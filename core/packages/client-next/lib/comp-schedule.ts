@@ -130,14 +130,26 @@ export function roundTypeName(id: string, isZh: boolean): string {
   return ROUND_TYPE_NAME[id]?.[isZh ? 'zh' : 'en'] ?? id;
 }
 
-// 紧凑英文代号（来源行 / 标签用）：R1/R2/R3/Fi/Q/BF；中文保持完整名不变。
+// 紧凑代号（来源行 / 标签用）：EN R1/R2/R3/Fi/Q/BF；ZH 去掉「组合制」前缀,与 EN 一样把
+// 组合制/非组合制并到同一短名(组合制初赛=初赛 等)。完整名仍走 roundTypeName(组合制保留)。
 const ROUND_TYPE_SHORT_EN: Record<string, string> = {
   '0': 'Q', '1': 'R1', '2': 'R2', '3': 'R3',
   'b': 'BF', 'c': 'Fi', 'd': 'R1', 'e': 'R2', 'f': 'Fi', 'g': 'R3', 'h': 'Q',
 };
+const ROUND_TYPE_SHORT_ZH: Record<string, string> = {
+  '0': '资格赛', '1': '初赛', '2': '复赛', '3': '半决赛',
+  'b': 'B组决赛', 'c': '决赛', 'd': '初赛', 'e': '复赛', 'f': '决赛', 'g': '半决赛', 'h': '资格赛',
+};
 export function roundTypeShort(id: string, isZh: boolean): string {
-  if (isZh) return ROUND_TYPE_NAME[id]?.zh ?? id;
+  if (isZh) return ROUND_TYPE_SHORT_ZH[id] ?? ROUND_TYPE_NAME[id]?.zh ?? id;
   return ROUND_TYPE_SHORT_EN[id] ?? ROUND_TYPE_NAME[id]?.en ?? id;
+}
+
+// 来源行: 轮次 + 组别 + #打乱序号（近期打乱 / scramble 示例卡片共用），如「初赛E组#4」。
+export function compSourceLine(round: string, group: string, num: number, isZh: boolean): string {
+  const r = roundTypeShort(round, isZh);
+  const grp = group ? (isZh ? `${group}组` : ` ${group}`) : '';
+  return isZh ? `${r}${grp}#${num}` : `${r}${grp} #${num}`;
 }
 
 const FORMAT_NAME: Record<string, { zh: string; enShort: string }> = {
@@ -466,7 +478,10 @@ export function computeCalendarLayout(data: ScheduleData, timeZone: string): Cal
     if (end > maxEnd) maxEnd = end;
   }
   const minMin = Math.max(0, Math.floor(minStart / 60) * 60);
-  const maxMin = Math.min(24 * 60, Math.max(minMin + 60, Math.ceil((maxEnd + 10) / 60) * 60));
+  // Round the bottom up to the activity's end hour — no extra buffer, so a comp
+  // whose last activity ends exactly on the hour (e.g. 颁奖 16:45-17:00) doesn't
+  // get a dead empty 17:00 row below it.
+  const maxMin = Math.min(24 * 60, Math.max(minMin + 60, Math.ceil(maxEnd / 60) * 60));
   return { slotMinTime: hms(minMin), slotMaxTime: hms(maxMin), dayKeys, overnight: false };
 }
 

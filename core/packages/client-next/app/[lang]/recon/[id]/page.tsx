@@ -44,12 +44,13 @@ import { computePrRank } from '@/components/persons/logic/progress';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { formatDateRangeIso } from '@/lib/wca-date';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import { RecordBadge } from '@/components/RecordBadge';
 import TwistySection from '@/components/TwistySection';
+import Sq1ReconPlayer from '@/components/Sq1ReconPlayer';
 import SolutionView from '@/components/SolutionView';
+import { canonicalSq1Alg } from '@/lib/sq1-svg';
 import {
   buildNormalizedSolution, findCrossLineIndex, hasWideMoveInCrossSection,
 } from '@/lib/recon-norm-cross-extract';
@@ -207,23 +208,39 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
   const displayText = crossNormalized && normalizedText ? normalizedText : solutionText;
   const crossLineIdx = useMemo(() => findCrossLineIndex(displayText), [displayText]);
 
+  // SQ1 renders with the cuber WebGL engine (Sq1ReconPlayer, same as /sim &
+  // the submit page); cubing.js draws it poorly. Its parseSq1Tokens accepts the
+  // stored compact `1/06/…` form directly. The cubedb external link still needs
+  // canonical `(1, 0) / …` notation; the on-page scramble text stays compact.
+  const isSq1 = solve.event === 'sq1';
+  const playerScramble = isSq1 ? canonicalSq1Alg(scramble) : scramble;
+
   return (
     <div className="detail-layout">
       <div className="detail-player-pane">
         {scramble && solutionText && (
-          <TwistySection
-            puzzle={getPuzzleId(solve.event)}
-            scramble={scramble}
-            alg={cleanForPlayer(displayText)}
-            playerRef={playerRef}
-            fillPane
-          />
+          isSq1 ? (
+            <Sq1ReconPlayer
+              scramble={scramble}
+              alg={displayText}
+              playerRef={playerRef}
+              fillPane
+            />
+          ) : (
+            <TwistySection
+              puzzle={getPuzzleId(solve.event)}
+              scramble={playerScramble}
+              alg={cleanForPlayer(displayText)}
+              playerRef={playerRef}
+              fillPane
+            />
+          )
         )}
       </div>
 
       <div className="detail-content-pane">
         {scramble && solutionText && (
-          <ExternalLinks event={solve.event} scramble={scramble} alg={cleanForPlayer(solutionText)} solveId={solve.id} />
+          <ExternalLinks event={solve.event} scramble={playerScramble} alg={cleanForPlayer(solutionText)} solveId={solve.id} />
         )}
 
         {(scramble || solutionText) && (
@@ -767,11 +784,6 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
     [allResults, allComps],
   );
 
-  const comp = useMemo(
-    () => allComps?.find(c => c.id === effectiveCompWcaId) ?? null,
-    [allComps, effectiveCompWcaId],
-  );
-
   useEffect(() => { onHasRows(rows.length > 0); }, [rows.length, onHasRows]);
 
   if (rows.length === 0) return null;
@@ -782,14 +794,6 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
     <div className="detail-section">
       <div className="detail-section-label">{t('recon.sameCompEvent')}</div>
       <div className="same-comp-event-table-wrap">
-        {comp && (
-          <div className="same-comp-event-table-header">
-            <span className="same-comp-event-table-comp">{comp.name}</span>
-            <span className="same-comp-event-table-date">
-              {formatDateRangeIso(comp.start_date, comp.end_date)}
-            </span>
-          </div>
-        )}
         <div className="wp-table-scroll">
           <table className="wp-bycomp-table same-comp-event-table">
             <thead>
@@ -815,7 +819,7 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                   <tr key={r.id}>
                     <td>
                       <span className={`wp-round-tag ${roundClass(r.round_type_id)}`}>
-                        {roundLabel(r.round_type_id)}
+                        {roundLabel(r.round_type_id).replace(/^C-/, '')}
                       </span>
                     </td>
                     <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>

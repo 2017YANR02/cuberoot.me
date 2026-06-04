@@ -31,7 +31,8 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { rememberRecent } from '../page';
 import { useLiveStream, applyResultPatch, type LivePatch, type WsStatus } from '@/hooks/useLiveStream';
 import { useWcaLiveStream, type WcaLiveRoundUpdate } from '@/hooks/useWcaLiveStream';
-import ScheduleView from './ScheduleView';
+import ScheduleView, { ScheduleControls } from './ScheduleView';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import '../comp.css';
 
 interface User {
@@ -214,6 +215,18 @@ function wcaIdToCubingSlug(wcaId: string): string {
 
 function roundKey(e: string, r: string): string { return `${e}:${r}`; }
 
+// URL 的轮次统一用数字 1,2,3,4(第几轮),不再用 WCA round_type_id 字母('d'/'f'/...)。
+// 数字 = 该事件 rounds 列表(ev.rs,首轮→决赛有序)中的 1-based 位置;内部仍用 round_type_id 当 key。
+function roundNumToTypeId(data: CompData | null, eventId: string, num: number): string {
+  const ev = data?.events.find(e => e.i === eventId);
+  return ev?.rs[num - 1]?.i ?? '';
+}
+function roundTypeIdToNum(data: CompData | null, eventId: string, rtid: string): number {
+  const ev = data?.events.find(e => e.i === eventId);
+  const idx = ev ? ev.rs.findIndex(r => r.i === rtid) : -1;
+  return idx >= 0 ? idx + 1 : 1;
+}
+
 const ROUND_NAME_ZH: Record<string, string> = {
   'First round': '初赛',
   'Second round': '复赛',
@@ -304,7 +317,21 @@ export default function CompDetailPage() {
   }, [slug, isZh, compInfo]);
 
   const eventParam = searchParams?.get('event') || '';
-  const roundParam = searchParams?.get('round') || '';
+  // URL 用数字轮号(1,2,3,4),内部仍以 round_type_id 当 key。读时数字→round_type_id,
+  // 并兼容老的字母 round_type_id 直链(?round=d 等)。
+  const roundUrlParam = searchParams?.get('round') || '';
+  const roundParam = useMemo(() => {
+    if (!roundUrlParam || !data || !eventParam) return '';
+    const n = Number(roundUrlParam);
+    if (Number.isInteger(n) && n >= 1) {
+      const rtid = roundNumToTypeId(data, eventParam, n);
+      if (rtid) return rtid;
+    }
+    // 老字母 round_type_id 直链(?round=d)兼容
+    const ev = data.events.find(e => e.i === eventParam);
+    if (ev?.rs.some(r => r.i === roundUrlParam)) return roundUrlParam;
+    return '';
+  }, [roundUrlParam, data, eventParam]);
   const filterParam = searchParams?.get('filter') || 'all';
   const explicitView = searchParams?.get('view');
   // 未来/未开始比赛无任何成绩 → 默认显示预排名;有成绩或用户显式选择则按选择.
@@ -321,7 +348,10 @@ export default function CompDetailPage() {
   const isSchedule = viewParam === 'schedule';
   const psychEventParam = searchParams?.get('psychEvent') || '';
   const sourceParam = searchParams?.get('source');
-  const schedView: 'calendar' | 'table' = searchParams?.get('layout') === 'calendar' ? 'calendar' : 'table';
+  const schedView: 'calendar' | 'table' = searchParams?.get('layout') === 'table' ? 'table' : 'calendar';
+  // "Show round details" lives up in the view-tab row (next to the calendar/table
+  // toggle); default on so Format / Time limit / Cutoff / Proceed show like WCA.
+  const [schedDetailsExpanded, setSchedDetailsExpanded] = useState(true);
 
   const load = useCallback((opts?: { fresh?: boolean }): { promise: Promise<void>; cancel: () => void } => {
     const fresh = opts?.fresh ?? false;
@@ -569,18 +599,30 @@ export default function CompDetailPage() {
       const [e, r] = defaultRoundKey.split(':');
       const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
       next.set('event', e);
-      next.set('round', r);
+      next.set('round', String(roundTypeIdToNum(data, e, r)));
       setSearchParams(next, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, defaultRoundKey]);
 
-  // Schedule defaults to the table layout; force it into the URL so the choice is
-  // always explicit (only an explicit layout=calendar opts out).
+  // 规范化:老的字母 round_type_id 直链(?round=d)→ 数字轮号,保证 URL 统一显示 1,2,3,4。
+  useEffect(() => {
+    if (!data || !eventParam || !roundUrlParam || !roundParam) return;
+    const canonical = String(roundTypeIdToNum(data, eventParam, roundParam));
+    if (roundUrlParam !== canonical) {
+      const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
+      next.set('round', canonical);
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, eventParam, roundParam, roundUrlParam]);
+
+  // Schedule defaults to the calendar layout; force it into the URL so the choice is
+  // always explicit (only an explicit layout=table opts out).
   useEffect(() => {
     if (!isSchedule || searchParams?.get('layout')) return;
     const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
-    next.set('layout', 'table');
+    next.set('layout', 'calendar');
     setSearchParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSchedule, explicitView]);
@@ -697,7 +739,7 @@ export default function CompDetailPage() {
     if (!e || !r) return;
     const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
     next.set('event', e);
-    next.set('round', r);
+    next.set('round', String(roundTypeIdToNum(data, e, r)));
     setSearchParams(next);
   };
 
@@ -719,10 +761,13 @@ export default function CompDetailPage() {
     setSearchParams(next);
   };
 
-  const onChangePsychEvent = (eventId: string) => {
+  // 预排名项目多选:切换某项目;按 comp.events 顺序序列化进 psychEvent (逗号分隔).
+  const onTogglePsychEvent = (eventId: string) => {
     const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
-    if (eventId) next.set('psychEvent', eventId);
-    else next.delete('psychEvent');
+    const cur = new Set(psychEventIds);
+    if (cur.has(eventId)) cur.delete(eventId); else cur.add(eventId);
+    const ordered = data ? data.events.filter(e => cur.has(e.i)).map(e => e.i) : [...cur];
+    if (ordered.length) next.set('psychEvent', ordered.join(',')); else next.delete('psychEvent');
     setSearchParams(next);
   };
 
@@ -736,11 +781,15 @@ export default function CompDetailPage() {
     return () => { cancelled = true; };
   }, [viewParam, data]);
 
-  const psychEventId = useMemo(() => {
-    if (!data) return '';
-    if (psychEventParam && data.events.some(e => e.i === psychEventParam)) return psychEventParam;
-    return '';
+  // 预排名选中的项目集合 (支持多选). 解析逗号分隔的 psychEvent 参数, 过滤到本场存在的项目,
+  // 并按 comp.events 顺序去重排列. 空 = 显示报名名单 (原"全部"); 1 项 = 单项预排名; 2+ 项 = 名次和.
+  const psychEventIds = useMemo(() => {
+    if (!data) return [] as string[];
+    const valid = new Set(data.events.map(e => e.i));
+    const want = new Set(psychEventParam.split(',').map(s => s.trim()).filter(s => valid.has(s)));
+    return data.events.filter(e => want.has(e.i)).map(e => e.i);
   }, [data, psychEventParam]);
+  const psychSelectedSet = useMemo(() => new Set(psychEventIds), [psychEventIds]);
 
   if (loading) {
     const pct = progress && progress.total > 0 ? Math.round(100 * progress.done / progress.total) : 0;
@@ -852,7 +901,16 @@ export default function CompDetailPage() {
                     </a>
                   )}
                   <Link
-                    href={`/scramble/gen?comp=${encodeURIComponent(slug)}`}
+                    href={(() => {
+                      // 带上当前 event + 轮次 → 打乱生成器直接定位到该项目该轮
+                      // (round 用「第几轮」位置,与本页 ?round= 及 gen 的 ?round= 完全一致)。
+                      const q = new URLSearchParams({ comp: slug });
+                      if (eventParam && eventParam !== 'all') {
+                        q.set('event', eventParam);
+                        if (roundParam) q.set('round', String(roundTypeIdToNum(data, eventParam, roundParam)));
+                      }
+                      return `/scramble/gen?${q.toString()}`;
+                    })()}
                     className="comp-title-icon comp-title-icon-lucide"
                     title={isZh ? '查看打乱' : 'View scrambles'}
                     aria-label={isZh ? '查看打乱' : 'View scrambles'}
@@ -905,11 +963,11 @@ export default function CompDetailPage() {
           <div className="comp-event-bar">
             <WcaEventSelector
               availableEvents={availableEventIds}
-              selectedEvent={isPsych ? psychEventId : eventParam}
-              onSelect={isPsych ? onChangePsychEvent : onSelectEvent}
+              {...(isPsych
+                ? { selectedEvents: psychSelectedSet, onToggle: onTogglePsychEvent }
+                : { selectedEvent: eventParam, onSelect: onSelectEvent })}
               isZh={isZh}
               onlyAvailable
-              allowAll={isPsych}
               badges={isPsych ? {} : eventBadges}
               topBadges={isPsych ? {} : eventTopBadges}
               appendEvents={nonWcaEvents}
@@ -939,6 +997,15 @@ export default function CompDetailPage() {
           >
             {isZh ? '赛程' : 'Schedule'}
           </button>
+          {isSchedule && (
+            <ScheduleControls
+              view={schedView}
+              onViewChange={onChangeSchedView}
+              detailsExpanded={schedDetailsExpanded}
+              onToggleDetails={() => setSchedDetailsExpanded(v => !v)}
+              isZh={isZh}
+            />
+          )}
         </div>
 
         {isSchedule ? (
@@ -947,7 +1014,7 @@ export default function CompDetailPage() {
             isZh={isZh}
             compName={compNameTitle}
             view={schedView}
-            onViewChange={onChangeSchedView}
+            detailsExpanded={schedDetailsExpanded}
           />
         ) : !isPsych ? (
           <>
@@ -986,7 +1053,7 @@ export default function CompDetailPage() {
           <PsychSheet
             data={data}
             isZh={isZh}
-            eventId={psychEventId}
+            eventIds={psychEventIds}
             pbMap={pbMap}
             onClickCuber={n => setModal({ kind: 'all', number: n })}
           />
@@ -1242,15 +1309,81 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
   );
 }
 
+// 选手名:有 WCA ID 时链到选手主页 (stopPropagation 避免同时触发整行的弹窗 onClick).
+function CuberNameLink({ u, isZh }: { u: User; isZh: boolean }) {
+  const name = displayCuberName(u.name, isZh);
+  const title = regionDisplay(u.region, isZh);
+  if (u.wcaid) {
+    return (
+      <Link
+        href={`/${isZh ? 'zh' : 'en'}/wca/persons/${u.wcaid}`}
+        className="cuber-name cuber-link"
+        title={title}
+        onClick={e => e.stopPropagation()}
+      >
+        {name}
+      </Link>
+    );
+  }
+  return <span className="cuber-name" title={title}>{name}</span>;
+}
+
+// 单项目预排名顺序 → 每个选手在该项目里的名次 (1-based) + 参赛人数. 名次和复用此函数:
+// 排序口径与单项预排名一致 (盲拧/bo 看单次, 否则看平均), 无成绩的报名选手仍按 Infinity 落到末尾.
+function rankEventPsych(
+  data: CompData,
+  eventId: string,
+  pbMap: Record<string, PbByEvent | null>,
+): { rankOf: Map<number, number>; participants: number } {
+  const numbers = new Set<number>();
+  for (const rd of data.events.find(e => e.i === eventId)?.rs ?? []) {
+    for (const r of data.resultsByRound[`${eventId}:${rd.i}`] ?? []) numbers.add(r.n);
+  }
+  if (numbers.size === 0) {
+    for (const u of Object.values(data.users)) {
+      if (u.eventIds?.includes(eventId)) numbers.add(u.number);
+    }
+  }
+  const ev = data.events.find(e => e.i === eventId);
+  const fmt = ev?.rs[ev.rs.length - 1]?.f ?? '';
+  const singleRanked = isBlindAvgEvent(eventId) || !isAvgRankedFormat(fmt);
+  const rankKey = (v: number | undefined) => (v && v > 0 ? v : Infinity);
+  const cmp = (a: number, b: number) => (a < b ? -1 : a > b ? 1 : 0);
+  const arr = [...numbers].map(n => {
+    const u = data.users[String(n)];
+    const pb = u?.wcaid ? pbMap[u.wcaid] : null;
+    return { n, single: pb?.[eventId]?.single?.best, average: pb?.[eventId]?.average?.best };
+  });
+  arr.sort((x, y) => {
+    if (singleRanked) {
+      const s = cmp(rankKey(x.single), rankKey(y.single));
+      return s !== 0 ? s : cmp(rankKey(x.average), rankKey(y.average));
+    }
+    const a = cmp(rankKey(x.average), rankKey(y.average));
+    return a !== 0 ? a : cmp(rankKey(x.single), rankKey(y.single));
+  });
+  const rankOf = new Map<number, number>();
+  arr.forEach((x, i) => rankOf.set(x.n, i + 1));
+  return { rankOf, participants: arr.length };
+}
+
 interface PsychSheetProps {
   data: CompData;
   isZh: boolean;
-  eventId: string;
+  eventIds: string[];
   pbMap: Record<string, PbByEvent | null>;
   onClickCuber: (number: number) => void;
 }
 
-function PsychSheet({ data, isZh, eventId, pbMap, onClickCuber }: PsychSheetProps) {
+function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetProps) {
+  // 0 项 = 报名名单; 1 项 = 单项预排名; 2+ 项 = 名次和 (下方 sorRows 分支).
+  const eventId = eventIds.length === 1 ? eventIds[0]! : '';
+  const router = useRouter();
+  // 预排名整行点击:有 WCA ID 直接去选手主页;无 ID 的新人退回弹窗.
+  const onRowClick = (u: User) => {
+    if (u.wcaid) router.push(`/${isZh ? 'zh' : 'en'}/wca/persons/${u.wcaid}`);
+    else onClickCuber(u.number);
+  };
   const userEvents = useMemo(() => {
     const map = new Map<number, string[]>();
     for (const ev of data.events) {
@@ -1327,6 +1460,85 @@ function PsychSheet({ data, isZh, eventId, pbMap, onClickCuber }: PsychSheetProp
     return all;
   }, [data, eventId]);
 
+  // 名次和 (2+ 项): 每位选手在每个所选项目的预排名相加. 报名了但缺该项 → 计 "参赛人数+1"
+  // (比该项倒数第一再差一名), 与 /wca/sum-of-ranks 口径一致. 全程用已加载的 pbMap, 不发请求.
+  const sorRows = useMemo(() => {
+    if (eventIds.length < 2) return [];
+    const perEvent = eventIds.map(e => ({ e, ...rankEventPsych(data, e, pbMap) }));
+    const numbers = new Set<number>();
+    for (const pe of perEvent) for (const n of pe.rankOf.keys()) numbers.add(n);
+    const rows = [...numbers].map(n => {
+      const u = data.users[String(n)];
+      if (!u) return null;
+      let total = 0;
+      let done = 0;
+      const ranks = perEvent.map(pe => {
+        const rk = pe.rankOf.get(n);
+        if (rk != null) { total += rk; done += 1; return { rank: rk, missing: false }; }
+        const penalty = pe.participants + 1;
+        total += penalty;
+        return { rank: penalty, missing: true };
+      });
+      return { n, u, ranks, total, done };
+    }).filter((x): x is NonNullable<typeof x> => x !== null);
+    rows.sort((a, b) => a.total - b.total || b.done - a.done || a.n - b.n);
+    return rows;
+  }, [data, eventIds, pbMap]);
+
+  if (eventIds.length >= 2) {
+    return (
+      <div className="comp-table-wrap">
+        <table className="comp-table comp-sor-table">
+          <thead>
+            <tr>
+              <th className="th-place">{isZh ? '名次' : 'Rank'}</th>
+              <th className="th-person">{isZh ? '选手' : 'Person'}</th>
+              {eventIds.map(e => (
+                <th key={e} className="comp-sor-evcol"><EventIcon event={e} className="comp-sor-evicon" /></th>
+              ))}
+              <th className="comp-sor-total-col">
+                {isZh ? '名次和' : 'Total'}
+                <InfoTooltip
+                  content={isZh
+                    ? '把所选项目的预排名名次相加(数字越小越靠前)。\n灰色斜体的「(数字)」表示该选手没报这项,按该项「参赛人数+1」(比最后一名再差一名)计入。'
+                    : 'Psych-sheet positions across the selected events added up (lower is better).\nA grey italic "(n)" means the cuber isn’t registered for that event, counted as that event’s "participants + 1" (one worse than last).'}
+                />
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorRows.map((row, idx) => (
+              <tr
+                key={row.n}
+                className={`${idx % 2 === 1 ? 'row-odd' : ''} comp-row-clickable`}
+                onClick={() => onRowClick(row.u)}
+              >
+                <td className="td-place">{idx + 1}</td>
+                <td className="td-person">
+                  <Flag iso2={regionToIso2(row.u.region)} className="comp-flag" />
+                  <CuberNameLink u={row.u} isZh={isZh} />
+                </td>
+                {row.ranks.map((r, j) => (
+                  <td
+                    key={eventIds[j]}
+                    className={`comp-sor-evcell${r.missing ? ' is-missing' : r.rank <= 3 ? ` podium-${r.rank}` : ''}`}
+                    title={r.missing
+                      ? (isZh ? `未报名 ${eventDisplayName(eventIds[j]!, true)},按「参赛人数+1」= ${r.rank} 计入` : `Not registered for ${eventDisplayName(eventIds[j]!, false)} — counted as participants+1 = ${r.rank}`)
+                      : undefined}
+                  >{r.missing ? `(${r.rank})` : r.rank}</td>
+                ))}
+                <td className="comp-sor-total-col">{row.total}</td>
+              </tr>
+            ))}
+            {sorRows.length === 0 && (
+              <tr><td colSpan={eventIds.length + 3} className="comp-empty">{isZh ? '暂无数据' : 'No data'}</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   return (
     <div className="comp-table-wrap">
       <table className="comp-table">
@@ -1350,17 +1562,12 @@ function PsychSheet({ data, isZh, eventId, pbMap, onClickCuber }: PsychSheetProp
                   <tr
                     key={row.n}
                     className={`${isOdd ? 'row-odd' : ''} comp-row-clickable`}
-                    onClick={() => onClickCuber(row.n)}
+                    onClick={() => onRowClick(row.u)}
                   >
                     <td className="td-place">{idx + 1}</td>
                     <td className="td-person">
                       <Flag iso2={regionToIso2(row.u.region)} className="comp-flag" />
-                      <span
-                        className="cuber-name"
-                        title={regionDisplay(row.u.region, isZh)}
-                      >
-                        {displayCuberName(row.u.name, isZh)}
-                      </span>
+                      <CuberNameLink u={row.u} isZh={isZh} />
                     </td>
                     {(() => {
                       const avgCell = (
@@ -1410,17 +1617,12 @@ function PsychSheet({ data, isZh, eventId, pbMap, onClickCuber }: PsychSheetProp
                   <tr
                     key={u.number}
                     className={`${isOdd ? 'row-odd' : ''} comp-row-clickable`}
-                    onClick={() => onClickCuber(u.number)}
+                    onClick={() => onRowClick(u)}
                   >
                     <td className="td-place">{idx + 1}</td>
                     <td className="td-person">
                       <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
-                      <span
-                        className="cuber-name"
-                        title={regionDisplay(u.region, isZh)}
-                      >
-                        {displayCuberName(u.name, isZh)}
-                      </span>
+                      <CuberNameLink u={u} isZh={isZh} />
                     </td>
                     <td className="comp-roster-events">
                       {evs.map(e => (

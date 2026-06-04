@@ -131,7 +131,7 @@ export default function TrainerRunPage() {
         <Link href={`/${lang}/trainer/${puzzleParam}/${setSlug}`} className="trainer-back">
           <ArrowLeft size={14} /> {isZh ? '选 case' : 'Select Algs'}
         </Link>
-        <span style={{ fontSize: '1rem', color: '#aaa' }}>
+        <span style={{ fontSize: '1rem', color: 'var(--muted-foreground)' }}>
           {puzzle} · {isZh ? meta.zh : meta.en}
         </span>
       </div>

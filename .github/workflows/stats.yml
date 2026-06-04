@@ -152,7 +152,8 @@ jobs:
         run: npx tsx src/bin/records_build.ts
 
       - name: Fetch upcoming comps
-        run: python scripts/fetch_upcoming_comps.py --refresh
+        working-directory: core/packages/stats-build
+        run: npx tsx src/bin/fetch_upcoming_comps.ts --refresh
 
       # ── 历史排名 snapshot:复用上面已经导入的 MySQL,算完 scp + ssh 灌进 prod PG ──
       - name: Build historical ranks snapshot

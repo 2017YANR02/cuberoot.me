@@ -1,10 +1,12 @@
 /* Trainer — SpeedCubeDB-style training UI.
    Shared by /trainer (landing), /trainer/:p/:s (select), /trainer/:p/:s/run.
-   Dark theme. Mobile (<480) collapses sidebar below timer. */
+   Dual-theme: follows ThemeToggle (no longer dark-locked). Theme tokens only,
+   no hard-coded greys. Mobile (<480) collapses sidebar below timer. */
 
 .trainer-root {
-  /* trainer 是 dark-locked:实际锁见 index.css 的 html:has(.trainer-root) 块,
-     :root 级别 token 翻 dark,body bg 自动跟着,不会因 max-width 露 light 底。 */
+  /* --tr-sel: "selected/active" accent (blue), distinct from brand terracotta;
+     defined once here, readable on both light + dark, derive via color-mix. */
+  --tr-sel: #4a90e2;
   max-width: 1400px;
   margin: 0 auto;
   padding: 24px;
@@ -23,7 +25,7 @@
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 0.9rem; color: var(--muted-foreground); text-decoration: none;
 }
-.trainer-topbar .trainer-back:hover { color: #fff; }
+.trainer-topbar .trainer-back:hover { color: var(--foreground); }
 .trainer-topbar .trainer-spacer { flex: 1; }
 
 .trainer-puzzle-select,
@@ -39,9 +41,9 @@
 }
 .trainer-start-btn {
   display: inline-flex; align-items: center; gap: 8px;
-  background: rgba(217,119,87,0.2);
-  border: 1px solid rgba(217,119,87,0.5);
-  color: #e8b49a;
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  color: color-mix(in srgb, var(--accent) 70%, var(--foreground));
   padding: 8px 18px;
   border-radius: 8px;
   font-size: 0.95rem;
@@ -49,7 +51,7 @@
   cursor: pointer;
   text-decoration: none;
 }
-.trainer-start-btn:hover { background: rgba(217,119,87,0.3); color: #fff; }
+.trainer-start-btn:hover { background: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--foreground); }
 .trainer-start-btn:disabled,
 .trainer-start-btn.is-disabled {
   opacity: 0.4; cursor: not-allowed; pointer-events: none;
@@ -72,7 +74,7 @@
 }
 .trainer-set-header input[type=checkbox] {
   width: 16px; height: 16px;
-  accent-color: #4a90e2;
+  accent-color: var(--tr-sel);
   cursor: pointer;
 }
 .trainer-set-header .trainer-set-title-thumb {
@@ -91,7 +93,7 @@
   margin-bottom: 10px; user-select: none;
 }
 .trainer-subgroup-header input[type=checkbox] {
-  width: 14px; height: 14px; accent-color: #4a90e2; cursor: pointer;
+  width: 14px; height: 14px; accent-color: var(--tr-sel); cursor: pointer;
 }
 .trainer-chevron-btn {
   display: inline-flex; align-items: center; justify-content: center;
@@ -99,7 +101,7 @@
   background: transparent; border: none; color: var(--muted-foreground);
   cursor: pointer; padding: 0;
 }
-.trainer-chevron-btn:hover { color: #fff; }
+.trainer-chevron-btn:hover { color: var(--foreground); }
 /* Sub-subgroup row container — horizontal flex-wrap of sub chips
    (e.g. ZBLL U → U1..U6 in one or two rows). Expanded sub takes full row. */
 .trainer-sub-subgroup-row {
@@ -110,27 +112,27 @@
 .trainer-sub-subgroup {
   flex: 0 1 auto;
   padding: 6px 10px;
-  background: rgba(255,255,255,0.015);
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
   border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   border-radius: 6px;
   min-width: 150px;
 }
 .trainer-sub-subgroup.is-expanded {
   flex: 1 0 100%;
-  background: rgba(255,255,255,0.025);
-  border-color: rgba(255,255,255,0.12);
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  border-color: color-mix(in srgb, var(--foreground) 12%, transparent);
 }
 .trainer-sub-subgroup-header {
   display: flex; align-items: center; gap: 6px;
   font-weight: 500; font-size: 0.85rem;
   cursor: pointer; user-select: none;
-  color: #ccc;
+  color: var(--muted-foreground);
 }
 .trainer-sub-subgroup.is-expanded .trainer-sub-subgroup-header {
   margin-bottom: 8px;
 }
 .trainer-sub-subgroup-header input[type=checkbox] {
-  width: 13px; height: 13px; accent-color: #4a90e2; cursor: pointer;
+  width: 13px; height: 13px; accent-color: var(--tr-sel); cursor: pointer;
 }
 .trainer-case-grid {
   display: flex; flex-wrap: wrap; gap: 10px;
@@ -147,17 +149,17 @@
   min-width: 92px;
 }
 .trainer-case-cell:hover {
-  border-color: rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.05);
+  border-color: color-mix(in srgb, var(--foreground) 30%, transparent);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 .trainer-case-cell.is-selected {
-  border-color: rgba(74,144,226,0.6);
-  background: rgba(74,144,226,0.08);
+  border-color: color-mix(in srgb, var(--tr-sel) 60%, transparent);
+  background: color-mix(in srgb, var(--tr-sel) 8%, transparent);
 }
 .trainer-case-cell-name {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--foreground);
 }
 .trainer-case-cell-thumb {
   pointer-events: none;
@@ -220,8 +222,8 @@
   margin: 28px 0 12px;
   font-style: italic;
 }
-.trainer-timer.is-awaiting { color: #ffc107; }
-.trainer-timer.is-ready    { color: #4caf50; }
+.trainer-timer.is-awaiting { color: var(--signal-warning); }
+.trainer-timer.is-ready    { color: var(--signal-success); }
 .trainer-timer.is-running  { color: var(--foreground); }
 .trainer-timer.is-stopping,
 .trainer-timer.is-idle     { color: var(--foreground); }
@@ -252,7 +254,7 @@
   background: transparent; border: none; color: var(--muted-foreground); cursor: pointer;
   padding: 4px;
 }
-.trainer-card-header .trainer-icon-btn:hover { color: #f44; }
+.trainer-card-header .trainer-icon-btn:hover { color: var(--destructive); }
 .trainer-card-divider {
   border: none; border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
   margin: 0 0 10px;
@@ -272,7 +274,7 @@
 .trainer-solve-scramble {
   font-family: 'Inter', monospace;
   font-size: 0.78rem;
-  color: #ccc;
+  color: var(--muted-foreground);
   word-break: break-word;
 }
 
@@ -288,12 +290,12 @@
   cursor: pointer;
 }
 .trainer-stats-list .trainer-stat-time.is-active {
-  background: rgba(74,144,226,0.15);
-  border-color: rgba(74,144,226,0.5);
-  color: #fff;
+  background: color-mix(in srgb, var(--tr-sel) 15%, transparent);
+  border-color: color-mix(in srgb, var(--tr-sel) 50%, transparent);
+  color: var(--foreground);
 }
 .trainer-stats-empty {
-  color: #777; font-size: 0.85rem;
+  color: var(--faint-foreground); font-size: 0.85rem;
 }
 
 /* ─── landing (puzzle dropdown only — landing layout same as select with no sidebar) ─── */
@@ -320,8 +322,8 @@
   transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
 }
 .trainer-set-card:hover {
-  background: rgba(217,119,87,0.06);
-  border-color: rgba(217,119,87,0.4);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   transform: translateY(-1px);
 }
 .trainer-set-card-thumb {
@@ -342,6 +344,6 @@
   border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 .trainer-set-card.is-recognize:hover {
-  background: rgba(74,144,226,0.08);
-  border-color: rgba(74,144,226,0.5);
+  background: color-mix(in srgb, var(--tr-sel) 8%, transparent);
+  border-color: color-mix(in srgb, var(--tr-sel) 50%, transparent);
 }

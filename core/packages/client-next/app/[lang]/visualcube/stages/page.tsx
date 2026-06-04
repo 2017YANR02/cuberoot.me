@@ -292,7 +292,8 @@ const INLINE_CSS = `
   max-width: 1280px;
   margin: 0 auto;
   padding: 16px 20px 64px;
-  color: #e8e8e8;
+  color: var(--foreground);
+  background: var(--background);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
@@ -301,7 +302,7 @@ const INLINE_CSS = `
   align-items: center;
   justify-content: space-between;
   padding: 8px 0 16px;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--border-default);
   margin-bottom: 16px;
 }
 .vcs-header h1 {
@@ -312,17 +313,17 @@ const INLINE_CSS = `
 }
 .vcs-header-right { display: flex; align-items: center; gap: 12px; }
 .vcs-link {
-  color: #9ec5ff;
+  color: var(--signal-info);
   text-decoration: none;
   font-size: 13px;
   padding: 4px 10px;
-  border: 1px solid #2a2a2a;
+  border: 1px solid var(--border-default);
   border-radius: 6px;
 }
-.vcs-link:hover { background: #1a1a1a; }
+.vcs-link:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
 
 .vcs-intro {
-  color: #999;
+  color: var(--muted-foreground);
   font-size: 13px;
   margin: 0 0 24px;
   line-height: 1.6;
@@ -333,12 +334,12 @@ const INLINE_CSS = `
   font-size: 15px;
   font-weight: 500;
   margin: 0 0 12px;
-  color: #ddd;
-  border-left: 3px solid #4a90e2;
+  color: var(--foreground);
+  border-left: 3px solid var(--signal-info);
   padding-left: 10px;
 }
 .vcs-count {
-  color: #666;
+  color: var(--faint-foreground);
   font-weight: 400;
   font-size: 12px;
   margin-left: 8px;
@@ -356,16 +357,16 @@ const INLINE_CSS = `
   align-items: center;
   gap: 6px;
   padding: 10px 6px 8px;
-  background: #141414;
-  border: 1px solid #232323;
+  background: var(--card);
+  border: 1px solid var(--border-default);
   border-radius: 6px;
   text-decoration: none;
   color: inherit;
   transition: border-color 0.15s, background 0.15s;
 }
 .vcs-card:hover {
-  border-color: #4a90e2;
-  background: #181818;
+  border-color: var(--signal-info);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
 }
 .vcs-thumb {
   display: flex;
@@ -377,8 +378,8 @@ const INLINE_CSS = `
 .vcs-thumb img { display: block; max-width: 100%; height: auto; }
 .vcs-label {
   font-size: 12px;
-  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  color: #ccc;
+  font-family: var(--font-mono, ui-monospace, 'SF Mono', Menlo, Consolas, monospace);
+  color: var(--muted-foreground);
   text-align: center;
   word-break: break-all;
   line-height: 1.3;

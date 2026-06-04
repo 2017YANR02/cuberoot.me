@@ -153,5 +153,12 @@
     "zh": "盲拧助手 App;记忆回想训练器 + 换位子公式库 + 联想词表合并自此",
     "en": "Blindfolded helper app; memo recall trainer + commutator library + association words merged",
     "long_en": "blindfolded helper Android app; its memo recall trainer, commutator library, and association-word dictionary are merged into the `/trainer/3bld` modules"
+  },
+  {
+    "name": "AnnikaStein/SkewbPage",
+    "url": "https://github.com/AnnikaStein/SkewbPage",
+    "zh": "Skewb 技巧训练器(SkewbSkills;三模式首层 / L2L 公式 / One-Look 全 port 为 React /trainer/skewb;作者 Annika Stein,Apache-2.0)",
+    "en": "Skewb Skills trainer (SkewbSkills; three-mode First Layer / L2L Alg / One-Look ported to React at /trainer/skewb; author Annika Stein, Apache-2.0)",
+    "long_en": "SkewbSkills web trainer — First Layer Trainer, L2L Algorithm Trainer, and One-Looking Trainer (alg database, RubiksSkewb→WCA notation conversion, scramble generation) ported to React for `/trainer/skewb` (author Annika Stein, Apache-2.0)"
   }
 ]

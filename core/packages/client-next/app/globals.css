@@ -109,20 +109,18 @@ body {
   }
 }
 
-/* dark-locked pages: trainer / visualcube editor / wca-stats / recon / timer.
+/* dark-locked pages: wca-stats family only.
    :root:has() lifts tokens to root so body bg flips with the container; without
    this, max-width pages leak light bg on the sides. These pages don't
    participate in ThemeToggle — always dark, by design.
-   NOTE: Battle (.battle-container) is NO LONGER dark-locked — it now follows the
-   user's chosen theme via the :root token set (chrome tokenized in battle.css). */
-html:has(.trainer-root),
-html:has(.bld-trainer-root),
-html:has(.vc-editor-page),
+   NOTE: Battle, Trainer (.trainer-root / .bld-trainer-root), Recon (.recon-page)
+   and VisualCube editor (.vc-editor-page) are NO LONGER dark-locked — they follow
+   the user's chosen theme via the :root token set (chrome fully tokenized in
+   their own CSS). */
 html:has(.wca-stats-page),
 html:has(.wse-page),
 html:has(.wp-page),
 html:has(.records-page),
-html:has(.recon-page),
 html:has(.tr-page) {
   color-scheme: dark;
   --background: #171717;

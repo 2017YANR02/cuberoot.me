@@ -19,7 +19,7 @@ import { useRouter, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
   Plus, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
-  CalendarDays, LayoutGrid, Wrench, ArrowRight, Search, Clipboard, Film,
+  CalendarDays, LayoutGrid, Wrench, ArrowRight, Search, Clipboard,
   ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, Mic, Sparkles, type LucideIcon,
 } from 'lucide-react';
 import { ClearButton } from '@/components/ClearButton';
@@ -36,7 +36,6 @@ import {
   INITIAL_RENDER_CAP,
   type SiteSearchCard,
 } from '@/lib/site-search';
-import { setPendingVideo } from '@/lib/pending-video';
 import { detectPasteIntent, type PasteIntent } from '@/lib/smart-paste';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import './landing_search.css';
@@ -137,8 +136,6 @@ export default function LandingSearch({ cards, lang }: Props) {
     onResult: (text) => { setQuery(text); setOpen(true); },
   });
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const textInputRef = useRef<HTMLInputElement>(null);
   const [expandedPersons, setExpandedPersons] = useState(false);
   const [expandedRecons, setExpandedRecons] = useState(false);
@@ -242,14 +239,6 @@ export default function LandingSearch({ cards, lang }: Props) {
     }
   };
 
-  const onVideoFile = (file: File | null | undefined) => {
-    if (!file || !file.type.startsWith('video/')) return;
-    setPendingVideo(file);
-    closeAfter();
-    setPlusMenuOpen(false);
-    router.push(`${langPrefix}/frame-count`);
-  };
-
   useEffect(() => {
     if (!plusMenuOpen) return;
     const onDown = (e: MouseEvent) => {
@@ -298,7 +287,7 @@ export default function LandingSearch({ cards, lang }: Props) {
   return (
     <div className="landing-search" ref={wrapRef}>
       <div
-        className={`landing-search-input${dragging ? ' is-drag-over' : ''}`}
+        className="landing-search-input"
         onMouseDown={e => {
           // 点击容器自身(上下 padding / 元素间 gap 死区)→ 聚焦输入框
           if (e.target === e.currentTarget) {
@@ -306,36 +295,17 @@ export default function LandingSearch({ cards, lang }: Props) {
             textInputRef.current?.focus();
           }
         }}
-        onDragOver={e => {
-          if (e.dataTransfer?.types.includes('Files')) {
-            e.preventDefault();
-            setDragging(true);
-          }
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={e => {
-          e.preventDefault();
-          setDragging(false);
-          onVideoFile(e.dataTransfer.files[0]);
-        }}
       >
         <button
           type="button"
           className="landing-search-plus"
           onClick={() => setPlusMenuOpen(v => !v)}
-          title={isZh ? '智能粘贴 / 上传视频' : 'Smart paste / upload video'}
+          title={isZh ? '智能粘贴' : 'Smart paste'}
           aria-label={isZh ? '添加' : 'Add'}
           aria-expanded={plusMenuOpen}
         >
           <Plus size={18} strokeWidth={1.75} />
         </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="video/*"
-          style={{ display: 'none' }}
-          onChange={e => onVideoFile(e.target.files?.[0])}
-        />
         <input
           ref={textInputRef}
           type="text"
@@ -372,13 +342,6 @@ export default function LandingSearch({ cards, lang }: Props) {
               <div className="landing-search-plus-menu-text">
                 <span className="landing-search-plus-menu-title">{isZh ? '智能粘贴' : 'Smart paste'}</span>
                 <span className="landing-search-plus-menu-sub">{isZh ? 'WCA URL / 打乱 / 公式' : 'WCA URL / scramble / alg'}</span>
-              </div>
-            </button>
-            <button type="button" role="menuitem" onClick={() => fileInputRef.current?.click()}>
-              <Film size={14} strokeWidth={1.75} />
-              <div className="landing-search-plus-menu-text">
-                <span className="landing-search-plus-menu-title">{isZh ? '上传视频数帧' : 'Upload video'}</span>
-                <span className="landing-search-plus-menu-sub">{isZh ? '逐帧计时,记录 split' : 'Per-frame timing & splits'}</span>
               </div>
             </button>
           </div>

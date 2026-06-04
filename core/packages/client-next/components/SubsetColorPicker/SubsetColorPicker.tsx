@@ -34,20 +34,17 @@ export function fillColorsForSubset(letters: ColorLetter[]): string[] {
   const set = new Set(letters);
   return GRADIENT_ORDER.filter((c) => set.has(c)).map((c) => COLOR_HEX[c]);
 }
-// 一个子集色块的内层 tile:单色实底,多色划分方格(dual 左右两半 / quad 2x2 / cn 3x2)。
+// 一个子集色块的内层 tile:单色实底,多色像切蛋糕一样从正方形中点等分扇形(所有颜色共用中点)。
 // picker 选项、六色 tile、RecentScrambles hero 圆点共用;外层尺寸/形状/边框由调用方的容器决定(配 overflow:hidden 裁切)。
 export function SubsetSwatch({ colors }: { colors: ColorLetter[] }) {
   if (colors.length <= 1) {
     return <span className="subset-swatch-tile" style={colors[0] ? { background: COLOR_HEX[colors[0]] } : undefined} />;
   }
-  const cols = colors.length <= 4 ? 2 : 3;   // 2→两半, 4→2x2, 6→3x2
-  return (
-    <span className="subset-swatch-tile" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
-      {colors.map((c, i) => (
-        <span key={i} className="subset-swatch-cell" style={{ background: COLOR_HEX[c] }} />
-      ))}
-    </span>
-  );
+  const seg = 360 / colors.length; // 等分扇形角度(6→60°, 4→90°, 2→180°)
+  const stops = colors
+    .map((c, i) => `${COLOR_HEX[c]} ${(i * seg).toFixed(3)}deg ${((i + 1) * seg).toFixed(3)}deg`)
+    .join(', ');
+  return <span className="subset-swatch-tile" style={{ background: `conic-gradient(from -90deg, ${stops})` }} />;
 }
 
 const MODE_ORDER: ColorMode[] = ['dual', 'single', 'cn', 'quad'];

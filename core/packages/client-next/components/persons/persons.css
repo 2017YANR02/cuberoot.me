@@ -150,6 +150,8 @@ html[data-theme=dark] .wp-page {
     font-size: 1.6rem; font-weight: 500;
     color: var(--wp-text); letter-spacing: -0.01em;
 }
+.wp-hero-name-link { color: inherit; text-decoration: none; }
+.wp-hero-name-link:hover { text-decoration: underline; }
 /* identity: 国旗在名字左侧, WCA ID 在名字下方(左缘与名字对齐) */
 .wp-hero-name-row { display: inline-flex; align-items: center; justify-content: center; gap: 12px; }
 .wp-hero-name-flag { display: inline-flex; flex-shrink: 0; }
@@ -192,8 +194,8 @@ html[data-theme=dark] .wp-page {
     color: var(--wp-text-sub);
     font-variant-numeric: tabular-nums;
 }
-.wp-hero-id-link { display: inline-flex; color: var(--wp-text-mute); }
-.wp-hero-id-link:hover { color: var(--wp-accent); }
+.wp-hero-id-link { color: inherit; text-decoration: none; }
+.wp-hero-id-link:hover { color: var(--wp-accent); text-decoration: underline; }
 .wp-hero-id-favicon { display: inline-block; vertical-align: middle; }
 
 .wp-flag { width: 24px; height: 18px; border-radius: 2px; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.1); display: inline-block; flex-shrink: 0; }
@@ -273,10 +275,12 @@ html[data-theme=dark] .wp-page {
 .wp-pr-table tbody th, .wp-pr-table tbody td {
     padding: 10px 12px;
     border-bottom: 1px solid var(--wp-border);
-    text-align: center;
+    text-align: right;
     vertical-align: middle;
     white-space: nowrap;
 }
+/* 子表头 (世界/洲际/地区/成绩/奖牌) 右对齐, 压住下方数字列;组表头 (单次/平均/领奖台) 仍居中跨列 */
+.wp-pr-table thead tr:nth-child(2) th { text-align: right; }
 .wp-pr-table tbody tr:last-child th,
 .wp-pr-table tbody tr:last-child td { border-bottom: none; }
 .wp-pr-table tbody tr:hover td,
@@ -314,20 +318,8 @@ html[data-theme=dark] .wp-page {
 
 /* podium: 奖牌图标只出现在表头, 数据格只显示计数(0 显示淡色 —) */
 .wp-th-medal { font-size: 1rem; font-weight: 400; }
-.wp-cell-podium-n { font-variant-numeric: tabular-nums; text-align: center; color: var(--wp-text); }
+.wp-cell-podium-n { font-variant-numeric: tabular-nums; text-align: right; color: var(--wp-text); }
 .wp-podium-zero { color: var(--wp-text-mute); }
-
-.wp-pr-footer {
-    display: flex; gap: 16px; justify-content: flex-end;
-    padding: 12px 4px 4px;
-    font-size: 0.82rem;
-    color: var(--wp-text-sub);
-}
-.wp-checkbox {
-    display: inline-flex; align-items: center; gap: 6px;
-    cursor: pointer;
-}
-.wp-checkbox input { accent-color: var(--wp-blue); }
 
 /* ── Tabs ─────────────────────────────────────────────────────────── */
 .wp-tabs-card { padding: 0; }

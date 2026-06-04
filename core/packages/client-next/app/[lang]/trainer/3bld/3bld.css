@@ -1,5 +1,5 @@
 /* 3BLD trainer — shared styles for all /trainer/3bld/* pages.
-   Dark-locked (see globals.css html:has(.bld-trainer-root)).
+   Dual-theme: follows ThemeToggle (no longer dark-locked).
    All classes prefixed 'bld-'. Theme tokens only; no hard-coded greys.
    start = blue, end = green defined as tokens here (theme-friendly). */
 

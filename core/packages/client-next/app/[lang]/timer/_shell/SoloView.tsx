@@ -85,6 +85,7 @@ import { CubePreview } from '../_lib/cube';
 import LiveCubeState from '../_components/LiveCubeState';
 
 import TimingSurface from './TimingSurface';
+import GestureWheel, { type GestureWheelHandle } from './GestureWheel';
 import RankBadge from './RankBadge';
 import SessionSwitcher from './SessionSwitcher';
 import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
@@ -530,7 +531,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
   }, [settings.metronomeOn, settings.metronomeBpm, timer.phase]);
 
   // ── Press input wiring (pointer + mouse fallback) ───────────────
-  const { onPressDown, onPressUp, reset } = timer;
+  const { onPressDown, onPressUp, reset, cancelArm } = timer;
   const solvesRef = useRef(solves);
   useEffect(() => { solvesRef.current = solves; }, [solves]);
 
@@ -538,19 +539,21 @@ export default function SoloView({ modePill }: SoloViewProps) {
   const digitsRef = useRef<HTMLDivElement | null>(null);
   const touchActiveRef = useRef(false);
   const lastTouchEndTsRef = useRef(0);
-  // Swipe gesture tracking (idle/stopped only).
+  // Radial gesture tracking (idle/stopped, touch only) — cstimer-style dial.
   const swipeStartRef = useRef<{ x: number; y: number; t: number } | null>(null);
   const swipeMovedRef = useRef(false);
+  const gestureHitRef = useRef(-1);
+  const gestureWheelRef = useRef<GestureWheelHandle | null>(null);
 
   const shouldIgnoreTimerTarget = useCallback((target: EventTarget | null): boolean => {
     if (!(target instanceof Element)) return false;
     return target.closest('button, a, input, textarea, select, [contenteditable="true"], [data-no-timer]') !== null;
   }, []);
 
-  // Keep stable refs to the swipe-action handlers (defined after mutators).
-  const swipeActionsRef = useRef<{ del: () => void; next: () => void; penalty: () => void }>({
-    del: () => {}, next: () => {}, penalty: () => {},
-  });
+  // Stable ref to the 8 radial-gesture actions, indexed by direction
+  // (0=right, then counter-clockwise: 1=up-right … 7=down-right). Populated
+  // below once the solve mutators exist.
+  const gestureActionsRef = useRef<Array<() => void>>([]);
 
   // Native pointer listeners with { passive: false } so preventDefault works
   // on iOS. Pointer events unify mouse/touch and (with touch-action:none in
@@ -560,12 +563,20 @@ export default function SoloView({ modePill }: SoloViewProps) {
   useEffect(() => {
     const el = surfaceRef.current;
     if (!el) return;
-    const SWIPE_THRESHOLD = 48; // px before a drag counts as a swipe
-    const TAP_SLOP = 10;        // px wobble still counts as a press
+    const TAP_SLOP = 10;   // px wobble still counts as a press, not a drag
+    const DEAD_ZONE = 44;  // px the drag must travel before a direction locks in
 
     const isIdleOrStopped = () => {
       const ph = phaseSnapshotRef.current;
       return ph === 'idle' || ph === 'stopped';
+    };
+
+    // Direction index from a drag delta: 0=right, then counter-clockwise
+    // (matches GestureWheel's label order). -1 inside the dead-zone.
+    const hitFor = (dx: number, dy: number): number => {
+      if (Math.hypot(dx, dy) < DEAD_ZONE) return -1;
+      const theta = -Math.atan2(dy, dx);
+      return ((Math.floor((theta / Math.PI) * 4 + 8.5) % 8) + 8) % 8;
     };
 
     const handlePointerDown = (e: PointerEvent) => {
@@ -574,43 +585,55 @@ export default function SoloView({ modePill }: SoloViewProps) {
       e.preventDefault();
       touchActiveRef.current = true;
       swipeMovedRef.current = false;
-      swipeStartRef.current = (e.pointerType !== 'mouse' && isIdleOrStopped())
+      gestureHitRef.current = -1;
+      // Works for mouse too (cstimer is touch-only, but desktop mouse-drag is
+      // non-conflicting: a plain click/hold still times — only a drag past
+      // TAP_SLOP switches to gesture mode).
+      const canGesture = isIdleOrStopped();
+      swipeStartRef.current = canGesture
         ? { x: e.clientX, y: e.clientY, t: performance.now() }
         : null;
+      if (canGesture) {
+        const hasLast = solvesRef.current.length > 0;
+        const canPrev = scrambleHistRef.current.idx > 0;
+        // index: 0 next · 1 OK · 2 +2 · 3 DNF · 4 prev · 5 note · 6 del · 7 copy
+        gestureWheelRef.current?.show(e.clientX, e.clientY,
+          [true, hasLast, hasLast, hasLast, canPrev, hasLast, hasLast, true]);
+      }
       warmupSound();
       onPressDown();
     };
     const handlePointerMove = (e: PointerEvent) => {
       const start = swipeStartRef.current;
-      if (!start || !touchActiveRef.current) return;
+      if (!start) return;
       const dx = e.clientX - start.x;
       const dy = e.clientY - start.y;
-      if (!swipeMovedRef.current && Math.hypot(dx, dy) > TAP_SLOP) {
-        // Movement crossed the tap-slop: this is a drag, not a hold. Cancel
-        // the arm so we never start the timer on a swipe.
+      const dist = Math.hypot(dx, dy);
+      if (!swipeMovedRef.current && dist > TAP_SLOP) {
+        // Crossed the tap-slop: this is a drag, not a hold. Soft-cancel the arm
+        // so we never start the timer on a gesture — but keep the last result
+        // on screen (reset() would blank it to 0.00).
         swipeMovedRef.current = true;
         touchActiveRef.current = false;
-        reset();
+        cancelArm();
+      }
+      if (swipeMovedRef.current) {
+        const hit = hitFor(dx, dy);
+        gestureHitRef.current = hit;
+        gestureWheelRef.current?.update(hit, Math.min(1, dist / DEAD_ZONE));
       }
     };
     const handlePointerUp = (e: PointerEvent) => {
       const start = swipeStartRef.current;
       swipeStartRef.current = null;
-      // Swipe shortcut path: a drag that already cancelled the arm.
+      if (start) gestureWheelRef.current?.hide();
+      // Gesture path: a drag that already cancelled the arm.
       if (start && swipeMovedRef.current) {
-        const dx = e.clientX - start.x;
-        const dy = e.clientY - start.y;
-        const adx = Math.abs(dx), ady = Math.abs(dy);
-        if (Math.max(adx, ady) >= SWIPE_THRESHOLD) {
-          if (adx > ady) {
-            if (dx < 0) swipeActionsRef.current.del();
-            else swipeActionsRef.current.next();
-          } else if (dy < 0) {
-            swipeActionsRef.current.penalty();
-          }
-        }
+        const hit = gestureHitRef.current;
         swipeMovedRef.current = false;
+        gestureHitRef.current = -1;
         lastTouchEndTsRef.current = performance.now();
+        if (hit >= 0) gestureActionsRef.current[hit]?.();
         return;
       }
       if (!touchActiveRef.current) return;
@@ -620,8 +643,10 @@ export default function SoloView({ modePill }: SoloViewProps) {
       onPressUp();
     };
     const handlePointerCancel = () => {
+      if (swipeStartRef.current) gestureWheelRef.current?.hide();
       swipeStartRef.current = null;
       swipeMovedRef.current = false;
+      gestureHitRef.current = -1;
       if (!touchActiveRef.current) return;
       touchActiveRef.current = false;
       lastTouchEndTsRef.current = performance.now();
@@ -638,7 +663,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
       el.removeEventListener('pointerup', handlePointerUp);
       el.removeEventListener('pointercancel', handlePointerCancel);
     };
-  }, [onPressDown, onPressUp, reset, shouldIgnoreTimerTarget]);
+  }, [onPressDown, onPressUp, cancelArm, shouldIgnoreTimerTarget]);
 
   // Mouse handlers on the React node are now redundant (pointerdown covers
   // mouse) but kept as a no-op guard so child buttons stay isolated and we
@@ -670,14 +695,6 @@ export default function SoloView({ modePill }: SoloViewProps) {
     setLastPenalty(p);
   }, [solves, updateSolve]);
 
-  const deleteLastSolve = useCallback(() => {
-    const last = solves[solves.length - 1];
-    if (!last) return;
-    if (!confirm(isZh ? '删除最后一次成绩？' : 'Delete last solve?')) return;
-    deleteSolve(last.id);
-    setLastPenalty(null);
-  }, [solves, deleteSolve, isZh]);
-
   // Swipe-delete: no confirm dialog (gesture intent is clear), restore via
   // the undo toast instead.
   const swipeDeleteLast = useCallback(() => {
@@ -706,20 +723,9 @@ export default function SoloView({ modePill }: SoloViewProps) {
     setLastPenalty(null);
   }, [event, isZh, solves.length]);
 
-  // Penalty action sheet (swipe-up).
-  const [penaltySheetOpen, setPenaltySheetOpen] = useState(false);
-  const openPenaltySheet = useCallback(() => {
-    if (solves.length === 0) return;
-    setPenaltySheetOpen(true);
-  }, [solves.length]);
-
-  useEffect(() => {
-    swipeActionsRef.current = {
-      del: swipeDeleteLast,
-      next: nextScramble,
-      penalty: openPenaltySheet,
-    };
-  }, [swipeDeleteLast, nextScramble, openPenaltySheet]);
+  // Penalties are now direct radial-gesture directions (↗ OK · ↑ +2 · ↖ DNF ·
+  // ↓ delete), so the old swipe-up action sheet was removed. gestureActionsRef
+  // is wired below, after the solve-detail modal state exists (note gesture).
 
   // ── Target-time (time-attack) ──────────────────────────────────
   const targetMs = useMemo<number | null>(() => {
@@ -743,6 +749,30 @@ export default function SoloView({ modePill }: SoloViewProps) {
   // ── Modals ──────────────────────────────────────────────────────
   const [modalSolve, setModalSolve] = useState<{ s: Solve; idx: number } | null>(null);
   const [reconstructSolve, setReconstructSolve] = useState<Solve | null>(null);
+
+  // Gesture: open the last solve's detail (to add a note / comment).
+  const commentLast = useCallback(() => {
+    const cur = solvesRef.current;
+    const last = cur[cur.length - 1];
+    if (!last) return;
+    setModalSolve({ s: last, idx: cur.length - 1 });
+  }, []);
+
+  // Wire the 8 radial-gesture directions (0=right, then counter-clockwise).
+  // Each action is a no-op when its target is absent, so disabled directions
+  // (greyed on the wheel) are also safe to fire.
+  useEffect(() => {
+    gestureActionsRef.current = [
+      nextScramble,                                                  // 0 → next scramble
+      () => changeLastPenalty('ok'),                                 // 1 ↗ OK
+      () => changeLastPenalty(lastPenalty === '+2' ? 'ok' : '+2'),   // 2 ↑ +2
+      () => changeLastPenalty(lastPenalty === 'DNF' ? 'ok' : 'DNF'), // 3 ↖ DNF
+      prevScramble,                                                  // 4 ← prev scramble
+      commentLast,                                                   // 5 ↙ note
+      swipeDeleteLast,                                               // 6 ↓ delete last
+      copyScrambleFlash,                                             // 7 ↘ copy scramble
+    ];
+  }, [nextScramble, prevScramble, changeLastPenalty, lastPenalty, commentLast, swipeDeleteLast, copyScrambleFlash]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -825,7 +855,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
     settingsOpen || shortcutsOpen || bluetoothOpen ||
     trainerSubsetOpen !== null || statsModalOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
-    drillModalOpen || penaltySheetOpen || bldHelperOpen ||
+    drillModalOpen || bldHelperOpen ||
     modalSolve !== null || reconstructSolve !== null;
   const anyModalOpenRef = useRef(anyModalOpen);
   useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
@@ -1361,10 +1391,10 @@ export default function SoloView({ modePill }: SoloViewProps) {
           )}
           {timer.phase === 'stopped' && solves.length > 0 && (
             <div className="shell-stopped-row">
-              <div className="timer-quick-actions">
-                <button className={`qa-btn ${lastPenalty === '+2' ? 'active' : ''}`} data-no-timer aria-pressed={lastPenalty === '+2'} aria-label={isZh ? '加 2 秒罚分' : 'Plus 2 penalty'} onClick={() => changeLastPenalty(lastPenalty === '+2' ? 'ok' : '+2')}>+2</button>
-                <button className={`qa-btn ${lastPenalty === 'DNF' ? 'active' : ''}`} data-no-timer aria-pressed={lastPenalty === 'DNF'} aria-label="DNF" onClick={() => changeLastPenalty(lastPenalty === 'DNF' ? 'ok' : 'DNF')}>DNF</button>
-                <button className="qa-btn danger" data-no-timer aria-label={isZh ? '删除最后一次成绩' : 'Delete last solve'} onClick={deleteLastSolve}>{isZh ? '删除' : 'Delete'}</button>
+              {/* Penalties / delete moved to the gesture wheel; tell the user how
+                  to reach them right where the +2 / DNF buttons used to sit. */}
+              <div className="shell-gesture-tip" data-no-timer>
+                {isZh ? '按住并拖动呼出轮盘' : 'Press & drag to open the wheel'}
               </div>
               <div className="shell-rank-slot">
                 <RankBadge eventId={event} centis={stoppedCentis} type="single" country={rankCountry} isZh={isZh} />
@@ -1405,12 +1435,11 @@ export default function SoloView({ modePill }: SoloViewProps) {
           </div>
         )}
 
-        {/* Phone swipe-hint row (auto-hides after a few solves) */}
-        {isMobile && solves.length < 3 && (
+        {/* First-run gesture hint (before any solve, both platforms). Once the
+            user has solves, the in-context tip in the stopped-row takes over. */}
+        {solves.length === 0 && (
           <div className="shell-swipe-hint surface-chrome">
-            <span>{isZh ? '← 删除' : '← delete'}</span>
-            <span>{isZh ? '→ 换打乱' : '→ new'}</span>
-            <span>{isZh ? '↑ 罚分' : '↑ penalty'}</span>
+            {isZh ? '按住并拖动呼出轮盘' : 'Press & drag to open the wheel'}
           </div>
         )}
       </div>
@@ -1452,17 +1481,8 @@ export default function SoloView({ modePill }: SoloViewProps) {
         </div>
       )}
 
-      {/* ── Penalty action sheet (swipe-up) ──────────────────── */}
-      {penaltySheetOpen && (
-        <div className="shell-sheet-backdrop" onClick={() => setPenaltySheetOpen(false)}>
-          <div className="shell-penalty-sheet" onClick={(e) => e.stopPropagation()}>
-            <button className={`qa-btn ${lastPenalty === '+2' ? 'active' : ''}`} onClick={() => { changeLastPenalty(lastPenalty === '+2' ? 'ok' : '+2'); setPenaltySheetOpen(false); }}>+2</button>
-            <button className={`qa-btn ${lastPenalty === 'DNF' ? 'active' : ''}`} onClick={() => { changeLastPenalty(lastPenalty === 'DNF' ? 'ok' : 'DNF'); setPenaltySheetOpen(false); }}>DNF</button>
-            <button className="qa-btn" onClick={() => { changeLastPenalty('ok'); setPenaltySheetOpen(false); }}>OK</button>
-            <button className="qa-btn danger" onClick={() => { setPenaltySheetOpen(false); deleteLastSolve(); }}>{isZh ? '删除' : 'Delete'}</button>
-          </div>
-        </div>
-      )}
+      {/* ── Radial gesture wheel (touch press-and-drag, idle/stopped) ── */}
+      <GestureWheel ref={gestureWheelRef} isZh={isZh} />
 
       {/* ── Modals (unchanged) ───────────────────────────────── */}
       {modalSolve && (() => {

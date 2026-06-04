@@ -191,7 +191,6 @@ export function WcaPersonPicker({
           )}
           {apiFiltered.length > 0 && (
             <div className="cuber-search-section">
-              <div className="cuber-search-section-label">{isZh ? 'WCA 数据库' : 'WCA database'}</div>
               {apiFiltered.map(c => (
                 <CuberRow key={`a-${c.id}`} cuber={c} isZh={isZh} onPick={handlePick} />
               ))}

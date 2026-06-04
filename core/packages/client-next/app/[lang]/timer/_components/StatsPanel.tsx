@@ -22,7 +22,7 @@ import {
   wpa,
   formatMs,
 } from '../_lib/stats';
-import { useSettings, updateSettings } from '../_lib/settings';
+import { useSettings, updateSettings, MAX_AO_WINDOWS } from '../_lib/settings';
 
 interface Props {
   solves: Solve[];
@@ -61,11 +61,18 @@ export default function StatsPanel({ solves, isZh }: Props) {
     [settings.statsAoWindows],
   );
 
-  const setWindows = (next: number[]) => updateSettings({ statsAoWindows: sanitizeWindows(next) });
+  const atMax = windows.length >= MAX_AO_WINDOWS;
+
+  const setWindows = (next: number[]) =>
+    updateSettings({ statsAoWindows: sanitizeWindows(next).slice(0, MAX_AO_WINDOWS) });
   const removeWindow = (n: number) => setWindows(windows.filter(w => w !== n));
-  const toggleWindow = (n: number) =>
-    setWindows(windows.includes(n) ? windows.filter(w => w !== n) : [...windows, n]);
+  const toggleWindow = (n: number) => {
+    if (windows.includes(n)) { setWindows(windows.filter(w => w !== n)); return; }
+    if (atMax) return; // cap reached — remove one first
+    setWindows([...windows, n]);
+  };
   const addCustom = () => {
+    if (atMax) return;
     const n = Math.floor(Number(customDraft.trim()));
     if (Number.isFinite(n) && n >= MIN_AO && n <= MAX_AO) { setWindows([...windows, n]); setCustomDraft(''); }
   };
@@ -159,16 +166,20 @@ export default function StatsPanel({ solves, isZh }: Props) {
             <div className="stats-ao-backdrop" onClick={() => setAddOpen(false)} />
             <div className="stats-ao-pop">
               <div className="stats-ao-presets">
-                {AO_PRESETS.map(p => (
-                  <button
-                    type="button"
-                    key={p}
-                    className={`stats-ao-chip${presetActive(p) ? ' active' : ''}`}
-                    onClick={() => toggleWindow(p)}
-                  >
-                    ao{p}
-                  </button>
-                ))}
+                {AO_PRESETS.map(p => {
+                  const active = presetActive(p);
+                  return (
+                    <button
+                      type="button"
+                      key={p}
+                      className={`stats-ao-chip${active ? ' active' : ''}`}
+                      onClick={() => toggleWindow(p)}
+                      disabled={!active && atMax}
+                    >
+                      ao{p}
+                    </button>
+                  );
+                })}
               </div>
               <div className="stats-ao-custom">
                 <input
@@ -179,11 +190,17 @@ export default function StatsPanel({ solves, isZh }: Props) {
                   placeholder={isZh ? '自定义 N' : 'Custom N'}
                   onChange={(e) => setCustomDraft(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') addCustom(); }}
+                  disabled={atMax}
                 />
-                <button type="button" className="stats-ao-custom-add" onClick={addCustom}>
+                <button type="button" className="stats-ao-custom-add" onClick={addCustom} disabled={atMax}>
                   {isZh ? '添加' : 'Add'}
                 </button>
               </div>
+              {atMax && (
+                <div className="stats-ao-hint">
+                  {isZh ? `最多 ${MAX_AO_WINDOWS} 个,先移除一个` : `Max ${MAX_AO_WINDOWS} — remove one first`}
+                </div>
+              )}
             </div>
           </>
         )}

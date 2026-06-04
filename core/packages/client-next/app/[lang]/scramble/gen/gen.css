@@ -78,10 +78,24 @@
     min-width: 0;
     display: flex;
     align-items: center;
+    gap: 6px;
 }
 .gen-comp-header-slot .gen-control-group {
     flex: 1;
     min-width: 0;
+}
+/* 操作图标组(打乱图 / 下载 PDF)贴在比赛名右侧,按内容收窄,不与输入抢宽。 */
+.gen-comp-header-slot .gen-control-group.gen-control-actions {
+    flex: 0 0 auto;
+}
+.gen-comp-header-slot .gen-control-actions .gen-btn {
+    height: 38px;
+    box-sizing: border-box;
+    border-color: transparent;
+    background: transparent;
+}
+.gen-comp-header-slot .gen-control-actions .gen-btn:hover:not(:disabled) {
+    background: var(--gen-accent-soft);
 }
 .gen-comp-header-slot .gen-tn-comp-picker,
 .gen-comp-header-slot .gen-tn-comp-input,
@@ -1070,6 +1084,14 @@
 .gen-tn-sheet-table tr.is-copied td {
     background: color-mix(in srgb, var(--gen-accent) 22%, transparent);
     transition: background 0.5s ease-out;
+}
+/* 深链(?group=A&attempt=2)/ 点击选中的某一把:持续高亮(滚动定位用),
+   比 is-copied 的瞬时闪烁更淡更稳。首列加 accent 左条提示锚点。 */
+.gen-tn-sheet-table tr.is-selected td {
+    background: color-mix(in srgb, var(--gen-accent) 12%, transparent);
+}
+.gen-tn-sheet-table tr.is-selected td:first-child {
+    box-shadow: inset 3px 0 0 var(--gen-accent);
 }
 .gen-tn-attempt-num {
     /* PDF renders the row label with NotoSans (FONT_SANS), not the mono. */

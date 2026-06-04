@@ -7,6 +7,7 @@
 import { useCallback, useRef, type MutableRefObject } from 'react';
 import { ArrowRightLeft } from 'lucide-react';
 import { findTokenPositions, snapToTokenBoundary, extractAlgFromText, syncPlayerToMoveCount, countMovesExpanded } from '@/lib/recon-alg-utils';
+import { parseSq1Tokens } from '@/lib/sq1-svg';
 import './solution_view.css';
 
 /** 获取点击在 DOM 元素纯文本中的绝对偏移 */
@@ -65,6 +66,20 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
   const preRef = useRef<HTMLPreElement>(null);
   const cursorOffsetRef = useRef(0);
 
+  // Scrub the player to the caret. SQ1 uses the cuber-engine player
+  // (Sq1ReconPlayer, `__kind: 'sq1'`): count tuple/slice tokens directly —
+  // extractAlgFromText would strip the `(t,b)` parens SQ1 depends on.
+  const syncToOffset = useCallback((text: string, offset: number) => {
+    const player = playerRef.current;
+    if (!player) return;
+    const textBefore = text.substring(0, offset);
+    if (player.__kind === 'sq1') {
+      player.jumpToMoveCount?.(parseSq1Tokens(textBefore).length);
+      return;
+    }
+    syncPlayerToMoveCount(player, countMovesExpanded(extractAlgFromText(textBefore)));
+  }, [playerRef]);
+
   // NOTE: 点击解法文本——计算偏移 → 磁吸到 token 边界 → 插入光标 + 同步 player
   const handleClick = useCallback(() => {
     const el = preRef.current;
@@ -76,10 +91,8 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
     offset = snapToTokenBoundary(offset, result);
     cursorOffsetRef.current = offset;
     insertVisualCursor(el, offset);
-    const textBefore = plainText.substring(0, offset);
-    const algBefore = extractAlgFromText(textBefore);
-    syncPlayerToMoveCount(playerRef.current, countMovesExpanded(algBefore));
-  }, [playerRef]);
+    syncToOffset(plainText, offset);
+  }, [syncToOffset]);
 
   // NOTE: 方向键导航——左右按 token 跳转,上下按行跳转
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -126,10 +139,8 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
     e.preventDefault();
     cursorOffsetRef.current = newPos;
     insertVisualCursor(el, newPos);
-    const textBefore = fullText.substring(0, newPos);
-    const algBefore = extractAlgFromText(textBefore);
-    syncPlayerToMoveCount(playerRef.current, countMovesExpanded(algBefore));
-  }, [playerRef]);
+    syncToOffset(fullText, newPos);
+  }, [playerRef, syncToOffset]);
 
   const lines = text.split(/\r?\n/);
   return (

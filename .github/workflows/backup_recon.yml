@@ -17,6 +17,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Install dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+
       - name: Fetch recon data from API
         run: |
           mkdir -p data/recon_backup
@@ -25,7 +37,8 @@ jobs:
 
       # NOTE: 从 WCA 公开 API 预构建同轮次成绩数据（只含有复盘的选手）
       - name: Build WCA attempts data
-        run: python3 scripts/build_wca_attempts.py
+        working-directory: core/packages/stats-build
+        run: npx tsx src/bin/build_wca_attempts.ts
 
       - name: Commit if changed
         run: |

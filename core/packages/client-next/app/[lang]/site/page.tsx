@@ -25,7 +25,7 @@ import './sites.css';
 function YouTubeBadge() {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden focusable="false">
-      <rect x="1" y="5" width="22" height="14" rx="3" fill="#d13636" />
+      <rect x="1" y="5" width="22" height="14" rx="3" fill="var(--destructive)" />
       <polygon points="10,9 10,15 15,12" fill="#fff" />
     </svg>
   );
