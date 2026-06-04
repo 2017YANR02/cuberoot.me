@@ -1687,7 +1687,7 @@ function CalendarPageInner() {
                 title={cycleHint}
               >
                 <CubingIcon icon={`event-${eid}`} />
-                <span className={`event-chip-rounds${cur === undefined ? ' is-empty' : ''}`}>
+                <span className={`event-chip-rounds${badge === '' ? ' is-empty' : ''}`}>
                   {badge}
                 </span>
               </button>
