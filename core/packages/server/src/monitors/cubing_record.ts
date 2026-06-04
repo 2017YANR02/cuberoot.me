@@ -21,6 +21,7 @@ import { getPushedSet, markPushed, type MonitorId } from './state.js';
 import { RECORD_TAGS, NR_COUNTRIES, POLL_INTERVAL_MS } from './config.js';
 import { COUNTRY_EN_MAP, isContinentalTag } from './region.js';
 import { getWatchedMatchKeys } from './watched.js';
+import { startPoller } from './poll.js';
 import { EVENT_NAME_BY_ID, type RecordEvent } from '../utils/record_format.js';
 import { formatRecords } from '../routes/wca_format.js';
 
@@ -574,8 +575,5 @@ async function runOnce(): Promise<void> {
 }
 
 export function startCubingRecordMonitor(): void {
-  runOnce().catch((e) => console.error('[cubing-record] runOnce error:', e));
-  setInterval(() => {
-    runOnce().catch((e) => console.error('[cubing-record] runOnce error:', e));
-  }, POLL_INTERVAL_MS.cubingRecord);
+  startPoller('cubing-record', runOnce, POLL_INTERVAL_MS.cubingRecord);
 }
