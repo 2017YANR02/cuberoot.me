@@ -1,6 +1,6 @@
 // NOTE: 预生成 JSON 的前端类型契约
 // 产出方：
-//   - all_upcoming_comps.json ← scripts/fetch_upcoming_comps.py 的 build_all_upcoming_comps()
+//   - all_upcoming_comps.json ← stats-build/src/bin/fetch_upcoming_comps.ts 的 buildAllUpcomingComps()
 //   - all_past_comps.json     ← core/packages/stats-build/src/bin/gen_all_comps.ts
 
 export interface UpcomingCompRecord {

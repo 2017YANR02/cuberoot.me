@@ -139,7 +139,12 @@ export default function OngoingComps({ lang }: Props) {
     else if (records.length > 0) setTab('records');
   }, [tab, buckets, records]);
 
-  const active = tab ?? 'inProgress';
+  const active: TabKey =
+    tab ??
+    (buckets.inProgress.length > 0 ? 'inProgress'
+      : buckets.upcoming.length > 0 ? 'upcoming'
+      : buckets.past.length > 0 ? 'past'
+      : 'records');
   const activeComps = active === 'records' ? [] : (buckets[active] ?? []);
 
   const groups = useMemo<Group[]>(() => {
@@ -152,28 +157,28 @@ export default function OngoingComps({ lang }: Props) {
   const total = buckets.upcoming.length + buckets.inProgress.length + buckets.past.length;
   if (total === 0 && records.length === 0) return null;
 
-  const tabs: { key: TabKey; zh: string; en: string; count: number }[] = [
+  // 只显示有数据的 tab(某分类为空 → 直接隐藏该 tab,不留灰态)
+  const allTabs: { key: TabKey; zh: string; en: string; count: number }[] = [
     { key: 'records',    zh: '纪录', en: 'Records',  count: records.length },
     { key: 'inProgress', zh: '当前', en: 'Now',      count: buckets.inProgress.length },
     { key: 'upcoming',   zh: '未来', en: 'Upcoming', count: buckets.upcoming.length },
     { key: 'past',       zh: '往期', en: 'Past',     count: buckets.past.length },
   ];
+  const tabs = allTabs.filter(t => t.count > 0);
 
   return (
     <div className="ongoing-comps">
       <div className="ongoing-comps-tabs" role="tablist">
         {tabs.map(t => {
           const isActive = t.key === active;
-          const disabled = t.count === 0;
           return (
             <button
               key={t.key}
               type="button"
               role="tab"
               aria-selected={isActive}
-              disabled={disabled}
               className={`ongoing-comps-tab${isActive ? ' is-active' : ''}`}
-              onClick={() => !disabled && setTab(t.key)}
+              onClick={() => setTab(t.key)}
             >
               <span>{isZh ? t.zh : t.en}</span>
             </button>

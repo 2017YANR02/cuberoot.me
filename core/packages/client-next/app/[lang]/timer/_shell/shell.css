@@ -479,32 +479,14 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.timing-surface .timer-quick-actions {
-  /* Override legacy timer.css `.timer-quick-actions { position:absolute; bottom:16px }`
-     which pulled this row out of flow and floated it over the digits on short
-     viewports. In the redesigned shell it must flow inside .shell-stopped-row,
-     always below the digits with the column gap. */
-  position: static;
-  bottom: auto;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
+/* Penalties / delete are gesture-only now (radial wheel). In the stopped-row,
+   right under the time, a one-line tip points the user at the gesture. */
+.timing-surface .shell-gesture-tip {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  text-align: center;
+  padding: 0 12px;
 }
-.timing-surface .qa-btn {
-  padding: 7px 16px;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  background: var(--shell-chip);
-  color: var(--foreground);
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 120ms, border-color 120ms;
-}
-.timing-surface .qa-btn:hover { background: var(--shell-hover); }
-.timing-surface .qa-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
-.timing-surface .qa-btn.danger { margin-left: 8px; }
-.timing-surface .qa-btn.danger:hover { border-color: var(--destructive); color: var(--destructive); }
 
 /* PB celebration toast — floating overlay. MUST be position:fixed so it stays
    out of the .timer-shell grid (desktop), otherwise it auto-places as an
@@ -601,9 +583,80 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   align-items: center;
   justify-content: center;
   gap: 4px 16px;
-  padding: 4px 12px 10px;
-  font-size: 11px;
+  padding: 6px 12px 10px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+/* ── Radial gesture wheel (cstimer-style press-and-drag dial) ────── */
+.gesture-wheel {
+  position: fixed;
+  z-index: 60;
+  font-size: 15px;        /* base for the em ring radius set in GestureWheel */
+  pointer-events: none;   /* never steal the press from the surface */
+  visibility: hidden;
+  /* Whole ring fades in 1:1 with drag distance (cstimer: opacity = moveDis/width).
+     No transition → tracks the finger exactly; a pure tap (op stays 0) shows
+     nothing, so normal timing never flashes the wheel. */
+  opacity: var(--wheel-op);
+  --wheel-op: 0;
+}
+.gesture-wheel.is-visible { visibility: visible; }
+
+.gesture-wheel-dot {
+  position: absolute;
+  left: 0; top: 0;
+  width: 10px; height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.gesture-wheel-item {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 2.6em;
+  padding: 0.3em 0.55em;
+  border-radius: 999px;
+  font-size: 0.85em;
+  font-weight: 600;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+  background: var(--popover);
+  border: 1px solid var(--border-default);
+  box-shadow: 0 2px 8px color-mix(in srgb, black 30%, transparent);
+  transition: transform 80ms ease, background 80ms ease, color 80ms ease, box-shadow 80ms ease;
+}
+.gesture-wheel-item.disabled {
   color: var(--faint-foreground);
+  background: var(--muted);
+}
+.gesture-wheel-item.hit {
+  color: var(--accent-foreground);
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: translate(-50%, -50%) scale(1.18);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* Delete slot: round button with the ClearButton × glyph instead of a label. */
+.gesture-wheel-item--icon {
+  min-width: 0;
+  width: 2.1em;
+  height: 2.1em;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.gesture-wheel-x { width: 1.1em; height: 1.1em; display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gesture-wheel-item { transition: none; }
 }
 
 /* Solver-hint pills (de-boxed in SolverHints.tsx) brighten on hover. */
@@ -1167,7 +1220,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .shell-topbar .tb-btn:focus-visible,
 .scramble-refresh:focus-visible,
 .shell-corner-net .cube-preview-toggle:focus-visible,
-.timing-surface .qa-btn:focus-visible,
 .shell-bottombar-btn:focus-visible,
 .shell-panel-tab:focus-visible,
 .shell-undersurface .solver-hints button:focus-visible {

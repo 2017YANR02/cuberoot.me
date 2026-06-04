@@ -35,16 +35,13 @@ const ScheduleCalendar = dynamic(() => import('./ScheduleCalendar'), {
 
 type View = 'calendar' | 'table';
 
-export default function ScheduleView({ slug, isZh, compName, view, onViewChange }: {
+export default function ScheduleView({ slug, isZh, compName, view, detailsExpanded }: {
   slug: string; isZh: boolean; compName: string;
-  view: View; onViewChange: (v: View) => void;
+  view: View; detailsExpanded: boolean;
 }) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<ScheduleData | null>(null);
   const [error, setError] = useState(false);
-  // Default on so Format / Time limit / Cutoff / Proceed are visible like the
-  // WCA site; the toggle still lets users collapse to a simpler table.
-  const [detailsExpanded, setDetailsExpanded] = useState(true);
 
   useEffect(() => {
     let cancel = false;
@@ -84,7 +81,6 @@ export default function ScheduleView({ slug, isZh, compName, view, onViewChange 
 
   return (
     <>
-      <ScheduleToolbar view={view} onChange={onViewChange} isZh={isZh} />
       {data.venues.length > 1 && (
         <p className="sched-note">
           {isZh
@@ -102,10 +98,44 @@ export default function ScheduleView({ slug, isZh, compName, view, onViewChange 
           isZh={isZh}
           compName={compName}
           detailsExpanded={detailsExpanded}
-          onToggleDetails={() => setDetailsExpanded(v => !v)}
         />
       )}
     </>
+  );
+}
+
+// Rendered up in the main view-tab row by CompDetailPage so the calendar/table
+// toggle and the details switch share one line with 成绩 / 预排名 / 赛程.
+export function ScheduleControls({ view, onViewChange, detailsExpanded, onToggleDetails, isZh }: {
+  view: View; onViewChange: (v: View) => void;
+  detailsExpanded: boolean; onToggleDetails: () => void; isZh: boolean;
+}) {
+  return (
+    <div className="comp-sched-controls">
+      <ScheduleToolbar view={view} onChange={onViewChange} isZh={isZh} />
+      {view === 'table' && (
+        <DetailsToggle expanded={detailsExpanded} onToggle={onToggleDetails} isZh={isZh} />
+      )}
+    </div>
+  );
+}
+
+function DetailsToggle({ expanded, onToggle, isZh }: {
+  expanded: boolean; onToggle: () => void; isZh: boolean;
+}) {
+  return (
+    <label className="sched-details-toggle">
+      <span className={`sched-switch${expanded ? ' is-on' : ''}`}>
+        <input
+          type="checkbox"
+          checked={expanded}
+          onChange={onToggle}
+          aria-label={isZh ? '显示轮次详情' : 'Show Round Details'}
+        />
+        <span className="sched-switch-knob" />
+      </span>
+      <span className="sched-switch-label">{isZh ? '显示轮次详情' : 'Show Round Details'}</span>
+    </label>
   );
 }
 
@@ -179,14 +209,13 @@ function CalendarSection({ data, tz, isZh }: {
   );
 }
 
-function TableView({ data, days, tz, isZh, compName, detailsExpanded, onToggleDetails }: {
+function TableView({ data, days, tz, isZh, compName, detailsExpanded }: {
   data: ScheduleData;
   days: DayColumn[];
   tz: string;
   isZh: boolean;
   compName: string;
   detailsExpanded: boolean;
-  onToggleDetails: () => void;
 }) {
   // The "Cutoff" legend section only appears when at least one round has a cutoff,
   // matching the WCA page (which links the column header to it conditionally).
@@ -194,19 +223,6 @@ function TableView({ data, days, tz, isZh, compName, detailsExpanded, onToggleDe
 
   return (
     <div className="sched-table-section">
-      <label className="sched-details-toggle">
-        <span className={`sched-switch${detailsExpanded ? ' is-on' : ''}`}>
-          <input
-            type="checkbox"
-            checked={detailsExpanded}
-            onChange={onToggleDetails}
-            aria-label={isZh ? '显示轮次详情' : 'Show Round Details'}
-          />
-          <span className="sched-switch-knob" />
-        </span>
-        <span className="sched-switch-label">{isZh ? '显示轮次详情' : 'Show Round Details'}</span>
-      </label>
-
       {days.map(d => {
         const sorted = [...d.activities].sort(
           (a, b) => a.startMin - b.startMin || a.roomName.localeCompare(b.roomName),

@@ -8,9 +8,11 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
+import { Flag } from '@/components/Flag';
 import { SubsetColorPicker, SubsetSwatch, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { localizeCompName } from '@/lib/comp-localize';
-import { roundTypeShort } from '@/lib/comp-schedule';
+import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
+import { compSourceLine } from '@/lib/comp-schedule';
 import './recent_scrambles.css';
 
 interface Props { lang: 'zh' | 'en' }
@@ -45,12 +47,6 @@ const METRIC_LABEL: Record<string, { zh: string; en: string }> = {
   xxxxc: { zh: 'XXXXCross', en: 'XXXXCross' },
 };
 
-function sourceLine(m: ScrMeta, isZh: boolean): string {
-  const round = roundTypeShort(m.r, isZh);
-  const grp = m.g ? (isZh ? `${m.g}组` : ` ${m.g}`) : '';
-  return isZh ? `${round}${grp}#${m.n}` : `${round}${grp} #${m.n}`;
-}
-
 export default function RecentScrambles({ lang }: Props) {
   const isZh = lang === 'zh';
   const [data, setData] = useState<RecentScramblesJson | null>(null);
@@ -59,6 +55,12 @@ export default function RecentScrambles({ lang }: Props) {
   const [step, setStep] = useState<number | null>(null); // null = 跟随当前切片最少步
   const sel = useSubsetSelection('cn');
   const [expanded, setExpanded] = useState(false);
+
+  // 异步加载 comp-country 索引,完成后 bump version 触发重渲染拿比赛国旗 + 中文名
+  const [flagVer, setFlagVer] = useState(() => flagDataVersion());
+  useEffect(() => {
+    void loadFlagData().then((v) => { if (v !== flagVer) setFlagVer(v); });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 点比赛名跳 /scramble/gen?comp=<id>(comp tab 直链加载该比赛打乱),不是 /wca/comp。
   const genHref = (ci: string) => `/${lang}/scramble/gen?comp=${encodeURIComponent(ci)}`;
@@ -167,13 +169,17 @@ export default function RecentScrambles({ lang }: Props) {
                 <span className="rs-hero-unit">{isZh ? '步' : curStep === 1 ? 'move' : 'moves'}</span>
               </div>
               <Link href={analyzerHref(scramble)} prefetch={false} className="rs-hero-scramble">{scramble}</Link>
-              {m && (
-                <Link href={genHref(m.ci)} prefetch={false} className="rs-hero-src">
-                  <EventIcon event={m.e} className="rs-evt" />
-                  <span className="rs-src-comp">{localizeCompName(m.ci, m.cn, isZh)}</span>
-                  <span className="rs-src-meta">{sourceLine(m, isZh)}</span>
-                </Link>
-              )}
+              {m && (() => {
+                const iso2 = compFlagIso2(m.ci);
+                return (
+                  <Link href={genHref(m.ci)} prefetch={false} className="rs-hero-src">
+                    {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                    <span className="rs-src-comp">{localizeCompName(m.ci, m.cn, isZh)}</span>
+                    <EventIcon event={m.e} className="rs-evt" />
+                    <span className="rs-src-meta">{compSourceLine(m.r, m.g, m.n, isZh)}</span>
+                  </Link>
+                );
+              })()}
             </div>
           </div>
         );
@@ -193,13 +199,17 @@ export default function RecentScrambles({ lang }: Props) {
                   <span className="rs-row-dot" aria-hidden="true"><SubsetSwatch colors={[color]} /></span>
                   <div className="rs-row-main">
                     <Link href={analyzerHref(scramble)} prefetch={false} className="rs-row-scramble">{scramble}</Link>
-                    {m && (
-                      <Link href={genHref(m.ci)} prefetch={false} className="rs-row-comp">
-                        <EventIcon event={m.e} className="rs-evt" />
-                        <span className="rs-row-name">{localizeCompName(m.ci, m.cn, isZh)}</span>
-                        <span className="rs-row-sub">{sourceLine(m, isZh)}</span>
-                      </Link>
-                    )}
+                    {m && (() => {
+                      const iso2 = compFlagIso2(m.ci);
+                      return (
+                        <Link href={genHref(m.ci)} prefetch={false} className="rs-row-comp">
+                          {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                          <span className="rs-row-name">{localizeCompName(m.ci, m.cn, isZh)}</span>
+                          <EventIcon event={m.e} className="rs-evt" />
+                          <span className="rs-row-sub">{compSourceLine(m.r, m.g, m.n, isZh)}</span>
+                        </Link>
+                      );
+                    })()}
                   </div>
                 </li>
               );

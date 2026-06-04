@@ -152,6 +152,9 @@ export interface TimerSettings {
   rankCountry?: string;
 }
 
+/** Max ao windows shown as stats/history columns (the ao5/ao12-style picker). */
+export const MAX_AO_WINDOWS = 2;
+
 export const DEFAULTS: TimerSettings = {
   inspection: 0,
   soundsEnabled: false,
@@ -261,6 +264,11 @@ function load(): TimerSettings {
     if (!merged.scrambleClickMigrated) {
       if (merged.scrambleClickAction === 'next') merged.scrambleClickAction = 'copy';
       merged.scrambleClickMigrated = true;
+      save(merged);
+    }
+    // Cap legacy selections at MAX_AO_WINDOWS (the stats/history ao columns).
+    if (Array.isArray(merged.statsAoWindows) && merged.statsAoWindows.length > MAX_AO_WINDOWS) {
+      merged.statsAoWindows = merged.statsAoWindows.slice(0, MAX_AO_WINDOWS);
       save(merged);
     }
     return merged;

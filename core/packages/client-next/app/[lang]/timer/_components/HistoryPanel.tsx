@@ -1,10 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Star, X, GitCompare, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical, Check, Clipboard, MessageSquare } from 'lucide-react';
+import { X, GitCompare, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical, Check, Clipboard, MessageSquare } from 'lucide-react';
 import type { Solve, Penalty } from '../_lib/types';
 import { effectiveMs } from '../_lib/types';
-import { formatMs, pbSingleIndex, averageOfN } from '../_lib/stats';
+import { formatMs, averageOfN } from '../_lib/stats';
 import CompareSolvesModal from './CompareSolvesModal';
 import { computeAllTags, TAG_DEFS, ALL_TAG_IDS } from '../_lib/storage/auto_tag';
 import type { TagId } from '../_lib/storage/auto_tag';
@@ -29,37 +29,6 @@ interface Props {
   /** cstimer-style per-row rolling-average columns (e.g. [5, 12] → ao5/ao12
    *  ending at each solve). Defaults to [5, 12]; pass [] to hide the columns. */
   aoWindows?: number[];
-}
-
-/**
- * Best ao{n} window across the full history. Returns the inclusive [start,end]
- * indices of the best window plus its trimmed mean (post-truncation in ms),
- * or null when there are fewer than n solves or every window is DNF.
- */
-function bestWindowIndices(
-  solves: Solve[],
-  n: number,
-): { start: number; end: number; ms: number } | null {
-  if (solves.length < n) return null;
-  const trim = Math.max(1, Math.ceil(n / 20));
-  const dnfCap = n <= 12 ? 1 : trim;
-  let best = Infinity;
-  let bestStart = -1;
-  for (let i = 0; i + n <= solves.length; i++) {
-    const window = solves.slice(i, i + n).map(effectiveMs);
-    const sorted = [...window].sort((a, b) => a - b);
-    const dnfCount = sorted.filter(t => t === Infinity).length;
-    if (dnfCount > dnfCap) continue;
-    const middle = sorted.slice(trim, n - trim);
-    if (middle.some(t => t === Infinity)) continue;
-    const avg = middle.reduce((a, b) => a + b, 0) / middle.length;
-    if (avg < best) {
-      best = avg;
-      bestStart = i;
-    }
-  }
-  if (bestStart < 0) return null;
-  return { start: bestStart, end: bestStart + n - 1, ms: Math.floor(best / 10) * 10 };
 }
 
 /** Parse a "5.0" / "1:23.45" / "12.3" string into ms. Returns null on failure. */
@@ -268,15 +237,9 @@ export default function HistoryPanel({
   const [tagSet, setTagSet] = useState<Set<TagId>>(new Set());
 
   const reversed = [...solves].reverse(); // newest at top
-  const pbIdx = pbSingleIndex(solves);
 
   // Auto-tags computed once per history change.
   const tagsByid = useMemo(() => computeAllTags(solves), [solves]);
-
-  // PB windows are computed from the FULL history so they remain stable
-  // regardless of any filtering applied to the rendered list.
-  const pbAo5Win = useMemo(() => bestWindowIndices(solves, 5), [solves]);
-  const pbAo12Win = useMemo(() => bestWindowIndices(solves, 12), [solves]);
 
   // Map each solve's id back to its index in the original (un-reversed) solves
   // array, so PB highlight indices stay correct after filtering.
@@ -288,25 +251,45 @@ export default function HistoryPanel({
 
   // cstimer-style rolling aoN columns: for each window n, aoCols[n][i] is the
   // trimmed aoN ending at the (original-order) solve index i. O(N·n) per window.
+  // aoPb[n][i] flags the rows where that aoN set a new running best (PB) — used
+  // to drop a "PB" badge straight into the matching ao column.
   const visibleAoWindows = aoWindows.filter(n => n >= 2);
   const aoColKey = visibleAoWindows.join(',');
-  const aoCols = useMemo(() => {
+  const { aoCols, aoPb } = useMemo(() => {
     const cols: Record<number, (number | null)[]> = {};
+    const pb: Record<number, boolean[]> = {};
     for (const n of visibleAoWindows) {
       const arr: (number | null)[] = new Array(solves.length).fill(null);
+      const pbArr: boolean[] = new Array(solves.length).fill(false);
+      let best = Infinity;
       for (let i = n - 1; i < solves.length; i++) {
-        arr[i] = averageOfN(solves.slice(i - n + 1, i + 1), n);
+        const v = averageOfN(solves.slice(i - n + 1, i + 1), n);
+        arr[i] = v;
+        if (v != null && Number.isFinite(v) && v < best) { best = v; pbArr[i] = true; }
       }
       cols[n] = arr;
+      pb[n] = pbArr;
     }
-    return cols;
+    return { aoCols: cols, aoPb: pb };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [solves, aoColKey]);
 
-  // Grid template for the row + column header. Leading marker column appears in
-  // compare/select mode; one auto column per aoN; trailing auto for row actions.
-  const aoTmpl = visibleAoWindows.length ? ' ' + visibleAoWindows.map(() => 'minmax(40px,auto)').join(' ') : '';
-  const headTmpl = `32px minmax(0,1fr)${aoTmpl} auto`;
+  // Each history row is its own grid, so `auto` ao columns would size to that
+  // row's own content and never line up across rows. Pin a FIXED ao width =
+  // widest rendered value/label + room for the PB badge, so every row's grid
+  // resolves identically (and adapts per event: 3x3 is narrow, big cubes wider).
+  const aoMaxLen = useMemo(() => {
+    let max = 4; // "0.00"
+    for (const n of visibleAoWindows) {
+      max = Math.max(max, `ao${n}`.length);
+      for (const v of (aoCols[n] ?? [])) max = Math.max(max, (v == null ? '-' : formatMs(v)).length);
+    }
+    return max;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aoCols, aoColKey]);
+  const aoColW = `calc(${aoMaxLen}ch + 28px)`;
+  const aoTmpl = visibleAoWindows.length ? ' ' + visibleAoWindows.map(() => aoColW).join(' ') : '';
+  const headTmpl = `32px minmax(0,1fr)${aoTmpl}`;
 
   const trimmed = query.trim().toLowerCase();
 
@@ -1009,29 +992,15 @@ export default function HistoryPanel({
             <span className="idx">#</span>
             <span>{isZh ? '时间' : 'Time'}</span>
             {visibleAoWindows.map(n => <span key={n} className="hao-head">ao{n}</span>)}
-            <span />
           </div>
         )}
         {filteredReversed.map((s) => {
           const realIdx = idToRealIdx.get(s.id) ?? -1;
           const time = effectiveMs(s);
-          const isPB = realIdx === pbIdx;
-          const inAo5 = pbAo5Win !== null && realIdx >= pbAo5Win.start && realIdx <= pbAo5Win.end;
-          const inAo12 = pbAo12Win !== null && realIdx >= pbAo12Win.start && realIdx <= pbAo12Win.end;
-          const isAo5End = pbAo5Win !== null && realIdx === pbAo5Win.end;
-          const isAo12End = pbAo12Win !== null && realIdx === pbAo12Win.end;
           const isSelected = compareMode && selectedIds.includes(s.id);
           const isBulkSelected = selectMode && bulkSelected.has(s.id);
 
           const classNames = ['history-row'];
-          if (isPB) classNames.push('is-pb', 'pb-single');
-          if (inAo5) classNames.push('pb-ao5');
-          if (inAo12) classNames.push('pb-ao12');
-
-          const tooltips: string[] = [];
-          if (isAo5End) tooltips.push(isZh ? 'PB ao5 此处达成' : 'PB ao5 ends here');
-          if (isAo12End) tooltips.push(isZh ? 'PB ao12 此处达成' : 'PB ao12 ends here');
-          const rowTitle = tooltips.length ? tooltips.join(' · ') : undefined;
 
           let rowStyle: React.CSSProperties = {};
           if (isSelected) {
@@ -1040,7 +1009,7 @@ export default function HistoryPanel({
             rowStyle = { background: 'rgba(153, 90, 77, 0.18)', boxShadow: 'inset 2px 0 0 #995a4d' };
           }
           const lead = (compareMode || selectMode) ? '14px ' : '';
-          rowStyle = { ...rowStyle, gridTemplateColumns: `${lead}32px minmax(0,1fr)${aoTmpl} auto` };
+          rowStyle = { ...rowStyle, gridTemplateColumns: `${lead}32px minmax(0,1fr)${aoTmpl}` };
 
           const handleRowClick = () => {
             // A long-press just opened the quick-action sheet — swallow the
@@ -1060,7 +1029,6 @@ export default function HistoryPanel({
             <div
               className={classNames.join(' ')}
               key={s.id}
-              title={rowTitle}
               style={rowStyle}
               onClick={handleRowClick}
               onContextMenu={(e) => handleRowContextMenu(e, s, realIdx)}
@@ -1101,20 +1069,18 @@ export default function HistoryPanel({
               )}
               <div className="idx">{realIdx + 1}</div>
               <div className="time">
-                {isPB && (
-                  <Star
-                    size={10}
-                    className="pb-icon"
-                    aria-label={isZh ? '当前最佳' : 'Personal best'}
-                  />
-                )}
                 {formatMs(time)}
                 {s.penalty === '+2' && <span className="penalty-flag">(+2)</span>}
-                {s.penalty === 'DNF' && <span className="penalty-flag">DNF</span>}
+                {/* DNF already shown by the time column (formatMs → "DNF") — no
+                    extra flag/tag (penalty also drops the 'dnf'/'plus2' chips below). */}
                 {s.comment && <span className="comment-flag" title={s.comment}>·</span>}
                 {(() => {
-                  const ts = tagsByid.get(s.id);
-                  if (!ts || ts.length === 0) return null;
+                  // pb-ao5 / pb-ao12 render as "PB" badges inside the ao5 / ao12
+                  // columns instead — keep only single-PB + the descriptive tags here.
+                  // 'dnf'/'plus2' are conveyed by the time column + (+2) flag — drop
+                  // the redundant chips. pb-ao5/pb-ao12 render in their ao columns.
+                  const ts = (tagsByid.get(s.id) ?? []).filter(t => t !== 'pb-ao5' && t !== 'pb-ao12' && t !== 'dnf' && t !== 'plus2');
+                  if (ts.length === 0) return null;
                   const cap = isMobile ? MOBILE_TAG_CAP : ts.length;
                   const shown = ts.slice(0, cap);
                   const overflow = ts.length - shown.length;
@@ -1128,9 +1094,9 @@ export default function HistoryPanel({
                     >
                       {shown.map(tid => {
                         const def = TAG_DEFS[tid];
-                        // PB / PB ao5 / PB ao12 use the shared RecordBadge (PR style)
-                        // so they read the same as record badges elsewhere on the site.
-                        if (tid === 'pb-single' || tid === 'pb-ao5' || tid === 'pb-ao12') {
+                        // Single PB uses the shared RecordBadge (PR style) so it reads
+                        // the same as record badges elsewhere on the site.
+                        if (tid === 'pb-single') {
                           return <RecordBadge key={tid} record={def.labelEn} variant="standalone" />;
                         }
                         return (
@@ -1149,15 +1115,13 @@ export default function HistoryPanel({
                 })()}
               </div>
               {visibleAoWindows.map(n => (
-                <div className="hao" key={n}>{formatMs(aoCols[n]?.[realIdx] ?? null)}</div>
-              ))}
-              {!compareMode && !selectMode && (
-                <div className="actions">
-                  <button onClick={(e) => { e.stopPropagation(); onRowClick(s, realIdx); }}>
-                    {isZh ? '详情' : 'Info'}
-                  </button>
+                <div className="hao" key={n}>
+                  <span className="record-num-cell">
+                    {formatMs(aoCols[n]?.[realIdx] ?? null)}
+                    {aoPb[n]?.[realIdx] && <RecordBadge record="PB" variant="inline" />}
+                  </span>
                 </div>
-              )}
+              ))}
             </div>
           );
         })}

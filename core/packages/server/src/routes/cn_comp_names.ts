@@ -28,7 +28,7 @@ interface CachedPayload {
 let cache: { data: CachedPayload; expiresAt: number } | null = null;
 let inflight: Promise<CachedPayload> | null = null;
 
-// row 结构同 scripts/fetch_comp_names_zh.py 的 scrape_cubing_china():
+// row 结构同 stats-build/src/bin/fetch_comp_names_zh.ts 的 scrapeCubingChina():
 //   <td>YYYY-MM-DD[~END]</td>
 //   <td><a class="comp-type-*" href="https://cubing.com/(competition|live)/SLUG">中文名</a>...
 const ROW_RE = /<td>(\d{4}-\d{2}-\d{2})(?:~(?:\d{4}-)?(?:\d{2}-)?\d{2})?<\/td>\s*<td>\s*<a[^>]*class="comp-type-\w+"[^>]*href="https:\/\/cubing\.com\/(?:competition|live)\/([^"?]+)"[^>]*>([\s\S]*?)<\/a>/g;

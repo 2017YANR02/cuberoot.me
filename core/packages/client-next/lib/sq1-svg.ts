@@ -73,6 +73,43 @@ export function compactSq1Alg(alg: string): string {
   }).join('');
 }
 
+/** Normalize a layer-turn amount to (-6, 6] (mod 12; 12 units = a full turn). */
+function normSq1Turn(x: number): number {
+  let v = ((x % 12) + 12) % 12;
+  if (v > 6) v -= 12;
+  return v;
+}
+
+/**
+ * Cancel redundant Square-1 moves ("消步"): two adjacent slices annihilate, and
+ * consecutive layer turns (no slice between) merge per layer mod 12, dropping
+ * any that reduce to (0, 0). `// comments` are stripped (parseSq1Tokens drops
+ * them), so e.g. `(0,-6) (0,6)//` collapses to the empty string.
+ */
+export function simplifySq1Alg(alg: string, format: 'compact' | 'wca' = 'compact'): string {
+  const stack: Sq1Token[] = [];
+  for (const tok of parseSq1Tokens(alg)) {
+    const top = stack[stack.length - 1];
+    if (tok.kind === 'slice') {
+      if (top && top.kind === 'slice') stack.pop();
+      else stack.push(tok);
+    } else if (top && top.kind === 'turn') {
+      const t = normSq1Turn(top.top + tok.top);
+      const b = normSq1Turn(top.bot + tok.bot);
+      if (t === 0 && b === 0) stack.pop();
+      else stack[stack.length - 1] = { kind: 'turn', top: t, bot: b };
+    } else {
+      const t = normSq1Turn(tok.top);
+      const b = normSq1Turn(tok.bot);
+      if (t !== 0 || b !== 0) stack.push({ kind: 'turn', top: t, bot: b });
+    }
+  }
+  const canonical = stack.map((tok) =>
+    tok.kind === 'slice' ? '/' : `(${tok.top}, ${tok.bot})`,
+  ).join(' ');
+  return format === 'wca' ? canonicalSq1Alg(canonical) : compactSq1Alg(canonical);
+}
+
 export function formatScrambleForEvent(event: string, scramble: string): string {
   return event === 'sq1' ? compactSq1Alg(scramble) : scramble;
 }

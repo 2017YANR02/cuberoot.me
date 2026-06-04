@@ -277,7 +277,7 @@ export default function DeskPet() {
       if (sz === 's' || sz === 'l') setSize(sz);
       const ch = localStorage.getItem(CHAR_KEY);
       if (ch === 'calico' || ch === 'cloudling') setCharacter(ch);
-      if (localStorage.getItem('clawd-deskpet-mode') === 'random') setRandomMode(true);
+      if (localStorage.getItem('clawd-deskpet-mode') !== 'default') setRandomMode(true);
     } catch {}
   }, []);
 
@@ -437,7 +437,7 @@ export default function DeskPet() {
     };
 
     const trackCursor = (cx: number, cy: number) => {
-      if (!theme.inlineIdle || state !== 'idle' || dragging) return;
+      if (!theme.inlineIdle || state !== 'idle' || dragging || randomMode) return;
       const r = root.getBoundingClientRect();
       const dx = cx - (r.left + r.width * 0.489);
       const dy = cy - (r.top + r.height * 0.756);
@@ -582,14 +582,14 @@ export default function DeskPet() {
     };
 
     let lastMove = 0;
-    // Random-play mode: instead of sleeping after idle, the pet performs a random
-    // pose every 1–3 min (skipped while dragged / resting; drive() honors mini-cling).
-    const RANDOM_POOL = ['thinking', 'working', 'building', 'groove', 'juggling', 'sweeping', 'carrying', 'cubing', 'happy', 'notification', 'reading', 'bubble', 'yawning', 'idle'];
+    // Random-play mode: cycle a random expression every ~6–15s, no cursor eye-track
+    // and no sleep timer (skipped while dragged / resting; drive() honors mini-cling).
+    const RANDOM_POOL = ['thinking', 'working', 'building', 'groove', 'juggling', 'sweeping', 'carrying', 'cubing', 'happy', 'notification', 'reading', 'bubble', 'yawning'];
+    const playRandom = () => {
+      if (!dnd && !dragging) drive(RANDOM_POOL[Math.floor(Math.random() * RANDOM_POOL.length)]);
+    };
     const scheduleRandom = () => {
-      randomTimer = setTimeout(() => {
-        if (!dnd && !dragging) drive(RANDOM_POOL[Math.floor(Math.random() * RANDOM_POOL.length)]);
-        scheduleRandom();
-      }, 60000 + Math.random() * 120000);
+      randomTimer = setTimeout(() => { playRandom(); scheduleRandom(); }, 6000 + Math.random() * 9000);
     };
 
     const onMove = (e: PointerEvent) => {
@@ -748,7 +748,7 @@ export default function DeskPet() {
 
     // force: on character switch state is already 'idle', must repaint
     setState(restoredMini ? (dnd ? 'mini-sleep' : 'mini-idle') : 'idle', true);
-    if (randomMode) scheduleRandom();
+    if (randomMode) { playRandom(); scheduleRandom(); }
     else if (!mini) resetIdle();
 
     return () => {

@@ -60,6 +60,7 @@ import { useCrossMap } from './useCrossMap';
 import { useCompSteps, normScramble } from './useCompSteps';
 import { useF2leoStepMap } from './useF2leoStepMap';
 import { useVariantStepMap, VARIANT_WASM_ID } from './useVariantStepMap';
+import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
@@ -113,11 +114,12 @@ interface Props {
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
-// 十字分析总开关(每行徽标 + 分布面板)。默认开,localStorage 记忆。
+// 十字分析总开关(每行徽标 + 分布面板)。默认关 —— 不显式开「分析」就完全没有分析;
+// 仅当用户曾手动开过(localStorage='1')才默认开。
 const SHOW_CROSS_KEY = 'gen:showCross';
 function readShowCross(): boolean {
-  if (typeof localStorage === 'undefined') return true;
-  return localStorage.getItem(SHOW_CROSS_KEY) !== '0';
+  if (typeof localStorage === 'undefined') return false;
+  return localStorage.getItem(SHOW_CROSS_KEY) === '1';
 }
 // 分析范围:本轮(默认) / 全部轮次。localStorage 记忆。
 const SCOPE_ALL_KEY = 'gen:cxScopeAll';
@@ -142,6 +144,8 @@ function groupIdxOf(g: string): number {
   const c = g.toUpperCase().charCodeAt(0);
   return c >= 65 && c <= 90 ? c - 65 : 0;
 }
+// 0-based 分组序号 → 字母(0→A);URL ?group= 的写/读两端共用,与 SheetView 的标题渲染一致。
+const groupLetter = (idx: number): string => String.fromCharCode(65 + idx);
 function inferFormat(event: string, nonExtraCount: number): WcaFormat {
   const allowed = allowedFormats(event);
   const COUNT: Record<WcaFormat, number> = { 'a': 5, 'm': 3, '5': 5, '3': 3, '2': 2, '1': 1 };
@@ -241,6 +245,20 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     },
     [router, pathname, searchParams],
   );
+  // 增量改写 URL query:null/'' 删键,否则设值。其余 query(comp/mode)原样保留。
+  const writeDeepLink = useCallback(
+    (patch: Record<string, string | number | null>) => {
+      setSearchParams((prev) => {
+        const p = new URLSearchParams(prev);
+        for (const [k, v] of Object.entries(patch)) {
+          if (v === null || v === '') p.delete(k);
+          else p.set(k, String(v));
+        }
+        return p;
+      }, { replace: true });
+    },
+    [setSearchParams],
+  );
   const urlComp = searchParams?.get('comp') ?? '';
 
   // CompPicker 的当前文本(用户在输入框里看到/输入的内容)。
@@ -258,6 +276,12 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const [sheets, setSheets] = useState<RoundSheet[] | null>(null);
   const [viewedEvent, setViewedEvent] = useState<string | null>(null);
   const [viewedRoundIdx, setViewedRoundIdx] = useState<number | null>(null);
+  // 深链选中的某一把:{分组序号, attempt label}。驱动行高亮 + 滚动定位,并写进 URL ?group=&attempt=。
+  const [selected, setSelected] = useState<{ groupIdx: number; label: string } | null>(null);
+  // 深链套用一次性闸:每个 comp 仅在加载后套用 URL 的 event/round/group/n 一次,之后让用户导航接管。
+  const deepLinkAppliedRef = useRef<string | null>(null);
+  // viewedEvent 套用后再补 round/选中把的中转(避开「切 event 清 round」的 effect 把 round 清掉)。
+  const pendingDeepLinkRef = useRef<{ event: string; round: number | null; group: number | null; label: string | null } | null>(null);
 
   const [generating, setGenerating] = useState(false);
   const [genProgress, setGenProgress] = useState<{ done: number; total: number } | null>(null);
@@ -631,17 +655,19 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     setSheets(null);
     setViewedEvent(null);
     setViewedRoundIdx(null);
+    setSelected(null);
     setError(null);
     // mock 路径:保留 compInput(用户的标题文本)
-    // wca 路径:清掉 loaded 状态 + compInput + URL ?comp
+    // wca 路径:清掉 loaded 状态 + compInput + URL ?comp 及深链参数
     if (loadedCompId) {
       setLoadedCompId(null);
       setLoadedCompName(null);
       setCompInput('');
       autoLoadedRef.current = null;
+      deepLinkAppliedRef.current = null;
       setSearchParams((prev) => {
         const p = new URLSearchParams(prev);
-        p.delete('comp');
+        for (const k of ['comp', 'event', 'round', 'group', 'attempt']) p.delete(k);
         return p;
       }, { replace: true });
     }
@@ -705,6 +731,61 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     () => Array.from(new Set((sheets ?? []).map((s) => s.event))),
     [sheets],
   );
+  // 某事件在 sheets 中的有序 roundIdx 列表(升序;roundIdx=ROUND_TYPE_INDEX 槽位,与轮次先后单调)。
+  const roundIdxsForEvent = useCallback(
+    (ev: string): number[] =>
+      Array.from(new Set((sheets ?? []).filter((s) => s.event === ev).map((s) => s.roundIdx))).sort((a, b) => a - b),
+    [sheets],
+  );
+  // URL 的 ?round= 统一用「第几轮」(1-based 位置,2 轮赛就 1/2),不是 round_type_id 槽位 —— 与
+  // 比赛页 ?round= 同口径。下面两个函数在「位置」与内部 roundIdx 槽位之间互转。
+  const roundNumOf = useCallback(
+    (ev: string, roundIdx: number): number => {
+      const i = roundIdxsForEvent(ev).indexOf(roundIdx);
+      return i >= 0 ? i + 1 : 1;
+    },
+    [roundIdxsForEvent],
+  );
+  const roundIdxForNum = useCallback(
+    (ev: string, num: number): number | null => roundIdxsForEvent(ev)[num - 1] ?? null,
+    [roundIdxsForEvent],
+  );
+
+  // 深链套用:comp 加载完(sheets 就绪)后,把 URL 的 ?event/round/group/n 套到视图状态,
+  // 每个 comp 只做一次。先 setViewedEvent,round/选中把交给下方「补 pending」effect 在
+  // 「切 event 清 round」之后补回(否则 round 会被清掉)。
+  useEffect(() => {
+    if (!sheets || !loadedCompId) return;
+    if (deepLinkAppliedRef.current === loadedCompId) return;
+    const ev = searchParams?.get('event') ?? '';
+    if (!ev || !eventsInSheets.includes(ev)) { deepLinkAppliedRef.current = loadedCompId; return; }
+    deepLinkAppliedRef.current = loadedCompId;
+    const roundP = Number(searchParams?.get('round'));
+    const groupP = searchParams?.get('group') ?? '';
+    const nP = searchParams?.get('attempt') ?? '';
+    const gIdx = /^[A-Za-z]$/.test(groupP) ? groupP.toUpperCase().charCodeAt(0) - 65 : null;
+    pendingDeepLinkRef.current = {
+      event: ev,
+      round: Number.isFinite(roundP) && roundP > 0 ? roundP : null, // 1-based 位置(第几轮)
+      group: gIdx,
+      label: nP || null,
+    };
+    setViewedEvent(ev);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheets, loadedCompId, eventsInSheets]);
+
+  // viewedEvent 套用后(上面「切 event 清 round」的 effect 已把 round 清空)补回 round + 选中把。
+  useEffect(() => {
+    const p = pendingDeepLinkRef.current;
+    if (!p || p.event !== viewedEvent) return;
+    pendingDeepLinkRef.current = null;
+    if (p.round !== null) {
+      const slot = roundIdxForNum(p.event, p.round); // 第几轮 → 内部 roundIdx 槽位
+      if (slot !== null) setViewedRoundIdx(slot);
+    }
+    if (p.group !== null && p.label) setSelected({ groupIdx: p.group, label: p.label });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewedEvent]);
   // 3x3 系列(333/oh/ft/fm/bf)cross-step 分析:跟随当前事件视图。
   const activeView = activeEventOf(viewedEvent, eventsInSheets);
   const is333Family = FAMILY_333.has(activeView ?? '');
@@ -868,23 +949,68 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       .map((sh) => ({ ...sh, attempts: sh.attempts.filter((a) => activeCrossFilter.scrambles.has(a.scramble)) }))
       .filter((sh) => sh.attempts.length > 0);
   }, [activeCrossFilter, analysisSheets, visibleSheets]);
-  // icon 角标:多轮时显示当前轮次缩写 (1/2/3/F),提示再次点击会循环。
-  const roundBadgeLabel = (idx: number): string => idx === 3 ? 'F' : `${idx + 1}`;
+  // icon 角标:多轮时显示当前轮次的位置编号 (1/2/3/…),与 URL round= 一致,提示再次点击会循环。
   const roundBadges = activeView && roundIdxsInEvent.length > 1 && activeRoundIdx !== null
-    ? { [activeView]: roundBadgeLabel(activeRoundIdx) }
+    ? { [activeView]: `${roundNumOf(activeView, activeRoundIdx)}` }
     : undefined;
+  // 切事件:重置轮次到该事件第一轮(位置=1)、清掉选中把,并把 URL 同步到 event。
+  const selectEvent = (ev: string) => {
+    setViewedEvent(ev);
+    setSelected(null);
+    if (loadedCompId) writeDeepLink({ event: ev, round: 1, group: null, attempt: null });
+  };
+  // 循环轮次:同事件内切到下一轮,清掉选中把,URL 更新 round=第几轮(清 group/attempt)。
+  const cycleRound = (nextIdx: number) => {
+    setViewedRoundIdx(nextIdx);
+    setSelected(null);
+    if (loadedCompId) writeDeepLink({ event: activeView, round: roundNumOf(activeView ?? '', nextIdx), group: null, attempt: null });
+  };
+  // 选中/取消某一把(来自 SheetView 行点击)。label=null 取消;否则写全套深链 event+round+group+attempt,
+  // 保证即便用户没动事件选择器(停在默认事件/轮次)直接点把,URL 也是可复现的完整深链。
+  const selectScramble = useCallback(
+    (groupIdx: number, label: string | null) => {
+      if (label === null) {
+        setSelected(null);
+        if (loadedCompId) writeDeepLink({ group: null, attempt: null });
+        return;
+      }
+      setSelected({ groupIdx, label });
+      if (loadedCompId) {
+        writeDeepLink({
+          event: activeView,
+          round: activeRoundIdx !== null ? roundNumOf(activeView ?? '', activeRoundIdx) : 1,
+          group: groupLetter(groupIdx),
+          attempt: label,
+        });
+      }
+    },
+    [writeDeepLink, loadedCompId, activeView, activeRoundIdx, roundNumOf],
+  );
   // 单击 event icon:不同 event → 切到该 event (轮次重置成第一);同一 event 再点 → 循环到下一轮。
   const onEventIconClick = (ev: string) => {
     if (ev === activeView && roundIdxsInEvent.length > 1) {
       const cur = activeRoundIdx === null ? -1 : roundIdxsInEvent.indexOf(activeRoundIdx);
       const nextIdx = roundIdxsInEvent[(cur + 1) % roundIdxsInEvent.length];
-      setViewedRoundIdx(nextIdx);
+      cycleRound(nextIdx);
       return;
     }
-    setViewedEvent(ev);
+    selectEvent(ev);
   };
 
   const loaded = sheets && sheets.length > 0;
+
+  // 「分析」打开 + 333 比赛已加载时,后台预热 StageSolver 共享池(拉 WASM + ~70MB 表)。
+  // 与预计算数据并行加载 —— 用户点开某把行内解法时池已就绪,免去「加载求解器与数据表」首次等待。
+  // need 跟随当前变体(std→cross / f2leo / 其余→variant),与行内解法器实际用的池一致。
+  const prewarmNeed: PoolNeed | null = variantEngine === 'std' ? 'cross'
+    : variantEngine === 'f2leo' ? 'f2leo'
+    : variantEngine === 'variant' ? 'variant'
+    : null;
+  useEffect(() => {
+    if (!(loaded && showCross && is333Family) || !prewarmNeed) return;
+    getRustCrossPool(prewarmNeed, poolSizeForDevice());
+  }, [loaded, showCross, is333Family, prewarmNeed]);
+
   const fmtKB = (b: number) => `${(b / 1024).toFixed(b < 10240 ? 1 : 0)} KB`;
   const placeholder = t('输入 WCA 比赛或链接,或自定义比赛名', 'Enter a WCA comp / link, or a custom name');
 
@@ -923,6 +1049,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
               setSheets(null);
               setViewedEvent(null);
               setViewedRoundIdx(null);
+              setSelected(null);
               setEvents({});
             }}
             isZh={isZh}
@@ -956,9 +1083,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     </div>
   );
 
-  const controlsNode = (
-    <div className={`gen-tn-controls${loaded ? ' is-loaded' : ''}`}>
-      {!compHeaderSlot && compPickerNode}
+  const actionsNode = (
       <div className="gen-control-group gen-control-actions">
           {loaded ? (
             // loadedCompId 模式下顶部 picker 已有 × 清除按钮,这里不再重复;
@@ -1035,6 +1160,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 setSheets(null);
                 setViewedEvent(null);
                 setViewedRoundIdx(null);
+                setSelected(null);
                 setEvents({});
               }}
               title={generating ? t('取消生成', 'Cancel generation') : t('清空所有项目', 'Clear all events')}
@@ -1044,13 +1170,27 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
             </button>
           )}
         </div>
-      </div>
+  );
+
+  // 比赛已加载:操作图标(打乱图开关 / 下载 PDF)挪到 header 输入框右侧,与比赛名同一行;
+  // 配置态仍把操作(生成按钮等)留在正文 controls 行。无 header slot 时整体回落正文。
+  const controlsNode = !compHeaderSlot ? (
+    <div className={`gen-tn-controls${loaded ? ' is-loaded' : ''}`}>
+      {compPickerNode}
+      {actionsNode}
+    </div>
+  ) : loaded ? null : (
+    <div className="gen-tn-controls">{actionsNode}</div>
   );
 
   return (
     <>
-      {/* picker 提到 GenPage header (跟 chip 一行);slot 不可用就 fallback 回 body */}
-      {compHeaderSlot ? createPortal(compPickerNode, compHeaderSlot) : null}
+      {/* picker 提到 GenPage header (跟 chip 一行);slot 不可用就 fallback 回 body。
+          已加载时操作图标(打乱图 / 下载 PDF)也portal到 header,贴在比赛名右侧。 */}
+      {compHeaderSlot ? createPortal(
+        <>{compPickerNode}{loaded ? actionsNode : null}</>,
+        compHeaderSlot,
+      ) : null}
 
       {error && <div className="gen-tn-empty" style={{ color: 'var(--gen-accent)' }}>{error}</div>}
 
@@ -1322,8 +1462,11 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 t={t}
                 showPreview={showPreview}
                 rowDigits={showCross && is333Family ? rowDigits : undefined}
+                analyzable={showCross && is333Family}
                 metric={metric}
                 variant={variant}
+                selectedLabel={selected && sh.groupIdx === selected.groupIdx ? selected.label : null}
+                onSelectScramble={(label) => selectScramble(sh.groupIdx, label)}
                 clockColors={!loadedCompId && sh.event === 'clock' ? events[sh.event]?.colors : undefined}
                 sq1Colors={!loadedCompId && sh.event === 'sq1' ? events[sh.event]?.colors : undefined}
                 megaColors={!loadedCompId && sh.event === 'minx' ? events[sh.event]?.colors : undefined}

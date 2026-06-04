@@ -57,8 +57,8 @@ background: color-mix(in srgb, var(--accent) 12%, transparent); /* tag 弱化 */
 
 | 页 | 模式 | 处理 |
 |---|---|---|
-| `/wca/calendar` `/wb` `/memo/colpi` `/alg` | 双主题 | 走 :root token,自动 light/dark 翻 |
-| `/trainer` `/battle` `/wca/*` (含 records/wse/t10h) | **dark-locked** | page-scope `color-scheme: dark` + 反盖 `--background --foreground` 等;**不要给它们加 light/dark 反盖** |
+| `/wca/calendar` `/wb` `/memo/colpi` `/alg` `/trainer` (含 `/trainer/3bld/*`) `/battle` `/recon` `/visualcube` `/mosaic` `/site` | 双主题 | 走 :root token,自动 light/dark 翻 |
+| `/wca/*` (含 records/wse/t10h) | **dark-locked** | globals.css `html:has(.xxx-page)` 把 token 整体压 dark;**不要给它们加 light/dark 反盖** |
 | `/calc` | **light-locked** | page-scope `color-scheme: light` + 锁 `--background --foreground` light 值 |
 
 ## Light/dark 反盖 (写新 :root token 才用)

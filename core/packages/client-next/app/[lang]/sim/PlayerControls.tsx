@@ -24,20 +24,24 @@ import {
   type RefObject,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRouter, useParams } from 'next/navigation';
 import {
   Play, Pause, SkipBack, SkipForward, RotateCcw,
   FlipHorizontal2, FlipVertical2, Eraser, Sparkles, RotateCw,
-  Settings, ChevronRight, Shuffle, Link2, Check,
+  Settings, ChevronRight, Shuffle, Link2, Check, Upload,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './cuber/world';
 import { TwistAction } from './cuber/twister';
 import CubeGroup from './cuber/group';
 import { parseSq1Scramble, movesToString, type Sq1Move } from './cuber/sq1/sq1State';
-import { invertAlg, simplifyAlg, mirrorAlg } from '@/lib/cube3';
+import { invertAlg, simplifyAlg, simplifyTwistyAlg, mirrorAlg, countMoves } from '@/lib/cube3';
 import { cleanForPlayer, extractAlgFromText } from '@/lib/recon-alg-utils';
 import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
-import { formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg } from '@/lib/sq1-svg';
+import {
+  formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg,
+  simplifySq1Alg, invertSq1Alg, parseSq1Tokens,
+} from '@/lib/sq1-svg';
 import type { SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import {
   Slider, Toggle, KeymapModal,
@@ -45,6 +49,7 @@ import {
   type SimSettings,
 } from './SettingDrawer';
 import { type KeyMove } from './keymap';
+import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { WheelPicker } from '@/components/WheelPicker';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
 import './player-controls.css';
@@ -227,6 +232,12 @@ export default function PlayerControls({
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
+
+  const router = useRouter();
+  const params = useParams<{ lang?: string }>();
+  const langPrefix = params?.lang === 'zh' || params?.lang === 'en'
+    ? `/${params.lang}` : (isZh ? '/zh' : '/en');
+  const reconEvent = reconEventForSim(puzzleKind);
 
   const [algDraft, setAlgDraft] = useState(alg);
   const [setupDraft, setSetupDraft] = useState(setup ?? '');
@@ -422,6 +433,29 @@ export default function PlayerControls({
     if (algElRef.current) algElRef.current.value = next;
   };
 
+  // Per-puzzle "消步" (cancel redundant moves) + invert. SQ1 has its own token
+  // model; pyraminx/skewb/megaminx can't use the cube's mod-4 fold.
+  const simplifyForPuzzle = useCallback((s: string): string => {
+    if (isSq1) return simplifySq1Alg(s, sq1Format);
+    if (isTwistyMode) return simplifyTwistyAlg(s);
+    return simplifyAlg(s);
+  }, [isSq1, isTwistyMode, sq1Format]);
+
+  const invertForPuzzle = useCallback((s: string): string => {
+    if (!isSq1) return invertAlg(s);
+    const inv = invertSq1Alg(s);
+    return sq1Format === 'wca' ? canonicalSq1Alg(inv) : compactSq1Alg(inv);
+  }, [isSq1, sq1Format]);
+
+  // Whether 消步 would actually shorten the sequence — drives the button's
+  // enabled state so it doubles as a "可以消步" hint.
+  const canSimplify = useMemo(() => {
+    const combined = (setupDraft + ' ' + algDraft).trim();
+    if (!combined) return false;
+    const count = (s: string) => (isSq1 ? parseSq1Tokens(s).length : countMoves(s));
+    return count(simplifyForPuzzle(combined)) < count(combined);
+  }, [setupDraft, algDraft, isSq1, simplifyForPuzzle]);
+
   // Copy the current page URL (puzzle + scramble + solution params) so the exact
   // sim state can be shared. Works for any puzzle — the URL always carries state.
   const copyTimerRef = useRef<number | null>(null);
@@ -435,6 +469,13 @@ export default function PlayerControls({
     }).catch(() => { /* clipboard denied */ });
   }, []);
 
+  // Hand off the current scramble + solution to /recon/submit (matching event).
+  const handlePublishRecon = useCallback(() => {
+    if (!reconEvent) return;
+    const qs = buildReconSubmitQuery(reconEvent, setupDraft, algDraft);
+    router.push(`${langPrefix}/recon/submit?${qs}`);
+  }, [reconEvent, setupDraft, algDraft, router, langPrefix]);
+
   const appendUserMove = useCallback((action: TwistAction | string) => {
     let moveText = typeof action === 'string' ? action : action.value;
     if (typeof action !== 'string' && !isSq1 && !isTwistyMode && world && world.cube.order === 1) {
@@ -446,9 +487,12 @@ export default function PlayerControls({
     const algEl = algElRef.current;
     if (!algEl) return;
     const current = algEl.value;
-    const sep = current.trim()
-      ? (isSq1 && (moveText === '/' || current.trimEnd().endsWith('/')) ? '' : ' ')
-      : '';
+    // SQ1: glue slices to adjacent turns (`(1,0)/(2,0)`), but NEVER glue two
+    // slices — `//` is the comment marker and parseSq1Tokens would drop it, so
+    // a dragged double-slice must read as `/ /`.
+    const endsSlash = current.trimEnd().endsWith('/');
+    const glue = isSq1 && (moveText === '/' || endsSlash) && !(moveText === '/' && endsSlash);
+    const sep = current.trim() ? (glue ? '' : ' ') : '';
     const next = current.trimEnd() + sep + moveText + ' ';
     algEl.value = next;
     algEl.selectionStart = algEl.selectionEnd = next.length;
@@ -703,8 +747,12 @@ export default function PlayerControls({
       )}
 
       <div className="sim-player-tools">
-        <button onClick={tool(invertAlg)} title={t('取逆', 'Invert')}><RotateCw size={13} />{t('逆', 'Invert')}</button>
-        {!isSq1 && !isTwistyMode && <button onClick={tool(simplifyAlg)} title={t('简化', 'Simplify')}><Sparkles size={13} />{t('简化', 'Simplify')}</button>}
+        <button onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}><RotateCw size={13} />{t('逆', 'Invert')}</button>
+        <button
+          onClick={tool(simplifyForPuzzle)}
+          disabled={!canSimplify}
+          title={t('消步:合并 / 抵消重复转动', 'Reduce: cancel redundant moves')}
+        ><Sparkles size={13} />{t('消步', 'Reduce')}</button>
         {!isSq1 && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
         {!isSq1 && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
         <button onClick={tool(() => '')} title={t('清空', 'Clear')}><Eraser size={13} />{t('清空', 'Clear')}</button>
@@ -716,6 +764,14 @@ export default function PlayerControls({
           {linkCopied ? <Check size={13} /> : <Link2 size={13} />}
           {linkCopied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}
         </button>
+        {reconEvent && (
+          <button
+            onClick={handlePublishRecon}
+            title={t('用当前打乱 / 解法去发布复盘', 'Take this scramble / solution to publish a reconstruction')}
+          >
+            <Upload size={13} />{t('发布复盘', 'Publish recon')}
+          </button>
+        )}
       </div>
 
       <PuzzleSettings

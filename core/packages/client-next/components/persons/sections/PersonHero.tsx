@@ -1,7 +1,7 @@
 // 顶部 hero:头像 + (国旗 + 姓名 + 性别图标) + 名字下方小字 WCA ID + 信息条(比赛次数 / 复原次数 / 尝试次数).
 // 头像居中,国旗在名字左侧,WCA ID 左缘与名字左缘对齐.
 
-import { ExternalLink, Mars, Venus } from 'lucide-react';
+import { Mars, Venus } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/name-utils';
 import { countryName } from '@/lib/country-name';
@@ -16,6 +16,7 @@ interface Props {
 export default function PersonHero({ profile, results, isZh }: Props) {
   const p = profile.person;
   const displayName = displayCuberName(p.name, isZh);
+  const wcaUrl = `https://www.worldcubeassociation.org/persons/${p.wca_id}`;
   const avatarUrl = p.avatar?.thumb_url || p.avatar?.url;
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
@@ -53,18 +54,15 @@ export default function PersonHero({ profile, results, isZh }: Props) {
           </span>
           <div className="wp-hero-name-col">
             <div className="wp-hero-name-line">
-              <h1 className="wp-hero-name">{displayName}</h1>
+              <h1 className="wp-hero-name">
+                <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-name-link" title="WCA">{displayName}</a>
+              </h1>
               {GenderIcon && (
                 <GenderIcon size={18} className={`wp-hero-gender wp-hero-gender-${p.gender}`} aria-label={genderLabel} />
               )}
             </div>
             <div className="wp-hero-id">
-              <span>{p.wca_id}</span>
-              <a
-                href={`https://www.worldcubeassociation.org/persons/${p.wca_id}`}
-                target="_blank" rel="noopener noreferrer"
-                className="wp-hero-id-link" title="WCA"
-              ><ExternalLink size={11} /></a>
+              <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-id-link" title="WCA">{p.wca_id}</a>
             </div>
           </div>
         </div>

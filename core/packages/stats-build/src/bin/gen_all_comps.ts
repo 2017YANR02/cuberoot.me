@@ -14,7 +14,7 @@ import type { RowDataPacket } from 'mysql2';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_PATH = resolve(__dirname, '../../../../../stats/all_past_comps.json');
 
-// NOTE: WCA 内部 event_id → 前端短名（与 scripts/fetch_upcoming_comps.py EVENT_DISPLAY_ORDER 保持一致）
+// NOTE: WCA 内部 event_id → 前端短名（与 fetch_upcoming_comps.ts EVENT_DISPLAY_ORDER 保持一致）
 const EVENT_SHORT: Record<string, string> = {
   '333': '3', '222': '2', '444': '4', '555': '5', '666': '6', '777': '7',
   '333bf': '3bf', '333fm': 'fm', '333oh': 'oh',

@@ -82,8 +82,9 @@ export class MyNewStat extends Statistic {
 追踪 434 名顶尖选手的近期 WCA 比赛。
 
 ```powershell
-python scripts/fetch_upcoming_comps.py          # 使用缓存（~5 秒）
-python scripts/fetch_upcoming_comps.py --refresh  # 强制刷新（~15 分钟）
+cd core/packages/stats-build
+npx tsx src/bin/fetch_upcoming_comps.ts          # 使用缓存（~5 秒）
+npx tsx src/bin/fetch_upcoming_comps.ts --refresh  # 强制刷新（~15 分钟）
 ```
 
 ### 数据源
@@ -101,4 +102,4 @@ python scripts/fetch_upcoming_comps.py --refresh  # 强制刷新（~15 分钟）
 
 ### 中文比赛名
 
-`scripts/fetch_comp_names_zh.py` 生成 `comp_names_zh.json`，CI 每天凌晨 4:00 自动更新。
+`core/packages/stats-build/src/bin/fetch_comp_names_zh.ts` 生成 `comp_names_zh.json`，CI 每天凌晨 4:00 自动更新。

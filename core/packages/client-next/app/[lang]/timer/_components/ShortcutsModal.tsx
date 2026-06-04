@@ -45,6 +45,19 @@ const NAV: ShortcutRow[] = [
   { keys: ['Click strip'], en: 'Refresh scramble.',                             zh: '点击打乱条换打乱。' },
 ];
 
+// Touch-only radial gesture wheel — press the timer area and drag toward a
+// direction (release to fire). Order matches the on-screen wheel.
+const GESTURES: ShortcutRow[] = [
+  { keys: ['→'],  en: 'Drag right: next scramble.',          zh: '向右拖：下一个打乱。' },
+  { keys: ['←'],  en: 'Drag left: previous scramble.',       zh: '向左拖：上一个打乱。' },
+  { keys: ['↗'],  en: 'Drag up-right: clear penalty (OK).',  zh: '右上拖：清除罚时（OK）。' },
+  { keys: ['↑'],  en: 'Drag up: toggle +2.',                 zh: '向上拖：切换 +2。' },
+  { keys: ['↖'],  en: 'Drag up-left: toggle DNF.',           zh: '左上拖：切换 DNF。' },
+  { keys: ['↓'],  en: 'Drag down: delete last solve.',       zh: '向下拖：删除最后一次。' },
+  { keys: ['↙'],  en: 'Drag down-left: note on last solve.', zh: '左下拖：给最后一次加注释。' },
+  { keys: ['↘'],  en: 'Drag down-right: copy scramble.',     zh: '右下拖：复制打乱。' },
+];
+
 export default function ShortcutsModal({ isZh, onClose }: Props) {
   const titleId = useId();
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -98,6 +111,13 @@ export default function ShortcutsModal({ isZh, onClose }: Props) {
         <Section title={isZh ? 'CFOP 分阶段（设置里开启）' : 'CFOP splits (enable in settings)'} rows={MULTISTAGE} isZh={isZh} isMobile={isMobile} />
         <Section title={isZh ? '盲拧（设置里开启）' : 'BLD (enable in settings)'} rows={BLD} isZh={isZh} isMobile={isMobile} />
         <Section title={isZh ? '导航' : 'Navigation'} rows={NAV} isZh={isZh} isMobile={isMobile} />
+
+        <div className="modal-section" style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
+          {isZh
+            ? '手势（触屏）：在计时区按住并拖向某方向，松手执行；轻触不拖 = 正常计时。'
+            : 'Gestures (touch): press the timer area and drag toward a direction, release to fire; a plain tap-and-hold still times.'}
+        </div>
+        <Section title={isZh ? '手势' : 'Gestures'} rows={GESTURES} isZh={isZh} isMobile={isMobile} />
 
         <div className="modal-actions" style={actionsStyle}>
           <button ref={closeBtnRef} className="primary" style={closeBtnStyle} onClick={onClose}>{isZh ? '关闭' : 'Close'}</button>
