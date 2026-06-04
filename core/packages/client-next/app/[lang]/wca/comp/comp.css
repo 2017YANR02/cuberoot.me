@@ -1295,10 +1295,10 @@ td.is-pr {
 
 .sched-subtoggle { display: flex; gap: 4px; margin-bottom: 12px; }
 .sched-subtoggle-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 12px; border: 1px solid var(--border-default); border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 7px 10px; border: 1px solid var(--border-default); border-radius: 6px;
   background: var(--card, var(--background)); color: var(--muted-foreground);
-  font-size: 0.88rem; font-weight: 500; cursor: pointer;
+  cursor: pointer;
 }
 .sched-subtoggle-btn:hover { color: var(--foreground); border-color: var(--border-strong); }
 .sched-subtoggle-btn.is-active {

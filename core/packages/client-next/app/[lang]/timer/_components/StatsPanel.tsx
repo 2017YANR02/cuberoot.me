@@ -1,137 +1,215 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { X, Plus } from 'lucide-react';
 import type { Solve, EventId } from '../_lib/types';
+import { effectiveMs } from '../_lib/types';
 import {
-  summarize,
   subXBreakdown,
-  eventDefaultFormat,
-  formatPrimary,
-  formatBestPrimary,
   averageOfN,
   bestAverageOfN,
+  bestSingle,
+  worstSingle,
+  meanOfAll,
+  meanOfN,
+  bestMeanOfN,
+  bestOfN,
+  bestBestOfN,
+  stdDev,
+  coefficientOfVariation,
+  formatPct,
+  bpa,
+  wpa,
   formatMs,
 } from '../_lib/stats';
-import { useSettings } from '../_lib/settings';
+import { useSettings, updateSettings } from '../_lib/settings';
 
 interface Props {
   solves: Solve[];
   isZh: boolean;
-  event: EventId;
+  /** Kept for call-site compatibility; the cstimer table is event-agnostic. */
+  event?: EventId;
 }
 
-function primaryLabel(kind: 'ao5' | 'mo3' | 'bo3' | 'single', isZh: boolean): string {
-  if (kind === 'ao5')    return isZh ? '五次平均' : 'Ao5';
-  if (kind === 'mo3')    return isZh ? '三次平均' : 'Mo3';
-  if (kind === 'bo3')    return isZh ? '三次最佳' : 'Bo3';
-  return isZh ? '单次' : 'Single';
+/** Preset average windows offered in the inline "+ window" picker. */
+const AO_PRESETS = [5, 12, 25, 50, 100, 200, 1000, 10000] as const;
+const MIN_AO = 3;
+const MAX_AO = 100000;
+
+function sanitizeWindows(list: number[]): number[] {
+  const out: number[] = [];
+  for (const raw of list) {
+    const n = Math.floor(Number(raw));
+    if (Number.isFinite(n) && n >= MIN_AO && n <= MAX_AO && !out.includes(n)) out.push(n);
+  }
+  return out.sort((a, b) => a - b);
 }
 
-const STANDARD_AOS = new Set([5, 12, 50, 100, 1000]);
-
-/** A row's value is "empty" if it's a dash placeholder. */
+/** A formatted value counts as "empty" when it's a dash placeholder. */
 function isEmptyVal(v: string): boolean {
-  return v === '-' || v === '—' || v === '- / -';
+  return v === '-' || v === '—';
 }
 
-export default function StatsPanel({ solves, isZh, event }: Props) {
+export default function StatsPanel({ solves, isZh }: Props) {
   const settings = useSettings();
   const [expanded, setExpanded] = useState(false);
-  const s = summarize(solves);
-  const subX = subXBreakdown(solves);
-  const customAos = (settings.customAoWindows ?? []).filter(n => !STANDARD_AOS.has(n));
-  const fmt = eventDefaultFormat(event);
-  const primaryNow = formatPrimary(solves, fmt);
-  const primaryBest = formatBestPrimary(solves, fmt);
-  const pLabel = primaryLabel(fmt.kind, isZh);
-  const liveBpaWpa5 = s.bpa5 !== '-' || s.wpa5 !== '-';
-  const liveBpaWpa12 = s.bpa12 !== '-' || s.wpa12 !== '-';
-  const rows: { lbl: string; val: string }[] = [
-    { lbl: isZh ? '总数' : 'Count',     val: s.count.toString() },
-    { lbl: isZh ? '最佳' : 'Best',      val: s.best },
-    { lbl: isZh ? '最差' : 'Worst',     val: s.worst },
-    { lbl: isZh ? '平均' : 'Mean',      val: s.mean },
-    { lbl: 'σ',                         val: s.sd },
-    { lbl: 'CV',                        val: s.cv },
-    { lbl: 'Ao5',                       val: s.ao5 },
-    ...(liveBpaWpa5 ? [{ lbl: 'BPA/WPA(5)', val: `${s.bpa5} / ${s.wpa5}` }] : []),
-    { lbl: 'Ao12',                      val: s.ao12 },
-    ...(liveBpaWpa12 ? [{ lbl: 'BPA/WPA(12)', val: `${s.bpa12} / ${s.wpa12}` }] : []),
-    { lbl: 'Mo3',                       val: s.mo3 },
-    { lbl: 'Bo3',                       val: s.bo3 },
-    { lbl: 'Ao50',                      val: s.ao50 },
-    { lbl: 'Ao100',                     val: s.ao100 },
-    { lbl: 'Ao1000',                    val: s.ao1000 },
-    { lbl: isZh ? 'Ao5 最佳' : 'Best Ao5',     val: s.bestAo5 },
-    { lbl: isZh ? 'Ao12 最佳' : 'Best Ao12',   val: s.bestAo12 },
-    { lbl: isZh ? 'Mo3 最佳' : 'Best Mo3',     val: s.bestMo3 },
-    { lbl: isZh ? 'Bo3 最佳' : 'Best Bo3',     val: s.bestBo3 },
-    { lbl: isZh ? 'Ao50 最佳' : 'Best Ao50',   val: s.bestAo50 },
-    { lbl: isZh ? 'Ao100 最佳' : 'Best Ao100', val: s.bestAo100 },
-    { lbl: isZh ? 'Ao1000 最佳' : 'Best Ao1000', val: s.bestAo1000 },
-    ...customAos.flatMap(n => [
-      { lbl: `Ao${n}`,                              val: formatMs(averageOfN(solves, n)) },
-      { lbl: isZh ? `Ao${n} 最佳` : `Best Ao${n}`,  val: formatMs(bestAverageOfN(solves, n)) },
-    ]),
-  ];
+  const [addOpen, setAddOpen] = useState(false);
+  const [customDraft, setCustomDraft] = useState('');
+
+  const windows = useMemo(
+    () => sanitizeWindows(settings.statsAoWindows ?? []),
+    [settings.statsAoWindows],
+  );
+
+  const setWindows = (next: number[]) => updateSettings({ statsAoWindows: sanitizeWindows(next) });
+  const removeWindow = (n: number) => setWindows(windows.filter(w => w !== n));
+  const toggleWindow = (n: number) =>
+    setWindows(windows.includes(n) ? windows.filter(w => w !== n) : [...windows, n]);
+  const addCustom = () => {
+    const n = Math.floor(Number(customDraft.trim()));
+    if (Number.isFinite(n) && n >= MIN_AO && n <= MAX_AO) { setWindows([...windows, n]); setCustomDraft(''); }
+  };
+
+  // ── cstimer-style current/best rows: time (single) + each ao window ──
+  const table = useMemo(() => {
+    const last = solves.length ? solves[solves.length - 1] : null;
+    const rows: { key: string; label: string; cur: string; best: string; n?: number }[] = [
+      {
+        key: 'time',
+        label: isZh ? '单次' : 'time',
+        cur: last ? formatMs(effectiveMs(last)) : '-',
+        best: formatMs(bestSingle(solves)),
+      },
+    ];
+    for (const n of windows) {
+      rows.push({
+        key: `ao${n}`,
+        label: `ao${n}`,
+        cur: formatMs(averageOfN(solves, n)),
+        best: formatMs(bestAverageOfN(solves, n)),
+        n,
+      });
+    }
+    return rows;
+  }, [solves, windows, isZh]);
+
+  // ── footer + extras ──
+  const count = solves.length;
+  const sd = stdDev(solves);
+  const cv = coefficientOfVariation(solves);
+  const subX = useMemo(() => subXBreakdown(solves), [solves]);
+
+  const extras = useMemo(() => {
+    const rows: { lbl: string; val: string }[] = [
+      { lbl: isZh ? '平均' : 'mean',  val: formatMs(meanOfAll(solves)) },
+      { lbl: isZh ? '最差' : 'worst', val: formatMs(worstSingle(solves)) },
+      { lbl: 'mo3',  val: formatMs(meanOfN(solves, 3)) },
+      { lbl: isZh ? 'mo3 最佳' : 'best mo3', val: formatMs(bestMeanOfN(solves, 3)) },
+      { lbl: 'bo3',  val: formatMs(bestOfN(solves, 3)) },
+      { lbl: isZh ? 'bo3 最佳' : 'best bo3', val: formatMs(bestBestOfN(solves, 3)) },
+    ];
+    // Live BPA/WPA for any window that is one solve away from completing.
+    for (const n of windows) {
+      if (solves.length === n - 1) {
+        rows.push({ lbl: `BPA/WPA(${n})`, val: `${formatMs(bpa(solves, n))} / ${formatMs(wpa(solves, n))}` });
+      }
+    }
+    return rows;
+  }, [solves, windows, isZh]);
+
+  const presetActive = (n: number) => windows.includes(n);
+
   return (
     <div className="stats-panel">
-      <h3>{isZh ? '统计' : 'Stats'}</h3>
-      <div className="stats-primary">
-        <div className="stats-primary-head">
-          {isZh ? '主成绩' : 'Primary'} <span className="stats-primary-sub">{pLabel}</span>
+      <div className="stats-table">
+        <div className="stats-table-head">
+          <span className="st-label" />
+          <span className="st-col">{isZh ? '当前' : 'current'}</span>
+          <span className="st-col">{isZh ? '最佳' : 'best'}</span>
         </div>
-        <div className="stats-primary-row">
-          <span className="lbl">{isZh ? '当前' : 'Current'}</span>
-          <span className={`stats-primary-val ${primaryNow === '-' ? 'muted' : ''}`}>{primaryNow}</span>
-        </div>
-        <div className="stats-primary-row">
-          <span className="lbl">{isZh ? '最佳' : 'Best'}</span>
-          <span className={`stats-primary-val ${primaryBest === '-' ? 'muted' : ''}`}>{primaryBest}</span>
-        </div>
+        {table.map(r => (
+          <div className="stats-row" key={r.key}>
+            <span className="st-label">
+              {r.label}
+              {r.n !== undefined && (
+                <button
+                  type="button"
+                  className="st-remove"
+                  onClick={() => removeWindow(r.n!)}
+                  title={isZh ? `移除 ao${r.n}` : `Remove ao${r.n}`}
+                  aria-label={isZh ? `移除 ao${r.n}` : `Remove ao${r.n}`}
+                >
+                  <X size={11} />
+                </button>
+              )}
+            </span>
+            <span className={`st-cur ${isEmptyVal(r.cur) ? 'muted' : ''}`}>{r.cur}</span>
+            <span className={`st-best ${isEmptyVal(r.best) ? 'muted' : ''}`}>{r.best}</span>
+          </div>
+        ))}
       </div>
-      {(() => {
-        // Show a small core set by default (Count/Best/Mean/σ/Ao5/Ao12/Mo3),
-        // keep the long tail (all Best-of-N, Ao50/100/1000, customs) one tap
-        // away behind the toggle — so the rail isn't a 22-row scroll wall.
-        // Live BPA/WPA rows stay visible (they only exist mid-average), and on
-        // a fresh session (<4 populated) any populated row is pinned too.
-        const populatedCount = rows.reduce((n, r) => n + (isEmptyVal(r.val) ? 0 : 1), 0);
-        const PRIMARY = new Set([
-          isZh ? '总数' : 'Count',
-          isZh ? '最佳' : 'Best',
-          isZh ? '平均' : 'Mean',
-          'σ', 'Ao5', 'Ao12', 'Mo3',
-        ]);
-        const isLive = (lbl: string) => lbl.startsWith('BPA/WPA');
-        const visible = expanded
-          ? rows
-          : rows.filter(r => PRIMARY.has(r.lbl) || isLive(r.lbl) || (populatedCount < 4 && !isEmptyVal(r.val)));
-        const hasExtras = rows.some(r => !PRIMARY.has(r.lbl) && !isLive(r.lbl));
-        return (
+
+      {/* Inline "+ add window" picker */}
+      <div className="stats-ao-add">
+        <button type="button" className="stats-ao-add-btn" onClick={() => setAddOpen(o => !o)} aria-expanded={addOpen}>
+          <Plus size={13} /> {isZh ? '添加窗口' : 'Add window'}
+        </button>
+        {addOpen && (
           <>
-            <div className="stats-grid">
-              {visible.map(r => (
-                <div className="row" key={r.lbl}>
-                  <span className="lbl">{r.lbl}</span>
-                  <span className={`val ${isEmptyVal(r.val) ? 'muted' : ''}`}>{r.val}</span>
-                </div>
-              ))}
+            <div className="stats-ao-backdrop" onClick={() => setAddOpen(false)} />
+            <div className="stats-ao-pop">
+              <div className="stats-ao-presets">
+                {AO_PRESETS.map(p => (
+                  <button
+                    type="button"
+                    key={p}
+                    className={`stats-ao-chip${presetActive(p) ? ' active' : ''}`}
+                    onClick={() => toggleWindow(p)}
+                  >
+                    ao{p}
+                  </button>
+                ))}
+              </div>
+              <div className="stats-ao-custom">
+                <input
+                  type="number"
+                  min={MIN_AO}
+                  max={MAX_AO}
+                  value={customDraft}
+                  placeholder={isZh ? '自定义 N' : 'Custom N'}
+                  onChange={(e) => setCustomDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') addCustom(); }}
+                />
+                <button type="button" className="stats-ao-custom-add" onClick={addCustom}>
+                  {isZh ? '添加' : 'Add'}
+                </button>
+              </div>
             </div>
-            {hasExtras && (
-              <button
-                type="button"
-                className="stats-expand-toggle"
-                onClick={() => setExpanded(e => !e)}
-              >
-                {expanded
-                  ? (isZh ? '收起' : 'Hide extras')
-                  : (isZh ? '显示全部统计' : 'Show all averages')}
-              </button>
-            )}
           </>
-        );
-      })()}
+        )}
+      </div>
+
+      {/* Footer: σ / CV / count */}
+      <div className="stats-foot">
+        <span>σ {sd === null ? '—' : formatMs(Math.round(sd))}</span>
+        <span>CV {formatPct(cv)}</span>
+        <span>{isZh ? '总数' : 'count'} {count}</span>
+      </div>
+
+      {expanded && (
+        <div className="stats-grid">
+          {extras.map(r => (
+            <div className="row" key={r.lbl}>
+              <span className="lbl">{r.lbl}</span>
+              <span className={`val ${isEmptyVal(r.val) ? 'muted' : ''}`}>{r.val}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <button type="button" className="stats-expand-toggle" onClick={() => setExpanded(e => !e)}>
+        {expanded ? (isZh ? '收起' : 'Hide extras') : (isZh ? '显示全部统计' : 'Show all stats')}
+      </button>
+
       {subX.length > 0 && (
         <>
           <h3 style={{ marginTop: 12 }}>{isZh ? '阈值占比' : 'Sub-X'}</h3>

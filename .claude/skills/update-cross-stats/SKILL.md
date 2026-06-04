@@ -16,7 +16,7 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1
 - **交互向导**:真人终端裸跑(无任何参数)自动进向导,全程**方向键菜单**(↑↓ 移动 / Space 多选 / 数字字母快捷 / Enter 确认 / Esc 取消)—— 取数前问「TSV 来源(下载官方最新 / 用本地缓存不联网)」,取数后列出各变体待补 + 估时,多选「跑哪些变体」+ 单选「每变体几块 / 是否发布」,总览确认再跑;`-Interactive` 可强制开,`-UseCached` 单独走不联网取数。AI/带任意 flag/非交互终端(stdin 重定向)不弹,走旧一键。
 - **长操作都有进度**:下载(每 5%)、解压大 TSV(每 128MB)、扫描(每 2M 行)、solver 解算([PROG] 每 1%)、build(每 20 万行 `\r`)、scp(每 3s 远端字节)。
 - 先 `-DryRun` 看新增规模(只读,不解算不发布);落后多就大补、solver 跑几小时。
-- pair 变体 ~2/s 太慢,不在默认;补齐/跟进单独跑 `-Variants pair`(全量 ~165h,分块可中断续跑)。
+- pair 变体不在默认(opt-in);补齐/跟进单独跑 `-Variants pair`(暖表实测 ~200/s,全量回填 ~1.7h;分块可中断续跑;低 RAM/冷启会退化)。
 - f2leo / pseudo_f2leo 是小表分析器(常驻 ~40MB,只用 mt_* + 自建 xcross/cross 剪枝表,**不碰 huge 表**),同 pair 一样 opt-in,不在默认:`-Variants f2leo,pseudo_f2leo`;首跑要全量回填全部 ~1.29M id。
 - 想本地看不发布:`-NoPublish`。
 - 细节/开关/排错:`core/packages/scramble-stats-build/RUNBOOK.md`。

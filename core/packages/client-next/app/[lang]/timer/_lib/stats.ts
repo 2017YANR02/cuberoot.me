@@ -244,14 +244,39 @@ export function formatMs(ms: number | null, precision: 2 | 3 = 2): string {
   return `${seconds}.${fracStr}`;
 }
 
-/** Standard deviation of all *valid* (non-DNF) effective times. */
-export function stdDev(solves: Solve[]): number | null {
-  const valid = solves.map(effectiveMs).filter(t => Number.isFinite(t));
+/** Standard deviation (ms) of an array of effective times — null if < 2 valid. */
+function sdOfTimes(times: number[]): number | null {
+  const valid = times.filter(t => Number.isFinite(t));
   if (valid.length < 2) return null;
   const m = valid.reduce((a, b) => a + b, 0) / valid.length;
   let sq = 0;
   for (const t of valid) sq += (t - m) * (t - m);
   return Math.sqrt(sq / valid.length);
+}
+
+/** Standard deviation of all *valid* (non-DNF) effective times. */
+export function stdDev(solves: Solve[]): number | null {
+  return sdOfTimes(solves.map(effectiveMs));
+}
+
+/** σ (ms) of the valid times in the most recent N solves. null if < 2 valid. */
+export function sdOfLastN(solves: Solve[], n: number): number | null {
+  if (solves.length < n) return null;
+  return sdOfTimes(solves.slice(-n).map(effectiveMs));
+}
+
+/** σ (ms) of the window that yields the best aoN (the same window bestAverageOfN picks). */
+export function sdOfBestAoN(solves: Solve[], n: number): number | null {
+  if (solves.length < n) return null;
+  let best = Infinity;
+  let bestStart = -1;
+  for (let i = 0; i + n <= solves.length; i++) {
+    const window = solves.slice(i, i + n).map(effectiveMs);
+    const avg = n === 1 ? window[0] : trimmedMean(window);
+    if (avg < best) { best = avg; bestStart = i; }
+  }
+  if (bestStart < 0) return null;
+  return sdOfTimes(solves.slice(bestStart, bestStart + n).map(effectiveMs));
 }
 
 /** Coefficient of variation (σ / μ) as a percentage (0..100+). */

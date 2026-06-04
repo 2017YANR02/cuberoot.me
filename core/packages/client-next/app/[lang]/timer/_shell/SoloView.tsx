@@ -21,9 +21,10 @@ import {
   Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
   Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText,
   FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe,
-  Eye, EyeOff, ListOrdered, LineChart, RefreshCw, X,
+  Eye, EyeOff, ListOrdered, LineChart, RefreshCw, ChevronLeft, Brain, X,
 } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
+import { CubingIcon } from '@/components/EventIcon/EventIcon';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { petReact } from '@/lib/deskpet';
@@ -40,6 +41,7 @@ import { EVENTS, isBldEvent } from '../_lib/types';
 import {
   loadAll, saveAll, exportJson, importJson, makeSolve,
   importCstimerJson, exportCsv, exportSpeedstacks,
+  listSessions, getActiveSessionId, moveSolveToSession,
 } from '../_lib/storage/db';
 import { formatTargetTime, useApplyTheme, useSettings } from '../_lib/settings';
 import { warmupSound } from '../_lib/sound';
@@ -51,8 +53,10 @@ import { useMultiStage } from '../_lib/multistage';
 import { useBldMemo } from '../_lib/useBldMemo';
 
 import StatsPanel from '../_components/StatsPanel';
+import CrossSessionStats from '../_components/CrossSessionStats';
 import CaseStatsPanel from '../_components/CaseStatsPanel';
 import HistoryPanel from '../_components/HistoryPanel';
+import BldHelperModal from '../_components/BldHelperModal';
 import SolveModal from '../_components/SolveModal';
 import ReconstructModal from '../_components/ReconstructModal';
 import { decodeReplayParam } from '../_lib/share/decode';
@@ -91,6 +95,9 @@ import '../_components/charts/practice_heatmap.css';
 import './shell.css';
 
 const TRAINER_KINDS = new Set<EventId>(['oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2']);
+
+/** Max scrambles kept for ←/→ back/forward navigation. */
+const SCRAMBLE_HISTORY_CAP = 50;
 
 /** Timer EventIds that map to a real WCA event (drive WcaEventSelector
  *  active state). The rest render via appendEvents. */
@@ -257,20 +264,73 @@ export default function SoloView({ modePill }: SoloViewProps) {
     if (!drillAllowed && drillTarget) setDrillTarget(null);
   }, [drillAllowed, drillTarget]);
 
-  // ── Scramble ────────────────────────────────────────────────────
-  const [scrambleNonce, setScrambleNonce] = useState(0);
-  const scramble = useMemo(
-    () => {
-      if (drillTarget && drillAllowed) {
-        const ds = generateDrillScramble(drillTarget.type, drillTarget.id);
-        if (ds) return ds.scramble;
-      }
-      return generateScramble(event);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [event, scrambleNonce, kociembaReady, drillTarget, drillAllowed],
+  // ── Scramble (with back/forward history) ────────────────────────
+  // A bounded ring of recently shown scrambles so ←/→ can revisit the
+  // previous scramble or advance to the next. nextScramble() at the tip
+  // generates a fresh one; in the middle it steps forward through history.
+  // Changing event / drill target / kociemba-ready resets history to a single
+  // fresh scramble (matches the old memo's regenerate-on-context-change).
+  const genScramble = useCallback((): string => {
+    if (drillTarget && drillAllowed) {
+      const ds = generateDrillScramble(drillTarget.type, drillTarget.id);
+      if (ds) return ds.scramble;
+    }
+    return generateScramble(event);
+  }, [drillTarget, drillAllowed, event]);
+
+  const [scrambleHist, setScrambleHist] = useState<{ list: string[]; idx: number }>(
+    () => ({ list: [genScramble()], idx: 0 }),
   );
-  const nextScramble = useCallback(() => { setScrambleNonce(n => n + 1); }, []);
+  // Write-through ref so the nav callbacks read the latest history without a
+  // stale closure and without re-creating themselves each push.
+  const scrambleHistRef = useRef(scrambleHist);
+  const applyScrambleHist = useCallback((next: { list: string[]; idx: number }) => {
+    scrambleHistRef.current = next;
+    setScrambleHist(next);
+  }, []);
+  const scramble = scrambleHist.list[scrambleHist.idx] ?? '';
+  const canPrevScramble = scrambleHist.idx > 0;
+
+  // Click-to-copy flash (cstimer-style). Reads the live scramble via ref so the
+  // helper stays stable; shows a brief "已复制" badge.
+  const [scrambleCopied, setScrambleCopied] = useState(false);
+  const copiedTimerRef = useRef<number | null>(null);
+  const copyScrambleFlash = useCallback(() => {
+    const s = scrambleHistRef.current.list[scrambleHistRef.current.idx] ?? '';
+    if (!s) return;
+    try { void navigator.clipboard.writeText(s); } catch { /* ignore */ }
+    setScrambleCopied(true);
+    if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current);
+    copiedTimerRef.current = window.setTimeout(() => setScrambleCopied(false), 1200);
+  }, []);
+  useEffect(() => () => { if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current); }, []);
+
+  const nextScramble = useCallback(() => {
+    const cur = scrambleHistRef.current;
+    if (cur.idx < cur.list.length - 1) {
+      applyScrambleHist({ list: cur.list, idx: cur.idx + 1 });
+      return;
+    }
+    let list = [...cur.list, genScramble()];
+    let idx = cur.idx + 1;
+    if (list.length > SCRAMBLE_HISTORY_CAP) { list = list.slice(1); idx = list.length - 1; }
+    applyScrambleHist({ list, idx });
+  }, [genScramble, applyScrambleHist]);
+
+  const prevScramble = useCallback(() => {
+    const cur = scrambleHistRef.current;
+    if (cur.idx <= 0) return;
+    applyScrambleHist({ list: cur.list, idx: cur.idx - 1 });
+  }, [applyScrambleHist]);
+
+  // Reset history when the generation context changes. Skip the very first
+  // mount run — the lazy initializer already produced the opening scramble.
+  const scrambleResetRef = useRef(true);
+  useEffect(() => {
+    if (scrambleResetRef.current) { scrambleResetRef.current = false; return; }
+    applyScrambleHist({ list: [genScramble()], idx: 0 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [genScramble, kociembaReady]);
 
   // ── Solve recording ─────────────────────────────────────────────
   const [lastPenalty, setLastPenalty] = useState<Penalty | null>(null);
@@ -736,6 +796,8 @@ export default function SoloView({ modePill }: SoloViewProps) {
   const [manualEntryOpen, setManualEntryOpen] = useState(false);
   const [solverOpen, setSolverOpen] = useState(false);
   const [bulkScrambleOpen, setBulkScrambleOpen] = useState(false);
+  const [bldHelperOpen, setBldHelperOpen] = useState(false);
+  const [showCrossSession, setShowCrossSession] = useState(false);
 
   // ── Fullscreen ──────────────────────────────────────────────────
   const [fullscreen, setFullscreen] = useState(false);
@@ -763,7 +825,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
     settingsOpen || shortcutsOpen || bluetoothOpen ||
     trainerSubsetOpen !== null || statsModalOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
-    drillModalOpen || penaltySheetOpen ||
+    drillModalOpen || penaltySheetOpen || bldHelperOpen ||
     modalSolve !== null || reconstructSolve !== null;
   const anyModalOpenRef = useRef(anyModalOpen);
   useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
@@ -807,6 +869,8 @@ export default function SoloView({ modePill }: SoloViewProps) {
         return;
       }
       if (e.code === 'Comma') { nextScramble(); return; }
+      if (e.code === 'ArrowLeft') { e.preventDefault(); prevScramble(); return; }
+      if (e.code === 'ArrowRight') { e.preventDefault(); nextScramble(); return; }
       if (e.code === 'KeyF') { toggleFullscreen(); }
     };
     const onKeyUp = (e: KeyboardEvent) => {
@@ -821,7 +885,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [onPressDown, onPressUp, reset, updateSolve, deleteSolve, nextScramble, toggleFullscreen, multiStageActive, bldMemoActive]);
+  }, [onPressDown, onPressUp, reset, updateSolve, deleteSolve, nextScramble, prevScramble, toggleFullscreen, multiStageActive, bldMemoActive]);
 
   // ── Import / export ─────────────────────────────────────────────
   const handleExport = useCallback(() => {
@@ -903,6 +967,9 @@ export default function SoloView({ modePill }: SoloViewProps) {
     ...(drillAllowed && !drillTarget ? [{
       icon: <Crosshair size={14} />, label: isZh ? '专项练习' : 'Drill mode', onClick: () => setDrillModalOpen(true),
     }] : []),
+    ...(event.startsWith('333') ? [{
+      icon: <Brain size={14} />, label: isZh ? '盲拧助手' : 'BLD helper', onClick: () => setBldHelperOpen(true),
+    }] : []),
     { icon: <Keyboard size={14} />, label: isZh ? '快捷键' : 'Shortcuts', onClick: () => setShortcutsOpen(true) },
     { icon: fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />, label: isZh ? '全屏' : 'Fullscreen', onClick: toggleFullscreen },
     { icon: <Bluetooth size={14} />, label: isZh ? '智能魔方' : 'Smart cube', onClick: () => setBluetoothOpen(true) },
@@ -916,7 +983,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
     { icon: <ListPlus size={14} />, label: isZh ? '批量打乱' : 'Bulk scrambles', onClick: () => setBulkScrambleOpen(true) },
     { icon: <Printer size={14} />, label: isZh ? '打印' : 'Print', onClick: () => window.print() },
     { icon: <Trash2 size={14} />, label: isZh ? '清空当前项目' : 'Clear current event', onClick: clearAll, danger: true, disabled: !solves.length },
-  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, i18n]);
+  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, i18n, event]);
 
   const allSolves = useMemo(() => {
     const out: Solve[] = [];
@@ -980,6 +1047,12 @@ export default function SoloView({ modePill }: SoloViewProps) {
     ...WCA_SELECTABLE, 'magic', 'mmagic', ...APPEND_EVENTS.map(e => e.id),
   ]), []);
   const selectorActiveId = eventToSelectorId(event);
+  // Trigger shows the event icon (same mapping the grid uses). Non-WCA training
+  // events without an icon (Cross / OLL / Custom…) fall back to their text label.
+  const triggerAppend = APPEND_EVENTS.find(e => e.id === event);
+  const triggerIcon = triggerAppend
+    ? (triggerAppend.iconClass || null)
+    : `event-${selectorActiveId}`;
 
   // Picker dropdown open state (the topbar event pill opens the icon grid).
   const [eventPickerOpen, setEventPickerOpen] = useState(false);
@@ -1007,6 +1080,15 @@ export default function SoloView({ modePill }: SoloViewProps) {
             <StatsPanel solves={solves} isZh={isZh} event={event} />
             <CaseStatsPanel event={event} solves={solves} isZh={isZh} />
           </div>
+          <div className="shell-times-actions">
+            <button type="button" className="stats-expand-toggle" onClick={() => setStatsModalOpen(true)}>
+              {isZh ? '完整统计' : 'Full stats'}
+            </button>
+            <button type="button" className="stats-expand-toggle" onClick={() => setShowCrossSession(v => !v)}>
+              {isZh ? '跨分组统计' : 'Cross-session'} {showCrossSession ? '▴' : '▾'}
+            </button>
+          </div>
+          {showCrossSession && <CrossSessionStats event={event} isZh={isZh} />}
           <HistoryPanel
             solves={solves}
             isZh={isZh}
@@ -1088,12 +1170,15 @@ export default function SoloView({ modePill }: SoloViewProps) {
           <div className="shell-event-pick">
             <button
               type="button"
-              className="shell-event-btn"
+              className={`shell-event-btn${triggerIcon ? ' icon-only' : ''}`}
               onClick={() => setEventPickerOpen(o => !o)}
               aria-expanded={eventPickerOpen}
-              title={isZh ? '项目' : 'Event'}
+              aria-label={eventLabel}
+              title={eventLabel}
             >
-              <span className="shell-event-label">{eventLabel}</span>
+              {triggerIcon
+                ? <CubingIcon icon={triggerIcon} />
+                : <span className="shell-event-label">{eventLabel}</span>}
             </button>
             {eventPickerOpen && (
               <>
@@ -1144,11 +1229,12 @@ export default function SoloView({ modePill }: SoloViewProps) {
           onMouseUp={onCenterMouseUp}
           scrambleSlot={
             <div
-              className={`scramble-strip${settings.compactScramble ? ' compact' : ''}`}
+              className={`scramble-strip${settings.compactScramble ? ' compact' : ''}${canPrevScramble ? ' has-prev' : ''}`}
+              style={{ '--scramble-scale': settings.scrambleFontScale } as React.CSSProperties}
               onClick={() => {
                 const action = settings.scrambleClickAction;
                 if (action === 'none') return;
-                if (action === 'copy') { try { void navigator.clipboard.writeText(scramble); } catch { /* ignore */ } return; }
+                if (action === 'copy') { copyScrambleFlash(); return; }
                 nextScramble();
               }}
               title={settings.scrambleClickAction === 'copy'
@@ -1157,13 +1243,28 @@ export default function SoloView({ modePill }: SoloViewProps) {
                   ? (isZh ? '点击无操作' : 'Click disabled')
                   : (isZh ? '点击换一个打乱' : 'Click to refresh')}
             >
+              {canPrevScramble && (
+                <button
+                  type="button"
+                  className="scramble-prev"
+                  data-no-timer
+                  onClick={(e) => { e.stopPropagation(); prevScramble(); }}
+                  title={isZh ? '上一条打乱（←）' : 'Previous scramble (←)'}
+                  aria-label={isZh ? '上一条打乱' : 'Previous scramble'}
+                >
+                  <ChevronLeft size={14} />
+                </button>
+              )}
               <span className="scramble-text">{scramble || <span className="scramble-empty">—</span>}</span>
+              {scrambleCopied && (
+                <span className="scramble-copied-flash" data-no-timer>{isZh ? '已复制' : 'Copied'}</span>
+              )}
               <button
                 type="button"
                 className="scramble-refresh"
                 data-no-timer
                 onClick={(e) => { e.stopPropagation(); nextScramble(); }}
-                title={isZh ? '换一个打乱' : 'New scramble'}
+                title={isZh ? '换一个打乱（→）' : 'New scramble (→)'}
               >
                 <RefreshCw size={14} />
               </button>
@@ -1382,6 +1483,14 @@ export default function SoloView({ modePill }: SoloViewProps) {
             }}
             onDelete={() => { deleteSolve(modalSolve.s.id); setModalSolve(null); if (isLatest) setLastPenalty(null); }}
             onOpenReconstruct={() => setReconstructSolve(modalSolve.s)}
+            moveTargets={listSessions().filter(s => s.id !== getActiveSessionId()).map(s => ({ id: s.id, name: s.name }))}
+            onMoveToSession={(toId) => {
+              if (moveSolveToSession(modalSolve.s.id, toId)) {
+                setByEvent(loadAll());
+                setModalSolve(null);
+                if (isLatest) setLastPenalty(null);
+              }
+            }}
           />
         );
       })()}
@@ -1439,13 +1548,14 @@ export default function SoloView({ modePill }: SoloViewProps) {
 
       {solverOpen && <SolverModal isZh={isZh} onClose={() => setSolverOpen(false)} />}
       {bulkScrambleOpen && <BulkScrambleModal defaultEvent={event} isZh={isZh} onClose={() => setBulkScrambleOpen(false)} />}
+      {bldHelperOpen && <BldHelperModal scramble={scramble} event={event} isZh={isZh} onClose={() => setBldHelperOpen(false)} />}
 
       {drillModalOpen && (
         <DrillModal
           isZh={isZh}
           activeCase={drillTarget}
           initialType={event === 'pll' ? 'pll' : 'oll'}
-          onPick={(type, id) => { setDrillTarget({ type, id }); setScrambleNonce(n => n + 1); }}
+          onPick={(type, id) => { setDrillTarget({ type, id }); }}
           onExit={() => setDrillTarget(null)}
           onClose={() => setDrillModalOpen(false)}
         />

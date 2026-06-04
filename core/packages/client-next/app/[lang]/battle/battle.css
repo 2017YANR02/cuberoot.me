@@ -144,7 +144,7 @@
 .scramble-text {
     font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
     font-size: calc(clamp(0.8rem, 2.8vw, 1.1rem) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
-    color: var(--scramble-color, var(--player-text-color, var(--muted-foreground)));
+    color: var(--scramble-color, var(--player-text-color, var(--scramble-fg)));
     text-shadow: none;
     text-align: center;
     line-height: 1.35;
@@ -167,6 +167,26 @@
 .scramble-text .loading {
     color: var(--faint-foreground);
     font-style: italic;
+}
+
+/* timer-battle: the scramble text is click-to-copy, so it must capture taps
+   (base .scramble-text is pointer-events:none so taps fall through to arm the
+   timer). Scoped to .player-area to leave the solo strip untouched. */
+.player-area .scramble-text {
+    pointer-events: auto;
+    cursor: pointer;
+}
+.player-area .scramble-text.hidden {
+    pointer-events: none;
+}
+
+.battle-scramble-copied {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    margin-top: 4px;
+    pointer-events: none;
 }
 
 /* NOTE: 打乱图居中显示 */

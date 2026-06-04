@@ -49,6 +49,7 @@ const LOADERS: Record<string, () => Promise<{ default: StackTool }>> = {
   'vitest': () => import('../_tools/vitest'),
   'webcodecs': () => import('../_tools/webcodecs'),
   'windows': () => import('../_tools/windows'),
+  'wsl2': () => import('../_tools/wsl2'),
   'zed': () => import('../_tools/zed'),
   'zustand': () => import('../_tools/zustand'),
 };

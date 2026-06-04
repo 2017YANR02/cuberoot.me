@@ -285,8 +285,11 @@ export default function DeskPet() {
   useEffect(() => {
     const update = () => setLang((i18n.language || 'en').startsWith('zh') ? 'zh' : 'en');
     update();
-    i18n.on('languageChanged', update);
-    return () => { i18n.off('languageChanged', update); };
+    // defer via setTimeout — languageChanged fires synchronously inside I18nProvider's render,
+    // calling setState during another component's render throws in React strict mode.
+    const deferred = () => setTimeout(update, 0);
+    i18n.on('languageChanged', deferred);
+    return () => { i18n.off('languageChanged', deferred); };
   }, []);
 
   // Open the PLL performer from anywhere:

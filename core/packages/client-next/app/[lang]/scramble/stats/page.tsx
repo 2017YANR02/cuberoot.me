@@ -4,6 +4,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import DiscreteHistogram, { type HistSeries } from './_components/DiscreteHistogram';
+import { EventIcon } from '@/components/EventIcon/EventIcon';
+import {
+  SubsetColorPicker, useSubsetSelection, fillColorsForSubset,
+  COLOR_HEX, type ColorLetter,
+} from '@/components/SubsetColorPicker/SubsetColorPicker';
 import './scramble_stats.css';
 
 interface HistEntry {
@@ -31,45 +36,40 @@ interface DistributionJson {
   sets: Record<string, SetData>;
 }
 
-type ExampleSample = [string, string, string];
+type ExampleSample = [string, string, string];        // [id, scramble, bottomColor]
+type ExampleCompMeta = [string, string, number];      // [compId, eventId, scrambleNum]
 interface ExamplesSet {
   variants: Record<string, Record<string, Record<string, Record<string, ExampleSample[]>>>>;
+  comps?: Record<string, [string, string]>;           // compId → [比赛名, 日期串]
+  idMeta?: Record<string, ExampleCompMeta>;            // 全 id → [compId, 项目, 打乱序号]
 }
 interface ExamplesJson {
   meta: { generated_at: string };
   sets: Record<string, ExamplesSet>;
 }
 
+const EVENT_LABEL: Record<string, { zh: string; en: string }> = {
+  '333': { zh: '3x3', en: '3x3' },
+  '333oh': { zh: '3x3 单手', en: '3x3 OH' },
+  '333bf': { zh: '3x3 盲拧', en: '3x3 BLD' },
+  '333ft': { zh: '3x3 脚拧', en: '3x3 FT' },
+  '333mbf': { zh: '3x3 多盲', en: '3x3 MBLD' },
+};
+function eventLabel(e: string, isZh: boolean): string {
+  const m = EVENT_LABEL[e];
+  return m ? (isZh ? m.zh : m.en) : e;
+}
+
 type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo';
-type ColorMode = 'cn' | 'quad' | 'dual' | 'single';
 type YMode = 'percent' | 'count';
 type ChartMode = 'pdf' | 'cdf';
 
-type ColorLetter = 'B' | 'G' | 'O' | 'R' | 'W' | 'Y';
-const COLOR_LETTERS: ColorLetter[] = ['B', 'G', 'O', 'R', 'W', 'Y'];
-const COLOR_HEX: Record<ColorLetter, string> = {
-  Y: '#FEFE00',
-  R: '#EE0000',
-  W: '#FFFFFF',
-  O: '#FFA100',
-  B: '#0000F2',
-  G: '#00D800',
-};
-const DUAL_PAIRS: { key: string; letters: [ColorLetter, ColorLetter] }[] = [
-  { key: 'WY', letters: ['W', 'Y'] },
-  { key: 'BG', letters: ['B', 'G'] },
-  { key: 'OR', letters: ['O', 'R'] },
-];
-const SINGLE_CYCLE: ColorLetter[] = ['B', 'G', 'O', 'R', 'W', 'Y'];
-const DUAL_PAIR_KEYS: string[] = DUAL_PAIRS.map((p) => p.key);
-const GRADIENT_ORDER: ColorLetter[] = ['W', 'Y', 'G', 'B', 'R', 'O'];
-
 const VARIANT_LABEL: Record<VariantKey, { en: string; zh: string }> = {
   std: { en: 'Standard', zh: '标准' },
-  eo: { en: 'EOCross', zh: 'EO十字' },
-  pair: { en: 'Cross + Pair', zh: '十字+基态' },
-  pseudo: { en: 'Pseudo', zh: '伪十字' },
-  pseudo_pair: { en: 'Pseudo + Pair', zh: '伪十字+基态' },
+  eo: { en: 'EO', zh: 'EO' },
+  pair: { en: 'Pair', zh: '基态' },
+  pseudo: { en: 'Pseudo', zh: '伪' },
+  pseudo_pair: { en: 'Pseudo Pair', zh: '伪基态' },
   f2leo: { en: 'F2LEO', zh: 'F2LEO' },
   pseudo_f2leo: { en: 'Pseudo F2LEO', zh: '伪 F2LEO' },
 };
@@ -109,15 +109,6 @@ const STAGE_LABEL: Record<string, { en: string; zh: string }> = {
 };
 
 const labelStage = (s: string, isZh: boolean) => STAGE_LABEL[s] ? STAGE_LABEL[s][isZh ? 'zh' : 'en'] : s;
-
-function subsetKeyFromLetters(letters: ColorLetter[]): string {
-  return [...letters].sort().join('');
-}
-
-function fillColorsForSubset(letters: ColorLetter[]): string[] {
-  const set = new Set(letters);
-  return GRADIENT_ORDER.filter((c) => set.has(c)).map((c) => COLOR_HEX[c]);
-}
 
 function computeStats(counts: Record<string, number>) {
   const entries = Object.entries(counts)
@@ -163,10 +154,7 @@ export default function ScrambleStatsPage() {
   const [scrambleSet, setScrambleSet] = useState<string>('wca');
   const [variant, setVariant] = useState<VariantKey>('std');
   const [stage, setStage] = useState<string>('cross');
-  const [colorMode, setColorMode] = useState<ColorMode>('cn');
-  const [singleColor, setSingleColor] = useState<ColorLetter>('Y');
-  const [dualPairKey, setDualPairKey] = useState<string>('WY');
-  const [quadExcludedPairKey, setQuadExcludedPairKey] = useState<string>('BG');
+  const sel = useSubsetSelection('cn');
   const [yMode, setYMode] = useState<YMode>('percent');
   const [chartMode, setChartMode] = useState<ChartMode>('pdf');
   const [examples, setExamples] = useState<ExamplesJson | null>(null);
@@ -204,50 +192,11 @@ export default function ScrambleStatsPage() {
     }
   }, [currentStages, stage]);
 
-  const { subsetKey, selectedColors, modeLabel } = useMemo(() => {
-    let letters: ColorLetter[];
-    let label: string;
-    switch (colorMode) {
-      case 'cn':
-        letters = [...COLOR_LETTERS];
-        label = isZh ? '六色底' : 'CN';
-        break;
-      case 'quad': {
-        const pair = DUAL_PAIRS.find((p) => p.key === quadExcludedPairKey) ?? DUAL_PAIRS[0];
-        const excl = new Set<ColorLetter>(pair.letters);
-        letters = COLOR_LETTERS.filter((c) => !excl.has(c));
-        label = isZh ? '四色底' : 'Quad';
-        break;
-      }
-      case 'dual':
-        letters = [...(DUAL_PAIRS.find((p) => p.key === dualPairKey) ?? DUAL_PAIRS[0]).letters];
-        label = isZh ? '双色底' : 'Dual';
-        break;
-      case 'single':
-        letters = [singleColor];
-        label = isZh ? '单色底' : 'Single';
-        break;
-    }
-    return {
-      subsetKey: subsetKeyFromLetters(letters),
-      selectedColors: letters,
-      modeLabel: label,
-    };
-  }, [colorMode, singleColor, dualPairKey, quadExcludedPairKey, isZh]);
-
-  const cycleSelection = () => {
-    if (colorMode === 'single') {
-      const idx = SINGLE_CYCLE.indexOf(singleColor);
-      setSingleColor(SINGLE_CYCLE[(idx + 1) % SINGLE_CYCLE.length]);
-    } else if (colorMode === 'dual') {
-      const idx = DUAL_PAIR_KEYS.indexOf(dualPairKey);
-      setDualPairKey(DUAL_PAIR_KEYS[(idx + 1) % DUAL_PAIR_KEYS.length]);
-    } else if (colorMode === 'quad') {
-      const idx = DUAL_PAIR_KEYS.indexOf(quadExcludedPairKey);
-      setQuadExcludedPairKey(DUAL_PAIR_KEYS[(idx + 1) % DUAL_PAIR_KEYS.length]);
-    }
-  };
-  const cyclable = colorMode === 'single' || colorMode === 'dual' || colorMode === 'quad';
+  const subsetKey = sel.subsetKey;
+  const selectedColors = sel.selectedColors;
+  const modeLabel = isZh
+    ? { cn: '六色底', quad: '四色底', dual: '双色底', single: '单色底' }[sel.colorMode]
+    : { cn: 'CN', quad: 'Quad', dual: 'Dual', single: 'Single' }[sel.colorMode];
 
   const previewBins = useMemo<number[]>(() => {
     if (!currentSet) return [];
@@ -262,7 +211,7 @@ export default function ScrambleStatsPage() {
   const ensureExamplesLoaded = () => {
     if (examples || examplesLoading) return;
     setExamplesLoading(true);
-    fetch('/stats/scramble/examples.json')
+    fetch('/stats/scramble/examples.json', { cache: 'no-store' })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -303,12 +252,8 @@ export default function ScrambleStatsPage() {
       name: modeLabel,
       fillColors: fillColorsForSubset(selectedColors),
       counts: hist.counts,
-      onLegendClick: cyclable ? cycleSelection : undefined,
-      legendHint: cyclable ? (isZh ? '点击切换' : 'Click to cycle') : undefined,
     }];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSet, variant, stage, subsetKey, selectedColors, modeLabel, cyclable, isZh,
-      colorMode, singleColor, dualPairKey, quadExcludedPairKey]);
+  }, [currentSet, variant, stage, subsetKey, selectedColors, modeLabel]);
 
   const extendedStats = useMemo(() => {
     if (series.length !== 1) return null;
@@ -387,21 +332,22 @@ export default function ScrambleStatsPage() {
 
       <div className="scramble-stats-controls">
         <label>
-          <span>{isZh ? '变体' : 'Variant'}</span>
-          <select value={variant} onChange={(e) => setVariant(e.target.value as VariantKey)}>
+          <select value={variant} onChange={(e) => setVariant(e.target.value as VariantKey)} aria-label={isZh ? '变体' : 'Variant'}>
             {currentSet && (Object.keys(currentSet.variants) as VariantKey[]).map((v) => (
               <option key={v} value={v}>{VARIANT_LABEL[v][isZh ? 'zh' : 'en']}</option>
             ))}
           </select>
         </label>
         <label>
-          <span>{isZh ? '阶段' : 'Stage'}</span>
-          <select value={stage} onChange={(e) => setStage(e.target.value)}>
+          <select value={stage} onChange={(e) => setStage(e.target.value)} aria-label={isZh ? '阶段' : 'Stage'}>
             {currentStages.map((s) => (
               <option key={s} value={s}>{labelStage(s, isZh)}</option>
             ))}
           </select>
         </label>
+        <div className="scramble-stats-color-control">
+          <SubsetColorPicker sel={sel} isZh={isZh} />
+        </div>
       </div>
 
       <div className="scramble-stats-chart-wrapper">
@@ -410,17 +356,10 @@ export default function ScrambleStatsPage() {
           isZh={isZh}
           yMode={yMode}
           chartMode={chartMode}
-          modes={[
-            { key: 'cn', label: isZh ? '六色' : 'cn' },
-            { key: 'quad', label: isZh ? '四色' : 'quad' },
-            { key: 'dual', label: isZh ? '双色' : 'dual' },
-            { key: 'single', label: isZh ? '单色' : 'single' },
-          ]}
-          activeMode={colorMode}
-          onModeChange={(k) => setColorMode(k as ColorMode)}
           clickableBins={previewBins}
           selectedBin={selectedBin}
           onBarClick={handleBarClick}
+          hideLegendColors
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
           yModeLabel={yMode === 'percent' ? (isZh ? '百分比' : '%') : (isZh ? '数量' : 'count')}
@@ -454,6 +393,8 @@ export default function ScrambleStatsPage() {
         loading={examplesLoading}
         errorText={examplesError}
         samples={currentSamples}
+        comps={examples?.sets[scrambleSet]?.comps}
+        idMeta={examples?.sets[scrambleSet]?.idMeta}
       />
 
       {cnBenefit && (
@@ -534,6 +475,8 @@ function ExamplesPanel({
   loading,
   errorText,
   samples,
+  comps,
+  idMeta,
 }: {
   isZh: boolean;
   scrambleSet: string;
@@ -545,6 +488,8 @@ function ExamplesPanel({
   loading: boolean;
   errorText: string | null;
   samples: ExampleSample[] | null;
+  comps?: Record<string, [string, string]>;
+  idMeta?: Record<string, ExampleCompMeta>;
 }) {
   const selectedDownloadable = selectedBin !== null && downloadBins.includes(selectedBin);
   return (
@@ -575,16 +520,38 @@ function ExamplesPanel({
       )}
       {selectedBin !== null && !loading && !errorText && samples && samples.length > 0 && (
         <ul className="scramble-stats-examples-list">
-          {samples.map(([, scr, color], i) => (
-            <li key={i}>
-              <span
-                className="scramble-stats-examples-chip"
-                style={{ background: COLOR_HEX[color as ColorLetter] ?? '#888' }}
-                title={isZh ? '朝下的底色' : 'Bottom color'}
-              />
-              <code className="scramble-stats-examples-scramble">{scr}</code>
-            </li>
-          ))}
+          {samples.map(([id, scr, color], i) => {
+            const m = idMeta?.[id];
+            const comp = m ? comps?.[m[0]] : undefined;
+            return (
+              <li key={i}>
+                <span
+                  className="scramble-stats-examples-chip"
+                  style={{ background: COLOR_HEX[color as ColorLetter] ?? '#888' }}
+                  title={isZh ? '朝下的底色' : 'Bottom color'}
+                />
+                <div className="scramble-stats-examples-body">
+                  <code className="scramble-stats-examples-scramble">{scr}</code>
+                  {comp && m && (
+                    <a
+                      className="scramble-stats-examples-comp"
+                      href={`https://www.worldcubeassociation.org/competitions/${m[0]}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={comp[0]}
+                    >
+                      <span className="scramble-stats-examples-comp-name">{comp[0]}</span>
+                      <span className="scramble-stats-examples-comp-meta">
+                        <EventIcon event={m[1]} className="scramble-stats-examples-evt" title={eventLabel(m[1], isZh)} />
+                        {m[2] ? <span>#{m[2]}</span> : null}
+                        {comp[1] ? <span>{comp[1]}</span> : null}
+                      </span>
+                    </a>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
       {selectedBin !== null && !loading && !errorText && samples && samples.length === 0 && (

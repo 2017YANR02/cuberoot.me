@@ -37,12 +37,24 @@ export default function LiquidGlassChips<T extends string | number>({
   const containerRef = useRef<HTMLDivElement>(null);
   const chipRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const draggingRef = useRef(false);
+  // Optimistic local selection: drives the thumb + active chip immediately on
+  // drag, instead of waiting for `value` to round-trip back from the parent.
+  // Next.js routes selection through `router.replace` (async App Router
+  // transition), so the controlled `value` lags by hundreds of ms and the thumb
+  // never follows the finger. Mirror `value` into local state and re-sync
+  // whenever the parent's value changes.
+  const [localValue, setLocalValue] = useState<T>(value);
+  useEffect(() => { setLocalValue(value); }, [value]);
+  const select = (next: T) => {
+    setLocalValue(next);
+    onChange(next);
+  };
   const [chipBox, setChipBox] = useState<{ centerX: number; centerY: number; w: number; h: number }>(
     { centerX: 0, centerY: 0, w: 0, h: 0 },
   );
 
   const syncBox = () => {
-    const idx = items.indexOf(value);
+    const idx = items.indexOf(localValue);
     const chip = chipRefs.current[idx];
     if (!chip) return;
     setChipBox({
@@ -53,13 +65,13 @@ export default function LiquidGlassChips<T extends string | number>({
     });
   };
   // value / items / 文本变化都可能改 chip 宽 → 重测
-  useLayoutEffect(syncBox, [value, items, getLabel]);
+  useLayoutEffect(syncBox, [localValue, items, getLabel]);
   useEffect(() => {
     const onResize = () => syncBox();
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+  }, [localValue]);
 
   const idxAtX = (clientX: number): number => {
     const rects = chipRefs.current.map((el) => el?.getBoundingClientRect() ?? null);
@@ -75,12 +87,12 @@ export default function LiquidGlassChips<T extends string | number>({
     draggingRef.current = true;
     e.currentTarget.setPointerCapture?.(e.pointerId);
     const next = items[idxAtX(e.clientX)];
-    if (next !== value) onChange(next);
+    if (next !== localValue) select(next);
   };
   const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!draggingRef.current) return;
     const next = items[idxAtX(e.clientX)];
-    if (next !== value) onChange(next);
+    if (next !== localValue) select(next);
   };
   const onPointerEnd = (e: ReactPointerEvent<HTMLDivElement>) => {
     draggingRef.current = false;
@@ -131,9 +143,9 @@ export default function LiquidGlassChips<T extends string | number>({
           ref={(el) => { chipRefs.current[i] = el; }}
           type="button"
           role="tab"
-          aria-selected={item === value}
-          className={`lg-chips-chip${item === value ? ' is-active' : ''}`}
-          onClick={() => onChange(item)}
+          aria-selected={item === localValue}
+          className={`lg-chips-chip${item === localValue ? ' is-active' : ''}`}
+          onClick={() => select(item)}
         >
           {getLabel(item)}
         </button>

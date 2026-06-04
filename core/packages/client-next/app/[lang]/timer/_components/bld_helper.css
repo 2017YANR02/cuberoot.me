@@ -1,0 +1,206 @@
+/* BLD helper modal — Speffz memo readout for the current 3x3 scramble.
+   Lives inside the timer-modal (dark) context; colors via theme tokens only. */
+
+.bld-helper-modal {
+  max-width: 440px;
+  /* .timer-modal is hardcoded-dark on every page theme, so root tokens (which
+     follow the page light/dark state) would paint dark text on the dark modal.
+     Lock the standard dark palette here — same fix as .timer-modal--solver. */
+  --foreground: #ededed;
+  --muted-foreground: #a3a3a3;
+  --faint-foreground: #737373;
+}
+
+.bld-helper-modal h2 {
+  margin: 0 0 14px;
+}
+
+.bld-helper-hint {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin: 4px 0 12px;
+  line-height: 1.5;
+}
+
+.bld-helper-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.bld-helper-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bld-helper-section-label {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.bld-helper-letters {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  line-height: 1.6;
+  letter-spacing: 0.06em;
+  color: var(--foreground);
+  word-break: break-word;
+}
+
+.bld-helper-pair {
+  white-space: nowrap;
+  margin-right: 0.55em;
+}
+
+/* cstimer-faithful cycle colouring: blue = cycle start, green = cycle end
+   (upstream reader.js color:blue / color:green). signal tokens are constant
+   across themes, so they read fine on the locked-dark modal. */
+.bld-helper-cell-start {
+  color: var(--signal-info);
+  font-weight: 600;
+}
+
+.bld-helper-cell-end {
+  color: var(--signal-success);
+  font-weight: 600;
+}
+
+/* ---- config (buffers + advanced) ---- */
+.bld-helper-config {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin: 4px 0 14px;
+}
+
+.bld-helper-cfg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bld-helper-cfg-field.wide { flex: 1 1 180px; }
+
+.bld-helper-cfg-field label {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.bld-helper-cfg-field select,
+.bld-helper-input-wrap input {
+  background: var(--input);
+  color: var(--foreground);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+
+.bld-helper-input-wrap {
+  position: relative;
+  display: flex;
+}
+
+.bld-helper-input-wrap input {
+  flex: 1;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+.bld-helper-adv-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--muted-foreground);
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.bld-helper-adv-toggle:hover { color: var(--foreground); }
+
+.bld-helper-adv {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: -6px 0 14px;
+  padding: 12px;
+  border: 1px solid var(--shell-divider);
+  border-radius: 6px;
+}
+
+.bld-helper-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.bld-helper-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  margin-bottom: 12px;
+}
+
+.bld-helper-legend-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.bld-helper-legend-item .bld-helper-cell-start,
+.bld-helper-legend-item .bld-helper-cell-end {
+  font-family: var(--font-mono);
+}
+
+.bld-helper-empty {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--faint-foreground);
+}
+
+.bld-helper-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding-top: 10px;
+  margin-top: 2px;
+  border-top: 1px solid var(--shell-divider);
+  font-size: 13px;
+}
+
+.bld-helper-meta-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.bld-helper-meta-key {
+  color: var(--muted-foreground);
+}
+
+.bld-helper-meta-val {
+  font-family: var(--font-mono);
+  color: var(--foreground);
+}
+
+.bld-helper-meta-val.is-on {
+  color: color-mix(in srgb, var(--accent) 90%, var(--foreground));
+}
+
+.bld-helper-meta-val.is-off {
+  color: var(--faint-foreground);
+}

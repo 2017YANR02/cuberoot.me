@@ -1,0 +1,49 @@
+/* SubsetColorPicker — /scramble/stats + 首页 DailyGod 共用。
+   主题无关:边框走 currentColor,选中态走 var(--accent)(两页都定义),不依赖 --background/--foreground。 */
+.subset-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.subset-picker-mode {
+  appearance: none;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.3rem 1.5rem 0.3rem 0.6rem;
+  color: inherit;
+  background: transparent
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='1.5'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E")
+    no-repeat right 0.45rem center / 0.8em;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.12s;
+}
+.subset-picker-mode:hover { border-color: color-mix(in srgb, currentColor 45%, transparent); }
+.subset-picker-mode:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.subset-picker-swatches {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.subset-swatch {
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: transform 0.1s;
+  display: block;
+  overflow: hidden;
+}
+.subset-swatch-tile { display: block; width: 100%; height: 100%; }
+.subset-swatch-cell { display: block; width: 100%; height: 100%; }
+.subset-swatch:not(.is-static):hover { transform: scale(1.1); }
+.subset-swatch.is-active { outline: 2px solid var(--accent); outline-offset: 1px; }
+.subset-swatch.is-static { cursor: default; }

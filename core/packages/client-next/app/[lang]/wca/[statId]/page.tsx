@@ -2,8 +2,8 @@
 
 // Catch-all WCA stat renderer. Ported from packages/client/src/pages/wca_stats/WcaStatsPage.tsx.
 // Supports 4 render modes: rows / sections / panels / metricPanels.
-// NOTE: deferred — Top10HistoryPage 嵌入(wr_metric ranking 面板)和 hasAbout 链接 (wca_about/registry)
-// 暂未迁移;wr_metric 仍可渲染但无 bar chart race,about 链接不显示。
+// NOTE: deferred — hasAbout 链接 (wca_about/registry) 暂未迁移,about 链接不显示。
+//   Top10HistoryPage 嵌入(wr_metric ranking 面板 bar chart race)已迁移。
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -24,6 +24,8 @@ import { translateCellText, translatePersonLink, stripChineseParens } from '@/li
 import { rewriteWcaCompUrl, prefetchComp } from '@/lib/comp-link';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
+import Top10HistoryPage from '@/components/wca-stats/Top10HistoryPage';
+import type { Metric as Top10Metric } from '@/lib/top10-axis';
 import '../_wca_stats.css';
 
 interface StatHeader {
@@ -1175,6 +1177,28 @@ export default function WcaStatsPage() {
           onSetActiveMetric={(idx) => handleSetActiveMetric(idx, data.metricPanels!)}
           onSetActivePanel={(idx, panels) => handleSetActivePanel(idx, panels)}
           activePanel={activePanel}
+          belowTabs={(() => {
+            // NOTE: wr_metric ranking 面板专属——bar chart race 渲染在 排名/历史 tabs 下方、表格上方
+            if (statId !== 'wr_metric' || activePanel !== 0) return null;
+            const METRIC_KEY: Record<string, Top10Metric> = {
+              single: 'single', average: 'average',
+              bao5: 'bao5', wao5: 'wao5', mo5: 'mo5',
+              bpa: 'bpa', wpa: 'wpa',
+              median: 'median', bestc: 'best_counting', worstc: 'worst_counting',
+              worst: 'worst',
+            };
+            const mp = data.metricPanels?.[activeMetric];
+            const m = mp ? METRIC_KEY[mp.id] : undefined;
+            if (!m) return null;
+            return (
+              <Top10HistoryPage
+                controlledEventId={selectedEvent || '333'}
+                controlledMetric={m}
+                controlledMetricLabelZh={mp?.labelZh}
+                controlledMetricLabelEn={mp?.labelEn}
+              />
+            );
+          })()}
         />
       )}
 

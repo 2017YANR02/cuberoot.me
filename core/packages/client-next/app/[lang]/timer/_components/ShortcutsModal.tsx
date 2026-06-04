@@ -38,6 +38,8 @@ const BLD: ShortcutRow[] = [
 ];
 
 const NAV: ShortcutRow[] = [
+  { keys: ['→'],         en: 'Next scramble (new one at the end of history).',  zh: '下一条打乱（到末尾则生成新的）。' },
+  { keys: ['←'],         en: 'Previous scramble (revisit history).',            zh: '上一条打乱（回看历史）。' },
   { keys: [','],         en: 'Generate a new scramble.',                        zh: '生成下一个打乱。' },
   { keys: ['F'],         en: 'Toggle fullscreen.',                              zh: '切换全屏。' },
   { keys: ['Click strip'], en: 'Refresh scramble.',                             zh: '点击打乱条换打乱。' },

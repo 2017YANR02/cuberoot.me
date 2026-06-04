@@ -245,7 +245,6 @@
     "density_heat": "热力",
     "density_country": "分国",
     "includePast": "包含往期",
-    "modeCuber": "路径",
     "modeWr": "WR",
     "wrYearLabel": "截至 {{year}} 年",
     "wrPlay": "播放时间轴",

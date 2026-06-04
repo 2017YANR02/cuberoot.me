@@ -88,6 +88,20 @@ export function play(cue: Cue): void {
 }
 
 /**
+ * A single short beep for the configurable "beep at N inspection seconds" list.
+ * Independent of `soundsEnabled` — populating the beep-at list IS the opt-in —
+ * but still respects master volume (0 = silent).
+ */
+export function playInspectionBeep(): void {
+  const s = getSettings();
+  if (s.volume <= 0) return;
+  const c = ctx();
+  if (!c) return;
+  if (c.state === 'suspended') void c.resume();
+  playNote(c, { freq: 1050, ms: 90 }, c.currentTime + 0.005, s.volume);
+}
+
+/**
  * Pre-warm the audio context with a silent note. Call this on the first user
  * gesture to satisfy mobile autoplay policies.
  */

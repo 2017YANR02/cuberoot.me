@@ -128,7 +128,7 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
         {/* 轮次列表 */}
         <div className="history-list">
           {roundCount === 0 && (
-            <div className="history-empty">{isZh ? '暂无对战记录' : 'No rounds yet'}</div>
+            <div className="history-empty">{isZh ? '暂无双人记录' : 'No rounds yet'}</div>
           )}
           {Array.from({ length: roundCount }, (_, i) => roundCount - 1 - i).map(i => {
             const e0 = h0[i];

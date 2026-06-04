@@ -245,7 +245,6 @@
     "density_heat": "Heat",
     "density_country": "Country",
     "includePast": "Include past",
-    "modeCuber": "Path",
     "modeWr": "WR",
     "wrYearLabel": "As of {{year}}",
     "wrPlay": "Play timeline",
