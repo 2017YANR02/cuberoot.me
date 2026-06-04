@@ -47,6 +47,8 @@ CUBING_CHINA_API = "https://cubing.com/api/competition"
 CUBING_CHINA_BASE = "https://cubing.com"
 API_DELAY_SEC = 0.5
 MAX_RETRIES = 3
+# NOTE: 429 限流独立于失败重试——遵守 Retry-After 多等几次，别因限流就丢掉一场比赛
+MAX_RATE_LIMIT_WAITS = 10
 # NOTE: 缓存有效期（秒），默认 24 小时。用户选择刷新时会被置为 0
 CACHE_TTL_SEC = 24 * 3600
 
@@ -222,7 +224,9 @@ def _build_event_tags(cuber_info) -> list:
 def fetch_with_retry(url: str, raw: bool = False):
     """带限流和防封禁重试机制的网络请求。raw=True 时返回原始文本，否则解析 JSON。"""
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    for attempt in range(MAX_RETRIES):
+    attempt = 0
+    rate_limit_waits = 0
+    while attempt < MAX_RETRIES:
         try:
             time.sleep(API_DELAY_SEC)
             with urllib.request.urlopen(req, timeout=10) as resp:
@@ -234,16 +238,25 @@ def fetch_with_retry(url: str, raw: bool = False):
                 # NOTE: 404 = 无 WCA 账号；403 = 端点需要认证，重试无意义
                 return {}
             elif e.code == 429:
+                # NOTE: 429 = 速率限流，不是失败。遵守 Retry-After 耐心等待，且不消耗
+                #       attempt（否则 3 次 429 就丢掉这场比赛）；仅独立上限防无限卡死。
+                if rate_limit_waits >= MAX_RATE_LIMIT_WAITS:
+                    print(f"[ERROR] 429 连续 {MAX_RATE_LIMIT_WAITS} 次仍限流，放弃: {url}")
+                    return {}
                 wait = int(e.headers.get("Retry-After", 2))
                 print(f"[WARN] 触发 429 限制，等待 {wait} 秒...")
                 time.sleep(wait)
+                rate_limit_waits += 1
+                continue
             else:
                 print(f"[ERROR] API 返回 {e.code}: {url}")
                 time.sleep(1)
+                attempt += 1
 
         except (urllib.error.URLError, OSError) as e:
             print(f"[WARN] 请求异常 {e}, 重试 {attempt + 1}/{MAX_RETRIES}...")
             time.sleep(2)
+            attempt += 1
 
     return {}
 
@@ -601,8 +614,9 @@ def fetch_wcif_batch(comp_ids: Iterable[str]) -> Dict[str, Dict[str, Any]]:
         return out
 
     print(f"[WCIF] 缓存命中 {len(out)} 场，待拉取 {len(pending)} 场...")
-    # NOTE: 2 个 worker × 0.5s/req ≈ 4 req/s。实测 5 worker 会触发 WCA 429 限速，2 已稳定。
-    workers = 2
+    # NOTE: 1 worker × 0.5s/req ≈ 2 req/s。2 worker(~4 req/s)实测仍频繁 429，降到 1 串行更
+    #       平滑：每次严格遵守上一个 429 的 Retry-After，自适应到 WCA 允许的最快合法速率。
+    workers = 1
     done = 0
     with ThreadPoolExecutor(max_workers=workers) as executor:
         futures = {executor.submit(fetch_wcif, cid): cid for cid in pending}
