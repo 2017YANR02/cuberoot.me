@@ -9,11 +9,11 @@ description: "Use when regenerating `stats/comp_names_zh.json`, debugging Chines
 
 ## 数据：`stats/comp_names_zh.json`
 
-由 `scripts/fetch_comp_names_zh.py` 生成。
+由 `core/packages/stats-build/src/bin/fetch_comp_names_zh.ts` 生成（在 `core/packages/stats-build` 下跑）。
 
 ```bash
-python scripts/fetch_comp_names_zh.py           # 全量
-python scripts/fetch_comp_names_zh.py --refresh # 增量（清第 1 页 + WCA API 缓存）
+npx tsx src/bin/fetch_comp_names_zh.ts           # 全量
+npx tsx src/bin/fetch_comp_names_zh.ts --refresh # 增量（清第 1 页 + WCA API 缓存）
 ```
 
 - 键同时存 WCA `name` 和 `short_name`，值是 cubing.com 中文名。

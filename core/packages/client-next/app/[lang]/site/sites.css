@@ -1,15 +1,15 @@
 :root {
-  --sites-bg: #ffffff;
-  --sites-bg-alt: #f6f8fb;
-  --sites-border: #e4e7ec;
-  --sites-text: #1a1a1a;
-  --sites-text-muted: #5a6370;
-  --sites-text-faint: #8a93a0;
+  --sites-bg: var(--background);
+  --sites-bg-alt: var(--card);
+  --sites-border: var(--border-default);
+  --sites-text: var(--foreground);
+  --sites-text-muted: var(--muted-foreground);
+  --sites-text-faint: var(--faint-foreground);
   --sites-accent: #0066cc;
-  --sites-accent-soft: #e6f0fb;
-  --sites-danger: #c63a3a;
-  --sites-danger-soft: #fde9e9;
-  --sites-row-hover: #f2f5fa;
+  --sites-accent-soft: color-mix(in srgb, var(--sites-accent) 14%, transparent);
+  --sites-danger: var(--destructive);
+  --sites-danger-soft: color-mix(in srgb, var(--destructive) 14%, transparent);
+  --sites-row-hover: color-mix(in srgb, var(--foreground) 4%, transparent);
 }
 
 .sites-page {
@@ -193,7 +193,7 @@
   top: 50%;
   right: 10px;
   transform: translateY(-50%);
-  color: #d13636;
+  color: var(--destructive);
   display: inline-flex;
   align-items: center;
   padding: 2px;

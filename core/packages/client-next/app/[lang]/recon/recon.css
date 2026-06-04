@@ -5,6 +5,9 @@
 
 /* --- 页面容器 --- */
 .recon-page {
+  /* 一等奖名次的洋红 — 与 persons.css 的 --wp-pink 同值;饱和色,两套主题都清晰,
+     recon 页不加载 persons.css 故就地定义 */
+  --recon-pink: #C84A6F;
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px 16px;
@@ -14,7 +17,7 @@
 .recon-page h1 {
   font-size: 1.4rem;
   margin-bottom: 0.5rem;
-  color: #e5e5e5;
+  color: var(--foreground);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -22,12 +25,12 @@
 .recon-title-help {
   display: inline-flex;
   align-items: center;
-  color: #95938E;
+  color: var(--muted-foreground);
   opacity: 0.6;
   text-decoration: none;
   transition: opacity 0.15s, color 0.15s;
 }
-.recon-title-help:hover { opacity: 1; color: #e8a27a; }
+.recon-title-help:hover { opacity: 1; color: var(--accent); }
 
 /* NOTE: 标题区行布局 — h1+副标题靠左，LangToggle 靠右（行业标准：header 内联） */
 .recon-page-header {
@@ -44,6 +47,14 @@
 
 .recon-page-header h1 {
   margin-bottom: 0.25rem;
+}
+
+/* 返回链接独占一行(块级),否则会和后面 inline-flex 的 h1 撞在一起 */
+.recon-back-link {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 4px;
 }
 
 /* --- 工具栏 --- */
@@ -68,9 +79,9 @@
 .recon-filters select {
   padding: 7px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: #c0c0c0;
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  color: var(--muted-foreground);
   font-size: 0.85rem;
   font-family: 'Inter', Arial, sans-serif;
   cursor: pointer;
@@ -79,12 +90,12 @@
 }
 
 .recon-filters select:focus {
-  border-color: rgba(217, 119, 87, 0.5);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .recon-stats-count {
   font-size: 0.8rem;
-  color: #5a5a5a;
+  color: var(--faint-foreground);
   white-space: nowrap;
 }
 
@@ -96,17 +107,17 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid rgba(217, 119, 87, 0.4);
-  background: rgba(217, 119, 87, 0.15);
-  color: #e8a27a;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
   cursor: pointer;
   transition: all 0.2s;
   text-decoration: none;
 }
 
 .recon-add-btn:hover {
-  background: rgba(217, 119, 87, 0.3);
-  color: #fff;
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--foreground);
 }
 
 .recon-actions {
@@ -140,7 +151,7 @@
   display: inline-block;
   margin-bottom: 1rem;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 /* event 列 cubing-icon + 文字对齐 */
@@ -175,12 +186,12 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: rgba(22, 22, 22, 0.98);
+  background: color-mix(in srgb, var(--background) 98%, transparent);
   backdrop-filter: blur(8px);
-  color: #8a8a8a;
+  color: var(--muted-foreground);
   font-weight: 600;
   padding: 10px 6px;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 2px solid color-mix(in srgb, var(--foreground) 8%, transparent);
   text-align: left;
   white-space: nowrap;
   cursor: pointer;
@@ -189,7 +200,7 @@
 }
 
 .recon-table thead th:hover {
-  color: #a3a3a3;
+  color: var(--foreground);
 }
 
 /* NOTE: 排序指示器 */
@@ -213,21 +224,21 @@
   flex: 1;
   width: 0;
   min-width: 60px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 4px;
   padding: 4px 6px;
-  color: #d4d4d4;
+  color: var(--foreground);
   font-family: 'Roboto Mono', monospace;
 }
 
 .recon-range-filter input:focus {
   outline: none;
-  border-color: rgba(232, 162, 122, 0.5);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .recon-range-sep {
-  color: #737373;
+  color: var(--faint-foreground);
   font-size: 0.75rem;
 }
 
@@ -236,21 +247,21 @@
   flex: 0 0 auto;
   min-width: 28px;
   padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
   border-radius: 4px;
-  color: #d4d4d4;
+  color: var(--foreground);
   font-size: 0.95rem;
   line-height: 1;
   cursor: pointer;
 }
 
 .recon-range-tilde-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
 }
 
 .recon-range-tilde-btn:active {
-  background: rgba(232, 162, 122, 0.25);
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 /* --- 表格行 --- */
@@ -260,12 +271,12 @@
 }
 
 .recon-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
 }
 
 .recon-table tbody td {
   padding: 8px 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 4%, transparent);
   white-space: nowrap;
   vertical-align: middle;
 }
@@ -273,14 +284,14 @@
 /* --- 列样式 --- */
 .col-idx {
   font-size: 0.6rem;
-  color: #5a5a5a;
+  color: var(--faint-foreground);
   padding: 6px 4px;
 }
 
 .col-single {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.85rem;
-  color: #e5e5e5;
+  color: var(--foreground);
 }
 
 .col-avg, .col-dsingle { font-weight: 600; }
@@ -306,7 +317,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #b5b5b5;
+  color: var(--muted-foreground);
 }
 
 /* 表格内联国旗(列表页 reconer 列) — 兼顾 fi-xx span 与 TW SVG img */
@@ -336,7 +347,7 @@ img.recon-inline-flag {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #909090;
+  color: var(--faint-foreground);
   font-size: 0.8rem;
 }
 
@@ -363,9 +374,9 @@ img.recon-inline-flag {
   padding: 0 14px;
   font-size: 0.82rem;
   font-family: 'Inter', Arial, sans-serif;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: #5a5a5a;
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  color: var(--faint-foreground);
   cursor: pointer;
   transition: all 0.15s ease;
   outline: none;
@@ -382,28 +393,28 @@ img.recon-inline-flag {
 }
 
 .toggle-btn.active {
-  background: rgba(217, 119, 87, 0.2);
-  color: #e8b49a;
-  border-color: rgba(217, 119, 87, 0.4);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .toggle-btn.active + .toggle-btn.active {
-  border-left: 1px solid rgba(217, 119, 87, 0.4);
+  border-left: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #c0c0c0;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--muted-foreground);
 }
 
 .toggle-btn.active:hover {
-  background: rgba(217, 119, 87, 0.3);
-  color: #f0d0b8;
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--accent);
 }
 
 /* --- 副标题 --- */
 .recon-subtitle {
-  color: #5a5a5a;
+  color: var(--faint-foreground);
   font-size: 0.9rem;
   margin-bottom: 0.8rem;
 }
@@ -415,7 +426,7 @@ img.recon-inline-flag {
 }
 
 .recon-table a:hover {
-  color: #d97757;
+  color: var(--accent);
   text-decoration: underline;
 }
 
@@ -431,9 +442,9 @@ td[data-tip-show]:hover::after {
   bottom: 100%;
   z-index: 100;
   padding: 4px 8px;
-  background: #1a1a1a;
-  color: #e5e5e5;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--popover);
+  color: var(--foreground);
+  border: 1px solid color-mix(in srgb, var(--foreground) 15%, transparent);
   border-radius: 4px;
   font-size: 0.78rem;
   white-space: nowrap;
@@ -443,7 +454,7 @@ td[data-tip-show]:hover::after {
 
 /* --- 社区标记 --- */
 .community-row td:first-child {
-  border-left: 2px solid rgba(217, 119, 87, 0.4);
+  border-left: 2px solid color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 /* --- 分页 --- */
@@ -458,30 +469,30 @@ td[data-tip-show]:hover::after {
 .recon-btn {
   padding: 8px 24px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: #c0c0c0;
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  color: var(--muted-foreground);
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .recon-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  border-color: rgba(217, 119, 87, 0.4);
+  background: color-mix(in srgb, var(--foreground) 12%, transparent);
+  color: var(--foreground);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .recon-showing {
   font-size: 0.8rem;
-  color: #5a5a5a;
+  color: var(--faint-foreground);
 }
 
 /* --- 加载 / 错误 --- */
 .recon-loading {
   text-align: center;
   padding: 40px 0;
-  color: #737373;
+  color: var(--faint-foreground);
   font-size: 0.95rem;
 }
 
@@ -492,10 +503,10 @@ td[data-tip-show]:hover::after {
   gap: 6px;
   text-align: center;
   padding: 20px;
-  color: #f87171;
-  background: rgba(248, 113, 113, 0.1);
+  color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
   border-radius: 8px;
-  border: 1px solid rgba(248, 113, 113, 0.2);
+  border: 1px solid color-mix(in srgb, var(--destructive) 20%, transparent);
 }
 
 /* --- WCA 登录区域 --- */
@@ -506,9 +517,9 @@ td[data-tip-show]:hover::after {
 }
 
 .wca-login-btn {
-  background: rgba(217, 119, 87, 0.15);
-  border: 1px solid rgba(217, 119, 87, 0.4);
-  color: #e8a27a;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent);
   padding: 7px 14px;
   border-radius: 8px;
   cursor: pointer;
@@ -518,15 +529,15 @@ td[data-tip-show]:hover::after {
 }
 
 .wca-login-btn:hover {
-  background: rgba(217, 119, 87, 0.3);
-  color: #fff;
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--foreground);
 }
 
 /* --- 空状态 --- */
 .recon-empty {
   text-align: center;
   padding: 60px 20px;
-  color: #5a5a5a;
+  color: var(--faint-foreground);
 }
 
 .recon-empty-icon {
@@ -542,9 +553,9 @@ td[data-tip-show]:hover::after {
   gap: 6px;
   padding: 12px 16px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px dashed rgba(255, 255, 255, 0.12);
-  color: #737373;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--foreground) 12%, transparent);
+  color: var(--faint-foreground);
   font-size: 0.85rem;
   text-align: center;
   margin-top: 8px;
@@ -553,8 +564,8 @@ td[data-tip-show]:hover::after {
 /* --- Normalized Cross block (used in detail + submit pages) --- */
 .normalized-cross-block {
   margin-top: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   border-radius: 6px;
   overflow: hidden;
 }
@@ -564,13 +575,13 @@ td[data-tip-show]:hover::after {
   align-items: center;
   justify-content: space-between;
   padding: 6px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
 }
 
 .normalized-cross-title {
   font-size: 0.78rem;
-  color: #a3a3a3;
+  color: var(--muted-foreground);
   letter-spacing: 0.02em;
 }
 
@@ -580,15 +591,15 @@ td[data-tip-show]:hover::after {
   justify-content: center;
   background: transparent;
   border: none;
-  color: #a3a3a3;
+  color: var(--muted-foreground);
   cursor: pointer;
   padding: 2px 4px;
   border-radius: 4px;
 }
 
 .normalized-cross-copy:hover {
-  color: #e8a27a;
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .normalized-cross-body {
@@ -596,10 +607,10 @@ td[data-tip-show]:hover::after {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.82rem;
   line-height: 1.6;
-  color: #e5e5e5;
+  color: var(--foreground);
   word-break: break-word;
 }
 
 .normalized-cross-comment {
-  color: #737373;
+  color: var(--faint-foreground);
 }

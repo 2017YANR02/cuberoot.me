@@ -17,20 +17,20 @@
 }
 
 .detail-back {
-  color: #e8a27a;
+  color: var(--accent);
   text-decoration: none;
   font-size: 0.9rem;
   white-space: nowrap;
 }
 
 .detail-back:hover {
-  color: #fff;
+  color: var(--foreground);
 }
 
 .detail-title {
   flex: 1;
   font-size: 1.3rem;
-  color: #e5e5e5;
+  color: var(--foreground);
 }
 
 /* --- 元数据标签栏 --- */
@@ -46,16 +46,16 @@
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
   border-radius: 6px;
   font-size: 0.82rem;
-  color: #a3a3a3;
+  color: var(--muted-foreground);
   text-decoration: none;
 }
 
 .detail-meta-tag a {
-  color: #e8a27a;
+  color: var(--accent);
   text-decoration: none;
 }
 
@@ -89,12 +89,14 @@
 }
 
 .detail-player-pane {
-  flex: 0 0 600px;
+  /* grow to absorb ultrawide slack so the content pane stays flush to the right
+     edge instead of leaving a dead gap; 600px is the floor */
+  flex: 1 1 600px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
   background: rgba(0, 0, 0, 0.15);
 }
 
@@ -111,8 +113,11 @@
 }
 
 .detail-content-pane {
-  flex: 1;
+  /* Cap reading width on ultrawide screens so stats / same-comp table don't
+     stretch edge-to-edge; won't grow past 800, the player pane eats the rest. */
+  flex: 0 1 800px;
   overflow-y: auto;
+  max-width: 800px;
   padding: 12px 20px 24px;
 }
 
@@ -132,10 +137,11 @@
     flex: none;
     height: 380px;
     border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
   }
   .detail-content-pane {
     overflow: visible;
+    max-width: none;
     padding: 12px 16px 24px;
   }
 }
@@ -157,7 +163,7 @@
   align-items: center;
   gap: 6px;
   font-size: 0.85rem;
-  color: #5a5a5a;
+  color: var(--faint-foreground);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 6px;
@@ -169,11 +175,11 @@
   font-family: 'Roboto Mono', monospace;
   font-size: 0.95rem;
   line-height: 1.7;
-  color: #a3a3a3;
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   padding: 10px 14px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   word-break: break-all;
 }
 
@@ -185,7 +191,7 @@
   font-family: 'Roboto Mono', monospace;
   font-size: 0.95rem;
   line-height: 1.7;
-  color: #d4d4d4;
+  color: var(--foreground);
   padding: 0;
   word-break: break-all;
 }
@@ -204,13 +210,13 @@
   font-family: 'Roboto Mono', monospace;
   font-size: 0.8rem;
   line-height: 1.5;
-  color: #9a9a9a;
+  color: var(--muted-foreground);
   margin-bottom: 6px;
   word-break: break-all;
 }
 .detail-other-scramble-label {
   flex-shrink: 0;
-  color: #707070;
+  color: var(--faint-foreground);
   font-family: inherit;
 }
 
@@ -219,10 +225,10 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
   padding: 10px 14px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .stat-item {
@@ -235,14 +241,14 @@
 
 .stat-label {
   font-size: 0.85rem;
-  color: #5a5a5a;
+  color: var(--faint-foreground);
   white-space: nowrap;
 }
 
 .stat-value {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.95rem;
-  color: #d4d4d4;
+  color: var(--foreground);
   text-align: left;
 }
 
@@ -261,8 +267,8 @@
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .detail-video-wrap iframe {
@@ -315,7 +321,7 @@
 }
 
 .detail-video-link {
-  color: #e8a27a;
+  color: var(--accent);
   font-size: 0.85rem;
   text-decoration: none;
   display: inline-flex;
@@ -331,11 +337,11 @@
 /* --- 备注 --- */
 .detail-note {
   font-size: 0.95rem;
-  color: #a3a3a3;
-  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
   padding: 10px 14px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   white-space: pre-wrap;
 }
 
@@ -347,8 +353,8 @@
 }
 
 .detail-comment {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   border-radius: 6px;
   padding: 10px 14px;
 }
@@ -361,17 +367,17 @@
 }
 
 .detail-comment-header strong {
-  color: #d4d4d4;
+  color: var(--foreground);
   font-size: 0.85rem;
 }
 
 .detail-comment-time {
-  color: #5a5a5a;
+  color: var(--faint-foreground);
   font-size: 0.75rem;
 }
 
 .detail-comment-body {
-  color: #a3a3a3;
+  color: var(--muted-foreground);
   font-size: 0.85rem;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -387,33 +393,33 @@
 .recon-btn-sm {
   font-size: 0.72rem;
   padding: 2px 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
   border-radius: 4px;
-  color: #e8a27a;
+  color: var(--accent);
   cursor: pointer;
   transition: background 0.15s;
 }
 
 .recon-btn-sm:hover {
-  background: rgba(232, 162, 122, 0.12);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .recon-btn-danger-sm {
-  color: #f87171 !important;
-  border-color: rgba(248, 113, 113, 0.2) !important;
+  color: var(--destructive) !important;
+  border-color: color-mix(in srgb, var(--destructive) 20%, transparent) !important;
 }
 
 .recon-btn-danger-sm:hover {
-  background: rgba(248, 113, 113, 0.12) !important;
+  background: color-mix(in srgb, var(--destructive) 12%, transparent) !important;
 }
 
 .detail-comment-edit textarea {
   width: 100%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 4px;
-  color: #d4d4d4;
+  color: var(--foreground);
   font-size: 0.85rem;
   padding: 6px 10px;
   resize: vertical;
@@ -434,17 +440,17 @@
 
 .detail-comment-add textarea {
   flex: 1;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 6px;
-  color: #d4d4d4;
+  color: var(--foreground);
   font-size: 0.85rem;
   padding: 8px 12px;
   resize: vertical;
 }
 
 .detail-comment-add textarea::placeholder {
-  color: #555;
+  color: var(--faint-foreground);
 }
 
 /* --- 盲拧时间 --- */
@@ -453,7 +459,7 @@
   gap: 16px;
   margin-top: 8px;
   font-size: 0.85rem;
-  color: #a3a3a3;
+  color: var(--muted-foreground);
 }
 
 /* --- 外部链接 --- */
@@ -465,13 +471,13 @@
 }
 
 .recon-external-links a {
-  color: #e8a27a;
+  color: var(--accent);
   text-decoration: none;
   transition: color 0.15s;
 }
 
 .recon-external-links a:hover {
-  color: #fff;
+  color: var(--foreground);
   text-decoration: underline;
 }
 
@@ -482,7 +488,7 @@
   gap: 16px;
   margin-top: 20px;
   padding: 12px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .detail-meta-item {
@@ -495,15 +501,15 @@
 .detail-meta-label {
   display: inline-flex;
   align-items: center;
-  color: #737373;
+  color: var(--faint-foreground);
 }
 
 .detail-meta-value {
-  color: #a3a3a3;
+  color: var(--muted-foreground);
 }
 
 .detail-meta-value a {
-  color: #e8a27a;
+  color: var(--accent);
   text-decoration: none;
 }
 
@@ -529,7 +535,7 @@
 /* --- 另解 --- */
 .alt-empty {
   padding: 12px 0 4px;
-  color: #737373;
+  color: var(--faint-foreground);
   font-size: 0.88rem;
 }
 
@@ -561,7 +567,7 @@
 .alt-submit-scramble {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.92rem;
-  color: #b8b8b8;
+  color: var(--muted-foreground);
   background: transparent;
   border: none;
   border-radius: 0;
@@ -571,16 +577,16 @@
 
 .alt-submit-parent-ref {
   font-size: 0.7em;
-  color: #888;
+  color: var(--faint-foreground);
   font-weight: normal;
 }
 
 .alt-submit-parent-link {
-  color: #888;
+  color: var(--faint-foreground);
   text-decoration: none;
 }
 
-.alt-submit-parent-link:hover { color: #e8a27a; }
+.alt-submit-parent-link:hover { color: var(--accent); }
 
 
 /* 另解卡片右侧:三点菜单 */
@@ -597,26 +603,26 @@
   gap: 10px;
   font-family: 'Roboto Mono', monospace;
   font-size: 0.78rem;
-  color: #8a8a8a;
+  color: var(--muted-foreground);
   margin: 4px 0 6px;
 }
 
 .recon-btn-edit {
-  color: #e8a27a !important;
-  border-color: rgba(232, 162, 122, 0.3) !important;
+  color: var(--accent) !important;
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent) !important;
 }
 
 .recon-btn-edit:hover {
-  background: rgba(232, 162, 122, 0.12) !important;
+  background: color-mix(in srgb, var(--accent) 12%, transparent) !important;
 }
 
 .recon-btn-danger {
-  color: #f87171 !important;
-  border-color: rgba(248, 113, 113, 0.3) !important;
+  color: var(--destructive) !important;
+  border-color: color-mix(in srgb, var(--destructive) 30%, transparent) !important;
 }
 
 .recon-btn-danger:hover {
-  background: rgba(248, 113, 113, 0.15) !important;
+  background: color-mix(in srgb, var(--destructive) 15%, transparent) !important;
 }
 
 /* --- 编辑历史 --- */
@@ -628,8 +634,8 @@
 }
 
 .detail-history-item {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   border-radius: 6px;
   padding: 8px 12px;
 }
@@ -639,7 +645,7 @@
   justify-content: space-between;
   align-items: center;
   font-size: 0.82rem;
-  color: #a3a3a3;
+  color: var(--muted-foreground);
   margin-bottom: 6px;
 }
 
@@ -658,12 +664,12 @@
 }
 
 .detail-history-key {
-  color: #e8a27a;
+  color: var(--accent);
   min-width: 80px;
 }
 
 .detail-history-before {
-  color: #f87171;
+  color: var(--destructive);
   text-decoration: line-through;
   opacity: 0.7;
   max-width: 200px;
@@ -673,11 +679,11 @@
 }
 
 .detail-history-arrow {
-  color: #555;
+  color: var(--faint-foreground);
 }
 
 .detail-history-after {
-  color: #4ade80;
+  color: var(--signal-success);
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -703,21 +709,21 @@
   font-size: 0.92rem;
   font-family: 'Roboto Mono', monospace;
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #e8a27a;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--accent);
   transition: background 0.15s;
 }
 
 .same-round-item:hover {
-  background: rgba(232, 162, 122, 0.12);
-  color: #fff;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--foreground);
 }
 
 .same-round-current {
-  background: rgba(232, 162, 122, 0.15);
-  border-color: rgba(232, 162, 122, 0.4);
-  color: #fff;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--foreground);
   font-weight: 600;
   cursor: default;
 }
@@ -725,89 +731,66 @@
 .same-round-missing {
   background: transparent;
   border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.18);
-  color: rgba(232, 162, 122, 0.55);
+  border-color: color-mix(in srgb, var(--foreground) 18%, transparent);
+  color: color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
 .same-round-missing:hover {
-  background: rgba(232, 162, 122, 0.08);
-  border-color: rgba(232, 162, 122, 0.4);
-  color: #e8a27a;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent);
 }
 
 /* --- 同场比赛(同项目)同选手全轮次成绩表 ---
    视觉对齐 /wca/persons 的 ByCompList 行式表格;wp-* class 同名复用 (recon 页不加载 persons.css,
-   所以这里就地定义,token 直接 hardcode 暗色值,不与 persons.css 冲突)。 */
+   所以这里就地定义,走主题 token,不与 persons.css 冲突)。 */
 .same-comp-event-table-wrap {
   margin-top: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
   border-radius: 10px;
   overflow: hidden;
-  background: #1f1f1f;
-}
-
-.same-comp-event-table-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.same-comp-event-table-comp {
-  color: #ededed;
-  font-weight: 600;
-  font-size: 0.92rem;
-}
-
-.same-comp-event-table-date {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 0.78rem;
-  color: #737373;
+  background: var(--card);
 }
 
 .same-comp-event-table .wp-cell-pos,
 .same-comp-event-table .wp-cell-attempts,
 .same-comp-event-table .wp-text-mute {
-  color: #a3a3a3;
+  color: var(--muted-foreground);
 }
 
 .same-comp-event-table .wp-cell-result {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  color: #ededed;
+  color: var(--foreground);
 }
 
 /* 标题里选手名跳 /wca/persons/:wcaId */
 .detail-person-link {
   color: inherit;
   text-decoration: none;
-  border-bottom: 1px dotted rgba(255, 255, 255, 0.3);
+  border-bottom: 1px dotted color-mix(in srgb, var(--foreground) 30%, transparent);
   transition: border-color 0.12s, color 0.12s;
 }
 .detail-person-link:hover {
-  color: #e8a27a;
-  border-bottom-color: #e8a27a;
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 /* attempts 单元格内每把支持单点跳转(有对应复盘时,渲染为 Link)
    不用 background — 7ch 列宽 + text-align:right 会让方块比内容大得突兀;用颜色 + 下划线 */
 .same-comp-event-att-link {
   text-decoration: none;
-  color: #e8a27a;
+  color: var(--accent);
   transition: color 0.12s, text-decoration-color 0.12s;
 }
 .same-comp-event-att-link:hover {
-  color: #fff;
+  color: var(--foreground);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
 }
 .same-comp-event-att-current {
-  color: #e8a27a;
+  color: var(--accent);
   font-weight: 700;
   text-decoration: underline;
   text-decoration-thickness: 2px;
@@ -824,18 +807,18 @@
 .same-comp-event-table thead th {
   padding: 8px 10px;
   text-align: left;
-  background: rgba(255, 255, 255, 0.03);
-  color: #a3a3a3;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  color: var(--muted-foreground);
   font-weight: 500;
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
   white-space: nowrap;
 }
 .same-comp-event-table tbody td {
   padding: 8px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
   vertical-align: middle;
   white-space: nowrap;
 }
@@ -849,8 +832,8 @@
 .same-comp-event-table .wp-round-final,
 .same-comp-event-table .wp-round-semi,
 .same-comp-event-table .wp-round-quarter,
-.same-comp-event-table .wp-round-first { color: #a3a3a3; }
-.same-comp-event-table .wp-pos-first { color: #C84A6F; font-weight: 700; }
+.same-comp-event-table .wp-round-first { color: var(--muted-foreground); }
+.same-comp-event-table .wp-pos-first { color: var(--recon-pink); font-weight: 700; }
 
 .same-comp-event-table .wp-th-info { display: inline-flex; align-items: center; gap: 3px; }
 .same-comp-event-table .wp-th-narrow { width: 50px; text-align: center !important; }
@@ -875,14 +858,14 @@
   border-radius: 6px;
   font-size: 0.78rem;
   background: transparent;
-  border: 1px dashed rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.55);
+  border: 1px dashed color-mix(in srgb, var(--foreground) 20%, transparent);
+  color: var(--muted-foreground);
   cursor: pointer;
 }
 
 .same-round-paste-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  color: var(--foreground);
 }
 
 .same-round-paste-box {
@@ -895,11 +878,11 @@
 .same-round-paste-box textarea {
   flex: 1;
   min-width: 0;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 4px;
   padding: 6px 8px;
-  color: #d4d4d4;
+  color: var(--foreground);
   font-family: 'Roboto Mono', monospace;
   font-size: 0.82rem;
   resize: vertical;
@@ -908,14 +891,14 @@
 .same-round-paste-hint {
   margin-top: 4px;
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--faint-foreground);
 }
 
 .same-round-source {
   display: inline-flex;
   align-items: center;
   margin-left: 6px;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--muted-foreground);
   vertical-align: middle;
 }
 
@@ -934,7 +917,7 @@
   border-radius: 50%;
   flex-shrink: 0;
   object-fit: cover;
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .yt-composer-avatar-fallback {
@@ -942,7 +925,7 @@
   align-items: center;
   justify-content: center;
   font-size: 0.85rem;
-  color: #d4d4d4;
+  color: var(--foreground);
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -956,8 +939,8 @@
   width: 100%;
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
-  color: #e5e5e5;
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  color: var(--foreground);
   font-size: 0.98rem;
   font-family: inherit;
   padding: 4px 0 8px;
@@ -970,11 +953,11 @@
 
 .yt-composer-input:focus,
 .yt-composer-active .yt-composer-input {
-  border-bottom-color: #e8a27a;
+  border-bottom-color: var(--accent);
 }
 
 .yt-composer-input::placeholder {
-  color: #6a6a6a;
+  color: var(--faint-foreground);
 }
 
 .yt-composer-actions {
@@ -987,7 +970,7 @@
 .yt-composer-emoji {
   background: transparent;
   border: none;
-  color: #a3a3a3;
+  color: var(--muted-foreground);
   cursor: pointer;
   padding: 6px;
   border-radius: 50%;
@@ -997,8 +980,8 @@
 }
 
 .yt-composer-emoji:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #e5e5e5;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
 }
 
 .yt-composer-buttons {
@@ -1009,7 +992,7 @@
 .yt-btn-text {
   background: transparent;
   border: none;
-  color: #d4d4d4;
+  color: var(--foreground);
   font-size: 0.85rem;
   padding: 8px 14px;
   border-radius: 999px;
@@ -1018,13 +1001,13 @@
 }
 
 .yt-btn-text:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 .yt-btn-primary {
-  background: #e8a27a;
+  background: var(--accent);
   border: none;
-  color: #1a1a1a;
+  color: var(--accent-foreground);
   font-size: 0.85rem;
   font-weight: 600;
   padding: 8px 14px;
@@ -1035,12 +1018,12 @@
 }
 
 .yt-btn-primary:hover:not(:disabled) {
-  background: #f0b48f;
+  background: color-mix(in srgb, var(--accent) 85%, var(--foreground));
 }
 
 .yt-btn-primary:disabled {
-  background: rgba(255, 255, 255, 0.1);
-  color: #6a6a6a;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  color: var(--faint-foreground);
   cursor: not-allowed;
 }
 
@@ -1065,7 +1048,7 @@
   border-radius: 50%;
   flex-shrink: 0;
   object-fit: cover;
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .yt-comment-avatar-fallback {
@@ -1073,7 +1056,7 @@
   align-items: center;
   justify-content: center;
   font-size: 0.85rem;
-  color: #d4d4d4;
+  color: var(--foreground);
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -1091,18 +1074,18 @@
 }
 
 .yt-comment-author {
-  color: #e5e5e5;
+  color: var(--foreground);
   font-size: 0.95rem;
   font-weight: 600;
 }
 
 .yt-comment-time {
-  color: #6a6a6a;
+  color: var(--faint-foreground);
   font-size: 0.85rem;
 }
 
 .yt-comment-body {
-  color: #d4d4d4;
+  color: var(--foreground);
   font-size: 0.98rem;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -1121,7 +1104,7 @@
 .yt-comment-menu-btn {
   background: transparent;
   border: none;
-  color: #a3a3a3;
+  color: var(--muted-foreground);
   cursor: pointer;
   padding: 6px;
   border-radius: 50%;
@@ -1131,8 +1114,8 @@
 }
 
 .yt-comment-menu-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #e5e5e5;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
 }
 
 .yt-comment-menu {
@@ -1140,8 +1123,8 @@
   top: 100%;
   right: 0;
   margin-top: 4px;
-  background: #2a2a2a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--popover);
+  border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
   border-radius: 6px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   min-width: 120px;
@@ -1157,7 +1140,7 @@
   padding: 8px 14px;
   background: transparent;
   border: none;
-  color: #d4d4d4;
+  color: var(--foreground);
   font-size: 0.85rem;
   cursor: pointer;
   text-align: left;
@@ -1165,7 +1148,7 @@
 }
 
 .yt-comment-menu button:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 .yt-comment-flag {
@@ -1179,7 +1162,7 @@
   align-items: center;
   gap: 4px;
   font-size: 0.7rem;
-  color: #6a6a6a;
+  color: var(--faint-foreground);
   margin-bottom: 2px;
 }
 
@@ -1196,7 +1179,7 @@
 .yt-reply-btn {
   background: transparent;
   border: none;
-  color: #a3a3a3;
+  color: var(--muted-foreground);
   font-size: 0.78rem;
   font-weight: 500;
   padding: 4px 12px;
@@ -1206,8 +1189,8 @@
   transition: background 0.15s, color 0.15s;
 }
 .yt-reply-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #e5e5e5;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
 }
 
 /* 回复区(缩进 + 展开/收起开关 + 列表) */
@@ -1225,7 +1208,7 @@
   align-self: flex-start;
   background: transparent;
   border: none;
-  color: #5da2ee;
+  color: var(--signal-info);
   font-size: 0.82rem;
   font-weight: 500;
   padding: 4px 10px;
@@ -1235,7 +1218,7 @@
   transition: background 0.15s;
 }
 .yt-replies-toggle:hover {
-  background: rgba(93, 162, 238, 0.1);
+  background: color-mix(in srgb, var(--signal-info) 10%, transparent);
 }
 .yt-reply-item {
   display: flex;

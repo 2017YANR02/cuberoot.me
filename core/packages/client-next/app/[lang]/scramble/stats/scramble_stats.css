@@ -455,15 +455,26 @@
   color: var(--text);
   word-break: break-word;
   line-height: 1.4;
+  text-decoration: none;
+  width: fit-content;
+  max-width: 100%;
+}
+.scramble-stats-examples-scramble:hover {
+  text-decoration: underline;
 }
 .scramble-stats-examples-comp {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: 0.35rem;
   width: fit-content;
   max-width: 100%;
   text-decoration: none;
+}
+.scramble-stats-examples-comp .country-flag,
+.scramble-stats-examples-comp .country-flag-ct {
+  margin-right: 0;
+  font-size: 0.82rem;
 }
 .scramble-stats-examples-comp-name {
   font-size: 0.74rem;

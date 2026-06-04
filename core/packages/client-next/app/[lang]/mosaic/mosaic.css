@@ -1,17 +1,16 @@
 /* Mosaic builder — scoped styles. */
 .mosaic-page {
-  --fg: #1a1a1a;
-  --muted: #6b7280;
-  --bg: #fafafa;
-  --surface: #fff;
-  --surface-2: #f3f4f6;
-  --border: #e5e7eb;
-  --border-strong: #9ca3af;
+  --fg: var(--foreground);
+  --muted: var(--muted-foreground);
+  --bg: var(--background);
+  --surface: var(--card);
+  --surface-2: var(--secondary);
+  --border: var(--border-default);
   --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
+  --success: var(--signal-success);
+  --warning: var(--signal-warning);
+  --danger: var(--destructive);
   color: var(--fg);
   background: var(--bg);
   min-height: 100vh;
@@ -73,7 +72,7 @@
 }
 .mosaic-dropzone.drag {
   border-color: var(--accent);
-  background: #eff6ff;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 .mosaic-dropzone-icon { font-size: 48px; margin-bottom: 12px; }
 .mosaic-dropzone-hint { font-size: 14px; color: var(--muted); margin-top: 8px; }
@@ -155,7 +154,7 @@
   color: var(--danger);
   border-color: var(--danger);
 }
-.mosaic-btn-danger:hover { background: #fef2f2; }
+.mosaic-btn-danger:hover { background: color-mix(in srgb, var(--destructive) 10%, transparent); }
 .mosaic-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Method/Variant stage — grid of canvases */

@@ -1491,14 +1491,14 @@ const FACE_DEFAULTS_STATE = {
 
 const INLINE_CSS = `
 .vc-editor-page {
-  --vc-bg: #1e1e1e;
-  --vc-panel: #2a2a2a;
-  --vc-input: #161616;
-  --vc-hover: #353535;
-  --vc-text: #e0e0e0;
-  --vc-text-dim: #888;
-  --vc-accent: #d97757;
-  --vc-divider: #3a3a3a;
+  --vc-bg: var(--background);
+  --vc-panel: var(--card);
+  --vc-input: color-mix(in srgb, var(--foreground) 5%, transparent);
+  --vc-hover: color-mix(in srgb, var(--foreground) 8%, transparent);
+  --vc-text: var(--foreground);
+  --vc-text-dim: var(--muted-foreground);
+  --vc-accent: var(--accent);
+  --vc-divider: var(--border-default);
 
   max-width: 960px; margin: 0 auto; padding: 16px;
   background: var(--vc-bg); color: var(--vc-text);
@@ -1510,21 +1510,21 @@ const INLINE_CSS = `
 .vc-header h1 { margin: 0; font-size: 18px; font-weight: 500; color: var(--vc-text); letter-spacing: 0.3px; }
 .vc-header-right { display: flex; align-items: center; gap: 12px; }
 .vc-header-link {
-  color: #9ec5ff; text-decoration: none; font-size: 13px;
+  color: var(--signal-info); text-decoration: none; font-size: 13px;
   padding: 4px 10px; border: 1px solid var(--vc-divider); border-radius: 6px;
 }
-.vc-header-link:hover { background: var(--vc-row-bg, #1a1a1a); }
+.vc-header-link:hover { background: var(--vc-hover); }
 
 .vc-preview-wrap {
   position: sticky; top: 0; z-index: 5;
   display: flex; justify-content: center; align-items: center;
   padding: calc(24px + var(--sat, 0px)) max(24px, var(--sar, 0px)) 24px max(24px, var(--sal, 0px));
-  background: #161616; border-radius: 4px;
+  background: var(--vc-input); border-radius: 4px;
   max-height: 45vh;
 }
 .vc-preview {
   display: inline-block;
-  background: repeating-conic-gradient(rgba(255,255,255,0.025) 0% 25%, transparent 0% 50%) 50% / 16px 16px;
+  background: repeating-conic-gradient(color-mix(in srgb, var(--foreground) 3%, transparent) 0% 25%, transparent 0% 50%) 50% / 16px 16px;
   max-width: 100%; max-height: 100%;
   overflow: hidden;
 }
@@ -1564,7 +1564,7 @@ const INLINE_CSS = `
 .vc-num:focus, .vc-text:focus, .vc-num-sm:focus, .vc-color-text:focus,
 .vc-select:focus, .vc-select-sm:focus {
   border-color: var(--vc-accent);
-  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.18);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .vc-range { flex: 1; min-width: 120px; height: 18px; -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; }
@@ -1590,9 +1590,9 @@ const INLINE_CSS = `
   font-family: inherit;
 }
 .vc-btn:hover { background: var(--vc-hover); }
-.vc-btn:active { background: #404040; }
+.vc-btn:active { background: color-mix(in srgb, var(--foreground) 12%, transparent); }
 .vc-btn-sm { padding: 5px 9px; font-size: 11px; }
-.vc-btn-active { background: var(--vc-accent); color: #fff; }
+.vc-btn-active { background: var(--vc-accent); color: var(--accent-foreground); }
 .vc-btn-active:hover { background: var(--vc-accent); filter: brightness(1.1); }
 .vc-btn-icon {
   display: inline-flex; align-items: center; justify-content: center;
@@ -1611,7 +1611,7 @@ const INLINE_CSS = `
 
 .vc-arrow-builder {
   display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px;
-  background: rgba(0,0,0,0.18); padding: 10px 12px; border-radius: 4px;
+  background: var(--vc-input); padding: 10px 12px; border-radius: 4px;
   color: var(--vc-text-dim);
 }
 .vc-arrow-builder > span { color: var(--vc-text-dim); margin-right: -2px; }
@@ -1619,7 +1619,7 @@ const INLINE_CSS = `
 .vc-face-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
 .vc-face-cell {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
-  font-size: 11px; color: var(--vc-text-dim); padding: 6px; background: rgba(0,0,0,0.18); border-radius: 3px;
+  font-size: 11px; color: var(--vc-text-dim); padding: 6px; background: var(--vc-input); border-radius: 3px;
 }
 .vc-face-cell input[type=color] { width: 100%; height: 24px; padding: 0; border: none; border-radius: 2px; cursor: pointer; background: transparent; }
 .vc-face-cell input[type=color]::-webkit-color-swatch { border: none; border-radius: 2px; }
@@ -1627,7 +1627,7 @@ const INLINE_CSS = `
 
 .vc-api-doc {
   margin-top: 24px; padding: 14px 16px;
-  background: rgba(0,0,0,0.18); border-radius: 4px;
+  background: var(--vc-input); border-radius: 4px;
   color: var(--vc-text-dim); font-size: 13px;
 }
 .vc-api-doc summary {
@@ -1646,7 +1646,7 @@ const INLINE_CSS = `
 .vc-api-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
 .vc-api-table th, .vc-api-table td {
   padding: 6px 10px; text-align: left; vertical-align: top;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid var(--vc-divider);
 }
 .vc-api-table th { color: var(--vc-text); font-weight: 500; }
 .vc-api-table td { color: var(--vc-text-dim); }

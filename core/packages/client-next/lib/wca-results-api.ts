@@ -194,3 +194,61 @@ export async function fetchCubingAttempts(
     return null;
   }
 }
+
+interface CubingLiveResult { n: number; b?: number; a?: number; pS?: number; pA?: number }
+interface CubingLiveData {
+  users?: Record<string, { wcaid?: string }>;
+  resultsByRound?: Record<string, CubingLiveResult[]>;
+}
+const cubingLiveCache = new Map<string, Promise<CubingLiveData | null>>();
+
+/**
+ * Personal-record RANK (single + average) from cubing.com live data — the same
+ * `pS`/`pA` the /comp page uses. WCA's regional_record field only carries
+ * WR/CR/NR; the PR rank (PR / PR2 / PR3 …) lives only here. Round code is
+ * matched via ROUND_VARIANTS (recon `f` → cubing `f`/`c`/`h`, etc.); best-single
+ * / average value is a fallback link when the round code doesn't line up.
+ */
+export async function fetchCubingPrRanks(
+  compWcaId: string,
+  reconEvent: string,
+  round: string,
+  personId: string,
+  bestCs: number | null,
+  avgCs: number | null,
+): Promise<{ pS: number | null; pA: number | null } | null> {
+  const wcaEventId = toWcaEventId(reconEvent);
+  let p = cubingLiveCache.get(compWcaId);
+  if (!p) {
+    p = fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compWcaId)}`))
+      .then(r => r.ok ? r.json() as Promise<CubingLiveData> : null)
+      .catch(() => null);
+    cubingLiveCache.set(compWcaId, p);
+  }
+  const data = await p;
+  if (!data) return null;
+  const users = data.users ?? {};
+  let num: string | null = null;
+  for (const [k, u] of Object.entries(users)) {
+    if (u?.wcaid === personId) { num = String(k); break; }
+  }
+  if (num == null) return null;
+  const byRound = data.resultsByRound ?? {};
+  const pick = (r: CubingLiveResult) => ({
+    pS: typeof r.pS === 'number' ? r.pS : null,
+    pA: typeof r.pA === 'number' ? r.pA : null,
+  });
+  const variants = ROUND_VARIANTS[round] ?? [round];
+  for (const code of variants) {
+    const hit = byRound[`${wcaEventId}:${code}`]?.find(r => String(r.n) === num);
+    if (hit) return pick(hit);
+  }
+  // Round code mismatch — link by the round's best-single / average value.
+  for (const key of Object.keys(byRound)) {
+    if (!key.startsWith(`${wcaEventId}:`)) continue;
+    const hit = byRound[key].find(r => String(r.n) === num
+      && ((bestCs != null && r.b === bestCs) || (avgCs != null && r.a === avgCs)));
+    if (hit) return pick(hit);
+  }
+  return null;
+}

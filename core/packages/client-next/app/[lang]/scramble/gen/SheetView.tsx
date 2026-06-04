@@ -9,7 +9,7 @@
  * row's current step (per-row badge); the badge ("C 767665") is independently
  * click-to-cycle through Cross → XC → XXC → XXXC → XXXXC; the index cell copies.
  */
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { Copy, ExternalLink } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -82,9 +82,17 @@ interface SheetViewProps {
   metric?: Metric;
   /** 顶部变体下拉(std/eo/pair/...);跳分析器时作为 `variant` 查询带过去。 */
   variant?: string;
+  /** 深链/点击选中的某一把(attempt label);非 null 时该行持续高亮,挂载/变更时滚动入视。
+   *  仅当本 sheet 的 groupIdx 命中选中分组时由父级传非 null。 */
+  selectedLabel?: string | null;
+  /** 点击某行选中 / 取消(label=null 表示取消)。整行均触发,含 SQ1 等不可分析事件。 */
+  onSelectScramble?: (label: string | null) => void;
+  /** 是否允许行内展开解法分析器(跟随顶部「分析」开关)。false 时可分析打乱点击无任何反应
+   *  —— 没开「分析」就完全不出分析器画面。SQ1 等不可分析事件不受影响(本就只选中)。 */
+  analyzable?: boolean;
 }
 
-export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, rowDigits, metric = 'cross', variant = 'std' }: SheetViewProps) {
+export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, rowDigits, metric = 'cross', variant = 'std', selectedLabel = null, onSelectScramble, analyzable = true }: SheetViewProps) {
   const { event, roundIdx, groupIdx, attemptNumber, attempts, totalGroups } = sheet;
   const router = useRouter();
   const params = useParams();
@@ -105,10 +113,20 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   // 行内展开:一次只展开一条(手风琴),按 scramble 字符串记忆(过滤/重排都稳)。
   const [expanded, setExpanded] = useState<string | null>(null);
+  // 顶部「分析」关掉时收起已展开的解法器,别留残面板。
+  useEffect(() => { if (!analyzable) setExpanded(null); }, [analyzable]);
   const showCross = !!rowDigits;
   // 逐行徽标指标覆盖(按 scramble 字符串 key,过滤/重排都稳)。顶部 tab 变 → 全部回落到全局指标。
   const [rowMetric, setRowMetric] = useState<Map<string, Metric>>(new Map());
   useEffect(() => { setRowMetric(new Map()); }, [metric]);
+  // 选中行 ref:深链(?group=A&attempt=2)落地或点击切换时,把命中行滚到可视区。
+  // block:'nearest' 已可见就不动,避免每次点击都强行重新居中。
+  const selectedRowRef = useRef<HTMLTableRowElement | null>(null);
+  useEffect(() => {
+    if (selectedLabel != null && selectedRowRef.current) {
+      selectedRowRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [selectedLabel]);
   const effMetric = (scr: string): Metric => rowMetric.get(scr) ?? metric;
   const cycleMetric = (scr: string) => {
     setRowMetric((prev) => {
@@ -127,11 +145,21 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
       setTimeout(() => setCopiedIdx((cur) => (cur === idx ? null : cur)), 1200);
     } catch { /* swallow */ }
   };
-  // 单击打乱 → 行内展开 StageSolver(就地看具体解法 + 动画),不再跳走。
-  // 选中文字时不展开,避免误触。展开是手风琴:再点同一条收起,点别条切换。
-  const toggleExpand = (scramble: string) => {
+  // 单击打乱:永远选中该行(父级写 URL group+attempt + 高亮 + 滚动),与「分析」开关无关 ——
+  // 选中/深链定位不算「分析」。仅当「分析」开 + 该打乱可解析时,额外就地展开 StageSolver。
+  // 选中文字时不触发,避免误触。手风琴:再点同一条收起/取消,点别条切换。
+  const onRowClick = (a: AttemptScramble) => {
     if (typeof window !== 'undefined' && window.getSelection()?.toString()) return;
-    setExpanded((cur) => (cur === scramble ? null : scramble));
+    if (!a.scramble) return;
+    if (analyzable && isAnalysableScramble(a.scramble)) {
+      // 分析开 + 可解析:展开解法器,选中态跟随展开。
+      const next = expanded === a.scramble ? null : a.scramble;
+      setExpanded(next);
+      onSelectScramble?.(next ? a.label : null);
+    } else {
+      // 分析关 或 不可解析(SQ1/clock/...):只切换选中(写 URL + 高亮),不展开解法器。
+      onSelectScramble?.(selectedLabel === a.label ? null : a.label);
+    }
   };
   // 在分析器中打开(深链):保留原 URL 契约(空格替下划线 + stage + variant),
   // 让用户仍能跳到完整分析器页面。用真 <a href> 让中键/Ctrl+点新开页。
@@ -149,24 +177,30 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
     if (showExtraDivider) {
       rows.push(
         <tr key={`div-${i}`} className="gen-tn-extras-divider">
-          <td colSpan={colSpan}>{t('Extra Scrambles', 'Extra Scrambles')}</td>
+          <td colSpan={colSpan}>{t('备用打乱', 'Extra Scrambles')}</td>
         </tr>,
       );
     }
     const isExpanded = expanded === a.scramble;
+    const isSelected = selectedLabel != null && selectedLabel === a.label;
     const rowCls = [
       a.isExtra ? 'is-extra' : '',
       copiedIdx === i ? 'is-copied' : '',
       isExpanded ? 'is-expanded' : '',
+      isSelected ? 'is-selected' : '',
     ].filter(Boolean).join(' ');
-    const canAnalyze = !!a.scramble && isAnalysableScramble(a.scramble);
+    const parseable = !!a.scramble && isAnalysableScramble(a.scramble);
+    const canAnalyze = analyzable && parseable;
+    // 有打乱就可点:点击永远选中(写深链 + 高亮);canAnalyze 时额外展开解法器。
+    const rowInteractive = !!a.scramble;
     rows.push(
       <tr
         key={i}
+        ref={isSelected ? selectedRowRef : undefined}
         className={rowCls}
-        onClick={canAnalyze ? () => toggleExpand(a.scramble) : undefined}
-        title={canAnalyze ? t('点击展开解法', 'Click to expand solutions') : undefined}
-        style={{ cursor: canAnalyze ? 'pointer' : 'default' }}
+        onClick={rowInteractive ? () => onRowClick(a) : undefined}
+        title={rowInteractive ? (canAnalyze ? t('点击展开解法', 'Click to expand solutions') : t('点击选中(链接定位)', 'Click to select (deep link)')) : undefined}
+        style={{ cursor: rowInteractive ? 'pointer' : 'default' }}
       >
         <td
           className="gen-tn-attempt-num"

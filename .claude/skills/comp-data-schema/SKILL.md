@@ -9,7 +9,7 @@ description: "Use when touching WCA competition JSON (upcoming_comps/all_past_co
 
 | JSON | 生成器 | 触发 | 用途 |
 |---|---|---|---|
-| `/stats/upcoming_comps.json` | `scripts/fetch_upcoming_comps.py` | `.github/workflows/update_upcoming.yml`（每天 20:00 UTC） | UpcomingComps Top 模式（只含有顶尖选手参赛的比赛 + cubing.com 中国比赛） |
+| `/stats/upcoming_comps.json` | `fetch_upcoming_comps.ts`（stats-build） | `.github/workflows/update_upcoming.yml`（每天 20:00 UTC） | UpcomingComps Top 模式（只含有顶尖选手参赛的比赛 + cubing.com 中国比赛） |
 | `/stats/all_upcoming_comps.json` | 同上脚本第二段 | 同上 | Globe upcoming 模式 + UpcomingComps All 模式（WCA 全球全量 upcoming） |
 | `/stats/all_past_comps.json` | `core/packages/stats-build/src/bin/gen_all_comps.ts` | `.github/workflows/stats.yml`（每周日 20:00 UTC） | Globe history 模式（WCA 历史所有已结束比赛） |
 
@@ -38,11 +38,11 @@ description: "Use when touching WCA competition JSON (upcoming_comps/all_past_co
 ## 通用规则
 
 - `country === 'TW'` 特判：旗子用 `/tools/assets/images/ChineseTaipei.svg`，不用 `flag-icons`
-- 事件短名约定见 `SHORT_TO_EVENT_ID`（UpcomingCompsPage） / `EVENT_DISPLAY_ORDER`（Python 脚本）
+- 事件短名约定见 `SHORT_TO_EVENT_ID`（UpcomingCompsPage） / `EVENT_DISPLAY_ORDER`（fetch_upcoming_comps.ts）
 - 在 GlobePage 的 choropleth / WR 模式里，TW 的计数合并进 CN（参考现有 `countryCounts` / `wrCountryCounts` 里的 `iso === 'TW' ? 'CN' : iso`）
 
 ## 已知坑
 
-- **WCA `/competitions` 分页会出现跨页重复**：分页中途 WCA API 排序会漂移（新增 / cancel 状态改变），同一 id 跨页重复。`build_all_upcoming_comps` 必须按 id 去重（已在 `fetch_upcoming_comps.py` 处理）。新写任何分页聚合 WCA 数据的脚本都要记得这一点。
+- **WCA `/competitions` 分页会出现跨页重复**：分页中途 WCA API 排序会漂移（新增 / cancel 状态改变），同一 id 跨页重复。`build_all_upcoming_comps` 必须按 id 去重（已在 `fetch_upcoming_comps.ts` 处理）。新写任何分页聚合 WCA 数据的脚本都要记得这一点。
 - **单个 JSON 内不应该有同 id 重复**：如果 upcoming / past JSON 自身出现同 id 多条，**这就是上游数据 bug**，去生成脚本修，**不要在前端兜底** —— 前端静默去重会盖住 bug、让下次再出同类问题无从察觉。
 - **upcoming 和 past 数据源间的同 id 重叠是正常的**：年初刚结束 / 即将开赛的比赛在两个 JSON 里都出现 —— 这是两份独立数据源的自然交集，不是 bug。前端合并两源时按 id 去重（以 upcoming 为准）是合理行为，见 GlobePage `upcomingGeojson` 里的 `upcomingIds` 逻辑。

@@ -571,6 +571,22 @@
   cursor: pointer;
 }
 .stats-ao-custom-add:hover { background: var(--shell-hover); }
+.stats-ao-chip:disabled,
+.stats-ao-custom input:disabled,
+.stats-ao-custom-add:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.stats-ao-chip:disabled:hover {
+  background: var(--shell-chip);
+  color: var(--muted-foreground);
+}
+.stats-ao-custom-add:disabled:hover { background: var(--shell-chip); }
+.stats-ao-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
 
 /* σ / CV / count footer line under the table */
 .stats-foot {
@@ -758,7 +774,8 @@
   color: #888;
 }
 .history-cols-head .idx { text-align: right; }
-.history-cols-head .hao-head { text-align: right; color: #6aa3c8; }
+/* Match .record-num-cell's badge reserve so the label sits over the numbers. */
+.history-cols-head .hao-head { text-align: right; color: #6aa3c8; padding-right: 22px; }
 .history-row .hao {
   text-align: right;
   color: #9a9aa0;
@@ -820,8 +837,6 @@
 :root[data-timer-theme="light"] .history-search input::placeholder { color: #999; }
 :root[data-timer-theme="light"] .history-search-count { color: #888; }
 
-.history-row.is-pb { background: rgba(255, 215, 0, 0.04); }
-.history-row.is-pb .time { color: #ffd54f; }
 .history-row .pb-badge {
   color: #ffd54f;
   margin-right: 6px;
@@ -1979,66 +1994,7 @@
   border-color: #d0d0d4;
 }
 
-/* PB highlights in history list (single / ao5 / ao12) */
-.history-row.pb-single {
-  background: rgba(255, 213, 79, 0.08);
-}
-.history-row.pb-single .time {
-  color: #ffd54f;
-  font-weight: 600;
-}
-.history-row.pb-single .pb-icon {
-  color: #ffd54f;
-  margin-right: 6px;
-  vertical-align: -1px;
-}
-.history-row.pb-ao5,
-.history-row.pb-ao12 {
-  position: relative;
-  padding-right: 26px;
-}
-.history-row.pb-ao5::after {
-  content: '';
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #5b9dd9;
-  box-shadow: 0 0 4px rgba(91, 157, 217, 0.5);
-}
-.history-row.pb-ao12.pb-ao5::after {
-  right: 16px;
-}
-.history-row.pb-ao12::before {
-  content: '';
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #b39ddb;
-  box-shadow: 0 0 4px rgba(179, 157, 219, 0.5);
-}
-:root[data-timer-theme="light"] .history-row.pb-single {
-  background: rgba(255, 184, 0, 0.1);
-}
-:root[data-timer-theme="light"] .history-row.pb-single .time {
-  color: #b87800;
-}
-:root[data-timer-theme="light"] .history-row.pb-single .pb-icon {
-  color: #b87800;
-}
-:root[data-timer-theme="light"] .history-row.pb-ao5::after {
-  background: #2f6fb0;
-}
-:root[data-timer-theme="light"] .history-row.pb-ao12::before {
-  background: #7e57c2;
-}
+/* PB single in history list is marked by the "PB" badge only (no star / gold). */
 
 /* --- Print-only header --- */
 .print-only-header { display: none; }

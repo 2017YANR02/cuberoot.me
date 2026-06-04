@@ -34,8 +34,6 @@ function RankCell({ r }: { r: number | null | undefined }) {
 export default function PersonPRTable({ profile, results, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   const [mode, setMode] = useState<Mode>('current');
-  const [showRanks, setShowRanks] = useState(true);
-  const [showPodium, setShowPodium] = useState(true);
   const [hist, setHist] = useState<PersonBestRanksResponse | null>(null);
   const [histLoading, setHistLoading] = useState(false);
   const [histError, setHistError] = useState<string | null>(null);
@@ -51,6 +49,7 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
   }, [mode, hist, histLoading, profile.person.wca_id]);
 
   const podium = useMemo(() => results ? countPodiumByEvent(results) : new Map(), [results]);
+  const showPodium = mode === 'current'; // 历史最佳排名 模式不显示领奖台
 
   // 用哪些项目? 当前模式 = profile.personal_records 有 PR 的项目;历史 = 同集合并 ∪ hist.events.
   const eventIds = useMemo(() => {
@@ -99,19 +98,19 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
           <thead>
             <tr>
               <th rowSpan={2} className="wp-th-event">{t('项目', 'Event')}</th>
-              <th colSpan={showRanks ? 4 : 1} className="wp-th-group">{t('单次', 'Single')}</th>
-              <th colSpan={showRanks ? 4 : 1} className="wp-th-group">{t('平均', 'Average')}</th>
+              <th colSpan={4} className="wp-th-group">{t('单次', 'Single')}</th>
+              <th colSpan={4} className="wp-th-group">{t('平均', 'Average')}</th>
               {showPodium && <th colSpan={3} className="wp-th-group wp-th-podium">{t('领奖台', 'Podium')}</th>}
             </tr>
             <tr>
-              {showRanks && <th>{t('世界', 'World')}</th>}
-              {showRanks && <th>{t('洲际', 'Continent')}</th>}
-              {showRanks && <th>{t('地区', 'Country')}</th>}
+              <th>{t('世界', 'World')}</th>
+              <th>{t('洲际', 'Continent')}</th>
+              <th>{t('地区', 'Country')}</th>
               <th>{t('成绩', 'Result')}</th>
               <th>{t('成绩', 'Result')}</th>
-              {showRanks && <th>{t('世界', 'World')}</th>}
-              {showRanks && <th>{t('洲际', 'Continent')}</th>}
-              {showRanks && <th>{t('地区', 'Country')}</th>}
+              <th>{t('世界', 'World')}</th>
+              <th>{t('洲际', 'Continent')}</th>
+              <th>{t('地区', 'Country')}</th>
               {showPodium && <th className="wp-th-medal" title={t('金牌', 'Gold')}>🥇</th>}
               {showPodium && <th className="wp-th-medal" title={t('银牌', 'Silver')}>🥈</th>}
               {showPodium && <th className="wp-th-medal" title={t('铜牌', 'Bronze')}>🥉</th>}
@@ -146,14 +145,14 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
                       <EventIcon event={eid} className="wp-event-icon" />
                     </span>
                   </th>
-                  {showRanks && <td><RankCell r={sRank.world} /></td>}
-                  {showRanks && <td><RankCell r={sRank.continent} /></td>}
-                  {showRanks && <td><RankCell r={sRank.country} /></td>}
+                  <td><RankCell r={sRank.world} /></td>
+                  <td><RankCell r={sRank.continent} /></td>
+                  <td><RankCell r={sRank.country} /></td>
                   <td className="wp-cell-result">{sValue === null ? '—' : formatWcaResult(sValue, eid, 'single')}</td>
                   <td className="wp-cell-result">{aValue === null ? '—' : formatWcaResult(aValue, eid, 'average')}</td>
-                  {showRanks && <td><RankCell r={aRank.world} /></td>}
-                  {showRanks && <td><RankCell r={aRank.continent} /></td>}
-                  {showRanks && <td><RankCell r={aRank.country} /></td>}
+                  <td><RankCell r={aRank.world} /></td>
+                  <td><RankCell r={aRank.continent} /></td>
+                  <td><RankCell r={aRank.country} /></td>
                   {showPodium && <td className="wp-cell-podium-n">{pod?.gold ? pod.gold : <span className="wp-podium-zero">—</span>}</td>}
                   {showPodium && <td className="wp-cell-podium-n">{pod?.silver ? pod.silver : <span className="wp-podium-zero">—</span>}</td>}
                   {showPodium && <td className="wp-cell-podium-n">{pod?.bronze ? pod.bronze : <span className="wp-podium-zero">—</span>}</td>}
@@ -162,17 +161,6 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
             })}
           </tbody>
         </table>
-      </div>
-
-      <div className="wp-pr-footer">
-        <label className="wp-checkbox">
-          <input type="checkbox" checked={showRanks} onChange={(e) => setShowRanks(e.target.checked)} />
-          <span>{t('显示排名', 'Show ranks')}</span>
-        </label>
-        <label className="wp-checkbox">
-          <input type="checkbox" checked={showPodium} onChange={(e) => setShowPodium(e.target.checked)} />
-          <span>{t('显示领奖台', 'Show podium')}</span>
-        </label>
       </div>
     </section>
   );

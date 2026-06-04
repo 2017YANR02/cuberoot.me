@@ -97,6 +97,20 @@ export function mirrorAlg(alg: string, axis: 'M' | 'S' | 'E'): string {
   }
 }
 
+/**
+ * Cancel adjacent moves WITHOUT the mod-4 fold (so it stays correct on
+ * non-cube puzzles whose axes aren't all order-4: pyraminx / skewb / megaminx).
+ * Adjacent inverse moves annihilate; identical moves combine.
+ */
+export function simplifyTwistyAlg(alg: string): string {
+  if (!alg) return '';
+  try {
+    return new Alg(alg).experimentalSimplify({ cancel: true }).toString();
+  } catch {
+    return alg;
+  }
+}
+
 /** Cancel adjacent same-axis moves AND fold each amount mod 4. */
 export function simplifyAlg(alg: string): string {
   if (!alg) return '';

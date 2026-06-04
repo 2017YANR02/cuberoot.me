@@ -181,7 +181,7 @@ async function buildExampleCompMeta(
   examplesOut: Record<string, unknown>,
   metaCsv: string,
   compTsv: string,
-): Promise<{ comps: Record<string, [string, string]>; idMeta: Record<string, [string, string, number]> }> {
+): Promise<{ comps: Record<string, [string, string]>; idMeta: Record<string, [string, string, number, string, string]> }> {
   const ids = new Set<string>();
   for (const preview of Object.values(examplesOut)) {
     const byStage = preview as Record<string, Record<string, Record<string, Sample[]>>>;
@@ -191,7 +191,7 @@ async function buildExampleCompMeta(
           for (const s of samples) ids.add(s[0]);
   }
   const comps: Record<string, [string, string]> = {};
-  const idMeta: Record<string, [string, string, number]> = {};
+  const idMeta: Record<string, [string, string, number, string, string]> = {};
   if (ids.size === 0) return { comps, idMeta };
   const compNames = await loadCompNames(compTsv);
   const rl = readline.createInterface({ input: fs.createReadStream(metaCsv, 'utf-8'), crlfDelay: Infinity });
@@ -205,7 +205,8 @@ async function buildExampleCompMeta(
     if (!ids.has(id)) continue;
     const c = line.split(',');
     const ci = c[2];
-    idMeta[id] = [ci, c[3], Number(c[7])];
+    // [compId, 项目, 打乱序号, 轮次代号, 组别] — 轮次/组别供示例卡片显示「初赛E组#4」来源行
+    idMeta[id] = [ci, c[3], Number(c[7]), c[4], c[5]];
     if (!(ci in comps)) comps[ci] = compNames.get(ci) ?? [ci, ''];
   }
   return { comps, idMeta };
@@ -546,7 +547,7 @@ async function main() {
     };
     // 示例补"来自哪场比赛"(仅有 split_mbf 的 WCA set;自造打乱 set 无 → comps/idMeta 空)
     let comps: Record<string, [string, string]> = {};
-    let idMeta: Record<string, [string, string, number]> = {};
+    let idMeta: Record<string, [string, string, number, string, string]> = {};
     const dataRoot = path.dirname(setSpec.csv_dir);
     const metaCsv = path.join(dataRoot, 'input', 'wca_scrambles_split_mbf.csv');
     if (fs.existsSync(metaCsv)) {

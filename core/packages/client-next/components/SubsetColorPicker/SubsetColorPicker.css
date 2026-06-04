@@ -43,7 +43,6 @@
   overflow: hidden;
 }
 .subset-swatch-tile { display: block; width: 100%; height: 100%; }
-.subset-swatch-cell { display: block; width: 100%; height: 100%; }
 .subset-swatch:not(.is-static):hover { transform: scale(1.1); }
 .subset-swatch.is-active { outline: 2px solid var(--accent); outline-offset: 1px; }
 .subset-swatch.is-static { cursor: default; }

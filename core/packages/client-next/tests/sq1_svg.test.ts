@@ -4,6 +4,7 @@ import {
   canonicalSq1Alg,
   compactSq1Alg,
   invertSq1Alg,
+  simplifySq1Alg,
 } from '@/lib/sq1-svg';
 
 describe('SQ1 tokenizer — existing forms still parse', () => {
@@ -64,5 +65,45 @@ describe('SQ1 tokenizer — single-num shorthand `t` = (t, 0)', () => {
   it('invert single negates top, keeps 0 bottom', () => {
     expect(invertSq1Alg('3')).toBe('(-3,0)');
     expect(invertSq1Alg('(1, 0) / 3')).toBe('(-3,0)/(-1,0)');
+  });
+});
+
+describe('SQ1 消步 — cancel redundant moves', () => {
+  it('net-zero turns collapse, trailing `//` comment vanishes', () => {
+    // The reported case: two opposing bottom turns cancel; `//` is a comment.
+    expect(simplifySq1Alg('(0,-6) (0,6)//')).toBe('');
+    expect(simplifySq1Alg('(0,-6) (0,6)')).toBe('');
+  });
+  it('lone `//` comment → empty', () => {
+    expect(simplifySq1Alg('//')).toBe('');
+    expect(simplifySq1Alg('(3,3) // some note')).toBe('33');
+  });
+  it('two adjacent slices annihilate', () => {
+    expect(simplifySq1Alg('/ /')).toBe('');
+    expect(simplifySq1Alg('(1,0) / / (-1,0)')).toBe('');
+  });
+  it('consecutive turns (no slice between) merge per layer', () => {
+    expect(simplifySq1Alg('(1,0) (2,0)')).toBe('3');
+    expect(simplifySq1Alg('(1,2) (2,1)')).toBe('33');
+    // 12 units = full turn → identity.
+    expect(simplifySq1Alg('(0,6) (0,6)')).toBe('');
+  });
+  it('turns straddling a slice do NOT merge', () => {
+    expect(simplifySq1Alg('(1,0) / (2,0)')).toBe('1/2');
+  });
+  it('slice + cancelling turns + slice all collapse', () => {
+    expect(simplifySq1Alg('/ (0,3) (0,-3) /')).toBe('');
+  });
+  it('amounts normalize to (-6, 6]', () => {
+    expect(simplifySq1Alg('(7,0)')).toBe('-5'); // 7 → -5
+    expect(simplifySq1Alg('(-7,0)')).toBe('5'); // -7 → 5
+    expect(canonicalSq1Alg(simplifySq1Alg('(8,8)'))).toBe('(-4, -4)');
+  });
+  it('respects requested output format', () => {
+    expect(simplifySq1Alg('(1,0) (2,0)', 'wca')).toBe('(3, 0)');
+    expect(simplifySq1Alg('(1,0) (2,0)', 'compact')).toBe('3');
+  });
+  it('already-minimal alg is unchanged (sans comment)', () => {
+    expect(simplifySq1Alg('1/3/-2-2', 'wca')).toBe(canonicalSq1Alg('1/3/-2-2'));
   });
 });

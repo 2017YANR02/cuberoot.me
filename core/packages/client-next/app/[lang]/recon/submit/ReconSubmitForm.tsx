@@ -45,17 +45,18 @@ import {
   attemptsPerRound, localizeRound, isBldEvent,
 } from '@/lib/recon-utils';
 import { computeAllStats } from '@/lib/recon-stats';
-import { fetchAttempts, fetchCubingAttempts, fetchResultRow } from '@/lib/wca-results-api';
+import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchScrambles } from '@/lib/wca-results-api';
+import { fetchPb, type PbByEvent } from '@/lib/wca-pb';
 import {
   cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount, normalizeSolutionSlashes,
 } from '@/lib/recon-alg-utils';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '@/lib/recon-norm-cross-extract';
 import { encodeUrlAlg, decodeUrlAlg } from '@/lib/cubedb-url';
-import { randomScrambleForEvent } from '@/lib/scramble-random';
-import { parseSq1Tokens } from '@/lib/sq1-svg';
+import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
+import { parseSq1Tokens, formatScrambleForEvent } from '@/lib/sq1-svg';
 import type { Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowLeft, ArrowRightLeft, ChevronDown, ChevronRight, Home, Loader2, LogIn, LogOut, Shuffle } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, Box, ChevronDown, ChevronRight, Home, Loader2, LogIn } from 'lucide-react';
 import '../recon.css';
 import './recon_submit.css';
 
@@ -123,7 +124,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   const authUser = useAuthStore(s => s.user);
   const login = useAuthStore(s => s.login);
-  const logout = useAuthStore(s => s.logout);
 
   const [saving, setSaving] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(isEditing || !!fromId);
@@ -193,6 +193,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const avgAutoFilledRef = useRef(false);
   const timeAutoFilledRef = useRef(false);
   const singleAutoFilledRef = useRef(false);
+  // WCA official scramble auto-fill (by comp / event / round / group / #).
+  const [scrambleUserTouched, setScrambleUserTouched] = useState(false);
+  const [scrambleAutoSource, setScrambleAutoSource] = useState<string | null>(null);
+  const [scrambleLoading, setScrambleLoading] = useState(false);
+  const loadedScrambleKeySnapshot = useRef<string | null>(null);
+  const scrambleAutoFilledRef = useRef(false);
+  const wcaScrambleRef = useRef<HTMLTextAreaElement>(null);
   const [compRounds, setCompRounds] = useState<Record<string, RoundFormat[]> | null>(null);
   const isMobile = useIsMobile();
 
@@ -223,6 +230,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       loadedAvgKeySnapshot.current = baseKey;
       loadedTimeKeySnapshot.current = `${baseKey}|${solve.solveNum ?? ''}`;
       loadedRecordKeySnapshot.current = `${baseKey}|${solve.solveNum ?? ''}`;
+      loadedScrambleKeySnapshot.current = `${solve.compWcaId ?? ''}|${solve.event ?? ''}|${solve.round ?? ''}|${solve.groupId ?? ''}|${solve.solveNum ?? ''}`;
       if (solve.rawTime != null) setTimeInput(formatTimeInput(solve.rawTime));
       if (solve.average != null) setAvgInput(formatTimeInput(solve.average));
       if (solve.execTime != null) setExecInput(formatTimeInput(solve.execTime));
@@ -299,6 +307,16 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     if (solutionRef.current && solution) {
       solutionRef.current.value = solution;
       autoResize(solutionRef.current);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── URL-driven event (handoff from /sim, mount only, create mode) ──
+  useEffect(() => {
+    if (isEditing || fromId) return;
+    const ev = searchParams?.get('event');
+    if (ev && EVENTS.includes(ev)) {
+      setForm(prev => prev.event === ev ? prev : { ...prev, event: ev });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -603,6 +621,50 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return () => { cancelled = true; clearTimeout(timer); setTimeLoading(false); };
   }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, timeUserTouched, singleUserTouched, isEditing, editId, isZh, setField]);
 
+  // ── WCA official scramble auto-fill (by comp / event / round / group / #) ──
+  // Pulls the exact scramble the player got — same data as /scramble/gen. Only
+  // for official WCA comps (compWcaId set); blocked once the user types their
+  // own. Group is optional (defaults to the round's first group).
+  useEffect(() => {
+    if (scrambleUserTouched) return;
+    if (!form.compWcaId || !form.event || !form.round || form.solveNum == null) return;
+
+    const currentKey = `${form.compWcaId}|${form.event}|${form.round}|${form.groupId ?? ''}|${form.solveNum}`;
+    if (loadedScrambleKeySnapshot.current === currentKey) return;
+    loadedScrambleKeySnapshot.current = null;
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setScrambleLoading(true);
+      try {
+        const arr = await fetchScrambles(form.compWcaId!, form.event!, form.round!, form.groupId || undefined);
+        if (cancelled) return;
+        const idx = form.solveNum! - 1;
+        const raw = arr && idx >= 0 && idx < arr.length ? arr[idx] : null;
+        // SQ1 → compact `1/06/33/…` shorthand (matches /sim & /scramble/gen);
+        // other events pass through. parseSq1Tokens round-trips the compact form.
+        const scr = raw ? formatScrambleForEvent(form.event!, raw) : null;
+        if (scr) {
+          setField('wcaScramble', scr);
+          setScrambleAutoSource(isZh ? '自动:WCA' : 'auto: WCA');
+          scrambleAutoFilledRef.current = true;
+        } else {
+          if (scrambleAutoFilledRef.current) setField('wcaScramble', '');
+          setScrambleAutoSource(null);
+          scrambleAutoFilledRef.current = false;
+        }
+      } finally {
+        if (!cancelled) setScrambleLoading(false);
+      }
+    }, 300);
+    return () => { cancelled = true; clearTimeout(timer); setScrambleLoading(false); };
+  }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, scrambleUserTouched, setField, isZh]);
+
+  // Resize the WCA scramble textarea when its value changes programmatically.
+  useEffect(() => {
+    if (wcaScrambleRef.current) autoResize(wcaScrambleRef.current);
+  }, [form.wcaScramble, autoResize]);
+
   // ── Record marker auto-fetch (WCA only) ──
   useEffect(() => {
     if (singleRecordUserTouched && averageRecordUserTouched) return;
@@ -625,16 +687,50 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
           setRecordAutoSource(null);
           return;
         }
+        // WCA's regional_record field only carries WR/CR/NR. PR (personal
+        // record) isn't stored there. Get the exact PR rank (PR / PR2 / PR3 …)
+        // from cubing.com live data — same `pS`/`pA` the /comp page uses; fall
+        // back to the WCA personal-best API for a rank-1 PR when cubing.com
+        // lacks the comp. Official records take priority over PR.
+        const idx = form.solveNum != null ? form.solveNum - 1 : -1;
+        const isBestSolve = idx === row.bestIndex && row.bestIndex >= 0;
+        const bestSec = isBestSolve ? row.attempts[row.bestIndex] : null;
+        const bestCs = bestSec != null && bestSec > 0 ? Math.round(bestSec * 100) : null;
+        const avgSec = computeWcaAverage(row.attempts, form.event!);
+        const avgCs = avgSec != null ? Math.round(avgSec * 100) : null;
+
+        const needPr = (!averageRecordUserTouched && !row.averageRecord)
+          || (!singleRecordUserTouched && !row.singleRecord);
+        let ranks: { pS: number | null; pA: number | null } | null = null;
+        let pbEvent: PbByEvent[string] | undefined;
+        if (needPr) {
+          ranks = await fetchCubingPrRanks(form.compWcaId!, form.event!, form.round!, form.personId!, bestCs, avgCs);
+          if (cancelled) return;
+          if (!ranks) {
+            pbEvent = (await fetchPb(form.personId!))?.[toWcaEventId(form.event!)];
+            if (cancelled) return;
+          }
+        }
+        const prTag = (rank: number | null | undefined): string =>
+          rank == null ? '' : (rank <= 1 ? 'PR' : `PR${rank}`);
+
         let avgFilled: string | null = null;
         let singleFilled: string | null = null;
         if (!averageRecordUserTouched) {
-          const v = row.averageRecord ?? '';
+          let v = row.averageRecord ?? '';
+          if (!v) {
+            if (ranks?.pA != null) v = prTag(ranks.pA);
+            else if (pbEvent?.average?.best != null && avgCs != null && avgCs <= pbEvent.average.best) v = 'PR';
+          }
           setField('regionalAverageRecord', v);
           if (v) avgFilled = v;
         }
         if (!singleRecordUserTouched) {
-          const idx = form.solveNum != null ? form.solveNum - 1 : -1;
-          const v = (idx === row.bestIndex && row.singleRecord) ? row.singleRecord : '';
+          let v = (isBestSolve && row.singleRecord) ? row.singleRecord : '';
+          if (!v && isBestSolve) {
+            if (ranks?.pS != null) v = prTag(ranks.pS);
+            else if (pbEvent?.single?.best != null && bestCs != null && bestCs <= pbEvent.single.best) v = 'PR';
+          }
           setField('regionalSingleRecord', v);
           if (v) singleFilled = v;
         }
@@ -837,6 +933,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     }
   };
 
+  // Hand off the current scramble + solution to /sim (matching puzzle). Null
+  // when the event has no sim equivalent (clock) — button then hidden.
+  const simPuzzleParam = simPuzzleForReconEvent(form.event || '');
+  const simHref = simPuzzleParam
+    ? `${langPrefix}/sim?${buildSimQuery(simPuzzleParam, form.wcaScramble || form.optimalScramble || '', form.solution || '')}`
+    : null;
+
   // Pre-mount: render a neutral loading shell on both SSR and the first client
   // render so they match (auth state isn't known until localStorage is read).
   if (!mounted) {
@@ -854,6 +957,15 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             </Link>
             <h1>{isZh ? '提交复盘' : 'Submit Reconstruction'}</h1>
           </div>
+          {simHref && (
+            <Link
+              href={simHref}
+              className="submit-open-sim"
+              title={isZh ? '把当前打乱 / 解法带到模拟器里玩' : 'Play this scramble / solution in the simulator'}
+            >
+              <Box size={14} /> {isZh ? '去模拟器' : 'Open in Sim'}
+            </Link>
+          )}
         </div>
         <div style={{ padding: 24, textAlign: 'center' }}>
           <p style={{ marginBottom: 16 }}>
@@ -877,13 +989,19 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   return (
     <div className="recon-page submit-page">
       <div className="submit-header">
-        <div className="detail-header">
-          <div className="detail-header-nav">
-            <button type="button" className="recon-btn recon-btn--ghost" onClick={() => logout()} title={authUser.wcaId}>
-              <LogOut size={14} /> {displayCuberName(authUser.name, isZh)}
-            </button>
+        <div className="submit-header-top">
+          <div className="detail-header">
+            <h1>{isEditing ? t('recon.editRecon') : t('recon.addRecon')}</h1>
           </div>
-          <h1>{isEditing ? t('recon.editRecon') : t('recon.addRecon')}</h1>
+          {simHref && (
+            <Link
+              href={simHref}
+              className="submit-open-sim"
+              title={isZh ? '把当前打乱 / 解法带到模拟器里玩' : 'Play this scramble / solution in the simulator'}
+            >
+              <Box size={14} /> {isZh ? '去模拟器' : 'Open in Sim'}
+            </Link>
+          )}
         </div>
         {dupWarning && <div className="submit-warning">{dupWarning}</div>}
       </div>
@@ -1148,41 +1266,29 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
             {/* WCA scramble */}
             <label className="submit-field submit-block">
-              <span className="submit-label submit-label-with-action">
-                <span>{t('recon.wcaScramble')}</span>
-                {(() => {
-                  const ev = form.event ?? '';
-                  const supported = randomScrambleForEvent(ev) !== null;
-                  return (
-                    <button
-                      type="button"
-                      className="submit-label-btn"
-                      disabled={!supported}
-                      onClick={() => {
-                        const s = randomScrambleForEvent(ev);
-                        if (s) setField('wcaScramble', s);
-                      }}
-                      title={supported
-                        ? (isZh ? '生成随机 WCA 打乱' : 'Generate random WCA scramble')
-                        : (isZh ? '该项目暂不支持随机生成' : 'Not supported for this event')}
-                      aria-label={isZh ? '生成随机打乱' : 'Generate random scramble'}
-                    >
-                      <Shuffle size={12} />
-                    </button>
-                  );
-                })()}
-              </span>
+              <span className="submit-label">{t('recon.wcaScramble')}</span>
               <textarea
                 rows={1}
+                ref={wcaScrambleRef}
                 value={form.wcaScramble || ''}
+                readOnly={!!scrambleAutoSource}
+                className={scrambleAutoSource ? 'submit-input-locked' : undefined}
+                title={scrambleAutoSource
+                  ? (isZh ? '自动填充值不可编辑;改 比赛/项目/轮次/分组/第几把 以重新获取' : 'auto-filled, read-only; change comp/event/round/group/# to refetch')
+                  : undefined}
                 onChange={e => {
+                  setScrambleUserTouched(true);
+                  setScrambleAutoSource(null);
+                  scrambleAutoFilledRef.current = false;
                   setField('wcaScramble', e.target.value);
                   autoResize(e.target);
                 }}
                 onInput={e => autoResize(e.target as HTMLTextAreaElement)}
-                ref={el => { if (el) autoResize(el); }}
                 style={{ overflow: 'hidden', resize: 'none' }}
               />
+              {scrambleLoading
+                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {isZh ? '自动获取中…' : 'fetching…'}</span>
+                : scrambleAutoSource ? <span className="submit-hint">{scrambleAutoSource}</span> : null}
             </label>
 
             {/* Optimal scramble */}

@@ -249,7 +249,7 @@ export function CaseTreePicker({
       <div className="trainer-set-header" onClick={toggleAll}>
         <TriCheckbox checked={allSelected} indeterminate={!allSelected && !noneSelected} />
         <span>{isZh ? '全选' : 'Select all'}</span>
-        <span style={{ color: '#888', fontWeight: 400, fontSize: '0.85rem' }}>
+        <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
           ({totalSelected}/{cases.length})
         </span>
       </div>
@@ -278,7 +278,7 @@ export function CaseTreePicker({
                   <TriCheckbox checked={topAll} indeterminate={!topAll && !topNone} />
                   <TopThumb g={top} />
                   <span>{set.toUpperCase()} {top.label}</span>
-                  <span style={{ color: '#888', fontWeight: 400, fontSize: '0.85rem' }}>
+                  <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
                     ({topSelectedCount}/{top.allCases.length})
                   </span>
                 </span>
@@ -321,7 +321,7 @@ export function CaseTreePicker({
                                 : <CaseThumb puzzle={puzzle} set={set} sticker={subCases[0].sticker}
                                     alg={subSampleAlg} setup={subCases[0].setup} size={36} />}
                               <span>{subLabel}</span>
-                              <span style={{ color: '#888', fontWeight: 400, fontSize: '0.85rem' }}>
+                              <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
                                 ({subSelectedCount}/{subCases.length})
                               </span>
                             </span>

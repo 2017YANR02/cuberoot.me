@@ -1,10 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import DiscreteHistogram, { type HistSeries } from './_components/DiscreteHistogram';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
+import { Flag } from '@/components/Flag';
+import { compSourceLine } from '@/lib/comp-schedule';
+import { localizeCompName } from '@/lib/comp-localize';
+import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import {
   SubsetColorPicker, useSubsetSelection, fillColorsForSubset,
   COLOR_HEX, type ColorLetter,
@@ -37,7 +42,7 @@ interface DistributionJson {
 }
 
 type ExampleSample = [string, string, string];        // [id, scramble, bottomColor]
-type ExampleCompMeta = [string, string, number];      // [compId, eventId, scrambleNum]
+type ExampleCompMeta = [string, string, number, string, string]; // [compId, eventId, scrambleNum, roundType, group]
 interface ExamplesSet {
   variants: Record<string, Record<string, Record<string, Record<string, ExampleSample[]>>>>;
   comps?: Record<string, [string, string]>;           // compId → [比赛名, 日期串]
@@ -161,6 +166,12 @@ export default function ScrambleStatsPage() {
   const [examplesLoading, setExamplesLoading] = useState(false);
   const [examplesError, setExamplesError] = useState<string | null>(null);
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
+
+  // 异步加载 comp→country 索引,完成后 bump version 触发重渲染拿示例卡片的比赛国旗 + 中文名
+  const [flagVer, setFlagVer] = useState(() => flagDataVersion());
+  useEffect(() => {
+    void loadFlagData().then((v) => { if (v !== flagVer) setFlagVer(v); });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetch('/stats/scramble/distribution.json')
@@ -384,6 +395,7 @@ export default function ScrambleStatsPage() {
 
       <ExamplesPanel
         isZh={isZh}
+        lang={isZh ? 'zh' : 'en'}
         scrambleSet={scrambleSet}
         variant={variant}
         stage={stage}
@@ -466,6 +478,7 @@ function DownloadIcon() {
 
 function ExamplesPanel({
   isZh,
+  lang,
   scrambleSet,
   variant,
   stage,
@@ -479,6 +492,7 @@ function ExamplesPanel({
   idMeta,
 }: {
   isZh: boolean;
+  lang: 'zh' | 'en';
   scrambleSet: string;
   variant: string;
   stage: string;
@@ -531,23 +545,31 @@ function ExamplesPanel({
                   title={isZh ? '朝下的底色' : 'Bottom color'}
                 />
                 <div className="scramble-stats-examples-body">
-                  <code className="scramble-stats-examples-scramble">{scr}</code>
-                  {comp && m && (
-                    <a
-                      className="scramble-stats-examples-comp"
-                      href={`https://www.worldcubeassociation.org/competitions/${m[0]}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      title={comp[0]}
-                    >
-                      <span className="scramble-stats-examples-comp-name">{comp[0]}</span>
-                      <span className="scramble-stats-examples-comp-meta">
-                        <EventIcon event={m[1]} className="scramble-stats-examples-evt" title={eventLabel(m[1], isZh)} />
-                        {m[2] ? <span>#{m[2]}</span> : null}
-                        {comp[1] ? <span>{comp[1]}</span> : null}
-                      </span>
-                    </a>
-                  )}
+                  <Link
+                    className="scramble-stats-examples-scramble"
+                    href={`/${lang}/scramble/analyzer?${new URLSearchParams({ scramble: scr.trim().replace(/ /g, '_') })}`}
+                    prefetch={false}
+                  >
+                    {scr}
+                  </Link>
+                  {comp && m && (() => {
+                    const iso2 = compFlagIso2(m[0]);
+                    return (
+                      <Link
+                        className="scramble-stats-examples-comp"
+                        href={`/${lang}/scramble/gen?comp=${encodeURIComponent(m[0])}`}
+                        prefetch={false}
+                        title={comp[0]}
+                      >
+                        {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                        <span className="scramble-stats-examples-comp-name">{localizeCompName(m[0], comp[0], isZh)}</span>
+                        <span className="scramble-stats-examples-comp-meta">
+                          <EventIcon event={m[1]} className="scramble-stats-examples-evt" title={eventLabel(m[1], isZh)} />
+                          <span>{compSourceLine(m[3], m[4], m[2], isZh)}</span>
+                        </span>
+                      </Link>
+                    );
+                  })()}
                 </div>
               </li>
             );

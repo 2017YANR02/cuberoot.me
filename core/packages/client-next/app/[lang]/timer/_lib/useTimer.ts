@@ -54,6 +54,9 @@ export interface TimerHandle {
   onPressDown: () => void;
   onPressUp: () => void;
   reset: () => void;
+  /** Soft-cancel an in-progress hold/inspection arm WITHOUT clearing the last
+   *  result or the displayed time — used when a press turns into a gesture. */
+  cancelArm: () => void;
 }
 
 export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
@@ -259,6 +262,20 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     setPhaseSafe('idle');
   }, [setLastMsSafe, setPhaseSafe, stopHoldTimer, stopInspectionTick, stopTick]);
 
+  const cancelArm = useCallback(() => {
+    // Tear down any pending hold/inspection started by the press-down, but keep
+    // the last solve + its displayed time intact, then fall back to the phase
+    // implied by whether a result is on screen (stopped) or not (idle).
+    stopHoldTimer();
+    stopInspectionTick();
+    pendingInspectionStartRef.current = false;
+    if (inspectionStartRef.current !== 0) {
+      inspectionStartRef.current = 0;
+      setInspectionDisplayMs(0);
+    }
+    setPhaseSafe(lastMsRef.current !== null ? 'stopped' : 'idle');
+  }, [setPhaseSafe, stopHoldTimer, stopInspectionTick]);
+
   // Cleanup on unmount.
   useEffect(() => {
     return () => {
@@ -276,5 +293,6 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     onPressDown,
     onPressUp,
     reset,
+    cancelArm,
   };
 }
