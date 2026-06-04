@@ -37,7 +37,8 @@ async function queryCompetitions(): Promise<WcaComp[]> {
   const url = `${WCA_API}?sort=-announced_at&per_page=${PER_PAGE}`;
   for (let attempt = 0; attempt < 3; attempt++) {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 15000);
+    // WCA /competitions?sort=-announced_at 是重查询,服务器实测 ~19s;15s 会被 abort,给 30s。
+    const t = setTimeout(() => ctrl.abort(), 30000);
     try {
       const r = await fetch(url, { headers: UA, signal: ctrl.signal });
       if (r.ok) {
