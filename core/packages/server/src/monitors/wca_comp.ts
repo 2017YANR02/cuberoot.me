@@ -38,8 +38,9 @@ function countryFlag(iso2: string): string {
 
 async function queryCompetitions(): Promise<WcaComp[]> {
   const url = `${WCA_API}?sort=-announced_at&per_page=${PER_PAGE}`;
-  // 单次尝试(30s):WCA /competitions 慢且偶发 >30s,retry 也是 30s 没意义,靠 60s 轮询补。
-  for (let attempt = 0; attempt < 1; attempt++) {
+  // per_page=10 后单次 ~3.8s。进程内偶发争用会让某次 >15s 被 abort,保留 3 次当轮重试自愈
+  // (每次都快,poll-guard 兜底不与下轮重叠);3 次仍失败再靠 60s 轮询补。
+  for (let attempt = 0; attempt < 3; attempt++) {
     const ctrl = new AbortController();
     // per_page=10 后该查询 ~2s,15s 超时足够;失败靠 60s 轮询补(poll-guard 兜底不重叠)。
     const t = setTimeout(() => ctrl.abort(), 15000);
