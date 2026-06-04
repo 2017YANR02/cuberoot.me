@@ -28,6 +28,7 @@ import { ensureDaemon as ensureCube555Daemon } from './cube555/daemon.js';
 import { getCurrentRecords } from './utils/current_records.js';
 import { warmCnCompZh } from './utils/cn_comp_zh_cache.js';
 import { startPrewarmCron } from './routes/cubing_live.js';
+import { startMonitors } from './monitors/index.js';
 
 const app = new Hono();
 
@@ -130,6 +131,10 @@ setTimeout(() => {
 // /v1/cubing-live L2 缓存预热:启动 90s 后扫一遍 upcoming+recent (~700 个),之后每 10min 刷一遍.
 // pm2 重启 / 新部署后第一个用户访问已结束 / 报名中比赛都秒返回.
 startPrewarmCron();
+
+// wca-monitor 推送套件(WCA Live 纪录/PR + 粗饼纪录/比赛 + WCA 比赛)后台 poller.
+// MONITORS_ENABLED!=1 时直接返回(休眠);MONITOR_PUSH_ENABLED!=1 时只 DRY 日志不真推.
+startMonitors();
 
 const PORT = Number(process.env.PORT) || 3001;
 

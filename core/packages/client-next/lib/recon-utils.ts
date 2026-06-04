@@ -75,6 +75,9 @@ export function getPuzzleId(event: string): string {
 // ── Record class ──
 export function getRecordClass(val: string): string {
   const v = val.toUpperCase();
+  // Personal-best labels incl. average variants (timer: "PB", "PB AO5", "PB AO12").
+  // Treat the whole PB/PR family as a personal record so they share one badge color.
+  if (/^P[RB](\s|$)/.test(v)) return 'pr';
   if (/^[FXU]?W[RB]$|^1STWR$|^RWR$|^YTW[RB]$|^XWR$/.test(v)) return 'wr';
   if (v === 'WCR') return 'wcr';
   if (v === 'CR') return 'cr';

@@ -21,7 +21,7 @@ import { User, Users } from 'lucide-react';
 import SoloView from './SoloView';
 import BattleView from './BattleView';
 
-type Mode = 'solo' | 'battle';
+type Mode = 'solo' | 'duo';
 
 export default function TimerShell() {
   const { i18n } = useTranslation();
@@ -30,15 +30,16 @@ export default function TimerShell() {
   const [mode, setMode] = useState<Mode>('solo');
 
   // Read ?mode AFTER mount only — first paint is the calm Solo view. Both modes
-  // are reflected in the URL (?mode=solo | ?mode=battle); normalize on mount so
-  // solo (previously param-less) also shows its mode.
+  // are reflected in the URL (?mode=solo | ?mode=duo); normalize on mount so solo
+  // (previously param-less) also shows its mode.
   useEffect(() => {
     setMounted(true);
     try {
       const params = new URLSearchParams(window.location.search);
-      const m: Mode = params.get('mode') === 'battle' ? 'battle' : 'solo';
+      const raw = params.get('mode');
+      const m: Mode = raw === 'duo' ? 'duo' : 'solo';
       setMode(m);
-      if (params.get('mode') !== m) {
+      if (raw !== m) {
         params.set('mode', m);
         const qs = params.toString();
         history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash);
@@ -74,11 +75,11 @@ export default function TimerShell() {
       <button
         type="button"
         role="tab"
-        aria-selected={mode === 'battle'}
+        aria-selected={mode === 'duo'}
         aria-label={isZh ? '双人' : 'Duo'}
         title={isZh ? '双人' : 'Duo'}
-        className={`shell-mode-opt${mode === 'battle' ? ' active' : ''}`}
-        onClick={() => switchMode('battle')}
+        className={`shell-mode-opt${mode === 'duo' ? ' active' : ''}`}
+        onClick={() => switchMode('duo')}
       >
         <Users size={16} />
       </button>
@@ -86,10 +87,10 @@ export default function TimerShell() {
   );
 
   // First paint is always Solo (mounted gate keeps SSG calm). After mount, if
-  // ?mode=battle we render <BattleView/>; the mode pill is injected into the
-  // battle middle-bar / bottom-nav. Switching modes never remounts the page —
-  // each view owns its own engine state.
-  if (mounted && mode === 'battle') {
+  // ?mode=duo we render <BattleView/> (the Duo experience); the mode pill is
+  // injected into its middle-bar / bottom-nav. Switching modes never remounts the
+  // page — each view owns its own engine state.
+  if (mounted && mode === 'duo') {
     return <BattleView modePill={modePill} />;
   }
 

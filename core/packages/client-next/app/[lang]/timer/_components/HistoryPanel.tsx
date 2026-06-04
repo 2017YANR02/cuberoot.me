@@ -4,11 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Star, X, GitCompare, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical, Check, Clipboard, MessageSquare } from 'lucide-react';
 import type { Solve, Penalty } from '../_lib/types';
 import { effectiveMs } from '../_lib/types';
-import { formatMs, pbSingleIndex } from '../_lib/stats';
+import { formatMs, pbSingleIndex, averageOfN } from '../_lib/stats';
 import CompareSolvesModal from './CompareSolvesModal';
 import { computeAllTags, TAG_DEFS, ALL_TAG_IDS } from '../_lib/storage/auto_tag';
 import type { TagId } from '../_lib/storage/auto_tag';
 import { ClearButton } from '@/components/ClearButton';
+import { RecordBadge } from '@/components/RecordBadge';
 
 interface Props {
   solves: Solve[];
@@ -25,6 +26,9 @@ interface Props {
   onQuickDelete?: (id: string) => void;
   /** Open the full SolveModal at this solve (for the "Comment" action). */
   onQuickComment?: (solve: Solve, index: number) => void;
+  /** cstimer-style per-row rolling-average columns (e.g. [5, 12] → ao5/ao12
+   *  ending at each solve). Defaults to [5, 12]; pass [] to hide the columns. */
+  aoWindows?: number[];
 }
 
 /**
@@ -105,6 +109,7 @@ const MOBILE_TAG_CAP = 2;
 export default function HistoryPanel({
   solves, isZh, onRowClick, onBulkDelete,
   onQuickPenalty, onQuickDelete, onQuickComment,
+  aoWindows = [5, 12],
 }: Props) {
   const [query, setQuery] = useState('');
   const [compareMode, setCompareMode] = useState(false);
@@ -280,6 +285,28 @@ export default function HistoryPanel({
     for (let i = 0; i < solves.length; i++) m.set(solves[i].id, i);
     return m;
   }, [solves]);
+
+  // cstimer-style rolling aoN columns: for each window n, aoCols[n][i] is the
+  // trimmed aoN ending at the (original-order) solve index i. O(N·n) per window.
+  const visibleAoWindows = aoWindows.filter(n => n >= 2);
+  const aoColKey = visibleAoWindows.join(',');
+  const aoCols = useMemo(() => {
+    const cols: Record<number, (number | null)[]> = {};
+    for (const n of visibleAoWindows) {
+      const arr: (number | null)[] = new Array(solves.length).fill(null);
+      for (let i = n - 1; i < solves.length; i++) {
+        arr[i] = averageOfN(solves.slice(i - n + 1, i + 1), n);
+      }
+      cols[n] = arr;
+    }
+    return cols;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [solves, aoColKey]);
+
+  // Grid template for the row + column header. Leading marker column appears in
+  // compare/select mode; one auto column per aoN; trailing auto for row actions.
+  const aoTmpl = visibleAoWindows.length ? ' ' + visibleAoWindows.map(() => 'minmax(40px,auto)').join(' ') : '';
+  const headTmpl = `32px minmax(0,1fr)${aoTmpl} auto`;
 
   const trimmed = query.trim().toLowerCase();
 
@@ -977,6 +1004,14 @@ export default function HistoryPanel({
             )}
           </div>
         )}
+        {filteredReversed.length > 0 && !compareMode && !selectMode && (
+          <div className="history-cols-head" style={{ gridTemplateColumns: headTmpl }}>
+            <span className="idx">#</span>
+            <span>{isZh ? '时间' : 'Time'}</span>
+            {visibleAoWindows.map(n => <span key={n} className="hao-head">ao{n}</span>)}
+            <span />
+          </div>
+        )}
         {filteredReversed.map((s) => {
           const realIdx = idToRealIdx.get(s.id) ?? -1;
           const time = effectiveMs(s);
@@ -1004,6 +1039,8 @@ export default function HistoryPanel({
           } else if (isBulkSelected) {
             rowStyle = { background: 'rgba(153, 90, 77, 0.18)', boxShadow: 'inset 2px 0 0 #995a4d' };
           }
+          const lead = (compareMode || selectMode) ? '14px ' : '';
+          rowStyle = { ...rowStyle, gridTemplateColumns: `${lead}32px minmax(0,1fr)${aoTmpl} auto` };
 
           const handleRowClick = () => {
             // A long-press just opened the quick-action sheet — swallow the
@@ -1091,6 +1128,11 @@ export default function HistoryPanel({
                     >
                       {shown.map(tid => {
                         const def = TAG_DEFS[tid];
+                        // PB / PB ao5 / PB ao12 use the shared RecordBadge (PR style)
+                        // so they read the same as record badges elsewhere on the site.
+                        if (tid === 'pb-single' || tid === 'pb-ao5' || tid === 'pb-ao12') {
+                          return <RecordBadge key={tid} record={def.labelEn} variant="standalone" />;
+                        }
                         return (
                           <span key={tid} style={tagChipStyle(def.tone)}>
                             {isZh ? def.labelZh : def.labelEn}
@@ -1106,6 +1148,9 @@ export default function HistoryPanel({
                   );
                 })()}
               </div>
+              {visibleAoWindows.map(n => (
+                <div className="hao" key={n}>{formatMs(aoCols[n]?.[realIdx] ?? null)}</div>
+              ))}
               {!compareMode && !selectMode && (
                 <div className="actions">
                   <button onClick={(e) => { e.stopPropagation(); onRowClick(s, realIdx); }}>

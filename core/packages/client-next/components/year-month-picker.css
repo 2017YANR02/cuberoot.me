@@ -1,0 +1,27 @@
+/* 年/月滚筒选择浮层 — YearMonthPickerPopover 用;token 随宿主页面主题自适配 */
+.ym-popover-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: transparent;
+}
+.ym-popover-panel {
+    position: fixed;
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.ym-popover-panel .wheel-picker {
+    --wp-bg: var(--surface);
+    --wp-text: #a8a69c;
+    --wp-text-active: var(--text);
+    --wp-highlight: var(--accent-soft);
+    --wp-text-fade-2: #b8b6ac;
+    --wp-text-fade-3: #d4d4d4;
+    --wp-text-fade-4: #e5e5e5;
+    min-height: 260px;
+}

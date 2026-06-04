@@ -1,0 +1,71 @@
+/* Sq1ReconPlayer — cuber-engine SQ1 preview. Sizing chains off the parent pane
+   (submit-player-pane / submit-inline-player / detail-player-pane) just like
+   TwistySection's fill mode. */
+
+.sq1-recon-player {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.sq1-recon-canvas {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  touch-action: none;
+}
+
+.sq1-recon-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  flex-wrap: nowrap;
+}
+
+.sq1-recon-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  transition: background 0.15s;
+}
+
+.sq1-recon-controls button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.sq1-recon-controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sq1-recon-scrubber {
+  flex: 1;
+  min-width: 60px;
+  height: 4px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.sq1-recon-scrubber:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sq1-recon-progress {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}

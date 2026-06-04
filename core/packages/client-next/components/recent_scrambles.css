@@ -1,7 +1,7 @@
-/* DailyGod — 落地页 tagline 下方「今日神打」栏:本批最简单打乱,变体×类型×底色切片。
+/* RecentScrambles — 落地页 tagline 下方「近期打乱」栏:本批最简单打乱,变体×类型×底色切片。
    双主题,走 :root token;底色 swatch/色点用魔方固定色(inline)。 */
 
-.daily-god {
+.recent-scrambles {
   width: 100%;
   max-width: 760px;
   margin: 0 auto 2.5rem;
@@ -10,21 +10,21 @@
   gap: 0.75rem;
 }
 
-.daily-god-head {
+.rs-head {
   display: flex;
   align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
 }
 
-.daily-god-title {
+.rs-title {
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--foreground);
 }
 
-.daily-god-date {
+.rs-date {
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
@@ -32,7 +32,7 @@
   margin-right: auto;
 }
 
-.daily-god-select {
+.rs-select {
   appearance: none;
   padding: 0.3rem 1.6rem 0.3rem 0.6rem;
   border: 1px solid var(--input);
@@ -46,11 +46,11 @@
   cursor: pointer;
   transition: border-color 0.12s;
 }
-.daily-god-select:hover { border-color: var(--border-strong); }
-.daily-god-select:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+.rs-select:hover { border-color: var(--border-strong); }
+.rs-select:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
 
 /* hero 卡 */
-.dg-hero {
+.rs-hero {
   display: flex;
   align-items: center;
   gap: 1.1rem;
@@ -59,25 +59,25 @@
   border-radius: 14px;
   background: color-mix(in srgb, var(--foreground) 3%, transparent);
 }
-.dg-hero-cube {
+.rs-hero-cube {
   flex-shrink: 0;
   line-height: 0;
 }
-.dg-hero-cube img { display: block; }
-.dg-hero-body {
+.rs-hero-cube img { display: block; }
+.rs-hero-body {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   min-width: 0;
   flex: 1;
 }
-.dg-hero-steps {
+.rs-hero-steps {
   display: flex;
   align-items: baseline;
   gap: 0.4rem;
 }
 /* hero 底色标识:直接复用 picker swatch 的圆角方块视觉(非圆形) */
-.dg-hero-dot {
+.rs-hero-dot {
   width: 1.35rem;
   height: 1.35rem;
   border-radius: 5px;
@@ -85,22 +85,26 @@
   align-self: center;
   overflow: hidden;
 }
-.dg-hero-steps b {
+.rs-hero-steps b {
   font-size: 1.8rem;
   font-weight: 700;
   line-height: 1;
   color: var(--foreground);
   font-variant-numeric: tabular-nums;
 }
-.dg-hero-unit { font-size: 0.85rem; color: var(--muted-foreground); }
-.dg-hero-scramble {
+.rs-hero-unit { font-size: 0.85rem; color: var(--muted-foreground); }
+.rs-hero-scramble {
+  display: block;
   font-family: var(--font-mono);
   font-size: 0.82rem;
   line-height: 1.45;
   color: var(--foreground);
   word-break: break-word;
+  text-decoration: none;
+  transition: color 0.12s;
 }
-.dg-hero-src {
+.rs-hero-scramble:hover { color: var(--accent); }
+.rs-hero-src {
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -109,12 +113,12 @@
   color: var(--foreground);
   margin-top: 0.1rem;
 }
-.dg-hero-src:hover .dg-src-comp { color: var(--accent); }
-.dg-evt { width: 1.05em; height: 1.05em; flex-shrink: 0; }
-.dg-src-comp { font-size: 0.85rem; font-weight: 600; }
-.dg-src-meta { font-size: 0.78rem; color: var(--muted-foreground); }
+.rs-hero-src:hover .rs-src-comp { color: var(--accent); }
+.rs-evt { width: 1.05em; height: 1.05em; flex-shrink: 0; }
+.rs-src-comp { font-size: 0.85rem; font-weight: 600; }
+.rs-src-meta { font-size: 0.78rem; color: var(--muted-foreground); }
 
-.dg-empty {
+.rs-empty {
   padding: 1.2rem;
   text-align: center;
   font-size: 0.85rem;
@@ -124,35 +128,39 @@
 }
 
 /* Top-5 列表 */
-.dg-list {
+.rs-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
 }
-.dg-row {
+.rs-row {
   display: flex;
   align-items: flex-start;
   gap: 0.7rem;
   padding: 0.5rem 0.3rem;
   border-top: 1px solid var(--border-default);
 }
-.dg-row-main {
+.rs-row-main {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
   min-width: 0;
   flex: 1;
 }
-.dg-row-scramble {
+.rs-row-scramble {
+  display: block;
   font-family: var(--font-mono);
   font-size: 0.76rem;
   line-height: 1.4;
   color: var(--foreground);
   word-break: break-word;
+  text-decoration: none;
+  transition: color 0.12s;
 }
-.dg-row-rank {
+.rs-row-scramble:hover { color: var(--accent); }
+.rs-row-rank {
   font-size: 0.78rem;
   color: var(--faint-foreground);
   font-variant-numeric: tabular-nums;
@@ -160,16 +168,18 @@
   text-align: center;
   flex-shrink: 0;
 }
-.dg-row-steps {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--foreground);
-  font-variant-numeric: tabular-nums;
-  width: 1.6rem;
-  text-align: center;
+/* 行内底色标识:与 hero 圆点同视觉,尺寸缩小贴合两行行高 */
+.rs-row-dot {
+  width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  overflow: hidden;
   flex-shrink: 0;
+  margin-top: 0.05rem;
+  line-height: 0;
 }
-.dg-row-comp {
+.rs-row-comp {
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -179,22 +189,22 @@
   color: var(--foreground);
   overflow: hidden;
 }
-.dg-row-comp:hover .dg-row-name { color: var(--accent); }
-.dg-row-name {
+.rs-row-comp:hover .rs-row-name { color: var(--accent); }
+.rs-row-name {
   font-size: 0.84rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex-shrink: 1;
 }
-.dg-row-sub {
+.rs-row-sub {
   font-size: 0.76rem;
   color: var(--muted-foreground);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-.dg-more {
+.rs-more {
   align-self: center;
   margin-top: 0.4rem;
   padding: 0.35rem 1.3rem;
@@ -207,10 +217,10 @@
   cursor: pointer;
   transition: border-color 0.12s, color 0.12s;
 }
-.dg-more:hover { border-color: var(--accent); color: var(--accent); }
+.rs-more:hover { border-color: var(--accent); color: var(--accent); }
 
 @media (max-width: 560px) {
-  .dg-hero { flex-direction: column; align-items: stretch; text-align: left; }
-  .dg-hero-cube { align-self: center; }
-  .dg-row-sub { display: none; }
+  .rs-hero { flex-direction: column; align-items: stretch; text-align: left; }
+  .rs-hero-cube { align-self: center; }
+  .rs-row-sub { display: none; }
 }
