@@ -6,6 +6,7 @@
 import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
 import { POLL_INTERVAL_MS } from './config.js';
+import { startPoller } from './poll.js';
 
 const MONITOR: MonitorId = 'wca_comp';
 const WCA_API = 'https://www.worldcubeassociation.org/api/v0/competitions';
@@ -35,7 +36,8 @@ function countryFlag(iso2: string): string {
 
 async function queryCompetitions(): Promise<WcaComp[]> {
   const url = `${WCA_API}?sort=-announced_at&per_page=${PER_PAGE}`;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  // 单次尝试(30s):WCA /competitions 慢且偶发 >30s,retry 也是 30s 没意义,靠 60s 轮询补。
+  for (let attempt = 0; attempt < 1; attempt++) {
     const ctrl = new AbortController();
     // WCA /competitions?sort=-announced_at 是重查询,服务器实测 ~19s;15s 会被 abort,给 30s。
     const t = setTimeout(() => ctrl.abort(), 30000);
@@ -103,8 +105,5 @@ async function runOnce(): Promise<void> {
 }
 
 export function startWcaCompMonitor(): void {
-  runOnce().catch((e) => console.error('[wca-comp] runOnce error:', e));
-  setInterval(() => {
-    runOnce().catch((e) => console.error('[wca-comp] runOnce error:', e));
-  }, POLL_INTERVAL_MS.wcaComp);
+  startPoller('wca-comp', runOnce, POLL_INTERVAL_MS.wcaComp);
 }

@@ -18,6 +18,7 @@ import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.j
 import { getWatchedWcaIds } from './watched.js';
 import { setPr, isNewPr, isTiedPr, warmBaseline } from './pr_baseline.js';
 import { POLL_INTERVAL_MS } from './config.js';
+import { startPoller } from './poll.js';
 import { enrichName } from './names.js';
 import { formatRecords } from '../routes/wca_format.js';
 import type { RecordEvent } from '../utils/record_format.js';
@@ -433,8 +434,5 @@ async function runOnce(): Promise<void> {
 }
 
 export function startWcaLivePrMonitor(): void {
-  runOnce().catch((e) => console.error('[wca-live-pr] runOnce error:', e));
-  setInterval(() => {
-    runOnce().catch((e) => console.error('[wca-live-pr] runOnce error:', e));
-  }, POLL_INTERVAL_MS.wcaLivePr);
+  startPoller('wca-live-pr', runOnce, POLL_INTERVAL_MS.wcaLivePr);
 }

@@ -6,6 +6,7 @@
 import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
 import { POLL_INTERVAL_MS } from './config.js';
+import { startPoller } from './poll.js';
 
 const MONITOR: MonitorId = 'cubing_comp';
 const CUBING_API = 'https://cubing.com/api/competition';
@@ -101,8 +102,5 @@ async function runOnce(): Promise<void> {
 }
 
 export function startCubingCompMonitor(): void {
-  runOnce().catch((e) => console.error('[cubing-comp] runOnce error:', e));
-  setInterval(() => {
-    runOnce().catch((e) => console.error('[cubing-comp] runOnce error:', e));
-  }, POLL_INTERVAL_MS.cubingComp);
+  startPoller('cubing-comp', runOnce, POLL_INTERVAL_MS.cubingComp);
 }
