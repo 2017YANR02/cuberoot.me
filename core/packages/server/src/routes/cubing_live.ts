@@ -371,10 +371,19 @@ async function getCompStartDate(wcaId: string): Promise<string | null> {
   const hit = startDateCache.get(wcaId);
   if (hit && Date.now() - hit.at < START_DATE_CACHE_TTL) return hit.d;
   try {
-    const rows = await query<{ start_date: string | null }>(
+    // 先精确匹配走 PK 索引(快路径).WCA 规范 id 有非直觉大小写(StartofSummerBeijing2026
+    // 里的小写 of),缓存/feed 偶尔带异形大小写(StartOfSummer…)精确查不到 → null 会让近期窗
+    // 失效,放过已被超越的旧纪录.miss 时再大小写不敏感兜底一次(全表扫,仅极少数异形 id 命中).
+    let rows = await query<{ start_date: string | null }>(
       `SELECT start_date FROM wca_competitions WHERE id = ? LIMIT 1`,
       [wcaId],
     );
+    if (rows.length === 0) {
+      rows = await query<{ start_date: string | null }>(
+        `SELECT start_date FROM wca_competitions WHERE LOWER(id) = LOWER(?) LIMIT 1`,
+        [wcaId],
+      );
+    }
     const d = rows[0]?.start_date || null;
     startDateCache.set(wcaId, { d, at: Date.now() });
     return d;
@@ -1713,11 +1722,13 @@ export async function extractInferredRecords(): Promise<InferredRecord[]> {
   const out: InferredRecord[] = [];
   const now = Date.now();
   for (const data of cache.values()) {
-    // 纳入 cubing(WCA REST 无数据的 CN 比赛)+ wca(刚结束、WCA REST 已录成绩但 record
-    // 未公示 ratify、tag 由 enrichRecordTags 本地推断的比赛)。这两类纪录都还没进 WCA Live
-    // recentRecords feed,需本地补上。排除 wca_db(已公示历史,feed 已含)/ wca_live(本就在 feed)。
-    // dedup(competitionId|eventId|type|value)+ 10 天窗兜底防与 feed 重复。
-    if (data.source !== 'cubing' && data.source !== 'wca') continue;
+    // 纳入 cubing(中国比赛跑在 cubing.com,WCA Live 根本没这场)+ wca(WCA REST 已录但
+    // record 未 ratify)+ wca_db(同一场 CN 比赛成绩进 WCA 中央库 → 本地 dump 后,loadComp
+    //   不再走 cubing 源而判成 wca_db;但 CN 比赛永远不进 WCA Live recentRecords feed,旧逻辑
+    //   排除 wca_db 就把这类纪录漏没了 —— 不是 dump 比 feed 快,是 feed 压根不收 cubing.com 比赛)。
+    // 排除 wca_live(本就是 feed 上游,会重复)。record_tag 是"达成时即纪录"的历史 marker
+    // (被超越后仍保留),靠下面 10 天窗 + 与 feed dedup 收敛成"近期纪录"。
+    if (data.source !== 'cubing' && data.source !== 'wca' && data.source !== 'wca_db') continue;
     const sd = await getCompStartDate(data.slug);
     if (sd) {
       const days = (now - Date.parse(sd)) / 86400_000;
