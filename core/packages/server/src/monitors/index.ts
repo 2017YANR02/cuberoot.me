@@ -24,9 +24,14 @@ export function startMonitors(): void {
   }
   const push = process.env.MONITOR_PUSH_ENABLED === '1';
   console.log(`[monitors] starting 5 monitors (push ${push ? 'ENABLED' : 'DRY-only'})`);
-  startWcaLiveRecordMonitor();
-  startCubingRecordMonitor();
-  startCubingCompMonitor();
-  startWcaCompMonitor();
-  startWcaLivePrMonitor();
+  // 错开启动 → 5 个监控的 60s tick 永久相差 7s,避免同 tick 齐发抢事件循环/出口
+  // (wca_comp 排最前抢最静窗口,cubing_record 的重 WS 排最后)。
+  const starts = [
+    startWcaCompMonitor,
+    startWcaLiveRecordMonitor,
+    startCubingCompMonitor,
+    startWcaLivePrMonitor,
+    startCubingRecordMonitor,
+  ];
+  starts.forEach((start, i) => setTimeout(start, i * 7000));
 }
