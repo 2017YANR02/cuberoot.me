@@ -22,11 +22,13 @@ export const NR_COUNTRIES: Set<string> = new Set(
     .filter(Boolean),
 );
 
-/** 各监控轮询间隔(ms)。原 Python 各 poll_interval 默认 30-60s,这里统一 60s。 */
+/** 各监控轮询间隔(ms)。原 Python 各 poll_interval 默认 30-60s,这里统一 60s。
+ *  wcaComp 例外 5min:全球新比赛公示不急,且 WCA /competitions 端点在本进程内偶发慢/超时,
+ *  拉长间隔降无谓负载与日志噪音(best-effort)。 */
 export const POLL_INTERVAL_MS = {
   wcaLiveRecord: 60000,
   cubingRecord: 60000,
   cubingComp: 60000,
-  wcaComp: 60000,
+  wcaComp: 300000,
   wcaLivePr: 60000,
 } as const;
