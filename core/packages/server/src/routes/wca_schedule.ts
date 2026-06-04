@@ -129,11 +129,14 @@ wcaScheduleRoutes.get('/wca/comp/:id/schedule', async (c) => {
     console.error(`[wca-schedule] cache read failed for ${compId}:`, (err as Error)?.message ?? err);
   }
 
-  // 2. miss / stale → write-through (deduped)
-  const result = await dedupedFetch(compId);
-  if (!result) {
-    if (stale) return respond(c, stale.data, stale.endDate, todayStr, 'STALE'); // serve stale on upstream failure
-    return c.json({ error: 'WCA API unreachable' }, 502);
+  // 2. stale entry exists → serve immediately, refresh in background
+  if (stale) {
+    dedupedFetch(compId).catch(() => {});
+    return respond(c, stale.data, stale.endDate, todayStr, 'STALE');
   }
+
+  // 3. no entry at all → must wait for first fetch
+  const result = await dedupedFetch(compId);
+  if (!result) return c.json({ error: 'WCA API unreachable' }, 502);
   return respond(c, result.data, result.endDate, todayStr, 'MISS');
 });
