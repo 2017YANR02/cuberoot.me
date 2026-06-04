@@ -362,6 +362,26 @@ function lowerBound(arr: Int32Array, target: number): number {
   return lo;
 }
 
+// 世界排名(Top 100 门控)—— 给 utils/record_format 的纪录文案 /WRn 后缀用.
+// 复刻退役 Python wca_rankings.get_world_rank:成绩进世界前 100 返名次,否则 null.
+// rank = (个人最佳严格小于 value 的选手数) + 1 = WCA 官方按选手 PB 去重的名次,
+// 与 /wca/rank-for 共用 getRankIndex 缓存(同一份 Int32Array,内存零额外).
+// ⚠️ 行为变更:数据源从「WCA 官网实时 Top100」变成本地 wca_results_top(stats-build 周更).
+//   两次周更间的新破纪录,/WRn 分母缺最近一周 → 名次可能系统性偏小几名(WR/Top10 无感,
+//   NR/CR 的 /WRnn 偶尔偏小且无人察觉).可接受 —— 换来彻底脱离 spawn/联网/超时/熔断脆链.
+//   333fm average 这里走得通(getRankIndex 不像 /wca/rank-for 端点那样拒它).
+export async function worldRankTop100(
+  eventId: string,
+  recType: string,
+  value: number,
+): Promise<number | null> {
+  if (!value || value <= 0) return null;
+  const idx = await getRankIndex(eventId.toLowerCase(), recType === 'average', 'W');
+  if (!idx) return null;
+  const rank = lowerBound(idx.values, value) + 1;
+  return rank <= 100 ? rank : null;
+}
+
 wcaStatsExtraRoutes.get('/wca/rank-for', async (c) => {
   const event = (c.req.query('event') ?? '').toLowerCase();
   const type = (c.req.query('type') ?? 'single').toLowerCase();
