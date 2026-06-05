@@ -22,13 +22,6 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--foreground);
-}
-
-.rs-date {
-  font-size: 0.78rem;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-  color: var(--muted-foreground);
   margin-right: auto;
 }
 

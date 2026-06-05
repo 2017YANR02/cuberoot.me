@@ -53,6 +53,32 @@ reconRoutes.get('/recon/list', async (c) => {
   return c.json(rows.map(rowToJson));
 });
 
+// ==================== GET /v1/recon/latest ====================
+// 首页「今日复盘」用:取 id 最大(最新录入)的一条,含 solution 等全字段 + edits 覆盖层。
+// NOTE: 必须先于 /:id 注册,否则 'latest' 会被当成 :id。
+reconRoutes.get('/recon/latest', async (c) => {
+  const rows = await query('SELECT * FROM recons ORDER BY id DESC LIMIT 1');
+  if (rows.length === 0) {
+    c.header('Cache-Control', 'public, max-age=300');
+    return c.json(null);
+  }
+  const result = rowToJson(rows[0] as Record<string, unknown>);
+
+  // 合并编辑覆盖层(同 /:id)
+  const edits = await query<{ fields: Record<string, unknown> }>(
+    'SELECT fields FROM edits WHERE solve_id = ?', [String((rows[0] as { id: unknown }).id)]
+  );
+  if (edits.length > 0 && edits[0].fields && typeof edits[0].fields === 'object') {
+    for (const [k, v] of Object.entries(edits[0].fields)) {
+      if (!k.startsWith('_')) result[k] = v;
+    }
+    result._edited = true;
+  }
+
+  c.header('Cache-Control', 'public, max-age=300');
+  return c.json(result);
+});
+
 // ==================== GET /v1/recon/check-duplicate ====================
 // NOTE: 放在 /:id 之前，否则 'check-duplicate' 会被当作 :id 参数
 

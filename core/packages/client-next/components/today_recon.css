@@ -1,0 +1,133 @@
+/* TodayRecon —「今日复盘」首页 WCA 入口上方:/recon 最新一条预览卡。
+   双主题,走 :root token。 */
+
+.today-recon {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tr-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+.tr-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--foreground);
+  margin-right: auto;
+}
+.tr-all {
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+.tr-all:hover { color: var(--accent); }
+
+/* 预览卡 */
+.tr-card {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.tr-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.tr-cube {
+  flex-shrink: 0;
+  line-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tr-cube img { display: block; }
+.tr-evt-big {
+  font-size: 3.4rem;
+  color: var(--muted-foreground);
+}
+
+.tr-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+  flex: 1;
+}
+.tr-line {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.tr-line-main { gap: 0.5rem; }
+.tr-time {
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.tr-evt { width: 1.15em; height: 1.15em; color: var(--foreground); }
+.tr-person {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.tr-meta {
+  gap: 0.7rem;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.tr-comp {
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+}
+.tr-comp-name {
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.tr-round {
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.tr-arrow {
+  font-size: 1.5rem;
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+.tr-card:hover .tr-arrow {
+  color: var(--accent);
+  transform: translateX(4px);
+}
+
+@media (max-width: 560px) {
+  .tr-card { gap: 0.85rem; padding: 0.8rem 0.85rem; }
+  .tr-arrow { display: none; }
+  .tr-time { font-size: 1.3rem; }
+}
