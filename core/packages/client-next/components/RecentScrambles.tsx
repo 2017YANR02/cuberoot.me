@@ -53,7 +53,7 @@ export default function RecentScrambles({ lang }: Props) {
   const [variant, setVariant] = useState('std');
   const [metric, setMetric] = useState('cross');
   const [step, setStep] = useState<number | null>(null); // null = 跟随当前切片最少步
-  const sel = useSubsetSelection('cn');
+  const sel = useSubsetSelection('dual');
   const [expanded, setExpanded] = useState(false);
 
   // 异步加载 comp-country 索引,完成后 bump version 触发重渲染拿比赛国旗 + 中文名
@@ -119,7 +119,6 @@ export default function RecentScrambles({ lang }: Props) {
     <div className="recent-scrambles">
       <div className="rs-head">
         <span className="rs-title">{isZh ? '近期打乱' : 'Recent Scrambles'}</span>
-        <span className="rs-date">{data.export_date}</span>
         <SubsetColorPicker sel={sel} isZh={isZh} />
         <select
           className="rs-select"

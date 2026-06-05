@@ -21,6 +21,9 @@ const OngoingComps = dynamic(() => import('@/components/OngoingComps'), {
 const RecentScrambles = dynamic(() => import('@/components/RecentScrambles'), {
   loading: () => <div style={{ minHeight: 40 }} aria-hidden="true" />,
 });
+const TodayRecon = dynamic(() => import('@/components/TodayRecon'), {
+  loading: () => <div style={{ minHeight: 40 }} aria-hidden="true" />,
+});
 import { useEffectiveTheme } from '@/lib/theme';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../landing.css';
@@ -60,6 +63,8 @@ export default function LandingPage() {
 
       <RecentScrambles lang={lang} />
       <OngoingComps lang={lang} />
+
+      <TodayRecon lang={lang} />
 
       {/* WCA full-width hero — top-level entry, not in any section */}
       <Link href="/wca" className="wca-hero" prefetch={false}>
