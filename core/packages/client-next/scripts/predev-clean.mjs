@@ -14,8 +14,15 @@
 // Port is overridable via argv[2] (used by tests so they don't touch 3000).
 
 import { execSync } from 'node:child_process';
+import { rmSync } from 'node:fs';
 
-const PORT = Number(process.argv[2]) || 3000;
+// First numeric arg = port (tests pass their own so they don't touch 3000).
+// `--wipe-next` = also delete the .next build cache after freeing the port,
+// to recover from a corrupt/stale .next (e.g. "Unexpected non-whitespace
+// character after JSON" from a half-written manifest). Used by `dev:clean`.
+const args = process.argv.slice(2);
+const PORT = Number(args.find((a) => /^\d+$/.test(a))) || 3000;
+const WIPE = args.includes('--wipe-next');
 const isWin = process.platform === 'win32';
 
 function pidsOnPort(port) {
@@ -60,5 +67,16 @@ if (!before.length) {
     console.log(`[predev-clean] freed port ${PORT} (was PID ${before.join(', ')})`);
   } else {
     console.warn(`[predev-clean] port ${PORT} still held by PID ${after.join(', ')} after kill — next dev may fail to bind`);
+  }
+}
+
+// Done AFTER killing the port holder, so nothing is writing .next while we
+// delete it. Full wipe = cold rebuild on the next start; only via dev:clean.
+if (WIPE) {
+  try {
+    rmSync('.next', { recursive: true, force: true });
+    console.log('[predev-clean] wiped .next build cache (cold rebuild ahead)');
+  } catch (e) {
+    console.warn(`[predev-clean] could not wipe .next: ${e.message}`);
   }
 }
