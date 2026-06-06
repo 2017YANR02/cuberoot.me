@@ -194,6 +194,15 @@ body {
     transition: color 0.2s ease;
 }
 
+/* 废止项目展开/收起三角(沿用 .event-btn 方块底,只定义箭头本体) */
+.event-selector .event-more-arrow {
+    font-size: 13px;
+    font-weight: 700;
+    color: #6e6050;
+    transition: color 0.2s ease;
+}
+.event-selector .event-btn:hover .event-more-arrow { color: #333333; }
+
 .event-btn:hover {
     background: rgba(0, 0, 0, 0.10);
     border-color: rgba(0, 0, 0, 0.15);
@@ -706,6 +715,16 @@ body {
     top: 0;
     bottom: 0;
     width: 72px;
+    /* NOTE: 滚筒默认底色 #1c1c1e 与 numpad #1f1f1f 几乎同色，整轮融进键盘背景看不见。
+       提亮一档 + 内描边 + 加强中心高亮条，让滚轮始终读得出是个独立控件。 */
+    --wp-bg: #2c2c2e;
+    --wp-highlight: rgba(255, 255, 255, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* NOTE: 空态(无成绩可调)仍保留可见轮廓 + 占位破折号，不要淡到完全消失 */
+.wheel-picker.calc-drum.is-disabled {
+    opacity: 0.75;
 }
 
 /* ── 指标对比表格 ── */

@@ -121,6 +121,7 @@ html:has(.wca-stats-page),
 html:has(.wse-page),
 html:has(.wp-page),
 html:has(.records-page),
+html:has(.nemesizer-page),
 html:has(.tr-page) {
   color-scheme: dark;
   --background: #171717;
