@@ -57,7 +57,7 @@
       "Still active"
     ],
     [
-      "8.14",
+      "8.15",
       9,
       "7x7x7 Cube",
       "Average",
@@ -111,7 +111,7 @@
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
     ],
     [
-      "6.90",
+      "6.91",
       7,
       "4x4x4 Blindfolded",
       "Average",
@@ -408,6 +408,15 @@
       "[Magic Revenge 2012](https://www.worldcubeassociation.org/competitions/MagicRevenge2012)"
     ],
     [
+      "2.65",
+      5,
+      "5x5x5 Blindfolded",
+      "Single",
+      "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+      "[Square-1 Madison Square 2023](https://www.worldcubeassociation.org/competitions/Square1onaMadisonSquare2023)",
+      "Still active"
+    ],
+    [
       "2.64",
       5,
       "Rubik's Magic",
@@ -415,15 +424,6 @@
       "[Yuxuan Wang (王宇轩)](https://www.worldcubeassociation.org/persons/2009WANG13)",
       "[BUAA Open 2010](https://www.worldcubeassociation.org/competitions/BUAAOpen2010)",
       "[Magic Revenge 2012](https://www.worldcubeassociation.org/competitions/MagicRevenge2012)"
-    ],
-    [
-      "2.64",
-      5,
-      "5x5x5 Blindfolded",
-      "Single",
-      "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
-      "[Square-1 Madison Square 2023](https://www.worldcubeassociation.org/competitions/Square1onaMadisonSquare2023)",
-      "Still active"
     ],
     [
       "2.57",
@@ -1832,20 +1832,20 @@
     [
       "0.40",
       2,
-      "5x5x5 Blindfolded",
-      "Single",
-      "[Hill Pong Yong Feng](https://www.worldcubeassociation.org/persons/2017FENG10)",
-      "[May MBLD Madness Singapore 2023](https://www.worldcubeassociation.org/competitions/MayMBLDMadnessSingapore2023)",
-      "[Square-1 Madison Square 2023](https://www.worldcubeassociation.org/competitions/Square1onaMadisonSquare2023)"
-    ],
-    [
-      "0.40",
-      2,
       "Rubik's Cube",
       "Average",
       "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
       "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
       "Still active"
+    ],
+    [
+      "0.40",
+      2,
+      "5x5x5 Blindfolded",
+      "Single",
+      "[Hill Pong Yong Feng](https://www.worldcubeassociation.org/persons/2017FENG10)",
+      "[May MBLD Madness Singapore 2023](https://www.worldcubeassociation.org/competitions/MayMBLDMadnessSingapore2023)",
+      "[Square-1 Madison Square 2023](https://www.worldcubeassociation.org/competitions/Square1onaMadisonSquare2023)"
     ],
     [
       "0.39",
