@@ -2,7 +2,7 @@
 # Population in this bin: 8
 # Samples listed: 8 (all entries in this bin)
 # Source: scrambles.txt
-# Generated: 2026-06-03
+# Generated: 2026-06-06
 # Columns: id,scramble,bottom_color
 
 5939,L2 F2 R2 B2 U' B2 U B2 L2 D R2 U' B2 U' L' B U L F D' R' U' B2 L' ,B

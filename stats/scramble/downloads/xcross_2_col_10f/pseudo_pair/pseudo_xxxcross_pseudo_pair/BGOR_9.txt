@@ -2,7 +2,7 @@
 # Population in this bin: 258
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: scrambles.txt
-# Generated: 2026-06-03
+# Generated: 2026-06-06
 # Columns: id,scramble,bottom_color
 
 105,L2 F2 D2 B2 L2 B2 R2 U' B2 U' L2 D B2 R' F U L' D' B2 R B F U ,O
