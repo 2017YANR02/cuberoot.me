@@ -1,15 +1,24 @@
-// Next 16 proxy (formerly middleware). Runs before route render.
-// Job during Phase 3 [lang] migration:
+// Next 16 proxy (formerly middleware). Runs before every page render and owns
+// the site's language-prefix routing (/en/ /zh/). The [lang] migration is
+// COMPLETE — every owned page lives under app/[lang]/* — so this is now the
+// permanent lang-routing layer, NOT a migration shim. What it does:
 //
-//   1. ?lang=zh|en on ANY path → set `lang` cookie + 308 redirect to the
-//      same path with the lang prefix prepended (if not already prefixed).
-//   2. Bare path /foo (no /en or /zh prefix) on a path that IS migrated →
-//      308 redirect to /<cookie-lang>/foo. List of migrated paths kept in
-//      MIGRATED_PATHS below; each Phase-3 batch appends to it.
-//   3. Bare path on a path NOT yet migrated → pass through unchanged.
+//   1. ?lang=zh|en on ANY path → set `lang` cookie + 308 redirect to the same
+//      path with the lang prefix prepended. Keeps old ?lang= links (Vite era)
+//      working.
+//   2. Bare path /foo (no /en or /zh prefix) that is a known top-level route →
+//      308 redirect to /<cookie-lang>/foo (cookie, else Accept-Language).
+//      "Known" = the MIGRATED_PATHS whitelist below.
+//   3. /<lang>/foo (already prefixed) → pass through; refresh the `lang` cookie
+//      and inject the x-lang request header so the root layout SSRs in the
+//      URL's locale.
 //
-// This split keeps backward-compatible URLs working for not-yet-migrated
-// pages while immediately giving migrated pages clean /zh/ /en/ form.
+// IMPORTANT: MIGRATED_PATHS is a HAND-MAINTAINED whitelist. EVERY new top-level
+// app/[lang]/<route> MUST be added here, or its bare /<route> form won't get a
+// lang prefix and will 404 (only /en/<route> + /zh/<route> would work — this is
+// exactly what bit /article). A bare path NOT in the list falls through to
+// [lang]/page.tsx with lang=<that-segment>, which notFound()s; there are no
+// un-migrated pages left to fall back to.
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -17,9 +26,10 @@ import type { NextRequest } from 'next/server';
 const SUPPORTED_LOCALES = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED_LOCALES[number];
 
-// Routes (without /en or /zh prefix) that have been migrated to app/[lang]/*.
-// Updated per Phase-3 batch. Match against pathname *exactly* or as a prefix
-// (e.g. '/math/god' matches '/math/god' but NOT '/math/godfather').
+// Top-level routes (without /en or /zh prefix) under app/[lang]/*. This IS the
+// lang-routing whitelist — ADD EVERY NEW TOP-LEVEL ROUTE HERE. Match is exact
+// or by path prefix (e.g. '/math' matches '/math' and '/math/god' but NOT
+// '/mathx'). The "batch N" comments below are just migration history.
 const MIGRATED_PATHS: readonly string[] = [
   '/', // app/[lang]/page.tsx
   '/about',
