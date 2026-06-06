@@ -1,0 +1,142 @@
+/* /wca/fun-stats 趣味统计 —— 颜色一律走 token + color-mix(页面 dark-locked,见 globals html:has(.fun-stats))。 */
+
+.fun-stats {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+  color: var(--foreground);
+}
+
+.fun-stats-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+.fun-stats-intro {
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  margin: 0 0 20px;
+}
+
+.fun-stats-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+/* ── 左侧榜单导航 ── */
+.fun-stats-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: sticky;
+  top: 16px;
+}
+.fun-stats-nav-group { display: flex; flex-direction: column; gap: 2px; }
+.fun-stats-nav-head {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--faint-foreground);
+  margin-bottom: 2px;
+}
+.fun-stats-nav-item {
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 0.86rem;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.fun-stats-nav-item:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); color: var(--foreground); }
+.fun-stats-nav-item.active {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent-foreground);
+  font-weight: 600;
+}
+
+/* ── 主区 ── */
+.fun-stats-main { min-width: 0; }
+.fun-stats-stat-title { font-size: 1.2rem; font-weight: 600; margin: 0 0 14px; }
+
+.fun-stats-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.fun-stats-year {
+  background: var(--card);
+  color: var(--foreground);
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.86rem;
+}
+
+.fun-stats-error { color: var(--destructive); font-size: 0.9rem; padding: 12px 0; }
+.fun-stats-loading, .fun-stats-empty { color: var(--muted-foreground); font-size: 0.9rem; padding: 24px 0; }
+
+/* ── 表格 ── */
+.fun-stats-table-scroll { overflow-x: auto; margin-top: 6px; }
+.fun-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+.fun-stats-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  padding: 8px 12px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border-default);
+}
+.fun-stats-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 7%, transparent);
+  white-space: nowrap;
+}
+.fun-stats-table tbody tr:hover { background: color-mix(in srgb, var(--foreground) 4%, transparent); }
+.fun-cell-strong { font-weight: 700; }
+.fun-cell-sub { color: var(--muted-foreground); font-size: 0.82em; }
+
+.fun-cell-person, .fun-cell-comp, .fun-cell-region {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.fun-cell-person a, .fun-cell-comp a { color: var(--foreground); text-decoration: none; }
+.fun-cell-person a:hover { color: var(--accent); text-decoration: underline; }
+.fun-evt-icon { font-size: 1.05rem; color: var(--foreground); }
+.fun-cell-evt { display: inline-flex; align-items: center; }
+
+/* A 各地综合矩阵 */
+.fun-stats-matrix td, .fun-stats-matrix th { padding: 6px 8px; text-align: center; }
+.fun-stats-matrix td:nth-child(2), .fun-stats-matrix th:nth-child(2) { text-align: left; }
+.fun-cell-penalty { color: var(--faint-foreground); }
+.fun-cell-top { color: var(--accent); font-weight: 600; }
+
+/* ── 移动端 ── */
+@media (max-width: 860px) {
+  .fun-stats-layout { grid-template-columns: 1fr; gap: 16px; }
+  .fun-stats-nav {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+  }
+  .fun-stats-nav-group { flex: 0 0 auto; }
+}
+@media (max-width: 480px) {
+  .fun-stats { padding: 16px 10px 48px; }
+  .fun-stats-table { font-size: 0.82rem; }
+  .fun-stats-table th, .fun-stats-table td { padding: 6px 8px; }
+}

@@ -87,7 +87,7 @@ function AllEventsDonePageInner() {
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
         </h1>
-        <p className="wse-subtitle">{isZh ? '完成全 17 项 WCA 官方项目所用天数(从首次参赛到最后一项达成)' : 'Days from first WCA comp to completing all 17 events'}</p>
+        <p className="wse-subtitle">{isZh ? '完成全 17 项 WCA 官方项目所用天数(从首次参赛到最后一项达成),即「全项目大满贯」' : 'Days from first WCA comp to completing all 17 events — the all-events grand slam'}</p>
       </header>
 
       <div className="wse-filters">

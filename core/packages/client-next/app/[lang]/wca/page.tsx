@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Wrench,
   CalendarDays, LineChart, TrendingDown, Radio, Target, Calculator, Search,
-  ListOrdered, Users, Percent, LayoutGrid, Sigma, Crown, History,
+  ListOrdered, Users, Percent, LayoutGrid, Sigma, Crown, History, Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 import { getLangQuery } from '@/i18n/i18n-client';
@@ -54,6 +54,7 @@ const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; ex
   { path: '/wca/sum-of-ranks',    zh: '名次和',       en: 'Sum of Ranks',    Icon: Sigma },
   { path: '/wca/grand-slam',      zh: '大满贯',       en: 'Grand Slam',      Icon: Crown },
   { path: '/wca/historical',      zh: '历史排名',     en: 'Historical Ranks', Icon: History },
+  { path: '/wca/fun-stats',       zh: '趣味统计',     en: 'Fun Stats',       Icon: Sparkles },
 ];
 
 export default function WcaStatsIndex() {
