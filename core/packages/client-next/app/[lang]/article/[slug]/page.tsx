@@ -11,11 +11,15 @@
  *   generateStaticParams:拉已发布 slug 预生成(失败 try/catch 返空,不阻塞 build)。
  *
  * 不可用 cookies()/headers()(SSG 约束);只服已发布,缺失 / 未发布 → notFound()。
+ * owner/admin 的 Edit/Delete 与登录用户的 Report 抽到 client island ArticleActions(依赖 auth)。
  */
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { ChevronLeft } from 'lucide-react';
 import { apiUrl } from '@/lib/api-base';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { ArticleBody } from '@/components/article/ArticleBody';
+import ArticleActions from '@/components/article/ArticleActions';
 import type { Article, ArticleListItem } from '@/lib/article-api';
 import '../article.css';
 
@@ -53,6 +57,26 @@ async function getArticle(slug: string): Promise<Article | null> {
   }
 }
 
+/**
+ * 「该作者的更多文章」:服务端拉作者已发布列表,去掉当前篇,只留已发布,最多 4 篇。
+ * 失败 / 异常一律返空(不阻塞阅读页),返回轻量 list item。
+ */
+async function getMoreByAuthor(authorWcaId: string, currentSlug: string): Promise<ArticleListItem[]> {
+  try {
+    const r = await fetch(apiUrl(`/v1/article?author=${encodeURIComponent(authorWcaId)}`), {
+      next: { revalidate: 300 },
+    });
+    if (!r.ok) return [];
+    const data = (await r.json()) as ArticleListItem[] | { articles?: ArticleListItem[] };
+    const list = Array.isArray(data) ? data : (data?.articles ?? []);
+    return list
+      .filter((a) => a && typeof a.slug === 'string' && a.slug !== currentSlug && !!a.publishedAt)
+      .slice(0, 4);
+  } catch {
+    return [];
+  }
+}
+
 export default async function ArticleReaderPage({
   params,
 }: {
@@ -60,25 +84,60 @@ export default async function ArticleReaderPage({
 }) {
   const { lang, slug } = await params;
   const isZh = lang.startsWith('zh');
+  const langPrefix = isZh ? 'zh' : 'en';
 
   const article = await getArticle(slug);
   if (!article) notFound();
 
   const author = article.authorName ? displayCuberName(article.authorName, isZh) : '';
   const date = article.publishedAt ? article.publishedAt.slice(0, 10) : '';
-  const byline = [author, date].filter(Boolean).join('  ');
+
+  const more = article.authorWcaId
+    ? await getMoreByAuthor(article.authorWcaId, article.slug)
+    : [];
 
   return (
     <main className="article-page">
+      <Link href={`/${langPrefix}/article`} className="article-breadcrumb">
+        <ChevronLeft size={15} />
+        <span>{isZh ? '全部文章' : 'All articles'}</span>
+      </Link>
+
       <h1>{article.title}</h1>
       {article.subtitle && <p className="article-subtitle">{article.subtitle}</p>}
-      {byline && (
+      {(author || date) && (
         <p className="article-byline">
           {isZh ? '作者 ' : 'by '}
-          {byline}
+          {author && (
+            <Link
+              href={`/${langPrefix}/article/author/${article.authorWcaId}`}
+              className="article-byline-author"
+            >
+              {author}
+            </Link>
+          )}
+          {date && <span className="article-byline-date">{date}</span>}
         </p>
       )}
+
+      <ArticleActions slug={article.slug} authorWcaId={article.authorWcaId} lang={lang} />
+
       <ArticleBody body={article.body} />
+
+      {more.length > 0 && (
+        <section className="article-more-by">
+          <h2 className="article-more-by-title">
+            {isZh ? '该作者的更多文章' : 'More by this author'}
+          </h2>
+          <ul className="article-more-by-list">
+            {more.map((a) => (
+              <li key={a.slug}>
+                <Link href={`/${langPrefix}/article/${a.slug}`}>{a.title}</Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   );
 }

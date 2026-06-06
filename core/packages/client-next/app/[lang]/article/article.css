@@ -231,3 +231,209 @@
     gap: 12px;
   }
 }
+
+/* ──────────────────────────────────────────────────────────────
+   阅读页交互(面包屑 / owner 操作 / 举报 / 更多文章)
+   - 颜色全 token;危险态走 --destructive。
+   - 房规:无外框卡片,分隔靠 hairline + margin。
+   ────────────────────────────────────────────────────────────── */
+
+/* ─── 顶部面包屑(导航,非「返回」按钮)─── */
+.article-page .article-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  border-bottom: none;
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+.article-page .article-breadcrumb:hover {
+  color: var(--foreground);
+  border-bottom: none;
+}
+
+/* ─── 署名内作者名链接(日期保持纯文本)─── */
+.article-page .article-byline-author {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--faint-foreground) 45%, transparent);
+}
+.article-page .article-byline-author:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+/* 作者名与日期之间留出明显间隔(HTML 会塌缩连续空白)。 */
+.article-page .article-byline-date {
+  margin-left: 0.7em;
+}
+
+/* ─── owner / admin 操作行(Edit / Delete)+ 登录用户举报入口 ─── */
+.article-page .article-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 1.8em;
+  font-size: 14px;
+}
+.article-page .article-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.article-page .article-action-link:hover {
+  color: color-mix(in srgb, var(--accent) 80%, var(--foreground));
+  border-bottom: none;
+}
+.article-page .article-action-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--destructive);
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.article-page .article-action-danger:hover {
+  color: color-mix(in srgb, var(--destructive) 82%, var(--foreground));
+}
+.article-page .article-action-danger:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.article-page .article-action-err {
+  color: var(--destructive);
+  font-size: 13px;
+  width: 100%;
+}
+
+/* ─── 举报内联面板 ─── */
+.article-page .article-report-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;
+}
+.article-page .article-report-label {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 600;
+}
+.article-page .article-report-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 64px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 6px;
+}
+.article-page .article-report-textarea:focus {
+  outline: none;
+  border-color: var(--ring);
+}
+.article-page .article-report-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.article-page .article-report-submit {
+  color: var(--accent);
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.article-page .article-report-submit:hover {
+  color: color-mix(in srgb, var(--accent) 80%, var(--foreground));
+}
+.article-page .article-report-submit:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.article-page .article-report-cancel {
+  color: var(--muted-foreground);
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.article-page .article-report-cancel:hover {
+  color: var(--foreground);
+}
+.article-page .article-report-cancel:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.article-page .article-report-thanks {
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+/* ─── 该作者的更多文章 ─── */
+.article-page .article-more-by {
+  margin: 3em 0 0;
+  padding-top: 1.6em;
+  border-top: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+.article-page .article-more-by-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.6em;
+}
+.article-page .article-more-by-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+.article-page .article-more-by-list li {
+  margin: 0;
+}
+.article-page .article-more-by-list a {
+  color: var(--foreground);
+  font-size: 16px;
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: none;
+}
+.article-page .article-more-by-list a:hover {
+  color: var(--accent);
+  border-bottom: none;
+}
+
+/* 窄屏:举报面板与操作行铺满 */
+@media (max-width: 480px) {
+  .article-page .article-report-panel {
+    max-width: 100%;
+  }
+}

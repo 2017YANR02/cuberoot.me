@@ -138,6 +138,51 @@
   color: var(--destructive);
 }
 
+/* 搜索框 — 浮 ClearButton(inline)需 position:relative + 右内边距留位 */
+.article-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0 0 24px;
+}
+.article-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+.article-search-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 32px 9px 32px;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  outline: none;
+}
+.article-search-input::placeholder {
+  color: var(--muted-foreground);
+}
+.article-search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+/* 作者页头部 — index 面包屑挨在 Home 右侧;标题继承 .article-list-title 字号 */
+.article-author-crumb {
+  margin-left: 16px;
+}
+.article-author-title {
+  margin-bottom: 24px;
+}
+
 @media (max-width: 768px) {
   .article-list-page {
     padding: 24px 16px 48px;

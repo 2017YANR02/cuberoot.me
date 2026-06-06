@@ -6,11 +6,12 @@
  * 已发布文章(published_at DESC)。任何登录 WCA 用户可写(New Article 门控在登录态)。
  * 卡片网格无外框(房规):靠分隔线 + gap 区分条目。双语走 useTranslation + isZh + i18n key。
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
-import { ChevronLeft, PenLine } from 'lucide-react';
+import { ChevronLeft, PenLine, Search } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
+import { ClearButton } from '@/components/ClearButton';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -34,6 +35,7 @@ export default function ArticleListPage() {
   const [articles, setArticles] = useState<ArticleListItem[] | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [mine, setMine] = useState<ArticleListItem[] | null>(null);
+  const [q, setQ] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +70,18 @@ export default function ArticleListPage() {
     };
   }, [isLoggedIn]);
 
+  // 客户端搜索:对已加载的已发布列表按 标题 + 副标题 + 作者名 大小写不敏感过滤。
+  const filtered = useMemo(() => {
+    if (!articles) return null;
+    const needle = q.trim().toLowerCase();
+    if (!needle) return articles;
+    return articles.filter((a) =>
+      [a.title, a.subtitle, a.authorName]
+        .filter((s): s is string => !!s)
+        .some((s) => s.toLowerCase().includes(needle)),
+    );
+  }, [articles, q]);
+
   return (
     <div className="article-list-page">
       <header className="article-list-header">
@@ -88,6 +102,21 @@ export default function ArticleListPage() {
       </div>
 
       <p className="article-list-lead">{t('article.subtitle')}</p>
+
+      <div className="article-search">
+        <Search className="article-search-icon" size={16} aria-hidden="true" />
+        <input
+          type="text"
+          className="article-search-input"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={t('article.searchPlaceholder')}
+          aria-label={t('article.search')}
+        />
+        {q && (
+          <ClearButton onClick={() => setQ('')} isZh={isZh} preserveFocus title={t('article.clearSearch')} />
+        )}
+      </div>
 
       {isLoggedIn && mine && mine.length > 0 && (
         <section className="article-mine">
@@ -131,9 +160,13 @@ export default function ArticleListPage() {
         <div className="article-list-empty">{t('article.empty')}</div>
       )}
 
-      {articles && articles.length > 0 && (
+      {articles && articles.length > 0 && filtered && filtered.length === 0 && q.trim() && (
+        <div className="article-list-empty">{t('article.noResults')}</div>
+      )}
+
+      {filtered && filtered.length > 0 && (
         <div className="article-grid">
-          {articles.map((a) => (
+          {filtered.map((a) => (
             <Link
               key={a.slug}
               href={isZh ? `/zh/article/${a.slug}` : `/en/article/${a.slug}`}

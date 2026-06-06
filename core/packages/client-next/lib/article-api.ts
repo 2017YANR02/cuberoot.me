@@ -63,9 +63,15 @@ export interface UpdateArticleInput {
 /**
  * 已发布文章列表(精简项,不含 body)。
  * mine=true → 自己的草稿 + 发布(需登录,服务端 no-store)。
+ * author=<wcaId> → 该作者的已发布文章(公开,作者页用)。mine 与 author 互斥,mine 优先。
  */
-export async function fetchArticles(opts?: { mine?: boolean }): Promise<ArticleListItem[]> {
-  const url = apiUrl(`/v1/article${opts?.mine ? '?mine=1' : ''}`);
+export async function fetchArticles(opts?: { mine?: boolean; author?: string }): Promise<ArticleListItem[]> {
+  const params = new URLSearchParams();
+  if (opts?.mine) params.set('mine', '1');
+  else if (opts?.author) params.set('author', opts.author);
+  const qs = params.toString();
+  const url = apiUrl(`/v1/article${qs ? `?${qs}` : ''}`);
+  // mine 需要登录态且禁缓存;public / author 走默认缓存。
   const r = opts?.mine
     ? await fetch(url, { headers: authHeaders(false), cache: 'no-store' })
     : await fetch(url);
@@ -137,4 +143,43 @@ export async function fetchArticleMe(): Promise<ArticleMe> {
     cache: 'no-store',
   });
   return handle<ArticleMe>(r);
+}
+
+// ── 举报 / 审核(社区防滥用) ────────────────────────────────────────────────
+/**
+ * 举报一篇已发布文章(requireAuth)。同一用户对同一篇幂等(后端 upsert),不报错。
+ * reason 可选,后端按上限截断。
+ */
+export async function reportArticle(slug: string, reason?: string): Promise<void> {
+  const r = await fetch(apiUrl(`/v1/article/${encodeURIComponent(slug)}/report`), {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ reason: reason ?? '' }),
+  });
+  await handle<{ ok?: boolean }>(r);
+}
+
+/** 被举报文章聚合行(admin 审核页)。 */
+export interface ArticleReportRow {
+  slug: string;
+  title: string;
+  authorName: string;
+  authorWcaId: string;
+  reportCount: number;
+  reporterCount: number;
+  lastReason: string | null;
+  lastReportedAt: string;
+  publishedAt: string | null;
+  deletedAt: string | null;
+}
+
+/** admin: 列出被举报的文章(按最近举报时间倒序聚合)。非 admin → 后端 403。 */
+export async function fetchArticleReports(): Promise<ArticleReportRow[]> {
+  const r = await fetch(apiUrl('/v1/article/reports'), {
+    headers: authHeaders(false),
+    cache: 'no-store',
+  });
+  const data = await handle<ArticleReportRow[] | { reports?: ArticleReportRow[] }>(r);
+  if (Array.isArray(data)) return data;
+  return data?.reports ?? [];
 }
