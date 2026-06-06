@@ -1,0 +1,252 @@
+/* ──────────────────────────────────────────────────────────────
+   /article/admin/reports — admin 审核页样式
+   - 双主题:全部颜色走 globals.css token,不硬码 hex。
+   - 房规:无卡片外框包内容,层级靠 margin / gap / hairline 分隔线。
+   - 删除 / 危险态走 var(--destructive)(填充上的文字用 --destructive-foreground)。
+   - <480px:表格塌成堆叠行(data-label 显标头),桌面横向可滚。
+   ────────────────────────────────────────────────────────────── */
+
+.article-reports-page {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+/* ─── 头部:回首页 + 面包屑回列表 ─── */
+.article-reports-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.article-reports-back,
+.article-reports-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  font-size: 14px;
+}
+.article-reports-back:hover,
+.article-reports-breadcrumb:hover {
+  color: var(--foreground);
+}
+
+.article-reports-title {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0.2em 0 0.6em;
+  line-height: 1.25;
+}
+
+.article-reports-empty {
+  color: var(--muted-foreground);
+  font-size: 15px;
+  padding: 32px 0;
+  text-align: center;
+}
+.article-reports-error {
+  color: var(--destructive);
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+
+/* ─── 未授权早返:居中最小化提示 ─── */
+.article-reports-denied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+  padding: 96px 24px;
+}
+.article-reports-denied-msg {
+  color: var(--muted-foreground);
+  font-size: 16px;
+  margin: 0;
+}
+
+/* ─── 表格:桌面横向可滚容器 ─── */
+.article-reports-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.article-reports-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.article-reports-table th,
+.article-reports-table td {
+  text-align: left;
+  padding: 12px 14px 12px 0;
+  border-bottom: 1px solid var(--border-default);
+  vertical-align: top;
+}
+.article-reports-table thead th {
+  color: var(--muted-foreground);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* 数字列右对齐 + 不换行 */
+.article-reports-table .ar-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  padding-right: 24px;
+}
+
+/* 理由列:untrusted 文本,限宽 + 断词,防撑爆布局 */
+.article-reports-table .ar-reason {
+  max-width: 280px;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.article-reports-table .ar-action {
+  text-align: right;
+  white-space: nowrap;
+  padding-right: 0;
+}
+
+.ar-title-link {
+  color: var(--foreground);
+  text-decoration: none;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.ar-title-link:hover {
+  color: var(--accent);
+}
+
+/* 已删除行:整体淡化 */
+.ar-row-deleted {
+  opacity: 0.55;
+}
+.ar-deleted-badge {
+  display: inline-block;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 删除按钮:危险态文字按钮(无外框,hover 转实底) */
+.ar-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--destructive);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-family: inherit;
+}
+.ar-delete-btn:hover {
+  background: color-mix(in srgb, var(--destructive) 12%, transparent);
+}
+.ar-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.ar-delete-btn:disabled:hover {
+  background: none;
+}
+
+/* ─── 移动端 <768px:略收边距 ─── */
+@media (max-width: 768px) {
+  .article-reports-page {
+    padding: 24px 16px 48px;
+  }
+  .article-reports-title {
+    font-size: 26px;
+  }
+}
+
+/* ─── 窄屏 <480px:表格塌成堆叠卡片行 ─── */
+@media (max-width: 480px) {
+  .article-reports-scroll {
+    overflow-x: visible;
+  }
+  .article-reports-table,
+  .article-reports-table tbody,
+  .article-reports-table tr,
+  .article-reports-table td {
+    display: block;
+    width: 100%;
+  }
+  /* 表头视觉隐藏(每个单元格用 data-label 自带标头) */
+  .article-reports-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .article-reports-table tr {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-default);
+  }
+  .article-reports-table td {
+    padding: 3px 0;
+    border-bottom: none;
+    max-width: none;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+  }
+  .article-reports-table td::before {
+    content: attr(data-label);
+    flex: 0 0 96px;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+  }
+  /* 标题行不需要前缀标头,占满整宽 */
+  .article-reports-table td:first-child {
+    margin-bottom: 4px;
+  }
+  .article-reports-table td:first-child::before {
+    display: none;
+  }
+  .ar-title-link {
+    font-size: 16px;
+  }
+  /* 数字列在堆叠态恢复左对齐(右对齐在卡片里很怪) */
+  .article-reports-table .ar-num {
+    text-align: left;
+    padding-right: 0;
+  }
+  /* 理由列断词在窄屏照样生效 */
+  .article-reports-table .ar-reason {
+    max-width: none;
+  }
+  .article-reports-table .ar-action {
+    text-align: left;
+    margin-top: 6px;
+  }
+  .article-reports-table .ar-action::before {
+    display: none;
+  }
+  .ar-delete-btn {
+    padding-left: 0;
+  }
+}

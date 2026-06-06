@@ -19,6 +19,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { query } from '../db/connection.js';
 import {
   requireAuth,
+  requireAdmin,
   authenticateUser,
   ADMIN_WCA_IDS,
   checkRateLimit,
@@ -32,6 +33,10 @@ const SLUG_MAX = 200;
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const IMG_MAX_BYTES = 8 * 1024 * 1024; // 8MB 解码后上限
 const ALLOWED_IMG_MIME = new Set(['image/png', 'image/jpeg', 'image/webp']);
+// 防滥用配额 (admin 不受限)。
+const MAX_ARTICLES_PER_USER = 200;
+const MAX_IMAGES_PER_USER = 1000;
+const REPORT_REASON_MAX = 500;
 
 /** Client IP for rate limiting (Nginx reverse-proxy sets X-Real-IP). */
 function getIp(c: { req: { header: (name: string) => string | undefined } }): string {
@@ -151,6 +156,20 @@ articleRoutes.get('/article', async (c) => {
   }
 
   c.header('Cache-Control', 'public, max-age=300');
+  const author = c.req.query('author');
+  if (author) {
+    // 按作者过滤:仅已发布,按发布时间倒序。author 作绑定参数传入,禁拼接。
+    const rows = await query<ArticleRow>(
+      `SELECT id, slug, title, subtitle, body, lang, owner_wca_id, owner_name,
+              published_at, created_at, updated_at, deleted_at
+       FROM article
+       WHERE deleted_at IS NULL AND published_at IS NOT NULL AND owner_wca_id = ?
+       ORDER BY published_at DESC, id DESC`,
+      [author],
+    );
+    return c.json({ articles: rows.map(rowToListItem) });
+  }
+
   const rows = await query<ArticleRow>(
     `SELECT id, slug, title, subtitle, body, lang, owner_wca_id, owner_name,
             published_at, created_at, updated_at, deleted_at
@@ -193,6 +212,56 @@ articleRoutes.get('/article/img/:id', async (c) => {
   return c.body(buf as unknown as ArrayBuffer);
 });
 
+// GET /v1/article/reports — admin 审核列表 (requireAdmin)。
+// NOTE: 必须在 /article/:slug 之前注册,否则 'reports' 会被当成 slug 命中。
+articleRoutes.get('/article/reports', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  await requireAdmin(c);
+
+  // 每篇被举报文章一行 (含软删文章)。lastReason 走相关子查询取最新一条理由。
+  const rows = await query<{
+    slug: string;
+    title: string;
+    owner_name: string;
+    owner_wca_id: string;
+    report_count: number | string;
+    reporter_count: number | string;
+    last_reason: string | null;
+    last_reported_at: string | Date;
+    published_at: string | Date | null;
+    deleted_at: string | Date | null;
+  }>(
+    `SELECT a.slug, a.title, a.owner_name, a.owner_wca_id,
+            COUNT(r.id) AS report_count,
+            COUNT(DISTINCT r.reporter_wca_id) AS reporter_count,
+            (SELECT r2.reason FROM article_report r2
+             WHERE r2.article_id = a.id
+             ORDER BY r2.created_at DESC, r2.id DESC
+             LIMIT 1) AS last_reason,
+            MAX(r.created_at) AS last_reported_at,
+            a.published_at, a.deleted_at
+     FROM article_report r
+     JOIN article a ON a.id = r.article_id
+     GROUP BY a.id, a.slug, a.title, a.owner_name, a.owner_wca_id,
+              a.published_at, a.deleted_at
+     ORDER BY MAX(r.created_at) DESC`,
+  );
+
+  const reports = rows.map((r) => ({
+    slug: r.slug,
+    title: r.title,
+    authorName: r.owner_name,
+    authorWcaId: r.owner_wca_id,
+    reportCount: Number(r.report_count),
+    reporterCount: Number(r.reporter_count),
+    lastReason: r.last_reason,
+    lastReportedAt: r.last_reported_at,
+    publishedAt: r.published_at,
+    deletedAt: r.deleted_at,
+  }));
+  return c.json({ reports });
+});
+
 // POST /v1/article/img — 传图 (requireAuth + rate limit + 8MB bodyLimit)。
 // JSON { dataB64, mime }。
 const imgBodyLimit = bodyLimit({
@@ -224,6 +293,17 @@ articleRoutes.post('/article/img', imgBodyLimit, async (c) => {
   const buf = Buffer.from(body.dataB64, 'base64');
   if (buf.length === 0) throw new Error('Validation: dataB64 is not valid base64');
   if (buf.length > IMG_MAX_BYTES) throw new Error('Validation: image too large (max 8MB)');
+
+  // 每用户配图上限 (admin 不限)。
+  if (!ADMIN_WCA_IDS.includes(user.wcaId)) {
+    const cnt = await query<{ n: number | string }>(
+      'SELECT COUNT(*) AS n FROM article_image WHERE owner_wca_id = ?',
+      [user.wcaId],
+    );
+    if (Number(cnt[0].n) >= MAX_IMAGES_PER_USER) {
+      throw new Error('Validation: image limit reached (max 1000)');
+    }
+  }
 
   const dims = parseImageDimensions(buf, mime);
 
@@ -286,6 +366,17 @@ articleRoutes.post('/article', async (c) => {
   const subtitle = normalizeSubtitle(body.subtitle);
   const publish = body.publish === true;
   const lang = typeof body.lang === 'string' && body.lang.trim() ? body.lang.trim().slice(0, 8) : 'zh';
+
+  // 每用户文章数上限 (admin 不限)。
+  if (!ADMIN_WCA_IDS.includes(user.wcaId)) {
+    const cnt = await query<{ n: number | string }>(
+      'SELECT COUNT(*) AS n FROM article WHERE owner_wca_id = ? AND deleted_at IS NULL',
+      [user.wcaId],
+    );
+    if (Number(cnt[0].n) >= MAX_ARTICLES_PER_USER) {
+      throw new Error('Validation: article limit reached (max 200)');
+    }
+  }
 
   // slug 唯一 (非软删)。
   const dup = await query<{ id: number | string }>(
@@ -418,6 +509,45 @@ articleRoutes.delete('/article/:slug', async (c) => {
   }
 
   await query('UPDATE article SET deleted_at = NOW() WHERE id = ?', [Number(found[0].id)]);
+  return c.json({ ok: true });
+});
+
+// POST /v1/article/:slug/report — 读者举报已发布文章 (requireAuth + rate limit)。
+// 幂等:同一举报人对同篇只占一行 (再次举报 → 更新理由/时间)。草稿不可举报且不暴露存在。
+articleRoutes.post('/article/:slug/report', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const user = await requireAuth(c);
+
+  const slug = c.req.param('slug');
+  const found = await query<{ id: number | string; published_at: string | Date | null }>(
+    'SELECT id, published_at FROM article WHERE slug = ? AND deleted_at IS NULL',
+    [slug],
+  );
+  // 草稿 (published_at IS NULL) 视同不存在,不透露其存在。
+  if (found.length === 0 || found[0].published_at == null) {
+    return c.json({ error: 'Not found' }, 404);
+  }
+
+  let body: { reason?: unknown } = {};
+  try {
+    body = await c.req.json<{ reason?: unknown }>();
+  } catch {
+    // 允许空 body — reason 可选。
+  }
+  let reason: string | null = null;
+  if (typeof body.reason === 'string') {
+    const v = body.reason.trim().slice(0, REPORT_REASON_MAX);
+    reason = v ? v : null;
+  }
+
+  await query(
+    `INSERT INTO article_report (article_id, reporter_wca_id, reason)
+     VALUES (?, ?, ?)
+     ON CONFLICT (article_id, reporter_wca_id)
+     DO UPDATE SET reason = EXCLUDED.reason, created_at = NOW()`,
+    [Number(found[0].id), user.wcaId, reason],
+  );
   return c.json({ ok: true });
 });
 
