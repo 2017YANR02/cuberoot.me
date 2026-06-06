@@ -30,7 +30,8 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 /** 粗筛:频道名像不像一个人名 */
 function looksLikePersonName(name: string): boolean {
-  if (name.length < 4 || name.length > 50) return false;
+  const len = [...name].length; // 码点数,与 Python len() 一致(非 BMP 字符不偏)
+  if (len < 4 || len > 50) return false;
   const lower = name.toLowerCase();
   for (const kw of SKIP_KEYWORDS) if (lower.includes(kw)) return false;
   // 跳过全大写(品牌/组织):isupper = 有 cased 字符且全大写

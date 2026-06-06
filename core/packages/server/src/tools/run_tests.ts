@@ -71,6 +71,7 @@ function runTest(title: string, uploader: string, channelId = ''): { output: str
     cwd: SCRIPT_DIR,
     maxBuffer: 16 * 1024 * 1024,
   });
+  if (res.error) throw res.error; // 启动失败要响,别伪装成内容 FAIL
   const fullOutput = (res.stdout ?? '') + (res.stderr ?? '');
   return { output: fullOutput, info: extractInfoLines(fullOutput) };
 }

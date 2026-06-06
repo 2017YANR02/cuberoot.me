@@ -58,24 +58,6 @@ function NemesizerInner() {
       {mode === 'h2h' && <H2HMode isZh={isZh} />}
       {mode === 'whatif' && <WhatIfMode isZh={isZh} />}
       {mode === 'stats' && <StatsMode isZh={isZh} />}
-
-      <footer className="nemesizer-footer">
-        {isZh ? (
-          <>
-            算法参考{' '}
-            <a href="https://github.com/huizhiLLL/WCA-Nemesizer-API" target="_blank" rel="noreferrer">huizhiLLL/WCA-Nemesizer-API</a>
-            ；UI 借鉴 <a href="https://nemesizer.com" target="_blank" rel="noreferrer">nemesizer.com</a>。
-            数据基于最近的 WCA developer dump，每周自动更新。
-          </>
-        ) : (
-          <>
-            Algorithm based on{' '}
-            <a href="https://github.com/huizhiLLL/WCA-Nemesizer-API" target="_blank" rel="noreferrer">huizhiLLL/WCA-Nemesizer-API</a>
-            ; UI inspired by <a href="https://nemesizer.com" target="_blank" rel="noreferrer">nemesizer.com</a>.
-            Data refreshed weekly from the WCA developer dump.
-          </>
-        )}
-      </footer>
     </div>
   );
 }

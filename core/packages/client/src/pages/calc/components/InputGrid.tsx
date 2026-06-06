@@ -206,8 +206,26 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
       return;
     }
 
+    // NOTE: 只允许数字 / . / : — 合法键与 d/D(DNF) 上面已 return，到这的可打印字符(字母、其它符号)一律拦掉
+    // 带 Ctrl/Meta/Alt 的组合键(复制粘贴撤销等)放行给浏览器；Arrow/Escape 等多字符 key 不受影响
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      return;
+    }
+
     // Arrow/Escape/Ctrl+Z 由 Numpad 的全局 keydown 处理
   }, [state, handleBlur, commitTavg]);
+
+  // NOTE: 粘贴也只保留数字 / . / :，过滤掉其余字符
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const clean = (e.clipboardData.getData('text') || '').replace(/[^0-9.:]/g, '');
+    const input = e.target as HTMLInputElement;
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    input.value = input.value.slice(0, start) + clean + input.value.slice(end);
+    input.selectionStart = input.selectionEnd = start + clean.length;
+  }, []);
 
   // NOTE: ghost bar 状态（用于 emoji 显示）
   // 原版 input_grid.js#861-875 Target Avg 状态 emoji
@@ -328,6 +346,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                 onBlur={(e) => commitTavg(p, e.target.value)}
                 onFocus={(e) => { state.setFocusedCell(p, -1); e.target.select(); }}
                 onKeyDown={(e) => handleKeyDown(e, p, 0, 'tavg')}
+                onPaste={handlePaste}
               />
             </div>
 
@@ -388,6 +407,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                     }}
                     onFocus={(e) => { state.setFocusedCell(p, t); e.target.select(); }}
                     onKeyDown={(e) => handleKeyDown(e, p, t)}
+                    onPaste={handlePaste}
                   />
                 </div>
               );

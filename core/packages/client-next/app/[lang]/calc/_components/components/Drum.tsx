@@ -64,7 +64,8 @@ export function Drum({ activeCell, onCellValueChange }: DrumProps) {
   const isMove = event === '333fm';
 
   const renderSlot = useCallback((v: number) => {
-    if (disabled) return '';
+    // NOTE: 空态(无成绩可调)填占位破折号，让滚筒即便没值也看得出是个轮子，而不是一片空白
+    if (disabled) return '–';
     return (v > 0 && v < DNF_VALUE) ? formatTime(v, false, isMove) : '';
   }, [disabled, isMove]);
 

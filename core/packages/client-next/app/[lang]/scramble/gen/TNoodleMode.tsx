@@ -1365,34 +1365,28 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 />
               )}
               {showCross && (
-                <label className="gen-cx-sel">
-                  <span>{t('变体', 'Variant')}</span>
-                  <select
-                    className="gen-cx-modesel"
-                    value={variant}
-                    onChange={(e) => setVariant(e.target.value as VariantKey)}
-                    aria-label={t('变体', 'Variant')}
-                  >
-                    {VARIANTS.map((v) => (
-                      <option key={v.key} value={v.key}>{t(v.zh, v.en)}</option>
-                    ))}
-                  </select>
-                </label>
+                <select
+                  className="gen-cx-modesel"
+                  value={variant}
+                  onChange={(e) => setVariant(e.target.value as VariantKey)}
+                  aria-label={t('变体', 'Variant')}
+                >
+                  {VARIANTS.map((v) => (
+                    <option key={v.key} value={v.key}>{t(v.zh, v.en)}</option>
+                  ))}
+                </select>
               )}
               {showCross && (
-                <label className="gen-cx-sel">
-                  <span>{t('阶段', 'Stage')}</span>
-                  <select
-                    className="gen-cx-modesel"
-                    value={safeMetric}
-                    onChange={(e) => setMetric(e.target.value as Metric)}
-                    aria-label={t('阶段', 'Stage')}
-                  >
-                    {vspec.stages.map((mk) => (
-                      <option key={mk} value={mk}>{t(STAGE_LABEL[mk].zh, STAGE_LABEL[mk].en)}</option>
-                    ))}
-                  </select>
-                </label>
+                <select
+                  className="gen-cx-modesel"
+                  value={safeMetric}
+                  onChange={(e) => setMetric(e.target.value as Metric)}
+                  aria-label={t('阶段', 'Stage')}
+                >
+                  {vspec.stages.map((mk) => (
+                    <option key={mk} value={mk}>{t(STAGE_LABEL[mk].zh, STAGE_LABEL[mk].en)}</option>
+                  ))}
+                </select>
               )}
               {showCross && (
                 <div className="gen-cx-colorsel">

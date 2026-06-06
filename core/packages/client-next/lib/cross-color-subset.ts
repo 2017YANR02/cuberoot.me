@@ -24,7 +24,7 @@ export const OPPOSITE_PAIRS: readonly (readonly [ColorLetter, ColorLetter])[] = 
   ['W', 'Y'], ['R', 'O'], ['B', 'G'],
 ];
 
-export const COLOR_MODES: readonly ColorMode[] = ['cn', 'quad', 'dual', 'single'];
+export const COLOR_MODES: readonly ColorMode[] = ['dual', 'single', 'cn', 'quad'];
 export const MODE_LABEL: Record<ColorMode, { zh: string; en: string }> = {
   cn: { zh: '六色', en: '6-color' },
   quad: { zh: '四色', en: '4-color' },
@@ -39,7 +39,7 @@ export interface ColorSel {
   quadExcl: number;    // quad 模式排除的对立色对下标
 }
 
-export const DEFAULT_COLOR_SEL: ColorSel = { mode: 'single', single: 'W', pair: 0, quadExcl: 2 };
+export const DEFAULT_COLOR_SEL: ColorSel = { mode: 'dual', single: 'W', pair: 0, quadExcl: 2 };
 
 /** 当前 mode + 子选择对应的底色字母集合。 */
 export function activeLetters(s: ColorSel): ColorLetter[] {

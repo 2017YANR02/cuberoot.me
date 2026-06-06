@@ -4,10 +4,12 @@
 
 'use client';
 
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCalcStore, solveCountForEvent } from '../stores/calc_store';
 import { setCurrentEvent } from '../engine/calc_engine';
 import { eventDisplayName } from '@/lib/wca-events';
+import { CANCELLED_EVENT_IDS } from '@/lib/event-constants';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
 
 const EVENT_IDS = [
@@ -17,12 +19,20 @@ const EVENT_IDS = [
   '333ft', 'magic', 'mmagic', '333mbo',
 ] as const;
 
+const OFFICIAL_IDS = EVENT_IDS.filter(id => !CANCELLED_EVENT_IDS.has(id));
+const CANCELLED_IDS = EVENT_IDS.filter(id => CANCELLED_EVENT_IDS.has(id));
+
 export function EventSelector() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const event = useCalcStore(s => s.event);
   const setEvent = useCalcStore(s => s.setEvent);
   const resizeTimes = useCalcStore(s => s.resizeTimes);
+
+  // 废止项目默认折叠在三角形后;当前已选中废止项时强制展开。
+  const hasSelectedCancelled = CANCELLED_EVENT_IDS.has(event);
+  const [expanded, setExpanded] = useState(false);
+  const showCancelled = expanded || hasSelectedCancelled;
 
   const handleSelect = (id: string) => {
     if (id === event) return;
@@ -32,18 +42,31 @@ export function EventSelector() {
     resizeTimes(solveCountForEvent(id));
   };
 
+  const renderBtn = (id: string) => (
+    <button
+      key={id}
+      className={`event-btn ${event === id ? 'active' : ''}`}
+      data-tooltip={eventDisplayName(id, isZh)}
+      onClick={() => handleSelect(id)}
+    >
+      <CubingIcon icon={`event-${id}`} />
+    </button>
+  );
+
   return (
     <div className="event-selector">
-      {EVENT_IDS.map(id => (
+      {OFFICIAL_IDS.map(renderBtn)}
+      {!hasSelectedCancelled && (
         <button
-          key={id}
-          className={`event-btn ${event === id ? 'active' : ''}`}
-          data-tooltip={eventDisplayName(id, isZh)}
-          onClick={() => handleSelect(id)}
+          type="button"
+          className="event-btn event-btn-more"
+          data-tooltip={isZh ? '已废止项目' : 'Former events'}
+          onClick={() => setExpanded(v => !v)}
         >
-          <CubingIcon icon={`event-${id}`} />
+          <span className="event-more-arrow">{expanded ? '▴' : '▾'}</span>
         </button>
-      ))}
+      )}
+      {showCancelled && CANCELLED_IDS.map(renderBtn)}
     </div>
   );
 }
