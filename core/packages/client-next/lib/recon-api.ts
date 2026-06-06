@@ -63,6 +63,19 @@ export async function getLatestRecon(): Promise<ReconSolve | null> {
   return list.length > 0 ? list[0] : null;
 }
 
+// 首页「今日复盘」: 最新录入那天的全部 recon(最新在前)。端点缺失/出错时回退到 /latest 单条,
+// 保证旧后端 / dev 代理也能渲染。
+export async function getTodayRecons(): Promise<ReconSolve[]> {
+  try {
+    const r = await apiGet<ReconSolve[]>('/today');
+    if (Array.isArray(r) && r.length > 0) return r;
+  } catch {
+    // fall through to latest fallback
+  }
+  const latest = await getLatestRecon();
+  return latest ? [latest] : [];
+}
+
 export async function addRecon(solve: Partial<ReconSolve>): Promise<ReconSolve> {
   return apiPost<ReconSolve>('', solve);
 }

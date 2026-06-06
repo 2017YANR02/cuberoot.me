@@ -17,36 +17,53 @@ import { SEARCH_CARDS } from '@/lib/landing-sections';
 
 const CSS = `
 .deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:60;display:flex;
-  align-items:flex-end;justify-content:center;padding:16px 16px max(12vh,48px);
+  flex-direction:column;align-items:center;justify-content:flex-end;padding:16px 16px max(12vh,48px);
   background:color-mix(in srgb, var(--foreground) 38%, transparent);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 .deskpet-search-box{width:min(640px,94vw);will-change:transform,opacity;}
 /* Box is anchored to the bottom of the screen, so the results open upward. */
 .deskpet-search-box .landing-search-panel{top:auto;bottom:calc(100% + 0.5rem);}
 
+/* Controls render as a bare row of icons (no per-button card/border) — hover only. */
 .deskpet-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
-  gap:8px;margin-top:8px;}
+  gap:4px;margin-top:10px;}
 .deskpet-toolbar button{display:flex;align-items:center;gap:6px;border:0;cursor:pointer;
-  padding:8px 12px;border-radius:10px;
+  padding:7px;border-radius:9px;
   font:13px/1 ui-sans-serif,system-ui,sans-serif;
-  background:color-mix(in srgb, var(--card) 90%, transparent);color:var(--foreground);
-  border:1px solid var(--border-default);}
-.deskpet-toolbar button:hover{background:var(--card);
-  border-color:color-mix(in srgb, var(--foreground) 24%, transparent);}
-.deskpet-toolbar .icon-only{padding:8px;}
-.deskpet-toolbar button.is-active{background:var(--accent-soft);
-  border-color:color-mix(in srgb, var(--accent) 50%, transparent);color:var(--accent);}
-.deskpet-toolbar .icon-only.char-btn{padding:3px;overflow:hidden;}
+  background:transparent;color:var(--foreground);transition:background .15s,color .15s;}
+.deskpet-toolbar button:hover{background:color-mix(in srgb, var(--foreground) 9%, transparent);}
+.deskpet-toolbar button.is-active{color:var(--accent);}
+.deskpet-toolbar button.is-active:hover{background:color-mix(in srgb, var(--accent) 12%, transparent);}
+.deskpet-toolbar .char-btn{padding:3px;overflow:hidden;}
 .deskpet-toolbar-thumb{width:26px;height:26px;object-fit:contain;}
-.deskpet-toolbar .sep{align-self:stretch;width:1px;margin:2px 2px;
+/* Donate heart — filled warm red, a theme-independent semantic color. */
+.deskpet-toolbar .heart-icon{fill:#ff5a5f;color:#ff5a5f;}
+.deskpet-toolbar .sep{align-self:center;width:1px;height:18px;margin:0 3px;
   background:var(--border-default);}
-.deskpet-toolbar .header-toggles{gap:8px;padding:0 2px;}
+.deskpet-toolbar .header-toggles{display:flex;align-items:center;gap:4px;}
+/* Auth control: drop the round outline so it reads as a bare icon in the row. */
+.deskpet-toolbar .wca-auth-btn,.deskpet-toolbar .wca-auth-trigger{
+  width:32px;height:32px;border:0;background:transparent;}
+.deskpet-toolbar .wca-auth-btn:hover,.deskpet-toolbar .wca-auth-trigger:hover{
+  background:color-mix(in srgb, var(--foreground) 9%, transparent);}
 /* Auth dropdown opens upward — the toolbar sits at the bottom of the screen. */
 .deskpet-toolbar .wca-auth-dropdown{top:auto;bottom:calc(100% + 6px);}
-/* toolbar button rule overrides border-radius + padding — restore circle for auth trigger */
-.deskpet-toolbar .wca-auth-trigger{border-radius:50%;padding:0;overflow:hidden;}
-@media (max-width:480px){
-  .deskpet-search-backdrop{padding-bottom:12px;}
+
+/* Mobile: lift the controls into a fixed bar pinned to the top of the screen,
+   one horizontally-scrollable row; the search box stays at the bottom. */
+@media (max-width:768px){
+  .deskpet-toolbar{position:fixed;top:0;left:0;right:0;margin:0;
+    padding:6px 10px;padding-top:max(6px,var(--sat,0px));
+    flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;gap:2px;
+    background:color-mix(in srgb, var(--background) 82%, transparent);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border-default);
+    scrollbar-width:none;-ms-overflow-style:none;}
+  .deskpet-toolbar>*{flex:0 0 auto;}
+  .deskpet-toolbar::-webkit-scrollbar{display:none;}
+  /* Box hugs the keyboard: visualViewport shrinks the backdrop, keep only a
+     small breathing gap at the bottom. */
+  .deskpet-search-backdrop{padding-bottom:6px;}
 }
 `;
 
@@ -130,16 +147,28 @@ export default function DeskPetSearch({
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
+    // iOS's visualViewport bottom lands ABOVE the form accessory bar (the
+    // dev.cuberoot.me / arrows / Done strip), and iOS exposes no keyboard-inset
+    // to locate it. When the keyboard is up, push the backdrop bottom past
+    // vv-bottom by a fixed amount so the box hugs that strip — the band between
+    // vv-bottom and the strip is actually visible, so the box stays on-screen.
+    const IOS_ACCESSORY = 30; // measured: vv-bottom sits ~30px above the iOS form accessory bar
     const apply = () => {
       const b = backdropRef.current;
       if (!b) return;
-      b.style.height = `${vv.height}px`;
+      const kbOpen = window.innerHeight - vv.height - vv.offsetTop > 100;
+      b.style.height = `${vv.height + (kbOpen ? IOS_ACCESSORY : 0)}px`;
       b.style.top = `${vv.offsetTop}px`;
     };
     apply();
+    // The keyboard animates in over a few hundred ms (and the URL bar may shift),
+    // so visualViewport settles late. Re-apply a few times so the box ends up
+    // flush against the keyboard instead of stranded mid-screen.
+    const retries = [60, 150, 300, 500].map(d => setTimeout(apply, d));
     vv.addEventListener('resize', apply);
     vv.addEventListener('scroll', apply);
     return () => {
+      retries.forEach(clearTimeout);
       vv.removeEventListener('resize', apply);
       vv.removeEventListener('scroll', apply);
     };
@@ -154,59 +183,59 @@ export default function DeskPetSearch({
       <style>{CSS}</style>
       <div className="deskpet-search-box" ref={boxRef}>
         <LandingSearch cards={SEARCH_CARDS} lang={lang} />
-        <div className="deskpet-toolbar">
-          <button type="button" className="icon-only" onClick={() => { router.push(`/${lang}`); onClose(); }}
-            title={t('主页', 'Home')}>
-            <Home size={16} />
-          </button>
-          <HeaderToggles />
-          <WcaAuth />
-          <button type="button" className="icon-only" onClick={() => setDonateOpen(true)}
-            title={t('赞助', 'Donate')}>
-            <Heart size={16} />
-          </button>
-          <span className="sep" />
-          <button type="button" className="icon-only char-btn" onClick={onCycleChar}
-            title={`${t('形象', 'Character')}: ${charLabel}`}>
-            <img src={charThumb} alt="" className="deskpet-toolbar-thumb"
-              style={charScale !== 1 ? { transform: `scale(${charScale})` } : undefined} />
-          </button>
-          <button type="button" className="icon-only" onClick={onCycleSize}
-            title={`${t('大小', 'Size')}: ${sizeLabel}`}>
-            <Maximize2 size={16} />
-          </button>
-          <button type="button" className="icon-only" onClick={() => setGalleryOpen(true)}
-            title={t('动画图鉴', 'Animations')}>
-            <Sparkles size={16} />
-          </button>
-          <button type="button" className="icon-only" onClick={() => {
-            window.dispatchEvent(new CustomEvent('clawd:perform'));
-            onClose();
-          }}
-            title={t('PLL 表演', 'PLL Show')}>
-            <Boxes size={16} />
-          </button>
-          <button type="button" className={`icon-only${randomMode ? ' is-active' : ''}`} onClick={onToggleRandom}
-            title={randomMode ? t('动画:随机', 'Animation: Random') : t('动画:默认', 'Animation: Default')}>
-            <Shuffle size={16} />
-          </button>
-          <button type="button" className="icon-only" onClick={onToggleRest}
-            title={resting ? t('叫醒它', 'Wake up') : t('休息一下', 'Take a nap')}>
-            <Coffee size={16} />
-          </button>
-          <button type="button" className="icon-only" onClick={onCling}
-            title={t('贴边', 'Cling')}>
-            <Magnet size={16} />
-          </button>
-          <button type="button" className="icon-only" onClick={onResetPos}
-            title={t('复位', 'Reset')}>
-            <Crosshair size={16} />
-          </button>
-          <button type="button" className="icon-only" onClick={onHide}
-            title={t('隐藏,刷新后恢复', 'Hide, restored on reload')}>
-            <EyeOff size={16} />
-          </button>
-        </div>
+      </div>
+      <div className="deskpet-toolbar">
+        <button type="button" className="icon-only" onClick={() => { router.push(`/${lang}`); onClose(); }}
+          title={t('主页', 'Home')}>
+          <Home size={16} />
+        </button>
+        <HeaderToggles />
+        <WcaAuth />
+        <button type="button" className="icon-only" onClick={() => setDonateOpen(true)}
+          title={t('赞助', 'Donate')}>
+          <Heart size={16} className="heart-icon" />
+        </button>
+        <span className="sep" />
+        <button type="button" className="icon-only char-btn" onClick={onCycleChar}
+          title={`${t('形象', 'Character')}: ${charLabel}`}>
+          <img src={charThumb} alt="" className="deskpet-toolbar-thumb"
+            style={charScale !== 1 ? { transform: `scale(${charScale})` } : undefined} />
+        </button>
+        <button type="button" className="icon-only" onClick={onCycleSize}
+          title={`${t('大小', 'Size')}: ${sizeLabel}`}>
+          <Maximize2 size={16} />
+        </button>
+        <button type="button" className="icon-only" onClick={() => setGalleryOpen(true)}
+          title={t('动画图鉴', 'Animations')}>
+          <Sparkles size={16} />
+        </button>
+        <button type="button" className="icon-only" onClick={() => {
+          window.dispatchEvent(new CustomEvent('clawd:perform'));
+          onClose();
+        }}
+          title={t('PLL 表演', 'PLL Show')}>
+          <Boxes size={16} />
+        </button>
+        <button type="button" className={`icon-only${randomMode ? ' is-active' : ''}`} onClick={onToggleRandom}
+          title={randomMode ? t('动画:随机', 'Animation: Random') : t('动画:默认', 'Animation: Default')}>
+          <Shuffle size={16} />
+        </button>
+        <button type="button" className="icon-only" onClick={onToggleRest}
+          title={resting ? t('叫醒它', 'Wake up') : t('休息一下', 'Take a nap')}>
+          <Coffee size={16} />
+        </button>
+        <button type="button" className="icon-only" onClick={onCling}
+          title={t('贴边', 'Cling')}>
+          <Magnet size={16} />
+        </button>
+        <button type="button" className="icon-only" onClick={onResetPos}
+          title={t('复位', 'Reset')}>
+          <Crosshair size={16} />
+        </button>
+        <button type="button" className="icon-only" onClick={onHide}
+          title={t('隐藏,刷新后恢复', 'Hide, restored on reload')}>
+          <EyeOff size={16} />
+        </button>
       </div>
       {donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}
       {galleryOpen && <DeskPetGallery lang={lang} onClose={() => setGalleryOpen(false)} />}

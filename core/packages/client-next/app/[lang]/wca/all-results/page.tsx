@@ -77,6 +77,13 @@ function AllResultsPageInner() {
   const qFromUrl = params.get('q') ?? '';
   const page = parseInt(params.get('page') ?? '1', 10);
   const size = parseInt(params.get('size') ?? '100', 10);
+  // 口径:截至(到所选年末的累积最佳)/ 当期(仅所选年或月内)。
+  // 默认随模式:选手=截至(走快照秒出),成绩=当期(现状)。
+  const basisRaw = params.get('basis');
+  const basis: 'period' | 'cumulative' =
+    basisRaw === 'cumulative' || basisRaw === 'period'
+      ? basisRaw
+      : (show === 'persons' ? 'cumulative' : 'period');
 
   const pushSearch = (next: URLSearchParams) => {
     const qs = next.toString();
@@ -90,6 +97,14 @@ function AllResultsPageInner() {
     if (k === 'event' && v === '333mbf' && next.get('type') === 'average') {
       next.delete('type');
     }
+    pushSearch(next);
+  };
+
+  const handleBasisChange = (v: 'period' | 'cumulative') => {
+    const next = new URLSearchParams(params.toString());
+    next.set('basis', v);
+    if (v === 'cumulative') next.delete('month');   // 截至按年末,月份无意义
+    next.delete('page');
     pushSearch(next);
   };
 
@@ -143,16 +158,30 @@ function AllResultsPageInner() {
     qs.set('page', String(page));
     qs.set('size', String(size));
     if (country) qs.set('country', country);
-    if (show === 'persons') {
+    if (show === 'persons' && basis === 'cumulative') {
+      // 选手 · 截至年末:走预计算快照(秒出),年粒度
       qs.set('year', String(year));
       const url = apiUrl(`/v1/wca/historical-ranks?${qs.toString()}`);
       fetch(url)
         .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
         .then((j: { rows: PersonRow[]; total: number }) => setData({ mode: 'persons', rows: j.rows, total: j.total }))
         .catch(e => setError(e.message)).finally(() => setLoading(false));
-    } else {
-      if (year > 0) qs.set('year', String(year));
+    } else if (show === 'persons') {
+      // 选手 · 当期(年 / 月):实时聚合 over wca_results_top(group=person)
+      qs.set('group', 'person');
+      qs.set('basis', 'period');
+      qs.set('year', String(year));
       if (month > 0) qs.set('month', String(month));
+      const url = apiUrl(`/v1/wca/all-results?${qs.toString()}`);
+      fetch(url)
+        .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+        .then((j: { rows: PersonRow[]; total: number }) => setData({ mode: 'persons', rows: j.rows, total: j.total }))
+        .catch(e => setError(e.message)).finally(() => setLoading(false));
+    } else {
+      // 成绩:每条成绩一行,basis 决定截至(comp_year<=)/ 当期(comp_year=[+月])
+      qs.set('basis', basis);
+      if (year > 0) qs.set('year', String(year));
+      if (basis === 'period' && month > 0) qs.set('month', String(month));
       if (qFromUrl) qs.set('q', qFromUrl);
       const url = apiUrl(`/v1/wca/all-results?${qs.toString()}`);
       fetch(url)
@@ -160,7 +189,7 @@ function AllResultsPageInner() {
         .then((j: { rows: ResultRow[]; total: number }) => setData({ mode: 'results', rows: j.rows, total: j.total }))
         .catch(e => setError(e.message)).finally(() => setLoading(false));
     }
-  }, [show, event, type, country, year, month, qFromUrl, page, size]);
+  }, [show, basis, event, type, country, year, month, qFromUrl, page, size]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
 
@@ -183,8 +212,12 @@ function AllResultsPageInner() {
         </h1>
         <p className="wse-subtitle">
           {show === 'persons'
-            ? (isZh ? '截至指定年末的全球 / 单国家累积最佳' : 'End-of-year cumulative best, worldwide or by country')
-            : (isZh ? '全部 valid 成绩按值升序;可叠加国家 / 年份 / 月份 / 选手或比赛搜索' : 'All valid results sorted by value; filter by country / year / month / person or competition search')}
+            ? (basis === 'cumulative'
+                ? (isZh ? '截至所选年末的累积最佳排名(全球 / 单国家)' : 'Ranking by best up to end of the selected year (worldwide / by country)')
+                : (isZh ? '仅所选年(或月)内取得的最佳排名(全球 / 单国家)' : 'Ranking by best within the selected year (or month)'))
+            : (basis === 'cumulative'
+                ? (isZh ? '截至所选年末的全部 valid 成绩,按值升序' : 'All valid results up to end of the selected year, sorted by value')
+                : (isZh ? '所选年 / 月内的全部 valid 成绩,按值升序;可叠加国家 / 选手或比赛搜索' : 'All valid results within the selected year / month, sorted by value'))}
         </p>
       </header>
 
@@ -200,6 +233,25 @@ function AllResultsPageInner() {
           <label>{isZh ? '显示' : 'Show'}</label>
           <ShowToggle value={show} onChange={handleShowChange} isZh={isZh} />
         </div>
+        <div className="wse-filter wse-filter-show">
+          <label>{isZh ? '口径' : 'Basis'}</label>
+          <div className="wse-show-toggle">
+            <button
+              type="button"
+              className={basis === 'cumulative' ? 'active' : ''}
+              onClick={() => handleBasisChange('cumulative')}
+            >
+              {isZh ? '截至' : 'Cumulative'}
+            </button>
+            <button
+              type="button"
+              className={basis === 'period' ? 'active' : ''}
+              onClick={() => handleBasisChange('period')}
+            >
+              {isZh ? '当期' : 'Period'}
+            </button>
+          </div>
+        </div>
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
           <label>{isZh ? '年份' : 'Year'}</label>
@@ -208,17 +260,20 @@ function AllResultsPageInner() {
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
-        {show === 'results' && (
-          <div className="wse-filter">
-            <label>{isZh ? '月份' : 'Month'}</label>
-            <select value={month} onChange={e => update('month', e.target.value === '0' ? '' : e.target.value)}>
-              <option value={0}>{isZh ? '全年' : 'All months'}</option>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-          </div>
-        )}
+        <div className="wse-filter">
+          <label>{isZh ? '月份' : 'Month'}</label>
+          <select
+            value={basis === 'cumulative' ? 0 : month}
+            disabled={basis === 'cumulative'}
+            title={basis === 'cumulative' ? (isZh ? '截至口径按年末,不分月' : 'Cumulative basis is year-end; month not applicable') : undefined}
+            onChange={e => update('month', e.target.value === '0' ? '' : e.target.value)}
+          >
+            <option value={0}>{isZh ? '全年' : 'All months'}</option>
+            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </div>
         <div className="wse-filter">
           <label>{isZh ? '类型' : 'Type'}</label>
           <select value={type} onChange={e => update('type', e.target.value)}>

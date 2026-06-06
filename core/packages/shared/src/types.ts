@@ -126,8 +126,10 @@ export interface ReconSolve {
   comp?: string;
   /** 比赛 WCA ID（如 "WC2025"） */
   compWcaId?: string;
-  /** 比赛所在国家 */
+  /** 比赛所在国家 ISO 3166-1 alpha-2 小写 */
   country?: string;
+  /** 比赛所在城市（自由文本，主要给非 WCA 比赛用；WCA 比赛城市由 compWcaId 解析） */
+  city?: string;
   /** 轮次（如 "f" = 决赛, "1" = 第一轮） */
   round?: string;
   /** 第几把（1-5） */

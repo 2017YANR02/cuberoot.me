@@ -148,10 +148,14 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   const year = parseInt(c.req.query('year') ?? '0', 10);   // 0 = 全部
   const month = parseInt(c.req.query('month') ?? '0', 10); // 0 = 全部
   const q = (c.req.query('q') ?? '').trim();
+  const basis = (c.req.query('basis') ?? 'period').toLowerCase();  // 'period'(当期) | 'cumulative'(截至年末)
+  const group = (c.req.query('group') ?? 'result').toLowerCase();  // 'result'(每条成绩) | 'person'(每选手一行)
   const page = Math.max(1, intParam(c.req.query('page'), 1));
   const size = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('size'), DEFAULT_SIZE)));
 
   if (!VALID_EVENTS.has(event)) return c.json({ error: 'Invalid event' }, 400);
+  if (basis !== 'period' && basis !== 'cumulative') return c.json({ error: 'Invalid basis' }, 400);
+  if (group !== 'result' && group !== 'person') return c.json({ error: 'Invalid group' }, 400);
   if (type !== 'single' && type !== 'average') return c.json({ error: 'Invalid type' }, 400);
   if (event === '333mbf' && type === 'average') return c.json({ error: 'No average for 333mbf' }, 400);
   const cn = await resolveCountry(country);
@@ -167,8 +171,16 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   const params: unknown[] = [event, type === 'average'];
 
   if (cn.id) { where.push(`t.person_country_id = ?`); params.push(cn.id); }
-  if (year) { where.push(`t.comp_year = ?`); params.push(year); }
-  if (month) { where.push(`EXTRACT(MONTH FROM t.comp_date) = ?`); params.push(month); }
+  if (year) {
+    if (basis === 'cumulative') {
+      // 截至:到该年末为止(月份在截至口径下无意义,前端置灰,这里忽略)
+      where.push(`t.comp_year <= ?`); params.push(year);
+    } else {
+      // 当期:仅该自然年(+ 可选月份;表达式与 wrt_month 索引对齐才能走索引)
+      where.push(`t.comp_year = ?`); params.push(year);
+      if (month) { where.push(`(EXTRACT(MONTH FROM t.comp_date))::int = ?`); params.push(month); }
+    }
+  }
 
   if (q) {
     const [personRows, compRows] = await Promise.all([
@@ -202,6 +214,62 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   const offset = (page - 1) * size;
   const totalParams = [...params];
   const dataParams = [...params, size, offset];
+
+  // ── group=person:每选手一行(区间内最佳),实时聚合 over wca_results_top ──
+  // bests: DISTINCT ON 取每人最小值 + 其 PB 上下文(comp/date/attempts);
+  // RANK 按 value 给名次(选了国家时即国家名次,因 where 已限定单国家);
+  // 走 wrt_year(当期年 / 截至年 comp_year<=)/ wrt_month(当期月),~0.4–1s;LIMIT 后再 join 字典表只 enrich 100 行.
+  // 选手页恒带 year(persons 模式 year=0 会被前端兜成当年),不会触发全时段全量聚合.
+  if (group === 'person') {
+    const [rows, totalRow] = await Promise.all([
+      query<{
+        rnk: string; value: number; wca_id: string; person_country_id: string;
+        iso2: string | null; comp_id: string | null; comp_name: string | null;
+        comp_date: string | null; attempts: number[] | null; person_name: string;
+      }>(
+        `
+        WITH bests AS (
+          SELECT DISTINCT ON (t.wca_id)
+                 t.wca_id, t.value, t.person_country_id, t.comp_id, t.comp_date, t.attempts
+          FROM wca_results_top t
+          WHERE ${where.join(' AND ')}
+          ORDER BY t.wca_id, t.value ASC
+        ),
+        ranked AS (
+          SELECT *, RANK() OVER (ORDER BY value ASC) AS rnk FROM bests
+        ),
+        pg AS (
+          SELECT * FROM ranked ORDER BY value ASC, wca_id ASC LIMIT ? OFFSET ?
+        )
+        SELECT r.rnk, r.value, r.wca_id, r.person_country_id,
+               co.iso2 AS iso2, r.comp_id, c.name AS comp_name, r.comp_date, r.attempts,
+               p.name AS person_name
+        FROM pg r
+        JOIN wca_persons p ON p.wca_id = r.wca_id
+        LEFT JOIN wca_countries co ON co.id = r.person_country_id
+        LEFT JOIN wca_competitions c ON c.id = r.comp_id
+        ORDER BY r.value ASC, r.wca_id ASC
+        `,
+        dataParams,
+      ),
+      query<{ n: string }>(
+        `SELECT COUNT(*) AS n FROM (SELECT DISTINCT t.wca_id FROM wca_results_top t WHERE ${where.join(' AND ')}) s`,
+        totalParams,
+      ),
+    ]);
+    const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
+    c.header('Cache-Control', CACHE_HEADER);
+    return c.json({
+      event, type, country: cn.id, year, month, basis, group, page, size, total,
+      rows: rows.map(r => ({
+        rank: parseInt(r.rnk, 10), value: r.value,
+        wcaId: r.wca_id, name: r.person_name,
+        countryId: r.person_country_id, iso2: r.iso2,
+        compId: r.comp_id, compName: r.comp_name, compDate: r.comp_date,
+        attempts: r.attempts ?? [],
+      })),
+    });
+  }
 
   // 派生表 + late join 走 id PK 回表:
   // 内子查询只 SELECT (id, value, wca_id) — 三列都覆盖在 wrt_main INCLUDE (id) 索引里,
@@ -884,6 +952,8 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/census', async (c) => {
 wcaStatsExtraRoutes.get('/wca/sum-of-ranks/player-best', async (c) => {
   const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
   if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) return c.json({ error: 'Invalid wcaId' }, 400);
+  // 跟随页面"废止项"开关: 默认 false=仅 17 活跃项; cancelled=1 → 含 4 废止项 (与名人堂/主榜单同口径).
+  const inclCancelled = c.req.query('cancelled') === '1' || c.req.query('cancelled') === 'true';
 
   const pers = await query<{ name: string; country_id: string; iso2: string | null }>(
     `SELECT p.name, p.country_id, co.iso2
@@ -894,8 +964,8 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/player-best', async (c) => {
   if (pers.length === 0) return c.json({ error: 'Person not found' }, 404);
 
   const rows = await query<{ is_avg: boolean; best_rank: number; combo_count: number; best_events: string }>(
-    `SELECT is_avg, best_rank, combo_count, best_events FROM sor_player_best WHERE wca_id = ? AND scope = 'world'`,
-    [wcaId],
+    `SELECT is_avg, best_rank, combo_count, best_events FROM sor_player_best WHERE wca_id = ? AND scope = 'world' AND incl_cancelled = ?`,
+    [wcaId, inclCancelled],
   );
   // best_events = ';' 分隔的并列最优组合, 每组合内部 ',' 分隔 event id (项目数最少优先, 服务端已封顶).
   // combo_count = 并列该名次的全部子集数(可能 > 列出的组合数).
@@ -912,7 +982,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/player-best', async (c) => {
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
     wcaId, name: pers[0]!.name, countryId: pers[0]!.country_id, iso2: pers[0]!.iso2,
-    scope: 'world', best,
+    scope: 'world', inclCancelled, best,
   });
 });
 

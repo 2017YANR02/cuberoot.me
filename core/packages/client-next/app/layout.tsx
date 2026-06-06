@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { THEME_BOOTSTRAP, LANG_BOOTSTRAP } from "@/lib/theme-bootstrap";
 import DeskPet from "@/components/DeskPet";
 import ThemeColorSync from "@/components/ThemeColorSync";
+import AuthTokenRefresher from "@/components/AuthTokenRefresher";
 import "./fonts.css";
 import "./globals.css";
 
@@ -47,6 +48,7 @@ export default function RootLayout({
         {children}
         <DeskPet />
         <ThemeColorSync />
+        <AuthTokenRefresher />
       </body>
     </html>
   );

@@ -6,6 +6,7 @@
 
 import { create } from 'zustand';
 import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
+import { apiUrl } from './api-base';
 
 export { ADMIN_WCA_IDS };
 
@@ -97,4 +98,44 @@ export function getWcaId(): string {
 
 export function isAdmin(): boolean {
   return isAdminWcaId(useAuthStore.getState().user?.wcaId);
+}
+
+// ── 长效 JWT 滑动续签 ──
+// callback 用 WCA token 换的 cuberoot_jwt 有效期 365 天。临近过期时静默用旧 jwt 换新 jwt
+// (POST /v1/auth/refresh),只要一年内活跃过就不掉线;整年不开站才需重新 WCA 登录。
+const JWT_KEY = 'cuberoot_jwt';
+const REFRESH_BEFORE_MS = 30 * 24 * 3600 * 1000; // 剩余 < 30 天才续,避免每次启动都打后端
+
+/** 解析 JWT payload 的 exp(毫秒),不验签;非法/无 exp 返 null。 */
+function jwtExpMs(token: string): number | null {
+  try {
+    const part = token.split('.')[1];
+    if (!part) return null;
+    const json = atob(part.replace(/-/g, '+').replace(/_/g, '/'));
+    const payload = JSON.parse(json) as { exp?: number };
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 启动时调用:cuberoot_jwt 临近过期则静默续签。best-effort,失败不影响现有登录态。 */
+export async function ensureFreshToken(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  const token = localStorage.getItem(JWT_KEY);
+  if (!token) return;
+  const expMs = jwtExpMs(token);
+  // 无 exp(永久 token)无需续;剩余还很多也不续。
+  if (expMs == null || expMs - Date.now() > REFRESH_BEFORE_MS) return;
+  try {
+    const r = await fetch(apiUrl('/v1/auth/refresh'), {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return;
+    const data = (await r.json()) as { token?: string };
+    if (data.token) localStorage.setItem(JWT_KEY, data.token);
+  } catch {
+    // 网络/后端不可用 — 保留旧 token,下次启动再试。
+  }
 }

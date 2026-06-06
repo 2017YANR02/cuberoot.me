@@ -139,11 +139,12 @@
   height: 100%;
   background: var(--card);
   color: var(--foreground);
-  font-size: 14px;
+  /* 与右侧预览正文 (.article-page 17px / 1.75) 同字号,左右行对齐 */
+  font-size: 17px;
 }
 .article-editor-source .cm-scroller {
   font-family: var(--font-mono);
-  line-height: 1.65;
+  line-height: 1.75;
 }
 .article-editor-source .cm-content {
   padding: 14px 14px;
@@ -161,6 +162,34 @@
 }
 .article-editor-source .cm-placeholder {
   color: var(--faint-foreground);
+}
+
+/* markdown 语法高亮 — class-based HighlightStyle 喂进来 (basicSetup syntaxHighlighting:false)。
+   颜色全走 token,自动 light/dark。原默认 light 配色的深蓝 url 在暗色下看不清,link 改用 --accent。
+   注意:一个 token 可能同时命中多个 tag(如链接标记 `[` 既是 link 又是标点 punct),span 会带多个
+   cm-md-* class;同 specificity 下「后定义者胜」,故按 弱→强 排序,link 放最后,保证链接永远是 accent。 */
+.article-editor-source .cm-md-punct {
+  color: var(--faint-foreground);
+}
+.article-editor-source .cm-md-code,
+.article-editor-source .cm-md-muted {
+  color: var(--muted-foreground);
+}
+.article-editor-source .cm-md-strike {
+  color: var(--muted-foreground);
+  text-decoration: line-through;
+}
+.article-editor-source .cm-md-em {
+  color: var(--foreground);
+  font-style: italic;
+}
+.article-editor-source .cm-md-heading,
+.article-editor-source .cm-md-strong {
+  color: var(--foreground);
+  font-weight: 700;
+}
+.article-editor-source .cm-md-link {
+  color: var(--accent);
 }
 .article-editor-cm-loading {
   height: 100%;
@@ -210,15 +239,19 @@
 .article-editor-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  /* 取消 / 存草稿 / 发布 三个按钮聚成一组靠右,等间距(不再两端分布) */
+  justify-content: flex-end;
+  gap: 16px;
   padding-top: 8px;
   border-top: 1px solid var(--border-default);
 }
-.article-editor-footer-right {
+/* 顶部操作条:复用底部按钮,右对齐;窄屏可换行 */
+.article-editor-actionbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 16px;
 }
 .article-editor-action {
   display: inline-flex;
@@ -283,6 +316,10 @@
   .article-editor-source {
     min-height: 320px;
   }
+  .article-editor-source .cm-editor {
+    /* 对齐移动端预览正文 16px */
+    font-size: 16px;
+  }
   .article-editor-cm-loading {
     min-height: 320px;
   }
@@ -292,9 +329,6 @@
   .article-editor-footer {
     flex-direction: column-reverse;
     align-items: stretch;
-  }
-  .article-editor-footer-right {
-    justify-content: flex-end;
   }
   .article-editor-action {
     flex: 1;

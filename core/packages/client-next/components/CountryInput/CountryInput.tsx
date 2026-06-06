@@ -50,8 +50,12 @@ export function CountryInput(props: CountryInputProps) {
   const [query, setQuery] = useState(() => isMulti ? '' : (props as SingleProps).value);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  // IME 合成中(中文/日文等拼音输入)为 true:此时不要自动选中,否则会改父 value →
+  // 受控 value 回写 → 打断合成,表现为"输入法被吃掉"。合成结束再补跑一次匹配。
+  const composingRef = useRef(false);
 
   useEffect(() => {
+    if (composingRef.current) return; // 合成中别回写 query,否则受控值打断 IME
     if (!isMulti) setQuery((props as SingleProps).value);
   }, [isMulti, isMulti ? '' : (props as SingleProps).value]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -123,13 +127,27 @@ export function CountryInput(props: CountryInputProps) {
     setQuery(raw);
     setOpen(true);
     if (isMulti) return;
-    if (/^[a-zA-Z]{2}$/.test(raw)) setSelected([raw.toLowerCase()]);
-    else if (raw === '') setSelected([]);
+    // 清空即取消选中。其余值不在敲字时即时选中:那样会(a)打断中文 IME 合成,
+    // (b)把"france"前两位 fr 误当 ISO2 顶替成「法国」再续打成「法国ance」。
+    // 统一在点击下拉项 / 失焦(handleBlur)时解析。
+    if (raw === '') setSelected([]);
   };
 
   const handleBlur = () => {
     if (isMulti) return;
-    if (!/^[a-zA-Z]{2}$/.test(query) && matches.length === 1) {
+    const qq = query.trim();
+    if (!qq) { setSelected([]); return; }
+    const cur = selected.length === 1 ? selected[0] : '';
+    if (cur && qq.toLowerCase() === cur.toLowerCase()) return; // 已选中该国,别动
+    const lc = qq.toLowerCase();
+    // 正好打了个有效 ISO2(如 cn / jp):它就是最高分匹配,直接用
+    if (/^[a-z]{2}$/.test(lc) && matches[0]?.iso2 === lc) {
+      setSelected([lc]);
+      setQuery(lc);
+      return;
+    }
+    // 唯一匹配才自动选,避免多义(如 "united")选错;多义时留给用户点下拉
+    if (matches.length === 1) {
       setSelected([matches[0].iso2]);
       setQuery(matches[0].iso2);
     }
@@ -194,8 +212,10 @@ export function CountryInput(props: CountryInputProps) {
         type="text"
         className={`country-input-field${(showFlag || showFlagMulti) ? ' country-input-field--with-flag' : ''}${selected.length > 0 ? ' country-input-field--with-clear' : ''}`}
         value={displayedQuery}
-        placeholder={placeholder ?? (allLabel ?? (isZh ? 'ISO2 / 国家名' : 'ISO2 / Country name'))}
+        placeholder={placeholder ?? (allLabel ?? (isZh ? '搜国家名' : 'Search country'))}
         onChange={(e) => handleChange(e.target.value)}
+        onCompositionStart={() => { composingRef.current = true; }}
+        onCompositionEnd={(e) => { composingRef.current = false; handleChange(e.currentTarget.value); }}
         onFocus={() => setOpen(true)}
         onBlur={handleBlur}
         autoComplete="off"
@@ -241,7 +261,7 @@ export function CountryInput(props: CountryInputProps) {
               <span className="country-input-name">{allLabel}</span>
             </button>
           )}
-          {matches.map(({ iso2, name }) => {
+          {matches.map(({ iso2 }) => {
             const cont = ISO2_TO_CONTINENT[iso2.toUpperCase()];
             const direct = selectedCountrySet.has(iso2.toLowerCase());
             const viaContinent = !direct && cont && selectedContinents.has(cont);
@@ -255,11 +275,10 @@ export function CountryInput(props: CountryInputProps) {
                 onClick={() => handleCountryClick(iso2)}
               >
                 <Flag iso2={iso2} className="country-input-flag" />
-                <span className="country-input-name">{name}</span>
+                <span className="country-input-name">{countryName(iso2, isZh)}</span>
                 {counts && counts[iso2] !== undefined && (
                   <span className="country-input-count">({counts[iso2]})</span>
                 )}
-                <span className="country-input-iso2">{iso2.toUpperCase()}</span>
                 {isMulti && active && <span className={`country-input-check${viaContinent ? ' country-input-check--partial' : ''}`} aria-hidden>✓</span>}
               </button>
             );

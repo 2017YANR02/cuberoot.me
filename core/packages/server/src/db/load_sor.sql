@@ -6,8 +6,9 @@
 --
 -- TSV 由本地 Rust 预计算产出 (吃 wca_person_ranks 同源的 21 项名次矩阵):
 --   sor_census.copy.tsv       列: is_avg scope country_id rank wca_id subsets_won
---   sor_player_best.copy.tsv  列: wca_id is_avg scope best_rank combo_count best_events
---                             (best_events = ';' 分隔的并列组合, 组内 ',' 分隔 event id; single+average 合并一个文件)
+--   sor_player_best.copy.tsv  列: wca_id is_avg scope incl_cancelled best_rank combo_count best_events
+--                             (best_events = ';' 分隔的并列组合, 组内 ',' 分隔 event id;
+--                              single/average × incl_cancelled(17活跃/21含废止) 四套合并一个文件)
 -- 口径与 /v1/wca/sum-of-ranks 一致 (RANK_EVENTS = 17 活跃 + 4 废止). 仅世界口径 (scope='world').
 
 CREATE TABLE IF NOT EXISTS sor_census (
@@ -22,22 +23,26 @@ CREATE TABLE IF NOT EXISTS sor_census (
 CREATE INDEX IF NOT EXISTS sorc_lookup ON sor_census (is_avg, scope, country_id, rank);
 
 CREATE TABLE IF NOT EXISTS sor_player_best (
-  wca_id       VARCHAR(20) NOT NULL,
-  is_avg       BOOLEAN NOT NULL,
-  scope        VARCHAR(8) NOT NULL DEFAULT 'world',
-  best_rank    INTEGER NOT NULL,
-  combo_count  INTEGER NOT NULL DEFAULT 1,
-  best_events  TEXT NOT NULL,
-  PRIMARY KEY (wca_id, is_avg, scope)
+  wca_id          VARCHAR(20) NOT NULL,
+  is_avg          BOOLEAN NOT NULL,
+  scope           VARCHAR(8) NOT NULL DEFAULT 'world',
+  incl_cancelled  BOOLEAN NOT NULL DEFAULT true,
+  best_rank       INTEGER NOT NULL,
+  combo_count     INTEGER NOT NULL DEFAULT 1,
+  best_events     TEXT NOT NULL,
+  PRIMARY KEY (wca_id, is_avg, scope, incl_cancelled)
 );
--- 既有表(老 schema 没 combo_count)补列; 与 migration 0022 同款, 幂等.
+-- 既有表补列 + 改 PK; 与 migration 0022(combo_count)/0030(incl_cancelled) 同款, 幂等.
 ALTER TABLE sor_player_best ADD COLUMN IF NOT EXISTS combo_count INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE sor_player_best ADD COLUMN IF NOT EXISTS incl_cancelled BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE sor_player_best DROP CONSTRAINT IF EXISTS sor_player_best_pkey;
+ALTER TABLE sor_player_best ADD PRIMARY KEY (wca_id, is_avg, scope, incl_cancelled);
 
 TRUNCATE sor_census;
 TRUNCATE sor_player_best;
 
 \copy sor_census (is_avg, scope, country_id, rank, wca_id, subsets_won) FROM 'sor_census.copy.tsv';
-\copy sor_player_best (wca_id, is_avg, scope, best_rank, combo_count, best_events) FROM 'sor_player_best.copy.tsv';
+\copy sor_player_best (wca_id, is_avg, scope, incl_cancelled, best_rank, combo_count, best_events) FROM 'sor_player_best.copy.tsv';
 
 ANALYZE sor_census;
 ANALYZE sor_player_best;

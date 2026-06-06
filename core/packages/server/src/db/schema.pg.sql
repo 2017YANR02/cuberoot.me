@@ -18,6 +18,7 @@ CREATE TABLE recons (
   comp            VARCHAR(200),
   comp_wca_id     VARCHAR(100),
   country         VARCHAR(100),
+  city            VARCHAR(100),
   round           VARCHAR(20),
   solve_num       SMALLINT,
   person          VARCHAR(100),
