@@ -73,7 +73,6 @@ export const LOOKUP_ITEMS: LookupItem[] = [
   { path: '/wca/all-events-done',  zh: '全项目达成',   en: 'All Events Done' },
   { path: '/wca/sum-of-ranks',     zh: '全项目排名',   en: 'Sum of Ranks' },
   { path: '/wca/sum-of-ranks', extraQuery: 'hidePodium=1', zh: '全能但无牌', en: 'All-Around · No Podium' },
-  { path: '/wca/sum-of-ranks', extraQuery: 'bestMisser=4', zh: '殿军之王',   en: 'Fourth-Place King' },
 ];
 
 const MIN_LEN_LATIN = 2;

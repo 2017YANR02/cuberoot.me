@@ -223,28 +223,33 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
         </td>
         <td className="gen-tn-attempt-scramble">
           <div className="gen-tn-scr-line">
-            <ScrambleLines scramble={a.scramble} className="gen-tn-attempt-line" />
-            {(() => {
-              // cross 数据存在 = 可分析的 333 行 → 显示徽标(可点击循环指标)。
-              if (!showCross || !a.scramble || !rowDigits!(a.scramble, 'cross')) return null;
-              const em = effMetric(a.scramble);
-              const digits = rowDigits!(a.scramble, em);
-              return (
-                <span
-                  className="gen-tn-cross-badge is-clickable"
-                  title={t('点击切换 十字/XC/XXC/XXXC/XXXXC', 'Click to cycle Cross / XC / XXC / XXXC / XXXXC')}
-                  onClick={(e) => { e.stopPropagation(); cycleMetric(a.scramble); }}
-                >
-                  {/* 该行指标与顶部「阶段」一致时不重复显示标签;被逐行切到不同指标才标出来 */}
-                  {em !== metric && <span className="gen-tn-cross-c">{metricBadgeLabel(em)}</span>}
-                  {digits
-                    ? digits.map((d, ci) => (
-                        <b key={ci} className="gen-tn-cx" style={{ color: CUBE_FILL[BADGE_FACE_ORDER[ci]] }}>{d}</b>
-                      ))
-                    : <b className="gen-tn-cx-na">–</b>}
-                </span>
-              );
-            })()}
+            <ScrambleLines
+              scramble={a.scramble}
+              className="gen-tn-attempt-line"
+              trailing={(() => {
+                // cross 数据存在 = 可分析的 333 行 → 显示徽标(可点击循环指标)。
+                // 作为 <code> 末尾子节点 float:right —— 贴打乱最后一行右缘,而非
+                // 作为兄弟节点对齐整块多行底部(那样会显得掉到单独一行)。
+                if (!showCross || !a.scramble || !rowDigits!(a.scramble, 'cross')) return null;
+                const em = effMetric(a.scramble);
+                const digits = rowDigits!(a.scramble, em);
+                return (
+                  <span
+                    className="gen-tn-cross-badge is-clickable"
+                    title={t('点击切换 十字/XC/XXC/XXXC/XXXXC', 'Click to cycle Cross / XC / XXC / XXXC / XXXXC')}
+                    onClick={(e) => { e.stopPropagation(); cycleMetric(a.scramble); }}
+                  >
+                    {/* 该行指标与顶部「阶段」一致时不重复显示标签;被逐行切到不同指标才标出来 */}
+                    {em !== metric && <span className="gen-tn-cross-c">{metricBadgeLabel(em)}</span>}
+                    {digits
+                      ? digits.map((d, ci) => (
+                          <b key={ci} className="gen-tn-cx" style={{ color: CUBE_FILL[BADGE_FACE_ORDER[ci]] }}>{d}</b>
+                        ))
+                      : <b className="gen-tn-cx-na">–</b>}
+                  </span>
+                );
+              })()}
+            />
           </div>
           {copiedIdx === i && (
             <span className="gen-tn-copy-toast" aria-live="polite">{t('已复制', 'Copied')}</span>

@@ -87,7 +87,22 @@ const nextConfig: NextConfig = {
   // (无 SAB),COEP=require-corp 会拦住 /analyze-worker/analyzer.js (Chrome 即使
   // 同源 classic worker 在 COEP 下也要 CORP);跟 Vite dev (无 COEP) 行为不一致。
   // 全站打开会把所有跨域 <img> (WCA 头像) 拦死。
+  //
+  // ⚠️ 关键 (2026-06-06 修):页面发了 COEP:require-corp 后,该页里 `new Worker()`
+  // 加载的**任何 worker 脚本响应自身也必须带 COEP:require-corp**,否则浏览器在
+  // cross-origin-isolated 上下文里直接拒绝实例化(opaque error,无 message)。
+  // Vite 时代是 server.headers 全站发 COEP=credentialless(连静态 worker 脚本一起带),
+  // 所以 worker 能加载;Next 只给页面发 → cubeopt 主 worker (/cubeopt/wasm-worker.js)、
+  // 它 import 的 emscripten pthread worker (/cubeopt/cube48opt*.mjs)、以及 kociemba
+  // module worker (Turbopack 产到 /_next/static/*) 全部加载失败 → solver 永远卡"忙"。
+  // 修法:给这些 worker/资产路径补 COEP:require-corp(同源资产再加 CORP:same-origin)。
+  // 注:COEP 响应头只在 require-corp 上下文里当 worker/document 加载时生效,普通
+  // 子资源(其它页的 /_next chunk、跨域图)忽略它 → 全站加这头是安全的,不会拦图。
   async headers() {
+    const workerAsset = [
+      { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+      { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+    ];
     return [
       {
         source: "/:lang(zh|en)?/scramble/solver",
@@ -96,6 +111,12 @@ const nextConfig: NextConfig = {
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
         ],
       },
+      // cubeopt-wasm: 主 worker + 9 个 emscripten pthread 模块 + .wasm
+      { source: "/cubeopt/:path*", headers: workerAsset },
+      // Turbopack/构建产物里的 module worker(kociemba.worker.ts 等)
+      { source: "/_next/static/:path*", headers: workerAsset },
+      // cubing.js search worker(经 app/cubing-chunks 路由 handler 提供)
+      { source: "/cubing-chunks/:path*", headers: workerAsset },
     ];
   },
 
@@ -111,6 +132,12 @@ const nextConfig: NextConfig = {
         // Internal rewrite (not redirect) so the URL bar stays /callback.html and
         // WCA's exact redirect_uri match still passes. Same page as /auth/callback.
         { source: "/callback.html", destination: "/auth/callback" },
+        // Person detail: unbounded wcaId space backed by ONE prerendered static
+        // shell (app/[lang]/wca/persons/[wcaId] generates only the "_" sentinel).
+        // Route every real id to that shell so the page never SSRs per request;
+        // the client reads the real id from window.location. URL bar is unchanged
+        // (rewrite, not redirect). See persons/[wcaId]/page.tsx.
+        { source: "/:lang(en|zh)/wca/persons/:wcaId", destination: "/:lang/wca/persons/_" },
       ],
       afterFiles: [
         // Dev: proxy backend so loadAlg() etc. don't trip CORS from 127.0.0.1.

@@ -1,89 +1,33 @@
-'use client';
+// Server wrapper: prerender every (puzzle, set) trainer URL at build (SSG) so the
+// route is 100% static. The UI is a client shell (TrainerSetClient) that reads the
+// segments via useParams and lazy-loads the alg set in the browser.
+// Import from the alg subpath, NOT the '@cuberoot/shared' barrel: the barrel
+// re-exports client-only hooks/components which a Server Component can't pull in.
+import { ALG_CATALOG, ALG_PUZZLES, type AlgPuzzle } from '@cuberoot/shared/alg';
+import TrainerSetClient from './TrainerSetClient';
 
-// Ported from packages/client/src/pages/trainer/TrainerSelectPage.tsx
-import { useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter, useParams } from 'next/navigation';
-import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Flag } from 'lucide-react';
-import { getAlgSetMeta, loadAlg } from '@cuberoot/shared';
-import { useTrainerStore } from '@/lib/trainer-store';
-import { CaseTreePicker } from '../../_components/trainer-components';
-import { resolveAlgPuzzle } from '../../_events';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import '../../trainer.css';
+export const dynamic = 'force-static';
 
-export default function TrainerSelectPage() {
-  const params = useParams<{ puzzle: string; set: string }>();
-  const puzzleParam = (Array.isArray(params?.puzzle) ? params.puzzle[0] : params?.puzzle) ?? '';
-  const setSlug = (Array.isArray(params?.set) ? params.set[0] : params?.set) ?? '';
-  const router = useRouter();
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
-  const lang = isZh ? 'zh' : 'en';
-  useDocumentTitle('公式训练', 'Algorithm Trainer');
+// Mirror of PUZZLE_EVENT in _events.ts (kept local — _events.ts imports the barrel).
+const PUZZLE_EVENT: Record<AlgPuzzle, string> = {
+  '2x2': '222', '3x3': '333', '4x4': '444', '5x5': '555',
+  'sq1': 'sq1', 'megaminx': 'minx', 'pyraminx': 'pyram', 'skewb': 'skewb',
+};
 
-  const puzzle = resolveAlgPuzzle(puzzleParam);   // 接受 event code(333)或 legacy puzzle 名(3x3)
-  const meta = puzzle ? getAlgSetMeta(puzzle, setSlug) : undefined;
-
-  const cases = useTrainerStore(s => s.cases);
-  const selected = useTrainerStore(s => s.selected);
-  const loadSession = useTrainerStore(s => s.loadSession);
-  const setSelected = useTrainerStore(s => s.setSelected);
-  const storePuzzle = useTrainerStore(s => s.puzzle);
-  const storeSet = useTrainerStore(s => s.set);
-
-  useEffect(() => {
-    if (!puzzle || !meta) return;
-    if (storePuzzle === puzzle && storeSet === setSlug && cases.length > 0) return;
-    loadAlg(puzzle, setSlug)
-      .then(d => loadSession(puzzle, setSlug, d.cases))
-      .catch(e => console.error('[trainer] loadAlg failed', e));
-  }, [puzzle, setSlug, meta, storePuzzle, storeSet, cases.length, loadSession]);
-
-  if (!puzzle || !meta) {
-    return (
-      <div className="trainer-root">
-        <div className="trainer-landing-empty">
-          {isZh ? '未知公式集' : 'Unknown set'}: {puzzleParam}/{setSlug}
-        </div>
-      </div>
-    );
+export function generateStaticParams() {
+  // The puzzle segment may be a WCA event code (333) — what the hub links to — or a
+  // legacy puzzle name (3x3); resolveAlgPuzzle accepts both. Enumerate every set slug
+  // for every puzzle, under both segment forms.
+  const out: { puzzle: string; set: string }[] = [];
+  for (const p of ALG_PUZZLES as readonly AlgPuzzle[]) {
+    for (const s of ALG_CATALOG[p]) {
+      out.push({ puzzle: PUZZLE_EVENT[p], set: s.slug });
+      out.push({ puzzle: p, set: s.slug });
+    }
   }
+  return out;
+}
 
-  const selectedSet = new Set(selected);
-  const canStart = selectedSet.size > 0;
-
-  return (
-    <div className="trainer-root">
-      <div className="trainer-topbar">
-        <Link href={`/${lang}/trainer/${puzzleParam}`} className="trainer-back">
-          <ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}
-        </Link>
-        <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>
-          {puzzle} · {isZh ? meta.zh : meta.en}
-        </span>
-        <button
-          className={`trainer-start-btn${!canStart ? ' is-disabled' : ''}`}
-          onClick={() => router.push(`/${lang}/trainer/${puzzleParam}/${setSlug}/run`)}
-          disabled={!canStart}
-        >
-          <Flag size={14} /> {isZh ? '开始训练' : 'Start Training'} ({selectedSet.size})
-        </button>
-      </div>
-
-      {cases.length === 0 ? (
-        <div className="trainer-landing-empty">{isZh ? '加载中…' : 'Loading…'}</div>
-      ) : (
-        <CaseTreePicker
-          puzzle={puzzle}
-          set={setSlug}
-          cases={cases}
-          selected={selectedSet}
-          onChange={(next) => setSelected([...next])}
-          isZh={isZh}
-        />
-      )}
-    </div>
-  );
+export default function Page() {
+  return <TrainerSetClient />;
 }

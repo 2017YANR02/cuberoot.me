@@ -20,6 +20,10 @@ const CONTENT_TYPE: Record<string, string> = {
   '.webp': 'image/webp',
   '.css': 'text/css; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
+  '.mjs': 'application/javascript; charset=utf-8',
+  // WebAssembly 必须以 application/wasm 返回,否则浏览器的 instantiateStreaming
+  // 拒绝编译、退回更慢的 instantiate(rust-cross glue 的 cross_solver_bg.wasm)。
+  '.wasm': 'application/wasm',
   '.html': 'text/html; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
 };
@@ -40,8 +44,14 @@ export async function GET(
       const data = await fs.readFile(candidate);
       const ext = path.extname(candidate).toLowerCase();
       const contentType = CONTENT_TYPE[ext] ?? 'application/octet-stream';
+      // .wasm 不走 stale-while-revalidate 缓存:一旦某次以错 MIME 缓存,SWR 每次都先
+      // 把旧的(错 MIME)喂给 worker、后台才更新,要 reload 多次才自愈。dev 下 wasm 仅
+      // 343KB,本地直取无感,no-store 杜绝 MIME 污染复发。其余资源(尤其 52MB 表)照常缓存。
+      const cacheControl = ext === '.wasm'
+        ? 'no-store'
+        : 'public, s-maxage=86400, stale-while-revalidate=86400';
       return new Response(new Uint8Array(data), {
-        headers: { 'content-type': contentType, 'cache-control': 'public, s-maxage=86400, stale-while-revalidate=86400' },
+        headers: { 'content-type': contentType, 'cache-control': cacheControl },
       });
     } catch {
       // try next candidate
@@ -63,7 +73,9 @@ export async function GET(
     try {
       const upstream = await fetch(`https://static.cuberoot.me/tools/${rel}`);
       if (!upstream.ok) return new Response('not found', { status: upstream.status });
-      const ct = upstream.headers.get('content-type') ?? 'application/octet-stream';
+      // 已知扩展名优先用我们的映射(尤其 .wasm),纠正 upstream 可能给错的 MIME。
+      const ext = path.extname(rel).toLowerCase();
+      const ct = CONTENT_TYPE[ext] ?? upstream.headers.get('content-type') ?? 'application/octet-stream';
       const buf = await upstream.arrayBuffer();
       return new Response(buf, {
         headers: { 'content-type': ct, 'cache-control': 'public, s-maxage=86400, stale-while-revalidate=86400' },

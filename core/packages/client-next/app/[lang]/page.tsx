@@ -62,9 +62,9 @@ export default function LandingPage() {
       <h1 className="landing-tagline">{t('tagline')}</h1>
 
       <RecentScrambles lang={lang} />
-      <OngoingComps lang={lang} />
-
       <TodayRecon lang={lang} />
+
+      <OngoingComps lang={lang} />
 
       {/* WCA full-width hero — top-level entry, not in any section */}
       <Link href="/wca" className="wca-hero" prefetch={false}>
