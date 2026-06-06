@@ -13,6 +13,12 @@
   padding: 32px 24px 64px;
 }
 
+/* new / edit 页托管 CodeMirror 分栏编辑器,需要满宽(820 阅读列宽会把
+   source|preview 挤死);只去掉宽度上限,头部/标题的左边距仍由本类 padding 给。 */
+.article-list-page--editor {
+  max-width: none;
+}
+
 .article-list-header {
   display: flex;
   align-items: center;
