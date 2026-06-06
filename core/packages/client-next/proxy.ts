@@ -76,6 +76,9 @@ const MIGRATED_PATHS: readonly string[] = [
   '/tutorial',
   '/wca',
   '/wiki',
+  // batch 13 — community long-form articles (/article, /article/:slug, /article/new,
+  // /article/:slug/edit, /article/author/:wcaId, /article/admin/reports)
+  '/article',
 ];
 
 function isMigrated(pathname: string): boolean {
