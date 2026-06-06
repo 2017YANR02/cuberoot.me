@@ -48,6 +48,19 @@ describe('article-markdown directives → whitelisted elements', () => {
     expect(html).toContain('loading="lazy"');
   });
 
+  it(':::figrow figures are NOT nested in <p> (invalid HTML → hydration mismatch #418)', () => {
+    // Markdown wraps the images in a paragraph inside the container; wrapFigrow must lift the
+    // figures to be direct children of div.article-figrow. A block <figure> inside <p> is invalid
+    // and the browser re-parents it, diverging from the SSR tree (React #418). Multi-image grid.
+    const html = render(':::figrow\n![图1](/v1/article/img/1)\n![图2](/v1/article/img/2)\n:::');
+    expect(html).not.toMatch(/<p>\s*<figure/);
+    expect(html).toMatch(/<div class="article-figrow">\s*<figure/);
+    // both images survive as figures, in order, no <p> wrappers
+    expect(html).toContain('src="/v1/article/img/1"');
+    expect(html).toContain('src="/v1/article/img/2"');
+    expect(html).not.toContain('<p>');
+  });
+
   it('single markdown image survives with src + alt', () => {
     const html = render('![图注](/v1/article/img/9)');
     expect(html).toContain('src="/v1/article/img/9"');
