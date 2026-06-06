@@ -32,6 +32,7 @@ import { EventIcon } from '@/components/EventIcon';
 import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
 import { Flag } from '@/components/Flag';
 import { localizeCompName } from '@/lib/comp-localize';
+import { displayCity } from '@/lib/city-display';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
 import {
   fetchAttempts, fetchCubingAttempts, fetchScrambles, matchRoundType,
@@ -168,6 +169,7 @@ export default function ReconDetailClient() {
               </span>
             </span>
           )}
+          {solve.city && <span className="detail-meta-item">{displayCity(solve.city, isZh)}</span>}
         </div>
       </div>
 

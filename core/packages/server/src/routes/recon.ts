@@ -39,6 +39,9 @@ const LIST_COLUMNS = [
   'optimal_scramble', 'oll', 'pll', 'note',
 ].join(', ');
 
+// 首页「今日复盘」卡片用:列表字段 + wca_scramble(打乱图回退) + created_at(分组用)。
+const TODAY_COLUMNS = LIST_COLUMNS + ', wca_scramble, created_at';
+
 reconRoutes.get('/recon/list', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   const wcaId = c.req.query('wcaId');
@@ -77,6 +80,33 @@ reconRoutes.get('/recon/latest', async (c) => {
 
   c.header('Cache-Control', 'public, max-age=300');
   return c.json(result);
+});
+
+// ==================== GET /v1/recon/today ====================
+// 首页「今日复盘」用:返回「最新录入那天」(按 created_at, 以 Asia/Shanghai 计日)的全部 recon,
+// 最新在前。这样卡片永远有内容(最近一天),当天录入多条时前端可展开。
+// created_at 全空的旧库回退到「最新一条」(按 id)。必须先于 /:id 注册。
+reconRoutes.get('/recon/today', async (c) => {
+  const dayExpr = `(to_timestamp(created_at) AT TIME ZONE 'Asia/Shanghai')::date`;
+  const rows = await query<Record<string, unknown>>(
+    `SELECT ${TODAY_COLUMNS} FROM recons
+     WHERE created_at IS NOT NULL
+       AND ${dayExpr} = (
+         SELECT ${dayExpr} FROM recons
+         WHERE created_at IS NOT NULL
+         ORDER BY created_at DESC, id DESC LIMIT 1
+       )
+     ORDER BY created_at DESC, id DESC
+     LIMIT 50`
+  );
+  if (rows.length === 0) {
+    // created_at 全空的旧库:退回最新一条
+    const fallback = await query<Record<string, unknown>>(`SELECT ${TODAY_COLUMNS} FROM recons ORDER BY id DESC LIMIT 1`);
+    c.header('Cache-Control', 'public, max-age=300');
+    return c.json(fallback.map(rowToJson));
+  }
+  c.header('Cache-Control', 'public, max-age=300');
+  return c.json(rows.map(rowToJson));
 });
 
 // ==================== GET /v1/recon/check-duplicate ====================

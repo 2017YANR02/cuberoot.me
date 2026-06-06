@@ -21,6 +21,7 @@ import {
 import { Flag } from '@/components/Flag';
 import { ClearButton } from '@/components/ClearButton';
 import { CompPicker } from '@/components/CompPicker';
+import { CountryInput } from '@/components/CountryInput/CountryInput';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { EventSelect } from '@/components/EventSelect';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
@@ -1142,6 +1143,29 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   )}
                 </div>
               </div>
+
+              {/* 非 WCA 比赛:补国家(选完显示国旗) + 城市,WCA 比赛由所选比赛自动带出 */}
+              {!form.official && (
+                <div className="submit-row">
+                  <label className="submit-field">
+                    <span className="submit-label">{isZh ? '国家 / 地区' : 'Country'}</span>
+                    <CountryInput
+                      value={form.country || ''}
+                      onChange={(iso2) => setField('country', iso2.toLowerCase())}
+                      placeholder=""
+                    />
+                  </label>
+                  <label className="submit-field">
+                    <span className="submit-label">{isZh ? '城市' : 'City'}</span>
+                    <input
+                      type="text"
+                      value={form.city || ''}
+                      onChange={(e) => setField('city', e.target.value)}
+                      maxLength={100}
+                    />
+                  </label>
+                </div>
+              )}
 
               <div className="submit-row">
                 <label className="submit-field">

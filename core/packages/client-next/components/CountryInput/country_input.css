@@ -99,13 +99,6 @@
   text-overflow: ellipsis;
 }
 
-.country-input-iso2 {
-  font-size: 0.75rem;
-  color: #888;
-  font-family: 'Inter', Arial, sans-serif;
-  text-transform: uppercase;
-}
-
 .country-input-count {
   font-size: 0.75rem;
   color: #666;

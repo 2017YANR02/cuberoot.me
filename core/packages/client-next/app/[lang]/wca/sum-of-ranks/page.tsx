@@ -165,20 +165,23 @@ function SumOfRanksPageInner() {
   }, [type, country, eventsParam, hidePodium, page, size, isZh]);
 
   // 选手最优组合(15s 超时, 防 dev proxy / 后端 stall 时永远转圈)
+  // 跟随"废止项"开关: 含废止时搜索 21 项, 否则仅 17 活跃项(与名人堂/主榜单同口径).
   useEffect(() => {
     if (!picked) { setPb(null); setPbError(false); return; }
     setPbLoading(true); setPbError(false);
     let done = false;
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 15000);
-    // v=3: bust 24h 缓存(浏览器 + nginx)里旧的单组合 {events} 响应,换成多组合 {combos,comboCount}
-    fetch(apiUrl(`/v1/wca/sum-of-ranks/player-best?wcaId=${encodeURIComponent(picked.id)}&v=3`), { signal: ctrl.signal })
+    // v=4: bust 24h 缓存(浏览器 + nginx)里旧响应 — 现按 cancelled 分二态(17活跃/21含废止)
+    const qs = new URLSearchParams({ wcaId: picked.id, v: '4' });
+    if (includeCancelled) qs.set('cancelled', '1');
+    fetch(apiUrl(`/v1/wca/sum-of-ranks/player-best?${qs.toString()}`), { signal: ctrl.signal })
       .then(r => (r.ok ? r.json() : null))
       .then(d => { if (!done) { setPb(d); setPbError(d == null); } })
       .catch(() => { if (!done) { setPb(null); setPbError(true); } })
       .finally(() => { clearTimeout(timer); if (!done) setPbLoading(false); });
     return () => { done = true; clearTimeout(timer); ctrl.abort(); };
-  }, [picked]);
+  }, [picked, includeCancelled]);
 
   // 名人堂某年名单(展开时 + type/含废止/年份变化时拉)
   useEffect(() => {
@@ -389,7 +392,7 @@ function SumOfRanksPageInner() {
                 </>
               );
             })()}
-            {pb.best[type] && <div className="sor-pb-note">{isZh ? '上面每个组合都能让 TA 的名次和排到该名次(世界口径)' : 'Each combination ties them at that sum-of-ranks position (world)'}</div>}
+            {pb.best[type] && <div className="sor-pb-note">{isZh ? `上面每个组合都能让 TA 的名次和排到该名次(世界口径,${includeCancelled ? '含废止项' : '仅活跃项'})` : `Each combination ties them at that sum-of-ranks position (world, ${includeCancelled ? 'incl. cancelled' : 'active only'})`}</div>}
           </div>
         )}
       </div>

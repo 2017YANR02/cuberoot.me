@@ -256,6 +256,10 @@ export default function DeskPet() {
   const svgRef = useRef<SVGSVGElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const hitRef = useRef<HTMLDivElement>(null);
+  // Off-screen primer input: on touch we focus it synchronously inside the tap
+  // gesture so the mobile keyboard opens; the search overlay's real input then
+  // takes over once it mounts (which is async, hence out of the gesture).
+  const kbdRef = useRef<HTMLInputElement>(null);
   const ctrlRef = useRef<{ rest: () => void; wake: () => void; cling: () => void; inMini: () => boolean; resetPos: () => void } | null>(null);
   // Visual-center screen point captured right before a size/character change,
   // so the pet's visual center stays put (scales about itself; characters land
@@ -279,6 +283,12 @@ export default function DeskPet() {
       if (ch === 'calico' || ch === 'cloudling') setCharacter(ch);
       if (localStorage.getItem('clawd-deskpet-mode') !== 'default') setRandomMode(true);
     } catch {}
+    // Warm the search overlay chunk so the first tap mounts it without an async
+    // gap — on touch that gap drops focus out of the gesture and the mobile
+    // keyboard won't open.
+    const warm = () => { import('@/components/DeskPetSearch').catch(() => {}); };
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(warm);
+    else setTimeout(warm, 1500);
   }, []);
 
   // Re-render menu text live when language changes (DeskPet is outside I18nProvider).
@@ -600,6 +610,11 @@ export default function DeskPet() {
     };
 
     const openSearch = () => {
+      // Touch: raise the keyboard now, inside the tap gesture, via the primer
+      // input. The overlay mounts async, so focusing its real input later loses
+      // the gesture and mobile browsers refuse to open the keyboard. The real
+      // input takes over (no blur in between → keyboard stays up).
+      if (lastTouch) { try { kbdRef.current?.focus({ preventScroll: true }); } catch {} }
       const r = root.getBoundingClientRect();
       const [fx, fy] = VC[character];
       searchOriginRef.current = { x: r.left + r.width * fx, y: r.top + r.height * fy };
@@ -815,6 +830,16 @@ export default function DeskPet() {
 
   return (
     <>
+      {/* Keyboard primer — focused inside the tap gesture so iOS/Android raise
+          the soft keyboard before the (async) search input mounts. Must stay a
+          real, non-readonly, non-display:none input or the keyboard won't show. */}
+      <input
+        ref={kbdRef}
+        aria-hidden
+        tabIndex={-1}
+        inputMode="search"
+        style={{ position: 'fixed', bottom: 0, left: 0, width: 1, height: 1, opacity: 0, padding: 0, margin: 0, border: 0, fontSize: 16, background: 'transparent', pointerEvents: 'none', zIndex: -1 }}
+      />
       <div className={`clawd-deskpet${searchOpen ? ' pet-front' : ''}`} data-size={size} data-char={character} ref={rootRef} aria-hidden>
         <style>{CSS}</style>
         <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45">

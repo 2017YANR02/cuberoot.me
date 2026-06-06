@@ -26,18 +26,21 @@ CREATE TABLE IF NOT EXISTS sor_census (
 CREATE INDEX IF NOT EXISTS sorc_lookup ON sor_census (is_avg, scope, country_id, rank);
 
 -- ── sor_player_best: 每个选手的最优项目组合 ──
--- 一行 = (wca_id, is_avg, scope). best_rank = 在最优组合下显示的名次 (1=能到第一).
+-- 一行 = (wca_id, is_avg, scope, incl_cancelled). best_rank = 在最优组合下显示的名次 (1=能到第一).
 -- best_events = 达到该名次的全部并列组合, ';' 分隔; 每组合内部 ',' 分隔 event id (项目数最少优先, 封顶 KEEP 个).
 -- combo_count  = 并列该名次的全部子集数 (可能 > best_events 里列出的组合数). 历史行 = 1 (单组合).
--- 只收录至少比过 1 项的选手 (best_rank 有意义). combo_count 由 migration 0022 补列.
+-- incl_cancelled=false → 仅 17 活跃项搜索空间; true → 含 4 废止项 (2^21). 跟随 /wca/sum-of-ranks 的"废止项"开关,
+-- 与 sor_census_yearly 同口径 (combo_count 由 migration 0022 补列, incl_cancelled 由 0030 补列).
+-- 只收录至少比过 1 项的选手 (best_rank 有意义).
 CREATE TABLE IF NOT EXISTS sor_player_best (
-  wca_id       VARCHAR(20) NOT NULL,
-  is_avg       BOOLEAN NOT NULL,
-  scope        VARCHAR(8) NOT NULL DEFAULT 'world',
-  best_rank    INTEGER NOT NULL,
-  combo_count  INTEGER NOT NULL DEFAULT 1,      -- 并列该名次的全部子集数
-  best_events  TEXT NOT NULL,                   -- ';' 分隔的并列组合, 组内 ',' 分隔 event id
-  PRIMARY KEY (wca_id, is_avg, scope)
+  wca_id          VARCHAR(20) NOT NULL,
+  is_avg          BOOLEAN NOT NULL,
+  scope           VARCHAR(8) NOT NULL DEFAULT 'world',
+  incl_cancelled  BOOLEAN NOT NULL DEFAULT true,  -- false=仅17活跃项, true=含4废止项
+  best_rank       INTEGER NOT NULL,
+  combo_count     INTEGER NOT NULL DEFAULT 1,     -- 并列该名次的全部子集数
+  best_events     TEXT NOT NULL,                  -- ';' 分隔的并列组合, 组内 ',' 分隔 event id
+  PRIMARY KEY (wca_id, is_avg, scope, incl_cancelled)
 );
 
 -- ── sor_census_yearly: 历史名人堂 (按年末快照) ──

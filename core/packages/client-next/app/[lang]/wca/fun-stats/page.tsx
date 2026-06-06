@@ -325,8 +325,8 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r: any) => (
-              <tr key={r.countryId}>
+            {rows.map((r: any, i: number) => (
+              <tr key={`${r.countryId ?? ''}-${i}`}>
                 <td>{r.rank}</td>
                 <td>{regionCell(r)}</td>
                 <td className="fun-cell-strong">{r.sum}</td>
@@ -469,8 +469,8 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r: any) => (
-              <tr key={r.compId}>
+            {rows.map((r: any, i: number) => (
+              <tr key={`${r.compId ?? ''}-${i}`}>
                 <td>{r.rank}</td>
                 <td>{compCell(r)}</td>
                 <td>{r.compDate}</td>
@@ -496,8 +496,8 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
       <table className="fun-stats-table">
         <thead><tr>{cols.map((c, i) => <th key={i}>{c.h}</th>)}</tr></thead>
         <tbody>
-          {rows.map((r: any) => (
-            <tr key={rowKey(r)}>{cols.map((c, i) => <td key={i} className={c.cls}>{c.cell(r)}</td>)}</tr>
+          {rows.map((r: any, ri: number) => (
+            <tr key={`${rowKey(r)}-${ri}`}>{cols.map((c, i) => <td key={i} className={c.cls}>{c.cell(r)}</td>)}</tr>
           ))}
         </tbody>
       </table>

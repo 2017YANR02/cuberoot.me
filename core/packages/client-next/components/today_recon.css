@@ -135,6 +135,26 @@
   transform: translateX(4px);
 }
 
+/* 展开/收起当天其余复盘 */
+.tr-more {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: -0.1rem;
+  padding: 0.3rem 0.4rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+  transition: color 0.12s;
+}
+.tr-more:hover { color: var(--accent); }
+.tr-more-chevron { transition: transform 0.18s ease; }
+.tr-more.is-open .tr-more-chevron { transform: rotate(180deg); }
+
 @media (max-width: 560px) {
   .tr-card { gap: 0.85rem; padding: 0.8rem 0.85rem; }
   .tr-arrow { display: none; }

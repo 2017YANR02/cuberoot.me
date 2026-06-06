@@ -52,7 +52,7 @@ for (const [json, sql] of Object.entries(FIELD_MAP_JSON_TO_SQL)) {
 
 // NOTE: 允许 INSERT/UPDATE 的列白名单（防止前端注入非数据库字段）
 const ALLOWED_COLUMNS = new Set([
-  'official', 'event', 'method', 'date', 'comp', 'country', 'round',
+  'official', 'event', 'method', 'date', 'comp', 'country', 'city', 'round',
   'solve_num', 'person', 'person_id', 'raw_time', 'exec_time', 'memo_time',
   'average', 'value', 'regional_single_record', 'regional_average_record',
   'ao_type', 'regional_aoxr_record', 'solution', 'optimal_scramble',
@@ -188,7 +188,7 @@ export function validateRow(row: Record<string, unknown>): string[] {
   // VARCHAR 长度限制
   const varcharLimits: Record<string, number> = {
     event: 20, method: 20, round: 20, comp: 200, comp_wca_id: 100,
-    country: 100, person: 100, person_id: 20, person_country: 10,
+    country: 100, city: 100, person: 100, person_id: 20, person_country: 10,
     cube: 100, reconer: 100, reconer_id: 20, group_id: 10,
     added_by: 100, added_by_id: 20, value: 20,
     regional_single_record: 20, regional_average_record: 20,
