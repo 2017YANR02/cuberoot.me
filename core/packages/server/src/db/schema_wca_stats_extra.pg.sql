@@ -75,7 +75,11 @@ CREATE INDEX IF NOT EXISTS wrt_comp_id ON wca_results_top (event_id, is_avg, com
 CREATE INDEX IF NOT EXISTS wrt_comp_lookup ON wca_results_top (comp_id);
 -- /comp/<id> 赛前 PR 查询专用,见 migrations/0007_wrt_prior_pr_index.sql
 CREATE INDEX IF NOT EXISTS wrt_prior_pr ON wca_results_top (wca_id, event_id, is_avg, comp_date) INCLUDE (value);
--- 年份/月份: 走 main 索引 + comp_date 过滤(不专门索引,跳过 cap=2GB 索引膨胀)
+-- 排名页"当期·年" + "截至·年(comp_year<=)":走 wrt_year(comp_year 是 stored 生成列)
+CREATE INDEX IF NOT EXISTS wrt_year ON wca_results_top (event_id, is_avg, comp_year, value, wca_id) INCLUDE (id);
+-- 排名页"当期·月"(选手模式 DISTINCT ON 切片):月份用表达式进索引,免整表改写;替代旧 wrt_country_year
+CREATE INDEX IF NOT EXISTS wrt_month ON wca_results_top (event_id, is_avg, comp_year, ((EXTRACT(MONTH FROM comp_date))::int), value, wca_id);
+-- 注:实际 DDL 以 wca_stats_extra_build.ts 的 loadSql 为准(此文件仅参考,apply.sh 不调)
 
 -- ── wca_cohort_ranks: 参赛届别排行 (~10M 行) ──
 -- 一行 = (cohort_year, event, is_avg, person):cohort_year=该选手第一次参赛的年份.

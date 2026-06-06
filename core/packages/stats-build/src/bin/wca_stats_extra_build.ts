@@ -1378,7 +1378,10 @@ CREATE INDEX wrt_country      ON wca_results_top (event_id, is_avg, person_count
 CREATE INDEX wrt_wca_id       ON wca_results_top (event_id, is_avg, wca_id, value);
 CREATE INDEX wrt_comp_id      ON wca_results_top (event_id, is_avg, comp_id, value);
 CREATE INDEX wrt_year         ON wca_results_top (event_id, is_avg, comp_year, value, wca_id) INCLUDE (id);
-CREATE INDEX wrt_country_year ON wca_results_top (event_id, is_avg, person_country_id, comp_year, value) INCLUDE (id);
+-- wrt_month: 选手模式"当期·月"排名走它(comp_year + 月份表达式),DISTINCT ON 切片秒出.
+-- 月份用表达式而非生成列:免整表改写(ALTER ADD STORED 会改写 11M 行+重建全索引,磁盘扛不住).
+-- 替代了旧 wrt_country_year(777MB / idx_scan≈16,近死索引;国家+年份退回 wrt_country+过滤 ~230ms 够用).
+CREATE INDEX wrt_month         ON wca_results_top (event_id, is_avg, comp_year, ((EXTRACT(MONTH FROM comp_date))::int), value, wca_id);
 CREATE INDEX wrt_comp_lookup  ON wca_results_top (comp_id);
 CREATE INDEX wrt_prior_pr     ON wca_results_top (wca_id, event_id, is_avg, comp_date) INCLUDE (value);
 

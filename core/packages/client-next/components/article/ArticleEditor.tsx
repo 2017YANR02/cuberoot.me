@@ -47,9 +47,31 @@ const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
   ssr: false,
   loading: () => <div className="article-editor-cm-loading" />,
 });
-// markdown() returns a CM Extension; loaded lazily alongside the editor.
+// markdown() + a class-based highlight style, loaded lazily alongside the editor.
+// basicSetup's default highlighting is disabled (syntaxHighlighting:false) — it ships a light
+// palette whose dark-blue URL color is unreadable on dark backgrounds. We re-add our own,
+// keyed to stable classes so every token color lives in editor.css → auto light/dark via tokens.
 const markdownExt = () =>
-  import('@codemirror/lang-markdown').then((m) => [m.markdown()]);
+  Promise.all([
+    import('@codemirror/lang-markdown'),
+    import('@codemirror/language'),
+    import('@lezer/highlight'),
+    import('@codemirror/view'),
+  ]).then(([md, lang, hl, view]) => {
+    const t = hl.tags;
+    const style = lang.HighlightStyle.define([
+      { tag: t.heading, class: 'cm-md-heading' },
+      { tag: t.strong, class: 'cm-md-strong' },
+      { tag: t.emphasis, class: 'cm-md-em' },
+      { tag: t.strikethrough, class: 'cm-md-strike' },
+      { tag: [t.link, t.url], class: 'cm-md-link' },
+      { tag: t.monospace, class: 'cm-md-code' },
+      { tag: [t.list, t.quote], class: 'cm-md-muted' },
+      { tag: [t.processingInstruction, t.meta, t.contentSeparator], class: 'cm-md-punct' },
+    ]);
+    // lineWrapping: 长行软换行,不出横向滚动条(markdown 正文里图片 URL / 长段落很常见)。
+    return [md.markdown(), lang.syntaxHighlighting(style), view.EditorView.lineWrapping];
+  });
 
 // Mirrors the backend slug regex (SPEC §2): lowercase alnum groups joined by single hyphens.
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -316,8 +338,42 @@ export default function ArticleEditor({ mode, initial, onSaved }: ArticleEditorP
     </button>
   );
 
+  // 取消 / 存草稿 / 发布 —— 顶部操作条与底部 footer 共用同一组按钮。
+  const actionButtons = (
+    <>
+      <button
+        type="button"
+        className="article-editor-action article-editor-action-ghost"
+        onClick={cancel}
+      >
+        {tt('取消', 'Cancel')}
+      </button>
+      <button
+        type="button"
+        className="article-editor-action article-editor-action-secondary"
+        onClick={() => save(false)}
+        disabled={!canSave}
+      >
+        {saving === 'draft' && <Loader2 size={14} className="article-editor-spin" />}
+        {tt('存草稿', 'Save draft')}
+      </button>
+      <button
+        type="button"
+        className="article-editor-action article-editor-action-primary"
+        onClick={() => save(true)}
+        disabled={!canSave}
+      >
+        {saving === 'publish' && <Loader2 size={14} className="article-editor-spin" />}
+        {tt('发布', 'Publish')}
+      </button>
+    </>
+  );
+
   return (
     <div className="article-editor">
+      {/* ── 顶部操作条:与底部相同的 取消/存草稿/发布(长文不用滚到底) ── */}
+      <div className="article-editor-actionbar">{actionButtons}</div>
+
       {/* ── metadata fields ── */}
       <div className="article-editor-meta">
         <div className="article-editor-field">
@@ -463,6 +519,8 @@ export default function ArticleEditor({ mode, initial, onSaved }: ArticleEditorP
               foldGutter: false,
               highlightActiveLine: false,
               highlightActiveLineGutter: false,
+              // Default highlight palette is light-only; we supply our own via cmExtensions.
+              syntaxHighlighting: false,
             }}
             onChange={(v) => setBody(v)}
             onCreateEditor={(view) => {
@@ -489,35 +547,7 @@ export default function ArticleEditor({ mode, initial, onSaved }: ArticleEditorP
       {error && <div className="article-editor-error">{error}</div>}
 
       {/* ── footer actions ── */}
-      <div className="article-editor-footer">
-        <button
-          type="button"
-          className="article-editor-action article-editor-action-ghost"
-          onClick={cancel}
-        >
-          {tt('取消', 'Cancel')}
-        </button>
-        <div className="article-editor-footer-right">
-          <button
-            type="button"
-            className="article-editor-action article-editor-action-secondary"
-            onClick={() => save(false)}
-            disabled={!canSave}
-          >
-            {saving === 'draft' && <Loader2 size={14} className="article-editor-spin" />}
-            {tt('存草稿', 'Save draft')}
-          </button>
-          <button
-            type="button"
-            className="article-editor-action article-editor-action-primary"
-            onClick={() => save(true)}
-            disabled={!canSave}
-          >
-            {saving === 'publish' && <Loader2 size={14} className="article-editor-spin" />}
-            {tt('发布', 'Publish')}
-          </button>
-        </div>
-      </div>
+      <div className="article-editor-footer">{actionButtons}</div>
     </div>
   );
 }

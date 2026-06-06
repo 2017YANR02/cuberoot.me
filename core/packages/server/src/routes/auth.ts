@@ -167,3 +167,27 @@ authRoutes.post('/auth/exchange', async (c) => {
     return c.json({ error: 'WCA API unavailable' }, 502);
   }
 });
+
+// 用未过期的 cuberoot_jwt 续签一张新的 365 天 JWT(滑动过期)。
+// 前端在 token 临近过期时静默调用 → 只要一年内活跃过就不掉线;整年不活跃才需重新 WCA 登录。
+// 只接受自签 JWT(WCA access_token 验签会失败 → 401,走 /auth/exchange);不碰 DB。
+authRoutes.post('/auth/refresh', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return c.json({ error: 'unauthorized' }, 401);
+  }
+  const token = authHeader.slice(7);
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as { wcaId?: string; name?: string };
+    if (!payload.wcaId) return c.json({ error: 'unauthorized' }, 401);
+    const fresh = jwt.sign(
+      { wcaId: payload.wcaId, name: payload.name ?? '' },
+      JWT_SECRET,
+      { expiresIn: '365d' },
+    );
+    return c.json({ token: fresh });
+  } catch {
+    // 过期或非法 JWT — 不续签,前端回退到重新 WCA 登录。
+    return c.json({ error: 'unauthorized' }, 401);
+  }
+});
