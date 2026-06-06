@@ -37,7 +37,7 @@ export default function NewArticlePage() {
   const isLoggedIn = !!user;
 
   return (
-    <div className="article-list-page">
+    <div className="article-list-page article-list-page--editor">
       <header className="article-list-header">
         <HomeLink className="article-list-back">
           <ChevronLeft size={16} />

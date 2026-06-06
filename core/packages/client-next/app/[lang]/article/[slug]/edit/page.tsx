@@ -62,7 +62,7 @@ export default function EditArticlePage() {
     (isAdmin || article.authorWcaId === user.wcaId || article.canEdit === true);
 
   return (
-    <div className="article-list-page">
+    <div className="article-list-page article-list-page--editor">
       <header className="article-list-header">
         <HomeLink className="article-list-back">
           <ChevronLeft size={16} />
