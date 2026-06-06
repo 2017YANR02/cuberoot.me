@@ -12,7 +12,7 @@
  *
  * 所有文案走 t('article.*'),颜色全 token(危险态走 --destructive)。
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -33,6 +33,15 @@ export default function ArticleActions({ slug, authorWcaId, lang }: ArticleActio
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
 
+  // Auth store reads localStorage: the server renders logged-out (null) while
+  // the client hydrates logged-in → hydration mismatch. Gate on `mounted` so
+  // the first client render matches the server (both null), then reveal after
+  // mount. See memory project_auth_store_hydration.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [busy, setBusy] = useState(false);
   const [actionErr, setActionErr] = useState<string | null>(null);
 
@@ -42,7 +51,7 @@ export default function ArticleActions({ slug, authorWcaId, lang }: ArticleActio
   const [reportDone, setReportDone] = useState(false);
   const [reportErr, setReportErr] = useState<string | null>(null);
 
-  if (!user) return null;
+  if (!mounted || !user) return null;
 
   const langPrefix = isZh ? 'zh' : 'en';
   const canManage = user.wcaId === authorWcaId || isAdminWcaId(user.wcaId);
