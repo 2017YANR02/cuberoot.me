@@ -45,6 +45,10 @@ export default function CubingPreview2D({ scramble, size = 14, className }: { sc
     player.style.height = `${h}px`;
     container.appendChild(player);
     return () => {
+      // Detach the old player so it (and any cubing.js listeners/timers it
+      // holds) is torn down on size change / unmount — otherwise each re-create
+      // orphaned the previous element. disconnectedCallback handles teardown.
+      try { player.remove(); } catch { /* */ }
       playerRef.current = null;
     };
   }, [Ctor, size]);

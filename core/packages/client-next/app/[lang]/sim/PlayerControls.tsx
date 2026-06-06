@@ -29,6 +29,7 @@ import {
   Play, Pause, SkipBack, SkipForward, RotateCcw,
   FlipHorizontal2, FlipVertical2, Eraser, Sparkles, RotateCw,
   Settings, ChevronRight, Shuffle, Link2, Check, Upload,
+  Search, Loader2,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './cuber/world';
@@ -37,6 +38,7 @@ import CubeGroup from './cuber/group';
 import { parseSq1Scramble, movesToString, type Sq1Move } from './cuber/sq1/sq1State';
 import { invertAlg, simplifyAlg, simplifyTwistyAlg, mirrorAlg, countMoves } from '@/lib/cube3';
 import { cleanForPlayer, extractAlgFromText } from '@/lib/recon-alg-utils';
+import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
 import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import {
   formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg,
@@ -229,6 +231,8 @@ export default function PlayerControls({
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
   const isTwistyMode = isTwistyPuzzle(puzzleKind);
+  // "Derive scramble from solution" (cubedb-style) is 3x3-only — the solver is.
+  const is3x3 = !isSq1 && !isTwistyMode && order === 3;
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -246,6 +250,7 @@ export default function PlayerControls({
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [derivingScramble, setDerivingScramble] = useState(false);
 
   useEffect(() => {
     CubeGroup.frames = Math.max(2, Math.round(30 / speed));
@@ -624,6 +629,42 @@ export default function PlayerControls({
     onSetupChange(scramble);
   }, [world, order, isSq1, isTwistyMode, puzzleKind, settings.animateScramble, onSetupChange, onAlgChange, twistyPlayerRef]);
 
+  // cubedb-style "反推打乱": invert + re-orient + solve the current solution to
+  // recover the clean rotation-free scramble it solves, drop it into the
+  // scramble box, and flip to forward (Moves) playback so the cube shows the
+  // scramble and the solution plays forward to solve it.
+  const handleDeriveScramble = useCallback(async () => {
+    if (!is3x3 || !world || !algDraft.trim()) return;
+    setDerivingScramble(true);
+    try {
+      const scramble = await deriveScrambleFromSolution(algDraft);
+      if (!scramble) return;
+      if (settings.playbackMode !== 'moves') {
+        onSettingsChange({ ...settings, playbackMode: 'moves' });
+      }
+      // Apply the scramble to the cube instantly. animatingScrambleRef tells the
+      // setup-change effect to land on step 0 (cube shows the scramble) instead
+      // of re-running jumpToStep, which would otherwise double-apply.
+      animatingScrambleRef.current = true;
+      const tw = world.cube.twister as unknown as {
+        setupAsync?: (e: string) => Promise<void>;
+        setup: (e: string) => void;
+      };
+      if (tw.setupAsync) await tw.setupAsync(scramble);
+      else tw.setup(scramble);
+      if (setupElRef.current) {
+        setupElRef.current.value = scramble;
+        autosize(setupElRef.current);
+      }
+      setSetupDraft(scramble);
+      onSetupChange(scramble);
+    } catch (err) {
+      console.warn('[sim] derive scramble failed:', err);
+    } finally {
+      setDerivingScramble(false);
+    }
+  }, [is3x3, world, algDraft, settings, onSettingsChange, onSetupChange]);
+
   return (
     <div className="sim-player">
       <div className="sim-player-row sim-player-row--top">
@@ -641,6 +682,18 @@ export default function PlayerControls({
             onSetupChange(el.value);
           }}
         />
+        {is3x3 && (
+          <button
+            type="button"
+            className="sim-player-scramble"
+            onClick={handleDeriveScramble}
+            disabled={derivingScramble || !algDraft.trim()}
+            title={t('从下方解法反推打乱', 'Derive scramble from the solution below')}
+            aria-label={t('反推打乱', 'Derive scramble')}
+          >
+            {derivingScramble ? <Loader2 size={14} className="sim-spin" /> : <Search size={14} />}
+          </button>
+        )}
         <button
           type="button"
           className="sim-player-scramble"

@@ -363,6 +363,19 @@
 .sim-player-scramble:hover {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
+.sim-player-scramble:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.sim-player-scramble:disabled:hover {
+  background: transparent;
+}
+.sim-spin {
+  animation: sim-spin 0.8s linear infinite;
+}
+@keyframes sim-spin {
+  to { transform: rotate(360deg); }
+}
 
 .sim-puzzle-sliders {
   display: grid;

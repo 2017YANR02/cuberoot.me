@@ -1135,6 +1135,10 @@
     max-width: 560px;       /* matches the ~550pt scramble column on A4 */
     position: relative;      /* anchor the click-to-copy "已复制" toast */
 }
+/* 含步数徽标的 333 系列 scramble cell:在 PDF 560 cap 基础上再留出徽标(~80px)的宽,
+   让 inline 徽标落在打乱最后一行末尾、不因 cell 太窄掉到下一行(只命中带徽标的行,
+   其它项目仍守 560 对齐 PDF)。max-width 只是上限,列宽仍按内容收窄到 文本+徽标。 */
+.gen-tn-attempt-scramble:has(.gen-tn-cross-badge) { max-width: 680px; }
 /* "已复制 / Copied" 浮层 —— 点击 row 复制后,在 scramble 单元格中央弹出一个
    accent-色小药丸,1.2s fade-in/out。pointer-events:none 防止挡住下一次点击。 */
 .gen-tn-copy-toast {
@@ -1287,22 +1291,20 @@ html[data-theme=dark] .gen-page {
     --gen-step-lo: #34D399;
 }
 
-/* per-scramble badge in the sheet rows —— 徽标贴打乱末行右侧同行,不换行掉到下一行 */
-.gen-tn-scr-line {
-    display: flex;
-    flex-flow: row nowrap;
-    align-items: flex-end;
-    gap: 2px 10px;
-}
-/* 打乱串收走剩余宽度并内部换行(min-width:0 允许收窄),徽标始终留在末行右侧 */
-.gen-tn-scr-line > .gen-tn-attempt-line { flex: 1 1 auto; min-width: 0; }
+/* per-scramble badge in the sheet rows —— 徽标作为 <code> 文本流末尾的 inline 子节点
+   (在流内,不 float / 不 flex),跟在打乱最后一个 token 后同一行。
+   关键:inline 才会把 cell 的 max-content 撑成「文本+徽标」宽度 —— 桌面单行时
+   cell 长到容纳两者、徽标自然落在文本右侧同行;窄屏 cell 被视口压窄,文本折行,
+   徽标贴最后一行末尾(放不下才随文本换到下一行)。float 不撑 cell → 末行没位
+   就掉行(桌面单行直接掉到第二行,图 #1/#4 根因);flex 兄弟对齐整块底部又抢
+   grow 空间致提前换行右侧留白(图 #2/#3 根因)。 */
+.gen-tn-scr-line { display: block; }
 .gen-tn-cross-badge {
+    float: right;
+    margin-left: 10px;
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    flex-shrink: 0;
-    /* 不用 margin-left:auto —— 让打乱串靠 flex-grow 撑满,否则 auto margin 抢走剩余空间
-       会把打乱串压窄、每行提前换行右侧留白。撑满后徽标自然落在右缘。 */
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 0.78rem;
     line-height: 1;

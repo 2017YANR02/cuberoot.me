@@ -11,9 +11,10 @@ interface Props {
   onLabel: string;
   offLabel: string;
   ariaLabel?: string;
+  className?: string;
 }
 
-export default function PillToggle({ value, onChange, onLabel, offLabel, ariaLabel }: Props) {
+export default function PillToggle({ value, onChange, onLabel, offLabel, ariaLabel, className }: Props) {
   const ref = useRef<HTMLButtonElement>(null);
   // startX 记起手点;moved=true 表示这次是拖动(松手时不再当 tap 翻转)。
   const drag = useRef<{ startX: number; moved: boolean } | null>(null);
@@ -54,7 +55,7 @@ export default function PillToggle({ value, onChange, onLabel, offLabel, ariaLab
       role="switch"
       aria-checked={value}
       aria-label={ariaLabel}
-      className={`pill-toggle${value ? ' is-on' : ''}`}
+      className={`pill-toggle${value ? ' is-on' : ''}${className ? ` ${className}` : ''}`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
