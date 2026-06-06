@@ -12,6 +12,10 @@
   color: var(--text-sub, #aaa);
   font-size: 13px;
   cursor: pointer;
+  /* 横向拖动滑钮由组件接管,纵向留给页面滚动;同时禁掉移动端长按选字 / 高亮 */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
   transition: background 0.18s, color 0.18s, border-color 0.18s;
 }
 

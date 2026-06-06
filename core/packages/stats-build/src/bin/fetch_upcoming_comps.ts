@@ -340,15 +340,16 @@ function buildEventTags(cuberInfo: CuberInfo): EventTag[] {
  * 失败兜底返回 {}（与 Python 一致：callers 用 isinstance(x,dict)/truthiness 判定）。
  *
  * 超时语义：Python urllib timeout=10 是读/不活动超时；这里用 AbortController 是硬总超时。
- * 此端点响应都很小（列表分页 / 单场 WCIF / 单 HTML），10s 总预算足够。
+ * 小响应（列表分页 / 单 HTML / 单场详情）用默认 10s；大响应（championship WCIF 的完整
+ * persons 数组可达数 MB）必须由调用方传更大的 timeoutMs，否则慢 runner 上会下到一半被 abort。
  */
-async function fetchWithRetry(url: string, raw = false): Promise<unknown> {
+async function fetchWithRetry(url: string, raw = false, timeoutMs = 10_000): Promise<unknown> {
   let attempt = 0;
   let rateLimitWaits = 0;
   while (attempt < MAX_RETRIES) {
     await sleep(API_DELAY_SEC);
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 10 * 1000);
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
     let text: string;
     try {
       const resp = await fetch(url, {
@@ -371,9 +372,10 @@ async function fetchWithRetry(url: string, raw = false): Promise<unknown> {
             return {};
           }
           const retryAfter = resp.headers.get('Retry-After');
-          const wait = retryAfter !== null && Number.isInteger(parseInt(retryAfter, 10)) && /^\s*[+-]?\d+\s*$/.test(retryAfter)
+          // 仅采信非负整数秒；其余(空/非数字/负数)落回 2s，并至少等 1s 防 busy-retry。
+          const wait = Math.max(1, retryAfter !== null && /^\s*\d+\s*$/.test(retryAfter)
             ? parseInt(retryAfter, 10)
-            : 2;
+            : 2);
           console.log(`[WARN] 触发 429 限制，等待 ${wait} 秒...`);
           await sleep(wait);
           rateLimitWaits += 1;
@@ -795,7 +797,8 @@ async function fetchWcif(compId: string): Promise<WcifEntry | Record<string, nev
   }
 
   const url = `${WCA_API_BASE}/competitions/${compId}/wcif/public`;
-  const data = await fetchWithRetry(url);
+  // WCIF persons 数组大型赛可达数 MB，给 60s 硬总超时上限（默认 10s 会下到一半 abort，丢整场报名）。
+  const data = await fetchWithRetry(url, false, 60_000);
   // NOTE: fetchWithRetry 网络失败 / 429 重试耗尽 / 404 都返回 {}（无 events 键）。
   //       区分"真无 events"和"fetch 失败"很重要：失败不写缓存，让下次重试；
   //       成功（哪怕 events 列表为空）才缓存。否则一次 429 → 缓存 24h 内永远空。

@@ -59,6 +59,15 @@
   font-size: 3.4rem;
   color: var(--muted-foreground);
 }
+/* 无打乱展开图时,左格直接放大号成绩 */
+.tr-time-big {
+  font-size: 2.1rem;
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 
 .tr-info {
   display: flex;
@@ -130,4 +139,5 @@
   .tr-card { gap: 0.85rem; padding: 0.8rem 0.85rem; }
   .tr-arrow { display: none; }
   .tr-time { font-size: 1.3rem; }
+  .tr-time-big { font-size: 1.85rem; }
 }

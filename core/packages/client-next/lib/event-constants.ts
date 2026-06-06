@@ -31,6 +31,11 @@ export const ALL_EVENT_IDS: string[] = [
   '333ft', 'magic', 'mmagic', '333mbo',
 ];
 
+// 已被 WCA 废止的项目(脚拧/八板/十二板/旧多盲)。项目选择器里默认折叠在三角形后,点击展开。
+export const CANCELLED_EVENT_IDS: ReadonlySet<string> = new Set([
+  '333ft', 'magic', 'mmagic', '333mbo',
+]);
+
 export const EVENT_ZH: Record<string, string> = {
   "333": "三阶魔方", "222": "二阶魔方", "444": "四阶魔方",
   "555": "五阶魔方", "666": "六阶魔方", "777": "七阶魔方",

@@ -294,7 +294,6 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
                   ...legendSteps.map((s) => {
                     const c = dr.hist.count[s] ?? 0;
                     if (!c) return <div key={`${dr.key}-${s}`} className="gen-cx-hm-cell is-empty">·</div>;
-                    const pct = Math.round((c / dr.hist.total) * 100);
                     const alpha = Math.round(22 + 78 * (c / rowMax));
                     const cls = `gen-cx-hm-cell${selStep != null && selStep !== s ? ' is-dim' : ''}${selStep === s ? ' is-sel' : ''}`;
                     return (
@@ -308,7 +307,7 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
                           color: alpha > 55 ? '#fff' : 'var(--gen-text)',
                         }}
                       >
-                        {pct}%
+                        {c}
                       </div>
                     );
                   }),

@@ -39,7 +39,10 @@ export function useCompSteps(compId: string | null, variant: CompStepsVariant = 
   const cache = useRef<Map<string, Map<string, number[]> | null>>(new Map());
 
   useEffect(() => {
-    if (!compId) { setState(EMPTY); return; }
+    // 无 compId(生成模式 / 未加载真比赛):没有预计算数据,直接 ready 让调用方走
+    // 客户端实时引擎(useCrossMap / useF2leoStepMap / useVariantStepMap 现场建表),
+    // 不要永远卡在「加载预计算数据中」。
+    if (!compId) { setState({ map: null, ready: true }); return; }
     const ck = `${variant}:${compId}`;
     if (cache.current.has(ck)) {
       setState({ map: cache.current.get(ck) ?? null, ready: true });

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { THEME_BOOTSTRAP, LANG_BOOTSTRAP } from "@/lib/theme-bootstrap";
 import DeskPet from "@/components/DeskPet";
+import ThemeColorSync from "@/components/ThemeColorSync";
 import "./fonts.css";
 import "./globals.css";
 
@@ -24,6 +25,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link id="app-favicon" rel="icon" href="/icons/CubeRoot.png" />
+        {/* iOS Safari chrome (top/bottom toolbar) tint. Bootstrap sets a pre-paint
+            guess; ThemeColorSync refines it to the live page bg. */}
+        <meta id="app-theme-color" name="theme-color" content="#fafafa" />
         {/* 关键字体预加载 — 正文 Inter 400 / 500 加快首屏 */}
         <link rel="preload" href="/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/inter-latin-500-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
@@ -42,6 +46,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `(function(){if(!location.pathname.startsWith('/auth/'))return;try{var u=sessionStorage.getItem('wca_return_url');if(u){var f=document.createElement('iframe');f.src=u;f.scrolling='no';f.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;border:none;z-index:0;overflow:hidden';f.setAttribute('aria-hidden','true');f.setAttribute('tabindex','-1');document.body.appendChild(f);}}catch(e){}})();` }} />
         {children}
         <DeskPet />
+        <ThemeColorSync />
       </body>
     </html>
   );

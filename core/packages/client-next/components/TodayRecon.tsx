@@ -65,12 +65,14 @@ export default function TodayRecon({ lang }: Props) {
         <div className="tr-cube">
           {showNet
             ? <ScramblePreview2D event={wcaEvent} scramble={scramble} size={56} />
-            : <EventIcon event={solve.event} className="tr-evt-big" />}
+            : timeText
+              ? <b className="tr-time-big">{timeText}</b>
+              : <EventIcon event={solve.event} className="tr-evt-big" />}
         </div>
 
         <div className="tr-info">
           <div className="tr-line tr-line-main">
-            {timeText && <b className="tr-time">{timeText}</b>}
+            {showNet && timeText && <b className="tr-time">{timeText}</b>}
             {solve.regionalSingleRecord && (
               <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} />
             )}

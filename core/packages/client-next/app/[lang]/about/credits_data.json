@@ -75,8 +75,8 @@
   {
     "name": "huizhiLLL/WCA-Nemesizer-API",
     "url": "https://github.com/huizhiLLL/WCA-Nemesizer-API",
-    "zh": "宿敌算法参考(client-side TS 重写;UI 灵感 nemesizer.com)",
-    "en": "Nemesis algorithm reference (client-side TS reimpl; UI inspired by nemesizer.com)",
+    "zh": "宿敌算法参考(client-side TS 重写;UI 灵感 nemesizer.com);数据基于最近的 WCA developer dump,每周自动更新",
+    "en": "Nemesis algorithm reference (client-side TS reimpl; UI inspired by nemesizer.com); data refreshed weekly from the WCA developer dump",
     "long_en": "nemesis-relation algorithm reference (client-side TS reimplementation; UI inspired by [nemesizer.com](https://nemesizer.com))"
   },
   {

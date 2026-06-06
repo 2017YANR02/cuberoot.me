@@ -4,7 +4,7 @@
 
 import { useMemo, useState } from 'react';
 import { X } from 'lucide-react';
-import { ALL_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
+import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { eventDisplayName } from '@/lib/wca-events';
 import { CubingIcon } from './EventIcon/EventIcon';
 import './WcaEventSelector.css';
@@ -26,6 +26,8 @@ interface WcaEventSelectorProps {
   onExpandedChange?: (expanded: boolean) => void;
 }
 
+type AppendItem = { id: string; iconClass: string; label?: string; textLabel?: string };
+
 export default function WcaEventSelector({
   availableEvents, selectedEvent, onSelect, isZh, allowAll,
   selectedEvents, onToggle, badges, topBadges, onlyAvailable, onRemove, appendEvents,
@@ -35,23 +37,99 @@ export default function WcaEventSelector({
   const renderedIds = onlyAvailable
     ? ALL_EVENT_IDS.filter(id => availableEvents.has(id))
     : ALL_EVENT_IDS;
+  const officialIds = renderedIds.filter(id => !CANCELLED_EVENT_IDS.has(id));
+  const cancelledIds = renderedIds.filter(id => CANCELLED_EVENT_IDS.has(id));
   const renderedAppend = useMemo(() => (appendEvents
     ? (onlyAvailable ? appendEvents.filter(e => availableEvents.has(e.id)) : appendEvents)
     : []), [appendEvents, onlyAvailable, availableEvents]);
 
-  const hasSelectedAppend = useMemo(() => {
-    if (!collapsibleAppend || renderedAppend.length === 0) return false;
-    const selSet: ReadonlySet<string> = isMulti
-      ? selectedEvents!
-      : selectedEvent
-        ? new Set([selectedEvent])
-        : new Set();
-    return renderedAppend.some(e => selSet.has(e.id));
-  }, [collapsibleAppend, renderedAppend, isMulti, selectedEvents, selectedEvent]);
+  const selSet: ReadonlySet<string> = useMemo(() => (isMulti
+    ? selectedEvents!
+    : selectedEvent ? new Set([selectedEvent]) : new Set<string>()
+  ), [isMulti, selectedEvents, selectedEvent]);
 
-  const [userExpanded, setUserExpanded] = useState(false);
-  const showAppend = !collapsibleAppend || userExpanded || hasSelectedAppend;
-  const showToggle = collapsibleAppend && renderedAppend.length > 0 && !hasSelectedAppend;
+  // 折叠在三角形后的「额外项」:废止项(脚拧/八板/十二板/旧多盲)始终折叠;非 WCA 追加项仅
+  // collapsibleAppend 时折叠。两者都折叠时合并到同一个三角,避免并排两个三角。
+  const appendCollapsible = !!collapsibleAppend && renderedAppend.length > 0;
+  const inlineAppend: ReadonlyArray<AppendItem> = collapsibleAppend ? [] : renderedAppend;
+  const hiddenAppend: ReadonlyArray<AppendItem> = appendCollapsible ? renderedAppend : [];
+  const hasHiddenContent = cancelledIds.length > 0 || appendCollapsible;
+
+  // 选中了折叠组里的任一项 → 强制展开并隐藏三角(否则会把当前选择藏掉)。
+  const hasSelectedHidden = cancelledIds.some(id => selSet.has(id))
+    || hiddenAppend.some(e => selSet.has(e.id));
+  const [expanded, setExpanded] = useState(false);
+  const showHidden = expanded || hasSelectedHidden;
+  const showToggle = hasHiddenContent && !hasSelectedHidden;
+
+  const toggleTip = (cancelledIds.length > 0 && appendCollapsible)
+    ? (isZh ? '其他项目' : 'Other events')
+    : appendCollapsible
+      ? (isZh ? '其他 (非 WCA 项目)' : 'Other (non-WCA puzzles)')
+      : (isZh ? '已废止项目' : 'Former events');
+
+  const removeBtn = (id: string, isActive: boolean) => (isMulti && isActive && onRemove ? (
+    <span
+      className="event-btn-remove"
+      role="button"
+      aria-label={isZh ? '移除' : 'Remove'}
+      onClick={(e) => { e.stopPropagation(); onRemove(id); }}
+    ><X size={10} strokeWidth={3} /></span>
+  ) : null);
+
+  const eventBadges = (id: string, isActive: boolean) => (
+    <>
+      {badges?.[id] !== undefined && (
+        <span className="event-btn-badge">{badges[id]}</span>
+      )}
+      {topBadges?.[id] !== undefined && !(isMulti && isActive && onRemove) && (
+        <span className="event-btn-badge event-btn-badge-top">{topBadges[id]}</span>
+      )}
+    </>
+  );
+
+  const renderWcaButton = (id: string) => {
+    const isDisabled = !availableEvents.has(id);
+    const isActive = isMulti ? selectedEvents!.has(id) : id === selectedEvent;
+    const tooltip = isZh ? (EVENT_ZH[id] || id) : (EVENT_EN[id] || id);
+    const handleClick = isDisabled
+      ? undefined
+      : () => (isMulti ? onToggle!(id) : onSelect?.(id));
+
+    return (
+      <button
+        key={id}
+        className={`event-btn${isActive ? ' active' : ''}${isDisabled ? ' disabled' : ''}`}
+        data-tooltip={tooltip}
+        data-event={id}
+        onClick={handleClick}
+      >
+        <CubingIcon icon={`event-${id}`} />
+        {eventBadges(id, isActive)}
+        {removeBtn(id, isActive)}
+      </button>
+    );
+  };
+
+  const renderAppendButton = ({ id, iconClass, label, textLabel }: AppendItem) => {
+    const isActive = isMulti ? selectedEvents!.has(id) : id === selectedEvent;
+    const tooltip = label ?? eventDisplayName(id, isZh);
+    return (
+      <button
+        key={id}
+        className={`event-btn${isActive ? ' active' : ''}${iconClass ? '' : ' event-btn-text'}`}
+        data-tooltip={tooltip}
+        data-event={id}
+        onClick={() => (isMulti ? onToggle!(id) : onSelect?.(id))}
+      >
+        {iconClass
+          ? <CubingIcon icon={iconClass} />
+          : <span className="event-text-label">{textLabel ?? id}</span>}
+        {eventBadges(id, isActive)}
+        {removeBtn(id, isActive)}
+      </button>
+    );
+  };
 
   return (
     <div className="wca-stats-event-selector">
@@ -64,85 +142,24 @@ export default function WcaEventSelector({
           <span className="event-all-label">{isZh ? '全部' : 'All'}</span>
         </button>
       )}
-      {renderedIds.map(id => {
-        const isDisabled = !availableEvents.has(id);
-        const isActive = isMulti ? selectedEvents!.has(id) : id === selectedEvent;
-        const tooltip = isZh ? (EVENT_ZH[id] || id) : (EVENT_EN[id] || id);
-        const handleClick = isDisabled
-          ? undefined
-          : () => (isMulti ? onToggle!(id) : onSelect?.(id));
-
-        return (
-          <button
-            key={id}
-            className={`event-btn${isActive ? ' active' : ''}${isDisabled ? ' disabled' : ''}`}
-            data-tooltip={tooltip}
-            data-event={id}
-            onClick={handleClick}
-          >
-            <CubingIcon icon={`event-${id}`} />
-            {badges?.[id] !== undefined && (
-              <span className="event-btn-badge">{badges[id]}</span>
-            )}
-            {topBadges?.[id] !== undefined && !(isMulti && isActive && onRemove) && (
-              <span className="event-btn-badge event-btn-badge-top">{topBadges[id]}</span>
-            )}
-            {isMulti && isActive && onRemove && (
-              <span
-                className="event-btn-remove"
-                role="button"
-                aria-label={isZh ? '移除' : 'Remove'}
-                onClick={(e) => { e.stopPropagation(); onRemove(id); }}
-              ><X size={10} strokeWidth={3} /></span>
-            )}
-          </button>
-        );
-      })}
+      {officialIds.map(renderWcaButton)}
       {showToggle && (
         <button
           type="button"
-          className={`event-btn event-btn-more${userExpanded ? ' active' : ''}`}
-          data-tooltip={isZh ? '其他 (非 WCA 项目)' : 'Other (non-WCA puzzles)'}
+          className={`event-btn event-btn-more${expanded ? ' active' : ''}`}
+          data-tooltip={toggleTip}
           onClick={() => {
-            const next = !userExpanded;
-            setUserExpanded(next);
+            const next = !expanded;
+            setExpanded(next);
             onExpandedChange?.(next);
           }}
         >
-          <span className="event-more-arrow">{userExpanded ? '▴' : '▾'}</span>
+          <span className="event-more-arrow">{expanded ? '▴' : '▾'}</span>
         </button>
       )}
-      {showAppend && renderedAppend.map(({ id, iconClass, label, textLabel }) => {
-        const isActive = isMulti ? selectedEvents!.has(id) : id === selectedEvent;
-        const tooltip = label ?? eventDisplayName(id, isZh);
-        return (
-          <button
-            key={id}
-            className={`event-btn${isActive ? ' active' : ''}${iconClass ? '' : ' event-btn-text'}`}
-            data-tooltip={tooltip}
-            data-event={id}
-            onClick={() => (isMulti ? onToggle!(id) : onSelect?.(id))}
-          >
-            {iconClass
-              ? <CubingIcon icon={iconClass} />
-              : <span className="event-text-label">{textLabel ?? id}</span>}
-            {badges?.[id] !== undefined && (
-              <span className="event-btn-badge">{badges[id]}</span>
-            )}
-            {topBadges?.[id] !== undefined && !(isMulti && isActive && onRemove) && (
-              <span className="event-btn-badge event-btn-badge-top">{topBadges[id]}</span>
-            )}
-            {isMulti && isActive && onRemove && (
-              <span
-                className="event-btn-remove"
-                role="button"
-                aria-label={isZh ? '移除' : 'Remove'}
-                onClick={(e) => { e.stopPropagation(); onRemove(id); }}
-              ><X size={10} strokeWidth={3} /></span>
-            )}
-          </button>
-        );
-      })}
+      {showHidden && cancelledIds.map(renderWcaButton)}
+      {showHidden && hiddenAppend.map(renderAppendButton)}
+      {inlineAppend.map(renderAppendButton)}
     </div>
   );
 }

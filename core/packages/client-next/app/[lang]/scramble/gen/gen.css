@@ -55,7 +55,9 @@
     backdrop-filter: blur(8px);
 }
 
-.gen-title { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* flex: 1 0 auto — grow 把 chips 推到右沿,但 shrink:0 保证标题永不被压到内容宽以下
+   (否则 nowrap 的标题会溢出到右边 portal 进来的比赛名 slot 上,窄屏重叠)。 */
+.gen-title { flex: 1 0 auto; display: flex; align-items: center; gap: 10px; min-width: 0; }
 .gen-title-icon { color: var(--gen-accent); flex-shrink: 0; }
 /* nowrap 保险:窄屏 header 内宽紧张时,4 字标题别再被压成 1 字一行竖排。 */
 .gen-title h1 { font-size: 1.15rem; margin: 0; font-weight: 600; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; }
@@ -531,11 +533,20 @@
     color: var(--gen-accent);
 }
 
-/* mode chips: 视觉走 LiquidGlassChips 组件;这里只管布局/响应式。
-   窄屏 header: 标题 + chip + 中文 + 主题 一行排齐;slot(比赛搜索框)占第二行。 */
+/* mode chips: 视觉走 LiquidGlassChips 组件;这里只管布局/响应式。 */
+
+/* 中等宽度起:比赛名 + 操作图标塞不进标题行,给 slot(比赛搜索框 / 已加载比赛名)单独整行,
+   标题行只留 标题 + tab。避免比赛名压到标题上或在标题行里换行(>1000px 桌面才同行)。 */
+@media (max-width: 1000px) {
+    .gen-header { flex-wrap: wrap; }
+    .gen-comp-header-slot {
+        order: 100;
+        flex: 1 0 100%;
+    }
+}
+
 @media (max-width: 700px) {
     .gen-header {
-        flex-wrap: wrap;
         gap: 6px 8px;
         padding: calc(0.9rem + var(--sat)) max(0.8rem, var(--sar)) 0.75rem max(0.8rem, var(--sal));
     }
@@ -544,10 +555,6 @@
     .gen-mode-chips { padding: 2px; }
     .gen-mode-chips .lg-chips-chip { padding: 3px 8px; font-size: 0.75rem; }
     .gen-header .lang-toggle { margin-left: auto; }
-    .gen-comp-header-slot {
-        order: 100;
-        flex: 1 0 100%;
-    }
 }
 
 /* ───────── TNoodle mode ───────── */
@@ -1280,18 +1287,22 @@ html[data-theme=dark] .gen-page {
     --gen-step-lo: #34D399;
 }
 
-/* per-scramble badge in the sheet rows */
+/* per-scramble badge in the sheet rows —— 徽标贴打乱末行右侧同行,不换行掉到下一行 */
 .gen-tn-scr-line {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+    flex-flow: row nowrap;
+    align-items: flex-end;
+    gap: 2px 10px;
 }
+/* 打乱串收走剩余宽度并内部换行(min-width:0 允许收窄),徽标始终留在末行右侧 */
+.gen-tn-scr-line > .gen-tn-attempt-line { flex: 1 1 auto; min-width: 0; }
 .gen-tn-cross-badge {
     display: inline-flex;
     align-items: center;
     gap: 2px;
     flex-shrink: 0;
+    /* 不用 margin-left:auto —— 让打乱串靠 flex-grow 撑满,否则 auto margin 抢走剩余空间
+       会把打乱串压窄、每行提前换行右侧留白。撑满后徽标自然落在右缘。 */
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 0.78rem;
     line-height: 1;
