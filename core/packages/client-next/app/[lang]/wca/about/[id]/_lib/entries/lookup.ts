@@ -501,7 +501,7 @@ const sum_of_ranks: AboutEntry = {
     { value: 'wr / cr', labelZh: '存两套排名', labelEn: 'Two rank arrays', hintZh: 'ranks_world + ranks_country 各 17 元素', hintEn: 'ranks_world + ranks_country — 17 INTEGER[] each' },
   ],
   sourceZh: [
-    'CI 端先 `accByEvent[event] → Acc { best, avg }` 累积每人每项 PB,然后对每个 event 各跑一次 `assignRanks(sortedList)` 同时给 world_rank + country_rank;最后 per person 把 17 项的 wr / cr 装进 `INTEGER[]`,缺项当场补 `participants + 1` 计入 total。**领奖台过滤**走 `best_final_pos`(跨所有 event 的 final round MIN(pos)):未登台 = `=0 OR >3`,殿军之王 = `=4`。落 `wca_person_ranks(wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world[], ranks_country[])`。',
+    'CI 端先 `accByEvent[event] → Acc { best, avg }` 累积每人每项 PB,然后对每个 event 各跑一次 `assignRanks(sortedList)` 同时给 world_rank + country_rank;最后 per person 把 17 项的 wr / cr 装进 `INTEGER[]`,缺项当场补 `participants + 1` 计入 total。**领奖台过滤**走 `best_final_pos`(跨所有 event 的 final round MIN(pos)):未登台 = `=0 OR >3`。落 `wca_person_ranks(wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world[], ranks_country[])`。',
   ],
   sourceEn: [
     'CI accumulates per-event PB via `accByEvent[event] → Acc { best, avg }`. For each event, `assignRanks(sortedList)` assigns both world_rank + country_rank in one pass. Per person, the 17 ranks land in two `INTEGER[]` columns; missing events absorb a `participants + 1` penalty in the precomputed total. **Podium filtering** uses `best_final_pos` (MIN(pos>0) across every event\'s final-round results): no-podium = `=0 OR >3`, fourth-place king = `=4`. Stored in `wca_person_ranks(wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world[], ranks_country[])`.',
@@ -550,8 +550,8 @@ ORDER BY subset_total ASC;`,
     {
       titleZh: '记 best_final_pos / events_done',
       titleEn: 'Record best_final_pos / events_done',
-      bodyZh: '主循环每条 result 命中 `round_type_id IN (\'c\', \'f\')` 且 `pos > 0` 时,跨 event 更新该人的 `best_final_pos = MIN(pos)`。0 = 从未在任何 final 拿过有效成绩。`events_done` 计 `wr > 0` 的项目数。`/v1/wca/sum-of-ranks?hidePodium=1` → `best_final_pos = 0 OR > 3`;`?bestMisser=4` → `best_final_pos = 4`(殿军之王)。',
-      bodyEn: 'In the main loop, every result with `round_type_id IN (\'c\', \'f\')` and `pos > 0` updates that person\'s `best_final_pos = MIN(pos)` across events. 0 = never produced a valid final-round result. `events_done` counts slots with `wr > 0`. `/v1/wca/sum-of-ranks?hidePodium=1` → `best_final_pos = 0 OR > 3`; `?bestMisser=4` → `best_final_pos = 4` (fourth-place king).',
+      bodyZh: '主循环每条 result 命中 `round_type_id IN (\'c\', \'f\')` 且 `pos > 0` 时,跨 event 更新该人的 `best_final_pos = MIN(pos)`。0 = 从未在任何 final 拿过有效成绩。`events_done` 计 `wr > 0` 的项目数。`/v1/wca/sum-of-ranks?hidePodium=1` → `best_final_pos = 0 OR > 3`。',
+      bodyEn: 'In the main loop, every result with `round_type_id IN (\'c\', \'f\')` and `pos > 0` updates that person\'s `best_final_pos = MIN(pos)` across events. 0 = never produced a valid final-round result. `events_done` counts slots with `wr > 0`. `/v1/wca/sum-of-ranks?hidePodium=1` → `best_final_pos = 0 OR > 3`.',
     },
     {
       titleZh: '全 17 项 → 走预计算列',

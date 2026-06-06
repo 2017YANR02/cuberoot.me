@@ -20,10 +20,16 @@ const TOKENS_PER_LINE_GENERIC = 12;     // chunk size for NxN / pyra / skewb / c
 const SQ1_TURNS_PER_LINE = 4;           // sq1 turns ((x,y) /) per line — matches tnoodle PDF
 const NBSP = ' ';
 
+import type { ReactNode } from 'react';
+
 interface Props {
   scramble: string;
   /** Optional className passed through to the wrapping element. */
   className?: string;
+  /** Optional inline node rendered as the LAST child INSIDE the <code>, after
+   *  the scramble text (e.g. the per-row step badge). Floated right via CSS so
+   *  it trails the scramble's last wrapped line instead of dropping below. */
+  trailing?: ReactNode;
 }
 
 function buildLines(scramble: string): string[] {
@@ -79,11 +85,11 @@ function buildLines(scramble: string): string[] {
   return [allTokens.map(pad).join(' ')];
 }
 
-export default function ScrambleLines({ scramble, className }: Props) {
+export default function ScrambleLines({ scramble, className, trailing }: Props) {
   const lines = buildLines(scramble);
-  if (lines.length === 0) return <code className={className} />;
+  if (lines.length === 0) return <code className={className}>{trailing}</code>;
   if (lines.length === 1) {
-    return <code className={className}>{lines[0]}</code>;
+    return <code className={className}>{lines[0]}{trailing}</code>;
   }
   // 不再走 PDF 风格的隔行灰底(MIN_LINES_HIGHLIGHTING 旧逻辑)。多行
   // (mega / sq1)纯文本换行即可,跟 PDF 三阶的"无 highlighting"对齐。
@@ -93,6 +99,7 @@ export default function ScrambleLines({ scramble, className }: Props) {
       {lines.map((line, i) => (
         <span key={i} className="gen-scramble-line">{line}</span>
       ))}
+      {trailing}
     </code>
   );
 }

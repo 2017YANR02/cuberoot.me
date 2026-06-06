@@ -1,11 +1,11 @@
-'use client';
-// /recon/[id]/alt — submit a new alternative solution.
+import ReconAltClient from './ReconAltClient';
 
-import { useParams } from 'next/navigation';
-import AltSubmitForm from './AltSubmitForm';
+export const dynamic = 'force-static';
+export const dynamicParams = true;
+export function generateStaticParams() {
+  return [];
+}
 
-export default function AltSubmitPage() {
-  const params = useParams<{ id: string }>();
-  const id = (Array.isArray(params?.id) ? params.id[0] : params?.id) ?? '';
-  return <AltSubmitForm parentId={id} />;
+export default function Page() {
+  return <ReconAltClient />;
 }

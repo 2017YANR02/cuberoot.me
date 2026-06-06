@@ -1,13 +1,16 @@
-'use client';
+// Server wrapper: subgroups are derived from runtime-loaded case data, so they
+// aren't statically enumerable. force-static + dynamicParams renders each
+// /alg/<puzzle>/<set>/<subgroup> on first request, then caches it as static.
+// No '@cuberoot/shared' barrel import here (barrel re-exports client hooks).
+import AlgSubgroupClient from './AlgSubgroupClient';
 
-import { useParams } from 'next/navigation';
-import AlgCategoryView from '@/components/AlgCategoryView';
-import '../../../alg.css';
+export const dynamic = 'force-static';
+export const dynamicParams = true;
 
-export default function AlgSubgroupPage() {
-  const params = useParams<{ puzzle: string | string[]; set: string | string[]; subgroup: string | string[] }>();
-  const puzzle = Array.isArray(params?.puzzle) ? params.puzzle[0] : (params?.puzzle ?? '');
-  const set = Array.isArray(params?.set) ? params.set[0] : (params?.set ?? '');
-  const subgroup = Array.isArray(params?.subgroup) ? params.subgroup[0] : (params?.subgroup ?? '');
-  return <AlgCategoryView puzzleParam={puzzle} set={set} subgroupParam={subgroup} />;
+export function generateStaticParams() {
+  return [];
+}
+
+export default function Page() {
+  return <AlgSubgroupClient />;
 }

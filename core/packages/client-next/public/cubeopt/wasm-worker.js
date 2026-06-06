@@ -99,6 +99,13 @@ function change_solver(e) {
 			table_name: cur_solver.get_table_name(),
 			table_size: cur_solver.get_table_size()
 		}));
+	}).catch(err => {
+		// Without this, a failed dynamic import / wasm instantiate (e.g. a future
+		// COEP regression on /cubeopt/* or an OOM) rejects silently and the page
+		// sits on "busy" forever — the page's worker.onerror does NOT catch
+		// in-worker promise rejections. Surface it as code:1 so the page resets
+		// to "no-solver" and shows the worker-error banner.
+		self.postMessage(Object.assign({}, e, { code: 1, error: String((err && err.message) || err) }));
 	});
 }
 

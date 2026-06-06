@@ -70,7 +70,8 @@
 }
 .wse-filter select,
 .wse-filter > input,
-.wse-filter > button {
+/* 排除 PillToggle:它是 <button> 但要保持自己的胶囊外形(999px),别被方框控件样式套住 */
+.wse-filter > button:not(.pill-toggle) {
   padding: 6px 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.04);
@@ -296,11 +297,20 @@
   gap: 6px;
   margin-bottom: 6px;
 }
-.wse-events-bar button {
+/* 排除 pill-toggle:它自带滑钮 padding(0 14 0 32),被 3px 8px !important 压扁会让滑钮压住文字 */
+.wse-events-bar button:not(.pill-toggle) {
   font-size: 12px;
   padding: 3px 8px !important;
   height: auto !important;
 }
+.wse-events-bar button.wse-cat-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-foreground);
+}
+/* 过滤 / 废止项 pill:贴合文字(默认 110px 是给 on/off 文案不同的开关用的);
+   flex-shrink:0 防止在 events-bar flex 里被压窄到文字钻进滑钮下面 */
+.pill-toggle.wse-pill { min-width: 0; flex-shrink: 0; height: 26px; font-size: 12px; }
 
 /* 数据细节列 */
 .wse-detail-cell {
@@ -427,7 +437,6 @@
 .sor-census-toggle:hover { color: var(--accent); }
 .sor-census-body { margin-top: 4px; }
 .sor-census-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 18px; margin: 6px 0 10px; }
-.sor-census-cancel { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted-foreground); cursor: pointer; }
 .sor-census-year { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted-foreground); }
 .sor-census-year select {
   background: var(--card); color: var(--foreground);

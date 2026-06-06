@@ -58,7 +58,7 @@ export default function TodayRecon({ lang }: Props) {
     <div className="today-recon">
       <div className="tr-head">
         <span className="tr-title">{isZh ? '今日复盘' : 'Recon of the Day'}</span>
-        <Link href="/recon" prefetch={false} className="tr-all">{isZh ? '全部复盘' : 'All recons'}</Link>
+        <Link href="/recon" prefetch={false} className="tr-all">{isZh ? '全部' : 'All recons'}</Link>
       </div>
 
       <Link href={`/recon/${solve.id}`} prefetch={false} className="tr-card">

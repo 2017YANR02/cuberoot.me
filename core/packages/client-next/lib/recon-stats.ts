@@ -4,6 +4,7 @@
  * （之前的 block-based 实现要求标签独占一行，会让所有 inline 注释的 recon 全部得 0）
  */
 import type { ReconStatsResult } from '@cuberoot/shared';
+import { formatTime } from './recon-utils';
 
 /** 删除每行 `//` 之后的注释，去掉空行 */
 function deleteComment(recon: string): string {
@@ -407,6 +408,27 @@ export function computeAllStats(
     sMove: countS(recon),
     crossColor: detectCrossColor(recon),
   };
+}
+
+/** 纯旋转(inspection)行——只由 x/y/z + 2/' 组成 */
+const ROTATION_LINE_RE = /^(?:[xyz][2']?\s*)+$/;
+
+/**
+ * 生成可复制的「caption」:首行 `48STM/ 8.56=5.61TPS` 摘要,其后每步去掉
+ * `// 注释`,并丢弃纯旋转(inspection)行。纯前端格式化,不依赖数据库字段。
+ */
+export function buildCaption(solutionText: string, single: number): string {
+  if (!solutionText) return '';
+  const stm = computeStm(solutionText);
+  const tps = computeTps(stm, single);
+  const body: string[] = [];
+  for (const raw of solutionText.split(/\r?\n/)) {
+    const stripped = raw.replace(/\/\/.*/, '').trim();
+    if (!stripped || ROTATION_LINE_RE.test(stripped)) continue;
+    body.push(stripped);
+  }
+  const header = `${stm}STM/ ${formatTime(single)}=${tps.toFixed(2)}TPS`;
+  return [header, ...body].join('\n');
 }
 
 // NOTE: 兼容旧用法保留 ANNOTATIONS / ROTATIONS 引用避免 unused 报错

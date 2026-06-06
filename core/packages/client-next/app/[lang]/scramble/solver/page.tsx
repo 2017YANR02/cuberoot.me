@@ -106,6 +106,7 @@ function ScrambleSolverPageInner() {
 
   const [solverInfo, setSolverInfo] = useState<SolverInfo | null>(null);
   const [readyState, setReadyState] = useState<ReadyState>('no-solver');
+  const [workerError, setWorkerError] = useState<string | null>(null);
   const [progress, setProgress] = useState(-1);
   const [logs, setLogs] = useState('');
   const [scrambles, setScrambles] = useState('');
@@ -256,7 +257,21 @@ function ScrambleSolverPageInner() {
   };
 
   const bindCubeoptWorker = (w: Worker) => {
+    // A worker (or its emscripten pthread workers) failing to load fires here
+    // with an opaque event. Without this handler the page would sit on 'busy'
+    // forever (the upstream worker's select-solver promise never resolves).
+    // Most common cause: COEP header missing on the worker script — see
+    // next.config.ts headers().
+    w.onerror = () => {
+      setWorkerError(t(
+        'Solver worker 加载失败(多线程 wasm 起不来)。请刷新页面重试;若反复出现请反馈。',
+        'Solver worker failed to load (multithreaded wasm could not start). Reload the page; report if it persists.',
+      ));
+      setReadyState('no-solver');
+      setProgress(-1);
+    };
     w.onmessage = (e) => {
+      setWorkerError(null);
       const d = e.data;
       if (d.code === -1) {
         const line = String(d.data ?? '').trim();
@@ -355,14 +370,24 @@ function ScrambleSolverPageInner() {
     w.postMessage({ cmd: 'select solver', data: solverName });
   };
 
+  // Gate on `mounted` so this fires exactly once after mobile-detection has
+  // settled solverName. Otherwise the desktop default (cube48opt3) posts a
+  // select-solver, then the mobile override (cube48opt1) posts a second one;
+  // the vendored worker's change_solver kicks off import().then() WITHOUT
+  // awaiting, so two emscripten modules (≈2×17 pthread workers + two prun
+  // tables) instantiate concurrently and whichever resolves last wins —
+  // desyncing the loaded solver from the dropdown (and on mobile silently
+  // loading a much bigger table than the shown opt1). The solver <select> is
+  // disabled while busy, so a user-driven change can't race; only this mount
+  // transient could, and the `mounted` gate removes it.
   useEffect(() => {
-    if (!workerRef.current) return;
+    if (!mounted || !workerRef.current) return;
     setReadyState('busy');
     setLogs('');
     setProgress(-1);
     pendingSolveRef.current = false;
     workerRef.current.postMessage({ cmd: 'select solver', data: solverName });
-  }, [solverName]);
+  }, [mounted, solverName]);
 
   useEffect(() => {
     if (nThreads % nGroup !== 0) {
@@ -506,6 +531,10 @@ function ScrambleSolverPageInner() {
             'SharedArrayBuffer / cross-origin isolation not active — multithreaded wasm will not run. Reload the page.',
           )}
         </div>
+      )}
+
+      {workerError && (
+        <div className="cubeopt-warn">{workerError}</div>
       )}
 
       {isMobile && (

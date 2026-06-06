@@ -13,6 +13,7 @@ const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 import Paginator from '@/components/wca-stats/Paginator';
 import { EventIcon } from '@/components/EventIcon';
 import WcaEventSelector from '@/components/WcaEventSelector';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import { Flag } from '@/components/Flag';
@@ -33,7 +34,18 @@ const ACTIVE_EVENTS = [
 const CANCELLED_EVENTS = ['333ft', 'magic', 'mmagic', '333mbo'];
 const RANK_EVENTS = [...ACTIVE_EVENTS, ...CANCELLED_EVENTS];
 const RANK_EVENT_SET = new Set(RANK_EVENTS);
+const CANCELLED_SET = new Set(CANCELLED_EVENTS);
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
+
+// 项目快速分类(对齐 cubing.pro):点一个 = 直接替换当前选中项
+const EVENT_CATEGORIES: { key: string; zh: string; en: string; events: string[] }[] = [
+  { key: 'speed', zh: '速拧', en: 'Speed', events: ['333','222','444','555','666','777','333oh','clock','minx','pyram','skewb','sq1'] },
+  { key: 'quiet', zh: '安静', en: 'Quiet', events: ['333bf','333fm','444bf','555bf','333mbf'] },
+  { key: 'blind', zh: '盲拧', en: 'Blind', events: ['333bf','444bf','555bf','333mbf'] },
+  { key: 'cubic', zh: '正阶', en: 'Cubic', events: ['333','222','444','555','666','777','333oh'] },
+  { key: 'sub25', zh: '二至五阶', en: '2-5', events: ['222','333','444','555'] },
+  { key: 'shape', zh: '异形', en: 'Other', events: ['clock','minx','pyram','skewb','sq1'] },
+];
 
 interface Row {
   wcaId: string; name: string;
@@ -68,12 +80,13 @@ function SumOfRanksPageInner() {
   const country = params.get('country') ?? '';
   const eventsParam = params.get('events') ?? '';
   const hidePodium = params.get('hidePodium') === '1';
-  const fourthKing = params.get('bestMisser') === '4';
   const page = parseInt(params.get('page') ?? '1', 10);
   const size = parseInt(params.get('size') ?? '100', 10);
 
   const selectedSet = new Set(eventsParam ? eventsParam.split(',').filter(Boolean) : ACTIVE_EVENTS);
   const selectedCount = RANK_EVENTS.filter(e => selectedSet.has(e)).length;
+  // 含废止项(脚拧/八板/十二板/旧多盲)勾选态 = 4 项全在选中里;控制复选框显示 + 名人堂口径.
+  const includeCancelled = CANCELLED_EVENTS.every(e => selectedSet.has(e));
   const pushSearch = (next: URLSearchParams) => {
     const qs = next.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname);
@@ -91,8 +104,22 @@ function SumOfRanksPageInner() {
     if (cur.size === ACTIVE_EVENTS.length && ACTIVE_EVENTS.every(e => cur.has(e))) update('events', '');
     else update('events', RANK_EVENTS.filter(e => cur.has(e)).join(','));
   };
-  const selectAll = () => update('events', '');
+  // 替换选中项为给定集合(全选 / 分类快速筛选);恰好 17 活跃项则折叠成默认空 param
+  const setEvents = (events: string[]) => {
+    const set = new Set(events);
+    if (set.size === ACTIVE_EVENTS.length && ACTIVE_EVENTS.every(e => set.has(e))) update('events', '');
+    else update('events', RANK_EVENTS.filter(e => set.has(e)).join(','));
+  };
+  const selectAll = () => setEvents(ACTIVE_EVENTS);
   const clearAll = () => update('events', '__none__');
+  // 含废止项:勾上=把 4 个废止项加进当前选择,取消=移除
+  const onToggleCancelled = (on: boolean) => {
+    if (on) setEvents([...selectedSet, ...CANCELLED_EVENTS]);
+    else setEvents([...selectedSet].filter(e => !CANCELLED_SET.has(e)));
+  };
+  const activeCategory = EVENT_CATEGORIES.find(
+    c => c.events.length === selectedSet.size && c.events.every(e => selectedSet.has(e)),
+  )?.key;
   // 把"最优组合"应用到主榜单(组合是世界口径 → 清掉国家筛选 + 切到对应 type)
   const applyCombo = (events: string[], comboType: 'single' | 'average') => {
     const next = new URLSearchParams(params.toString());
@@ -119,7 +146,6 @@ function SumOfRanksPageInner() {
   const [census, setCensus] = useState<Census | null>(null);
   const [censusOpen, setCensusOpen] = useState(false);
   const [censusExpanded, setCensusExpanded] = useState(false);
-  const [censusCancelled, setCensusCancelled] = useState(false); // 含废止项(默认不含)
   const [censusYear, setCensusYear] = useState<number | null>(null); // null = 最新年
   const [timeline, setTimeline] = useState<TimelinePoint[] | null>(null);
 
@@ -132,12 +158,11 @@ function SumOfRanksPageInner() {
     qs.set('size', String(size));
     if (country) qs.set('country', country);
     if (eventsParam && eventsParam !== '__none__') qs.set('events', eventsParam);
-    if (fourthKing) qs.set('bestMisser', '4');
-    else if (hidePodium) qs.set('hidePodium', '1');
+    if (hidePodium) qs.set('hidePodium', '1');
     fetch(apiUrl(`/v1/wca/sum-of-ranks?${qs.toString()}`))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(setData).catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [type, country, eventsParam, hidePodium, fourthKing, page, size, isZh]);
+  }, [type, country, eventsParam, hidePodium, page, size, isZh]);
 
   // 选手最优组合(15s 超时, 防 dev proxy / 后端 stall 时永远转圈)
   useEffect(() => {
@@ -160,20 +185,20 @@ function SumOfRanksPageInner() {
     if (!censusOpen) return;
     setCensus(null); setCensusExpanded(false);
     const qs = new URLSearchParams({ type, v: '2' }); // v: bust 24h 缓存里缺 year/years 的旧响应
-    if (censusCancelled) qs.set('cancelled', '1');
+    if (includeCancelled) qs.set('cancelled', '1');
     if (censusYear != null) qs.set('year', String(censusYear));
     fetch(apiUrl(`/v1/wca/sum-of-ranks/census?${qs.toString()}`))
       .then(r => (r.ok ? r.json() : null)).then(setCensus).catch(() => {});
-  }, [censusOpen, type, censusCancelled, censusYear]);
+  }, [censusOpen, type, includeCancelled, censusYear]);
 
   // 名人堂历年人数时间线(年份变化不重拉,只随 type/含废止变)
   useEffect(() => {
     if (!censusOpen) { setTimeline(null); return; }
     const qs = new URLSearchParams({ type, timeline: '1' });
-    if (censusCancelled) qs.set('cancelled', '1');
+    if (includeCancelled) qs.set('cancelled', '1');
     fetch(apiUrl(`/v1/wca/sum-of-ranks/census?${qs.toString()}`))
       .then(r => (r.ok ? r.json() : null)).then(d => setTimeline(d?.points ?? null)).catch(() => {});
-  }, [censusOpen, type, censusCancelled]);
+  }, [censusOpen, type, includeCancelled]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
   const isCountryMode = !!country;
@@ -244,7 +269,7 @@ function SumOfRanksPageInner() {
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
         </h1>
-        <p className="wse-subtitle">{isZh ? '把所选项目的(世界 / 国家)排名相加,缺项以该项目"参赛人数+1"(比倒数第一再差一名)计入。"未登领奖台" / "殿军之王" 按比赛决赛(final round)实际名次过滤' : 'Sum of (world / country) ranks across selected events; missing events default to "participants+1" (one worse than last). "No podium" / "Fourth-place king" filter by actual final-round position'}</p>
+        <p className="wse-subtitle">{isZh ? '把所选项目的(世界 / 国家)排名相加,缺项以该项目"参赛人数+1"(比倒数第一再差一名)计入。"未登领奖台" 按比赛决赛(final round)实际名次过滤' : 'Sum of (world / country) ranks across selected events; missing events default to "participants+1" (one worse than last). "No podium" filters by actual final-round position'}</p>
       </header>
 
       <div className="wse-filters">
@@ -256,44 +281,44 @@ function SumOfRanksPageInner() {
             <option value="average">{isZh ? '平均' : 'Average'}</option>
           </select>
         </div>
-        <div className="wse-filter" style={{ minWidth: 220 }}>
+        <div className="wse-filter">
           <label>{isZh ? '过滤' : 'Filter'}</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, height: 34, justifyContent: 'center' }}>
-            <label className="wse-toggle" style={{ alignItems: 'center', display: 'flex', gap: 6 }}>
-              <input
-                type="checkbox"
-                checked={hidePodium}
-                onChange={e => {
-                  const next = new URLSearchParams(params.toString());
-                  if (e.target.checked) { next.set('hidePodium', '1'); next.delete('bestMisser'); }
-                  else { next.delete('hidePodium'); }
-                  next.delete('page');
-                  pushSearch(next);
-                }}
-              />
-              {isZh ? '未登领奖台' : 'No podium'}
-            </label>
-            <label className="wse-toggle" style={{ alignItems: 'center', display: 'flex', gap: 6 }}>
-              <input
-                type="checkbox"
-                checked={fourthKing}
-                onChange={e => {
-                  const next = new URLSearchParams(params.toString());
-                  if (e.target.checked) { next.set('bestMisser', '4'); next.delete('hidePodium'); }
-                  else { next.delete('bestMisser'); }
-                  next.delete('page');
-                  pushSearch(next);
-                }}
-              />
-              {isZh ? '殿军之王(最佳名次=4)' : 'Fourth-place king (best=4)'}
-            </label>
-          </div>
+          <PillToggle
+            className="wse-pill"
+            value={hidePodium}
+            onChange={v => {
+              const next = new URLSearchParams(params.toString());
+              if (v) next.set('hidePodium', '1');
+              else next.delete('hidePodium');
+              next.delete('page');
+              pushSearch(next);
+            }}
+            onLabel={isZh ? '未登领奖台' : 'No podium'}
+            offLabel={isZh ? '未登领奖台' : 'No podium'}
+          />
         </div>
         <div className="wse-filter" style={{ minWidth: '100%' }}>
           <label>{isZh ? `项目(已选 ${selectedCount} / ${RANK_EVENTS.length})` : `Events (${selectedCount}/${RANK_EVENTS.length} selected)`}</label>
           <div className="wse-events-bar">
-            <button type="button" onClick={selectAll}>{isZh ? '全选活跃项' : 'Active'}</button>
+            <button type="button" onClick={selectAll}>{isZh ? '全选' : 'All'}</button>
             <button type="button" onClick={clearAll}>{isZh ? '清除' : 'None'}</button>
+            {EVENT_CATEGORIES.map(cat => (
+              <button
+                key={cat.key}
+                type="button"
+                onClick={() => setEvents(cat.events)}
+                className={activeCategory === cat.key ? 'wse-cat-on' : undefined}
+              >
+                {isZh ? cat.zh : cat.en}
+              </button>
+            ))}
+            <PillToggle
+              className="wse-pill"
+              value={includeCancelled}
+              onChange={onToggleCancelled}
+              onLabel={isZh ? '废止项' : 'Cancelled'}
+              offLabel={isZh ? '废止项' : 'Cancelled'}
+            />
           </div>
           <WcaEventSelector
             availableEvents={RANK_EVENT_SET}
@@ -378,10 +403,6 @@ function SumOfRanksPageInner() {
         {censusOpen && (
           <div className="sor-census-body">
             <div className="sor-census-controls">
-              <label className="sor-census-cancel">
-                <input type="checkbox" checked={censusCancelled} onChange={e => setCensusCancelled(e.target.checked)} />
-                {isZh ? '含废止项' : 'Incl. cancelled'}
-              </label>
               {census && (census.years?.length ?? 0) > 1 && census.year != null && (
                 <label className="sor-census-year">
                   {isZh ? '截至' : 'As of'}
@@ -401,8 +422,8 @@ function SumOfRanksPageInner() {
             {census && (
               <>
                 <p className="sor-census-lead">{isZh
-                  ? `${censusYearLabel != null ? `截至 ${censusYearLabel} 年末,` : ''}有 ${census.distinct} 名选手曾在 ${census.totalSubsets.toLocaleString()} 种项目组合的至少一种里排到“名次和第一”(${type === 'average' ? '平均' : '单次'}${censusCancelled ? ',含废止项' : ''},世界口径)。`
-                  : `${censusYearLabel != null ? `As of end of ${censusYearLabel}, ` : ''}${census.distinct} cubers have ranked #1 in at least one of ${census.totalSubsets.toLocaleString()} event combinations (${type}${censusCancelled ? ', incl. cancelled' : ''}, world).`}</p>
+                  ? `${censusYearLabel != null ? `截至 ${censusYearLabel} 年末,` : ''}有 ${census.distinct} 名选手曾在 ${census.totalSubsets.toLocaleString()} 种项目组合的至少一种里排到“名次和第一”(${type === 'average' ? '平均' : '单次'}${includeCancelled ? ',含废止项' : ''},世界口径)。`
+                  : `${censusYearLabel != null ? `As of end of ${censusYearLabel}, ` : ''}${census.distinct} cubers have ranked #1 in at least one of ${census.totalSubsets.toLocaleString()} event combinations (${type}${includeCancelled ? ', incl. cancelled' : ''}, world).`}</p>
                 <ol className="sor-census-list">
                   {(censusExpanded ? census.rows : census.rows.slice(0, 12)).map(r => {
                     const share = r.subsetsWon / census.totalSubsets * 100;
