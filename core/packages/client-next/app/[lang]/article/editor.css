@@ -7,9 +7,8 @@
    ────────────────────────────────────────────────────────────── */
 
 .article-editor {
-  max-width: 1280px;
   margin: 0 auto;
-  padding: 24px 20px 48px;
+  padding: 24px 0 48px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -275,7 +274,7 @@
 /* ─── 移动端:source 在上、preview 在下 (不并排) ─── */
 @media (max-width: 768px) {
   .article-editor {
-    padding: 16px 14px 40px;
+    padding: 16px 0 40px;
   }
   .article-editor-split {
     grid-template-columns: 1fr;
