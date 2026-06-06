@@ -407,6 +407,38 @@ async function main() {
   // accByEvent[event][pid] = Acc — 用于 cohort_ranks(全期累积) 和 grand_slam best/avg fill
   const accByEvent = new Map<string, Map<string, Acc>>();
 
+  // ════════════ fun-stats 累加器 (port of cubingchina /results/statistics → wca_fs_*) ════════════
+  // 全部在主循环里 piggyback,不进 wrtWrite 增量门(任一成绩变这些聚合都会动,全量重灌).
+  // solve = value>0;attempt = value>-2 && value!=0(DNF=-1 算 attempt,DNS=-2/0/null 不算).
+  const solveAttempt = (attempts: (number | null)[]): [number, number] => {
+    let s = 0, a = 0;
+    for (const v of attempts) { if (v == null) continue; if (v > 0) { s++; a++; } else if (v === -1) a++; }
+    return [s, a];
+  };
+  // B 奖牌(pid → event → [g,s,b]) + 名次(pid\x1fcountry → event → [pos2,pos4]).跨 event 聚合 → 顶层.
+  const medalByPidEvent = new Map<string, Map<string, [number, number, number]>>();
+  const placeAcc = new Map<string, Map<string, [number, number]>>();
+  // D 纪录:per (pid\x1fcountry) 与 per comp → [wr,cr,nr].无 event 过滤(废止项也有纪录).
+  const recPerson = new Map<string, [number, number, number]>();
+  const recComp = new Map<string, [number, number, number]>();
+  const recBump = (m: Map<string, [number, number, number]>, key: string, slot: number) => {
+    let t = m.get(key); if (!t) { t = [0, 0, 0]; m.set(key, t); } t[slot]++;
+  };
+  const recTally = (marker: string | null, pid: string, country: string, compId: string) => {
+    if (!marker) return;                                   // '' / null = 无纪录
+    const slot = marker === 'WR' ? 0 : marker === 'NR' ? 2 : 1;  // 其余非空 = 洲纪录(AsR/ER/...)
+    recBump(recPerson, pid + '\x1f' + country, slot);
+    recBump(recComp, compId, slot);
+  };
+  // E 参赛 & 复原次数(无 event 过滤,所有 21 项都算).
+  // E1/E2(选手比赛次数 / 赛事选手人数)不另存 Set,直接从 personCompSA 的 key 去重派生(省 ~1GB).
+  const personCompSA = new Map<string, [number, number]>();  // pid\x1fcomp → [s,a] (E1/E2/E3/E4/E5 全派生)
+  const personYearSA = new Map<string, [number, number]>();  // pid\x1fyear → [s,a] (E6)
+  // 循环内逐 event 写出的 stream(misser per-event;best podiums per-event).
+  const misserStream = createWriteStream(resolve(outDir, 'wca_fs_misser.copy.tsv'));
+  const bestPodiumsStream = createWriteStream(resolve(outDir, 'wca_fs_best_podiums.copy.tsv'));
+  let misserCount = 0, bestPodiumsCount = 0;
+
   // wca_competition_id 列表(已在 wca_competitions 写过)
 
   // 21 events including non-active(为 cohort_ranks / 全成绩排行 / person_ranks 废止项列也需要历史项)
@@ -462,6 +494,11 @@ async function main() {
 
     // ── (a) 累积 PB per person ──
     const acc = new Map<string, Acc>();
+
+    // fun-stats per-event 累加器(每 event 重置;写出后丢弃):
+    //   C misser: key=`${pid}\x1f${country}`(比赛时国籍);D2/podium: key=compId.
+    const misserAcc = new Map<string, { best: number; avg: number; everFirst: boolean; everPodium: boolean; everRecS: boolean; everRecA: boolean }>();
+    const podiumByComp = new Map<string, Array<{ pid: string; value: number; pos: number }>>();
 
     // ── (b) success_rate counters (only for active events) ──
     const sr = isActive ? successAcc.get(eventId)! : null;
@@ -593,6 +630,84 @@ async function main() {
           if (r.regAvgRecord === 'WR') g2.hasWrAvg = true;
         }
       }
+
+      // ════════════ fun-stats per-row 累加 ════════════
+      // B 奖牌(finals + pos1-3 + best>0);单项榜限活跃 17,__all__ 含废止项 (对齐 cubingchina type=all).
+      if (r.best > 0 && isFinal && r.pos >= 1 && r.pos <= 3) {
+        let em = medalByPidEvent.get(r.pid);
+        if (!em) { em = new Map(); medalByPidEvent.set(r.pid, em); }
+        let t = em.get(eventId); if (!t) { t = [0, 0, 0]; em.set(eventId, t); }
+        t[r.pos - 1]!++;
+      }
+      // B 名次次数(全 round + best>0;pos 2/4;per-result 国籍).单项榜限活跃 17,__all__ 含废止项.
+      if (r.best > 0 && (r.pos === 2 || r.pos === 4)) {
+        const key = r.pid + '\x1f' + r.countryId;
+        let em = placeAcc.get(key); if (!em) { em = new Map(); placeAcc.set(key, em); }
+        let t = em.get(eventId); if (!t) { t = [0, 0]; em.set(eventId, t); }
+        if (r.pos === 2) t[0]++; else t[1]++;
+      }
+      // B7 领奖台成绩(active + finals + pos1-3 + metric>0;per comp).333fm/盲拧/mbf 用 best,余用 average.
+      if (isActive && isFinal && r.pos >= 1 && r.pos <= 3) {
+        const bestType = (eventId === '333fm' || eventId === '333bf' || eventId === '444bf' || eventId === '555bf' || eventId === '333mbf');
+        let metric: number;
+        if (eventId === '333fm') {
+          const cy = compInfo.get(r.compId)?.year ?? 9999;
+          metric = (cy < 2014) ? r.best * 100 : (r.average === 0 ? r.best * 100 : r.average);
+        } else metric = bestType ? r.best : r.average;
+        if (metric > 0) {
+          let arr = podiumByComp.get(r.compId);
+          if (!arr) { arr = []; podiumByComp.set(r.compId, arr); }
+          arr.push({ pid: r.pid, value: metric, pos: r.pos });
+        }
+      }
+      // C misser(active;per-result 国籍;OR-in 三种排除 flag;best/avg = 该国籍下 MIN).
+      if (isActive) {
+        const key = r.pid + '\x1f' + r.countryId;
+        let m = misserAcc.get(key);
+        if (!m) { m = { best: 0, avg: 0, everFirst: false, everPodium: false, everRecS: false, everRecA: false }; misserAcc.set(key, m); }
+        if (r.best > 0 && (m.best === 0 || r.best < m.best)) m.best = r.best;
+        if (r.average > 0 && (m.avg === 0 || r.average < m.avg)) m.avg = r.average;
+        if (isFinal && r.pos > 0 && r.best > 0) { if (r.pos === 1) m.everFirst = true; if (r.pos <= 3) m.everPodium = true; }
+        if (r.regSingleRecord) m.everRecS = true;
+        if (r.regAvgRecord) m.everRecA = true;
+      }
+      // D 纪录(无 event 过滤;per-result 国籍 + per comp).
+      recTally(r.regSingleRecord, r.pid, r.countryId, r.compId);
+      recTally(r.regAvgRecord, r.pid, r.countryId, r.compId);
+      // E 参赛 & 复原(无 event 过滤;每行都计).
+      {
+        const [sR, aR] = solveAttempt(r.attempts);
+        { const k = r.pid + '\x1f' + r.compId; let t = personCompSA.get(k); if (!t) { t = [0, 0]; personCompSA.set(k, t); } t[0] += sR; t[1] += aR; }
+        { const yr = compInfo.get(r.compId)?.year; if (yr) { const k = r.pid + '\x1f' + yr; let t = personYearSA.get(k); if (!t) { t = [0, 0]; personYearSA.set(k, t); } t[0] += sR; t[1] += aR; } }
+      }
+    }
+
+    // ── fun-stats per-event 写出:C misser(每 (pid,country) 单次/平均各一行)──
+    for (const [key, m] of misserAcc) {
+      const sep = key.indexOf('\x1f');
+      const pid = key.slice(0, sep), country = key.slice(sep + 1);
+      if (m.best > 0) { misserStream.write(`${eventId}\t${bool(false)}\t${m.best}\t${pgEsc(pid)}\t${pgEsc(country)}\t${bool(m.everFirst)}\t${bool(m.everPodium)}\t${bool(m.everRecS)}\n`); misserCount++; }
+      if (m.avg > 0)  { misserStream.write(`${eventId}\t${bool(true)}\t${m.avg}\t${pgEsc(pid)}\t${pgEsc(country)}\t${bool(m.everFirst)}\t${bool(m.everPodium)}\t${bool(m.everRecA)}\n`); misserCount++; }
+      // H: 该国籍无有效平均却拿过 first/podium(如只比单次的轮夺冠) → 写 value=-1 哨兵行,
+      //    让 world/continent 平均榜的 bool_or 排除对改国籍者仍生效;端点按 value>0 把哨兵剔出排名.
+      else if (m.everFirst || m.everPodium) { misserStream.write(`${eventId}\t${bool(true)}\t-1\t${pgEsc(pid)}\t${pgEsc(country)}\t${bool(m.everFirst)}\t${bool(m.everPodium)}\t${bool(m.everRecA)}\n`); misserCount++; }
+    }
+    // ── B7 best podiums(每 comp,完整领奖台 count(pos)>=3;并列时 sum DISTINCT)──
+    for (const [compId, arr] of podiumByComp) {
+      if (arr.length < 3) continue;
+      const tie = arr.length > 3;
+      const sumValue = tie
+        ? [...new Set(arr.map(e => e.value))].reduce((s, v) => s + v, 0)
+        : arr.reduce((s, e) => s + e.value, 0);
+      const slot = (pos: number) => arr.find(e => e.pos === pos);
+      const p1 = slot(1), p2 = slot(2), p3 = slot(3);
+      bestPodiumsStream.write(
+        `${pgEsc(compId)}\t${eventId}\t${sumValue}\t` +
+        `${pgEsc(p1?.pid ?? '')}\t${num(p1?.value ?? 0)}\t` +
+        `${pgEsc(p2?.pid ?? '')}\t${num(p2?.value ?? 0)}\t` +
+        `${pgEsc(p3?.pid ?? '')}\t${num(p3?.value ?? 0)}\t${bool(tie)}\n`,
+      );
+      bestPodiumsCount++;
     }
 
     // ── 写 wca_cohort_ranks(per cohort_year × event × is_avg) ──
@@ -763,6 +878,116 @@ async function main() {
     eventParticipantsCountryAvg.push(caMap);
   }
 
+  // ════════════ A 各地综合排行 (wca_fs_country_ranks + _meta) ════════════
+  // 每 active event 取每国 MIN(world_rank)(current 国籍 bucket);penalty = MAX(world_rank over ALL persons)+1.
+  // sum = Σ_event ( 有成绩 ? min_world_rank : penalty ).avg 项 333mbf 不参与(无 average).
+  console.log('[fs-A] country sum-of-ranks...');
+  {
+    const csMinSingle: Map<string, number>[] = []; const csMinAvg: Map<string, number>[] = [];
+    const csPenaltySingle: number[] = []; const csPenaltyAvg: number[] = [];
+    const csPresentSingle: boolean[] = []; const csPresentAvg: boolean[] = [];
+    for (let i = 0; i < ACTIVE_EVENTS.length; i++) {
+      const sMap = eventRanks[i]!.single; const minS = new Map<string, number>(); let maxWrS = 0;
+      for (const [pid, r] of sMap) {
+        if (r.wr > maxWrS) maxWrS = r.wr;                       // penalty 用全体(无国籍过滤)
+        const ctry = personCountry.get(pid); if (!ctry) continue;
+        const cur = minS.get(ctry); if (cur == null || r.wr < cur) minS.set(ctry, r.wr);
+      }
+      csMinSingle.push(minS); csPenaltySingle.push(maxWrS + 1); csPresentSingle.push(sMap.size > 0);
+      if (ACTIVE_EVENTS[i] === '333mbf') { csMinAvg.push(new Map()); csPenaltyAvg.push(0); csPresentAvg.push(false); }
+      else {
+        const aMap = eventRanks[i]!.avg; const minA = new Map<string, number>(); let maxWrA = 0;
+        for (const [pid, r] of aMap) {
+          if (r.wr > maxWrA) maxWrA = r.wr;
+          const ctry = personCountry.get(pid); if (!ctry) continue;
+          const cur = minA.get(ctry); if (cur == null || r.wr < cur) minA.set(ctry, r.wr);
+        }
+        csMinAvg.push(minA); csPenaltyAvg.push(maxWrA + 1); csPresentAvg.push(aMap.size > 0);
+      }
+    }
+    const cscStream = createWriteStream(resolve(outDir, 'wca_fs_country_ranks.copy.tsv'));
+    let cscCount = 0; const csPenaltyVec: { single: number[]; average: number[] } = { single: [], average: [] };
+    const csAllPenalties: { single: number; average: number } = { single: 0, average: 0 };
+    const emitCountrySor = (isAvg: boolean) => {
+      const minByEv = isAvg ? csMinAvg : csMinSingle, penByEv = isAvg ? csPenaltyAvg : csPenaltySingle, presentByEv = isAvg ? csPresentAvg : csPresentSingle;
+      const evIdxs: number[] = []; for (let i = 0; i < ACTIVE_EVENTS.length; i++) if (presentByEv[i]) evIdxs.push(i);
+      const allPenalties = evIdxs.reduce((s, i) => s + penByEv[i]!, 0);
+      const penVec: number[] = []; for (let i = 0; i < ACTIVE_EVENTS.length; i++) penVec.push(presentByEv[i] ? penByEv[i]! : 0);
+      if (isAvg) { csPenaltyVec.average = penVec; csAllPenalties.average = allPenalties; } else { csPenaltyVec.single = penVec; csAllPenalties.single = allPenalties; }
+      const countries = new Set<string>(); for (const i of evIdxs) for (const ctry of minByEv[i]!.keys()) countries.add(ctry);
+      for (const ctry of countries) {
+        let sum = allPenalties; const perEv: number[] = []; let eventsPresent = 0;
+        for (let i = 0; i < ACTIVE_EVENTS.length; i++) {
+          if (!presentByEv[i]) { perEv.push(0); continue; }
+          const wr = minByEv[i]!.get(ctry);
+          if (wr != null) { sum += wr - penByEv[i]!; perEv.push(wr); eventsPresent++; } else perEv.push(penByEv[i]!);
+        }
+        cscStream.write(`${bool(isAvg)}\t${pgEsc(ctry)}\t${sum}\t${eventsPresent}\t${intArr(perEv)}\n`); cscCount++;
+      }
+    };
+    emitCountrySor(false); emitCountrySor(true);
+    await new Promise<void>(res => cscStream.end(() => res()));
+    const cscMetaStream = createWriteStream(resolve(outDir, 'wca_fs_country_ranks_meta.copy.tsv'));
+    cscMetaStream.write(`${bool(false)}\t${intArr(csPenaltyVec.single)}\t${csAllPenalties.single}\n`);
+    cscMetaStream.write(`${bool(true)}\t${intArr(csPenaltyVec.average)}\t${csAllPenalties.average}\n`);
+    await new Promise<void>(res => cscMetaStream.end(() => res()));
+    console.log(`  country_ranks=${cscCount} rows`);
+  }
+
+  // ════════════ D3 纪录现保持时间 (wca_fs_current_records) ════════════
+  // 每 active event × is_avg,从 accByEvent 重建按成绩排序的列表,取 world/各洲/各国 #1,
+  // 各带 (world_rank, continent_rank, country_rank);set_date = 该 PB 的 bestCompId/avgCompId 比赛 start_date.
+  console.log('[fs-D3] current records standing...');
+  {
+    const assignContinentRanks = (sorted: Array<{ wcaId: string; val: number; country: string }>) => {
+      const out = new Map<string, number>(); const cont = new Map<string, { prev: number; rank: number; count: number }>();
+      for (const it of sorted) {
+        const k = continentOf.get(it.country) ?? ''; let cs = cont.get(k);
+        if (!cs) { cs = { prev: -1, rank: 0, count: 0 }; cont.set(k, cs); }
+        let cr: number; if (it.val === cs.prev) cr = cs.rank; else { cr = cs.count + 1; cs.prev = it.val; cs.rank = cr; }
+        cs.count++; out.set(it.wcaId, cr);
+      }
+      return out;
+    };
+    const dlist = (isAvg: boolean, ev: string) => {
+      const acc = accByEvent.get(ev); const out: Array<{ wcaId: string; val: number; country: string }> = [];
+      if (acc) for (const [pid, a] of acc) { const v = isAvg ? a.avg : a.best; if (v > 0) out.push({ wcaId: pid, val: v, country: a.country }); }
+      out.sort((x, y) => x.val - y.val); return out;
+    };
+    const currStream = createWriteStream(resolve(outDir, 'wca_fs_current_records.copy.tsv'));
+    let currCount = 0;
+    for (let i = 0; i < ACTIVE_EVENTS.length; i++) {
+      const ev = ACTIVE_EVENTS[i]!;
+      for (const isAvg of [false, true]) {
+        if (isAvg && ev === '333mbf') continue;
+        const list = dlist(isAvg, ev);
+        if (list.length === 0) continue;
+        const contRank = assignContinentRanks(list);
+        const ranksMap = isAvg ? eventRanks[i]!.avg : eventRanks[i]!.single;
+        const accEv = accByEvent.get(ev);
+        const emit = (scopeKind: string, scopeId: string, item: { wcaId: string; val: number; country: string }) => {
+          const rk = ranksMap.get(item.wcaId); const a = accEv?.get(item.wcaId);
+          const setCompId = isAvg ? (a?.avgCompId ?? '') : (a?.bestCompId ?? '');
+          const setDate = compInfo.get(setCompId)?.startDate ?? '';
+          currStream.write(
+            `${ev}\t${bool(isAvg)}\t${scopeKind}\t${pgEsc(scopeId)}\t${pgEsc(item.wcaId)}\t${pgEsc(item.country)}\t${item.val}\t` +
+            `${pgEsc(setCompId)}\t${dateOrNull(setDate)}\t${num(rk?.wr ?? null)}\t${num(contRank.get(item.wcaId) ?? null)}\t${num(rk?.cr ?? null)}\n`,
+          );
+          currCount++;
+        };
+        emit('W', '', list[0]!);
+        const seenCont = new Set<string>(); const seenCtry = new Set<string>();
+        for (const item of list) {
+          const cont = continentOf.get(item.country) ?? '';
+          if (cont && !seenCont.has(cont)) { seenCont.add(cont); emit('K', cont, item); }
+          if (!seenCtry.has(item.country)) { seenCtry.add(item.country); emit('N', item.country, item); }
+        }
+      }
+    }
+    await new Promise<void>(res => currStream.end(() => res()));
+    console.log(`  current_records=${currCount} rows`);
+  }
+
   const prStream = createWriteStream(resolve(outDir, 'wca_person_ranks.copy.tsv'));
   let prCount = 0;
   // 收集所有人(任何 active event 出现过的)
@@ -838,6 +1063,108 @@ async function main() {
   }
   prStream.end();
 
+  // ════════════ fun-stats 后处理写出器 (B 奖牌/名次, D1/D2 纪录, E 参赛&复原) ════════════
+  console.log('[fs-BDE] writing medals/placements/records/solves...');
+  const endStream = (s: ReturnType<typeof createWriteStream>) => new Promise<void>(res => s.end(() => res()));
+
+  // B 奖牌(per pid: 每 event 一行 + __all__ 汇总;current 国籍)
+  const medalsStream = createWriteStream(resolve(outDir, 'wca_fs_medals.copy.tsv'));
+  let medalsCount = 0;
+  for (const [pid, em] of medalByPidEvent) {
+    const country = personCountry.get(pid) ?? '';
+    let ag = 0, asv = 0, ab = 0;
+    for (const [ev, [g, s, b]] of em) {
+      if (EVENT_INDEX.has(ev)) { medalsStream.write(`${pgEsc(pid)}\t${pgEsc(country)}\t${ev}\t${g}\t${s}\t${b}\n`); medalsCount++; }  // 单项榜仅活跃 17
+      ag += g; asv += s; ab += b;  // __all__ 汇总含废止项
+    }
+    if (ag + asv + ab > 0) { medalsStream.write(`${pgEsc(pid)}\t${pgEsc(country)}\t__all__\t${ag}\t${asv}\t${ab}\n`); medalsCount++; }
+  }
+  await endStream(medalsStream);
+
+  // B 名次次数(per pid\x1fcountry: 每 event×pos 一行 + __all__;per-result 国籍)
+  const placeStream = createWriteStream(resolve(outDir, 'wca_fs_placements.copy.tsv'));
+  let placeCount = 0;
+  for (const [key, em] of placeAcc) {
+    const sep = key.indexOf('\x1f'); const pid = key.slice(0, sep), country = key.slice(sep + 1);
+    let all2 = 0, all4 = 0;
+    for (const [ev, [p2, p4]] of em) {
+      if (EVENT_INDEX.has(ev)) {  // 单项榜仅活跃 17
+        if (p2 > 0) { placeStream.write(`${pgEsc(pid)}\t${pgEsc(country)}\t${ev}\t2\t${p2}\n`); placeCount++; }
+        if (p4 > 0) { placeStream.write(`${pgEsc(pid)}\t${pgEsc(country)}\t${ev}\t4\t${p4}\n`); placeCount++; }
+      }
+      all2 += p2; all4 += p4;  // __all__ 汇总含废止项
+    }
+    if (all2 > 0) { placeStream.write(`${pgEsc(pid)}\t${pgEsc(country)}\t__all__\t2\t${all2}\n`); placeCount++; }
+    if (all4 > 0) { placeStream.write(`${pgEsc(pid)}\t${pgEsc(country)}\t__all__\t4\t${all4}\n`); placeCount++; }
+  }
+  await endStream(placeStream);
+
+  // D1 选手创纪录数(per pid\x1fcountry);D2 赛事创纪录数(per comp)
+  const recPersonStream = createWriteStream(resolve(outDir, 'wca_fs_records_person.copy.tsv'));
+  let recPersonCount = 0;
+  for (const [key, [wr, cr, nr]] of recPerson) {
+    const sep = key.indexOf('\x1f'); const pid = key.slice(0, sep), country = key.slice(sep + 1);
+    recPersonStream.write(`${pgEsc(pid)}\t${pgEsc(country)}\t${wr}\t${cr}\t${nr}\t${wr * 10 + cr * 5 + nr}\n`); recPersonCount++;
+  }
+  await endStream(recPersonStream);
+  const recCompStream = createWriteStream(resolve(outDir, 'wca_fs_records_comp.copy.tsv'));
+  let recCompCount = 0;
+  for (const [compId, [wr, cr, nr]] of recComp) {
+    recCompStream.write(`${pgEsc(compId)}\t${pgEsc(compInfo.get(compId)?.country ?? '')}\t${wr}\t${cr}\t${nr}\t${wr * 10 + cr * 5 + nr}\n`); recCompCount++;
+  }
+  await endStream(recCompStream);
+
+  // E3 个人单场复原(all person×comp);单趟遍历 personCompSA 同时折出
+  //   E1 选手比赛次数(distinct comp / person)、E2 赛事选手人数(distinct person / comp)、
+  //   E4 赛事总复原、E5 个人累积复原 —— 全派生,不另存 Set.
+  const pcsStream = createWriteStream(resolve(outDir, 'wca_fs_person_comp_solves.copy.tsv'));
+  let pcsCount = 0;
+  const compSA = new Map<string, [number, number]>();         // E4: comp → [s,a]
+  const personSA = new Map<string, [number, number]>();       // E5: pid → [s,a]
+  const personCompCount = new Map<string, number>();          // E1: pid → distinct comp 数
+  const compPersonCount = new Map<string, number>();          // E2: comp → distinct person 数
+  for (const [key, [s, a]] of personCompSA) {
+    const sep = key.indexOf('\x1f'); const pid = key.slice(0, sep), compId = key.slice(sep + 1);
+    pcsStream.write(`${pgEsc(pid)}\t${pgEsc(personCountry.get(pid) ?? '')}\t${pgEsc(compId)}\t${s}\t${a}\n`); pcsCount++;
+    { let t = compSA.get(compId); if (!t) { t = [0, 0]; compSA.set(compId, t); } t[0] += s; t[1] += a; }
+    { let t = personSA.get(pid); if (!t) { t = [0, 0]; personSA.set(pid, t); } t[0] += s; t[1] += a; }
+    personCompCount.set(pid, (personCompCount.get(pid) ?? 0) + 1);
+    compPersonCount.set(compId, (compPersonCount.get(compId) ?? 0) + 1);
+  }
+  await endStream(pcsStream);
+  // E1 选手比赛次数
+  const pcStream = createWriteStream(resolve(outDir, 'wca_fs_person_comps.copy.tsv'));
+  let pcCount = 0;
+  for (const [pid, n] of personCompCount) { pcStream.write(`${pgEsc(pid)}\t${pgEsc(personCountry.get(pid) ?? '')}\t${n}\n`); pcCount++; }
+  await endStream(pcStream);
+  // E2 赛事选手人数
+  const cpStream = createWriteStream(resolve(outDir, 'wca_fs_comp_persons.copy.tsv'));
+  let cpCount = 0;
+  for (const [compId, n] of compPersonCount) { cpStream.write(`${pgEsc(compId)}\t${pgEsc(compInfo.get(compId)?.country ?? '')}\t${n}\n`); cpCount++; }
+  await endStream(cpStream);
+  // E4 赛事总复原
+  const csolvStream = createWriteStream(resolve(outDir, 'wca_fs_comp_solves.copy.tsv'));
+  let csolvCount = 0;
+  for (const [compId, [s, a]] of compSA) { csolvStream.write(`${pgEsc(compId)}\t${pgEsc(compInfo.get(compId)?.country ?? '')}\t${s}\t${a}\n`); csolvCount++; }
+  await endStream(csolvStream);
+  // E5 个人累积复原
+  const psolvStream = createWriteStream(resolve(outDir, 'wca_fs_person_solves.copy.tsv'));
+  let psolvCount = 0;
+  for (const [pid, [s, a]] of personSA) { psolvStream.write(`${pgEsc(pid)}\t${pgEsc(personCountry.get(pid) ?? '')}\t${s}\t${a}\n`); psolvCount++; }
+  await endStream(psolvStream);
+
+  // E6 个人年度复原
+  const pysStream = createWriteStream(resolve(outDir, 'wca_fs_person_year_solves.copy.tsv'));
+  let pysCount = 0;
+  for (const [key, [s, a]] of personYearSA) {
+    const sep = key.indexOf('\x1f'); const pid = key.slice(0, sep), year = key.slice(sep + 1);
+    pysStream.write(`${pgEsc(pid)}\t${pgEsc(personCountry.get(pid) ?? '')}\t${year}\t${s}\t${a}\n`); pysCount++;
+  }
+  await endStream(pysStream);
+  console.log(`  fs: medals=${medalsCount} placements=${placeCount} recPerson=${recPersonCount} recComp=${recCompCount} ` +
+    `personComps=${pcCount} compPersons=${cpCount} personCompSolves=${pcsCount} compSolves=${csolvCount} personSolves=${psolvCount} personYearSolves=${pysCount} ` +
+    `misser=${misserCount} bestPodiums=${bestPodiumsCount}`);
+
   // (per-comp 内容指纹 manifest 已在前面 §2.5 算好并写出 wca_comp_updated_at.copy.tsv)
 
   // ── flush 还在 buffer 的 stream ──
@@ -845,20 +1172,58 @@ async function main() {
     new Promise<void>(res => allTopStream.end(() => res())),
     new Promise<void>(res => cohortStream.end(() => res())),
     new Promise<void>(res => grandSlamStream.end(() => res())),
+    new Promise<void>(res => misserStream.end(() => res())),
+    new Promise<void>(res => bestPodiumsStream.end(() => res())),
   ]);
   await conn.end();
 
   // ── 10. del-list (增量) + load.sql ──
   const wrtCols = 'event_id, is_avg, value, wca_id, person_country_id, comp_id, comp_date, attempts, round_type_id, format_id, record_tag';
 
+  // 防呆:15 张 wca_fs_* 表正常由 migration 0028 建,但若 deploy_core(apply_migrations)尚未跑到、
+  // 而 stats.yml 先跑,TRUNCATE 缺表会在单事务 ON_ERROR_STOP 下把整个 wca_stats_extra 刷新一起回滚.
+  // 这里内联幂等 CREATE TABLE IF NOT EXISTS(全量/增量两模式都经 smallTables 走到)解耦该跨 workflow 依赖;
+  // 索引仍由 0028 建(正常路径必跑;缺索引只是临时慢,不致命).表定义须与 0028 / schema_wca_stats_extra.pg.sql 同步.
+  const ensureFsTables = `CREATE TABLE IF NOT EXISTS wca_fs_country_ranks (is_avg BOOLEAN NOT NULL, country_id VARCHAR(50) NOT NULL, sum INTEGER NOT NULL, events_present SMALLINT NOT NULL, per_event_rank INTEGER[] NOT NULL, PRIMARY KEY (is_avg, country_id));
+CREATE TABLE IF NOT EXISTS wca_fs_country_ranks_meta (is_avg BOOLEAN PRIMARY KEY, penalties INTEGER[] NOT NULL, all_penalties INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS wca_fs_medals (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, event_id VARCHAR(20) NOT NULL, gold INTEGER NOT NULL, silver INTEGER NOT NULL, bronze INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS wca_fs_placements (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, event_id VARCHAR(20) NOT NULL, pos SMALLINT NOT NULL, count INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS wca_fs_best_podiums (comp_id VARCHAR(50) NOT NULL, event_id VARCHAR(20) NOT NULL, sum_value BIGINT NOT NULL, pos1_wca_id VARCHAR(20) NOT NULL, pos1_value BIGINT NOT NULL, pos2_wca_id VARCHAR(20) NOT NULL, pos2_value BIGINT NOT NULL, pos3_wca_id VARCHAR(20) NOT NULL, pos3_value BIGINT NOT NULL, tie BOOLEAN NOT NULL DEFAULT FALSE);
+CREATE TABLE IF NOT EXISTS wca_fs_misser (event_id VARCHAR(20) NOT NULL, is_avg BOOLEAN NOT NULL, value INTEGER NOT NULL, wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, ever_first BOOLEAN NOT NULL, ever_podium BOOLEAN NOT NULL, ever_record BOOLEAN NOT NULL);
+CREATE TABLE IF NOT EXISTS wca_fs_records_person (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, wr INTEGER NOT NULL DEFAULT 0, cr INTEGER NOT NULL DEFAULT 0, nr INTEGER NOT NULL DEFAULT 0, score INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (wca_id, country_id));
+CREATE TABLE IF NOT EXISTS wca_fs_records_comp (comp_id VARCHAR(50) NOT NULL, comp_country_id VARCHAR(50) NOT NULL, wr INTEGER NOT NULL DEFAULT 0, cr INTEGER NOT NULL DEFAULT 0, nr INTEGER NOT NULL DEFAULT 0, score INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (comp_id));
+CREATE TABLE IF NOT EXISTS wca_fs_current_records (event_id VARCHAR(20) NOT NULL, is_avg BOOLEAN NOT NULL, scope_kind CHAR(1) NOT NULL, scope_id VARCHAR(50) NOT NULL DEFAULT '', wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, value INTEGER NOT NULL, set_comp_id VARCHAR(50) NOT NULL DEFAULT '', set_date DATE, world_rank INTEGER, continent_rank INTEGER, country_rank INTEGER, PRIMARY KEY (event_id, is_avg, scope_kind, scope_id));
+CREATE TABLE IF NOT EXISTS wca_fs_person_comps (wca_id VARCHAR(20) PRIMARY KEY, country_id VARCHAR(50) NOT NULL, comp_count INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS wca_fs_comp_persons (comp_id VARCHAR(50) PRIMARY KEY, comp_country_id VARCHAR(50) NOT NULL, person_count INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS wca_fs_person_comp_solves (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, comp_id VARCHAR(50) NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL, PRIMARY KEY (wca_id, comp_id));
+CREATE TABLE IF NOT EXISTS wca_fs_comp_solves (comp_id VARCHAR(50) PRIMARY KEY, comp_country_id VARCHAR(50) NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS wca_fs_person_solves (wca_id VARCHAR(20) PRIMARY KEY, country_id VARCHAR(50) NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS wca_fs_person_year_solves (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, year SMALLINT NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL, PRIMARY KEY (wca_id, year));`;
+
   // 6 张全局聚合小表 + 指纹 manifest:两模式都全量 TRUNCATE+重灌(任一成绩变这些排名都会动,无法增量;
   // 但它们小,翻倍无所谓).边 COPY 边删源 TSV(同分区白占空间;\\copy 读完即删,\\! 不受事务影响).
-  const smallTables = `TRUNCATE wca_competitions       CASCADE;
+  const smallTables = `${ensureFsTables}
+TRUNCATE wca_competitions       CASCADE;
 TRUNCATE wca_grand_slam;
 TRUNCATE wca_cohort_ranks;
 TRUNCATE wca_success_rate;
 TRUNCATE wca_all_events_done;
 TRUNCATE wca_person_ranks;
+TRUNCATE wca_fs_country_ranks;
+TRUNCATE wca_fs_country_ranks_meta;
+TRUNCATE wca_fs_medals;
+TRUNCATE wca_fs_placements;
+TRUNCATE wca_fs_best_podiums;
+TRUNCATE wca_fs_misser;
+TRUNCATE wca_fs_records_person;
+TRUNCATE wca_fs_records_comp;
+TRUNCATE wca_fs_current_records;
+TRUNCATE wca_fs_person_comps;
+TRUNCATE wca_fs_comp_persons;
+TRUNCATE wca_fs_person_comp_solves;
+TRUNCATE wca_fs_comp_solves;
+TRUNCATE wca_fs_person_solves;
+TRUNCATE wca_fs_person_year_solves;
 
 \\copy wca_competitions (id, name, country_id, start_date, end_date) FROM 'wca_competitions.copy.tsv';
 \\! rm -f wca_competitions.copy.tsv
@@ -871,7 +1236,37 @@ TRUNCATE wca_person_ranks;
 \\copy wca_all_events_done (wca_id, country_id, done_count, is_done, first_comp_id, first_comp_date, achievement_comp_id, achievement_comp_date, days_to_complete, total_comp_count) FROM 'wca_all_events_done.copy.tsv';
 \\! rm -f wca_all_events_done.copy.tsv
 \\copy wca_person_ranks (wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world, ranks_country) FROM 'wca_person_ranks.copy.tsv';
-\\! rm -f wca_person_ranks.copy.tsv`;
+\\! rm -f wca_person_ranks.copy.tsv
+\\copy wca_fs_country_ranks (is_avg, country_id, sum, events_present, per_event_rank) FROM 'wca_fs_country_ranks.copy.tsv';
+\\! rm -f wca_fs_country_ranks.copy.tsv
+\\copy wca_fs_country_ranks_meta (is_avg, penalties, all_penalties) FROM 'wca_fs_country_ranks_meta.copy.tsv';
+\\! rm -f wca_fs_country_ranks_meta.copy.tsv
+\\copy wca_fs_medals (wca_id, country_id, event_id, gold, silver, bronze) FROM 'wca_fs_medals.copy.tsv';
+\\! rm -f wca_fs_medals.copy.tsv
+\\copy wca_fs_placements (wca_id, country_id, event_id, pos, count) FROM 'wca_fs_placements.copy.tsv';
+\\! rm -f wca_fs_placements.copy.tsv
+\\copy wca_fs_best_podiums (comp_id, event_id, sum_value, pos1_wca_id, pos1_value, pos2_wca_id, pos2_value, pos3_wca_id, pos3_value, tie) FROM 'wca_fs_best_podiums.copy.tsv';
+\\! rm -f wca_fs_best_podiums.copy.tsv
+\\copy wca_fs_misser (event_id, is_avg, value, wca_id, country_id, ever_first, ever_podium, ever_record) FROM 'wca_fs_misser.copy.tsv';
+\\! rm -f wca_fs_misser.copy.tsv
+\\copy wca_fs_records_person (wca_id, country_id, wr, cr, nr, score) FROM 'wca_fs_records_person.copy.tsv';
+\\! rm -f wca_fs_records_person.copy.tsv
+\\copy wca_fs_records_comp (comp_id, comp_country_id, wr, cr, nr, score) FROM 'wca_fs_records_comp.copy.tsv';
+\\! rm -f wca_fs_records_comp.copy.tsv
+\\copy wca_fs_current_records (event_id, is_avg, scope_kind, scope_id, wca_id, country_id, value, set_comp_id, set_date, world_rank, continent_rank, country_rank) FROM 'wca_fs_current_records.copy.tsv';
+\\! rm -f wca_fs_current_records.copy.tsv
+\\copy wca_fs_person_comps (wca_id, country_id, comp_count) FROM 'wca_fs_person_comps.copy.tsv';
+\\! rm -f wca_fs_person_comps.copy.tsv
+\\copy wca_fs_comp_persons (comp_id, comp_country_id, person_count) FROM 'wca_fs_comp_persons.copy.tsv';
+\\! rm -f wca_fs_comp_persons.copy.tsv
+\\copy wca_fs_person_comp_solves (wca_id, country_id, comp_id, solve, attempt) FROM 'wca_fs_person_comp_solves.copy.tsv';
+\\! rm -f wca_fs_person_comp_solves.copy.tsv
+\\copy wca_fs_comp_solves (comp_id, comp_country_id, solve, attempt) FROM 'wca_fs_comp_solves.copy.tsv';
+\\! rm -f wca_fs_comp_solves.copy.tsv
+\\copy wca_fs_person_solves (wca_id, country_id, solve, attempt) FROM 'wca_fs_person_solves.copy.tsv';
+\\! rm -f wca_fs_person_solves.copy.tsv
+\\copy wca_fs_person_year_solves (wca_id, country_id, year, solve, attempt) FROM 'wca_fs_person_year_solves.copy.tsv';
+\\! rm -f wca_fs_person_year_solves.copy.tsv`;
 
   // VACUUM (ANALYZE):wca_results_top 走 Index Only Scan 跑深分页,必须更新 visibility map.
   // 增量同样需要:DELETE 的 dead tuple 页 + delta 新页都要进 vmap,否则 IOS 退化 heap fetch.
@@ -882,7 +1277,22 @@ ANALYZE wca_cohort_ranks;
 ANALYZE wca_success_rate;
 ANALYZE wca_all_events_done;
 ANALYZE wca_person_ranks;
-ANALYZE wca_comp_updated_at;`;
+ANALYZE wca_comp_updated_at;
+ANALYZE wca_fs_country_ranks;
+ANALYZE wca_fs_country_ranks_meta;
+ANALYZE wca_fs_medals;
+ANALYZE wca_fs_placements;
+ANALYZE wca_fs_best_podiums;
+ANALYZE wca_fs_misser;
+ANALYZE wca_fs_records_person;
+ANALYZE wca_fs_records_comp;
+ANALYZE wca_fs_current_records;
+ANALYZE wca_fs_person_comps;
+ANALYZE wca_fs_comp_persons;
+ANALYZE wca_fs_person_comp_solves;
+ANALYZE wca_fs_comp_solves;
+ANALYZE wca_fs_person_solves;
+ANALYZE wca_fs_person_year_solves;`;
 
   let loadSql: string;
   if (incremental) {

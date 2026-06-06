@@ -25,14 +25,14 @@ import { query } from '../db/connection.js';
 
 export const wcaStatsExtraRoutes = new Hono();
 
-const VALID_EVENTS = new Set<string>([
+export const VALID_EVENTS = new Set<string>([
   '333','222','444','555','666','777',
   '333bf','333fm','333oh',
   'minx','pyram','clock','skewb','sq1',
   '444bf','555bf','333mbf',
   '333ft','magic','mmagic','333mbo',
 ]);
-const ACTIVE_EVENTS = [
+export const ACTIVE_EVENTS = [
   '333','222','444','555','666','777',
   '333bf','333fm','333oh',
   'minx','pyram','clock','skewb','sq1',
@@ -43,12 +43,18 @@ const ACTIVE_EVENTS = [
 const CANCELLED_EVENTS = ['333ft', 'magic', 'mmagic', '333mbo'] as const;
 const RANK_EVENTS = [...ACTIVE_EVENTS, ...CANCELLED_EVENTS] as const;
 
-const MAX_SIZE = 200;
-const DEFAULT_SIZE = 100;
-const CACHE_HEADER = 'public, max-age=86400, s-maxage=86400';
+export const MAX_SIZE = 200;
+export const DEFAULT_SIZE = 100;
+export const CACHE_HEADER = 'public, max-age=86400, s-maxage=86400';
+
+// NaN 防御:parseInt('abc') = NaN,Math.max/min(NaN) 仍 NaN → 绑进 LIMIT/OFFSET 触发 query error。
+function intParam(raw: string | undefined, dflt: number): number {
+  const v = parseInt(raw ?? '', 10);
+  return Number.isFinite(v) ? v : dflt;
+}
 
 // 国家 ISO2/id 归一化
-async function resolveCountry(input: string): Promise<{ ok: true; id: string } | { ok: false; err: string }> {
+export async function resolveCountry(input: string): Promise<{ ok: true; id: string } | { ok: false; err: string }> {
   if (!input) return { ok: true, id: '' };
   if (input.length === 2) {
     const rows = await query<{ id: string }>(
@@ -142,8 +148,8 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   const year = parseInt(c.req.query('year') ?? '0', 10);   // 0 = 全部
   const month = parseInt(c.req.query('month') ?? '0', 10); // 0 = 全部
   const q = (c.req.query('q') ?? '').trim();
-  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10));
-  const size = Math.min(MAX_SIZE, Math.max(1, parseInt(c.req.query('size') ?? String(DEFAULT_SIZE), 10)));
+  const page = Math.max(1, intParam(c.req.query('page'), 1));
+  const size = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('size'), DEFAULT_SIZE)));
 
   if (!VALID_EVENTS.has(event)) return c.json({ error: 'Invalid event' }, 400);
   if (type !== 'single' && type !== 'average') return c.json({ error: 'Invalid type' }, 400);
@@ -336,7 +342,7 @@ async function getRankIndex(event: string, isAvg: boolean, scope: string): Promi
 }
 
 // 解析国家入参(iso2 或 WCA country id)-> {id, continentId, iso2}.查不到返回 null.
-async function resolveCountryFull(
+export async function resolveCountryFull(
   input: string,
 ): Promise<{ id: string; continentId: string; iso2: string } | null> {
   if (!input) return null;
@@ -443,8 +449,8 @@ wcaStatsExtraRoutes.get('/wca/cohort-ranks', async (c) => {
   const event = (c.req.query('event') ?? '333').toLowerCase();
   const type = (c.req.query('type') ?? 'single').toLowerCase();
   const country = c.req.query('country') ?? '';
-  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10));
-  const size = Math.min(MAX_SIZE, Math.max(1, parseInt(c.req.query('size') ?? String(DEFAULT_SIZE), 10)));
+  const page = Math.max(1, intParam(c.req.query('page'), 1));
+  const size = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('size'), DEFAULT_SIZE)));
 
   if (!Number.isFinite(cohort) || cohort < 1980 || cohort > new Date().getUTCFullYear() + 1) {
     return c.json({ error: 'Invalid cohort year' }, 400);
@@ -507,9 +513,9 @@ wcaStatsExtraRoutes.get('/wca/cohort-ranks', async (c) => {
 wcaStatsExtraRoutes.get('/wca/success-rate', async (c) => {
   const event = (c.req.query('event') ?? '333bf').toLowerCase();
   const country = c.req.query('country') ?? '';
-  const minAttempted = Math.max(3, parseInt(c.req.query('minAttempted') ?? '3', 10));
-  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10));
-  const size = Math.min(MAX_SIZE, Math.max(1, parseInt(c.req.query('size') ?? String(DEFAULT_SIZE), 10)));
+  const minAttempted = Math.max(3, intParam(c.req.query('minAttempted'), 3));
+  const page = Math.max(1, intParam(c.req.query('page'), 1));
+  const size = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('size'), DEFAULT_SIZE)));
 
   if (!VALID_EVENTS.has(event)) return c.json({ error: 'Invalid event' }, 400);
   const cn = await resolveCountry(country);
@@ -566,8 +572,8 @@ wcaStatsExtraRoutes.get('/wca/success-rate', async (c) => {
 wcaStatsExtraRoutes.get('/wca/all-events-done', async (c) => {
   const country = c.req.query('country') ?? '';
   const onlyDone = c.req.query('onlyDone') !== '0' && c.req.query('onlyDone') !== 'false';
-  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10));
-  const size = Math.min(MAX_SIZE, Math.max(1, parseInt(c.req.query('size') ?? String(DEFAULT_SIZE), 10)));
+  const page = Math.max(1, intParam(c.req.query('page'), 1));
+  const size = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('size'), DEFAULT_SIZE)));
 
   const cn = await resolveCountry(country);
   if (!cn.ok) return c.json({ error: cn.err }, 400);
@@ -645,11 +651,8 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
   const country = c.req.query('country') ?? '';
   const eventsParam = c.req.query('events') ?? '';
   const hidePodium = c.req.query('hidePodium') === '1' || c.req.query('hidePodium') === 'true';
-  // bestMisser: 命中 best_final_pos = N(殿军之王 = 4).bestMisser>0 时 hidePodium 被忽略.
-  const bestMisserRaw = parseInt(c.req.query('bestMisser') ?? '0', 10);
-  const bestMisser = Number.isFinite(bestMisserRaw) && bestMisserRaw > 0 ? bestMisserRaw : 0;
-  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10));
-  const size = Math.min(MAX_SIZE, Math.max(1, parseInt(c.req.query('size') ?? String(DEFAULT_SIZE), 10)));
+  const page = Math.max(1, intParam(c.req.query('page'), 1));
+  const size = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('size'), DEFAULT_SIZE)));
 
   if (type !== 'single' && type !== 'average') return c.json({ error: 'Invalid type' }, 400);
   const cn = await resolveCountry(country);
@@ -682,10 +685,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
   const where: string[] = [`pr.is_avg = ?`];
   const params: unknown[] = [isAvg];
   if (isCountryMode) { where.push(`pr.country_id = ?`); params.push(cn.id); }
-  if (bestMisser > 0) {
-    where.push(`pr.best_final_pos = ?`);
-    params.push(bestMisser);
-  } else if (hidePodium) {
+  if (hidePodium) {
     where.push(`(pr.best_final_pos = 0 OR pr.best_final_pos > 3)`);
   }
 
@@ -725,7 +725,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
 
     c.header('Cache-Control', CACHE_HEADER);
     return c.json({
-      type, country: cn.id, hidePodium, bestMisser, page, size, total,
+      type, country: cn.id, hidePodium, page, size, total,
       events: RANK_EVENTS,
       rows: rows.map(r => ({
         wcaId: r.wca_id, name: r.person_name,
@@ -793,7 +793,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
 
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    type, country: cn.id, hidePodium, bestMisser, page, size, total,
+    type, country: cn.id, hidePodium, page, size, total,
     events: RANK_EVENTS,
     selectedEvents: eventIdxs!.map(i => RANK_EVENTS[i]),
     rows: rows.map(r => ({
@@ -840,7 +840,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/census', async (c) => {
     });
   }
 
-  const limit = Math.min(MAX_SIZE, Math.max(1, parseInt(c.req.query('limit') ?? '200', 10)));
+  const limit = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('limit'), 200)));
   const yearParam = parseInt(c.req.query('year') ?? '', 10);
   const year = Number.isFinite(yearParam) && years.includes(yearParam) ? yearParam : maxYear;
   if (year == null) {
