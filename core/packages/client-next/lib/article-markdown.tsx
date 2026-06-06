@@ -152,6 +152,7 @@ function directiveLabel(n: DirectiveNode): string {
 // The container's children are blocks (usually paragraphs holding the image nodes); we walk them
 // and replace each `image` mdast node with a sentinel figure (via hName/hProperties + figcaption).
 function wrapFigrow(container: DirectiveNode) {
+  const figures: unknown[] = [];
   visit(container as unknown as UnistTree, 'image', (imageNode: unknown) => {
     const img = imageNode as {
       type: string;
@@ -181,7 +182,14 @@ function wrapFigrow(container: DirectiveNode) {
       });
     }
     data.hChildren = hChildren;
+    figures.push(imageNode);
   });
+  // Markdown wraps the images in paragraph(s) inside the container; lift the figures out so they
+  // are DIRECT children of <div class="article-figrow">. A block <figure> nested in a <p> is
+  // invalid HTML — the browser re-parents it, which diverges from the server tree and triggers a
+  // React hydration mismatch (#418). figrows are image grids by contract, so dropping the empty
+  // paragraph wrappers is safe.
+  if (figures.length > 0) container.children = figures;
 }
 
 // ── sanitize schema: defaultSchema extended EXACTLY per SPEC §4 ────────────────
