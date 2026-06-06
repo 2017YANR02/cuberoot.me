@@ -83,6 +83,12 @@ body {
   --timer-warn12: color-mix(in srgb, var(--accent) 20%, var(--destructive));
   --timer-plus2: var(--destructive);
   --timer-dnf: var(--destructive);
+
+  /* /article inline highlights (light) — base hex lives ONLY here, page CSS uses var(). */
+  --article-red: #b73c4b;
+  --article-blue: #395ca2;
+  --article-red-soft: color-mix(in srgb, var(--article-red) 12%, transparent);
+  --article-blue-soft: color-mix(in srgb, var(--article-blue) 12%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -106,6 +112,12 @@ body {
     --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
     --border-strong: color-mix(in srgb, var(--foreground) 20%, transparent);
     --input: color-mix(in srgb, var(--foreground) 10%, transparent);
+
+    /* /article inline highlights (dark) — lightened bases for contrast on dark bg. */
+    --article-red: #e87a86;
+    --article-blue: #7ba0e0;
+    --article-red-soft: color-mix(in srgb, var(--article-red) 18%, transparent);
+    --article-blue-soft: color-mix(in srgb, var(--article-blue) 18%, transparent);
   }
 }
 
@@ -165,6 +177,12 @@ html[data-theme=dark] {
   --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
   --border-strong: color-mix(in srgb, var(--foreground) 20%, transparent);
   --input: color-mix(in srgb, var(--foreground) 10%, transparent);
+
+  /* /article inline highlights (dark) — lightened bases for contrast on dark bg. */
+  --article-red: #e87a86;
+  --article-blue: #7ba0e0;
+  --article-red-soft: color-mix(in srgb, var(--article-red) 18%, transparent);
+  --article-blue-soft: color-mix(in srgb, var(--article-blue) 18%, transparent);
 }
 
 * {
