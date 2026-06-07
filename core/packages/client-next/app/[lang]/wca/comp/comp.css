@@ -771,7 +771,7 @@ td.is-pr {
   color: var(--foreground);
   border: 1px solid var(--border-default);
   border-radius: 12px;
-  max-width: 920px;
+  max-width: min(920px, calc(100vw - 32px));
   width: fit-content;
   max-height: 90vh;
   display: flex;
@@ -824,6 +824,7 @@ td.is-pr {
 .comp-modal-body {
   padding: 12px 16px;
   overflow-y: auto;
+  overflow-x: auto;
   flex: 1;
 }
 .comp-modal-footer {
@@ -888,7 +889,7 @@ td.is-pr {
   color: var(--foreground);
   border: 1px solid var(--border-default);
   border-radius: 8px;
-  max-width: 380px;
+  max-width: min(380px, calc(100vw - 32px));
   width: fit-content;
   max-height: 90vh;
   display: flex;
