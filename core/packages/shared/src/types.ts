@@ -140,6 +140,8 @@ export interface ReconSolve {
   personId?: string;
   /** 选手国籍 ISO 3166-1 alpha-2 小写 */
   personCountry?: string;
+  /** 共同完成的其他选手——主选手(成绩归属)仍是 person/personId,这里存额外合作者(两人合作还原等) */
+  coPersons?: ReconCuber[];
   /** 单次成绩（秒） */
   rawTime?: number;
   /** 盲拧执行时间（秒） */
@@ -226,6 +228,16 @@ export interface ReconSolve {
   _edited?: boolean;
   /** 前端标记：本地未同步数据 */
   _local?: boolean;
+}
+
+/** 共同完成者——除主选手外的额外合作者(同一把由多人合作完成时用) */
+export interface ReconCuber {
+  /** 选手名(WCA API 原始名,渲染走 displayCuberName) */
+  name: string;
+  /** WCA ID(可空——非 WCA 选手) */
+  id?: string;
+  /** 国籍 ISO 3166-1 alpha-2 小写 */
+  country?: string;
 }
 
 /** 另解条目——挂在某个 solve 下的子还原(同打乱、不同解法) */

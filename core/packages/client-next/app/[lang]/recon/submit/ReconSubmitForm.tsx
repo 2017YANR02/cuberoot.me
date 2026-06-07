@@ -57,7 +57,7 @@ import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { parseSq1Tokens, formatScrambleForEvent } from '@/lib/sq1-svg';
 import type { Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowLeft, ArrowRightLeft, Box, ChevronDown, ChevronRight, Home, Loader2, LogIn } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, Box, ChevronDown, ChevronRight, Home, Loader2, LogIn, UserPlus } from 'lucide-react';
 import '../recon.css';
 import './recon_submit.css';
 
@@ -150,6 +150,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     person: '',
     personId: '',
     personCountry: '',
+    coPersons: [],
     comp: '',
     compWcaId: '',
     country: '',
@@ -257,6 +258,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         person: src.person,
         personId: src.personId,
         personCountry: src.personCountry,
+        coPersons: src.coPersons,
         comp: src.comp,
         compWcaId: src.compWcaId,
         country: src.country,
@@ -782,6 +784,22 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   const clearSolver = useCallback(() => handleSolverPick(null), [handleSolverPick]);
 
+  // ── Co-solvers (共同完成者) ──
+  const [addingCo, setAddingCo] = useState(false);
+  const addCoPerson = useCallback((p: WcaPersonLite | null) => {
+    if (!p) return;
+    setForm(prev => {
+      const list = prev.coPersons ?? [];
+      // 跳过已是主选手 / 已添加过的
+      if (p.id && (p.id === prev.personId || list.some(c => c.id === p.id))) return prev;
+      return { ...prev, coPersons: [...list, { name: p.name, id: p.id, country: p.country_iso2 ?? '' }] };
+    });
+    setAddingCo(false);
+  }, []);
+  const removeCoPerson = useCallback((idx: number) => {
+    setForm(prev => ({ ...prev, coPersons: (prev.coPersons ?? []).filter((_, i) => i !== idx) }));
+  }, []);
+
   // ── Reconer ──
   const [reconerCountry, setReconerCountry] = useState<string>('');
 
@@ -1104,6 +1122,36 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   </>
                 )}
               </div>
+
+              {solverLite && (
+                <div className="submit-row">
+                  <div className="submit-field">
+                    <span className="submit-label">{isZh ? '共同完成者' : 'Co-solvers'}</span>
+                    <div className="submit-cosolvers">
+                      {(form.coPersons ?? []).map((c, i) => (
+                        <div key={`${c.id || c.name}-${i}`} className="submit-solver-pill submit-cosolver-pill">
+                          <Flag iso2={c.country || ''} />
+                          <span className="submit-solver-name">{displayCuberName(c.name, isZh)}</span>
+                          <ClearButton onClick={() => removeCoPerson(i)} isZh={isZh} variant="standalone" preserveFocus />
+                        </div>
+                      ))}
+                      {addingCo ? (
+                        <WcaPersonPicker
+                          value={null}
+                          onChange={addCoPerson}
+                          isZh={isZh}
+                          placeholder={isZh ? '搜选手名 / WCA ID' : 'Search name / WCA ID'}
+                          className="submit-cosolver-picker"
+                        />
+                      ) : (
+                        <button type="button" className="submit-add-cosolver" onClick={() => setAddingCo(true)}>
+                          <UserPlus size={14} /> {isZh ? '添加选手' : 'Add solver'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="submit-row">
                 <label className="submit-field submit-field-narrow">

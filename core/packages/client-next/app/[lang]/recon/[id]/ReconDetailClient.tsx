@@ -77,6 +77,10 @@ function personLinkForSolve(solve: ReconSolve, isZh: boolean): string {
   return `/wca/persons/${solve.personId}${search}`;
 }
 
+function personHref(wcaId: string, isZh: boolean): string {
+  return `/wca/persons/${wcaId}${isZh ? '?lang=zh' : ''}`;
+}
+
 export default function ReconDetailClient() {
   const params = useParams<{ id: string }>();
   const id = (Array.isArray(params?.id) ? params.id[0] : params?.id) ?? '';
@@ -128,6 +132,12 @@ export default function ReconDetailClient() {
   const solutionText = solve.solution || solve.recon || '';
   const scramble = solve.optimalScramble || solve.wcaScramble || '';
 
+  // 主选手(成绩归属)+ 共同完成者,逐个带旗帜/链接渲染
+  const cubers: { name: string; id?: string; country?: string }[] = [
+    { name: solve.person || '', id: solve.personId, country: solve.personCountry },
+    ...(solve.coPersons ?? []),
+  ].filter(c => c.name);
+
   return (
     <div className="recon-page detail-page">
       <div className="detail-header-block">
@@ -138,16 +148,20 @@ export default function ReconDetailClient() {
             {solve.event && (
               <>{' '}<EventIcon event={solve.event} />{' '}{eventDisplayName(solve.event, isZh)}</>
             )}
-            {solve.personCountry && <>{' '}<Flag iso2={solve.personCountry} className="recon-inline-flag" /></>}
-            {' '}
-            {solve.personId ? (
-              <Link
-                href={personLinkForSolve(solve, isZh)}
-                className="detail-person-link"
-              >
-                {displayCuberName(solve.person || '', isZh)}
-              </Link>
-            ) : displayCuberName(solve.person || '', isZh)}
+            {cubers.map((c, i) => (
+              <span key={i} className="detail-cuber">
+                {i > 0 ? <span className="detail-cuber-sep"> &amp; </span> : ' '}
+                {c.country && <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</>}
+                {c.id ? (
+                  <Link
+                    href={i === 0 ? personLinkForSolve(solve, isZh) : personHref(c.id, isZh)}
+                    className="detail-person-link"
+                  >
+                    {displayCuberName(c.name, isZh)}
+                  </Link>
+                ) : displayCuberName(c.name, isZh)}
+              </span>
+            ))}
             {' '}
             <Link href={`/recon/submit/${solve.id}`} className="recon-btn recon-btn-edit detail-title-edit" title={t('recon.edit')} aria-label={t('recon.edit')}>
               <Pencil size={14} />

@@ -775,6 +775,14 @@
   color: var(--accent);
   border-bottom-color: var(--accent);
 }
+/* 多选手(共同完成)分隔符 */
+.detail-cuber {
+  white-space: nowrap;
+}
+.detail-cuber-sep {
+  color: color-mix(in srgb, var(--foreground) 45%, transparent);
+  white-space: normal;
+}
 
 /* attempts 单元格内每把支持单点跳转(有对应复盘时,渲染为 Link)
    不用 background — 7ch 列宽 + text-align:right 会让方块比内容大得突兀;用颜色 + 下划线 */
