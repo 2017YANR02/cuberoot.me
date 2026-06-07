@@ -1172,16 +1172,13 @@ export default function CompDetailPage() {
                 </select>
               )}
               {currentIsDual && (
-                <label className="comp-combine-toggle">
-                  <PillToggle
-                    value={showCombined}
-                    onChange={setCombinedPref}
-                    onLabel={isZh ? '合并' : 'Combined'}
-                    offLabel={isZh ? '合并' : 'Combined'}
-                    ariaLabel={isZh ? '合并双轮成绩' : 'Combine dual rounds'}
-                  />
-                  <span className="comp-combine-label">{isZh ? '合并双轮' : 'Combined dual rounds'}</span>
-                </label>
+                <PillToggle
+                  value={showCombined}
+                  onChange={setCombinedPref}
+                  onLabel={isZh ? '合并双轮' : 'Combined'}
+                  offLabel={isZh ? '合并双轮' : 'Combined'}
+                  ariaLabel={isZh ? '合并双轮成绩' : 'Combine dual rounds'}
+                />
               )}
             </div>
 
