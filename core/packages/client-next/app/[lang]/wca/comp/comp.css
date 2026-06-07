@@ -704,15 +704,6 @@ td.is-pr {
   white-space: nowrap;
 }
 
-/* 合并开关 (PillToggle + 文案) */
-.comp-combine-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-.comp-combine-label { font-size: 0.9rem; color: var(--muted-foreground); }
 .comp-flag {
   display: inline-block;
   width: 20px;
