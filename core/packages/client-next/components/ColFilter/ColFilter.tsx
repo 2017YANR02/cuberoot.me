@@ -50,12 +50,21 @@ export function ColFilter({
   const updatePos = useCallback(() => {
     if (!btnRef.current) return;
     const rect = btnRef.current.getBoundingClientRect();
-    setPos({
-      top: rect.bottom + 4,
-      ...(align === 'right'
-        ? { right: window.innerWidth - rect.right }
-        : { left: rect.left }),
-    });
+    const vw = window.innerWidth;
+    const popW = popRef.current?.offsetWidth ?? 220;
+    const margin = 8;
+    const top = rect.bottom + 4;
+    if (align === 'right') {
+      let right = vw - rect.right;
+      // 防左溢出:右对齐时 popover 左边越界则钉到左 margin
+      if (vw - right - popW < margin) right = vw - popW - margin;
+      setPos({ top, right: Math.max(margin, right) });
+    } else {
+      let left = rect.left;
+      // 防右溢出:左对齐时 popover 右边越界则左移(复盘者/# 等偏右列)
+      if (left + popW > vw - margin) left = vw - popW - margin;
+      setPos({ top, left: Math.max(margin, left) });
+    }
   }, [align]);
 
   useLayoutEffect(() => {

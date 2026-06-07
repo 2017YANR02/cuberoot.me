@@ -306,7 +306,7 @@
 .recon-table .col-idx { text-align: right; }
 
 .col-solver {
-  max-width: 140px;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -318,6 +318,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--muted-foreground);
+}
+
+/* 合作者分隔符(主选手 & 共同完成者) */
+.recon-cuber-sep {
+  color: var(--faint-foreground);
 }
 
 /* 表格内联国旗(列表页 reconer 列) — 兼顾 fi-xx span 与 TW SVG img */

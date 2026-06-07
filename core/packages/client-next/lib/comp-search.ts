@@ -10,6 +10,8 @@ export interface Comp {
   start_date: string;
   end_date: string;
   events?: string[];
+  /** 比赛场地经度 — 用来估算比赛当地时区,按比赛本地日期分桶(当前/未来/往期)。 */
+  longitude_degrees?: number;
 }
 
 export const CANCELLED_BUFFER_DAYS = 60;

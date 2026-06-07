@@ -48,12 +48,25 @@ function ReconCard({ solve, isZh }: { solve: ReconSolve; isZh: boolean }) {
           {solve.event && isWcaEvent(solve.event) && (
             <EventIcon event={solve.event} className="tr-evt" title={eventDisplayName(solve.event, isZh)} />
           )}
-          {solve.person && (
-            <span className="tr-person">
-              {solve.personCountry && <Flag iso2={solve.personCountry} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-              {displayCuberName(solve.person, isZh)}
-            </span>
-          )}
+          {(() => {
+            // 主选手 + 共同完成者(整卡是 Link,名字不单独成链)
+            const cubers = [
+              { name: solve.person || '', country: solve.personCountry },
+              ...(solve.coPersons ?? []),
+            ].filter(c => c.name);
+            if (cubers.length === 0) return null;
+            return (
+              <span className="tr-person">
+                {cubers.map((c, i) => (
+                  <span key={i} className="tr-person-one">
+                    {i > 0 ? <span className="tr-cuber-sep"> &amp; </span> : null}
+                    {c.country && <Flag iso2={c.country} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                    {displayCuberName(c.name, isZh)}
+                  </span>
+                ))}
+              </span>
+            );
+          })()}
         </div>
 
         {(solve.method || solve.stm || typeof solve.tps === 'number') && (
