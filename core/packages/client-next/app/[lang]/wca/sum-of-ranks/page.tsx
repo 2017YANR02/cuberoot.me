@@ -86,11 +86,10 @@ function SumOfRanksPageInner() {
 
   const selectedSet = new Set(eventsParam ? eventsParam.split(',').filter(Boolean) : ACTIVE_EVENTS);
   const selectedCount = RANK_EVENTS.filter(e => selectedSet.has(e)).length;
-  // 含废止项(脚拧/八板/十二板/旧多盲)勾选态 = 4 项全在选中里;控制复选框显示 + 名人堂口径.
-  const includeCancelled = CANCELLED_EVENTS.every(e => selectedSet.has(e));
-  // 是否有任一废止项被选中 — 决定 selector 是否展示废止项. 一个都没选时只给 17 活跃项,
-  // 这样 selector 内部不再渲染"展开废止项"的 ▾ 三角(本页已有上方「废止项」PillToggle 控制).
-  const anyCancelledSelected = CANCELLED_EVENTS.some(e => selectedSet.has(e));
+  // 废止项(脚拧/八板/十二板/旧多盲)"开"= 选中里含任一废止项 (取消其一只要还剩一个就仍算开,不误关).
+  // 控制三处: PillToggle 显隐 + selector 是否展示废止项 (否则一个不选时也不渲染 ▾ 三角) + 名人堂/选手
+  // 最优的"含废止项"口径 (21 项全集). 主榜单走精确选中子集, 不受此布尔影响.
+  const includeCancelled = CANCELLED_EVENTS.some(e => selectedSet.has(e));
   const pushSearch = (next: URLSearchParams) => {
     const qs = next.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname);
@@ -330,7 +329,7 @@ function SumOfRanksPageInner() {
             />
           </div>
           <WcaEventSelector
-            availableEvents={anyCancelledSelected ? RANK_EVENT_SET : ACTIVE_EVENT_SET}
+            availableEvents={includeCancelled ? RANK_EVENT_SET : ACTIVE_EVENT_SET}
             selectedEvents={selectedSet}
             onToggle={toggleEvent}
             isZh={isZh}

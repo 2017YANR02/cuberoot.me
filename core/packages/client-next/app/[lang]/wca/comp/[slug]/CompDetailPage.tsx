@@ -25,6 +25,7 @@ import { fetchCompInfo, fetchCubingZh, type CompInfo, type CubingZhMeta } from '
 import { formatDateRangeIso, toIsoDate } from '@/lib/wca-date';
 import { localizeCity } from '@/lib/city-localize';
 import WcaEventSelector from '@/components/WcaEventSelector';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { EventIcon } from '@/components/EventIcon';
 import { formatWcaResult } from '@/lib/wca-format-result';
@@ -69,6 +70,7 @@ interface EventMeta {
   i: string;
   name: string;
   rs: RoundMeta[];
+  dual?: boolean; // 双轮赛制 (WCA Reg 9v):前两轮合并排名。cubing.com 源直接给;其它源客户端兜底推断
 }
 
 interface LiveResult {
@@ -238,6 +240,117 @@ const ROUND_NAME_ZH: Record<string, string> = {
 function roundDisplayName(rdName: string, isZh: boolean): string {
   if (!isZh) return rdName;
   return ROUND_NAME_ZH[rdName] || rdName;
+}
+
+// ── 双轮赛制 (WCA Reg 9v, 2026) ──────────────────────────────────────────────
+// 一个项目的前两轮作为「双轮」:选手两轮都打,取两轮更好的成绩排名 (9v4);两轮成绩
+// 都计入世界排名/纪录 (9v4a);轮间不淘汰 (9v5)。avg 赛制比更好的平均 (并列看单次),
+// best 赛制比更好的单次 (9f6/9f8)。
+function dualPairFor(
+  ev: EventMeta | undefined,
+  resultsByRound: Record<string, LiveResult[]>,
+): { r1: RoundMeta; r2: RoundMeta } | null {
+  if (!ev || ev.rs.length < 2) return null;
+  const r1 = ev.rs[0];
+  const r2 = ev.rs[1];
+  if (ev.dual === true) return { r1, r2 }; // cubing.com data-events 显式标记 (权威)
+  if (r1.f !== r2.f) return null; // 兜底推断要求两轮同赛制 (9v3)
+  // 兜底 (WCA / WCA Live / WCA DB 源无标记):非双轮按 9p1 最多晋级 75%,
+  // 第二轮人数 ≥ 第一轮 80% ⇒ 100% 晋级 ⇒ 双轮 (排除并列略超 75% 的常规轮)。
+  const n1 = (resultsByRound[roundKey(ev.i, r1.i)] || []).length;
+  const n2 = (resultsByRound[roundKey(ev.i, r2.i)] || []).length;
+  if (n1 >= 4 && n2 >= n1 * 0.8) return { r1, r2 };
+  return null;
+}
+
+// 两个成绩按赛制比较:返回 <0 表示 a 更好。avg 赛制比平均 (并列比单次),否则比单次。
+function compareDualResults(a: LiveResult, b: LiveResult, byAvg: boolean): number {
+  const k = (v: number) => (v > 0 ? v : Infinity);
+  const pa = byAvg ? k(effectiveAvg(a)) : k(a.b);
+  const pb = byAvg ? k(effectiveAvg(b)) : k(b.b);
+  if (pa !== pb) return pa - pb;
+  const sa = k(a.b); const sb = k(b.b);
+  if (sa === sb) return 0; // 单次相同 / 两边都无效 (避免 Infinity-Infinity=NaN 破坏排序)
+  return sa - sb; // 平均并列 → 看更好那轮的单次
+}
+
+interface DualRow {
+  n: number;
+  r1: LiveResult | null;
+  r2: LiveResult | null;
+  better: LiveResult;
+  betterRound: 1 | 2;
+  place: number;      // 竞赛名次 (并列同名次)
+  hasResult: boolean; // 至少一轮有有效成绩
+}
+
+// 两轮成绩按选手合并 → 取更好的排名,算竞赛名次 (并列同名次,跳号)。
+function buildDualRows(r1res: LiveResult[], r2res: LiveResult[], byAvg: boolean): DualRow[] {
+  const byNum = new Map<number, { r1: LiveResult | null; r2: LiveResult | null }>();
+  for (const r of r1res) {
+    const e = byNum.get(r.n) || { r1: null, r2: null };
+    e.r1 = r; byNum.set(r.n, e);
+  }
+  for (const r of r2res) {
+    const e = byNum.get(r.n) || { r1: null, r2: null };
+    e.r2 = r; byNum.set(r.n, e);
+  }
+  const ranked: Omit<DualRow, 'place'>[] = [];
+  for (const [n, pair] of byNum) {
+    const { r1, r2 } = pair;
+    let better: LiveResult; let betterRound: 1 | 2;
+    if (r1 && r2) {
+      if (compareDualResults(r1, r2, byAvg) <= 0) { better = r1; betterRound = 1; }
+      else { better = r2; betterRound = 2; }
+    } else if (r1) { better = r1; betterRound = 1; }
+    else { better = r2 as LiveResult; betterRound = 2; }
+    const hasResult = better.b > 0 || effectiveAvg(better) > 0;
+    ranked.push({ n, r1, r2, better, betterRound, hasResult });
+  }
+  ranked.sort((a, b) => {
+    const c = compareDualResults(a.better, b.better, byAvg);
+    return c !== 0 ? c : a.n - b.n;
+  });
+  const out: DualRow[] = [];
+  let prev: LiveResult | null = null;
+  let prevPlace = 0;
+  ranked.forEach((row, i) => {
+    let place: number;
+    if (prev && compareDualResults(prev, row.better, byAvg) === 0) place = prevPlace;
+    else { place = i + 1; prevPlace = place; prev = row.better; }
+    out.push({ ...row, place });
+  });
+  return out;
+}
+
+// 双轮后晋级集合:下一轮 (rs[2]) 已出成绩 → 用其选手;否则取合并榜 top-N
+// (并列带入);无下一轮 (双轮即末轮) → 颁奖前 3。
+function dualAdvancers(
+  ev: EventMeta,
+  rows: DualRow[],
+  resultsByRound: Record<string, LiveResult[]>,
+  byAvg: boolean,
+): Set<number> {
+  const valid = rows.filter(r => r.hasResult);
+  const topN = (n: number): Set<number> => {
+    const out = new Set<number>();
+    if (valid.length === 0 || n <= 0) return out;
+    const limit = Math.min(n, valid.length);
+    const cutoff = valid[limit - 1].better;
+    for (let i = 0; i < valid.length; i++) {
+      if (i < limit) out.add(valid[i].n);
+      else if (compareDualResults(valid[i].better, cutoff, byAvg) === 0) out.add(valid[i].n);
+      else break;
+    }
+    return out;
+  };
+  const next = ev.rs[2];
+  if (next) {
+    const nextRes = resultsByRound[roundKey(ev.i, next.i)] || [];
+    if (nextRes.length > 0) return new Set(nextRes.map(r => r.n));
+    return topN(next.n);
+  }
+  return topN(3);
 }
 
 function regionDisplay(region: string, isZh: boolean): string {
@@ -691,6 +804,24 @@ export default function CompDetailPage() {
     return set;
   }, [data, currentRound, filteredResults]);
 
+  // 双轮赛制:当前项目的双轮对 (前两轮) + 当前轮是否属于双轮 + 合并开关 (默认开)。
+  const dualPair = useMemo(
+    () => (data && currentRound ? dualPairFor(currentRound.ev, data.resultsByRound) : null),
+    [data, currentRound],
+  );
+  const currentIsDual = !!(dualPair && currentRound
+    && (currentRound.rd.i === dualPair.r1.i || currentRound.rd.i === dualPair.r2.i));
+  const [combinedPref, setCombinedPref] = useState<boolean | null>(null);
+  const showCombined = currentIsDual && (combinedPref ?? true);
+  // 切换项目时重置为默认 (默认开):避免在某项目关掉合并后,切到另一双轮项目仍是关的。
+  // 同一项目内换轮次保留用户选择。
+  useEffect(() => { setCombinedPref(null); }, [eventParam]);
+  const filterMemberSet = useMemo(() => {
+    if (filterParam === 'all' || !data) return null;
+    const members = data.membersByFilter?.[filterParam as keyof MembersByFilter];
+    return members ? new Set(members) : null;
+  }, [data, filterParam]);
+
   useEffect(() => {
     if (!data || !currentRound) return;
     if (data.source === 'wca_db') return;
@@ -1030,24 +1161,50 @@ export default function CompDetailPage() {
                   ))}
                 </select>
               )}
+              {currentIsDual && (
+                <label className="comp-combine-toggle">
+                  <PillToggle
+                    value={showCombined}
+                    onChange={setCombinedPref}
+                    onLabel={isZh ? '合并' : 'Combined'}
+                    offLabel={isZh ? '合并' : 'Combined'}
+                    ariaLabel={isZh ? '合并双轮成绩' : 'Combine dual rounds'}
+                  />
+                  <span className="comp-combine-label">{isZh ? '合并双轮' : 'Combined dual rounds'}</span>
+                </label>
+              )}
             </div>
 
-            <ResultsTable
-              results={filteredResults}
-              users={data.users}
-              round={currentRound?.rd}
-              isZh={isZh}
-              pbMap={pbMap}
-              advancers={advancers}
-              compIso2={compFlagIso2(slug)}
-              onClickCuber={n => {
-                if (currentRound) {
-                  setModal({ kind: 'round', number: n, eventId: currentRound.ev.i, roundId: currentRound.rd.i });
-                } else {
-                  setModal({ kind: 'all', number: n });
-                }
-              }}
-            />
+            {showCombined && dualPair && currentRound ? (
+              <CombinedDualRoundsTable
+                data={data}
+                ev={currentRound.ev}
+                r1={dualPair.r1}
+                r2={dualPair.r2}
+                isZh={isZh}
+                pbMap={pbMap}
+                compIso2={compFlagIso2(slug)}
+                memberSet={filterMemberSet}
+                onClickCuber={n => setModal({ kind: 'all', number: n })}
+              />
+            ) : (
+              <ResultsTable
+                results={filteredResults}
+                users={data.users}
+                round={currentRound?.rd}
+                isZh={isZh}
+                pbMap={pbMap}
+                advancers={advancers}
+                compIso2={compFlagIso2(slug)}
+                onClickCuber={n => {
+                  if (currentRound) {
+                    setModal({ kind: 'round', number: n, eventId: currentRound.ev.i, roundId: currentRound.rd.i });
+                  } else {
+                    setModal({ kind: 'all', number: n });
+                  }
+                }}
+              />
+            )}
           </>
         ) : (
           <PsychSheet
@@ -1302,6 +1459,136 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
           })}
           {results.length === 0 && (
             <tr><td colSpan={(showAvg ? 4 : 3) + attemptCount} className="comp-empty">{isZh ? '此轮暂无成绩' : 'No results yet'}</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+interface CombinedDualRoundsTableProps {
+  data: CompData;
+  ev: EventMeta;
+  r1: RoundMeta;
+  r2: RoundMeta;
+  isZh: boolean;
+  pbMap: Record<string, PbByEvent | null>;
+  compIso2?: string;
+  memberSet: Set<number> | null;
+  onClickCuber: (number: number) => void;
+}
+
+// 双轮合并榜:每位选手两行 (按轮次顺序),名次按两轮更好的成绩 (Reg 9v4),更好那轮高亮、
+// 另一轮淡灰。复用 ResultsTable 的列结构/记录标志/成绩格式化。
+function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memberSet, onClickCuber }: CombinedDualRoundsTableProps) {
+  const byAvg = isAvgRankedFormat(r1.f);
+  const showAvg = byAvg || isBlindAvgEvent(ev.i);
+  const singleFirst = !byAvg;
+  const r1res = data.resultsByRound[roundKey(ev.i, r1.i)] || [];
+  const r2res = data.resultsByRound[roundKey(ev.i, r2.i)] || [];
+  const rows = useMemo(() => {
+    const filt = (arr: LiveResult[]) => (memberSet ? arr.filter(r => memberSet.has(r.n)) : arr);
+    return buildDualRows(filt(r1res), filt(r2res), byAvg);
+  }, [r1res, r2res, byAvg, memberSet]);
+  const advancers = useMemo(
+    () => dualAdvancers(ev, rows, data.resultsByRound, byAvg),
+    [ev, rows, data.resultsByRound, byAvg],
+  );
+
+  const formatAttempts = r1.f === 'a' || r1.f === '' ? 5 : r1.f === 'm' ? 3 : parseInt(r1.f, 10) || 1;
+  const maxRowAttempts = [...r1res, ...r2res].reduce((m, r) => Math.max(m, r.v.length), 0);
+  const attemptCount = Math.max(formatAttempts, maxRowAttempts);
+  const fixedCols = 3 + (showAvg ? 2 : 1); // place + person + round + best (+ avg)
+
+  return (
+    <div className="comp-table-wrap">
+      <table className={`comp-table comp-table-dual${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
+        <thead>
+          <tr>
+            <th className="th-place">{isZh ? '名次' : 'Place'}</th>
+            <th className="th-person">{isZh ? '选手' : 'Person'}</th>
+            <th className="th-dual-round">{isZh ? '轮次' : 'Round'}</th>
+            {(() => {
+              const avgTh = showAvg ? <th key="avg" className={`th-avg${!singleFirst ? ' is-rank-col' : ''}`}>{isZh ? '平均' : 'Average'}</th> : null;
+              const bestTh = <th key="best" className={`th-best${singleFirst ? ' is-rank-col' : ''}`}>{isZh ? '单次' : 'Best'}</th>;
+              return singleFirst ? [bestTh, avgTh] : [avgTh, bestTh];
+            })()}
+            <th className="th-detail" colSpan={attemptCount}>{isZh ? '详情' : 'Detail'}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, idx) => {
+            const u = data.users[String(row.n)];
+            if (!u) return null;
+            const advanced = advancers.has(row.n);
+            const subRows: { rd: RoundMeta; res: LiveResult; roundNo: 1 | 2 }[] = [];
+            if (row.r1) subRows.push({ rd: r1, res: row.r1, roundNo: 1 });
+            if (row.r2) subRows.push({ rd: r2, res: row.r2, roundNo: 2 });
+            const span = subRows.length;
+            const pb = pbMap[u.wcaid];
+            return subRows.map((sr, si) => {
+              const isBetter = sr.roundNo === row.betterRound;
+              const { singleRank, averageRank } = classifyPr(sr.res, pb);
+              const singleBadge = prBadgeFor(singleRank);
+              const averageBadge = prBadgeFor(averageRank);
+              const trCls = [
+                advanced ? 'row-advanced' : '',
+                idx % 2 === 1 ? 'row-odd' : '',
+                isBetter ? 'dual-row-better' : 'dual-row-worse',
+                si === span - 1 ? 'dual-row-last' : '',
+              ].filter(Boolean).join(' ');
+              const avgCell = showAvg ? (
+                <td key="avg" className={`td-avg${!singleFirst ? ' is-rank-col' : ''}`}>
+                  <span className="record-num-cell">
+                    {formatLive(effectiveAvg(sr.res), ev.i, true)}
+                    {sr.res.ar
+                      ? <RecordBadge record={String(sr.res.ar)} variant="inline" iso2={regionToIso2(u.region)} />
+                      : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null}
+                  </span>
+                </td>
+              ) : null;
+              const bestCell = (
+                <td key="best" className={`td-best${singleFirst ? ' is-rank-col' : ''}`}>
+                  <span className="record-num-cell">
+                    {formatLive(sr.res.b, ev.i, false)}
+                    {sr.res.sr
+                      ? <RecordBadge record={sr.res.sr} variant="inline" iso2={regionToIso2(u.region)} />
+                      : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
+                  </span>
+                </td>
+              );
+              return (
+                <tr
+                  key={`${row.n}:${sr.roundNo}`}
+                  className={`${trCls} comp-row-clickable`}
+                  onClick={() => onClickCuber(row.n)}
+                >
+                  {si === 0 && (
+                    <td className="td-place dual-td-span" rowSpan={span}>{row.hasResult ? row.place : '-'}</td>
+                  )}
+                  {si === 0 && (
+                    <td className="dual-td-span dual-td-person" rowSpan={span}>
+                      <span className="dual-person-inner">
+                        <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
+                        <span className="cuber-name" title={regionDisplay(u.region, isZh)}>
+                          {displayCuberName(u.name, isZh)}
+                        </span>
+                      </span>
+                    </td>
+                  )}
+                  <td className="td-dual-round">{roundDisplayName(sr.rd.name, isZh)}</td>
+                  {singleFirst ? [bestCell, avgCell] : [avgCell, bestCell]}
+                  {Array.from({ length: attemptCount }).map((_, i) => (
+                    <td key={i} className={`td-attempt ${isAo5Bracketed(sr.res.v, i) ? 'td-attempt-trimmed' : ''}`}>
+                      {formatLive(sr.res.v[i] ?? 0, ev.i, false)}
+                    </td>
+                  ))}
+                </tr>
+              );
+            });
+          })}
+          {rows.length === 0 && (
+            <tr><td colSpan={fixedCols + attemptCount} className="comp-empty">{isZh ? '此轮暂无成绩' : 'No results yet'}</td></tr>
           )}
         </tbody>
       </table>

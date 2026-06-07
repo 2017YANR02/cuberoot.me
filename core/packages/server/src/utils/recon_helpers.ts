@@ -41,6 +41,7 @@ const FIELD_MAP_JSON_TO_SQL: Record<string, string> = {
   compWcaId: 'comp_wca_id',
   reconerId: 'reconer_id',
   personCountry: 'person_country',
+  coPersons: 'co_persons',
   videoUrl: 'video_url',
 };
 
@@ -60,8 +61,8 @@ const ALLOWED_COLUMNS = new Set([
   'oll_short', 'pll_short', 'free_pair', 'y_rot', 'regrip', 'lockup',
   'cross_type', 'cross_stm', 'f2l', 'll', 's_move', 'cross_color',
   'cube', 'reconer', 'reconer_id', 'group_id', 'recon_date', 'created_at',
-  'added_by', 'added_by_id', 'comp_wca_id', 'person_country', 'video_url',
-  'alternatives',
+  'added_by', 'added_by_id', 'comp_wca_id', 'person_country', 'co_persons',
+  'video_url', 'alternatives',
 ]);
 
 // ── 数据转换 ──
@@ -98,6 +99,11 @@ export function rowToJson(row: Record<string, unknown>): Record<string, unknown>
     try { json.alternatives = JSON.parse(json.alternatives); } catch { json.alternatives = []; }
   }
 
+  // NOTE: co_persons JSON 列(同 alternatives,TEXT 存 JSON 串)
+  if (typeof json.coPersons === 'string') {
+    try { json.coPersons = JSON.parse(json.coPersons); } catch { json.coPersons = []; }
+  }
+
   // NOTE: 移除 null 值——与原 PHP 行为一致
   for (const k of Object.keys(json)) {
     if (json[k] === null) delete json[k];
@@ -120,6 +126,12 @@ export function jsonToRow(json: Record<string, unknown>): Record<string, unknown
   // NOTE: 布尔值转换（MySQL TINYINT）
   if (row.official !== undefined) {
     row.official = row.official ? 1 : 0;
+  }
+  // NOTE: co_persons 是 TEXT 存 JSON 串——数组直接 stringify(空数组存 null),
+  //       已是字符串则原样透传(防 driver 把数组当 PG array literal 写坏)
+  if (Array.isArray(row.co_persons)) {
+    const arr = (row.co_persons as unknown[]).filter(Boolean);
+    row.co_persons = arr.length ? JSON.stringify(arr) : null;
   }
   return row;
 }
@@ -205,6 +217,26 @@ export function validateRow(row: Record<string, unknown>): string[] {
   // CHAR(1): cross_color
   if (row.cross_color !== undefined && row.cross_color !== null && String(row.cross_color).length > 1) {
     errors.push('cross_color must be a single character');
+  }
+
+  // co_persons: JSON 数组 [{name, id?, country?}],各字段长度对齐 person 列
+  if (row.co_persons !== undefined && row.co_persons !== null) {
+    let arr: unknown;
+    try { arr = JSON.parse(String(row.co_persons)); } catch { arr = undefined; }
+    if (!Array.isArray(arr)) {
+      errors.push('co_persons must be a JSON array');
+    } else if (arr.length > 10) {
+      errors.push('co_persons too many entries (max 10)');
+    } else {
+      for (const e of arr as Record<string, unknown>[]) {
+        if (!e || typeof e.name !== 'string' || !e.name.trim()) {
+          errors.push('co_persons entry must have a name'); break;
+        }
+        if (String(e.name).length > 100) { errors.push('co_persons name exceeds max length (100)'); break; }
+        if (e.id != null && String(e.id).length > 20) { errors.push('co_persons id exceeds max length (20)'); break; }
+        if (e.country != null && String(e.country).length > 10) { errors.push('co_persons country exceeds max length (10)'); break; }
+      }
+    }
   }
 
   // TEXT 上限 64KB

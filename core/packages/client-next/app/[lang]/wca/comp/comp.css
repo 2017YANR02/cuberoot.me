@@ -675,6 +675,44 @@ td.is-pr {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ── 双轮合并榜 (WCA Reg 9v) ─────────────────────────────────────────────── */
+/* 每位选手两行 (round 1 / round 2);名次 + 选手列竖向合并 (rowSpan),竖向居中。
+   更好那轮正常显示,另一轮淡灰。两行共用同一条纹底色 (按选手 idx),自然成组。 */
+.comp-table-dual td.dual-td-span { vertical-align: middle; }
+.comp-table-dual .dual-td-person { white-space: nowrap; }
+.dual-person-inner { display: inline-flex; align-items: center; gap: 8px; }
+.comp-table-dual .td-dual-round { color: var(--foreground); }
+/* 较差那轮:成绩/平均/单次/轮次淡化,attempts 本就是 muted 色 */
+.comp-table-dual tbody tr.dual-row-worse td.td-dual-round,
+.comp-table-dual tbody tr.dual-row-worse td.td-avg,
+.comp-table-dual tbody tr.dual-row-worse td.td-best { color: var(--muted-foreground); }
+/* 较差那轮的排名列不加粗 (更好那轮才是排名依据) */
+.comp-table-dual tbody tr.dual-row-worse td.is-rank-col { font-weight: 400; color: var(--muted-foreground); }
+/* 选手之间分隔线 (同一选手两轮之间不画) */
+.comp-table-dual tbody tr.dual-row-last td {
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 55%, transparent);
+}
+.comp-table-dual tbody tr:last-child td { border-bottom: none; }
+/* CN 比赛选手列宽 (rowSpan 的 person 用 dual-td-person 而非 td-person) */
+.comp-table-cn.comp-table-dual .th-person,
+.comp-table-cn.comp-table-dual .dual-td-person { width: 110px; max-width: 110px; }
+.comp-table-cn.comp-table-dual .dual-td-person .cuber-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 合并开关 (PillToggle + 文案) */
+.comp-combine-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.comp-combine-label { font-size: 0.9rem; color: var(--muted-foreground); }
 .comp-flag {
   display: inline-block;
   width: 20px;
