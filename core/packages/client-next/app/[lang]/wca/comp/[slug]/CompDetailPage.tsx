@@ -980,11 +980,21 @@ export default function CompDetailPage() {
   const onSelectEvent = (newEventId: string) => {
     const ev = data.events.find(e => e.i === newEventId);
     if (!ev) return;
-    const valid = validRoundsFor(newEventId);
-    const cycleRounds = valid.length > 0 ? valid : ev.rs;
+    // 双轮 + 合并视图:第一轮和第二轮渲染同一张合并表 → 合为一个循环档(用第一轮代表),
+    // 且整个事件的轮次都进循环(含尚无成绩的决赛),让点图标能从合并视图直达决赛,
+    // 而不是在两张相同的合并表之间空转。非双轮 / 未合并时维持原行为(只循环有成绩的轮)。
+    const dp = showCombined ? dualPairFor(ev, data.resultsByRound) : null;
+    let cycleRounds: RoundMeta[];
+    if (dp) {
+      cycleRounds = ev.rs.filter(rd => rd.i !== dp.r2.i);
+    } else {
+      const valid = validRoundsFor(newEventId);
+      cycleRounds = valid.length > 0 ? valid : ev.rs;
+    }
     if (cycleRounds.length === 0) return;
     if (newEventId === eventParam) {
-      const curIdx = cycleRounds.findIndex(rd => rd.i === roundParam);
+      const curId = dp && roundParam === dp.r2.i ? dp.r1.i : roundParam;
+      const curIdx = cycleRounds.findIndex(rd => rd.i === curId);
       const nextIdx = (curIdx + 1) % cycleRounds.length;
       onChangeRound(roundKey(newEventId, cycleRounds[nextIdx].i));
     } else {
