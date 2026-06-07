@@ -44,18 +44,21 @@ CREATE TABLE IF NOT EXISTS sor_player_best (
 );
 
 -- ── sor_census_yearly: 历史名人堂 (按年末快照) ──
--- 一行 = (is_avg, incl_cancelled, year, 截至该年末当过"名次和第一"的某选手).
+-- 一行 = (is_avg, incl_cancelled, no_podium, year, 截至该年末当过"名次和第一"的某选手).
 -- 数据源 historical_ranks_snapshot (每年末全员重排) → Rust `sorcalc history` 逐年穷举.
 -- incl_cancelled=false → 仅 17 活跃项 (2^17-1 组合); true → 含 4 废止项 (2^21-1 组合).
+-- no_podium=false → 全部选手; true → 仅从未登上比赛决赛前三的选手 (best_final_pos∈{0,>3}, 同主榜单 hidePodium)
+--   里重排"名次和第一" (`sorcalc census_np`, 由 migration 0031 补维度; v1 仅最新年, 历史时间线待 v2).
 -- 历史冻结: 过去年份永不重算, 只偶尔刷新当前年 (DELETE year=Y 重灌). 与每日 stats 流水线无关.
--- 某年 distinct = COUNT(*); 时间线 = GROUP BY year COUNT(*). 走 load_sor_yearly.sql 灌库.
+-- 某年 distinct = COUNT(*); 时间线 = GROUP BY year COUNT(*). 全量走 load_sor_yearly.sql; no_podium 增量走 load_sor_census_np.sql.
 CREATE TABLE IF NOT EXISTS sor_census_yearly (
   is_avg          BOOLEAN NOT NULL,
   incl_cancelled  BOOLEAN NOT NULL,
+  no_podium       BOOLEAN NOT NULL DEFAULT false, -- false=全部选手, true=仅未登领奖台(best_final_pos∈{0,>3})
   year            INTEGER NOT NULL,
   rank            INTEGER NOT NULL,             -- 1-based, 按 subsets_won 降序
   wca_id          VARCHAR(20) NOT NULL,
   subsets_won     BIGINT NOT NULL,
-  PRIMARY KEY (is_avg, incl_cancelled, year, wca_id)
+  PRIMARY KEY (is_avg, incl_cancelled, no_podium, year, wca_id)
 );
-CREATE INDEX IF NOT EXISTS sor_cy_lookup ON sor_census_yearly (is_avg, incl_cancelled, year, rank);
+CREATE INDEX IF NOT EXISTS sor_cy_lookup ON sor_census_yearly (is_avg, incl_cancelled, no_podium, year, rank);

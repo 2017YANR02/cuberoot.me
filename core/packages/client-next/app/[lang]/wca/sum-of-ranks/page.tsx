@@ -34,6 +34,7 @@ const ACTIVE_EVENTS = [
 const CANCELLED_EVENTS = ['333ft', 'magic', 'mmagic', '333mbo'];
 const RANK_EVENTS = [...ACTIVE_EVENTS, ...CANCELLED_EVENTS];
 const RANK_EVENT_SET = new Set(RANK_EVENTS);
+const ACTIVE_EVENT_SET = new Set(ACTIVE_EVENTS);
 const CANCELLED_SET = new Set(CANCELLED_EVENTS);
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
 
@@ -65,7 +66,7 @@ interface PlayerBest {
   best: { single?: ComboBest; average?: ComboBest };
 }
 interface CensusRow { rank: number; wcaId: string; name: string; iso2: string | null; subsetsWon: number; }
-interface Census { type: string; inclCancelled: boolean; year: number | null; years: number[]; distinct: number; totalSubsets: number; rows: CensusRow[]; }
+interface Census { type: string; inclCancelled: boolean; noPodium?: boolean; year: number | null; years: number[]; distinct: number; totalSubsets: number; rows: CensusRow[]; }
 interface TimelinePoint { year: number; distinct: number; }
 
 function SumOfRanksPageInner() {
@@ -87,6 +88,9 @@ function SumOfRanksPageInner() {
   const selectedCount = RANK_EVENTS.filter(e => selectedSet.has(e)).length;
   // 含废止项(脚拧/八板/十二板/旧多盲)勾选态 = 4 项全在选中里;控制复选框显示 + 名人堂口径.
   const includeCancelled = CANCELLED_EVENTS.every(e => selectedSet.has(e));
+  // 是否有任一废止项被选中 — 决定 selector 是否展示废止项. 一个都没选时只给 17 活跃项,
+  // 这样 selector 内部不再渲染"展开废止项"的 ▾ 三角(本页已有上方「废止项」PillToggle 控制).
+  const anyCancelledSelected = CANCELLED_EVENTS.some(e => selectedSet.has(e));
   const pushSearch = (next: URLSearchParams) => {
     const qs = next.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname);
@@ -183,25 +187,27 @@ function SumOfRanksPageInner() {
     return () => { done = true; clearTimeout(timer); ctrl.abort(); };
   }, [picked, includeCancelled]);
 
-  // 名人堂某年名单(展开时 + type/含废止/年份变化时拉)
+  // 名人堂某年名单(展开时 + type/含废止/未登台/年份变化时拉)
   useEffect(() => {
     if (!censusOpen) return;
     setCensus(null); setCensusExpanded(false);
-    const qs = new URLSearchParams({ type, v: '2' }); // v: bust 24h 缓存里缺 year/years 的旧响应
+    const qs = new URLSearchParams({ type, v: '3' }); // v: bust 缓存(新增 no_podium 维度)
     if (includeCancelled) qs.set('cancelled', '1');
+    if (hidePodium) qs.set('no_podium', '1');
     if (censusYear != null) qs.set('year', String(censusYear));
     fetch(apiUrl(`/v1/wca/sum-of-ranks/census?${qs.toString()}`))
       .then(r => (r.ok ? r.json() : null)).then(setCensus).catch(() => {});
-  }, [censusOpen, type, includeCancelled, censusYear]);
+  }, [censusOpen, type, includeCancelled, hidePodium, censusYear]);
 
-  // 名人堂历年人数时间线(年份变化不重拉,只随 type/含废止变)
+  // 名人堂历年人数时间线(年份变化不重拉,只随 type/含废止变).
+  // v1: 未登台口径只有最新年一个点, 不画时间线.
   useEffect(() => {
-    if (!censusOpen) { setTimeline(null); return; }
+    if (!censusOpen || hidePodium) { setTimeline(null); return; }
     const qs = new URLSearchParams({ type, timeline: '1' });
     if (includeCancelled) qs.set('cancelled', '1');
     fetch(apiUrl(`/v1/wca/sum-of-ranks/census?${qs.toString()}`))
       .then(r => (r.ok ? r.json() : null)).then(d => setTimeline(d?.points ?? null)).catch(() => {});
-  }, [censusOpen, type, includeCancelled]);
+  }, [censusOpen, type, includeCancelled, hidePodium]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
   const isCountryMode = !!country;
@@ -324,7 +330,7 @@ function SumOfRanksPageInner() {
             />
           </div>
           <WcaEventSelector
-            availableEvents={RANK_EVENT_SET}
+            availableEvents={anyCancelledSelected ? RANK_EVENT_SET : ACTIVE_EVENT_SET}
             selectedEvents={selectedSet}
             onToggle={toggleEvent}
             isZh={isZh}
@@ -425,8 +431,8 @@ function SumOfRanksPageInner() {
             {census && (
               <>
                 <p className="sor-census-lead">{isZh
-                  ? `${censusYearLabel != null ? `截至 ${censusYearLabel} 年末,` : ''}有 ${census.distinct} 名选手曾在 ${census.totalSubsets.toLocaleString()} 种项目组合的至少一种里排到“名次和第一”(${type === 'average' ? '平均' : '单次'}${includeCancelled ? ',含废止项' : ''},世界口径)。`
-                  : `${censusYearLabel != null ? `As of end of ${censusYearLabel}, ` : ''}${census.distinct} cubers have ranked #1 in at least one of ${census.totalSubsets.toLocaleString()} event combinations (${type}${includeCancelled ? ', incl. cancelled' : ''}, world).`}</p>
+                  ? `${censusYearLabel != null ? `截至 ${censusYearLabel} 年末,` : ''}${hidePodium ? '在从未登上比赛领奖台的选手中,' : ''}有 ${census.distinct} 名选手曾在 ${census.totalSubsets.toLocaleString()} 种项目组合的至少一种里排到“名次和第一”(${type === 'average' ? '平均' : '单次'}${includeCancelled ? ',含废止项' : ''},世界口径)。`
+                  : `${censusYearLabel != null ? `As of end of ${censusYearLabel}, ` : ''}${hidePodium ? 'among cubers who have never reached a competition podium, ' : ''}${census.distinct} cubers have ranked #1 in at least one of ${census.totalSubsets.toLocaleString()} event combinations (${type}${includeCancelled ? ', incl. cancelled' : ''}, world).`}</p>
                 <ol className="sor-census-list">
                   {(censusExpanded ? census.rows : census.rows.slice(0, 12)).map(r => {
                     const share = r.subsetsWon / census.totalSubsets * 100;
