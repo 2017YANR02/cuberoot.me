@@ -76,6 +76,7 @@ if (-not $SkipSolve) {
 # 每套 best_*.tsv 4 列: wca_id \t best_rank \t combo_count \t best_events. 在 wca_id 后插入 is_avg/scope/incl_cancelled.
 if (Test-Path $CopyTsv) { Remove-Item $CopyTsv -Force }
 $sw = [System.IO.StreamWriter]::new($CopyTsv, $false, [System.Text.UTF8Encoding]::new($false))
+$sw.NewLine = "`n"   # LF only (Windows StreamWriter 默认 \r\n 会把 \r 带进 best_events 末列)
 try {
   foreach ($v in $VARIANTS) {
     $src = Join-Path $SorDir "best_$($v.typ)_$($v.nev).tsv"

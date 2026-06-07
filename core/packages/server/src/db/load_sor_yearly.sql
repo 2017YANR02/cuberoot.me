@@ -11,15 +11,22 @@
 CREATE TABLE IF NOT EXISTS sor_census_yearly (
   is_avg          BOOLEAN NOT NULL,
   incl_cancelled  BOOLEAN NOT NULL,
+  no_podium       BOOLEAN NOT NULL DEFAULT false,
   year            INTEGER NOT NULL,
   rank            INTEGER NOT NULL,
   wca_id          VARCHAR(20) NOT NULL,
   subsets_won     BIGINT NOT NULL,
-  PRIMARY KEY (is_avg, incl_cancelled, year, wca_id)
+  PRIMARY KEY (is_avg, incl_cancelled, no_podium, year, wca_id)
 );
-CREATE INDEX IF NOT EXISTS sor_cy_lookup ON sor_census_yearly (is_avg, incl_cancelled, year, rank);
+-- 既有表补 no_podium 维度 + 改 PK/索引 (与 migration 0031 同款, 幂等).
+ALTER TABLE sor_census_yearly ADD COLUMN IF NOT EXISTS no_podium BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE sor_census_yearly DROP CONSTRAINT IF EXISTS sor_census_yearly_pkey;
+ALTER TABLE sor_census_yearly ADD PRIMARY KEY (is_avg, incl_cancelled, no_podium, year, wca_id);
+DROP INDEX IF EXISTS sor_cy_lookup;
+CREATE INDEX IF NOT EXISTS sor_cy_lookup ON sor_census_yearly (is_avg, incl_cancelled, no_podium, year, rank);
 
-TRUNCATE sor_census_yearly;
+-- 全量回填 = 全部选手口径 (no_podium=false, 由 DEFAULT 填). 只删 no_podium=false 行, 保留 census_np 增量.
+DELETE FROM sor_census_yearly WHERE no_podium = false;
 
 \copy sor_census_yearly (year, is_avg, incl_cancelled, rank, wca_id, subsets_won) FROM 'census_yearly.copy.tsv';
 

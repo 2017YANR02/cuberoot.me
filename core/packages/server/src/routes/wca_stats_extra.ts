@@ -13,7 +13,7 @@
  *   GET /v1/wca/success-rate?event=&country=&minAttempted=&page=&size=
  *   GET /v1/wca/all-events-done?country=&hidePodiumless=&page=&size=
  *   GET /v1/wca/sum-of-ranks?type=&country=&events=&hidePodium=&page=&size=
- *   GET /v1/wca/sum-of-ranks/census?type=&cancelled=&year=&timeline=  (历史名人堂:历年名次和第一)
+ *   GET /v1/wca/sum-of-ranks/census?type=&cancelled=&no_podium=&year=&timeline=  (历史名人堂:历年名次和第一)
  *   GET /v1/wca/sum-of-ranks/player-best?wcaId=           (指定选手最优项目组合)
  *   GET /v1/wca/person-best-ranks?wcaId=
  *   GET /v1/wca/person-rank-history?wcaId=&eventId=
@@ -878,18 +878,22 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
 // 历史名人堂:截至某年末, 全 2^17-1(仅活跃) / 2^21-1(含废止) 个项目组合普查谁当过"名次和第一".
 // 预计算专表 sor_census_yearly(数据源 historical_ranks_snapshot 年末快照 → Rust `sorcalc history`).
 //   ?type=single|average  ?cancelled=0|1(默认0=不含废止)  ?year=YYYY(默认最新年)
+//   ?no_podium=0|1(默认0;1=仅未登领奖台选手 best_final_pos∈{0,>3}, 跟随主榜单开关; v1 仅最新年)
 //   ?timeline=1(返回历年 distinct 人数, 画时间线用)  ?limit=
 wcaStatsExtraRoutes.get('/wca/sum-of-ranks/census', async (c) => {
   const type = (c.req.query('type') ?? 'single').toLowerCase();
   if (type !== 'single' && type !== 'average') return c.json({ error: 'Invalid type' }, 400);
   const isAvg = type === 'average';
   const inclCancelled = c.req.query('cancelled') === '1' || c.req.query('cancelled') === 'true';
+  // no_podium: 跟随主榜单"未登领奖台"开关 — 仅在从未登上比赛决赛前三的选手里重排"名次和第一".
+  // v1 只有最新年快照, 历史时间线退化为单点(前端在此态下不画时间线).
+  const noPodium = c.req.query('no_podium') === '1' || c.req.query('no_podium') === 'true';
   const totalSubsets = inclCancelled ? (2 ** 21 - 1) : (2 ** 17 - 1);
 
   // 可选年份列表(供前端选择器)
   const yearRows = await query<{ year: number }>(
-    `SELECT DISTINCT year FROM sor_census_yearly WHERE is_avg = ? AND incl_cancelled = ? ORDER BY year`,
-    [isAvg, inclCancelled],
+    `SELECT DISTINCT year FROM sor_census_yearly WHERE is_avg = ? AND incl_cancelled = ? AND no_podium = ? ORDER BY year`,
+    [isAvg, inclCancelled, noPodium],
   );
   const years = yearRows.map(r => r.year);
   const maxYear = years.length ? years[years.length - 1]! : null;
@@ -898,12 +902,12 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/census', async (c) => {
   if (c.req.query('timeline') === '1') {
     const pts = await query<{ year: number; cnt: string }>(
       `SELECT year, COUNT(*) AS cnt FROM sor_census_yearly
-       WHERE is_avg = ? AND incl_cancelled = ? GROUP BY year ORDER BY year`,
-      [isAvg, inclCancelled],
+       WHERE is_avg = ? AND incl_cancelled = ? AND no_podium = ? GROUP BY year ORDER BY year`,
+      [isAvg, inclCancelled, noPodium],
     );
     c.header('Cache-Control', CACHE_HEADER);
     return c.json({
-      type, inclCancelled, totalSubsets,
+      type, inclCancelled, noPodium, totalSubsets,
       points: pts.map(p => ({ year: p.year, distinct: parseInt(p.cnt, 10) })),
     });
   }
@@ -913,7 +917,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/census', async (c) => {
   const year = Number.isFinite(yearParam) && years.includes(yearParam) ? yearParam : maxYear;
   if (year == null) {
     c.header('Cache-Control', CACHE_HEADER);
-    return c.json({ type, inclCancelled, year: null, years, distinct: 0, totalSubsets, rows: [] });
+    return c.json({ type, inclCancelled, noPodium, year: null, years, distinct: 0, totalSubsets, rows: [] });
   }
 
   const rows = await query<{
@@ -924,20 +928,20 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/census', async (c) => {
      FROM sor_census_yearly sc
      JOIN wca_persons p ON p.wca_id = sc.wca_id
      LEFT JOIN wca_countries co ON co.id = p.country_id
-     WHERE sc.is_avg = ? AND sc.incl_cancelled = ? AND sc.year = ?
+     WHERE sc.is_avg = ? AND sc.incl_cancelled = ? AND sc.no_podium = ? AND sc.year = ?
      ORDER BY sc.rank ASC
      LIMIT ?`,
-    [isAvg, inclCancelled, year, limit],
+    [isAvg, inclCancelled, noPodium, year, limit],
   );
   const totalRow = await query<{ n: string }>(
-    `SELECT COUNT(*) AS n FROM sor_census_yearly WHERE is_avg = ? AND incl_cancelled = ? AND year = ?`,
-    [isAvg, inclCancelled, year],
+    `SELECT COUNT(*) AS n FROM sor_census_yearly WHERE is_avg = ? AND incl_cancelled = ? AND no_podium = ? AND year = ?`,
+    [isAvg, inclCancelled, noPodium, year],
   );
   const distinct = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
 
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    type, inclCancelled, year, years, distinct, totalSubsets,
+    type, inclCancelled, noPodium, year, years, distinct, totalSubsets,
     rows: rows.map(r => ({
       rank: r.rank, wcaId: r.wca_id, name: r.name,
       countryId: r.country_id, iso2: r.iso2,

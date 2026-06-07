@@ -58,6 +58,7 @@ function scopeInput(c: { req: { query(k: string): string | undefined } }) {
 }
 
 const ACTIVE_SET = new Set<string>(ACTIVE_EVENTS as readonly string[]);
+const NO_AVERAGE_EVENTS = new Set(['444bf', '555bf', '333mbf']);  // best-of-3,无排名平均
 
 // ════════════════════════════════════════════════════════════════
 // A 各地综合排行 — GET /v1/wca/fun/country-sor
@@ -108,11 +109,12 @@ wcaFunStatsRoutes.get('/wca/fun/country-sor', async (c) => {
       .filter(r => !allowed || allowed.has(r.country_id))
       .map(r => {
         let sum = 0, present = 0;
-        const per: number[] = [];
+        // per 补成完整 17 长(非选中位 = 0):客户端按 ACTIVE_EVENTS 全下标渲染矩阵
+        const per: number[] = new Array(events.length).fill(0);
         for (const i of subsetIdxs!) {
           const v = r.per_event_rank[i] ?? 0;
           sum += v;
-          per.push(v);
+          per[i] = v;
           if (v > 0 && penalties[i] !== undefined && v !== penalties[i]) present++;
         }
         return { country_id: r.country_id, sum, present, per };
@@ -321,7 +323,7 @@ async function misserHandler(c: any, flagCol: 'ever_first' | 'ever_podium' | 'ev
   if (!ACTIVE_SET.has(event)) return c.json({ error: 'Invalid event' }, 400);
   const type = (c.req.query('type') ?? defaultRankType(event)).toLowerCase();
   if (type !== 'single' && type !== 'average') return c.json({ error: 'Invalid type' }, 400);
-  if (event === '333mbf' && type === 'average') return c.json({ error: 'No average for 333mbf' }, 400);
+  if (type === 'average' && NO_AVERAGE_EVENTS.has(event)) return c.json({ error: 'No average for this event' }, 400);
   const scope = await resolveScope(scopeInput(c));
   if ('err' in scope) return c.json({ error: scope.err }, 400);
   const isAvg = type === 'average';
@@ -497,7 +499,7 @@ wcaFunStatsRoutes.get('/wca/fun/oldest-records', async (c) => {
       rank: offset + i + 1, eventId: r.event_id, type: r.is_avg ? 'average' : 'single', wcaId: r.wca_id, name: r.person_name,
       countryId: r.country_id, iso2: r.iso2, value: r.value, standingDays: r.standing_days, setDate: r.set_date,
       compId: r.set_comp_id || null, compName: r.comp_name,
-      record: r.world_rank === 1 ? 'WR' : r.continent_rank === 1 ? 'CR' : 'NR',
+      record: scopeKind === 'W' ? 'WR' : scopeKind === 'K' ? 'CR' : 'NR',
       worldRank: r.world_rank, continentRank: r.continent_rank, countryRank: r.country_rank,
     })),
   });
