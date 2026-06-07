@@ -54,6 +54,10 @@ interface EventMeta {
   i: string;        // event id
   name: string;     // "3x3x3 Cube"
   rs: RoundMeta[];  // rounds in chronological order
+  // 双轮赛制 (WCA Reg 9v, 2026):该项目前两轮作为「双轮」合并排名。
+  // cubing.com 的 data-events JSON 直接带此字段,scrapeMeta JSON.parse 后原样透传;
+  // WCA/WCA Live/WCA DB 源无此标记,客户端按规则兜底推断。
+  dual?: boolean;
 }
 
 interface LiveResult {

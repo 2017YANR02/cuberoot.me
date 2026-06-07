@@ -24,6 +24,7 @@ CREATE TABLE recons (
   person          VARCHAR(100),
   person_id       VARCHAR(20),
   person_country  VARCHAR(10),
+  co_persons      TEXT,
   raw_time        NUMERIC(8,3),
   exec_time       NUMERIC(8,3),
   memo_time       NUMERIC(8,3),

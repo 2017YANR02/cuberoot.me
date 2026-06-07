@@ -31,7 +31,7 @@ const LIST_COLUMNS = [
   'id', 'official', 'event', 'method', 'date',
   'comp', 'comp_wca_id', 'country',
   'round', 'solve_num',
-  'person', 'person_id', 'person_country',
+  'person', 'person_id', 'person_country', 'co_persons',
   'reconer', 'reconer_id',
   'value', 'raw_time', 'average', 'ao_type',
   'regional_single_record', 'regional_average_record', 'regional_aoxr_record',

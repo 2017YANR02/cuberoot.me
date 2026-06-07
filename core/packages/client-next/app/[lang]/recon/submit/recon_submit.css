@@ -618,6 +618,36 @@
   white-space: nowrap;
 }
 
+/* --- 共同完成者: 已添加选手 chip 流式排列 + 添加控件 --- */
+.submit-cosolvers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.submit-cosolver-picker {
+  flex: 1 1 220px;
+  min-width: 0;
+  max-width: 280px;
+}
+.submit-add-cosolver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px dashed color-mix(in srgb, var(--foreground) 28%, transparent);
+  border-radius: 8px;
+  color: color-mix(in srgb, var(--foreground) 70%, transparent);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+}
+.submit-add-cosolver:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* --- 已选比赛 pill — 国旗 + 名称 + 灰色 WCA ID + ✕ --- */
 .submit-comp-pill {
   display: inline-flex;
