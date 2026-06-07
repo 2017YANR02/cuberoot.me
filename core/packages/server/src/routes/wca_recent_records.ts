@@ -298,7 +298,9 @@ async function fetchOnce(): Promise<void> {
   for (const r of [...inferred, ...records]) {
     // competitionId 小写归一:WCA Live feed 与本地 dump 偶尔大小写不同(StartOfSummer… vs
     // Startof…),同一条纪录两源都出时需当成重复去掉。
-    const k = `${r.competitionId.toLowerCase()}|${r.eventId}|${r.type}|${r.attemptResult}`;
+    // 含 personName:同场同项同成绩可有多人并列破纪录(如 FM 9 人并列 17 步 AsR),
+    // 不带选手会把他们误并成一条,首页只剩 1 个。
+    const k = `${r.competitionId.toLowerCase()}|${r.eventId}|${r.type}|${r.attemptResult}|${r.personName.trim().toLowerCase()}`;
     if (seen.has(k)) continue;
     seen.add(k);
     merged.push(r);

@@ -33,6 +33,16 @@ function shiftIso(iso: string, days: number): string {
   return toIsoDate(d);
 }
 
+// 比赛日期(start_date/end_date)存的是「比赛当地时区」的日历日。若用用户浏览器本地 today
+// 分桶,领先时区正在进行的比赛会被误判:中国比赛在美洲看像「明天才开始」而落进「未来」。
+// 用比赛经度估算 UTC 偏移(≈ 经度/15 小时)得到比赛当地「今天」,各比赛按自己的本地日期分桶。
+// 经度缺失时回退用户本地日期(同旧行为)。
+function compLocalDate(nowMs: number, lon: number | undefined): string {
+  if (lon == null || !Number.isFinite(lon)) return toIsoDate(new Date(nowMs));
+  const d = new Date(nowMs + Math.round((lon / 15) * 60) * 60_000);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
 function groupByCountry(comps: Comp[]): Group[] {
   const byIso = new Map<string, Comp[]>();
   for (const c of comps) {
@@ -112,14 +122,16 @@ export default function OngoingComps({ lang }: Props) {
 
   const buckets = useMemo<{ upcoming: Comp[]; inProgress: Comp[]; past: Comp[] }>(() => {
     if (!comps) return { upcoming: [], inProgress: [], past: [] };
-    const today = toIsoDate(new Date());
-    const monthAgo = shiftIso(today, -30);
-    const monthAhead = shiftIso(today, 30);
+    const nowMs = Date.now();
+    const userToday = toIsoDate(new Date(nowMs));
+    const monthAgo = shiftIso(userToday, -30);
+    const monthAhead = shiftIso(userToday, 30);
     const upcoming: Comp[] = [];
     const inProgress: Comp[] = [];
     const past: Comp[] = [];
     for (const c of comps) {
       const end = c.end_date || c.start_date;
+      const today = compLocalDate(nowMs, c.longitude_degrees);
       if (c.start_date > today) {
         if (c.start_date <= monthAhead) upcoming.push(c);
       } else if (end >= today) {
