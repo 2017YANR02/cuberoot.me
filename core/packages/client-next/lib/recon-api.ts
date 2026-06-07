@@ -50,6 +50,23 @@ export async function getRecon(id: number): Promise<ReconSolve> {
   return apiGet<ReconSolve>(`/${id}`);
 }
 
+// 个人复盘主页:某选手参与的全部 recon(作为选手 / 合作者 / 复盘者 / 添加者)。
+// 返回字段含 addedBy/addedById(LIST_COLUMNS 没有,角色筛选用)。
+// 端点未部署(dev 打 prod / 前后端部署错位)时降级:用全量列表按 选手/合作者/复盘者
+// 过滤(added_by_id 不在 LIST_COLUMNS,降级模式下「添加者」角色暂缺)。
+export async function listPersonRecons(wcaId: string): Promise<ReconSolve[]> {
+  try {
+    return await apiGet<ReconSolve[]>(`/person/${encodeURIComponent(wcaId)}`);
+  } catch {
+    const all = await listRecons();
+    return all.filter(s =>
+      s.personId === wcaId
+      || s.reconerId === wcaId
+      || (s.coPersons?.some(c => c.id === wcaId) ?? false),
+    );
+  }
+}
+
 // 首页「今日复盘」: 最新一条。主用轻量 /latest 端点; 端点缺失/出错时回退到 /list 取首条
 // (list 已按 id DESC 排序), 保证旧后端 / dev 代理也能渲染。
 export async function getLatestRecon(): Promise<ReconSolve | null> {

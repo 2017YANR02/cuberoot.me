@@ -42,6 +42,9 @@ const LIST_COLUMNS = [
 // 首页「今日复盘」卡片用:列表字段 + wca_scramble(打乱图回退) + created_at(分组用)。
 const TODAY_COLUMNS = LIST_COLUMNS + ', wca_scramble, created_at';
 
+// 个人主页用:列表字段 + 添加者(added_by/added_by_id 不在 LIST_COLUMNS,个人页要按添加者角色筛)。
+const PERSON_COLUMNS = LIST_COLUMNS + ', added_by, added_by_id';
+
 reconRoutes.get('/recon/list', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   const wcaId = c.req.query('wcaId');
@@ -53,6 +56,26 @@ reconRoutes.get('/recon/list', async (c) => {
     rows = await query(`SELECT ${LIST_COLUMNS} FROM recons ORDER BY id DESC`);
   }
 
+  return c.json(rows.map(rowToJson));
+});
+
+// ==================== GET /v1/recon/person/:wcaId ====================
+// 个人复盘主页:某选手参与的全部 recon——作为选手(person_id)、合作者(co_persons 含其 id)、
+// 复盘者(reconer_id) 或 添加者(added_by_id)。客户端再按角色 tab 过滤。
+// NOTE: co_persons 是 TEXT 存 JSON 数组;NULLIF 把空串挡掉(''::jsonb 会报错),
+//       jsonb 数组 containment @> [{"id":...}] 命中任一合作者条目。
+reconRoutes.get('/recon/person/:wcaId', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  const wcaId = (c.req.param('wcaId') ?? '').trim();
+  if (!wcaId) return c.json([]);
+  const coMatch = JSON.stringify([{ id: wcaId }]);
+  const rows = await query<Record<string, unknown>>(
+    `SELECT ${PERSON_COLUMNS} FROM recons
+     WHERE person_id = ? OR reconer_id = ? OR added_by_id = ?
+        OR NULLIF(co_persons, '')::jsonb @> ?::jsonb
+     ORDER BY id DESC`,
+    [wcaId, wcaId, wcaId, coMatch],
+  );
   return c.json(rows.map(rowToJson));
 });
 

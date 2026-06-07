@@ -15,7 +15,6 @@ import type { ReconSolve } from '@cuberoot/shared';
 import { useReconStore, type SortKey } from '@/lib/recon-store';
 import {
   formatResult, formatTime, formatAvg, formatAoXR, formatRound, localizeRound,
-  wcaPersonUrl,
 } from '@/lib/recon-utils';
 import { compLinkProps } from '@/lib/comp-link';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -617,24 +616,27 @@ export default function ReconListPage() {
           </span>
         );
       case 'person': {
-        const flag = solve.personCountry ? <Flag iso2={solve.personCountry} className="recon-inline-flag" /> : null;
-        const name = displayCuberName(solve.person || '', isZh);
-        if (solve.personId) {
-          return (
-            <>
-              {flag}{' '}
-              <a
-                href={wcaPersonUrl(solve.personId)}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {name}
-              </a>
-            </>
-          );
-        }
-        return <>{flag} {name}</>;
+        // NOTE: 主选手(成绩归属)+ 共同完成者,与详情页一致用 & 串联
+        const cubers = [
+          { name: solve.person || '', id: solve.personId, country: solve.personCountry },
+          ...(solve.coPersons ?? []),
+        ].filter(c => c.name);
+        if (cubers.length === 0) return '';
+        return (
+          <>
+            {cubers.map((c, i) => (
+              <span key={i}>
+                {i > 0 ? <span className="recon-cuber-sep"> &amp; </span> : null}
+                {c.country ? <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</> : null}
+                {c.id ? (
+                  <Link href={`/recon/person/${c.id}`} onClick={(e) => e.stopPropagation()}>
+                    {displayCuberName(c.name, isZh)}
+                  </Link>
+                ) : displayCuberName(c.name, isZh)}
+              </span>
+            ))}
+          </>
+        );
       }
       case 'reconer': {
         // NOTE: 复盘者 country 通过 reconerId 反查 person_countries.json
@@ -646,14 +648,12 @@ export default function ReconListPage() {
           return (
             <>
               {flag}
-              <a
-                href={wcaPersonUrl(solve.reconerId)}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href={`/recon/person/${solve.reconerId}`}
                 onClick={(e) => e.stopPropagation()}
               >
                 {name}
-              </a>
+              </Link>
             </>
           );
         }
@@ -831,7 +831,9 @@ export default function ReconListPage() {
                     {COLUMNS.map((col) => {
                       // NOTE: col-solver 和 col-comp 需要溢出 tooltip
                       const needsTip = col.className?.includes('col-solver') || col.className?.includes('col-comp');
-                      const tipText = col.key === 'person' ? (solve.person || '') : col.key === 'comp' ? (solve.comp || '') : '';
+                      const tipText = col.key === 'person'
+                        ? [solve.person, ...(solve.coPersons?.map(c => c.name) ?? [])].filter(Boolean).join(' & ')
+                        : col.key === 'comp' ? (solve.comp || '') : '';
                       return (
                         <td
                           key={col.key || col.labelKey}
