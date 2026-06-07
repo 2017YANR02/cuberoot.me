@@ -233,6 +233,14 @@ function AllResultsPageInner() {
           <label>{isZh ? '显示' : 'Show'}</label>
           <ShowToggle value={show} onChange={handleShowChange} isZh={isZh} />
         </div>
+        <div className="wse-filter">
+          <label>{isZh ? '类型' : 'Type'}</label>
+          <select value={type} onChange={e => update('type', e.target.value)}>
+            <option value="single">{isZh ? '单次' : 'Single'}</option>
+            {allowAvg && <option value="average">{isZh ? '平均' : 'Average'}</option>}
+          </select>
+        </div>
+        <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter wse-filter-show">
           <label>{isZh ? '口径' : 'Basis'}</label>
           <div className="wse-show-toggle">
@@ -252,7 +260,6 @@ function AllResultsPageInner() {
             </button>
           </div>
         </div>
-        <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
           <label>{isZh ? '年份' : 'Year'}</label>
           <select value={year} onChange={e => update('year', e.target.value === '0' ? '' : e.target.value)}>
@@ -272,13 +279,6 @@ function AllResultsPageInner() {
             {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
               <option key={m} value={m}>{m}</option>
             ))}
-          </select>
-        </div>
-        <div className="wse-filter">
-          <label>{isZh ? '类型' : 'Type'}</label>
-          <select value={type} onChange={e => update('type', e.target.value)}>
-            <option value="single">{isZh ? '单次' : 'Single'}</option>
-            {allowAvg && <option value="average">{isZh ? '平均' : 'Average'}</option>}
           </select>
         </div>
         {show === 'results' && (

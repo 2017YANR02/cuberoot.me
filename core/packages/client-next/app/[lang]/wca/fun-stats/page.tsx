@@ -18,6 +18,7 @@ import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryName } from '@/lib/country-name';
 import { localizeCompName } from '@/lib/comp-localize';
+import { loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { apiUrl } from '@/lib/api-base';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -126,13 +127,24 @@ function FunStatsInner() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // 加载比赛中文名映射(comp_names_zh.json + cn-comp-names 兜底),完成后重渲染应用 zh 名
+  const [flagVer, setFlagVer] = useState(() => flagDataVersion());
+  useEffect(() => { void loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); }); }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+
   const countries = useCountries();
   const restrictTo = useMemo(() => countries.map(c => c.iso2).filter((x): x is string => !!x), [countries]);
 
   const personHref = (id: string) => `/${lang}/wca/persons/${id}`;
 
-  // 切榜重置分页 + 默认类型
+  // F 平均变体排除无平均的项目(444bf/555bf/333mbf)
+  const availableEvents = useMemo(() => {
+    const base = ACTIVE_EVENTS.filter(e => !(stat.fixed?.type === 'average' && NO_AVERAGE.has(e)));
+    return new Set(base);
+  }, [stat.fixed?.type]);
+
+  // 切榜重置分页 + 默认类型 + 清多选(避免上一个榜的子集泄漏到新榜)
   useEffect(() => { setPage(1); }, [statId, region, event, typeAvg, year, size]);
+  useEffect(() => { setSelEvents(new Set()); }, [statId]);
   useEffect(() => {
     if (stat.typeToggle) setTypeAvg(defaultRankType(event) === 'average');
   }, [statId, event, stat.typeToggle]);
@@ -158,8 +170,9 @@ function FunStatsInner() {
     if (stat.fixed) for (const [k, v] of Object.entries(stat.fixed)) qs.set(k, v);
     qs.set('scope', region);
     if (stat.eventMode === 'select') qs.set('event', event);
-    if (stat.eventMode === 'multi' && selEvents.size > 0 && selEvents.size < ACTIVE_EVENTS.length) {
-      qs.set('events', [...selEvents].join(','));
+    if (stat.eventMode === 'multi') {
+      const sel = [...selEvents].filter(e => availableEvents.has(e));
+      if (sel.length > 0 && sel.length < availableEvents.size) qs.set('events', sel.join(','));
     }
     if (stat.typeToggle) qs.set('type', typeAvg ? 'average' : 'single');
     if (stat.needsYear && year) qs.set('year', String(year));
@@ -172,7 +185,7 @@ function FunStatsInner() {
       .catch(e => { if (alive) { setErr(String(e.message ?? e)); setResp(null); } })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, [stat, region, event, typeAvg, year, page, size, selEvents]);
+  }, [stat, region, event, typeAvg, year, page, size, selEvents, availableEvents]);
 
   const selectStat = (id: string) => {
     const sp = new URLSearchParams(params.toString());
@@ -184,12 +197,6 @@ function FunStatsInner() {
   const total = resp?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / size));
   const kind = typeAvg ? 'average' : 'single';
-
-  // F 平均变体排除无平均的项目(444bf/555bf/333mbf)
-  const availableEvents = useMemo(() => {
-    const base = ACTIVE_EVENTS.filter(e => !(stat.fixed?.type === 'average' && NO_AVERAGE.has(e)));
-    return new Set(base);
-  }, [stat.fixed?.type]);
 
   return (
     <div className="fun-stats">
@@ -223,7 +230,7 @@ function FunStatsInner() {
           {/* 控件 */}
           <div className="fun-stats-controls">
             <RegionPicker isZh={isZh} value={region} onChange={setRegion} restrictTo={restrictTo} />
-            {stat.typeToggle && (
+            {stat.typeToggle && !NO_AVERAGE.has(event) && (
               <PillToggle
                 value={typeAvg} onChange={setTypeAvg}
                 onLabel={isZh ? '平均' : 'Average'} offLabel={isZh ? '单次' : 'Single'}
