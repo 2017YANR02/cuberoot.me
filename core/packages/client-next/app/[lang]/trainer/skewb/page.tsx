@@ -8,7 +8,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Layers, RotateCcw, Eye, TimerReset, ArrowRight } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES } from '@cuberoot/shared';
@@ -74,7 +74,7 @@ export default function SkewbTrainerPage() {
           availableEvents={SELECTOR_EVENTS}
           onlyAvailable
           selectedEvent="skewb"
-          onSelect={(id) => router.push(`/${lang}/trainer/${id}`)}
+          onSelect={(id) => router.push(`${lang === 'zh' ? '/zh' : ''}/trainer/${id}`)}
           isZh={isZh}
         />
       </div>
