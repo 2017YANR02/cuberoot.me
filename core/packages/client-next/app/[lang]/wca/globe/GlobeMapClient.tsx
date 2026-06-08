@@ -12,7 +12,7 @@
  * '../components/X' → '@/components/X', Flag from utils/flag → '@/components/Flag'.
  */
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft, ChevronLeft, ChevronRight, Layers, Flame, Globe, Map as MapIcon, Globe2, HelpCircle, Download } from 'lucide-react';
@@ -3024,7 +3024,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         <Link
           href="/wca/comp"
           className="globe-logo-link"
-          onClick={embedded ? (e) => { e.preventDefault(); window.location.href = window.location.pathname; } : undefined}
+          onClick={embedded ? (e) => { e.preventDefault(); if (window.history.length > 1) window.history.back(); else window.location.href = window.location.pathname; } : undefined}
           title={t('globe.backToCalendar') as string}
           aria-label="Home"
         >

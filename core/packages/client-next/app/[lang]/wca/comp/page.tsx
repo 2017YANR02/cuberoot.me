@@ -12,7 +12,7 @@
  */
 import { Suspense, useState, useEffect, useMemo, useCallback, useRef, useReducer } from 'react';
 import type { CSSProperties } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, Ban, LayoutGrid, HelpCircle, X as XIcon } from 'lucide-react';
 import { getLangQuery } from '@/i18n/i18n-client';
@@ -1049,14 +1049,22 @@ function CalendarPageInner() {
     window.history.replaceState(null, '', newUrl);
   }, [compQuery, viewMode]);
 
-  // NOTE: viewMode 始终写入 URL ?view= — 避免同状态两种 URL 并存,改默认值时老链接也不漂移
-  useEffect(() => {
+  // 视图切换走 pushState(进浏览器历史),配合下面的 popstate 监听,让 iOS 左缘左滑 /
+  // 浏览器后退能在视图间返回(如 globe → 日历)。year/month/q 仍用 replaceState(不堆历史)。
+  const changeView = useCallback((next: ViewMode) => {
+    setViewMode(next);
     if (typeof window === 'undefined') return;
     const p = new URLSearchParams(window.location.search);
-    p.set('view', viewMode);
-    const newUrl = `${window.location.pathname}?${p.toString()}${window.location.hash}`;
-    window.history.replaceState(null, '', newUrl);
-  }, [viewMode]);
+    p.set('view', next);
+    window.history.pushState(null, '', `${window.location.pathname}?${p.toString()}${window.location.hash}`);
+  }, []);
+
+  // 后退手势 / 后退键(popstate)→ 按 URL 的 view 恢复视图(只 set 不 push,避免循环)
+  useEffect(() => {
+    const onPop = () => setViewMode(readViewFromUrl() ?? 'calendar');
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   useEffect(() => {
     fetch(statsUrl('/stats/upcoming_comps.json'))
@@ -1514,7 +1522,7 @@ function CalendarPageInner() {
             role="tab"
             aria-selected={viewMode === 'calendar'}
             className={`view-btn ${viewMode === 'calendar' ? 'is-active' : ''}`}
-            onClick={() => setViewMode('calendar')}
+            onClick={() => changeView('calendar')}
             aria-label={isZh ? '日历' : 'Calendar'}
             title={isZh ? '日历' : 'Calendar'}
           >
@@ -1524,7 +1532,7 @@ function CalendarPageInner() {
             role="tab"
             aria-selected={viewMode === 'compact'}
             className={`view-btn ${viewMode === 'compact' ? 'is-active' : ''}`}
-            onClick={() => setViewMode('compact')}
+            onClick={() => changeView('compact')}
             aria-label={isZh ? '紧凑日历(国旗)' : 'Compact (flags)'}
             title={isZh ? '紧凑日历(国旗)' : 'Compact (flags)'}
           >
@@ -1534,7 +1542,7 @@ function CalendarPageInner() {
             role="tab"
             aria-selected={viewMode === 'list'}
             className={`view-btn ${viewMode === 'list' ? 'is-active' : ''}`}
-            onClick={() => { setViewMode('list'); setMode('all'); }}
+            onClick={() => { changeView('list'); setMode('all'); }}
             aria-label={isZh ? '列表' : 'List'}
             title={isZh ? '列表' : 'List'}
           >
@@ -1544,7 +1552,7 @@ function CalendarPageInner() {
             role="tab"
             aria-selected={viewMode === 'globe'}
             className={`view-btn ${viewMode === 'globe' ? 'is-active' : ''}`}
-            onClick={() => setViewMode('globe')}
+            onClick={() => changeView('globe')}
             aria-label={isZh ? '地球' : 'Globe'}
             title={isZh ? '地球' : 'Globe'}
           >
