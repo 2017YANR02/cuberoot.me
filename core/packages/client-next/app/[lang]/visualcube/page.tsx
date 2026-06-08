@@ -28,7 +28,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Copy, Check, Download, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import {

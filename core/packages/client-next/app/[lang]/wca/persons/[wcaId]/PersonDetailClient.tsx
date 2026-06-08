@@ -9,7 +9,7 @@
 // read it from the browser URL client-side instead.
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import {

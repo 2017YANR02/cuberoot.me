@@ -3,7 +3,7 @@
 // Landing — WCA Live last-10-days WR/CR/NR list (60s sync).
 // Text rendering reuses the server-side Python format_cli template (id-cached).
 import { useEffect, useState, useMemo } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { Copy, Check } from 'lucide-react';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps } from '@/lib/comp-link';

@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useCallback } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { HelpCircle } from 'lucide-react';

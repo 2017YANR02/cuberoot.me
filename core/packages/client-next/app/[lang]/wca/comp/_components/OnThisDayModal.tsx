@@ -5,7 +5,7 @@
  * Ported from packages/client/src/pages/calendar/OnThisDayModal.tsx.
  */
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { loadFlagData, flagDataVersion } from '@/lib/country-flags';

@@ -13,7 +13,7 @@
  *   7. 算法 / 参考资料
  */
 import { Suspense, lazy, useMemo, useState, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

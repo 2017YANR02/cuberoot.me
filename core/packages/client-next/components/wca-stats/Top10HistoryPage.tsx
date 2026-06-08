@@ -4,7 +4,7 @@
 // 数据源:stats/top10_history.json(主索引) + stats/top10_history/{eventId}.json(per-event lazy)
 // 当前仅作 wr_metric ranking 面板的嵌入(embedded)使用。
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Play, Pause, Download } from 'lucide-react';
 import { Flag } from '@/components/Flag';

@@ -3,7 +3,7 @@
  * /wca/comp/sources — data flow diagram.
  * Ported from packages/client/src/pages/comp/CompSourcesPage.tsx.
  */
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Database, Globe, Radio, FileText } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

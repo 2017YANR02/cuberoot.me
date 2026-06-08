@@ -25,7 +25,7 @@ import {
   useState,
   type JSX,
 } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Play, Timer, X } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

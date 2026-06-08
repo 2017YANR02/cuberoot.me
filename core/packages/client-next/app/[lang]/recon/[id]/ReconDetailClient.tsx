@@ -5,8 +5,8 @@
  * Restored features: SameRound nav, SameCompEvent table, normalized-cross block, full StatsGrid,
  * comment reply tree, pin/edit/delete, alternatives section.
  */
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import Link from 'next/link';
+import { useEffect, useState, useCallback, useMemo, useRef, Fragment } from 'react';
+import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import {
@@ -149,18 +149,21 @@ export default function ReconDetailClient() {
               <>{' '}<EventIcon event={solve.event} />{' '}{eventDisplayName(solve.event, isZh)}</>
             )}
             {cubers.map((c, i) => (
-              <span key={i} className="detail-cuber">
-                {i > 0 ? <span className="detail-cuber-sep"> &amp; </span> : ' '}
-                {c.country && <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</>}
-                {c.id ? (
-                  <Link
-                    href={i === 0 ? personLinkForSolve(solve, isZh) : personHref(c.id, isZh)}
-                    className="detail-person-link"
-                  >
-                    {displayCuberName(c.name, isZh)}
-                  </Link>
-                ) : displayCuberName(c.name, isZh)}
-              </span>
+              <Fragment key={i}>
+                {' '}
+                <span className="detail-cuber">
+                  {i > 0 && <span className="detail-cuber-sep">&amp;{' '}</span>}
+                  {c.country && <Flag iso2={c.country} className="recon-inline-flag" />}
+                  {c.id ? (
+                    <Link
+                      href={i === 0 ? personLinkForSolve(solve, isZh) : personHref(c.id, isZh)}
+                      className="detail-person-link"
+                    >
+                      {displayCuberName(c.name, isZh)}
+                    </Link>
+                  ) : displayCuberName(c.name, isZh)}
+                </span>
+              </Fragment>
             ))}
             {' '}
             <Link href={`/recon/submit/${solve.id}`} className="recon-btn recon-btn-edit detail-title-edit" title={t('recon.edit')} aria-label={t('recon.edit')}>

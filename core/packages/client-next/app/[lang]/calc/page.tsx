@@ -6,7 +6,7 @@
 // 比赛名 → 图表 → 输入网格 → 控制按钮 → 进度滑杆 → 数字键盘 → 项目选择器 → 统计表
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Sigma, HelpCircle } from 'lucide-react';
 import { useCalcStore, isMbfForEvent, solveCountForEvent } from './_components/stores/calc_store';

@@ -12,7 +12,7 @@
  */
 import { Suspense, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useSearchParams as useNextSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Shuffle, HelpCircle } from 'lucide-react';
 import LiquidGlassChips from '@/components/LiquidGlassChips';

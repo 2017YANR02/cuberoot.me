@@ -3,7 +3,7 @@
 /**
  * /wca/viz-about — 成绩分布可视化说明页
  */
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

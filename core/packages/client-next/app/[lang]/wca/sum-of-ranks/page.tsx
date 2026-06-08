@@ -2,7 +2,7 @@
 
 // Ported from packages/client/src/pages/wca_stats/SumOfRanksPage.tsx.
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';

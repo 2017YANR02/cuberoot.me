@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { FileText } from 'lucide-react';
 import type { CatalogEntry, Lang } from '../_lib/useTutorialCatalog';

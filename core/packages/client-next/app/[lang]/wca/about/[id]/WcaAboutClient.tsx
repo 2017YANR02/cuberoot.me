@@ -10,7 +10,7 @@
  * 内容来自 entries/<id>.ts 里的 AboutEntry,通过 ABOUT_REGISTRY 索引。
  */
 import { useMemo } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink } from 'lucide-react';

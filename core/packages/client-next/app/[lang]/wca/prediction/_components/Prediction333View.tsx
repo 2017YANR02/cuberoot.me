@@ -8,7 +8,7 @@
 
 import { useEffect, useState, useContext, createContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight as ArrowRightIcon, Menu, X as XIcon } from 'lucide-react';
 

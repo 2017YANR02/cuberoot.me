@@ -18,7 +18,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink, FileText, Sparkles } from 'lucide-react';

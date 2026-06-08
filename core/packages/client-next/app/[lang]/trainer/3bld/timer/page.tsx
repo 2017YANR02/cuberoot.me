@@ -18,7 +18,7 @@ import {
   useState,
   type JSX,
 } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { RotateCcw, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

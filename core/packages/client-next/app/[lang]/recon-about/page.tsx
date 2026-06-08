@@ -3,7 +3,7 @@
 /**
  * /recon-about — 复盘库说明页
  */
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -110,7 +110,7 @@ export default function ReconAboutPage() {
             {t(' — 找到比赛具体某轮的成绩单,再回头补复盘。', ' — find an exact round\'s scoresheet, then come back to add the recon.')}
           </li>
           <li>
-            <Link href="/analyze">{t('CFOP 分析器', 'CFOP Analyzer')}</Link>
+            <Link href="/scramble/analyzer">{t('CFOP 分析器', 'CFOP Analyzer')}</Link>
             {t(' — 给一个 scramble + solution,自动切 cross / F2L / OLL / PLL 节点。', ' — given a scramble and solution, auto-segments cross / F2L / OLL / PLL stages.')}
           </li>
           <li>

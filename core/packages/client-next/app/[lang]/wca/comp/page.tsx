@@ -12,6 +12,7 @@
  */
 import { Suspense, useState, useEffect, useMemo, useCallback, useRef, useReducer } from 'react';
 import type { CSSProperties } from 'react';
+import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, Ban, LayoutGrid, HelpCircle, X as XIcon } from 'lucide-react';
@@ -704,11 +705,7 @@ function readQFromUrl(): string {
 }
 
 type ViewMode = 'calendar' | 'compact' | 'list' | 'globe';
-function readViewFromUrl(): ViewMode | null {
-  if (typeof window === 'undefined') return null;
-  const v = new URLSearchParams(window.location.search).get('view');
-  return v === 'calendar' || v === 'compact' || v === 'list' || v === 'globe' ? v : null;
-}
+const VIEW_MODES: ViewMode[] = ['calendar', 'compact', 'list', 'globe'];
 
 // ── 列表视图 ──────────────────────────────────────────────────────────────
 // 不分月，按 start_date 倒序排列、按年分组；点行同样打开 CompModal。
@@ -995,7 +992,12 @@ function CalendarPageInner() {
   // 缺 key = 不过滤此项目。chip 单击循环：undefined → 1 → ... → max → 'any' → undefined。
   // 'any' 状态在 UI 上仅通过 is-active 边框体现（badge 空），不显式写"≥1"等文字。
   const [eventFilters, setEventFilters] = useState<Record<string, 'any' | 1 | 2 | 3 | 4>>({});
-  const [viewMode, setViewMode] = useState<ViewMode>(() => readViewFromUrl() ?? 'calendar');
+  // 视图状态走 URL(nuqs):切换 push 进历史 → iOS 左缘滑 / 浏览器后退能在视图间返回;
+  // 后退 / 前进由 nuqs 自动同步,无需手写 popstate。calendar 为默认值,自动从 URL 省略。
+  const [viewMode, setViewMode] = useQueryState(
+    'view',
+    parseAsStringEnum<ViewMode>(VIEW_MODES).withDefault('calendar').withOptions({ history: 'push' }),
+  );
   // 列表视图下的年月范围过滤（YYYY-MM 字符串；不合规或空 = 不参与过滤）
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -1049,22 +1051,7 @@ function CalendarPageInner() {
     window.history.replaceState(null, '', newUrl);
   }, [compQuery, viewMode]);
 
-  // 视图切换走 pushState(进浏览器历史),配合下面的 popstate 监听,让 iOS 左缘左滑 /
-  // 浏览器后退能在视图间返回(如 globe → 日历)。year/month/q 仍用 replaceState(不堆历史)。
-  const changeView = useCallback((next: ViewMode) => {
-    setViewMode(next);
-    if (typeof window === 'undefined') return;
-    const p = new URLSearchParams(window.location.search);
-    p.set('view', next);
-    window.history.pushState(null, '', `${window.location.pathname}?${p.toString()}${window.location.hash}`);
-  }, []);
-
-  // 后退手势 / 后退键(popstate)→ 按 URL 的 view 恢复视图(只 set 不 push,避免循环)
-  useEffect(() => {
-    const onPop = () => setViewMode(readViewFromUrl() ?? 'calendar');
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-  }, []);
+  // 视图切换 / 后退由上面的 useQueryState(nuqs)自动管理,无需手写 changeView / popstate。
 
   useEffect(() => {
     fetch(statsUrl('/stats/upcoming_comps.json'))
@@ -1522,7 +1509,7 @@ function CalendarPageInner() {
             role="tab"
             aria-selected={viewMode === 'calendar'}
             className={`view-btn ${viewMode === 'calendar' ? 'is-active' : ''}`}
-            onClick={() => changeView('calendar')}
+            onClick={() => setViewMode('calendar')}
             aria-label={isZh ? '日历' : 'Calendar'}
             title={isZh ? '日历' : 'Calendar'}
           >
@@ -1532,7 +1519,7 @@ function CalendarPageInner() {
             role="tab"
             aria-selected={viewMode === 'compact'}
             className={`view-btn ${viewMode === 'compact' ? 'is-active' : ''}`}
-            onClick={() => changeView('compact')}
+            onClick={() => setViewMode('compact')}
             aria-label={isZh ? '紧凑日历(国旗)' : 'Compact (flags)'}
             title={isZh ? '紧凑日历(国旗)' : 'Compact (flags)'}
           >
@@ -1542,7 +1529,7 @@ function CalendarPageInner() {
             role="tab"
             aria-selected={viewMode === 'list'}
             className={`view-btn ${viewMode === 'list' ? 'is-active' : ''}`}
-            onClick={() => { changeView('list'); setMode('all'); }}
+            onClick={() => { setViewMode('list'); setMode('all'); }}
             aria-label={isZh ? '列表' : 'List'}
             title={isZh ? '列表' : 'List'}
           >
@@ -1552,7 +1539,7 @@ function CalendarPageInner() {
             role="tab"
             aria-selected={viewMode === 'globe'}
             className={`view-btn ${viewMode === 'globe' ? 'is-active' : ''}`}
-            onClick={() => changeView('globe')}
+            onClick={() => setViewMode('globe')}
             aria-label={isZh ? '地球' : 'Globe'}
             title={isZh ? '地球' : 'Globe'}
           >

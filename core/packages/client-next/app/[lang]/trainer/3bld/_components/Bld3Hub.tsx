@@ -5,7 +5,7 @@
 // 三盲/3BLD. `embedded` drops the page-level wrapper + big title so it nests
 // cleanly under the /trainer landing.
 
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Brain, Library, FileText, Compass, Timer as TimerIcon } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon/EventIcon';

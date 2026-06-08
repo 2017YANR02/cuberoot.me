@@ -5,7 +5,7 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { TriangleAlert, ArrowLeft, LogIn } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
