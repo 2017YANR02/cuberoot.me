@@ -1,0 +1,17 @@
+/* JetBrains Mono — 魔方记法 / 公式专用(对齐主站 alg 工具)。
+   单独成文件:Tailwind v4 入口(globals.css 的 @import "tailwindcss")会吃掉顶层 @font-face,
+   所以放这里、由 layout 单独 import,自带 woff2。 */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-latin-500-normal.woff2") format("woff2");
+}
