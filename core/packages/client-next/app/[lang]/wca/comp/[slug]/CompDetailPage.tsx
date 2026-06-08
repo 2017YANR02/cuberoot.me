@@ -6,7 +6,8 @@
  */
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from '@/components/AppLink';
-import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check } from 'lucide-react';
 import { Flag } from '@/components/Flag';
@@ -379,16 +380,40 @@ export default function CompDetailPage() {
   const router = useRouter();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const searchParams = useSearchParams();
   const user = useAuthStore(s => s.user);
   const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
 
-  const setSearchParams = useCallback((next: URLSearchParams, opts?: { replace?: boolean }) => {
-    const qs = next.toString();
-    const url = qs ? `/wca/comp/${slug}?${qs}` : `/wca/comp/${slug}`;
-    if (opts?.replace) router.replace(url);
-    else router.push(url);
-  }, [router, slug]);
+  // URL 状态走 nuqs。导航型(项目 / 轮次 / 视图 / 预排名多选)默认 push,后退可逐步返回;
+  // 筛选 / 赛程布局 / 数据源覆盖是过滤/子开关,走 replace 不堆历史。多键联动(项目+轮次)
+  // 用各自 setter 同 tick 调用,nuqs 自动合并;需要 replace 写入时传 per-call { history: 'replace' }。
+  const [eventParam, setEventParam] = useQueryState(
+    'event',
+    parseAsString.withDefault('').withOptions({ history: 'push', scroll: false }),
+  );
+  const [roundUrlParam, setRoundUrlParam] = useQueryState(
+    'round',
+    parseAsString.withDefault('').withOptions({ history: 'push', scroll: false }),
+  );
+  const [explicitView, setExplicitView] = useQueryState(
+    'view',
+    parseAsStringEnum<'live' | 'psych' | 'schedule'>(['live', 'psych', 'schedule']).withOptions({ history: 'push', scroll: false }),
+  );
+  const [psychEventParam, setPsychEventParam] = useQueryState(
+    'psychEvent',
+    parseAsString.withDefault('').withOptions({ history: 'push', scroll: false }),
+  );
+  const [filterParam, setFilterParam] = useQueryState(
+    'filter',
+    parseAsString.withDefault('all').withOptions({ history: 'replace', scroll: false }),
+  );
+  const [layoutParam, setLayoutParam] = useQueryState(
+    'layout',
+    parseAsStringEnum<'calendar' | 'table'>(['calendar', 'table']).withOptions({ history: 'replace', scroll: false }),
+  );
+  const [sourceParam, setSourceParam] = useQueryState(
+    'source',
+    parseAsString.withOptions({ history: 'replace', scroll: false }),
+  );
 
   useEffect(() => {
     if (rawSlug && rawSlug !== slug) {
@@ -440,10 +465,8 @@ export default function CompDetailPage() {
     return () => { cancel = true; };
   }, [slug, isZh, compInfo]);
 
-  const eventParam = searchParams?.get('event') || '';
   // URL 用数字轮号(1,2,3,4),内部仍以 round_type_id 当 key。读时数字→round_type_id,
   // 并兼容老的字母 round_type_id 直链(?round=d 等)。
-  const roundUrlParam = searchParams?.get('round') || '';
   const roundParam = useMemo(() => {
     if (!roundUrlParam || !data || !eventParam) return '';
     const n = Number(roundUrlParam);
@@ -456,8 +479,6 @@ export default function CompDetailPage() {
     if (ev?.rs.some(r => r.i === roundUrlParam)) return roundUrlParam;
     return '';
   }, [roundUrlParam, data, eventParam]);
-  const filterParam = searchParams?.get('filter') || 'all';
-  const explicitView = searchParams?.get('view');
   // 未来/未开始比赛无任何成绩 → 默认显示预排名;有成绩或用户显式选择则按选择.
   const hasResults = useMemo(
     () => !!data && Object.values(data.resultsByRound).some(arr => arr.length > 0),
@@ -470,9 +491,7 @@ export default function CompDetailPage() {
           : (data && !hasResults) ? 'psych' : 'live';
   const isPsych = viewParam === 'psych';
   const isSchedule = viewParam === 'schedule';
-  const psychEventParam = searchParams?.get('psychEvent') || '';
-  const sourceParam = searchParams?.get('source');
-  const schedView: 'calendar' | 'table' = searchParams?.get('layout') === 'table' ? 'table' : 'calendar';
+  const schedView: 'calendar' | 'table' = layoutParam === 'table' ? 'table' : 'calendar';
   // "Show round details" lives up in the view-tab row (next to the calendar/table
   // toggle); default on so Format / Time limit / Cutoff / Proceed show like WCA.
   const [schedDetailsExpanded, setSchedDetailsExpanded] = useState(true);
@@ -721,10 +740,9 @@ export default function CompDetailPage() {
     if (!data || !defaultRoundKey) return;
     if (!eventParam || !roundParam) {
       const [e, r] = defaultRoundKey.split(':');
-      const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
-      next.set('event', e);
-      next.set('round', String(roundTypeIdToNum(data, e, r)));
-      setSearchParams(next, { replace: true });
+      // 默认填充走 replace,不在历史里留一条空→默认的中间态。
+      setEventParam(e, { history: 'replace' });
+      setRoundUrlParam(String(roundTypeIdToNum(data, e, r)), { history: 'replace' });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, defaultRoundKey]);
@@ -734,9 +752,7 @@ export default function CompDetailPage() {
     if (!data || !eventParam || !roundUrlParam || !roundParam) return;
     const canonical = String(roundTypeIdToNum(data, eventParam, roundParam));
     if (roundUrlParam !== canonical) {
-      const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
-      next.set('round', canonical);
-      setSearchParams(next, { replace: true });
+      setRoundUrlParam(canonical, { history: 'replace' });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, eventParam, roundParam, roundUrlParam]);
@@ -744,10 +760,8 @@ export default function CompDetailPage() {
   // Schedule defaults to the calendar layout; force it into the URL so the choice is
   // always explicit (only an explicit layout=table opts out).
   useEffect(() => {
-    if (!isSchedule || searchParams?.get('layout')) return;
-    const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
-    next.set('layout', 'calendar');
-    setSearchParams(next, { replace: true });
+    if (!isSchedule || layoutParam) return;
+    setLayoutParam('calendar', { history: 'replace' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSchedule, explicitView]);
 
@@ -900,38 +914,28 @@ export default function CompDetailPage() {
   const onChangeRound = (value: string) => {
     const [e, r] = value.split(':');
     if (!e || !r) return;
-    const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
-    next.set('event', e);
-    next.set('round', String(roundTypeIdToNum(data, e, r)));
-    setSearchParams(next);
+    setEventParam(e);
+    setRoundUrlParam(String(roundTypeIdToNum(data, e, r)));
   };
 
   const onChangeFilter = (value: string) => {
-    const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
-    next.set('filter', value);
-    setSearchParams(next);
+    setFilterParam(value || null);
   };
 
   const onChangeView = (value: 'live' | 'psych' | 'schedule') => {
-    const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
-    next.set('view', value); // 显式记录:空成绩比赛点「成绩」不会被默认弹回预排名
-    setSearchParams(next);
+    setExplicitView(value); // 显式记录:空成绩比赛点「成绩」不会被默认弹回预排名
   };
 
   const onChangeSchedView = (value: 'calendar' | 'table') => {
-    const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
-    next.set('layout', value);
-    setSearchParams(next);
+    setLayoutParam(value);
   };
 
   // 预排名项目多选:切换某项目;按 comp.events 顺序序列化进 psychEvent (逗号分隔).
   const onTogglePsychEvent = (eventId: string) => {
-    const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
     const cur = new Set(psychEventIds);
     if (cur.has(eventId)) cur.delete(eventId); else cur.add(eventId);
     const ordered = data ? data.events.filter(e => cur.has(e.i)).map(e => e.i) : [...cur];
-    if (ordered.length) next.set('psychEvent', ordered.join(',')); else next.delete('psychEvent');
-    setSearchParams(next);
+    setPsychEventParam(ordered.length ? ordered.join(',') : null);
   };
 
   useEffect(() => {
@@ -1107,11 +1111,7 @@ export default function CompDetailPage() {
                       key={s}
                       type="button"
                       className={`comp-source-btn${data.source === s ? ' is-active' : ''}`}
-                      onClick={() => {
-                        const next = new URLSearchParams(searchParams ? searchParams.toString() : '');
-                        next.set('source', s);
-                        setSearchParams(next);
-                      }}
+                      onClick={() => { setSourceParam(s); }}
                     >
                       {label}
                     </button>

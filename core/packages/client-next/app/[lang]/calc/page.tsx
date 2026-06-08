@@ -6,6 +6,7 @@
 // 比赛名 → 图表 → 输入网格 → 控制按钮 → 进度滑杆 → 数字键盘 → 项目选择器 → 统计表
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Sigma, HelpCircle } from 'lucide-react';
@@ -54,21 +55,12 @@ export function CalcPage() {
   // NOTE: 防止 event useEffect 在首次挂载时清空 URL 恢复的数据
   const eventInitRef = useRef(false);
 
-  // NOTE: tab 初值优先读 ?tab=average,默认 compare(H2H)
-  const [tab, setTab] = useState<CalcTab>(() => {
-    if (typeof window === 'undefined') return 'compare';
-    return new URLSearchParams(window.location.search).get('tab') === 'average' ? 'average' : 'compare';
-  });
-
-  // NOTE: tab 切换同步到 URL（不进历史，刷新可恢复）
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (tab === 'average') params.set('tab', 'average');
-    else params.delete('tab');
-    const qs = params.toString();
-    const newUrl = `${window.location.pathname}${qs ? '?' + qs : ''}${window.location.hash}`;
-    window.history.replaceState(null, '', newUrl);
-  }, [tab]);
+  // NOTE: tab 走 nuqs ?tab=（replace,不堆历史,刷新可恢复)。默认 compare 自动从 URL 省略。
+  // 成绩数据(event/target/t0..)由 calc_store 自己序列化进 URL,saveToUrl 会保留本 ?tab=。
+  const [tab, setTab] = useQueryState(
+    'tab',
+    parseAsStringEnum<CalcTab>(['compare', 'average']).withDefault('compare'),
+  );
 
   // NOTE: 头像按钮状态 — 原版 input_grid.js 的 setMeButtonState 逻辑转为 React state
   const [avatarState, setAvatarState] = useState<AvatarState[]>([

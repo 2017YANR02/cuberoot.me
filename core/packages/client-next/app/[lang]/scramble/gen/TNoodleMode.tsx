@@ -8,8 +8,8 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useQueryStates, parseAsString } from 'nuqs';
 import Link from '@/components/AppLink';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { RefreshCw, Download, X, Edit3, Image as ImageIcon, ImageOff, Dices } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -255,35 +255,31 @@ function buildSheetsFromWca(rows: WcaScrambleRow[]): RoundSheet[] {
 }
 
 export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, compHeaderSlot }: Props) {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-  const setSearchParams = useCallback(
-    (
-      updater: ((prev: URLSearchParams) => URLSearchParams) | URLSearchParams,
-      _opts?: { replace?: boolean },
-    ) => {
-      const prev = new URLSearchParams(searchParams?.toString() ?? '');
-      const next = typeof updater === 'function' ? updater(prev) : updater;
-      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  // URL 同步走 nuqs(全 replace,不堆历史):comp = 已加载比赛 id;event/round/group/attempt
+  // = 深链选中态。其它键(mode 等,由 GenPage 持有)互不干扰。?mode= 等保留。
+  const [urlQuery, setUrlQuery] = useQueryStates(
+    {
+      comp: parseAsString,
+      event: parseAsString,
+      round: parseAsString,
+      group: parseAsString,
+      attempt: parseAsString,
     },
-    [router, pathname, searchParams],
+    { history: 'replace', scroll: false },
   );
-  // 增量改写 URL query:null/'' 删键,否则设值。其余 query(comp/mode)原样保留。
+  // 增量改写 URL query:null/'' 删键(nuqs 把 null 当删键),否则设值。
+  // 只动 patch 里的键,其余(comp/mode 等)原样保留(useQueryStates 批量 setter 默认行为)。
   const writeDeepLink = useCallback(
     (patch: Record<string, string | number | null>) => {
-      setSearchParams((prev) => {
-        const p = new URLSearchParams(prev);
-        for (const [k, v] of Object.entries(patch)) {
-          if (v === null || v === '') p.delete(k);
-          else p.set(k, String(v));
-        }
-        return p;
-      }, { replace: true });
+      const next: Record<string, string | null> = {};
+      for (const [k, v] of Object.entries(patch)) {
+        next[k] = v === null || v === '' ? null : String(v);
+      }
+      setUrlQuery(next as Parameters<typeof setUrlQuery>[0]);
     },
-    [setSearchParams],
+    [setUrlQuery],
   );
-  const urlComp = searchParams?.get('comp') ?? '';
+  const urlComp = urlQuery.comp ?? '';
 
   // CompPicker 的当前文本(用户在输入框里看到/输入的内容)。
   // 在 mock 路径里它兼作 PDF 标题(空则 fallback 到今天日期)。
@@ -624,11 +620,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       setViewedRoundIdx(null);
       setLoadedCompId(compId);
       setLoadedCompName(name);
-      setSearchParams((prev) => {
-        const p = new URLSearchParams(prev);
-        p.set('comp', compId);
-        return p;
-      }, { replace: true });
+      setUrlQuery({ comp: compId });
     } catch (err) {
       setError(t('网络错误', 'Network error') + ': ' + (err instanceof Error ? err.message : String(err)));
     } finally {
@@ -689,11 +681,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       setCompInput('');
       autoLoadedRef.current = null;
       deepLinkAppliedRef.current = null;
-      setSearchParams((prev) => {
-        const p = new URLSearchParams(prev);
-        for (const k of ['comp', 'event', 'round', 'group', 'attempt']) p.delete(k);
-        return p;
-      }, { replace: true });
+      setUrlQuery({ comp: null, event: null, round: null, group: null, attempt: null });
     }
   };
 
@@ -781,12 +769,12 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   useEffect(() => {
     if (!sheets || !loadedCompId) return;
     if (deepLinkAppliedRef.current === loadedCompId) return;
-    const ev = searchParams?.get('event') ?? '';
+    const ev = urlQuery.event ?? '';
     if (!ev || !eventsInSheets.includes(ev)) { deepLinkAppliedRef.current = loadedCompId; return; }
     deepLinkAppliedRef.current = loadedCompId;
-    const roundP = Number(searchParams?.get('round'));
-    const groupP = searchParams?.get('group') ?? '';
-    const nP = searchParams?.get('attempt') ?? '';
+    const roundP = Number(urlQuery.round);
+    const groupP = urlQuery.group ?? '';
+    const nP = urlQuery.attempt ?? '';
     const gIdx = /^[A-Za-z]$/.test(groupP) ? groupP.toUpperCase().charCodeAt(0) - 65 : null;
     pendingDeepLinkRef.current = {
       event: ev,

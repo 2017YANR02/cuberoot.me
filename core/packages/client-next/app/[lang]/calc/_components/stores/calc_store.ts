@@ -208,9 +208,12 @@ export const useCalcStore = create<CalcState>((set, get) => ({
     urlDebounceTimer = setTimeout(() => {
       const s = get();
       const params = new URLSearchParams();
-      // NOTE: 保留现有的 lang 参数
-      const curLang = new URLSearchParams(window.location.search).get('lang');
+      // NOTE: 保留现有的 lang 参数 + nuqs 管理的 ?tab=(本 store 重建整个 query,不保留会被清掉)
+      const cur = new URLSearchParams(window.location.search);
+      const curLang = cur.get('lang');
       if (curLang) params.set('lang', curLang);
+      const curTab = cur.get('tab');
+      if (curTab) params.set('tab', curTab);
       if (s.event) params.set('event', s.event);
 
       // NOTE: 保存 Target Avg（centiseconds），替代原来的 n0/n1 名字
@@ -228,6 +231,9 @@ export const useCalcStore = create<CalcState>((set, get) => ({
           params.set('t' + i, t.join(','));
         }
       }
+      // 豁免:zustand store(无法用 React hook)+ t0/t1.. 动态键的成绩数据序列化,不适合 nuqs 固定 schema;
+      // 改 nuqs 会变 URL 格式破坏已分享链接。data-blob 例外(见 CLAUDE.md「URL 状态 / 后退导航」)。
+      // eslint-disable-next-line no-restricted-syntax, no-restricted-globals
       history.replaceState(null, '', '?' + params.toString());
     }, URL_DEBOUNCE_MS);
   },

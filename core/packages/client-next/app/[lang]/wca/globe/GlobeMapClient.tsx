@@ -1410,6 +1410,8 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     const qs = sp.toString();
     const nextUrl = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
     if (nextUrl !== window.location.pathname + window.location.search + window.location.hash) {
+      // heavy maplibre component — URL sync intentionally hand-rolled, exempt from nuqs rule.
+      // eslint-disable-next-line no-restricted-syntax, no-restricted-globals
       window.history.replaceState(null, '', nextUrl);
     }
   }, [mode, cuber, currentIndex, cuberComps.length, urlBootstrapDone]);

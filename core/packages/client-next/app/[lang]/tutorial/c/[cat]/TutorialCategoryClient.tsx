@@ -2,7 +2,8 @@
 
 import { Suspense, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { Search as SearchIcon } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { useTutorialCatalog, type CatalogEntry, type Lang } from '../../_lib/useTutorialCatalog';
@@ -18,8 +19,11 @@ function TutorialCategoryPageInner() {
   const params = useParams<{ cat: string | string[] }>();
   const rawCategory = Array.isArray(params?.cat) ? params.cat[0] : params?.cat;
   const category = rawCategory ? decodeURIComponent(rawCategory) : '';
-  const searchParams = useSearchParams();
-  const showHidden = searchParams.get('show') === 'hidden';
+  const [show] = useQueryState(
+    'show',
+    parseAsStringEnum(['hidden']).withOptions({ history: 'replace' }),
+  );
+  const showHidden = show === 'hidden';
 
   const tutorialTitle = category || (isZh ? '教程' : 'Tutorial');
   useDocumentTitle(tutorialTitle, tutorialTitle);
