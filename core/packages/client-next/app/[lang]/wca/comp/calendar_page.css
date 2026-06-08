@@ -146,19 +146,9 @@
 .calendar-page--globe > .legend,
 .calendar-page--globe > .comp-recent,
 .calendar-page--globe > .mode-status { display: none; }
-/* 特异性 0,3,0 压过 line 388 的基础 `.calendar-page .month-bar`(margin 0.5rem),
-   否则 margin-top 残留 8px 把切换器推得比 globe 顶栏内容偏下、不居中 */
-.calendar-page.calendar-page--globe > .month-bar {
-    position: fixed;
-    top: max(8px, var(--sat, 0px));
-    left: 12px;
-    margin: 0;
-    z-index: 60;
-    width: auto;
-}
-/* 地球顶栏给浮动切换器让出左侧(嵌入态 logo 已隐藏);特异性需高过 globe.css 的
-   .globe-page .globe-topbar(padding shorthand),否则被覆盖 */
-.comp-globe-view .globe-page .globe-topbar { padding-left: 185px; }
+/* 地球视图不显示浮动视图切换器(会挤 globe 顶栏,手机端尤其);返回靠 globe 自带的
+   地球 logo(embedded 时 onClick=onExit 切回日历)。日历/紧凑/列表视图切换器照常。 */
+.calendar-page.calendar-page--globe > .month-bar { display: none; }
 
 .calendar-page .search-box {
     background: var(--surface);

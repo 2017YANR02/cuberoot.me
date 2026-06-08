@@ -115,6 +115,33 @@ function getCookieLocale(req: NextRequest): Locale {
   return al.toLowerCase().includes('zh') ? 'zh' : 'en';
 }
 
+// SEO canonical + hreflang, emitted as HTTP Link headers (Google & Bing both
+// honor these). Done HERE, in the proxy, on purpose: it's one central place that
+// covers all ~128 routes without touching a single page component, and it's
+// SSG-safe — middleware runs on every request, including prerendered/CDN-cached
+// pages, so adding a response header doesn't opt anything into dynamic rendering.
+// Host is hard-pinned to www so apex / next.cuberoot.me / *.vercel.app previews
+// all self-consolidate onto the one canonical host. Path-only (query dropped) so
+// ?lang= / ?tab= and other view-state variants collapse to the page's canonical.
+const CANONICAL_HOST = 'https://www.cuberoot.me';
+
+function setSeoLinkHeaders(res: NextResponse, rest: string, locale: Locale) {
+  const sub = rest === '/' ? '' : rest;
+  const en = `${CANONICAL_HOST}/en${sub}`;
+  const zh = `${CANONICAL_HOST}/zh${sub}`;
+  const self = locale === 'zh' ? zh : en;
+  // append (not set) so we never clobber Next's own preload Link headers.
+  res.headers.append(
+    'Link',
+    [
+      `<${self}>; rel="canonical"`,
+      `<${en}>; rel="alternate"; hreflang="en"`,
+      `<${zh}>; rel="alternate"; hreflang="zh"`,
+      `<${en}>; rel="alternate"; hreflang="x-default"`,
+    ].join(', '),
+  );
+}
+
 export function proxy(req: NextRequest) {
   const url = req.nextUrl;
   const { pathname, searchParams } = url;
@@ -145,7 +172,7 @@ export function proxy(req: NextRequest) {
   }
 
   // 2. Bare migrated path → redirect to /<cookie-lang>/path.
-  const { locale } = stripLocalePrefix(pathname);
+  const { locale, rest } = stripLocalePrefix(pathname);
   if (!locale && isMigrated(pathname)) {
     const lang = getCookieLocale(req);
     const target = url.clone();
@@ -170,6 +197,7 @@ export function proxy(req: NextRequest) {
         sameSite: 'lax',
       });
     }
+    setSeoLinkHeaders(res, rest, locale);
     return res;
   }
 
