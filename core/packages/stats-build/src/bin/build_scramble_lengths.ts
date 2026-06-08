@@ -51,13 +51,14 @@ const rand = () => {
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 };
 
-type Example = [string, string, string, number, string]; // [compId, round, group, num, text]
+type Example = [string, string, string, number, string, 0 | 1]; // [compId, round, group, num, text, isExtra]
 
 interface ScrambleRow {
   competition_id: string;
   event_id: string;
   round_type_id: string;
   group_id: string;
+  is_extra: number;
   scramble_num: number;
   scramble: string;
 }
@@ -92,12 +93,13 @@ async function main() {
 
   await new Promise<void>((res, rej) => {
     const stream = conn.query(
-      'SELECT competition_id, event_id, round_type_id, group_id, scramble_num, scramble FROM scrambles',
+      'SELECT competition_id, event_id, round_type_id, group_id, is_extra, scramble_num, scramble FROM scrambles',
     ).stream();
     stream.on('data', (row: ScrambleRow) => {
       rows++;
+      const extra: 0 | 1 = row.is_extra ? 1 : 0;
       for (const s of scrambleMoveSamples(row.event_id, row.scramble)) {
-        bump(row.event_id, s.len, [row.competition_id, row.round_type_id, row.group_id, row.scramble_num, s.text]);
+        bump(row.event_id, s.len, [row.competition_id, row.round_type_id, row.group_id, row.scramble_num, s.text, extra]);
       }
       if (rows % 1_000_000 === 0) console.log(`  ...${rows.toLocaleString()} rows`);
     });

@@ -18,7 +18,7 @@ import './recent_scrambles.css';
 
 interface Props { lang: 'zh' | 'en' }
 
-interface ScrMeta { ci: string; cn: string; cd: string; r: string; g: string; n: number; e: string }
+interface ScrMeta { ci: string; cn: string; cd: string; r: string; g: string; n: number; e: string; x?: 0 | 1 }
 interface RecentScramblesJson {
   export_date: string;
   new_count: number;
@@ -176,7 +176,7 @@ export default function RecentScrambles({ lang }: Props) {
                     {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                     <span className="rs-src-comp">{localizeCompName(m.ci, m.cn, isZh)}</span>
                     <EventIcon event={m.e} className="rs-evt" />
-                    <span className="rs-src-meta">{compSourceLine(m.r, m.g, m.n, isZh)}</span>
+                    <span className="rs-src-meta">{compSourceLine(m.r, m.g, m.n, isZh, !!m.x)}</span>
                   </Link>
                 );
               })()}
@@ -206,7 +206,7 @@ export default function RecentScrambles({ lang }: Props) {
                           {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                           <span className="rs-row-name">{localizeCompName(m.ci, m.cn, isZh)}</span>
                           <EventIcon event={m.e} className="rs-evt" />
-                          <span className="rs-row-sub">{compSourceLine(m.r, m.g, m.n, isZh)}</span>
+                          <span className="rs-row-sub">{compSourceLine(m.r, m.g, m.n, isZh, !!m.x)}</span>
                         </Link>
                       );
                     })()}
