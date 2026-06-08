@@ -9,6 +9,7 @@
  * upstream's cookie.js.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ExternalLink, HelpCircle, Copy, Check } from 'lucide-react';
@@ -93,24 +94,12 @@ export default function CommutatorPage() {
     useDocumentTitle('交换子', 'Commutator');
     const t = (zh: string, en: string) => (isZh ? zh : en);
 
-    const [tab, setTab] = useState<Tab>('decompose');
-
-    // Hash-based tab routing — read on mount only (Next.js doesn't surface hash via useParams).
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        const h = window.location.hash.replace('#', '') as Tab;
-        if ((['home', 'decompose', 'excel', 'intro', 'about'] as Tab[]).includes(h)) {
-            setTab(h);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        const newHash = `#${tab}`;
-        if (window.location.hash !== newHash) {
-            window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${newHash}`);
-        }
-    }, [tab]);
+    const [tab, setTab] = useQueryState(
+        'tab',
+        parseAsStringEnum<Tab>(['home', 'decompose', 'excel', 'intro', 'about'])
+            .withDefault('decompose')
+            .withOptions({ history: 'push' }),
+    );
 
     const [settings, setSettings] = useState<Settings>(DEFAULTS);
     // Hydrate from localStorage on mount (avoid SSR mismatch).

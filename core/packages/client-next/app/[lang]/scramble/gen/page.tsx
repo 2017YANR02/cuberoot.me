@@ -10,10 +10,10 @@
  *
  * Next.js port of packages/client/src/pages/gen/GenPage.tsx (1:1 shell).
  */
-import { Suspense, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { Suspense, useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryState, parseAsString } from 'nuqs';
 import Link from '@/components/AppLink';
-import { useSearchParams as useNextSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Shuffle, HelpCircle } from 'lucide-react';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
 import { prewarmScramble } from '@/lib/cubing-scramble';
@@ -93,51 +93,28 @@ function GenPageInner() {
     try { localStorage.setItem(SHOW_PREVIEW_KEY, v ? '1' : '0'); } catch { /* swallow */ }
   };
 
-  // react-router-dom-style useSearchParams adapter over next/navigation.
-  // 2-arg setter: `(updater | nextParams, opts?)`. We always use router.replace
-  // with scroll:false so the page doesn't jump; the `replace` opt is therefore
-  // ignored (mirrors Vite behavior — this file always passes {replace:true}).
-  const nextParams = useNextSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useMemo(
-    () => new URLSearchParams(nextParams?.toString() ?? ''),
-    [nextParams],
+  // mode 走 nuqs(replace);raw 字符串读出后做 legacy alias 归一(parseAsStringEnum
+  // 会在归一前就把旧别名丢成默认值,故用 parseAsString 自己归一)。default 'comp' 自动
+  // 从 URL 省略;?comp= 等其它键由 TNoodleMode 各自的 nuqs hook 持有,互不干扰。
+  // 切 mode 不入历史(后退跳过),与原 router.replace 语义一致。
+  const [rawMode, setRawMode] = useQueryState(
+    'mode',
+    parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }),
   );
-  const setSearchParams = useCallback(
-    (
-      update: URLSearchParams | ((prev: URLSearchParams) => URLSearchParams),
-      _opts?: { replace?: boolean },
-    ) => {
-      const next = typeof update === 'function' ? update(searchParams) : update;
-      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-    },
-    [router, pathname, searchParams],
-  );
-
-  const rawParam = searchParams.get('mode') ?? '';
-  const aliased = (LEGACY_MODE_ALIAS[rawParam] ?? rawParam) as Mode;
+  const aliased = (LEGACY_MODE_ALIAS[rawMode] ?? rawMode) as Mode;
   const mode: Mode = VALID_MODES.has(aliased) ? aliased : 'comp';
 
-  // 老链接(?mode=text 等)落到这里时 URL 还是旧值;静悄悄改写成 canonical 名,
-  // 这样书签/分享/复制 URL 都更新到当前别名。replace:true 避免污染历史。
-  useEffect(() => {
-    if (rawParam && rawParam !== mode) {
-      setSearchParams((prev) => {
-        const p = new URLSearchParams(prev);
-        p.set('mode', mode);
-        return p;
-      }, { replace: true });
-    }
-  }, [rawParam, mode, setSearchParams]);
   const setMode = (next: Mode) => {
-    setSearchParams((prev) => {
-      const p = new URLSearchParams(prev);
-      p.set('mode', next);
-      // ?comp= 保留 —— comp tab 切走再切回能秒回已加载比赛。
-      return p;
-    }, { replace: true });
+    // default 'comp' → null 删键(clearOnDefault),非默认 → 写值;?comp= 保留。
+    setRawMode(next === 'comp' ? null : next);
   };
+
+  // 老链接(?mode=text / ?mode=wca 等)落到这里时 URL 还是旧值;静悄悄改写成 canonical 名
+  // (comp 直接删键),这样书签/分享/复制 URL 都更新到当前别名。replace 避免污染历史。
+  useEffect(() => {
+    if (rawMode && rawMode !== mode) setMode(mode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawMode, mode]);
 
   // 比赛 chip 激活时,header 右上腾出一个槽给 TNoodleMode 的 CompPicker 用 portal 注入
   // (state 仍在 TNoodleMode,只是 DOM 出现在 header)。chip 不在 comp → slot 不渲染。

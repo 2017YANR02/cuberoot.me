@@ -7,6 +7,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { BarChart3, Play, Pause, ChevronRight, ChevronDown } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -956,26 +957,6 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
   );
 }
 
-function parseHash(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const h = window.location.hash.slice(1);
-  return Object.fromEntries(h.split('&').filter(Boolean).map(s => s.split('=')));
-}
-function setHashParam(key: string, value: string) {
-  if (typeof window === 'undefined') return;
-  const p = parseHash();
-  p[key] = value;
-  const str = Object.entries(p).map(([k, v]) => `${k}=${v}`).join('&');
-  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${str}`);
-}
-function clearHashParam(key: string) {
-  if (typeof window === 'undefined') return;
-  const p = parseHash();
-  delete p[key];
-  const str = Object.entries(p).map(([k, v]) => `${k}=${v}`).join('&');
-  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${str ? '#' + str : ''}`);
-}
-
 export default function WcaStatClient() {
   const params = useParams();
   const statIdRaw = params?.statId;
@@ -989,6 +970,14 @@ export default function WcaStatClient() {
   const [selectedEvent, setSelectedEvent] = useState<string>('');
   const [activePanel, setActivePanel] = useState(0);
   const [activeMetric, setActiveMetric] = useState(0);
+
+  // ?event= ?type= ?metric= 走 nuqs(replace,无历史 — 等价于原 hash replaceState)。
+  // 单页内的 事件 / 面板 / 指标 选择,深链可恢复,后退不堆历史。(从 #hash 迁来:旧 # 链接失效可接受)
+  // 只用 setter 写 URL;读取在数据加载时直接读 window.location.search(一次性深链,不入 effect deps)。
+  const [, setUrlState] = useQueryStates(
+    { event: parseAsString, type: parseAsString, metric: parseAsString },
+    { history: 'replace', scroll: false },
+  );
 
   const isZh = i18n.language === 'zh';
 
@@ -1014,14 +1003,17 @@ export default function WcaStatClient() {
       .then((json: StatData) => {
         setData(json);
         setLoading(false);
-        const h = parseHash();
-        if (h.type) {
+        // 初始深链:从 ?type= / ?metric= 还原面板/指标(挂载读一次,直接读 URL 不入 effect deps)
+        const sp = new URLSearchParams(window.location.search);
+        const typeId = sp.get('type');
+        const metricId = sp.get('metric');
+        if (typeId) {
           const panels = json.panels ?? json.metricPanels?.[0]?.panels ?? [];
-          const idx = panels.findIndex((p: StatPanel) => p.id === h.type);
+          const idx = panels.findIndex((p: StatPanel) => p.id === typeId);
           if (idx !== -1) setActivePanel(idx);
         }
-        if (h.metric && json.metricPanels) {
-          const idx = json.metricPanels.findIndex((mp: MetricPanel) => mp.id === h.metric);
+        if (metricId && json.metricPanels) {
+          const idx = json.metricPanels.findIndex((mp: MetricPanel) => mp.id === metricId);
           if (idx !== -1) setActiveMetric(idx);
         }
       })
@@ -1033,20 +1025,20 @@ export default function WcaStatClient() {
 
   const handleSelectEvent = useCallback((ev: string) => {
     setSelectedEvent(ev);
-    if (ev) setHashParam('event', ev); else clearHashParam('event');
-  }, []);
+    setUrlState({ event: ev || null });
+  }, [setUrlState]);
 
   const handleSetActivePanel = useCallback((idx: number, panels: StatPanel[]) => {
     setActivePanel(idx);
     const id = panels[idx]?.id;
-    if (id) setHashParam('type', id);
-  }, []);
+    if (id) setUrlState({ type: id });
+  }, [setUrlState]);
 
   const handleSetActiveMetric = useCallback((idx: number, metricPanels: MetricPanel[]) => {
     setActiveMetric(idx);
     const id = metricPanels[idx]?.id;
-    if (id) setHashParam('metric', id);
-  }, []);
+    if (id) setUrlState({ metric: id });
+  }, [setUrlState]);
 
   const renderMode = useMemo(() => {
     if (!data) return 'empty';
@@ -1083,16 +1075,16 @@ export default function WcaStatClient() {
 
   useEffect(() => {
     if (availableEvents.size > 0 && !selectedEvent) {
-      const hashEvent = parseHash().event;
-      const initial = (hashEvent && availableEvents.has(hashEvent))
-        ? hashEvent
+      const urlEvent = new URLSearchParams(window.location.search).get('event');
+      const initial = (urlEvent && availableEvents.has(urlEvent))
+        ? urlEvent
         : ALL_EVENT_IDS.find((id: string) => availableEvents.has(id));
       if (initial) {
         setSelectedEvent(initial);
-        setHashParam('event', initial);
+        setUrlState({ event: initial });
       }
     }
-  }, [availableEvents, selectedEvent]);
+  }, [availableEvents, selectedEvent, setUrlState]);
 
   const showEventSelector = renderMode !== 'rows' && renderMode !== 'empty' && availableEvents.size >= 2;
 

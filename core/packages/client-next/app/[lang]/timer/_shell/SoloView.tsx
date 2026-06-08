@@ -17,6 +17,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryState, parseAsString } from 'nuqs';
 import {
   Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
   Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText,
@@ -774,11 +775,15 @@ export default function SoloView({ modePill }: SoloViewProps) {
     ];
   }, [nextScramble, prevScramble, changeLastPenalty, lastPenalty, commentLast, swipeDeleteLast, copyScrambleFlash]);
 
+  // ?replay= is a consume-once deep link: decode it into an ephemeral solve, open
+  // the reconstruct modal, then strip the param. nuqs owns it (replace — clearing
+  // a transient deep link should not push history); the hash is left untouched
+  // automatically. After setReplay(null) the param is gone and this re-run early
+  // returns (consume-once).
+  const [replay, setReplay] = useQueryState('replay', parseAsString.withOptions({ history: 'replace' }));
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const raw = params.get('replay');
-    if (!raw) return;
-    const decoded = decodeReplayParam(raw);
+    if (!replay) return;
+    const decoded = decodeReplayParam(replay);
     if (!decoded) {
       console.warn('[timer] invalid ?replay= payload');
     } else {
@@ -793,11 +798,8 @@ export default function SoloView({ modePill }: SoloViewProps) {
       };
       setReconstructSolve(ephemeral);
     }
-    params.delete('replay');
-    const qs = params.toString();
-    const newUrl = window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash;
-    history.replaceState(null, '', newUrl);
-  }, []);
+    void setReplay(null);
+  }, [replay, setReplay]);
 
   const handlePasteReplay = useCallback(() => {
     const raw = window.prompt(isZh ? '粘贴 replay URL 或 token：' : 'Paste a replay URL or token:', '');

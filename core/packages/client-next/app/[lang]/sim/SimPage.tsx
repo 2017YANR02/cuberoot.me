@@ -13,7 +13,7 @@
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import HomeLink from '@/components/HomeLink';
 // THREE is type-only at module scope — runtime instance is dynamically imported
@@ -64,17 +64,6 @@ export function isTwistyPuzzle(p: SimPuzzle): p is TwistyPuzzle {
 /** Narrow `world.cube` to the NxN Cube type. Returns null for SQ1. */
 function asNxN(world: World): Cube | null {
   return world.puzzleKind === 'sq1' ? null : (world.cube as Cube);
-}
-
-function withPuzzleFirst(p: URLSearchParams): URLSearchParams {
-  const out = new URLSearchParams();
-  const puzzle = p.get('puzzle');
-  if (puzzle != null) out.set('puzzle', puzzle);
-  for (const [k, v] of p) {
-    if (k === 'puzzle') continue;
-    out.set(k, v);
-  }
-  return out;
 }
 
 /** 3x3 sticker click rules. See Vite original for the geometry derivation. */
@@ -128,38 +117,31 @@ export default function SimPage() {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   useDocumentTitle('模拟器', 'Sim');
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  // Sim editor state in the URL (replace semantics — not navigation).
+  // puzzle defaults to '3' (absent reads as 3, and '3' is auto-omitted from
+  // the URL by clearOnDefault, so no explicit default-write effect is needed).
+  const [query, setQuery] = useQueryStates(
+    {
+      puzzle: parseAsString.withDefault('3'),
+      alg: parseAsString,
+      setup: parseAsString,
+    },
+    { history: 'replace', scroll: false },
+  );
 
-  // Default puzzle param when absent.
-  useEffect(() => {
-    if (!searchParams) return;
-    if (searchParams.get('puzzle') != null) return;
-    const np = new URLSearchParams(Array.from(searchParams.entries()));
-    np.set('puzzle', '3');
-    router.replace('?' + withPuzzleFirst(np).toString(), { scroll: false });
-  }, [searchParams, router]);
-
-  const algParam = searchParams?.get('alg') || '';
-  const setupParam = searchParams?.get('setup') || '';
+  const algParam = query.alg || '';
+  const setupParam = query.setup || '';
 
   const puzzleParam: SimPuzzle = useMemo(() => {
-    const raw = searchParams?.get('puzzle');
+    const raw = query.puzzle;
     if (!raw) return 3;
     if (raw === 'sq1') return 'sq1';
     if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
     return n;
-  }, [searchParams]);
+  }, [query.puzzle]);
   const twisty = isTwistyPuzzle(puzzleParam);
-
-  const writeSearch = useCallback((mutate: (p: URLSearchParams) => void) => {
-    if (!searchParams) return;
-    const np = new URLSearchParams(Array.from(searchParams.entries()));
-    mutate(np);
-    router.replace('?' + withPuzzleFirst(np).toString(), { scroll: false });
-  }, [searchParams, router]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<World | null>(null);
@@ -733,9 +715,8 @@ export default function SimPage() {
     setPuzzleKind(kind);
     if (typeof kind === 'number') setOrder(kind);
     const world = worldRef.current;
-    const writeUrl = () => writeSearch((np) => {
-      if (kind === 3) np.delete('puzzle'); else np.set('puzzle', String(kind));
-    });
+    // kind === 3 → null clears `puzzle` (it's the default, auto-omitted anyway).
+    const writeUrl = () => setQuery({ puzzle: kind === 3 ? null : String(kind) });
     // Twisty puzzles don't use World — just update URL. The world-init
     // effect's [twisty] dep tears down the live cuber instance.
     if (isTwistyPuzzle(kind)) { writeUrl(); return; }
@@ -745,7 +726,7 @@ export default function SimPage() {
     ensureCubeCallback();
     applySettings(world, settingsRef.current);
     writeUrl();
-  }, [ensureCubeCallback, writeSearch]);
+  }, [ensureCubeCallback, setQuery]);
 
   const handleOrder = useCallback((n: number) => {
     handlePuzzle(n);
@@ -832,26 +813,19 @@ export default function SimPage() {
   }, [handleUndo, handleRedo]);
 
   const onAlgChange = useCallback((alg: string) => {
-    writeSearch((np) => {
-      if (alg) np.set('alg', alg); else np.delete('alg');
-    });
-  }, [writeSearch]);
+    setQuery({ alg: alg || null });
+  }, [setQuery]);
 
   const onSetupChange = useCallback((setup: string) => {
-    writeSearch((np) => {
-      if (setup) np.set('setup', setup); else np.delete('setup');
-    });
-  }, [writeSearch]);
+    setQuery({ setup: setup || null });
+  }, [setQuery]);
 
   const onAlgPick = useCallback((setup: string, alg: string) => {
     const world = worldRef.current;
     if (!world) return;
     world.cube.twister.setup(setup);
-    writeSearch((np) => {
-      if (setup) np.set('setup', setup); else np.delete('setup');
-      if (alg) np.set('alg', alg); else np.delete('alg');
-    });
-  }, [writeSearch]);
+    setQuery({ setup: setup || null, alg: alg || null });
+  }, [setQuery]);
 
   const getCanvas = useCallback((): HTMLCanvasElement | null => {
     return rendererRef.current?.domElement ?? null;

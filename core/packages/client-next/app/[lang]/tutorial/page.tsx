@@ -3,7 +3,7 @@
 import { Suspense, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from '@/components/AppLink';
-import { useSearchParams } from 'next/navigation';
+import { useQueryState, parseAsStringEnum } from 'nuqs';
 import {
   Search as SearchIcon,
   Grid3x3, Award, Languages, Gauge, Eye, Square, Infinity as InfinityIcon,
@@ -68,8 +68,11 @@ function TutorialIndexPageInner() {
   const isZh = i18n.language.startsWith('zh');
   useDocumentTitle('教程', 'Tutorial');
   const pageLang: Lang = isZh ? 'zh' : 'en';
-  const searchParams = useSearchParams();
-  const showHidden = searchParams.get('show') === 'hidden';
+  const [show] = useQueryState(
+    'show',
+    parseAsStringEnum(['hidden']).withOptions({ history: 'replace' }),
+  );
+  const showHidden = show === 'hidden';
 
   const [query, setQuery] = useState('');
 
