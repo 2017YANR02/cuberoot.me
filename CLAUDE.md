@@ -81,6 +81,7 @@ pnpm --filter @cuberoot/client dev                 # http://127.0.0.1:5173/
 > 2. **Dev server 永远在 `http://127.0.0.1:3000/` (Next) 或 `127.0.0.1:5173/` (Vite,兜底)**,不要 `pnpm dev`(端口占用立刻挂)。要验证用 playwright 直接开。
 > 3. Windows Next dev 关窗口/Ctrl+C 可能留孤儿 node.exe (memory `feedback_windows_next_dev_restart`),改 globals/layout/next.config 看 chunk hash 是否变。
 > 4. 磁盘不够 (worktree / pnpm install / build 失败时) 先 `df -h` 告诉我,别静默换方案。
+> 5. **dev 在跑时禁本地 `next build`**:build 和 dev 共用 `.next/`,并发写撕裂 manifest JSON → 全站 500。验证走 `typecheck`(不碰 `.next/`),真要本地 build 先停 dev。已有 PreToolUse hook (`.claude/hooks/block-next-build-while-dev.ps1`) 在 dev 活着时硬拦 build;坏了删 `.next` 重启即恢复。
 
 - Next dev 绑定 `127.0.0.1` (Windows Chrome IPv6 解析问题)
 - 本地 Next dev 调 `/v1/*` 走 next.config rewrites 反代 `https://api.cuberoot.me`,**本地开发不需要跑后端**

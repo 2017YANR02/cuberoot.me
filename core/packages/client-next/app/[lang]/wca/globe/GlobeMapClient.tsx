@@ -3021,8 +3021,13 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
             )}
           </>
         ) : (<>
-        {!embedded && (
-        <Link href="/wca/comp" className="globe-logo-link" title={t('globe.backToCalendar') as string} aria-label="Home">
+        <Link
+          href="/wca/comp"
+          className="globe-logo-link"
+          onClick={embedded ? (e) => { e.preventDefault(); window.location.href = window.location.pathname; } : undefined}
+          title={t('globe.backToCalendar') as string}
+          aria-label="Home"
+        >
           <svg className="globe-logo" width={26} height={26} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <defs>
               <radialGradient id="earthGrad" cx="0.35" cy="0.35" r="0.85">
@@ -3056,7 +3061,6 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
             </g>
           </svg>
         </Link>
-        )}
         <h1 className="globe-title-compact">
           {t('globe.title')}
           <Link
