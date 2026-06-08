@@ -17,7 +17,7 @@ import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
 import { getWatchedWcaIds } from './watched.js';
 import { setPr, isNewPr, isTiedPr, warmBaseline } from './pr_baseline.js';
-import { POLL_INTERVAL_MS } from './config.js';
+import { POLL_INTERVAL_MS, siteCompUrl } from './config.js';
 import { startPoller } from './poll.js';
 import { enrichName } from './names.js';
 import { formatRecords } from '../routes/wca_format.js';
@@ -39,11 +39,11 @@ query($from: Date) {
 const COMP_ROUNDS_QUERY = `
 query($id: ID!) {
   competition(id: $id) {
-    id name
+    id name wcaId
     venues { country { iso2 } }
     competitionEvents {
       event { id name }
-      rounds { id finished numEnteredResults }
+      rounds { id number finished numEnteredResults }
     }
   }
 }
@@ -74,11 +74,12 @@ interface OngoingComp {
 interface CompMeta {
   id: string;
   name: string | null;
+  wcaId: string | null;
   venues: { country: { iso2: string } }[] | null;
   competitionEvents:
     | {
         event: { id: string; name: string } | null;
-        rounds: { id: string; finished: boolean; numEnteredResults: number | null }[] | null;
+        rounds: { id: string; number: number | null; finished: boolean; numEnteredResults: number | null }[] | null;
       }[]
     | null;
 }
@@ -110,7 +111,9 @@ interface Candidate {
   value: number;
   recordTag: string;
   roundId: string;
+  roundNumber: number | null;
   compId: string;
+  compWcaId: string | null;
   compName: string;
   compIso2: string;
   tied?: boolean;
@@ -120,6 +123,7 @@ interface ActiveRound {
   eventId: string;
   eventName: string;
   roundId: string;
+  roundNumber: number | null;
 }
 
 // ─── GraphQL helper ───────────────────────────────────────────────────────────
@@ -169,7 +173,7 @@ async function listOngoingComps(lookbackDays = 3): Promise<OngoingComp[]> {
 /** 轻量 query:比赛元数据 + 各 round 的 id/finished/numEnteredResults。 */
 async function fetchCompRounds(compId: string): Promise<CompMeta> {
   const data = await gql<{ competition: CompMeta | null }>(COMP_ROUNDS_QUERY, { id: compId });
-  return data.competition ?? ({ id: compId, name: '', venues: [], competitionEvents: [] } as CompMeta);
+  return data.competition ?? ({ id: compId, name: '', wcaId: null, venues: [], competitionEvents: [] } as CompMeta);
 }
 
 /** 拉单个 round 的 results。 */
@@ -192,7 +196,7 @@ function activeRounds(meta: CompMeta): ActiveRound[] {
     for (const r of ce.rounds ?? []) {
       if (r.finished) continue;
       if ((r.numEnteredResults ?? 0) <= 0) continue;
-      out.push({ eventId, eventName, roundId: r.id });
+      out.push({ eventId, eventName, roundId: r.id, roundNumber: r.number ?? null });
     }
   }
   return out;
@@ -201,7 +205,7 @@ function activeRounds(meta: CompMeta): ActiveRound[] {
 /** 从一个 round 的 results 筛关注选手的 single+average,产候选。 */
 function candidatesFromRoundResults(
   results: RoundResult[],
-  ctx: { compId: string; compName: string; compIso2: string },
+  ctx: { compId: string; compWcaId: string | null; compName: string; compIso2: string },
   round: ActiveRound,
   watchedIds: Set<string>,
 ): Candidate[] {
@@ -229,7 +233,9 @@ function candidatesFromRoundResults(
         value,
         recordTag,
         roundId: round.roundId,
+        roundNumber: round.roundNumber,
         compId: ctx.compId,
+        compWcaId: ctx.compWcaId,
         compName: ctx.compName,
         compIso2: ctx.compIso2,
       });
@@ -264,7 +270,10 @@ async function toFormatEvent(c: Candidate): Promise<RecordEvent> {
     comp_name: c.compName,
     comp_iso2: c.compIso2.toUpperCase(),
     tied: c.tied,
-    url: `https://live.worldcubeassociation.org/competitions/${c.compId}/rounds/${c.roundId}`,
+    // 比赛链接指向自有站(带 event+round 深链);未关联 WCA id 时回退 WCA Live。
+    url:
+      siteCompUrl(c.compWcaId, c.eventId, c.roundNumber)
+      ?? `https://live.worldcubeassociation.org/competitions/${c.compId}/rounds/${c.roundId}`,
   };
 }
 
@@ -333,10 +342,11 @@ async function runOnce(): Promise<void> {
   );
 
   // 平铺所有 active round + 比赛上下文。
-  const tasks: { ctx: { compId: string; compName: string; compIso2: string }; round: ActiveRound }[] = [];
+  const tasks: { ctx: { compId: string; compWcaId: string | null; compName: string; compIso2: string }; round: ActiveRound }[] = [];
   for (const meta of metas) {
     const ctx = {
       compId: meta.id,
+      compWcaId: meta.wcaId,
       compName: meta.name ?? '',
       compIso2: meta.venues?.[0]?.country?.iso2 ?? '',
     };
