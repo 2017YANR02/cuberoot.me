@@ -1135,7 +1135,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     readOnly={!!timeAutoSource}
                     className={timeAutoSource ? 'submit-input-locked' : undefined}
                     title={timeAutoSource ? (tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch',
-                        zhHant: "自動填充值不可編輯;改 選手/比賽/專案/輪次/第幾把 以重新獲取"
+                        zhHant: "自動填充值不可編輯;改 選手/比賽/項目/輪次/第幾把 以重新獲取"
                     })) : undefined}
                   />
                 </label>
@@ -1323,7 +1323,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                         zhHant: "身份欄位不可改;如需修改請重建"
                     }))
                       : avgAutoSource ? (tr({ zh: '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取', en: 'auto-filled, read-only; change person/comp/event/round to refetch',
-                          zhHant: "自動填充值不可編輯;改選手/比賽/專案/輪次以重新獲取"
+                          zhHant: "自動填充值不可編輯;改選手/比賽/項目/輪次以重新獲取"
                     }))
                       : undefined}
                   />
@@ -1350,7 +1350,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                         zhHant: "身份欄位不可改;如需修改請重建"
                     }))
                       : singleAutoSource ? (tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch',
-                          zhHant: "自動填充值不可編輯;改 選手/比賽/專案/輪次/第幾把 以重新獲取"
+                          zhHant: "自動填充值不可編輯;改 選手/比賽/項目/輪次/第幾把 以重新獲取"
                     })) : undefined}
                   />
                   {timeLoading
@@ -1415,7 +1415,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 className={scrambleAutoSource ? 'submit-input-locked' : undefined}
                 title={scrambleAutoSource
                   ? (tr({ zh: '自动填充值不可编辑;改 比赛/项目/轮次/分组/第几把 以重新获取', en: 'auto-filled, read-only; change comp/event/round/group/# to refetch',
-                      zhHant: "自動填充值不可編輯;改 比賽/專案/輪次/分組/第幾把 以重新獲取"
+                      zhHant: "自動填充值不可編輯;改 比賽/項目/輪次/分組/第幾把 以重新獲取"
                 }))
                   : undefined}
                 onChange={e => {

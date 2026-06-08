@@ -197,7 +197,7 @@ function RecordsPageInner() {
           <>
             {visibleRows.length === 0 && (
               <div className="wse-state">{tr({ zh: '该区域 / 项目暂无历史纪录', en: 'No historical records for this region / event',
-                  zhHant: "該區域 / 專案暫無歷史紀錄"
+                  zhHant: "該區域 / 項目暫無歷史紀錄"
             })}</div>
             )}
 
@@ -255,7 +255,7 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
               zhHant: "型別"
         })}</th>
           {showEvent && <th>{tr({ zh: '项目', en: 'Event',
-              zhHant: "專案"
+              zhHant: "項目"
         })}</th>}
           <th className="wse-value-col">{tr({ zh: '单次', en: 'Single',
               zhHant: "單次"

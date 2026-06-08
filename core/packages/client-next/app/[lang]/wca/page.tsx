@@ -73,7 +73,7 @@ const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; ex
 },
   { path: '/wca/success-rate',    zh: '完成率',       en: 'Success Rate',    Icon: Percent },
   { path: '/wca/all-events-done', zh: '全项目达成',   en: 'All Events Done', Icon: LayoutGrid,
-      zhHant: "全專案達成"
+      zhHant: "全項目達成"
 },
   { path: '/wca/sum-of-ranks',    zh: '名次和',       en: 'Sum of Ranks',    Icon: Sigma },
   { path: '/wca/grand-slam',      zh: '大满贯',       en: 'Grand Slam',      Icon: Crown,

@@ -89,7 +89,7 @@ export default function CompAboutPage() {
             title={t('点击选手看历史', 'Click a person for history', "點選選手看歷史")}
             body={t(
               '点任意选手名会弹出他/她在本场各项目的所有成绩(每次 attempt + PR 标记),以及生涯 PB 对比。',
-              'Clicking a competitor\'s name opens a modal with all their round results (per-attempt + PR flags) across events in this competition, alongside their career PB.', "點任意選手名會彈出他/她在本場各專案的所有成績(每次 attempt + PR 標記),以及生涯 PB 對比。"
+              'Clicking a competitor\'s name opens a modal with all their round results (per-attempt + PR flags) across events in this competition, alongside their career PB.', "點任意選手名會彈出他/她在本場各項目的所有成績(每次 attempt + PR 標記),以及生涯 PB 對比。"
             )}
             highlight
           />
@@ -108,7 +108,7 @@ export default function CompAboutPage() {
         <p className="ca-section-intro">
           {t(
             '每条成绩标的不只是"是不是 PR",而是历史第几快:PR = 选手此项目历史最快,PR2 = 历史第 2 快,PR17 = 历史第 17 快,以此类推。计算口径:本比赛开始日期之前的全部历史成绩取 dense rank。这意味着旧比赛页面的 PR rank 在那一刻冻结 — 选手未来破纪录不会回头改老页面里的标志。单次和平均独立排名。',
-            'Each result is tagged not just "is PR" but its historical position: PR = fastest ever, PR2 = 2nd best, PR17 = 17th best, etc. Dense rank computed across all results before this competition\'s start date. Past-comp PR rank is frozen in time — future breakthroughs do not retroactively rewrite old pages. Single and average ranked independently.', "每條成績標的不只是\"是不是 PR\",而是歷史第幾快:PR = 選手此專案歷史最快,PR2 = 歷史第 2 快,PR17 = 歷史第 17 快,以此類推。計算口徑:本比賽開始日期之前的全部歷史成績取 dense rank。這意味著舊比賽頁面的 PR rank 在那一刻凍結 — 選手未來破紀錄不會回頭改老頁面裡的標誌。單次和平均獨立排名。"
+            'Each result is tagged not just "is PR" but its historical position: PR = fastest ever, PR2 = 2nd best, PR17 = 17th best, etc. Dense rank computed across all results before this competition\'s start date. Past-comp PR rank is frozen in time — future breakthroughs do not retroactively rewrite old pages. Single and average ranked independently.', "每條成績標的不只是\"是不是 PR\",而是歷史第幾快:PR = 選手此項目歷史最快,PR2 = 歷史第 2 快,PR17 = 歷史第 17 快,以此類推。計算口徑:本比賽開始日期之前的全部歷史成績取 dense rank。這意味著舊比賽頁面的 PR rank 在那一刻凍結 — 選手未來破紀錄不會回頭改老頁面裡的標誌。單次和平均獨立排名。"
           )}
         </p>
 
@@ -116,7 +116,7 @@ export default function CompAboutPage() {
         <p className="ca-section-intro">
           {t(
             '本页主体是一张比赛日历:月历 / 紧凑国旗 / 列表三种视图,默认展示近期与历史的 WCA 比赛。可按顶尖选手、地区(大洲 / 国家)、项目轮次、月份过滤;点任意比赛弹出各轮次 WR / CR / NR 纪录摘要,再一步进入完整成绩。顶部「统计」链接到比赛数量随时间分布的热力图。比赛列表来自每周更新的 all_upcoming_comps.json / all_past_comps.json。',
-            'The body of this page is a competition calendar: month-grid / compact-flags / list views, showing upcoming and past WCA competitions by default. Filter by top cubers, region (continent / country), event rounds, and month; click any competition for its per-round WR / CR / NR record highlights, then drill into full results. The "Stats" link opens a heatmap of competition counts over time. Lists update weekly from all_upcoming_comps.json / all_past_comps.json.', "本頁主體是一張比賽日曆:月曆 / 緊湊國旗 / 列表三種檢視,預設展示近期與歷史的 WCA 比賽。可按頂尖選手、地區(大洲 / 國家)、專案輪次、月份過濾;點任意比賽彈出各輪次 WR / CR / NR 紀錄摘要,再一步進入完整成績。頂部「統計」連結到比賽數量隨時間分佈的熱力圖。比賽列表來自每週更新的 all_upcoming_comps.json / all_past_comps.json。"
+            'The body of this page is a competition calendar: month-grid / compact-flags / list views, showing upcoming and past WCA competitions by default. Filter by top cubers, region (continent / country), event rounds, and month; click any competition for its per-round WR / CR / NR record highlights, then drill into full results. The "Stats" link opens a heatmap of competition counts over time. Lists update weekly from all_upcoming_comps.json / all_past_comps.json.', "本頁主體是一張比賽日曆:月曆 / 緊湊國旗 / 列表三種檢視,預設展示近期與歷史的 WCA 比賽。可按頂尖選手、地區(大洲 / 國家)、項目輪次、月份過濾;點任意比賽彈出各輪次 WR / CR / NR 紀錄摘要,再一步進入完整成績。頂部「統計」連結到比賽數量隨時間分佈的熱力圖。比賽列表來自每週更新的 all_upcoming_comps.json / all_past_comps.json。"
           )}
         </p>
 

@@ -63,7 +63,7 @@ export default function ReconAboutPage() {
             title={t('过滤 / 搜索', 'Filter or search', "過濾 / 搜尋")}
             body={t(
               '顶部表头每列可点开 popover 过滤:项目、选手、纪录标志(WR/CR/NR)、比赛。"WCA only" toggle 只看正式比赛复盘。',
-              'Each column header opens a popover filter: event, person, record tag (WR/CR/NR), competition. The "WCA only" toggle restricts to official-competition solves.', "頂部表頭每列可點開 popover 過濾:專案、選手、紀錄標誌(WR/CR/NR)、比賽。\"WCA only\" toggle 只看正式比賽覆盤。"
+              'Each column header opens a popover filter: event, person, record tag (WR/CR/NR), competition. The "WCA only" toggle restricts to official-competition solves.', "頂部表頭每列可點開 popover 過濾:項目、選手、紀錄標誌(WR/CR/NR)、比賽。\"WCA only\" toggle 只看正式比賽覆盤。"
             )}
           />
           <Arrow />

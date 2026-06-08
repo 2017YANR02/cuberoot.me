@@ -211,7 +211,7 @@ export default function CalendarStatsPage() {
           value={event}
           onChange={setEvent}
           allLabel={tr({ zh: '所有项目', en: 'All events',
-              zhHant: "所有專案"
+              zhHant: "所有項目"
         })}
           className="cs-filter"
         />
@@ -355,7 +355,7 @@ export default function CalendarStatsPage() {
         <section className="cs-section">
           <h2 className="cs-section-title">
             {tr({ zh: '项目场次', en: 'Events offered',
-                zhHant: "專案場次"
+                zhHant: "項目場次"
             })}
             <SectionPlayControls anim={eventAnim} isZh={isZh} />
             <span className="cs-scope-tag">{scopeLabelOf(eventScope)}</span>

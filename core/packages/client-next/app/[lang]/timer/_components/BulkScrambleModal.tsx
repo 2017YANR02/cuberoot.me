@@ -124,7 +124,7 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
         <div className="modal-section bulk-controls" style={controlsStyle}>
           <label className="manual-label inline" style={fieldStyle}>
             {tr({ zh: '项目', en: 'Event',
-                zhHant: "專案"
+                zhHant: "項目"
             })}
             <select
               ref={firstSelectRef}

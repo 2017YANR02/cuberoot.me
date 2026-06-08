@@ -22,8 +22,8 @@ const grand_slam: AboutEntry = {
         hintZhHant: "WC + 大洲 + 國錦 領獎臺,外加任一 WR"
     },
     { value: '17', labelZh: '覆盖项目', labelEn: 'Events covered', hintZh: '当前 17 个官方项目逐个独立计算', hintEn: 'Computed independently per active event',
-        labelZhHant: "覆蓋專案",
-        hintZhHant: "當前 17 個官方專案逐個獨立計算"
+        labelZhHant: "覆蓋項目",
+        hintZhHant: "當前 17 個官方項目逐個獨立計算"
     },
     { value: 'pos ≤ 3', labelZh: '领奖台口径', labelEn: 'Podium criterion', hintZh: '只看 finals(round_type c/f)', hintEn: 'Finals only — `round_type_id` in c/f',
         labelZhHant: "領獎臺口徑"
@@ -108,11 +108,11 @@ ORDER BY gs.best_value NULLS LAST;`,
   ],
   related: [
     { id: 'sum-of-ranks', titleZh: '全项目排名', titleEn: 'Sum of Ranks', hintZh: '另一个"全能选手"指标 — 把世界排名相加', hintEn: 'Another all-rounder lens — sum of world ranks instead of podiums',
-        titleZhHant: "全專案排名",
+        titleZhHant: "全項目排名",
         hintZhHant: "另一個\"全能選手\"指標 — 把世界排名相加"
     },
     { id: 'all-events-done', titleZh: '全项目达成', titleEn: 'All Events Done', hintZh: '从首参赛到 17 项都至少完赛一次的耗时', hintEn: 'Days from first comp to having at least one result in all 17 events',
-        titleZhHant: "全專案達成",
+        titleZhHant: "全項目達成",
         hintZhHant: "從首參賽到 17 項都至少完賽一次的耗時"
     },
     { id: 'wr_aoxr', titleZh: 'AoXR — 跨轮平均', titleEn: 'AoXR — across-round average', hintZh: '同样靠 WR 列表筛人 — has_wr=TRUE 选手集合的交集', hintEn: 'Also keyed off the WR list — overlaps the has_wr=TRUE cohort',
@@ -121,10 +121,10 @@ ORDER BY gs.best_value NULLS LAST;`,
     },
     { id: 'grand-slam', toStat: true, titleZh: '直接打开大满贯排名', titleEn: 'Open the Grand Slam table', hintZh: '看实际选手 / 项目切换 / 全金过滤', hintEn: 'Live table + event picker + only-gold toggle',
         titleZhHant: "直接開啟大滿貫排名",
-        hintZhHant: "看實際選手 / 專案切換 / 全金過濾"
+        hintZhHant: "看實際選手 / 項目切換 / 全金過濾"
     },
   ],
-    titleZhHant: "大滿貫 — 同一專案集齊三冠 + WR",
+    titleZhHant: "大滿貫 — 同一項目集齊三冠 + WR",
     badgeZhHant: "選手"
 };
 
@@ -190,7 +190,7 @@ ORDER BY q.value ASC, q.wca_id ASC;`,
       bodyZh: '`event_id` 校验 `VALID_EVENTS`(21 个含废止项目),`type` 只接 `single` / `average`;`333mbf` 拒绝 average。这两个值进 `wrt_main` 索引前缀。',
       bodyEn: '`event_id` validated against `VALID_EVENTS` (21 incl. discontinued); `type` is `single` or `average` only; `333mbf` rejects `average`. Both values form the leading prefix of `wrt_main`.',
         titleZhHant: "基礎過濾:event + type",
-        bodyZhHant: "`event_id` 校驗 `VALID_EVENTS`(21 個含廢止專案),`type` 只接 `single` / `average`;`333mbf` 拒絕 average。這兩個值進 `wrt_main` 索引字首。"
+        bodyZhHant: "`event_id` 校驗 `VALID_EVENTS`(21 個含廢止項目),`type` 只接 `single` / `average`;`333mbf` 拒絕 average。這兩個值進 `wrt_main` 索引字首。"
     },
     {
       titleZh: '附加过滤:country / year / month',
@@ -359,12 +359,12 @@ LIMIT ? OFFSET ?;`,
         hintZhHant: "同源資料,不分 cohort 的全域性檢視"
     },
     { id: 'sum-of-ranks', titleZh: '全项目排名', titleEn: 'Sum of Ranks', hintZh: '世界排名衍生指标 — 17 项相加', hintEn: 'Another rank-derived metric — sums world ranks across 17 events',
-        titleZhHant: "全專案排名",
+        titleZhHant: "全項目排名",
         hintZhHant: "世界排名衍生指標 — 17 項相加"
     },
     { id: 'cohort-ranks', toStat: true, titleZh: '直接打开届别排名', titleEn: 'Open the cohort table', hintZh: '看届别 / 项目 / 国家切换', hintEn: 'Live table — cohort / event / country switches',
         titleZhHant: "直接開啟屆別排名",
-        hintZhHant: "看屆別 / 專案 / 國家切換"
+        hintZhHant: "看屆別 / 項目 / 國家切換"
     },
   ],
     titleZhHant: "參賽屆別排名 — 按\"首參賽年\"分組排名"
@@ -447,7 +447,7 @@ LIMIT ? OFFSET ?;`,
       bodyZh: '`successAcc: Map<event, Map<pid, [solved, attempted]>>`。同人同项目的所有比赛所有轮次都加在一起 — 没有时间窗 / cohort 切片。',
       bodyEn: '`successAcc: Map<event, Map<pid, [solved, attempted]>>`. All rounds across all comps for the same `(event, person)` aggregate into one cell — no time window or cohort slicing.',
         titleZhHant: "按 (event, person) 累計",
-        bodyZhHant: "`successAcc: Map<event, Map<pid, [solved, attempted]>>`。同人同專案的所有比賽所有輪次都加在一起 — 沒有時間窗 / cohort 切片。"
+        bodyZhHant: "`successAcc: Map<event, Map<pid, [solved, attempted]>>`。同人同項目的所有比賽所有輪次都加在一起 — 沒有時間窗 / cohort 切片。"
     },
     {
       titleZh: '过滤 + 百分比定点化',
@@ -481,7 +481,7 @@ LIMIT ? OFFSET ?;`,
   ],
   related: [
     { id: 'dnf_rate_by_event', titleZh: 'DNF 率(按项目)', titleEn: 'DNF rate by event', hintZh: '整体角度 — 同样的数据按事件聚合', hintEn: 'Event-level aggregate of the same numerator/denominator',
-        titleZhHant: "DNF 率(按專案)",
+        titleZhHant: "DNF 率(按項目)",
         hintZhHant: "整體角度 — 同樣的資料按事件聚合"
     },
     { id: 'most_solves_before_bld_success', titleZh: '盲拧首成功前 DNF 数', titleEn: 'DNFs before first BLD success', hintZh: '盲拧专属姐妹指标 — 首成功的尝试代价', hintEn: 'BLD-specific sibling — DNFs before the first valid solve',
@@ -490,10 +490,10 @@ LIMIT ? OFFSET ?;`,
     },
     { id: 'success-rate', toStat: true, titleZh: '直接打开成功率榜', titleEn: 'Open the Success Rate table', hintZh: '看默认 333bf + 项目切换 + 国家过滤', hintEn: 'Live table — defaults to 333bf, event + country pickers',
         titleZhHant: "直接開啟成功率榜",
-        hintZhHant: "看預設 333bf + 專案切換 + 國家過濾"
+        hintZhHant: "看預設 333bf + 項目切換 + 國家過濾"
     },
   ],
-    titleZhHant: "專案成功率 — solved / attempted",
+    titleZhHant: "項目成功率 — solved / attempted",
     badgeZhHant: "選手"
 };
 
@@ -514,8 +514,8 @@ const all_events_done: AboutEntry = {
   ],
   stats: [
     { value: '17', labelZh: '目标项目', labelEn: 'Target events', hintZh: 'ACTIVE_EVENTS 当下口径,废止项目不计', hintEn: 'Current ACTIVE_EVENTS set — discontinued events not counted',
-        labelZhHant: "目標專案",
-        hintZhHant: "ACTIVE_EVENTS 當下口徑,廢止專案不計"
+        labelZhHant: "目標項目",
+        hintZhHant: "ACTIVE_EVENTS 當下口徑,廢止項目不計"
     },
     { value: '~150 k', labelZh: '行数', labelEn: 'Rows', hintZh: '每个参加过 WCA 的人一行', hintEn: 'One row per person with any WCA result',
         labelZhHant: "行數",
@@ -523,7 +523,7 @@ const all_events_done: AboutEntry = {
     },
     { value: 'best > 0', labelZh: '达成口径', labelEn: 'Done criterion', hintZh: '一次 valid single 就算这个项目达成', hintEn: 'Any single valid result counts the event as done',
         labelZhHant: "達成口徑",
-        hintZhHant: "一次 valid single 就算這個專案達成"
+        hintZhHant: "一次 valid single 就算這個項目達成"
     },
     { value: 'max(date)', labelZh: '达成日 = 17 个首达成日的最晚', labelEn: 'Achievement date = max of 17 firsts', hintZh: '最后一项的首达成日就是大功告成日', hintEn: 'Latest first-result among the 17 events seals the achievement',
         labelZhHant: "達成日 = 17 個首達成日的最晚",
@@ -558,7 +558,7 @@ LIMIT ? OFFSET ?;`,
       expr: 'days = max₍e ∈ 17₎ firstDone(p, e) − firstComp(p)',
       bodyZh: '`firstDone(p, e)` = 选手 p 在项目 e 上首次 `best > 0` 的比赛日期;若有任一项目无成绩 → 全无定义,`is_done = FALSE` 且 `days_to_complete IS NULL`。',
       bodyEn: '`firstDone(p, e)` = the comp date of person p\'s first `best > 0` in event e; if any of the 17 is missing → undefined overall, with `is_done = FALSE` and `days_to_complete IS NULL`.',
-        bodyZhHant: "`firstDone(p, e)` = 選手 p 在專案 e 上首次 `best > 0` 的比賽日期;若有任一專案無成績 → 全無定義,`is_done = FALSE` 且 `days_to_complete IS NULL`。"
+        bodyZhHant: "`firstDone(p, e)` = 選手 p 在項目 e 上首次 `best > 0` 的比賽日期;若有任一項目無成績 → 全無定義,`is_done = FALSE` 且 `days_to_complete IS NULL`。"
     },
   ],
   steps: [
@@ -567,7 +567,7 @@ LIMIT ? OFFSET ?;`,
       titleEn: 'Resolve first-comp date and id',
       bodyZh: 'CI 预扫一次 `results JOIN competitions ORDER BY start_date, comp_id`,per pid 留最早一行 → `firstComp.compId / date / year`。后续 `personCompSet` 同时收集所有参赛 comp 用于 `total_comp_count`。',
       bodyEn: 'CI presweep: `results JOIN competitions ORDER BY start_date, comp_id`, keep the earliest row per pid → `firstComp.compId / date / year`. `personCompSet` simultaneously tracks all attended comps for `total_comp_count`.',
-        titleZhHant: "識別首參賽日 / 專案",
+        titleZhHant: "識別首參賽日 / 項目",
         bodyZhHant: "CI 預掃一次 `results JOIN competitions ORDER BY start_date, comp_id`,per pid 留最早一行 → `firstComp.compId / date / year`。後續 `personCompSet` 同時收集所有參賽 comp 用於 `total_comp_count`。"
     },
     {
@@ -629,11 +629,11 @@ LIMIT ? OFFSET ?;`,
         hintZhHant: "另一個\"全能\"維度 — 三級冠軍 + WR"
     },
     { id: 'all-events-done', toStat: true, titleZh: '直接打开全项目达成榜', titleEn: 'Open the All Events Done table', hintZh: '看默认 onlyDone 模式 + 国家切换', hintEn: 'Live table — default onlyDone view + country switcher',
-        titleZhHant: "直接開啟全專案達成榜",
+        titleZhHant: "直接開啟全項目達成榜",
         hintZhHant: "看預設 onlyDone 模式 + 國家切換"
     },
   ],
-    titleZhHant: "全專案達成 — 集齊 17 項所用的天數",
+    titleZhHant: "全項目達成 — 集齊 17 項所用的天數",
     badgeZhHant: "選手"
 };
 
@@ -661,7 +661,7 @@ const sum_of_ranks: AboutEntry = {
     },
     { value: 'participants + 1', labelZh: '缺项惩罚', labelEn: 'Missing-event penalty', hintZh: '比该项目最后一名再差一名', hintEn: 'One worse than the last-ranked competitor of that event',
         labelZhHant: "缺項懲罰",
-        hintZhHant: "比該專案最後一名再差一名"
+        hintZhHant: "比該項目最後一名再差一名"
     },
     { value: 'wr / cr', labelZh: '存两套排名', labelEn: 'Two rank arrays', hintZh: 'ranks_world + ranks_country 各 17 元素', hintEn: 'ranks_world + ranks_country — 17 INTEGER[] each',
         labelZhHant: "存兩套排名"
@@ -691,7 +691,7 @@ FROM wca_person_ranks pr CROSS JOIN ep
 JOIN wca_persons p ON p.wca_id = pr.wca_id
 WHERE pr.is_avg = ?
 ORDER BY subset_total ASC;`,
-      captionZhHant: "子集模式 — CTE 算每個選中專案的參賽人數,缺項 fallback 到 ep.pX + 1"
+      captionZhHant: "子集模式 — CTE 算每個選中項目的參賽人數,缺項 fallback 到 ep.pX + 1"
 },
   formulae: [
     {
@@ -700,7 +700,7 @@ ORDER BY subset_total ASC;`,
       expr: 'totalRank(p) = Σₑ (rank(p, e)  if rank > 0 else participants(e) + 1)',
       bodyZh: '`e` 跑遍 17 项(或子集);`rank(p, e) = 0` 表示该项目无成绩,fallback 到"参赛人数 + 1"(比最后一名再差一名)。',
       bodyEn: '`e` ranges over all 17 events (or chosen subset). `rank(p, e) = 0` indicates no result in that event, fallback to "participants + 1" (one worse than the bottom-ranked competitor).',
-        bodyZhHant: "`e` 跑遍 17 項(或子集);`rank(p, e) = 0` 表示該專案無成績,fallback 到\"參賽人數 + 1\"(比最後一名再差一名)。"
+        bodyZhHant: "`e` 跑遍 17 項(或子集);`rank(p, e) = 0` 表示該項目無成績,fallback 到\"參賽人數 + 1\"(比最後一名再差一名)。"
     },
   ],
   steps: [
@@ -726,7 +726,7 @@ ORDER BY subset_total ASC;`,
       bodyZh: '主循环每条 result 命中 `round_type_id IN (\'c\', \'f\')` 且 `pos > 0` 时,跨 event 更新该人的 `best_final_pos = MIN(pos)`。0 = 从未在任何 final 拿过有效成绩。`events_done` 计 `wr > 0` 的项目数。`/v1/wca/sum-of-ranks?hidePodium=1` → `best_final_pos = 0 OR > 3`。',
       bodyEn: 'In the main loop, every result with `round_type_id IN (\'c\', \'f\')` and `pos > 0` updates that person\'s `best_final_pos = MIN(pos)` across events. 0 = never produced a valid final-round result. `events_done` counts slots with `wr > 0`. `/v1/wca/sum-of-ranks?hidePodium=1` → `best_final_pos = 0 OR > 3`.',
         titleZhHant: "記 best_final_pos / events_done",
-        bodyZhHant: "主迴圈每條 result 命中 `round_type_id IN ('c', 'f')` 且 `pos > 0` 時,跨 event 更新該人的 `best_final_pos = MIN(pos)`。0 = 從未在任何 final 拿過有效成績。`events_done` 計 `wr > 0` 的專案數。`/v1/wca/sum-of-ranks?hidePodium=1` → `best_final_pos = 0 OR > 3`。"
+        bodyZhHant: "主迴圈每條 result 命中 `round_type_id IN ('c', 'f')` 且 `pos > 0` 時,跨 event 更新該人的 `best_final_pos = MIN(pos)`。0 = 從未在任何 final 拿過有效成績。`events_done` 計 `wr > 0` 的項目數。`/v1/wca/sum-of-ranks?hidePodium=1` → `best_final_pos = 0 OR > 3`。"
     },
     {
       titleZh: '全 17 项 → 走预计算列',
@@ -743,7 +743,7 @@ ORDER BY subset_total ASC;`,
       bodyEn: 'A real subset was passed: CTE `ep` counts participants per selected event; the main query builds `subset_total` with `CASE WHEN ranks_X[i+1] > 0 THEN ... ELSE ep.pX + 1 END` and `ORDER BY subset_total ASC`. The CTE is **not** affected by `hidePodium` — participant count is intrinsic to the event.',
       highlight: true,
         titleZhHant: "子集 → CTE + array indexing 實時算",
-        bodyZhHant: "`events` 傳了真子集:CTE `ep` 算每個選中專案的參賽人數;主查詢用 `CASE WHEN ranks_X[i+1] > 0 THEN ... ELSE ep.pX + 1 END` 累加 `subset_total`,再 `ORDER BY` 它。CTE 不受 `hidePodium` 影響 — 參賽人數是固有屬性。"
+        bodyZhHant: "`events` 傳了真子集:CTE `ep` 算每個選中項目的參賽人數;主查詢用 `CASE WHEN ranks_X[i+1] > 0 THEN ... ELSE ep.pX + 1 END` 累加 `subset_total`,再 `ORDER BY` 它。CTE 不受 `hidePodium` 影響 — 參賽人數是固有屬性。"
     },
   ],
   edgesZh: [
@@ -764,19 +764,19 @@ ORDER BY subset_total ASC;`,
         hintZhHant: "另一種\"全能\"過濾 — 看頂尖一行;sum-of-ranks 看分佈"
     },
     { id: 'all-events-done', titleZh: '全项目达成', titleEn: 'All Events Done', hintZh: '前置条件 — 没集齐 17 项,sum 里会扛缺项惩罚', hintEn: 'Precondition — anyone short of 17 events eats the missing-event penalty here',
-        titleZhHant: "全專案達成",
+        titleZhHant: "全項目達成",
         hintZhHant: "前置條件 — 沒集齊 17 項,sum 裡會扛缺項懲罰"
     },
     { id: 'cohort-ranks', titleZh: '参赛届别排名', titleEn: 'Cohort Ranks', hintZh: '单项目按届别看,sum-of-ranks 全项目无届别', hintEn: 'Single event by cohort; sum-of-ranks aggregates all events without cohorting',
         titleZhHant: "參賽屆別排名",
-        hintZhHant: "單專案按屆別看,sum-of-ranks 全專案無屆別"
+        hintZhHant: "單項目按屆別看,sum-of-ranks 全項目無屆別"
     },
     { id: 'sum-of-ranks', toStat: true, titleZh: '直接打开 Sum of Ranks', titleEn: 'Open Sum of Ranks', hintZh: '看默认 17 项 + 子集 picker + hidePodium 切换', hintEn: 'Live table — default 17 events + subset picker + hidePodium toggle',
         titleZhHant: "直接開啟 Sum of Ranks",
         hintZhHant: "看預設 17 項 + 子集 picker + hidePodium 切換"
     },
   ],
-    titleZhHant: "全專案排名 — 17 項世界排名之和"
+    titleZhHant: "全項目排名 — 17 項世界排名之和"
 };
 
 export const LOOKUP_ABOUT: Record<string, AboutEntry> = {

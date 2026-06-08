@@ -85,7 +85,7 @@ export default function WhatIfMode({ isZh }: Props) {
         })}</h2>
         <p className="nemesizer-results-summary">
           {tr({ zh: '假设你在某些项目上的排名不同，看看新的宿敌关系。', en: 'Enter alternate ranks for one or more events to see the new you.',
-              zhHant: "假設你在某些專案上的排名不同，看看新的宿敵關係。"
+              zhHant: "假設你在某些項目上的排名不同，看看新的宿敵關係。"
         })}
         </p>
         <NemesizerPersonPicker isZh={isZh} onPick={id => setParam('person', id)} />
@@ -145,7 +145,7 @@ export default function WhatIfMode({ isZh }: Props) {
       <div className="nemesizer-whatif-grid">
         <div className="nemesizer-whatif-row is-header" style={{ fontWeight: 600 }}>
           <div>{tr({ zh: '项目', en: 'Event',
-              zhHant: "專案"
+              zhHant: "項目"
         })}</div>
           <div>{tr({ zh: '真实排名', en: 'Real rank',
               zhHant: "真實排名"

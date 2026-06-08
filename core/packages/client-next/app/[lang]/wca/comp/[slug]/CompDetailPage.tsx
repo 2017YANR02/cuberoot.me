@@ -1892,7 +1892,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
                 {tr({ zh: '名次和', en: 'Total' })}
                 <InfoTooltip
                   content={tr({ zh: '把所选项目的预排名名次相加(数字越小越靠前)。\n灰色斜体的「(数字)」表示该选手没报这项,按该项「参赛人数+1」(比最后一名再差一名)计入。', en: 'Psych-sheet positions across the selected events added up (lower is better).\nA grey italic "(n)" means the cuber isn’t registered for that event, counted as that event’s "participants + 1" (one worse than last).',
-                      zhHant: "把所選專案的預排名名次相加(數字越小越靠前)。\n\
+                      zhHant: "把所選項目的預排名名次相加(數字越小越靠前)。\n\
 灰色斜體的「(數字)」表示該選手沒報這項,按該項「參賽人數+1」(比最後一名再差一名)計入。"
                 })}
                 />
@@ -2010,7 +2010,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
                     zhHant: "選手"
                 })}</th>
                 <th>{tr({ zh: '项目', en: 'Events',
-                    zhHant: "專案"
+                    zhHant: "項目"
                 })}</th>
               </tr>
             </thead>

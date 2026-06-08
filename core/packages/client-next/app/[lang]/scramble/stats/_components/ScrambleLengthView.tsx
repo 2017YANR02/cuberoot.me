@@ -242,10 +242,10 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
       zhHant: "步數;SQ1 計擰次,多盲每方塊單獨計"
 });
   const source = isBootstrap
-    ? (i18n.language === 'zh-Hant' ? (`示例樣本 ${totalN} 條打亂(取自部分比賽,完整全時段資料每日重新整理後生效);按專案統計打亂記號長度(${unitNote})。`) : (isZh
+    ? (i18n.language === 'zh-Hant' ? (`示例樣本 ${totalN} 條打亂(取自部分比賽,完整全時段資料每日重新整理後生效);按項目統計打亂記號長度(${unitNote})。`) : (isZh
             ? `示例样本 ${totalN} 条打乱(取自部分比赛,完整全时段数据每日刷新后生效);按项目统计打乱记号长度(${unitNote})。`
             : `Sample of ${totalN} scrambles (a few competitions; full all-time data lands on the next daily refresh); scramble notation length per event (${unitNote}).`))
-    : (i18n.language === 'zh-Hant' ? (`來源: WCA 歷史比賽全部 ${totalN} 條打亂原文;按專案統計打亂記號長度(${unitNote})。`) : (isZh
+    : (i18n.language === 'zh-Hant' ? (`來源: WCA 歷史比賽全部 ${totalN} 條打亂原文;按項目統計打亂記號長度(${unitNote})。`) : (isZh
             ? `来源: WCA 历史比赛全部 ${totalN} 条打乱原文;按项目统计打乱记号长度(${unitNote})。`
             : `Source: all ${totalN} historical WCA competition scrambles; scramble notation length per event (${unitNote}).`));
 
@@ -272,7 +272,7 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
                 zhHant: "分開"
             })}
             ariaLabel={tr({ zh: '合并打乱相同的项目', en: 'Merge events that share scrambles',
-                zhHant: "合併打亂相同的專案"
+                zhHant: "合併打亂相同的項目"
             })}
           />
           <span className="scramble-len-merge-hint">

@@ -18,8 +18,8 @@ const best_result_off_podium: AboutEntry = {
   ],
   stats: [
     { value: '17', labelZh: '覆盖项目', labelEn: 'Events', hintZh: '所有 WCA 项目分组排', hintEn: 'Grouped per WCA event',
-        labelZhHant: "覆蓋專案",
-        hintZhHant: "所有 WCA 專案分組排"
+        labelZhHant: "覆蓋項目",
+        hintZhHant: "所有 WCA 項目分組排"
     },
     { value: 'pos > 3', labelZh: '过滤条件', labelEn: 'Filter', hintZh: '排除 1/2/3 名', hintEn: 'Drops 1st / 2nd / 3rd',
         labelZhHant: "過濾條件"
@@ -28,7 +28,7 @@ const best_result_off_podium: AboutEntry = {
         labelZhHant: "輪次範圍"
     },
     { value: 'Top 10', labelZh: '每项目保留', labelEn: 'Per event', hintZh: '按主成绩升序前 10', hintEn: 'Top 10 by primary metric',
-        labelZhHant: "每專案保留",
+        labelZhHant: "每項目保留",
         hintZhHant: "按主成績升序前 10"
     },
   ],
@@ -60,8 +60,8 @@ WHERE round_type_id IN ('c', 'f') AND pos > 3;`,
       titleEn: 'Group by event',
       bodyZh: '遍历 17 个 WCA 项目,每个项目独立排榜 —— 不同项目用不同主成绩(single vs average),不能混排。',
       bodyEn: 'Iterate over all 17 WCA events; each event has its own leaderboard because the primary metric (single vs average) differs by event.',
-        titleZhHant: "按專案分組",
-        bodyZhHant: "遍歷 17 個 WCA 專案,每個專案獨立排榜 —— 不同專案用不同主成績(single vs average),不能混排。"
+        titleZhHant: "按項目分組",
+        bodyZhHant: "遍歷 17 個 WCA 項目,每個項目獨立排榜 —— 不同項目用不同主成績(single vs average),不能混排。"
     },
     {
       titleZh: '解析主 / 次成绩',
@@ -69,7 +69,7 @@ WHERE round_type_id IN ('c', 'f') AND pos > 3;`,
       bodyZh: '从 `preferred_formats` 读这个项目的 `sort_by`:333fm = "average",大多数项目 = "average",333bf / 333mbf / 333ft = "single"。`sort_by_second` 是平局打破字段。',
       bodyEn: 'Read the event\'s `sort_by` from `preferred_formats`: 333fm = "average", most events = "average", 333bf / 333mbf / 333ft = "single". `sort_by_second` breaks ties.',
         titleZhHant: "解析主 / 次成績",
-        bodyZhHant: "從 `preferred_formats` 讀這個專案的 `sort_by`:333fm = \"average\",大多數專案 = \"average\",333bf / 333mbf / 333ft = \"single\"。`sort_by_second` 是平局打破欄位。"
+        bodyZhHant: "從 `preferred_formats` 讀這個項目的 `sort_by`:333fm = \"average\",大多數項目 = \"average\",333bf / 333mbf / 333ft = \"single\"。`sort_by_second` 是平局打破欄位。"
     },
     {
       titleZh: '按主成绩升序',
@@ -110,7 +110,7 @@ WHERE round_type_id IN ('c', 'f') AND pos > 3;`,
     },
     { id: 'best_result_off_podium', toStat: true, titleZh: '直接打开排名', titleEn: 'Jump to the leaderboard', hintZh: '看每个项目的"差点拿奖"完整 top 10', hintEn: 'Full per-event top 10 of off-podium bests',
         titleZhHant: "直接開啟排名",
-        hintZhHant: "看每個專案的\"差點拿獎\"完整 top 10"
+        hintZhHant: "看每個項目的\"差點拿獎\"完整 top 10"
     },
   ],
     titleZhHant: "最佳非領獎臺成績 — 離獎牌最近的眼淚",
@@ -135,7 +135,7 @@ const complete_competition_winners: AboutEntry = {
   stats: [
     { value: 'pos = 1', labelZh: '入选条件', labelEn: 'Filter', hintZh: '每个项目都拿第一', hintEn: 'Gold in every event',
         labelZhHant: "入選條件",
-        hintZhHant: "每個專案都拿第一"
+        hintZhHant: "每個項目都拿第一"
     },
     { value: 'HAVING = 1', labelZh: '关键 SQL', labelEn: 'SQL key', hintZh: '比赛里"第一名集合"只有 1 人', hintEn: 'Set of 1st-place people has size 1',
         labelZhHant: "關鍵 SQL",
@@ -145,7 +145,7 @@ const complete_competition_winners: AboutEntry = {
         labelZhHant: "輪次範圍"
     },
     { value: 'DESC', labelZh: '排序', labelEn: 'Sort', hintZh: '项目数多者优先', hintEn: 'More events first',
-        hintZhHant: "專案數多者優先"
+        hintZhHant: "項目數多者優先"
     },
   ],
   sourceZh: [
@@ -183,7 +183,7 @@ ORDER BY events_count DESC, person.name;`,
       bodyZh: '内层 `GROUP BY competition_id`,把这场比赛每个项目的"第一名 person_id"汇总。',
       bodyEn: 'Inner query `GROUP BY competition_id`; for each comp, gather the person_id of every event\'s 1st place.',
         titleZhHant: "按比賽收集所有金牌",
-        bodyZhHant: "內層 `GROUP BY competition_id`,把這場比賽每個專案的\"第一名 person_id\"彙總。"
+        bodyZhHant: "內層 `GROUP BY competition_id`,把這場比賽每個項目的\"第一名 person_id\"彙總。"
     },
     {
       titleZh: '只留"一人通吃"',
@@ -197,8 +197,8 @@ ORDER BY events_count DESC, person.name;`,
       titleEn: 'Count events',
       bodyZh: '`COUNT(DISTINCT event_id)` 就是这场比赛的项目数 N —— 也是包圆的"难度"。',
       bodyEn: '`COUNT(DISTINCT event_id)` is the comp\'s event count N — also the sweep\'s difficulty.',
-        titleZhHant: "數專案數",
-        bodyZhHant: "`COUNT(DISTINCT event_id)` 就是這場比賽的專案數 N —— 也是包圓的\"難度\"。"
+        titleZhHant: "數項目數",
+        bodyZhHant: "`COUNT(DISTINCT event_id)` 就是這場比賽的項目數 N —— 也是包圓的\"難度\"。"
     },
     {
       titleZh: '关联展示字段并排序',
@@ -323,7 +323,7 @@ ORDER BY 4th_places_count DESC;`,
       bodyZh: '`GROUP BY person_id` + `COUNT(*)`,得到生涯累积。一个比赛同一项目只会有一个决赛,所以不会重复计数。',
       bodyEn: '`GROUP BY person_id` + `COUNT(*)` produces the career tally. Each comp × event has only one final, so no double counting.',
         titleZhHant: "按選手 COUNT",
-        bodyZhHant: "`GROUP BY person_id` + `COUNT(*)`,得到生涯累積。一個比賽同一專案只會有一個決賽,所以不會重複計數。"
+        bodyZhHant: "`GROUP BY person_id` + `COUNT(*)`,得到生涯累積。一個比賽同一項目只會有一個決賽,所以不會重複計數。"
     },
     {
       titleZh: '截 top 100 + 拼接展示',
@@ -380,8 +380,8 @@ const most_competitions_before_winning: AboutEntry = {
   ],
   stats: [
     { value: '17', labelZh: '覆盖项目', labelEn: 'Events', hintZh: '按项目独立计算', hintEn: 'Computed per event',
-        labelZhHant: "覆蓋專案",
-        hintZhHant: "按專案獨立計算"
+        labelZhHant: "覆蓋項目",
+        hintZhHant: "按項目獨立計算"
     },
     { value: 'first 1st', labelZh: '触发条件', labelEn: 'Trigger', hintZh: '首次决赛 pos = 1 AND best > 0', hintEn: 'First final pos = 1 AND best > 0',
         labelZhHant: "觸發條件",
@@ -392,7 +392,7 @@ const most_competitions_before_winning: AboutEntry = {
         hintZhHant: "按比賽開始日期排序"
     },
     { value: 'Top 10', labelZh: '每项目保留', labelEn: 'Per event', hintZh: '等待最长的 10 人', hintEn: '10 longest waits per event',
-        labelZhHant: "每專案保留",
+        labelZhHant: "每項目保留",
         hintZhHant: "等待最長的 10 人"
     },
   ],
@@ -433,8 +433,8 @@ ORDER BY start_date;`,
       titleEn: 'Filter per event, bucket per person',
       bodyZh: '`EVENTS_ENTRIES.map` 遍历 17 个项目;每个项目内 `Map<personLink, rows[]>`,行的相对顺序保留(因为 SQL 已按时间排过)。',
       bodyEn: '`EVENTS_ENTRIES.map` iterates 17 events. Inside, `Map<personLink, rows[]>` — the row order is preserved because SQL already sorted by time.',
-        titleZhHant: "按專案篩 → 按選手分桶",
-        bodyZhHant: "`EVENTS_ENTRIES.map` 遍歷 17 個專案;每個專案內 `Map<personLink, rows[]>`,行的相對順序保留(因為 SQL 已按時間排過)。"
+        titleZhHant: "按項目篩 → 按選手分桶",
+        bodyZhHant: "`EVENTS_ENTRIES.map` 遍歷 17 個項目;每個項目內 `Map<personLink, rows[]>`,行的相對順序保留(因為 SQL 已按時間排過)。"
     },
     {
       titleZh: '同人内按比赛再分桶',
@@ -450,7 +450,7 @@ ORDER BY start_date;`,
       bodyZh: '`won = compRows.some(r => is_final === 1 && place === 1 && best > 0)`。一场比赛只要在该项目决赛里有一行 pos = 1 就算赢。',
       bodyEn: '`won = compRows.some(r => is_final === 1 && place === 1 && best > 0)`. A single 1st-place final row in that event flags the whole comp as a win.',
         titleZhHant: "每場打\"是否獲勝\"標籤",
-        bodyZhHant: "`won = compRows.some(r => is_final === 1 && place === 1 && best > 0)`。一場比賽只要在該專案決賽裡有一行 pos = 1 就算贏。"
+        bodyZhHant: "`won = compRows.some(r => is_final === 1 && place === 1 && best > 0)`。一場比賽只要在該項目決賽裡有一行 pos = 1 就算贏。"
     },
     {
       titleZh: '找首次 won 的下标',
@@ -484,7 +484,7 @@ ORDER BY start_date;`,
     },
     { id: 'most_competitions_before_winning', toStat: true, titleZh: '直接打开排名', titleEn: 'Jump to the leaderboard', hintZh: '看每个项目"等最久"的 10 人', hintEn: '10 longest waits per event',
         titleZhHant: "直接開啟排名",
-        hintZhHant: "看每個專案\"等最久\"的 10 人"
+        hintZhHant: "看每個項目\"等最久\"的 10 人"
     },
   ],
     titleZhHant: "首次獲勝前參加最多比賽 — 漫長的等待",
@@ -516,8 +516,8 @@ const most_finals: AboutEntry = {
     },
     { value: 'Top 100', labelZh: '保留', labelEn: 'Cutoff', hintZh: 'LIMIT 100', hintEn: 'LIMIT 100' },
     { value: 'all events', labelZh: '项目混合', labelEn: 'All events', hintZh: '不分单 / 平均 / 项目', hintEn: 'Pooled across single / average / event',
-        labelZhHant: "專案混合",
-        hintZhHant: "不分單 / 平均 / 專案"
+        labelZhHant: "項目混合",
+        hintZhHant: "不分單 / 平均 / 項目"
     },
   ],
   sourceZh: [
@@ -561,7 +561,7 @@ ORDER BY finals_count DESC;`,
       bodyZh: '`GROUP BY person_id` + `COUNT(*)`。同一场比赛同一项目只贡献 1 行 result(决赛只跑一次),所以不会重复。',
       bodyEn: '`GROUP BY person_id` + `COUNT(*)`. A given comp × event only produces one finals row, so no double-count.',
         titleZhHant: "按選手計數",
-        bodyZhHant: "`GROUP BY person_id` + `COUNT(*)`。同一場比賽同一專案只貢獻 1 行 result(決賽只跑一次),所以不會重複。"
+        bodyZhHant: "`GROUP BY person_id` + `COUNT(*)`。同一場比賽同一項目只貢獻 1 行 result(決賽只跑一次),所以不會重複。"
     },
     {
       titleZh: '降序截 100',
@@ -803,7 +803,7 @@ GROUP BY event_id, competition_id;`,
       bodyZh: '`GROUP BY event_id, competition_id` —— 每一行 = 该比赛该项目的领奖台名单(按字母排序,后面好做 key)。',
       bodyEn: '`GROUP BY event_id, competition_id` — each row = the podium roster of one (comp × event), names alphabetized so combos give canonical keys.',
         titleZhHant: "收集每個領獎臺",
-        bodyZhHant: "`GROUP BY event_id, competition_id` —— 每一行 = 該比賽該專案的領獎臺名單(按字母排序,後面好做 key)。"
+        bodyZhHant: "`GROUP BY event_id, competition_id` —— 每一行 = 該比賽該項目的領獎臺名單(按字母排序,後面好做 key)。"
     },
     {
       titleZh: '拼名字成字符串',
@@ -897,8 +897,8 @@ const worst_result_on_podium: AboutEntry = {
   ],
   stats: [
     { value: '17', labelZh: '覆盖项目', labelEn: 'Events', hintZh: '所有 WCA 项目', hintEn: 'All WCA events',
-        labelZhHant: "覆蓋專案",
-        hintZhHant: "所有 WCA 專案"
+        labelZhHant: "覆蓋項目",
+        hintZhHant: "所有 WCA 項目"
     },
     { value: 'pos ≤ 3', labelZh: '过滤条件', labelEn: 'Filter', hintZh: '只看 1 / 2 / 3 名', hintEn: 'Only 1st / 2nd / 3rd',
         labelZhHant: "過濾條件"
@@ -908,7 +908,7 @@ const worst_result_on_podium: AboutEntry = {
         hintZhHant: "isComplete() 過濾"
     },
     { value: 'Top 10', labelZh: '每项目保留', labelEn: 'Per event', hintZh: '正序后 reverse 取 top 10', hintEn: 'Sort asc, reverse, slice 10',
-        labelZhHant: "每專案保留",
+        labelZhHant: "每項目保留",
         hintZhHant: "正序後 reverse 取 top 10"
     },
   ],
@@ -942,7 +942,7 @@ WHERE round_type_id IN ('c', 'f') AND pos <= 3;`,
       titleEn: 'Group by event',
       bodyZh: '`EVENTS_ENTRIES.map` 遍历 17 项,每项独立排榜(主成绩字段不同,不能混)。',
       bodyEn: '`EVENTS_ENTRIES.map` iterates all 17 events. Each event ranks independently because the primary metric differs.',
-        titleZhHant: "按專案分組",
+        titleZhHant: "按項目分組",
         bodyZhHant: "`EVENTS_ENTRIES.map` 遍歷 17 項,每項獨立排榜(主成績欄位不同,不能混)。"
     },
     {
@@ -994,7 +994,7 @@ WHERE round_type_id IN ('c', 'f') AND pos <= 3;`,
     },
     { id: 'worst_result_on_podium', toStat: true, titleZh: '直接打开排名', titleEn: 'Jump to the leaderboard', hintZh: '看每个项目"奖牌地板"top 10', hintEn: 'Live per-event top 10 of slowest podiums',
         titleZhHant: "直接開啟排名",
-        hintZhHant: "看每個專案\"獎牌地板\"top 10"
+        hintZhHant: "看每個項目\"獎牌地板\"top 10"
     },
   ],
     titleZhHant: "領獎臺最差成績 — 也能拿獎",

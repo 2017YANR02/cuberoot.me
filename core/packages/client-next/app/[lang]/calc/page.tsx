@@ -326,7 +326,7 @@ export function CalcPage() {
         next[p] = { active: false };
         return next;
       });
-      alert(i18n.language === 'zh-Hant' ? (`未找到 ${person.wcaId} 該專案的資料。`) : (isZh
+      alert(i18n.language === 'zh-Hant' ? (`未找到 ${person.wcaId} 該項目的資料。`) : (isZh
                   ? `未找到 ${person.wcaId} 该项目的数据。`
                   : 'No data found for ' + person.wcaId + ' in this event.'));
       return;

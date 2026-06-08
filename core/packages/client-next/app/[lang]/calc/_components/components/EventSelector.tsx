@@ -62,7 +62,7 @@ export function EventSelector() {
           type="button"
           className="event-btn event-btn-more"
           data-tooltip={tr({ zh: '已废止项目', en: 'Former events',
-              zhHant: "已廢止專案"
+              zhHant: "已廢止項目"
         })}
           onClick={() => setExpanded(v => !v)}
         >

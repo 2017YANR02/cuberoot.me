@@ -44,7 +44,7 @@ export default function PredictionAboutPage() {
         <p className="pa-intro">
           {t(
             '/wca/prediction 用三轨并行的数学方法预测 16 个 WCA 项目的速拧极限:曲线拟合(exp+floor / Gompertz / 幂律)、物理下界(M/TPS+R 步数法)、以及极值统计理论(GEV)。数据覆盖 1982-2050。',
-            '/wca/prediction forecasts the physical and statistical limits of 16 WCA events using three parallel approaches: curve-fitting (exp+floor / Gompertz / power-law), first-principles physics floors (M/TPS+R), and extreme-value theory (GEV). Data span 1982-2050.', "/wca/prediction 用三軌並行的數學方法預測 16 個 WCA 專案的速擰極限:曲線擬合(exp+floor / Gompertz / 冪律)、物理下界(M/TPS+R 步數法)、以及極值統計理論(GEV)。資料覆蓋 1982-2050。"
+            '/wca/prediction forecasts the physical and statistical limits of 16 WCA events using three parallel approaches: curve-fitting (exp+floor / Gompertz / power-law), first-principles physics floors (M/TPS+R), and extreme-value theory (GEV). Data span 1982-2050.', "/wca/prediction 用三軌並行的數學方法預測 16 個 WCA 項目的速擰極限:曲線擬合(exp+floor / Gompertz / 冪律)、物理下界(M/TPS+R 步數法)、以及極值統計理論(GEV)。資料覆蓋 1982-2050。"
           )}
         </p>
 
@@ -61,7 +61,7 @@ export default function PredictionAboutPage() {
             <strong>{t('物理下界 (M/TPS+R)', 'Physics floor (M/TPS+R)')}</strong>
             {t(
               ' — 把一次 solve 拆解成步数 M、人类手速 TPS、和反应时间 R 三部分,估算生物力学不可突破的硬墙。各项目参数来自公开文献 + 竞技运动数据。',
-              ' — decomposes a solve into move count M, human TPS, and reaction time R, then derives the biomechanical hard floor. Per-event parameters come from published literature and sports-science data.', " — 把一次 solve 拆解成步數 M、人類手速 TPS、和反應時間 R 三部分,估算生物力學不可突破的硬牆。各專案引數來自公開文獻 + 競技運動資料。"
+              ' — decomposes a solve into move count M, human TPS, and reaction time R, then derives the biomechanical hard floor. Per-event parameters come from published literature and sports-science data.', " — 把一次 solve 拆解成步數 M、人類手速 TPS、和反應時間 R 三部分,估算生物力學不可突破的硬牆。各項目引數來自公開文獻 + 競技運動資料。"
             )}
           </li>
           <li>
@@ -80,7 +80,7 @@ export default function PredictionAboutPage() {
             title={t('一句话结论', 'Top Line', "一句話結論")}
             body={t(
               '显示"有多少项目已经压到物理下界 80% 以内",即还有不到 1.25 倍压缩空间 — 速拧正在撞墙的全局信号。',
-              'Shows how many events sit within 80% of their physics floor — less than 1.25× compression remaining — the global signal that speedcubing is hitting the wall.', "顯示\"有多少專案已經壓到物理下界 80% 以內\",即還有不到 1.25 倍壓縮空間 — 速擰正在撞牆的全域性訊號。"
+              'Shows how many events sit within 80% of their physics floor — less than 1.25× compression remaining — the global signal that speedcubing is hitting the wall.', "顯示\"有多少項目已經壓到物理下界 80% 以內\",即還有不到 1.25 倍壓縮空間 — 速擰正在撞牆的全域性訊號。"
             )}
           />
           <Arrow />
@@ -89,16 +89,16 @@ export default function PredictionAboutPage() {
             title={t('撞墙排名', 'Closest to Wall', "撞牆排名")}
             body={t(
               '16 个项目按"当前 WR / 物理下界"比值排序。比值越接近 1 代表越接近极限。3×3 BLD / 5×5 BLD 等通常在顶部。',
-              '16 events ranked by current WR / physics-floor ratio. Closer to 1.0 = closer to the limit. 3×3 BLD and 5×5 BLD typically top the list.', "16 個專案按\"當前 WR / 物理下界\"比值排序。比值越接近 1 代表越接近極限。3×3 BLD / 5×5 BLD 等通常在頂部。"
+              '16 events ranked by current WR / physics-floor ratio. Closer to 1.0 = closer to the limit. 3×3 BLD and 5×5 BLD typically top the list.', "16 個項目按\"當前 WR / 物理下界\"比值排序。比值越接近 1 代表越接近極限。3×3 BLD / 5×5 BLD 等通常在頂部。"
             )}
           />
           <Arrow />
           <Step
             step={3}
-            title={t('各项目详细分析', 'Per-event analysis', "各專案詳細分析")}
+            title={t('各项目详细分析', 'Per-event analysis', "各項目詳細分析")}
             body={t(
               '每个项目有:历史 WR 折线图 + 三条拟合曲线 + 物理下界线;TPS / 步数分解 biomech 计算;各时间节点(2030/2040/2050)的里程碑预测;区域格局地图。',
-              'Per event: historical WR line + three fitted curves + physics floor; per-move TPS/step biomechanical decomposition; milestone forecasts for 2030/2040/2050; regional distribution map.', "每個專案有:歷史 WR 折線圖 + 三條擬合曲線 + 物理下界線;TPS / 步數分解 biomech 計算;各時間節點(2030/2040/2050)的里程碑預測;區域格局地圖。"
+              'Per event: historical WR line + three fitted curves + physics floor; per-move TPS/step biomechanical decomposition; milestone forecasts for 2030/2040/2050; regional distribution map.', "每個項目有:歷史 WR 折線圖 + 三條擬合曲線 + 物理下界線;TPS / 步數分解 biomech 計算;各時間節點(2030/2040/2050)的里程碑預測;區域格局地圖。"
             )}
             highlight
           />
@@ -116,7 +116,7 @@ export default function PredictionAboutPage() {
         <ul className="pa-refs">
           <li>
             <Link href="/wca/prediction/333">{t('3×3 详细分析', '3×3 deep-dive', "3×3 詳細分析")}</Link>
-            {t(' — 单项目更深入的分节分析。', ' — deeper per-section analysis for 3×3.', " — 單專案更深入的分節分析。")}
+            {t(' — 单项目更深入的分节分析。', ' — deeper per-section analysis for 3×3.', " — 單項目更深入的分節分析。")}
           </li>
           <li>
             <Link href="/wca/viz">{t('成绩分布', 'Distribution', "成績分佈")}</Link>
@@ -124,7 +124,7 @@ export default function PredictionAboutPage() {
           </li>
           <li>
             <Link href="/wca/all-results">{t('全成绩排名', 'All Results', "全成績排名")}</Link>
-            {t(' — 查看任意项目的历史 WR 排列。', ' — browse historical WR progressions per event.', " — 檢視任意專案的歷史 WR 排列。")}
+            {t(' — 查看任意项目的历史 WR 排列。', ' — browse historical WR progressions per event.', " — 檢視任意項目的歷史 WR 排列。")}
           </li>
         </ul>
       </main>

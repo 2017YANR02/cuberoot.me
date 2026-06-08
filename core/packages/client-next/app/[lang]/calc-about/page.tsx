@@ -70,10 +70,10 @@ export default function CalcAboutPage() {
         <div className="calca-flow">
           <Step
             step={1}
-            title={t('选项目', 'Pick an event', "選專案")}
+            title={t('选项目', 'Pick an event', "選項目")}
             body={t(
               '底部事件选择器切换项目。切换时所有成绩清空,并按新项目更新 WR 默认参数。',
-              'The event selector at the bottom switches events. All times are cleared and WR defaults update for the new event.', "底部事件選擇器切換專案。切換時所有成績清空,並按新專案更新 WR 預設引數。"
+              'The event selector at the bottom switches events. All times are cleared and WR defaults update for the new event.', "底部事件選擇器切換項目。切換時所有成績清空,並按新項目更新 WR 預設引數。"
             )}
           />
           <Arrow />
@@ -82,7 +82,7 @@ export default function CalcAboutPage() {
             title={t('加载示例数据', 'Load sample data', "載入示例資料")}
             body={t(
               '点"随机 / World TOP 2"按钮自动加载当前项目 WR #1 和 WR #2 选手的 KDE 分布作为起点。头像出现代表数据已就绪。',
-              'Click the "World TOP 2" button to auto-load KDE data for WR #1 and WR #2 of the current event. Avatars appear when data is ready.', "點\"隨機 / World TOP 2\"按鈕自動載入當前專案 WR #1 和 WR #2 選手的 KDE 分佈作為起點。頭像出現代表資料已就緒。"
+              'Click the "World TOP 2" button to auto-load KDE data for WR #1 and WR #2 of the current event. Avatars appear when data is ready.', "點\"隨機 / World TOP 2\"按鈕自動載入當前項目 WR #1 和 WR #2 選手的 KDE 分佈作為起點。頭像出現代表資料已就緒。"
             )}
           />
           <Arrow />
@@ -135,7 +135,7 @@ export default function CalcAboutPage() {
           </li>
           <li>
             <Link href="/wca/prediction">{t('极限预测', 'Prediction', "極限預測")}</Link>
-            {t(' — WCA 项目速拧极限的数学预测报告。', ' — mathematical limit forecasts for WCA events.', " — WCA 專案速擰極限的數學預測報告。")}
+            {t(' — WCA 项目速拧极限的数学预测报告。', ' — mathematical limit forecasts for WCA events.', " — WCA 項目速擰極限的數學預測報告。")}
           </li>
           <li>
             <a href="https://github.com/carykh/hthgrapher" target="_blank" rel="noopener noreferrer">carykh/hthgrapher</a>

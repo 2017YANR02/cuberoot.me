@@ -58,7 +58,7 @@ const SECTIONS = [
       labelZhHant: "撞牆排名"
 },
   { id: 'overview',      labelZh: '跨项目总览',  labelEn: 'Cross-Event Grid',
-      labelZhHant: "跨專案總覽"
+      labelZhHant: "跨項目總覽"
 },
   { id: 'theory-deep',   labelZh: '数学硬墙',    labelEn: 'Math Walls',
       labelZhHant: "數學硬牆"
@@ -281,7 +281,7 @@ export default function PredictionPage() {
 
           <div className="pred-toc-group">
             <div className="pred-toc-group-title">{tr({ zh: '分项目章节', en: 'Per-Event Chapters',
-                zhHant: "分專案章節"
+                zhHant: "分項目章節"
             })}</div>
             {EVENTS.map((ev, i) => {
               const pctRaw = closenessPcts.find((p) => p.id === ev.id)?.pctRaw ?? null;
@@ -322,7 +322,7 @@ export default function PredictionPage() {
         <article className="pred-article">
           <h1 className="pred-title">
             {tr({ zh: '速拧的尽头: 全 WCA 项目极限预测', en: 'The Limits of Speedcubing: WCA-Wide Forecast',
-                zhHant: "速擰的盡頭: 全 WCA 專案極限預測"
+                zhHant: "速擰的盡頭: 全 WCA 項目極限預測"
             })}
             <Link
               href="/wca/prediction-about"
@@ -351,7 +351,7 @@ export default function PredictionPage() {
             <p className="pred-tldr-lede">
               {i18n.language === 'zh-Hant' ? ((
                                           <>
-                                            速擰正在撞牆。<strong>16 個 WCA 專案裡有 {closestCount} 個</strong> 當前 WR 已經壓到物理下界 (M/TPS+R 步數法) 的 80% 以內 — 餘地不到 1.25 倍。
+                                            速擰正在撞牆。<strong>16 個 WCA 項目裡有 {closestCount} 個</strong> 當前 WR 已經壓到物理下界 (M/TPS+R 步數法) 的 80% 以內 — 餘地不到 1.25 倍。
                                             3x3 單次 WR 在 2026 年首次跌破 3 秒 (Zajder 2.76),物理下界估計落在 <strong>~1.5 秒 (百年可達) 到 ~0.8 秒 (God's number 數學硬牆)</strong> 之間,還有 1.8 到 3.5 倍空間。
                                           </>
                                         )) : (isZh ? (
@@ -456,7 +456,7 @@ export default function PredictionPage() {
             })}</h2>
             <p>
               {tr({ zh: '横轴 = 物理下界 / 当前 WR (%)。越靠右 = 剩余空间越小。这个指标比「WR 是多少」更能反映「项目成熟度」: ratio 99% 的项目即使数字看上去吓人 (比如 0.30 秒),也几乎不会再有大幅改写;ratio 50% 的项目即使数字慢 (Wang 3.08 → Zajder 2.76 → 还能 ~1.5),突破才刚开始。', en: 'X-axis = physical floor / current WR (%). Further right = less headroom. This ratio captures "event maturity" better than the raw WR: a 99% event will see very few more WRs even if its absolute number looks impressive; a 50% event still has the steepest part of its curve ahead.',
-                  zhHant: "橫軸 = 物理下界 / 當前 WR (%)。越靠右 = 剩餘空間越小。這個指標比「WR 是多少」更能反映「專案成熟度」: ratio 99% 的專案即使數字看上去嚇人 (比如 0.30 秒),也幾乎不會再有大幅改寫;ratio 50% 的專案即使數字慢 (Wang 3.08 → Zajder 2.76 → 還能 ~1.5),突破才剛開始。"
+                  zhHant: "橫軸 = 物理下界 / 當前 WR (%)。越靠右 = 剩餘空間越小。這個指標比「WR 是多少」更能反映「項目成熟度」: ratio 99% 的項目即使數字看上去嚇人 (比如 0.30 秒),也幾乎不會再有大幅改寫;ratio 50% 的項目即使數字慢 (Wang 3.08 → Zajder 2.76 → 還能 ~1.5),突破才剛開始。"
             })}
             </p>
             <HeadlineBar eventSummaries={eventSummaries} isZh={isZh} />
@@ -465,7 +465,7 @@ export default function PredictionPage() {
           {/* 跨项目总览 */}
           <section className="pred-section" id="overview">
             <h2>{tr({ zh: '跨项目总览', en: 'Cross-Event Overview',
-                zhHant: "跨專案總覽"
+                zhHant: "跨項目總覽"
             })}</h2>
             <p>
               {tr({ zh: '每张卡片三行: 单次  /  平均  /  微型对比条。微型条横轴是「物理下界 → 当前 WR」的区间,三点分别是 T_phys (绿), 拟合 L (橙), 当前 WR (红)。红点离绿点越近,离物理墙就越近。', en: 'Each card has three rows: single, average, microbar. The bar runs from T_phys (green, physical floor) through L (orange, curve-fit trajectory floor) to WR (red, current). Red close to green = wall is closing in.',
@@ -589,7 +589,7 @@ export default function PredictionPage() {
                 <strong>{tr({ zh: '数据源', en: 'Source',
                     zhHant: "資料來源"
                 })}{isZh ? '。' : '.'}</strong>{' '}
-                {i18n.language === 'zh-Hant' ? (`WCA 全量 results dump,裝在本機 MySQL 8 (wca_developer_database 庫)。涵蓋 1982 至 ${new Date().getFullYear()},全部 16 個專案,共 170 萬+ 條 3x3 單次成績 (其他專案資料規模見各章)。`) : (isZh
+                {i18n.language === 'zh-Hant' ? (`WCA 全量 results dump,裝在本機 MySQL 8 (wca_developer_database 庫)。涵蓋 1982 至 ${new Date().getFullYear()},全部 16 個項目,共 170 萬+ 條 3x3 單次成績 (其他項目資料規模見各章)。`) : (isZh
                                                 ? `WCA 全量 results dump,装在本机 MySQL 8 (wca_developer_database 库)。涵盖 1982 至 ${new Date().getFullYear()},全部 16 个项目,共 170 万+ 条 3x3 单次成绩 (其他项目数据规模见各章)。`
                                                 : `Full WCA results dump in local MySQL 8 (wca_developer_database db). Covers 1982 to ${new Date().getFullYear()}, all 16 events analyzed, 1.7M+ 333 solves (others vary).`)}
               </li>
@@ -620,7 +620,7 @@ export default function PredictionPage() {
               <li>
                 <strong>{tr({ zh: '物理下界 T_phys', en: 'Physical floor T_phys' })}{isZh ? '。' : '.'}</strong>{' '}
                 {tr({ zh: '步数法 T = M/TPS + R,其中 M 是有公开复盘的平均 STM,TPS 是顶级选手的持续敲击率,R 是识别 + 切换的余量。每个项目独立填表,见各章节「已验证复盘」。', en: 'Step-count T = M/TPS + R, with M = verified reconstruction average STM, TPS = top-cuber sustained rate, R = recognition + switching residual. Filled per event, see each chapter\'s "Verified reconstructions".',
-                    zhHant: "步數法 T = M/TPS + R,其中 M 是有公開復盤的平均 STM,TPS 是頂級選手的持續敲擊率,R 是識別 + 切換的餘量。每個專案獨立填表,見各章節「已驗證覆盤」。"
+                    zhHant: "步數法 T = M/TPS + R,其中 M 是有公開復盤的平均 STM,TPS 是頂級選手的持續敲擊率,R 是識別 + 切換的餘量。每個項目獨立填表,見各章節「已驗證覆盤」。"
                 })}
               </li>
               <li>
@@ -833,7 +833,7 @@ function TheoreticalSection({ isZh }: { isZh: boolean }) {
       <p>
         {i18n.language === 'zh-Hant' ? ((
                         <>
-                          <strong>跨專案類比。</strong> STM × TPS × 切換 這個公式在每個專案都成立,但三個輸入隨魔方階數, 單手, 盲擰任務顯著不同:
+                          <strong>跨項目類比。</strong> STM × TPS × 切換 這個公式在每個項目都成立,但三個輸入隨魔方階數, 單手, 盲擰任務顯著不同:
                         </>
                       )) : (isZh ? (
                         <>
@@ -901,7 +901,7 @@ function RegionalSection({ eventSummaries, isZh }: { eventSummaries: any[]; isZh
                   zhHant: "WR 單次數量"
             })}</th>
               <th>{tr({ zh: '项目', en: 'Events',
-                  zhHant: "專案"
+                  zhHant: "項目"
             })}</th>
             </tr>
           </thead>

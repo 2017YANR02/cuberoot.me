@@ -33,7 +33,7 @@ interface Row {
 function AllEventsDonePageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('全项目达成', 'All Events Done', "全專案達成");
+  useDocumentTitle('全项目达成', 'All Events Done', "全項目達成");
   const [q, setQ] = useQueryStates(
     {
       country: parseAsString,
@@ -82,7 +82,7 @@ function AllEventsDonePageInner() {
         </div>
         <h1 className="wse-title-row">
           {tr({ zh: '全项目达成排名', en: 'All Events Achievement',
-              zhHant: "全專案達成排名"
+              zhHant: "全項目達成排名"
         })}
           <Link
             href="/wca/about/all-events-done"
@@ -98,7 +98,7 @@ function AllEventsDonePageInner() {
           </Link>
         </h1>
         <p className="wse-subtitle">{tr({ zh: '完成全 17 项 WCA 官方项目所用天数(从首次参赛到最后一项达成),即「全项目大满贯」', en: 'Days from first WCA comp to completing all 17 events — the all-events grand slam',
-            zhHant: "完成全 17 項 WCA 官方專案所用天數(從首次參賽到最後一項達成),即「全專案大滿貫」"
+            zhHant: "完成全 17 項 WCA 官方項目所用天數(從首次參賽到最後一項達成),即「全項目大滿貫」"
         })}</p>
       </header>
 
@@ -142,7 +142,7 @@ function AllEventsDonePageInner() {
                       zhHant: "比賽場次"
                 })}</th>
                   {!onlyDone && <th className="wse-value-col">{tr({ zh: '完成项目', en: 'Done',
-                      zhHant: "完成專案"
+                      zhHant: "完成項目"
                 })}</th>}
                   <th>{tr({ zh: '国家', en: 'Country',
                       zhHant: "國家"

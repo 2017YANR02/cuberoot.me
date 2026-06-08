@@ -105,7 +105,7 @@ export default function MetricExplainer({ isZh }: Props) {
       <table className="god-metric-table">
         <thead>
           <tr>
-            <th>{t('项目', 'Puzzle', "專案")}</th>
+            <th>{t('项目', 'Puzzle', "項目")}</th>
             <th>{t('上帝之数', "God's number", "上帝之數")} ({metric})</th>
           </tr>
         </thead>

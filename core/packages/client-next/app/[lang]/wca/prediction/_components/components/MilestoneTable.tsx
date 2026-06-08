@@ -15,7 +15,7 @@ export function MilestoneTableSection({ isZh }: Props) {
       <p>
         {i18n.language === 'zh-Hant' ? ((
                         <>
-                          本表把<strong>曲線擬合 (Exp+floor / Gompertz / 冪律 / 純指數 加權整合)</strong> + <strong>物理下界 T_phys (M/TPS+R)</strong> + <strong>方法 / 硬體 regime shift 調整</strong> 三類訊號合併,給出未來 5 / 25 / 50 年的 WR 預測 (單次,單位與各專案頁面一致)。
+                          本表把<strong>曲線擬合 (Exp+floor / Gompertz / 冪律 / 純指數 加權整合)</strong> + <strong>物理下界 T_phys (M/TPS+R)</strong> + <strong>方法 / 硬體 regime shift 調整</strong> 三類訊號合併,給出未來 5 / 25 / 50 年的 WR 預測 (單次,單位與各項目頁面一致)。
                           <strong>不要把這些數字當作預言</strong> — 5 年這種短期預測的歷史偏差 ±10%,25 年 ±30%,50 年的誤差量級與當前數值相當。
                           實際值之所以經常比預測低,是因為<em>下一次方法 / 硬體革命</em>不會被歷史軌跡捕捉到。Geng 的 ZB 革命 (2026) 一次就把 Ao5 砍掉了 ~5%,但單點擬合看不到這種跳躍。
                         </>
@@ -38,7 +38,7 @@ export function MilestoneTableSection({ isZh }: Props) {
           <thead>
             <tr>
               <th>{tr({ zh: '项目', en: 'Event',
-                  zhHant: "專案"
+                  zhHant: "項目"
             })}</th>
               <th>{tr({ zh: '现 WR', en: 'Current WR',
                   zhHant: "現 WR"

@@ -130,7 +130,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
   // Build the lines for both display and copy. Order mimics cstimer's BUTTON_OPTIONS.
   const lines: Array<[string, string]> = [];
   lines.push([tr({ zh: '项目', en: 'Event',
-      zhHant: "專案"
+      zhHant: "項目"
 }), evName]);
   lines.push([tr({ zh: '次数', en: 'Count',
       zhHant: "次數"

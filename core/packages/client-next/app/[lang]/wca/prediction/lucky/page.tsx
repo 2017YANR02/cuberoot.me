@@ -466,11 +466,11 @@ function LuckyLimitPageInner() {
         {/* 期望最幸运时间 chart */}
         <section className="pred-section">
           <h2>{tr({ zh: '期望最幸运成绩随年份 (跨项目)', en: 'Expected Luckiest Time vs Year (Cross-Event)',
-              zhHant: "期望最幸運成績隨年份 (跨專案)"
+              zhHant: "期望最幸運成績隨年份 (跨項目)"
         })}</h2>
           <p>
             {tr({ zh: '横轴 log 年份,纵轴 log 秒。每条线 = 某项目 E[min depth] / TPS_ceil + setup_s。长期渐近到 k_min_wca / TPS_ceil + setup (各项目最快可能的单次)。', en: 'Log year vs log seconds. Each line = E[min depth] / TPS_ceil + setup_s per event. Asymptote = k_min_wca / TPS_ceil + setup (fastest physically possible single).',
-                zhHant: "橫軸 log 年份,縱軸 log 秒。每條線 = 某專案 E[min depth] / TPS_ceil + setup_s。長期漸近到 k_min_wca / TPS_ceil + setup (各專案最快可能的單次)。"
+                zhHant: "橫軸 log 年份,縱軸 log 秒。每條線 = 某項目 E[min depth] / TPS_ceil + setup_s。長期漸近到 k_min_wca / TPS_ceil + setup (各項目最快可能的單次)。"
             })}
           </p>
           <LineChart
@@ -490,7 +490,7 @@ function LuckyLimitPageInner() {
         {/* Per-event cards */}
         <section className="pred-section">
           <h2>{tr({ zh: '各项目当前年份运气预测', en: 'Per-Event Forecast at Selected Year',
-              zhHant: "各專案當前年份運氣預測"
+              zhHant: "各項目當前年份運氣預測"
         })}</h2>
           <p>
             {tr({ zh: '★ = 深度分布精确;◐ = 部分精确, 高深度估计;~ = 近似分布。时间 = E[min] / TPS_ceil + setup_s。', en: '★ = exact depth distribution; ◐ = partial (exact low / est. high); ~ = approximate. Time = E[min] / TPS_ceil + setup_s.',
@@ -513,7 +513,7 @@ function LuckyLimitPageInner() {
                   zhHant: "狀態空間。"
             })}</strong>{' '}
               {tr({ zh: '三阶 4.3252×10¹⁹ 个状态,二阶 3,674,160,Pyraminx 933,120,Skewb 3,149,280。这四个项目的深度分布都已完全枚举 (counts[d] = 步数恰好为 d 的状态数)。', en: '3x3 = 4.3252 × 10^19 states; 2x2 = 3,674,160; Pyraminx = 933,120; Skewb = 3,149,280. Their full depth distributions are known.',
-                  zhHant: "三階 4.3252×10¹⁹ 個狀態,二階 3,674,160,Pyraminx 933,120,Skewb 3,149,280。這四個專案的深度分佈都已完全列舉 (counts[d] = 步數恰好為 d 的狀態數)。"
+                  zhHant: "三階 4.3252×10¹⁹ 個狀態,二階 3,674,160,Pyraminx 933,120,Skewb 3,149,280。這四個項目的深度分佈都已完全列舉 (counts[d] = 步數恰好為 d 的狀態數)。"
             })}
             </li>
             <li>
@@ -529,7 +529,7 @@ function LuckyLimitPageInner() {
                   zhHant: "累積打亂 N(Y)。"
             })}</strong>{' '}
               {tr({ zh: '2003-2025 来自 WCA 真实数据 (≈ 28000 场),2026+ 用 5% 年复合增长外推,封顶 30000 场 / 年。单场 3x3 打乱数 (含备用) 线性插值: 2003 ~30,2026 ~250。其他项目按 scramble_share 折算 (4x4 ≈ 0.70 × 3x3)。', en: '2003–2025 from WCA dump (≈28k comps total), 2026+ extrapolated at 5% CAGR capped at 30k comps/year. Per-comp 3x3 scrambles (incl. backups) linearly interpolated 30 → 250 (2003 → 2026). Other events by share factor (4x4 ≈ 0.70 × 3x3).',
-                  zhHant: "2003-2025 來自 WCA 真實資料 (≈ 28000 場),2026+ 用 5% 年複合增長外推,封頂 30000 場 / 年。單場 3x3 打亂數 (含備用) 線性插值: 2003 ~30,2026 ~250。其他專案按 scramble_share 折算 (4x4 ≈ 0.70 × 3x3)。"
+                  zhHant: "2003-2025 來自 WCA 真實資料 (≈ 28000 場),2026+ 用 5% 年複合增長外推,封頂 30000 場 / 年。單場 3x3 打亂數 (含備用) 線性插值: 2003 ~30,2026 ~250。其他項目按 scramble_share 折算 (4x4 ≈ 0.70 × 3x3)。"
             })}
             </li>
             <li>
