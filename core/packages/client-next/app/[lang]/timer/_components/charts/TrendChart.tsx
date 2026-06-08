@@ -14,6 +14,7 @@ import { effectiveMs } from '../../_lib/types';
 import { averageOfN, formatMs } from '../../_lib/stats';
 import './charts.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 type CurveKind = 'single' | 'ao5' | 'ao12' | 'ao100';
 
@@ -36,6 +37,12 @@ const CURVE_LABEL: Record<CurveKind, string> = {
 
 const CURVE_LABEL_ZH: Record<CurveKind, string> = {
   single: '单次',
+  ao5: 'Ao5',
+  ao12: 'Ao12',
+  ao100: 'Ao100',
+};
+const CURVE_LABEL_ZH__Hant: Record<CurveKind, string> = {
+  single: '單次',
   ao5: 'Ao5',
   ao12: 'Ao12',
   ao100: 'Ao100',
@@ -157,7 +164,7 @@ export default function TrendChart({
 
   const yMid = (lo + hi) / 2;
 
-  const labelMap = isZh ? CURVE_LABEL_ZH : CURVE_LABEL;
+  const labelMap = i18n.language === 'zh-Hant' ? CURVE_LABEL_ZH__Hant : (isZh ? CURVE_LABEL_ZH : CURVE_LABEL);
 
   return (
     <svg
