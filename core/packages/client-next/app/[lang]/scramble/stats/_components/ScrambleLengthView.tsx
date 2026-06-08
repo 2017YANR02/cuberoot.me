@@ -305,8 +305,8 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
             <div className="scramble-len-footnote">
               <span>
                 {isZh
-                  ? `注：${eventName(event, isZh)}打乱由官方 TNoodle 固定生成 ${stats.mode} 步;下面这些比赛用了非标准打乱器,才出现别的长度：`
-                  : `Note: ${eventName(event, isZh)} scrambles are a fixed ${stats.mode} moves from official TNoodle; the off-length ones come from non-standard scramblers at: `}
+                  ? `注：${eventName(event, isZh)}打乱由官方 TNoodle 固定生成 ${stats.mode} 步,下面这些比赛的打乱却不是 ${stats.mode} 步(应是用了非标准打乱器)：`
+                  : `Note: ${eventName(event, isZh)} scrambles are a fixed ${stats.mode} moves from official TNoodle; the ones below aren't ${stats.mode} moves (most likely from a non-standard scrambler): `}
               </span>
               {cur.anomalies.map((a, i) => {
                 const iso2 = compFlagIso2(a.ci);
