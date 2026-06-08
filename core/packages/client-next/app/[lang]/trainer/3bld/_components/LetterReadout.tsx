@@ -6,6 +6,7 @@
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LetterCell } from '../_lib/types';
+import { tr } from '@/i18n/tr';
 
 interface LetterReadoutProps {
   cells: LetterCell[];
@@ -32,7 +33,9 @@ export function LetterReadout({ cells, label }: LetterReadoutProps): JSX.Element
     <div className="bld-readout">
       {label !== undefined && <span className="bld-readout-label">{label}</span>}
       {cells.length === 0 ? (
-        <span className="bld-readout-empty">{isZh ? '无' : 'none'}</span>
+        <span className="bld-readout-empty">{tr({ zh: '无', en: 'none',
+            zhHant: "無"
+        })}</span>
       ) : (
         <span className="bld-readout-cells">
           {pairs.map((pair, pi) => (

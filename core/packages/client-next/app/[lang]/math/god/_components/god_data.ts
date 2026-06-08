@@ -45,11 +45,13 @@ export interface PuzzleEntry {
 export const PUZZLES: PuzzleEntry[] = [
   {
     id: '222',
-    name: { zh: '二阶', en: '2×2×2' },
+    name: { zh: '二阶', en: '2×2×2'
+    },
     states: {
       exact: '3,674,160',
       sci: '3.67 × 10⁶',
-      pretty: { zh: '约 367 万', en: '~3.67 million' },
+      pretty: { zh: '约 367 万', en: '~3.67 million'
+    },
     },
     diameters: [
       { metric: 'HTM', upper: 11, status: 'exact', year: 1981, by: 'community BFS' },
@@ -58,7 +60,7 @@ export const PUZZLES: PuzzleEntry[] = [
     milestoneYear: 1981,
     blurb: {
       zh: '状态空间极小,你电脑五秒就能 BFS 完整张图。固定一个角块作锚点后,直径在 HTM 度量下精确为 11,QTM 下为 14。本页右下的"现场 BFS"就是把这个过程跑给你看。',
-      en: "Tiny state graph — your laptop can BFS the whole thing in seconds. Fixing one corner as anchor, the diameter is exactly 11 HTM and 14 QTM. The live BFS demo on this page reproduces it in your browser.",
+      en: "Tiny state graph — your laptop can BFS the whole thing in seconds. Fixing one corner as anchor, the diameter is exactly 11 HTM and 14 QTM. The live BFS demo on this page reproduces it in your browser."
     },
     refs: [
       { label: 'Jaap Scherphuis — 2×2 page', url: 'https://www.jaapsch.net/puzzles/cube2.htm' },
@@ -67,11 +69,13 @@ export const PUZZLES: PuzzleEntry[] = [
   },
   {
     id: '333',
-    name: { zh: '三阶', en: '3×3×3' },
+    name: { zh: '三阶', en: '3×3×3'
+    },
     states: {
       exact: '43,252,003,274,489,856,000',
       sci: '4.3252 × 10¹⁹',
-      pretty: { zh: '约 4325 亿亿', en: '~43 quintillion' },
+      pretty: { zh: '约 4325 亿亿', en: '~43 quintillion'
+    },
     },
     diameters: [
       { metric: 'HTM', upper: 20, status: 'exact', year: 2010, by: 'Rokicki · Kociemba · Davidson · Dethridge' },
@@ -81,7 +85,7 @@ export const PUZZLES: PuzzleEntry[] = [
     milestoneYear: 2010,
     blurb: {
       zh: '把 4.3 × 10¹⁹ 个状态按 2,217,093,120 个陪集分组,再用对称性 + 集合覆盖压到 5588 万陪集,Google 上跑了 ~35 CPU-年,2010 年 7 月证出 HTM 直径恰好等于 20。QTM 直径 26 与 STM 直径 18 都是后续用同套陪集框架证出的。',
-      en: 'Partition all 4.3×10¹⁹ states into 2,217,093,120 cosets, then shrink to 55.88M via symmetry + set cover. ~35 CPU-years on Google in July 2010 nailed the HTM diameter at exactly 20. The QTM=26 (2014) and STM=18 results followed using the same coset framework.',
+      en: 'Partition all 4.3×10¹⁹ states into 2,217,093,120 cosets, then shrink to 55.88M via symmetry + set cover. ~35 CPU-years on Google in July 2010 nailed the HTM diameter at exactly 20. The QTM=26 (2014) and STM=18 results followed using the same coset framework.'
     },
     refs: [
       { label: 'cube20.org', url: 'https://www.cube20.org/' },
@@ -93,7 +97,8 @@ export const PUZZLES: PuzzleEntry[] = [
   {
     id: '333oh',
     sameGroupAs: '333',
-    name: { zh: '单手', en: '3×3 One-Handed' },
+    name: { zh: '单手', en: '3×3 One-Handed'
+    },
     states: { sci: '4.3252 × 10¹⁹' },
     diameters: [
       { metric: 'HTM', upper: 20, status: 'exact', year: 2010, by: 'Rokicki et al.' },
@@ -101,7 +106,7 @@ export const PUZZLES: PuzzleEntry[] = [
     milestoneYear: 2010,
     blurb: {
       zh: '与三阶同群,只是手的数量变了。上帝之数仍然是 20 步 HTM —— 群论不在乎你用几只手。',
-      en: 'Same group as 3×3; only the number of hands changes. The diameter is still 20 HTM — group theory doesn\'t care which hand you use.',
+      en: 'Same group as 3×3; only the number of hands changes. The diameter is still 20 HTM — group theory doesn\'t care which hand you use.'
     },
     refs: [{ label: 'cube20.org', url: 'https://www.cube20.org/' }],
     puzzleSize: 3,
@@ -116,7 +121,7 @@ export const PUZZLES: PuzzleEntry[] = [
     ],
     blurb: {
       zh: '群没变,直径就没变。盲拧的"难"在记忆和盲转技术,与上帝之数无关。',
-      en: 'Same group, same diameter. Blindfolded difficulty is about memory + execution; God\'s number is unchanged.',
+      en: 'Same group, same diameter. Blindfolded difficulty is about memory + execution; God\'s number is unchanged.'
     },
     refs: [{ label: 'cube20.org', url: 'https://www.cube20.org/' }],
     puzzleSize: 3,
@@ -131,25 +136,27 @@ export const PUZZLES: PuzzleEntry[] = [
     ],
     blurb: {
       zh: 'FMC 的上限就是 20 步:任何 WCA 三阶打乱都存在 ≤20 步的解。现实里裁判给你 1 小时,人类找不到那么短 —— 当前世界纪录 16 步是天才 + 运气的合奏。',
-      en: 'FMC has a hard ceiling at 20: every WCA 3×3 scramble has a ≤20-move solution. In reality contestants get 1 hour and can\'t hit it — the current 16-move WR took a flash of insight and a lucky scramble.',
+      en: 'FMC has a hard ceiling at 20: every WCA 3×3 scramble has a ≤20-move solution. In reality contestants get 1 hour and can\'t hit it — the current 16-move WR took a flash of insight and a lucky scramble.'
     },
     refs: [{ label: 'cube20.org', url: 'https://www.cube20.org/' }],
     puzzleSize: 3,
   },
   {
     id: '444',
-    name: { zh: '四阶', en: '4×4×4' },
+    name: { zh: '四阶', en: '4×4×4'
+    },
     states: {
       exact: '7,401,196,841,564,901,869,874,093,974,498,574,336,000,000,000',
       sci: '7.40 × 10⁴⁵',
-      pretty: { zh: '约 7.4 × 10⁴⁵', en: '~7.4 × 10⁴⁵' },
+      pretty: { zh: '约 7.4 × 10⁴⁵', en: '~7.4 × 10⁴⁵'
+    },
     },
     diameters: [
       { metric: 'OBTM', upper: 57, lower: 35, status: 'bounds', by: 'Kociemba (上界:reduction 块转计) · community (下界:canonical-sequence)' },
     ],
     blurb: {
       zh: '没有精确解。下界来自 canonical-sequence 计数:每深度的合法序列数有递推上限,反推出"至少要这么多步才能覆盖所有状态" ⇒ d ≥ 35。上界 57 来自 Kociemba 的 reduction 策略各阶段最坏值之和。两者之间还有 20 多步的缝。',
-      en: 'No proven diameter. Lower bound from canonical-sequence counting: bounded sequences per depth force d ≥ 35 to cover all 7.4×10⁴⁵ states. Upper bound 57 from Kociemba\'s reduction-method per-phase worst case. A 20-move gap remains open.',
+      en: 'No proven diameter. Lower bound from canonical-sequence counting: bounded sequences per depth force d ≥ 35 to cover all 7.4×10⁴⁵ states. Upper bound 57 from Kociemba\'s reduction-method per-phase worst case. A 20-move gap remains open.'
     },
     refs: [
       { label: 'Wikipedia — Rubik\'s Revenge', url: 'https://en.wikipedia.org/wiki/Rubik%27s_Revenge' },
@@ -163,20 +170,23 @@ export const PUZZLES: PuzzleEntry[] = [
     name: { zh: '四盲', en: '4×4 Blindfolded' },
     states: { sci: '7.40 × 10⁴⁵' },
     diameters: [{ metric: 'OBTM', upper: 57, lower: 35, status: 'bounds' }],
-    blurb: { zh: '同四阶群,只有界,没有精确值。', en: 'Same group as 4×4; only bounds, no exact diameter.' },
+    blurb: { zh: '同四阶群,只有界,没有精确值。', en: 'Same group as 4×4; only bounds, no exact diameter.'
+    },
     refs: [{ label: 'Wikipedia — Rubik\'s Revenge', url: 'https://en.wikipedia.org/wiki/Rubik%27s_Revenge' }],
     puzzleSize: 4,
   },
   {
     id: '555',
-    name: { zh: '五阶', en: '5×5×5' },
-    states: { sci: '2.83 × 10⁷⁴', pretty: { zh: '约 2.83 × 10⁷⁴', en: '~2.83 × 10⁷⁴' } },
+    name: { zh: '五阶', en: '5×5×5'
+    },
+    states: { sci: '2.83 × 10⁷⁴', pretty: { zh: '约 2.83 × 10⁷⁴', en: '~2.83 × 10⁷⁴'
+    } },
     diameters: [
       { metric: 'OBTM', upper: 130, lower: 52, status: 'bounds', by: 'community / reduction ceiling' },
     ],
     blurb: {
       zh: '比可观测宇宙的原子数(~10⁸²)少几个 0 而已。除了渐近 Θ(N²/log N) 是数学严证,精确直径没人知道。',
-      en: 'Only a few zeros short of the atoms in the observable universe (~10⁸²). Apart from the Θ(N²/log N) asymptotic, no exact diameter is known.',
+      en: 'Only a few zeros short of the atoms in the observable universe (~10⁸²). Apart from the Θ(N²/log N) asymptotic, no exact diameter is known.'
     },
     refs: [{ label: 'Wikipedia — Professor\'s Cube', url: 'https://en.wikipedia.org/wiki/Professor%27s_Cube' }],
     puzzleSize: 5,
@@ -187,30 +197,33 @@ export const PUZZLES: PuzzleEntry[] = [
     name: { zh: '五盲', en: '5×5 Blindfolded' },
     states: { sci: '2.83 × 10⁷⁴' },
     diameters: [{ metric: 'OBTM', upper: 130, lower: 52, status: 'bounds' }],
-    blurb: { zh: '与五阶同群,只有界。', en: 'Same group as 5×5; only bounds.' },
+    blurb: { zh: '与五阶同群,只有界。', en: 'Same group as 5×5; only bounds.'
+    },
     refs: [{ label: 'Wikipedia — Professor\'s Cube', url: 'https://en.wikipedia.org/wiki/Professor%27s_Cube' }],
     puzzleSize: 5,
   },
   {
     id: '666',
-    name: { zh: '六阶', en: '6×6×6' },
+    name: { zh: '六阶', en: '6×6×6'
+    },
     states: { sci: '1.57 × 10¹¹⁶' },
     diameters: [{ metric: 'OBTM', upper: 200, lower: 75, status: 'bounds', by: 'community' }],
     blurb: {
       zh: '状态数已经远超经典物理对"有限"的常识。直径只有粗糙界限。',
-      en: 'State count blows past anything classical physics calls finite. Only loose bounds are known.',
+      en: 'State count blows past anything classical physics calls finite. Only loose bounds are known.'
     },
     refs: [{ label: 'Wikipedia — V-Cube 6', url: 'https://en.wikipedia.org/wiki/V-Cube_6' }],
     puzzleSize: 6,
   },
   {
     id: '777',
-    name: { zh: '七阶', en: '7×7×7' },
+    name: { zh: '七阶', en: '7×7×7'
+    },
     states: { sci: '1.95 × 10¹⁶⁰' },
     diameters: [{ metric: 'OBTM', upper: 280, lower: 99, status: 'bounds', by: 'community' }],
     blurb: {
       zh: '渐近来看,N 阶魔方的上帝之数走 Θ(N²/log N) —— 由 Demaine 等人 2011 证明,既给上界(用并行求解器)又给下界(用合法序列计数)。',
-      en: 'Asymptotically, N×N God\'s number grows as Θ(N²/log N) — proved by Demaine et al. (2011), upper via a parallel solver, lower via canonical-sequence counting.',
+      en: 'Asymptotically, N×N God\'s number grows as Θ(N²/log N) — proved by Demaine et al. (2011), upper via a parallel solver, lower via canonical-sequence counting.'
     },
     refs: [
       { label: 'Wikipedia — V-Cube 7', url: 'https://en.wikipedia.org/wiki/V-Cube_7' },
@@ -225,18 +238,20 @@ export const PUZZLES: PuzzleEntry[] = [
     diameters: [{ metric: 'HTM', upper: 20, status: 'parametric', by: '20·k for k 独立 3×3' }],
     blurb: {
       zh: 'k 个独立三阶的笛卡尔积。直径平凡地等于 20k(每个魔方走自己的 ≤20 步)。MBLD 的"难"完全在记忆和盲拧执行,与群论无关。',
-      en: 'Cartesian product of k independent 3×3 cubes. Diameter is trivially 20k (each cube solved independently in ≤20). MBLD difficulty is all memory + execution, no new group theory.',
+      en: 'Cartesian product of k independent 3×3 cubes. Diameter is trivially 20k (each cube solved independently in ≤20). MBLD difficulty is all memory + execution, no new group theory.'
     },
     refs: [{ label: 'cube20.org', url: 'https://www.cube20.org/' }],
     puzzleSize: 3,
   },
   {
     id: 'clock',
-    name: { zh: '魔表', en: 'Clock' },
+    name: { zh: '魔表', en: 'Clock'
+    },
     states: {
       exact: '20,542,695,432,781,824',
       sci: '2.05 × 10¹⁶',
-      pretty: { zh: '约 2.05 × 10¹⁶ (含针位)', en: '~2.05 × 10¹⁶ (incl. pin state)' },
+      pretty: { zh: '约 2.05 × 10¹⁶ (含针位)', en: '~2.05 × 10¹⁶ (incl. pin state)'
+    },
     },
     diameters: [
       { metric: 'move', upper: 12, status: 'exact', year: 2014, by: 'Jakob Kogler · 验证: Tomas Rokicki' },
@@ -244,7 +259,7 @@ export const PUZZLES: PuzzleEntry[] = [
     milestoneYear: 2014,
     blurb: {
       zh: 'Kogler 2014 年 5 月用 front-cross 陪集 + 1.5 GB 剪枝表证出直径 = 12 步。cube20.org 在 2025 年 3 月 4 日发布完整距离分布作为复核。Clock 是少数"上帝之数早就被算出来,只是没几个人在乎"的项目。',
-      en: 'Kogler proved diameter = 12 (May 2014) via a front-cross coset + 1.5 GB pruning table. cube20.org posted the full distance distribution on 2025-03-04 as cross-check. Clock is the rare event whose God\'s number has been known for a decade but barely talked about.',
+      en: 'Kogler proved diameter = 12 (May 2014) via a front-cross coset + 1.5 GB pruning table. cube20.org posted the full distance distribution on 2025-03-04 as cross-check. Clock is the rare event whose God\'s number has been known for a decade but barely talked about.'
     },
     refs: [
       { label: 'cube20.org/clock', url: 'https://www.cube20.org/clock/' },
@@ -260,7 +275,7 @@ export const PUZZLES: PuzzleEntry[] = [
     ],
     blurb: {
       zh: '群序约 10⁶⁸,介于三阶 (10¹⁹) 与四阶 (10⁴⁵) ……才怪 —— 比四阶还大 23 个数量级。Kociemba 2012 年用对易面计数推出下界 48 HTM,上界 194 来自社区。',
-      en: 'Group order ≈ 10⁶⁸ — between 3×3 and 4×4… not even close, it dwarfs 4×4 by 23 orders. Kociemba (2012) proved lower bound 48 HTM via commuting-faces counting; community upper bound 194.',
+      en: 'Group order ≈ 10⁶⁸ — between 3×3 and 4×4… not even close, it dwarfs 4×4 by 23 orders. Kociemba (2012) proved lower bound 48 HTM via commuting-faces counting; community upper bound 194.'
     },
     refs: [
       { label: 'Speedsolving — Megaminx bound', url: 'https://www.speedsolving.com/threads/lower-bound-for-megaminx-in-htm-and-qtm.35724/' },
@@ -269,21 +284,24 @@ export const PUZZLES: PuzzleEntry[] = [
   {
     id: 'pyram',
     name: { zh: '金字塔', en: 'Pyraminx' },
-    states: { exact: '933,120', sci: '9.33 × 10⁵', pretty: { zh: '不计 4 个 tip 转轴', en: 'ignoring 4 trivial tips' } },
+    states: { exact: '933,120', sci: '9.33 × 10⁵', pretty: { zh: '不计 4 个 tip 转轴', en: 'ignoring 4 trivial tips'
+    } },
     diameters: [
       { metric: 'HTM', upper: 11, status: 'exact', by: 'Jaap Scherphuis (BFS)' },
-      { metric: 'HTM', upper: 15, status: 'exact', note: { zh: '加上 4 个 tip', en: 'incl. 4 trivial tip turns' } },
+      { metric: 'HTM', upper: 15, status: 'exact', note: { zh: '加上 4 个 tip', en: 'incl. 4 trivial tip turns'
+    } },
     ],
     milestoneYear: 1981,
     blurb: {
       zh: '"无 tip" 群只有 93 万状态,BFS 一觉醒来就跑完了。加上 4 个 tip 转轴(它们彼此独立)直径平凡地 +4 = 15。',
-      en: 'The "no-tip" group has only 933K states — an overnight BFS. Adding the 4 trivially-independent tip turns bumps the diameter by 4 to 15.',
+      en: 'The "no-tip" group has only 933K states — an overnight BFS. Adding the 4 trivially-independent tip turns bumps the diameter by 4 to 15.'
     },
     refs: [{ label: 'Jaap Scherphuis — Pyraminx', url: 'https://www.jaapsch.net/puzzles/pyraminx.htm' }],
   },
   {
     id: 'skewb',
-    name: { zh: '斜转', en: 'Skewb' },
+    name: { zh: '斜转', en: 'Skewb'
+    },
     states: { exact: '3,149,280', sci: '3.15 × 10⁶' },
     diameters: [
       { metric: 'HTM', upper: 11, status: 'exact', by: 'Jaap Scherphuis (BFS)' },
@@ -291,7 +309,7 @@ export const PUZZLES: PuzzleEntry[] = [
     milestoneYear: 1982,
     blurb: {
       zh: 'Skewb 群只有 ~315 万状态(8 个 corner 中 4 个独立 × 3 朝向,加 6 个 center),BFS 几秒完成。HTM 直径 = 11。',
-      en: 'The Skewb group has ~3.15M states (4 independent corners × 3 orientations × 6 center perms), BFS finishes in seconds. HTM diameter = 11.',
+      en: 'The Skewb group has ~3.15M states (4 independent corners × 3 orientations × 6 center perms), BFS finishes in seconds. HTM diameter = 11.'
     },
     refs: [{ label: 'Jaap Scherphuis — Skewb', url: 'https://www.jaapsch.net/puzzles/skewb.htm' }],
   },
@@ -310,7 +328,7 @@ export const PUZZLES: PuzzleEntry[] = [
     milestoneYear: 2017,
     blurb: {
       zh: 'SQ1 有两个常用度量:twist metric (Masonjones 2005 ⇒ 13) 与 face-turn metric (Shuang Chen 2017 ⇒ 31)。后者用了 3816 个对称陪集 + 2-bit/state 磁盘 BFS,占 722 GB。',
-      en: 'Two common metrics: twist (Masonjones 2005 ⇒ 13) and face-turn (Shuang Chen 2017 ⇒ 31). The latter used 3816 symmetry cosets + 2-bit/state disk BFS, 722 GB total.',
+      en: 'Two common metrics: twist (Masonjones 2005 ⇒ 13) and face-turn (Shuang Chen 2017 ⇒ 31). The latter used 3816 symmetry cosets + 2-bit/state disk BFS, 722 GB total.'
     },
     refs: [
       { label: 'Jaap Scherphuis — Square-1', url: 'https://www.jaapsch.net/puzzles/square1.htm' },

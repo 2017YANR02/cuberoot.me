@@ -12,6 +12,7 @@ import {
   advancementText, dayHeaderLabel, fullDateLabel, roundIdOf,
   type ScheduleData, type DayColumn,
 } from '@/lib/comp-schedule';
+import { tr } from '@/i18n/tr';
 
 const WCA_REGS = 'https://www.worldcubeassociation.org/regulations';
 
@@ -66,7 +67,9 @@ export default function ScheduleView({ slug, isZh, compName, view, detailsExpand
     return (
       <div className="sched-loading">
         <Loader2 className="sched-loading-spinner is-spinning" />
-        <span>{isZh ? '加载赛程…' : 'Loading schedule…'}</span>
+        <span>{tr({ zh: '加载赛程…', en: 'Loading schedule…',
+            zhHant: "載入賽程…"
+        })}</span>
       </div>
     );
   }
@@ -74,7 +77,9 @@ export default function ScheduleView({ slug, isZh, compName, view, detailsExpand
   if (error || !data || !cols || cols.days.length === 0) {
     return (
       <div className="sched-empty">
-        {isZh ? '暂无赛程' : 'No schedule available'}
+        {tr({ zh: '暂无赛程', en: 'No schedule available',
+            zhHant: "暫無賽程"
+        })}
       </div>
     );
   }
@@ -130,11 +135,15 @@ function DetailsToggle({ expanded, onToggle, isZh }: {
           type="checkbox"
           checked={expanded}
           onChange={onToggle}
-          aria-label={isZh ? '显示轮次详情' : 'Show Round Details'}
+          aria-label={tr({ zh: '显示轮次详情', en: 'Show Round Details',
+              zhHant: "顯示輪次詳情"
+        })}
         />
         <span className="sched-switch-knob" />
       </span>
-      <span className="sched-switch-label">{isZh ? '显示轮次详情' : 'Show Round Details'}</span>
+      <span className="sched-switch-label">{tr({ zh: '显示轮次详情', en: 'Show Round Details',
+          zhHant: "顯示輪次詳情"
+    })}</span>
     </label>
   );
 }
@@ -148,8 +157,12 @@ function ScheduleToolbar({ view, onChange, isZh }: {
         type="button"
         className={`sched-subtoggle-btn${view === 'calendar' ? ' is-active' : ''}`}
         onClick={() => onChange('calendar')}
-        aria-label={isZh ? '日历' : 'Calendar'}
-        title={isZh ? '日历' : 'Calendar'}
+        aria-label={tr({ zh: '日历', en: 'Calendar',
+            zhHant: "日曆"
+        })}
+        title={tr({ zh: '日历', en: 'Calendar',
+            zhHant: "日曆"
+        })}
       >
         <CalendarDays size={16} />
       </button>
@@ -157,8 +170,8 @@ function ScheduleToolbar({ view, onChange, isZh }: {
         type="button"
         className={`sched-subtoggle-btn${view === 'table' ? ' is-active' : ''}`}
         onClick={() => onChange('table')}
-        aria-label={isZh ? '表格' : 'Table'}
-        title={isZh ? '表格' : 'Table'}
+        aria-label={tr({ zh: '表格', en: 'Table' })}
+        title={tr({ zh: '表格', en: 'Table' })}
       >
         <TableIcon size={16} />
       </button>
@@ -240,7 +253,9 @@ function TableView({ data, days, tz, isZh, compName, detailsExpanded }: {
                   href={gcalUrl(firstStart, lastEnd, compName)}
                   target="_blank"
                   rel="noreferrer"
-                  aria-label={isZh ? '添加到 Google 日历' : 'Add to Google Calendar'}
+                  aria-label={tr({ zh: '添加到 Google 日历', en: 'Add to Google Calendar',
+                      zhHant: "新增到 Google 日曆"
+                })}
                 >
                   <CalendarPlus size={19} />
                 </a>
@@ -253,18 +268,34 @@ function TableView({ data, days, tz, isZh, compName, detailsExpanded }: {
               <table className={`sched-table${detailsExpanded ? '' : ' sched-table--details-hidden'}`}>
                 <thead>
                   <tr>
-                    <th>{isZh ? '开始' : 'Start'}</th>
-                    <th>{isZh ? '结束' : 'End'}</th>
-                    <th>{isZh ? '活动' : 'Activity'}</th>
-                    <th>{isZh ? '场地' : 'Room or Stage'}</th>
-                    <th className="sched-col-format">{isZh ? '赛制' : 'Format'}</th>
+                    <th>{tr({ zh: '开始', en: 'Start',
+                        zhHant: "開始"
+                    })}</th>
+                    <th>{tr({ zh: '结束', en: 'End',
+                        zhHant: "結束"
+                    })}</th>
+                    <th>{tr({ zh: '活动', en: 'Activity',
+                        zhHant: "活動"
+                    })}</th>
+                    <th>{tr({ zh: '场地', en: 'Room or Stage',
+                        zhHant: "場地"
+                    })}</th>
+                    <th className="sched-col-format">{tr({ zh: '赛制', en: 'Format',
+                        zhHant: "賽制"
+                    })}</th>
                     <th className="sched-col-timelimit">
-                      <a href="#sched-time-limit">{isZh ? '还原时限' : 'Time limit'}</a>
+                      <a href="#sched-time-limit">{tr({ zh: '还原时限', en: 'Time limit',
+                          zhHant: "還原時限"
+                    })}</a>
                     </th>
                     <th className="sched-col-cutoff">
-                      <a href="#sched-cutoff">{isZh ? '及格线' : 'Cutoff'}</a>
+                      <a href="#sched-cutoff">{tr({ zh: '及格线', en: 'Cutoff',
+                          zhHant: "及格線"
+                    })}</a>
                     </th>
-                    <th className="sched-col-proceed">{isZh ? '晋级' : 'Proceed'}</th>
+                    <th className="sched-col-proceed">{tr({ zh: '晋级', en: 'Proceed',
+                        zhHant: "晉級"
+                    })}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -284,21 +315,37 @@ function TableView({ data, days, tz, isZh, compName, detailsExpanded }: {
                     );
                     return (
                       <tr key={a.id}>
-                        <td className="sched-td-time" data-label={isZh ? '开始' : 'Start'}>
+                        <td className="sched-td-time" data-label={tr({ zh: '开始', en: 'Start',
+                            zhHant: "開始"
+                        })}>
                           {simpleTimeLabel(a.startTime, tz, isZh)}
                         </td>
-                        <td className="sched-td-time" data-label={isZh ? '结束' : 'End'}>
+                        <td className="sched-td-time" data-label={tr({ zh: '结束', en: 'End',
+                            zhHant: "結束"
+                        })}>
                           {simpleTimeLabel(a.endTime, tz, isZh)}
                         </td>
-                        <td className="sched-td-activity" data-label={isZh ? '活动' : 'Activity'}>
+                        <td className="sched-td-activity" data-label={tr({ zh: '活动', en: 'Activity',
+                            zhHant: "活動"
+                        })}>
                           {evId && <EventIcon event={evId} className="sched-block-icon" />}
                           {name}
                         </td>
-                        <td className="sched-td-room" data-label={isZh ? '场地' : 'Room or Stage'}>{a.roomName}</td>
-                        {detailCell('sched-col-format', isZh ? '赛制' : 'Format', fmt)}
-                        {detailCell('sched-col-timelimit', isZh ? '还原时限' : 'Time limit', tl)}
-                        {detailCell('sched-col-cutoff', isZh ? '及格线' : 'Cutoff', co)}
-                        {detailCell('sched-col-proceed', isZh ? '晋级' : 'Proceed', adv)}
+                        <td className="sched-td-room" data-label={tr({ zh: '场地', en: 'Room or Stage',
+                            zhHant: "場地"
+                        })}>{a.roomName}</td>
+                        {detailCell('sched-col-format', tr({ zh: '赛制', en: 'Format',
+                            zhHant: "賽制"
+                        }), fmt)}
+                        {detailCell('sched-col-timelimit', tr({ zh: '还原时限', en: 'Time limit',
+                            zhHant: "還原時限"
+                        }), tl)}
+                        {detailCell('sched-col-cutoff', tr({ zh: '及格线', en: 'Cutoff',
+                            zhHant: "及格線"
+                        }), co)}
+                        {detailCell('sched-col-proceed', tr({ zh: '晋级', en: 'Proceed',
+                            zhHant: "晉級"
+                        }), adv)}
                       </tr>
                     );
                   })}
@@ -324,7 +371,9 @@ function ScheduleLegend({ isZh, hasCutoff }: { isZh: boolean; hasCutoff: boolean
   );
   return (
     <div className="sched-legend">
-      <h4 id="sched-time-limit">{isZh ? '还原时限' : 'Time limit'}</h4>
+      <h4 id="sched-time-limit">{tr({ zh: '还原时限', en: 'Time limit',
+          zhHant: "還原時限"
+    })}</h4>
       <p>
         {isZh ? (
           <>若你在还原过程中达到还原时限,裁判会喊停,你的成绩将记为 DNF(见 {reg('A1a4')})。</>
@@ -335,7 +384,9 @@ function ScheduleLegend({ isZh, hasCutoff }: { isZh: boolean; hasCutoff: boolean
 
       {hasCutoff && (
         <>
-          <h4 id="sched-cutoff">{isZh ? '及格线' : 'Cutoff'}</h4>
+          <h4 id="sched-cutoff">{tr({ zh: '及格线', en: 'Cutoff',
+              zhHant: "及格線"
+        })}</h4>
           <p>
             {isZh ? (
               <>及格线是进入第二阶段所需达到的成绩(见 {reg('9g')})。</>
@@ -346,7 +397,9 @@ function ScheduleLegend({ isZh, hasCutoff }: { isZh: boolean; hasCutoff: boolean
         </>
       )}
 
-      <h4 id="sched-format">{isZh ? '赛制' : 'Format'}</h4>
+      <h4 id="sched-format">{tr({ zh: '赛制', en: 'Format',
+          zhHant: "賽制"
+    })}</h4>
       <p>
         {isZh ? (
           <>赛制规定如何依据成绩对选手排名。每个项目允许的赛制见 {reg('9b')},各赛制的说明见 {reg('9f')}。</>
@@ -355,11 +408,13 @@ function ScheduleLegend({ isZh, hasCutoff }: { isZh: boolean; hasCutoff: boolean
         )}
       </p>
 
-      <h4 id="sched-advancement">{isZh ? '晋级条件' : 'Advancement Condition'}</h4>
+      <h4 id="sched-advancement">{tr({ zh: '晋级条件', en: 'Advancement Condition',
+          zhHant: "晉級條件"
+    })}</h4>
       <p>
-        {isZh
-          ? '表中显示的晋级人数为计划上限。若实际参赛人数少于预期,或在晋级线上出现并列,实际晋级人数可能更少。'
-          : 'The number of competitors shown as advancing to the next round is the planned maximum. The actual number may be lower if there are fewer competitors than expected, or if there are ties at the boundary.'}
+        {tr({ zh: '表中显示的晋级人数为计划上限。若实际参赛人数少于预期,或在晋级线上出现并列,实际晋级人数可能更少。', en: 'The number of competitors shown as advancing to the next round is the planned maximum. The actual number may be lower if there are fewer competitors than expected, or if there are ties at the boundary.',
+            zhHant: "表中顯示的晉級人數為計劃上限。若實際參賽人數少於預期,或在晉級線上出現並列,實際晉級人數可能更少。"
+        })}
       </p>
     </div>
   );

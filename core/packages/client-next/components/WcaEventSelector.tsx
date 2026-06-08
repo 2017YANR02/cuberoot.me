@@ -8,6 +8,7 @@ import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/ev
 import { eventDisplayName } from '@/lib/wca-events';
 import { CubingIcon } from './EventIcon/EventIcon';
 import './WcaEventSelector.css';
+import { tr } from '@/i18n/tr';
 
 interface WcaEventSelectorProps {
   availableEvents: Set<string>;
@@ -63,16 +64,22 @@ export default function WcaEventSelector({
   const showToggle = hasHiddenContent && !hasSelectedHidden;
 
   const toggleTip = (cancelledIds.length > 0 && appendCollapsible)
-    ? (isZh ? '其他项目' : 'Other events')
+    ? (tr({ zh: '其他项目', en: 'Other events',
+        zhHant: "其他專案"
+    }))
     : appendCollapsible
-      ? (isZh ? '其他 (非 WCA 项目)' : 'Other (non-WCA puzzles)')
-      : (isZh ? '已废止项目' : 'Former events');
+      ? (tr({ zh: '其他 (非 WCA 项目)', en: 'Other (non-WCA puzzles)',
+          zhHant: "其他 (非 WCA 專案)"
+    }))
+      : (tr({ zh: '已废止项目', en: 'Former events',
+          zhHant: "已廢止專案"
+    }));
 
   const removeBtn = (id: string, isActive: boolean) => (isMulti && isActive && onRemove ? (
     <span
       className="event-btn-remove"
       role="button"
-      aria-label={isZh ? '移除' : 'Remove'}
+      aria-label={tr({ zh: '移除', en: 'Remove' })}
       onClick={(e) => { e.stopPropagation(); onRemove(id); }}
     ><X size={10} strokeWidth={3} /></span>
   ) : null);
@@ -136,10 +143,10 @@ export default function WcaEventSelector({
       {allowAll && !isMulti && (
         <button
           className={`event-btn event-btn-all${selectedEvent === '' ? ' active' : ''}`}
-          data-tooltip={isZh ? '全部' : 'All'}
+          data-tooltip={tr({ zh: '全部', en: 'All' })}
           onClick={() => onSelect?.('')}
         >
-          <span className="event-all-label">{isZh ? '全部' : 'All'}</span>
+          <span className="event-all-label">{tr({ zh: '全部', en: 'All' })}</span>
         </button>
       )}
       {officialIds.map(renderWcaButton)}

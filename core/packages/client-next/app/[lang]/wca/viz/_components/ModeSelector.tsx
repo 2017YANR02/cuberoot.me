@@ -8,6 +8,7 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVizStore } from '../_stores/viz_store';
 import type { DataMode } from '../_engine/data_fetch';
+import { tr } from '@/i18n/tr';
 
 // NOTE: 第一行按钮配置
 const ROW1_MODES: { key: DataMode; label: string }[] = [
@@ -84,8 +85,8 @@ export default function ModeSelector() {
         onClick={() => setExpanded(v => !v)}
       >
         {expanded || isRoundActive
-          ? (isZh ? '▴ 收起' : '▴ Collapse')
-          : (isZh ? '▾ 更多' : '▾ More')}
+          ? (tr({ zh: '▴ 收起', en: '▴ Collapse' }))
+          : (tr({ zh: '▾ 更多', en: '▾ More' }))}
       </button>
     </div>
   );

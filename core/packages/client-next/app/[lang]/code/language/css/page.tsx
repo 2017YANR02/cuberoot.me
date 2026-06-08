@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './css_intro.css';
+import i18n from '@/i18n/i18n-client';
 
 /* CSS3 shield logo — pentagon similar to HTML5 but blue + "3" */
 const CSS_LOGO_SVG = (
@@ -456,7 +457,7 @@ const FUTURE_CARDS: FutureCard[] = [
 
 export default function CssIntroPage() {
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
   const [baTab, setBaTab] = useState<'clearfix' | 'cols' | 'cq' | 'centre'>('clearfix');
 

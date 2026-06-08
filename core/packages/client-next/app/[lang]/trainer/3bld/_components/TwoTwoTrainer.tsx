@@ -25,6 +25,7 @@ import {
 } from '../_lib/state-gen';
 import { m2pSolve, prewarm } from '../_lib/m2p-bridge';
 import '../3bld.css';
+import { tr } from '@/i18n/tr';
 
 type Piece = 'corner' | 'edge';
 
@@ -121,7 +122,9 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
     if (busy) return;
     const codes = usableCodes;
     if (codes.length === 0) {
-      setInfo(isZh ? '请至少选择 1 个编码' : 'Select at least one code');
+      setInfo(tr({ zh: '请至少选择 1 个编码', en: 'Select at least one code',
+          zhHant: "請至少選擇 1 個編碼"
+    }));
       return;
     }
     setBusy(true);
@@ -215,9 +218,9 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
       ? isZh
         ? `已选择 ${displayCodes} 共 ${usableCodes.length} 个编码`
         : `Selected ${displayCodes} (${usableCodes.length} codes)`
-      : isZh
-        ? '尚未选择训练编码'
-        : 'No training codes selected yet';
+      : tr({ zh: '尚未选择训练编码', en: 'No training codes selected yet',
+          zhHant: "尚未選擇訓練編碼"
+    });
 
   return (
     <div className="bld-trainer-root">
@@ -238,7 +241,9 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
       <div className="bld-section">
         <button type="button" className="bld-btn" onClick={openModal}>
           <Plus size={15} />
-          {isZh ? '选择训练编码' : 'Pick training codes'}
+          {tr({ zh: '选择训练编码', en: 'Pick training codes',
+              zhHant: "選擇訓練編碼"
+        })}
         </button>
         <p className="bld-input-summary" style={{ marginTop: 12 }}>{inputSummary}</p>
 
@@ -253,7 +258,9 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
           </label>
           <label className="bld-check">
             <input type="checkbox" checked={excludeTop} onChange={(e) => setExcludeTop(e.target.checked)} />
-            {isZh ? '是否排除顶层' : 'Exclude top layer'}
+            {tr({ zh: '是否排除顶层', en: 'Exclude top layer',
+                zhHant: "是否排除頂層"
+            })}
           </label>
         </div>
 
@@ -265,13 +272,17 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
             disabled={busy || usableCodes.length === 0}
           >
             <Play size={15} />
-            {isZh ? '生成训练打乱' : 'Generate scrambles'}
+            {tr({ zh: '生成训练打乱', en: 'Generate scrambles',
+                zhHant: "生成訓練打亂"
+            })}
           </button>
         </div>
       </div>
 
       <div className="bld-section">
-        <h2 className="bld-section-title">{isZh ? '输出训练打乱' : 'Output scrambles'}</h2>
+        <h2 className="bld-section-title">{tr({ zh: '输出训练打乱', en: 'Output scrambles',
+            zhHant: "輸出訓練打亂"
+        })}</h2>
         <ScrambleOutput scrambles={scrambles} info={info || undefined} busy={busy} />
       </div>
 
@@ -284,12 +295,16 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
         >
           <div className="bld-modal" role="dialog" aria-modal="true">
             <div className="bld-modal-header">
-              <h3 className="bld-modal-title">{isZh ? '请选择训练编码' : 'Pick training codes'}</h3>
+              <h3 className="bld-modal-title">{tr({ zh: '请选择训练编码', en: 'Pick training codes',
+                  zhHant: "請選擇訓練編碼"
+            })}</h3>
               <button
                 type="button"
                 className="bld-modal-close"
                 onClick={() => setModalOpen(false)}
-                aria-label={isZh ? '关闭' : 'Close'}
+                aria-label={tr({ zh: '关闭', en: 'Close',
+                    zhHant: "關閉"
+                })}
               >
                 <X size={18} />
               </button>
@@ -299,10 +314,12 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
 
             <div className="bld-modal-actions">
               <button type="button" className="bld-btn" onClick={() => setModalOpen(false)}>
-                {isZh ? '取消' : 'Cancel'}
+                {tr({ zh: '取消', en: 'Cancel' })}
               </button>
               <button type="button" className="bld-btn bld-btn-primary" onClick={confirmModal}>
-                {isZh ? '确认' : 'Confirm'}
+                {tr({ zh: '确认', en: 'Confirm',
+                    zhHant: "確認"
+                })}
               </button>
             </div>
           </div>

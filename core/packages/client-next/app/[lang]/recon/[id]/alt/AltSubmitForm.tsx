@@ -21,6 +21,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../recon.css';
 import '../../submit/recon_submit.css';
 import '../recon_detail.css';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   parentId: string;
@@ -133,14 +134,20 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
         <div className="recon-page-header">
           <div>
             <Link href={`/recon/${parentId}`} className="recon-back-link">
-              <ArrowLeft size={14} /> {isZh ? '返回详情' : 'Back'}
+              <ArrowLeft size={14} /> {tr({ zh: '返回详情', en: 'Back',
+                  zhHant: "返回詳情"
+            })}
             </Link>
           </div>
         </div>
         <div style={{ padding: 24, textAlign: 'center' }}>
-          <p style={{ marginBottom: 16 }}>{isZh ? '需要登录才能提交另解。' : 'Login required to submit an alternative.'}</p>
+          <p style={{ marginBottom: 16 }}>{tr({ zh: '需要登录才能提交另解。', en: 'Login required to submit an alternative.',
+              zhHant: "需要登入才能提交另解。"
+        })}</p>
           <button type="button" className="recon-btn" onClick={() => login()}>
-            <LogIn size={14} /> {isZh ? '登录 WCA' : 'Sign in with WCA'}
+            <LogIn size={14} /> {tr({ zh: '登录 WCA', en: 'Sign in with WCA',
+                zhHant: "登入 WCA"
+            })}
           </button>
         </div>
       </div>
@@ -153,7 +160,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
         <div className="detail-header">
           <div className="detail-header-nav">
             <Link href={`/recon/${parentId}`} className="recon-back-link">
-              <ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}
+              <ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}
             </Link>
           </div>
           <h1>{isEditing ? t('recon.editAlternative') : t('recon.addAlternative')}</h1>
@@ -184,7 +191,9 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
                 value={scramble}
                 readOnly
                 className="submit-input-locked alt-submit-scramble"
-                title={isZh ? '继承自原 solve,不可编辑' : 'Inherited from original, read-only'}
+                title={tr({ zh: '继承自原 solve,不可编辑', en: 'Inherited from original, read-only',
+                    zhHant: "繼承自原 solve,不可編輯"
+                })}
               />
             </label>
 

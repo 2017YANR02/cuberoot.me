@@ -24,6 +24,8 @@ import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const ORI_SUFFIX = ['', 'y', 'y2', "y'"];
 function oriAdjustSetup(setup: string, oriIdx: number): string {
@@ -136,8 +138,10 @@ function SubgroupIndex({
                 ? <CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={110} />
                 : <VisualCube algorithm={firstAlg} view="oll" size={120} />}
             </div>
-            <div className="alg-subgroup-card-title">{useF2lThumb ? (topLabel || (isZh ? '其他' : 'Other')) : `${set.toUpperCase()} ${topLabel || (isZh ? '其他' : 'Other')}`}</div>
-            <div className="alg-subgroup-card-count">{count} {isZh ? '个' : 'cases'}</div>
+            <div className="alg-subgroup-card-title">{useF2lThumb ? (topLabel || (tr({ zh: '其他', en: 'Other' }))) : `${set.toUpperCase()} ${topLabel || (tr({ zh: '其他', en: 'Other' }))}`}</div>
+            <div className="alg-subgroup-card-count">{count} {tr({ zh: '个', en: 'cases',
+                zhHant: "個"
+            })}</div>
           </Link>
         );
       })}
@@ -157,9 +161,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
   const validPuzzle = isPuzzle(puzzleParam);
   const meta = validPuzzle ? getAlgSetMeta(puzzleParam, set) : undefined;
   const algSetTitle = (() => {
-    const fallback = isZh ? '公式库' : 'Algorithms';
+    const fallback = tr({ zh: '公式库', en: 'Algorithms',
+        zhHant: "公式庫"
+    });
     if (!puzzleParam || !set) return fallback;
-    const setName = meta ? (isZh ? meta.zh : meta.en) : set;
+    const setName = meta ? ((i18n.language.startsWith('zh') ? meta.zh : meta.en)) : set;
     return `${puzzleParam} · ${setName}`;
   })();
   useDocumentTitle(algSetTitle, algSetTitle);
@@ -272,16 +278,18 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     <div className="alg-root">
       <div className="alg-cat-header">
         <Link href={backTo} className="alg-back">
-          <ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}
+          <ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}
         </Link>
         <h1 className="alg-cat-title">
           <span className="alg-cat-puzzle">{puzzleParam}</span>
           {' '}
-          {isZh ? meta.zh : meta.en}
+          {(i18n.language.startsWith('zh') ? meta.zh : meta.en)}
           {subgroupDisplay && <span className="alg-cat-subgroup"> {subgroupDisplay}</span>}
         </h1>
         {data && !showSubgroupPicker && (
-          <span className="alg-cat-count">{visibleCases.length} {isZh ? '个' : 'cases'}</span>
+          <span className="alg-cat-count">{visibleCases.length} {tr({ zh: '个', en: 'cases',
+              zhHant: "個"
+        })}</span>
         )}
       </div>
 
@@ -305,7 +313,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
       })()}
 
       {error && <div className="alg-empty">{error}</div>}
-      {!data && !error && <div className="alg-empty">{isZh ? '加载中…' : 'Loading…'}</div>}
+      {!data && !error && <div className="alg-empty">{tr({ zh: '加载中…', en: 'Loading…',
+          zhHant: "載入中…"
+    })}</div>}
 
       {data && showSubgroupPicker && (
         <SubgroupIndex puzzle={puzzleParam as AlgPuzzle} set={set} cases={data.cases} isZh={isZh} />
@@ -339,7 +349,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                     />
                   </div>
                   <div className="alg-subgroup-card-title">{subLabel}</div>
-                  <div className="alg-subgroup-card-count">{count} {isZh ? '个' : 'cases'}</div>
+                  <div className="alg-subgroup-card-count">{count} {tr({ zh: '个', en: 'cases',
+                      zhHant: "個"
+                })}</div>
                 </Link>
               );
             })}
@@ -360,7 +372,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                 tabIndex={0}
               >
                 {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-                {subgroup || (isZh ? '其他' : 'Other')}
+                {subgroup || (tr({ zh: '其他', en: 'Other' }))}
                 <span className="alg-subgroup-count">{cases.length}</span>
               </h2>
             )}
@@ -402,7 +414,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                           </div>
                           {c.setup && (
                             <div className="alg-case-standard">
-                              <Shuffle size={13} className="alg-case-icon" aria-label={isZh ? '打乱' : 'Setup'} />
+                              <Shuffle size={13} className="alg-case-icon" aria-label={tr({ zh: '打乱', en: 'Setup',
+                                  zhHant: "打亂"
+                            })} />
                               <code>{formatScrambleForEvent(puzzleParam, c.setup)}</code>
                             </div>
                           )}

@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useCalcStore, isMbfForEvent } from '../stores/calc_store';
 import { DNF_VALUE, formatTime, clampValue } from '../engine/calc_engine';
 import { WheelPicker } from '@/components/WheelPicker';
+import { tr } from '@/i18n/tr';
 
 interface DrumProps {
   /** 当前聚焦的 [playerIdx, solveIdx]，[-1,-1] 表示无聚焦 */
@@ -86,7 +87,9 @@ export function Drum({ activeCell, onCellValueChange }: DrumProps) {
       renderSlot={renderSlot}
       onChange={handleChange}
       width={72}
-      ariaLabel={isZh ? '成绩滚筒' : 'Time wheel'}
+      ariaLabel={tr({ zh: '成绩滚筒', en: 'Time wheel',
+          zhHant: "成績滾筒"
+    })}
     />
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import type { Lang } from '../primitives';
+import i18n from '@/i18n/i18n-client';
 
 // ── Mathematical constants ────────────────────────────────────────────────────
 
@@ -398,8 +399,10 @@ function BurnsideBreakdownPanel({ lang }: { lang: Lang }) {
 
   const modeLabels: { id: ObjectMode; zh: string; en: string }[] = [
     { id: 'faces',    zh: '面 (6)',   en: 'Faces (6)'    },
-    { id: 'edges',    zh: '棱 (12)',  en: 'Edges (12)'   },
-    { id: 'vertices', zh: '顶点 (8)', en: 'Vertices (8)' },
+    { id: 'edges',    zh: '棱 (12)',  en: 'Edges (12)'
+    },
+    { id: 'vertices', zh: '顶点 (8)', en: 'Vertices (8)'
+    },
   ];
 
   return (
@@ -432,7 +435,7 @@ function BurnsideBreakdownPanel({ lang }: { lang: Lang }) {
               className={`gt-chip${mode === m.id ? ' gt-chip-active' : ''}`}
               onClick={() => setMode(m.id)}
             >
-              {lang === 'zh' ? m.zh : m.en}
+              {(i18n.language.startsWith('zh') ? m.zh : m.en)}
             </button>
           ))}
         </div>

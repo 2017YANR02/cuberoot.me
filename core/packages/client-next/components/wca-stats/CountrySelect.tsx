@@ -7,6 +7,7 @@ import { Flag } from '@/components/Flag';
 import { countryName } from '@/lib/country-name';
 import { ClearButton } from '@/components/ClearButton';
 import { apiUrl } from '@/lib/api-base';
+import { tr } from '@/i18n/tr';
 
 export interface CountryOption {
   id: string;
@@ -53,7 +54,9 @@ export default function CountrySelect({ countries, value, isZh, onChange }: Prop
 
   return (
     <div className="wse-filter wse-country" ref={ref}>
-      <label>{isZh ? '国家' : 'Country'}</label>
+      <label>{tr({ zh: '国家', en: 'Country',
+          zhHant: "國家"
+    })}</label>
       <div className="wse-country-trigger">
         <button type="button" onClick={() => setOpen(o => !o)}>
           {selected ? (
@@ -62,7 +65,7 @@ export default function CountrySelect({ countries, value, isZh, onChange }: Prop
               <span>{display(selected)}</span>
             </>
           ) : (
-            <span>{isZh ? '全球' : 'Worldwide'}</span>
+            <span>{tr({ zh: '全球', en: 'Worldwide' })}</span>
           )}
         </button>
         {value && <ClearButton onClick={() => onChange('')} isZh={isZh} preserveFocus />}
@@ -75,14 +78,16 @@ export default function CountrySelect({ countries, value, isZh, onChange }: Prop
               autoFocus
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder={isZh ? '搜索国家...' : 'Search country...'}
+              placeholder={tr({ zh: '搜索国家...', en: 'Search country...',
+                  zhHant: "搜尋國家..."
+            })}
             />
           </div>
           <div className="wse-country-list">
             <button
               className={`wse-country-item ${!value ? 'active' : ''}`}
               onClick={() => { onChange(''); setOpen(false); setQuery(''); }}
-            >{isZh ? '全球' : 'Worldwide'}</button>
+            >{tr({ zh: '全球', en: 'Worldwide' })}</button>
             {filtered.map(c => (
               <button
                 key={c.id}

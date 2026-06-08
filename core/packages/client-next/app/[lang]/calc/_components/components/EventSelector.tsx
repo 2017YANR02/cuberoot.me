@@ -11,6 +11,7 @@ import { setCurrentEvent } from '../engine/calc_engine';
 import { eventDisplayName } from '@/lib/wca-events';
 import { CANCELLED_EVENT_IDS } from '@/lib/event-constants';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
+import { tr } from '@/i18n/tr';
 
 const EVENT_IDS = [
   '333', '222', '444', '555', '666', '777',
@@ -60,7 +61,9 @@ export function EventSelector() {
         <button
           type="button"
           className="event-btn event-btn-more"
-          data-tooltip={isZh ? '已废止项目' : 'Former events'}
+          data-tooltip={tr({ zh: '已废止项目', en: 'Former events',
+              zhHant: "已廢止專案"
+        })}
           onClick={() => setExpanded(v => !v)}
         >
           <span className="event-more-arrow">{expanded ? '▴' : '▾'}</span>

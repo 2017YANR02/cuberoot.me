@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import type { EventId } from '../_lib/types';
 import { formatMs } from '../_lib/stats';
 import { getWcaRecord, WR_AS_OF } from '../_lib/wca_records/lookup';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   event: EventId;
@@ -81,13 +82,15 @@ function recordRow(opts: {
             )}
             {gapMs !== null && gapMs <= 0 && (
               <span style={{ color: '#3aa757' }}>
-                ({isZh ? '已超 WR' : 'beat WR'})
+                ({tr({ zh: '已超 WR', en: 'beat WR' })})
               </span>
             )}
           </>
         ) : (
           <span style={{ opacity: 0.55, fontSize: '0.9em' }}>
-            ({isZh ? '暂无 PB' : 'no PB yet'})
+            ({tr({ zh: '暂无 PB', en: 'no PB yet',
+                zhHant: "暫無 PB"
+            })})
           </span>
         )}
       </div>
@@ -105,27 +108,29 @@ export default function RecordsOverlay({
   if (!rec) return null;
 
   const singleRow = recordRow({
-    label: isZh ? 'WR 单次' : 'WR single',
-    yourLabel: isZh ? '你的 PB' : 'your PB',
+    label: tr({ zh: 'WR 单次', en: 'WR single',
+        zhHant: "WR 單次"
+    }),
+    yourLabel: tr({ zh: '你的 PB', en: 'your PB' }),
     wrMs: rec.wrSingleMs,
     wrText: rec.singleText,
     holder: rec.wrSingleHolder,
     date: rec.wrSingleDate,
     userMs: userPbSingleMs ?? null,
     isZh,
-    gapLabel: isZh ? '差' : 'gap',
+    gapLabel: tr({ zh: '差', en: 'gap' }),
   });
 
   const avgRow = recordRow({
-    label: isZh ? 'WR 平均' : 'WR average',
-    yourLabel: isZh ? '你的最佳平均' : 'your best avg',
+    label: tr({ zh: 'WR 平均', en: 'WR average' }),
+    yourLabel: tr({ zh: '你的最佳平均', en: 'your best avg' }),
     wrMs: rec.wrAverageMs,
     wrText: rec.averageText,
     holder: rec.wrAverageHolder,
     date: rec.wrAverageDate,
     userMs: userPbAvgMs ?? null,
     isZh,
-    gapLabel: isZh ? '差' : 'gap',
+    gapLabel: tr({ zh: '差', en: 'gap' }),
   });
 
   if (!singleRow && !avgRow) return null;
@@ -133,9 +138,11 @@ export default function RecordsOverlay({
   return (
     <div className="modal-section">
       <h3 className="settings-h3">
-        {isZh ? 'WCA 记录' : 'WCA records'}
+        {tr({ zh: 'WCA 记录', en: 'WCA records',
+            zhHant: "WCA 記錄"
+        })}
         <span style={{ marginLeft: 8, opacity: 0.55, fontSize: '0.8em', fontWeight: 'normal' }}>
-          ({isZh ? '截至' : 'as of'} {WR_AS_OF})
+          ({tr({ zh: '截至', en: 'as of' })} {WR_AS_OF})
         </span>
       </h3>
       <div>

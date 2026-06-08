@@ -23,6 +23,8 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { apiUrl } from '@/lib/api-base';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './fun_stats.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const ACTIVE_EVENTS = [
   '333', '222', '444', '555', '666', '777',
@@ -55,43 +57,72 @@ interface FunStat {
 
 const FUN_STATS: FunStat[] = [
   // A 各地综合排行
-  { id: 'country-sor-single', family: 'A', zh: '各地全项目单次综合排行榜', en: 'Sum of Country Ranks (Single)', endpoint: '/v1/wca/fun/country-sor', shape: 'countrySor', fixed: { type: 'single' }, eventMode: 'multi' },
-  { id: 'country-sor-average', family: 'A', zh: '各地全项目平均综合排行榜', en: 'Sum of Country Ranks (Average)', endpoint: '/v1/wca/fun/country-sor', shape: 'countrySor', fixed: { type: 'average' }, eventMode: 'multi' },
+  { id: 'country-sor-single', family: 'A', zh: '各地全项目单次综合排行榜', en: 'Sum of Country Ranks (Single)', endpoint: '/v1/wca/fun/country-sor', shape: 'countrySor', fixed: { type: 'single' }, eventMode: 'multi'
+},
+  { id: 'country-sor-average', family: 'A', zh: '各地全项目平均综合排行榜', en: 'Sum of Country Ranks (Average)', endpoint: '/v1/wca/fun/country-sor', shape: 'countrySor', fixed: { type: 'average' }, eventMode: 'multi'
+},
   // B 奖牌 & 名次
-  { id: 'medals-all', family: 'B', zh: '全项目累计奖牌榜', en: 'Medal Collection (All Events)', endpoint: '/v1/wca/fun/medals', shape: 'medals', fixed: { type: 'all' } },
-  { id: 'medals-event', family: 'B', zh: '分项目累计奖牌榜', en: 'Medal Collection (by Event)', endpoint: '/v1/wca/fun/medals', shape: 'medals', fixed: { type: 'event' }, eventMode: 'select' },
-  { id: 'most-second-all', family: 'B', zh: '全项目第二名次数', en: 'Most 2nd Places (All Events)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '2', type: 'all' }, countLabelZh: '第二名次数', countLabelEn: '2nd Places' },
-  { id: 'most-second-event', family: 'B', zh: '分项目第二名次数', en: 'Most 2nd Places (by Event)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '2', type: 'event' }, eventMode: 'select', countLabelZh: '第二名次数', countLabelEn: '2nd Places' },
-  { id: 'most-fourth-all', family: 'B', zh: '全项目第四名次数', en: 'Most 4th Places (All Events)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '4', type: 'all' }, countLabelZh: '第四名次数', countLabelEn: '4th Places' },
-  { id: 'most-fourth-event', family: 'B', zh: '分项目第四名次数', en: 'Most 4th Places (by Event)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '4', type: 'event' }, eventMode: 'select', countLabelZh: '第四名次数', countLabelEn: '4th Places' },
-  { id: 'best-podiums', family: 'B', zh: '赛事领奖台成绩榜', en: 'Best Podiums', endpoint: '/v1/wca/fun/best-podiums', shape: 'bestPodiums', eventMode: 'select' },
+  { id: 'medals-all', family: 'B', zh: '全项目累计奖牌榜', en: 'Medal Collection (All Events)', endpoint: '/v1/wca/fun/medals', shape: 'medals', fixed: { type: 'all' }
+},
+  { id: 'medals-event', family: 'B', zh: '分项目累计奖牌榜', en: 'Medal Collection (by Event)', endpoint: '/v1/wca/fun/medals', shape: 'medals', fixed: { type: 'event' }, eventMode: 'select'
+},
+  { id: 'most-second-all', family: 'B', zh: '全项目第二名次数', en: 'Most 2nd Places (All Events)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '2', type: 'all' }, countLabelZh: '第二名次数', countLabelEn: '2nd Places'
+},
+  { id: 'most-second-event', family: 'B', zh: '分项目第二名次数', en: 'Most 2nd Places (by Event)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '2', type: 'event' }, eventMode: 'select', countLabelZh: '第二名次数', countLabelEn: '2nd Places'
+},
+  { id: 'most-fourth-all', family: 'B', zh: '全项目第四名次数', en: 'Most 4th Places (All Events)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '4', type: 'all' }, countLabelZh: '第四名次数', countLabelEn: '4th Places'
+},
+  { id: 'most-fourth-event', family: 'B', zh: '分项目第四名次数', en: 'Most 4th Places (by Event)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '4', type: 'event' }, eventMode: 'select', countLabelZh: '第四名次数', countLabelEn: '4th Places'
+},
+  { id: 'best-podiums', family: 'B', zh: '赛事领奖台成绩榜', en: 'Best Podiums', endpoint: '/v1/wca/fun/best-podiums', shape: 'bestPodiums', eventMode: 'select'
+},
   // C 遗憾榜
-  { id: 'uncrowned-kings', family: 'C', zh: '无冕之王', en: 'Uncrowned Kings', endpoint: '/v1/wca/fun/uncrowned-kings', shape: 'misser', eventMode: 'select', typeToggle: true },
-  { id: 'podium-missers', family: 'C', zh: '奖牌遗珠', en: 'Podium Missers', endpoint: '/v1/wca/fun/podium-missers', shape: 'misser', eventMode: 'select', typeToggle: true },
-  { id: 'record-missers', family: 'C', zh: '纪录之憾', en: 'Record Missers', endpoint: '/v1/wca/fun/record-missers', shape: 'misser', eventMode: 'select', typeToggle: true },
+  { id: 'uncrowned-kings', family: 'C', zh: '无冕之王', en: 'Uncrowned Kings', endpoint: '/v1/wca/fun/uncrowned-kings', shape: 'misser', eventMode: 'select', typeToggle: true
+},
+  { id: 'podium-missers', family: 'C', zh: '奖牌遗珠', en: 'Podium Missers', endpoint: '/v1/wca/fun/podium-missers', shape: 'misser', eventMode: 'select', typeToggle: true
+},
+  { id: 'record-missers', family: 'C', zh: '纪录之憾', en: 'Record Missers', endpoint: '/v1/wca/fun/record-missers', shape: 'misser', eventMode: 'select', typeToggle: true
+},
   // D 纪录
-  { id: 'records-person', family: 'D', zh: '选手创纪录数量排行榜', en: 'Records Set (by Person)', endpoint: '/v1/wca/fun/records-person', shape: 'recordsPerson' },
-  { id: 'records-comp', family: 'D', zh: '赛事创纪录数量排行榜', en: 'Records Set (by Competition)', endpoint: '/v1/wca/fun/records-comp', shape: 'recordsComp' },
-  { id: 'oldest-records', family: 'D', zh: '纪录现保持时间排行榜', en: 'Oldest Standing Records', endpoint: '/v1/wca/fun/oldest-records', shape: 'oldestRecords' },
+  { id: 'records-person', family: 'D', zh: '选手创纪录数量排行榜', en: 'Records Set (by Person)', endpoint: '/v1/wca/fun/records-person', shape: 'recordsPerson'
+},
+  { id: 'records-comp', family: 'D', zh: '赛事创纪录数量排行榜', en: 'Records Set (by Competition)', endpoint: '/v1/wca/fun/records-comp', shape: 'recordsComp'
+},
+  { id: 'oldest-records', family: 'D', zh: '纪录现保持时间排行榜', en: 'Oldest Standing Records', endpoint: '/v1/wca/fun/oldest-records', shape: 'oldestRecords'
+},
   // E 参赛 & 复原次数
-  { id: 'most-comps-person', family: 'E', zh: '选手比赛次数', en: 'Most Competitions (Person)', endpoint: '/v1/wca/fun/most-comps-person', shape: 'countPerson', countLabelZh: '比赛次数', countLabelEn: 'Competitions' },
-  { id: 'most-persons-comp', family: 'E', zh: '赛事选手人数', en: 'Most Competitors (Competition)', endpoint: '/v1/wca/fun/most-persons-comp', shape: 'countComp', countLabelZh: '选手人数', countLabelEn: 'Competitors' },
-  { id: 'most-solves-person-comp', family: 'E', zh: '个人单场总复原次数', en: 'Most Solves in One Competition', endpoint: '/v1/wca/fun/most-solves-person-comp', shape: 'solvesPersonComp' },
-  { id: 'most-solves-comp', family: 'E', zh: '赛事总复原次数', en: 'Most Total Solves (Competition)', endpoint: '/v1/wca/fun/most-solves-comp', shape: 'solvesComp' },
-  { id: 'most-solves-person', family: 'E', zh: '个人累积总复原次数', en: 'Most Career Solves (Person)', endpoint: '/v1/wca/fun/most-solves-person', shape: 'solvesPerson' },
-  { id: 'most-solves-person-year', family: 'E', zh: '个人年度总复原次数', en: 'Most Solves in One Year', endpoint: '/v1/wca/fun/most-solves-person-year', shape: 'solvesPerson', needsYear: true },
+  { id: 'most-comps-person', family: 'E', zh: '选手比赛次数', en: 'Most Competitions (Person)', endpoint: '/v1/wca/fun/most-comps-person', shape: 'countPerson', countLabelZh: '比赛次数', countLabelEn: 'Competitions'
+},
+  { id: 'most-persons-comp', family: 'E', zh: '赛事选手人数', en: 'Most Competitors (Competition)', endpoint: '/v1/wca/fun/most-persons-comp', shape: 'countComp', countLabelZh: '选手人数', countLabelEn: 'Competitors'
+},
+  { id: 'most-solves-person-comp', family: 'E', zh: '个人单场总复原次数', en: 'Most Solves in One Competition', endpoint: '/v1/wca/fun/most-solves-person-comp', shape: 'solvesPersonComp'
+},
+  { id: 'most-solves-comp', family: 'E', zh: '赛事总复原次数', en: 'Most Total Solves (Competition)', endpoint: '/v1/wca/fun/most-solves-comp', shape: 'solvesComp'
+},
+  { id: 'most-solves-person', family: 'E', zh: '个人累积总复原次数', en: 'Most Career Solves (Person)', endpoint: '/v1/wca/fun/most-solves-person', shape: 'solvesPerson'
+},
+  { id: 'most-solves-person-year', family: 'E', zh: '个人年度总复原次数', en: 'Most Solves in One Year', endpoint: '/v1/wca/fun/most-solves-person-year', shape: 'solvesPerson', needsYear: true
+},
   // F Top100 占席
-  { id: 'top100-appearances-single', family: 'F', zh: '各项单次成绩前100占席', en: 'Top-100 Single Appearances', endpoint: '/v1/wca/fun/top100-appearances', shape: 'top100', fixed: { type: 'single' }, eventMode: 'select' },
-  { id: 'top100-appearances-average', family: 'F', zh: '各项平均成绩前100占席', en: 'Top-100 Average Appearances', endpoint: '/v1/wca/fun/top100-appearances', shape: 'top100', fixed: { type: 'average' }, eventMode: 'select' },
+  { id: 'top100-appearances-single', family: 'F', zh: '各项单次成绩前100占席', en: 'Top-100 Single Appearances', endpoint: '/v1/wca/fun/top100-appearances', shape: 'top100', fixed: { type: 'single' }, eventMode: 'select'
+},
+  { id: 'top100-appearances-average', family: 'F', zh: '各项平均成绩前100占席', en: 'Top-100 Average Appearances', endpoint: '/v1/wca/fun/top100-appearances', shape: 'top100', fixed: { type: 'average' }, eventMode: 'select'
+},
 ];
 
 const FAMILIES: { key: FamKey; zh: string; en: string }[] = [
-  { key: 'A', zh: '各地综合排行', en: 'Country Rankings' },
-  { key: 'B', zh: '奖牌与名次', en: 'Medals & Placements' },
-  { key: 'C', zh: '遗憾榜', en: 'Best Without' },
-  { key: 'D', zh: '纪录', en: 'Records' },
-  { key: 'E', zh: '参赛与复原', en: 'Participation & Solves' },
-  { key: 'F', zh: 'Top100 占席', en: 'Top-100 Appearances' },
+  { key: 'A', zh: '各地综合排行', en: 'Country Rankings'
+},
+  { key: 'B', zh: '奖牌与名次', en: 'Medals & Placements'
+},
+  { key: 'C', zh: '遗憾榜', en: 'Best Without'
+},
+  { key: 'D', zh: '纪录', en: 'Records'
+},
+  { key: 'E', zh: '参赛与复原', en: 'Participation & Solves'
+},
+  { key: 'F', zh: 'Top100 占席', en: 'Top-100 Appearances'
+},
 ];
 
 const STAT_BY_ID = new Map(FUN_STATS.map(s => [s.id, s]));
@@ -105,7 +136,7 @@ interface ApiResp { total?: number; rows?: Record<string, unknown>[]; years?: nu
 function FunStatsInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  const lang = isZh ? 'zh' : 'en';
+  const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   useDocumentTitle('趣味统计', 'Fun Statistics');
   // 榜单选择(左侧导航)持久化到 ?stat=,沿用原 replace 语义(不堆历史)
   const [statParam, setStatParam] = useQueryState(
@@ -200,11 +231,13 @@ function FunStatsInner() {
 
   return (
     <div className="fun-stats">
-      <h1 className="fun-stats-title">{isZh ? '趣味统计' : 'Fun Statistics'}</h1>
+      <h1 className="fun-stats-title">{tr({ zh: '趣味统计', en: 'Fun Statistics',
+          zhHant: "趣味統計"
+    })}</h1>
       <p className="fun-stats-intro">
-        {isZh
-          ? '基于 WCA 官方成绩的趣味排行,可选世界 / 洲际 / 国家。'
-          : 'Fun leaderboards from official WCA results — pick World, a continent, or a country.'}
+        {tr({ zh: '基于 WCA 官方成绩的趣味排行,可选世界 / 洲际 / 国家。', en: 'Fun leaderboards from official WCA results — pick World, a continent, or a country.',
+            zhHant: "基於 WCA 官方成績的趣味排行,可選世界 / 洲際 / 國家。"
+        })}
       </p>
 
       <div className="fun-stats-layout">
@@ -212,20 +245,20 @@ function FunStatsInner() {
         <nav className="fun-stats-nav">
           {FAMILIES.map(fam => (
             <div key={fam.key} className="fun-stats-nav-group">
-              <div className="fun-stats-nav-head">{isZh ? fam.zh : fam.en}</div>
+              <div className="fun-stats-nav-head">{(i18n.language.startsWith('zh') ? fam.zh : fam.en)}</div>
               {FUN_STATS.filter(s => s.family === fam.key).map(s => (
                 <button
                   key={s.id}
                   className={`fun-stats-nav-item${s.id === statId ? ' active' : ''}`}
                   onClick={() => selectStat(s.id)}
-                >{isZh ? s.zh : s.en}</button>
+                >{(i18n.language.startsWith('zh') ? s.zh : s.en)}</button>
               ))}
             </div>
           ))}
         </nav>
 
         <div className="fun-stats-main">
-          <h2 className="fun-stats-stat-title">{isZh ? stat.zh : stat.en}</h2>
+          <h2 className="fun-stats-stat-title">{(i18n.language.startsWith('zh') ? stat.zh : stat.en)}</h2>
 
           {/* 控件 */}
           <div className="fun-stats-controls">
@@ -233,7 +266,9 @@ function FunStatsInner() {
             {stat.typeToggle && !NO_AVERAGE.has(event) && (
               <PillToggle
                 value={typeAvg} onChange={setTypeAvg}
-                onLabel={isZh ? '平均' : 'Average'} offLabel={isZh ? '单次' : 'Single'}
+                onLabel={tr({ zh: '平均', en: 'Average' })} offLabel={tr({ zh: '单次', en: 'Single',
+                    zhHant: "單次"
+                })}
               />
             )}
             {stat.needsYear && years.length > 0 && (
@@ -264,8 +299,12 @@ function FunStatsInner() {
             />
           )}
 
-          {err && <div className="fun-stats-error">{isZh ? '加载失败:' : 'Error: '}{err}</div>}
-          {loading && !resp && <div className="fun-stats-loading">{isZh ? '加载中…' : 'Loading…'}</div>}
+          {err && <div className="fun-stats-error">{tr({ zh: '加载失败:', en: 'Error: ',
+              zhHant: "載入失敗:"
+        })}{err}</div>}
+          {loading && !resp && <div className="fun-stats-loading">{tr({ zh: '加载中…', en: 'Loading…',
+              zhHant: "載入中…"
+        })}</div>}
 
           {resp && (
             <FunStatTable

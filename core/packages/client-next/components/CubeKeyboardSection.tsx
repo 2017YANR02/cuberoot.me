@@ -8,6 +8,7 @@ import { Keyboard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import CubeVirtualKeyboard from './CubeVirtualKeyboard';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   target: RefObject<HTMLTextAreaElement | HTMLDivElement | null>;
@@ -22,8 +23,12 @@ export default function CubeKeyboardSection({ target, onInput, enableMarks }: Pr
   const [showKeyboard, setShowKeyboard] = useState(false);
 
   const visible = isMobile || showKeyboard;
-  const labelOn = isZh ? '隐藏虚拟键盘' : 'Hide keyboard';
-  const labelOff = isZh ? '显示虚拟键盘' : 'Show keyboard';
+  const labelOn = tr({ zh: '隐藏虚拟键盘', en: 'Hide keyboard',
+      zhHant: "隱藏虛擬鍵盤"
+});
+  const labelOff = tr({ zh: '显示虚拟键盘', en: 'Show keyboard',
+      zhHant: "顯示虛擬鍵盤"
+});
 
   return (
     <>

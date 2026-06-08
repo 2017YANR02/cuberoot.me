@@ -22,6 +22,7 @@ import { ArticleBody } from '@/components/article/ArticleBody';
 import ArticleActions from '@/components/article/ArticleActions';
 import type { Article, ArticleListItem } from '@/lib/article-api';
 import '../article.css';
+import { tr } from '@/i18n/tr';
 
 export const dynamicParams = true;
 export const revalidate = 300;
@@ -100,14 +101,14 @@ export default async function ArticleReaderPage({
     <main className="article-page">
       <Link href={`/${langPrefix}/article`} className="article-breadcrumb">
         <ChevronLeft size={15} />
-        <span>{isZh ? '全部文章' : 'All articles'}</span>
+        <span>{tr({ zh: '全部文章', en: 'All articles' })}</span>
       </Link>
 
       <h1>{article.title}</h1>
       {article.subtitle && <p className="article-subtitle">{article.subtitle}</p>}
       {(author || date) && (
         <p className="article-byline">
-          {isZh ? '作者 ' : 'by '}
+          {tr({ zh: '作者 ', en: 'by ' })}
           {author && (
             <Link
               href={`/${langPrefix}/article/author/${article.authorWcaId}`}
@@ -127,7 +128,9 @@ export default async function ArticleReaderPage({
       {more.length > 0 && (
         <section className="article-more-by">
           <h2 className="article-more-by-title">
-            {isZh ? '该作者的更多文章' : 'More by this author'}
+            {tr({ zh: '该作者的更多文章', en: 'More by this author',
+                zhHant: "該作者的更多文章"
+            })}
           </h2>
           <ul className="article-more-by-list">
             {more.map((a) => (

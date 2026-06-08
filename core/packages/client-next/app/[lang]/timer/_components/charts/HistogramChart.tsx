@@ -12,6 +12,7 @@ import type { Solve } from '../../_lib/types';
 import { effectiveMs } from '../../_lib/types';
 import { formatMs } from '../../_lib/stats';
 import './charts.css';
+import { tr } from '@/i18n/tr';
 
 interface HistogramChartProps {
   solves: Solve[];
@@ -90,7 +91,9 @@ export default function HistogramChart({
   if (finiteCount < 5) {
     return (
       <div className={`chart-empty-hint ${className ?? ''}`.trim()}>
-        {isZh ? '至少 5 次成绩才显示分布' : 'Need 5+ solves to chart distribution'}
+        {tr({ zh: '至少 5 次成绩才显示分布', en: 'Need 5+ solves to chart distribution',
+            zhHant: "至少 5 次成績才顯示分佈"
+        })}
       </div>
     );
   }
@@ -116,7 +119,9 @@ export default function HistogramChart({
       width={width}
       height={height}
       role="img"
-      aria-label={isZh ? '成绩分布直方图' : 'Solve time histogram'}
+      aria-label={tr({ zh: '成绩分布直方图', en: 'Solve time histogram',
+          zhHant: "成績分佈直方圖"
+    })}
     >
       {/* Bars */}
       {buckets.map((b, i) => {

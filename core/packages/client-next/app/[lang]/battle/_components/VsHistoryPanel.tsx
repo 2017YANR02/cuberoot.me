@@ -15,6 +15,8 @@ import { PUZZLES } from './engine/constants';
 import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent } from '@/lib/wca-events';
 import type { SolveEntry } from './engine/types';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 // NOTE: yyyy-mm-dd —— 列表用
 function formatDateOnly(isoDate: string): string {
@@ -97,7 +99,7 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
 
   const puzzleName = (id: string) => {
     const p = PUZZLES.find(x => x.id === id);
-    return p ? (p.name[isZh ? 'zh' : 'en'] || p.name.en) : id;
+    return p ? (p.name[(i18n.language.startsWith('zh') ? 'zh' : 'en')] || p.name.en) : id;
   };
   const puzzlesDiffer = store.puzzleIds[0] !== store.puzzleIds[1];
 
@@ -109,12 +111,16 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
         <div className="history-header">
           <span className="history-title">
             <Swords size={16} />
-            1v1 {isZh ? '历史' : 'History'}
+            1v1 {tr({ zh: '历史', en: 'History',
+                zhHant: "歷史"
+            })}
             {puzzlesDiffer && (
               <span className="vs-puzzle-tag"> · P1: {puzzleName(store.puzzleIds[0])} · P2: {puzzleName(store.puzzleIds[1])}</span>
             )}
           </span>
-          <span className="history-stats">{roundCount} {isZh ? '轮' : 'rounds'}</span>
+          <span className="history-stats">{roundCount} {tr({ zh: '轮', en: 'rounds',
+              zhHant: "輪"
+        })}</span>
           <button className="settings-x-btn" onClick={onClose}>✕</button>
         </div>
 
@@ -128,7 +134,9 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
         {/* 轮次列表 */}
         <div className="history-list">
           {roundCount === 0 && (
-            <div className="history-empty">{isZh ? '暂无双人记录' : 'No rounds yet'}</div>
+            <div className="history-empty">{tr({ zh: '暂无双人记录', en: 'No rounds yet',
+                zhHant: "暫無雙人記錄"
+            })}</div>
           )}
           {Array.from({ length: roundCount }, (_, i) => roundCount - 1 - i).map(i => {
             const e0 = h0[i];
@@ -162,7 +170,9 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
                 <button
                   type="button"
                   className="h-delete"
-                  title={isZh ? '删除此轮' : 'Delete round'}
+                  title={tr({ zh: '删除此轮', en: 'Delete round',
+                      zhHant: "刪除此輪"
+                })}
                   onClick={(e) => {
                     e.stopPropagation();
                     store.deleteVsRound(i);
@@ -272,7 +282,9 @@ function RoundDetailModal({
           {sameScramble ? (
             s0 || s1 ? (
               <div className="round-modal-scramble-block">
-                <div className="round-modal-scramble-label">{isZh ? '打乱' : 'Scramble'}</div>
+                <div className="round-modal-scramble-label">{tr({ zh: '打乱', en: 'Scramble',
+                    zhHant: "打亂"
+                })}</div>
                 <div className="round-modal-scramble-text">{s0 || s1}</div>
               </div>
             ) : null
@@ -280,13 +292,17 @@ function RoundDetailModal({
             <>
               {s0 && (
                 <div className="round-modal-scramble-block">
-                  <div className="round-modal-scramble-label">P1{isWcaEvent(puz0) ? ' ' : ''}{isZh ? '打乱' : 'Scramble'}</div>
+                  <div className="round-modal-scramble-label">P1{isWcaEvent(puz0) ? ' ' : ''}{tr({ zh: '打乱', en: 'Scramble',
+                      zhHant: "打亂"
+                })}</div>
                   <div className="round-modal-scramble-text">{s0}</div>
                 </div>
               )}
               {s1 && (
                 <div className="round-modal-scramble-block">
-                  <div className="round-modal-scramble-label">P2{isWcaEvent(puz1) ? ' ' : ''}{isZh ? '打乱' : 'Scramble'}</div>
+                  <div className="round-modal-scramble-label">P2{isWcaEvent(puz1) ? ' ' : ''}{tr({ zh: '打乱', en: 'Scramble',
+                      zhHant: "打亂"
+                })}</div>
                   <div className="round-modal-scramble-text">{s1}</div>
                 </div>
               )}
@@ -299,8 +315,12 @@ function RoundDetailModal({
             type="button"
             className="round-modal-delete"
             onClick={onDelete}
-            title={isZh ? '删除此轮' : 'Delete round'}
-            aria-label={isZh ? '删除此轮' : 'Delete round'}
+            title={tr({ zh: '删除此轮', en: 'Delete round',
+                zhHant: "刪除此輪"
+            })}
+            aria-label={tr({ zh: '删除此轮', en: 'Delete round',
+                zhHant: "刪除此輪"
+            })}
           >
             <Trash2 size={16} />
           </button>

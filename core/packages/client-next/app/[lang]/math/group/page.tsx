@@ -26,6 +26,8 @@ import {
   type CubieState,
 } from './_components/cube_state';
 import './group_theory.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 // ── Extended sections §33–§62 (self-contained files, lazy-loaded per slug so the
 //    base page chunk stays lean — only the active section's code is fetched) ──
@@ -204,12 +206,18 @@ function AxiomTable() {
 // ── §3 Generator demos  six face turns ─────────────────────────────────────
 function GeneratorRow() {
   const faces: { f: string; zh: string; en: string }[] = [
-    { f: 'U', zh: '上层顺时针', en: 'Up' },
-    { f: 'D', zh: '下层顺时针', en: 'Down' },
-    { f: 'R', zh: '右层顺时针', en: 'Right' },
-    { f: 'L', zh: '左层顺时针', en: 'Left' },
-    { f: 'F', zh: '前层顺时针', en: 'Front' },
-    { f: 'B', zh: '后层顺时针', en: 'Back' },
+    { f: 'U', zh: '上层顺时针', en: 'Up'
+    },
+    { f: 'D', zh: '下层顺时针', en: 'Down'
+    },
+    { f: 'R', zh: '右层顺时针', en: 'Right'
+    },
+    { f: 'L', zh: '左层顺时针', en: 'Left'
+    },
+    { f: 'F', zh: '前层顺时针', en: 'Front'
+    },
+    { f: 'B', zh: '后层顺时针', en: 'Back'
+    },
   ];
   const lang = useLang();
   return (
@@ -237,16 +245,18 @@ function CubeStateInspector() {
 
   return (
     <div className="gt-panel">
-      <div className="gt-panel-title">{lang === 'zh' ? '互动 § 状态张量分解' : 'Interactive § State tensor'}</div>
+      <div className="gt-panel-title">{tr({ zh: '互动 § 状态张量分解', en: 'Interactive § State tensor',
+          zhHant: "互動 § 狀態張量分解"
+    })}</div>
       <p className="gt-panel-sub">
-        {lang === 'zh'
-          ? '魔方状态 = (cp, co, ep, eo) 四元组。输入任意公式,看四个数组随之变化。'
-          : 'A cube state is the 4-tuple (cp, co, ep, eo). Type any alg, watch the four arrays mutate.'}
+        {tr({ zh: '魔方状态 = (cp, co, ep, eo) 四元组。输入任意公式,看四个数组随之变化。', en: 'A cube state is the 4-tuple (cp, co, ep, eo). Type any alg, watch the four arrays mutate.',
+            zhHant: "魔方狀態 = (cp, co, ep, eo) 四元組。輸入任意公式,看四個陣列隨之變化。"
+        })}
       </p>
       <div className="gt-panel-input-row">
         <label>alg</label>
         <input className="gt-input" value={alg} onChange={e => setAlg(e.target.value)} placeholder="R U R' U' …" />
-        <button className="gt-btn-ghost gt-btn" onClick={() => setAlg('')}>{lang === 'zh' ? '清空' : 'reset'}</button>
+        <button className="gt-btn-ghost gt-btn" onClick={() => setAlg('')}>{tr({ zh: '清空', en: 'reset' })}</button>
       </div>
 
       <div className="gt-twisty-inline"><TwistyMini alg={alg} /></div>
@@ -300,11 +310,15 @@ function CubeStateInspector() {
 
       <div className="gt-panel-result">
         <div className="gt-result-row">
-          <div className="gt-result-label">{lang === 'zh' ? '角块循环型' : 'corner cycle type'}</div>
+          <div className="gt-result-label">{tr({ zh: '角块循环型', en: 'corner cycle type',
+              zhHant: "角塊迴圈型"
+        })}</div>
           <div className="gt-result-val">{formatCycle(cycleStructure(state.cp), lang)}</div>
         </div>
         <div className="gt-result-row">
-          <div className="gt-result-label">{lang === 'zh' ? '棱块循环型' : 'edge cycle type'}</div>
+          <div className="gt-result-label">{tr({ zh: '棱块循环型', en: 'edge cycle type',
+              zhHant: "稜塊迴圈型"
+        })}</div>
           <div className="gt-result-val">{formatCycle(cycleStructure(state.ep), lang)}</div>
         </div>
       </div>
@@ -313,7 +327,9 @@ function CubeStateInspector() {
 }
 
 function formatCycle(cycles: number[], lang: Lang): string {
-  if (cycles.length === 0) return lang === 'zh' ? '恒等 (无循环)' : 'identity (no cycles)';
+  if (cycles.length === 0) return tr({ zh: '恒等 (无循环)', en: 'identity (no cycles)',
+      zhHant: "恆等 (無迴圈)"
+});
   return cycles.map(c => `${c}-cycle`).join(' × ');
 }
 
@@ -342,11 +358,13 @@ function InvariantInspector() {
 
   return (
     <div className="gt-panel">
-      <div className="gt-panel-title">{lang === 'zh' ? '互动 § 三个守恒律' : 'Interactive § Three invariants'}</div>
+      <div className="gt-panel-title">{tr({ zh: '互动 § 三个守恒律', en: 'Interactive § Three invariants',
+          zhHant: "互動 § 三個守恆律"
+    })}</div>
       <p className="gt-panel-sub">
-        {lang === 'zh'
-          ? '凡是合法的魔方状态都满足三条约束。手动破坏任何一条,状态就不可达 (即,无法仅靠 6 个面转出来)。'
-          : 'Every legal cube state satisfies three constraints. Manually break any one and the state is unreachable — no sequence of face turns can produce it.'}
+        {tr({ zh: '凡是合法的魔方状态都满足三条约束。手动破坏任何一条,状态就不可达 (即,无法仅靠 6 个面转出来)。', en: 'Every legal cube state satisfies three constraints. Manually break any one and the state is unreachable — no sequence of face turns can produce it.',
+            zhHant: "凡是合法的魔方狀態都滿足三條約束。手動破壞任何一條,狀態就不可達 (即,無法僅靠 6 個面轉出來)。"
+        })}
       </p>
       <div className="gt-panel-input-row">
         <label>alg</label>
@@ -354,13 +372,19 @@ function InvariantInspector() {
       </div>
       <div className="gt-panel-input-row" style={{ marginTop: 4 }}>
         <span className={`gt-chip ${breakCo ? 'gt-chip-active' : ''}`} onClick={() => setBreakCo(v => !v)}>
-          {lang === 'zh' ? '手扭角块 0' : 'twist corner 0'}
+          {tr({ zh: '手扭角块 0', en: 'twist corner 0',
+              zhHant: "手扭角塊 0"
+        })}
         </span>
         <span className={`gt-chip ${breakEo ? 'gt-chip-active' : ''}`} onClick={() => setBreakEo(v => !v)}>
-          {lang === 'zh' ? '手翻棱块 0' : 'flip edge 0'}
+          {tr({ zh: '手翻棱块 0', en: 'flip edge 0',
+              zhHant: "手翻稜塊 0"
+        })}
         </span>
         <span className={`gt-chip ${swapEdges ? 'gt-chip-active' : ''}`} onClick={() => setSwapEdges(v => !v)}>
-          {lang === 'zh' ? '交换两棱块' : 'swap two edges'}
+          {tr({ zh: '交换两棱块', en: 'swap two edges',
+              zhHant: "交換兩稜塊"
+        })}
         </span>
       </div>
 
@@ -385,8 +409,12 @@ function InvariantInspector() {
 
       <div className={`gt-inv-final ${inv.reachable ? '' : 'gt-inv-final-bad'}`}>
         {inv.reachable
-          ? (lang === 'zh' ? '✓ 可达 — 该状态是 G 的元素' : '✓ Reachable — this state is in G')
-          : (lang === 'zh' ? '✗ 不可达 — 该状态不在 G 中' : '✗ Unreachable — this state is not in G')}
+          ? (tr({ zh: '✓ 可达 — 该状态是 G 的元素', en: '✓ Reachable — this state is in G',
+              zhHant: "✓ 可達 — 該狀態是 G 的元素"
+        }))
+          : (tr({ zh: '✗ 不可达 — 该状态不在 G 中', en: '✗ Unreachable — this state is not in G',
+              zhHant: "✗ 不可達 — 該狀態不在 G 中"
+        }))}
       </div>
     </div>
   );
@@ -464,11 +492,13 @@ function PeriodExplorer() {
 
   return (
     <div className="gt-panel">
-      <div className="gt-panel-title">{lang === 'zh' ? '互动 § 元素阶' : 'Interactive § Order of an element'}</div>
+      <div className="gt-panel-title">{tr({ zh: '互动 § 元素阶', en: 'Interactive § Order of an element',
+          zhHant: "互動 § 元素階"
+    })}</div>
       <p className="gt-panel-sub">
-        {lang === 'zh'
-          ? '一个公式重复多少次能回到起点?这就是它的「阶」。点几个常见例子看看。'
-          : 'Repeat a sequence until it returns to identity. The smallest such count is its order.'}
+        {tr({ zh: '一个公式重复多少次能回到起点?这就是它的「阶」。点几个常见例子看看。', en: 'Repeat a sequence until it returns to identity. The smallest such count is its order.',
+            zhHant: "一個公式重複多少次能回到起點?這就是它的「階」。點幾個常見例子看看。"
+        })}
       </p>
       <div className="gt-panel-input-row">
         <label>alg</label>
@@ -495,10 +525,12 @@ function PeriodExplorer() {
 
       <div className="gt-panel-input-row">
         <button className="gt-btn" onClick={animate} disabled={!period || period > 60}>
-          {lang === 'zh' ? '播放轨道' : 'play orbit'}
+          {tr({ zh: '播放轨道', en: 'play orbit',
+              zhHant: "播放軌道"
+        })}
         </button>
         <button className="gt-btn-ghost gt-btn" onClick={stop}>
-          {lang === 'zh' ? '停' : 'stop'}
+          {tr({ zh: '停', en: 'stop' })}
         </button>
         <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-faint)', marginLeft: 'auto' }}>
           {iter > 0 ? `${iter} / ${period}` : ''}
@@ -507,12 +539,16 @@ function PeriodExplorer() {
 
       <div className="gt-panel-result">
         <div className="gt-result-row">
-          <div className="gt-result-label">{lang === 'zh' ? '阶 (返回单位元所需重复数)' : 'order (period)'}</div>
+          <div className="gt-result-label">{tr({ zh: '阶 (返回单位元所需重复数)', en: 'order (period)',
+              zhHant: "階 (返回單位元所需重複數)"
+        })}</div>
           <div className="gt-result-val-strong">{period === null ? '—' : period}</div>
         </div>
         {showOver && (
           <div className="gt-aside" style={{ marginTop: 12 }}>
-            {lang === 'zh' ? '阶 > 60,动画不再播放;轨道太长,光看图就够。' : 'Order > 60 — orbit too long to animate, but the chart shows the full trajectory.'}
+            {tr({ zh: '阶 > 60,动画不再播放;轨道太长,光看图就够。', en: 'Order > 60 — orbit too long to animate, but the chart shows the full trajectory.',
+                zhHant: "階 > 60,動畫不再播放;軌道太長,光看圖就夠。"
+            })}
           </div>
         )}
       </div>
@@ -520,7 +556,9 @@ function PeriodExplorer() {
       {trajectory.length > 0 && (
         <div style={{ marginTop: 20 }}>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-faint)', marginBottom: 4 }}>
-            {lang === 'zh' ? '与单位元的距离 (错位件数), 每次幂' : 'distance from identity (mismatched positions), per power'}
+            {tr({ zh: '与单位元的距离 (错位件数), 每次幂', en: 'distance from identity (mismatched positions), per power',
+                zhHant: "與單位元的距離 (錯位件數), 每次冪"
+            })}
           </div>
           <div className="gt-period-chart">
             {trajectory.map((d, i) => (
@@ -559,11 +597,13 @@ function ConjugateViewer() {
   const validB = useMemo(() => safeTok(b), [b]);
   return (
     <div className="gt-panel">
-      <div className="gt-panel-title">{lang === 'zh' ? '互动 § 共轭 A B A⁻¹' : 'Interactive § Conjugate A B A⁻¹'}</div>
+      <div className="gt-panel-title">{tr({ zh: '互动 § 共轭 A B A⁻¹', en: 'Interactive § Conjugate A B A⁻¹',
+          zhHant: "互動 § 共軛 A B A⁻¹"
+    })}</div>
       <p className="gt-panel-sub">
-        {lang === 'zh'
-          ? '共轭 = 把 B 这个操作「搬到另一个位置去做」。先用 A 把目标移过来,执行 B,再 A 撤回。'
-          : 'A conjugate moves operation B "to another location": A sets up, B acts, A⁻¹ undoes the setup.'}
+        {tr({ zh: '共轭 = 把 B 这个操作「搬到另一个位置去做」。先用 A 把目标移过来,执行 B,再 A 撤回。', en: 'A conjugate moves operation B "to another location": A sets up, B acts, A⁻¹ undoes the setup.',
+            zhHant: "共軛 = 把 B 這個操作「搬到另一個位置去做」。先用 A 把目標移過來,執行 B,再 A 撤回。"
+        })}
       </p>
       <div className="gt-panel-input-row">
         <label>A (setup)</label>
@@ -635,20 +675,27 @@ function CommutatorViewer() {
   }, [full]);
 
   const presets: { a: string; b: string; name: string; zh: string; en: string }[] = [
-    { a: "R U R'", b: "D",            name: "edge 3-cycle",     zh: '棱块 3-循环', en: 'edge 3-cycle' },
-    { a: "[R, U]", b: "[U, R]",       name: "wrong (nested)",   zh: '嵌套例', en: 'nested example' },
-    { a: "U R U'", b: "L'",          name: "corner 3-cycle",   zh: '角块 3-循环', en: 'corner 3-cycle' },
-    { a: "R",     b: "U",            name: "the sexy",         zh: '小鱼起手', en: 'sexy' },
-    { a: "M",     b: "U",            name: "M-slice cycle",    zh: 'M 切片循环', en: 'M-slice cycle' },
+    { a: "R U R'", b: "D",            name: "edge 3-cycle",     zh: '棱块 3-循环', en: 'edge 3-cycle'
+    },
+    { a: "[R, U]", b: "[U, R]",       name: "wrong (nested)",   zh: '嵌套例', en: 'nested example'
+    },
+    { a: "U R U'", b: "L'",          name: "corner 3-cycle",   zh: '角块 3-循环', en: 'corner 3-cycle'
+    },
+    { a: "R",     b: "U",            name: "the sexy",         zh: '小鱼起手', en: 'sexy'
+    },
+    { a: "M",     b: "U",            name: "M-slice cycle",    zh: 'M 切片循环', en: 'M-slice cycle'
+    },
   ];
 
   return (
     <div className="gt-panel">
-      <div className="gt-panel-title">{lang === 'zh' ? '互动 § 换位子 [A, B] = A B A⁻¹ B⁻¹' : 'Interactive § Commutator [A, B] = A B A⁻¹ B⁻¹'}</div>
+      <div className="gt-panel-title">{tr({ zh: '互动 § 换位子 [A, B] = A B A⁻¹ B⁻¹', en: 'Interactive § Commutator [A, B] = A B A⁻¹ B⁻¹',
+          zhHant: "互動 § 換位子 [A, B] = A B A⁻¹ B⁻¹"
+    })}</div>
       <p className="gt-panel-sub">
-        {lang === 'zh'
-          ? '换位子是高级解法的灵魂。它衡量「A 和 B 互不交换的程度」—— 如果它们交换,[A, B] = e。'
-          : 'The commutator measures how far A and B fail to commute. If they commute, [A, B] = e.'}
+        {tr({ zh: '换位子是高级解法的灵魂。它衡量「A 和 B 互不交换的程度」—— 如果它们交换,[A, B] = e。', en: 'The commutator measures how far A and B fail to commute. If they commute, [A, B] = e.',
+            zhHant: "換位子是高階解法的靈魂。它衡量「A 和 B 互不交換的程度」—— 如果它們交換,[A, B] = e。"
+        })}
       </p>
       <div className="gt-panel-input-row">
         <label>A</label>
@@ -673,19 +720,27 @@ function CommutatorViewer() {
       {stateResult && (
         <div className="gt-panel-result">
           <div className="gt-result-row">
-            <div className="gt-result-label">{lang === 'zh' ? '完整公式' : 'expanded'}</div>
+            <div className="gt-result-label">{tr({ zh: '完整公式', en: 'expanded' })}</div>
             <div className="gt-result-val-strong">{full}</div>
           </div>
           <div className="gt-result-row">
-            <div className="gt-result-label">{lang === 'zh' ? '是否单位元' : 'identity?'}</div>
-            <div className="gt-result-val">{stateResult.solved ? (lang === 'zh' ? '是 (A, B 互换)' : 'yes (A and B commute)') : (lang === 'zh' ? '否' : 'no')}</div>
+            <div className="gt-result-label">{tr({ zh: '是否单位元', en: 'identity?',
+                zhHant: "是否單位元"
+            })}</div>
+            <div className="gt-result-val">{stateResult.solved ? (tr({ zh: '是 (A, B 互换)', en: 'yes (A and B commute)',
+                zhHant: "是 (A, B 互換)"
+            })) : (tr({ zh: '否', en: 'no' }))}</div>
           </div>
           <div className="gt-result-row">
-            <div className="gt-result-label">{lang === 'zh' ? '角块循环型' : 'corner cycles'}</div>
+            <div className="gt-result-label">{tr({ zh: '角块循环型', en: 'corner cycles',
+                zhHant: "角塊迴圈型"
+            })}</div>
             <div className="gt-result-val">{formatCycle(stateResult.cornerCycles, lang)}</div>
           </div>
           <div className="gt-result-row">
-            <div className="gt-result-label">{lang === 'zh' ? '棱块循环型' : 'edge cycles'}</div>
+            <div className="gt-result-label">{tr({ zh: '棱块循环型', en: 'edge cycles',
+                zhHant: "稜塊迴圈型"
+            })}</div>
             <div className="gt-result-val">{formatCycle(stateResult.edgeCycles, lang)}</div>
           </div>
         </div>
@@ -722,11 +777,13 @@ function CentreVerifier() {
 
   return (
     <div className="gt-panel">
-      <div className="gt-panel-title">{lang === 'zh' ? '互动 § 中心验证 — g 是否跟所有面转交换?' : 'Interactive § Centre check — does g commute with every face turn?'}</div>
+      <div className="gt-panel-title">{tr({ zh: '互动 § 中心验证 — g 是否跟所有面转交换?', en: 'Interactive § Centre check — does g commute with every face turn?',
+          zhHant: "互動 § 中心驗證 — g 是否跟所有面轉交換?"
+    })}</div>
       <p className="gt-panel-sub">
-        {lang === 'zh'
-          ? '逐个验证 [g, X] = e 对 6 个生成元成立 ⇔ g ∈ Z(G)。理论已证 Z(G) = {e, superflip} 阶 2。'
-          : 'For each face turn X, check [g, X] = e. If all six pass, then g ∈ Z(G). Theory says Z(G) = {e, superflip} of order 2.'}
+        {tr({ zh: '逐个验证 [g, X] = e 对 6 个生成元成立 ⇔ g ∈ Z(G)。理论已证 Z(G) = {e, superflip} 阶 2。', en: 'For each face turn X, check [g, X] = e. If all six pass, then g ∈ Z(G). Theory says Z(G) = {e, superflip} of order 2.',
+            zhHant: "逐個驗證 [g, X] = e 對 6 個生成元成立 ⇔ g ∈ Z(G)。理論已證 Z(G) = {e, superflip} 階 2。"
+        })}
       </p>
       <div className="gt-panel-input-row">
         <label>g</label>
@@ -748,7 +805,9 @@ function CentreVerifier() {
       </div>
       <div className={`gt-inv-final ${result?.inCentre ? '' : 'gt-inv-final-bad'}`}>
         {result?.inCentre
-          ? (lang === 'zh' ? '✓ g ∈ Z(G) — 跟全部 6 个面转都交换' : '✓ g ∈ Z(G) — commutes with every face turn')
+          ? (tr({ zh: '✓ g ∈ Z(G) — 跟全部 6 个面转都交换', en: '✓ g ∈ Z(G) — commutes with every face turn',
+              zhHant: "✓ g ∈ Z(G) — 跟全部 6 個面轉都交換"
+        }))
           : (lang === 'zh' ? '✗ g ∉ Z(G)' : '✗ g ∉ Z(G)')}
       </div>
     </div>
@@ -787,11 +846,17 @@ function ConjugacyClassTable() {
     <table className="gt-compare">
       <thead>
         <tr>
-          <th>{lang === 'zh' ? '公式' : 'Alg'}</th>
-          <th>{lang === 'zh' ? '角块循环型' : 'Corner cycle type'}</th>
-          <th>{lang === 'zh' ? '棱块循环型' : 'Edge cycle type'}</th>
-          <th>{lang === 'zh' ? '阶' : 'Order'}</th>
-          <th>{lang === 'zh' ? '奇偶' : 'sgn'}</th>
+          <th>{tr({ zh: '公式', en: 'Alg' })}</th>
+          <th>{tr({ zh: '角块循环型', en: 'Corner cycle type',
+              zhHant: "角塊迴圈型"
+        })}</th>
+          <th>{tr({ zh: '棱块循环型', en: 'Edge cycle type',
+              zhHant: "稜塊迴圈型"
+        })}</th>
+          <th>{tr({ zh: '阶', en: 'Order',
+              zhHant: "階"
+        })}</th>
+          <th>{tr({ zh: '奇偶', en: 'sgn' })}</th>
         </tr>
       </thead>
       <tbody>
@@ -841,11 +906,13 @@ function HomomorphismPanel() {
 
   return (
     <div className="gt-panel">
-      <div className="gt-panel-title">{lang === 'zh' ? '互动 § 同态性质 sgn(g·h) = sgn(g) · sgn(h)' : 'Interactive § Homomorphism check sgn(g·h) = sgn(g) · sgn(h)'}</div>
+      <div className="gt-panel-title">{tr({ zh: '互动 § 同态性质 sgn(g·h) = sgn(g) · sgn(h)', en: 'Interactive § Homomorphism check sgn(g·h) = sgn(g) · sgn(h)',
+          zhHant: "互動 § 同態性質 sgn(g·h) = sgn(g) · sgn(h)"
+    })}</div>
       <p className="gt-panel-sub">
-        {lang === 'zh'
-          ? 'sgn 把 G 映到 ℤ/2 = {±1}。要验证它是同态:对任意 g, h ∈ G,应有 sgn(g·h) = sgn(g) · sgn(h)。'
-          : 'sgn maps G → ℤ/2 = {±1}. To check it is a homomorphism: for any g, h ∈ G, we need sgn(g·h) = sgn(g) · sgn(h).'}
+        {tr({ zh: 'sgn 把 G 映到 ℤ/2 = {±1}。要验证它是同态:对任意 g, h ∈ G,应有 sgn(g·h) = sgn(g) · sgn(h)。', en: 'sgn maps G → ℤ/2 = {±1}. To check it is a homomorphism: for any g, h ∈ G, we need sgn(g·h) = sgn(g) · sgn(h).',
+            zhHant: "sgn 把 G 映到 ℤ/2 = {±1}。要驗證它是同態:對任意 g, h ∈ G,應有 sgn(g·h) = sgn(g) · sgn(h)。"
+        })}
       </p>
       <div className="gt-panel-input-row">
         <label>g</label>
@@ -880,8 +947,12 @@ function HomomorphismPanel() {
       )}
       <div className={`gt-inv-final ${result?.homOk ? '' : 'gt-inv-final-bad'}`}>
         {result?.homOk
-          ? (lang === 'zh' ? '✓ 同态性质成立' : '✓ homomorphism property holds')
-          : (lang === 'zh' ? '✗ 同态性质失败 (不可能发生 — 这是定理)' : '✗ homomorphism property fails (impossible — this is a theorem)')}
+          ? (tr({ zh: '✓ 同态性质成立', en: '✓ homomorphism property holds',
+              zhHant: "✓ 同態性質成立"
+        }))
+          : (tr({ zh: '✗ 同态性质失败 (不可能发生 — 这是定理)', en: '✗ homomorphism property fails (impossible — this is a theorem)',
+              zhHant: "✗ 同態性質失敗 (不可能發生 — 這是定理)"
+        }))}
       </div>
     </div>
   );
@@ -909,9 +980,15 @@ function BurnsideMiniTable() {
     <table className="gt-compare">
       <thead>
         <tr>
-          <th>{lang === 'zh' ? '对称变换' : 'Symmetry'}</th>
-          <th>{lang === 'zh' ? '不动点 (Fix g)' : 'Fixed states (Fix g)'}</th>
-          <th>{lang === 'zh' ? '说明' : 'Meaning'}</th>
+          <th>{tr({ zh: '对称变换', en: 'Symmetry',
+              zhHant: "對稱變換"
+        })}</th>
+          <th>{tr({ zh: '不动点 (Fix g)', en: 'Fixed states (Fix g)',
+              zhHant: "不動點 (Fix g)"
+        })}</th>
+          <th>{tr({ zh: '说明', en: 'Meaning',
+              zhHant: "說明"
+        })}</th>
         </tr>
       </thead>
       <tbody>
@@ -1024,7 +1101,9 @@ function SymmetryPicker() {
 
   return (
     <div className="gt-panel">
-      <div className="gt-panel-title">{lang === 'zh' ? '互动 § 选一个外部对称变换' : 'Interactive § Pick an outer cube symmetry'}</div>
+      <div className="gt-panel-title">{tr({ zh: '互动 § 选一个外部对称变换', en: 'Interactive § Pick an outer cube symmetry',
+          zhHant: "互動 § 選一個外部對稱變換"
+    })}</div>
       <p className="gt-panel-sub">
         {lang === 'zh'
           ? `魔方有 ${totalElems} = 48 个外部对称 (O_h 群),分成 10 个共轭类。点任意一类看它的轴、阶、不动状态数。`
@@ -1044,23 +1123,33 @@ function SymmetryPicker() {
       </div>
       <div className="gt-panel-result" style={{ marginTop: 20 }}>
         <div className="gt-result-row">
-          <div className="gt-result-label">{lang === 'zh' ? '类' : 'class'}</div>
+          <div className="gt-result-label">{tr({ zh: '类', en: 'class',
+              zhHant: "類"
+        })}</div>
           <div className="gt-result-val-strong">{lang === 'zh' ? sym.nameZh : sym.name}</div>
         </div>
         <div className="gt-result-row">
-          <div className="gt-result-label">{lang === 'zh' ? '元素个数' : 'elements'}</div>
+          <div className="gt-result-label">{tr({ zh: '元素个数', en: 'elements',
+              zhHant: "元素個數"
+        })}</div>
           <div className="gt-result-val">{sym.count}</div>
         </div>
         <div className="gt-result-row">
-          <div className="gt-result-label">{lang === 'zh' ? '阶' : 'order'}</div>
+          <div className="gt-result-label">{tr({ zh: '阶', en: 'order',
+              zhHant: "階"
+        })}</div>
           <div className="gt-result-val">{sym.order}</div>
         </div>
         <div className="gt-result-row">
-          <div className="gt-result-label">{lang === 'zh' ? '不动点 |Fix(σ)|' : '|Fix(σ)|'}</div>
+          <div className="gt-result-label">{tr({ zh: '不动点 |Fix(σ)|', en: '|Fix(σ)|',
+              zhHant: "不動點 |Fix(σ)|"
+        })}</div>
           <div className="gt-result-val-strong">{sym.fixCount}</div>
         </div>
         <div className="gt-result-row">
-          <div className="gt-result-label">{lang === 'zh' ? '不动状态' : 'fixed states'}</div>
+          <div className="gt-result-label">{tr({ zh: '不动状态', en: 'fixed states',
+              zhHant: "不動狀態"
+        })}</div>
           <div className="gt-result-val" style={{ fontSize: 13 }}>{lang === 'zh' ? sym.fixDescZh : sym.fixDesc}</div>
         </div>
       </div>
@@ -1083,22 +1172,36 @@ function OrbitExplorer() {
   const stabSize = G_SIZE / orbitSize;
   const sampleCubie = { corner: 'URF', edge: 'UF', center: 'U' }[type];
   const orbitDesc = {
-    corner: lang === 'zh' ? '所有 8 个角块位置 (角块块在 G 作用下能到的位置)' : 'all 8 corner positions (where any corner cubie can land under G)',
-    edge:   lang === 'zh' ? '所有 12 个棱块位置 (棱块块在 G 作用下能到的位置)' : 'all 12 edge positions (where any edge cubie can land under G)',
-    center: lang === 'zh' ? '只有 1 个位置 — 中心块不动 (它本身定义朝向)' : 'just 1 position — centres are fixed by definition',
+    corner: tr({ zh: '所有 8 个角块位置 (角块块在 G 作用下能到的位置)', en: 'all 8 corner positions (where any corner cubie can land under G)',
+        zhHant: "所有 8 個角塊位置 (角塊塊在 G 作用下能到的位置)"
+    }),
+    edge:   tr({ zh: '所有 12 个棱块位置 (棱块块在 G 作用下能到的位置)', en: 'all 12 edge positions (where any edge cubie can land under G)',
+        zhHant: "所有 12 個稜塊位置 (稜塊塊在 G 作用下能到的位置)"
+    }),
+    center: tr({ zh: '只有 1 个位置 — 中心块不动 (它本身定义朝向)', en: 'just 1 position — centres are fixed by definition',
+        zhHant: "只有 1 個位置 — 中心塊不動 (它本身定義朝向)"
+    }),
   }[type];
   const stabDesc = {
-    corner: lang === 'zh' ? '不改变 URF 位置和朝向的所有操作 = G 的指数 8 · 3 = 24 子群' : 'all operations fixing URF including orientation = subgroup of index 8 · 3 = 24',
-    edge:   lang === 'zh' ? '不改变 UF 位置和朝向的所有操作 = G 的指数 12 · 2 = 24 子群' : 'all operations fixing UF including orientation = subgroup of index 12 · 2 = 24',
-    center: lang === 'zh' ? '全部 G (中心块不动)' : 'all of G (centre is always fixed)',
+    corner: tr({ zh: '不改变 URF 位置和朝向的所有操作 = G 的指数 8 · 3 = 24 子群', en: 'all operations fixing URF including orientation = subgroup of index 8 · 3 = 24',
+        zhHant: "不改變 URF 位置和朝向的所有操作 = G 的指數 8 · 3 = 24 子群"
+    }),
+    edge:   tr({ zh: '不改变 UF 位置和朝向的所有操作 = G 的指数 12 · 2 = 24 子群', en: 'all operations fixing UF including orientation = subgroup of index 12 · 2 = 24',
+        zhHant: "不改變 UF 位置和朝向的所有操作 = G 的指數 12 · 2 = 24 子群"
+    }),
+    center: tr({ zh: '全部 G (中心块不动)', en: 'all of G (centre is always fixed)',
+        zhHant: "全部 G (中心塊不動)"
+    }),
   }[type];
   return (
     <div className="gt-panel">
-      <div className="gt-panel-title">{lang === 'zh' ? '互动 § 轨道-稳定子' : 'Interactive § Orbit-stabilizer'}</div>
+      <div className="gt-panel-title">{tr({ zh: '互动 § 轨道-稳定子', en: 'Interactive § Orbit-stabilizer',
+          zhHant: "互動 § 軌道-穩定子"
+    })}</div>
       <p className="gt-panel-sub">
-        {lang === 'zh'
-          ? '选一个 cubie 类型, 看它在 G 下的轨道大小 (|G·x|) 和稳定子大小 (|Stab(x)|) 。 它们的乘积永远 = |G|。'
-          : 'Pick a cubie type and see its orbit size |G·x| and stabilizer size |Stab(x)|. Their product is always |G|.'}
+        {tr({ zh: '选一个 cubie 类型, 看它在 G 下的轨道大小 (|G·x|) 和稳定子大小 (|Stab(x)|) 。 它们的乘积永远 = |G|。', en: 'Pick a cubie type and see its orbit size |G·x| and stabilizer size |Stab(x)|. Their product is always |G|.',
+            zhHant: "選一個 cubie 型別, 看它在 G 下的軌道大小 (|G·x|) 和穩定子大小 (|Stab(x)|) 。 它們的乘積永遠 = |G|。"
+        })}
       </p>
       <div className="gt-panel-input-row" style={{ marginTop: 4 }}>
         {(['corner', 'edge', 'center'] as CubieType[]).map(t => (
@@ -1109,13 +1212,17 @@ function OrbitExplorer() {
       </div>
       <div className="gt-orbit-explorer">
         <div>
-          <h4>{lang === 'zh' ? '轨道 G·x' : 'Orbit G·x'}</h4>
+          <h4>{tr({ zh: '轨道 G·x', en: 'Orbit G·x',
+              zhHant: "軌道 G·x"
+        })}</h4>
           <p>x = <span className="gt-orbit-val">{sampleCubie}</span></p>
           <p>|G·x| = <span className="gt-orbit-val">{orbitSize.toString()}</span></p>
           <p style={{ fontSize: 12, color: 'var(--ink-dim)', marginTop: 8 }}>{orbitDesc}</p>
         </div>
         <div>
-          <h4>{lang === 'zh' ? '稳定子 Stab(x)' : 'Stabilizer Stab(x)'}</h4>
+          <h4>{tr({ zh: '稳定子 Stab(x)', en: 'Stabilizer Stab(x)',
+              zhHant: "穩定子 Stab(x)"
+        })}</h4>
           <p>|Stab(x)| = <span className="gt-orbit-val" style={{ fontSize: 11 }}>{stabSize.toLocaleString()}</span></p>
           <p style={{ fontSize: 12, color: 'var(--ink-dim)', marginTop: 8 }}>{stabDesc}</p>
         </div>
@@ -1124,9 +1231,9 @@ function OrbitExplorer() {
         |G·x| × |Stab(x)| &nbsp;=&nbsp; {orbitSize.toString()} &nbsp;×&nbsp; {stabSize.toLocaleString()} &nbsp;=&nbsp; |G| ✓
       </div>
       <div className="gt-aside" style={{ marginTop: 12 }}>
-        {lang === 'zh'
-          ? '这就是轨道-稳定子定理。 每个 cubie 的 「能去哪里」 和 「让它不动需要多少操作」 是反比关系。'
-          : 'This is the orbit-stabilizer theorem: a cubie\'s "where it can go" and "how many operations leave it fixed" are inversely related.'}
+        {tr({ zh: '这就是轨道-稳定子定理。 每个 cubie 的 「能去哪里」 和 「让它不动需要多少操作」 是反比关系。', en: 'This is the orbit-stabilizer theorem: a cubie\'s "where it can go" and "how many operations leave it fixed" are inversely related.',
+            zhHant: "這就是軌道-穩定子定理。 每個 cubie 的 「能去哪裡」 和 「讓它不動需要多少操作」 是反比關係。"
+        })}
       </div>
     </div>
   );
@@ -1182,11 +1289,13 @@ function CubeSymmetryAxes() {
   const countsZh = { C4: '3 轴 · 6 旋转 + 3 σ_h 镜面', C3: '4 轴 · 8 旋转 + 8 S6 反演', C2: '6 轴 · 6 旋转 + 6 σ_d 镜面' };
   return (
     <div className="gt-panel">
-      <div className="gt-panel-title">{lang === 'zh' ? '可视 § 立方体对称轴' : 'Visual § Cube symmetry axes'}</div>
+      <div className="gt-panel-title">{tr({ zh: '可视 § 立方体对称轴', en: 'Visual § Cube symmetry axes',
+          zhHant: "可視 § 立方體對稱軸"
+    })}</div>
       <p className="gt-panel-sub">
-        {lang === 'zh'
-          ? '将鼠标悬在轴上(或点击下方按钮)显示对应的对称类。 红 = 面轴 (C₄, 4 重) , 蓝 = 体对角线 (C₃, 3 重) , 金 = 面对角线 (C₂, 2 重) 。'
-          : 'Hover an axis (or click below) to highlight a symmetry class. Red = face axes (C₄, 4-fold), blue = body diagonals (C₃, 3-fold), gold = edge axes (C₂, 2-fold).'}
+        {tr({ zh: '将鼠标悬在轴上(或点击下方按钮)显示对应的对称类。 红 = 面轴 (C₄, 4 重) , 蓝 = 体对角线 (C₃, 3 重) , 金 = 面对角线 (C₂, 2 重) 。', en: 'Hover an axis (or click below) to highlight a symmetry class. Red = face axes (C₄, 4-fold), blue = body diagonals (C₃, 3-fold), gold = edge axes (C₂, 2-fold).',
+            zhHant: "將滑鼠懸在軸上(或點選下方按鈕)顯示對應的對稱類。 紅 = 面軸 (C₄, 4 重) , 藍 = 體對角線 (C₃, 3 重) , 金 = 面對角線 (C₂, 2 重) 。"
+        })}
       </p>
       <div className="gt-panel-input-row" style={{ marginTop: 4 }}>
         {(['C4', 'C3', 'C2'] as const).map(c => (
@@ -1219,9 +1328,9 @@ function CubeSymmetryAxes() {
         </div>
       )}
       <div className="gt-aside" style={{ marginTop: 12 }}>
-        {lang === 'zh'
-          ? '合计: 24 个旋转 (E + 6 C₄ + 3 C₂面 + 8 C₃ + 6 C₂棱) + 24 个反射 (i + 6 σ_h + 6 σ_d + 8 S₆ + 6 S₄) = 48。这就是 O_h, 立方体的全对称群。'
-          : 'In total: 24 rotations (E + 6 C₄ + 3 C₂-face + 8 C₃ + 6 C₂-edge) + 24 reflections (i + 6 σ_h + 6 σ_d + 8 S₆ + 6 S₄) = 48. This is O_h, the full cube symmetry group.'}
+        {tr({ zh: '合计: 24 个旋转 (E + 6 C₄ + 3 C₂面 + 8 C₃ + 6 C₂棱) + 24 个反射 (i + 6 σ_h + 6 σ_d + 8 S₆ + 6 S₄) = 48。这就是 O_h, 立方体的全对称群。', en: 'In total: 24 rotations (E + 6 C₄ + 3 C₂-face + 8 C₃ + 6 C₂-edge) + 24 reflections (i + 6 σ_h + 6 σ_d + 8 S₆ + 6 S₄) = 48. This is O_h, the full cube symmetry group.',
+            zhHant: "合計: 24 個旋轉 (E + 6 C₄ + 3 C₂面 + 8 C₃ + 6 C₂稜) + 24 個反射 (i + 6 σ_h + 6 σ_d + 8 S₆ + 6 S₄) = 48。這就是 O_h, 立方體的全對稱群。"
+        })}
       </div>
     </div>
   );
@@ -1245,11 +1354,13 @@ function SubgroupClimber() {
 
   return (
     <div className="gt-panel">
-      <div className="gt-panel-title">{lang === 'zh' ? '互动 § Thistlethwaite 子群链' : 'Interactive § Thistlethwaite subgroup chain'}</div>
+      <div className="gt-panel-title">{tr({ zh: '互动 § Thistlethwaite 子群链', en: 'Interactive § Thistlethwaite subgroup chain',
+          zhHant: "互動 § Thistlethwaite 子群鏈"
+    })}</div>
       <p className="gt-panel-sub">
-        {lang === 'zh'
-          ? '从 G 一路降到 {e},中间穿过四个固定子群。输入打乱,看它「位于哪一阶」。'
-          : 'Climb from G down to {e} through four fixed subgroups. Input an alg, see what depth its state is "inside".'}
+        {tr({ zh: '从 G 一路降到 {e},中间穿过四个固定子群。输入打乱,看它「位于哪一阶」。', en: 'Climb from G down to {e} through four fixed subgroups. Input an alg, see what depth its state is "inside".',
+            zhHant: "從 G 一路降到 {e},中間穿過四個固定子群。輸入打亂,看它「位於哪一階」。"
+        })}
       </p>
       <div className="gt-panel-input-row">
         <label>alg</label>
@@ -1340,7 +1451,9 @@ function GodsNumberChart() {
         })}
       </div>
       <div className="gt-gn-axis-label">
-        {lang === 'zh' ? '横轴:最短解长度 (HTM)。纵轴:对数刻度的状态数。' : 'x: optimal depth (HTM). y: log-scale count of positions.'}
+        {tr({ zh: '横轴:最短解长度 (HTM)。纵轴:对数刻度的状态数。', en: 'x: optimal depth (HTM). y: log-scale count of positions.',
+            zhHant: "橫軸:最短解長度 (HTM)。縱軸:對數刻度的狀態數。"
+        })}
       </div>
     </>
   );
@@ -1359,19 +1472,26 @@ function GroupExamplesTable() {
   };
   const examples: Example[] = [
     { name: '(ℤ, +)',         op: '+',  order: '∞',     abelian: true,
-      zh: '整数加法 — 最常见的无限阿贝尔群', en: 'integer addition — the prototypical infinite Abelian group' },
+      zh: '整数加法 — 最常见的无限阿贝尔群', en: 'integer addition — the prototypical infinite Abelian group'
+    },
     { name: '(ℤ/n, +)',       op: '+',  order: 'n',     abelian: true,
-      zh: '模 n 加法 — 有限循环群', en: 'addition mod n — the cyclic group of order n' },
+      zh: '模 n 加法 — 有限循环群', en: 'addition mod n — the cyclic group of order n'
+    },
     { name: '(ℝ \\ {0}, ×)', op: '×',  order: '∞',     abelian: true,
-      zh: '非零实数乘法', en: 'nonzero reals under multiplication' },
+      zh: '非零实数乘法', en: 'nonzero reals under multiplication'
+    },
     { name: 'Sₙ',             op: '∘',  order: 'n!',    abelian: false,
-      zh: '对称群 — n 个元素的所有置换。n ≥ 3 时非阿贝尔', en: 'symmetric group — all permutations of n. Non-Abelian when n ≥ 3' },
+      zh: '对称群 — n 个元素的所有置换。n ≥ 3 时非阿贝尔', en: 'symmetric group — all permutations of n. Non-Abelian when n ≥ 3'
+    },
     { name: 'D₂ₙ',            op: '∘',  order: '2n',    abelian: false,
-      zh: '二面体群 — 正 n 边形对称变换', en: 'dihedral group — symmetries of a regular n-gon' },
+      zh: '二面体群 — 正 n 边形对称变换', en: 'dihedral group — symmetries of a regular n-gon'
+    },
     { name: 'GL(n, ℝ)',       op: '·',  order: '∞',     abelian: false,
-      zh: '可逆 n×n 实矩阵的乘法群', en: 'invertible n×n real matrices under multiplication' },
+      zh: '可逆 n×n 实矩阵的乘法群', en: 'invertible n×n real matrices under multiplication'
+    },
     { name: '(rotations of cube, ∘)', op: '∘', order: '24', abelian: false,
-      zh: '魔方整体旋转 (中心固定) — 同构于 S₄', en: 'cube rotations (centres fixed) — isomorphic to S₄' },
+      zh: '魔方整体旋转 (中心固定) — 同构于 S₄', en: 'cube rotations (centres fixed) — isomorphic to S₄'
+    },
     { name: 'G (Rubik\'s cube)', op: '∘', order: '4.3 × 10¹⁹', abelian: false,
       zh: '本文的主角', en: 'the subject of this essay' },
   ];
@@ -1379,21 +1499,27 @@ function GroupExamplesTable() {
   return (
     <div className="gt-examples">
       <div className="gt-example-row gt-example-head">
-        <div>{lang === 'zh' ? '群' : 'Group'}</div>
-        <div>{lang === 'zh' ? '运算' : 'Op.'}</div>
-        <div>{lang === 'zh' ? '阶' : 'Order'}</div>
-        <div>{lang === 'zh' ? '阿贝尔' : 'Abel.'}</div>
+        <div>{tr({ zh: '群', en: 'Group' })}</div>
+        <div>{tr({ zh: '运算', en: 'Op.',
+            zhHant: "運算"
+        })}</div>
+        <div>{tr({ zh: '阶', en: 'Order',
+            zhHant: "階"
+        })}</div>
+        <div>{tr({ zh: '阿贝尔', en: 'Abel.',
+            zhHant: "阿貝爾"
+        })}</div>
       </div>
       {examples.map((ex, i) => (
         <div className="gt-example-row" key={i}>
           <div className="gt-example-name">{ex.name}</div>
           <div>
             <span className="gt-mono">{ex.op}</span>
-            <div style={{ fontSize: 12, color: 'var(--ink-dim)', marginTop: 4 }}>{lang === 'zh' ? ex.zh : ex.en}</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-dim)', marginTop: 4 }}>{(i18n.language.startsWith('zh') ? ex.zh : ex.en)}</div>
           </div>
           <div className="gt-mono" style={{ fontFamily: 'var(--mono)' }}>{ex.order}</div>
           <div className={`gt-example-abelian ${ex.abelian ? 'gt-example-abelian-yes' : 'gt-example-abelian-no'}`}>
-            {ex.abelian ? (lang === 'zh' ? '是' : 'yes') : (lang === 'zh' ? '否' : 'no')}
+            {ex.abelian ? (tr({ zh: '是', en: 'yes' })) : (tr({ zh: '否', en: 'no' }))}
           </div>
         </div>
       ))}
@@ -1445,25 +1571,33 @@ function ScaleComparison() {
   // log10 values
   const items: { label: string; zh: string; en: string; log10: number; colour: string }[] = [
     { label: '1 thousand',         zh: '1 千',                en: '1 thousand',                  log10: 3,  colour: '#7BA88B' },
-    { label: '1 million',          zh: '1 百万',              en: '1 million',                   log10: 6,  colour: '#7BA88B' },
+    { label: '1 million',          zh: '1 百万',              en: '1 million',                   log10: 6,  colour: '#7BA88B'
+    },
     { label: 'world population',   zh: '世界人口 8 × 10⁹',     en: 'world population 8 × 10⁹',    log10: 9.9,colour: '#2A4D69' },
-    { label: '1 trillion',         zh: '1 万亿',              en: '1 trillion',                  log10: 12, colour: '#2A4D69' },
-    { label: 'stars in observable universe', zh: '可观宇宙恒星 ≈ 10²³', en: 'stars in observable universe', log10: 23, colour: '#B8860B' },
-    { label: '|G| = 4.3 × 10¹⁹', zh: '|G| 魔方状态', en: '|G| cube states', log10: 19.6, colour: '#8B2E3C' },
-    { label: 'atoms in a kilogram',zh: '1 公斤物质原子 ≈ 10²⁵', en: 'atoms in a kg of matter ≈ 10²⁵', log10: 25, colour: '#B8860B' },
-    { label: 'age of universe in nanoseconds', zh: '宇宙年龄(纳秒) ≈ 10²⁶', en: 'age of universe (ns) ≈ 10²⁶', log10: 26, colour: '#B8860B' },
+    { label: '1 trillion',         zh: '1 万亿',              en: '1 trillion',                  log10: 12, colour: '#2A4D69'
+    },
+    { label: 'stars in observable universe', zh: '可观宇宙恒星 ≈ 10²³', en: 'stars in observable universe', log10: 23, colour: '#B8860B'
+    },
+    { label: '|G| = 4.3 × 10¹⁹', zh: '|G| 魔方状态', en: '|G| cube states', log10: 19.6, colour: '#8B2E3C'
+    },
+    { label: 'atoms in a kilogram',zh: '1 公斤物质原子 ≈ 10²⁵', en: 'atoms in a kg of matter ≈ 10²⁵', log10: 25, colour: '#B8860B'
+    },
+    { label: 'age of universe in nanoseconds', zh: '宇宙年龄(纳秒) ≈ 10²⁶', en: 'age of universe (ns) ≈ 10²⁶', log10: 26, colour: '#B8860B'
+    },
   ];
   // Sort ascending
   const sorted = [...items].sort((a, b) => a.log10 - b.log10);
   return (
     <div className="gt-scale">
       <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-faint)', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 4 }}>
-        {lang === 'zh' ? '数量级对照 (log₁₀)' : 'orders of magnitude (log₁₀)'}
+        {tr({ zh: '数量级对照 (log₁₀)', en: 'orders of magnitude (log₁₀)',
+            zhHant: "數量級對照 (log₁₀)"
+        })}
       </div>
       {sorted.map((it, i) => (
         <div key={i} style={{ display: 'grid', gridTemplateColumns: '40px 1fr 70px', alignItems: 'center', gap: 12, padding: '6px 0', fontSize: 13, borderBottom: i < sorted.length - 1 ? '1px dashed var(--rule)' : 'none' }}>
           <div style={{ fontFamily: 'var(--mono)', color: it.colour, fontWeight: 600 }}>10<sup>{Math.round(it.log10)}</sup></div>
-          <div style={{ color: 'var(--ink)' }}>{lang === 'zh' ? it.zh : it.en}</div>
+          <div style={{ color: 'var(--ink)' }}>{(i18n.language.startsWith('zh') ? it.zh : it.en)}</div>
           <div style={{ background: it.colour, height: 8, borderRadius: 4, width: `${(it.log10 / 30) * 100}%` }} />
         </div>
       ))}
@@ -1479,16 +1613,22 @@ function QuotientChart() {
   // [G₂:G₃] = 8C4 · 4! · 4! / 2 = 70 · 24 · 24 / 2 ... actually = 29400 from references
   // [G₃:G₄] = |G₃| = (4!)³ / 2 = 1,824 ... actually 663,552 = 2 · (4!)² · (4!)² / something
   const data: { label: string; size: number; zh: string; en: string }[] = [
-    { label: '[G : G₁]',  size: 2_048,      zh: '修棱朝向: 12 个棱块每个 0/1 flip,但 Σeo=0',        en: 'orient edges: 12 binary flips constrained by Σeo=0' },
-    { label: '[G₁: G₂]', size: 1_082_565,  zh: '修角朝向 + 棱归 UD 切片: 3⁷ × (12 choose 4)',         en: 'orient corners + UD slice: 3⁷ × (12 choose 4)' },
-    { label: '[G₂: G₃]', size: 29_400,     zh: '角棱归各自的 G₃ 轨道',                              en: 'corners and edges into G₃ orbits' },
-    { label: '[G₃: G₄]', size: 663_552,    zh: '只用半圈还原 — 多米诺群',                          en: 'solve with half-turns only — the "domino" group' },
+    { label: '[G : G₁]',  size: 2_048,      zh: '修棱朝向: 12 个棱块每个 0/1 flip,但 Σeo=0',        en: 'orient edges: 12 binary flips constrained by Σeo=0'
+    },
+    { label: '[G₁: G₂]', size: 1_082_565,  zh: '修角朝向 + 棱归 UD 切片: 3⁷ × (12 choose 4)',         en: 'orient corners + UD slice: 3⁷ × (12 choose 4)'
+    },
+    { label: '[G₂: G₃]', size: 29_400,     zh: '角棱归各自的 G₃ 轨道',                              en: 'corners and edges into G₃ orbits'
+    },
+    { label: '[G₃: G₄]', size: 663_552,    zh: '只用半圈还原 — 多米诺群',                          en: 'solve with half-turns only — the "domino" group'
+    },
   ];
   const max = Math.log10(Math.max(...data.map(d => d.size)));
   return (
     <div className="gt-quotients">
       <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-faint)', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 12 }}>
-        {lang === 'zh' ? 'Thistlethwaite 链各级商群大小' : 'sizes of consecutive Thistlethwaite quotients'}
+        {tr({ zh: 'Thistlethwaite 链各级商群大小', en: 'sizes of consecutive Thistlethwaite quotients',
+            zhHant: "Thistlethwaite 鏈各級商群大小"
+        })}
       </div>
       {data.map((d, i) => (
         <div key={i} className="gt-quotient-row">
@@ -1497,15 +1637,15 @@ function QuotientChart() {
             <div className="gt-quotient-track">
               <div className="gt-quotient-fill" style={{ width: `${(Math.log10(d.size) / max) * 100}%` }} />
             </div>
-            <div style={{ fontSize: 12, color: 'var(--ink-dim)', marginTop: 6 }}>{lang === 'zh' ? d.zh : d.en}</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-dim)', marginTop: 6 }}>{(i18n.language.startsWith('zh') ? d.zh : d.en)}</div>
           </div>
           <div className="gt-quotient-val">{d.size.toLocaleString()}</div>
         </div>
       ))}
       <div className="gt-aside" style={{ marginTop: 16 }}>
-        {lang === 'zh'
-          ? '验证: 2048 × 1,082,565 × 29,400 × 663,552 = 4.3 × 10¹⁹ = |G| ✓'
-          : 'Sanity check: 2048 × 1,082,565 × 29,400 × 663,552 = 4.3 × 10¹⁹ = |G| ✓'}
+        {tr({ zh: '验证: 2048 × 1,082,565 × 29,400 × 663,552 = 4.3 × 10¹⁹ = |G| ✓', en: 'Sanity check: 2048 × 1,082,565 × 29,400 × 663,552 = 4.3 × 10¹⁹ = |G| ✓',
+            zhHant: "驗證: 2048 × 1,082,565 × 29,400 × 663,552 = 4.3 × 10¹⁹ = |G| ✓"
+        })}
       </div>
     </div>
   );
@@ -1552,7 +1692,9 @@ function PatternGallery() {
           <div className="gt-pattern-name">{lang === 'zh' ? p.nameZh : p.name}</div>
           <div className="gt-pattern-meta">
             {lang === 'zh' ? p.descZh : p.descEn}<br />
-            <span style={{ color: 'var(--accent)' }}>{lang === 'zh' ? '阶' : 'order'} {p.order}</span>
+            <span style={{ color: 'var(--accent)' }}>{tr({ zh: '阶', en: 'order',
+                zhHant: "階"
+            })} {p.order}</span>
           </div>
           <div className="gt-pattern-alg">{p.alg}</div>
         </div>
@@ -1693,31 +1835,41 @@ function CayleyWalker() {
   return (
     <div className="gt-cayley-walker">
       <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-faint)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>
-        {lang === 'zh' ? '互动 § 在 Cayley 图上走一步' : 'Interactive § Walk one edge of the Cayley graph'}
+        {tr({ zh: '互动 § 在 Cayley 图上走一步', en: 'Interactive § Walk one edge of the Cayley graph',
+            zhHant: "互動 § 在 Cayley 圖上走一步"
+        })}
       </div>
       <div className="gt-cayley-walker-controls">
-        <span className="gt-cayley-walker-label">{lang === 'zh' ? '点一个生成元' : 'click a generator'}</span>
+        <span className="gt-cayley-walker-label">{tr({ zh: '点一个生成元', en: 'click a generator',
+            zhHant: "點一個生成元"
+        })}</span>
         {allMoves.map(m => (
           <button key={m} className="gt-cayley-walker-move" onClick={() => push(m)}>{m}</button>
         ))}
       </div>
       <div className="gt-cayley-walker-controls">
         <button className="gt-btn-ghost gt-btn" onClick={pop} disabled={path.length === 0}>
-          {lang === 'zh' ? '↶ 撤回' : '↶ undo'}
+          {tr({ zh: '↶ 撤回', en: '↶ undo' })}
         </button>
         <button className="gt-btn-ghost gt-btn" onClick={reset}>
-          {lang === 'zh' ? '回到 e' : 'reset'}
+          {tr({ zh: '回到 e', en: 'reset' })}
         </button>
         <button className="gt-btn-ghost gt-btn" onClick={() => random(5)}>
-          {lang === 'zh' ? '随机走 5 步' : 'random walk 5'}
+          {tr({ zh: '随机走 5 步', en: 'random walk 5',
+              zhHant: "隨機走 5 步"
+        })}
         </button>
         <button className="gt-btn-ghost gt-btn" onClick={() => random(15)}>
-          {lang === 'zh' ? '随机 15' : 'random 15'}
+          {tr({ zh: '随机 15', en: 'random 15',
+              zhHant: "隨機 15"
+        })}
         </button>
       </div>
       <div className="gt-cayley-walker-path">
         {path.length === 0
-          ? <span className="gt-cayley-walker-empty">{lang === 'zh' ? '路径 = e (单位元, 起点)' : 'path = e (identity, start node)'}</span>
+          ? <span className="gt-cayley-walker-empty">{tr({ zh: '路径 = e (单位元, 起点)', en: 'path = e (identity, start node)',
+              zhHant: "路徑 = e (單位元, 起點)"
+        })}</span>
           : path.map((m, i) => <span key={i} className="gt-cayley-walker-token">{m}</span>)
         }
       </div>
@@ -1726,36 +1878,44 @@ function CayleyWalker() {
       </div>
       <div className="gt-cayley-walker-stats">
         <div className="gt-cayley-walker-stat">
-          <div className="gt-cayley-walker-stat-label">{lang === 'zh' ? '路径长度' : 'path length'}</div>
+          <div className="gt-cayley-walker-stat-label">{tr({ zh: '路径长度', en: 'path length',
+              zhHant: "路徑長度"
+        })}</div>
           <div className="gt-cayley-walker-stat-val">{path.length}</div>
         </div>
         <div className="gt-cayley-walker-stat">
-          <div className="gt-cayley-walker-stat-label">{lang === 'zh' ? 'd(e, g) 上界' : 'd(e, g) upper bound'}</div>
+          <div className="gt-cayley-walker-stat-label">{tr({ zh: 'd(e, g) 上界', en: 'd(e, g) upper bound' })}</div>
           <div className="gt-cayley-walker-stat-val">{upperBound}</div>
         </div>
         <div className="gt-cayley-walker-stat">
-          <div className="gt-cayley-walker-stat-label">{lang === 'zh' ? '在 G 中?' : 'in G?'}</div>
+          <div className="gt-cayley-walker-stat-label">{tr({ zh: '在 G 中?', en: 'in G?' })}</div>
           <div className="gt-cayley-walker-stat-val" style={{ color: inv.reachable ? 'var(--green)' : 'var(--accent)' }}>
             {inv.reachable ? '✓' : '✗'}
           </div>
         </div>
         <div className="gt-cayley-walker-stat">
-          <div className="gt-cayley-walker-stat-label">{lang === 'zh' ? '在子群' : 'in subgroup'}</div>
+          <div className="gt-cayley-walker-stat-label">{tr({ zh: '在子群', en: 'in subgroup' })}</div>
           <div className="gt-cayley-walker-stat-val" style={{ fontSize: 14 }}>G<sub>{stage}</sub></div>
         </div>
         <div className="gt-cayley-walker-stat">
-          <div className="gt-cayley-walker-stat-label">{lang === 'zh' ? '角块循环' : 'corner cyc.'}</div>
+          <div className="gt-cayley-walker-stat-label">{tr({ zh: '角块循环', en: 'corner cyc.',
+              zhHant: "角塊迴圈"
+        })}</div>
           <div className="gt-cayley-walker-stat-val" style={{ fontSize: 13 }}>{formatCycle(cornerCycles, lang)}</div>
         </div>
         <div className="gt-cayley-walker-stat">
-          <div className="gt-cayley-walker-stat-label">{lang === 'zh' ? '棱块循环' : 'edge cyc.'}</div>
+          <div className="gt-cayley-walker-stat-label">{tr({ zh: '棱块循环', en: 'edge cyc.',
+              zhHant: "稜塊迴圈"
+        })}</div>
           <div className="gt-cayley-walker-stat-val" style={{ fontSize: 13 }}>{formatCycle(edgeCycles, lang)}</div>
         </div>
       </div>
       <div className="gt-aside" style={{ marginTop: 12, marginBottom: 0 }}>
         {isHome && path.length > 0
           ? (lang === 'zh' ? `走了 ${path.length} 步又回到 e — 你转了一个圈 (这条路径是 G 中的一个 ${path.length}-阶元素)。` : `Walked ${path.length} steps and returned to e — you traced a cycle (this path is an ${path.length}-order element of G).`)
-          : (lang === 'zh' ? '每个按钮都是一条边。路径长度 = 在 Cayley 图上的步数 (≥ 真实距离 d(e,g))。' : 'Each button is an edge. Path length = walk length in Cayley graph (≥ the true distance d(e, g)).')}
+          : (tr({ zh: '每个按钮都是一条边。路径长度 = 在 Cayley 图上的步数 (≥ 真实距离 d(e,g))。', en: 'Each button is an edge. Path length = walk length in Cayley graph (≥ the true distance d(e, g)).',
+              zhHant: "每個按鈕都是一條邊。路徑長度 = 在 Cayley 圖上的步數 (≥ 真實距離 d(e,g))。"
+        }))}
       </div>
     </div>
   );
@@ -1795,9 +1955,15 @@ function CayleyBFSTable() {
   return (
     <div className="gt-cayley-bfs">
       <div className="gt-cayley-bfs-row head">
-        <div>{lang === 'zh' ? '距离 d' : 'radius d'}</div>
-        <div>{lang === 'zh' ? '球壳 |S_d| (对数刻度)' : '|S_d| (log-scale bar)'}</div>
-        <div>{lang === 'zh' ? '状态数' : 'count'}</div>
+        <div>{tr({ zh: '距离 d', en: 'radius d',
+            zhHant: "距離 d"
+        })}</div>
+        <div>{tr({ zh: '球壳 |S_d| (对数刻度)', en: '|S_d| (log-scale bar)',
+            zhHant: "球殼 |S_d| (對數刻度)"
+        })}</div>
+        <div>{tr({ zh: '状态数', en: 'count',
+            zhHant: "狀態數"
+        })}</div>
       </div>
       {CAYLEY_SPHERE.map(({ d, count, exact }) => {
         const log = Math.log10(Number(count));
@@ -1876,7 +2042,9 @@ function CayleyMini() {
       <div className="gt-cayley-legend">
         <span><span className="gt-cayley-legend-swatch" style={{ background: 'var(--accent)' }} />R</span>
         <span><span className="gt-cayley-legend-swatch" style={{ background: 'var(--accent-2)' }} />U</span>
-        <span style={{ marginLeft: 12 }}>{lang === 'zh' ? '节点 = 状态' : 'nodes = states'}</span>
+        <span style={{ marginLeft: 12 }}>{tr({ zh: '节点 = 状态', en: 'nodes = states',
+            zhHant: "節點 = 狀態"
+        })}</span>
       </div>
     </div>
   );
@@ -1907,7 +2075,9 @@ function SphereLogPlot() {
   const yTicks = [0, 4, 8, 12, 16, 19];
   return (
     <div className="gt-sphere-plot">
-      <svg viewBox={`0 0 ${W} ${H}`} className="gt-sphere-svg" role="img" aria-label={lang === 'zh' ? '球壳大小对数图' : 'sphere size log plot'}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="gt-sphere-svg" role="img" aria-label={tr({ zh: '球壳大小对数图', en: 'sphere size log plot',
+          zhHant: "球殼大小對數圖"
+    })}>
         {yTicks.map(t => (
           <g key={t}>
             <line x1={ML} y1={yOf(t)} x2={W - MR} y2={yOf(t)} className="gt-sphere-grid" />
@@ -1918,7 +2088,9 @@ function SphereLogPlot() {
           <text key={d} x={xOf(d) + dx / 2} y={H - MB + 16} className="gt-sphere-axis-text" textAnchor="middle">{d}</text>
         ))}
         <text x={ML - 44} y={MT + 4} className="gt-sphere-axis-text" textAnchor="start">|S<tspan baselineShift="sub" fontSize="9">d</tspan>|</text>
-        <text x={W - MR} y={H - 6} className="gt-sphere-axis-text" textAnchor="end">{lang === 'zh' ? '距离 d' : 'distance d'}</text>
+        <text x={W - MR} y={H - 6} className="gt-sphere-axis-text" textAnchor="end">{tr({ zh: '距离 d', en: 'distance d',
+            zhHant: "距離 d"
+        })}</text>
         {data.map((s, i) => {
           const isPeak = s.d === 18;
           const isHovered = hover === i;
@@ -1933,26 +2105,30 @@ function SphereLogPlot() {
           );
         })}
         <line x1={xOf(18) + dx / 2} y1={yOf(data[18].log) - 4} x2={xOf(18) + dx / 2} y2={yOf(data[18].log) - 22} className="gt-sphere-ann" />
-        <text x={xOf(18) + dx / 2} y={yOf(data[18].log) - 26} className="gt-sphere-peak" textAnchor="middle">{lang === 'zh' ? '峰值 d=18' : 'peak d=18'}</text>
+        <text x={xOf(18) + dx / 2} y={yOf(data[18].log) - 26} className="gt-sphere-peak" textAnchor="middle">{tr({ zh: '峰值 d=18', en: 'peak d=18' })}</text>
       </svg>
       <div className="gt-sphere-readout">
         {hover === null ? (
-          <span className="gt-sphere-readout-empty">{lang === 'zh' ? '悬停某根条 → 显示该距离的详细数据' : 'hover a bar for that radius'}</span>
+          <span className="gt-sphere-readout-empty">{tr({ zh: '悬停某根条 → 显示该距离的详细数据', en: 'hover a bar for that radius',
+              zhHant: "懸停某根條 → 顯示該距離的詳細資料"
+        })}</span>
         ) : (
           <>
             <span><strong>d = {data[hover].d}</strong></span>
             <span>|S<sub>d</sub>| = {CAYLEY_SPHERE[hover].count.toLocaleString()}{!data[hover].exact && ' ≈'}</span>
-            <span>{lang === 'zh' ? '占 |G|:' : '% of |G|:'} {data[hover].pct < 1e-6 ? data[hover].pct.toExponential(2) : data[hover].pct.toFixed(4)}%</span>
+            <span>{tr({ zh: '占 |G|:', en: '% of |G|:',
+                zhHant: "佔 |G|:"
+            })} {data[hover].pct < 1e-6 ? data[hover].pct.toExponential(2) : data[hover].pct.toFixed(4)}%</span>
             {branchingAt(data[hover].d) !== null && (
-              <span>{lang === 'zh' ? '分支因子:' : 'branching:'} ×{branchingAt(data[hover].d)!.toFixed(2)}</span>
+              <span>{tr({ zh: '分支因子:', en: 'branching:' })} ×{branchingAt(data[hover].d)!.toFixed(2)}</span>
             )}
           </>
         )}
       </div>
       <div className="gt-aside" style={{ marginTop: 8, marginBottom: 0 }}>
-        {lang === 'zh'
-          ? '前 13 步增长率稳定在 ≈ 17.97× (略低于 18 — 因为 R 后不能立刻走 R\'); d = 18 达到 ≈ 2.93 × 10¹⁹ 的峰值; d = 20 仅剩 ≈ 4.9 亿状态, 其中包含 superflip。 这是「球面填空」在有限图上的几何后果 — 顶端必然收缩。'
-          : 'Steady growth at ~17.97× for d ≤ 13 (just below 18 because R cannot be immediately undone). Peak at d = 18 ≈ 2.93 × 10¹⁹. By d = 20 only ~490 million states remain (superflip among them). This is the geometric consequence of "sphere packing in a finite graph" — the outer tip must shrink.'}
+        {tr({ zh: '前 13 步增长率稳定在 ≈ 17.97× (略低于 18 — 因为 R 后不能立刻走 R\'); d = 18 达到 ≈ 2.93 × 10¹⁹ 的峰值; d = 20 仅剩 ≈ 4.9 亿状态, 其中包含 superflip。 这是「球面填空」在有限图上的几何后果 — 顶端必然收缩。', en: 'Steady growth at ~17.97× for d ≤ 13 (just below 18 because R cannot be immediately undone). Peak at d = 18 ≈ 2.93 × 10¹⁹. By d = 20 only ~490 million states remain (superflip among them). This is the geometric consequence of "sphere packing in a finite graph" — the outer tip must shrink.',
+            zhHant: "前 13 步增長率穩定在 ≈ 17.97× (略低於 18 — 因為 R 後不能立刻走 R'); d = 18 達到 ≈ 2.93 × 10¹⁹ 的峰值; d = 20 僅剩 ≈ 4.9 億狀態, 其中包含 superflip。 這是「球面填空」在有限圖上的幾何後果 — 頂端必然收縮。"
+        })}
       </div>
     </div>
   );
@@ -2101,16 +2277,16 @@ const SMALL_GROUPS: SmallGroup[] = [
     layout: 'cycle',
     gens: [
       { label: '+1', perm: [1, 2, 3, 4, 5, 6, 7, 0], cssVar: '--accent' },
-    ],
-  },
+    ]
+},
   {
     id: 'z8b', zh: 'ℤ/8 (双生成元 +1, +3)', en: 'ℤ/8 (two generators +1, +3)',
     layout: 'cycle',
     gens: [
       { label: '+1', perm: [1, 2, 3, 4, 5, 6, 7, 0], cssVar: '--accent' },
       { label: '+3', perm: [3, 4, 5, 6, 7, 0, 1, 2], cssVar: '--accent-2' },
-    ],
-  },
+    ]
+},
   {
     id: 'z4z3', zh: 'ℤ/4 × ℤ/3 (网格)', en: 'ℤ/4 × ℤ/3 (grid)',
     layout: 'grid', rows: 3, cols: 4,
@@ -2120,8 +2296,8 @@ const SMALL_GROUPS: SmallGroup[] = [
       { label: 'x', perm: [1, 2, 3, 0, 5, 6, 7, 4, 9, 10, 11, 8], cssVar: '--accent' },
       // +1 in ℤ/3 direction
       { label: 'y', perm: [4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2, 3], cssVar: '--accent-2' },
-    ],
-  },
+    ]
+},
   {
     id: 'd4', zh: '二面体 D₄ (正方形对称)', en: 'Dihedral D₄ (square symmetries)',
     layout: 'force',
@@ -2130,16 +2306,16 @@ const SMALL_GROUPS: SmallGroup[] = [
       { label: 'r', perm: [1, 2, 3, 0], cssVar: '--accent' },
       // reflection s = (1 3)(2)(4) on positions 0..3
       { label: 's', perm: [0, 3, 2, 1], cssVar: '--accent-2' },
-    ],
-  },
+    ]
+},
   {
     id: 's3', zh: '对称群 S₃ (3 元置换)', en: 'Symmetric S₃ (3 perms)',
     layout: 'force',
     gens: [
       { label: '(12)', perm: [1, 0, 2], cssVar: '--accent' },
       { label: '(23)', perm: [0, 2, 1], cssVar: '--accent-2' },
-    ],
-  },
+    ]
+},
   {
     id: 's4-adj', zh: 'S₄ (相邻换位 (12),(23),(34))', en: 'S₄ (adjacent transpositions)',
     layout: 'force',
@@ -2147,24 +2323,24 @@ const SMALL_GROUPS: SmallGroup[] = [
       { label: '(12)', perm: [1, 0, 2, 3], cssVar: '--accent' },
       { label: '(23)', perm: [0, 2, 1, 3], cssVar: '--accent-2' },
       { label: '(34)', perm: [0, 1, 3, 2], cssVar: '--accent-3' },
-    ],
-  },
+    ]
+},
   {
     id: 's4-cycle', zh: 'S₄ (4-循环 + 换位)', en: 'S₄ (4-cycle + transposition)',
     layout: 'force',
     gens: [
       { label: '(1234)', perm: [1, 2, 3, 0], cssVar: '--accent' },
       { label: '(12)', perm: [1, 0, 2, 3], cssVar: '--accent-2' },
-    ],
-  },
+    ]
+},
   {
     id: 'a4', zh: '交错群 A₄ (3-循环 (123),(124))', en: 'Alternating A₄ (3-cycles (123),(124))',
     layout: 'force',
     gens: [
       { label: '(123)', perm: [1, 2, 0, 3], cssVar: '--accent' },
       { label: '(124)', perm: [1, 3, 2, 0], cssVar: '--accent-2' },
-    ],
-  },
+    ]
+},
 ];
 
 // Build all groups once (memoized at module scope).
@@ -2312,10 +2488,12 @@ function SmallGroupCayleyExplorer() {
   return (
     <div className="gt-sg-explorer">
       <div className="gt-sg-row gt-sg-row-top">
-        <label className="gt-sg-label">{lang === 'zh' ? '挑一个群 G' : 'pick a group G'}</label>
+        <label className="gt-sg-label">{tr({ zh: '挑一个群 G', en: 'pick a group G',
+            zhHant: "挑一個群 G"
+        })}</label>
         <select className="gt-sg-select" value={groupId} onChange={e => { setGroupId(e.target.value); setHover(null); setTarget(null); }}>
           {SMALL_GROUPS.map(g => (
-            <option key={g.id} value={g.id}>{lang === 'zh' ? g.zh : g.en}</option>
+            <option key={g.id} value={g.id}>{(i18n.language.startsWith('zh') ? g.zh : g.en)}</option>
           ))}
         </select>
         <div className="gt-sg-legend">
@@ -2375,7 +2553,7 @@ function SmallGroupCayleyExplorer() {
           return (
             <>
               <div className="gt-sg-readout-item">
-                <span className="gt-sg-readout-label">{lang === 'zh' ? '元素 g' : 'element g'}</span>
+                <span className="gt-sg-readout-label">{tr({ zh: '元素 g', en: 'element g' })}</span>
                 <span className="gt-sg-readout-val gt-mono">{elementLabel(built.elements[i])}</span>
               </div>
               <div className="gt-sg-readout-item">
@@ -2383,7 +2561,9 @@ function SmallGroupCayleyExplorer() {
                 <span className="gt-sg-readout-val">{bfs.dist[i]}</span>
               </div>
               <div className="gt-sg-readout-item">
-                <span className="gt-sg-readout-label">{lang === 'zh' ? '阶 ord(g)' : 'order ord(g)'}</span>
+                <span className="gt-sg-readout-label">{tr({ zh: '阶 ord(g)', en: 'order ord(g)',
+                    zhHant: "階 ord(g)"
+                })}</span>
                 <span className="gt-sg-readout-val">{(() => {
                   let v = i, n = 0;
                   do { v = built.mul[v][i]; n++; } while (v !== built.identity && n < built.elements.length);
@@ -2393,24 +2573,32 @@ function SmallGroupCayleyExplorer() {
             </>
           );
         })() : (
-          <span className="gt-sg-readout-empty">{lang === 'zh' ? '悬停一个节点 → 显示 g, d(e,g), ord(g);   点击 → 锁定 + 显示最短路径' : 'hover a node → g, d(e,g), ord(g);   click → lock + show shortest path'}</span>
+          <span className="gt-sg-readout-empty">{tr({ zh: '悬停一个节点 → 显示 g, d(e,g), ord(g);   点击 → 锁定 + 显示最短路径', en: 'hover a node → g, d(e,g), ord(g);   click → lock + show shortest path',
+              zhHant: "懸停一個節點 → 顯示 g, d(e,g), ord(g);   點選 → 鎖定 + 顯示最短路徑"
+        })}</span>
         )}
       </div>
       <div className="gt-sg-stats">
         <div className="gt-sg-stat"><div className="gt-sg-stat-label">|G|</div><div className="gt-sg-stat-val">{built.elements.length}</div></div>
         <div className="gt-sg-stat"><div className="gt-sg-stat-label">|S|</div><div className="gt-sg-stat-val">{spec.gens.length}</div></div>
-        <div className="gt-sg-stat"><div className="gt-sg-stat-label">{lang === 'zh' ? '直径' : 'diameter'}</div><div className="gt-sg-stat-val">{diameter}</div></div>
-        <div className="gt-sg-stat"><div className="gt-sg-stat-label">{lang === 'zh' ? '围长' : 'girth'}</div><div className="gt-sg-stat-val">{girth || '—'}</div></div>
+        <div className="gt-sg-stat"><div className="gt-sg-stat-label">{tr({ zh: '直径', en: 'diameter',
+            zhHant: "直徑"
+        })}</div><div className="gt-sg-stat-val">{diameter}</div></div>
+        <div className="gt-sg-stat"><div className="gt-sg-stat-label">{tr({ zh: '围长', en: 'girth',
+            zhHant: "圍長"
+        })}</div><div className="gt-sg-stat-val">{girth || '—'}</div></div>
         <div className="gt-sg-stat"><div className="gt-sg-stat-label">|E|</div><div className="gt-sg-stat-val">{edges.length}</div></div>
         <div className="gt-sg-stat">
-          <div className="gt-sg-stat-label">{lang === 'zh' ? '球壳 |S_d|' : 'spheres |S_d|'}</div>
+          <div className="gt-sg-stat-label">{tr({ zh: '球壳 |S_d|', en: 'spheres |S_d|',
+              zhHant: "球殼 |S_d|"
+        })}</div>
           <div className="gt-sg-stat-val gt-mono" style={{ fontSize: 12 }}>{spheres.join(', ')}</div>
         </div>
       </div>
       <div className="gt-aside" style={{ marginTop: 12, marginBottom: 0 }}>
-        {lang === 'zh'
-          ? '生成元颜色 = 边色; 节点数字 = d(e, g); 中心绿点 = 单位元 e。 切换不同生成集观察 — 同一个 G 的直径会变 (e.g. ℤ/8 配 {+1} 直径 = 4, 配 {+1, +3} 直径 = 2)。'
-          : 'Generator = edge colour; node number = d(e, g); central green = identity e. Switch generators to see how |E|, diameter, girth all change for the same G (e.g. ℤ/8 with {+1} has diameter 4; with {+1, +3} it drops to 2).'}
+        {tr({ zh: '生成元颜色 = 边色; 节点数字 = d(e, g); 中心绿点 = 单位元 e。 切换不同生成集观察 — 同一个 G 的直径会变 (e.g. ℤ/8 配 {+1} 直径 = 4, 配 {+1, +3} 直径 = 2)。', en: 'Generator = edge colour; node number = d(e, g); central green = identity e. Switch generators to see how |E|, diameter, girth all change for the same G (e.g. ℤ/8 with {+1} has diameter 4; with {+1, +3} it drops to 2).',
+            zhHant: "生成元顏色 = 邊色; 節點數字 = d(e, g); 中心綠點 = 單位元 e。 切換不同生成集觀察 — 同一個 G 的直徑會變 (e.g. ℤ/8 配 {+1} 直徑 = 4, 配 {+1, +3} 直徑 = 2)。"
+        })}
       </div>
     </div>
   );
@@ -2423,7 +2611,8 @@ function SmallGroupCayleyExplorer() {
 const MIXING_GROUPS: { id: string; zh: string; en: string; spec: string }[] = [
   { id: 'd4',       zh: 'D₄ (8)',  en: 'D₄ (8)',       spec: 'd4' },
   { id: 's3',       zh: 'S₃ (6)',  en: 'S₃ (6)',       spec: 's3' },
-  { id: 's4-adj',   zh: 'S₄ 相邻换位 (24)', en: 'S₄ adj. transpositions (24)', spec: 's4-adj' },
+  { id: 's4-adj',   zh: 'S₄ 相邻换位 (24)', en: 'S₄ adj. transpositions (24)', spec: 's4-adj'
+},
   { id: 'a4',       zh: 'A₄ (12)', en: 'A₄ (12)',      spec: 'a4' },
   { id: 'z4z3',     zh: 'ℤ/4 × ℤ/3 (12)', en: 'ℤ/4 × ℤ/3 (12)', spec: 'z4z3' },
 ];
@@ -2488,10 +2677,10 @@ function RandomWalkMixingPlot() {
   return (
     <div className="gt-mix-plot">
       <div className="gt-sg-row gt-sg-row-top">
-        <label className="gt-sg-label">{lang === 'zh' ? '群 (生成集 = 上方所有元)' : 'group (generators = listed above)'}</label>
+        <label className="gt-sg-label">{tr({ zh: '群 (生成集 = 上方所有元)', en: 'group (generators = listed above)' })}</label>
         <select className="gt-sg-select" value={groupId} onChange={e => { setGroupId(e.target.value); setStep(0); }}>
           {MIXING_GROUPS.map(g => (
-            <option key={g.id} value={g.id}>{lang === 'zh' ? g.zh : g.en}</option>
+            <option key={g.id} value={g.id}>{(i18n.language.startsWith('zh') ? g.zh : g.en)}</option>
           ))}
         </select>
       </div>
@@ -2506,7 +2695,9 @@ function RandomWalkMixingPlot() {
           <text key={t} x={xOf(t)} y={H - MB + 14} className="gt-sphere-axis-text" textAnchor="middle">{t}</text>
         ))}
         <text x={ML - 44} y={MT + 8} className="gt-sphere-axis-text">TV</text>
-        <text x={W - MR} y={H - 6} className="gt-sphere-axis-text" textAnchor="end">{lang === 'zh' ? '步数 t' : 'steps t'}</text>
+        <text x={W - MR} y={H - 6} className="gt-sphere-axis-text" textAnchor="end">{tr({ zh: '步数 t', en: 'steps t',
+            zhHant: "步數 t"
+        })}</text>
         <path d={tvSeries.map((v, t) => `${t === 0 ? 'M' : 'L'}${xOf(t)},${yOf(v)}`).join(' ')} className="gt-mix-line" />
         {/* current step marker */}
         <line x1={xOf(step)} y1={MT} x2={xOf(step)} y2={MT + plotH} className="gt-mix-cursor" />
@@ -2516,7 +2707,7 @@ function RandomWalkMixingPlot() {
         <input type="range" min={0} max={T_MAX} value={step} onChange={e => setStep(parseInt(e.target.value))} className="gt-mix-slider" style={{ flex: 1 }} />
         <span className="gt-mix-step gt-mono">{lang === 'zh' ? `t = ${step}` : `t = ${step}`}</span>
         <span className="gt-mix-tv gt-mono">TV = {(tvSeries[step] ?? 0).toFixed(4)}</span>
-        <button className="gt-btn gt-btn-ghost" onClick={() => setStep(0)}>{lang === 'zh' ? '重置' : 'reset'}</button>
+        <button className="gt-btn gt-btn-ghost" onClick={() => setStep(0)}>{tr({ zh: '重置', en: 'reset' })}</button>
       </div>
       <div className="gt-mix-dist">
         {Array.from({ length: N }, (_, i) => {
@@ -2769,12 +2960,18 @@ const CAYLEY_REFS: CayleyRef[] = [
 function CayleyReferences() {
   const lang = useLang();
   const sections: { id: CayleyRef['category']; zh: string; en: string }[] = [
-    { id: 'foundational', zh: '基础', en: 'Foundational' },
-    { id: 'cube', zh: '魔方专题', en: 'Cube-specific' },
-    { id: 'diameter', zh: '直径与 Babai 猜想', en: 'Diameter & Babai\'s conjecture' },
-    { id: 'expander', zh: '扩张图与 Ramanujan', en: 'Expanders & Ramanujan' },
-    { id: 'mixing', zh: '混合时间与随机游走', en: 'Mixing time & random walks' },
-    { id: 'growth', zh: '增长函数与几何群论', en: 'Growth & geometric group theory' },
+    { id: 'foundational', zh: '基础', en: 'Foundational'
+    },
+    { id: 'cube', zh: '魔方专题', en: 'Cube-specific'
+    },
+    { id: 'diameter', zh: '直径与 Babai 猜想', en: 'Diameter & Babai\'s conjecture'
+    },
+    { id: 'expander', zh: '扩张图与 Ramanujan', en: 'Expanders & Ramanujan'
+    },
+    { id: 'mixing', zh: '混合时间与随机游走', en: 'Mixing time & random walks'
+    },
+    { id: 'growth', zh: '增长函数与几何群论', en: 'Growth & geometric group theory'
+    },
   ];
   return (
     <div className="gt-refs">
@@ -2783,7 +2980,7 @@ function CayleyReferences() {
         if (items.length === 0) return null;
         return (
           <div key={s.id} className="gt-refs-section">
-            <div className="gt-refs-section-head">{lang === 'zh' ? s.zh : s.en}</div>
+            <div className="gt-refs-section-head">{(i18n.language.startsWith('zh') ? s.zh : s.en)}</div>
             <ul className="gt-refs-list">
               {items.map((r, i) => (
                 <li key={i} className="gt-refs-item">
@@ -2827,10 +3024,16 @@ function PuzzleComparison() {
     <table className="gt-compare">
       <thead>
         <tr>
-          <th>{lang === 'zh' ? '拼图' : 'Puzzle'}</th>
-          <th>{lang === 'zh' ? '阶' : 'Order'}</th>
-          <th>{lang === 'zh' ? '生成集' : 'Generators'}</th>
-          <th>{lang === 'zh' ? '直径' : 'Diameter'}</th>
+          <th>{tr({ zh: '拼图', en: 'Puzzle',
+              zhHant: "拼圖"
+        })}</th>
+          <th>{tr({ zh: '阶', en: 'Order',
+              zhHant: "階"
+        })}</th>
+          <th>{tr({ zh: '生成集', en: 'Generators' })}</th>
+          <th>{tr({ zh: '直径', en: 'Diameter',
+              zhHant: "直徑"
+        })}</th>
         </tr>
       </thead>
       <tbody>
@@ -2857,22 +3060,24 @@ function OrderDistribution() {
   return (
     <div>
       <div className="gt-aside" style={{ marginBottom: 12 }}>
-        {lang === 'zh'
-          ? '魔方群中实际出现的元素阶（共 73 个不同的阶）。最大为 1260。每个阶都对应一组共轭类。'
-          : 'Orders actually attained by some cube element (73 distinct values). Maximum is 1260. Each order corresponds to a family of conjugacy classes.'}
+        {tr({ zh: '魔方群中实际出现的元素阶（共 73 个不同的阶）。最大为 1260。每个阶都对应一组共轭类。', en: 'Orders actually attained by some cube element (73 distinct values). Maximum is 1260. Each order corresponds to a family of conjugacy classes.',
+            zhHant: "魔方群中實際出現的元素階（共 73 個不同的階）。最大為 1260。每個階都對應一組共軛類。"
+        })}
       </div>
       <div className="gt-order-table">
         {orders.map(n => (
           <div className="gt-order-cell" key={n}>
             <div className="gt-order-cell-n">{n}</div>
-            <div className="gt-order-cell-lbl">{lang === 'zh' ? '阶' : 'ord'}</div>
+            <div className="gt-order-cell-lbl">{tr({ zh: '阶', en: 'ord',
+                zhHant: "階"
+            })}</div>
           </div>
         ))}
       </div>
       <div className="gt-aside" style={{ marginTop: 12 }}>
-        {lang === 'zh'
-          ? '1260 = 2² · 3² · 5 · 7 是 |G| 的最大整除元素阶。这个特殊数字来自一个 (7-cycle on corners) × (5-cycle on edges) × (9-twist on corner ori) 的精心构造。'
-          : '1260 = 2² · 3² · 5 · 7 is the maximum element order dividing |G|. Achievable via a (7-cycle on corners) × (5-cycle on edges) × (9-twist orbit) construction.'}
+        {tr({ zh: '1260 = 2² · 3² · 5 · 7 是 |G| 的最大整除元素阶。这个特殊数字来自一个 (7-cycle on corners) × (5-cycle on edges) × (9-twist on corner ori) 的精心构造。', en: '1260 = 2² · 3² · 5 · 7 is the maximum element order dividing |G|. Achievable via a (7-cycle on corners) × (5-cycle on edges) × (9-twist orbit) construction.',
+            zhHant: "1260 = 2² · 3² · 5 · 7 是 |G| 的最大整除元素階。這個特殊數字來自一個 (7-cycle on corners) × (5-cycle on edges) × (9-twist on corner ori) 的精心構造。"
+        })}
       </div>
     </div>
   );
@@ -2883,7 +3088,8 @@ function OrderDistribution() {
 // generators), then display |G|/|H| as the count of cosets, with a tiled
 // "fabric" panel that shows how G splits.
 const COSET_SUBGROUPS = [
-  { id: 'U',    gens: ['U'],                  name: '⟨U⟩',          orderApprox: 4,            zh: '只转 U', en: 'only U' },
+  { id: 'U',    gens: ['U'],                  name: '⟨U⟩',          orderApprox: 4,            zh: '只转 U', en: 'only U'
+},
   { id: 'U2',   gens: ['U2'],                 name: '⟨U²⟩',         orderApprox: 2,            zh: '只 180° U', en: 'only U2' },
   { id: 'UD',   gens: ['U', 'D'],             name: '⟨U,D⟩',        orderApprox: 16,           zh: '上下面', en: 'U, D faces' },
   { id: 'RU',   gens: ['R', 'U'],             name: '⟨R,U⟩',        orderApprox: 73483200,     zh: 'R, U (2 面群)', en: 'R, U (2-gen)' },
@@ -2941,21 +3147,25 @@ function CosetVisualizer() {
             onClick={() => setPicked(s.id)}
           >
             <span className="gt-mono" style={{ fontWeight: 600 }}>{s.name}</span>
-            <span style={{ fontSize: 11, color: 'var(--ink-faint)', marginLeft: 8 }}>{lang === 'zh' ? s.zh : s.en}</span>
+            <span style={{ fontSize: 11, color: 'var(--ink-faint)', marginLeft: 8 }}>{(i18n.language.startsWith('zh') ? s.zh : s.en)}</span>
           </button>
         ))}
       </div>
       <div className="gt-coset-stats">
         <div className="gt-coset-stat">
-          <div className="gt-coset-stat-lbl">{lang === 'zh' ? '子群阶 |H|' : '|H|'}</div>
+          <div className="gt-coset-stat-lbl">{tr({ zh: '子群阶 |H|', en: '|H|',
+              zhHant: "子群階 |H|"
+        })}</div>
           <div className="gt-coset-stat-val">{measured.size <= 65536 ? measured.size.toLocaleString() : formatBig(measured.size)}</div>
         </div>
         <div className="gt-coset-stat">
-          <div className="gt-coset-stat-lbl">{lang === 'zh' ? '陪集数 [G:H]' : '[G:H]'}</div>
+          <div className="gt-coset-stat-lbl">{tr({ zh: '陪集数 [G:H]', en: '[G:H]',
+              zhHant: "陪集數 [G:H]"
+        })}</div>
           <div className="gt-coset-stat-val">{formatBig(numCosets)}</div>
         </div>
         <div className="gt-coset-stat">
-          <div className="gt-coset-stat-lbl">{lang === 'zh' ? '整除性' : 'divides |G|?'}</div>
+          <div className="gt-coset-stat-lbl">{tr({ zh: '整除性', en: 'divides |G|?' })}</div>
           <div className="gt-coset-stat-val gt-coset-stat-ok">
             {Number.isInteger(numCosets) ? '✓' : '✗'}
           </div>
@@ -3054,9 +3264,11 @@ function QuotientGroupBuilder() {
             <div key={i} className="gt-quotient-tile">
               <div className="gt-quotient-tile-coset">[g{i}]</div>
               <div className="gt-quotient-tile-cnt">
-                {lang === 'zh' ? '约 ' : '~'}
+                {tr({ zh: '约 ', en: '~',
+                    zhHant: "約 "
+                })}
                 {formatBig(4.3252003274489856e19 / opt.n)}
-                {' '}{lang === 'zh' ? '元素' : 'elts'}
+                {' '}{tr({ zh: '元素', en: 'elts' })}
               </div>
             </div>
           ))}
@@ -3089,14 +3301,22 @@ function ParityCalculator() {
           <div className={`gt-parity-val ${sgnCp === 1 ? 'pos' : 'neg'}`}>
             {sgnCp === 1 ? '+1' : '−1'}
           </div>
-          <div className="gt-parity-sub">{sgnCp === 1 ? (lang === 'zh' ? '偶置换' : 'even') : (lang === 'zh' ? '奇置换' : 'odd')}</div>
+          <div className="gt-parity-sub">{sgnCp === 1 ? (tr({ zh: '偶置换', en: 'even',
+              zhHant: "偶置換"
+        })) : (tr({ zh: '奇置换', en: 'odd',
+            zhHant: "奇置換"
+        }))}</div>
         </div>
         <div className="gt-parity-cell">
           <div className="gt-parity-lbl">sgn(ep)</div>
           <div className={`gt-parity-val ${sgnEp === 1 ? 'pos' : 'neg'}`}>
             {sgnEp === 1 ? '+1' : '−1'}
           </div>
-          <div className="gt-parity-sub">{sgnEp === 1 ? (lang === 'zh' ? '偶置换' : 'even') : (lang === 'zh' ? '奇置换' : 'odd')}</div>
+          <div className="gt-parity-sub">{sgnEp === 1 ? (tr({ zh: '偶置换', en: 'even',
+              zhHant: "偶置換"
+        })) : (tr({ zh: '奇置换', en: 'odd',
+            zhHant: "奇置換"
+        }))}</div>
         </div>
         <div className="gt-parity-cell gt-parity-cell-prod">
           <div className="gt-parity-lbl">sgn(cp) · sgn(ep)</div>
@@ -3105,18 +3325,26 @@ function ParityCalculator() {
           </div>
           <div className="gt-parity-sub">
             {product === 1
-              ? (lang === 'zh' ? '✓ 在 G 中可达' : '✓ reachable in G')
-              : (lang === 'zh' ? '✗ 不可能!(单棱翻转不允许)' : '✗ impossible! (single-edge flip forbidden)')}
+              ? (tr({ zh: '✓ 在 G 中可达', en: '✓ reachable in G',
+                  zhHant: "✓ 在 G 中可達"
+            }))
+              : (tr({ zh: '✗ 不可能!(单棱翻转不允许)', en: '✗ impossible! (single-edge flip forbidden)',
+                  zhHant: "✗ 不可能!(單稜翻轉不允許)"
+            }))}
           </div>
         </div>
       </div>
       <div className="gt-parity-cycles">
         <div className="gt-parity-cycles-row">
-          <span className="gt-parity-cycles-lbl">{lang === 'zh' ? '角块循环' : 'corner cycles'}</span>
+          <span className="gt-parity-cycles-lbl">{tr({ zh: '角块循环', en: 'corner cycles',
+              zhHant: "角塊迴圈"
+        })}</span>
           <span className="gt-mono">[{cycleStructure(state.cp).join(', ') || '·'}]</span>
         </div>
         <div className="gt-parity-cycles-row">
-          <span className="gt-parity-cycles-lbl">{lang === 'zh' ? '棱块循环' : 'edge cycles'}</span>
+          <span className="gt-parity-cycles-lbl">{tr({ zh: '棱块循环', en: 'edge cycles',
+              zhHant: "稜塊迴圈"
+        })}</span>
           <span className="gt-mono">[{cycleStructure(state.ep).join(', ') || '·'}]</span>
         </div>
       </div>
@@ -3141,8 +3369,12 @@ function AlgorithmCompareTable() {
       worstMoves: '~52',
       tableSize: '< 100 KB',
       runtime: 'milliseconds',
-      type: lang === 'zh' ? '4-阶段子群链' : '4-stage subgroup chain',
-      note: lang === 'zh' ? '最早的有限存储次优解' : 'first finite-memory suboptimal',
+      type: tr({ zh: '4-阶段子群链', en: '4-stage subgroup chain',
+          zhHant: "4-階段子群鏈"
+    }),
+      note: tr({ zh: '最早的有限存储次优解', en: 'first finite-memory suboptimal',
+          zhHant: "最早的有限儲存次優解"
+    }),
     },
     {
       name: 'Kociemba (1992)',
@@ -3151,8 +3383,12 @@ function AlgorithmCompareTable() {
       worstMoves: '~30',
       tableSize: '~50 MB',
       runtime: 'ms-seconds',
-      type: lang === 'zh' ? '两阶段' : 'Two-phase',
-      note: lang === 'zh' ? '现代速求解器主流' : 'modern fast-suboptimal standard',
+      type: tr({ zh: '两阶段', en: 'Two-phase',
+          zhHant: "兩階段"
+    }),
+      note: tr({ zh: '现代速求解器主流', en: 'modern fast-suboptimal standard',
+          zhHant: "現代速求解器主流"
+    }),
     },
     {
       name: 'Korf IDA* (1997)',
@@ -3161,8 +3397,12 @@ function AlgorithmCompareTable() {
       worstMoves: '20',
       tableSize: '~80 MB',
       runtime: 'sec-min',
-      type: lang === 'zh' ? '最优 IDA* + 模式 DB' : 'Optimal IDA* + pattern DBs',
-      note: lang === 'zh' ? '首个可比较的最优解' : 'first truly optimal solver',
+      type: tr({ zh: '最优 IDA* + 模式 DB', en: 'Optimal IDA* + pattern DBs',
+          zhHant: "最優 IDA* + 模式 DB"
+    }),
+      note: tr({ zh: '首个可比较的最优解', en: 'first truly optimal solver',
+          zhHant: "首個可比較的最優解"
+    }),
     },
     {
       name: 'Rokicki cosets (2010)',
@@ -3171,20 +3411,30 @@ function AlgorithmCompareTable() {
       worstMoves: '20',
       tableSize: '~3 GB cosets',
       runtime: 'CPU-years',
-      type: lang === 'zh' ? '对称压缩枚举' : 'symmetry-reduced enumeration',
-      note: lang === 'zh' ? '20 步证明用此方法' : 'used to prove God\'s # = 20',
+      type: tr({ zh: '对称压缩枚举', en: 'symmetry-reduced enumeration',
+          zhHant: "對稱壓縮列舉"
+    }),
+      note: tr({ zh: '20 步证明用此方法', en: 'used to prove God\'s # = 20',
+          zhHant: "20 步證明用此方法"
+    }),
     },
   ];
   return (
     <table className="gt-algo-compare">
       <thead>
         <tr>
-          <th>{lang === 'zh' ? '算法' : 'Algorithm'}</th>
-          <th>{lang === 'zh' ? '类型' : 'Type'}</th>
+          <th>{tr({ zh: '算法', en: 'Algorithm',
+              zhHant: "演算法"
+        })}</th>
+          <th>{tr({ zh: '类型', en: 'Type',
+              zhHant: "型別"
+        })}</th>
           <th>avg HTM</th>
           <th>max HTM</th>
-          <th>{lang === 'zh' ? '表' : 'Tables'}</th>
-          <th>{lang === 'zh' ? '运行' : 'Runtime'}</th>
+          <th>{tr({ zh: '表', en: 'Tables' })}</th>
+          <th>{tr({ zh: '运行', en: 'Runtime',
+              zhHant: "執行"
+        })}</th>
         </tr>
       </thead>
       <tbody>
@@ -3213,8 +3463,10 @@ function ThistlethwaitePhaseChart() {
   const stages = [
     { name: 'G₀ → G₁',  zh: '修 EO',                    en: 'fix edge orientation',     maxDepth: 7,  bound: 'EO = 0' },
     { name: 'G₁ → G₂',  zh: '修 CO + UD slice',         en: 'fix CO + UD slice',         maxDepth: 10, bound: 'CO = 0, FR/FL/BL/BR in slice' },
-    { name: 'G₂ → G₃',  zh: '达成 domino',              en: 'reach domino orbits',       maxDepth: 13, bound: 'corner & edge orbit parity' },
-    { name: 'G₃ → e',   zh: '完成 (仅 180° 转)',         en: 'solve (only 180° turns)',   maxDepth: 15, bound: 'identity' },
+    { name: 'G₂ → G₃',  zh: '达成 domino',              en: 'reach domino orbits',       maxDepth: 13, bound: 'corner & edge orbit parity'
+    },
+    { name: 'G₃ → e',   zh: '完成 (仅 180° 转)',         en: 'solve (only 180° turns)',   maxDepth: 15, bound: 'identity'
+    },
   ];
   const totalMax = stages.reduce((s, r) => s + r.maxDepth, 0);
   const maxD = Math.max(...stages.map(s => s.maxDepth));
@@ -3227,13 +3479,17 @@ function ThistlethwaitePhaseChart() {
             <div className="gt-thistle-stage-fill" style={{ width: `${(s.maxDepth / maxD) * 100}%` }} />
             <div className="gt-thistle-stage-depth">{s.maxDepth}</div>
           </div>
-          <div className="gt-thistle-stage-desc">{lang === 'zh' ? s.zh : s.en}</div>
+          <div className="gt-thistle-stage-desc">{(i18n.language.startsWith('zh') ? s.zh : s.en)}</div>
           <div className="gt-thistle-stage-bound"><span className="gt-mono">{s.bound}</span></div>
         </div>
       ))}
       <div className="gt-thistle-total">
-        {lang === 'zh' ? '理论最大深度合计:' : 'theoretical max depth sum:'}{' '}
-        <strong>{totalMax}</strong> {lang === 'zh' ? '步 (HTM)。后续的 45 步上界来自启发式 IDA* 在每一阶段的最优搜索。' : ' moves (HTM). The improved 45-move bound comes from optimal IDA* within each stage.'}
+        {tr({ zh: '理论最大深度合计:', en: 'theoretical max depth sum:',
+            zhHant: "理論最大深度合計:"
+        })}{' '}
+        <strong>{totalMax}</strong> {tr({ zh: '步 (HTM)。后续的 45 步上界来自启发式 IDA* 在每一阶段的最优搜索。', en: ' moves (HTM). The improved 45-move bound comes from optimal IDA* within each stage.',
+            zhHant: "步 (HTM)。後續的 45 步上界來自啟發式 IDA* 在每一階段的最優搜尋。"
+        })}
       </div>
     </div>
   );
@@ -3300,19 +3556,25 @@ function DistanceDistributionChart() {
           <div>
             <span className="gt-dist-hover-d">d = {hover}</span>
             <span className="gt-dist-hover-cnt">
-              {DIST_DATA_HTM[hover].count.toString()} {lang === 'zh' ? '个状态' : 'states'}
+              {DIST_DATA_HTM[hover].count.toString()} {tr({ zh: '个状态', en: 'states',
+                  zhHant: "個狀態"
+            })}
             </span>
-            {hover > 15 && <span className="gt-dist-hover-approx"> ({lang === 'zh' ? '估算' : 'approx.'})</span>}
+            {hover > 15 && <span className="gt-dist-hover-approx"> ({tr({ zh: '估算', en: 'approx.' })})</span>}
           </div>
         ) : (
           <div style={{ color: 'var(--ink-faint)' }}>
-            {lang === 'zh' ? '悬停查看每个距离 d 上的状态数' : 'hover to see count at each distance d'}
+            {tr({ zh: '悬停查看每个距离 d 上的状态数', en: 'hover to see count at each distance d',
+                zhHant: "懸停檢視每個距離 d 上的狀態數"
+            })}
           </div>
         )}
       </div>
       <div className="gt-dist-legend">
-        <span><span className="gt-dist-swatch exact" /> {lang === 'zh' ? '已枚举 (Rokicki et al.)' : 'enumerated (Rokicki et al.)'}</span>
-        <span><span className="gt-dist-swatch approx" /> {lang === 'zh' ? '估算 (cube20.org)' : 'approximated'}</span>
+        <span><span className="gt-dist-swatch exact" /> {tr({ zh: '已枚举 (Rokicki et al.)', en: 'enumerated (Rokicki et al.)',
+            zhHant: "已列舉 (Rokicki et al.)"
+        })}</span>
+        <span><span className="gt-dist-swatch approx" /> {tr({ zh: '估算 (cube20.org)', en: 'approximated' })}</span>
       </div>
     </div>
   );
@@ -3359,13 +3621,21 @@ function RandomWalkSimulator() {
     <div className="gt-rwalk">
       <div className="gt-rwalk-controls">
         <button className="gt-rwalk-btn" onClick={() => setRunning(r => !r)}>
-          {running ? (lang === 'zh' ? '暂停' : 'pause') : (lang === 'zh' ? '运行' : 'run')}
+          {running ? (tr({ zh: '暂停', en: 'pause',
+              zhHant: "暫停"
+        })) : (tr({ zh: '运行', en: 'run',
+            zhHant: "執行"
+        }))}
         </button>
         <button className="gt-rwalk-btn" onClick={reset}>
-          {lang === 'zh' ? '重置' : 'reset'}
+          {tr({ zh: '重置', en: 'reset' })}
         </button>
-        <span className="gt-rwalk-step">{lang === 'zh' ? '步数' : 'steps'}: <strong>{step}</strong></span>
-        <span className="gt-rwalk-step">{lang === 'zh' ? '当前距离 (代理)' : 'current d (proxy)'}: <strong>{history[history.length - 1]?.d ?? 0}</strong></span>
+        <span className="gt-rwalk-step">{tr({ zh: '步数', en: 'steps',
+            zhHant: "步數"
+        })}: <strong>{step}</strong></span>
+        <span className="gt-rwalk-step">{tr({ zh: '当前距离 (代理)', en: 'current d (proxy)',
+            zhHant: "當前距離 (代理)"
+        })}: <strong>{history[history.length - 1]?.d ?? 0}</strong></span>
       </div>
       <div className="gt-rwalk-chart">
         <svg viewBox="0 0 600 200" preserveAspectRatio="none" style={{ width: '100%', height: 200 }}>
@@ -3384,17 +3654,23 @@ function RandomWalkSimulator() {
         <div className="gt-rwalk-stat">
           <div className="gt-rwalk-stat-lbl">Σco mod 3</div>
           <div className="gt-rwalk-stat-val">{history[history.length - 1]?.co ?? 0}</div>
-          <div className="gt-rwalk-stat-must">{lang === 'zh' ? '必须 = 0' : 'must = 0'}</div>
+          <div className="gt-rwalk-stat-must">{tr({ zh: '必须 = 0', en: 'must = 0',
+              zhHant: "必須 = 0"
+        })}</div>
         </div>
         <div className="gt-rwalk-stat">
           <div className="gt-rwalk-stat-lbl">Σeo mod 2</div>
           <div className="gt-rwalk-stat-val">{history[history.length - 1]?.eo ?? 0}</div>
-          <div className="gt-rwalk-stat-must">{lang === 'zh' ? '必须 = 0' : 'must = 0'}</div>
+          <div className="gt-rwalk-stat-must">{tr({ zh: '必须 = 0', en: 'must = 0',
+              zhHant: "必須 = 0"
+        })}</div>
         </div>
         <div className="gt-rwalk-stat">
           <div className="gt-rwalk-stat-lbl">sgn(cp) · sgn(ep)</div>
           <div className="gt-rwalk-stat-val">{((history[history.length - 1]?.sgnC ?? 1) * (history[history.length - 1]?.sgnE ?? 1)) === 1 ? '+1' : '−1'}</div>
-          <div className="gt-rwalk-stat-must">{lang === 'zh' ? '必须 = +1' : 'must = +1'}</div>
+          <div className="gt-rwalk-stat-must">{tr({ zh: '必须 = +1', en: 'must = +1',
+              zhHant: "必須 = +1"
+        })}</div>
         </div>
       </div>
       <div className="gt-aside" style={{ marginTop: 12 }}>
@@ -3429,10 +3705,16 @@ function StabilizerChainExplorer() {
       <table className="gt-stab-tbl">
         <thead>
           <tr>
-            <th>{lang === 'zh' ? '层' : 'level'}</th>
-            <th>{lang === 'zh' ? '固定贴纸' : 'fixed stickers'}</th>
+            <th>{tr({ zh: '层', en: 'level',
+                zhHant: "層"
+            })}</th>
+            <th>{tr({ zh: '固定贴纸', en: 'fixed stickers',
+                zhHant: "固定貼紙"
+            })}</th>
             <th>|stab|</th>
-            <th>{lang === 'zh' ? '轨道大小' : 'orbit size'}</th>
+            <th>{tr({ zh: '轨道大小', en: 'orbit size',
+                zhHant: "軌道大小"
+            })}</th>
           </tr>
         </thead>
         <tbody>
@@ -3469,7 +3751,9 @@ function CharacterTableHint() {
             <th>1</th>
             <th>R</th>
             <th>R²</th>
-            <th>{lang === 'zh' ? '其它共轭类...' : 'other conj. classes...'}</th>
+            <th>{tr({ zh: '其它共轭类...', en: 'other conj. classes...',
+                zhHant: "其它共軛類..."
+            })}</th>
           </tr>
         </thead>
         <tbody>
@@ -3656,33 +3940,45 @@ function LightsOutBoard({ size }: { size: number }) {
       </div>
       <div className="gt-lights-info">
         <div className="gt-lights-stat">
-          <div className="gt-lights-stat-label">{lang === 'zh' ? '亮灯' : 'lit'}</div>
+          <div className="gt-lights-stat-label">{tr({ zh: '亮灯', en: 'lit',
+              zhHant: "亮燈"
+        })}</div>
           <div className="gt-lights-stat-val">{litCount} / {n}</div>
         </div>
         <div className="gt-lights-stat">
-          <div className="gt-lights-stat-label">{lang === 'zh' ? '可解' : 'solvable'}</div>
+          <div className="gt-lights-stat-label">{tr({ zh: '可解', en: 'solvable' })}</div>
           <div className="gt-lights-stat-val" style={{ color: solvable ? 'var(--green)' : 'var(--accent)' }}>
-            {solvable ? (lang === 'zh' ? '是' : 'yes') : (lang === 'zh' ? '否' : 'no')}
+            {solvable ? (tr({ zh: '是', en: 'yes' })) : (tr({ zh: '否', en: 'no' }))}
           </div>
         </div>
         <div className="gt-lights-stat">
-          <div className="gt-lights-stat-label">{lang === 'zh' ? '最短步数' : 'min moves'}</div>
+          <div className="gt-lights-stat-label">{tr({ zh: '最短步数', en: 'min moves',
+              zhHant: "最短步數"
+        })}</div>
           <div className="gt-lights-stat-val">{solvable ? moveCount : '—'}</div>
         </div>
         <div className="gt-lights-stat">
-          <div className="gt-lights-stat-label">{lang === 'zh' ? '解的数量' : '# solutions'}</div>
+          <div className="gt-lights-stat-label">{tr({ zh: '解的数量', en: '# solutions',
+              zhHant: "解的數量"
+        })}</div>
           <div className="gt-lights-stat-val">{solvable ? (1 << kernel.length) : 0}</div>
         </div>
         <div className="gt-lights-stat">
-          <div className="gt-lights-stat-label">{lang === 'zh' ? '安静图案' : 'quiet patterns'}</div>
+          <div className="gt-lights-stat-label">{tr({ zh: '安静图案', en: 'quiet patterns',
+              zhHant: "安靜圖案"
+        })}</div>
           <div className="gt-lights-stat-val">{kernel.length}</div>
         </div>
       </div>
       <div className="gt-lights-actions">
-        <button type="button" className="gt-btn gt-btn-ghost" onClick={randomize}>{lang === 'zh' ? '随机' : 'randomize'}</button>
-        <button type="button" className="gt-btn gt-btn-ghost" onClick={clear}>{lang === 'zh' ? '全灭' : 'clear'}</button>
+        <button type="button" className="gt-btn gt-btn-ghost" onClick={randomize}>{tr({ zh: '随机', en: 'randomize',
+            zhHant: "隨機"
+        })}</button>
+        <button type="button" className="gt-btn gt-btn-ghost" onClick={clear}>{tr({ zh: '全灭', en: 'clear',
+            zhHant: "全滅"
+        })}</button>
         <button type="button" className="gt-btn" onClick={showSolution} disabled={!solvable || litCount === 0}>
-          {lang === 'zh' ? '演示最短解' : 'animate solution'}
+          {tr({ zh: '演示最短解', en: 'animate solution' })}
         </button>
       </div>
     </div>
@@ -3726,7 +4022,9 @@ function QuietPatternViewer() {
   return (
     <div className="gt-quiet">
       <div className="gt-quiet-side">
-        <div className="gt-quiet-label">{lang === 'zh' ? '你的图案 p' : 'your pattern p'}</div>
+        <div className="gt-quiet-label">{tr({ zh: '你的图案 p', en: 'your pattern p',
+            zhHant: "你的圖案 p"
+        })}</div>
         <div className="gt-quiet-grid">
           {board.map((cell, i) => (
             <button
@@ -3740,7 +4038,9 @@ function QuietPatternViewer() {
           ))}
         </div>
         <button type="button" className="gt-btn gt-btn-ghost" onClick={random} style={{ marginTop: 12 }}>
-          {lang === 'zh' ? '随机可解' : 'random solvable'}
+          {tr({ zh: '随机可解', en: 'random solvable',
+              zhHant: "隨機可解"
+        })}
         </button>
       </div>
       <div className="gt-quiet-side">
@@ -3760,11 +4060,13 @@ function QuietPatternViewer() {
         </div>
       </div>
       <div className="gt-quiet-verdict">
-        <div className="gt-quiet-verdict-label">{lang === 'zh' ? '判定' : 'verdict'}</div>
+        <div className="gt-quiet-verdict-label">{tr({ zh: '判定', en: 'verdict' })}</div>
         <div className="gt-quiet-verdict-val" style={{ color: isSolvable ? 'var(--green)' : 'var(--accent)' }}>
           {isSolvable
-            ? (lang === 'zh' ? '可解 — 两个安静图案的内积都为 0' : 'solvable — orthogonal to both quiet patterns')
-            : (lang === 'zh' ? '不可解 — 不在 im A 中' : 'unreachable — not in im A')}
+            ? (tr({ zh: '可解 — 两个安静图案的内积都为 0', en: 'solvable — orthogonal to both quiet patterns',
+                zhHant: "可解 — 兩個安靜圖案的內積都為 0"
+            }))
+            : (tr({ zh: '不可解 — 不在 im A 中', en: 'unreachable — not in im A' }))}
         </div>
       </div>
     </div>
@@ -3943,9 +4245,13 @@ function PegSolitaireBoard() {
       </div>
       <div className="gt-peg-controls">
         <div className="gt-peg-info">
-          <div><span className="gt-peg-label">{lang === 'zh' ? '剩余棋子' : 'pegs'}</span> <strong>{pegCount}</strong></div>
-          <div><span className="gt-peg-label">{lang === 'zh' ? '已走步' : 'moves'}</span> <strong>{moveCount}</strong></div>
-          {isWin && <div style={{ color: 'var(--green)' }}>★ {lang === 'zh' ? '通关 · 1 子留中央' : 'solved · 1 peg in centre'}</div>}
+          <div><span className="gt-peg-label">{tr({ zh: '剩余棋子', en: 'pegs',
+              zhHant: "剩餘棋子"
+        })}</span> <strong>{pegCount}</strong></div>
+          <div><span className="gt-peg-label">{tr({ zh: '已走步', en: 'moves' })}</span> <strong>{moveCount}</strong></div>
+          {isWin && <div style={{ color: 'var(--green)' }}>★ {tr({ zh: '通关 · 1 子留中央', en: 'solved · 1 peg in centre',
+              zhHant: "通關 · 1 子留中央"
+        })}</div>}
         </div>
         {showColoring !== 'none' && (
           <div className="gt-peg-coloring">
@@ -3955,11 +4261,19 @@ function PegSolitaireBoard() {
           </div>
         )}
         <div className="gt-peg-buttons">
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={undo} disabled={hist.length <= 1}>{lang === 'zh' ? '撤销' : 'undo'}</button>
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{lang === 'zh' ? '重置' : 'reset'}</button>
-          <button type="button" className={`gt-chip ${showColoring === 'none' ? 'gt-chip-active' : ''}`} onClick={() => setShowColoring('none')}>{lang === 'zh' ? '关闭着色' : 'no colour'}</button>
-          <button type="button" className={`gt-chip ${showColoring === 'diag1' ? 'gt-chip-active' : ''}`} onClick={() => setShowColoring('diag1')}>{lang === 'zh' ? '↗ 着色' : '↗ colouring'}</button>
-          <button type="button" className={`gt-chip ${showColoring === 'diag2' ? 'gt-chip-active' : ''}`} onClick={() => setShowColoring('diag2')}>{lang === 'zh' ? '↘ 着色' : '↘ colouring'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={undo} disabled={hist.length <= 1}>{tr({ zh: '撤销', en: 'undo',
+              zhHant: "撤銷"
+        })}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{tr({ zh: '重置', en: 'reset' })}</button>
+          <button type="button" className={`gt-chip ${showColoring === 'none' ? 'gt-chip-active' : ''}`} onClick={() => setShowColoring('none')}>{tr({ zh: '关闭着色', en: 'no colour',
+              zhHant: "關閉著色"
+        })}</button>
+          <button type="button" className={`gt-chip ${showColoring === 'diag1' ? 'gt-chip-active' : ''}`} onClick={() => setShowColoring('diag1')}>{tr({ zh: '↗ 着色', en: '↗ colouring',
+              zhHant: "↗ 著色"
+        })}</button>
+          <button type="button" className={`gt-chip ${showColoring === 'diag2' ? 'gt-chip-active' : ''}`} onClick={() => setShowColoring('diag2')}>{tr({ zh: '↘ 着色', en: '↘ colouring',
+              zhHant: "↘ 著色"
+        })}</button>
         </div>
       </div>
     </div>
@@ -4063,11 +4377,15 @@ function PegTriangleSAX() {
           <div><span className="gt-peg-label">A (中央 / central)</span> <strong>{A}</strong></div>
           <div><span className="gt-peg-label">X (外围 / perimeter)</span> <strong>{X}</strong></div>
           <div className="gt-peg-sax-total"><span className="gt-peg-label">S + A − X</span> <strong>{sax}</strong></div>
-          <div className="gt-peg-sax-note">{lang === 'zh' ? '此值在每步跳跃下不增 — 不变量' : 'non-increasing under play — invariant'}</div>
+          <div className="gt-peg-sax-note">{tr({ zh: '此值在每步跳跃下不增 — 不变量', en: 'non-increasing under play — invariant',
+              zhHant: "此值在每步跳躍下不增 — 不變數"
+        })}</div>
         </div>
         <div className="gt-peg-buttons">
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={undo} disabled={hist.length <= 1}>{lang === 'zh' ? '撤销' : 'undo'}</button>
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{lang === 'zh' ? '重置' : 'reset'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={undo} disabled={hist.length <= 1}>{tr({ zh: '撤销', en: 'undo',
+              zhHant: "撤銷"
+        })}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{tr({ zh: '重置', en: 'reset' })}</button>
         </div>
       </div>
     </div>
@@ -4107,9 +4425,15 @@ function GrayCodeWalker() {
         <label>n = {n}</label>
         <input type="range" min={2} max={6} value={n} onChange={e => { setN(parseInt(e.target.value, 10)); reset(); }} />
         <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
-          {playing ? (lang === 'zh' ? '暂停' : 'pause') : (lang === 'zh' ? '播放 Gray 码' : 'play')}
+          {playing ? (tr({ zh: '暂停', en: 'pause',
+              zhHant: "暫停"
+        })) : (tr({ zh: '播放 Gray 码', en: 'play',
+            zhHant: "播放 Gray 碼"
+        }))}
         </button>
-        <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{lang === 'zh' ? '复位' : 'reset'}</button>
+        <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{tr({ zh: '复位', en: 'reset',
+            zhHant: "復位"
+        })}</button>
         <span className="gt-gray-step">{step + 1} / {gray.length}</span>
       </div>
       <div className="gt-gray-bits">
@@ -4200,12 +4524,14 @@ function MobiusPlayground() {
       }
       if (cyc.length > 1) parts.push('(' + cyc.map(x => x === 'inf' ? '∞' : String(x)).join(' ') + ')');
     }
-    return parts.join('') || (lang === 'zh' ? '恒等' : 'identity');
+    return parts.join('') || (tr({ zh: '恒等', en: 'identity',
+        zhHant: "恆等"
+    }));
   })();
 
   const presets = [
-    { label: lang === 'zh' ? '平移 z↦z+1' : 'shift z↦z+1', vals: [1, 1, 0, 1] },
-    { label: lang === 'zh' ? '反演 z↦1/z' : 'invert z↦1/z', vals: [0, 1, 1, 0] },
+    { label: tr({ zh: '平移 z↦z+1', en: 'shift z↦z+1' }), vals: [1, 1, 0, 1] },
+    { label: tr({ zh: '反演 z↦1/z', en: 'invert z↦1/z' }), vals: [0, 1, 1, 0] },
     { label: 'z↦2z',           vals: [2, 0, 0, 1] },
     { label: 'z↦(z+1)/(z+2)',  vals: [1, 1, 1, 2] },
   ];
@@ -4213,7 +4539,9 @@ function MobiusPlayground() {
   return (
     <div className="gt-mobius">
       <div className="gt-mobius-matrix">
-        <div className="gt-mobius-matrix-label">{lang === 'zh' ? '矩阵 (mod 5)' : 'matrix (mod 5)'}</div>
+        <div className="gt-mobius-matrix-label">{tr({ zh: '矩阵 (mod 5)', en: 'matrix (mod 5)',
+            zhHant: "矩陣 (mod 5)"
+        })}</div>
         <div className="gt-mobius-matrix-grid">
           {[[a, b], [c, d]].map((row, ri) =>
             row.map((v, ci) => (
@@ -4245,7 +4573,7 @@ function MobiusPlayground() {
       </div>
       <div className="gt-mobius-action">
         <div className="gt-mobius-action-label">
-          {lang === 'zh' ? '在 ℙ¹(𝔽₅) = {0,1,2,3,4,∞} 上的作用' : 'action on ℙ¹(𝔽₅) = {0,1,2,3,4,∞}'}
+          {tr({ zh: '在 ℙ¹(𝔽₅) = {0,1,2,3,4,∞} 上的作用', en: 'action on ℙ¹(𝔽₅) = {0,1,2,3,4,∞}' })}
         </div>
         {invertible && (
           <table className="gt-mobius-table">
@@ -4262,7 +4590,9 @@ function MobiusPlayground() {
           </table>
         )}
         <div className="gt-mobius-cycle">
-          {lang === 'zh' ? '循环分解 ' : 'cycle '} {cycle}
+          {tr({ zh: '循环分解 ', en: 'cycle ',
+              zhHant: "迴圈分解 "
+        })} {cycle}
         </div>
       </div>
     </div>
@@ -4320,15 +4650,23 @@ function TwoFaceCornerSim() {
         <div className="gt-twoface-controls">
           <button type="button" className="gt-btn" onClick={doR}>R</button>
           <button type="button" className="gt-btn" onClick={doU}>U</button>
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{lang === 'zh' ? '复原' : 'reset'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{tr({ zh: '复原', en: 'reset',
+              zhHant: "復原"
+        })}</button>
         </div>
         <div className="gt-twoface-moves">
-          {moves.length === 0 ? <em>{lang === 'zh' ? '尚未操作' : 'no moves yet'}</em> : moves.join(' ')}
+          {moves.length === 0 ? <em>{tr({ zh: '尚未操作', en: 'no moves yet' })}</em> : moves.join(' ')}
         </div>
         <div className="gt-twoface-info">
-          {isSolved && <div style={{ color: 'var(--green)' }}>★ {lang === 'zh' ? '已复原' : 'identity'}</div>}
-          <div><span className="gt-peg-label">{lang === 'zh' ? '可达状态' : 'reachable'}</span> <strong>{reachableCount}</strong> = 5!</div>
-          <div><span className="gt-peg-label">{lang === 'zh' ? '若朴素估算' : 'naive bound'}</span> <strong>720</strong> = 6!</div>
+          {isSolved && <div style={{ color: 'var(--green)' }}>★ {tr({ zh: '已复原', en: 'identity',
+              zhHant: "已復原"
+        })}</div>}
+          <div><span className="gt-peg-label">{tr({ zh: '可达状态', en: 'reachable',
+              zhHant: "可達狀態"
+        })}</span> <strong>{reachableCount}</strong> = 5!</div>
+          <div><span className="gt-peg-label">{tr({ zh: '若朴素估算', en: 'naive bound',
+              zhHant: "若樸素估算"
+        })}</span> <strong>720</strong> = 6!</div>
           <div className="gt-twoface-note">
             {lang === 'zh' ? (
               <>只有 120 个 — 这个群同构于 <TeX src="S_5 \cong \mathrm{PGL}_2(\mathbb{F}_5)" /> 在 <TeX src="\mathbb{P}^1(\mathbb{F}_5)" /> 上的尖锐 3-传递作用。这是 <TeX src="S_5" /> 与 <TeX src="S_6" /> 之间著名的「外自同构」奇迹。</>
@@ -4355,11 +4693,21 @@ function XYZClassifier() {
   // Classification (simplified, from Jaap's table)
   let verdict: { sym: 'S' | 'A' | 'exc' | 'small'; size: number; note: string };
   const fact = (k: number): number => k <= 1 ? 1 : k * fact(k - 1);
-  if (f1 < 3 || f2 < 3) verdict = { sym: 'small', size: 0, note: lang === 'zh' ? '需要每面 ≥ 3 个棋子才能转出 3-循环' : 'need face size ≥ 3 to get a 3-cycle' };
-  else if (x === 2 && y === 2 && z === 2) verdict = { sym: 'exc', size: 120, note: lang === 'zh' ? '例外:120 = 5! 个状态 (S₅ 在 6 点上)' : 'exception: 120 = 5! states (S_5 on 6 points)' };
-  else if (x === 1 && y === 3 && z === 2) verdict = { sym: 'exc', size: 120, note: lang === 'zh' ? '同构于 (2,2,2) 例外 — 120 个状态' : 'isomorphic to (2,2,2) exception — 120 states' };
-  else if (f1 % 2 === 0 || f2 % 2 === 0) verdict = { sym: 'S', size: fact(n), note: lang === 'zh' ? '存在偶长面 ⇒ 含奇置换 ⇒ 全 S_n' : 'face has even length ⇒ contains odd permutation ⇒ full S_n' };
-  else verdict = { sym: 'A', size: fact(n) / 2, note: lang === 'zh' ? '两面都是奇长 ⇒ 全是偶置换 ⇒ A_n' : 'both faces odd length ⇒ only even permutations ⇒ A_n' };
+  if (f1 < 3 || f2 < 3) verdict = { sym: 'small', size: 0, note: tr({ zh: '需要每面 ≥ 3 个棋子才能转出 3-循环', en: 'need face size ≥ 3 to get a 3-cycle',
+      zhHant: "需要每面 ≥ 3 個棋子才能轉出 3-迴圈"
+}) };
+  else if (x === 2 && y === 2 && z === 2) verdict = { sym: 'exc', size: 120, note: tr({ zh: '例外:120 = 5! 个状态 (S₅ 在 6 点上)', en: 'exception: 120 = 5! states (S_5 on 6 points)',
+      zhHant: "例外:120 = 5! 個狀態 (S₅ 在 6 點上)"
+}) };
+  else if (x === 1 && y === 3 && z === 2) verdict = { sym: 'exc', size: 120, note: tr({ zh: '同构于 (2,2,2) 例外 — 120 个状态', en: 'isomorphic to (2,2,2) exception — 120 states',
+      zhHant: "同構於 (2,2,2) 例外 — 120 個狀態"
+}) };
+  else if (f1 % 2 === 0 || f2 % 2 === 0) verdict = { sym: 'S', size: fact(n), note: tr({ zh: '存在偶长面 ⇒ 含奇置换 ⇒ 全 S_n', en: 'face has even length ⇒ contains odd permutation ⇒ full S_n',
+      zhHant: "存在偶長面 ⇒ 含奇置換 ⇒ 全 S_n"
+}) };
+  else verdict = { sym: 'A', size: fact(n) / 2, note: tr({ zh: '两面都是奇长 ⇒ 全是偶置换 ⇒ A_n', en: 'both faces odd length ⇒ only even permutations ⇒ A_n',
+      zhHant: "兩面都是奇長 ⇒ 全是偶置換 ⇒ A_n"
+}) };
 
   const cx = 120, cy = 120, r = 55;
   const f1Cells = Array.from({ length: f1 }, (_, i) => {
@@ -4396,12 +4744,12 @@ function XYZClassifier() {
         <text x={cx + 38} y={cy + r + 18} textAnchor="middle" fontSize={11} fontFamily="var(--mono)" fill="var(--accent-2)">{lang === 'zh' ? `面 2 · ${f2} 子` : `face 2 · ${f2}`}</text>
       </svg>
       <div className="gt-xyz-verdict">
-        <div className="gt-xyz-verdict-label">{lang === 'zh' ? '生成的群' : 'group generated'}</div>
+        <div className="gt-xyz-verdict-label">{tr({ zh: '生成的群', en: 'group generated' })}</div>
         <div className="gt-xyz-verdict-val">
           {verdict.sym === 'S' && <>S<sub>{n}</sub></>}
           {verdict.sym === 'A' && <>A<sub>{n}</sub></>}
           {verdict.sym === 'exc' && <>S<sub>5</sub> (≅ PGL<sub>2</sub>(𝔽<sub>5</sub>))</>}
-          {verdict.sym === 'small' && <>{lang === 'zh' ? '太小' : 'degenerate'}</>}
+          {verdict.sym === 'small' && <>{tr({ zh: '太小', en: 'degenerate' })}</>}
         </div>
         <div className="gt-xyz-size">|G| = <strong>{verdict.size}</strong></div>
         <div className="gt-xyz-note">{verdict.note}</div>
@@ -4417,7 +4765,9 @@ function PermutationVisualiser() {
   const parsed = useMemo(() => {
     const tokens = input.trim().split(/[\s,]+/).filter(Boolean).map(Number);
     if (!tokens.every(t => Number.isInteger(t) && t >= 1)) {
-      return { valid: false, perm: [] as number[], error: lang === 'zh' ? '请输入正整数序列' : 'enter positive integers' };
+      return { valid: false, perm: [] as number[], error: tr({ zh: '请输入正整数序列', en: 'enter positive integers',
+          zhHant: "請輸入正整數序列"
+    }) };
     }
     const n = tokens.length;
     const sorted = [...tokens].sort((a, b) => a - b);
@@ -4431,7 +4781,7 @@ function PermutationVisualiser() {
     return (
       <div className="gt-permvis">
         <div className="gt-permvis-input-row">
-          <label>{lang === 'zh' ? '排列 σ' : 'permutation σ'}</label>
+          <label>{tr({ zh: '排列 σ', en: 'permutation σ' })}</label>
           <input type="text" className="gt-input" value={input} onChange={e => setInput(e.target.value)} />
         </div>
         <div className="gt-permvis-error">{parsed.error}</div>
@@ -4480,7 +4830,7 @@ function PermutationVisualiser() {
   return (
     <div className="gt-permvis">
       <div className="gt-permvis-input-row">
-        <label>{lang === 'zh' ? '排列 σ' : 'permutation σ'}</label>
+        <label>{tr({ zh: '排列 σ', en: 'permutation σ' })}</label>
         <input
           type="text"
           className="gt-input"
@@ -4490,10 +4840,14 @@ function PermutationVisualiser() {
           placeholder="2 3 1 5 4 6"
         />
         <div className="gt-permvis-presets">
-          <button type="button" className="gt-chip" onClick={() => setInput('2 3 1 5 4 6')}>{lang === 'zh' ? '示例 1' : 'ex 1'}</button>
-          <button type="button" className="gt-chip" onClick={() => setInput('2 1')}>{lang === 'zh' ? '对换' : 'swap'}</button>
-          <button type="button" className="gt-chip" onClick={() => setInput('5 4 3 2 1')}>{lang === 'zh' ? '反序' : 'reverse'}</button>
-          <button type="button" className="gt-chip" onClick={() => setInput('2 3 4 5 6 7 1')}>{lang === 'zh' ? '7-循环' : '7-cycle'}</button>
+          <button type="button" className="gt-chip" onClick={() => setInput('2 3 1 5 4 6')}>{tr({ zh: '示例 1', en: 'ex 1' })}</button>
+          <button type="button" className="gt-chip" onClick={() => setInput('2 1')}>{tr({ zh: '对换', en: 'swap',
+              zhHant: "對換"
+        })}</button>
+          <button type="button" className="gt-chip" onClick={() => setInput('5 4 3 2 1')}>{tr({ zh: '反序', en: 'reverse' })}</button>
+          <button type="button" className="gt-chip" onClick={() => setInput('2 3 4 5 6 7 1')}>{tr({ zh: '7-循环', en: '7-cycle',
+              zhHant: "7-迴圈"
+        })}</button>
         </div>
       </div>
       <svg className="gt-permvis-svg" viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="xMidYMid meet">
@@ -4526,34 +4880,46 @@ function PermutationVisualiser() {
       </svg>
       <div className="gt-permvis-results">
         <div className="gt-result-row">
-          <div className="gt-result-label">{lang === 'zh' ? '两行记号' : 'two-line'}</div>
+          <div className="gt-result-label">{tr({ zh: '两行记号', en: 'two-line',
+              zhHant: "兩行記號"
+        })}</div>
           <div className="gt-result-val">
             ({Array.from({ length: n }, (_, i) => i + 1).join(' ')} / {perm.join(' ')})
           </div>
         </div>
         <div className="gt-result-row">
-          <div className="gt-result-label">{lang === 'zh' ? '循环分解' : 'cycle decomp.'}</div>
+          <div className="gt-result-label">{tr({ zh: '循环分解', en: 'cycle decomp.',
+              zhHant: "迴圈分解"
+        })}</div>
           <div className="gt-result-val">
             {cycles.filter(c => c.length > 1).map((c, i) => (
               <span key={i} style={{ color: cycleColor[cycles.indexOf(c) % cycleColor.length] }}>
                 ({c.join(' ')})
               </span>
-            )) || (lang === 'zh' ? '恒等' : 'identity')}
-            {cycles.every(c => c.length === 1) && (lang === 'zh' ? '恒等 (e)' : 'identity (e)')}
+            )) || (tr({ zh: '恒等', en: 'identity',
+                zhHant: "恆等"
+            }))}
+            {cycles.every(c => c.length === 1) && (tr({ zh: '恒等 (e)', en: 'identity (e)',
+                zhHant: "恆等 (e)"
+            }))}
           </div>
         </div>
         <div className="gt-result-row">
-          <div className="gt-result-label">{lang === 'zh' ? '交叉数' : 'crossings'}</div>
+          <div className="gt-result-label">{tr({ zh: '交叉数', en: 'crossings',
+              zhHant: "交叉數"
+        })}</div>
           <div className="gt-result-val">{crossings}</div>
         </div>
         <div className="gt-result-row">
-          <div className="gt-result-label">{lang === 'zh' ? '奇偶性 sgn(σ)' : 'parity sgn(σ)'}</div>
+          <div className="gt-result-label">{tr({ zh: '奇偶性 sgn(σ)', en: 'parity sgn(σ)' })}</div>
           <div className="gt-result-val" style={{ color: parity === '+1' ? 'var(--green)' : 'var(--accent)' }}>
-            {parity} ({parity === '+1' ? (lang === 'zh' ? '偶' : 'even') : (lang === 'zh' ? '奇' : 'odd')})
+            {parity} ({parity === '+1' ? (tr({ zh: '偶', en: 'even' })) : (tr({ zh: '奇', en: 'odd' }))})
           </div>
         </div>
         <div className="gt-result-row">
-          <div className="gt-result-label">{lang === 'zh' ? '阶 ord(σ)' : 'order ord(σ)'}</div>
+          <div className="gt-result-label">{tr({ zh: '阶 ord(σ)', en: 'order ord(σ)',
+              zhHant: "階 ord(σ)"
+        })}</div>
           <div className="gt-result-val">
             {order} = lcm({cycles.filter(c => c.length > 1).map(c => c.length).join(', ') || '1'})
           </div>
@@ -4619,7 +4985,9 @@ function GaussianEliminationStepper() {
     <div className="gt-lights-gauss">
       <div className="gt-lights-gauss-head">
         <div className="gt-lights-gauss-step">
-          {lang === 'zh' ? '步骤' : 'step'} {step} / {history.length - 1}
+          {tr({ zh: '步骤', en: 'step',
+              zhHant: "步驟"
+        })} {step} / {history.length - 1}
           {snap.pivotRow >= 0 && (
             <span className="gt-lights-gauss-hint">
               {lang === 'zh'
@@ -4629,15 +4997,21 @@ function GaussianEliminationStepper() {
           )}
           {done && (
             <span className="gt-lights-gauss-hint">
-              {lang === 'zh' ? '完全约简 · 解 x 在最右列' : 'fully reduced · solution x in last column'}
+              {tr({ zh: '完全约简 · 解 x 在最右列', en: 'fully reduced · solution x in last column',
+                  zhHant: "完全約簡 · 解 x 在最右列"
+            })}
             </span>
           )}
         </div>
         <div className="gt-lights-gauss-actions">
           <button type="button" className="gt-btn gt-btn-ghost" onClick={prev} disabled={step === 0}>◀</button>
           <button type="button" className="gt-btn gt-btn-ghost" onClick={next} disabled={done}>▶</button>
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={fastForward} disabled={done}>{lang === 'zh' ? '直达' : 'finish'}</button>
-          <button type="button" className="gt-btn" onClick={reset}>{lang === 'zh' ? '新目标' : 'new target'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={fastForward} disabled={done}>{tr({ zh: '直达', en: 'finish',
+              zhHant: "直達"
+        })}</button>
+          <button type="button" className="gt-btn" onClick={reset}>{tr({ zh: '新目标', en: 'new target',
+              zhHant: "新目標"
+        })}</button>
         </div>
       </div>
       <div className="gt-lights-gauss-matrix">
@@ -4654,7 +5028,9 @@ function GaussianEliminationStepper() {
       {x && (
         <div className="gt-lights-gauss-solution">
           <div className="gt-lights-gauss-solution-label">
-            {lang === 'zh' ? '解 x — 按这些按钮即可熄灭目标 b' : 'solution x — press these buttons to clear b'}
+            {tr({ zh: '解 x — 按这些按钮即可熄灭目标 b', en: 'solution x — press these buttons to clear b',
+                zhHant: "解 x — 按這些按鈕即可熄滅目標 b"
+            })}
           </div>
           <div className="gt-lights-gauss-solution-grid">
             {x.map((v, i) => (
@@ -4758,14 +5134,18 @@ function LightChasingAnimator() {
                 style={{ width: 40, height: 40, position: 'relative' }}
               >
                 {wasPressed && <span className="gt-lights-chase-dot" />}
-                {row === 0 && phase !== 'idle' && <span className="gt-lights-chase-row-tag">{lang === 'zh' ? '顶' : 'top'}</span>}
+                {row === 0 && phase !== 'idle' && <span className="gt-lights-chase-row-tag">{tr({ zh: '顶', en: 'top',
+                    zhHant: "頂"
+                })}</span>}
               </div>
             );
           })}
         </div>
         <div className="gt-lights-chase-meta">
-          <div>{lang === 'zh' ? '已按' : 'pressed'}: <strong>{presses.length}</strong></div>
-          <div>{lang === 'zh' ? '剩余亮' : 'still lit'}: <strong>{state.reduce((a, v) => a + v, 0)}</strong></div>
+          <div>{tr({ zh: '已按', en: 'pressed' })}: <strong>{presses.length}</strong></div>
+          <div>{tr({ zh: '剩余亮', en: 'still lit',
+              zhHant: "剩餘亮"
+        })}: <strong>{state.reduce((a, v) => a + v, 0)}</strong></div>
         </div>
       </div>
       <div className="gt-lights-chase-side">
@@ -4785,10 +5165,14 @@ function LightChasingAnimator() {
         </div>
         <div className="gt-lights-chase-actions">
           <button type="button" className="gt-btn" onClick={start} disabled={phase === 'chasing'}>
-            {lang === 'zh' ? '开始追光' : 'start chase'}
+            {tr({ zh: '开始追光', en: 'start chase',
+                zhHant: "開始追光"
+            })}
           </button>
           <button type="button" className="gt-btn gt-btn-ghost" onClick={newPattern}>
-            {lang === 'zh' ? '新图案' : 'new pattern'}
+            {tr({ zh: '新图案', en: 'new pattern',
+                zhHant: "新圖案"
+            })}
           </button>
         </div>
       </div>
@@ -4849,14 +5233,18 @@ function KernelDimTable() {
       <div className="gt-lights-kdim-legend">
         {hover && (
           <span>
-            {lang === 'zh' ? '尺寸' : 'size'} <strong>{hover.m + 1} × {hover.n + 1}</strong>
+            {tr({ zh: '尺寸', en: 'size' })} <strong>{hover.m + 1} × {hover.n + 1}</strong>
             {' · '}
             dim ker = <strong>{dims[hover.m][hover.n]}</strong>
             {' · '}
-            {lang === 'zh' ? '可解图案占比' : 'solvable fraction'} = <strong>1 / {1 << dims[hover.m][hover.n]}</strong>
+            {tr({ zh: '可解图案占比', en: 'solvable fraction',
+                zhHant: "可解圖案佔比"
+            })} = <strong>1 / {1 << dims[hover.m][hover.n]}</strong>
           </span>
         )}
-        {!hover && (lang === 'zh' ? '把鼠标移到格子上看细节。' : 'Hover any cell for details.')}
+        {!hover && (tr({ zh: '把鼠标移到格子上看细节。', en: 'Hover any cell for details.',
+            zhHant: "把滑鼠移到格子上看細節。"
+        }))}
       </div>
     </div>
   );
@@ -5018,11 +5406,13 @@ function SigmaGameOnGraph() {
       </svg>
       <div className="gt-lights-sigma-info">
         <div className="gt-lights-sigma-stat">
-          <span className="gt-lights-sigma-stat-label">{lang === 'zh' ? '点亮' : 'lit'}</span>
+          <span className="gt-lights-sigma-stat-label">{tr({ zh: '点亮', en: 'lit',
+              zhHant: "點亮"
+        })}</span>
           <strong>{litCount} / {n}</strong>
         </div>
         <div className="gt-lights-sigma-stat">
-          <span className="gt-lights-sigma-stat-label">{lang === 'zh' ? '按了' : 'pressed'}</span>
+          <span className="gt-lights-sigma-stat-label">{tr({ zh: '按了', en: 'pressed' })}</span>
           <strong>{pressed.size}</strong>
         </div>
         <div className="gt-lights-sigma-stat">
@@ -5030,22 +5420,26 @@ function SigmaGameOnGraph() {
           <strong>{kernel.length}</strong>
         </div>
         <div className="gt-lights-sigma-stat">
-          <span className="gt-lights-sigma-stat-label">{lang === 'zh' ? '全亮可解' : 'all-ones reachable'}</span>
+          <span className="gt-lights-sigma-stat-label">{tr({ zh: '全亮可解', en: 'all-ones reachable' })}</span>
           <strong style={{ color: solvable ? 'var(--green)' : 'var(--accent)' }}>
-            {solvable ? (lang === 'zh' ? '是' : 'yes') : (lang === 'zh' ? '否' : 'no')}
+            {solvable ? (tr({ zh: '是', en: 'yes' })) : (tr({ zh: '否', en: 'no' }))}
           </strong>
         </div>
       </div>
       <div className="gt-lights-sigma-actions">
         <button type="button" className="gt-btn" onClick={showSolution} disabled={!solvable}>
-          {lang === 'zh' ? '显示全亮解' : 'show all-ones solution'}
+          {tr({ zh: '显示全亮解', en: 'show all-ones solution',
+              zhHant: "顯示全亮解"
+        })}
         </button>
         <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>
-          {lang === 'zh' ? '清空' : 'reset'}
+          {tr({ zh: '清空', en: 'reset' })}
         </button>
         {allLit && pressed.size > 0 && (
           <span className="gt-lights-sigma-verdict" style={{ color: 'var(--green)' }}>
-            {lang === 'zh' ? '全亮 — Sutner 定理保证总能做到 (σ⁺ 游戏)。' : 'all on — Sutner\'s theorem guarantees this is always possible (σ⁺-game).'}
+            {tr({ zh: '全亮 — Sutner 定理保证总能做到 (σ⁺ 游戏)。', en: 'all on — Sutner\'s theorem guarantees this is always possible (σ⁺-game).',
+                zhHant: "全亮 — Sutner 定理保證總能做到 (σ⁺ 遊戲)。"
+            })}
           </span>
         )}
       </div>
@@ -5197,10 +5591,12 @@ function PegBoardChoose() {
           <button key={b} type="button"
             className={`gt-chip ${name === b ? 'gt-chip-active' : ''}`}
             onClick={() => setName(b)}>
-            {b === 'english'  ? (lang === 'zh' ? '英式 33' : 'English 33')
-            : b === 'european' ? (lang === 'zh' ? '欧式 37' : 'European 37')
-            : b === 'triangle' ? (lang === 'zh' ? '三角 15' : 'Triangle 15')
-            :                    (lang === 'zh' ? '菱形 25' : 'Diamond 25')}
+            {b === 'english'  ? (tr({ zh: '英式 33', en: 'English 33' }))
+            : b === 'european' ? (tr({ zh: '欧式 37', en: 'European 37',
+                zhHant: "歐式 37"
+            }))
+            : b === 'triangle' ? (tr({ zh: '三角 15', en: 'Triangle 15' }))
+            :                    (tr({ zh: '菱形 25', en: 'Diamond 25' }))}
           </button>
         ))}
       </div>
@@ -5221,8 +5617,10 @@ function PegBoardChoose() {
         </div>
         <div className="gt-peg-controls">
           <div className="gt-peg-info">
-            <div><span className="gt-peg-label">{lang === 'zh' ? '剩余棋子' : 'pegs'}</span> <strong>{pegCount}</strong></div>
-            <div><span className="gt-peg-label">{lang === 'zh' ? '已走步' : 'moves'}</span> <strong>{moveCount}</strong></div>
+            <div><span className="gt-peg-label">{tr({ zh: '剩余棋子', en: 'pegs',
+                zhHant: "剩餘棋子"
+            })}</span> <strong>{pegCount}</strong></div>
+            <div><span className="gt-peg-label">{tr({ zh: '已走步', en: 'moves' })}</span> <strong>{moveCount}</strong></div>
           </div>
           {overlay !== 'none' && (
             <div className="gt-peg-coloring">
@@ -5232,9 +5630,13 @@ function PegBoardChoose() {
             </div>
           )}
           <div className="gt-peg-buttons">
-            <button type="button" className="gt-btn gt-btn-ghost" onClick={undo} disabled={hist.length <= 1}>{lang === 'zh' ? '撤销' : 'undo'}</button>
-            <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{lang === 'zh' ? '重置' : 'reset'}</button>
-            <button type="button" className={`gt-chip ${overlay === 'none' ? 'gt-chip-active' : ''}`} onClick={() => setOverlay('none')}>{lang === 'zh' ? '关闭着色' : 'no colour'}</button>
+            <button type="button" className="gt-btn gt-btn-ghost" onClick={undo} disabled={hist.length <= 1}>{tr({ zh: '撤销', en: 'undo',
+                zhHant: "撤銷"
+            })}</button>
+            <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{tr({ zh: '重置', en: 'reset' })}</button>
+            <button type="button" className={`gt-chip ${overlay === 'none' ? 'gt-chip-active' : ''}`} onClick={() => setOverlay('none')}>{tr({ zh: '关闭着色', en: 'no colour',
+                zhHant: "關閉著色"
+            })}</button>
             <button type="button" className={`gt-chip ${overlay === 'diag1' ? 'gt-chip-active' : ''}`} onClick={() => setOverlay('diag1')}>↗</button>
             <button type="button" className={`gt-chip ${overlay === 'diag2' ? 'gt-chip-active' : ''}`} onClick={() => setOverlay('diag2')}>↘</button>
           </div>
@@ -5304,15 +5706,19 @@ function PagodaCalculator() {
           <div><span className="gt-peg-label">∑ f</span> <strong>{sum}</strong></div>
           {verified && (
             verified.ok
-              ? <div style={{ color: 'var(--green)' }}>✓ {lang === 'zh' ? '有效 pagoda · 任意跳均不增和' : 'valid pagoda — sum is non-increasing'}</div>
+              ? <div style={{ color: 'var(--green)' }}>✓ {tr({ zh: '有效 pagoda · 任意跳均不增和', en: 'valid pagoda — sum is non-increasing' })}</div>
               : <div style={{ color: '#C84A4A' }}>✗ {lang === 'zh' ? `${verified.bad.length} 个三元组违反 f(b) ≤ f(a) + f(c)` : `${verified.bad.length} triples violate f(b) ≤ f(a) + f(c)`}</div>
           )}
         </div>
         <div className="gt-peg-buttons">
-          <button type="button" className="gt-btn" onClick={verify}>{lang === 'zh' ? '验证 pagoda' : 'verify pagoda'}</button>
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setF(defaultF); setVerified(null); }}>{lang === 'zh' ? 'Fibonacci 预设' : 'Fibonacci preset'}</button>
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setF(cells.map(() => 0)); setVerified(null); }}>{lang === 'zh' ? '清零' : 'clear'}</button>
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setF(cells.map(() => 1)); setVerified(null); }}>{lang === 'zh' ? '全 1' : 'all 1'}</button>
+          <button type="button" className="gt-btn" onClick={verify}>{tr({ zh: '验证 pagoda', en: 'verify pagoda',
+              zhHant: "驗證 pagoda"
+        })}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setF(defaultF); setVerified(null); }}>{tr({ zh: 'Fibonacci 预设', en: 'Fibonacci preset',
+              zhHant: "Fibonacci 預設"
+        })}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setF(cells.map(() => 0)); setVerified(null); }}>{tr({ zh: '清零', en: 'clear' })}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setF(cells.map(() => 1)); setVerified(null); }}>{tr({ zh: '全 1', en: 'all 1' })}</button>
         </div>
       </div>
     </div>
@@ -5354,10 +5760,10 @@ function GF4ColouringDisplay() {
         })}
       </div>
       <div className="gt-peg-gf4-legend">
-        <div><span className="gf4-swatch gf4-1"  /> 1  · {lang === 'zh' ? '偶行偶列' : 'even,even'} · {counts['1']}</div>
-        <div><span className="gf4-swatch gf4-a"  /> a  · {lang === 'zh' ? '奇行偶列' : 'odd,even'}  · {counts['a']}</div>
-        <div><span className="gf4-swatch gf4-b"  /> b  · {lang === 'zh' ? '偶行奇列' : 'even,odd'}  · {counts['b']}</div>
-        <div><span className="gf4-swatch gf4-ab" /> ab · {lang === 'zh' ? '奇行奇列' : 'odd,odd'}   · {counts['ab']}</div>
+        <div><span className="gf4-swatch gf4-1"  /> 1  · {tr({ zh: '偶行偶列', en: 'even,even' })} · {counts['1']}</div>
+        <div><span className="gf4-swatch gf4-a"  /> a  · {tr({ zh: '奇行偶列', en: 'odd,even' })}  · {counts['a']}</div>
+        <div><span className="gf4-swatch gf4-b"  /> b  · {tr({ zh: '偶行奇列', en: 'even,odd' })}  · {counts['b']}</div>
+        <div><span className="gf4-swatch gf4-ab" /> ab · {tr({ zh: '奇行奇列', en: 'odd,odd' })}   · {counts['ab']}</div>
         <div className="gt-peg-gf4-claim">
           {lang === 'zh'
             ? <>每次合法跳跃 a → b 跨 c 都满足 a + b + c = 0 ∈ GF(4); 因此整盘的 GF(4)-和守恒。</>
@@ -5454,22 +5860,30 @@ function PegMoveReplay() {
       </div>
       <div className="gt-peg-controls">
         <div className="gt-peg-info">
-          <div><span className="gt-peg-label">{lang === 'zh' ? '步骤' : 'step'}</span> <strong>{step} / 18</strong></div>
-          <div><span className="gt-peg-label">{lang === 'zh' ? '剩余棋子' : 'pegs'}</span> <strong>{pegCount}</strong></div>
+          <div><span className="gt-peg-label">{tr({ zh: '步骤', en: 'step',
+              zhHant: "步驟"
+        })}</span> <strong>{step} / 18</strong></div>
+          <div><span className="gt-peg-label">{tr({ zh: '剩余棋子', en: 'pegs',
+              zhHant: "剩餘棋子"
+        })}</span> <strong>{pegCount}</strong></div>
           {step > 0 && step <= BERGHOLT_18.length && (
             <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-dim)' }}>
               {BERGHOLT_18[step - 1].label}
             </div>
           )}
-          {step === 18 && <div style={{ color: 'var(--green)' }}>★ {lang === 'zh' ? '到达终局 d4' : 'finish at d4'}</div>}
+          {step === 18 && <div style={{ color: 'var(--green)' }}>★ {tr({ zh: '到达终局 d4', en: 'finish at d4',
+              zhHant: "到達終局 d4"
+        })}</div>}
         </div>
         <div className="gt-peg-buttons">
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setStep(0); setPlaying(false); }}>{lang === 'zh' ? '重置' : 'reset'}</button>
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>← {lang === 'zh' ? '退一步' : 'back'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setStep(0); setPlaying(false); }}>{tr({ zh: '重置', en: 'reset' })}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>← {tr({ zh: '退一步', en: 'back' })}</button>
           <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
-            {playing ? (lang === 'zh' ? '⏸ 暂停' : '⏸ pause') : (lang === 'zh' ? '▶ 播放' : '▶ play')}
+            {playing ? (tr({ zh: '⏸ 暂停', en: '⏸ pause',
+                zhHant: "⏸ 暫停"
+            })) : (tr({ zh: '▶ 播放', en: '▶ play' }))}
           </button>
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.min(states.length - 1, s + 1))} disabled={step >= states.length - 1}>{lang === 'zh' ? '前一步' : 'next'} →</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.min(states.length - 1, s + 1))} disabled={step >= states.length - 1}>{tr({ zh: '前一步', en: 'next' })} →</button>
         </div>
       </div>
     </div>
@@ -5665,16 +6079,24 @@ function KnightTourBoard() {
       </svg>
       <div className="gt-ham-knight-side">
         <div className="gt-ham-knight-info">
-          <div><span className="gt-peg-label">{lang === 'zh' ? '步骤' : 'step'}</span> <strong>{step + 1} / 64</strong></div>
-          <div><span className="gt-peg-label">{lang === 'zh' ? '当前格' : 'square'}</span> <strong>{String.fromCharCode(97 + cur[1])}{cur[0] + 1}</strong></div>
+          <div><span className="gt-peg-label">{tr({ zh: '步骤', en: 'step',
+              zhHant: "步驟"
+        })}</span> <strong>{step + 1} / 64</strong></div>
+          <div><span className="gt-peg-label">{tr({ zh: '当前格', en: 'square',
+              zhHant: "當前格"
+        })}</span> <strong>{String.fromCharCode(97 + cur[1])}{cur[0] + 1}</strong></div>
         </div>
         <div className="gt-ham-knight-buttons">
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setStep(0); setPlaying(false); }}>{lang === 'zh' ? '重置' : 'reset'}</button>
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>← {lang === 'zh' ? '退' : 'back'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setStep(0); setPlaying(false); }}>{tr({ zh: '重置', en: 'reset' })}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>← {tr({ zh: '退', en: 'back' })}</button>
           <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
-            {playing ? (lang === 'zh' ? '暂停' : 'pause') : (lang === 'zh' ? '播放' : 'play')}
+            {playing ? (tr({ zh: '暂停', en: 'pause',
+                zhHant: "暫停"
+            })) : (tr({ zh: '播放', en: 'play' }))}
           </button>
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.min(tour.length - 1, s + 1))} disabled={step >= tour.length - 1}>{lang === 'zh' ? '前进' : 'next'} →</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.min(tour.length - 1, s + 1))} disabled={step >= tour.length - 1}>{tr({ zh: '前进', en: 'next',
+              zhHant: "前進"
+        })} →</button>
         </div>
         <div className="gt-ham-knight-note">
           {lang === 'zh'
@@ -5753,10 +6175,12 @@ function HypercubeGrayWalker() {
         <button type="button" className={`gt-chip ${n === 4 ? 'gt-chip-active' : ''}`}
                 onClick={() => { setN(4); setStep(0); setPlaying(false); }}>Q₄</button>
         <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
-          {playing ? (lang === 'zh' ? '暂停' : 'pause') : (lang === 'zh' ? '播放' : 'play')}
+          {playing ? (tr({ zh: '暂停', en: 'pause',
+              zhHant: "暫停"
+        })) : (tr({ zh: '播放', en: 'play' }))}
         </button>
         <button type="button" className="gt-btn gt-btn-ghost"
-                onClick={() => { setStep(0); setPlaying(false); }}>{lang === 'zh' ? '重置' : 'reset'}</button>
+                onClick={() => { setStep(0); setPlaying(false); }}>{tr({ zh: '重置', en: 'reset' })}</button>
         <span className="gt-gray-step">{step + 1} / {gray.length}</span>
       </div>
       <svg width="360" height="320" viewBox="0 0 360 320">
@@ -5891,18 +6315,24 @@ function PetersenInteractive() {
           <button type="button" className="gt-btn"
                   onClick={() => setShowPath(p => !p)}>
             {showPath
-              ? (lang === 'zh' ? '隐藏 Ham 路径' : 'hide Ham path')
-              : (lang === 'zh' ? '显示 Ham 路径' : 'show Ham path')}
+              ? (tr({ zh: '隐藏 Ham 路径', en: 'hide Ham path',
+                  zhHant: "隱藏 Ham 路徑"
+            }))
+              : (tr({ zh: '显示 Ham 路径', en: 'show Ham path',
+                  zhHant: "顯示 Ham 路徑"
+            }))}
           </button>
         </div>
         <div className="gt-petersen-extra-row">
           <button type="button" className={`gt-chip ${showLabels === 'num' ? 'gt-chip-active' : ''}`}
                   onClick={() => setShowLabels('num')}>
-            {lang === 'zh' ? '编号 0..9' : 'numbers 0..9'}
+            {tr({ zh: '编号 0..9', en: 'numbers 0..9',
+                zhHant: "編號 0..9"
+            })}
           </button>
           <button type="button" className={`gt-chip ${showLabels === 'set' ? 'gt-chip-active' : ''}`}
                   onClick={() => setShowLabels('set')}>
-            {lang === 'zh' ? '二元子集' : '2-subsets'}
+            {tr({ zh: '二元子集', en: '2-subsets' })}
           </button>
         </div>
         <div className="gt-petersen-extra-row">
@@ -6023,19 +6453,27 @@ function CosetChainBuilder() {
       </svg>
       <div className="gt-ham-coset-side">
         <div className="gt-ham-coset-info">
-          <div><span className="gt-peg-label">{lang === 'zh' ? '步骤' : 'step'}</span> <strong>{step} / {cycle.path.length - 1}</strong></div>
-          <div><span className="gt-peg-label">{lang === 'zh' ? '当前' : 'now at'}</span> <strong>{cur}</strong></div>
+          <div><span className="gt-peg-label">{tr({ zh: '步骤', en: 'step',
+              zhHant: "步驟"
+        })}</span> <strong>{step} / {cycle.path.length - 1}</strong></div>
+          <div><span className="gt-peg-label">{tr({ zh: '当前', en: 'now at',
+              zhHant: "當前"
+        })}</span> <strong>{cur}</strong></div>
           {step > 0 && (
             <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-dim)' }}>
-              {lang === 'zh' ? '刚走' : 'last move'}: <strong>{cycle.labels[step - 1]}</strong>
+              {tr({ zh: '刚走', en: 'last move',
+                  zhHant: "剛走"
+            })}: <strong>{cycle.labels[step - 1]}</strong>
             </div>
           )}
         </div>
         <div className="gt-ham-coset-buttons">
-          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setStep(0); setPlaying(false); }}>{lang === 'zh' ? '重置' : 'reset'}</button>
+          <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setStep(0); setPlaying(false); }}>{tr({ zh: '重置', en: 'reset' })}</button>
           <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>←</button>
           <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
-            {playing ? (lang === 'zh' ? '暂停' : 'pause') : (lang === 'zh' ? '播放' : 'play')}
+            {playing ? (tr({ zh: '暂停', en: 'pause',
+                zhHant: "暫停"
+            })) : (tr({ zh: '播放', en: 'play' }))}
           </button>
           <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.min(cycle.path.length - 1, s + 1))} disabled={step >= cycle.path.length - 1}>→</button>
         </div>
@@ -6107,13 +6545,15 @@ function GrayCodeFamily() {
                   className={`gt-chip ${n === k ? 'gt-chip-active' : ''}`}
                   onClick={() => setN(k)}>n = {k}</button>
         ))}
-        <span className="gt-peg-label" style={{ marginLeft: 12 }}>{lang === 'zh' ? '族' : 'family'}</span>
+        <span className="gt-peg-label" style={{ marginLeft: 12 }}>{tr({ zh: '族', en: 'family' })}</span>
         <button type="button" className={`gt-chip ${family === 'brgc' ? 'gt-chip-active' : ''}`}
-                onClick={() => setFamily('brgc')}>{lang === 'zh' ? '反射二进制' : 'reflected'}</button>
+                onClick={() => setFamily('brgc')}>{tr({ zh: '反射二进制', en: 'reflected',
+                    zhHant: "反射二進位制"
+                })}</button>
         <button type="button" className={`gt-chip ${family === 'balanced' ? 'gt-chip-active' : ''}`}
-                onClick={() => setFamily('balanced')}>{lang === 'zh' ? '平衡' : 'balanced'}</button>
+                onClick={() => setFamily('balanced')}>{tr({ zh: '平衡', en: 'balanced' })}</button>
         <button type="button" className={`gt-chip ${family === 'anti' ? 'gt-chip-active' : ''}`}
-                onClick={() => setFamily('anti')}>{lang === 'zh' ? '反 Gray' : 'anti-Gray'}</button>
+                onClick={() => setFamily('anti')}>{tr({ zh: '反 Gray', en: 'anti-Gray' })}</button>
       </div>
       <div className="gt-ham-gray-family-list">
         {seq.map((g, i) => {
@@ -6213,7 +6653,9 @@ function CrossRatioCalc() {
   return (
     <div className="gt-pgl-cross">
       <div className="gt-pgl-cross-row">
-        <span className="gt-pgl-cross-label">{lang === 'zh' ? '四点' : 'four points'}</span>
+        <span className="gt-pgl-cross-label">{tr({ zh: '四点', en: 'four points',
+            zhHant: "四點"
+        })}</span>
         {(['a', 'b', 'c', 'd'] as const).map((k, i) => {
           const v = [a, b, c, d][i];
           const setV = [setA, setB, setC, setD][i];
@@ -6235,13 +6677,17 @@ function CrossRatioCalc() {
         <strong>{fmt(cr0)}</strong>
         {!distinct && (
           <span className="gt-pgl-cross-warn">
-            {lang === 'zh' ? '注:四点未全相异' : 'note: four points not all distinct'}
+            {tr({ zh: '注:四点未全相异', en: 'note: four points not all distinct',
+                zhHant: "注:四點未全相異"
+            })}
           </span>
         )}
       </div>
       <div className="gt-pgl-cross-mob">
         <div className="gt-pgl-cross-mob-title">
-          {lang === 'zh' ? '应用 Möbius 变换并验不变性' : 'apply a Möbius transformation, watch invariance'}
+          {tr({ zh: '应用 Möbius 变换并验不变性', en: 'apply a Möbius transformation, watch invariance',
+              zhHant: "應用 Möbius 變換並驗不變性"
+        })}
         </div>
         <div className="gt-pgl-cross-mob-grid">
           {[[ma, mb], [mc, md]].map((row, ri) =>
@@ -6264,27 +6710,35 @@ function CrossRatioCalc() {
         <div className="gt-pgl-cross-mob-det">
           det = {detM}{' '}
           {detM === 0
-            ? <span style={{ color: 'var(--accent)' }}>· {lang === 'zh' ? '退化' : 'singular'}</span>
+            ? <span style={{ color: 'var(--accent)' }}>· {tr({ zh: '退化', en: 'singular' })}</span>
             : <span style={{ color: 'var(--green)' }}>· ∈ PGL₂(𝔽₅)</span>}
         </div>
         <div className="gt-pgl-cross-result">
           <div>
-            <span className="gt-peg-label">{lang === 'zh' ? '变换后四点' : 'transformed quadruple'}</span>
+            <span className="gt-peg-label">{tr({ zh: '变换后四点', en: 'transformed quadruple',
+                zhHant: "變換後四點"
+            })}</span>
             <span className="gt-mono">
               ({fmt(a1)}, {fmt(b1)}, {fmt(c1)}, {fmt(d1)})
             </span>
           </div>
           <div>
-            <span className="gt-peg-label">{lang === 'zh' ? '变换后交比' : 'new cross-ratio'}</span>
+            <span className="gt-peg-label">{tr({ zh: '变换后交比', en: 'new cross-ratio',
+                zhHant: "變換後交比"
+            })}</span>
             <strong>{fmt(cr1)}</strong>
             {detM !== 0 && distinct && String(cr0) === String(cr1) && (
               <span style={{ color: 'var(--green)', marginLeft: 8 }}>
-                ✓ {lang === 'zh' ? '不变 (PGL₂(𝔽₅) 保持交比)' : 'invariant (PGL₂(𝔽₅) preserves cross-ratio)'}
+                ✓ {tr({ zh: '不变 (PGL₂(𝔽₅) 保持交比)', en: 'invariant (PGL₂(𝔽₅) preserves cross-ratio)',
+                    zhHant: "不變 (PGL₂(𝔽₅) 保持交比)"
+                })}
               </span>
             )}
             {detM !== 0 && distinct && String(cr0) !== String(cr1) && (
               <span style={{ color: 'var(--accent)', marginLeft: 8 }}>
-                {lang === 'zh' ? '注:交比恒不变,如果不等应该是 ∞/0 边界 case' : 'cross-ratio should match; mismatch indicates ∞/0 edge case'}
+                {tr({ zh: '注:交比恒不变,如果不等应该是 ∞/0 边界 case', en: 'cross-ratio should match; mismatch indicates ∞/0 edge case',
+                    zhHant: "注:交比恆不變,如果不等應該是 ∞/0 邊界 case"
+                })}
               </span>
             )}
           </div>
@@ -6411,7 +6865,9 @@ function SynthemeTotalsViewer() {
               ))}
             </div>
             <div className="gt-s6-syn-card-foot">
-              {lang === 'zh' ? '→ 经 σ 映到' : '→ under σ ↦'}{' '}
+              {tr({ zh: '→ 经 σ 映到', en: '→ under σ ↦',
+                  zhHant: "→ 經 σ 映到"
+            })}{' '}
               <strong style={{ color: palette[mapped[i]] }}>
                 {lang === 'zh' ? `总 ${'ABCDEF'[mapped[i]]}` : `total ${'ABCDEF'[mapped[i]]}`}
               </strong>
@@ -6421,7 +6877,7 @@ function SynthemeTotalsViewer() {
       </div>
       <div className="gt-s6-syn-perm">
         <div className="gt-s6-syn-perm-title">
-          {lang === 'zh' ? 'σ ∈ S₆ (作用在 {1..6}) =' : 'σ ∈ S₆ (acting on {1..6}) ='}{' '}
+          {tr({ zh: 'σ ∈ S₆ (作用在 {1..6}) =', en: 'σ ∈ S₆ (acting on {1..6}) =' })}{' '}
           <span className="gt-mono">[{perm.join(', ')}]</span>
         </div>
         <div className="gt-s6-syn-perm-buttons">
@@ -6463,7 +6919,9 @@ function SynthemeTotalsViewer() {
           ))}
         </div>
         <div className="gt-s6-syn-pickedinfo-foot">
-          {lang === 'zh' ? '5 个 syntheme,15 条 duad — 正好覆盖 ' : '5 synthemes, 15 duads — covering exactly '}<TeX src="\binom{6}{2} = 15" />
+          {tr({ zh: '5 个 syntheme,15 条 duad — 正好覆盖 ', en: '5 synthemes, 15 duads — covering exactly ',
+              zhHant: "5 個 syntheme,15 條 duad — 正好覆蓋 "
+        })}<TeX src="\binom{6}{2} = 15" />
         </div>
       </div>
     </div>
@@ -6565,13 +7023,15 @@ function IcosahedronP1F5() {
       </svg>
       <div className="gt-pgl-ico-side">
         <div className="gt-pgl-ico-title">
-          {lang === 'zh'
-            ? '12 顶点 = 6 对极点,每对贴一个 ℙ¹(𝔽₅) 标号'
-            : '12 vertices = 6 antipodal pairs, each pair labelled by a point of ℙ¹(𝔽₅)'}
+          {tr({ zh: '12 顶点 = 6 对极点,每对贴一个 ℙ¹(𝔽₅) 标号', en: '12 vertices = 6 antipodal pairs, each pair labelled by a point of ℙ¹(𝔽₅)',
+              zhHant: "12 頂點 = 6 對極點,每對貼一個 ℙ¹(𝔽₅) 標號"
+        })}
         </div>
         <div className="gt-pgl-ico-buttons">
           <button type="button" className={'gt-chip' + (rot === 'id' ? ' is-active' : '')} onClick={() => setRot('id')}>
-            {lang === 'zh' ? '不动' : 'identity'}
+            {tr({ zh: '不动', en: 'identity',
+                zhHant: "不動"
+            })}
           </button>
           <button type="button" className={'gt-chip' + (rot === 'T' ? ' is-active' : '')} onClick={() => setRot('T')}>
             T : z ↦ z + 1
@@ -6655,26 +7115,38 @@ function OrderHistogramTwoFace() {
     <div className="gt-pgl-hist">
       <div className="gt-pgl-hist-controls">
         <label>
-          {lang === 'zh' ? '最长字 len ≤ ' : 'word length ≤ '}
+          {tr({ zh: '最长字 len ≤ ', en: 'word length ≤ ',
+              zhHant: "最長字 len ≤ "
+        })}
           <input type="range" min={4} max={50} value={maxLen} onChange={e => setMaxLen(parseInt(e.target.value, 10))} />
           <span className="gt-mono">{maxLen}</span>
         </label>
         <label>
-          {lang === 'zh' ? '采样数 N = ' : 'samples N = '}
+          {tr({ zh: '采样数 N = ', en: 'samples N = ',
+              zhHant: "取樣數 N = "
+        })}
           <input type="range" min={500} max={20000} step={500} value={N} onChange={e => setN(parseInt(e.target.value, 10))} />
           <span className="gt-mono">{N}</span>
         </label>
         <button type="button" className="gt-btn" onClick={() => setSeed(s => s + 1)}>
-          {lang === 'zh' ? '重抽' : 'reroll'}
+          {tr({ zh: '重抽', en: 'reroll' })}
         </button>
       </div>
       <table className="gt-pgl-hist-tbl">
         <thead>
           <tr>
-            <th>{lang === 'zh' ? '阶' : 'order'}</th>
-            <th>{lang === 'zh' ? '理论 (S₅ 占比)' : 'theory (S₅ share)'}</th>
-            <th>{lang === 'zh' ? '采样占比' : 'sample share'}</th>
-            <th>{lang === 'zh' ? '条形' : 'bar'}</th>
+            <th>{tr({ zh: '阶', en: 'order',
+                zhHant: "階"
+            })}</th>
+            <th>{tr({ zh: '理论 (S₅ 占比)', en: 'theory (S₅ share)',
+                zhHant: "理論 (S₅ 佔比)"
+            })}</th>
+            <th>{tr({ zh: '采样占比', en: 'sample share',
+                zhHant: "取樣佔比"
+            })}</th>
+            <th>{tr({ zh: '条形', en: 'bar',
+                zhHant: "條形"
+            })}</th>
           </tr>
         </thead>
         <tbody>
@@ -6698,8 +7170,12 @@ function OrderHistogramTwoFace() {
         </tbody>
       </table>
       <div className="gt-pgl-hist-legend">
-        <span><span className="gt-pgl-hist-swatch gt-pgl-hist-bar-theory" /> {lang === 'zh' ? '理论 (S₅ 全部 120 元素)' : 'theory (all 120 elements of S₅)'}</span>
-        <span><span className="gt-pgl-hist-swatch gt-pgl-hist-bar-sample" /> {lang === 'zh' ? '⟨R, U⟩ 采样' : '⟨R, U⟩ samples'}</span>
+        <span><span className="gt-pgl-hist-swatch gt-pgl-hist-bar-theory" /> {tr({ zh: '理论 (S₅ 全部 120 元素)', en: 'theory (all 120 elements of S₅)',
+            zhHant: "理論 (S₅ 全部 120 元素)"
+        })}</span>
+        <span><span className="gt-pgl-hist-swatch gt-pgl-hist-bar-sample" /> {tr({ zh: '⟨R, U⟩ 采样', en: '⟨R, U⟩ samples',
+            zhHant: "⟨R, U⟩ 取樣"
+        })}</span>
       </div>
     </div>
   );
@@ -6801,7 +7277,9 @@ function TwoFaceTurner() {
         <div className="gt-rot-turner-btns">
           <button type="button" onClick={applyFace1} disabled={f1 < 2}>L<sup>+</sup></button>
           <button type="button" onClick={applyFace2} disabled={f2 < 2}>R<sup>+</sup></button>
-          <button type="button" onClick={reset} className="gt-rot-reset">{lang === 'zh' ? '复位' : 'reset'}</button>
+          <button type="button" onClick={reset} className="gt-rot-reset">{tr({ zh: '复位', en: 'reset',
+              zhHant: "復位"
+        })}</button>
         </div>
       </div>
       <svg width="340" height="260" viewBox="0 0 340 260" className="gt-rot-turner-svg">
@@ -6823,21 +7301,25 @@ function TwoFaceTurner() {
       </svg>
       <div className="gt-rot-turner-info">
         <div className="gt-rot-info-row">
-          <span className="gt-rot-info-lbl">{lang === 'zh' ? '当前置换' : 'current perm'}</span>
+          <span className="gt-rot-info-lbl">{tr({ zh: '当前置换', en: 'current perm',
+              zhHant: "當前置換"
+        })}</span>
           <span className="gt-rot-info-val">
             {cycles.length === 0
-              ? (lang === 'zh' ? '恒等 e' : 'identity e')
+              ? (tr({ zh: '恒等 e', en: 'identity e',
+                  zhHant: "恆等 e"
+            }))
               : cycles.map((c, i) => (
                 <span key={i}>({c.map(labelOf).join(' ')})</span>
               ))}
           </span>
         </div>
         <div className="gt-rot-info-row">
-          <span className="gt-rot-info-lbl">{lang === 'zh' ? '奇偶性' : 'parity'}</span>
+          <span className="gt-rot-info-lbl">{tr({ zh: '奇偶性', en: 'parity' })}</span>
           <span className="gt-rot-info-val">{sign === 1 ? '+1 (even)' : '−1 (odd)'}</span>
         </div>
         <div className="gt-rot-info-row">
-          <span className="gt-rot-info-lbl">{lang === 'zh' ? '圈型' : 'cycle type'}</span>
+          <span className="gt-rot-info-lbl">{tr({ zh: '圈型', en: 'cycle type' })}</span>
           <span className="gt-rot-info-val">
             {cycles.length === 0
               ? `1^${n}`
@@ -7028,7 +7510,7 @@ function SchreierSimsDemo() {
   // Base [1,2,3,4]; show orbit sizes 5, 4, 3, 2 ⇒ |S_5| = 5·4·3·2·1 = 120
   const trace = [
     {
-      title: lang === 'zh' ? '生成元' : 'generators',
+      title: tr({ zh: '生成元', en: 'generators' }),
       body: lang === 'zh'
         ? <>g₁ = (1 2 3 4 5),  g₂ = (1 2)。 候选群 G ⊆ S₅</>
         : <>g₁ = (1 2 3 4 5),  g₂ = (1 2). Candidate G ⊆ S₅</>,
@@ -7037,7 +7519,9 @@ function SchreierSimsDemo() {
       gens: ['g₁', 'g₂'],
     },
     {
-      title: lang === 'zh' ? '第 1 层:base point = 1' : 'level 1: base point = 1',
+      title: tr({ zh: '第 1 层:base point = 1', en: 'level 1: base point = 1',
+          zhHant: "第 1 層:base point = 1"
+    }),
       body: lang === 'zh'
         ? <>固定 1 的子群 G₁ 由 Schreier 生成元生成。 G/G₁ 轨道:{`{1,2,3,4,5}`} (大小 5)</>
         : <>Stabiliser G₁ of 1 generated by Schreier generators. Orbit of 1: {`{1,2,3,4,5}`} (size 5)</>,
@@ -7046,7 +7530,9 @@ function SchreierSimsDemo() {
       gens: ['g₂', 'g₁ g₂ g₁⁻¹', 'g₁² g₂ g₁⁻²'],
     },
     {
-      title: lang === 'zh' ? '第 2 层:base point = 2' : 'level 2: base point = 2',
+      title: tr({ zh: '第 2 层:base point = 2', en: 'level 2: base point = 2',
+          zhHant: "第 2 層:base point = 2"
+    }),
       body: lang === 'zh'
         ? <>G₁ 作用于 {`{2,3,4,5}`},轨道完整 (大小 4)</>
         : <>G₁ acts on {`{2,3,4,5}`}; orbit fills (size 4)</>,
@@ -7055,21 +7541,27 @@ function SchreierSimsDemo() {
       gens: ['(2 3)', '(3 4)', '(4 5)'],
     },
     {
-      title: lang === 'zh' ? '第 3 层:base = 3' : 'level 3: base = 3',
+      title: tr({ zh: '第 3 层:base = 3', en: 'level 3: base = 3',
+          zhHant: "第 3 層:base = 3"
+    }),
       body: lang === 'zh' ? <>剩余轨道大小 3</> : <>Remaining orbit size 3</>,
       orbit: [3, 4, 5],
       orbitOf: 3,
       gens: ['(3 4)', '(4 5)'],
     },
     {
-      title: lang === 'zh' ? '第 4 层:base = 4' : 'level 4: base = 4',
+      title: tr({ zh: '第 4 层:base = 4', en: 'level 4: base = 4',
+          zhHant: "第 4 層:base = 4"
+    }),
       body: lang === 'zh' ? <>轨道大小 2</> : <>Orbit size 2</>,
       orbit: [4, 5],
       orbitOf: 4,
       gens: ['(4 5)'],
     },
     {
-      title: lang === 'zh' ? '终止' : 'finish',
+      title: tr({ zh: '终止', en: 'finish',
+          zhHant: "終止"
+    }),
       body: lang === 'zh'
         ? <>稳定子链 G ⊃ G₁ ⊃ G₁₂ ⊃ G₁₂₃ ⊃ G₁₂₃₄ = {`{e}`}。 |G| = 5·4·3·2·1 = <strong>120</strong></>
         : <>Stabiliser chain G ⊃ G₁ ⊃ G₁₂ ⊃ G₁₂₃ ⊃ G₁₂₃₄ = {`{e}`}. |G| = 5·4·3·2·1 = <strong>120</strong></>,
@@ -7084,9 +7576,11 @@ function SchreierSimsDemo() {
       <div className="gt-rot-ss-head">
         <div className="gt-rot-ss-step">{lang === 'zh' ? `第 ${step} / ${trace.length - 1} 步` : `step ${step} / ${trace.length - 1}`}</div>
         <div className="gt-rot-ss-btns">
-          <button type="button" onClick={() => setStep(s => Math.max(0, s - 1))}>{lang === 'zh' ? '上一步' : 'prev'}</button>
-          <button type="button" onClick={() => setStep(s => Math.min(trace.length - 1, s + 1))}>{lang === 'zh' ? '下一步' : 'next'}</button>
-          <button type="button" onClick={() => setStep(0)} className="gt-rot-reset">{lang === 'zh' ? '复位' : 'reset'}</button>
+          <button type="button" onClick={() => setStep(s => Math.max(0, s - 1))}>{tr({ zh: '上一步', en: 'prev' })}</button>
+          <button type="button" onClick={() => setStep(s => Math.min(trace.length - 1, s + 1))}>{tr({ zh: '下一步', en: 'next' })}</button>
+          <button type="button" onClick={() => setStep(0)} className="gt-rot-reset">{tr({ zh: '复位', en: 'reset',
+              zhHant: "復位"
+        })}</button>
         </div>
       </div>
       <div className="gt-rot-ss-title">{t.title}</div>
@@ -7103,7 +7597,9 @@ function SchreierSimsDemo() {
       </div>
       {t.gens.length > 0 && (
         <div className="gt-rot-ss-gens">
-          {lang === 'zh' ? '当前生成元' : 'current generators'}: {t.gens.join(',  ')}
+          {tr({ zh: '当前生成元', en: 'current generators',
+              zhHant: "當前生成元"
+        })}: {t.gens.join(',  ')}
         </div>
       )}
     </div>
@@ -7119,13 +7615,19 @@ function WilsonSliding() {
     <div className="gt-rot-wilson">
       <div className="gt-rot-wilson-tabs">
         <button type="button" className={mode === 'cycle' ? 'is-active' : ''} onClick={() => setMode('cycle')}>
-          {lang === 'zh' ? '环 C_n' : 'cycle C_n'}
+          {tr({ zh: '环 C_n', en: 'cycle C_n',
+              zhHant: "環 C_n"
+        })}
         </button>
         <button type="button" className={mode === 'theta' ? 'is-active' : ''} onClick={() => setMode('theta')}>
-          {lang === 'zh' ? 'θ₀ (7 点例外)' : 'θ₀ (7-point exception)'}
+          {tr({ zh: 'θ₀ (7 点例外)', en: 'θ₀ (7-point exception)',
+              zhHant: "θ₀ (7 點例外)"
+        })}
         </button>
         <button type="button" className={mode === 'fifteen' ? 'is-active' : ''} onClick={() => setMode('fifteen')}>
-          {lang === 'zh' ? '15-滑块 (4×4 grid)' : '15-puzzle (4×4 grid)'}
+          {tr({ zh: '15-滑块 (4×4 grid)', en: '15-puzzle (4×4 grid)',
+              zhHant: "15-滑塊 (4×4 grid)"
+        })}
         </button>
       </div>
       <svg width="320" height="220" viewBox="0 0 320 220" className="gt-rot-wilson-svg">
@@ -7325,7 +7827,9 @@ function TwoLineNotationDemo() {
     return (
       <div className="gt-useful-twoline">
         <div className="gt-panel-input-row">
-          <label>{lang === 'zh' ? '排列 (输入下行)' : 'permutation (bottom row)'}</label>
+          <label>{tr({ zh: '排列 (输入下行)', en: 'permutation (bottom row)',
+              zhHant: "排列 (輸入下行)"
+        })}</label>
           <input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
         </div>
         <div className="gt-permvis-error">{parsed.error}</div>
@@ -7338,10 +7842,14 @@ function TwoLineNotationDemo() {
   return (
     <div className="gt-useful-twoline">
       <div className="gt-panel-input-row">
-        <label>{lang === 'zh' ? '下行 σ(1)..σ(n)' : 'bottom row σ(1)..σ(n)'}</label>
+        <label>{tr({ zh: '下行 σ(1)..σ(n)', en: 'bottom row σ(1)..σ(n)' })}</label>
         <input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
         <button type="button" className="gt-chip" onClick={() => setShowCycle(s => !s)}>
-          {showCycle ? (lang === 'zh' ? '看两行' : 'show two-line') : (lang === 'zh' ? '看循环' : 'show cycles')}
+          {showCycle ? (tr({ zh: '看两行', en: 'show two-line',
+              zhHant: "看兩行"
+        })) : (tr({ zh: '看循环', en: 'show cycles',
+            zhHant: "看迴圈"
+        }))}
         </button>
       </div>
       <div className="gt-useful-twoline-eq">
@@ -7384,17 +7892,17 @@ function CycleDecomposer() {
   return (
     <div className="gt-useful-decompose">
       <div className="gt-panel-input-row">
-        <label>{lang === 'zh' ? '排列' : 'permutation'}</label>
+        <label>{tr({ zh: '排列', en: 'permutation' })}</label>
         <input className="gt-input" value={input} onChange={e => { setInput(e.target.value); setStep(0); }} spellCheck={false} />
       </div>
       {parsed.error && <div className="gt-permvis-error">{parsed.error}</div>}
       {!parsed.error && (
         <>
           <div className="gt-useful-decompose-controls">
-            <button type="button" className="gt-chip" onClick={() => setStep(0)} disabled={step === 0}>{lang === 'zh' ? '重置' : 'reset'}</button>
-            <button type="button" className="gt-chip" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>← {lang === 'zh' ? '上一步' : 'prev'}</button>
-            <button type="button" className="gt-chip" onClick={() => setStep(s => Math.min(total - 1, s + 1))} disabled={step >= total - 1}>{lang === 'zh' ? '下一步' : 'next'} →</button>
-            <button type="button" className="gt-chip" onClick={() => setStep(total - 1)} disabled={step >= total - 1}>{lang === 'zh' ? '全部' : 'all'}</button>
+            <button type="button" className="gt-chip" onClick={() => setStep(0)} disabled={step === 0}>{tr({ zh: '重置', en: 'reset' })}</button>
+            <button type="button" className="gt-chip" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>← {tr({ zh: '上一步', en: 'prev' })}</button>
+            <button type="button" className="gt-chip" onClick={() => setStep(s => Math.min(total - 1, s + 1))} disabled={step >= total - 1}>{tr({ zh: '下一步', en: 'next' })} →</button>
+            <button type="button" className="gt-chip" onClick={() => setStep(total - 1)} disabled={step >= total - 1}>{tr({ zh: '全部', en: 'all' })}</button>
             <span className="gt-useful-decompose-counter">{step + 1} / {total}</span>
           </div>
           <div className="gt-useful-decompose-cycles">
@@ -7437,13 +7945,21 @@ function ComposeConventions() {
       <div className="gt-panel-input-row"><label>τ</label><input className="gt-input" value={bInput} onChange={e => setBInput(e.target.value)} spellCheck={false} /></div>
       <div className="gt-useful-compose-grid">
         <div className="gt-useful-compose-cell">
-          <div className="gt-useful-compose-head">{lang === 'zh' ? '数学约定 σ∘τ' : 'math σ∘τ'}</div>
-          <div className="gt-useful-compose-sub">{lang === 'zh' ? '先 τ 后 σ — (σ∘τ)(i) = σ(τ(i))' : 'first τ then σ — (σ∘τ)(i) = σ(τ(i))'}</div>
+          <div className="gt-useful-compose-head">{tr({ zh: '数学约定 σ∘τ', en: 'math σ∘τ',
+              zhHant: "數學約定 σ∘τ"
+        })}</div>
+          <div className="gt-useful-compose-sub">{tr({ zh: '先 τ 后 σ — (σ∘τ)(i) = σ(τ(i))', en: 'first τ then σ — (σ∘τ)(i) = σ(τ(i))',
+              zhHant: "先 τ 後 σ — (σ∘τ)(i) = σ(τ(i))"
+        })}</div>
           <div className="gt-useful-compose-result">{fmtCycles(decomposeCycles(mathStTau))}</div>
         </div>
         <div className="gt-useful-compose-cell">
-          <div className="gt-useful-compose-head">{lang === 'zh' ? '魔方约定 "σ τ"' : 'cuber "σ τ"'}</div>
-          <div className="gt-useful-compose-sub">{lang === 'zh' ? '先 σ 后 τ — 跟读法一致' : 'first σ then τ — read left to right'}</div>
+          <div className="gt-useful-compose-head">{tr({ zh: '魔方约定 "σ τ"', en: 'cuber "σ τ"',
+              zhHant: "魔方約定 \"σ τ\""
+        })}</div>
+          <div className="gt-useful-compose-sub">{tr({ zh: '先 σ 后 τ — 跟读法一致', en: 'first σ then τ — read left to right',
+              zhHant: "先 σ 後 τ — 跟讀法一致"
+        })}</div>
           <div className="gt-useful-compose-result">{fmtCycles(decomposeCycles(cubeAfterB))}</div>
         </div>
       </div>
@@ -7467,7 +7983,9 @@ function ParityFromTranspositions() {
   if (!parsed.ok) {
     return (
       <div className="gt-useful-parity">
-        <div className="gt-panel-input-row"><label>{lang === 'zh' ? '对换序列' : 'transpositions'}</label><input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-panel-input-row"><label>{tr({ zh: '对换序列', en: 'transpositions',
+            zhHant: "對換序列"
+        })}</label><input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
         <div className="gt-permvis-error">{parsed.error}</div>
       </div>
     );
@@ -7485,14 +8003,20 @@ function ParityFromTranspositions() {
   return (
     <div className="gt-useful-parity">
       <div className="gt-panel-input-row">
-        <label>{lang === 'zh' ? '对换序列' : 'transpositions'}</label>
+        <label>{tr({ zh: '对换序列', en: 'transpositions',
+            zhHant: "對換序列"
+        })}</label>
         <input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
       </div>
       <div className="gt-useful-parity-results">
-        <div><b>{lang === 'zh' ? '个数 k' : 'count k'}:</b> {k}</div>
-        <div><b>{lang === 'zh' ? '乘积' : 'product'}:</b> {fmtCycles(decomposeCycles(acc))}</div>
+        <div><b>{tr({ zh: '个数 k', en: 'count k',
+            zhHant: "個數 k"
+        })}:</b> {k}</div>
+        <div><b>{tr({ zh: '乘积', en: 'product',
+            zhHant: "乘積"
+        })}:</b> {fmtCycles(decomposeCycles(acc))}</div>
         <div><b>(−1)<sup>k</sup>:</b> {k % 2 === 0 ? '+1' : '−1'}</div>
-        <div><b>sgn(σ):</b> <span style={{ color: sign === 1 ? 'var(--green)' : 'var(--accent)' }}>{sign === 1 ? '+1' : '−1'} ({sign === 1 ? (lang === 'zh' ? '偶' : 'even') : (lang === 'zh' ? '奇' : 'odd')})</span></div>
+        <div><b>sgn(σ):</b> <span style={{ color: sign === 1 ? 'var(--green)' : 'var(--accent)' }}>{sign === 1 ? '+1' : '−1'} ({sign === 1 ? (tr({ zh: '偶', en: 'even' })) : (tr({ zh: '奇', en: 'odd' }))})</span></div>
         <div className="gt-useful-parity-match">{((k % 2 === 0 ? 1 : -1) === sign) ? (lang === 'zh' ? '✓ (−1)ᵏ = sgn(σ)' : '✓ (−1)ᵏ = sgn(σ)') : '✗'}</div>
       </div>
     </div>
@@ -7507,7 +8031,7 @@ function OrderCalculator() {
   if (parsed.error) {
     return (
       <div className="gt-useful-order">
-        <div className="gt-panel-input-row"><label>{lang === 'zh' ? '排列' : 'permutation'}</label><input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-panel-input-row"><label>{tr({ zh: '排列', en: 'permutation' })}</label><input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
         <div className="gt-permvis-error">{parsed.error}</div>
       </div>
     );
@@ -7518,7 +8042,7 @@ function OrderCalculator() {
   return (
     <div className="gt-useful-order">
       <div className="gt-panel-input-row">
-        <label>{lang === 'zh' ? '排列' : 'permutation'}</label>
+        <label>{tr({ zh: '排列', en: 'permutation' })}</label>
         <input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
       </div>
       <div className="gt-useful-order-formula">
@@ -7560,7 +8084,9 @@ function LandauTable() {
         <tr>
           <th>n</th>
           <th>g(n) = max ord</th>
-          <th>{lang === 'zh' ? '达到的循环结构' : 'extremal cycle type'}</th>
+          <th>{tr({ zh: '达到的循环结构', en: 'extremal cycle type',
+              zhHant: "達到的迴圈結構"
+        })}</th>
         </tr>
       </thead>
       <tbody>
@@ -7610,7 +8136,9 @@ function ConjugationVisualiser() {
         <span className="gt-conj-vis-result">{fmtCycles(decomposeCycles(conj))}</span>
       </div>
       <div className="gt-conj-vis-relabel">
-        <div className="gt-conj-vis-relabel-head">{lang === 'zh' ? '重命名规则' : 'relabel rule'}</div>
+        <div className="gt-conj-vis-relabel-head">{tr({ zh: '重命名规则', en: 'relabel rule',
+            zhHant: "重新命名規則"
+        })}</div>
         {tauCycles.length === 0 ? (
           <div className="gt-conj-vis-relabel-cyc">τ = e ⇒ σ τ σ⁻¹ = e</div>
         ) : tauCycles.map((c, i) => (
@@ -7656,10 +8184,14 @@ function CommutatorComputer() {
       <div className={`gt-comm-comp-result ${is3Cycle ? 'gt-comm-comp-3cycle' : ''}`}>
         <span className="gt-comm-comp-label">[A, B] = A B A⁻¹ B⁻¹ =</span>
         <span className="gt-comm-comp-value">{fmtCycles(decomposeCycles(comm))}</span>
-        {is3Cycle && <span className="gt-comm-comp-badge">{lang === 'zh' ? '✓ 干净 3-循环' : '✓ clean 3-cycle'}</span>}
+        {is3Cycle && <span className="gt-comm-comp-badge">{tr({ zh: '✓ 干净 3-循环', en: '✓ clean 3-cycle',
+            zhHant: "✓ 乾淨 3-迴圈"
+        })}</span>}
       </div>
       <div className="gt-comm-comp-meta">
-        ord([A,B]) = {permOrder(comm)} · sgn([A,B]) = +1 ({lang === 'zh' ? '换位子始终是偶置换' : 'commutators are always even'})
+        ord([A,B]) = {permOrder(comm)} · sgn([A,B]) = +1 ({tr({ zh: '换位子始终是偶置换', en: 'commutators are always even',
+            zhHant: "換位子始終是偶置換"
+        })})
       </div>
     </div>
   );
@@ -7676,7 +8208,7 @@ function PowerSlider() {
   if (parsed.error) {
     return (
       <div className="gt-useful-power">
-        <div className="gt-panel-input-row"><label>{lang === 'zh' ? '排列' : 'permutation'}</label><input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
+        <div className="gt-panel-input-row"><label>{tr({ zh: '排列', en: 'permutation' })}</label><input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} /></div>
         <div className="gt-permvis-error">{parsed.error}</div>
       </div>
     );
@@ -7687,7 +8219,7 @@ function PowerSlider() {
   return (
     <div className="gt-useful-power">
       <div className="gt-panel-input-row">
-        <label>{lang === 'zh' ? '排列 σ' : 'permutation σ'}</label>
+        <label>{tr({ zh: '排列 σ', en: 'permutation σ' })}</label>
         <input className="gt-input" value={input} onChange={e => { setInput(e.target.value); setK(1); }} spellCheck={false} />
       </div>
       <div className="gt-useful-power-slider-row">
@@ -7697,7 +8229,9 @@ function PowerSlider() {
       </div>
       <div className={`gt-useful-power-result ${isIdentity ? 'gt-useful-power-identity' : ''}`}>
         σ<sup>{k}</sup> = {fmtCycles(decomposeCycles(pow))}
-        {isIdentity && k > 0 && <span className="gt-useful-power-badge">{lang === 'zh' ? '恒等' : 'identity'}</span>}
+        {isIdentity && k > 0 && <span className="gt-useful-power-badge">{tr({ zh: '恒等', en: 'identity',
+            zhHant: "恆等"
+        })}</span>}
       </div>
     </div>
   );
@@ -7788,7 +8322,11 @@ function CycleIndexPoly() {
     <div className="gt-useful-poly">
       <table className="gt-useful-poly-tbl">
         <thead>
-          <tr><th>g</th><th>{lang === 'zh' ? '在 4 顶点上的圈型' : 'cycles on 4 vertices'}</th><th>{lang === 'zh' ? '单项' : 'monomial'}</th></tr>
+          <tr><th>g</th><th>{tr({ zh: '在 4 顶点上的圈型', en: 'cycles on 4 vertices',
+              zhHant: "在 4 頂點上的圈型"
+        })}</th><th>{tr({ zh: '单项', en: 'monomial',
+            zhHant: "單項"
+        })}</th></tr>
         </thead>
         <tbody>
           {elements.map((el, i) => (
@@ -7820,17 +8358,27 @@ function IndexStatsStrip() {
       <div className="gt-index-stat">
         <div className="gt-index-stat-val">4.33 × 10<sup>19</sup></div>
         <div className="gt-index-stat-label">|G|</div>
-        <div className="gt-index-stat-cap">{lang === 'zh' ? '魔方可达状态' : 'reachable cube states'}</div>
+        <div className="gt-index-stat-cap">{tr({ zh: '魔方可达状态', en: 'reachable cube states',
+            zhHant: "魔方可達狀態"
+        })}</div>
       </div>
       <div className="gt-index-stat">
         <div className="gt-index-stat-val">20</div>
-        <div className="gt-index-stat-label">{lang === 'zh' ? '上帝之数 HTM' : "God's number (HTM)"}</div>
-        <div className="gt-index-stat-cap">{lang === 'zh' ? '群的直径 = 最长最短解' : 'group diameter — longest optimal solve'}</div>
+        <div className="gt-index-stat-label">{tr({ zh: '上帝之数 HTM', en: "God's number (HTM)",
+            zhHant: "上帝之數 HTM"
+        })}</div>
+        <div className="gt-index-stat-cap">{tr({ zh: '群的直径 = 最长最短解', en: 'group diameter — longest optimal solve',
+            zhHant: "群的直徑 = 最長最短解"
+        })}</div>
       </div>
       <div className="gt-index-stat">
         <div className="gt-index-stat-val">31 + 45</div>
-        <div className="gt-index-stat-label">{lang === 'zh' ? '小节 · 互动面板' : 'sections · interactive panels'}</div>
-        <div className="gt-index-stat-cap">{lang === 'zh' ? 'KaTeX 公式 · cubing.js 动画' : 'KaTeX formulas · cubing.js animations'}</div>
+        <div className="gt-index-stat-label">{tr({ zh: '小节 · 互动面板', en: 'sections · interactive panels',
+            zhHant: "小節 · 互動面板"
+        })}</div>
+        <div className="gt-index-stat-cap">{tr({ zh: 'KaTeX 公式 · cubing.js 动画', en: 'KaTeX formulas · cubing.js animations',
+            zhHant: "KaTeX 公式 · cubing.js 動畫"
+        })}</div>
       </div>
     </div>
   );
@@ -7840,21 +8388,37 @@ function IndexOrderBlock() {
   const lang = useLang();
   return (
     <div className="gt-index-order">
-      <div className="gt-index-section-head">{lang === 'zh' ? '本文核心定理 · |G| 的封闭式' : "core theorem · closed form for |G|"}</div>
+      <div className="gt-index-section-head">{tr({ zh: '本文核心定理 · |G| 的封闭式', en: "core theorem · closed form for |G|",
+          zhHant: "本文核心定理 · |G| 的封閉式"
+    })}</div>
       <div className="gt-index-order-eq">
         <TeXBlock src={`|G| \\;=\\; \\frac{8!\\,\\cdot\\,3^{7}\\,\\cdot\\,12!\\,\\cdot\\,2^{11}}{2} \\;=\\; 43{,}252{,}003{,}274{,}489{,}856{,}000`} />
       </div>
       <div className="gt-index-order-legend">
-        <div><b>8!</b><span>{lang === 'zh' ? '角块排列' : 'corner perms'}</span></div>
-        <div><b>3<sup>7</sup></b><span>{lang === 'zh' ? '角块朝向' : 'corner twists'}<br /><em>Σco ≡ 0</em></span></div>
-        <div><b>12!</b><span>{lang === 'zh' ? '棱块排列' : 'edge perms'}</span></div>
-        <div><b>2<sup>11</sup></b><span>{lang === 'zh' ? '棱块翻面' : 'edge flips'}<br /><em>Σeo ≡ 0</em></span></div>
-        <div><b>÷ 2</b><span>{lang === 'zh' ? '角棱同奇偶' : 'parity match'}<br /><em>sgn(c) = sgn(e)</em></span></div>
+        <div><b>8!</b><span>{tr({ zh: '角块排列', en: 'corner perms',
+            zhHant: "角塊排列"
+        })}</span></div>
+        <div><b>3<sup>7</sup></b><span>{tr({ zh: '角块朝向', en: 'corner twists',
+            zhHant: "角塊朝向"
+        })}<br /><em>Σco ≡ 0</em></span></div>
+        <div><b>12!</b><span>{tr({ zh: '棱块排列', en: 'edge perms',
+            zhHant: "稜塊排列"
+        })}</span></div>
+        <div><b>2<sup>11</sup></b><span>{tr({ zh: '棱块翻面', en: 'edge flips',
+            zhHant: "稜塊翻面"
+        })}<br /><em>Σeo ≡ 0</em></span></div>
+        <div><b>÷ 2</b><span>{tr({ zh: '角棱同奇偶', en: 'parity match',
+            zhHant: "角稜同奇偶"
+        })}<br /><em>sgn(c) = sgn(e)</em></span></div>
       </div>
       <div className="gt-index-order-foot">
         <span>= 2<sup>27</sup> · 3<sup>14</sup> · 5<sup>3</sup> · 7<sup>2</sup> · 11</span>
-        <Link href="/math/group/order">→ §4 {lang === 'zh' ? '完整推导' : 'full derivation'}</Link>
-        <Link href="/math/group/invariants">→ §5 {lang === 'zh' ? '三守恒律证明' : "why ÷ 2 / ÷ 3 / ÷ 2"}</Link>
+        <Link href="/math/group/order">→ §4 {tr({ zh: '完整推导', en: 'full derivation',
+            zhHant: "完整推導"
+        })}</Link>
+        <Link href="/math/group/invariants">→ §5 {tr({ zh: '三守恒律证明', en: "why ÷ 2 / ÷ 3 / ÷ 2",
+            zhHant: "三守恆律證明"
+        })}</Link>
       </div>
     </div>
   );
@@ -7865,14 +8429,18 @@ function IndexFeaturedCube() {
   const SUPERFLIP = "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2";
   return (
     <div className="gt-index-featured">
-      <div className="gt-index-featured-meta">{lang === 'zh' ? '特写 · SUPERFLIP' : 'feature · SUPERFLIP'}</div>
+      <div className="gt-index-featured-meta">{tr({ zh: '特写 · SUPERFLIP', en: 'feature · SUPERFLIP',
+          zhHant: "特寫 · SUPERFLIP"
+    })}</div>
       <div className="gt-index-featured-body">
         <div className="gt-index-featured-cube">
           <TwistyMini alg={SUPERFLIP} />
         </div>
         <div className="gt-index-featured-text">
           <h3 className="gt-index-featured-title">
-            {lang === 'zh' ? '所有棱翻面 — 离还原最远的 3 个态之一' : 'All edges flipped — one of three positions maximally far from solved'}
+            {tr({ zh: '所有棱翻面 — 离还原最远的 3 个态之一', en: 'All edges flipped — one of three positions maximally far from solved',
+                zhHant: "所有稜翻面 — 離還原最遠的 3 個態之一"
+            })}
           </h3>
           <p>
             {lang === 'zh'
@@ -7881,9 +8449,15 @@ function IndexFeaturedCube() {
           </p>
           <pre className="gt-index-featured-alg">{SUPERFLIP}</pre>
           <div className="gt-index-featured-cta">
-            <Link href="/math/group/gods-number">§11 {lang === 'zh' ? '上帝之数 = 20 ↗' : "God's number = 20 ↗"}</Link>
-            <Link href="/math/group/order-of-element">§7 {lang === 'zh' ? '元素的阶 ↗' : 'order of an element ↗'}</Link>
-            <Link href="/math/group/patterns">§13 {lang === 'zh' ? '图案画廊 ↗' : 'pattern gallery ↗'}</Link>
+            <Link href="/math/group/gods-number">§11 {tr({ zh: '上帝之数 = 20 ↗', en: "God's number = 20 ↗",
+                zhHant: "上帝之數 = 20 ↗"
+            })}</Link>
+            <Link href="/math/group/order-of-element">§7 {tr({ zh: '元素的阶 ↗', en: 'order of an element ↗',
+                zhHant: "元素的階 ↗"
+            })}</Link>
+            <Link href="/math/group/patterns">§13 {tr({ zh: '图案画廊 ↗', en: 'pattern gallery ↗',
+                zhHant: "圖案畫廊 ↗"
+            })}</Link>
           </div>
         </div>
       </div>
@@ -7928,7 +8502,9 @@ function IndexHighlightCards() {
   ];
   return (
     <div className="gt-index-cards">
-      <div className="gt-index-section-head">{lang === 'zh' ? '亮点 · 四个关键概念' : 'highlights · four pivotal ideas'}</div>
+      <div className="gt-index-section-head">{tr({ zh: '亮点 · 四个关键概念', en: 'highlights · four pivotal ideas',
+          zhHant: "亮點 · 四個關鍵概念"
+    })}</div>
       <div className="gt-index-cards-grid">
         {cards.map(c => (
           <Link key={c.id} href={`/math/group/${c.id}`} className="gt-index-card">
@@ -7948,43 +8524,53 @@ const TOC_THEMES: { id: string; zh: string; en: string; descZh: string; descEn: 
   { id: 'foundations', zh: '基础', en: 'Foundations',
     descZh: '公理 · 生成元 · 状态向量 · |G| · 守恒律 · 结构定理',
     descEn: 'axioms · generators · state vector · order · invariants · structure theorem',
-    range: '§1 – §6', secs: ['what-is-a-group','cube-group','state-vector','order','invariants','structure'] },
+    range: '§1 – §6', secs: ['what-is-a-group','cube-group','state-vector','order','invariants','structure']
+},
   { id: 'core', zh: '群论核心', en: 'Core group theory',
     descZh: '元素的阶 · 共轭 · 换位子 · 子群链 · 上帝之数',
     descEn: 'element order · conjugation · commutators · Thistlethwaite chain · God\'s number',
-    range: '§7 – §11', secs: ['order-of-element','conjugation','commutators','thistlethwaite','gods-number'] },
+    range: '§7 – §11', secs: ['order-of-element','conjugation','commutators','thistlethwaite','gods-number']
+},
   { id: 'visual', zh: '拓展 · 几何与图案', en: 'Extensions · geometry & patterns',
     descZh: '走得更远 · 图案画廊 · Cayley 图 · 其它拼图 · 未解问题',
     descEn: 'beyond · pattern gallery · Cayley graph · other puzzles · open problems',
-    range: '§12 – §16', secs: ['beyond','patterns','cayley','other-puzzles','open-problems'] },
+    range: '§12 – §16', secs: ['beyond','patterns','cayley','other-puzzles','open-problems']
+},
   { id: 'advanced', zh: '进阶代数', en: 'Advanced algebra',
     descZh: '同态 · 群作用 + Burnside · Lagrange + 陪集 · 商群 · 对称群与交错群',
     descEn: 'homomorphisms · actions + Burnside · Lagrange + cosets · quotients · S_n / A_n',
-    range: '§17 – §21', secs: ['homomorphisms','actions-burnside','lagrange','quotient','permutation-groups'] },
+    range: '§17 – §21', secs: ['homomorphisms','actions-burnside','lagrange','quotient','permutation-groups']
+},
   { id: 'computation', zh: '计算 · 算法 · 表示', en: 'Computation · algorithms · representation',
     descZh: '解法算法 · 距离分布 · 随机游走 · BSGS · 表示论一瞥',
     descEn: 'solving algorithms · distance distribution · random walks · BSGS · representation theory',
-    range: '§22 – §26', secs: ['algorithms','distance','random-walks','computational','representations'] },
+    range: '§22 – §26', secs: ['algorithms','distance','random-walks','computational','representations']
+},
   { id: 'puzzles', zh: '拼图数学 · jaapsch.net', en: 'Puzzle mathematics · jaapsch.net',
     descZh: 'Lights Out · 孔明棋 · Hamilton · PGL₂(𝔽₅) · 图旋转拼图 · 有用数学',
     descEn: 'Lights Out · peg solitaire · Hamilton · PGL₂(𝔽₅) · rotational graph puzzles · useful math',
-    range: '§27 – §32', secs: ['lights-out','peg-solitaire','hamiltonian','two-face-pgl','rotational-puzzles','useful-math'] },
+    range: '§27 – §32', secs: ['lights-out','peg-solitaire','hamiltonian','two-face-pgl','rotational-puzzles','useful-math']
+},
   { id: 'structure', zh: '群的结构', en: 'Structure of groups',
     descZh: '圈积、半直积、Sylow、合成列、可解与幂零、阿贝尔分类、自同构群',
     descEn: 'wreath, semidirect, Sylow, series, solvable & nilpotent, abelian, Aut',
-    range: '§33 – §39', secs: ['wreath-product','semidirect-product','sylow','composition-series','solvable-nilpotent','abelian-classification','automorphism-group'] },
+    range: '§33 – §39', secs: ['wreath-product','semidirect-product','sylow','composition-series','solvable-nilpotent','abelian-classification','automorphism-group']
+},
   { id: 'symmetry', zh: '对称与几何', en: 'Symmetry & geometry',
     descZh: '循环群、二面体群、柏拉图立体、带饰群、墙纸群、点群、Coxeter、平面等距',
     descEn: 'cyclic, dihedral, Platonic solids, frieze, wallpaper, point groups, Coxeter, isometries',
-    range: '§40 – §47', secs: ['cyclic-modular','dihedral','platonic-symmetry','frieze-groups','wallpaper-groups','point-groups-crystal','reflection-coxeter','plane-isometries'] },
+    range: '§40 – §47', secs: ['cyclic-modular','dihedral','platonic-symmetry','frieze-groups','wallpaper-groups','point-groups-crystal','reflection-coxeter','plane-isometries']
+},
   { id: 'counting', zh: '计数与表示', en: 'Counting & representation',
     descZh: 'Burnside–Pólya、轮换指标、类方程、特征标表、Young 图、不可约分解、傅里叶',
     descEn: 'Burnside–Pólya, cycle index, class equation, character tables, Young tableaux, irreps, Fourier',
-    range: '§48 – §54', secs: ['polya-cube-colorings','cycle-index','class-equation','character-table','young-tableaux','representation-basics','fourier-on-groups'] },
+    range: '§48 – §54', secs: ['polya-cube-colorings','cycle-index','class-equation','character-table','young-tableaux','representation-basics','fourier-on-groups']
+},
   { id: 'frontiers', zh: '更多群与前沿', en: 'More groups & frontiers',
     descZh: '四元数群、自由群、Cayley 定理、轨道稳定子、矩阵与李群、伽罗瓦、增长、扩张图',
     descEn: 'quaternions, free groups, Cayley, orbit–stabiliser, Lie groups, Galois, growth, expanders',
-    range: '§55 – §62', secs: ['quaternion-group','free-groups','cayley-theorem','orbit-stabilizer','matrix-lie-groups','galois-connection','growth-of-groups','expander-ramanujan'] },
+    range: '§55 – §62', secs: ['quaternion-group','free-groups','cayley-theorem','orbit-stabilizer','matrix-lie-groups','galois-connection','growth-of-groups','expander-ramanujan']
+},
 ];
 
 function IndexThemedTOC() {
@@ -7992,13 +8578,15 @@ function IndexThemedTOC() {
   const byId = useMemo(() => new Map(TOC.map(t => [t.id, t])), []);
   return (
     <nav className="gt-index-toc" aria-label="Table of contents">
-      <div className="gt-index-section-head">{lang === 'zh' ? '目录 · 62 节按主题分组' : 'contents · 62 sections, grouped by theme'}</div>
+      <div className="gt-index-section-head">{tr({ zh: '目录 · 62 节按主题分组', en: 'contents · 62 sections, grouped by theme',
+          zhHant: "目錄 · 62 節按主題分組"
+    })}</div>
       <div className="gt-index-toc-themes">
         {TOC_THEMES.map(theme => (
           <div key={theme.id} className="gt-index-theme">
             <div className="gt-index-theme-head">
               <span className="gt-index-theme-range">{theme.range}</span>
-              <span className="gt-index-theme-name">{lang === 'zh' ? theme.zh : theme.en}</span>
+              <span className="gt-index-theme-name">{(i18n.language.startsWith('zh') ? theme.zh : theme.en)}</span>
               <span className="gt-index-theme-desc">{lang === 'zh' ? theme.descZh : theme.descEn}</span>
             </div>
             <ul className="gt-index-theme-list">
@@ -8009,7 +8597,7 @@ function IndexThemedTOC() {
                   <li key={id}>
                     <Link href={`/math/group/${id}`}>
                       <span className="gt-index-theme-num">§{t.num}</span>
-                      <span className="gt-index-theme-title">{lang === 'zh' ? t.zh : t.en}</span>
+                      <span className="gt-index-theme-title">{(i18n.language.startsWith('zh') ? t.zh : t.en)}</span>
                     </Link>
                   </li>
                 );
@@ -8020,14 +8608,20 @@ function IndexThemedTOC() {
         <div className="gt-index-theme gt-index-theme-refs">
           <div className="gt-index-theme-head">
             <span className="gt-index-theme-range">REF</span>
-            <span className="gt-index-theme-name">{lang === 'zh' ? '参考文献' : 'References'}</span>
-            <span className="gt-index-theme-desc">{lang === 'zh' ? '12 条 · 教材 · 论文 · 网络资源' : '12 entries · textbooks · papers · web resources'}</span>
+            <span className="gt-index-theme-name">{tr({ zh: '参考文献', en: 'References',
+                zhHant: "參考文獻"
+            })}</span>
+            <span className="gt-index-theme-desc">{tr({ zh: '12 条 · 教材 · 论文 · 网络资源', en: '12 entries · textbooks · papers · web resources',
+                zhHant: "12 條 · 教材 · 論文 · 網路資源"
+            })}</span>
           </div>
           <ul className="gt-index-theme-list">
             <li>
               <Link href={`/math/group/refs`}>
                 <span className="gt-index-theme-num">REF</span>
-                <span className="gt-index-theme-title">{lang === 'zh' ? '参考文献' : 'Bibliography'}</span>
+                <span className="gt-index-theme-title">{tr({ zh: '参考文献', en: 'Bibliography',
+                    zhHant: "參考文獻"
+                })}</span>
               </Link>
             </li>
           </ul>
@@ -8055,25 +8649,31 @@ export default function GroupTheoryPage() {
     <div className="gt-page">
       <div className="gt-topbar">
         {isIndex
-          ? <HomeLink className="gt-back">← {lang === 'zh' ? '返回' : 'home'}</HomeLink>
-          : <Link href="/math/group" className="gt-back">← {lang === 'zh' ? '目录' : 'contents'}</Link>}
+          ? <HomeLink className="gt-back">← {tr({ zh: '返回', en: 'home' })}</HomeLink>
+          : <Link href="/math/group" className="gt-back">← {tr({ zh: '目录', en: 'contents',
+              zhHant: "目錄"
+        })}</Link>}
       </div>
 
       {isIndex && (
       <header className="gt-hero">
-        <div className="gt-hero-meta">{lang === 'zh' ? '理论 · GROUP THEORY' : 'THEORY · GROUP THEORY'}</div>
+        <div className="gt-hero-meta">{tr({ zh: '理论 · GROUP THEORY', en: 'THEORY · GROUP THEORY',
+            zhHant: "理論 · GROUP THEORY"
+        })}</div>
         <h1 className="gt-hero-title">
           {lang === 'zh'
             ? <>魔方<span className="gt-bold">与群</span></>
             : <>The Rubik's Cube,<br /><span className="gt-bold">as a Group</span></>}
         </h1>
         <p className="gt-hero-sub">
-          {lang === 'zh'
-            ? '4,325 京个状态 不是混沌,是一个有序代数对象。一篇带图、带动画、带互动的代数学小课。'
-            : '43 quintillion positions is not chaos. It is a beautifully structured algebraic object. An illustrated, interactive primer.'}
+          {tr({ zh: '4,325 京个状态 不是混沌,是一个有序代数对象。一篇带图、带动画、带互动的代数学小课。', en: '43 quintillion positions is not chaos. It is a beautifully structured algebraic object. An illustrated, interactive primer.',
+              zhHant: "4,325 京個狀態 不是混沌,是一個有序代數物件。一篇帶圖、帶動畫、帶互動的代數學小課。"
+        })}
         </p>
         <div className="gt-hero-byline">
-          {lang === 'zh' ? 'cuberoot · 2026 · 62 节 · 100+ 互动 & 视觉面板 · 数学公式 KaTeX 渲染' : 'cuberoot · 2026 · 62 sections · 100+ interactive & visual panels · KaTeX-rendered math'}
+          {tr({ zh: 'cuberoot · 2026 · 62 节 · 100+ 互动 & 视觉面板 · 数学公式 KaTeX 渲染', en: 'cuberoot · 2026 · 62 sections · 100+ interactive & visual panels · KaTeX-rendered math',
+              zhHant: "cuberoot · 2026 · 62 節 · 100+ 互動 & 視覺面板 · 數學公式 KaTeX 渲染"
+        })}
         </div>
       </header>
       )}
@@ -8106,7 +8706,9 @@ export default function GroupTheoryPage() {
         </p>
         <AxiomTable />
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 1.1' : 'Definition 1.1'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 1.1', en: 'Definition 1.1',
+              zhHant: "定義 1.1"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>一个 <strong>群</strong> 是一个集合 <TeX src={`G`} />,配上一个二元运算 <TeX src={`\\cdot : G \\times G \\to G`} />,满足上面四条公理。如果同时还满足 <em>交换律</em> <TeX src={`a \\cdot b = b \\cdot a`} />,我们称之为 <strong>阿贝尔群 (Abelian group)</strong>。</>}
@@ -8140,7 +8742,9 @@ export default function GroupTheoryPage() {
           <L zh="1.2  阿贝尔 vs 非阿贝尔" en="1.2  Abelian vs non-Abelian" />
         </h3>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 1.2' : 'Definition 1.2'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 1.2', en: 'Definition 1.2',
+              zhHant: "定義 1.2"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>一个群 <TeX src={`G`} /> 叫 <strong>阿贝尔群</strong>(Abelian)如果它的运算可交换:对所有 <TeX src={`a, b \\in G`} />, <TeX src={`ab = ba`} />。否则是非阿贝尔的。</>}
@@ -8172,13 +8776,29 @@ export default function GroupTheoryPage() {
         </h3>
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '公理' : 'Axiom'}</th><th>{lang === 'zh' ? '公式' : 'Formula'}</th><th>{lang === 'zh' ? '魔方含义' : 'Cube meaning'}</th></tr>
+            <tr><th>{tr({ zh: '公理', en: 'Axiom' })}</th><th>{tr({ zh: '公式', en: 'Formula' })}</th><th>{tr({ zh: '魔方含义', en: 'Cube meaning',
+                zhHant: "魔方含義"
+            })}</th></tr>
           </thead>
           <tbody>
-            <tr><td>{lang === 'zh' ? 'G1 封闭' : 'G1 closure'}</td><td><TeX src={`a, b \\in G \\Rightarrow ab \\in G`} /></td><td>{lang === 'zh' ? '面转复合仍是面转复合' : 'composition of moves is a move'}</td></tr>
-            <tr><td>{lang === 'zh' ? 'G2 结合' : 'G2 associativity'}</td><td><TeX src={`(ab)c = a(bc)`} /></td><td>{lang === 'zh' ? '括号无效,序列才有意义' : 'bracketing irrelevant, sequence is what matters'}</td></tr>
-            <tr><td>{lang === 'zh' ? 'G3 单位' : 'G3 identity'}</td><td><TeX src={`\\exists\\, e:\\; ea = ae = a`} /></td><td>{lang === 'zh' ? '不动魔方就是空操作' : 'doing nothing is the empty alg'}</td></tr>
-            <tr><td>{lang === 'zh' ? 'G4 逆' : 'G4 inverse'}</td><td><TeX src={`\\forall a\\, \\exists a^{-1}:\\; aa^{-1} = e`} /></td><td>{lang === 'zh' ? '每个 alg 都可撤销' : 'every alg can be undone'}</td></tr>
+            <tr><td>{tr({ zh: 'G1 封闭', en: 'G1 closure',
+                zhHant: "G1 封閉"
+            })}</td><td><TeX src={`a, b \\in G \\Rightarrow ab \\in G`} /></td><td>{tr({ zh: '面转复合仍是面转复合', en: 'composition of moves is a move',
+                zhHant: "面轉複合仍是面轉複合"
+            })}</td></tr>
+            <tr><td>{tr({ zh: 'G2 结合', en: 'G2 associativity',
+                zhHant: "G2 結合"
+            })}</td><td><TeX src={`(ab)c = a(bc)`} /></td><td>{tr({ zh: '括号无效,序列才有意义', en: 'bracketing irrelevant, sequence is what matters',
+                zhHant: "括號無效,序列才有意義"
+            })}</td></tr>
+            <tr><td>{tr({ zh: 'G3 单位', en: 'G3 identity',
+                zhHant: "G3 單位"
+            })}</td><td><TeX src={`\\exists\\, e:\\; ea = ae = a`} /></td><td>{tr({ zh: '不动魔方就是空操作', en: 'doing nothing is the empty alg',
+                zhHant: "不動魔方就是空操作"
+            })}</td></tr>
+            <tr><td>{tr({ zh: 'G4 逆', en: 'G4 inverse' })}</td><td><TeX src={`\\forall a\\, \\exists a^{-1}:\\; aa^{-1} = e`} /></td><td>{tr({ zh: '每个 alg 都可撤销', en: 'every alg can be undone',
+                zhHant: "每個 alg 都可撤銷"
+            })}</td></tr>
           </tbody>
         </table>
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
@@ -8186,16 +8806,34 @@ export default function GroupTheoryPage() {
         </h3>
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '群' : 'Group'}</th><th>{lang === 'zh' ? '阶' : 'Order'}</th><th>{lang === 'zh' ? '阿贝尔' : 'Abelian'}</th><th>{lang === 'zh' ? '与魔方的关系' : 'Cube analogy'}</th></tr>
+            <tr><th>{tr({ zh: '群', en: 'Group' })}</th><th>{tr({ zh: '阶', en: 'Order',
+                zhHant: "階"
+            })}</th><th>{tr({ zh: '阿贝尔', en: 'Abelian',
+                zhHant: "阿貝爾"
+            })}</th><th>{tr({ zh: '与魔方的关系', en: 'Cube analogy',
+                zhHant: "與魔方的關係"
+            })}</th></tr>
           </thead>
           <tbody>
-            <tr><td><TeX src={`(\\mathbb{Z}, +)`} /></td><td className="num">∞</td><td>{lang === 'zh' ? '是' : 'yes'}</td><td>{lang === 'zh' ? '只考虑 U 转累计角度的「无限版本」' : 'an infinite analogue of "U turns piling up"'}</td></tr>
-            <tr><td><TeX src={`\\mathbb{Z}/n`} /></td><td className="num">n</td><td>{lang === 'zh' ? '是' : 'yes'}</td><td><TeX src={`\\langle U\\rangle \\cong \\mathbb{Z}/4`} /></td></tr>
-            <tr><td><TeX src={`S_n`} /></td><td className="num">n!</td><td>{lang === 'zh' ? '否 (n≥3)' : 'no (n≥3)'}</td><td>{lang === 'zh' ? '魔方角块嵌入 S₈,棱块嵌入 S₁₂' : 'corners → S₈, edges → S₁₂'}</td></tr>
-            <tr><td><TeX src={`A_n`} /></td><td className="num">n!/2</td><td>{lang === 'zh' ? '否 (n≥4)' : 'no (n≥4)'}</td><td>{lang === 'zh' ? '换位子子群 [G,G] 内有 A₈ × A₁₂ 投影' : '[G,G] projects onto A₈ × A₁₂'}</td></tr>
-            <tr><td><TeX src={`GL_n(\\mathbb{R})`} /></td><td className="num">∞</td><td>{lang === 'zh' ? '否' : 'no'}</td><td>{lang === 'zh' ? '面转可写成 48×48 置换矩阵' : 'face turns sit inside GL₄₈(ℤ)'}</td></tr>
-            <tr><td><TeX src={`Q_8`} /></td><td className="num">8</td><td>{lang === 'zh' ? '否' : 'no'}</td><td>{lang === 'zh' ? '四元数群,非阿贝尔最小例之一' : 'quaternion group — smallest non-Abelian non-dihedral example'}</td></tr>
-            <tr><td><TeX src={`F_2 = \\langle a, b \\rangle`} /></td><td className="num">∞</td><td>{lang === 'zh' ? '否' : 'no'}</td><td>{lang === 'zh' ? '两元自由群 — 魔方 ⟨R, U⟩ 在前 ~20 步内同自由群难以区分' : 'rank-2 free group — ⟨R, U⟩ behaves like F₂ until depth ~20'}</td></tr>
+            <tr><td><TeX src={`(\\mathbb{Z}, +)`} /></td><td className="num">∞</td><td>{tr({ zh: '是', en: 'yes' })}</td><td>{tr({ zh: '只考虑 U 转累计角度的「无限版本」', en: 'an infinite analogue of "U turns piling up"',
+                zhHant: "只考慮 U 轉累計角度的「無限版本」"
+            })}</td></tr>
+            <tr><td><TeX src={`\\mathbb{Z}/n`} /></td><td className="num">n</td><td>{tr({ zh: '是', en: 'yes' })}</td><td><TeX src={`\\langle U\\rangle \\cong \\mathbb{Z}/4`} /></td></tr>
+            <tr><td><TeX src={`S_n`} /></td><td className="num">n!</td><td>{tr({ zh: '否 (n≥3)', en: 'no (n≥3)' })}</td><td>{tr({ zh: '魔方角块嵌入 S₈,棱块嵌入 S₁₂', en: 'corners → S₈, edges → S₁₂',
+                zhHant: "魔方角塊嵌入 S₈,稜塊嵌入 S₁₂"
+            })}</td></tr>
+            <tr><td><TeX src={`A_n`} /></td><td className="num">n!/2</td><td>{tr({ zh: '否 (n≥4)', en: 'no (n≥4)' })}</td><td>{tr({ zh: '换位子子群 [G,G] 内有 A₈ × A₁₂ 投影', en: '[G,G] projects onto A₈ × A₁₂',
+                zhHant: "換位子子群 [G,G] 內有 A₈ × A₁₂ 投影"
+            })}</td></tr>
+            <tr><td><TeX src={`GL_n(\\mathbb{R})`} /></td><td className="num">∞</td><td>{tr({ zh: '否', en: 'no' })}</td><td>{tr({ zh: '面转可写成 48×48 置换矩阵', en: 'face turns sit inside GL₄₈(ℤ)',
+                zhHant: "面轉可寫成 48×48 置換矩陣"
+            })}</td></tr>
+            <tr><td><TeX src={`Q_8`} /></td><td className="num">8</td><td>{tr({ zh: '否', en: 'no' })}</td><td>{tr({ zh: '四元数群,非阿贝尔最小例之一', en: 'quaternion group — smallest non-Abelian non-dihedral example',
+                zhHant: "四元數群,非阿貝爾最小例之一"
+            })}</td></tr>
+            <tr><td><TeX src={`F_2 = \\langle a, b \\rangle`} /></td><td className="num">∞</td><td>{tr({ zh: '否', en: 'no' })}</td><td>{tr({ zh: '两元自由群 — 魔方 ⟨R, U⟩ 在前 ~20 步内同自由群难以区分', en: 'rank-2 free group — ⟨R, U⟩ behaves like F₂ until depth ~20',
+                zhHant: "兩元自由群 — 魔方 ⟨R, U⟩ 在前 ~20 步內同自由群難以區分"
+            })}</td></tr>
           </tbody>
         </table>
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
@@ -8228,7 +8866,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 2.1 — 魔方群' : 'Definition 2.1 — the cube group'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 2.1 — 魔方群', en: 'Definition 2.1 — the cube group',
+              zhHant: "定義 2.1 — 魔方群"
+        })}</div>
           <div className="gt-def-body">
             <TeXBlock src={`G = \\langle U,\\, D,\\, L,\\, R,\\, F,\\, B \\rangle`} />
             <L
@@ -8262,7 +8902,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 2.2 — 度量' : 'Definition 2.2 — metric on a group'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 2.2 — 度量', en: 'Definition 2.2 — metric on a group',
+              zhHant: "定義 2.2 — 度量"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>给定生成集 <TeX src={`S`} />,对任意 <TeX src={`g \\in G`} />,定义 <TeX src={`|g|_S`} /> 为「<em>用 S 的元素表示 g 所需的最少 token 数</em>」。HTM 用 18-生成集,QTM 用 12-生成集。「最短解」是 <TeX src={`|g|_S`} /> 的别名。</>}
@@ -8320,7 +8962,9 @@ export default function GroupTheoryPage() {
         </h3>
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '面' : 'Face'}</th><th>90°</th><th>180°</th><th>270° = 90° CCW</th><th>{lang === 'zh' ? 'HTM 计数' : 'HTM count'}</th></tr>
+            <tr><th>{tr({ zh: '面', en: 'Face' })}</th><th>90°</th><th>180°</th><th>270° = 90° CCW</th><th>{tr({ zh: 'HTM 计数', en: 'HTM count',
+                zhHant: "HTM 計數"
+            })}</th></tr>
           </thead>
           <tbody>
             <tr><td><strong>U</strong></td><td className="num"><span className="gt-mono">U</span></td><td className="num"><span className="gt-mono">U2</span></td><td className="num"><span className="gt-mono">U'</span></td><td className="num">3</td></tr>
@@ -8329,7 +8973,9 @@ export default function GroupTheoryPage() {
             <tr><td><strong>R</strong></td><td className="num"><span className="gt-mono">R</span></td><td className="num"><span className="gt-mono">R2</span></td><td className="num"><span className="gt-mono">R'</span></td><td className="num">3</td></tr>
             <tr><td><strong>F</strong></td><td className="num"><span className="gt-mono">F</span></td><td className="num"><span className="gt-mono">F2</span></td><td className="num"><span className="gt-mono">F'</span></td><td className="num">3</td></tr>
             <tr><td><strong>B</strong></td><td className="num"><span className="gt-mono">B</span></td><td className="num"><span className="gt-mono">B2</span></td><td className="num"><span className="gt-mono">B'</span></td><td className="num">3</td></tr>
-            <tr><td>{lang === 'zh' ? '合计' : 'Total'}</td><td colSpan={3}></td><td className="num"><strong>18</strong></td></tr>
+            <tr><td>{tr({ zh: '合计', en: 'Total',
+                zhHant: "合計"
+            })}</td><td colSpan={3}></td><td className="num"><strong>18</strong></td></tr>
           </tbody>
         </table>
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
@@ -8350,12 +8996,20 @@ export default function GroupTheoryPage() {
         </p>
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '生成元' : 'Gen'}</th><th>{lang === 'zh' ? '角块循环' : 'Corner cycle'}</th><th>{lang === 'zh' ? '棱块循环' : 'Edge cycle'}</th><th>{lang === 'zh' ? '阶' : 'Order'}</th><th>{lang === 'zh' ? '改 CO?' : 'Δ CO'}</th><th>{lang === 'zh' ? '改 EO?' : 'Δ EO'}</th></tr>
+            <tr><th>{tr({ zh: '生成元', en: 'Gen' })}</th><th>{tr({ zh: '角块循环', en: 'Corner cycle',
+                zhHant: "角塊迴圈"
+            })}</th><th>{tr({ zh: '棱块循环', en: 'Edge cycle',
+                zhHant: "稜塊迴圈"
+            })}</th><th>{tr({ zh: '阶', en: 'Order',
+                zhHant: "階"
+            })}</th><th>{tr({ zh: '改 CO?', en: 'Δ CO' })}</th><th>{tr({ zh: '改 EO?', en: 'Δ EO' })}</th></tr>
           </thead>
           <tbody>
             <tr><td><strong>U</strong></td><td><TeX src={`(0\\;1\\;2\\;3)`} /></td><td><TeX src={`(0\\;1\\;2\\;3)`} /></td><td className="num">4</td><td>0</td><td>0</td></tr>
-            <tr><td><strong>R</strong></td><td><TeX src={`(0\\;3\\;7\\;4)`} /></td><td><TeX src={`(0\\;11\\;4\\;8)`} /></td><td className="num">4</td><td>{lang === 'zh' ? '是' : 'yes'}</td><td>0</td></tr>
-            <tr><td><strong>F</strong></td><td><TeX src={`(0\\;4\\;5\\;1)`} /></td><td><TeX src={`(1\\;8\\;5\\;9)`} /></td><td className="num">4</td><td>{lang === 'zh' ? '是' : 'yes'}</td><td>{lang === 'zh' ? '4 棱 +1' : '4 edges +1'}</td></tr>
+            <tr><td><strong>R</strong></td><td><TeX src={`(0\\;3\\;7\\;4)`} /></td><td><TeX src={`(0\\;11\\;4\\;8)`} /></td><td className="num">4</td><td>{tr({ zh: '是', en: 'yes' })}</td><td>0</td></tr>
+            <tr><td><strong>F</strong></td><td><TeX src={`(0\\;4\\;5\\;1)`} /></td><td><TeX src={`(1\\;8\\;5\\;9)`} /></td><td className="num">4</td><td>{tr({ zh: '是', en: 'yes' })}</td><td>{tr({ zh: '4 棱 +1', en: '4 edges +1',
+                zhHant: "4 稜 +1"
+            })}</td></tr>
           </tbody>
         </table>
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 14, color: 'var(--ink)' }}>
@@ -8391,19 +9045,27 @@ export default function GroupTheoryPage() {
         <div className="gt-statevec">
           <div className="gt-statevec-row">
             <TeX src={`c_p \\in S_8`} />
-            <span className="gt-statevec-desc">{lang === 'zh' ? '8 个角块的位置 (置换)' : 'positions of the 8 corners (permutation)'}</span>
+            <span className="gt-statevec-desc">{tr({ zh: '8 个角块的位置 (置换)', en: 'positions of the 8 corners (permutation)',
+                zhHant: "8 個角塊的位置 (置換)"
+            })}</span>
           </div>
           <div className="gt-statevec-row">
             <TeX src={`c_o \\in (\\mathbb{Z}/3)^8`} />
-            <span className="gt-statevec-desc">{lang === 'zh' ? '每个角块的方向 (拧角)' : 'orientation of each corner (twist)'}</span>
+            <span className="gt-statevec-desc">{tr({ zh: '每个角块的方向 (拧角)', en: 'orientation of each corner (twist)',
+                zhHant: "每個角塊的方向 (擰角)"
+            })}</span>
           </div>
           <div className="gt-statevec-row">
             <TeX src={`e_p \\in S_{12}`} />
-            <span className="gt-statevec-desc">{lang === 'zh' ? '12 个棱块的位置' : 'positions of the 12 edges'}</span>
+            <span className="gt-statevec-desc">{tr({ zh: '12 个棱块的位置', en: 'positions of the 12 edges',
+                zhHant: "12 個稜塊的位置"
+            })}</span>
           </div>
           <div className="gt-statevec-row">
             <TeX src={`e_o \\in (\\mathbb{Z}/2)^{12}`} />
-            <span className="gt-statevec-desc">{lang === 'zh' ? '每个棱块的翻面 (好/坏)' : 'orientation of each edge (flip)'}</span>
+            <span className="gt-statevec-desc">{tr({ zh: '每个棱块的翻面 (好/坏)', en: 'orientation of each edge (flip)',
+                zhHant: "每個稜塊的翻面 (好/壞)"
+            })}</span>
           </div>
         </div>
         <p>
@@ -8465,10 +9127,18 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-rgen">
-          <div className="gt-rgen-row"><TeX src={`R_{c_p} = (0\\;4\\;7\\;3)`} /><span className="gt-rgen-desc">{lang === 'zh' ? '4-循环角块' : '4-cycle on corners'}</span></div>
-          <div className="gt-rgen-row"><TeX src={`R_{c_o} = (+2, 0, 0, +1, +1, 0, 0, +2)`} /><span className="gt-rgen-desc">{lang === 'zh' ? '角块拧角偏移' : 'corner twist deltas'}</span></div>
-          <div className="gt-rgen-row"><TeX src={`R_{e_p} = (0\\;8\\;11\\;4)`} /><span className="gt-rgen-desc">{lang === 'zh' ? '4-循环棱块' : '4-cycle on edges'}</span></div>
-          <div className="gt-rgen-row"><TeX src={`R_{e_o} = 0`} /><span className="gt-rgen-desc">{lang === 'zh' ? 'R 不改变 EO (因 R 是 RL-轴)' : 'R does not affect EO (since R is on the RL-axis)'}</span></div>
+          <div className="gt-rgen-row"><TeX src={`R_{c_p} = (0\\;4\\;7\\;3)`} /><span className="gt-rgen-desc">{tr({ zh: '4-循环角块', en: '4-cycle on corners',
+              zhHant: "4-迴圈角塊"
+        })}</span></div>
+          <div className="gt-rgen-row"><TeX src={`R_{c_o} = (+2, 0, 0, +1, +1, 0, 0, +2)`} /><span className="gt-rgen-desc">{tr({ zh: '角块拧角偏移', en: 'corner twist deltas',
+              zhHant: "角塊擰角偏移"
+        })}</span></div>
+          <div className="gt-rgen-row"><TeX src={`R_{e_p} = (0\\;8\\;11\\;4)`} /><span className="gt-rgen-desc">{tr({ zh: '4-循环棱块', en: '4-cycle on edges',
+              zhHant: "4-迴圈稜塊"
+        })}</span></div>
+          <div className="gt-rgen-row"><TeX src={`R_{e_o} = 0`} /><span className="gt-rgen-desc">{tr({ zh: 'R 不改变 EO (因 R 是 RL-轴)', en: 'R does not affect EO (since R is on the RL-axis)',
+              zhHant: "R 不改變 EO (因 R 是 RL-軸)"
+        })}</span></div>
         </div>
         <p>
           <L
@@ -8495,15 +9165,21 @@ export default function GroupTheoryPage() {
         </p>
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '坐标' : 'Coord'}</th><th>{lang === 'zh' ? '取值空间' : 'Codomain'}</th><th>{lang === 'zh' ? '大小' : 'Size'}</th></tr>
+            <tr><th>{tr({ zh: '坐标', en: 'Coord',
+                zhHant: "座標"
+            })}</th><th>{tr({ zh: '取值空间', en: 'Codomain',
+                zhHant: "取值空間"
+            })}</th><th>{tr({ zh: '大小', en: 'Size' })}</th></tr>
           </thead>
           <tbody>
             <tr><td><TeX src={`c_p`} /></td><td><TeX src={`S_8`} /></td><td className="num">8! = 40,320</td></tr>
             <tr><td><TeX src={`c_o`} /></td><td><TeX src={`(\\mathbb{Z}/3)^8`} /></td><td className="num">3⁸ = 6,561</td></tr>
             <tr><td><TeX src={`e_p`} /></td><td><TeX src={`S_{12}`} /></td><td className="num">12! = 479,001,600</td></tr>
             <tr><td><TeX src={`e_o`} /></td><td><TeX src={`(\\mathbb{Z}/2)^{12}`} /></td><td className="num">2¹² = 4,096</td></tr>
-            <tr><td>{lang === 'zh' ? '乘积 (自由空间)' : 'product (free space F)'}</td><td colSpan={2} className="num"><TeX src={`|F| = 5.19 \\times 10^{20}`} /></td></tr>
-            <tr><td>{lang === 'zh' ? '魔方群 G' : 'cube group G'}</td><td colSpan={2} className="num"><TeX src={`|G| = |F|/12 \\approx 4.33 \\times 10^{19}`} /></td></tr>
+            <tr><td>{tr({ zh: '乘积 (自由空间)', en: 'product (free space F)',
+                zhHant: "乘積 (自由空間)"
+            })}</td><td colSpan={2} className="num"><TeX src={`|F| = 5.19 \\times 10^{20}`} /></td></tr>
+            <tr><td>{tr({ zh: '魔方群 G', en: 'cube group G' })}</td><td colSpan={2} className="num"><TeX src={`|G| = |F|/12 \\approx 4.33 \\times 10^{19}`} /></td></tr>
           </tbody>
         </table>
         <p>
@@ -8607,7 +9283,9 @@ export default function GroupTheoryPage() {
           <li><TeX src={`P_{11}`} />: <L zh={<>11-Sylow 子群,阶 11</>} en={<>11-Sylow, order 11</>} /></li>
         </ul>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '为什么有 11 出现?' : 'Why does 11 appear?'}</div>
+          <div className="gt-thm-title">{tr({ zh: '为什么有 11 出现?', en: 'Why does 11 appear?',
+              zhHant: "為什麼有 11 出現?"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>11 是 ≤ 12 的最大素数 — 它来自 <strong>S₁₂</strong> 中的 11-循环 (12 个棱块上)。如果某个 11-阶元素被还原,意味着 11 个棱块被循环 (剩 1 个不动)。这种 11-循环在 G 中真实存在,数学上称为 <strong>11-阶元素</strong>。</>}
@@ -8621,9 +9299,13 @@ export default function GroupTheoryPage() {
         <table className="gt-compare">
           <thead>
             <tr>
-              <th>{lang === 'zh' ? '速率' : 'Rate'}</th>
-              <th>{lang === 'zh' ? '看完所有状态所需时间' : 'Time to enumerate all states'}</th>
-              <th>{lang === 'zh' ? '对照' : 'Comparable to'}</th>
+              <th>{tr({ zh: '速率', en: 'Rate' })}</th>
+              <th>{tr({ zh: '看完所有状态所需时间', en: 'Time to enumerate all states',
+                  zhHant: "看完所有狀態所需時間"
+            })}</th>
+              <th>{tr({ zh: '对照', en: 'Comparable to',
+                  zhHant: "對照"
+            })}</th>
             </tr>
           </thead>
           <tbody>
@@ -8688,10 +9370,16 @@ export default function GroupTheoryPage() {
         <table className="gt-puzzle-order-tbl">
           <thead>
             <tr>
-              <th>{lang === 'zh' ? '拼图' : 'puzzle'}</th>
+              <th>{tr({ zh: '拼图', en: 'puzzle',
+                  zhHant: "拼圖"
+            })}</th>
               <th>|G|</th>
-              <th>{lang === 'zh' ? '十进制' : 'decimal'}</th>
-              <th>{lang === 'zh' ? '相对 3×3' : 'vs 3×3'}</th>
+              <th>{tr({ zh: '十进制', en: 'decimal',
+                  zhHant: "十進位制"
+            })}</th>
+              <th>{tr({ zh: '相对 3×3', en: 'vs 3×3',
+                  zhHant: "相對 3×3"
+            })}</th>
             </tr>
           </thead>
           <tbody>
@@ -8702,7 +9390,7 @@ export default function GroupTheoryPage() {
               <td className="num">~10<sup>-13</sup></td>
             </tr>
             <tr>
-              <td>{lang === 'zh' ? '3×3×3 (本文主角)' : '3×3×3 (this article)'}</td>
+              <td>{tr({ zh: '3×3×3 (本文主角)', en: '3×3×3 (this article)' })}</td>
               <td><TeX src={`\\dfrac{8! \\cdot 3^7 \\cdot 12! \\cdot 2^{11}}{2}`} /></td>
               <td className="num">4.33 × 10<sup>19</sup></td>
               <td className="num">1.00</td>
@@ -8720,13 +9408,15 @@ export default function GroupTheoryPage() {
               <td className="num">6.5 × 10<sup>54</sup></td>
             </tr>
             <tr>
-              <td>{lang === 'zh' ? 'Megaminx (12 面)' : 'Megaminx (12 faces)'}</td>
+              <td>{tr({ zh: 'Megaminx (12 面)', en: 'Megaminx (12 faces)' })}</td>
               <td><TeX src={`\\dfrac{20!\\cdot 30!\\cdot 3^{19}\\cdot 2^{29}}{60}`} /></td>
               <td className="num">1.01 × 10<sup>68</sup></td>
               <td className="num">2.3 × 10<sup>48</sup></td>
             </tr>
             <tr>
-              <td>{lang === 'zh' ? 'Pyraminx (四面体)' : 'Pyraminx (tetrahedron)'}</td>
+              <td>{tr({ zh: 'Pyraminx (四面体)', en: 'Pyraminx (tetrahedron)',
+                  zhHant: "Pyraminx (四面體)"
+            })}</td>
               <td><TeX src={`\\dfrac{6!\\cdot 3^4 \\cdot 3^4}{2}`} /></td>
               <td className="num">75,582,720</td>
               <td className="num">~10<sup>-12</sup></td>
@@ -8766,7 +9456,7 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 5.1 — 魔方第一定律' : 'Theorem 5.1 — first law of cubology'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 5.1 — 魔方第一定律', en: 'Theorem 5.1 — first law of cubology' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>一个状态 <TeX src={`(c_p, c_o, e_p, e_o)`} /> 可达 (即位于 G 中),当且仅当下面三件事同时成立:</>}
@@ -8776,17 +9466,23 @@ export default function GroupTheoryPage() {
               <div className="gt-inv-law">
                 <div className="gt-inv-law-num">(1)</div>
                 <TeXBlock src={`\\sum_{i=1}^{8} c_o^{(i)} \\;\\equiv\\; 0 \\pmod 3`} />
-                <div className="gt-inv-law-desc">{lang === 'zh' ? '总角块拧角守恒' : 'total corner twist conserved'}</div>
+                <div className="gt-inv-law-desc">{tr({ zh: '总角块拧角守恒', en: 'total corner twist conserved',
+                    zhHant: "總角塊擰角守恆"
+                })}</div>
               </div>
               <div className="gt-inv-law">
                 <div className="gt-inv-law-num">(2)</div>
                 <TeXBlock src={`\\sum_{i=1}^{12} e_o^{(i)} \\;\\equiv\\; 0 \\pmod 2`} />
-                <div className="gt-inv-law-desc">{lang === 'zh' ? '总棱块翻面守恒' : 'total edge flip conserved'}</div>
+                <div className="gt-inv-law-desc">{tr({ zh: '总棱块翻面守恒', en: 'total edge flip conserved',
+                    zhHant: "總稜塊翻面守恆"
+                })}</div>
               </div>
               <div className="gt-inv-law">
                 <div className="gt-inv-law-num">(3)</div>
                 <TeXBlock src={`\\operatorname{sgn}(c_p) \\;=\\; \\operatorname{sgn}(e_p)`} />
-                <div className="gt-inv-law-desc">{lang === 'zh' ? '角棱奇偶联动' : 'corner-edge parity coupling'}</div>
+                <div className="gt-inv-law-desc">{tr({ zh: '角棱奇偶联动', en: 'corner-edge parity coupling',
+                    zhHant: "角稜奇偶聯動"
+                })}</div>
               </div>
             </div>
           </div>
@@ -8802,7 +9498,9 @@ export default function GroupTheoryPage() {
           <L zh="5.1  CO 守恒律的证明" en="5.1  Proof: corner orientation sum is conserved" />
         </h3>
         <div className="gt-proof">
-          <div className="gt-proof-title">{lang === 'zh' ? '证明' : 'Proof'}</div>
+          <div className="gt-proof-title">{tr({ zh: '证明', en: 'Proof',
+              zhHant: "證明"
+        })}</div>
           <L
             zh={<>
               <p style={{ margin: '0 0 12px' }}>要证: 任何面转 <TeX src={`X`} /> 应用后, <TeX src={`\\sum_i c_o^{(i)} \\equiv 0 \\pmod 3`} /> 在 G 中保持。</p>
@@ -8831,7 +9529,9 @@ export default function GroupTheoryPage() {
           <L zh="5.2  EO 守恒律的证明" en="5.2  Proof: edge orientation sum is conserved" />
         </h3>
         <div className="gt-proof">
-          <div className="gt-proof-title">{lang === 'zh' ? '证明' : 'Proof'}</div>
+          <div className="gt-proof-title">{tr({ zh: '证明', en: 'Proof',
+              zhHant: "證明"
+        })}</div>
           <L
             zh={<>
               <p style={{ margin: '0 0 12px' }}>要证: <TeX src={`\\sum_i e_o^{(i)} \\pmod 2`} /> 在 G 中保持。</p>
@@ -8850,7 +9550,9 @@ export default function GroupTheoryPage() {
           <L zh="5.3  奇偶联动的证明" en="5.3  Proof: corner-edge parity coupling" />
         </h3>
         <div className="gt-proof">
-          <div className="gt-proof-title">{lang === 'zh' ? '证明' : 'Proof'}</div>
+          <div className="gt-proof-title">{tr({ zh: '证明', en: 'Proof',
+              zhHant: "證明"
+        })}</div>
           <L
             zh={<>
               <p style={{ margin: '0 0 12px' }}>要证: <TeX src={`\\operatorname{sgn}(c_p) = \\operatorname{sgn}(e_p)`} /> 在 G 中保持 ⇔ 角块置换和棱块置换的奇偶性绑定。</p>
@@ -8872,7 +9574,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '推论 5.4' : 'Corollary 5.4'}</div>
+          <div className="gt-thm-title">{tr({ zh: '推论 5.4', en: 'Corollary 5.4',
+              zhHant: "推論 5.4"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>「自由组装空间」/ G 是一个 12 元商群:</>}
@@ -8912,7 +9616,7 @@ export default function GroupTheoryPage() {
         </p>
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '生成元' : 'Gen'}</th><th><TeX src={`\\Delta(\\sum c_o) \\bmod 3`} /></th><th><TeX src={`\\Delta(\\sum e_o) \\bmod 2`} /></th><th><TeX src={`\\operatorname{sgn}(c_p) \\cdot \\operatorname{sgn}(e_p)`} /></th></tr>
+            <tr><th>{tr({ zh: '生成元', en: 'Gen' })}</th><th><TeX src={`\\Delta(\\sum c_o) \\bmod 3`} /></th><th><TeX src={`\\Delta(\\sum e_o) \\bmod 2`} /></th><th><TeX src={`\\operatorname{sgn}(c_p) \\cdot \\operatorname{sgn}(e_p)`} /></th></tr>
           </thead>
           <tbody>
             <tr><td>U</td><td className="num">0</td><td className="num">0</td><td className="num">+1</td></tr>
@@ -8944,7 +9648,7 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 6.1 — Singmaster' : 'Theorem 6.1 — Singmaster'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 6.1 — Singmaster', en: 'Theorem 6.1 — Singmaster' })}</div>
           <div className="gt-thm-body">
             <TeXBlock src={`G \\;\\cong\\; \\bigl\\{\\, (\\sigma, x, \\tau, y) \\in S_8 \\times (\\mathbb{Z}/3)^8 \\times S_{12} \\times (\\mathbb{Z}/2)^{12} \\;\\bigm|\\; \\textstyle\\sum x_i \\equiv 0,\\; \\sum y_i \\equiv 0,\\; \\operatorname{sgn}(\\sigma) = \\operatorname{sgn}(\\tau) \\,\\bigr\\}`} />
             <L
@@ -8953,9 +9657,9 @@ export default function GroupTheoryPage() {
             />
             <TeXBlock src={`\\underbrace{\\mathbb{Z}/3 \\,\\wr\\, S_8}_{\\text{corner sector}} \\;\\;\\times\\;\\; \\underbrace{\\mathbb{Z}/2 \\,\\wr\\, S_{12}}_{\\text{edge sector}}`} />
             <span style={{ fontSize: 14, color: 'var(--ink-dim)' }}>
-              {lang === 'zh'
-                ? '角块部分 ≅ 81 万 7,920,且与棱块部分通过 sgn(cp)=sgn(ep) 这一条「相位锁」耦合。'
-                : 'The corner sector has 88,179,840 elements; it is coupled to the edge sector by the single parity lock sgn(cp) = sgn(ep).'}
+              {tr({ zh: '角块部分 ≅ 81 万 7,920,且与棱块部分通过 sgn(cp)=sgn(ep) 这一条「相位锁」耦合。', en: 'The corner sector has 88,179,840 elements; it is coupled to the edge sector by the single parity lock sgn(cp) = sgn(ep).',
+                  zhHant: "角塊部分 ≅ 81 萬 7,920,且與稜塊部分透過 sgn(cp)=sgn(ep) 這一條「相位鎖」耦合。"
+            })}
             </span>
           </div>
         </div>
@@ -9009,30 +9713,50 @@ export default function GroupTheoryPage() {
         <table className="gt-product-tbl">
           <thead>
             <tr>
-              <th>{lang === 'zh' ? '运算结构' : 'Structure'}</th>
-              <th>{lang === 'zh' ? '乘法律' : 'Multiplication'}</th>
-              <th>{lang === 'zh' ? '阿贝尔?' : 'Abelian?'}</th>
-              <th>{lang === 'zh' ? '魔方实例' : 'Cube instance'}</th>
+              <th>{tr({ zh: '运算结构', en: 'Structure',
+                  zhHant: "運算結構"
+            })}</th>
+              <th>{tr({ zh: '乘法律', en: 'Multiplication' })}</th>
+              <th>{tr({ zh: '阿贝尔?', en: 'Abelian?',
+                  zhHant: "阿貝爾?"
+            })}</th>
+              <th>{tr({ zh: '魔方实例', en: 'Cube instance',
+                  zhHant: "魔方例項"
+            })}</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>{lang === 'zh' ? '直积' : 'Direct product'}</strong> <TeX src={`A \\times B`} /></td>
+              <td><strong>{tr({ zh: '直积', en: 'Direct product',
+                  zhHant: "直積"
+            })}</strong> <TeX src={`A \\times B`} /></td>
               <td><TeX src={`(a_1, b_1)(a_2, b_2) = (a_1 a_2, b_1 b_2)`} /></td>
-              <td className="num">{lang === 'zh' ? 'A, B 均阿贝尔则是' : 'iff A, B abelian'}</td>
+              <td className="num">{tr({ zh: 'A, B 均阿贝尔则是', en: 'iff A, B abelian',
+                  zhHant: "A, B 均阿貝爾則是"
+            })}</td>
               <td><L zh={<><em>无</em>: 角棱实际有奇偶耦合, 非独立</>} en={<><em>none</em>: corners/edges parity-coupled</>} /></td>
             </tr>
             <tr>
-              <td><strong>{lang === 'zh' ? '半直积' : 'Semidirect'}</strong> <TeX src={`A \\rtimes_\\varphi B`} /></td>
+              <td><strong>{tr({ zh: '半直积', en: 'Semidirect',
+                  zhHant: "半直積"
+            })}</strong> <TeX src={`A \\rtimes_\\varphi B`} /></td>
               <td><TeX src={`(a_1, b_1)(a_2, b_2) = (a_1\\,\\varphi_{b_1}(a_2),\\; b_1 b_2)`} /></td>
-              <td className="num">{lang === 'zh' ? 'φ 平凡时才是' : 'iff φ trivial'}</td>
-              <td><TeX src={`G \\cong N \\rtimes P`} />,P {lang === 'zh' ? '通过共轭作用于方向' : 'acts on orientations by conjugation'}</td>
+              <td className="num">{tr({ zh: 'φ 平凡时才是', en: 'iff φ trivial',
+                  zhHant: "φ 平凡時才是"
+            })}</td>
+              <td><TeX src={`G \\cong N \\rtimes P`} />,P {tr({ zh: '通过共轭作用于方向', en: 'acts on orientations by conjugation',
+                  zhHant: "透過共軛作用於方向"
+            })}</td>
             </tr>
             <tr>
-              <td><strong>{lang === 'zh' ? '圈积' : 'Wreath product'}</strong> <TeX src={`A \\wr B`} /></td>
+              <td><strong>{tr({ zh: '圈积', en: 'Wreath product',
+                  zhHant: "圈積"
+            })}</strong> <TeX src={`A \\wr B`} /></td>
               <td><TeX src={`A^B \\rtimes B`} /> <L zh="(B 置换 |B| 份 A)" en=" (B permutes |B| copies of A)" /></td>
-              <td className="num">{lang === 'zh' ? '通常不是' : 'usually not'}</td>
-              <td><TeX src={`\\mathbb{Z}/3 \\wr S_8`} /> {lang === 'zh' ? '为角块部分' : 'is the corner sector'}</td>
+              <td className="num">{tr({ zh: '通常不是', en: 'usually not' })}</td>
+              <td><TeX src={`\\mathbb{Z}/3 \\wr S_8`} /> {tr({ zh: '为角块部分', en: 'is the corner sector',
+                  zhHant: "為角塊部分"
+            })}</td>
             </tr>
           </tbody>
         </table>
@@ -9083,7 +9807,7 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 7.1 — Lagrange' : 'Theorem 7.1 — Lagrange'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 7.1 — Lagrange', en: 'Theorem 7.1 — Lagrange' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>每个元素的阶必须整除 |G|。 所以 <TeX src={`n \\,\\bigm|\\, 43{,}252{,}003{,}274{,}489{,}856{,}000`} />。 魔方群中实际出现的元素阶,最大是 <strong>1260</strong>(由两个不交圈乘出来的 LCM)。</>}
@@ -9148,8 +9872,10 @@ export default function GroupTheoryPage() {
             <tr>
               <th>n</th>
               <th>g(n)</th>
-              <th>{lang === 'zh' ? '取到最大值的分拆' : 'optimal partition'}</th>
-              <th>{lang === 'zh' ? '魔方上的对应' : 'cube analogue'}</th>
+              <th>{tr({ zh: '取到最大值的分拆', en: 'optimal partition' })}</th>
+              <th>{tr({ zh: '魔方上的对应', en: 'cube analogue',
+                  zhHant: "魔方上的對應"
+            })}</th>
             </tr>
           </thead>
           <tbody>
@@ -9226,7 +9952,9 @@ export default function GroupTheoryPage() {
         </p>
         <ConjugationGallery />
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '共轭与「同态阶」' : 'Conjugation preserves order'}</div>
+          <div className="gt-thm-title">{tr({ zh: '共轭与「同态阶」', en: 'Conjugation preserves order',
+              zhHant: "共軛與「同態階」"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>共轭操作满足: <TeX src={`(aba^{-1})^n = a \\cdot b^n \\cdot a^{-1}`} />。 所以 b 和 <TeX src={`aba^{-1}`} /> 阶相同。 在魔方上的意义:你可以把任意操作搬到任何「等价位置」上, 它的次数、 还原性、 所有内在性质都不变。</>}
@@ -9266,7 +9994,9 @@ export default function GroupTheoryPage() {
           <L zh="8.3  共轭类大小 — 轨道–稳定子定理" en="8.3  Conjugacy-class size — orbit–stabilizer" />
         </h3>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 8.3 — 中心化子' : 'Definition 8.3 — centralizer'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 8.3 — 中心化子', en: 'Definition 8.3 — centralizer',
+              zhHant: "定義 8.3 — 中心化子"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>给定 <TeX src={`g \\in G`} />,中心化子 <TeX src={`C_G(g) := \\{\\, x \\in G \\;:\\; xg = gx\\,\\}`} /> 是 <em>与 g 交换的所有元素</em> 构成的子群。 它度量 g 在 G 中「跟谁交换得起来」。</>}
@@ -9275,7 +10005,9 @@ export default function GroupTheoryPage() {
           </div>
         </div>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 8.4 — 轨道–稳定子' : 'Theorem 8.4 — orbit–stabilizer'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 8.4 — 轨道–稳定子', en: 'Theorem 8.4 — orbit–stabilizer',
+              zhHant: "定理 8.4 — 軌道–穩定子"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>g 所在共轭类 <TeX src={`[g] := \\{\\,xgx^{-1} \\;:\\; x \\in G\\,\\}`} /> 的大小满足<TeXBlock src={`|[g]| \\;=\\; \\frac{|G|}{|C_G(g)|}`} />即「轨道大小 × 稳定子大小 = G 的阶」。 因此 <TeX src={`|[g]|`} /> 必整除 <TeX src={`|G|`} />。</>}
@@ -9294,7 +10026,9 @@ export default function GroupTheoryPage() {
           <li><L zh={<><strong>「最不平凡」元素</strong>:仅与 ⟨g⟩ 自身交换,<TeX src={`|C_G(g)| = \\operatorname{ord}(g)`} />,所以共轭类大小 <TeX src={`|[g]| = |G| / \\operatorname{ord}(g)`} />。 对 |g| = 1260 (最大阶) 的元素,<TeX src={`|[g]| \\le 4.3\\times10^{19}/1260 \\approx 3.4\\times10^{16}`} />。</>} en={<><strong>"Most non-trivial" elements</strong>: commute only with ⟨g⟩ itself, <TeX src={`|C_G(g)| = \\operatorname{ord}(g)`} />, so the class size is <TeX src={`|[g]| = |G| / \\operatorname{ord}(g)`} />. For order-1260 elements, <TeX src={`|[g]| \\le 4.3\\times10^{19}/1260 \\approx 3.4\\times10^{16}`} />.</>} /></li>
         </ul>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '类方程 (class equation)' : 'The class equation'}</div>
+          <div className="gt-thm-title">{tr({ zh: '类方程 (class equation)', en: 'The class equation',
+              zhHant: "類方程 (class equation)"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>把 G 按共轭类分解,得<TeXBlock src={`|G| \\;=\\; |Z(G)| \\;+\\; \\sum_{[g]\\,\\not\\subset\\,Z(G)} \\frac{|G|}{|C_G(g)|}`} />前一项是中心 (大小 1 的类), 后面是大小 ≥ 2 的类。 这是有限群论里最深的恒等式之一: 它把 |G| 的素因子结构、 中心、 与「非平凡共轭」 三者绑在同一行。</>}
@@ -9330,7 +10064,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '为什么换位子如此有用?' : 'Why commutators are so powerful'}</div>
+          <div className="gt-thm-title">{tr({ zh: '为什么换位子如此有用?', en: 'Why commutators are so powerful',
+              zhHant: "為什麼換位子如此有用?"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>当 <TeX src={`A`} /> 和 <TeX src={`B`} /> 的「影响区域」 <em>大体不重叠</em> 但 <em>有一处接触</em> 时, 换位子 <TeX src={`[A, B]`} /> 把接触点附近一两个块循环, 其他全部完整保留。 这就是 <strong>3-循环</strong>:盲拧、 还原 (FMC) 的核心积木。<br /><br />例如 <TeX src={`[R\\, U\\, R',\\, D]`} /> 是个干净的 3-循环棱块。 从 <TeX src={`8! \\cdot 12! \\cdot 3^8 \\cdot 2^{12}`} /> 这么大的群中, 提取出只动 3 个块的操作 —— 这是换位子做到的近乎魔法般的事。</>}
@@ -9353,7 +10089,9 @@ export default function GroupTheoryPage() {
           <L zh="9.2  换位子子群 [G, G]" en="9.2  The commutator subgroup [G, G]" />
         </h3>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 9.1' : 'Definition 9.1'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 9.1', en: 'Definition 9.1',
+              zhHant: "定義 9.1"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>群 <TeX src={`G`} /> 的 <strong>换位子子群</strong>(又叫 <em>derived subgroup</em>)是:</>}
@@ -9373,7 +10111,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '推论 9.2' : 'Corollary 9.2'}</div>
+          <div className="gt-thm-title">{tr({ zh: '推论 9.2', en: 'Corollary 9.2',
+              zhHant: "推論 9.2"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>偶置换 (sgn = +1) 的所有魔方状态恰好等于 [G, G]。所以 <strong>任何偶置换状态都能写成换位子的有限乘积</strong>。这就是为什么换位子语言对盲拧如此核心 —— 它把所有「无奇偶问题」的状态都拆解为基本积木。</>}
@@ -9385,7 +10125,9 @@ export default function GroupTheoryPage() {
           <L zh="9.3  换位子与「中心」" en="9.3  Commutators and the centre" />
         </h3>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 9.3 — 中心' : 'Definition 9.3 — centre'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 9.3 — 中心', en: 'Definition 9.3 — centre',
+              zhHant: "定義 9.3 — 中心"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>群的 <strong>中心</strong>:<TeXBlock src={`Z(G) \\;=\\; \\{\\, z \\in G \\;:\\; zg = gz \\;\\forall\\, g \\in G \\,\\}.`} />即跟所有元素都交换的子集。</>}
@@ -9400,7 +10142,7 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 9.4' : 'Theorem 9.4'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 9.4', en: 'Theorem 9.4' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>魔方群的中心 <TeX src={`Z(G) = \\{e,\\,\\text{superflip}\\}`} />, 阶为 2。 即 <strong>仅有 superflip 和 identity 跟所有面转都交换</strong>。 superflip 是「12 个棱全翻」那个状态, 它本身是阶 2 元素。</>}
@@ -9416,7 +10158,9 @@ export default function GroupTheoryPage() {
         </p>
         <CentreVerifier />
         <div className="gt-proof">
-          <div className="gt-proof-title">{lang === 'zh' ? '为什么 Z(G) 只有 2 个元素?' : 'Why |Z(G)| = 2'}</div>
+          <div className="gt-proof-title">{tr({ zh: '为什么 Z(G) 只有 2 个元素?', en: 'Why |Z(G)| = 2',
+              zhHant: "為什麼 Z(G) 只有 2 個元素?"
+        })}</div>
           <L
             zh={<>
               <p style={{ margin: '0 0 12px' }}>设 <TeX src={`g \\in Z(G)`} />。 则 g 跟每个面转都交换 ⇔ g 在 cube symmetry group 下不变 ⇔ g 在 48 个外部对称下也不变 (因为 G 由面转生成, 且面转生成的对称变换闭包 = 整个外部对称群)。</p>
@@ -9466,14 +10210,26 @@ export default function GroupTheoryPage() {
         </p>
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '层' : 'Term'}</th><th>{lang === 'zh' ? '定义' : 'Definition'}</th><th>{lang === 'zh' ? '阶 (魔方)' : 'Cube order'}</th></tr>
+            <tr><th>{tr({ zh: '层', en: 'Term',
+                zhHant: "層"
+            })}</th><th>{tr({ zh: '定义', en: 'Definition',
+                zhHant: "定義"
+            })}</th><th>{tr({ zh: '阶 (魔方)', en: 'Cube order',
+                zhHant: "階 (魔方)"
+            })}</th></tr>
           </thead>
           <tbody>
-            <tr><td><TeX src={`G^{(0)} = G`} /></td><td>{lang === 'zh' ? '魔方群' : 'cube group'}</td><td className="num">4.33 × 10¹⁹</td></tr>
-            <tr><td><TeX src={`G^{(1)} = [G, G]`} /></td><td>{lang === 'zh' ? '偶置换状态' : 'even-parity states'}</td><td className="num">|G|/2 ≈ 2.16 × 10¹⁹</td></tr>
-            <tr><td><TeX src={`G^{(2)} = [G', G']`} /></td><td>{lang === 'zh' ? 'CO+EO=0 的偶状态 (A₈ × A₁₂ 投影)' : 'even states with CO=EO=0 (A₈ × A₁₂ projection)'}</td><td className="num">≈ 9.65 × 10¹⁵</td></tr>
-            <tr><td><TeX src={`G^{(3)}`} /></td><td>{lang === 'zh' ? 'A₈ 与 A₁₂ 各自的换位子子群 (它们是单群,自换位 = 自身)' : 'commutator subgroups of A₈ and A₁₂ — both simple, so equal themselves'}</td><td className="num">≈ 9.65 × 10¹⁵</td></tr>
-            <tr><td><TeX src={`G^{(k)}, k \\geq 3`} /></td><td>{lang === 'zh' ? '不再下降' : 'stabilises (no further descent)'}</td><td className="num">≈ 9.65 × 10¹⁵</td></tr>
+            <tr><td><TeX src={`G^{(0)} = G`} /></td><td>{tr({ zh: '魔方群', en: 'cube group' })}</td><td className="num">4.33 × 10¹⁹</td></tr>
+            <tr><td><TeX src={`G^{(1)} = [G, G]`} /></td><td>{tr({ zh: '偶置换状态', en: 'even-parity states',
+                zhHant: "偶置換狀態"
+            })}</td><td className="num">|G|/2 ≈ 2.16 × 10¹⁹</td></tr>
+            <tr><td><TeX src={`G^{(2)} = [G', G']`} /></td><td>{tr({ zh: 'CO+EO=0 的偶状态 (A₈ × A₁₂ 投影)', en: 'even states with CO=EO=0 (A₈ × A₁₂ projection)',
+                zhHant: "CO+EO=0 的偶狀態 (A₈ × A₁₂ 投影)"
+            })}</td><td className="num">≈ 9.65 × 10¹⁵</td></tr>
+            <tr><td><TeX src={`G^{(3)}`} /></td><td>{tr({ zh: 'A₈ 与 A₁₂ 各自的换位子子群 (它们是单群,自换位 = 自身)', en: 'commutator subgroups of A₈ and A₁₂ — both simple, so equal themselves',
+                zhHant: "A₈ 與 A₁₂ 各自的換位子子群 (它們是單群,自換位 = 自身)"
+            })}</td><td className="num">≈ 9.65 × 10¹⁵</td></tr>
+            <tr><td><TeX src={`G^{(k)}, k \\geq 3`} /></td><td>{tr({ zh: '不再下降', en: 'stabilises (no further descent)' })}</td><td className="num">≈ 9.65 × 10¹⁵</td></tr>
           </tbody>
         </table>
         <p>
@@ -9585,7 +10341,9 @@ export default function GroupTheoryPage() {
           <L zh="10.2  陪集 (Cosets)" en="10.2  Cosets" />
         </h3>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 10.1' : 'Definition 10.1'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 10.1', en: 'Definition 10.1',
+              zhHant: "定義 10.1"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>设 <TeX src={`H \\subseteq G`} /> 是子群, <TeX src={`g \\in G`} />。 <strong>左陪集</strong>: <TeX src={`gH = \\{gh : h \\in H\\}`} />。 陪集大小都等于 <TeX src={`|H|`} />, 且 G 被陪集划分为 <TeX src={`[G:H]`} /> 个互不相交的集合。</>}
@@ -9603,7 +10361,7 @@ export default function GroupTheoryPage() {
           <L zh="10.3  Lagrange 定理" en="10.3  Lagrange's theorem" />
         </h3>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 10.2 — Lagrange' : 'Theorem 10.2 — Lagrange'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 10.2 — Lagrange', en: 'Theorem 10.2 — Lagrange' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>设 <TeX src={`H \\subseteq G`} /> 是有限群的子群, 则 <TeX src={`|H| \\,\\bigm|\\, |G|`} /> (即 <TeX src={`|H|`} /> 整除 <TeX src={`|G|`} />), 且 <TeX src={`|G| = |H| \\cdot [G:H]`} />。</>}
@@ -9628,14 +10386,30 @@ export default function GroupTheoryPage() {
         </p>
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '阶段' : 'Phase'}</th><th>{lang === 'zh' ? '陪集大小' : 'Coset size'}</th><th>{lang === 'zh' ? '直径 (HTM)' : 'Diameter (HTM)'}</th><th>{lang === 'zh' ? '坐标含义' : 'Coordinate'}</th></tr>
+            <tr><th>{tr({ zh: '阶段', en: 'Phase',
+                zhHant: "階段"
+            })}</th><th>{tr({ zh: '陪集大小', en: 'Coset size' })}</th><th>{tr({ zh: '直径 (HTM)', en: 'Diameter (HTM)',
+                zhHant: "直徑 (HTM)"
+            })}</th><th>{tr({ zh: '坐标含义', en: 'Coordinate',
+                zhHant: "座標含義"
+            })}</th></tr>
           </thead>
           <tbody>
-            <tr><td><TeX src={`G \\to G_1`} /></td><td className="num">2¹¹ = 2,048</td><td className="num">7</td><td>{lang === 'zh' ? '12 棱朝向 (mod 11 自由)' : '12-edge orientation (11 free)'}</td></tr>
-            <tr><td><TeX src={`G_1 \\to G_2`} /></td><td className="num">3⁷ · <TeX src={`\\binom{12}{4}`} /> = 2187 · 495 = 1,082,565</td><td className="num">10</td><td>{lang === 'zh' ? '7 角朝向 + UD-slice 棱位置' : '7-corner orient. + UD-slice edge placement'}</td></tr>
-            <tr><td><TeX src={`G_2 \\to G_3`} /></td><td className="num">29,400</td><td className="num">13</td><td>{lang === 'zh' ? '角块进 4-轨道 + 棱块进 4-轨道' : 'corners and edges into 4-orbits'}</td></tr>
-            <tr><td><TeX src={`G_3 \\to \\{e\\}`} /></td><td className="num">663,552</td><td className="num">15</td><td>{lang === 'zh' ? '半圈子群,domino group' : 'half-turn-only "domino" group'}</td></tr>
-            <tr><td>{lang === 'zh' ? '总上界' : 'Total upper bound'}</td><td colSpan={2} className="num"><strong>7 + 10 + 13 + 15 = 45</strong></td><td>{lang === 'zh' ? '原 Thistlethwaite 1981 给的是 52,后人收紧' : 'original 1981 Thistlethwaite gave 52; later refined'}</td></tr>
+            <tr><td><TeX src={`G \\to G_1`} /></td><td className="num">2¹¹ = 2,048</td><td className="num">7</td><td>{tr({ zh: '12 棱朝向 (mod 11 自由)', en: '12-edge orientation (11 free)',
+                zhHant: "12 稜朝向 (mod 11 自由)"
+            })}</td></tr>
+            <tr><td><TeX src={`G_1 \\to G_2`} /></td><td className="num">3⁷ · <TeX src={`\\binom{12}{4}`} /> = 2187 · 495 = 1,082,565</td><td className="num">10</td><td>{tr({ zh: '7 角朝向 + UD-slice 棱位置', en: '7-corner orient. + UD-slice edge placement',
+                zhHant: "7 角朝向 + UD-slice 稜位置"
+            })}</td></tr>
+            <tr><td><TeX src={`G_2 \\to G_3`} /></td><td className="num">29,400</td><td className="num">13</td><td>{tr({ zh: '角块进 4-轨道 + 棱块进 4-轨道', en: 'corners and edges into 4-orbits',
+                zhHant: "角塊進 4-軌道 + 稜塊進 4-軌道"
+            })}</td></tr>
+            <tr><td><TeX src={`G_3 \\to \\{e\\}`} /></td><td className="num">663,552</td><td className="num">15</td><td>{tr({ zh: '半圈子群,domino group', en: 'half-turn-only "domino" group' })}</td></tr>
+            <tr><td>{tr({ zh: '总上界', en: 'Total upper bound',
+                zhHant: "總上界"
+            })}</td><td colSpan={2} className="num"><strong>7 + 10 + 13 + 15 = 45</strong></td><td>{tr({ zh: '原 Thistlethwaite 1981 给的是 52,后人收紧', en: 'original 1981 Thistlethwaite gave 52; later refined',
+                zhHant: "原 Thistlethwaite 1981 給的是 52,後人收緊"
+            })}</td></tr>
           </tbody>
         </table>
         <p>
@@ -9674,7 +10448,7 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 11.1 — Rokicki, Kociemba, Davidson, Dethridge (2014)' : 'Theorem 11.1 — Rokicki, Kociemba, Davidson, Dethridge (2014)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 11.1 — Rokicki, Kociemba, Davidson, Dethridge (2014)', en: 'Theorem 11.1 — Rokicki, Kociemba, Davidson, Dethridge (2014)' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>魔方群的直径 (在半圈度量 HTM 下) 恰好等于 <strong>20</strong>。即:任何状态都可在 20 步以内还原, 且存在状态恰好需要 20 步。</>}
@@ -9748,7 +10522,11 @@ export default function GroupTheoryPage() {
         </p>
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '度量' : 'Metric'}</th><th>{lang === 'zh' ? '生成集' : 'Generators'}</th><th>{lang === 'zh' ? '直径' : 'Diameter'}</th><th>{lang === 'zh' ? '极端状态' : 'Extremal'}</th></tr>
+            <tr><th>{tr({ zh: '度量', en: 'Metric' })}</th><th>{tr({ zh: '生成集', en: 'Generators' })}</th><th>{tr({ zh: '直径', en: 'Diameter',
+                zhHant: "直徑"
+            })}</th><th>{tr({ zh: '极端状态', en: 'Extremal',
+                zhHant: "極端狀態"
+            })}</th></tr>
           </thead>
           <tbody>
             <tr><td>HTM (half-turn)</td><td className="num">18 (each face × 90°/180°/270°)</td><td className="num">20</td><td>superflip {`{}`}+ ~490M others</td></tr>
@@ -9768,7 +10546,7 @@ export default function GroupTheoryPage() {
         </h3>
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '年' : 'Year'}</th><th>{lang === 'zh' ? '人' : 'Who'}</th><th>{lang === 'zh' ? '上界' : 'Upper'}</th><th>{lang === 'zh' ? '下界' : 'Lower'}</th></tr>
+            <tr><th>{tr({ zh: '年', en: 'Year' })}</th><th>{tr({ zh: '人', en: 'Who' })}</th><th>{tr({ zh: '上界', en: 'Upper' })}</th><th>{tr({ zh: '下界', en: 'Lower' })}</th></tr>
           </thead>
           <tbody>
             <tr><td>1981</td><td>Thistlethwaite</td><td className="num">52</td><td className="num">—</td></tr>
@@ -9955,39 +10733,53 @@ export default function GroupTheoryPage() {
         </h3>
         <div className="gt-beyond-scale">
           <div className="gt-beyond-scale-row">
-            <span className="gt-beyond-scale-name">{lang === 'zh' ? '2×2 口袋' : '2×2 Pocket'}</span>
+            <span className="gt-beyond-scale-name">{tr({ zh: '2×2 口袋', en: '2×2 Pocket' })}</span>
             <span className="gt-beyond-scale-val">3.67 × 10⁶</span>
-            <span className="gt-beyond-scale-cmp">{lang === 'zh' ? '只是 G 的角块部分' : 'just the corner sector of G'}</span>
+            <span className="gt-beyond-scale-cmp">{tr({ zh: '只是 G 的角块部分', en: 'just the corner sector of G',
+                zhHant: "只是 G 的角塊部分"
+            })}</span>
           </div>
           <div className="gt-beyond-scale-row">
             <span className="gt-beyond-scale-name">{lang === 'zh' ? 'Pyraminx' : 'Pyraminx'}</span>
             <span className="gt-beyond-scale-val">75,582,720</span>
-            <span className="gt-beyond-scale-cmp">{lang === 'zh' ? '8 顶 × 8! / 部分约束' : '8 tips × 8!/ constrained'}</span>
+            <span className="gt-beyond-scale-cmp">{tr({ zh: '8 顶 × 8! / 部分约束', en: '8 tips × 8!/ constrained',
+                zhHant: "8 頂 × 8! / 部分約束"
+            })}</span>
           </div>
           <div className="gt-beyond-scale-row gt-beyond-scale-row-self">
             <span className="gt-beyond-scale-name">{lang === 'zh' ? '3×3 (G)' : '3×3 (G)'}</span>
             <span className="gt-beyond-scale-val">4.33 × 10<sup>19</sup></span>
-            <span className="gt-beyond-scale-cmp">{lang === 'zh' ? '本文主题' : 'the subject of this essay'}</span>
+            <span className="gt-beyond-scale-cmp">{tr({ zh: '本文主题', en: 'the subject of this essay',
+                zhHant: "本文主題"
+            })}</span>
           </div>
           <div className="gt-beyond-scale-row">
             <span className="gt-beyond-scale-name">{lang === 'zh' ? '4×4 Revenge' : '4×4 Revenge'}</span>
             <span className="gt-beyond-scale-val">7.40 × 10<sup>45</sup></span>
-            <span className="gt-beyond-scale-cmp">{lang === 'zh' ? '没有固定中心 → 状态空间 × 24' : 'no fixed centres → state space × 24'}</span>
+            <span className="gt-beyond-scale-cmp">{tr({ zh: '没有固定中心 → 状态空间 × 24', en: 'no fixed centres → state space × 24',
+                zhHant: "沒有固定中心 → 狀態空間 × 24"
+            })}</span>
           </div>
           <div className="gt-beyond-scale-row">
             <span className="gt-beyond-scale-name">{lang === 'zh' ? 'Megaminx' : 'Megaminx'}</span>
             <span className="gt-beyond-scale-val">1.01 × 10<sup>68</sup></span>
-            <span className="gt-beyond-scale-cmp">{lang === 'zh' ? '12 面 · 30 棱 · 20 角' : '12 faces · 30 edges · 20 corners'}</span>
+            <span className="gt-beyond-scale-cmp">{tr({ zh: '12 面 · 30 棱 · 20 角', en: '12 faces · 30 edges · 20 corners',
+                zhHant: "12 面 · 30 稜 · 20 角"
+            })}</span>
           </div>
           <div className="gt-beyond-scale-row">
-            <span className="gt-beyond-scale-name">{lang === 'zh' ? '魔方 100×100' : 'Cube 100×100'}</span>
+            <span className="gt-beyond-scale-name">{tr({ zh: '魔方 100×100', en: 'Cube 100×100' })}</span>
             <span className="gt-beyond-scale-val">≈ 10<sup>33,000</sup></span>
-            <span className="gt-beyond-scale-cmp">{lang === 'zh' ? '比可观宇宙原子数 (10⁸²) 高 400 数量级' : '400 orders of magnitude beyond cosmic atom count (10⁸²)'}</span>
+            <span className="gt-beyond-scale-cmp">{tr({ zh: '比可观宇宙原子数 (10⁸²) 高 400 数量级', en: '400 orders of magnitude beyond cosmic atom count (10⁸²)',
+                zhHant: "比可觀宇宙原子數 (10⁸²) 高 400 數量級"
+            })}</span>
           </div>
           <div className="gt-beyond-scale-row gt-beyond-scale-row-out">
-            <span className="gt-beyond-scale-name">{lang === 'zh' ? 'Monster 群' : 'Monster group'}</span>
+            <span className="gt-beyond-scale-name">{tr({ zh: 'Monster 群', en: 'Monster group' })}</span>
             <span className="gt-beyond-scale-val">8.08 × 10<sup>53</sup></span>
-            <span className="gt-beyond-scale-cmp">{lang === 'zh' ? 'CFSG 最大零散群,不来自任何拼图' : 'largest sporadic in CFSG — no puzzle source'}</span>
+            <span className="gt-beyond-scale-cmp">{tr({ zh: 'CFSG 最大零散群,不来自任何拼图', en: 'largest sporadic in CFSG — no puzzle source',
+                zhHant: "CFSG 最大零散群,不來自任何拼圖"
+            })}</span>
           </div>
         </div>
 
@@ -10034,69 +10826,133 @@ export default function GroupTheoryPage() {
           <table className="gt-pattern-tbl">
             <thead>
               <tr>
-                <th>{lang === 'zh' ? '图案' : 'pattern'}</th>
-                <th>{lang === 'zh' ? '阶' : 'order'}</th>
-                <th>{lang === 'zh' ? '角循环' : 'corner cycles'}</th>
-                <th>{lang === 'zh' ? '棱循环' : 'edge cycles'}</th>
-                <th>{lang === 'zh' ? '类型' : 'character'}</th>
+                <th>{tr({ zh: '图案', en: 'pattern',
+                    zhHant: "圖案"
+                })}</th>
+                <th>{tr({ zh: '阶', en: 'order',
+                    zhHant: "階"
+                })}</th>
+                <th>{tr({ zh: '角循环', en: 'corner cycles',
+                    zhHant: "角迴圈"
+                })}</th>
+                <th>{tr({ zh: '棱循环', en: 'edge cycles',
+                    zhHant: "稜迴圈"
+                })}</th>
+                <th>{tr({ zh: '类型', en: 'character',
+                    zhHant: "型別"
+                })}</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><strong>{lang === 'zh' ? 'Superflip 超翻' : 'Superflip'}</strong></td>
+                <td><strong>{tr({ zh: 'Superflip 超翻', en: 'Superflip' })}</strong></td>
                 <td className="num">2</td>
-                <td className="num">{lang === 'zh' ? '全恒等' : 'identity'}</td>
-                <td>{lang === 'zh' ? '12 棱全翻' : '12 edges flipped'}</td>
-                <td>{lang === 'zh' ? '中心 Z(G)' : 'centre Z(G)'}</td>
+                <td className="num">{tr({ zh: '全恒等', en: 'identity',
+                    zhHant: "全恆等"
+                })}</td>
+                <td>{tr({ zh: '12 棱全翻', en: '12 edges flipped',
+                    zhHant: "12 稜全翻"
+                })}</td>
+                <td>{tr({ zh: '中心 Z(G)', en: 'centre Z(G)' })}</td>
               </tr>
               <tr>
-                <td><strong>{lang === 'zh' ? 'Checkerboard 棋盘' : 'Checkerboard'}</strong></td>
+                <td><strong>{tr({ zh: 'Checkerboard 棋盘', en: 'Checkerboard',
+                    zhHant: "Checkerboard 棋盤"
+                })}</strong></td>
                 <td className="num">2</td>
-                <td>{lang === 'zh' ? '4 个 2-循环' : '4 transpositions'}</td>
-                <td>{lang === 'zh' ? '6 个 2-循环' : '6 transpositions'}</td>
-                <td>{lang === 'zh' ? '6 半圈阿贝尔' : 'Abelian 6-tuple'}</td>
+                <td>{tr({ zh: '4 个 2-循环', en: '4 transpositions',
+                    zhHant: "4 個 2-迴圈"
+                })}</td>
+                <td>{tr({ zh: '6 个 2-循环', en: '6 transpositions',
+                    zhHant: "6 個 2-迴圈"
+                })}</td>
+                <td>{tr({ zh: '6 半圈阿贝尔', en: 'Abelian 6-tuple',
+                    zhHant: "6 半圈阿貝爾"
+                })}</td>
               </tr>
               <tr>
-                <td><strong>{lang === 'zh' ? '4 dots 四点' : '4 dots'}</strong></td>
+                <td><strong>{tr({ zh: '4 dots 四点', en: '4 dots',
+                    zhHant: "4 dots 四點"
+                })}</strong></td>
                 <td className="num">2</td>
-                <td className="num">{lang === 'zh' ? '全恒等' : 'identity'}</td>
-                <td>{lang === 'zh' ? '4 个 2-循环' : '4 transpositions'}</td>
-                <td>{lang === 'zh' ? '只移棱' : 'edges only'}</td>
+                <td className="num">{tr({ zh: '全恒等', en: 'identity',
+                    zhHant: "全恆等"
+                })}</td>
+                <td>{tr({ zh: '4 个 2-循环', en: '4 transpositions',
+                    zhHant: "4 個 2-迴圈"
+                })}</td>
+                <td>{tr({ zh: '只移棱', en: 'edges only',
+                    zhHant: "只移稜"
+                })}</td>
               </tr>
               <tr>
-                <td><strong>{lang === 'zh' ? 'Cube in cube 回字' : 'Cube in cube'}</strong></td>
+                <td><strong>{tr({ zh: 'Cube in cube 回字', en: 'Cube in cube' })}</strong></td>
                 <td className="num">4</td>
-                <td>{lang === 'zh' ? '8-循环' : 'one 8-cycle'}</td>
-                <td>{lang === 'zh' ? '复合' : 'mixed'}</td>
-                <td>{lang === 'zh' ? '非阿贝尔' : 'non-Abelian'}</td>
+                <td>{tr({ zh: '8-循环', en: 'one 8-cycle',
+                    zhHant: "8-迴圈"
+                })}</td>
+                <td>{tr({ zh: '复合', en: 'mixed',
+                    zhHant: "複合"
+                })}</td>
+                <td>{tr({ zh: '非阿贝尔', en: 'non-Abelian',
+                    zhHant: "非阿貝爾"
+                })}</td>
               </tr>
               <tr>
-                <td><strong>{lang === 'zh' ? '十字' : 'Cross'}</strong></td>
+                <td><strong>{tr({ zh: '十字', en: 'Cross' })}</strong></td>
                 <td className="num">2</td>
-                <td className="num">{lang === 'zh' ? '全恒等' : 'identity'}</td>
-                <td>{lang === 'zh' ? '6 个 2-循环' : '6 transpositions'}</td>
-                <td>{lang === 'zh' ? '对称' : 'symmetric'}</td>
+                <td className="num">{tr({ zh: '全恒等', en: 'identity',
+                    zhHant: "全恆等"
+                })}</td>
+                <td>{tr({ zh: '6 个 2-循环', en: '6 transpositions',
+                    zhHant: "6 個 2-迴圈"
+                })}</td>
+                <td>{tr({ zh: '对称', en: 'symmetric',
+                    zhHant: "對稱"
+                })}</td>
               </tr>
               <tr>
-                <td><strong>{lang === 'zh' ? '蟒蛇 Anaconda' : 'Anaconda'}</strong></td>
+                <td><strong>{tr({ zh: '蟒蛇 Anaconda', en: 'Anaconda' })}</strong></td>
                 <td className="num">6</td>
-                <td>{lang === 'zh' ? '3-循环 + 朝向' : '3-cycle + twists'}</td>
-                <td>{lang === 'zh' ? '6-循环' : '6-cycle'}</td>
-                <td>{lang === 'zh' ? '阶 = lcm(2,3)' : 'order = lcm(2,3)'}</td>
+                <td>{tr({ zh: '3-循环 + 朝向', en: '3-cycle + twists',
+                    zhHant: "3-迴圈 + 朝向"
+                })}</td>
+                <td>{tr({ zh: '6-循环', en: '6-cycle',
+                    zhHant: "6-迴圈"
+                })}</td>
+                <td>{tr({ zh: '阶 = lcm(2,3)', en: 'order = lcm(2,3)',
+                    zhHant: "階 = lcm(2,3)"
+                })}</td>
               </tr>
               <tr>
-                <td><strong>{lang === 'zh' ? '六点 Six spots' : 'Six spots'}</strong></td>
+                <td><strong>{tr({ zh: '六点 Six spots', en: 'Six spots',
+                    zhHant: "六點 Six spots"
+                })}</strong></td>
                 <td className="num">4</td>
-                <td>{lang === 'zh' ? '2 个 4-循环' : '2 four-cycles'}</td>
-                <td>{lang === 'zh' ? '4 个 2-循环' : '4 transpositions'}</td>
-                <td>{lang === 'zh' ? '90° 类' : '90° type'}</td>
+                <td>{tr({ zh: '2 个 4-循环', en: '2 four-cycles',
+                    zhHant: "2 個 4-迴圈"
+                })}</td>
+                <td>{tr({ zh: '4 个 2-循环', en: '4 transpositions',
+                    zhHant: "4 個 2-迴圈"
+                })}</td>
+                <td>{tr({ zh: '90° 类', en: '90° type',
+                    zhHant: "90° 類"
+                })}</td>
               </tr>
               <tr>
-                <td><strong>{lang === 'zh' ? '加减号' : 'Plus minus'}</strong></td>
+                <td><strong>{tr({ zh: '加减号', en: 'Plus minus',
+                    zhHant: "加減號"
+                })}</strong></td>
                 <td className="num">2</td>
-                <td className="num">{lang === 'zh' ? '全恒等' : 'identity'}</td>
-                <td>{lang === 'zh' ? '6 个 2-循环' : '6 transpositions'}</td>
-                <td>{lang === 'zh' ? '6 步极简' : '6-move minimum'}</td>
+                <td className="num">{tr({ zh: '全恒等', en: 'identity',
+                    zhHant: "全恆等"
+                })}</td>
+                <td>{tr({ zh: '6 个 2-循环', en: '6 transpositions',
+                    zhHant: "6 個 2-迴圈"
+                })}</td>
+                <td>{tr({ zh: '6 步极简', en: '6-move minimum',
+                    zhHant: "6 步極簡"
+                })}</td>
               </tr>
             </tbody>
           </table>
@@ -10163,7 +11019,9 @@ export default function GroupTheoryPage() {
         </p>
 
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '观察 13.1 — 图案视觉对称 ↔ 群代数对称' : 'Observation 13.1 — visual ↔ algebraic symmetry'}</div>
+          <div className="gt-def-title">{tr({ zh: '观察 13.1 — 图案视觉对称 ↔ 群代数对称', en: 'Observation 13.1 — visual ↔ algebraic symmetry',
+              zhHant: "觀察 13.1 — 圖案視覺對稱 ↔ 群代數對稱"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>一个图案在所有 48 个外部立方对称下不变 ⇔ 它在共轭作用下是 G 的不动点 ⇔ 它在 <strong>Z(G)</strong> 里。 这是 「为什么 superflip 既视觉上完美对称又代数上独一」 的真正原因。 一个图案在 <em>子集</em> 对称下不变 ⇔ 它在那部分稳定子里 —— 例如 「三轴对称」 棋盘对 24 个旋转对称不变, 它不属于 Z(G) 但属于对称化子群。</>}
@@ -10186,7 +11044,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 14.1' : 'Definition 14.1'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 14.1', en: 'Definition 14.1',
+              zhHant: "定義 14.1"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>设群 <TeX src={`G`} /> 有生成集 <TeX src={`S`} /> (假设 <TeX src={`S = S^{-1}`} />, 即生成元的逆也在 S 中)。 <strong>Cayley 图</strong> <TeX src={`\\operatorname{Cay}(G, S)`} /> 是: 顶点 = G 的每个元素, 每对 <TeX src={`(g, s)`} /> 给出一条 <TeX src={`g \\to g \\cdot s`} /> 的有色无向边 (按 s 配色)。 它是一个 <strong>顶点传递</strong> (vertex-transitive) 图。</>}
@@ -10206,9 +11066,9 @@ export default function GroupTheoryPage() {
         <div className="gt-panel">
           <CayleyMini />
           <div className="gt-aside" style={{ marginTop: 12, marginBottom: 0 }}>
-            {lang === 'zh'
-              ? '完整的 ⟨R, U⟩ Cayley 图有 73,483,200 个节点, 直径约 26 (HTM)。这里只画了前 15 个节点作示意。'
-              : 'The full Cay(⟨R, U⟩, {R, U}) has 73,483,200 nodes and diameter ≈ 26 (HTM). Only 15 nodes shown here.'}
+            {tr({ zh: '完整的 ⟨R, U⟩ Cayley 图有 73,483,200 个节点, 直径约 26 (HTM)。这里只画了前 15 个节点作示意。', en: 'The full Cay(⟨R, U⟩, {R, U}) has 73,483,200 nodes and diameter ≈ 26 (HTM). Only 15 nodes shown here.',
+                zhHant: "完整的 ⟨R, U⟩ Cayley 圖有 73,483,200 個節點, 直徑約 26 (HTM)。這裡只畫了前 15 個節點作示意。"
+            })}
           </div>
         </div>
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 14, color: 'var(--ink)' }}>
@@ -10247,7 +11107,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '直径 (Theorem 14.2)' : 'Diameter (Theorem 14.2)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '直径 (Theorem 14.2)', en: 'Diameter (Theorem 14.2)',
+              zhHant: "直徑 (Theorem 14.2)"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>Cay(G, S) 的 <strong>直径</strong> diam(G, S) = max<sub>g ∈ G</sub> d(e, g) = G 中 「最难还原状态」 的最短解长度。 在 HTM 下 = 20 (上帝之数); 在 QTM 下 = 26。</>}
@@ -10271,7 +11133,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '混合时间' : 'Mixing time'}</div>
+          <div className="gt-thm-title">{tr({ zh: '混合时间', en: 'Mixing time',
+              zhHant: "混合時間"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>魔方 Cayley 图的随机游走混合时间是 <strong>O(log |G| / λ)</strong> 步, 其中 λ 是 spectral gap。 数值实验给出 λ ≈ 0.6, 混合时间 ≈ 70 步 — 即任何 70 步以上的均匀随机打乱在统计意义上跟 「真正均匀分布」 几乎不可区分。 WCA 比赛打乱长度 (3x3 一般 25 步) 远低于这个值, 所以打乱有一些 「偏」 — 比如靠近 e 的状态出现概率比预期高一点点。</>}
@@ -10291,10 +11155,14 @@ export default function GroupTheoryPage() {
         <table className="gt-compare">
           <thead>
             <tr>
-              <th>{lang === 'zh' ? '生成集 S' : 'Generators S'}</th>
+              <th>{tr({ zh: '生成集 S', en: 'Generators S' })}</th>
               <th>{lang === 'zh' ? '|S|' : '|S|'}</th>
-              <th>{lang === 'zh' ? '直径' : 'Diameter'}</th>
-              <th>{lang === 'zh' ? '说明' : 'Notes'}</th>
+              <th>{tr({ zh: '直径', en: 'Diameter',
+                  zhHant: "直徑"
+            })}</th>
+              <th>{tr({ zh: '说明', en: 'Notes',
+                  zhHant: "說明"
+            })}</th>
             </tr>
           </thead>
           <tbody>
@@ -10302,31 +11170,43 @@ export default function GroupTheoryPage() {
               <td>HTM = U U' U2 D D' D2 ...</td>
               <td className="num">18</td>
               <td className="num">20</td>
-              <td>{lang === 'zh' ? 'WCA 标准, 半圈算一步' : 'WCA standard, half-turn metric'}</td>
+              <td>{tr({ zh: 'WCA 标准, 半圈算一步', en: 'WCA standard, half-turn metric',
+                  zhHant: "WCA 標準, 半圈算一步"
+            })}</td>
             </tr>
             <tr>
               <td>QTM = U U' D D' ...</td>
               <td className="num">12</td>
               <td className="num">26</td>
-              <td>{lang === 'zh' ? '只允许 90°, 半圈算两步' : 'quarter-turn only; U2 = 2 moves'}</td>
+              <td>{tr({ zh: '只允许 90°, 半圈算两步', en: 'quarter-turn only; U2 = 2 moves',
+                  zhHant: "只允許 90°, 半圈算兩步"
+            })}</td>
             </tr>
             <tr>
               <td>STM = HTM + M E S (切片)</td>
               <td className="num">27</td>
               <td className="num">18</td>
-              <td>{lang === 'zh' ? '加 9 个切片转, 直径少 2' : '+ 9 slice moves; diameter drops by 2'}</td>
+              <td>{tr({ zh: '加 9 个切片转, 直径少 2', en: '+ 9 slice moves; diameter drops by 2',
+                  zhHant: "加 9 個切片轉, 直徑少 2"
+            })}</td>
             </tr>
             <tr>
               <td>BTM (block turn)</td>
               <td className="num">36</td>
               <td className="num">≤ 16</td>
-              <td>{lang === 'zh' ? '宽幅 + 切片; 进一步缩短' : 'wide + slice; shortens further'}</td>
+              <td>{tr({ zh: '宽幅 + 切片; 进一步缩短', en: 'wide + slice; shortens further',
+                  zhHant: "寬幅 + 切片; 進一步縮短"
+            })}</td>
             </tr>
             <tr>
-              <td>{lang === 'zh' ? '只用 ⟨R, U⟩ 两个面' : 'only ⟨R, U⟩'}</td>
+              <td>{tr({ zh: '只用 ⟨R, U⟩ 两个面', en: 'only ⟨R, U⟩',
+                  zhHant: "只用 ⟨R, U⟩ 兩個面"
+            })}</td>
               <td className="num">2 (or 6 with inverses/dbl)</td>
               <td className="num">~26</td>
-              <td>{lang === 'zh' ? '只能到达 73,483,200 个状态' : 'reaches just 73,483,200 states'}</td>
+              <td>{tr({ zh: '只能到达 73,483,200 个状态', en: 'reaches just 73,483,200 states',
+                  zhHant: "只能到達 73,483,200 個狀態"
+            })}</td>
             </tr>
           </tbody>
         </table>
@@ -10425,7 +11305,9 @@ export default function GroupTheoryPage() {
         </p>
         <SphereLogPlot />
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '观察 14.9 — 球面饱和' : 'Observation 14.9 — sphere saturation'}</div>
+          <div className="gt-thm-title">{tr({ zh: '观察 14.9 — 球面饱和', en: 'Observation 14.9 — sphere saturation',
+              zhHant: "觀察 14.9 — 球面飽和"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>对于 finite vertex-transitive graph Γ = Cay(G, S), 球壳大小 |S_d| 必满足: <strong>(a)</strong> 单峰 (上下文意义上的) — 存在唯一 d* 使得 |S_{`{d-1}`}| ≤ |S_d| ≥ |S_{`{d+1}`}|; <strong>(b)</strong> 总和 ∑|S_d| = |G|; <strong>(c)</strong> 在直径 D 处必有 |S_D| ≥ 1。 对魔方 d* = 18, D = 20, |S_D| = 4.9 × 10⁸ (其中 superflip 是被研究最多的)。</>}
@@ -10446,7 +11328,9 @@ export default function GroupTheoryPage() {
         </p>
         <SmallGroupCayleyExplorer />
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 14.10 — 围长 (girth)' : 'Definition 14.10 — girth'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 14.10 — 围长 (girth)', en: 'Definition 14.10 — girth',
+              zhHant: "定義 14.10 — 圍長 (girth)"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>图 Γ 的 <strong>围长</strong> g(Γ) = 最短闭合圈的长度。 对 Cay(G, S), 这等于 G 中 「除 e 以外最短的关系字 (relator) 长度」。 自由群无关系字 ⇒ 围长 = ∞。 ℤ/n 配 {`{+1}`} 围长 = n。 D₄ 配 {`{r, s}`} 围长 = 4 (来自 r⁴ = e)。 围长大 ⇒ Cayley 图局部 「像树」 ⇒ 高扩张 (随后 §14.13 会用到)。</>}
@@ -10466,7 +11350,7 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? 'Cheeger 不等式 (Theorem 14.11)' : 'Cheeger inequality (Theorem 14.11)'}</div>
+          <div className="gt-thm-title">{tr({ zh: 'Cheeger 不等式 (Theorem 14.11)', en: 'Cheeger inequality (Theorem 14.11)' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>对图 Γ 定义 <strong>Cheeger 常数</strong> (等周常数): <TeXBlock src={`h(\\Gamma) \\;=\\; \\min_{S \\subset V,\\, |S| \\leq |V|/2} \\;\\frac{|\\partial S|}{|S|}`} /> 其中 ∂S = 「一头在 S 内、 另一头在 S 外」 的边集。 那么:</>}
@@ -10505,7 +11389,7 @@ export default function GroupTheoryPage() {
         <TeXBlock src={`\\mathrm{TV}(p, U) \\;=\\; \\tfrac{1}{2}\\sum_{g \\in G} \\big|\\, p(g) - 1/|G|\\,\\big|`} />
         <RandomWalkMixingPlot />
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 14.12 — Diaconis-Shahshahani (1981)' : 'Theorem 14.12 — Diaconis-Shahshahani (1981)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 14.12 — Diaconis-Shahshahani (1981)', en: 'Theorem 14.12 — Diaconis-Shahshahani (1981)' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>对 G = S_n 配 「全体换位 S = {`{(i j) : i < j}`}」 (即 「随机换位 shuffle」), 混合时间存在 <strong>cutoff 现象</strong>:</>}
@@ -10536,7 +11420,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 14.13 — Ramanujan 图' : 'Definition 14.13 — Ramanujan graph'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 14.13 — Ramanujan 图', en: 'Definition 14.13 — Ramanujan graph',
+              zhHant: "定義 14.13 — Ramanujan 圖"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>k-正则图 Γ 是 <strong>Ramanujan</strong> 如果所有非平凡特征值 <TeX src={`|\\lambda_i| \\leq 2\\sqrt{k-1}`} />。 这是 Alon-Boppana 定理给出的 「谱下界」 — 没有图能比 <TeX src={`2\\sqrt{k-1}`} /> 更稀疏。 故 Ramanujan = 「<strong>最优扩张图</strong>」 (spectrally optimal expander)。</>}
@@ -10553,19 +11439,31 @@ export default function GroupTheoryPage() {
         <table className="gt-compare">
           <thead>
             <tr>
-              <th>{lang === 'zh' ? '图族' : 'family'}</th>
-              <th>{lang === 'zh' ? '次数 k' : 'degree k'}</th>
-              <th>{lang === 'zh' ? '直径' : 'diameter'}</th>
-              <th>{lang === 'zh' ? '谱性质' : 'spectral'}</th>
-              <th>{lang === 'zh' ? '是否 Cayley' : 'Cayley?'}</th>
+              <th>{tr({ zh: '图族', en: 'family',
+                  zhHant: "圖族"
+            })}</th>
+              <th>{tr({ zh: '次数 k', en: 'degree k',
+                  zhHant: "次數 k"
+            })}</th>
+              <th>{tr({ zh: '直径', en: 'diameter',
+                  zhHant: "直徑"
+            })}</th>
+              <th>{tr({ zh: '谱性质', en: 'spectral',
+                  zhHant: "譜性質"
+            })}</th>
+              <th>{tr({ zh: '是否 Cayley', en: 'Cayley?' })}</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>{lang === 'zh' ? '随机正则图 (Friedman 2003)' : 'random k-regular (Friedman 2003)'}</td>
+              <td>{tr({ zh: '随机正则图 (Friedman 2003)', en: 'random k-regular (Friedman 2003)',
+                  zhHant: "隨機正則圖 (Friedman 2003)"
+            })}</td>
               <td className="num">k</td>
               <td className="num">log_k N</td>
-              <td>|λ| ≤ 2√(k-1) + ε{lang === 'zh' ? ' (高概率)' : ' (whp)'}</td>
+              <td>|λ| ≤ 2√(k-1) + ε{tr({ zh: ' (高概率)', en: ' (whp)',
+                  zhHant: " (高機率)"
+            })}</td>
               <td>—</td>
             </tr>
             <tr>
@@ -10579,21 +11477,31 @@ export default function GroupTheoryPage() {
               <td>Margulis 1973 (SL₂(ℤ))</td>
               <td className="num">8</td>
               <td className="num">O(log N)</td>
-              <td>{lang === 'zh' ? '一类显式扩张' : 'explicit expander'}</td>
-              <td>{lang === 'zh' ? '商图' : 'quotient'}</td>
+              <td>{tr({ zh: '一类显式扩张', en: 'explicit expander',
+                  zhHant: "一類顯式擴張"
+            })}</td>
+              <td>{tr({ zh: '商图', en: 'quotient',
+                  zhHant: "商圖"
+            })}</td>
             </tr>
             <tr>
-              <td>{lang === 'zh' ? '魔方 (HTM)' : 'Rubik cube (HTM)'}</td>
+              <td>{tr({ zh: '魔方 (HTM)', en: 'Rubik cube (HTM)' })}</td>
               <td className="num">18</td>
               <td className="num">20</td>
-              <td>λ₂/k ≈ 0.95{lang === 'zh' ? ' (扩张但非 Ramanujan)' : ' (expander, not Ramanujan)'}</td>
+              <td>λ₂/k ≈ 0.95{tr({ zh: ' (扩张但非 Ramanujan)', en: ' (expander, not Ramanujan)',
+                  zhHant: " (擴張但非 Ramanujan)"
+            })}</td>
               <td>✓</td>
             </tr>
             <tr>
-              <td>{lang === 'zh' ? 'Alon-Roichman 随机 Cayley' : 'Alon-Roichman random Cayley'}</td>
+              <td>{tr({ zh: 'Alon-Roichman 随机 Cayley', en: 'Alon-Roichman random Cayley',
+                  zhHant: "Alon-Roichman 隨機 Cayley"
+            })}</td>
               <td className="num">~log|G|</td>
               <td className="num">{lang === 'zh' ? 'polylog' : 'polylog'}</td>
-              <td>{lang === 'zh' ? '扩张 (高概率)' : 'expander (whp)'}</td>
+              <td>{tr({ zh: '扩张 (高概率)', en: 'expander (whp)',
+                  zhHant: "擴張 (高機率)"
+            })}</td>
               <td>✓</td>
             </tr>
           </tbody>
@@ -10616,7 +11524,7 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? 'Babai 猜想 (1992)' : "Babai's conjecture (1992)"}</div>
+          <div className="gt-thm-title">{tr({ zh: 'Babai 猜想 (1992)', en: "Babai's conjecture (1992)" })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>对每个 <em>非阿贝尔有限单群</em> G 和每个对称生成集 S, <TeXBlock src={`\\mathrm{diam}\\bigl(\\mathrm{Cay}(G, S)\\bigr) \\;\\leq\\; (\\log |G|)^c`} /> 其中 c 是绝对常数 (与 G 无关)。 即 「<strong>所有非阿贝尔有限单群都是 polylog-直径</strong>」 — 不管你怎么挑生成集。</>}
@@ -10673,7 +11581,9 @@ export default function GroupTheoryPage() {
           <li><L zh={<><strong>中间增长</strong>: 比多项式快, 比指数慢。 Milnor 1968 提问: 存在吗? Grigorchuk 1984 给出第一个例子 (Grigorchuk 群)。</>} en={<><strong>Intermediate growth</strong>: faster than polynomial, slower than exponential. Asked by Milnor (1968); Grigorchuk (1984) gave the first example (the Grigorchuk group).</>} /></li>
         </ul>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? "Gromov 定理 (1981) — 多项式增长 ⇔ 几乎幂零" : "Gromov's theorem (1981) — polynomial growth ⇔ virtually nilpotent"}</div>
+          <div className="gt-thm-title">{tr({ zh: "Gromov 定理 (1981) — 多项式增长 ⇔ 几乎幂零", en: "Gromov's theorem (1981) — polynomial growth ⇔ virtually nilpotent",
+              zhHant: "Gromov 定理 (1981) — 多項式增長 ⇔ 幾乎冪零"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>一个有限生成群 G 多项式增长 ⇔ G 包含一个有限指数的幂零 (nilpotent) 子群。 进一步, Bass-Guivarc'h 公式给出增长阶 <TeX src={`d = \\sum_i i \\cdot \\mathrm{rank}(\\Gamma_i / \\Gamma_{i+1})`} /> 永远是整数 (没有分数次方增长)。</>}
@@ -10706,7 +11616,7 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? "定理 14.16 — Cayley 1854" : "Theorem 14.16 — Cayley 1854"}</div>
+          <div className="gt-thm-title">{tr({ zh: "定理 14.16 — Cayley 1854", en: "Theorem 14.16 — Cayley 1854" })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>每个群 G 同构地嵌入 Sym(G), 即 <TeX src={`G \\hookrightarrow S_{|G|}`} />。 嵌入由 「左乘」 给出: <TeX src={`g \\mapsto L_g`} /> 其中 L_g(x) = g·x。</>}
@@ -10727,7 +11637,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '推论 14.16.1 — 魔方 G 嵌入 S₄.₃ₓ₁₀¹⁹' : 'Corollary 14.16.1 — the cube G embeds in S_{4.3×10¹⁹}'}</div>
+          <div className="gt-def-title">{tr({ zh: '推论 14.16.1 — 魔方 G 嵌入 S₄.₃ₓ₁₀¹⁹', en: 'Corollary 14.16.1 — the cube G embeds in S_{4.3×10¹⁹}',
+              zhHant: "推論 14.16.1 — 魔方 G 嵌入 S₄.₃ₓ₁₀¹⁹"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>形式上, 魔方的 G 是 <TeX src={`S_{4.3 \\times 10^{19}}`} /> 的一个子群。 但这没什么用 — <TeX src={`|S_n| = (4.3 \\times 10^{19})!`} /> 是远超宇宙原子数的天文数。 实际我们用 「<strong>更紧的</strong>」 嵌入 G ↪ S₈ × S₁₂ (角块 + 棱块置换) 来计算, 把 cube state 编码成 (8 + 12)-元置换 + 朝向向量 — 这就是 §5 的 (cp, co, ep, eo) 表示。</>}
@@ -10846,21 +11758,41 @@ export default function GroupTheoryPage() {
           <table className="gt-pattern-tbl">
             <thead>
               <tr>
-                <th>{lang === 'zh' ? '拼图' : 'puzzle'}</th>
+                <th>{tr({ zh: '拼图', en: 'puzzle',
+                    zhHant: "拼圖"
+                })}</th>
                 <th>HTM</th>
                 <th>QTM/STM</th>
-                <th>{lang === 'zh' ? '状态' : 'status'}</th>
+                <th>{tr({ zh: '状态', en: 'status',
+                    zhHant: "狀態"
+                })}</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td>2×2×2</td><td className="num">11</td><td className="num">14 (QTM)</td><td>{lang === 'zh' ? '已确证 (Reid 1995)' : 'proven (Reid 1995)'}</td></tr>
-              <tr><td>3×3×3</td><td className="num">20</td><td className="num">26 (QTM)</td><td>{lang === 'zh' ? '已确证 (Rokicki et al. 2010)' : 'proven (Rokicki et al. 2010)'}</td></tr>
-              <tr><td>4×4×4</td><td className="num">[22, 36]</td><td className="num">[35, 53]</td><td>{lang === 'zh' ? '开放 — 区间持续收紧' : 'open — interval slowly tightening'}</td></tr>
-              <tr><td>5×5×5</td><td className="num">[20, 32]</td><td className="num">?</td><td>{lang === 'zh' ? '开放' : 'open'}</td></tr>
-              <tr><td>Pyraminx</td><td className="num">11</td><td className="num">11</td><td>{lang === 'zh' ? '已确证 (Cubelovers, 1981)' : 'proven (Cubelovers, 1981)'}</td></tr>
-              <tr><td>Skewb</td><td className="num">11</td><td className="num">11</td><td>{lang === 'zh' ? '已确证' : 'proven'}</td></tr>
-              <tr><td>Megaminx</td><td className="num">≈ 45</td><td className="num">?</td><td>{lang === 'zh' ? '上界未严格证明' : 'upper bound unproved'}</td></tr>
-              <tr><td>Square-1</td><td className="num">[31, 35]</td><td className="num">[26, 31]</td><td>{lang === 'zh' ? '开放' : 'open'}</td></tr>
+              <tr><td>2×2×2</td><td className="num">11</td><td className="num">14 (QTM)</td><td>{tr({ zh: '已确证 (Reid 1995)', en: 'proven (Reid 1995)',
+                  zhHant: "已確證 (Reid 1995)"
+            })}</td></tr>
+              <tr><td>3×3×3</td><td className="num">20</td><td className="num">26 (QTM)</td><td>{tr({ zh: '已确证 (Rokicki et al. 2010)', en: 'proven (Rokicki et al. 2010)',
+                  zhHant: "已確證 (Rokicki et al. 2010)"
+            })}</td></tr>
+              <tr><td>4×4×4</td><td className="num">[22, 36]</td><td className="num">[35, 53]</td><td>{tr({ zh: '开放 — 区间持续收紧', en: 'open — interval slowly tightening',
+                  zhHant: "開放 — 區間持續收緊"
+            })}</td></tr>
+              <tr><td>5×5×5</td><td className="num">[20, 32]</td><td className="num">?</td><td>{tr({ zh: '开放', en: 'open',
+                  zhHant: "開放"
+            })}</td></tr>
+              <tr><td>Pyraminx</td><td className="num">11</td><td className="num">11</td><td>{tr({ zh: '已确证 (Cubelovers, 1981)', en: 'proven (Cubelovers, 1981)',
+                  zhHant: "已確證 (Cubelovers, 1981)"
+            })}</td></tr>
+              <tr><td>Skewb</td><td className="num">11</td><td className="num">11</td><td>{tr({ zh: '已确证', en: 'proven',
+                  zhHant: "已確證"
+            })}</td></tr>
+              <tr><td>Megaminx</td><td className="num">≈ 45</td><td className="num">?</td><td>{tr({ zh: '上界未严格证明', en: 'upper bound unproved',
+                  zhHant: "上界未嚴格證明"
+            })}</td></tr>
+              <tr><td>Square-1</td><td className="num">[31, 35]</td><td className="num">[26, 31]</td><td>{tr({ zh: '开放', en: 'open',
+                  zhHant: "開放"
+            })}</td></tr>
             </tbody>
           </table>
         </div>
@@ -10940,22 +11872,48 @@ export default function GroupTheoryPage() {
         </p>
 
         <div className="gt-open-summary">
-          <div className="gt-open-summary-head">{lang === 'zh' ? '开放问题速览' : 'open problems at a glance'}</div>
+          <div className="gt-open-summary-head">{tr({ zh: '开放问题速览', en: 'open problems at a glance',
+              zhHant: "開放問題速覽"
+        })}</div>
           <table className="gt-pattern-tbl">
             <thead>
               <tr>
                 <th>#</th>
-                <th>{lang === 'zh' ? '问题' : 'problem'}</th>
-                <th>{lang === 'zh' ? '最佳已知' : 'best known'}</th>
-                <th>{lang === 'zh' ? '难度' : 'difficulty'}</th>
+                <th>{tr({ zh: '问题', en: 'problem',
+                    zhHant: "問題"
+                })}</th>
+                <th>{tr({ zh: '最佳已知', en: 'best known' })}</th>
+                <th>{tr({ zh: '难度', en: 'difficulty',
+                    zhHant: "難度"
+                })}</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td className="num">1</td><td>{lang === 'zh' ? '4×4 God\'s number' : '4×4 God\'s number'}</td><td className="num">[22, 36] HTM</td><td>{lang === 'zh' ? '中等 (需算法)' : 'medium (algorithmic)'}</td></tr>
-              <tr><td className="num">2</td><td>{lang === 'zh' ? 'n×n 渐近常数' : 'n×n asymptotic constant'}</td><td>Θ(n²/log n)</td><td>{lang === 'zh' ? '困难 (理论)' : 'hard (theoretical)'}</td></tr>
-              <tr><td className="num">3</td><td>{lang === 'zh' ? '平均最优解长度' : 'average optimal length'}</td><td className="num">17.97 HTM</td><td>{lang === 'zh' ? '简单 (统计)' : 'easy (statistical)'}</td></tr>
-              <tr><td className="num">4</td><td>{lang === 'zh' ? '非阿贝尔 HSP' : 'non-Abelian HSP'}</td><td>{lang === 'zh' ? '无量子加速' : 'no quantum speedup'}</td><td>{lang === 'zh' ? '极困难 (量子)' : 'very hard (quantum)'}</td></tr>
-              <tr><td className="num">5</td><td>{lang === 'zh' ? 'Cutoff 临界值' : 'mixing-time cutoff'}</td><td>≈ 22 ± 3</td><td>{lang === 'zh' ? '困难 (概率)' : 'hard (probabilistic)'}</td></tr>
+              <tr><td className="num">1</td><td>{lang === 'zh' ? '4×4 God\'s number' : '4×4 God\'s number'}</td><td className="num">[22, 36] HTM</td><td>{tr({ zh: '中等 (需算法)', en: 'medium (algorithmic)',
+                  zhHant: "中等 (需演算法)"
+            })}</td></tr>
+              <tr><td className="num">2</td><td>{tr({ zh: 'n×n 渐近常数', en: 'n×n asymptotic constant',
+                  zhHant: "n×n 漸近常數"
+            })}</td><td>Θ(n²/log n)</td><td>{tr({ zh: '困难 (理论)', en: 'hard (theoretical)',
+                zhHant: "困難 (理論)"
+            })}</td></tr>
+              <tr><td className="num">3</td><td>{tr({ zh: '平均最优解长度', en: 'average optimal length',
+                  zhHant: "平均最優解長度"
+            })}</td><td className="num">17.97 HTM</td><td>{tr({ zh: '简单 (统计)', en: 'easy (statistical)',
+                zhHant: "簡單 (統計)"
+            })}</td></tr>
+              <tr><td className="num">4</td><td>{tr({ zh: '非阿贝尔 HSP', en: 'non-Abelian HSP',
+                  zhHant: "非阿貝爾 HSP"
+            })}</td><td>{tr({ zh: '无量子加速', en: 'no quantum speedup',
+                zhHant: "無量子加速"
+            })}</td><td>{tr({ zh: '极困难 (量子)', en: 'very hard (quantum)',
+                zhHant: "極困難 (量子)"
+            })}</td></tr>
+              <tr><td className="num">5</td><td>{tr({ zh: 'Cutoff 临界值', en: 'mixing-time cutoff',
+                  zhHant: "Cutoff 臨界值"
+            })}</td><td>≈ 22 ± 3</td><td>{tr({ zh: '困难 (概率)', en: 'hard (probabilistic)',
+                zhHant: "困難 (機率)"
+            })}</td></tr>
             </tbody>
           </table>
         </div>
@@ -11100,7 +12058,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 17.1' : 'Definition 17.1'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 17.1', en: 'Definition 17.1',
+              zhHant: "定義 17.1"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>函数 <TeX src={`\\varphi : G \\to H`} /> 是 <strong>群同态</strong>, 若对所有 <TeX src={`a, b \\in G`} />: <TeX src={`\\varphi(a \\cdot b) = \\varphi(a) \\cdot \\varphi(b)`} />。 同态自动满足 <TeX src={`\\varphi(e_G) = e_H`} /> 和 <TeX src={`\\varphi(a^{-1}) = \\varphi(a)^{-1}`} />。</>}
@@ -11119,7 +12079,7 @@ export default function GroupTheoryPage() {
         </p>
         <TeXBlock src={`\\operatorname{sgn} : G \\to \\mathbb{Z}/2, \\qquad \\operatorname{sgn}(g) = \\operatorname{sgn}(c_p(g)) \\in \\{+1, -1\\}`} />
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 17.2' : 'Theorem 17.2'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 17.2', en: 'Theorem 17.2' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>sgn 是满同态 <TeX src={`G \\twoheadrightarrow \\mathbb{Z}/2`} />, 它的核是 <strong>偶状态集</strong> = <TeX src={`[G, G]`} />, 阶为 <TeX src={`|G| / 2 \\approx 2.16 \\times 10^{19}`} />。</>}
@@ -11132,7 +12092,7 @@ export default function GroupTheoryPage() {
           <L zh="17.2  第一同构定理 (First Isomorphism Theorem)" en="17.2  First Isomorphism Theorem" />
         </h3>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 17.3' : 'Theorem 17.3'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 17.3', en: 'Theorem 17.3' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>设 <TeX src={`\\varphi : G \\to H`} /> 是同态, 则<TeXBlock src={`G / \\ker(\\varphi) \\;\\cong\\; \\operatorname{im}(\\varphi).`} /></>}
@@ -11209,13 +12169,19 @@ export default function GroupTheoryPage() {
         </p>
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '同态' : 'Homomorphism'}</th><th>{lang === 'zh' ? '像' : 'Image'}</th><th>{lang === 'zh' ? '核' : 'Kernel'}</th><th>|ker|</th><th>[G : ker]</th></tr>
+            <tr><th>{tr({ zh: '同态', en: 'Homomorphism',
+                zhHant: "同態"
+            })}</th><th>{tr({ zh: '像', en: 'Image' })}</th><th>{tr({ zh: '核', en: 'Kernel' })}</th><th>|ker|</th><th>[G : ker]</th></tr>
           </thead>
           <tbody>
             <tr><td><TeX src={`\\operatorname{sgn} : G \\to \\mathbb{Z}/2`} /></td><td><TeX src={`\\mathbb{Z}/2`} /></td><td><TeX src={`[G,G]`} /></td><td className="num">|G|/2</td><td className="num">2</td></tr>
-            <tr><td><TeX src={`\\pi_{\\text{corner}} : G \\to G_c`} /></td><td>{lang === 'zh' ? '2×2×2 群' : '2×2×2 group'}</td><td>{lang === 'zh' ? 'cp=co=identity 的部分' : 'cp = co = identity part'}</td><td className="num">≈ 1.18 × 10¹³</td><td className="num">3,674,160</td></tr>
-            <tr><td><TeX src={`\\pi_{\\text{edge}} : G \\to G_e`} /></td><td>{lang === 'zh' ? '12 棱块群' : '12-edge group'}</td><td>{lang === 'zh' ? 'ep=eo=identity 的部分' : 'ep = eo = identity part'}</td><td className="num">≈ 4.41 × 10⁷</td><td className="num">9.81 × 10¹¹</td></tr>
-            <tr><td><TeX src={`\\pi_{\\text{ori}} : G \\to (\\mathbb{Z}/3)^7 \\times (\\mathbb{Z}/2)^{11}`} /></td><td>{lang === 'zh' ? 'EO ⊕ CO 空间' : 'EO ⊕ CO space'}</td><td><TeX src={`G_1`} /> ({lang === 'zh' ? '朝向全 0 的子群' : 'orientation-zero subgroup'})</td><td className="num">|G|/2¹¹ = |G|/2048</td><td className="num">2¹¹ · 3⁷ = 4,478,976</td></tr>
+            <tr><td><TeX src={`\\pi_{\\text{corner}} : G \\to G_c`} /></td><td>{tr({ zh: '2×2×2 群', en: '2×2×2 group' })}</td><td>{tr({ zh: 'cp=co=identity 的部分', en: 'cp = co = identity part' })}</td><td className="num">≈ 1.18 × 10¹³</td><td className="num">3,674,160</td></tr>
+            <tr><td><TeX src={`\\pi_{\\text{edge}} : G \\to G_e`} /></td><td>{tr({ zh: '12 棱块群', en: '12-edge group',
+                zhHant: "12 稜塊群"
+            })}</td><td>{tr({ zh: 'ep=eo=identity 的部分', en: 'ep = eo = identity part' })}</td><td className="num">≈ 4.41 × 10⁷</td><td className="num">9.81 × 10¹¹</td></tr>
+            <tr><td><TeX src={`\\pi_{\\text{ori}} : G \\to (\\mathbb{Z}/3)^7 \\times (\\mathbb{Z}/2)^{11}`} /></td><td>{tr({ zh: 'EO ⊕ CO 空间', en: 'EO ⊕ CO space',
+                zhHant: "EO ⊕ CO 空間"
+            })}</td><td><TeX src={`G_1`} /> ({tr({ zh: '朝向全 0 的子群', en: 'orientation-zero subgroup' })})</td><td className="num">|G|/2¹¹ = |G|/2048</td><td className="num">2¹¹ · 3⁷ = 4,478,976</td></tr>
           </tbody>
         </table>
         <p>
@@ -11228,7 +12194,7 @@ export default function GroupTheoryPage() {
           <L zh="17.6  Schur–Zassenhaus 在魔方上" en="17.6  Schur–Zassenhaus on the cube" />
         </h3>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 17.4 — Schur–Zassenhaus' : 'Theorem 17.4 — Schur–Zassenhaus'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 17.4 — Schur–Zassenhaus', en: 'Theorem 17.4 — Schur–Zassenhaus' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>设 <TeX src={`N \\triangleleft G`} /> 是有限群的正规子群, <TeX src={`\\gcd(|N|, |G/N|) = 1`} />。 则 G 可表为 <strong>半直积</strong> <TeX src={`G \\cong N \\rtimes (G/N)`} />, 即 G 内存在补群 <TeX src={`H \\subseteq G`} /> 使 <TeX src={`G = NH`} /> 且 <TeX src={`N \\cap H = \\{e\\}`} />。</>}
@@ -11263,15 +12229,21 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 18.1 — 群作用' : 'Definition 18.1 — group action'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 18.1 — 群作用', en: 'Definition 18.1 — group action',
+              zhHant: "定義 18.1 — 群作用"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>群 <span className="gt-math">G</span> 在集合 <span className="gt-math">X</span> 上的 <strong>作用</strong> 是一个映射 <span className="gt-math">G × X → X</span>, <span className="gt-math">(g, x) ↦ g · x</span>, 满足:</>}
               en={<>An <strong>action</strong> of group G on a set X is a map <span className="gt-math">G × X → X</span>, <span className="gt-math">(g, x) ↦ g · x</span>, satisfying:</>}
             />
             <ul style={{ paddingLeft: 24, margin: '8px 0' }}>
-              <li><span className="gt-math">e · x = x</span> {lang === 'zh' ? '(单位元固定一切)' : '(identity fixes everything)'}</li>
-              <li><span className="gt-math">(g · h) · x = g · (h · x)</span> {lang === 'zh' ? '(乘法兼容)' : '(compatible with multiplication)'}</li>
+              <li><span className="gt-math">e · x = x</span> {tr({ zh: '(单位元固定一切)', en: '(identity fixes everything)',
+                  zhHant: "(單位元固定一切)"
+            })}</li>
+              <li><span className="gt-math">(g · h) · x = g · (h · x)</span> {tr({ zh: '(乘法兼容)', en: '(compatible with multiplication)',
+                  zhHant: "(乘法相容)"
+            })}</li>
             </ul>
             <L
               zh={<>对每个 <span className="gt-math">x ∈ X</span>, 它的 <strong>轨道</strong> <span className="gt-math">G·x = {`{g · x : g ∈ G}`}</span> 是 X 的子集。 <strong>稳定子</strong> <span className="gt-math">Stab(x) = {`{g ∈ G : g · x = x}`}</span> 是 G 的子群。轨道-稳定子定理:|G·x| = [G : Stab(x)]。</>}
@@ -11316,7 +12288,7 @@ export default function GroupTheoryPage() {
           <L zh="18.3  Burnside 引理 (轨道计数定理)" en="18.3  Burnside's lemma (orbit counting)" />
         </h3>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 18.2 — Burnside' : 'Theorem 18.2 — Burnside'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 18.2 — Burnside', en: 'Theorem 18.2 — Burnside' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>设 G 作用于有限集 X。则 X 在 G 下的 <strong>轨道数</strong> 等于「每个 g 的不动点数」的平均:</>}
@@ -11373,7 +12345,7 @@ export default function GroupTheoryPage() {
           <L zh="18.5  Cayley 定理 — 每个群都是置换群" en="18.5  Cayley's theorem — every group is a permutation group" />
         </h3>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 18.3 — Cayley' : 'Theorem 18.3 — Cayley'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 18.3 — Cayley', en: 'Theorem 18.3 — Cayley' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>任何群 G 都同构于某个对称群 <TeX src={`S_n`} /> (<TeX src={`n = |G|`} />) 的子群。 证明: G 通过左乘作用在自己身上, 这给出嵌入 <TeX src={`G \\hookrightarrow \\operatorname{Sym}(G)`} />。</>}
@@ -11398,16 +12370,34 @@ export default function GroupTheoryPage() {
         </p>
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '类' : 'Class'}</th><th>{lang === 'zh' ? '元素数' : 'Size'}</th><th>{lang === 'zh' ? '描述' : 'Description'}</th><th>|Fix(g)|</th></tr>
+            <tr><th>{tr({ zh: '类', en: 'Class',
+                zhHant: "類"
+            })}</th><th>{tr({ zh: '元素数', en: 'Size',
+                zhHant: "元素數"
+            })}</th><th>{tr({ zh: '描述', en: 'Description' })}</th><th>|Fix(g)|</th></tr>
           </thead>
           <tbody>
-            <tr><td>e</td><td className="num">1</td><td>{lang === 'zh' ? '恒等' : 'identity'}</td><td className="num">|G| = 4.33 × 10¹⁹</td></tr>
-            <tr><td><TeX src={`C_4`} /></td><td className="num">6</td><td>{lang === 'zh' ? '90° 面轴旋转' : '90° face-axis rotation'}</td><td className="num">≈ √|G| ≈ 6.6 × 10⁹</td></tr>
-            <tr><td><TeX src={`C_4^2 = C_2`} /></td><td className="num">3</td><td>{lang === 'zh' ? '180° 面轴' : '180° face-axis'}</td><td className="num">≈ |G|^{`{1/2}`} · 倍数</td></tr>
-            <tr><td><TeX src={`C_3`} /></td><td className="num">8</td><td>{lang === 'zh' ? '120° 体对角线' : '120° body-diagonal'}</td><td className="num">≈ |G|^{`{1/3}`} ≈ 3.5 × 10⁶</td></tr>
-            <tr><td><TeX src={`C_2'`} /></td><td className="num">6</td><td>{lang === 'zh' ? '180° 棱中点轴' : '180° edge-midpoint axis'}</td><td className="num">≈ 9.3 × 10⁹</td></tr>
-            <tr><td>i</td><td className="num">1</td><td>{lang === 'zh' ? '中心反演' : 'inversion through centre'}</td><td className="num">≈ 10¹⁰</td></tr>
-            <tr><td><TeX src={`S_6, S_4, \\sigma_h, \\sigma_d`} /></td><td className="num">23</td><td>{lang === 'zh' ? '改进 / 镜像 / 旋反' : 'improper / mirror / rotoreflection'}</td><td className="num">{lang === 'zh' ? '各类 10⁶–10¹⁰ 量级' : 'class-dependent, 10⁶–10¹⁰ each'}</td></tr>
+            <tr><td>e</td><td className="num">1</td><td>{tr({ zh: '恒等', en: 'identity',
+                zhHant: "恆等"
+            })}</td><td className="num">|G| = 4.33 × 10¹⁹</td></tr>
+            <tr><td><TeX src={`C_4`} /></td><td className="num">6</td><td>{tr({ zh: '90° 面轴旋转', en: '90° face-axis rotation',
+                zhHant: "90° 面軸旋轉"
+            })}</td><td className="num">≈ √|G| ≈ 6.6 × 10⁹</td></tr>
+            <tr><td><TeX src={`C_4^2 = C_2`} /></td><td className="num">3</td><td>{tr({ zh: '180° 面轴', en: '180° face-axis',
+                zhHant: "180° 面軸"
+            })}</td><td className="num">≈ |G|^{`{1/2}`} · 倍数</td></tr>
+            <tr><td><TeX src={`C_3`} /></td><td className="num">8</td><td>{tr({ zh: '120° 体对角线', en: '120° body-diagonal',
+                zhHant: "120° 體對角線"
+            })}</td><td className="num">≈ |G|^{`{1/3}`} ≈ 3.5 × 10⁶</td></tr>
+            <tr><td><TeX src={`C_2'`} /></td><td className="num">6</td><td>{tr({ zh: '180° 棱中点轴', en: '180° edge-midpoint axis',
+                zhHant: "180° 稜中點軸"
+            })}</td><td className="num">≈ 9.3 × 10⁹</td></tr>
+            <tr><td>i</td><td className="num">1</td><td>{tr({ zh: '中心反演', en: 'inversion through centre' })}</td><td className="num">≈ 10¹⁰</td></tr>
+            <tr><td><TeX src={`S_6, S_4, \\sigma_h, \\sigma_d`} /></td><td className="num">23</td><td>{tr({ zh: '改进 / 镜像 / 旋反', en: 'improper / mirror / rotoreflection',
+                zhHant: "改進 / 映象 / 旋反"
+            })}</td><td className="num">{tr({ zh: '各类 10⁶–10¹⁰ 量级', en: 'class-dependent, 10⁶–10¹⁰ each',
+                zhHant: "各類 10⁶–10¹⁰ 量級"
+            })}</td></tr>
           </tbody>
         </table>
         <p>
@@ -11428,7 +12418,15 @@ export default function GroupTheoryPage() {
         <TeXBlock src={`\\#\\,\\text{colourings} \\;=\\; \\frac{1}{24} \\sum_{g \\in \\text{Rot}(\\text{cube})} 6^{\\,\\text{cycles}(g)}`} />
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '旋转类' : 'Rotation class'}</th><th>{lang === 'zh' ? '元素数' : 'Count'}</th><th>{lang === 'zh' ? '面上循环数' : '#cycles on faces'}</th><th><TeX src={`6^{\\#\\text{cycles}}`} /></th><th>{lang === 'zh' ? '贡献' : 'Contribution'}</th></tr>
+            <tr><th>{tr({ zh: '旋转类', en: 'Rotation class',
+                zhHant: "旋轉類"
+            })}</th><th>{tr({ zh: '元素数', en: 'Count',
+                zhHant: "元素數"
+            })}</th><th>{tr({ zh: '面上循环数', en: '#cycles on faces',
+                zhHant: "面上迴圈數"
+            })}</th><th><TeX src={`6^{\\#\\text{cycles}}`} /></th><th>{tr({ zh: '贡献', en: 'Contribution',
+                zhHant: "貢獻"
+            })}</th></tr>
           </thead>
           <tbody>
             <tr><td>e</td><td className="num">1</td><td className="num">6</td><td className="num">46,656</td><td className="num">46,656</td></tr>
@@ -11436,7 +12434,7 @@ export default function GroupTheoryPage() {
             <tr><td><TeX src={`C_2`} /> (180°)</td><td className="num">3</td><td className="num">4</td><td className="num">1,296</td><td className="num">3,888</td></tr>
             <tr><td><TeX src={`C_3`} /></td><td className="num">8</td><td className="num">2</td><td className="num">36</td><td className="num">288</td></tr>
             <tr><td><TeX src={`C_2'`} /></td><td className="num">6</td><td className="num">3</td><td className="num">216</td><td className="num">1,296</td></tr>
-            <tr><td>{lang === 'zh' ? '求和' : 'Sum'}</td><td colSpan={3} className="num"><TeX src={`\\sum`} /></td><td className="num"><strong>53,424</strong></td></tr>
+            <tr><td>{tr({ zh: '求和', en: 'Sum' })}</td><td colSpan={3} className="num"><TeX src={`\\sum`} /></td><td className="num"><strong>53,424</strong></td></tr>
           </tbody>
         </table>
         <TeXBlock src={`\\#\\,\\text{colourings} \\;=\\; \\frac{53{,}424}{24} \\;=\\; 2{,}226. \\quad \\text{(With exactly 6 distinct colours: } 6! / 24 = 30.\\text{)}`} />
@@ -11461,7 +12459,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 19.1 — 陪集' : 'Definition 19.1 — coset'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 19.1 — 陪集', en: 'Definition 19.1 — coset',
+              zhHant: "定義 19.1 — 陪集"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>令 <span className="gt-math">H</span> 是群 <span className="gt-math">G</span> 的子群。 对任意 <span className="gt-math">g ∈ G</span>,记<TeXBlock src={`gH \\;=\\; \\{\\, gh \\;:\\; h \\in H \\,\\}`} />为 <strong>g 的左陪集</strong>。 类似地有右陪集 <TeX src={`Hg`} />。 两个陪集要么 <em>完全相等</em> 要么 <em>不相交</em>。</>}
@@ -11470,7 +12470,7 @@ export default function GroupTheoryPage() {
           </div>
         </div>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定理 19.2 — 拉格朗日 (1771)' : 'Theorem 19.2 — Lagrange (1771)'}</div>
+          <div className="gt-def-title">{tr({ zh: '定理 19.2 — 拉格朗日 (1771)', en: 'Theorem 19.2 — Lagrange (1771)' })}</div>
           <div className="gt-def-body">
             <L
               zh={<><TeXBlock src={`|G| \\;=\\; [G : H] \\cdot |H|`} />其中 <TeX src={`[G:H]`} /> 是 <em>陪集数</em> (也叫指数)。 推论:<TeX src={`|H| \\mid |G|`} />。 任何 H 的阶都整除 |G|。</>}
@@ -11518,7 +12518,7 @@ export default function GroupTheoryPage() {
           <L zh="19.4  Cauchy 定理 — 拉格朗日的部分逆" en="19.4  Cauchy's theorem — partial converse to Lagrange" />
         </h3>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 19.4 — Cauchy (1845)' : 'Theorem 19.4 — Cauchy (1845)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 19.4 — Cauchy (1845)', en: 'Theorem 19.4 — Cauchy (1845)' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>若 <strong>素数</strong> <TeX src={`p`} /> 整除 <TeX src={`|G|`} />,则 G 中存在阶 <em>恰好</em> 为 <TeX src={`p`} /> 的元素 (从而存在阶 p 的子群 <TeX src={`\\langle g \\rangle`} />)。</>}
@@ -11536,8 +12536,12 @@ export default function GroupTheoryPage() {
           <thead>
             <tr>
               <th>p</th>
-              <th>{lang === 'zh' ? '阶 p 的元素 (示例)' : 'element of order p (example)'}</th>
-              <th>{lang === 'zh' ? '解释' : 'why'}</th>
+              <th>{tr({ zh: '阶 p 的元素 (示例)', en: 'element of order p (example)',
+                  zhHant: "階 p 的元素 (示例)"
+            })}</th>
+              <th>{tr({ zh: '解释', en: 'why',
+                  zhHant: "解釋"
+            })}</th>
             </tr>
           </thead>
           <tbody>
@@ -11578,7 +12582,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 19.5 — Sylow p-子群' : 'Definition 19.5 — Sylow p-subgroup'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 19.5 — Sylow p-子群', en: 'Definition 19.5 — Sylow p-subgroup',
+              zhHant: "定義 19.5 — Sylow p-子群"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>子群 <TeX src={`P \\subseteq G`} /> 的阶恰为 <TeX src={`p^a`} /> (即 |G| 中 p 的最高次幂) 时, 称 P 为 G 的 <strong>Sylow p-子群</strong>。 记 <TeX src={`n_p`} /> 为 G 中 Sylow p-子群的个数。</>}
@@ -11587,7 +12593,9 @@ export default function GroupTheoryPage() {
           </div>
         </div>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 19.6 — Sylow 三条' : 'Theorem 19.6 — the three Sylow theorems'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 19.6 — Sylow 三条', en: 'Theorem 19.6 — the three Sylow theorems',
+              zhHant: "定理 19.6 — Sylow 三條"
+        })}</div>
           <div className="gt-thm-body">
             <ol style={{ paddingLeft: 22, lineHeight: 1.95, margin: 0 }}>
               <li><L zh={<><strong>存在</strong>: G 至少含有一个 Sylow p-子群 (即 <TeX src={`n_p \\ge 1`} />)。</>} en={<><strong>Existence</strong>: G has at least one Sylow p-subgroup (so <TeX src={`n_p \\ge 1`} />).</>} /></li>
@@ -11606,8 +12614,12 @@ export default function GroupTheoryPage() {
           <thead>
             <tr>
               <th>p</th>
-              <th>{lang === 'zh' ? 'Sylow 阶' : 'Sylow order'}</th>
-              <th>{lang === 'zh' ? '十进制' : 'decimal'}</th>
+              <th>{tr({ zh: 'Sylow 阶', en: 'Sylow order',
+                  zhHant: "Sylow 階"
+            })}</th>
+              <th>{tr({ zh: '十进制', en: 'decimal',
+                  zhHant: "十進位制"
+            })}</th>
               <th>{lang === 'zh' ? 'm = |G|/p^a' : 'm = |G|/p^a'}</th>
             </tr>
           </thead>
@@ -11640,7 +12652,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 20.1 — 正规子群' : 'Definition 20.1 — normal subgroup'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 20.1 — 正规子群', en: 'Definition 20.1 — normal subgroup',
+              zhHant: "定義 20.1 — 正規子群"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>子群 <span className="gt-math">N ⊂ G</span> 叫 <strong>正规子群</strong> (记作 <TeX src={`N \\triangleleft G`} />),如果它在共轭下保持不变:<TeXBlock src={`\\forall g \\in G, \\;\\; gNg^{-1} = N`} />等价地:左陪集 = 右陪集,<TeX src={`gN = Ng`} />。</>}
@@ -11649,7 +12663,7 @@ export default function GroupTheoryPage() {
           </div>
         </div>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定理 20.2 — 商群' : 'Theorem 20.2 — quotient group'}</div>
+          <div className="gt-def-title">{tr({ zh: '定理 20.2 — 商群', en: 'Theorem 20.2 — quotient group' })}</div>
           <div className="gt-def-body">
             <L
               zh={<>若 <TeX src={`N \\triangleleft G`} />,陪集集合 <TeX src={`G/N = \\{gN : g \\in G\\}`} /> 在乘法<TeXBlock src={`(g_1 N)(g_2 N) := (g_1 g_2) N`} />下构成群。 阶 <TeX src={`|G/N| = [G:N]`} />。</>}
@@ -11715,7 +12729,9 @@ export default function GroupTheoryPage() {
           <L zh="20.5  第二与第三同构定理" en="20.5  Second & third isomorphism theorems" />
         </h3>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 20.4 — 第二同构 (钻石定理)' : 'Theorem 20.4 — Second isomorphism (diamond)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 20.4 — 第二同构 (钻石定理)', en: 'Theorem 20.4 — Second isomorphism (diamond)',
+              zhHant: "定理 20.4 — 第二同構 (鑽石定理)"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>设 <TeX src={`H \\le G`} />, <TeX src={`N \\triangleleft G`} />。 则 <TeX src={`HN`} /> 是 G 的子群,<TeX src={`H \\cap N \\triangleleft H`} />,且<TeXBlock src={`(HN)/N \\;\\cong\\; H/(H \\cap N).`} />常画成钻石格 (lattice):四个顶点 <TeX src={`HN,\\,H,\\,N,\\,H\\cap N`} />,两条对角对应的商相同。</>}
@@ -11724,7 +12740,9 @@ export default function GroupTheoryPage() {
           </div>
         </div>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 20.5 — 第三同构 (商的商)' : 'Theorem 20.5 — Third isomorphism (quotient of a quotient)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 20.5 — 第三同构 (商的商)', en: 'Theorem 20.5 — Third isomorphism (quotient of a quotient)',
+              zhHant: "定理 20.5 — 第三同構 (商的商)"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>设 <TeX src={`K \\triangleleft N \\triangleleft G`} /> (K 也是 G 正规)。 则<TeXBlock src={`(G/K) \\;\\big/\\; (N/K) \\;\\cong\\; G/N.`} />「先商 K 再商 (N/K),等于直接商 N。」</>}
@@ -11746,7 +12764,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 20.6 — Lattice (对应) 定理' : 'Theorem 20.6 — Correspondence (lattice) theorem'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 20.6 — Lattice (对应) 定理', en: 'Theorem 20.6 — Correspondence (lattice) theorem',
+              zhHant: "定理 20.6 — Lattice (對應) 定理"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>设 <TeX src={`N \\triangleleft G`} />,记 <TeX src={`\\pi : G \\twoheadrightarrow G/N`} /> 为自然投影。 则 <TeX src={`\\pi`} /> 在<strong>包含 N 的子群</strong>和 <TeX src={`G/N`} /> 的<strong>所有子群</strong>之间建立 <em>保序双射</em>:<TeXBlock src={`\\{\\,H \\;:\\; N \\le H \\le G\\,\\} \\;\\overset{\\sim}{\\longleftrightarrow}\\; \\{\\,\\bar{H} \\le G/N\\,\\}.`} />正规子群对应正规子群,指数保持。</>}
@@ -11781,7 +12801,9 @@ export default function GroupTheoryPage() {
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 21.1 — 对称群 Sₙ' : 'Definition 21.1 — symmetric group Sₙ'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 21.1 — 对称群 Sₙ', en: 'Definition 21.1 — symmetric group Sₙ',
+              zhHant: "定義 21.1 — 對稱群 Sₙ"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<><TeX src={`S_n`} /> 是 n 元集 {'{1, 2, ..., n}'} 上所有双射的集合,合成是运算。 它有<TeXBlock src={`|S_n| = n!`} />阶。</>}
@@ -11790,7 +12812,9 @@ export default function GroupTheoryPage() {
           </div>
         </div>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 21.2 — 交错群 Aₙ' : 'Definition 21.2 — alternating group Aₙ'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 21.2 — 交错群 Aₙ', en: 'Definition 21.2 — alternating group Aₙ',
+              zhHant: "定義 21.2 — 交錯群 Aₙ"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<><TeX src={`A_n \\subset S_n`} /> 是所有 <em>偶置换</em> (即偶数个对换的乘积) 构成的子群,等价地<TeXBlock src={`A_n = \\ker(\\operatorname{sgn} : S_n \\to \\{\\pm 1\\}).`} /><TeX src={`A_n`} /> 是 <TeX src={`S_n`} /> 的正规子群,阶 <TeX src={`|A_n| = n!/2`} />。</>}
@@ -11802,7 +12826,7 @@ export default function GroupTheoryPage() {
           <L zh="21.1  Aₙ 的单纯性 (n ≥ 5)" en="21.1  Simplicity of Aₙ (n ≥ 5)" />
         </h3>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定理 21.3 — Galois' : 'Theorem 21.3 — Galois'}</div>
+          <div className="gt-def-title">{tr({ zh: '定理 21.3 — Galois', en: 'Theorem 21.3 — Galois' })}</div>
           <div className="gt-def-body">
             <L
               zh={<>对所有 <TeX src={`n \\geq 5`} />, <TeX src={`A_n`} /> 是 <strong>单群</strong>: 它没有任何非平凡正规子群。</>}
@@ -11850,7 +12874,7 @@ export default function GroupTheoryPage() {
           <L zh="21.3  凯莱定理:每个群都是置换群" en="21.3  Cayley's theorem: every group is a permutation group" />
         </h3>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定理 21.4 — Cayley (1854)' : 'Theorem 21.4 — Cayley (1854)'}</div>
+          <div className="gt-def-title">{tr({ zh: '定理 21.4 — Cayley (1854)', en: 'Theorem 21.4 — Cayley (1854)' })}</div>
           <div className="gt-def-body">
             <L
               zh={<>每个群 G 都嵌入对称群:<TeXBlock src={`G \\;\\hookrightarrow\\; S_{|G|}.`} />映射 <TeX src={`g \\mapsto L_g`} /> 把 g 看成 G 上的左乘置换 <TeX src={`L_g(x) = gx`} />。 这是单同态。</>}
@@ -11868,7 +12892,9 @@ export default function GroupTheoryPage() {
           <L zh="21.4  共轭类 ↔ 分拆 — Sₙ 的「形状字母表」" en="21.4  Conjugacy classes ↔ partitions — the shape alphabet of Sₙ" />
         </h3>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 21.5 — Sₙ 的共轭类' : 'Theorem 21.5 — conjugacy classes of Sₙ'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 21.5 — Sₙ 的共轭类', en: 'Theorem 21.5 — conjugacy classes of Sₙ',
+              zhHant: "定理 21.5 — Sₙ 的共軛類"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<><TeX src={`S_n`} /> 的两个置换共轭 <em>当且仅当</em> 它们有相同的不交圈型 (cycle type)。 共轭类 ↔ <TeX src={`n`} /> 的 <strong>整数分拆</strong> 一一对应。 一个置换 <TeX src={`\\sigma`} /> 的圈型为 <TeX src={`1^{m_1} 2^{m_2} \\cdots n^{m_n}`} /> 时,它所在共轭类大小为<TeXBlock src={`|[\\sigma]| \\;=\\; \\frac{n!}{\\prod_{k} k^{m_k} \\cdot m_k!}.`} /></>}
@@ -11885,9 +12911,11 @@ export default function GroupTheoryPage() {
         <table className="gt-partition-tbl">
           <thead>
             <tr>
-              <th>{lang === 'zh' ? '分拆' : 'partition'}</th>
-              <th>{lang === 'zh' ? '圈型' : 'cycle type'}</th>
-              <th>{lang === 'zh' ? '类大小' : 'class size'}</th>
+              <th>{tr({ zh: '分拆', en: 'partition' })}</th>
+              <th>{tr({ zh: '圈型', en: 'cycle type' })}</th>
+              <th>{tr({ zh: '类大小', en: 'class size',
+                  zhHant: "類大小"
+            })}</th>
               <th>{lang === 'zh' ? 'sgn' : 'sgn'}</th>
               <th>{lang === 'zh' ? 'order' : 'order'}</th>
             </tr>
@@ -11900,7 +12928,9 @@ export default function GroupTheoryPage() {
             <tr><td>4 + 4</td><td>(4)(4)</td><td className="num">1,260</td><td className="num">+</td><td className="num">4</td></tr>
             <tr><td>3 + 3 + 2</td><td>(3)(3)(2)</td><td className="num">1,120</td><td className="num">−</td><td className="num">6</td></tr>
             <tr><td>2 + 2 + 2 + 2</td><td>(2)<sup>4</sup></td><td className="num">105</td><td className="num">+</td><td className="num">2</td></tr>
-            <tr><td>1<sup>8</sup></td><td>(1)<sup>8</sup> {lang === 'zh' ? '(单位元)' : '(identity)'}</td><td className="num">1</td><td className="num">+</td><td className="num">1</td></tr>
+            <tr><td>1<sup>8</sup></td><td>(1)<sup>8</sup> {tr({ zh: '(单位元)', en: '(identity)',
+                zhHant: "(單位元)"
+            })}</td><td className="num">1</td><td className="num">+</td><td className="num">1</td></tr>
           </tbody>
         </table>
         <p style={{ marginTop: 14 }}>
@@ -12003,7 +13033,9 @@ export default function GroupTheoryPage() {
             <div className="gt-algo-flow-num">Phase 1</div>
             <div className="gt-algo-flow-title">{lang === 'zh' ? 'G → G₂' : 'G → G₂'}</div>
             <div className="gt-algo-flow-body">
-              {lang === 'zh' ? '坐标:(co, eo, slice). 表大小:2187 × 2048 × 495 ≈ 2.2 × 10⁹。 用 IDA*, 启发式 max(co-depth, eo-depth, slice-depth)。' : 'Coords: (co, eo, slice). Table sizes 2187 × 2048 × 495 ≈ 2.2 × 10⁹. IDA* with heuristic max(co, eo, slice).'}
+              {tr({ zh: '坐标:(co, eo, slice). 表大小:2187 × 2048 × 495 ≈ 2.2 × 10⁹。 用 IDA*, 启发式 max(co-depth, eo-depth, slice-depth)。', en: 'Coords: (co, eo, slice). Table sizes 2187 × 2048 × 495 ≈ 2.2 × 10⁹. IDA* with heuristic max(co, eo, slice).',
+                  zhHant: "座標:(co, eo, slice). 表大小:2187 × 2048 × 495 ≈ 2.2 × 10⁹。 用 IDA*, 啟發式 max(co-depth, eo-depth, slice-depth)。"
+            })}
             </div>
           </div>
           <div className="gt-algo-flow-arrow">→</div>
@@ -12011,7 +13043,9 @@ export default function GroupTheoryPage() {
             <div className="gt-algo-flow-num">Phase 2</div>
             <div className="gt-algo-flow-title">{lang === 'zh' ? 'G₂ → e' : 'G₂ → e'}</div>
             <div className="gt-algo-flow-body">
-              {lang === 'zh' ? '坐标:(cp, ep_UD, ep_slice). 表大小 40320 × 40320 × 24 ≈ 4 × 10¹⁰. 但每个状态只有 10 个允许 generator (U, D, L², R², F², B²)。' : 'Coords: (cp, ep_UD, ep_slice). Table 40320 × 40320 × 24 ≈ 4 × 10¹⁰. Only 10 generators allowed in this phase.'}
+              {tr({ zh: '坐标:(cp, ep_UD, ep_slice). 表大小 40320 × 40320 × 24 ≈ 4 × 10¹⁰. 但每个状态只有 10 个允许 generator (U, D, L², R², F², B²)。', en: 'Coords: (cp, ep_UD, ep_slice). Table 40320 × 40320 × 24 ≈ 4 × 10¹⁰. Only 10 generators allowed in this phase.',
+                  zhHant: "座標:(cp, ep_UD, ep_slice). 表大小 40320 × 40320 × 24 ≈ 4 × 10¹⁰. 但每個狀態只有 10 個允許 generator (U, D, L², R², F², B²)。"
+            })}
             </div>
           </div>
         </div>
@@ -12076,7 +13110,7 @@ function search(node, g, bound):
           <L zh="22.6  Korf IDA* — admissibility 严格证明" en="22.6  Korf IDA* — proving admissibility" />
         </h3>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 22.1 — admissibility' : 'Theorem 22.1 — admissibility'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 22.1 — admissibility', en: 'Theorem 22.1 — admissibility' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>设 <TeX src={`h_1, h_2, h_3 : G \\to \\mathbb{N}`} /> 是 G 中三个 「子问题距离」 (角块距离、 棱块 1 距离、 棱块 2 距离)。 取 <TeX src={`h(g) = \\max(h_1, h_2, h_3)`} />, 则 <TeX src={`h(g) \\leq d_S(g, e)`} /> 对所有 g 成立 (admissible)。</>}
@@ -12085,7 +13119,9 @@ function search(node, g, bound):
           </div>
         </div>
         <div className="gt-proof">
-          <div className="gt-proof-title">{lang === 'zh' ? '证明' : 'Proof'}</div>
+          <div className="gt-proof-title">{tr({ zh: '证明', en: 'Proof',
+              zhHant: "證明"
+        })}</div>
           <L
             zh={<>
               <p style={{ margin: '0 0 12px' }}>设 g ∈ G, <TeX src={`d_S(g, e) = k`} /> (即 g 可由 k 个生成元乘出)。 把 g 投到 「子集 X_i」 (例如 8 角块) 上, 得 <TeX src={`\\pi_i(g) \\in \\pi_i(G)`} />, 其 「子集 distance」 <TeX src={`h_i(g) = d_S(\\pi_i(g), e)`} />。</p>
@@ -12105,15 +13141,33 @@ function search(node, g, bound):
         </h3>
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '算法' : 'Algorithm'}</th><th>{lang === 'zh' ? '最优?' : 'Optimal?'}</th><th>{lang === 'zh' ? '时间' : 'Time'}</th><th>{lang === 'zh' ? '空间' : 'Space'}</th><th>{lang === 'zh' ? '典型步数' : 'Typical len'}</th></tr>
+            <tr><th>{tr({ zh: '算法', en: 'Algorithm',
+                zhHant: "演算法"
+            })}</th><th>{tr({ zh: '最优?', en: 'Optimal?',
+                zhHant: "最優?"
+            })}</th><th>{tr({ zh: '时间', en: 'Time',
+                zhHant: "時間"
+            })}</th><th>{tr({ zh: '空间', en: 'Space',
+                zhHant: "空間"
+            })}</th><th>{tr({ zh: '典型步数', en: 'Typical len',
+                zhHant: "典型步數"
+            })}</th></tr>
           </thead>
           <tbody>
-            <tr><td>{lang === 'zh' ? '朴素 BFS' : 'Naive BFS'}</td><td>{lang === 'zh' ? '是' : 'yes'}</td><td className="num"><TeX src={`O(|G|)`} /></td><td className="num"><TeX src={`O(|G|)`} /></td><td className="num">{lang === 'zh' ? '不可行' : 'infeasible'}</td></tr>
-            <tr><td>Korf IDA* (1997)</td><td>{lang === 'zh' ? '是' : 'yes'}</td><td className="num"><TeX src={`O(b^d)`} /> {lang === 'zh' ? ',b ≈ 13.34, d ≤ 20' : ', b ≈ 13.34, d ≤ 20'}</td><td className="num">~80 MB</td><td className="num">{lang === 'zh' ? '最优 18–20 HTM' : 'opt. 18–20 HTM'}</td></tr>
-            <tr><td>Kociemba two-phase (1992)</td><td>{lang === 'zh' ? '否 (近似)' : 'no (suboptimal)'}</td><td className="num">~ms</td><td className="num">~100 MB</td><td className="num">~21 HTM</td></tr>
-            <tr><td>Thistlethwaite (1981)</td><td>{lang === 'zh' ? '否' : 'no'}</td><td className="num">~ms</td><td className="num">~10 MB</td><td className="num">~50 HTM</td></tr>
-            <tr><td>Rokicki 2010</td><td>{lang === 'zh' ? '验证而非 solver' : 'verifier, not solver'}</td><td className="num">35 CPU-yr</td><td className="num">~2 GB</td><td className="num">{lang === 'zh' ? '不输出 alg' : 'no alg output'}</td></tr>
-            <tr><td>DeepCubeA (2019)</td><td>{lang === 'zh' ? '否' : 'no'}</td><td className="num">~s</td><td className="num">~GB</td><td className="num">~21 HTM</td></tr>
+            <tr><td>{tr({ zh: '朴素 BFS', en: 'Naive BFS',
+                zhHant: "樸素 BFS"
+            })}</td><td>{tr({ zh: '是', en: 'yes' })}</td><td className="num"><TeX src={`O(|G|)`} /></td><td className="num"><TeX src={`O(|G|)`} /></td><td className="num">{tr({ zh: '不可行', en: 'infeasible' })}</td></tr>
+            <tr><td>Korf IDA* (1997)</td><td>{tr({ zh: '是', en: 'yes' })}</td><td className="num"><TeX src={`O(b^d)`} /> {lang === 'zh' ? ',b ≈ 13.34, d ≤ 20' : ', b ≈ 13.34, d ≤ 20'}</td><td className="num">~80 MB</td><td className="num">{tr({ zh: '最优 18–20 HTM', en: 'opt. 18–20 HTM',
+                zhHant: "最優 18–20 HTM"
+            })}</td></tr>
+            <tr><td>Kociemba two-phase (1992)</td><td>{tr({ zh: '否 (近似)', en: 'no (suboptimal)' })}</td><td className="num">~ms</td><td className="num">~100 MB</td><td className="num">~21 HTM</td></tr>
+            <tr><td>Thistlethwaite (1981)</td><td>{tr({ zh: '否', en: 'no' })}</td><td className="num">~ms</td><td className="num">~10 MB</td><td className="num">~50 HTM</td></tr>
+            <tr><td>Rokicki 2010</td><td>{tr({ zh: '验证而非 solver', en: 'verifier, not solver',
+                zhHant: "驗證而非 solver"
+            })}</td><td className="num">35 CPU-yr</td><td className="num">~2 GB</td><td className="num">{tr({ zh: '不输出 alg', en: 'no alg output',
+                zhHant: "不輸出 alg"
+            })}</td></tr>
+            <tr><td>DeepCubeA (2019)</td><td>{tr({ zh: '否', en: 'no' })}</td><td className="num">~s</td><td className="num">~GB</td><td className="num">~21 HTM</td></tr>
           </tbody>
         </table>
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 12, color: 'var(--ink)' }}>
@@ -12187,34 +13241,44 @@ function search(node, g, bound):
         <table className="gt-distance-tbl">
           <thead>
             <tr>
-              <th>{lang === 'zh' ? '度量' : 'Metric'}</th>
-              <th>{lang === 'zh' ? '生成集' : 'Generators'}</th>
-              <th>{lang === 'zh' ? '直径' : 'Diameter'}</th>
-              <th>{lang === 'zh' ? '随机平均' : 'Random avg'}</th>
-              <th>{lang === 'zh' ? '上限证明' : 'Bound proof'}</th>
+              <th>{tr({ zh: '度量', en: 'Metric' })}</th>
+              <th>{tr({ zh: '生成集', en: 'Generators' })}</th>
+              <th>{tr({ zh: '直径', en: 'Diameter',
+                  zhHant: "直徑"
+            })}</th>
+              <th>{tr({ zh: '随机平均', en: 'Random avg',
+                  zhHant: "隨機平均"
+            })}</th>
+              <th>{tr({ zh: '上限证明', en: 'Bound proof',
+                  zhHant: "上限證明"
+            })}</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>HTM</strong> ({lang === 'zh' ? '半圈' : 'half-turn'})</td>
+              <td><strong>HTM</strong> ({tr({ zh: '半圈', en: 'half-turn' })})</td>
               <td className="num">18</td>
               <td className="num">20</td>
               <td className="num">~18</td>
               <td className="num">{lang === 'zh' ? '2010 Rokicki et al.' : '2010 Rokicki et al.'}</td>
             </tr>
             <tr>
-              <td><strong>QTM</strong> ({lang === 'zh' ? '四分一圈' : 'quarter-turn'})</td>
+              <td><strong>QTM</strong> ({tr({ zh: '四分一圈', en: 'quarter-turn' })})</td>
               <td className="num">12</td>
               <td className="num">26</td>
               <td className="num">~22</td>
               <td className="num">{lang === 'zh' ? '2014 Rokicki & Kociemba' : '2014 Rokicki & Kociemba'}</td>
             </tr>
             <tr>
-              <td><strong>STM</strong> ({lang === 'zh' ? '加切片' : 'slice'})</td>
+              <td><strong>STM</strong> ({tr({ zh: '加切片', en: 'slice' })})</td>
               <td className="num">27</td>
-              <td className="num">{lang === 'zh' ? '≤ 20 (未严格)' : '≤ 20 (unproven)'}</td>
+              <td className="num">{tr({ zh: '≤ 20 (未严格)', en: '≤ 20 (unproven)',
+                  zhHant: "≤ 20 (未嚴格)"
+            })}</td>
               <td className="num">~17</td>
-              <td className="num">{lang === 'zh' ? '部分计算' : 'partial enumerations'}</td>
+              <td className="num">{tr({ zh: '部分计算', en: 'partial enumerations',
+                  zhHant: "部分計算"
+            })}</td>
             </tr>
           </tbody>
         </table>
@@ -12246,9 +13310,15 @@ function search(node, g, bound):
           <thead>
             <tr>
               <th>d</th>
-              <th>{lang === 'zh' ? '状态数' : 'states at d'}</th>
-              <th>{lang === 'zh' ? '占 |G| 比例' : 'fraction of |G|'}</th>
-              <th>{lang === 'zh' ? '增长率' : 'ratio'}</th>
+              <th>{tr({ zh: '状态数', en: 'states at d',
+                  zhHant: "狀態數"
+            })}</th>
+              <th>{tr({ zh: '占 |G| 比例', en: 'fraction of |G|',
+                  zhHant: "佔 |G| 比例"
+            })}</th>
+              <th>{tr({ zh: '增长率', en: 'ratio',
+                  zhHant: "增長率"
+            })}</th>
             </tr>
           </thead>
           <tbody>
@@ -12284,7 +13354,9 @@ function search(node, g, bound):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '推论 23.4 — 平均距离' : 'Corollary 23.4 — average distance'}</div>
+          <div className="gt-thm-title">{tr({ zh: '推论 23.4 — 平均距离', en: 'Corollary 23.4 — average distance',
+              zhHant: "推論 23.4 — 平均距離"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<><TeXBlock src={`\\mathbb{E}[d] \\;=\\; \\frac{1}{|G|} \\sum_{d=0}^{20} d \\cdot N_d \\;\\approx\\; 17.97`} />其中 <TeX src={`N_d`} /> 是距离 d 处的状态数。 一个均匀随机的 scramble,期望最优解长度大约 <strong>17.97 HTM</strong>。 (QTM 下约为 22.) 注意:这跟「<em>3-style 选手实际解出 60 步</em>」差异很大 —— 那只反映人类启发式跟最优解之间的差距 (gap ≈ 40 步)。</>}
@@ -12327,7 +13399,9 @@ function search(node, g, bound):
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 24.1 — 总变差距离' : 'Definition 24.1 — total variation distance'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 24.1 — 总变差距离', en: 'Definition 24.1 — total variation distance',
+              zhHant: "定義 24.1 — 總變差距離"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>对 G 上两个概率分布 P 和 Q,定义<TeXBlock src={`d_{TV}(P, Q) \\;=\\; \\tfrac{1}{2} \\sum_{g \\in G} |P(g) - Q(g)|.`} />混合时间 <TeX src={`t_{\\mathrm{mix}}(\\varepsilon)`} /> 是「<TeX src={`d_{TV}(\\mu^t, \\mathrm{Unif}_G) \\leq \\varepsilon`} />」 所需的最小 t。</>}
@@ -12466,16 +13540,34 @@ function search(node, g, bound):
         </h3>
         <table className="gt-compare">
           <thead>
-            <tr><th>{lang === 'zh' ? '步数 t' : 'Steps t'}</th><th><TeX src={`d_{TV}(\\mu^t, \\pi)`} /></th><th>{lang === 'zh' ? '解释' : 'Interpretation'}</th></tr>
+            <tr><th>{tr({ zh: '步数 t', en: 'Steps t',
+                zhHant: "步數 t"
+            })}</th><th><TeX src={`d_{TV}(\\mu^t, \\pi)`} /></th><th>{tr({ zh: '解释', en: 'Interpretation',
+                zhHant: "解釋"
+            })}</th></tr>
           </thead>
           <tbody>
-            <tr><td className="num">5</td><td className="num">≈ 1.00</td><td>{lang === 'zh' ? '几乎所有质量集中于 d ≤ 5 邻域' : 'all mass within d ≤ 5 neighbourhood'}</td></tr>
-            <tr><td className="num">10</td><td className="num">≈ 0.99</td><td>{lang === 'zh' ? '仍远未均匀' : 'still far from uniform'}</td></tr>
-            <tr><td className="num">15</td><td className="num">≈ 0.85</td><td>{lang === 'zh' ? '开始进入 cutoff 区' : 'entering the cutoff region'}</td></tr>
-            <tr><td className="num">18</td><td className="num">≈ 0.45</td><td>{lang === 'zh' ? 'cutoff 中点' : 'cutoff midpoint'}</td></tr>
-            <tr><td className="num">20</td><td className="num">≈ 0.20</td><td>{lang === 'zh' ? '接近均匀,WCA 25 步 scramble 安全裕度' : 'nearly uniform; WCA 25-move scramble adds safety margin'}</td></tr>
-            <tr><td className="num">25</td><td className="num">≈ 0.05</td><td>{lang === 'zh' ? '极其接近均匀' : 'essentially uniform'}</td></tr>
-            <tr><td className="num">30</td><td className="num">{'<'} 0.01</td><td>{lang === 'zh' ? '指数收敛尾部' : 'exponential tail'}</td></tr>
+            <tr><td className="num">5</td><td className="num">≈ 1.00</td><td>{tr({ zh: '几乎所有质量集中于 d ≤ 5 邻域', en: 'all mass within d ≤ 5 neighbourhood',
+                zhHant: "幾乎所有質量集中於 d ≤ 5 鄰域"
+            })}</td></tr>
+            <tr><td className="num">10</td><td className="num">≈ 0.99</td><td>{tr({ zh: '仍远未均匀', en: 'still far from uniform',
+                zhHant: "仍遠未均勻"
+            })}</td></tr>
+            <tr><td className="num">15</td><td className="num">≈ 0.85</td><td>{tr({ zh: '开始进入 cutoff 区', en: 'entering the cutoff region',
+                zhHant: "開始進入 cutoff 區"
+            })}</td></tr>
+            <tr><td className="num">18</td><td className="num">≈ 0.45</td><td>{tr({ zh: 'cutoff 中点', en: 'cutoff midpoint',
+                zhHant: "cutoff 中點"
+            })}</td></tr>
+            <tr><td className="num">20</td><td className="num">≈ 0.20</td><td>{tr({ zh: '接近均匀,WCA 25 步 scramble 安全裕度', en: 'nearly uniform; WCA 25-move scramble adds safety margin',
+                zhHant: "接近均勻,WCA 25 步 scramble 安全裕度"
+            })}</td></tr>
+            <tr><td className="num">25</td><td className="num">≈ 0.05</td><td>{tr({ zh: '极其接近均匀', en: 'essentially uniform',
+                zhHant: "極其接近均勻"
+            })}</td></tr>
+            <tr><td className="num">30</td><td className="num">{'<'} 0.01</td><td>{tr({ zh: '指数收敛尾部', en: 'exponential tail',
+                zhHant: "指數收斂尾部"
+            })}</td></tr>
           </tbody>
         </table>
         <p>
@@ -12499,7 +13591,9 @@ function search(node, g, bound):
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 25.1 — 基与稳定子链' : 'Definition 25.1 — base & stabilizer chain'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 25.1 — 基与稳定子链', en: 'Definition 25.1 — base & stabilizer chain',
+              zhHant: "定義 25.1 — 基與穩定子鏈"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>令 G 作用在集合 Ω 上 (魔方上 |Ω| = 48 个贴纸)。 选 <strong>基</strong> <TeX src={`B = (b_1, b_2, \\ldots, b_k) \\subset \\Omega`} /> 使得稳定子链<TeXBlock src={`G \\supset G^{(1)} \\supset G^{(2)} \\supset \\cdots \\supset G^{(k)} = \\{e\\}`} />其中 <TeX src={`G^{(i)} = \\operatorname{Stab}_G(b_1, \\ldots, b_i)`} />, 最后稳定到平凡。 然后 <TeX src={`|G| = \\prod_i |G^{(i-1)} \\cdot b_i|`} /> (轨道大小的乘积)。</>}
@@ -12521,7 +13615,9 @@ function search(node, g, bound):
           />
         </p>
         <div className="gt-aside">
-          <strong>GAP code</strong> ({lang === 'zh' ? '验证 |G| = 4.3 × 10¹⁹' : 'verify |G| = 4.3 × 10¹⁹'}):
+          <strong>GAP code</strong> ({tr({ zh: '验证 |G| = 4.3 × 10¹⁹', en: 'verify |G| = 4.3 × 10¹⁹',
+              zhHant: "驗證 |G| = 4.3 × 10¹⁹"
+        })}):
           <div className="gt-algo-pseudo" style={{ marginTop: 8 }}>
 {`gap> G := Group(
 >     (1,3,8,6)(2,5,7,4)(9,33,25,17)(10,34,26,18)(11,35,27,19),
@@ -12537,7 +13633,7 @@ gap> StructureDescription(G);
           <L zh="25.3  Schreier 引理 + 伪代码" en="25.3  Schreier's lemma + pseudocode" />
         </h3>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? 'Schreier 引理 (1927)' : "Schreier's lemma (1927)"}</div>
+          <div className="gt-def-title">{tr({ zh: 'Schreier 引理 (1927)', en: "Schreier's lemma (1927)" })}</div>
           <div className="gt-def-body">
             <L
               zh={<>设 <TeX src={`H \\leq G`} /> 指数 <TeX src={`[G : H]`} />, <TeX src={`T = \\{t_1, \\ldots, t_m\\}`} /> 是 H 在 G 中的一个左陪集代表系 (含 <TeX src={`t_1 = e`} />), 设 <TeX src={`S`} /> 为 G 的生成集。 对 <TeX src={`g \\in G`} />, 记 <TeX src={`\\bar g`} /> 为它在 T 中的陪集代表。 那么<TeXBlock src={`H \\;=\\; \\bigl\\langle\\, \\bar{(t \\cdot s)}^{-1} \\cdot (t \\cdot s) \\;:\\; t \\in T,\\; s \\in S \\,\\bigr\\rangle.`} />即 H 由这 <TeX src={`m |S|`} /> 个 「<em>Schreier 生成元</em>」 生成。</>}
@@ -12583,20 +13679,36 @@ Membership(g):
             <thead>
               <tr>
                 <th>i</th>
-                <th>{lang === 'zh' ? '基点 b_i' : 'base point b_i'}</th>
+                <th>{tr({ zh: '基点 b_i', en: 'base point b_i',
+                    zhHant: "基點 b_i"
+                })}</th>
                 <th>|O_i|</th>
-                <th>{lang === 'zh' ? '稳定到' : 'stabilizes to'}</th>
+                <th>{tr({ zh: '稳定到', en: 'stabilizes to',
+                    zhHant: "穩定到"
+                })}</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td className="num">1</td><td>{lang === 'zh' ? '角块 URF' : 'corner URF'}</td><td className="num">8</td><td>G⁽¹⁾</td></tr>
-              <tr><td className="num">2</td><td>{lang === 'zh' ? '角块 UFL' : 'corner UFL'}</td><td className="num">7</td><td>G⁽²⁾</td></tr>
+              <tr><td className="num">1</td><td>{tr({ zh: '角块 URF', en: 'corner URF',
+                  zhHant: "角塊 URF"
+            })}</td><td className="num">8</td><td>G⁽¹⁾</td></tr>
+              <tr><td className="num">2</td><td>{tr({ zh: '角块 UFL', en: 'corner UFL',
+                  zhHant: "角塊 UFL"
+            })}</td><td className="num">7</td><td>G⁽²⁾</td></tr>
               <tr><td className="num">…</td><td>…</td><td className="num">…</td><td>…</td></tr>
-              <tr><td className="num">8</td><td>{lang === 'zh' ? '最后角' : 'last corner'}</td><td className="num">3</td><td>{lang === 'zh' ? '角朝向 ÷ 3' : 'cor twists ÷ 3'}</td></tr>
-              <tr><td className="num">9</td><td>{lang === 'zh' ? '棱块 UR' : 'edge UR'}</td><td className="num">12</td><td>G⁽⁹⁾</td></tr>
+              <tr><td className="num">8</td><td>{tr({ zh: '最后角', en: 'last corner',
+                  zhHant: "最後角"
+            })}</td><td className="num">3</td><td>{tr({ zh: '角朝向 ÷ 3', en: 'cor twists ÷ 3' })}</td></tr>
+              <tr><td className="num">9</td><td>{tr({ zh: '棱块 UR', en: 'edge UR',
+                  zhHant: "稜塊 UR"
+            })}</td><td className="num">12</td><td>G⁽⁹⁾</td></tr>
               <tr><td className="num">…</td><td>…</td><td className="num">…</td><td>…</td></tr>
-              <tr><td className="num">19</td><td>{lang === 'zh' ? '最后棱' : 'last edge'}</td><td className="num">2</td><td>{lang === 'zh' ? '棱翻 ÷ 2' : 'edge flip ÷ 2'}</td></tr>
-              <tr><td className="num">20</td><td>{lang === 'zh' ? '奇偶' : 'parity'}</td><td className="num">1</td><td>{`{e}`}</td></tr>
+              <tr><td className="num">19</td><td>{tr({ zh: '最后棱', en: 'last edge',
+                  zhHant: "最後稜"
+            })}</td><td className="num">2</td><td>{tr({ zh: '棱翻 ÷ 2', en: 'edge flip ÷ 2',
+                zhHant: "稜翻 ÷ 2"
+            })}</td></tr>
+              <tr><td className="num">20</td><td>{tr({ zh: '奇偶', en: 'parity' })}</td><td className="num">1</td><td>{`{e}`}</td></tr>
             </tbody>
           </table>
         </div>
@@ -12664,7 +13776,9 @@ Membership(g):
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 26.1 — 表示' : 'Definition 26.1 — representation'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 26.1 — 表示', en: 'Definition 26.1 — representation',
+              zhHant: "定義 26.1 — 表示"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>群 G 的一个 <strong>表示</strong> 是同态 <TeX src={`\\rho : G \\to GL_n(\\mathbb{C})`} />, 把 g 映为可逆 n × n 复矩阵。 n 称为 <strong>维数</strong>。 表示叫 <strong>不可约</strong> 如果只有平凡子空间在所有 ρ(g) 下不变。 有限群的每个表示都是不可约表示的 <em>直和</em> (Maschke 定理)。</>}
@@ -12695,7 +13809,7 @@ Membership(g):
           <L zh="26.3  Maschke + Schur — 表示论的两个支柱" en="26.3  Maschke + Schur — the two pillars" />
         </h3>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? 'Maschke 定理 (1899)' : "Maschke's theorem (1899)"}</div>
+          <div className="gt-def-title">{tr({ zh: 'Maschke 定理 (1899)', en: "Maschke's theorem (1899)" })}</div>
           <div className="gt-def-body">
             <L
               zh={<>有限群 G 的任意 (有限维) 复表示都 <strong>完全可约</strong>:它是不可约表示的直和。 关键: 对任何 G-不变子空间 W ⊆ V, 存在 G-不变补 W'。 用平均化技巧 (averaging) 构造投影 <TeX src={`P = \\tfrac{1}{|G|} \\sum_{g \\in G} \\rho(g) P_0 \\rho(g)^{-1}`} />。</>}
@@ -12704,7 +13818,7 @@ Membership(g):
           </div>
         </div>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? 'Schur 引理 (1905)' : "Schur's lemma (1905)"}</div>
+          <div className="gt-def-title">{tr({ zh: 'Schur 引理 (1905)', en: "Schur's lemma (1905)" })}</div>
           <div className="gt-def-body">
             <L
               zh={<>设 <TeX src={`\\rho_1, \\rho_2`} /> 是 G 的两个不可约表示, <TeX src={`T : V_1 \\to V_2`} /> 是 G-等变线性映射 (<TeX src={`T \\rho_1(g) = \\rho_2(g) T`} />)。 那么:<br />(a) 若 <TeX src={`\\rho_1 \\not\\cong \\rho_2`} />, 必 <TeX src={`T = 0`} />;<br />(b) 若 <TeX src={`\\rho_1 = \\rho_2`} />, 必 <TeX src={`T = \\lambda I`} /> (复数倍单位)。</>}
@@ -12844,12 +13958,16 @@ Membership(g):
         </p>
         <div className="gt-panel">
           <div className="gt-panel-title">3 × 3</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '满秩 · 任何图案可解 · 直径 9' : 'full rank · every pattern solvable · diameter 9'}</div>
+          <div className="gt-panel-sub">{tr({ zh: '满秩 · 任何图案可解 · 直径 9', en: 'full rank · every pattern solvable · diameter 9',
+              zhHant: "滿秩 · 任何圖案可解 · 直徑 9"
+        })}</div>
           <LightsOutBoard size={3} />
         </div>
         <div className="gt-panel">
           <div className="gt-panel-title">5 × 5</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '秩 23 · 2 个安静图案 · 每个可解图案 4 种解 · 直径 15' : 'rank 23 · 2 quiet patterns · 4 solutions per solvable · diameter 15'}</div>
+          <div className="gt-panel-sub">{tr({ zh: '秩 23 · 2 个安静图案 · 每个可解图案 4 种解 · 直径 15', en: 'rank 23 · 2 quiet patterns · 4 solutions per solvable · diameter 15',
+              zhHant: "秩 23 · 2 個安靜圖案 · 每個可解圖案 4 種解 · 直徑 15"
+        })}</div>
           <LightsOutBoard size={5} />
         </div>
 
@@ -12870,11 +13988,15 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '内积判据' : 'orthogonality test'}</div>
+          <div className="gt-panel-title">{tr({ zh: '内积判据', en: 'orthogonality test',
+              zhHant: "內積判據"
+        })}</div>
           <QuietPatternViewer />
         </div>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '观察 27.1 — 「安静」 的几何' : 'Observation 27.1 — geometry of quiet'}</div>
+          <div className="gt-def-title">{tr({ zh: '观察 27.1 — 「安静」 的几何', en: 'Observation 27.1 — geometry of quiet',
+              zhHant: "觀察 27.1 — 「安靜」 的幾何"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<><TeX src="Q_1" /> 是棋盘式的 「四角块」 图案; <TeX src="Q_2" /> 是 「四象限块」 图案。 两者都有 D₄ (8 阶) 对称性, 这不是巧合 — 5 × 5 网格自身有 D₄ 对称, 因此 A 在 D₄ 表示下分解, 核必然落入某个不变子空间。 这是 「<strong>对称对子空间分解</strong>」 (representation theory of finite groups) 给出的硬约束: 5 × 5 上只有两个非平凡 D₄ 不变向量满足 <TeX src="Ax = 0" />, 就是 <TeX src="Q_1, Q_2" />。</>}
@@ -12893,8 +14015,10 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '3 × 3 高斯消元逐步演示' : '3 × 3 Gaussian elimination, step by step'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '增广矩阵 [A | b]  — 9 列 A + 1 列 b · 高亮主元行与正在消去的行' : 'augmented matrix [A | b] — 9 cols of A + 1 col of b · pivot row and eliminating rows highlighted'}</div>
+          <div className="gt-panel-title">{tr({ zh: '3 × 3 高斯消元逐步演示', en: '3 × 3 Gaussian elimination, step by step' })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '增广矩阵 [A | b]  — 9 列 A + 1 列 b · 高亮主元行与正在消去的行', en: 'augmented matrix [A | b] — 9 cols of A + 1 col of b · pivot row and eliminating rows highlighted',
+              zhHant: "增廣矩陣 [A | b]  — 9 列 A + 1 列 b · 高亮主元行與正在消去的行"
+        })}</div>
           <GaussianEliminationStepper />
         </div>
         <p>
@@ -12914,8 +14038,12 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '追光动画 (5 × 5)' : 'light-chasing animator (5 × 5)'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '点击「开始追光」看单向消元;若底行不全灭,需要回顶行重选 (4 种可行起手)' : 'click "start chase" to run forward elimination; non-zero bottom row means you must restart with a different top-row kick (4 valid choices)'}</div>
+          <div className="gt-panel-title">{tr({ zh: '追光动画 (5 × 5)', en: 'light-chasing animator (5 × 5)',
+              zhHant: "追光動畫 (5 × 5)"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '点击「开始追光」看单向消元;若底行不全灭,需要回顶行重选 (4 种可行起手)', en: 'click "start chase" to run forward elimination; non-zero bottom row means you must restart with a different top-row kick (4 valid choices)',
+              zhHant: "點選「開始追光」看單向消元;若底行不全滅,需要回頂行重選 (4 種可行起手)"
+        })}</div>
           <LightChasingAnimator />
         </div>
         <p>
@@ -12948,7 +14076,9 @@ Membership(g):
           <li><L zh={<>n = 3, 4, 6, 7, 9, …: 任意图案可解。</>} en={<>n = 3, 4, 6, 7, 9, …: every pattern solvable.</>} /></li>
         </ul>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? 'n 滑动 · 高亮安静图案' : 'slide n · highlight quiet pattern'}</div>
+          <div className="gt-panel-title">{tr({ zh: 'n 滑动 · 高亮安静图案', en: 'slide n · highlight quiet pattern',
+              zhHant: "n 滑動 · 高亮安靜圖案"
+        })}</div>
           <LineLightsSlider />
         </div>
         <p>
@@ -12975,7 +14105,7 @@ Membership(g):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 27.2 (Sutner 1989)' : 'Theorem 27.2 (Sutner 1989)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 27.2 (Sutner 1989)', en: 'Theorem 27.2 (Sutner 1989)' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>对 m × n 网格 Lights Out, <TeX src="\dim \ker A_{m \times n} = \deg \gcd\bigl(c_m(x),\; c_n(-x - 1)\bigr)" /> over <TeX src="\mathbb{F}_2" />, 其中 <TeX src="c_k" /> 由 <TeX src="c_k(x) = x\,c_{k-1}(x) - c_{k-2}(x)" />, <TeX src="c_0 = 1,\, c_1 = x" /> 定义。</>}
@@ -12996,7 +14126,9 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? 'dim ker A_{m×n} 表 — 浏览器实时计算' : 'dim ker A_{m×n} table — computed live in your browser'}</div>
+          <div className="gt-panel-title">{tr({ zh: 'dim ker A_{m×n} 表 — 浏览器实时计算', en: 'dim ker A_{m×n} table — computed live in your browser',
+              zhHant: "dim ker A_{m×n} 表 — 瀏覽器實時計算"
+        })}</div>
           <KernelDimTable />
         </div>
         <div className="gt-aside" style={{ marginTop: 8 }}>
@@ -13026,7 +14158,7 @@ Membership(g):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 27.3 (Sutner 1989 — σ⁺ 全亮)' : 'Theorem 27.3 (Sutner 1989 — universal σ⁺ solvability)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 27.3 (Sutner 1989 — σ⁺ 全亮)', en: 'Theorem 27.3 (Sutner 1989 — universal σ⁺ solvability)' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>对 <em>任意</em> 有限简单图 G, σ⁺ 游戏中的 「全亮目标」 <TeX src="\mathbf{1} = (1, 1, \ldots, 1)" /> 总是可解 — 即存在按钮选择 <TeX src="x \in \mathbb{F}_2^{|V|}" /> 满足 <TeX src="(A(G) + I)\,x = \mathbf{1}" />。</>}
@@ -13047,8 +14179,12 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">σ⁺ {lang === 'zh' ? '游戏 · 5 个预设小图' : 'game · 5 preset small graphs'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '点顶点 = 按按钮 · 看灯阵实时反应 · 也可让程序展示 Sutner 解' : 'click vertex = press button · live lit-state · or auto-show the Sutner solution'}</div>
+          <div className="gt-panel-title">σ⁺ {tr({ zh: '游戏 · 5 个预设小图', en: 'game · 5 preset small graphs',
+              zhHant: "遊戲 · 5 個預設小圖"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '点顶点 = 按按钮 · 看灯阵实时反应 · 也可让程序展示 Sutner 解', en: 'click vertex = press button · live lit-state · or auto-show the Sutner solution',
+              zhHant: "點頂點 = 按按鈕 · 看燈陣實時反應 · 也可讓程式展示 Sutner 解"
+        })}</div>
           <SigmaGameOnGraph />
         </div>
         <p>
@@ -13071,62 +14207,82 @@ Membership(g):
           <table className="gt-pattern-tbl">
             <thead>
               <tr>
-                <th>{lang === 'zh' ? '变种' : 'variant'}</th>
-                <th>{lang === 'zh' ? '图 G' : 'graph G'}</th>
-                <th>{lang === 'zh' ? '数域' : 'ring'}</th>
-                <th>{lang === 'zh' ? '状态空间' : 'state space'}</th>
+                <th>{tr({ zh: '变种', en: 'variant',
+                    zhHant: "變種"
+                })}</th>
+                <th>{tr({ zh: '图 G', en: 'graph G',
+                    zhHant: "圖 G"
+                })}</th>
+                <th>{tr({ zh: '数域', en: 'ring',
+                    zhHant: "數域"
+                })}</th>
+                <th>{tr({ zh: '状态空间', en: 'state space',
+                    zhHant: "狀態空間"
+                })}</th>
                 <th>dim ker</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td><strong>Lights Out</strong> (1995)</td>
-                <td>5 × 5 {lang === 'zh' ? '方格' : 'grid'}</td>
+                <td>5 × 5 {tr({ zh: '方格', en: 'grid' })}</td>
                 <td><TeX src="\mathbb{F}_2" /></td>
                 <td>2²³ = 8.4 M</td>
                 <td className="num">2</td>
               </tr>
               <tr>
                 <td><strong>Mini Lights Out</strong></td>
-                <td>4 × 4 {lang === 'zh' ? '环面' : 'torus'}</td>
+                <td>4 × 4 {tr({ zh: '环面', en: 'torus',
+                    zhHant: "環面"
+                })}</td>
                 <td><TeX src="\mathbb{F}_2" /></td>
                 <td>2¹⁶ = 65 K</td>
                 <td className="num">0</td>
               </tr>
               <tr>
                 <td><strong>Lights Out 2000</strong></td>
-                <td>5 × 5 {lang === 'zh' ? '方格' : 'grid'}</td>
+                <td>5 × 5 {tr({ zh: '方格', en: 'grid' })}</td>
                 <td><TeX src="\mathbb{F}_3" /></td>
                 <td>3²² ≈ 31 G</td>
                 <td className="num">3</td>
               </tr>
               <tr>
                 <td><strong>Lights Out Cube</strong></td>
-                <td>3 × 3 × 3 {lang === 'zh' ? '表面 (54 灯)' : 'surface (54 lights)'}</td>
+                <td>3 × 3 × 3 {tr({ zh: '表面 (54 灯)', en: 'surface (54 lights)',
+                    zhHant: "表面 (54 燈)"
+                })}</td>
                 <td><TeX src="\mathbb{F}_2" /></td>
                 <td>2⁴⁸ ≈ 281 T</td>
                 <td className="num">6</td>
               </tr>
               <tr>
                 <td><strong>Lights Out Deluxe</strong></td>
-                <td>6 × 6 {lang === 'zh' ? '方格 + 对角邻居' : 'grid + diag neighbours'}</td>
+                <td>6 × 6 {tr({ zh: '方格 + 对角邻居', en: 'grid + diag neighbours',
+                    zhHant: "方格 + 對角鄰居"
+                })}</td>
                 <td><TeX src="\mathbb{F}_2" /></td>
                 <td>2³⁶ ≈ 69 G</td>
                 <td className="num">0</td>
               </tr>
               <tr>
                 <td>XL-25 (1983, Vulcan)</td>
-                <td>5 × 5 {lang === 'zh' ? '方格 (商业最早)' : 'grid (earliest commercial)'}</td>
+                <td>5 × 5 {tr({ zh: '方格 (商业最早)', en: 'grid (earliest commercial)',
+                    zhHant: "方格 (商業最早)"
+                })}</td>
                 <td><TeX src="\mathbb{F}_2" /></td>
                 <td>2²³</td>
                 <td className="num">2</td>
               </tr>
               <tr>
-                <td>{lang === 'zh' ? '六边形 Lights Out' : 'hex Lights Out'}</td>
-                <td>{lang === 'zh' ? '六边形蜂窝' : 'hexagonal honeycomb'}</td>
+                <td>{tr({ zh: '六边形 Lights Out', en: 'hex Lights Out',
+                    zhHant: "六邊形 Lights Out"
+                })}</td>
+                <td>{tr({ zh: '六边形蜂窝', en: 'hexagonal honeycomb',
+                    zhHant: "六邊形蜂窩"
+                })}</td>
                 <td><TeX src="\mathbb{F}_2" /></td>
-                <td>{lang === 'zh' ? '依尺寸' : 'size-dependent'}</td>
-                <td>{lang === 'zh' ? '依尺寸' : 'varies'}</td>
+                <td>{tr({ zh: '依尺寸', en: 'size-dependent' })}</td>
+                <td>{tr({ zh: '依尺寸', en: 'varies' })}</td>
               </tr>
             </tbody>
           </table>
@@ -13229,7 +14385,9 @@ Membership(g):
           <L zh="28.1  棋盘与合法跳跃" en="28.1  The board and legal moves" />
         </h3>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 28.1 — 英式 33 格' : 'Definition 28.1 — English 33-cell board'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 28.1 — 英式 33 格', en: 'Definition 28.1 — English 33-cell board',
+              zhHant: "定義 28.1 — 英式 33 格"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>英式盘是 <TeX src="7 \times 7" /> 网格四角各裁掉 <TeX src="2 \times 2" /> 后剩下的 <strong>33</strong> 个格子, 呈十字形。 标准起手: 中央格 d4 为空, 其余 32 格各放一颗棋子。 标准目标: 还原到 <strong>一颗</strong> 棋子位于 d4。</>}
@@ -13238,7 +14396,9 @@ Membership(g):
           </div>
         </div>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 28.2 — 合法跳跃' : 'Definition 28.2 — legal jump'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 28.2 — 合法跳跃', en: 'Definition 28.2 — legal jump',
+              zhHant: "定義 28.2 — 合法跳躍"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>三个连成正交一行的相邻格 <TeX src="a, c, b" />。 若 <TeX src="a" /> 与 <TeX src="c" /> 有棋子、 <TeX src="b" /> 为空, 则可以执行跳跃 <TeX src="a \to b" />: 把 <TeX src="a" /> 的棋子移到 <TeX src="b" />, 把中间 <TeX src="c" /> 上的棋子吃掉。 <strong>不允许</strong> 斜跳。 一组连续跳跃 (同一颗棋子接连吃多颗) 通常按 「multi-jump = 1 move」 计数。</>}
@@ -13247,8 +14407,12 @@ Membership(g):
           </div>
         </div>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '四种盘 · 自由探索' : 'Four boards · free play'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '英式 33 / 欧式 37 / 三角 15 / 菱形 25 · 点棋子选起点, 再点空格跳' : 'English 33 / European 37 / Triangle 15 / Diamond 25 · click a peg, then click an empty cell to jump'}</div>
+          <div className="gt-panel-title">{tr({ zh: '四种盘 · 自由探索', en: 'Four boards · free play',
+              zhHant: "四種盤 · 自由探索"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '英式 33 / 欧式 37 / 三角 15 / 菱形 25 · 点棋子选起点, 再点空格跳', en: 'English 33 / European 37 / Triangle 15 / Diamond 25 · click a peg, then click an empty cell to jump',
+              zhHant: "英式 33 / 歐式 37 / 三角 15 / 菱形 25 · 點棋子選起點, 再點空格跳"
+        })}</div>
           <PegBoardChoose />
         </div>
 
@@ -13263,7 +14427,7 @@ Membership(g):
         </p>
         <TeXBlock src="(\sigma_R, \sigma_B, \sigma_Y) \;\bmod\; 2 \quad \text{is invariant up to simultaneous flip of all three coordinates.}" />
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 28.3 — Reiss (1857), 5-格定理' : 'Theorem 28.3 — Reiss (1857), the 5-cell theorem'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 28.3 — Reiss (1857), 5-格定理', en: 'Theorem 28.3 — Reiss (1857), the 5-cell theorem' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>从中央 d4 空起手的英式 33 棋, 若能终于单子状态, 则该残子的位置必在以下 5 格之一: 中央 d4, 或四端 d1, d7, a4, g4。</>}
@@ -13272,7 +14436,9 @@ Membership(g):
           </div>
         </div>
         <div className="gt-proof">
-          <div className="gt-proof-title">{lang === 'zh' ? '证明' : 'Proof'}</div>
+          <div className="gt-proof-title">{tr({ zh: '证明', en: 'Proof',
+              zhHant: "證明"
+        })}</div>
           <L
             zh={<>
               <p style={{ margin: '0 0 12px' }}>初始 33 颗棋子按 ↗ 着色, 三色计数 <TeX src="(11, 11, 11)" />。 去掉中央 (颜色 R) 后变成 (10, 11, 11), 奇偶 <TeX src="(0, 1, 1)" />。 任意跳跃同时翻三个奇偶位, 所以任何可达状态的奇偶向量都 ∈ <TeX src="\{(0, 1, 1),\, (1, 0, 0)\}" />。 终局单子时, 奇偶 (1, 0, 0) 表示这颗棋子位于 R 色格 (因 R+0+0 ≡ R mod 2)。</p>
@@ -13286,8 +14452,12 @@ Membership(g):
           <div className="gt-proof-end">∎</div>
         </div>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '英式 33 · 三染色叠加' : 'English 33 · with 3-colouring overlay'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '点棋子选起点, 再点空格跳。 「↗ 着色」「↘ 着色」打开后, R / B / Y 实时显示三色计数' : 'click peg → destination to jump. Toggle ↗ / ↘ to overlay the colourings; live counts update.'}</div>
+          <div className="gt-panel-title">{tr({ zh: '英式 33 · 三染色叠加', en: 'English 33 · with 3-colouring overlay',
+              zhHant: "英式 33 · 三染色疊加"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '点棋子选起点, 再点空格跳。 「↗ 着色」「↘ 着色」打开后, R / B / Y 实时显示三色计数', en: 'click peg → destination to jump. Toggle ↗ / ↘ to overlay the colourings; live counts update.',
+              zhHant: "點棋子選起點, 再點空格跳。 「↗ 著色」「↘ 著色」開啟後, R / B / Y 實時顯示三色計數"
+        })}</div>
           <PegSolitaireBoard />
         </div>
 
@@ -13301,7 +14471,9 @@ Membership(g):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 28.4 — Reuss/Bell 扫局表' : 'Theorem 28.4 — Reuss/Bell sweep table'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 28.4 — Reuss/Bell 扫局表', en: 'Theorem 28.4 — Reuss/Bell sweep table',
+              zhHant: "定理 28.4 — Reuss/Bell 掃局表"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>设 <TeX src="s" /> 为起始空格、 <TeX src="t" /> 为终点单子位置, 「complementary」 问题 (其余 32 格皆有棋子, 终态仅 t 有棋子) 当且仅当 <TeX src="s" /> 与 <TeX src="t" /> 满足三染色 ↗ 与 ↘ 两个 mod-2 约束 时, 才有可能可解。 表格 (用 <TeX src="\overset{?}{=}" /> 表示同色等价类):</>}
@@ -13325,7 +14497,9 @@ Membership(g):
           <L zh="28.4  Pagoda 函数族" en="28.4  The pagoda function family" />
         </h3>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 28.5 — pagoda 函数' : 'Definition 28.5 — pagoda function'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 28.5 — pagoda 函数', en: 'Definition 28.5 — pagoda function',
+              zhHant: "定義 28.5 — pagoda 函式"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>给每个棋盘格 <TeX src="p" /> 赋一个非负实数 <TeX src="f(p) \ge 0" />, 满足对每三个连成正交一线的格 <TeX src="(a, c, b)" /> 都有</>}
@@ -13360,8 +14534,12 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? 'Pagoda 验证器 · 7 × 7 数值表' : 'Pagoda calculator · 7 × 7 numeric grid'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '点格子改数。 「验证 pagoda」检查每个共线三元组 (a, c, b) 是否满足 f(b) ≤ f(a) + f(c); 违反的格高亮红色' : 'edit any cell. "verify pagoda" checks every collinear triple (a, c, b) for f(b) ≤ f(a) + f(c); violating cells turn red'}</div>
+          <div className="gt-panel-title">{tr({ zh: 'Pagoda 验证器 · 7 × 7 数值表', en: 'Pagoda calculator · 7 × 7 numeric grid',
+              zhHant: "Pagoda 驗證器 · 7 × 7 數值表"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '点格子改数。 「验证 pagoda」检查每个共线三元组 (a, c, b) 是否满足 f(b) ≤ f(a) + f(c); 违反的格高亮红色', en: 'edit any cell. "verify pagoda" checks every collinear triple (a, c, b) for f(b) ≤ f(a) + f(c); violating cells turn red',
+              zhHant: "點格子改數。 「驗證 pagoda」檢查每個共線三元組 (a, c, b) 是否滿足 f(b) ≤ f(a) + f(c); 違反的格高亮紅色"
+        })}</div>
           <PagodaCalculator />
         </div>
 
@@ -13388,7 +14566,7 @@ Membership(g):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 28.6 — Conway / Beasley 1985' : 'Theorem 28.6 — Conway / Beasley 1985'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 28.6 — Conway / Beasley 1985', en: 'Theorem 28.6 — Conway / Beasley 1985' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>对任何 GF(4) 着色 <TeX src="\xi" /> 满足上述条件, 「棋盘的 GF(4) 加权和」 <TeX src="\Sigma(P) := \sum_{p \in P} \xi(p) \in \mathrm{GF}(4)" /> 在每次合法跳跃下保持不变。 因此, 一个起态 <TeX src="P_0" /> 可达终态 <TeX src="P_1" /> 必有 <TeX src="\Sigma(P_0) = \Sigma(P_1)" />。</>}
@@ -13403,8 +14581,12 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? 'Conway GF(4) 着色 · 静态显示' : 'Conway GF(4) labelling · static display'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '每格按 (r mod 2, c mod 2) 标记 1, a, b, ab; 任何合法跳跃保持 GF(4) 加权和' : 'each cell labelled (r mod 2, c mod 2) ∈ {1, a, b, ab}; every legal jump preserves the GF(4) sum'}</div>
+          <div className="gt-panel-title">{tr({ zh: 'Conway GF(4) 着色 · 静态显示', en: 'Conway GF(4) labelling · static display',
+              zhHant: "Conway GF(4) 著色 · 靜態顯示"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '每格按 (r mod 2, c mod 2) 标记 1, a, b, ab; 任何合法跳跃保持 GF(4) 加权和', en: 'each cell labelled (r mod 2, c mod 2) ∈ {1, a, b, ab}; every legal jump preserves the GF(4) sum',
+              zhHant: "每格按 (r mod 2, c mod 2) 標記 1, a, b, ab; 任何合法跳躍保持 GF(4) 加權和"
+        })}</div>
           <GF4ColouringDisplay />
         </div>
 
@@ -13418,7 +14600,7 @@ Membership(g):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 28.7 — Bergholt 1912, Beasley 1964' : 'Theorem 28.7 — Bergholt 1912, Beasley 1964'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 28.7 — Bergholt 1912, Beasley 1964', en: 'Theorem 28.7 — Bergholt 1912, Beasley 1964' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>英式 33 中央 → 中央问题在 「multi-jump = 1 move」 计法下的最短解恰为 <strong>18 步</strong>。 全部 31 颗棋子被吃, 残子位于 d4。</>}
@@ -13433,8 +14615,12 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? 'Bergholt 18 步扫局 · 回放' : 'Bergholt 18-move sweep · replay'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '18 个 macro-move, 标准 a1..g7 坐标; multi-jump 链按 1 步计' : '18 macro-moves in standard a1..g7 coordinates; multi-jump chains count as one'}</div>
+          <div className="gt-panel-title">{tr({ zh: 'Bergholt 18 步扫局 · 回放', en: 'Bergholt 18-move sweep · replay',
+              zhHant: "Bergholt 18 步掃局 · 回放"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '18 个 macro-move, 标准 a1..g7 坐标; multi-jump 链按 1 步计', en: '18 macro-moves in standard a1..g7 coordinates; multi-jump chains count as one',
+              zhHant: "18 個 macro-move, 標準 a1..g7 座標; multi-jump 鏈按 1 步計"
+        })}</div>
           <PegMoveReplay />
         </div>
 
@@ -13455,8 +14641,12 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '15 棋三角 · 实时 SAX' : '15-peg triangle · live SAX'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '中心 3 格高亮; 注意 S + A − X 永远只减不增 (含斜跳)' : 'central 3 cells highlighted; watch S + A − X be non-increasing (diagonal jumps included)'}</div>
+          <div className="gt-panel-title">{tr({ zh: '15 棋三角 · 实时 SAX', en: '15-peg triangle · live SAX',
+              zhHant: "15 棋三角 · 實時 SAX"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '中心 3 格高亮; 注意 S + A − X 永远只减不增 (含斜跳)', en: 'central 3 cells highlighted; watch S + A − X be non-increasing (diagonal jumps included)',
+              zhHant: "中心 3 格高亮; 注意 S + A − X 永遠只減不增 (含斜跳)"
+        })}</div>
           <PegTriangleSAX />
         </div>
 
@@ -13476,7 +14666,7 @@ Membership(g):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 28.8 — Zantema 1996' : 'Theorem 28.8 — Zantema 1996'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 28.8 — Zantema 1996', en: 'Theorem 28.8 — Zantema 1996' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>欧式 37 格盘上, 中央 d4 起手空、 终态单子在 d4 的问题 <strong>不可解</strong>。</>}
@@ -13485,8 +14675,12 @@ Membership(g):
           </div>
         </div>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '欧式 37 · Zantema 配色' : 'European 37 · Zantema labelling'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '数字 = (r + c) mod 3 三染色; 加粗格 = 「偶位殻」' : 'numbers = (r + c) mod 3 colouring; bold cells = "even shell"'}</div>
+          <div className="gt-panel-title">{tr({ zh: '欧式 37 · Zantema 配色', en: 'European 37 · Zantema labelling',
+              zhHant: "歐式 37 · Zantema 配色"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '数字 = (r + c) mod 3 三染色; 加粗格 = 「偶位殻」', en: 'numbers = (r + c) mod 3 colouring; bold cells = "even shell"',
+              zhHant: "數字 = (r + c) mod 3 三染色; 加粗格 = 「偶位殻」"
+        })}</div>
           <EuropeanBoardParity />
         </div>
 
@@ -13518,19 +14712,31 @@ Membership(g):
         <table className="gt-compare">
           <thead>
             <tr>
-              <th>{lang === 'zh' ? '问题' : 'problem'}</th>
-              <th>{lang === 'zh' ? '可解?' : 'solvable?'}</th>
-              <th>{lang === 'zh' ? '最短步' : 'min moves'}</th>
-              <th>{lang === 'zh' ? '来源' : 'reference'}</th>
+              <th>{tr({ zh: '问题', en: 'problem',
+                  zhHant: "問題"
+            })}</th>
+              <th>{tr({ zh: '可解?', en: 'solvable?' })}</th>
+              <th>{tr({ zh: '最短步', en: 'min moves' })}</th>
+              <th>{tr({ zh: '来源', en: 'reference',
+                  zhHant: "來源"
+            })}</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>{lang === 'zh' ? '中央 → 中央' : 'centre → centre'}</td><td>✓</td><td className="num">18</td><td>Bergholt 1912 / Beasley 1964</td></tr>
-            <tr><td>{lang === 'zh' ? '中央 → 四端 (a4 / g4 / d1 / d7)' : 'centre → arm-tip'}</td><td>✓</td><td className="num">17</td><td>Beasley 1985</td></tr>
-            <tr><td>{lang === 'zh' ? '任一非中央起空 → 单子终局可达性' : 'any non-centre start → singleton'}</td><td>{lang === 'zh' ? '部分' : 'partial'}</td><td className="num">—</td><td>Bell 2007 (全分类)</td></tr>
-            <tr><td>{lang === 'zh' ? '欧式 37 中央 → 中央' : 'European 37: centre → centre'}</td><td>✗</td><td className="num">—</td><td>Zantema 1996</td></tr>
-            <tr><td>{lang === 'zh' ? '15 棋三角 顶点空 → 单子在顶点' : 'Triangle 15: apex → apex'}</td><td>✓</td><td className="num">9</td><td>Beasley 1985</td></tr>
-            <tr><td>{lang === 'zh' ? '15 棋三角 顶点空 → 任意终点' : 'Triangle 15: apex → arbitrary'}</td><td>{lang === 'zh' ? '5 / 15 可解' : '5 of 15 solvable'}</td><td className="num">—</td><td>Hentzel 1973</td></tr>
+            <tr><td>{tr({ zh: '中央 → 中央', en: 'centre → centre' })}</td><td>✓</td><td className="num">18</td><td>Bergholt 1912 / Beasley 1964</td></tr>
+            <tr><td>{tr({ zh: '中央 → 四端 (a4 / g4 / d1 / d7)', en: 'centre → arm-tip' })}</td><td>✓</td><td className="num">17</td><td>Beasley 1985</td></tr>
+            <tr><td>{tr({ zh: '任一非中央起空 → 单子终局可达性', en: 'any non-centre start → singleton',
+                zhHant: "任一非中央起空 → 單子終局可達性"
+            })}</td><td>{tr({ zh: '部分', en: 'partial' })}</td><td className="num">—</td><td>Bell 2007 (全分类)</td></tr>
+            <tr><td>{tr({ zh: '欧式 37 中央 → 中央', en: 'European 37: centre → centre',
+                zhHant: "歐式 37 中央 → 中央"
+            })}</td><td>✗</td><td className="num">—</td><td>Zantema 1996</td></tr>
+            <tr><td>{tr({ zh: '15 棋三角 顶点空 → 单子在顶点', en: 'Triangle 15: apex → apex',
+                zhHant: "15 棋三角 頂點空 → 單子在頂點"
+            })}</td><td>✓</td><td className="num">9</td><td>Beasley 1985</td></tr>
+            <tr><td>{tr({ zh: '15 棋三角 顶点空 → 任意终点', en: 'Triangle 15: apex → arbitrary',
+                zhHant: "15 棋三角 頂點空 → 任意終點"
+            })}</td><td>{tr({ zh: '5 / 15 可解', en: '5 of 15 solvable' })}</td><td className="num">—</td><td>Hentzel 1973</td></tr>
           </tbody>
         </table>
         <p>
@@ -13597,7 +14803,9 @@ Membership(g):
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '猜想 29.1 (Cayley, 1878 隐含)' : 'Conjecture 29.1 (Cayley, 1878 implicit)'}</div>
+          <div className="gt-def-title">{tr({ zh: '猜想 29.1 (Cayley, 1878 隐含)', en: 'Conjecture 29.1 (Cayley, 1878 implicit)',
+              zhHant: "猜想 29.1 (Cayley, 1878 隱含)"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>每个连通的、 有限的 Cayley 图都含一条 Hamilton 圈。</>}
@@ -13606,7 +14814,7 @@ Membership(g):
           </div>
         </div>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '猜想 29.2 (Lovász 1970)' : 'Conjecture 29.2 (Lovász 1970)'}</div>
+          <div className="gt-def-title">{tr({ zh: '猜想 29.2 (Lovász 1970)', en: 'Conjecture 29.2 (Lovász 1970)' })}</div>
           <div className="gt-def-body">
             <L
               zh={<>每个连通的有限顶点传递图都含一条 Hamilton 路径。 (注意: 是 「路径」, 不是 「圈」。)</>}
@@ -13621,7 +14829,9 @@ Membership(g):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '为什么有人相信猜想为真?' : 'Why do people believe the conjectures?'}</div>
+          <div className="gt-thm-title">{tr({ zh: '为什么有人相信猜想为真?', en: 'Why do people believe the conjectures?',
+              zhHant: "為什麼有人相信猜想為真?"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>三条直观证据: <strong>(i)</strong> 顶点传递图 「处处一样」, 任何阻断都会被对称性传遍, 所以局部障碍不易存在; <strong>(ii)</strong> 已知的所有反例 (Petersen 等 4 个) 都 <em>不</em> 是 Cayley 图; <strong>(iii)</strong> 大量计算机搜索从未在 Cayley 图上找到反例 — 但这只是 「不存在小反例」 的证据, 不是定理。</>}
@@ -13640,7 +14850,7 @@ Membership(g):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 29.3 — Petersen 1898' : 'Theorem 29.3 — Petersen (1898)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 29.3 — Petersen 1898', en: 'Theorem 29.3 — Petersen (1898)' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<><TeX src="P" /> 含 Hamilton 路径 (例如 0-1-2-3-4-9-7-5-8-6), <strong>但不含</strong> Hamilton 圈。 因此 Lovász (路径) 猜想在 <TeX src="P" /> 上成立, 而 Cayley (圈) 猜想在 <TeX src="P" /> 上无意义 — Petersen 不是 Cayley。</>}
@@ -13649,7 +14859,9 @@ Membership(g):
           </div>
         </div>
         <div className="gt-proof">
-          <div className="gt-proof-title">{lang === 'zh' ? 'Petersen 自同构群 = S₅' : 'Aut(Petersen) = S₅'}</div>
+          <div className="gt-proof-title">{tr({ zh: 'Petersen 自同构群 = S₅', en: 'Aut(Petersen) = S₅',
+              zhHant: "Petersen 自同構群 = S₅"
+        })}</div>
           <L
             zh={<>
               <p style={{ margin: '0 0 12px' }}>把 <TeX src="P" /> 的 10 个顶点等同于 <TeX src="\binom{[5]}{2}" /> 的 10 个二元子集; 两顶点连边 ⟺ 子集 <em>不相交</em>。 <TeX src="S_5" /> 在 <TeX src="\{1, 2, 3, 4, 5\}" /> 上的置换诱导 <TeX src="P" /> 的自同构, 给出 <TeX src="|\text{Aut}(P)| \ge 120" />。 容易验证不能更大, 故 <TeX src="\text{Aut}(P) = S_5" />。</p>
@@ -13663,8 +14875,12 @@ Membership(g):
           <div className="gt-proof-end">∎</div>
         </div>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? 'Petersen 图 · 互动' : 'Petersen graph · interactive'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '切换 「Ham 路径」 「数字 / 二元子集 标签」 「Aut(P) = S₅ 的几种置换」' : 'toggle Ham path, number / 2-subset labels, and four S₅ automorphisms'}</div>
+          <div className="gt-panel-title">{tr({ zh: 'Petersen 图 · 互动', en: 'Petersen graph · interactive',
+              zhHant: "Petersen 圖 · 互動"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '切换 「Ham 路径」 「数字 / 二元子集 标签」 「Aut(P) = S₅ 的几种置换」', en: 'toggle Ham path, number / 2-subset labels, and four S₅ automorphisms',
+              zhHant: "切換 「Ham 路徑」 「數字 / 二元子集 標籤」 「Aut(P) = S₅ 的幾種置換」"
+        })}</div>
           <PetersenInteractive />
         </div>
 
@@ -13685,7 +14901,9 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? 'Gray 码遍历 𝔽₂ⁿ' : 'Gray code walking through 𝔽₂ⁿ'}</div>
+          <div className="gt-panel-title">{tr({ zh: 'Gray 码遍历 𝔽₂ⁿ', en: 'Gray code walking through 𝔽₂ⁿ',
+              zhHant: "Gray 碼遍歷 𝔽₂ⁿ"
+        })}</div>
           <GrayCodeWalker />
         </div>
         <p>
@@ -13695,8 +14913,12 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? 'Gray 码家族 · n = 3..5' : 'Gray code family · n = 3..5'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '反射二进制 vs 平衡 vs 反 Gray; Δ = 相邻翻位数' : 'reflected binary vs balanced vs anti-Gray; Δ = bits flipped between consecutive entries'}</div>
+          <div className="gt-panel-title">{tr({ zh: 'Gray 码家族 · n = 3..5', en: 'Gray code family · n = 3..5',
+              zhHant: "Gray 碼家族 · n = 3..5"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '反射二进制 vs 平衡 vs 反 Gray; Δ = 相邻翻位数', en: 'reflected binary vs balanced vs anti-Gray; Δ = bits flipped between consecutive entries',
+              zhHant: "反射二進位制 vs 平衡 vs 反 Gray; Δ = 相鄰翻位數"
+        })}</div>
           <GrayCodeFamily />
         </div>
 
@@ -13710,7 +14932,9 @@ Membership(g):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 29.4 — Q_n 的 Ham 圈计数' : 'Theorem 29.4 — Counting Ham cycles in Q_n'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 29.4 — Q_n 的 Ham 圈计数', en: 'Theorem 29.4 — Counting Ham cycles in Q_n',
+              zhHant: "定理 29.4 — Q_n 的 Ham 圈計數"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<><TeX src="Q_n" /> 含 Hamilton 圈, 数目 <TeX src="H_n" /> 增长极快: <TeX src="H_2 = 1" />, <TeX src="H_3 = 6" />, <TeX src="H_4 = 1344" />, <TeX src="H_5 = 906\,545\,760" />, <TeX src="H_6 = 35\,838\,213\,722\,570\,883\,870\,720" /> (OEIS A006069)。 一般公式未知; 渐近 <TeX src="H_n \sim n!^{2^{n}/n}" /> 量级 (启发式)。</>}
@@ -13719,8 +14943,12 @@ Membership(g):
           </div>
         </div>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? 'Q_n · Hamilton 圈动画 (n = 3, 4)' : 'Q_n · Hamilton cycle animation (n = 3, 4)'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '反射 Gray 码; 金色边 = 已走; 二进制标签直接显示当前顶点' : 'reflected Gray code; gold edges = traversed; binary labels show the current vertex'}</div>
+          <div className="gt-panel-title">{tr({ zh: 'Q_n · Hamilton 圈动画 (n = 3, 4)', en: 'Q_n · Hamilton cycle animation (n = 3, 4)',
+              zhHant: "Q_n · Hamilton 圈動畫 (n = 3, 4)"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '反射 Gray 码; 金色边 = 已走; 二进制标签直接显示当前顶点', en: 'reflected Gray code; gold edges = traversed; binary labels show the current vertex',
+              zhHant: "反射 Gray 碼; 金色邊 = 已走; 二進位制標籤直接顯示當前頂點"
+        })}</div>
           <HypercubeGrayWalker />
         </div>
 
@@ -13734,7 +14962,9 @@ Membership(g):
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? 'Warnsdorff 规则 (1823)' : 'Warnsdorff\'s rule (1823)'}</div>
+          <div className="gt-def-title">{tr({ zh: 'Warnsdorff 规则 (1823)', en: 'Warnsdorff\'s rule (1823)',
+              zhHant: "Warnsdorff 規則 (1823)"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>每一步选择 「后续合法走法最少」 的邻格走。 一个一行的贪心启发式 — 但几乎总能完成完整 Hamilton 周游, 是历史上第一个 「实用的」 Hamilton 路径求解器。 实证: 8 × 8 上随机起点, Warnsdorff 完成率 ≥ 99%; <em>n × n</em> 上, <em>n</em> 充分大时几乎稳赢。</>}
@@ -13743,8 +14973,12 @@ Membership(g):
           </div>
         </div>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '骑士周游 · 8 × 8' : 'Knight\'s tour · 8 × 8'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '从 a1 出发, Warnsdorff 启发式生成的 64 步周游' : 'starting from a1, a 64-step tour generated by Warnsdorff\'s rule'}</div>
+          <div className="gt-panel-title">{tr({ zh: '骑士周游 · 8 × 8', en: 'Knight\'s tour · 8 × 8',
+              zhHant: "騎士周遊 · 8 × 8"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '从 a1 出发, Warnsdorff 启发式生成的 64 步周游', en: 'starting from a1, a 64-step tour generated by Warnsdorff\'s rule',
+              zhHant: "從 a1 出發, Warnsdorff 啟發式生成的 64 步周遊"
+        })}</div>
           <KnightTourBoard />
         </div>
         <p>
@@ -13764,7 +14998,7 @@ Membership(g):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 29.5 — Rapaport-Strasser 1959' : 'Theorem 29.5 — Rapaport-Strasser 1959'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 29.5 — Rapaport-Strasser 1959', en: 'Theorem 29.5 — Rapaport-Strasser 1959' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>设 <TeX src="G = D_n = \langle r, s \mid r^n = s^2 = e,\, srs = r^{-1} \rangle" />, 生成集 <TeX src="S = \{r, s\}" /> (或更一般的连通生成集)。 则 <TeX src="\operatorname{Cay}(G, S)" /> 含一条显式 Hamilton 圈, 构造为:</>}
@@ -13794,7 +15028,7 @@ Membership(g):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 29.6 — Marušič 1985' : 'Theorem 29.6 — Marušič (1985)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 29.6 — Marušič 1985', en: 'Theorem 29.6 — Marušič (1985)' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>每个 <strong>顶点数 = <em>pk</em> (<em>p</em> 素数, <em>k</em> 较小)</strong> 的顶点传递图都含 Hamilton 路径。 这一推得当时把 Lovász 猜想从 「小例子检验」 扩展到 「无限族构造」。</>}
@@ -13835,60 +15069,86 @@ Membership(g):
         <table className="gt-compare">
           <thead>
             <tr>
-              <th>{lang === 'zh' ? '谜题 / 群' : 'puzzle / group'}</th>
-              <th>{lang === 'zh' ? '状态数' : '|G|'}</th>
-              <th>{lang === 'zh' ? 'Ham 圈?' : 'Ham cycle?'}</th>
-              <th>{lang === 'zh' ? '来源 / 注' : 'source / note'}</th>
+              <th>{tr({ zh: '谜题 / 群', en: 'puzzle / group',
+                  zhHant: "謎題 / 群"
+            })}</th>
+              <th>{tr({ zh: '状态数', en: '|G|',
+                  zhHant: "狀態數"
+            })}</th>
+              <th>{tr({ zh: 'Ham 圈?', en: 'Ham cycle?' })}</th>
+              <th>{tr({ zh: '来源 / 注', en: 'source / note',
+                  zhHant: "來源 / 注"
+            })}</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>{lang === 'zh' ? '魔方时钟 (Rubik\'s Clock)' : 'Rubik\'s Clock'}</td>
+              <td>{tr({ zh: '魔方时钟 (Rubik\'s Clock)', en: 'Rubik\'s Clock',
+                  zhHant: "魔方時鐘 (Rubik's Clock)"
+            })}</td>
               <td className="num">12¹⁴ ≈ 1.28×10¹⁵</td>
               <td>✓</td>
-              <td>{lang === 'zh' ? '阿贝尔 ⇒ 12 进制 Gray 码' : 'Abelian → base-12 Gray code'}</td>
+              <td>{tr({ zh: '阿贝尔 ⇒ 12 进制 Gray 码', en: 'Abelian → base-12 Gray code',
+                  zhHant: "阿貝爾 ⇒ 12 進位制 Gray 碼"
+            })}</td>
             </tr>
             <tr>
               <td>Floppy Cube (1×3×3)</td>
               <td className="num">192</td>
               <td>✓</td>
-              <td>{lang === 'zh' ? '显式公式 (R²LR²L\'R²LR²L\')⁵' : 'explicit (R²LR²L\'R²LR²L\')⁵'}</td>
+              <td>{tr({ zh: '显式公式 (R²LR²L\'R²LR²L\')⁵', en: 'explicit (R²LR²L\'R²LR²L\')⁵',
+                  zhHant: "顯式公式 (R²LR²L'R²LR²L')⁵"
+            })}</td>
             </tr>
             <tr>
-              <td>{lang === 'zh' ? '两面 6 子 (§30)' : 'Two-face 6-piece (§30)'}</td>
+              <td>{tr({ zh: '两面 6 子 (§30)', en: 'Two-face 6-piece (§30)',
+                  zhHant: "兩面 6 子 (§30)"
+            })}</td>
               <td className="num">120 ≅ S₅</td>
               <td>✓</td>
-              <td>{lang === 'zh' ? '已知, 含 (RU)⁴LU 连接器' : 'known, with connector (RU)⁴LU'}</td>
+              <td>{tr({ zh: '已知, 含 (RU)⁴LU 连接器', en: 'known, with connector (RU)⁴LU',
+                  zhHant: "已知, 含 (RU)⁴LU 聯結器"
+            })}</td>
             </tr>
             <tr>
               <td>Lights Out (5×5)</td>
               <td className="num">2²⁵</td>
               <td>✓</td>
-              <td>{lang === 'zh' ? '阿贝尔 ⇒ 二进制 Gray 码' : 'Abelian → binary Gray code'}</td>
+              <td>{tr({ zh: '阿贝尔 ⇒ 二进制 Gray 码', en: 'Abelian → binary Gray code',
+                  zhHant: "阿貝爾 ⇒ 二進位制 Gray 碼"
+            })}</td>
             </tr>
             <tr>
               <td>{lang === 'zh' ? 'Pocket Cube (2×2×2)' : 'Pocket Cube (2×2×2)'}</td>
               <td className="num">3 674 160</td>
               <td>?</td>
-              <td>{lang === 'zh' ? '开 (猜测有)' : 'open (conjectured)'}</td>
+              <td>{tr({ zh: '开 (猜测有)', en: 'open (conjectured)',
+                  zhHant: "開 (猜測有)"
+            })}</td>
             </tr>
             <tr>
-              <td>{lang === 'zh' ? '魔方 (3×3×3)' : 'Rubik\'s Cube (3×3×3)'}</td>
+              <td>{tr({ zh: '魔方 (3×3×3)', en: 'Rubik\'s Cube (3×3×3)' })}</td>
               <td className="num">4.3×10¹⁹</td>
               <td>?</td>
-              <td>{lang === 'zh' ? '开 (猜测有)' : 'open (conjectured)'}</td>
+              <td>{tr({ zh: '开 (猜测有)', en: 'open (conjectured)',
+                  zhHant: "開 (猜測有)"
+            })}</td>
             </tr>
             <tr>
               <td>Pyraminx</td>
               <td className="num">75 582 720</td>
               <td>?</td>
-              <td>{lang === 'zh' ? '开' : 'open'}</td>
+              <td>{tr({ zh: '开', en: 'open',
+                  zhHant: "開"
+            })}</td>
             </tr>
             <tr>
               <td>Megaminx</td>
               <td className="num">≈ 10⁶⁸</td>
               <td>?</td>
-              <td>{lang === 'zh' ? '开 (规模太大, 无人尝试)' : 'open (size prohibitive)'}</td>
+              <td>{tr({ zh: '开 (规模太大, 无人尝试)', en: 'open (size prohibitive)',
+                  zhHant: "開 (規模太大, 無人嘗試)"
+            })}</td>
             </tr>
           </tbody>
         </table>
@@ -13909,7 +15169,9 @@ Membership(g):
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '陪集链接定理 (Witte-Gallian 1984, 形式化)' : 'Coset chaining (Witte-Gallian 1984, formal)'}</div>
+          <div className="gt-def-title">{tr({ zh: '陪集链接定理 (Witte-Gallian 1984, 形式化)', en: 'Coset chaining (Witte-Gallian 1984, formal)',
+              zhHant: "陪集連結定理 (Witte-Gallian 1984, 形式化)"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>设 <TeX src="H \le G" />, 生成集 <TeX src="S" /> 含 <TeX src="H" /> 的生成集 <TeX src="T" /> 及一个连接子 <TeX src="c \in S \setminus T" />。 若 <strong>(a)</strong> <TeX src="\operatorname{Cay}(H, T)" /> 含 Hamilton 路径 <TeX src="h_1, h_2, \ldots, h_m" /> (其中 <TeX src="m = |H|" />), <strong>(b)</strong> 商图 <TeX src="\operatorname{Cay}(G/H, \bar S)" /> 含 Hamilton 圈 <TeX src="\bar g_1, \bar g_2, \ldots, \bar g_k" /> (<TeX src="k = [G : H]" />), <strong>(c)</strong> 连接子 <TeX src="c" /> 与 <TeX src="T" /> 在每个陪集上方向兼容, 则 <TeX src="\operatorname{Cay}(G, S)" /> 含一条 Hamilton 圈。</>}
@@ -13924,8 +15186,12 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '陪集链接 · Z₈ 范例' : 'Coset chaining · Z₈ example'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '子群 H = 2Z₈ = {0,2,4,6} 用 +2 遍历; 连接子 +3 跨到奇陪集 {1,3,5,7}; 共 8 步形成 Ham 圈' : 'subgroup H = 2Z₈ = {0,2,4,6} traversed by +2; connector +3 splices to odd coset {1,3,5,7}; 8 steps form a Ham cycle'}</div>
+          <div className="gt-panel-title">{tr({ zh: '陪集链接 · Z₈ 范例', en: 'Coset chaining · Z₈ example',
+              zhHant: "陪集連結 · Z₈ 範例"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '子群 H = 2Z₈ = {0,2,4,6} 用 +2 遍历; 连接子 +3 跨到奇陪集 {1,3,5,7}; 共 8 步形成 Ham 圈', en: 'subgroup H = 2Z₈ = {0,2,4,6} traversed by +2; connector +3 splices to odd coset {1,3,5,7}; 8 steps form a Ham cycle',
+              zhHant: "子群 H = 2Z₈ = {0,2,4,6} 用 +2 遍歷; 連線子 +3 跨到奇陪集 {1,3,5,7}; 共 8 步形成 Ham 圈"
+        })}</div>
           <CosetChainBuilder />
         </div>
         <p>
@@ -13945,7 +15211,7 @@ Membership(g):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 29.7 — Pak-Radoičić 2009' : 'Theorem 29.7 — Pak-Radoičić (2009)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 29.7 — Pak-Radoičić 2009', en: 'Theorem 29.7 — Pak-Radoičić (2009)' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>对每个有限群 <TeX src="G" /> 存在生成集 <TeX src="S" /> 使 <TeX src="|S| \le \lceil \log_2 |G| \rceil" /> 且 <TeX src="\operatorname{Cay}(G, S)" /> 含 Hamilton 圈。 进一步, 这条圈可以在多项式时间内显式构造。</>}
@@ -13978,40 +15244,64 @@ Membership(g):
         <table className="gt-compare">
           <thead>
             <tr>
-              <th>{lang === 'zh' ? '图类' : 'graph class'}</th>
+              <th>{tr({ zh: '图类', en: 'graph class',
+                  zhHant: "圖類"
+            })}</th>
               <th>HAM-CYCLE</th>
               <th>HAM-PATH</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>{lang === 'zh' ? '一般有限图' : 'general finite graph'}</td>
-              <td>NP-{lang === 'zh' ? '完全 (Karp 1972)' : 'complete (Karp 1972)'}</td>
-              <td>NP-{lang === 'zh' ? '完全' : 'complete'}</td>
+              <td>{tr({ zh: '一般有限图', en: 'general finite graph',
+                  zhHant: "一般有限圖"
+            })}</td>
+              <td>NP-{tr({ zh: '完全 (Karp 1972)', en: 'complete (Karp 1972)' })}</td>
+              <td>NP-{tr({ zh: '完全', en: 'complete' })}</td>
             </tr>
             <tr>
-              <td>{lang === 'zh' ? '平面 3-正则' : 'planar 3-regular'}</td>
-              <td>NP-{lang === 'zh' ? '完全 (Garey-Johnson-Tarjan 1976)' : 'complete (Garey-Johnson-Tarjan 1976)'}</td>
-              <td>NP-{lang === 'zh' ? '完全' : 'complete'}</td>
+              <td>{tr({ zh: '平面 3-正则', en: 'planar 3-regular',
+                  zhHant: "平面 3-正則"
+            })}</td>
+              <td>NP-{tr({ zh: '完全 (Garey-Johnson-Tarjan 1976)', en: 'complete (Garey-Johnson-Tarjan 1976)' })}</td>
+              <td>NP-{tr({ zh: '完全', en: 'complete' })}</td>
             </tr>
             <tr>
-              <td>{lang === 'zh' ? '二部图' : 'bipartite'}</td>
-              <td>NP-{lang === 'zh' ? '完全' : 'complete'}</td>
-              <td>NP-{lang === 'zh' ? '完全' : 'complete'}</td>
+              <td>{tr({ zh: '二部图', en: 'bipartite',
+                  zhHant: "二部圖"
+            })}</td>
+              <td>NP-{tr({ zh: '完全', en: 'complete' })}</td>
+              <td>NP-{tr({ zh: '完全', en: 'complete' })}</td>
             </tr>
             <tr>
-              <td>{lang === 'zh' ? '顶点传递' : 'vertex-transitive'}</td>
-              <td>{lang === 'zh' ? '开 (Lovász ⇒ 平凡)' : 'open (Lovász ⇒ trivial)'}</td>
-              <td>{lang === 'zh' ? '开 (Lovász ⇒ 平凡)' : 'open (Lovász ⇒ trivial)'}</td>
+              <td>{tr({ zh: '顶点传递', en: 'vertex-transitive',
+                  zhHant: "頂點傳遞"
+            })}</td>
+              <td>{tr({ zh: '开 (Lovász ⇒ 平凡)', en: 'open (Lovász ⇒ trivial)',
+                  zhHant: "開 (Lovász ⇒ 平凡)"
+            })}</td>
+              <td>{tr({ zh: '开 (Lovász ⇒ 平凡)', en: 'open (Lovász ⇒ trivial)',
+                  zhHant: "開 (Lovász ⇒ 平凡)"
+            })}</td>
             </tr>
             <tr>
-              <td>{lang === 'zh' ? 'Cayley 图' : 'Cayley graph'}</td>
-              <td>{lang === 'zh' ? '开 (猜想 ⇒ 平凡)' : 'open (conjecture ⇒ trivial)'}</td>
-              <td>{lang === 'zh' ? '开 (猜想 ⇒ 平凡)' : 'open (conjecture ⇒ trivial)'}</td>
+              <td>{tr({ zh: 'Cayley 图', en: 'Cayley graph',
+                  zhHant: "Cayley 圖"
+            })}</td>
+              <td>{tr({ zh: '开 (猜想 ⇒ 平凡)', en: 'open (conjecture ⇒ trivial)',
+                  zhHant: "開 (猜想 ⇒ 平凡)"
+            })}</td>
+              <td>{tr({ zh: '开 (猜想 ⇒ 平凡)', en: 'open (conjecture ⇒ trivial)',
+                  zhHant: "開 (猜想 ⇒ 平凡)"
+            })}</td>
             </tr>
             <tr>
-              <td>{lang === 'zh' ? '阿贝尔 Cayley' : 'Abelian Cayley'}</td>
-              <td>{lang === 'zh' ? 'P (构造 Gray 码)' : 'P (Gray code)'}</td>
+              <td>{tr({ zh: '阿贝尔 Cayley', en: 'Abelian Cayley',
+                  zhHant: "阿貝爾 Cayley"
+            })}</td>
+              <td>{tr({ zh: 'P (构造 Gray 码)', en: 'P (Gray code)',
+                  zhHant: "P (構造 Gray 碼)"
+            })}</td>
               <td>P</td>
             </tr>
           </tbody>
@@ -14073,27 +15363,59 @@ Membership(g):
         </p>
 
         <div className="gt-open-summary">
-          <div className="gt-open-summary-head">{lang === 'zh' ? '本节速览' : 'at a glance'}</div>
+          <div className="gt-open-summary-head">{tr({ zh: '本节速览', en: 'at a glance',
+              zhHant: "本節速覽"
+        })}</div>
           <table className="gt-pattern-tbl">
             <thead>
               <tr>
                 <th>#</th>
-                <th>{lang === 'zh' ? '子节' : 'subsection'}</th>
-                <th>{lang === 'zh' ? '主要事实' : 'main fact'}</th>
+                <th>{tr({ zh: '子节', en: 'subsection',
+                    zhHant: "子節"
+                })}</th>
+                <th>{tr({ zh: '主要事实', en: 'main fact',
+                    zhHant: "主要事實"
+                })}</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td className="num">30.1</td><td>{lang === 'zh' ? '两面 6 角子拼图' : 'Two-face 6-corner puzzle'}</td><td>{lang === 'zh' ? '现象:120 个状态而不是 720' : 'phenomenon: 120 states, not 720'}</td></tr>
-              <tr><td className="num">30.2</td><td>{lang === 'zh' ? '配对模式证明' : 'pair-pattern proof'}</td><td>{lang === 'zh' ? '15/3 = 5 个配对模式, S₅ 作用忠实' : '15/3 = 5 pair patterns, faithful S₅ action'}</td></tr>
+              <tr><td className="num">30.1</td><td>{tr({ zh: '两面 6 角子拼图', en: 'Two-face 6-corner puzzle',
+                  zhHant: "兩面 6 角子拼圖"
+            })}</td><td>{tr({ zh: '现象:120 个状态而不是 720', en: 'phenomenon: 120 states, not 720',
+                zhHant: "現象:120 個狀態而不是 720"
+            })}</td></tr>
+              <tr><td className="num">30.2</td><td>{tr({ zh: '配对模式证明', en: 'pair-pattern proof',
+                  zhHant: "配對模式證明"
+            })}</td><td>{tr({ zh: '15/3 = 5 个配对模式, S₅ 作用忠实', en: '15/3 = 5 pair patterns, faithful S₅ action',
+                zhHant: "15/3 = 5 個配對模式, S₅ 作用忠實"
+            })}</td></tr>
               <tr><td className="num">30.3</td><td>ℙ¹(𝔽₅) & PGL₂(𝔽₅)</td><td><TeX src="|\mathrm{PGL}_2(\mathbb{F}_q)| = q(q+1)(q-1)" /></td></tr>
-              <tr><td className="num">30.4</td><td>{lang === 'zh' ? '尖锐 3-传递' : 'sharply 3-transitive'}</td><td>{lang === 'zh' ? '任给三对相异点,Möbius 唯一确定' : '3 → 3 lifts uniquely'}</td></tr>
-              <tr><td className="num">30.5</td><td>{lang === 'zh' ? '交比不变量' : 'cross-ratio invariant'}</td><td><TeX src="(a,b;c,d) = \tfrac{(a-c)(b-d)}{(a-d)(b-c)}" /></td></tr>
-              <tr><td className="num">30.6</td><td>S₆ {lang === 'zh' ? '外自同构' : 'outer automorphism'}</td><td>{lang === 'zh' ? '唯一; 由异常 S₅ ↪ S₆ 诱导' : 'unique; induced by exotic S₅ ↪ S₆'}</td></tr>
-              <tr><td className="num">30.7</td><td>{lang === 'zh' ? 'syntheme / duads' : 'synthemes & duads'}</td><td>{lang === 'zh' ? '6 个 synthematic total; S₆ 置换' : '6 totals; S₆ permutes them'}</td></tr>
+              <tr><td className="num">30.4</td><td>{tr({ zh: '尖锐 3-传递', en: 'sharply 3-transitive',
+                  zhHant: "尖銳 3-傳遞"
+            })}</td><td>{tr({ zh: '任给三对相异点,Möbius 唯一确定', en: '3 → 3 lifts uniquely',
+                zhHant: "任給三對相異點,Möbius 唯一確定"
+            })}</td></tr>
+              <tr><td className="num">30.5</td><td>{tr({ zh: '交比不变量', en: 'cross-ratio invariant',
+                  zhHant: "交比不變數"
+            })}</td><td><TeX src="(a,b;c,d) = \tfrac{(a-c)(b-d)}{(a-d)(b-c)}" /></td></tr>
+              <tr><td className="num">30.6</td><td>S₆ {tr({ zh: '外自同构', en: 'outer automorphism',
+                  zhHant: "外自同構"
+            })}</td><td>{tr({ zh: '唯一; 由异常 S₅ ↪ S₆ 诱导', en: 'unique; induced by exotic S₅ ↪ S₆',
+                zhHant: "唯一; 由異常 S₅ ↪ S₆ 誘導"
+            })}</td></tr>
+              <tr><td className="num">30.7</td><td>{lang === 'zh' ? 'syntheme / duads' : 'synthemes & duads'}</td><td>{tr({ zh: '6 个 synthematic total; S₆ 置换', en: '6 totals; S₆ permutes them',
+                  zhHant: "6 個 synthematic total; S₆ 置換"
+            })}</td></tr>
               <tr><td className="num">30.8</td><td>Mathieu</td><td>PGL₂(𝔽₅) ⊂ M₁₀ ⊂ M₁₁ ⊂ M₁₂ ⊂ M₂₄</td></tr>
-              <tr><td className="num">30.9</td><td>{lang === 'zh' ? '正二十面体' : 'icosahedron'}</td><td>PSL₂(𝔽₅) ≅ A₅ ≅ I (rotations)</td></tr>
-              <tr><td className="num">30.10</td><td>{lang === 'zh' ? '生成元 / 表示' : 'generators / presentation'}</td><td><TeX src="\langle S, T \mid S^2 = T^5 = (ST)^3 = 1\rangle" /></td></tr>
-              <tr><td className="num">30.11</td><td>{lang === 'zh' ? '⟨R,U⟩ 阶分布实验' : 'order histogram experiment'}</td><td>{lang === 'zh' ? '阶分布拟合 S₅ 共轭类' : 'sample matches S₅ class sizes'}</td></tr>
+              <tr><td className="num">30.9</td><td>{tr({ zh: '正二十面体', en: 'icosahedron',
+                  zhHant: "正二十面體"
+            })}</td><td>PSL₂(𝔽₅) ≅ A₅ ≅ I (rotations)</td></tr>
+              <tr><td className="num">30.10</td><td>{tr({ zh: '生成元 / 表示', en: 'generators / presentation' })}</td><td><TeX src="\langle S, T \mid S^2 = T^5 = (ST)^3 = 1\rangle" /></td></tr>
+              <tr><td className="num">30.11</td><td>{tr({ zh: '⟨R,U⟩ 阶分布实验', en: 'order histogram experiment',
+                  zhHant: "⟨R,U⟩ 階分佈實驗"
+            })}</td><td>{tr({ zh: '阶分布拟合 S₅ 共轭类', en: 'sample matches S₅ class sizes',
+                zhHant: "階分佈擬合 S₅ 共軛類"
+            })}</td></tr>
             </tbody>
           </table>
         </div>
@@ -14118,8 +15440,12 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '6 角子模拟器' : '6-corner sim'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '按 R / U,看角置换;可达 120 = 5! 种' : 'press R / U, watch the corner permutation; only 120 = 5! states reachable'}</div>
+          <div className="gt-panel-title">{tr({ zh: '6 角子模拟器', en: '6-corner sim',
+              zhHant: "6 角子模擬器"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '按 R / U,看角置换;可达 120 = 5! 种', en: 'press R / U, watch the corner permutation; only 120 = 5! states reachable',
+              zhHant: "按 R / U,看角置換;可達 120 = 5! 種"
+        })}</div>
           <TwoFaceCornerSim />
         </div>
 
@@ -14133,7 +15459,9 @@ Membership(g):
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '引理 30.1 — 配对作用忠实' : 'Lemma 30.1 — pair action is faithful'}</div>
+          <div className="gt-def-title">{tr({ zh: '引理 30.1 — 配对作用忠实', en: 'Lemma 30.1 — pair action is faithful',
+              zhHant: "引理 30.1 — 配對作用忠實"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>不同的角置换给出不同的「5 模式上的置换」。 因此角群同态注入 <TeX src="S_5" />。 反向: R、 U 各自的 5 模式作用包含一个 4-cycle 和一个错开的 4-cycle, 两个 4-cycle 在 <TeX src="S_5" /> 里足以生成全 <TeX src="S_5" /> (经典事实, <TeX src="S_n" /> 由「<TeX src="n-1" /> 循环 + 对换」 或「适当两个 <TeX src="n-1" /> 循环」 生成)。 所以角群 = <TeX src="S_5" />,阶 120。 ∎</>}
@@ -14152,7 +15480,9 @@ Membership(g):
           <L zh="30.3  ℙ¹(𝔽₅) 与 PGL₂(𝔽₅)" en="30.3  ℙ¹(𝔽₅) and PGL₂(𝔽₅)"/>
         </h3>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 30.2 — 射影直线' : 'Definition 30.2 — projective line'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 30.2 — 射影直线', en: 'Definition 30.2 — projective line',
+              zhHant: "定義 30.2 — 射影直線"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>对任意域 <TeX src="F" />,射影直线 <TeX src="\mathbb{P}^1(F)" /> 是 <em>非零</em> 二维向量 <em>模缩放</em> 的等价类: <TeXBlock src={`\\mathbb{P}^1(F) \\;=\\; (F^2 \\setminus \\{0\\})\\,/\\,F^{*},`} /> 即 <TeX src="[x : y]" /> 与 <TeX src="[\lambda x : \lambda y]" /> (<TeX src="\lambda \neq 0" />) 视为同一点。 对 <TeX src="F = \mathbb{F}_q" />, 共 <TeX src="\frac{q^2 - 1}{q - 1} = q + 1" /> 个点。</>}
@@ -14167,7 +15497,9 @@ Membership(g):
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 30.3 — 一般射影线性群' : 'Definition 30.3 — projective linear group'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 30.3 — 一般射影线性群', en: 'Definition 30.3 — projective linear group',
+              zhHant: "定義 30.3 — 一般射影線性群"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>给定域 <TeX src="F" />,定义<TeXBlock src={`\\mathrm{GL}_2(F) = \\{M \\in M_2(F) : \\det M \\neq 0\\}, \\quad Z = \\{\\lambda I : \\lambda \\in F^{*}\\} \\le \\mathrm{GL}_2(F),`} /><TeXBlock src={`\\mathrm{PGL}_2(F) = \\mathrm{GL}_2(F)\\,/\\,Z.`} /><TeX src="\mathrm{PGL}_2(F)" /> 通过 Möbius 变换 <TeX src="z \mapsto (az + b)/(cz + d)" /> 作用在 <TeX src="\mathbb{P}^1(F)" /> 上 — 缩放矩阵给同一个 Möbius,所以中心 <TeX src="Z" /> 被自然消掉。</>}
@@ -14200,16 +15532,18 @@ Membership(g):
               <th>q</th>
               <th><TeX src="|\mathbb{P}^1(\mathbb{F}_q)| = q + 1" /></th>
               <th><TeX src="|\mathrm{PGL}_2|" /></th>
-              <th>{lang === 'zh' ? '熟悉的群' : 'familiar group'}</th>
+              <th>{tr({ zh: '熟悉的群', en: 'familiar group' })}</th>
             </tr>
           </thead>
           <tbody>
             <tr><td className="num">2</td><td className="num">3</td><td className="num">6</td><td><TeX src="S_3" /></td></tr>
             <tr><td className="num">3</td><td className="num">4</td><td className="num">24</td><td><TeX src="S_4" /></td></tr>
-            <tr><td className="num">4</td><td className="num">5</td><td className="num">60</td><td><TeX src="A_5" /> ({lang === 'zh' ? '注:F₄ 非素域' : 'note: F₄ not prime'})</td></tr>
+            <tr><td className="num">4</td><td className="num">5</td><td className="num">60</td><td><TeX src="A_5" /> ({tr({ zh: '注:F₄ 非素域', en: 'note: F₄ not prime' })})</td></tr>
             <tr><td className="num">5</td><td className="num">6</td><td className="num">120</td><td><TeX src="S_5" /></td></tr>
-            <tr><td className="num">7</td><td className="num">8</td><td className="num">336</td><td><TeX src="\mathrm{PGL}_2(\mathbb{F}_7)" /> ({lang === 'zh' ? '不再是 S_n' : 'no longer S_n'})</td></tr>
-            <tr><td className="num">9</td><td className="num">10</td><td className="num">720</td><td><TeX src="\mathrm{PGL}_2(\mathbb{F}_9)" />, <TeX src="\mathrm{P\\Gamma L}" /> {lang === 'zh' ? '触及 S₆' : 'related to S₆'}</td></tr>
+            <tr><td className="num">7</td><td className="num">8</td><td className="num">336</td><td><TeX src="\mathrm{PGL}_2(\mathbb{F}_7)" /> ({tr({ zh: '不再是 S_n', en: 'no longer S_n' })})</td></tr>
+            <tr><td className="num">9</td><td className="num">10</td><td className="num">720</td><td><TeX src="\mathrm{PGL}_2(\mathbb{F}_9)" />, <TeX src="\mathrm{P\\Gamma L}" /> {tr({ zh: '触及 S₆', en: 'related to S₆',
+                zhHant: "觸及 S₆"
+            })}</td></tr>
           </tbody>
         </table>
         <p style={{ marginTop: 12 }}>
@@ -14219,8 +15553,12 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? 'Möbius 游乐场 · 在 ℙ¹(𝔽₅) 上' : 'Möbius playground · on ℙ¹(𝔽₅)'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '调整 2×2 矩阵的 4 个 0..4 元素; 实时看 6 点置换 + 循环分解' : 'tweak the 2×2 mod-5 matrix; live 6-point action + cycle decomposition'}</div>
+          <div className="gt-panel-title">{tr({ zh: 'Möbius 游乐场 · 在 ℙ¹(𝔽₅) 上', en: 'Möbius playground · on ℙ¹(𝔽₅)',
+              zhHant: "Möbius 遊樂場 · 在 ℙ¹(𝔽₅) 上"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '调整 2×2 矩阵的 4 个 0..4 元素; 实时看 6 点置换 + 循环分解', en: 'tweak the 2×2 mod-5 matrix; live 6-point action + cycle decomposition',
+              zhHant: "調整 2×2 矩陣的 4 個 0..4 元素; 實時看 6 點置換 + 迴圈分解"
+        })}</div>
           <MobiusPlayground />
         </div>
 
@@ -14228,7 +15566,9 @@ Membership(g):
           <L zh="30.4  尖锐 3-传递作用" en="30.4  The sharply 3-transitive action"/>
         </h3>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 30.4 — 尖锐 k-传递' : 'Definition 30.4 — sharply k-transitive'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 30.4 — 尖锐 k-传递', en: 'Definition 30.4 — sharply k-transitive',
+              zhHant: "定義 30.4 — 尖銳 k-傳遞"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>群 <TeX src="G" /> 作用于集合 <TeX src="X" /> 称为 <strong>尖锐 <TeX src="k" />-传递</strong> 若对任意两组 <em>有序</em> <TeX src="k" /> 元相异点 <TeX src="(x_1,\ldots,x_k)" /> 和 <TeX src="(y_1,\ldots,y_k)" />,存在 <em>唯一</em> 一个 <TeX src="g \in G" /> 满足 <TeX src="g \cdot x_i = y_i" /> for all <TeX src="i" />。</>}
@@ -14237,7 +15577,9 @@ Membership(g):
           </div>
         </div>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 30.5 (经典)' : 'Theorem 30.5 (classical)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 30.5 (经典)', en: 'Theorem 30.5 (classical)',
+              zhHant: "定理 30.5 (經典)"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>对任意域 <TeX src="F" />, <TeX src="\mathrm{PGL}_2(F)" /> 在 <TeX src="\mathbb{P}^1(F)" /> 上的 Möbius 作用是 <strong>尖锐 3-传递</strong>。 特别 <TeX src="F = \mathbb{F}_5" />: 给定 <TeX src="(a, b, c), (a', b', c')" /> 两组互不相同的三点, 恰有 <em>一个</em> Möbius 把第一组送到第二组。</>}
@@ -14282,7 +15624,9 @@ Membership(g):
         </p>
         <TeXBlock src={`(a, b;\\, c, d) \\;=\\; \\frac{(a - c)(b - d)}{(a - d)(b - c)} \\;\\in\\; F \\cup \\{\\infty\\}.`} />
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 30.6 (交比不变性)' : 'Theorem 30.6 (cross-ratio invariance)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 30.6 (交比不变性)', en: 'Theorem 30.6 (cross-ratio invariance)',
+              zhHant: "定理 30.6 (交比不變性)"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>对任意 <TeX src="\phi \in \mathrm{PGL}_2(F)" /> 和任意 4 相异点 <TeX src="(a, b, c, d) \in \mathbb{P}^1(F)^4" />:<TeXBlock src={`(\\phi(a),\\, \\phi(b);\\, \\phi(c),\\, \\phi(d)) \\;=\\; (a,\\, b;\\, c,\\, d).`} />反之: 若 <TeX src="(a, b; c, d) = (a', b'; c', d')" />, 则存在 <TeX src="\phi \in \mathrm{PGL}_2(F)" /> 把第一组四点送到第二组。 即 <strong>交比是 4 元组在 <TeX src="\mathrm{PGL}_2" /> 作用下的完全不变量</strong>。</>}
@@ -14303,8 +15647,12 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '交比计算器 + Möbius 不变性' : 'cross-ratio calculator + Möbius invariance'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '选 4 个点,再加一个 Möbius,验交比不变' : 'pick 4 points, apply a Möbius, watch the cross-ratio stay fixed'}</div>
+          <div className="gt-panel-title">{tr({ zh: '交比计算器 + Möbius 不变性', en: 'cross-ratio calculator + Möbius invariance',
+              zhHant: "交比計算器 + Möbius 不變性"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '选 4 个点,再加一个 Möbius,验交比不变', en: 'pick 4 points, apply a Möbius, watch the cross-ratio stay fixed',
+              zhHant: "選 4 個點,再加一個 Möbius,驗交比不變"
+        })}</div>
           <CrossRatioCalc />
         </div>
 
@@ -14312,7 +15660,7 @@ Membership(g):
           <L zh="30.6  S₆ 的外自同构 — 唯一的例外" en="30.6  The outer automorphism of S₆ — the unique exception"/>
         </h3>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 30.7 (Hölder 1895)' : 'Theorem 30.7 (Hölder 1895)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 30.7 (Hölder 1895)', en: 'Theorem 30.7 (Hölder 1895)' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>对所有 <TeX src="n \neq 6" />,<TeX src="\mathrm{Aut}(S_n) = S_n" /> (即所有自同构都是内自同构, <TeX src="\mathrm{Out}(S_n) = 1" />)。 唯独 <TeX src="n = 6" />: <TeXBlock src={`\\mathrm{Out}(S_6) \\;\\cong\\; \\mathbb{Z}/2.`} /> 这一外自同构由 <TeX src="\mathrm{PGL}_2(\mathbb{F}_5)" /> 的 「异常」 嵌入 <TeX src="S_5 \hookrightarrow S_6" /> 诱导,把对换 (类大小 15) 与「三对换之积」(类大小 15) 互换。</>}
@@ -14329,21 +15677,33 @@ Membership(g):
         <table className="gt-pattern-tbl">
           <thead>
             <tr>
-              <th>{lang === 'zh' ? '嵌入' : 'embedding'}</th>
-              <th>{lang === 'zh' ? '描述' : 'description'}</th>
-              <th>{lang === 'zh' ? '在 6 元集上' : 'on 6 elements'}</th>
+              <th>{tr({ zh: '嵌入', en: 'embedding' })}</th>
+              <th>{tr({ zh: '描述', en: 'description' })}</th>
+              <th>{tr({ zh: '在 6 元集上', en: 'on 6 elements' })}</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>{lang === 'zh' ? '标准' : 'standard'}</td>
-              <td>{lang === 'zh' ? '把 S₅ 当成「固定第 6 个元素」' : 'S₅ fixes one of the 6 elements'}</td>
-              <td>{lang === 'zh' ? '非传递 — 第 6 点是孤立轨道' : 'intransitive — the 6th point is isolated'}</td>
+              <td>{tr({ zh: '标准', en: 'standard',
+                  zhHant: "標準"
+            })}</td>
+              <td>{tr({ zh: '把 S₅ 当成「固定第 6 个元素」', en: 'S₅ fixes one of the 6 elements',
+                  zhHant: "把 S₅ 當成「固定第 6 個元素」"
+            })}</td>
+              <td>{tr({ zh: '非传递 — 第 6 点是孤立轨道', en: 'intransitive — the 6th point is isolated',
+                  zhHant: "非傳遞 — 第 6 點是孤立軌道"
+            })}</td>
             </tr>
             <tr>
-              <td>{lang === 'zh' ? '异常' : 'exotic'}</td>
-              <td>{lang === 'zh' ? 'PGL₂(𝔽₅) ≅ S₅ 在 ℙ¹(𝔽₅) 上传递' : 'PGL₂(𝔽₅) ≅ S₅ acting on ℙ¹(𝔽₅) transitively'}</td>
-              <td>{lang === 'zh' ? '传递 — 6 点上的尖锐 3-传递' : 'transitive — sharp 3-transitivity'}</td>
+              <td>{tr({ zh: '异常', en: 'exotic',
+                  zhHant: "異常"
+            })}</td>
+              <td>{tr({ zh: 'PGL₂(𝔽₅) ≅ S₅ 在 ℙ¹(𝔽₅) 上传递', en: 'PGL₂(𝔽₅) ≅ S₅ acting on ℙ¹(𝔽₅) transitively',
+                  zhHant: "PGL₂(𝔽₅) ≅ S₅ 在 ℙ¹(𝔽₅) 上傳遞"
+            })}</td>
+              <td>{tr({ zh: '传递 — 6 点上的尖锐 3-传递', en: 'transitive — sharp 3-transitivity',
+                  zhHant: "傳遞 — 6 點上的尖銳 3-傳遞"
+            })}</td>
             </tr>
           </tbody>
         </table>
@@ -14354,7 +15714,9 @@ Membership(g):
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '关键不变量' : 'Key invariant'}</div>
+          <div className="gt-def-title">{tr({ zh: '关键不变量', en: 'Key invariant',
+              zhHant: "關鍵不變數"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>对 <TeX src="n \neq 6" />,只有一类阶 2 元素的共轭类大小是 <TeX src="\binom{n}{2}" /> (对换), 所以任何自同构 都保持「对换类」 ⇒ 必为内自同构。 但 <TeX src="n = 6" /> 时, 阶 2 共轭类有两类大小都是 15 —— 对换 (圈型 (2, 1, 1, 1, 1)) 和「三个不相交对换之积」 (圈型 (2, 2, 2)) —— 自同构可以把它们对调。</>}
@@ -14384,7 +15746,7 @@ Membership(g):
           <li><L zh={<><strong>Synthematic total</strong> = 5 个 syntheme,它们的 15 个 duad 恰好覆盖全部 <TeX src="\binom{6}{2} = 15" /> 个 duad (即每个 duad 在 total 里恰好出现一次)。 这等价于 <em>K₆ 的 1-因子化</em>: 把 K₆ 的 15 条边分到 5 个完美匹配里。 共 <strong>6 个 total</strong>。</>} en={<><strong>Synthematic total</strong> = a set of 5 synthemes whose 15 duads cover all <TeX src="\binom{6}{2} = 15" /> duads (each duad appearing exactly once). Equivalently: a <em>1-factorisation of <TeX src="K_6" /></em> (partition the 15 edges into 5 perfect matchings). There are exactly <strong>6 totals</strong>.</>} /></li>
         </ul>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 30.8 (Sylvester)' : 'Theorem 30.8 (Sylvester)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 30.8 (Sylvester)', en: 'Theorem 30.8 (Sylvester)' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<><TeX src="S_6" /> 在 6 个 total 上的自然作用给出一个 <strong>非平凡同态</strong> <TeXBlock src={`\\Phi : S_6 \\to S_{\\{\\text{6 totals}\\}} \\cong S_6.`} /> 因为 <TeX src="S_6" /> 是 (除 <TeX src="\{e\}" /> 外)「近乎单」 的 (<TeX src="A_6" /> 是它唯一的指数为 2 的正规子群), <TeX src="\Phi" /> 要么是平凡映射、 要么是单射 — 实际上它是单射, 故为自同构。 它 <em>不是</em> 内自同构 (它把对换映到 <TeX src="(2, 2, 2)" /> 类), 所以恰好实现外自同构。</>}
@@ -14393,8 +15755,12 @@ Membership(g):
           </div>
         </div>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '6 个 Synthematic Total 浏览器' : 'six synthematic totals viewer'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '点 σ 看一个对换 (1 2) 是怎么把 6 个 total 按 (2, 2, 2) 型重排的 — 那就是外自同构' : 'pick σ = (1 2) and watch how it scrambles the 6 totals in cycle type (2, 2, 2) — that\'s the outer automorphism'}</div>
+          <div className="gt-panel-title">{tr({ zh: '6 个 Synthematic Total 浏览器', en: 'six synthematic totals viewer',
+              zhHant: "6 個 Synthematic Total 瀏覽器"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '点 σ 看一个对换 (1 2) 是怎么把 6 个 total 按 (2, 2, 2) 型重排的 — 那就是外自同构', en: 'pick σ = (1 2) and watch how it scrambles the 6 totals in cycle type (2, 2, 2) — that\'s the outer automorphism',
+              zhHant: "點 σ 看一個對換 (1 2) 是怎麼把 6 個 total 按 (2, 2, 2) 型重排的 — 那就是外自同構"
+        })}</div>
           <SynthemeTotalsViewer />
         </div>
 
@@ -14410,20 +15776,46 @@ Membership(g):
         <table className="gt-pattern-tbl">
           <thead>
             <tr>
-              <th>{lang === 'zh' ? '群' : 'group'}</th>
-              <th>{lang === 'zh' ? '阶' : 'order'}</th>
-              <th>{lang === 'zh' ? '作用域' : 'acts on'}</th>
-              <th>{lang === 'zh' ? '传递度' : 'transitivity'}</th>
+              <th>{tr({ zh: '群', en: 'group' })}</th>
+              <th>{tr({ zh: '阶', en: 'order',
+                  zhHant: "階"
+            })}</th>
+              <th>{tr({ zh: '作用域', en: 'acts on' })}</th>
+              <th>{tr({ zh: '传递度', en: 'transitivity',
+                  zhHant: "傳遞度"
+            })}</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td><TeX src="\mathrm{PGL}_2(\mathbb{F}_5) \cong S_5" /></td><td className="num">120</td><td>6 {lang === 'zh' ? '点' : 'points'}</td><td>{lang === 'zh' ? '尖锐 3-传递' : 'sharply 3-transitive'}</td></tr>
-            <tr><td><TeX src="M_{10}" /></td><td className="num">720</td><td>10 {lang === 'zh' ? '点' : 'points'}</td><td>{lang === 'zh' ? '尖锐 3-传递' : 'sharply 3-transitive'}</td></tr>
-            <tr><td><TeX src="M_{11}" /></td><td className="num">7,920</td><td>11 {lang === 'zh' ? '点' : 'points'}</td><td>{lang === 'zh' ? '尖锐 4-传递' : 'sharply 4-transitive'}</td></tr>
-            <tr><td><TeX src="M_{12}" /></td><td className="num">95,040</td><td>12 {lang === 'zh' ? '点' : 'points'}</td><td>{lang === 'zh' ? '尖锐 5-传递' : 'sharply 5-transitive'}</td></tr>
-            <tr><td><TeX src="M_{22}" /></td><td className="num">443,520</td><td>22</td><td>3-{lang === 'zh' ? '传递' : 'transitive'}</td></tr>
-            <tr><td><TeX src="M_{23}" /></td><td className="num">10,200,960</td><td>23</td><td>4-{lang === 'zh' ? '传递' : 'transitive'}</td></tr>
-            <tr><td><TeX src="M_{24}" /></td><td className="num">244,823,040</td><td>24</td><td>5-{lang === 'zh' ? '传递' : 'transitive'}</td></tr>
+            <tr><td><TeX src="\mathrm{PGL}_2(\mathbb{F}_5) \cong S_5" /></td><td className="num">120</td><td>6 {tr({ zh: '点', en: 'points',
+                zhHant: "點"
+            })}</td><td>{tr({ zh: '尖锐 3-传递', en: 'sharply 3-transitive',
+                zhHant: "尖銳 3-傳遞"
+            })}</td></tr>
+            <tr><td><TeX src="M_{10}" /></td><td className="num">720</td><td>10 {tr({ zh: '点', en: 'points',
+                zhHant: "點"
+            })}</td><td>{tr({ zh: '尖锐 3-传递', en: 'sharply 3-transitive',
+                zhHant: "尖銳 3-傳遞"
+            })}</td></tr>
+            <tr><td><TeX src="M_{11}" /></td><td className="num">7,920</td><td>11 {tr({ zh: '点', en: 'points',
+                zhHant: "點"
+            })}</td><td>{tr({ zh: '尖锐 4-传递', en: 'sharply 4-transitive',
+                zhHant: "尖銳 4-傳遞"
+            })}</td></tr>
+            <tr><td><TeX src="M_{12}" /></td><td className="num">95,040</td><td>12 {tr({ zh: '点', en: 'points',
+                zhHant: "點"
+            })}</td><td>{tr({ zh: '尖锐 5-传递', en: 'sharply 5-transitive',
+                zhHant: "尖銳 5-傳遞"
+            })}</td></tr>
+            <tr><td><TeX src="M_{22}" /></td><td className="num">443,520</td><td>22</td><td>3-{tr({ zh: '传递', en: 'transitive',
+                zhHant: "傳遞"
+            })}</td></tr>
+            <tr><td><TeX src="M_{23}" /></td><td className="num">10,200,960</td><td>23</td><td>4-{tr({ zh: '传递', en: 'transitive',
+                zhHant: "傳遞"
+            })}</td></tr>
+            <tr><td><TeX src="M_{24}" /></td><td className="num">244,823,040</td><td>24</td><td>5-{tr({ zh: '传递', en: 'transitive',
+                zhHant: "傳遞"
+            })}</td></tr>
           </tbody>
         </table>
         <p>
@@ -14450,8 +15842,12 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '正二十面体 + ℙ¹(𝔽₅) 标号' : 'icosahedron with ℙ¹(𝔽₅) labels'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '按 T (绕顶点 2π/5) 和 S (绕棱中点 π) 看顶点重排' : 'press T (vertex 2π/5) and S (edge-midpoint π) to watch vertices shuffle'}</div>
+          <div className="gt-panel-title">{tr({ zh: '正二十面体 + ℙ¹(𝔽₅) 标号', en: 'icosahedron with ℙ¹(𝔽₅) labels',
+              zhHant: "正二十面體 + ℙ¹(𝔽₅) 標號"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '按 T (绕顶点 2π/5) 和 S (绕棱中点 π) 看顶点重排', en: 'press T (vertex 2π/5) and S (edge-midpoint π) to watch vertices shuffle',
+              zhHant: "按 T (繞頂點 2π/5) 和 S (繞稜中點 π) 看頂點重排"
+        })}</div>
           <IcosahedronP1F5 />
         </div>
         <p>
@@ -14524,17 +15920,27 @@ Membership(g):
         <table className="gt-pattern-tbl">
           <thead>
             <tr>
-              <th>{lang === 'zh' ? '阶' : 'order'}</th>
-              <th>{lang === 'zh' ? 'S₅ 圈型' : 'S₅ cycle type'}</th>
-              <th>{lang === 'zh' ? '类大小' : 'class size'}</th>
-              <th>{lang === 'zh' ? '占比' : 'share'}</th>
+              <th>{tr({ zh: '阶', en: 'order',
+                  zhHant: "階"
+            })}</th>
+              <th>{tr({ zh: 'S₅ 圈型', en: 'S₅ cycle type' })}</th>
+              <th>{tr({ zh: '类大小', en: 'class size',
+                  zhHant: "類大小"
+            })}</th>
+              <th>{tr({ zh: '占比', en: 'share',
+                  zhHant: "佔比"
+            })}</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td className="num">1</td><td>(1)⁵ {lang === 'zh' ? '(恒等)' : '(identity)'}</td><td className="num">1</td><td className="num">0.83%</td></tr>
+            <tr><td className="num">1</td><td>(1)⁵ {tr({ zh: '(恒等)', en: '(identity)',
+                zhHant: "(恆等)"
+            })}</td><td className="num">1</td><td className="num">0.83%</td></tr>
             <tr><td className="num">2</td><td>(2, 1, 1, 1) + (2, 2, 1)</td><td className="num">10 + 15 = 25</td><td className="num">20.83%</td></tr>
             <tr><td className="num">3</td><td>(3, 1, 1)</td><td className="num">20</td><td className="num">16.67%</td></tr>
-            <tr><td className="num">4</td><td>(4, 1) + (2, 2, 1) {lang === 'zh' ? '(注:(2,2,1)在 S₅ 阶为 2 不是 4)' : '(note: (2,2,1) has order 2, not 4)'}</td><td className="num">30</td><td className="num">25.00%</td></tr>
+            <tr><td className="num">4</td><td>(4, 1) + (2, 2, 1) {tr({ zh: '(注:(2,2,1)在 S₅ 阶为 2 不是 4)', en: '(note: (2,2,1) has order 2, not 4)',
+                zhHant: "(注:(2,2,1)在 S₅ 階為 2 不是 4)"
+            })}</td><td className="num">30</td><td className="num">25.00%</td></tr>
             <tr><td className="num">5</td><td>(5)</td><td className="num">24</td><td className="num">20.00%</td></tr>
             <tr><td className="num">6</td><td>(3, 2)</td><td className="num">20</td><td className="num">16.67%</td></tr>
           </tbody>
@@ -14546,8 +15952,12 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '⟨R, U⟩ 阶分布采样' : '⟨R, U⟩ order histogram'}</div>
-          <div className="gt-panel-sub">{lang === 'zh' ? '采 N 个随机字 (长度 ≤ maxLen),计角置换阶,与 S₅ 共轭类大小比较' : 'sample N random words (length ≤ maxLen), compute the order of the resulting corner permutation, compare with S₅ class sizes'}</div>
+          <div className="gt-panel-title">{tr({ zh: '⟨R, U⟩ 阶分布采样', en: '⟨R, U⟩ order histogram',
+              zhHant: "⟨R, U⟩ 階分佈取樣"
+        })}</div>
+          <div className="gt-panel-sub">{tr({ zh: '采 N 个随机字 (长度 ≤ maxLen),计角置换阶,与 S₅ 共轭类大小比较', en: 'sample N random words (length ≤ maxLen), compute the order of the resulting corner permutation, compare with S₅ class sizes',
+              zhHant: "採 N 個隨機字 (長度 ≤ maxLen),計角置換階,與 S₅ 共軛類大小比較"
+        })}</div>
           <OrderHistogramTwoFace />
         </div>
 
@@ -14598,7 +16008,9 @@ Membership(g):
           <L zh="31.1  形式化:图、面、生成元" en="31.1  Formalisation: graph, face, generator" />
         </h3>
         <div className="gt-def">
-          <div className="gt-def-title">{lang === 'zh' ? '定义 31.1 — 图上的旋转拼图' : 'Definition 31.1 — rotational graph puzzle'}</div>
+          <div className="gt-def-title">{tr({ zh: '定义 31.1 — 图上的旋转拼图', en: 'Definition 31.1 — rotational graph puzzle',
+              zhHant: "定義 31.1 — 圖上的旋轉拼圖"
+        })}</div>
           <div className="gt-def-body">
             <L
               zh={<>给定连通有限图 <TeX src="G = (V, E)" />,<TeX src="|V| = n" />,以及一族标记的 <em>有向闭合环</em> <TeX src="F_1, F_2, \ldots, F_k" /> (称作 <strong>面</strong>),每个面是 <TeX src="V" /> 的一个有序子集。 棋子 <TeX src="\{1, 2, \ldots, n\}" /> 一对一放在顶点上。 每个面 <TeX src="F_i" /> 给出一个生成元 <TeX src="\rho_i \in S_n" />:沿环把每个棋子推到下一个顶点。 <strong>拼图群</strong> 是<TeXBlock src={`\\Gamma \\;=\\; \\langle \\rho_1, \\rho_2, \\ldots, \\rho_k \\rangle \\;\\le\\; S_n.`} /></>}
@@ -14644,7 +16056,9 @@ Membership(g):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 31.2 — Scherphuis (两面分类)' : 'Theorem 31.2 — Scherphuis (two-face classification)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 31.2 — Scherphuis (两面分类)', en: 'Theorem 31.2 — Scherphuis (two-face classification)',
+              zhHant: "定理 31.2 — Scherphuis (兩面分類)"
+        })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>设 <TeX src="f_1, f_2 \ge 3" />。 则<TeXBlock src={`\\Gamma_{(x,y,z)} \\;=\\; \\begin{cases} S_5\\;(\\text{order } 120) & \\text{if } (x,y,z) \\in \\{(2,2,2),\\,(1,3,2)\\}, \\\\ A_n & \\text{if both } f_1, f_2 \\text{ are odd}, \\\\ S_n & \\text{otherwise}. \\end{cases}`} />当 <TeX src="\min(f_1, f_2) < 3" /> 时退化:面太短无法产生 3-循环。</>}
@@ -14687,7 +16101,9 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '(x, y, z) 实时分类器' : '(x, y, z) live classifier'}</div>
+          <div className="gt-panel-title">{tr({ zh: '(x, y, z) 实时分类器', en: '(x, y, z) live classifier',
+              zhHant: "(x, y, z) 實時分類器"
+        })}</div>
           <XYZClassifier />
         </div>
         <p>
@@ -14713,20 +16129,36 @@ Membership(g):
               <th>(x, y, z)</th>
               <th>n</th>
               <th>(f₁, f₂)</th>
-              <th>{lang === 'zh' ? '群' : 'group'}</th>
+              <th>{tr({ zh: '群', en: 'group' })}</th>
               <th>|Γ|</th>
-              <th>{lang === 'zh' ? '构造' : 'construction'}</th>
+              <th>{tr({ zh: '构造', en: 'construction',
+                  zhHant: "構造"
+            })}</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>(1, 1, 1)</td><td className="num">3</td><td>(2, 2)</td><td><TeX src="\mathbb{Z}_3" /></td><td className="num">3</td><td>{lang === 'zh' ? '过小 (面长 2 < 3)' : 'degenerate (faces too short)'}</td></tr>
-            <tr><td>(1, 2, 1)</td><td className="num">4</td><td>(3, 3)</td><td><TeX src="A_4" /></td><td className="num">12</td><td><TeX src="[\rho_1, \rho_2]" />{lang === 'zh' ? ' = 3-循环' : ' = 3-cycle'}</td></tr>
-            <tr><td>(2, 1, 2)</td><td className="num">5</td><td>(3, 3)</td><td><TeX src="A_5" /></td><td className="num">60</td><td><TeX src="[\rho_1, \rho_2]" />{lang === 'zh' ? '；Pyraminx 局部' : '; Pyraminx local'}</td></tr>
-            <tr><td>(1, 3, 2)</td><td className="num">6</td><td>(4, 5)</td><td><TeX src="S_5" /> <em>{lang === 'zh' ? '(例外)' : '(exceptional)'}</em></td><td className="num">120</td><td>{lang === 'zh' ? '同构于 (2,2,2);Wilson θ₀ 之内核' : 'isomorphic to (2,2,2); kernel of Wilson\'s θ₀'}</td></tr>
-            <tr><td>(2, 2, 2)</td><td className="num">6</td><td>(4, 4)</td><td><TeX src="S_5" /> <em>{lang === 'zh' ? '(例外)' : '(exceptional)'}</em></td><td className="num">120</td><td><TeX src="PGL_2(\mathbb{F}_5) \curvearrowright \mathbb{P}^1(\mathbb{F}_5)" /></td></tr>
-            <tr><td>(3, 2, 3)</td><td className="num">8</td><td>(5, 5)</td><td><TeX src="A_8" /></td><td className="num">20,160</td><td>{lang === 'zh' ? '两奇长面;Impossiball 两面' : 'both odd faces; Impossiball local'}</td></tr>
-            <tr><td>(4, 1, 4)</td><td className="num">9</td><td>(5, 5)</td><td><TeX src="A_9" /></td><td className="num">181,440</td><td>{lang === 'zh' ? 'Alexander\'s Star 局部' : 'Alexander\'s Star local'}</td></tr>
-            <tr><td>(3, 3, 3)</td><td className="num">9</td><td>(6, 6)</td><td><TeX src="S_9" /></td><td className="num">362,880</td><td>{lang === 'zh' ? '偶长面 ⇒ 奇置换 ⇒ 全 S' : 'even faces ⇒ odd perm ⇒ full S'}</td></tr>
+            <tr><td>(1, 1, 1)</td><td className="num">3</td><td>(2, 2)</td><td><TeX src="\mathbb{Z}_3" /></td><td className="num">3</td><td>{tr({ zh: '过小 (面长 2 < 3)', en: 'degenerate (faces too short)',
+                zhHant: "過小 (面長 2 < 3)"
+            })}</td></tr>
+            <tr><td>(1, 2, 1)</td><td className="num">4</td><td>(3, 3)</td><td><TeX src="A_4" /></td><td className="num">12</td><td><TeX src="[\rho_1, \rho_2]" />{tr({ zh: ' = 3-循环', en: ' = 3-cycle',
+                zhHant: " = 3-迴圈"
+            })}</td></tr>
+            <tr><td>(2, 1, 2)</td><td className="num">5</td><td>(3, 3)</td><td><TeX src="A_5" /></td><td className="num">60</td><td><TeX src="[\rho_1, \rho_2]" />{tr({ zh: '；Pyraminx 局部', en: '; Pyraminx local',
+                zhHant: "；Pyraminx 區域性"
+            })}</td></tr>
+            <tr><td>(1, 3, 2)</td><td className="num">6</td><td>(4, 5)</td><td><TeX src="S_5" /> <em>{tr({ zh: '(例外)', en: '(exceptional)' })}</em></td><td className="num">120</td><td>{tr({ zh: '同构于 (2,2,2);Wilson θ₀ 之内核', en: 'isomorphic to (2,2,2); kernel of Wilson\'s θ₀',
+                zhHant: "同構於 (2,2,2);Wilson θ₀ 之核心"
+            })}</td></tr>
+            <tr><td>(2, 2, 2)</td><td className="num">6</td><td>(4, 4)</td><td><TeX src="S_5" /> <em>{tr({ zh: '(例外)', en: '(exceptional)' })}</em></td><td className="num">120</td><td><TeX src="PGL_2(\mathbb{F}_5) \curvearrowright \mathbb{P}^1(\mathbb{F}_5)" /></td></tr>
+            <tr><td>(3, 2, 3)</td><td className="num">8</td><td>(5, 5)</td><td><TeX src="A_8" /></td><td className="num">20,160</td><td>{tr({ zh: '两奇长面;Impossiball 两面', en: 'both odd faces; Impossiball local',
+                zhHant: "兩奇長面;Impossiball 兩面"
+            })}</td></tr>
+            <tr><td>(4, 1, 4)</td><td className="num">9</td><td>(5, 5)</td><td><TeX src="A_9" /></td><td className="num">181,440</td><td>{tr({ zh: 'Alexander\'s Star 局部', en: 'Alexander\'s Star local',
+                zhHant: "Alexander's Star 區域性"
+            })}</td></tr>
+            <tr><td>(3, 3, 3)</td><td className="num">9</td><td>(6, 6)</td><td><TeX src="S_9" /></td><td className="num">362,880</td><td>{tr({ zh: '偶长面 ⇒ 奇置换 ⇒ 全 S', en: 'even faces ⇒ odd perm ⇒ full S',
+                zhHant: "偶長面 ⇒ 奇置換 ⇒ 全 S"
+            })}</td></tr>
           </tbody>
         </table>
         <p style={{ marginTop: 14 }}>
@@ -14736,7 +16168,9 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '两面转动 — 实时奇偶性 + 圈型' : 'Two-face turner — live parity & cycle type'}</div>
+          <div className="gt-panel-title">{tr({ zh: '两面转动 — 实时奇偶性 + 圈型', en: 'Two-face turner — live parity & cycle type',
+              zhHant: "兩面轉動 — 實時奇偶性 + 圈型"
+        })}</div>
           <TwoFaceTurner />
         </div>
         <p>
@@ -14786,7 +16220,7 @@ Membership(g):
           />
         </p>
         <div className="gt-thm">
-          <div className="gt-thm-title">{lang === 'zh' ? '定理 31.3 — Wilson (1974)' : 'Theorem 31.3 — Wilson (1974)'}</div>
+          <div className="gt-thm-title">{tr({ zh: '定理 31.3 — Wilson (1974)', en: 'Theorem 31.3 — Wilson (1974)' })}</div>
           <div className="gt-thm-body">
             <L
               zh={<>设 <TeX src="G" /> 连通、 至少 2 度。 滑动拼图状态群 <TeX src="W(G, b)" /> 等于:<TeXBlock src={`W(G, b) \\;=\\; \\begin{cases} \\mathbb{Z}_n & G = C_n \\text{ (简单环)}, \\\\ \\langle (1\\,2\\,3\\,4\\,5\\,6) \\rangle \\rtimes \\langle (2\\,6)(3\\,5) \\rangle \\cong PGL_2(\\mathbb{F}_5) & G = \\theta_0 \\text{ (7-vertex exception)}, \\\\ A_{n-1} & \\text{otherwise, if } G \\text{ bipartite}, \\\\ S_{n-1} & \\text{otherwise}. \\end{cases}`} />其中 <TeX src="\theta_0" /> 是「两个长 4 的路径共享两个端点 + 一条额外的边在中间」 形成的 7 顶点图 — 正是把 (1,3,2) 旋转拼图的中央共享段拆开插入一个空格得到的。</>}
@@ -14806,7 +16240,9 @@ Membership(g):
           <li><L zh={<><strong>θ₀</strong>: 7 个点的散在例外, <TeX src="|W| = 120" /> — 与定理 31.2 的 (1,3,2) 同构</>} en={<><strong>θ₀</strong>: sporadic 7-vertex exception with <TeX src="|W| = 120" /> — isomorphic to (1,3,2) of Thm 31.2</>} /></li>
         </ul>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? 'Wilson 三种类型对照' : 'Wilson three-cases visualiser'}</div>
+          <div className="gt-panel-title">{tr({ zh: 'Wilson 三种类型对照', en: 'Wilson three-cases visualiser',
+              zhHant: "Wilson 三種型別對照"
+        })}</div>
           <WilsonSliding />
         </div>
         <p>
@@ -14844,7 +16280,9 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? 'Schreier-Sims 在 S₅ 上的逐步追踪' : 'Schreier-Sims step trace on S₅'}</div>
+          <div className="gt-panel-title">{tr({ zh: 'Schreier-Sims 在 S₅ 上的逐步追踪', en: 'Schreier-Sims step trace on S₅',
+              zhHant: "Schreier-Sims 在 S₅ 上的逐步追蹤"
+        })}</div>
           <SchreierSimsDemo />
         </div>
         <p>
@@ -14856,21 +16294,31 @@ Membership(g):
         <table className="gt-partition-tbl">
           <thead>
             <tr>
-              <th>{lang === 'zh' ? '拼图' : 'puzzle'}</th>
-              <th>{lang === 'zh' ? '生成元数' : '# gens'}</th>
+              <th>{tr({ zh: '拼图', en: 'puzzle',
+                  zhHant: "拼圖"
+            })}</th>
+              <th>{tr({ zh: '生成元数', en: '# gens',
+                  zhHant: "生成元數"
+            })}</th>
               <th>n</th>
               <th>|G|</th>
-              <th>{lang === 'zh' ? '运行时间' : 'time'}</th>
+              <th>{tr({ zh: '运行时间', en: 'time',
+                  zhHant: "執行時間"
+            })}</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>15-puzzle</td><td className="num">12</td><td className="num">15</td><td className="num">10,461,394,944,000</td><td>{lang === 'zh' ? '一瞬' : '&lt; 1 s'}</td></tr>
+            <tr><td>15-puzzle</td><td className="num">12</td><td className="num">15</td><td className="num">10,461,394,944,000</td><td>{tr({ zh: '一瞬', en: '&lt; 1 s' })}</td></tr>
             <tr><td>2×2×2</td><td className="num">6</td><td className="num">24</td><td className="num">3,674,160</td><td>&lt; 1 s</td></tr>
             <tr><td>Pyraminx</td><td className="num">8</td><td className="num">14</td><td className="num">75,582,720</td><td>&lt; 1 s</td></tr>
             <tr><td>Skewb</td><td className="num">8</td><td className="num">14</td><td className="num">3,149,280</td><td>&lt; 1 s</td></tr>
             <tr><td>3×3×3</td><td className="num">6</td><td className="num">48</td><td className="num">4.33 × 10<sup>19</sup></td><td>&lt; 10 s</td></tr>
-            <tr><td>Megaminx</td><td className="num">12</td><td className="num">132</td><td className="num">1.01 × 10<sup>68</sup></td><td>{lang === 'zh' ? '数分钟' : 'minutes'}</td></tr>
-            <tr><td>4×4×4</td><td className="num">12</td><td className="num">96</td><td className="num">7.40 × 10<sup>45</sup></td><td>{lang === 'zh' ? '数分钟' : 'minutes'}</td></tr>
+            <tr><td>Megaminx</td><td className="num">12</td><td className="num">132</td><td className="num">1.01 × 10<sup>68</sup></td><td>{tr({ zh: '数分钟', en: 'minutes',
+                zhHant: "數分鐘"
+            })}</td></tr>
+            <tr><td>4×4×4</td><td className="num">12</td><td className="num">96</td><td className="num">7.40 × 10<sup>45</sup></td><td>{tr({ zh: '数分钟', en: 'minutes',
+                zhHant: "數分鐘"
+            })}</td></tr>
           </tbody>
         </table>
 
@@ -14914,7 +16362,9 @@ Membership(g):
           />
         </p>
         <div className="gt-panel">
-          <div className="gt-panel-title">{lang === 'zh' ? '12 个拼图,一一拆解' : '12 puzzles, one by one'}</div>
+          <div className="gt-panel-title">{tr({ zh: '12 个拼图,一一拆解', en: '12 puzzles, one by one',
+              zhHant: "12 個拼圖,一一拆解"
+        })}</div>
           <PuzzleZoo />
         </div>
         <p>
@@ -14928,7 +16378,9 @@ Membership(g):
             zh={<>「每一个塑料玩具都是一个有限群的传教士。」</>}
             en={<>"Every plastic puzzle is a missionary for some finite group."</>}
           />
-          <div className="gt-pullquote-cite">— {lang === 'zh' ? '现代群论教学俗谚' : 'modern group-theory teaching folklore'}</div>
+          <div className="gt-pullquote-cite">— {tr({ zh: '现代群论教学俗谚', en: 'modern group-theory teaching folklore',
+              zhHant: "現代群論教學俗諺"
+        })}</div>
         </div>
 
         {/* ===== 31.9 Open problems ===== */}
@@ -15044,8 +16496,12 @@ Membership(g):
                 />
               </p>
               <div className="gt-panel">
-                <div className="gt-panel-title">{lang === 'zh' ? '可视化器' : 'visualiser'}</div>
-                <div className="gt-panel-sub">{lang === 'zh' ? '输入一行 1..n 的某个排列; 实时显示连线 + 循环 + 奇偶 + 阶' : 'type any permutation of 1..n; live lines + cycles + parity + order'}</div>
+                <div className="gt-panel-title">{tr({ zh: '可视化器', en: 'visualiser',
+                    zhHant: "視覺化器"
+                })}</div>
+                <div className="gt-panel-sub">{tr({ zh: '输入一行 1..n 的某个排列; 实时显示连线 + 循环 + 奇偶 + 阶', en: 'type any permutation of 1..n; live lines + cycles + parity + order',
+                    zhHant: "輸入一行 1..n 的某個排列; 實時顯示連線 + 迴圈 + 奇偶 + 階"
+                })}</div>
                 <PermutationVisualiser />
               </div>
 
@@ -15070,7 +16526,9 @@ Membership(g):
               </p>
               <TeXBlock src="\sigma \;=\; \begin{pmatrix} 1 & 2 & 3 & \cdots & n \\ \sigma(1) & \sigma(2) & \sigma(3) & \cdots & \sigma(n) \end{pmatrix}" />
               <div className="gt-def">
-                <div className="gt-def-title">{lang === 'zh' ? '观察 32.1 — 双射 ↔ 排列' : 'Observation 32.1 — bijection ↔ permutation'}</div>
+                <div className="gt-def-title">{tr({ zh: '观察 32.1 — 双射 ↔ 排列', en: 'Observation 32.1 — bijection ↔ permutation',
+                    zhHant: "觀察 32.1 — 雙射 ↔ 排列"
+                })}</div>
                 <div className="gt-def-body">
                   <L
                     zh={<>下行必须是上行的<em>双射重排</em>: 每个 1..n 的数恰好出现一次。 这等价地说 <TeX src="\sigma : \{1, \ldots, n\} \to \{1, \ldots, n\}" /> 是<strong>双射</strong>。 所以「两行记号 = 1..n 的某个双射」, 这正是 <TeX src="S_n" /> 的元素。</>}
@@ -15085,7 +16543,9 @@ Membership(g):
                 />
               </p>
               <div className="gt-panel">
-                <div className="gt-panel-title">{lang === 'zh' ? '两行 ↔ 循环 互转' : 'two-line ↔ cycle toggle'}</div>
+                <div className="gt-panel-title">{tr({ zh: '两行 ↔ 循环 互转', en: 'two-line ↔ cycle toggle',
+                    zhHant: "兩行 ↔ 迴圈 互轉"
+                })}</div>
                 <TwoLineNotationDemo />
               </div>
 
@@ -15110,7 +16570,9 @@ Membership(g):
                 />
               </p>
               <div className="gt-thm">
-                <div className="gt-thm-title">{lang === 'zh' ? '定理 32.2 — 共轭 = 重命名' : 'Theorem 32.2 — conjugation = relabelling'}</div>
+                <div className="gt-thm-title">{tr({ zh: '定理 32.2 — 共轭 = 重命名', en: 'Theorem 32.2 — conjugation = relabelling',
+                    zhHant: "定理 32.2 — 共軛 = 重新命名"
+                })}</div>
                 <div className="gt-thm-body">
                   <L
                     zh={<>对任意 <TeX src="\sigma, \tau \in S_n" />, <TeXBlock src="\sigma \tau \sigma^{-1} \;=\; \tau\text{ with every entry relabelled by } \sigma." />即, 若 τ = (a b c …)(d e …)…, 则 σ τ σ⁻¹ = (σ(a) σ(b) σ(c) …)(σ(d) σ(e) …)…。 共轭只是<em>换名字</em>, 不改形状。</>}
@@ -15125,8 +16587,12 @@ Membership(g):
                 />
               </p>
               <div className="gt-panel">
-                <div className="gt-panel-title">{lang === 'zh' ? '逐步循环分解器' : 'step-by-step cycle decomposer'}</div>
-                <div className="gt-panel-sub">{lang === 'zh' ? '点「下一步」看算法如何从 i = 1 开始追踪每条轨道' : 'click "next" to watch the algorithm trace each orbit starting from i = 1'}</div>
+                <div className="gt-panel-title">{tr({ zh: '逐步循环分解器', en: 'step-by-step cycle decomposer',
+                    zhHant: "逐步迴圈分解器"
+                })}</div>
+                <div className="gt-panel-sub">{tr({ zh: '点「下一步」看算法如何从 i = 1 开始追踪每条轨道', en: 'click "next" to watch the algorithm trace each orbit starting from i = 1',
+                    zhHant: "點「下一步」看演算法如何從 i = 1 開始追蹤每條軌道"
+                })}</div>
                 <CycleDecomposer />
               </div>
 
@@ -15140,7 +16606,9 @@ Membership(g):
                 />
               </p>
               <div className="gt-thm">
-                <div className="gt-thm-title">{lang === 'zh' ? '两种约定' : 'Two conventions'}</div>
+                <div className="gt-thm-title">{tr({ zh: '两种约定', en: 'Two conventions',
+                    zhHant: "兩種約定"
+                })}</div>
                 <div className="gt-thm-body">
                   <L
                     zh={<>
@@ -15173,7 +16641,9 @@ Membership(g):
                 />
               </p>
               <div className="gt-panel">
-                <div className="gt-panel-title">{lang === 'zh' ? '合成约定对比' : 'composition convention comparator'}</div>
+                <div className="gt-panel-title">{tr({ zh: '合成约定对比', en: 'composition convention comparator',
+                    zhHant: "合成約定對比"
+                })}</div>
                 <ComposeConventions />
               </div>
 
@@ -15192,7 +16662,9 @@ Membership(g):
                 <li><L zh={<><strong>(iii) 对换分解</strong>: 把 σ 写成对换的乘积 σ = t₁ t₂ … t_k。 sgn(σ) = (−1)<sup>k</sup>, 且这个 <em>k 的奇偶不取决于分解方式</em>。 这是「奇偶是良定的」最非平凡的事实。</>} en={<><strong>(iii) Transposition decomposition</strong>: write σ = t₁ t₂ … t_k as a product of transpositions. sgn(σ) = (−1)<sup>k</sup>, and crucially <em>the parity of k is independent of the decomposition</em>. The fact that "parity is well-defined" is the most non-trivial of the three.</>} /></li>
               </ol>
               <div className="gt-def">
-                <div className="gt-def-title">{lang === 'zh' ? '为什么三个定义等价?' : 'Why all three agree'}</div>
+                <div className="gt-def-title">{tr({ zh: '为什么三个定义等价?', en: 'Why all three agree',
+                    zhHant: "為什麼三個定義等價?"
+                })}</div>
                 <div className="gt-def-body">
                   <L
                     zh={<>关键引理: 一个对换 (a b) 跟在 σ 之后<em>恰好</em>把 σ 的圈数改变 ±1 (取决于 a, b 是否在同一个圈)。 所以「σ 加一次对换」 = 「圈数加减 1」 = 「sgn 反号」。 把 σ 写成 k 个对换, 等价于「从 e 出发 k 步翻奇偶 k 次」, 终态的奇偶完全由 k 决定。 这正是 (ii) ↔ (iii) 的桥梁; (i) ↔ (ii) 则可由「冒泡排序的逆序对 = 交叉数」 (Knuth TAOCP 5.1) 直接对应。</>}
@@ -15201,8 +16673,12 @@ Membership(g):
                 </div>
               </div>
               <div className="gt-panel">
-                <div className="gt-panel-title">{lang === 'zh' ? '对换序列 → 奇偶对账' : 'transposition sequence → parity check'}</div>
-                <div className="gt-panel-sub">{lang === 'zh' ? '随意打几个 (a b) 对换, 同时算出 k 与 sgn(乘积) — 它们必然一致。' : 'type any sequence of (a b) transpositions; the count k and sgn(product) always agree.'}</div>
+                <div className="gt-panel-title">{tr({ zh: '对换序列 → 奇偶对账', en: 'transposition sequence → parity check',
+                    zhHant: "對換序列 → 奇偶對賬"
+                })}</div>
+                <div className="gt-panel-sub">{tr({ zh: '随意打几个 (a b) 对换, 同时算出 k 与 sgn(乘积) — 它们必然一致。', en: 'type any sequence of (a b) transpositions; the count k and sgn(product) always agree.',
+                    zhHant: "隨意打幾個 (a b) 對換, 同時算出 k 與 sgn(乘積) — 它們必然一致。"
+                })}</div>
                 <ParityFromTranspositions />
               </div>
 
@@ -15223,7 +16699,9 @@ Membership(g):
                 />
               </p>
               <div className="gt-panel">
-                <div className="gt-panel-title">{lang === 'zh' ? '阶计算器' : 'order calculator'}</div>
+                <div className="gt-panel-title">{tr({ zh: '阶计算器', en: 'order calculator',
+                    zhHant: "階計算器"
+                })}</div>
                 <OrderCalculator />
               </div>
               <h3 style={{ fontFamily: 'var(--serif)', fontSize: 19, fontWeight: 600, marginTop: 28, marginBottom: 10, color: 'var(--ink)' }}>
@@ -15248,7 +16726,9 @@ Membership(g):
                 />
               </p>
               <div className="gt-panel">
-                <div className="gt-panel-title">{lang === 'zh' ? 'Landau 函数表 (n = 1..20)' : "Landau's function (n = 1..20)"}</div>
+                <div className="gt-panel-title">{tr({ zh: 'Landau 函数表 (n = 1..20)', en: "Landau's function (n = 1..20)",
+                    zhHant: "Landau 函式表 (n = 1..20)"
+                })}</div>
                 <LandauTable />
               </div>
 
@@ -15268,8 +16748,12 @@ Membership(g):
                 />
               </p>
               <div className="gt-panel">
-                <div className="gt-panel-title">{lang === 'zh' ? '共轭可视化器' : 'conjugation visualiser'}</div>
-                <div className="gt-panel-sub">{lang === 'zh' ? 'σ τ σ⁻¹ — 圈型不变, 每个 entry 被 σ 重命名' : 'σ τ σ⁻¹ — same cycle shape, every entry relabelled by σ'}</div>
+                <div className="gt-panel-title">{tr({ zh: '共轭可视化器', en: 'conjugation visualiser',
+                    zhHant: "共軛視覺化器"
+                })}</div>
+                <div className="gt-panel-sub">{tr({ zh: 'σ τ σ⁻¹ — 圈型不变, 每个 entry 被 σ 重命名', en: 'σ τ σ⁻¹ — same cycle shape, every entry relabelled by σ',
+                    zhHant: "σ τ σ⁻¹ — 圈型不變, 每個 entry 被 σ 重新命名"
+                })}</div>
                 <ConjugationVisualiser />
               </div>
 
@@ -15289,7 +16773,9 @@ Membership(g):
                 />
               </p>
               <div className="gt-thm">
-                <div className="gt-thm-title">{lang === 'zh' ? '事实 32.3 — [A, B] 永远是偶置换' : 'Fact 32.3 — [A, B] is always even'}</div>
+                <div className="gt-thm-title">{tr({ zh: '事实 32.3 — [A, B] 永远是偶置换', en: 'Fact 32.3 — [A, B] is always even',
+                    zhHant: "事實 32.3 — [A, B] 永遠是偶置換"
+                })}</div>
                 <div className="gt-thm-body">
                   <L
                     zh={<>sgn([A, B]) = sgn(A) sgn(B) sgn(A⁻¹) sgn(B⁻¹) = sgn(A)² sgn(B)² = +1。 所以换位子从不引入奇偶, 它们「住在交错群 <TeX src="A_n" /> 里」。 在魔方上, <TeX src="A_8 \times A_{12}" /> 投影下任何换位子都在 ker(sgn) 内 — 这正是 [G, G] = G' 的源头 (§9.2)。</>}
@@ -15298,8 +16784,12 @@ Membership(g):
                 </div>
               </div>
               <div className="gt-panel">
-                <div className="gt-panel-title">{lang === 'zh' ? '换位子计算器' : 'commutator computer'}</div>
-                <div className="gt-panel-sub">{lang === 'zh' ? '改变 A、B 的重叠位置, 看 [A, B] 变化; 单点重叠通常给 3-循环。' : 'change A, B overlap and watch [A, B] react; single-point overlap usually yields a 3-cycle.'}</div>
+                <div className="gt-panel-title">{tr({ zh: '换位子计算器', en: 'commutator computer',
+                    zhHant: "換位子計算器"
+                })}</div>
+                <div className="gt-panel-sub">{tr({ zh: '改变 A、B 的重叠位置, 看 [A, B] 变化; 单点重叠通常给 3-循环。', en: 'change A, B overlap and watch [A, B] react; single-point overlap usually yields a 3-cycle.',
+                    zhHant: "改變 A、B 的重疊位置, 看 [A, B] 變化; 單點重疊通常給 3-迴圈。"
+                })}</div>
                 <CommutatorComputer />
               </div>
 
@@ -15319,7 +16809,9 @@ Membership(g):
                 />
               </p>
               <div className="gt-panel">
-                <div className="gt-panel-title">{lang === 'zh' ? '幂滑条' : 'power slider'}</div>
+                <div className="gt-panel-title">{tr({ zh: '幂滑条', en: 'power slider',
+                    zhHant: "冪滑條"
+                })}</div>
                 <PowerSlider />
               </div>
 
@@ -15339,7 +16831,7 @@ Membership(g):
                 <li><L zh={<>⟨(1 2 3 4 5), (1 3)⟩ = ? 试着猜, 然后用 widget 验证 — 答案不是 <TeX src="S_5" />! 因为 (1 3) 不是相邻于 5-循环 (1 2 3 4 5) 的 「邻位」 — 但实际仍生成 <TeX src="S_5" />, 因为 (1 3) 与 (1 2 3 4 5) 的共轭轨道仍能拼出所有相邻对换。</>} en={<>⟨(1 2 3 4 5), (1 3)⟩ = ? Guess first, then check with the widget — the answer is not obvious. (In fact, it still equals <TeX src="S_5" />, because conjugates of (1 3) by powers of the 5-cycle cover all transpositions on {`{1..5}`}.)</>} /></li>
               </ul>
               <div className="gt-def">
-                <div className="gt-def-title">{lang === 'zh' ? '定理 32.4 (Jordan)' : 'Theorem 32.4 (Jordan)'}</div>
+                <div className="gt-def-title">{tr({ zh: '定理 32.4 (Jordan)', en: 'Theorem 32.4 (Jordan)' })}</div>
                 <div className="gt-def-body">
                   <L
                     zh={<>对 n ≥ 5: ⟨n-循环, 对换⟩ = <TeX src="S_n" /> 当且仅当对换的两个元素之间在 n-循环上的「距离」与 n 互素。 若距离与 n 有公因子 d &gt; 1, 子群退化为「d 个 n/d-顶点的对称群直积里再加一个 ℤ/d 旋转」 (一个不平凡的子群, 较 <TeX src="S_n" /> 小)。</>}
@@ -15354,7 +16846,9 @@ Membership(g):
                 />
               </p>
               <div className="gt-panel">
-                <div className="gt-panel-title">{lang === 'zh' ? '⟨g₁, g₂⟩ 阶数计算 (BFS)' : 'order of ⟨g₁, g₂⟩ (BFS)'}</div>
+                <div className="gt-panel-title">{tr({ zh: '⟨g₁, g₂⟩ 阶数计算 (BFS)', en: 'order of ⟨g₁, g₂⟩ (BFS)',
+                    zhHant: "⟨g₁, g₂⟩ 階數計算 (BFS)"
+                })}</div>
                 <SubgroupGenerator />
               </div>
 
@@ -15381,7 +16875,9 @@ Membership(g):
                 />
               </p>
               <div className="gt-panel">
-                <div className="gt-panel-title">{lang === 'zh' ? 'D₄ 在 4 顶点上的循环指数' : 'cycle index of D₄ on 4 vertices'}</div>
+                <div className="gt-panel-title">{tr({ zh: 'D₄ 在 4 顶点上的循环指数', en: 'cycle index of D₄ on 4 vertices',
+                    zhHant: "D₄ 在 4 頂點上的迴圈指數"
+                })}</div>
                 <CycleIndexPoly />
               </div>
               <p style={{ marginTop: 14 }}>
@@ -15587,7 +17083,9 @@ Membership(g):
 
       <div className="gt-end-mark">∎</div>
 
-      <div className="gt-foot">cuberoot.me · {lang === 'zh' ? '魔方与群论' : 'Rubik\'s Cube as a Group'} · 2026</div>
+      <div className="gt-foot">cuberoot.me · {tr({ zh: '魔方与群论', en: 'Rubik\'s Cube as a Group',
+          zhHant: "魔方與群論"
+    })} · 2026</div>
     </div>
     </SlugContext.Provider>
   );
@@ -15605,23 +17103,29 @@ function SectionNav({ slug, lang }: { slug: string; lang: Lang }) {
       <div className="gt-section-nav-cell gt-section-nav-prev">
         {prev ? (
           <Link href={`/math/group/${prev.id}`}>
-            <div className="gt-section-nav-dir">← {lang === 'zh' ? '上一节' : 'previous'}</div>
+            <div className="gt-section-nav-dir">← {tr({ zh: '上一节', en: 'previous',
+                zhHant: "上一節"
+            })}</div>
             <div className="gt-section-nav-num">§{prev.num}</div>
-            <div className="gt-section-nav-title">{lang === 'zh' ? prev.zh : prev.en}</div>
+            <div className="gt-section-nav-title">{(i18n.language.startsWith('zh') ? prev.zh : prev.en)}</div>
           </Link>
         ) : <div className="gt-section-nav-empty" />}
       </div>
       <div className="gt-section-nav-cell gt-section-nav-toc">
         <Link href="/math/group">
-          <div className="gt-section-nav-dir">↑ {lang === 'zh' ? '回到目录' : 'contents'}</div>
+          <div className="gt-section-nav-dir">↑ {tr({ zh: '回到目录', en: 'contents',
+              zhHant: "回到目錄"
+        })}</div>
         </Link>
       </div>
       <div className="gt-section-nav-cell gt-section-nav-next">
         {next ? (
           <Link href={`/math/group/${next.id}`}>
-            <div className="gt-section-nav-dir">{lang === 'zh' ? '下一节' : 'next'} →</div>
+            <div className="gt-section-nav-dir">{tr({ zh: '下一节', en: 'next',
+                zhHant: "下一節"
+            })} →</div>
             <div className="gt-section-nav-num">§{next.num}</div>
-            <div className="gt-section-nav-title">{lang === 'zh' ? next.zh : next.en}</div>
+            <div className="gt-section-nav-title">{(i18n.language.startsWith('zh') ? next.zh : next.en)}</div>
           </Link>
         ) : <div className="gt-section-nav-empty" />}
       </div>
@@ -15630,67 +17134,124 @@ function SectionNav({ slug, lang }: { slug: string; lang: Lang }) {
 }
 
 const TOC: { id: string; num: string; zh: string; en: string }[] = [
-  { id: 'what-is-a-group',   num: '1',  zh: '什么是群',                 en: 'What is a group?' },
+  { id: 'what-is-a-group',   num: '1',  zh: '什么是群',                 en: 'What is a group?'
+},
   { id: 'cube-group',         num: '2',  zh: '魔方群 G',                 en: 'The cube group G' },
-  { id: 'state-vector',       num: '3',  zh: '状态向量 (cp, co, ep, eo)', en: 'State vector' },
-  { id: 'order',              num: '4',  zh: 'G 的阶',                  en: 'The order |G|' },
-  { id: 'invariants',         num: '5',  zh: '三个守恒律 + 证明',         en: 'Three invariants + proofs' },
-  { id: 'structure',          num: '6',  zh: '结构定理',                 en: 'Structure theorem' },
-  { id: 'order-of-element',   num: '7',  zh: '元素的阶',                 en: 'Order of an element' },
-  { id: 'conjugation',        num: '8',  zh: '共轭与共轭类',              en: 'Conjugation' },
-  { id: 'commutators',        num: '9',  zh: '换位子 + 中心',            en: 'Commutators + centre' },
-  { id: 'thistlethwaite',     num: '10', zh: 'Thistlethwaite 子群链',    en: 'Subgroup chain' },
-  { id: 'gods-number',        num: '11', zh: '上帝之数 = 20',           en: "God's number = 20" },
-  { id: 'beyond',             num: '12', zh: '走得更远',                en: 'Beyond the cube' },
-  { id: 'patterns',           num: '13', zh: '著名图案画廊',             en: 'Famous patterns' },
-  { id: 'cayley',             num: '14', zh: 'Cayley 图',              en: 'Cayley graph' },
-  { id: 'other-puzzles',      num: '15', zh: '其它扭转拼图',             en: 'Other twisting puzzles' },
-  { id: 'open-problems',      num: '16', zh: '未解问题',                 en: 'Open problems' },
-  { id: 'homomorphisms',      num: '17', zh: '同态与第一同构定理',        en: 'Homomorphisms' },
+  { id: 'state-vector',       num: '3',  zh: '状态向量 (cp, co, ep, eo)', en: 'State vector'
+},
+  { id: 'order',              num: '4',  zh: 'G 的阶',                  en: 'The order |G|'
+},
+  { id: 'invariants',         num: '5',  zh: '三个守恒律 + 证明',         en: 'Three invariants + proofs'
+},
+  { id: 'structure',          num: '6',  zh: '结构定理',                 en: 'Structure theorem'
+},
+  { id: 'order-of-element',   num: '7',  zh: '元素的阶',                 en: 'Order of an element'
+},
+  { id: 'conjugation',        num: '8',  zh: '共轭与共轭类',              en: 'Conjugation'
+},
+  { id: 'commutators',        num: '9',  zh: '换位子 + 中心',            en: 'Commutators + centre'
+},
+  { id: 'thistlethwaite',     num: '10', zh: 'Thistlethwaite 子群链',    en: 'Subgroup chain'
+},
+  { id: 'gods-number',        num: '11', zh: '上帝之数 = 20',           en: "God's number = 20"
+},
+  { id: 'beyond',             num: '12', zh: '走得更远',                en: 'Beyond the cube'
+},
+  { id: 'patterns',           num: '13', zh: '著名图案画廊',             en: 'Famous patterns'
+},
+  { id: 'cayley',             num: '14', zh: 'Cayley 图',              en: 'Cayley graph'
+},
+  { id: 'other-puzzles',      num: '15', zh: '其它扭转拼图',             en: 'Other twisting puzzles'
+},
+  { id: 'open-problems',      num: '16', zh: '未解问题',                 en: 'Open problems'
+},
+  { id: 'homomorphisms',      num: '17', zh: '同态与第一同构定理',        en: 'Homomorphisms'
+},
   { id: 'actions-burnside',   num: '18', zh: '群作用 + Burnside',         en: 'Group actions + Burnside' },
   { id: 'lagrange',           num: '19', zh: '拉格朗日定理 + 陪集',        en: 'Lagrange + cosets' },
-  { id: 'quotient',           num: '20', zh: '正规子群 + 商群',            en: 'Normal subgroups + quotients' },
-  { id: 'permutation-groups', num: '21', zh: '置换群 Sₙ 与交错群 Aₙ',       en: 'Symmetric & alternating groups' },
-  { id: 'algorithms',         num: '22', zh: '解魔方的算法',               en: 'Solving algorithms' },
-  { id: 'distance',           num: '23', zh: '距离分布与 20 步证明',       en: 'Distance distribution' },
-  { id: 'random-walks',       num: '24', zh: '群上的随机游走',             en: 'Random walks on G' },
-  { id: 'computational',      num: '25', zh: '计算群论:BSGS 与 Schreier–Sims', en: 'Computational group theory' },
-  { id: 'representations',    num: '26', zh: '表示论一瞥',                en: 'A glimpse of representation theory' },
-  { id: 'lights-out',         num: '27', zh: 'Lights Out 与 𝔽₂ 线性代数',  en: 'Lights Out · linear algebra over 𝔽₂' },
-  { id: 'peg-solitaire',      num: '28', zh: '孔明棋 · 三染色不变量',       en: 'Peg solitaire · 3-colouring invariant' },
-  { id: 'hamiltonian',        num: '29', zh: 'Hamilton 路径 + Gray 码',     en: 'Hamiltonian paths + Gray codes' },
-  { id: 'two-face-pgl',       num: '30', zh: '两面 6 角 ≅ PGL₂(𝔽₅) ≅ S₅',  en: 'Two-face corners ≅ PGL₂(𝔽₅) ≅ S₅' },
-  { id: 'rotational-puzzles', num: '31', zh: '图上的旋转拼图 · (x,y,z)',    en: 'Rotational puzzles on graphs · (x,y,z)' },
-  { id: 'useful-math',        num: '32', zh: '有用数学 · 排列可视化',         en: 'Useful mathematics · permutation visualiser' },
-  { id: 'wreath-product',      num: '33', zh: '圈积 Wreath',                en: 'Wreath products' },
-  { id: 'semidirect-product',  num: '34', zh: '半直积',                    en: 'Semidirect products' },
+  { id: 'quotient',           num: '20', zh: '正规子群 + 商群',            en: 'Normal subgroups + quotients'
+},
+  { id: 'permutation-groups', num: '21', zh: '置换群 Sₙ 与交错群 Aₙ',       en: 'Symmetric & alternating groups'
+},
+  { id: 'algorithms',         num: '22', zh: '解魔方的算法',               en: 'Solving algorithms'
+},
+  { id: 'distance',           num: '23', zh: '距离分布与 20 步证明',       en: 'Distance distribution'
+},
+  { id: 'random-walks',       num: '24', zh: '群上的随机游走',             en: 'Random walks on G'
+},
+  { id: 'computational',      num: '25', zh: '计算群论:BSGS 与 Schreier–Sims', en: 'Computational group theory'
+},
+  { id: 'representations',    num: '26', zh: '表示论一瞥',                en: 'A glimpse of representation theory'
+},
+  { id: 'lights-out',         num: '27', zh: 'Lights Out 与 𝔽₂ 线性代数',  en: 'Lights Out · linear algebra over 𝔽₂'
+},
+  { id: 'peg-solitaire',      num: '28', zh: '孔明棋 · 三染色不变量',       en: 'Peg solitaire · 3-colouring invariant'
+},
+  { id: 'hamiltonian',        num: '29', zh: 'Hamilton 路径 + Gray 码',     en: 'Hamiltonian paths + Gray codes'
+},
+  { id: 'two-face-pgl',       num: '30', zh: '两面 6 角 ≅ PGL₂(𝔽₅) ≅ S₅',  en: 'Two-face corners ≅ PGL₂(𝔽₅) ≅ S₅'
+},
+  { id: 'rotational-puzzles', num: '31', zh: '图上的旋转拼图 · (x,y,z)',    en: 'Rotational puzzles on graphs · (x,y,z)'
+},
+  { id: 'useful-math',        num: '32', zh: '有用数学 · 排列可视化',         en: 'Useful mathematics · permutation visualiser'
+},
+  { id: 'wreath-product',      num: '33', zh: '圈积 Wreath',                en: 'Wreath products'
+},
+  { id: 'semidirect-product',  num: '34', zh: '半直积',                    en: 'Semidirect products'
+},
   { id: 'sylow',               num: '35', zh: 'Sylow 定理',                en: 'Sylow theorems' },
-  { id: 'composition-series',  num: '36', zh: '合成列与 Jordan–Hölder',    en: 'Composition series' },
-  { id: 'solvable-nilpotent',  num: '37', zh: '可解群与幂零群',            en: 'Solvable & nilpotent' },
-  { id: 'abelian-classification', num: '38', zh: '有限阿贝尔群基本定理',    en: 'Finite abelian groups' },
-  { id: 'automorphism-group',  num: '39', zh: '自同构群 Aut(G)',           en: 'Automorphism groups' },
-  { id: 'cyclic-modular',      num: '40', zh: '循环群与模算术',            en: 'Cyclic & modular' },
-  { id: 'dihedral',            num: '41', zh: '二面体群 Dₙ',               en: 'Dihedral groups' },
-  { id: 'platonic-symmetry',   num: '42', zh: '柏拉图立体的对称群',        en: 'Platonic symmetry' },
-  { id: 'frieze-groups',       num: '43', zh: '七种带饰群',                en: 'The 7 frieze groups' },
-  { id: 'wallpaper-groups',    num: '44', zh: '十七种墙纸群',              en: 'The 17 wallpaper groups' },
-  { id: 'point-groups-crystal', num: '45', zh: '点群与晶体学',             en: 'Point groups & crystals' },
-  { id: 'reflection-coxeter',  num: '46', zh: '反射群与 Coxeter 群',       en: 'Reflection & Coxeter' },
+  { id: 'composition-series',  num: '36', zh: '合成列与 Jordan–Hölder',    en: 'Composition series'
+},
+  { id: 'solvable-nilpotent',  num: '37', zh: '可解群与幂零群',            en: 'Solvable & nilpotent'
+},
+  { id: 'abelian-classification', num: '38', zh: '有限阿贝尔群基本定理',    en: 'Finite abelian groups'
+},
+  { id: 'automorphism-group',  num: '39', zh: '自同构群 Aut(G)',           en: 'Automorphism groups'
+},
+  { id: 'cyclic-modular',      num: '40', zh: '循环群与模算术',            en: 'Cyclic & modular'
+},
+  { id: 'dihedral',            num: '41', zh: '二面体群 Dₙ',               en: 'Dihedral groups'
+},
+  { id: 'platonic-symmetry',   num: '42', zh: '柏拉图立体的对称群',        en: 'Platonic symmetry'
+},
+  { id: 'frieze-groups',       num: '43', zh: '七种带饰群',                en: 'The 7 frieze groups'
+},
+  { id: 'wallpaper-groups',    num: '44', zh: '十七种墙纸群',              en: 'The 17 wallpaper groups'
+},
+  { id: 'point-groups-crystal', num: '45', zh: '点群与晶体学',             en: 'Point groups & crystals'
+},
+  { id: 'reflection-coxeter',  num: '46', zh: '反射群与 Coxeter 群',       en: 'Reflection & Coxeter'
+},
   { id: 'plane-isometries',    num: '47', zh: '平面等距群',                en: 'Plane isometries' },
-  { id: 'polya-cube-colorings', num: '48', zh: '数立方体染色 (Burnside–Pólya)', en: 'Counting cube colourings' },
-  { id: 'cycle-index',         num: '49', zh: '轮换指标多项式',            en: 'Cycle-index polynomial' },
-  { id: 'class-equation',      num: '50', zh: '类方程',                    en: 'The class equation' },
-  { id: 'character-table',     num: '51', zh: '特征标表',                  en: 'Character tables' },
-  { id: 'young-tableaux',      num: '52', zh: 'Young 图与 Sₙ 表示',        en: 'Young tableaux' },
-  { id: 'representation-basics', num: '53', zh: '表示与不可约分解',        en: 'Representations' },
-  { id: 'fourier-on-groups',   num: '54', zh: '群上的傅里叶分析',          en: 'Fourier on groups' },
-  { id: 'quaternion-group',    num: '55', zh: '四元数群 Q₈',              en: 'Quaternion group Q₈' },
-  { id: 'free-groups',         num: '56', zh: '自由群与约简字',            en: 'Free groups' },
+  { id: 'polya-cube-colorings', num: '48', zh: '数立方体染色 (Burnside–Pólya)', en: 'Counting cube colourings'
+},
+  { id: 'cycle-index',         num: '49', zh: '轮换指标多项式',            en: 'Cycle-index polynomial'
+},
+  { id: 'class-equation',      num: '50', zh: '类方程',                    en: 'The class equation'
+},
+  { id: 'character-table',     num: '51', zh: '特征标表',                  en: 'Character tables'
+},
+  { id: 'young-tableaux',      num: '52', zh: 'Young 图与 Sₙ 表示',        en: 'Young tableaux'
+},
+  { id: 'representation-basics', num: '53', zh: '表示与不可约分解',        en: 'Representations'
+},
+  { id: 'fourier-on-groups',   num: '54', zh: '群上的傅里叶分析',          en: 'Fourier on groups'
+},
+  { id: 'quaternion-group',    num: '55', zh: '四元数群 Q₈',              en: 'Quaternion group Q₈'
+},
+  { id: 'free-groups',         num: '56', zh: '自由群与约简字',            en: 'Free groups'
+},
   { id: 'cayley-theorem',      num: '57', zh: 'Cayley 定理',              en: "Cayley's theorem" },
-  { id: 'orbit-stabilizer',    num: '58', zh: '轨道–稳定子定理',          en: 'Orbit–stabiliser' },
-  { id: 'matrix-lie-groups',   num: '59', zh: '矩阵群与李群',              en: 'Matrix & Lie groups' },
-  { id: 'galois-connection',   num: '60', zh: '伽罗瓦理论与可解性',        en: 'Galois & solvability' },
-  { id: 'growth-of-groups',    num: '61', zh: '群的增长',                  en: 'Growth of groups' },
-  { id: 'expander-ramanujan',  num: '62', zh: '扩张图与 Ramanujan 图',     en: 'Expanders & Ramanujan' },
-  { id: 'refs',               num: 'REF', zh: '参考文献',                   en: 'References' },
+  { id: 'orbit-stabilizer',    num: '58', zh: '轨道–稳定子定理',          en: 'Orbit–stabiliser'
+},
+  { id: 'matrix-lie-groups',   num: '59', zh: '矩阵群与李群',              en: 'Matrix & Lie groups'
+},
+  { id: 'galois-connection',   num: '60', zh: '伽罗瓦理论与可解性',        en: 'Galois & solvability'
+},
+  { id: 'growth-of-groups',    num: '61', zh: '群的增长',                  en: 'Growth of groups'
+},
+  { id: 'expander-ramanujan',  num: '62', zh: '扩张图与 Ramanujan 图',     en: 'Expanders & Ramanujan'
+},
+  { id: 'refs',               num: 'REF', zh: '参考文献',                   en: 'References'
+},
 ];

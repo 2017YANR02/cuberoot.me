@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './sql_intro.css';
-
+import i18n from '@/i18n/i18n-client';
 // Stylized cylinder DB logo — three stacked ellipses with a SELECT wordmark
 const SQL_LOGO_SVG = (
   <svg viewBox="0 0 256 256">
@@ -453,7 +453,7 @@ const FUTURE_CARDS: FutureCard[] = [
 
 export default function SqlIntroPage() {
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
 
   useDocumentTitle(
@@ -859,7 +859,7 @@ export default function SqlIntroPage() {
               ].map((a, i) => (
                 <div className="anti-card" key={i}>
                   <div className="anti-h">{a.h}</div>
-                  <p>{lang === 'zh' ? a.zh : a.en}</p>
+                  <p>{(i18n.language.startsWith('zh') ? a.zh : a.en)}</p>
                 </div>
               ))}
             </div>

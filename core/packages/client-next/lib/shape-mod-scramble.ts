@@ -18,16 +18,24 @@ export interface ShapeModEvent {
   textLabel?: string;
   zh: string;
   en: string;
+  zhHant?: string;
 }
 
 export const SHAPE_MOD_EVENTS: ReadonlyArray<ShapeModEvent> = [
-  { id: 'mirror_333',       scrambleSourceId: '333', zh: '镜面魔方',     en: 'Mirror Blocks',   iconClass: 'unofficial-333_mirror_blocks' },
-  { id: 'pyramorphix',      scrambleSourceId: '222', zh: '二阶金字塔',   en: 'Pyramorphix',     iconClass: 'unofficial-pyramorphix' },
-  { id: 'mastermorphix',    scrambleSourceId: '333', zh: '三阶金字塔',   en: 'Mastermorphix',   textLabel: 'MMx' },
-  { id: 'fisher_333',       scrambleSourceId: '333', zh: '费舍尔魔方',   en: 'Fisher Cube',     iconClass: 'unofficial-fisher' },
-  { id: 'axis_333',         scrambleSourceId: '333', zh: '轴方',         en: 'Axis Cube',       textLabel: 'Axis' },
-  { id: 'windmill_333',     scrambleSourceId: '333', zh: '风火轮',       en: 'Windmill',        textLabel: 'Wind' },
-  { id: 'ghost_333',        scrambleSourceId: '333', zh: '幽灵魔方',     en: 'Ghost Cube',      textLabel: 'Ghost' },
+  { id: 'mirror_333',       scrambleSourceId: '333', zh: '镜面魔方',     en: 'Mirror Blocks',   iconClass: 'unofficial-333_mirror_blocks'
+},
+  { id: 'pyramorphix',      scrambleSourceId: '222', zh: '二阶金字塔',   en: 'Pyramorphix',     iconClass: 'unofficial-pyramorphix'
+},
+  { id: 'mastermorphix',    scrambleSourceId: '333', zh: '三阶金字塔',   en: 'Mastermorphix',   textLabel: 'MMx'
+},
+  { id: 'fisher_333',       scrambleSourceId: '333', zh: '费舍尔魔方',   en: 'Fisher Cube',     iconClass: 'unofficial-fisher'
+},
+  { id: 'axis_333',         scrambleSourceId: '333', zh: '轴方',         en: 'Axis Cube',       textLabel: 'Axis'
+},
+  { id: 'windmill_333',     scrambleSourceId: '333', zh: '风火轮',       en: 'Windmill',        textLabel: 'Wind'
+},
+  { id: 'ghost_333',        scrambleSourceId: '333', zh: '幽灵魔方',     en: 'Ghost Cube',      textLabel: 'Ghost'
+},
   { id: 'void_333',         scrambleSourceId: '333', zh: '空心魔方',     en: 'Void Cube',       textLabel: 'Void' },
 ];
 

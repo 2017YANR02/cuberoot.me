@@ -12,6 +12,7 @@ import { OLL_CASES } from '../_lib/scramble/algs/oll_cases';
 import { PLL_CASES } from '../_lib/scramble/algs/pll_cases';
 import type { DrillType } from '../_lib/scramble/drill';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   isZh: boolean;
@@ -115,7 +116,9 @@ export default function DrillModal({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id={titleId}>
-          {isZh ? '专项练习' : 'Drill mode'}
+          {tr({ zh: '专项练习', en: 'Drill mode',
+              zhHant: "專項練習"
+        })}
           <span className="trainer-subset-count"> ({total})</span>
         </h2>
 
@@ -147,14 +150,18 @@ export default function DrillModal({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={searchPlaceholder}
-          aria-label={isZh ? '搜索 case' : 'Search cases'}
+          aria-label={tr({ zh: '搜索 case', en: 'Search cases',
+              zhHant: "搜尋 case"
+        })}
           style={searchStyle}
         />
 
         <div className="trainer-subset-body" style={bodyStyle}>
           {matchedCount === 0 ? (
             <div style={{ color: '#888', fontSize: 13, padding: '12px 4px' }}>
-              {isZh ? '无匹配结果' : 'No matches'}
+              {tr({ zh: '无匹配结果', en: 'No matches',
+                  zhHant: "無匹配結果"
+            })}
             </div>
           ) : (
             groups.map((g, gi) => (
@@ -187,7 +194,9 @@ export default function DrillModal({
         </div>
 
         <div className="modal-actions">
-          <button type="button" onClick={onClose}>{isZh ? '关闭' : 'Close'}</button>
+          <button type="button" onClick={onClose}>{tr({ zh: '关闭', en: 'Close',
+              zhHant: "關閉"
+        })}</button>
         </div>
       </div>
     </div>

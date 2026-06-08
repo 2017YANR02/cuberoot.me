@@ -7,6 +7,7 @@ import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import type { CSSProperties } from 'react';
 import { WheelPicker } from './WheelPicker';
 import './year-month-picker.css';
+import { tr } from '@/i18n/tr';
 
 export function YearMonthPickerPopover({ year, month, yearMonthsMap, anchor, onCommit, isZh }: {
   year: number;
@@ -110,7 +111,7 @@ export function YearMonthPickerPopover({ year, month, yearMonthsMap, anchor, onC
           renderSlot={yearRenderSlot}
           onChange={setPendingYIdx}
           width={96}
-          ariaLabel={isZh ? '年' : 'Year'}
+          ariaLabel={tr({ zh: '年', en: 'Year' })}
         />
         <WheelPicker
           value={pendingMIdx}
@@ -119,7 +120,7 @@ export function YearMonthPickerPopover({ year, month, yearMonthsMap, anchor, onC
           renderSlot={monthRenderSlot}
           onChange={monthOnChange}
           width={80}
-          ariaLabel={isZh ? '月' : 'Month'}
+          ariaLabel={tr({ zh: '月', en: 'Month' })}
         />
       </div>
     </div>

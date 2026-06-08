@@ -13,6 +13,7 @@ import { useMemo } from 'react';
 import { CheckCircle2, Flame } from 'lucide-react';
 import type { Solve } from '../_lib/types';
 import { countSolvesToday, consecutiveGoalDays } from '../_lib/storage/goals';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   solves: Solve[];
@@ -78,13 +79,15 @@ export default function GoalProgress({ solves, goal, isZh }: Props) {
     fontVariantNumeric: 'tabular-nums',
   };
 
-  const label = isZh ? '今日目标' : 'today';
+  const label = tr({ zh: '今日目标', en: 'today',
+      zhHant: "今日目標"
+});
   const streakLabel = isZh
     ? `${streak} 天连续达标`
     : `${streak} day${streak === 1 ? '' : 's'} streak`;
-  const streakTitle = isZh
-    ? '连续每日达成日目标'
-    : 'Consecutive days hitting the daily goal';
+  const streakTitle = tr({ zh: '连续每日达成日目标', en: 'Consecutive days hitting the daily goal',
+      zhHant: "連續每日達成日目標"
+});
 
   return (
     <div

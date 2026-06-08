@@ -24,6 +24,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import Link from '@/components/AppLink';
 import { HelpCircle } from 'lucide-react';
 import './viz.css';
+import { tr } from '@/i18n/tr';
 
 // NOTE: WCA 项目列表
 const EVENTS = [
@@ -141,7 +142,9 @@ export default function VizPage() {
 
   // NOTE: 标题文本（JSX 形式以便嵌国旗）
   const evLabel = currentEventId === '333' ? '3×3' : currentEventId;
-  const noPlayerTitle = isZh ? '分布演变' : 'Distribution Evolution';
+  const noPlayerTitle = tr({ zh: '分布演变', en: 'Distribution Evolution',
+      zhHant: "分佈演變"
+});
   const renderName = (p: typeof players[number]) => {
     const iso2 = personFlagIso2(p.wcaId);
     const name = isZh ? p.nameZh : p.name;
@@ -158,7 +161,9 @@ export default function VizPage() {
     const p = players[0];
     titleNode = (
       <>
-        {renderName(p)} {evLabel} {isZh ? '分布演变' : 'Distribution Evolution'}
+        {renderName(p)} {evLabel} {tr({ zh: '分布演变', en: 'Distribution Evolution',
+            zhHant: "分佈演變"
+        })}
       </>
     );
     metaNode = `${p.name} · ${p.wcaId} · ${p.solveData.length} solves`;
@@ -171,7 +176,9 @@ export default function VizPage() {
             {renderName(p)}
           </span>
         ))}
-        {' '}{evLabel} {isZh ? '分布对比' : 'Distribution Comparison'}
+        {' '}{evLabel} {tr({ zh: '分布对比', en: 'Distribution Comparison',
+            zhHant: "分佈對比"
+        })}
       </>
     );
     metaNode = players.map(p => `${p.name}(${p.solveData.length})`).join(' · ');
@@ -190,8 +197,12 @@ export default function VizPage() {
             <Link
               href="/wca/viz-about"
               className="viz-title-help"
-              title={isZh ? '这页是干啥的?' : 'What is this page?'}
-              aria-label={isZh ? '查看说明' : 'About this page'}
+              title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+                  zhHant: "這頁是幹啥的?"
+            })}
+              aria-label={tr({ zh: '查看说明', en: 'About this page',
+                  zhHant: "檢視說明"
+            })}
             >
               <HelpCircle size={16} strokeWidth={1.75} />
             </Link>
@@ -206,7 +217,9 @@ export default function VizPage() {
         <div className="toolbar-search">
           <WcaPersonPicker
             mode="inline"
-            placeholder={isZh ? '搜索选手...' : 'Search cuber...'}
+            placeholder={tr({ zh: '搜索选手...', en: 'Search cuber...',
+                zhHant: "搜尋選手..."
+            })}
             onSelect={handlePersonSelect}
           />
         </div>
@@ -221,7 +234,9 @@ export default function VizPage() {
           ))}
         </select>
         <div style={{ position: 'relative' }}>
-          <button className="toolbar-btn" title={isZh ? '下载 CSV' : 'Download CSV'} onClick={handleCsvDownload}>
+          <button className="toolbar-btn" title={tr({ zh: '下载 CSV', en: 'Download CSV',
+              zhHant: "下載 CSV"
+        })} onClick={handleCsvDownload}>
             📥 CSV
           </button>
           {csvMenuOpen && players.length > 1 && (
@@ -248,9 +263,15 @@ export default function VizPage() {
         <PlayControls />
 
         <div className="shortcuts-hint">
-          <kbd>Space</kbd> {isZh ? '播放/暂停' : 'Play/Pause'}&nbsp;
-          <kbd>←</kbd><kbd>→</kbd> {isZh ? '步进' : 'Step'}&nbsp;
-          <kbd>Shift</kbd>+<kbd>←</kbd><kbd>→</kbd> {isZh ? '快进' : 'Fast-forward'}
+          <kbd>Space</kbd> {tr({ zh: '播放/暂停', en: 'Play/Pause',
+              zhHant: "播放/暫停"
+        })}&nbsp;
+          <kbd>←</kbd><kbd>→</kbd> {tr({ zh: '步进', en: 'Step',
+              zhHant: "步進"
+        })}&nbsp;
+          <kbd>Shift</kbd>+<kbd>←</kbd><kbd>→</kbd> {tr({ zh: '快进', en: 'Fast-forward',
+              zhHant: "快進"
+        })}
         </div>
 
         <RidgelineCanvas highlightSolveIdx={ridgeHighlight} />

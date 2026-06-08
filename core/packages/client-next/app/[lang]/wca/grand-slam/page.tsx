@@ -21,6 +21,8 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { apiUrl } from '@/lib/api-base';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const EVENTS = [
   '333','222','444','555','666','777',
@@ -88,24 +90,30 @@ function GrandSlamPageInner() {
       <header className="wse-header">
         <div className="wse-header-row">
           <Link href={`/wca?lang=${i18n.language}`} className="wse-back">
-            <ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}
+            <ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}
           </Link>
         </div>
         <h1 className="wse-title-row">
-          {isZh ? '大满贯' : 'Grand Slam'}
+          {tr({ zh: '大满贯', en: 'Grand Slam',
+              zhHant: "大滿貫"
+        })}
           <Link
             href="/wca/about/grand-slam"
             className="wse-title-help"
-            title={isZh ? '这页是干啥的?' : 'What is this page?'}
-            aria-label={isZh ? '查看说明' : 'About this page'}
+            title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+                zhHant: "這頁是幹啥的?"
+            })}
+            aria-label={tr({ zh: '查看说明', en: 'About this page',
+                zhHant: "檢視說明"
+            })}
           >
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
         </h1>
         <p className="wse-subtitle">
-          {isZh
-            ? '单个项目里,某位选手同时获得世锦赛领奖台、所属洲际赛领奖台、所属国家赛领奖台,且打破过该项目 WR,即达成该项目大满贯。默认采用领奖台最佳且最早的比赛。注意:部分世锦赛 / 洲际赛可能同时被算作举办国的国家锦标赛。'
-            : 'For a single event, a cuber achieves Grand Slam by podium at Worlds + their Continental + their National championship AND having broken WR. Defaults to the best & earliest podium. Note: some World/Continental championships also count as the host country’s nationals.'}
+          {tr({ zh: '单个项目里,某位选手同时获得世锦赛领奖台、所属洲际赛领奖台、所属国家赛领奖台,且打破过该项目 WR,即达成该项目大满贯。默认采用领奖台最佳且最早的比赛。注意:部分世锦赛 / 洲际赛可能同时被算作举办国的国家锦标赛。', en: 'For a single event, a cuber achieves Grand Slam by podium at Worlds + their Continental + their National championship AND having broken WR. Defaults to the best & earliest podium. Note: some World/Continental championships also count as the host country’s nationals.',
+              zhHant: "單個專案裡,某位選手同時獲得世錦賽領獎臺、所屬洲際賽領獎臺、所屬國家賽領獎臺,且打破過該專案 WR,即達成該專案大滿貫。預設採用領獎臺最佳且最早的比賽。注意:部分世錦賽 / 洲際賽可能同時被算作舉辦國的國家錦標賽。"
+        })}
         </p>
       </header>
 
@@ -119,27 +127,33 @@ function GrandSlamPageInner() {
 
       <div className="wse-filters">
         <div className="wse-filter">
-          <label>{isZh ? '筛选' : 'Filter'}</label>
+          <label>{tr({ zh: '筛选', en: 'Filter',
+              zhHant: "篩選"
+        })}</label>
           <PillToggle
             value={onlyFirst}
             onChange={v => setParam('onlyFirst', v ? '1' : '')}
-            offLabel={isZh ? '全部' : 'All'}
-            onLabel={isZh ? '仅全部第一' : 'Only all gold'}
+            offLabel={tr({ zh: '全部', en: 'All' })}
+            onLabel={tr({ zh: '仅全部第一', en: 'Only all gold',
+                zhHant: "僅全部第一"
+            })}
           />
         </div>
         <div className="wse-filter">
-          <label>{isZh ? '破 WR' : 'Broke WR'}</label>
+          <label>{tr({ zh: '破 WR', en: 'Broke WR' })}</label>
           <PillToggle
             value={hasWr}
             onChange={v => setParam('hasWr', v ? '1' : '')}
-            offLabel={isZh ? '全部' : 'All'}
-            onLabel={isZh ? '是' : 'Yes'}
+            offLabel={tr({ zh: '全部', en: 'All' })}
+            onLabel={tr({ zh: '是', en: 'Yes' })}
           />
         </div>
       </div>
 
       <div className="wse-table-wrapper">
-        {loading && <div className="wse-state">{isZh ? '加载中...' : 'Loading...'}</div>}
+        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...',
+            zhHant: "載入中..."
+        })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {!loading && !error && (
           <>
@@ -150,14 +164,26 @@ function GrandSlamPageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{isZh ? '选手' : 'Person'}</th>
-                  <th>{isZh ? '项目' : 'Event'}</th>
-                  <th className="wse-value-col">{isZh ? '单次' : 'Single'}</th>
-                  <th className="wse-value-col">{isZh ? '平均' : 'Average'}</th>
+                  <th>{tr({ zh: '选手', en: 'Person',
+                      zhHant: "選手"
+                })}</th>
+                  <th>{tr({ zh: '项目', en: 'Event',
+                      zhHant: "專案"
+                })}</th>
+                  <th className="wse-value-col">{tr({ zh: '单次', en: 'Single',
+                      zhHant: "單次"
+                })}</th>
+                  <th className="wse-value-col">{tr({ zh: '平均', en: 'Average' })}</th>
                   <th>WR</th>
-                  <th>{isZh ? '世锦赛' : 'World'}</th>
-                  <th>{isZh ? '洲际赛' : 'Continental'}</th>
-                  <th>{isZh ? '国家赛' : 'National'}</th>
+                  <th>{tr({ zh: '世锦赛', en: 'World',
+                      zhHant: "世錦賽"
+                })}</th>
+                  <th>{tr({ zh: '洲际赛', en: 'Continental',
+                      zhHant: "洲際賽"
+                })}</th>
+                  <th>{tr({ zh: '国家赛', en: 'National',
+                      zhHant: "國家賽"
+                })}</th>
                 </tr>
               </thead>
               <tbody>
@@ -166,7 +192,7 @@ function GrandSlamPageInner() {
                     <td className="wse-rank-col">{i + 1}</td>
                     <td>
                       {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                      <Link prefetch={false} href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>
+                      <Link prefetch={false} href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${r.wcaId}`}>
                         {displayCuberName(r.name, isZh)}
                       </Link>
                     </td>

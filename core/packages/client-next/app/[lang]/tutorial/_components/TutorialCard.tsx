@@ -2,6 +2,7 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { FileText } from 'lucide-react';
 import type { CatalogEntry, Lang } from '../_lib/useTutorialCatalog';
+import { tr } from '@/i18n/tr';
 
 interface TutorialCardProps {
   entry: CatalogEntry;
@@ -31,12 +32,18 @@ export function TutorialCard({ entry, lang }: TutorialCardProps) {
           <span className="tutorial-category-badge">{entry.category}</span>
           {entry.algCount > 0 && (
             <span className="tutorial-tutorial-count">
-              {entry.algCount} {entry.view === 'algset' ? (isZh ? '个情况' : 'cases') : (isZh ? '个公式' : 'algs')}
+              {entry.algCount} {entry.view === 'algset' ? (tr({ zh: '个情况', en: 'cases',
+                  zhHant: "個情況"
+            })) : (tr({ zh: '个公式', en: 'algs',
+                zhHant: "個公式"
+            }))}
             </span>
           )}
         </div>
       </div>
-      {entry.view === 'algset' && <span className="tutorial-corner-badge">{isZh ? '公共库' : 'PUBLIC LIB'}</span>}
+      {entry.view === 'algset' && <span className="tutorial-corner-badge">{tr({ zh: '公共库', en: 'PUBLIC LIB',
+          zhHant: "公共庫"
+    })}</span>}
     </Link>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── Math helpers ─────────────────────────────────────────────────────────────
 
@@ -659,7 +660,9 @@ export default function AutomorphismGroup() {
             <span className="gt-result-val" style={{ color: cyclic ? 'var(--green)' : 'var(--warn)', fontWeight: 600 }}>
               {cyclic
                 ? (isZh ? `是 — 最小原根 g = ${primitiveRoot}` : `Yes — smallest primitive root g = ${primitiveRoot}`)
-                : (isZh ? '否（无原根）' : 'No (no primitive root)')}
+                : (tr({ zh: '否（无原根）', en: 'No (no primitive root)',
+                    zhHant: "否（無原根）"
+                }))}
             </span>
           </div>
           {cyclic && primitiveRoot != null && (
@@ -864,7 +867,9 @@ export default function AutomorphismGroup() {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginTop: 20, alignItems: 'flex-start', justifyContent: 'center' }}>
           {/* Triangle SVG */}
           <div style={{ maxWidth: 220, width: '100%' }}>
-            <svg viewBox="0 0 200 200" width="100%" aria-label={isZh ? 'V4 三角形自同构图' : 'V4 automorphism triangle'}>
+            <svg viewBox="0 0 200 200" width="100%" aria-label={tr({ zh: 'V4 三角形自同构图', en: 'V4 automorphism triangle',
+                zhHant: "V4 三角形自同構圖"
+            })}>
               <defs>
                 <marker id="arrowV4" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
                   <path d="M0,0 L7,3.5 L0,7 Z" fill="var(--accent-2)" />
@@ -937,7 +942,9 @@ export default function AutomorphismGroup() {
             </div>
             <div style={{ fontFamily: 'var(--mono)', fontSize: 15, marginBottom: 10 }}>
               {v4AutLabel(selAut) === 'id'
-                ? (isZh ? '恒等映射 id' : 'Identity id')
+                ? (tr({ zh: '恒等映射 id', en: 'Identity id',
+                    zhHant: "恆等對映 id"
+                }))
                 : v4AutLabel(selAut)}
             </div>
             <div style={{ fontSize: 13, lineHeight: 1.8 }}>
@@ -1120,8 +1127,8 @@ export default function AutomorphismGroup() {
               fontWeight: 600
             }}>
               {innSize === grp.n / centerActual.length
-                ? (isZh ? '✓ 一致' : '✓ Consistent')
-                : (isZh ? '✗ 不一致' : '✗ Mismatch')}
+                ? (tr({ zh: '✓ 一致', en: '✓ Consistent' }))
+                : (tr({ zh: '✗ 不一致', en: '✗ Mismatch' }))}
             </span>
           </div>
         </div>

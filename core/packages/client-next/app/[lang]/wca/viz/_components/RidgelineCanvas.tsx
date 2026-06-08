@@ -12,6 +12,7 @@ import {
 } from '../_renderers/ridgeline_renderer';
 import type { RidgeGroup } from '../_renderers/ridgeline_renderer';
 import type { KDEPoint } from '../_engine/kde';
+import { tr } from '@/i18n/tr';
 
 interface RidgelineCanvasProps {
   highlightSolveIdx: number;
@@ -143,7 +144,9 @@ export default function RidgelineCanvas({ highlightSolveIdx }: RidgelineCanvasPr
   return (
     <>
       <div className="section-divider" />
-      <h2 className="section-title">{isZh ? '分布全景' : 'Distribution overview'}</h2>
+      <h2 className="section-title">{tr({ zh: '分布全景', en: 'Distribution overview',
+          zhHant: "分佈全景"
+    })}</h2>
       <div className="ridgeline-wrapper" ref={wrapperRef}>
         <canvas ref={canvasRef} id="ridgelineCanvas" onClick={onClick} />
       </div>

@@ -15,6 +15,7 @@ import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags
 import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
 import './recent_scrambles.css';
+import { tr } from '@/i18n/tr';
 
 interface Props { lang: 'zh' | 'en' }
 
@@ -30,13 +31,18 @@ interface RecentScramblesJson {
 
 const VARIANT_ORDER = ['std', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo'];
 const VARIANT_LABEL: Record<string, { zh: string; en: string }> = {
-  std: { zh: '标准', en: 'Standard' },
+  std: { zh: '标准', en: 'Standard'
+},
   eo: { zh: 'EO', en: 'EO' },
-  pseudo: { zh: '伪', en: 'Pseudo' },
-  pseudo_pair: { zh: '伪基态', en: 'Pseudo Pair' },
-  pair: { zh: '基态', en: 'Pair' },
+  pseudo: { zh: '伪', en: 'Pseudo'
+},
+  pseudo_pair: { zh: '伪基态', en: 'Pseudo Pair'
+},
+  pair: { zh: '基态', en: 'Pair'
+},
   f2leo: { zh: 'F2LEO', en: 'F2LEO' },
-  pseudo_f2leo: { zh: '伪 F2LEO', en: 'Pseudo F2LEO' },
+  pseudo_f2leo: { zh: '伪 F2LEO', en: 'Pseudo F2LEO'
+},
 };
 
 const METRIC_ORDER = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc'];
@@ -121,13 +127,17 @@ export default function RecentScrambles({ lang }: Props) {
   return (
     <div className="recent-scrambles">
       <div className="rs-head">
-        <span className="rs-title">{isZh ? '近期打乱' : 'Recent Scrambles'}</span>
+        <span className="rs-title">{tr({ zh: '近期打乱', en: 'Recent Scrambles',
+            zhHant: "近期打亂"
+        })}</span>
         <SubsetColorPicker sel={sel} isZh={isZh} />
         <select
           className="rs-select"
           value={curVariant}
           onChange={(e) => setVariant(e.target.value)}
-          aria-label={isZh ? '变体' : 'Variant'}
+          aria-label={tr({ zh: '变体', en: 'Variant',
+              zhHant: "變體"
+        })}
         >
           {variants.map((v) => (
             <option key={v} value={v}>{VARIANT_LABEL[v]?.[isZh ? 'zh' : 'en'] ?? v}</option>
@@ -137,7 +147,9 @@ export default function RecentScrambles({ lang }: Props) {
           className="rs-select"
           value={curMetric}
           onChange={(e) => setMetric(e.target.value)}
-          aria-label={isZh ? '类型' : 'Type'}
+          aria-label={tr({ zh: '类型', en: 'Type',
+              zhHant: "型別"
+        })}
         >
           {metrics.map((m) => (
             <option key={m} value={m}>{METRIC_LABEL[m]?.[isZh ? 'zh' : 'en'] ?? m}</option>
@@ -147,7 +159,9 @@ export default function RecentScrambles({ lang }: Props) {
           className="rs-select"
           value={curStep ?? ''}
           onChange={(e) => setStep(Number(e.target.value))}
-          aria-label={isZh ? '步数' : 'Moves'}
+          aria-label={tr({ zh: '步数', en: 'Moves',
+              zhHant: "步數"
+        })}
         >
           {steps.map((s) => (
             <option key={s} value={s}>{isZh ? `${s} 步` : `${s}`}</option>
@@ -162,7 +176,9 @@ export default function RecentScrambles({ lang }: Props) {
         return (
           <div className="rs-hero">
             <div className="rs-hero-cube">
-              <ScramblePreview2D event="333" scramble={scramble} size={78} fullSizeLink linkTitle={isZh ? '查看大图' : 'View full size'} />
+              <ScramblePreview2D event="333" scramble={scramble} size={78} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size',
+                  zhHant: "檢視大圖"
+            })} />
             </div>
             <div className="rs-hero-body">
               <div className="rs-hero-steps">
@@ -186,7 +202,9 @@ export default function RecentScrambles({ lang }: Props) {
           </div>
         );
       })() : (
-        <div className="rs-empty">{isZh ? '该组合本批暂无数据' : 'No data for this combination'}</div>
+        <div className="rs-empty">{tr({ zh: '该组合本批暂无数据', en: 'No data for this combination',
+            zhHant: "該組合本批暫無資料"
+        })}</div>
       )}
 
       {rest.length > 0 && (
@@ -219,7 +237,7 @@ export default function RecentScrambles({ lang }: Props) {
           </ol>
           {rest.length > 4 && (
             <button type="button" className="rs-more" onClick={() => setExpanded(!expanded)}>
-              {expanded ? (isZh ? '收起' : 'Show less') : (isZh ? '更多' : 'More')}
+              {expanded ? (tr({ zh: '收起', en: 'Show less' })) : (tr({ zh: '更多', en: 'More' }))}
             </button>
           )}
         </>

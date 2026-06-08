@@ -1,13 +1,16 @@
 // 16 项目 × (2030 / 2040 / 2050) 综合预测表
 import { EVENTS } from '../events';
 import { MILESTONE_FORECASTS } from '../theory_data';
+import { tr } from '@/i18n/tr';
 
 interface Props { isZh: boolean }
 
 export function MilestoneTableSection({ isZh }: Props) {
   return (
     <section className="pred-section" id="milestones">
-      <h2>{isZh ? '综合预测 (Ensemble × 物理下界 × Regime shift)' : 'Ensemble Forecasts × Physical Floor × Regime Shifts'}</h2>
+      <h2>{tr({ zh: '综合预测 (Ensemble × 物理下界 × Regime shift)', en: 'Ensemble Forecasts × Physical Floor × Regime Shifts',
+          zhHant: "綜合預測 (Ensemble × 物理下界 × Regime shift)"
+    })}</h2>
       <p>
         {isZh ? (
           <>
@@ -27,8 +30,12 @@ export function MilestoneTableSection({ isZh }: Props) {
         <table className="pred-fit-table pred-milestone-table">
           <thead>
             <tr>
-              <th>{isZh ? '项目' : 'Event'}</th>
-              <th>{isZh ? '现 WR' : 'Current WR'}</th>
+              <th>{tr({ zh: '项目', en: 'Event',
+                  zhHant: "專案"
+            })}</th>
+              <th>{tr({ zh: '现 WR', en: 'Current WR',
+                  zhHant: "現 WR"
+            })}</th>
               <th>2030</th>
               <th>2040</th>
               <th>2050</th>
@@ -55,9 +62,9 @@ export function MilestoneTableSection({ isZh }: Props) {
         </table>
       </div>
       <p className="pred-note">
-        {isZh
-          ? '区间 [a-b] = 95% 集成预测区间。「floor」标记表示已抵达物理下界,后续只能靠打乱的幸运抽样。'
-          : 'Interval [a–b] = 95% ensemble prediction band. "floor" = already at the physical wall, further gains hinge on scramble luck only.'}
+        {tr({ zh: '区间 [a-b] = 95% 集成预测区间。「floor」标记表示已抵达物理下界,后续只能靠打乱的幸运抽样。', en: 'Interval [a–b] = 95% ensemble prediction band. "floor" = already at the physical wall, further gains hinge on scramble luck only.',
+            zhHant: "區間 [a-b] = 95% 整合預測區間。「floor」標記表示已抵達物理下界,後續只能靠打亂的幸運抽樣。"
+        })}
       </p>
     </section>
   );

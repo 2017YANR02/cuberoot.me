@@ -13,6 +13,7 @@ import { useMemo, createContext, useContext, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import i18n from '@/i18n/i18n-client';
 
 // ── LaTeX rendering via KaTeX ───────────────────────────────────────────────
 export function TeX({ src }: { src: string }) {
@@ -41,12 +42,12 @@ export function GTSec({ id, className, children }: { id: string; className?: str
 export type Lang = 'zh' | 'en';
 export function L({ zh, en }: { zh: ReactNode; en: ReactNode }) {
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   return <>{lang === 'zh' ? zh : en}</>;
 }
 export function useLang(): Lang {
   const { i18n } = useTranslation();
-  return i18n.language.startsWith('zh') ? 'zh' : 'en';
+  return (i18n.language.startsWith('zh') ? 'zh' : 'en');
 }
 
 // ── Inline TwistyPlayer ─────────────────────────────────────────────────────

@@ -10,6 +10,7 @@ import { computeAllTags, TAG_DEFS, ALL_TAG_IDS } from '../_lib/storage/auto_tag'
 import type { TagId } from '../_lib/storage/auto_tag';
 import { ClearButton } from '@/components/ClearButton';
 import { RecordBadge } from '@/components/RecordBadge';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   solves: Solve[];
@@ -476,13 +477,17 @@ export default function HistoryPanel({
   const openCompareModal = () => {
     if (selectedIds.length !== 2) return;
     if (selectedIds[0] === selectedIds[1]) {
-      setCompareError(isZh ? '请选择两个不同的成绩' : 'Pick two different solves');
+      setCompareError(tr({ zh: '请选择两个不同的成绩', en: 'Pick two different solves',
+          zhHant: "請選擇兩個不同的成績"
+    }));
       return;
     }
     const a = solves.find(x => x.id === selectedIds[0]);
     const b = solves.find(x => x.id === selectedIds[1]);
     if (!a || !b) {
-      setCompareError(isZh ? '成绩未找到' : 'Solve not found');
+      setCompareError(tr({ zh: '成绩未找到', en: 'Solve not found',
+          zhHant: "成績未找到"
+    }));
       return;
     }
     setComparePair([a, b]);
@@ -540,13 +545,17 @@ export default function HistoryPanel({
   return (
     <div className="history-panel">
       <div className="history-header">
-        <span>{isZh ? '历史' : 'History'}</span>
+        <span>{tr({ zh: '历史', en: 'History',
+            zhHant: "歷史"
+        })}</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {!isMobile && (
             <button
               type="button"
               onClick={toggleCompareMode}
-              title={isZh ? '对比两次成绩' : 'Compare two solves'}
+              title={tr({ zh: '对比两次成绩', en: 'Compare two solves',
+                  zhHant: "對比兩次成績"
+            })}
               aria-pressed={compareMode}
               style={{
                 background: compareMode ? '#2a3d4d' : 'transparent',
@@ -563,14 +572,18 @@ export default function HistoryPanel({
               }}
             >
               <GitCompare size={12} />
-              {isZh ? '对比' : 'Compare'}
+              {tr({ zh: '对比', en: 'Compare',
+                  zhHant: "對比"
+            })}
             </button>
           )}
           {!isMobile && onBulkDelete && (
             <button
               type="button"
               onClick={toggleSelectMode}
-              title={isZh ? '多选删除' : 'Select multiple to delete'}
+              title={tr({ zh: '多选删除', en: 'Select multiple to delete',
+                  zhHant: "多選刪除"
+            })}
               aria-pressed={selectMode}
               style={{
                 background: selectMode ? '#3d2a2a' : 'transparent',
@@ -586,7 +599,9 @@ export default function HistoryPanel({
               }}
             >
               <CheckSquare size={12} />
-              {isZh ? '选择' : 'Select'}
+              {tr({ zh: '选择', en: 'Select',
+                  zhHant: "選擇"
+            })}
             </button>
           )}
           {isMobile && (
@@ -594,10 +609,10 @@ export default function HistoryPanel({
               <button
                 type="button"
                 onClick={() => setActionsOpen(v => !v)}
-                title={isZh ? '更多操作' : 'More actions'}
+                title={tr({ zh: '更多操作', en: 'More actions' })}
                 aria-haspopup="menu"
                 aria-expanded={actionsOpen}
-                aria-label={isZh ? '更多操作' : 'More actions'}
+                aria-label={tr({ zh: '更多操作', en: 'More actions' })}
                 style={{
                   background: (compareMode || selectMode) ? '#2a3d4d' : 'transparent',
                   border: '1px solid ' + ((compareMode || selectMode) ? '#4d7a99' : '#333'),
@@ -654,7 +669,9 @@ export default function HistoryPanel({
                     }}
                   >
                     <GitCompare size={14} />
-                    {isZh ? '对比' : 'Compare'}
+                    {tr({ zh: '对比', en: 'Compare',
+                        zhHant: "對比"
+                    })}
                   </button>
                   {onBulkDelete && (
                     <button
@@ -680,7 +697,9 @@ export default function HistoryPanel({
                       }}
                     >
                       <CheckSquare size={14} />
-                      {isZh ? '选择' : 'Select'}
+                      {tr({ zh: '选择', en: 'Select',
+                          zhHant: "選擇"
+                    })}
                     </button>
                   )}
                 </div>
@@ -698,16 +717,24 @@ export default function HistoryPanel({
             onChange={(e) => setQuery(e.target.value)}
             placeholder={
               isMobile
-                ? (isZh ? '搜索…' : 'Search…')
-                : (isZh ? '搜索注释或打乱…' : 'Search comment or scramble…')
+                ? (tr({ zh: '搜索…', en: 'Search…',
+                    zhHant: "搜尋…"
+                }))
+                : (tr({ zh: '搜索注释或打乱…', en: 'Search comment or scramble…',
+                    zhHant: "搜尋註釋或打亂…"
+                }))
             }
-            aria-label={isZh ? '搜索注释或打乱' : 'Search comment or scramble'}
+            aria-label={tr({ zh: '搜索注释或打乱', en: 'Search comment or scramble',
+                zhHant: "搜尋註釋或打亂"
+            })}
           />
           {query && (
             <ClearButton
               onClick={() => setQuery('')}
               isZh={isZh}
-              ariaLabel={isZh ? '清空搜索' : 'Clear search'}
+              ariaLabel={tr({ zh: '清空搜索', en: 'Clear search',
+                  zhHant: "清空搜尋"
+            })}
             />
           )}
         </div>
@@ -744,7 +771,9 @@ export default function HistoryPanel({
             }}
           >
             {filtersExpanded ? <ChevronUp size={isMobile ? 16 : 12} /> : <ChevronDown size={isMobile ? 16 : 12} />}
-            {isZh ? '筛选' : 'Filters'}
+            {tr({ zh: '筛选', en: 'Filters',
+                zhHant: "篩選"
+            })}
           </button>
           {activeFilterCount > 0 && (
             <span style={{ fontSize: 11, color: '#cde' }}>
@@ -770,10 +799,12 @@ export default function HistoryPanel({
                 gap: 3,
                 fontSize: 10,
               }}
-              title={isZh ? '清空所有筛选' : 'Clear all filters'}
+              title={tr({ zh: '清空所有筛选', en: 'Clear all filters',
+                  zhHant: "清空所有篩選"
+            })}
             >
               <X size={10} />
-              {isZh ? '清空' : 'Clear filters'}
+              {tr({ zh: '清空', en: 'Clear filters' })}
             </button>
           )}
         </div>
@@ -781,7 +812,7 @@ export default function HistoryPanel({
           <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               <div>
-                <label style={labelStyle}>{isZh ? '日期 起' : 'Date from'}</label>
+                <label style={labelStyle}>{tr({ zh: '日期 起', en: 'Date from' })}</label>
                 <input
                   type="date"
                   value={dateFrom}
@@ -790,7 +821,7 @@ export default function HistoryPanel({
                 />
               </div>
               <div>
-                <label style={labelStyle}>{isZh ? '日期 止' : 'Date to'}</label>
+                <label style={labelStyle}>{tr({ zh: '日期 止', en: 'Date to' })}</label>
                 <input
                   type="date"
                   value={dateTo}
@@ -801,7 +832,7 @@ export default function HistoryPanel({
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               <div>
-                <label style={labelStyle}>{isZh ? '最短 (秒)' : 'Min (s)'}</label>
+                <label style={labelStyle}>{tr({ zh: '最短 (秒)', en: 'Min (s)' })}</label>
                 <input
                   type="text"
                   inputMode="decimal"
@@ -812,7 +843,9 @@ export default function HistoryPanel({
                 />
               </div>
               <div>
-                <label style={labelStyle}>{isZh ? '最长 (秒)' : 'Max (s)'}</label>
+                <label style={labelStyle}>{tr({ zh: '最长 (秒)', en: 'Max (s)',
+                    zhHant: "最長 (秒)"
+                })}</label>
                 <input
                   type="text"
                   inputMode="decimal"
@@ -824,7 +857,9 @@ export default function HistoryPanel({
               </div>
             </div>
             <div>
-              <label style={labelStyle}>{isZh ? '罚时' : 'Penalty'}</label>
+              <label style={labelStyle}>{tr({ zh: '罚时', en: 'Penalty',
+                  zhHant: "罰時"
+            })}</label>
               <div style={{ display: 'flex', gap: 4 }}>
                 {ALL_PENALTIES.map(p => {
                   const label = p === 'ok' ? 'OK' : p;
@@ -845,28 +880,30 @@ export default function HistoryPanel({
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               <div>
-                <label style={labelStyle}>{isZh ? 'OLL 公式' : 'OLL case'}</label>
+                <label style={labelStyle}>{tr({ zh: 'OLL 公式', en: 'OLL case' })}</label>
                 <input
                   type="text"
                   value={ollFilter}
                   onChange={(e) => setOllFilter(e.target.value)}
-                  placeholder={isZh ? '例如 OLL 21' : 'e.g. OLL 21'}
+                  placeholder={tr({ zh: '例如 OLL 21', en: 'e.g. OLL 21' })}
                   style={inputStyle}
                 />
               </div>
               <div>
-                <label style={labelStyle}>{isZh ? 'PLL 公式' : 'PLL case'}</label>
+                <label style={labelStyle}>{tr({ zh: 'PLL 公式', en: 'PLL case' })}</label>
                 <input
                   type="text"
                   value={pllFilter}
                   onChange={(e) => setPllFilter(e.target.value)}
-                  placeholder={isZh ? '例如 Aa' : 'e.g. Aa'}
+                  placeholder={tr({ zh: '例如 Aa', en: 'e.g. Aa' })}
                   style={inputStyle}
                 />
               </div>
             </div>
             <div>
-              <label style={labelStyle}>{isZh ? '标签' : 'Tags'}</label>
+              <label style={labelStyle}>{tr({ zh: '标签', en: 'Tags',
+                  zhHant: "標籤"
+            })}</label>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                 {ALL_TAG_IDS.map(tid => {
                   const def = TAG_DEFS[tid];
@@ -954,19 +991,25 @@ export default function HistoryPanel({
               fontSize: 11,
             }}
           >
-            {isZh ? '清空选择' : 'Select none'}
+            {tr({ zh: '清空选择', en: 'Select none',
+                zhHant: "清空選擇"
+            })}
           </button>
         </div>
       )}
       <div className="history-list">
         {reversed.length === 0 && (
           <div className="history-empty">
-            {isZh ? '还没有成绩。按住空格开始计时。' : 'No solves yet. Hold space to start.'}
+            {tr({ zh: '还没有成绩。按住空格开始计时。', en: 'No solves yet. Hold space to start.',
+                zhHant: "還沒有成績。按住空格開始計時。"
+            })}
           </div>
         )}
         {reversed.length > 0 && filteredReversed.length === 0 && (
           <div className="history-empty">
-            <div>{isZh ? '没有匹配的成绩。' : 'No solves match these filters'}</div>
+            <div>{tr({ zh: '没有匹配的成绩。', en: 'No solves match these filters',
+                zhHant: "沒有匹配的成績。"
+            })}</div>
             {hasAnyFilter && (
               <button
                 type="button"
@@ -982,7 +1025,9 @@ export default function HistoryPanel({
                   padding: 0,
                 }}
               >
-                {isZh ? '清空筛选' : 'Clear filters'}
+                {tr({ zh: '清空筛选', en: 'Clear filters',
+                    zhHant: "清空篩選"
+                })}
               </button>
             )}
           </div>
@@ -990,7 +1035,9 @@ export default function HistoryPanel({
         {filteredReversed.length > 0 && !compareMode && !selectMode && (
           <div className="history-cols-head" style={{ gridTemplateColumns: headTmpl }}>
             <span className="idx">#</span>
-            <span>{isZh ? '时间' : 'Time'}</span>
+            <span>{tr({ zh: '时间', en: 'Time',
+                zhHant: "時間"
+            })}</span>
             {visibleAoWindows.map(n => <span key={n} className="hao-head">ao{n}</span>)}
           </div>
         )}
@@ -1150,7 +1197,7 @@ export default function HistoryPanel({
               cursor: 'pointer',
             }}
           >
-            {isZh ? '取消' : 'Cancel'}
+            {tr({ zh: '取消', en: 'Cancel' })}
           </button>
           <button
             type="button"
@@ -1170,7 +1217,9 @@ export default function HistoryPanel({
             }}
           >
             <GitCompare size={12} />
-            {isZh ? '对比这 2 个' : 'Compare these 2'}
+            {tr({ zh: '对比这 2 个', en: 'Compare these 2',
+                zhHant: "對比這 2 個"
+            })}
           </button>
         </div>
       )}
@@ -1198,7 +1247,7 @@ export default function HistoryPanel({
               cursor: 'pointer',
             }}
           >
-            {isZh ? '取消' : 'Cancel'}
+            {tr({ zh: '取消', en: 'Cancel' })}
           </button>
           <button
             type="button"
@@ -1243,7 +1292,9 @@ export default function HistoryPanel({
               onClick={() => setQuickPenalty(s, 'ok')}
             >
               <Check size={14} />
-              <span>{isZh ? '无罚时' : 'OK'}</span>
+              <span>{tr({ zh: '无罚时', en: 'OK',
+                  zhHant: "無罰時"
+            })}</span>
             </button>
             <button
               type="button"
@@ -1266,16 +1317,22 @@ export default function HistoryPanel({
             <div className="row-quick-sep" role="separator" />
             <button type="button" role="menuitem" className="row-quick-item" onClick={() => doQuickComment(s, quickMenu.index)}>
               <MessageSquare size={14} />
-              <span>{isZh ? '评论' : 'Comment'}</span>
+              <span>{tr({ zh: '评论', en: 'Comment',
+                  zhHant: "評論"
+            })}</span>
             </button>
             <button type="button" role="menuitem" className="row-quick-item" onClick={() => doCopyScramble(s)}>
               <Clipboard size={14} />
-              <span>{isZh ? '复制打乱' : 'Copy scramble'}</span>
+              <span>{tr({ zh: '复制打乱', en: 'Copy scramble',
+                  zhHant: "複製打亂"
+            })}</span>
             </button>
             <div className="row-quick-sep" role="separator" />
             <button type="button" role="menuitem" className="row-quick-item danger" onClick={() => doQuickDelete(s)}>
               <Trash2 size={14} />
-              <span>{isZh ? '删除' : 'Delete'}</span>
+              <span>{tr({ zh: '删除', en: 'Delete',
+                  zhHant: "刪除"
+            })}</span>
             </button>
           </>
         );

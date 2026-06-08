@@ -13,6 +13,7 @@ import type { Solve } from '../../_lib/types';
 import { effectiveMs } from '../../_lib/types';
 import { averageOfN, formatMs } from '../../_lib/stats';
 import './charts.css';
+import { tr } from '@/i18n/tr';
 
 type CurveKind = 'single' | 'ao5' | 'ao12' | 'ao100';
 
@@ -120,7 +121,9 @@ export default function TrendChart({
   if (solves.length < 5 || !hasAny) {
     return (
       <div className={`chart-empty-hint ${className ?? ''}`.trim()}>
-        {isZh ? '至少 5 次成绩才显示趋势' : 'Need 5+ solves to chart trend'}
+        {tr({ zh: '至少 5 次成绩才显示趋势', en: 'Need 5+ solves to chart trend',
+            zhHant: "至少 5 次成績才顯示趨勢"
+        })}
       </div>
     );
   }
@@ -162,7 +165,9 @@ export default function TrendChart({
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="xMidYMid meet"
       role="img"
-      aria-label={isZh ? '成绩趋势图' : 'Solve time trend'}
+      aria-label={tr({ zh: '成绩趋势图', en: 'Solve time trend',
+          zhHant: "成績趨勢圖"
+    })}
     >
       {/* Grid: top, mid, bottom */}
       <line

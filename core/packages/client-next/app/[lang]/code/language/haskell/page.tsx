@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './haskell_intro.css';
+import i18n from '@/i18n/i18n-client';
 
 /* Inline logo: the angle-arrow >λ= mark.
    No external assets — drawn from primitives only. */
@@ -468,7 +469,7 @@ const FUTURE_CARDS: FutureCard[] = [
 
 export default function HaskellIntroPage() {
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
 
   useDocumentTitle(

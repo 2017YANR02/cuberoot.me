@@ -6,6 +6,7 @@ import { EVENTS } from '../_lib/types';
 import { generateScramble } from '../_lib/scramble';
 import { warmup333 } from '../_lib/scramble/kociemba/random_state';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   defaultEvent: EventId;
@@ -115,11 +116,15 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
         onClick={(e) => e.stopPropagation()}
         style={modalStyle}
       >
-        <h2 id={titleId}>{isZh ? '批量打乱' : 'Bulk scrambles'}</h2>
+        <h2 id={titleId}>{tr({ zh: '批量打乱', en: 'Bulk scrambles',
+            zhHant: "批次打亂"
+        })}</h2>
 
         <div className="modal-section bulk-controls" style={controlsStyle}>
           <label className="manual-label inline" style={fieldStyle}>
-            {isZh ? '项目' : 'Event'}
+            {tr({ zh: '项目', en: 'Event',
+                zhHant: "專案"
+            })}
             <select
               ref={firstSelectRef}
               value={event}
@@ -132,7 +137,9 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
             </select>
           </label>
           <label className="manual-label inline" style={fieldStyle}>
-            {isZh ? '数量' : 'Count'}
+            {tr({ zh: '数量', en: 'Count',
+                zhHant: "數量"
+            })}
             <input
               type="number"
               inputMode="numeric"
@@ -152,7 +159,7 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
             disabled={generating}
             style={generateBtnStyle}
           >
-            {generating ? (isZh ? '生成中…' : 'Generating…') : (isZh ? '生成' : 'Generate')}
+            {generating ? (tr({ zh: '生成中…', en: 'Generating…' })) : (tr({ zh: '生成', en: 'Generate' }))}
           </button>
         </div>
 
@@ -173,14 +180,22 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
           {scrambles.length > 0 && (
             <>
               <button onClick={onCopy} style={actionBtnStyle}>
-                {copied ? (isZh ? '已复制' : 'Copied') : (isZh ? '全部复制' : 'Copy all')}
+                {copied ? (tr({ zh: '已复制', en: 'Copied',
+                    zhHant: "已複製"
+                })) : (tr({ zh: '全部复制', en: 'Copy all',
+                    zhHant: "全部複製"
+                }))}
               </button>
               <button onClick={onDownload} style={actionBtnStyle}>
-                {isZh ? '下载 .txt' : 'Download .txt'}
+                {tr({ zh: '下载 .txt', en: 'Download .txt',
+                    zhHant: "下載 .txt"
+                })}
               </button>
             </>
           )}
-          <button onClick={onClose} style={actionBtnStyle}>{isZh ? '关闭' : 'Close'}</button>
+          <button onClick={onClose} style={actionBtnStyle}>{tr({ zh: '关闭', en: 'Close',
+              zhHant: "關閉"
+        })}</button>
         </div>
       </div>
     </div>

@@ -26,6 +26,7 @@ import {
   type Category, type Pattern, type PuzzleSize,
 } from './_data/patterns_data';
 import './patterns.css';
+import i18n from '@/i18n/i18n-client';
 
 const ALL: 'all' = 'all';
 type Filter = typeof ALL | Category;
@@ -90,7 +91,7 @@ function PatternThumb({ pattern, size = 120 }: { pattern: Pattern; size?: number
 
 export default function PatternsPage() {
   const { i18n } = useTranslation();
-  const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   useDocumentTitle('图案', 'Patterns');
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 

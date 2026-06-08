@@ -20,6 +20,7 @@ import { isAdmin } from '@/lib/auth-store';
 import { listSites, deleteSite, reorderGroup } from './nav_sites_api';
 import SiteEditor from './SiteEditor';
 import './sites.css';
+import i18n from '@/i18n/i18n-client';
 
 function YouTubeBadge() {
   return (
@@ -54,20 +55,32 @@ function firstGlyph(name: string): string {
 }
 
 const TEXTS = {
-  title:       { en: 'Web Directory', zh: '魔方导航' },
-  searchPh:    { en: 'Search name / description / URL…', zh: '搜索名称 / 描述 / 网址…' },
-  sites:       { en: 'sites',            zh: '个站点' },
-  dead:        { en: 'Offline',          zh: '不可访问' },
-  resultsFor:  { en: 'Results for',      zh: '搜索' },
-  altLink:     { en: 'mirrors',          zh: '其他镜像' },
-  noResults:   { en: 'No matches.',      zh: '没有匹配结果。' },
-  colName:     { en: 'Name',             zh: '名称' },
+  title:       { en: 'Web Directory', zh: '魔方导航'
+},
+  searchPh:    { en: 'Search name / description / URL…', zh: '搜索名称 / 描述 / 网址…'
+},
+  sites:       { en: 'sites',            zh: '个站点'
+},
+  dead:        { en: 'Offline',          zh: '不可访问'
+},
+  resultsFor:  { en: 'Results for',      zh: '搜索'
+},
+  altLink:     { en: 'mirrors',          zh: '其他镜像'
+},
+  noResults:   { en: 'No matches.',      zh: '没有匹配结果。'
+},
+  colName:     { en: 'Name',             zh: '名称'
+},
   colAuthor:   { en: 'Author',           zh: '作者' },
-  colDesc:     { en: 'Description',      zh: '简介' },
-  loading:     { en: 'Loading…',         zh: '加载中…' },
-  err:         { en: 'Failed to load',   zh: '加载失败' },
+  colDesc:     { en: 'Description',      zh: '简介'
+},
+  loading:     { en: 'Loading…',         zh: '加载中…'
+},
+  err:         { en: 'Failed to load',   zh: '加载失败'
+},
   add:         { en: 'Add',              zh: '新增' },
-  confirmDel:  { en: 'Delete this site?', zh: '确认删除此站点?' },
+  confirmDel:  { en: 'Delete this site?', zh: '确认删除此站点?'
+},
 } as const;
 
 function splitLangTag(s: string): { en: string; zh: string } {
@@ -156,7 +169,7 @@ function SiteRow({ site, lang, admin, canMoveUp, canMoveDown, onEdit, onDelete, 
 
 function SitesPageInner() {
   const { i18n } = useTranslation();
-  const lang: 'en' | 'zh' = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: 'en' | 'zh' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   useDocumentTitle('网站导航', 'Sites Directory');
   // admin comes from the client-only auth store; gate on mount so SSR and the
   // first client render agree (both non-admin) and don't trip a hydration mismatch.

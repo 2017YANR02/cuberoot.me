@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── Q8 element model ──────────────────────────────────────────────────────────
 // Each element encoded as { s: 1 | -1, idx: 0|1|2|3 }
@@ -558,7 +559,9 @@ function CayleyPanel({ lang }: { lang: 'zh' | 'en' }) {
                 ))}
                 <text x={centerX} y={centerY + R + 16} textAnchor="middle"
                   style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
-                  {lang === 'zh' ? '循环规则 i→j→k→i' : 'cyclic rule i→j→k→i'}
+                  {tr({ zh: '循环规则 i→j→k→i', en: 'cyclic rule i→j→k→i',
+                      zhHant: "迴圈規則 i→j→k→i"
+                })}
                 </text>
               </g>
             );
@@ -706,7 +709,9 @@ function LatticePanel({ lang }: { lang: 'zh' | 'en' }) {
 
             {/* Legend */}
             <text x={10} y={270} style={{ fontFamily: 'var(--mono)', fontSize: 8 }} fill="var(--green)">
-              {lang === 'zh' ? '⊴ = 正规子群' : '⊴ = normal subgroup'}
+              {tr({ zh: '⊴ = 正规子群', en: '⊴ = normal subgroup',
+                  zhHant: "⊴ = 正規子群"
+            })}
             </text>
           </svg>
         </div>
@@ -810,7 +815,9 @@ function LatticePanel({ lang }: { lang: 'zh' | 'en' }) {
                 }}>
                   {isNormalVerified
                     ? (lang === 'zh' ? `gHg⁻¹ = H ✓ — ${sg.name} 是正规子群` : `gHg⁻¹ = H ✓ — ${sg.name} is normal`)
-                    : (lang === 'zh' ? 'gHg⁻¹ ≠ H — 不正规（理论上不应出现）' : 'gHg⁻¹ ≠ H — not normal (should not occur)')}
+                    : (tr({ zh: 'gHg⁻¹ ≠ H — 不正规（理论上不应出现）', en: 'gHg⁻¹ ≠ H — not normal (should not occur)',
+                        zhHant: "gHg⁻¹ ≠ H — 不正規（理論上不應出現）"
+                    }))}
                 </div>
               </div>
             )}
@@ -955,7 +962,9 @@ function CharTablePanel({ lang }: { lang: 'zh' | 'en' }) {
         {(['side', 'Q8', 'D4'] as const).map(m => (
           <button key={m} className={`gt-chip${mode === m ? ' gt-chip-active' : ''}`}
             onClick={() => setMode(m)}>
-            {m === 'side' ? (lang === 'zh' ? '并排' : 'side by side')
+            {m === 'side' ? (tr({ zh: '并排', en: 'side by side',
+                zhHant: "並排"
+            }))
               : m === 'Q8' ? 'Q₈'
               : 'D₄'}
           </button>
@@ -973,7 +982,9 @@ function CharTablePanel({ lang }: { lang: 'zh' | 'en' }) {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginBottom: 16 }}>
         {(mode === 'side' || mode === 'Q8') && (
           <CharTable
-            title={lang === 'zh' ? 'Q₈ 的特征标表' : 'Character table of Q₈'}
+            title={tr({ zh: 'Q₈ 的特征标表', en: 'Character table of Q₈',
+                zhHant: "Q₈ 的特徵標表"
+            })}
             classLabels={CLASS_LABELS_Q8}
             classSizes={CLASS_SIZES_Q8}
             highlightRows={true}
@@ -981,7 +992,9 @@ function CharTablePanel({ lang }: { lang: 'zh' | 'en' }) {
         )}
         {(mode === 'side' || mode === 'D4') && (
           <CharTable
-            title={lang === 'zh' ? 'D₄ 的特征标表' : 'Character table of D₄'}
+            title={tr({ zh: 'D₄ 的特征标表', en: 'Character table of D₄',
+                zhHant: "D₄ 的特徵標表"
+            })}
             classLabels={CLASS_LABELS_D4}
             classSizes={CLASS_SIZES_Q8}
             highlightRows={true}

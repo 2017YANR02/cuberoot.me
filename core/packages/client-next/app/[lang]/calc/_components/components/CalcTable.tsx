@@ -7,6 +7,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCalcStore, isMo3ForEvent, isMbfForEvent } from '../stores/calc_store';
 import { DNF_VALUE, formatTime, CalcEngine } from '../engine/calc_engine';
+import { tr } from '@/i18n/tr';
 
 export function CalcTable() {
   const { i18n } = useTranslation();
@@ -19,31 +20,37 @@ export function CalcTable() {
   // NOTE: 指标行定义 — key 对应 ComputeResult 的属性; 随语言变化, useMemo 稳定引用
   const metrics = useMemo(() => {
     const AO5_METRICS = [
-      { key: 'best', label: isZh ? '最好' : 'Best' },
-      { key: 'worst', label: isZh ? '最差' : 'Worst' },
-      { key: 'avg', label: isZh ? '平均' : 'Average' },
+      { key: 'best', label: tr({ zh: '最好', en: 'Best' }) },
+      { key: 'worst', label: tr({ zh: '最差', en: 'Worst' }) },
+      { key: 'avg', label: tr({ zh: '平均', en: 'Average' }) },
       { key: 'bpa', label: 'BPA' },
       { key: 'wpa', label: 'WPA' },
       { key: 'bao5', label: 'BAo5' },
       { key: 'wao5', label: 'WAo5' },
       { key: 'mo5', label: 'Mo5' },
-      { key: 'mo4', label: isZh ? '最好 Mo4' : 'Best Mo4' },
-      { key: 'mo3', label: isZh ? '最好 Mo3' : 'Best Mo3' },
-      { key: 'mo2', label: isZh ? '最好 Mo2' : 'Best Mo2' },
-      { key: 'bestC', label: isZh ? '最好计入成绩' : 'Best Counting' },
-      { key: 'median', label: isZh ? '中位数' : 'Median' },
-      { key: 'worstC', label: isZh ? '最差计入成绩' : 'Worst Counting' },
-      { key: 'variance', label: isZh ? '方差 (s²)' : 'Variance (s²)' },
-      { key: 'bestAvgRatio', label: isZh ? '最好/平均' : 'Best/Avg' },
+      { key: 'mo4', label: tr({ zh: '最好 Mo4', en: 'Best Mo4' }) },
+      { key: 'mo3', label: tr({ zh: '最好 Mo3', en: 'Best Mo3' }) },
+      { key: 'mo2', label: tr({ zh: '最好 Mo2', en: 'Best Mo2' }) },
+      { key: 'bestC', label: tr({ zh: '最好计入成绩', en: 'Best Counting',
+          zhHant: "最好計入成績"
+    }) },
+      { key: 'median', label: tr({ zh: '中位数', en: 'Median',
+          zhHant: "中位數"
+    }) },
+      { key: 'worstC', label: tr({ zh: '最差计入成绩', en: 'Worst Counting',
+          zhHant: "最差計入成績"
+    }) },
+      { key: 'variance', label: tr({ zh: '方差 (s²)', en: 'Variance (s²)' }) },
+      { key: 'bestAvgRatio', label: tr({ zh: '最好/平均', en: 'Best/Avg' }) },
     ];
     const MO3_METRICS = [
-      { key: 'best', label: isZh ? '最好' : 'Best' },
-      { key: 'worst', label: isZh ? '最差' : 'Worst' },
-      { key: 'avg', label: isZh ? '均值' : 'Mean' },
+      { key: 'best', label: tr({ zh: '最好', en: 'Best' }) },
+      { key: 'worst', label: tr({ zh: '最差', en: 'Worst' }) },
+      { key: 'avg', label: tr({ zh: '均值', en: 'Mean' }) },
       { key: 'mo3', label: 'Mo3' },
-      { key: 'mo2', label: isZh ? '最好 Mo2' : 'Best Mo2' },
-      { key: 'variance', label: isZh ? '方差 (s²)' : 'Variance (s²)' },
-      { key: 'bestAvgRatio', label: isZh ? '最好/平均' : 'Best/Avg' },
+      { key: 'mo2', label: tr({ zh: '最好 Mo2', en: 'Best Mo2' }) },
+      { key: 'variance', label: tr({ zh: '方差 (s²)', en: 'Variance (s²)' }) },
+      { key: 'bestAvgRatio', label: tr({ zh: '最好/平均', en: 'Best/Avg' }) },
     ];
     return mo3 ? MO3_METRICS : AO5_METRICS;
   }, [isZh, mo3]);
@@ -80,12 +87,16 @@ export function CalcTable() {
   return (
     <details id="calc-section">
       <summary className="stats-toggle">
-        {isZh ? '📊 统计' : '📊 Statistics'}
+        {tr({ zh: '📊 统计', en: '📊 Statistics',
+            zhHant: "📊 統計"
+        })}
       </summary>
       <table id="calc-table">
         <thead>
           <tr>
-            <th>{isZh ? '指标' : 'Metric'}</th>
+            <th>{tr({ zh: '指标', en: 'Metric',
+                zhHant: "指標"
+            })}</th>
             <th>{state.names[state.seedOn] || 'A'}</th>
             {state.playerEnabled[1] && (
               <th>{state.names[state.seedOn + 1] || 'B'}</th>

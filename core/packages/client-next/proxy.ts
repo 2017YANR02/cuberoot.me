@@ -27,7 +27,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const SUPPORTED_LOCALES = ['en', 'zh'] as const;
+// zh-Hant before zh so prefix-stripping matches the longer one first.
+const SUPPORTED_LOCALES = ['en', 'zh-Hant', 'zh'] as const;
 type Locale = typeof SUPPORTED_LOCALES[number];
 
 // App-root routes that are NOT under app/[lang]/* — route handlers, OAuth, the
@@ -45,13 +46,15 @@ function stripLocalePrefix(pathname: string): { locale: Locale | null; rest: str
 }
 
 // Environment language for a BARE request. Explicit cookie wins; else
-// Accept-Language. Only 'zh' diverts a bare path to /zh — every other signal
-// (including none) stays bare-English.
-function prefersZh(req: NextRequest): boolean {
+// Accept-Language. 'en' stays bare; 'zh'/'zh-Hant' divert to their prefix.
+// Traditional signals (zh-TW/HK/MO/Hant) → zh-Hant; any other zh → Simplified.
+function preferredLocale(req: NextRequest): Locale {
   const cookie = req.cookies.get('lang')?.value;
-  if (cookie === 'zh') return true;
-  if (cookie === 'en') return false;
-  return (req.headers.get('accept-language') ?? '').toLowerCase().includes('zh');
+  if (cookie === 'en' || cookie === 'zh' || cookie === 'zh-Hant') return cookie;
+  const al = (req.headers.get('accept-language') ?? '').toLowerCase();
+  if (/zh-(hant|tw|hk|mo)/.test(al)) return 'zh-Hant';
+  if (al.includes('zh')) return 'zh';
+  return 'en';
 }
 
 function setLangCookie(res: NextResponse, lang: Locale) {
@@ -67,18 +70,20 @@ function setLangCookie(res: NextResponse, lang: Locale) {
 // the locale-stripped path, so en/zh share one sub-path.
 const CANONICAL_HOST = 'https://www.cuberoot.me';
 
-function setSeoLinkHeaders(res: NextResponse, rest: string, isZh: boolean) {
+function setSeoLinkHeaders(res: NextResponse, rest: string, locale: Locale) {
   const sub = rest === '/' ? '' : rest;
   const en = `${CANONICAL_HOST}${sub || '/'}`; // bare
   const zh = `${CANONICAL_HOST}/zh${sub}`;
-  const self = isZh ? zh : en;
+  const zhHant = `${CANONICAL_HOST}/zh-Hant${sub}`;
+  const self = locale === 'zh-Hant' ? zhHant : locale === 'zh' ? zh : en;
   // append (not set) so we never clobber Next's own preload Link headers.
   res.headers.append(
     'Link',
     [
       `<${self}>; rel="canonical"`,
       `<${en}>; rel="alternate"; hreflang="en"`,
-      `<${zh}>; rel="alternate"; hreflang="zh"`,
+      `<${zh}>; rel="alternate"; hreflang="zh-Hans"`,
+      `<${zhHant}>; rel="alternate"; hreflang="zh-Hant"`,
       `<${en}>; rel="alternate"; hreflang="x-default"`,
     ].join(', '),
   );
@@ -97,11 +102,11 @@ export function proxy(req: NextRequest) {
   //    canonical shape (en = bare, zh = /zh/…), dropping the query. Keeps old
   //    ?lang= links (Vite era) working.
   const queryLang = searchParams.get('lang');
-  if (queryLang === 'zh' || queryLang === 'en') {
+  if (queryLang === 'zh' || queryLang === 'en' || queryLang === 'zh-Hant') {
     const target = url.clone();
     target.searchParams.delete('lang');
-    target.pathname =
-      queryLang === 'zh' ? `/zh${rest === '/' ? '' : rest}` : rest === '/' ? '/' : rest;
+    const sub = rest === '/' ? '' : rest;
+    target.pathname = queryLang === 'en' ? sub || '/' : `/${queryLang}${sub}`;
     const res = NextResponse.redirect(target, 307);
     setLangCookie(res, queryLang);
     return res;
@@ -122,21 +127,22 @@ export function proxy(req: NextRequest) {
     requestHeaders.set('x-lang', locale);
     const res = NextResponse.next({ request: { headers: requestHeaders } });
     if (req.cookies.get('lang')?.value !== locale) setLangCookie(res, locale);
-    setSeoLinkHeaders(res, rest, locale === 'zh');
+    setSeoLinkHeaders(res, rest, locale);
     return res;
   }
 
   // 3. Bare path → English by default. Chinese-preferring visitors get
-  //    308 → /zh/…; everyone else is served English in place by rewriting to
-  //    the /en tree (the URL bar stays bare).
-  if (prefersZh(req)) {
+  //    307 → /zh/… or /zh-Hant/…; everyone else is served English in place by
+  //    rewriting to the /en tree (the URL bar stays bare).
+  const pref = preferredLocale(req);
+  if (pref !== 'en') {
     const target = url.clone();
-    target.pathname = `/zh${pathname === '/' ? '' : pathname}`;
+    target.pathname = `/${pref}${pathname === '/' ? '' : pathname}`;
     // 307 (temporary), NOT 308: this depends on the per-user cookie /
     // Accept-Language, so it must never be cached as a permanent redirect — a
     // 308 would pin a visitor to /zh even after they switch to English.
     const res = NextResponse.redirect(target, 307);
-    setLangCookie(res, 'zh');
+    setLangCookie(res, pref);
     return res;
   }
 
@@ -146,7 +152,7 @@ export function proxy(req: NextRequest) {
   requestHeaders.set('x-lang', 'en');
   const res = NextResponse.rewrite(target, { request: { headers: requestHeaders } });
   if (req.cookies.get('lang')?.value !== 'en') setLangCookie(res, 'en');
-  setSeoLinkHeaders(res, pathname, false); // bare → rest === pathname
+  setSeoLinkHeaders(res, pathname, 'en'); // bare → rest === pathname
   return res;
 }
 

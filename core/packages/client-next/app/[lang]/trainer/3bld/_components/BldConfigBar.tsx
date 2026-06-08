@@ -9,6 +9,7 @@ import { Settings2, ChevronDown, ChevronUp } from 'lucide-react';
 import { ClearButton } from '@/components/ClearButton';
 import { useBldConfigStore } from '../_store/bld-config-store';
 import { ORIENTATION_LABELS_ZH } from '../_lib/scheme-presets';
+import { tr } from '@/i18n/tr';
 
 // 8 corner buffer letters / 12 edge buffer letters (upstream chichu buffers).
 const CORNER_BUFFERS = ['J', 'A', 'G', 'D', 'W', 'O', 'R', 'X'];
@@ -59,7 +60,7 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
         aria-expanded={open}
       >
         <Settings2 size={15} />
-        {isZh ? '配置' : 'Config'}
+        {tr({ zh: '配置', en: 'Config' })}
         <span className="bld-config-summary">{summary}</span>
         {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
       </button>
@@ -68,10 +69,14 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
         <div className="bld-config-panel">
           {flags.corner && (
             <div className="bld-config-group">
-              <span className="bld-config-group-title">{isZh ? '角块' : 'Corner'}</span>
+              <span className="bld-config-group-title">{tr({ zh: '角块', en: 'Corner',
+                  zhHant: "角塊"
+            })}</span>
               <div className="bld-field">
                 <label className="bld-field-label" htmlFor="bld-cbuf">
-                  {isZh ? '角块缓冲' : 'Corner buffer'}
+                  {tr({ zh: '角块缓冲', en: 'Corner buffer',
+                      zhHant: "角塊緩衝"
+                })}
                 </label>
                 <select
                   id="bld-cbuf"
@@ -84,7 +89,9 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
               </div>
               <div className="bld-field">
                 <label className="bld-field-label" htmlFor="bld-corder">
-                  {isZh ? '借位顺序' : 'Borrow order'}
+                  {tr({ zh: '借位顺序', en: 'Borrow order',
+                      zhHant: "借位順序"
+                })}
                 </label>
                 <div className="bld-input-wrap">
                   <input
@@ -105,10 +112,14 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
 
           {flags.edge && (
             <div className="bld-config-group">
-              <span className="bld-config-group-title">{isZh ? '棱块' : 'Edge'}</span>
+              <span className="bld-config-group-title">{tr({ zh: '棱块', en: 'Edge',
+                  zhHant: "稜塊"
+            })}</span>
               <div className="bld-field">
                 <label className="bld-field-label" htmlFor="bld-ebuf">
-                  {isZh ? '棱块缓冲' : 'Edge buffer'}
+                  {tr({ zh: '棱块缓冲', en: 'Edge buffer',
+                      zhHant: "稜塊緩衝"
+                })}
                 </label>
                 <select
                   id="bld-ebuf"
@@ -121,7 +132,9 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
               </div>
               <div className="bld-field">
                 <label className="bld-field-label" htmlFor="bld-eorder">
-                  {isZh ? '借位顺序' : 'Borrow order'}
+                  {tr({ zh: '借位顺序', en: 'Borrow order',
+                      zhHant: "借位順序"
+                })}
                 </label>
                 <div className="bld-input-wrap">
                   <input
@@ -142,11 +155,15 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
 
           {(flags.scheme || flags.orientation) && (
             <div className="bld-config-group">
-              <span className="bld-config-group-title">{isZh ? '编码' : 'Scheme'}</span>
+              <span className="bld-config-group-title">{tr({ zh: '编码', en: 'Scheme',
+                  zhHant: "編碼"
+            })}</span>
               {flags.scheme && (
                 <div className="bld-field">
                   <label className="bld-field-label" htmlFor="bld-scheme">
-                    {isZh ? '编码方案' : 'Scheme'}
+                    {tr({ zh: '编码方案', en: 'Scheme',
+                        zhHant: "編碼方案"
+                    })}
                   </label>
                   <select
                     id="bld-scheme"
@@ -154,7 +171,7 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
                     value={config.scheme}
                     onChange={(e) => setConfig({ scheme: e.target.value as 'chichu' | 'speffz' })}
                   >
-                    <option value="chichu">{isZh ? '彳亍' : 'Chichu'}</option>
+                    <option value="chichu">{tr({ zh: '彳亍', en: 'Chichu' })}</option>
                     <option value="speffz">Speffz</option>
                   </select>
                 </div>
@@ -162,7 +179,9 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
               {flags.orientation && (
                 <div className="bld-field">
                   <label className="bld-field-label" htmlFor="bld-orient">
-                    {isZh ? '打乱坐标' : 'Orientation'}
+                    {tr({ zh: '打乱坐标', en: 'Orientation',
+                        zhHant: "打亂座標"
+                    })}
                   </label>
                   <select
                     id="bld-orient"
@@ -183,7 +202,9 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
 
           {flags.hueSkip && (
             <div className="bld-config-group">
-              <span className="bld-config-group-title">{isZh ? '高级' : 'Advanced'}</span>
+              <span className="bld-config-group-title">{tr({ zh: '高级', en: 'Advanced',
+                  zhHant: "高階"
+            })}</span>
               <div className="bld-check-row">
                 <label className="bld-check">
                   <input
@@ -191,7 +212,7 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
                     checked={config.keepHueC}
                     onChange={(e) => setConfig({ keepHueC: e.target.checked })}
                   />
-                  {isZh ? '角保持色相借位' : 'Corner keep hue'}
+                  {tr({ zh: '角保持色相借位', en: 'Corner keep hue' })}
                 </label>
                 <label className="bld-check">
                   <input
@@ -199,7 +220,9 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
                     checked={config.keepHueE}
                     onChange={(e) => setConfig({ keepHueE: e.target.checked })}
                   />
-                  {isZh ? '棱保持色相借位' : 'Edge keep hue'}
+                  {tr({ zh: '棱保持色相借位', en: 'Edge keep hue',
+                      zhHant: "稜保持色相借位"
+                })}
                 </label>
               </div>
               <div className="bld-check-row">
@@ -209,7 +232,9 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
                     checked={config.skipC === 1}
                     onChange={(e) => setConfig({ skipC: e.target.checked ? 1 : 0 })}
                   />
-                  {isZh ? '角跳编法' : 'Corner fixed-buffer'}
+                  {tr({ zh: '角跳编法', en: 'Corner fixed-buffer',
+                      zhHant: "角跳編法"
+                })}
                 </label>
                 <label className="bld-check">
                   <input
@@ -217,7 +242,9 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
                     checked={config.skipE === 1}
                     onChange={(e) => setConfig({ skipE: e.target.checked ? 1 : 0 })}
                   />
-                  {isZh ? '棱跳编法' : 'Edge fixed-buffer'}
+                  {tr({ zh: '棱跳编法', en: 'Edge fixed-buffer',
+                      zhHant: "稜跳編法"
+                })}
                 </label>
               </div>
             </div>

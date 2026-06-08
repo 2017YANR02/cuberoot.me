@@ -30,6 +30,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ClearButton } from '@/components/ClearButton';
 import CubingPreview from '@/components/CubingPreview';
 import '../3bld.css';
+import { tr } from '@/i18n/tr';
 
 // TwistySection pulls in cubing.js (heavy) — load only on the client, lazily.
 const TwistySection = dynamic(() => import('@/components/TwistySection'), {
@@ -121,25 +122,33 @@ export default function CommLibraryPage(): JSX.Element {
   const selNormalized = selAlg ? normalizeAlg(selAlg) : '';
 
   const kindLabel = (k: Kind) =>
-    k === 'corner' ? (isZh ? '角块' : 'Corner') : (isZh ? '棱块' : 'Edge');
+    k === 'corner' ? (tr({ zh: '角块', en: 'Corner',
+        zhHant: "角塊"
+    })) : (tr({ zh: '棱块', en: 'Edge',
+        zhHant: "稜塊"
+    }));
 
   const loading = activeMap === null;
 
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{isZh ? '3BLD 公式库' : '3BLD Commutator Library'}</h1>
+        <h1>{tr({ zh: '3BLD 公式库', en: '3BLD Commutator Library',
+            zhHant: "3BLD 公式庫"
+        })}</h1>
       </div>
 
       <p className="bld-input-summary">
-        {isZh
-          ? '角块 / 棱块换法公式库,每条公式在还原态魔方上即一组三循环。点选可交互播放,带中文联想词作记忆提示。'
-          : 'Corner / edge commutator dictionary — each alg is a 3-cycle on a solved cube. Tap a pair to scrub it interactively; Chinese association words shown as a memory hint where available.'}
+        {tr({ zh: '角块 / 棱块换法公式库,每条公式在还原态魔方上即一组三循环。点选可交互播放,带中文联想词作记忆提示。', en: 'Corner / edge commutator dictionary — each alg is a 3-cycle on a solved cube. Tap a pair to scrub it interactively; Chinese association words shown as a memory hint where available.',
+            zhHant: "角塊 / 稜塊換法公式庫,每條公式在還原態魔方上即一組三迴圈。點選可互動播放,帶中文聯想詞作記憶提示。"
+        })}
       </p>
 
       {/* ── toolbar: kind toggle + search ── */}
       <div className="bld-comm-toolbar">
-        <div className="bld-seg" role="tablist" aria-label={isZh ? '块类型' : 'Piece type'}>
+        <div className="bld-seg" role="tablist" aria-label={tr({ zh: '块类型', en: 'Piece type',
+            zhHant: "塊型別"
+        })}>
           <button
             type="button"
             role="tab"
@@ -170,10 +179,14 @@ export default function CommLibraryPage(): JSX.Element {
             className="bld-comm-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={isZh ? '搜索编码 / 公式 / 联想词' : 'Search pair / alg / word'}
+            placeholder={tr({ zh: '搜索编码 / 公式 / 联想词', en: 'Search pair / alg / word',
+                zhHant: "搜尋編碼 / 公式 / 聯想詞"
+            })}
             spellCheck={false}
             autoComplete="off"
-            aria-label={isZh ? '搜索' : 'Search'}
+            aria-label={tr({ zh: '搜索', en: 'Search',
+                zhHant: "搜尋"
+            })}
           />
           {query && (
             <ClearButton isZh={isZh} onClick={() => setQuery('')} preserveFocus />
@@ -182,7 +195,9 @@ export default function CommLibraryPage(): JSX.Element {
 
         <span className="bld-comm-count">
           {loading
-            ? (isZh ? '加载中…' : 'Loading…')
+            ? (tr({ zh: '加载中…', en: 'Loading…',
+                zhHant: "載入中…"
+            }))
             : isZh
               ? `${pairs.length} 组`
               : `${pairs.length}`}
@@ -206,7 +221,7 @@ export default function CommLibraryPage(): JSX.Element {
             </div>
 
             <div>
-              <div className="bld-comm-alg-label">{isZh ? '公式' : 'Algorithm'}</div>
+              <div className="bld-comm-alg-label">{tr({ zh: '公式', en: 'Algorithm' })}</div>
               <div className="bld-comm-alg-text">{selAlg}</div>
             </div>
 
@@ -235,7 +250,9 @@ export default function CommLibraryPage(): JSX.Element {
           </div>
         ) : pairs.length === 0 ? (
           <div className="bld-comm-empty">
-            {isZh ? '无匹配公式' : 'No matching algs'}
+            {tr({ zh: '无匹配公式', en: 'No matching algs',
+                zhHant: "無匹配公式"
+            })}
           </div>
         ) : (
           pairs.map((p) => {

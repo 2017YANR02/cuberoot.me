@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── Helper types ──────────────────────────────────────────────────────────────
 
@@ -279,7 +280,9 @@ function PairMultiplierPanel({ lang }: { lang: 'zh' | 'en' }) {
           {(['trivial', 'inversion', 'coord-perm'] as PhiMode[]).map(m => (
             <button key={m} className={`gt-chip${phiMode === m ? ' gt-chip-active' : ''}`} onClick={() => setPhiMode(m)}>
               {m === 'trivial'
-                ? (lang === 'zh' ? '平凡 (直积)' : 'trivial (direct)')
+                ? (tr({ zh: '平凡 (直积)', en: 'trivial (direct)',
+                    zhHant: "平凡 (直積)"
+                }))
                 : m === 'inversion'
                 ? (lang === 'zh' ? `C_${n} 求逆` : `C_${n} inversion`)
                 : (lang === 'zh' ? `坐标置换 (Z/${k <= 4 ? 2 : 3})^${k}` : `coord-perm (Z/${k <= 4 ? 2 : 3})^${k}`)}
@@ -361,8 +364,10 @@ function PairMultiplierPanel({ lang }: { lang: 'zh' | 'en' }) {
           <span className="gt-result-label"><L zh="两种乘法相等？" en="Equal (abelian here)?" /></span>
           <span className={result.isAbelianHere ? 'gt-result-val' : 'gt-result-val-strong'} style={{ color: result.isAbelianHere ? 'var(--green)' : 'var(--warn)' }}>
             {result.isAbelianHere
-              ? (lang === 'zh' ? '相等 (φ 在此未起作用)' : 'equal (φ inactive here)')
-              : (lang === 'zh' ? '不等 — 非交换！' : 'different — non-abelian!')}
+              ? (tr({ zh: '相等 (φ 在此未起作用)', en: 'equal (φ inactive here)' }))
+              : (tr({ zh: '不等 — 非交换！', en: 'different — non-abelian!',
+                  zhHant: "不等 — 非交換！"
+            }))}
           </span>
         </div>
       </div>
@@ -398,7 +403,7 @@ function MultiplicationSVG({
   const boxes = [
     { x: labelX(0), label: `n₁=${a1}`, sub: '', highlight: false },
     { x: labelX(1), label: `h₁=${b1}`, sub: '', highlight: false },
-    { x: labelX(2), label: `n₂=${a2}`, sub: lang === 'zh' ? '被 φ 作用' : 'gets twisted', highlight: true },
+    { x: labelX(2), label: `n₂=${a2}`, sub: tr({ zh: '被 φ 作用', en: 'gets twisted' }), highlight: true },
     { x: labelX(3), label: `h₂=${b2}`, sub: '', highlight: false },
   ];
   const resultSemiX = labelX(5);
@@ -408,7 +413,7 @@ function MultiplicationSVG({
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block', margin: '16px 0', overflow: 'visible', maxWidth: W }}>
       {/* Row label: semidirect */}
       <text x={4} y={row1y + 24} style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill={inkDim}>
-        {lang === 'zh' ? '半直' : 'semi'}
+        {tr({ zh: '半直', en: 'semi' })}
       </text>
 
       {/* Draw input boxes */}
@@ -448,7 +453,9 @@ function MultiplicationSVG({
 
       {/* Row 2: direct product */}
       <text x={4} y={row2y + 24} style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill={inkDim}>
-        {lang === 'zh' ? '直积' : 'direct'}
+        {tr({ zh: '直积', en: 'direct',
+            zhHant: "直積"
+        })}
       </text>
 
       {boxes.map((b, i) => (
@@ -588,10 +595,14 @@ function DihedralWheelPanel({ lang }: { lang: 'zh' | 'en' }) {
         {(['r', 's', 'conj'] as const).map(a => (
           <button key={a} className={`gt-chip${action === a ? ' gt-chip-active' : ''}`} onClick={() => setAction(a)}>
             {a === 'r'
-              ? (lang === 'zh' ? '×r (旋转)' : '×r (rotate)')
+              ? (tr({ zh: '×r (旋转)', en: '×r (rotate)',
+                  zhHant: "×r (旋轉)"
+            }))
               : a === 's'
-              ? (lang === 'zh' ? '×s (反射)' : '×s (reflect)')
-              : (lang === 'zh' ? 's·g·s⁻¹ (共轭)' : 's·g·s⁻¹ (conjugate)')}
+              ? (tr({ zh: '×s (反射)', en: '×s (reflect)' }))
+              : (tr({ zh: 's·g·s⁻¹ (共轭)', en: 's·g·s⁻¹ (conjugate)',
+                  zhHant: "s·g·s⁻¹ (共軛)"
+            }))}
           </button>
         ))}
       </div>
@@ -624,10 +635,12 @@ function DihedralWheelPanel({ lang }: { lang: 'zh' | 'en' }) {
 
           {/* Labels */}
           <text x={cx} y={16} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--accent)">
-            {lang === 'zh' ? '旋转' : 'rotations'}
+            {tr({ zh: '旋转', en: 'rotations',
+                zhHant: "旋轉"
+            })}
           </text>
           <text x={cx} y={cy + R_inner - 4} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--accent-2)">
-            {lang === 'zh' ? '反射' : 'reflections'}
+            {tr({ zh: '反射', en: 'reflections' })}
           </text>
         </svg>
 
@@ -783,8 +796,8 @@ function SplitExtensionPanel({ lang }: { lang: 'zh' | 'en' }) {
           <button key={ex} className={`gt-chip${example === ex ? ' gt-chip-active' : ''}`}
             onClick={() => { setExample(ex); setSelectedH(null); setChecked(false); }}>
             {ex === 'D3'
-              ? (lang === 'zh' ? 'D₃ = C₃ ⋊ C₂ (分裂)' : 'D₃ = C₃ ⋊ C₂ (splits)')
-              : (lang === 'zh' ? 'ℤ/4 over ℤ/2 (不分裂)' : 'ℤ/4 over ℤ/2 (non-split)')}
+              ? (tr({ zh: 'D₃ = C₃ ⋊ C₂ (分裂)', en: 'D₃ = C₃ ⋊ C₂ (splits)' }))
+              : (tr({ zh: 'ℤ/4 over ℤ/2 (不分裂)', en: 'ℤ/4 over ℤ/2 (non-split)' }))}
           </button>
         ))}
       </div>
@@ -936,7 +949,9 @@ function ExtensionDiagramSVG({
 
       {/* Legend */}
       <text x={W / 2} y={H - 6} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-faint)">
-        {lang === 'zh' ? '实线=闭合(分裂), 虚线=不封闭' : 'solid=closed(splits), dashed=fails closure'}
+        {tr({ zh: '实线=闭合(分裂), 虚线=不封闭', en: 'solid=closed(splits), dashed=fails closure',
+            zhHant: "實線=閉合(分裂), 虛線=不封閉"
+        })}
       </text>
     </svg>
   );

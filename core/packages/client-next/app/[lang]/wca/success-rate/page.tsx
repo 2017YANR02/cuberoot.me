@@ -14,6 +14,8 @@ import { apiUrl } from '@/lib/api-base';
 import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelect';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const EVENTS = [
   '333bf','444bf','555bf','333mbf','333fm','333',
@@ -78,20 +80,28 @@ function SuccessRatePageInner() {
     <div className="wse-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
+          <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}</Link>
         </div>
         <h1 className="wse-title-row">
-          {isZh ? '项目成功率' : 'Event Success Rate'}
+          {tr({ zh: '项目成功率', en: 'Event Success Rate',
+              zhHant: "專案成功率"
+        })}
           <Link
             href="/wca/about/success-rate"
             className="wse-title-help"
-            title={isZh ? '这页是干啥的?' : 'What is this page?'}
-            aria-label={isZh ? '查看说明' : 'About this page'}
+            title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+                zhHant: "這頁是幹啥的?"
+            })}
+            aria-label={tr({ zh: '查看说明', en: 'About this page',
+                zhHant: "檢視說明"
+            })}
           >
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
         </h1>
-        <p className="wse-subtitle">{isZh ? '每位选手在该项目中成功完成的轮次占比(主要看盲拧 / FMC 等失败率高的项目)' : 'Per-cuber success rate per event (most relevant for BLD / FMC)'}</p>
+        <p className="wse-subtitle">{tr({ zh: '每位选手在该项目中成功完成的轮次占比(主要看盲拧 / FMC 等失败率高的项目)', en: 'Per-cuber success rate per event (most relevant for BLD / FMC)',
+            zhHant: "每位選手在該專案中成功完成的輪次佔比(主要看盲擰 / FMC 等失敗率高的專案)"
+        })}</p>
       </header>
 
       <WcaEventSelector
@@ -104,7 +114,9 @@ function SuccessRatePageInner() {
       <div className="wse-filters">
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
-          <label>{isZh ? '最小尝试数' : 'Min attempts'}</label>
+          <label>{tr({ zh: '最小尝试数', en: 'Min attempts',
+              zhHant: "最小嚐試數"
+        })}</label>
           <select value={minAttempted} onChange={e => update('minAttempted', e.target.value)}>
             {MIN_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
@@ -112,7 +124,9 @@ function SuccessRatePageInner() {
       </div>
 
       <div className="wse-table-wrapper">
-        {loading && <div className="wse-state">{isZh ? '加载中...' : 'Loading...'}</div>}
+        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...',
+            zhHant: "載入中..."
+        })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {data && !loading && (
           <>
@@ -121,11 +135,19 @@ function SuccessRatePageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{isZh ? '选手' : 'Person'}</th>
-                  <th className="wse-value-col">{isZh ? '成功率' : 'Rate'}</th>
-                  <th className="wse-value-col">{isZh ? '复原' : 'Solved'}</th>
-                  <th className="wse-value-col">{isZh ? '尝试' : 'Attempts'}</th>
-                  <th>{isZh ? '国家' : 'Country'}</th>
+                  <th>{tr({ zh: '选手', en: 'Person',
+                      zhHant: "選手"
+                })}</th>
+                  <th className="wse-value-col">{tr({ zh: '成功率', en: 'Rate' })}</th>
+                  <th className="wse-value-col">{tr({ zh: '复原', en: 'Solved',
+                      zhHant: "復原"
+                })}</th>
+                  <th className="wse-value-col">{tr({ zh: '尝试', en: 'Attempts',
+                      zhHant: "嘗試"
+                })}</th>
+                  <th>{tr({ zh: '国家', en: 'Country',
+                      zhHant: "國家"
+                })}</th>
                 </tr>
               </thead>
               <tbody>
@@ -133,7 +155,7 @@ function SuccessRatePageInner() {
                   <tr key={r.wcaId}>
                     <td className="wse-rank-col">{(page - 1) * size + i + 1}</td>
                     <td>
-                      <Link prefetch={false} href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>{displayCuberName(r.name, isZh)}</Link>
+                      <Link prefetch={false} href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${r.wcaId}`}>{displayCuberName(r.name, isZh)}</Link>
                     </td>
                     <td className="wse-value-col">{r.percentage.toFixed(2)}%</td>
                     <td className="wse-value-col">{r.solved}</td>

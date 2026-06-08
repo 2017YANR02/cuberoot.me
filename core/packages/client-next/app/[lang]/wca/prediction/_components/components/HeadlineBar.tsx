@@ -2,6 +2,7 @@
 // "谁离物理下界最近"
 import { EVENTS } from '../events';
 import { THEORETICAL_LIMITS } from '../theoretical_limits';
+import { tr } from '@/i18n/tr';
 
 interface EventSummary {
   ev: typeof EVENTS[number];
@@ -31,9 +32,9 @@ export function HeadlineBar({ eventSummaries, isZh }: Props) {
   return (
     <div className="pred-headline-bar">
       <div className="pred-headline-bar-title">
-        {isZh
-          ? '当前 WR 距物理下界的占比 — 100% = 已撞墙'
-          : 'Current WR vs physical floor — 100% = at the wall'}
+        {tr({ zh: '当前 WR 距物理下界的占比 — 100% = 已撞墙', en: 'Current WR vs physical floor — 100% = at the wall',
+            zhHant: "當前 WR 距物理下界的佔比 — 100% = 已撞牆"
+        })}
       </div>
       <div className="pred-headline-bar-rows">
         {rows.map((r) => (
@@ -50,9 +51,9 @@ export function HeadlineBar({ eventSummaries, isZh }: Props) {
         ))}
       </div>
       <div className="pred-headline-bar-foot">
-        {isZh
-          ? '红 (≥ 95%) = 物理下界已贴脸  橙 (80-95%) = 紧逼  黄 (60-80%) = 仍有 1.5× 提升空间  灰 = 远未到墙'
-          : 'Red (≥95%) = at wall · Orange (80–95%) = closing in · Yellow (60–80%) = 1.5× headroom remaining · Grey = far from wall'}
+        {tr({ zh: '红 (≥ 95%) = 物理下界已贴脸  橙 (80-95%) = 紧逼  黄 (60-80%) = 仍有 1.5× 提升空间  灰 = 远未到墙', en: 'Red (≥95%) = at wall · Orange (80–95%) = closing in · Yellow (60–80%) = 1.5× headroom remaining · Grey = far from wall',
+            zhHant: "紅 (≥ 95%) = 物理下界已貼臉  橙 (80-95%) = 緊逼  黃 (60-80%) = 仍有 1.5× 提升空間  灰 = 遠未到牆"
+        })}
       </div>
     </div>
   );

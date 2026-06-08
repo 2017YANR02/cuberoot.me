@@ -22,6 +22,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { VisualCube } from '@/components/VisualCube';
 import { Play, Pause, RotateCcw, SkipBack, SkipForward, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { MathText } from './Tex';
+import i18n from '@/i18n/i18n-client';
 
 interface Preset {
   id: string;
@@ -46,9 +47,9 @@ const PRESETS: Preset[] = [
     phase2: "",
     notes: {
       zh: '这是 T-perm,只交换两个角块 + 两个棱块。其逆 5 步就是 phase 1 出口,刚好回到 H 子群(实际上已经在 H,故 phase 2 = 0 步)。',
-      en: 'This is a T-perm: swaps two corners + two edges. Its 5-move inverse lands directly in H (in fact already in H ⇒ phase 2 = 0 moves).',
-    },
-  },
+      en: 'This is a T-perm: swaps two corners + two edges. Its 5-move inverse lands directly in H (in fact already in H ⇒ phase 2 = 0 moves).'
+    }
+},
   {
     id: 'random',
     zh: '随机三阶状态',
@@ -58,9 +59,9 @@ const PRESETS: Preset[] = [
     phase2: "U2 R2 U2 F2 R2 U2 B2 D2 L2 D'",
     notes: {
       zh: '7 + 10 = 17 步 ≤ 20 上帝之数。Phase 1 用 7 步进 H;Phase 2 用 10 步在 H 内还原。注意 phase 2 全部是 180° + U/D 转,从不出现 L/R/F/B 单转。',
-      en: '7 + 10 = 17 ≤ 20 (God\'s number). Phase 1 enters H in 7 moves; Phase 2 solves inside H in 10 moves. Phase 2 only uses 180° turns + U/D, never L/R/F/B alone.',
-    },
-  },
+      en: '7 + 10 = 17 ≤ 20 (God\'s number). Phase 1 enters H in 7 moves; Phase 2 solves inside H in 10 moves. Phase 2 only uses 180° turns + U/D, never L/R/F/B alone.'
+    }
+},
   {
     id: 'superflip',
     zh: 'Superflip (上界紧的 antipode)',
@@ -70,9 +71,9 @@ const PRESETS: Preset[] = [
     phase2: "F2 D2 L2 U2 R2 D2 B2 L2",
     notes: {
       zh: 'Superflip 是 distance-20 状态。Kociemba 给出 12 + 8 = 20 步分解(本预置)。即使最优分解,phase 1 也吃满 ~12 步,phase 2 吃满 ~8 步。20 = 上帝之数,这条解算"打满上限"。',
-      en: 'Superflip is a distance-20 state. Kociemba splits it 12 + 8 = 20 (preset above). Even optimal, phase 1 saturates at ~12; phase 2 at ~8. 20 = God\'s number — this solution "hits the ceiling".',
-    },
-  },
+      en: 'Superflip is a distance-20 state. Kociemba splits it 12 + 8 = 20 (preset above). Even optimal, phase 1 saturates at ~12; phase 2 at ~8. 20 = God\'s number — this solution "hits the ceiling".'
+    }
+},
   {
     id: 'hard',
     zh: '硬 scramble (FMC 训练题)',
@@ -82,9 +83,9 @@ const PRESETS: Preset[] = [
     phase2: "L2 U2 F2 D' B2 L2 R2 D' F2 R2",
     notes: {
       zh: '7 + 10 = 17 步,典型 FMC 比赛级 scramble。注意 phase 1 出口的状态被 4 个不变量同时锁定:8 个角块朝向归零 (corner-orient = 0) + 12 个棱块朝向归零 (edge-orient = 0) + M-slice edges 全在 UD 之间 (M-slice = 0)。',
-      en: '7 + 10 = 17, FMC-grade. Phase 1\'s exit state hits all four invariants simultaneously: 8 corners oriented (corner-orient = 0) + 12 edges oriented (edge-orient = 0) + M-slice edges all between UD layers (M-slice = 0).',
-    },
-  },
+      en: '7 + 10 = 17, FMC-grade. Phase 1\'s exit state hits all four invariants simultaneously: 8 corners oriented (corner-orient = 0) + 12 edges oriented (edge-orient = 0) + M-slice edges all between UD layers (M-slice = 0).'
+    }
+},
 ];
 
 function tokens(alg: string): string[] {
@@ -166,7 +167,7 @@ export default function TwoPhaseDemo({ isZh }: Props) {
           <button key={p.id}
                   className={`god-metric-tab ${presetId === p.id ? 'is-on' : ''}`}
                   onClick={() => setPresetId(p.id)}>
-            {isZh ? p.zh : p.en}
+            {(i18n.language.startsWith('zh') ? p.zh : p.en)}
           </button>
         ))}
       </div>
@@ -273,7 +274,7 @@ export default function TwoPhaseDemo({ isZh }: Props) {
       {/* Bottom: notes */}
       <div className="god-tp-notes">
         <strong>{t('这条 scramble:', 'This scramble:')}</strong>{' '}
-        <MathText>{isZh ? preset.notes.zh : preset.notes.en}</MathText>
+        <MathText>{(i18n.language.startsWith('zh') ? preset.notes.zh : preset.notes.en)}</MathText>
       </div>
       <p className="god-tp-caption">
         <MathText>{t(

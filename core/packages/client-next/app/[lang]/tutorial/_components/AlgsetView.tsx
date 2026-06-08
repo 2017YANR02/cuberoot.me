@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { AlgsetPostContent } from '../_lib/useTutorialCatalog';
 import { CaseCard } from './CaseCard';
 import { CaseModal } from './CaseModal';
+import { tr } from '@/i18n/tr';
 
 interface AlgsetViewProps {
   post: AlgsetPostContent;
@@ -37,7 +38,7 @@ export function AlgsetView({ post }: AlgsetViewProps) {
             }
             onClick={() => setActiveGroup('all')}
           >
-            {isZh ? '全部' : 'All'} · {post.cases.length}
+            {tr({ zh: '全部', en: 'All' })} · {post.cases.length}
           </button>
           {post.groups.map(g => (
             <button

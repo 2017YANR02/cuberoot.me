@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── Pure math helpers ──────────────────────────────────────────────────────────
 
@@ -806,7 +807,9 @@ function SumOfSquaresPanel({
               <td style={{ textAlign: 'right', fontFamily: 'var(--mono)', fontSize: 12, padding: '6px 8px', color: matches ? 'var(--green)' : 'var(--warn)' }}>
                 {matches ? `= ${n}! ` : `≠ ${n}!`}
                 {matches
-                  ? (lang === 'zh' ? '✓ 验证' : '✓ verified')
+                  ? (tr({ zh: '✓ 验证', en: '✓ verified',
+                      zhHant: "✓ 驗證"
+                }))
                   : (lang === 'zh' ? '!' : '!')}
               </td>
             </tr>
@@ -937,7 +940,9 @@ function ConjugateParityPanel({ lambda, lang }: { lambda: number[]; lang: 'zh' |
             style={{ fontFamily: 'var(--mono)', fontSize: 9 }}
             fill="var(--ink-faint)"
           >
-            {lang === 'zh' ? '转置' : 'transpose'}
+            {tr({ zh: '转置', en: 'transpose',
+                zhHant: "轉置"
+            })}
           </text>
 
           {/* Right: rightLambda */}
@@ -957,8 +962,10 @@ function ConjugateParityPanel({ lambda, lang }: { lambda: number[]; lang: 'zh' |
           </div>
           <div style={{ color: f === fConj ? 'var(--green)' : 'var(--warn)', fontSize: 12, marginTop: 4 }}>
             {f === fConj
-              ? (lang === 'zh' ? '✓ 相等 (S^{λ\'} ≅ S^λ ⊗ sgn)' : '✓ equal (S^{λ\'} ≅ S^λ ⊗ sgn)')
-              : (lang === 'zh' ? '不等 (计算有误)' : 'unequal (computation error)')}
+              ? (tr({ zh: '✓ 相等 (S^{λ\'} ≅ S^λ ⊗ sgn)', en: '✓ equal (S^{λ\'} ≅ S^λ ⊗ sgn)' }))
+              : (tr({ zh: '不等 (计算有误)', en: 'unequal (computation error)',
+                  zhHant: "不等 (計算有誤)"
+            }))}
           </div>
         </div>
       </div>

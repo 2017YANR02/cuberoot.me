@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── Data model ────────────────────────────────────────────────────────────────
 
@@ -491,7 +492,7 @@ function SeriesBuilderPanel({ lang }: { lang: 'zh' | 'en' }) {
         <div className="gt-result-row">
           <span className="gt-result-label"><L zh="|G|" en="|G|" /></span>
           <span className="gt-result-val-strong" style={{ color: correct ? 'var(--green)' : 'var(--warn)' }}>
-            {gdef.order} {correct ? (lang === 'zh' ? '✓ 吻合' : '✓ matches') : (lang === 'zh' ? '✗ 不符' : '✗ mismatch')}
+            {gdef.order} {correct ? (tr({ zh: '✓ 吻合', en: '✓ matches' })) : (tr({ zh: '✗ 不符', en: '✗ mismatch' }))}
           </span>
         </div>
         <div className="gt-result-row">
@@ -572,7 +573,9 @@ function SeriesLadderSVG({
                 style={{ fontFamily: 'var(--mono)', fontSize: 10 }}
                 fill="var(--warn)"
               >
-                {lang === 'zh' ? '非G正规' : '⊴G fails'}
+                {tr({ zh: '非G正规', en: '⊴G fails',
+                    zhHant: "非G正規"
+                })}
               </text>
             )}
           </g>
@@ -620,7 +623,9 @@ function SeriesLadderSVG({
         style={{ fontFamily: 'var(--mono)', fontSize: 10 }}
         fill="var(--ink-faint)"
       >
-        {lang === 'zh' ? '从下往上读：每段因子阶之积 = |G|' : 'read bottom-up: product of edge orders = |G|'}
+        {tr({ zh: '从下往上读：每段因子阶之积 = |G|', en: 'read bottom-up: product of edge orders = |G|',
+            zhHant: "從下往上讀：每段因子階之積 = |G|"
+        })}
       </text>
     </svg>
   );
@@ -895,7 +900,9 @@ function ElementOrderBarChart({
         fill="var(--ink-faint)"
         transform={`rotate(-90, 10, ${axisY / 2})`}
       >
-        {lang === 'zh' ? '元素个数' : 'count'}
+        {tr({ zh: '元素个数', en: 'count',
+            zhHant: "元素個數"
+        })}
       </text>
     </svg>
   );
@@ -1080,7 +1087,9 @@ function CubeFactorPanel({ lang }: { lang: 'zh' | 'en' }) {
 
         {/* Prime ledger below blocks */}
         <text x={12} y={blockH + 22} style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-dim)">
-          {lang === 'zh' ? '素数分解:' : 'prime decomp:'}
+          {tr({ zh: '素数分解:', en: 'prime decomp:',
+              zhHant: "素數分解:"
+        })}
         </text>
         <text x={12} y={blockH + 36} style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-faint)">
           2: {lang === 'zh' ? '6(A₈)+9(A₁₂)+12(C₂×12)' : '6(A₈)+9(A₁₂)+12(C₂×12)'} = 27
@@ -1089,7 +1098,9 @@ function CubeFactorPanel({ lang }: { lang: 'zh' | 'en' }) {
           3: {lang === 'zh' ? '2(A₈)+5(A₁₂)+7(C₃×7)' : '2(A₈)+5(A₁₂)+7(C₃×7)'} = 14
         </text>
         <text x={12} y={blockH + 64} style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-faint)">
-          {lang === 'zh' ? '5: 1(A₈)+2(A₁₂)=3; 7: 1+1=2; 11: 1(A₁₂)=1 — 全部来自非交换单因子' : '5: 1(A₈)+2(A₁₂)=3; 7: 1+1=2; 11: 1(A₁₂)=1 — all from nonabelian simple factors'}
+          {tr({ zh: '5: 1(A₈)+2(A₁₂)=3; 7: 1+1=2; 11: 1(A₁₂)=1 — 全部来自非交换单因子', en: '5: 1(A₈)+2(A₁₂)=3; 7: 1+1=2; 11: 1(A₁₂)=1 — all from nonabelian simple factors',
+              zhHant: "5: 1(A₈)+2(A₁₂)=3; 7: 1+1=2; 11: 1(A₁₂)=1 — 全部來自非交換單因子"
+        })}
         </text>
       </svg>
 
@@ -1129,8 +1140,8 @@ function CubeFactorPanel({ lang }: { lang: 'zh' | 'en' }) {
               <span className="gt-result-label"><L zh="|G| = 43,252,003,274,489,856,000" en="|G| = 43,252,003,274,489,856,000" /></span>
               <span className="gt-result-val-strong" style={{ color: runningProducts[animStep] === CUBE_ORDER_BIGINT ? 'var(--green)' : 'var(--warn)' }}>
                 {runningProducts[animStep] === CUBE_ORDER_BIGINT
-                  ? (lang === 'zh' ? '✓ 完全吻合' : '✓ exact match')
-                  : (lang === 'zh' ? '✗ 不符 (bug)' : '✗ mismatch (bug)')}
+                  ? (tr({ zh: '✓ 完全吻合', en: '✓ exact match' }))
+                  : (tr({ zh: '✗ 不符 (bug)', en: '✗ mismatch (bug)' }))}
               </span>
             </div>
           )}
@@ -1206,7 +1217,9 @@ function A4RefinementPanel({ lang }: { lang: 'zh' | 'en' }) {
   ];
   // Coarse "factor" from 1 to V4 is order 4, NOT simple
   const coarseFactors = [
-    { order: 4, simple: false, label: lang === 'zh' ? 'C₂×C₂ (非单!)' : 'C₂×C₂ (not simple!)' },
+    { order: 4, simple: false, label: tr({ zh: 'C₂×C₂ (非单!)', en: 'C₂×C₂ (not simple!)',
+        zhHant: "C₂×C₂ (非單!)"
+    }) },
     { order: 3, simple: true, label: 'C₃' },
   ];
 
@@ -1359,8 +1372,12 @@ function A4RefinementPanel({ lang }: { lang: 'zh' | 'en' }) {
                 fill={f.simple ? 'var(--ink-faint)' : 'var(--warn)'}
               >
                 {f.simple
-                  ? (lang === 'zh' ? '单群 ✓' : 'simple ✓')
-                  : (lang === 'zh' ? '非单群 ✗' : 'not simple ✗')}
+                  ? (tr({ zh: '单群 ✓', en: 'simple ✓',
+                      zhHant: "單群 ✓"
+                }))
+                  : (tr({ zh: '非单群 ✗', en: 'not simple ✗',
+                      zhHant: "非單群 ✗"
+                }))}
               </text>
             </g>
           );
@@ -1372,8 +1389,12 @@ function A4RefinementPanel({ lang }: { lang: 'zh' | 'en' }) {
           <span className="gt-result-label"><L zh="是合成列？" en="Is this a composition series?" /></span>
           <span className="gt-result-val-strong" style={{ color: step === 1 ? 'var(--green)' : 'var(--warn)' }}>
             {step === 0
-              ? (lang === 'zh' ? '否 — V₄/1 = C₂×C₂ 不是单群' : 'No — V₄/1 = C₂×C₂ is not simple')
-              : (lang === 'zh' ? '是 — 每个因子都是单群' : 'Yes — every factor is a simple group')}
+              ? (tr({ zh: '否 — V₄/1 = C₂×C₂ 不是单群', en: 'No — V₄/1 = C₂×C₂ is not simple',
+                  zhHant: "否 — V₄/1 = C₂×C₂ 不是單群"
+            }))
+              : (tr({ zh: '是 — 每个因子都是单群', en: 'Yes — every factor is a simple group',
+                  zhHant: "是 — 每個因子都是單群"
+            }))}
           </span>
         </div>
         {step === 1 && (

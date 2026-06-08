@@ -28,6 +28,7 @@ import {
   exportToJson,
   shareResultCard,
 } from './AdvancedFeatures';
+import { tr } from '@/i18n/tr';
 
 // NOTE: 渐进式加载每批数量
 const BATCH_SIZE = 100;
@@ -128,7 +129,7 @@ function formatRelativeDate(isoDate: string, locale: string): string {
   const timeStr = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
 
   if (diff === 0) return timeStr;
-  if (diff === 1) return (locale === 'zh' ? '昨天 ' : 'Yesterday ') + timeStr;
+  if (diff === 1) return (tr({ zh: '昨天 ', en: 'Yesterday ' })) + timeStr;
   return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + timeStr;
 }
 
@@ -221,22 +222,30 @@ export default function HistoryPanel() {
     return (
       <div className="history-panel">
         <div className="history-header">
-          <span className="history-title">📋 {locale === 'zh' ? '历史' : 'History'}</span>
+          <span className="history-title">📋 {tr({ zh: '历史', en: 'History',
+              zhHant: "歷史"
+        })}</span>
           <span className="history-stats"></span>
         </div>
         {/* 工具按钮（即使空列表也能手动输入/导入） */}
         <div className="history-tools">
           <button className="history-tool-btn" onClick={() => setPopup('manual')}>
-            ✏️ {locale === 'zh' ? '手动' : 'Manual'}
+            ✏️ {tr({ zh: '手动', en: 'Manual',
+                zhHant: "手動"
+            })}
           </button>
           <button className="history-tool-btn" onClick={() => triggerCsTimerImport(useBattleStore.getState(), (msg) => {
             setToastMsg(msg);
             setTimeout(() => setToastMsg(null), 3000);
           })}>
-            📂 {locale === 'zh' ? '导入' : 'Import'}
+            📂 {tr({ zh: '导入', en: 'Import',
+                zhHant: "匯入"
+            })}
           </button>
         </div>
-        <div className="history-empty">{locale === 'zh' ? '暂无成绩' : 'No solves yet'}</div>
+        <div className="history-empty">{tr({ zh: '暂无成绩', en: 'No solves yet',
+            zhHant: "暫無成績"
+        })}</div>
         {popup === 'manual' && <ManualInputDialog onClose={() => setPopup(null)} />}
         {toastMsg && <div className="milestone-toast show">{toastMsg}</div>}
       </div>
@@ -267,7 +276,7 @@ export default function HistoryPanel() {
     <div className="history-panel">
       <div className="history-header">
         <span className="history-title">📋 History</span>
-        <span className="history-stats">{history.length} {locale === 'zh' ? '次' : 'solves'}</span>
+        <span className="history-stats">{history.length} {tr({ zh: '次', en: 'solves' })}</span>
       </div>
 
       {/* 功能按钮行 */}
@@ -284,19 +293,25 @@ export default function HistoryPanel() {
           📦 JSON
         </button>
         <button className="history-tool-btn" onClick={() => setPopup('manual')}>
-          ✏️ {locale === 'zh' ? '手动' : 'Manual'}
+          ✏️ {tr({ zh: '手动', en: 'Manual',
+              zhHant: "手動"
+        })}
         </button>
         <button className="history-tool-btn" onClick={() => triggerCsTimerImport(useBattleStore.getState(), (msg) => {
           setToastMsg(msg);
           setTimeout(() => setToastMsg(null), 3000);
         })}>
-          📂 {locale === 'zh' ? '导入' : 'Import'}
+          📂 {tr({ zh: '导入', en: 'Import',
+              zhHant: "匯入"
+        })}
         </button>
         <button className="history-tool-btn" onClick={() => setPopup('simulation')}>
-          🎲 {locale === 'zh' ? '模拟' : 'Sim'}
+          🎲 {tr({ zh: '模拟', en: 'Sim',
+              zhHant: "模擬"
+        })}
         </button>
         <button className="history-tool-btn" onClick={() => shareResultCard(history, puzzleId, locale, precision)}>
-          📤 {locale === 'zh' ? '分享' : 'Share'}
+          📤 {tr({ zh: '分享', en: 'Share' })}
         </button>
       </div>
 

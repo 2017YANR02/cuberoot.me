@@ -5,12 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../../_lib/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './algorithm_intro.css';
+import i18n from '@/i18n/i18n-client';
 
 const ACCENT = '#F0A04B';
 
 export default function Min2PhasePage() {
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
   useDocumentTitle('min2phase', 'min2phase');
 

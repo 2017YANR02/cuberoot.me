@@ -9,6 +9,7 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import type { ReactNode, AnchorHTMLAttributes } from 'react';
+import i18n from '@/i18n/i18n-client';
 
 type Props = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
   children?: ReactNode;
@@ -16,6 +17,6 @@ type Props = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
 
 export default function HomeLink({ children, ...rest }: Props) {
   const { i18n } = useTranslation();
-  const home = i18n.language.startsWith('zh') ? '/zh' : '/en';
+  const home = (i18n.language.startsWith('zh') ? '/zh' : '/en');
   return <Link href={home} {...rest}>{children}</Link>;
 }

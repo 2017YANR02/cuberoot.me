@@ -45,14 +45,22 @@ const ACTIVE_EVENTS = new Set([
 const BLIND_EVENTS = new Set(['333bf', '444bf', '555bf', '333mbf']);
 
 const REGIONAL_LABELS: Record<string, { zh: string; en: string }> = {
-  WR: { zh: 'WR 世界纪录', en: 'World Record' },
-  AfR: { zh: 'AfR 非洲纪录', en: 'African Record' },
-  AsR: { zh: 'AsR 亚洲纪录', en: 'Asian Record' },
-  ER: { zh: 'ER 欧洲纪录', en: 'European Record' },
-  NAR: { zh: 'NAR 北美纪录', en: 'N. American Record' },
-  OcR: { zh: 'OcR 大洋洲纪录', en: 'Oceanic Record' },
-  SAR: { zh: 'SAR 南美纪录', en: 'S. American Record' },
-  NR: { zh: 'NR 国家纪录', en: 'National Record' },
+  WR: { zh: 'WR 世界纪录', en: 'World Record'
+},
+  AfR: { zh: 'AfR 非洲纪录', en: 'African Record'
+},
+  AsR: { zh: 'AsR 亚洲纪录', en: 'Asian Record'
+},
+  ER: { zh: 'ER 欧洲纪录', en: 'European Record'
+},
+  NAR: { zh: 'NAR 北美纪录', en: 'N. American Record'
+},
+  OcR: { zh: 'OcR 大洋洲纪录', en: 'Oceanic Record'
+},
+  SAR: { zh: 'SAR 南美纪录', en: 'S. American Record'
+},
+  NR: { zh: 'NR 国家纪录', en: 'National Record'
+},
 };
 
 interface BuildOpts {
@@ -89,7 +97,7 @@ export function buildMilestones(
       date: first.start_date,
       zh: '首次参赛',
       en: 'First competition',
-      tags: [{ kind: 'comp', label: compName(first.id) }],
+      tags: [{ kind: 'comp', label: compName(first.id) }]
     });
   }
 
@@ -262,8 +270,8 @@ export function buildMilestones(
         date: latest.date,
         zh: '大满贯 — 完成全部 17 个现役项目',
         en: 'Grand Slam — completed all 17 active events',
-        tags: [{ kind: 'comp', label: compName(latest.compId) }],
-      });
+        tags: [{ kind: 'comp', label: compName(latest.compId) }]
+    });
     }
   }
 

@@ -6,6 +6,7 @@ import { LangCtx, L, type Lang } from '../../_lib/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './algorithm_intro.css';
 import './cfop_solver.css';
+import i18n from '@/i18n/i18n-client';
 
 const ACCENT = '#E879A6';
 
@@ -13,7 +14,7 @@ const FIG_BASE = '/images/algorithms/cfop';
 
 export default function CfopStdSolverPage() {
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
   useDocumentTitle('CFOP 多阶段求解器', 'CFOP multi-stage solver');
 

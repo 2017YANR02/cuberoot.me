@@ -18,6 +18,7 @@ import { ABOUT_REGISTRY } from './_lib/registry';
 import type { AboutEntry, AboutStep, AboutStat, AboutFormula, AboutCode, AboutRelated, AboutSection } from './_lib/types';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './wca_about.css';
+import { tr } from '@/i18n/tr';
 
 function pickLang<T extends string | string[] | undefined>(zh: T, en: T, isZh: boolean): T {
   return (isZh ? zh : en) as T;
@@ -151,7 +152,9 @@ export default function WcaAboutClient() {
     return ABOUT_REGISTRY[id] ?? null;
   }, [id]);
 
-  const aboutTitle = entry ? (isZh ? entry.titleZh : entry.titleEn) : (isZh ? '统计说明' : 'About Stat');
+  const aboutTitle = entry ? (isZh ? entry.titleZh : entry.titleEn) : (tr({ zh: '统计说明', en: 'About Stat',
+      zhHant: "統計說明"
+}));
   useDocumentTitle(aboutTitle, aboutTitle);
 
   if (!entry) {
@@ -160,7 +163,9 @@ export default function WcaAboutClient() {
         <div className="wcaa-header">
           <Link href="/wca" className="wcaa-back">
             <ArrowLeft size={16} />
-            <span>{isZh ? '返回 WCA 统计' : 'Back to WCA Statistics'}</span>
+            <span>{tr({ zh: '返回 WCA 统计', en: 'Back to WCA Statistics',
+                zhHant: "返回 WCA 統計"
+            })}</span>
           </Link>
         </div>
         <main className="wcaa-main">
@@ -179,7 +184,9 @@ export default function WcaAboutClient() {
       <div className="wcaa-header">
         <Link href="/wca" className="wcaa-back">
           <ArrowLeft size={16} />
-          <span>{isZh ? '返回 WCA 统计' : 'Back to WCA Statistics'}</span>
+          <span>{tr({ zh: '返回 WCA 统计', en: 'Back to WCA Statistics',
+              zhHant: "返回 WCA 統計"
+        })}</span>
         </Link>
       </div>
 
@@ -195,32 +202,42 @@ export default function WcaAboutClient() {
 
         {entry.stats && entry.stats.length > 0 && (
           <>
-            <h2 className="wcaa-section-title">{isZh ? '数字一览' : 'By the numbers'}</h2>
+            <h2 className="wcaa-section-title">{tr({ zh: '数字一览', en: 'By the numbers',
+                zhHant: "數字一覽"
+            })}</h2>
             <div className="wcaa-stats-grid">
               {entry.stats.map((s, i) => <StatCallout key={i} stat={s} isZh={isZh} />)}
             </div>
           </>
         )}
 
-        <h2 className="wcaa-section-title">{isZh ? '数据源' : 'Data source'}</h2>
+        <h2 className="wcaa-section-title">{tr({ zh: '数据源', en: 'Data source',
+            zhHant: "資料來源"
+        })}</h2>
         <Paragraphs value={pickLang(entry.sourceZh, entry.sourceEn, isZh)} />
         {entry.sourceCode && <CodeBlock code={entry.sourceCode} isZh={isZh} />}
 
-        <h2 className="wcaa-section-title">{isZh ? '算法 / 流程' : 'Algorithm / pipeline'}</h2>
+        <h2 className="wcaa-section-title">{tr({ zh: '算法 / 流程', en: 'Algorithm / pipeline',
+            zhHant: "演算法 / 流程"
+        })}</h2>
         <div className="wcaa-flow">
           {entry.steps.map((s, i) => <StepCard key={i} step={s} index={i} isZh={isZh} />)}
         </div>
 
         {entry.formulae && entry.formulae.length > 0 && (
           <>
-            <h2 className="wcaa-section-title">{isZh ? '关键公式' : 'Key formulae'}</h2>
+            <h2 className="wcaa-section-title">{tr({ zh: '关键公式', en: 'Key formulae',
+                zhHant: "關鍵公式"
+            })}</h2>
             {entry.formulae.map((f, i) => <FormulaCard key={i} formula={f} isZh={isZh} />)}
           </>
         )}
 
         {((isZh ? entry.edgesZh : entry.edgesEn) ?? []).length > 0 && (
           <>
-            <h2 className="wcaa-section-title">{isZh ? '口径与边界' : 'Caveats & edges'}</h2>
+            <h2 className="wcaa-section-title">{tr({ zh: '口径与边界', en: 'Caveats & edges',
+                zhHant: "口徑與邊界"
+            })}</h2>
             <ul className="wcaa-edges">
               {(isZh ? entry.edgesZh! : entry.edgesEn!).map((e, i) => (
                 <li key={i} dangerouslySetInnerHTML={{ __html: inlineFormat(e) }} />
@@ -233,7 +250,9 @@ export default function WcaAboutClient() {
 
         {entry.related && entry.related.length > 0 && (
           <>
-            <h2 className="wcaa-section-title">{isZh ? '相关统计 / 链接' : 'Related stats & links'}</h2>
+            <h2 className="wcaa-section-title">{tr({ zh: '相关统计 / 链接', en: 'Related stats & links',
+                zhHant: "相關統計 / 連結"
+            })}</h2>
             <div className="wcaa-related">
               {entry.related.map((r, i) => <RelatedCard key={i} rel={r} isZh={isZh} />)}
             </div>

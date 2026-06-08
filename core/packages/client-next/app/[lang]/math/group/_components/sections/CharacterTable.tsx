@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import type { Lang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── Complex number arithmetic ─────────────────────────────────────────────────
 
@@ -594,8 +595,12 @@ function CharTablePanel({
                   </span>
                   <span className="gt-result-val">
                     {res.isRow
-                      ? (lang === 'zh' ? '行正交（第一正交关系）' : 'Row orthogonality (1st relation)')
-                      : (lang === 'zh' ? '列正交（第二正交关系）' : 'Column orthogonality (2nd relation)')}
+                      ? (tr({ zh: '行正交（第一正交关系）', en: 'Row orthogonality (1st relation)',
+                          zhHant: "行正交（第一正交關係）"
+                    }))
+                      : (tr({ zh: '列正交（第二正交关系）', en: 'Column orthogonality (2nd relation)',
+                          zhHant: "列正交（第二正交關係）"
+                    }))}
                   </span>
                 </div>
                 <div className="gt-result-row">
@@ -706,7 +711,7 @@ function CharTableSVG({
             {/* Centralizer order */}
             <text x={x + CELL_W / 2} y={44} textAnchor="middle"
               style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
-              {lang === 'zh' ? '中心' : 'cen'}={group.order / group.classSizes[k]}
+              {tr({ zh: '中心', en: 'cen' })}={group.order / group.classSizes[k]}
             </text>
           </g>
         );
@@ -771,7 +776,9 @@ function CharTableSVG({
         fill="var(--bg-elev)" stroke="var(--rule)" strokeWidth={1} rx={3} />
       <text x={padLeft + ROW_LABEL_W / 2} y={18} textAnchor="middle"
         style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-faint)">
-        {lang === 'zh' ? 'χᵢ \\ 类' : 'χᵢ \\ class'}
+        {tr({ zh: 'χᵢ \\ 类', en: 'χᵢ \\ class',
+            zhHant: "χᵢ \\ 類"
+        })}
       </text>
       <text x={padLeft + ROW_LABEL_W / 2} y={32} textAnchor="middle"
         style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-faint)">
@@ -882,7 +889,9 @@ function SumOfSquaresPanel({ group, lang }: { group: GroupDef; lang: Lang }) {
         {hovered !== null && (
           <text x={20 + BAR_W / 2} y={BAR_H + 48} textAnchor="middle"
             style={{ fontFamily: 'var(--mono)', fontSize: 11 }} fill={CAT[hovered % CAT.length]}>
-            {group.charLabels[hovered]}: deg={degrees[hovered]}, d²={segments[hovered].sq}, {lang === 'zh' ? '占比' : 'share'}={segments[hovered].sq}/{G}
+            {group.charLabels[hovered]}: deg={degrees[hovered]}, d²={segments[hovered].sq}, {tr({ zh: '占比', en: 'share',
+                zhHant: "佔比"
+            })}={segments[hovered].sq}/{G}
           </text>
         )}
       </svg>
@@ -1034,7 +1043,9 @@ function ConjugationPanel({ lang }: { lang: Lang }) {
         })()}
 
         <text x={120} y={168} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-faint)">
-          {lang === 'zh' ? 'Argand 图 — 各项首尾相连' : 'Argand diagram — vectors head-to-tail'}
+          {tr({ zh: 'Argand 图 — 各项首尾相连', en: 'Argand diagram — vectors head-to-tail',
+              zhHant: "Argand 圖 — 各項首尾相連"
+        })}
         </text>
       </svg>
 
@@ -1045,7 +1056,9 @@ function ConjugationPanel({ lang }: { lang: Lang }) {
             <L zh="内积结果" en="Inner product" />
           </span>
           <span className="gt-result-val-strong" style={{ color: conjOn ? 'var(--green)' : 'var(--warn)' }}>
-            {fmtC(displayVal)} {conjOn ? (Math.abs(displayVal.re - (pairI === pairJ ? 1 : 0)) < 0.01 ? '= δ ✓' : '') : (lang === 'zh' ? '(错误)' : '(wrong)')}
+            {fmtC(displayVal)} {conjOn ? (Math.abs(displayVal.re - (pairI === pairJ ? 1 : 0)) < 0.01 ? '= δ ✓' : '') : (tr({ zh: '(错误)', en: '(wrong)',
+                zhHant: "(錯誤)"
+            }))}
           </span>
         </div>
         <div className="gt-result-row">

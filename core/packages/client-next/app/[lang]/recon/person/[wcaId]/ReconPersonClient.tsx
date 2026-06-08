@@ -27,6 +27,7 @@ import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import { useAuthStore } from '@/lib/auth-store';
 import '../../recon.css';
 import './recon-person.css';
+import { tr } from '@/i18n/tr';
 
 type Role = 'all' | 'solver' | 'reconer' | 'adder';
 
@@ -134,17 +135,29 @@ export default function ReconPersonClient() {
 
   const roleBadges = (r: RoleFlags) => {
     const out: { key: string; label: string }[] = [];
-    if (r.solver) out.push({ key: 'solver', label: isZh ? '选手' : 'Solver' });
-    if (r.reconer) out.push({ key: 'reconer', label: isZh ? '复盘' : 'Recon' });
-    if (r.adder) out.push({ key: 'adder', label: isZh ? '添加' : 'Added' });
+    if (r.solver) out.push({ key: 'solver', label: tr({ zh: '选手', en: 'Solver',
+        zhHant: "選手"
+    }) });
+    if (r.reconer) out.push({ key: 'reconer', label: tr({ zh: '复盘', en: 'Recon',
+        zhHant: "覆盤"
+    }) });
+    if (r.adder) out.push({ key: 'adder', label: tr({ zh: '添加', en: 'Added',
+        zhHant: "新增"
+    }) });
     return out;
   };
 
   const ROLE_TABS: { key: Role; label: string }[] = [
-    { key: 'all', label: isZh ? '全部' : 'All' },
-    { key: 'solver', label: isZh ? '选手' : 'Solver' },
-    { key: 'reconer', label: isZh ? '复盘者' : 'Reconstructor' },
-    { key: 'adder', label: isZh ? '添加者' : 'Added by' },
+    { key: 'all', label: tr({ zh: '全部', en: 'All' }) },
+    { key: 'solver', label: tr({ zh: '选手', en: 'Solver',
+        zhHant: "選手"
+    }) },
+    { key: 'reconer', label: tr({ zh: '复盘者', en: 'Reconstructor',
+        zhHant: "覆盤者"
+    }) },
+    { key: 'adder', label: tr({ zh: '添加者', en: 'Added by',
+        zhHant: "新增者"
+    }) },
   ];
 
   return (
@@ -166,14 +179,22 @@ export default function ReconPersonClient() {
             </a>
           </div>
           <div className="recon-person-stats">
-            <span><b>{counts.solver}</b> {isZh ? '选手' : 'solver'}</span>
-            <span><b>{counts.reconer}</b> {isZh ? '复盘' : 'recon'}</span>
-            <span><b>{counts.adder}</b> {isZh ? '添加' : 'added'}</span>
+            <span><b>{counts.solver}</b> {tr({ zh: '选手', en: 'solver',
+                zhHant: "選手"
+            })}</span>
+            <span><b>{counts.reconer}</b> {tr({ zh: '复盘', en: 'recon',
+                zhHant: "覆盤"
+            })}</span>
+            <span><b>{counts.adder}</b> {tr({ zh: '添加', en: 'added',
+                zhHant: "新增"
+            })}</span>
           </div>
         </div>
         {isSelf && (
           <button type="button" className="recon-person-logout" onClick={() => logout()}>
-            <LogOut size={14} /> {isZh ? '退出登录' : 'Log out'}
+            <LogOut size={14} /> {tr({ zh: '退出登录', en: 'Log out',
+                zhHant: "退出登入"
+            })}
           </button>
         )}
       </div>
@@ -191,28 +212,40 @@ export default function ReconPersonClient() {
         ))}
       </div>
 
-      {loading && <div className="recon-loading">{isZh ? '加载中…' : 'Loading…'}</div>}
+      {loading && <div className="recon-loading">{tr({ zh: '加载中…', en: 'Loading…',
+          zhHant: "載入中…"
+    })}</div>}
       {error && <div className="recon-error"><TriangleAlert size={16} /> {error}</div>}
 
       {!loading && !error && (
         <>
           {filtered.length === 0 ? (
             <div className="recon-empty">
-              <div>{isZh ? '暂无复盘记录' : 'No reconstructions yet'}</div>
+              <div>{tr({ zh: '暂无复盘记录', en: 'No reconstructions yet',
+                  zhHant: "暫無覆盤記錄"
+            })}</div>
             </div>
           ) : (
             <div className="recon-table-wrap">
               <table className="recon-table">
                 <thead>
                   <tr>
-                    <th className="col-event">{isZh ? '项目' : 'Event'}</th>
-                    <th className="col-solver">{isZh ? '选手' : 'Solver'}</th>
-                    <th className="col-dsingle">{isZh ? '单次' : 'Single'}</th>
-                    <th className="col-avg">{isZh ? '平均' : 'Average'}</th>
-                    <th className="col-comp">{isZh ? '比赛' : 'Competition'}</th>
-                    <th className="col-date">{isZh ? '日期' : 'Date'}</th>
-                    <th className="col-method">{isZh ? '方法' : 'Method'}</th>
-                    <th className="col-role">{isZh ? '角色' : 'Role'}</th>
+                    <th className="col-event">{tr({ zh: '项目', en: 'Event',
+                        zhHant: "專案"
+                    })}</th>
+                    <th className="col-solver">{tr({ zh: '选手', en: 'Solver',
+                        zhHant: "選手"
+                    })}</th>
+                    <th className="col-dsingle">{tr({ zh: '单次', en: 'Single',
+                        zhHant: "單次"
+                    })}</th>
+                    <th className="col-avg">{tr({ zh: '平均', en: 'Average' })}</th>
+                    <th className="col-comp">{tr({ zh: '比赛', en: 'Competition',
+                        zhHant: "比賽"
+                    })}</th>
+                    <th className="col-date">{tr({ zh: '日期', en: 'Date' })}</th>
+                    <th className="col-method">{tr({ zh: '方法', en: 'Method' })}</th>
+                    <th className="col-role">{tr({ zh: '角色', en: 'Role' })}</th>
                   </tr>
                 </thead>
                 <tbody>

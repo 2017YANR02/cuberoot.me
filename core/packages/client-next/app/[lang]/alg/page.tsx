@@ -14,6 +14,8 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import './alg.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 export default function AlgIndexPage() {
   const { i18n } = useTranslation();
@@ -24,14 +26,18 @@ export default function AlgIndexPage() {
     <div className="alg-root">
       <div className="alg-index-header">
         <div className="alg-index-header-row">
-          <h1 className="alg-index-title">{isZh ? '公式库' : 'Algorithm DB'}</h1>
+          <h1 className="alg-index-title">{tr({ zh: '公式库', en: 'Algorithm DB',
+              zhHant: "公式庫"
+        })}</h1>
         </div>
         <p className="alg-index-subtitle">
-          {(isZh ? '魔方公式速查 — ' : 'Cube algorithm reference — ') +
+          {(tr({ zh: '魔方公式速查 — ', en: 'Cube algorithm reference — ' })) +
             ALG_PUZZLES.map((p) => eventDisplayName(p, isZh)).join(' / ')}
         </p>
         <p className="alg-index-credit">
-          {isZh ? '数据来源: ' : 'Source: '}
+          {tr({ zh: '数据来源: ', en: 'Source: ',
+              zhHant: "資料來源: "
+        })}
           <a href="https://speedcubedb.com" target="_blank" rel="noopener noreferrer">
             speedcubedb.com
           </a>
@@ -48,12 +54,12 @@ export default function AlgIndexPage() {
                 <span>{eventDisplayName(p, isZh)}</span>
               </div>
               <div className="alg-puzzle-count">
-                {sets.length} {isZh ? '套公式' : 'sets'}
+                {sets.length} {tr({ zh: '套公式', en: 'sets' })}
               </div>
               <div className="alg-puzzle-preview">
                 {sets.slice(0, 6).map((s) => (
                   <span key={s.slug} className="alg-puzzle-chip">
-                    {isZh ? s.zh : s.en}
+                    {(i18n.language.startsWith('zh') ? s.zh : s.en)}
                   </span>
                 ))}
                 {sets.length > 6 && (
@@ -68,14 +74,20 @@ export default function AlgIndexPage() {
             <span className="alg-puzzle-icon alg-bracket-icon" aria-hidden="true">
               [,]
             </span>
-            <span>{isZh ? '换位子' : 'Commutator'}</span>
+            <span>{tr({ zh: '换位子', en: 'Commutator',
+                zhHant: "換位子"
+            })}</span>
           </div>
           <div className="alg-puzzle-count">
-            {isZh ? '换位子分解工具' : 'Commutator decomposer'}
+            {tr({ zh: '换位子分解工具', en: 'Commutator decomposer',
+                zhHant: "換位子分解工具"
+            })}
           </div>
           <div className="alg-puzzle-preview">
-            <span className="alg-puzzle-chip">{isZh ? '分解' : 'Decompose'}</span>
-            <span className="alg-puzzle-chip">{isZh ? '展开' : 'Expand'}</span>
+            <span className="alg-puzzle-chip">{tr({ zh: '分解', en: 'Decompose' })}</span>
+            <span className="alg-puzzle-chip">{tr({ zh: '展开', en: 'Expand',
+                zhHant: "展開"
+            })}</span>
             <span className="alg-puzzle-chip">Excel</span>
           </div>
         </Link>

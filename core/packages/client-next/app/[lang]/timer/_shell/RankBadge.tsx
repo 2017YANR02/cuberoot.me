@@ -26,6 +26,7 @@ import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import { useAuthStore } from '@/lib/auth-store';
 import { ISO2_TO_CONTINENT, CONTINENT_RECORD_ABBR } from '@/lib/continent';
 import { RecordBadge } from '@/components/RecordBadge';
+import { tr } from '@/i18n/tr';
 
 export interface RankBadgeProps {
   /** 计时器内部 EventId */
@@ -166,10 +167,14 @@ export default function RankBadge({
             className="rank-login-btn"
             data-no-timer
             onClick={() => login()}
-            title={isZh ? '登录 WCA 显示全国 / 大洲排名' : 'Sign in with WCA for national / continental ranks'}
+            title={tr({ zh: '登录 WCA 显示全国 / 大洲排名', en: 'Sign in with WCA for national / continental ranks',
+                zhHant: "登入 WCA 顯示全國 / 大洲排名"
+            })}
           >
             <LogIn size="1em" aria-hidden />
-            {isZh ? '登录' : 'Sign in'}
+            {tr({ zh: '登录', en: 'Sign in',
+                zhHant: "登入"
+            })}
           </button>
         )}
       </span>

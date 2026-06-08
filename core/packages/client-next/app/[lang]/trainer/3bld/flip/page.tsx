@@ -23,6 +23,7 @@ import {
 import { posChichu, eglobalState, globalState } from '../_lib/lettering';
 import { m2pSolve, prewarm } from '../_lib/m2p-bridge';
 import '../3bld.css';
+import { tr } from '@/i18n/tr';
 
 // 12 non-buffer-default edge stickers, one per edge piece (upstream inputCodeStr).
 const INPUT_CODE_STR = 'bdfhjlnprtxz';
@@ -112,7 +113,9 @@ export default function FlipTrainerPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{isZh ? '翻棱公式训练' : 'Edge Flip Trainer'}</h1>
+        <h1>{tr({ zh: '翻棱公式训练', en: 'Edge Flip Trainer',
+            zhHant: "翻稜公式訓練"
+        })}</h1>
       </div>
 
       <div className="bld-section">
@@ -127,7 +130,9 @@ export default function FlipTrainerPage(): JSX.Element {
               checked={cornerScramble}
               onChange={(e) => setCornerScramble(e.target.checked)}
             />
-            {isZh ? '打乱角块' : 'Scramble corners'}
+            {tr({ zh: '打乱角块', en: 'Scramble corners',
+                zhHant: "打亂角塊"
+            })}
           </label>
         </div>
       </div>
@@ -140,7 +145,9 @@ export default function FlipTrainerPage(): JSX.Element {
           disabled={busy}
         >
           <Play size={15} />
-          {isZh ? '生成翻棱训练' : 'Generate flip training'}
+          {tr({ zh: '生成翻棱训练', en: 'Generate flip training',
+              zhHant: "生成翻稜訓練"
+        })}
         </button>
       </div>
 

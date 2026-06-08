@@ -39,6 +39,7 @@ import { detectStage } from '@/lib/stage_detect';
 import { suggestAlg, movesOnly, lineRange } from '@/lib/recon_autofill_core';
 import type { Alg3x3Set } from '@cuberoot/shared/alg';
 import './ReconAutofill.css';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   textareaRef: RefObject<HTMLTextAreaElement | null>;
@@ -511,7 +512,9 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
             onMouseEnter={() => setSelected(i)}
           >
             {popup.kind === 'comment' ? (
-              <span className="recon-autofill-badge">{isZh ? '注释' : 'COMMENT'}</span>
+              <span className="recon-autofill-badge">{tr({ zh: '注释', en: 'COMMENT',
+                  zhHant: "註釋"
+            })}</span>
             ) : cat === 'zbls' ? (
               <>
                 <span className="recon-autofill-badge">F2L</span>
@@ -528,8 +531,12 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
                 tabIndex={-1}
                 className="recon-autofill-close"
                 onMouseDown={e => { e.preventDefault(); e.stopPropagation(); dismiss(); }}
-                aria-label={isZh ? '关闭自动补全' : 'Close suggestions'}
-                title={isZh ? '关闭(本行不再自动弹)' : 'Close (won\'t reopen on this line)'}
+                aria-label={tr({ zh: '关闭自动补全', en: 'Close suggestions',
+                    zhHant: "關閉自動補全"
+                })}
+                title={tr({ zh: '关闭(本行不再自动弹)', en: 'Close (won\'t reopen on this line)',
+                    zhHant: "關閉(本行不再自動彈)"
+                })}
               >
                 <X size={12} />
               </span>

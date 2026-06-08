@@ -6,6 +6,7 @@
 import { useEffect, useRef, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
+import { tr } from '@/i18n/tr';
 
 interface SampleButton {
   label: string;
@@ -52,7 +53,9 @@ export function CodeInputModal({
 
   if (!open) return null;
 
-  const heading = title ?? (isZh ? '输入编码' : 'Enter codes');
+  const heading = title ?? (tr({ zh: '输入编码', en: 'Enter codes',
+      zhHant: "輸入編碼"
+}));
 
   return (
     <div
@@ -68,7 +71,9 @@ export function CodeInputModal({
             type="button"
             className="bld-modal-close"
             onClick={onClose}
-            aria-label={isZh ? '关闭' : 'Close'}
+            aria-label={tr({ zh: '关闭', en: 'Close',
+                zhHant: "關閉"
+            })}
           >
             <X size={18} />
           </button>
@@ -79,7 +84,9 @@ export function CodeInputModal({
           className="bld-modal-textarea"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder ?? (isZh ? '每行一个编码,例如 AB' : 'One code per line, e.g. AB')}
+          placeholder={placeholder ?? (tr({ zh: '每行一个编码,例如 AB', en: 'One code per line, e.g. AB',
+              zhHant: "每行一個編碼,例如 AB"
+        }))}
           spellCheck={false}
         />
 
@@ -102,13 +109,15 @@ export function CodeInputModal({
             className="bld-btn bld-btn-ghost"
             onClick={() => onChange('')}
           >
-            {isZh ? '清空' : 'Clear'}
+            {tr({ zh: '清空', en: 'Clear' })}
           </button>
           <button type="button" className="bld-btn" onClick={onClose}>
-            {isZh ? '取消' : 'Cancel'}
+            {tr({ zh: '取消', en: 'Cancel' })}
           </button>
           <button type="button" className="bld-btn bld-btn-primary" onClick={onConfirm}>
-            {isZh ? '确认' : 'Confirm'}
+            {tr({ zh: '确认', en: 'Confirm',
+                zhHant: "確認"
+            })}
           </button>
         </div>
       </div>

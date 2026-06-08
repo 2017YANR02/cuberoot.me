@@ -17,6 +17,8 @@ import {
   COLOR_HEX, type ColorLetter,
 } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import './scramble_stats.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 interface HistEntry {
   min: number;
@@ -57,14 +59,17 @@ interface ExamplesJson {
 
 const EVENT_LABEL: Record<string, { zh: string; en: string }> = {
   '333': { zh: '3x3', en: '3x3' },
-  '333oh': { zh: '3x3 单手', en: '3x3 OH' },
-  '333bf': { zh: '3x3 盲拧', en: '3x3 BLD' },
-  '333ft': { zh: '3x3 脚拧', en: '3x3 FT' },
+  '333oh': { zh: '3x3 单手', en: '3x3 OH'
+},
+  '333bf': { zh: '3x3 盲拧', en: '3x3 BLD'
+},
+  '333ft': { zh: '3x3 脚拧', en: '3x3 FT'
+},
   '333mbf': { zh: '3x3 多盲', en: '3x3 MBLD' },
 };
 function eventLabel(e: string, isZh: boolean): string {
   const m = EVENT_LABEL[e];
-  return m ? (isZh ? m.zh : m.en) : e;
+  return m ? ((i18n.language.startsWith('zh') ? m.zh : m.en)) : e;
 }
 
 type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo';
@@ -72,13 +77,18 @@ type YMode = 'percent' | 'count';
 type ChartMode = 'pdf' | 'cdf';
 
 const VARIANT_LABEL: Record<VariantKey, { en: string; zh: string }> = {
-  std: { en: 'Standard', zh: '标准' },
+  std: { en: 'Standard', zh: '标准'
+},
   eo: { en: 'EO', zh: 'EO' },
-  pair: { en: 'Pair', zh: '基态' },
-  pseudo: { en: 'Pseudo', zh: '伪' },
-  pseudo_pair: { en: 'Pseudo Pair', zh: '伪基态' },
+  pair: { en: 'Pair', zh: '基态'
+},
+  pseudo: { en: 'Pseudo', zh: '伪'
+},
+  pseudo_pair: { en: 'Pseudo Pair', zh: '伪基态'
+},
   f2leo: { en: 'F2LEO', zh: 'F2LEO' },
-  pseudo_f2leo: { en: 'Pseudo F2LEO', zh: '伪 F2LEO' },
+  pseudo_f2leo: { en: 'Pseudo F2LEO', zh: '伪 F2LEO'
+},
 };
 
 const STAGE_LABEL: Record<string, { en: string; zh: string }> = {
@@ -294,20 +304,28 @@ export default function ScrambleStatsPage() {
   }, [currentSet, variant, stage]);
 
   const pageTitle = tab === 'length'
-    ? (isZh ? '打乱统计' : 'Scramble Stats')
-    : (isZh ? '打乱难度分布' : 'Scramble Distribution');
+    ? (tr({ zh: '打乱统计', en: 'Scramble Stats',
+        zhHant: "打亂統計"
+    }))
+    : (tr({ zh: '打乱难度分布', en: 'Scramble Distribution',
+        zhHant: "打亂難度分佈"
+    }));
   const tabsBar = (
     <div className="scramble-stats-tabs" role="tablist">
       <button
         type="button" role="tab" aria-selected={tab === 'difficulty'}
         className={`scramble-stats-tab${tab === 'difficulty' ? ' active' : ''}`}
         onClick={() => setTab('difficulty')}
-      >{isZh ? '十字难度' : 'Cross difficulty'}</button>
+      >{tr({ zh: '十字难度', en: 'Cross difficulty',
+          zhHant: "十字難度"
+    })}</button>
       <button
         type="button" role="tab" aria-selected={tab === 'length'}
         className={`scramble-stats-tab${tab === 'length' ? ' active' : ''}`}
         onClick={() => setTab('length')}
-      >{isZh ? '打乱长度' : 'Scramble length'}</button>
+      >{tr({ zh: '打乱长度', en: 'Scramble length',
+          zhHant: "打亂長度"
+    })}</button>
     </div>
   );
 
@@ -330,7 +348,9 @@ export default function ScrambleStatsPage() {
           <h1>{pageTitle}</h1>
           {tabsBar}
         </div>
-        <div className="scramble-stats-error">{isZh ? '加载失败' : 'Load failed'}: {error}</div>
+        <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed',
+            zhHant: "載入失敗"
+        })}: {error}</div>
       </div>
     );
   }
@@ -342,7 +362,9 @@ export default function ScrambleStatsPage() {
           <h1>{pageTitle}</h1>
           {tabsBar}
         </div>
-        <div className="scramble-stats-loading">{isZh ? '加载中…' : 'Loading…'}</div>
+        <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…',
+            zhHant: "載入中…"
+        })}</div>
       </div>
     );
   }
@@ -382,14 +404,18 @@ export default function ScrambleStatsPage() {
           <SubsetColorPicker sel={sel} isZh={isZh} />
         </div>
         <label>
-          <select value={variant} onChange={(e) => setVariant(e.target.value as VariantKey)} aria-label={isZh ? '变体' : 'Variant'}>
+          <select value={variant} onChange={(e) => setVariant(e.target.value as VariantKey)} aria-label={tr({ zh: '变体', en: 'Variant',
+              zhHant: "變體"
+        })}>
             {currentSet && (Object.keys(currentSet.variants) as VariantKey[]).map((v) => (
-              <option key={v} value={v}>{VARIANT_LABEL[v][isZh ? 'zh' : 'en']}</option>
+              <option key={v} value={v}>{VARIANT_LABEL[v][(i18n.language.startsWith('zh') ? 'zh' : 'en')]}</option>
             ))}
           </select>
         </label>
         <label>
-          <select value={stage} onChange={(e) => setStage(e.target.value)} aria-label={isZh ? '阶段' : 'Stage'}>
+          <select value={stage} onChange={(e) => setStage(e.target.value)} aria-label={tr({ zh: '阶段', en: 'Stage',
+              zhHant: "階段"
+        })}>
             {currentStages.map((s) => (
               <option key={s} value={s}>{labelStage(s, isZh)}</option>
             ))}
@@ -409,7 +435,9 @@ export default function ScrambleStatsPage() {
           hideLegendColors
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
-          yModeLabel={yMode === 'percent' ? (isZh ? '百分比' : '%') : (isZh ? '数量' : 'count')}
+          yModeLabel={yMode === 'percent' ? (tr({ zh: '百分比', en: '%' })) : (tr({ zh: '数量', en: 'count',
+              zhHant: "數量"
+        }))}
           setOptions={setOptions}
           activeSet={scrambleSet}
           onSetChange={setScrambleSet}
@@ -418,10 +446,14 @@ export default function ScrambleStatsPage() {
 
       {extendedStats && (
         <div className="scramble-stats-panel">
-          <div className="scramble-stats-panel-title">{isZh ? '摘要统计' : 'Summary stats'}</div>
+          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计', en: 'Summary stats',
+              zhHant: "摘要統計"
+        })}</div>
           <div className="scramble-stats-stat-grid">
-            <StatCell label={isZh ? '均值' : 'mean'} value={extendedStats.mean.toFixed(2)} />
-            <StatCell label={isZh ? '中位数' : 'median'} value={String(extendedStats.median)} />
+            <StatCell label={tr({ zh: '均值', en: 'mean' })} value={extendedStats.mean.toFixed(2)} />
+            <StatCell label={tr({ zh: '中位数', en: 'median',
+                zhHant: "中位數"
+            })} value={String(extendedStats.median)} />
             <StatCell label="p10" value={String(extendedStats.p10)} />
             <StatCell label="p90" value={String(extendedStats.p90)} />
             <StatCell label="p99" value={String(extendedStats.p99)} />
@@ -431,7 +463,7 @@ export default function ScrambleStatsPage() {
 
       <ExamplesPanel
         isZh={isZh}
-        lang={isZh ? 'zh' : 'en'}
+        lang={(i18n.language.startsWith('zh') ? 'zh' : 'en')}
         scrambleSet={scrambleSet}
         variant={variant}
         stage={stage}
@@ -447,12 +479,18 @@ export default function ScrambleStatsPage() {
 
       {cnBenefit && (
         <div className="scramble-stats-panel">
-          <div className="scramble-stats-panel-title">{isZh ? '颜色中立收益（本阶段均值）' : 'Color-neutrality gain (stage mean)'}</div>
+          <div className="scramble-stats-panel-title">{tr({ zh: '颜色中立收益（本阶段均值）', en: 'Color-neutrality gain (stage mean)',
+              zhHant: "顏色中立收益（本階段均值）"
+        })}</div>
           <div className="scramble-stats-cn-grid">
-            <CnCell label={isZh ? '黄底' : 'Yellow'} value={cnBenefit.yellowMean.toFixed(3)} />
-            <CnCell label={isZh ? '白底' : 'White'} value={cnBenefit.whiteMean.toFixed(3)} />
-            <CnCell label={isZh ? '白黄双色底' : 'Dual'} value={cnBenefit.wyMean.toFixed(3)} diff={cnBenefit.wyMean - cnBenefit.whiteMean} />
-            <CnCell label={isZh ? '六色底' : 'CN'} value={cnBenefit.all6Mean.toFixed(3)} diff={cnBenefit.all6Mean - cnBenefit.whiteMean} />
+            <CnCell label={tr({ zh: '黄底', en: 'Yellow',
+                zhHant: "黃底"
+            })} value={cnBenefit.yellowMean.toFixed(3)} />
+            <CnCell label={tr({ zh: '白底', en: 'White' })} value={cnBenefit.whiteMean.toFixed(3)} />
+            <CnCell label={tr({ zh: '白黄双色底', en: 'Dual',
+                zhHant: "白黃雙色底"
+            })} value={cnBenefit.wyMean.toFixed(3)} diff={cnBenefit.wyMean - cnBenefit.whiteMean} />
+            <CnCell label={tr({ zh: '六色底', en: 'CN' })} value={cnBenefit.all6Mean.toFixed(3)} diff={cnBenefit.all6Mean - cnBenefit.whiteMean} />
           </div>
           <div className="scramble-stats-cn-note">
             {isZh
@@ -464,10 +502,14 @@ export default function ScrambleStatsPage() {
 
       <div className="scramble-stats-meta">
         <span>
-          {isZh ? '本变体样本' : 'Variant samples'}: {(vData?.sample_count ?? 0).toLocaleString()}
+          {tr({ zh: '本变体样本', en: 'Variant samples',
+              zhHant: "本變體樣本"
+        })}: {(vData?.sample_count ?? 0).toLocaleString()}
         </span>
         <span>
-          {isZh ? '生成时间' : 'Generated'}: {new Date(data.meta.generated_at).toLocaleString()}
+          {tr({ zh: '生成时间', en: 'Generated',
+              zhHant: "生成時間"
+        })}: {new Date(data.meta.generated_at).toLocaleString()}
         </span>
       </div>
     </div>
@@ -548,7 +590,7 @@ function ExamplesPanel({
         <div className="scramble-stats-panel-title">
           {selectedBin !== null
             ? (isZh ? `${selectedBin} 步示例` : `${selectedBin}-move examples`)
-            : (isZh ? '示例' : 'Examples')}
+            : (tr({ zh: '示例', en: 'Examples' }))}
         </div>
         {selectedDownloadable && (
           <a
@@ -563,10 +605,14 @@ function ExamplesPanel({
         )}
       </div>
       {selectedBin !== null && loading && (
-        <div className="scramble-stats-examples-hint">{isZh ? '加载中…' : 'Loading…'}</div>
+        <div className="scramble-stats-examples-hint">{tr({ zh: '加载中…', en: 'Loading…',
+            zhHant: "載入中…"
+        })}</div>
       )}
       {selectedBin !== null && errorText && (
-        <div className="scramble-stats-examples-hint">{isZh ? '加载失败' : 'Load failed'}: {errorText}</div>
+        <div className="scramble-stats-examples-hint">{tr({ zh: '加载失败', en: 'Load failed',
+            zhHant: "載入失敗"
+        })}: {errorText}</div>
       )}
       {selectedBin !== null && !loading && !errorText && samples && samples.length > 0 && (
         <ul className="scramble-stats-examples-list">
@@ -578,7 +624,7 @@ function ExamplesPanel({
                 <span
                   className="scramble-stats-examples-chip"
                   style={{ background: COLOR_HEX[color as ColorLetter] ?? '#888' }}
-                  title={isZh ? '朝下的底色' : 'Bottom color'}
+                  title={tr({ zh: '朝下的底色', en: 'Bottom color' })}
                 />
                 <div className="scramble-stats-examples-body">
                   <Link
@@ -613,7 +659,9 @@ function ExamplesPanel({
         </ul>
       )}
       {selectedBin !== null && !loading && !errorText && samples && samples.length === 0 && (
-        <div className="scramble-stats-examples-hint">{isZh ? '此 bin 无示例' : 'No examples for this bin'}</div>
+        <div className="scramble-stats-examples-hint">{tr({ zh: '此 bin 无示例', en: 'No examples for this bin',
+            zhHant: "此 bin 無示例"
+        })}</div>
       )}
     </div>
   );

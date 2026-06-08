@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 import { Brain, type LucideIcon } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../landing.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 interface MemoCard {
   id: string;
@@ -20,7 +22,8 @@ interface MemoCard {
 }
 
 const CARDS: MemoCard[] = [
-  { id: 'colpi', href: '/memo/colpi', Icon: Brain, zh: '字母对', en: 'CoLPI' },
+  { id: 'colpi', href: '/memo/colpi', Icon: Brain, zh: '字母对', en: 'CoLPI'
+},
 ];
 
 export default function MemoLandingPage() {
@@ -30,7 +33,9 @@ export default function MemoLandingPage() {
 
   return (
     <div className="landing-page">
-      <h1 className="landing-tagline">{isZh ? '记忆' : 'Memo'}</h1>
+      <h1 className="landing-tagline">{tr({ zh: '记忆', en: 'Memo',
+          zhHant: "記憶"
+    })}</h1>
 
       <div className="cards-container">
         {CARDS.map(c => (
@@ -38,7 +43,7 @@ export default function MemoLandingPage() {
             <div className="card-icon">
               <c.Icon size={24} strokeWidth={1.5} />
             </div>
-            <div className="card-name">{isZh ? c.zh : c.en}</div>
+            <div className="card-name">{(i18n.language.startsWith('zh') ? c.zh : c.en)}</div>
           </Link>
         ))}
       </div>

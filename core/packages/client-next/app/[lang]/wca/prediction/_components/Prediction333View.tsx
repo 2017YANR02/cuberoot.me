@@ -48,6 +48,8 @@ import { HISTORY_EXTENDED_EN } from './data/longform/history_extended';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './prediction.css';
 import './prediction333.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const SECTIONS = [
   { id: 'tldr',          labelZh: '一句话结论',                  labelEn: 'Top Line' },
@@ -89,7 +91,9 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
   const nextSection = activeIdx < SECTIONS.length - 1 ? SECTIONS[activeIdx + 1] : null;
   const section333Title = sectionId
     ? (isZh ? SECTIONS[activeIdx].labelZh : SECTIONS[activeIdx].labelEn)
-    : (isZh ? '三阶预测' : '3×3 Prediction');
+    : (tr({ zh: '三阶预测', en: '3×3 Prediction',
+        zhHant: "三階預測"
+    }));
   useDocumentTitle(section333Title, section333Title);
   const sectionHref = (id: string) => {
     const search = typeof window !== 'undefined' ? window.location.search : '';
@@ -128,14 +132,16 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
   }, []);
 
   const toggleLang = () => {
-    const n = isZh ? 'en' : 'zh';
+    const n = (i18n.language.startsWith('zh') ? 'en' : 'zh');
     i18n.changeLanguage(n);
     localStorage.setItem('trainer-lang', n);
   };
 
   // ── WR 时间序列 ─────────────────────
   const singleSeries: Series[] = [{
-    name: isZh ? 'WR 单次实测' : 'WR Single (actual)',
+    name: tr({ zh: 'WR 单次实测', en: 'WR Single (actual)',
+        zhHant: "WR 單次實測"
+    }),
     color: '#c2410c',
     data: WR_SINGLE_HISTORY.map((w) => ({ x: new Date(w.date).getFullYear() + (new Date(w.date).getMonth() / 12), y: w.time })),
   }];
@@ -153,7 +159,9 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
     }),
   };
   const forecastCenter: Series = {
-    name: isZh ? '综合预测中位' : 'Ensemble median',
+    name: tr({ zh: '综合预测中位', en: 'Ensemble median',
+        zhHant: "綜合預測中位"
+    }),
     color: '#c2410c',
     dashed: true,
     width: 1.5,
@@ -164,12 +172,18 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
   };
 
   const refLines: RefLine[] = [
-    { y: 1.5, label: isZh ? '100 年渐近 ~1.5 s' : '100-yr asymptote ~1.5 s', color: '#0a8a6b' },
-    { y: 0.99, label: isZh ? '数学硬墙 ~1.0 s' : 'Math wall ~1.0 s', color: '#d13636' },
+    { y: 1.5, label: tr({ zh: '100 年渐近 ~1.5 s', en: '100-yr asymptote ~1.5 s',
+        zhHant: "100 年漸近 ~1.5 s"
+    }), color: '#0a8a6b' },
+    { y: 0.99, label: tr({ zh: '数学硬墙 ~1.0 s', en: 'Math wall ~1.0 s',
+        zhHant: "數學硬牆 ~1.0 s"
+    }), color: '#d13636' },
   ];
 
   const ao5Series: Series[] = [{
-    name: isZh ? 'WR Ao5 实测' : 'WR Ao5 (actual)',
+    name: tr({ zh: 'WR Ao5 实测', en: 'WR Ao5 (actual)',
+        zhHant: "WR Ao5 實測"
+    }),
     color: '#2f6fd8',
     data: WR_AO5_HISTORY.map((w) => ({ x: new Date(w.date).getFullYear() + (new Date(w.date).getMonth() / 12), y: w.time })),
   }];
@@ -186,7 +200,9 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
     }),
   };
   const ao5Center: Series = {
-    name: isZh ? '综合预测中位 (Ao5)' : 'Ensemble median (Ao5)',
+    name: tr({ zh: '综合预测中位 (Ao5)', en: 'Ensemble median (Ao5)',
+        zhHant: "綜合預測中位 (Ao5)"
+    }),
     color: '#2f6fd8',
     dashed: true,
     width: 1.5,
@@ -201,17 +217,19 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
       <header className="pred-header">
         <Link href="/wca/prediction" className="pred-back" aria-label="back">
           <ArrowLeft size={16} />
-          <span>{isZh ? '返回全项目' : 'Back to All Events'}</span>
+          <span>{tr({ zh: '返回全项目', en: 'Back to All Events',
+              zhHant: "返回全專案"
+        })}</span>
         </Link>
         <button className="pred-toc-btn" onClick={() => setTocOpen(!tocOpen)}>
           {tocOpen ? <XIcon size={16} /> : <Menu size={16} />}
         </button>
-        <button className="pred-lang" onClick={toggleLang}>{isZh ? 'EN' : '中文'}</button>
+        <button className="pred-lang" onClick={toggleLang}>{(i18n.language.startsWith('zh') ? 'EN' : '中文')}</button>
       </header>
 
       <div className="pred-layout">
         <aside className={`pred-sidebar${tocOpen ? ' pred-sidebar-open' : ''}`}>
-          <div className="pred-toc-title">{isZh ? '3x3 深度' : '3x3 Deep Dive'}</div>
+          <div className="pred-toc-title">{tr({ zh: '3x3 深度', en: '3x3 Deep Dive' })}</div>
           <div className="pred-toc-group">
             {SECTIONS.map((s, i) => (
               <Link key={s.id} href={sectionHref(s.id)}
@@ -226,16 +244,22 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
 
         <article className="pred-article">
           <h1 className="pred-title">
-            {isZh ? '三阶魔方: 终极极限预测' : '3x3 Speedcubing: The Ultimate Limits Forecast'}
+            {tr({ zh: '三阶魔方: 终极极限预测', en: '3x3 Speedcubing: The Ultimate Limits Forecast',
+                zhHant: "三階魔方: 終極極限預測"
+            })}
           </h1>
           <p className="pred-subtitle">
-            {isZh
-              ? '历史  方法  硬件  数学  生物力学  顶级选手  训练  统计 — 综合预测单次与平均'
-              : 'History · Methods · Hardware · Math · Biomech · Top Cubers · Training · Statistics — toward a single & average forecast.'}
+            {tr({ zh: '历史  方法  硬件  数学  生物力学  顶级选手  训练  统计 — 综合预测单次与平均', en: 'History · Methods · Hardware · Math · Biomech · Top Cubers · Training · Statistics — toward a single & average forecast.',
+                zhHant: "歷史  方法  硬體  數學  生物力學  頂級選手  訓練  統計 — 綜合預測單次與平均"
+            })}
           </p>
           <div className="pred-333-section-meta">
-            {isZh ? '章节' : 'Section'} <strong>{(activeIdx + 1).toString().padStart(2, '0')}</strong> / {SECTIONS.length}
-            <span className="pred-333-section-meta-hint">{isZh ? '  ← → 切换' : ' · ← → to navigate'}</span>
+            {tr({ zh: '章节', en: 'Section',
+                zhHant: "章節"
+            })} <strong>{(activeIdx + 1).toString().padStart(2, '0')}</strong> / {SECTIONS.length}
+            <span className="pred-333-section-meta-hint">{tr({ zh: '  ← → 切换', en: ' · ← → to navigate',
+                zhHant: "  ← → 切換"
+            })}</span>
           </div>
 
           <ActiveSectionContext.Provider value={activeId}>
@@ -255,7 +279,9 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
               </p>
               <div className="pred-tldr-grid">
                 <div className="pred-tldr-block">
-                  <div className="pred-tldr-label">{isZh ? 'WR 单次预测' : 'WR Single Forecast'}</div>
+                  <div className="pred-tldr-label">{tr({ zh: 'WR 单次预测', en: 'WR Single Forecast',
+                      zhHant: "WR 單次預測"
+                })}</div>
                   <ul className="pred-tldr-list">
                     <li><span>2030</span><strong>2.30 s</strong></li>
                     <li><span>2040</span><strong>1.90 s</strong></li>
@@ -263,7 +289,9 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
                   </ul>
                 </div>
                 <div className="pred-tldr-block">
-                  <div className="pred-tldr-label">{isZh ? 'WR Ao5 预测' : 'WR Ao5 Forecast'}</div>
+                  <div className="pred-tldr-label">{tr({ zh: 'WR Ao5 预测', en: 'WR Ao5 Forecast',
+                      zhHant: "WR Ao5 預測"
+                })}</div>
                   <ul className="pred-tldr-list">
                     <li><span>2030</span><strong>3.00 s</strong></li>
                     <li><span>2040</span><strong>2.40 s</strong></li>
@@ -271,18 +299,26 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
                   </ul>
                 </div>
                 <div className="pred-tldr-block">
-                  <div className="pred-tldr-label">{isZh ? '物理/数学硬墙' : 'Physical/Math Floors'}</div>
+                  <div className="pred-tldr-label">{tr({ zh: '物理/数学硬墙', en: 'Physical/Math Floors',
+                      zhHant: "物理/數學硬牆"
+                })}</div>
                   <ul className="pred-tldr-list">
-                    <li><span>{isZh ? '100 年方法可达' : '100-yr method-reachable'}</span><strong>~1.50 s</strong></li>
-                    <li><span>{isZh ? '数学墙' : 'Math wall'}</span><strong>~0.99 s</strong></li>
-                    <li><span>{isZh ? 'Ao5 渐近' : 'Ao5 asymptote'}</span><strong>~1.90 s</strong></li>
+                    <li><span>{tr({ zh: '100 年方法可达', en: '100-yr method-reachable',
+                        zhHant: "100 年方法可達"
+                    })}</span><strong>~1.50 s</strong></li>
+                    <li><span>{tr({ zh: '数学墙', en: 'Math wall',
+                        zhHant: "數學牆"
+                    })}</span><strong>~0.99 s</strong></li>
+                    <li><span>{tr({ zh: 'Ao5 渐近', en: 'Ao5 asymptote',
+                        zhHant: "Ao5 漸近"
+                    })}</span><strong>~1.90 s</strong></li>
                   </ul>
                 </div>
               </div>
               <p className="pred-tldr-note">
-                {isZh
-                  ? '所有预测都带 80% 置信区间,见各章节细节。文末有完整的建模说明。'
-                  : 'All forecasts include 80% confidence band; full methodology at the end.'}
+                {tr({ zh: '所有预测都带 80% 置信区间,见各章节细节。文末有完整的建模说明。', en: 'All forecasts include 80% confidence band; full methodology at the end.',
+                    zhHant: "所有預測都帶 80% 置信區間,見各章節細節。文末有完整的建模說明。"
+                })}
               </p>
             </div>
           </Section>
@@ -299,8 +335,10 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
               series={[...singleSeries, forecastCenter]}
               bands={[forecastBand]}
               refLines={refLines}
-              yLabel={isZh ? '时间 (秒)' : 'Time (s)'}
-              xLabel={isZh ? '年份' : 'Year'}
+              yLabel={tr({ zh: '时间 (秒)', en: 'Time (s)',
+                  zhHant: "時間 (秒)"
+            })}
+              xLabel={tr({ zh: '年份', en: 'Year' })}
               yMin={0.5}
               yMax={20}
             />
@@ -313,15 +351,25 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
               <table className="pred-fit-table pred-method-table">
                 <thead>
                   <tr>
-                    <th>{isZh ? '日期' : 'Date'}</th>
-                    <th>{isZh ? '时间' : 'Time'}</th>
-                    <th>{isZh ? '选手' : 'Holder'}</th>
-                    <th>{isZh ? '比赛' : 'Comp'}</th>
-                    <th>{isZh ? '方法' : 'Method'}</th>
-                    <th>{isZh ? '硬件' : 'Hardware'}</th>
+                    <th>{tr({ zh: '日期', en: 'Date' })}</th>
+                    <th>{tr({ zh: '时间', en: 'Time',
+                        zhHant: "時間"
+                    })}</th>
+                    <th>{tr({ zh: '选手', en: 'Holder',
+                        zhHant: "選手"
+                    })}</th>
+                    <th>{tr({ zh: '比赛', en: 'Comp',
+                        zhHant: "比賽"
+                    })}</th>
+                    <th>{tr({ zh: '方法', en: 'Method' })}</th>
+                    <th>{tr({ zh: '硬件', en: 'Hardware',
+                        zhHant: "硬體"
+                    })}</th>
                     <th>STM</th>
                     <th>TPS</th>
-                    <th>{isZh ? '特征' : 'Feature'}</th>
+                    <th>{tr({ zh: '特征', en: 'Feature',
+                        zhHant: "特徵"
+                    })}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -342,7 +390,9 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
               </table>
             </div>
 
-            <h3>{isZh ? 'Ao5 历程 (2007 引入)' : 'Ao5 Progression (since 2007)'}</h3>
+            <h3>{tr({ zh: 'Ao5 历程 (2007 引入)', en: 'Ao5 Progression (since 2007)',
+                zhHant: "Ao5 歷程 (2007 引入)"
+            })}</h3>
             <p>
               {isZh
                 ? <>WCA 从 2007 年起以 Ao5 作为正式排名指标 (之前是 Mo3)。本表是 Ao5 时代的完整 WR,共 <strong>{WR_AO5_HISTORY.length} 次</strong>。Feliks Zemdegs 一人霸榜 9 年 (2010-2019)。</>
@@ -351,16 +401,26 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             <LineChart
               series={[...ao5Series, ao5Center]}
               bands={[ao5Band]}
-              refLines={[{ y: 1.9, label: isZh ? 'Ao5 渐近 ~1.9 s' : 'Ao5 asymptote ~1.9 s', color: '#0a8a6b' }]}
-              yLabel={isZh ? '时间 (秒)' : 'Time (s)'}
-              xLabel={isZh ? '年份' : 'Year'}
+              refLines={[{ y: 1.9, label: tr({ zh: 'Ao5 渐近 ~1.9 s', en: 'Ao5 asymptote ~1.9 s',
+                  zhHant: "Ao5 漸近 ~1.9 s"
+            }), color: '#0a8a6b' }]}
+              yLabel={tr({ zh: '时间 (秒)', en: 'Time (s)',
+                  zhHant: "時間 (秒)"
+            })}
+              xLabel={tr({ zh: '年份', en: 'Year' })}
               yMin={1}
               yMax={20}
             />
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table pred-method-table">
                 <thead>
-                  <tr><th>{isZh ? '日期' : 'Date'}</th><th>Ao5</th><th>{isZh ? '选手' : 'Holder'}</th><th>{isZh ? '比赛' : 'Comp'}</th><th>{isZh ? '方法' : 'Method'}</th><th>{isZh ? '5 局' : '5 solves'}</th><th>{isZh ? '备注' : 'Note'}</th></tr>
+                  <tr><th>{tr({ zh: '日期', en: 'Date' })}</th><th>Ao5</th><th>{tr({ zh: '选手', en: 'Holder',
+                      zhHant: "選手"
+                })}</th><th>{tr({ zh: '比赛', en: 'Comp',
+                    zhHant: "比賽"
+                })}</th><th>{tr({ zh: '方法', en: 'Method' })}</th><th>{tr({ zh: '5 局', en: '5 solves' })}</th><th>{tr({ zh: '备注', en: 'Note',
+                    zhHant: "備註"
+                })}</th></tr>
                 </thead>
                 <tbody>
                   {WR_AO5_HISTORY.map((w, i) => (
@@ -378,11 +438,19 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
               </table>
             </div>
 
-            <h3>{isZh ? 'Sub-X 里程碑时间轴' : 'Sub-X Milestone Timeline'}</h3>
-            <p>{isZh ? '单次 Sub-X 节点用了 22 年压缩 5 倍:' : 'Single sub-X milestones compressed 5× over 22 years:'}</p>
+            <h3>{tr({ zh: 'Sub-X 里程碑时间轴', en: 'Sub-X Milestone Timeline',
+                zhHant: "Sub-X 里程碑時間軸"
+            })}</h3>
+            <p>{tr({ zh: '单次 Sub-X 节点用了 22 年压缩 5 倍:', en: 'Single sub-X milestones compressed 5× over 22 years:',
+                zhHant: "單次 Sub-X 節點用了 22 年壓縮 5 倍:"
+            })}</p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table pred-method-table">
-                <thead><tr><th>{isZh ? '阈值' : 'Sub-X'}</th><th>{isZh ? '年份' : 'Year'}</th><th>{isZh ? '日期' : 'Date'}</th><th>{isZh ? '首突破' : 'First Holder'}</th><th>{isZh ? '注解' : 'Note'}</th></tr></thead>
+                <thead><tr><th>{tr({ zh: '阈值', en: 'Sub-X',
+                    zhHant: "閾值"
+                })}</th><th>{tr({ zh: '年份', en: 'Year' })}</th><th>{tr({ zh: '日期', en: 'Date' })}</th><th>{tr({ zh: '首突破', en: 'First Holder' })}</th><th>{tr({ zh: '注解', en: 'Note',
+                    zhHant: "註解"
+                })}</th></tr></thead>
                 <tbody>
                   {SUB_X_MILESTONES.map((m) => (
                     <tr key={m.threshold}>
@@ -396,10 +464,16 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
                 </tbody>
               </table>
             </div>
-            <p>{isZh ? 'Ao5 sub-X 序列,通常比单次晚 2-3 年:' : 'Ao5 milestones lag single by ~2-3 years:'}</p>
+            <p>{tr({ zh: 'Ao5 sub-X 序列,通常比单次晚 2-3 年:', en: 'Ao5 milestones lag single by ~2-3 years:',
+                zhHant: "Ao5 sub-X 序列,通常比單次晚 2-3 年:"
+            })}</p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table pred-method-table">
-                <thead><tr><th>{isZh ? '阈值' : 'Sub-X'}</th><th>{isZh ? '年份' : 'Year'}</th><th>{isZh ? '日期' : 'Date'}</th><th>{isZh ? '首突破' : 'First Holder'}</th><th>{isZh ? '注解' : 'Note'}</th></tr></thead>
+                <thead><tr><th>{tr({ zh: '阈值', en: 'Sub-X',
+                    zhHant: "閾值"
+                })}</th><th>{tr({ zh: '年份', en: 'Year' })}</th><th>{tr({ zh: '日期', en: 'Date' })}</th><th>{tr({ zh: '首突破', en: 'First Holder' })}</th><th>{tr({ zh: '注解', en: 'Note',
+                    zhHant: "註解"
+                })}</th></tr></thead>
                 <tbody>
                   {SUB_X_AO5.map((m) => (
                     <tr key={m.threshold}>
@@ -438,13 +512,17 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
                     <span>{r.tps.toFixed(2)} TPS</span>
                     {r.hardware && <span className="pred-recon-hw">{r.hardware}</span>}
                   </div>
-                  <div className="pred-recon-method"><strong>{isZh ? '方法' : 'Method'}:</strong> {r.method}</div>
+                  <div className="pred-recon-method"><strong>{tr({ zh: '方法', en: 'Method' })}:</strong> {r.method}</div>
                   {r.scramble && (
-                    <div className="pred-recon-scramble"><strong>{isZh ? '打乱' : 'Scramble'}:</strong> <code>{r.scramble}</code></div>
+                    <div className="pred-recon-scramble"><strong>{tr({ zh: '打乱', en: 'Scramble',
+                        zhHant: "打亂"
+                    })}:</strong> <code>{r.scramble}</code></div>
                   )}
                   {r.solution && <pre className="pred-recon-solution">{r.solution}</pre>}
                   <p className="pred-recon-note">{isZh ? r.significance_zh : r.significance_en}</p>
-                  {r.source && <a className="pred-recon-source" href={r.source} target="_blank" rel="noopener noreferrer">{isZh ? '来源' : 'source'} ↗</a>}
+                  {r.source && <a className="pred-recon-source" href={r.source} target="_blank" rel="noopener noreferrer">{tr({ zh: '来源', en: 'source',
+                      zhHant: "來源"
+                })} ↗</a>}
                 </div>
               ))}
             </div>
@@ -492,7 +570,9 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             </p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table">
-                <thead><tr><th>{isZh ? '年份' : 'Year'}</th><th>{isZh ? 'HTM 上界' : 'HTM bound'}</th><th>{isZh ? '证明者' : 'By'}</th><th>{isZh ? '方法' : 'Method'}</th></tr></thead>
+                <thead><tr><th>{tr({ zh: '年份', en: 'Year' })}</th><th>{tr({ zh: 'HTM 上界', en: 'HTM bound' })}</th><th>{tr({ zh: '证明者', en: 'By',
+                    zhHant: "證明者"
+                })}</th><th>{tr({ zh: '方法', en: 'Method' })}</th></tr></thead>
                 <tbody>
                   {GODS_NUMBER_HISTORY.map((g) => (
                     <tr key={g.year}><td>{g.year}</td><td className="pred-num"><strong>{g.bound_htm}</strong></td><td>{g.who}</td><td>{isZh ? g.note_zh : g.note_en}</td></tr>
@@ -503,7 +583,9 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             <ul>
               <li><strong>HTM = 20</strong> (Rokicki et al. 2010, SIAM J. Discrete Math. 27(2))</li>
               <li><strong>QTM = 26</strong> (Rokicki & Davidson 2014; superflip × 4-spot)</li>
-              <li><strong>STM</strong> {isZh ? '尚未确定 (16 ≤ ? ≤ 20)' : 'unsettled (16 ≤ ? ≤ 20)'};superflip {isZh ? '在 STM 下 16 步即可解' : 'is 16-STM-solvable'}</li>
+              <li><strong>STM</strong> {tr({ zh: '尚未确定 (16 ≤ ? ≤ 20)', en: 'unsettled (16 ≤ ? ≤ 20)',
+                  zhHant: "尚未確定 (16 ≤ ? ≤ 20)"
+            })};superflip {tr({ zh: '在 STM 下 16 步即可解', en: 'is 16-STM-solvable' })}</li>
               <li><strong>NxN Θ(N² / log N)</strong> (Demaine et al. 2011, arXiv:1106.5736)</li>
               <li><strong>NxN optimal solving NP-complete</strong> (Demaine, Eisenstat, Rudoy 2017)</li>
             </ul>
@@ -542,15 +624,25 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
           </Section>
 
           <Section id="metrics" titleZh="度量学: HTM vs STM vs QTM vs ATM" titleEn="Metrics: HTM vs STM vs QTM vs ATM" isZh={isZh}>
-            <p>{isZh ? '不同度量学算不同的事:' : 'Different metrics count different things:'}</p>
+            <p>{tr({ zh: '不同度量学算不同的事:', en: 'Different metrics count different things:',
+                zhHant: "不同度量學算不同的事:"
+            })}</p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table">
-                <thead><tr><th>{isZh ? '度量' : 'Metric'}</th><th>R</th><th>R'</th><th>R2</th><th>M</th><th>R + L</th><th>{isZh ? '说明' : 'Meaning'}</th></tr></thead>
+                <thead><tr><th>{tr({ zh: '度量', en: 'Metric' })}</th><th>R</th><th>R'</th><th>R2</th><th>M</th><th>R + L</th><th>{tr({ zh: '说明', en: 'Meaning',
+                    zhHant: "說明"
+                })}</th></tr></thead>
                 <tbody>
-                  <tr><td><strong>HTM</strong></td><td>1</td><td>1</td><td>1</td><td>2</td><td>2</td><td>{isZh ? '面 turn 计 1; 学术默认' : 'face turn = 1; academic default'}</td></tr>
-                  <tr><td><strong>QTM</strong></td><td>1</td><td>1</td><td>2</td><td>4</td><td>2</td><td>{isZh ? '只算 90°' : 'quarter-turn only'}</td></tr>
-                  <tr><td><strong>STM</strong></td><td>1</td><td>1</td><td>1</td><td>1</td><td>2</td><td>{isZh ? 'slice 计 1; 人类自然' : 'slice = 1; natural human'}</td></tr>
-                  <tr><td><strong>ATM</strong></td><td>1</td><td>1</td><td>1</td><td>1</td><td><strong>1</strong></td><td>{isZh ? 'R+L 同时算 1 步,体现双手同步' : 'axial; R+L = 1'}</td></tr>
+                  <tr><td><strong>HTM</strong></td><td>1</td><td>1</td><td>1</td><td>2</td><td>2</td><td>{tr({ zh: '面 turn 计 1; 学术默认', en: 'face turn = 1; academic default',
+                      zhHant: "面 turn 計 1; 學術預設"
+                })}</td></tr>
+                  <tr><td><strong>QTM</strong></td><td>1</td><td>1</td><td>2</td><td>4</td><td>2</td><td>{tr({ zh: '只算 90°', en: 'quarter-turn only' })}</td></tr>
+                  <tr><td><strong>STM</strong></td><td>1</td><td>1</td><td>1</td><td>1</td><td>2</td><td>{tr({ zh: 'slice 计 1; 人类自然', en: 'slice = 1; natural human',
+                      zhHant: "slice 計 1; 人類自然"
+                })}</td></tr>
+                  <tr><td><strong>ATM</strong></td><td>1</td><td>1</td><td>1</td><td>1</td><td><strong>1</strong></td><td>{tr({ zh: 'R+L 同时算 1 步,体现双手同步', en: 'axial; R+L = 1',
+                      zhHant: "R+L 同時算 1 步,體現雙手同步"
+                })}</td></tr>
                 </tbody>
               </table>
             </div>
@@ -576,7 +668,15 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             </p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table pred-method-table">
-                <thead><tr><th>{isZh ? '步骤' : 'Step'}</th><th>{isZh ? '算法数' : 'Algs'}</th><th>{isZh ? '平均 STM' : 'Avg STM'}</th><th>{isZh ? '识别 (s)' : 'Recog (s)'}</th><th>{isZh ? '顶级耗时 (s)' : 'Top time (s)'}</th><th>{isZh ? '描述' : 'Description'}</th></tr></thead>
+                <thead><tr><th>{tr({ zh: '步骤', en: 'Step',
+                    zhHant: "步驟"
+                })}</th><th>{tr({ zh: '算法数', en: 'Algs',
+                    zhHant: "演算法數"
+                })}</th><th>{tr({ zh: '平均 STM', en: 'Avg STM' })}</th><th>{tr({ zh: '识别 (s)', en: 'Recog (s)',
+                    zhHant: "識別 (s)"
+                })}</th><th>{tr({ zh: '顶级耗时 (s)', en: 'Top time (s)',
+                    zhHant: "頂級耗時 (s)"
+                })}</th><th>{tr({ zh: '描述', en: 'Description' })}</th></tr></thead>
                 <tbody>
                   {CFOP_BREAKDOWN.map((s) => (
                     <tr key={s.step}>
@@ -610,7 +710,9 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             <p>{isZh ? <><strong>57 种 case</strong>,算法长度 STM 7-14 不等:</> : <><strong>57 cases</strong>, alg lengths 7-14 STM:</>}</p>
             <LineChart
               series={[{ name: 'cases', color: '#0a8a6b', data: OLL_BY_STM.map((d) => ({ x: d.stm, y: d.case_count })) }]}
-              yLabel={isZh ? 'case 数' : 'case count'} xLabel="STM" yMin={0}
+              yLabel={tr({ zh: 'case 数', en: 'case count',
+                  zhHant: "case 數"
+            })} xLabel="STM" yMin={0}
               yFormat={(v) => v.toFixed(0)}
             />
             <p>{isZh ? <><strong>双峰</strong>: 9 STM (14 个 case) 和 11 STM (10 个 case) 是高点;14 STM 只 1 个 (Dot OLL #57)。<strong>Sune / Anti-Sune (#26/27) 是经典的 7 步</strong>。</> : <><strong>Bimodal</strong>: 9 STM (14) and 11 STM (10) peak; only OLL #57 (Dot) at 14. <strong>Sune / Antisune (#26/27) classic 7-move</strong>.</>}</p>
@@ -620,7 +722,13 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             <p>{isZh ? <><strong>21 种 case</strong> (4 对镜像 → 17 个独立算法)。均长 12.5 STM:</> : <><strong>21 cases</strong> (4 mirror pairs → 17 independent algs). Mean 12.5 STM:</>}</p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table pred-method-table">
-                <thead><tr><th>{isZh ? '字母' : 'Letter'}</th><th>{isZh ? '名称' : 'Name'}</th><th>STM</th><th>P</th><th>{isZh ? '识别' : 'Recog'}</th><th>{isZh ? '算法' : 'Alg'}</th></tr></thead>
+                <thead><tr><th>{tr({ zh: '字母', en: 'Letter' })}</th><th>{tr({ zh: '名称', en: 'Name',
+                    zhHant: "名稱"
+                })}</th><th>STM</th><th>P</th><th>{tr({ zh: '识别', en: 'Recog',
+                    zhHant: "識別"
+                })}</th><th>{tr({ zh: '算法', en: 'Alg',
+                    zhHant: "演算法"
+                })}</th></tr></thead>
                 <tbody>
                   {PLL_TABLE.map((p) => (
                     <tr key={p.letter}>
@@ -655,7 +763,11 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             <p>{isZh ? <><strong>ZBLL 8 个子集</strong>:</> : <><strong>ZBLL 8 sub-families</strong>:</>}</p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table">
-                <thead><tr><th>{isZh ? '子集' : 'COLL'}</th><th>{isZh ? 'case 数' : 'cases'}</th><th>{isZh ? 'STM' : 'STM'}</th><th>{isZh ? '说明' : 'Description'}</th></tr></thead>
+                <thead><tr><th>{tr({ zh: '子集', en: 'COLL' })}</th><th>{tr({ zh: 'case 数', en: 'cases',
+                    zhHant: "case 數"
+                })}</th><th>{(i18n.language.startsWith('zh') ? 'STM' : 'STM')}</th><th>{tr({ zh: '说明', en: 'Description',
+                    zhHant: "說明"
+                })}</th></tr></thead>
                 <tbody>
                   {ZBLL_GROUPS.map((g) => (
                     <tr key={g.coll}><td><strong>{g.coll}</strong></td><td className="pred-num">{g.count}</td><td className="pred-num">{g.avg_stm.toFixed(1)}</td><td>{isZh ? g.description_zh : g.description_en}</td></tr>
@@ -726,7 +838,9 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
           <Section id="skips" titleZh="幸运打乱 + skip 概率" titleEn="Lucky Scrambles + Skip Probability" isZh={isZh}>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table pred-method-table">
-                <thead><tr><th>{isZh ? '事件' : 'Event'}</th><th>P</th><th>%</th><th>{isZh ? '说明' : 'Note'}</th></tr></thead>
+                <thead><tr><th>{tr({ zh: '事件', en: 'Event' })}</th><th>P</th><th>%</th><th>{tr({ zh: '说明', en: 'Note',
+                    zhHant: "說明"
+                })}</th></tr></thead>
                 <tbody>
                   {SKIP_PROBABILITIES.map((s) => (
                     <tr key={s.event_en}>
@@ -754,24 +868,52 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             </p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table pred-method-table">
-                <thead><tr><th>{isZh ? '年' : 'Year'}</th><th>{isZh ? '型号' : 'Model'}</th><th>{isZh ? '质量' : 'Mass'}</th><th>{isZh ? '磁铁数' : 'Magnets'}</th><th>{isZh ? '里程碑' : 'Milestone'}</th></tr></thead>
+                <thead><tr><th>{tr({ zh: '年', en: 'Year' })}</th><th>{tr({ zh: '型号', en: 'Model',
+                    zhHant: "型號"
+                })}</th><th>{tr({ zh: '质量', en: 'Mass',
+                    zhHant: "質量"
+                })}</th><th>{tr({ zh: '磁铁数', en: 'Magnets',
+                    zhHant: "磁鐵數"
+                })}</th><th>{tr({ zh: '里程碑', en: 'Milestone' })}</th></tr></thead>
                 <tbody>
-                  <tr><td>1980</td><td>{isZh ? '原版 Rubik' : "Original Rubik's"}</td><td>~95 g</td><td>0</td><td>{isZh ? '弹簧+螺丝核心' : 'spring+screw core'}</td></tr>
-                  <tr><td>2007</td><td>{isZh ? 'Type-A 仿品' : 'Type-A clones'}</td><td>~85 g</td><td>0</td><td>{isZh ? '首批竞速级' : 'first competitive non-Rubik\'s'}</td></tr>
-                  <tr><td>2010</td><td>DaYan GuHong</td><td>~75 g</td><td>0</td><td>{isZh ? '反向 corner cutting 首批' : 'first reverse corner cutting'}</td></tr>
-                  <tr><td>2011</td><td>DaYan ZhanChi</td><td>126 g</td><td>0</td><td>{isZh ? 'Torpedo, Feliks sub-6 用此' : 'torpedoes, Feliks sub-6 era'}</td></tr>
-                  <tr><td>2013</td><td>MoYu WeiLong V1</td><td>~68 g</td><td>0</td><td>{isZh ? '结束 ZhanChi 主导' : 'ended ZhanChi era'}</td></tr>
-                  <tr><td>2014</td><td>MoYu AoLong V2</td><td>~68 g</td><td>0</td><td>{isZh ? 'Du 3.47 用此 (无磁)' : 'Du 3.47 cube (non-magnetic)'}</td></tr>
-                  <tr><td>2016</td><td>{isZh ? 'TheCubicle 磁后装 Valk 3' : 'Cubicle magnetic Valk 3'}</td><td>~75 g</td><td>48</td><td>{isZh ? '首磁铁 WR (Valk 4.74)' : 'first magnet WR (Valk 4.74)'}</td></tr>
-                  <tr><td>2017</td><td>GAN 356 Air UM</td><td>~67 g</td><td>48</td><td>{isZh ? '首批量产出厂磁铁' : 'first factory-magnetized flagship'}</td></tr>
-                  <tr><td>2020</td><td>GAN 11 M Pro</td><td>63 g</td><td>64</td><td>{isZh ? '+8 对核心磁' : '+8 core-to-corner magnet pairs'}</td></tr>
-                  <tr><td>2021</td><td>GAN 12 MagLev</td><td>~67 g</td><td>64</td><td>{isZh ? '首批量产磁悬浮' : 'first mass-produced MagLev'}</td></tr>
-                  <tr><td>2022</td><td>MoYu Super RS3 M Ball-Core</td><td>86 g</td><td>~80</td><td>{isZh ? '首批 ball-core' : 'first ball-core flagship'}</td></tr>
-                  <tr><td>2023</td><td>QiYi X-Man Tornado V3</td><td>~69 g</td><td>64</td><td>{isZh ? 'Park 3.13 用此' : 'Park 3.13 cube'}</td></tr>
-                  <tr><td>2024</td><td>GAN 14 MagLev</td><td>70.3 g</td><td>88</td><td>{isZh ? '1296 配置' : '1296 settings'}</td></tr>
-                  <tr><td>2024</td><td>GAN 15 MagLev</td><td>58.6 g</td><td>76</td><td>{isZh ? 'GAN 最轻旗舰' : 'lightest GAN flagship'}</td></tr>
-                  <tr><td>2025</td><td>MoYu Super WeiLong V2</td><td>70 g</td><td>100</td><td>{isZh ? '20 磁球心, Wang 3.08' : '20-magnet ball core, Wang 3.08'}</td></tr>
-                  <tr><td>2025</td><td>GAN 16 MagLev MAX</td><td>~66 g</td><td>136+</td><td>{isZh ? '中层磁网, 72 阶 tensioning' : 'mid-layer network, 72-step tensioning'}</td></tr>
+                  <tr><td>1980</td><td>{tr({ zh: '原版 Rubik', en: "Original Rubik's" })}</td><td>~95 g</td><td>0</td><td>{tr({ zh: '弹簧+螺丝核心', en: 'spring+screw core',
+                      zhHant: "彈簧+螺絲核心"
+                })}</td></tr>
+                  <tr><td>2007</td><td>{tr({ zh: 'Type-A 仿品', en: 'Type-A clones' })}</td><td>~85 g</td><td>0</td><td>{tr({ zh: '首批竞速级', en: 'first competitive non-Rubik\'s',
+                      zhHant: "首批競速級"
+                })}</td></tr>
+                  <tr><td>2010</td><td>DaYan GuHong</td><td>~75 g</td><td>0</td><td>{tr({ zh: '反向 corner cutting 首批', en: 'first reverse corner cutting' })}</td></tr>
+                  <tr><td>2011</td><td>DaYan ZhanChi</td><td>126 g</td><td>0</td><td>{tr({ zh: 'Torpedo, Feliks sub-6 用此', en: 'torpedoes, Feliks sub-6 era' })}</td></tr>
+                  <tr><td>2013</td><td>MoYu WeiLong V1</td><td>~68 g</td><td>0</td><td>{tr({ zh: '结束 ZhanChi 主导', en: 'ended ZhanChi era',
+                      zhHant: "結束 ZhanChi 主導"
+                })}</td></tr>
+                  <tr><td>2014</td><td>MoYu AoLong V2</td><td>~68 g</td><td>0</td><td>{tr({ zh: 'Du 3.47 用此 (无磁)', en: 'Du 3.47 cube (non-magnetic)',
+                      zhHant: "Du 3.47 用此 (無磁)"
+                })}</td></tr>
+                  <tr><td>2016</td><td>{tr({ zh: 'TheCubicle 磁后装 Valk 3', en: 'Cubicle magnetic Valk 3',
+                      zhHant: "TheCubicle 磁後裝 Valk 3"
+                })}</td><td>~75 g</td><td>48</td><td>{tr({ zh: '首磁铁 WR (Valk 4.74)', en: 'first magnet WR (Valk 4.74)',
+                    zhHant: "首磁鐵 WR (Valk 4.74)"
+                })}</td></tr>
+                  <tr><td>2017</td><td>GAN 356 Air UM</td><td>~67 g</td><td>48</td><td>{tr({ zh: '首批量产出厂磁铁', en: 'first factory-magnetized flagship',
+                      zhHant: "首批次產出廠磁鐵"
+                })}</td></tr>
+                  <tr><td>2020</td><td>GAN 11 M Pro</td><td>63 g</td><td>64</td><td>{tr({ zh: '+8 对核心磁', en: '+8 core-to-corner magnet pairs',
+                      zhHant: "+8 對核心磁"
+                })}</td></tr>
+                  <tr><td>2021</td><td>GAN 12 MagLev</td><td>~67 g</td><td>64</td><td>{tr({ zh: '首批量产磁悬浮', en: 'first mass-produced MagLev',
+                      zhHant: "首批次產磁懸浮"
+                })}</td></tr>
+                  <tr><td>2022</td><td>MoYu Super RS3 M Ball-Core</td><td>86 g</td><td>~80</td><td>{tr({ zh: '首批 ball-core', en: 'first ball-core flagship' })}</td></tr>
+                  <tr><td>2023</td><td>QiYi X-Man Tornado V3</td><td>~69 g</td><td>64</td><td>{tr({ zh: 'Park 3.13 用此', en: 'Park 3.13 cube' })}</td></tr>
+                  <tr><td>2024</td><td>GAN 14 MagLev</td><td>70.3 g</td><td>88</td><td>{tr({ zh: '1296 配置', en: '1296 settings' })}</td></tr>
+                  <tr><td>2024</td><td>GAN 15 MagLev</td><td>58.6 g</td><td>76</td><td>{tr({ zh: 'GAN 最轻旗舰', en: 'lightest GAN flagship',
+                      zhHant: "GAN 最輕旗艦"
+                })}</td></tr>
+                  <tr><td>2025</td><td>MoYu Super WeiLong V2</td><td>70 g</td><td>100</td><td>{tr({ zh: '20 磁球心, Wang 3.08', en: '20-magnet ball core, Wang 3.08' })}</td></tr>
+                  <tr><td>2025</td><td>GAN 16 MagLev MAX</td><td>~66 g</td><td>136+</td><td>{tr({ zh: '中层磁网, 72 阶 tensioning', en: 'mid-layer network, 72-step tensioning',
+                      zhHant: "中層磁網, 72 階 tensioning"
+                })}</td></tr>
                 </tbody>
               </table>
             </div>
@@ -803,7 +945,9 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
           </Section>
 
           <Section id="biomech" titleZh="生物力学: TPS 的硬天花板" titleEn="Biomech: The TPS Ceiling" isZh={isZh}>
-            <p>{isZh ? '三个独立的生物力学来源:' : 'Three independent biomech benchmarks:'}</p>
+            <p>{tr({ zh: '三个独立的生物力学来源:', en: 'Three independent biomech benchmarks:',
+                zhHant: "三個獨立的生物力學來源:"
+            })}</p>
             <ul>
               <li>{isZh ? <><strong>钢琴单指敲击</strong>: Aoki & Kinoshita 2001 (Ergonomics 44(15)) — 钢琴家单指 6.0-6.7 Hz (食指 / 中指),5.0-5.5 Hz (无名指 / 小指)。</> : <><strong>Piano single-finger tap</strong>: Aoki & Kinoshita 2001 (Ergonomics 44(15)) — pianists 6.0-6.7 Hz (index/middle), 5.0-5.5 Hz (ring/little).</>}</li>
               <li>{isZh ? <><strong>双手交替击鼓</strong>: Keita Hattori 2024 Guinness — 22.2 strokes/s (1334/min)。双手交替的上限。</> : <><strong>Dual-hand drum stroke</strong>: Keita Hattori 2024 Guinness — 22.2 strokes/s (1334/min). Two-hand alternating ceiling.</>}</li>
@@ -934,31 +1078,49 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             <p>{isZh ? <><strong>累计 solves 与 PB 阈值关系</strong> (社区共识):</> : <><strong>Cumulative solves vs PB threshold</strong> (community consensus):</>}</p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table pred-method-table">
-                <thead><tr><th>{isZh ? '阈值' : 'PB'}</th><th>{isZh ? '累计 solves' : 'Cumulative'}</th><th>{isZh ? '一致训练时间' : 'Calendar time'}</th><th>{isZh ? '日均' : 'Daily'}</th></tr></thead>
+                <thead><tr><th>{tr({ zh: '阈值', en: 'PB',
+                    zhHant: "閾值"
+                })}</th><th>{tr({ zh: '累计 solves', en: 'Cumulative',
+                    zhHant: "累計 solves"
+                })}</th><th>{tr({ zh: '一致训练时间', en: 'Calendar time',
+                    zhHant: "一致訓練時間"
+                })}</th><th>{tr({ zh: '日均', en: 'Daily' })}</th></tr></thead>
                 <tbody>
-                  <tr><td>Sub-30</td><td>~1,000</td><td>{isZh ? '1-3 月' : '1-3 months'}</td><td>~50</td></tr>
-                  <tr><td>Sub-20</td><td>~5,000</td><td>{isZh ? '6-12 月' : '6-12 months'}</td><td>~50-100</td></tr>
-                  <tr><td>Sub-15</td><td>~15,000</td><td>{isZh ? '1-2 年' : '1-2 years'}</td><td>~100-200</td></tr>
-                  <tr><td>Sub-10</td><td>~50,000</td><td>{isZh ? '2-4 年' : '2-4 years'}</td><td>~200-300</td></tr>
-                  <tr><td>Sub-7</td><td>~150,000</td><td>{isZh ? '4-7 年' : '4-7 years'}</td><td>~300-500</td></tr>
-                  <tr><td>Sub-5</td><td>~400,000+</td><td>{isZh ? '6-10 年' : '6-10 years'}</td><td>~500-1000+</td></tr>
-                  <tr><td>Sub-4</td><td>~10⁶+</td><td>{isZh ? '天赋限制' : 'talent-bound'}</td><td>—</td></tr>
-                  <tr><td>Sub-3</td><td>{isZh ? '~10 人小圈' : '~10-person club'}</td><td>—</td><td>—</td></tr>
+                  <tr><td>Sub-30</td><td>~1,000</td><td>{tr({ zh: '1-3 月', en: '1-3 months' })}</td><td>~50</td></tr>
+                  <tr><td>Sub-20</td><td>~5,000</td><td>{tr({ zh: '6-12 月', en: '6-12 months' })}</td><td>~50-100</td></tr>
+                  <tr><td>Sub-15</td><td>~15,000</td><td>{tr({ zh: '1-2 年', en: '1-2 years' })}</td><td>~100-200</td></tr>
+                  <tr><td>Sub-10</td><td>~50,000</td><td>{tr({ zh: '2-4 年', en: '2-4 years' })}</td><td>~200-300</td></tr>
+                  <tr><td>Sub-7</td><td>~150,000</td><td>{tr({ zh: '4-7 年', en: '4-7 years' })}</td><td>~300-500</td></tr>
+                  <tr><td>Sub-5</td><td>~400,000+</td><td>{tr({ zh: '6-10 年', en: '6-10 years' })}</td><td>~500-1000+</td></tr>
+                  <tr><td>Sub-4</td><td>~10⁶+</td><td>{tr({ zh: '天赋限制', en: 'talent-bound',
+                      zhHant: "天賦限制"
+                })}</td><td>—</td></tr>
+                  <tr><td>Sub-3</td><td>{tr({ zh: '~10 人小圈', en: '~10-person club' })}</td><td>—</td><td>—</td></tr>
                 </tbody>
               </table>
             </div>
             <p>{isZh ? <><strong>训练分配 (顶级共识)</strong>:</> : <><strong>Practice composition (consensus)</strong>:</>}</p>
             <ul>
-              <li>{isZh ? '~60% csTimer 计时解 (Ao12/50/100 课次)' : '~60% csTimer-timed solves'}</li>
-              <li>{isZh ? '~15% 慢解 / 强制 lookahead' : '~15% slow / forced-lookahead solves'}</li>
-              <li>{isZh ? '~15% 算法练习 (按 case 频率加权)' : '~15% algorithm drilling (case-frequency-weighted)'}</li>
-              <li>{isZh ? '~10% 复盘 (视频 / 智能魔方)' : '~10% review (video / smart cube)'}</li>
+              <li>{tr({ zh: '~60% csTimer 计时解 (Ao12/50/100 课次)', en: '~60% csTimer-timed solves',
+                  zhHant: "~60% csTimer 計時解 (Ao12/50/100 課次)"
+            })}</li>
+              <li>{tr({ zh: '~15% 慢解 / 强制 lookahead', en: '~15% slow / forced-lookahead solves',
+                  zhHant: "~15% 慢解 / 強制 lookahead"
+            })}</li>
+              <li>{tr({ zh: '~15% 算法练习 (按 case 频率加权)', en: '~15% algorithm drilling (case-frequency-weighted)',
+                  zhHant: "~15% 演算法練習 (按 case 頻率加權)"
+            })}</li>
+              <li>{tr({ zh: '~10% 复盘 (视频 / 智能魔方)', en: '~10% review (video / smart cube)',
+                  zhHant: "~10% 覆盤 (影片 / 智慧魔方)"
+            })}</li>
             </ul>
             <p>{isZh ? <><strong>训练 PB 跟 WCA PB 的差距</strong>: 5-10%。原因: 魔方冷启动, 打乱验证延迟, 紧张, 没热身。</> : <><strong>Training-comp gap</strong>: 5-10%. Causes: cube cooldown, scramble verification delay, anxiety, no warmup.</>}</p>
           </Section>
 
           <Section id="stats" titleZh="统计建模: 4 个独立模型" titleEn="Statistical Modeling: 4 Independent Models" isZh={isZh}>
-            <p>{isZh ? '4 个候选模型:' : 'Four candidate models:'}</p>
+            <p>{tr({ zh: '4 个候选模型:', en: 'Four candidate models:',
+                zhHant: "4 個候選模型:"
+            })}</p>
             <ol>
               <li>{isZh ? <><strong>Exp + floor。</strong> T(t) = L + A · exp(−k(t−t₀))。L 用网格搜索。优势: floor 可解释;劣势: 单 floor 假设。</> : <><strong>Exp + floor.</strong> Grid search L. Pro: floor interpretable. Con: single-floor assumption.</>}</li>
               <li>{isZh ? <><strong>Gompertz 衰减。</strong> S 形,比 exp+floor 多一个拐点。</> : <><strong>Gompertz decay.</strong> S-shaped; adds an inflection vs exp+floor.</>}</li>
@@ -968,7 +1130,13 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             <p>{isZh ? <><strong>Walk-forward backtest</strong> (训练 2003-2020, 预测 2021-2026):</> : <><strong>Walk-forward backtest</strong> (train 2003-2020, forecast 2021-2026):</>}</p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table">
-                <thead><tr><th>{isZh ? '模型' : 'Model'}</th><th>{isZh ? '2026 预测' : '2026 forecast'}</th><th>{isZh ? '实测' : 'Actual'}</th><th>{isZh ? '误差' : 'Error'}</th></tr></thead>
+                <thead><tr><th>{tr({ zh: '模型', en: 'Model' })}</th><th>{tr({ zh: '2026 预测', en: '2026 forecast',
+                    zhHant: "2026 預測"
+                })}</th><th>{tr({ zh: '实测', en: 'Actual',
+                    zhHant: "實測"
+                })}</th><th>{tr({ zh: '误差', en: 'Error',
+                    zhHant: "誤差"
+                })}</th></tr></thead>
                 <tbody>
                   <tr><td>Exp + floor</td><td>~3.50 s</td><td rowSpan={4}><strong>2.76 s</strong> (Zajder)</td><td className="pred-num">+0.74</td></tr>
                   <tr><td>Gompertz</td><td>~3.20 s</td><td className="pred-num">+0.44</td></tr>
@@ -996,28 +1164,44 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
           <Section id="forecast" titleZh="综合预测 — Single + Ao5 (BMA Ensemble)" titleEn="Final Forecast — Single + Ao5 (BMA Ensemble)" isZh={isZh}>
             <div className="pred-forecast-dash">
               <div className="pred-forecast-col">
-                <h3>{isZh ? '单次 WR 预测' : 'Single WR Forecast'}</h3>
+                <h3>{tr({ zh: '单次 WR 预测', en: 'Single WR Forecast',
+                    zhHant: "單次 WR 預測"
+                })}</h3>
                 <div className="pred-forecast-numbers">
-                  <div className="pred-forecast-row"><span className="pred-forecast-year">2026 {isZh ? '现' : 'now'}</span><span className="pred-forecast-val">2.76 s</span><span className="pred-forecast-ci">Zajder</span></div>
+                  <div className="pred-forecast-row"><span className="pred-forecast-year">2026 {tr({ zh: '现', en: 'now',
+                      zhHant: "現"
+                })}</span><span className="pred-forecast-val">2.76 s</span><span className="pred-forecast-ci">Zajder</span></div>
                   <div className="pred-forecast-row pred-fc-soon"><span className="pred-forecast-year">2027</span><span className="pred-forecast-val">2.55</span><span className="pred-forecast-ci">[2.40–2.70]</span></div>
                   <div className="pred-forecast-row pred-fc-mid"><span className="pred-forecast-year">2030</span><span className="pred-forecast-val">2.30</span><span className="pred-forecast-ci">[2.05–2.55]</span></div>
                   <div className="pred-forecast-row pred-fc-mid"><span className="pred-forecast-year">2035</span><span className="pred-forecast-val">2.05</span><span className="pred-forecast-ci">[1.80–2.30]</span></div>
                   <div className="pred-forecast-row pred-fc-far"><span className="pred-forecast-year">2040</span><span className="pred-forecast-val">1.90</span><span className="pred-forecast-ci">[1.65–2.15]</span></div>
                   <div className="pred-forecast-row pred-fc-far"><span className="pred-forecast-year">2050</span><span className="pred-forecast-val">1.70</span><span className="pred-forecast-ci">[1.45–1.95]</span></div>
-                  <div className="pred-forecast-row pred-fc-asymp"><span className="pred-forecast-year">{isZh ? '100 年' : '100-yr'}</span><span className="pred-forecast-val">~1.50</span><span className="pred-forecast-ci">{isZh ? '方法可达' : 'method-reachable'}</span></div>
-                  <div className="pred-forecast-row pred-fc-wall"><span className="pred-forecast-year">{isZh ? '硬墙' : 'wall'}</span><span className="pred-forecast-val">~0.99</span><span className="pred-forecast-ci">16 STM × 17 TPS</span></div>
+                  <div className="pred-forecast-row pred-fc-asymp"><span className="pred-forecast-year">{tr({ zh: '100 年', en: '100-yr' })}</span><span className="pred-forecast-val">~1.50</span><span className="pred-forecast-ci">{tr({ zh: '方法可达', en: 'method-reachable',
+                      zhHant: "方法可達"
+                })}</span></div>
+                  <div className="pred-forecast-row pred-fc-wall"><span className="pred-forecast-year">{tr({ zh: '硬墙', en: 'wall',
+                      zhHant: "硬牆"
+                })}</span><span className="pred-forecast-val">~0.99</span><span className="pred-forecast-ci">16 STM × 17 TPS</span></div>
                 </div>
               </div>
               <div className="pred-forecast-col">
-                <h3>{isZh ? 'Ao5 WR 预测' : 'Ao5 WR Forecast'}</h3>
+                <h3>{tr({ zh: 'Ao5 WR 预测', en: 'Ao5 WR Forecast',
+                    zhHant: "Ao5 WR 預測"
+                })}</h3>
                 <div className="pred-forecast-numbers">
-                  <div className="pred-forecast-row"><span className="pred-forecast-year">2026 {isZh ? '现' : 'now'}</span><span className="pred-forecast-val">3.71 s</span><span className="pred-forecast-ci">Geng</span></div>
+                  <div className="pred-forecast-row"><span className="pred-forecast-year">2026 {tr({ zh: '现', en: 'now',
+                      zhHant: "現"
+                })}</span><span className="pred-forecast-val">3.71 s</span><span className="pred-forecast-ci">Geng</span></div>
                   <div className="pred-forecast-row pred-fc-soon"><span className="pred-forecast-year">2027</span><span className="pred-forecast-val">3.45</span><span className="pred-forecast-ci">[3.30–3.60]</span></div>
                   <div className="pred-forecast-row pred-fc-mid"><span className="pred-forecast-year">2030</span><span className="pred-forecast-val">3.00</span><span className="pred-forecast-ci">[2.75–3.25]</span></div>
                   <div className="pred-forecast-row pred-fc-mid"><span className="pred-forecast-year">2035</span><span className="pred-forecast-val">2.65</span><span className="pred-forecast-ci">[2.40–2.90]</span></div>
                   <div className="pred-forecast-row pred-fc-far"><span className="pred-forecast-year">2040</span><span className="pred-forecast-val">2.40</span><span className="pred-forecast-ci">[2.15–2.65]</span></div>
                   <div className="pred-forecast-row pred-fc-far"><span className="pred-forecast-year">2050</span><span className="pred-forecast-val">2.15</span><span className="pred-forecast-ci">[1.90–2.40]</span></div>
-                  <div className="pred-forecast-row pred-fc-asymp"><span className="pred-forecast-year">{isZh ? '渐近' : 'asymptote'}</span><span className="pred-forecast-val">~1.90</span><span className="pred-forecast-ci">{isZh ? '执行噪声底' : 'execution-noise floor'}</span></div>
+                  <div className="pred-forecast-row pred-fc-asymp"><span className="pred-forecast-year">{tr({ zh: '渐近', en: 'asymptote',
+                      zhHant: "漸近"
+                })}</span><span className="pred-forecast-val">~1.90</span><span className="pred-forecast-ci">{tr({ zh: '执行噪声底', en: 'execution-noise floor',
+                    zhHant: "執行噪聲底"
+                })}</span></div>
                 </div>
               </div>
             </div>
@@ -1026,13 +1210,17 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
                 ? <><strong>建模。</strong> BMA 集成 (GEV 0.55 + Exp-floor 0.30 + Gompertz 0.15),80% CI 来自残差 bootstrap。Ao5 / 单次 比例由 σ_log = 0.10-0.12 + Ao5 trimmed mean √5 收缩推导,顶级同轮 Ao5 / min-single ≈ 1.25-1.35。<strong>下界不超过物理 floor 0.99 秒 和 Ao5 1.9 秒</strong>。</>
                 : <><strong>Methodology.</strong> BMA ensemble (GEV 0.55 + Exp-floor 0.30 + Gompertz 0.15), 80% CI from residual bootstrap. Ao5/single ratio from σ_log = 0.10-0.12 + Ao5 trimmed-mean √5 shrinkage; top same-round Ao5/min-single ≈ 1.25-1.35. <strong>Lower bounds capped at physical floor 0.99 s and Ao5 1.9 s</strong>.</>}
             </p>
-            <h3>{isZh ? '预测置信区间可视化' : 'Forecast Confidence Band'}</h3>
+            <h3>{tr({ zh: '预测置信区间可视化', en: 'Forecast Confidence Band',
+                zhHant: "預測置信區間視覺化"
+            })}</h3>
             <LineChart
               series={[...singleSeries, forecastCenter, ...ao5Series, ao5Center]}
               bands={[forecastBand, ao5Band]}
               refLines={refLines}
-              yLabel={isZh ? '时间 (秒)' : 'Time (s)'}
-              xLabel={isZh ? '年份' : 'Year'}
+              yLabel={tr({ zh: '时间 (秒)', en: 'Time (s)',
+                  zhHant: "時間 (秒)"
+            })}
+              xLabel={tr({ zh: '年份', en: 'Year' })}
               yMin={0.5}
               yMax={20}
             />
@@ -1042,15 +1230,43 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
           </Section>
 
           <Section id="scenarios" titleZh="情景分析" titleEn="Scenarios" isZh={isZh}>
-            <p>{isZh ? '「基线」假设方法 + 硬件按现有趋势演化:' : '"Baseline" assumes methods + hardware continue current trends:'}</p>
+            <p>{tr({ zh: '「基线」假设方法 + 硬件按现有趋势演化:', en: '"Baseline" assumes methods + hardware continue current trends:',
+                zhHant: "「基線」假設方法 + 硬體按現有趨勢演化:"
+            })}</p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table pred-method-table">
-                <thead><tr><th>{isZh ? '场景' : 'Scenario'}</th><th>{isZh ? '触发' : 'Trigger'}</th><th>{isZh ? 'Single 2030' : '2030 Single'}</th><th>{isZh ? 'Ao5 2030' : '2030 Ao5'}</th><th>{isZh ? '说明' : 'Note'}</th></tr></thead>
+                <thead><tr><th>{tr({ zh: '场景', en: 'Scenario',
+                    zhHant: "場景"
+                })}</th><th>{tr({ zh: '触发', en: 'Trigger',
+                    zhHant: "觸發"
+                })}</th><th>{(i18n.language.startsWith('zh') ? 'Single 2030' : '2030 Single')}</th><th>{(i18n.language.startsWith('zh') ? 'Ao5 2030' : '2030 Ao5')}</th><th>{tr({ zh: '说明', en: 'Note',
+                    zhHant: "說明"
+                })}</th></tr></thead>
                 <tbody>
-                  <tr><td><strong>{isZh ? '基线' : 'Baseline'}</strong></td><td>{isZh ? '现有趋势' : 'current trends'}</td><td className="pred-num">2.30</td><td className="pred-num">3.00</td><td className="pred-num-small">{isZh ? 'BMA 中心' : 'BMA central'}</td></tr>
-                  <tr><td>{isZh ? '🚀 加速' : '🚀 Acceleration'}</td><td className="pred-num-small">{isZh ? '1LLL 实用化 / 新方法' : '1LLL practical / new method'}</td><td className="pred-num">~2.00</td><td className="pred-num">~2.55</td><td className="pred-num-small">{isZh ? '阶跃 ~15%' : 'step ~15%'}</td></tr>
-                  <tr><td>{isZh ? '🐌 减速' : '🐌 Stagnation'}</td><td className="pred-num-small">{isZh ? '智能魔方代际无效 / 新血断层' : 'smart-cube plateaus / drought'}</td><td className="pred-num">~2.60</td><td className="pred-num">~3.40</td><td className="pred-num-small">{isZh ? '类似一英里跑 27 年零进展' : 'Mile-run-style stall'}</td></tr>
-                  <tr><td>{isZh ? '⚖️ WCA 调整' : '⚖️ WCA Adjust'}</td><td className="pred-num-small">{isZh ? '触发器 / 帧分析进一步收紧' : 'Timer / FBF tightened'}</td><td className="pred-num">~2.40</td><td className="pred-num">~3.10</td><td className="pred-num-small">{isZh ? '类似 2024 滑计时事件之后' : 'post-2024 sliding'}</td></tr>
+                  <tr><td><strong>{tr({ zh: '基线', en: 'Baseline',
+                      zhHant: "基線"
+                })}</strong></td><td>{tr({ zh: '现有趋势', en: 'current trends',
+                    zhHant: "現有趨勢"
+                })}</td><td className="pred-num">2.30</td><td className="pred-num">3.00</td><td className="pred-num-small">{tr({ zh: 'BMA 中心', en: 'BMA central' })}</td></tr>
+                  <tr><td>{tr({ zh: '🚀 加速', en: '🚀 Acceleration' })}</td><td className="pred-num-small">{tr({ zh: '1LLL 实用化 / 新方法', en: '1LLL practical / new method',
+                      zhHant: "1LLL 實用化 / 新方法"
+                })}</td><td className="pred-num">~2.00</td><td className="pred-num">~2.55</td><td className="pred-num-small">{tr({ zh: '阶跃 ~15%', en: 'step ~15%',
+                    zhHant: "階躍 ~15%"
+                })}</td></tr>
+                  <tr><td>{tr({ zh: '🐌 减速', en: '🐌 Stagnation',
+                      zhHant: "🐌 減速"
+                })}</td><td className="pred-num-small">{tr({ zh: '智能魔方代际无效 / 新血断层', en: 'smart-cube plateaus / drought',
+                    zhHant: "智慧魔方代際無效 / 新血斷層"
+                })}</td><td className="pred-num">~2.60</td><td className="pred-num">~3.40</td><td className="pred-num-small">{tr({ zh: '类似一英里跑 27 年零进展', en: 'Mile-run-style stall',
+                    zhHant: "類似一英里跑 27 年零進展"
+                })}</td></tr>
+                  <tr><td>{tr({ zh: '⚖️ WCA 调整', en: '⚖️ WCA Adjust',
+                      zhHant: "⚖️ WCA 調整"
+                })}</td><td className="pred-num-small">{tr({ zh: '触发器 / 帧分析进一步收紧', en: 'Timer / FBF tightened',
+                    zhHant: "觸發器 / 幀分析進一步收緊"
+                })}</td><td className="pred-num">~2.40</td><td className="pred-num">~3.10</td><td className="pred-num-small">{tr({ zh: '类似 2024 滑计时事件之后', en: 'post-2024 sliding',
+                    zhHant: "類似 2024 滑計時事件之後"
+                })}</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1076,7 +1292,7 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
               <Link href={sectionHref(prevSection.id)} className="pred-333-pager-link pred-333-pager-prev">
                 <ArrowLeft size={16} />
                 <span>
-                  <span className="pred-333-pager-label">{isZh ? '上一章' : 'Previous'}</span>
+                  <span className="pred-333-pager-label">{tr({ zh: '上一章', en: 'Previous' })}</span>
                   <span className="pred-333-pager-title">{isZh ? prevSection.labelZh : prevSection.labelEn}</span>
                 </span>
               </Link>
@@ -1084,7 +1300,7 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
             {nextSection ? (
               <Link href={sectionHref(nextSection.id)} className="pred-333-pager-link pred-333-pager-next">
                 <span>
-                  <span className="pred-333-pager-label">{isZh ? '下一章' : 'Next'}</span>
+                  <span className="pred-333-pager-label">{tr({ zh: '下一章', en: 'Next' })}</span>
                   <span className="pred-333-pager-title">{isZh ? nextSection.labelZh : nextSection.labelEn}</span>
                 </span>
                 <ArrowRightIcon size={16} />
@@ -1093,7 +1309,9 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
           </nav>
 
           <footer className="pred-footer">
-            <div>{isZh ? '本章节是 /wca/prediction 的 3x3 深度版。数据 2026-05。' : 'This is the 3x3 deep-dive of /wca/prediction. Data May 2026.'}</div>
+            <div>{tr({ zh: '本章节是 /wca/prediction 的 3x3 深度版。数据 2026-05。', en: 'This is the 3x3 deep-dive of /wca/prediction. Data May 2026.',
+                zhHant: "本章節是 /wca/prediction 的 3x3 深度版。資料 2026-05。"
+            })}</div>
           </footer>
         </article>
       </div>
@@ -1142,13 +1360,19 @@ function CuberCard({
     <div className="pred-cuber-card">
       <div className="pred-cuber-head">
         <span className="pred-cuber-name">{name}</span>
-        <span className="pred-cuber-meta">{nation} · {isZh ? '生' : 'b.'} {born}</span>
+        <span className="pred-cuber-meta">{nation} · {tr({ zh: '生', en: 'b.' })} {born}</span>
       </div>
-      <div className="pred-cuber-row"><strong>{isZh ? '成就' : 'Accolades'}:</strong> {isZh ? accolades_zh : accolades_en}</div>
-      <div className="pred-cuber-row"><strong>{isZh ? '方法' : 'Method'}:</strong> {isZh ? method_zh : method_en}</div>
-      <div className="pred-cuber-row"><strong>{isZh ? '训练' : 'Training'}:</strong> {isZh ? training_zh : training_en}</div>
-      <div className="pred-cuber-row"><strong>{isZh ? '硬件' : 'Hardware'}:</strong> {isZh ? hardware_zh : hardware_en}</div>
-      <div className="pred-cuber-row pred-cuber-current"><strong>{isZh ? '现状' : 'Current'}:</strong> {isZh ? current_zh : current_en}</div>
+      <div className="pred-cuber-row"><strong>{tr({ zh: '成就', en: 'Accolades' })}:</strong> {isZh ? accolades_zh : accolades_en}</div>
+      <div className="pred-cuber-row"><strong>{tr({ zh: '方法', en: 'Method' })}:</strong> {isZh ? method_zh : method_en}</div>
+      <div className="pred-cuber-row"><strong>{tr({ zh: '训练', en: 'Training',
+          zhHant: "訓練"
+    })}:</strong> {isZh ? training_zh : training_en}</div>
+      <div className="pred-cuber-row"><strong>{tr({ zh: '硬件', en: 'Hardware',
+          zhHant: "硬體"
+    })}:</strong> {isZh ? hardware_zh : hardware_en}</div>
+      <div className="pred-cuber-row pred-cuber-current"><strong>{tr({ zh: '现状', en: 'Current',
+          zhHant: "現狀"
+    })}:</strong> {isZh ? current_zh : current_en}</div>
     </div>
   );
 }

@@ -55,6 +55,7 @@ import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { WheelPicker } from '@/components/WheelPicker';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
 import './player-controls.css';
+import i18n from '@/i18n/i18n-client';
 
 /** Convert SQ1 text while preserving per-line `// comments` and newlines. */
 function convertSq1Text(text: string, convert: (s: string) => string): string {
@@ -240,7 +241,7 @@ export default function PlayerControls({
   const router = useRouter();
   const params = useParams<{ lang?: string }>();
   const langPrefix = params?.lang === 'zh' || params?.lang === 'en'
-    ? `/${params.lang}` : (isZh ? '/zh' : '/en');
+    ? `/${params.lang}` : ((i18n.language.startsWith('zh') ? '/zh' : '/en'));
   const reconEvent = reconEventForSim(puzzleKind);
 
   const [algDraft, setAlgDraft] = useState(alg);
@@ -909,10 +910,13 @@ function ColorRow({
 }
 
 const STYLE_PRESETS: { id: string; zh: string; en: string; s: Pick<SimSettings, 'thickness' | 'hollow' | 'arrow' | 'hint'> }[] = [
-  { id: 'std', zh: '标准', en: 'Standard', s: { thickness: true, hollow: false, arrow: false, hint: false } },
-  { id: 'hollow', zh: '镂空', en: 'Hollow', s: { thickness: true, hollow: true, arrow: false, hint: false } },
+  { id: 'std', zh: '标准', en: 'Standard', s: { thickness: true, hollow: false, arrow: false, hint: false }
+},
+  { id: 'hollow', zh: '镂空', en: 'Hollow', s: { thickness: true, hollow: true, arrow: false, hint: false }
+},
   { id: 'hint', zh: '提示', en: 'Hint', s: { thickness: true, hollow: false, arrow: false, hint: true } },
-  { id: 'arrow', zh: '箭头', en: 'Arrows', s: { thickness: true, hollow: false, arrow: true, hint: false } },
+  { id: 'arrow', zh: '箭头', en: 'Arrows', s: { thickness: true, hollow: false, arrow: true, hint: false }
+},
   { id: 'flat', zh: '平面', en: 'Flat', s: { thickness: false, hollow: false, arrow: false, hint: false } },
 ];
 

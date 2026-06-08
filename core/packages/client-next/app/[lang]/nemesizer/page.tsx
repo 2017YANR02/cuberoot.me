@@ -12,6 +12,7 @@ import H2HMode from './_modes/H2HMode';
 import WhatIfMode from './_modes/WhatIfMode';
 import StatsMode from './_modes/StatsMode';
 import './nemesizer.css';
+import { tr } from '@/i18n/tr';
 
 type Mode = 'standard' | 'h2h' | 'whatif' | 'stats';
 const MODES: Mode[] = ['standard', 'h2h', 'whatif', 'stats'];
@@ -34,18 +35,30 @@ function NemesizerInner() {
         <Link
           href="/nemesizer-about"
           className="nemesizer-title-help"
-          title={isZh ? '这页是干啥的?' : 'What is this page?'}
-          aria-label={isZh ? '查看说明' : 'About this page'}
+          title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+              zhHant: "這頁是幹啥的?"
+        })}
+          aria-label={tr({ zh: '查看说明', en: 'About this page',
+              zhHant: "檢視說明"
+        })}
         >
           <HelpCircle size={18} strokeWidth={1.75} />
         </Link>
       </div>
 
       <div className="nemesizer-tabs">
-        <TabBtn active={mode === 'standard'} onClick={() => setMode('standard')}>{isZh ? '宿敌' : 'Nemeses'}</TabBtn>
-        <TabBtn active={mode === 'h2h'} onClick={() => setMode('h2h')}>{isZh ? '对决' : 'Head to head'}</TabBtn>
-        <TabBtn active={mode === 'whatif'} onClick={() => setMode('whatif')}>{isZh ? '假设' : 'What if'}</TabBtn>
-        <TabBtn active={mode === 'stats'} onClick={() => setMode('stats')}>{isZh ? '统计' : 'Statistics'}</TabBtn>
+        <TabBtn active={mode === 'standard'} onClick={() => setMode('standard')}>{tr({ zh: '宿敌', en: 'Nemeses',
+            zhHant: "宿敵"
+        })}</TabBtn>
+        <TabBtn active={mode === 'h2h'} onClick={() => setMode('h2h')}>{tr({ zh: '对决', en: 'Head to head',
+            zhHant: "對決"
+        })}</TabBtn>
+        <TabBtn active={mode === 'whatif'} onClick={() => setMode('whatif')}>{tr({ zh: '假设', en: 'What if',
+            zhHant: "假設"
+        })}</TabBtn>
+        <TabBtn active={mode === 'stats'} onClick={() => setMode('stats')}>{tr({ zh: '统计', en: 'Statistics',
+            zhHant: "統計"
+        })}</TabBtn>
       </div>
 
       {mode === 'standard' && <StandardMode isZh={isZh} />}

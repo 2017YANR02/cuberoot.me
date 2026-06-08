@@ -16,6 +16,8 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchArticles, type ArticleListItem } from '@/lib/article-api';
 import '../../article-list.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 function formatDate(iso: string | null): string {
   if (!iso) return '';
@@ -26,7 +28,7 @@ function formatDate(iso: string | null): string {
 export default function ArticleAuthorClient() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const langPrefix = isZh ? 'zh' : 'en';
+  const langPrefix = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
   const params = useParams<{ wcaId: string }>();
   const wcaId = Array.isArray(params.wcaId) ? params.wcaId[0] : params.wcaId;
@@ -63,7 +65,9 @@ export default function ArticleAuthorClient() {
       <header className="article-list-header">
         <HomeLink className="article-list-back">
           <ChevronLeft size={16} />
-          <span>{isZh ? '首页' : 'Home'}</span>
+          <span>{tr({ zh: '首页', en: 'Home',
+              zhHant: "首頁"
+        })}</span>
         </HomeLink>
         <Link href={`/${langPrefix}/article`} className="article-list-back article-author-crumb">
           <ChevronLeft size={16} />
@@ -75,7 +79,9 @@ export default function ArticleAuthorClient() {
 
       {loadErr && (
         <div className="article-list-empty article-list-error">
-          {(isZh ? '加载失败: ' : 'Failed to load: ') + loadErr}
+          {(tr({ zh: '加载失败: ', en: 'Failed to load: ',
+              zhHant: "載入失敗: "
+        })) + loadErr}
         </div>
       )}
 

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── Math helpers (all closed-form, no numeric eigensolver) ────────────────────
 
@@ -471,8 +472,8 @@ function AbelianSpectrumPanel() {
           <span className="gt-result-label"><L zh="满足 Ramanujan 不等式？" en="Satisfies Ramanujan bound?" /></span>
           <span className="gt-result-val-strong" style={{ color: isRamanujan ? 'var(--green)' : 'var(--warn)' }}>
             {isRamanujan
-              ? (lang === 'zh' ? '是' : 'Yes')
-              : (lang === 'zh' ? '否' : 'No')}
+              ? (tr({ zh: '是', en: 'Yes' }))
+              : (tr({ zh: '否', en: 'No' }))}
           </span>
         </div>
       </div>
@@ -634,7 +635,9 @@ function MixingRacePanel() {
         {/* x-axis label */}
         <text x={padL + iW / 2} y={H - 2} textAnchor="middle" fontSize={9}
           fill="var(--ink-dim)" style={{ fontFamily: 'var(--mono)' }}>
-          {lang === 'zh' ? '步数 t' : 'Steps t'}
+          {tr({ zh: '步数 t', en: 'Steps t',
+              zhHant: "步數 t"
+        })}
         </text>
 
         {/* x-axis ticks */}

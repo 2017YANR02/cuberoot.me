@@ -63,6 +63,7 @@ import {
   SKEWB_DEFAULT_COLORS,
 } from '@/app/[lang]/scramble/gen/_svg/skewb_svg';
 import { renderUnfoldedSvg } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
+import { tr } from '@/i18n/tr';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -1150,10 +1151,16 @@ function VisualCubeEditorPageInner() {
                   className={`vc-btn vc-btn-sm${state.puzzleVariant === pv ? ' vc-btn-active' : ''}`}
                   onClick={() => setState((s) => snapRotationOnVariantBoundary(s, { puzzleVariant: pv }))}
                 >
-                  {pv === 'iso' ? (isZh ? '立体' : 'iso')
-                    : pv === 'top' ? (isZh ? '顶视' : 'top')
+                  {pv === 'iso' ? (tr({ zh: '立体', en: 'iso',
+                      zhHant: "立體"
+                }))
+                    : pv === 'top' ? (tr({ zh: '顶视', en: 'top',
+                        zhHant: "頂視"
+                    }))
                     : pv === 'wca' ? 'wca'
-                    : (isZh ? '展开' : 'net')}
+                    : (tr({ zh: '展开', en: 'net',
+                        zhHant: "展開"
+                    }))}
                 </button>
               ))
             )}

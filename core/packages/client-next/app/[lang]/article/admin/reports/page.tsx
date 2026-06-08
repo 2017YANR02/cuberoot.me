@@ -19,6 +19,8 @@ import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchArticleReports, deleteArticle, type ArticleReportRow } from '@/lib/article-api';
 import './reports.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 export default function ArticleReportsPage() {
   const { t, i18n } = useTranslation();
@@ -27,7 +29,7 @@ export default function ArticleReportsPage() {
 
   const user = useAuthStore((s) => s.user);
   const admin = isAdminWcaId(user?.wcaId);
-  const langPrefix = isZh ? 'zh' : 'en';
+  const langPrefix = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
   const [rows, setRows] = useState<ArticleReportRow[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -55,7 +57,9 @@ export default function ArticleReportsPage() {
         <p className="article-reports-denied-msg">{t('article.adminNotAuthorized')}</p>
         <HomeLink className="article-reports-back">
           <ChevronLeft size={16} />
-          <span>{isZh ? '首页' : 'Home'}</span>
+          <span>{tr({ zh: '首页', en: 'Home',
+              zhHant: "首頁"
+        })}</span>
         </HomeLink>
       </div>
     );
@@ -81,7 +85,9 @@ export default function ArticleReportsPage() {
       <header className="article-reports-header">
         <HomeLink className="article-reports-back">
           <ChevronLeft size={16} />
-          <span>{isZh ? '首页' : 'Home'}</span>
+          <span>{tr({ zh: '首页', en: 'Home',
+              zhHant: "首頁"
+        })}</span>
         </HomeLink>
         <Link href={`/${langPrefix}/article`} className="article-reports-breadcrumb">
           {t('article.backToList')}

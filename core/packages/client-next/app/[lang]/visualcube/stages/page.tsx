@@ -11,6 +11,7 @@ import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { VisualCube } from '@/components/VisualCube';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { tr } from '@/i18n/tr';
 
 interface StageEntry {
   label: string;
@@ -257,18 +258,20 @@ export default function VisualCubeStagesPage() {
       <style>{INLINE_CSS}</style>
 
       <header className="vcs-header">
-        <h1>{isZh ? 'VisualCube Stage 速查' : 'VisualCube Stages'}</h1>
+        <h1>{tr({ zh: 'VisualCube Stage 速查', en: 'VisualCube Stages' })}</h1>
         <div className="vcs-header-right">
           <Link className="vcs-link" href={`/${lang}/visualcube`}>
-            {isZh ? '编辑器' : 'Editor'}
+            {tr({ zh: '编辑器', en: 'Editor',
+                zhHant: "編輯器"
+            })}
           </Link>
         </div>
       </header>
 
       <p className="vcs-intro">
-        {isZh
-          ? '点任意一格在编辑器里打开。stage 名大小写不敏感(如 fl / FL / Fl 等价)。Origin 是上游 visualcube 自带的 stage,3x3 (Custom) 起是 Ruimin Yan 在 PHP 端追加的。'
-          : 'Click any tile to open in the editor. Stage names are case-insensitive (fl / FL / Fl all match). "Origin" lists the upstream visualcube stages; everything below is added by Ruimin Yan in the PHP fork.'}
+        {tr({ zh: '点任意一格在编辑器里打开。stage 名大小写不敏感(如 fl / FL / Fl 等价)。Origin 是上游 visualcube 自带的 stage,3x3 (Custom) 起是 Ruimin Yan 在 PHP 端追加的。', en: 'Click any tile to open in the editor. Stage names are case-insensitive (fl / FL / Fl all match). "Origin" lists the upstream visualcube stages; everything below is added by Ruimin Yan in the PHP fork.',
+            zhHant: "點任意一格在編輯器裡開啟。stage 名大小寫不敏感(如 fl / FL / Fl 等價)。Origin 是上游 visualcube 自帶的 stage,3x3 (Custom) 起是 Ruimin Yan 在 PHP 端追加的。"
+        })}
       </p>
 
       {SECTIONS.map((section) => (

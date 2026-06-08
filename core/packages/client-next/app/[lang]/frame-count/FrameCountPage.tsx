@@ -32,6 +32,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { consumePendingVideo } from '@/lib/pending-video';
 
 import './frame-count.css';
+import { tr } from '@/i18n/tr';
 
 // ── SVG Icons ────────────────────────────────────────────────────────────────
 
@@ -2154,8 +2155,12 @@ export default function FrameCountPage() {
           <Link
             href="/frame-count-about"
             className="fc-title-help"
-            title={i18n.language.startsWith('zh') ? '这页是干啥的?' : 'What is this page?'}
-            aria-label={i18n.language.startsWith('zh') ? '查看说明' : 'About this page'}
+            title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+                zhHant: "這頁是幹啥的?"
+            })}
+            aria-label={tr({ zh: '查看说明', en: 'About this page',
+                zhHant: "檢視說明"
+            })}
           >
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>

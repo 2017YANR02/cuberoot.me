@@ -16,6 +16,8 @@ import {
 import { resolveAlgPuzzle } from '../../../_events';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../../trainer.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const TIMER_DELAY_MS = 0;
 
@@ -25,7 +27,7 @@ export default function TrainerRunClient() {
   const setSlug = (Array.isArray(params?.set) ? params.set[0] : params?.set) ?? '';
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const lang = isZh ? 'zh' : 'en';
+  const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   useDocumentTitle('训练中', 'Training');
 
   const puzzle = resolveAlgPuzzle(puzzleParam);   // 接受 event code(333)或 legacy puzzle 名(3x3)
@@ -90,7 +92,7 @@ export default function TrainerRunClient() {
     return (
       <div className="trainer-root">
         <div className="trainer-landing-empty">
-          {isZh ? '未知公式集' : 'Unknown set'}: {puzzleParam}/{setSlug}
+          {tr({ zh: '未知公式集', en: 'Unknown set' })}: {puzzleParam}/{setSlug}
         </div>
       </div>
     );
@@ -100,10 +102,14 @@ export default function TrainerRunClient() {
     return (
       <div className="trainer-root">
         <div className="trainer-landing-empty">
-          {isZh ? '尚未选 case' : 'No cases selected'}
+          {tr({ zh: '尚未选 case', en: 'No cases selected',
+              zhHant: "尚未選 case"
+        })}
           <div style={{ marginTop: 16 }}>
             <Link href={`/${lang}/trainer/${puzzleParam}/${setSlug}`} className="trainer-start-btn">
-              <Flag size={14} /> {isZh ? '去选择' : 'Pick cases'}
+              <Flag size={14} /> {tr({ zh: '去选择', en: 'Pick cases',
+                  zhHant: "去選擇"
+            })}
             </Link>
           </div>
         </div>
@@ -129,10 +135,12 @@ export default function TrainerRunClient() {
     <div className="trainer-root">
       <div className="trainer-topbar">
         <Link href={`/${lang}/trainer/${puzzleParam}/${setSlug}`} className="trainer-back">
-          <ArrowLeft size={14} /> {isZh ? '选 case' : 'Select Algs'}
+          <ArrowLeft size={14} /> {tr({ zh: '选 case', en: 'Select Algs',
+              zhHant: "選 case"
+        })}
         </Link>
         <span style={{ fontSize: '1rem', color: 'var(--muted-foreground)' }}>
-          {puzzle} · {isZh ? meta.zh : meta.en}
+          {puzzle} · {(i18n.language.startsWith('zh') ? meta.zh : meta.en)}
         </span>
       </div>
 
@@ -140,7 +148,9 @@ export default function TrainerRunClient() {
         <div className="trainer-stage" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
           <ScrambleHeader
             scramble={currentScramble || ''}
-            label={isZh ? '打乱:' : 'Scramble:'}
+            label={tr({ zh: '打乱:', en: 'Scramble:',
+                zhHant: "打亂:"
+            })}
           />
           <div className="trainer-stage-actions">
             <button
@@ -148,14 +158,18 @@ export default function TrainerRunClient() {
               onClick={onNewCase}
               disabled={timerState !== TimerState.NOT_RUNNING}
             >
-              <RefreshCw size={12} /> {isZh ? '换一个' : 'New Case'}
+              <RefreshCw size={12} /> {tr({ zh: '换一个', en: 'New Case',
+                  zhHant: "換一個"
+            })}
             </button>
           </div>
 
           <TimerDisplay state={timerState} ms={ms} />
 
           <div className="trainer-help">
-            {isZh ? '空格开始/停止' : 'Space to start/stop'}
+            {tr({ zh: '空格开始/停止', en: 'Space to start/stop',
+                zhHant: "空格開始/停止"
+            })}
           </div>
         </div>
 
@@ -167,12 +181,16 @@ export default function TrainerRunClient() {
             c={observingCase}
             isZh={isZh}
             onDelete={observingSolve ? () => {
-              if (confirm(isZh ? '删除此成绩?' : 'Delete this solve?'))
+              if (confirm(tr({ zh: '删除此成绩?', en: 'Delete this solve?',
+                  zhHant: "刪除此成績?"
+            })))
                 deleteSolve(observingIdx);
             } : undefined}
             header={observingSolve
               ? (isZh ? `第 ${observingSolve.i + 1} 次` : `Solve #${observingSolve.i + 1}`)
-              : (isZh ? '当前' : 'Current')}
+              : (tr({ zh: '当前', en: 'Current',
+                  zhHant: "當前"
+            }))}
           />
           <StatsList
             solves={solves}
@@ -180,7 +198,9 @@ export default function TrainerRunClient() {
             isZh={isZh}
             onPick={(i) => setObservingIdx(i)}
             onClear={() => {
-              if (confirm(isZh ? '清空所有成绩?' : 'Clear all solves?'))
+              if (confirm(tr({ zh: '清空所有成绩?', en: 'Clear all solves?',
+                  zhHant: "清空所有成績?"
+            })))
                 clearSolves();
             }}
           />

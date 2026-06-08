@@ -5,6 +5,7 @@
 import { useState, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Copy, Check, Loader2 } from 'lucide-react';
+import { tr } from '@/i18n/tr';
 
 interface ScrambleOutputProps {
   scrambles: string[];
@@ -25,11 +26,15 @@ export function ScrambleOutput({ scrambles, info, busy }: ScrambleOutputProps): 
       setTimeout(() => setCopied(false), 1500);
     } catch {
       // clipboard unavailable (insecure context / permission) — surface the text.
-      window.prompt(isZh ? '复制下面的打乱:' : 'Copy the scrambles below:', text);
+      window.prompt(tr({ zh: '复制下面的打乱:', en: 'Copy the scrambles below:',
+          zhHant: "複製下面的打亂:"
+    }), text);
     }
   };
 
-  const stat = info ?? `${scrambles.length} ${isZh ? '条' : 'scrambles'}`;
+  const stat = info ?? `${scrambles.length} ${tr({ zh: '条', en: 'scrambles',
+      zhHant: "條"
+})}`;
 
   return (
     <div className="bld-scramble-output">
@@ -38,7 +43,7 @@ export function ScrambleOutput({ scrambles, info, busy }: ScrambleOutputProps): 
         {busy && (
           <span className="bld-spinner">
             <Loader2 size={15} />
-            {isZh ? '生成中…' : 'Generating…'}
+            {tr({ zh: '生成中…', en: 'Generating…' })}
           </span>
         )}
         <span className="bld-spacer" />
@@ -49,13 +54,19 @@ export function ScrambleOutput({ scrambles, info, busy }: ScrambleOutputProps): 
           disabled={busy || scrambles.length === 0}
         >
           {copied ? <Check size={15} /> : <Copy size={15} />}
-          {copied ? (isZh ? '已复制' : 'Copied') : (isZh ? '复制全部' : 'Copy all')}
+          {copied ? (tr({ zh: '已复制', en: 'Copied',
+              zhHant: "已複製"
+        })) : (tr({ zh: '复制全部', en: 'Copy all',
+            zhHant: "複製全部"
+        }))}
         </button>
       </div>
 
       {scrambles.length === 0 ? (
         <div className="bld-scramble-empty">
-          {busy ? (isZh ? '生成中…' : 'Generating…') : (isZh ? '暂无打乱' : 'No scrambles yet')}
+          {busy ? (tr({ zh: '生成中…', en: 'Generating…' })) : (tr({ zh: '暂无打乱', en: 'No scrambles yet',
+              zhHant: "暫無打亂"
+        }))}
         </div>
       ) : (
         <ol className="bld-scramble-list">

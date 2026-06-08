@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './java_intro.css';
+import i18n from '@/i18n/i18n-client';
 
 const JAVA_LOGO_SVG = (
   <svg viewBox="0 0 256 256">
@@ -441,7 +442,7 @@ const FUTURE_CARDS: FutureCard[] = [
 
 export default function JavaIntroPage() {
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
 
   useDocumentTitle(

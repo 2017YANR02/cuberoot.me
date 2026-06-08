@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Eraser, RotateCcw, Shuffle, Sparkles } from 'lucide-react';
 import { SOLVED_FACELET, STICKER_SIBLINGS, validateFacelet, cubieToFacelet } from './facelet';
 import { applySequence, solvedCubie } from './_kociemba/cube';
+import i18n from '@/i18n/i18n-client';
 
 export type FaceLetter = 'U' | 'R' | 'F' | 'D' | 'L' | 'B';
 export type PaintColor = FaceLetter | 'X';
@@ -252,7 +253,7 @@ export default function InteractiveCubeNet({
             ?? (hasEmpty ? t('还有空缺颜色未填', 'Some stickers are still empty') : t('用 cubeopt 求最优解', 'Solve optimally with cubeopt'))}
         >
           <Sparkles size={14} />
-          <span>{solveLabel ? (isZh ? solveLabel.zh : solveLabel.en) : t('求最优解', 'Solve')}</span>
+          <span>{solveLabel ? ((i18n.language.startsWith('zh') ? solveLabel.zh : solveLabel.en)) : t('求最优解', 'Solve')}</span>
         </button>
       </div>
 

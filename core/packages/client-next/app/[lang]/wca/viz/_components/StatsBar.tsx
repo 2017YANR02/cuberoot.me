@@ -5,6 +5,7 @@
 import { useTranslation } from 'react-i18next';
 import { isFMC, isMBLD } from '../_engine/data_fetch';
 import { useVizStore } from '../_stores/viz_store';
+import { tr } from '@/i18n/tr';
 
 interface StatsBarProps {
   mean: string;
@@ -38,11 +39,13 @@ export default function StatsBar(props: StatsBarProps) {
   return (
     <div className="stats-bar">
       <div className="stat-item">
-        <span className="stat-label">{isZh ? '均值' : 'Mean'}</span>
+        <span className="stat-label">{tr({ zh: '均值', en: 'Mean' })}</span>
         <span className="stat-value mono">{props.mean || '--'}</span>
       </div>
       <div className="stat-item">
-        <span className="stat-label">{isZh ? '标准差' : 'Stddev'}</span>
+        <span className="stat-label">{tr({ zh: '标准差', en: 'Stddev',
+            zhHant: "標準差"
+        })}</span>
         <span className="stat-value mono">{props.std || '--'}</span>
       </div>
       <div className="stat-item">
@@ -50,7 +53,9 @@ export default function StatsBar(props: StatsBarProps) {
         <span className="stat-value mono">{props.syncValue || '--'}</span>
       </div>
       <div className="stat-item stat-comp">
-        <span className="stat-label">{isZh ? '比赛' : 'Comp'}</span>
+        <span className="stat-label">{tr({ zh: '比赛', en: 'Comp',
+            zhHant: "比賽"
+        })}</span>
         <span className="stat-value">{props.compName || '--'}</span>
       </div>
       <div className="stat-item">

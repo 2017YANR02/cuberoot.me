@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import type { Lang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── Arithmetic helpers (bigint-safe for large n) ──────────────────────────────
 
@@ -444,12 +445,18 @@ function SylowConstraintExplorer({ lang }: { lang: Lang }) {
     if (!trimmed) return { rows: [], error: null, n: 0n };
     try {
       const val = BigInt(trimmed);
-      if (val <= 1n) return { rows: [], error: lang === 'zh' ? '请输入大于 1 的正整数' : 'Enter an integer > 1', n: 0n };
-      if (val > 10n ** 25n) return { rows: [], error: lang === 'zh' ? '数字过大（最大 10²⁵）' : 'Too large (max 10²⁵)', n: 0n };
+      if (val <= 1n) return { rows: [], error: tr({ zh: '请输入大于 1 的正整数', en: 'Enter an integer > 1',
+          zhHant: "請輸入大於 1 的正整數"
+    }), n: 0n };
+      if (val > 10n ** 25n) return { rows: [], error: tr({ zh: '数字过大（最大 10²⁵）', en: 'Too large (max 10²⁵)',
+          zhHant: "數字過大（最大 10²⁵）"
+    }), n: 0n };
       const rows = computeSylowRows(val);
       return { rows, error: null, n: val };
     } catch {
-      return { rows: [], error: lang === 'zh' ? '无效整数' : 'Invalid integer', n: 0n };
+      return { rows: [], error: tr({ zh: '无效整数', en: 'Invalid integer',
+          zhHant: "無效整數"
+    }), n: 0n };
     }
   }, [raw, lang]);
 
@@ -478,7 +485,7 @@ function SylowConstraintExplorer({ lang }: { lang: Lang }) {
             onClick={() => setRaw(ps.value)}
           >
             {i === PRESETS.length - 1
-              ? (lang === 'zh' ? '魔方群' : 'Cube group')
+              ? (tr({ zh: '魔方群', en: 'Cube group' }))
               : ps.label}
           </button>
         ))}
@@ -490,7 +497,9 @@ function SylowConstraintExplorer({ lang }: { lang: Lang }) {
           style={{ flex: 1, fontFamily: 'var(--mono)', fontSize: 14 }}
           value={raw}
           onChange={e => setRaw(e.target.value)}
-          placeholder={lang === 'zh' ? '输入正整数' : 'Enter a positive integer'}
+          placeholder={tr({ zh: '输入正整数', en: 'Enter a positive integer',
+              zhHant: "輸入正整數"
+        })}
           spellCheck={false}
         />
       </div>
@@ -814,7 +823,9 @@ function PqCyclicDecider({ lang }: { lang: Lang }) {
               {/* Arrow / connector */}
               <text x={SVG_W / 2} y={SVG_H - 8} textAnchor="middle"
                 style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
-                {lang === 'zh' ? '划掉的丸子 = 被 Sylow III 排除' : 'Crossed-out pills = eliminated by Sylow III'}
+                {tr({ zh: '划掉的丸子 = 被 Sylow III 排除', en: 'Crossed-out pills = eliminated by Sylow III',
+                    zhHant: "劃掉的丸子 = 被 Sylow III 排除"
+                })}
               </text>
             </svg>
           </div>
@@ -961,7 +972,9 @@ function RealizabilityQuiz({ lang }: { lang: Lang }) {
           value={input}
           onChange={e => { setInput(e.target.value); setChecked(false); }}
           style={{ width: 90, fontFamily: 'var(--mono)' }}
-          placeholder={lang === 'zh' ? '整数' : 'integer'}
+          placeholder={tr({ zh: '整数', en: 'integer',
+              zhHant: "整數"
+        })}
         />
         <button className="gt-btn" onClick={handleCheck} disabled={!inputValid}>
           <L zh="检验 Sylow III" en="Check Sylow III" />
@@ -1085,8 +1098,12 @@ function SylowGauges({ passCongruence, passDivides, np, p, m, lang }: {
           style={{ fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 700 }}
           fill={passCongruence && passDivides ? 'var(--green)' : 'var(--warn)'}>
           {passCongruence && passDivides
-            ? (lang === 'zh' ? 'Sylow III 通过（必要条件满足）' : 'Sylow III: OK (necessary conditions met)')
-            : (lang === 'zh' ? 'Sylow III 未通过' : 'Sylow III: FAIL')}
+            ? (tr({ zh: 'Sylow III 通过（必要条件满足）', en: 'Sylow III: OK (necessary conditions met)',
+                zhHant: "Sylow III 透過（必要條件滿足）"
+            }))
+            : (tr({ zh: 'Sylow III 未通过', en: 'Sylow III: FAIL',
+                zhHant: "Sylow III 未透過"
+            }))}
         </text>
       </svg>
     </div>

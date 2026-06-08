@@ -1,5 +1,6 @@
 // 跨运动 / 跨技能 极限对比
 import { CROSS_SPORT_TABLE } from '../theory_data';
+import { tr } from '@/i18n/tr';
 
 interface Props { isZh: boolean }
 
@@ -7,7 +8,9 @@ export function CrossSportSection({ isZh }: Props) {
   const sorted = [...CROSS_SPORT_TABLE].sort((a, b) => b.ratio_pct - a.ratio_pct);
   return (
     <section className="pred-section" id="cross-sport">
-      <h2>{isZh ? '跨运动锚定: WR 离物理墙多远' : 'Cross-Sport Anchoring: How Close Is the WR to the Wall'}</h2>
+      <h2>{tr({ zh: '跨运动锚定: WR 离物理墙多远', en: 'Cross-Sport Anchoring: How Close Is the WR to the Wall',
+          zhHant: "跨運動錨定: WR 離物理牆多遠"
+    })}</h2>
       <p>
         {isZh ? (
           <>「WR 占理论极限的百分比」是判断「一项运动成不成熟, 还剩多少空间」的最直接指标。速拧两项放到一起看: 2x2 已经接近反应时间墙,3x3 还有近一半空间。跟传统竞技项目对比一下,3x3 现在的位置更接近 1990 年代的马拉松,而不是今天的马拉松。</>
@@ -19,10 +22,16 @@ export function CrossSportSection({ isZh }: Props) {
         <table className="pred-fit-table pred-method-table">
           <thead>
             <tr>
-              <th>{isZh ? '项目' : 'Sport'}</th>
-              <th>{isZh ? '现 WR' : 'WR'}</th>
-              <th>{isZh ? '持有 / 年份' : 'Holder / year'}</th>
-              <th>{isZh ? '理论极限' : 'Theoretical limit'}</th>
+              <th>{tr({ zh: '项目', en: 'Sport',
+                  zhHant: "專案"
+            })}</th>
+              <th>{tr({ zh: '现 WR', en: 'WR',
+                  zhHant: "現 WR"
+            })}</th>
+              <th>{tr({ zh: '持有 / 年份', en: 'Holder / year' })}</th>
+              <th>{tr({ zh: '理论极限', en: 'Theoretical limit',
+                  zhHant: "理論極限"
+            })}</th>
               <th>WR / Limit</th>
             </tr>
           </thead>
@@ -44,7 +53,9 @@ export function CrossSportSection({ isZh }: Props) {
                         {r.ratio_pct}%
                       </span>
                     </>
-                  ) : (isZh ? '墙已被推翻' : 'wall moved')}
+                  ) : (tr({ zh: '墙已被推翻', en: 'wall moved',
+                      zhHant: "牆已被推翻"
+                }))}
                 </td>
               </tr>
             ))}

@@ -9,10 +9,11 @@ import ArchNav from '../_components/ArchNav';
 import { MobilePipelineSVG } from '../_components/ArchSvgs';
 import { DECISIONS, DETAILS } from '../_lib/arch-data';
 import '../architecture.css';
+import i18n from '@/i18n/i18n-client';
 
 export default function ArchDecisionsPage() {
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
   useDocumentTitle('技术决策', 'Technical Decisions');
 
@@ -61,7 +62,7 @@ export default function ArchDecisionsPage() {
                   <td className="arch-tbl-topic">{d.topic}</td>
                   <td className="arch-tbl-pick">{d.pick}</td>
                   <td className="arch-tbl-alt">{d.alt}</td>
-                  <td>{lang === 'zh' ? d.zh : d.en}</td>
+                  <td>{(i18n.language.startsWith('zh') ? d.zh : d.en)}</td>
                 </tr>
               ))}
             </tbody>
@@ -78,7 +79,7 @@ export default function ArchDecisionsPage() {
             {DETAILS.map((d) => (
               <article key={d.title} className="arch-detail">
                 <h3 className="arch-detail-title">{d.title}</h3>
-                <p className="arch-detail-body">{lang === 'zh' ? d.zh : d.en}</p>
+                <p className="arch-detail-body">{(i18n.language.startsWith('zh') ? d.zh : d.en)}</p>
               </article>
             ))}
           </div>

@@ -12,7 +12,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import i18n from '@/i18n/i18n-client';
-
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
 const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -76,7 +75,8 @@ const THEMES: Record<ThemeId, PetTheme> = {
   },
   calico: {
     base: '/deskpet/calico/', inlineIdle: false,
-    thumb: '/deskpet/calico/calico-idle.apng', label: { zh: '三花猫', en: 'Calico' },
+    thumb: '/deskpet/calico/calico-idle.apng', label: { zh: '三花猫', en: 'Calico'
+    },
     files: {
       idle: 'calico-idle.apng',
       thinking: 'calico-thinking.apng', working: 'calico-working-typing.apng',
@@ -103,7 +103,8 @@ const THEMES: Record<ThemeId, PetTheme> = {
   },
   cloudling: {
     base: '/deskpet/cloudling/', inlineIdle: false,
-    thumb: '/deskpet/cloudling/cloudling-idle.svg', thumbScale: 3, label: { zh: '云宝', en: 'Cloud' },
+    thumb: '/deskpet/cloudling/cloudling-idle.svg', thumbScale: 3, label: { zh: '云宝', en: 'Cloud'
+    },
     files: {
       idle: 'cloudling-idle.svg',
       thinking: 'cloudling-thinking.svg', working: 'cloudling-typing.svg',
@@ -293,7 +294,7 @@ export default function DeskPet() {
 
   // Re-render menu text live when language changes (DeskPet is outside I18nProvider).
   useEffect(() => {
-    const update = () => setLang((i18n.language || 'en').startsWith('zh') ? 'zh' : 'en');
+    const update = () => setLang((i18n.language.startsWith('zh') ? 'zh' : 'en'));
     update();
     // defer via setTimeout — languageChanged fires synchronously inside I18nProvider's render,
     // calling setState during another component's render throws in React strict mode.
