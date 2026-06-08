@@ -3,7 +3,7 @@
 // Ported from packages/client/src/pages/code/OpsPage.tsx.
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Check, Copy, Database, Hammer, UploadCloud, Archive, ChevronDown, Terminal, Sparkles, Plus, Pencil, Trash2, X } from 'lucide-react';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';

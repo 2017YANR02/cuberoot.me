@@ -5,7 +5,7 @@
 // 当天录入多条时下方出现展开按钮,展开后逐条列出。点卡进 /recon/[id] 看完整回放。
 // 数据:lib/recon-api getTodayRecons()(主用 /v1/recon/today,回退 /latest 单条)。
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { ChevronDown } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getTodayRecons } from '@/lib/recon-api';

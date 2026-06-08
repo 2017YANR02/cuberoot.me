@@ -10,7 +10,7 @@ import parse, {
   type DOMNode,
 } from 'html-react-parser';
 import DOMPurify from 'dompurify';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { AlgChip } from './AlgChip';
 
 interface TutorialContentProps {

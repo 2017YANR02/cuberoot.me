@@ -20,7 +20,7 @@
  *  13.  Epistemic discussion + references
  */
 import { Suspense, lazy, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink, FileText } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

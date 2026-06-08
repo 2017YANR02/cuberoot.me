@@ -54,6 +54,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **后端 API**:Hono 服 `api.cuberoot.me`(同一台自有服务器,nginx 反代到 127.0.0.1:3001)。
 - **Blog (`/blog/` + `blog.cuberoot.me`)**:独立 `cuberoot-blog` repo 静态归档,blog.cuberoot.me 双轨(自有 nginx alias / GH Pages)按 DNS 分线路。主域 `/blog` 走 next.config.ts redirect → blog.cuberoot.me。详 memory `reference_blog_subdomain`。
 - 前端调 API **必须**用 `utils/api_base.ts` 的 `apiUrl()`(client-next 在 `lib/api-base.ts`),不要硬编码 origin。
+- `/stats/*.json` fetch 走 `statsUrl()`(`lib/stats-base.ts` / `shared/src/api/stats-base.ts`),别写相对路径(Vercel 上相对 `/stats/*` 多一跳 307,白吃 edge request)。
+- 内部 `<Link>` 用 `components/AppLink`(自动补 `/en` `/zh`),别裸 `next/link`+裸 `href="/x"`(触发 proxy 308 翻倍);`/analyze` `/scramble-stats` 等老 rename 别名前缀后会 404,改用当前路径。
 - 切 dev/prod API base 永远用 `import.meta.env.DEV`,**禁** `hostname === 'localhost'` 检查 — LAN IP / Tailscale `*.ts.net` / 隧道域名都不匹配,会错走 prod 跨域被 CORS 拦死。`shared/` 包不能 import client utils,直接 `(import.meta as { env?: { DEV?: boolean } }).env?.DEV`。
 - **COOP/COEP (cubeopt-wasm SAB)**:仅 `/scramble/solver` 在 Next config `headers()` 发(Phase 4 缩到只 solver — analyzer 用 classic worker COEP 会拦死)。nginx vhost 顶 `map $request_uri` 同样匹配 `/scramble/(solver|analyzer)`(历史保留,实际 Next 自己也发)。新增 SAB 页面同步改两处。
 - **client-next 页面默认 SSG**(2026-05-28 起,~128 组静态走 CDN):根 `app/layout.tsx` 禁动态 API(cookies/headers),全局组件禁在 render 调 `useSearchParams`,否则整站退回动态 / CSR 空壳;语言归属在 `[lang]/layout`,i18n 走 `initImmediate:false` + `useSuspense:false`。
@@ -116,6 +118,16 @@ pnpm --filter @cuberoot/client dev                 # http://127.0.0.1:5173/
 - UI 验证走项目内 Playwright MCP;fixtures 跑全集别采样
 - 新路由 / 新顶层 page 前先 grep routes config 防撞名
 - 路由重命名 / 合并后旧路径直接弃用,不为老链接加 redirect(老 URL 404 可接受)
+
+## URL 状态 / 后退导航(全站统一 nuqs)
+
+页内状态进 URL 一律 `nuqs` 的 `useQueryState`,**禁裸 `history.pushState/replaceState` + 手写 `popstate`**(maplibre/canvas/video 等重组件例外,加注释豁免)。后退/前进由 nuqs 自动同步,不手写监听。
+- 大视图 / 大 tab / 大 mode / 打开全屏浮层 → `.withOptions({ history: 'push' })`(后退能返回)
+- 筛选 / 排序 / 搜索词 / 子开关 → 默认 replace(不堆历史,后退跳过)
+- 默认值 `.withDefault(x)` 自动从 URL 省略(clearOnDefault v2 默认开);枚举用 `parseAsStringEnum`
+- 沉浸浮层的返回件用 `history.back()`,`history.length<=1`(深链直进)时 fallback 硬导航父路由
+- `NuqsAdapter` 已挂 root layout;`useQueryState` 只在页级 client 组件用,禁进全局 chrome(同 useSearchParams 的 SSG 约束)
+- 范本:`app/[lang]/wca/comp/page.tsx` 的 `viewMode`
 
 ## 主题 / 颜色
 

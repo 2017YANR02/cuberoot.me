@@ -4,7 +4,7 @@ import { formatVal, milestonePredictions, toDisplay, toDisplayAvg, type EventMet
 import { fitExpFloor, fitExp, fitPower, type DataPoint } from './models';
 import { THEORETICAL_LIMITS } from './theoretical_limits';
 import TheoreticalLimitView from './TheoreticalLimitView';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { ArrowRight } from 'lucide-react';
 
 interface EventData {

@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useMosaicStore } from './_components/state/store';

@@ -7,7 +7,7 @@
  * not yet ported into client-next. The validate-all flow re-enables once
  * @cuberoot/shared exports the OAuth hook and we port useAuthStore.
  */
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ALG_PUZZLES, ALG_CATALOG } from '@cuberoot/shared';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

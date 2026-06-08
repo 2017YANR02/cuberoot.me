@@ -4,7 +4,7 @@
  * /scramble/gen-about — 打乱生成器说明页。介绍三种模式 (comp / batch / paste) +
  * 后台预生成 pool 的工作方式。从 GenPage 标题的 HelpCircle 入口进入。
  */
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

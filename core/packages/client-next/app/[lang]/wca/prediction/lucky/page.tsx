@@ -27,7 +27,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { EVENTS, formatVal } from '../_components/events';

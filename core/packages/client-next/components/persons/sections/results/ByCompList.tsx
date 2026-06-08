@@ -3,7 +3,7 @@
 // 进步(PB)染色 + regional record 标签.
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';

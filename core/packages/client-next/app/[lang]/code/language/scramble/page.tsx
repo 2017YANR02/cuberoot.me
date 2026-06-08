@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

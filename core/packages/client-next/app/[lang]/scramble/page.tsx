@@ -10,7 +10,7 @@
  *
  * 1:1 port from packages/client/src/pages/scramble/ScrambleHubPage.tsx (Vite SPA).
  */
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { BarChart3, Dices, Microscope, Sparkles, Wand2 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

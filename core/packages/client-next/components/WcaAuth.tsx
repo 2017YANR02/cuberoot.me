@@ -7,7 +7,7 @@
  *            logout lives in that page's header.
  */
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { Key } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/lib/auth-store';

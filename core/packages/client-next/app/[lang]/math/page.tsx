@@ -7,7 +7,7 @@
  *
  * 1:1 port from packages/client/src/pages/math/MathLandingPage.tsx (Vite SPA).
  */
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Infinity as InfinityIcon, Sigma, Dices, Ruler } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

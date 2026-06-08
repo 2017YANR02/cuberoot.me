@@ -11,7 +11,7 @@
  * TODO: port useSiteSearch + SEARCH_CARDS once LandingPage is migrated.
  */
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Wrench,

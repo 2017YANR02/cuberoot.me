@@ -8,7 +8,7 @@
  * 服务端实现 + 对比表 + 资料链接。窄屏卡片堆叠。无外部图表库依赖,
  * 流程图用 CSS box + Unicode 箭头。
  */
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

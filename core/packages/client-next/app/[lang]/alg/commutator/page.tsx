@@ -9,7 +9,7 @@
  * upstream's cookie.js.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ExternalLink, HelpCircle, Copy, Check } from 'lucide-react';
 import * as XLSX from 'xlsx';

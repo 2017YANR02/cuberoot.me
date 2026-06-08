@@ -6,7 +6,7 @@
  * 加载本地视频，逐帧控制，标记帧，计算精确时间差。
  */
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type mediaInfoFactoryT from 'mediainfo.js';

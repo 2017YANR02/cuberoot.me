@@ -3,7 +3,7 @@
 // 之前内嵌 react-globe.gl 的 3D 球已废弃 — 体验和 /globe 重复且贴图丑.
 
 import { useMemo } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { Globe2 } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { countryName } from '@/lib/country-name';

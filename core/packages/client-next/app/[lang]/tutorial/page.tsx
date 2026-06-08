@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useSearchParams } from 'next/navigation';
 import {
   Search as SearchIcon,

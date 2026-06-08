@@ -13,7 +13,7 @@
  * per-case ori cycle, subgroup collapse, sticker/setup/HTML alg rendering.
  */
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle } from 'lucide-react';
 import {

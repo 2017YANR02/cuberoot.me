@@ -21,7 +21,7 @@ import RidgelineCanvas from './_components/RidgelineCanvas';
 import { Flag } from '@/components/Flag';
 import { personFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { HelpCircle } from 'lucide-react';
 import './viz.css';
 
