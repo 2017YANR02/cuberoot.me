@@ -159,38 +159,38 @@ function back(
   const cx = x0 + PANEL_W / 2;
   const { main, sub } = backText(entry);
   const term = entry.term?.trim();
+  const hasAlg = !!entry.alg?.moves;
 
-  // 二维码白芯片:小卡用 margin:2 让码点更大更好扫,白底兼当静默区
+  // 二维码白芯片:小卡用 margin:2 让码点更大更好扫,白底兼当静默区。
+  // 有精选公式时二维码上移腾出下方空间(放 案例图 + 公式)。
   const { inner, dim } = qrSvgBody(url, { margin: 2, fg: BRAND });
   const chip = 14.5;
   const pad = 0.9;
   const chipX = cx - chip / 2;
-  const chipTop = top + 15.75;
+  const chipTop = top + (hasAlg ? 12 : 15.75);
   const scale = (chip - pad * 2) / dim;
   const qr =
     `<rect x="${chipX}" y="${chipTop}" width="${chip}" height="${chip}" rx="1.4" fill="#FFFFFF" stroke="#E5E8EE" stroke-width="0.14"/>` +
     `<g transform="translate(${(chipX + pad).toFixed(3)} ${(chipTop + pad).toFixed(3)}) scale(${scale.toFixed(4)})">${inner}</g>`;
 
-  // 案例图(visualcube 矢量)优先放在二维码上方;无图时退回术语角标
-  const caseEl = algSvg
-    ? embedSvg(algSvg, cx - 2.9, chipTop - 6.9, 5.8)
-    : term
-      ? `<rect x="${cx - (term.length * 1.2 + 1.8) / 2}" y="${chipTop - 3.4}" width="${term.length * 1.2 + 1.8}" height="2.4" rx="1.2" fill="rgba(42,93,244,0.10)" stroke="rgba(42,93,244,0.28)" stroke-width="0.12"/>` +
-        text(cx, chipTop - 1.7, 1.1, BRAND_DARK, term, { weight: 700, spacing: 0.06 })
-      : "";
-
-  // 背面精选公式:名称 + 记法,衬在二维码下方(url 上方)。
-  // 记法优先用矢量轮廓(movesPath,任何查看器都精确),无则退回 <text>(JetBrains Mono)。
-  const alg = entry.alg;
-  const movesY = top + (alg?.name ? 33.7 : 32.8);
-  const movesEl = !alg?.moves
-    ? ""
-    : movesPath
-      ? `<path transform="translate(${(cx - movesPath.width / 2).toFixed(3)} ${movesY})" d="${movesPath.d}" fill="${BRAND}"/>`
-      : text(cx, movesY, 1.1, BRAND, alg.moves, { mono: true, weight: 500 });
-  const algEl = alg?.moves
-    ? (alg.name ? text(cx, top + 31.9, 0.95, BRAND_DARK, alg.name, { weight: 700 }) : "") + movesEl
+  // 术语角标:仅无精选公式时显示在二维码上方
+  const termEl = !hasAlg && term
+    ? `<rect x="${cx - (term.length * 1.2 + 1.8) / 2}" y="${chipTop - 3.4}" width="${term.length * 1.2 + 1.8}" height="2.4" rx="1.2" fill="rgba(42,93,244,0.10)" stroke="rgba(42,93,244,0.28)" stroke-width="0.12"/>` +
+      text(cx, chipTop - 1.7, 1.1, BRAND_DARK, term, { weight: 700, spacing: 0.06 })
     : "";
+
+  // 精选公式区:案例图(魔方)正上方对齐 记法,衬在二维码下方。不显示名称。
+  // 记法优先用矢量轮廓(movesPath,任何查看器都精确),无则退回 <text>(JetBrains Mono)。
+  let algEl = "";
+  if (hasAlg) {
+    const cubeSize = 6;
+    const caseImg = algSvg ? embedSvg(algSvg, cx - cubeSize / 2, top + 26.8, cubeSize) : "";
+    const movesY = top + 34.8;
+    const movesEl = movesPath
+      ? `<path transform="translate(${(cx - movesPath.width / 2).toFixed(3)} ${movesY})" d="${movesPath.d}" fill="${BRAND}"/>`
+      : text(cx, movesY, 1.1, BRAND, entry.alg!.moves, { mono: true, weight: 500 });
+    algEl = caseImg + movesEl;
+  }
 
   return (
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#backBg)"/>` +
@@ -198,7 +198,7 @@ function back(
     (pattern ? notationPattern(x0, top, "backClip", BRAND, 0.08) : "") +
     text(cx, top + 6.5, 1.6, BRAND_DARK, main, { weight: 700 }) +
     (sub ? text(cx, top + 9.4, 1.2, "#6B7280", sub) : "") +
-    caseEl +
+    termEl +
     qr +
     algEl +
     text(cx, top + PANEL_H - 3, 1.1, "#9aa1ad", url.replace(/^https?:\/\//, ""), { mono: true })
