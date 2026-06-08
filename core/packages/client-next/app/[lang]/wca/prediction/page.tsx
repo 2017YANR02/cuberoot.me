@@ -51,25 +51,49 @@ interface AllEvents {
 }
 
 const SECTIONS = [
-  { id: 'tldr',          labelZh: '一句话结论',  labelEn: 'Top Line' },
-  { id: 'headline',      labelZh: '撞墙排名',    labelEn: 'Closest to Wall' },
-  { id: 'overview',      labelZh: '跨项目总览',  labelEn: 'Cross-Event Grid' },
-  { id: 'theory-deep',   labelZh: '数学硬墙',    labelEn: 'Math Walls' },
-  { id: 'methods-compare', labelZh: '方法对比',  labelEn: 'Method Comparison' },
-  { id: 'scaling',       labelZh: '阶数尺度律',  labelEn: 'Cube-Size Scaling' },
-  { id: 'theory',        labelZh: '生物力学极限', labelEn: 'Biomech Floor' },
-  { id: 'cross-sport',   labelZh: '跨运动锚定',  labelEn: 'Cross-Sport' },
-  { id: 'milestones',    labelZh: '里程碑预测',  labelEn: 'Forecasts 2030/40/50' },
-  { id: 'regional',      labelZh: '区域格局',    labelEn: 'Regional' },
-  { id: 'methods',       labelZh: '方法论',      labelEn: 'Methodology' },
-  { id: 'caveats',       labelZh: '局限与陷阱',  labelEn: 'Caveats' },
+  { id: 'tldr',          labelZh: '一句话结论',  labelEn: 'Top Line',
+      labelZhHant: "一句話結論"
+},
+  { id: 'headline',      labelZh: '撞墙排名',    labelEn: 'Closest to Wall',
+      labelZhHant: "撞牆排名"
+},
+  { id: 'overview',      labelZh: '跨项目总览',  labelEn: 'Cross-Event Grid',
+      labelZhHant: "跨專案總覽"
+},
+  { id: 'theory-deep',   labelZh: '数学硬墙',    labelEn: 'Math Walls',
+      labelZhHant: "數學硬牆"
+},
+  { id: 'methods-compare', labelZh: '方法对比',  labelEn: 'Method Comparison',
+      labelZhHant: "方法對比"
+},
+  { id: 'scaling',       labelZh: '阶数尺度律',  labelEn: 'Cube-Size Scaling',
+      labelZhHant: "階數尺度律"
+},
+  { id: 'theory',        labelZh: '生物力学极限', labelEn: 'Biomech Floor',
+      labelZhHant: "生物力學極限"
+},
+  { id: 'cross-sport',   labelZh: '跨运动锚定',  labelEn: 'Cross-Sport',
+      labelZhHant: "跨運動錨定"
+},
+  { id: 'milestones',    labelZh: '里程碑预测',  labelEn: 'Forecasts 2030/40/50',
+      labelZhHant: "里程碑預測"
+},
+  { id: 'regional',      labelZh: '区域格局',    labelEn: 'Regional',
+      labelZhHant: "區域格局"
+},
+  { id: 'methods',       labelZh: '方法论',      labelEn: 'Methodology',
+      labelZhHant: "方法論"
+},
+  { id: 'caveats',       labelZh: '局限与陷阱',  labelEn: 'Caveats',
+      labelZhHant: "侷限與陷阱"
+},
 ];
 
 export default function PredictionPage() {
   const { i18n } = useTranslation();
   const lang: 'en' | 'zh' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const isZh = lang === 'zh';
-  useDocumentTitle('预测', 'Prediction');
+  useDocumentTitle('预测', 'Prediction', "預測");
 
   const [data, setData] = useState<AllEvents | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -210,7 +234,7 @@ export default function PredictionPage() {
                 className={`pred-toc-item${activeId === s.id ? ' is-active' : ''}`}
                 onClick={() => setTocOpen(false)}
               >
-                {isZh ? s.labelZh : s.labelEn}
+                {i18n.language === 'zh-Hant' ? (s.labelZhHant ?? s.labelZh) : (isZh ? s.labelZh : s.labelEn)}
               </a>
             ))}
           </div>
@@ -250,7 +274,7 @@ export default function PredictionPage() {
                 className={`pred-toc-item${activeId === s.id ? ' is-active' : ''}`}
                 onClick={() => setTocOpen(false)}
               >
-                {isZh ? s.labelZh : s.labelEn}
+                {i18n.language === 'zh-Hant' ? (s.labelZhHant ?? s.labelZh) : (isZh ? s.labelZh : s.labelEn)}
               </a>
             ))}
           </div>
@@ -288,7 +312,7 @@ export default function PredictionPage() {
                 className={`pred-toc-item${activeId === s.id ? ' is-active' : ''}`}
                 onClick={() => setTocOpen(false)}
               >
-                {isZh ? s.labelZh : s.labelEn}
+                {i18n.language === 'zh-Hant' ? (s.labelZhHant ?? s.labelZh) : (isZh ? s.labelZh : s.labelEn)}
               </a>
             ))}
           </div>
@@ -314,9 +338,9 @@ export default function PredictionPage() {
             </Link>
           </h1>
           <p className="pred-subtitle">
-            {isZh
-              ? `数据 ${data.generated_at.slice(0, 10)}  1982-2050  16 项  拟合 / 物理 / 极值理论三轨预测`
-              : `Data ${data.generated_at.slice(0, 10)} · 1982-2050 · 16 events · curve / physics / extreme-value tri-track forecasts`}
+            {i18n.language === 'zh-Hant' ? (`資料 ${data.generated_at.slice(0, 10)}  1982-2050  16 項  擬合 / 物理 / 極值理論三軌預測`) : (isZh
+                                    ? `数据 ${data.generated_at.slice(0, 10)}  1982-2050  16 项  拟合 / 物理 / 极值理论三轨预测`
+                                    : `Data ${data.generated_at.slice(0, 10)} · 1982-2050 · 16 events · curve / physics / extreme-value tri-track forecasts`)}
           </p>
 
           {/* TL;DR — finding-first */}
@@ -325,17 +349,22 @@ export default function PredictionPage() {
                 zhHant: "一句話結論"
             })}</h2>
             <p className="pred-tldr-lede">
-              {isZh ? (
-                <>
-                  速拧正在撞墙。<strong>16 个 WCA 项目里有 {closestCount} 个</strong> 当前 WR 已经压到物理下界 (M/TPS+R 步数法) 的 80% 以内 — 余地不到 1.25 倍。
-                  3x3 单次 WR 在 2026 年首次跌破 3 秒 (Zajder 2.76),物理下界估计落在 <strong>~1.5 秒 (百年可达) 到 ~0.8 秒 (God's number 数学硬墙)</strong> 之间,还有 1.8 到 3.5 倍空间。
-                </>
-              ) : (
-                <>
-                  Speedcubing is hitting the wall. <strong>{closestCount} of 16 WCA events</strong> sit within 80 % of their physical floor (M/TPS+R first-principles) — about 1.25× compression remains for those.
-                  Meanwhile the 3x3 single broke 3 s in 2026 (Zajder 2.76) and the physical floor estimate is <strong>~1.5 s (100-year reachable) to ~0.8 s (God's-number math wall)</strong> — still 1.8 to 3.5× of room.
-                </>
-              )}
+              {i18n.language === 'zh-Hant' ? ((
+                                          <>
+                                            速擰正在撞牆。<strong>16 個 WCA 專案裡有 {closestCount} 個</strong> 當前 WR 已經壓到物理下界 (M/TPS+R 步數法) 的 80% 以內 — 餘地不到 1.25 倍。
+                                            3x3 單次 WR 在 2026 年首次跌破 3 秒 (Zajder 2.76),物理下界估計落在 <strong>~1.5 秒 (百年可達) 到 ~0.8 秒 (God's number 數學硬牆)</strong> 之間,還有 1.8 到 3.5 倍空間。
+                                          </>
+                                        )) : (isZh ? (
+                                          <>
+                                            速拧正在撞墙。<strong>16 个 WCA 项目里有 {closestCount} 个</strong> 当前 WR 已经压到物理下界 (M/TPS+R 步数法) 的 80% 以内 — 余地不到 1.25 倍。
+                                            3x3 单次 WR 在 2026 年首次跌破 3 秒 (Zajder 2.76),物理下界估计落在 <strong>~1.5 秒 (百年可达) 到 ~0.8 秒 (God's number 数学硬墙)</strong> 之间,还有 1.8 到 3.5 倍空间。
+                                          </>
+                                        ) : (
+                                          <>
+                                            Speedcubing is hitting the wall. <strong>{closestCount} of 16 WCA events</strong> sit within 80 % of their physical floor (M/TPS+R first-principles) — about 1.25× compression remains for those.
+                                            Meanwhile the 3x3 single broke 3 s in 2026 (Zajder 2.76) and the physical floor estimate is <strong>~1.5 s (100-year reachable) to ~0.8 s (God's-number math wall)</strong> — still 1.8 to 3.5× of room.
+                                          </>
+                                        ))}
             </p>
             <div className="pred-tldr-grid">
               <div className="pred-tldr-block">
@@ -378,9 +407,9 @@ export default function PredictionPage() {
               </div>
             </div>
             <p className="pred-tldr-note">
-              {isZh
-                ? `${eventSummaries.reduce((s, x) => s + x.progressionCount, 0)} 次 WR 改写  /  ${totalEvents} 项独立建模  /  拟合, 物理, GEV 三层并列互相校验`
-                : `${eventSummaries.reduce((s, x) => s + x.progressionCount, 0)} WR drops · ${totalEvents} events modeled independently · curve / physics / GEV tracks cross-checked.`}
+              {i18n.language === 'zh-Hant' ? (`${eventSummaries.reduce((s, x) => s + x.progressionCount, 0)} 次 WR 改寫  /  ${totalEvents} 項獨立建模  /  擬合, 物理, GEV 三層並列互相校驗`) : (isZh
+                                          ? `${eventSummaries.reduce((s, x) => s + x.progressionCount, 0)} 次 WR 改写  /  ${totalEvents} 项独立建模  /  拟合, 物理, GEV 三层并列互相校验`
+                                          : `${eventSummaries.reduce((s, x) => s + x.progressionCount, 0)} WR drops · ${totalEvents} events modeled independently · curve / physics / GEV tracks cross-checked.`)}
             </p>
           </section>
 
@@ -560,9 +589,9 @@ export default function PredictionPage() {
                 <strong>{tr({ zh: '数据源', en: 'Source',
                     zhHant: "資料來源"
                 })}{isZh ? '。' : '.'}</strong>{' '}
-                {isZh
-                  ? `WCA 全量 results dump,装在本机 MySQL 8 (wca_developer_database 库)。涵盖 1982 至 ${new Date().getFullYear()},全部 16 个项目,共 170 万+ 条 3x3 单次成绩 (其他项目数据规模见各章)。`
-                  : `Full WCA results dump in local MySQL 8 (wca_developer_database db). Covers 1982 to ${new Date().getFullYear()}, all 16 events analyzed, 1.7M+ 333 solves (others vary).`}
+                {i18n.language === 'zh-Hant' ? (`WCA 全量 results dump,裝在本機 MySQL 8 (wca_developer_database 庫)。涵蓋 1982 至 ${new Date().getFullYear()},全部 16 個專案,共 170 萬+ 條 3x3 單次成績 (其他專案資料規模見各章)。`) : (isZh
+                                                ? `WCA 全量 results dump,装在本机 MySQL 8 (wca_developer_database 库)。涵盖 1982 至 ${new Date().getFullYear()},全部 16 个项目,共 170 万+ 条 3x3 单次成绩 (其他项目数据规模见各章)。`
+                                                : `Full WCA results dump in local MySQL 8 (wca_developer_database db). Covers 1982 to ${new Date().getFullYear()}, all 16 events analyzed, 1.7M+ 333 solves (others vary).`)}
               </li>
               <li>
                 <strong>{tr({ zh: '过滤', en: 'Filter',
@@ -616,8 +645,8 @@ export default function PredictionPage() {
 
           <footer className="pred-footer">
             <div>
-              {isZh ? `数据生成: ${data.generated_at}  复现见方法论 §7 末尾`
-                    : `Data: ${data.generated_at} · Reproduce: see Methodology §7`}
+              {i18n.language === 'zh-Hant' ? (`資料生成: ${data.generated_at}  復現見方法論 §7 末尾`) : (isZh ? `数据生成: ${data.generated_at}  复现见方法论 §7 末尾`
+                                              : `Data: ${data.generated_at} · Reproduce: see Methodology §7`)}
             </div>
           </footer>
         </article>
@@ -666,7 +695,7 @@ function ScalingSection({ eventSummaries, isZh }: { eventSummaries: any[]; isZh:
   if (scalingFit) {
     const fitYs = [2,3,4,5,6,7,8,9,10].map((N) => ({ x: N, y: scalingFit!.a * Math.pow(N, scalingFit!.b) }));
     wrSeries.push({
-      name: isZh ? `幂律拟合 t = ${scalingFit.a.toFixed(2)}·N^${scalingFit.b.toFixed(2)}` : `Power fit t = ${scalingFit.a.toFixed(2)}·N^${scalingFit.b.toFixed(2)}`,
+      name: i18n.language === 'zh-Hant' ? (`冪律擬合 t = ${scalingFit.a.toFixed(2)}·N^${scalingFit.b.toFixed(2)}`) : (isZh ? `幂律拟合 t = ${scalingFit.a.toFixed(2)}·N^${scalingFit.b.toFixed(2)}` : `Power fit t = ${scalingFit.a.toFixed(2)}·N^${scalingFit.b.toFixed(2)}`),
       color: '#c2410c',
       dashed: true,
       data: fitYs,
@@ -679,19 +708,25 @@ function ScalingSection({ eventSummaries, isZh }: { eventSummaries: any[]; isZh:
           zhHant: "NxN 階數尺度律: 時間隨 N"
     })}</h2>
       <p>
-        {isZh ? (
-          <>
-            前一节「数学硬墙」已经把「步数 ~ N^1.8」(Demaine 渐近) 和「时间 ~ N^2.5」分开。这里聚焦时间这一侧 — 实测 222 → 777 当前 WR 走出的曲线。
-            {scalingFit && <> 时间这一维 b ≈ <strong>{scalingFit.b.toFixed(2)}</strong>,R² = {scalingFit.r2.toFixed(3)}。也就是 N 翻一倍,时间增到约 <strong>{(2 ** scalingFit.b).toFixed(1)} 倍</strong>。</>}
-            步数侧 (n^1.8) 和时间侧 (n^{scalingFit?.b.toFixed(2) ?? '?'}) 之间的差距,就是「大魔方 TPS 明显下降」的代价。
-          </>
-        ) : (
-          <>
-            The previous "Math Walls" section separated step-count scaling (~N^1.8, Demaine asymptotic) from time scaling. Here we focus on the time side — empirical curve from 222→777 current WRs.
-            {scalingFit && <> Time exponent b ≈ <strong>{scalingFit.b.toFixed(2)}</strong>, R² = {scalingFit.r2.toFixed(3)}. Doubling N gives <strong>{(2 ** scalingFit.b).toFixed(1)}×</strong> the time.</>}
-            The gap between the move-count exponent (~1.8) and the time exponent ({scalingFit?.b.toFixed(2) ?? '?'}) is the "big cubes have lower sustained TPS" cost.
-          </>
-        )}
+        {i18n.language === 'zh-Hant' ? ((
+                        <>
+                          前一節「數學硬牆」已經把「步數 ~ N^1.8」(Demaine 漸近) 和「時間 ~ N^2.5」分開。這裡聚焦時間這一側 — 實測 222 → 777 當前 WR 走出的曲線。
+                          {scalingFit && <> 時間這一維 b ≈ <strong>{scalingFit.b.toFixed(2)}</strong>,R² = {scalingFit.r2.toFixed(3)}。也就是 N 翻一倍,時間增到約 <strong>{(2 ** scalingFit.b).toFixed(1)} 倍</strong>。</>}
+                          步數側 (n^1.8) 和時間側 (n^{scalingFit?.b.toFixed(2) ?? '?'}) 之間的差距,就是「大魔方 TPS 明顯下降」的代價。
+                        </>
+                      )) : (isZh ? (
+                        <>
+                          前一节「数学硬墙」已经把「步数 ~ N^1.8」(Demaine 渐近) 和「时间 ~ N^2.5」分开。这里聚焦时间这一侧 — 实测 222 → 777 当前 WR 走出的曲线。
+                          {scalingFit && <> 时间这一维 b ≈ <strong>{scalingFit.b.toFixed(2)}</strong>,R² = {scalingFit.r2.toFixed(3)}。也就是 N 翻一倍,时间增到约 <strong>{(2 ** scalingFit.b).toFixed(1)} 倍</strong>。</>}
+                          步数侧 (n^1.8) 和时间侧 (n^{scalingFit?.b.toFixed(2) ?? '?'}) 之间的差距,就是「大魔方 TPS 明显下降」的代价。
+                        </>
+                      ) : (
+                        <>
+                          The previous "Math Walls" section separated step-count scaling (~N^1.8, Demaine asymptotic) from time scaling. Here we focus on the time side — empirical curve from 222→777 current WRs.
+                          {scalingFit && <> Time exponent b ≈ <strong>{scalingFit.b.toFixed(2)}</strong>, R² = {scalingFit.r2.toFixed(3)}. Doubling N gives <strong>{(2 ** scalingFit.b).toFixed(1)}×</strong> the time.</>}
+                          The gap between the move-count exponent (~1.8) and the time exponent ({scalingFit?.b.toFixed(2) ?? '?'}) is the "big cubes have lower sustained TPS" cost.
+                        </>
+                      ))}
       </p>
       <LineChart
         series={wrSeries}
@@ -775,30 +810,40 @@ function TheoreticalSection({ isZh }: { isZh: boolean }) {
         </tbody>
       </table>
       <p>
-        {isZh ? (
-          <>
-            <strong>「现实」3.6 秒已经被 Zajder 2.76 击穿</strong>,因为 Zajder 用 ZB 跑了 29 步,比「现实」列的 49 步省了 20 步。
-            乐观 1.5 秒需要同时: 24 STM (近 God's STM 下界,极少打乱) + 17 TPS 持续 (王艺衡当前 14.6 的延展) + 0.05 秒识别 (接近物理反应时间)。
-            <strong>数学硬墙 (God's number 18 HTM ≈ 16 STM + 22 Hz 双手击鼓 + StackMat 50 ms) 在 ~0.78 秒</strong>,这个数字 100 年内出现的概率接近零。
-          </>
-        ) : (
-          <>
-            <strong>The "realistic" 3.6 s has already been broken</strong> — Zajder 2.76 used ZB at 29 STM, saving 20 STM vs the realistic column's 49.
-            Optimistic 1.5 s needs simultaneously: 24 STM (near God's-STM, vanishingly rare scramble) + 17 TPS sustained (an extension of Wang's verified 14.6) + 0.05 s recognition (physical reaction time).
-            <strong>The math wall (God's number 18 HTM ≈ 16 STM + 22 Hz dual-hand drum + StackMat 50 ms) sits near 0.78 s</strong> — probability ≈ 0 within 100 years.
-          </>
-        )}
+        {i18n.language === 'zh-Hant' ? ((
+                        <>
+                          <strong>「現實」3.6 秒已經被 Zajder 2.76 擊穿</strong>,因為 Zajder 用 ZB 跑了 29 步,比「現實」列的 49 步省了 20 步。
+                          樂觀 1.5 秒需要同時: 24 STM (近 God's STM 下界,極少打亂) + 17 TPS 持續 (王藝衡當前 14.6 的延展) + 0.05 秒識別 (接近物理反應時間)。
+                          <strong>數學硬牆 (God's number 18 HTM ≈ 16 STM + 22 Hz 雙手擊鼓 + StackMat 50 ms) 在 ~0.78 秒</strong>,這個數字 100 年內出現的機率接近零。
+                        </>
+                      )) : (isZh ? (
+                        <>
+                          <strong>「现实」3.6 秒已经被 Zajder 2.76 击穿</strong>,因为 Zajder 用 ZB 跑了 29 步,比「现实」列的 49 步省了 20 步。
+                          乐观 1.5 秒需要同时: 24 STM (近 God's STM 下界,极少打乱) + 17 TPS 持续 (王艺衡当前 14.6 的延展) + 0.05 秒识别 (接近物理反应时间)。
+                          <strong>数学硬墙 (God's number 18 HTM ≈ 16 STM + 22 Hz 双手击鼓 + StackMat 50 ms) 在 ~0.78 秒</strong>,这个数字 100 年内出现的概率接近零。
+                        </>
+                      ) : (
+                        <>
+                          <strong>The "realistic" 3.6 s has already been broken</strong> — Zajder 2.76 used ZB at 29 STM, saving 20 STM vs the realistic column's 49.
+                          Optimistic 1.5 s needs simultaneously: 24 STM (near God's-STM, vanishingly rare scramble) + 17 TPS sustained (an extension of Wang's verified 14.6) + 0.05 s recognition (physical reaction time).
+                          <strong>The math wall (God's number 18 HTM ≈ 16 STM + 22 Hz dual-hand drum + StackMat 50 ms) sits near 0.78 s</strong> — probability ≈ 0 within 100 years.
+                        </>
+                      ))}
       </p>
       <p>
-        {isZh ? (
-          <>
-            <strong>跨项目类比。</strong> STM × TPS × 切换 这个公式在每个项目都成立,但三个输入随魔方阶数, 单手, 盲拧任务显著不同:
-          </>
-        ) : (
-          <>
-            <strong>Cross-event analog.</strong> STM × TPS × latency extends to every event, but the three inputs vary by puzzle / mode:
-          </>
-        )}
+        {i18n.language === 'zh-Hant' ? ((
+                        <>
+                          <strong>跨專案類比。</strong> STM × TPS × 切換 這個公式在每個專案都成立,但三個輸入隨魔方階數, 單手, 盲擰任務顯著不同:
+                        </>
+                      )) : (isZh ? (
+                        <>
+                          <strong>跨项目类比。</strong> STM × TPS × 切换 这个公式在每个项目都成立,但三个输入随魔方阶数, 单手, 盲拧任务显著不同:
+                        </>
+                      ) : (
+                        <>
+                          <strong>Cross-event analog.</strong> STM × TPS × latency extends to every event, but the three inputs vary by puzzle / mode:
+                        </>
+                      ))}
       </p>
       <ul>
         <li>{tr({ zh: 'OH 单手: TPS 减半到 ~7-8,解法同 49 STM → 6.5 秒下界。当前 WR 5.66,已经贴到墙上。', en: 'OH: TPS halves to ~7-8, same 49 STM → 6.5 s floor. Current WR 5.66 — at the wall.',
@@ -872,17 +917,22 @@ function RegionalSection({ eventSummaries, isZh }: { eventSummaries: any[]; isZh
         </table>
       </div>
       <p>
-        {isZh ? (
-          <>
-            <strong>解读。</strong> WR 持有者的集中度反映两层: (a) 训练资源 (顶级选手数量, 教练池, 智能魔方普及),(b) 比赛机会密度。
-            中, 美两国占近 5 年全球比赛数的 ~45%,也占走了绝大多数 WR 出场机会。但「WR 频率 ≠ 国家平均水平」。
-          </>
-        ) : (
-          <>
-            <strong>Interpretation.</strong> WR concentration reflects two layers: (a) training resources, (b) comp opportunity density.
-            China and USA combined account for ~45% of global comps in recent years and most WR attempts. "WR frequency ≠ national average level."
-          </>
-        )}
+        {i18n.language === 'zh-Hant' ? ((
+                        <>
+                          <strong>解讀。</strong> WR 持有者的集中度反映兩層: (a) 訓練資源 (頂級選手數量, 教練池, 智慧魔方普及),(b) 比賽機會密度。
+                          中, 美兩國佔近 5 年全球比賽數的 ~45%,也佔走了絕大多數 WR 出場機會。但「WR 頻率 ≠ 國家平均水平」。
+                        </>
+                      )) : (isZh ? (
+                        <>
+                          <strong>解读。</strong> WR 持有者的集中度反映两层: (a) 训练资源 (顶级选手数量, 教练池, 智能魔方普及),(b) 比赛机会密度。
+                          中, 美两国占近 5 年全球比赛数的 ~45%,也占走了绝大多数 WR 出场机会。但「WR 频率 ≠ 国家平均水平」。
+                        </>
+                      ) : (
+                        <>
+                          <strong>Interpretation.</strong> WR concentration reflects two layers: (a) training resources, (b) comp opportunity density.
+                          China and USA combined account for ~45% of global comps in recent years and most WR attempts. "WR frequency ≠ national average level."
+                        </>
+                      ))}
       </p>
       {recent333WR.length > 0 && (
         <>

@@ -26,6 +26,7 @@ import {
 import { m2pSolve, prewarm } from '../_lib/m2p-bridge';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 type Piece = 'corner' | 'edge';
 
@@ -46,7 +47,10 @@ const SPEC = {
     otherScrambleZh: '打乱棱块',
     otherScrambleEn: 'Scramble edges',
     caseLabel: '2C2C',
-  },
+      titleZhHant: "2C2C 訓練",
+      twiststateZhHant: "是否帶翻",
+      otherScrambleZhHant: "打亂稜塊"
+},
   edge: {
     titleZh: '2E2E 训练',
     titleEn: '2E2E Trainer',
@@ -58,7 +62,10 @@ const SPEC = {
     otherScrambleZh: '打乱角块',
     otherScrambleEn: 'Scramble corners',
     caseLabel: '2E2E',
-  },
+      titleZhHant: "2E2E 訓練",
+      twiststateZhHant: "是否帶翻",
+      otherScrambleZhHant: "打亂角塊"
+},
 } as const;
 
 export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null {
@@ -201,9 +208,9 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
       const shuffled = shuffle(Array.from(solved));
       setScrambles(shuffled);
       setInfo(
-        isZh
-          ? `随机生成 ${times} 条打乱，遍历输入编码的所有 ${spec.caseLabel} 情况。`
-          : `Generated ${times} scrambles, covering all ${spec.caseLabel} cases for the chosen codes.`,
+        i18n.language === 'zh-Hant' ? (`隨機生成 ${times} 條打亂，遍歷輸入編碼的所有 ${spec.caseLabel} 情況。`) : (isZh
+                    ? `随机生成 ${times} 条打乱，遍历输入编码的所有 ${spec.caseLabel} 情况。`
+                    : `Generated ${times} scrambles, covering all ${spec.caseLabel} cases for the chosen codes.`),
       );
     } finally {
       setBusy(false);
@@ -215,9 +222,9 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
   const displayCodes = usableCodes.map((c) => c.toUpperCase()).join('');
   const inputSummary =
     usableCodes.length > 0
-      ? isZh
-        ? `已选择 ${displayCodes} 共 ${usableCodes.length} 个编码`
-        : `Selected ${displayCodes} (${usableCodes.length} codes)`
+      ? i18n.language === 'zh-Hant' ? (`已選擇 ${displayCodes} 共 ${usableCodes.length} 個編碼`) : (isZh
+                  ? `已选择 ${displayCodes} 共 ${usableCodes.length} 个编码`
+                  : `Selected ${displayCodes} (${usableCodes.length} codes)`)
       : tr({ zh: '尚未选择训练编码', en: 'No training codes selected yet',
           zhHant: "尚未選擇訓練編碼"
     });

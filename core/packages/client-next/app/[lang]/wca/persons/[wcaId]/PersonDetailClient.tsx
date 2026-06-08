@@ -24,6 +24,7 @@ import PersonPRTable from '@/components/persons/sections/PersonPRTable';
 import PersonTabs from '@/components/persons/sections/PersonTabs';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '@/components/persons/persons.css';
+import i18n from "@/i18n/i18n-client";
 
 export default function PersonDetailClient() {
   const [wcaId, setWcaId] = useState('');
@@ -35,7 +36,7 @@ export default function PersonDetailClient() {
   }, []);
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
 
   const [profile, setProfile] = useState<WcaPersonProfile | null>(null);
   const [results, setResults] = useState<WcaResultRow[] | null>(null);
@@ -71,7 +72,7 @@ export default function PersonDetailClient() {
       <div className="wp-page">
         <PageHeader t={t} />
         <main className="wp-main">
-          <div className="wp-error">{t('加载失败', 'Failed to load')}: {error}</div>
+          <div className="wp-error">{t('加载失败', 'Failed to load', "載入失敗")}: {error}</div>
         </main>
       </div>
     );
@@ -81,7 +82,7 @@ export default function PersonDetailClient() {
       <div className="wp-page">
         <PageHeader t={t} />
         <main className="wp-main">
-          <div className="wp-loading">{t('加载中…', 'Loading…')}</div>
+          <div className="wp-loading">{t('加载中…', 'Loading…', "載入中…")}</div>
         </main>
       </div>
     );

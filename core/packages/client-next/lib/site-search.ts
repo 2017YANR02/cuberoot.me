@@ -24,14 +24,22 @@ export interface SiteSearchCard {
   nameZh: string;
   sectionTitleEn: string;
   sectionTitleZh: string;
+    nameZhHant?: string;
+    sectionTitleZhHant?: string;
 }
 
 export interface ToolItem { path: string; zh: string; en: string; zhHant?: string }
 export interface LookupItem { path: string; extraQuery?: string; zh: string; en: string; zhHant?: string }
 
-export interface MetricEntry { id: string; labelEn: string; labelZh: string }
-export interface StatEntry { id: string; titleEn: string; titleZh: string; metrics?: MetricEntry[] }
-export interface StatCategory { nameEn: string; nameZh: string; iconName?: string; stats: StatEntry[] }
+export interface MetricEntry { id: string; labelEn: string; labelZh: string
+    labelZhHant?: string;
+ }
+export interface StatEntry { id: string; titleEn: string; titleZh: string; metrics?: MetricEntry[]
+    titleZhHant?: string;
+ }
+export interface StatCategory { nameEn: string; nameZh: string; iconName?: string; stats: StatEntry[]
+    nameZhHant?: string;
+ }
 export interface StatIndex { categories: StatCategory[] }
 
 export type StatItem =
@@ -50,40 +58,54 @@ export interface ReconHit {
   recordTag?: string;
 }
 export interface GlossaryHit { head: string; body: string; slug: string }
-export interface AboutHit { id: string; titleZh: string; titleEn: string }
+export interface AboutHit { id: string; titleZh: string; titleEn: string
+    titleZhHant?: string;
+ }
 export interface StackHit extends StackToolMeta {}
 export interface AlgSetHit { puzzle: string; setSlug: string }
 
 export const METRIC_LABEL_OVERRIDE: Record<string, string> = { 'Ao3': 'Mo3' };
 
 export const TOOL_ITEMS: ToolItem[] = [
-  { path: '/wca/comp',       zh: '比赛',   en: 'Comp'
+  { path: '/wca/comp',       zh: '比赛',   en: 'Comp',
+      zhHant: "比賽"
 },
   { path: '/wca/comp?view=globe', zh: '地球', en: 'Globe' },
-  { path: '/wca/viz',        zh: '分布',   en: 'Distribution'
+  { path: '/wca/viz',        zh: '分布',   en: 'Distribution',
+      zhHant: "分佈"
 },
-  { path: '/wca/prediction', zh: '预测',   en: 'Prediction'
+  { path: '/wca/prediction', zh: '预测',   en: 'Prediction',
+      zhHant: "預測"
 },
-  { path: '/nemesizer',      zh: '宿敌',   en: 'Nemesizer'
+  { path: '/nemesizer',      zh: '宿敌',   en: 'Nemesizer',
+      zhHant: "宿敵"
 },
-  { path: '/calc',           zh: '计算器', en: 'Calculator'
+  { path: '/calc',           zh: '计算器', en: 'Calculator',
+      zhHant: "計算器"
 },
 ];
 
 export const LOOKUP_ITEMS: LookupItem[] = [
-  { path: '/wca/grand-slam',       zh: '大满贯',       en: 'Grand Slam'
+  { path: '/wca/grand-slam',       zh: '大满贯',       en: 'Grand Slam',
+      zhHant: "大滿貫"
 },
-  { path: '/wca/all-results',      zh: '全部成绩排名', en: 'All Results'
+  { path: '/wca/all-results',      zh: '全部成绩排名', en: 'All Results',
+      zhHant: "全部成績排名"
 },
-  { path: '/wca/cohort-ranks',     zh: '参赛届别排名', en: 'Cohort Ranks'
+  { path: '/wca/cohort-ranks',     zh: '参赛届别排名', en: 'Cohort Ranks',
+      zhHant: "參賽屆別排名"
 },
-  { path: '/wca/success-rate',     zh: '项目成功率',   en: 'Success Rate'
+  { path: '/wca/success-rate',     zh: '项目成功率',   en: 'Success Rate',
+      zhHant: "專案成功率"
 },
-  { path: '/wca/all-events-done',  zh: '全项目达成',   en: 'All Events Done'
+  { path: '/wca/all-events-done',  zh: '全项目达成',   en: 'All Events Done',
+      zhHant: "全專案達成"
 },
-  { path: '/wca/sum-of-ranks',     zh: '全项目排名',   en: 'Sum of Ranks'
+  { path: '/wca/sum-of-ranks',     zh: '全项目排名',   en: 'Sum of Ranks',
+      zhHant: "全專案排名"
 },
-  { path: '/wca/sum-of-ranks', extraQuery: 'hidePodium=1', zh: '全能但无牌', en: 'All-Around · No Podium'
+  { path: '/wca/sum-of-ranks', extraQuery: 'hidePodium=1', zh: '全能但无牌', en: 'All-Around · No Podium',
+      zhHant: "全能但無牌"
 },
 ];
 
@@ -127,7 +149,9 @@ const GLOSSARY_ENTRIES: GlossaryRecord[] = ((): GlossaryRecord[] => {
   return out;
 })();
 
-interface AboutRecord { id: string; titleZh: string; titleEn: string; hay: string }
+interface AboutRecord { id: string; titleZh: string; titleEn: string; hay: string
+    titleZhHant?: string;
+ }
 const ABOUT_ENTRIES: AboutRecord[] = Object.values(ABOUT_REGISTRY).map(e => ({
   id: e.id,
   titleZh: e.titleZh,

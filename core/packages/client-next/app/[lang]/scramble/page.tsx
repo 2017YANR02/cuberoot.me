@@ -59,14 +59,14 @@ const CARDS: Card[] = [
 export default function ScrambleHubPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  const t = (zh: string, en: string) => (isZh ? zh : en);
-  useDocumentTitle('打乱', 'Scramble');
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  useDocumentTitle('打乱', 'Scramble', "打亂");
 
   return (
     <div className="scramble-hub-page">
       <style>{INLINE_CSS}</style>
       <header className="hub-header">
-        <h1>{t('打乱', 'Scramble')}</h1>
+        <h1>{t('打乱', 'Scramble', "打亂")}</h1>
       </header>
       <div className="hub-grid">
         {CARDS.map((c) => (

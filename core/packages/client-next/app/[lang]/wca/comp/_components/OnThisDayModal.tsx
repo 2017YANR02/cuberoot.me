@@ -15,6 +15,7 @@ import { compLinkProps } from '@/lib/comp-link';
 import { RecordBadge } from '@/components/RecordBadge';
 import { useDayMatches, type DayMatch } from './use_calendar_data';
 import './on_this_day.css';
+import i18n from "@/i18n/i18n-client";
 
 type TierKey = 'WR' | 'CR' | 'NR';
 const TIER_KEYS: TierKey[] = ['WR', 'CR', 'NR'];
@@ -40,7 +41,7 @@ interface Props {
 }
 
 export default function OnThisDayModal({ date: initialDate, isZh, onClose }: Props) {
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
 
   const [date, setDate] = useState<Date>(initialDate);
   useEffect(() => { setDate(initialDate); }, [initialDate]);
@@ -124,7 +125,7 @@ export default function OnThisDayModal({ date: initialDate, isZh, onClose }: Pro
 
         <div className="otd-body">
           {matches && matches.length > 0 && (
-            <div className="otd-filters" role="group" aria-label={t('记录筛选', 'record filter')}>
+            <div className="otd-filters" role="group" aria-label={t('记录筛选', 'record filter', "記錄篩選")}>
               {TIER_KEYS.map((k) => {
                 const active = activeTiers.has(k);
                 return (
@@ -145,24 +146,24 @@ export default function OnThisDayModal({ date: initialDate, isZh, onClose }: Pro
 
           {error && (
             <div className="otd-error">
-              {t('数据加载失败:', 'Failed to load data:')} {error}
+              {t('数据加载失败:', 'Failed to load data:', "資料載入失敗:")} {error}
             </div>
           )}
 
           {!matches && !error && (
-            <div className="otd-loading">{t('加载中…', 'Loading…')}</div>
+            <div className="otd-loading">{t('加载中…', 'Loading…', "載入中…")}</div>
           )}
 
           {matches && matches.length === 0 && (
             <div className="otd-empty">
               {t(`历年 ${dateLabel} 没有 WCA 比赛举行`,
-                 `No WCA competitions on record for ${dateLabel}`)}
+                 `No WCA competitions on record for ${dateLabel}`, `歷年 ${dateLabel} 沒有 WCA 比賽舉行`)}
             </div>
           )}
 
           {matches && matches.length > 0 && filteredMatches && filteredMatches.length === 0 && (
             <div className="otd-empty">
-              {t('当前筛选下没有比赛', 'No competitions match the current filter')}
+              {t('当前筛选下没有比赛', 'No competitions match the current filter', "當前篩選下沒有比賽")}
             </div>
           )}
 
@@ -170,9 +171,9 @@ export default function OnThisDayModal({ date: initialDate, isZh, onClose }: Pro
             <div className="otd-summary">
               {filteredMatches!.length === matches!.length
                 ? t(`共 ${matches!.length} 场 WCA 比赛在历年的此日举行`,
-                    `${matches!.length} WCA competitions across the years`)
+                    `${matches!.length} WCA competitions across the years`, `共 ${matches!.length} 場 WCA 比賽在歷年的此日舉行`)
                 : t(`筛选出 ${filteredMatches!.length} / ${matches!.length} 场`,
-                    `${filteredMatches!.length} of ${matches!.length} comps`)}
+                    `${filteredMatches!.length} of ${matches!.length} comps`, `篩選出 ${filteredMatches!.length} / ${matches!.length} 場`)}
             </div>
           )}
 
@@ -187,7 +188,7 @@ export default function OnThisDayModal({ date: initialDate, isZh, onClose }: Pro
                       ? t('今天', 'Today')
                       : t(`${yearsAgo} 年前`, `${yearsAgo} ${yearsAgo === 1 ? 'year' : 'years'} ago`)}
                   </span>
-                  <span className="otd-year-count">{ms.length} {t('场比赛', ms.length === 1 ? 'comp' : 'comps')}</span>
+                  <span className="otd-year-count">{ms.length} {t('场比赛', ms.length === 1 ? 'comp' : 'comps', "場比賽")}</span>
                 </header>
                 <ul className="otd-list">
                   {ms.map((m) => (

@@ -13,6 +13,7 @@
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { exportJson, importJson } from './db';
+import i18n from "@/i18n/i18n-client";
 
 const ENDPOINT = '/v1/timer/backup';
 
@@ -95,11 +96,11 @@ export async function deleteBackup(): Promise<void> {
 export function formatSyncTime(epochSec: number, isZh: boolean): string {
   if (!epochSec) return isZh ? '未知' : 'unknown';
   const diffSec = Math.max(0, Math.floor(Date.now() / 1000) - epochSec);
-  if (diffSec < 60) return isZh ? '刚刚' : 'just now';
+  if (diffSec < 60) return i18n.language === 'zh-Hant' ? ('剛剛') : (isZh ? '刚刚' : 'just now');
   const min = Math.floor(diffSec / 60);
-  if (min < 60) return isZh ? `${min} 分钟前` : `${min} min ago`;
+  if (min < 60) return i18n.language === 'zh-Hant' ? (`${min} 分鐘前`) : (isZh ? `${min} 分钟前` : `${min} min ago`);
   const hr = Math.floor(min / 60);
-  if (hr < 24) return isZh ? `${hr} 小时前` : `${hr} h ago`;
+  if (hr < 24) return i18n.language === 'zh-Hant' ? (`${hr} 小時前`) : (isZh ? `${hr} 小时前` : `${hr} h ago`);
   const d = new Date(epochSec * 1000);
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;

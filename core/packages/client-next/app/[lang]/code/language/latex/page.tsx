@@ -660,7 +660,7 @@ export default function LatexIntroPage() {
 
   useDocumentTitle(
     'LaTeX : 数学排版的事实标准 — 1978→2026',
-    'LaTeX : the de-facto standard for typesetting math — 1978→2026',
+    'LaTeX : the de-facto standard for typesetting math — 1978→2026', "LaTeX : 數學排版的事實標準 — 1978→2026"
   );
 
   useEffect(() => {

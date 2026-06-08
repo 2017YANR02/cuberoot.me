@@ -578,9 +578,15 @@ function GrowthComparisonPanel({ lang }: { lang: Lang }) {
 
         {/* Legend */}
         {[
-          { show: showZ2, color: COLOR_Z2, labelZh: 'Z² (多项式, 次数2)', labelEn: 'Z² (poly, degree 2)' },
-          { show: showF2, color: COLOR_F2, labelZh: 'F₂ (指数, 速率3)', labelEn: 'F₂ (exp, rate 3)' },
-          { show: showCube, color: COLOR_CUBE, labelZh: '魔方群 (饱和)', labelEn: 'Cube (saturating)' },
+          { show: showZ2, color: COLOR_Z2, labelZh: 'Z² (多项式, 次数2)', labelEn: 'Z² (poly, degree 2)',
+              labelZhHant: "Z² (多項式, 次數2)"
+        },
+          { show: showF2, color: COLOR_F2, labelZh: 'F₂ (指数, 速率3)', labelEn: 'F₂ (exp, rate 3)',
+              labelZhHant: "F₂ (指數, 速率3)"
+        },
+          { show: showCube, color: COLOR_CUBE, labelZh: '魔方群 (饱和)', labelEn: 'Cube (saturating)',
+              labelZhHant: "魔方群 (飽和)"
+        },
         ].filter(it => it.show).map((it, i) => (
           <g key={i} transform={`translate(${PAD.left + 8}, ${PAD.top + 10 + i * 16})`}>
             <line x1={0} y1={0} x2={18} y2={0} stroke={it.color} strokeWidth={2} />

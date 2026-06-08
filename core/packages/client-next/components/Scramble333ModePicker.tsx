@@ -6,6 +6,7 @@
  */
 import { use333Mode } from '@/lib/scramble-333-mode';
 import ScrambleModePickerRow from './ScrambleModePickerRow';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   active333: boolean;
@@ -15,7 +16,7 @@ interface Props {
 export default function Scramble333ModePicker({ active333, isZh }: Props) {
   const [mode, setMode] = use333Mode();
   if (!active333) return null;
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   return (
     <ScrambleModePickerRow
       label={t('3x3 引擎', '3x3 engine')}
@@ -23,7 +24,7 @@ export default function Scramble333ModePicker({ active333, isZh }: Props) {
       onChange={(v) => setMode(v ? 'm2p' : 'wca')}
       onLabel="min2phase"
       offLabel="WCA"
-      ariaLabel={t('3x3 打乱引擎', '3x3 scramble engine')}
+      ariaLabel={t('3x3 打乱引擎', '3x3 scramble engine', "3x3 打亂引擎")}
     />
   );
 }

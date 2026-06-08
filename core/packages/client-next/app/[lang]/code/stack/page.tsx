@@ -62,7 +62,7 @@ export default function StackLandingPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('技术栈', 'Stack');
+  useDocumentTitle('技术栈', 'Stack', "技術棧");
 
   return (
     <div className="stack-landing">

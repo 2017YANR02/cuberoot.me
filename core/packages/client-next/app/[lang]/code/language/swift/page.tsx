@@ -443,7 +443,7 @@ export default function SwiftIntroPage() {
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useDocumentTitle('Swift : 苹果生态的钦定语言', 'Swift : Apple Ecosystem’s Native Tongue');
+  useDocumentTitle('Swift : 苹果生态的钦定语言', 'Swift : Apple Ecosystem’s Native Tongue', "Swift : 蘋果生態的欽定語言");
 
   useEffect(() => {
     const root = rootRef.current;

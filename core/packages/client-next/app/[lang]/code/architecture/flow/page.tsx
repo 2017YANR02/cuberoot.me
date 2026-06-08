@@ -16,7 +16,7 @@ export default function ArchFlowPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('请求流程', 'Request Flow');
+  useDocumentTitle('请求流程', 'Request Flow', "請求流程");
 
   return (
     <LangCtx.Provider value={lang}>

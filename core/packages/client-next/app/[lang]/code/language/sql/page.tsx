@@ -458,7 +458,7 @@ export default function SqlIntroPage() {
 
   useDocumentTitle(
     'SQL : 56 年的声明式查询语言 — 数据层的默认语',
-    'SQL : 56 years of declarative query — the data layer\'s default',
+    'SQL : 56 years of declarative query — the data layer\'s default', "SQL : 56 年的宣告式查詢語言 — 資料層的預設語"
   );
 
   useEffect(() => {

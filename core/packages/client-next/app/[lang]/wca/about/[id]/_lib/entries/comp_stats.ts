@@ -17,10 +17,18 @@ const average_event_count_by_competition: AboutEntry = {
     'A high value usually means two things at once: the schedule was broad, and competitors actually opted into many of those events. Single-event or invitational comps land low; big general-purpose meets land high.',
   ],
   stats: [
-    { value: 'AVG', labelZh: '聚合方式', labelEn: 'Aggregation', hintZh: '算术平均', hintEn: 'Arithmetic mean' },
-    { value: 'top 100', labelZh: '榜单长度', labelEn: 'Leaderboard size', hintZh: '按平均项目数降序', hintEn: 'Top 100 by mean event count' },
+    { value: 'AVG', labelZh: '聚合方式', labelEn: 'Aggregation', hintZh: '算术平均', hintEn: 'Arithmetic mean',
+        hintZhHant: "算術平均"
+    },
+    { value: 'top 100', labelZh: '榜单长度', labelEn: 'Leaderboard size', hintZh: '按平均项目数降序', hintEn: 'Top 100 by mean event count',
+        labelZhHant: "榜單長度",
+        hintZhHant: "按平均專案數降序"
+    },
     { value: '2 位小数', labelZh: '精度', labelEn: 'Precision', hintZh: 'toFixed(2)', hintEn: 'toFixed(2)' },
-    { value: '4 列', labelZh: '表头', labelEn: 'Columns', hintZh: '比赛 / 均值 / 选手数 / 国家', hintEn: 'Competition / mean / competitors / country' },
+    { value: '4 列', labelZh: '表头', labelEn: 'Columns', hintZh: '比赛 / 均值 / 选手数 / 国家', hintEn: 'Competition / mean / competitors / country',
+        labelZhHant: "表頭",
+        hintZhHant: "比賽 / 均值 / 選手數 / 國家"
+    },
   ],
   sourceZh: [
     '只读 `results` 表 —— 一行 = 某选手在某比赛某项目的某轮成绩。先把 `(competition_id, person_id)` 分组,`COUNT(DISTINCT event_id)` 得到每人在该比赛的项目数;再外层按比赛聚合一次,取 `AVG`。',
@@ -53,24 +61,32 @@ LIMIT 100;`,
       titleEn: 'Group by (competition, person)',
       bodyZh: '在 `results` 上做内层 GROUP BY `(competition_id, person_id)`,行数 = 每场比赛参与的"选手 × 1"。',
       bodyEn: 'Inner `GROUP BY (competition_id, person_id)` on `results`. Each output row = one competitor at one comp.',
+        titleZhHant: "按 (比賽, 選手) 分組",
+        bodyZhHant: "在 `results` 上做內層 GROUP BY `(competition_id, person_id)`,行數 = 每場比賽參與的\"選手 × 1\"。"
     },
     {
       titleZh: '数项目数',
       titleEn: 'Count distinct events',
       bodyZh: '组内 `COUNT(DISTINCT event_id)` —— 同一人同一项目多轮只算一次。',
       bodyEn: '`COUNT(DISTINCT event_id)` per group — multiple rounds of the same event collapse to one.',
+        titleZhHant: "數專案數",
+        bodyZhHant: "組內 `COUNT(DISTINCT event_id)` —— 同一人同一專案多輪只算一次。"
     },
     {
       titleZh: '外层按比赛聚合',
       titleEn: 'Outer group by competition',
       bodyZh: '外层把内层结果按 `competition_id` 再分一次组,取 `AVG(event_count)` 作为该比赛的平均项目数,同时 `COUNT(*)` 出选手数。',
       bodyEn: 'Outer `GROUP BY competition_id` over the inner result, taking `AVG(event_count)` as the mean and `COUNT(*)` as competitor count.',
+        titleZhHant: "外層按比賽聚合",
+        bodyZhHant: "外層把內層結果按 `competition_id` 再分一次組,取 `AVG(event_count)` 作為該比賽的平均專案數,同時 `COUNT(*)` 出選手數。"
     },
     {
       titleZh: '挂上国家 / 比赛链接',
       titleEn: 'Join country and comp link',
       bodyZh: 'JOIN `competitions` 拿 `cell_name` 做链接显示,JOIN `countries` 拿国名作右侧列。',
       bodyEn: 'JOIN `competitions` for the display `cell_name` (used in the WCA link) and `countries` for the right-most column.',
+        titleZhHant: "掛上國家 / 比賽連結",
+        bodyZhHant: "JOIN `competitions` 拿 `cell_name` 做連結顯示,JOIN `countries` 拿國名作右側列。"
     },
     {
       titleZh: '降序取前 100',
@@ -78,6 +94,7 @@ LIMIT 100;`,
       bodyZh: '`ORDER BY average_event_count DESC LIMIT 100`,均值前留 2 位小数。',
       bodyEn: '`ORDER BY average_event_count DESC LIMIT 100`; the mean is rendered with two decimals.',
       highlight: true,
+        bodyZhHant: "`ORDER BY average_event_count DESC LIMIT 100`,均值前留 2 位小數。"
     },
   ],
   edgesZh: [
@@ -91,11 +108,24 @@ LIMIT 100;`,
     'The top of the board is usually small early-era multi-event meets — broad schedule plus low headcount pushes the mean up.',
   ],
   related: [
-    { id: 'competitions_per_year_by_country', titleZh: '每年每国比赛数', titleEn: 'Competitions per year by country', hintZh: '另一种"赛事密度"切片', hintEn: 'Sibling slice of competition density' },
-    { id: 'fewest_competitors_contest', titleZh: '参赛人数最少的比赛', titleEn: 'Fewest competitors contest', hintZh: '人数维度的相对面', hintEn: 'Opposite end on the headcount axis' },
-    { id: 'most_records_at_single_competition', titleZh: '单场比赛最多纪录', titleEn: 'Most records at a single competition', hintZh: '另一种"单场强度"指标', hintEn: 'Another single-comp intensity metric' },
-    { id: 'average_event_count_by_competition', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '完整 top 100', hintEn: 'Full top 100' },
+    { id: 'competitions_per_year_by_country', titleZh: '每年每国比赛数', titleEn: 'Competitions per year by country', hintZh: '另一种"赛事密度"切片', hintEn: 'Sibling slice of competition density',
+        titleZhHant: "每年每國比賽數",
+        hintZhHant: "另一種\"賽事密度\"切片"
+    },
+    { id: 'fewest_competitors_contest', titleZh: '参赛人数最少的比赛', titleEn: 'Fewest competitors contest', hintZh: '人数维度的相对面', hintEn: 'Opposite end on the headcount axis',
+        titleZhHant: "參賽人數最少的比賽",
+        hintZhHant: "人數維度的相對面"
+    },
+    { id: 'most_records_at_single_competition', titleZh: '单场比赛最多纪录', titleEn: 'Most records at a single competition', hintZh: '另一种"单场强度"指标', hintEn: 'Another single-comp intensity metric',
+        titleZhHant: "單場比賽最多紀錄",
+        hintZhHant: "另一種\"單場強度\"指標"
+    },
+    { id: 'average_event_count_by_competition', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '完整 top 100', hintEn: 'Full top 100',
+        titleZhHant: "檢視實時榜單"
+    },
   ],
+    titleZhHant: "每場比賽平均參賽專案數",
+    badgeZhHant: "賽事"
 };
 
 // ──── competition_days_count_by_region ──────────────────────────────────────
@@ -114,10 +144,20 @@ const competition_days_count_by_region: AboutEntry = {
     'Cleanly answers: where do organizers lean toward multi-day comps? Big multi-event regions almost always need >1 day; small regions or single-event meets wrap in a day.',
   ],
   stats: [
-    { value: '3 档', labelZh: '分组维度', labelEn: 'Group tiers', hintZh: 'World / Continents / Countries', hintEn: 'World / Continents / Countries' },
-    { value: '+1 天', labelZh: '区间口径', labelEn: 'Range convention', hintZh: '含首尾两端', hintEn: 'Inclusive of both ends' },
-    { value: '排除虚拟', labelZh: '排除项', labelEn: 'Excludes', hintZh: '7 个 X* 虚拟国家 + 多洲', hintEn: '7 X* virtual countries + multi-continent' },
-    { value: 'mean ↓', labelZh: '排序', labelEn: 'Sort', hintZh: '组内按均值降序', hintEn: 'Within tier by mean DESC' },
+    { value: '3 档', labelZh: '分组维度', labelEn: 'Group tiers', hintZh: 'World / Continents / Countries', hintEn: 'World / Continents / Countries',
+        labelZhHant: "分組維度"
+    },
+    { value: '+1 天', labelZh: '区间口径', labelEn: 'Range convention', hintZh: '含首尾两端', hintEn: 'Inclusive of both ends',
+        labelZhHant: "區間口徑",
+        hintZhHant: "含首尾兩端"
+    },
+    { value: '排除虚拟', labelZh: '排除项', labelEn: 'Excludes', hintZh: '7 个 X* 虚拟国家 + 多洲', hintEn: '7 X* virtual countries + multi-continent',
+        labelZhHant: "排除項",
+        hintZhHant: "7 個 X* 虛擬國家 + 多洲"
+    },
+    { value: 'mean ↓', labelZh: '排序', labelEn: 'Sort', hintZh: '组内按均值降序', hintEn: 'Within tier by mean DESC',
+        hintZhHant: "組內按均值降序"
+    },
   ],
   sourceZh: [
     '只读 `competitions` 表,逐行算 `DATEDIFF(end_date, start_date) + 1` 作为比赛天数;JOIN `countries` / `continents` 取人话名字。过滤掉 7 个 X 开头的虚拟国家代码(`XA/XE/XF/XM/XN/XO/XS/XW`)和 `_Multiple Continents`。',
@@ -143,24 +183,32 @@ WHERE country_id NOT IN ('XA','XE','XF','XM','XN','XO','XS','XW')
       titleEn: 'Compute per-comp days',
       bodyZh: '`days = DATEDIFF(end_date, start_date) + 1`。同日比赛 = 1 天,跨周末两日赛 = 2 天。',
       bodyEn: '`days = DATEDIFF(end_date, start_date) + 1`. Same-day = 1, weekend two-day = 2.',
+        titleZhHant: "逐場算天數",
+        bodyZhHant: "`days = DATEDIFF(end_date, start_date) + 1`。同日比賽 = 1 天,跨週末兩日賽 = 2 天。"
     },
     {
       titleZh: '过滤虚拟地区',
       titleEn: 'Filter virtual regions',
       bodyZh: 'WCA dump 里有 7 个 `X*` 占位国家代码(给一些跨域比赛用的虚拟值)和 `_Multiple Continents`,统计前先剔掉。',
       bodyEn: 'The WCA dump uses 7 `X*` placeholder country codes (for cross-region edge cases) plus `_Multiple Continents` — drop these before tallying.',
+        titleZhHant: "過濾虛擬地區",
+        bodyZhHant: "WCA dump 裡有 7 個 `X*` 佔位國家程式碼(給一些跨域比賽用的虛擬值)和 `_Multiple Continents`,統計前先剔掉。"
     },
     {
       titleZh: '三档 group 键',
       titleEn: 'Three group keys',
       bodyZh: 'TypeScript 端用三个 `groupFn`:`World` 全合并、`Continents` 按 `continent.name`、`Countries` 按 `country.name`。',
       bodyEn: 'TS-side three `groupFn`s: `World` collapses everything, `Continents` keys on `continent.name`, `Countries` on `country.name`.',
+        titleZhHant: "三檔 group 鍵",
+        bodyZhHant: "TypeScript 端用三個 `groupFn`:`World` 全合併、`Continents` 按 `continent.name`、`Countries` 按 `country.name`。"
     },
     {
       titleZh: '组内累加',
       titleEn: 'Accumulate within group',
       bodyZh: '每组记 `totalDays` 和 `count`;`mean = totalDays / count`。',
       bodyEn: 'Each group tracks `totalDays` and `count`; `mean = totalDays / count`.',
+        titleZhHant: "組內累加",
+        bodyZhHant: "每組記 `totalDays` 和 `count`;`mean = totalDays / count`。"
     },
     {
       titleZh: '排序并输出三表',
@@ -168,6 +216,8 @@ WHERE country_id NOT IN ('XA','XE','XF','XM','XN','XO','XS','XW')
       bodyZh: '组内按 `mean` 降序排,同值时按地区名 `localeCompare`;输出 `[ header, rows ]` 元组列表,前端三个 tab 渲染。',
       bodyEn: 'Within each tier sort by `mean` DESC, breaking ties by region name `localeCompare`. Emit a list of `[header, rows]` tuples — the UI renders one tab per tier.',
       highlight: true,
+        titleZhHant: "排序並輸出三表",
+        bodyZhHant: "組內按 `mean` 降序排,同值時按地區名 `localeCompare`;輸出 `[ header, rows ]` 元組列表,前端三個 tab 渲染。"
     },
   ],
   edgesZh: [
@@ -181,11 +231,25 @@ WHERE country_id NOT IN ('XA','XE','XF','XM','XN','XO','XS','XW')
     'The World tier has a single row — the mean is total days across all comps divided by total comp count.',
   ],
   related: [
-    { id: 'competitions_per_year_by_country', titleZh: '每年每国比赛数', titleEn: 'Competitions per year by country', hintZh: '按时间维度看赛事密度', hintEn: 'Comp density on the time axis' },
-    { id: 'competitions_count_by_week', titleZh: '每周比赛数量', titleEn: 'Competitions count by week', hintZh: '同一份赛事数据另一种切法', hintEn: 'Same data sliced by ISO week' },
-    { id: 'average_event_count_by_competition', titleZh: '每场比赛平均项目数', titleEn: 'Average event count by competition', hintZh: '与天数强相关', hintEn: 'Strongly correlated with days' },
-    { id: 'competition_days_count_by_region', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '三档地区切换', hintEn: 'Three-tier region switcher' },
+    { id: 'competitions_per_year_by_country', titleZh: '每年每国比赛数', titleEn: 'Competitions per year by country', hintZh: '按时间维度看赛事密度', hintEn: 'Comp density on the time axis',
+        titleZhHant: "每年每國比賽數",
+        hintZhHant: "按時間維度看賽事密度"
+    },
+    { id: 'competitions_count_by_week', titleZh: '每周比赛数量', titleEn: 'Competitions count by week', hintZh: '同一份赛事数据另一种切法', hintEn: 'Same data sliced by ISO week',
+        titleZhHant: "每週比賽數量",
+        hintZhHant: "同一份賽事資料另一種切法"
+    },
+    { id: 'average_event_count_by_competition', titleZh: '每场比赛平均项目数', titleEn: 'Average event count by competition', hintZh: '与天数强相关', hintEn: 'Strongly correlated with days',
+        titleZhHant: "每場比賽平均專案數",
+        hintZhHant: "與天數強相關"
+    },
+    { id: 'competition_days_count_by_region', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '三档地区切换', hintEn: 'Three-tier region switcher',
+        titleZhHant: "檢視實時榜單",
+        hintZhHant: "三檔地區切換"
+    },
   ],
+    titleZhHant: "按區域統計比賽天數",
+    badgeZhHant: "賽事"
 };
 
 // ──── competitions_count_by_week ────────────────────────────────────────────
@@ -204,10 +268,19 @@ const competitions_count_by_week: AboutEntry = {
     'The top weeks typically cluster around late June to early August (summer plus pre-Worlds in WC years), with occasional spikes from coordinated regional pushes.',
   ],
   stats: [
-    { value: '周一', labelZh: '周起点', labelEn: 'Week starts on', hintZh: 'ISO 8601', hintEn: 'ISO 8601' },
-    { value: 'show_at_all', labelZh: '过滤', labelEn: 'Filters', hintZh: '排除隐藏比赛', hintEn: 'Hidden comps excluded' },
-    { value: 'cancelled IS NULL', labelZh: '过滤', labelEn: 'Filters', hintZh: '排除已取消', hintEn: 'Cancelled comps excluded' },
-    { value: '"List" 链接', labelZh: '末列', labelEn: 'Last column', hintZh: '深链接到 WCA 该周筛选', hintEn: 'Deep-link to WCA weekly filter' },
+    { value: '周一', labelZh: '周起点', labelEn: 'Week starts on', hintZh: 'ISO 8601', hintEn: 'ISO 8601',
+        labelZhHant: "周起點"
+    },
+    { value: 'show_at_all', labelZh: '过滤', labelEn: 'Filters', hintZh: '排除隐藏比赛', hintEn: 'Hidden comps excluded',
+        labelZhHant: "過濾",
+        hintZhHant: "排除隱藏比賽"
+    },
+    { value: 'cancelled IS NULL', labelZh: '过滤', labelEn: 'Filters', hintZh: '排除已取消', hintEn: 'Cancelled comps excluded',
+        labelZhHant: "過濾"
+    },
+    { value: '"List" 链接', labelZh: '末列', labelEn: 'Last column', hintZh: '深链接到 WCA 该周筛选', hintEn: 'Deep-link to WCA weekly filter',
+        hintZhHant: "深連結到 WCA 該周篩選"
+    },
   ],
   sourceZh: [
     '只读 `competitions` 表 —— 已取消的(`cancelled_at IS NOT NULL`)和未公开的(`show_at_all = 0`)排除。在 SQL 里直接用 `DATE_ADD(start_date, INTERVAL(-WEEKDAY(start_date)) DAY)` 推回当周周一,再 `+6` 拿周日。',
@@ -235,24 +308,31 @@ ORDER BY competitions_count DESC, week_start_date DESC;`,
       titleEn: 'Filter visible and non-cancelled',
       bodyZh: '`show_at_all = 1 AND cancelled_at IS NULL` —— 草稿、测试赛、取消赛都排除。',
       bodyEn: '`show_at_all = 1 AND cancelled_at IS NULL` — drafts, tests, and cancellations excluded.',
+        titleZhHant: "過濾可見 + 未取消",
+        bodyZhHant: "`show_at_all = 1 AND cancelled_at IS NULL` —— 草稿、測試賽、取消賽都排除。"
     },
     {
       titleZh: '回推所在周',
       titleEn: 'Snap to enclosing week',
       bodyZh: '`WEEKDAY()` 返回 0..6(周一..周日)。减它得周一、加 `6-` 得周日,把 `start_date` 精确锁到一周。',
       bodyEn: '`WEEKDAY()` returns 0..6 (Mon..Sun). Subtracting it lands on Monday; `6 - WEEKDAY` lands on Sunday — pinning `start_date` to its containing ISO week.',
+        bodyZhHant: "`WEEKDAY()` 返回 0..6(週一..週日)。減它得週一、加 `6-` 得週日,把 `start_date` 精確鎖到一週。"
     },
     {
       titleZh: '按周分组计数',
       titleEn: 'Group and count per week',
       bodyZh: '`GROUP BY week_start_date, week_end_date`,`COUNT(*)` 就是该周比赛数。',
       bodyEn: '`GROUP BY week_start_date, week_end_date` then `COUNT(*)` gives comps in that week.',
+        titleZhHant: "按周分組計數",
+        bodyZhHant: "`GROUP BY week_start_date, week_end_date`,`COUNT(*)` 就是該周比賽數。"
     },
     {
       titleZh: '拼 WCA 列表深链接',
       titleEn: 'Build WCA deep-link',
       bodyZh: '用 `MIN(start_date)` / `MAX(end_date)` 拼 `state=custom&from_date=...&to_date=...`,点 "List" 直接跳 WCA 该周筛选页。',
       bodyEn: 'Use `MIN(start_date)` / `MAX(end_date)` to build `state=custom&from_date=...&to_date=...` — the "List" link jumps to that week filtered on the WCA site.',
+        titleZhHant: "拼 WCA 列表深連結",
+        bodyZhHant: "用 `MIN(start_date)` / `MAX(end_date)` 拼 `state=custom&from_date=...&to_date=...`,點 \"List\" 直接跳 WCA 該周篩選頁。"
     },
     {
       titleZh: '降序输出 + 日期格式化',
@@ -260,6 +340,8 @@ ORDER BY competitions_count DESC, week_start_date DESC;`,
       bodyZh: '主键 `competitions_count DESC`,同票数按周降序;前端把 `Date` 渲染成 `5 Jan 2025`(无前导零,英文月缩写)。',
       bodyEn: 'Primary key `competitions_count DESC`, ties broken by week DESC. The renderer formats dates as `5 Jan 2025` (no leading zero, abbreviated month).',
       highlight: true,
+        titleZhHant: "降序輸出 + 日期格式化",
+        bodyZhHant: "主鍵 `competitions_count DESC`,同票數按周降序;前端把 `Date` 渲染成 `5 Jan 2025`(無前導零,英文月縮寫)。"
     },
   ],
   edgesZh: [
@@ -273,11 +355,24 @@ ORDER BY competitions_count DESC, week_start_date DESC;`,
     'The "List" URL uses `state=custom`, which does not pull in future hidden comps.',
   ],
   related: [
-    { id: 'most_attended_competitions_in_single_week', titleZh: '一周参赛最多的选手', titleEn: 'Most competitions in single week', hintZh: '同时间窗的选手维度', hintEn: 'Same time window, per-person view' },
-    { id: 'most_attended_competitions_in_single_month', titleZh: '一月参赛最多的选手', titleEn: 'Most competitions in single month', hintZh: '放宽到月窗口', hintEn: 'Same idea, monthly window' },
-    { id: 'competition_days_count_by_region', titleZh: '按区域比赛天数', titleEn: 'Competition days by region', hintZh: '同一份赛事数据按地区分', hintEn: 'Same comp data sliced by region' },
-    { id: 'competitions_count_by_week', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '逐周完整列表', hintEn: 'Full week-by-week list' },
+    { id: 'most_attended_competitions_in_single_week', titleZh: '一周参赛最多的选手', titleEn: 'Most competitions in single week', hintZh: '同时间窗的选手维度', hintEn: 'Same time window, per-person view',
+        titleZhHant: "一週參賽最多的選手",
+        hintZhHant: "同時間窗的選手維度"
+    },
+    { id: 'most_attended_competitions_in_single_month', titleZh: '一月参赛最多的选手', titleEn: 'Most competitions in single month', hintZh: '放宽到月窗口', hintEn: 'Same idea, monthly window',
+        titleZhHant: "一月參賽最多的選手",
+        hintZhHant: "放寬到月視窗"
+    },
+    { id: 'competition_days_count_by_region', titleZh: '按区域比赛天数', titleEn: 'Competition days by region', hintZh: '同一份赛事数据按地区分', hintEn: 'Same comp data sliced by region',
+        titleZhHant: "按區域比賽天數",
+        hintZhHant: "同一份賽事資料按地區分"
+    },
+    { id: 'competitions_count_by_week', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '逐周完整列表', hintEn: 'Full week-by-week list',
+        titleZhHant: "檢視實時榜單"
+    },
   ],
+    titleZhHant: "每週比賽數量",
+    badgeZhHant: "賽事"
 };
 
 // ──── competitions_per_year_by_country ──────────────────────────────────────
@@ -296,9 +391,18 @@ const competitions_per_year_by_country: AboutEntry = {
     'The denominator counts from **that country\'s** first comp, not from WCA\'s overall start — so a freshly active region is not penalized by the global 20+ year history.',
   ],
   stats: [
-    { value: 'years ≥ 1', labelZh: '门槛', labelEn: 'Threshold', hintZh: '首场满 1 年才上榜', hintEn: 'First comp ≥ 1 year ago' },
-    { value: '/ 365.25', labelZh: '年长度', labelEn: 'Year length', hintZh: '含闰年平均', hintEn: 'Average incl. leap years' },
-    { value: 'CURDATE()', labelZh: '终点', labelEn: 'End date', hintZh: '取数据 dump 当天', hintEn: 'Date of dump load' },
+    { value: 'years ≥ 1', labelZh: '门槛', labelEn: 'Threshold', hintZh: '首场满 1 年才上榜', hintEn: 'First comp ≥ 1 year ago',
+        labelZhHant: "門檻",
+        hintZhHant: "首場滿 1 年才上榜"
+    },
+    { value: '/ 365.25', labelZh: '年长度', labelEn: 'Year length', hintZh: '含闰年平均', hintEn: 'Average incl. leap years',
+        labelZhHant: "年長度",
+        hintZhHant: "含閏年平均"
+    },
+    { value: 'CURDATE()', labelZh: '终点', labelEn: 'End date', hintZh: '取数据 dump 当天', hintEn: 'Date of dump load',
+        labelZhHant: "終點",
+        hintZhHant: "取資料 dump 當天"
+    },
     { value: '2 位小数', labelZh: '精度', labelEn: 'Precision', hintZh: 'comps/year + years', hintEn: 'comps/year + years' },
   ],
   sourceZh: [
@@ -334,6 +438,7 @@ ORDER BY competitions_per_year DESC;`,
       expr: 'rate(country) = competitions(country) / years_since_first(country)',
       bodyZh: '`years_since_first = (today - first_comp_date) / 365.25`,不足 1 年的国家剔除。',
       bodyEn: '`years_since_first = (today - first_comp_date) / 365.25`. Countries under 1 year are dropped.',
+        bodyZhHant: "`years_since_first = (today - first_comp_date) / 365.25`,不足 1 年的國家剔除。"
     },
   ],
   steps: [
@@ -342,24 +447,32 @@ ORDER BY competitions_per_year DESC;`,
       titleEn: 'Collect per-country comp set',
       bodyZh: '从 `results` 起,只为了拿到"真实办过的比赛"(竞赛日历里挂了但 0 人出赛的不算)。JOIN `competitions` 拿到 `country_id` 和 `start_date`。',
       bodyEn: 'Starting from `results` (not `competitions` directly) ensures only comps that actually ran are counted. JOIN `competitions` for `country_id` and `start_date`.',
+        titleZhHant: "收集每國比賽集合",
+        bodyZhHant: "從 `results` 起,只為了拿到\"真實辦過的比賽\"(競賽日曆裡掛了但 0 人出賽的不算)。JOIN `competitions` 拿到 `country_id` 和 `start_date`。"
     },
     {
       titleZh: '数比赛 + 找首场',
       titleEn: 'Count comps and find first date',
       bodyZh: '组内 `COUNT(DISTINCT competition_id)`(同一比赛多轮多人不重复),`MIN(start_date)` 得首场日期。',
       bodyEn: '`COUNT(DISTINCT competition_id)` per group (multi-round, multi-person rows collapse), `MIN(start_date)` for the first comp date.',
+        titleZhHant: "數比賽 + 找首場",
+        bodyZhHant: "組內 `COUNT(DISTINCT competition_id)`(同一比賽多輪多人不重複),`MIN(start_date)` 得首場日期。"
     },
     {
       titleZh: '算"自首场以来"年数',
       titleEn: 'Compute years since first comp',
       bodyZh: '`years = DATEDIFF(CURDATE(), MIN(start_date)) / 365.25`。除以 365.25 而非 365 是为了平摊闰年。',
       bodyEn: '`years = DATEDIFF(CURDATE(), MIN(start_date)) / 365.25`. Dividing by 365.25 (not 365) amortizes leap years.',
+        titleZhHant: "算\"自首場以來\"年數",
+        bodyZhHant: "`years = DATEDIFF(CURDATE(), MIN(start_date)) / 365.25`。除以 365.25 而非 365 是為了平攤閏年。"
     },
     {
       titleZh: '过滤新国',
       titleEn: 'Drop fresh regions',
       bodyZh: '`HAVING years >= 1` —— 否则一个 6 个月前刚开第一场的国家会算出 "12 场/年" 这种伪信号。',
       bodyEn: '`HAVING years >= 1` — otherwise a country whose first comp was 6 months ago could read as "12 comps/year", a false signal.',
+        titleZhHant: "過濾新國",
+        bodyZhHant: "`HAVING years >= 1` —— 否則一個 6 個月前剛開第一場的國家會算出 \"12 場/年\" 這種偽訊號。"
     },
     {
       titleZh: '相除并降序',
@@ -367,6 +480,8 @@ ORDER BY competitions_per_year DESC;`,
       bodyZh: '外层 `competitions / years`,JOIN `countries` 拿可读国名,`ORDER BY competitions_per_year DESC`。',
       bodyEn: 'Outer divides the two, JOIN `countries` for display name, `ORDER BY competitions_per_year DESC`.',
       highlight: true,
+        titleZhHant: "相除並降序",
+        bodyZhHant: "外層 `competitions / years`,JOIN `countries` 拿可讀國名,`ORDER BY competitions_per_year DESC`。"
     },
   ],
   edgesZh: [
@@ -380,11 +495,25 @@ ORDER BY competitions_per_year DESC;`,
     '`CURDATE()` advances with each dump rebuild, giving rates a slight natural decay if a country sits idle for a year.',
   ],
   related: [
-    { id: 'competition_days_count_by_region', titleZh: '按区域比赛天数', titleEn: 'Competition days by region', hintZh: '另一种"地区赛事密度"', hintEn: 'Alt region-density slice' },
-    { id: 'competitions_count_by_week', titleZh: '每周比赛数量', titleEn: 'Competitions per week', hintZh: '时间维度的对照', hintEn: 'Time-axis counterpart' },
-    { id: 'average_event_count_by_competition', titleZh: '每场比赛平均项目数', titleEn: 'Avg events per comp', hintZh: '"广度"维度,与"密度"配套看', hintEn: 'Breadth dimension, complements density' },
-    { id: 'competitions_per_year_by_country', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '按国家完整排序', hintEn: 'Full country ranking' },
+    { id: 'competition_days_count_by_region', titleZh: '按区域比赛天数', titleEn: 'Competition days by region', hintZh: '另一种"地区赛事密度"', hintEn: 'Alt region-density slice',
+        titleZhHant: "按區域比賽天數",
+        hintZhHant: "另一種\"地區賽事密度\""
+    },
+    { id: 'competitions_count_by_week', titleZh: '每周比赛数量', titleEn: 'Competitions per week', hintZh: '时间维度的对照', hintEn: 'Time-axis counterpart',
+        titleZhHant: "每週比賽數量",
+        hintZhHant: "時間維度的對照"
+    },
+    { id: 'average_event_count_by_competition', titleZh: '每场比赛平均项目数', titleEn: 'Avg events per comp', hintZh: '"广度"维度,与"密度"配套看', hintEn: 'Breadth dimension, complements density',
+        titleZhHant: "每場比賽平均專案數",
+        hintZhHant: "\"廣度\"維度,與\"密度\"配套看"
+    },
+    { id: 'competitions_per_year_by_country', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '按国家完整排序', hintEn: 'Full country ranking',
+        titleZhHant: "檢視實時榜單",
+        hintZhHant: "按國家完整排序"
+    },
   ],
+    titleZhHant: "每年每國比賽數",
+    badgeZhHant: "賽事"
 };
 
 // ──── dnf_rate_by_event ─────────────────────────────────────────────────────
@@ -403,10 +532,18 @@ const dnf_rate_by_event: AboutEntry = {
     'BLD / FMC / MBLD sit well above 3x3: blindfolded depends on full memorization, FMC has a 1-hour cap with move limits, MBLD DNFs the whole attempt if any cube fails.',
   ],
   stats: [
-    { value: 'value=-1', labelZh: 'DNF 编码', labelEn: 'DNF encoding', hintZh: 'result_attempts.value', hintEn: 'In result_attempts.value' },
-    { value: 'value=-2', labelZh: 'DNS 编码', labelEn: 'DNS encoding', hintZh: '排除在分母外', hintEn: 'Excluded from denominator' },
-    { value: 'value=0', labelZh: '空槽', labelEn: 'Empty slot', hintZh: '一轮 5 attempts 未填满', hintEn: '5-attempts round not filled' },
-    { value: '%', labelZh: '展示', labelEn: 'Display', hintZh: '2 位小数百分比', hintEn: '2-decimal percentage' },
+    { value: 'value=-1', labelZh: 'DNF 编码', labelEn: 'DNF encoding', hintZh: 'result_attempts.value', hintEn: 'In result_attempts.value',
+        labelZhHant: "DNF 編碼"
+    },
+    { value: 'value=-2', labelZh: 'DNS 编码', labelEn: 'DNS encoding', hintZh: '排除在分母外', hintEn: 'Excluded from denominator',
+        labelZhHant: "DNS 編碼"
+    },
+    { value: 'value=0', labelZh: '空槽', labelEn: 'Empty slot', hintZh: '一轮 5 attempts 未填满', hintEn: '5-attempts round not filled',
+        hintZhHant: "一輪 5 attempts 未填滿"
+    },
+    { value: '%', labelZh: '展示', labelEn: 'Display', hintZh: '2 位小数百分比', hintEn: '2-decimal percentage',
+        hintZhHant: "2 位小數百分比"
+    },
   ],
   sourceZh: [
     '走 `results` JOIN `result_attempts` —— 后者一行 = 一次单尝试(WCA dump 的细粒度表)。按 `event_id` 分组,SUM 出 dnfs(`value = -1`)与 attempts(`value NOT IN (-2, 0)`),前端 TS 端再算比例并按降序排。',
@@ -431,6 +568,7 @@ GROUP BY r.event_id;`,
       expr: 'dnf_rate = dnf_count / attempted',
       bodyZh: '`dnf_count = COUNT(value = -1)`;`attempted = COUNT(value ≠ -2 且 ≠ 0)` —— 排除 DNS 和未填槽。展示时乘 100 加 `%`。',
       bodyEn: '`dnf_count = COUNT(value = -1)`; `attempted = COUNT(value ≠ -2 and ≠ 0)` — excludes DNS and empty slots. Multiplied by 100 with `%` for display.',
+        bodyZhHant: "`dnf_count = COUNT(value = -1)`;`attempted = COUNT(value ≠ -2 且 ≠ 0)` —— 排除 DNS 和未填槽。展示時乘 100 加 `%`。"
     },
   ],
   steps: [
@@ -439,24 +577,32 @@ GROUP BY r.event_id;`,
       titleEn: 'Expand to per-attempt rows',
       bodyZh: '`results` 一行是一轮成绩(含 best/average),真实的 5 个单尝试要去 `result_attempts` 里看 —— JOIN 后行数 ≈ 5× results。',
       bodyEn: '`results` is one row per round (with best/average); the individual 5 attempts live in `result_attempts`. JOIN multiplies row count by ~5.',
+        titleZhHant: "展開單 attempt 維度",
+        bodyZhHant: "`results` 一行是一輪成績(含 best/average),真實的 5 個單嘗試要去 `result_attempts` 裡看 —— JOIN 後行數 ≈ 5× results。"
     },
     {
       titleZh: '辨认三种值',
       titleEn: 'Recognize three value types',
       bodyZh: '`value > 0` 真成绩(厘秒/步数/移动数等编码),`= -1` DNF,`= -2` DNS(未上),`= 0` 一轮 5 个 attempt 没填满的空槽。',
       bodyEn: '`value > 0` real result (centisecond / move / FMC encoding); `= -1` DNF; `= -2` DNS (no-show); `= 0` empty slot when a 5-attempt round wasn\'t fully filled.',
+        titleZhHant: "辨認三種值",
+        bodyZhHant: "`value > 0` 真成績(釐秒/步數/移動數等編碼),`= -1` DNF,`= -2` DNS(未上),`= 0` 一輪 5 個 attempt 沒填滿的空槽。"
     },
     {
       titleZh: 'SUM 出两个数',
       titleEn: 'SUM out two numbers',
       bodyZh: '`SUM(CASE WHEN value = -1 THEN 1 ELSE 0 END)` = DNF 数;`SUM(CASE WHEN value NOT IN (-2, 0) THEN 1 ELSE 0 END)` = 实尝试数(含 DNF)。',
       bodyEn: '`SUM(CASE WHEN value = -1 THEN 1 ELSE 0 END)` = DNF count; `SUM(CASE WHEN value NOT IN (-2, 0) THEN 1 ELSE 0 END)` = real attempts (including DNFs).',
+        titleZhHant: "SUM 出兩個數",
+        bodyZhHant: "`SUM(CASE WHEN value = -1 THEN 1 ELSE 0 END)` = DNF 數;`SUM(CASE WHEN value NOT IN (-2, 0) THEN 1 ELSE 0 END)` = 實嘗試數(含 DNF)。"
     },
     {
       titleZh: '按项目分组',
       titleEn: 'Group by event',
       bodyZh: '`GROUP BY r.event_id`,每个 WCA 项目一行。',
       bodyEn: '`GROUP BY r.event_id` — one row per WCA event.',
+        titleZhHant: "按專案分組",
+        bodyZhHant: "`GROUP BY r.event_id`,每個 WCA 專案一行。"
     },
     {
       titleZh: '前端算比例并排序',
@@ -464,6 +610,8 @@ GROUP BY r.event_id;`,
       bodyZh: 'TS 端 `100 * dnfs / attempts`,`toFixed(2) + " %"`;按 DNF 率降序,`EVENTS[id]` 映射成项目中文名。',
       bodyEn: 'TS computes `100 * dnfs / attempts`, formats as `toFixed(2) + " %"`, sorts DESC by rate, and maps `event_id` through `EVENTS[id]` for display.',
       highlight: true,
+        titleZhHant: "前端算比例並排序",
+        bodyZhHant: "TS 端 `100 * dnfs / attempts`,`toFixed(2) + \" %\"`;按 DNF 率降序,`EVENTS[id]` 對映成專案中文名。"
     },
   ],
   edgesZh: [
@@ -477,11 +625,24 @@ GROUP BY r.event_id;`,
     'MBLD attempts are compound (one bundle of cubes) — DNF is judged at the bundle level. The rate is not "per-cube DNF rate".',
   ],
   related: [
-    { id: 'most_completed_solves', titleZh: '最多完成单次数', titleEn: 'Most completed solves', hintZh: '"实尝试 - DNF"的全选手榜', hintEn: 'Successful attempts leaderboard' },
-    { id: 'most_solves_before_bld_success', titleZh: 'BLD 首次成功前的尝试', titleEn: 'Solves before BLD success', hintZh: 'DNF 集中的盲拧角度', hintEn: 'BLD-focused take on DNF density' },
-    { id: 'mbf_average', titleZh: 'MBF 平均', titleEn: 'MBF average', hintZh: 'MBLD 完成度细项', hintEn: 'MBLD attempt-completeness companion' },
-    { id: 'dnf_rate_by_event', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '21 个项目排序', hintEn: 'All 21 events ranked' },
+    { id: 'most_completed_solves', titleZh: '最多完成单次数', titleEn: 'Most completed solves', hintZh: '"实尝试 - DNF"的全选手榜', hintEn: 'Successful attempts leaderboard',
+        titleZhHant: "最多完成單次數",
+        hintZhHant: "\"實嘗試 - DNF\"的全選手榜"
+    },
+    { id: 'most_solves_before_bld_success', titleZh: 'BLD 首次成功前的尝试', titleEn: 'Solves before BLD success', hintZh: 'DNF 集中的盲拧角度', hintEn: 'BLD-focused take on DNF density',
+        titleZhHant: "BLD 首次成功前的嘗試",
+        hintZhHant: "DNF 集中的盲擰角度"
+    },
+    { id: 'mbf_average', titleZh: 'MBF 平均', titleEn: 'MBF average', hintZh: 'MBLD 完成度细项', hintEn: 'MBLD attempt-completeness companion',
+        hintZhHant: "MBLD 完成度細項"
+    },
+    { id: 'dnf_rate_by_event', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '21 个项目排序', hintEn: 'All 21 events ranked',
+        titleZhHant: "檢視實時榜單",
+        hintZhHant: "21 個專案排序"
+    },
   ],
+    titleZhHant: "各專案 DNF 率",
+    badgeZhHant: "專案"
 };
 
 // ──── fewest_competitors_contest ────────────────────────────────────────────
@@ -500,10 +661,18 @@ const fewest_competitors_contest: AboutEntry = {
     '"Competed" means a row exists in `results` — registered-but-DNS no-shows are not counted.',
   ],
   stats: [
-    { value: '≤ 15', labelZh: '门槛', labelEn: 'Threshold', hintZh: '只看小型比赛', hintEn: 'Small comps only' },
-    { value: 'DISTINCT', labelZh: '计数', labelEn: 'Counting', hintZh: 'person_id 去重', hintEn: 'On person_id' },
+    { value: '≤ 15', labelZh: '门槛', labelEn: 'Threshold', hintZh: '只看小型比赛', hintEn: 'Small comps only',
+        labelZhHant: "門檻",
+        hintZhHant: "只看小型比賽"
+    },
+    { value: 'DISTINCT', labelZh: '计数', labelEn: 'Counting', hintZh: 'person_id 去重', hintEn: 'On person_id',
+        labelZhHant: "計數"
+    },
     { value: '升序', labelZh: '排序', labelEn: 'Sort', hintZh: '人最少在最上', hintEn: 'Fewest at top' },
-    { value: '2 列', labelZh: '表头', labelEn: 'Columns', hintZh: '人数 + 比赛链接', hintEn: 'Count + comp link' },
+    { value: '2 列', labelZh: '表头', labelEn: 'Columns', hintZh: '人数 + 比赛链接', hintEn: 'Count + comp link',
+        labelZhHant: "表頭",
+        hintZhHant: "人數 + 比賽連結"
+    },
   ],
   sourceZh: [
     '一条只读 SQL:内层 `GROUP BY competition_id` 数 distinct 出赛人;`HAVING competitors_count <= 15` 卡门槛;外层 JOIN `competitions` 拿到 `cell_name` 拼 WCA 比赛链接。',
@@ -533,24 +702,32 @@ ORDER BY competitors_count;`,
       titleEn: 'Start from actual results',
       bodyZh: '从 `results` 起(而不是 `registrations`/`competitions`),没出赛的天然不算。',
       bodyEn: 'Start from `results` (not `registrations` or `competitions`) — anyone who didn\'t show up is naturally excluded.',
+        titleZhHant: "基於真實出賽",
+        bodyZhHant: "從 `results` 起(而不是 `registrations`/`competitions`),沒出賽的天然不算。"
     },
     {
       titleZh: '去重计数',
       titleEn: 'Count distinct',
       bodyZh: '`COUNT(DISTINCT person_id)` —— 同一人多项目多轮仍只算一次。',
       bodyEn: '`COUNT(DISTINCT person_id)` — multi-event multi-round rows from the same person collapse to one.',
+        titleZhHant: "去重計數",
+        bodyZhHant: "`COUNT(DISTINCT person_id)` —— 同一人多專案多輪仍只算一次。"
     },
     {
       titleZh: '过滤"小型"',
       titleEn: 'Filter to "small"',
       bodyZh: '`HAVING competitors_count <= 15` —— 完整 dump 上 LIMIT 没意义,15 是约定的"小赛"上界。',
       bodyEn: '`HAVING competitors_count <= 15` — a LIMIT on a full dump is meaningless; 15 is the conventional "small comp" upper bound.',
+        titleZhHant: "過濾\"小型\"",
+        bodyZhHant: "`HAVING competitors_count <= 15` —— 完整 dump 上 LIMIT 沒意義,15 是約定的\"小賽\"上界。"
     },
     {
       titleZh: '挂比赛链接',
       titleEn: 'Attach comp link',
       bodyZh: '外层 JOIN `competitions`,拼 markdown `[name](.../competitions/<id>)`,前端渲染成可点链接。',
       bodyEn: 'Outer JOIN `competitions`, build a markdown `[name](.../competitions/<id>)`. The renderer turns this into a clickable link.',
+        titleZhHant: "掛比賽連結",
+        bodyZhHant: "外層 JOIN `competitions`,拼 markdown `[name](.../competitions/<id>)`,前端渲染成可點連結。"
     },
     {
       titleZh: '升序输出',
@@ -558,6 +735,8 @@ ORDER BY competitors_count;`,
       bodyZh: '`ORDER BY competitors_count` —— 同票数无打破,前端按 SQL 顺序保留。',
       bodyEn: '`ORDER BY competitors_count` — ties keep SQL\'s natural order in the UI.',
       highlight: true,
+        titleZhHant: "升序輸出",
+        bodyZhHant: "`ORDER BY competitors_count` —— 同票數無打破,前端按 SQL 順序保留。"
     },
   ],
   edgesZh: [
@@ -571,11 +750,25 @@ ORDER BY competitors_count;`,
     'Single-person comps are very rare historically — usually pandemic-era 1- or 2-person specials.',
   ],
   related: [
-    { id: 'average_event_count_by_competition', titleZh: '每场比赛平均项目数', titleEn: 'Avg events per comp', hintZh: '小赛常项目多人少', hintEn: 'Small comps trend high here' },
-    { id: 'competition_days_count_by_region', titleZh: '按区域比赛天数', titleEn: 'Comp days by region', hintZh: '小赛通常 1 天完结', hintEn: 'Small comps usually wrap in a day' },
-    { id: 'most_records_at_single_competition', titleZh: '单场比赛最多纪录', titleEn: 'Most records at one comp', hintZh: '与"人少"对照的"密度高"', hintEn: 'Opposite-end density companion' },
-    { id: 'fewest_competitors_contest', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '完整小赛列表', hintEn: 'Full small-comp list' },
+    { id: 'average_event_count_by_competition', titleZh: '每场比赛平均项目数', titleEn: 'Avg events per comp', hintZh: '小赛常项目多人少', hintEn: 'Small comps trend high here',
+        titleZhHant: "每場比賽平均專案數",
+        hintZhHant: "小賽常專案多人少"
+    },
+    { id: 'competition_days_count_by_region', titleZh: '按区域比赛天数', titleEn: 'Comp days by region', hintZh: '小赛通常 1 天完结', hintEn: 'Small comps usually wrap in a day',
+        titleZhHant: "按區域比賽天數",
+        hintZhHant: "小賽通常 1 天完結"
+    },
+    { id: 'most_records_at_single_competition', titleZh: '单场比赛最多纪录', titleEn: 'Most records at one comp', hintZh: '与"人少"对照的"密度高"', hintEn: 'Opposite-end density companion',
+        titleZhHant: "單場比賽最多紀錄",
+        hintZhHant: "與\"人少\"對照的\"密度高\""
+    },
+    { id: 'fewest_competitors_contest', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '完整小赛列表', hintEn: 'Full small-comp list',
+        titleZhHant: "檢視實時榜單",
+        hintZhHant: "完整小賽列表"
+    },
   ],
+    titleZhHant: "參賽人數最少的比賽",
+    badgeZhHant: "賽事"
 };
 
 // ──── most_records_at_single_competition ────────────────────────────────────
@@ -594,10 +787,20 @@ const most_records_at_single_competition: AboutEntry = {
     'Three tiers — World / Continental / National. World counts only `WR`; Continental counts all CRs (WR auto-qualifies since WR ≥ CR); National adds `NR` on top. Top 20 per tier with ties.',
   ],
   stats: [
-    { value: '3 档', labelZh: '层级', labelEn: 'Tiers', hintZh: 'World / Continental / National', hintEn: 'World / Continental / National' },
-    { value: '2 字段', labelZh: '记录列', labelEn: 'Record columns', hintZh: 'single + average 各 1 个', hintEn: 'single + average flags' },
-    { value: 'top 20', labelZh: '每档', labelEn: 'Per tier', hintZh: '含并列', hintEn: 'Ties included' },
-    { value: 'sub_id=1', labelZh: '过滤', labelEn: 'Filter', hintZh: '只主身份', hintEn: 'Primary identity only' },
+    { value: '3 档', labelZh: '层级', labelEn: 'Tiers', hintZh: 'World / Continental / National', hintEn: 'World / Continental / National',
+        labelZhHant: "層級"
+    },
+    { value: '2 字段', labelZh: '记录列', labelEn: 'Record columns', hintZh: 'single + average 各 1 个', hintEn: 'single + average flags',
+        labelZhHant: "記錄列",
+        hintZhHant: "single + average 各 1 個"
+    },
+    { value: 'top 20', labelZh: '每档', labelEn: 'Per tier', hintZh: '含并列', hintEn: 'Ties included',
+        labelZhHant: "每檔",
+        hintZhHant: "含並列"
+    },
+    { value: 'sub_id=1', labelZh: '过滤', labelEn: 'Filter', hintZh: '只主身份', hintEn: 'Primary identity only',
+        labelZhHant: "過濾"
+    },
   ],
   sourceZh: [
     '只读 `results` JOIN `persons (sub_id = 1)` JOIN `competitions` 三张表。`WHERE` 卡 `regional_single_record` 或 `regional_average_record` 非空,把所有"该轮破了某级纪录"的行抽出来 —— 后续在 TS 端按 (人, 比赛) 分组并按层级累加。',
@@ -627,24 +830,32 @@ WHERE (regional_single_record IS NOT NULL AND regional_single_record != '')
       titleEn: 'Pull only "record-setting" rows',
       bodyZh: 'WHERE 至少一个 record 字段非空 —— `regional_*_record` 是 `WR / CR / NR` 中的代码(空串 = 没破)。',
       bodyEn: 'WHERE at least one record flag is non-empty — `regional_*_record` holds `WR / CR / NR` code (empty string = none).',
+        titleZhHant: "只抽\"重新整理\"行",
+        bodyZhHant: "WHERE 至少一個 record 欄位非空 —— `regional_*_record` 是 `WR / CR / NR` 中的程式碼(空串 = 沒破)。"
     },
     {
       titleZh: '过滤副身份',
       titleEn: 'Filter to primary identity',
       bodyZh: '`persons.sub_id = 1` —— 改名/换国籍的选手 dump 里有多行,只保留主行,避免重复计数。',
       bodyEn: '`persons.sub_id = 1` — the dump holds multiple rows for rename/country-change cases; keep only the primary to avoid double counts.',
+        titleZhHant: "過濾副身份",
+        bodyZhHant: "`persons.sub_id = 1` —— 改名/換國籍的選手 dump 裡有多行,只保留主行,避免重複計數。"
     },
     {
       titleZh: '前端定义三档代码集',
       titleEn: 'Define three tier code-sets',
       bodyZh: 'TypeScript 端的 `levels`:`World = ["WR"]`;`Continental = ["AfR","AsR","NAR","SAR","ER","OcR","WR"]`;`National = ["NR","AfR",...,"WR"]`(因为 WR 总是同时 ≥ CR ≥ NR)。',
       bodyEn: 'TS `levels` map: `World = ["WR"]`; `Continental = ["AfR","AsR","NAR","SAR","ER","OcR","WR"]`; `National = ["NR","AfR",...,"WR"]` (since WR is automatically also CR and NR).',
+        titleZhHant: "前端定義三檔程式碼集",
+        bodyZhHant: "TypeScript 端的 `levels`:`World = [\"WR\"]`;`Continental = [\"AfR\",\"AsR\",\"NAR\",\"SAR\",\"ER\",\"OcR\",\"WR\"]`;`National = [\"NR\",\"AfR\",...,\"WR\"]`(因為 WR 總是同時 ≥ CR ≥ NR)。"
     },
     {
       titleZh: '按 (人, 比赛) 累加',
       titleEn: 'Tally per (person, comp)',
       bodyZh: '组键 `person_link|||results_link`,组内对 single 和 average 各检查一次:若该字段值落在当前档的代码集里,`count += 1`。',
       bodyEn: 'Group key `person_link|||results_link`. Within a group, check both `single` and `average` against the tier\'s code-set — `count += 1` for each hit.',
+        titleZhHant: "按 (人, 比賽) 累加",
+        bodyZhHant: "組鍵 `person_link|||results_link`,組內對 single 和 average 各檢查一次:若該欄位值落在當前檔的程式碼集裡,`count += 1`。"
     },
     {
       titleZh: '排序并取 top 20(含并列)',
@@ -652,6 +863,8 @@ WHERE (regional_single_record IS NOT NULL AND regional_single_record != '')
       bodyZh: '按 `count DESC`;`takeTopNWithTies` 取 20,边界并列全部一起留下(避免"第 20 名打平却被剪掉"的不公)。',
       bodyEn: 'Sort by `count DESC`; `takeTopNWithTies` keeps the top 20 plus any ties at the cutoff (avoids "tied at #20 but cut off" unfairness).',
       highlight: true,
+        titleZhHant: "排序並取 top 20(含並列)",
+        bodyZhHant: "按 `count DESC`;`takeTopNWithTies` 取 20,邊界並列全部一起留下(避免\"第 20 名打平卻被剪掉\"的不公)。"
     },
   ],
   edgesZh: [
@@ -667,11 +880,25 @@ WHERE (regional_single_record IS NOT NULL AND regional_single_record != '')
     'Reads only the `regional_*_record` flags — no numeric re-verification. If WCA retroactively voids a record, the next dump rebuild reflects it.',
   ],
   related: [
-    { id: 'longest_streak_of_world_records', titleZh: '连续比赛刷 WR', titleEn: 'Longest streak of WRs', hintZh: '跨比赛的"连续刷新"', hintEn: 'Cross-comp consecutive WRs' },
-    { id: 'records_in_most_events', titleZh: '在最多项目上有纪录', titleEn: 'Records in most events', hintZh: '项目覆盖维度', hintEn: 'Event-coverage take' },
-    { id: 'most_podiums_at_single_competition', titleZh: '单场最多领奖台', titleEn: 'Most podiums at one comp', hintZh: '同"单场密度"另一种切', hintEn: 'Sibling single-comp density stat' },
-    { id: 'most_records_at_single_competition', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '三档完整 top 20', hintEn: 'Full top-20 per tier' },
+    { id: 'longest_streak_of_world_records', titleZh: '连续比赛刷 WR', titleEn: 'Longest streak of WRs', hintZh: '跨比赛的"连续刷新"', hintEn: 'Cross-comp consecutive WRs',
+        titleZhHant: "連續比賽刷 WR",
+        hintZhHant: "跨比賽的\"連續重新整理\""
+    },
+    { id: 'records_in_most_events', titleZh: '在最多项目上有纪录', titleEn: 'Records in most events', hintZh: '项目覆盖维度', hintEn: 'Event-coverage take',
+        titleZhHant: "在最多專案上有紀錄",
+        hintZhHant: "專案覆蓋維度"
+    },
+    { id: 'most_podiums_at_single_competition', titleZh: '单场最多领奖台', titleEn: 'Most podiums at one comp', hintZh: '同"单场密度"另一种切', hintEn: 'Sibling single-comp density stat',
+        titleZhHant: "單場最多領獎臺",
+        hintZhHant: "同\"單場密度\"另一種切"
+    },
+    { id: 'most_records_at_single_competition', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '三档完整 top 20', hintEn: 'Full top-20 per tier',
+        titleZhHant: "檢視實時榜單",
+        hintZhHant: "三檔完整 top 20"
+    },
   ],
+    titleZhHant: "單場比賽最多紀錄",
+    badgeZhHant: "賽事"
 };
 
 export const COMP_STATS_ABOUT: Record<string, AboutEntry> = {

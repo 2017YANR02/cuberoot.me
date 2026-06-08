@@ -20,7 +20,7 @@ import i18n from '@/i18n/i18n-client';
 export default function AlgIndexPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('公式库', 'Algorithms');
+  useDocumentTitle('公式库', 'Algorithms', "公式庫");
 
   return (
     <div className="alg-root">
@@ -59,7 +59,7 @@ export default function AlgIndexPage() {
               <div className="alg-puzzle-preview">
                 {sets.slice(0, 6).map((s) => (
                   <span key={s.slug} className="alg-puzzle-chip">
-                    {(i18n.language.startsWith('zh') ? s.zh : s.en)}
+                    {(i18n.language === 'zh-Hant' ? ((s as { zhHant?: string }).zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en))}
                   </span>
                 ))}
                 {sets.length > 6 && (

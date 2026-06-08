@@ -6,13 +6,17 @@ import { useLang } from '../../_lib/Lang';
 import i18n from '@/i18n/i18n-client';
 
 const TABS = [
-  { path: '/code/architecture',           zh: '概览',    en: 'Overview'
+  { path: '/code/architecture',           zh: '概览',    en: 'Overview',
+      zhHant: "概覽"
 },
-  { path: '/code/architecture/flow',      zh: '请求流程', en: 'Flow'
+  { path: '/code/architecture/flow',      zh: '请求流程', en: 'Flow',
+      zhHant: "請求流程"
 },
-  { path: '/code/architecture/decisions', zh: '技术决策', en: 'Decisions'
+  { path: '/code/architecture/decisions', zh: '技术决策', en: 'Decisions',
+      zhHant: "技術決策"
 },
-  { path: '/code/architecture/history',   zh: '历程',    en: 'History'
+  { path: '/code/architecture/history',   zh: '历程',    en: 'History',
+      zhHant: "歷程"
 },
 ] as const;
 

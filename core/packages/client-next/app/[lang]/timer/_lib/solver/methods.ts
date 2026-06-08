@@ -294,7 +294,9 @@ export function solveEODR(scramble: string): SolveResult {
 
 export type MethodId = 'cfop' | 'roux' | 'petrus' | 'zz' | 'eodr' | 'thistle';
 
-export const METHOD_REGISTRY: { id: MethodId; def: StepDef[] | null; nameEn: string; nameZh: string }[] = [
+export const METHOD_REGISTRY: { id: MethodId; def: StepDef[] | null; nameEn: string; nameZh: string
+    nameZhHant?: string;
+ }[] = [
   { id: 'cfop', def: CFOP_METHOD, nameEn: 'CFOP', nameZh: 'CFOP' },
   { id: 'roux', def: ROUX_METHOD, nameEn: 'Roux', nameZh: 'Roux' },
   { id: 'petrus', def: PETRUS_METHOD, nameEn: 'Petrus', nameZh: 'Petrus' },
@@ -332,6 +334,7 @@ export interface PuzzleSolverEntry {
   nameZh: string;
   /** WCA event short-name (matches `<scramble-display event="...">`). */
   event: string;
+    nameZhHant?: string;
 }
 
 export const PUZZLE_SOLVER_REGISTRY: PuzzleSolverEntry[] = [

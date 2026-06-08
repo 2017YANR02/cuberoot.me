@@ -142,7 +142,7 @@ export default function CodeIndexPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('代码', 'Code');
+  useDocumentTitle('代码', 'Code', "程式碼");
 
   return (
     <div className="code-index">

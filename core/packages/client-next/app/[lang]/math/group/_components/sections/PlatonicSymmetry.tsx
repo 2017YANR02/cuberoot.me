@@ -765,12 +765,17 @@ const SOLID_COLORS_ICOSA = [
 ];
 
 type SolidName = 'tetrahedron' | 'cube' | 'icosahedron';
-const SOLID_META: Record<SolidName, { label: { zh: string; en: string }; order: number; group: string }> = {
-  tetrahedron: { label: { zh: '正四面体', en: 'Tetrahedron'
+const SOLID_META: Record<SolidName, { label: { zh: string; en: string
+        zhHant?: string;
+ }; order: number; group: string }> = {
+  tetrahedron: { label: { zh: '正四面体', en: 'Tetrahedron',
+      zhHant: "正四面體"
 }, order: 12, group: 'A₄' },
-  cube:        { label: { zh: '正方体',   en: 'Cube'
+  cube:        { label: { zh: '正方体',   en: 'Cube',
+      zhHant: "正方體"
 }, order: 24, group: 'S₄' },
-  icosahedron: { label: { zh: '正二十面体', en: 'Icosahedron'
+  icosahedron: { label: { zh: '正二十面体', en: 'Icosahedron',
+      zhHant: "正二十面體"
 }, order: 60, group: 'A₅' },
 };
 
@@ -851,7 +856,7 @@ function OrbitCountWidget() {
             className={`gt-chip ${solid === s ? 'gt-chip-active' : ''}`}
             onClick={() => changeSolid(s)}
           >
-            {(i18n.language.startsWith('zh') ? SOLID_META[s].label.zh : SOLID_META[s].label.en)}
+            {(i18n.language === 'zh-Hant' ? (SOLID_META[s].label.zhHant ?? SOLID_META[s].label.zh) : (i18n.language.startsWith('zh') ? SOLID_META[s].label.zh : SOLID_META[s].label.en))}
           </button>
         ))}
       </div>
@@ -923,7 +928,7 @@ function OrbitCountWidget() {
               ] as const).map(([s, rot, ord, full, ford]) => (
                 <tr key={s} style={{ fontWeight: solid === s ? 700 : undefined }}>
                   <td style={{ fontFamily: 'var(--serif)', color: solid === s ? 'var(--accent)' : 'var(--ink-dim)' }}>
-                    {(i18n.language.startsWith('zh') ? SOLID_META[s].label.zh : SOLID_META[s].label.en)}
+                    {(i18n.language === 'zh-Hant' ? (SOLID_META[s].label.zhHant ?? SOLID_META[s].label.zh) : (i18n.language.startsWith('zh') ? SOLID_META[s].label.zh : SOLID_META[s].label.en))}
                   </td>
                   <td className="num">{rot}</td>
                   <td className="num">{ord}</td>

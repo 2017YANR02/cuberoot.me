@@ -9,14 +9,14 @@ import { useTranslation } from 'react-i18next';
 const BRAND = 'CubeRoot';
 const SEP = ' — ';
 
-export function useDocumentTitle(zh: string, en: string): void {
+export function useDocumentTitle(zh: string, en: string, zhHant?: string): void {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   useEffect(() => {
-    const page = (isZh ? zh : en).trim();
+    const page = (i18n.language === 'zh-Hant' ? (zhHant ?? zh) : isZh ? zh : en).trim();
     document.title = page ? `${page}${SEP}${BRAND}` : BRAND;
     return () => {
       document.title = BRAND;
     };
-  }, [zh, en, isZh]);
+  }, [zh, en, zhHant, isZh, i18n.language]);
 }

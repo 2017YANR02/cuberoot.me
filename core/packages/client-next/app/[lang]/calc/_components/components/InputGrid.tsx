@@ -15,6 +15,7 @@ import {
 import { isWR } from '../engine/wr_data';
 import { recordAndUpdate, nextCell, prevCell, navigateToCell, tryAutoAdvance, shouldAutoAdvance } from './Numpad';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 // NOTE: 头像按钮状态 — 由 CalcPage 管理，通过 props 传入
 export interface AvatarState {
@@ -311,7 +312,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
             <button
               className={`me-btn${avatarState?.[p]?.active ? ' me-active' : ''}`}
               title={avatarState?.[p]?.active
-                ? (isZh ? `切换回世界第 ${p + 1} 名` : `Switch back to World #${p + 1}`)
+                ? (i18n.language === 'zh-Hant' ? (`切換回世界第 ${p + 1} 名`) : (isZh ? `切换回世界第 ${p + 1} 名` : `Switch back to World #${p + 1}`))
                 : (tr({ zh: '搜索选手', en: 'Search for a player',
                     zhHant: "搜尋選手"
                 }))}

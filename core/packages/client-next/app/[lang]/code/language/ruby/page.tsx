@@ -497,7 +497,7 @@ export default function RubyIntroPage() {
 
   useDocumentTitle(
     'Ruby : 程序员幸福为本 · Matz / DHH / Shopify 的三十年',
-    'Ruby : Optimised for programmer happiness — three decades of Matz, DHH and Shopify',
+    'Ruby : Optimised for programmer happiness — three decades of Matz, DHH and Shopify', "Ruby : 程式設計師幸福為本 · Matz / DHH / Shopify 的三十年"
   );
 
   useEffect(() => {

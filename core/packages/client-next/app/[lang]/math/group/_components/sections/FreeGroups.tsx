@@ -689,9 +689,13 @@ function SphereSizePanel({ lang }: { lang: Lang }) {
   const barW = nSeries === 0 ? 0 : (barGroupW - barPad * 2) / nSeries;
 
   const series = useMemo(() => {
-    const arr: { id: string; data: readonly number[]; color: string; labelZh: string; labelEn: string }[] = [];
+    const arr: { id: string; data: readonly number[]; color: string; labelZh: string; labelEn: string
+        labelZhHant?: string;
+ }[] = [];
     if (showF2)   arr.push({ id: 'f2',        data: F2_SPHERE,        color: COLOR_F2,        labelZh: 'F₂ (自由群)', labelEn: 'F₂ (free group)' });
-    if (showFP)   arr.push({ id: 'fp',        data: FREE_PROD_SPHERE, color: COLOR_FREE_PROD, labelZh: 'Z/4*Z/4 (自由积)', labelEn: 'Z/4*Z/4 (free product)' });
+    if (showFP)   arr.push({ id: 'fp',        data: FREE_PROD_SPHERE, color: COLOR_FREE_PROD, labelZh: 'Z/4*Z/4 (自由积)', labelEn: 'Z/4*Z/4 (free product)',
+        labelZhHant: "Z/4*Z/4 (自由積)"
+    });
     if (showCube) arr.push({ id: 'cube',      data: CUBE_RU_SPHERE,   color: COLOR_CUBE_RU,   labelZh: '⟨R,U⟩ 魔方子群', labelEn: '⟨R,U⟩ cube subgroup' });
     return arr;
   }, [showF2, showFP, showCube]);

@@ -766,9 +766,9 @@ function PlayerBgRow({ playerId, isZh }: { playerId: 0 | 1; isZh: boolean }) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > BG_MAX_BYTES) {
-      setError(isZh
-        ? `图片太大(${(file.size / 1024 / 1024).toFixed(1)} MB),≤4MB`
-        : `Image too large (${(file.size / 1024 / 1024).toFixed(1)} MB), ≤4MB`);
+      setError(i18n.language === 'zh-Hant' ? (`圖片太大(${(file.size / 1024 / 1024).toFixed(1)} MB),≤4MB`) : (isZh
+                  ? `图片太大(${(file.size / 1024 / 1024).toFixed(1)} MB),≤4MB`
+                  : `Image too large (${(file.size / 1024 / 1024).toFixed(1)} MB), ≤4MB`));
       e.target.value = '';
       setTimeout(() => setError(null), 3000);
       return;
@@ -806,7 +806,7 @@ function PlayerBgRow({ playerId, isZh }: { playerId: 0 | 1; isZh: boolean }) {
               zhHant: "上傳背景圖"
         })}
         >
-          {isZh ? (hasImage ? '已上传' : '图片') : (hasImage ? 'Set' : 'Image')}
+          {i18n.language === 'zh-Hant' ? ((hasImage ? '已上傳' : '圖片')) : (isZh ? (hasImage ? '已上传' : '图片') : (hasImage ? 'Set' : 'Image'))}
         </button>
         <input
           ref={fileInputRef}
@@ -1064,7 +1064,7 @@ export default function BattleView({ modePill }: BattleViewProps) {
 
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('双人', 'Duo');
+  useDocumentTitle('双人', 'Duo', "雙人");
   const store = useBattleStore();
   const { mode } = store;
   const [settingsOpen, setSettingsOpen] = useState(false);

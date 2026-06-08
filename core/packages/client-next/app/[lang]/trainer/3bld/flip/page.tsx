@@ -24,6 +24,7 @@ import { posChichu, eglobalState, globalState } from '../_lib/lettering';
 import { m2pSolve, prewarm } from '../_lib/m2p-bridge';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 // 12 non-buffer-default edge stickers, one per edge piece (upstream inputCodeStr).
 const INPUT_CODE_STR = 'bdfhjlnprtxz';
@@ -31,7 +32,7 @@ const INPUT_CODE_STR = 'bdfhjlnprtxz';
 export default function FlipTrainerPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('翻棱公式训练', 'Edge Flip Trainer');
+  useDocumentTitle('翻棱公式训练', 'Edge Flip Trainer', "翻稜公式訓練");
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);
@@ -101,9 +102,9 @@ export default function FlipTrainerPage(): JSX.Element {
 
     setScrambles(out);
     setInfo(
-      isZh
-        ? `随机生成 ${out.length} 条打乱，遍历缓冲外存在两个翻棱的情况。`
-        : `Generated ${out.length} scrambles, covering every pair of flipped edges outside the buffer.`,
+      i18n.language === 'zh-Hant' ? (`隨機生成 ${out.length} 條打亂，遍歷緩衝外存在兩個翻稜的情況。`) : (isZh
+                ? `随机生成 ${out.length} 条打乱，遍历缓冲外存在两个翻棱的情况。`
+                : `Generated ${out.length} scrambles, covering every pair of flipped edges outside the buffer.`),
     );
     setBusy(false);
   }, [config.eBuf, cornerScramble, isZh]);

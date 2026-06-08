@@ -25,6 +25,7 @@ import HourChart from './charts/HourChart';
 import RecordsOverlay from './RecordsOverlay';
 import CfopCaseStatsPanel from './CfopCaseStatsPanel';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   event: EventId;
@@ -84,7 +85,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
   }, [rawSolves, range]);
 
   const evInfo = EVENTS.find(e => e.id === event);
-  const evName = evInfo ? (isZh ? evInfo.nameZh : evInfo.nameEn) : event;
+  const evName = evInfo ? (i18n.language === 'zh-Hant' ? (evInfo.nameZhHant ?? evInfo.nameZh) : (isZh ? evInfo.nameZh : evInfo.nameEn)) : event;
   const fmt = eventDefaultFormat(event);
 
   const summary = useMemo(() => summarize(solves), [solves]);
@@ -260,8 +261,12 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
 
         <div className="stats-tab-bar" role="tablist">
           {([
-            { id: 'overview' as const, labelZh: '概览', labelEn: 'Overview', Icon: LayoutDashboard },
-            { id: 'charts'   as const, labelZh: '图表', labelEn: 'Charts',   Icon: BarChart3 },
+            { id: 'overview' as const, labelZh: '概览', labelEn: 'Overview', Icon: LayoutDashboard,
+                labelZhHant: "概覽"
+            },
+            { id: 'charts'   as const, labelZh: '图表', labelEn: 'Charts',   Icon: BarChart3,
+                labelZhHant: "圖表"
+            },
             { id: 'cases'    as const, labelZh: '案例', labelEn: 'Cases',    Icon: Layers },
           ]).map(({ id, labelZh, labelEn, Icon }) => {
             const active = tab === id;
@@ -393,9 +398,9 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
           <div className="stats-charts">
             <div className="stats-chart-card">
               <p className="stats-chart-title">
-                {isZh
-                  ? `单次散点（最近 ${Math.min(solves.length, 200)} 次）`
-                  : `Per-solve scatter (last ${Math.min(solves.length, 200)})`}
+                {i18n.language === 'zh-Hant' ? (`單次散點（最近 ${Math.min(solves.length, 200)} 次）`) : (isZh
+                                                    ? `单次散点（最近 ${Math.min(solves.length, 200)} 次）`
+                                                    : `Per-solve scatter (last ${Math.min(solves.length, 200)})`)}
               </p>
               <ScatterChart
                 solves={solves}

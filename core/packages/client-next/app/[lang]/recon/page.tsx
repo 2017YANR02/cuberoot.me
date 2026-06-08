@@ -179,7 +179,7 @@ export default function ReconListPage() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('复盘', 'Reconstructions');
+  useDocumentTitle('复盘', 'Reconstructions', "覆盤");
   const {
     loading, error, filters,
     sortKey, sortDir,

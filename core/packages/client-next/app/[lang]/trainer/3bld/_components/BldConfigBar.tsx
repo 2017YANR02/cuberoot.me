@@ -10,6 +10,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { useBldConfigStore } from '../_store/bld-config-store';
 import { ORIENTATION_LABELS_ZH } from '../_lib/scheme-presets';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 // 8 corner buffer letters / 12 edge buffer letters (upstream chichu buffers).
 const CORNER_BUFFERS = ['J', 'A', 'G', 'D', 'W', 'O', 'R', 'X'];
@@ -47,9 +48,9 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
 
   const upper = (v: string) => v.toUpperCase().replace(/[^A-Z]/g, '');
 
-  const summary = isZh
-    ? `角 ${config.cBuf} / 棱 ${config.eBuf} / ${config.scheme === 'chichu' ? '彳亍' : 'Speffz'}`
-    : `C ${config.cBuf} / E ${config.eBuf} / ${config.scheme === 'chichu' ? 'Chichu' : 'Speffz'}`;
+  const summary = i18n.language === 'zh-Hant' ? (`角 ${config.cBuf} / 稜 ${config.eBuf} / ${config.scheme === 'chichu' ? '彳亍' : 'Speffz'}`) : (isZh
+      ? `角 ${config.cBuf} / 棱 ${config.eBuf} / ${config.scheme === 'chichu' ? '彳亍' : 'Speffz'}`
+      : `C ${config.cBuf} / E ${config.eBuf} / ${config.scheme === 'chichu' ? 'Chichu' : 'Speffz'}`);
 
   return (
     <div className="bld-config-bar">

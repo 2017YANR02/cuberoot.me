@@ -58,7 +58,9 @@ const BROWSER: BrowserSolver[] = [
 // 口径 = 权威 full 全模式 (CUBE_ALLOW_HUGE_TABLES=1, 无 *_NO_DIAG / *_SKIP)。
 // cnt>1 = 同规格一组; cond = 对角剪枝表, 仅全模式载, 设 *_NO_DIAG 可跳过 (各省 ~10GB).
 interface Tbl { n: string; b: number; cnt?: number; cond?: boolean }
-interface SolverTbls { move: Tbl[]; prune: Tbl[]; builtZh?: string; builtEn?: string }
+interface SolverTbls { move: Tbl[]; prune: Tbl[]; builtZh?: string; builtEn?: string
+    builtZhHant?: string;
+ }
 
 const TABLES: Record<string, SolverTbls> = {
   std: {
@@ -101,7 +103,8 @@ const TABLES: Record<string, SolverTbls> = {
     prune: [{ n: 'pt_cross', b: 139408 }, { n: 'pt_cross_C4E0', b: 54743056 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856 }],
     builtZh: 'cross 阶段用 pt_cross;xcross 用 pt_cross_C4E0;xxcross/xxxcross 复用 std 的 pair huge 表 + 叶子门控自由 F2L 棱 EO',
     builtEn: 'cross via pt_cross; xcross via pt_cross_C4E0; xxcross/xxxcross reuse std pair huge tables + leaf EO gating on free F2L edges',
-  },
+      builtZhHant: "cross 階段用 pt_cross;xcross 用 pt_cross_C4E0;xxcross/xxxcross 複用 std 的 pair huge 表 + 葉子門控自由 F2L 稜 EO"
+},
   pseudo_f2leo: {
     move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_corn3', b: 653196 }],
     prune: [{ n: 'pt_pscross_C4E0‥C4E3', b: 54743056, cnt: 4 },
@@ -110,7 +113,8 @@ const TABLES: Record<string, SolverTbls> = {
       { n: 'pt_pscross_E0E1E2', b: 1003622416 }, { n: 'pt_pscross_C4C5C6', b: 862202896 }],
     builtZh: 'combo 启发式 = max(每对 C4E, 角组 corner2/3, 棱组 edge2/3) + 叶子门控自由棱 EO;另现场建 pscross 剪枝 (~272KB, 内存) 供 cross 阶段',
     builtEn: 'combo heuristic = max(per-pair C4E, corner2/3 group, edge2/3 group) + leaf EO gating on free edges; plus pscross prune (~272KB) built in-RAM for the cross stage',
-  },
+      builtZhHant: "combo 啟發式 = max(每對 C4E, 角組 corner2/3, 稜組 edge2/3) + 葉子門控自由稜 EO;另現場建 pscross 剪枝 (~272KB, 記憶體) 供 cross 階段"
+},
 };
 
 function fmtBytes(b: number): string {

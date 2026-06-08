@@ -13,6 +13,7 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from "@/i18n/i18n-client";
 
 const PANEL_W = 220;
 const PANEL_H = 220;
@@ -54,7 +55,7 @@ function projectAndCount(pts: Pt[]): { proj: number[]; pairs: [number, number][]
 export default function LatticeProjection() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
 
   const [R, setR] = useState(3.5);
 
@@ -69,15 +70,15 @@ export default function LatticeProjection() {
     <div className="ud-proj">
       <div className="ud-proj-controls">
         <div className="ud-sandbox-slider">
-          <label>{t('多圆盘半径 R = ', 'polydisc radius R = ')}{R.toFixed(1)}</label>
+          <label>{t('多圆盘半径 R = ', 'polydisc radius R = ', "多圓盤半徑 R = ")}{R.toFixed(1)}</label>
           <input type="range" min={1.0} max={4.5} step={0.1}
             value={R} onChange={e => setR(parseFloat(e.target.value))} />
         </div>
         <div className="ud-proj-readout">
           <span><span className="ud-stat-label">|Λ ∩ W|</span> <span className="ud-stat-value">{insidePts.length}</span></span>
-          <span><span className="ud-stat-label">{t('投影点数', 'projected pts')}</span> <span className="ud-stat-value">{proj.length}</span></span>
+          <span><span className="ud-stat-label">{t('投影点数', 'projected pts', "投影點數")}</span> <span className="ud-stat-value">{proj.length}</span></span>
           <span className="is-primary">
-            <span className="ud-stat-label">{t('单位距离对', 'unit pairs')}</span>
+            <span className="ud-stat-label">{t('单位距离对', 'unit pairs', "單位距離對")}</span>
             <span className="ud-stat-value">{pairs.length}</span>
           </span>
         </div>
@@ -110,7 +111,7 @@ export default function LatticeProjection() {
         <div className="ud-proj-panel">
           <div className="ud-proj-panel-label">
             <span className="ud-proj-tag">②</span>
-            {t('切多圆盘 W', 'restrict to polydisc W')}
+            {t('切多圆盘 W', 'restrict to polydisc W', "切多圓盤 W")}
           </div>
           <svg viewBox={`0 0 ${PANEL_W} ${PANEL_H}`} className="ud-proj-svg">
             <line x1={0} y1={PANEL_H / 2} x2={PANEL_W} y2={PANEL_H / 2} stroke="var(--ud-grid)" strokeWidth="0.6" />
@@ -173,11 +174,13 @@ export default function LatticeProjection() {
       </div>
 
       <p className="ud-sandbox-hint">
-        {isZh ? (
-          <>这是 f = 2 的简化示意:格 <span className="ud-mono">Λ = ℤ[i]</span> 在 ℂ ≈ ℝ²。增加 R,有限子集 X 指数增长 (|X| ≤ e^Bf);投影后单位距离对数也指数增长 (≥ e^(γf/2) · |P|)。两者指数比就是新指数 1+δ。<strong>关键</strong>:论文里 f 可以任意大,Λⱼ 是<em>真正</em>的高维格,所以塞得下指数多的 norm-1 平移 — 而这些平移投影到 ℝ² 后,每对都是<em>精确</em>距离 1。</>
-        ) : (
-          <>This is the f = 2 cartoon: <span className="ud-mono">Λ = ℤ[i]</span> in ℂ ≈ ℝ². As R grows, |X| grows exponentially (|X| ≤ e^Bf); the unit-distance count also grows exponentially (≥ e^(γf/2) · |P|). The ratio of those exponents is the new exponent 1 + δ. <strong>The catch</strong>: in the paper f goes to infinity, Λⱼ is a <em>genuinely</em> high-dimensional lattice — that's why it fits exponentially many norm-1 translations, each of which projects to an <em>exact</em> distance-1 pair in ℝ².</>
-        )}
+        {i18n.language === 'zh-Hant' ? ((
+                        <>這是 f = 2 的簡化示意:格 <span className="ud-mono">Λ = ℤ[i]</span> 在 ℂ ≈ ℝ²。增加 R,有限子集 X 指數增長 (|X| ≤ e^Bf);投影后單位距離對數也指數增長 (≥ e^(γf/2) · |P|)。兩者指數比就是新指數 1+δ。<strong>關鍵</strong>:論文裡 f 可以任意大,Λⱼ 是<em>真正</em>的高維格,所以塞得下指數多的 norm-1 平移 — 而這些平移投影到 ℝ² 後,每對都是<em>精確</em>距離 1。</>
+                      )) : (isZh ? (
+                        <>这是 f = 2 的简化示意:格 <span className="ud-mono">Λ = ℤ[i]</span> 在 ℂ ≈ ℝ²。增加 R,有限子集 X 指数增长 (|X| ≤ e^Bf);投影后单位距离对数也指数增长 (≥ e^(γf/2) · |P|)。两者指数比就是新指数 1+δ。<strong>关键</strong>:论文里 f 可以任意大,Λⱼ 是<em>真正</em>的高维格,所以塞得下指数多的 norm-1 平移 — 而这些平移投影到 ℝ² 后,每对都是<em>精确</em>距离 1。</>
+                      ) : (
+                        <>This is the f = 2 cartoon: <span className="ud-mono">Λ = ℤ[i]</span> in ℂ ≈ ℝ². As R grows, |X| grows exponentially (|X| ≤ e^Bf); the unit-distance count also grows exponentially (≥ e^(γf/2) · |P|). The ratio of those exponents is the new exponent 1 + δ. <strong>The catch</strong>: in the paper f goes to infinity, Λⱼ is a <em>genuinely</em> high-dimensional lattice — that's why it fits exponentially many norm-1 translations, each of which projects to an <em>exact</em> distance-1 pair in ℝ².</>
+                      ))}
       </p>
     </div>
   );

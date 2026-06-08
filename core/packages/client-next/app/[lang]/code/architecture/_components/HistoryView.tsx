@@ -10,7 +10,9 @@ import COMMITS_DATA from '../timeline_commits.json';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
 
-interface DayEntry { date: string; zh: string; en: string; }
+interface DayEntry { date: string; zh: string; en: string;
+    zhHant?: string;
+ }
 const DAYS = COMMITS_DATA as DayEntry[];
 const CAL_MONTHS = ['2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05'];
 
@@ -87,7 +89,7 @@ function CalMonth({ ym, byDate, lang, expanded, onToggle }: {
           return (
             <>
               <div className="cal-day">{day.getDate()}</div>
-              {entry && <div className="cal-note">{(i18n.language.startsWith('zh') ? entry.zh : entry.en)}</div>}
+              {entry && <div className="cal-note">{(i18n.language === 'zh-Hant' ? (entry.zhHant ?? entry.zh) : (i18n.language.startsWith('zh') ? entry.zh : entry.en))}</div>}
             </>
           );
         }}

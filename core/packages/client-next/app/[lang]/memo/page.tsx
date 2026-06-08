@@ -19,17 +19,19 @@ interface MemoCard {
   Icon: LucideIcon;
   zh: string;
   en: string;
+    zhHant?: string;
 }
 
 const CARDS: MemoCard[] = [
-  { id: 'colpi', href: '/memo/colpi', Icon: Brain, zh: '字母对', en: 'CoLPI'
+  { id: 'colpi', href: '/memo/colpi', Icon: Brain, zh: '字母对', en: 'CoLPI',
+      zhHant: "字母對"
 },
 ];
 
 export default function MemoLandingPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('记忆', 'Memo');
+  useDocumentTitle('记忆', 'Memo', "記憶");
 
   return (
     <div className="landing-page">
@@ -43,7 +45,7 @@ export default function MemoLandingPage() {
             <div className="card-icon">
               <c.Icon size={24} strokeWidth={1.5} />
             </div>
-            <div className="card-name">{(i18n.language.startsWith('zh') ? c.zh : c.en)}</div>
+            <div className="card-name">{(i18n.language === 'zh-Hant' ? (c.zhHant ?? c.zh) : (i18n.language.startsWith('zh') ? c.zh : c.en))}</div>
           </Link>
         ))}
       </div>

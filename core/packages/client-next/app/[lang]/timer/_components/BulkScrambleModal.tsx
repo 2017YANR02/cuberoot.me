@@ -7,6 +7,7 @@ import { generateScramble } from '../_lib/scramble';
 import { warmup333 } from '../_lib/scramble/kociemba/random_state';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   defaultEvent: EventId;
@@ -132,7 +133,7 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
               style={selectStyle}
             >
               {EVENTS.filter(e => e.group !== 'll' && e.group !== 'cfop' && e.id !== 'custom').map(ev => (
-                <option key={ev.id} value={ev.id}>{isZh ? ev.nameZh : ev.nameEn}</option>
+                <option key={ev.id} value={ev.id}>{i18n.language === 'zh-Hant' ? (ev.nameZhHant ?? ev.nameZh) : (isZh ? ev.nameZh : ev.nameEn)}</option>
               ))}
             </select>
           </label>

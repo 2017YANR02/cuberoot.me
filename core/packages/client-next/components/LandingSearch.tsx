@@ -265,7 +265,7 @@ export default function LandingSearch({ cards, lang }: Props) {
         {!expandedPersons && personMatches.length > INITIAL_RENDER_CAP && (
           <HeaderMore
             overflow={personMatches.length - INITIAL_RENDER_CAP}
-            title={isZh ? `展开全部 ${personMatches.length} 位` : `Expand all ${personMatches.length}`}
+            title={i18n.language === 'zh-Hant' ? (`展開全部 ${personMatches.length} 位`) : (isZh ? `展开全部 ${personMatches.length} 位` : `Expand all ${personMatches.length}`)}
             onClick={() => setExpandedPersons(true)}
           />
         )}
@@ -401,7 +401,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                   className="landing-search-item"
                   onClick={closeAfter}
                 >
-                  <span className="landing-search-item-name">{isZh ? `${yearMatch} 年比赛日历` : `${yearMatch} competitions`}</span>
+                  <span className="landing-search-item-name">{i18n.language === 'zh-Hant' ? (`${yearMatch} 年比賽日曆`) : (isZh ? `${yearMatch} 年比赛日历` : `${yearMatch} competitions`)}</span>
                   <span className="landing-search-item-meta">{tr({ zh: '查看该年所有比赛', en: 'All competitions that year',
                       zhHant: "檢視該年所有比賽"
                 })}</span>
@@ -423,7 +423,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                   className="landing-search-item"
                   onClick={() => goPasteIntent(pasteIntent)}
                 >
-                  <span className="landing-search-item-name">{isZh ? pasteIntent.labelZh : pasteIntent.labelEn}</span>
+                  <span className="landing-search-item-name">{i18n.language === 'zh-Hant' ? (pasteIntent.labelZhHant ?? pasteIntent.labelZh) : (isZh ? pasteIntent.labelZh : pasteIntent.labelEn)}</span>
                   <span className="landing-search-item-meta">
                     {query.trim().slice(0, 60)}{query.trim().length > 60 ? '…' : ''}
                   </span>
@@ -452,8 +452,8 @@ export default function LandingSearch({ cards, lang }: Props) {
                     className="landing-search-item"
                     onClick={() => goCard(c)}
                   >
-                    <span className="landing-search-item-name">{isZh ? c.nameZh : c.nameEn}</span>
-                    <span className="landing-search-item-meta">{isZh ? c.sectionTitleZh : c.sectionTitleEn}</span>
+                    <span className="landing-search-item-name">{i18n.language === 'zh-Hant' ? (c.nameZhHant ?? c.nameZh) : (isZh ? c.nameZh : c.nameEn)}</span>
+                    <span className="landing-search-item-meta">{i18n.language === 'zh-Hant' ? (c.sectionTitleZhHant ?? c.sectionTitleZh) : (isZh ? c.sectionTitleZh : c.sectionTitleEn)}</span>
                   </button>
                 ))}
               </div>
@@ -474,7 +474,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
-                    <span className="landing-search-item-name">{(i18n.language.startsWith('zh') ? it.zh : it.en)}</span>
+                    <span className="landing-search-item-name">{(i18n.language === 'zh-Hant' ? (it.zhHant ?? it.zh) : (i18n.language.startsWith('zh') ? it.zh : it.en))}</span>
                   </Link>
                 ))}
               </div>
@@ -497,7 +497,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
-                    <span className="landing-search-item-name">{(i18n.language.startsWith('zh') ? it.zh : it.en)}</span>
+                    <span className="landing-search-item-name">{(i18n.language === 'zh-Hant' ? (it.zhHant ?? it.zh) : (i18n.language.startsWith('zh') ? it.zh : it.en))}</span>
                   </Link>
                 ))}
               </div>
@@ -510,7 +510,7 @@ export default function LandingSearch({ cards, lang }: Props) {
               <section key={cat.nameEn} className="landing-search-section">
                 <div className="landing-search-section-header">
                   {Icon && <Icon size={14} strokeWidth={1.75} />}
-                  <h3>{isZh ? cat.nameZh : cat.nameEn}</h3>
+                  <h3>{i18n.language === 'zh-Hant' ? (cat.nameZhHant ?? cat.nameZh) : (isZh ? cat.nameZh : cat.nameEn)}</h3>
                 </div>
                 <div className="landing-search-grid">
                   {items.map(it => {
@@ -524,13 +524,13 @@ export default function LandingSearch({ cards, lang }: Props) {
                           className="landing-search-item"
                           onClick={closeAfter}
                         >
-                          <span className="landing-search-item-name">{isZh ? s.titleZh : s.titleEn}</span>
+                          <span className="landing-search-item-name">{i18n.language === 'zh-Hant' ? (s.titleZhHant ?? s.titleZh) : (isZh ? s.titleZh : s.titleEn)}</span>
                         </Link>
                       );
                     }
                     const { parent, metric } = it;
-                    const parentTitle = isZh ? parent.titleZh : parent.titleEn;
-                    const metricLabel = METRIC_LABEL_OVERRIDE[metric.labelEn] ?? (isZh ? metric.labelZh : metric.labelEn);
+                    const parentTitle = i18n.language === 'zh-Hant' ? (parent.titleZhHant ?? parent.titleZh) : (isZh ? parent.titleZh : parent.titleEn);
+                    const metricLabel = METRIC_LABEL_OVERRIDE[metric.labelEn] ?? (i18n.language === 'zh-Hant' ? (metric.labelZhHant ?? metric.labelZh) : (isZh ? metric.labelZh : metric.labelEn));
                     return (
                       <Link
                         key={`m:${parent.id}:${metric.id}`}
@@ -565,7 +565,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
-                    <span className="landing-search-item-name">{isZh ? a.titleZh : a.titleEn}</span>
+                    <span className="landing-search-item-name">{i18n.language === 'zh-Hant' ? (a.titleZhHant ?? a.titleZh) : (isZh ? a.titleZh : a.titleEn)}</span>
                   </Link>
                 ))}
               </div>
@@ -607,7 +607,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {!expandedGlossary && glossaryMatches.length > INITIAL_RENDER_CAP && (
                   <HeaderMore
                     overflow={glossaryMatches.length - INITIAL_RENDER_CAP}
-                    title={isZh ? `展开全部 ${glossaryMatches.length} 条` : `Expand all ${glossaryMatches.length}`}
+                    title={i18n.language === 'zh-Hant' ? (`展開全部 ${glossaryMatches.length} 條`) : (isZh ? `展开全部 ${glossaryMatches.length} 条` : `Expand all ${glossaryMatches.length}`)}
                     onClick={() => setExpandedGlossary(true)}
                   />
                 )}
@@ -666,7 +666,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {compMatches.length > COMP_INITIAL_CAP && (
                   <HeaderMore
                     overflow={compMatches.length - COMP_INITIAL_CAP}
-                    title={isZh ? `查看全部 ${compMatches.length} 场` : `View all ${compMatches.length}`}
+                    title={i18n.language === 'zh-Hant' ? (`檢視全部 ${compMatches.length} 場`) : (isZh ? `查看全部 ${compMatches.length} 场` : `View all ${compMatches.length}`)}
                     href={langHref(`/wca/comp`, `view=list&q=${encodeURIComponent(q)}`)}
                     onClick={closeAfter}
                   />
@@ -708,7 +708,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {!expandedRecons && reconMatches.length > RECON_INITIAL_CAP && (
                   <HeaderMore
                     overflow={reconMatches.length - RECON_INITIAL_CAP}
-                    title={isZh ? `展开全部 ${reconMatches.length} 条` : `Expand all ${reconMatches.length}`}
+                    title={i18n.language === 'zh-Hant' ? (`展開全部 ${reconMatches.length} 條`) : (isZh ? `展开全部 ${reconMatches.length} 条` : `Expand all ${reconMatches.length}`)}
                     onClick={() => setExpandedRecons(true)}
                   />
                 )}

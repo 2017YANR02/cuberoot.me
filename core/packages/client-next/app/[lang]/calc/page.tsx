@@ -28,6 +28,7 @@ import AverageMode from './_components/average_mode/AverageMode';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './calc.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 type CalcTab = 'compare' | 'average';
 
@@ -49,7 +50,7 @@ async function requestWakeLock(): Promise<void> {
 export function CalcPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('成绩计算器', 'Score Calculator');
+  useDocumentTitle('成绩计算器', 'Score Calculator', "成績計算器");
   const event = useCalcStore(s => s.event);
   const loadFromUrl = useCalcStore(s => s.loadFromUrl);
   const initDone = useRef(false);
@@ -325,9 +326,9 @@ export function CalcPage() {
         next[p] = { active: false };
         return next;
       });
-      alert(isZh
-        ? `未找到 ${person.wcaId} 该项目的数据。`
-        : 'No data found for ' + person.wcaId + ' in this event.');
+      alert(i18n.language === 'zh-Hant' ? (`未找到 ${person.wcaId} 該專案的資料。`) : (isZh
+                  ? `未找到 ${person.wcaId} 该项目的数据。`
+                  : 'No data found for ' + person.wcaId + ' in this event.'));
       return;
     }
 

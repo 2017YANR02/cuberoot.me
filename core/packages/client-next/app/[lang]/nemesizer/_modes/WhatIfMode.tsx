@@ -13,6 +13,7 @@ import {
   type WhatIfResponse,
 } from '../_data/nemesizerApi';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props { isZh: boolean; }
 
@@ -184,9 +185,9 @@ export default function WhatIfMode({ isZh }: Props) {
       {result && (
         <>
           <div className="nemesizer-results-summary">
-            {isZh
-              ? `原 ${result.origCount}  →  假设后 ${result.newCount}`
-              : `Original ${result.origCount}  →  After what-if ${result.newCount}`}
+            {i18n.language === 'zh-Hant' ? (`原 ${result.origCount}  →  假設後 ${result.newCount}`) : (isZh
+                                    ? `原 ${result.origCount}  →  假设后 ${result.newCount}`
+                                    : `Original ${result.origCount}  →  After what-if ${result.newCount}`)}
             {resultLoading && <span className="nemesizer-small-muted" style={{ marginLeft: 8 }}>{tr({ zh: '更新中…', en: 'updating…' })}</span>}
           </div>
           <div className="nemesizer-table-wrap">

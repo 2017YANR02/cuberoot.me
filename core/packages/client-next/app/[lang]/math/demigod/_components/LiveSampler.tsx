@@ -18,6 +18,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { randomScrambleForEvent } from 'cubing/scramble';
 import { TeX } from '../../god/_components/Tex';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   isZh: boolean;
@@ -31,7 +32,7 @@ function countHTM(scramble: string): number {
 }
 
 export default function LiveSampler({ isZh, onSamples }: Props) {
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const [running, setRunning] = useState(false);
   const [target, setTarget] = useState(500);
   const [counts, setCounts] = useState<Map<number, number>>(() => new Map());
@@ -128,7 +129,7 @@ export default function LiveSampler({ isZh, onSamples }: Props) {
           className={`dg-sampler-btn ${!running ? 'is-primary' : ''}`}
           onClick={running ? stop : start}
         >
-          {running ? t('停止', 'Stop') : t(`再采样 ${target} 个`, `Sample +${target}`)}
+          {running ? t('停止', 'Stop') : t(`再采样 ${target} 个`, `Sample +${target}`, `再取樣 ${target} 個`)}
         </button>
         <button type="button" className="dg-sampler-btn" onClick={reset} disabled={total === 0}>
           {t('重置', 'Reset')}
@@ -147,18 +148,18 @@ export default function LiveSampler({ isZh, onSamples }: Props) {
 
       {error && (
         <div className="dg-callout is-warn" style={{ marginTop: 0 }}>
-          <span className="dg-callout-h">{t('错误', 'Error')}</span>
+          <span className="dg-callout-h">{t('错误', 'Error', "錯誤")}</span>
           {error}
         </div>
       )}
 
       <div className="dg-sampler-stats">
         <div>
-          <div className="dg-sampler-stat-label">{t('样本量 |S|', 'Samples |S|')}</div>
+          <div className="dg-sampler-stat-label">{t('样本量 |S|', 'Samples |S|', "樣本量 |S|")}</div>
           <div className="dg-sampler-stat-val">{total.toLocaleString('en-US')}</div>
         </div>
         <div>
-          <div className="dg-sampler-stat-label">{t('经验均值 μ̂', 'Running μ̂')}</div>
+          <div className="dg-sampler-stat-label">{t('经验均值 μ̂', 'Running μ̂', "經驗均值 μ̂")}</div>
           <div className={`dg-sampler-stat-val ${total >= 200 && Math.abs(mean - 18.32) < 0.2 ? 'is-conv' : ''}`}>
             {total > 0 ? mean.toFixed(4) : '—'}
           </div>
@@ -173,7 +174,7 @@ export default function LiveSampler({ isZh, onSamples }: Props) {
           <div className="dg-sampler-stat-label">{t('Hoeffding fail (t=0.1, C=20)', 'Hoeffding fail (t=0.1, C=20)')}</div>
           <div className="dg-sampler-stat-val">
             {total > 0
-              ? (fail >= 1 ? t('> 1 (界还无效)', '> 1 (vacuous)')
+              ? (fail >= 1 ? t('> 1 (界还无效)', '> 1 (vacuous)', "> 1 (界還無效)")
                 : fail < 1e-6 ? fail.toExponential(2) : fail.toFixed(4))
               : '—'}
           </div>
@@ -182,7 +183,7 @@ export default function LiveSampler({ isZh, onSamples }: Props) {
 
       {latest && (
         <div style={{ marginTop: '0.8rem', fontSize: '0.84rem', fontFamily: 'var(--dg-mono)' }}>
-          <span style={{ color: 'var(--dg-text-mute)' }}>{t('最新样本: ', 'Latest: ')}</span>
+          <span style={{ color: 'var(--dg-text-mute)' }}>{t('最新样本: ', 'Latest: ', "最新樣本: ")}</span>
           <span style={{ color: 'var(--dg-text)' }}>d = {latest.d}</span>
           {' · '}
           <span style={{ color: 'var(--dg-text-sub)', wordBreak: 'break-all' }}>{latest.scramble}</span>
@@ -190,11 +191,13 @@ export default function LiveSampler({ isZh, onSamples }: Props) {
       )}
 
       <p className="dg-sampler-note">
-        {isZh ? (
-          <>实现细节:每个 sample 走 cubing.js 的 <code>randomScrambleForEvent('333')</code> —— 在 worker 内挑 uniform 随机态并跑 Kociemba 求解,把解长度当 <TeX src="d(s)" /> 上界。注意 cubing.js 把 WCA scramble 截到 <TeX src="\ge 18" /> 步,故经验均值会略偏高;真实 <TeX src="\mu" /> 约 18.32。每个 sample ~50–300 ms。</>
-        ) : (
-          <>How it works: each sample calls cubing.js's <code>randomScrambleForEvent('333')</code> — picks a uniformly random state in a worker, solves it with Kociemba, returns the solution length as a bound on <TeX src="d(s)" />. cubing.js clamps WCA scrambles to <TeX src="\ge 18" /> moves so the running mean here biases slightly upward; the true <TeX src="\mu" /> is ≈ 18.32. ~50–300 ms per sample.</>
-        )}
+        {i18n.language === 'zh-Hant' ? ((
+                        <>實現細節:每個 sample 走 cubing.js 的 <code>randomScrambleForEvent('333')</code> —— 在 worker 內挑 uniform 隨機態並跑 Kociemba 求解,把解長度當 <TeX src="d(s)" /> 上界。注意 cubing.js 把 WCA scramble 截到 <TeX src="\ge 18" /> 步,故經驗均值會略偏高;真實 <TeX src="\mu" /> 約 18.32。每個 sample ~50–300 ms。</>
+                      )) : (isZh ? (
+                        <>实现细节:每个 sample 走 cubing.js 的 <code>randomScrambleForEvent('333')</code> —— 在 worker 内挑 uniform 随机态并跑 Kociemba 求解,把解长度当 <TeX src="d(s)" /> 上界。注意 cubing.js 把 WCA scramble 截到 <TeX src="\ge 18" /> 步,故经验均值会略偏高;真实 <TeX src="\mu" /> 约 18.32。每个 sample ~50–300 ms。</>
+                      ) : (
+                        <>How it works: each sample calls cubing.js's <code>randomScrambleForEvent('333')</code> — picks a uniformly random state in a worker, solves it with Kociemba, returns the solution length as a bound on <TeX src="d(s)" />. cubing.js clamps WCA scrambles to <TeX src="\ge 18" /> moves so the running mean here biases slightly upward; the true <TeX src="\mu" /> is ≈ 18.32. ~50–300 ms per sample.</>
+                      ))}
       </p>
     </div>
   );

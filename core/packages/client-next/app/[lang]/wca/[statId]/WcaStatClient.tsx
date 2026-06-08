@@ -30,6 +30,7 @@ import Top10HistoryPage from '@/components/wca-stats/Top10HistoryPage';
 import type { Metric as Top10Metric } from '@/lib/top10-axis';
 import '../_wca_stats.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface StatHeader {
   key: string;
@@ -50,6 +51,7 @@ interface StatPanel {
   labelZh: string;
   header: StatHeader[];
   sections: StatSection[];
+    labelZhHant?: string;
 }
 
 interface SourcePanel {
@@ -57,6 +59,7 @@ interface SourcePanel {
   labelEn: string;
   labelZh: string;
   panels: StatPanel[];
+    labelZhHant?: string;
 }
 
 interface MetricPanel {
@@ -65,6 +68,7 @@ interface MetricPanel {
   labelZh: string;
   panels?: StatPanel[];
   sourcePanels?: SourcePanel[];
+    labelZhHant?: string;
 }
 
 interface MetricGroup {
@@ -309,7 +313,7 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
       {remaining > 0 && (
         <div className="wca-stats-more">
           <button type="button" className="wca-stats-more-btn" onClick={() => setVisible(v => v + PAGE_SIZE * 3)}>
-            {isZh ? `显示更多（还有 ${remaining} 行）` : `Show more (${remaining} left)`}
+            {i18n.language === 'zh-Hant' ? (`顯示更多（還有 ${remaining} 行）`) : (isZh ? `显示更多（还有 ${remaining} 行）` : `Show more (${remaining} left)`)}
           </button>
           <button type="button" className="wca-stats-more-btn" onClick={() => setVisible(filtered.length)}>
             {tr({ zh: '全部显示', en: 'Show all',
@@ -461,7 +465,7 @@ function SectionsView({ header, sections, searchTerm, isZh, selectedEvent }: {
               className={`wca-stats-tab ${selectedMetric === metric ? 'active' : ''}`}
               onClick={() => setSelectedMetric(selectedMetric === metric ? null : metric)}
             >
-              {isZh ? (metric === 'Single' ? '单次' : metric === 'Average' ? '平均' : metric) : metric}
+              {i18n.language === 'zh-Hant' ? ((metric === 'Single' ? '單次' : metric === 'Average' ? '平均' : metric)) : (isZh ? (metric === 'Single' ? '单次' : metric === 'Average' ? '平均' : metric) : metric)}
             </button>
           ))}
         </div>
@@ -716,7 +720,7 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSe
               className={`wca-stats-tab ${m === activeMetric ? 'active' : ''}`}
               onClick={() => setMetric(m)}
             >
-              {isZh ? (m === 'Single' ? '单次' : m === 'Average' ? '平均' : m) : m}
+              {i18n.language === 'zh-Hant' ? ((m === 'Single' ? '單次' : m === 'Average' ? '平均' : m)) : (isZh ? (m === 'Single' ? '单次' : m === 'Average' ? '平均' : m) : m)}
             </button>
           ))}
         </div>
@@ -728,7 +732,7 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSe
             className={`wca-stats-tab wca-stats-panel-tab ${i === activePanel ? 'active' : ''}`}
             onClick={() => onSetActivePanel(i)}
           >
-            {isZh ? p.labelZh : p.labelEn}
+            {i18n.language === 'zh-Hant' ? (p.labelZhHant ?? p.labelZh) : (isZh ? p.labelZh : p.labelEn)}
           </button>
         ))}
         {showDedup && (
@@ -823,7 +827,7 @@ function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent, activ
             className={`wca-stats-tab ${i === activeSource ? 'active' : ''}`}
             onClick={() => setActiveSource(i)}
           >
-            {isZh ? sp.labelZh : sp.labelEn}
+            {i18n.language === 'zh-Hant' ? (sp.labelZhHant ?? sp.labelZh) : (isZh ? sp.labelZh : sp.labelEn)}
           </button>
         ))}
       </div>
@@ -899,7 +903,7 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
       'Ao25': 'Ao25', 'Ao50': 'Ao50', 'Ao100': 'Ao100', 'Ao1000': 'Ao1000',
     };
     const resolveLabel = (mp: MetricPanel) =>
-      LABEL_OVERRIDE[mp.labelEn] ?? (isZh ? mp.labelZh : mp.labelEn);
+      LABEL_OVERRIDE[mp.labelEn] ?? (i18n.language === 'zh-Hant' ? (mp.labelZhHant ?? mp.labelZh) : (isZh ? mp.labelZh : mp.labelEn));
 
     if (metricGroups) {
       return metricGroups.flatMap(g => g.items).map(itemId => {

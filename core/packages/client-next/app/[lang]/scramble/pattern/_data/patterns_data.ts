@@ -72,16 +72,22 @@ export function twistyPuzzleId(size: PuzzleSize): string {
   return size;
 }
 
-export const CATEGORY_LABEL: Record<Category, { zh: string; en: string }> = {
-  symmetry:      { zh: '对称', en: 'Symmetry'
+export const CATEGORY_LABEL: Record<Category, { zh: string; en: string
+        zhHant?: string;
+ }> = {
+  symmetry:      { zh: '对称', en: 'Symmetry',
+      zhHant: "對稱"
 },
   'cube-in-cube':{ zh: '立方中立方', en: 'Cube-in-Cube' },
-  dots:          { zh: '点阵', en: 'Dots'
+  dots:          { zh: '点阵', en: 'Dots',
+      zhHant: "點陣"
 },
-  stripes:       { zh: '条纹', en: 'Stripes'
+  stripes:       { zh: '条纹', en: 'Stripes',
+      zhHant: "條紋"
 },
   crosses:       { zh: '十字', en: 'Crosses' },
-  twists:        { zh: '扭转', en: 'Twists'
+  twists:        { zh: '扭转', en: 'Twists',
+      zhHant: "扭轉"
 },
   other:         { zh: '其他', en: 'Other' },
 };

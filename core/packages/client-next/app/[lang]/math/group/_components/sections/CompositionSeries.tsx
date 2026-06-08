@@ -646,6 +646,9 @@ interface GroupPairSpec {
   factorsEn: string;
   distinctZh: string;
   distinctEn: string;
+    pairZhHant?: string;
+    factorsZhHant?: string;
+    distinctZhHant?: string;
 }
 
 const PAIRS: Record<PairKey, GroupPairSpec> = {
@@ -658,7 +661,10 @@ const PAIRS: Record<PairKey, GroupPairSpec> = {
     factorsEn: 'Both have factors {C₂, C₃}',
     distinctZh: 'ℤ/6 交换，S₃ 非交换 → 不同构',
     distinctEn: 'ℤ/6 is abelian, S₃ is not → not isomorphic',
-  },
+      pairZhHant: "ℤ/6 與 S₃",
+      factorsZhHant: "兩者因子均為 {C₂, C₃}",
+      distinctZhHant: "ℤ/6 交換，S₃ 非交換 → 不同構"
+},
   'D4-Q8': {
     groupA: 'D4',
     groupB: 'Q8',
@@ -668,7 +674,10 @@ const PAIRS: Record<PairKey, GroupPairSpec> = {
     factorsEn: 'Both have factors {C₂, C₂, C₂}',
     distinctZh: 'D₄ 有 5 个阶-2 元素，Q₈ 只有 1 个 → 不同构',
     distinctEn: 'D₄ has 5 elements of order 2; Q₈ has only 1 → not isomorphic',
-  },
+      pairZhHant: "D₄ 與 Q₈",
+      factorsZhHant: "兩者因子均為 {C₂, C₂, C₂}",
+      distinctZhHant: "D₄ 有 5 個階-2 元素，Q₈ 只有 1 個 → 不同構"
+},
 };
 
 // Special Z/6 data (subset of Z/12 data)
@@ -921,6 +930,7 @@ interface CubeFactorBlock {
   color: string;
   tooltipZh: string;
   tooltipEn: string;
+    tooltipZhHant?: string;
 }
 
 const CUBE_FACTORS: CubeFactorBlock[] = [
@@ -928,27 +938,32 @@ const CUBE_FACTORS: CubeFactorBlock[] = [
     key: 'A8', label: 'A₈', order: 20160n, count: 1, color: '#8B2E3C',
     tooltipZh: 'A₈: 8 个角块的偶置换群（n=8≥5，非交换单群）|A₈|=2⁶·3²·5·7=20160',
     tooltipEn: 'A₈: even permutations of 8 corners (n=8≥5, nonabelian simple). |A₈|=2⁶·3²·5·7=20160',
-  },
+      tooltipZhHant: "A₈: 8 個角塊的偶置換群（n=8≥5，非交換單群）|A₈|=2⁶·3²·5·7=20160"
+},
   {
     key: 'A12', label: 'A₁₂', order: 239500800n, count: 1, color: '#2A4D69',
     tooltipZh: 'A₁₂: 12 条棱块的偶置换群（n=12≥5，非交换单群）|A₁₂|=2⁹·3⁵·5²·7·11=239500800',
     tooltipEn: 'A₁₂: even permutations of 12 edges (n=12≥5, nonabelian simple). |A₁₂|=2⁹·3⁵·5²·7·11=239500800',
-  },
+      tooltipZhHant: "A₁₂: 12 條稜塊的偶置換群（n=12≥5，非交換單群）|A₁₂|=2⁹·3⁵·5²·7·11=239500800"
+},
   {
     key: 'C3', label: 'C₃', order: 3n, count: 7, color: '#3F7050',
     tooltipZh: 'C₃ × 7: 7 个角块朝向（总转角≡0 mod 3，去掉一个自由度，剩 7 个独立 C₃）',
     tooltipEn: 'C₃ × 7: 7 corner-orientation degrees of freedom (total-twist=0 mod 3 removes one, leaving 7 independent C₃)',
-  },
+      tooltipZhHant: "C₃ × 7: 7 個角塊朝向（總轉角≡0 mod 3，去掉一個自由度，剩 7 個獨立 C₃）"
+},
   {
     key: 'C2_edge', label: 'C₂', order: 2n, count: 11, color: '#B8860B',
     tooltipZh: 'C₂ × 11: 11 条棱块翻转（总翻转≡0 mod 2，去掉一个，剩 11 个独立 C₂）',
     tooltipEn: 'C₂ × 11: 11 edge-flip degrees of freedom (total-flip=0 mod 2 removes one, leaving 11)',
-  },
+      tooltipZhHant: "C₂ × 11: 11 條稜塊翻轉（總翻轉≡0 mod 2，去掉一個，剩 11 個獨立 C₂）"
+},
   {
     key: 'C2_parity', label: 'C₂', order: 2n, count: 1, color: '#6B4E9C',
     tooltipZh: 'C₂ × 1: 奇偶约束（角和棱的置换奇偶性必须相同，外层 ⋊ ℤ₂）',
     tooltipEn: 'C₂ × 1: the parity constraint (corner and edge permutation parities must agree; the outer ⋊ ℤ₂)',
-  },
+      tooltipZhHant: "C₂ × 1: 奇偶約束（角和稜的置換奇偶性必須相同，外層 ⋊ ℤ₂）"
+},
 ];
 
 // Total product: |A8|·|A12|·3^7·2^12 = |G|

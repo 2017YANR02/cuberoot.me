@@ -967,9 +967,9 @@ export default function CompDetailPage() {
           zhHant: "載入中…"
     });
       const f = progress.filter ? ` · ${progress.filter}` : '';
-      const map: Record<string, string> = isZh
-        ? { 'meta': '读取比赛元数据', 'cubing.results': '加载成绩', 'cubing.filter': '加载分组成员', 'wca.fetch': '从 WCA 拉取', 'wca.transform': '解析 WCA 数据', 'wca_live.results': '从 WCA Live 拉取', 'wca_db.query': '从 WCA 数据库读取', 'wca_db.transform': '解析 WCA 数据' }
-        : { 'meta': 'Reading metadata', 'cubing.results': 'Loading results', 'cubing.filter': 'Loading filters', 'wca.fetch': 'Fetching WCA data', 'wca.transform': 'Parsing WCA data', 'wca_live.results': 'Loading from WCA Live', 'wca_db.query': 'Querying WCA database', 'wca_db.transform': 'Parsing WCA data' };
+      const map: Record<string, string> = i18n.language === 'zh-Hant' ? ({ 'meta': '讀取比賽後設資料', 'cubing.results': '載入成績', 'cubing.filter': '載入分組成員', 'wca.fetch': '從 WCA 拉取', 'wca.transform': '解析 WCA 資料', 'wca_live.results': '從 WCA Live 拉取', 'wca_db.query': '從 WCA 資料庫讀取', 'wca_db.transform': '解析 WCA 資料' }) : (isZh
+              ? { 'meta': '读取比赛元数据', 'cubing.results': '加载成绩', 'cubing.filter': '加载分组成员', 'wca.fetch': '从 WCA 拉取', 'wca.transform': '解析 WCA 数据', 'wca_live.results': '从 WCA Live 拉取', 'wca_db.query': '从 WCA 数据库读取', 'wca_db.transform': '解析 WCA 数据' }
+              : { 'meta': 'Reading metadata', 'cubing.results': 'Loading results', 'cubing.filter': 'Loading filters', 'wca.fetch': 'Fetching WCA data', 'wca.transform': 'Parsing WCA data', 'wca_live.results': 'Loading from WCA Live', 'wca_db.query': 'Querying WCA database', 'wca_db.transform': 'Parsing WCA data' });
       return (map[progress.step] || progress.step) + f;
     })();
     return (
@@ -1048,9 +1048,15 @@ export default function CompDetailPage() {
 
   const filterOptions = [
     { value: 'all', labelZh: '全部', labelEn: 'All' },
-    { value: 'females', labelZh: '女选手', labelEn: 'Females' },
-    { value: 'children', labelZh: '儿童组', labelEn: 'Children' },
-    { value: 'newcomers', labelZh: '新人组', labelEn: 'New Comers' },
+    { value: 'females', labelZh: '女选手', labelEn: 'Females',
+        labelZhHant: "女選手"
+    },
+    { value: 'children', labelZh: '儿童组', labelEn: 'Children',
+        labelZhHant: "兒童組"
+    },
+    { value: 'newcomers', labelZh: '新人组', labelEn: 'New Comers',
+        labelZhHant: "新人組"
+    },
   ];
 
   return (
@@ -1177,7 +1183,7 @@ export default function CompDetailPage() {
             className={`comp-view-tab${(!isPsych && !isSchedule) ? ' is-active' : ''}`}
             onClick={() => onChangeView('live')}
           >
-            {isZh ? '成绩' : (isWca ? 'Results' : 'Live')}
+            {i18n.language === 'zh-Hant' ? ('成績') : (isZh ? '成绩' : (isWca ? 'Results' : 'Live'))}
           </button>
           <button
             type="button"
@@ -1226,7 +1232,7 @@ export default function CompDetailPage() {
                   onChange={e => onChangeFilter(e.target.value)}
                 >
                   {filterOptions.map(f => (
-                    <option key={f.value} value={f.value}>{isZh ? f.labelZh : f.labelEn}</option>
+                    <option key={f.value} value={f.value}>{i18n.language === 'zh-Hant' ? (f.labelZhHant ?? f.labelZh) : (isZh ? f.labelZh : f.labelEn)}</option>
                   ))}
                 </select>
               )}
@@ -1424,7 +1430,7 @@ function PastRowsPopover({
         type="button"
         className="comp-info-past-trigger"
         onClick={() => setOpen(o => !o)}
-        aria-label={isZh ? `已过期 ${rows.length} 项` : `${rows.length} past`}
+        aria-label={i18n.language === 'zh-Hant' ? (`已過期 ${rows.length} 項`) : (isZh ? `已过期 ${rows.length} 项` : `${rows.length} past`)}
       >
         <Info size={14} />
       </button>
@@ -1910,7 +1916,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
                     key={eventIds[j]}
                     className={`comp-sor-evcell${r.missing ? ' is-missing' : r.rank <= 3 ? ` podium-${r.rank}` : ''}`}
                     title={r.missing
-                      ? (isZh ? `未报名 ${eventDisplayName(eventIds[j]!, true)},按「参赛人数+1」= ${r.rank} 计入` : `Not registered for ${eventDisplayName(eventIds[j]!, false)} — counted as participants+1 = ${r.rank}`)
+                      ? (i18n.language === 'zh-Hant' ? (`未報名 ${eventDisplayName(eventIds[j]!, true)},按「參賽人數+1」= ${r.rank} 計入`) : (isZh ? `未报名 ${eventDisplayName(eventIds[j]!, true)},按「参赛人数+1」= ${r.rank} 计入` : `Not registered for ${eventDisplayName(eventIds[j]!, false)} — counted as participants+1 = ${r.rank}`))
                       : undefined}
                   >{r.missing ? `(${r.rank})` : r.rank}</td>
                 ))}

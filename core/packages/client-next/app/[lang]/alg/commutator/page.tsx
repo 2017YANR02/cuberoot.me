@@ -17,6 +17,7 @@ import * as XLSX from 'xlsx';
 import { search as cmtSearch, expand as cmtExpand } from './engine';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './commutator.css';
+import i18n from "@/i18n/i18n-client";
 
 type Tab = 'home' | 'decompose' | 'excel' | 'intro' | 'about';
 
@@ -91,8 +92,8 @@ function buildExpandOpts(s: Settings, algorithm: string) {
 export default function CommutatorPage() {
     const { i18n } = useTranslation();
     const isZh = i18n.language.startsWith('zh');
-    useDocumentTitle('交换子', 'Commutator');
-    const t = (zh: string, en: string) => (isZh ? zh : en);
+    useDocumentTitle('交换子', 'Commutator', "交換子");
+    const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
 
     const [tab, setTab] = useQueryState(
         'tab',
@@ -114,18 +115,18 @@ export default function CommutatorPage() {
         <div className="cmt-page">
             <header className="cmt-header">
                 <div className="cmt-title">
-                    <Link href="/alg" className="cmt-gh-link cmt-bracket-icon" title={t('返回公式库', 'Back to Algorithm DB')}>
+                    <Link href="/alg" className="cmt-gh-link cmt-bracket-icon" title={t('返回公式库', 'Back to Algorithm DB', "返回公式庫")}>
                         [,]
                     </Link>
-                    <h1>{t('换位子', 'Commutator')}</h1>
-                    <span className="cmt-title-sub">{t('换位子分解', 'Decompose into commutator notation')}</span>
+                    <h1>{t('换位子', 'Commutator', "換位子")}</h1>
+                    <span className="cmt-title-sub">{t('换位子分解', 'Decompose into commutator notation', "換位子分解")}</span>
                 </div>
                 <a
                     className="cmt-gh-link"
                     href="https://github.com/nbwzx/commutator"
                     target="_blank"
                     rel="noopener noreferrer"
-                    title={t('上游仓库', 'Upstream repository')}
+                    title={t('上游仓库', 'Upstream repository', "上游倉庫")}
                     aria-label="Github repository"
                 >
                     <ExternalLink size={16} />
@@ -133,11 +134,11 @@ export default function CommutatorPage() {
             </header>
 
             <nav className="cmt-tabs" role="tablist">
-                <TabBtn active={tab === 'home'} onClick={() => setTab('home')}>{t('首页', 'Home')}</TabBtn>
+                <TabBtn active={tab === 'home'} onClick={() => setTab('home')}>{t('首页', 'Home', "首頁")}</TabBtn>
                 <TabBtn active={tab === 'decompose'} onClick={() => setTab('decompose')}>{t('魔方公式', "Rubik's cube")}</TabBtn>
                 <TabBtn active={tab === 'excel'} onClick={() => setTab('excel')}>Excel</TabBtn>
-                <TabBtn active={tab === 'intro'} onClick={() => setTab('intro')}>{t('理论', 'Introduction')}</TabBtn>
-                <TabBtn active={tab === 'about'} onClick={() => setTab('about')}>{t('关于', 'About')}</TabBtn>
+                <TabBtn active={tab === 'intro'} onClick={() => setTab('intro')}>{t('理论', 'Introduction', "理論")}</TabBtn>
+                <TabBtn active={tab === 'about'} onClick={() => setTab('about')}>{t('关于', 'About', "關於")}</TabBtn>
             </nav>
 
             <main className="cmt-main">

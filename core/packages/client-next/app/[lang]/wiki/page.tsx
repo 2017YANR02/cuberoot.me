@@ -26,6 +26,7 @@ import {
 } from '@/lib/wiki-api';
 import './wiki.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 const LETTERS = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
 
@@ -186,9 +187,9 @@ export default function WikiPage() {
       <main className="wiki-main">
         <h1 className="wiki-title">{tr({ zh: '魔方百科', en: 'Cubing Wiki' })}</h1>
         <p className="wiki-lead">
-          {isZh
-            ? `${totalEntries} 条术语,中英对照,登录可增补。资料汇编自 `
-            : `${totalEntries} terms, EN/ZH, sign in to contribute. Compiled from `}
+          {i18n.language === 'zh-Hant' ? (`${totalEntries} 條術語,中英對照,登入可增補。資料彙編自 `) : (isZh
+                              ? `${totalEntries} 条术语,中英对照,登录可增补。资料汇编自 `
+                              : `${totalEntries} terms, EN/ZH, sign in to contribute. Compiled from `)}
           <a href="https://www.speedsolving.com/wiki" target="_blank" rel="noopener noreferrer">
             speedsolving.com/wiki
           </a>
@@ -215,7 +216,7 @@ export default function WikiPage() {
 
         {q && (
           <div className="wiki-search-meta">
-            {isZh ? `匹配 ${matchedEntries} 条` : `${matchedEntries} match${matchedEntries === 1 ? '' : 'es'}`}
+            {i18n.language === 'zh-Hant' ? (`匹配 ${matchedEntries} 條`) : (isZh ? `匹配 ${matchedEntries} 条` : `${matchedEntries} match${matchedEntries === 1 ? '' : 'es'}`)}
           </div>
         )}
 

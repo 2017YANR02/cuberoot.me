@@ -134,7 +134,7 @@ const LAYOUT = layout();
 interface Props { isZh: boolean; }
 
 export default function IdaStarTree({ isZh }: Props) {
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const [mode, setMode] = useState<HeurMode>('corners-edges');
   const [limit, setLimit] = useState(8);
   const [hover, setHover] = useState<number | null>(null);
@@ -172,18 +172,23 @@ export default function IdaStarTree({ isZh }: Props) {
     return { total, visited, pruned, solutions };
   }, [mode, limit, live]);
 
-  const heurDesc: Record<HeurMode, { zh: string; en: string }> = {
+  const heurDesc: Record<HeurMode, { zh: string; en: string
+          zhHant?: string;
+ }> = {
     none: {
       zh: 'h(s) ≡ 1: 没有 PDB,等价于 iterative deepening DFS。f-limit 必须扫遍每个节点,完全无剪枝。',
-      en: 'h(s) ≡ 1: no PDB, equivalent to iterative deepening DFS. The f-limit scans every node, zero pruning.'
+      en: 'h(s) ≡ 1: no PDB, equivalent to iterative deepening DFS. The f-limit scans every node, zero pruning.',
+        zhHant: "h(s) ≡ 1: 沒有 PDB,等價於 iterative deepening DFS。f-limit 必須掃遍每個節點,完全無剪枝。"
     },
     corners: {
       zh: 'h(s) = 角块 PDB 查表: 预计算"只看 8 个角块"在 G₃ = ⟨180°⟩ 内的最优距离。占 88 MB,提示稍弱(角朝向 + 角排列 = 8!·3⁷ ≈ 8.8 × 10⁷ 种)。',
-      en: 'h(s) = corner-only PDB lookup: precompute the optimal distance restricted to the 8 corners (in G₃ = ⟨180°⟩). 88 MB on disk, mildly informed (8!·3⁷ ≈ 8.8 × 10⁷ entries).'
+      en: 'h(s) = corner-only PDB lookup: precompute the optimal distance restricted to the 8 corners (in G₃ = ⟨180°⟩). 88 MB on disk, mildly informed (8!·3⁷ ≈ 8.8 × 10⁷ entries).',
+        zhHant: "h(s) = 角塊 PDB 查表: 預計算\"只看 8 個角塊\"在 G₃ = ⟨180°⟩ 內的最優距離。佔 88 MB,提示稍弱(角朝向 + 角排列 = 8!·3⁷ ≈ 8.8 × 10⁷ 種)。"
     },
     'corners-edges': {
       zh: 'h(s) = max(角 PDB, 6-edge PDB): Korf 1997 的经典启发,8.8 × 10⁷ 角条目 + 2 个 6-edge 子集表(各 4.2 × 10⁸,共 ~1.5 GB)。三阶 IDA* 实际用的就是这个,平均剪掉 99.9% 节点。',
-      en: 'h(s) = max(corner PDB, 6-edge PDBs): Korf\'s classic 1997 heuristic. 8.8 × 10⁷ corner entries + two 6-edge subset tables (4.2 × 10⁸ each, ~1.5 GB total). The real-world 3×3 IDA*; prunes ~99.9% of nodes.'
+      en: 'h(s) = max(corner PDB, 6-edge PDBs): Korf\'s classic 1997 heuristic. 8.8 × 10⁷ corner entries + two 6-edge subset tables (4.2 × 10⁸ each, ~1.5 GB total). The real-world 3×3 IDA*; prunes ~99.9% of nodes.',
+        zhHant: "h(s) = max(角 PDB, 6-edge PDB): Korf 1997 的經典啟發,8.8 × 10⁷ 角條目 + 2 個 6-edge 子集表(各 4.2 × 10⁸,共 ~1.5 GB)。三階 IDA* 實際用的就是這個,平均剪掉 99.9% 節點。"
     },
   };
 
@@ -192,20 +197,20 @@ export default function IdaStarTree({ isZh }: Props) {
       {/* heuristic mode */}
       <div className="god-ida-controls">
         <div className="god-ida-segctl">
-          <span className="god-ida-segctl-l">{t('启发函数 h(s):', 'Heuristic h(s):')}</span>
+          <span className="god-ida-segctl-l">{t('启发函数 h(s):', 'Heuristic h(s):', "啟發函式 h(s):")}</span>
           {(['none', 'corners', 'corners-edges'] as HeurMode[]).map((m) => (
             <button key={m}
                     className={`god-metric-tab ${mode === m ? 'is-on' : ''}`}
                     onClick={() => setMode(m)}>
-              {m === 'none' ? t('无 (BFS)', 'none (BFS)') :
+              {m === 'none' ? t('无 (BFS)', 'none (BFS)', "無 (BFS)") :
                m === 'corners' ? t('8 角 PDB', '8-corner PDB') :
-                                  t('Korf (角 + 6 棱)', 'Korf (corners + 6 edges)')}
+                                  t('Korf (角 + 6 棱)', 'Korf (corners + 6 edges)', "Korf (角 + 6 稜)")}
             </button>
           ))}
         </div>
         <div className="god-ida-segctl">
           <label className="god-ida-segctl-l" htmlFor="ida-limit">
-            {t('f-阈值', 'f-limit')}: <b style={{ color: 'var(--god-accent)' }}>{limit}</b>
+            {t('f-阈值', 'f-limit', "f-閾值")}: <b style={{ color: 'var(--god-accent)' }}>{limit}</b>
           </label>
           <input id="ida-limit" type="range" min={0} max={10} step={1}
                  value={limit} onChange={(e) => setLimit(+e.target.value)}
@@ -214,21 +219,21 @@ export default function IdaStarTree({ isZh }: Props) {
       </div>
 
       <p className="god-ida-heur-desc">
-        <MathText>{(i18n.language.startsWith('zh') ? heurDesc[mode].zh : heurDesc[mode].en)}</MathText>
+        <MathText>{(i18n.language === 'zh-Hant' ? (heurDesc[mode].zhHant ?? heurDesc[mode].zh) : (i18n.language.startsWith('zh') ? heurDesc[mode].zh : heurDesc[mode].en))}</MathText>
       </p>
 
       {/* counts */}
       <div className="god-ida-counts">
-        <div><span className="l">{t('节点总数', 'Total nodes')}</span><b>{counts.total}</b></div>
-        <div><span className="l">{t('已访问', 'Visited')}</span><b style={{ color: 'var(--god-accent)' }}>{counts.visited}</b></div>
+        <div><span className="l">{t('节点总数', 'Total nodes', "節點總數")}</span><b>{counts.total}</b></div>
+        <div><span className="l">{t('已访问', 'Visited', "已訪問")}</span><b style={{ color: 'var(--god-accent)' }}>{counts.visited}</b></div>
         <div><span className="l">{t('被剪枝', 'Pruned')}</span><b style={{ color: 'var(--god-warn)' }}>{counts.pruned}</b></div>
-        <div><span className="l">{t('解 (识别 d=8)', 'Solutions found')}</span><b style={{ color: 'var(--god-wca)' }}>{counts.solutions}</b></div>
+        <div><span className="l">{t('解 (识别 d=8)', 'Solutions found', "解 (識別 d=8)")}</span><b style={{ color: 'var(--god-wca)' }}>{counts.solutions}</b></div>
         <div><span className="l">{t('剪枝率', 'Prune rate')}</span><b>{((counts.pruned / Math.max(1, counts.visited + counts.pruned)) * 100).toFixed(0)}%</b></div>
       </div>
 
       {/* tree */}
       <svg viewBox="0 0 720 540" className="god-ida-svg" preserveAspectRatio="xMidYMid meet"
-           role="img" aria-label={t('IDA* 搜索树', 'IDA* search tree')}>
+           role="img" aria-label={t('IDA* 搜索树', 'IDA* search tree', "IDA* 搜尋樹")}>
         {/* edges */}
         {TREE.filter((n) => n.parent !== -1).map((n) => {
           const a = LAYOUT.get(n.parent)!;
@@ -323,12 +328,12 @@ export default function IdaStarTree({ isZh }: Props) {
           const isLive = live.has(n.id);
           return (
             <>
-              <strong>{t('节点', 'Node')} #{n.id}:</strong>{' '}
+              <strong>{t('节点', 'Node', "節點")} #{n.id}:</strong>{' '}
               <TeX src={`g = ${n.depth}`} />{' · '}
               <TeX src={`h = ${h}`} />{' · '}
               <TeX src={`f = g + h = ${f}`} />{' · '}
               {n.solved ? <span style={{ color: 'var(--god-wca)' }}>{t('✓ 解', '✓ solution')}</span> :
-               isLive ? <span style={{ color: 'var(--god-accent)' }}>{t('已访问', 'expanded')}</span> :
+               isLive ? <span style={{ color: 'var(--god-accent)' }}>{t('已访问', 'expanded', "已訪問")}</span> :
                         <span style={{ color: 'var(--god-text-mute)' }}>{t('剪枝 (f > limit)', 'pruned (f > limit)')}</span>}
             </>
           );
@@ -336,7 +341,7 @@ export default function IdaStarTree({ isZh }: Props) {
           <span className="god-growth-hint">
             <MathText>{t(
               'hover 任意节点查 g/h/f。三阶完整解需要 g + h ≤ 20 的路径;启发 h 越紧,被剪枝的子树越多。Korf 启发把 21 步迭代的搜索从 10²⁰ 节点压到 10⁹ 量级。',
-              'Hover any node for g/h/f. A real 3×3 needs g + h ≤ 20; tighter h means more pruning. Korf\'s heuristic shrinks a 21-iteration search from ~10²⁰ down to ~10⁹ nodes.',
+              'Hover any node for g/h/f. A real 3×3 needs g + h ≤ 20; tighter h means more pruning. Korf\'s heuristic shrinks a 21-iteration search from ~10²⁰ down to ~10⁹ nodes.', "hover 任意節點查 g/h/f。三階完整解需要 g + h ≤ 20 的路徑;啟發 h 越緊,被剪枝的子樹越多。Korf 啟發把 21 步迭代的搜尋從 10²⁰ 節點壓到 10⁹ 量級。"
             )}</MathText>
           </span>
         )}
@@ -345,7 +350,7 @@ export default function IdaStarTree({ isZh }: Props) {
       <p className="god-ida-caption">
         <MathText>{t(
           '本树是 8 层、分支因子 3 的教学版 (共 ~3,280 节点);真实三阶 IDA* 分支因子 ~13.34 (去同轴),iteration 21 时节点数 ~ 13.34²¹ ≈ 4 × 10²³,无启发完全跑不动。Korf 1997 用 1.5 GB PDB 把节点压到 ~ 10⁸ 量级,毫秒级返回。本组件演示的是同一个剪枝机制,但缩放到肉眼可见。',
-          'The tree above is a teaching-scale 8-layer branching-3 example (~3,280 nodes); a real 3×3 IDA* has branching ~13.34 (after same-axis pruning), so iteration 21 hits ~13.34²¹ ≈ 4 × 10²³ — utterly infeasible without heuristic. Korf\'s 1.5 GB PDB cuts that to ~10⁸ and returns in milliseconds. Same pruning mechanism, just scaled where the eye can follow.',
+          'The tree above is a teaching-scale 8-layer branching-3 example (~3,280 nodes); a real 3×3 IDA* has branching ~13.34 (after same-axis pruning), so iteration 21 hits ~13.34²¹ ≈ 4 × 10²³ — utterly infeasible without heuristic. Korf\'s 1.5 GB PDB cuts that to ~10⁸ and returns in milliseconds. Same pruning mechanism, just scaled where the eye can follow.', "本樹是 8 層、分支因子 3 的教學版 (共 ~3,280 節點);真實三階 IDA* 分支因子 ~13.34 (去同軸),iteration 21 時節點數 ~ 13.34²¹ ≈ 4 × 10²³,無啟發完全跑不動。Korf 1997 用 1.5 GB PDB 把節點壓到 ~ 10⁸ 量級,毫秒級返回。本元件演示的是同一個剪枝機制,但縮放到肉眼可見。"
         )}</MathText>
       </p>
     </div>

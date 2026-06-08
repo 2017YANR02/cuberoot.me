@@ -446,7 +446,7 @@ export default function CppIntroPage() {
 
   useDocumentTitle(
     'C++ : Systems — 46 年仍是性能之王',
-    'C++ : Systems — 46 Years and Still the King of Performance',
+    'C++ : Systems — 46 Years and Still the King of Performance', "C++ : Systems — 46 年仍是效能之王"
   );
 
   useEffect(() => {

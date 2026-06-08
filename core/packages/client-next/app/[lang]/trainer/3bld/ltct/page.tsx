@@ -64,7 +64,7 @@ function stripBrackets(code: string): string {
 export default function LtctTrainerPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('奇偶带翻训练', 'LTCT Parity-Twist Trainer');
+  useDocumentTitle('奇偶带翻训练', 'LTCT Parity-Twist Trainer', "奇偶帶翻訓練");
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);
@@ -155,9 +155,9 @@ export default function LtctTrainerPage(): JSX.Element {
     // Upstream uppercases the corner codes at generation time; keep the entered
     // text verbatim in the summary (matches ltctInputCheck's slice display).
     setInputSummary(
-      isZh
-        ? `已输入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 组编码。`
-        : `Entered ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} (${codes.length} codes).`,
+      i18n.language === 'zh-Hant' ? (`已輸入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 組編碼。`) : (isZh
+                ? `已输入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 组编码。`
+                : `Entered ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} (${codes.length} codes).`),
     );
   }, [validateCodes, isZh]);
 
@@ -227,15 +227,16 @@ export default function LtctTrainerPage(): JSX.Element {
 
     setScrambles(out);
     setInfo(
-      isZh
-        ? `随机生成 ${times} 条打乱。`
-        : `Generated ${times} scrambles.`,
+      i18n.language === 'zh-Hant' ? (`隨機生成 ${times} 條打亂。`) : (isZh
+                ? `随机生成 ${times} 条打乱。`
+                : `Generated ${times} scrambles.`),
     );
     setBusy(false);
   }, [newCodes, cBuffer, edgeScramble, cornerScramble, isZh]);
 
   const title = useMemo(
-    () => ({ zh: '奇偶带翻训练', en: 'LTCT Parity-Twist Trainer'
+    () => ({ zh: '奇偶带翻训练', en: 'LTCT Parity-Twist Trainer',
+        zhHant: "奇偶帶翻訓練"
     }),
     [],
   );
@@ -245,7 +246,7 @@ export default function LtctTrainerPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{(i18n.language.startsWith('zh') ? title.zh : title.en)}</h1>
+        <h1>{(i18n.language === 'zh-Hant' ? (title.zhHant ?? title.zh) : (i18n.language.startsWith('zh') ? title.zh : title.en))}</h1>
       </div>
 
       <div className="bld-section">

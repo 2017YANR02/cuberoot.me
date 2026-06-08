@@ -5,6 +5,7 @@
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { Suspense, lazy } from 'react';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
+import i18n from "@/i18n/i18n-client";
 
 const ResultsTab = lazy(() => import('./results/ResultsTab'));
 const CompsTab = lazy(() => import('./CompsTab'));
@@ -24,7 +25,7 @@ interface Props {
 }
 
 export default function PersonTabs({ profile, results, comps, reconLookup, isZh }: Props) {
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   // tab 切换 push 进历史 → 后退能在选手页 tab 间返回(nuqs 自动同步,无需手写 popstate)
   const [active, setActive] = useQueryState(
     'tab',
@@ -32,11 +33,11 @@ export default function PersonTabs({ profile, results, comps, reconLookup, isZh 
   );
 
   const labels: Record<TabKey, string> = {
-    results: t('成绩', 'Results'),
-    comps: t('赛事', 'Competitions'),
-    events: t('项目统计', 'Event Stats'),
+    results: t('成绩', 'Results', "成績"),
+    comps: t('赛事', 'Competitions', "賽事"),
+    events: t('项目统计', 'Event Stats', "專案統計"),
     milestones: t('里程碑', 'Milestones'),
-    cities: t('点亮城市', 'Cities'),
+    cities: t('点亮城市', 'Cities', "點亮城市"),
   };
 
   return (
@@ -53,7 +54,7 @@ export default function PersonTabs({ profile, results, comps, reconLookup, isZh 
         ))}
       </div>
       <div className="wp-tab-body">
-        <Suspense fallback={<div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>}>
+        <Suspense fallback={<div className="wp-loading-inline">{t('加载中…', 'Loading…', "載入中…")}</div>}>
           {active === 'results' && <ResultsTab profile={profile} results={results} comps={comps} reconLookup={reconLookup} isZh={isZh} />}
           {active === 'comps' && <CompsTab profile={profile} results={results} comps={comps} isZh={isZh} />}
           {active === 'events' && <EventStatsTab results={results} comps={comps} isZh={isZh} />}

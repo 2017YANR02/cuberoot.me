@@ -476,7 +476,7 @@ export default function PythonIntroPage() {
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useDocumentTitle('Python — AI 时代的胶水语言', 'Python — Glue of the AI Era');
+  useDocumentTitle('Python — AI 时代的胶水语言', 'Python — Glue of the AI Era', "Python — AI 時代的膠水語言");
 
   useEffect(() => {
     const root = rootRef.current;

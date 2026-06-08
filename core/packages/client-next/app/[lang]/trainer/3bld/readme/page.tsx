@@ -25,6 +25,7 @@ import {
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface ModuleDoc {
   n: number;
@@ -34,12 +35,13 @@ interface ModuleDoc {
   titleEn: string;
   bodyZh: JSX.Element;
   bodyEn: JSX.Element;
+    titleZhHant?: string;
 }
 
 export default function BldGuidePage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('盲拧训练说明', '3BLD Guide');
+  useDocumentTitle('盲拧训练说明', '3BLD Guide', "盲擰訓練說明");
 
   const modules: ModuleDoc[] = [
     {
@@ -74,6 +76,7 @@ export default function BldGuidePage(): JSX.Element {
           </p>
         </>
       ),
+        titleZhHant: "讀碼還原助手"
     },
     {
       n: 2,
@@ -111,6 +114,7 @@ export default function BldGuidePage(): JSX.Element {
           </ul>
         </>
       ),
+        titleZhHant: "稜塊公式訓練"
     },
     {
       n: 3,
@@ -120,6 +124,7 @@ export default function BldGuidePage(): JSX.Element {
       titleEn: 'Corner Algorithm Trainer',
       bodyZh: <p>功能与棱块公式训练相同,针对角块公式。</p>,
       bodyEn: <p>Same as the edge algorithm trainer, for corner algs.</p>,
+        titleZhHant: "角塊公式訓練"
     },
     {
       n: 4,
@@ -141,6 +146,7 @@ export default function BldGuidePage(): JSX.Element {
           </p>
         </>
       ),
+        titleZhHant: "翻角公式訓練"
     },
     {
       n: 5,
@@ -150,6 +156,7 @@ export default function BldGuidePage(): JSX.Element {
       titleEn: 'Edge Flip Trainer',
       bodyZh: <p>功能与翻角公式训练相同,针对翻棱。</p>,
       bodyEn: <p>Same as the corner twist trainer, for flipped edges.</p>,
+        titleZhHant: "翻稜公式訓練"
     },
     {
       n: 6,
@@ -183,6 +190,7 @@ export default function BldGuidePage(): JSX.Element {
           </p>
         </>
       ),
+        titleZhHant: "稜塊浮動訓練"
     },
     {
       n: 7,
@@ -192,6 +200,7 @@ export default function BldGuidePage(): JSX.Element {
       titleEn: 'Corner Float Trainer',
       bodyZh: <p>功能与棱块浮动训练相同,针对角块。</p>,
       bodyEn: <p>Same as the edge float trainer, for corners.</p>,
+        titleZhHant: "角塊浮動訓練"
     },
     {
       n: 8,
@@ -221,6 +230,7 @@ export default function BldGuidePage(): JSX.Element {
           <p>Checking &ldquo;exclude top layer&rdquo; forces both swapped corners to land on the bottom layer.</p>
         </>
       ),
+        titleZhHant: "2C2C 訓練"
     },
     {
       n: 9,
@@ -248,6 +258,7 @@ export default function BldGuidePage(): JSX.Element {
           </p>
         </>
       ),
+        titleZhHant: "奇偶帶翻訓練"
     },
     {
       n: 10,
@@ -275,6 +286,7 @@ export default function BldGuidePage(): JSX.Element {
           </p>
         </>
       ),
+        titleZhHant: "奇偶訓練"
     },
   ];
 
@@ -327,10 +339,10 @@ export default function BldGuidePage(): JSX.Element {
             <span className="bld-guide-icon">{m.icon}</span>
             {m.href ? (
               <Link href={m.href} className="bld-guide-title-link">
-                {isZh ? m.titleZh : m.titleEn}
+                {i18n.language === 'zh-Hant' ? (m.titleZhHant ?? m.titleZh) : (isZh ? m.titleZh : m.titleEn)}
               </Link>
             ) : (
-              <span>{isZh ? m.titleZh : m.titleEn}</span>
+              <span>{i18n.language === 'zh-Hant' ? (m.titleZhHant ?? m.titleZh) : (isZh ? m.titleZh : m.titleEn)}</span>
             )}
           </h2>
           <div className="bld-guide-body">{isZh ? m.bodyZh : m.bodyEn}</div>
@@ -365,15 +377,19 @@ export default function BldGuidePage(): JSX.Element {
         </h2>
         <div className="bld-guide-body">
           <p>
-            {isZh ? (
-              <>
-                盲拧训练器由 <b>勺子(乔智 / Zhi Qiao)</b> 开发,以 GPL-3.0 协议开源。本站为移植整合版本,引擎与玩法忠实于原作。
-              </>
-            ) : (
-              <>
-                The 3BLD trainer was created by <b>Spoon (Zhi Qiao)</b> and open-sourced under GPL-3.0. This site is a ported / integrated build that stays faithful to the original engine and behaviour.
-              </>
-            )}
+            {i18n.language === 'zh-Hant' ? ((
+                                    <>
+                                      盲擰訓練器由 <b>勺子(喬智 / Zhi Qiao)</b> 開發,以 GPL-3.0 協議開源。本站為移植整合版本,引擎與玩法忠實於原作。
+                                    </>
+                                  )) : (isZh ? (
+                                    <>
+                                      盲拧训练器由 <b>勺子(乔智 / Zhi Qiao)</b> 开发,以 GPL-3.0 协议开源。本站为移植整合版本,引擎与玩法忠实于原作。
+                                    </>
+                                  ) : (
+                                    <>
+                                      The 3BLD trainer was created by <b>Spoon (Zhi Qiao)</b> and open-sourced under GPL-3.0. This site is a ported / integrated build that stays faithful to the original engine and behaviour.
+                                    </>
+                                  ))}
           </p>
         </div>
       </section>

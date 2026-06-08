@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Shuffle, Grid3x3, Hexagon, Triangle } from 'lucide-react';
+import i18n from "@/i18n/i18n-client";
 
 type Preset = 'random' | 'square' | 'triangular' | 'hexagonal';
 interface Pt { x: number; y: number }
@@ -101,7 +102,7 @@ function findUnitPairs(pts: Pt[]): Pair[] {
 export default function UnitDistanceSandbox() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
 
   const [n, setN] = useState(13);
   const [preset, setPreset] = useState<Preset>('triangular');
@@ -159,7 +160,7 @@ export default function UnitDistanceSandbox() {
       <div className="ud-sandbox-controls">
         <div className="ud-sandbox-presets">
           <button className={preset === 'random' ? 'is-on' : ''} onClick={() => setPreset('random')}>
-            <Shuffle size={14} /> {t('随机', 'Random')}
+            <Shuffle size={14} /> {t('随机', 'Random', "隨機")}
           </button>
           <button className={preset === 'square' ? 'is-on' : ''} onClick={() => setPreset('square')}>
             <Grid3x3 size={14} /> {t('方格', 'Square')}
@@ -184,7 +185,7 @@ export default function UnitDistanceSandbox() {
             type="checkbox" checked={showCircles}
             onChange={e => setShowCircles(e.target.checked)}
           />
-          <span>{t('单位圆提示', 'Unit-circle hints')}</span>
+          <span>{t('单位圆提示', 'Unit-circle hints', "單位圓提示")}</span>
         </label>
       </div>
 
@@ -271,11 +272,13 @@ export default function UnitDistanceSandbox() {
       </div>
 
       <p className="ud-sandbox-hint">
-        {isZh ? (
-          <>拖动任意点 — 距离恰好为 1(单位 = {UNIT_PX} px,容差 ±{TOL} px)的对子会立刻画上一条线。<strong>等边三角形</strong> 给出最高的局部 ν/n;切到方格立刻能看出"水平+垂直"两族,但少了 √2 那一族。</>
-        ) : (
-          <>Drag any point. Pairs at distance exactly 1 (unit = {UNIT_PX} px, tol ±{TOL} px) light up. The <strong>triangular</strong> lattice maximises local ν/n; switching to the square lattice loses the diagonal family and drops the count.</>
-        )}
+        {i18n.language === 'zh-Hant' ? ((
+                        <>拖動任意點 — 距離恰好為 1(單位 = {UNIT_PX} px,容差 ±{TOL} px)的對子會立刻畫上一條線。<strong>等邊三角形</strong> 給出最高的區域性 ν/n;切到方格立刻能看出"水平+垂直"兩族,但少了 √2 那一族。</>
+                      )) : (isZh ? (
+                        <>拖动任意点 — 距离恰好为 1(单位 = {UNIT_PX} px,容差 ±{TOL} px)的对子会立刻画上一条线。<strong>等边三角形</strong> 给出最高的局部 ν/n;切到方格立刻能看出"水平+垂直"两族,但少了 √2 那一族。</>
+                      ) : (
+                        <>Drag any point. Pairs at distance exactly 1 (unit = {UNIT_PX} px, tol ±{TOL} px) light up. The <strong>triangular</strong> lattice maximises local ν/n; switching to the square lattice loses the diagonal family and drops the count.</>
+                      ))}
       </p>
     </div>
   );

@@ -473,7 +473,7 @@ export default function PowershellIntroPage() {
 
   useDocumentTitle(
     'PowerShell : 2006 Jeffrey Snover · 对象管道 · Windows 自动化默认',
-    'PowerShell : 2006 Jeffrey Snover · object pipeline · Windows automation default',
+    'PowerShell : 2006 Jeffrey Snover · object pipeline · Windows automation default', "PowerShell : 2006 Jeffrey Snover · 物件管道 · Windows 自動化預設"
   );
 
   useEffect(() => {

@@ -21,34 +21,47 @@ interface Props {
 }
 
 const TXT = {
-  titleNew:    { en: 'Add Site',    zh: '新增网站'
+  titleNew:    { en: 'Add Site',    zh: '新增网站',
+      zhHant: "新增網站"
 },
-  titleEdit:   { en: 'Edit Site',   zh: '编辑网站'
+  titleEdit:   { en: 'Edit Site',   zh: '编辑网站',
+      zhHant: "編輯網站"
 },
-  group:       { en: 'Group',       zh: '分组'
+  group:       { en: 'Group',       zh: '分组',
+      zhHant: "分組"
 },
-  name:        { en: 'Name',        zh: '名称'
+  name:        { en: 'Name',        zh: '名称',
+      zhHant: "名稱"
 },
-  nameEn:      { en: 'Name (EN)',   zh: '英文名（可选）'
+  nameEn:      { en: 'Name (EN)',   zh: '英文名（可选）',
+      zhHant: "英文名（可選）"
 },
-  nameZh:      { en: 'Name (ZH)',   zh: '中文名（可选）'
+  nameZh:      { en: 'Name (ZH)',   zh: '中文名（可选）',
+      zhHant: "中文名（可選）"
 },
-  url:         { en: 'URL',         zh: '主网址'
+  url:         { en: 'URL',         zh: '主网址',
+      zhHant: "主網址"
 },
-  altUrls:     { en: 'Mirrors (one per line)', zh: '镜像网址（每行一条）'
+  altUrls:     { en: 'Mirrors (one per line)', zh: '镜像网址（每行一条）',
+      zhHant: "映象網址（每行一條）"
 },
   author:      { en: 'Author',      zh: '作者' },
-  descEn:      { en: 'Description (EN)', zh: '英文简介'
+  descEn:      { en: 'Description (EN)', zh: '英文简介',
+      zhHant: "英文簡介"
 },
-  descZh:      { en: 'Description (ZH)', zh: '中文简介'
+  descZh:      { en: 'Description (ZH)', zh: '中文简介',
+      zhHant: "中文簡介"
 },
-  youtube:     { en: 'YouTube link', zh: 'YouTube 链接'
+  youtube:     { en: 'YouTube link', zh: 'YouTube 链接',
+      zhHant: "YouTube 連結"
 },
-  tags:        { en: 'Tags (comma)', zh: '标签（逗号分隔）'
+  tags:        { en: 'Tags (comma)', zh: '标签（逗号分隔）',
+      zhHant: "標籤（逗號分隔）"
 },
   status:      { en: 'Offline?',    zh: '是否失效' },
   cancel:      { en: 'Cancel',      zh: '取消' },
-  save:        { en: 'Save',        zh: '保存'
+  save:        { en: 'Save',        zh: '保存',
+      zhHant: "儲存"
 },
 } as const;
 

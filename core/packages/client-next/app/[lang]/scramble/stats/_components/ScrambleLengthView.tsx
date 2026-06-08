@@ -56,11 +56,16 @@ interface MergeGroup {
   members: string[];  // events summed when merged (rep first)
   zh: string; en: string;
   subZh: string; subEn: string;
+    zhHant?: string;
+    subZhHant?: string;
 }
 const MERGE_GROUPS: MergeGroup[] = [
-  { rep: '333', members: ['333', '333oh'], zh: '三阶速拧', en: '3×3 (speed)', subZh: '含单手', subEn: 'incl. OH'
+  { rep: '333', members: ['333', '333oh'], zh: '三阶速拧', en: '3×3 (speed)', subZh: '含单手', subEn: 'incl. OH',
+      zhHant: "三階速擰",
+      subZhHant: "含單手"
 },
-  { rep: '333bf', members: ['333bf', '333mbf'], zh: '三阶盲拧', en: '3×3 (blind)', subZh: '含多盲', subEn: 'incl. MBLD'
+  { rep: '333bf', members: ['333bf', '333mbf'], zh: '三阶盲拧', en: '3×3 (blind)', subZh: '含多盲', subEn: 'incl. MBLD',
+      zhHant: "三階盲擰"
 },
 ];
 const groupForRep = (id: string) => MERGE_GROUPS.find((g) => g.rep === id);
@@ -170,8 +175,8 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
     () => (merged ? groupForRep(event) : undefined),
     [merged, event],
   );
-  const curName = activeGroup ? ((i18n.language.startsWith('zh') ? activeGroup.zh : activeGroup.en)) : eventName(event, isZh);
-  const curSub = activeGroup ? (isZh ? activeGroup.subZh : activeGroup.subEn) : null;
+  const curName = activeGroup ? ((i18n.language === 'zh-Hant' ? (activeGroup.zhHant ?? activeGroup.zh) : (i18n.language.startsWith('zh') ? activeGroup.zh : activeGroup.en))) : eventName(event, isZh);
+  const curSub = activeGroup ? (i18n.language === 'zh-Hant' ? (activeGroup.subZhHant ?? activeGroup.subZh) : (isZh ? activeGroup.subZh : activeGroup.subEn)) : null;
 
   // Synthesize the merged distribution (sum member counts) or use the raw event.
   const cur = useMemo<EventLen | null>(() => {
@@ -237,12 +242,12 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
       zhHant: "步數;SQ1 計擰次,多盲每方塊單獨計"
 });
   const source = isBootstrap
-    ? (isZh
-      ? `示例样本 ${totalN} 条打乱(取自部分比赛,完整全时段数据每日刷新后生效);按项目统计打乱记号长度(${unitNote})。`
-      : `Sample of ${totalN} scrambles (a few competitions; full all-time data lands on the next daily refresh); scramble notation length per event (${unitNote}).`)
-    : (isZh
-      ? `来源: WCA 历史比赛全部 ${totalN} 条打乱原文;按项目统计打乱记号长度(${unitNote})。`
-      : `Source: all ${totalN} historical WCA competition scrambles; scramble notation length per event (${unitNote}).`);
+    ? (i18n.language === 'zh-Hant' ? (`示例樣本 ${totalN} 條打亂(取自部分比賽,完整全時段資料每日重新整理後生效);按專案統計打亂記號長度(${unitNote})。`) : (isZh
+            ? `示例样本 ${totalN} 条打乱(取自部分比赛,完整全时段数据每日刷新后生效);按项目统计打乱记号长度(${unitNote})。`
+            : `Sample of ${totalN} scrambles (a few competitions; full all-time data lands on the next daily refresh); scramble notation length per event (${unitNote}).`))
+    : (i18n.language === 'zh-Hant' ? (`來源: WCA 歷史比賽全部 ${totalN} 條打亂原文;按專案統計打亂記號長度(${unitNote})。`) : (isZh
+            ? `来源: WCA 历史比赛全部 ${totalN} 条打乱原文;按项目统计打乱记号长度(${unitNote})。`
+            : `Source: all ${totalN} historical WCA competition scrambles; scramble notation length per event (${unitNote}).`));
 
   return (
     <>
@@ -327,9 +332,9 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
           {cur.anomalies && cur.anomalies.length > 0 && stats && (
             <div className="scramble-len-footnote">
               <span>
-                {isZh
-                  ? `注：${eventName(event, isZh)}打乱由官方 TNoodle 固定生成 ${stats.mode} 步,下面这些比赛的打乱却不是 ${stats.mode} 步(应是用了非标准打乱器)：`
-                  : `Note: ${eventName(event, isZh)} scrambles are a fixed ${stats.mode} moves from official TNoodle; the ones below aren't ${stats.mode} moves (most likely from a non-standard scrambler): `}
+                {i18n.language === 'zh-Hant' ? (`注：${eventName(event, isZh)}打亂由官方 TNoodle 固定生成 ${stats.mode} 步,下面這些比賽的打亂卻不是 ${stats.mode} 步(應是用了非標準打亂器)：`) : (isZh
+                                                ? `注：${eventName(event, isZh)}打乱由官方 TNoodle 固定生成 ${stats.mode} 步,下面这些比赛的打乱却不是 ${stats.mode} 步(应是用了非标准打乱器)：`
+                                                : `Note: ${eventName(event, isZh)} scrambles are a fixed ${stats.mode} moves from official TNoodle; the ones below aren't ${stats.mode} moves (most likely from a non-standard scrambler): `)}
               </span>
               {cur.anomalies.map((a, i) => {
                 const iso2 = compFlagIso2(a.ci);
@@ -340,7 +345,7 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
                       {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                       {localizeCompName(a.ci, a.cn, isZh)}
                     </Link>
-                    {isZh ? `(${a.lens.join('/')} 步,${a.n} 条)` : ` (${a.lens.join('/')} moves, ${a.n})`}
+                    {i18n.language === 'zh-Hant' ? (`(${a.lens.join('/')} 步,${a.n} 條)`) : (isZh ? `(${a.lens.join('/')} 步,${a.n} 条)` : ` (${a.lens.join('/')} moves, ${a.n})`)}
                   </span>
                 );
               })}
@@ -379,7 +384,7 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
           <div className="scramble-stats-panel scramble-stats-examples-panel">
             <div className="scramble-stats-panel-title">
               {selectedBin !== null
-                ? (isZh ? `${selectedBin} ${unitLabel(cur.unit, isZh)}打乱样例` : `${selectedBin}-${cur.unit} examples`)
+                ? (i18n.language === 'zh-Hant' ? (`${selectedBin} ${unitLabel(cur.unit, isZh)}打亂樣例`) : (isZh ? `${selectedBin} ${unitLabel(cur.unit, isZh)}打乱样例` : `${selectedBin}-${cur.unit} examples`))
                 : (tr({ zh: '极端打乱样例', en: 'Extreme scrambles',
                     zhHant: "極端打亂樣例"
                 }))}

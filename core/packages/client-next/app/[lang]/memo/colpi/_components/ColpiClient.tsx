@@ -59,14 +59,19 @@ const CATEGORY_DOT: Record<Category, string> = {
   other:       '#7f8c8d',
 };
 
-const CATEGORY_LABEL: Record<Category, { en: string; zh: string }> = {
-  unspecified: { en: 'unspecified', zh: '未分类'
+const CATEGORY_LABEL: Record<Category, { en: string; zh: string
+        zhHant?: string;
+ }> = {
+  unspecified: { en: 'unspecified', zh: '未分类',
+      zhHant: "未分類"
 },
   object:      { en: 'object',      zh: '物品' },
   person:      { en: 'person',      zh: '人物' },
-  action:      { en: 'action',      zh: '动作'
+  action:      { en: 'action',      zh: '动作',
+      zhHant: "動作"
 },
-  place:       { en: 'place',       zh: '地点'
+  place:       { en: 'place',       zh: '地点',
+      zhHant: "地點"
 },
   other:       { en: 'other',       zh: '其它' },
 };
@@ -104,7 +109,7 @@ function validateWordInput(word: string, isZh: boolean): string | null {
 export default function ColpiClient() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('Colpi 训练', 'Colpi');
+  useDocumentTitle('Colpi 训练', 'Colpi', "Colpi 訓練");
   const user = useAuthStore(s => s.user);
   const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
   const router = useRouter();
@@ -387,9 +392,9 @@ export default function ColpiClient() {
   // ── delete ──
   const handleDelete = async (w: ColpiWord) => {
     if (!canEdit(w)) return;
-    const confirmMsg = isZh
-      ? `确认删除"${w.word}"?`
-      : `Delete "${w.word}"?`;
+    const confirmMsg = i18n.language === 'zh-Hant' ? (`確認刪除"${w.word}"?`) : (isZh
+          ? `确认删除"${w.word}"?`
+          : `Delete "${w.word}"?`);
     if (!window.confirm(confirmMsg)) return;
     try {
       await deleteWord(w.id);
@@ -525,9 +530,9 @@ export default function ColpiClient() {
       {/* === Letter-pair grid === */}
       <section className="colpi-grid-wrap">
         <div className="colpi-section-h">
-          {isZh
-            ? `字母对网格 (${langDisplay(langFilter, true)})`
-            : `Language table (${langDisplay(langFilter, false).toLowerCase()} scheme)`}
+          {i18n.language === 'zh-Hant' ? (`字母對網格 (${langDisplay(langFilter, true)})`) : (isZh
+                                  ? `字母对网格 (${langDisplay(langFilter, true)})`
+                                  : `Language table (${langDisplay(langFilter, false).toLowerCase()} scheme)`)}
         </div>
         <div className="colpi-grid-scroll">
           <table className="colpi-grid">
@@ -591,10 +596,10 @@ export default function ColpiClient() {
                   zhHant: "載入中…"
             }))
               : loadError
-                ? (isZh ? `加载失败: ${loadError}` : `Load failed: ${loadError}`)
-                : isZh
-                  ? `共 ${filledPairs} 对 / ${totalWordCount} 个词`
-                  : `${filledPairs} pairs / ${totalWordCount} words`}
+                ? (i18n.language === 'zh-Hant' ? (`載入失敗: ${loadError}`) : (isZh ? `加载失败: ${loadError}` : `Load failed: ${loadError}`))
+                : i18n.language === 'zh-Hant' ? (`共 ${filledPairs} 對 / ${totalWordCount} 個詞`) : (isZh
+                                                    ? `共 ${filledPairs} 对 / ${totalWordCount} 个词`
+                                                    : `${filledPairs} pairs / ${totalWordCount} words`)}
           </span>
         </div>
       </section>
@@ -633,7 +638,7 @@ export default function ColpiClient() {
                   <span
                     className="colpi-pao-dot"
                     style={{ background: CATEGORY_DOT[w.category] }}
-                    title={(i18n.language.startsWith('zh') ? CATEGORY_LABEL[w.category].zh : CATEGORY_LABEL[w.category].en)}
+                    title={(i18n.language === 'zh-Hant' ? (CATEGORY_LABEL[w.category].zhHant ?? CATEGORY_LABEL[w.category].zh) : (i18n.language.startsWith('zh') ? CATEGORY_LABEL[w.category].zh : CATEGORY_LABEL[w.category].en))}
                   />
                   <span className="colpi-detail-word">{w.word}</span>
                   {w.note && <span className="colpi-detail-note">{w.note}</span>}
@@ -738,7 +743,7 @@ export default function ColpiClient() {
                     <span
                       className="colpi-pao-dot"
                       style={{ background: CATEGORY_DOT[w.category] }}
-                      title={(i18n.language.startsWith('zh') ? CATEGORY_LABEL[w.category].zh : CATEGORY_LABEL[w.category].en)}
+                      title={(i18n.language === 'zh-Hant' ? (CATEGORY_LABEL[w.category].zhHant ?? CATEGORY_LABEL[w.category].zh) : (i18n.language.startsWith('zh') ? CATEGORY_LABEL[w.category].zh : CATEGORY_LABEL[w.category].en))}
                     />
                   </td>
                   <td className="colpi-recent-word">

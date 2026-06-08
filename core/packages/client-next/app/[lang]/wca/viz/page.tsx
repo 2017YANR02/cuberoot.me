@@ -50,7 +50,7 @@ const EVENTS = [
 export default function VizPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('成绩分布', 'Distribution');
+  useDocumentTitle('成绩分布', 'Distribution', "成績分佈");
   const players = useVizStore(s => s.players);
   const currentEventId = useVizStore(s => s.currentEventId);
   const addPlayer = useVizStore(s => s.addPlayer);

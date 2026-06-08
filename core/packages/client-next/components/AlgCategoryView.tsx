@@ -165,7 +165,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
         zhHant: "公式庫"
     });
     if (!puzzleParam || !set) return fallback;
-    const setName = meta ? ((i18n.language.startsWith('zh') ? meta.zh : meta.en)) : set;
+    const setName = meta ? ((i18n.language === 'zh-Hant' ? ((meta as { zhHant?: string }).zhHant ?? meta.zh) : (i18n.language.startsWith('zh') ? meta.zh : meta.en))) : set;
     return `${puzzleParam} · ${setName}`;
   })();
   useDocumentTitle(algSetTitle, algSetTitle);
@@ -283,7 +283,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
         <h1 className="alg-cat-title">
           <span className="alg-cat-puzzle">{puzzleParam}</span>
           {' '}
-          {(i18n.language.startsWith('zh') ? meta.zh : meta.en)}
+          {(i18n.language === 'zh-Hant' ? ((meta as { zhHant?: string }).zhHant ?? meta.zh) : (i18n.language.startsWith('zh') ? meta.zh : meta.en))}
           {subgroupDisplay && <span className="alg-cat-subgroup"> {subgroupDisplay}</span>}
         </h1>
         {data && !showSubgroupPicker && (
