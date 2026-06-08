@@ -1,0 +1,242 @@
+/* BlockTrainerView — view-specific styles (de-MUI port).
+ * Mirrors roux-trainers' makeStyles: .container/.paper/.title/.setup/.fgap/
+ * .configPanel/.prompt etc. All colors via site tokens, dual-theme. New classes
+ * are namespaced .roux-block-*; shared classes (.roux-btn*, .roux-icon-btn*,
+ * .roux-sel*, .roux-field-label) are reused from ../roux.css.
+ */
+
+/* makeStyles .container */
+.roux-block-container {
+  padding-top: 0;
+  padding-bottom: 16px;
+  background: var(--background);
+  transition: all 0.5s ease-in-out;
+}
+
+/* makeStyles .paper (Paper, padding theme.spacing(3) = 24px, square corners) */
+.roux-block-paper {
+  padding: 24px;
+  display: flex;
+  overflow: auto;
+  flex-direction: column;
+  margin-bottom: 3px;
+  border-radius: 0;
+  background: var(--card);
+  color: var(--foreground);
+}
+
+/* third Paper had paddingTop:20 / paddingBottom:22 */
+.roux-block-action-paper {
+  padding-top: 20px;
+  padding-bottom: 22px;
+}
+
+/* makeStyles .title (disabled-text colored label with 3px bottom border) */
+.roux-block-title {
+  color: var(--muted-foreground);
+  font-weight: 500;
+  border-bottom: 3px solid;
+}
+
+/* Box wrappers around the title */
+.roux-block-title-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.roux-block-title-col-start {
+  display: flex;
+  align-self: flex-start;
+}
+
+/* makeStyles .fgap (flexible spacer between title and content) */
+.roux-block-fgap {
+  flex-shrink: 100;
+  flex-basis: 2.5rem;
+  min-width: 1.5em;
+}
+@media (max-width: 599px) {
+  .roux-block-fgap {
+    flex-basis: 1rem;
+    min-width: 0.4rem;
+  }
+}
+
+/* ---- scramble head row --------------------------------------------------- */
+.roux-block-scramble-head {
+  display: flex;
+}
+
+/* textColumn / setup wrapper */
+.roux-block-setup-wrap {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+}
+
+/* makeStyles .setup */
+.roux-block-setup {
+  white-space: pre-line;
+  font-size: 1.4rem;
+  font-weight: 500;
+  margin: 0;
+}
+@media (max-width: 599px) {
+  .roux-block-setup {
+    font-size: 1.2rem;
+  }
+}
+
+.roux-block-scramble-panel {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0;
+}
+
+/* fav button: keep a sane min so the lone "✓" / "Add" still reads */
+.roux-block-fav-btn {
+  font-size: 0.85rem;
+  padding: 4px 10px;
+}
+
+/* ---- solutions + cube grid ---------------------------------------------- */
+.roux-block-grid {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.roux-block-grid-half {
+  flex: 1 1 50%;
+  min-width: 0;
+}
+@media (max-width: 899px) {
+  /* MUI md breakpoint: below md the two columns stack full width (sm/xs=12) */
+  .roux-block-grid-half {
+    flex-basis: 100%;
+  }
+}
+
+.roux-block-solutions-head {
+  display: flex;
+}
+.roux-block-alg-wrap {
+  padding-bottom: 16px;
+  line-height: 1;
+}
+.roux-block-alg-text {
+  white-space: pre-line;
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.roux-block-cube-col {
+  display: flex;
+  justify-content: center;
+}
+.roux-block-cube-wrap {
+  background: transparent;
+}
+
+/* ---- action row (Next button + warning) --------------------------------- */
+.roux-block-action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.roux-block-space-btn-wrap {
+  flex: 0 0 auto;
+  width: 41.666%; /* xs=5/12 */
+  margin-left: 8px;
+  min-width: 120px;
+}
+@media (min-width: 600px) {
+  .roux-block-space-btn-wrap {
+    width: 33.333%; /* sm=4/12 */
+  }
+}
+@media (min-width: 900px) {
+  .roux-block-space-btn-wrap {
+    width: 25%; /* md=3/12 */
+  }
+}
+.roux-block-space-btn {
+  width: 100%;
+  height: 50px;
+  justify-content: center;
+  font-size: 0.95rem;
+  border-radius: 0;
+}
+
+.roux-block-warn-wrap {
+  margin-left: 8px;
+}
+.roux-block-warn-icon {
+  color: var(--destructive);
+  cursor: help;
+  width: auto;
+  height: auto;
+  padding: 4px;
+}
+.roux-block-warn-icon:hover {
+  background: color-mix(in srgb, var(--destructive) 12%, transparent);
+  color: var(--destructive);
+}
+
+/* ---- dividers / spacers (MUI <Box height=.../> + <Divider/>) ------------- */
+.roux-block-divider {
+  border: none;
+  border-top: 1px solid var(--border-default);
+  margin: 0;
+}
+.roux-block-spacer-20 {
+  height: 20px;
+}
+.roux-block-spacer-15 {
+  height: 15px;
+}
+
+/* ---- config panel group ------------------------------------------------- */
+.roux-block-config-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* makeStyles .configPanel — wrapping flow; color-panel & multi-select full row */
+.roux-block-config-panel {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 16px;
+  row-gap: 0;
+}
+.roux-block-config-panel .roux-color-panel,
+.roux-block-config-panel .multi-select {
+  flex-basis: 100%;
+}
+
+/* ---- helper text prompt (4c / eopair usage hint) ------------------------ */
+.roux-block-prompt {
+  color: var(--muted-foreground);
+}
+.roux-block-helper-pre {
+  font-family: inherit;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* ---- mobile: stack cube + controls vertically --------------------------- */
+@media (max-width: 480px) {
+  .roux-block-paper {
+    padding: 16px;
+  }
+  .roux-block-scramble-head {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .roux-block-grid {
+    flex-direction: column;
+  }
+  .roux-block-grid-half {
+    flex-basis: 100%;
+  }
+}

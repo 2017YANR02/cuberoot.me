@@ -1,0 +1,139 @@
+/* CmllTrainerView / OllcpTrainerView — view-specific layout. Tokens only.
+ * de-MUI: Paper → bordered .roux-cmll-card; Grid → CSS grid; Typography → p/div.
+ */
+
+.roux-cmll {
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  color: var(--foreground);
+  padding-bottom: 16px;
+}
+
+/* cube canvas — upstream Paper with fixed 350 height, cube centered. */
+.roux-cmll-canvas {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 350px;
+  overflow: auto;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+}
+
+/* the scramble / case card (upstream Paper elevation 2). */
+.roux-cmll-card {
+  margin-top: 5px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+/* upstream Grid: xs=3 label / xs=9 value, then xs=3 "Case" label / xs=3 Show
+ * (or xs=9 value). Approximate with a 12-col grid. */
+.roux-cmll-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.roux-cmll-label {
+  grid-column: span 3;
+  color: var(--muted-foreground);
+  font-weight: 500;
+  font-size: 18px;
+  border-bottom: 2px solid currentColor;
+  width: fit-content;
+}
+.roux-cmll-value {
+  grid-column: span 9;
+  min-width: 0;
+}
+.roux-cmll-showcell {
+  grid-column: span 3;
+}
+.roux-cmll-text {
+  white-space: pre-line;
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0 0 8px;
+  line-height: 1;
+  color: var(--foreground);
+}
+.roux-cmll-casevis {
+  transition: all 0.3s ease;
+  line-height: 0;
+}
+
+.roux-cmll-fullbtn {
+  width: 100%;
+}
+
+.roux-cmll-nextrow {
+  margin-top: 30px;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+}
+.roux-cmll-nextbtn {
+  grid-column: span 3;
+  justify-content: center;
+}
+
+/* config panel */
+.roux-cmll-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.roux-cmll-multirow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+.roux-cmll-visualrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.roux-cmll-divider {
+  border: none;
+  border-top: 1px solid var(--border-default);
+  margin: 20px 0;
+  width: 100%;
+}
+
+.roux-cmll-usage {
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+  .roux-cmll-card {
+    padding: 16px;
+  }
+  .roux-cmll-label {
+    grid-column: span 12;
+  }
+  .roux-cmll-value {
+    grid-column: span 12;
+  }
+  .roux-cmll-showcell {
+    grid-column: span 12;
+  }
+  .roux-cmll-nextbtn {
+    grid-column: span 6;
+  }
+  .roux-cmll-multirow,
+  .roux-cmll-visualrow {
+    flex-direction: column;
+    gap: 16px;
+  }
+}

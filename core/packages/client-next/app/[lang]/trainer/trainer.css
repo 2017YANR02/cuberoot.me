@@ -28,6 +28,33 @@
 .trainer-topbar .trainer-back:hover { color: var(--foreground); }
 .trainer-topbar .trainer-spacer { flex: 1; }
 
+/* 3x3 hub: Alg-training / Roux segmented toggle */
+.trainer-mode-toggle {
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  padding: 4px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+.trainer-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.trainer-mode-btn:hover { color: var(--foreground); }
+.trainer-mode-btn.is-active {
+  color: var(--accent-foreground);
+  background: var(--accent);
+}
+
 .trainer-puzzle-select,
 .trainer-set-select {
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
