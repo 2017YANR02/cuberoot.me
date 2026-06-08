@@ -9,6 +9,7 @@ import {
   Clock3,
   Lock,
   PlayCircle,
+  Crown,
 } from "lucide-react";
 import {
   list as listCourses,
@@ -17,6 +18,7 @@ import {
 } from "@/lib/db/courses";
 import { listByCourse as listLessons } from "@/lib/db/lessons";
 import { courseProgressPercent } from "@/lib/db/progress";
+import { isMember } from "@/lib/db/membership";
 import { getCurrentUser } from "@/lib/auth-user";
 import { Badge } from "@/components/Badge";
 import { CourseVideo } from "@/components/CourseVideo";
@@ -72,9 +74,12 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
 
   const [lessons, user] = await Promise.all([listLessons(id), getCurrentUser()]);
   const isFreeCourse = course.price === 0;
-  const paid = user ? await hasUserPaidForCourse(user.id, id) : false;
+  const purchased = user ? await hasUserPaidForCourse(user.id, id) : false;
+  // 会员在有效期内畅看全部付费课程,视同已解锁
+  const memberUnlock = user && !purchased && !isFreeCourse ? await isMember(user.id) : false;
+  const unlocked = purchased || memberUnlock;
   const progress =
-    user && paid
+    user && unlocked
       ? await courseProgressPercent(user.id, id)
       : { percent: 0, completed: 0, total: lessons.length };
 
@@ -109,7 +114,7 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
               <div className="text-[12px] text-ink-3 mt-1">
                 {course.format === "一对一私教" ? "按节购买,首节可申请试听" : "一次购买,长期回看"}
               </div>
-              {paid || isFreeCourse ? (
+              {unlocked || isFreeCourse ? (
                 <Link
                   href={
                     lessons[0]
@@ -118,7 +123,7 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
                   }
                   className="mt-4 inline-flex w-full items-center justify-center rounded-md bg-brand py-2.5 text-[14px] font-medium text-white hover:bg-brand-dark transition"
                 >
-                  {paid ? "继续学习" : "开始学习"}
+                  {unlocked ? "继续学习" : "开始学习"}
                 </Link>
               ) : (
                 <CouponBox
@@ -129,6 +134,20 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
                   action={placeOrderFromForm}
                 />
               )}
+              {memberUnlock ? (
+                <div className="mt-3 flex items-center gap-1.5 text-[12px] text-brand">
+                  <Crown size={13} className="shrink-0" />
+                  你已是会员,本课已为你解锁
+                </div>
+              ) : !unlocked && !isFreeCourse ? (
+                <Link
+                  href="/membership"
+                  className="mt-3 flex items-center gap-1.5 text-[12px] text-ink-3 hover:text-brand transition"
+                >
+                  <Crown size={13} className="shrink-0" />
+                  开通会员畅看全部付费课程
+                </Link>
+              ) : null}
               <button
                 className="mt-2 w-full rounded-md border border-line bg-white py-2.5 text-[14px] font-medium text-ink-2 hover:border-brand hover:text-brand transition"
                 type="button"
@@ -136,7 +155,7 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
                 咨询教练
               </button>
 
-              {paid && progress.total > 0 ? (
+              {unlocked && progress.total > 0 ? (
                 <div className="mt-5 border-t border-line pt-4">
                   <div className="flex items-center justify-between text-[12px] text-ink-3">
                     <span>学习进度</span>
@@ -203,14 +222,16 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
               <h2 className="text-[20px] font-semibold text-ink mt-12 mb-5">课程目录</h2>
               <ol className="border border-line rounded-[14px] divide-y divide-line bg-white">
                 {lessons.map((lesson) => {
-                  const unlocked = isFreeCourse || lesson.free || paid;
+                  const lessonUnlocked = isFreeCourse || lesson.free || unlocked;
                   const tag = isFreeCourse
                     ? null
-                    : lesson.free && !paid
+                    : lesson.free && !unlocked
                       ? { label: "试看", tone: "brand" as const }
-                      : paid
-                        ? { label: "已购", tone: "muted" as const }
-                        : { label: "锁定", tone: "lock" as const };
+                      : memberUnlock
+                        ? { label: "会员", tone: "brand" as const }
+                        : purchased
+                          ? { label: "已购", tone: "muted" as const }
+                          : { label: "锁定", tone: "lock" as const };
                   const Inner = (
                     <div className="flex items-center gap-4 px-5 py-4">
                       <span className="w-8 shrink-0 font-mono text-[12px] text-ink-3">
@@ -240,7 +261,7 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
                   );
                   return (
                     <li key={lesson.id}>
-                      {unlocked ? (
+                      {lessonUnlocked ? (
                         <Link
                           href={`/courses/${course.id}/learn/${lesson.id}`}
                           className="block hover:bg-brand-tint transition"

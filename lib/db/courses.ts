@@ -10,6 +10,7 @@ import type {
   User,
 } from "@/db/schema";
 import { searchCourses, searchCoursesCount } from "@/lib/db/search";
+import { isMember } from "@/lib/db/membership";
 
 export type { CourseLevel, CourseFormat };
 
@@ -208,6 +209,7 @@ export async function hasUserPaidForCourse(
 export type CourseAccessReason =
   | "price_zero"
   | "free_lesson"
+  | "member"
   | "paid"
   | "not_logged_in"
   | "not_paid";
@@ -230,6 +232,10 @@ export async function canAccessCourse(
   }
   if (!user) {
     return { allowed: false, reason: "not_logged_in" };
+  }
+  // 会员在有效期内畅看全部付费课程,先于按课购买校验放行
+  if (await isMember(user.id)) {
+    return { allowed: true, reason: "member" };
   }
   const paid = await hasUserPaidForCourse(user.id, course.id);
   return paid

@@ -8,6 +8,7 @@ import { HeaderSearch } from "./HeaderSearch";
 
 const NAV = [
   { href: "/courses", label: "课程" },
+  { href: "/membership", label: "会员" },
   { href: "/shop", label: "商城" },
   { href: "/events", label: "赛事" },
   { href: "/community", label: "社群" },
@@ -200,6 +201,13 @@ function UserMenu({ user }: { user: HeaderUser }) {
             className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
           >
             我的订单
+          </Link>
+          <Link
+            href="/me/membership"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
+          >
+            我的会员
           </Link>
           <Link
             href="/me/invite"
