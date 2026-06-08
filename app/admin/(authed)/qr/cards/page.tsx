@@ -46,6 +46,7 @@ export default async function QrCardsPage({
           actions={
             <div className="flex gap-2">
               <GhostLink href="/admin/qr">返回列表</GhostLink>
+              <GhostLink href="/admin/qr/stats">数据看板</GhostLink>
               <PrintButton />
             </div>
           }
