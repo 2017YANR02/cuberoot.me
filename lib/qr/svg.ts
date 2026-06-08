@@ -1,11 +1,8 @@
 import QRCode from "qrcode";
+import { CUBE_FACES } from "./cardText";
 
-// 魔方六面配色,中心 logo 用(打乱面的视觉效果,比单色更"魔方")
-export const CUBE_FACES = [
-  "#C41E3A", "#FFFFFF", "#0051BA",
-  "#FF8A00", "#FFD500", "#009E60",
-  "#FFFFFF", "#C41E3A", "#FFD500",
-];
+// 魔方六面配色从 cardText 共享(logo / 色块散点同源)
+export { CUBE_FACES };
 
 export type QrSvgOptions = {
   fg?: string;      // 码点颜色,默认品牌色
