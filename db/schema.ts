@@ -7,8 +7,10 @@ export type EventType = "WCA 官方赛" | "城市开放赛" | "线上挑战赛" 
 export type EventStatus = "报名中" | "即将开放" | "已结束";
 export type NewsCategory = "公告" | "赛事" | "教学" | "行业";
 export type UserRole = "user" | "instructor" | "admin";
-export type OrderType = "course" | "product" | "event";
+export type OrderType = "course" | "product" | "event" | "membership";
 export type OrderStatus = "pending" | "paid" | "cancelled" | "refunded";
+export type MembershipStatus = "active" | "expired" | "cancelled";
+export type PayoutStatus = "pending" | "paid";
 export type PaymentLogKind =
   | "callback"
   | "refund"
@@ -308,6 +310,58 @@ export const inviteCodes = sqliteTable(
   },
   (t) => [index("invite_codes_owner_idx").on(t.ownerId)],
 );
+
+// 会员订阅:一条 active 行代表当前会员资格,续费时延长 expiresAt;退款按 orderId 撤销
+export const memberships = sqliteTable(
+  "memberships",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    plan: text("plan").notNull(), // 计划 id:monthly / quarterly / yearly
+    status: text("status").$type<MembershipStatus>().notNull().default("active"),
+    startedAt: integer("started_at").notNull(),
+    expiresAt: integer("expires_at").notNull(),
+    orderId: text("order_id"), // 最近一次开通/续费的订单
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [
+    index("memberships_user_idx").on(t.userId),
+    index("memberships_expires_idx").on(t.expiresAt),
+  ],
+);
+
+// 讲师结算分账:每讲师每月一张结算单(net 实收 + 固定分成),pending → paid 留打款凭证
+export const instructorPayouts = sqliteTable(
+  "instructor_payouts",
+  {
+    id: text("id").primaryKey(),
+    instructorId: text("instructor_id").notNull(),
+    period: text("period").notNull(), // 结算月份 "YYYY-MM"
+    orderCount: integer("order_count").notNull().default(0),
+    grossAmount: integer("gross_amount").notNull().default(0), // 当月实收(net,已扣优惠)
+    shareRate: real("share_rate").notNull(), // 分成比例,如 0.7
+    shareAmount: integer("share_amount").notNull(), // 应打款金额 = grossAmount × shareRate
+    status: text("status").$type<PayoutStatus>().notNull().default("pending"),
+    method: text("method"), // 打款方式:bank / wechat / alipay / manual
+    reference: text("reference"), // 打款凭证号 / 流水
+    note: text("note"),
+    createdAt: integer("created_at").notNull(),
+    paidAt: integer("paid_at"),
+  },
+  (t) => [
+    uniqueIndex("instructor_payouts_inst_period_unique").on(
+      t.instructorId,
+      t.period,
+    ),
+    index("instructor_payouts_status_idx").on(t.status),
+  ],
+);
+
+export type Membership = typeof memberships.$inferSelect;
+export type MembershipInsert = typeof memberships.$inferInsert;
+export type InstructorPayout = typeof instructorPayouts.$inferSelect;
+export type InstructorPayoutInsert = typeof instructorPayouts.$inferInsert;
 
 export type QrType = "redirect" | "landing";
 export type QrLink = { label: string; href: string; note?: string };

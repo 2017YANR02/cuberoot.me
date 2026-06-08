@@ -41,18 +41,39 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-export default async function EventDetail({ params }: { params: Promise<{ id: string }> }) {
+const ORDER_ERROR_MSG: Record<string, string> = {
+  event_sold_out: "名额已报满,暂时无法报名。",
+  event_closed: "该赛事报名已结束。",
+  event_not_found: "赛事不存在或已下架。",
+};
+
+export default async function EventDetail({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
   const { id } = await params;
+  const { error } = await searchParams;
   const e = await findEvent(id);
   if (!e) notFound();
 
   const dateText = e.endDate
     ? `${e.startDate} ~ ${e.endDate}`
     : e.startDate;
+  const soldOut = e.registered >= e.capacity;
+  const errorMsg = error ? ORDER_ERROR_MSG[error] : null;
 
   return (
     <section className="container-page py-12">
       <Link href="/events" className="text-[13px] text-ink-3 hover:text-ink">← 返回赛事列表</Link>
+
+      {errorMsg ? (
+        <div className="mt-4 rounded-[14px] border border-brand/40 bg-brand-soft px-4 py-3 text-[13px] text-brand-dark">
+          {errorMsg}
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-10 md:grid-cols-[1.4fr_1fr] items-start">
         <div>
@@ -66,7 +87,7 @@ export default async function EventDetail({ params }: { params: Promise<{ id: st
           <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Info icon={CalendarDays} label="时间" value={dateText} />
             <Info icon={MapPin} label="地点" value={`${e.city} · ${e.venue}`} />
-            <Info icon={Users} label="报名" value={`${e.registered}/${e.capacity}`} />
+            <Info icon={Users} label="报名" value={`${e.registered}/${e.capacity}${soldOut ? " · 已满" : ""}`} />
             <Info icon={Wallet} label="费用" value={e.fee === 0 ? "免费" : `¥${e.fee}`} />
           </div>
 
@@ -86,7 +107,7 @@ export default async function EventDetail({ params }: { params: Promise<{ id: st
             {e.fee === 0 ? "免费" : `¥${e.fee}`}
           </div>
           <div className="text-[12px] text-ink-3 mt-1">含赛事胸卡 · 现场补给 · 数据成绩册</div>
-          {e.status === "报名中" ? (
+          {e.status === "报名中" && !soldOut ? (
             <div className="mt-5">
               <CouponBox
                 type="event"
@@ -102,7 +123,11 @@ export default async function EventDetail({ params }: { params: Promise<{ id: st
               disabled
               className="mt-5 w-full rounded-md py-2.5 text-[14px] font-medium transition bg-line-soft text-ink-3 cursor-not-allowed"
             >
-              {e.status === "已结束" ? "已结束" : "提醒我开放"}
+              {e.status === "已结束"
+                ? "已结束"
+                : e.status === "即将开放"
+                  ? "提醒我开放"
+                  : "名额已报满"}
             </button>
           )}
           <div className="mt-5 border-t border-line pt-4 text-[12px] text-ink-3 leading-6">

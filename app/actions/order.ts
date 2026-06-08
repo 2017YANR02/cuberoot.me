@@ -13,7 +13,8 @@ function isNextControlFlow(e: unknown): boolean {
 }
 import { findById as findCourse } from "@/lib/db/courses";
 import { findById as findProduct } from "@/lib/db/products";
-import { findById as findEvent } from "@/lib/db/events";
+import { findById as findEvent, checkEventOrderable } from "@/lib/db/events";
+import { getPlan as getMembershipPlan } from "@/lib/db/membership";
 import {
   cancel as cancelOrder,
   create as createOrder,
@@ -51,8 +52,13 @@ async function resolveRef(
     const p = await findProduct(refId);
     return p ? { title: p.name, price: p.price } : null;
   }
-  const e = await findEvent(refId);
-  return e ? { title: e.title, price: e.fee } : null;
+  if (type === "event") {
+    const e = await findEvent(refId);
+    return e ? { title: e.title, price: e.fee } : null;
+  }
+  // membership:refId 即套餐 id
+  const plan = getMembershipPlan(refId);
+  return plan ? { title: plan.label, price: plan.price } : null;
 }
 
 export async function placeOrder(input: PlaceInput): Promise<void> {
@@ -82,6 +88,17 @@ async function placeOrderImpl(input: PlaceInput): Promise<void> {
     redirect(orderEntryPath(input.type, input.refId) + "?error=not_found");
   }
   const qty = Math.max(1, Math.floor(input.qty ?? 1));
+
+  // 赛事名额防超卖:下单前拦截已结束 / 满员(付款成功再 registered += qty)
+  if (input.type === "event") {
+    const guard = await checkEventOrderable(input.refId, qty);
+    if (!guard.ok) {
+      redirect(
+        orderEntryPath(input.type, input.refId) + `?error=event_${guard.reason}`,
+      );
+    }
+  }
+
   const gross = ref.price * qty;
 
   let discount = 0;
@@ -264,5 +281,6 @@ export async function cancelOrderFromForm(f: FormData): Promise<void> {
 function orderEntryPath(type: OrderType, refId: string): string {
   if (type === "course") return `/courses/${refId}`;
   if (type === "product") return `/shop/${refId}`;
-  return `/events/${refId}`;
+  if (type === "event") return `/events/${refId}`;
+  return "/membership";
 }
