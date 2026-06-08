@@ -4,7 +4,7 @@
 // 选项目走 URL(选别的 event 直接 push /trainer/<id>),不再藏在组件 state 里.
 // Ported from packages/client/src/pages/trainer/TrainerLandingPage.tsx.
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
@@ -100,7 +100,7 @@ export default function TrainerHubClient() {
           availableEvents={SELECTOR_EVENTS}
           onlyAvailable
           selectedEvent={event}
-          onSelect={(id) => router.push(`/${lang}/trainer/${id}`)}
+          onSelect={(id) => router.push(`${lang === 'zh' ? '/zh' : ''}/trainer/${id}`)}
           isZh={isZh}
         />
       </div>

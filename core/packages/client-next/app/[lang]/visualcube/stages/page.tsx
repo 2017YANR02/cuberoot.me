@@ -6,7 +6,7 @@
  * Ported from packages/client/src/pages/visualcube/VisualCubeStagesPage.tsx
  * (next/link replaces react-router Link; useDocumentTitle is the local hook).
  */
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { VisualCube } from '@/components/VisualCube';

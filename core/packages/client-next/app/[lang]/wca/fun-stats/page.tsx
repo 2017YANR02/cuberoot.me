@@ -4,7 +4,7 @@
 // 单一聚合页:左侧按家族选榜(?stat= 深链),顶部统一 region/事件/类型/年份控件,下方表格。
 // 全部 23 榜支持 world / continent / country。数据走 /v1/wca/fun/*(wca_fs_* 预计算)。
 import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useQueryState, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { RegionPicker } from '@/components/RegionPicker';

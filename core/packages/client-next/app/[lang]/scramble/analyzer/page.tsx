@@ -13,7 +13,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useQueryStates, parseAsString, parseAsInteger, parseAsStringEnum } from 'nuqs';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Copy, Loader2, Check, Shuffle, Dices } from 'lucide-react';
 import { solveCross, normalizeScramble } from '@/lib/cross-solver';

@@ -2,7 +2,7 @@
 
 // Ported from packages/client/src/pages/trainer/TrainerSelectPage.tsx
 import { useEffect } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Flag } from 'lucide-react';
@@ -65,7 +65,7 @@ export default function TrainerSetClient() {
         </span>
         <button
           className={`trainer-start-btn${!canStart ? ' is-disabled' : ''}`}
-          onClick={() => router.push(`/${lang}/trainer/${puzzleParam}/${setSlug}/run`)}
+          onClick={() => router.push(`${lang === 'zh' ? '/zh' : ''}/trainer/${puzzleParam}/${setSlug}/run`)}
           disabled={!canStart}
         >
           <Flag size={14} /> {isZh ? '开始训练' : 'Start Training'} ({selectedSet.size})
