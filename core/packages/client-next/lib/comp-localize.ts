@@ -22,21 +22,28 @@ export interface LocalizeCompOpts {
   explicitNameZh?: string | null;
 }
 
-export function localizeCompName(
+// 解析比赛名(zh fallback),但不剥 WCA 前缀 — 拿原始全名(如 2026WCA黄冈魔方公开赛)。
+export function resolveCompName(
   id: string,
   name: string,
   isZh: boolean,
   opts?: LocalizeCompOpts,
 ): string {
   if (!name) return name;
-  const resolved = (() => {
-    if (!isZh) return name;
-    if (opts?.explicitNameZh) return opts.explicitNameZh;
-    const zh1 = opts?.upcomingNameZhById?.get(id);
-    if (zh1) return zh1;
-    const zh2 = compNameZh(name);
-    if (zh2) return zh2;
-    return name;
-  })();
-  return stripWcaPrefix(resolved);
+  if (!isZh) return name;
+  if (opts?.explicitNameZh) return opts.explicitNameZh;
+  const zh1 = opts?.upcomingNameZhById?.get(id);
+  if (zh1) return zh1;
+  const zh2 = compNameZh(name);
+  if (zh2) return zh2;
+  return name;
+}
+
+export function localizeCompName(
+  id: string,
+  name: string,
+  isZh: boolean,
+  opts?: LocalizeCompOpts,
+): string {
+  return stripWcaPrefix(resolveCompName(id, name, isZh, opts));
 }

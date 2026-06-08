@@ -15,7 +15,8 @@ import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
-import { localizeCompName } from '@/lib/comp-localize';
+import { localizeCompName, resolveCompName } from '@/lib/comp-localize';
+import { fetchRankForWca, type RankResult } from '@/lib/rank-client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { apiUrl } from '@/lib/api-base';
 import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
@@ -399,6 +400,16 @@ export default function CompDetailPage() {
   const [data, setData] = useState<CompData | null>(null);
   const compNameTitle = data ? localizeCompName(slug, data.name, isZh) : slug;
   useDocumentTitle(compNameTitle, compNameTitle);
+  const [nameCopied, setNameCopied] = useState(false);
+  const copyCompName = useCallback(() => {
+    if (!data) return;
+    // 复制原始全名(中文不剥 WCA 前缀):2026WCA黄冈魔方公开赛
+    const full = resolveCompName(slug, decodeEntities(data.name), isZh);
+    navigator.clipboard.writeText(full).then(
+      () => { setNameCopied(true); setTimeout(() => setNameCopied(false), 1500); },
+      e => console.error('[comp copy name] failed:', e),
+    );
+  }, [data, slug, isZh]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1023,14 +1034,17 @@ export default function CompDetailPage() {
               return (
                 <>
                   {iso2 && <Flag iso2={iso2} className="comp-flag comp-title-flag" />}
-                  <a
-                    href={wcaUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={copyCompName}
                     className="comp-detail-title-name"
+                    title={isZh ? '点击复制比赛名' : 'Click to copy name'}
                   >
                     {localizeCompName(slug, decodeEntities(data.name), isZh)}
-                  </a>
+                    {nameCopied
+                      ? <Check size={16} className="comp-title-copy-icon is-copied" />
+                      : <Copy size={15} className="comp-title-copy-icon" />}
+                  </button>
                   <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon" title="WCA">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/icons/upstream/wca.svg" alt="WCA" />
@@ -2085,6 +2099,8 @@ interface RoundResultModalProps {
 
 function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMap, onShowAll, onClose }: RoundResultModalProps) {
   const [copyState, setCopyState] = useState<'idle' | 'copying' | 'done' | 'nothing' | 'error'>('idle');
+  // 破 PR 时同步查「这成绩在 WCA 历史能排第几」(NR/WR),走 /v1/wca/rank-for(24h 缓存).
+  const [rankInfo, setRankInfo] = useState<{ single: RankResult | null; average: RankResult | null }>({ single: null, average: null });
 
   const prefetchRef = useRef<Promise<{ cn: string; en: string; url: string } | null> | null>(null);
   const prefetchKeyRef = useRef<string>('');
@@ -2151,6 +2167,34 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
       .catch(() => null);
   }, [data, number, eventId, roundId, pbMap]);
 
+  useEffect(() => {
+    const u = data.users[String(number)];
+    const ev = data.events.find(e => e.i === eventId);
+    const rd = ev?.rs.find(r => r.i === roundId);
+    const arr = data.resultsByRound[roundKey(eventId, roundId)] || [];
+    const result = arr.find(rr => rr.n === number);
+    setRankInfo({ single: null, average: null });
+    if (!u || !ev || !rd || !result) return;
+    const pb = pbMap[u.wcaid];
+    const { singleRank, averageRank } = classifyPr(result, pb);
+    const country = regionToIso2(u.region).toUpperCase();
+    const wantSingle = singleRank === 1 && !result.sr && result.b > 0;
+    const isAvgFmt = isAvgRankedFormat(rd.f) || isBlindAvgEvent(eventId);
+    const avgVal = effectiveAvg(result);
+    const wantAvg = averageRank === 1 && !result.ar && isAvgFmt && avgVal > 0;
+    if (!wantSingle && !wantAvg) return;
+    let cancelled = false;
+    if (wantSingle) {
+      fetchRankForWca(result.e, result.b, 'single', country)
+        .then(r => { if (!cancelled) setRankInfo(prev => ({ ...prev, single: r })); });
+    }
+    if (wantAvg) {
+      fetchRankForWca(result.e, avgVal, 'average', country)
+        .then(r => { if (!cancelled) setRankInfo(prev => ({ ...prev, average: r })); });
+    }
+    return () => { cancelled = true; };
+  }, [data, number, eventId, roundId, pbMap]);
+
   const u = data.users[String(number)];
   const ev = data.events.find(e => e.i === eventId);
   const rd = ev?.rs.find(r => r.i === roundId);
@@ -2172,6 +2216,15 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
   const singleTagForCopy = result.sr ? String(result.sr) : (singleRank ? 'PR' : '');
   const avgTagForCopy = result.ar ? String(result.ar) : (averageRank ? 'PR' : '');
   const canCopy = (singleTagForCopy && result.b > 0) || (avgTagForCopy && result.a > 0);
+
+  // 破 PR:把 PR 框 + NR/WR 名次拼成一个右上角标组「PR/NR3/WR3」(只 PR 带框,名次纯文本,/ 分割).
+  const renderPrMark = (info: RankResult | null) => (
+    <span className="comp-pr-mark">
+      <RecordBadge record="PR" variant="standalone" />
+      {info?.national && <span className="comp-pr-mark-rank">/NR{info.national.rank}</span>}
+      {info?.world && <span className="comp-pr-mark-rank">/WR{info.world.rank}</span>}
+    </span>
+  );
 
   async function handleCopy() {
     if (!hasEventsRef.current || !prefetchRef.current) {
@@ -2249,12 +2302,19 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
             <div className="comp-round-modal-label">{isZh ? '平均' : 'Average'}</div>
             <div className="comp-round-modal-value">
               {isAverageFormat && effectiveAvg(result) !== 0 ? (
-                <span className="record-num-cell">
-                  {formatLive(effectiveAvg(result), result.e, true)}
-                  {result.ar
-                    ? <RecordBadge record={String(result.ar)} variant="inline" iso2={iso2} />
-                    : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null}
-                </span>
+                (!result.ar && averageBadge === 'PR') ? (
+                  <span className="comp-pr-value">
+                    {formatLive(effectiveAvg(result), result.e, true)}
+                    {renderPrMark(rankInfo.average)}
+                  </span>
+                ) : (
+                  <span className="record-num-cell">
+                    {formatLive(effectiveAvg(result), result.e, true)}
+                    {result.ar
+                      ? <RecordBadge record={String(result.ar)} variant="inline" iso2={iso2} />
+                      : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null}
+                  </span>
+                )
               ) : '—'}
             </div>
           </section>
@@ -2262,12 +2322,19 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
             <div className="comp-round-modal-label">{isZh ? '单次' : 'Best'}</div>
             <div className="comp-round-modal-value">
               {result.b !== 0 ? (
-                <span className="record-num-cell">
-                  {formatLive(result.b, result.e, false)}
-                  {result.sr
-                    ? <RecordBadge record={result.sr} variant="inline" iso2={iso2} />
-                    : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
-                </span>
+                (!result.sr && singleBadge === 'PR') ? (
+                  <span className="comp-pr-value">
+                    {formatLive(result.b, result.e, false)}
+                    {renderPrMark(rankInfo.single)}
+                  </span>
+                ) : (
+                  <span className="record-num-cell">
+                    {formatLive(result.b, result.e, false)}
+                    {result.sr
+                      ? <RecordBadge record={result.sr} variant="inline" iso2={iso2} />
+                      : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
+                  </span>
+                )
               ) : '—'}
             </div>
           </section>
