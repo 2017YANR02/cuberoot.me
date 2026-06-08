@@ -48,6 +48,13 @@ describe('scrambleMoveLengths', () => {
     expect(len1('minx', minx)).toBe(77);
   });
 
+  it('megaminx: counts by move alphabet, robust to a glued move (missing space)', () => {
+    // real WCA data quirk: "R--D--" with a missing space — still 11 moves on that line → 77
+    const line7glued = "R-- D++ R++ D-- R++ D-- R--D-- R-- D++ U";
+    const minx = Array(6).fill("R++ D-- R-- D-- R++ D-- R-- D-- R++ D-- U'").concat(line7glued).join('\n');
+    expect(len1('minx', minx)).toBe(77);
+  });
+
   it('444: single value, wide moves counted as tokens', () => {
     const s = "L' U2 F B' D' U2 L2 F' R' U L2 R' F2 D2 R' B2 U2 F2 U2 Rw2 Fw2 L D2 L F' Uw2 L' U2 R' B2 U B' Rw2 L B2 Uw' Fw Uw' Fw L' Uw R' U2";
     expect(len1('444', s)).toBe(43);
