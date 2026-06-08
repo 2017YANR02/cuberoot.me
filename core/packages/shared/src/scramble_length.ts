@@ -51,8 +51,15 @@ export function scrambleMoveSamples(eventId: string, scramble: string): Scramble
       .filter((x) => x.len > 0);
   }
 
-  // Everything else. Megaminx's 7 newline-separated lines collapse into the
-  // same whitespace split (77 tokens), which is the conventional count.
+  // Megaminx: count moves by the fixed alphabet (R±±/D±±/U/U') rather than
+  // whitespace — a few WCA scrambles glue two moves with a missing space
+  // (e.g. "R--D--"), which a whitespace split miscounts (76 instead of 77).
+  if (eventId === 'minx') {
+    const m = s.match(/R\+\+|R--|D\+\+|D--|U'|U/g);
+    return m && m.length > 0 ? [{ len: m.length, text: s }] : [];
+  }
+
+  // Everything else: whitespace tokens (newlines collapse into the same split).
   const n = countTokens(s);
   return n > 0 ? [{ len: n, text: s }] : [];
 }
