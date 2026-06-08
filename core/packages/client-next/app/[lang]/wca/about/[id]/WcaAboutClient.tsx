@@ -14,7 +14,6 @@ import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
-import { getLangQuery } from '@/i18n/i18n-client';
 import { ABOUT_REGISTRY } from './_lib/registry';
 import type { AboutEntry, AboutStep, AboutStat, AboutFormula, AboutCode, AboutRelated, AboutSection } from './_lib/types';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -110,7 +109,6 @@ function CodeBlock({ code, isZh }: { code: AboutCode; isZh: boolean }) {
 }
 
 function RelatedCard({ rel, isZh }: { rel: AboutRelated; isZh: boolean }) {
-  const langQ = getLangQuery();
   const name = isZh ? rel.titleZh : rel.titleEn;
   const hint = isZh ? rel.hintZh : rel.hintEn;
   const inner = (
@@ -129,7 +127,7 @@ function RelatedCard({ rel, isZh }: { rel: AboutRelated; isZh: boolean }) {
       </a>
     );
   }
-  const to = rel.toStat ? `/wca/${rel.id}${langQ}` : `/wca/about/${rel.id}${langQ}`;
+  const to = rel.toStat ? `/wca/${rel.id}` : `/wca/about/${rel.id}`;
   return <Link className="wcaa-related-card" href={to}>{inner}</Link>;
 }
 
@@ -147,7 +145,6 @@ export default function WcaAboutClient() {
   const id = Array.isArray(params?.id) ? params.id[0] : (params?.id ?? '');
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  const langQ = getLangQuery();
 
   const entry = useMemo<AboutEntry | null>(() => {
     if (!id) return null;
@@ -161,7 +158,7 @@ export default function WcaAboutClient() {
     return (
       <div className="wcaa-page">
         <div className="wcaa-header">
-          <Link href={`/wca${langQ}`} className="wcaa-back">
+          <Link href="/wca" className="wcaa-back">
             <ArrowLeft size={16} />
             <span>{isZh ? '返回 WCA 统计' : 'Back to WCA Statistics'}</span>
           </Link>
@@ -180,7 +177,7 @@ export default function WcaAboutClient() {
   return (
     <div className="wcaa-page">
       <div className="wcaa-header">
-        <Link href={`/wca${langQ}`} className="wcaa-back">
+        <Link href="/wca" className="wcaa-back">
           <ArrowLeft size={16} />
           <span>{isZh ? '返回 WCA 统计' : 'Back to WCA Statistics'}</span>
         </Link>
