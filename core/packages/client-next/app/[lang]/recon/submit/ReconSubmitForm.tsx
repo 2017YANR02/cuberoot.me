@@ -345,6 +345,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       const qs = next.toString();
       const newHref = url.pathname + (qs ? '?' + qs : '') + url.hash;
       if (newHref !== url.pathname + url.search + url.hash) {
+        // EXEMPT from nuqs: this writes a user-shareable cubedb-style deep link
+        // whose exact shape is a contract — params are encodeUrlAlg-serialized
+        // (space→_, '→-, asymmetric in // comments) and existing params are kept
+        // verbatim first, then scramble→optimal→alg. nuqs's parseAsString would
+        // percent-encode instead, changing the link format; and this write is
+        // hard-gated off in edit / ?from= prefill modes (an always-on
+        // useQueryStates hook can't reproduce that suppression).
+        // eslint-disable-next-line no-restricted-syntax, no-restricted-globals
         window.history.replaceState(window.history.state, '', newHref);
       }
     }, 300);

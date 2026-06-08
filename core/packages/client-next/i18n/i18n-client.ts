@@ -51,6 +51,8 @@ export function ensureLangInUrl(lang: string): void {
   params.set('lang', lang);
   const safePath = window.location.pathname.replace(/^\/+/, '/');
   const newUrl = `${safePath}?${params.toString()}${window.location.hash}`;
+  // global i18n infra (non-React, no hooks) — exempt from the nuqs rule.
+  // eslint-disable-next-line no-restricted-syntax, no-restricted-globals
   history.replaceState(null, '', newUrl);
 }
 
@@ -63,6 +65,8 @@ export function syncLangToUrl(lang: string): void {
   document.cookie = `lang=${lang}; max-age=${60 * 60 * 24 * 365}; path=/; samesite=lax`;
   const url = new URL(window.location.href);
   url.searchParams.set('lang', lang);
+  // global i18n infra (non-React, no hooks) — exempt from the nuqs rule.
+  // eslint-disable-next-line no-restricted-syntax, no-restricted-globals
   history.replaceState(null, '', url.toString());
 }
 

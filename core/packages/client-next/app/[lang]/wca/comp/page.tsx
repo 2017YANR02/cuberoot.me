@@ -12,7 +12,7 @@
  */
 import { Suspense, useState, useEffect, useMemo, useCallback, useRef, useReducer } from 'react';
 import type { CSSProperties } from 'react';
-import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parseAsString } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, Ban, LayoutGrid, HelpCircle, X as XIcon } from 'lucide-react';
@@ -998,6 +998,12 @@ function CalendarPageInner() {
     'view',
     parseAsStringEnum<ViewMode>(VIEW_MODES).withDefault('calendar').withOptions({ history: 'push' }),
   );
+  // ?year= ?month= ?q= 走 nuqs(replace,不堆历史)。viewDate/compQuery 仍是真源,
+  // 这里只把它们镜像进 URL 方便分享深链;挂载时的初值读取仍走 readMonthFromUrl/readQFromUrl。
+  const [, setUrlState] = useQueryStates(
+    { year: parseAsInteger, month: parseAsInteger, q: parseAsString },
+    { history: 'replace', scroll: false },
+  );
   // 列表视图下的年月范围过滤（YYYY-MM 字符串；不合规或空 = 不参与过滤）
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -1031,25 +1037,15 @@ function CalendarPageInner() {
 
   // NOTE: viewDate 变化时同步 URL（?year= ?month=），方便复制分享当前月份链接
   useEffect(() => {
-    if (typeof window === 'undefined') return;
     if (viewMode === 'globe') return; // 地球视图把 URL 让给 globe 自己的参数(wcaId 等)
-    const p = new URLSearchParams(window.location.search);
-    p.set('year', String(viewDate.getFullYear()));
-    p.set('month', String(viewDate.getMonth() + 1));
-    const newUrl = `${window.location.pathname}?${p.toString()}${window.location.hash}`;
-    window.history.replaceState(null, '', newUrl);
-  }, [viewDate, viewMode]);
+    setUrlState({ year: viewDate.getFullYear(), month: viewDate.getMonth() + 1 });
+  }, [viewDate, viewMode, setUrlState]);
 
   // NOTE: compQuery 变化时同步 URL ?q= — 支持从全站搜索 deep-link 跳进来,也方便分享筛选状态
   useEffect(() => {
-    if (typeof window === 'undefined') return;
     if (viewMode === 'globe') return;
-    const p = new URLSearchParams(window.location.search);
-    if (compQuery) p.set('q', compQuery);
-    else p.delete('q');
-    const newUrl = `${window.location.pathname}?${p.toString()}${window.location.hash}`;
-    window.history.replaceState(null, '', newUrl);
-  }, [compQuery, viewMode]);
+    setUrlState({ q: compQuery || null });
+  }, [compQuery, viewMode, setUrlState]);
 
   // 视图切换 / 后退由上面的 useQueryState(nuqs)自动管理,无需手写 changeView / popstate。
 

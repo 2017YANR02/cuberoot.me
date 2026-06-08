@@ -12,7 +12,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useQueryStates, parseAsString, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Copy, Loader2, Check, Shuffle, Dices } from 'lucide-react';
@@ -111,6 +111,22 @@ function resolveComp(name: string): { id: string; iso: string } {
   return { id: strip, iso: '' };
 }
 
+// URL state (nuqs, replace semantics — filters/scramble shouldn't pile history).
+// `scramble` keeps the original `_`-for-space encoding; `colors` keeps the compact
+// per-color char string. Parsers carry no `.withDefault` so an absent param reads
+// back as null — the useState initializers below preserve the original
+// URL > localStorage > hardcoded-default priority. `worker` is read-only.
+const STAGE_VALUES: Stage[] = ['cross', 'xcross', 'xxcross', 'xxxcross'];
+const VARIANT_VALUES: Variant[] = ['std', 'eo', 'pair', 'pseudo', 'pseudo_pair'];
+const URL_KEYS = {
+  scramble: parseAsString,
+  howfar: parseAsInteger,
+  stage: parseAsStringEnum<Stage>(STAGE_VALUES),
+  variant: parseAsStringEnum<Variant>(VARIANT_VALUES),
+  colors: parseAsString,
+  worker: parseAsStringEnum(['ts', 'legacy']),
+};
+
 function FilterChip(props: { active: boolean; title: string; amount: number; onClick: () => void }) {
   return (
     <button
@@ -129,39 +145,40 @@ function AnalyzePageInner() {
   useDocumentTitle('打乱分析', 'Scramble Analyzer');
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const initialScramble = searchParams.get('scramble')?.replace(/_/g, ' ').trim() || DEFAULT_SCRAMBLE;
-  const workerVariant: WorkerVariant = searchParams.get('worker') === 'legacy' ? 'legacy' : 'ts';
+  const [urlState, setUrlState] = useQueryStates(URL_KEYS, { history: 'replace', scroll: false });
+  // Snapshot the URL params at mount for the useState initializers below — they
+  // run once and must reflect the deep-linked URL, not later edits.
+  const initUrlRef = useRef(urlState);
+  const workerVariant: WorkerVariant = urlState.worker === 'legacy' ? 'legacy' : 'ts';
 
-  const [scramble, setScramble] = useState(initialScramble);
+  const [scramble, setScramble] = useState(
+    () => initUrlRef.current.scramble?.replace(/_/g, ' ').trim() || DEFAULT_SCRAMBLE,
+  );
   const [howfar, setHowfar] = useState<Howfar>(() => {
-    const urlV = Number(searchParams.get('howfar'));
+    const urlV = initUrlRef.current.howfar;
     if (urlV === 1 || urlV === 2 || urlV === 3 || urlV === 4) return urlV;
     if (typeof localStorage === 'undefined') return 4;
     const v = Number(localStorage.getItem('analyze.howfar'));
     return v === 1 || v === 2 || v === 3 || v === 4 ? v : 4;
   });
   const [stage, setStage] = useState<Stage>(() => {
-    const valid: Stage[] = ['cross', 'xcross', 'xxcross', 'xxxcross'];
-    const urlV = searchParams.get('stage');
-    if (urlV && (valid as string[]).includes(urlV)) return urlV as Stage;
+    const urlV = initUrlRef.current.stage;
+    if (urlV) return urlV;
     if (typeof localStorage === 'undefined') return 'cross';
     const v = localStorage.getItem('analyze.stage');
-    if (v && (valid as string[]).includes(v)) return v as Stage;
+    if (v && (STAGE_VALUES as string[]).includes(v)) return v as Stage;
     return 'cross';
   });
   const [variant, setVariant] = useState<Variant>(() => {
-    const valid: Variant[] = ['std', 'eo', 'pair', 'pseudo', 'pseudo_pair'];
-    const urlV = searchParams.get('variant');
-    if (urlV && (valid as string[]).includes(urlV)) return urlV as Variant;
+    const urlV = initUrlRef.current.variant;
+    if (urlV) return urlV;
     if (typeof localStorage === 'undefined') return 'std';
     const v = localStorage.getItem('analyze.variant');
-    if (v && (valid as string[]).includes(v)) return v as Variant;
+    if (v && (VARIANT_VALUES as string[]).includes(v)) return v as Variant;
     return 'std';
   });
   const [colors, setColors] = useState<Record<CrossColor, boolean>>(() => {
-    const urlColors = searchParams.get('colors');
+    const urlColors = initUrlRef.current.colors;
     if (urlColors !== null) {
       const set = new Set(Array.from(urlColors.toLowerCase()).map((ch) => CHAR_COLOR[ch]).filter(Boolean) as CrossColor[]);
       return Object.fromEntries(CROSS_COLORS.map((c) => [c, set.has(c)])) as Record<CrossColor, boolean>;
@@ -184,20 +201,17 @@ function AnalyzePageInner() {
   useEffect(() => { try { localStorage.setItem('analyze.variant', variant); } catch { /* */ } }, [variant]);
   useEffect(() => { try { localStorage.setItem('analyze.colors', JSON.stringify(colors)); } catch { /* */ } }, [colors]);
 
-  // Sync URL params (replace, not push).
+  // Sync URL params (replace, not push). nuqs omits keys set to null.
   useEffect(() => {
-    const next = new URLSearchParams(Array.from(searchParams.entries()));
     const trimmed = scramble.trim();
-    if (trimmed) next.set('scramble', trimmed.replace(/ /g, '_'));
-    else next.delete('scramble');
-    if (howfar !== 4) next.set('howfar', String(howfar)); else next.delete('howfar');
-    if (stage !== 'cross') next.set('stage', stage); else next.delete('stage');
-    if (variant !== 'std') next.set('variant', variant); else next.delete('variant');
     const checked = CROSS_COLORS.filter((c) => colors[c]);
-    if (checked.length === CROSS_COLORS.length) next.delete('colors');
-    else next.set('colors', checked.map((c) => COLOR_CHAR[c]).join(''));
-    const q = next.toString();
-    router.replace(q ? `?${q}` : '?', { scroll: false });
+    void setUrlState({
+      scramble: trimmed ? trimmed.replace(/ /g, '_') : null,
+      howfar: howfar !== 4 ? howfar : null,
+      stage: stage !== 'cross' ? stage : null,
+      variant: variant !== 'std' ? variant : null,
+      colors: checked.length === CROSS_COLORS.length ? null : checked.map((c) => COLOR_CHAR[c]).join(''),
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scramble, howfar, stage, variant, colors]);
 
