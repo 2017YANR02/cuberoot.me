@@ -71,6 +71,20 @@ const PLACEHOLDERS_ZH = [
   '哪个赛事即将开始?',
   '想学什么新方法?',
 ];
+const PLACEHOLDERS_ZH__Hant = [
+  '今天從哪裡開始?',
+  '最近在參加什麼比賽?',
+  '想查誰的成績?',
+  '哪個專案的世界紀錄?',
+  '想看哪一年的統計?',
+  '哪個公式還沒背會?',
+  '今天練 PLL 還是 OLL?',
+  '上週末誰拿了冠軍?',
+  '想覆盤哪場比賽?',
+  '中國選手誰最快?',
+  '哪個賽事即將開始?',
+  '想學什麼新方法?',
+];
 const PLACEHOLDERS_EN = [
   'Where to start today?',
   'Which comp are you at?',
@@ -92,7 +106,7 @@ function dayOfYear(d: Date): number {
 }
 
 function rotatingPlaceholder(isZh: boolean): string {
-  const list = isZh ? PLACEHOLDERS_ZH : PLACEHOLDERS_EN;
+  const list = i18n.language === 'zh-Hant' ? PLACEHOLDERS_ZH__Hant : (isZh ? PLACEHOLDERS_ZH : PLACEHOLDERS_EN);
   return list[dayOfYear(new Date()) % list.length];
 }
 

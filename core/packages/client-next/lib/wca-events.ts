@@ -51,6 +51,17 @@ const DISPLAY_ZH: Record<string, string> = {
   // 非 WCA cubing.com 自定义项目
   'funny': '趣味',
 };
+const DISPLAY_ZH__Hant: Record<string, string> = {
+  '333': '三階', '222': '二階', '444': '四階', '555': '五階', '666': '六階', '777': '七階',
+  '333bf': '三盲', '444bf': '四盲', '555bf': '五盲', '333mbf': '多盲',
+  '333oh': '單手', '333fm': '最少步', '333ft': '腳擰',
+  'minx': '五魔', 'pyram': '金字塔', 'clock': '魔錶', 'skewb': '斜轉', 'sq1': 'SQ1',
+  'magic': '八板', 'mmagic': '十二板', '333mbo': '舊多盲',
+  // 非 WCA(cubing.js twizzleEvents)
+  'fto': 'FTO', 'master_tetraminx': '四階金字塔', 'kilominx': '二階五魔', 'redi_cube': 'Redi', 'baby_fto': '二階 FTO',
+  // 非 WCA cubing.com 自定義專案
+  'funny': '趣味',
+};
 
 const DISPLAY_EN: Record<string, string> = {
   '333': '3×3', '222': '2×2', '444': '4×4', '555': '5×5', '666': '6×6', '777': '7×7',
@@ -74,7 +85,7 @@ export function eventDisplayName(input: string, isZh: boolean): string {
     const n = m[1];
     return i18n.language === 'zh-Hant' ? (`${n}階`) : (isZh ? `${n}阶` : `${n}×${n}`);
   }
-  const dict = isZh ? DISPLAY_ZH : DISPLAY_EN;
+  const dict = i18n.language === 'zh-Hant' ? DISPLAY_ZH__Hant : (isZh ? DISPLAY_ZH : DISPLAY_EN);
   if (dict[id]) return dict[id];
   const cstimerName = cstimerEventDisplayName(id, isZh);
   if (cstimerName) return cstimerName;

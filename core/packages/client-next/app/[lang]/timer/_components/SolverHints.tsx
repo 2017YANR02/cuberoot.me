@@ -237,6 +237,11 @@ const SMALL_TITLE_ZH: Record<SmallEvent, string> = {
   'pyra': '金字塔解法提示',
   'skewb': '斜转解法提示',
 };
+const SMALL_TITLE_ZH__Hant: Record<SmallEvent, string> = {
+  '222': '二階解法提示',
+  'pyra': '金字塔解法提示',
+  'skewb': '斜轉解法提示',
+};
 const SMALL_TITLE_EN: Record<SmallEvent, string> = {
   '222': '2x2 solver hints',
   'pyra': 'Pyraminx solver hints',
@@ -247,6 +252,11 @@ const FACE_SECTION_ZH: Record<SmallEvent, string> = {
   '222': '六个面',
   'pyra': '四个面 (V)',
   'skewb': '六个面',
+};
+const FACE_SECTION_ZH__Hant: Record<SmallEvent, string> = {
+  '222': '六個面',
+  'pyra': '四個面 (V)',
+  'skewb': '六個面',
 };
 const FACE_SECTION_EN: Record<SmallEvent, string> = {
   '222': 'Per-face',
@@ -301,11 +311,11 @@ function SmallPuzzleHints({ scramble, isZh, event }: SmallProps) {
     };
   }, [open, cacheKey, event, scramble]);
 
-  const title = isZh ? SMALL_TITLE_ZH[event] : SMALL_TITLE_EN[event];
+  const title = i18n.language === 'zh-Hant' ? SMALL_TITLE_ZH__Hant[event] : (isZh ? SMALL_TITLE_ZH[event] : SMALL_TITLE_EN[event]);
   const fullLabel = tr({ zh: '完整还原', en: 'Full solve',
       zhHant: "完整還原"
 });
-  const sectionLabel = isZh ? FACE_SECTION_ZH[event] : FACE_SECTION_EN[event];
+  const sectionLabel = i18n.language === 'zh-Hant' ? FACE_SECTION_ZH__Hant[event] : (isZh ? FACE_SECTION_ZH[event] : FACE_SECTION_EN[event]);
 
   const minFaceLen = useMemo(() => {
     if (!computed) return -1;
