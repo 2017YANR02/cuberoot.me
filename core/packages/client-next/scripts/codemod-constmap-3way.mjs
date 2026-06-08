@@ -58,8 +58,10 @@ for (const sf of project.getSourceFiles()) {
     if (!parts) continue;
     const decl = sf.getVariableDeclaration(parts.id.getText());   // same-file only
     if (!decl) continue;
-    const init = decl.getInitializer();
+    let init = decl.getInitializer();
+    while (init && Node.isAsExpression(init)) init = init.getExpression(); // unwrap `as const`
     if (!init || !(Node.isArrayLiteralExpression(init) || Node.isObjectLiteralExpression(init))) continue;
+    init = decl.getInitializer(); // keep the full text (incl. `as const`) for the clone
     const initText = init.getText();
     if (!HAS_CJK.test(initText)) continue;
     const hantInit = conv(initText);
