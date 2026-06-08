@@ -3,7 +3,8 @@ import path from "node:path";
 import { findByCode } from "@/lib/db/qr";
 import { qrTargetUrl } from "@/lib/site";
 import { cardSvg } from "@/lib/qr/cardSvg";
-import { FRONT_ARTS } from "@/lib/qr/cardText";
+import { FRONT_ARTS, algImgUrl } from "@/lib/qr/cardText";
+import { movesPath } from "@/lib/qr/glyphs";
 
 export const runtime = "nodejs";
 
@@ -65,12 +66,32 @@ export async function GET(
   const art =
     url.searchParams.get("noart") === "1" ? undefined : await resolveArt(artSrc);
 
-  // 内嵌 JetBrains Mono(记法字体),母版独立打开也能正确显示公式
+  // 内嵌 JetBrains Mono(记法字体)作 url/底纹 兜底;精选公式则转矢量轮廓(最稳)
   const monoFont = await resolveArt("/fonts/jetbrains-mono-latin-500-normal.woff2");
+  const moves = entry.alg?.moves
+    ? (await movesPath(entry.alg.moves, 1.1)) ?? undefined
+    : undefined;
+
+  // 案例图:抓主站 visualcube 的 SVG 内嵌为矢量(失败则不显示,降级到术语角标)
+  let algSvg: string | undefined;
+  const imgUrl = entry.alg ? algImgUrl(entry.alg) : null;
+  if (imgUrl) {
+    try {
+      const res = await fetch(imgUrl, { signal: AbortSignal.timeout(4000) });
+      if (res.ok) {
+        const body = await res.text();
+        if (body.includes("<svg")) algSvg = body;
+      }
+    } catch {
+      algSvg = undefined;
+    }
+  }
 
   const svg = cardSvg(entry, {
     url: qrTargetUrl(code),
     art,
+    algSvg,
+    movesPath: moves,
     monoFont,
     bleed,
     cropMarks,

@@ -5,6 +5,7 @@ import {
   CUBE_FACES,
   DEFAULT_QUOTES,
   FRONT_ARTS,
+  algImgUrl,
   backText,
   cubeFaceletSpots,
   formulaRow,
@@ -164,7 +165,14 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
           gap: m(0.7),
         }}
       >
-        {term ? (
+        {entry.alg?.moves ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={algImgUrl(entry.alg) ?? ""}
+            alt={entry.alg.name ?? "魔方案例"}
+            style={{ width: m(5.8), height: m(5.8), display: "block" }}
+          />
+        ) : term ? (
           <div
             style={{
               fontSize: m(1.1),
