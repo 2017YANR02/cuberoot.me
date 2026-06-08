@@ -18,7 +18,9 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const conv = OpenCC.Converter({ from: 'cn', to: 'twp' });
+const raw = OpenCC.Converter({ from: 'cn', to: 'twp' });
+// 项目 (cube event) -> 項目, not s2twp's 專案 (software project). Keep 開源專案.
+const conv = (s) => raw(s).replace(/專案/g, '項目').replace(/開源項目/g, '開源專案');
 const HAS_CJK = /[㐀-鿿豈-﫿]/;
 
 const project = new Project({ skipAddingFilesFromTsConfig: true });

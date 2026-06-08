@@ -56,7 +56,7 @@ LIMIT 100`,
       bodyZh: '一行 `results` = 一个项目轮次;先 `COUNT(DISTINCT competition_id)` 把多项目同场塌缩成 1。',
       bodyEn: 'Each `results` row is one event-round; `COUNT(DISTINCT competition_id)` collapses multi-event same-comp entries to 1.',
         titleZhHant: "按選手聚合",
-        bodyZhHant: "一行 `results` = 一個專案輪次;先 `COUNT(DISTINCT competition_id)` 把多專案同場塌縮成 1。"
+        bodyZhHant: "一行 `results` = 一個項目輪次;先 `COUNT(DISTINCT competition_id)` 把多項目同場塌縮成 1。"
     },
     {
       titleZh: '量职业年限',
@@ -118,7 +118,7 @@ LIMIT 100`,
     },
     { id: 'competitions_per_year_by_person', toStat: true, titleZh: '查看实时数据', titleEn: 'Jump to live data', hintZh: '当前榜单 + 项目筛选', hintEn: 'Current leaderboard + filters',
         titleZhHant: "檢視實時資料",
-        hintZhHant: "當前榜單 + 專案篩選"
+        hintZhHant: "當前榜單 + 項目篩選"
     },
   ],
     titleZhHant: "每年每人比賽數",
@@ -408,7 +408,7 @@ ORDER BY competition.start_date, round_type.rank`,
       bodyZh: '外层按 `person_link` 分,内层把同场所有项目轮次收拢为一个"比赛快照"。',
       bodyEn: 'Outer bucket: `person_link`. Inner bucket: gather all event-rounds at one comp into a single "comp snapshot".',
         titleZhHant: "按選手 → 比賽 巢狀分組",
-        bodyZhHant: "外層按 `person_link` 分,內層把同場所有專案輪次收攏為一個\"比賽快照\"。"
+        bodyZhHant: "外層按 `person_link` 分,內層把同場所有項目輪次收攏為一個\"比賽快照\"。"
     },
     {
       titleZh: '维护 per-event PB',
@@ -416,7 +416,7 @@ ORDER BY competition.start_date, round_type.rank`,
       bodyZh: '`pbsByEvent` 存每个项目的 single PB 和 average PB(都从 Infinity 起);遍历比赛快照内所有结果。',
       bodyEn: '`pbsByEvent` holds single-PB and average-PB per event (both start at Infinity); iterate every result in the snapshot.',
         titleZhHant: "維護 per-event PB",
-        bodyZhHant: "`pbsByEvent` 存每個專案的 single PB 和 average PB(都從 Infinity 起);遍歷比賽快照內所有結果。"
+        bodyZhHant: "`pbsByEvent` 存每個項目的 single PB 和 average PB(都從 Infinity 起);遍歷比賽快照內所有結果。"
     },
     {
       titleZh: '判定"有 PR 的比赛"',
@@ -424,7 +424,7 @@ ORDER BY competition.start_date, round_type.rank`,
       bodyZh: '任一项目任一类型 `val > 0 && val <= pb` 即触发刷新 + 标 `competitionWithPb = true`。注意 `<=`,平 PR 也算。',
       bodyEn: 'Any event × type where `val > 0 && val <= pb` fires the refresh and flips `competitionWithPb`. `<=` means ties count.',
         titleZhHant: "判定\"有 PR 的比賽\"",
-        bodyZhHant: "任一專案任一型別 `val > 0 && val <= pb` 即觸發重新整理 + 標 `competitionWithPb = true`。注意 `<=`,平 PR 也算。"
+        bodyZhHant: "任一項目任一型別 `val > 0 && val <= pb` 即觸發重新整理 + 標 `competitionWithPb = true`。注意 `<=`,平 PR 也算。"
     },
     {
       titleZh: 'streak 推进 / 重置',
@@ -487,7 +487,7 @@ const longest_streak_of_podiums: AboutEntry = {
         labelZhHant: "登臺判定"
     },
     { value: '(人 × 项目)', labelZh: 'streak 粒度', labelEn: 'Streak key', hintZh: '同人不同项目各自计数', hintEn: 'Same person, different events, separate counters',
-        hintZhHant: "同人不同專案各自計數"
+        hintZhHant: "同人不同項目各自計數"
     },
     { value: 'best > 0', labelZh: '有效成绩', labelEn: 'Must complete', hintZh: '全 DNF 即便排到第 3 也不算', hintEn: 'All-DNF final doesn\'t qualify',
         labelZhHant: "有效成績"
@@ -520,8 +520,8 @@ ORDER BY competition.start_date, round_type.rank`,
       titleEn: 'Group by (person, comp, event)',
       bodyZh: '外层按选手,内层按 `(comp, event)` 拼一个 key;同 key 内多个 row = 该项目的多个轮次。',
       bodyEn: 'Outer by person; inner by `(comp, event)` key — multiple rows in a key = multiple rounds.',
-        titleZhHant: "按 (選手, 比賽, 專案) 三層分組",
-        bodyZhHant: "外層按選手,內層按 `(comp, event)` 拼一個 key;同 key 內多個 row = 該專案的多個輪次。"
+        titleZhHant: "按 (選手, 比賽, 項目) 三層分組",
+        bodyZhHant: "外層按選手,內層按 `(comp, event)` 拼一個 key;同 key 內多個 row = 該項目的多個輪次。"
     },
     {
       titleZh: '取最后一轮',
@@ -537,7 +537,7 @@ ORDER BY competition.start_date, round_type.rank`,
       bodyZh: '`is_final && place ≤ 3 && single > 0` → `current.count += 1`;否则把 current 写回 podiumsStreaks,把该项目从 `currentByEvent` 删 → 下次重新开 streak。',
       bodyEn: '`is_final && place ≤ 3 && single > 0` → `current.count += 1`; otherwise commit current, remove the event from `currentByEvent` — fresh streak next time.',
         titleZhHant: "登臺判定 / 計數",
-        bodyZhHant: "`is_final && place ≤ 3 && single > 0` → `current.count += 1`;否則把 current 寫回 podiumsStreaks,把該專案從 `currentByEvent` 刪 → 下次重新開 streak。"
+        bodyZhHant: "`is_final && place ≤ 3 && single > 0` → `current.count += 1`;否則把 current 寫回 podiumsStreaks,把該項目從 `currentByEvent` 刪 → 下次重新開 streak。"
     },
     {
       titleZh: '收集 + 取 100',
@@ -545,7 +545,7 @@ ORDER BY competition.start_date, round_type.rank`,
       bodyZh: '把每个 (人, 项目) 的所有 streak(包括仍在进行中的)平铺,按 count 降序取 100。',
       bodyEn: 'Flatten every (person, event) streak (including ongoing), sort desc by count, take 100.',
       highlight: true,
-        bodyZhHant: "把每個 (人, 專案) 的所有 streak(包括仍在進行中的)平鋪,按 count 降序取 100。"
+        bodyZhHant: "把每個 (人, 項目) 的所有 streak(包括仍在進行中的)平鋪,按 count 降序取 100。"
     },
   ],
   edgesZh: [
@@ -568,7 +568,7 @@ ORDER BY competition.start_date, round_type.rank`,
     },
     { id: 'longest_streak_of_podiums', toStat: true, titleZh: '查看实时连胜榜', titleEn: 'Jump to live streaks', hintZh: '按项目筛选 + 选手', hintEn: 'Filter by event + cubers',
         titleZhHant: "檢視實時連勝榜",
-        hintZhHant: "按專案篩選 + 選手"
+        hintZhHant: "按項目篩選 + 選手"
     },
   ],
     titleZhHant: "最長連續登臺記錄",
@@ -596,7 +596,7 @@ const longest_time_to_sub_10: AboutEntry = {
         hintZhHant: "`average < 1000`(釐秒 = 10.00 秒)"
     },
     { value: '事件 = 333', labelZh: '项目', labelEn: 'Event', hintZh: '仅 3x3x3', hintEn: '3x3x3 only',
-        labelZhHant: "專案",
+        labelZhHant: "項目",
         hintZhHant: "僅 3x3x3"
     },
     { value: '365.25', labelZh: '年化系数', labelEn: 'Year basis', hintZh: '日差 / 365.25', hintEn: 'Day diff / 365.25',
@@ -642,7 +642,7 @@ ORDER BY years DESC LIMIT 100`,
       bodyZh: '`MIN(start_date)` 跨所有项目,**不限 333** —— 比"3x3 入坑日"早,因为可能先打过别的项目。',
       bodyEn: '`MIN(start_date)` across **all events** — earlier than "3x3 debut" since they might have played another event first.',
         titleZhHant: "取首場比賽日",
-        bodyZhHant: "`MIN(start_date)` 跨所有專案,**不限 333** —— 比\"3x3 入坑日\"早,因為可能先打過別的專案。"
+        bodyZhHant: "`MIN(start_date)` 跨所有項目,**不限 333** —— 比\"3x3 入坑日\"早,因為可能先打過別的項目。"
     },
     {
       titleZh: '取首次 sub-10 日',
@@ -676,7 +676,7 @@ ORDER BY years DESC LIMIT 100`,
         hintZhHant: "持續進步 vs 單點突破"
     },
     { id: 'shortest_time_to_get_all_singles', titleZh: '最快全项目 single', titleEn: 'Fastest to all singles', hintZh: '反方向 —— "最快"达成', hintEn: 'Opposite direction — "fastest" to',
-        titleZhHant: "最快全專案 single",
+        titleZhHant: "最快全項目 single",
         hintZhHant: "反方向 —— \"最快\"達成"
     },
     { id: 'longest_time_to_sub_10', toStat: true, titleZh: '查看实时榜', titleEn: 'Jump to live ranking', hintZh: '具体年数 + 选手', hintEn: 'Years + cubers',
@@ -712,7 +712,7 @@ const most_attended_competitions_in_single_month: AboutEntry = {
         hintZhHant: "1 號 ~ 月末,跨年不合並"
     },
     { value: 'DISTINCT', labelZh: '去重', labelEn: 'Dedup', hintZh: '同场多项目 → 1 场', hintEn: 'Multi-event same comp → 1',
-        hintZhHant: "同場多專案 → 1 場"
+        hintZhHant: "同場多項目 → 1 場"
     },
   ],
   sourceZh: [
@@ -740,7 +740,7 @@ ORDER BY attended_within_month DESC`,
       bodyZh: '同一场打多个项目只算一行 —— `DISTINCT competition_id, person_id` 子查询。',
       bodyEn: 'Multi-event same comp collapses to one row — `DISTINCT competition_id, person_id` subquery.',
         titleZhHant: "去重 (人, 場)",
-        bodyZhHant: "同一場打多個專案只算一行 —— `DISTINCT competition_id, person_id` 子查詢。"
+        bodyZhHant: "同一場打多個項目只算一行 —— `DISTINCT competition_id, person_id` 子查詢。"
     },
     {
       titleZh: '按 (人, 年, 月) 分桶',
@@ -823,7 +823,7 @@ const most_attended_competitions_in_single_week: AboutEntry = {
         hintZhHant: "ISO,WEEKDAY = 0 即週一"
     },
     { value: 'DISTINCT', labelZh: '去重', labelEn: 'Dedup', hintZh: '同场多项目 → 1 场', hintEn: 'Multi-event same comp → 1',
-        hintZhHant: "同場多專案 → 1 場"
+        hintZhHant: "同場多項目 → 1 場"
     },
   ],
   sourceZh: [
@@ -850,7 +850,7 @@ ORDER BY attended_within_week DESC`,
       bodyZh: '同月同样的处理 —— 多项目同场塌缩为 1。',
       bodyEn: 'Same as the monthly version — multi-event same comp → 1.',
         titleZhHant: "去重 (人, 場)",
-        bodyZhHant: "同月同樣的處理 —— 多專案同場塌縮為 1。"
+        bodyZhHant: "同月同樣的處理 —— 多項目同場塌縮為 1。"
     },
     {
       titleZh: '锚定 ISO 周',
@@ -979,7 +979,7 @@ LIMIT 100`,
       bodyZh: '`COUNT(DISTINCT competition_id)` 把同场多项目折成 1。',
       bodyEn: '`COUNT(DISTINCT competition_id)` collapses multi-event same comp.',
         titleZhHant: "去重場次 + 聚合",
-        bodyZhHant: "`COUNT(DISTINCT competition_id)` 把同場多專案折成 1。"
+        bodyZhHant: "`COUNT(DISTINCT competition_id)` 把同場多項目折成 1。"
     },
     {
       titleZh: '降序取 100',
@@ -1039,7 +1039,7 @@ const most_completed_solves: AboutEntry = {
   stats: [
     { value: '6', labelZh: '聚合维度', labelEn: 'Dimensions', hintZh: '比赛 / 人 / 国 / 洲 / 年 / 项目', hintEn: 'Comp / person / country / continent / year / event',
         labelZhHant: "聚合維度",
-        hintZhHant: "比賽 / 人 / 國 / 洲 / 年 / 專案"
+        hintZhHant: "比賽 / 人 / 國 / 洲 / 年 / 項目"
     },
     { value: 'Top 20', labelZh: '每段深度', labelEn: 'Per-section depth', hintZh: '每个维度独立 top 20', hintEn: 'Each section is independent top 20',
         hintZhHant: "每個維度獨立 top 20"
@@ -1085,7 +1085,7 @@ JOIN countries / continents / events ...`,
       bodyZh: '同 row 拼上比赛 link / 人 link / 国名 / 大洲名 / 年份 / 项目名 —— 后续 TS 端选哪个字段就按哪个聚合。',
       bodyEn: 'Same row carries comp link / person link / country / continent / year / event — TS picks one of these as the regrouping key per section.',
         titleZhHant: "主錶帶維度欄位",
-        bodyZhHant: "同 row 拼上比賽 link / 人 link / 國名 / 大洲名 / 年份 / 專案名 —— 後續 TS 端選哪個欄位就按哪個聚合。"
+        bodyZhHant: "同 row 拼上比賽 link / 人 link / 國名 / 大洲名 / 年份 / 項目名 —— 後續 TS 端選哪個欄位就按哪個聚合。"
     },
     {
       titleZh: 'TS 6 次重分组',
@@ -1269,14 +1269,14 @@ const most_solves_before_bld_success: AboutEntry = {
   ],
   stats: [
     { value: '4', labelZh: '项目', labelEn: 'Events', hintZh: '333bf/444bf/555bf/333mbf', hintEn: '333bf/444bf/555bf/333mbf',
-        labelZhHant: "專案"
+        labelZhHant: "項目"
     },
     { value: 'DNF 计入', labelZh: '失败定义', labelEn: 'Failure', hintZh: '`value = -1`(DNF) 算尝试,`0` 不算', hintEn: '`value = -1` (DNF) counts, `0` does not',
         labelZhHant: "失敗定義",
         hintZhHant: "`value = -1`(DNF) 算嘗試,`0` 不算"
     },
     { value: 'Top 20', labelZh: '每段深度', labelEn: 'Per-section depth', hintZh: '4 个项目各 top 20', hintEn: '4 events × top 20',
-        hintZhHant: "4 個專案各 top 20"
+        hintZhHant: "4 個項目各 top 20"
     },
   ],
   sourceZh: [
@@ -1301,8 +1301,8 @@ ORDER BY competition.start_date, round_type.rank`,
       titleEn: 'Filter by event',
       bodyZh: '只看 BLD 四项目 —— OH/FMC/普通项目都不在范围。',
       bodyEn: 'BLD-only — OH / FMC / regular events out of scope.',
-        titleZhHant: "按專案過濾",
-        bodyZhHant: "只看 BLD 四專案 —— OH/FMC/普通專案都不在範圍。"
+        titleZhHant: "按項目過濾",
+        bodyZhHant: "只看 BLD 四項目 —— OH/FMC/普通項目都不在範圍。"
     },
     {
       titleZh: '拼 attempts 字符串',
@@ -1317,8 +1317,8 @@ ORDER BY competition.start_date, round_type.rank`,
       titleEn: 'TS flatten by (event, person)',
       bodyZh: '每个 (项目, 人) 把所有 result 的 attempts 串展开成一维数组,**保留 -1(DNF)和 >0(成功),丢 0(skip)和 -2(DNS)**。',
       bodyEn: 'Per (event, person), flatten every result\'s attempts into a 1D array, **keeping -1 (DNF) and >0 (success), dropping 0 (skip) and -2 (DNS)**.',
-        titleZhHant: "TS 端按 (專案, 人) 平鋪",
-        bodyZhHant: "每個 (專案, 人) 把所有 result 的 attempts 串展開成一維陣列,**保留 -1(DNF)和 >0(成功),丟 0(skip)和 -2(DNS)**。"
+        titleZhHant: "TS 端按 (項目, 人) 平鋪",
+        bodyZhHant: "每個 (項目, 人) 把所有 result 的 attempts 串展開成一維陣列,**保留 -1(DNF)和 >0(成功),丟 0(skip)和 -2(DNS)**。"
     },
     {
       titleZh: 'findIndex 找首胜',
@@ -1351,7 +1351,7 @@ ORDER BY competition.start_date, round_type.rank`,
     },
     { id: 'most_solves_before_bld_success', toStat: true, titleZh: '查看实时榜', titleEn: 'Jump to live ranking', hintZh: '4 项目分段', hintEn: '4 events broken out',
         titleZhHant: "檢視實時榜",
-        hintZhHant: "4 專案分段"
+        hintZhHant: "4 項目分段"
     },
   ],
     titleZhHant: "盲擰成功前最多嘗試次數",
@@ -1785,8 +1785,8 @@ const shortest_time_to_get_all_singles: AboutEntry = {
   ],
   stats: [
     { value: 'rank < 900', labelZh: '官方项目过滤', labelEn: 'Official filter', hintZh: '退役项目 rank ≥ 900', hintEn: 'Retired events at rank ≥ 900',
-        labelZhHant: "官方專案過濾",
-        hintZhHant: "退役專案 rank ≥ 900"
+        labelZhHant: "官方項目過濾",
+        hintZhHant: "退役項目 rank ≥ 900"
     },
     { value: 'best > 0', labelZh: '有效 single', labelEn: 'Valid single', hintZh: 'DNF 不算', hintEn: 'DNF doesn\'t count' },
     { value: '首场 → 最后项目', labelZh: '时间口径', labelEn: 'Time span', hintZh: '不止 333 入坑那天', hintEn: 'Not just 3x3 debut',
@@ -1822,7 +1822,7 @@ ORDER BY start_date`,
       bodyZh: '子查询 `HAVING COUNT(DISTINCT event_id) = (SELECT COUNT(*) FROM events WHERE rank<900)` —— 当前官方项目全部至少一个 `best > 0`。',
       bodyEn: 'Subquery `HAVING COUNT(DISTINCT event_id) = (SELECT COUNT(*) FROM events WHERE rank<900)` — at least one `best > 0` in every current event.',
         titleZhHant: "鎖\"全 single\"候選人",
-        bodyZhHant: "子查詢 `HAVING COUNT(DISTINCT event_id) = (SELECT COUNT(*) FROM events WHERE rank<900)` —— 當前官方專案全部至少一個 `best > 0`。"
+        bodyZhHant: "子查詢 `HAVING COUNT(DISTINCT event_id) = (SELECT COUNT(*) FROM events WHERE rank<900)` —— 當前官方項目全部至少一個 `best > 0`。"
     },
     {
       titleZh: '拉全 results 时间线',
@@ -1837,8 +1837,8 @@ ORDER BY start_date`,
       titleEn: 'Earliest success per event',
       bodyZh: 'Map<eventId, Date>:遍历 personRows,只保留 `best > 0` 的最早日期。最后一个完成项目的日期是 Map 里最大值。',
       bodyEn: 'Map<eventId, Date>: iterate personRows, keep earliest `best > 0` date per event. Last-completed event = max value in the Map.',
-        titleZhHant: "每專案最早成功日",
-        bodyZhHant: "Map<eventId, Date>:遍歷 personRows,只保留 `best > 0` 的最早日期。最後一個完成專案的日期是 Map 裡最大值。"
+        titleZhHant: "每項目最早成功日",
+        bodyZhHant: "Map<eventId, Date>:遍歷 personRows,只保留 `best > 0` 的最早日期。最後一個完成項目的日期是 Map 裡最大值。"
     },
     {
       titleZh: '日数差升序',
@@ -1876,7 +1876,7 @@ ORDER BY start_date`,
         hintZhHant: "具體天數 + 選手"
     },
   ],
-    titleZhHant: "最短時間獲得所有專案單次成績",
+    titleZhHant: "最短時間獲得所有項目單次成績",
     badgeZhHant: "選手"
 };
 
@@ -1943,7 +1943,7 @@ ORDER BY start_date`,
       titleEn: 'Collect best + average dates',
       bodyZh: 'TS 端遍历两遍 personRows:第一遍按 `best > 0` 取每项目最早日;第二遍按 `average > 0`。两组日期数组合并。',
       bodyEn: 'TS iterates personRows twice: once collecting earliest `best > 0` per event, once for `average > 0`. Concatenate the two date lists.',
-        bodyZhHant: "TS 端遍歷兩遍 personRows:第一遍按 `best > 0` 取每專案最早日;第二遍按 `average > 0`。兩組日期陣列合並。"
+        bodyZhHant: "TS 端遍歷兩遍 personRows:第一遍按 `best > 0` 取每項目最早日;第二遍按 `average > 0`。兩組日期陣列合並。"
     },
     {
       titleZh: '最大日 − 首场日',
@@ -1988,7 +1988,7 @@ ORDER BY start_date`,
         hintZhHant: "具體天數 + 選手"
     },
   ],
-    titleZhHant: "最短時間獲得所有專案的單次和平均成績",
+    titleZhHant: "最短時間獲得所有項目的單次和平均成績",
     badgeZhHant: "選手"
 };
 

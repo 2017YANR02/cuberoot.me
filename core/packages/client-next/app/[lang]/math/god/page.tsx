@@ -238,11 +238,11 @@ export default function GodNumberPage() {
           <div className="god-hero-eyebrow">{t('数学:扭计群论', 'Mathematics: combinatorial group theory', "數學:扭計群論")}</div>
           <h1 className="god-title">
             {t('上帝之数 ', "God's Number ", "上帝之數 ")}
-            <span className="god-title-zh">{t('— 全 WCA 项目', '— across every WCA puzzle', "— 全 WCA 專案")}</span>
+            <span className="god-title-zh">{t('— 全 WCA 项目', '— across every WCA puzzle', "— 全 WCA 項目")}</span>
           </h1>
           <p className="god-lead">
             {i18n.language === 'zh-Hant' ? ((
-                                    <>"上帝之數"是一個魔方解魔方所需的最少步數中最大的那個 —— 也就是這個魔方"最難的狀態"。形式化講,它就是 Cayley 圖的直徑:在群 <TeX src="G" /> 與生成元集 <TeX src="S" /> 下,起點 <TeX src="e" /> 到任意點 <TeX src="g" /> 的最短路徑長度的最大值。下面把 17 個 WCA 專案的直徑(精確或上下界)一一列出。</>
+                                    <>"上帝之數"是一個魔方解魔方所需的最少步數中最大的那個 —— 也就是這個魔方"最難的狀態"。形式化講,它就是 Cayley 圖的直徑:在群 <TeX src="G" /> 與生成元集 <TeX src="S" /> 下,起點 <TeX src="e" /> 到任意點 <TeX src="g" /> 的最短路徑長度的最大值。下面把 17 個 WCA 項目的直徑(精確或上下界)一一列出。</>
                                   )) : (isZh ? (
                                     <>"上帝之数"是一个魔方解魔方所需的最少步数中最大的那个 —— 也就是这个魔方"最难的状态"。形式化讲,它就是 Cayley 图的直径:在群 <TeX src="G" /> 与生成元集 <TeX src="S" /> 下,起点 <TeX src="e" /> 到任意点 <TeX src="g" /> 的最短路径长度的最大值。下面把 17 个 WCA 项目的直径(精确或上下界)一一列出。</>
                                   ) : (
@@ -302,7 +302,7 @@ export default function GodNumberPage() {
               <ol className="god-roadmap-ol">
                 <li><b>{t('群论速通', 'Primer', "群論速通")}</b> — {t('搞懂"群、生成元、Cayley 图、直径"四个词', 'understand the four words: group / generators / Cayley graph / diameter', "搞懂\"群、生成元、Cayley 圖、直徑\"四個詞")}</li>
                 <li><b>{t('度量切换', 'Metrics', "度量切換")}</b> — {t('明白 HTM vs QTM vs STM 之差', 'see why HTM ≠ QTM ≠ STM')}</li>
-                <li><b>{t('17 项目网格', '17-puzzle grid', "17 專案網格")}</b> — {t('扫一眼,知道哪些精确、哪些只有上下界', 'scan: which are proven, which are bounded', "掃一眼,知道哪些精確、哪些只有上下界")}</li>
+                <li><b>{t('17 项目网格', '17-puzzle grid', "17 項目網格")}</b> — {t('扫一眼,知道哪些精确、哪些只有上下界', 'scan: which are proven, which are bounded', "掃一眼,知道哪些精確、哪些只有上下界")}</li>
                 <li><b>Superflip</b> — {t('看"最难"那一类状态长什么样', 'see what the "hardest" state actually looks like', "看\"最難\"那一類狀態長什麼樣")}</li>
                 <li><b>{t('Rokicki 证明动画', 'Rokicki proof animator', "Rokicki 證明動畫")}</b> — {t('7 帧搞懂 2010 年那 35 CPU-年到底在算什么', '7 frames: what those 35 CPU-years actually computed', "7 幀搞懂 2010 年那 35 CPU-年到底在算什麼")}</li>
               </ol>
@@ -314,7 +314,7 @@ export default function GodNumberPage() {
                 <li><span className="god-roadmap-tag">{t('算法', 'Algorithm', "演算法")}</span> {t('IDA* 树 → 两阶段求解器 → 算法 8 卡', 'IDA* tree → Two-phase demo → 8 algorithm cards', "IDA* 樹 → 兩階段求解器 → 演算法 8 卡")}</li>
                 <li><span className="god-roadmap-tag">{t('动手', 'Hands-on', "動手")}</span> {t('两阶段求解器 → 2×2 BFS → IDA* 滑块', 'Two-phase demo → 2×2 BFS → IDA* slider', "兩階段求解器 → 2×2 BFS → IDA* 滑塊")}</li>
                 <li><span className="god-roadmap-tag">{t('历史', 'History', "歷史")}</span> {t('证明动画 → 历史时间线 → 参考资料', 'Proof animator → Timeline → References', "證明動畫 → 歷史時間線 → 參考資料")}</li>
-                <li><span className="god-roadmap-tag">{t('数据', 'Data', "資料")}</span> {t('距离分布 → 17 项目网格 → 增长图', 'Distance distribution → 17-puzzle grid → Growth chart', "距離分佈 → 17 專案網格 → 增長圖")}</li>
+                <li><span className="god-roadmap-tag">{t('数据', 'Data', "資料")}</span> {t('距离分布 → 17 项目网格 → 增长图', 'Distance distribution → 17-puzzle grid → Growth chart', "距離分佈 → 17 項目網格 → 增長圖")}</li>
                 <li><span className="god-roadmap-tag">{t('未解', 'Open')}</span> {t('未解之谜 → 4×4 / Megaminx gap', 'Open problems → 4×4 / Megaminx gap', "未解之謎 → 4×4 / Megaminx gap")}</li>
               </ul>
               <p className="god-roadmap-tip">
@@ -450,7 +450,7 @@ export default function GodNumberPage() {
 
         {/* ────────────── PUZZLES GRID ────────────── */}
         <section className="god-section">
-          <h2>{t('全 WCA 项目的上帝之数', "God's number for every WCA event", "全 WCA 專案的上帝之數")}</h2>
+          <h2>{t('全 WCA 项目的上帝之数', "God's number for every WCA event", "全 WCA 項目的上帝之數")}</h2>
           <p className="god-sec-lead">{t(
             '点任意卡片展开详情(算法、证明者、参考资料)。"已证"卡片有精确值;"上下界"卡片只有当前最好的上下界 —— 它们之间还存在缝隙,等待被合上。',
             'Click any card to expand details (algorithm, prover, references). "Proven" cards have exact values; "Bounds" cards show the best known gap, waiting to be closed.', "點任意卡片展開詳情(演算法、證明者、參考資料)。\"已證\"卡片有精確值;\"上下界\"卡片只有當前最好的上下界 —— 它們之間還存在縫隙,等待被合上。"
@@ -665,7 +665,7 @@ function dfs(state, max_depth, g):
           <h2>{t('未解之谜', 'Open problems', "未解之謎")}</h2>
           <p className="god-sec-lead">{t(
             '4 个 / 5 个项目精确直径至今未知。下面把每个未合拢的 gap 拆开来看:为什么难、怎么合拢、估算工作量。',
-            "Four/five puzzles have no exact diameter to date. For each unfinished gap: why it's hard, what would close it, rough effort estimate.", "4 個 / 5 個專案精確直徑至今未知。下面把每個未合攏的 gap 拆開來看:為什麼難、怎麼合攏、估算工作量。"
+            "Four/five puzzles have no exact diameter to date. For each unfinished gap: why it's hard, what would close it, rough effort estimate.", "4 個 / 5 個項目精確直徑至今未知。下面把每個未合攏的 gap 拆開來看:為什麼難、怎麼合攏、估算工作量。"
           )}</p>
           <Suspense fallback={<div className="god-loading">…</div>}>
             <OpenProblems isZh={isZh} />

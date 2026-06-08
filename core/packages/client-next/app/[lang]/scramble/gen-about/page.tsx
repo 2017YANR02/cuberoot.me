@@ -52,7 +52,7 @@ export default function GenAboutPage() {
         <p className="ga-intro">
           {t(
             '/scramble/gen 是站内的统一打乱生成入口。3 种模式覆盖从「比赛官方打乱表」到「随手出 N 条练习」到「自带打乱粘进来出图」的常见需求。所有 WCA 项目走 Lucas Garron 的 cubing.js 随机状态生成器(3×3 可切到 min2phase-rust 引擎,cs0x7f Kociemba 的 Rust port,~10× 快;4×4 走 cs0x7f Threephase 走 Web Worker 池;5×5 可切到本站 cube555 daemon 真随机态)。除 WCA 21 项外另接入了三套非 WCA puzzle:cubing.js twizzleEvents 的 5 个(FTO / 四阶金字塔 / 二阶五魔 / Redi / 二阶 FTO);从 cs0x7f csTimer 引擎 vendor 进来的 31 个(齿轮/枫叶/恐龙/Sq2/SSq1/五魔金字塔/六阶五魔/直升机/cuboid 5 个/15-puzzle/8-puzzle 等);7 个 shape-mod 借用 WCA scramble(镜面/费舍尔/三阶金字塔/二阶金字塔/轴方/风火轮/幽灵/空心)。共 64 个 puzzle,非 WCA 默认折叠在「其他 ▾」chip 后,点开展示。',
-            '/scramble/gen is the unified scramble entry point. Three modes cover the common needs: "official WCA scramble sheet", "quick N scrambles to practice", "paste my own scrambles for preview". All WCA events go through Lucas Garron\'s cubing.js random-state scramblers (3×3 can switch to the min2phase-rust engine — cs0x7f Kociemba ported to Rust, ~10× faster; 4×4 routes to cs0x7f Threephase via a Web Worker pool; 5×5 can switch to our server-side cube555 daemon for true random-state). Beyond WCA 21 we plug in three more sources: 5 random-state events from cubing.js twizzleEvents (FTO / Master Tetra / Kilominx / Redi / Baby FTO); 31 events vendored from cs0x7f csTimer (Gear / Ivy / Dino / Sq2 / SSq1 / Pyraminx Crystal / Gigaminx / Helicopter / 5 cuboids / 15-puzzle / 8-puzzle / …); 7 shape mods borrowing WCA scrambles (Mirror Blocks / Fisher / Mastermorphix / Pyramorphix / Axis / Windmill / Ghost / Void). 64 puzzles total; non-WCA ones collapse behind an "Other ▾" chip by default.', "/scramble/gen 是站內的統一打亂生成入口。3 種模式覆蓋從「比賽官方打亂表」到「隨手出 N 條練習」到「自帶打亂粘進來出圖」的常見需求。所有 WCA 專案走 Lucas Garron 的 cubing.js 隨機狀態生成器(3×3 可切到 min2phase-rust 引擎,cs0x7f Kociemba 的 Rust port,~10× 快;4×4 走 cs0x7f Threephase 走 Web Worker 池;5×5 可切到本站 cube555 daemon 真隨機態)。除 WCA 21 項外另接入了三套非 WCA puzzle:cubing.js twizzleEvents 的 5 個(FTO / 四階金字塔 / 二階五魔 / Redi / 二階 FTO);從 cs0x7f csTimer 引擎 vendor 進來的 31 個(齒輪/楓葉/恐龍/Sq2/SSq1/五魔金字塔/六階五魔/直升機/cuboid 5 個/15-puzzle/8-puzzle 等);7 個 shape-mod 借用 WCA scramble(鏡面/費舍爾/三階金字塔/二階金字塔/軸方/風火輪/幽靈/空心)。共 64 個 puzzle,非 WCA 預設摺疊在「其他 ▾」chip 後,點開展示。"
+            '/scramble/gen is the unified scramble entry point. Three modes cover the common needs: "official WCA scramble sheet", "quick N scrambles to practice", "paste my own scrambles for preview". All WCA events go through Lucas Garron\'s cubing.js random-state scramblers (3×3 can switch to the min2phase-rust engine — cs0x7f Kociemba ported to Rust, ~10× faster; 4×4 routes to cs0x7f Threephase via a Web Worker pool; 5×5 can switch to our server-side cube555 daemon for true random-state). Beyond WCA 21 we plug in three more sources: 5 random-state events from cubing.js twizzleEvents (FTO / Master Tetra / Kilominx / Redi / Baby FTO); 31 events vendored from cs0x7f csTimer (Gear / Ivy / Dino / Sq2 / SSq1 / Pyraminx Crystal / Gigaminx / Helicopter / 5 cuboids / 15-puzzle / 8-puzzle / …); 7 shape mods borrowing WCA scrambles (Mirror Blocks / Fisher / Mastermorphix / Pyramorphix / Axis / Windmill / Ghost / Void). 64 puzzles total; non-WCA ones collapse behind an "Other ▾" chip by default.', "/scramble/gen 是站內的統一打亂生成入口。3 種模式覆蓋從「比賽官方打亂表」到「隨手出 N 條練習」到「自帶打亂粘進來出圖」的常見需求。所有 WCA 項目走 Lucas Garron 的 cubing.js 隨機狀態生成器(3×3 可切到 min2phase-rust 引擎,cs0x7f Kociemba 的 Rust port,~10× 快;4×4 走 cs0x7f Threephase 走 Web Worker 池;5×5 可切到本站 cube555 daemon 真隨機態)。除 WCA 21 項外另接入了三套非 WCA puzzle:cubing.js twizzleEvents 的 5 個(FTO / 四階金字塔 / 二階五魔 / Redi / 二階 FTO);從 cs0x7f csTimer 引擎 vendor 進來的 31 個(齒輪/楓葉/恐龍/Sq2/SSq1/五魔金字塔/六階五魔/直升機/cuboid 5 個/15-puzzle/8-puzzle 等);7 個 shape-mod 借用 WCA scramble(鏡面/費舍爾/三階金字塔/二階金字塔/軸方/風火輪/幽靈/空心)。共 64 個 puzzle,非 WCA 預設摺疊在「其他 ▾」chip 後,點開展示。"
           )}
         </p>
 
@@ -66,7 +66,7 @@ export default function GenAboutPage() {
             <p className="ga-mode-tag">
               {t(
                 '一张完整的 WCA 比赛打乱表。多项目 + 多轮 + 每轮多组,format / sets / copies 全可配。也能粘 WCA 比赛 id 直接拉已公布的真实打乱。',
-                'A full WCA-style scramble sheet — multi-event, multi-round, multi-group, with format / sets / copies all configurable. Or paste a WCA comp id to pull published scrambles.', "一張完整的 WCA 比賽打亂表。多專案 + 多輪 + 每輪多組,format / sets / copies 全可配。也能粘 WCA 比賽 id 直接拉已公佈的真實打亂。"
+                'A full WCA-style scramble sheet — multi-event, multi-round, multi-group, with format / sets / copies all configurable. Or paste a WCA comp id to pull published scrambles.', "一張完整的 WCA 比賽打亂表。多項目 + 多輪 + 每輪多組,format / sets / copies 全可配。也能粘 WCA 比賽 id 直接拉已公佈的真實打亂。"
               )}
             </p>
             <ul className="ga-mode-uses">
@@ -86,7 +86,7 @@ export default function GenAboutPage() {
             <p className="ga-mode-tag">
               {t(
                 '选 1 个或多个项目,设个数量 (1-1000),按一次直接出。多项目并排,每项目独立计时基准。',
-                'Pick one or more events + a count (1-1000). Multi-event runs in parallel; each event reports its own timing.', "選 1 個或多個專案,設個數量 (1-1000),按一次直接出。多專案並排,每專案獨立計時基準。"
+                'Pick one or more events + a count (1-1000). Multi-event runs in parallel; each event reports its own timing.', "選 1 個或多個項目,設個數量 (1-1000),按一次直接出。多項目並排,每項目獨立計時基準。"
               )}
             </p>
             <ul className="ga-mode-uses">
@@ -95,7 +95,7 @@ export default function GenAboutPage() {
               <li>{t('一键 100 条复制贴到 csTimer / Twisty Timer', 'Copy 100 scrambles into csTimer / Twisty Timer in one go', "一鍵 100 條複製貼到 csTimer / Twisty Timer")}</li>
             </ul>
             <h4 className="ga-mode-out">{t('输出', 'Output', "輸出")}</h4>
-            <p className="ga-mode-out-body">{t('每个项目一张表(点行复制单条) + 一键出 PDF。', 'Per-event tables (click a row to copy one scramble) + one-click PDF export.', "每個專案一張表(點行復制單條) + 一鍵出 PDF。")}</p>
+            <p className="ga-mode-out-body">{t('每个项目一张表(点行复制单条) + 一键出 PDF。', 'Per-event tables (click a row to copy one scramble) + one-click PDF export.', "每個項目一張表(點行復制單條) + 一鍵出 PDF。")}</p>
           </section>
 
           <section className="ga-mode-card">
@@ -129,10 +129,10 @@ export default function GenAboutPage() {
         <div className="ga-flow">
           <Step
             step={1}
-            title={t('挑项目', 'Pick events', "挑專案")}
+            title={t('挑项目', 'Pick events', "挑項目")}
             body={t(
               '21 个 WCA 项目图标里点选,带橙色高亮。也能输入 8-50 加高阶 NxN(8×8 到 50×50 都行,WCA 7 项之外)。',
-              'Click one or more of the 21 WCA event icons (orange highlight). Optionally type 8-50 to add a high-order NxN (8×8 to 50×50, beyond WCA\'s 7).', "21 個 WCA 專案圖示裡點選,帶橙色高亮。也能輸入 8-50 加高階 NxN(8×8 到 50×50 都行,WCA 7 項之外)。"
+              'Click one or more of the 21 WCA event icons (orange highlight). Optionally type 8-50 to add a high-order NxN (8×8 to 50×50, beyond WCA\'s 7).', "21 個 WCA 項目圖示裡點選,帶橙色高亮。也能輸入 8-50 加高階 NxN(8×8 到 50×50 都行,WCA 7 項之外)。"
             )}
           />
           <Arrow />
@@ -159,7 +159,7 @@ export default function GenAboutPage() {
             title={t('点「生成 (N)」', 'Click "Generate (N)"', "點「生成 (N)」")}
             body={t(
               '能从 pool 拿就直接 shift 出来,几乎零等。pool 没填满的部分回退到现场生成,跟点按钮前一样。生成完页面切到查看模式:顶端 selector 单选切项目,下面是 sheet 表格 + 打乱图预览。',
-              'Drain from the pool first (near-zero wait). Anything not yet pooled falls through to live generation. The page then switches to view mode: top selector single-picks an event; sheet table + preview thumbnails below.', "能從 pool 拿就直接 shift 出來,幾乎零等。pool 沒填滿的部分回退到現場生成,跟點按鈕前一樣。生成完頁面切到檢視模式:頂端 selector 單選切專案,下面是 sheet 表格 + 打亂圖預覽。"
+              'Drain from the pool first (near-zero wait). Anything not yet pooled falls through to live generation. The page then switches to view mode: top selector single-picks an event; sheet table + preview thumbnails below.', "能從 pool 拿就直接 shift 出來,幾乎零等。pool 沒填滿的部分回退到現場生成,跟點按鈕前一樣。生成完頁面切到檢視模式:頂端 selector 單選切項目,下面是 sheet 表格 + 打亂圖預覽。"
             )}
             highlight
           />
@@ -169,7 +169,7 @@ export default function GenAboutPage() {
             title={t('看 / 复制 / 下载 PDF', 'View / copy / download PDF', "看 / 複製 / 下載 PDF")}
             body={t(
               '右上「下载 PDF」走 tnoodle 风格 (项目分组 + group / sets / copies header + 打乱图 thumbnail)。需要换比赛或重新配置:左边的清空按钮回配置模式。',
-              "Top-right Download PDF emits a tnoodle-style PDF (event grouped, group/sets/copies headers, preview thumbnails). To re-configure: hit the clear button on the left to return to configure mode.", "右上「下載 PDF」走 tnoodle 風格 (專案分組 + group / sets / copies header + 打亂圖 thumbnail)。需要換比賽或重新配置:左邊的清空按鈕回配置模式。"
+              "Top-right Download PDF emits a tnoodle-style PDF (event grouped, group/sets/copies headers, preview thumbnails). To re-configure: hit the clear button on the left to return to configure mode.", "右上「下載 PDF」走 tnoodle 風格 (項目分組 + group / sets / copies header + 打亂圖 thumbnail)。需要換比賽或重新配置:左邊的清空按鈕回配置模式。"
             )}
           />
         </div>
@@ -184,8 +184,8 @@ export default function GenAboutPage() {
         <div className="ga-flow ga-flow--compact">
           <Step
             step={1}
-            title={t('挑项目', 'Pick events', "挑專案")}
-            body={t('多选 21 个 WCA 项目里的若干个;高阶 NxN 同 Comp 模式。', 'Multi-pick from the 21 WCA events; high-order NxN works the same as Comp.', "多選 21 個 WCA 專案裡的若干個;高階 NxN 同 Comp 模式。")}
+            title={t('挑项目', 'Pick events', "挑項目")}
+            body={t('多选 21 个 WCA 项目里的若干个;高阶 NxN 同 Comp 模式。', 'Multi-pick from the 21 WCA events; high-order NxN works the same as Comp.', "多選 21 個 WCA 項目裡的若干個;高階 NxN 同 Comp 模式。")}
           />
           <Arrow />
           <Step
@@ -193,7 +193,7 @@ export default function GenAboutPage() {
             title={t('选个数(批量)/ 粘文本(输入)', 'Pick a count (batch) / paste text (paste)', "選個數(批次)/ 粘文字(輸入)")}
             body={t(
               '批量:输入 1-1000 或点 chip(1 / 5 / 12 / 25 / 50 / 100 / 200 / 1000)。输入:每行一条粘到选中项目下方的 textarea。',
-              'Batch: type 1-1000 or pick a chip (1 / 5 / 12 / 25 / 50 / 100 / 200 / 1000). Paste: one scramble per line into each event\'s textarea.', "批次:輸入 1-1000 或點 chip(1 / 5 / 12 / 25 / 50 / 100 / 200 / 1000)。輸入:每行一條粘到選中專案下方的 textarea。"
+              'Batch: type 1-1000 or pick a chip (1 / 5 / 12 / 25 / 50 / 100 / 200 / 1000). Paste: one scramble per line into each event\'s textarea.', "批次:輸入 1-1000 或點 chip(1 / 5 / 12 / 25 / 50 / 100 / 200 / 1000)。輸入:每行一條粘到選中項目下方的 textarea。"
             )}
           />
           <Arrow />
@@ -213,7 +213,7 @@ export default function GenAboutPage() {
           <table className="ga-engine-table">
             <thead>
               <tr>
-                <th>{t('项目', 'Event', "專案")}</th>
+                <th>{t('项目', 'Event', "項目")}</th>
                 <th>{t('引擎', 'Engine')}</th>
                 <th>{t('生成位置', 'Where')}</th>
                 <th>{t('特点', 'Notes', "特點")}</th>
@@ -348,7 +348,7 @@ export default function GenAboutPage() {
             <strong>{t('prewarm 启动钩:', 'prewarm on mount:', "prewarm 啟動鉤:")}</strong>
             {t(
               ' 进 /scramble/gen 就触发 333 / 444 / 555 的剪枝表 build,跟用户挑项目并行。第一次点 Generate 不再等 ~3s 冷启。',
-              ' Landing on /scramble/gen kicks off the 333 / 444 / 555 pruning-table build in parallel with the user picking events. The first Generate click no longer eats a ~3 s cold start.', " 進 /scramble/gen 就觸發 333 / 444 / 555 的剪枝表 build,跟使用者挑專案並行。第一次點 Generate 不再等 ~3s 冷啟。"
+              ' Landing on /scramble/gen kicks off the 333 / 444 / 555 pruning-table build in parallel with the user picking events. The first Generate click no longer eats a ~3 s cold start.', " 進 /scramble/gen 就觸發 333 / 444 / 555 的剪枝表 build,跟使用者挑項目並行。第一次點 Generate 不再等 ~3s 冷啟。"
             )}
           </li>
           <li>
@@ -362,7 +362,7 @@ export default function GenAboutPage() {
             <strong>{t('应用层池 (cubingScramble.ts):', 'App-level pool (cubingScramble.ts):', "應用層池 (cubingScramble.ts):")}</strong>
             {t(
               ' 每个项目维护 N 条已生成 scramble。pop 一条立刻 schedule 补一条;4×4 池 25,5×5 池 5,其余 3。',
-              ' Each event keeps N pre-generated scrambles. Pop one, schedule a refill; 4×4 pool = 25, 5×5 = 5, others = 3.', " 每個專案維護 N 條已生成 scramble。pop 一條立刻 schedule 補一條;4×4 池 25,5×5 池 5,其餘 3。"
+              ' Each event keeps N pre-generated scrambles. Pop one, schedule a refill; 4×4 pool = 25, 5×5 = 5, others = 3.', " 每個項目維護 N 條已生成 scramble。pop 一條立刻 schedule 補一條;4×4 池 25,5×5 池 5,其餘 3。"
             )}
           </li>
           <li>
@@ -390,7 +390,7 @@ export default function GenAboutPage() {
           </li>
           <li>
             <a href="https://www.cubing.net/cubing.js/" target="_blank" rel="noopener noreferrer">cubing.js</a>
-            {t(' — Lucas Garron 的浏览器 cubing 全家桶,本站 WCA + 5 个 twizzle 项目走这里。', " — Lucas Garron's in-browser cubing stack; WCA + 5 twizzle non-WCA events flow through it.", " — Lucas Garron 的瀏覽器 cubing 全家桶,本站 WCA + 5 個 twizzle 專案走這裡。")}
+            {t(' — Lucas Garron 的浏览器 cubing 全家桶,本站 WCA + 5 个 twizzle 项目走这里。', " — Lucas Garron's in-browser cubing stack; WCA + 5 twizzle non-WCA events flow through it.", " — Lucas Garron 的瀏覽器 cubing 全家桶,本站 WCA + 5 個 twizzle 項目走這裡。")}
           </li>
           <li>
             <a href="https://github.com/cs0x7f/cstimer" target="_blank" rel="noopener noreferrer">cs0x7f/csTimer</a>
@@ -402,7 +402,7 @@ export default function GenAboutPage() {
           </li>
           <li>
             <a href="https://www.worldcubeassociation.org/regulations/#article-4-scrambling" target="_blank" rel="noopener noreferrer">{t('WCA Regulation §4: Scrambling', 'WCA Regulation §4: Scrambling')}</a>
-            {t(' — 比赛打乱标准的来源(各项目长度、随机转动 vs 随机状态的规定)。', ' — the source of competition scramble rules (per-event length, random-move vs random-state allowances).', " — 比賽打亂標準的來源(各專案長度、隨機轉動 vs 隨機狀態的規定)。")}
+            {t(' — 比赛打乱标准的来源(各项目长度、随机转动 vs 随机状态的规定)。', ' — the source of competition scramble rules (per-event length, random-move vs random-state allowances).', " — 比賽打亂標準的來源(各項目長度、隨機轉動 vs 隨機狀態的規定)。")}
           </li>
         </ul>
       </main>

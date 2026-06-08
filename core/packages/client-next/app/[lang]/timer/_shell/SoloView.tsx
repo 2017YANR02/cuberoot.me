@@ -724,7 +724,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
   const clearAll = useCallback(() => {
     if (!solves.length) return;
     const evName = EVENTS.find(e => e.id === event);
-    if (!confirm(i18n.language === 'zh-Hant' ? (`清空當前專案「${evName?.nameZh}」的所有 ${solves.length} 次成績？`) : (isZh
+    if (!confirm(i18n.language === 'zh-Hant' ? (`清空當前項目「${evName?.nameZh}」的所有 ${solves.length} 次成績？`) : (isZh
               ? `清空当前项目「${evName?.nameZh}」的所有 ${solves.length} 次成绩？`
               : `Clear all ${solves.length} solves of "${evName?.nameEn}"?`),
     )) return;
@@ -1065,7 +1065,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
         zhHant: "列印"
     }), onClick: () => window.print() },
     { icon: <Trash2 size={14} />, label: tr({ zh: '清空当前项目', en: 'Clear current event',
-        zhHant: "清空當前專案"
+        zhHant: "清空當前項目"
     }), onClick: clearAll, danger: true, disabled: !solves.length },
   ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, i18n, event]);
 

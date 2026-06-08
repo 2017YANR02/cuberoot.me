@@ -293,7 +293,7 @@ export const PUZZLES: PuzzleEntry[] = [
     blurb: {
       zh: 'Kogler 2014 年 5 月用 front-cross 陪集 + 1.5 GB 剪枝表证出直径 = 12 步。cube20.org 在 2025 年 3 月 4 日发布完整距离分布作为复核。Clock 是少数"上帝之数早就被算出来,只是没几个人在乎"的项目。',
       en: 'Kogler proved diameter = 12 (May 2014) via a front-cross coset + 1.5 GB pruning table. cube20.org posted the full distance distribution on 2025-03-04 as cross-check. Clock is the rare event whose God\'s number has been known for a decade but barely talked about.',
-        zhHant: "Kogler 2014 年 5 月用 front-cross 陪集 + 1.5 GB 剪枝表證出直徑 = 12 步。cube20.org 在 2025 年 3 月 4 日釋出完整距離分佈作為複核。Clock 是少數\"上帝之數早就被算出來,只是沒幾個人在乎\"的專案。"
+        zhHant: "Kogler 2014 年 5 月用 front-cross 陪集 + 1.5 GB 剪枝表證出直徑 = 12 步。cube20.org 在 2025 年 3 月 4 日釋出完整距離分佈作為複核。Clock 是少數\"上帝之數早就被算出來,只是沒幾個人在乎\"的項目。"
     },
     refs: [
       { label: 'cube20.org/clock', url: 'https://www.cube20.org/clock/' },

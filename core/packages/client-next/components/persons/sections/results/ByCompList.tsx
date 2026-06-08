@@ -132,7 +132,7 @@ export default function ByCompList({ results, comps, reconLookup, isZh }: Props)
               <table className="wp-bycomp-table">
                 <thead>
                   <tr>
-                    <th>{t('项目', 'Event', "專案")}</th>
+                    <th>{t('项目', 'Event', "項目")}</th>
                     <th>
                       <span className="wp-th-info">
                         {t('轮次', 'Round', "輪次")}

@@ -22,8 +22,8 @@ const best_potential_fmc_mean: AboutEntry = {
         hintZhHant: "三個 attempt 各取全場最小再求均值"
     },
     { value: '`333fm`', labelZh: '仅此项目', labelEn: 'Only event', hintZh: 'Fewest Moves 是 WCA 里唯一手写步数的项目', hintEn: 'FMC is the only hand-written move-count event in WCA',
-        labelZhHant: "僅此專案",
-        hintZhHant: "Fewest Moves 是 WCA 裡唯一手寫步數的專案"
+        labelZhHant: "僅此項目",
+        hintZhHant: "Fewest Moves 是 WCA 裡唯一手寫步數的項目"
     },
     { value: '100', labelZh: '榜单深度', labelEn: 'Rows returned', hintZh: '按 mean 升序取前 100 个 round', hintEn: 'Top 100 rounds by mean ascending',
         labelZhHant: "榜單深度",
@@ -155,8 +155,8 @@ const best_round: AboutEntry = {
   ],
   stats: [
     { value: '21', labelZh: '项目', labelEn: 'Events', hintZh: '每个项目独立一节,top 10 轮', hintEn: 'One section per event, top 10 rounds each',
-        labelZhHant: "專案",
-        hintZhHant: "每個專案獨立一節,top 10 輪"
+        labelZhHant: "項目",
+        hintZhHant: "每個項目獨立一節,top 10 輪"
     },
     { value: 'top 3', labelZh: '取多少人', labelEn: 'Per round', hintZh: '`ROW_NUMBER ≤ 3` 取前三',  hintEn: '`ROW_NUMBER ≤ 3` keeps the top three' },
     { value: 'single / average', labelZh: '排序口径', labelEn: 'Rank field', hintZh: 'BLD 用 best;其他用 average', hintEn: 'BLD uses best; others use average',
@@ -200,7 +200,7 @@ LIMIT 10;`,
       bodyZh: 'BLD 三项 + multi-BLD 用 `best`(single 值越小越好);其它项目用 `average`(ao5 的官方均值)。在 `CASE` 表达式里一次解决,排序和"宽表透视"都用同一个表达式。',
       bodyEn: 'BLD trio + multi-BLD rank by `best` (single, lower is better); all other events rank by `average` (the official ao5 mean). A single `CASE` expression handles both the `ORDER BY` and the pivot column.',
         titleZhHant: "挑排序欄位",
-        bodyZhHant: "BLD 三項 + multi-BLD 用 `best`(single 值越小越好);其它專案用 `average`(ao5 的官方均值)。在 `CASE` 表示式裡一次解決,排序和\"寬表透視\"都用同一個表示式。"
+        bodyZhHant: "BLD 三項 + multi-BLD 用 `best`(single 值越小越好);其它項目用 `average`(ao5 的官方均值)。在 `CASE` 表示式裡一次解決,排序和\"寬表透視\"都用同一個表示式。"
     },
     {
       titleZh: '每 round 内排名',
@@ -223,7 +223,7 @@ LIMIT 10;`,
       titleEn: 'Sum, sort, top 10',
       bodyZh: '`result_sum = first + second + third`,按和升序 `LIMIT 10`,每个项目独立一节。',
       bodyEn: '`result_sum = first + second + third`, ordered ascending, `LIMIT 10`, one section per event.',
-        bodyZhHant: "`result_sum = first + second + third`,按和升序 `LIMIT 10`,每個專案獨立一節。"
+        bodyZhHant: "`result_sum = first + second + third`,按和升序 `LIMIT 10`,每個項目獨立一節。"
     },
     {
       titleZh: '`333mbf` 单独一条 transform',
@@ -261,7 +261,7 @@ LIMIT 10;`,
     },
     { id: 'best_round', toStat: true, titleZh: '打开 Best round 榜', titleEn: 'Jump to Best round board', hintZh: '21 项目 top 10', hintEn: '21 events, top 10 each',
         titleZhHant: "開啟 Best round 榜",
-        hintZhHant: "21 專案 top 10"
+        hintZhHant: "21 項目 top 10"
     },
   ],
     titleZhHant: "最佳輪次",
@@ -286,12 +286,12 @@ const most_frequent_results: AboutEntry = {
   stats: [
     { value: '`> 0`', labelZh: '只算成功', labelEn: 'Successful only', hintZh: 'DNF (-1)、DNS (-2)、未提交 (0) 全跳', hintEn: 'DNF (-1), DNS (-2), unattempted (0) all skipped' },
     { value: '21 项目', labelZh: '逐项目分桶', labelEn: 'Per-event buckets', hintZh: '不同项目厘秒分布完全不同,不混着排', hintEn: 'Different events have wildly different distributions; not pooled',
-        labelZhHant: "逐專案分桶",
-        hintZhHant: "不同專案釐秒分佈完全不同,不混著排"
+        labelZhHant: "逐項目分桶",
+        hintZhHant: "不同項目釐秒分佈完全不同,不混著排"
     },
     { value: 'top 10', labelZh: '榜单深度', labelEn: 'Rows per event', hintZh: '每个项目取最热门 10 个具体值', hintEn: 'Per event: the 10 most-frequent exact values',
         labelZhHant: "榜單深度",
-        hintZhHant: "每個專案取最熱門 10 個具體值"
+        hintZhHant: "每個項目取最熱門 10 個具體值"
     },
     { value: '~M 级', labelZh: '总 attempt 量', labelEn: 'Total attempts', hintZh: 'WCA 历史所有 attempt — 数千万级', hintEn: 'Tens of millions of attempts across WCA history',
         labelZhHant: "總 attempt 量",
@@ -330,8 +330,8 @@ WHERE event_id != '333mbo';
       titleEn: 'Bucket by event + split attempts',
       bodyZh: '`EVENTS_ENTRIES.map`,每个项目一节。`row[\'attempts\'].split(\',\').map(Number)` 拆出 1-5 个 attempt;`if (v > 0)` 过滤掉 DNF(-1)、DNS(-2)、未提交(0)。',
       bodyEn: '`EVENTS_ENTRIES.map` builds one section per event. `row.attempts.split(\',\').map(Number)` extracts the 1 ~ 5 attempts; the `v > 0` filter drops DNF (-1), DNS (-2), and unattempted (0).',
-        titleZhHant: "按專案分桶 + 拆 attempt",
-        bodyZhHant: "`EVENTS_ENTRIES.map`,每個專案一節。`row['attempts'].split(',').map(Number)` 拆出 1-5 個 attempt;`if (v > 0)` 過濾掉 DNF(-1)、DNS(-2)、未提交(0)。"
+        titleZhHant: "按項目分桶 + 拆 attempt",
+        bodyZhHant: "`EVENTS_ENTRIES.map`,每個項目一節。`row['attempts'].split(',').map(Number)` 拆出 1-5 個 attempt;`if (v > 0)` 過濾掉 DNF(-1)、DNS(-2)、未提交(0)。"
     },
     {
       titleZh: '`Map<number, number>` 计数',
@@ -368,7 +368,7 @@ WHERE event_id != '333mbo';
         hintZhHant: "同樣用 `result_attempts` 拆 attempt slot"
     },
     { id: 'dnf_rate_by_event', titleZh: '各项目 DNF 率', titleEn: 'DNF rate by event', hintZh: '反过来:看被这里过滤掉的 DNF 占比', hintEn: 'Mirror view: how big a fraction were the filtered-out DNFs',
-        titleZhHant: "各專案 DNF 率",
+        titleZhHant: "各項目 DNF 率",
         hintZhHant: "反過來:看被這裡過濾掉的 DNF 佔比"
     },
     { id: 'smallest_diff_between_single_and_average', titleZh: '最小单平差', titleEn: 'Smallest single-average diff', hintZh: '另一类"巧合数值"统计', hintEn: 'A different kind of "coincidental value" stat',
@@ -377,7 +377,7 @@ WHERE event_id != '333mbo';
     },
     { id: 'most_frequent_results', toStat: true, titleZh: '打开 Most frequent results', titleEn: 'Jump to live frequency board', hintZh: '21 项目分布', hintEn: '21 event distributions',
         titleZhHant: "開啟 Most frequent results",
-        hintZhHant: "21 專案分佈"
+        hintZhHant: "21 項目分佈"
     },
   ],
     titleZhHant: "最常出現的成績",
@@ -414,7 +414,7 @@ const moving_average: AboutEntry = {
     },
     { value: '50', labelZh: '榜单深度', labelEn: 'Rows per event', hintZh: 'top 50 / 项目', hintEn: 'Top 50 per event',
         labelZhHant: "榜單深度",
-        hintZhHant: "top 50 / 專案"
+        hintZhHant: "top 50 / 項目"
     },
   ],
   sourceZh: [
@@ -469,7 +469,7 @@ ORDER BY competition.start_date, round_type.rank;
       bodyEn: '`.filter(([, avgs]) => avgs.length >= 5)` drops solvers with fewer than 5 averages. Sort ascending, take top 50. One section per event (BLD events absent as a group).',
       highlight: true,
         titleZhHant: "過濾不足 5 + 排序取 top 50",
-        bodyZhHant: "`.filter(([, avgs]) => avgs.length >= 5)` — 不足 5 個 average 的人不上榜。再按 EMA 升序取 50。每專案獨立一節(BLD 5 專案整組缺席)。"
+        bodyZhHant: "`.filter(([, avgs]) => avgs.length >= 5)` — 不足 5 個 average 的人不上榜。再按 EMA 升序取 50。每項目獨立一節(BLD 5 項目整組缺席)。"
     },
   ],
   formulae: [
@@ -509,7 +509,7 @@ ORDER BY competition.start_date, round_type.rank;
     },
     { id: 'moving_average', toStat: true, titleZh: '打开 Moving average 榜', titleEn: 'Jump to Moving average board', hintZh: '看每项目 top 50', hintEn: 'Per-event top 50',
         titleZhHant: "開啟 Moving average 榜",
-        hintZhHant: "看每專案 top 50"
+        hintZhHant: "看每項目 top 50"
     },
   ],
     titleZhHant: "移動平均"
@@ -610,8 +610,8 @@ WHERE event_id != '333fm' AND average > 0;
       bodyZh: '`EVENTS_ENTRIES.map`,21 项目(剔除 `333fm`)每项目独立切前 10。`SolveTime(eventId, type, v).clockFormat()` 把厘秒转成展示串。',
       bodyEn: '`EVENTS_ENTRIES.map`, one section per event (FMC excluded), top 10 each. `SolveTime(eventId, type, v).clockFormat()` formats centiseconds for display.',
       highlight: true,
-        titleZhHant: "每專案取 top 10",
-        bodyZhHant: "`EVENTS_ENTRIES.map`,21 專案(剔除 `333fm`)每專案獨立切前 10。`SolveTime(eventId, type, v).clockFormat()` 把釐秒轉成展示串。"
+        titleZhHant: "每項目取 top 10",
+        bodyZhHant: "`EVENTS_ENTRIES.map`,21 項目(剔除 `333fm`)每項目獨立切前 10。`SolveTime(eventId, type, v).clockFormat()` 把釐秒轉成展示串。"
     },
   ],
   formulae: [
@@ -651,7 +651,7 @@ WHERE event_id != '333fm' AND average > 0;
     },
     { id: 'smallest_diff_between_single_and_average', toStat: true, titleZh: '打开最小单平差榜', titleEn: 'Jump to Smallest diff board', hintZh: '21 项目 top 10', hintEn: '21 events, top 10 each',
         titleZhHant: "開啟最小單平差榜",
-        hintZhHant: "21 專案 top 10"
+        hintZhHant: "21 項目 top 10"
     },
   ],
     titleZhHant: "最小的單次與平均差距"
@@ -678,7 +678,7 @@ const yearly_rankings: AboutEntry = {
     },
     { value: '21 × 2', labelZh: '面板数', labelEn: 'Panels', hintZh: '21 项目,每项目 Single + Average', hintEn: '21 events, Single + Average each',
         labelZhHant: "面板數",
-        hintZhHant: "21 專案,每專案 Single + Average"
+        hintZhHant: "21 項目,每項目 Single + Average"
     },
     { value: 'top 10', labelZh: '每榜深度', labelEn: 'Per panel', hintZh: '每榜 top 10', hintEn: 'Top 10 per panel' },
     { value: '人去重', labelZh: '每人取最佳', labelEn: 'Best per person', hintZh: '同一人多条只留最快那条', hintEn: 'Same solver, multiple rows → only the fastest is kept',
@@ -729,7 +729,7 @@ WHERE YEAR(competition.start_date) = YEAR(CURDATE());
       bodyZh: '`EVENTS_ENTRIES.flatMap` 把每个项目展开成 `[Single, Average]` 两个 panel(共 ~42 个面板,部分项目 average panel 为空,如 `333mbf`)。',
       bodyEn: '`EVENTS_ENTRIES.flatMap` expands each event into a `[Single, Average]` pair (≈ 42 panels total — some events have an empty average panel, e.g. `333mbf`).',
         titleZhHant: "展開 event × type",
-        bodyZhHant: "`EVENTS_ENTRIES.flatMap` 把每個專案展開成 `[Single, Average]` 兩個 panel(共 ~42 個面板,部分專案 average panel 為空,如 `333mbf`)。"
+        bodyZhHant: "`EVENTS_ENTRIES.flatMap` 把每個項目展開成 `[Single, Average]` 兩個 panel(共 ~42 個面板,部分項目 average panel 為空,如 `333mbf`)。"
     },
     {
       titleZh: '正值过滤 + SolveTime 排序',
@@ -737,7 +737,7 @@ WHERE YEAR(competition.start_date) = YEAR(CURDATE());
       bodyZh: '`Number(r[type]) > 0` 排除 DNF/DNS/未提交。然后用 `SolveTime.compareTo` 排序(BLD points 项目走升序仍然语义正确,因为基类内部已封好)。',
       bodyEn: '`Number(r[type]) > 0` drops DNF / DNS / unattempted. Then `SolveTime.compareTo` sorts — for BLD-points events the comparator is encapsulated correctly inside `SolveTime` so the calling code remains uniform.',
         titleZhHant: "正值過濾 + SolveTime 排序",
-        bodyZhHant: "`Number(r[type]) > 0` 排除 DNF/DNS/未提交。然後用 `SolveTime.compareTo` 排序(BLD points 專案走升序仍然語義正確,因為基類內部已封好)。"
+        bodyZhHant: "`Number(r[type]) > 0` 排除 DNF/DNS/未提交。然後用 `SolveTime.compareTo` 排序(BLD points 項目走升序仍然語義正確,因為基類內部已封好)。"
     },
     {
       titleZh: '人去重',
@@ -782,7 +782,7 @@ WHERE YEAR(competition.start_date) = YEAR(CURDATE());
     },
     { id: 'yearly_rankings', toStat: true, titleZh: '打开 Yearly rankings', titleEn: 'Jump to Yearly rankings', hintZh: '21 项目 × {Single, Average} 共 ~42 面板', hintEn: '21 events × {Single, Average} ≈ 42 panels',
         titleZhHant: "開啟 Yearly rankings",
-        hintZhHant: "21 專案 × {Single, Average} 共 ~42 面板"
+        hintZhHant: "21 項目 × {Single, Average} 共 ~42 面板"
     },
   ],
 };

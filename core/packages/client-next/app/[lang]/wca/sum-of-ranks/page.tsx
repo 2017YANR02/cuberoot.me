@@ -169,7 +169,7 @@ function SumOfRanksPageInner() {
 
   useEffect(() => {
     if (eventsParam === '__none__') { setData(null); setError(tr({ zh: '请至少选择一个项目', en: 'Select at least one event',
-        zhHant: "請至少選擇一個專案"
+        zhHant: "請至少選擇一個項目"
     })); return; }
     setLoading(true); setError(null);
     const qs = new URLSearchParams();
@@ -287,7 +287,7 @@ function SumOfRanksPageInner() {
         </div>
         <h1 className="wse-title-row">
           {tr({ zh: '全项目排名', en: 'Sum of Ranks',
-              zhHant: "全專案排名"
+              zhHant: "全項目排名"
         })}
           <Link
             href="/wca/about/sum-of-ranks"
@@ -303,7 +303,7 @@ function SumOfRanksPageInner() {
           </Link>
         </h1>
         <p className="wse-subtitle">{tr({ zh: '把所选项目的(世界 / 国家)排名相加,缺项以该项目"参赛人数+1"(比倒数第一再差一名)计入。"未登领奖台" 按比赛决赛(final round)实际名次过滤', en: 'Sum of (world / country) ranks across selected events; missing events default to "participants+1" (one worse than last). "No podium" filters by actual final-round position',
-            zhHant: "把所選專案的(世界 / 國家)排名相加,缺項以該專案\"參賽人數+1\"(比倒數第一再差一名)計入。\"未登領獎臺\" 按比賽決賽(final round)實際名次過濾"
+            zhHant: "把所選項目的(世界 / 國家)排名相加,缺項以該項目\"參賽人數+1\"(比倒數第一再差一名)計入。\"未登領獎臺\" 按比賽決賽(final round)實際名次過濾"
         })}</p>
       </header>
 
@@ -339,7 +339,7 @@ function SumOfRanksPageInner() {
           />
         </div>
         <div className="wse-filter" style={{ minWidth: '100%' }}>
-          <label>{i18n.language === 'zh-Hant' ? (`專案(已選 ${selectedCount} / ${RANK_EVENTS.length})`) : (isZh ? `项目(已选 ${selectedCount} / ${RANK_EVENTS.length})` : `Events (${selectedCount}/${RANK_EVENTS.length} selected)`)}</label>
+          <label>{i18n.language === 'zh-Hant' ? (`項目(已選 ${selectedCount} / ${RANK_EVENTS.length})`) : (isZh ? `项目(已选 ${selectedCount} / ${RANK_EVENTS.length})` : `Events (${selectedCount}/${RANK_EVENTS.length} selected)`)}</label>
           <div className="wse-events-bar">
             <button type="button" onClick={selectAll}>{tr({ zh: '全选', en: 'All',
                 zhHant: "全選"
@@ -380,7 +380,7 @@ function SumOfRanksPageInner() {
       {/* Q1: 指定选手最优项目组合 */}
       <div className="sor-tool">
         <label className="sor-tool-label">{tr({ zh: '查选手的最优项目组合', en: "A cuber's best event combination",
-            zhHant: "查選手的最優專案組合"
+            zhHant: "查選手的最優項目組合"
         })}</label>
         <WcaPersonPicker
           value={picked}
@@ -412,7 +412,7 @@ function SumOfRanksPageInner() {
                 const hasOther = !!pb.best[other];
                 return (
                   <div className="sor-tool-hint">
-                    {i18n.language === 'zh-Hant' ? (`該選手在全部 21 個專案裡都沒有有效${typeZh}成績(${type === 'average' ? '比如只打過多盲等無平均的專案,或平均全 DNF' : '單次記錄缺失'})${hasOther ? `;但有${other === 'average' ? '平均' : '單次'}最優組合,切上方“型別”檢視` : ''}`) : (isZh
+                    {i18n.language === 'zh-Hant' ? (`該選手在全部 21 個項目裡都沒有有效${typeZh}成績(${type === 'average' ? '比如只打過多盲等無平均的項目,或平均全 DNF' : '單次記錄缺失'})${hasOther ? `;但有${other === 'average' ? '平均' : '單次'}最優組合,切上方“型別”檢視` : ''}`) : (isZh
                                               ? `该选手在全部 21 个项目里都没有有效${typeZh}成绩(${type === 'average' ? '比如只打过多盲等无平均的项目,或平均全 DNF' : '单次记录缺失'})${hasOther ? `;但有${other === 'average' ? '平均' : '单次'}最优组合,切上方“类型”查看` : ''}`
                                               : `No valid ${type} result in any of the 21 events${hasOther ? ` — but a ${other} combo exists, switch "Type" above` : ''}`)}
                   </div>
@@ -443,7 +443,7 @@ function SumOfRanksPageInner() {
                     ))}
                   </ul>
                   {comboCount > combos.length && (
-                    <div className="sor-pb-note">{i18n.language === 'zh-Hant' ? (`僅列出專案數最少的 ${combos.length} 種`) : (isZh ? `仅列出项目数最少的 ${combos.length} 种` : `Showing the ${combos.length} with fewest events`)}</div>
+                    <div className="sor-pb-note">{i18n.language === 'zh-Hant' ? (`僅列出項目數最少的 ${combos.length} 種`) : (isZh ? `仅列出项目数最少的 ${combos.length} 种` : `Showing the ${combos.length} with fewest events`)}</div>
                   )}
                 </>
               );
@@ -486,7 +486,7 @@ function SumOfRanksPageInner() {
             })}</div>}
             {census && (
               <>
-                <p className="sor-census-lead">{i18n.language === 'zh-Hant' ? (`${censusYearLabel != null ? `截至 ${censusYearLabel} 年末,` : ''}${hidePodium ? '在從未登上比賽領獎臺的選手中,' : ''}有 ${census.distinct} 名選手曾在 ${census.totalSubsets.toLocaleString()} 種專案組合的至少一種裡排到“名次和第一”(${type === 'average' ? '平均' : '單次'}${includeCancelled ? ',含廢止項' : ''},世界口徑)。`) : (isZh
+                <p className="sor-census-lead">{i18n.language === 'zh-Hant' ? (`${censusYearLabel != null ? `截至 ${censusYearLabel} 年末,` : ''}${hidePodium ? '在從未登上比賽領獎臺的選手中,' : ''}有 ${census.distinct} 名選手曾在 ${census.totalSubsets.toLocaleString()} 種項目組合的至少一種裡排到“名次和第一”(${type === 'average' ? '平均' : '單次'}${includeCancelled ? ',含廢止項' : ''},世界口徑)。`) : (isZh
                                                 ? `${censusYearLabel != null ? `截至 ${censusYearLabel} 年末,` : ''}${hidePodium ? '在从未登上比赛领奖台的选手中,' : ''}有 ${census.distinct} 名选手曾在 ${census.totalSubsets.toLocaleString()} 种项目组合的至少一种里排到“名次和第一”(${type === 'average' ? '平均' : '单次'}${includeCancelled ? ',含废止项' : ''},世界口径)。`
                                                 : `${censusYearLabel != null ? `As of end of ${censusYearLabel}, ` : ''}${hidePodium ? 'among cubers who have never reached a competition podium, ' : ''}${census.distinct} cubers have ranked #1 in at least one of ${census.totalSubsets.toLocaleString()} event combinations (${type}${includeCancelled ? ', incl. cancelled' : ''}, world).`)}</p>
                 <ol className="sor-census-list">

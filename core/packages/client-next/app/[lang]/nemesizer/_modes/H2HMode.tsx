@@ -132,7 +132,7 @@ function Comparison({ data, isZh, show }: { data: H2HResponse; isZh: boolean; sh
         <thead>
           <tr>
             <th>{tr({ zh: '项目', en: 'Event',
-                zhHant: "專案"
+                zhHant: "項目"
             })}</th>
             <th><PersonCell person={{ wcaId: data.p1.wcaId, name: data.p1.name, countryIso2: data.p1.iso2, continentIdx: 0 }} isZh={isZh} /></th>
             <th><PersonCell person={{ wcaId: data.p2.wcaId, name: data.p2.name, countryIso2: data.p2.iso2, continentIdx: 0 }} isZh={isZh} /></th>

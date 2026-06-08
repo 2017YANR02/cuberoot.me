@@ -84,7 +84,7 @@ function SuccessRatePageInner() {
         </div>
         <h1 className="wse-title-row">
           {tr({ zh: '项目成功率', en: 'Event Success Rate',
-              zhHant: "專案成功率"
+              zhHant: "項目成功率"
         })}
           <Link
             href="/wca/about/success-rate"
@@ -100,7 +100,7 @@ function SuccessRatePageInner() {
           </Link>
         </h1>
         <p className="wse-subtitle">{tr({ zh: '每位选手在该项目中成功完成的轮次占比(主要看盲拧 / FMC 等失败率高的项目)', en: 'Per-cuber success rate per event (most relevant for BLD / FMC)',
-            zhHant: "每位選手在該專案中成功完成的輪次佔比(主要看盲擰 / FMC 等失敗率高的專案)"
+            zhHant: "每位選手在該項目中成功完成的輪次佔比(主要看盲擰 / FMC 等失敗率高的項目)"
         })}</p>
       </header>
 

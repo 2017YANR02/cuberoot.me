@@ -111,7 +111,7 @@ export default function MosaicAboutPage() {
             {t(' — 单个魔方状态可视化,可以快速验证 mosaic 导出的某一格是否正确。', ' — single-cube state visualizer; handy for sanity-checking individual cells from a mosaic plan.', " — 單個魔方狀態視覺化,可以快速驗證 mosaic 匯出的某一格是否正確。")}
           </li>
           <li>
-            <a href="https://github.com/Roman-/mosaic" target="_blank" rel="noopener noreferrer">{t('上游项目 Roman-/mosaic', 'Upstream Roman-/mosaic', "上游專案 Roman-/mosaic")}</a>
+            <a href="https://github.com/Roman-/mosaic" target="_blank" rel="noopener noreferrer">{t('上游项目 Roman-/mosaic', 'Upstream Roman-/mosaic', "上游項目 Roman-/mosaic")}</a>
             {t(' — 算法和早期 UI 出处。', ' — algorithm and original UI inspiration.', " — 演算法和早期 UI 出處。")}
           </li>
         </ul>

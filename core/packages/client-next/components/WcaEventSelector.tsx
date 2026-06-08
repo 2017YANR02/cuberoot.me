@@ -65,14 +65,14 @@ export default function WcaEventSelector({
 
   const toggleTip = (cancelledIds.length > 0 && appendCollapsible)
     ? (tr({ zh: '其他项目', en: 'Other events',
-        zhHant: "其他專案"
+        zhHant: "其他項目"
     }))
     : appendCollapsible
       ? (tr({ zh: '其他 (非 WCA 项目)', en: 'Other (non-WCA puzzles)',
-          zhHant: "其他 (非 WCA 專案)"
+          zhHant: "其他 (非 WCA 項目)"
     }))
       : (tr({ zh: '已废止项目', en: 'Former events',
-          zhHant: "已廢止專案"
+          zhHant: "已廢止項目"
     }));
 
   const removeBtn = (id: string, isActive: boolean) => (isMulti && isActive && onRemove ? (

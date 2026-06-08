@@ -276,7 +276,7 @@ function PeopleTable({ data, isZh, order, direction }: {
             <th>WCA ID</th>
             <th>{tr({ zh: '姓名', en: 'Name' })}</th>
             <th>{tr({ zh: '共同项目', en: 'Shared events',
-                zhHant: "共同專案"
+                zhHant: "共同項目"
             })}</th>
             <th>{tr({ zh: '我的宿敌数', en: 'Nemeses',
                 zhHant: "我的宿敵數"

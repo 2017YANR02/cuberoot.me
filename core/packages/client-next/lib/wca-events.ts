@@ -59,7 +59,7 @@ const DISPLAY_ZH__Hant: Record<string, string> = {
   'magic': '八板', 'mmagic': '十二板', '333mbo': '舊多盲',
   // 非 WCA(cubing.js twizzleEvents)
   'fto': 'FTO', 'master_tetraminx': '四階金字塔', 'kilominx': '二階五魔', 'redi_cube': 'Redi', 'baby_fto': '二階 FTO',
-  // 非 WCA cubing.com 自定義專案
+  // 非 WCA cubing.com 自定義項目
   'funny': '趣味',
 };
 

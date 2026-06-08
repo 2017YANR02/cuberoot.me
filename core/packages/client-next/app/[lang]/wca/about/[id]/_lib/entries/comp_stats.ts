@@ -22,7 +22,7 @@ const average_event_count_by_competition: AboutEntry = {
     },
     { value: 'top 100', labelZh: '榜单长度', labelEn: 'Leaderboard size', hintZh: '按平均项目数降序', hintEn: 'Top 100 by mean event count',
         labelZhHant: "榜單長度",
-        hintZhHant: "按平均專案數降序"
+        hintZhHant: "按平均項目數降序"
     },
     { value: '2 位小数', labelZh: '精度', labelEn: 'Precision', hintZh: 'toFixed(2)', hintEn: 'toFixed(2)' },
     { value: '4 列', labelZh: '表头', labelEn: 'Columns', hintZh: '比赛 / 均值 / 选手数 / 国家', hintEn: 'Competition / mean / competitors / country',
@@ -69,8 +69,8 @@ LIMIT 100;`,
       titleEn: 'Count distinct events',
       bodyZh: '组内 `COUNT(DISTINCT event_id)` —— 同一人同一项目多轮只算一次。',
       bodyEn: '`COUNT(DISTINCT event_id)` per group — multiple rounds of the same event collapse to one.',
-        titleZhHant: "數專案數",
-        bodyZhHant: "組內 `COUNT(DISTINCT event_id)` —— 同一人同一專案多輪只算一次。"
+        titleZhHant: "數項目數",
+        bodyZhHant: "組內 `COUNT(DISTINCT event_id)` —— 同一人同一項目多輪只算一次。"
     },
     {
       titleZh: '外层按比赛聚合',
@@ -78,7 +78,7 @@ LIMIT 100;`,
       bodyZh: '外层把内层结果按 `competition_id` 再分一次组,取 `AVG(event_count)` 作为该比赛的平均项目数,同时 `COUNT(*)` 出选手数。',
       bodyEn: 'Outer `GROUP BY competition_id` over the inner result, taking `AVG(event_count)` as the mean and `COUNT(*)` as competitor count.',
         titleZhHant: "外層按比賽聚合",
-        bodyZhHant: "外層把內層結果按 `competition_id` 再分一次組,取 `AVG(event_count)` 作為該比賽的平均專案數,同時 `COUNT(*)` 出選手數。"
+        bodyZhHant: "外層把內層結果按 `competition_id` 再分一次組,取 `AVG(event_count)` 作為該比賽的平均項目數,同時 `COUNT(*)` 出選手數。"
     },
     {
       titleZh: '挂上国家 / 比赛链接',
@@ -124,7 +124,7 @@ LIMIT 100;`,
         titleZhHant: "檢視實時榜單"
     },
   ],
-    titleZhHant: "每場比賽平均參賽專案數",
+    titleZhHant: "每場比賽平均參賽項目數",
     badgeZhHant: "賽事"
 };
 
@@ -240,7 +240,7 @@ WHERE country_id NOT IN ('XA','XE','XF','XM','XN','XO','XS','XW')
         hintZhHant: "同一份賽事資料另一種切法"
     },
     { id: 'average_event_count_by_competition', titleZh: '每场比赛平均项目数', titleEn: 'Average event count by competition', hintZh: '与天数强相关', hintEn: 'Strongly correlated with days',
-        titleZhHant: "每場比賽平均專案數",
+        titleZhHant: "每場比賽平均項目數",
         hintZhHant: "與天數強相關"
     },
     { id: 'competition_days_count_by_region', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '三档地区切换', hintEn: 'Three-tier region switcher',
@@ -504,7 +504,7 @@ ORDER BY competitions_per_year DESC;`,
         hintZhHant: "時間維度的對照"
     },
     { id: 'average_event_count_by_competition', titleZh: '每场比赛平均项目数', titleEn: 'Avg events per comp', hintZh: '"广度"维度,与"密度"配套看', hintEn: 'Breadth dimension, complements density',
-        titleZhHant: "每場比賽平均專案數",
+        titleZhHant: "每場比賽平均項目數",
         hintZhHant: "\"廣度\"維度,與\"密度\"配套看"
     },
     { id: 'competitions_per_year_by_country', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '按国家完整排序', hintEn: 'Full country ranking',
@@ -601,8 +601,8 @@ GROUP BY r.event_id;`,
       titleEn: 'Group by event',
       bodyZh: '`GROUP BY r.event_id`,每个 WCA 项目一行。',
       bodyEn: '`GROUP BY r.event_id` — one row per WCA event.',
-        titleZhHant: "按專案分組",
-        bodyZhHant: "`GROUP BY r.event_id`,每個 WCA 專案一行。"
+        titleZhHant: "按項目分組",
+        bodyZhHant: "`GROUP BY r.event_id`,每個 WCA 項目一行。"
     },
     {
       titleZh: '前端算比例并排序',
@@ -611,7 +611,7 @@ GROUP BY r.event_id;`,
       bodyEn: 'TS computes `100 * dnfs / attempts`, formats as `toFixed(2) + " %"`, sorts DESC by rate, and maps `event_id` through `EVENTS[id]` for display.',
       highlight: true,
         titleZhHant: "前端算比例並排序",
-        bodyZhHant: "TS 端 `100 * dnfs / attempts`,`toFixed(2) + \" %\"`;按 DNF 率降序,`EVENTS[id]` 對映成專案中文名。"
+        bodyZhHant: "TS 端 `100 * dnfs / attempts`,`toFixed(2) + \" %\"`;按 DNF 率降序,`EVENTS[id]` 對映成項目中文名。"
     },
   ],
   edgesZh: [
@@ -638,11 +638,11 @@ GROUP BY r.event_id;`,
     },
     { id: 'dnf_rate_by_event', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '21 个项目排序', hintEn: 'All 21 events ranked',
         titleZhHant: "檢視實時榜單",
-        hintZhHant: "21 個專案排序"
+        hintZhHant: "21 個項目排序"
     },
   ],
-    titleZhHant: "各專案 DNF 率",
-    badgeZhHant: "專案"
+    titleZhHant: "各項目 DNF 率",
+    badgeZhHant: "項目"
 };
 
 // ──── fewest_competitors_contest ────────────────────────────────────────────
@@ -711,7 +711,7 @@ ORDER BY competitors_count;`,
       bodyZh: '`COUNT(DISTINCT person_id)` —— 同一人多项目多轮仍只算一次。',
       bodyEn: '`COUNT(DISTINCT person_id)` — multi-event multi-round rows from the same person collapse to one.',
         titleZhHant: "去重計數",
-        bodyZhHant: "`COUNT(DISTINCT person_id)` —— 同一人多專案多輪仍只算一次。"
+        bodyZhHant: "`COUNT(DISTINCT person_id)` —— 同一人多項目多輪仍只算一次。"
     },
     {
       titleZh: '过滤"小型"',
@@ -751,8 +751,8 @@ ORDER BY competitors_count;`,
   ],
   related: [
     { id: 'average_event_count_by_competition', titleZh: '每场比赛平均项目数', titleEn: 'Avg events per comp', hintZh: '小赛常项目多人少', hintEn: 'Small comps trend high here',
-        titleZhHant: "每場比賽平均專案數",
-        hintZhHant: "小賽常專案多人少"
+        titleZhHant: "每場比賽平均項目數",
+        hintZhHant: "小賽常項目多人少"
     },
     { id: 'competition_days_count_by_region', titleZh: '按区域比赛天数', titleEn: 'Comp days by region', hintZh: '小赛通常 1 天完结', hintEn: 'Small comps usually wrap in a day',
         titleZhHant: "按區域比賽天數",
@@ -885,8 +885,8 @@ WHERE (regional_single_record IS NOT NULL AND regional_single_record != '')
         hintZhHant: "跨比賽的\"連續重新整理\""
     },
     { id: 'records_in_most_events', titleZh: '在最多项目上有纪录', titleEn: 'Records in most events', hintZh: '项目覆盖维度', hintEn: 'Event-coverage take',
-        titleZhHant: "在最多專案上有紀錄",
-        hintZhHant: "專案覆蓋維度"
+        titleZhHant: "在最多項目上有紀錄",
+        hintZhHant: "項目覆蓋維度"
     },
     { id: 'most_podiums_at_single_competition', titleZh: '单场最多领奖台', titleEn: 'Most podiums at one comp', hintZh: '同"单场密度"另一种切', hintEn: 'Sibling single-comp density stat',
         titleZhHant: "單場最多領獎臺",

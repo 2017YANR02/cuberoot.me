@@ -100,7 +100,7 @@ export default function TrainerHubClient() {
 
       {!isBld && trainableSets.length === 0 && (
         <div className="trainer-landing-empty">{tr({ zh: '此项目暂无可训练公式集', en: 'No trainable sets for this puzzle',
-            zhHant: "此專案暫無可訓練公式集"
+            zhHant: "此項目暫無可訓練公式集"
         })}</div>
       )}
 

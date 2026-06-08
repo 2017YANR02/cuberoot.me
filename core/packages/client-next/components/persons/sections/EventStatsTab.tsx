@@ -107,7 +107,7 @@ export default function EventStatsTab({ results, comps, isZh }: Props) {
       <table className="wp-event-stats-table">
         <thead>
           <tr>
-            <th onClick={() => toggle('event')} className="wp-th-sortable">{t('项目', 'Event', "專案")} <Arrow col="event" /></th>
+            <th onClick={() => toggle('event')} className="wp-th-sortable">{t('项目', 'Event', "項目")} <Arrow col="event" /></th>
             <th onClick={() => toggle('first')} className="wp-th-sortable">{t('首次参赛', 'First', "首次參賽")} <Arrow col="first" /></th>
             <th onClick={() => toggle('last')} className="wp-th-sortable">{t('最后参赛', 'Last', "最後參賽")} <Arrow col="last" /></th>
             <th onClick={() => toggle('comps')} className="wp-th-sortable">{t('比赛次数', 'Comps', "比賽次數")} <Arrow col="comps" /></th>

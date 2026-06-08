@@ -112,7 +112,7 @@ function GrandSlamPageInner() {
         </h1>
         <p className="wse-subtitle">
           {tr({ zh: '单个项目里,某位选手同时获得世锦赛领奖台、所属洲际赛领奖台、所属国家赛领奖台,且打破过该项目 WR,即达成该项目大满贯。默认采用领奖台最佳且最早的比赛。注意:部分世锦赛 / 洲际赛可能同时被算作举办国的国家锦标赛。', en: 'For a single event, a cuber achieves Grand Slam by podium at Worlds + their Continental + their National championship AND having broken WR. Defaults to the best & earliest podium. Note: some World/Continental championships also count as the host country’s nationals.',
-              zhHant: "單個專案裡,某位選手同時獲得世錦賽領獎臺、所屬洲際賽領獎臺、所屬國家賽領獎臺,且打破過該專案 WR,即達成該專案大滿貫。預設採用領獎臺最佳且最早的比賽。注意:部分世錦賽 / 洲際賽可能同時被算作舉辦國的國家錦標賽。"
+              zhHant: "單個項目裡,某位選手同時獲得世錦賽領獎臺、所屬洲際賽領獎臺、所屬國家賽領獎臺,且打破過該項目 WR,即達成該項目大滿貫。預設採用領獎臺最佳且最早的比賽。注意:部分世錦賽 / 洲際賽可能同時被算作舉辦國的國家錦標賽。"
         })}
         </p>
       </header>
@@ -168,7 +168,7 @@ function GrandSlamPageInner() {
                       zhHant: "選手"
                 })}</th>
                   <th>{tr({ zh: '项目', en: 'Event',
-                      zhHant: "專案"
+                      zhHant: "項目"
                 })}</th>
                   <th className="wse-value-col">{tr({ zh: '单次', en: 'Single',
                       zhHant: "單次"

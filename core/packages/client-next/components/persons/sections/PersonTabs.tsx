@@ -35,7 +35,7 @@ export default function PersonTabs({ profile, results, comps, reconLookup, isZh 
   const labels: Record<TabKey, string> = {
     results: t('成绩', 'Results', "成績"),
     comps: t('赛事', 'Competitions', "賽事"),
-    events: t('项目统计', 'Event Stats', "專案統計"),
+    events: t('项目统计', 'Event Stats', "項目統計"),
     milestones: t('里程碑', 'Milestones'),
     cities: t('点亮城市', 'Cities', "點亮城市"),
   };

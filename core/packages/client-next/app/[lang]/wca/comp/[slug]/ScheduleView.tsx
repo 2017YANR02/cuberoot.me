@@ -407,7 +407,7 @@ function ScheduleLegend({ isZh, hasCutoff }: { isZh: boolean; hasCutoff: boolean
     })}</h4>
       <p>
         {i18n.language === 'zh-Hant' ? ((
-                        <>賽制規定如何依據成績對選手排名。每個專案允許的賽制見 {reg('9b')},各賽制的說明見 {reg('9f')}。</>
+                        <>賽制規定如何依據成績對選手排名。每個項目允許的賽制見 {reg('9b')},各賽制的說明見 {reg('9f')}。</>
                       )) : (isZh ? (
                         <>赛制规定如何依据成绩对选手排名。每个项目允许的赛制见 {reg('9b')},各赛制的说明见 {reg('9f')}。</>
                       ) : (
