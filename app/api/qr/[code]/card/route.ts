@@ -28,12 +28,14 @@ export async function GET(
       ? Math.max(0, Math.min(6, Number(bleedParam)))
       : 3;
   const cropMarks = url.searchParams.get("crop") !== "0";
+  const pattern = url.searchParams.get("bg") !== "plain"; // bg=plain 关掉记法底纹
   const idx = Math.max(0, Math.floor(Number(url.searchParams.get("idx")) || 0));
 
   const svg = cardSvg(entry, {
     url: qrTargetUrl(code),
     bleed,
     cropMarks,
+    pattern,
     idx,
   });
 
