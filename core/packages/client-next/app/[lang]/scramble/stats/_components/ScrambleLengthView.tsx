@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import WcaEventSelector from '@/components/WcaEventSelector';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import { compSourceLine } from '@/lib/comp-schedule';
@@ -39,6 +40,25 @@ interface ExamplesJson {
 const BAR = '#8B7D72'; // neutral warm — no color dimension here
 // Events whose example scramble is a plain 3x3 state the cross analyzer accepts.
 const ANALYZER_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft', '333mbf', '333mbo']);
+
+// Events that share the exact same TNoodle scrambler, so their length
+// distributions are statistically identical — offered merged by default to
+// declutter the selector. 333ft is deliberately NOT in the speed group: same
+// generator, but retired in 2019 so its sample sits on older TNoodle versions
+// and skews ~1 move longer (see the per-event note below).
+interface MergeGroup {
+  rep: string;        // representative id shown in the selector
+  members: string[];  // events summed when merged (rep first)
+  zh: string; en: string;
+  subZh: string; subEn: string;
+}
+const MERGE_GROUPS: MergeGroup[] = [
+  { rep: '333', members: ['333', '333oh'], zh: '三阶速拧', en: '3×3 (speed)', subZh: '含单手', subEn: 'incl. OH' },
+  { rep: '333bf', members: ['333bf', '333mbf'], zh: '三阶盲拧', en: '3×3 (blind)', subZh: '含多盲', subEn: 'incl. MBLD' },
+];
+const groupForRep = (id: string) => MERGE_GROUPS.find((g) => g.rep === id);
+// Non-representative members hidden from the selector while merged.
+const MERGED_HIDDEN = new Set(MERGE_GROUPS.flatMap((g) => g.members.filter((m) => m !== g.rep)));
 
 function summarize(counts: Record<string, number>) {
   const entries = Object.entries(counts)
@@ -75,6 +95,7 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
   const [data, setData] = useState<EventLengthsJson | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [event, setEvent] = useState('333');
+  const [merged, setMerged] = useState(true);
   const [yMode, setYMode] = useState<'percent' | 'count'>('percent');
   const [chartMode, setChartMode] = useState<'pdf' | 'cdf'>('pdf');
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
@@ -108,6 +129,14 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
     () => new Set(data ? Object.keys(data.events) : []),
     [data],
   );
+  // While merged, hide the non-representative members (their distribution is
+  // folded into the rep); 333ft stays visible as its own event.
+  const selectorAvailable = useMemo(() => {
+    if (!merged) return available;
+    const s = new Set(available);
+    for (const id of MERGED_HIDDEN) s.delete(id);
+    return s;
+  }, [available, merged]);
 
   // Keep the selection on an event that actually has data.
   useEffect(() => {
@@ -117,22 +146,70 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
     }
   }, [data, event]);
 
+  // Merging hides member events — fold any selected member onto its rep.
+  useEffect(() => {
+    if (!merged) return;
+    const g = MERGE_GROUPS.find((g) => g.rep !== event && g.members.includes(event));
+    if (g) setEvent(g.rep);
+  }, [merged, event]);
+
   // Switching event clears the selected length bin (examples no longer apply).
   useEffect(() => { setSelectedBin(null); }, [event]);
 
-  const cur = data?.events[event] ?? null;
+  // Active merge group (only when its rep is selected and merging is on).
+  const activeGroup = useMemo(
+    () => (merged ? groupForRep(event) : undefined),
+    [merged, event],
+  );
+  const curName = activeGroup ? (isZh ? activeGroup.zh : activeGroup.en) : eventName(event, isZh);
+  const curSub = activeGroup ? (isZh ? activeGroup.subZh : activeGroup.subEn) : null;
+
+  // Synthesize the merged distribution (sum member counts) or use the raw event.
+  const cur = useMemo<EventLen | null>(() => {
+    if (!data) return null;
+    if (activeGroup) {
+      const counts: Record<string, number> = {};
+      let samples = 0;
+      for (const m of activeGroup.members) {
+        const ev = data.events[m];
+        if (!ev) continue;
+        for (const [k, v] of Object.entries(ev.counts)) { counts[k] = (counts[k] ?? 0) + v; samples += v; }
+      }
+      return { unit: 'moves', samples, counts };
+    }
+    return data.events[event] ?? null;
+  }, [data, event, activeGroup]);
+
   const stats = useMemo(() => (cur ? summarize(cur.counts) : null), [cur]);
   const series = useMemo<HistSeries[]>(
-    () => (cur ? [{ name: eventName(event, isZh), fillColors: [BAR], counts: cur.counts }] : []),
-    [cur, event, isZh],
+    () => (cur ? [{ name: curName, fillColors: [BAR], counts: cur.counts }] : []),
+    [cur, curName],
   );
   const clickableBins = useMemo(
     () => (cur ? Object.keys(cur.counts).map(Number) : []),
     [cur],
   );
-  const curExamples = (selectedBin !== null && examples)
-    ? (examples.events[event]?.[String(selectedBin)] ?? null)
-    : null;
+  // When merged, pool the bin's examples across members round-robin (so both
+  // events show up, not just the larger one) — each tagged with its source
+  // event for the icon / analyzer link, capped at the per-bin count.
+  const curExamples = useMemo<{ ex: LenExample; ev: string }[] | null>(() => {
+    if (selectedBin === null || !examples) return null;
+    const bin = String(selectedBin);
+    const members = activeGroup ? activeGroup.members : [event];
+    const lists = members.map((m) => ({ ev: m, arr: examples.events[m]?.[bin] ?? [] }));
+    const cap = examples.meta.per_bin;
+    const out: { ex: LenExample; ev: string }[] = [];
+    for (let i = 0, added = true; added && out.length < cap; i++) {
+      added = false;
+      for (const { ev, arr } of lists) {
+        if (i >= arr.length) continue;
+        out.push({ ex: arr[i], ev });
+        added = true;
+        if (out.length >= cap) break;
+      }
+    }
+    return out.length ? out : null;
+  }, [selectedBin, examples, activeGroup, event]);
 
   if (error) {
     return <div className="scramble-stats-error">{isZh ? '加载失败' : 'Load failed'}: {error}</div>;
@@ -158,11 +235,26 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
 
       <div className="scramble-len-events">
         <WcaEventSelector
-          availableEvents={available}
+          availableEvents={selectorAvailable}
           selectedEvent={event}
           onSelect={setEvent}
           isZh={isZh}
+          onlyAvailable
         />
+        <div className="scramble-len-merge">
+          <PillToggle
+            value={merged}
+            onChange={setMerged}
+            onLabel={isZh ? '已合并' : 'Merged'}
+            offLabel={isZh ? '分开' : 'Split'}
+            ariaLabel={isZh ? '合并打乱相同的项目' : 'Merge events that share scrambles'}
+          />
+          <span className="scramble-len-merge-hint">
+            {isZh
+              ? '三阶速拧与单手、三盲与多盲打乱相同'
+              : '3×3 speed + OH, and 3BLD + MBLD share scrambles'}
+          </span>
+        </div>
       </div>
 
       {cur && (
@@ -207,10 +299,19 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
             </div>
           )}
 
+          {event === '333ft' && (
+            <div className="scramble-len-footnote">
+              {isZh
+                ? '注：脚拧与三阶 / 单手用的是同一套打乱程序(TNoodle 三阶随机状态),但脚拧 2019 年已被 WCA 废止,样本集中在较早的 TNoodle 版本,分布略偏长(众数 20 步,三阶 / 单手为 19),故未并入「三阶(速拧)」,单独列出。'
+                : 'Note: With-Feet uses the same scramble program as 3×3 / One-Handed (TNoodle 3×3 random state), but it was retired by the WCA in 2019, so its sample sits on older TNoodle versions and skews ~1 move longer (mode 20 vs 19). It is therefore kept separate from the merged 3×3 (speed) group.'}
+            </div>
+          )}
+
           {stats && (
             <div className="scramble-stats-panel">
               <div className="scramble-stats-panel-title">
-                {eventName(event, isZh)} · {isZh ? '摘要统计' : 'Summary stats'}
+                {curName}
+                {curSub && <span className="scramble-len-sub">{curSub}</span>} {isZh ? '摘要统计' : 'Summary stats'}
                 <span className="scramble-len-unit">({unitLabel(cur.unit, isZh)})</span>
               </div>
               <div className="scramble-stats-stat-grid">
@@ -239,11 +340,11 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
             )}
             {selectedBin !== null && !examplesLoading && curExamples && curExamples.length > 0 && (
               <ul className="scramble-stats-examples-list">
-                {curExamples.map((ex, i) => {
+                {curExamples.map(({ ex, ev }, i) => {
                   const [compId, round, group, num, text, extra] = ex;
                   const comp = examples?.comps[compId];
                   const iso2 = compFlagIso2(compId);
-                  const linkable = ANALYZER_EVENTS.has(event);
+                  const linkable = ANALYZER_EVENTS.has(ev);
                   return (
                     <li key={i}>
                       <div className="scramble-stats-examples-body">
@@ -266,7 +367,7 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
                             {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                             <span className="scramble-stats-examples-comp-name">{localizeCompName(compId, comp[0], isZh)}</span>
                             <span className="scramble-stats-examples-comp-meta">
-                              <EventIcon event={event} className="scramble-stats-examples-evt" title={eventName(event, isZh)} />
+                              <EventIcon event={ev} className="scramble-stats-examples-evt" title={eventName(ev, isZh)} />
                               <span>{compSourceLine(round, group, num, isZh, !!extra)}</span>
                             </span>
                           </Link>
