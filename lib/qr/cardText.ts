@@ -17,6 +17,38 @@ export function algToText(alg?: QrAlg | null): string {
   return [alg.name, alg.moves, alg.url].filter(Boolean).join(" | ");
 }
 
+// 记法求逆(reverse + 每步取反),用作 visualcube 的 setup(从解法还原出案例状态)
+export function inverseMoves(moves: string): string {
+  return moves
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .reverse()
+    .map((t) => (t.endsWith("'") ? t.slice(0, -1) : t.endsWith("2") ? t : t + "'"))
+    .join(" ");
+}
+
+// 案例图视角(从名称推断):OLL 顶视 / F2L 立体 / PLL 顶视
+function algView(alg: QrAlg): "oll" | "f2l" | "pll" {
+  const n = (alg.name ?? "").toLowerCase();
+  if (n.includes("f2l")) return "f2l";
+  if (n.includes("pll")) return "pll";
+  return "oll";
+}
+
+const VC_BASE = (process.env.NEXT_PUBLIC_VISUALCUBE_BASE || "https://api.cuberoot.me").replace(/\/+$/, "");
+
+// 案例可视化图 URL(主站 visualcube,返回 SVG)。从解法记法自动推出 setup + 视角。
+export function algImgUrl(alg?: QrAlg | null, size = 120): string | null {
+  if (!alg?.moves) return null;
+  const p = new URLSearchParams({
+    view: algView(alg),
+    size: String(size),
+    setup: inverseMoves(alg.moves),
+  });
+  return `${VC_BASE}/v1/visualcube.svg?${p.toString()}`;
+}
+
 // 卡片文案逻辑(纯函数,DOM 卡片 QrCard.tsx 与矢量导出 cardSvg.ts 共用,避免两处漂移)。
 
 // 正面艺术背景图注册表(后台缩略图选择器 + 卡片轮换 + 矢量母版内嵌共用同一份)

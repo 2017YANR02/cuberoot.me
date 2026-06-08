@@ -13,6 +13,8 @@ type CardSvgOptions = {
   url: string; // 印进二维码里的落地地址(背面也显示这串,去协议)
   quote?: string; // 正面语录,\n 分行;不传按默认轮换
   art?: string; // 正面艺术图 data URI / URL;有则内嵌位图正面,无则全矢量回退
+  algSvg?: string; // 案例图(visualcube SVG 源串),内嵌为矢量放二维码上方
+  movesPath?: { d: string; width: number }; // 记法的矢量轮廓(fontSize 1.1mm),最稳的字体方案
   monoFont?: string; // JetBrains Mono woff2 的 data URI;母版内嵌 @font-face 让记法字体独立可渲染
   bleed?: number; // 出血 mm,默认 3
   cropMarks?: boolean; // 角裁切线,默认 true
@@ -135,8 +137,25 @@ function front(
   );
 }
 
-// 背面:浅色 + 解法流派/公式底纹 + 标题/副标题 + 术语角标 + 二维码白芯片 + 网址。全矢量。
-function back(x0: number, top: number, entry: QrCode, url: string, pattern: boolean): string {
+// 把一段 <svg> 作为嵌套矢量放进卡片坐标(保留其 viewBox,只改外层 x/y/尺寸)
+function embedSvg(svg: string, x: number, y: number, size: number): string {
+  const inner = svg.replace(/^<\?xml[^>]*>\s*/i, "").trim();
+  return inner.replace(/^<svg([^>]*)>/i, (_m, attrs: string) => {
+    const cleaned = attrs.replace(/\s(width|height|x|y)="[^"]*"/gi, "");
+    return `<svg${cleaned} x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${size}" height="${size}">`;
+  });
+}
+
+// 背面:浅色 + 流派/公式底纹 + 案例图/术语 + 标题 + 二维码 + 公式 + 网址。全矢量。
+function back(
+  x0: number,
+  top: number,
+  entry: QrCode,
+  url: string,
+  pattern: boolean,
+  algSvg?: string,
+  movesPath?: { d: string; width: number },
+): string {
   const cx = x0 + PANEL_W / 2;
   const { main, sub } = backText(entry);
   const term = entry.term?.trim();
@@ -152,16 +171,25 @@ function back(x0: number, top: number, entry: QrCode, url: string, pattern: bool
     `<rect x="${chipX}" y="${chipTop}" width="${chip}" height="${chip}" rx="1.4" fill="#FFFFFF" stroke="#E5E8EE" stroke-width="0.14"/>` +
     `<g transform="translate(${(chipX + pad).toFixed(3)} ${(chipTop + pad).toFixed(3)}) scale(${scale.toFixed(4)})">${inner}</g>`;
 
-  const termEl = term
-    ? `<rect x="${cx - (term.length * 1.2 + 1.8) / 2}" y="${chipTop - 3.4}" width="${term.length * 1.2 + 1.8}" height="2.4" rx="1.2" fill="rgba(42,93,244,0.10)" stroke="rgba(42,93,244,0.28)" stroke-width="0.12"/>` +
-      text(cx, chipTop - 1.7, 1.1, BRAND_DARK, term, { weight: 700, spacing: 0.06 })
-    : "";
+  // 案例图(visualcube 矢量)优先放在二维码上方;无图时退回术语角标
+  const caseEl = algSvg
+    ? embedSvg(algSvg, cx - 2.9, chipTop - 6.9, 5.8)
+    : term
+      ? `<rect x="${cx - (term.length * 1.2 + 1.8) / 2}" y="${chipTop - 3.4}" width="${term.length * 1.2 + 1.8}" height="2.4" rx="1.2" fill="rgba(42,93,244,0.10)" stroke="rgba(42,93,244,0.28)" stroke-width="0.12"/>` +
+        text(cx, chipTop - 1.7, 1.1, BRAND_DARK, term, { weight: 700, spacing: 0.06 })
+      : "";
 
-  // 背面精选公式:名称 + 记法,衬在二维码下方(url 上方)
+  // 背面精选公式:名称 + 记法,衬在二维码下方(url 上方)。
+  // 记法优先用矢量轮廓(movesPath,任何查看器都精确),无则退回 <text>(JetBrains Mono)。
   const alg = entry.alg;
+  const movesY = top + (alg?.name ? 33.7 : 32.8);
+  const movesEl = !alg?.moves
+    ? ""
+    : movesPath
+      ? `<path transform="translate(${(cx - movesPath.width / 2).toFixed(3)} ${movesY})" d="${movesPath.d}" fill="${BRAND}"/>`
+      : text(cx, movesY, 1.1, BRAND, alg.moves, { mono: true, weight: 500 });
   const algEl = alg?.moves
-    ? (alg.name ? text(cx, top + 31.9, 0.95, BRAND_DARK, alg.name, { weight: 700 }) : "") +
-      text(cx, top + (alg.name ? 33.7 : 32.8), 1.05, BRAND, alg.moves, { mono: true })
+    ? (alg.name ? text(cx, top + 31.9, 0.95, BRAND_DARK, alg.name, { weight: 700 }) : "") + movesEl
     : "";
 
   return (
@@ -170,7 +198,7 @@ function back(x0: number, top: number, entry: QrCode, url: string, pattern: bool
     (pattern ? notationPattern(x0, top, "backClip", BRAND, 0.08) : "") +
     text(cx, top + 6.5, 1.6, BRAND_DARK, main, { weight: 700 }) +
     (sub ? text(cx, top + 9.4, 1.2, "#6B7280", sub) : "") +
-    termEl +
+    caseEl +
     qr +
     algEl +
     text(cx, top + PANEL_H - 3, 1.1, "#9aa1ad", url.replace(/^https?:\/\//, ""), { mono: true })
@@ -246,7 +274,7 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
     defs +
     bleedBg +
     front(bleed, foldX, h, quote, pattern, opts.art) +
-    back(foldX, bleed, entry, opts.url, pattern) +
+    back(foldX, bleed, entry, opts.url, pattern, opts.algSvg, opts.movesPath) +
     fold +
     (cropMarks ? cropMarksSvg(bleed, w, h) : "") +
     `</svg>`
