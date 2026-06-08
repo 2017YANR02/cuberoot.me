@@ -54,7 +54,7 @@ const VARIANTS: Variant[] = [
   { key: 'pseudo_f2leo', file: 'pseudo_f2leo.csv', stages: ['pseudo_f2leo_cross', 'pseudo_f2leo_xcross', 'pseudo_f2leo_xxcross', 'pseudo_f2leo_xxxcross'] },
 ];
 
-interface NewMeta { scramble: string; compId: string; event: string; round: string; group: string; num: number }
+interface NewMeta { scramble: string; compId: string; event: string; round: string; group: string; num: number; extra: boolean }
 // step(字符串) -> 该步数的样例 [id, 取最少步的底色字母] 列表（每桶 ≤ PER_STEP）
 type StepBuckets = Record<string, [string, string][]>;
 
@@ -81,7 +81,7 @@ async function readNewMeta(p: string): Promise<Map<string, NewMeta>> {
     if (!line) continue;
     if (first) { first = false; continue; }
     const c = line.split(',');
-    m.set(c[0], { scramble: c[1], compId: c[2], event: c[3], round: c[4], group: c[5], num: Number(c[7]) });
+    m.set(c[0], { scramble: c[1], compId: c[2], event: c[3], round: c[4], group: c[5], num: Number(c[7]), extra: c[6] === '1' });
   }
   return m;
 }
@@ -200,7 +200,7 @@ async function main() {
     const nm = newMeta.get(id)!;
     scr[id] = nm.scramble;
     const cm = compMeta.get(nm.compId);
-    meta[id] = { ci: nm.compId, cn: cm?.name ?? nm.compId, cd: cm?.date ?? '', r: nm.round, g: nm.group, n: nm.num, e: nm.event };
+    meta[id] = { ci: nm.compId, cn: cm?.name ?? nm.compId, cd: cm?.date ?? '', r: nm.round, g: nm.group, n: nm.num, e: nm.event, x: nm.extra ? 1 : 0 };
   }
 
   const stamp = process.env.SCRAMBLE_STATS_STAMP || new Date().toISOString().slice(0, 10);
