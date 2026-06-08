@@ -186,17 +186,8 @@ const nextConfig: NextConfig = {
       { source: "/code/mojo", destination: "/code/language/mojo", permanent: true },
       { source: "/code/compare", destination: "/code/language/compare", permanent: true },
       { source: "/code/scramble", destination: "/code/language/scramble", permanent: true },
-      // Battle is now the 双人 / Duo mode inside /timer. Old /battle 308-redirects
-      // to /timer?mode=duo. Query strings auto-pass through, so /battle?lang=zh
-      // becomes /timer?mode=duo&lang=zh. Lang-prefixed forms keep their lang
-      // segment; bare + sub-path variants fold to the bare /timer (matches the
-      // other rootless renames above, e.g. /analyze → /scramble/analyzer).
-      { source: "/zh/battle", destination: "/zh/timer?mode=duo", permanent: true },
-      { source: "/en/battle", destination: "/en/timer?mode=duo", permanent: true },
-      { source: "/zh/battle/:path*", destination: "/zh/timer?mode=duo", permanent: true },
-      { source: "/en/battle/:path*", destination: "/en/timer?mode=duo", permanent: true },
-      { source: "/battle", destination: "/timer?mode=duo", permanent: true },
-      { source: "/battle/:path*", destination: "/timer?mode=duo", permanent: true },
+      // /battle is retired — the 双人 / Duo experience lives only at /timer?mode=duo.
+      // No redirect: old /battle URLs 404 on purpose.
       // /blog/* → blog.cuberoot.me (双轨:境内 nginx 在主域 vhost ^~ /blog/ alias 直 serve;
       // next.cuberoot.me 没这个 alias,统一跳子域。Vite 由 SPA BlogRedirectFallback 兜底,
       // Next 这里在 next.config 层直接发 redirect。)

@@ -33,6 +33,7 @@ import { type MoreMenuItem } from '../_components/MoreMenu';
 import { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { generateScramble, registerScramble } from '../_lib/scramble';
+import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
 import { warmup333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';
 import { useTimer } from '../_lib/useTimer';
@@ -291,6 +292,10 @@ export default function SoloView({ modePill }: SoloViewProps) {
     setScrambleHist(next);
   }, []);
   const scramble = scrambleHist.list[scrambleHist.idx] ?? '';
+  // What the user sees/copies. SQ1 shows compact notation (4/-36/...) site-wide;
+  // the raw canonical form stays in `scramble` for the solver hints / cube preview
+  // (their parsers only accept `(a,b)/`). Other events pass through unchanged.
+  const displayScramble = formatScrambleForEvent(event, scramble);
   const canPrevScramble = scrambleHist.idx > 0;
 
   // Click-to-copy flash (cstimer-style). Reads the live scramble via ref so the
@@ -300,11 +305,11 @@ export default function SoloView({ modePill }: SoloViewProps) {
   const copyScrambleFlash = useCallback(() => {
     const s = scrambleHistRef.current.list[scrambleHistRef.current.idx] ?? '';
     if (!s) return;
-    try { void navigator.clipboard.writeText(s); } catch { /* ignore */ }
+    try { void navigator.clipboard.writeText(formatScrambleForEvent(event, s)); } catch { /* ignore */ }
     setScrambleCopied(true);
     if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current);
     copiedTimerRef.current = window.setTimeout(() => setScrambleCopied(false), 1200);
-  }, []);
+  }, [event]);
   useEffect(() => () => { if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current); }, []);
 
   const nextScramble = useCallback(() => {
@@ -1291,7 +1296,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
                   <ChevronLeft size={14} />
                 </button>
               )}
-              <span className="scramble-text">{scramble || <span className="scramble-empty">—</span>}</span>
+              <span className="scramble-text">{displayScramble || <span className="scramble-empty">—</span>}</span>
               {scrambleCopied && (
                 <span className="scramble-copied-flash" data-no-timer>{isZh ? '已复制' : 'Copied'}</span>
               )}
@@ -1561,7 +1566,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
       {manualEntryOpen && (
         <ManualEntryModal
           event={event}
-          currentScramble={scramble}
+          currentScramble={displayScramble}
           isZh={isZh}
           onClose={() => setManualEntryOpen(false)}
           onSubmit={(solve) => {

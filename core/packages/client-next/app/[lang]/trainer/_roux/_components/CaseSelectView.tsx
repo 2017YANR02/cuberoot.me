@@ -22,6 +22,7 @@ import * as SRVisualizer from 'sr-visualizer';
 import CaseVisualizer from './CaseVisualizer';
 import { Modal, FieldLabel } from './ui';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useRT } from '../i18n';
 import './CaseSelectView.css';
 
 export type CaseSelectSettings = {
@@ -49,6 +50,7 @@ function CaseSelectContent(props: {
   settings: CaseSelectSettings;
 }) {
   const { selector, groups, algs, visualizeMask } = props.settings;
+  const { t } = useRT();
   const sel = (props.state.config as Record<string, unknown>)[selector] as Selector;
   const algGroups = splitAlgIntoGroups(algs, groups);
 
@@ -77,11 +79,11 @@ function CaseSelectContent(props: {
         <div className="roux-caseselect-btngroup">
           <button type="button" className="roux-btn roux-btn-outline" onClick={handleSelectAll(1)}>
             <CheckCircle2 size={16} />
-            Select All
+            {t('Select All')}
           </button>
           <button type="button" className="roux-btn roux-btn-outline" onClick={handleSelectAll(0)}>
             <XCircle size={16} />
-            Deselect All
+            {t('Deselect All')}
           </button>
         </div>
       </div>
@@ -102,7 +104,7 @@ function CaseSelectContent(props: {
                 type="button"
                 className="roux-btn roux-btn-outline roux-caseselect-iconbtn"
                 onClick={handleSelectGroup(groupname, 1)}
-                aria-label="Select group"
+                aria-label={t('Select group')}
               >
                 <CheckCircle2 size={16} />
               </button>
@@ -110,7 +112,7 @@ function CaseSelectContent(props: {
                 type="button"
                 className="roux-btn roux-btn-outline roux-caseselect-iconbtn"
                 onClick={handleSelectGroup(groupname, 0)}
-                aria-label="Deselect group"
+                aria-label={t('Deselect group')}
               >
                 <XCircle size={16} />
               </button>
@@ -156,24 +158,25 @@ function CaseSelectDialog(props: {
   title?: string;
 }) {
   const title = props.title || props.label;
+  const { t } = useRT();
   const [open, setOpen] = React.useState(false);
 
   return (
     <div className="roux-caseselect">
-      <FieldLabel>{props.label}</FieldLabel>
+      <FieldLabel>{t(props.label)}</FieldLabel>
       <button
         type="button"
         className="roux-btn roux-btn-outline"
         onClick={() => setOpen(true)}
       >
         <Settings size={16} />
-        Select
+        {t('Select')}
       </button>
 
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title={title}
+        title={t(title)}
         maxWidth={900}
         actions={
           <button
@@ -181,7 +184,7 @@ function CaseSelectDialog(props: {
             className="roux-btn roux-btn-text"
             onClick={() => setOpen(false)}
           >
-            Close
+            {t('Close')}
           </button>
         }
       >

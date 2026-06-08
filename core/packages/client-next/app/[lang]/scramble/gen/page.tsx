@@ -41,6 +41,14 @@ function readShowPreview(): boolean {
   return localStorage.getItem(SHOW_PREVIEW_KEY) !== '0';
 }
 
+// SQ1 打乱记号:简写 (4/-36/…，全站默认) vs WCA 官方 (x, y) / 完整形式。
+// 仅 /scramble/gen 提供切换(选了 sq1 才显开关);默认简写,持久化。
+const SQ1_COMPACT_KEY = 'gen:sq1Compact';
+function readSq1Compact(): boolean {
+  if (typeof localStorage === 'undefined') return true;
+  return localStorage.getItem(SQ1_COMPACT_KEY) !== '0';
+}
+
 type Mode = 'comp' | 'batch' | 'paste';
 
 const VALID_MODES: ReadonlySet<Mode> = new Set(['comp', 'batch', 'paste']);
@@ -91,6 +99,12 @@ function GenPageInner() {
   const setShowPreview = (v: boolean) => {
     setShowPreviewState(v);
     try { localStorage.setItem(SHOW_PREVIEW_KEY, v ? '1' : '0'); } catch { /* swallow */ }
+  };
+
+  const [sq1Compact, setSq1CompactState] = useState<boolean>(readSq1Compact);
+  const setSq1Compact = (v: boolean) => {
+    setSq1CompactState(v);
+    try { localStorage.setItem(SQ1_COMPACT_KEY, v ? '1' : '0'); } catch { /* swallow */ }
   };
 
   // mode 走 nuqs(replace);raw 字符串读出后做 legacy alias 归一(parseAsStringEnum
@@ -152,10 +166,10 @@ function GenPageInner() {
       <main className="gen-main">
         {/* Comp 永远挂载:切走再切回保留已加载/已生成 sheets */}
         <div style={{ display: mode === 'comp' ? 'block' : 'none' }}>
-          <TNoodleMode t={t} isZh={isZh} showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} compHeaderSlot={compHeaderSlot} />
+          <TNoodleMode t={t} isZh={isZh} showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} compHeaderSlot={compHeaderSlot} sq1Compact={sq1Compact} onSq1CompactChange={setSq1Compact} />
         </div>
-        {mode === 'batch' && <QuickMode t={t} subMode="batch" showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />}
-        {mode === 'paste' && <QuickMode t={t} subMode="paste" showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} />}
+        {mode === 'batch' && <QuickMode t={t} subMode="batch" showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} sq1Compact={sq1Compact} onSq1CompactChange={setSq1Compact} />}
+        {mode === 'paste' && <QuickMode t={t} subMode="paste" showPreview={showPreview} onTogglePreview={() => setShowPreview(!showPreview)} sq1Compact={sq1Compact} onSq1CompactChange={setSq1Compact} />}
       </main>
     </div>
   );

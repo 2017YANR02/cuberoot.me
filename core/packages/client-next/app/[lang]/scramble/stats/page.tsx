@@ -294,7 +294,7 @@ export default function ScrambleStatsPage() {
   }, [currentSet, variant, stage]);
 
   const pageTitle = tab === 'length'
-    ? (isZh ? '打乱长度分布' : 'Scramble Length')
+    ? (isZh ? '打乱统计' : 'Scramble Stats')
     : (isZh ? '打乱难度分布' : 'Scramble Distribution');
   const tabsBar = (
     <div className="scramble-stats-tabs" role="tablist">

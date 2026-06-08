@@ -21,6 +21,7 @@ import { SingleSelect, MultiSelect, SliderSelect } from './SelectorViews';
 import { ColorPanel } from './Input';
 import { ScrambleInputView } from './ScrambleInputView';
 import { FieldLabel } from './ui';
+import { useRT } from '../i18n';
 
 import './BlockTrainerView.css';
 
@@ -90,13 +91,14 @@ function getHelperTextForMode(mode: Mode) {
 
 function BlockTrainerView(props: { state: AppState; dispatch: React.Dispatch<Action> }) {
   const { state, dispatch } = props;
+  const { t, isZh } = useRT();
   const cube = state.cube.state;
 
   const facelet = FaceletCube.from_cubie(cube, getMask(state));
 
   const desc: CaseDesc[] = state.case.desc.length
     ? state.case.desc
-    : [{ algs: [''], setup: 'Press next for new case', id: '', kind: '' }];
+    : [{ algs: [''], setup: t('Press next for new case'), id: '', kind: '' }];
 
   const spaceButtonText = state.name === 'hiding' ? 'Reveal' : 'Next';
   const showMoveCountHint = state.config.moveCountHint.getActiveName() === 'Show';
@@ -115,7 +117,7 @@ function BlockTrainerView(props: { state: AppState; dispatch: React.Dispatch<Act
       .map((d) => d.algs.map((a) => new MoveSeq(a).remove_setup().moves.length))
       .flat()
       .reduce((a, b) => Math.min(a, b), 100);
-    return `(Min = ${minMove} STM)`;
+    return isZh ? `(最少 = ${minMove} STM)` : `(Min = ${minMove} STM)`;
   };
   const algText =
     state.name === 'hiding'
@@ -170,13 +172,14 @@ function BlockTrainerView(props: { state: AppState; dispatch: React.Dispatch<Act
   const gt_sm = !useIsMobile(599);
   const effectiveTheme = useEffectiveTheme();
   const canvas_wh = gt_sm ? [400, 350] : [320, 280];
-  const ADD_STR = gt_sm ? 'Add' : '';
+  const ADD_STR = gt_sm ? t('Add') : '';
 
   // helper-text
   const helperText = getHelperTextForMode(state.mode);
 
-  const levelSelectionWarning =
-    "We weren't able to generate your level within time limit. You can try again -- some levels are reachable within a few tries.";
+  const levelSelectionWarning = t(
+    "We weren't able to generate your level within time limit. You can try again -- some levels are reachable within a few tries.",
+  );
   const levelSelectionSuccess = state.cube.levelSuccess;
 
   const scramblePanel = (
@@ -207,7 +210,7 @@ function BlockTrainerView(props: { state: AppState; dispatch: React.Dispatch<Act
       <div className="roux-block-paper">
         <div className="roux-block-scramble-head">
           <div className="roux-block-title-col">
-            <div className="roux-block-title">Scramble</div>
+            <div className="roux-block-title">{t('Scramble')}</div>
           </div>
           <div className="roux-block-fgap" />
           <div className="roux-block-setup-wrap">
@@ -224,7 +227,7 @@ function BlockTrainerView(props: { state: AppState; dispatch: React.Dispatch<Act
           <div className="roux-block-grid-half roux-block-solutions-col">
             <div className="roux-block-solutions-head">
               <div className="roux-block-title-col-start">
-                <div className="roux-block-title">Solutions</div>
+                <div className="roux-block-title">{t('Solutions')}</div>
               </div>
               <div className="roux-block-fgap" />
               <div>
@@ -275,7 +278,7 @@ function BlockTrainerView(props: { state: AppState; dispatch: React.Dispatch<Act
               className="roux-btn roux-btn-primary roux-block-space-btn"
               onClick={handleSpace}
             >
-              {spaceButtonText}
+              {t(spaceButtonText)}
             </button>
           </div>
           {!levelSelectionSuccess ? (
@@ -304,7 +307,7 @@ function BlockTrainerView(props: { state: AppState; dispatch: React.Dispatch<Act
           <div>
             <div className="roux-block-prompt">
               <FieldLabel>
-                <pre className="roux-block-helper-pre">{helperText}</pre>
+                <pre className="roux-block-helper-pre">{t(helperText)}</pre>
               </FieldLabel>
             </div>
           </div>

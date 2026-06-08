@@ -58,6 +58,7 @@ import {
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { useCrossMap } from './useCrossMap';
 import { useCompSteps, normScramble } from './useCompSteps';
+import { displaySq1ForEvent } from './_svg/sq1_svg';
 import { useF2leoStepMap } from './useF2leoStepMap';
 import { useVariantStepMap, VARIANT_WASM_ID } from './useVariantStepMap';
 import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
@@ -110,6 +111,9 @@ interface Props {
   /** GenPage header 提供的 portal 目标:CompPicker(及 loaded/readonly 两个变体)
    *  会通过 createPortal 渲染到这里。null 时 fallback 回 body 内联。 */
   compHeaderSlot?: HTMLDivElement | null;
+  /** SQ1 打乱记号:true=简写(默认),false=WCA 官方完整 (x, y) /。涉及 sq1 才显开关。 */
+  sq1Compact: boolean;
+  onSq1CompactChange: (v: boolean) => void;
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -254,7 +258,7 @@ function buildSheetsFromWca(rows: WcaScrambleRow[]): RoundSheet[] {
   return sheets;
 }
 
-export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, compHeaderSlot }: Props) {
+export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, compHeaderSlot, sq1Compact, onSq1CompactChange }: Props) {
   // URL 同步走 nuqs(全 replace,不堆历史):comp = 已加载比赛 id;event/round/group/attempt
   // = 深链选中态。其它键(mode 等,由 GenPage 持有)互不干扰。?mode= 等保留。
   const [urlQuery, setUrlQuery] = useQueryStates(
@@ -698,7 +702,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         groupIdx: s.groupIdx,
         format: s.format,
         attemptNumber: s.attemptNumber,
-        attempts: s.attempts.map((a) => ({ label: a.label, isExtra: a.isExtra, scramble: a.scramble })),
+        attempts: s.attempts.map((a) => ({ label: a.label, isExtra: a.isExtra, scramble: displaySq1ForEvent(s.event, a.scramble, sq1Compact) })),
         locales: s.locales,
         copies: s.copies,
         totalGroups: s.totalGroups,
@@ -961,6 +965,16 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       .map((sh) => ({ ...sh, attempts: sh.attempts.filter((a) => activeCrossFilter.scrambles.has(a.scramble)) }))
       .filter((sh) => sh.attempts.length > 0);
   }, [activeCrossFilter, analysisSheets, visibleSheets]);
+  // SQ1 显示/PDF 按「简写 / 完整」开关转换记号;原始 sheets 保持不动(分析/选中/深链都用原始)。
+  const convSheet = useCallback(
+    (sh: RoundSheet): RoundSheet =>
+      sh.event !== 'sq1'
+        ? sh
+        : { ...sh, attempts: sh.attempts.map((a) => ({ ...a, scramble: displaySq1ForEvent('sq1', a.scramble, sq1Compact) })) },
+    [sq1Compact],
+  );
+  // 是否涉及 sq1(配置选中 或 已加载/生成的 sheets 含 sq1)→ 显示记号开关。
+  const sq1Involved = !!events['sq1'] || eventsInSheets.includes('sq1');
   // icon 角标:多轮时显示当前轮次的位置编号 (1/2/3/…),与 URL round= 一致,提示再次点击会循环。
   const roundBadges = activeView && roundIdxsInEvent.length > 1 && activeRoundIdx !== null
     ? { [activeView]: `${roundNumOf(activeView, activeRoundIdx)}` }
@@ -1258,6 +1272,20 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       {/* 生成 / 预览 / 清空 按钮行 — 放在 selector + config 之后,events 列表之前 */}
       {controlsNode}
 
+      {/* SQ1 记号开关:涉及 sq1 时显示。简写(全站默认)/ 完整(WCA 官方打乱纸风格) */}
+      {sq1Involved && (
+        <div className="gen-sq1-format">
+          <span className="gen-sq1-format-label">{t('SQ1 记号', 'SQ1 notation')}</span>
+          <PillToggle
+            value={sq1Compact}
+            onChange={onSq1CompactChange}
+            onLabel={t('简写', 'Compact')}
+            offLabel={t('完整', 'Full')}
+            ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full')}
+          />
+        </div>
+      )}
+
       {loaded ? null : enabledEvents.length === 0 ? (
         <div className="gen-tn-empty">{t('点击上方图标添加项目', 'Tap an event icon above to add it')}</div>
       ) : (
@@ -1463,7 +1491,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
             {sheetsToRender.map((sh, i) => (
               <SheetView
                 key={i}
-                sheet={sh}
+                sheet={convSheet(sh)}
                 isZh={isZh}
                 t={t}
                 showPreview={showPreview}
