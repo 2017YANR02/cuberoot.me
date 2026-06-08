@@ -19,6 +19,7 @@ import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './calendar_stats.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 const EVENT_LIST = ['3x3', '2x2', '4x4', '5x5', '6x6', '7x7', '3bld', '4bld', '5bld', 'oh', 'sq1', 'pyra', 'mega', 'clock', 'skewb', 'fmc', 'mbld'];
 
@@ -35,7 +36,7 @@ function bucketColor(count: number, max: number): string {
 export default function CalendarStatsPage() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('日历统计', 'Calendar Stats');
+  useDocumentTitle('日历统计', 'Calendar Stats', "日曆統計");
   const router = useRouter();
   const navigate = (to: string) => router.push(to);
   const [comps, setComps] = useState<Comp[] | null>(null);
@@ -215,9 +216,9 @@ export default function CalendarStatsPage() {
           className="cs-filter"
         />
         <div className="cs-summary">
-          {isZh
-            ? `共 ${totalComps.toLocaleString()} 场比赛 · ${years.length} 年 · ${byCountry.length >= 15 ? '15+' : byCountry.length} 个国家`
-            : `${totalComps.toLocaleString()} comps · ${years.length} yrs · ${byCountry.length >= 15 ? '15+' : byCountry.length} countries`}
+          {i18n.language === 'zh-Hant' ? (`共 ${totalComps.toLocaleString()} 場比賽 · ${years.length} 年 · ${byCountry.length >= 15 ? '15+' : byCountry.length} 個國家`) : (isZh
+                              ? `共 ${totalComps.toLocaleString()} 场比赛 · ${years.length} 年 · ${byCountry.length >= 15 ? '15+' : byCountry.length} 个国家`
+                              : `${totalComps.toLocaleString()} comps · ${years.length} yrs · ${byCountry.length >= 15 ? '15+' : byCountry.length} countries`)}
         </div>
       </div>
 
@@ -612,9 +613,9 @@ function LineChart({ series, granularity, isZh, view, onViewChange, onPointClick
   const pointLabel = (s: { year: number; month: number; count: number }): string => {
     if (granularity === 'month') {
       const mm = String(s.month).padStart(2, '0');
-      return isZh ? `${s.year}-${mm} · ${s.count} 场` : `${s.year}-${mm} · ${s.count}`;
+      return i18n.language === 'zh-Hant' ? (`${s.year}-${mm} · ${s.count} 場`) : (isZh ? `${s.year}-${mm} · ${s.count} 场` : `${s.year}-${mm} · ${s.count}`);
     }
-    return isZh ? `${s.year} · ${s.count} 场` : `${s.year} · ${s.count}`;
+    return i18n.language === 'zh-Hant' ? (`${s.year} · ${s.count} 場`) : (isZh ? `${s.year} · ${s.count} 场` : `${s.year} · ${s.count}`);
   };
 
   const zoomed = view.start > 0 || view.end < 1;

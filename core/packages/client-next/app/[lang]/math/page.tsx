@@ -50,14 +50,14 @@ const CARDS: Card[] = [
 export default function MathLandingPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('数学', 'Math');
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  useDocumentTitle('数学', 'Math', "數學");
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
 
   return (
     <div className="math-hub-page">
       <style>{INLINE_CSS}</style>
       <header className="hub-header">
-        <h1>{t('数学', 'Math')}</h1>
+        <h1>{t('数学', 'Math', "數學")}</h1>
       </header>
       <div className="hub-grid">
         {CARDS.map((c) => (

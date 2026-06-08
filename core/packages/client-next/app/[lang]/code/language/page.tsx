@@ -509,7 +509,7 @@ function renderTopicCard(t: Topic, lang: 'zh' | 'en') {
 export default function CodeLandingPage() {
   const { i18n } = useTranslation();
   const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('编程', 'Code');
+  useDocumentTitle('编程', 'Code', "程式設計");
 
   return (
     <div className="code-landing">

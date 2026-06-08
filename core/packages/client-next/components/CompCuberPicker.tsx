@@ -21,6 +21,7 @@ import { loadPersonsIndex, searchLocalPersons, isPersonsIndexReady } from '@cube
 import './comp-picker.css';
 import './wca-person-picker.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 const DEBOUNCE_MS = 300;
 const MAX_COMPS = 12;
@@ -175,7 +176,7 @@ export function CompCuberPicker({
           <span className="cuber-search-chip-id">{cuber.id}</span>
           {typeof cuberMatchCount === 'number' && (
             <span className="cuber-search-chip-count">
-              {isZh ? `${cuberMatchCount} 场` : `${cuberMatchCount} ${cuberMatchCount === 1 ? 'comp' : 'comps'}`}
+              {i18n.language === 'zh-Hant' ? (`${cuberMatchCount} 場`) : (isZh ? `${cuberMatchCount} 场` : `${cuberMatchCount} ${cuberMatchCount === 1 ? 'comp' : 'comps'}`)}
             </span>
           )}
           <ClearButton onClick={() => onCuberChange(null)} isZh={isZh} />

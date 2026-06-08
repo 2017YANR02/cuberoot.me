@@ -183,7 +183,7 @@ interface SoloViewProps {
 export default function SoloView({ modePill }: SoloViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('计时器', 'Timer');
+  useDocumentTitle('计时器', 'Timer', "計時器");
   const settings = useSettings();
   const rankCountry = useRankCountry();
   useApplyTheme();
@@ -724,9 +724,9 @@ export default function SoloView({ modePill }: SoloViewProps) {
   const clearAll = useCallback(() => {
     if (!solves.length) return;
     const evName = EVENTS.find(e => e.id === event);
-    if (!confirm(isZh
-      ? `清空当前项目「${evName?.nameZh}」的所有 ${solves.length} 次成绩？`
-      : `Clear all ${solves.length} solves of "${evName?.nameEn}"?`,
+    if (!confirm(i18n.language === 'zh-Hant' ? (`清空當前專案「${evName?.nameZh}」的所有 ${solves.length} 次成績？`) : (isZh
+              ? `清空当前项目「${evName?.nameZh}」的所有 ${solves.length} 次成绩？`
+              : `Clear all ${solves.length} solves of "${evName?.nameEn}"?`),
     )) return;
     setByEvent(prev => ({ ...prev, [event]: [] }));
     setLastPenalty(null);
@@ -980,7 +980,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
             }
             return merged;
           });
-          alert(isZh ? `从 cstimer 导入了 ${Object.values(cs).reduce((n, l) => n + l.length, 0)} 次成绩。` : `Imported ${Object.values(cs).reduce((n, l) => n + l.length, 0)} solves from cstimer.`);
+          alert(i18n.language === 'zh-Hant' ? (`從 cstimer 匯入了 ${Object.values(cs).reduce((n, l) => n + l.length, 0)} 次成績。`) : (isZh ? `从 cstimer 导入了 ${Object.values(cs).reduce((n, l) => n + l.length, 0)} 次成绩。` : `Imported ${Object.values(cs).reduce((n, l) => n + l.length, 0)} solves from cstimer.`));
           return;
         }
         alert(tr({ zh: '导入失败：文件格式无效。', en: 'Import failed: invalid file.',
@@ -1008,7 +1008,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
           if (stackmat.status.listening) stackmat.stop();
           else {
             try { await stackmat.start(); }
-            catch (err) { alert(isZh ? `麦克风启用失败：${(err as Error).message}` : `Mic error: ${(err as Error).message}`); }
+            catch (err) { alert(i18n.language === 'zh-Hant' ? (`麥克風啟用失敗：${(err as Error).message}`) : (isZh ? `麦克风启用失败：${(err as Error).message}` : `Mic error: ${(err as Error).message}`)); }
           }
         },
       },
@@ -1120,8 +1120,8 @@ export default function SoloView({ modePill }: SoloViewProps) {
   }, [timer.phase, timer.displayMs, lastPenalty]);
 
   const eventInfoCurrent = EVENTS.find(e => e.id === event);
-  const printEventName = eventInfoCurrent ? (isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn) : event;
-  const eventLabel = eventInfoCurrent ? (isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn) : event;
+  const printEventName = eventInfoCurrent ? (i18n.language === 'zh-Hant' ? (eventInfoCurrent.nameZhHant ?? eventInfoCurrent.nameZh) : (isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn)) : event;
+  const eventLabel = eventInfoCurrent ? (i18n.language === 'zh-Hant' ? (eventInfoCurrent.nameZhHant ?? eventInfoCurrent.nameZh) : (isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn)) : event;
 
   // Available set for the selector: every WCA id we map to + the append ids +
   // magic/mmagic (rendered in the main grid via ALL_EVENT_IDS, not appended).
@@ -1308,7 +1308,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
             className={`tb-btn${bluetoothCube.status.connected ? ' connected' : ''}`}
             onClick={() => setBluetoothOpen(true)}
             title={bluetoothCube.status.connected
-              ? (isZh ? `已连接 ${bluetoothCube.status.deviceName}` : `Connected: ${bluetoothCube.status.deviceName}`)
+              ? (i18n.language === 'zh-Hant' ? (`已連線 ${bluetoothCube.status.deviceName}`) : (isZh ? `已连接 ${bluetoothCube.status.deviceName}` : `Connected: ${bluetoothCube.status.deviceName}`))
               : (tr({ zh: '智能魔方（iOS 用 Bluefy）', en: 'Smart cube (use Bluefy on iOS)',
                   zhHant: "智慧魔方（iOS 用 Bluefy）"
             }))}
@@ -1458,7 +1458,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
                     zhHant: "WCA 4d: 觀察期間只允許整體旋轉 (x/y/z)，轉面會判 DNF"
                 })}>
                   <AlertTriangle size={14} />
-                  <span>{isZh ? `检测到 ${inspectionIllegalCount} 次违规转面（WCA 应判 DNF）` : `${inspectionIllegalCount} illegal face turn${inspectionIllegalCount === 1 ? '' : 's'} detected (WCA: DNF)`}</span>
+                  <span>{i18n.language === 'zh-Hant' ? (`檢測到 ${inspectionIllegalCount} 次違規轉面（WCA 應判 DNF）`) : (isZh ? `检测到 ${inspectionIllegalCount} 次违规转面（WCA 应判 DNF）` : `${inspectionIllegalCount} illegal face turn${inspectionIllegalCount === 1 ? '' : 's'} detected (WCA: DNF)`)}</span>
                 </div>
               )}
             </>
@@ -1678,7 +1678,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
             try { await bluetoothCube.connect(); }
             catch (err) {
               const msg = (err as Error).message ?? String(err);
-              if (msg !== 'NO_WEB_BLUETOOTH') alert(isZh ? `连接失败：${msg}` : `Connection failed: ${msg}`);
+              if (msg !== 'NO_WEB_BLUETOOTH') alert(i18n.language === 'zh-Hant' ? (`連線失敗：${msg}`) : (isZh ? `连接失败：${msg}` : `Connection failed: ${msg}`));
             }
           }}
         />

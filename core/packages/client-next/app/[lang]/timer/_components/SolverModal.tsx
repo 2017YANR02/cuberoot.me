@@ -10,6 +10,7 @@ import {
 } from '../_lib/scramble/kociemba/cube';
 import { warmup333, solve333 } from '../_lib/scramble/kociemba/random_state';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   isZh: boolean;
@@ -66,7 +67,7 @@ export default function SolverModal({ isZh, onClose }: Props) {
     try {
       moves = parseMoves(txt);
     } catch (e) {
-      setErr(isZh ? `打乱解析失败：${(e as Error).message}` : `Parse error: ${(e as Error).message}`);
+      setErr(i18n.language === 'zh-Hant' ? (`打亂解析失敗：${(e as Error).message}`) : (isZh ? `打乱解析失败：${(e as Error).message}` : `Parse error: ${(e as Error).message}`));
       return;
     }
     setSolving(true);
@@ -76,7 +77,7 @@ export default function SolverModal({ isZh, onClose }: Props) {
       const sol = await solve333(state);
       setSolution(sol.trim());
     } catch (e) {
-      setErr(isZh ? `求解失败：${(e as Error).message}` : `Solve failed: ${(e as Error).message}`);
+      setErr(i18n.language === 'zh-Hant' ? (`求解失敗：${(e as Error).message}`) : (isZh ? `求解失败：${(e as Error).message}` : `Solve failed: ${(e as Error).message}`));
     } finally {
       setSolving(false);
     }

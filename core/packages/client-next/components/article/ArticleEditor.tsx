@@ -41,6 +41,7 @@ import { ClearButton } from '@/components/ClearButton';
 // Preview reuses the reader's .article-page / .article-content typography so preview == reader.
 import '@/app/[lang]/article/article.css';
 import '@/app/[lang]/article/editor.css';
+import i18n from "@/i18n/i18n-client";
 
 // CodeMirror chunk stays out of the server / SSG bundle. ssr:false → only mounts client-side.
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
@@ -117,7 +118,7 @@ export interface ArticleEditorProps {
 export default function ArticleEditor({ mode, initial, onSaved }: ArticleEditorProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const tt = (zh: string, en: string) => (isZh ? zh : en);
+  const tt = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
 
   const [title, setTitle] = useState(initial?.title ?? '');
   const [subtitle, setSubtitle] = useState(initial?.subtitle ?? '');
@@ -229,7 +230,7 @@ export default function ArticleEditor({ mode, initial, onSaved }: ArticleEditorP
       const list = Array.from(files).filter((f) => ACCEPTED_IMAGE.test(f.type));
       if (list.length === 0) {
         if (Array.from(files).length > 0)
-          setError(tt('仅支持 PNG / JPEG / WebP 图片', 'Only PNG / JPEG / WebP images'));
+          setError(tt('仅支持 PNG / JPEG / WebP 图片', 'Only PNG / JPEG / WebP images', "僅支援 PNG / JPEG / WebP 圖片"));
         return;
       }
       setError(null);
@@ -364,7 +365,7 @@ export default function ArticleEditor({ mode, initial, onSaved }: ArticleEditorP
         disabled={!canSave}
       >
         {saving === 'publish' && <Loader2 size={14} className="article-editor-spin" />}
-        {tt('发布', 'Publish')}
+        {tt('发布', 'Publish', "釋出")}
       </button>
     </>
   );
@@ -377,13 +378,13 @@ export default function ArticleEditor({ mode, initial, onSaved }: ArticleEditorP
       {/* ── metadata fields ── */}
       <div className="article-editor-meta">
         <div className="article-editor-field">
-          <label className="article-editor-label">{tt('标题', 'Title')}</label>
+          <label className="article-editor-label">{tt('标题', 'Title', "標題")}</label>
           <div className="article-editor-input-wrap">
             <input
               className="article-editor-input"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder={tt('文章标题', 'Article title')}
+              placeholder={tt('文章标题', 'Article title', "文章標題")}
             />
             {title && (
               <ClearButton onClick={() => setTitle('')} isZh={isZh} preserveFocus />
@@ -392,13 +393,13 @@ export default function ArticleEditor({ mode, initial, onSaved }: ArticleEditorP
         </div>
 
         <div className="article-editor-field">
-          <label className="article-editor-label">{tt('副标题', 'Subtitle')}</label>
+          <label className="article-editor-label">{tt('副标题', 'Subtitle', "副標題")}</label>
           <div className="article-editor-input-wrap">
             <input
               className="article-editor-input"
               value={subtitle}
               onChange={(e) => setSubtitle(e.target.value)}
-              placeholder={tt('可选', 'Optional')}
+              placeholder={tt('可选', 'Optional', "可選")}
             />
             {subtitle && (
               <ClearButton onClick={() => setSubtitle('')} isZh={isZh} preserveFocus />
@@ -407,7 +408,7 @@ export default function ArticleEditor({ mode, initial, onSaved }: ArticleEditorP
         </div>
 
         <div className="article-editor-field">
-          <label className="article-editor-label">{tt('链接名 (slug)', 'Slug')}</label>
+          <label className="article-editor-label">{tt('链接名 (slug)', 'Slug', "連結名 (slug)")}</label>
           <div className="article-editor-input-wrap">
             <input
               className={
@@ -437,7 +438,7 @@ export default function ArticleEditor({ mode, initial, onSaved }: ArticleEditorP
             <div className="article-editor-hint article-editor-hint-error">
               {tt(
                 '只能用小写字母、数字、连字符,如 my-article',
-                'Lowercase letters, digits, hyphens only, e.g. my-article',
+                'Lowercase letters, digits, hyphens only, e.g. my-article', "只能用小寫字母、數字、連字元,如 my-article"
               )}
             </div>
           )}
@@ -446,31 +447,31 @@ export default function ArticleEditor({ mode, initial, onSaved }: ArticleEditorP
 
       {/* ── toolbar ── */}
       <div className="article-editor-toolbar">
-        {toolbarBtn('bold', tt('加粗', 'Bold'), Bold, () => wrap('**', '**', tt('粗体', 'bold')))}
-        {toolbarBtn('heading', tt('小标题', 'Heading'), Heading, () =>
+        {toolbarBtn('bold', tt('加粗', 'Bold'), Bold, () => wrap('**', '**', tt('粗体', 'bold', "粗體")))}
+        {toolbarBtn('heading', tt('小标题', 'Heading', "小標題"), Heading, () =>
           insertBlock('## ', [3, 3]),
         )}
-        {toolbarBtn('red', tt('标红 (重点)', 'Red (key point)'), Highlighter, () =>
-          wrap(':red[', ']', tt('重点', 'key point')),
+        {toolbarBtn('red', tt('标红 (重点)', 'Red (key point)', "標紅 (重點)"), Highlighter, () =>
+          wrap(':red[', ']', tt('重点', 'key point', "重點")),
         )}
-        {toolbarBtn('blue', tt('标蓝 (背景知识)', 'Blue (background)'), Info, () =>
-          wrap(':blue[', ']', tt('背景知识', 'background')),
+        {toolbarBtn('blue', tt('标蓝 (背景知识)', 'Blue (background)', "標藍 (背景知識)"), Info, () =>
+          wrap(':blue[', ']', tt('背景知识', 'background', "背景知識")),
         )}
-        {toolbarBtn('figrow', tt('图网格', 'Figure grid'), Rows3, () =>
+        {toolbarBtn('figrow', tt('图网格', 'Figure grid', "圖網格"), Rows3, () =>
           insertBlock(':::figrow\n\n![](url1)\n![](url2)\n\n:::\n'),
         )}
-        {toolbarBtn('alg', tt('活动画 (alg)', 'Alg player'), Play, () =>
+        {toolbarBtn('alg', tt('活动画 (alg)', 'Alg player', "活動畫 (alg)"), Play, () =>
           wrap(':alg[', "]{puzzle=3x3x3}", "R U R' U'"),
         )}
-        {toolbarBtn('cube', tt('魔方图', 'Cube image'), Box, () =>
+        {toolbarBtn('cube', tt('魔方图', 'Cube image', "魔方圖"), Box, () =>
           wrap(':cube[', ']{view=oll}', ''),
         )}
         <span className="article-editor-tool-sep" aria-hidden="true" />
         <button
           type="button"
           className="article-editor-tool"
-          title={tt('插入图片', 'Insert image')}
-          aria-label={tt('插入图片', 'Insert image')}
+          title={tt('插入图片', 'Insert image', "插入圖片")}
+          aria-label={tt('插入图片', 'Insert image', "插入圖片")}
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
         >
@@ -511,7 +512,7 @@ export default function ArticleEditor({ mode, initial, onSaved }: ArticleEditorP
             height="100%"
             placeholder={tt(
               '在这里写 markdown… 工具栏可插入标红 / 标蓝 / 活动画等',
-              'Write markdown here… use the toolbar for highlights / alg players / images',
+              'Write markdown here… use the toolbar for highlights / alg players / images', "在這裡寫 markdown… 工具欄可插入標紅 / 標藍 / 活動畫等"
             )}
             extensions={cmExtensions as never}
             basicSetup={{
@@ -529,7 +530,7 @@ export default function ArticleEditor({ mode, initial, onSaved }: ArticleEditorP
           />
           {dragOver && (
             <div className="article-editor-drop-hint">
-              {tt('松开上传图片', 'Drop to upload image')}
+              {tt('松开上传图片', 'Drop to upload image', "鬆開上傳圖片")}
             </div>
           )}
         </div>

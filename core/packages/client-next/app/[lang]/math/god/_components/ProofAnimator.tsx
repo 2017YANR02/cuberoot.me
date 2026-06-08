@@ -28,6 +28,8 @@ interface Frame {
   formula?: string;
   /** scene illustration */
   art: (props: { progress: number }) => ReactElement;
+    zhHant?: string;
+    bodyZhHant?: string;
 }
 
 /* ─── illustration helpers ─────────────────────────────────────────── */
@@ -138,7 +140,9 @@ const REID: Frame[] = [
     en: 'Setup: observe the symmetry of superflip',
     bodyZh: 'Superflip = 12 个棱块全部翻 180° (位置不变),8 个角块全在原位。它在立方体对称群 S₄₈ 下被一整类对称保持 (axes through opposite faces),这一对称将极大缩小要验证的状态。',
     bodyEn: 'Superflip = all 12 edges flipped 180° in place, 8 corners untouched. It\'s stabilised by a large subgroup of S₄₈ (axes through opposite faces), shrinking the verification set.',
-    art: () => <SuperflipArt />
+    art: () => <SuperflipArt />,
+      zhHant: "出發:觀察 superflip 的對稱性",
+      bodyZhHant: "Superflip = 12 個稜塊全部翻 180° (位置不變),8 個角塊全在原位。它在立方體對稱群 S₄₈ 下被一整類對稱保持 (axes through opposite faces),這一對稱將極大縮小要驗證的狀態。"
 },
   {
     zh: '声明:若解 ≤ 19,则存在某段被算法穷尽',
@@ -153,7 +157,9 @@ const REID: Frame[] = [
         <text x="80" y="58" fontSize="9" textAnchor="middle" fill="var(--god-text-mute)" fontFamily="monospace">d=1..19</text>
         <text x="80" y="74" fontSize="8" textAnchor="middle" fill="var(--god-text-mute)">≈ 6 × 10¹⁹ raw → ÷ S₄₈ → ~10¹⁸</text>
       </svg>
-    )
+    ),
+      zhHant: "宣告:若解 ≤ 19,則存在某段被演算法窮盡",
+      bodyZhHant: "反證法:假設存在 ≤ 19 HTM 的解 w。Reid 寫了一個 IDA* 求解器列舉所有 ≤ 19 步序列(去同軸 + 對稱等價),只需檢查 superflip 是否被覆蓋。"
 },
   {
     zh: '机器穷举:90 CPU-小时 (1995 的硬件)',
@@ -161,14 +167,18 @@ const REID: Frame[] = [
     bodyZh: 'Reid 用 SGI Indigo 工作站约 90 小时跑完。结果:没有任何 ≤ 19 步序列把 superflip 解掉。结合"显式 20 步解的存在" ⇒ d(superflip) = 20.',
     bodyEn: 'Reid ran an SGI Indigo for ~90 hours. Result: no ≤19-move sequence solves superflip. Combined with an explicit 20-move solution ⇒ d(superflip) = 20 exactly.',
     formula: 'd(\\text{superflip}) = 20',
-    art: () => <BoundsBar proven={20} conj={20} />
+    art: () => <BoundsBar proven={20} conj={20} />,
+      zhHant: "機器窮舉:90 CPU-小時 (1995 的硬體)",
+      bodyZhHant: "Reid 用 SGI Indigo 工作站約 90 小時跑完。結果:沒有任何 ≤ 19 步序列把 superflip 解掉。結合\"顯式 20 步解的存在\" ⇒ d(superflip) = 20."
 },
   {
     zh: '推论:三阶上帝之数 ≥ 20',
     en: 'Corollary: 3×3 God\'s number ≥ 20',
     bodyZh: 'Cayley 图直径 = max_g d(g) ≥ d(superflip) = 20。这是 15 年内三阶下界的精确值,直到 2010 年的上界证明把上下界合拢。',
     bodyEn: 'Diameter of the Cayley graph = max_g d(g) ≥ d(superflip) = 20. The exact lower bound for the next 15 years, until the 2010 upper-bound proof closed the gap.',
-    art: () => <BoundsBar proven={20} conj={22} />
+    art: () => <BoundsBar proven={20} conj={22} />,
+      zhHant: "推論:三階上帝之數 ≥ 20",
+      bodyZhHant: "Cayley 圖直徑 = max_g d(g) ≥ d(superflip) = 20。這是 15 年內三階下界的精確值,直到 2010 年的上界證明把上下界合攏。"
 },
 ];
 
@@ -178,7 +188,9 @@ const ROKICKI: Frame[] = [
     en: '2008 starting point: ≤22, ≥20',
     bodyZh: 'Reid 1995 已证下界 20 + 上界 22。2008 年 Rokicki 用 Kociemba 子群 H + 部分陪集分析,把上界压到 22。还差 2 步合拢。',
     bodyEn: 'Reid 1995 had lower 20 + upper 22. In 2008 Rokicki used Kociemba subgroup H + partial coset analysis to drop upper to 22. Still a 2-move gap.',
-    art: () => <BoundsBar proven={20} conj={22} />
+    art: () => <BoundsBar proven={20} conj={22} />,
+      zhHant: "2008 起點:上界 22, 下界 20",
+      bodyZhHant: "Reid 1995 已證下界 20 + 上界 22。2008 年 Rokicki 用 Kociemba 子群 H + 部分陪集分析,把上界壓到 22。還差 2 步合攏。"
 },
   {
     zh: '陪集分解:|G| → |G/H|',
@@ -187,21 +199,26 @@ const ROKICKI: Frame[] = [
     bodyZh: 'Lagrange 定理 + Kociemba\'s H = ⟨U,D,L²,R²,F²,B²⟩ ⇒ 22.17 亿个陪集。每个陪集"代表"一族距离相等的状态。',
     bodyEn: 'Lagrange + Kociemba\'s H = ⟨U,D,L²,R²,F²,B²⟩ ⇒ 2.22 billion cosets. Each coset "represents" a family of states sharing the same distance class.',
     art: () => <CompressionFlow stage={1} />,
-  },
+      bodyZhHant: "Lagrange 定理 + Kociemba's H = ⟨U,D,L²,R²,F²,B²⟩ ⇒ 22.17 億個陪集。每個陪集\"代表\"一族距離相等的狀態。"
+},
   {
     zh: '对称商:|G/H| → 5588 万对称类',
     en: 'Symmetry quotient: |G/H| → 55.88M classes',
     formula: '|G/H| \\;/\\; |S_{48} \\cdot \\sigma| \\approx \\frac{2.22 \\times 10^{9}}{96}',
     bodyZh: '立方体几何对称群 S₄₈ (24 旋 + 24 镜旋 = O_h 点群) + 逆元等价 = 96 倍压缩。两个对称等价陪集距离相等,只算其一。最终 55,882,296 个对称类。',
     bodyEn: 'Cube geometric symmetry group S₄₈ (24 rotations + 24 mirror = O_h) + inverse equivalence = 96× compression. Cosets equivalent under symmetry share their distance; compute one. Final: 55,882,296 symmetry classes.',
-    art: () => <CompressionFlow stage={2} />
+    art: () => <CompressionFlow stage={2} />,
+      zhHant: "對稱商:|G/H| → 5588 萬對稱類",
+      bodyZhHant: "立方體幾何對稱群 S₄₈ (24 旋 + 24 鏡旋 = O_h 點群) + 逆元等價 = 96 倍壓縮。兩個對稱等價陪集距離相等,只算其一。最終 55,882,296 個對稱類。"
 },
   {
     zh: '集合覆盖:5588 万 → 80 super-cosets',
     en: 'Set cover: 55.88M → ~80 super-cosets',
     bodyZh: 'Rokicki 观察:跑一次 IDA* 时,顺手能解附近 ~70 万状态。把对称类打包成 super-coset—每个 super-coset 一次 IDA* 调用。Greedy set cover 把 5588 万压成约 80 个 super-coset 作业。',
     bodyEn: 'Rokicki: one IDA* call optimally solves ~700k nearby states. Pack symmetry classes into super-cosets; greedy set cover collapses 55.88M into ~80 super-coset jobs.',
-    art: () => <CompressionFlow stage={3} />
+    art: () => <CompressionFlow stage={3} />,
+      zhHant: "集合覆蓋:5588 萬 → 80 super-cosets",
+      bodyZhHant: "Rokicki 觀察:跑一次 IDA* 時,順手能解附近 ~70 萬狀態。把對稱類打包成 super-coset—每個 super-coset 一次 IDA* 呼叫。Greedy set cover 把 5588 萬壓成約 80 個 super-coset 作業。"
 },
   {
     zh: 'IDA* + 1.5 GB PDB:跑 35 CPU-年',
@@ -214,35 +231,46 @@ const ROKICKI: Frame[] = [
                  highlight={Array.from({ length: 30 }).map((_, i) => [Math.floor(i / 6) % 5 + 1, (i * 5) % 20] as [number, number])}
                  color="var(--god-warn)" />
     ),
-  },
+      bodyZhHant: "Google 叢集,每個 super-coset 跑 ~30 分鐘。Korf 啟發 = max(角塊 PDB 88 MB,兩個 6-edge PDB 各 ~700 MB,共 1.5 GB)。35 CPU-年總算力。"
+},
   {
     zh: '结果:全部 super-coset 都 ≤ 20 步',
     en: 'Result: every super-coset solves in ≤ 20',
     bodyZh: '所有 ~80 个 super-coset 都验证通过:对每个成员状态,IDA* 都返回长度 ≤ 20 的解。没有反例 ⇒ 上界 20 证毕。结合 Reid 1995 下界 20 ⇒ 直径 = 20.',
     bodyEn: 'All ~80 super-cosets verified: for every member state, IDA* returns a solution of length ≤ 20. Zero counterexamples ⇒ upper bound 20. Combined with Reid 1995 lower bound ⇒ diameter = 20.',
     formula: 'D(G, S_{\\text{HTM}}) = 20',
-    art: () => <CompressionFlow stage={4} />
+    art: () => <CompressionFlow stage={4} />,
+      zhHant: "結果:全部 super-coset 都 ≤ 20 步",
+      bodyZhHant: "所有 ~80 個 super-coset 都驗證透過:對每個成員狀態,IDA* 都返回長度 ≤ 20 的解。沒有反例 ⇒ 上界 20 證畢。結合 Reid 1995 下界 20 ⇒ 直徑 = 20."
 },
   {
     zh: '公布日期:2010-07-13',
     en: 'Announcement: 2010-07-13',
     bodyZh: '由 Tomas Rokicki, Herbert Kociemba, Morley Davidson, John Dethridge 联合公布,cube20.org 同步开放数据。2014 年发表于 SIAM J. Discrete Math (peer-reviewed)。',
     bodyEn: 'Announced jointly by Tomas Rokicki, Herbert Kociemba, Morley Davidson, John Dethridge; cube20.org released data. Published in SIAM J. Discrete Math 2014 (peer-reviewed).',
-    art: () => <BoundsBar proven={20} conj={20} />
+    art: () => <BoundsBar proven={20} conj={20} />,
+      zhHant: "公佈日期:2010-07-13",
+      bodyZhHant: "由 Tomas Rokicki, Herbert Kociemba, Morley Davidson, John Dethridge 聯合公佈,cube20.org 同步開放資料。2014 年發表於 SIAM J. Discrete Math (peer-reviewed)。"
 },
 ];
 
-const PROOFS: Record<ProofId, { name: { zh: string; en: string }; frames: Frame[]; meta: { zh: string; en: string } }> = {
+const PROOFS: Record<ProofId, { name: { zh: string; en: string
+        zhHant?: string;
+ }; frames: Frame[]; meta: { zh: string; en: string
+        zhHant?: string;
+ } }> = {
   reid: {
     name: { zh: 'Reid 1995 — 下界 = 20', en: 'Reid 1995 — lower bound = 20' },
     frames: REID,
-    meta: { zh: '4 帧 · 90 CPU-小时 (SGI Indigo 1995)', en: '4 frames · 90 CPU-hours (SGI Indigo, 1995)'
+    meta: { zh: '4 帧 · 90 CPU-小时 (SGI Indigo 1995)', en: '4 frames · 90 CPU-hours (SGI Indigo, 1995)',
+        zhHant: "4 幀 · 90 CPU-小時 (SGI Indigo 1995)"
     },
   },
   rokicki: {
     name: { zh: 'Rokicki 2008→2010 — 上界 = 20', en: 'Rokicki 2008→2010 — upper bound = 20' },
     frames: ROKICKI,
-    meta: { zh: '7 帧 · 35 CPU-年 (Google 集群 2010)', en: '7 frames · 35 CPU-years (Google cluster, 2010)'
+    meta: { zh: '7 帧 · 35 CPU-年 (Google 集群 2010)', en: '7 frames · 35 CPU-years (Google cluster, 2010)',
+        zhHant: "7 幀 · 35 CPU-年 (Google 叢集 2010)"
     },
   },
 };
@@ -250,7 +278,7 @@ const PROOFS: Record<ProofId, { name: { zh: string; en: string }; frames: Frame[
 interface Props { isZh: boolean; }
 
 export default function ProofAnimator({ isZh }: Props) {
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const [proof, setProof] = useState<ProofId>('rokicki');
   const [frame, setFrame] = useState(0);
 
@@ -269,8 +297,8 @@ export default function ProofAnimator({ isZh }: Props) {
           <button key={p}
                   className={`god-pa-tab ${proof === p ? 'is-on' : ''}`}
                   onClick={() => { setProof(p); setFrame(0); }}>
-            <div className="god-pa-tab-name">{(i18n.language.startsWith('zh') ? PROOFS[p].name.zh : PROOFS[p].name.en)}</div>
-            <div className="god-pa-tab-meta">{(i18n.language.startsWith('zh') ? PROOFS[p].meta.zh : PROOFS[p].meta.en)}</div>
+            <div className="god-pa-tab-name">{(i18n.language === 'zh-Hant' ? (PROOFS[p].name.zhHant ?? PROOFS[p].name.zh) : (i18n.language.startsWith('zh') ? PROOFS[p].name.zh : PROOFS[p].name.en))}</div>
+            <div className="god-pa-tab-meta">{(i18n.language === 'zh-Hant' ? (PROOFS[p].meta.zhHant ?? PROOFS[p].meta.zh) : (i18n.language.startsWith('zh') ? PROOFS[p].meta.zh : PROOFS[p].meta.en))}</div>
           </button>
         ))}
       </div>
@@ -283,7 +311,7 @@ export default function ProofAnimator({ isZh }: Props) {
         <div className="god-pa-frame-r">
           <div className="god-pa-frame-h">
             <span className="god-pa-frame-i">{frame + 1} / {total}</span>
-            <h3 className="god-pa-frame-title">{(i18n.language.startsWith('zh') ? F.zh : F.en)}</h3>
+            <h3 className="god-pa-frame-title">{(i18n.language === 'zh-Hant' ? (F.zhHant ?? F.zh) : (i18n.language.startsWith('zh') ? F.zh : F.en))}</h3>
           </div>
           {F.formula && (
             <div className="god-pa-frame-formula">
@@ -291,7 +319,7 @@ export default function ProofAnimator({ isZh }: Props) {
             </div>
           )}
           <p className="god-pa-frame-body">
-            <MathText>{isZh ? F.bodyZh : F.bodyEn}</MathText>
+            <MathText>{i18n.language === 'zh-Hant' ? (F.bodyZhHant ?? F.bodyZh) : (isZh ? F.bodyZh : F.bodyEn)}</MathText>
           </p>
         </div>
       </div>
@@ -299,7 +327,7 @@ export default function ProofAnimator({ isZh }: Props) {
       {/* navigation */}
       <div className="god-pa-nav">
         <button className="god-btn-secondary" onClick={prev} disabled={frame === 0}>
-          <ChevronLeft size={16} /> {t('上一帧', 'prev')}
+          <ChevronLeft size={16} /> {t('上一帧', 'prev', "上一幀")}
         </button>
         <div className="god-pa-dots">
           {P.frames.map((_, i) => (
@@ -310,7 +338,7 @@ export default function ProofAnimator({ isZh }: Props) {
           ))}
         </div>
         <button className="god-btn-secondary" onClick={next} disabled={frame === total - 1}>
-          {t('下一帧', 'next')} <ChevronRight size={16} />
+          {t('下一帧', 'next', "下一幀")} <ChevronRight size={16} />
         </button>
       </div>
     </div>

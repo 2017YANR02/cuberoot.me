@@ -84,6 +84,7 @@ interface RealizabilityCase {
   realized: boolean;   // actually realized by some group
   noteZh: string;
   noteEn: string;
+    noteZhHant?: string;
 }
 
 const REALIZABILITY_CASES: RealizabilityCase[] = [
@@ -92,44 +93,51 @@ const REALIZABILITY_CASES: RealizabilityCase[] = [
     passes: true, realized: true,
     noteZh: 'S₃ × Z/2 (或 D₆) 实现 n₂ = 3',
     noteEn: 'D₆ (or S₃ × Z/2) realizes n₂ = 3',
-  },
+      noteZhHant: "S₃ × Z/2 (或 D₆) 實現 n₂ = 3"
+},
   {
     n: 12, p: 3, np: 4,
     passes: true, realized: true,
     noteZh: 'A₄ 实现 n₃ = 4',
     noteEn: 'A₄ realizes n₃ = 4',
-  },
+      noteZhHant: "A₄ 實現 n₃ = 4"
+},
   {
     n: 12, p: 3, np: 1,
     passes: true, realized: true,
     noteZh: 'Z/12 或 Z/6 × Z/2 实现 n₃ = 1',
     noteEn: 'Z/12 or Z/6 × Z/2 realizes n₃ = 1',
-  },
+      noteZhHant: "Z/12 或 Z/6 × Z/2 實現 n₃ = 1"
+},
   {
     n: 60, p: 3, np: 10,
     passes: true, realized: true,
     noteZh: 'A₅ 实现 n₃ = 10',
     noteEn: 'A₅ realizes n₃ = 10',
-  },
+      noteZhHant: "A₅ 實現 n₃ = 10"
+},
   {
     n: 60, p: 5, np: 6,
     passes: true, realized: true,
     noteZh: 'A₅ 实现 n₅ = 6',
     noteEn: 'A₅ realizes n₅ = 6',
-  },
+      noteZhHant: "A₅ 實現 n₅ = 6"
+},
   // Non-realizable: pass Sylow III but no group achieves them
   {
     n: 132, p: 3, np: 22,
     passes: true, realized: false,
     noteZh: '22 ≡ 1 (mod 3) 且 22 | 44，通过 Sylow III 检验，但无任何有限群有 n₃ = 22（Conrad 注记 2.9）',
     noteEn: '22 ≡ 1 (mod 3) and 22 | 44, so passes Sylow III, but NO finite group has n₃ = 22 (Conrad Rmk 2.9)',
-  },
+      noteZhHant: "22 ≡ 1 (mod 3) 且 22 | 44，透過 Sylow III 檢驗，但無任何有限群有 n₃ = 22（Conrad 註記 2.9）"
+},
   {
     n: 105, p: 5, np: 21,
     passes: true, realized: false,
     noteZh: '21 ≡ 1 (mod 5) 且 21 | 21，通过 Sylow III，但无群实现 n₅ = 21（Conrad 注记 2.9）',
     noteEn: '21 ≡ 1 (mod 5) and 21 | 21, passes Sylow III, but no group realizes n₅ = 21 (Conrad Rmk 2.9)',
-  },
+      noteZhHant: "21 ≡ 1 (mod 5) 且 21 | 21，透過 Sylow III，但無群實現 n₅ = 21（Conrad 註記 2.9）"
+},
 ];
 
 // ══════════════════════════════════════════════════════════════════════════════

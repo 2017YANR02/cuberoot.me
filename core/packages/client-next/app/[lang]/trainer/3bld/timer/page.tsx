@@ -45,7 +45,7 @@ interface Solve {
 export default function BldTimerPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('盲拧练习计时', 'BLD Practice Timer');
+  useDocumentTitle('盲拧练习计时', 'BLD Practice Timer', "盲擰練習計時");
 
   const [scrambles, setScrambles] = useState<string[]>([]);
   const [idx, setIdx] = useState(0);

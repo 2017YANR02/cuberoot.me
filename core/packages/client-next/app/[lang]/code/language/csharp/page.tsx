@@ -484,7 +484,7 @@ export default function CsharpIntroPage() {
 
   useDocumentTitle(
     'C# : Hejlsberg 的第三门语言, .NET 的灵魂 — 26 年长青',
-    'C# : Hejlsberg\'s third language, soul of .NET — 26 years and counting',
+    'C# : Hejlsberg\'s third language, soul of .NET — 26 years and counting', "C# : Hejlsberg 的第三門語言, .NET 的靈魂 — 26 年長青"
   );
 
   useEffect(() => {

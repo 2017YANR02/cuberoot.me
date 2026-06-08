@@ -26,55 +26,71 @@ interface CategoryConfig {
   cat: string;
   tier: Tier;
   Icon: LucideIcon;
-  label: { en: string; zh: string };
+  label: { en: string; zh: string
+    zhHant?: string;
+ };
 }
 
 // NOTE: Tier 映射 + i18n label。category 名 = catalog.json 里的 category 字段。
 // 不在表里的 category 自动落到 tier-utility 尾部兜底。
 const CATEGORY_CARDS: CategoryConfig[] = [
   // Tier 1 — 3 张大卡（1 hero + 2 hero-side）
-  { cat: '3x3',       tier: 'hero',      Icon: Grid3x3,   label: { en: '3x3',        zh: '三阶'
+  { cat: '3x3',       tier: 'hero',      Icon: Grid3x3,   label: { en: '3x3',        zh: '三阶',
+      zhHant: "三階"
 } },
   { cat: '魔方根',    tier: 'hero-side', Icon: Award,     label: { en: 'CubeRoot Method', zh: '魔方根方法' } },
-  { cat: 'CHS',       tier: 'hero-side', Icon: Languages, label: { en: 'Chinese Resources', zh: '中文资料'
+  { cat: 'CHS',       tier: 'hero-side', Icon: Languages, label: { en: 'Chinese Resources', zh: '中文资料',
+      zhHant: "中文資料"
 } },
   // Tier 2 — medium（3 per row）
   { cat: 'FMC',       tier: 'medium',    Icon: Gauge,     label: { en: 'FMC',        zh: '最少步' } },
-  { cat: '3BLD',      tier: 'medium',    Icon: Eye,       label: { en: '3BLD',       zh: '盲拧'
+  { cat: '3BLD',      tier: 'medium',    Icon: Eye,       label: { en: '3BLD',       zh: '盲拧',
+      zhHant: "盲擰"
 } },
-  { cat: '2x2',       tier: 'medium',    Icon: Square,    label: { en: '2x2',        zh: '二阶'
+  { cat: '2x2',       tier: 'medium',    Icon: Square,    label: { en: '2x2',        zh: '二阶',
+      zhHant: "二階"
 } },
   // Tier 3 — standard（4 per row）
   { cat: 'Roux',      tier: 'standard',  Icon: InfinityIcon,  label: { en: 'Roux',       zh: 'Roux' } },
   { cat: 'SQ1',       tier: 'standard',  Icon: Shapes,    label: { en: 'SQ1',        zh: 'SQ1' } },
-  { cat: 'Skewb',     tier: 'standard',  Icon: Diamond,   label: { en: 'Skewb',      zh: '斜转'
+  { cat: 'Skewb',     tier: 'standard',  Icon: Diamond,   label: { en: 'Skewb',      zh: '斜转',
+      zhHant: "斜轉"
 } },
   { cat: 'Non-WCA',   tier: 'standard',  Icon: Sparkles,  label: { en: 'Non-WCA',    zh: '非 WCA' } },
-  { cat: '4x4',       tier: 'standard',  Icon: LayoutGrid, label: { en: '4x4',       zh: '四阶'
+  { cat: '4x4',       tier: 'standard',  Icon: LayoutGrid, label: { en: '4x4',       zh: '四阶',
+      zhHant: "四階"
 } },
   { cat: 'Pyraminx',  tier: 'standard',  Icon: Triangle,  label: { en: 'Pyraminx',   zh: '金字塔' } },
-  { cat: '5x5',       tier: 'standard',  Icon: LayoutGrid, label: { en: '5x5',       zh: '五阶'
+  { cat: '5x5',       tier: 'standard',  Icon: LayoutGrid, label: { en: '5x5',       zh: '五阶',
+      zhHant: "五階"
 } },
   { cat: 'Megaminx',  tier: 'standard',  Icon: Hexagon,   label: { en: 'Megaminx',   zh: '五魔' } },
   { cat: 'Big',       tier: 'standard',  Icon: Boxes,     label: { en: 'Big Cubes',  zh: '大魔方' } },
-  { cat: 'Big BLD',   tier: 'standard',  Icon: EyeOff,    label: { en: 'Big BLD',    zh: '大魔方盲拧'
+  { cat: 'Big BLD',   tier: 'standard',  Icon: EyeOff,    label: { en: 'Big BLD',    zh: '大魔方盲拧',
+      zhHant: "大魔方盲擰"
 } },
   { cat: 'Mehta',     tier: 'standard',  Icon: Workflow,  label: { en: 'Mehta',      zh: 'Mehta' } },
   // Tier 4 — utility（2 per row，小条）
-  { cat: 'Stats',     tier: 'utility',   Icon: BarChart3, label: { en: 'Stats',      zh: '统计'
+  { cat: 'Stats',     tier: 'utility',   Icon: BarChart3, label: { en: 'Stats',      zh: '统计',
+      zhHant: "統計"
 } },
-  { cat: 'Blogs',     tier: 'utility',   Icon: FileText,  label: { en: 'Blogs',      zh: '博客'
+  { cat: 'Blogs',     tier: 'utility',   Icon: FileText,  label: { en: 'Blogs',      zh: '博客',
+      zhHant: "部落格"
 } },
-  { cat: 'Misc',      tier: 'utility',   Icon: MoreHorizontal, label: { en: 'Misc',  zh: '杂项'
+  { cat: 'Misc',      tier: 'utility',   Icon: MoreHorizontal, label: { en: 'Misc',  zh: '杂项',
+      zhHant: "雜項"
 } },
   { cat: 'Solves',    tier: 'utility',   Icon: Play,      label: { en: 'Solves',     zh: '解法分析' } },
   { cat: 'Tools',     tier: 'utility',   Icon: Wrench,    label: { en: 'Tools',      zh: '工具' } },
-  { cat: 'Hardware',  tier: 'utility',   Icon: Cpu,       label: { en: 'Hardware',   zh: '硬件'
+  { cat: 'Hardware',  tier: 'utility',   Icon: Cpu,       label: { en: 'Hardware',   zh: '硬件',
+      zhHant: "硬體"
 } },
   { cat: 'Clock',     tier: 'utility',   Icon: Clock,     label: { en: 'Clock',      zh: 'Clock' } },
-  { cat: 'Pretty Patterns', tier: 'utility', Icon: Palette, label: { en: 'Pretty Patterns', zh: '花样'
+  { cat: 'Pretty Patterns', tier: 'utility', Icon: Palette, label: { en: 'Pretty Patterns', zh: '花样',
+      zhHant: "花樣"
 } },
-  { cat: 'Theory',    tier: 'utility',   Icon: BookOpen,  label: { en: 'Theory',     zh: '理论'
+  { cat: 'Theory',    tier: 'utility',   Icon: BookOpen,  label: { en: 'Theory',     zh: '理论',
+      zhHant: "理論"
 } },
 ];
 
@@ -137,9 +153,9 @@ function TutorialIndexPageInner() {
             {tr({ zh: '公式教程', en: 'Algorithms' })}
           </h1>
           <p className="tutorial-index-subtitle">
-            {isZh
-              ? `${visible.length} 个教程与公式库`
-              : `${visible.length} tutorials & algorithm sets`}
+            {i18n.language === 'zh-Hant' ? (`${visible.length} 個教程與公式庫`) : (isZh
+                                    ? `${visible.length} 个教程与公式库`
+                                    : `${visible.length} tutorials & algorithm sets`)}
           </p>
         </div>
         <div className="tutorial-search-box">
@@ -188,9 +204,9 @@ function TutorialIndexPageInner() {
       {!loading && !error && searchResults !== null && (
         <>
           <div className="tutorial-search-meta">
-            {isZh
-              ? `找到 ${searchResults.length} 个结果`
-              : `${searchResults.length} result${searchResults.length === 1 ? '' : 's'}`}
+            {i18n.language === 'zh-Hant' ? (`找到 ${searchResults.length} 個結果`) : (isZh
+                                    ? `找到 ${searchResults.length} 个结果`
+                                    : `${searchResults.length} result${searchResults.length === 1 ? '' : 's'}`)}
             {' · '}
             <button className="tutorial-link-btn" onClick={() => setQuery('')}>
               {tr({ zh: '清空搜索', en: 'clear search',

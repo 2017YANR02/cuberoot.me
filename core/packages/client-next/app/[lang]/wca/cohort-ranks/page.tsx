@@ -36,7 +36,7 @@ interface Row {
 function CohortRanksPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('届别排名', 'Cohort Ranks');
+  useDocumentTitle('届别排名', 'Cohort Ranks', "屆別排名");
   const [q, setQ] = useQueryStates(
     {
       cohort: parseAsString,
@@ -160,7 +160,7 @@ function CohortRanksPageInner() {
                   <th>{tr({ zh: '选手', en: 'Person',
                       zhHant: "選手"
                 })}</th>
-                  <th className="wse-value-col">{isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average')}</th>
+                  <th className="wse-value-col">{i18n.language === 'zh-Hant' ? ((type === 'single' ? '單次' : '平均')) : (isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average'))}</th>
                   {!country && <th>{tr({ zh: '国家', en: 'Country',
                       zhHant: "國家"
                 })}</th>}

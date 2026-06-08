@@ -38,7 +38,9 @@ interface PetTheme {
   inlineIdle: boolean; // clawd uses the inline eye-tracking SVG for idle
   thumb: string;
   thumbScale?: number; // zoom the toolbar thumb to crop dead viewBox margin
-  label: { zh: string; en: string };
+  label: { zh: string; en: string
+    zhHant?: string;
+ };
   files: Record<string, string>;
   mini: MiniTheme;
 }
@@ -75,7 +77,8 @@ const THEMES: Record<ThemeId, PetTheme> = {
   },
   calico: {
     base: '/deskpet/calico/', inlineIdle: false,
-    thumb: '/deskpet/calico/calico-idle.apng', label: { zh: '三花猫', en: 'Calico'
+    thumb: '/deskpet/calico/calico-idle.apng', label: { zh: '三花猫', en: 'Calico',
+        zhHant: "三花貓"
     },
     files: {
       idle: 'calico-idle.apng',
@@ -103,7 +106,8 @@ const THEMES: Record<ThemeId, PetTheme> = {
   },
   cloudling: {
     base: '/deskpet/cloudling/', inlineIdle: false,
-    thumb: '/deskpet/cloudling/cloudling-idle.svg', thumbScale: 3, label: { zh: '云宝', en: 'Cloud'
+    thumb: '/deskpet/cloudling/cloudling-idle.svg', thumbScale: 3, label: { zh: '云宝', en: 'Cloud',
+        zhHant: "雲寶"
     },
     files: {
       idle: 'cloudling-idle.svg',

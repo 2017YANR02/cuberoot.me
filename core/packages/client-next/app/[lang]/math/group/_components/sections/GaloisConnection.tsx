@@ -59,6 +59,9 @@ interface PolyData {
   discriminantTex: string;
   noteEn: string;
   noteZh: string;
+    labelZhHant?: string;
+    galoisGroupZhHant?: string;
+    noteZhHant?: string;
 }
 
 // ── Root data (hand-computed closed-form numerics) ────────────────────────────
@@ -121,7 +124,9 @@ const POLY_DATA: Record<PolyId, PolyData> = {
     discriminantTex: String.raw`\Delta = 8,\quad \sqrt{\Delta}=2\sqrt{2}\in\mathbb{Q}`,
     noteEn: 'The unique non-trivial automorphism swaps √2 ↔ −√2; C₂ is abelian, hence solvable.',
     noteZh: '唯一非平凡自同构交换 √2 ↔ −√2；C₂ 是阿贝尔群，故可解。',
-  },
+      galoisGroupZhHant: "C₂（迴圈群，階 2）",
+      noteZhHant: "唯一非平凡自同構交換 √2 ↔ −√2；C₂ 是阿貝爾群，故可解。"
+},
 
   x3_minus_2: {
     labelEn: 'x³ − 2',
@@ -170,7 +175,9 @@ const POLY_DATA: Record<PolyId, PolyData> = {
     discriminantTex: String.raw`\Delta = -108 = -4\cdot 27,\quad \sqrt{\Delta}\notin\mathbb{Q}`,
     noteEn: 'Δ = −108 is not a square in Q, so Gal ⊄ A₃; the group is S₃. Solvable: {e} ◁ A₃ ◁ S₃ with quotients C₃, C₂.',
     noteZh: 'Δ = −108 不是 Q 中的平方，故 Gal ⊄ A₃，从而群为 S₃。可解：{e} ◁ A₃ ◁ S₃，商群依次为 C₃、C₂。',
-  },
+      galoisGroupZhHant: "S₃（三根的對稱群，階 6）",
+      noteZhHant: "Δ = −108 不是 Q 中的平方，故 Gal ⊄ A₃，從而群為 S₃。可解：{e} ◁ A₃ ◁ S₃，商群依次為 C₃、C₂。"
+},
 
   cyclotomic_5: {
     labelEn: 'Φ₅ = x⁴+x³+x²+x+1 (cyclotomic)',
@@ -209,7 +216,10 @@ const POLY_DATA: Record<PolyId, PolyData> = {
     discriminantTex: String.raw`\text{Gal}(\mathbb{Q}(\zeta_5)/\mathbb{Q})\cong(\mathbb{Z}/5\mathbb{Z})^*\cong C_4`,
     noteEn: 'All cyclotomic extensions have abelian Galois group; C₄ is abelian (cyclic) hence solvable. The intermediate field Q(√5) corresponds to the unique subgroup of order 2.',
     noteZh: '所有分圆扩张的 Galois 群均为阿贝尔群；C₄ 是阿贝尔（循环）群，故可解。中间域 Q(√5) 对应唯一的阶 2 子群。',
-  },
+      labelZhHant: "Φ₅ = x⁴+x³+x²+x+1（分圓多項式）",
+      galoisGroupZhHant: "C₄（迴圈群，階 4；(Z/5Z)* ≅ C₄）",
+      noteZhHant: "所有分圓擴張的 Galois 群均為阿貝爾群；C₄ 是阿貝爾（迴圈）群，故可解。中間域 Q(√5) 對應唯一的階 2 子群。"
+},
 
   cyclotomic_7: {
     labelEn: 'Φ₇ = x⁶+x⁵+…+1 (cyclotomic, p=7)',
@@ -255,7 +265,10 @@ const POLY_DATA: Record<PolyId, PolyData> = {
     discriminantTex: String.raw`\text{Gal}(\mathbb{Q}(\zeta_7)/\mathbb{Q})\cong(\mathbb{Z}/7\mathbb{Z})^*\cong C_6`,
     noteEn: 'For prime p=7, (Z/7Z)* is cyclic of order p−1 = 6. All subgroups of C₆ are normal (it is abelian). Three intermediate fields: Q ⊂ Q(√−7) ⊂ Q(ζ₇+ζ₇⁻¹) ⊂ Q(ζ₇).',
     noteZh: '对素数 p=7，(Z/7Z)* 是阶为 p−1=6 的循环群。C₆ 的所有子群均正规（因为是阿贝尔群）。三个中间域：Q ⊂ Q(√−7) ⊂ Q(ζ₇+ζ₇⁻¹) ⊂ Q(ζ₇)。',
-  },
+      labelZhHant: "Φ₇ = x⁶+x⁵+…+1（分圓，p=7）",
+      galoisGroupZhHant: "C₆（迴圈群，階 6；(Z/7Z)* ≅ C₆）",
+      noteZhHant: "對素數 p=7，(Z/7Z)* 是階為 p−1=6 的迴圈群。C₆ 的所有子群均正規（因為是阿貝爾群）。三個中間域：Q ⊂ Q(√−7) ⊂ Q(ζ₇+ζ₇⁻¹) ⊂ Q(ζ₇)。"
+},
 
   quintic: {
     labelEn: 'x⁵ − 6x + 3 (unsolvable quintic)',
@@ -288,7 +301,9 @@ const POLY_DATA: Record<PolyId, PolyData> = {
     discriminantTex: String.raw`\text{Gal}(f/\mathbb{Q}) \cong S_5,\quad [S_5,S_5]=A_5,\quad [A_5,A_5]=A_5`,
     noteEn: "Irreducible by Eisenstein (p=3); exactly 3 real roots -> complex conjugation is a transposition; a 5-cycle exists by Cauchy's theorem (5 | |Gal|). Together they generate S₅.",
     noteZh: '由 Eisenstein（p=3）不可约；恰有 3 个实根，故复共轭是对换；5 整除 |Gal|，由 Cauchy 定理存在 5-轮换。两者共同生成 S₅。',
-  },
+      galoisGroupZhHant: "S₅（不可解，階 120）",
+      noteZhHant: "由 Eisenstein（p=3）不可約；恰有 3 個實根，故複共軛是對換；5 整除 |Gal|，由 Cauchy 定理存在 5-輪換。兩者共同生成 S₅。"
+},
 };
 
 const POLY_IDS: PolyId[] = ['x2_minus_2', 'x3_minus_2', 'cyclotomic_5', 'cyclotomic_7', 'quintic'];
@@ -1096,13 +1111,22 @@ interface CompositionFactor {
   isSimpleNonAbelian: boolean;
   noteEn: string;
   noteZh: string;
+    noteZhHant?: string;
 }
 
 const CUBE_FACTORS: CompositionFactor[] = [
-  { label: 'Z/2', order: '2', isSimpleNonAbelian: false, noteEn: 'cyclic (abelian) — from edge-flip orientations', noteZh: '循环群（阿贝尔）——棱翻转朝向' },
-  { label: 'Z/3', order: '3', isSimpleNonAbelian: false, noteEn: 'cyclic (abelian) — from corner-twist orientations', noteZh: '循环群（阿贝尔）——角朝向' },
-  { label: 'A₈',  order: '8!/2 = 20160', isSimpleNonAbelian: true,  noteEn: 'simple non-abelian! (even permutations of 8 corners)', noteZh: '非交换单群！（8 个角块的偶置换）' },
-  { label: 'A₁₂', order: '12!/2 ≈ 2.4×10⁸', isSimpleNonAbelian: true, noteEn: 'simple non-abelian! (even permutations of 12 edges)', noteZh: '非交换单群！（12 个棱块的偶置换）' },
+  { label: 'Z/2', order: '2', isSimpleNonAbelian: false, noteEn: 'cyclic (abelian) — from edge-flip orientations', noteZh: '循环群（阿贝尔）——棱翻转朝向',
+      noteZhHant: "迴圈群（阿貝爾）——稜翻轉朝向"
+},
+  { label: 'Z/3', order: '3', isSimpleNonAbelian: false, noteEn: 'cyclic (abelian) — from corner-twist orientations', noteZh: '循环群（阿贝尔）——角朝向',
+      noteZhHant: "迴圈群（阿貝爾）——角朝向"
+},
+  { label: 'A₈',  order: '8!/2 = 20160', isSimpleNonAbelian: true,  noteEn: 'simple non-abelian! (even permutations of 8 corners)', noteZh: '非交换单群！（8 个角块的偶置换）',
+      noteZhHant: "非交換單群！（8 個角塊的偶置換）"
+},
+  { label: 'A₁₂', order: '12!/2 ≈ 2.4×10⁸', isSimpleNonAbelian: true, noteEn: 'simple non-abelian! (even permutations of 12 edges)', noteZh: '非交换单群！（12 个棱块的偶置换）',
+      noteZhHant: "非交換單群！（12 個稜塊的偶置換）"
+},
 ];
 
 function CubeDisambiguatorPanel({ lang }: { lang: Lang }) {

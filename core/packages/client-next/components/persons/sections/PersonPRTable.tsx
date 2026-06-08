@@ -9,6 +9,7 @@ import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { fetchPersonBestRanks, type WcaPersonProfile, type WcaResultRow, type PersonBestRanksResponse } from '@/lib/wca-person-api';
 import { countPodiumByEvent } from '../logic/podium';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   profile: WcaPersonProfile;
@@ -32,7 +33,7 @@ function RankCell({ r }: { r: number | null | undefined }) {
 }
 
 export default function PersonPRTable({ profile, results, isZh }: Props) {
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const [mode, setMode] = useState<Mode>('current');
   const [hist, setHist] = useState<PersonBestRanksResponse | null>(null);
   const [histLoading, setHistLoading] = useState(false);
@@ -66,7 +67,7 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
   if (eventIds.length === 0) {
     return (
       <section className="wp-card">
-        <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>
+        <div className="wp-empty">{t('暂无成绩', 'No results yet', "暫無成績")}</div>
       </section>
     );
   }
@@ -78,42 +79,42 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
           <button
             className={`wp-toggle-btn ${mode === 'current' ? 'is-active' : ''}`}
             onClick={() => setMode('current')}
-          >{t('当前', 'Current')}</button>
+          >{t('当前', 'Current', "當前")}</button>
           <button
             className={`wp-toggle-btn ${mode === 'historical' ? 'is-active' : ''}`}
             onClick={() => setMode('historical')}
-          >{t('历史最佳排名', 'Historical Best')}</button>
+          >{t('历史最佳排名', 'Historical Best', "歷史最佳排名")}</button>
         </div>
       </div>
 
       {mode === 'historical' && histLoading && (
-        <div className="wp-loading-inline">{t('加载历史排名…', 'Loading historical ranks…')}</div>
+        <div className="wp-loading-inline">{t('加载历史排名…', 'Loading historical ranks…', "載入歷史排名…")}</div>
       )}
       {mode === 'historical' && histError && (
-        <div className="wp-error-inline">{t('历史排名加载失败', 'Failed to load historical ranks')}: {histError}</div>
+        <div className="wp-error-inline">{t('历史排名加载失败', 'Failed to load historical ranks', "歷史排名載入失敗")}: {histError}</div>
       )}
 
       <div className="wp-table-scroll">
         <table className="wp-pr-table">
           <thead>
             <tr>
-              <th rowSpan={2} className="wp-th-event">{t('项目', 'Event')}</th>
-              <th colSpan={4} className="wp-th-group">{t('单次', 'Single')}</th>
+              <th rowSpan={2} className="wp-th-event">{t('项目', 'Event', "專案")}</th>
+              <th colSpan={4} className="wp-th-group">{t('单次', 'Single', "單次")}</th>
               <th colSpan={4} className="wp-th-group">{t('平均', 'Average')}</th>
-              {showPodium && <th colSpan={3} className="wp-th-group wp-th-podium">{t('领奖台', 'Podium')}</th>}
+              {showPodium && <th colSpan={3} className="wp-th-group wp-th-podium">{t('领奖台', 'Podium', "領獎臺")}</th>}
             </tr>
             <tr>
               <th>{t('世界', 'World')}</th>
-              <th>{t('洲际', 'Continent')}</th>
-              <th>{t('地区', 'Country')}</th>
-              <th>{t('成绩', 'Result')}</th>
-              <th>{t('成绩', 'Result')}</th>
+              <th>{t('洲际', 'Continent', "洲際")}</th>
+              <th>{t('地区', 'Country', "地區")}</th>
+              <th>{t('成绩', 'Result', "成績")}</th>
+              <th>{t('成绩', 'Result', "成績")}</th>
               <th>{t('世界', 'World')}</th>
-              <th>{t('洲际', 'Continent')}</th>
-              <th>{t('地区', 'Country')}</th>
+              <th>{t('洲际', 'Continent', "洲際")}</th>
+              <th>{t('地区', 'Country', "地區")}</th>
               {showPodium && <th className="wp-th-medal" title={t('金牌', 'Gold')}>🥇</th>}
-              {showPodium && <th className="wp-th-medal" title={t('银牌', 'Silver')}>🥈</th>}
-              {showPodium && <th className="wp-th-medal" title={t('铜牌', 'Bronze')}>🥉</th>}
+              {showPodium && <th className="wp-th-medal" title={t('银牌', 'Silver', "銀牌")}>🥈</th>}
+              {showPodium && <th className="wp-th-medal" title={t('铜牌', 'Bronze', "銅牌")}>🥉</th>}
             </tr>
           </thead>
           <tbody>

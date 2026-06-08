@@ -15,7 +15,7 @@ export default function ArchHistoryPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('历程', 'History');
+  useDocumentTitle('历程', 'History', "歷程");
 
   return (
     <LangCtx.Provider value={lang}>

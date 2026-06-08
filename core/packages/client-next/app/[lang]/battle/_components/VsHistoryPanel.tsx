@@ -246,7 +246,7 @@ function RoundDetailModal({
       <div className="round-modal">
         <div className="round-modal-header">
           <span className="round-modal-title">
-            {isZh ? `第 ${roundIndex + 1} 轮` : `Round ${roundIndex + 1}`}
+            {i18n.language === 'zh-Hant' ? (`第 ${roundIndex + 1} 輪`) : (isZh ? `第 ${roundIndex + 1} 轮` : `Round ${roundIndex + 1}`)}
             {dateStr && <span className="round-modal-date"> · {dateStr}</span>}
           </span>
           <button className="settings-x-btn" onClick={onClose}>✕</button>

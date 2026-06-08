@@ -228,7 +228,7 @@ interface KeymapModalProps {
 export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeymap }: KeymapModalProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const [editingCode, setEditingCode] = useState<string | null>(null);
 
   useEffect(() => {
@@ -247,16 +247,16 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
 
   return (
     <div className="sim-keymap-modal-backdrop" onClick={onClose}>
-      <div className="sim-keymap-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={t('键盘快捷键', 'Keyboard shortcuts')}>
+      <div className="sim-keymap-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={t('键盘快捷键', 'Keyboard shortcuts', "鍵盤快捷鍵")}>
         <header className="sim-keymap-modal-head">
-          <h2>{t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}</h2>
-          <button onClick={onClose} title={t('关闭', 'Close')}><X size={16} /></button>
+          <h2>{t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts', "鍵盤 / 滑鼠快捷鍵")}</h2>
+          <button onClick={onClose} title={t('关闭', 'Close', "關閉")}><X size={16} /></button>
         </header>
         <div className="sim-keymap-modal-body">
           <div className="sim-keymap-hint">
             {editingCode
-              ? t(`为 ${keyLabel(editingCode)} 键选择动作 (ESC 取消)`, `Choose move for ${keyLabel(editingCode)} (ESC to cancel)`)
-              : t('点击键盘格修改对应快捷键', 'Click a key to rebind')}
+              ? t(`为 ${keyLabel(editingCode)} 键选择动作 (ESC 取消)`, `Choose move for ${keyLabel(editingCode)} (ESC to cancel)`, `為 ${keyLabel(editingCode)} 鍵選擇動作 (ESC 取消)`)
+              : t('点击键盘格修改对应快捷键', 'Click a key to rebind', "點選鍵盤格修改對應快捷鍵")}
           </div>
 
           <div className="sim-keyboard">
@@ -285,7 +285,7 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
             <div className="sim-keymap-picker">
               {KEYMAP_GROUPS.map((g) => (
                 <div key={g.zh} className="sim-keymap-picker-group">
-                  <div className="sim-keymap-title">{(i18n.language.startsWith('zh') ? g.zh : g.en)}</div>
+                  <div className="sim-keymap-title">{(i18n.language === 'zh-Hant' ? (g.zhHant ?? g.zh) : (i18n.language.startsWith('zh') ? g.zh : g.en))}</div>
                   <div className="sim-keymap-picker-row">
                     {g.moves.map((m) => (
                       <button
@@ -312,7 +312,7 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
                     onKeymapChange(next);
                     setEditingCode(null);
                   }}
-                >{t('清除该键', 'Clear this key')}</button>
+                >{t('清除该键', 'Clear this key', "清除該鍵")}</button>
                 <button
                   type="button"
                   className="sim-keymap-picker-cancel"
@@ -324,48 +324,48 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
 
           <div className="sim-keymap-misc">
             <span>{t('其它 (固定):', 'Misc (fixed):')}</span>
-            <span>{t('撤销', 'Undo')} <kbd>Ctrl</kbd>+<kbd>Z</kbd> <kbd>⌫</kbd></span>
+            <span>{t('撤销', 'Undo', "撤銷")} <kbd>Ctrl</kbd>+<kbd>Z</kbd> <kbd>⌫</kbd></span>
             <span>{t('重做', 'Redo')} <kbd>Ctrl</kbd>+<kbd>Y</kbd></span>
           </div>
 
-          <div className="sim-keymap-title" style={{ marginTop: 12 }}>{t('鼠标', 'Mouse')}</div>
+          <div className="sim-keymap-title" style={{ marginTop: 12 }}>{t('鼠标', 'Mouse', "滑鼠")}</div>
           <div className="sim-mouse-help">
             <div>
-              <span className="sim-mouse-op">{t('单击 sticker', 'Click a sticker')}</span>
-              <span className="sim-mouse-act">{t('转该 sticker 所在切片', 'Rotate the slice through it')}</span>
+              <span className="sim-mouse-op">{t('单击 sticker', 'Click a sticker', "單擊 sticker")}</span>
+              <span className="sim-mouse-act">{t('转该 sticker 所在切片', 'Rotate the slice through it', "轉該 sticker 所在切片")}</span>
             </div>
             <div>
               <span className="sim-mouse-op">&nbsp;&nbsp;{t('— U 面 → z 切片', '— U face → z slice')}</span>
-              <span className="sim-mouse-act">{t('点最前一行 = F,中央 = S,最后 = B', 'front row = F, middle = S, back = B\'')}</span>
+              <span className="sim-mouse-act">{t('点最前一行 = F,中央 = S,最后 = B', 'front row = F, middle = S, back = B\'', "點最前一行 = F,中央 = S,最後 = B")}</span>
             </div>
             <div>
               <span className="sim-mouse-op">&nbsp;&nbsp;{t('— F / R 面 → y 切片', '— F / R face → y slice')}</span>
-              <span className="sim-mouse-act">{t('点最上 = U,中央 = E,最下 = D', 'top = U, middle = E, bottom = D\'')}</span>
+              <span className="sim-mouse-act">{t('点最上 = U,中央 = E,最下 = D', 'top = U, middle = E, bottom = D\'', "點最上 = U,中央 = E,最下 = D")}</span>
             </div>
             <div>
-              <span className="sim-mouse-op"><kbd>Shift</kbd> {t('+ 单击 / 右键单击', '+ click / right click')}</span>
-              <span className="sim-mouse-act">{t('逆时针', 'Counter-clockwise')}</span>
+              <span className="sim-mouse-op"><kbd>Shift</kbd> {t('+ 单击 / 右键单击', '+ click / right click', "+ 單擊 / 右鍵單擊")}</span>
+              <span className="sim-mouse-act">{t('逆时针', 'Counter-clockwise', "逆時針")}</span>
             </div>
             <div>
-              <span className="sim-mouse-op"><kbd>Alt</kbd> {t('+ 单击 / 拖动', '+ click / drag')}</span>
-              <span className="sim-mouse-act">{t('宽层转动 (深度=宽度):内层 → Rw/3Lw/...,中线 → x/y/z', 'Wide turn (depth = width): inner → Rw/3Lw/..., center → x/y/z')}</span>
+              <span className="sim-mouse-op"><kbd>Alt</kbd> {t('+ 单击 / 拖动', '+ click / drag', "+ 單擊 / 拖動")}</span>
+              <span className="sim-mouse-act">{t('宽层转动 (深度=宽度):内层 → Rw/3Lw/...,中线 → x/y/z', 'Wide turn (depth = width): inner → Rw/3Lw/..., center → x/y/z', "寬層轉動 (深度=寬度):內層 → Rw/3Lw/...,中線 → x/y/z")}</span>
             </div>
             <div>
-              <span className="sim-mouse-op">{t('拖动 sticker', 'Drag sticker')}</span>
-              <span className="sim-mouse-act">{t('沿手势方向转该层', 'Rotate slice along drag direction')}</span>
+              <span className="sim-mouse-op">{t('拖动 sticker', 'Drag sticker', "拖動 sticker")}</span>
+              <span className="sim-mouse-act">{t('沿手势方向转该层', 'Rotate slice along drag direction', "沿手勢方向轉該層")}</span>
             </div>
             <div>
-              <span className="sim-mouse-op">{t('拖动空白', 'Drag empty area')}</span>
-              <span className="sim-mouse-act">{t('整体旋转视角', 'Rotate whole cube')}</span>
+              <span className="sim-mouse-op">{t('拖动空白', 'Drag empty area', "拖動空白")}</span>
+              <span className="sim-mouse-act">{t('整体旋转视角', 'Rotate whole cube', "整體旋轉視角")}</span>
             </div>
             <div>
-              <span className="sim-mouse-op">{t('滚轮', 'Wheel')}</span>
-              <span className="sim-mouse-act">{t('缩放', 'Zoom')}</span>
+              <span className="sim-mouse-op">{t('滚轮', 'Wheel', "滾輪")}</span>
+              <span className="sim-mouse-act">{t('缩放', 'Zoom', "縮放")}</span>
             </div>
           </div>
 
           <button type="button" className="sim-keymap-reset" onClick={onResetKeymap}>
-            {t('恢复默认快捷键', 'Reset shortcuts to defaults')}
+            {t('恢复默认快捷键', 'Reset shortcuts to defaults', "恢復預設快捷鍵")}
           </button>
         </div>
       </div>

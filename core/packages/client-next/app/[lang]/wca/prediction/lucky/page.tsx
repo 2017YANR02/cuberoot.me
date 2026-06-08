@@ -102,7 +102,7 @@ function nToApproxYear(N: number): number {
 function LuckyLimitPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('幸运极限', 'Lucky Limit');
+  useDocumentTitle('幸运极限', 'Lucky Limit', "幸運極限");
 
   // ?year= 走 nuqs(replace,不堆历史)。原 raw history.replaceState 已替换。
   const [yearParam, setYearParam] = useQueryState(
@@ -304,19 +304,25 @@ function LuckyLimitPageInner() {
               zhHant: "三階: 當前累積機率"
         })}</h2>
           <p>
-            {isZh ? (
-              <>
-                到 {formatYear(year)} 年,WCA 累积生成了 <strong>{formatBigN(N333)} 个三阶打乱</strong> (含备用)。
-                「在这 N 个打乱里至少撞上一次 d ≤ K 状态」的累积概率 P = 1 − (1 − p)^N。
-                K 越小 → 该状态在 4.3×10¹⁹ 中的占比 p 越小 → N 即使极大也需要继续累积。
-              </>
-            ) : (
-              <>
-                Through {formatYear(year)}, WCA has accumulated <strong>{formatBigN(N333)} 3x3 scrambles</strong> (incl. backups).
-                Cumulative probability of at least one d ≤ K hit across these N is P = 1 − (1 − p)^N.
-                Smaller K → smaller p in the 4.3×10^19 state space → need exponentially larger N.
-              </>
-            )}
+            {i18n.language === 'zh-Hant' ? ((
+                                    <>
+                                      到 {formatYear(year)} 年,WCA 累積生成了 <strong>{formatBigN(N333)} 個三階打亂</strong> (含備用)。
+                                      「在這 N 個打亂裡至少撞上一次 d ≤ K 狀態」的累積機率 P = 1 − (1 − p)^N。
+                                      K 越小 → 該狀態在 4.3×10¹⁹ 中的佔比 p 越小 → N 即使極大也需要繼續累積。
+                                    </>
+                                  )) : (isZh ? (
+                                    <>
+                                      到 {formatYear(year)} 年,WCA 累积生成了 <strong>{formatBigN(N333)} 个三阶打乱</strong> (含备用)。
+                                      「在这 N 个打乱里至少撞上一次 d ≤ K 状态」的累积概率 P = 1 − (1 − p)^N。
+                                      K 越小 → 该状态在 4.3×10¹⁹ 中的占比 p 越小 → N 即使极大也需要继续累积。
+                                    </>
+                                  ) : (
+                                    <>
+                                      Through {formatYear(year)}, WCA has accumulated <strong>{formatBigN(N333)} 3x3 scrambles</strong> (incl. backups).
+                                      Cumulative probability of at least one d ≤ K hit across these N is P = 1 − (1 − p)^N.
+                                      Smaller K → smaller p in the 4.3×10^19 state space → need exponentially larger N.
+                                    </>
+                                  ))}
           </p>
           <div className="lucky-prob-table-wrap">
             <table className="lucky-prob-table">
@@ -362,22 +368,30 @@ function LuckyLimitPageInner() {
             </table>
           </div>
           <p className="lucky-prob-caption">
-            {isZh ? (
-              <>
-                <strong>怎么读:</strong> 比如表中 d ≤ 2 这一行 — 单次概率 6×10⁻¹⁸ (4.3×10¹⁹ 个状态里只有 262 个)。
-                需要累积到 N₅₀ ≈ 1.2×10¹⁷ 次打乱才能有 50% 概率撞上一次,
-                对应年份约 10¹⁴ 左右 (WCA 比赛累积 30000 场 / 年 × 250 个打乱 / 场 ≈ 7.5×10⁶ / 年)。
-                所以「三阶 2 步运气解」不是某一年能见到的事件,而是「累积到无穷年」的渐近。
-                现实里 2026 年的期望最幸运 d ≈ 11.5 步,分布集中在 d=11-12 (P 约 40%)。
-              </>
-            ) : (
-              <>
-                <strong>How to read:</strong> e.g. d ≤ 2 row — single-scramble prob 6×10^-18 (262 of 4.3×10^19).
-                Need N₅₀ ≈ 1.2×10^17 to have 50% chance of one such hit; that's ~10^14 yr away at WCA's 7.5M scrambles/year cap.
-                That is why "3x3 2-move lucky solve" is not a near-future event but an asymptotic limit.
-                Today the expected luckiest scramble is d ≈ 11.5 with P(d≤12) ≈ 99.9%.
-              </>
-            )}
+            {i18n.language === 'zh-Hant' ? ((
+                                    <>
+                                      <strong>怎麼讀:</strong> 比如表中 d ≤ 2 這一行 — 單次機率 6×10⁻¹⁸ (4.3×10¹⁹ 個狀態裡只有 262 個)。
+                                      需要累積到 N₅₀ ≈ 1.2×10¹⁷ 次打亂才能有 50% 機率撞上一次,
+                                      對應年份約 10¹⁴ 左右 (WCA 比賽累積 30000 場 / 年 × 250 個打亂 / 場 ≈ 7.5×10⁶ / 年)。
+                                      所以「三階 2 步運氣解」不是某一年能見到的事件,而是「累積到無窮年」的漸近。
+                                      現實裡 2026 年的期望最幸運 d ≈ 11.5 步,分佈集中在 d=11-12 (P 約 40%)。
+                                    </>
+                                  )) : (isZh ? (
+                                    <>
+                                      <strong>怎么读:</strong> 比如表中 d ≤ 2 这一行 — 单次概率 6×10⁻¹⁸ (4.3×10¹⁹ 个状态里只有 262 个)。
+                                      需要累积到 N₅₀ ≈ 1.2×10¹⁷ 次打乱才能有 50% 概率撞上一次,
+                                      对应年份约 10¹⁴ 左右 (WCA 比赛累积 30000 场 / 年 × 250 个打乱 / 场 ≈ 7.5×10⁶ / 年)。
+                                      所以「三阶 2 步运气解」不是某一年能见到的事件,而是「累积到无穷年」的渐近。
+                                      现实里 2026 年的期望最幸运 d ≈ 11.5 步,分布集中在 d=11-12 (P 约 40%)。
+                                    </>
+                                  ) : (
+                                    <>
+                                      <strong>How to read:</strong> e.g. d ≤ 2 row — single-scramble prob 6×10^-18 (262 of 4.3×10^19).
+                                      Need N₅₀ ≈ 1.2×10^17 to have 50% chance of one such hit; that's ~10^14 yr away at WCA's 7.5M scrambles/year cap.
+                                      That is why "3x3 2-move lucky solve" is not a near-future event but an asymptotic limit.
+                                      Today the expected luckiest scramble is d ≈ 11.5 with P(d≤12) ≈ 99.9%.
+                                    </>
+                                  ))}
           </p>
         </section>
 
@@ -386,7 +400,7 @@ function LuckyLimitPageInner() {
           <section className="lucky-headline">
             <div className="lucky-headline-left">
               <div className="lucky-headline-eyebrow">
-                {isZh ? `三阶 · ${formatYear(year)} 运气预测` : `3x3 · ${formatYear(year)} luck forecast`}
+                {i18n.language === 'zh-Hant' ? (`三階 · ${formatYear(year)} 運氣預測`) : (isZh ? `三阶 · ${formatYear(year)} 运气预测` : `3x3 · ${formatYear(year)} luck forecast`)}
               </div>
               <div className="lucky-headline-time">
                 {formatVal(row333.timeCeil, row333.ev.scale)}
@@ -403,7 +417,7 @@ function LuckyLimitPageInner() {
                     zhHant: "累積打亂數 (個)"
                 })}
                 value={formatBigN(row333.N)}
-                hint={isZh ? `2003-${Math.round(year)}, 含备用` : `2003–${Math.round(year)} · incl. backups`}
+                hint={i18n.language === 'zh-Hant' ? (`2003-${Math.round(year)}, 含備用`) : (isZh ? `2003-${Math.round(year)}, 含备用` : `2003–${Math.round(year)} · incl. backups`)}
               />
               <Stat
                 label={tr({ zh: '期望最幸运 d', en: 'Expected min depth',

@@ -54,12 +54,17 @@ type Mode = 'comp' | 'batch' | 'paste';
 const VALID_MODES: ReadonlySet<Mode> = new Set(['comp', 'batch', 'paste']);
 
 const MODE_ORDER: Mode[] = ['comp', 'batch', 'paste'];
-const MODE_LABELS: Record<Mode, { zh: string; en: string }> = {
-  comp:  { zh: '比赛', en: 'Comp'
+const MODE_LABELS: Record<Mode, { zh: string; en: string
+        zhHant?: string;
+ }> = {
+  comp:  { zh: '比赛', en: 'Comp',
+      zhHant: "比賽"
 },
-  batch: { zh: '批量', en: 'Batch'
+  batch: { zh: '批量', en: 'Batch',
+      zhHant: "批次"
 },
-  paste: { zh: '输入', en: 'Paste'
+  paste: { zh: '输入', en: 'Paste',
+      zhHant: "輸入"
 },
 };
 
@@ -80,7 +85,7 @@ function GenPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = useCallback((zh: string, en: string) => (isZh ? zh : en), [isZh]);
-  useDocumentTitle('打乱生成器', 'Scramble Generator');
+  useDocumentTitle('打乱生成器', 'Scramble Generator', "打亂生成器");
 
   // Prewarm the heaviest random-state scramblers while the user is reading the
   // event selector. 444/555 each pay a ~3s pruning-table build on first call;

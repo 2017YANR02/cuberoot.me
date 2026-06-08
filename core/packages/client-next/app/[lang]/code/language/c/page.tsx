@@ -459,7 +459,7 @@ export default function CIntroPage() {
 
   useDocumentTitle(
     'C : 看不见的母语 — 53 年仍跑在一切之下',
-    'C : The Invisible Mother Tongue — 53 Years and Still Underneath It All',
+    'C : The Invisible Mother Tongue — 53 Years and Still Underneath It All', "C : 看不見的母語 — 53 年仍跑在一切之下"
   );
 
   useEffect(() => {

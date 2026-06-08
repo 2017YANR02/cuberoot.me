@@ -37,7 +37,7 @@ export default function SkewbTrainerPage() {
   const isZh = i18n.language.startsWith('zh');
   const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const router = useRouter();
-  useDocumentTitle('Skewb 技巧训练', 'Skewb Skills');
+  useDocumentTitle('Skewb 技巧训练', 'Skewb Skills', "Skewb 技巧訓練");
 
   const t = useSkewbTrainer();
 
@@ -63,8 +63,11 @@ export default function SkewbTrainerPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [t]);
 
-  const modes: { key: SkewbMode; en: string; zh: string; icon: React.ReactNode }[] = [
-    { key: 'flt', en: 'First Layer', zh: '第一层', icon: <Layers size={15} />
+  const modes: { key: SkewbMode; en: string; zh: string; icon: React.ReactNode
+      zhHant?: string;
+ }[] = [
+    { key: 'flt', en: 'First Layer', zh: '第一层', icon: <Layers size={15} />,
+        zhHant: "第一層"
     },
     { key: 'alg', en: 'L2L Alg', zh: 'L2L 公式', icon: <RotateCcw size={15} /> },
     { key: 'ol', en: 'One-Looking', zh: '一步看穿', icon: <Eye size={15} /> },
@@ -108,7 +111,7 @@ export default function SkewbTrainerPage() {
               onClick={() => t.setMode(m.key)}
             >
               {m.icon}
-              {(i18n.language.startsWith('zh') ? m.zh : m.en)}
+              {(i18n.language === 'zh-Hant' ? (m.zhHant ?? m.zh) : (i18n.language.startsWith('zh') ? m.zh : m.en))}
             </button>
           ))}
         </div>
@@ -180,11 +183,13 @@ export default function SkewbTrainerPage() {
           {t.mode === 'alg' && t.pbText ? (
             <div className={t.isPB ? 'sk-timer-pb is-new' : 'sk-timer-pb'}>
               {t.isPB ? (
-                isZh ? (
-                  '本案例新纪录!'
-                ) : (
-                  "That's a PB!"
-                )
+                i18n.language === 'zh-Hant' ? ((
+                                                '本案例新紀錄!'
+                                              )) : (isZh ? (
+                                                '本案例新纪录!'
+                                              ) : (
+                                                "That's a PB!"
+                                              ))
               ) : (
                 <>
                   {tr({ zh: '本案例最好:', en: 'Best for this case: ' })}

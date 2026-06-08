@@ -442,7 +442,7 @@ export default function ZigIntroPage() {
 
   useDocumentTitle(
     'Zig : C — 给系统编程换个零隐藏的地基',
-    'Zig : C — A No-Hidden-Control-Flow Foundation for Systems',
+    'Zig : C — A No-Hidden-Control-Flow Foundation for Systems', "Zig : C — 給系統程式設計換個零隱藏的地基"
   );
 
   useEffect(() => {

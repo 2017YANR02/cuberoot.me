@@ -49,7 +49,7 @@ type Show = 'history' | 'mixed';
 function RecordsPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('纪录', 'Records');
+  useDocumentTitle('纪录', 'Records', "紀錄");
   const [q, setQ] = useQueryStates(
     {
       show: parseAsString,

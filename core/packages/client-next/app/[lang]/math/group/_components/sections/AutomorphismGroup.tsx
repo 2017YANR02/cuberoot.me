@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 // ── Math helpers ─────────────────────────────────────────────────────────────
 
@@ -698,7 +699,7 @@ export default function AutomorphismGroup() {
 
         {/* SVG dial */}
         <div style={{ marginTop: 20, maxWidth: 340, width: '100%', margin: '20px auto 0' }}>
-          <svg viewBox="0 0 240 240" width="100%" aria-label={isZh ? `C_${n} 拨盘` : `C_${n} dial`}>
+          <svg viewBox="0 0 240 240" width="100%" aria-label={i18n.language === 'zh-Hant' ? (`C_${n} 撥盤`) : (isZh ? `C_${n} 拨盘` : `C_${n} dial`)}>
             {/* Tick circle */}
             <circle cx={CX} cy={CY} r={R} fill="none" stroke="var(--rule)" strokeWidth={1} />
 

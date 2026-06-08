@@ -28,6 +28,7 @@ import { Modal } from './_components/ui';
 import { rt } from './i18n';
 
 import './roux.css';
+import i18n from "@/i18n/i18n-client";
 
 // [mode key, long label, short label] — ported from AppView.tab_modes.
 // (OLLCP / tracking were commented out upstream; we keep them wired so the
@@ -157,7 +158,7 @@ function RouxTrainer(props: { embedded?: boolean }) {
   const { embedded } = props;
   const { i18n } = useTranslation();
   const isZh = i18n.language?.startsWith('zh');
-  const tt = (zh: string, en: string) => (isZh ? zh : en);
+  const tt = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
 
   // Mode in the URL (?m=). push history so the back gesture returns between modes.
   const [mode, setMode] = useQueryState(
@@ -209,13 +210,13 @@ function RouxTrainer(props: { embedded?: boolean }) {
       <div className="roux-topbar">
         {/* When embedded under the 333 hub's 桥式 section heading, the section title
             already names it — drop the internal title to avoid a double label. */}
-        {!embedded && <div className="roux-topbar-title">{tt('桥式训练器', 'Roux Trainer')}</div>}
+        {!embedded && <div className="roux-topbar-title">{tt('桥式训练器', 'Roux Trainer', "橋式訓練器")}</div>}
 
         <select
           className="roux-mode-select"
           value={mode}
           onChange={(e) => handleModeChange(e.target.value as Mode)}
-          aria-label={tt('选择模式', 'Select mode')}
+          aria-label={tt('选择模式', 'Select mode', "選擇模式")}
         >
           {tab_modes.map(([m, long, short]) => (
             <option key={m} value={m} title={rt(long, !!isZh)}>
@@ -240,8 +241,8 @@ function RouxTrainer(props: { embedded?: boolean }) {
             type="button"
             className="roux-icon-btn"
             onClick={() => setInfoOpen(true)}
-            aria-label={tt('说明', 'Info')}
-            title={tt('说明', 'Info')}
+            aria-label={tt('说明', 'Info', "說明")}
+            title={tt('说明', 'Info', "說明")}
           >
             <Info size={20} />
           </button>
@@ -262,7 +263,7 @@ function RouxTrainer(props: { embedded?: boolean }) {
       <Modal
         open={infoOpen}
         onClose={() => setInfoOpen(false)}
-        title={tt('关于', 'About')}
+        title={tt('关于', 'About', "關於")}
         actions={
           <button
             type="button"

@@ -83,9 +83,9 @@ function TutorialCategoryPageInner() {
         <div>
           <h1 className="tutorial-index-title">{category}</h1>
           <p className="tutorial-index-subtitle">
-            {isZh
-              ? `${inCategory.length} 个教程与公式库`
-              : `${inCategory.length} tutorials & algorithm sets`}
+            {i18n.language === 'zh-Hant' ? (`${inCategory.length} 個教程與公式庫`) : (isZh
+                                    ? `${inCategory.length} 个教程与公式库`
+                                    : `${inCategory.length} tutorials & algorithm sets`)}
           </p>
         </div>
         <div className="tutorial-search-box">

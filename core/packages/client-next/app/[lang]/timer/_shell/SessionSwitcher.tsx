@@ -21,6 +21,7 @@ import {
   type SessionMeta,
 } from '../_lib/storage/db';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   isZh: boolean;
@@ -121,9 +122,9 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
   };
 
   const handleClear = (s: SessionMeta) => {
-    const ok = window.confirm(isZh
-      ? `清空分组「${s.name}」的全部成绩？此操作无法撤销。`
-      : `Clear all solves in "${s.name}"? This cannot be undone.`);
+    const ok = window.confirm(i18n.language === 'zh-Hant' ? (`清空分組「${s.name}」的全部成績？此操作無法撤銷。`) : (isZh
+              ? `清空分组「${s.name}」的全部成绩？此操作无法撤销。`
+              : `Clear all solves in "${s.name}"? This cannot be undone.`));
     if (!ok) return;
     clearSession(s.id);
     refresh();
@@ -132,9 +133,9 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
 
   const handleDelete = (s: SessionMeta) => {
     if (sessions.length <= 1) return;
-    const ok = window.confirm(isZh
-      ? `删除分组「${s.name}」及其全部成绩？此操作无法撤销。`
-      : `Delete session "${s.name}" and all its solves? This cannot be undone.`);
+    const ok = window.confirm(i18n.language === 'zh-Hant' ? (`刪除分組「${s.name}」及其全部成績？此操作無法撤銷。`) : (isZh
+              ? `删除分组「${s.name}」及其全部成绩？此操作无法撤销。`
+              : `Delete session "${s.name}" and all its solves? This cannot be undone.`));
     if (!ok) return;
     const newActive = deleteSession(s.id);
     refresh();

@@ -8,6 +8,6 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Bld3Hub } from './_components/Bld3Hub';
 
 export default function Bld3HubPage() {
-  useDocumentTitle('盲拧训练', '3BLD Trainer');
+  useDocumentTitle('盲拧训练', '3BLD Trainer', "盲擰訓練");
   return <Bld3Hub />;
 }

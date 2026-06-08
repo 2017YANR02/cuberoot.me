@@ -220,9 +220,9 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
     }
 
     setInfo(
-      isZh
-        ? `已生成遍历副缓冲 ${String(bufferList[1] ?? '').toUpperCase()} 全部公式的 ${times} 条打乱。`
-        : `Generated ${times} scrambles covering every alg of sub-buffer ${String(bufferList[1] ?? '').toUpperCase()}.`,
+      i18n.language === 'zh-Hant' ? (`已生成遍歷副緩衝 ${String(bufferList[1] ?? '').toUpperCase()} 全部公式的 ${times} 條打亂。`) : (isZh
+                ? `已生成遍历副缓冲 ${String(bufferList[1] ?? '').toUpperCase()} 全部公式的 ${times} 条打乱。`
+                : `Generated ${times} scrambles covering every alg of sub-buffer ${String(bufferList[1] ?? '').toUpperCase()}.`),
     );
     return out;
   }, [isEdge, floatOrder, ejectPos, oppScramble, parityMode, isZh]);
@@ -327,9 +327,11 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
   const title = useMemo(
     () =>
       isEdge
-        ? { zh: '棱块浮动训练', en: 'Edge Float Trainer'
+        ? { zh: '棱块浮动训练', en: 'Edge Float Trainer',
+            zhHant: "稜塊浮動訓練"
         }
-        : { zh: '角块浮动训练', en: 'Corner Float Trainer'
+        : { zh: '角块浮动训练', en: 'Corner Float Trainer',
+            zhHant: "角塊浮動訓練"
         },
     [isEdge],
   );
@@ -344,7 +346,7 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{(i18n.language.startsWith('zh') ? title.zh : title.en)}</h1>
+        <h1>{(i18n.language === 'zh-Hant' ? (title.zhHant ?? title.zh) : (i18n.language.startsWith('zh') ? title.zh : title.en))}</h1>
       </div>
 
       <div className="bld-section">

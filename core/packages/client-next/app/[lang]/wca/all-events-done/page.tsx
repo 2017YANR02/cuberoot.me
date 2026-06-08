@@ -33,7 +33,7 @@ interface Row {
 function AllEventsDonePageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('全项目达成', 'All Events Done');
+  useDocumentTitle('全项目达成', 'All Events Done', "全專案達成");
   const [q, setQ] = useQueryStates(
     {
       country: parseAsString,

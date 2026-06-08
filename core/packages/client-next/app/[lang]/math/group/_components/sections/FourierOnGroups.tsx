@@ -578,12 +578,17 @@ function ConvolutionDemo() {
 
 type WalkPreset = 'nearest' | 'lazy' | 'bigjump';
 
-const WALK_PRESETS: { id: WalkPreset; zh: string; en: string }[] = [
-  { id: 'nearest', zh: '±1 游走', en: '±1 walk'
+const WALK_PRESETS: { id: WalkPreset; zh: string; en: string
+    zhHant?: string;
+ }[] = [
+  { id: 'nearest', zh: '±1 游走', en: '±1 walk',
+      zhHant: "±1 遊走"
 },
-  { id: 'lazy', zh: '懒惰游走', en: 'Lazy walk'
+  { id: 'lazy', zh: '懒惰游走', en: 'Lazy walk',
+      zhHant: "懶惰遊走"
 },
-  { id: 'bigjump', zh: '大跳跃', en: 'Big jump'
+  { id: 'bigjump', zh: '大跳跃', en: 'Big jump',
+      zhHant: "大跳躍"
 },
 ];
 

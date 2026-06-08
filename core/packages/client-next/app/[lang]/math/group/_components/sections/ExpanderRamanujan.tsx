@@ -286,7 +286,9 @@ function CycleSpectrumPanel() {
 
 // ── Panel 2: Abelian Cayley spectrum explorer ─────────────────────────────────
 
-const GEN_CONFIGS: { id: GeneratorConfig; zh: string; en: string }[] = [
+const GEN_CONFIGS: { id: GeneratorConfig; zh: string; en: string
+    zhHant?: string;
+ }[] = [
   { id: '±1', zh: '生成元 {±1}，d=2', en: 'Generators {±1}, d=2' },
   { id: '±1,±2', zh: '生成元 {±1,±2}，d=4', en: 'Generators {±1,±2}, d=4' },
   { id: '±1,±floor(n/3)', zh: '生成元 {±1,±⌊n/3⌋}，d=4', en: 'Generators {±1,±⌊n/3⌋}, d=4' },

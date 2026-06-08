@@ -9,7 +9,9 @@ export interface OpsCommandInput {
   id?: string;             // POST 必填,PUT 不需要
   category: string;
   cwd?: string | null;
-  chips: { zh: string; en: string }[];
+  chips: { zh: string; en: string
+    zhHant?: string;
+ }[];
   title_zh: string;
   title_en: string;
   desc_zh: string;

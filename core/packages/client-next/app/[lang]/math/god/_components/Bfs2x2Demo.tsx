@@ -10,6 +10,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { MathText } from './Tex';
+import i18n from "@/i18n/i18n-client";
 
 interface Props { isZh: boolean; }
 
@@ -29,7 +30,7 @@ interface DoneEvent {
 }
 
 export default function Bfs2x2Demo({ isZh }: Props) {
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
   const [dist, setDist] = useState<number[]>([1]);
@@ -88,7 +89,7 @@ export default function Bfs2x2Demo({ isZh }: Props) {
       <div className="god-bfs-controls">
         {!running && !done && (
           <button className="god-btn-primary" onClick={start}>
-            {t('开始 BFS', 'Start BFS')}
+            {t('开始 BFS', 'Start BFS', "開始 BFS")}
           </button>
         )}
         {running && (
@@ -98,25 +99,25 @@ export default function Bfs2x2Demo({ isZh }: Props) {
         )}
         {done && (
           <button className="god-btn-secondary" onClick={start}>
-            {t('再来一次', 'Run again')}
+            {t('再来一次', 'Run again', "再來一次")}
           </button>
         )}
         <span className="god-bfs-stat">
-          {t('已枚举', 'Visited')}: <b>{totalSoFar.toLocaleString()}</b>
+          {t('已枚举', 'Visited', "已列舉")}: <b>{totalSoFar.toLocaleString()}</b>
           {' / '}
           <span style={{ color: 'var(--god-text-mute)' }}>{TOTAL.toLocaleString()}</span>
         </span>
         <span className="god-bfs-stat">
-          {t('耗时', 'Time')}: <b>{(elapsed / 1000).toFixed(2)}s</b>
+          {t('耗时', 'Time', "耗時")}: <b>{(elapsed / 1000).toFixed(2)}s</b>
         </span>
         {diameter != null && (
           <span className="god-bfs-stat god-bfs-result">
-            {t('上帝之数', 'God\'s number')} = <b>{diameter}</b> HTM
+            {t('上帝之数', 'God\'s number', "上帝之數")} = <b>{diameter}</b> HTM
           </span>
         )}
       </div>
 
-      <div className="god-bfs-chart" role="img" aria-label={t('距离分布柱状图', 'Distance distribution bar chart')}>
+      <div className="god-bfs-chart" role="img" aria-label={t('距离分布柱状图', 'Distance distribution bar chart', "距離分佈柱狀圖")}>
         {Array.from({ length: 12 }).map((_, d) => {
           const v = dist[d] ?? 0;
           const known = KNOWN[d];
@@ -138,7 +139,7 @@ export default function Bfs2x2Demo({ isZh }: Props) {
       <p className="god-bfs-caption">
         <MathText>{t(
           '横轴 = 距离还原态的最少步数(HTM)。彩色 = 你这次 BFS 的结果,灰色虚影 = 已知精确分布。两个吻合 ⇒ 你刚刚在浏览器里从零证明了 "2×2 上帝之数 = 11"。',
-          'X-axis = minimum HTM distance from solved. Coloured bars = your live BFS; pale ghost = published distribution. Match ⇒ you just re-proved "2×2 God\'s number = 11" in the browser.',
+          'X-axis = minimum HTM distance from solved. Coloured bars = your live BFS; pale ghost = published distribution. Match ⇒ you just re-proved "2×2 God\'s number = 11" in the browser.', "橫軸 = 距離還原態的最少步數(HTM)。彩色 = 你這次 BFS 的結果,灰色虛影 = 已知精確分佈。兩個吻合 ⇒ 你剛剛在瀏覽器裡從零證明了 \"2×2 上帝之數 = 11\"。"
         )}</MathText>
       </p>
     </div>

@@ -659,7 +659,10 @@ interface SubgroupInfo {
   labelEn: string;
   order: (n: number) => number;
   iso: string;
-  desc: { zh: string; en: string };
+  desc: { zh: string; en: string
+    zhHant?: string;
+ };
+    labelZhHant?: string;
 }
 
 const SUBGROUPS: SubgroupInfo[] = [
@@ -667,37 +670,47 @@ const SUBGROUPS: SubgroupInfo[] = [
     key: 'Cn', labelZh: 'C_n (循环)', labelEn: 'C_n (cyclic)', order: n => n,
     iso: 'ℤ/n', desc: {
       zh: '绕固定轴旋转 2πk/n，阶为 n',
-      en: 'Rotations by 2πk/n about a fixed axis, order n'
+      en: 'Rotations by 2πk/n about a fixed axis, order n',
+        zhHant: "繞固定軸旋轉 2πk/n，階為 n"
     },
-  },
+      labelZhHant: "C_n (迴圈)"
+},
   {
     key: 'Dn', labelZh: 'D_n (二面体旋转)', labelEn: 'D_n (dihedral rotation)', order: n => 2 * n,
     iso: 'Dih(n)', desc: {
       zh: '正 n 边形嵌入 ℝ³ 的旋转群，阶 2n（含 n 条平面内旋转轴）',
-      en: 'Rotational symmetry of n-gon in ℝ³, order 2n (n in-plane flip axes)'
+      en: 'Rotational symmetry of n-gon in ℝ³, order 2n (n in-plane flip axes)',
+        zhHant: "正 n 邊形嵌入 ℝ³ 的旋轉群，階 2n（含 n 條平面內旋轉軸）"
     },
-  },
+      labelZhHant: "D_n (二面體旋轉)"
+},
   {
     key: 'T', labelZh: '四面体 T ≅ A₄', labelEn: 'Tetrahedral T ≅ A₄', order: () => 12,
     iso: 'A₄', desc: {
       zh: '正四面体旋转群，阶 12 = 4!/2，由 4 个三重轴和 3 个二重轴生成',
-      en: 'Rotation group of tetrahedron, order 12 = 4!/2; 4 threefold axes, 3 twofold axes'
+      en: 'Rotation group of tetrahedron, order 12 = 4!/2; 4 threefold axes, 3 twofold axes',
+        zhHant: "正四面體旋轉群，階 12 = 4!/2，由 4 個三重軸和 3 個二重軸生成"
     },
-  },
+      labelZhHant: "四面體 T ≅ A₄"
+},
   {
     key: 'O', labelZh: '正方体/八面体 O ≅ S₄', labelEn: 'Cube/octahedron O ≅ S₄', order: () => 24,
     iso: 'S₄', desc: {
       zh: '正方体（及正八面体）旋转群，阶 24 = 4!，置换 4 条体对角线。这正是魔方形状的刚体旋转群！',
-      en: 'Rotation group of cube (and octahedron), order 24 = 4!, permuting 4 body diagonals. This is the rigid symmetry group of the Rubik\'s cube shape!'
+      en: 'Rotation group of cube (and octahedron), order 24 = 4!, permuting 4 body diagonals. This is the rigid symmetry group of the Rubik\'s cube shape!',
+        zhHant: "正方體（及正八面體）旋轉群，階 24 = 4!，置換 4 條體對角線。這正是魔方形狀的剛體旋轉群！"
     },
-  },
+      labelZhHant: "正方體/八面體 O ≅ S₄"
+},
   {
     key: 'I', labelZh: '正十二/二十面体 I ≅ A₅', labelEn: 'Dodecahedron/icosahedron I ≅ A₅', order: () => 60,
     iso: 'A₅', desc: {
       zh: '正十二面体（及正二十面体）旋转群，阶 60 = 5!/2，单群（非可解）',
-      en: 'Rotation group of dodecahedron (and icosahedron), order 60 = 5!/2; a simple group (non-solvable)'
+      en: 'Rotation group of dodecahedron (and icosahedron), order 60 = 5!/2; a simple group (non-solvable)',
+        zhHant: "正十二面體（及正二十面體）旋轉群，階 60 = 5!/2，單群（非可解）"
     },
-  },
+      labelZhHant: "正十二/二十面體 I ≅ A₅"
+},
 ];
 
 /** Generate octahedral group (O ≅ S₄, 24 elements) by closure starting from Rx(90) and Ry(90). */
@@ -953,7 +966,7 @@ function FiniteSubgroupPanel({ lang }: { lang: 'zh' | 'en' }) {
           </text>
           <foreignObject x={0} y={60} width={280} height={80}>
             <div style={{ fontFamily: 'var(--serif)', fontSize: 13, color: 'var(--ink-dim)', lineHeight: 1.5 }}>
-              {(i18n.language.startsWith('zh') ? info.desc.zh : info.desc.en)}
+              {(i18n.language === 'zh-Hant' ? (info.desc.zhHant ?? info.desc.zh) : (i18n.language.startsWith('zh') ? info.desc.zh : info.desc.en))}
             </div>
           </foreignObject>
           <text x={0} y={155} style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-faint)">

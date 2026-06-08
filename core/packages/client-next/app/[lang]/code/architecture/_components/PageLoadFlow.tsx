@@ -15,6 +15,7 @@ interface ForkStep {
   en: string;
   tag?: string;
   color?: 'accent' | 'hot' | 'green';
+    zhHant?: string;
 }
 
 const SHARED_TOP: ForkStep[] = [
@@ -22,15 +23,18 @@ const SHARED_TOP: ForkStep[] = [
 ];
 const VERCEL_STEPS: ForkStep[] = [
   { id: 've-edge', zh: 'Vercel Edge PoP',  en: 'Vercel Edge PoP',  tag: '~5 ms',   color: 'accent' },
-  { id: 've-cache',zh: 'Edge 缓存检查',     en: 'Edge Cache Check', tag: '~8 ms'
+  { id: 've-cache',zh: 'Edge 缓存检查',     en: 'Edge Cache Check', tag: '~8 ms',
+      zhHant: "Edge 快取檢查"
 },
-  { id: 've-fn',   zh: 'Serverless 函数',   en: 'Serverless Fn',    tag: '~30 ms'
+  { id: 've-fn',   zh: 'Serverless 函数',   en: 'Serverless Fn',    tag: '~30 ms',
+      zhHant: "Serverless 函式"
 },
   { id: 've-ssr',  zh: 'Next SSR stream',   en: 'Next SSR stream',  tag: '~80 ms', color: 'hot' },
 ];
 const VM_STEPS: ForkStep[] = [
   { id: 'vm-nginx',  zh: 'nginx :443',         en: 'nginx :443',          tag: '~3 ms',  color: 'accent' },
-  { id: 'vm-files',  zh: 'try_files 静态',      en: 'try_files static',    tag: '~5 ms'
+  { id: 'vm-files',  zh: 'try_files 静态',      en: 'try_files static',    tag: '~5 ms',
+      zhHant: "try_files 靜態"
 },
   { id: 'vm-proxy',  zh: 'proxy_pass :3002',    en: 'proxy_pass :3002',    tag: '~8 ms'  },
   { id: 'vm-ssr',    zh: 'Next standalone SSR', en: 'Next standalone SSR', tag: '~20 ms', color: 'hot' },
@@ -39,13 +43,14 @@ const SHARED_BOT: ForkStep[] = [
   { id: 'html',    zh: 'HTML + JS chunks',    en: 'HTML + JS chunks',   tag: '~150 ms', color: 'accent' },
   { id: 'hydrate', zh: 'React Hydrate',       en: 'React Hydrate',      tag: '~200 ms', color: 'hot' },
   { id: 'api',     zh: 'apiUrl() → API',      en: 'apiUrl() → API',     tag: '~250 ms', color: 'green' },
-  { id: 'dom',     zh: 'DOM 可交互',           en: 'DOM Interactive',    tag: '~300 ms', color: 'green'
+  { id: 'dom',     zh: 'DOM 可交互',           en: 'DOM Interactive',    tag: '~300 ms', color: 'green',
+      zhHant: "DOM 可互動"
 },
 ];
 
 function ForkStep({ step }: { step: ForkStep }) {
   const lang = useLang();
-  const label = (i18n.language.startsWith('zh') ? step.zh : step.en);
+  const label = (i18n.language === 'zh-Hant' ? (step.zhHant ?? step.zh) : (i18n.language.startsWith('zh') ? step.zh : step.en));
   return (
     <div className={`plf-step${step.color ? ` plf-step-${step.color}` : ''}`}>
       <span className="plf-step-label">{label}</span>
@@ -100,14 +105,20 @@ function ForkDiagram() {
 // ── Swimlane (Option A) ────────────────────────
 
 interface SwimlaneRow {
-  label: { zh: string; en: string };
-  cells: Array<{ col: number; span?: number; zh: string; en: string; tone?: 'accent' | 'hot' | 'green' | 'dim' }>;
+  label: { zh: string; en: string
+    zhHant?: string;
+ };
+  cells: Array<{ col: number; span?: number; zh: string; en: string; tone?: 'accent' | 'hot' | 'green' | 'dim'
+          zhHant?: string;
+ }>;
 }
 
 const SWIMLANE_COLS = [
-  { zh: '时序', en: 'Time'
+  { zh: '时序', en: 'Time',
+      zhHant: "時序"
 },
-  { zh: '浏览器', en: 'Browser'
+  { zh: '浏览器', en: 'Browser',
+      zhHant: "瀏覽器"
 },
   { zh: 'Vercel/nginx', en: 'Vercel/nginx' },
   { zh: 'Next.js', en: 'Next.js' },
@@ -118,7 +129,8 @@ const SWIMLANE_ROWS: SwimlaneRow[] = [
   {
     label: { zh: '0ms', en: '0ms' },
     cells: [
-      { col: 1, zh: '输入 URL / 点击链接', en: 'Enter URL / click link', tone: 'accent'
+      { col: 1, zh: '输入 URL / 点击链接', en: 'Enter URL / click link', tone: 'accent',
+          zhHant: "輸入 URL / 點選連結"
     },
       { col: 2, zh: 'DNS 解析 → IP', en: 'DNS Lookup → IP', tone: 'dim' },
     ],
@@ -127,7 +139,8 @@ const SWIMLANE_ROWS: SwimlaneRow[] = [
     label: { zh: '5ms', en: '5ms' },
     cells: [
       { col: 1, zh: 'TCP 握手 · TLS 1.3', en: 'TCP handshake · TLS 1.3', tone: 'dim' },
-      { col: 2, zh: '连接建立', en: 'Connection established', tone: 'dim'
+      { col: 2, zh: '连接建立', en: 'Connection established', tone: 'dim',
+          zhHant: "連線建立"
     },
     ],
   },
@@ -147,14 +160,17 @@ const SWIMLANE_ROWS: SwimlaneRow[] = [
   {
     label: { zh: '80ms+', en: '80ms+' },
     cells: [
-      { col: 1, zh: '首字节到达\n开始渲染', en: 'TTFB\nStart render', tone: 'green'
+      { col: 1, zh: '首字节到达\n开始渲染', en: 'TTFB\nStart render', tone: 'green',
+          zhHant: "首位元組到達\n\
+開始渲染"
     },
     ],
   },
   {
     label: { zh: '100–200ms', en: '100–200ms' },
     cells: [
-      { col: 1, zh: 'JS chunks 并发拉取', en: 'JS chunks fetched', tone: 'dim'
+      { col: 1, zh: 'JS chunks 并发拉取', en: 'JS chunks fetched', tone: 'dim',
+          zhHant: "JS chunks 併發拉取"
     },
       { col: 2, zh: 'CDN / nginx serve\nimmutable cache', en: 'CDN / nginx serve\nimmutable cache', tone: 'dim' },
     ],
@@ -162,7 +178,9 @@ const SWIMLANE_ROWS: SwimlaneRow[] = [
   {
     label: { zh: '200ms', en: '200ms' },
     cells: [
-      { col: 1, zh: 'React Hydrate\n可交互', en: 'React Hydrate\nInteractive', tone: 'green'
+      { col: 1, zh: 'React Hydrate\n可交互', en: 'React Hydrate\nInteractive', tone: 'green',
+          zhHant: "React Hydrate\n\
+可互動"
     },
       { col: 3, zh: 'Client component\nmount', en: 'Client component\nmount', tone: 'hot' },
     ],
@@ -183,7 +201,9 @@ const SWIMLANE_ROWS: SwimlaneRow[] = [
   },
 ];
 
-function SwimlaneCell({ tone, zh, en }: { tone?: string; zh: string; en: string }) {
+function SwimlaneCell({ tone, zh, en }: { tone?: string; zh: string; en: string
+    zhHant?: string;
+ }) {
   const lang = useLang();
   return (
     <div className={`plf-cell${tone ? ` plf-cell-${tone}` : ''}`}>
@@ -203,14 +223,14 @@ function SwimlaneDiagram() {
         <div className="plf-sw-header">
           {SWIMLANE_COLS.map((col, i) => (
             <div key={i} className={`plf-sw-col-head${i === 0 ? ' plf-sw-time' : ''}`}>
-              {(i18n.language.startsWith('zh') ? col.zh : col.en)}
+              {(i18n.language === 'zh-Hant' ? (col.zhHant ?? col.zh) : (i18n.language.startsWith('zh') ? col.zh : col.en))}
             </div>
           ))}
         </div>
         {/* Rows */}
         {SWIMLANE_ROWS.map((row, ri) => (
           <div key={ri} className="plf-sw-row">
-            <div className="plf-sw-time-cell">{(i18n.language.startsWith('zh') ? row.label.zh : row.label.en)}</div>
+            <div className="plf-sw-time-cell">{(i18n.language === 'zh-Hant' ? (row.label.zhHant ?? row.label.zh) : (i18n.language.startsWith('zh') ? row.label.zh : row.label.en))}</div>
             {[1, 2, 3, 4].map(col => {
               const cell = row.cells.find(c => c.col === col);
               if (!cell) return <div key={col} className="plf-sw-empty" />;

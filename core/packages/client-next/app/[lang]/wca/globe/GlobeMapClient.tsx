@@ -54,6 +54,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { exportTrailVideo, isVideoExportSupported } from './_lib/trail_video';
 import './globe.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 type Mode = 'upcoming' | 'cuber' | 'wr';
 type Speed = 0.5 | 1 | 2;
@@ -546,14 +547,19 @@ function patchMapTilerLang(map: maplibregl.Map, isZh: boolean) {
     ['get', 'iso_a2'], ['get', 'iso_3166_1'], ['get', 'iso_3166_1_alpha_2'],
     ['get', 'adm0_a3'], ['get', 'ADM0_A3'],
   ];
-  const baseExpr: unknown[] = isZh
-    ? ['match', countryCode,
-        ['KP', 'PRK'], '朝鲜',
-        ['KR', 'KOR'], '韩国',
-        ['MN', 'MNG'], '蒙古',
-        rawBase,
-      ]
-    : rawBase;
+  const baseExpr: unknown[] = i18n.language === 'zh-Hant' ? (['match', countryCode,
+          ['KP', 'PRK'], '朝鮮',
+          ['KR', 'KOR'], '韓國',
+          ['MN', 'MNG'], '蒙古',
+          rawBase,
+        ]) : (isZh
+      ? ['match', countryCode,
+          ['KP', 'PRK'], '朝鲜',
+          ['KR', 'KOR'], '韩国',
+          ['MN', 'MNG'], '蒙古',
+          rawBase,
+        ]
+      : rawBase);
 
   const isTwn: unknown[] = ['any',
     ['==', ['get', 'iso_a2'], 'TW'],
@@ -3503,13 +3509,13 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           <div className="cuber-step-meta is-selectable">{(nameZhMap?.get(currentComp.id)?.city_zh && isZh) ? nameZhMap.get(currentComp.id)!.city_zh : localizeCity(currentComp.city, isZh)}, {countryName(currentComp.country_iso2, isZh)} · {currentComp.start_date}</div>
           {prevComp && (
             <div className="cuber-step-leg is-selectable">
-              {fmtDistance(legKm, isZh)} · {isZh ? `距上场 ${legDays} 天` : `${legDays}d since prev`}
+              {fmtDistance(legKm, isZh)} · {i18n.language === 'zh-Hant' ? (`距上場 ${legDays} 天`) : (isZh ? `距上场 ${legDays} 天` : `${legDays}d since prev`)}
             </div>
           )}
           {skippedComps.length > 0 && cuber && (
             <div className="cuber-skipped">
               <span title={skippedComps.map(s => s.name || s.id).join('\n')}>
-                {isZh ? `${skippedComps.length} 场未加载` : `${skippedComps.length} not loaded`}
+                {i18n.language === 'zh-Hant' ? (`${skippedComps.length} 場未載入`) : (isZh ? `${skippedComps.length} 场未加载` : `${skippedComps.length} not loaded`)}
               </span>
               <button
                 className="cuber-skipped-retry"
@@ -3527,7 +3533,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         <div className="cuber-record-overlay" role="status">
           <span className="cuber-record-dot" aria-hidden="true" />
           <span className="cuber-record-text">
-            {isZh ? `录制中 ${Math.round(recordProgress * 100)}%` : `Recording ${Math.round(recordProgress * 100)}%`}
+            {i18n.language === 'zh-Hant' ? (`錄製中 ${Math.round(recordProgress * 100)}%`) : (isZh ? `录制中 ${Math.round(recordProgress * 100)}%` : `Recording ${Math.round(recordProgress * 100)}%`)}
           </span>
           <button
             className="cuber-record-cancel"
@@ -3662,7 +3668,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         >
           {mode === 'upcoming' && (
             <span className="globe-statusbar-stats">
-              <span>{upcomingStats.comps} {isZh ? (includePast ? '近期' : '比赛') : (includePast ? 'upcoming' : 'comps')}</span>
+              <span>{upcomingStats.comps} {i18n.language === 'zh-Hant' ? ((includePast ? '近期' : '比賽')) : (isZh ? (includePast ? '近期' : '比赛') : (includePast ? 'upcoming' : 'comps'))}</span>
               {includePast && (
                 <>
                   <span className="globe-statusbar-stats-sep">·</span>
@@ -3698,7 +3704,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
             <h2 className="bin-panel-title">
               {selectedComps.length === 1
                 ? <a href={selectedComps[0].url} target="_blank" rel="noopener noreferrer" className="bin-panel-title-link"><Flag iso2={selectedComps[0].country} className="bin-panel-flag" />{localizeCompName(selectedComps[0].id, selectedComps[0].name)}</a>
-                : (isZh ? `${selectedComps.length} 场比赛` : `${selectedComps.length} competitions`)}
+                : (i18n.language === 'zh-Hant' ? (`${selectedComps.length} 場比賽`) : (isZh ? `${selectedComps.length} 场比赛` : `${selectedComps.length} competitions`))}
             </h2>
             <div className="bin-panel-list">
               {selectedComps.map((c, idx) => (

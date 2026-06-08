@@ -114,7 +114,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const searchParams = useSearchParams();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('提交复盘', 'Submit Reconstruction');
+  useDocumentTitle('提交复盘', 'Submit Reconstruction', "提交覆盤");
 
   const langPrefix = params?.lang === 'zh' || params?.lang === 'en' ? `/${params.lang}` : ((i18n.language.startsWith('zh') ? '/zh' : '/en'));
 
@@ -502,7 +502,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             );
             if (sibling && sibling.average != null) {
               foundAvg = sibling.average;
-              foundSource = isZh ? `自动:同轮 #${sibling.solveNum ?? '?'}` : `auto: same round #${sibling.solveNum ?? '?'}`;
+              foundSource = i18n.language === 'zh-Hant' ? (`自動:同輪 #${sibling.solveNum ?? '?'}`) : (isZh ? `自动:同轮 #${sibling.solveNum ?? '?'}` : `auto: same round #${sibling.solveNum ?? '?'}`);
             }
           } catch { /* fall through */ }
         }
@@ -603,7 +603,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               const v = attempts[idx];
               if (v != null && v >= 0) {
                 foundTime = v;
-                foundSource = isZh ? `自动:${label}` : `auto: ${label}`;
+                foundSource = i18n.language === 'zh-Hant' ? (`自動:${label}`) : (isZh ? `自动:${label}` : `auto: ${label}`);
               }
             }
           } catch { /* fall through */ }

@@ -251,7 +251,7 @@ export default function VisualCubeStagesPage() {
   const params = useParams();
   const lang = typeof params?.lang === 'string' ? params.lang : 'en';
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('阶段可视化', 'Visualcube Stages');
+  useDocumentTitle('阶段可视化', 'Visualcube Stages', "階段視覺化");
 
   return (
     <div className="vcs-page">

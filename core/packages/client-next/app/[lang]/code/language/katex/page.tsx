@@ -579,7 +579,7 @@ export default function KatexIntroPage() {
 
   useDocumentTitle(
     'KaTeX : 浏览器里 100× 速度的 LaTeX 数学渲染 — 2013→2026',
-    'KaTeX : LaTeX math in the browser at 100× MathJax speed — 2013→2026',
+    'KaTeX : LaTeX math in the browser at 100× MathJax speed — 2013→2026', "KaTeX : 瀏覽器裡 100× 速度的 LaTeX 數學渲染 — 2013→2026"
   );
 
   useEffect(() => {

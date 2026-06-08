@@ -28,6 +28,7 @@ import {
 import { m2pSolve, prewarm } from '../_lib/m2p-bridge';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 // Upstream twist.js: 16 corner stickers (8 top-layer + 8 bottom-layer) used to
 // enumerate twist pairs. Index < 8 = top layer, >= 8 = bottom layer.
@@ -54,7 +55,7 @@ const DEFAULT_OPTIONS: TwistOptions = {
 export default function TwistTrainerPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('翻角公式训练', 'Corner Twist Trainer');
+  useDocumentTitle('翻角公式训练', 'Corner Twist Trainer', "翻角公式訓練");
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);
@@ -154,9 +155,9 @@ export default function TwistTrainerPage(): JSX.Element {
 
     setScrambles(out);
     setInfo(
-      isZh
-        ? `随机生成 ${out.length} 条打乱，遍历缓冲外存在两个翻角的情况。`
-        : `Generated ${out.length} scrambles, enumerating two-corner-twist cases outside the buffer.`,
+      i18n.language === 'zh-Hant' ? (`隨機生成 ${out.length} 條打亂，遍歷緩衝外存在兩個翻角的情況。`) : (isZh
+                ? `随机生成 ${out.length} 条打乱，遍历缓冲外存在两个翻角的情况。`
+                : `Generated ${out.length} scrambles, enumerating two-corner-twist cases outside the buffer.`),
     );
     setBusy(false);
   }, [config.cBuf, opts, isZh]);

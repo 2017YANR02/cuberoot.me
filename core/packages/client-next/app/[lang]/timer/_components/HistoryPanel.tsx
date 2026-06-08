@@ -11,6 +11,7 @@ import type { TagId } from '../_lib/storage/auto_tag';
 import { ClearButton } from '@/components/ClearButton';
 import { RecordBadge } from '@/components/RecordBadge';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   solves: Solve[];
@@ -453,9 +454,9 @@ export default function HistoryPanel({
     if (!onBulkDelete) return;
     const ids = Array.from(bulkSelected);
     if (ids.length === 0) return;
-    const msg = isZh
-      ? `确认删除选中的 ${ids.length} 条成绩？此操作无法撤销。`
-      : `Delete ${ids.length} selected solve${ids.length === 1 ? '' : 's'}? This cannot be undone.`;
+    const msg = i18n.language === 'zh-Hant' ? (`確認刪除選中的 ${ids.length} 條成績？此操作無法撤銷。`) : (isZh
+          ? `确认删除选中的 ${ids.length} 条成绩？此操作无法撤销。`
+          : `Delete ${ids.length} selected solve${ids.length === 1 ? '' : 's'}? This cannot be undone.`);
     // eslint-disable-next-line no-alert
     if (!window.confirm(msg)) return;
     onBulkDelete(ids);
@@ -740,7 +741,7 @@ export default function HistoryPanel({
         </div>
         {hasAnyFilter && (
           <span className="history-search-count">
-            {isZh ? `${matchCount} 条匹配` : `${matchCount} matches`}
+            {i18n.language === 'zh-Hant' ? (`${matchCount} 條匹配`) : (isZh ? `${matchCount} 条匹配` : `${matchCount} matches`)}
           </span>
         )}
       </div>
@@ -777,9 +778,9 @@ export default function HistoryPanel({
           </button>
           {activeFilterCount > 0 && (
             <span style={{ fontSize: 11, color: '#cde' }}>
-              {isZh
-                ? `${activeFilterCount} 个筛选生效`
-                : `${activeFilterCount} filter${activeFilterCount === 1 ? '' : 's'} active`}
+              {i18n.language === 'zh-Hant' ? (`${activeFilterCount} 個篩選生效`) : (isZh
+                                          ? `${activeFilterCount} 个筛选生效`
+                                          : `${activeFilterCount} filter${activeFilterCount === 1 ? '' : 's'} active`)}
             </span>
           )}
           {hasAnyFilter && (
@@ -916,7 +917,7 @@ export default function HistoryPanel({
                       aria-pressed={active}
                       style={chipBtn(active)}
                     >
-                      {isZh ? def.labelZh : def.labelEn}
+                      {i18n.language === 'zh-Hant' ? (def.labelZhHant ?? def.labelZh) : (isZh ? def.labelZh : def.labelEn)}
                     </button>
                   );
                 })}
@@ -935,9 +936,9 @@ export default function HistoryPanel({
             background: '#15151a',
           }}
         >
-          {isZh
-            ? `选择 2 个成绩进行对比 (已选 ${selectedIds.length}/2)`
-            : `Pick 2 solves to compare (${selectedIds.length}/2 selected)`}
+          {i18n.language === 'zh-Hant' ? (`選擇 2 個成績進行對比 (已選 ${selectedIds.length}/2)`) : (isZh
+                              ? `选择 2 个成绩进行对比 (已选 ${selectedIds.length}/2)`
+                              : `Pick 2 solves to compare (${selectedIds.length}/2 selected)`)}
           {compareError && (
             <div style={{ color: '#d97a7a', marginTop: 2 }}>{compareError}</div>
           )}
@@ -958,9 +959,9 @@ export default function HistoryPanel({
           }}
         >
           <span>
-            {isZh
-              ? `已选 ${bulkSelected.size} 条`
-              : `${bulkSelected.size} selected`}
+            {i18n.language === 'zh-Hant' ? (`已選 ${bulkSelected.size} 條`) : (isZh
+                                    ? `已选 ${bulkSelected.size} 条`
+                                    : `${bulkSelected.size} selected`)}
           </span>
           <button
             type="button"
@@ -975,7 +976,7 @@ export default function HistoryPanel({
               fontSize: 11,
             }}
           >
-            {isZh ? `全选可见 (${matchCount})` : `Select all visible (${matchCount})`}
+            {i18n.language === 'zh-Hant' ? (`全選可見 (${matchCount})`) : (isZh ? `全选可见 (${matchCount})` : `Select all visible (${matchCount})`)}
           </button>
           <button
             type="button"
@@ -1132,7 +1133,7 @@ export default function HistoryPanel({
                   const shown = ts.slice(0, cap);
                   const overflow = ts.length - shown.length;
                   const fullList = ts
-                    .map(tid => isZh ? TAG_DEFS[tid].labelZh : TAG_DEFS[tid].labelEn)
+                    .map(tid => i18n.language === 'zh-Hant' ? (TAG_DEFS[tid].labelZhHant ?? TAG_DEFS[tid].labelZh) : (isZh ? TAG_DEFS[tid].labelZh : TAG_DEFS[tid].labelEn))
                     .join(' · ');
                   return (
                     <span
@@ -1148,7 +1149,7 @@ export default function HistoryPanel({
                         }
                         return (
                           <span key={tid} style={tagChipStyle(def.tone)}>
-                            {isZh ? def.labelZh : def.labelEn}
+                            {i18n.language === 'zh-Hant' ? (def.labelZhHant ?? def.labelZh) : (isZh ? def.labelZh : def.labelEn)}
                           </span>
                         );
                       })}
@@ -1267,9 +1268,9 @@ export default function HistoryPanel({
             }}
           >
             <Trash2 size={12} />
-            {isZh
-              ? `删除选中 ${bulkSelected.size}`
-              : `Delete ${bulkSelected.size} selected`}
+            {i18n.language === 'zh-Hant' ? (`刪除選中 ${bulkSelected.size}`) : (isZh
+                                    ? `删除选中 ${bulkSelected.size}`
+                                    : `Delete ${bulkSelected.size} selected`)}
           </button>
         </div>
       )}

@@ -19,8 +19,12 @@ type StageId = 'F' | 'tower' | 'K' | 'lattice' | 'project';
 interface Stage {
   id: StageId;
   num: number;
-  title: { zh: string; en: string };
-  oneLine: { zh: string; en: string };
+  title: { zh: string; en: string
+    zhHant?: string;
+ };
+  oneLine: { zh: string; en: string
+    zhHant?: string;
+ };
   detail: { zh: React.ReactNode; en: React.ReactNode };
   Schematic: () => React.ReactElement;
 }
@@ -109,11 +113,13 @@ const STAGES: Stage[] = [
   {
     id: 'F',
     num: 1,
-    title: { zh: '基场 F', en: 'Base field F'
+    title: { zh: '基场 F', en: 'Base field F',
+        zhHant: "基場 F"
     },
     oneLine: {
       zh: '三次循环、全实数域,起点',
-      en: 'cyclic cubic, totally real'
+      en: 'cyclic cubic, totally real',
+        zhHant: "三次迴圈、全實數域,起點"
     },
     Schematic: SchF,
     detail: {
@@ -136,11 +142,13 @@ const STAGES: Stage[] = [
   {
     id: 'tower',
     num: 2,
-    title: { zh: '无支 pro-3 塔', en: 'Unramified pro-3 tower'
+    title: { zh: '无支 pro-3 塔', en: 'Unramified pro-3 tower',
+        zhHant: "無支 pro-3 塔"
     },
     oneLine: {
       zh: '让度数 [Fⱼ : ℚ] → ∞,根判别式保持常数',
-      en: 'degrees [Fⱼ : ℚ] → ∞, root discriminant stays constant'
+      en: 'degrees [Fⱼ : ℚ] → ∞, root discriminant stays constant',
+        zhHant: "讓度數 [Fⱼ : ℚ] → ∞,根判別式保持常數"
     },
     Schematic: SchTower,
     detail: {
@@ -167,11 +175,13 @@ const STAGES: Stage[] = [
   {
     id: 'K',
     num: 3,
-    title: { zh: 'CM 扩张 Kⱼ = Fⱼ(i)', en: 'CM extension Kⱼ = Fⱼ(i)'
+    title: { zh: 'CM 扩张 Kⱼ = Fⱼ(i)', en: 'CM extension Kⱼ = Fⱼ(i)',
+        zhHant: "CM 擴張 Kⱼ = Fⱼ(i)"
     },
     oneLine: {
       zh: '加入 i,得到复共轭非平凡的 CM 域',
-      en: 'adjoin i — get a CM field where complex conjugation is non-trivial'
+      en: 'adjoin i — get a CM field where complex conjugation is non-trivial',
+        zhHant: "加入 i,得到複共軛非平凡的 CM 域"
     },
     Schematic: SchK,
     detail: {
@@ -199,7 +209,8 @@ const STAGES: Stage[] = [
     title: { zh: 'Minkowski 格 Λⱼ', en: 'Minkowski lattice Λⱼ' },
     oneLine: {
       zh: '把 Kⱼ 嵌入 ℂ^fⱼ,得到高维格',
-      en: 'embed Kⱼ ↪ ℂ^fⱼ as a high-dim lattice'
+      en: 'embed Kⱼ ↪ ℂ^fⱼ as a high-dim lattice',
+        zhHant: "把 Kⱼ 嵌入 ℂ^fⱼ,得到高維格"
     },
     Schematic: SchLattice,
     detail: {
@@ -226,11 +237,13 @@ const STAGES: Stage[] = [
   {
     id: 'project',
     num: 5,
-    title: { zh: '多圆盘切 + 投影 → Pⱼ', en: 'Polydisc cut + project → Pⱼ'
+    title: { zh: '多圆盘切 + 投影 → Pⱼ', en: 'Polydisc cut + project → Pⱼ',
+        zhHant: "多圓盤切 + 投影 → Pⱼ"
     },
     oneLine: {
       zh: '切出有限子集,投影到第一坐标得 ℝ² 点集',
-      en: 'restrict to finite subset, project to first coord → ℝ² point set'
+      en: 'restrict to finite subset, project to first coord → ℝ² point set',
+        zhHant: "切出有限子集,投影到第一座標得 ℝ² 點集"
     },
     Schematic: SchProject,
     detail: {
@@ -289,11 +302,11 @@ export default function ConstructionFlow() {
               >
                 <div className="ud-flow-card-head">
                   <span className="ud-flow-num">{s.num}</span>
-                  <span className="ud-flow-title">{(i18n.language.startsWith('zh') ? s.title.zh : s.title.en)}</span>
+                  <span className="ud-flow-title">{(i18n.language === 'zh-Hant' ? (s.title.zhHant ?? s.title.zh) : (i18n.language.startsWith('zh') ? s.title.zh : s.title.en))}</span>
                   {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </div>
                 <div className="ud-flow-card-schem"><s.Schematic /></div>
-                <div className="ud-flow-card-oneline">{(i18n.language.startsWith('zh') ? s.oneLine.zh : s.oneLine.en)}</div>
+                <div className="ud-flow-card-oneline">{(i18n.language === 'zh-Hant' ? (s.oneLine.zhHant ?? s.oneLine.zh) : (i18n.language.startsWith('zh') ? s.oneLine.zh : s.oneLine.en))}</div>
               </button>
               {i < STAGES.length - 1 && <div className="ud-flow-arrow" aria-hidden>→</div>}
             </div>
@@ -307,7 +320,7 @@ export default function ConstructionFlow() {
           <div className="ud-flow-detail">
             <div className="ud-flow-detail-head">
               <span className="ud-flow-detail-num">Stage {s.num}</span>
-              <span className="ud-flow-detail-title">{(i18n.language.startsWith('zh') ? s.title.zh : s.title.en)}</span>
+              <span className="ud-flow-detail-title">{(i18n.language === 'zh-Hant' ? (s.title.zhHant ?? s.title.zh) : (i18n.language.startsWith('zh') ? s.title.zh : s.title.en))}</span>
             </div>
             <div className="ud-flow-detail-body">
               {(i18n.language.startsWith('zh') ? s.detail.zh : s.detail.en)}

@@ -166,10 +166,10 @@ export function CountryInput(props: CountryInputProps) {
     if (multiSingle) {
       const t = selected[0];
       return isContinentCode(t)
-        ? ((i18n.language.startsWith('zh') ? CONTINENT_NAMES[t].zh : CONTINENT_NAMES[t].en))
+        ? ((i18n.language === 'zh-Hant' ? (CONTINENT_NAMES[t].zhHant ?? CONTINENT_NAMES[t].zh) : (i18n.language.startsWith('zh') ? CONTINENT_NAMES[t].zh : CONTINENT_NAMES[t].en)))
         : countryName(t, isZh);
     }
-    if (selected.length >= 2) return isZh ? `已选 ${selected.length} 项` : `${selected.length} selected`;
+    if (selected.length >= 2) return i18n.language === 'zh-Hant' ? (`已選 ${selected.length} 項`) : (isZh ? `已选 ${selected.length} 项` : `${selected.length} selected`);
     return '';
   })();
 
@@ -177,7 +177,7 @@ export function CountryInput(props: CountryInputProps) {
 
   const renderChip = (token: string) => {
     if (isContinentCode(token)) {
-      const name = (i18n.language.startsWith('zh') ? CONTINENT_NAMES[token].zh : CONTINENT_NAMES[token].en);
+      const name = (i18n.language === 'zh-Hant' ? (CONTINENT_NAMES[token].zhHant ?? CONTINENT_NAMES[token].zh) : (i18n.language.startsWith('zh') ? CONTINENT_NAMES[token].zh : CONTINENT_NAMES[token].en));
       return (
         <span key={`cont-${token}`} className="country-input-chip country-input-chip--continent">
           <Globe size={12} className="country-input-continent-icon" aria-hidden />
@@ -249,7 +249,7 @@ export function CountryInput(props: CountryInputProps) {
                 onClick={() => handleContinentClick(continent)}
               >
                 <Globe size={14} className="country-input-continent-icon" aria-hidden />
-                <span className="country-input-name">{(i18n.language.startsWith('zh') ? CONTINENT_NAMES[continent].zh : CONTINENT_NAMES[continent].en)}</span>
+                <span className="country-input-name">{(i18n.language === 'zh-Hant' ? (CONTINENT_NAMES[continent].zhHant ?? CONTINENT_NAMES[continent].zh) : (i18n.language.startsWith('zh') ? CONTINENT_NAMES[continent].zh : CONTINENT_NAMES[continent].en))}</span>
                 <span className="country-input-count">({iso2s.length})</span>
                 {active && <span className="country-input-check" aria-hidden>✓</span>}
               </button>

@@ -11,6 +11,7 @@
  */
 import { useMemo, useState } from 'react';
 import { MathText } from './Tex';
+import i18n from "@/i18n/i18n-client";
 
 interface Row {
   d: number;
@@ -59,7 +60,7 @@ function fmt(n: number): string {
 interface Props { isZh: boolean; }
 
 export default function DistanceDistribution({ isZh }: Props) {
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const [mode, setMode] = useState<'count' | 'cum'>('count');
   const [hover, setHover] = useState<number | null>(null);
 
@@ -101,10 +102,10 @@ export default function DistanceDistribution({ isZh }: Props) {
     <div className="god-dist-wrap">
       <div className="god-dist-tabs">
         <button className={`god-metric-tab ${mode === 'count' ? 'is-on' : ''}`} onClick={() => setMode('count')}>
-          {t('状态数 (log)', 'Count (log)')}
+          {t('状态数 (log)', 'Count (log)', "狀態數 (log)")}
         </button>
         <button className={`god-metric-tab ${mode === 'cum' ? 'is-on' : ''}`} onClick={() => setMode('cum')}>
-          {t('累积占比', 'Cumulative %')}
+          {t('累积占比', 'Cumulative %', "累積佔比")}
         </button>
       </div>
 
@@ -114,21 +115,21 @@ export default function DistanceDistribution({ isZh }: Props) {
           <div className="god-dist-stat-num">{stats.avg.toFixed(2)} <span>HTM</span></div>
         </div>
         <div>
-          <div className="god-dist-stat-label">{t('中位数', 'Median')}</div>
+          <div className="god-dist-stat-label">{t('中位数', 'Median', "中位數")}</div>
           <div className="god-dist-stat-num">{stats.median} <span>HTM</span></div>
         </div>
         <div>
-          <div className="god-dist-stat-label">{t('FMC 当前 WR', 'Current FMC WR')}</div>
+          <div className="god-dist-stat-label">{t('FMC 当前 WR', 'Current FMC WR', "FMC 當前 WR")}</div>
           <div className="god-dist-stat-num">16 <span>HTM</span></div>
         </div>
         <div>
-          <div className="god-dist-stat-label">{t('上帝之数 (上限)', "God's number (ceiling)")}</div>
+          <div className="god-dist-stat-label">{t('上帝之数 (上限)', "God's number (ceiling)", "上帝之數 (上限)")}</div>
           <div className="god-dist-stat-num">20 <span>HTM</span></div>
         </div>
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} className="god-dist-svg" preserveAspectRatio="xMidYMid meet" role="img"
-           aria-label={t('三阶距离分布', '3×3 distance distribution')}>
+           aria-label={t('三阶距离分布', '3×3 distance distribution', "三階距離分佈")}>
         {/* gridlines */}
         {[0, 0.25, 0.5, 0.75, 1].map((p) => {
           const y = PAD_T + innerH * (1 - p);
@@ -176,7 +177,7 @@ export default function DistanceDistribution({ isZh }: Props) {
         {/* milestone lines */}
         {[
           { x: 16, label: 'FMC WR' },
-          { x: 20, label: t("上帝之数", "God's #") },
+          { x: 20, label: t("上帝之数", "God's #", "上帝之數") },
         ].map((m) => {
           const i = ROWS.findIndex((r) => r.d === m.x);
           const x = PAD_L + (i + 0.5) * barW;
@@ -192,7 +193,7 @@ export default function DistanceDistribution({ isZh }: Props) {
         })}
         {/* axis label */}
         <text x={(PAD_L + W - PAD_R) / 2} y={H - 6} fontSize="11" textAnchor="middle" fill="var(--god-text-sub)">
-          {t('最少步数 d (HTM)', 'minimum solution length d (HTM)')}
+          {t('最少步数 d (HTM)', 'minimum solution length d (HTM)', "最少步數 d (HTM)")}
         </text>
       </svg>
 
@@ -205,8 +206,8 @@ export default function DistanceDistribution({ isZh }: Props) {
             <>
               <strong>d = {r.d}:</strong>{' '}
               {r.exact
-                ? <>{fmt(r.count)} {t('个状态', 'states')}</>
-                : <>≈ {fmt(c)} {t('个状态(估算)', 'states (estimated)')}</>}
+                ? <>{fmt(r.count)} {t('个状态', 'states', "個狀態")}</>
+                : <>≈ {fmt(c)} {t('个状态(估算)', 'states (estimated)', "個狀態(估算)")}</>}
               {' · '}
               {pct < 0.001 ? `< 0.001%` : `${pct.toFixed(3)}%`}
               {r.exact ? ' (✓ 精确, cube20.org)' : ' (上界已证 ≤ 20)'}
@@ -216,7 +217,7 @@ export default function DistanceDistribution({ isZh }: Props) {
           <span className="god-growth-hint">
             <MathText>{t(
               'hover 某个深度看精确数字。d=0..15 是 Rokicki 团队公开的精确分布;d=16..20 因为总和约束被反推为估算。99% 的随机三阶状态需要 17-19 步最优。',
-              'Hover a depth for exact values. d=0..15 are Rokicki\'s published exact counts; d=16..20 are estimates from the total-sum constraint. 99% of random 3×3 states need 17-19 moves optimally.',
+              'Hover a depth for exact values. d=0..15 are Rokicki\'s published exact counts; d=16..20 are estimates from the total-sum constraint. 99% of random 3×3 states need 17-19 moves optimally.', "hover 某個深度看精確數字。d=0..15 是 Rokicki 團隊公開的精確分佈;d=16..20 因為總和約束被反推為估算。99% 的隨機三階狀態需要 17-19 步最優。"
             )}</MathText>
           </span>
         )}
@@ -225,7 +226,7 @@ export default function DistanceDistribution({ isZh }: Props) {
       <p className="god-dist-caption">
         <MathText>{t(
           '这张表就是"最少步分布":随机抽一个三阶打乱,问它最少几步能解。绝大多数 (>99%) 在 17-19 步。恰好 20 步的"超难"状态约占 ~10⁻¹¹——也就是大约 ~4.9 亿个 antipode 状态,在 4.3 × 10¹⁹ 总状态里几乎找不到。FMC WR 16 步几乎不可能复刻,因为对应的 antipode 集太稀有。',
-          'This is the "minimum-solution-length distribution": pick a random 3×3 state, ask how few moves it needs. Over 99% need 17-19. The exact-20 antipodes are about 10⁻¹¹ of all states (~490 million antipodes out of 4.3 × 10¹⁹). The 16-move FMC WR is essentially unreproducible because that antipode class is so rare.',
+          'This is the "minimum-solution-length distribution": pick a random 3×3 state, ask how few moves it needs. Over 99% need 17-19. The exact-20 antipodes are about 10⁻¹¹ of all states (~490 million antipodes out of 4.3 × 10¹⁹). The 16-move FMC WR is essentially unreproducible because that antipode class is so rare.', "這張表就是\"最少步分佈\":隨機抽一個三階打亂,問它最少幾步能解。絕大多數 (>99%) 在 17-19 步。恰好 20 步的\"超難\"狀態約佔 ~10⁻¹¹——也就是大約 ~4.9 億個 antipode 狀態,在 4.3 × 10¹⁹ 總狀態裡幾乎找不到。FMC WR 16 步幾乎不可能復刻,因為對應的 antipode 集太稀有。"
         )}</MathText>
       </p>
     </div>

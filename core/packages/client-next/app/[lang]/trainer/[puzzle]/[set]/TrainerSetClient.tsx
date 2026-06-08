@@ -23,7 +23,7 @@ export default function TrainerSetClient() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('公式训练', 'Algorithm Trainer');
+  useDocumentTitle('公式训练', 'Algorithm Trainer', "公式訓練");
 
   const puzzle = resolveAlgPuzzle(puzzleParam);   // 接受 event code(333)或 legacy puzzle 名(3x3)
   const meta = puzzle ? getAlgSetMeta(puzzle, setSlug) : undefined;
@@ -63,7 +63,7 @@ export default function TrainerSetClient() {
           <ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}
         </Link>
         <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>
-          {puzzle} · {(i18n.language.startsWith('zh') ? meta.zh : meta.en)}
+          {puzzle} · {(i18n.language === 'zh-Hant' ? ((meta as { zhHant?: string }).zhHant ?? meta.zh) : (i18n.language.startsWith('zh') ? meta.zh : meta.en))}
         </span>
         <button
           className={`trainer-start-btn${!canStart ? ' is-disabled' : ''}`}

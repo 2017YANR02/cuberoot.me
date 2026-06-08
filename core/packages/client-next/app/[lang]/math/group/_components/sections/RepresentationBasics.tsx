@@ -35,12 +35,15 @@ type IrrepRow = {
   nameZh: string;
   nameEn: string;
   dim: number;
-  values: ComplexNum[]; // one per conjugacy class
+  values: ComplexNum[];
+    nameZhHant?: string;
 };
 
 type CharTableData = {
   groupOrder: number;
-  classes: { nameZh: string; nameEn: string; size: number }[];
+  classes: { nameZh: string; nameEn: string; size: number
+      nameZhHant?: string;
+ }[];
   irreps: IrrepRow[];
   psiFixed: number[]; // fixed points per class
 };
@@ -54,8 +57,12 @@ const S3_DATA: CharTableData = {
   ],
   irreps: [
     { nameZh: '平凡', nameEn: 'trivial', dim: 1, values: [C1, C1, C1] },
-    { nameZh: '符号', nameEn: 'sign', dim: 1, values: [C1, CN1, C1] },
-    { nameZh: '标准(2维)', nameEn: 'standard(2-dim)', dim: 2, values: [C2, C0, CN1Half] },
+    { nameZh: '符号', nameEn: 'sign', dim: 1, values: [C1, CN1, C1],
+        nameZhHant: "符號"
+    },
+    { nameZh: '标准(2维)', nameEn: 'standard(2-dim)', dim: 2, values: [C2, C0, CN1Half],
+        nameZhHant: "標準(2維)"
+    },
   ],
   psiFixed: [3, 1, 0],
 };
@@ -71,10 +78,18 @@ const S4_DATA: CharTableData = {
   ],
   irreps: [
     { nameZh: '平凡', nameEn: 'trivial', dim: 1, values: [C1, C1, C1, C1, C1] },
-    { nameZh: '符号', nameEn: 'sign', dim: 1, values: [C1, CN1, C1, C1, CN1] },
-    { nameZh: '标准V(3维)', nameEn: 'standard V(3-dim)', dim: 3, values: [C3, C1, CN1, C0, CN1] },
-    { nameZh: '标准⊗符号(3维)', nameEn: 'standard⊗sign(3-dim)', dim: 3, values: [C3, CN1, CN1, C0, C1] },
-    { nameZh: '2维', nameEn: '2-dim', dim: 2, values: [C2, C0, C2, CN1, C0] },
+    { nameZh: '符号', nameEn: 'sign', dim: 1, values: [C1, CN1, C1, C1, CN1],
+        nameZhHant: "符號"
+    },
+    { nameZh: '标准V(3维)', nameEn: 'standard V(3-dim)', dim: 3, values: [C3, C1, CN1, C0, CN1],
+        nameZhHant: "標準V(3維)"
+    },
+    { nameZh: '标准⊗符号(3维)', nameEn: 'standard⊗sign(3-dim)', dim: 3, values: [C3, CN1, CN1, C0, C1],
+        nameZhHant: "標準⊗符號(3維)"
+    },
+    { nameZh: '2维', nameEn: '2-dim', dim: 2, values: [C2, C0, C2, CN1, C0],
+        nameZhHant: "2維"
+    },
   ],
   psiFixed: [4, 2, 0, 1, 0],
 };
@@ -91,7 +106,9 @@ const A4_DATA: CharTableData = {
     { nameZh: '平凡', nameEn: 'trivial', dim: 1, values: [C1, C1, C1, C1] },
     { nameZh: 'χ_ω', nameEn: 'χ_ω', dim: 1, values: [C1, C1, OMEGA, OMEGA2] },
     { nameZh: 'χ_ω²', nameEn: 'χ_ω²', dim: 1, values: [C1, C1, OMEGA2, OMEGA] },
-    { nameZh: '标准(3维)', nameEn: 'standard(3-dim)', dim: 3, values: [C3, CN1, C0, C0] },
+    { nameZh: '标准(3维)', nameEn: 'standard(3-dim)', dim: 3, values: [C3, CN1, C0, C0],
+        nameZhHant: "標準(3維)"
+    },
   ],
   psiFixed: [4, 0, 1, 1],
 };
@@ -158,13 +175,27 @@ function decompose3(v: [number, number, number]): {
 
 // Apply permutation to R^3 vector: new[i] = v[pi^{-1}(i)]
 // Permutations of {0,1,2}: S3 generators
-const S3_GENERATORS: Array<{ nameZh: string; nameEn: string; perm: [number, number, number] }> = [
-  { nameZh: '恒等 e', nameEn: 'identity e', perm: [0, 1, 2] },
-  { nameZh: '对换 (12)', nameEn: 'transposition (12)', perm: [1, 0, 2] },
-  { nameZh: '轮换 (123)', nameEn: '3-cycle (123)', perm: [2, 0, 1] },
-  { nameZh: '轮换 (132)', nameEn: '3-cycle (132)', perm: [1, 2, 0] },
-  { nameZh: '对换 (13)', nameEn: 'transposition (13)', perm: [2, 1, 0] },
-  { nameZh: '对换 (23)', nameEn: 'transposition (23)', perm: [0, 2, 1] },
+const S3_GENERATORS: Array<{ nameZh: string; nameEn: string; perm: [number, number, number]
+        nameZhHant?: string;
+ }> = [
+  { nameZh: '恒等 e', nameEn: 'identity e', perm: [0, 1, 2],
+      nameZhHant: "恆等 e"
+},
+  { nameZh: '对换 (12)', nameEn: 'transposition (12)', perm: [1, 0, 2],
+      nameZhHant: "對換 (12)"
+},
+  { nameZh: '轮换 (123)', nameEn: '3-cycle (123)', perm: [2, 0, 1],
+      nameZhHant: "輪換 (123)"
+},
+  { nameZh: '轮换 (132)', nameEn: '3-cycle (132)', perm: [1, 2, 0],
+      nameZhHant: "輪換 (132)"
+},
+  { nameZh: '对换 (13)', nameEn: 'transposition (13)', perm: [2, 1, 0],
+      nameZhHant: "對換 (13)"
+},
+  { nameZh: '对换 (23)', nameEn: 'transposition (23)', perm: [0, 2, 1],
+      nameZhHant: "對換 (23)"
+},
 ];
 
 function applyPerm(v: [number, number, number], perm: [number, number, number]): [number, number, number] {

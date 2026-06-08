@@ -28,6 +28,8 @@ interface GroupData {
   // Why not nilpotent (short note)
   notNilpotentReasonEn?: string;
   notNilpotentReasonZh?: string;
+    labelZhHant?: string;
+    notNilpotentReasonZhHant?: string;
 }
 
 const E_TERM: SeriesTerm = { name: '{e}', nameTex: '\\{e\\}', order: 1 };
@@ -52,7 +54,9 @@ const GROUP_DATA: Record<GroupId, GroupData> = {
     nilpClass: null,
     notNilpotentReasonEn: 'γ₃ = [S₃, A₃] = A₃ ≠ {e} — series stabilizes; Sylow-2 subgroups (three of them) not normal.',
     notNilpotentReasonZh: 'γ₃ = [S₃, A₃] = A₃ ≠ {e}，下中心级数稳定；Sylow-2 子群（共三个）不正规。',
-  },
+      labelZhHant: "S₃ (3元置換群)",
+      notNilpotentReasonZhHant: "γ₃ = [S₃, A₃] = A₃ ≠ {e}，下中心級數穩定；Sylow-2 子群（共三個）不正規。"
+},
   S4: {
     labelEn: 'S₄ (sym. on 4)', labelZh: 'S₄ (4元置换群)',
     order: 24,
@@ -73,7 +77,9 @@ const GROUP_DATA: Record<GroupId, GroupData> = {
     nilpClass: null,
     notNilpotentReasonEn: 'γ₃ = [S₄, A₄] = A₄ ≠ {e} — lower central stabilizes at A₄; Sylow-3 subgroups not normal.',
     notNilpotentReasonZh: 'γ₃ = [S₄, A₄] = A₄ ≠ {e}，下中心级数稳定在 A₄；Sylow-3 子群不正规。',
-  },
+      labelZhHant: "S₄ (4元置換群)",
+      notNilpotentReasonZhHant: "γ₃ = [S₄, A₄] = A₄ ≠ {e}，下中心級數穩定在 A₄；Sylow-3 子群不正規。"
+},
   A4: {
     labelEn: 'A₄ (alt. on 4)', labelZh: 'A₄ (4元交替群)',
     order: 12,
@@ -93,7 +99,8 @@ const GROUP_DATA: Record<GroupId, GroupData> = {
     nilpClass: null,
     notNilpotentReasonEn: 'γ₃ = [A₄, V₄] = V₄ ≠ {e} — series stabilizes; four Sylow-3 subgroups (not normal).',
     notNilpotentReasonZh: 'γ₃ = [A₄, V₄] = V₄ ≠ {e}，级数稳定；有四个 Sylow-3 子群（不正规）。',
-  },
+      notNilpotentReasonZhHant: "γ₃ = [A₄, V₄] = V₄ ≠ {e}，級數穩定；有四個 Sylow-3 子群（不正規）。"
+},
   A5: {
     labelEn: 'A₅ (alt. on 5)', labelZh: 'A₅ (5元交替群)',
     order: 60,
@@ -111,7 +118,8 @@ const GROUP_DATA: Record<GroupId, GroupData> = {
     nilpClass: null,
     notNilpotentReasonEn: 'A₅ is simple nonabelian — derived series stabilizes at A₅ itself; not solvable and not nilpotent.',
     notNilpotentReasonZh: 'A₅ 是非交换单群，导出列稳定在 A₅ 本身；既不可解也不幂零。',
-  },
+      notNilpotentReasonZhHant: "A₅ 是非交換單群，匯出列穩定在 A₅ 本身；既不可解也不冪零。"
+},
   D4: {
     labelEn: 'D₄ (dihedral, order 8)', labelZh: 'D₄ (二面体群，阶 8)',
     order: 8,
@@ -129,7 +137,8 @@ const GROUP_DATA: Record<GroupId, GroupData> = {
     nilpotent: true,
     derivedLength: 2,
     nilpClass: 2,
-  },
+      labelZhHant: "D₄ (二面體群，階 8)"
+},
   Q8: {
     labelEn: 'Q₈ (quaternion)', labelZh: 'Q₈ (四元数群)',
     order: 8,
@@ -147,7 +156,8 @@ const GROUP_DATA: Record<GroupId, GroupData> = {
     nilpotent: true,
     derivedLength: 2,
     nilpClass: 2,
-  },
+      labelZhHant: "Q₈ (四元數群)"
+},
 };
 
 const GROUP_IDS: GroupId[] = ['S3', 'S4', 'A4', 'A5', 'D4', 'Q8'];
@@ -939,6 +949,8 @@ const SN_INFO: Record<Degree, {
   formulaZh: string;
   derivedChainEn: string;
   derivedChainZh: string;
+        formulaZhHant?: string;
+        derivedChainZhHant?: string;
 }> = {
   2: {
     order: 2,
@@ -948,7 +960,8 @@ const SN_INFO: Record<Degree, {
     formulaZh: '二次公式: x = (−b ± √(b²−4ac)) / 2a',
     derivedChainEn: 'S₂ → {e} (abelian, derived length 1)',
     derivedChainZh: 'S₂ → {e}（交换群，导出长度 1）',
-  },
+      derivedChainZhHant: "S₂ → {e}（交換群，匯出長度 1）"
+},
   3: {
     order: 6,
     solvable: true,
@@ -957,7 +970,8 @@ const SN_INFO: Record<Degree, {
     formulaZh: '三次根式公式存在（Cardano，1545）',
     derivedChainEn: 'S₃ → A₃ → {e} (derived length 2)',
     derivedChainZh: 'S₃ → A₃ → {e}（导出长度 2）',
-  },
+      derivedChainZhHant: "S₃ → A₃ → {e}（匯出長度 2）"
+},
   4: {
     order: 24,
     solvable: true,
@@ -966,7 +980,8 @@ const SN_INFO: Record<Degree, {
     formulaZh: '四次根式公式存在（Ferrari，1545）',
     derivedChainEn: 'S₄ → A₄ → V₄ → {e} (derived length 3)',
     derivedChainZh: 'S₄ → A₄ → V₄ → {e}（导出长度 3）',
-  },
+      derivedChainZhHant: "S₄ → A₄ → V₄ → {e}（匯出長度 3）"
+},
   5: {
     order: 120,
     solvable: false,
@@ -975,7 +990,9 @@ const SN_INFO: Record<Degree, {
     formulaZh: '不存在通用根式公式（Abel-Ruffini，约 1824）',
     derivedChainEn: 'S₅ → A₅ → A₅ → ··· (stabilizes; A₅ simple nonabelian)',
     derivedChainZh: 'S₅ → A₅ → A₅ → ···（稳定；A₅ 为非交换单群）',
-  },
+      formulaZhHant: "不存在通用根式公式（Abel-Ruffini，約 1824）",
+      derivedChainZhHant: "S₅ → A₅ → A₅ → ···（穩定；A₅ 為非交換單群）"
+},
   6: {
     order: 720,
     solvable: false,
@@ -984,7 +1001,9 @@ const SN_INFO: Record<Degree, {
     formulaZh: '不存在通用根式公式（A₆ 为非交换单群）',
     derivedChainEn: 'S₆ → A₆ → A₆ → ··· (stabilizes)',
     derivedChainZh: 'S₆ → A₆ → A₆ → ···（稳定）',
-  },
+      formulaZhHant: "不存在通用根式公式（A₆ 為非交換單群）",
+      derivedChainZhHant: "S₆ → A₆ → A₆ → ···（穩定）"
+},
 };
 
 function GaloisTimelinePanel({ lang }: { lang: Lang }) {

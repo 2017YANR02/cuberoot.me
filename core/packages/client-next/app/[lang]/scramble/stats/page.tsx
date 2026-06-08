@@ -57,41 +57,55 @@ interface ExamplesJson {
   sets: Record<string, ExamplesSet>;
 }
 
-const EVENT_LABEL: Record<string, { zh: string; en: string }> = {
+const EVENT_LABEL: Record<string, { zh: string; en: string
+        zhHant?: string;
+ }> = {
   '333': { zh: '3x3', en: '3x3' },
-  '333oh': { zh: '3x3 单手', en: '3x3 OH'
+  '333oh': { zh: '3x3 单手', en: '3x3 OH',
+      zhHant: "3x3 單手"
 },
-  '333bf': { zh: '3x3 盲拧', en: '3x3 BLD'
+  '333bf': { zh: '3x3 盲拧', en: '3x3 BLD',
+      zhHant: "3x3 盲擰"
 },
-  '333ft': { zh: '3x3 脚拧', en: '3x3 FT'
+  '333ft': { zh: '3x3 脚拧', en: '3x3 FT',
+      zhHant: "3x3 腳擰"
 },
   '333mbf': { zh: '3x3 多盲', en: '3x3 MBLD' },
 };
 function eventLabel(e: string, isZh: boolean): string {
   const m = EVENT_LABEL[e];
-  return m ? ((i18n.language.startsWith('zh') ? m.zh : m.en)) : e;
+  return m ? ((i18n.language === 'zh-Hant' ? (m.zhHant ?? m.zh) : (i18n.language.startsWith('zh') ? m.zh : m.en))) : e;
 }
 
 type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo';
 type YMode = 'percent' | 'count';
 type ChartMode = 'pdf' | 'cdf';
 
-const VARIANT_LABEL: Record<VariantKey, { en: string; zh: string }> = {
-  std: { en: 'Standard', zh: '标准'
+const VARIANT_LABEL: Record<VariantKey, { en: string; zh: string
+        zhHant?: string;
+ }> = {
+  std: { en: 'Standard', zh: '标准',
+      zhHant: "標準"
 },
   eo: { en: 'EO', zh: 'EO' },
-  pair: { en: 'Pair', zh: '基态'
+  pair: { en: 'Pair', zh: '基态',
+      zhHant: "基態"
 },
-  pseudo: { en: 'Pseudo', zh: '伪'
+  pseudo: { en: 'Pseudo', zh: '伪',
+      zhHant: "偽"
 },
-  pseudo_pair: { en: 'Pseudo Pair', zh: '伪基态'
+  pseudo_pair: { en: 'Pseudo Pair', zh: '伪基态',
+      zhHant: "偽基態"
 },
   f2leo: { en: 'F2LEO', zh: 'F2LEO' },
-  pseudo_f2leo: { en: 'Pseudo F2LEO', zh: '伪 F2LEO'
+  pseudo_f2leo: { en: 'Pseudo F2LEO', zh: '伪 F2LEO',
+      zhHant: "偽 F2LEO"
 },
 };
 
-const STAGE_LABEL: Record<string, { en: string; zh: string }> = {
+const STAGE_LABEL: Record<string, { en: string; zh: string
+        zhHant?: string;
+ }> = {
   cross: { en: 'Cross', zh: '十字' },
   eo_cross: { en: 'Cross', zh: '十字' },
   cross_pair: { en: 'Cross', zh: '十字' },
@@ -164,7 +178,7 @@ function computeStats(counts: Record<string, number>) {
 export default function ScrambleStatsPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('打乱分布', 'Scramble Stats');
+  useDocumentTitle('打乱分布', 'Scramble Stats', "打亂分佈");
 
   const [tab, setTab] = useState<'difficulty' | 'length'>('difficulty');
   const [data, setData] = useState<DistributionJson | null>(null);
@@ -218,9 +232,9 @@ export default function ScrambleStatsPage() {
 
   const subsetKey = sel.subsetKey;
   const selectedColors = sel.selectedColors;
-  const modeLabel = isZh
-    ? { cn: '六色底', quad: '四色底', dual: '双色底', single: '单色底' }[sel.colorMode]
-    : { cn: 'CN', quad: 'Quad', dual: 'Dual', single: 'Single' }[sel.colorMode];
+  const modeLabel = i18n.language === 'zh-Hant' ? ({ cn: '六色底', quad: '四色底', dual: '雙色底', single: '單色底' }[sel.colorMode]) : (isZh
+      ? { cn: '六色底', quad: '四色底', dual: '双色底', single: '单色底' }[sel.colorMode]
+      : { cn: 'CN', quad: 'Quad', dual: 'Dual', single: 'Single' }[sel.colorMode]);
 
   const previewBins = useMemo<number[]>(() => {
     if (!currentSet) return [];
@@ -374,16 +388,16 @@ export default function ScrambleStatsPage() {
   const sourceText = (() => {
     if (scrambleSet === 'wca') {
       const n = currentSet?.sample_count.toLocaleString() ?? '?';
-      return isZh
-        ? `来源: WCA 历史 ${n} 条三阶打乱,覆盖三阶速拧 / 单手 / 盲拧 / 多盲 / 最少步 / 脚拧 6 个项目;每条按 6 种底色方向(黄 / 红 / 白 / 橙 / 蓝 / 绿)求阶段最优步数的分布。`
-        : `Source: ${n} WCA historical 3×3 scrambles from 6 events (3×3, OH, BLD, Multi-BLD, FMC, Feet); each analyzed across 6 bottom-color orientations (Y/R/W/O/B/G). Distribution of stage-optimal move counts.`;
+      return i18n.language === 'zh-Hant' ? (`來源: WCA 歷史 ${n} 條三階打亂,覆蓋三階速擰 / 單手 / 盲擰 / 多盲 / 最少步 / 腳擰 6 個專案;每條按 6 種底色方向(黃 / 紅 / 白 / 橙 / 藍 / 綠)求階段最優步數的分佈。`) : (isZh
+              ? `来源: WCA 历史 ${n} 条三阶打乱,覆盖三阶速拧 / 单手 / 盲拧 / 多盲 / 最少步 / 脚拧 6 个项目;每条按 6 种底色方向(黄 / 红 / 白 / 橙 / 蓝 / 绿)求阶段最优步数的分布。`
+              : `Source: ${n} WCA historical 3×3 scrambles from 6 events (3×3, OH, BLD, Multi-BLD, FMC, Feet); each analyzed across 6 bottom-color orientations (Y/R/W/O/B/G). Distribution of stage-optimal move counts.`);
     }
     if (!currentSet) return '';
     const labelDisp = (isZh && currentSet.label_zh) ? currentSet.label_zh : currentSet.label;
     const n = currentSet.sample_count.toLocaleString();
-    return isZh
-      ? `来源: ${labelDisp},共 ${n} 条样本;每条按 6 种底色方向求阶段最优步数的分布。`
-      : `Source: ${labelDisp} (${n} samples); each analyzed across 6 bottom-color orientations.`;
+    return i18n.language === 'zh-Hant' ? (`來源: ${labelDisp},共 ${n} 條樣本;每條按 6 種底色方向求階段最優步數的分佈。`) : (isZh
+          ? `来源: ${labelDisp},共 ${n} 条样本;每条按 6 种底色方向求阶段最优步数的分布。`
+          : `Source: ${labelDisp} (${n} samples); each analyzed across 6 bottom-color orientations.`);
   })();
 
   const setOptions = Object.entries(data.sets).map(([key, s]) => ({
@@ -493,9 +507,9 @@ export default function ScrambleStatsPage() {
             <CnCell label={tr({ zh: '六色底', en: 'CN' })} value={cnBenefit.all6Mean.toFixed(3)} diff={cnBenefit.all6Mean - cnBenefit.whiteMean} />
           </div>
           <div className="scramble-stats-cn-note">
-            {isZh
-              ? `相对白底基线：双色底省 ${(cnBenefit.whiteMean - cnBenefit.wyMean).toFixed(3)} 步，六色底省 ${(cnBenefit.whiteMean - cnBenefit.all6Mean).toFixed(3)} 步`
-              : `Savings vs white: dual −${(cnBenefit.whiteMean - cnBenefit.wyMean).toFixed(3)}, cn −${(cnBenefit.whiteMean - cnBenefit.all6Mean).toFixed(3)}`}
+            {i18n.language === 'zh-Hant' ? (`相對白底基線：雙色底省 ${(cnBenefit.whiteMean - cnBenefit.wyMean).toFixed(3)} 步，六色底省 ${(cnBenefit.whiteMean - cnBenefit.all6Mean).toFixed(3)} 步`) : (isZh
+                                    ? `相对白底基线：双色底省 ${(cnBenefit.whiteMean - cnBenefit.wyMean).toFixed(3)} 步，六色底省 ${(cnBenefit.whiteMean - cnBenefit.all6Mean).toFixed(3)} 步`
+                                    : `Savings vs white: dual −${(cnBenefit.whiteMean - cnBenefit.wyMean).toFixed(3)}, cn −${(cnBenefit.whiteMean - cnBenefit.all6Mean).toFixed(3)}`)}
           </div>
         </div>
       )}
@@ -597,8 +611,8 @@ function ExamplesPanel({
             className="scramble-stats-download-btn"
             href={`/stats/scramble/downloads/${scrambleSet}/${variant}/${stage}/${subsetKey}_${selectedBin}.txt`}
             download={`${scrambleSet}_${variant}_${stage}_${subsetKey}_${selectedBin}.txt`}
-            title={isZh ? `下载 ${selectedBin} 步完整 txt` : `Download full txt for ${selectedBin} moves`}
-            aria-label={isZh ? `下载 ${selectedBin} 步完整 txt` : `Download full txt for ${selectedBin} moves`}
+            title={i18n.language === 'zh-Hant' ? (`下載 ${selectedBin} 步完整 txt`) : (isZh ? `下载 ${selectedBin} 步完整 txt` : `Download full txt for ${selectedBin} moves`)}
+            aria-label={i18n.language === 'zh-Hant' ? (`下載 ${selectedBin} 步完整 txt`) : (isZh ? `下载 ${selectedBin} 步完整 txt` : `Download full txt for ${selectedBin} moves`)}
           >
             <DownloadIcon />
           </a>

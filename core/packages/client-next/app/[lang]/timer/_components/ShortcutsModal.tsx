@@ -14,73 +14,98 @@ interface ShortcutRow {
   keys: string[];
   en: string;
   zh: string;
+    zhHant?: string;
 }
 
 const TIMING: ShortcutRow[] = [
-  { keys: ['Space'],     en: 'Hold to ready, release to start. Press to stop.', zh: '按住进入准备，松开开始计时；运行中按下停止。'
+  { keys: ['Space'],     en: 'Hold to ready, release to start. Press to stop.', zh: '按住进入准备，松开开始计时；运行中按下停止。',
+      zhHant: "按住進入準備，鬆開開始計時；執行中按下停止。"
 },
-  { keys: ['Esc'],       en: 'Cancel current attempt (no solve recorded).',     zh: '取消当前尝试（不计成绩）。'
+  { keys: ['Esc'],       en: 'Cancel current attempt (no solve recorded).',     zh: '取消当前尝试（不计成绩）。',
+      zhHant: "取消當前嘗試（不計成績）。"
 },
-  { keys: ['Touch'],     en: 'Same as space — tap-and-hold to ready.',          zh: '同空格 — 按住屏幕进入准备。'
+  { keys: ['Touch'],     en: 'Same as space — tap-and-hold to ready.',          zh: '同空格 — 按住屏幕进入准备。',
+      zhHant: "同空格 — 按住螢幕進入準備。"
 },
 ];
 
 const HISTORY: ShortcutRow[] = [
-  { keys: ['Z'],         en: 'Delete the last solve (undo).',                   zh: '删除最近一次成绩（撤销）。'
+  { keys: ['Z'],         en: 'Delete the last solve (undo).',                   zh: '删除最近一次成绩（撤销）。',
+      zhHant: "刪除最近一次成績（撤銷）。"
 },
-  { keys: ['2'],         en: 'Toggle +2 on the last solve (when stopped).',     zh: '已停止时切换最近成绩的 +2 罚时。'
+  { keys: ['2'],         en: 'Toggle +2 on the last solve (when stopped).',     zh: '已停止时切换最近成绩的 +2 罚时。',
+      zhHant: "已停止時切換最近成績的 +2 罰時。"
 },
-  { keys: ['D'],         en: 'Toggle DNF on the last solve (when stopped).',    zh: '已停止时切换最近成绩的 DNF。'
+  { keys: ['D'],         en: 'Toggle DNF on the last solve (when stopped).',    zh: '已停止时切换最近成绩的 DNF。',
+      zhHant: "已停止時切換最近成績的 DNF。"
 },
-  { keys: ['1', '…', '9'], en: 'Open the Nth-most-recent solve detail.',         zh: '打开倒数第 N 次成绩的详情面板。'
+  { keys: ['1', '…', '9'], en: 'Open the Nth-most-recent solve detail.',         zh: '打开倒数第 N 次成绩的详情面板。',
+      zhHant: "開啟倒數第 N 次成績的詳情面板。"
 },
 ];
 
 const MULTISTAGE: ShortcutRow[] = [
-  { keys: ['1'], en: 'During solve: mark Cross done.',          zh: '运行中：标记十字完成。'
+  { keys: ['1'], en: 'During solve: mark Cross done.',          zh: '运行中：标记十字完成。',
+      zhHant: "執行中：標記十字完成。"
 },
-  { keys: ['2'], en: 'During solve: mark F2L done.',            zh: '运行中：标记 F2L 完成。'
+  { keys: ['2'], en: 'During solve: mark F2L done.',            zh: '运行中：标记 F2L 完成。',
+      zhHant: "執行中：標記 F2L 完成。"
 },
-  { keys: ['3'], en: 'During solve: mark OLL done.',            zh: '运行中：标记 OLL 完成。'
+  { keys: ['3'], en: 'During solve: mark OLL done.',            zh: '运行中：标记 OLL 完成。',
+      zhHant: "執行中：標記 OLL 完成。"
 },
 ];
 
 const BLD: ShortcutRow[] = [
-  { keys: ['Enter'], en: 'During BLD solve: mark memo done.',   zh: '盲拧运行中：标记记忆完成。'
+  { keys: ['Enter'], en: 'During BLD solve: mark memo done.',   zh: '盲拧运行中：标记记忆完成。',
+      zhHant: "盲擰執行中：標記記憶完成。"
 },
 ];
 
 const NAV: ShortcutRow[] = [
-  { keys: ['→'],         en: 'Next scramble (new one at the end of history).',  zh: '下一条打乱（到末尾则生成新的）。'
+  { keys: ['→'],         en: 'Next scramble (new one at the end of history).',  zh: '下一条打乱（到末尾则生成新的）。',
+      zhHant: "下一條打亂（到末尾則生成新的）。"
 },
-  { keys: ['←'],         en: 'Previous scramble (revisit history).',            zh: '上一条打乱（回看历史）。'
+  { keys: ['←'],         en: 'Previous scramble (revisit history).',            zh: '上一条打乱（回看历史）。',
+      zhHant: "上一條打亂（回看歷史）。"
 },
-  { keys: [','],         en: 'Generate a new scramble.',                        zh: '生成下一个打乱。'
+  { keys: [','],         en: 'Generate a new scramble.',                        zh: '生成下一个打乱。',
+      zhHant: "生成下一個打亂。"
 },
-  { keys: ['F'],         en: 'Toggle fullscreen.',                              zh: '切换全屏。'
+  { keys: ['F'],         en: 'Toggle fullscreen.',                              zh: '切换全屏。',
+      zhHant: "切換全屏。"
 },
-  { keys: ['Click strip'], en: 'Refresh scramble.',                             zh: '点击打乱条换打乱。'
+  { keys: ['Click strip'], en: 'Refresh scramble.',                             zh: '点击打乱条换打乱。',
+      zhHant: "點選打亂條換打亂。"
 },
 ];
 
 // Touch-only radial gesture wheel — press the timer area and drag toward a
 // direction (release to fire). Order matches the on-screen wheel.
 const GESTURES: ShortcutRow[] = [
-  { keys: ['→'],  en: 'Drag right: next scramble.',          zh: '向右拖：下一个打乱。'
+  { keys: ['→'],  en: 'Drag right: next scramble.',          zh: '向右拖：下一个打乱。',
+      zhHant: "向右拖：下一個打亂。"
 },
-  { keys: ['←'],  en: 'Drag left: previous scramble.',       zh: '向左拖：上一个打乱。'
+  { keys: ['←'],  en: 'Drag left: previous scramble.',       zh: '向左拖：上一个打乱。',
+      zhHant: "向左拖：上一個打亂。"
 },
-  { keys: ['↗'],  en: 'Drag up-right: clear penalty (OK).',  zh: '右上拖：清除罚时（OK）。'
+  { keys: ['↗'],  en: 'Drag up-right: clear penalty (OK).',  zh: '右上拖：清除罚时（OK）。',
+      zhHant: "右上拖：清除罰時（OK）。"
 },
-  { keys: ['↑'],  en: 'Drag up: toggle +2.',                 zh: '向上拖：切换 +2。'
+  { keys: ['↑'],  en: 'Drag up: toggle +2.',                 zh: '向上拖：切换 +2。',
+      zhHant: "向上拖：切換 +2。"
 },
-  { keys: ['↖'],  en: 'Drag up-left: toggle DNF.',           zh: '左上拖：切换 DNF。'
+  { keys: ['↖'],  en: 'Drag up-left: toggle DNF.',           zh: '左上拖：切换 DNF。',
+      zhHant: "左上拖：切換 DNF。"
 },
-  { keys: ['↓'],  en: 'Drag down: delete last solve.',       zh: '向下拖：删除最后一次。'
+  { keys: ['↓'],  en: 'Drag down: delete last solve.',       zh: '向下拖：删除最后一次。',
+      zhHant: "向下拖：刪除最後一次。"
 },
-  { keys: ['↙'],  en: 'Drag down-left: note on last solve.', zh: '左下拖：给最后一次加注释。'
+  { keys: ['↙'],  en: 'Drag down-left: note on last solve.', zh: '左下拖：给最后一次加注释。',
+      zhHant: "左下拖：給最後一次加註釋。"
 },
-  { keys: ['↘'],  en: 'Drag down-right: copy scramble.',     zh: '右下拖：复制打乱。'
+  { keys: ['↘'],  en: 'Drag down-right: copy scramble.',     zh: '右下拖：复制打乱。',
+      zhHant: "右下拖：複製打亂。"
 },
 ];
 
@@ -189,7 +214,7 @@ function Section({ title, rows, isZh, isMobile }: { title: string; rows: Shortcu
                 </span>
               ))}
             </div>
-            <div className="shortcut-desc" style={descStyle}>{(i18n.language.startsWith('zh') ? r.zh : r.en)}</div>
+            <div className="shortcut-desc" style={descStyle}>{(i18n.language === 'zh-Hant' ? (r.zhHant ?? r.zh) : (i18n.language.startsWith('zh') ? r.zh : r.en))}</div>
           </div>
         ))}
       </div>

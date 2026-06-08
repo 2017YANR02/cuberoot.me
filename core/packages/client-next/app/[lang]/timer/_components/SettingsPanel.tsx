@@ -22,6 +22,7 @@ import { WCA_COLORS } from '../_lib/cube/colors';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { CountryInput } from '@/components/CountryInput';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   isZh: boolean;
@@ -255,7 +256,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
     try {
       const { updatedAt, solveCount, byteSize } = await uploadBackup();
       setCloudMeta({ exists: true, solveCount, updatedAt, byteSize });
-      flashCloudMsg(isZh ? `已上传 ${solveCount} 条到云端` : `Uploaded ${solveCount} solves`);
+      flashCloudMsg(i18n.language === 'zh-Hant' ? (`已上傳 ${solveCount} 條到雲端`) : (isZh ? `已上传 ${solveCount} 条到云端` : `Uploaded ${solveCount} solves`));
     } catch {
       flashCloudMsg(tr({ zh: '上传失败,请重试', en: 'Upload failed, try again',
           zhHant: "上傳失敗,請重試"
@@ -320,9 +321,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
       const result = await reanalyzeAll(p => {
         setReanalyzeProgress({ scanned: p.scanned, total: p.total });
       });
-      const msg = isZh
-        ? `已更新 ${result.updated} 条成绩，涉及 ${result.eventsTouched.length} 个项目`
-        : `Updated ${result.updated} solves across ${result.eventsTouched.length} events`;
+      const msg = i18n.language === 'zh-Hant' ? (`已更新 ${result.updated} 條成績，涉及 ${result.eventsTouched.length} 個專案`) : (isZh
+              ? `已更新 ${result.updated} 条成绩，涉及 ${result.eventsTouched.length} 个项目`
+              : `Updated ${result.updated} solves across ${result.eventsTouched.length} events`);
       setReanalyzeMsg(msg);
       if (reanalyzeMsgTimerRef.current !== null) window.clearTimeout(reanalyzeMsgTimerRef.current);
       reanalyzeMsgTimerRef.current = window.setTimeout(() => {
@@ -361,9 +362,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      const msg = isZh
-        ? `已导出 ${solveCount} 条成绩（${sessionCount} 个会话）`
-        : `Exported ${solveCount} solves across ${sessionCount} sessions`;
+      const msg = i18n.language === 'zh-Hant' ? (`已匯出 ${solveCount} 條成績（${sessionCount} 個會話）`) : (isZh
+              ? `已导出 ${solveCount} 条成绩（${sessionCount} 个会话）`
+              : `Exported ${solveCount} solves across ${sessionCount} sessions`);
       setCstimerExportMsg(msg);
       if (cstimerExportTimerRef.current !== null) window.clearTimeout(cstimerExportTimerRef.current);
       cstimerExportTimerRef.current = window.setTimeout(() => {
@@ -393,9 +394,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      const msg = isZh
-        ? `已导出 ${solveCount} 条成绩`
-        : `Exported ${solveCount} solves`;
+      const msg = i18n.language === 'zh-Hant' ? (`已匯出 ${solveCount} 條成績`) : (isZh
+              ? `已导出 ${solveCount} 条成绩`
+              : `Exported ${solveCount} solves`);
       setCsvExportMsg(msg);
       if (csvExportTimerRef.current !== null) window.clearTimeout(csvExportTimerRef.current);
       csvExportTimerRef.current = window.setTimeout(() => {
@@ -442,9 +443,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
       return;
     }
     if (mode === 'replace') {
-      const confirmMsg = isZh
-        ? `确认用 ${sess.solves.length} 条记录替换 ${eventInfo(sess.event).nameZh} 的全部成绩？`
-        : `Replace all ${eventInfo(sess.event).nameEn} solves with ${sess.solves.length} from "${sess.name}"?`;
+      const confirmMsg = i18n.language === 'zh-Hant' ? (`確認用 ${sess.solves.length} 條記錄替換 ${eventInfo(sess.event).nameZh} 的全部成績？`) : (isZh
+              ? `确认用 ${sess.solves.length} 条记录替换 ${eventInfo(sess.event).nameZh} 的全部成绩？`
+              : `Replace all ${eventInfo(sess.event).nameEn} solves with ${sess.solves.length} from "${sess.name}"?`);
       if (!confirm(confirmMsg)) return;
       replaceSolves(sess.event, sess.solves);
     } else {
@@ -470,9 +471,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
       const kb = (e.size / 1024).toFixed(1);
       return `${i + 1}. ${stamp}  (${kb} KB)`;
     }).join('\n');
-    const prompt1 = isZh
-      ? `备份列表（输入序号恢复，留空取消）：\n\n${lines}`
-      : `Auto-backups (enter index to restore, blank to cancel):\n\n${lines}`;
+    const prompt1 = i18n.language === 'zh-Hant' ? (`備份列表（輸入序號恢復，留空取消）：\n\n${lines}`) : (isZh
+          ? `备份列表（输入序号恢复，留空取消）：\n\n${lines}`
+          : `Auto-backups (enter index to restore, blank to cancel):\n\n${lines}`);
     const ans = window.prompt(prompt1, '');
     if (!ans) return;
     const idx = parseInt(ans, 10) - 1;
@@ -483,9 +484,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
       return;
     }
     const target = list[idx]!;
-    if (!confirm(isZh
-      ? `确认用 ${new Date(target.ts).toLocaleString()} 的备份覆盖当前数据？`
-      : `Restore backup from ${new Date(target.ts).toLocaleString()} (overwrites current data)?`)) return;
+    if (!confirm(i18n.language === 'zh-Hant' ? (`確認用 ${new Date(target.ts).toLocaleString()} 的備份覆蓋當前資料？`) : (isZh
+              ? `确认用 ${new Date(target.ts).toLocaleString()} 的备份覆盖当前数据？`
+              : `Restore backup from ${new Date(target.ts).toLocaleString()} (overwrites current data)?`))) return;
     const ok = restoreBackup(target.key);
     alert(ok
       ? (tr({ zh: '已恢复。请刷新页面。', en: 'Restored. Please reload the page.',
@@ -627,8 +628,8 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             <span className="hint">
               <Target size={12} style={{ verticalAlign: '-1px', marginRight: 4 }} />
               {currentTargetMs === null
-                ? (isZh ? `当前 ${eventInfo(event).nameZh}：关闭` : `${eventInfo(event).nameEn}: off`)
-                : (isZh ? `当前 ${eventInfo(event).nameZh}：${formatTargetTime(currentTargetMs)}` : `${eventInfo(event).nameEn}: ${formatTargetTime(currentTargetMs)}`)}
+                ? (i18n.language === 'zh-Hant' ? (`當前 ${eventInfo(event).nameZh}：關閉`) : (isZh ? `当前 ${eventInfo(event).nameZh}：关闭` : `${eventInfo(event).nameEn}: off`))
+                : (i18n.language === 'zh-Hant' ? (`當前 ${eventInfo(event).nameZh}：${formatTargetTime(currentTargetMs)}`) : (isZh ? `当前 ${eventInfo(event).nameZh}：${formatTargetTime(currentTargetMs)}` : `${eventInfo(event).nameEn}: ${formatTargetTime(currentTargetMs)}`))}
             </span>
           </Row>
           <Row label={tr({ zh: '每日目标次数', en: 'Daily solve goal',
@@ -650,7 +651,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               ? (tr({ zh: '关闭', en: 'off',
                   zhHant: "關閉"
             }))
-              : (isZh ? `每天 ${currentDailyGoal} 次（全部项目合计）` : `${currentDailyGoal} solves/day (all events)`)}</span>
+              : (i18n.language === 'zh-Hant' ? (`每天 ${currentDailyGoal} 次（全部專案合計）`) : (isZh ? `每天 ${currentDailyGoal} 次（全部项目合计）` : `${currentDailyGoal} solves/day (all events)`))}</span>
           </Row>
           <Row label={tr({ zh: '精度', en: 'Precision' })}>
             <select
@@ -826,9 +827,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                   zhHant: "試聽"
             })}
             </button>
-            <span className="hint">{isZh
-              ? `观察到这些秒数各响一声（1..60，独立于 8/12 秒）；当前 ${(s.inspectionBeepAt ?? []).length ? s.inspectionBeepAt.join(' / ') + ' 秒' : '关闭'}`
-              : `one beep at each inspection second (1..60, separate from 8/12s); current ${(s.inspectionBeepAt ?? []).length ? s.inspectionBeepAt.join(' / ') + 's' : 'off'}`}</span>
+            <span className="hint">{i18n.language === 'zh-Hant' ? (`觀察到這些秒數各響一聲（1..60，獨立於 8/12 秒）；當前 ${(s.inspectionBeepAt ?? []).length ? s.inspectionBeepAt.join(' / ') + ' 秒' : '關閉'}`) : (isZh
+                                    ? `观察到这些秒数各响一声（1..60，独立于 8/12 秒）；当前 ${(s.inspectionBeepAt ?? []).length ? s.inspectionBeepAt.join(' / ') + ' 秒' : '关闭'}`
+                                    : `one beep at each inspection second (1..60, separate from 8/12s); current ${(s.inspectionBeepAt ?? []).length ? s.inspectionBeepAt.join(' / ') + 's' : 'off'}`)}</span>
           </Row>
         </AccordionSection>
 
@@ -895,9 +896,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                 ? (tr({ zh: '未启用', en: 'off',
                     zhHant: "未啟用"
                 }))
-                : (isZh
-                    ? `seed=${s.syncSeed}，第 ${getSeedCounter()} 个打乱`
-                    : `seed=${s.syncSeed}, scramble #${getSeedCounter()}`)}
+                : (i18n.language === 'zh-Hant' ? (`seed=${s.syncSeed}，第 ${getSeedCounter()} 個打亂`) : (isZh
+                                                  ? `seed=${s.syncSeed}，第 ${getSeedCounter()} 个打乱`
+                                                  : `seed=${s.syncSeed}, scramble #${getSeedCounter()}`))}
             </span>
             <button
               className="hint-btn"
@@ -1017,9 +1018,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                           zhHant: "正在讀取雲端狀態…"
                     }))
                       : cloudMeta.exists
-                        ? (isZh
-                            ? `云端 ${cloudMeta.solveCount ?? 0} 条,上次同步 ${formatSyncTime(cloudMeta.updatedAt ?? 0, true)}`
-                            : `Cloud: ${cloudMeta.solveCount ?? 0} solves, synced ${formatSyncTime(cloudMeta.updatedAt ?? 0, false)}`)
+                        ? (i18n.language === 'zh-Hant' ? (`雲端 ${cloudMeta.solveCount ?? 0} 條,上次同步 ${formatSyncTime(cloudMeta.updatedAt ?? 0, true)}`) : (isZh
+                                                                              ? `云端 ${cloudMeta.solveCount ?? 0} 条,上次同步 ${formatSyncTime(cloudMeta.updatedAt ?? 0, true)}`
+                                                                              : `Cloud: ${cloudMeta.solveCount ?? 0} solves, synced ${formatSyncTime(cloudMeta.updatedAt ?? 0, false)}`))
                         : (tr({ zh: '云端暂无备份', en: 'No cloud backup yet',
                             zhHant: "雲端暫無備份"
                         }))
@@ -1100,7 +1101,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             <div className="cstimer-import-list">
               {cstimerSessions.map(sess => {
                 const ev = eventInfo(sess.event);
-                const evLabel = isZh ? ev.nameZh : ev.nameEn;
+                const evLabel = i18n.language === 'zh-Hant' ? (ev.nameZhHant ?? ev.nameZh) : (isZh ? ev.nameZh : ev.nameEn);
                 const done = cstimerImported[sess.sessionId];
                 const disabled = sess.solves.length === 0;
                 return (
@@ -1108,9 +1109,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                     <div className="cstimer-import-info">
                       <span className="cstimer-import-name">{sess.name}</span>
                       <span className="hint">
-                        {isZh
-                          ? `${sess.solves.length} 条 → ${evLabel}${sess.matched ? '' : '（默认）'}`
-                          : `${sess.solves.length} solves → ${evLabel}${sess.matched ? '' : ' (fallback)'}`}
+                        {i18n.language === 'zh-Hant' ? (`${sess.solves.length} 條 → ${evLabel}${sess.matched ? '' : '（預設）'}`) : (isZh
+                                                          ? `${sess.solves.length} 条 → ${evLabel}${sess.matched ? '' : '（默认）'}`
+                                                          : `${sess.solves.length} solves → ${evLabel}${sess.matched ? '' : ' (fallback)'}`)}
                       </span>
                     </div>
                     <div className="cstimer-import-actions">
@@ -1158,9 +1159,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               <RefreshCw size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
               {reanalyzeBusy
                 ? (reanalyzeProgress && reanalyzeProgress.total > 0
-                    ? (isZh
-                        ? `处理中… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`
-                        : `Working… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`)
+                    ? (i18n.language === 'zh-Hant' ? (`處理中… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`) : (isZh
+                                                          ? `处理中… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`
+                                                          : `Working… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`))
                     : (tr({ zh: '处理中…', en: 'Working…',
                         zhHant: "處理中…"
                     })))

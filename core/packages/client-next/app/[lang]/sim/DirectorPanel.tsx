@@ -15,6 +15,7 @@ import World from './cuber/world';
 import { exportSimVideo, type ExportProgress } from './sim_export';
 import './director-panel.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   getCanvas: () => HTMLCanvasElement | null;
@@ -38,7 +39,7 @@ function download(blob: Blob, name: string): void {
 export default function DirectorPanel({ getCanvas, getWorld, getRenderer, setup, alg }: Props) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
 
   const [exporting, setExporting] = useState(false);
   const [progress, setProgress] = useState<ExportProgress | null>(null);
@@ -97,25 +98,25 @@ export default function DirectorPanel({ getCanvas, getWorld, getRenderer, setup,
     <div className="sim-director">
       <button className="sim-director-btn" onClick={snapshot}>
         <Camera size={14} />
-        {t('截图 PNG', 'Snapshot PNG')}
+        {t('截图 PNG', 'Snapshot PNG', "截圖 PNG")}
       </button>
       <button
         className="sim-director-btn"
         onClick={startExport}
         disabled={!canExport || exporting}
-        title={!canExport ? t('解法为空, 无可导出动画', 'Alg is empty — nothing to record') : ''}
+        title={!canExport ? t('解法为空, 无可导出动画', 'Alg is empty — nothing to record', "解法為空, 無可匯出動畫") : ''}
       >
         <Film size={14} />
-        {t('导出 mp4 1080p', 'Export mp4 1080p')}
+        {t('导出 mp4 1080p', 'Export mp4 1080p', "匯出 mp4 1080p")}
       </button>
       <span className="sim-director-hint">
-        {t('1080p 离线渲染当前打乱+解法的动画', 'Offline 1080p render of current scramble+solution')}
+        {t('1080p 离线渲染当前打乱+解法的动画', 'Offline 1080p render of current scramble+solution', "1080p 離線渲染當前打亂+解法的動畫")}
       </span>
 
       {exporting && progress && (
         <div className="sim-export-overlay">
           <div className="sim-export-card">
-            <div className="sim-export-title">{t('导出视频中', 'Exporting video')}</div>
+            <div className="sim-export-title">{t('导出视频中', 'Exporting video', "匯出影片中")}</div>
             <canvas ref={previewRef} className="sim-export-preview" />
             <div className="sim-export-bar">
               <div className="sim-export-bar-fill" style={{ width: `${(progress.pct * 100).toFixed(1)}%` }} />

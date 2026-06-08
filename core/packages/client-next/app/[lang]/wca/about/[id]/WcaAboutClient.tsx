@@ -19,6 +19,7 @@ import type { AboutEntry, AboutStep, AboutStat, AboutFormula, AboutCode, AboutRe
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './wca_about.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 function pickLang<T extends string | string[] | undefined>(zh: T, en: T, isZh: boolean): T {
   return (isZh ? zh : en) as T;
@@ -54,7 +55,7 @@ function StatCallout({ stat, isZh }: { stat: AboutStat; isZh: boolean }) {
   return (
     <div className="wcaa-stat">
       <div className="wcaa-stat-value">{stat.value}</div>
-      <div className="wcaa-stat-label">{isZh ? stat.labelZh : stat.labelEn}</div>
+      <div className="wcaa-stat-label">{i18n.language === 'zh-Hant' ? (stat.labelZhHant ?? stat.labelZh) : (isZh ? stat.labelZh : stat.labelEn)}</div>
       {(isZh ? stat.hintZh : stat.hintEn) && (
         <div className="wcaa-stat-hint">{isZh ? stat.hintZh : stat.hintEn}</div>
       )}
@@ -67,10 +68,10 @@ function StepCard({ step, index, isZh }: { step: AboutStep; index: number; isZh:
     <div className={`wcaa-step${step.highlight ? ' is-highlight' : ''}`}>
       <span className="wcaa-step-num">{index + 1}</span>
       <div>
-        <div className="wcaa-step-title">{isZh ? step.titleZh : step.titleEn}</div>
+        <div className="wcaa-step-title">{i18n.language === 'zh-Hant' ? (step.titleZhHant ?? step.titleZh) : (isZh ? step.titleZh : step.titleEn)}</div>
         <div
           className="wcaa-step-body"
-          dangerouslySetInnerHTML={{ __html: inlineFormat(isZh ? step.bodyZh : step.bodyEn) }}
+          dangerouslySetInnerHTML={{ __html: inlineFormat(i18n.language === 'zh-Hant' ? (step.bodyZhHant ?? step.bodyZh) : (isZh ? step.bodyZh : step.bodyEn)) }}
         />
       </div>
     </div>
@@ -80,7 +81,7 @@ function StepCard({ step, index, isZh }: { step: AboutStep; index: number; isZh:
 function FormulaCard({ formula, isZh }: { formula: AboutFormula; isZh: boolean }) {
   return (
     <div className="wcaa-formula">
-      <div className="wcaa-formula-label">{isZh ? formula.labelZh : formula.labelEn}</div>
+      <div className="wcaa-formula-label">{i18n.language === 'zh-Hant' ? (formula.labelZhHant ?? formula.labelZh) : (isZh ? formula.labelZh : formula.labelEn)}</div>
       <div className="wcaa-formula-expr">{formula.expr}</div>
       {(isZh ? formula.bodyZh : formula.bodyEn) && (
         <div
@@ -110,7 +111,7 @@ function CodeBlock({ code, isZh }: { code: AboutCode; isZh: boolean }) {
 }
 
 function RelatedCard({ rel, isZh }: { rel: AboutRelated; isZh: boolean }) {
-  const name = isZh ? rel.titleZh : rel.titleEn;
+  const name = i18n.language === 'zh-Hant' ? (rel.titleZhHant ?? rel.titleZh) : (isZh ? rel.titleZh : rel.titleEn);
   const hint = isZh ? rel.hintZh : rel.hintEn;
   const inner = (
     <>
@@ -135,7 +136,7 @@ function RelatedCard({ rel, isZh }: { rel: AboutRelated; isZh: boolean }) {
 function ExtraSection({ section, isZh }: { section: AboutSection; isZh: boolean }) {
   return (
     <>
-      <h2 className="wcaa-section-title">{isZh ? section.titleZh : section.titleEn}</h2>
+      <h2 className="wcaa-section-title">{i18n.language === 'zh-Hant' ? (section.titleZhHant ?? section.titleZh) : (isZh ? section.titleZh : section.titleEn)}</h2>
       <Paragraphs value={pickLang(section.bodyZh, section.bodyEn, isZh)} />
     </>
   );
@@ -152,7 +153,7 @@ export default function WcaAboutClient() {
     return ABOUT_REGISTRY[id] ?? null;
   }, [id]);
 
-  const aboutTitle = entry ? (isZh ? entry.titleZh : entry.titleEn) : (tr({ zh: '统计说明', en: 'About Stat',
+  const aboutTitle = entry ? (i18n.language === 'zh-Hant' ? (entry.titleZhHant ?? entry.titleZh) : (isZh ? entry.titleZh : entry.titleEn)) : (tr({ zh: '统计说明', en: 'About Stat',
       zhHant: "統計說明"
 }));
   useDocumentTitle(aboutTitle, aboutTitle);
@@ -170,9 +171,9 @@ export default function WcaAboutClient() {
         </div>
         <main className="wcaa-main">
           <div className="wcaa-missing">
-            {isZh
-              ? `暂未给统计项 "${id}" 撰写算法说明页。可在 /wca 列表里点开它本身看数据。`
-              : `No algorithm explanation yet for "${id}". You can still browse it from /wca.`}
+            {i18n.language === 'zh-Hant' ? (`暫未給統計項 "${id}" 撰寫演算法說明頁。可在 /wca 列表裡點開它本身看資料。`) : (isZh
+                                  ? `暂未给统计项 "${id}" 撰写算法说明页。可在 /wca 列表里点开它本身看数据。`
+                                  : `No algorithm explanation yet for "${id}". You can still browse it from /wca.`)}
           </div>
         </main>
       </div>
@@ -192,7 +193,7 @@ export default function WcaAboutClient() {
 
       <main className="wcaa-main">
         <div className="wcaa-title-row">
-          <h1 className="wcaa-title">{isZh ? entry.titleZh : entry.titleEn}</h1>
+          <h1 className="wcaa-title">{i18n.language === 'zh-Hant' ? (entry.titleZhHant ?? entry.titleZh) : (isZh ? entry.titleZh : entry.titleEn)}</h1>
           {(isZh ? entry.badgeZh : entry.badgeEn) && (
             <span className="wcaa-badge">{isZh ? entry.badgeZh : entry.badgeEn}</span>
           )}

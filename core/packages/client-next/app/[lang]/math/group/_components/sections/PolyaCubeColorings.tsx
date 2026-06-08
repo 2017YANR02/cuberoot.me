@@ -15,32 +15,63 @@ interface RotClass {
   cycleType: string;
   nameZh: string;
   nameEn: string;
+    nameZhHant?: string;
 }
 
 const FACE_CLASSES: RotClass[] = [
-  { size: 1, cycles: 6, cycleType: '1⁶',     nameZh: '恒等',         nameEn: 'Identity'       },
-  { size: 6, cycles: 3, cycleType: '1² 4¹',  nameZh: '面轴 90°/270°', nameEn: 'Face 90°/270°' },
-  { size: 3, cycles: 4, cycleType: '1² 2²',  nameZh: '面轴 180°',    nameEn: 'Face 180°'      },
-  { size: 8, cycles: 2, cycleType: '3²',      nameZh: '顶点轴 120°/240°', nameEn: 'Vertex 120°/240°' },
-  { size: 6, cycles: 3, cycleType: '2³',      nameZh: '棱轴 180°',   nameEn: 'Edge 180°'      },
+  { size: 1, cycles: 6, cycleType: '1⁶',     nameZh: '恒等',         nameEn: 'Identity',
+      nameZhHant: "恆等"
+},
+  { size: 6, cycles: 3, cycleType: '1² 4¹',  nameZh: '面轴 90°/270°', nameEn: 'Face 90°/270°',
+      nameZhHant: "面軸 90°/270°"
+},
+  { size: 3, cycles: 4, cycleType: '1² 2²',  nameZh: '面轴 180°',    nameEn: 'Face 180°',
+      nameZhHant: "面軸 180°"
+},
+  { size: 8, cycles: 2, cycleType: '3²',      nameZh: '顶点轴 120°/240°', nameEn: 'Vertex 120°/240°',
+      nameZhHant: "頂點軸 120°/240°"
+},
+  { size: 6, cycles: 3, cycleType: '2³',      nameZh: '棱轴 180°',   nameEn: 'Edge 180°',
+      nameZhHant: "稜軸 180°"
+},
 ];
 
 // Acting on EDGES (12 edges)
 const EDGE_CLASSES: RotClass[] = [
-  { size: 1, cycles: 12, cycleType: '1¹²',    nameZh: '恒等',         nameEn: 'Identity'       },
-  { size: 6, cycles: 3,  cycleType: '4³',      nameZh: '面轴 90°/270°', nameEn: 'Face 90°/270°' },
-  { size: 3, cycles: 6,  cycleType: '2⁶',      nameZh: '面轴 180°',    nameEn: 'Face 180°'      },
-  { size: 8, cycles: 4,  cycleType: '3⁴',      nameZh: '顶点轴 120°/240°', nameEn: 'Vertex 120°/240°' },
-  { size: 6, cycles: 7,  cycleType: '1² 2⁵',  nameZh: '棱轴 180°',   nameEn: 'Edge 180°'      },
+  { size: 1, cycles: 12, cycleType: '1¹²',    nameZh: '恒等',         nameEn: 'Identity',
+      nameZhHant: "恆等"
+},
+  { size: 6, cycles: 3,  cycleType: '4³',      nameZh: '面轴 90°/270°', nameEn: 'Face 90°/270°',
+      nameZhHant: "面軸 90°/270°"
+},
+  { size: 3, cycles: 6,  cycleType: '2⁶',      nameZh: '面轴 180°',    nameEn: 'Face 180°',
+      nameZhHant: "面軸 180°"
+},
+  { size: 8, cycles: 4,  cycleType: '3⁴',      nameZh: '顶点轴 120°/240°', nameEn: 'Vertex 120°/240°',
+      nameZhHant: "頂點軸 120°/240°"
+},
+  { size: 6, cycles: 7,  cycleType: '1² 2⁵',  nameZh: '棱轴 180°',   nameEn: 'Edge 180°',
+      nameZhHant: "稜軸 180°"
+},
 ];
 
 // Acting on VERTICES (8 vertices)
 const VERTEX_CLASSES: RotClass[] = [
-  { size: 1, cycles: 8, cycleType: '1⁸',      nameZh: '恒等',         nameEn: 'Identity'       },
-  { size: 6, cycles: 2, cycleType: '4²',       nameZh: '面轴 90°/270°', nameEn: 'Face 90°/270°' },
-  { size: 3, cycles: 4, cycleType: '2⁴',       nameZh: '面轴 180°',    nameEn: 'Face 180°'      },
-  { size: 8, cycles: 4, cycleType: '1² 3²',   nameZh: '顶点轴 120°/240°', nameEn: 'Vertex 120°/240°' },
-  { size: 6, cycles: 4, cycleType: '2⁴',       nameZh: '棱轴 180°',   nameEn: 'Edge 180°'      },
+  { size: 1, cycles: 8, cycleType: '1⁸',      nameZh: '恒等',         nameEn: 'Identity',
+      nameZhHant: "恆等"
+},
+  { size: 6, cycles: 2, cycleType: '4²',       nameZh: '面轴 90°/270°', nameEn: 'Face 90°/270°',
+      nameZhHant: "面軸 90°/270°"
+},
+  { size: 3, cycles: 4, cycleType: '2⁴',       nameZh: '面轴 180°',    nameEn: 'Face 180°',
+      nameZhHant: "面軸 180°"
+},
+  { size: 8, cycles: 4, cycleType: '1² 3²',   nameZh: '顶点轴 120°/240°', nameEn: 'Vertex 120°/240°',
+      nameZhHant: "頂點軸 120°/240°"
+},
+  { size: 6, cycles: 4, cycleType: '2⁴',       nameZh: '棱轴 180°',   nameEn: 'Edge 180°',
+      nameZhHant: "稜軸 180°"
+},
 ];
 
 type ObjectMode = 'faces' | 'edges' | 'vertices';
@@ -138,12 +169,16 @@ const SWATCH_LABELS_EN = ['Red', 'Blue', 'Green', 'Yellow', 'Orange', 'White', '
 //      [U]
 // [L] [F] [R] [B]
 //      [D]
-const NET_POSITIONS: { face: number; col: number; row: number; labelZh: string; labelEn: string }[] = [
+const NET_POSITIONS: { face: number; col: number; row: number; labelZh: string; labelEn: string
+    labelZhHant?: string;
+ }[] = [
   { face: 2, col: 1, row: 0, labelZh: '上', labelEn: 'U' },
   { face: 1, col: 0, row: 1, labelZh: '左', labelEn: 'L' },
   { face: 4, col: 1, row: 1, labelZh: '前', labelEn: 'F' },
   { face: 0, col: 2, row: 1, labelZh: '右', labelEn: 'R' },
-  { face: 5, col: 3, row: 1, labelZh: '后', labelEn: 'B' },
+  { face: 5, col: 3, row: 1, labelZh: '后', labelEn: 'B',
+      labelZhHant: "後"
+},
   { face: 3, col: 1, row: 2, labelZh: '下', labelEn: 'D' },
 ];
 
@@ -397,11 +432,15 @@ function BurnsideBreakdownPanel({ lang }: { lang: Lang }) {
   const SVG_H = classes.length * (BAR_H + ROW_GAP) + 60;
   const LEFT = 140;
 
-  const modeLabels: { id: ObjectMode; zh: string; en: string }[] = [
+  const modeLabels: { id: ObjectMode; zh: string; en: string
+      zhHant?: string;
+ }[] = [
     { id: 'faces',    zh: '面 (6)',   en: 'Faces (6)'    },
-    { id: 'edges',    zh: '棱 (12)',  en: 'Edges (12)'
+    { id: 'edges',    zh: '棱 (12)',  en: 'Edges (12)',
+        zhHant: "稜 (12)"
     },
-    { id: 'vertices', zh: '顶点 (8)', en: 'Vertices (8)'
+    { id: 'vertices', zh: '顶点 (8)', en: 'Vertices (8)',
+        zhHant: "頂點 (8)"
     },
   ];
 
@@ -435,7 +474,7 @@ function BurnsideBreakdownPanel({ lang }: { lang: Lang }) {
               className={`gt-chip${mode === m.id ? ' gt-chip-active' : ''}`}
               onClick={() => setMode(m.id)}
             >
-              {(i18n.language.startsWith('zh') ? m.zh : m.en)}
+              {(i18n.language === 'zh-Hant' ? (m.zhHant ?? m.zh) : (i18n.language.startsWith('zh') ? m.zh : m.en))}
             </button>
           ))}
         </div>

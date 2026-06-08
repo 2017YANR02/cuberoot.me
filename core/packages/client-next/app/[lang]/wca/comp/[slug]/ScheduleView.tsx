@@ -13,6 +13,7 @@ import {
   type ScheduleData, type DayColumn,
 } from '@/lib/comp-schedule';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 const WCA_REGS = 'https://www.worldcubeassociation.org/regulations';
 
@@ -88,9 +89,9 @@ export default function ScheduleView({ slug, isZh, compName, view, detailsExpand
     <>
       {data.venues.length > 1 && (
         <p className="sched-note">
-          {isZh
-            ? `本赛程按第一个场地时区(${tz})显示`
-            : `Times shown in the first venue's timezone (${tz})`}
+          {i18n.language === 'zh-Hant' ? (`本賽程按第一個場地時區(${tz})顯示`) : (isZh
+                              ? `本赛程按第一个场地时区(${tz})显示`
+                              : `Times shown in the first venue's timezone (${tz})`)}
         </p>
       )}
       {view === 'calendar' ? (
@@ -260,9 +261,9 @@ function TableView({ data, days, tz, isZh, compName, detailsExpanded }: {
                   <CalendarPlus size={19} />
                 </a>
               )}
-              {isZh
-                ? `${fullDateLabel(d.dateKey, true)} 赛程`
-                : `Schedule for ${fullDateLabel(d.dateKey, false)}`}
+              {i18n.language === 'zh-Hant' ? (`${fullDateLabel(d.dateKey, true)} 賽程`) : (isZh
+                                    ? `${fullDateLabel(d.dateKey, true)} 赛程`
+                                    : `Schedule for ${fullDateLabel(d.dateKey, false)}`)}
             </h2>
             <div className="sched-table-wrap">
               <table className={`sched-table${detailsExpanded ? '' : ' sched-table--details-hidden'}`}>
@@ -366,7 +367,7 @@ function TableView({ data, days, tz, isZh, compName, detailsExpanded }: {
 function ScheduleLegend({ isZh, hasCutoff }: { isZh: boolean; hasCutoff: boolean }) {
   const reg = (n: string) => (
     <a href={`${WCA_REGS}#${n}`} target="_blank" rel="noreferrer">
-      {isZh ? `规则 ${n}` : `Regulation ${n}`}
+      {i18n.language === 'zh-Hant' ? (`規則 ${n}`) : (isZh ? `规则 ${n}` : `Regulation ${n}`)}
     </a>
   );
   return (
@@ -375,11 +376,13 @@ function ScheduleLegend({ isZh, hasCutoff }: { isZh: boolean; hasCutoff: boolean
           zhHant: "還原時限"
     })}</h4>
       <p>
-        {isZh ? (
-          <>若你在还原过程中达到还原时限,裁判会喊停,你的成绩将记为 DNF(见 {reg('A1a4')})。</>
-        ) : (
-          <>If you reach the time limit during your solve, the judge will stop you and your result will be DNF (see {reg('A1a4')}).</>
-        )}
+        {i18n.language === 'zh-Hant' ? ((
+                        <>若你在還原過程中達到還原時限,裁判會喊停,你的成績將記為 DNF(見 {reg('A1a4')})。</>
+                      )) : (isZh ? (
+                        <>若你在还原过程中达到还原时限,裁判会喊停,你的成绩将记为 DNF(见 {reg('A1a4')})。</>
+                      ) : (
+                        <>If you reach the time limit during your solve, the judge will stop you and your result will be DNF (see {reg('A1a4')}).</>
+                      ))}
       </p>
 
       {hasCutoff && (
@@ -388,11 +391,13 @@ function ScheduleLegend({ isZh, hasCutoff }: { isZh: boolean; hasCutoff: boolean
               zhHant: "及格線"
         })}</h4>
           <p>
-            {isZh ? (
-              <>及格线是进入第二阶段所需达到的成绩(见 {reg('9g')})。</>
-            ) : (
-              <>The result to beat to proceed to the second phase of a cutoff round (see {reg('9g')}).</>
-            )}
+            {i18n.language === 'zh-Hant' ? ((
+                                    <>及格線是進入第二階段所需達到的成績(見 {reg('9g')})。</>
+                                  )) : (isZh ? (
+                                    <>及格线是进入第二阶段所需达到的成绩(见 {reg('9g')})。</>
+                                  ) : (
+                                    <>The result to beat to proceed to the second phase of a cutoff round (see {reg('9g')}).</>
+                                  ))}
           </p>
         </>
       )}
@@ -401,11 +406,13 @@ function ScheduleLegend({ isZh, hasCutoff }: { isZh: boolean; hasCutoff: boolean
           zhHant: "賽制"
     })}</h4>
       <p>
-        {isZh ? (
-          <>赛制规定如何依据成绩对选手排名。每个项目允许的赛制见 {reg('9b')},各赛制的说明见 {reg('9f')}。</>
-        ) : (
-          <>The format describes how to determine the ranking of competitors based on their results. The list of allowed formats per event is described in {reg('9b')}. See {reg('9f')} for a description of each format.</>
-        )}
+        {i18n.language === 'zh-Hant' ? ((
+                        <>賽制規定如何依據成績對選手排名。每個專案允許的賽制見 {reg('9b')},各賽制的說明見 {reg('9f')}。</>
+                      )) : (isZh ? (
+                        <>赛制规定如何依据成绩对选手排名。每个项目允许的赛制见 {reg('9b')},各赛制的说明见 {reg('9f')}。</>
+                      ) : (
+                        <>The format describes how to determine the ranking of competitors based on their results. The list of allowed formats per event is described in {reg('9b')}. See {reg('9f')} for a description of each format.</>
+                      ))}
       </p>
 
       <h4 id="sched-advancement">{tr({ zh: '晋级条件', en: 'Advancement Condition',

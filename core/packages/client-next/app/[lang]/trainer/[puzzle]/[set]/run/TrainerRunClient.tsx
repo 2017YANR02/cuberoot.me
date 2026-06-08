@@ -28,7 +28,7 @@ export default function TrainerRunClient() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('训练中', 'Training');
+  useDocumentTitle('训练中', 'Training', "訓練中");
 
   const puzzle = resolveAlgPuzzle(puzzleParam);   // 接受 event code(333)或 legacy puzzle 名(3x3)
   const meta = puzzle ? getAlgSetMeta(puzzle, setSlug) : undefined;
@@ -140,7 +140,7 @@ export default function TrainerRunClient() {
         })}
         </Link>
         <span style={{ fontSize: '1rem', color: 'var(--muted-foreground)' }}>
-          {puzzle} · {(i18n.language.startsWith('zh') ? meta.zh : meta.en)}
+          {puzzle} · {(i18n.language === 'zh-Hant' ? ((meta as { zhHant?: string }).zhHant ?? meta.zh) : (i18n.language.startsWith('zh') ? meta.zh : meta.en))}
         </span>
       </div>
 

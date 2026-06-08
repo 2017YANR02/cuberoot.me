@@ -619,7 +619,7 @@ export default function HtmlIntroPage() {
 
   useDocumentTitle(
     'HTML : 不是编程语言, 但每个 UI 都从这里开始 — 1989→2026',
-    'HTML : not a programming language, but every UI starts here — 1989→2026',
+    'HTML : not a programming language, but every UI starts here — 1989→2026', "HTML : 不是程式語言, 但每個 UI 都從這裡開始 — 1989→2026"
   );
 
   useEffect(() => {

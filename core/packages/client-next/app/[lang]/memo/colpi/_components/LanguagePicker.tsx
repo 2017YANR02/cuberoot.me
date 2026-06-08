@@ -64,7 +64,7 @@ export function LangPopup({
             title={l.code}
           >
             <Flag iso2={l.iso2} className="colpi-langpicker-flag" />
-            <span>{(i18n.language.startsWith('zh') ? l.zh : l.en)}</span>
+            <span>{(i18n.language === 'zh-Hant' ? (l.zhHant ?? l.zh) : (i18n.language.startsWith('zh') ? l.zh : l.en))}</span>
           </button>
         ))}
       </div>

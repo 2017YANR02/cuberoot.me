@@ -63,7 +63,7 @@ type Data =
 function AllResultsPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('全部成绩', 'All Results');
+  useDocumentTitle('全部成绩', 'All Results', "全部成績");
   const [query, setQuery] = useQueryStates(
     {
       show: parseAsString,
@@ -347,7 +347,7 @@ function AllResultsPageInner() {
         {data && !loading && data.mode === 'results' && (
           <>
             <div className="wse-result-meta">
-              {isZh ? `共 ${data.total.toLocaleString()} 条,显示 ${data.rows.length}` : `${data.total.toLocaleString()} results, showing ${data.rows.length}`}
+              {i18n.language === 'zh-Hant' ? (`共 ${data.total.toLocaleString()} 條,顯示 ${data.rows.length}`) : (isZh ? `共 ${data.total.toLocaleString()} 条,显示 ${data.rows.length}` : `${data.total.toLocaleString()} results, showing ${data.rows.length}`)}
             </div>
             <table className="wse-table">
               <thead>
@@ -356,7 +356,7 @@ function AllResultsPageInner() {
                   <th>{tr({ zh: '选手', en: 'Person',
                       zhHant: "選手"
                 })}</th>
-                  <th className="wse-value-col">{isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average')}</th>
+                  <th className="wse-value-col">{i18n.language === 'zh-Hant' ? ((type === 'single' ? '單次' : '平均')) : (isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average'))}</th>
                   <th>{tr({ zh: '日期', en: 'Date' })}</th>
                   <th>{tr({ zh: '比赛', en: 'Competition',
                       zhHant: "比賽"
@@ -407,7 +407,7 @@ function AllResultsPageInner() {
         {data && !loading && data.mode === 'persons' && (
           <>
             <div className="wse-result-meta">
-              {isZh ? `共 ${data.total.toLocaleString()} 人,${data.rows.length} 条` : `${data.total.toLocaleString()} cubers, showing ${data.rows.length}`}
+              {i18n.language === 'zh-Hant' ? (`共 ${data.total.toLocaleString()} 人,${data.rows.length} 條`) : (isZh ? `共 ${data.total.toLocaleString()} 人,${data.rows.length} 条` : `${data.total.toLocaleString()} cubers, showing ${data.rows.length}`)}
             </div>
             <table className="wse-table">
               <thead>
@@ -416,7 +416,7 @@ function AllResultsPageInner() {
                   <th>{tr({ zh: '选手', en: 'Person',
                       zhHant: "選手"
                 })}</th>
-                  <th className="wse-value-col">{isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average')}</th>
+                  <th className="wse-value-col">{i18n.language === 'zh-Hant' ? ((type === 'single' ? '單次' : '平均')) : (isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average'))}</th>
                   <th>{tr({ zh: '日期', en: 'Date' })}</th>
                   <th>{tr({ zh: '比赛', en: 'Competition',
                       zhHant: "比賽"

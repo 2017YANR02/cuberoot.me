@@ -9,6 +9,7 @@
  * 2x2 scramble — kept here for the 3x3 cubing-icons glyph but routed
  * carefully. We skip the 2x2 mod for now since it's rarely demanded.)
  */
+import i18n from "@/i18n/i18n-client";
 
 export interface ShapeModEvent {
   id: string;
@@ -22,19 +23,26 @@ export interface ShapeModEvent {
 }
 
 export const SHAPE_MOD_EVENTS: ReadonlyArray<ShapeModEvent> = [
-  { id: 'mirror_333',       scrambleSourceId: '333', zh: '镜面魔方',     en: 'Mirror Blocks',   iconClass: 'unofficial-333_mirror_blocks'
+  { id: 'mirror_333',       scrambleSourceId: '333', zh: '镜面魔方',     en: 'Mirror Blocks',   iconClass: 'unofficial-333_mirror_blocks',
+      zhHant: "鏡面魔方"
 },
-  { id: 'pyramorphix',      scrambleSourceId: '222', zh: '二阶金字塔',   en: 'Pyramorphix',     iconClass: 'unofficial-pyramorphix'
+  { id: 'pyramorphix',      scrambleSourceId: '222', zh: '二阶金字塔',   en: 'Pyramorphix',     iconClass: 'unofficial-pyramorphix',
+      zhHant: "二階金字塔"
 },
-  { id: 'mastermorphix',    scrambleSourceId: '333', zh: '三阶金字塔',   en: 'Mastermorphix',   textLabel: 'MMx'
+  { id: 'mastermorphix',    scrambleSourceId: '333', zh: '三阶金字塔',   en: 'Mastermorphix',   textLabel: 'MMx',
+      zhHant: "三階金字塔"
 },
-  { id: 'fisher_333',       scrambleSourceId: '333', zh: '费舍尔魔方',   en: 'Fisher Cube',     iconClass: 'unofficial-fisher'
+  { id: 'fisher_333',       scrambleSourceId: '333', zh: '费舍尔魔方',   en: 'Fisher Cube',     iconClass: 'unofficial-fisher',
+      zhHant: "費舍爾魔方"
 },
-  { id: 'axis_333',         scrambleSourceId: '333', zh: '轴方',         en: 'Axis Cube',       textLabel: 'Axis'
+  { id: 'axis_333',         scrambleSourceId: '333', zh: '轴方',         en: 'Axis Cube',       textLabel: 'Axis',
+      zhHant: "軸方"
 },
-  { id: 'windmill_333',     scrambleSourceId: '333', zh: '风火轮',       en: 'Windmill',        textLabel: 'Wind'
+  { id: 'windmill_333',     scrambleSourceId: '333', zh: '风火轮',       en: 'Windmill',        textLabel: 'Wind',
+      zhHant: "風火輪"
 },
-  { id: 'ghost_333',        scrambleSourceId: '333', zh: '幽灵魔方',     en: 'Ghost Cube',      textLabel: 'Ghost'
+  { id: 'ghost_333',        scrambleSourceId: '333', zh: '幽灵魔方',     en: 'Ghost Cube',      textLabel: 'Ghost',
+      zhHant: "幽靈魔方"
 },
   { id: 'void_333',         scrambleSourceId: '333', zh: '空心魔方',     en: 'Void Cube',       textLabel: 'Void' },
 ];
@@ -62,5 +70,5 @@ export function shapeModSourceEvent(id: string): string | null {
 export function shapeModDisplayName(id: string, isZh: boolean): string | null {
   const e = BY_ID.get(id);
   if (!e) return null;
-  return isZh ? e.zh : e.en;
+  return i18n.language === 'zh-Hant' ? (e.zhHant ?? e.zh) : (isZh ? e.zh : e.en);
 }

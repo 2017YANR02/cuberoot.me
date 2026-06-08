@@ -12,16 +12,23 @@ interface Props { isZh: boolean; }
 type Tab = 'most' | 'few' | 'people' | 'biggest' | 'countries';
 const TAB_KEYS: Tab[] = ['most', 'few', 'people', 'biggest', 'countries'];
 
-const TABS: { id: Tab; en: string; zh: string }[] = [
-  { id: 'most',      en: 'Most nemeses',         zh: '最多宿敌'
+const TABS: { id: Tab; en: string; zh: string
+    zhHant?: string;
+ }[] = [
+  { id: 'most',      en: 'Most nemeses',         zh: '最多宿敌',
+      zhHant: "最多宿敵"
 },
-  { id: 'few',       en: 'Fewest nemeses',       zh: '最少宿敌'
+  { id: 'few',       en: 'Fewest nemeses',       zh: '最少宿敌',
+      zhHant: "最少宿敵"
 },
-  { id: 'people',    en: 'People',               zh: '选手'
+  { id: 'people',    en: 'People',               zh: '选手',
+      zhHant: "選手"
 },
-  { id: 'biggest',   en: 'Biggest nemesizers',   zh: '被视为宿敌最多者'
+  { id: 'biggest',   en: 'Biggest nemesizers',   zh: '被视为宿敌最多者',
+      zhHant: "被視為宿敵最多者"
 },
-  { id: 'countries', en: 'Top countries',        zh: '顶尖国家'
+  { id: 'countries', en: 'Top countries',        zh: '顶尖国家',
+      zhHant: "頂尖國家"
 },
 ];
 
@@ -52,7 +59,7 @@ export default function StatsMode({ isZh }: Props) {
             className={tab === t.id ? 'active' : ''}
             onClick={() => setTab(t.id)}
           >
-            {(i18n.language.startsWith('zh') ? t.zh : t.en)}
+            {(i18n.language === 'zh-Hant' ? (t.zhHant ?? t.zh) : (i18n.language.startsWith('zh') ? t.zh : t.en))}
           </button>
         ))}
       </div>
@@ -85,7 +92,7 @@ export default function StatsMode({ isZh }: Props) {
           <PeopleTable persons={data.persons ?? []} isZh={isZh} />
           {data.truncated && (
             <p className="nemesizer-small-muted" style={{ textAlign: 'center', padding: 12 }}>
-              {isZh ? `仅显示前 500 行（共 ${data.totalCount}）。` : `Showing first 500 of ${data.totalCount}.`}
+              {i18n.language === 'zh-Hant' ? (`僅顯示前 500 行（共 ${data.totalCount}）。`) : (isZh ? `仅显示前 500 行（共 ${data.totalCount}）。` : `Showing first 500 of ${data.totalCount}.`)}
             </p>
           )}
         </>

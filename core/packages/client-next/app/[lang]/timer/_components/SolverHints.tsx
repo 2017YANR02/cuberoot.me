@@ -28,6 +28,7 @@ import { solveMega, type MegaSolveResult } from '../_lib/solver/mega';
 import SolverCompareModal from './SolverCompareModal';
 import StageSolverModal from './StageSolverModal';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 type SmallEvent = '222' | 'pyra' | 'skewb';
 type Sq1Event = 'sq1';
@@ -153,7 +154,7 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
                   onClick={() => setMethodId(m.id)}
                   style={methodId === m.id ? tabActiveStyle : tabStyle}
                 >
-                  {isZh ? m.nameZh : m.nameEn}
+                  {i18n.language === 'zh-Hant' ? (m.nameZhHant ?? m.nameZh) : (isZh ? m.nameZh : m.nameEn)}
                 </button>
               ))}
               <button

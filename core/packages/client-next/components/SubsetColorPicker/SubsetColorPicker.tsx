@@ -16,12 +16,18 @@ export const COLOR_LETTERS: ColorLetter[] = ['B', 'G', 'O', 'R', 'W', 'Y'];
 export const COLOR_HEX: Record<ColorLetter, string> = {
   W: '#FFFFFF', Y: '#FEFE00', R: '#EE0000', O: '#FFA100', B: '#0000F2', G: '#00D800',
 };
-export const COLOR_NAME: Record<ColorLetter, { zh: string; en: string }> = {
-  W: { zh: '白', en: 'White' }, Y: { zh: '黄', en: 'Yellow'
-}, R: { zh: '红', en: 'Red'
+export const COLOR_NAME: Record<ColorLetter, { zh: string; en: string
+        zhHant?: string;
+ }> = {
+  W: { zh: '白', en: 'White' }, Y: { zh: '黄', en: 'Yellow',
+      zhHant: "黃"
+}, R: { zh: '红', en: 'Red',
+    zhHant: "紅"
 },
-  O: { zh: '橙', en: 'Orange' }, B: { zh: '蓝', en: 'Blue'
-}, G: { zh: '绿', en: 'Green'
+  O: { zh: '橙', en: 'Orange' }, B: { zh: '蓝', en: 'Blue',
+      zhHant: "藍"
+}, G: { zh: '绿', en: 'Green',
+    zhHant: "綠"
 },
 };
 // 渐变里颜色自上而下顺序(与直方图 fillColors 一致)。
@@ -53,12 +59,16 @@ export function SubsetSwatch({ colors }: { colors: ColorLetter[] }) {
 }
 
 const MODE_ORDER: ColorMode[] = ['dual', 'single', 'cn', 'quad'];
-const MODE_LABEL: Record<ColorMode, { zh: string; en: string }> = {
+const MODE_LABEL: Record<ColorMode, { zh: string; en: string
+        zhHant?: string;
+ }> = {
   cn: { zh: '六色', en: 'CN' },
   quad: { zh: '四色', en: 'Quad' },
-  dual: { zh: '双色', en: 'Dual'
+  dual: { zh: '双色', en: 'Dual',
+      zhHant: "雙色"
 },
-  single: { zh: '单色', en: 'Single'
+  single: { zh: '单色', en: 'Single',
+      zhHant: "單色"
 },
 };
 

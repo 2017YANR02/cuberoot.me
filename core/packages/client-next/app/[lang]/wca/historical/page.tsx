@@ -53,7 +53,7 @@ interface RanksResponse {
 function HistoricalRanksPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('历史排名', 'Historical Ranks');
+  useDocumentTitle('历史排名', 'Historical Ranks', "歷史排名");
   const [q, setQ] = useQueryStates(
     {
       event: parseAsString,
@@ -174,9 +174,9 @@ function HistoricalRanksPageInner() {
         {data && !loading && (
           <>
             <div className="wse-result-meta">
-              {isZh
-                ? `共 ${data.total.toLocaleString()} 人,${data.rows.length} 条`
-                : `${data.total.toLocaleString()} cubers, showing ${data.rows.length}`}
+              {i18n.language === 'zh-Hant' ? (`共 ${data.total.toLocaleString()} 人,${data.rows.length} 條`) : (isZh
+                                          ? `共 ${data.total.toLocaleString()} 人,${data.rows.length} 条`
+                                          : `${data.total.toLocaleString()} cubers, showing ${data.rows.length}`)}
             </div>
             <table className="wse-table">
               <thead>
@@ -185,7 +185,7 @@ function HistoricalRanksPageInner() {
                   <th>{tr({ zh: '选手', en: 'Person',
                       zhHant: "選手"
                 })}</th>
-                  <th className="wse-value-col">{isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average')}</th>
+                  <th className="wse-value-col">{i18n.language === 'zh-Hant' ? ((type === 'single' ? '單次' : '平均')) : (isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average'))}</th>
                   {!country && <th>{tr({ zh: '国家', en: 'Country',
                       zhHant: "國家"
                 })}</th>}

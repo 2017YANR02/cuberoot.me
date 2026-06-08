@@ -39,7 +39,7 @@ export default function RequestTracer() {
           const isHit = p.cacheHit && s.id === 'api';
           const litList = p.lit;
           const isFinal = isLit && s.id === litList[litList.length - 1];
-          const st = (i18n.language.startsWith('zh') ? s.zh : s.en);
+          const st = (i18n.language === 'zh-Hant' ? (s.zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en));
           return (
             <li key={s.id} className={`tracer-stage${isLit ? ' lit' : ''}${isHit ? ' hit' : ''}${isFinal ? ' final' : ''}`}>
               <div className="tracer-stage-num">{String(i + 1).padStart(2, '0')}</div>
