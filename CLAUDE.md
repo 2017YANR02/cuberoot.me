@@ -154,3 +154,6 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 - better-sqlite3 native 模块,首次装包要 `pnpm install` 触发 build(pnpm-workspace.yaml 已 allowBuilds)
 - turbopack 在 Windows 偶发 panic + HMR 死循环闪屏:`rm -rf .next` 重启 dev
 - FTS5 触发器只覆盖 insert/update/delete,migration 里有一次性 backfill;新装环境跑完 migration 就好,不用手动同步
+- `@font-face` 禁写在 globals.css(Tailwind v4 入口会吃掉顶层 @font-face),放独立 `app/fonts.css` 由 layout 单独 import(同主站)
+- 自定义字体验收:① CSSOM 有该 @font-face ② `document.fonts` 有该 family ③ canvas 测宽同时 ≠ serif 且 ≠ monospace;别用 innerHTML 注入 SVG 截图当证据(不加载内嵌字体);印刷母版关键记法转矢量轮廓
+- 动字体 / CSS / 构建前先看主站 `D:\cube\cuberoot.me` 同款做法,抄结构不只抄片段
