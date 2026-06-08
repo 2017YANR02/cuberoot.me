@@ -8,6 +8,38 @@ export const FRONT_ARTS: { src: string; label: string }[] = [
   { src: "/card/front-city.webp", label: "微缩世界" },
 ];
 
+// 魔方六面配色,logo / 色块散点底纹共用
+export const CUBE_FACES = [
+  "#C41E3A", "#FFFFFF", "#0051BA",
+  "#FF8A00", "#FFD500", "#009E60",
+  "#FFFFFF", "#C41E3A", "#FFD500",
+];
+
+export type FaceletSpot = {
+  x: number; // 面板内 0..1
+  y: number;
+  size: number; // mm
+  colorIndex: number; // CUBE_FACES 下标
+  opacity: number;
+  rot: number; // deg
+};
+
+// 散落魔方色块的确定性坐标(sin 哈希,避免 Math.random),DOM 卡与矢量卡共用同一份散点。
+export function cubeFaceletSpots(count = 14): FaceletSpot[] {
+  const h = (i: number, seed: number) => {
+    const v = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453;
+    return v - Math.floor(v);
+  };
+  return Array.from({ length: count }, (_, i) => ({
+    x: h(i, 1),
+    y: h(i, 2),
+    size: 1.1 + h(i, 3) * 1.7,
+    colorIndex: Math.floor(h(i, 4) * CUBE_FACES.length),
+    opacity: 0.1 + h(i, 5) * 0.13,
+    rot: h(i, 6) * 44 - 22,
+  }));
+}
+
 // 魔方记法 + 解法流派缩写,背面底纹用。CFOP/Roux/ZZ/Petrus… 是主流流派。
 export const FORMULA_TOKENS = [
   "R U R' U'", "F2L", "CFOP", "OLL", "PLL", "R' D' R D", "U R U' R'",

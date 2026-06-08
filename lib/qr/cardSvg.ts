@@ -1,6 +1,6 @@
 import type { QrCode } from "@/lib/db/qr";
 import { qrSvgBody, cubeLogo, CUBE_FACES } from "./svg";
-import { backText, frontQuote, FORMULA_TOKENS } from "./cardText";
+import { backText, frontQuote, FORMULA_TOKENS, cubeFaceletSpots } from "./cardText";
 
 // 整张折叠卡的「印刷母版」:单个自包含、100% 矢量的 SVG(无位图、无 CSS、无外链)。
 // 二维码 / 文字 / 配色 / 魔方图形全是矢量路径,印刷厂可直接收、无限放大不糊。
@@ -72,27 +72,16 @@ function notationPattern(
   return `<g clip-path="url(#${clipId})"><g transform="rotate(-8 ${cx} ${cy})">${rows.join("")}</g></g>`;
 }
 
-// 确定性散点(避免 Math.random,sin 哈希),正面魔方色块底纹用
-function hash01(i: number, seed: number): number {
-  const x = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453;
-  return x - Math.floor(x);
-}
-
-// 正面魔方元素:散落的六色小方块(魔方面块),低透明度,clip 在正面板内
-function cubeFacelets(x0: number, top: number): string {
-  const out: string[] = [];
-  for (let i = 0; i < 16; i++) {
-    const fx = x0 + 1 + hash01(i, 1) * (PANEL_W - 3);
-    const fy = top + 1 + hash01(i, 2) * (PANEL_H - 3);
-    const s = 1.1 + hash01(i, 3) * 1.7;
-    const color = CUBE_FACES[Math.floor(hash01(i, 4) * CUBE_FACES.length)];
-    const op = (0.1 + hash01(i, 5) * 0.13).toFixed(2);
-    const rot = (hash01(i, 6) * 44 - 22).toFixed(1);
-    out.push(
-      `<rect x="${fx.toFixed(2)}" y="${fy.toFixed(2)}" width="${s.toFixed(2)}" height="${s.toFixed(2)}" rx="${(s * 0.2).toFixed(2)}" fill="${color}" fill-opacity="${op}" transform="rotate(${rot} ${(fx + s / 2).toFixed(2)} ${(fy + s / 2).toFixed(2)})"/>`,
-    );
-  }
-  return `<g clip-path="url(#frontClip)">${out.join("")}</g>`;
+// 散落的六色魔方色块(魔方面块),低透明度,clip 在指定面板内。正面 / 背面共用,散点同源。
+function cubeFacelets(x0: number, top: number, clipId: string): string {
+  const out = cubeFaceletSpots().map((sp) => {
+    const fx = x0 + 1 + sp.x * (PANEL_W - 3);
+    const fy = top + 1 + sp.y * (PANEL_H - 3);
+    const s = sp.size;
+    const color = CUBE_FACES[sp.colorIndex];
+    return `<rect x="${fx.toFixed(2)}" y="${fy.toFixed(2)}" width="${s.toFixed(2)}" height="${s.toFixed(2)}" rx="${(s * 0.2).toFixed(2)}" fill="${color}" fill-opacity="${sp.opacity.toFixed(2)}" transform="rotate(${sp.rot.toFixed(1)} ${(fx + s / 2).toFixed(2)} ${(fy + s / 2).toFixed(2)})"/>`;
+  });
+  return `<g clip-path="url(#${clipId})">${out.join("")}</g>`;
 }
 
 // 正面:魔方艺术图(内嵌位图,印满含出血)+ 底部压暗 + slogan + 品牌名。
@@ -137,7 +126,7 @@ function front(
   const logoSize = 7.5;
   return (
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="${INK}"/>` +
-    (pattern ? cubeFacelets(x0, top) : "") +
+    (pattern ? cubeFacelets(x0, top, "frontClip") : "") +
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#frontGlow)"/>` +
     cubeLogo(cx - logoSize / 2, top + 5, logoSize) +
     slogan
@@ -168,6 +157,7 @@ function back(x0: number, top: number, entry: QrCode, url: string, pattern: bool
 
   return (
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#backBg)"/>` +
+    (pattern ? cubeFacelets(x0, top, "backClip") : "") +
     (pattern ? notationPattern(x0, top, "backClip", BRAND, 0.08) : "") +
     text(cx, top + 6.5, 1.6, BRAND_DARK, main, { weight: 700 }) +
     (sub ? text(cx, top + 9.4, 1.2, "#6B7280", sub) : "") +

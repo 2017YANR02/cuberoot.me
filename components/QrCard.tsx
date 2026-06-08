@@ -1,7 +1,14 @@
 import type { CSSProperties } from "react";
 import type { QrCode } from "@/lib/db/qr";
 import { qrTargetUrl } from "@/lib/site";
-import { DEFAULT_QUOTES, FRONT_ARTS, backText, formulaRow } from "@/lib/qr/cardText";
+import {
+  CUBE_FACES,
+  DEFAULT_QUOTES,
+  FRONT_ARTS,
+  backText,
+  cubeFaceletSpots,
+  formulaRow,
+} from "@/lib/qr/cardText";
 
 // 2x4cm 折叠卡:正面(slogan + 魔方艺术图)| 折线 | 背面(解法流派公式底纹 + 唯一二维码)。
 // 尺寸走 --s 缩放变量:屏幕放大方便看,打印时由外层把 --s 设回 1 即精确 mm。
@@ -103,6 +110,25 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
             "radial-gradient(42% 22% at 100% 0%, rgba(42,93,244,0.12), transparent 70%), radial-gradient(46% 24% at 0% 100%, rgba(42,93,244,0.10), transparent 70%)",
         }}
       />
+      {/* 散落魔方色块底纹(衬在二维码后,和正面同源散点) */}
+      <div aria-hidden style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+        {cubeFaceletSpots().map((sp, i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              left: m(1 + sp.x * 17),
+              top: m(1 + sp.y * 37),
+              width: m(sp.size),
+              height: m(sp.size),
+              borderRadius: m(sp.size * 0.2),
+              background: CUBE_FACES[sp.colorIndex],
+              opacity: sp.opacity,
+              transform: `rotate(${sp.rot}deg)`,
+            }}
+          />
+        ))}
+      </div>
       {/* 解法流派 / 公式底纹(斜排淡蓝,衬在二维码后) */}
       <div
         aria-hidden
