@@ -19,7 +19,6 @@ import {
   ListOrdered, Users, Percent, LayoutGrid, Sigma, Crown, History, Sparkles,
   type LucideIcon,
 } from 'lucide-react';
-import { getLangQuery } from '@/i18n/i18n-client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { statsUrl } from '@/lib/stats-base';
 import { STAT_ICONS } from './wca-stat-icons';
@@ -160,9 +159,7 @@ export default function WcaStatsIndex() {
     );
   }
 
-  const langQuery = getLangQuery();
-
-  type Section = { key: string; zh: string; en: string; Icon?: LucideIcon; cat?: StatCategory };
+  type Section ={ key: string; zh: string; en: string; Icon?: LucideIcon; cat?: StatCategory };
   const sections: Section[] = [
     { key: TOOLS, zh: '工具', en: 'Tools', Icon: Wrench },
     { key: LOOKUP, zh: '查询', en: 'Lookup', Icon: Search },
@@ -220,7 +217,7 @@ export default function WcaStatsIndex() {
             {sec.key === TOOLS && (
               <div className="wca-tools-grid">
                 {WCA_TOOLS.map(it => (
-                  <Link key={it.path} href={`${it.path}${langQuery}`} className="wca-tool-card">
+                  <Link key={it.path} href={it.path} className="wca-tool-card">
                     <it.Icon size={28} strokeWidth={1.5} />
                     <span>{isZh ? it.zh : it.en}</span>
                   </Link>
@@ -231,7 +228,7 @@ export default function WcaStatsIndex() {
             {sec.key === LOOKUP && (
               <div className="wca-tools-grid">
                 {LOOKUP_ITEMS.map(it => {
-                  const to = it.extraQuery ? `${it.path}${langQuery}&${it.extraQuery}` : `${it.path}${langQuery}`;
+                  const to = it.extraQuery ? `${it.path}?${it.extraQuery}` : it.path;
                   return (
                     <Link key={`${it.path}|${it.extraQuery ?? ''}`} href={to} className="wca-tool-card">
                       <it.Icon size={28} strokeWidth={1.5} />
@@ -249,7 +246,7 @@ export default function WcaStatsIndex() {
                   return (
                     <Link
                       key={s.id}
-                      href={`/wca/${s.id}${langQuery}`}
+                      href={`/wca/${s.id}`}
                       className="wca-stat-card"
                     >
                       {StatIcon && <StatIcon size={18} strokeWidth={1.5} />}
@@ -266,7 +263,7 @@ export default function WcaStatsIndex() {
             {isZh ? '数据来源 ' : 'Data from '}
             <a href="https://www.worldcubeassociation.org/" target="_blank" rel="noopener noreferrer">WCA</a>
           </span>
-          <Link href={`/about${langQuery}`} prefetch={false}>{isZh ? '关于' : 'About'}</Link>
+          <Link href="/about" prefetch={false}>{isZh ? '关于' : 'About'}</Link>
           <a href="https://github.com/RuiminYan/cuberoot.me" target="_blank" rel="noopener noreferrer">GitHub</a>
         </footer>
       </div>
