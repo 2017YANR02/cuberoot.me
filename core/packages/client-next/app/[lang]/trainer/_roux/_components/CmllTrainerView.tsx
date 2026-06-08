@@ -22,6 +22,7 @@ import { AppState, Action } from '@/lib/roux/Types';
 import { MultiSelect, SingleSelect } from './SelectorViews';
 import { ColorPanel } from './Input';
 import CaseSelectDialog from './CaseSelectView';
+import { useRT } from '../i18n';
 import {
   cmll_algs_raw,
   nmcll_display_parity,
@@ -87,6 +88,7 @@ function _getMask(name: string) {
 
 export function CmllTrainerView(props: { state: AppState; dispatch: React.Dispatch<Action> }) {
   const { state, dispatch } = props;
+  const { t } = useRT();
   const cube = state.cube.state;
   const cubeTheme = useEffectiveTheme() === 'dark' ? 'dark' : 'bright';
 
@@ -290,12 +292,12 @@ export function CmllTrainerView(props: { state: AppState; dispatch: React.Dispat
 
       <div className="roux-cmll-card">
         <div className="roux-cmll-grid">
-          <div className="roux-cmll-label">Scramble</div>
+          <div className="roux-cmll-label">{t('Scramble')}</div>
           <div className="roux-cmll-value">
             <p className="roux-cmll-text">{setup}</p>
           </div>
 
-          <div className="roux-cmll-label">Case</div>
+          <div className="roux-cmll-label">{t('Case')}</div>
           {!reveal ? (
             <div className="roux-cmll-showcell">
               <button
@@ -304,7 +306,7 @@ export function CmllTrainerView(props: { state: AppState; dispatch: React.Dispat
                 className="roux-btn roux-btn-outline roux-cmll-fullbtn"
                 onClick={handleClick}
               >
-                Show
+                {t('Show')}
               </button>
             </div>
           ) : (
@@ -331,7 +333,7 @@ export function CmllTrainerView(props: { state: AppState; dispatch: React.Dispat
             className="roux-btn roux-btn-primary roux-cmll-nextbtn"
             onClick={handleNext}
           >
-            Next
+            {t('Next')}
           </button>
         </div>
       </div>
@@ -341,7 +343,7 @@ export function CmllTrainerView(props: { state: AppState; dispatch: React.Dispat
       <hr className="roux-cmll-divider" />
 
       <div className="roux-cmll-usage">
-        Usage: Press space for next case. Enter to redo. / to reveal.
+        {t('Usage: Press space for next case. Enter to redo. / to reveal.')}
       </div>
     </div>
   );
@@ -349,6 +351,7 @@ export function CmllTrainerView(props: { state: AppState; dispatch: React.Dispat
 
 export function OllcpTrainerView(props: { state: AppState; dispatch: React.Dispatch<Action> }) {
   const { state, dispatch } = props;
+  const { t } = useRT();
   const cube = state.cube.state;
   const cubeTheme = useEffectiveTheme() === 'dark' ? 'dark' : 'bright';
 
@@ -470,12 +473,12 @@ export function OllcpTrainerView(props: { state: AppState; dispatch: React.Dispa
 
       <div className="roux-cmll-card">
         <div className="roux-cmll-grid">
-          <div className="roux-cmll-label">Scramble</div>
+          <div className="roux-cmll-label">{t('Scramble')}</div>
           <div className="roux-cmll-value">
             <p className="roux-cmll-text">{setup}</p>
           </div>
 
-          <div className="roux-cmll-label">Case</div>
+          <div className="roux-cmll-label">{t('Case')}</div>
           {!reveal ? (
             <div className="roux-cmll-showcell">
               <button
@@ -484,7 +487,7 @@ export function OllcpTrainerView(props: { state: AppState; dispatch: React.Dispa
                 className="roux-btn roux-btn-outline roux-cmll-fullbtn"
                 onClick={handleClick}
               >
-                Show
+                {t('Show')}
               </button>
             </div>
           ) : (
@@ -511,7 +514,7 @@ export function OllcpTrainerView(props: { state: AppState; dispatch: React.Dispa
             className="roux-btn roux-btn-primary roux-cmll-nextbtn"
             onClick={handleNext}
           >
-            Next
+            {t('Next')}
           </button>
         </div>
       </div>
@@ -521,7 +524,7 @@ export function OllcpTrainerView(props: { state: AppState; dispatch: React.Dispa
       <hr className="roux-cmll-divider" />
 
       <div className="roux-cmll-usage">
-        Usage: Press space for next case. Enter to redo. / to reveal.
+        {t('Usage: Press space for next case. Enter to redo. / to reveal.')}
       </div>
     </div>
   );

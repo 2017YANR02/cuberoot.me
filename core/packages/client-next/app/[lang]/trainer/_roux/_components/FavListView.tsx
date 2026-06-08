@@ -15,12 +15,14 @@ import { AppState, Action, FavCase } from '@/lib/roux/Types';
 import { all_solvers } from '@/lib/roux/CachedSolver';
 
 import { Modal } from './ui';
+import { useRT } from '../i18n';
 import './FavListView.css';
 
 // Confirm-dialog helper (upstream signature: warnDialog({ confirm })). Upstream
 // shipped only an empty stub; here it is a functional Modal-backed confirm. It
 // returns { open, render } — call open() to ask, render() to mount the dialog.
 export function warnDialog(props: { confirm: () => void }) {
+  const { t } = useRT();
   const [shown, setShown] = React.useState(false);
   const open = () => setShown(true);
   const close = () => setShown(false);
@@ -32,14 +34,14 @@ export function warnDialog(props: { confirm: () => void }) {
     <Modal
       open={shown}
       onClose={close}
-      title={message ?? 'Are you sure?'}
+      title={message ?? t('Are you sure?')}
       actions={
         <>
           <button type="button" className="roux-btn roux-btn-text" onClick={close}>
-            No
+            {t('No')}
           </button>
           <button type="button" className="roux-btn roux-btn-text" onClick={onYes}>
-            Yes
+            {t('Yes')}
           </button>
         </>
       }
@@ -75,6 +77,7 @@ function parseAddString(state: AppState, s: string): [FavCase[], boolean] {
 
 export default function FavListView(props: { state: AppState; dispatch: React.Dispatch<Action> }) {
   const { state, dispatch } = props;
+  const { t, isZh } = useRT();
   const favList = state.favList.filter((c) => c.mode === state.mode);
 
   const play = (i: number) => {
@@ -95,14 +98,14 @@ export default function FavListView(props: { state: AppState; dispatch: React.Di
     <Modal
       open={dialogID >= 0}
       onClose={handleClose}
-      title="Delete this alg from favorites?"
+      title={t('Delete this alg from favorites?')}
       actions={
         <>
           <button type="button" className="roux-btn roux-btn-text" onClick={handleClose}>
-            No
+            {t('No')}
           </button>
           <button type="button" className="roux-btn roux-btn-text" onClick={handleRemove}>
-            Yes
+            {t('Yes')}
           </button>
         </>
       }
@@ -129,21 +132,24 @@ export default function FavListView(props: { state: AppState; dispatch: React.Di
     <Modal
       open={addDialogOpen}
       onClose={handleAddClose}
-      title="Add New Cases"
+      title={t('Add New Cases')}
       actions={
         <>
           <button type="button" className="roux-btn roux-btn-text" onClick={handleAddClose}>
-            Cancel
+            {t('Cancel')}
           </button>
           <button type="button" className="roux-btn roux-btn-text" onClick={handleAddSuccess}>
-            Add All
+            {t('Add All')}
           </button>
         </>
       }
     >
       <p className="roux-fav-add-help">
-        Input your cases here. (one per line) <br />
-        Format: [category], [setup algorithm]. category := fb | fbdr | ss-front | ss-back
+        {isZh ? '在此输入情况（每行一条）' : 'Input your cases here. (one per line)'}
+        <br />
+        {isZh
+          ? '格式：[类别], [打乱公式]。类别 := fb | fbdr | ss-front | ss-back'
+          : 'Format: [category], [setup algorithm]. category := fb | fbdr | ss-front | ss-back'}
       </p>
       <textarea
         autoFocus
@@ -165,13 +171,13 @@ export default function FavListView(props: { state: AppState; dispatch: React.Di
         <table className="roux-fav-table">
           <thead>
             <tr>
-              <th className="roux-fav-th">Scramble</th>
+              <th className="roux-fav-th">{t('Scramble')}</th>
               <th className="roux-fav-th roux-fav-th-action">
                 <button
                   type="button"
                   className="roux-icon-btn roux-icon-btn-active roux-fav-icon"
                   onClick={handleAdd}
-                  aria-label="Add cases"
+                  aria-label={t('Add cases')}
                 >
                   <Plus size={18} />
                 </button>
@@ -190,7 +196,7 @@ export default function FavListView(props: { state: AppState; dispatch: React.Di
                     className="roux-icon-btn roux-icon-btn-active roux-fav-icon"
                     onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => play(i)}
-                    aria-label="Replay"
+                    aria-label={t('Replay')}
                   >
                     <ListVideo size={18} />
                   </button>
@@ -199,7 +205,7 @@ export default function FavListView(props: { state: AppState; dispatch: React.Di
                     className="roux-icon-btn roux-icon-btn-active roux-fav-icon"
                     onFocus={(e) => e.currentTarget.blur()}
                     onClick={() => setDialogID(i)}
-                    aria-label="Delete"
+                    aria-label={t('Delete')}
                   >
                     <Trash2 size={18} />
                   </button>

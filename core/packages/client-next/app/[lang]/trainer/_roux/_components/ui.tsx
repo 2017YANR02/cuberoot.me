@@ -11,6 +11,7 @@
 
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useRT } from '../i18n';
 
 export function Modal(props: {
   open: boolean;
@@ -23,6 +24,7 @@ export function Modal(props: {
   maxWidth?: number | string;
 }) {
   const { open, onClose, title, children, actions, disableBackdropClose, maxWidth } = props;
+  const { t } = useRT();
 
   useEffect(() => {
     if (!open) return;
@@ -52,7 +54,7 @@ export function Modal(props: {
         style={maxWidth != null ? { maxWidth } : undefined}
         onClick={(e) => e.stopPropagation()}
       >
-        <button type="button" className="roux-modal-close" onClick={onClose} aria-label="Close">
+        <button type="button" className="roux-modal-close" onClick={onClose} aria-label={t('Close')}>
           <X size={16} />
         </button>
         {title != null && <div className="roux-modal-title">{title}</div>}

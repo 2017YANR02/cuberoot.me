@@ -31,6 +31,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useEffectiveTheme } from '@/lib/theme';
 
 import { Modal, FieldLabel } from './ui';
+import { useRT } from '../i18n';
 import type { AnalyzerWorker } from './analyzer.worker';
 import './AnalyzerView.css';
 
@@ -50,6 +51,7 @@ function ScrambleView(props: {
   setState: (newState: AnalyzerState) => void;
 }) {
   const { state, setState } = props;
+  const { t } = useRT();
   const [value, setValue] = React.useState(state.scramble);
 
   const onScrambleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -69,7 +71,7 @@ function ScrambleView(props: {
   return (
     <div className="roux-analyzer-scramble">
       <div className="roux-analyzer-scramble-field">
-        <FieldLabel>Scramble</FieldLabel>
+        <FieldLabel>{t('Scramble')}</FieldLabel>
         <textarea
           className="roux-analyzer-scramble-input"
           rows={2}
@@ -85,7 +87,7 @@ function ScrambleView(props: {
           onFocus={(evt) => evt.currentTarget.blur()}
           onClick={handleGen}
         >
-          Gen
+          {t('Gen')}
         </button>
         <button
           type="button"
@@ -93,7 +95,7 @@ function ScrambleView(props: {
           onFocus={(evt) => evt.currentTarget.blur()}
           onClick={handleBegin}
         >
-          GO
+          {t('GO')}
         </button>
       </div>
     </div>
@@ -103,6 +105,7 @@ function ScrambleView(props: {
 // ---- ConfigView ----------------------------------------------------------
 function ConfigView(props: { state: AnalyzerState; setState: (newState: AnalyzerState) => void }) {
   const { state, setState } = props;
+  const { t } = useRT();
 
   const fb_ori_str = state.orientation + ',' + state.pre_orientation;
   const handleFBOri = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -126,23 +129,23 @@ function ConfigView(props: { state: AnalyzerState; setState: (newState: Analyzer
   return (
     <div className="roux-analyzer-config">
       <div className="roux-analyzer-config-item">
-        <FieldLabel>FB Orientation</FieldLabel>
+        <FieldLabel>{t('FB Orientation')}</FieldLabel>
         <select className="roux-analyzer-select" value={fb_ori_str} onChange={handleFBOri}>
-          <option value="x2y,">x2y on W/Y</option>
-          <option value="x2y,x">x2y on B/G</option>
-          <option value="x2y,z">x2y on R/O</option>
-          <option value="cn,">Color Neutral</option>
+          <option value="x2y,">{t('x2y on W/Y')}</option>
+          <option value="x2y,x">{t('x2y on B/G')}</option>
+          <option value="x2y,z">{t('x2y on R/O')}</option>
+          <option value="cn,">{t('Color Neutral')}</option>
         </select>
       </div>
       <div className="roux-analyzer-config-item">
-        <FieldLabel>Organize</FieldLabel>
+        <FieldLabel>{t('Organize')}</FieldLabel>
         <select className="roux-analyzer-select" value={state.show_mode} onChange={handle_display_mode}>
-          <option value="foreach">By FB</option>
-          <option value="combined">Combined</option>
+          <option value="foreach">{t('By FB')}</option>
+          <option value="combined">{t('Combined')}</option>
         </select>
       </div>
       <div className="roux-analyzer-config-item">
-        <FieldLabel># Solutions</FieldLabel>
+        <FieldLabel>{t('# Solutions')}</FieldLabel>
         <select
           className="roux-analyzer-select"
           value={state.num_solution}
@@ -156,24 +159,24 @@ function ConfigView(props: { state: AnalyzerState; setState: (newState: Analyzer
         </select>
       </div>
       <div className="roux-analyzer-config-item">
-        <FieldLabel>FB Stage</FieldLabel>
+        <FieldLabel>{t('FB Stage')}</FieldLabel>
         <select className="roux-analyzer-select" value={state.fb_stage} onChange={handle_fb_stage}>
-          <option value="fb">FB</option>
+          <option value="fb">{t('FB')}</option>
           <option value="fs">FS</option>
-          <option value="pseudo-fs">Pseudo FS</option>
+          <option value="pseudo-fs">{t('Pseudo FS')}</option>
           <option value="felinep1">E-Line+1</option>
           <option value="fs-combo">FS/Line</option>
         </select>
       </div>
       <div className="roux-analyzer-config-item">
-        <FieldLabel>Hints?</FieldLabel>
+        <FieldLabel>{t('Hints?')}</FieldLabel>
         <select
           className="roux-analyzer-select"
           value={state.hide_solutions.toString()}
           onChange={handle_hide_solutions}
         >
-          <option value="true">Yes</option>
-          <option value="false">No</option>
+          <option value="true">{t('Yes')}</option>
+          <option value="false">{t('No')}</option>
         </select>
       </div>
     </div>
@@ -185,6 +188,7 @@ function SolutionInputView(props: {
   state: AnalyzerState;
   setState: (newState: AnalyzerState) => void;
 }) {
+  const { t } = useRT();
   const [editing, setEditing] = React.useState(false);
   const [value, setValue] = React.useState('');
 
@@ -218,18 +222,18 @@ function SolutionInputView(props: {
           onClick={toggleEdit}
         >
           <Edit size={15} />
-          Input Your Solution
+          {t('Input Your Solution')}
         </button>
       </div>
 
       <Modal
         open={editing}
         onClose={handleClose}
-        title="Input your reconstructed solution"
+        title={t('Input your reconstructed solution')}
         maxWidth={520}
         actions={
           <button type="button" className="roux-btn roux-btn-outline" onClick={handleClose}>
-            Confirm
+            {t('Confirm')}
           </button>
         }
       >
@@ -301,6 +305,7 @@ function StageSolutionListView(props: {
   setState: (newState: AnalyzerState) => void;
 }) {
   const { solutions, num_to_display, state } = props;
+  const { t, isZh } = useRT();
   const [isRevealed, setIsRevealed] = React.useState(!state.hide_solutions);
 
   React.useEffect(() => {
@@ -323,10 +328,10 @@ function StageSolutionListView(props: {
     (s) => s.solution.moves.length === shortest_length,
   );
   const tag_full_name: Record<string, string> = {
-    FS: 'FS',
-    FB: 'FB',
-    Ps: 'Pseudo FS',
-    Line: 'E-Line + 1c',
+    FS: t('FS'),
+    FB: t('FB'),
+    Ps: t('Pseudo FS'),
+    Line: t('E-Line + 1c'),
   };
   const shortest_solution_tag_names = shortest_solutions.map((s) => ({
     tag: tag_full_name[s.fb_tag || 'FB'],
@@ -351,7 +356,9 @@ function StageSolutionListView(props: {
     return (
       <React.Fragment key={tag}>
         <div className="roux-analyzer-hint-line">
-          {`There exists ${shortest_length}-STM ${tag || 'solution'} in: `}
+          {isZh
+            ? `存在 ${shortest_length}-STM 的 ${tag || '解法'}：`
+            : `There exists ${shortest_length}-STM ${tag || 'solution'} in: `}
         </div>
         <div className="roux-analyzer-hint-pairs">{colorPairs}</div>
       </React.Fragment>
@@ -368,7 +375,7 @@ function StageSolutionListView(props: {
           {!isRevealed ? (
             <div className="roux-analyzer-quiz">
               {shortest_tag_names_str}
-              <div className="roux-analyzer-quiz-hint">(Click to reveal)</div>
+              <div className="roux-analyzer-quiz-hint">{t('(Click to reveal)')}</div>
             </div>
           ) : (
             <div>
@@ -523,6 +530,7 @@ function useAnalyzer(analyzerState: AnalyzerState): AnalyzerData {
 // ---- AnalyzerView (main) -------------------------------------------------
 function AnalyzerView(props: { state: AppState; dispatch: React.Dispatch<Action> }) {
   const { state: appState } = props;
+  const { t } = useRT();
 
   const [state, setState] = React.useState<AnalyzerState>(initialState);
 
@@ -567,7 +575,7 @@ function AnalyzerView(props: { state: AppState; dispatch: React.Dispatch<Action>
           <div className="roux-analyzer-col">
             <div className="roux-analyzer-sol-block">
               <div className="roux-analyzer-sol-head">
-                <div className="roux-analyzer-title">Solutions</div>
+                <div className="roux-analyzer-title">{t('Solutions')}</div>
                 <div>
                   <span className="roux-analyzer-stage-tag">{state.stage}</span>
                 </div>

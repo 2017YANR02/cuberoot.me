@@ -30,6 +30,7 @@ import { useBattleStore } from '@/app/[lang]/battle/_components/engine/battle_st
 import { KEY_MAP, PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from '@/app/[lang]/battle/_components/engine/constants';
 import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format';
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
+import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import type { PenaltyType } from '@/app/[lang]/battle/_components/engine/constants';
 import HistoryPanel from '@/app/[lang]/battle/_components/HistoryPanel';
 import VsHistoryPanel from '@/app/[lang]/battle/_components/VsHistoryPanel';
@@ -454,9 +455,11 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
 
   const copyScramble = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    const s = useBattleStore.getState().scrambles[playerId];
+    const st = useBattleStore.getState();
+    const s = st.scrambles[playerId];
     if (!s || s.startsWith('⚠️')) return;
-    try { void navigator.clipboard.writeText(s); } catch { /* ignore */ }
+    // SQ1 copies in compact notation (4/-36/...) to match the displayed text.
+    try { void navigator.clipboard.writeText(formatScrambleForEvent(st.puzzleIds[playerId], s)); } catch { /* ignore */ }
     setScrambleCopied(true);
     if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current);
     copiedTimerRef.current = window.setTimeout(() => setScrambleCopied(false), 1200);
@@ -503,9 +506,14 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
   const myScramble = store.scrambles[playerId];
   const myLoading = store.scrambleLoadings[playerId];
   const myPuzzle = store.puzzleIds[playerId];
+  // SQ1 shows compact notation (4/-36/...) site-wide; keep the raw csTimer form
+  // (with parens) for the CubingPreview below, which cubing.js parses. Errors pass through.
+  const myScrambleDisplay = myScramble && !myScramble.startsWith('⚠️')
+    ? formatScrambleForEvent(myPuzzle, myScramble)
+    : myScramble;
   const scrambleContent = myLoading
     ? `<span class="loading">${I18N_TEXT.generating[store.locale]}</span>`
-    : (myScramble || '');
+    : (myScrambleDisplay || '');
 
   const bgColor = store.bgColors[playerId];
   const bgImage = store.bgImages[playerId];
@@ -564,7 +572,7 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
         data-no-timer
         onClick={copyScramble}
         title={isZh ? '点击复制打乱' : 'Click to copy'}
-        style={{ '--scramble-auto': getScrambleAutoScale(myScramble || ''), cursor: 'pointer' } as React.CSSProperties}
+        style={{ '--scramble-auto': getScrambleAutoScale(myScrambleDisplay || ''), cursor: 'pointer' } as React.CSSProperties}
         dangerouslySetInnerHTML={{ __html: scrambleContent }}
       />
       {scrambleCopied && (

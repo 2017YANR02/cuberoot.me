@@ -23,7 +23,8 @@ import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEven
 import type { RoundSheetInput } from './_tnoodle-pdf';
 import ProgressButton from './ProgressButton';
 import ScrambleLines from './ScrambleLines';
-import { formatScrambleForEvent } from './_svg/sq1_svg';
+import PillToggle from '@/components/PillToggle/PillToggle';
+import { displaySq1ForEvent } from './_svg/sq1_svg';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
@@ -58,9 +59,12 @@ interface Props {
   /** 是否在每行右侧渲染打乱图(2D net SVG)。off ⇒ 网页 + PDF 都不出。 */
   showPreview: boolean;
   onTogglePreview: () => void;
+  /** SQ1 打乱记号:true=简写(默认),false=WCA 官方完整 (x, y) /。选了 sq1 才显开关。 */
+  sq1Compact: boolean;
+  onSq1CompactChange: (v: boolean) => void;
 }
 
-export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: Props) {
+export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq1Compact, onSq1CompactChange }: Props) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const [events, setEvents] = useState<Set<string>>(() => new Set(['333']));
@@ -214,7 +218,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
             evWallEnd[ev] = !(ev in evWallEnd) || t1 > evWallEnd[ev] ? t1 : evWallEnd[ev];
             evDurations[ev].push(t1 - t0);
             if (reqIdRef.current !== myId) return;
-            if (s) buckets[ev].push(formatScrambleForEvent(ev, s));
+            if (s) buckets[ev].push(s); // store raw; sq1 formatting applied at display (scramblesByEvent)
             done += 1;
             setGenProgress({ done, total });
           }),
@@ -268,12 +272,13 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
   const scramblesByEvent = useMemo(() => {
     const m: Record<string, string[]> = {};
     if (subMode === 'batch') {
-      for (const ev of eventsOrdered) m[ev] = generated[ev] ?? [];
+      // Generated scrambles stored raw; sq1 rendered as compact/full per the toggle.
+      for (const ev of eventsOrdered) m[ev] = (generated[ev] ?? []).map((s) => displaySq1ForEvent(ev, s, sq1Compact));
     } else {
       for (const ev of eventsOrdered) m[ev] = parsePastedScrambles(pasteTexts[ev] ?? '');
     }
     return m;
-  }, [subMode, eventsOrdered, generated, pasteTexts]);
+  }, [subMode, eventsOrdered, generated, pasteTexts, sq1Compact]);
 
   const totalScrambles = useMemo(
     () => Object.values(scramblesByEvent).reduce((sum, arr) => sum + arr.length, 0),
@@ -370,6 +375,18 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview }: 
         )}
         <Scramble555ModePicker active555={events.has('555')} isZh={isZh} />
         <Scramble333ModePicker active333={events.has('333')} isZh={isZh} />
+        {events.has('sq1') && (
+          <div className="gen-sq1-format">
+            <span className="gen-sq1-format-label">{t('SQ1 记号', 'SQ1 notation')}</span>
+            <PillToggle
+              value={sq1Compact}
+              onChange={onSq1CompactChange}
+              onLabel={t('简写', 'Compact')}
+              offLabel={t('完整', 'Full')}
+              ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full')}
+            />
+          </div>
+        )}
       </div>
 
       <div className="gen-tn-controls" style={{ marginTop: '8px' }}>
