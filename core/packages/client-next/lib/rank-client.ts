@@ -57,6 +57,20 @@ export async function fetchRankFor(
 ): Promise<RankResult | null> {
   const wcaEvent = toWcaEventForRank(eventId as EventId);
   if (!wcaEvent) return null; // relays / CFOP-LL 训练 / custom 等无 WCA 排名
+  return fetchRankForWca(wcaEvent, centis, type, country);
+}
+
+/**
+ * 同 fetchRankFor,但直接收 WCA 标准 event id(如 '333' / '333bf' / 'minx'),
+ * 跳过 timer EventId 映射.给已持有 WCA id 的页面用(如 /wca/comp 的成绩弹窗).
+ */
+export async function fetchRankForWca(
+  wcaEvent: string,
+  centis: number,
+  type: 'single' | 'average',
+  country?: string,
+): Promise<RankResult | null> {
+  if (!wcaEvent) return null;
   if (!Number.isFinite(centis) || centis <= 0) return null;
   const value = Math.round(centis);
   if (value <= 0) return null;
