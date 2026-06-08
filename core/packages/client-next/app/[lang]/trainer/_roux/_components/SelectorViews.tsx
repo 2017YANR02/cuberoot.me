@@ -12,6 +12,7 @@ import { AppState, Action, SliderOpt } from '@/lib/roux/Types';
 import Selector from '@/lib/roux/Selector';
 
 import { Modal, FieldLabel } from './ui';
+import { useRT } from '../i18n';
 
 // ---- Slider --------------------------------------------------------------
 // MUI Slider had an "Any" mark at value=l-1, then numeric marks l..r with an
@@ -19,11 +20,12 @@ import { Modal, FieldLabel } from './ui';
 
 function SliderView(props: { slider: SliderOpt; onChange: (n: number) => void }) {
   const { slider } = props;
+  const { t } = useRT();
   const handleChange = (v: number) => {
     if (slider.l - 1 <= v && v <= slider.r) props.onChange(v);
   };
   const marks = React.useMemo(() => {
-    const obj = [{ value: slider.l - 1, label: 'Any' }];
+    const obj = [{ value: slider.l - 1, label: t('Any') }];
     for (let i = slider.l; i <= slider.r; i++) {
       let suffix = '';
       if (i === slider.l && slider.extend_l) suffix = '-';
@@ -31,11 +33,12 @@ function SliderView(props: { slider: SliderOpt; onChange: (n: number) => void })
       obj.push({ value: i, label: i.toString() + suffix });
     }
     return obj;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slider.l, slider.r, slider.extend_l, slider.extend_r]);
 
   return (
     <div className="roux-sel-slider">
-      <FieldLabel className="roux-sel-label">Level</FieldLabel>
+      <FieldLabel className="roux-sel-label">{t('Level')}</FieldLabel>
       <div className="roux-sel-slider-track-wrap">
         <input
           type="range"
@@ -92,6 +95,7 @@ function SingleSelect(props: {
 }) {
   const { state, dispatch, select } = props;
   const { config } = state;
+  const { t } = useRT();
   const sel = (config as any)[select] as Selector;
 
   const handleChange = (value: string) => {
@@ -115,7 +119,7 @@ function SingleSelect(props: {
   const label = sel.label || props.label || '';
   return (
     <fieldset className="roux-sel roux-sel-single">
-      <FieldLabel className="roux-sel-label">{label}</FieldLabel>
+      <FieldLabel className="roux-sel-label">{t(label)}</FieldLabel>
       <div className="roux-sel-row">
         {sel.names.map((name) => (
           <label key={name} className="roux-sel-radio">
@@ -126,7 +130,7 @@ function SingleSelect(props: {
               checked={radioValue === name}
               onChange={(e) => handleChange(e.target.value)}
             />
-            <span>{name}</span>
+            <span>{t(name)}</span>
           </label>
         ))}
       </div>
@@ -151,6 +155,7 @@ function MultiSelectContent(props: {
   const { state, dispatch, select } = props;
   const options = props.options || {};
   const { config } = state;
+  const { t } = useRT();
 
   const sel = (config as any)[select] as Selector;
   const handleChange = (value: string, checked: boolean) => {
@@ -170,7 +175,7 @@ function MultiSelectContent(props: {
         value={name}
         onChange={(e) => handleChange(e.target.value, e.target.checked)}
       />
-      <span>{name}</span>
+      <span>{t(name)}</span>
     </label>
   );
 
@@ -196,7 +201,7 @@ function MultiSelectContent(props: {
           value={name}
           onChange={(e) => handleManip(e.target.checked)}
         />
-        <span>{name}</span>
+        <span>{t(name)}</span>
       </label>
     );
   };
@@ -211,7 +216,7 @@ function MultiSelectContent(props: {
       <div className="roux-sel-row">{sel.names.map((name, i) => makeBox(name, !!sel.flags[i]))}</div>
     </>
   );
-  return { label, content };
+  return { label: t(label), content };
 }
 
 function MultiSelect(props: {
@@ -221,6 +226,7 @@ function MultiSelect(props: {
   options?: MultiSelectOptions;
 }) {
   const { state, dispatch, select } = props;
+  const { t } = useRT();
   const { label, content } = MultiSelectContent({ state, dispatch, select, options: props.options });
   const options = props.options || {};
 
@@ -242,7 +248,7 @@ function MultiSelect(props: {
       <FieldLabel className="roux-sel-label">{label}</FieldLabel>
       <button type="button" className="roux-btn roux-btn-outline" onClick={handleClickOpen}>
         <Settings size={16} />
-        Edit
+        {t('Edit')}
       </button>
       <Modal
         open={open}
@@ -251,7 +257,7 @@ function MultiSelect(props: {
         title={label}
         actions={
           <button type="button" className="roux-btn roux-btn-text" onClick={handleClose}>
-            Ok
+            {t('Ok')}
           </button>
         }
       >

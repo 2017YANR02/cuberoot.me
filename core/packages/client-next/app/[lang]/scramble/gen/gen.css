@@ -172,6 +172,19 @@
     margin: 0;
 }
 
+/* SQ1 记号开关(简写 / 完整)— 配置条内 + 比赛模式 controls 后各一处 */
+.gen-sq1-format {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 12px 0;
+}
+.gen-tn-config-row .gen-sq1-format { margin: 0; }
+.gen-sq1-format-label {
+    font-size: 0.8rem;
+    color: var(--gen-text-mute);
+}
+
 .gen-tn-config-group {
     display: flex;
     flex-wrap: wrap;

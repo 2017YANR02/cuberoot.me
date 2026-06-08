@@ -5,10 +5,12 @@
  *
  * Renders a top-left segmented [单人 Solo | 双人 Duo] pill and switches
  * between SoloView and (Phase 3) BattleView. The mode (?mode=solo | ?mode=duo)
- * is owned by nuqs (useQueryState) — solo is the default and is auto-omitted
- * from the URL (clearOnDefault). solo↔duo is a genuine big-mode switch between
- * two distinct full-screen experiences, so it pushes a history entry
- * (history:'push') → browser back / iOS edge-swipe returns to the previous mode.
+ * is owned by nuqs (useQueryState). The param is always present in the URL: solo
+ * is the default but is NOT omitted (clearOnDefault:false), and a bare /timer
+ * normalizes itself to /timer?mode=solo on mount (replace, no history entry).
+ * solo↔duo is a genuine big-mode switch between two distinct full-screen
+ * experiences, so it pushes a history entry (history:'push') → browser back /
+ * iOS edge-swipe returns to the previous mode.
  *
  * SSG note: useQueryState calls useSearchParams, but app/[lang]/layout.tsx wraps
  * pages in <Suspense>, so static generation does not bail. To avoid an SSR /
@@ -38,12 +40,21 @@ export default function TimerShell() {
   const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useQueryState(
     'mode',
-    parseAsStringEnum<Mode>([...MODES]).withDefault('solo').withOptions({ history: 'push' }),
+    parseAsStringEnum<Mode>([...MODES])
+      .withDefault('solo')
+      .withOptions({ history: 'push', clearOnDefault: false }),
   );
 
   // First client paint stays on SoloView (matches the SSG prerender) — only swap
   // in BattleView after mount once nuqs has hydrated ?mode from the real URL.
-  useEffect(() => { setMounted(true); }, []);
+  // Also force the mode param into the URL: a bare /timer becomes /timer?mode=solo
+  // (replace, so back doesn't trap on the bare URL).
+  useEffect(() => {
+    setMounted(true);
+    if (!new URLSearchParams(window.location.search).has('mode')) {
+      void setMode('solo', { history: 'replace' });
+    }
+  }, [setMode]);
 
   const switchMode = (next: Mode) => { void setMode(next); };
 

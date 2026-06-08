@@ -160,5 +160,12 @@
     "zh": "Skewb 技巧训练器(SkewbSkills;三模式首层 / L2L 公式 / One-Look 全 port 为 React /trainer/skewb;作者 Annika Stein,Apache-2.0)",
     "en": "Skewb Skills trainer (SkewbSkills; three-mode First Layer / L2L Alg / One-Look ported to React at /trainer/skewb; author Annika Stein, Apache-2.0)",
     "long_en": "SkewbSkills web trainer — First Layer Trainer, L2L Algorithm Trainer, and One-Looking Trainer (alg database, RubiksSkewb→WCA notation conversion, scramble generation) ported to React for `/trainer/skewb` (author Annika Stein, Apache-2.0)"
+  },
+  {
+    "name": "onionhoney/roux-trainers",
+    "url": "https://github.com/onionhoney/roux-trainers",
+    "zh": "桥式训练器(/trainer/333 的 Roux 标签;引擎 + three.js 渲染器全量 port 为 React、去 MUI;作者 Onionhoney,GPL-3.0)",
+    "en": "Roux trainer (/trainer/333 Roux tab; engine + three.js renderer fully ported to React, de-MUI'd; author Onionhoney, GPL-3.0)",
+    "long_en": "Roux-method trainer collection — first-block / analyzer / FS / SS / CMLL / LSE trainers + in-browser Roux solver + three.js cube renderer, ported to React (MUI removed) and embedded under the `/trainer/333` Roux tab (author Onionhoney, GPL-3.0)"
   }
 ]

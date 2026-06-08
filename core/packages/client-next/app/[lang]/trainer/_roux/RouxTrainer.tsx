@@ -25,6 +25,7 @@ import AnalyzerView from './_components/AnalyzerView';
 import TrackerView from './_components/TrackerView';
 import FavListView from './_components/FavListView';
 import { Modal } from './_components/ui';
+import { rt } from './i18n';
 
 import './roux.css';
 
@@ -114,6 +115,44 @@ This is a faithful de-MUI port for React 19 / Next.js. Original by Onionhoney:
 https://github.com/onionhoney/roux-trainers
 `;
 
+const introTextZh = `# Onionhoney 的桥式（Roux）训练器
+- 一套覆盖桥式（Roux）各类训练需求的工具集 ❤️
+- 灵感来自 http://cubegrass.appspot.com/，并补齐了它缺失的功能。
+
+## 支持的模式
+- 左桥分析器（FB analyzer）
+    - 求解全部 x2y 左桥，并推荐最佳起手的左桥！
+    - 也会推荐最佳起手的 FS / 伪 FS / Line！
+    - 可作为“找到 x 步解”的小测验，答案藏在折叠里。
+    - 支持更多朝向（CN、蓝/绿 x2y、红/橙 x2y）。
+- 左桥末槽（+ DR）训练
+    - 学左桥或左桥 + DR 时 \`非常实用\`。拿一个随机打乱，先自己想，再对照解法！
+    - **注意**：求解器已尽力，但仍可能错过整体最优解。拿不准时请咨询身边的高手，挑要学的解法务必谨慎。
+- 左桥方块 / 左桥 / 右桥方块 训练
+    - 可按块的位置指定。这些模式在拼块（blockbuilding）上能带来不少新思路。
+- CMLL 训练
+    - 真随机 L10P 打乱，看不出情况。可指定不同 OCLL，甚至可从随机的 SB 最后一对起手（模拟真实识别过程）。
+    - 只显示识别所需的贴纸！
+- LSE 训练（EOLR、4c）
+    - 适合复习 EOLR、练习 4c 识别。也可按 MC / 非 MC 情况筛选。
+
+## 快捷键
+- 空格：下一个打乱。
+- 回车：把虚拟魔方重置回当前打乱。
+- 用 cstimer 键位控制魔方。
+
+## 功能
+- 打乱全部为随机态。求解器针对桥式优化，M、r 转为一等公民，最多提供 25 种解法。
+- 可用键盘控制虚拟魔方（cstimer 键位），也可拖动魔方改变视角。
+- 可收藏喜欢的情况，保存在你的浏览器里。
+- 可粘贴一组自己的打乱，训练器会逐个发给你！
+
+---
+
+这是为 React 19 / Next.js 重写（去 MUI）的忠实移植。原作者 Onionhoney：
+https://github.com/onionhoney/roux-trainers
+`;
+
 function RouxTrainer(props: { embedded?: boolean }) {
   const { embedded } = props;
   const { i18n } = useTranslation();
@@ -168,7 +207,9 @@ function RouxTrainer(props: { embedded?: boolean }) {
   return (
     <div className="roux-root" data-embedded={embedded ? '1' : undefined} data-cube-theme={cubeTheme}>
       <div className="roux-topbar">
-        <div className="roux-topbar-title">{tt('Roux 训练器', 'Roux Trainer')}</div>
+        {/* When embedded under the 333 hub's 桥式 section heading, the section title
+            already names it — drop the internal title to avoid a double label. */}
+        {!embedded && <div className="roux-topbar-title">{tt('桥式训练器', 'Roux Trainer')}</div>}
 
         <select
           className="roux-mode-select"
@@ -177,8 +218,8 @@ function RouxTrainer(props: { embedded?: boolean }) {
           aria-label={tt('选择模式', 'Select mode')}
         >
           {tab_modes.map(([m, long, short]) => (
-            <option key={m} value={m} title={long}>
-              {long || short}
+            <option key={m} value={m} title={rt(long, !!isZh)}>
+              {rt(long || short, !!isZh)}
             </option>
           ))}
         </select>
@@ -233,7 +274,7 @@ function RouxTrainer(props: { embedded?: boolean }) {
         }
       >
         <div className="roux-markdown">
-          <ReactMarkdown>{introText}</ReactMarkdown>
+          <ReactMarkdown>{isZh ? introTextZh : introText}</ReactMarkdown>
         </div>
       </Modal>
     </div>

@@ -16,6 +16,7 @@ import { MoveSeq } from '@/lib/roux/CubeLib';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
 import { Modal } from './ui';
+import { useRT } from '../i18n';
 import './ScrambleInputView.css';
 
 export function ScrambleInputView(props: {
@@ -23,6 +24,7 @@ export function ScrambleInputView(props: {
   scrambles: string[];
   dispatch: React.Dispatch<Action>;
 }) {
+  const { t } = useRT();
   let [editing, setEditing] = React.useState(false);
   let [value, setValue] = React.useState(props.scrambles.join('\n'));
   let textField = React.useRef<HTMLTextAreaElement | null>(null);
@@ -69,14 +71,14 @@ export function ScrambleInputView(props: {
           onClick={toggleEdit}
         >
           <Pencil size={gt_sm ? 16 : 18} />
-          {gt_sm && <span>Input</span>}
+          {gt_sm && <span>{t('Input')}</span>}
         </button>
       </div>
 
       <Modal
         open={editing}
         onClose={handleClose}
-        title="Input your own solution / scrambles (one per line)"
+        title={t('Input your own solution / scrambles (one per line)')}
         actions={
           <div className="roux-scrin-actions">
             <button
@@ -84,14 +86,14 @@ export function ScrambleInputView(props: {
               className="roux-btn roux-btn-outline roux-scrin-action"
               onClick={handleInvert}
             >
-              Use as solution
+              {t('Use as solution')}
             </button>
             <button
               type="button"
               className="roux-btn roux-btn-outline roux-scrin-action"
               onClick={handleSubmit}
             >
-              Use as scramble
+              {t('Use as scramble')}
             </button>
           </div>
         }

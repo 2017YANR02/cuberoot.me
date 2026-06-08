@@ -17,6 +17,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { ALL_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { statsUrl } from '@/lib/stats-base';
+import { formatScrambleForEvent } from '@/lib/sq1-svg';
 
 interface GluedScramble { ci: string; cn: string; r: string; g: string; n: number; tok: string }
 interface ScrambleAnomaly { ci: string; cn: string; lens: number[]; n: number }
@@ -342,8 +343,6 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
               <div className="scramble-stats-stat-grid">
                 <Cell label={isZh ? '均值' : 'mean'} value={stats.mean.toFixed(2)} />
                 <Cell label={isZh ? '中位数' : 'median'} value={String(stats.median)} />
-                <Cell label={isZh ? '众数' : 'mode'} value={String(stats.mode)} />
-                <Cell label={isZh ? '范围' : 'range'} value={`${stats.min}–${stats.max}`} />
                 <Cell label={isZh ? '样本' : 'samples'} value={stats.total.toLocaleString()} />
               </div>
             </div>
@@ -370,17 +369,19 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
                   const comp = examples?.comps[compId];
                   const iso2 = compFlagIso2(compId);
                   const linkable = ANALYZER_EVENTS.has(ev);
+                  // SQ1 shows compact notation site-wide (4/-36/...); other events unchanged.
+                  const displayText = formatScrambleForEvent(ev, text);
                   return (
                     <li key={i}>
                       <div className="scramble-stats-examples-body">
                         {linkable ? (
                           <Link
                             className="scramble-stats-examples-scramble"
-                            href={`/scramble/analyzer?${new URLSearchParams({ scramble: text.trim().replace(/ /g, '_') })}`}
+                            href={`/scramble/analyzer?${new URLSearchParams({ scramble: displayText.trim().replace(/ /g, '_') })}`}
                             prefetch={false}
-                          >{text}</Link>
+                          >{displayText}</Link>
                         ) : (
-                          <span className="scramble-stats-examples-scramble">{text}</span>
+                          <span className="scramble-stats-examples-scramble">{displayText}</span>
                         )}
                         {comp && (
                           <Link
@@ -409,10 +410,6 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
           </div>
         </>
       )}
-
-      <div className="scramble-stats-meta">
-        <span>{isZh ? '生成时间' : 'Generated'}: {new Date(data.meta.generated_at).toLocaleString()}</span>
-      </div>
     </>
   );
 }

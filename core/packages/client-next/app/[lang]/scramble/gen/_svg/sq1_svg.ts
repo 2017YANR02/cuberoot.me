@@ -110,10 +110,16 @@ export function compactSq1Alg(alg: string): string {
 
 /** 按 event id 把 sq1 alg/scramble 收成 compact 短形以便显示;其它 event 原样返回。
  *  /alg 公式表 + /sim 打乱框 + /scramble/gen?mode=batch 自练 sheet 三处共用,保持
- *  视觉一致。TNoodleMode (mode=comp) 是 WCA 官方风格 sheet,留 canonical 形式不走
- *  这条。 */
+ *  视觉一致(全站默认简写)。 */
 export function formatScrambleForEvent(event: string, scramble: string): string {
   return event === 'sq1' ? compactSq1Alg(scramble) : scramble;
+}
+
+/** /scramble/gen 专用:用户可在「简写 / 完整」间切。compact=true → 简写(全站默认),
+ *  false → WCA 官方 (x, y) / 形式(打乱纸常用)。非 sq1 原样返回。 */
+export function displaySq1ForEvent(event: string, scramble: string, compact: boolean): string {
+  if (event !== 'sq1') return scramble;
+  return compact ? compactSq1Alg(scramble) : canonicalSq1Alg(scramble);
 }
 
 /** Parse + apply a WCA-spec sq1 scramble. Accepts every form parseSq1Tokens does. */

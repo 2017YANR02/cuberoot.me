@@ -187,15 +187,16 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
             })}
           </g>
         ))}
-        {/* 稀有 bin 的透明 hit-rect，覆盖柱子及下方 x 轴，避免点 0 步极矮柱子难点 */}
+        {/* 整列透明 hit-rect：边到边铺满整格(slotW，无列间间隙),覆盖柱子及下方 x 轴标签,
+            点该列任意位置都能选中该 bin —— 跟「点 0~7 数字所在列」一致,不留死区。 */}
         {onBarClick && clickableBins && series.length === 1 && Array.from({ length: nBins }, (_, i) => xMin + i).map((v, bi) => {
           if (!clickableSet.has(v)) return null;
           return (
             <rect
               key={`hit${v}`}
-              x={PAD.l + bi * slotW + slotPadL}
+              x={PAD.l + bi * slotW}
               y={PAD.t}
-              width={slotW - slotPadL * 2}
+              width={slotW}
               height={chartH + 18}
               fill="transparent"
               style={{ cursor: 'pointer' }}
@@ -222,7 +223,8 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
             pctDisp = countDisp / tot;
           }
           return (
-            <g key={`lb${v}`}>
+            // pointer-events:none 让点到数字标签时穿透到下方整列 hit-rect,不挡选中。
+            <g key={`lb${v}`} style={{ pointerEvents: 'none' }}>
               <text x={cx} y={topY - 12} textAnchor="middle" fontSize="10" style={{ fill: 'var(--text)' }}>{fmtCount(countDisp)}</text>
               <text x={cx} y={topY} textAnchor="middle" fontSize="10" style={{ fill: 'var(--text-sub)' }}>{fmtPct(pctDisp)}</text>
             </g>
