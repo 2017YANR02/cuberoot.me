@@ -7,7 +7,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import LandingCubeHero from '../_components/LandingCubeHero';
 import { TEXTS, SECTIONS } from '@/lib/landing-sections';

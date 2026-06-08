@@ -2,7 +2,7 @@
 
 // Ported from packages/client/src/pages/wca_stats/RecordsPage.tsx.
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
@@ -244,7 +244,8 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
         <tr>
           <th>{isZh ? '类型' : 'Type'}</th>
           {showEvent && <th>{isZh ? '项目' : 'Event'}</th>}
-          <th className="wse-value-col">{isZh ? '成绩' : 'Result'}</th>
+          <th className="wse-value-col">{isZh ? '单次' : 'Single'}</th>
+          <th className="wse-value-col">{isZh ? '平均' : 'Average'}</th>
           <th>{isZh ? '选手' : 'Person'}</th>
           <th>{isZh ? '比赛' : 'Competition'}</th>
           <th>{isZh ? '日期' : 'Date'}</th>
@@ -257,8 +258,6 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
             <td>
               <RecordBadge record={r.l} />
               {' '}
-              <span className="records-type-sub">{r.t === 's' ? (isZh ? '单次' : 'Single') : (isZh ? '平均' : 'Avg')}</span>
-              {' '}
               <span className="records-rank">#{ranks[i]}</span>
             </td>
             {showEvent && (
@@ -268,7 +267,8 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
                 <span>{eventDisplayName(r.e, isZh)}</span>
               </td>
             )}
-            <td className="wse-value-col">{formatWcaResult(r.v, r.e, r.t === 's' ? 'single' : 'average')}</td>
+            <td className="wse-value-col">{r.t === 's' ? formatWcaResult(r.v, r.e, 'single') : ''}</td>
+            <td className="wse-value-col">{r.t === 'a' ? formatWcaResult(r.v, r.e, 'average') : ''}</td>
             <td>
               {r.pc && <Flag iso2={r.pc} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
               <Link prefetch={false} href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.p}`}>

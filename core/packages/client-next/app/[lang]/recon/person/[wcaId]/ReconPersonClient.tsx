@@ -6,7 +6,7 @@
  * 数据走 GET /v1/recon/person/:wcaId(含 addedBy/addedById,LIST_COLUMNS 没有)。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ExternalLink, LogOut, TriangleAlert } from 'lucide-react';

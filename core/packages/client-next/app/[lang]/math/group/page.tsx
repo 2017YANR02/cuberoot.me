@@ -14,7 +14,7 @@
  * cube_state.ts module (verified against R, RU, superflip orders).
  */
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { SlugContext, GTSec, L, useLang, TeX, TeXBlock, type Lang } from './_components/primitives';

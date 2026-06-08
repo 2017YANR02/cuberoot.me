@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { statsUrl } from '@/lib/stats-base';
 import { ArrowLeft, Menu, X as XIcon, HelpCircle } from 'lucide-react';

@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L } from '../_lib/Lang';
 import type { Lang } from '../_lib/Lang';

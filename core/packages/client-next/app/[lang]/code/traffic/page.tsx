@@ -7,7 +7,7 @@
  * 4 块: PV/UV 折线 + Top 路径 + Top 来源 + 国家分布.
  */
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';

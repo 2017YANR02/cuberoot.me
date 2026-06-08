@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { STACK_TOOLS_META, type StackToolMeta } from './_lib/stack_meta';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

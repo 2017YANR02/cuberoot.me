@@ -5,7 +5,7 @@
  * Per-event pickers (Scramble333ModePicker / Scramble555ModePicker) wrap this with
  * their own hook + labels.
  */
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { HelpCircle } from 'lucide-react';
 import PillToggle from './PillToggle/PillToggle';
 

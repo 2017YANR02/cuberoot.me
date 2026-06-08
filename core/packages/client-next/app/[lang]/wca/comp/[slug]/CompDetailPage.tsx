@@ -5,7 +5,7 @@
  * Live WS (cubing.com + WCA Live) + Psych Sheet + record badges + round/cuber modals.
  */
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check } from 'lucide-react';

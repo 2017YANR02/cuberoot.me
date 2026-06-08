@@ -5,7 +5,7 @@
  *
  * 1:1 port from packages/client/src/pages/memo/MemoLandingPage.tsx (Vite SPA).
  */
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Brain, type LucideIcon } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

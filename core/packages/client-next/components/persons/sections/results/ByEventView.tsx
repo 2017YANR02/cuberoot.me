@@ -6,7 +6,7 @@
 //   4. 全部成绩 (按比赛倒序的轮次表,attempts 列)
 
 import { useState, useEffect, useMemo } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 // echarts-for-react needs to be client-only.

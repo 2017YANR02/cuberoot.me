@@ -5,7 +5,7 @@
 // NOTE: deferred — hasAbout 链接 (wca_about/registry) 暂未迁移,about 链接不显示。
 //   Top10HistoryPage 嵌入(wr_metric ranking 面板 bar chart race)已迁移。
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { BarChart3, Play, Pause, ChevronRight, ChevronDown } from 'lucide-react';

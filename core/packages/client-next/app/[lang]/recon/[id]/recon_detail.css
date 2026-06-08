@@ -31,6 +31,11 @@
   flex: 1;
   font-size: 1.3rem;
   color: var(--foreground);
+  /* 标题是 flex 容器(成绩/项目/旗+名/编辑各为一项):窄屏让整项折行而非溢出视口;
+     纵向对齐避免「&」/旗帜悬浮错位 */
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 4px;
 }
 
 /* --- 元数据标签栏 --- */
@@ -775,13 +780,15 @@
   color: var(--accent);
   border-bottom-color: var(--accent);
 }
-/* 多选手(共同完成)分隔符 */
+/* 多选手(共同完成):每个「旗 + 名」是不可断的整体,前面的空格给换行机会,
+   整组在窄屏会整体折到下一行而不是溢出视口 */
 .detail-cuber {
+  display: inline-block;
   white-space: nowrap;
 }
 .detail-cuber-sep {
   color: color-mix(in srgb, var(--foreground) 45%, transparent);
-  white-space: normal;
+  font-weight: 400;
 }
 
 /* attempts 单元格内每把支持单点跳转(有对应复盘时,渲染为 Link)

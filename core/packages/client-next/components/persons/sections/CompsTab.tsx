@@ -3,7 +3,7 @@
 // 项目图标:选手在该比赛参加过 → 实色;比赛设了但选手没参 → 灰色.
 
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';

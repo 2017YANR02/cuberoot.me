@@ -7,7 +7,7 @@
 import {
   cloneElement, useEffect, useMemo, useState, useRef, useCallback, useContext,
 } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Plus, HelpCircle, TriangleAlert } from 'lucide-react';

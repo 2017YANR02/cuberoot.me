@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../../_lib/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -1830,7 +1830,7 @@ x' : U→B→D→F→U`}
           </section>
 
           <footer className="algo-page-foot">
-            <Link href="/">CubeRoot</Link> · <Link href="/code/algorithms">/code/algorithms</Link> · <Link href="/scramble-stats">/scramble-stats</Link>
+            <Link href="/">CubeRoot</Link> · <Link href="/code/algorithms">/code/algorithms</Link> · <Link href="/scramble/stats">/scramble/stats</Link>
           </footer>
         </div>
       </div>

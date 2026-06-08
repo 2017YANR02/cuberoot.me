@@ -3,7 +3,7 @@
 // Ported from packages/client/src/pages/code/StackToolPage.tsx
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { STACK_TOOLS_META } from '../_lib/stack_meta';

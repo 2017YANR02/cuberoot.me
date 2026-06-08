@@ -6,7 +6,7 @@
  * Ported from packages/client/src/pages/wca_stats/GrandSlamPage.tsx.
  */
 import { Suspense, useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, HelpCircle } from 'lucide-react';

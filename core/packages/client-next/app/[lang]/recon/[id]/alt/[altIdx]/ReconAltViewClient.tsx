@@ -6,7 +6,7 @@
  * Ported from packages/client/src/pages/recon/AltViewPage.tsx.
  */
 import { useEffect, useState, useRef, useMemo } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { TriangleAlert } from 'lucide-react';
