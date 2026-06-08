@@ -31,6 +31,7 @@ import {
   Users,
   Boxes,
   ScanLine,
+  Crown,
 } from "lucide-react";
 import { db, schema } from "@/db";
 import { Section } from "@/components/Section";
@@ -55,7 +56,7 @@ const LOOP: { n: string; icon: LucideIcon; title: string; desc: string }[] = [
   { n: "03", icon: BookOpen, title: "浏览课程商品", desc: "课程 / 商城 / 赛事 / 资讯分区浏览" },
   { n: "04", icon: Ticket, title: "优惠下单", desc: "优惠券试算,生成订单待支付" },
   { n: "05", icon: CreditCard, title: "扫码支付", desc: "微信 / 支付宝 / Stripe,二维码轮询到账" },
-  { n: "06", icon: GraduationCap, title: "解锁学习", desc: "付费墙校验,视频取流防盗链" },
+  { n: "06", icon: GraduationCap, title: "解锁学习", desc: "单课购买或会员畅看,付费墙校验,视频防盗链" },
   { n: "07", icon: Activity, title: "进度续看", desc: "学习进度自动保存,断点继续" },
   { n: "08", icon: MessageSquare, title: "社群交流", desc: "圈子发帖、评论、点赞" },
   { n: "09", icon: Share2, title: "邀请裂变", desc: "专属邀请码拉新,双向发券" },
@@ -64,6 +65,7 @@ const LOOP: { n: string; icon: LucideIcon; title: string; desc: string }[] = [
 const FRONTEND: Feature[] = [
   { icon: Zap, title: "SSG + RSC 秒开", description: "Next 16 App Router,服务端组件直出,首屏快、SEO 友好。" },
   { icon: Lock, title: "课程付费墙 + 视频", description: "已购校验决定可看范围,试看课免费,视频经取流接口防盗链。" },
+  { icon: Crown, title: "会员订阅畅看", description: "月 / 季 / 年会员,有效期内解锁全部付费课程,新课自动可看,续费时长自动叠加。" },
   { icon: Activity, title: "学习进度续看", description: "播放进度按节流自动落库,我的课程一键跳到最近学到的一节。" },
   { icon: Search, title: "全站中文搜索", description: "SQLite FTS5 全文检索,自定义 CJK 分词,课程/商品/赛事/资讯/帖子统一搜。" },
   { icon: MessageSquare, title: "社群圈子", description: "新手/竞速/盲拧/校园四个圈子,发帖评论点赞,Markdown 正文。" },
@@ -80,7 +82,8 @@ const BACKEND: Feature[] = [
   { icon: CreditCard, title: "支付多 Provider", description: "微信 V3 Native / 支付宝电脑网站 / Stripe Checkout,回调统一,可退款对账。" },
   { icon: Search, title: "FTS5 全文检索", description: "5 张虚拟表 + 15 触发器自动同步,CJK 自定义分词函数 cube_seg。" },
   { icon: BarChart3, title: "可观测日志", description: "错误日志兜底 + 慢请求(>500ms)埋点,后台分 Tab 查看。" },
-  { icon: Wallet, title: "讲师分成结算", description: "讲师角色 + 课程归属,70% 固定分成月度汇总,后台审核入驻自动建号。" },
+  { icon: Wallet, title: "讲师结算分账", description: "70% 分成按月一键生成结算单,后台标记打款留凭证,讲师可查到账状态。" },
+  { icon: Boxes, title: "赛事名额防超卖", description: "付款自动占名额,满员 / 已结束下单即拦,退款自动释放,名额计数实时准确。" },
 ];
 
 const GROWTH: Feature[] = [
@@ -101,7 +104,6 @@ const HIGHLIGHTS: { icon: LucideIcon; title: string; desc: string }[] = [
 const TODO: { title: string; desc: string }[] = [
   { title: "真实支付商户", desc: "接入微信 / 支付宝正式商户,替换当前 mock 通道。" },
   { title: "视频真实签名 URL", desc: "远端存储签发带时效的防盗链地址。" },
-  { title: "讲师结算落地", desc: "新增 instructor_payouts 表,把展示型收益变成可结算。" },
   { title: "短信真实通道", desc: "配置阿里云 / 腾讯云模板,替换 console 降级。" },
   { title: "付费聚合码", desc: "聚合码链接级 gating 接现有付费墙(待群里定规则)。" },
 ];
@@ -124,6 +126,7 @@ const ROUTE_GROUPS: RouteGroupData[] = [
     links: [
       { href: "/", label: "首页" },
       { href: "/courses", label: "课程" },
+      { href: "/membership", label: "会员订阅" },
       { href: "/shop", label: "商城" },
       { href: "/events", label: "赛事" },
       { href: "/community", label: "社群" },
@@ -141,6 +144,7 @@ const ROUTE_GROUPS: RouteGroupData[] = [
     links: [
       { href: "/login", label: "登录" },
       { href: "/me/courses", label: "我的课程" },
+      { href: "/me/membership", label: "我的会员" },
       { href: "/me/invite", label: "我的邀请码" },
       { href: "/orders", label: "我的订单" },
       { href: "/instructors/apply", label: "讲师入驻申请" },
@@ -184,6 +188,7 @@ const ROUTE_GROUPS: RouteGroupData[] = [
       { href: "/admin/events", label: "赛事管理" },
       { href: "/admin/orders", label: "订单" },
       { href: "/admin/reconcile", label: "对账与流水" },
+      { href: "/admin/instructor-payouts", label: "讲师结算" },
       { href: "/admin/coupons", label: "优惠券" },
       { href: "/admin/invites", label: "邀请码" },
       { href: "/admin/events-track", label: "埋点" },
