@@ -19,11 +19,13 @@ import { ALL_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { statsUrl } from '@/lib/stats-base';
 
 interface GluedScramble { ci: string; cn: string; r: string; g: string; n: number; tok: string }
+interface ScrambleAnomaly { ci: string; cn: string; lens: number[]; n: number }
 interface EventLen {
   unit: 'moves' | 'twists';
   samples: number;
   counts: Record<string, number>;
   glued?: GluedScramble[]; // megaminx scrambles with a missing-space move (e.g. R--D--)
+  anomalies?: ScrambleAnomaly[]; // fixed-length events: comps whose scrambles deviate (non-standard scrambler)
 }
 interface EventLengthsJson {
   meta: { generated_at: string; total_scrambles: number; total_samples: number };
@@ -293,6 +295,29 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
                       {localizeCompName(gl.ci, gl.cn, isZh)}
                     </Link>
                     {' '}{compSourceLine(gl.r, gl.g, gl.n, isZh)}（<code>{gl.tok}</code> {isZh ? '应为' : '→'} <code>{fixed}</code>）
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
+          {cur.anomalies && cur.anomalies.length > 0 && stats && (
+            <div className="scramble-len-footnote">
+              <span>
+                {isZh
+                  ? `注：${eventName(event, isZh)}打乱由官方 TNoodle 固定生成 ${stats.mode} 步;下面这些比赛用了非标准打乱器,才出现别的长度：`
+                  : `Note: ${eventName(event, isZh)} scrambles are a fixed ${stats.mode} moves from official TNoodle; the off-length ones come from non-standard scramblers at: `}
+              </span>
+              {cur.anomalies.map((a, i) => {
+                const iso2 = compFlagIso2(a.ci);
+                return (
+                  <span key={i} className="scramble-len-glued-item">
+                    {i > 0 && '；'}
+                    <Link href={`/scramble/gen?comp=${encodeURIComponent(a.ci)}`} prefetch={false} title={a.cn} className="scramble-len-glued-comp">
+                      {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                      {localizeCompName(a.ci, a.cn, isZh)}
+                    </Link>
+                    {isZh ? `(${a.lens.join('/')} 步,${a.n} 条)` : ` (${a.lens.join('/')} moves, ${a.n})`}
                   </span>
                 );
               })}
