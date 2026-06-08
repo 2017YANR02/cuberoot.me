@@ -6,9 +6,14 @@
 // the spread lives in 333-family / 222 / pyram / skewb / sq1.
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
+import { Flag } from '@/components/Flag';
+import { compSourceLine } from '@/lib/comp-schedule';
+import { localizeCompName } from '@/lib/comp-localize';
+import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { ALL_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { statsUrl } from '@/lib/stats-base';
 
@@ -22,7 +27,16 @@ interface EventLengthsJson {
   events: Record<string, EventLen>;
 }
 
+type LenExample = [string, string, string, number, string]; // [compId, round, group, num, text]
+interface ExamplesJson {
+  meta: { generated_at: string; per_bin: number };
+  comps: Record<string, [string, string]>;
+  events: Record<string, Record<string, LenExample[]>>;
+}
+
 const BAR = '#8B7D72'; // neutral warm — no color dimension here
+// Events whose example scramble is a plain 3x3 state the cross analyzer accepts.
+const ANALYZER_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft', '333mbf', '333mbo']);
 
 function summarize(counts: Record<string, number>) {
   const entries = Object.entries(counts)
@@ -61,6 +75,9 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
   const [event, setEvent] = useState('333');
   const [yMode, setYMode] = useState<'percent' | 'count'>('percent');
   const [chartMode, setChartMode] = useState<'pdf' | 'cdf'>('pdf');
+  const [selectedBin, setSelectedBin] = useState<number | null>(null);
+  const [examples, setExamples] = useState<ExamplesJson | null>(null);
+  const [examplesLoading, setExamplesLoading] = useState(false);
 
   useEffect(() => {
     fetch(statsUrl('/stats/scramble/event_lengths.json'))
@@ -68,6 +85,22 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
       .then(setData)
       .catch((e) => setError(String(e)));
   }, []);
+
+  // Flag index for example comp cards (bump version to re-render once loaded).
+  const [flagVer, setFlagVer] = useState(() => flagDataVersion());
+  useEffect(() => {
+    void loadFlagData().then((v) => { if (v !== flagVer) setFlagVer(v); });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const ensureExamples = () => {
+    if (examples || examplesLoading) return;
+    setExamplesLoading(true);
+    fetch(statsUrl('/stats/scramble/event_length_examples.json'))
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then((j) => { setExamples(j); setExamplesLoading(false); })
+      .catch(() => setExamplesLoading(false));
+  };
+  const handleBarClick = (bin: number) => { setSelectedBin(bin); ensureExamples(); };
 
   const available = useMemo(
     () => new Set(data ? Object.keys(data.events) : []),
@@ -82,12 +115,22 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
     }
   }, [data, event]);
 
+  // Switching event clears the selected length bin (examples no longer apply).
+  useEffect(() => { setSelectedBin(null); }, [event]);
+
   const cur = data?.events[event] ?? null;
   const stats = useMemo(() => (cur ? summarize(cur.counts) : null), [cur]);
   const series = useMemo<HistSeries[]>(
     () => (cur ? [{ name: eventName(event, isZh), fillColors: [BAR], counts: cur.counts }] : []),
     [cur, event, isZh],
   );
+  const clickableBins = useMemo(
+    () => (cur ? Object.keys(cur.counts).map(Number) : []),
+    [cur],
+  );
+  const curExamples = (selectedBin !== null && examples)
+    ? (examples.events[event]?.[String(selectedBin)] ?? null)
+    : null;
 
   const overview = useMemo(() => {
     if (!data) return [];
@@ -135,6 +178,9 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
               isZh={isZh}
               yMode={yMode}
               chartMode={chartMode}
+              clickableBins={clickableBins}
+              selectedBin={selectedBin}
+              onBarClick={handleBarClick}
               hideLegendColors
               onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
               onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
@@ -157,6 +203,65 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
               </div>
             </div>
           )}
+
+          <div className="scramble-stats-panel scramble-stats-examples-panel">
+            <div className="scramble-stats-panel-title">
+              {selectedBin !== null
+                ? (isZh ? `${selectedBin} ${unitLabel(cur.unit, isZh)}打乱样例` : `${selectedBin}-${cur.unit} examples`)
+                : (isZh ? '极端打乱样例' : 'Extreme scrambles')}
+            </div>
+            {selectedBin === null && (
+              <div className="scramble-stats-examples-hint">
+                {isZh ? '点击直方图的柱子查看该长度的真实比赛打乱(含极长 / 极短)。' : 'Click a bar to see real competition scrambles of that length (including the extreme long / short ones).'}
+              </div>
+            )}
+            {selectedBin !== null && examplesLoading && (
+              <div className="scramble-stats-examples-hint">{isZh ? '加载中…' : 'Loading…'}</div>
+            )}
+            {selectedBin !== null && !examplesLoading && curExamples && curExamples.length > 0 && (
+              <ul className="scramble-stats-examples-list">
+                {curExamples.map((ex, i) => {
+                  const [compId, round, group, num, text] = ex;
+                  const comp = examples?.comps[compId];
+                  const iso2 = compFlagIso2(compId);
+                  const linkable = ANALYZER_EVENTS.has(event);
+                  return (
+                    <li key={i}>
+                      <div className="scramble-stats-examples-body">
+                        {linkable ? (
+                          <Link
+                            className="scramble-stats-examples-scramble"
+                            href={`/scramble/analyzer?${new URLSearchParams({ scramble: text.trim().replace(/ /g, '_') })}`}
+                            prefetch={false}
+                          >{text}</Link>
+                        ) : (
+                          <span className="scramble-stats-examples-scramble">{text}</span>
+                        )}
+                        {comp && (
+                          <Link
+                            className="scramble-stats-examples-comp"
+                            href={`/scramble/gen?comp=${encodeURIComponent(compId)}`}
+                            prefetch={false}
+                            title={comp[0]}
+                          >
+                            {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                            <span className="scramble-stats-examples-comp-name">{localizeCompName(compId, comp[0], isZh)}</span>
+                            <span className="scramble-stats-examples-comp-meta">
+                              <EventIcon event={event} className="scramble-stats-examples-evt" title={eventName(event, isZh)} />
+                              <span>{compSourceLine(round, group, num, isZh)}</span>
+                            </span>
+                          </Link>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            {selectedBin !== null && !examplesLoading && (!curExamples || curExamples.length === 0) && (
+              <div className="scramble-stats-examples-hint">{isZh ? '此长度无样例' : 'No examples for this length'}</div>
+            )}
+          </div>
         </>
       )}
 

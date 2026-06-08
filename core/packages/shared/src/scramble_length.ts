@@ -19,13 +19,21 @@ export function scrambleLengthUnit(eventId: string): ScrambleLengthUnit {
   return eventId === 'sq1' ? 'twists' : 'moves';
 }
 
+/** One countable sample: its move-count and the representative scramble text. */
+export interface ScrambleSample {
+  len: number;
+  /** The scramble this length belongs to — the full string, except multi-blind
+   *  where it's the single per-cube 3x3 line. */
+  text: string;
+}
+
 /**
- * Move-counts of one scramble string. Returns an array because multi-blind
- * packs several cubes (one per line) into a single scramble row — each cube is
- * counted as its own 3x3 sample. Returns `[]` when nothing is countable (e.g. a
- * blank magic scramble).
+ * Per-sample move-counts of one scramble string. Returns an array because
+ * multi-blind packs several cubes (one per line) into a single row — each cube
+ * is its own 3x3 sample. Returns `[]` when nothing is countable (e.g. a blank
+ * magic scramble). Single source of truth for both the histogram and examples.
  */
-export function scrambleMoveLengths(eventId: string, scramble: string): number[] {
+export function scrambleMoveSamples(eventId: string, scramble: string): ScrambleSample[] {
   const s = (scramble ?? '').trim();
   if (!s) return [];
 
@@ -33,18 +41,25 @@ export function scrambleMoveLengths(eventId: string, scramble: string): number[]
   // the '/' tokens and break "(1, 0)" with an inner space into two.
   if (eventId === 'sq1') {
     const pairs = s.match(/\(\s*-?\d+\s*,\s*-?\d+\s*\)/g);
-    return pairs ? [pairs.length] : [];
+    return pairs ? [{ len: pairs.length, text: s }] : [];
   }
 
   // Multi-blind (current + retired old format): one 3x3 scramble per line.
   if (eventId === '333mbf' || eventId === '333mbo') {
-    return s.split('\n').map(countTokens).filter((n) => n > 0);
+    return s.split('\n').map((l) => l.trim())
+      .map((l) => ({ len: countTokens(l), text: l }))
+      .filter((x) => x.len > 0);
   }
 
   // Everything else. Megaminx's 7 newline-separated lines collapse into the
   // same whitespace split (77 tokens), which is the conventional count.
   const n = countTokens(s);
-  return n > 0 ? [n] : [];
+  return n > 0 ? [{ len: n, text: s }] : [];
+}
+
+/** Move-counts only — see scrambleMoveSamples. */
+export function scrambleMoveLengths(eventId: string, scramble: string): number[] {
+  return scrambleMoveSamples(eventId, scramble).map((x) => x.len);
 }
 
 function countTokens(line: string): number {
