@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createBatch, remove, update, type QrType } from "@/lib/db/qr";
 import { parseLinks } from "@/lib/qr/links";
+import { parseAlg } from "@/lib/qr/cardText";
 
 export async function createQrBatch(f: FormData): Promise<void> {
   const prefix = String(f.get("prefix") ?? "").trim();
@@ -39,6 +40,7 @@ export async function saveQr(f: FormData): Promise<void> {
     term: String(f.get("term") ?? ""),
     quote: String(f.get("quote") ?? ""),
     frontArt: String(f.get("frontArt") ?? ""),
+    alg: parseAlg(String(f.get("alg") ?? "")),
     links: parseLinks(String(f.get("links") ?? "")),
   });
   revalidatePath("/admin/qr");

@@ -2,14 +2,14 @@ import "server-only";
 import { desc, eq, sql } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { db, schema } from "@/db";
-import type { QrCode, QrCodeInsert, QrLink, QrType } from "@/db/schema";
+import type { QrAlg, QrCode, QrCodeInsert, QrLink, QrType } from "@/db/schema";
 
-export type { QrCode, QrLink, QrType };
+export type { QrAlg, QrCode, QrLink, QrType };
 
 export type QrUpdate = Partial<
   Pick<
     QrCode,
-    "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote" | "frontArt"
+    "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote" | "frontArt" | "alg"
   >
 >;
 
@@ -95,6 +95,7 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
   if (patch.term !== undefined) next.term = patch.term?.trim() || null;
   if (patch.quote !== undefined) next.quote = patch.quote?.trim() || null;
   if (patch.frontArt !== undefined) next.frontArt = patch.frontArt?.trim() || null;
+  if (patch.alg !== undefined) next.alg = patch.alg && patch.alg.moves ? patch.alg : null;
   if (patch.links !== undefined) next.links = patch.links;
   if (Object.keys(next).length === 0) return;
   await db.update(schema.qrCodes).set(next).where(eq(schema.qrCodes.code, c));

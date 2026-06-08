@@ -1,6 +1,23 @@
 @import "tailwindcss";
 
+/* JetBrains Mono — 魔方记法 / 公式专用(对齐主站 alg 工具),自带 woff2 */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-latin-500-normal.woff2") format("woff2");
+}
+
 @theme {
+  --font-alg: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --color-brand: #2A5DF4;
   --color-brand-dark: #1E4ACB;
   --color-brand-soft: #EAF0FE;
