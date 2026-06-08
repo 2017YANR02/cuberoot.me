@@ -1,20 +1,6 @@
 @import "tailwindcss";
 
-/* JetBrains Mono — 魔方记法 / 公式专用(对齐主站 alg 工具),自带 woff2 */
-@font-face {
-  font-family: "JetBrains Mono";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
-}
-@font-face {
-  font-family: "JetBrains Mono";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("/fonts/jetbrains-mono-latin-500-normal.woff2") format("woff2");
-}
+/* JetBrains Mono 的 @font-face 在单独的 app/fonts.css(Tailwind 入口会吃掉顶层 @font-face) */
 
 @theme {
   --font-alg: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
