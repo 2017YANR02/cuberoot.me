@@ -128,7 +128,9 @@ interface Props {
 export default function LandingSearch({ cards, lang }: Props) {
   const isZh = lang === 'zh';
   const params = useParams<{ lang?: string }>();
-  const langPrefix = params?.lang === 'zh' || params?.lang === 'en' ? `/${params.lang}` : `/${lang}`;
+  // Pattern B: English is the bare path → empty prefix; only Chinese is /zh.
+  const effLang = params?.lang === 'zh' || params?.lang === 'en' ? params.lang : lang;
+  const langPrefix = effLang === 'zh' ? '/zh' : '';
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const { supported: micSupported, listening, start: micStart, stop: micStop } = useSpeechToText({

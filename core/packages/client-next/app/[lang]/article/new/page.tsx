@@ -60,7 +60,7 @@ export default function NewArticlePage() {
       ) : (
         <ArticleEditor
           mode="create"
-          onSaved={(slug) => router.push(`/${lang}/article/${slug}`)}
+          onSaved={(slug) => router.push(`${lang === 'zh' ? '/zh' : ''}/article/${slug}`)}
         />
       )}
     </div>

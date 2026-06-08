@@ -46,13 +46,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [...new Set([...scanRoutes(), ...EXTRA])]
     .filter((r) => !EXCLUDE.has(r))
     .sort();
-  const at = (lang: string, path: string) => `${BASE}/${lang}${path ? `/${path}` : ''}`;
+  // Pattern B: English is the BARE URL (no /en prefix); Chinese is /zh/….
+  const en = (path: string) => (path ? `${BASE}/${path}` : `${BASE}/`);
+  const zh = (path: string) => (path ? `${BASE}/zh/${path}` : `${BASE}/zh`);
   const now = new Date();
   return routes.map((path) => ({
-    url: at('en', path),
+    url: en(path),
     lastModified: now,
     alternates: {
-      languages: { en: at('en', path), zh: at('zh', path), 'x-default': at('en', path) },
+      languages: { en: en(path), zh: zh(path), 'x-default': en(path) },
     },
   }));
 }
