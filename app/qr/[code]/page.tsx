@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, ArrowUpRight, Sparkles } from "lucide-react";
 import { findByCode, incrementScans, type QrLink } from "@/lib/db/qr";
+import { recordEvent } from "@/lib/db/track";
 import { TrackOnce } from "@/components/TrackOnce";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +38,13 @@ export default async function QrLandingPage({
 
   if (entry) {
     await incrementScans(entry.code);
+    const anonId = (await cookies()).get("cube_anon")?.value ?? null;
+    await recordEvent({
+      name: "qr_scan",
+      payload: { code: entry.code, type: entry.type, label: entry.label },
+      anonId,
+      url: `/qr/${entry.code}`,
+    });
     if (
       entry.type !== "landing" &&
       entry.target &&
