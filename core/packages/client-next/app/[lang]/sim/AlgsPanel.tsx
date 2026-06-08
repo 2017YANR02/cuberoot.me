@@ -30,7 +30,7 @@ const PUZZLES_SUPPORTED: AlgPuzzle[] = ['2x2', '3x3', '4x4', '5x5'];
 export default function AlgsPanel({ onSelect, onOrderChange, disabled = false }: Props) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
 
   const [puzzle, setPuzzle] = useState<AlgPuzzle>('3x3');
   const sets = ALG_CATALOG[puzzle] ?? [];
@@ -86,7 +86,7 @@ export default function AlgsPanel({ onSelect, onOrderChange, disabled = false }:
   if (disabled) {
     return (
       <div className="sim-algs">
-        <div className="sim-algs-msg">{t('该魔方暂无公式集', 'No algs for this puzzle yet')}</div>
+        <div className="sim-algs-msg">{t('该魔方暂无公式集', 'No algs for this puzzle yet', "該魔方暫無公式集")}</div>
       </div>
     );
   }
@@ -111,19 +111,19 @@ export default function AlgsPanel({ onSelect, onOrderChange, disabled = false }:
         >
           {sets.map((s) => (
             <option key={s.slug} value={s.slug}>
-              {(i18n.language.startsWith('zh') ? s.zh : s.en)}
+              {(i18n.language === 'zh-Hant' ? ((s as { zhHant?: string }).zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en))}
             </option>
           ))}
         </select>
         <span className="sim-algs-hint">
-          {t('点公式 = 摆出此情形;下方回放区按播放看动画', 'Click case = set up the position; hit play below to watch the alg')}
+          {t('点公式 = 摆出此情形;下方回放区按播放看动画', 'Click case = set up the position; hit play below to watch the alg', "點公式 = 擺出此情形;下方回放區按播放看動畫")}
         </span>
       </div>
       <div className="sim-algs-list">
-        {loading ? <div className="sim-algs-msg">{t('加载中…', 'Loading…')}</div> : null}
+        {loading ? <div className="sim-algs-msg">{t('加载中…', 'Loading…', "載入中…")}</div> : null}
         {error ? <div className="sim-algs-msg error">{error}</div> : null}
         {!loading && !error && cases.length === 0 ? (
-          <div className="sim-algs-msg">{t('暂无数据', 'No data')}</div>
+          <div className="sim-algs-msg">{t('暂无数据', 'No data', "暫無資料")}</div>
         ) : null}
         {cases.map((c, i) => {
           const algText = c.algs?.[0]?.[0]?.alg ?? '';

@@ -20,7 +20,7 @@ const MODES: Mode[] = ['standard', 'h2h', 'whatif', 'stats'];
 function NemesizerInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('宿敌', 'Nemesizer');
+  useDocumentTitle('宿敌', 'Nemesizer', "宿敵");
 
   // mode 是导航态(在 4 个视图间切换)→ push 进历史,后退能返回上一视图
   const [mode, setMode] = useQueryState(

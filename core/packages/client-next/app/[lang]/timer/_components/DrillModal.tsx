@@ -13,6 +13,7 @@ import { PLL_CASES } from '../_lib/scramble/algs/pll_cases';
 import type { DrillType } from '../_lib/scramble/drill';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   isZh: boolean;
@@ -102,9 +103,9 @@ export default function DrillModal({
     marginBottom: 10,
   };
 
-  const searchPlaceholder = isZh
-    ? type === 'oll' ? '搜索 (例如 21)' : '搜索 (例如 T)'
-    : type === 'oll' ? 'Search (e.g. 21)' : 'Search (e.g. T)';
+  const searchPlaceholder = i18n.language === 'zh-Hant' ? (type === 'oll' ? '搜尋 (例如 21)' : '搜尋 (例如 T)') : (isZh
+      ? type === 'oll' ? '搜索 (例如 21)' : '搜索 (例如 T)'
+      : type === 'oll' ? 'Search (e.g. 21)' : 'Search (e.g. T)');
 
   return (
     <div className="timer-modal-overlay" onClick={onClose}>
@@ -140,7 +141,7 @@ export default function DrillModal({
           </button>
           {activeCase && (
             <button type="button" onClick={() => { onExit(); onClose(); }}>
-              {isZh ? `退出专项 (${activeCase.id})` : `Exit drill (${activeCase.id})`}
+              {i18n.language === 'zh-Hant' ? (`退出專項 (${activeCase.id})`) : (isZh ? `退出专项 (${activeCase.id})` : `Exit drill (${activeCase.id})`)}
             </button>
           )}
         </div>

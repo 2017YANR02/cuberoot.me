@@ -31,6 +31,7 @@ import { ClearButton } from '@/components/ClearButton';
 import CubingPreview from '@/components/CubingPreview';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 // TwistySection pulls in cubing.js (heavy) — load only on the client, lazily.
 const TwistySection = dynamic(() => import('@/components/TwistySection'), {
@@ -63,7 +64,7 @@ function normalizeAlg(s: string): string {
 export default function CommLibraryPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('3BLD 公式库', '3BLD Commutator Library');
+  useDocumentTitle('3BLD 公式库', '3BLD Commutator Library', "3BLD 公式庫");
 
   const [kind, setKind] = useState<Kind>('corner');
   const [query, setQuery] = useState('');
@@ -198,9 +199,9 @@ export default function CommLibraryPage(): JSX.Element {
             ? (tr({ zh: '加载中…', en: 'Loading…',
                 zhHant: "載入中…"
             }))
-            : isZh
-              ? `${pairs.length} 组`
-              : `${pairs.length}`}
+            : i18n.language === 'zh-Hant' ? (`${pairs.length} 組`) : (isZh
+                                    ? `${pairs.length} 组`
+                                    : `${pairs.length}`)}
         </span>
       </div>
 

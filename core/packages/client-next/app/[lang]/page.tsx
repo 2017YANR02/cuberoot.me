@@ -52,8 +52,9 @@ export default function LandingPage() {
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
   const t = useCallback((key: keyof typeof TEXTS) => {
+    if (i18n.language === 'zh-Hant') return TEXTS[key].zhHant ?? TEXTS[key].zh;
     return TEXTS[key][lang];
-  }, [lang]);
+  }, [lang, i18n.language]);
 
   return (
     <div className="landing-page">
@@ -86,9 +87,9 @@ export default function LandingPage() {
         {SECTIONS.map((sec) => (
           <section key={sec.id} id={`section-${sec.id}`} className="cards-section">
             <div className="section-header">
-              <div className="section-eyebrow">{(i18n.language.startsWith('zh') ? sec.eyebrow.zh : sec.eyebrow.en)}</div>
-              <h2 className="section-title-serif">{(i18n.language.startsWith('zh') ? sec.title.zh : sec.title.en)}</h2>
-              <div className="section-sub">{(i18n.language.startsWith('zh') ? sec.sub.zh : sec.sub.en)}</div>
+              <div className="section-eyebrow">{(i18n.language === 'zh-Hant' ? (sec.eyebrow.zhHant ?? sec.eyebrow.zh) : (i18n.language.startsWith('zh') ? sec.eyebrow.zh : sec.eyebrow.en))}</div>
+              <h2 className="section-title-serif">{(i18n.language === 'zh-Hant' ? (sec.title.zhHant ?? sec.title.zh) : (i18n.language.startsWith('zh') ? sec.title.zh : sec.title.en))}</h2>
+              <div className="section-sub">{(i18n.language === 'zh-Hant' ? (sec.sub.zhHant ?? sec.sub.zh) : (i18n.language.startsWith('zh') ? sec.sub.zh : sec.sub.en))}</div>
             </div>
             <div className="cards-container">
               {sec.cards.map((card) => {

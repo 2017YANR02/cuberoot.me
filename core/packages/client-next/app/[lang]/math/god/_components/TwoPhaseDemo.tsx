@@ -30,7 +30,10 @@ interface Preset {
   scramble: string;
   phase1: string;
   phase2: string;
-  notes: { zh: string; en: string };
+  notes: { zh: string; en: string
+    zhHant?: string;
+ };
+    zhHant?: string;
 }
 
 // Phase 1 ends in the H subgroup state — corner orient OK + edge orient OK + M-slice
@@ -47,8 +50,10 @@ const PRESETS: Preset[] = [
     phase2: "",
     notes: {
       zh: '这是 T-perm,只交换两个角块 + 两个棱块。其逆 5 步就是 phase 1 出口,刚好回到 H 子群(实际上已经在 H,故 phase 2 = 0 步)。',
-      en: 'This is a T-perm: swaps two corners + two edges. Its 5-move inverse lands directly in H (in fact already in H ⇒ phase 2 = 0 moves).'
-    }
+      en: 'This is a T-perm: swaps two corners + two edges. Its 5-move inverse lands directly in H (in fact already in H ⇒ phase 2 = 0 moves).',
+        zhHant: "這是 T-perm,只交換兩個角塊 + 兩個稜塊。其逆 5 步就是 phase 1 出口,剛好回到 H 子群(實際上已經在 H,故 phase 2 = 0 步)。"
+    },
+      zhHant: "入門 scramble"
 },
   {
     id: 'random',
@@ -59,8 +64,10 @@ const PRESETS: Preset[] = [
     phase2: "U2 R2 U2 F2 R2 U2 B2 D2 L2 D'",
     notes: {
       zh: '7 + 10 = 17 步 ≤ 20 上帝之数。Phase 1 用 7 步进 H;Phase 2 用 10 步在 H 内还原。注意 phase 2 全部是 180° + U/D 转,从不出现 L/R/F/B 单转。',
-      en: '7 + 10 = 17 ≤ 20 (God\'s number). Phase 1 enters H in 7 moves; Phase 2 solves inside H in 10 moves. Phase 2 only uses 180° turns + U/D, never L/R/F/B alone.'
-    }
+      en: '7 + 10 = 17 ≤ 20 (God\'s number). Phase 1 enters H in 7 moves; Phase 2 solves inside H in 10 moves. Phase 2 only uses 180° turns + U/D, never L/R/F/B alone.',
+        zhHant: "7 + 10 = 17 步 ≤ 20 上帝之數。Phase 1 用 7 步進 H;Phase 2 用 10 步在 H 內還原。注意 phase 2 全部是 180° + U/D 轉,從不出現 L/R/F/B 單轉。"
+    },
+      zhHant: "隨機三階狀態"
 },
   {
     id: 'superflip',
@@ -71,8 +78,10 @@ const PRESETS: Preset[] = [
     phase2: "F2 D2 L2 U2 R2 D2 B2 L2",
     notes: {
       zh: 'Superflip 是 distance-20 状态。Kociemba 给出 12 + 8 = 20 步分解(本预置)。即使最优分解,phase 1 也吃满 ~12 步,phase 2 吃满 ~8 步。20 = 上帝之数,这条解算"打满上限"。',
-      en: 'Superflip is a distance-20 state. Kociemba splits it 12 + 8 = 20 (preset above). Even optimal, phase 1 saturates at ~12; phase 2 at ~8. 20 = God\'s number — this solution "hits the ceiling".'
-    }
+      en: 'Superflip is a distance-20 state. Kociemba splits it 12 + 8 = 20 (preset above). Even optimal, phase 1 saturates at ~12; phase 2 at ~8. 20 = God\'s number — this solution "hits the ceiling".',
+        zhHant: "Superflip 是 distance-20 狀態。Kociemba 給出 12 + 8 = 20 步分解(本預置)。即使最優分解,phase 1 也吃滿 ~12 步,phase 2 吃滿 ~8 步。20 = 上帝之數,這條解算\"打滿上限\"。"
+    },
+      zhHant: "Superflip (上界緊的 antipode)"
 },
   {
     id: 'hard',
@@ -83,8 +92,10 @@ const PRESETS: Preset[] = [
     phase2: "L2 U2 F2 D' B2 L2 R2 D' F2 R2",
     notes: {
       zh: '7 + 10 = 17 步,典型 FMC 比赛级 scramble。注意 phase 1 出口的状态被 4 个不变量同时锁定:8 个角块朝向归零 (corner-orient = 0) + 12 个棱块朝向归零 (edge-orient = 0) + M-slice edges 全在 UD 之间 (M-slice = 0)。',
-      en: '7 + 10 = 17, FMC-grade. Phase 1\'s exit state hits all four invariants simultaneously: 8 corners oriented (corner-orient = 0) + 12 edges oriented (edge-orient = 0) + M-slice edges all between UD layers (M-slice = 0).'
-    }
+      en: '7 + 10 = 17, FMC-grade. Phase 1\'s exit state hits all four invariants simultaneously: 8 corners oriented (corner-orient = 0) + 12 edges oriented (edge-orient = 0) + M-slice edges all between UD layers (M-slice = 0).',
+        zhHant: "7 + 10 = 17 步,典型 FMC 比賽級 scramble。注意 phase 1 出口的狀態被 4 個不變數同時鎖定:8 個角塊朝向歸零 (corner-orient = 0) + 12 個稜塊朝向歸零 (edge-orient = 0) + M-slice edges 全在 UD 之間 (M-slice = 0)。"
+    },
+      zhHant: "硬 scramble (FMC 訓練題)"
 },
 ];
 
@@ -95,7 +106,7 @@ function tokens(alg: string): string[] {
 interface Props { isZh: boolean; }
 
 export default function TwoPhaseDemo({ isZh }: Props) {
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const [presetId, setPresetId] = useState<string>('random');
   const [step, setStep] = useState(0);  // 0 = scramble shown, then 1..N = after N moves of (phase1 + phase2)
   const [playing, setPlaying] = useState(false);
@@ -162,12 +173,12 @@ export default function TwoPhaseDemo({ isZh }: Props) {
     <div className="god-tp-wrap">
       {/* preset selector */}
       <div className="god-tp-presets">
-        <span className="god-tp-presets-l">{t('选 scramble:', 'Scramble:')}</span>
+        <span className="god-tp-presets-l">{t('选 scramble:', 'Scramble:', "選 scramble:")}</span>
         {PRESETS.map((p) => (
           <button key={p.id}
                   className={`god-metric-tab ${presetId === p.id ? 'is-on' : ''}`}
                   onClick={() => setPresetId(p.id)}>
-            {(i18n.language.startsWith('zh') ? p.zh : p.en)}
+            {(i18n.language === 'zh-Hant' ? (p.zhHant ?? p.zh) : (i18n.language.startsWith('zh') ? p.zh : p.en))}
           </button>
         ))}
       </div>
@@ -186,8 +197,8 @@ export default function TwoPhaseDemo({ isZh }: Props) {
               {solved
                 ? t('已解!', 'Solved!')
                 : currentPhase === 1
-                  ? <>{t('阶段 1 / Phase 1', 'Phase 1')} <span>· {step}/{phase1Tokens.length}</span></>
-                  : <>{t('阶段 2 / Phase 2', 'Phase 2')} <span>· {step - phase1Tokens.length}/{phase2Tokens.length}</span></>}
+                  ? <>{t('阶段 1 / Phase 1', 'Phase 1', "階段 1 / Phase 1")} <span>· {step}/{phase1Tokens.length}</span></>
+                  : <>{t('阶段 2 / Phase 2', 'Phase 2', "階段 2 / Phase 2")} <span>· {step - phase1Tokens.length}/{phase2Tokens.length}</span></>}
             </div>
           </div>
 
@@ -198,7 +209,7 @@ export default function TwoPhaseDemo({ isZh }: Props) {
             <button className="god-btn-secondary god-tp-iconbtn" onClick={prev} title={t('上一步', 'prev')} disabled={step === 0}>
               <SkipBack size={16} />
             </button>
-            <button className="god-btn-primary god-tp-iconbtn" onClick={() => setPlaying((p) => !p)} title={playing ? t('暂停', 'pause') : t('播放', 'play')} disabled={solved}>
+            <button className="god-btn-primary god-tp-iconbtn" onClick={() => setPlaying((p) => !p)} title={playing ? t('暂停', 'pause', "暫停") : t('播放', 'play')} disabled={solved}>
               {playing ? <Pause size={16} /> : <Play size={16} />}
             </button>
             <button className="god-btn-secondary god-tp-iconbtn" onClick={next} title={t('下一步', 'next')} disabled={solved}>
@@ -207,7 +218,7 @@ export default function TwoPhaseDemo({ isZh }: Props) {
             <button className="god-btn-secondary god-tp-iconbtn" onClick={toPhase1End} title={t('跳到 Phase 1 末', 'jump to end of Phase 1')}>
               <span style={{ fontSize: 11 }}>P1↗</span>
             </button>
-            <button className="god-btn-secondary god-tp-iconbtn" onClick={toEnd} title={t('跳到最后', 'to end')}>
+            <button className="god-btn-secondary god-tp-iconbtn" onClick={toEnd} title={t('跳到最后', 'to end', "跳到最後")}>
               <ChevronsRight size={16} />
             </button>
             <button className="god-btn-secondary god-tp-iconbtn" onClick={reset} title={t('重置', 'reset')}>
@@ -216,9 +227,9 @@ export default function TwoPhaseDemo({ isZh }: Props) {
           </div>
 
           <div className="god-tp-step-readout">
-            <span>{t('步数', 'Step')}: <b>{step}</b> / {totalSteps}</span>
+            <span>{t('步数', 'Step', "步數")}: <b>{step}</b> / {totalSteps}</span>
             <span style={{ color: 'var(--god-text-mute)' }}>
-              · {t('总长', 'Total')}: {phase1Tokens.length} + {phase2Tokens.length} = <b style={{ color: 'var(--god-text)' }}>{totalSteps}</b> HTM
+              · {t('总长', 'Total', "總長")}: {phase1Tokens.length} + {phase2Tokens.length} = <b style={{ color: 'var(--god-text)' }}>{totalSteps}</b> HTM
             </span>
           </div>
         </div>
@@ -228,7 +239,7 @@ export default function TwoPhaseDemo({ isZh }: Props) {
           {/* Phase track */}
           <div className="god-tp-tracks">
             <div className="god-tp-track-h">
-              <span className="god-tp-track-name is-p1">{t('阶段 1: scramble → H', 'Phase 1: scramble → H')}</span>
+              <span className="god-tp-track-name is-p1">{t('阶段 1: scramble → H', 'Phase 1: scramble → H', "階段 1: scramble → H")}</span>
               <span className="god-tp-track-len">{phase1Tokens.length} HTM</span>
             </div>
             <div className="god-tp-track">
@@ -239,7 +250,7 @@ export default function TwoPhaseDemo({ isZh }: Props) {
               ))}
             </div>
             <div className="god-tp-track-h">
-              <span className="god-tp-track-name is-p2">{t('阶段 2: H 内求解', 'Phase 2: solve in H')}</span>
+              <span className="god-tp-track-name is-p2">{t('阶段 2: H 内求解', 'Phase 2: solve in H', "階段 2: H 內求解")}</span>
               <span className="god-tp-track-len">{phase2Tokens.length} HTM</span>
             </div>
             <div className="god-tp-track">
@@ -258,28 +269,28 @@ export default function TwoPhaseDemo({ isZh }: Props) {
           {/* Invariants */}
           <div className="god-tp-inv">
             <div className="god-tp-inv-h">
-              {t('Phase 1 不变量(进 H 的 4 个条件):', 'Phase 1 invariants (4 conditions for entering H):')}
+              {t('Phase 1 不变量(进 H 的 4 个条件):', 'Phase 1 invariants (4 conditions for entering H):', "Phase 1 不變數(進 H 的 4 個條件):")}
               <span className={`god-tp-inv-status ${inH ? 'is-in' : ''}`}>
                 {inH ? t('✓ 已在 H', '✓ inside H') : t('外部', 'outside H')}
               </span>
             </div>
-            <InvBar label={t('8 角块朝向余量', '8 corner orient. remaining')} v={invariants.cornerOrient} />
-            <InvBar label={t('12 棱块朝向余量', '12 edge orient. remaining')} v={invariants.edgeOrient} />
-            <InvBar label={t('M-slice 棱归位余量', 'M-slice edges remaining')} v={invariants.mSlice} />
-            <InvBar label={t('完整解到位度 (P2 进度)', 'Solved-ness (P2 progress)')} v={invariants.solved} inverse />
+            <InvBar label={t('8 角块朝向余量', '8 corner orient. remaining', "8 角塊朝向餘量")} v={invariants.cornerOrient} />
+            <InvBar label={t('12 棱块朝向余量', '12 edge orient. remaining', "12 稜塊朝向餘量")} v={invariants.edgeOrient} />
+            <InvBar label={t('M-slice 棱归位余量', 'M-slice edges remaining', "M-slice 稜歸位餘量")} v={invariants.mSlice} />
+            <InvBar label={t('完整解到位度 (P2 进度)', 'Solved-ness (P2 progress)', "完整解到位度 (P2 進度)")} v={invariants.solved} inverse />
           </div>
         </div>
       </div>
 
       {/* Bottom: notes */}
       <div className="god-tp-notes">
-        <strong>{t('这条 scramble:', 'This scramble:')}</strong>{' '}
-        <MathText>{(i18n.language.startsWith('zh') ? preset.notes.zh : preset.notes.en)}</MathText>
+        <strong>{t('这条 scramble:', 'This scramble:', "這條 scramble:")}</strong>{' '}
+        <MathText>{(i18n.language === 'zh-Hant' ? (preset.notes.zhHant ?? preset.notes.zh) : (i18n.language.startsWith('zh') ? preset.notes.zh : preset.notes.en))}</MathText>
       </div>
       <p className="god-tp-caption">
         <MathText>{t(
           'Kociemba 1992: 取子群 H = ⟨U,D,L²,R²,F²,B²⟩,|H| ≈ 1.95 × 10¹⁰。任何打乱状态 s ∈ G,先用 ≤ 12 步把它推进 H 的某个陪集代表(phase 1),再用 ≤ 18 步在 H 里把它还原(phase 2),合计 ≤ 30 步。Rokicki 后续把上界压到 20。每个 scramble 的最优两阶段分解通常不是"先 phase 1 然后 phase 2",而是 Cube Explorer iterative deepening 找出来的——p1 不一定取最短(因为可能让 p2 更长),整体取 |p1| + |p2| 最小。',
-          'Kociemba 1992 picks H = ⟨U,D,L²,R²,F²,B²⟩ with |H| ≈ 1.95 × 10¹⁰. Any scramble s ∈ G: push it into a coset representative of H in ≤ 12 moves (phase 1), then solve inside H in ≤ 18 (phase 2) — total ≤ 30. Rokicki later tightened this to 20. The optimal two-phase split is rarely "shortest phase 1 then phase 2": Cube Explorer iterative-deepens to minimise |p1| + |p2|, accepting a longer p1 if it shrinks p2 more.',
+          'Kociemba 1992 picks H = ⟨U,D,L²,R²,F²,B²⟩ with |H| ≈ 1.95 × 10¹⁰. Any scramble s ∈ G: push it into a coset representative of H in ≤ 12 moves (phase 1), then solve inside H in ≤ 18 (phase 2) — total ≤ 30. Rokicki later tightened this to 20. The optimal two-phase split is rarely "shortest phase 1 then phase 2": Cube Explorer iterative-deepens to minimise |p1| + |p2|, accepting a longer p1 if it shrinks p2 more.', "Kociemba 1992: 取子群 H = ⟨U,D,L²,R²,F²,B²⟩,|H| ≈ 1.95 × 10¹⁰。任何打亂狀態 s ∈ G,先用 ≤ 12 步把它推進 H 的某個陪集代表(phase 1),再用 ≤ 18 步在 H 裡把它還原(phase 2),合計 ≤ 30 步。Rokicki 後續把上界壓到 20。每個 scramble 的最優兩階段分解通常不是\"先 phase 1 然後 phase 2\",而是 Cube Explorer iterative deepening 找出來的——p1 不一定取最短(因為可能讓 p2 更長),整體取 |p1| + |p2| 最小。"
         )}</MathText>
       </p>
     </div>

@@ -6,6 +6,7 @@ import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/name-utils';
 import { countryName } from '@/lib/country-name';
 import type { WcaPersonProfile, WcaResultRow } from '@/lib/wca-person-api';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   profile: WcaPersonProfile;
@@ -18,7 +19,7 @@ export default function PersonHero({ profile, results, isZh }: Props) {
   const displayName = displayCuberName(p.name, isZh);
   const wcaUrl = `https://www.worldcubeassociation.org/persons/${p.wca_id}`;
   const avatarUrl = p.avatar?.thumb_url || p.avatar?.url;
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
 
   // 复原次数 / 尝试次数 (排除 DNS / no-result)
   let solves = 0, attempts = 0;
@@ -70,13 +71,13 @@ export default function PersonHero({ profile, results, isZh }: Props) {
 
       <div className="wp-hero-table">
         <div className="wp-hero-cell">
-          <div className="wp-hero-cell-label">{t('比赛次数', 'Competitions')}</div>
+          <div className="wp-hero-cell-label">{t('比赛次数', 'Competitions', "比賽次數")}</div>
           <div className="wp-hero-cell-value">
             <span className="wp-pill wp-pill-green">{profile.competition_count}</span>
           </div>
         </div>
         <div className="wp-hero-cell">
-          <div className="wp-hero-cell-label">{t('复原次数 / 尝试次数', 'Solves / Attempts')}</div>
+          <div className="wp-hero-cell-label">{t('复原次数 / 尝试次数', 'Solves / Attempts', "復原次數 / 嘗試次數")}</div>
           <div className="wp-hero-cell-value">
             <span className="wp-pill wp-pill-blue">{solves}</span>
             <span className="wp-pill-sep">/</span>

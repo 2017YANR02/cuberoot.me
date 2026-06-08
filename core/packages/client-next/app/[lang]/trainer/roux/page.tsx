@@ -13,7 +13,7 @@ import '../trainer.css';
 const RouxTrainer = dynamic(() => import('../_roux/RouxTrainer'), { ssr: false });
 
 export default function RouxTrainerPage() {
-  useDocumentTitle('桥式训练器', 'Roux Trainer');
+  useDocumentTitle('桥式训练器', 'Roux Trainer', "橋式訓練器");
   return (
     <div className="trainer-root">
       <RouxTrainer />

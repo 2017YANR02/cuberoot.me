@@ -62,9 +62,15 @@ const PALETTE = ['#8B2E3C','#2A4D69','#3F7050','#B8860B','#6B4E9C','#C2410C','#5
 
 // ── Widget 1: Wreath Element Builder ─────────────────────────────────────────
 type WreathMode = 'corners' | 'edges' | 'demo';
-const MODES: { key: WreathMode; A: number; n: number; labelZh: string; labelEn: string }[] = [
-  { key: 'corners', A: 3, n: 8,  labelZh: '角块 (C₃≀S₈)',  labelEn: 'Corners (C₃≀S₈)' },
-  { key: 'edges',   A: 2, n: 12, labelZh: '棱块 (C₂≀S₁₂)', labelEn: 'Edges (C₂≀S₁₂)' },
+const MODES: { key: WreathMode; A: number; n: number; labelZh: string; labelEn: string
+    labelZhHant?: string;
+ }[] = [
+  { key: 'corners', A: 3, n: 8,  labelZh: '角块 (C₃≀S₈)',  labelEn: 'Corners (C₃≀S₈)',
+      labelZhHant: "角塊 (C₃≀S₈)"
+},
+  { key: 'edges',   A: 2, n: 12, labelZh: '棱块 (C₂≀S₁₂)', labelEn: 'Edges (C₂≀S₁₂)',
+      labelZhHant: "稜塊 (C₂≀S₁₂)"
+},
   { key: 'demo',    A: 3, n: 3,  labelZh: '演示 (C₃≀S₃)',  labelEn: 'Demo (C₃≀S₃)' },
 ];
 
@@ -435,18 +441,21 @@ function IndexSieve() {
       {/* Enforce checkboxes */}
       <div style={{ marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: 16 }}>
         {[
-          { zh: '启用约束 1: ∑twist≡0', en: 'Enforce: ∑twist≡0'
+          { zh: '启用约束 1: ∑twist≡0', en: 'Enforce: ∑twist≡0',
+              zhHant: "啟用約束 1: ∑twist≡0"
         },
-          { zh: '启用约束 2: ∑flip≡0',  en: 'Enforce: ∑flip≡0'
+          { zh: '启用约束 2: ∑flip≡0',  en: 'Enforce: ∑flip≡0',
+              zhHant: "啟用約束 2: ∑flip≡0"
         },
-          { zh: '启用约束 3: 奇偶匹配',  en: 'Enforce: parity match'
+          { zh: '启用约束 3: 奇偶匹配',  en: 'Enforce: parity match',
+              zhHant: "啟用約束 3: 奇偶匹配"
         },
         ].map((c, i) => (
           <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
             <input type="checkbox" checked={enforceAll[i]}
               onChange={() => setEnforceAll(prev => { const n = [...prev]; n[i] = !n[i]; return n; })}
             />
-            {(i18n.language.startsWith('zh') ? c.zh : c.en)}
+            {(i18n.language === 'zh-Hant' ? (c.zhHant ?? c.zh) : (i18n.language.startsWith('zh') ? c.zh : c.en))}
           </label>
         ))}
       </div>
@@ -522,16 +531,19 @@ function IndexSieve() {
       {/* Three invariant lamps */}
       <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 16, fontSize: 13 }}>
         {[
-          { zh: '约束①: ∑角扭转≡0 (mod 3)', en: 'Constraint ①: ∑corner twist ≡ 0 (mod 3)', ok: ok0
+          { zh: '约束①: ∑角扭转≡0 (mod 3)', en: 'Constraint ①: ∑corner twist ≡ 0 (mod 3)', ok: ok0,
+              zhHant: "約束①: ∑角扭轉≡0 (mod 3)"
         },
-          { zh: '约束②: ∑棱翻转≡0 (mod 2)', en: 'Constraint ②: ∑edge flip ≡ 0 (mod 2)', ok: ok1
+          { zh: '约束②: ∑棱翻转≡0 (mod 2)', en: 'Constraint ②: ∑edge flip ≡ 0 (mod 2)', ok: ok1,
+              zhHant: "約束②: ∑稜翻轉≡0 (mod 2)"
         },
-          { zh: '约束③: 角置换奇偶 = 棱置换奇偶', en: 'Constraint ③: corner perm parity = edge perm parity', ok: ok2
+          { zh: '约束③: 角置换奇偶 = 棱置换奇偶', en: 'Constraint ③: corner perm parity = edge perm parity', ok: ok2,
+              zhHant: "約束③: 角置換奇偶 = 稜置換奇偶"
         },
         ].map((c, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
             {lamp(c.ok, true)}
-            <span style={{ color: 'var(--ink-dim)' }}>{(i18n.language.startsWith('zh') ? c.zh : c.en)}</span>
+            <span style={{ color: 'var(--ink-dim)' }}>{(i18n.language === 'zh-Hant' ? (c.zhHant ?? c.zh) : (i18n.language.startsWith('zh') ? c.zh : c.en))}</span>
           </div>
         ))}
       </div>
@@ -658,17 +670,27 @@ function OrderExplorer() {
 // ── Data table ────────────────────────────────────────────────────────────────
 function WreathTable() {
   const lang = useLang();
-  const rows: { A: string; n: number; mod: bigint; nameZh: string; nameEn: string; order: bigint; note: string }[] = [
+  const rows: { A: string; n: number; mod: bigint; nameZh: string; nameEn: string; order: bigint; note: string
+      nameZhHant?: string;
+ }[] = [
     { A: 'C₂', n: 3,  mod: 2n, nameZh: '超八面体群 B₃', nameEn: 'Hyperoctahedral B₃', order: 48n, note: tr({ zh: '普通正方体对称群', en: 'Symmetry of the geometric cube',
         zhHant: "普通正方體對稱群"
-    }) },
-    { A: 'C₃', n: 8,  mod: 3n, nameZh: '角块圈积',  nameEn: 'Corner wreath',  order: wreathOrder(3n, 8),  note: tr({ zh: '8 角×3 朝向', en: '8 corners × 3 orientations' }) },
+    }),
+        nameZhHant: "超八面體群 B₃"
+    },
+    { A: 'C₃', n: 8,  mod: 3n, nameZh: '角块圈积',  nameEn: 'Corner wreath',  order: wreathOrder(3n, 8),  note: tr({ zh: '8 角×3 朝向', en: '8 corners × 3 orientations' }),
+        nameZhHant: "角塊圈積"
+    },
     { A: 'C₂', n: 12, mod: 2n, nameZh: '棱块圈积',  nameEn: 'Edge wreath',    order: wreathOrder(2n, 12), note: tr({ zh: '12 棱×2 翻转', en: '12 edges × 2 flips',
         zhHant: "12 稜×2 翻轉"
-    }) },
+    }),
+        nameZhHant: "稜塊圈積"
+    },
     { A: 'C₂', n: 12, mod: 2n, nameZh: '超八面体 B₁₂', nameEn: 'Hyperoctahedral B₁₂', order: wreathOrder(2n, 12), note: tr({ zh: '12维符号置换群', en: 'Signed permutations of 12 things',
         zhHant: "12維符號置換群"
-    }) },
+    }),
+        nameZhHant: "超八面體 B₁₂"
+    },
   ];
 
   return (

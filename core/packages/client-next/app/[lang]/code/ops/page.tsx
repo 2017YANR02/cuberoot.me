@@ -21,17 +21,22 @@ interface CategoryDef {
   zh: string;
   en: string;
   Icon: typeof Database;
+    zhHant?: string;
 }
 
 const CATEGORIES: CategoryDef[] = [
-  { id: 'db', zh: '数据库', en: 'Database', Icon: Database
+  { id: 'db', zh: '数据库', en: 'Database', Icon: Database,
+      zhHant: "資料庫"
 },
-  { id: 'build', zh: '构建', en: 'Build', Icon: Hammer
+  { id: 'build', zh: '构建', en: 'Build', Icon: Hammer,
+      zhHant: "構建"
 },
   { id: 'deploy', zh: '部署', en: 'Deploy', Icon: UploadCloud },
-  { id: 'backup', zh: '备份', en: 'Backup', Icon: Archive
+  { id: 'backup', zh: '备份', en: 'Backup', Icon: Archive,
+      zhHant: "備份"
 },
-  { id: 'prompt', zh: 'AI 提示词', en: 'AI Prompt', Icon: Sparkles
+  { id: 'prompt', zh: 'AI 提示词', en: 'AI Prompt', Icon: Sparkles,
+      zhHant: "AI 提示詞"
 },
 ];
 
@@ -47,7 +52,9 @@ interface OpCommand {
   category: CategoryId;
   cwd?: string;
   position: number;
-  chips: { zh: string; en: string }[];
+  chips: { zh: string; en: string
+    zhHant?: string;
+ }[];
   title_zh: string;
   title_en: string;
   desc_zh: string;
@@ -185,7 +192,7 @@ export default function OpsPage() {
   const [err, setErr] = useState<string | null>(null);
   const [editor, setEditor] = useState<{ mode: 'add' | 'edit'; op?: OpCommand } | null>(null);
 
-  useDocumentTitle('运维', 'Ops');
+  useDocumentTitle('运维', 'Ops', "運維");
 
   const refresh = () => {
     setErr(null);

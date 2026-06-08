@@ -13,7 +13,7 @@ import { tr } from '@/i18n/tr';
 export default function CompSourcesPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('数据源', 'Sources');
+  useDocumentTitle('数据源', 'Sources', "資料來源");
 
   return (
     <div className="comp-sources-page">

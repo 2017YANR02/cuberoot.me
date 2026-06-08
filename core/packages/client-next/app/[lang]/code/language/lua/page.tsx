@@ -510,7 +510,7 @@ export default function LuaIntroPage() {
 
   useDocumentTitle(
     'Lua : 200KB 嵌入式脚本 · 30 年活在所有东西里面',
-    'Lua : the 200KB embedded script that lives inside everything',
+    'Lua : the 200KB embedded script that lives inside everything', "Lua : 200KB 嵌入式指令碼 · 30 年活在所有東西里面"
   );
 
   useEffect(() => {

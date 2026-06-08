@@ -16,18 +16,26 @@ import i18n from '@/i18n/i18n-client';
 
 interface Props { isZh: boolean; }
 
-const VIEWS: { id: RelationView; en: string; zh: string }[] = [
-  { id: 'myNem',      en: 'Show my nemeses',              zh: '显示我的宿敌'
+const VIEWS: { id: RelationView; en: string; zh: string
+    zhHant?: string;
+ }[] = [
+  { id: 'myNem',      en: 'Show my nemeses',              zh: '显示我的宿敌',
+      zhHant: "顯示我的宿敵"
 },
-  { id: 'iNem',       en: 'Show who I nemesize',          zh: '显示谁把我视为宿敌'
+  { id: 'iNem',       en: 'Show who I nemesize',          zh: '显示谁把我视为宿敌',
+      zhHant: "顯示誰把我視為宿敵"
 },
-  { id: 'nearlyMe',   en: 'Show who nearly nemesizes me', zh: '显示差一步就成我宿敌的人'
+  { id: 'nearlyMe',   en: 'Show who nearly nemesizes me', zh: '显示差一步就成我宿敌的人',
+      zhHant: "顯示差一步就成我宿敵的人"
 },
-  { id: 'iNearly',    en: 'Show who I nearly nemesize',   zh: '显示差一步就把我视为宿敌的人'
+  { id: 'iNearly',    en: 'Show who I nearly nemesize',   zh: '显示差一步就把我视为宿敌的人',
+      zhHant: "顯示差一步就把我視為宿敵的人"
 },
-  { id: 'onlyJustMe', en: 'Show who only just nemesizes me', zh: '显示刚好成为我宿敌的人'
+  { id: 'onlyJustMe', en: 'Show who only just nemesizes me', zh: '显示刚好成为我宿敌的人',
+      zhHant: "顯示剛好成為我宿敵的人"
 },
-  { id: 'iOnlyJust',  en: 'Show who I only just nemesize',   zh: '显示刚好把我视为宿敌的人'
+  { id: 'iOnlyJust',  en: 'Show who I only just nemesize',   zh: '显示刚好把我视为宿敌的人',
+      zhHant: "顯示剛好把我視為宿敵的人"
 },
 ];
 
@@ -157,7 +165,7 @@ function ViewPicker({ view, onChange, isZh }: { view: RelationView; onChange: (v
       {VIEWS.map(v => (
         <label key={v.id}>
           <input type="radio" checked={view === v.id} onChange={() => onChange(v.id)} />
-          {(i18n.language.startsWith('zh') ? v.zh : v.en)}
+          {(i18n.language === 'zh-Hant' ? (v.zhHant ?? v.zh) : (i18n.language.startsWith('zh') ? v.zh : v.en))}
         </label>
       ))}
     </div>
@@ -170,7 +178,7 @@ function ScopePicker({ scope, onChange, isZh }: { scope: Scope; onChange: (s: Sc
       {(['world', 'continent', 'country'] as const).map(s => (
         <label key={s}>
           <input type="radio" checked={scope === s} onChange={() => onChange(s)} />
-          {isZh ? ({ world: '世界', continent: '大洲', country: '国家' })[s] : s[0].toUpperCase() + s.slice(1)}
+          {i18n.language === 'zh-Hant' ? (({ world: '世界', continent: '大洲', country: '國家' })[s]) : (isZh ? ({ world: '世界', continent: '大洲', country: '国家' })[s] : s[0].toUpperCase() + s.slice(1))}
         </label>
       ))}
     </div>
@@ -292,7 +300,7 @@ function PeopleTable({ data, isZh, order, direction }: {
       </table>
       {data.truncated && (
         <p className="nemesizer-small-muted" style={{ textAlign: 'center', padding: '12px' }}>
-          {isZh ? `仅显示前 ${sorted.length} 行（共 ${data.totalCount}）。` : `Showing first ${sorted.length} of ${data.totalCount}.`}
+          {i18n.language === 'zh-Hant' ? (`僅顯示前 ${sorted.length} 行（共 ${data.totalCount}）。`) : (isZh ? `仅显示前 ${sorted.length} 行（共 ${data.totalCount}）。` : `Showing first ${sorted.length} of ${data.totalCount}.`)}
         </p>
       )}
     </div>

@@ -49,16 +49,22 @@ const CHAR_COLOR: Record<string, CrossColor> = {
 
 type FilterMode = 'all' | 'full-step' | 'oll-skip' | 'pll-skip' | 'll-skip';
 
-const COLOR_LABEL: Record<CrossColor, { zh: string; en: string }> = {
+const COLOR_LABEL: Record<CrossColor, { zh: string; en: string
+        zhHant?: string;
+ }> = {
   White: { zh: '白', en: 'White' },
-  Yellow: { zh: '黄', en: 'Yellow'
+  Yellow: { zh: '黄', en: 'Yellow',
+      zhHant: "黃"
 },
-  Red: { zh: '红', en: 'Red'
+  Red: { zh: '红', en: 'Red',
+      zhHant: "紅"
 },
   Orange: { zh: '橙', en: 'Orange' },
-  Blue: { zh: '蓝', en: 'Blue'
+  Blue: { zh: '蓝', en: 'Blue',
+      zhHant: "藍"
 },
-  Green: { zh: '绿', en: 'Green'
+  Green: { zh: '绿', en: 'Green',
+      zhHant: "綠"
 },
 };
 
@@ -66,22 +72,35 @@ const COLOR_LABEL: Record<CrossColor, { zh: string; en: string }> = {
 const COLOR_LETTER: Record<CrossColor, string> = {
   White: 'W', Yellow: 'Y', Red: 'R', Orange: 'O', Blue: 'B', Green: 'G',
 };
-const ROUND_LABEL: Record<string, { zh: string; en: string }> = {
-  '0': { zh: '资格赛', en: 'Qualification'
-}, h: { zh: '资格赛', en: 'Qualification'
+const ROUND_LABEL: Record<string, { zh: string; en: string
+        zhHant?: string;
+ }> = {
+  '0': { zh: '资格赛', en: 'Qualification',
+      zhHant: "資格賽"
+}, h: { zh: '资格赛', en: 'Qualification',
+    zhHant: "資格賽"
 },
-  '1': { zh: '第一轮', en: 'Round 1'
-}, d: { zh: '第一轮', en: 'Round 1'
+  '1': { zh: '第一轮', en: 'Round 1',
+      zhHant: "第一輪"
+}, d: { zh: '第一轮', en: 'Round 1',
+    zhHant: "第一輪"
 },
-  '2': { zh: '第二轮', en: 'Round 2'
-}, e: { zh: '第二轮', en: 'Round 2'
+  '2': { zh: '第二轮', en: 'Round 2',
+      zhHant: "第二輪"
+}, e: { zh: '第二轮', en: 'Round 2',
+    zhHant: "第二輪"
 },
-  '3': { zh: '复赛', en: 'Semi-Final'
-}, g: { zh: '第三轮', en: 'Round 3'
+  '3': { zh: '复赛', en: 'Semi-Final',
+      zhHant: "複賽"
+}, g: { zh: '第三轮', en: 'Round 3',
+    zhHant: "第三輪"
 },
-  c: { zh: '决赛', en: 'Final'
-}, f: { zh: '决赛', en: 'Final'
-}, b: { zh: 'B 决赛', en: 'B-Final'
+  c: { zh: '决赛', en: 'Final',
+      zhHant: "決賽"
+}, f: { zh: '决赛', en: 'Final',
+    zhHant: "決賽"
+}, b: { zh: 'B 决赛', en: 'B-Final',
+    zhHant: "B 決賽"
 },
 };
 interface WcaEntry { s: string; c: string; d: string; r: string; g: string; n: number; e: string; id?: string }
@@ -158,7 +177,7 @@ function FilterChip(props: { active: boolean; title: string; amount: number; onC
 function AnalyzePageInner() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('打乱分析', 'Scramble Analyzer');
+  useDocumentTitle('打乱分析', 'Scramble Analyzer', "打亂分析");
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   const [urlState, setUrlState] = useQueryStates(URL_KEYS, { history: 'replace', scroll: false });

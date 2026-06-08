@@ -15,7 +15,7 @@ export default function ArchDecisionsPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('技术决策', 'Technical Decisions');
+  useDocumentTitle('技术决策', 'Technical Decisions', "技術決策");
 
   return (
     <LangCtx.Provider value={lang}>
@@ -62,7 +62,7 @@ export default function ArchDecisionsPage() {
                   <td className="arch-tbl-topic">{d.topic}</td>
                   <td className="arch-tbl-pick">{d.pick}</td>
                   <td className="arch-tbl-alt">{d.alt}</td>
-                  <td>{(i18n.language.startsWith('zh') ? d.zh : d.en)}</td>
+                  <td>{(i18n.language === 'zh-Hant' ? (d.zhHant ?? d.zh) : (i18n.language.startsWith('zh') ? d.zh : d.en))}</td>
                 </tr>
               ))}
             </tbody>

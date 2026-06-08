@@ -67,18 +67,25 @@ const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
 // 变体 (前端先做,后端数据后续接;key 与 /scramble/analyzer + /scramble/stats 对齐)。
 type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo';
-const VARIANTS: { key: VariantKey; zh: string; en: string }[] = [
-  { key: 'std', zh: '标准', en: 'Standard'
+const VARIANTS: { key: VariantKey; zh: string; en: string
+    zhHant?: string;
+ }[] = [
+  { key: 'std', zh: '标准', en: 'Standard',
+      zhHant: "標準"
 },
   { key: 'eo', zh: 'EO', en: 'EO' },
-  { key: 'pair', zh: '基态', en: 'Pair'
+  { key: 'pair', zh: '基态', en: 'Pair',
+      zhHant: "基態"
 },
-  { key: 'pseudo', zh: '伪', en: 'Pseudo'
+  { key: 'pseudo', zh: '伪', en: 'Pseudo',
+      zhHant: "偽"
 },
-  { key: 'pseudo_pair', zh: '伪基态', en: 'Pseudo Pair'
+  { key: 'pseudo_pair', zh: '伪基态', en: 'Pseudo Pair',
+      zhHant: "偽基態"
 },
   { key: 'f2leo', zh: 'F2LEO', en: 'F2LEO' },
-  { key: 'pseudo_f2leo', zh: '伪 F2LEO', en: 'Pseudo F2LEO'
+  { key: 'pseudo_f2leo', zh: '伪 F2LEO', en: 'Pseudo F2LEO',
+      zhHant: "偽 F2LEO"
 },
 ];
 // 每变体:阶段集 + 实时引擎能力。std=现有 cross WASM(5 阶段);f2leo/pseudo_f2leo=
@@ -100,7 +107,9 @@ const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2le
 const EMPTY_STEP: StepMapState = { map: null, ready: true, done: 0, total: 0, error: null };
 const EMPTY_MAP_TN: Map<string, number[]> = new Map();
 // 阶段下拉显示名(metric → 标签);XCross 系沿用 stats 写法,中英一致。
-const STAGE_LABEL: Record<Metric, { zh: string; en: string }> = {
+const STAGE_LABEL: Record<Metric, { zh: string; en: string
+        zhHant?: string;
+ }> = {
   cross: { zh: '十字', en: 'Cross' },
   xc: { zh: 'XCross', en: 'XCross' },
   xxc: { zh: 'XXCross', en: 'XXCross' },

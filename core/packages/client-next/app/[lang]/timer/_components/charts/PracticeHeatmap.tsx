@@ -28,6 +28,7 @@ import type { Solve } from '../../_lib/types';
 import { formatMs } from '../../_lib/stats';
 import './practice_heatmap.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface PracticeHeatmapProps {
   /** All solves across all events (or already-filtered by event — caller's choice). */
@@ -288,9 +289,9 @@ export default function PracticeHeatmap({
   const dowLabelsZh = ['周一', '', '周三', '', '周五', '', ''];
   const dowLabels = isZh ? dowLabelsZh : dowLabelsEn;
 
-  const totalLabel = isZh
-    ? `${total} 次于 ${targetYear}`
-    : `${total} ${total === 1 ? 'solve' : 'solves'} in ${targetYear}`;
+  const totalLabel = i18n.language === 'zh-Hant' ? (`${total} 次於 ${targetYear}`) : (isZh
+      ? `${total} 次于 ${targetYear}`
+      : `${total} ${total === 1 ? 'solve' : 'solves'} in ${targetYear}`);
   const emptyLabel = tr({ zh: '还没有成绩。', en: 'No solves yet.',
       zhHant: "還沒有成績。"
 });
@@ -302,9 +303,9 @@ export default function PracticeHeatmap({
   let streakText: string;
   const streakActive = streak > 0;
   if (streak > 0) {
-    streakText = isZh
-      ? `${streak} 天连续`
-      : `${streak} day${streak === 1 ? '' : 's'} streak`;
+    streakText = i18n.language === 'zh-Hant' ? (`${streak} 天連續`) : (isZh
+          ? `${streak} 天连续`
+          : `${streak} day${streak === 1 ? '' : 's'} streak`);
   } else {
     streakText = tr({ zh: '今日未练', en: 'no streak today',
         zhHant: "今日未練"
@@ -318,7 +319,7 @@ export default function PracticeHeatmap({
   const cellTooltip = (date: Date, agg: DayAgg): string => {
     const dateStr = fmtDate(date);
     if (agg.count === 0) {
-      return isZh ? `${dateStr} — 无` : `${dateStr} — none`;
+      return i18n.language === 'zh-Hant' ? (`${dateStr} — 無`) : (isZh ? `${dateStr} — 无` : `${dateStr} — none`);
     }
     const solvesPart = isZh
       ? `${agg.count} 次`
@@ -339,7 +340,7 @@ export default function PracticeHeatmap({
     agg: DayAgg,
   ): string => {
     if (agg.count === 0) {
-      return isZh ? `${label} — 无` : `${label} — none`;
+      return i18n.language === 'zh-Hant' ? (`${label} — 無`) : (isZh ? `${label} — 无` : `${label} — none`);
     }
     const solvesPart = isZh
       ? `${agg.count} 次`

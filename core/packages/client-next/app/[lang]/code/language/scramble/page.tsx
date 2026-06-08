@@ -537,7 +537,7 @@ export default function CompareScramblePage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('17 种语言, 一个打乱解析器', 'One scramble parser, seventeen languages');
+  useDocumentTitle('17 种语言, 一个打乱解析器', 'One scramble parser, seventeen languages', "17 種語言, 一個打亂解析器");
 
   return (
     <LangCtx.Provider value={lang}>

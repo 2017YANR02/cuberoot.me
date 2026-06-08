@@ -490,7 +490,7 @@ export default function BashIntroPage() {
 
   useDocumentTitle(
     'Bash : 1989 Brian Fox · 装在每台机器上 · DevOps 默认胶水',
-    'Bash : 1989 Brian Fox · pre-installed everywhere · the DevOps default',
+    'Bash : 1989 Brian Fox · pre-installed everywhere · the DevOps default', "Bash : 1989 Brian Fox · 裝在每臺機器上 · DevOps 預設膠水"
   );
 
   useEffect(() => {

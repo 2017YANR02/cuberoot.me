@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { isFMC, isMBLD } from '../_engine/data_fetch';
 import { useVizStore } from '../_stores/viz_store';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface StatsBarProps {
   mean: string;
@@ -32,9 +33,9 @@ export default function StatsBar(props: StatsBarProps) {
     : 'stat-value mono';
 
   // NOTE: syncLabel 值来自 VizCanvas，中文为 '把数' 或 '日期'
-  const syncLabelDisplay = isZh
-    ? (props.syncLabel || '把数')
-    : (props.syncLabel === '日期' ? 'Date' : 'Solves');
+  const syncLabelDisplay = i18n.language === 'zh-Hant' ? ((props.syncLabel || '把數')) : (isZh
+      ? (props.syncLabel || '把数')
+      : (props.syncLabel === '日期' ? 'Date' : 'Solves'));
 
   return (
     <div className="stats-bar">
@@ -60,9 +61,9 @@ export default function StatsBar(props: StatsBarProps) {
       </div>
       <div className="stat-item">
         <span className="stat-label">
-          {isZh
-            ? (props.improved ? '进步' : props.regressed ? '退步' : '进步')
-            : (props.improved ? 'Progress' : props.regressed ? 'Regress' : 'Progress')}
+          {i18n.language === 'zh-Hant' ? ((props.improved ? '進步' : props.regressed ? '退步' : '進步')) : (isZh
+                              ? (props.improved ? '进步' : props.regressed ? '退步' : '进步')
+                              : (props.improved ? 'Progress' : props.regressed ? 'Regress' : 'Progress'))}
         </span>
         <span className={deltaClass}>{deltaText}</span>
       </div>

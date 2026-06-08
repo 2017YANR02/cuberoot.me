@@ -10,6 +10,7 @@ import { loadPersonsIndex, searchLocalPersons, isPersonsIndexReady } from '@cube
 import { ClearButton } from './ClearButton';
 import './wca-person-picker.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   value: WcaPersonLite | null;
@@ -150,7 +151,7 @@ export function WcaPersonPicker({
           <span className="cuber-search-chip-id">{value.id}</span>
           {typeof matchCount === 'number' && (
             <span className="cuber-search-chip-count">
-              {isZh ? `${matchCount} 场` : `${matchCount} ${matchCount === 1 ? 'comp' : 'comps'}`}
+              {i18n.language === 'zh-Hant' ? (`${matchCount} 場`) : (isZh ? `${matchCount} 场` : `${matchCount} ${matchCount === 1 ? 'comp' : 'comps'}`)}
             </span>
           )}
           <ClearButton onClick={handleClear} isZh={isZh} />

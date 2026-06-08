@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { apiUrl } from '@/lib/api-base';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 const ME_URL = 'https://www.worldcubeassociation.org/api/v0/me';
 
@@ -43,7 +44,7 @@ export default function AuthCallbackPage() {
     const error = params.get('error');
 
     if (error) {
-      setErrorMsg(isZh ? `授权被拒绝: ${error}` : `Authorization denied: ${error}`);
+      setErrorMsg(i18n.language === 'zh-Hant' ? (`授權被拒絕: ${error}`) : (isZh ? `授权被拒绝: ${error}` : `Authorization denied: ${error}`));
       return;
     }
     if (!accessToken) {
@@ -104,7 +105,7 @@ export default function AuthCallbackPage() {
         router.replace('/recon');
       }
     } catch (err) {
-      setErrorMsg(isZh ? `登录失败: ${(err as Error).message}` : `Login failed: ${(err as Error).message}`);
+      setErrorMsg(i18n.language === 'zh-Hant' ? (`登入失敗: ${(err as Error).message}`) : (isZh ? `登录失败: ${(err as Error).message}` : `Login failed: ${(err as Error).message}`));
     }
   }
 

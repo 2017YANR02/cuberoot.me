@@ -14,7 +14,7 @@ import i18n from '@/i18n/i18n-client';
 export default function AboutPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('关于', 'About');
+  useDocumentTitle('关于', 'About', "關於");
 
   return (
     <div className="about-page">
@@ -44,7 +44,7 @@ export default function AboutPage() {
           {CREDITS.map((c) => (
             <li key={c.url}>
               <a href={c.url} target="_blank" rel="noopener noreferrer">{c.name}</a>
-              <span className="about-credits-desc"> — {(i18n.language.startsWith('zh') ? c.zh : c.en)}</span>
+              <span className="about-credits-desc"> — {(i18n.language === 'zh-Hant' ? ((c as { zhHant?: string }).zhHant ?? c.zh) : (i18n.language.startsWith('zh') ? c.zh : c.en))}</span>
             </li>
           ))}
         </ul>

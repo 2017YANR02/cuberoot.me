@@ -52,76 +52,115 @@ interface FunStat {
   eventMode?: 'select' | 'multi';
   typeToggle?: boolean;        // 显示单次/平均切换(C 家族)
   needsYear?: boolean;         // E6
-  countLabelZh?: string; countLabelEn?: string;  // countPerson/countComp 计数列标题
+  countLabelZh?: string; countLabelEn?: string;
+    zhHant?: string;
+    countLabelZhHant?: string;
 }
 
 const FUN_STATS: FunStat[] = [
   // A 各地综合排行
-  { id: 'country-sor-single', family: 'A', zh: '各地全项目单次综合排行榜', en: 'Sum of Country Ranks (Single)', endpoint: '/v1/wca/fun/country-sor', shape: 'countrySor', fixed: { type: 'single' }, eventMode: 'multi'
+  { id: 'country-sor-single', family: 'A', zh: '各地全项目单次综合排行榜', en: 'Sum of Country Ranks (Single)', endpoint: '/v1/wca/fun/country-sor', shape: 'countrySor', fixed: { type: 'single' }, eventMode: 'multi',
+      zhHant: "各地全專案單次綜合排行榜"
 },
-  { id: 'country-sor-average', family: 'A', zh: '各地全项目平均综合排行榜', en: 'Sum of Country Ranks (Average)', endpoint: '/v1/wca/fun/country-sor', shape: 'countrySor', fixed: { type: 'average' }, eventMode: 'multi'
+  { id: 'country-sor-average', family: 'A', zh: '各地全项目平均综合排行榜', en: 'Sum of Country Ranks (Average)', endpoint: '/v1/wca/fun/country-sor', shape: 'countrySor', fixed: { type: 'average' }, eventMode: 'multi',
+      zhHant: "各地全專案平均綜合排行榜"
 },
   // B 奖牌 & 名次
-  { id: 'medals-all', family: 'B', zh: '全项目累计奖牌榜', en: 'Medal Collection (All Events)', endpoint: '/v1/wca/fun/medals', shape: 'medals', fixed: { type: 'all' }
+  { id: 'medals-all', family: 'B', zh: '全项目累计奖牌榜', en: 'Medal Collection (All Events)', endpoint: '/v1/wca/fun/medals', shape: 'medals', fixed: { type: 'all' },
+      zhHant: "全專案累計獎牌榜"
 },
-  { id: 'medals-event', family: 'B', zh: '分项目累计奖牌榜', en: 'Medal Collection (by Event)', endpoint: '/v1/wca/fun/medals', shape: 'medals', fixed: { type: 'event' }, eventMode: 'select'
+  { id: 'medals-event', family: 'B', zh: '分项目累计奖牌榜', en: 'Medal Collection (by Event)', endpoint: '/v1/wca/fun/medals', shape: 'medals', fixed: { type: 'event' }, eventMode: 'select',
+      zhHant: "分專案累計獎牌榜"
 },
-  { id: 'most-second-all', family: 'B', zh: '全项目第二名次数', en: 'Most 2nd Places (All Events)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '2', type: 'all' }, countLabelZh: '第二名次数', countLabelEn: '2nd Places'
+  { id: 'most-second-all', family: 'B', zh: '全项目第二名次数', en: 'Most 2nd Places (All Events)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '2', type: 'all' }, countLabelZh: '第二名次数', countLabelEn: '2nd Places',
+      zhHant: "全專案第二名次數",
+      countLabelZhHant: "第二名次數"
 },
-  { id: 'most-second-event', family: 'B', zh: '分项目第二名次数', en: 'Most 2nd Places (by Event)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '2', type: 'event' }, eventMode: 'select', countLabelZh: '第二名次数', countLabelEn: '2nd Places'
+  { id: 'most-second-event', family: 'B', zh: '分项目第二名次数', en: 'Most 2nd Places (by Event)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '2', type: 'event' }, eventMode: 'select', countLabelZh: '第二名次数', countLabelEn: '2nd Places',
+      zhHant: "分專案第二名次數",
+      countLabelZhHant: "第二名次數"
 },
-  { id: 'most-fourth-all', family: 'B', zh: '全项目第四名次数', en: 'Most 4th Places (All Events)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '4', type: 'all' }, countLabelZh: '第四名次数', countLabelEn: '4th Places'
+  { id: 'most-fourth-all', family: 'B', zh: '全项目第四名次数', en: 'Most 4th Places (All Events)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '4', type: 'all' }, countLabelZh: '第四名次数', countLabelEn: '4th Places',
+      zhHant: "全專案第四名次數",
+      countLabelZhHant: "第四名次數"
 },
-  { id: 'most-fourth-event', family: 'B', zh: '分项目第四名次数', en: 'Most 4th Places (by Event)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '4', type: 'event' }, eventMode: 'select', countLabelZh: '第四名次数', countLabelEn: '4th Places'
+  { id: 'most-fourth-event', family: 'B', zh: '分项目第四名次数', en: 'Most 4th Places (by Event)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '4', type: 'event' }, eventMode: 'select', countLabelZh: '第四名次数', countLabelEn: '4th Places',
+      zhHant: "分專案第四名次數",
+      countLabelZhHant: "第四名次數"
 },
-  { id: 'best-podiums', family: 'B', zh: '赛事领奖台成绩榜', en: 'Best Podiums', endpoint: '/v1/wca/fun/best-podiums', shape: 'bestPodiums', eventMode: 'select'
+  { id: 'best-podiums', family: 'B', zh: '赛事领奖台成绩榜', en: 'Best Podiums', endpoint: '/v1/wca/fun/best-podiums', shape: 'bestPodiums', eventMode: 'select',
+      zhHant: "賽事領獎臺成績榜"
 },
   // C 遗憾榜
-  { id: 'uncrowned-kings', family: 'C', zh: '无冕之王', en: 'Uncrowned Kings', endpoint: '/v1/wca/fun/uncrowned-kings', shape: 'misser', eventMode: 'select', typeToggle: true
+  { id: 'uncrowned-kings', family: 'C', zh: '无冕之王', en: 'Uncrowned Kings', endpoint: '/v1/wca/fun/uncrowned-kings', shape: 'misser', eventMode: 'select', typeToggle: true,
+      zhHant: "無冕之王"
 },
-  { id: 'podium-missers', family: 'C', zh: '奖牌遗珠', en: 'Podium Missers', endpoint: '/v1/wca/fun/podium-missers', shape: 'misser', eventMode: 'select', typeToggle: true
+  { id: 'podium-missers', family: 'C', zh: '奖牌遗珠', en: 'Podium Missers', endpoint: '/v1/wca/fun/podium-missers', shape: 'misser', eventMode: 'select', typeToggle: true,
+      zhHant: "獎牌遺珠"
 },
-  { id: 'record-missers', family: 'C', zh: '纪录之憾', en: 'Record Missers', endpoint: '/v1/wca/fun/record-missers', shape: 'misser', eventMode: 'select', typeToggle: true
+  { id: 'record-missers', family: 'C', zh: '纪录之憾', en: 'Record Missers', endpoint: '/v1/wca/fun/record-missers', shape: 'misser', eventMode: 'select', typeToggle: true,
+      zhHant: "紀錄之憾"
 },
   // D 纪录
-  { id: 'records-person', family: 'D', zh: '选手创纪录数量排行榜', en: 'Records Set (by Person)', endpoint: '/v1/wca/fun/records-person', shape: 'recordsPerson'
+  { id: 'records-person', family: 'D', zh: '选手创纪录数量排行榜', en: 'Records Set (by Person)', endpoint: '/v1/wca/fun/records-person', shape: 'recordsPerson',
+      zhHant: "選手創紀錄數量排行榜"
 },
-  { id: 'records-comp', family: 'D', zh: '赛事创纪录数量排行榜', en: 'Records Set (by Competition)', endpoint: '/v1/wca/fun/records-comp', shape: 'recordsComp'
+  { id: 'records-comp', family: 'D', zh: '赛事创纪录数量排行榜', en: 'Records Set (by Competition)', endpoint: '/v1/wca/fun/records-comp', shape: 'recordsComp',
+      zhHant: "賽事創紀錄數量排行榜"
 },
-  { id: 'oldest-records', family: 'D', zh: '纪录现保持时间排行榜', en: 'Oldest Standing Records', endpoint: '/v1/wca/fun/oldest-records', shape: 'oldestRecords'
+  { id: 'oldest-records', family: 'D', zh: '纪录现保持时间排行榜', en: 'Oldest Standing Records', endpoint: '/v1/wca/fun/oldest-records', shape: 'oldestRecords',
+      zhHant: "紀錄現保持時間排行榜"
 },
   // E 参赛 & 复原次数
-  { id: 'most-comps-person', family: 'E', zh: '选手比赛次数', en: 'Most Competitions (Person)', endpoint: '/v1/wca/fun/most-comps-person', shape: 'countPerson', countLabelZh: '比赛次数', countLabelEn: 'Competitions'
+  { id: 'most-comps-person', family: 'E', zh: '选手比赛次数', en: 'Most Competitions (Person)', endpoint: '/v1/wca/fun/most-comps-person', shape: 'countPerson', countLabelZh: '比赛次数', countLabelEn: 'Competitions',
+      zhHant: "選手比賽次數",
+      countLabelZhHant: "比賽次數"
 },
-  { id: 'most-persons-comp', family: 'E', zh: '赛事选手人数', en: 'Most Competitors (Competition)', endpoint: '/v1/wca/fun/most-persons-comp', shape: 'countComp', countLabelZh: '选手人数', countLabelEn: 'Competitors'
+  { id: 'most-persons-comp', family: 'E', zh: '赛事选手人数', en: 'Most Competitors (Competition)', endpoint: '/v1/wca/fun/most-persons-comp', shape: 'countComp', countLabelZh: '选手人数', countLabelEn: 'Competitors',
+      zhHant: "賽事選手人數",
+      countLabelZhHant: "選手人數"
 },
-  { id: 'most-solves-person-comp', family: 'E', zh: '个人单场总复原次数', en: 'Most Solves in One Competition', endpoint: '/v1/wca/fun/most-solves-person-comp', shape: 'solvesPersonComp'
+  { id: 'most-solves-person-comp', family: 'E', zh: '个人单场总复原次数', en: 'Most Solves in One Competition', endpoint: '/v1/wca/fun/most-solves-person-comp', shape: 'solvesPersonComp',
+      zhHant: "個人單場總復原次數"
 },
-  { id: 'most-solves-comp', family: 'E', zh: '赛事总复原次数', en: 'Most Total Solves (Competition)', endpoint: '/v1/wca/fun/most-solves-comp', shape: 'solvesComp'
+  { id: 'most-solves-comp', family: 'E', zh: '赛事总复原次数', en: 'Most Total Solves (Competition)', endpoint: '/v1/wca/fun/most-solves-comp', shape: 'solvesComp',
+      zhHant: "賽事總復原次數"
 },
-  { id: 'most-solves-person', family: 'E', zh: '个人累积总复原次数', en: 'Most Career Solves (Person)', endpoint: '/v1/wca/fun/most-solves-person', shape: 'solvesPerson'
+  { id: 'most-solves-person', family: 'E', zh: '个人累积总复原次数', en: 'Most Career Solves (Person)', endpoint: '/v1/wca/fun/most-solves-person', shape: 'solvesPerson',
+      zhHant: "個人累積總復原次數"
 },
-  { id: 'most-solves-person-year', family: 'E', zh: '个人年度总复原次数', en: 'Most Solves in One Year', endpoint: '/v1/wca/fun/most-solves-person-year', shape: 'solvesPerson', needsYear: true
+  { id: 'most-solves-person-year', family: 'E', zh: '个人年度总复原次数', en: 'Most Solves in One Year', endpoint: '/v1/wca/fun/most-solves-person-year', shape: 'solvesPerson', needsYear: true,
+      zhHant: "個人年度總復原次數"
 },
   // F Top100 占席
-  { id: 'top100-appearances-single', family: 'F', zh: '各项单次成绩前100占席', en: 'Top-100 Single Appearances', endpoint: '/v1/wca/fun/top100-appearances', shape: 'top100', fixed: { type: 'single' }, eventMode: 'select'
+  { id: 'top100-appearances-single', family: 'F', zh: '各项单次成绩前100占席', en: 'Top-100 Single Appearances', endpoint: '/v1/wca/fun/top100-appearances', shape: 'top100', fixed: { type: 'single' }, eventMode: 'select',
+      zhHant: "各項單次成績前100佔席"
 },
-  { id: 'top100-appearances-average', family: 'F', zh: '各项平均成绩前100占席', en: 'Top-100 Average Appearances', endpoint: '/v1/wca/fun/top100-appearances', shape: 'top100', fixed: { type: 'average' }, eventMode: 'select'
+  { id: 'top100-appearances-average', family: 'F', zh: '各项平均成绩前100占席', en: 'Top-100 Average Appearances', endpoint: '/v1/wca/fun/top100-appearances', shape: 'top100', fixed: { type: 'average' }, eventMode: 'select',
+      zhHant: "各項平均成績前100佔席"
 },
 ];
 
-const FAMILIES: { key: FamKey; zh: string; en: string }[] = [
-  { key: 'A', zh: '各地综合排行', en: 'Country Rankings'
+const FAMILIES: { key: FamKey; zh: string; en: string
+    zhHant?: string;
+ }[] = [
+  { key: 'A', zh: '各地综合排行', en: 'Country Rankings',
+      zhHant: "各地綜合排行"
 },
-  { key: 'B', zh: '奖牌与名次', en: 'Medals & Placements'
+  { key: 'B', zh: '奖牌与名次', en: 'Medals & Placements',
+      zhHant: "獎牌與名次"
 },
-  { key: 'C', zh: '遗憾榜', en: 'Best Without'
+  { key: 'C', zh: '遗憾榜', en: 'Best Without',
+      zhHant: "遺憾榜"
 },
-  { key: 'D', zh: '纪录', en: 'Records'
+  { key: 'D', zh: '纪录', en: 'Records',
+      zhHant: "紀錄"
 },
-  { key: 'E', zh: '参赛与复原', en: 'Participation & Solves'
+  { key: 'E', zh: '参赛与复原', en: 'Participation & Solves',
+      zhHant: "參賽與復原"
 },
-  { key: 'F', zh: 'Top100 占席', en: 'Top-100 Appearances'
+  { key: 'F', zh: 'Top100 占席', en: 'Top-100 Appearances',
+      zhHant: "Top100 佔席"
 },
 ];
 
@@ -137,7 +176,7 @@ function FunStatsInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('趣味统计', 'Fun Statistics');
+  useDocumentTitle('趣味统计', 'Fun Statistics', "趣味統計");
   // 榜单选择(左侧导航)持久化到 ?stat=,沿用原 replace 语义(不堆历史)
   const [statParam, setStatParam] = useQueryState(
     'stat',
@@ -245,20 +284,20 @@ function FunStatsInner() {
         <nav className="fun-stats-nav">
           {FAMILIES.map(fam => (
             <div key={fam.key} className="fun-stats-nav-group">
-              <div className="fun-stats-nav-head">{(i18n.language.startsWith('zh') ? fam.zh : fam.en)}</div>
+              <div className="fun-stats-nav-head">{(i18n.language === 'zh-Hant' ? (fam.zhHant ?? fam.zh) : (i18n.language.startsWith('zh') ? fam.zh : fam.en))}</div>
               {FUN_STATS.filter(s => s.family === fam.key).map(s => (
                 <button
                   key={s.id}
                   className={`fun-stats-nav-item${s.id === statId ? ' active' : ''}`}
                   onClick={() => selectStat(s.id)}
-                >{(i18n.language.startsWith('zh') ? s.zh : s.en)}</button>
+                >{(i18n.language === 'zh-Hant' ? (s.zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en))}</button>
               ))}
             </div>
           ))}
         </nav>
 
         <div className="fun-stats-main">
-          <h2 className="fun-stats-stat-title">{(i18n.language.startsWith('zh') ? stat.zh : stat.en)}</h2>
+          <h2 className="fun-stats-stat-title">{(i18n.language === 'zh-Hant' ? (stat.zhHant ?? stat.zh) : (i18n.language.startsWith('zh') ? stat.zh : stat.en))}</h2>
 
           {/* 控件 */}
           <div className="fun-stats-controls">
@@ -330,7 +369,7 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
   stat: FunStat; rows: Record<string, unknown>[]; resp: ApiResp; isZh: boolean;
   kind: 'single' | 'average'; event: string; personHref: (id: string) => string;
 }) {
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const personCell = (r: any) => (
     <span className="fun-cell-person">
       <Flag iso2={r.iso2 ?? ''} spanClassName="country-flag" imgClassName="country-flag-ct" />
@@ -352,7 +391,7 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
   const solveCell = (r: any) => <span>{r.solve}<span className="fun-cell-sub"> / {r.attempt}</span></span>;
 
   if (rows.length === 0) {
-    return <div className="fun-stats-empty">{t('暂无数据', 'No data')}</div>;
+    return <div className="fun-stats-empty">{t('暂无数据', 'No data', "暫無資料")}</div>;
   }
 
   // A 各地综合排行(矩阵)
@@ -365,7 +404,7 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
           <thead>
             <tr>
               <th>{t('名次', 'Rank')}</th>
-              <th>{t('地区', 'Region')}</th>
+              <th>{t('地区', 'Region', "地區")}</th>
               <th>{t('名次和', 'Sum')}</th>
               {ACTIVE_EVENTS.map(ev => hideEv(ev) ? null : <th key={ev}><EventIcon event={ev} className="fun-evt-icon" /></th>)}
             </tr>
@@ -397,83 +436,83 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
     case 'medals':
       cols = [
         { h: '#', cell: r => r.rank },
-        { h: t('选手', 'Cuber'), cell: personCell },
+        { h: t('选手', 'Cuber', "選手"), cell: personCell },
         { h: t('金', 'Gold'), cell: r => r.gold },
-        { h: t('银', 'Silver'), cell: r => r.silver },
-        { h: t('铜', 'Bronze'), cell: r => r.bronze },
-        { h: t('合计', 'Sum'), cell: r => r.sum, cls: 'fun-cell-strong' },
+        { h: t('银', 'Silver', "銀"), cell: r => r.silver },
+        { h: t('铜', 'Bronze', "銅"), cell: r => r.bronze },
+        { h: t('合计', 'Sum', "合計"), cell: r => r.sum, cls: 'fun-cell-strong' },
       ];
       break;
     case 'countPerson':
       cols = [
         { h: '#', cell: r => r.rank },
-        { h: t('选手', 'Cuber'), cell: personCell },
+        { h: t('选手', 'Cuber', "選手"), cell: personCell },
         { h: t(stat.countLabelZh ?? '次数', stat.countLabelEn ?? 'Count'), cell: r => r.count, cls: 'fun-cell-strong' },
       ];
       break;
     case 'countComp':
       cols = [
         { h: '#', cell: r => r.rank },
-        { h: t('比赛', 'Competition'), cell: compCell },
+        { h: t('比赛', 'Competition', "比賽"), cell: compCell },
         { h: t(stat.countLabelZh ?? '人数', stat.countLabelEn ?? 'Count'), cell: r => r.count, cls: 'fun-cell-strong' },
       ];
       break;
     case 'misser':
       cols = [
         { h: t('名次', 'Rank'), cell: r => r.rank },
-        { h: t('选手', 'Cuber'), cell: personCell },
-        { h: t('地区', 'Region'), cell: regionCell },
-        { h: t('个人最佳', 'Personal Record'), cell: r => formatWcaResult(r.value, event, kind), cls: 'fun-cell-strong' },
+        { h: t('选手', 'Cuber', "選手"), cell: personCell },
+        { h: t('地区', 'Region', "地區"), cell: regionCell },
+        { h: t('个人最佳', 'Personal Record', "個人最佳"), cell: r => formatWcaResult(r.value, event, kind), cls: 'fun-cell-strong' },
       ];
       break;
     case 'recordsPerson':
       cols = [
         { h: '#', cell: r => r.rank },
-        { h: t('选手', 'Cuber'), cell: personCell },
-        { h: t('分数', 'Score'), cell: r => r.score, cls: 'fun-cell-strong' },
+        { h: t('选手', 'Cuber', "選手"), cell: personCell },
+        { h: t('分数', 'Score', "分數"), cell: r => r.score, cls: 'fun-cell-strong' },
         { h: 'WR', cell: r => r.wr }, { h: 'CR', cell: r => r.cr }, { h: 'NR', cell: r => r.nr },
       ];
       break;
     case 'recordsComp':
       cols = [
         { h: '#', cell: r => r.rank },
-        { h: t('比赛', 'Competition'), cell: compCell },
+        { h: t('比赛', 'Competition', "比賽"), cell: compCell },
         { h: t('日期', 'Date'), cell: r => r.startDate },
-        { h: t('分数', 'Score'), cell: r => r.score, cls: 'fun-cell-strong' },
+        { h: t('分数', 'Score', "分數"), cell: r => r.score, cls: 'fun-cell-strong' },
         { h: 'WR', cell: r => r.wr }, { h: 'CR', cell: r => r.cr }, { h: 'NR', cell: r => r.nr },
       ];
       break;
     case 'oldestRecords':
       cols = [
-        { h: t('选手', 'Cuber'), cell: personCell },
-        { h: t('天数', 'Days'), cell: r => r.standingDays, cls: 'fun-cell-strong' },
-        { h: t('项目', 'Event'), cell: r => <span className="fun-cell-evt"><EventIcon event={r.eventId} className="fun-evt-icon" /></span> },
-        { h: t('类型', 'Type'), cell: r => r.type === 'average' ? t('平均', 'Average') : t('单次', 'Single') },
-        { h: t('成绩', 'Result'), cell: r => formatWcaResult(r.value, r.eventId, r.type) },
-        { h: t('纪录', 'Record'), cell: r => <RecordBadge record={r.record} variant="inline" /> },
-        { h: t('比赛', 'Competition'), cell: r => r.compName ? localizeCompName(r.compId, r.compName, isZh) : '—' },
+        { h: t('选手', 'Cuber', "選手"), cell: personCell },
+        { h: t('天数', 'Days', "天數"), cell: r => r.standingDays, cls: 'fun-cell-strong' },
+        { h: t('项目', 'Event', "專案"), cell: r => <span className="fun-cell-evt"><EventIcon event={r.eventId} className="fun-evt-icon" /></span> },
+        { h: t('类型', 'Type', "型別"), cell: r => r.type === 'average' ? t('平均', 'Average') : t('单次', 'Single', "單次") },
+        { h: t('成绩', 'Result', "成績"), cell: r => formatWcaResult(r.value, r.eventId, r.type) },
+        { h: t('纪录', 'Record', "紀錄"), cell: r => <RecordBadge record={r.record} variant="inline" /> },
+        { h: t('比赛', 'Competition', "比賽"), cell: r => r.compName ? localizeCompName(r.compId, r.compName, isZh) : '—' },
       ];
       break;
     case 'solvesPerson':
       cols = [
         { h: t('名次', 'Rank'), cell: r => r.rank },
-        { h: t('选手', 'Cuber'), cell: personCell },
-        { h: t('复原 / 尝试', 'Solves / Attempts'), cell: solveCell, cls: 'fun-cell-strong' },
+        { h: t('选手', 'Cuber', "選手"), cell: personCell },
+        { h: t('复原 / 尝试', 'Solves / Attempts', "復原 / 嘗試"), cell: solveCell, cls: 'fun-cell-strong' },
       ];
       break;
     case 'solvesPersonComp':
       cols = [
         { h: t('名次', 'Rank'), cell: r => r.rank },
-        { h: t('选手', 'Cuber'), cell: personCell },
-        { h: t('复原 / 尝试', 'Solves / Attempts'), cell: solveCell, cls: 'fun-cell-strong' },
-        { h: t('比赛', 'Competition'), cell: compCell },
+        { h: t('选手', 'Cuber', "選手"), cell: personCell },
+        { h: t('复原 / 尝试', 'Solves / Attempts', "復原 / 嘗試"), cell: solveCell, cls: 'fun-cell-strong' },
+        { h: t('比赛', 'Competition', "比賽"), cell: compCell },
       ];
       break;
     case 'solvesComp':
       cols = [
         { h: t('名次', 'Rank'), cell: r => r.rank },
-        { h: t('比赛', 'Competition'), cell: compCell },
-        { h: t('复原 / 尝试', 'Solves / Attempts'), cell: solveCell, cls: 'fun-cell-strong' },
+        { h: t('比赛', 'Competition', "比賽"), cell: compCell },
+        { h: t('复原 / 尝试', 'Solves / Attempts', "復原 / 嘗試"), cell: solveCell, cls: 'fun-cell-strong' },
       ];
       break;
     case 'top100': {
@@ -481,9 +520,9 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
       const top100Kind: 'single' | 'average' = stat.fixed?.type === 'average' ? 'average' : 'single';
       cols = [
         { h: t('名次', 'Rank'), cell: r => r.rank },
-        { h: t('选手', 'Cuber'), cell: personCell },
-        { h: t('占席数', 'Appearances'), cell: r => r.appearances, cls: 'fun-cell-strong' },
-        { h: t('最佳成绩', 'Best Result'), cell: r => formatWcaResult(r.bestValue, event, top100Kind) },
+        { h: t('选手', 'Cuber', "選手"), cell: personCell },
+        { h: t('占席数', 'Appearances', "佔席數"), cell: r => r.appearances, cls: 'fun-cell-strong' },
+        { h: t('最佳成绩', 'Best Result', "最佳成績"), cell: r => formatWcaResult(r.bestValue, event, top100Kind) },
       ];
       break;
     }
@@ -510,8 +549,8 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
         <table className="fun-stats-table">
           <thead>
             <tr>
-              <th>#</th><th>{t('比赛', 'Competition')}</th><th>{t('日期', 'Date')}</th>
-              <th>{t('合计', 'Sum')}</th><th>{t('平均', 'Average')}</th><th>{t('第一', 'First')}</th><th>{t('第二', 'Second')}</th><th>{t('第三', 'Third')}</th>
+              <th>#</th><th>{t('比赛', 'Competition', "比賽")}</th><th>{t('日期', 'Date')}</th>
+              <th>{t('合计', 'Sum', "合計")}</th><th>{t('平均', 'Average')}</th><th>{t('第一', 'First')}</th><th>{t('第二', 'Second')}</th><th>{t('第三', 'Third')}</th>
             </tr>
           </thead>
           <tbody>

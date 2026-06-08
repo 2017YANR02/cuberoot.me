@@ -53,6 +53,7 @@ import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
 } from './keymap';
 import './sim.css';
+import i18n from "@/i18n/i18n-client";
 
 /** Twisty puzzles rendered by cubing.js (not the local cuber engine). */
 export const TWISTY_PUZZLES = ['pyraminx', 'skewb', 'megaminx'] as const;
@@ -114,8 +115,8 @@ interface SimCubeMin {
 export default function SimPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string) => (isZh ? zh : en);
-  useDocumentTitle('模拟器', 'Sim');
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  useDocumentTitle('模拟器', 'Sim', "模擬器");
 
   // Sim editor state in the URL (replace semantics — not navigation).
   // puzzle defaults to '3' (absent reads as 3, and '3' is auto-omitted from
@@ -839,7 +840,7 @@ export default function SimPage() {
         <HomeLink className="sim-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
         </HomeLink>
-        <h1 className="sim-title">{t('模拟', 'Sim')}</h1>
+        <h1 className="sim-title">{t('模拟', 'Sim', "模擬")}</h1>
         <div className="sim-spacer" />
       </header>
 
@@ -912,7 +913,7 @@ export default function SimPage() {
               open={directorOpen}
               onToggle={() => setDirectorOpen((o) => !o)}
               icon={Film}
-              label={t('录制', 'Record')}
+              label={t('录制', 'Record', "錄製")}
             >
               <DirectorPanel
                 getCanvas={getCanvas}

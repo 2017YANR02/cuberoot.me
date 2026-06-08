@@ -474,7 +474,7 @@ export default function HaskellIntroPage() {
 
   useDocumentTitle(
     'Haskell : 纯函数 · 惰性 · 类型类 — 影响所有人, 自己不必爆款',
-    'Haskell : pure, lazy, type-classed — the language that quietly shaped everyone else',
+    'Haskell : pure, lazy, type-classed — the language that quietly shaped everyone else', "Haskell : 純函式 · 惰性 · 型別類 — 影響所有人, 自己不必爆款"
   );
 
   useEffect(() => {

@@ -100,7 +100,7 @@ function formatSeconds(ms: number): string {
 export default function MemoRecallPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('盲拧记忆回想训练', '3BLD Memo Recall Trainer');
+  useDocumentTitle('盲拧记忆回想训练', '3BLD Memo Recall Trainer', "盲擰記憶回想訓練");
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);
@@ -333,21 +333,28 @@ export default function MemoRecallPage(): JSX.Element {
 
   if (!hydrated) return <div className="bld-trainer-root" />;
 
-  const stepOrder: { id: Phase; zh: string; en: string }[] = useDistractor
+  const stepOrder: { id: Phase; zh: string; en: string
+      zhHant?: string;
+ }[] = useDistractor
     ? [
-        { id: 'memorize', zh: '记忆', en: 'Memorize'
+        { id: 'memorize', zh: '记忆', en: 'Memorize',
+            zhHant: "記憶"
         },
-        { id: 'delay', zh: '延迟', en: 'Delay'
+        { id: 'delay', zh: '延迟', en: 'Delay',
+            zhHant: "延遲"
         },
         { id: 'recall', zh: '回想', en: 'Recall' },
-        { id: 'score', zh: '评分', en: 'Score'
+        { id: 'score', zh: '评分', en: 'Score',
+            zhHant: "評分"
         },
       ]
     : [
-        { id: 'memorize', zh: '记忆', en: 'Memorize'
+        { id: 'memorize', zh: '记忆', en: 'Memorize',
+            zhHant: "記憶"
         },
         { id: 'recall', zh: '回想', en: 'Recall' },
-        { id: 'score', zh: '评分', en: 'Score'
+        { id: 'score', zh: '评分', en: 'Score',
+            zhHant: "評分"
         },
       ];
   const stepIndex = stepOrder.findIndex((s) => s.id === phase);
@@ -383,7 +390,7 @@ export default function MemoRecallPage(): JSX.Element {
                 }
               >
                 {i < stepIndex && <Check size={13} />}
-                {(i18n.language.startsWith('zh') ? s.zh : s.en)}
+                {(i18n.language === 'zh-Hant' ? (s.zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en))}
               </span>
               {i < stepOrder.length - 1 && <span className="bld-memo-step-sep">›</span>}
             </span>

@@ -14,7 +14,7 @@ export default function KociembaPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('Kociemba 二阶段', 'Kociemba two-phase');
+  useDocumentTitle('Kociemba 二阶段', 'Kociemba two-phase', "Kociemba 二階段");
 
   return (
     <LangCtx.Provider value={lang}>

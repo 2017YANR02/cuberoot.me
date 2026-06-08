@@ -103,6 +103,7 @@ export interface KeymapGroup {
   zh: string;
   en: string;
   moves: KeyMove[];
+    zhHant?: string;
 }
 
 // 每个分组只列 move 列表,具体 key 在 UI 中从 effective keymap 反查
@@ -125,7 +126,8 @@ export const KEYMAP_GROUPS: KeymapGroup[] = [
       { sign: 'l' }, { sign: 'l', reverse: true },
       { sign: 'u' }, { sign: 'u', reverse: true },
       { sign: 'd' }, { sign: 'd', reverse: true },
-    ]
+    ],
+      zhHant: "內層 (wide)"
 },
   {
     zh: '中层切片', en: 'Slices',
@@ -133,7 +135,8 @@ export const KEYMAP_GROUPS: KeymapGroup[] = [
       { sign: 'M' }, { sign: 'M', reverse: true },
       { sign: 'E' }, { sign: 'E', reverse: true },
       { sign: 'S' }, { sign: 'S', reverse: true },
-    ]
+    ],
+      zhHant: "中層切片"
 },
   {
     zh: '整体转', en: 'Rotation',
@@ -141,6 +144,7 @@ export const KEYMAP_GROUPS: KeymapGroup[] = [
       { sign: 'x' }, { sign: 'x', reverse: true },
       { sign: 'y' }, { sign: 'y', reverse: true },
       { sign: 'z' }, { sign: 'z', reverse: true },
-    ]
+    ],
+      zhHant: "整體轉"
 },
 ];

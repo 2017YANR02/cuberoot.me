@@ -15,6 +15,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import './recent_records.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface RecentRecord {
   id: string;
@@ -189,7 +190,7 @@ export function RecentRecordsList({ filled, isZh }: { filled: RecentRecord[]; is
               type="button"
               className="recent-records-copy"
               onClick={() => handleCopy(r)}
-              title={isZh ? (copied ? '已复制' : '复制') : (copied ? 'Copied' : 'Copy')}
+              title={i18n.language === 'zh-Hant' ? ((copied ? '已複製' : '複製')) : (isZh ? (copied ? '已复制' : '复制') : (copied ? 'Copied' : 'Copy'))}
               aria-label={tr({ zh: '复制', en: 'Copy',
                   zhHant: "複製"
             })}

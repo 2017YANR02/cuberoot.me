@@ -30,6 +30,7 @@ export const EVENT_TO_CSTIMER: Record<string, [string, number]> = {
 export interface PuzzleName {
   en: string;
   zh: string;
+    zhHant?: string;
 }
 
 export interface PuzzleInfo {
@@ -40,19 +41,26 @@ export interface PuzzleInfo {
 // NOTE: 所有 WCA 官方项目 + 显示名
 export const PUZZLES: PuzzleInfo[] = [
   // WCA 速拧
-  { id: '222',    name: { en: '2×2',      zh: '二阶'
+  { id: '222',    name: { en: '2×2',      zh: '二阶',
+      zhHant: "二階"
 } },
-  { id: '333',    name: { en: '3×3',      zh: '三阶'
+  { id: '333',    name: { en: '3×3',      zh: '三阶',
+      zhHant: "三階"
 } },
-  { id: '444',    name: { en: '4×4',      zh: '四阶'
+  { id: '444',    name: { en: '4×4',      zh: '四阶',
+      zhHant: "四階"
 } },
-  { id: '555',    name: { en: '5×5',      zh: '五阶'
+  { id: '555',    name: { en: '5×5',      zh: '五阶',
+      zhHant: "五階"
 } },
-  { id: '666',    name: { en: '6×6',      zh: '六阶'
+  { id: '666',    name: { en: '6×6',      zh: '六阶',
+      zhHant: "六階"
 } },
-  { id: '777',    name: { en: '7×7',      zh: '七阶'
+  { id: '777',    name: { en: '7×7',      zh: '七阶',
+      zhHant: "七階"
 } },
-  { id: '333oh',  name: { en: 'OH',       zh: '单手'
+  { id: '333oh',  name: { en: 'OH',       zh: '单手',
+      zhHant: "單手"
 } },
   // WCA 盲拧
   { id: '333bf',  name: { en: '3BLD',     zh: '三盲' } },
@@ -60,16 +68,19 @@ export const PUZZLES: PuzzleInfo[] = [
   { id: '555bf',  name: { en: '5BLD',     zh: '五盲' } },
   { id: '333mbf', name: { en: 'MBLD',     zh: '多盲' } },
   // WCA 异形
-  { id: 'clock',  name: { en: 'Clock',    zh: '魔表'
+  { id: 'clock',  name: { en: 'Clock',    zh: '魔表',
+      zhHant: "魔錶"
 } },
   { id: 'minx',   name: { en: 'Megaminx', zh: '五魔方' } },
   { id: 'pyram',  name: { en: 'Pyraminx', zh: '金字塔' } },
-  { id: 'skewb',  name: { en: 'Skewb',    zh: '斜转'
+  { id: 'skewb',  name: { en: 'Skewb',    zh: '斜转',
+      zhHant: "斜轉"
 } },
   { id: 'sq1',    name: { en: 'SQ1',      zh: 'SQ1' } },
   // 非 WCA（cubing.js 支持）
   { id: 'fto',       name: { en: 'FTO',      zh: 'FTO' } },
-  { id: 'kilominx',  name: { en: 'Kilominx', zh: '二阶五魔'
+  { id: 'kilominx',  name: { en: 'Kilominx', zh: '二阶五魔',
+      zhHant: "二階五魔"
 } },
 ];
 
@@ -96,14 +107,18 @@ export const KEY_MAP: Record<string, number> = {
 
 // NOTE: 双语文本映射（JS 动态设置的文本，无法用 data-i18n 属性）
 export const I18N_TEXT: Record<string, Record<string, string>> = {
-  hide_time:  { en: 'Hide time', zh: '隐藏时间'
+  hide_time:  { en: 'Hide time', zh: '隐藏时间',
+      zhHant: "隱藏時間"
 },
-  show_time:  { en: 'Show time', zh: '显示时间'
+  show_time:  { en: 'Show time', zh: '显示时间',
+      zhHant: "顯示時間"
 },
-  generating: { en: 'Generating scramble...',    zh: '正在生成打乱...'
+  generating: { en: 'Generating scramble...',    zh: '正在生成打乱...',
+      zhHant: "正在生成打亂..."
 },
   // NOTE: WCA 观察倒计时状态文字
-  inspecting: { en: 'Inspecting',                zh: '观察中'
+  inspecting: { en: 'Inspecting',                zh: '观察中',
+      zhHant: "觀察中"
 },
 };
 

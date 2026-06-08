@@ -19,6 +19,7 @@ import ollMap from '@cuberoot/shared/data/oll.json';
 import { VisualCube } from '@/components/VisualCube';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 const typedOllMap = ollMap as Record<string, { name: string; alg: string; alg2: string; group: string }>;
 
@@ -28,7 +29,7 @@ export default function RecognizeClient() {
   const algSetId = (Array.isArray(params?.algSetId) ? params.algSetId[0] : params?.algSetId) ?? '';
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('识别训练', 'Recognition Training');
+  useDocumentTitle('识别训练', 'Recognition Training', "識別訓練");
   const hydrated = useSessionHydrated();
 
   const gameState = useSessionStore((s) => s.gameState);
@@ -159,9 +160,9 @@ export default function RecognizeClient() {
       return `${pendingKey}_ ...`;
     }
     if (gameState === 'playing' && mistake) {
-      return isZh
-        ? `按 ${currentCase?.name} 继续，Esc 暂停`
-        : `Press ${currentCase?.name} to continue, Esc to pause`;
+      return i18n.language === 'zh-Hant' ? (`按 ${currentCase?.name} 繼續，Esc 暫停`) : (isZh
+              ? `按 ${currentCase?.name} 继续，Esc 暂停`
+              : `Press ${currentCase?.name} to continue, Esc to pause`);
     }
     if (gameState === 'playing' && !mistake) {
       return tr({ zh: '这是哪个 PLL？输入公式名字', en: 'Which PLL is this? Type the algorithm name',
@@ -198,7 +199,7 @@ export default function RecognizeClient() {
         </p>
         {mistakeCount > 0 && (
           <p style={{ color: '#dc3545' }}>
-            {isZh ? `错误 ${mistakeCount} 次` : `${mistakeCount} mistake${mistakeCount > 1 ? 's' : ''}`}
+            {i18n.language === 'zh-Hant' ? (`錯誤 ${mistakeCount} 次`) : (isZh ? `错误 ${mistakeCount} 次` : `${mistakeCount} mistake${mistakeCount > 1 ? 's' : ''}`)}
           </p>
         )}
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>

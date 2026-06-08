@@ -92,7 +92,7 @@ function PatternThumb({ pattern, size = 120 }: { pattern: Pattern; size?: number
 export default function PatternsPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('图案', 'Patterns');
+  useDocumentTitle('图案', 'Patterns', "圖案");
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   const [puzzle, setPuzzle] = useState<PuzzleSize>('3x3x3');

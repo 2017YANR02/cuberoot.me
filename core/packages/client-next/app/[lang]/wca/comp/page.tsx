@@ -230,7 +230,7 @@ function formatRegStatus(open: string | null | undefined, close: string | null |
   const openMs = open ? new Date(open).getTime() : null;
   const closeMs = close ? new Date(close).getTime() : null;
   if (openMs !== null && now < openMs) {
-    return isZh ? `${fmt(open!)} 开放报名` : `Registration opens ${fmt(open!)}`;
+    return i18n.language === 'zh-Hant' ? (`${fmt(open!)} 開放報名`) : (isZh ? `${fmt(open!)} 开放报名` : `Registration opens ${fmt(open!)}`);
   }
   if (closeMs !== null && now >= closeMs) {
     return tr({ zh: '报名已截止', en: 'Registration closed',
@@ -961,7 +961,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
 function CalendarPageInner() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('比赛', 'Competitions');
+  useDocumentTitle('比赛', 'Competitions', "比賽");
   const router = useRouter();
   const [recent, setRecent] = useState<RecentEntry[]>([]);
   useEffect(() => { setRecent(loadRecent()); }, []);
@@ -1623,9 +1623,9 @@ function CalendarPageInner() {
               />
             )}
             <span className="date-range-summary">
-              {isZh
-                ? `共 ${displayedComps.length.toLocaleString()} 场`
-                : `${displayedComps.length.toLocaleString()} comps`}
+              {i18n.language === 'zh-Hant' ? (`共 ${displayedComps.length.toLocaleString()} 場`) : (isZh
+                                          ? `共 ${displayedComps.length.toLocaleString()} 场`
+                                          : `${displayedComps.length.toLocaleString()} comps`)}
             </span>
           </div>
         )}
@@ -1657,7 +1657,7 @@ function CalendarPageInner() {
               return next;
             });
             const cycleHint = max >= 1
-              ? (isZh ? `点击切换：关 → max → 1 → ... → ${max} → 关` : `Click to cycle: off → max → 1 → ... → ${max} → off`)
+              ? (i18n.language === 'zh-Hant' ? (`點選切換：關 → max → 1 → ... → ${max} → 關`) : (isZh ? `点击切换：关 → max → 1 → ... → ${max} → 关` : `Click to cycle: off → max → 1 → ... → ${max} → off`))
               : (tr({ zh: '点击切换：关 → max → 关', en: 'Click to cycle: off → max → off',
                   zhHant: "點選切換：關 → max → 關"
             }));

@@ -205,18 +205,26 @@ function AxiomTable() {
 
 // ── §3 Generator demos  six face turns ─────────────────────────────────────
 function GeneratorRow() {
-  const faces: { f: string; zh: string; en: string }[] = [
-    { f: 'U', zh: '上层顺时针', en: 'Up'
+  const faces: { f: string; zh: string; en: string
+      zhHant?: string;
+ }[] = [
+    { f: 'U', zh: '上层顺时针', en: 'Up',
+        zhHant: "上層順時針"
     },
-    { f: 'D', zh: '下层顺时针', en: 'Down'
+    { f: 'D', zh: '下层顺时针', en: 'Down',
+        zhHant: "下層順時針"
     },
-    { f: 'R', zh: '右层顺时针', en: 'Right'
+    { f: 'R', zh: '右层顺时针', en: 'Right',
+        zhHant: "右層順時針"
     },
-    { f: 'L', zh: '左层顺时针', en: 'Left'
+    { f: 'L', zh: '左层顺时针', en: 'Left',
+        zhHant: "左層順時針"
     },
-    { f: 'F', zh: '前层顺时针', en: 'Front'
+    { f: 'F', zh: '前层顺时针', en: 'Front',
+        zhHant: "前層順時針"
     },
-    { f: 'B', zh: '后层顺时针', en: 'Back'
+    { f: 'B', zh: '后层顺时针', en: 'Back',
+        zhHant: "後層順時針"
     },
   ];
   const lang = useLang();
@@ -674,16 +682,23 @@ function CommutatorViewer() {
     } catch { return null; }
   }, [full]);
 
-  const presets: { a: string; b: string; name: string; zh: string; en: string }[] = [
-    { a: "R U R'", b: "D",            name: "edge 3-cycle",     zh: '棱块 3-循环', en: 'edge 3-cycle'
+  const presets: { a: string; b: string; name: string; zh: string; en: string
+      zhHant?: string;
+ }[] = [
+    { a: "R U R'", b: "D",            name: "edge 3-cycle",     zh: '棱块 3-循环', en: 'edge 3-cycle',
+        zhHant: "稜塊 3-迴圈"
     },
-    { a: "[R, U]", b: "[U, R]",       name: "wrong (nested)",   zh: '嵌套例', en: 'nested example'
+    { a: "[R, U]", b: "[U, R]",       name: "wrong (nested)",   zh: '嵌套例', en: 'nested example',
+        zhHant: "巢狀例"
     },
-    { a: "U R U'", b: "L'",          name: "corner 3-cycle",   zh: '角块 3-循环', en: 'corner 3-cycle'
+    { a: "U R U'", b: "L'",          name: "corner 3-cycle",   zh: '角块 3-循环', en: 'corner 3-cycle',
+        zhHant: "角塊 3-迴圈"
     },
-    { a: "R",     b: "U",            name: "the sexy",         zh: '小鱼起手', en: 'sexy'
+    { a: "R",     b: "U",            name: "the sexy",         zh: '小鱼起手', en: 'sexy',
+        zhHant: "小魚起手"
     },
-    { a: "M",     b: "U",            name: "M-slice cycle",    zh: 'M 切片循环', en: 'M-slice cycle'
+    { a: "M",     b: "U",            name: "M-slice cycle",    zh: 'M 切片循环', en: 'M-slice cycle',
+        zhHant: "M 切片迴圈"
     },
   ];
 
@@ -818,14 +833,26 @@ type FaceLetterChar = 'U' | 'D' | 'L' | 'R' | 'F' | 'B';
 // ── §8.2 ConjugacyClassTable — cycle types of common algs ──────────────────
 function ConjugacyClassTable() {
   const lang = useLang();
-  const samples: { alg: string; nameZh: string; nameEn: string }[] = [
-    { alg: 'R',                                       nameZh: '单面转',          nameEn: 'single face turn' },
-    { alg: "R U R' U'",                                nameZh: '小鱼起手 (sexy)',    nameEn: 'sexy move' },
-    { alg: 'R L',                                      nameZh: '对面同时转',       nameEn: 'opposite-face pair' },
-    { alg: "R U R' U R U2 R'",                         nameZh: '小鱼 (Sune)',     nameEn: 'Sune' },
+  const samples: { alg: string; nameZh: string; nameEn: string
+      nameZhHant?: string;
+ }[] = [
+    { alg: 'R',                                       nameZh: '单面转',          nameEn: 'single face turn',
+        nameZhHant: "單面轉"
+    },
+    { alg: "R U R' U'",                                nameZh: '小鱼起手 (sexy)',    nameEn: 'sexy move',
+        nameZhHant: "小魚起手 (sexy)"
+    },
+    { alg: 'R L',                                      nameZh: '对面同时转',       nameEn: 'opposite-face pair',
+        nameZhHant: "對面同時轉"
+    },
+    { alg: "R U R' U R U2 R'",                         nameZh: '小鱼 (Sune)',     nameEn: 'Sune',
+        nameZhHant: "小魚 (Sune)"
+    },
     { alg: "F R U' R' U' R U R' F'",                   nameZh: 'OLL 26',            nameEn: 'OLL 26' },
     { alg: "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2", nameZh: 'superflip', nameEn: 'superflip' },
-    { alg: 'U2 D2 F2 B2 L2 R2',                        nameZh: '棋盘 checker',      nameEn: 'checkerboard' },
+    { alg: 'U2 D2 F2 B2 L2 R2',                        nameZh: '棋盘 checker',      nameEn: 'checkerboard',
+        nameZhHant: "棋盤 checker"
+    },
     { alg: "R U2 R' U' R U' R'",                       nameZh: '反 Sune',           nameEn: 'anti-Sune' },
   ];
   const rows = useMemo(() => samples.map(s => {
@@ -964,17 +991,29 @@ function BurnsideMiniTable() {
   // For each of 6 face-equivalence operations, give a rough "fixed-states" estimate.
   // Numbers are illustrative orders-of-magnitude; the precise figures come from
   // Burnside applied to G under the 48-element outer symmetry group.
-  const rows: { sym: string; symEn: string; symZh: string; fixed: string; comment: string; commentZh: string }[] = [
+  const rows: { sym: string; symEn: string; symZh: string; fixed: string; comment: string; commentZh: string
+      symZhHant?: string;
+ }[] = [
     { sym: 'identity (e)',         symEn: 'identity',           symZh: '恒等',
-      fixed: '4.3 × 10¹⁹',          comment: 'all of G fixed',                commentZh: '所有状态都被恒等固定' },
+      fixed: '4.3 × 10¹⁹',          comment: 'all of G fixed',                commentZh: '所有状态都被恒等固定',
+        symZhHant: "恆等"
+    },
     { sym: '90° rotation × 6',     symEn: 'face 90° rotation',   symZh: '面 90° 旋转',
-      fixed: '~1.4 × 10⁹ each',     comment: 'states with that 4-fold symmetry', commentZh: '具有该 4 重对称的状态' },
+      fixed: '~1.4 × 10⁹ each',     comment: 'states with that 4-fold symmetry', commentZh: '具有该 4 重对称的状态',
+        symZhHant: "面 90° 旋轉"
+    },
     { sym: '180° rotation × 9',    symEn: 'face/edge 180° rotation', symZh: '面/棱 180° 旋转',
-      fixed: '~10¹⁰ each',          comment: 'states with that 2-fold symmetry', commentZh: '具有该 2 重对称的状态' },
+      fixed: '~10¹⁰ each',          comment: 'states with that 2-fold symmetry', commentZh: '具有该 2 重对称的状态',
+        symZhHant: "面/稜 180° 旋轉"
+    },
     { sym: '120° rotation × 8',    symEn: 'corner 120° rotation', symZh: '角块 120° 旋转',
-      fixed: '~10⁶ each',           comment: 'states with that 3-fold symmetry', commentZh: '具有该 3 重对称的状态' },
+      fixed: '~10⁶ each',           comment: 'states with that 3-fold symmetry', commentZh: '具有该 3 重对称的状态',
+        symZhHant: "角塊 120° 旋轉"
+    },
     { sym: 'mirror × 24',          symEn: 'mirror reflection',   symZh: '镜面反射',
-      fixed: '~10⁹ each',           comment: 'mirror-symmetric states',          commentZh: '镜像对称状态' },
+      fixed: '~10⁹ each',           comment: 'mirror-symmetric states',          commentZh: '镜像对称状态',
+        symZhHant: "鏡面反射"
+    },
   ];
   return (
     <table className="gt-compare">
@@ -1469,28 +1508,36 @@ function GroupExamplesTable() {
     abelian: boolean;
     zh: string;
     en: string;
+      zhHant?: string;
   };
   const examples: Example[] = [
     { name: '(ℤ, +)',         op: '+',  order: '∞',     abelian: true,
-      zh: '整数加法 — 最常见的无限阿贝尔群', en: 'integer addition — the prototypical infinite Abelian group'
+      zh: '整数加法 — 最常见的无限阿贝尔群', en: 'integer addition — the prototypical infinite Abelian group',
+        zhHant: "整數加法 — 最常見的無限阿貝爾群"
     },
     { name: '(ℤ/n, +)',       op: '+',  order: 'n',     abelian: true,
-      zh: '模 n 加法 — 有限循环群', en: 'addition mod n — the cyclic group of order n'
+      zh: '模 n 加法 — 有限循环群', en: 'addition mod n — the cyclic group of order n',
+        zhHant: "模 n 加法 — 有限迴圈群"
     },
     { name: '(ℝ \\ {0}, ×)', op: '×',  order: '∞',     abelian: true,
-      zh: '非零实数乘法', en: 'nonzero reals under multiplication'
+      zh: '非零实数乘法', en: 'nonzero reals under multiplication',
+        zhHant: "非零實數乘法"
     },
     { name: 'Sₙ',             op: '∘',  order: 'n!',    abelian: false,
-      zh: '对称群 — n 个元素的所有置换。n ≥ 3 时非阿贝尔', en: 'symmetric group — all permutations of n. Non-Abelian when n ≥ 3'
+      zh: '对称群 — n 个元素的所有置换。n ≥ 3 时非阿贝尔', en: 'symmetric group — all permutations of n. Non-Abelian when n ≥ 3',
+        zhHant: "對稱群 — n 個元素的所有置換。n ≥ 3 時非阿貝爾"
     },
     { name: 'D₂ₙ',            op: '∘',  order: '2n',    abelian: false,
-      zh: '二面体群 — 正 n 边形对称变换', en: 'dihedral group — symmetries of a regular n-gon'
+      zh: '二面体群 — 正 n 边形对称变换', en: 'dihedral group — symmetries of a regular n-gon',
+        zhHant: "二面體群 — 正 n 邊形對稱變換"
     },
     { name: 'GL(n, ℝ)',       op: '·',  order: '∞',     abelian: false,
-      zh: '可逆 n×n 实矩阵的乘法群', en: 'invertible n×n real matrices under multiplication'
+      zh: '可逆 n×n 实矩阵的乘法群', en: 'invertible n×n real matrices under multiplication',
+        zhHant: "可逆 n×n 實矩陣的乘法群"
     },
     { name: '(rotations of cube, ∘)', op: '∘', order: '24', abelian: false,
-      zh: '魔方整体旋转 (中心固定) — 同构于 S₄', en: 'cube rotations (centres fixed) — isomorphic to S₄'
+      zh: '魔方整体旋转 (中心固定) — 同构于 S₄', en: 'cube rotations (centres fixed) — isomorphic to S₄',
+        zhHant: "魔方整體旋轉 (中心固定) — 同構於 S₄"
     },
     { name: 'G (Rubik\'s cube)', op: '∘', order: '4.3 × 10¹⁹', abelian: false,
       zh: '本文的主角', en: 'the subject of this essay' },
@@ -1515,7 +1562,7 @@ function GroupExamplesTable() {
           <div className="gt-example-name">{ex.name}</div>
           <div>
             <span className="gt-mono">{ex.op}</span>
-            <div style={{ fontSize: 12, color: 'var(--ink-dim)', marginTop: 4 }}>{(i18n.language.startsWith('zh') ? ex.zh : ex.en)}</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-dim)', marginTop: 4 }}>{(i18n.language === 'zh-Hant' ? (ex.zhHant ?? ex.zh) : (i18n.language.startsWith('zh') ? ex.zh : ex.en))}</div>
           </div>
           <div className="gt-mono" style={{ fontFamily: 'var(--mono)' }}>{ex.order}</div>
           <div className={`gt-example-abelian ${ex.abelian ? 'gt-example-abelian-yes' : 'gt-example-abelian-no'}`}>
@@ -1569,20 +1616,28 @@ function UnfoldedCubeMap() {
 function ScaleComparison() {
   const lang = useLang();
   // log10 values
-  const items: { label: string; zh: string; en: string; log10: number; colour: string }[] = [
+  const items: { label: string; zh: string; en: string; log10: number; colour: string
+      zhHant?: string;
+ }[] = [
     { label: '1 thousand',         zh: '1 千',                en: '1 thousand',                  log10: 3,  colour: '#7BA88B' },
-    { label: '1 million',          zh: '1 百万',              en: '1 million',                   log10: 6,  colour: '#7BA88B'
+    { label: '1 million',          zh: '1 百万',              en: '1 million',                   log10: 6,  colour: '#7BA88B',
+        zhHant: "1 百萬"
     },
     { label: 'world population',   zh: '世界人口 8 × 10⁹',     en: 'world population 8 × 10⁹',    log10: 9.9,colour: '#2A4D69' },
-    { label: '1 trillion',         zh: '1 万亿',              en: '1 trillion',                  log10: 12, colour: '#2A4D69'
+    { label: '1 trillion',         zh: '1 万亿',              en: '1 trillion',                  log10: 12, colour: '#2A4D69',
+        zhHant: "1 萬億"
     },
-    { label: 'stars in observable universe', zh: '可观宇宙恒星 ≈ 10²³', en: 'stars in observable universe', log10: 23, colour: '#B8860B'
+    { label: 'stars in observable universe', zh: '可观宇宙恒星 ≈ 10²³', en: 'stars in observable universe', log10: 23, colour: '#B8860B',
+        zhHant: "可觀宇宙恆星 ≈ 10²³"
     },
-    { label: '|G| = 4.3 × 10¹⁹', zh: '|G| 魔方状态', en: '|G| cube states', log10: 19.6, colour: '#8B2E3C'
+    { label: '|G| = 4.3 × 10¹⁹', zh: '|G| 魔方状态', en: '|G| cube states', log10: 19.6, colour: '#8B2E3C',
+        zhHant: "|G| 魔方狀態"
     },
-    { label: 'atoms in a kilogram',zh: '1 公斤物质原子 ≈ 10²⁵', en: 'atoms in a kg of matter ≈ 10²⁵', log10: 25, colour: '#B8860B'
+    { label: 'atoms in a kilogram',zh: '1 公斤物质原子 ≈ 10²⁵', en: 'atoms in a kg of matter ≈ 10²⁵', log10: 25, colour: '#B8860B',
+        zhHant: "1 公斤物質原子 ≈ 10²⁵"
     },
-    { label: 'age of universe in nanoseconds', zh: '宇宙年龄(纳秒) ≈ 10²⁶', en: 'age of universe (ns) ≈ 10²⁶', log10: 26, colour: '#B8860B'
+    { label: 'age of universe in nanoseconds', zh: '宇宙年龄(纳秒) ≈ 10²⁶', en: 'age of universe (ns) ≈ 10²⁶', log10: 26, colour: '#B8860B',
+        zhHant: "宇宙年齡(納秒) ≈ 10²⁶"
     },
   ];
   // Sort ascending
@@ -1597,7 +1652,7 @@ function ScaleComparison() {
       {sorted.map((it, i) => (
         <div key={i} style={{ display: 'grid', gridTemplateColumns: '40px 1fr 70px', alignItems: 'center', gap: 12, padding: '6px 0', fontSize: 13, borderBottom: i < sorted.length - 1 ? '1px dashed var(--rule)' : 'none' }}>
           <div style={{ fontFamily: 'var(--mono)', color: it.colour, fontWeight: 600 }}>10<sup>{Math.round(it.log10)}</sup></div>
-          <div style={{ color: 'var(--ink)' }}>{(i18n.language.startsWith('zh') ? it.zh : it.en)}</div>
+          <div style={{ color: 'var(--ink)' }}>{(i18n.language === 'zh-Hant' ? (it.zhHant ?? it.zh) : (i18n.language.startsWith('zh') ? it.zh : it.en))}</div>
           <div style={{ background: it.colour, height: 8, borderRadius: 4, width: `${(it.log10 / 30) * 100}%` }} />
         </div>
       ))}
@@ -1612,14 +1667,20 @@ function QuotientChart() {
   // [G₁:G₂] = 3^7 · (12 choose 4) = 2187 · 495 = 1,082,565
   // [G₂:G₃] = 8C4 · 4! · 4! / 2 = 70 · 24 · 24 / 2 ... actually = 29400 from references
   // [G₃:G₄] = |G₃| = (4!)³ / 2 = 1,824 ... actually 663,552 = 2 · (4!)² · (4!)² / something
-  const data: { label: string; size: number; zh: string; en: string }[] = [
-    { label: '[G : G₁]',  size: 2_048,      zh: '修棱朝向: 12 个棱块每个 0/1 flip,但 Σeo=0',        en: 'orient edges: 12 binary flips constrained by Σeo=0'
+  const data: { label: string; size: number; zh: string; en: string
+      zhHant?: string;
+ }[] = [
+    { label: '[G : G₁]',  size: 2_048,      zh: '修棱朝向: 12 个棱块每个 0/1 flip,但 Σeo=0',        en: 'orient edges: 12 binary flips constrained by Σeo=0',
+        zhHant: "修稜朝向: 12 個稜塊每個 0/1 flip,但 Σeo=0"
     },
-    { label: '[G₁: G₂]', size: 1_082_565,  zh: '修角朝向 + 棱归 UD 切片: 3⁷ × (12 choose 4)',         en: 'orient corners + UD slice: 3⁷ × (12 choose 4)'
+    { label: '[G₁: G₂]', size: 1_082_565,  zh: '修角朝向 + 棱归 UD 切片: 3⁷ × (12 choose 4)',         en: 'orient corners + UD slice: 3⁷ × (12 choose 4)',
+        zhHant: "修角朝向 + 稜歸 UD 切片: 3⁷ × (12 choose 4)"
     },
-    { label: '[G₂: G₃]', size: 29_400,     zh: '角棱归各自的 G₃ 轨道',                              en: 'corners and edges into G₃ orbits'
+    { label: '[G₂: G₃]', size: 29_400,     zh: '角棱归各自的 G₃ 轨道',                              en: 'corners and edges into G₃ orbits',
+        zhHant: "角稜歸各自的 G₃ 軌道"
     },
-    { label: '[G₃: G₄]', size: 663_552,    zh: '只用半圈还原 — 多米诺群',                          en: 'solve with half-turns only — the "domino" group'
+    { label: '[G₃: G₄]', size: 663_552,    zh: '只用半圈还原 — 多米诺群',                          en: 'solve with half-turns only — the "domino" group',
+        zhHant: "只用半圈還原 — 多米諾群"
     },
   ];
   const max = Math.log10(Math.max(...data.map(d => d.size)));
@@ -1637,7 +1698,7 @@ function QuotientChart() {
             <div className="gt-quotient-track">
               <div className="gt-quotient-fill" style={{ width: `${(Math.log10(d.size) / max) * 100}%` }} />
             </div>
-            <div style={{ fontSize: 12, color: 'var(--ink-dim)', marginTop: 6 }}>{(i18n.language.startsWith('zh') ? d.zh : d.en)}</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-dim)', marginTop: 6 }}>{(i18n.language === 'zh-Hant' ? (d.zhHant ?? d.zh) : (i18n.language.startsWith('zh') ? d.zh : d.en))}</div>
           </div>
           <div className="gt-quotient-val">{d.size.toLocaleString()}</div>
         </div>
@@ -1654,35 +1715,63 @@ function QuotientChart() {
 // ── Pattern gallery (§13) ─────────────────────────────────────────────────
 function PatternGallery() {
   const lang = useLang();
-  const patterns: { name: string; nameZh: string; alg: string; order: number; descZh: string; descEn: string }[] = [
+  const patterns: { name: string; nameZh: string; alg: string; order: number; descZh: string; descEn: string
+      descZhHant?: string;
+ }[] = [
     { name: 'Superflip',        nameZh: '超翻',     alg: "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2",
-      order: 2, descZh: '12 棱全翻 (cp=e, ep=e, co=0, eo=1)',  descEn: 'all 12 edges flipped' },
+      order: 2, descZh: '12 棱全翻 (cp=e, ep=e, co=0, eo=1)',  descEn: 'all 12 edges flipped',
+        descZhHant: "12 稜全翻 (cp=e, ep=e, co=0, eo=1)"
+    },
     { name: 'Checkerboard',     nameZh: '棋盘格', alg: 'U2 D2 F2 B2 L2 R2',
-      order: 2, descZh: '6 面 ×3 半圈; |G| 中阶最小', descEn: 'all 6 axes half-turned' },
+      order: 2, descZh: '6 面 ×3 半圈; |G| 中阶最小', descEn: 'all 6 axes half-turned',
+        descZhHant: "6 面 ×3 半圈; |G| 中階最小"
+    },
     { name: '4 dots',           nameZh: '四点',     alg: "U R2 L2 U2 R2 L2 U' D R2 L2 D2 R2 L2 D'",
-      order: 2, descZh: '4 面中央色块互换', descEn: '4-face centre swap' },
+      order: 2, descZh: '4 面中央色块互换', descEn: '4-face centre swap',
+        descZhHant: "4 面中央色塊互換"
+    },
     { name: 'Cube in cube',     nameZh: '回字',     alg: "F L F U' R U F2 L2 U' L' B D' B' L2 U",
-      order: 4, descZh: '小立方体在大立方体里的视觉错觉',  descEn: 'classic Escher-style visual illusion' },
+      order: 4, descZh: '小立方体在大立方体里的视觉错觉',  descEn: 'classic Escher-style visual illusion',
+        descZhHant: "小立方體在大立方體裡的視覺錯覺"
+    },
     { name: 'Cross pattern',    nameZh: '十字',     alg: "U F B' L2 U2 L2 F' B U2 L2 U",
-      order: 2, descZh: '每面中央一个十字色',  descEn: 'a cross on every face' },
+      order: 2, descZh: '每面中央一个十字色',  descEn: 'a cross on every face',
+        descZhHant: "每面中央一個十字色"
+    },
     { name: 'Anaconda',         nameZh: '蟒蛇',     alg: "L U B' U' R L' B R' F B' D R D' F'",
-      order: 6, descZh: '环绕魔方的彩色带',     descEn: 'a winding band of colour' },
+      order: 6, descZh: '环绕魔方的彩色带',     descEn: 'a winding band of colour',
+        descZhHant: "環繞魔方的彩色帶"
+    },
     { name: 'Six spots',        nameZh: '六点',     alg: "U D' R L' F B' U D'",
       order: 4, descZh: '中心翻 (U↔D, R↔L, F↔B)', descEn: 'each face centre swapped with opposite' },
     { name: 'Plus minus',       nameZh: '加减号', alg: "U2 R2 L2 U2 R2 L2",
-      order: 2, descZh: '简短 6 步即得',         descEn: 'a 6-move classic' },
+      order: 2, descZh: '简短 6 步即得',         descEn: 'a 6-move classic',
+        descZhHant: "簡短 6 步即得"
+    },
     { name: 'Pons Asinorum (6X)', nameZh: '驴桥定理 (6X)', alg: "R2 L2 F2 B2 U2 D2",
-      order: 2, descZh: '所有 6 面 ×3 半圈; 直径距离 20 候选反点', descEn: 'all six faces half-turned; one of three antipode candidates' },
+      order: 2, descZh: '所有 6 面 ×3 半圈; 直径距离 20 候选反点', descEn: 'all six faces half-turned; one of three antipode candidates',
+        descZhHant: "所有 6 面 ×3 半圈; 直徑距離 20 候選反點"
+    },
     { name: 'Six H-bars',       nameZh: '六 H 条', alg: "U2 B2 R2 D2 U2 R2 F2 U2",
-      order: 2, descZh: '三对正交 H 条棱', descEn: 'three orthogonal H-bars on the equators' },
+      order: 2, descZh: '三对正交 H 条棱', descEn: 'three orthogonal H-bars on the equators',
+        descZhHant: "三對正交 H 條稜"
+    },
     { name: 'Stairs',           nameZh: '阶梯',     alg: "F D2 B R B' L' F D' L2 F2 R F' R' F2 L' F'",
-      order: 6, descZh: '颜色顺台阶错位', descEn: 'colours staircase across the cube' },
+      order: 6, descZh: '颜色顺台阶错位', descEn: 'colours staircase across the cube',
+        descZhHant: "顏色順臺階錯位"
+    },
     { name: 'Tetris',           nameZh: '俄罗斯方块', alg: "L R F B U' D' L' R'",
-      order: 4, descZh: '8 步生成的中等阶图案', descEn: 'short 8-move medium-order pattern' },
+      order: 4, descZh: '8 步生成的中等阶图案', descEn: 'short 8-move medium-order pattern',
+        descZhHant: "8 步生成的中等階圖案"
+    },
     { name: 'Order-1260',       nameZh: '阶 1260',  alg: "R U2 D' B D'",
-      order: 1260, descZh: 'Singmaster 经典: 一公式 1260 次才回到原点 = lcm(3,4,5,7)', descEn: "Singmaster's classic: this 5-move alg has order 1260 = lcm(3,4,5,7); repeat 1260× to return" },
+      order: 1260, descZh: 'Singmaster 经典: 一公式 1260 次才回到原点 = lcm(3,4,5,7)', descEn: "Singmaster's classic: this 5-move alg has order 1260 = lcm(3,4,5,7); repeat 1260× to return",
+        descZhHant: "Singmaster 經典: 一公式 1260 次才回到原點 = lcm(3,4,5,7)"
+    },
     { name: '4 spots (90°)',    nameZh: '四点 (90°)', alg: "R F' L' U2 B' D' R B U2 L U F'",
-      order: 4, descZh: '4 个中央色块 90° 错位 (≠ 6-spot 的 180°)', descEn: '4 face centres rotated 90° (≠ 6-spot 180°)' },
+      order: 4, descZh: '4 个中央色块 90° 错位 (≠ 6-spot 的 180°)', descEn: '4 face centres rotated 90° (≠ 6-spot 180°)',
+        descZhHant: "4 箇中央色塊 90° 錯位 (≠ 6-spot 的 180°)"
+    },
   ];
   return (
     <div className="gt-pattern-gallery">
@@ -1755,15 +1844,30 @@ function ConjugationGallery() {
 // ── Commutator-as-3-cycle gallery (§9) ────────────────────────────────────
 function CommutatorAtoms() {
   const lang = useLang();
-  const examples: { a: string; b: string; nameZh: string; nameEn: string; descZh: string; descEn: string }[] = [
+  const examples: { a: string; b: string; nameZh: string; nameEn: string; descZh: string; descEn: string
+      nameZhHant?: string;
+      descZhHant?: string;
+ }[] = [
     { a: "R U R'", b: 'D', nameZh: '棱块 3-循环 (UD 面)', nameEn: 'Edge 3-cycle (UD-axis)',
-      descZh: '只动 3 个棱块, 其它 17 个件不变', descEn: 'moves 3 edges, fixes the other 17 cubies' },
+      descZh: '只动 3 个棱块, 其它 17 个件不变', descEn: 'moves 3 edges, fixes the other 17 cubies',
+        nameZhHant: "稜塊 3-迴圈 (UD 面)",
+        descZhHant: "只動 3 個稜塊, 其它 17 個件不變"
+    },
     { a: "R'", b: 'D', nameZh: '角块 3-循环', nameEn: 'Corner 3-cycle',
-      descZh: '只动 3 个角块', descEn: 'moves 3 corners only' },
+      descZh: '只动 3 个角块', descEn: 'moves 3 corners only',
+        nameZhHant: "角塊 3-迴圈",
+        descZhHant: "只動 3 個角塊"
+    },
     { a: "M'", b: 'U', nameZh: 'M 切片棱循环', nameEn: 'M-slice edge cycle',
-      descZh: '切片 + U 的复合 3-循环', descEn: 'slice-then-U commutator' },
+      descZh: '切片 + U 的复合 3-循环', descEn: 'slice-then-U commutator',
+        nameZhHant: "M 切片稜迴圈",
+        descZhHant: "切片 + U 的複合 3-迴圈"
+    },
     { a: "F R F'", b: 'U', nameZh: 'F 槽换棱', nameEn: 'F-slot edge swap',
-      descZh: '改 F2L pair 的局部 3-循环', descEn: 'a localized 3-cycle near the F2L slot' },
+      descZh: '改 F2L pair 的局部 3-循环', descEn: 'a localized 3-cycle near the F2L slot',
+        nameZhHant: "F 槽換稜",
+        descZhHant: "改 F2L pair 的區域性 3-迴圈"
+    },
   ];
   return (
     <div className="gt-recipes">
@@ -2149,6 +2253,8 @@ type SmallGroup = {
   layout?: 'cycle' | 'grid' | 'force';
   // for 'grid' layouts only
   rows?: number; cols?: number;
+    zhHant?: string;
+    layoutZhHant?: string;
 };
 
 function permCompose(p: number[], q: number[]): number[] {
@@ -2277,7 +2383,8 @@ const SMALL_GROUPS: SmallGroup[] = [
     layout: 'cycle',
     gens: [
       { label: '+1', perm: [1, 2, 3, 4, 5, 6, 7, 0], cssVar: '--accent' },
-    ]
+    ],
+      zhHant: "ℤ/8 (迴圈, 單生成元)"
 },
   {
     id: 'z8b', zh: 'ℤ/8 (双生成元 +1, +3)', en: 'ℤ/8 (two generators +1, +3)',
@@ -2285,7 +2392,8 @@ const SMALL_GROUPS: SmallGroup[] = [
     gens: [
       { label: '+1', perm: [1, 2, 3, 4, 5, 6, 7, 0], cssVar: '--accent' },
       { label: '+3', perm: [3, 4, 5, 6, 7, 0, 1, 2], cssVar: '--accent-2' },
-    ]
+    ],
+      zhHant: "ℤ/8 (雙生成元 +1, +3)"
 },
   {
     id: 'z4z3', zh: 'ℤ/4 × ℤ/3 (网格)', en: 'ℤ/4 × ℤ/3 (grid)',
@@ -2296,7 +2404,8 @@ const SMALL_GROUPS: SmallGroup[] = [
       { label: 'x', perm: [1, 2, 3, 0, 5, 6, 7, 4, 9, 10, 11, 8], cssVar: '--accent' },
       // +1 in ℤ/3 direction
       { label: 'y', perm: [4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2, 3], cssVar: '--accent-2' },
-    ]
+    ],
+      zhHant: "ℤ/4 × ℤ/3 (網格)"
 },
   {
     id: 'd4', zh: '二面体 D₄ (正方形对称)', en: 'Dihedral D₄ (square symmetries)',
@@ -2306,7 +2415,8 @@ const SMALL_GROUPS: SmallGroup[] = [
       { label: 'r', perm: [1, 2, 3, 0], cssVar: '--accent' },
       // reflection s = (1 3)(2)(4) on positions 0..3
       { label: 's', perm: [0, 3, 2, 1], cssVar: '--accent-2' },
-    ]
+    ],
+      zhHant: "二面體 D₄ (正方形對稱)"
 },
   {
     id: 's3', zh: '对称群 S₃ (3 元置换)', en: 'Symmetric S₃ (3 perms)',
@@ -2314,7 +2424,8 @@ const SMALL_GROUPS: SmallGroup[] = [
     gens: [
       { label: '(12)', perm: [1, 0, 2], cssVar: '--accent' },
       { label: '(23)', perm: [0, 2, 1], cssVar: '--accent-2' },
-    ]
+    ],
+      zhHant: "對稱群 S₃ (3 元置換)"
 },
   {
     id: 's4-adj', zh: 'S₄ (相邻换位 (12),(23),(34))', en: 'S₄ (adjacent transpositions)',
@@ -2323,7 +2434,8 @@ const SMALL_GROUPS: SmallGroup[] = [
       { label: '(12)', perm: [1, 0, 2, 3], cssVar: '--accent' },
       { label: '(23)', perm: [0, 2, 1, 3], cssVar: '--accent-2' },
       { label: '(34)', perm: [0, 1, 3, 2], cssVar: '--accent-3' },
-    ]
+    ],
+      zhHant: "S₄ (相鄰換位 (12),(23),(34))"
 },
   {
     id: 's4-cycle', zh: 'S₄ (4-循环 + 换位)', en: 'S₄ (4-cycle + transposition)',
@@ -2331,7 +2443,8 @@ const SMALL_GROUPS: SmallGroup[] = [
     gens: [
       { label: '(1234)', perm: [1, 2, 3, 0], cssVar: '--accent' },
       { label: '(12)', perm: [1, 0, 2, 3], cssVar: '--accent-2' },
-    ]
+    ],
+      zhHant: "S₄ (4-迴圈 + 換位)"
 },
   {
     id: 'a4', zh: '交错群 A₄ (3-循环 (123),(124))', en: 'Alternating A₄ (3-cycles (123),(124))',
@@ -2339,7 +2452,8 @@ const SMALL_GROUPS: SmallGroup[] = [
     gens: [
       { label: '(123)', perm: [1, 2, 0, 3], cssVar: '--accent' },
       { label: '(124)', perm: [1, 3, 2, 0], cssVar: '--accent-2' },
-    ]
+    ],
+      zhHant: "交錯群 A₄ (3-迴圈 (123),(124))"
 },
 ];
 
@@ -2493,7 +2607,7 @@ function SmallGroupCayleyExplorer() {
         })}</label>
         <select className="gt-sg-select" value={groupId} onChange={e => { setGroupId(e.target.value); setHover(null); setTarget(null); }}>
           {SMALL_GROUPS.map(g => (
-            <option key={g.id} value={g.id}>{(i18n.language.startsWith('zh') ? g.zh : g.en)}</option>
+            <option key={g.id} value={g.id}>{(i18n.language === 'zh-Hant' ? (g.zhHant ?? g.zh) : (i18n.language.startsWith('zh') ? g.zh : g.en))}</option>
           ))}
         </select>
         <div className="gt-sg-legend">
@@ -2608,10 +2722,13 @@ function SmallGroupCayleyExplorer() {
 // Watch a simple random walk on a small group converge to uniform. We
 // compute exact distributions by left-multiplying p_t by the transition
 // matrix, then plot TV(p_t, U) vs t.
-const MIXING_GROUPS: { id: string; zh: string; en: string; spec: string }[] = [
+const MIXING_GROUPS: { id: string; zh: string; en: string; spec: string
+    zhHant?: string;
+ }[] = [
   { id: 'd4',       zh: 'D₄ (8)',  en: 'D₄ (8)',       spec: 'd4' },
   { id: 's3',       zh: 'S₃ (6)',  en: 'S₃ (6)',       spec: 's3' },
-  { id: 's4-adj',   zh: 'S₄ 相邻换位 (24)', en: 'S₄ adj. transpositions (24)', spec: 's4-adj'
+  { id: 's4-adj',   zh: 'S₄ 相邻换位 (24)', en: 'S₄ adj. transpositions (24)', spec: 's4-adj',
+      zhHant: "S₄ 相鄰換位 (24)"
 },
   { id: 'a4',       zh: 'A₄ (12)', en: 'A₄ (12)',      spec: 'a4' },
   { id: 'z4z3',     zh: 'ℤ/4 × ℤ/3 (12)', en: 'ℤ/4 × ℤ/3 (12)', spec: 'z4z3' },
@@ -2680,7 +2797,7 @@ function RandomWalkMixingPlot() {
         <label className="gt-sg-label">{tr({ zh: '群 (生成集 = 上方所有元)', en: 'group (generators = listed above)' })}</label>
         <select className="gt-sg-select" value={groupId} onChange={e => { setGroupId(e.target.value); setStep(0); }}>
           {MIXING_GROUPS.map(g => (
-            <option key={g.id} value={g.id}>{(i18n.language.startsWith('zh') ? g.zh : g.en)}</option>
+            <option key={g.id} value={g.id}>{(i18n.language === 'zh-Hant' ? (g.zhHant ?? g.zh) : (i18n.language.startsWith('zh') ? g.zh : g.en))}</option>
           ))}
         </select>
       </div>
@@ -2742,6 +2859,7 @@ type CayleyRef = {
   category: 'foundational' | 'diameter' | 'expander' | 'mixing' | 'growth' | 'cube';
   noteZh?: string;
   noteEn?: string;
+    noteZhHant?: string;
 };
 const CAYLEY_REFS: CayleyRef[] = [
   // ── Foundational ──
@@ -2753,7 +2871,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'foundational',
     noteZh: '群论的诞生论文之一; 含 Cayley 定理 (每个群嵌入对称群)。',
     noteEn: 'One of the birth papers of abstract group theory; contains Cayley\'s theorem.',
-  },
+      noteZhHant: "群論的誕生論文之一; 含 Cayley 定理 (每個群嵌入對稱群)。"
+},
   {
     authors: 'Cayley, A.', year: '1878',
     title: 'Desiderata and suggestions: No. 2. The theory of groups: graphical representation',
@@ -2762,7 +2881,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'foundational',
     noteZh: '「Cayley 图」 第一次定义; 画了一个 order-12 的非阿贝尔群的图。',
     noteEn: 'First definition of the "Cayley graph"; the original drawing was a non-Abelian group of order 12.',
-  },
+      noteZhHant: "「Cayley 圖」 第一次定義; 畫了一個 order-12 的非阿貝爾群的圖。"
+},
   // ── Cube-specific ──
   {
     authors: 'Rokicki, T.; Kociemba, H.; Davidson, M.; Dethridge, J.', year: '2010',
@@ -2772,7 +2892,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'cube',
     noteZh: '上帝之数 HTM = 20 的最终证明 (35 CPU-年, 对称约简 + IDA* + 共置 lookup)。',
     noteEn: "God's number HTM = 20 proven exactly (35 CPU-years; symmetry reduction + IDA* + cosets).",
-  },
+      noteZhHant: "上帝之數 HTM = 20 的最終證明 (35 CPU-年, 對稱約簡 + IDA* + 共置 lookup)。"
+},
   {
     authors: 'Rokicki, T.', year: '2014',
     title: "The diameter of the Rubik's cube group is twenty-six in the quarter-turn metric",
@@ -2781,7 +2902,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'cube',
     noteZh: 'QTM 直径 = 26 (HTM 的伴生结果, 同年完工)。',
     noteEn: 'QTM diameter = 26 (companion to the 2010 HTM result).',
-  },
+      noteZhHant: "QTM 直徑 = 26 (HTM 的伴生結果, 同年完工)。"
+},
   {
     authors: 'Korf, R. E.', year: '1997',
     title: "Finding optimal solutions to Rubik's cube using pattern databases",
@@ -2790,7 +2912,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'cube',
     noteZh: 'IDA* + 角块/棱块 pattern-database 启发式; 「在 Cayley 图上找测地线」 的算法奠基。',
     noteEn: "IDA* + corner/edge pattern databases; foundational solver for shortest paths on the cube's Cayley graph.",
-  },
+      noteZhHant: "IDA* + 角塊/稜塊 pattern-database 啟發式; 「在 Cayley 圖上找測地線」 的演算法奠基。"
+},
   {
     authors: 'Kociemba, H.', year: '1992-2009',
     title: 'Cube Explorer & the two-phase algorithm (Web monograph)',
@@ -2799,7 +2922,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'cube',
     noteZh: '二阶段法的官方网页; G → G₁ → e 两段 IDA*, 任何状态 ≤ 24 步。',
     noteEn: 'Official two-phase reference (G → G₁ → e); any scramble solved in ≤ 24 moves.',
-  },
+      noteZhHant: "二階段法的官方網頁; G → G₁ → e 兩段 IDA*, 任何狀態 ≤ 24 步。"
+},
   {
     authors: 'Bordoni, A.; Reiter, F.', year: '2024',
     title: "Rubik's cube scrambling requires at least 26 random moves",
@@ -2808,7 +2932,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'cube',
     noteZh: '魔方混合时间下界证明: 25 步随机打乱 在 TV 意义上仍非均匀。',
     noteEn: 'Lower bound on the cube mixing time: 25-step random scrambles are not yet TV-uniform.',
-  },
+      noteZhHant: "魔方混合時間下界證明: 25 步隨機打亂 在 TV 意義上仍非均勻。"
+},
   // ── Diameter / Babai ──
   {
     authors: 'Babai, L.; Seress, Á.', year: '1992',
@@ -2818,7 +2943,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'diameter',
     noteZh: 'Babai 猜想首次提出; 给出 S_n 直径的早期亚指数上界。',
     noteEn: "Babai's conjecture first stated; an early sub-exponential bound for diam(S_n).",
-  },
+      noteZhHant: "Babai 猜想首次提出; 給出 S_n 直徑的早期亞指數上界。"
+},
   {
     authors: 'Helfgott, H. A.', year: '2008',
     title: 'Growth and generation in SL₂(ℤ/pℤ)',
@@ -2827,7 +2953,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'diameter',
     noteZh: 'PSL₂(𝔽_p) 直径 O((log p)^c); Cayley 直径研究的转折点 (additive combinatorics)。',
     noteEn: 'Diameter of PSL₂(𝔽_p) is O((log p)^c); turning point via additive combinatorics.',
-  },
+      noteZhHant: "PSL₂(𝔽_p) 直徑 O((log p)^c); Cayley 直徑研究的轉折點 (additive combinatorics)。"
+},
   {
     authors: 'Pyber, L.; Szabó, E.', year: '2016',
     title: 'Growth in finite simple groups of Lie type',
@@ -2836,7 +2963,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'diameter',
     noteZh: 'Babai 猜想在所有有界秩 Lie 型单群上完全解决。',
     noteEn: "Babai's conjecture fully resolved for all finite simple groups of Lie type of bounded rank.",
-  },
+      noteZhHant: "Babai 猜想在所有有界秩 Lie 型單群上完全解決。"
+},
   {
     authors: 'Breuillard, E.; Green, B.; Tao, T.', year: '2011',
     title: 'Approximate subgroups of linear groups',
@@ -2845,7 +2973,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'diameter',
     noteZh: '同期的另一个有界秩 Babai 猜想证明 (近似子群结构定理)。',
     noteEn: 'Independent proof of bounded-rank Babai conjecture via approximate subgroup theory.',
-  },
+      noteZhHant: "同期的另一個有界秩 Babai 猜想證明 (近似子群結構定理)。"
+},
   {
     authors: 'Helfgott, H. A.; Seress, Á.', year: '2014',
     title: 'On the diameter of permutation groups',
@@ -2854,7 +2983,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'diameter',
     noteZh: 'A_n 直径上界改进到 exp((log n)^4 log log n) — 仍非 polylog。',
     noteEn: 'Best known bound diam(A_n) ≤ exp((log n)^4 log log n) — still super-polylog.',
-  },
+      noteZhHant: "A_n 直徑上界改進到 exp((log n)^4 log log n) — 仍非 polylog。"
+},
   // ── Expander / Ramanujan ──
   {
     authors: 'Margulis, G. A.', year: '1973',
@@ -2863,7 +2993,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'expander',
     noteZh: '历史上第一个显式扩张图构造, 用 SL₂(ℤ) 在 ℤ/n 上的作用。',
     noteEn: 'First explicit expander construction, via SL₂(ℤ) acting on ℤ/n.',
-  },
+      noteZhHant: "歷史上第一個顯式擴張圖構造, 用 SL₂(ℤ) 在 ℤ/n 上的作用。"
+},
   {
     authors: 'Lubotzky, A.; Phillips, R.; Sarnak, P.', year: '1988',
     title: 'Ramanujan graphs',
@@ -2872,7 +3003,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'expander',
     noteZh: 'LPS 构造: PSL₂(𝔽_p) 的 (p+1)-正则 Cayley 图是 Ramanujan; 谱最优, 围长大。',
     noteEn: 'The LPS construction: (p+1)-regular Cayley graphs of PSL₂(𝔽_p) are Ramanujan; spectrally optimal.',
-  },
+      noteZhHant: "LPS 構造: PSL₂(𝔽_p) 的 (p+1)-正則 Cayley 圖是 Ramanujan; 譜最優, 圍長大。"
+},
   {
     authors: 'Alon, N.; Roichman, Y.', year: '1994',
     title: 'Random Cayley graphs and expanders',
@@ -2881,7 +3013,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'expander',
     noteZh: '随机 Cayley 图 (生成集大小 ~log|G|) 几乎必然是扩张图。',
     noteEn: 'Random Cayley graphs with |S| ~ log|G| are almost surely expanders.',
-  },
+      noteZhHant: "隨機 Cayley 圖 (生成集大小 ~log|G|) 幾乎必然是擴張圖。"
+},
   {
     authors: 'Hoory, S.; Linial, N.; Wigderson, A.', year: '2006',
     title: 'Expander graphs and their applications',
@@ -2890,7 +3023,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'expander',
     noteZh: '扩张图标准综述 (Cheeger, LPS, zig-zag, 应用, 70 页)。',
     noteEn: 'The standard survey of expander graphs (Cheeger, LPS, zig-zag, applications).',
-  },
+      noteZhHant: "擴張圖示準綜述 (Cheeger, LPS, zig-zag, 應用, 70 頁)。"
+},
   // ── Mixing time / random walks ──
   {
     authors: 'Diaconis, P.; Shahshahani, M.', year: '1981',
@@ -2900,7 +3034,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'mixing',
     noteZh: '随机换位 shuffle 混合时间 = (n/2) log n + O(n); 首次用群表示论分析随机游走。',
     noteEn: 'Random-transposition mixing time = (n/2) log n + O(n); first analysis via group representations.',
-  },
+      noteZhHant: "隨機換位 shuffle 混合時間 = (n/2) log n + O(n); 首次用群表示論分析隨機遊走。"
+},
   {
     authors: 'Bayer, D.; Diaconis, P.', year: '1992',
     title: 'Trailing the dovetail shuffle to its lair',
@@ -2909,7 +3044,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'mixing',
     noteZh: '7 次 riffle shuffle 足够洗 52 张牌; cutoff 现象的经典例子。',
     noteEn: '7 riffle shuffles suffice for 52 cards — the canonical cutoff phenomenon example.',
-  },
+      noteZhHant: "7 次 riffle shuffle 足夠洗 52 張牌; cutoff 現象的經典例子。"
+},
   {
     authors: 'Aldous, D.; Diaconis, P.', year: '1986',
     title: 'Shuffling cards and stopping times',
@@ -2918,7 +3054,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'mixing',
     noteZh: '「cutoff 现象」 这个词首次出现; 联系了停时和混合时间。',
     noteEn: 'Coined the term "cutoff phenomenon" and linked stopping times to mixing.',
-  },
+      noteZhHant: "「cutoff 現象」 這個詞首次出現; 聯絡了停時和混合時間。"
+},
   {
     authors: 'Levin, D. A.; Peres, Y.', year: '2017',
     title: 'Markov Chains and Mixing Times (2nd ed.)',
@@ -2927,7 +3064,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'mixing',
     noteZh: '混合时间标准教材; 含 Cayley 图、 spectral gap、 cutoff 现象的完整理论。',
     noteEn: 'The standard textbook; full theory of Cayley random walks, spectral gap, cutoff.',
-  },
+      noteZhHant: "混合時間標準教材; 含 Cayley 圖、 spectral gap、 cutoff 現象的完整理論。"
+},
   // ── Growth / geometric group theory ──
   {
     authors: 'Gromov, M.', year: '1981',
@@ -2937,7 +3075,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'growth',
     noteZh: '多项式增长 ⇔ 几乎幂零; 引入 Gromov-Hausdorff 收敛, 开创几何群论。',
     noteEn: 'Polynomial growth ⇔ virtually nilpotent; introduced Gromov-Hausdorff convergence, founded GGT.',
-  },
+      noteZhHant: "多項式增長 ⇔ 幾乎冪零; 引入 Gromov-Hausdorff 收斂, 開創幾何群論。"
+},
   {
     authors: 'Grigorchuk, R.', year: '1984',
     title: 'Degrees of growth of finitely generated groups, and the theory of invariant means',
@@ -2946,7 +3085,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'growth',
     noteZh: '第一个 「中间增长」 群的例子 (Grigorchuk 群); 比多项式快、 比指数慢。',
     noteEn: 'First example of a group of intermediate growth (the Grigorchuk group).',
-  },
+      noteZhHant: "第一個 「中間增長」 群的例子 (Grigorchuk 群); 比多項式快、 比指數慢。"
+},
   {
     authors: 'Cheeger, J.', year: '1970',
     title: 'A lower bound for the smallest eigenvalue of the Laplacian',
@@ -2954,23 +3094,32 @@ const CAYLEY_REFS: CayleyRef[] = [
     category: 'growth',
     noteZh: '原 Cheeger 不等式 (流形版); 1985 Dodziuk &amp; Alon-Milman 给出图论对应。',
     noteEn: 'The original Cheeger inequality on manifolds; graph version came later (Dodziuk, Alon-Milman 1985).',
-  },
+      noteZhHant: "原 Cheeger 不等式 (流形版); 1985 Dodziuk &amp; Alon-Milman 給出圖論對應。"
+},
 ];
 
 function CayleyReferences() {
   const lang = useLang();
-  const sections: { id: CayleyRef['category']; zh: string; en: string }[] = [
-    { id: 'foundational', zh: '基础', en: 'Foundational'
+  const sections: { id: CayleyRef['category']; zh: string; en: string
+      zhHant?: string;
+ }[] = [
+    { id: 'foundational', zh: '基础', en: 'Foundational',
+        zhHant: "基礎"
     },
-    { id: 'cube', zh: '魔方专题', en: 'Cube-specific'
+    { id: 'cube', zh: '魔方专题', en: 'Cube-specific',
+        zhHant: "魔方專題"
     },
-    { id: 'diameter', zh: '直径与 Babai 猜想', en: 'Diameter & Babai\'s conjecture'
+    { id: 'diameter', zh: '直径与 Babai 猜想', en: 'Diameter & Babai\'s conjecture',
+        zhHant: "直徑與 Babai 猜想"
     },
-    { id: 'expander', zh: '扩张图与 Ramanujan', en: 'Expanders & Ramanujan'
+    { id: 'expander', zh: '扩张图与 Ramanujan', en: 'Expanders & Ramanujan',
+        zhHant: "擴張圖與 Ramanujan"
     },
-    { id: 'mixing', zh: '混合时间与随机游走', en: 'Mixing time & random walks'
+    { id: 'mixing', zh: '混合时间与随机游走', en: 'Mixing time & random walks',
+        zhHant: "混合時間與隨機遊走"
     },
-    { id: 'growth', zh: '增长函数与几何群论', en: 'Growth & geometric group theory'
+    { id: 'growth', zh: '增长函数与几何群论', en: 'Growth & geometric group theory',
+        zhHant: "增長函式與幾何群論"
     },
   ];
   return (
@@ -2980,7 +3129,7 @@ function CayleyReferences() {
         if (items.length === 0) return null;
         return (
           <div key={s.id} className="gt-refs-section">
-            <div className="gt-refs-section-head">{(i18n.language.startsWith('zh') ? s.zh : s.en)}</div>
+            <div className="gt-refs-section-head">{(i18n.language === 'zh-Hant' ? (s.zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
             <ul className="gt-refs-list">
               {items.map((r, i) => (
                 <li key={i} className="gt-refs-item">
@@ -3088,7 +3237,8 @@ function OrderDistribution() {
 // generators), then display |G|/|H| as the count of cosets, with a tiled
 // "fabric" panel that shows how G splits.
 const COSET_SUBGROUPS = [
-  { id: 'U',    gens: ['U'],                  name: '⟨U⟩',          orderApprox: 4,            zh: '只转 U', en: 'only U'
+  { id: 'U',    gens: ['U'],                  name: '⟨U⟩',          orderApprox: 4,            zh: '只转 U', en: 'only U',
+      zhHant: "只轉 U"
 },
   { id: 'U2',   gens: ['U2'],                 name: '⟨U²⟩',         orderApprox: 2,            zh: '只 180° U', en: 'only U2' },
   { id: 'UD',   gens: ['U', 'D'],             name: '⟨U,D⟩',        orderApprox: 16,           zh: '上下面', en: 'U, D faces' },
@@ -3203,7 +3353,9 @@ const QUOTIENT_OPTIONS = [
     descZh: '所有让 Σco ≡ 0 的状态构成正规子群,商群是 ℤ/3。',
     descEn: 'States with Σco ≡ 0 form a normal subgroup; the quotient is ℤ/3.',
     n: 3,
-  },
+      nameZhHant: "co-總和 = 0 的核 K_co",
+      descZhHant: "所有讓 Σco ≡ 0 的狀態構成正規子群,商群是 ℤ/3。"
+},
   {
     id: 'eo-kernel',
     nameZh: 'eo-总和 = 0 的核 K_eo',
@@ -3214,7 +3366,9 @@ const QUOTIENT_OPTIONS = [
     descZh: '所有让 Σeo ≡ 0 的状态构成正规子群,商群是 ℤ/2。',
     descEn: 'States with Σeo ≡ 0 form a normal subgroup; the quotient is ℤ/2.',
     n: 2,
-  },
+      nameZhHant: "eo-總和 = 0 的核 K_eo",
+      descZhHant: "所有讓 Σeo ≡ 0 的狀態構成正規子群,商群是 ℤ/2。"
+},
   {
     id: 'parity-kernel',
     nameZh: '偶置换核 K_par',
@@ -3225,7 +3379,9 @@ const QUOTIENT_OPTIONS = [
     descZh: '所有 sgn(cp) = sgn(ep) = +1 的状态。',
     descEn: 'States with sgn(cp) = sgn(ep) = +1.',
     n: 2,
-  },
+      nameZhHant: "偶置換核 K_par",
+      descZhHant: "所有 sgn(cp) = sgn(ep) = +1 的狀態。"
+},
   {
     id: 'abel',
     nameZh: '换位子群 [G,G]',
@@ -3236,7 +3392,9 @@ const QUOTIENT_OPTIONS = [
     descZh: '所有换位子生成的子群。最大的阿贝尔商。',
     descEn: 'The subgroup generated by all commutators. Yields the largest Abelian quotient.',
     n: 2,
-  },
+      nameZhHant: "換位子群 [G,G]",
+      descZhHant: "所有換位子生成的子群。最大的阿貝爾商。"
+},
 ] as const;
 
 function QuotientGroupBuilder() {
@@ -3463,9 +3621,11 @@ function ThistlethwaitePhaseChart() {
   const stages = [
     { name: 'G₀ → G₁',  zh: '修 EO',                    en: 'fix edge orientation',     maxDepth: 7,  bound: 'EO = 0' },
     { name: 'G₁ → G₂',  zh: '修 CO + UD slice',         en: 'fix CO + UD slice',         maxDepth: 10, bound: 'CO = 0, FR/FL/BL/BR in slice' },
-    { name: 'G₂ → G₃',  zh: '达成 domino',              en: 'reach domino orbits',       maxDepth: 13, bound: 'corner & edge orbit parity'
+    { name: 'G₂ → G₃',  zh: '达成 domino',              en: 'reach domino orbits',       maxDepth: 13, bound: 'corner & edge orbit parity',
+        zhHant: "達成 domino"
     },
-    { name: 'G₃ → e',   zh: '完成 (仅 180° 转)',         en: 'solve (only 180° turns)',   maxDepth: 15, bound: 'identity'
+    { name: 'G₃ → e',   zh: '完成 (仅 180° 转)',         en: 'solve (only 180° turns)',   maxDepth: 15, bound: 'identity',
+        zhHant: "完成 (僅 180° 轉)"
     },
   ];
   const totalMax = stages.reduce((s, r) => s + r.maxDepth, 0);
@@ -3479,7 +3639,7 @@ function ThistlethwaitePhaseChart() {
             <div className="gt-thistle-stage-fill" style={{ width: `${(s.maxDepth / maxD) * 100}%` }} />
             <div className="gt-thistle-stage-depth">{s.maxDepth}</div>
           </div>
-          <div className="gt-thistle-stage-desc">{(i18n.language.startsWith('zh') ? s.zh : s.en)}</div>
+          <div className="gt-thistle-stage-desc">{(i18n.language === 'zh-Hant' ? (s.zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
           <div className="gt-thistle-stage-bound"><span className="gt-mono">{s.bound}</span></div>
         </div>
       ))}
@@ -7347,6 +7507,8 @@ type PuzzleSpec = {
   order: string;
   blurbZh: string;
   blurbEn: string;
+    nameZhHant?: string;
+    blurbZhHant?: string;
 };
 
 const PUZZLE_ZOO: PuzzleSpec[] = [
@@ -7359,7 +7521,8 @@ const PUZZLE_ZOO: PuzzleSpec[] = [
     order: '3',
     blurbZh: '两个 2-长面共享 1 点 — 只能旋转单个共享子,小到没有 3-循环',
     blurbEn: 'Two 2-cycles sharing a point — degenerate; not enough for a 3-cycle',
-  },
+      blurbZhHant: "兩個 2-長面共享 1 點 — 只能旋轉單個共享子,小到沒有 3-迴圈"
+},
   {
     key: 'tetrahedron-2tip',
     nameZh: 'Pyraminx 两面 (2,1,2)',
@@ -7369,7 +7532,9 @@ const PUZZLE_ZOO: PuzzleSpec[] = [
     order: '60',
     blurbZh: '两个 3-循环共享 1 点,生成 5 点上的交错群 — 经典 Pyraminx 局部',
     blurbEn: 'Two 3-cycles sharing 1 point; classical Pyraminx local pattern, yields A_5',
-  },
+      nameZhHant: "Pyraminx 兩面 (2,1,2)",
+      blurbZhHant: "兩個 3-迴圈共享 1 點,生成 5 點上的交錯群 — 經典 Pyraminx 區域性"
+},
   {
     key: 'exceptional-222',
     nameZh: '例外 (2,2,2)',
@@ -7379,7 +7544,8 @@ const PUZZLE_ZOO: PuzzleSpec[] = [
     order: '120',
     blurbZh: '6 子两面,本该 720 元 — 实际只有 120,等同 §30 的 S_5 在 6 点的奇异作用',
     blurbEn: '6 pieces but only 120 reachable — matches §30 exotic S_5 on 6 points',
-  },
+      blurbZhHant: "6 子兩面,本該 720 元 — 實際只有 120,等同 §30 的 S_5 在 6 點的奇異作用"
+},
   {
     key: 'exceptional-132',
     nameZh: '例外 (1,3,2)',
@@ -7389,7 +7555,8 @@ const PUZZLE_ZOO: PuzzleSpec[] = [
     order: '120',
     blurbZh: '同 (2,2,2) 同构 — Wilson 滑动版插一个空格就回到他的 7-点反例',
     blurbEn: 'Isomorphic to (2,2,2); inserting a blank recovers Wilson\'s 7-vertex exception',
-  },
+      blurbZhHant: "同 (2,2,2) 同構 — Wilson 滑動版插一個空格就回到他的 7-點反例"
+},
   {
     key: 'impossiball-2face',
     nameZh: 'Impossiball 两面 (3,2,3)',
@@ -7399,7 +7566,9 @@ const PUZZLE_ZOO: PuzzleSpec[] = [
     order: '20,160',
     blurbZh: '两个 5-长面共享 2 子,8 子全偶 — A_8 是阶为 20160 的单群',
     blurbEn: 'Two 5-cycles share 2 — full A_8, a simple group of order 20160',
-  },
+      nameZhHant: "Impossiball 兩面 (3,2,3)",
+      blurbZhHant: "兩個 5-長面共享 2 子,8 子全偶 — A_8 是階為 20160 的單群"
+},
   {
     key: 'alexstar-2face',
     nameZh: "Alexander's Star (4,1,4)",
@@ -7409,7 +7578,8 @@ const PUZZLE_ZOO: PuzzleSpec[] = [
     order: '181,440',
     blurbZh: '两面长 5 共享 1 子 — A_9,5 个十二面体面在边上的同构',
     blurbEn: 'Two length-5 faces sharing 1 — A_9; matches an edge-pattern on the dodecahedron',
-  },
+      blurbZhHant: "兩面長 5 共享 1 子 — A_9,5 個十二面體面在邊上的同構"
+},
   {
     key: 'big-even',
     nameZh: '偶面 (3,3,3)',
@@ -7419,7 +7589,8 @@ const PUZZLE_ZOO: PuzzleSpec[] = [
     order: '362,880',
     blurbZh: '两面长 6 (偶) 共享 3 子 — 偶长面提供奇置换 ⇒ 全 S_9',
     blurbEn: 'Two length-6 (even) faces share 3 — even face contributes odd permutation ⇒ full S_9',
-  },
+      blurbZhHant: "兩面長 6 (偶) 共享 3 子 — 偶長面提供奇置換 ⇒ 全 S_9"
+},
   {
     key: 'pyraminx-full',
     nameZh: 'Pyraminx (整体)',
@@ -7428,7 +7599,9 @@ const PUZZLE_ZOO: PuzzleSpec[] = [
     order: '75,582,720',
     blurbZh: '4 个尖块 Z_3 朝向 × 6 边块在 A_6 × 朝向约束 × 4 中央 — 见 §15.1 闭式',
     blurbEn: '4 tips Z_3 × 6 edges in A_6 × orientations × 4 centres — see §15.1 closed form',
-  },
+      nameZhHant: "Pyraminx (整體)",
+      blurbZhHant: "4 個尖塊 Z_3 朝向 × 6 邊塊在 A_6 × 朝向約束 × 4 中央 — 見 §15.1 閉式"
+},
   {
     key: 'skewb',
     nameZh: 'Skewb',
@@ -7437,7 +7610,8 @@ const PUZZLE_ZOO: PuzzleSpec[] = [
     order: '3,149,280',
     blurbZh: '8 角 + 6 面中心,角带朝向 — 4 个对角轴生成,约束总和 ≡ 0',
     blurbEn: '8 corners with twist + 6 centres, 4 diagonal-axis generators, sums vanish',
-  },
+      blurbZhHant: "8 角 + 6 面中心,角帶朝向 — 4 個對角軸生成,約束總和 ≡ 0"
+},
   {
     key: '2x2x2',
     nameZh: '2×2×2',
@@ -7446,7 +7620,8 @@ const PUZZLE_ZOO: PuzzleSpec[] = [
     order: '3,674,160',
     blurbZh: '只有 8 角,没有棱、 没有中心 — 角朝向和 ≡ 0 (mod 3)',
     blurbEn: '8 corners only, no edges or centres — corner twist sum ≡ 0 (mod 3)',
-  },
+      blurbZhHant: "只有 8 角,沒有稜、 沒有中心 — 角朝向和 ≡ 0 (mod 3)"
+},
   {
     key: 'megaminx',
     nameZh: 'Megaminx',
@@ -7455,7 +7630,8 @@ const PUZZLE_ZOO: PuzzleSpec[] = [
     order: '≈ 1.01 × 10^68',
     blurbZh: '12 个 5-长面 — 三面分类已远超 (x,y,z) 范围,落在 §31.10 wreath product',
     blurbEn: '12 length-5 faces — beyond (x,y,z), naturally a wreath construction (§31.10)',
-  },
+      blurbZhHant: "12 個 5-長面 — 三面分類已遠超 (x,y,z) 範圍,落在 §31.10 wreath product"
+},
   {
     key: 'square1',
     nameZh: 'Square-1',
@@ -7464,7 +7640,8 @@ const PUZZLE_ZOO: PuzzleSpec[] = [
     order: '≈ 1.78 × 10^14',
     blurbZh: 'Shape-shifting 让合法移动依赖几何 — 严格说不是群,是 groupoid (见 §15.3)',
     blurbEn: 'Shape-shifting makes legality geometry-dependent — formally a groupoid (cf. §15.3)',
-  },
+      blurbZhHant: "Shape-shifting 讓合法移動依賴幾何 — 嚴格說不是群,是 groupoid (見 §15.3)"
+},
 ];
 
 function PuzzleZoo() {
@@ -8467,13 +8644,18 @@ function IndexFeaturedCube() {
 
 function IndexHighlightCards() {
   const lang = useLang();
-  const cards: { id: string; num: string; titleZh: string; titleEn: string; teaserZh: string; teaserEn: string; formula: string }[] = [
+  const cards: { id: string; num: string; titleZh: string; titleEn: string; teaserZh: string; teaserEn: string; formula: string
+      titleZhHant?: string;
+      teaserZhHant?: string;
+ }[] = [
     {
       id: 'what-is-a-group', num: '§1',
       titleZh: '四条公理', titleEn: 'Four axioms',
       teaserZh: '封闭 · 结合 · 单位 · 逆 — 为什么魔方"就是"一个群',
       teaserEn: 'Closure · associativity · identity · inverse — why the cube literally is a group',
       formula: `G_1 \\;G_2 \\;G_3 \\;G_4`,
+        titleZhHant: "四條公理",
+        teaserZhHant: "封閉 · 結合 · 單位 · 逆 — 為什麼魔方\"就是\"一個群"
     },
     {
       id: 'invariants', num: '§5',
@@ -8482,6 +8664,8 @@ function IndexHighlightCards() {
       teaserZh: '角向 mod 3,棱向 mod 2,角棱奇偶同 — 为什么只有 1/12 可达',
       teaserEn: 'Σco mod 3, Σeo mod 2, parity match — why only 1/12 of "free" states are reachable',
       formula: `\\textstyle\\sum c_o \\equiv 0,\\;\\sum e_o \\equiv 0`,
+        titleZhHant: "三守恆律 + 證明",
+        teaserZhHant: "角向 mod 3,稜向 mod 2,角稜奇偶同 — 為什麼只有 1/12 可達"
     },
     {
       id: 'gods-number', num: '§11',
@@ -8490,6 +8674,8 @@ function IndexHighlightCards() {
       teaserZh: '35 CPU 年遍历 4.3 京状态:没有一个需要 21 步',
       teaserEn: '35 CPU-years brute-forced 4.3 × 10¹⁹ states — none needs 21 moves',
       formula: `\\mathrm{diam}(\\Gamma(G,S)) = 20`,
+        titleZhHant: "上帝之數 = 20",
+        teaserZhHant: "35 CPU 年遍歷 4.3 京狀態:沒有一個需要 21 步"
     },
     {
       id: 'cayley', num: '§14',
@@ -8498,6 +8684,8 @@ function IndexHighlightCards() {
       teaserZh: '顶点 = 状态 · 边 = 转面 · 直径 = 上帝之数 · BFS = 最优解',
       teaserEn: 'Vertices = states · edges = face turns · diameter = God\'s number · BFS = optimal solver',
       formula: `\\Gamma(G,\\, S)`,
+        titleZhHant: "Cayley 圖",
+        teaserZhHant: "頂點 = 狀態 · 邊 = 轉面 · 直徑 = 上帝之數 · BFS = 最優解"
     },
   ];
   return (
@@ -8520,56 +8708,79 @@ function IndexHighlightCards() {
   );
 }
 
-const TOC_THEMES: { id: string; zh: string; en: string; descZh: string; descEn: string; range: string; secs: string[] }[] = [
+const TOC_THEMES: { id: string; zh: string; en: string; descZh: string; descEn: string; range: string; secs: string[]
+    zhHant?: string;
+    descZhHant?: string;
+ }[] = [
   { id: 'foundations', zh: '基础', en: 'Foundations',
     descZh: '公理 · 生成元 · 状态向量 · |G| · 守恒律 · 结构定理',
     descEn: 'axioms · generators · state vector · order · invariants · structure theorem',
-    range: '§1 – §6', secs: ['what-is-a-group','cube-group','state-vector','order','invariants','structure']
+    range: '§1 – §6', secs: ['what-is-a-group','cube-group','state-vector','order','invariants','structure'],
+      zhHant: "基礎",
+      descZhHant: "公理 · 生成元 · 狀態向量 · |G| · 守恆律 · 結構定理"
 },
   { id: 'core', zh: '群论核心', en: 'Core group theory',
     descZh: '元素的阶 · 共轭 · 换位子 · 子群链 · 上帝之数',
     descEn: 'element order · conjugation · commutators · Thistlethwaite chain · God\'s number',
-    range: '§7 – §11', secs: ['order-of-element','conjugation','commutators','thistlethwaite','gods-number']
+    range: '§7 – §11', secs: ['order-of-element','conjugation','commutators','thistlethwaite','gods-number'],
+      zhHant: "群論核心",
+      descZhHant: "元素的階 · 共軛 · 換位子 · 子群鏈 · 上帝之數"
 },
   { id: 'visual', zh: '拓展 · 几何与图案', en: 'Extensions · geometry & patterns',
     descZh: '走得更远 · 图案画廊 · Cayley 图 · 其它拼图 · 未解问题',
     descEn: 'beyond · pattern gallery · Cayley graph · other puzzles · open problems',
-    range: '§12 – §16', secs: ['beyond','patterns','cayley','other-puzzles','open-problems']
+    range: '§12 – §16', secs: ['beyond','patterns','cayley','other-puzzles','open-problems'],
+      zhHant: "拓展 · 幾何與圖案",
+      descZhHant: "走得更遠 · 圖案畫廊 · Cayley 圖 · 其它拼圖 · 未解問題"
 },
   { id: 'advanced', zh: '进阶代数', en: 'Advanced algebra',
     descZh: '同态 · 群作用 + Burnside · Lagrange + 陪集 · 商群 · 对称群与交错群',
     descEn: 'homomorphisms · actions + Burnside · Lagrange + cosets · quotients · S_n / A_n',
-    range: '§17 – §21', secs: ['homomorphisms','actions-burnside','lagrange','quotient','permutation-groups']
+    range: '§17 – §21', secs: ['homomorphisms','actions-burnside','lagrange','quotient','permutation-groups'],
+      zhHant: "進階代數",
+      descZhHant: "同態 · 群作用 + Burnside · Lagrange + 陪集 · 商群 · 對稱群與交錯群"
 },
   { id: 'computation', zh: '计算 · 算法 · 表示', en: 'Computation · algorithms · representation',
     descZh: '解法算法 · 距离分布 · 随机游走 · BSGS · 表示论一瞥',
     descEn: 'solving algorithms · distance distribution · random walks · BSGS · representation theory',
-    range: '§22 – §26', secs: ['algorithms','distance','random-walks','computational','representations']
+    range: '§22 – §26', secs: ['algorithms','distance','random-walks','computational','representations'],
+      zhHant: "計算 · 演算法 · 表示",
+      descZhHant: "解法演算法 · 距離分佈 · 隨機遊走 · BSGS · 表示論一瞥"
 },
   { id: 'puzzles', zh: '拼图数学 · jaapsch.net', en: 'Puzzle mathematics · jaapsch.net',
     descZh: 'Lights Out · 孔明棋 · Hamilton · PGL₂(𝔽₅) · 图旋转拼图 · 有用数学',
     descEn: 'Lights Out · peg solitaire · Hamilton · PGL₂(𝔽₅) · rotational graph puzzles · useful math',
-    range: '§27 – §32', secs: ['lights-out','peg-solitaire','hamiltonian','two-face-pgl','rotational-puzzles','useful-math']
+    range: '§27 – §32', secs: ['lights-out','peg-solitaire','hamiltonian','two-face-pgl','rotational-puzzles','useful-math'],
+      zhHant: "拼圖數學 · jaapsch.net",
+      descZhHant: "Lights Out · 孔明棋 · Hamilton · PGL₂(𝔽₅) · 圖旋轉拼圖 · 有用數學"
 },
   { id: 'structure', zh: '群的结构', en: 'Structure of groups',
     descZh: '圈积、半直积、Sylow、合成列、可解与幂零、阿贝尔分类、自同构群',
     descEn: 'wreath, semidirect, Sylow, series, solvable & nilpotent, abelian, Aut',
-    range: '§33 – §39', secs: ['wreath-product','semidirect-product','sylow','composition-series','solvable-nilpotent','abelian-classification','automorphism-group']
+    range: '§33 – §39', secs: ['wreath-product','semidirect-product','sylow','composition-series','solvable-nilpotent','abelian-classification','automorphism-group'],
+      zhHant: "群的結構",
+      descZhHant: "圈積、半直積、Sylow、合成列、可解與冪零、阿貝爾分類、自同構群"
 },
   { id: 'symmetry', zh: '对称与几何', en: 'Symmetry & geometry',
     descZh: '循环群、二面体群、柏拉图立体、带饰群、墙纸群、点群、Coxeter、平面等距',
     descEn: 'cyclic, dihedral, Platonic solids, frieze, wallpaper, point groups, Coxeter, isometries',
-    range: '§40 – §47', secs: ['cyclic-modular','dihedral','platonic-symmetry','frieze-groups','wallpaper-groups','point-groups-crystal','reflection-coxeter','plane-isometries']
+    range: '§40 – §47', secs: ['cyclic-modular','dihedral','platonic-symmetry','frieze-groups','wallpaper-groups','point-groups-crystal','reflection-coxeter','plane-isometries'],
+      zhHant: "對稱與幾何",
+      descZhHant: "迴圈群、二面體群、柏拉圖立體、帶飾群、牆紙群、點群、Coxeter、平面等距"
 },
   { id: 'counting', zh: '计数与表示', en: 'Counting & representation',
     descZh: 'Burnside–Pólya、轮换指标、类方程、特征标表、Young 图、不可约分解、傅里叶',
     descEn: 'Burnside–Pólya, cycle index, class equation, character tables, Young tableaux, irreps, Fourier',
-    range: '§48 – §54', secs: ['polya-cube-colorings','cycle-index','class-equation','character-table','young-tableaux','representation-basics','fourier-on-groups']
+    range: '§48 – §54', secs: ['polya-cube-colorings','cycle-index','class-equation','character-table','young-tableaux','representation-basics','fourier-on-groups'],
+      zhHant: "計數與表示",
+      descZhHant: "Burnside–Pólya、輪換指標、類方程、特徵標表、Young 圖、不可約分解、傅立葉"
 },
   { id: 'frontiers', zh: '更多群与前沿', en: 'More groups & frontiers',
     descZh: '四元数群、自由群、Cayley 定理、轨道稳定子、矩阵与李群、伽罗瓦、增长、扩张图',
     descEn: 'quaternions, free groups, Cayley, orbit–stabiliser, Lie groups, Galois, growth, expanders',
-    range: '§55 – §62', secs: ['quaternion-group','free-groups','cayley-theorem','orbit-stabilizer','matrix-lie-groups','galois-connection','growth-of-groups','expander-ramanujan']
+    range: '§55 – §62', secs: ['quaternion-group','free-groups','cayley-theorem','orbit-stabilizer','matrix-lie-groups','galois-connection','growth-of-groups','expander-ramanujan'],
+      zhHant: "更多群與前沿",
+      descZhHant: "四元數群、自由群、Cayley 定理、軌道穩定子、矩陣與李群、伽羅瓦、增長、擴張圖"
 },
 ];
 
@@ -8586,7 +8797,7 @@ function IndexThemedTOC() {
           <div key={theme.id} className="gt-index-theme">
             <div className="gt-index-theme-head">
               <span className="gt-index-theme-range">{theme.range}</span>
-              <span className="gt-index-theme-name">{(i18n.language.startsWith('zh') ? theme.zh : theme.en)}</span>
+              <span className="gt-index-theme-name">{(i18n.language === 'zh-Hant' ? (theme.zhHant ?? theme.zh) : (i18n.language.startsWith('zh') ? theme.zh : theme.en))}</span>
               <span className="gt-index-theme-desc">{lang === 'zh' ? theme.descZh : theme.descEn}</span>
             </div>
             <ul className="gt-index-theme-list">
@@ -8597,7 +8808,7 @@ function IndexThemedTOC() {
                   <li key={id}>
                     <Link href={`/math/group/${id}`}>
                       <span className="gt-index-theme-num">§{t.num}</span>
-                      <span className="gt-index-theme-title">{(i18n.language.startsWith('zh') ? t.zh : t.en)}</span>
+                      <span className="gt-index-theme-title">{(i18n.language === 'zh-Hant' ? (t.zhHant ?? t.zh) : (i18n.language.startsWith('zh') ? t.zh : t.en))}</span>
                     </Link>
                   </li>
                 );
@@ -8634,7 +8845,7 @@ function IndexThemedTOC() {
 // ── Main page ──────────────────────────────────────────────────────────────
 export default function GroupTheoryPage() {
   const lang = useLang();
-  useDocumentTitle('群论', 'Group Theory');
+  useDocumentTitle('群论', 'Group Theory', "群論");
   const params = useParams<{ slug?: string | string[] }>();
   const rawSlug = params?.slug;
   const slug = Array.isArray(rawSlug) ? rawSlug[0] : rawSlug;
@@ -17107,7 +17318,7 @@ function SectionNav({ slug, lang }: { slug: string; lang: Lang }) {
                 zhHant: "上一節"
             })}</div>
             <div className="gt-section-nav-num">§{prev.num}</div>
-            <div className="gt-section-nav-title">{(i18n.language.startsWith('zh') ? prev.zh : prev.en)}</div>
+            <div className="gt-section-nav-title">{(i18n.language === 'zh-Hant' ? (prev.zhHant ?? prev.zh) : (i18n.language.startsWith('zh') ? prev.zh : prev.en))}</div>
           </Link>
         ) : <div className="gt-section-nav-empty" />}
       </div>
@@ -17125,7 +17336,7 @@ function SectionNav({ slug, lang }: { slug: string; lang: Lang }) {
                 zhHant: "下一節"
             })} →</div>
             <div className="gt-section-nav-num">§{next.num}</div>
-            <div className="gt-section-nav-title">{(i18n.language.startsWith('zh') ? next.zh : next.en)}</div>
+            <div className="gt-section-nav-title">{(i18n.language === 'zh-Hant' ? (next.zhHant ?? next.zh) : (i18n.language.startsWith('zh') ? next.zh : next.en))}</div>
           </Link>
         ) : <div className="gt-section-nav-empty" />}
       </div>
@@ -17133,125 +17344,184 @@ function SectionNav({ slug, lang }: { slug: string; lang: Lang }) {
   );
 }
 
-const TOC: { id: string; num: string; zh: string; en: string }[] = [
-  { id: 'what-is-a-group',   num: '1',  zh: '什么是群',                 en: 'What is a group?'
+const TOC: { id: string; num: string; zh: string; en: string
+    zhHant?: string;
+ }[] = [
+  { id: 'what-is-a-group',   num: '1',  zh: '什么是群',                 en: 'What is a group?',
+      zhHant: "什麼是群"
 },
   { id: 'cube-group',         num: '2',  zh: '魔方群 G',                 en: 'The cube group G' },
-  { id: 'state-vector',       num: '3',  zh: '状态向量 (cp, co, ep, eo)', en: 'State vector'
+  { id: 'state-vector',       num: '3',  zh: '状态向量 (cp, co, ep, eo)', en: 'State vector',
+      zhHant: "狀態向量 (cp, co, ep, eo)"
 },
-  { id: 'order',              num: '4',  zh: 'G 的阶',                  en: 'The order |G|'
+  { id: 'order',              num: '4',  zh: 'G 的阶',                  en: 'The order |G|',
+      zhHant: "G 的階"
 },
-  { id: 'invariants',         num: '5',  zh: '三个守恒律 + 证明',         en: 'Three invariants + proofs'
+  { id: 'invariants',         num: '5',  zh: '三个守恒律 + 证明',         en: 'Three invariants + proofs',
+      zhHant: "三個守恆律 + 證明"
 },
-  { id: 'structure',          num: '6',  zh: '结构定理',                 en: 'Structure theorem'
+  { id: 'structure',          num: '6',  zh: '结构定理',                 en: 'Structure theorem',
+      zhHant: "結構定理"
 },
-  { id: 'order-of-element',   num: '7',  zh: '元素的阶',                 en: 'Order of an element'
+  { id: 'order-of-element',   num: '7',  zh: '元素的阶',                 en: 'Order of an element',
+      zhHant: "元素的階"
 },
-  { id: 'conjugation',        num: '8',  zh: '共轭与共轭类',              en: 'Conjugation'
+  { id: 'conjugation',        num: '8',  zh: '共轭与共轭类',              en: 'Conjugation',
+      zhHant: "共軛與共軛類"
 },
-  { id: 'commutators',        num: '9',  zh: '换位子 + 中心',            en: 'Commutators + centre'
+  { id: 'commutators',        num: '9',  zh: '换位子 + 中心',            en: 'Commutators + centre',
+      zhHant: "換位子 + 中心"
 },
-  { id: 'thistlethwaite',     num: '10', zh: 'Thistlethwaite 子群链',    en: 'Subgroup chain'
+  { id: 'thistlethwaite',     num: '10', zh: 'Thistlethwaite 子群链',    en: 'Subgroup chain',
+      zhHant: "Thistlethwaite 子群鏈"
 },
-  { id: 'gods-number',        num: '11', zh: '上帝之数 = 20',           en: "God's number = 20"
+  { id: 'gods-number',        num: '11', zh: '上帝之数 = 20',           en: "God's number = 20",
+      zhHant: "上帝之數 = 20"
 },
-  { id: 'beyond',             num: '12', zh: '走得更远',                en: 'Beyond the cube'
+  { id: 'beyond',             num: '12', zh: '走得更远',                en: 'Beyond the cube',
+      zhHant: "走得更遠"
 },
-  { id: 'patterns',           num: '13', zh: '著名图案画廊',             en: 'Famous patterns'
+  { id: 'patterns',           num: '13', zh: '著名图案画廊',             en: 'Famous patterns',
+      zhHant: "著名圖案畫廊"
 },
-  { id: 'cayley',             num: '14', zh: 'Cayley 图',              en: 'Cayley graph'
+  { id: 'cayley',             num: '14', zh: 'Cayley 图',              en: 'Cayley graph',
+      zhHant: "Cayley 圖"
 },
-  { id: 'other-puzzles',      num: '15', zh: '其它扭转拼图',             en: 'Other twisting puzzles'
+  { id: 'other-puzzles',      num: '15', zh: '其它扭转拼图',             en: 'Other twisting puzzles',
+      zhHant: "其它扭轉拼圖"
 },
-  { id: 'open-problems',      num: '16', zh: '未解问题',                 en: 'Open problems'
+  { id: 'open-problems',      num: '16', zh: '未解问题',                 en: 'Open problems',
+      zhHant: "未解問題"
 },
-  { id: 'homomorphisms',      num: '17', zh: '同态与第一同构定理',        en: 'Homomorphisms'
+  { id: 'homomorphisms',      num: '17', zh: '同态与第一同构定理',        en: 'Homomorphisms',
+      zhHant: "同態與第一同構定理"
 },
   { id: 'actions-burnside',   num: '18', zh: '群作用 + Burnside',         en: 'Group actions + Burnside' },
   { id: 'lagrange',           num: '19', zh: '拉格朗日定理 + 陪集',        en: 'Lagrange + cosets' },
-  { id: 'quotient',           num: '20', zh: '正规子群 + 商群',            en: 'Normal subgroups + quotients'
+  { id: 'quotient',           num: '20', zh: '正规子群 + 商群',            en: 'Normal subgroups + quotients',
+      zhHant: "正規子群 + 商群"
 },
-  { id: 'permutation-groups', num: '21', zh: '置换群 Sₙ 与交错群 Aₙ',       en: 'Symmetric & alternating groups'
+  { id: 'permutation-groups', num: '21', zh: '置换群 Sₙ 与交错群 Aₙ',       en: 'Symmetric & alternating groups',
+      zhHant: "置換群 Sₙ 與交錯群 Aₙ"
 },
-  { id: 'algorithms',         num: '22', zh: '解魔方的算法',               en: 'Solving algorithms'
+  { id: 'algorithms',         num: '22', zh: '解魔方的算法',               en: 'Solving algorithms',
+      zhHant: "解魔方的演算法"
 },
-  { id: 'distance',           num: '23', zh: '距离分布与 20 步证明',       en: 'Distance distribution'
+  { id: 'distance',           num: '23', zh: '距离分布与 20 步证明',       en: 'Distance distribution',
+      zhHant: "距離分佈與 20 步證明"
 },
-  { id: 'random-walks',       num: '24', zh: '群上的随机游走',             en: 'Random walks on G'
+  { id: 'random-walks',       num: '24', zh: '群上的随机游走',             en: 'Random walks on G',
+      zhHant: "群上的隨機遊走"
 },
-  { id: 'computational',      num: '25', zh: '计算群论:BSGS 与 Schreier–Sims', en: 'Computational group theory'
+  { id: 'computational',      num: '25', zh: '计算群论:BSGS 与 Schreier–Sims', en: 'Computational group theory',
+      zhHant: "計算群論:BSGS 與 Schreier–Sims"
 },
-  { id: 'representations',    num: '26', zh: '表示论一瞥',                en: 'A glimpse of representation theory'
+  { id: 'representations',    num: '26', zh: '表示论一瞥',                en: 'A glimpse of representation theory',
+      zhHant: "表示論一瞥"
 },
-  { id: 'lights-out',         num: '27', zh: 'Lights Out 与 𝔽₂ 线性代数',  en: 'Lights Out · linear algebra over 𝔽₂'
+  { id: 'lights-out',         num: '27', zh: 'Lights Out 与 𝔽₂ 线性代数',  en: 'Lights Out · linear algebra over 𝔽₂',
+      zhHant: "Lights Out 與 𝔽₂ 線性代數"
 },
-  { id: 'peg-solitaire',      num: '28', zh: '孔明棋 · 三染色不变量',       en: 'Peg solitaire · 3-colouring invariant'
+  { id: 'peg-solitaire',      num: '28', zh: '孔明棋 · 三染色不变量',       en: 'Peg solitaire · 3-colouring invariant',
+      zhHant: "孔明棋 · 三染色不變數"
 },
-  { id: 'hamiltonian',        num: '29', zh: 'Hamilton 路径 + Gray 码',     en: 'Hamiltonian paths + Gray codes'
+  { id: 'hamiltonian',        num: '29', zh: 'Hamilton 路径 + Gray 码',     en: 'Hamiltonian paths + Gray codes',
+      zhHant: "Hamilton 路徑 + Gray 碼"
 },
-  { id: 'two-face-pgl',       num: '30', zh: '两面 6 角 ≅ PGL₂(𝔽₅) ≅ S₅',  en: 'Two-face corners ≅ PGL₂(𝔽₅) ≅ S₅'
+  { id: 'two-face-pgl',       num: '30', zh: '两面 6 角 ≅ PGL₂(𝔽₅) ≅ S₅',  en: 'Two-face corners ≅ PGL₂(𝔽₅) ≅ S₅',
+      zhHant: "兩面 6 角 ≅ PGL₂(𝔽₅) ≅ S₅"
 },
-  { id: 'rotational-puzzles', num: '31', zh: '图上的旋转拼图 · (x,y,z)',    en: 'Rotational puzzles on graphs · (x,y,z)'
+  { id: 'rotational-puzzles', num: '31', zh: '图上的旋转拼图 · (x,y,z)',    en: 'Rotational puzzles on graphs · (x,y,z)',
+      zhHant: "圖上的旋轉拼圖 · (x,y,z)"
 },
-  { id: 'useful-math',        num: '32', zh: '有用数学 · 排列可视化',         en: 'Useful mathematics · permutation visualiser'
+  { id: 'useful-math',        num: '32', zh: '有用数学 · 排列可视化',         en: 'Useful mathematics · permutation visualiser',
+      zhHant: "有用數學 · 排列視覺化"
 },
-  { id: 'wreath-product',      num: '33', zh: '圈积 Wreath',                en: 'Wreath products'
+  { id: 'wreath-product',      num: '33', zh: '圈积 Wreath',                en: 'Wreath products',
+      zhHant: "圈積 Wreath"
 },
-  { id: 'semidirect-product',  num: '34', zh: '半直积',                    en: 'Semidirect products'
+  { id: 'semidirect-product',  num: '34', zh: '半直积',                    en: 'Semidirect products',
+      zhHant: "半直積"
 },
   { id: 'sylow',               num: '35', zh: 'Sylow 定理',                en: 'Sylow theorems' },
-  { id: 'composition-series',  num: '36', zh: '合成列与 Jordan–Hölder',    en: 'Composition series'
+  { id: 'composition-series',  num: '36', zh: '合成列与 Jordan–Hölder',    en: 'Composition series',
+      zhHant: "合成列與 Jordan–Hölder"
 },
-  { id: 'solvable-nilpotent',  num: '37', zh: '可解群与幂零群',            en: 'Solvable & nilpotent'
+  { id: 'solvable-nilpotent',  num: '37', zh: '可解群与幂零群',            en: 'Solvable & nilpotent',
+      zhHant: "可解群與冪零群"
 },
-  { id: 'abelian-classification', num: '38', zh: '有限阿贝尔群基本定理',    en: 'Finite abelian groups'
+  { id: 'abelian-classification', num: '38', zh: '有限阿贝尔群基本定理',    en: 'Finite abelian groups',
+      zhHant: "有限阿貝爾群基本定理"
 },
-  { id: 'automorphism-group',  num: '39', zh: '自同构群 Aut(G)',           en: 'Automorphism groups'
+  { id: 'automorphism-group',  num: '39', zh: '自同构群 Aut(G)',           en: 'Automorphism groups',
+      zhHant: "自同構群 Aut(G)"
 },
-  { id: 'cyclic-modular',      num: '40', zh: '循环群与模算术',            en: 'Cyclic & modular'
+  { id: 'cyclic-modular',      num: '40', zh: '循环群与模算术',            en: 'Cyclic & modular',
+      zhHant: "迴圈群與模算術"
 },
-  { id: 'dihedral',            num: '41', zh: '二面体群 Dₙ',               en: 'Dihedral groups'
+  { id: 'dihedral',            num: '41', zh: '二面体群 Dₙ',               en: 'Dihedral groups',
+      zhHant: "二面體群 Dₙ"
 },
-  { id: 'platonic-symmetry',   num: '42', zh: '柏拉图立体的对称群',        en: 'Platonic symmetry'
+  { id: 'platonic-symmetry',   num: '42', zh: '柏拉图立体的对称群',        en: 'Platonic symmetry',
+      zhHant: "柏拉圖立體的對稱群"
 },
-  { id: 'frieze-groups',       num: '43', zh: '七种带饰群',                en: 'The 7 frieze groups'
+  { id: 'frieze-groups',       num: '43', zh: '七种带饰群',                en: 'The 7 frieze groups',
+      zhHant: "七種帶飾群"
 },
-  { id: 'wallpaper-groups',    num: '44', zh: '十七种墙纸群',              en: 'The 17 wallpaper groups'
+  { id: 'wallpaper-groups',    num: '44', zh: '十七种墙纸群',              en: 'The 17 wallpaper groups',
+      zhHant: "十七種牆紙群"
 },
-  { id: 'point-groups-crystal', num: '45', zh: '点群与晶体学',             en: 'Point groups & crystals'
+  { id: 'point-groups-crystal', num: '45', zh: '点群与晶体学',             en: 'Point groups & crystals',
+      zhHant: "點群與晶體學"
 },
-  { id: 'reflection-coxeter',  num: '46', zh: '反射群与 Coxeter 群',       en: 'Reflection & Coxeter'
+  { id: 'reflection-coxeter',  num: '46', zh: '反射群与 Coxeter 群',       en: 'Reflection & Coxeter',
+      zhHant: "反射群與 Coxeter 群"
 },
   { id: 'plane-isometries',    num: '47', zh: '平面等距群',                en: 'Plane isometries' },
-  { id: 'polya-cube-colorings', num: '48', zh: '数立方体染色 (Burnside–Pólya)', en: 'Counting cube colourings'
+  { id: 'polya-cube-colorings', num: '48', zh: '数立方体染色 (Burnside–Pólya)', en: 'Counting cube colourings',
+      zhHant: "數立方體染色 (Burnside–Pólya)"
 },
-  { id: 'cycle-index',         num: '49', zh: '轮换指标多项式',            en: 'Cycle-index polynomial'
+  { id: 'cycle-index',         num: '49', zh: '轮换指标多项式',            en: 'Cycle-index polynomial',
+      zhHant: "輪換指標多項式"
 },
-  { id: 'class-equation',      num: '50', zh: '类方程',                    en: 'The class equation'
+  { id: 'class-equation',      num: '50', zh: '类方程',                    en: 'The class equation',
+      zhHant: "類方程"
 },
-  { id: 'character-table',     num: '51', zh: '特征标表',                  en: 'Character tables'
+  { id: 'character-table',     num: '51', zh: '特征标表',                  en: 'Character tables',
+      zhHant: "特徵標表"
 },
-  { id: 'young-tableaux',      num: '52', zh: 'Young 图与 Sₙ 表示',        en: 'Young tableaux'
+  { id: 'young-tableaux',      num: '52', zh: 'Young 图与 Sₙ 表示',        en: 'Young tableaux',
+      zhHant: "Young 圖與 Sₙ 表示"
 },
-  { id: 'representation-basics', num: '53', zh: '表示与不可约分解',        en: 'Representations'
+  { id: 'representation-basics', num: '53', zh: '表示与不可约分解',        en: 'Representations',
+      zhHant: "表示與不可約分解"
 },
-  { id: 'fourier-on-groups',   num: '54', zh: '群上的傅里叶分析',          en: 'Fourier on groups'
+  { id: 'fourier-on-groups',   num: '54', zh: '群上的傅里叶分析',          en: 'Fourier on groups',
+      zhHant: "群上的傅立葉分析"
 },
-  { id: 'quaternion-group',    num: '55', zh: '四元数群 Q₈',              en: 'Quaternion group Q₈'
+  { id: 'quaternion-group',    num: '55', zh: '四元数群 Q₈',              en: 'Quaternion group Q₈',
+      zhHant: "四元數群 Q₈"
 },
-  { id: 'free-groups',         num: '56', zh: '自由群与约简字',            en: 'Free groups'
+  { id: 'free-groups',         num: '56', zh: '自由群与约简字',            en: 'Free groups',
+      zhHant: "自由群與約簡字"
 },
   { id: 'cayley-theorem',      num: '57', zh: 'Cayley 定理',              en: "Cayley's theorem" },
-  { id: 'orbit-stabilizer',    num: '58', zh: '轨道–稳定子定理',          en: 'Orbit–stabiliser'
+  { id: 'orbit-stabilizer',    num: '58', zh: '轨道–稳定子定理',          en: 'Orbit–stabiliser',
+      zhHant: "軌道–穩定子定理"
 },
-  { id: 'matrix-lie-groups',   num: '59', zh: '矩阵群与李群',              en: 'Matrix & Lie groups'
+  { id: 'matrix-lie-groups',   num: '59', zh: '矩阵群与李群',              en: 'Matrix & Lie groups',
+      zhHant: "矩陣群與李群"
 },
-  { id: 'galois-connection',   num: '60', zh: '伽罗瓦理论与可解性',        en: 'Galois & solvability'
+  { id: 'galois-connection',   num: '60', zh: '伽罗瓦理论与可解性',        en: 'Galois & solvability',
+      zhHant: "伽羅瓦理論與可解性"
 },
-  { id: 'growth-of-groups',    num: '61', zh: '群的增长',                  en: 'Growth of groups'
+  { id: 'growth-of-groups',    num: '61', zh: '群的增长',                  en: 'Growth of groups',
+      zhHant: "群的增長"
 },
-  { id: 'expander-ramanujan',  num: '62', zh: '扩张图与 Ramanujan 图',     en: 'Expanders & Ramanujan'
+  { id: 'expander-ramanujan',  num: '62', zh: '扩张图与 Ramanujan 图',     en: 'Expanders & Ramanujan',
+      zhHant: "擴張圖與 Ramanujan 圖"
 },
-  { id: 'refs',               num: 'REF', zh: '参考文献',                   en: 'References'
+  { id: 'refs',               num: 'REF', zh: '参考文献',                   en: 'References',
+      zhHant: "參考文獻"
 },
 ];

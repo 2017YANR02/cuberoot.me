@@ -2,6 +2,7 @@
 
 import { cstimerEventDisplayName } from './cstimer-scramble';
 import { shapeModDisplayName } from './shape-mod-scramble';
+import i18n from "@/i18n/i18n-client";
 
 // NOTE: 仓库里历史上有 3 套短名约定，全部归一化到 WCA 标准 id（333 / 222 / 333oh ...）
 //   - recon 数据：3x3 / 2x2 / 3bld / oh / mbld / pyra / mega / fmc ...
@@ -71,7 +72,7 @@ export function eventDisplayName(input: string, isZh: boolean): string {
   const m = /^nxn(\d+)$/.exec(id);
   if (m) {
     const n = m[1];
-    return isZh ? `${n}阶` : `${n}×${n}`;
+    return i18n.language === 'zh-Hant' ? (`${n}階`) : (isZh ? `${n}阶` : `${n}×${n}`);
   }
   const dict = isZh ? DISPLAY_ZH : DISPLAY_EN;
   if (dict[id]) return dict[id];

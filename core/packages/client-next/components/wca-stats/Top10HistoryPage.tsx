@@ -24,6 +24,7 @@ import { COUNTRY_TO_CONTINENT, type Continent } from '@/lib/country-continents';
 import { exportTop10Video, type ExportProgress } from '@/lib/top10-export';
 import './top10_history.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface PbEvent { d: string; p: string; v: number; c: string }
 interface PersonInfo { name: string; country: string; iso2: string | null }
@@ -132,6 +133,7 @@ export default function Top10HistoryPage({
   controlledMetric?: Metric;
   controlledMetricLabelZh?: string;
   controlledMetricLabelEn?: string;
+    controlledMetricLabelZhHant?: string;
 } = {}) {
   const embedded = !!controlledEventId;
   const { i18n } = useTranslation();
@@ -388,9 +390,9 @@ export default function Top10HistoryPage({
     : 0;
 
   // NOTE: 优先用父级 metric label(与左侧 metric 选择器一致),fallback 到本地 single/average 短词
-  const metricLabel = isZh
-    ? (controlledMetricLabelZh ?? (metric === 'single' ? '单次' : '平均'))
-    : (controlledMetricLabelEn ?? (metric === 'single' ? 'Singles' : 'Avgs'));
+  const metricLabel = i18n.language === 'zh-Hant' ? ((controlledMetricLabelZh ?? (metric === 'single' ? '單次' : '平均'))) : (isZh
+      ? (controlledMetricLabelZh ?? (metric === 'single' ? '单次' : '平均'))
+      : (controlledMetricLabelEn ?? (metric === 'single' ? 'Singles' : 'Avgs')));
 
   const handleScrub = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setDateMs(Number(e.target.value));
@@ -550,9 +552,9 @@ export default function Top10HistoryPage({
                   zhHant: "載入中…"
             })) : '')}</div>
               <div className="t10h-holder-sub">
-                {top1Person && (isZh
-                  ? `保持纪录 ${top1DurationDays} 天`
-                  : `World record holder for ${top1DurationDays} days`)}
+                {top1Person && (i18n.language === 'zh-Hant' ? (`保持紀錄 ${top1DurationDays} 天`) : (isZh
+                                                ? `保持纪录 ${top1DurationDays} 天`
+                                                : `World record holder for ${top1DurationDays} days`))}
               </div>
             </div>
           </div>
@@ -702,7 +704,7 @@ export default function Top10HistoryPage({
           aria-label={tr({ zh: '导出视频', en: 'Export video',
               zhHant: "匯出影片"
         })}
-          title={isZh ? `导出 mp4(1080p / ${playMode === 'time' ? speed + '天/秒' : '1 PB/秒'})` : `Export mp4 (1080p / ${playMode === 'time' ? speed + 'd/s' : '1 PB/s'})`}
+          title={i18n.language === 'zh-Hant' ? (`匯出 mp4(1080p / ${playMode === 'time' ? speed + '天/秒' : '1 PB/秒'})`) : (isZh ? `导出 mp4(1080p / ${playMode === 'time' ? speed + '天/秒' : '1 PB/秒'})` : `Export mp4 (1080p / ${playMode === 'time' ? speed + 'd/s' : '1 PB/s'})`)}
         >
           <Download size={16} />
         </button>
@@ -710,9 +712,9 @@ export default function Top10HistoryPage({
 
       {events.length > 0 && (
         <div className="t10h-note">
-          {isZh
-            ? `数据自 ${events[0]?.d ?? '—'}。共 ${events.length} 次 PB 事件,涉及 ${replay ? new Set(events.map(e => e.p)).size : 0} 名曾进过历史 TOP ${index.topK} 的选手。`
-            : `Data since ${events[0]?.d ?? '—'}. ${events.length} PB events from ${new Set(events.map(e => e.p)).size} cubers who were ever in the historical top ${index.topK}.`}
+          {i18n.language === 'zh-Hant' ? (`資料自 ${events[0]?.d ?? '—'}。共 ${events.length} 次 PB 事件,涉及 ${replay ? new Set(events.map(e => e.p)).size : 0} 名曾進過歷史 TOP ${index.topK} 的選手。`) : (isZh
+                              ? `数据自 ${events[0]?.d ?? '—'}。共 ${events.length} 次 PB 事件,涉及 ${replay ? new Set(events.map(e => e.p)).size : 0} 名曾进过历史 TOP ${index.topK} 的选手。`
+                              : `Data since ${events[0]?.d ?? '—'}. ${events.length} PB events from ${new Set(events.map(e => e.p)).size} cubers who were ever in the historical top ${index.topK}.`)}
           <div className="t10h-legend">
             {([
               ['Asia', tr({ zh: '亚洲', en: 'Asia',

@@ -17,10 +17,22 @@ const best_potential_fmc_mean: AboutEntry = {
     'Concretely: aggregate attempt 1 across all competitors in the round to its `MIN`, same for attempts 2 and 3, then `(min1 + min2 + min3) / 3`. It is a measure of **how easy the scrambles were**, not how good any one solver is.',
   ],
   stats: [
-    { value: 'mean-of-3', labelZh: '聚合口径', labelEn: 'Aggregation', hintZh: '三个 attempt 各取全场最小再求均值', hintEn: 'Per-attempt minimum across the round, then averaged' },
-    { value: '`333fm`', labelZh: '仅此项目', labelEn: 'Only event', hintZh: 'Fewest Moves 是 WCA 里唯一手写步数的项目', hintEn: 'FMC is the only hand-written move-count event in WCA' },
-    { value: '100', labelZh: '榜单深度', labelEn: 'Rows returned', hintZh: '按 mean 升序取前 100 个 round', hintEn: 'Top 100 rounds by mean ascending' },
-    { value: '整数', labelZh: '步数为整数', labelEn: 'Integer values', hintZh: 'WCA dump 里 `333fm` 步数直接存,不像计时项 ×100', hintEn: 'FMC values stored as integer moves, no ×100 like timed events' },
+    { value: 'mean-of-3', labelZh: '聚合口径', labelEn: 'Aggregation', hintZh: '三个 attempt 各取全场最小再求均值', hintEn: 'Per-attempt minimum across the round, then averaged',
+        labelZhHant: "聚合口徑",
+        hintZhHant: "三個 attempt 各取全場最小再求均值"
+    },
+    { value: '`333fm`', labelZh: '仅此项目', labelEn: 'Only event', hintZh: 'Fewest Moves 是 WCA 里唯一手写步数的项目', hintEn: 'FMC is the only hand-written move-count event in WCA',
+        labelZhHant: "僅此專案",
+        hintZhHant: "Fewest Moves 是 WCA 裡唯一手寫步數的專案"
+    },
+    { value: '100', labelZh: '榜单深度', labelEn: 'Rows returned', hintZh: '按 mean 升序取前 100 个 round', hintEn: 'Top 100 rounds by mean ascending',
+        labelZhHant: "榜單深度",
+        hintZhHant: "按 mean 升序取前 100 個 round"
+    },
+    { value: '整数', labelZh: '步数为整数', labelEn: 'Integer values', hintZh: 'WCA dump 里 `333fm` 步数直接存,不像计时项 ×100', hintEn: 'FMC values stored as integer moves, no ×100 like timed events',
+        labelZhHant: "步數為整數",
+        hintZhHant: "WCA dump 裡 `333fm` 步數直接存,不像計時項 ×100"
+    },
   ],
   sourceZh: [
     '`results` + `result_attempts` 两表 join。先按 `(competition_id, round_type_id)` 分组,对每个 `attempt_number ∈ {1, 2, 3}` 单独取 `MIN(value)`(只算 `value > 0`,过滤 DNF/DNS/未提交);再把三个最小值相加除以 3。`333fm` 不需要乘 100 — dump 里这个项目存的就是步数本身。',
@@ -53,18 +65,24 @@ LIMIT 100;`,
       titleEn: 'Bucket by (competition, round)',
       bodyZh: '`results` join `result_attempts`,只留 `event_id = 333fm`。把每一条 attempt 按 `(competition_id, round_type_id)` 装进对应的桶。',
       bodyEn: '`results` joined with `result_attempts`, filtered to `event_id = 333fm`. Each attempt row is dropped into the bucket keyed by `(competition_id, round_type_id)`.',
+        titleZhHant: "按 (比賽, 輪次) 拆桶",
+        bodyZhHant: "`results` join `result_attempts`,只留 `event_id = 333fm`。把每一條 attempt 按 `(competition_id, round_type_id)` 裝進對應的桶。"
     },
     {
       titleZh: '逐 attempt slot 取全场最小',
       titleEn: 'Per-slot minimum',
       bodyZh: '在每个桶内,attempt 1、attempt 2、attempt 3 三个槽位各跑一次 `MIN(value WHERE value > 0)`。这一步 = "把全轮选手在 attempt i 上的最好成绩抽出来"。',
       bodyEn: 'Within each bucket, run `MIN(value WHERE value > 0)` three times — once per attempt slot. This pulls out "the best attempt-1 by anyone in this round", and same for slots 2 and 3.',
+        titleZhHant: "逐 attempt slot 取全場最小",
+        bodyZhHant: "在每個桶內,attempt 1、attempt 2、attempt 3 三個槽位各跑一次 `MIN(value WHERE value > 0)`。這一步 = \"把全輪選手在 attempt i 上的最好成績抽出來\"。"
     },
     {
       titleZh: '过滤完整桶',
       titleEn: 'Keep only complete buckets',
       bodyZh: '`WHERE LEAST(best1, best2, best3) IS NOT NULL` — 必须三个 attempt 都有有效成绩,否则不算 mean。预赛 / DNF 一片的轮次会自动被剔掉。',
       bodyEn: '`WHERE LEAST(best1, best2, best3) IS NOT NULL` — all three slots must have at least one valid attempt. Rounds where some attempt slot is all-DNF / all-unattempted are dropped.',
+        titleZhHant: "過濾完整桶",
+        bodyZhHant: "`WHERE LEAST(best1, best2, best3) IS NOT NULL` — 必須三個 attempt 都有有效成績,否則不算 mean。預賽 / DNF 一片的輪次會自動被剔掉。"
     },
     {
       titleZh: '算潜在 mean 排前 100',
@@ -72,6 +90,8 @@ LIMIT 100;`,
       bodyZh: '`mean = (best1 + best2 + best3) / 3`,按 mean 升序 `LIMIT 100`。注意:这个 mean 完全可能没有任何**单个选手**真实拿到过 — 它是三人各贡献一槽的虚拟最佳。',
       bodyEn: '`mean = (best1 + best2 + best3) / 3`, ordered ascending, `LIMIT 100`. Note: no single solver may ever have posted this mean — it is a virtual best assembled from three different people, one per slot.',
       highlight: true,
+        titleZhHant: "算潛在 mean 排前 100",
+        bodyZhHant: "`mean = (best1 + best2 + best3) / 3`,按 mean 升序 `LIMIT 100`。注意:這個 mean 完全可能沒有任何**單個選手**真實拿到過 — 它是三人各貢獻一槽的虛擬最佳。"
     },
   ],
   formulae: [
@@ -81,6 +101,7 @@ LIMIT 100;`,
       expr: 'potentialMean(c, r) = (mₐ + m_b + m_c) / 3,  mₖ = min{vₖ(p) : p ∈ round(c, r), vₖ(p) > 0}',
       bodyZh: 'c = 比赛,r = 轮次,p = 选手,vₖ(p) = 选手 p 在 attempt slot k 上的步数。mₖ 是该 slot 在该轮的全场最小步数。',
       bodyEn: 'c = competition, r = round, p = competitor, vₖ(p) = solver p\'s move count on attempt slot k. mₖ is the per-slot minimum across the whole round.',
+        bodyZhHant: "c = 比賽,r = 輪次,p = 選手,vₖ(p) = 選手 p 在 attempt slot k 上的步數。mₖ 是該 slot 在該輪的全場最小步數。"
     },
   ],
   edgesZh: [
@@ -96,11 +117,25 @@ LIMIT 100;`,
     '`MIN`, not `MAX`: FMC is lower-is-better, unlike BLD points which are higher-is-better.',
   ],
   related: [
-    { id: 'best_round', titleZh: '最佳轮次', titleEn: 'Best round', hintZh: '真实达成过的轮次 top-3 之和,可对照"潜在"差距', hintEn: 'Actually-achieved top-3 sum per round — contrast with "potential"' },
-    { id: 'wr_metric', titleZh: '指标 (Metric)', titleEn: 'Metric', hintZh: '其它 mean / average / single 的 WR 视角', hintEn: 'Other mean / average / single WR perspectives' },
-    { id: 'most_frequent_results', titleZh: '最常出现的成绩', titleEn: 'Most frequent results', hintZh: '同样用 `result_attempts` 拆 attempt slot', hintEn: 'Also unrolls per-attempt values via `result_attempts`' },
-    { id: 'best_potential_fmc_mean', toStat: true, titleZh: '打开潜在 FMC mean 榜', titleEn: 'Jump to potential FMC mean board', hintZh: '看实际榜单', hintEn: 'Live leaderboard' },
+    { id: 'best_round', titleZh: '最佳轮次', titleEn: 'Best round', hintZh: '真实达成过的轮次 top-3 之和,可对照"潜在"差距', hintEn: 'Actually-achieved top-3 sum per round — contrast with "potential"',
+        titleZhHant: "最佳輪次",
+        hintZhHant: "真實達成過的輪次 top-3 之和,可對照\"潛在\"差距"
+    },
+    { id: 'wr_metric', titleZh: '指标 (Metric)', titleEn: 'Metric', hintZh: '其它 mean / average / single 的 WR 视角', hintEn: 'Other mean / average / single WR perspectives',
+        titleZhHant: "指標 (Metric)",
+        hintZhHant: "其它 mean / average / single 的 WR 視角"
+    },
+    { id: 'most_frequent_results', titleZh: '最常出现的成绩', titleEn: 'Most frequent results', hintZh: '同样用 `result_attempts` 拆 attempt slot', hintEn: 'Also unrolls per-attempt values via `result_attempts`',
+        titleZhHant: "最常出現的成績",
+        hintZhHant: "同樣用 `result_attempts` 拆 attempt slot"
+    },
+    { id: 'best_potential_fmc_mean', toStat: true, titleZh: '打开潜在 FMC mean 榜', titleEn: 'Jump to potential FMC mean board', hintZh: '看实际榜单', hintEn: 'Live leaderboard',
+        titleZhHant: "開啟潛在 FMC mean 榜",
+        hintZhHant: "看實際榜單"
+    },
   ],
+    titleZhHant: "最佳潛在 FMC 平均",
+    badgeZhHant: "潛在最佳"
 };
 
 // ──── best_round ────────────────────────────────────────────────────────────
@@ -119,9 +154,14 @@ const best_round: AboutEntry = {
     'BLD events (333bf / 444bf / 555bf / 333mbf) rank by single; all other events rank by average. `333mbf` gets a separate transform path because its WCA `value` encoding is lower-is-better but the natural ranking is by **points** descending.',
   ],
   stats: [
-    { value: '21', labelZh: '项目', labelEn: 'Events', hintZh: '每个项目独立一节,top 10 轮', hintEn: 'One section per event, top 10 rounds each' },
+    { value: '21', labelZh: '项目', labelEn: 'Events', hintZh: '每个项目独立一节,top 10 轮', hintEn: 'One section per event, top 10 rounds each',
+        labelZhHant: "專案",
+        hintZhHant: "每個專案獨立一節,top 10 輪"
+    },
     { value: 'top 3', labelZh: '取多少人', labelEn: 'Per round', hintZh: '`ROW_NUMBER ≤ 3` 取前三',  hintEn: '`ROW_NUMBER ≤ 3` keeps the top three' },
-    { value: 'single / average', labelZh: '排序口径', labelEn: 'Rank field', hintZh: 'BLD 用 best;其他用 average', hintEn: 'BLD uses best; others use average' },
+    { value: 'single / average', labelZh: '排序口径', labelEn: 'Rank field', hintZh: 'BLD 用 best;其他用 average', hintEn: 'BLD uses best; others use average',
+        labelZhHant: "排序口徑"
+    },
     { value: 'points DESC', labelZh: '`333mbf` 特例', labelEn: '`333mbf` special', hintZh: '另查一次,按 points 之和倒序', hintEn: 'Queried separately, sorted by points sum descending' },
   ],
   sourceZh: [
@@ -159,24 +199,31 @@ LIMIT 10;`,
       titleEn: 'Pick the rank field',
       bodyZh: 'BLD 三项 + multi-BLD 用 `best`(single 值越小越好);其它项目用 `average`(ao5 的官方均值)。在 `CASE` 表达式里一次解决,排序和"宽表透视"都用同一个表达式。',
       bodyEn: 'BLD trio + multi-BLD rank by `best` (single, lower is better); all other events rank by `average` (the official ao5 mean). A single `CASE` expression handles both the `ORDER BY` and the pivot column.',
+        titleZhHant: "挑排序欄位",
+        bodyZhHant: "BLD 三項 + multi-BLD 用 `best`(single 值越小越好);其它專案用 `average`(ao5 的官方均值)。在 `CASE` 表示式裡一次解決,排序和\"寬表透視\"都用同一個表示式。"
     },
     {
       titleZh: '每 round 内排名',
       titleEn: 'Rank within each round',
       bodyZh: '`ROW_NUMBER() OVER (PARTITION BY competition_id, round_type_id ORDER BY <rank field>)` 给每条结果在所属 round 内分配 1, 2, 3, ... 的名次。只看正值(`best_result > 0`,排除 DNF/DNS/未提交)。',
       bodyEn: '`ROW_NUMBER() OVER (PARTITION BY competition_id, round_type_id ORDER BY <rank field>)` numbers each row within its round (1, 2, 3, ...). Only positive values are considered (`best_result > 0`, dropping DNF/DNS/unattempted).',
+        titleZhHant: "每 round 內排名",
+        bodyZhHant: "`ROW_NUMBER() OVER (PARTITION BY competition_id, round_type_id ORDER BY <rank field>)` 給每條結果在所屬 round 內分配 1, 2, 3, ... 的名次。只看正值(`best_result > 0`,排除 DNF/DNS/未提交)。"
     },
     {
       titleZh: '透视成宽表',
       titleEn: 'Pivot to wide table',
       bodyZh: '`MAX(CASE WHEN row_num = 1 THEN person_id END) first_id` 等等 — 把 long 表压成每 round 一行、第 1/2/3 名各自占三列。`third_result IS NOT NULL` 过滤掉不足三人完赛的轮次。',
       bodyEn: '`MAX(CASE WHEN row_num = 1 THEN person_id END) first_id` etc. — collapses the long table to one row per round with three columns each for the top three solvers. `third_result IS NOT NULL` drops rounds where fewer than three completed.',
+        titleZhHant: "透視成寬表",
+        bodyZhHant: "`MAX(CASE WHEN row_num = 1 THEN person_id END) first_id` 等等 — 把 long 表壓成每 round 一行、第 1/2/3 名各自佔三列。`third_result IS NOT NULL` 過濾掉不足三人完賽的輪次。"
     },
     {
       titleZh: '加和取前 10',
       titleEn: 'Sum, sort, top 10',
       bodyZh: '`result_sum = first + second + third`,按和升序 `LIMIT 10`,每个项目独立一节。',
       bodyEn: '`result_sum = first + second + third`, ordered ascending, `LIMIT 10`, one section per event.',
+        bodyZhHant: "`result_sum = first + second + third`,按和升序 `LIMIT 10`,每個專案獨立一節。"
     },
     {
       titleZh: '`333mbf` 单独一条 transform',
@@ -184,6 +231,8 @@ LIMIT 10;`,
       bodyZh: 'Multi-BLD 的 `value` 编码越小越好(攻击数 / 时间 / 解出数全塞一个数),但人眼习惯按 **points** 倒序(尝试 N 个、解出 M 个、错 N−M)。`queryResults` 跳过 `333mbf`,`toJson` 单独查 + 按 `points` 之和倒序排,再合并回去。',
       bodyEn: 'Multi-BLD `value` is encoded lower-is-better (a single packed number for attempted / time / solved), but humans rank it by **points** descending. `queryResults` skips `333mbf`; `toJson` queries it separately and sorts by sum of `points` descending before merging.',
       highlight: true,
+        titleZhHant: "`333mbf` 單獨一條 transform",
+        bodyZhHant: "Multi-BLD 的 `value` 編碼越小越好(攻擊數 / 時間 / 解出數全塞一個數),但人眼習慣按 **points** 倒序(嘗試 N 個、解出 M 個、錯 N−M)。`queryResults` 跳過 `333mbf`,`toJson` 單獨查 + 按 `points` 之和倒序排,再合併回去。"
     },
   ],
   edgesZh: [
@@ -199,11 +248,24 @@ LIMIT 10;`,
     'A first-round and a final from the same competition can both appear (they have distinct `round_type_id`s).',
   ],
   related: [
-    { id: 'best_potential_fmc_mean', titleZh: '最佳潜在 FMC 平均', titleEn: 'Best potential FMC mean', hintZh: '同样以"轮次"为单位的潜在视角', hintEn: 'Round-keyed sibling stat, but "potential" rather than achieved' },
-    { id: 'wr_aoxr', titleZh: 'AoXR (跨轮)', titleEn: 'AoXR (across rounds)', hintZh: '反过来:同一选手跨多轮取平均', hintEn: 'Opposite axis: averages across rounds for one person' },
-    { id: 'yearly_rankings', titleZh: '年度排名', titleEn: 'Yearly rankings', hintZh: '一年时间窗内的最佳成绩', hintEn: 'Best results within a single year' },
-    { id: 'best_round', toStat: true, titleZh: '打开 Best round 榜', titleEn: 'Jump to Best round board', hintZh: '21 项目 top 10', hintEn: '21 events, top 10 each' },
+    { id: 'best_potential_fmc_mean', titleZh: '最佳潜在 FMC 平均', titleEn: 'Best potential FMC mean', hintZh: '同样以"轮次"为单位的潜在视角', hintEn: 'Round-keyed sibling stat, but "potential" rather than achieved',
+        titleZhHant: "最佳潛在 FMC 平均",
+        hintZhHant: "同樣以\"輪次\"為單位的潛在視角"
+    },
+    { id: 'wr_aoxr', titleZh: 'AoXR (跨轮)', titleEn: 'AoXR (across rounds)', hintZh: '反过来:同一选手跨多轮取平均', hintEn: 'Opposite axis: averages across rounds for one person',
+        titleZhHant: "AoXR (跨輪)",
+        hintZhHant: "反過來:同一選手跨多輪取平均"
+    },
+    { id: 'yearly_rankings', titleZh: '年度排名', titleEn: 'Yearly rankings', hintZh: '一年时间窗内的最佳成绩', hintEn: 'Best results within a single year',
+        hintZhHant: "一年時間窗內的最佳成績"
+    },
+    { id: 'best_round', toStat: true, titleZh: '打开 Best round 榜', titleEn: 'Jump to Best round board', hintZh: '21 项目 top 10', hintEn: '21 events, top 10 each',
+        titleZhHant: "開啟 Best round 榜",
+        hintZhHant: "21 專案 top 10"
+    },
   ],
+    titleZhHant: "最佳輪次",
+    badgeZhHant: "輪次"
 };
 
 // ──── most_frequent_results ─────────────────────────────────────────────────
@@ -223,9 +285,18 @@ const most_frequent_results: AboutEntry = {
   ],
   stats: [
     { value: '`> 0`', labelZh: '只算成功', labelEn: 'Successful only', hintZh: 'DNF (-1)、DNS (-2)、未提交 (0) 全跳', hintEn: 'DNF (-1), DNS (-2), unattempted (0) all skipped' },
-    { value: '21 项目', labelZh: '逐项目分桶', labelEn: 'Per-event buckets', hintZh: '不同项目厘秒分布完全不同,不混着排', hintEn: 'Different events have wildly different distributions; not pooled' },
-    { value: 'top 10', labelZh: '榜单深度', labelEn: 'Rows per event', hintZh: '每个项目取最热门 10 个具体值', hintEn: 'Per event: the 10 most-frequent exact values' },
-    { value: '~M 级', labelZh: '总 attempt 量', labelEn: 'Total attempts', hintZh: 'WCA 历史所有 attempt — 数千万级', hintEn: 'Tens of millions of attempts across WCA history' },
+    { value: '21 项目', labelZh: '逐项目分桶', labelEn: 'Per-event buckets', hintZh: '不同项目厘秒分布完全不同,不混着排', hintEn: 'Different events have wildly different distributions; not pooled',
+        labelZhHant: "逐專案分桶",
+        hintZhHant: "不同專案釐秒分佈完全不同,不混著排"
+    },
+    { value: 'top 10', labelZh: '榜单深度', labelEn: 'Rows per event', hintZh: '每个项目取最热门 10 个具体值', hintEn: 'Per event: the 10 most-frequent exact values',
+        labelZhHant: "榜單深度",
+        hintZhHant: "每個專案取最熱門 10 個具體值"
+    },
+    { value: '~M 级', labelZh: '总 attempt 量', labelEn: 'Total attempts', hintZh: 'WCA 历史所有 attempt — 数千万级', hintEn: 'Tens of millions of attempts across WCA history',
+        labelZhHant: "總 attempt 量",
+        hintZhHant: "WCA 歷史所有 attempt — 數千萬級"
+    },
   ],
   sourceZh: [
     '只 `SELECT` 出 `event_id` 和 attempts 列(通过 `ATTEMPTS_SUBQUERY` 把 `result_attempts` 表的 1-5 个 attempt 拼成 comma-separated string),其它过滤、拆分、计数都在 TS 里跑。`event_id != \'333mbo\'`(旧 multi-BLD old style,已被 `333mbf` 取代)。',
@@ -252,18 +323,23 @@ WHERE event_id != '333mbo';
       titleEn: 'Concatenate attempts',
       bodyZh: '`ATTEMPTS_SUBQUERY` 在 `result_attempts` 表里按 `result_id` group + `GROUP_CONCAT(value ORDER BY attempt_number)`,得到形如 `\'1234,1100,1450,1380,1290\'` 的串。WCA 表设计本身没有 `value1..value5` 列,值散在 `result_attempts` 里一行一条。',
       bodyEn: '`ATTEMPTS_SUBQUERY` does a per-`result_id` `GROUP_CONCAT(value ORDER BY attempt_number)` over `result_attempts`, yielding strings like `\'1234,1100,1450,1380,1290\'`. (The WCA schema does **not** have `value1..value5` columns — each attempt is its own row in `result_attempts`.)',
+        bodyZhHant: "`ATTEMPTS_SUBQUERY` 在 `result_attempts` 表裡按 `result_id` group + `GROUP_CONCAT(value ORDER BY attempt_number)`,得到形如 `'1234,1100,1450,1380,1290'` 的串。WCA 表設計本身沒有 `value1..value5` 列,值散在 `result_attempts` 裡一行一條。"
     },
     {
       titleZh: '按项目分桶 + 拆 attempt',
       titleEn: 'Bucket by event + split attempts',
       bodyZh: '`EVENTS_ENTRIES.map`,每个项目一节。`row[\'attempts\'].split(\',\').map(Number)` 拆出 1-5 个 attempt;`if (v > 0)` 过滤掉 DNF(-1)、DNS(-2)、未提交(0)。',
       bodyEn: '`EVENTS_ENTRIES.map` builds one section per event. `row.attempts.split(\',\').map(Number)` extracts the 1 ~ 5 attempts; the `v > 0` filter drops DNF (-1), DNS (-2), and unattempted (0).',
+        titleZhHant: "按專案分桶 + 拆 attempt",
+        bodyZhHant: "`EVENTS_ENTRIES.map`,每個專案一節。`row['attempts'].split(',').map(Number)` 拆出 1-5 個 attempt;`if (v > 0)` 過濾掉 DNF(-1)、DNS(-2)、未提交(0)。"
     },
     {
       titleZh: '`Map<number, number>` 计数',
       titleEn: '`Map<number, number>` count',
       bodyZh: '`valueCounts.set(v, (valueCounts.get(v) ?? 0) + 1)` — 每见到一次 v 就 ++。注意 `v` 是**原始厘秒/步数**整数,所以 `10.00` (1000)、`10.01` (1001)、`10.02` (1002) 被算成三个不同 key。',
       bodyEn: '`valueCounts.set(v, (valueCounts.get(v) ?? 0) + 1)` — increment per occurrence. `v` is the **raw centisecond / move-count integer**, so `10.00` (1000), `10.01` (1001), `10.02` (1002) are three distinct keys.',
+        titleZhHant: "`Map<number, number>` 計數",
+        bodyZhHant: "`valueCounts.set(v, (valueCounts.get(v) ?? 0) + 1)` — 每見到一次 v 就 ++。注意 `v` 是**原始釐秒/步數**整數,所以 `10.00` (1000)、`10.01` (1001)、`10.02` (1002) 被算成三個不同 key。"
     },
     {
       titleZh: '排序 + top 10 + 格式化',
@@ -271,6 +347,7 @@ WHERE event_id != '333mbo';
       bodyZh: '`[...valueCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10)`,然后用 `SolveTime(eventId, \'single\', v).clockFormat()` 把整数转成展示串(`10.00` / `33` 等)。',
       bodyEn: '`[...valueCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10)`, then `SolveTime(eventId, \'single\', v).clockFormat()` turns the integer into a display string (`10.00`, `33`, etc.).',
       highlight: true,
+        bodyZhHant: "`[...valueCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10)`,然後用 `SolveTime(eventId, 'single', v).clockFormat()` 把整數轉成展示串(`10.00` / `33` 等)。"
     },
   ],
   edgesZh: [
@@ -286,11 +363,25 @@ WHERE event_id != '333mbo';
     'All 5 attempts of a result are counted — not only the `best`, not only the 3 that survive ao5 trimming.',
   ],
   related: [
-    { id: 'best_potential_fmc_mean', titleZh: '最佳潜在 FMC 平均', titleEn: 'Best potential FMC mean', hintZh: '同样用 `result_attempts` 拆 attempt slot', hintEn: 'Also unrolls `result_attempts` per slot' },
-    { id: 'dnf_rate_by_event', titleZh: '各项目 DNF 率', titleEn: 'DNF rate by event', hintZh: '反过来:看被这里过滤掉的 DNF 占比', hintEn: 'Mirror view: how big a fraction were the filtered-out DNFs' },
-    { id: 'smallest_diff_between_single_and_average', titleZh: '最小单平差', titleEn: 'Smallest single-average diff', hintZh: '另一类"巧合数值"统计', hintEn: 'A different kind of "coincidental value" stat' },
-    { id: 'most_frequent_results', toStat: true, titleZh: '打开 Most frequent results', titleEn: 'Jump to live frequency board', hintZh: '21 项目分布', hintEn: '21 event distributions' },
+    { id: 'best_potential_fmc_mean', titleZh: '最佳潜在 FMC 平均', titleEn: 'Best potential FMC mean', hintZh: '同样用 `result_attempts` 拆 attempt slot', hintEn: 'Also unrolls `result_attempts` per slot',
+        titleZhHant: "最佳潛在 FMC 平均",
+        hintZhHant: "同樣用 `result_attempts` 拆 attempt slot"
+    },
+    { id: 'dnf_rate_by_event', titleZh: '各项目 DNF 率', titleEn: 'DNF rate by event', hintZh: '反过来:看被这里过滤掉的 DNF 占比', hintEn: 'Mirror view: how big a fraction were the filtered-out DNFs',
+        titleZhHant: "各專案 DNF 率",
+        hintZhHant: "反過來:看被這裡過濾掉的 DNF 佔比"
+    },
+    { id: 'smallest_diff_between_single_and_average', titleZh: '最小单平差', titleEn: 'Smallest single-average diff', hintZh: '另一类"巧合数值"统计', hintEn: 'A different kind of "coincidental value" stat',
+        titleZhHant: "最小單平差",
+        hintZhHant: "另一類\"巧合數值\"統計"
+    },
+    { id: 'most_frequent_results', toStat: true, titleZh: '打开 Most frequent results', titleEn: 'Jump to live frequency board', hintZh: '21 项目分布', hintEn: '21 event distributions',
+        titleZhHant: "開啟 Most frequent results",
+        hintZhHant: "21 專案分佈"
+    },
   ],
+    titleZhHant: "最常出現的成績",
+    badgeZhHant: "頻次"
 };
 
 // ──── moving_average ────────────────────────────────────────────────────────
@@ -309,10 +400,22 @@ const moving_average: AboutEntry = {
     'Unlike official ao5 / ao12 (a single-comp window of consecutive solves), this glides over an entire **career**, measuring "how strong has this solver been lately at this event". People with fewer than 5 career ao5 averages are excluded (not enough signal).',
   ],
   stats: [
-    { value: 'α = 0.8', labelZh: '衰减系数', labelEn: 'Decay factor', hintZh: '老成绩每滑一步衰减 0.8 倍', hintEn: 'Each step back in time discounts by 0.8' },
-    { value: '~5', labelZh: '有效窗口', labelEn: 'Effective window', hintZh: '最近 5 个 average 总权重约占 2/3', hintEn: 'Most recent 5 averages contribute ~2/3 of total weight' },
-    { value: '≥ 5', labelZh: '最低 average 数', labelEn: 'Min averages', hintZh: '少于 5 个 ao5 的选手不上榜', hintEn: 'Solvers with under 5 career averages are dropped' },
-    { value: '50', labelZh: '榜单深度', labelEn: 'Rows per event', hintZh: 'top 50 / 项目', hintEn: 'Top 50 per event' },
+    { value: 'α = 0.8', labelZh: '衰减系数', labelEn: 'Decay factor', hintZh: '老成绩每滑一步衰减 0.8 倍', hintEn: 'Each step back in time discounts by 0.8',
+        labelZhHant: "衰減係數",
+        hintZhHant: "老成績每滑一步衰減 0.8 倍"
+    },
+    { value: '~5', labelZh: '有效窗口', labelEn: 'Effective window', hintZh: '最近 5 个 average 总权重约占 2/3', hintEn: 'Most recent 5 averages contribute ~2/3 of total weight',
+        labelZhHant: "有效視窗",
+        hintZhHant: "最近 5 個 average 總權重約佔 2/3"
+    },
+    { value: '≥ 5', labelZh: '最低 average 数', labelEn: 'Min averages', hintZh: '少于 5 个 ao5 的选手不上榜', hintEn: 'Solvers with under 5 career averages are dropped',
+        labelZhHant: "最低 average 數",
+        hintZhHant: "少於 5 個 ao5 的選手不上榜"
+    },
+    { value: '50', labelZh: '榜单深度', labelEn: 'Rows per event', hintZh: 'top 50 / 项目', hintEn: 'Top 50 per event',
+        labelZhHant: "榜單深度",
+        hintZhHant: "top 50 / 專案"
+    },
   ],
   sourceZh: [
     '`results` join `persons`(`sub_id = 1`)、`competitions`、`round_types`,**按 `start_date` + `round_type.rank` 全局排序**(职业生涯时间线)。只取 `average > 0`,排除 BLD 系列(`333bf / 333mbf / 333mbo / 444bf / 555bf`,因为它们的 single 才是排名口径)。`average_of_x` 的 sibling 思路用纯 SQL 滑动窗口;这里 EMA + 偏差校正只能在 TS 里跑。',
@@ -342,18 +445,22 @@ ORDER BY competition.start_date, round_type.rank;
       titleEn: 'Sort the whole table chronologically',
       bodyZh: 'SQL 一次性按 `start_date, round_type.rank` 全排,TS 端按 `(person, event)` 收桶即可,无需在 TS 里再排。`round_type.rank` 保证同一比赛内预赛 → 半决 → 决赛顺序。',
       bodyEn: 'SQL pre-sorts the entire table by `start_date, round_type.rank`. The TS side just needs to bucket by `(person, event)` — no re-sorting. `round_type.rank` ensures qualification → semifinal → final ordering within a comp.',
+        titleZhHant: "時間序排好整張表",
+        bodyZhHant: "SQL 一次性按 `start_date, round_type.rank` 全排,TS 端按 `(person, event)` 收桶即可,無需在 TS 裡再排。`round_type.rank` 保證同一比賽內預賽 → 半決 → 決賽順序。"
     },
     {
       titleZh: '逐人迭代 EMA',
       titleEn: 'Iterate EMA per person',
       bodyZh: '从 `avg = 0` 起步,每读一个新 average `num`:`avg = avg * α + (1 − α) * num`。`α = 0.8` 意味着老值每步衰减到 80%,新值仅占 20% — 但因为持续累加,最近 5 个值贡献了约 2/3 总权重。',
       bodyEn: 'Start `avg = 0`. For each new `num`: `avg = avg * α + (1 − α) * num`. With `α = 0.8`, old values decay to 80% per step and the new one contributes 20% — but accumulated over time, the most recent 5 values contribute ~2/3 of total weight.',
+        bodyZhHant: "從 `avg = 0` 起步,每讀一個新 average `num`:`avg = avg * α + (1 − α) * num`。`α = 0.8` 意味著老值每步衰減到 80%,新值僅佔 20% — 但因為持續累加,最近 5 個值貢獻了約 2/3 總權重。"
     },
     {
       titleZh: '偏差校正',
       titleEn: 'Bias correction',
       bodyZh: '初期 `avg` 被 `0` 拖低(只跑了 1-2 个值时,衰减项还没"填满"),需要除以 `1 − αⁿ`(n = 已见值数量)来抵消。等价于 Adam optimizer 里那个 `1 − β₁ᵗ` 修正。`Math.round` 取整成厘秒 long-int。',
       bodyEn: 'Early on, `avg` is dragged down by its `0` start (the decay term has not "filled in" yet). Dividing by `1 − αⁿ` (n = number of samples seen) cancels that — same trick as Adam optimizer\'s `1 − β₁ᵗ`. Rounded to a centisecond long-int.',
+        bodyZhHant: "初期 `avg` 被 `0` 拖低(只跑了 1-2 個值時,衰減項還沒\"填滿\"),需要除以 `1 − αⁿ`(n = 已見值數量)來抵消。等價於 Adam optimizer 裡那個 `1 − β₁ᵗ` 修正。`Math.round` 取整成釐秒 long-int。"
     },
     {
       titleZh: '过滤不足 5 + 排序取 top 50',
@@ -361,6 +468,8 @@ ORDER BY competition.start_date, round_type.rank;
       bodyZh: '`.filter(([, avgs]) => avgs.length >= 5)` — 不足 5 个 average 的人不上榜。再按 EMA 升序取 50。每项目独立一节(BLD 5 项目整组缺席)。',
       bodyEn: '`.filter(([, avgs]) => avgs.length >= 5)` drops solvers with fewer than 5 averages. Sort ascending, take top 50. One section per event (BLD events absent as a group).',
       highlight: true,
+        titleZhHant: "過濾不足 5 + 排序取 top 50",
+        bodyZhHant: "`.filter(([, avgs]) => avgs.length >= 5)` — 不足 5 個 average 的人不上榜。再按 EMA 升序取 50。每專案獨立一節(BLD 5 專案整組缺席)。"
     },
   ],
   formulae: [
@@ -370,6 +479,8 @@ ORDER BY competition.start_date, round_type.rank;
       expr: 'avgₜ = α · avgₜ₋₁ + (1 − α) · numₜ ;  EMA = avg_n / (1 − αⁿ)',
       bodyZh: 'α = 0.8,n = 该选手已发布的 average 数。先迭代,最后一步除以 `1 − αⁿ` 校正初期欠拟合。',
       bodyEn: 'α = 0.8, n = number of averages the solver has posted. Iterate, then divide the final value by `1 − αⁿ` to correct the warm-up underestimate.',
+        labelZhHant: "EMA 遞推 + 偏差校正",
+        bodyZhHant: "α = 0.8,n = 該選手已釋出的 average 數。先迭代,最後一步除以 `1 − αⁿ` 校正初期欠擬合。"
     },
   ],
   edgesZh: [
@@ -385,11 +496,23 @@ ORDER BY competition.start_date, round_type.rank;
     'Unlike `average_of_x` (a hard window of N consecutive official attempts), EMA is a soft window — there is no cliff cutoff.',
   ],
   related: [
-    { id: 'average_of', titleZh: '滚动平均 (ao3 ~ ao1000)', titleEn: 'Rolling Average (ao3 ~ ao1000)', hintZh: '硬窗口连续 N 次官方还原,对照 EMA 软窗口', hintEn: 'Hard-window sibling: N consecutive official solves, vs EMA\'s soft window' },
-    { id: 'wr_metric', titleZh: '指标 (Metric)', titleEn: 'Metric', hintZh: '更广义的 WR 指标族(bao5 / wao5 / mo5 / ...)', hintEn: 'Broader WR-metric family (bao5 / wao5 / mo5 / ...)' },
-    { id: 'yearly_rankings', titleZh: '年度排名', titleEn: 'Yearly rankings', hintZh: '时间窗硬切到一年,而非 EMA 软衰减', hintEn: 'Hard one-year cutoff, opposite of EMA\'s decay' },
-    { id: 'moving_average', toStat: true, titleZh: '打开 Moving average 榜', titleEn: 'Jump to Moving average board', hintZh: '看每项目 top 50', hintEn: 'Per-event top 50' },
+    { id: 'average_of', titleZh: '滚动平均 (ao3 ~ ao1000)', titleEn: 'Rolling Average (ao3 ~ ao1000)', hintZh: '硬窗口连续 N 次官方还原,对照 EMA 软窗口', hintEn: 'Hard-window sibling: N consecutive official solves, vs EMA\'s soft window',
+        titleZhHant: "滾動平均 (ao3 ~ ao1000)",
+        hintZhHant: "硬視窗連續 N 次官方還原,對照 EMA 軟視窗"
+    },
+    { id: 'wr_metric', titleZh: '指标 (Metric)', titleEn: 'Metric', hintZh: '更广义的 WR 指标族(bao5 / wao5 / mo5 / ...)', hintEn: 'Broader WR-metric family (bao5 / wao5 / mo5 / ...)',
+        titleZhHant: "指標 (Metric)",
+        hintZhHant: "更廣義的 WR 指標族(bao5 / wao5 / mo5 / ...)"
+    },
+    { id: 'yearly_rankings', titleZh: '年度排名', titleEn: 'Yearly rankings', hintZh: '时间窗硬切到一年,而非 EMA 软衰减', hintEn: 'Hard one-year cutoff, opposite of EMA\'s decay',
+        hintZhHant: "時間窗硬切到一年,而非 EMA 軟衰減"
+    },
+    { id: 'moving_average', toStat: true, titleZh: '打开 Moving average 榜', titleEn: 'Jump to Moving average board', hintZh: '看每项目 top 50', hintEn: 'Per-event top 50',
+        titleZhHant: "開啟 Moving average 榜",
+        hintZhHant: "看每專案 top 50"
+    },
   ],
+    titleZhHant: "移動平均"
 };
 
 // ──── smallest_diff_between_single_and_average ──────────────────────────────
@@ -408,10 +531,20 @@ const smallest_diff_between_single_and_average: AboutEntry = {
     'This stat picks out the rounds with the smallest such diff. The extreme case is `diff = 0` (the 3 counting solves happen to equal the single); the next is `diff = 0.01` (one centisecond). Often these come from low-time solvers spamming near-identical times, or from big-cube events (`777`, `666`) where the whole set moves together.',
   ],
   stats: [
-    { value: '`avg − best`', labelZh: '定义', labelEn: 'Definition', hintZh: '同一 round 的 average 减 single', hintEn: 'average minus single from the same round' },
-    { value: 'top 10', labelZh: '榜单深度', labelEn: 'Rows per event', hintZh: '按 diff 升序取前 10', hintEn: 'Top 10 by diff ascending' },
-    { value: '剔除 333fm', labelZh: '`333fm` 不入榜', labelEn: '`333fm` excluded', hintZh: 'FMC 整数步数,diff = 0 太常见无意义', hintEn: 'FMC integer moves — `diff = 0` is trivial and noisy' },
-    { value: 'tiebreak', labelZh: '三键排序', labelEn: 'Three-key sort', hintZh: 'diff → avg → single,确保稳定输出', hintEn: 'diff → avg → single, deterministic ordering' },
+    { value: '`avg − best`', labelZh: '定义', labelEn: 'Definition', hintZh: '同一 round 的 average 减 single', hintEn: 'average minus single from the same round',
+        labelZhHant: "定義",
+        hintZhHant: "同一 round 的 average 減 single"
+    },
+    { value: 'top 10', labelZh: '榜单深度', labelEn: 'Rows per event', hintZh: '按 diff 升序取前 10', hintEn: 'Top 10 by diff ascending',
+        labelZhHant: "榜單深度"
+    },
+    { value: '剔除 333fm', labelZh: '`333fm` 不入榜', labelEn: '`333fm` excluded', hintZh: 'FMC 整数步数,diff = 0 太常见无意义', hintEn: 'FMC integer moves — `diff = 0` is trivial and noisy',
+        hintZhHant: "FMC 整數步數,diff = 0 太常見無意義"
+    },
+    { value: 'tiebreak', labelZh: '三键排序', labelEn: 'Three-key sort', hintZh: 'diff → avg → single,确保稳定输出', hintEn: 'diff → avg → single, deterministic ordering',
+        labelZhHant: "三鍵排序",
+        hintZhHant: "diff → avg → single,確保穩定輸出"
+    },
   ],
   sourceZh: [
     '`results` join `persons` (`sub_id = 1`)、`competitions`。SQL 只 SELECT `best`、`average` 和身份信息;`diff` 在 TS 端算。`event_id != \'333fm\'`(FMC 整数步数,diff=0 极常见,没区分度);`average > 0`(排除 DNF average / 未提交)。',
@@ -444,24 +577,32 @@ WHERE event_id != '333fm' AND average > 0;
       titleEn: 'Pair (single, average)',
       bodyZh: '从 `results` 取每一条 ao5 round 的 `best` 与 `average`。注意 WCA dump 里 `best` 列 = 该 round 的最佳 attempt(即"单次"列),`average` = ao5 / mo3 的官方均值。',
       bodyEn: 'For each ao5 round in `results`, pull `best` and `average`. WCA dump convention: `best` column = the round\'s best attempt (i.e. the "single"), `average` = the ao5 / mo3 mean.',
+        titleZhHant: "拉成對 (single, average)",
+        bodyZhHant: "從 `results` 取每一條 ao5 round 的 `best` 與 `average`。注意 WCA dump 裡 `best` 列 = 該 round 的最佳 attempt(即\"單次\"列),`average` = ao5 / mo3 的官方均值。"
     },
     {
       titleZh: '过滤口径',
       titleEn: 'Apply filters',
       bodyZh: '`event_id != \'333fm\'` — FMC 整数步数容易 single 与 average 完全相同,`diff = 0` 没有区分度。`average > 0` 排除 DNF 平均(WCA value `-1`)和未提交(`0`)。',
       bodyEn: '`event_id != \'333fm\'` — FMC integer-move semantics make `diff = 0` too common to be meaningful. `average > 0` drops DNF averages (value `-1`) and unattempted (`0`).',
+        titleZhHant: "過濾口徑",
+        bodyZhHant: "`event_id != '333fm'` — FMC 整數步數容易 single 與 average 完全相同,`diff = 0` 沒有區分度。`average > 0` 排除 DNF 平均(WCA value `-1`)和未提交(`0`)。"
     },
     {
       titleZh: '计算 diff',
       titleEn: 'Compute diff',
       bodyZh: '`diff = Number(average) − Number(single)`,单位是**厘秒**(可正可零,理论上不会为负 — single 是 ao5 内最佳)。注意:展示时 `(diff / 100).toFixed(2)` 转秒,但内部排序用整数厘秒避免浮点误差。',
       bodyEn: '`diff = Number(average) − Number(single)`, units are **centiseconds** (always ≥ 0 in theory — single is the round\'s best). For display: `(diff / 100).toFixed(2)` to seconds; internal sort stays on integer centiseconds to avoid float jitter.',
+        titleZhHant: "計算 diff",
+        bodyZhHant: "`diff = Number(average) − Number(single)`,單位是**釐秒**(可正可零,理論上不會為負 — single 是 ao5 內最佳)。注意:展示時 `(diff / 100).toFixed(2)` 轉秒,但內部排序用整數釐秒避免浮點誤差。"
     },
     {
       titleZh: '三键排序',
       titleEn: 'Three-key sort',
       bodyZh: '`diff ASC → average ASC → single ASC` — diff 相同时偏好 average 更低的 round(更难达成),再相同时偏好 single 更低。这种 tiebreak 让大量 `diff = 0` 的行有确定排序。',
       bodyEn: '`diff ASC → average ASC → single ASC` — among ties on diff, prefer rounds with lower average (harder), then lower single. This deterministic tiebreak orders the (often many) `diff = 0` rows.',
+        titleZhHant: "三鍵排序",
+        bodyZhHant: "`diff ASC → average ASC → single ASC` — diff 相同時偏好 average 更低的 round(更難達成),再相同時偏好 single 更低。這種 tiebreak 讓大量 `diff = 0` 的行有確定排序。"
     },
     {
       titleZh: '每项目取 top 10',
@@ -469,6 +610,8 @@ WHERE event_id != '333fm' AND average > 0;
       bodyZh: '`EVENTS_ENTRIES.map`,21 项目(剔除 `333fm`)每项目独立切前 10。`SolveTime(eventId, type, v).clockFormat()` 把厘秒转成展示串。',
       bodyEn: '`EVENTS_ENTRIES.map`, one section per event (FMC excluded), top 10 each. `SolveTime(eventId, type, v).clockFormat()` formats centiseconds for display.',
       highlight: true,
+        titleZhHant: "每專案取 top 10",
+        bodyZhHant: "`EVENTS_ENTRIES.map`,21 專案(剔除 `333fm`)每專案獨立切前 10。`SolveTime(eventId, type, v).clockFormat()` 把釐秒轉成展示串。"
     },
   ],
   formulae: [
@@ -478,6 +621,7 @@ WHERE event_id != '333fm' AND average > 0;
       expr: 'diff = average − single,  diff ≥ 0',
       bodyZh: 'WCA ao5 规则:5 次 attempt 去最快和最慢,剩 3 次取算术平均。所以 `single ≤ 任一中间 3 次 ≤ average`(忽略 DNF 边界)。',
       bodyEn: 'WCA ao5 rule: drop fastest and slowest of 5 attempts, average the middle 3. Therefore `single ≤ any of the middle 3 ≤ average` (ignoring DNF edge cases).',
+        bodyZhHant: "WCA ao5 規則:5 次 attempt 去最快和最慢,剩 3 次取算術平均。所以 `single ≤ 任一中間 3 次 ≤ average`(忽略 DNF 邊界)。"
     },
   ],
   edgesZh: [
@@ -493,11 +637,24 @@ WHERE event_id != '333fm' AND average > 0;
     'This is **within a single round**, not "most similar single and average across history" — two coincidentally-equal values in different rounds are not eligible.',
   ],
   related: [
-    { id: 'most_frequent_results', titleZh: '最常出现的成绩', titleEn: 'Most frequent results', hintZh: '同样在"巧合数值"题材', hintEn: 'Sibling stat in the "value coincidence" theme' },
-    { id: 'best_round', titleZh: '最佳轮次', titleEn: 'Best round', hintZh: 'round 级别的另一视角:top 3 之和', hintEn: 'Round-level sibling: top-3 sum view' },
-    { id: 'average_of', titleZh: '滚动平均', titleEn: 'Rolling Average', hintZh: 'ao5 / mo3 计算口径详解', hintEn: 'Detail on the ao5 / mo3 semantics this stat relies on' },
-    { id: 'smallest_diff_between_single_and_average', toStat: true, titleZh: '打开最小单平差榜', titleEn: 'Jump to Smallest diff board', hintZh: '21 项目 top 10', hintEn: '21 events, top 10 each' },
+    { id: 'most_frequent_results', titleZh: '最常出现的成绩', titleEn: 'Most frequent results', hintZh: '同样在"巧合数值"题材', hintEn: 'Sibling stat in the "value coincidence" theme',
+        titleZhHant: "最常出現的成績",
+        hintZhHant: "同樣在\"巧合數值\"題材"
+    },
+    { id: 'best_round', titleZh: '最佳轮次', titleEn: 'Best round', hintZh: 'round 级别的另一视角:top 3 之和', hintEn: 'Round-level sibling: top-3 sum view',
+        titleZhHant: "最佳輪次",
+        hintZhHant: "round 級別的另一視角:top 3 之和"
+    },
+    { id: 'average_of', titleZh: '滚动平均', titleEn: 'Rolling Average', hintZh: 'ao5 / mo3 计算口径详解', hintEn: 'Detail on the ao5 / mo3 semantics this stat relies on',
+        titleZhHant: "滾動平均",
+        hintZhHant: "ao5 / mo3 計算口徑詳解"
+    },
+    { id: 'smallest_diff_between_single_and_average', toStat: true, titleZh: '打开最小单平差榜', titleEn: 'Jump to Smallest diff board', hintZh: '21 项目 top 10', hintEn: '21 events, top 10 each',
+        titleZhHant: "開啟最小單平差榜",
+        hintZhHant: "21 專案 top 10"
+    },
   ],
+    titleZhHant: "最小的單次與平均差距"
 };
 
 // ──── yearly_rankings ───────────────────────────────────────────────────────
@@ -516,10 +673,17 @@ const yearly_rankings: AboutEntry = {
     'This is the quickest window into "who is dominant this year": who is breaking out, who just dropped sub-X, which events are seeing record clusters. Different from `wr_current` (all-time WR) — this filter is strictly **results that happened in 2026 itself**.',
   ],
   stats: [
-    { value: '当年', labelZh: '时间窗', labelEn: 'Time window', hintZh: '`YEAR(start_date) = YEAR(CURDATE())`', hintEn: '`YEAR(start_date) = YEAR(CURDATE())`' },
-    { value: '21 × 2', labelZh: '面板数', labelEn: 'Panels', hintZh: '21 项目,每项目 Single + Average', hintEn: '21 events, Single + Average each' },
+    { value: '当年', labelZh: '时间窗', labelEn: 'Time window', hintZh: '`YEAR(start_date) = YEAR(CURDATE())`', hintEn: '`YEAR(start_date) = YEAR(CURDATE())`',
+        labelZhHant: "時間窗"
+    },
+    { value: '21 × 2', labelZh: '面板数', labelEn: 'Panels', hintZh: '21 项目,每项目 Single + Average', hintEn: '21 events, Single + Average each',
+        labelZhHant: "面板數",
+        hintZhHant: "21 專案,每專案 Single + Average"
+    },
     { value: 'top 10', labelZh: '每榜深度', labelEn: 'Per panel', hintZh: '每榜 top 10', hintEn: 'Top 10 per panel' },
-    { value: '人去重', labelZh: '每人取最佳', labelEn: 'Best per person', hintZh: '同一人多条只留最快那条', hintEn: 'Same solver, multiple rows → only the fastest is kept' },
+    { value: '人去重', labelZh: '每人取最佳', labelEn: 'Best per person', hintZh: '同一人多条只留最快那条', hintEn: 'Same solver, multiple rows → only the fastest is kept',
+        hintZhHant: "同一人多條只留最快那條"
+    },
   ],
   sourceZh: [
     'extends `Rankings`(共用基类),`condition = \'WHERE YEAR(competition.start_date) = YEAR(CURDATE())\'`。`Rankings.query()` 从 `results` join `persons` (`sub_id = 1`)、`countries`、`competitions`,带出 single / average / attempts / 比赛 / 国籍信息。当前年口径意味着每元旦 0:00 整张榜清零重建。',
@@ -556,24 +720,31 @@ WHERE YEAR(competition.start_date) = YEAR(CURDATE());
       titleEn: 'Filter to the current year',
       bodyZh: '`WHERE YEAR(competition.start_date) = YEAR(CURDATE())` — 只放行当年的比赛结果。SQL 端一次过滤完,后续逻辑都共享 `Rankings` 基类的实现。',
       bodyEn: '`WHERE YEAR(competition.start_date) = YEAR(CURDATE())` lets through only this year\'s competition results. The SQL handles the filter once; everything downstream reuses the shared `Rankings` base.',
+        titleZhHant: "時間窗過濾",
+        bodyZhHant: "`WHERE YEAR(competition.start_date) = YEAR(CURDATE())` — 只放行當年的比賽結果。SQL 端一次過濾完,後續邏輯都共享 `Rankings` 基類的實現。"
     },
     {
       titleZh: '展开 event × type',
       titleEn: 'Expand event × type',
       bodyZh: '`EVENTS_ENTRIES.flatMap` 把每个项目展开成 `[Single, Average]` 两个 panel(共 ~42 个面板,部分项目 average panel 为空,如 `333mbf`)。',
       bodyEn: '`EVENTS_ENTRIES.flatMap` expands each event into a `[Single, Average]` pair (≈ 42 panels total — some events have an empty average panel, e.g. `333mbf`).',
+        titleZhHant: "展開 event × type",
+        bodyZhHant: "`EVENTS_ENTRIES.flatMap` 把每個專案展開成 `[Single, Average]` 兩個 panel(共 ~42 個面板,部分專案 average panel 為空,如 `333mbf`)。"
     },
     {
       titleZh: '正值过滤 + SolveTime 排序',
       titleEn: 'Positive filter + SolveTime sort',
       bodyZh: '`Number(r[type]) > 0` 排除 DNF/DNS/未提交。然后用 `SolveTime.compareTo` 排序(BLD points 项目走升序仍然语义正确,因为基类内部已封好)。',
       bodyEn: '`Number(r[type]) > 0` drops DNF / DNS / unattempted. Then `SolveTime.compareTo` sorts — for BLD-points events the comparator is encapsulated correctly inside `SolveTime` so the calling code remains uniform.',
+        titleZhHant: "正值過濾 + SolveTime 排序",
+        bodyZhHant: "`Number(r[type]) > 0` 排除 DNF/DNS/未提交。然後用 `SolveTime.compareTo` 排序(BLD points 專案走升序仍然語義正確,因為基類內部已封好)。"
     },
     {
       titleZh: '人去重',
       titleEn: 'Dedupe by person',
       bodyZh: '`Set<person_link>`,从已排序列表中扫,首次出现即记入,后续重复 skip。等价于"每人保留**今年内**最快的那条"。',
       bodyEn: '`Set<person_link>` walks the sorted list and records each solver on first encounter, skipping duplicates. Equivalent to "keep this year\'s fastest record per person".',
+        bodyZhHant: "`Set<person_link>`,從已排序列表中掃,首次出現即記入,後續重複 skip。等價於\"每人保留**今年內**最快的那條\"。"
     },
     {
       titleZh: '取 top 10 + 渲染',
@@ -581,6 +752,7 @@ WHERE YEAR(competition.start_date) = YEAR(CURDATE());
       bodyZh: '`slice(0, 10)`,每行附带 attempts 串("**32.10** 33.45 30.20 ...")便于看到组成。每个 (event, type) 一个 section。',
       bodyEn: '`slice(0, 10)`. Each row attaches the attempts string ("**32.10** 33.45 30.20 ...") so viewers can see the composition. One section per `(event, type)`.',
       highlight: true,
+        bodyZhHant: "`slice(0, 10)`,每行附帶 attempts 串(\"**32.10** 33.45 30.20 ...\")便於看到組成。每個 (event, type) 一個 section。"
     },
   ],
   edgesZh: [
@@ -596,10 +768,22 @@ WHERE YEAR(competition.start_date) = YEAR(CURDATE());
     'Dedupe is "year-best per person", not per-comp or per-round. Even if someone competes 30 times in the year, only their single fastest result appears.',
   ],
   related: [
-    { id: 'wr_current', titleZh: '现役世界纪录', titleEn: 'Current world records', hintZh: '全时段口径,对照"今年口径"', hintEn: 'All-time WR, contrast with this year-only view' },
-    { id: 'wr_metric', titleZh: '指标 (Metric)', titleEn: 'Metric', hintZh: 'WR 指标族 — single/average/bao5/wao5/...', hintEn: 'WR metric family — single / average / bao5 / wao5 / ...' },
-    { id: 'moving_average', titleZh: '移动平均', titleEn: 'Moving average', hintZh: 'EMA 软窗口 vs 一年硬窗口', hintEn: 'EMA soft window vs hard one-year cutoff' },
-    { id: 'yearly_rankings', toStat: true, titleZh: '打开 Yearly rankings', titleEn: 'Jump to Yearly rankings', hintZh: '21 项目 × {Single, Average} 共 ~42 面板', hintEn: '21 events × {Single, Average} ≈ 42 panels' },
+    { id: 'wr_current', titleZh: '现役世界纪录', titleEn: 'Current world records', hintZh: '全时段口径,对照"今年口径"', hintEn: 'All-time WR, contrast with this year-only view',
+        titleZhHant: "現役世界紀錄",
+        hintZhHant: "全時段口徑,對照\"今年口徑\""
+    },
+    { id: 'wr_metric', titleZh: '指标 (Metric)', titleEn: 'Metric', hintZh: 'WR 指标族 — single/average/bao5/wao5/...', hintEn: 'WR metric family — single / average / bao5 / wao5 / ...',
+        titleZhHant: "指標 (Metric)",
+        hintZhHant: "WR 指標族 — single/average/bao5/wao5/..."
+    },
+    { id: 'moving_average', titleZh: '移动平均', titleEn: 'Moving average', hintZh: 'EMA 软窗口 vs 一年硬窗口', hintEn: 'EMA soft window vs hard one-year cutoff',
+        titleZhHant: "移動平均",
+        hintZhHant: "EMA 軟視窗 vs 一年硬視窗"
+    },
+    { id: 'yearly_rankings', toStat: true, titleZh: '打开 Yearly rankings', titleEn: 'Jump to Yearly rankings', hintZh: '21 项目 × {Single, Average} 共 ~42 面板', hintEn: '21 events × {Single, Average} ≈ 42 panels',
+        titleZhHant: "開啟 Yearly rankings",
+        hintZhHant: "21 專案 × {Single, Average} 共 ~42 面板"
+    },
   ],
 };
 

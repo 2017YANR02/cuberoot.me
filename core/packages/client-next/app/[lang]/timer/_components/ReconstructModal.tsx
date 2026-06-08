@@ -25,6 +25,7 @@ import PlaybackPanel from './PlaybackPanel';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import './reconstruct.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   solve: Solve;
@@ -387,7 +388,7 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
         )}
 
         <AccordionSection
-          title={isZh ? `动作序列 (${moves.length})` : `Move stream (${moves.length})`}
+          title={i18n.language === 'zh-Hant' ? (`動作序列 (${moves.length})`) : (isZh ? `动作序列 (${moves.length})` : `Move stream (${moves.length})`)}
           collapsible={isMobile}
           expanded={moveListExpanded}
           onToggle={() => setMoveListExpanded(v => !v)}
@@ -487,6 +488,7 @@ function StageSegmentsPanel({
     ms: number | null;
     htm: number | null;
     caseLabel: string | null;
+          labelZhHant?: string;
   }> = [
     { key: 'cross', labelEn: 'Cross', labelZh: '十字', ms: segs.crossMs, htm: segs.crossHtm, caseLabel: segs.crossSide },
     { key: 'f2l',   labelEn: 'F2L',   labelZh: 'F2L',  ms: segs.f2lMs,   htm: segs.f2lHtm,   caseLabel: null },
@@ -535,7 +537,7 @@ function StageSegmentsPanel({
               key={s.key}
               className={`reconstruct-stage-seg stage-${s.key}`}
               style={{ width: `${pct}%` }}
-              title={`${isZh ? s.labelZh : s.labelEn}: ${formatStageTime(s.ms)}`}
+              title={`${i18n.language === 'zh-Hant' ? (s.labelZhHant ?? s.labelZh) : (isZh ? s.labelZh : s.labelEn)}: ${formatStageTime(s.ms)}`}
             />
           );
         })}
@@ -566,7 +568,7 @@ function StageSegmentsPanel({
           return (
             <div key={s.key} className="reconstruct-stage-cell">
               <div className={`reconstruct-stage-dot stage-${s.key}`} />
-              <div className="reconstruct-stage-label">{isZh ? s.labelZh : s.labelEn}</div>
+              <div className="reconstruct-stage-label">{i18n.language === 'zh-Hant' ? (s.labelZhHant ?? s.labelZh) : (isZh ? s.labelZh : s.labelEn)}</div>
               <div className="reconstruct-stage-time">{formatStageTime(s.ms)}</div>
               {s.caseLabel ? (
                 <div className="reconstruct-stage-case">{s.caseLabel}</div>

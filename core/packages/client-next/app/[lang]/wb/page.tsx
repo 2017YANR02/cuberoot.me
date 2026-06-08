@@ -22,7 +22,7 @@ const SOURCE_URL = 'https://www.speedsolving.com/wiki/index.php?title=List_of_Un
 export default function WbPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('非官方纪录', 'World Bests');
+  useDocumentTitle('非官方纪录', 'World Bests', "非官方紀錄");
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   const { data, error } = useWbData();

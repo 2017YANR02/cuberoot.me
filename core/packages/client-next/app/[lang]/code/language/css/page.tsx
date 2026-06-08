@@ -463,7 +463,7 @@ export default function CssIntroPage() {
 
   useDocumentTitle(
     'CSS : 30 年声明式样式语言 — 1994 CERN 提案到 2026 平台追上来',
-    "CSS : 30 years of declarative styling — from CERN 1994 to 'the platform caught up'",
+    "CSS : 30 years of declarative styling — from CERN 1994 to 'the platform caught up'", "CSS : 30 年宣告式樣式語言 — 1994 CERN 提案到 2026 平臺追上來"
   );
 
   useEffect(() => {

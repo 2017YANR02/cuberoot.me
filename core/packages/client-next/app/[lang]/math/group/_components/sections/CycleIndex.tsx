@@ -82,7 +82,9 @@ function evaluateCycleIndex(poly: CycleIndexPoly, k: number): number {
 /** One conjugacy class contribution */
 interface CycleClass {
   /** label for display */
-  label: { zh: string; en: string };
+  label: { zh: string; en: string
+    zhHant?: string;
+ };
   /** number of elements in this class */
   size: number;
   /** exponents: exponents[i] = power of x_{i+1} */
@@ -185,31 +187,36 @@ function cycleIndexDn(n: number): { classes: CycleClass[]; poly: CycleIndexPoly 
 function cycleIndexCubeFace(): { classes: CycleClass[]; poly: CycleIndexPoly } {
   const classes: CycleClass[] = [
     {
-      label: { zh: '恒等 (×1)', en: 'identity (×1)'
+      label: { zh: '恒等 (×1)', en: 'identity (×1)',
+          zhHant: "恆等 (×1)"
     },
       size: 1,
       exponents: [6,0,0,0,0,0], // x_1^6
     },
     {
-      label: { zh: '面轴 ±90° (×6)', en: 'face ±90° rotations (×6)'
+      label: { zh: '面轴 ±90° (×6)', en: 'face ±90° rotations (×6)',
+          zhHant: "面軸 ±90° (×6)"
     },
       size: 6,
       exponents: [2,0,0,1,0,0], // x_1^2 x_4
     },
     {
-      label: { zh: '面轴 180° (×3)', en: 'face 180° rotations (×3)'
+      label: { zh: '面轴 180° (×3)', en: 'face 180° rotations (×3)',
+          zhHant: "面軸 180° (×3)"
     },
       size: 3,
       exponents: [2,2,0,0,0,0], // x_1^2 x_2^2
     },
     {
-      label: { zh: '顶点轴 ±120° (×8)', en: 'vertex ±120° rotations (×8)'
+      label: { zh: '顶点轴 ±120° (×8)', en: 'vertex ±120° rotations (×8)',
+          zhHant: "頂點軸 ±120° (×8)"
     },
       size: 8,
       exponents: [0,0,2,0,0,0], // x_3^2
     },
     {
-      label: { zh: '棱轴 180° (×6)', en: 'edge 180° rotations (×6)'
+      label: { zh: '棱轴 180° (×6)', en: 'edge 180° rotations (×6)',
+          zhHant: "稜軸 180° (×6)"
     },
       size: 6,
       exponents: [0,3,0,0,0,0], // x_2^3
@@ -1197,7 +1204,7 @@ function SubstitutionStepper({ lang }: { lang: Lang }) {
                 {data.classes.map((cls, ci) => (
                   <tr key={ci}>
                     <td style={{ fontSize: 12, color: 'var(--ink-dim)' }}>
-                      {(i18n.language.startsWith('zh') ? cls.label.zh : cls.label.en)}
+                      {(i18n.language === 'zh-Hant' ? (cls.label.zhHant ?? cls.label.zh) : (i18n.language.startsWith('zh') ? cls.label.zh : cls.label.en))}
                     </td>
                     <td style={{ textAlign: 'center', fontFamily: 'var(--mono)' }}>{cls.size}</td>
                     <td style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>

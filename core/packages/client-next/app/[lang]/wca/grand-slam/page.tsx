@@ -46,7 +46,7 @@ interface GsRow {
 function GrandSlamPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('大满贯', 'Grand Slam');
+  useDocumentTitle('大满贯', 'Grand Slam', "大滿貫");
   const [q, setQ] = useQueryStates(
     {
       event: parseAsString,
@@ -158,7 +158,7 @@ function GrandSlamPageInner() {
         {!loading && !error && (
           <>
             <div className="wse-result-meta">
-              {isZh ? `共 ${rows.length} 项达成` : `${rows.length} achievements`}
+              {i18n.language === 'zh-Hant' ? (`共 ${rows.length} 項達成`) : (isZh ? `共 ${rows.length} 项达成` : `${rows.length} achievements`)}
             </div>
             <table className="wse-table">
               <thead>

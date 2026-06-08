@@ -192,9 +192,9 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
     setModalOpen(false);
     setModalMsg(undefined);
     setInputSummary(
-      isZh
-        ? `已输入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 组编码。`
-        : `Entered ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} (${codes.length} codes).`,
+      i18n.language === 'zh-Hant' ? (`已輸入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 組編碼。`) : (isZh
+                ? `已输入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 组编码。`
+                : `Entered ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} (${codes.length} codes).`),
     );
   }, [validateCodes, isZh]);
 
@@ -297,9 +297,9 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
 
     setScrambles(out);
     setInfo(
-      isZh
-        ? `已生成遍历训练集编码的 ${srcNum} 条打乱。出现 ${inputCodeNum} 次训练集编码，${otherCodeNum} 次其他编码。`
-        : `Generated ${srcNum} scrambles covering the training set. ${inputCodeNum} training-code occurrences, ${otherCodeNum} other-code occurrences.`,
+      i18n.language === 'zh-Hant' ? (`已生成遍歷訓練集編碼的 ${srcNum} 條打亂。出現 ${inputCodeNum} 次訓練集編碼，${otherCodeNum} 次其他編碼。`) : (isZh
+                ? `已生成遍历训练集编码的 ${srcNum} 条打乱。出现 ${inputCodeNum} 次训练集编码，${otherCodeNum} 次其他编码。`
+                : `Generated ${srcNum} scrambles covering the training set. ${inputCodeNum} training-code occurrences, ${otherCodeNum} other-code occurrences.`),
     );
     setBusy(false);
   }, [buffer, isEdge, newCodes, otherCodeMode, oppScramble, isZh]);
@@ -350,9 +350,9 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
     const pieceZh = isEdge ? '棱块' : '角块';
     const pieceEn = isEdge ? 'edge' : 'corner';
     setInfo(
-      isZh
-        ? `共生成 100 条打乱，共出现${pieceZh}公式 ${allAlgNum} 条，其中训练集公式共 ${allHitNum} 条，训练集公式比例为 ${perc.toFixed(3)}。`
-        : `Generated 100 scrambles with ${allAlgNum} ${pieceEn} algs total; ${allHitNum} are training-set algs (ratio ${perc.toFixed(3)}).`,
+      i18n.language === 'zh-Hant' ? (`共生成 100 條打亂，共出現${pieceZh}公式 ${allAlgNum} 條，其中訓練集公式共 ${allHitNum} 條，訓練集公式比例為 ${perc.toFixed(3)}。`) : (isZh
+                ? `共生成 100 条打乱，共出现${pieceZh}公式 ${allAlgNum} 条，其中训练集公式共 ${allHitNum} 条，训练集公式比例为 ${perc.toFixed(3)}。`
+                : `Generated 100 scrambles with ${allAlgNum} ${pieceEn} algs total; ${allHitNum} are training-set algs (ratio ${perc.toFixed(3)}).`),
     );
     setBusy(false);
   }, [config, isEdge, randKeepHue, randSkipCycle, newCodes, isZh]);
@@ -374,9 +374,11 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
   const title = useMemo(
     () =>
       isEdge
-        ? { zh: '棱块公式训练', en: 'Edge Algorithm Trainer'
+        ? { zh: '棱块公式训练', en: 'Edge Algorithm Trainer',
+            zhHant: "稜塊公式訓練"
         }
-        : { zh: '角块公式训练', en: 'Corner Algorithm Trainer'
+        : { zh: '角块公式训练', en: 'Corner Algorithm Trainer',
+            zhHant: "角塊公式訓練"
         },
     [isEdge],
   );
@@ -386,7 +388,7 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{(i18n.language.startsWith('zh') ? title.zh : title.en)}</h1>
+        <h1>{(i18n.language === 'zh-Hant' ? (title.zhHant ?? title.zh) : (i18n.language.startsWith('zh') ? title.zh : title.en))}</h1>
       </div>
 
       <div className="bld-section">

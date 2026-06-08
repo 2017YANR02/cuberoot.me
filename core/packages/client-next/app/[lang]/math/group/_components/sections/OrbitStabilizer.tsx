@@ -148,16 +148,23 @@ function computeOrbitAndStab(type: ObjectType): {
 }
 
 // Lookup table (all values deterministic, computed from matrices)
-const OBJECT_INFO: Record<ObjectType, { orbitSize: number; stabSize: number; structuralDesc: { zh: string; en: string } }> = {
-  face:     { orbitSize: 6,  stabSize: 4, structuralDesc: { zh: 'C₄（面轴四转）', en: 'C₄ (four rotations about the face axis)'
+const OBJECT_INFO: Record<ObjectType, { orbitSize: number; stabSize: number; structuralDesc: { zh: string; en: string
+        zhHant?: string;
+ } }> = {
+  face:     { orbitSize: 6,  stabSize: 4, structuralDesc: { zh: 'C₄（面轴四转）', en: 'C₄ (four rotations about the face axis)',
+      zhHant: "C₄（面軸四轉）"
 } },
-  edge:     { orbitSize: 12, stabSize: 2, structuralDesc: { zh: 'C₂（绕棱中点 180°）', en: 'C₂ (180° about the edge midpoint axis)'
+  edge:     { orbitSize: 12, stabSize: 2, structuralDesc: { zh: 'C₂（绕棱中点 180°）', en: 'C₂ (180° about the edge midpoint axis)',
+      zhHant: "C₂（繞稜中點 180°）"
 } },
-  vertex:   { orbitSize: 8,  stabSize: 3, structuralDesc: { zh: 'C₃（绕顶点体对角线三转）', en: 'C₃ (three rotations about the vertex diagonal)'
+  vertex:   { orbitSize: 8,  stabSize: 3, structuralDesc: { zh: 'C₃（绕顶点体对角线三转）', en: 'C₃ (three rotations about the vertex diagonal)',
+      zhHant: "C₃（繞頂點體對角線三轉）"
 } },
-  diagonal: { orbitSize: 4,  stabSize: 6, structuralDesc: { zh: 'S₃（对角线三转 + 三个 180° 交换两端）', en: 'S₃ (three rotations + three 180° swaps of endpoints)'
+  diagonal: { orbitSize: 4,  stabSize: 6, structuralDesc: { zh: 'S₃（对角线三转 + 三个 180° 交换两端）', en: 'S₃ (three rotations + three 180° swaps of endpoints)',
+      zhHant: "S₃（對角線三轉 + 三個 180° 交換兩端）"
 } },
-  axis:     { orbitSize: 3,  stabSize: 8, structuralDesc: { zh: 'D₄（面轴四转 + 四个 180° 交换两面）', en: 'D₄ (four rotations + four 180° swaps of the two faces)'
+  axis:     { orbitSize: 3,  stabSize: 8, structuralDesc: { zh: 'D₄（面轴四转 + 四个 180° 交换两面）', en: 'D₄ (four rotations + four 180° swaps of the two faces)',
+      zhHant: "D₄（面軸四轉 + 四個 180° 交換兩面）"
 } },
 };
 
@@ -197,21 +204,28 @@ const CUBE_FACES: { verts: number[]; normal: Vec3 }[] = [
 // 5. Edge 180° rotations (×6): 3 cycles each
 
 interface RotClass {
-  name: { zh: string; en: string };
+  name: { zh: string; en: string
+    zhHant?: string;
+ };
   count: number;
   cycles: number;
 }
 
 const ROT_CLASSES: RotClass[] = [
-  { name: { zh: '恒等 (×1)', en: 'Identity (×1)'
+  { name: { zh: '恒等 (×1)', en: 'Identity (×1)',
+      zhHant: "恆等 (×1)"
 }, count: 1, cycles: 6 },
-  { name: { zh: '面轴 90°/270° (×6)', en: 'Face 90°/270° (×6)'
+  { name: { zh: '面轴 90°/270° (×6)', en: 'Face 90°/270° (×6)',
+      zhHant: "面軸 90°/270° (×6)"
 }, count: 6, cycles: 3 },
-  { name: { zh: '面轴 180° (×3)', en: 'Face 180° (×3)'
+  { name: { zh: '面轴 180° (×3)', en: 'Face 180° (×3)',
+      zhHant: "面軸 180° (×3)"
 }, count: 3, cycles: 4 },
-  { name: { zh: '顶点轴 120°/240° (×8)', en: 'Vertex 120°/240° (×8)'
+  { name: { zh: '顶点轴 120°/240° (×8)', en: 'Vertex 120°/240° (×8)',
+      zhHant: "頂點軸 120°/240° (×8)"
 }, count: 8, cycles: 2 },
-  { name: { zh: '棱轴 180° (×6)', en: 'Edge 180° (×6)'
+  { name: { zh: '棱轴 180° (×6)', en: 'Edge 180° (×6)',
+      zhHant: "稜軸 180° (×6)"
 }, count: 6, cycles: 3 },
 ];
 
@@ -456,7 +470,7 @@ export default function OrbitStabilizer() {
                 <td style={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{info.orbitSize}</td>
                 <td style={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{info.stabSize}</td>
                 <td style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-dim)' }}>
-                  {(i18n.language.startsWith('zh') ? info.structuralDesc.zh : info.structuralDesc.en)}
+                  {(i18n.language === 'zh-Hant' ? (info.structuralDesc.zhHant ?? info.structuralDesc.zh) : (i18n.language.startsWith('zh') ? info.structuralDesc.zh : info.structuralDesc.en))}
                 </td>
                 <td style={{ textAlign: 'center', color: 'var(--green)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
                   {info.orbitSize * info.stabSize}
@@ -669,7 +683,7 @@ function CubeExplorerPanel({ lang }: { lang: Lang }) {
             <div className="gt-result-row">
               <span className="gt-result-label"><L zh="稳定子结构" en="Stabiliser structure" /></span>
               <span className="gt-result-val" style={{ fontSize: 12 }}>
-                {(i18n.language.startsWith('zh') ? OBJECT_INFO[type].structuralDesc.zh : OBJECT_INFO[type].structuralDesc.en)}
+                {(i18n.language === 'zh-Hant' ? (OBJECT_INFO[type].structuralDesc.zhHant ?? OBJECT_INFO[type].structuralDesc.zh) : (i18n.language.startsWith('zh') ? OBJECT_INFO[type].structuralDesc.zh : OBJECT_INFO[type].structuralDesc.en))}
               </span>
             </div>
           </div>
@@ -946,7 +960,7 @@ function BurnsidePanel({ lang }: { lang: Lang }) {
                   strokeWidth={1.5}
                 />
                 <text x={colX[0]+4} y={y+CELL_H/2+4} style={{ fontSize: 10, fontFamily: 'var(--mono)' }} fill={isHL ? rowColor : 'var(--ink-dim)'}>
-                  {(i18n.language.startsWith('zh') ? cls.name.zh : cls.name.en)}
+                  {(i18n.language === 'zh-Hant' ? (cls.name.zhHant ?? cls.name.zh) : (i18n.language.startsWith('zh') ? cls.name.zh : cls.name.en))}
                 </text>
                 <text x={colX[1]+4} y={y+CELL_H/2+4} style={{ fontSize: 12, fontFamily: 'var(--mono)' }} fill={isHL ? rowColor : 'var(--ink)'}>
                   {cls.count}

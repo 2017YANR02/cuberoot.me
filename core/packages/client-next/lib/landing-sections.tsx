@@ -10,67 +10,95 @@ import {
 import { type LandingSearchCard } from '@/components/LandingSearch';
 
 // i18n text map — bilingual mirror of the Vite original's TEXTS table.
-export const TEXTS: Record<string, { en: string; zh: string }> = {
+export const TEXTS: Record<string, { en: string; zh: string
+        zhHant?: string;
+ }> = {
   brand:           { en: 'CubeRoot', zh: 'CubeRoot' },
-  tagline:         { en: 'Solve. Train. Analyze.', zh: '解法 · 训练 · 分析'
+  tagline:         { en: 'Solve. Train. Analyze.', zh: '解法 · 训练 · 分析',
+      zhHant: "解法 · 訓練 · 分析"
 },
   solver:          { en: 'or18 Solver', zh: 'or18 求解器' },
   wcaStats:        { en: 'WCA', zh: 'WCA' },
-  recon:           { en: 'Recon', zh: '复盘'
+  recon:           { en: 'Recon', zh: '复盘',
+      zhHant: "覆盤"
 },
-  algTrainer:      { en: 'mihlefeld Trainer', zh: 'mihlefeld 训练器'
+  algTrainer:      { en: 'mihlefeld Trainer', zh: 'mihlefeld 训练器',
+      zhHant: "mihlefeld 訓練器"
 },
-  cuberootTrainer: { en: 'Trainer', zh: '训练器'
+  cuberootTrainer: { en: 'Trainer', zh: '训练器',
+      zhHant: "訓練器"
 },
-  hthGrapher:      { en: 'Calculator', zh: '计算器'
+  hthGrapher:      { en: 'Calculator', zh: '计算器',
+      zhHant: "計算器"
 },
-  battle:          { en: 'Battle', zh: '对战'
+  battle:          { en: 'Battle', zh: '对战',
+      zhHant: "對戰"
 },
-  viz:             { en: 'Distribution', zh: '分布'
+  viz:             { en: 'Distribution', zh: '分布',
+      zhHant: "分佈"
 },
-  upcoming:        { en: 'Calendar', zh: '日历'
+  upcoming:        { en: 'Calendar', zh: '日历',
+      zhHant: "日曆"
 },
   globe:           { en: 'Globe', zh: '地球' },
   cstimer:         { en: 'csTimer', zh: 'csTimer' },
-  timer:           { en: 'Timer', zh: '计时器'
+  timer:           { en: 'Timer', zh: '计时器',
+      zhHant: "計時器"
 },
-  frameCount:      { en: 'Frame Count', zh: '数帧'
+  frameCount:      { en: 'Frame Count', zh: '数帧',
+      zhHant: "數幀"
 },
-  scramble:        { en: 'Scramble', zh: '打乱'
+  scramble:        { en: 'Scramble', zh: '打乱',
+      zhHant: "打亂"
 },
   alg:             { en: 'Tutorial',   zh: '教程' },
   algdb:           { en: 'Algorithms', zh: '公式' },
   wiki:            { en: 'Wiki', zh: 'Wiki' },
   article:         { en: 'Articles', zh: '文章' },
-  sitesDirectory:  { en: 'Web', zh: '网站'
+  sitesDirectory:  { en: 'Web', zh: '网站',
+      zhHant: "網站"
 },
-  mosaic:          { en: 'Mosaic', zh: '马赛克'
+  mosaic:          { en: 'Mosaic', zh: '马赛克',
+      zhHant: "馬賽克"
 },
-  worldBests:      { en: 'World Bests', zh: '非官方纪录'
+  worldBests:      { en: 'World Bests', zh: '非官方纪录',
+      zhHant: "非官方紀錄"
 },
-  blog:            { en: 'Blog', zh: '博客'
+  blog:            { en: 'Blog', zh: '博客',
+      zhHant: "部落格"
 },
-  prediction:      { en: 'Prediction', zh: '预测'
+  prediction:      { en: 'Prediction', zh: '预测',
+      zhHant: "預測"
 },
-  visualcubeEditor:{ en: 'VisualCube', zh: '魔方可视化'
+  visualcubeEditor:{ en: 'VisualCube', zh: '魔方可视化',
+      zhHant: "魔方視覺化"
 },
-  analyze:         { en: 'Analyzer', zh: '打乱分析'
+  analyze:         { en: 'Analyzer', zh: '打乱分析',
+      zhHant: "打亂分析"
 },
-  gen:             { en: 'Scrambles', zh: '生成打乱'
+  gen:             { en: 'Scrambles', zh: '生成打乱',
+      zhHant: "生成打亂"
 },
-  memo:            { en: 'Memo', zh: '记忆'
+  memo:            { en: 'Memo', zh: '记忆',
+      zhHant: "記憶"
 },
-  code:            { en: 'Code', zh: '编程'
+  code:            { en: 'Code', zh: '编程',
+      zhHant: "程式設計"
 },
-  sim:             { en: 'Sim', zh: '模拟'
+  sim:             { en: 'Sim', zh: '模拟',
+      zhHant: "模擬"
 },
-  comp:            { en: 'Comp', zh: '比赛'
+  comp:            { en: 'Comp', zh: '比赛',
+      zhHant: "比賽"
 },
-  theoryGroup:     { en: 'Math', zh: '数学'
+  theoryGroup:     { en: 'Math', zh: '数学',
+      zhHant: "數學"
 },
-  comingSoon:      { en: 'Coming soon', zh: '即将上线'
+  comingSoon:      { en: 'Coming soon', zh: '即将上线',
+      zhHant: "即將上線"
 },
-  creditsPrefix:   { en: 'Inspired by', zh: '致谢'
+  creditsPrefix:   { en: 'Inspired by', zh: '致谢',
+      zhHant: "致謝"
 },
 };
 
@@ -99,11 +127,14 @@ export interface Section {
 export const SECTIONS: Section[] = [
   {
     id: 'train',
-    eyebrow: { en: 'TRAIN · 训练', zh: 'TRAIN · 训练'
+    eyebrow: { en: 'TRAIN · 训练', zh: 'TRAIN · 训练',
+        zhHant: "TRAIN · 訓練"
     },
-    title:   { en: 'Drill, time, refine.', zh: '练习、计时、复盘。'
+    title:   { en: 'Drill, time, refine.', zh: '练习、计时、复盘。',
+        zhHant: "練習、計時、覆盤。"
     },
-    sub:     { en: 'Drill algorithms, race the clock, battle head-to-head, recall image pairs.', zh: '背公式、计时、对战、记忆 — 把每一步打磨到肌肉记忆。'
+    sub:     { en: 'Drill algorithms, race the clock, battle head-to-head, recall image pairs.', zh: '背公式、计时、对战、记忆 — 把每一步打磨到肌肉记忆。',
+        zhHant: "背公式、計時、對戰、記憶 — 把每一步打磨到肌肉記憶。"
     },
     cards: [
       { id: 'cuberoot', href: '/trainer',      internal: true, tier: 'hero',     nameKey: 'cuberootTrainer' },
@@ -115,11 +146,14 @@ export const SECTIONS: Section[] = [
   },
   {
     id: 'learn',
-    eyebrow: { en: 'LEARN · 学习', zh: 'LEARN · 学习'
+    eyebrow: { en: 'LEARN · 学习', zh: 'LEARN · 学习',
+        zhHant: "LEARN · 學習"
     },
-    title:   { en: 'Methods and algorithms.', zh: '方法与公式。'
+    title:   { en: 'Methods and algorithms.', zh: '方法与公式。',
+        zhHant: "方法與公式。"
     },
-    sub:     { en: 'CFOP tutorials and the full algorithm library — beginner method to ZBLL.', zh: 'CFOP 教程 + 多阶公式库 — 从入门法到 ZBLL 全套查阅。'
+    sub:     { en: 'CFOP tutorials and the full algorithm library — beginner method to ZBLL.', zh: 'CFOP 教程 + 多阶公式库 — 从入门法到 ZBLL 全套查阅。',
+        zhHant: "CFOP 教程 + 多階公式庫 — 從入門法到 ZBLL 全套查閱。"
     },
     cards: [
       { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg', comingSoon: true },
@@ -132,9 +166,11 @@ export const SECTIONS: Section[] = [
   {
     id: 'tool',
     eyebrow: { en: 'TOOL · 工具', zh: 'TOOL · 工具' },
-    title:   { en: 'From scramble to solution.', zh: '从打乱到解法。'
+    title:   { en: 'From scramble to solution.', zh: '从打乱到解法。',
+        zhHant: "從打亂到解法。"
     },
-    sub:     { en: 'Recon, frame-count, visualizers, solvers — a tool for every step of the solve.', zh: '复盘、数帧、可视化、求解 — 每个解法环节都有专门工具。'
+    sub:     { en: 'Recon, frame-count, visualizers, solvers — a tool for every step of the solve.', zh: '复盘、数帧、可视化、求解 — 每个解法环节都有专门工具。',
+        zhHant: "覆盤、數幀、視覺化、求解 — 每個解法環節都有專門工具。"
     },
     cards: [
       { id: 'recon',       href: '/recon',       internal: true, tier: 'medium', Icon: ScanSearch, nameKey: 'recon' },
@@ -149,9 +185,11 @@ export const SECTIONS: Section[] = [
   {
     id: 'other',
     eyebrow: { en: 'OTHER · 其他', zh: 'OTHER · 其他' },
-    title:   { en: 'Read, code, explore.', zh: '阅读、编程、探索。'
+    title:   { en: 'Read, code, explore.', zh: '阅读、编程、探索。',
+        zhHant: "閱讀、程式設計、探索。"
     },
-    sub:     { en: 'Code notes, blog, link directory, unofficial world records.', zh: '代码笔记、博客、链接导航、非官方纪录。'
+    sub:     { en: 'Code notes, blog, link directory, unofficial world records.', zh: '代码笔记、博客、链接导航、非官方纪录。',
+        zhHant: "程式碼筆記、部落格、連結導航、非官方紀錄。"
     },
     cards: [
       { id: 'code', href: '/code',  internal: true,  tier: 'medium', Icon: CodeIcon, nameKey: 'code' },

@@ -8,6 +8,7 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { axisFor, tickLabel, type Metric } from '@/lib/top10-axis';
 import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { COUNTRY_TO_CONTINENT, type Continent } from '@/lib/country-continents';
+import i18n from "@/i18n/i18n-client";
 
 export type { Metric };
 
@@ -474,7 +475,7 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
   }
 
   if (typeof VideoEncoder === 'undefined') {
-    throw new Error(isZh ? '浏览器不支持 WebCodecs(需 Chrome / Edge / Safari 16.4+)' : 'Browser does not support WebCodecs');
+    throw new Error(i18n.language === 'zh-Hant' ? ('瀏覽器不支援 WebCodecs(需 Chrome / Edge / Safari 16.4+)') : (isZh ? '浏览器不支持 WebCodecs(需 Chrome / Edge / Safari 16.4+)' : 'Browser does not support WebCodecs'));
   }
   if (events.length === 0) throw new Error('no events');
 
@@ -489,7 +490,7 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
   if (totalFrames > MAX_FRAMES) totalFrames = MAX_FRAMES;
 
   // 2. 国旗预加载 — 收集所有 events 涉及的 iso2 并 fetch SVG → ImageBitmap
-  onProgress?.({ phase: isZh ? '加载国旗...' : 'Loading flags...', pct: 0, framesDone: 0, framesTotal: totalFrames });
+  onProgress?.({ phase: i18n.language === 'zh-Hant' ? ('載入國旗...') : (isZh ? '加载国旗...' : 'Loading flags...'), pct: 0, framesDone: 0, framesTotal: totalFrames });
   const isoSet = new Set<string>();
   for (const e of events) {
     const pi = persons[e.p];
@@ -624,9 +625,9 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
         const pct = (f + 1) / totalFrames;
         const pctTxt = (pct * 100).toFixed(0);
         onProgress?.({
-          phase: isZh
-            ? `编码中 ${pctTxt}% · ${fps.toFixed(0)} fps · 剩 ${eta.toFixed(0)}s`
-            : `Encoding ${pctTxt}% · ${fps.toFixed(0)} fps · ETA ${eta.toFixed(0)}s`,
+          phase: i18n.language === 'zh-Hant' ? (`編碼中 ${pctTxt}% · ${fps.toFixed(0)} fps · 剩 ${eta.toFixed(0)}s`) : (isZh
+                        ? `编码中 ${pctTxt}% · ${fps.toFixed(0)} fps · 剩 ${eta.toFixed(0)}s`
+                        : `Encoding ${pctTxt}% · ${fps.toFixed(0)} fps · ETA ${eta.toFixed(0)}s`),
           pct, framesDone: f + 1, framesTotal: totalFrames,
         });
         await new Promise<void>(r => setTimeout(r, 0));
@@ -634,7 +635,7 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
     }
 
     onProgress?.({
-      phase: isZh ? '正在封装 mp4...' : 'Finalizing mp4...',
+      phase: i18n.language === 'zh-Hant' ? ('正在封裝 mp4...') : (isZh ? '正在封装 mp4...' : 'Finalizing mp4...'),
       pct: 1, framesDone: totalFrames, framesTotal: totalFrames,
     });
     await encoder.flush();

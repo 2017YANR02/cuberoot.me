@@ -67,19 +67,31 @@ interface RowDef {
   en: string;
   hintZh: string;
   hintEn: string;
+    zhHant?: string;
+    hintZhHant?: string;
 }
 
 // Upstream li1..li5 order (edge / corner / parity / flip / twist).
 const ROW_DEFS: RowDef[] = [
-  { id: 'edge', zh: '棱块还原', en: 'Edges', hintZh: '例:XY 为缓冲块-X-Y 的三棱换', hintEn: 'e.g. XY = buffer-X-Y edge 3-cycle'
+  { id: 'edge', zh: '棱块还原', en: 'Edges', hintZh: '例:XY 为缓冲块-X-Y 的三棱换', hintEn: 'e.g. XY = buffer-X-Y edge 3-cycle',
+      zhHant: "稜塊還原",
+      hintZhHant: "例:XY 為緩衝塊-X-Y 的三稜換"
 },
-  { id: 'corner', zh: '角块还原', en: 'Corners', hintZh: '例:ZY 为缓冲块-Z-Y 的三角换', hintEn: 'e.g. ZY = buffer-Z-Y corner 3-cycle'
+  { id: 'corner', zh: '角块还原', en: 'Corners', hintZh: '例:ZY 为缓冲块-Z-Y 的三角换', hintEn: 'e.g. ZY = buffer-Z-Y corner 3-cycle',
+      zhHant: "角塊還原",
+      hintZhHant: "例:ZY 為緩衝塊-Z-Y 的三角換"
 },
-  { id: 'parity', zh: '奇偶还原', en: 'Parity', hintZh: '先棱后角,例:MX 为棱缓冲与 M 交换、角缓冲与 X 交换', hintEn: 'edge then corner, e.g. MX swaps edge-buffer↔M, corner-buffer↔X'
+  { id: 'parity', zh: '奇偶还原', en: 'Parity', hintZh: '先棱后角,例:MX 为棱缓冲与 M 交换、角缓冲与 X 交换', hintEn: 'edge then corner, e.g. MX swaps edge-buffer↔M, corner-buffer↔X',
+      zhHant: "奇偶還原",
+      hintZhHant: "先稜后角,例:MX 為稜緩衝與 M 交換、角緩衝與 X 交換"
 },
-  { id: 'flip', zh: '翻棱编码', en: 'Edge flips', hintZh: '例:NM 为缓冲块与 MN 块翻棱', hintEn: 'e.g. NM = flip buffer with the MN edge'
+  { id: 'flip', zh: '翻棱编码', en: 'Edge flips', hintZh: '例:NM 为缓冲块与 MN 块翻棱', hintEn: 'e.g. NM = flip buffer with the MN edge',
+      zhHant: "翻稜編碼",
+      hintZhHant: "例:NM 為緩衝塊與 MN 塊翻稜"
 },
-  { id: 'twist', zh: '翻角编码', en: 'Corner twists', hintZh: '例:ZX 为缓冲块逆翻与 XYZ 块顺翻', hintEn: 'e.g. ZX = CCW-twist buffer, CW-twist the XYZ corner'
+  { id: 'twist', zh: '翻角编码', en: 'Corner twists', hintZh: '例:ZX 为缓冲块逆翻与 XYZ 块顺翻', hintEn: 'e.g. ZX = CCW-twist buffer, CW-twist the XYZ corner',
+      zhHant: "翻角編碼",
+      hintZhHant: "例:ZX 為緩衝塊逆翻與 XYZ 塊順翻"
 },
 ];
 
@@ -257,7 +269,7 @@ const EMPTY_READ: CodeReadResult = { edges: [], corners: [], flips: '', twists: 
 export default function HelperPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('读码还原助手', 'Read & Restore Helper');
+  useDocumentTitle('读码还原助手', 'Read & Restore Helper', "讀碼還原助手");
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);
@@ -541,8 +553,8 @@ export default function HelperPage(): JSX.Element {
                     <GripVertical size={14} />
                   </span>
                   <div className="bld-restore-main">
-                    <label className="bld-restore-label" title={isZh ? row.hintZh : row.hintEn}>
-                      {(i18n.language.startsWith('zh') ? row.zh : row.en)}
+                    <label className="bld-restore-label" title={i18n.language === 'zh-Hant' ? (row.hintZhHant ?? row.hintZh) : (isZh ? row.hintZh : row.hintEn)}>
+                      {(i18n.language === 'zh-Hant' ? (row.zhHant ?? row.zh) : (i18n.language.startsWith('zh') ? row.zh : row.en))}
                     </label>
                     <div className="bld-input-wrap">
                       <input

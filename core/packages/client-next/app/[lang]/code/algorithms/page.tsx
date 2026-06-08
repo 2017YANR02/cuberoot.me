@@ -100,7 +100,7 @@ export default function AlgorithmsLandingPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('算法导览', 'Algorithms');
+  useDocumentTitle('算法导览', 'Algorithms', "演算法導覽");
 
   return (
     <div className="algos-landing">

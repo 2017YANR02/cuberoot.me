@@ -16,6 +16,7 @@ interface SmallGroup {
   elements: GroupEl[];
   /** op(i,j) = index of E[i]*E[j] in the element list */
   op: (i: number, j: number) => number;
+    labelZhHant?: string;
 }
 
 // C4 = Z/4Z under addition mod 4
@@ -26,6 +27,7 @@ const C4: SmallGroup = {
   order: 4,
   elements: [{ label: 'e' }, { label: 'g' }, { label: 'g²' }, { label: 'g³' }],
   op: (i, j) => (i + j) % 4,
+    labelZhHant: "C₄ (4階迴圈群)"
 };
 
 // V4 = C2 x C2, elements (0,0),(0,1),(1,0),(1,1) bitwise XOR
@@ -63,6 +65,7 @@ const S3: SmallGroup = {
   order: 6,
   elements: S3_LABELS.map(l => ({ label: l })),
   op: (i, j) => s3Idx(s3Compose(S3_PERMS[i], S3_PERMS[j])),
+    labelZhHant: "S₃ (3階對稱群, 6階)"
 };
 
 // Q8: quaternion group {±1,±i,±j,±k}
@@ -87,6 +90,7 @@ const Q8: SmallGroup = {
   order: 8,
   elements: Q8_LABELS.map(l => ({ label: l })),
   op: (i, j) => Q8_TABLE[i][j],
+    labelZhHant: "Q₈ (四元數群, 8階)"
 };
 
 const GROUPS: SmallGroup[] = [C4, V4, S3, Q8];

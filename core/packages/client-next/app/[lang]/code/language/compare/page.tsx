@@ -391,7 +391,7 @@ export default function CompareAo5Page() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('17 种语言, 一个 Ao5', 'One Ao5, Seventeen Languages');
+  useDocumentTitle('17 种语言, 一个 Ao5', 'One Ao5, Seventeen Languages', "17 種語言, 一個 Ao5");
 
   return (
     <LangCtx.Provider value={lang}>

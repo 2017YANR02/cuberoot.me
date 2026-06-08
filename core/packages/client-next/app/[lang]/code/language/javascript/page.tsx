@@ -468,7 +468,7 @@ export default function JavaScriptIntroPage() {
 
   useDocumentTitle(
     'JavaScript : TheLanguageOfTheWeb — 30 年的网页语言',
-    'JavaScript : TheLanguageOfTheWeb — Thirty Years of the Web',
+    'JavaScript : TheLanguageOfTheWeb — Thirty Years of the Web', "JavaScript : TheLanguageOfTheWeb — 30 年的網頁語言"
   );
 
   useEffect(() => {

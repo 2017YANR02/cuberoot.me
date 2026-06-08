@@ -27,6 +27,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import { ISO2_TO_CONTINENT, CONTINENT_RECORD_ABBR } from '@/lib/continent';
 import { RecordBadge } from '@/components/RecordBadge';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 export interface RankBadgeProps {
   /** 计时器内部 EventId */
@@ -107,9 +108,9 @@ export default function RankBadge({
   }
 
   const eventName = eventDisplayName(wcaEvent, isZh);
-  const typeWord = isZh
-    ? type === 'average' ? '平均' : '单次'
-    : type === 'average' ? 'average' : 'single';
+  const typeWord = i18n.language === 'zh-Hant' ? (type === 'average' ? '平均' : '單次') : (isZh
+      ? type === 'average' ? '平均' : '单次'
+      : type === 'average' ? 'average' : 'single');
 
   const SCOPE_ZH: Record<Scope, string> = { WR: '世界', CR: '大洲', NR: '全国' };
   const SCOPE_EN: Record<Scope, string> = { WR: 'World', CR: 'Continent', NR: 'National' };
@@ -135,9 +136,9 @@ export default function RankBadge({
     const n = data.rank.toLocaleString('en-US');
     return isZh ? `${SCOPE_ZH[scope]} #${n}` : `${SCOPE_EN[scope]} #${n}`;
   });
-  const detail = isZh
-    ? `${parts.join(' / ')}（WCA ${eventName}${typeWord},对比历史比赛成绩,非实时官方排名）`
-    : `${parts.join(' / ')} (WCA ${eventName} ${typeWord}, vs historical competition results — not a live official rank)`;
+  const detail = i18n.language === 'zh-Hant' ? (`${parts.join(' / ')}（WCA ${eventName}${typeWord},對比歷史比賽成績,非實時官方排名）`) : (isZh
+      ? `${parts.join(' / ')}（WCA ${eventName}${typeWord},对比历史比赛成绩,非实时官方排名）`
+      : `${parts.join(' / ')} (WCA ${eventName} ${typeWord}, vs historical competition results — not a live official rank)`);
 
   return (
     <span className={`rank-badge-row${className ? ` ${className}` : ''}`}>

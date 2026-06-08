@@ -20,6 +20,7 @@ import type { StageSegments } from '../_lib/reconstruct/stage_segments';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import './reconstruct.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   solveA: Solve;
@@ -40,6 +41,7 @@ interface StageRow {
   htmB: number | null;
   caseA: string | null;
   caseB: string | null;
+    labelZhHant?: string;
 }
 
 function getOrCompute(s: Solve): StageSegments | null {
@@ -242,12 +244,12 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
 
         <div style={headerStyle}>
           <div>
-            <div style={{ color: '#aaa', fontSize: 11 }}>A · {isZh ? evA.nameZh : evA.nameEn}</div>
+            <div style={{ color: '#aaa', fontSize: 11 }}>A · {i18n.language === 'zh-Hant' ? (evA.nameZhHant ?? evA.nameZh) : (isZh ? evA.nameZh : evA.nameEn)}</div>
             <div style={{ color: '#fff', fontWeight: 600, fontSize: isMobile ? 14 : 16 }}>{formatMs(totalA)}</div>
             <div style={subStyle}>{dtA.toLocaleString()}</div>
           </div>
           <div>
-            <div style={{ color: '#aaa', fontSize: 11 }}>B · {isZh ? evB.nameZh : evB.nameEn}</div>
+            <div style={{ color: '#aaa', fontSize: 11 }}>B · {i18n.language === 'zh-Hant' ? (evB.nameZhHant ?? evB.nameZh) : (isZh ? evB.nameZh : evB.nameEn)}</div>
             <div style={{ color: '#fff', fontWeight: 600, fontSize: isMobile ? 14 : 16 }}>{formatMs(totalB)}</div>
             <div style={subStyle}>{dtB.toLocaleString()}</div>
           </div>
@@ -290,7 +292,7 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
                 <div key={s.key} style={rowStyle}>
                   <div style={{ ...labelCellStyle, marginBottom: 4 }}>
                     <span className={`reconstruct-stage-dot stage-${s.key}`} style={{ marginRight: 4 }} />
-                    {isZh ? s.labelZh : s.labelEn}
+                    {i18n.language === 'zh-Hant' ? (s.labelZhHant ?? s.labelZh) : (isZh ? s.labelZh : s.labelEn)}
                   </div>
                   <div style={mobileLineStyle}>
                     <span style={mobileTagStyle}>A</span>
@@ -331,7 +333,7 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
                 <div style={colStyle}>
                   <div style={labelCellStyle}>
                     <span className={`reconstruct-stage-dot stage-${s.key}`} style={{ marginRight: 4 }} />
-                    {isZh ? s.labelZh : s.labelEn}
+                    {i18n.language === 'zh-Hant' ? (s.labelZhHant ?? s.labelZh) : (isZh ? s.labelZh : s.labelEn)}
                   </div>
                   <div>{fmtStage(s.msA)}</div>
                   <div style={subStyle}>

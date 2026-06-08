@@ -479,7 +479,7 @@ export default function PhpIntroPage() {
 
   useDocumentTitle(
     'PHP : 仍跑着 75% 的网络 — Lerdorf 的简历计数器走过 30 年',
-    'PHP : still running 75% of the web — Lerdorf\'s resume counter, 30 years on',
+    'PHP : still running 75% of the web — Lerdorf\'s resume counter, 30 years on', "PHP : 仍跑著 75% 的網路 — Lerdorf 的簡歷計數器走過 30 年"
   );
 
   useEffect(() => {

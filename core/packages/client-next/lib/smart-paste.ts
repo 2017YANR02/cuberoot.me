@@ -17,6 +17,7 @@ export interface PasteIntent {
   /** 给 UI 显示的简短标签(中英共用,UI 层再 i18n) */
   labelZh: string;
   labelEn: string;
+    labelZhHant?: string;
 }
 
 const MOVE_RE = /^([FRULBDfrulbd][wW]?|[xyzXYZ]|[MESmes])(?:[2'])?$/;
@@ -41,13 +42,16 @@ export function detectPasteIntent(raw: string): PasteIntent | null {
       route: `/wca/persons/${mPerson[1]}`,
       labelZh: '选手页',
       labelEn: 'Person',
+        labelZhHant: "選手頁"
     };
   }
 
   // WCA comp URL
   const compRoute = rewriteWcaCompUrl(s);
   if (compRoute) {
-    return { kind: 'wca-comp', route: compRoute, labelZh: '比赛页', labelEn: 'Competition' };
+    return { kind: 'wca-comp', route: compRoute, labelZh: '比赛页', labelEn: 'Competition',
+        labelZhHant: "比賽頁"
+    };
   }
 
   // cubing.com 比赛页
@@ -58,12 +62,15 @@ export function detectPasteIntent(raw: string): PasteIntent | null {
       route: `/wca/comp/${mCubingCom[1]}`,
       labelZh: '比赛页',
       labelEn: 'Competition',
+        labelZhHant: "比賽頁"
     };
   }
 
   // YouTube / Twitch 视频 → 数帧 (拖文件更直接,链接先放着待开发,目前路由到 frame-count 让用户手动粘)
   if (/(?:youtube\.com\/watch|youtu\.be\/|twitch\.tv\/videos\/)/i.test(s)) {
-    return { kind: 'youtube', route: '/frame-count', labelZh: '数帧', labelEn: 'Frame count' };
+    return { kind: 'youtube', route: '/frame-count', labelZh: '数帧', labelEn: 'Frame count',
+        labelZhHant: "數幀"
+    };
   }
 
   // 3x3 scramble / alg (>= 6 tokens, >= 70% 合法 move 记号)
@@ -74,6 +81,7 @@ export function detectPasteIntent(raw: string): PasteIntent | null {
       route: `/scramble/analyzer?scramble=${enc}`,
       labelZh: '打乱分析',
       labelEn: 'Analyzer',
+        labelZhHant: "打亂分析"
     };
   }
 

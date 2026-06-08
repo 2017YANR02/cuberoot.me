@@ -440,7 +440,7 @@ export default function TsIntroPage() {
 
   useDocumentTitle(
     'TypeScript : JavaScript — AI 时代的事实标准',
-    'TypeScript : JavaScript — De Facto Language of the AI Era',
+    'TypeScript : JavaScript — De Facto Language of the AI Era', "TypeScript : JavaScript — AI 時代的事實標準"
   );
 
   useEffect(() => {

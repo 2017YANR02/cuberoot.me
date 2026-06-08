@@ -7,6 +7,7 @@ import TheoreticalLimitView from './TheoreticalLimitView';
 import Link from '@/components/AppLink';
 import { ArrowRight } from 'lucide-react';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface EventData {
   wr_by_year: Array<{ year: number; wr_single: number | null; wr_avg: number | null; solves: number }>;
@@ -111,7 +112,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
   }
   if (fitAvg) {
     series.push({
-      name: isZh ? `${event.avgFormat} 拟合` : `${event.avgFormat} fit`,
+      name: i18n.language === 'zh-Hant' ? (`${event.avgFormat} 擬合`) : (isZh ? `${event.avgFormat} 拟合` : `${event.avgFormat} fit`),
       color: COLORS.avg,
       dashed: true,
       width: 1.5,
@@ -273,7 +274,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
           const curAvg = lim?.current_wr_avg_value ?? (wrYears.length > 0 ? wrYears[wrYears.length - 1].wr_avg : null);
           return (
             <div className="pred-card">
-              <div className="pred-card-label">{isZh ? `当前 WR ${event.avgFormat}` : `Current WR ${event.avgFormat}`}</div>
+              <div className="pred-card-label">{i18n.language === 'zh-Hant' ? (`當前 WR ${event.avgFormat}`) : (isZh ? `当前 WR ${event.avgFormat}` : `Current WR ${event.avgFormat}`)}</div>
               <div className="pred-card-value">{curAvg !== null ? formatVal(curAvg, event, 'average') : '–'}</div>
               <div className="pred-card-sub">{lim?.current_wr_avg_holder ?? ''}</div>
             </div>
@@ -299,17 +300,22 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       </div>
 
       <p>
-        {isZh ? (
-          <>
-            从 {data.wr_by_year[0]?.year} 到 {data.wr_by_year.at(-1)?.year},{event.name_zh} 的 WR 单次从 <strong>{dispVal(wrMin ?? null)}</strong> 演化到 <strong>{dispVal(wrLast ?? null)}</strong>{ratio ? `,共缩了 ${ratio.toFixed(1)} 倍` : ''}。
-            数据覆盖 {yearsCovered} 年,累计 {totalCubers} 选手-年。
-          </>
-        ) : (
-          <>
-            From {data.wr_by_year[0]?.year} to {data.wr_by_year.at(-1)?.year}, the {event.name_en} WR single has evolved from <strong>{dispVal(wrMin ?? null)}</strong> to <strong>{dispVal(wrLast ?? null)}</strong>{ratio ? ` — a ${ratio.toFixed(1)}× compression` : ''}.
-            Coverage: {yearsCovered} years, {totalCubers} cumulative cuber-years.
-          </>
-        )}
+        {i18n.language === 'zh-Hant' ? ((
+                            <>
+                              從 {data.wr_by_year[0]?.year} 到 {data.wr_by_year.at(-1)?.year},{event.name_zh} 的 WR 單次從 <strong>{dispVal(wrMin ?? null)}</strong> 演化到 <strong>{dispVal(wrLast ?? null)}</strong>{ratio ? `,共縮了 ${ratio.toFixed(1)} 倍` : ''}。
+                              資料覆蓋 {yearsCovered} 年,累計 {totalCubers} 選手-年。
+                            </>
+                          )) : (isZh ? (
+                            <>
+                              从 {data.wr_by_year[0]?.year} 到 {data.wr_by_year.at(-1)?.year},{event.name_zh} 的 WR 单次从 <strong>{dispVal(wrMin ?? null)}</strong> 演化到 <strong>{dispVal(wrLast ?? null)}</strong>{ratio ? `,共缩了 ${ratio.toFixed(1)} 倍` : ''}。
+                              数据覆盖 {yearsCovered} 年,累计 {totalCubers} 选手-年。
+                            </>
+                          ) : (
+                            <>
+                              From {data.wr_by_year[0]?.year} to {data.wr_by_year.at(-1)?.year}, the {event.name_en} WR single has evolved from <strong>{dispVal(wrMin ?? null)}</strong> to <strong>{dispVal(wrLast ?? null)}</strong>{ratio ? ` — a ${ratio.toFixed(1)}× compression` : ''}.
+                              Coverage: {yearsCovered} years, {totalCubers} cumulative cuber-years.
+                            </>
+                          ))}
       </p>
 
       {/* 主图: WR */}
@@ -482,17 +488,22 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
         zhHant: "單次 (秒)"
     }))} />
       <p className="pred-note">
-        {isZh ? (
-          <>
-            <strong>注:</strong> Top-N 是「<em>该年内</em>排名 N 的最好成绩」,每年独立采样,<strong>不是单调下降的</strong>。
-            2020-2021 抬头是 COVID 比赛大量取消所致 — 排名越深 (Top 1000 / 10000) 抬得越明显,因为这个位置是当年还在比的最末尾,由出赛次数少, 没机会刷低 PB 的新人占据;Top 1 / Top 10 抖动小,是因为顶尖选手基本没受影响。
-          </>
-        ) : (
-          <>
-            <strong>Note:</strong> Top-N is the rank-N best result <em>achieved within that year</em>, sampled independently per year — <strong>not monotonically decreasing</strong>.
-            The 2020-2021 hump reflects COVID competition cancellations — the deeper the rank, the bigger the hump, because the rank-1000 / rank-10000 spot that year was held by infrequent competitors with few attempts to lower their PB. Top 1 / Top 10 stay stable since elite cubers kept practicing regardless.
-          </>
-        )}
+        {i18n.language === 'zh-Hant' ? ((
+                            <>
+                              <strong>注:</strong> Top-N 是「<em>該年內</em>排名 N 的最好成績」,每年獨立取樣,<strong>不是單調下降的</strong>。
+                              2020-2021 抬頭是 COVID 比賽大量取消所致 — 排名越深 (Top 1000 / 10000) 抬得越明顯,因為這個位置是當年還在比的最末尾,由出賽次數少, 沒機會刷低 PB 的新人佔據;Top 1 / Top 10 抖動小,是因為頂尖選手基本沒受影響。
+                            </>
+                          )) : (isZh ? (
+                            <>
+                              <strong>注:</strong> Top-N 是「<em>该年内</em>排名 N 的最好成绩」,每年独立采样,<strong>不是单调下降的</strong>。
+                              2020-2021 抬头是 COVID 比赛大量取消所致 — 排名越深 (Top 1000 / 10000) 抬得越明显,因为这个位置是当年还在比的最末尾,由出赛次数少, 没机会刷低 PB 的新人占据;Top 1 / Top 10 抖动小,是因为顶尖选手基本没受影响。
+                            </>
+                          ) : (
+                            <>
+                              <strong>Note:</strong> Top-N is the rank-N best result <em>achieved within that year</em>, sampled independently per year — <strong>not monotonically decreasing</strong>.
+                              The 2020-2021 hump reflects COVID competition cancellations — the deeper the rank, the bigger the hump, because the rank-1000 / rank-10000 spot that year was held by infrequent competitors with few attempts to lower their PB. Top 1 / Top 10 stay stable since elite cubers kept practicing regardless.
+                            </>
+                          ))}
       </p>
 
       {/* Sub-X 增长 */}

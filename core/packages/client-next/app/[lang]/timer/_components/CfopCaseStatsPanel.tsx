@@ -22,6 +22,7 @@ import { useState } from 'react';
 import type { EventId, Solve } from '../_lib/types';
 import { formatMs } from '../_lib/stats';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   event: EventId;
@@ -130,9 +131,9 @@ function CaseTable({
           onClick={onToggle}
           style={{ marginTop: 6 }}
         >
-          {isZh
-            ? `展开剩余 ${hidden} 项`
-            : `Show ${hidden} more`}
+          {i18n.language === 'zh-Hant' ? (`展開剩餘 ${hidden} 項`) : (isZh
+                              ? `展开剩余 ${hidden} 项`
+                              : `Show ${hidden} more`)}
         </button>
       )}
       {showAll && rows.length > cap && (

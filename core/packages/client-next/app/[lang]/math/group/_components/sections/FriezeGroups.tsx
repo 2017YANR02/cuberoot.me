@@ -30,20 +30,29 @@ const FRIEZE_TABLE: FriezeInfo[] = [
 ];
 
 // Map IUC id to Conway nickname + zh description
-const FRIEZE_NAMES: Record<FriezeId, { en: string; zh: string; conway: string }> = {
-  p1:   { en: 'Translation only',                    zh: '仅平移',                conway: 'hop'
+const FRIEZE_NAMES: Record<FriezeId, { en: string; zh: string; conway: string
+        zhHant?: string;
+ }> = {
+  p1:   { en: 'Translation only',                    zh: '仅平移',                conway: 'hop',
+      zhHant: "僅平移"
 },
-  p11g: { en: 'Glide reflection',                    zh: '滑动反射',              conway: 'step'
+  p11g: { en: 'Glide reflection',                    zh: '滑动反射',              conway: 'step',
+      zhHant: "滑動反射"
 },
-  p1m1: { en: 'Vertical mirrors',                    zh: '竖直镜面',              conway: 'sidle'
+  p1m1: { en: 'Vertical mirrors',                    zh: '竖直镜面',              conway: 'sidle',
+      zhHant: "豎直鏡面"
 },
-  p2:   { en: '180° rotations',                      zh: '半转旋转',              conway: 'spinning hop'
+  p2:   { en: '180° rotations',                      zh: '半转旋转',              conway: 'spinning hop',
+      zhHant: "半轉旋轉"
 },
-  p2mg: { en: 'Vertical mirrors + glide + rotation', zh: '竖直镜面 + 滑动 + 半转', conway: 'spinning sidle'
+  p2mg: { en: 'Vertical mirrors + glide + rotation', zh: '竖直镜面 + 滑动 + 半转', conway: 'spinning sidle',
+      zhHant: "豎直鏡面 + 滑動 + 半轉"
 },
-  p11m: { en: 'Horizontal mirror',                   zh: '水平镜面',              conway: 'jump'
+  p11m: { en: 'Horizontal mirror',                   zh: '水平镜面',              conway: 'jump',
+      zhHant: "水平鏡面"
 },
-  p2mm: { en: 'All symmetries',                      zh: '全部对称',              conway: 'spinning jump'
+  p2mm: { en: 'All symmetries',                      zh: '全部对称',              conway: 'spinning jump',
+      zhHant: "全部對稱"
 },
 };
 
@@ -198,7 +207,7 @@ function SevenTypeFriezeExplorer({ lang }: { lang: 'zh' | 'en' }) {
         >
           {FRIEZE_TABLE.map(f => (
             <option key={f.id} value={f.id}>
-              {f.id} — {(i18n.language.startsWith('zh') ? FRIEZE_NAMES[f.id].zh : FRIEZE_NAMES[f.id].en)}
+              {f.id} — {(i18n.language === 'zh-Hant' ? (FRIEZE_NAMES[f.id].zhHant ?? FRIEZE_NAMES[f.id].zh) : (i18n.language.startsWith('zh') ? FRIEZE_NAMES[f.id].zh : FRIEZE_NAMES[f.id].en))}
             </option>
           ))}
         </select>
@@ -525,7 +534,7 @@ function BuildYourOwnFrieze({ lang }: { lang: 'zh' | 'en' }) {
           {info.id}
         </span>
         <span style={{ fontSize: 14, color: 'var(--ink-dim)' }}>
-          {(i18n.language.startsWith('zh') ? FRIEZE_NAMES[info.id].zh : FRIEZE_NAMES[info.id].en)}
+          {(i18n.language === 'zh-Hant' ? (FRIEZE_NAMES[info.id].zhHant ?? FRIEZE_NAMES[info.id].zh) : (i18n.language.startsWith('zh') ? FRIEZE_NAMES[info.id].zh : FRIEZE_NAMES[info.id].en))}
         </span>
         <span style={{ fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--ink-dim)',
           background: 'var(--bg-deep)', padding: '2px 8px', borderRadius: 4 }}>

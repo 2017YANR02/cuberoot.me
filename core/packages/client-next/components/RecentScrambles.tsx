@@ -30,23 +30,32 @@ interface RecentScramblesJson {
 }
 
 const VARIANT_ORDER = ['std', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo'];
-const VARIANT_LABEL: Record<string, { zh: string; en: string }> = {
-  std: { zh: '标准', en: 'Standard'
+const VARIANT_LABEL: Record<string, { zh: string; en: string
+        zhHant?: string;
+ }> = {
+  std: { zh: '标准', en: 'Standard',
+      zhHant: "標準"
 },
   eo: { zh: 'EO', en: 'EO' },
-  pseudo: { zh: '伪', en: 'Pseudo'
+  pseudo: { zh: '伪', en: 'Pseudo',
+      zhHant: "偽"
 },
-  pseudo_pair: { zh: '伪基态', en: 'Pseudo Pair'
+  pseudo_pair: { zh: '伪基态', en: 'Pseudo Pair',
+      zhHant: "偽基態"
 },
-  pair: { zh: '基态', en: 'Pair'
+  pair: { zh: '基态', en: 'Pair',
+      zhHant: "基態"
 },
   f2leo: { zh: 'F2LEO', en: 'F2LEO' },
-  pseudo_f2leo: { zh: '伪 F2LEO', en: 'Pseudo F2LEO'
+  pseudo_f2leo: { zh: '伪 F2LEO', en: 'Pseudo F2LEO',
+      zhHant: "偽 F2LEO"
 },
 };
 
 const METRIC_ORDER = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc'];
-const METRIC_LABEL: Record<string, { zh: string; en: string }> = {
+const METRIC_LABEL: Record<string, { zh: string; en: string
+        zhHant?: string;
+ }> = {
   cross: { zh: '十字', en: 'Cross' },
   xc: { zh: 'XCross', en: 'XCross' },
   xxc: { zh: 'XXCross', en: 'XXCross' },

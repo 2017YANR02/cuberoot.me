@@ -78,21 +78,23 @@ export interface InteractiveCubeNetProps {
   onActiveColorChange: (c: PaintColor) => void;
   pixelSize: number;
   onSolve?: (facelet: string) => void;
-  solveLabel?: { zh: string; en: string };
+  solveLabel?: { zh: string; en: string
+    zhHant?: string;
+ };
 }
 
 function friendlyValidErr(msg: string, isZh: boolean): string {
-  const t = (z: string, e: string) => isZh ? z : e;
-  if (msg.includes('color counts != 9')) return t('每种颜色必须正好 9 格', 'Each color must appear exactly 9 times');
-  if (msg.includes('not in centers')) return t('出现了非中心色字符', 'Sticker color does not match any center');
-  if (msg.includes('corner permutation not bijective')) return t('某个角块出现两次(或缺失)', 'Some corner piece appears twice or is missing');
-  if (msg.includes('edge permutation not bijective')) return t('某个棱块出现两次(或缺失)', 'Some edge piece appears twice or is missing');
-  if (msg.includes('corner orientation sum')) return t('单个角块被扭了 ±120°(角朝向之和必须是 3 的倍数)', 'A single corner is twisted (corner orientation invariant)');
-  if (msg.includes('edge orientation sum')) return t('单个棱块被翻了(棱翻转之和必须是偶数)', 'A single edge is flipped (edge orientation invariant)');
-  if (msg.includes('parity mismatch')) return t('角棱排列奇偶不一致(只有两个块对调是不可能的)', 'Corner/edge permutation parity mismatch — single 2-cycle swap is impossible');
-  if (msg.includes('no matching piece') && msg.includes('corner')) return t('某个角的颜色组合不存在(角必须由相邻 3 个面组成)', 'A corner has colors that cannot belong to any real cubelet');
-  if (msg.includes('no matching piece') && msg.includes('edge')) return t('某个棱的颜色组合不存在(棱必须由相邻 2 个面组成)', 'An edge has colors that cannot belong to any real cubelet');
-  if (msg.includes('no U/D sticker')) return t('某个角没有 U/D 面颜色(每个角必须含 U 或 D)', 'A corner has no U/D sticker (every corner must include U or D)');
+  const t = (z: string, e: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? z) : (isZh ? z : e);
+  if (msg.includes('color counts != 9')) return t('每种颜色必须正好 9 格', 'Each color must appear exactly 9 times', "每種顏色必須正好 9 格");
+  if (msg.includes('not in centers')) return t('出现了非中心色字符', 'Sticker color does not match any center', "出現了非中心色字元");
+  if (msg.includes('corner permutation not bijective')) return t('某个角块出现两次(或缺失)', 'Some corner piece appears twice or is missing', "某個角塊出現兩次(或缺失)");
+  if (msg.includes('edge permutation not bijective')) return t('某个棱块出现两次(或缺失)', 'Some edge piece appears twice or is missing', "某個稜塊出現兩次(或缺失)");
+  if (msg.includes('corner orientation sum')) return t('单个角块被扭了 ±120°(角朝向之和必须是 3 的倍数)', 'A single corner is twisted (corner orientation invariant)', "單個角塊被扭了 ±120°(角朝向之和必須是 3 的倍數)");
+  if (msg.includes('edge orientation sum')) return t('单个棱块被翻了(棱翻转之和必须是偶数)', 'A single edge is flipped (edge orientation invariant)', "單個稜塊被翻了(稜翻轉之和必須是偶數)");
+  if (msg.includes('parity mismatch')) return t('角棱排列奇偶不一致(只有两个块对调是不可能的)', 'Corner/edge permutation parity mismatch — single 2-cycle swap is impossible', "角稜排列奇偶不一致(只有兩個塊對調是不可能的)");
+  if (msg.includes('no matching piece') && msg.includes('corner')) return t('某个角的颜色组合不存在(角必须由相邻 3 个面组成)', 'A corner has colors that cannot belong to any real cubelet', "某個角的顏色組合不存在(角必須由相鄰 3 個面組成)");
+  if (msg.includes('no matching piece') && msg.includes('edge')) return t('某个棱的颜色组合不存在(棱必须由相邻 2 个面组成)', 'An edge has colors that cannot belong to any real cubelet', "某個稜的顏色組合不存在(稜必須由相鄰 2 個面組成)");
+  if (msg.includes('no U/D sticker')) return t('某个角没有 U/D 面颜色(每个角必须含 U 或 D)', 'A corner has no U/D sticker (every corner must include U or D)', "某個角沒有 U/D 面顏色(每個角必須含 U 或 D)");
   return msg;
 }
 
@@ -101,7 +103,7 @@ export default function InteractiveCubeNet({
 }: InteractiveCubeNetProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const router = useRouter();
 
   const hasEmpty = useMemo(() => facelet.includes('X'), [facelet]);
@@ -145,14 +147,14 @@ export default function InteractiveCubeNet({
         if (sibColor === activeColor) {
           flashReject(t(
             '一个角/棱块上不能有重复颜色',
-            'A piece cannot have two stickers of the same color',
+            'A piece cannot have two stickers of the same color', "一個角/稜塊上不能有重複顏色"
           ));
           return;
         }
         if (OPPOSITE_FACE[sibColor] === activeColor) {
           flashReject(t(
             `一个角/棱块上不能同时含相对面颜色(${sibColor} 与 ${activeColor})`,
-            `A piece cannot have opposite-face colors (${sibColor} and ${activeColor})`,
+            `A piece cannot have opposite-face colors (${sibColor} and ${activeColor})`, `一個角/稜塊上不能同時含相對面顏色(${sibColor} 與 ${activeColor})`
           ));
           return;
         }
@@ -207,7 +209,7 @@ export default function InteractiveCubeNet({
       </div>
 
       <div className="vc-net-toolbar">
-        <span className="vc-net-toolbar-label">{t('涂色', 'Paint')}:</span>
+        <span className="vc-net-toolbar-label">{t('涂色', 'Paint', "塗色")}:</span>
         {FACES.map(f => (
           <button
             key={f}
@@ -236,13 +238,13 @@ export default function InteractiveCubeNet({
           <Eraser size={14} />
           <span>{t('清空', 'Empty')}</span>
         </button>
-        <button type="button" className="vc-net-btn" onClick={setClean} title={t('还原到 solved', 'Reset to solved')}>
+        <button type="button" className="vc-net-btn" onClick={setClean} title={t('还原到 solved', 'Reset to solved', "還原到 solved")}>
           <RotateCcw size={14} />
-          <span>{t('还原', 'Clean')}</span>
+          <span>{t('还原', 'Clean', "還原")}</span>
         </button>
-        <button type="button" className="vc-net-btn" onClick={setRandom} title={t('随机合法状态(25 步随机 HTM)', 'Random legal state (25 random HTM moves)')}>
+        <button type="button" className="vc-net-btn" onClick={setRandom} title={t('随机合法状态(25 步随机 HTM)', 'Random legal state (25 random HTM moves)', "隨機合法狀態(25 步隨機 HTM)")}>
           <Shuffle size={14} />
-          <span>{t('随机', 'Random')}</span>
+          <span>{t('随机', 'Random', "隨機")}</span>
         </button>
         <button
           type="button"
@@ -250,10 +252,10 @@ export default function InteractiveCubeNet({
           disabled={solveBlocked || facelet === SOLVED_FACELET}
           onClick={goSolver}
           title={validErr
-            ?? (hasEmpty ? t('还有空缺颜色未填', 'Some stickers are still empty') : t('用 cubeopt 求最优解', 'Solve optimally with cubeopt'))}
+            ?? (hasEmpty ? t('还有空缺颜色未填', 'Some stickers are still empty', "還有空缺顏色未填") : t('用 cubeopt 求最优解', 'Solve optimally with cubeopt', "用 cubeopt 求最優解"))}
         >
           <Sparkles size={14} />
-          <span>{solveLabel ? ((i18n.language.startsWith('zh') ? solveLabel.zh : solveLabel.en)) : t('求最优解', 'Solve')}</span>
+          <span>{solveLabel ? ((i18n.language === 'zh-Hant' ? (solveLabel.zhHant ?? solveLabel.zh) : (i18n.language.startsWith('zh') ? solveLabel.zh : solveLabel.en))) : t('求最优解', 'Solve', "求最優解")}</span>
         </button>
       </div>
 
@@ -262,7 +264,7 @@ export default function InteractiveCubeNet({
       )}
       {validErr && !rejectMsg && (
         <div className="vc-net-err">
-          {t('当前状态非法:', 'Invalid state: ')}{validErr}
+          {t('当前状态非法:', 'Invalid state: ', "當前狀態非法:")}{validErr}
         </div>
       )}
     </div>

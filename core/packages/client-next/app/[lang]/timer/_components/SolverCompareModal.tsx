@@ -15,6 +15,7 @@ import {
 } from '../_lib/solver/methods';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   scramble: string;
@@ -172,7 +173,7 @@ function MethodCard({ outcome, isZh, bestTotal }: CardProps) {
     <div style={isBest ? cardBestStyle : cardStyle}>
       <div style={cardHeadStyle}>
         <span style={isBest ? cardTitleBestStyle : cardTitleStyle}>
-          {isZh ? entry.nameZh : entry.nameEn}
+          {i18n.language === 'zh-Hant' ? (entry.nameZhHant ?? entry.nameZh) : (isZh ? entry.nameZh : entry.nameEn)}
         </span>
         <span style={cardTotalStyle}>
           {!r
@@ -230,7 +231,7 @@ function MethodAccordion({ outcome, isZh, bestTotal, open, onToggle }: Accordion
         aria-expanded={open}
       >
         <span style={isBest ? cardTitleBestStyle : cardTitleStyle}>
-          {isZh ? entry.nameZh : entry.nameEn}
+          {i18n.language === 'zh-Hant' ? (entry.nameZhHant ?? entry.nameZh) : (isZh ? entry.nameZh : entry.nameEn)}
         </span>
         <span style={cardTotalStyle}>
           {!r

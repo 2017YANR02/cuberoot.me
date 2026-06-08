@@ -34,12 +34,14 @@ interface BldModule {
   en: string;
   img?: StaticImg;
   icon?: React.ReactNode;
+    zhHant?: string;
 }
 
 interface BldGroup {
   zh: string;
   en: string;
   modules: BldModule[];
+    zhHant?: string;
 }
 
 const GROUPS: BldGroup[] = [
@@ -47,73 +49,95 @@ const GROUPS: BldGroup[] = [
     zh: '读码还原',
     en: 'Read & Solve',
     modules: [
-      { href: '/trainer/3bld/helper', zh: '读码还原助手', en: 'Read-Code Helper', img: helperIcon
+      { href: '/trainer/3bld/helper', zh: '读码还原助手', en: 'Read-Code Helper', img: helperIcon,
+          zhHant: "讀碼還原助手"
     },
-    ]
+    ],
+      zhHant: "讀碼還原"
 },
   {
     zh: '公式训练',
     en: 'Algorithm Drills',
     modules: [
-      { href: '/trainer/3bld/edge', zh: '棱块公式训练', en: 'Edge Trainer', img: edgeIcon
+      { href: '/trainer/3bld/edge', zh: '棱块公式训练', en: 'Edge Trainer', img: edgeIcon,
+          zhHant: "稜塊公式訓練"
     },
-      { href: '/trainer/3bld/corner', zh: '角块公式训练', en: 'Corner Trainer', img: cornerIcon
+      { href: '/trainer/3bld/corner', zh: '角块公式训练', en: 'Corner Trainer', img: cornerIcon,
+          zhHant: "角塊公式訓練"
     },
-      { href: '/trainer/3bld/twist', zh: '翻角公式训练', en: 'Corner Twist Trainer', img: twistIcon
+      { href: '/trainer/3bld/twist', zh: '翻角公式训练', en: 'Corner Twist Trainer', img: twistIcon,
+          zhHant: "翻角公式訓練"
     },
-      { href: '/trainer/3bld/flip', zh: '翻棱公式训练', en: 'Edge Flip Trainer', img: flipIcon
+      { href: '/trainer/3bld/flip', zh: '翻棱公式训练', en: 'Edge Flip Trainer', img: flipIcon,
+          zhHant: "翻稜公式訓練"
     },
-    ]
+    ],
+      zhHant: "公式訓練"
 },
   {
     zh: '浮动训练',
     en: 'Floating Buffer',
     modules: [
-      { href: '/trainer/3bld/edge-float', zh: '棱块浮动训练', en: 'Edge Float Trainer', img: edgeFloatIcon
+      { href: '/trainer/3bld/edge-float', zh: '棱块浮动训练', en: 'Edge Float Trainer', img: edgeFloatIcon,
+          zhHant: "稜塊浮動訓練"
     },
-      { href: '/trainer/3bld/corner-float', zh: '角块浮动训练', en: 'Corner Float Trainer', img: cornerFloatIcon
+      { href: '/trainer/3bld/corner-float', zh: '角块浮动训练', en: 'Corner Float Trainer', img: cornerFloatIcon,
+          zhHant: "角塊浮動訓練"
     },
-    ]
+    ],
+      zhHant: "浮動訓練"
 },
   {
     zh: '编组训练',
     en: '2-2 Swap',
     modules: [
-      { href: '/trainer/3bld/2c2c', zh: '2C2C 训练', en: '2C2C Trainer', img: twoC2cIcon
+      { href: '/trainer/3bld/2c2c', zh: '2C2C 训练', en: '2C2C Trainer', img: twoC2cIcon,
+          zhHant: "2C2C 訓練"
     },
-      { href: '/trainer/3bld/2e2e', zh: '2E2E 训练', en: '2E2E Trainer', img: twoE2eIcon
+      { href: '/trainer/3bld/2e2e', zh: '2E2E 训练', en: '2E2E Trainer', img: twoE2eIcon,
+          zhHant: "2E2E 訓練"
     },
-    ]
+    ],
+      zhHant: "編組訓練"
 },
   {
     zh: '奇偶训练',
     en: 'Parity',
     modules: [
-      { href: '/trainer/3bld/ltct', zh: '奇偶带翻训练', en: 'Parity + Twist (LTCT)', img: ltctIcon
+      { href: '/trainer/3bld/ltct', zh: '奇偶带翻训练', en: 'Parity + Twist (LTCT)', img: ltctIcon,
+          zhHant: "奇偶帶翻訓練"
     },
-      { href: '/trainer/3bld/parity', zh: '奇偶训练', en: 'Parity Trainer', img: parityIcon
+      { href: '/trainer/3bld/parity', zh: '奇偶训练', en: 'Parity Trainer', img: parityIcon,
+          zhHant: "奇偶訓練"
     },
-    ]
+    ],
+      zhHant: "奇偶訓練"
 },
   {
     zh: '记忆与公式库',
     en: 'Memory & Library',
     modules: [
-      { href: '/trainer/3bld/memo', zh: '记忆默写训练', en: 'Memory Recall', icon: <Brain size={40} strokeWidth={1.5} />
+      { href: '/trainer/3bld/memo', zh: '记忆默写训练', en: 'Memory Recall', icon: <Brain size={40} strokeWidth={1.5} />,
+          zhHant: "記憶默寫訓練"
     },
-      { href: '/trainer/3bld/comm', zh: '公式库', en: 'Commutator Library', icon: <Library size={40} strokeWidth={1.5} />
+      { href: '/trainer/3bld/comm', zh: '公式库', en: 'Commutator Library', icon: <Library size={40} strokeWidth={1.5} />,
+          zhHant: "公式庫"
     },
-    ]
+    ],
+      zhHant: "記憶與公式庫"
 },
   {
     zh: '参考',
     en: 'Reference',
     modules: [
-      { href: '/trainer/3bld/readme', zh: '说明', en: 'Introduction', icon: <FileText size={40} strokeWidth={1.5} />
+      { href: '/trainer/3bld/readme', zh: '说明', en: 'Introduction', icon: <FileText size={40} strokeWidth={1.5} />,
+          zhHant: "說明"
     },
-      { href: '/trainer/3bld/resources', zh: '资源汇总', en: 'Resources', icon: <Compass size={40} strokeWidth={1.5} />
+      { href: '/trainer/3bld/resources', zh: '资源汇总', en: 'Resources', icon: <Compass size={40} strokeWidth={1.5} />,
+          zhHant: "資源彙總"
     },
-    ]
+    ],
+      zhHant: "參考"
 },
 ];
 
@@ -151,7 +175,7 @@ function HubBody({ isZh, embedded }: { isZh: boolean; embedded: boolean }) {
 
       {GROUPS.map((group) => (
         <section key={group.en} className="bld-hub-group">
-          <h2 className="bld-hub-group-title">{(i18n.language.startsWith('zh') ? group.zh : group.en)}</h2>
+          <h2 className="bld-hub-group-title">{(i18n.language === 'zh-Hant' ? (group.zhHant ?? group.zh) : (i18n.language.startsWith('zh') ? group.zh : group.en))}</h2>
           <div className="bld-hub-grid">
             {group.modules.map((m) => (
               <Link key={m.href} href={m.href} className="bld-hub-card">
@@ -163,7 +187,7 @@ function HubBody({ isZh, embedded }: { isZh: boolean; embedded: boolean }) {
                     <span className="bld-hub-card-lucide">{m.icon}</span>
                   )}
                 </div>
-                <div className="bld-hub-card-title">{(i18n.language.startsWith('zh') ? m.zh : m.en)}</div>
+                <div className="bld-hub-card-title">{(i18n.language === 'zh-Hant' ? (m.zhHant ?? m.zh) : (i18n.language.startsWith('zh') ? m.zh : m.en))}</div>
               </Link>
             ))}
           </div>

@@ -50,7 +50,7 @@ export default function TrainerHubClient() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('训练器', 'Trainer');
+  useDocumentTitle('训练器', 'Trainer', "訓練器");
   const router = useRouter();
   const params = useParams<{ puzzle: string }>();
   const seg = (Array.isArray(params?.puzzle) ? params.puzzle[0] : params?.puzzle) ?? '333';
@@ -133,7 +133,7 @@ export default function TrainerHubClient() {
                       />
                     )}
                   </div>
-                  <div className="trainer-set-card-title">{(i18n.language.startsWith('zh') ? s.zh : s.en)}</div>
+                  <div className="trainer-set-card-title">{(i18n.language === 'zh-Hant' ? ((s as { zhHant?: string }).zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
                 </Link>
               );
             })}
@@ -190,7 +190,7 @@ export default function TrainerHubClient() {
                       />
                     )}
                   </div>
-                  <div className="trainer-set-card-title">{(i18n.language.startsWith('zh') ? s.zh : s.en)}</div>
+                  <div className="trainer-set-card-title">{(i18n.language === 'zh-Hant' ? ((s as { zhHant?: string }).zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
                 </Link>
               );
             })}

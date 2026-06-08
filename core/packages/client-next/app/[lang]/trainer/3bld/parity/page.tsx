@@ -30,6 +30,7 @@ import {
 import { m2pSolve, prewarm } from '../_lib/m2p-bridge';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 function isAlphabet(ch: string): boolean {
   return /^[a-zA-Z]$/.test(ch);
@@ -42,7 +43,7 @@ const SAMPLE_CORNER = 'ADGJ';
 export default function ParityTrainerPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('奇偶训练', 'Parity Trainer');
+  useDocumentTitle('奇偶训练', 'Parity Trainer', "奇偶訓練");
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);
@@ -128,9 +129,9 @@ export default function ParityTrainerPage(): JSX.Element {
     setModalOpen(false);
     setModalMsg(undefined);
     setInputSummary(
-      isZh
-        ? `已输入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 组编码。`
-        : `Entered ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} (${codes.length} codes).`,
+      i18n.language === 'zh-Hant' ? (`已輸入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 組編碼。`) : (isZh
+                ? `已输入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 组编码。`
+                : `Entered ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} (${codes.length} codes).`),
     );
   }, [validateCodes, isZh]);
 
@@ -244,9 +245,9 @@ export default function ParityTrainerPage(): JSX.Element {
 
     setScrambles(out);
     setInfo(
-      isZh
-        ? `已生成遍历训练集编码的 ${shuffled.length} 条打乱。`
-        : `Generated ${shuffled.length} scrambles covering the training set.`,
+      i18n.language === 'zh-Hant' ? (`已生成遍歷訓練集編碼的 ${shuffled.length} 條打亂。`) : (isZh
+                ? `已生成遍历训练集编码的 ${shuffled.length} 条打乱。`
+                : `Generated ${shuffled.length} scrambles covering the training set.`),
     );
     setBusy(false);
   }, [validateCodes, edgeBuffer, cornerBuffer, edgeScramble, cornerScramble, isZh]);

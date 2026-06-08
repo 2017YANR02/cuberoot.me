@@ -24,6 +24,7 @@ import {
 } from '../_lib/stats';
 import { useSettings, updateSettings, MAX_AO_WINDOWS } from '../_lib/settings';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 interface Props {
   solves: Solve[];
@@ -209,7 +210,7 @@ export default function StatsPanel({ solves, isZh }: Props) {
               </div>
               {atMax && (
                 <div className="stats-ao-hint">
-                  {isZh ? `最多 ${MAX_AO_WINDOWS} 个,先移除一个` : `Max ${MAX_AO_WINDOWS} — remove one first`}
+                  {i18n.language === 'zh-Hant' ? (`最多 ${MAX_AO_WINDOWS} 個,先移除一個`) : (isZh ? `最多 ${MAX_AO_WINDOWS} 个,先移除一个` : `Max ${MAX_AO_WINDOWS} — remove one first`)}
                 </div>
               )}
             </div>

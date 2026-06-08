@@ -4,6 +4,7 @@ import type * as React from 'react';
 import { type TheoreticalLimit } from './theoretical_limits';
 import { formatVal, type EventMeta } from './events';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 /** 轻量 inline markdown: **bold** + `code` + escape HTML */
 function renderInline(s: string): string {
@@ -205,7 +206,7 @@ export default function TheoreticalLimitView({ event, limit, fittedL, isZh }: Pr
               zhHant: "曲線擬合 L vs 物理下界 T_phys"
         })}</strong>
           <p className="pred-note">
-            {isZh ? `曲线拟合给出 L = ${formatVal(fittedL, event.scale)},但这只是历史轨迹的渐近值,不是物理极限。` : `Curve fit yields L = ${formatVal(fittedL, event.scale)}, but this is the asymptote of the observed trajectory, not the physical floor. `}
+            {i18n.language === 'zh-Hant' ? (`曲線擬合給出 L = ${formatVal(fittedL, event.scale)},但這只是歷史軌跡的漸近值,不是物理極限。`) : (isZh ? `曲线拟合给出 L = ${formatVal(fittedL, event.scale)},但这只是历史轨迹的渐近值,不是物理极限。` : `Curve fit yields L = ${formatVal(fittedL, event.scale)}, but this is the asymptote of the observed trajectory, not the physical floor. `)}
             {isZh ? limit.why_fit_differs_zh : limit.why_fit_differs_en}
           </p>
         </div>

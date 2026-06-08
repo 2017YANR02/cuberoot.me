@@ -41,18 +41,26 @@ const CANCELLED_SET = new Set(CANCELLED_EVENTS);
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
 
 // 项目快速分类(对齐 cubing.pro):点一个 = 直接替换当前选中项
-const EVENT_CATEGORIES: { key: string; zh: string; en: string; events: string[] }[] = [
-  { key: 'speed', zh: '速拧', en: 'Speed', events: ['333','222','444','555','666','777','333oh','clock','minx','pyram','skewb','sq1']
+const EVENT_CATEGORIES: { key: string; zh: string; en: string; events: string[]
+    zhHant?: string;
+ }[] = [
+  { key: 'speed', zh: '速拧', en: 'Speed', events: ['333','222','444','555','666','777','333oh','clock','minx','pyram','skewb','sq1'],
+      zhHant: "速擰"
 },
-  { key: 'quiet', zh: '安静', en: 'Quiet', events: ['333bf','333fm','444bf','555bf','333mbf']
+  { key: 'quiet', zh: '安静', en: 'Quiet', events: ['333bf','333fm','444bf','555bf','333mbf'],
+      zhHant: "安靜"
 },
-  { key: 'blind', zh: '盲拧', en: 'Blind', events: ['333bf','444bf','555bf','333mbf']
+  { key: 'blind', zh: '盲拧', en: 'Blind', events: ['333bf','444bf','555bf','333mbf'],
+      zhHant: "盲擰"
 },
-  { key: 'cubic', zh: '正阶', en: 'Cubic', events: ['333','222','444','555','666','777','333oh']
+  { key: 'cubic', zh: '正阶', en: 'Cubic', events: ['333','222','444','555','666','777','333oh'],
+      zhHant: "正階"
 },
-  { key: 'sub25', zh: '二至五阶', en: '2-5', events: ['222','333','444','555']
+  { key: 'sub25', zh: '二至五阶', en: '2-5', events: ['222','333','444','555'],
+      zhHant: "二至五階"
 },
-  { key: 'shape', zh: '异形', en: 'Other', events: ['clock','minx','pyram','skewb','sq1']
+  { key: 'shape', zh: '异形', en: 'Other', events: ['clock','minx','pyram','skewb','sq1'],
+      zhHant: "異形"
 },
 ];
 
@@ -331,7 +339,7 @@ function SumOfRanksPageInner() {
           />
         </div>
         <div className="wse-filter" style={{ minWidth: '100%' }}>
-          <label>{isZh ? `项目(已选 ${selectedCount} / ${RANK_EVENTS.length})` : `Events (${selectedCount}/${RANK_EVENTS.length} selected)`}</label>
+          <label>{i18n.language === 'zh-Hant' ? (`專案(已選 ${selectedCount} / ${RANK_EVENTS.length})`) : (isZh ? `项目(已选 ${selectedCount} / ${RANK_EVENTS.length})` : `Events (${selectedCount}/${RANK_EVENTS.length} selected)`)}</label>
           <div className="wse-events-bar">
             <button type="button" onClick={selectAll}>{tr({ zh: '全选', en: 'All',
                 zhHant: "全選"
@@ -344,7 +352,7 @@ function SumOfRanksPageInner() {
                 onClick={() => setEvents(cat.events)}
                 className={activeCategory === cat.key ? 'wse-cat-on' : undefined}
               >
-                {(i18n.language.startsWith('zh') ? cat.zh : cat.en)}
+                {(i18n.language === 'zh-Hant' ? (cat.zhHant ?? cat.zh) : (i18n.language.startsWith('zh') ? cat.zh : cat.en))}
               </button>
             ))}
             <PillToggle
@@ -404,9 +412,9 @@ function SumOfRanksPageInner() {
                 const hasOther = !!pb.best[other];
                 return (
                   <div className="sor-tool-hint">
-                    {isZh
-                      ? `该选手在全部 21 个项目里都没有有效${typeZh}成绩(${type === 'average' ? '比如只打过多盲等无平均的项目,或平均全 DNF' : '单次记录缺失'})${hasOther ? `;但有${other === 'average' ? '平均' : '单次'}最优组合,切上方“类型”查看` : ''}`
-                      : `No valid ${type} result in any of the 21 events${hasOther ? ` — but a ${other} combo exists, switch "Type" above` : ''}`}
+                    {i18n.language === 'zh-Hant' ? (`該選手在全部 21 個專案裡都沒有有效${typeZh}成績(${type === 'average' ? '比如只打過多盲等無平均的專案,或平均全 DNF' : '單次記錄缺失'})${hasOther ? `;但有${other === 'average' ? '平均' : '單次'}最優組合,切上方“型別”檢視` : ''}`) : (isZh
+                                              ? `该选手在全部 21 个项目里都没有有效${typeZh}成绩(${type === 'average' ? '比如只打过多盲等无平均的项目,或平均全 DNF' : '单次记录缺失'})${hasOther ? `;但有${other === 'average' ? '平均' : '单次'}最优组合,切上方“类型”查看` : ''}`
+                                              : `No valid ${type} result in any of the 21 events${hasOther ? ` — but a ${other} combo exists, switch "Type" above` : ''}`)}
                   </div>
                 );
               }
@@ -421,7 +429,7 @@ function SumOfRanksPageInner() {
                     <span className="sor-pb-type">{typeLabel}</span>
                     <span className="sor-pb-rank">{isZh ? `世界第 ${b.rank}` : `World #${b.rank}`}</span>
                     {comboCount > 1 && (
-                      <span className="sor-pb-count">{isZh ? `${comboCount} 种组合并列` : `${comboCount} tied combos`}</span>
+                      <span className="sor-pb-count">{i18n.language === 'zh-Hant' ? (`${comboCount} 種組合並列`) : (isZh ? `${comboCount} 种组合并列` : `${comboCount} tied combos`)}</span>
                     )}
                   </div>
                   <ul className="sor-pb-combos">
@@ -435,12 +443,12 @@ function SumOfRanksPageInner() {
                     ))}
                   </ul>
                   {comboCount > combos.length && (
-                    <div className="sor-pb-note">{isZh ? `仅列出项目数最少的 ${combos.length} 种` : `Showing the ${combos.length} with fewest events`}</div>
+                    <div className="sor-pb-note">{i18n.language === 'zh-Hant' ? (`僅列出專案數最少的 ${combos.length} 種`) : (isZh ? `仅列出项目数最少的 ${combos.length} 种` : `Showing the ${combos.length} with fewest events`)}</div>
                   )}
                 </>
               );
             })()}
-            {pb.best[type] && <div className="sor-pb-note">{isZh ? `上面每个组合都能让 TA 的名次和排到该名次(世界口径,${includeCancelled ? '含废止项' : '仅活跃项'})` : `Each combination ties them at that sum-of-ranks position (world, ${includeCancelled ? 'incl. cancelled' : 'active only'})`}</div>}
+            {pb.best[type] && <div className="sor-pb-note">{i18n.language === 'zh-Hant' ? (`上面每個組合都能讓 TA 的名次和排到該名次(世界口徑,${includeCancelled ? '含廢止項' : '僅活躍項'})`) : (isZh ? `上面每个组合都能让 TA 的名次和排到该名次(世界口径,${includeCancelled ? '含废止项' : '仅活跃项'})` : `Each combination ties them at that sum-of-ranks position (world, ${includeCancelled ? 'incl. cancelled' : 'active only'})`)}</div>}
           </div>
         )}
       </div>
@@ -478,9 +486,9 @@ function SumOfRanksPageInner() {
             })}</div>}
             {census && (
               <>
-                <p className="sor-census-lead">{isZh
-                  ? `${censusYearLabel != null ? `截至 ${censusYearLabel} 年末,` : ''}${hidePodium ? '在从未登上比赛领奖台的选手中,' : ''}有 ${census.distinct} 名选手曾在 ${census.totalSubsets.toLocaleString()} 种项目组合的至少一种里排到“名次和第一”(${type === 'average' ? '平均' : '单次'}${includeCancelled ? ',含废止项' : ''},世界口径)。`
-                  : `${censusYearLabel != null ? `As of end of ${censusYearLabel}, ` : ''}${hidePodium ? 'among cubers who have never reached a competition podium, ' : ''}${census.distinct} cubers have ranked #1 in at least one of ${census.totalSubsets.toLocaleString()} event combinations (${type}${includeCancelled ? ', incl. cancelled' : ''}, world).`}</p>
+                <p className="sor-census-lead">{i18n.language === 'zh-Hant' ? (`${censusYearLabel != null ? `截至 ${censusYearLabel} 年末,` : ''}${hidePodium ? '在從未登上比賽領獎臺的選手中,' : ''}有 ${census.distinct} 名選手曾在 ${census.totalSubsets.toLocaleString()} 種專案組合的至少一種裡排到“名次和第一”(${type === 'average' ? '平均' : '單次'}${includeCancelled ? ',含廢止項' : ''},世界口徑)。`) : (isZh
+                                                ? `${censusYearLabel != null ? `截至 ${censusYearLabel} 年末,` : ''}${hidePodium ? '在从未登上比赛领奖台的选手中,' : ''}有 ${census.distinct} 名选手曾在 ${census.totalSubsets.toLocaleString()} 种项目组合的至少一种里排到“名次和第一”(${type === 'average' ? '平均' : '单次'}${includeCancelled ? ',含废止项' : ''},世界口径)。`
+                                                : `${censusYearLabel != null ? `As of end of ${censusYearLabel}, ` : ''}${hidePodium ? 'among cubers who have never reached a competition podium, ' : ''}${census.distinct} cubers have ranked #1 in at least one of ${census.totalSubsets.toLocaleString()} event combinations (${type}${includeCancelled ? ', incl. cancelled' : ''}, world).`)}</p>
                 <ol className="sor-census-list">
                   {(censusExpanded ? census.rows : census.rows.slice(0, 12)).map(r => {
                     const share = r.subsetsWon / census.totalSubsets * 100;
@@ -496,7 +504,7 @@ function SumOfRanksPageInner() {
                 </ol>
                 {census.rows.length > 12 && (
                   <button type="button" className="sor-census-more" onClick={() => setCensusExpanded(e => !e)}>
-                    {censusExpanded ? (tr({ zh: '收起', en: 'Show less' })) : (isZh ? `展开全部 ${census.distinct} 人` : `Show all ${census.distinct}`)}
+                    {censusExpanded ? (tr({ zh: '收起', en: 'Show less' })) : (i18n.language === 'zh-Hant' ? (`展開全部 ${census.distinct} 人`) : (isZh ? `展开全部 ${census.distinct} 人` : `Show all ${census.distinct}`))}
                   </button>
                 )}
               </>

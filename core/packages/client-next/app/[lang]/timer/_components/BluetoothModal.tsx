@@ -113,8 +113,8 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
         {!supported && advice && (
           <>
             <div className="modal-section bt-warn">
-              <h3 className="bt-warn-title">{(i18n.language.startsWith('zh') ? advice.title.zh : advice.title.en)}</h3>
-              <p>{(i18n.language.startsWith('zh') ? advice.body.zh : advice.body.en)}</p>
+              <h3 className="bt-warn-title">{(i18n.language === 'zh-Hant' ? (advice.title.zhHant ?? advice.title.zh) : (i18n.language.startsWith('zh') ? advice.title.zh : advice.title.en))}</h3>
+              <p>{(i18n.language === 'zh-Hant' ? (advice.body.zhHant ?? advice.body.zh) : (i18n.language.startsWith('zh') ? advice.body.zh : advice.body.en))}</p>
             </div>
             {advice.url && (
               <div className="modal-section">
