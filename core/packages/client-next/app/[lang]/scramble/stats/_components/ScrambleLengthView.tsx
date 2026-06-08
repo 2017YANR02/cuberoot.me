@@ -132,13 +132,6 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
     ? (examples.events[event]?.[String(selectedBin)] ?? null)
     : null;
 
-  const overview = useMemo(() => {
-    if (!data) return [];
-    return ALL_EVENT_IDS
-      .filter((id) => data.events[id])
-      .map((id) => ({ id, ...data.events[id], stats: summarize(data.events[id].counts) }));
-  }, [data]);
-
   if (error) {
     return <div className="scramble-stats-error">{isZh ? '加载失败' : 'Load failed'}: {error}</div>;
   }
@@ -264,31 +257,6 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
           </div>
         </>
       )}
-
-      <div className="scramble-stats-panel">
-        <div className="scramble-stats-panel-title">{isZh ? '全部项目一览' : 'All events'}</div>
-        <div className="scramble-len-overview">
-          {overview.map((o) => (
-            <button
-              key={o.id}
-              type="button"
-              className={`scramble-len-row${o.id === event ? ' active' : ''}`}
-              onClick={() => setEvent(o.id)}
-            >
-              <EventIcon event={o.id} className="scramble-len-row-icon" title={eventName(o.id, isZh)} />
-              {o.stats && (
-                <>
-                  <span className="scramble-len-row-median">
-                    {o.stats.min === o.stats.max ? o.stats.min : `${o.stats.min}–${o.stats.max}`}
-                    <span className="scramble-len-row-unit"> {unitLabel(o.unit, isZh)}</span>
-                  </span>
-                  <span className="scramble-len-row-n">{o.samples.toLocaleString()}</span>
-                </>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
 
       <div className="scramble-stats-meta">
         <span>{isZh ? '生成时间' : 'Generated'}: {new Date(data.meta.generated_at).toLocaleString()}</span>

@@ -550,51 +550,6 @@
   font-weight: 400;
   text-transform: none;
 }
-.scramble-len-overview {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 0.4rem;
-}
-.scramble-len-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.45rem 0.7rem;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
-}
-.scramble-len-row:hover { border-color: var(--border-strong); }
-.scramble-len-row.active {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-.scramble-len-row-icon {
-  font-size: 1.05rem;
-  color: var(--text-sub);
-  flex-shrink: 0;
-}
-.scramble-len-row-median {
-  font-size: 0.82rem;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-  margin-left: auto;
-}
-.scramble-len-row-unit { color: var(--text-sub); font-size: 0.72rem; }
-.scramble-len-row-n {
-  font-size: 0.72rem;
-  color: var(--text-sub);
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-  min-width: 3.5em;
-  text-align: right;
-}
-
 /* ── Dark mode ── */
 @media (prefers-color-scheme: dark) {
   html:not([data-theme=light]) .scramble-stats-page {

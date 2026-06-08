@@ -34,7 +34,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Frame Count | `/frame-count` | `core/packages/client-next/app/[lang]/frame-count/` | 自有（WebCodecs + mp4box.js） | ✅ |
 | Distribution | `/wca/viz` | `core/packages/client-next/app/[lang]/wca/viz/` | 自有 | ✅ |
 | Comp (比赛中心:搜索/日历/地球/实时成绩) | `/wca/comp` | `core/packages/client-next/app/[lang]/wca/comp/` | 自有 | ✅ |
-| Scramble（打乱难度分布） | `/scramble/stats` | `core/packages/client-next/app/[lang]/scramble/stats/` + 数据 `stats/scramble/*.json` | 自有（源自 `D:\cube\solver` C++ 分析器产出的 CSV） | ✅ |
+| Scramble（打乱难度 / 长度分布） | `/scramble/stats` | `core/packages/client-next/app/[lang]/scramble/stats/` + 数据 `stats/scramble/*.json`（长度走 CI 日更 `build_scramble_lengths.ts`） | 自有 | ✅ |
 | Mosaic（魔方马赛克生成） | `/mosaic` | `core/packages/client-next/app/[lang]/mosaic/` | ported from [Roman-/mosaic](https://github.com/Roman-/mosaic) | ✅ |
 | Blog | `blog.cuberoot.me`(`/blog` redirect 过去) | 独立 repo `RuiminYan/cuberoot-blog` | 外部托管 | — |
 
