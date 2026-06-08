@@ -165,14 +165,7 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
           gap: m(0.7),
         }}
       >
-        {entry.alg?.moves ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={algImgUrl(entry.alg) ?? ""}
-            alt={entry.alg.name ?? "魔方案例"}
-            style={{ width: m(5.8), height: m(5.8), display: "block" }}
-          />
-        ) : term ? (
+        {!entry.alg?.moves && term ? (
           <div
             style={{
               fontSize: m(1.1),
@@ -200,13 +193,15 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
         >
           <div style={{ width: m(14.5), height: m(14.5) }} dangerouslySetInnerHTML={{ __html: svg }} />
         </div>
+        {/* 精选公式:案例图(魔方)正上方对齐 记法,不显示名称 */}
         {entry.alg?.moves ? (
-          <div style={{ textAlign: "center", lineHeight: 1.15 }}>
-            {entry.alg.name ? (
-              <div style={{ fontSize: m(0.95), fontWeight: 700, color: "#1E4ACB" }}>
-                {entry.alg.name}
-              </div>
-            ) : null}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: m(0.5) }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={algImgUrl(entry.alg) ?? ""}
+              alt="魔方案例"
+              style={{ width: m(6), height: m(6), display: "block" }}
+            />
             <div
               style={{
                 fontSize: m(1.1),
