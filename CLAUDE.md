@@ -128,6 +128,7 @@ pnpm --filter @cuberoot/client dev                 # http://127.0.0.1:5173/
 - 沉浸浮层的返回件用 `history.back()`,`history.length<=1`(深链直进)时 fallback 硬导航父路由
 - `NuqsAdapter` 已挂 root layout;`useQueryState` 只在页级 client 组件用,禁进全局 chrome(同 useSearchParams 的 SSG 约束)
 - 范本:`app/[lang]/wca/comp/page.tsx` 的 `viewMode`
+- CI 守卫:`tests/url-state-no-raw-history.test.ts`(vitest,CI 跑 vitest 不跑 eslint)禁裸 history.*/popstate;确属特殊(zustand data-blob / 自定义编码 / 全局 infra)才豁免:加进该测试 ALLOWLIST + 文件内 `// eslint-disable-next-line no-restricted-syntax, no-restricted-globals` + 理由
 
 ## 主题 / 颜色
 
