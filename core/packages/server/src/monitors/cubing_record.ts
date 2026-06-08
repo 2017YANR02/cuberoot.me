@@ -18,7 +18,7 @@
 import WebSocket from 'ws';
 import { sendBark } from './bark.js';
 import { getPushedSet, markPushed, type MonitorId } from './state.js';
-import { RECORD_TAGS, NR_COUNTRIES, POLL_INTERVAL_MS } from './config.js';
+import { RECORD_TAGS, NR_COUNTRIES, POLL_INTERVAL_MS, siteCompUrlFromCubingAlias } from './config.js';
 import { COUNTRY_EN_MAP, isContinentalTag } from './region.js';
 import { getWatchedMatchKeys } from './watched.js';
 import { startPoller } from './poll.js';
@@ -492,7 +492,11 @@ function toRecordEvent(ev: InternalEvent): RecordEvent {
     comp_name: ev.compName,
     comp_name_en: ev.compNameEn,
     comp_iso2: ev.compIso2,
-    url: `https://cubing.com/live/${ev.slug}?event=${ev.eventId}&round=${ev.roundId}`,
+    // 比赛链接指向自有站(alias 去横杠=WCA id;cubing 的 round 值非本站轮次序号,故只带 event)。
+    // alias 缺失时回退 cubing.com live 页。
+    url:
+      siteCompUrlFromCubingAlias(ev.slug, ev.eventId)
+      ?? `https://cubing.com/live/${ev.slug}?event=${ev.eventId}&round=${ev.roundId}`,
   };
 }
 
