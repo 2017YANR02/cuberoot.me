@@ -122,6 +122,8 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 - 埋点:`events_track` 表 + `POST /api/track`({name,payload?,url?}),客户端走 `lib/track.ts`。匿名 cookie `cube_anon`(non-httpOnly,1y)。自动埋:`page_view` / `signup` / `login` / `order_placed` / `post_created` / `qr_landing`。admin 看 `/admin/events-track`
 - 优惠券 / 邀请码:`coupons` / `invite_codes`,orders 带 `discount` + `couponCode`。下单 server action 接 `couponCode`,前端 `CouponBox` 调 `previewCoupon` 试算;新用户 `?invite=XX` 透传到 verify-otp,`applyInviteOnSignup` + `rewardCoupon` 透传 toast。用户在 `/me/invite` 看自己邀请码
 - 二维码(活码):`qr_codes` 两类型 `redirect`(扫码直达 target)/ `landing`(落地页 `/qr/[code]` 聚合多链接),`incrementScans` 计扫,预览 `?stay=1`;admin `/admin/qr` 批量生成 + 编辑(类型/标题/简介/链接/术语/正面图/语录)。2x4cm 折叠卡 `components/QrCard.tsx`(正面图+语录 / 背面唯一码),`/admin/qr/cards` 打印,正面图存 `public/card/`(占位图带水印,印前换);链接解析 `lib/qr/links.ts`,svg `lib/qr/svg.ts`,编辑页实时预览 `_LiveCardPreview.tsx`
+- 码域名解耦:印进码里的地址走 `qrTargetUrl(code)`(`lib/site.ts`),base = `NEXT_PUBLIC_QR_BASE`(未设退 `NEXT_PUBLIC_SITE_URL`)+ 前缀 `NEXT_PUBLIC_QR_PATH`(默 `/qr`,上专用短域名设空即 `host/code`)。**印刷前定好域名再生成**,印出去改不了
+- 矢量印刷母版:`/api/qr/[code]/card`(`lib/qr/cardSvg.ts`)出整张折叠卡的 100% 矢量 SVG(无位图/CSS/外链,含出血+裁切线),印刷厂直接收;卡片文案逻辑抽到 `lib/qr/cardText.ts`(DOM 卡 + 矢量卡共用),魔方 logo `cubeLogo()` 与 `qrSvgBody()` 在 `lib/qr/svg.ts`。送印前文字建议「创建轮廓」防缺字
 - 不接 GA / Plausible / Sentry / Posthog,埋点全自建
 
 ## PWA

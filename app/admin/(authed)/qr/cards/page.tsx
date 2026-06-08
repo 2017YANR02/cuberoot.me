@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { list, type QrCode } from "@/lib/db/qr";
-import { absoluteUrl } from "@/lib/site";
+import { qrTargetUrl } from "@/lib/site";
 import { qrSvg } from "@/lib/qr/svg";
 import { QrCardUnit } from "@/components/QrCard";
 import { PageHeader, GhostLink } from "../../../_components/Shell";
@@ -66,7 +66,7 @@ export default async function QrCardsPage({
         style={{ gap: "calc(var(--s) * 3mm)", alignContent: "flex-start" }}
       >
         {rows.map((r, idx) => (
-          <QrCardUnit key={r.code} entry={r} svg={qrSvg(absoluteUrl(`/qr/${r.code}`))} idx={idx} />
+          <QrCardUnit key={r.code} entry={r} svg={qrSvg(qrTargetUrl(r.code))} idx={idx} />
         ))}
       </div>
 

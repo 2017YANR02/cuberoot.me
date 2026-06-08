@@ -1,4 +1,4 @@
-import { absoluteUrl } from "@/lib/site";
+import { qrTargetUrl } from "@/lib/site";
 import { qrSvg } from "@/lib/qr/svg";
 
 export const runtime = "nodejs";
@@ -19,7 +19,7 @@ export async function GET(
   const logo = url.searchParams.get("logo") !== "0";
   const fg = url.searchParams.get("fg");
 
-  const svg = qrSvg(absoluteUrl(`/qr/${code}`), {
+  const svg = qrSvg(qrTargetUrl(code), {
     logo,
     fg: fg && /^#[0-9a-fA-F]{6}$/.test(fg) ? fg : undefined,
   });

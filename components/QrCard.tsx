@@ -1,20 +1,11 @@
 import type { CSSProperties } from "react";
 import type { QrCode } from "@/lib/db/qr";
-import { getSiteUrl } from "@/lib/site";
+import { qrTargetUrl } from "@/lib/site";
+import { DEFAULT_QUOTES, backText } from "@/lib/qr/cardText";
 
 // 2x4cm 折叠卡:正面(语录 + 艺术图)| 折线 | 背面(唯一二维码)。
 // 尺寸走 --s 缩放变量:屏幕放大方便看,打印时由外层把 --s 设回 1 即精确 mm。
 // 纯展示组件,svg(二维码)由调用方传入,卡片打印页与编辑页预览共用。
-
-// 正面默认语录(未填时按序轮换);第一行大字,其余行小字
-const DEFAULT_QUOTES = [
-  "慢就是快\n一次打乱 一次成长",
-  "拧的是方块\n解的是心境",
-  "手指快\n不如脑子快",
-  "三阶之上\n皆是热爱",
-  "热爱可抵\n万次打乱",
-  "每一次复原\n都是新的开始",
-];
 
 // 正面艺术背景图可选项(后台缩略图选择器 + 卡片轮换共用同一份注册表)
 export const FRONT_ARTS: { src: string; label: string }[] = [
@@ -22,28 +13,7 @@ export const FRONT_ARTS: { src: string; label: string }[] = [
   { src: "/card/front-city.webp", label: "微缩世界" },
 ];
 
-// 跳转码目标路径 → 中文目的地(背面文案用,告诉扫码人到底去哪)
-const PATH_LABELS: Record<string, string> = {
-  "/": "首页",
-  "/courses": "课程",
-  "/shop": "商城",
-  "/events": "赛事",
-  "/community": "社群",
-  "/news": "资讯",
-  "/instructors": "讲师",
-  "/about": "关于",
-  "/login": "登录",
-  "/me/courses": "我的课程",
-  "/orders": "我的订单",
-};
-function destLabel(target: string): string {
-  const path = target.split("?")[0].replace(/\/+$/, "") || "/";
-  if (PATH_LABELS[path]) return PATH_LABELS[path];
-  const seg = "/" + (path.split("/")[1] ?? "");
-  return PATH_LABELS[seg] ?? "";
-}
-
-const host = () => getSiteUrl().replace(/^https?:\/\//, "");
+const displayUrl = (code: string) => qrTargetUrl(code).replace(/^https?:\/\//, "");
 const m = (n: number) => `calc(var(--s) * ${n}mm)`;
 
 const PANEL_BASE: CSSProperties = {
@@ -115,19 +85,8 @@ function FrontPanel({ quote, art }: { quote: string; art: string }) {
 
 // 背面:唯一二维码(白芯片保证可扫)+ 按该码去向生成的文案 + 网址
 function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
-  const isLanding = entry.type === "landing";
-  const dest = destLabel(entry.target);
   const term = entry.term?.trim();
-  const main =
-    entry.title?.trim() ||
-    (isLanding ? "扫码进社群" : dest ? `扫码直达${dest}` : "扫码直达");
-  const sub =
-    entry.intro?.trim() ||
-    (isLanding
-      ? entry.links && entry.links.length > 0
-        ? entry.links.map((l) => l.label).join(" / ")
-        : "课程 / 商城 / 赛事 / 社群"
-      : "");
+  const { main, sub } = backText(entry);
   return (
     <div
       style={{
@@ -201,7 +160,7 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
           textAlign: "center",
         }}
       >
-        {host()}/qr/{entry.code}
+        {displayUrl(entry.code)}
       </div>
     </div>
   );
