@@ -14,6 +14,7 @@ type CardSvgOptions = {
   quote?: string; // 正面语录,\n 分行;不传按默认轮换
   bleed?: number; // 出血 mm,默认 3
   cropMarks?: boolean; // 角裁切线,默认 true
+  pattern?: boolean; // 正面魔方记法底纹,默认 true
   idx?: number; // 默认语录轮换序号
 };
 
@@ -45,8 +46,34 @@ function text(
   );
 }
 
-// 正面:深色封面式,顶部魔方 logo + 底部语录 + 品牌名。全矢量。
-function front(x0: number, top: number, quote: string): string {
+// 魔方记法 / 解法体系缩写,正面底纹用(全矢量文字水印)
+const FORMULA_TOKENS = [
+  "R U R' U'", "F2L", "CFOP", "OLL", "PLL", "R' D' R D", "U R U' R'",
+  "Cross", "F R U R' U' F'", "M2 E2 S2", "ZBLL", "Sune", "T-Perm",
+  "Roux", "ZZ", "L' U' L U", "x2 y'", "R U2 R'", "U' L' U L", "COLL",
+];
+
+// 正面底纹:斜排的淡白记法文字,clip 在面板内。背景加魔方公式 / 解法缩写(同事需求)。
+function formulaPattern(x0: number, top: number): string {
+  const cx = x0 + PANEL_W / 2;
+  const cy = top + PANEL_H / 2;
+  const lineH = 2.7;
+  const rows: string[] = [];
+  for (let i = 0; (i - 1) * lineH < PANEL_H + 4; i++) {
+    const y = top - 2 + i * lineH;
+    const start = (i * 3) % FORMULA_TOKENS.length;
+    const seq: string[] = [];
+    for (let k = 0; k < 6; k++) seq.push(FORMULA_TOKENS[(start + k * 2) % FORMULA_TOKENS.length]);
+    const dx = i % 2 ? -5 : -2;
+    rows.push(
+      `<text x="${x0 + dx}" y="${y.toFixed(2)}" font-family="${MONO}" font-size="1.5" fill="#FFFFFF" fill-opacity="0.11">${esc(seq.join("   "))}</text>`,
+    );
+  }
+  return `<g clip-path="url(#frontClip)"><g transform="rotate(-8 ${cx} ${cy})">${rows.join("")}</g></g>`;
+}
+
+// 正面:深色封面式,记法底纹 + 顶部魔方 logo + 底部语录 + 品牌名。全矢量。
+function front(x0: number, top: number, quote: string, pattern: boolean): string {
   const cx = x0 + PANEL_W / 2;
   const lines = quote.split("\n").map((l) => l.trim()).filter(Boolean);
   const main = lines[0] ?? "热爱魔方";
@@ -63,6 +90,7 @@ function front(x0: number, top: number, quote: string): string {
 
   return (
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="${INK}"/>` +
+    (pattern ? formulaPattern(x0, top) : "") +
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#frontGlow)"/>` +
     logo +
     text(cx, mainY, 2.8, "#FFFFFF", main, { weight: 800 }) +
@@ -128,6 +156,7 @@ function cropMarksSvg(bleed: number, w: number, h: number): string {
 export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
   const bleed = opts.bleed ?? 3;
   const cropMarks = opts.cropMarks ?? true;
+  const pattern = opts.pattern ?? true;
   const quote = opts.quote ?? frontQuote(entry, opts.idx ?? 0);
   const w = PANEL_W * 2 + bleed * 2;
   const h = PANEL_H + bleed * 2;
@@ -135,6 +164,7 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
 
   const defs =
     `<defs>` +
+    `<clipPath id="frontClip"><rect x="${bleed}" y="${bleed}" width="${PANEL_W}" height="${PANEL_H}"/></clipPath>` +
     `<linearGradient id="frontGlow" x1="0" y1="1" x2="0" y2="0">` +
     `<stop offset="0" stop-color="${BRAND}" stop-opacity="0.55"/>` +
     `<stop offset="0.45" stop-color="${BRAND}" stop-opacity="0.12"/>` +
@@ -158,7 +188,7 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}" role="img" aria-label="魔方开放社群二维码卡片">` +
     defs +
     bleedBg +
-    front(bleed, bleed, quote) +
+    front(bleed, bleed, quote, pattern) +
     back(foldX, bleed, entry, opts.url) +
     fold +
     (cropMarks ? cropMarksSvg(bleed, w, h) : "") +
