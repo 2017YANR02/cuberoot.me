@@ -1,6 +1,7 @@
 // Ported from packages/client/src/utils/comp_search.ts.
 import { compNameZh, countryToIso2, loadFlagData } from './country-flags';
 import { localizeCity } from './city-localize';
+import { statsUrl } from './stats-base';
 
 export interface Comp {
   id: string;
@@ -44,8 +45,8 @@ export async function loadComps(): Promise<Comp[]> {
   if (!inflight) {
     inflight = (async () => {
       const [past, upcoming] = await Promise.all([
-        fetch('/stats/all_past_comps.json').then(r => r.ok ? r.json() : []).catch(() => []),
-        fetch('/stats/all_upcoming_comps.json').then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch(statsUrl('/stats/all_past_comps.json')).then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch(statsUrl('/stats/all_upcoming_comps.json')).then(r => r.ok ? r.json() : []).catch(() => []),
         loadFlagData().catch(() => 0),
       ]);
       const map = new Map<string, Comp>();

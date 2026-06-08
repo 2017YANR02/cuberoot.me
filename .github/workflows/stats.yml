@@ -143,6 +143,12 @@ jobs:
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_comp_records.ts
 
+      # Per-event scramble move-length distribution (/scramble/stats length tab).
+      # Streams the `scrambles` table (added to REQUIRED_TABLES) — no extra download.
+      - name: Generate scramble length distribution JSON
+        working-directory: core/packages/stats-build
+        run: npx tsx src/bin/build_scramble_lengths.ts
+
       - name: Generate lookup data (person_countries + comp_countries)
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_lookup_data.ts

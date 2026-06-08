@@ -15,6 +15,7 @@ import { wcaPersonUrl } from '@/lib/recon-utils';
 import { compLinkProps } from '@/lib/comp-link';
 import { formatWcaResult, type ResultKind } from '@/lib/wca-format-result';
 import { axisFor, tickLabel, type Metric } from '@/lib/top10-axis';
+import { statsUrl } from '@/lib/stats-base';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import LangToggle from '@/components/LangToggle';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -163,7 +164,7 @@ export default function Top10HistoryPage({
 
   // 加载主索引
   useEffect(() => {
-    fetch('/stats/top10_history.json')
+    fetch(statsUrl('/stats/top10_history.json'))
       .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
       .then((j: Top10Index) => setIndex(j))
       .catch(e => setError(String(e?.message || e)));
@@ -189,7 +190,7 @@ export default function Top10HistoryPage({
     if (!index) return;
     if (eventDataCache.has(eventId)) return;
     setEventLoading(true);
-    fetch(`/stats/top10_history/${eventId}.json`)
+    fetch(statsUrl(`/stats/top10_history/${eventId}.json`))
       .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
       .then((d: EventData) => {
         eventDataCache.set(eventId, d);

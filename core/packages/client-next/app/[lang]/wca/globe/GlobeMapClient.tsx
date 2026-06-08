@@ -24,6 +24,7 @@ import { localizeCity } from '@/lib/city-localize';
 import { stripWcaPrefix } from '@/lib/comp-localize';
 import { compNameZh } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
+import { statsUrl } from '@/lib/stats-base';
 import { VectorTile } from '@mapbox/vector-tile';
 import Protobuf from 'pbf';
 import vtpbf from 'vt-pbf';
@@ -659,10 +660,11 @@ async function loadPastCoordMap(): Promise<Map<string, WcaCompDetail>> {
   return m;
 }
 
-export default function GlobeMapClient() {
+export default function GlobeMapClient({ embedded = false }: { embedded?: boolean } = {}) {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('地球视图', 'Globe');
+  // 嵌入 /wca/comp 的 view=globe 时,标题归 comp 管(保持「比赛」),不覆盖成「地球」
+  useDocumentTitle(embedded ? '比赛' : '地球视图', embedded ? 'Competitions' : 'Globe');
   const router = useRouter();
   const navigate = useCallback((href: string) => { router.push(href); }, [router]);
   const navigateRef = useRef(navigate);
@@ -764,7 +766,7 @@ export default function GlobeMapClient() {
   useEffect(() => {
     if (!isZh) return;
     if (!nameZhMap) {
-      fetch('/stats/upcoming_comps.json')
+      fetch(statsUrl('/stats/upcoming_comps.json'))
         .then(r => r.ok ? r.json() : null)
         .then((d: { competitions?: Array<{ id: string; name_zh?: string; city_zh?: string }> } | null) => {
           if (!d?.competitions) return;
@@ -776,7 +778,7 @@ export default function GlobeMapClient() {
         }).catch(() => { /* */ });
     }
     if (!compNameEnToZh) {
-      fetch('/stats/comp_names_zh.json')
+      fetch(statsUrl('/stats/comp_names_zh.json'))
         .then(r => r.ok ? r.json() : null)
         .then((d: Record<string, string> | null) => { if (d) setCompNameEnToZh(d); })
         .catch(() => { /* */ });
@@ -1083,7 +1085,7 @@ export default function GlobeMapClient() {
   const [wrData, setWrData] = useState<WrData | null>(null);
   useEffect(() => {
     if (mode !== 'wr' || wrData) return;
-    fetch('/stats/world_records_by_country.json')
+    fetch(statsUrl('/stats/world_records_by_country.json'))
       .then(r => r.json())
       .then((d: WrData) => setWrData(d))
       .catch((e) => console.warn('wr data load failed', e));
@@ -3019,7 +3021,8 @@ export default function GlobeMapClient() {
             )}
           </>
         ) : (<>
-        <Link href="/wca/calendar" className="globe-logo-link" title={t('globe.backToCalendar') as string} aria-label="Home">
+        {!embedded && (
+        <Link href="/wca/comp" className="globe-logo-link" title={t('globe.backToCalendar') as string} aria-label="Home">
           <svg className="globe-logo" width={26} height={26} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <defs>
               <radialGradient id="earthGrad" cx="0.35" cy="0.35" r="0.85">
@@ -3053,6 +3056,7 @@ export default function GlobeMapClient() {
             </g>
           </svg>
         </Link>
+        )}
         <h1 className="globe-title-compact">
           {t('globe.title')}
           <Link

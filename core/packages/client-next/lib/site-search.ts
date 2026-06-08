@@ -6,6 +6,7 @@
 import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
 import { loadPersonsIndex, searchLocalPersons, type WcaPerson, type ReconSolve } from '@cuberoot/shared';
 import { loadComps, searchComps, type Comp } from '@/lib/comp-search';
+import { statsUrl } from '@/lib/stats-base';
 import { listRecons } from '@/lib/recon-api';
 import { loadCachedSolves, saveCachedSolves } from '@/lib/recon-cache';
 import { compNameZh, loadFlagData } from '@/lib/country-flags';
@@ -57,8 +58,7 @@ export const METRIC_LABEL_OVERRIDE: Record<string, string> = { 'Ao3': 'Mo3' };
 
 export const TOOL_ITEMS: ToolItem[] = [
   { path: '/wca/comp',       zh: '比赛',   en: 'Comp' },
-  { path: '/wca/calendar',   zh: '日历',   en: 'Calendar' },
-  { path: '/wca/globe',      zh: '地球',   en: 'Globe' },
+  { path: '/wca/comp?view=globe', zh: '地球', en: 'Globe' },
   { path: '/wca/viz',        zh: '分布',   en: 'Distribution' },
   { path: '/wca/prediction', zh: '预测',   en: 'Prediction' },
   { path: '/nemesizer',      zh: '宿敌',   en: 'Nemesizer' },
@@ -210,7 +210,7 @@ function loadAlgSets(): Promise<AlgSetRecord[] | null> {
 let statIndexPromise: Promise<StatIndex | null> | null = null;
 function loadStatIndex(): Promise<StatIndex | null> {
   if (!statIndexPromise) {
-    statIndexPromise = fetch('/stats/index.json')
+    statIndexPromise = fetch(statsUrl('/stats/index.json'))
       .then(r => (r.ok ? r.json() : null))
       .catch(() => null);
   }

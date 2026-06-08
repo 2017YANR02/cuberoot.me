@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import HomeLink from '@/components/HomeLink';
+import { statsUrl } from '@/lib/stats-base';
 import { ArrowLeft, Menu, X as XIcon, HelpCircle } from 'lucide-react';
 import { LineChart, type Series } from './_components/charts';
 import { fitExpFloor, type DataPoint } from './_components/models';
@@ -74,7 +75,7 @@ export default function PredictionPage() {
   const [activeId, setActiveId] = useState<string>('tldr');
 
   useEffect(() => {
-    fetch('/stats/prediction/all_events.json')
+    fetch(statsUrl('/stats/prediction/all_events.json'))
       .then((r) => (r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`)))
       .then(setData)
       .catch((e) => setErr(String(e)));

@@ -354,7 +354,7 @@ function SumOfRanksPageInner() {
           <div className="sor-pb">
             <div className="sor-pb-head">
               {pb.iso2 && <Flag iso2={pb.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-              <Link href={personHref(pb.wcaId)}>{displayCuberName(pb.name, isZh)}</Link>
+              <Link prefetch={false} href={personHref(pb.wcaId)}>{displayCuberName(pb.name, isZh)}</Link>
             </div>
             {(() => {
               // 跟随顶部类型选择器: 选平均就看平均最优组合, 没有则提示(不再同时堆单次+平均).
@@ -439,7 +439,7 @@ function SumOfRanksPageInner() {
                       <li key={r.wcaId}>
                         <span className="sor-census-rank">{r.rank}</span>
                         {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                        <Link href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
+                        <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                         <span className="sor-census-share">{share < 0.1 ? share.toFixed(3) : share.toFixed(1)}%</span>
                       </li>
                     );
@@ -482,7 +482,7 @@ function SumOfRanksPageInner() {
                     <td>
                       <span className="wse-person-cell">
                         {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                        <Link href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
+                        <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                       </span>
                     </td>
                     {RANK_EVENTS.map((ev, j) => {

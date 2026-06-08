@@ -32,7 +32,7 @@ export default function GlobeAboutPage() {
   return (
     <div className="gla-page">
       <div className="gla-header">
-        <Link href="/wca/globe" className="gla-back">
+        <Link href="/wca/comp?view=globe" className="gla-back">
           <ArrowLeft size={16} />
           <span>{t('返回地球视图', 'Back to Globe')}</span>
         </Link>
@@ -120,12 +120,8 @@ export default function GlobeAboutPage() {
         <h2 className="gla-section-title">{t('相关页面', 'See also')}</h2>
         <ul className="gla-refs">
           <li>
-            <Link href="/wca/calendar">{t('比赛日历', 'Competition Calendar')}</Link>
-            {t(' — 同一批比赛数据的日历视图。', ' — the same competition data in a calendar layout.')}
-          </li>
-          <li>
-            <Link href="/wca/comp">{t('比赛成绩', 'Competition Results')}</Link>
-            {t(' — 逐轮次成绩查看。', ' — round-by-round results viewer.')}
+            <Link href="/wca/comp">{t('比赛', 'Competitions')}</Link>
+            {t(' — 比赛日历 + 逐轮次成绩查看。', ' — competition calendar + round-by-round results.')}
           </li>
           <li>
             <a href="https://maplibre.org" target="_blank" rel="noopener noreferrer">MapLibre GL JS</a>

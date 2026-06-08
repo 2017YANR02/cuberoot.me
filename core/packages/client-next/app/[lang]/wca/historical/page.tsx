@@ -178,7 +178,7 @@ function HistoricalRanksPageInner() {
                   <tr key={r.wcaId}>
                     <td className="wse-rank-col">{r.rank}</td>
                     <td>
-                      <Link href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>
+                      <Link prefetch={false} href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>
                         {displayCuberName(r.name, isZh)}
                       </Link>
                     </td>

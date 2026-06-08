@@ -13,6 +13,7 @@ import { SubsetColorPicker, SubsetSwatch, useSubsetSelection, type ColorLetter }
 import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { compSourceLine } from '@/lib/comp-schedule';
+import { statsUrl } from '@/lib/stats-base';
 import './recent_scrambles.css';
 
 interface Props { lang: 'zh' | 'en' }
@@ -72,7 +73,7 @@ export default function RecentScrambles({ lang }: Props) {
     let on = true;
     const kick = () => {
       if (!on) return;
-      fetch('/stats/scramble/recent_scrambles.json', { cache: 'no-cache' })
+      fetch(statsUrl('/stats/scramble/recent_scrambles.json'), { cache: 'no-cache' })
         .then((r) => (r.ok ? r.json() : null))
         .then((j: RecentScramblesJson | null) => { if (on) setData(j); })
         .catch(() => { if (on) setData(null); });

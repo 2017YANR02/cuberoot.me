@@ -573,7 +573,9 @@ async function renderPage(
 
       // Scramble text — clamp to sheetFontCap so all rows share the same size.
       const phrase = computePhrase(doc, a.scramble, textBoxW, textBoxH, sheetFontCap);
-      const useHL = phrase.lines.length >= MIN_LINES_HIGHLIGHTING;
+      // 三阶相关项目(含多盲逐方块行)一律不要 tnoodle 的隔行灰底 —— web 上早已拿掉,PDF 同步。
+      const is333 = eventToCubeSize(sheet.event) === 3;
+      const useHL = !is333 && phrase.lines.length >= MIN_LINES_HIGHLIGHTING;
       doc.setFont(FONT_MONO, 'normal');
       doc.setFontSize(phrase.fontSize);
       const lineH = phrase.fontSize * SCRAMBLE_TEXT_LEADING;
