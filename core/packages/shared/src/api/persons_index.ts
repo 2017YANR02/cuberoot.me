@@ -2,6 +2,7 @@
 // 数据源：stats/persons_search.json.gz （由 stats-build 周更）
 // 首次访问后台拉一次（~3.7MB gzip → ~10MB JSON），之后客户端内存搜索 O(n) 但 n=28万 + SIMD includes 通常 <20ms
 import type { WcaPerson } from '../types';
+import { statsUrl } from './stats-base';
 
 const URL = '/stats/persons_search.json.gz';
 
@@ -18,7 +19,7 @@ let loadPromise: Promise<Loaded> | null = null;
 function yieldMain() { return new Promise<void>(r => setTimeout(r, 0)); }
 
 async function fetchAndParse(): Promise<Loaded> {
-  const resp = await fetch(URL, { cache: 'force-cache' });
+  const resp = await fetch(statsUrl(URL), { cache: 'force-cache' });
   if (!resp.ok) throw new Error(`persons index fetch ${resp.status}`);
   const ds = new DecompressionStream('gzip');
   const stream = resp.body!.pipeThrough(ds);

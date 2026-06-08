@@ -30,7 +30,7 @@ export const REQUIRED_TABLES = [
   'countries', 'eligible_country_iso2s_for_championship',
   'events', 'formats', 'persons', 'preferred_formats',
   'ranks_single', 'ranks_average', 'result_attempts', 'results',
-  'round_types', 'users',
+  'round_types', 'scrambles', 'users',
 ] as const;
 
 // NOTE: 导入后追加的自定义索引

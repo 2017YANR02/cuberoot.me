@@ -2,6 +2,7 @@
 // WCA country_id / country.name → ISO 3166-1 alpha-2 + async-loaded person/comp country maps.
 
 import { apiUrl } from './api-base';
+import { statsUrl } from './stats-base';
 import { countryName } from './country-name';
 
 const COUNTRY_TO_ISO2: Record<string, string> = {
@@ -177,9 +178,9 @@ let _flagDataVersion = 0;
 export function loadFlagData(): Promise<number> {
   if (!_loadPromise) {
     _loadPromise = Promise.all([
-      fetch('/stats/person_countries.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
-      fetch('/stats/comp_countries.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
-      fetch('/stats/comp_names_zh.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      fetch(statsUrl('/stats/person_countries.json')).then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      fetch(statsUrl('/stats/comp_countries.json')).then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      fetch(statsUrl('/stats/comp_names_zh.json')).then(r => r.ok ? r.json() : {}).catch(() => ({})),
     ]).then(async ([persons, comps, compZh]) => {
       _personCountries = persons;
       _compCountries = comps;

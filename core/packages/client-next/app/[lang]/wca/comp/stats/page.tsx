@@ -183,7 +183,7 @@ export default function CalendarStatsPage() {
     <div className="cs-page">
       <header className="cs-header">
         <div className="cs-header-left">
-          <Link href={`/wca/calendar${getLangQuery()}`} className="cs-back" aria-label={isZh ? '返回日历' : 'Back to calendar'}>
+          <Link href={`/wca/comp${getLangQuery()}`} className="cs-back" aria-label={isZh ? '返回比赛' : 'Back to competitions'}>
             <ArrowLeft size={18} />
           </Link>
           <h1 className="cs-title">{isZh ? '比赛统计' : 'Competition stats'}</h1>
@@ -243,7 +243,7 @@ export default function CalendarStatsPage() {
                   const count = yearMonthGrid.get(key) ?? 0;
                   const clickable = count > 0;
                   const onClick = clickable
-                    ? () => navigate(`/wca/calendar?year=${y}&month=${month}`)
+                    ? () => navigate(`/wca/comp?year=${y}&month=${month}`)
                     : undefined;
                   return (
                     <rect
@@ -291,8 +291,8 @@ export default function CalendarStatsPage() {
             view={view}
             onViewChange={setView}
             onPointClick={(year, month) => {
-              if (granularity === 'month') navigate(`/wca/calendar?year=${year}&month=${month}`);
-              else navigate(`/wca/calendar?year=${year}&month=1`);
+              if (granularity === 'month') navigate(`/wca/comp?year=${year}&month=${month}`);
+              else navigate(`/wca/comp?year=${year}&month=1`);
             }}
           />
         </section>

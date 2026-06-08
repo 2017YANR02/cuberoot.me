@@ -198,7 +198,7 @@ export default function LandingSearch({ cards, lang }: Props) {
   // top-to-bottom order the dropdown renders its sections in.
   const pushInternal = (href: string) => { closeAfter(); router.push(href); };
   const goFirstResult = () => {
-    if (yearMatch) { pushInternal(langHref('/wca/calendar', `year=${yearMatch}`)); return; }
+    if (yearMatch) { pushInternal(langHref('/wca/comp', `year=${yearMatch}`)); return; }
     if (pasteIntent) { goPasteIntent(pasteIntent); return; }
     if (cardMatches.length > 0) { goCard(cardMatches[0]); return; }
     if (toolMatches.length > 0) { pushInternal(langHref(toolMatches[0].path)); return; }
@@ -373,7 +373,7 @@ export default function LandingSearch({ cards, lang }: Props) {
               </div>
               <div className="landing-search-grid">
                 <Link
-                  href={langHref('/wca/calendar', `year=${yearMatch}`)}
+                  href={langHref('/wca/comp', `year=${yearMatch}`)}
                   className="landing-search-item"
                   onClick={closeAfter}
                 >
@@ -625,7 +625,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                   <HeaderMore
                     overflow={compMatches.length - COMP_INITIAL_CAP}
                     title={isZh ? `查看全部 ${compMatches.length} 场` : `View all ${compMatches.length}`}
-                    href={langHref(`/wca/calendar`, `view=list&q=${encodeURIComponent(q)}`)}
+                    href={langHref(`/wca/comp`, `view=list&q=${encodeURIComponent(q)}`)}
                     onClick={closeAfter}
                   />
                 )}

@@ -15,6 +15,10 @@
       "node": "./dist/wca_events.js",
       "default": "./src/wca_events.ts"
     },
+    "./scramble-length": {
+      "node": "./dist/scramble_length.js",
+      "default": "./src/scramble_length.ts"
+    },
     "./comp-schedule": {
       "node": "./dist/comp_schedule.js",
       "default": "./src/comp_schedule.ts"

@@ -22,6 +22,7 @@ import DistributionChart, { type DistDataset } from '@/components/wca-stats/Dist
 import WrHistoryChart from '@/components/wca-stats/WrHistoryChart';
 import { translateCellText, translatePersonLink, stripChineseParens } from '@/lib/wca-translations';
 import { rewriteWcaCompUrl, prefetchComp } from '@/lib/comp-link';
+import { statsUrl } from '@/lib/stats-base';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import Top10HistoryPage from '@/components/wca-stats/Top10HistoryPage';
@@ -1005,7 +1006,7 @@ export default function WcaStatClient() {
     setActivePanel(0);
     setActiveMetric(0);
 
-    fetch(`/stats/${statId}.json`)
+    fetch(statsUrl(`/stats/${statId}.json`))
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

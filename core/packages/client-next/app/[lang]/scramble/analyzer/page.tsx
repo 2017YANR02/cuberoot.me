@@ -32,6 +32,7 @@ import TwistySection from '@/components/TwistySection';
 import StageSolver from '@/components/StageSolver';
 import { Flag } from '@/components/Flag';
 import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
+import { statsUrl } from '@/lib/stats-base';
 import { WheelPicker } from '@/components/WheelPicker';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './analyze.css';
@@ -337,7 +338,7 @@ function AnalyzePageInner() {
     if (cached) return cached;
     setWcaLoading(true);
     try {
-      const r = await fetch(`/stats/scramble/wca_cross/${letter}.json`);
+      const r = await fetch(statsUrl(`/stats/scramble/wca_cross/${letter}.json`));
       if (!r.ok) throw new Error(String(r.status));
       const data = (await r.json()) as WcaFile;
       wcaCacheRef.current.set(letter, data);

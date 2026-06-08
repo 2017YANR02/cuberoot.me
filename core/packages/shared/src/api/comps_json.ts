@@ -3,6 +3,8 @@
 //   - all_upcoming_comps.json ← stats-build/src/bin/fetch_upcoming_comps.ts 的 buildAllUpcomingComps()
 //   - all_past_comps.json     ← core/packages/stats-build/src/bin/gen_all_comps.ts
 
+import { statsUrl } from './stats-base';
+
 export interface UpcomingCompRecord {
   id: string;
   name: string;
@@ -37,13 +39,13 @@ export interface PastCompRecord {
 }
 
 export async function fetchAllUpcomingCompsJson(): Promise<UpcomingCompRecord[]> {
-  const r = await fetch('/stats/all_upcoming_comps.json');
+  const r = await fetch(statsUrl('/stats/all_upcoming_comps.json'));
   if (!r.ok) throw new Error(`all_upcoming_comps ${r.status}`);
   return r.json() as Promise<UpcomingCompRecord[]>;
 }
 
 export async function fetchAllPastCompsJson(): Promise<PastCompRecord[]> {
-  const r = await fetch('/stats/all_past_comps.json');
+  const r = await fetch(statsUrl('/stats/all_past_comps.json'));
   if (!r.ok) throw new Error(`all_past_comps ${r.status}`);
   return r.json() as Promise<PastCompRecord[]>;
 }

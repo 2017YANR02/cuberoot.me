@@ -37,7 +37,7 @@ export default function LitCitiesTab({ profile, comps, isZh }: Props) {
           )}
         </span>
         <Link
-          href={`/wca/globe?wcaId=${encodeURIComponent(profile.person.wca_id)}${isZh ? '&lang=zh' : ''}`}
+          href={`/wca/comp?view=globe&wcaId=${encodeURIComponent(profile.person.wca_id)}${isZh ? '&lang=zh' : ''}`}
           className="wp-lit-banner-cta"
         >
           {t('在地球上查看', 'Open on Globe')}

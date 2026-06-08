@@ -128,8 +128,9 @@ function readScopeAll(): boolean {
   return localStorage.getItem(SCOPE_ALL_KEY) === '1';
 }
 const NO_SCRAMBLES: string[] = [];
-// 用 3x3 打乱、可做十字步数分析的项目(跳过 333mbf 多盲:一把多方块无法逐方块对应)。
-const FAMILY_333 = new Set(['333', '333oh', '333ft', '333fm', '333bf']);
+// 用 3x3 打乱、可做十字步数分析的项目。多盲(mbf/mbo)拆成逐方块行后,每个方块就是
+// 一条 333bf 式打乱,逐方块做十字分析与 333bf 完全一致,故纳入。
+const FAMILY_333 = new Set(['333', '333oh', '333ft', '333fm', '333bf', '333mbf', '333mbo']);
 
 // ── WCA load helpers (was ImportMode.tsx) ─────────────────────────────────
 const ROUND_INDEX: Record<string, number> = {
@@ -209,6 +210,28 @@ function buildSheetsFromWca(rows: WcaScrambleRow[]): RoundSheet[] {
     const roundIdx = Number(riStr);
     const main = arr.filter((r) => !r.is_extra).sort((a, b) => a.scramble_num - b.scramble_num);
     const extras = arr.filter((r) => r.is_extra).sort((a, b) => a.scramble_num - b.scramble_num);
+    const totalGroups = groupCountByER.get(`${event}|${roundIdx}`) ?? 1;
+    // MBLD:每个 row(scramble_num)= 一把,其 scramble 字段是多行,逐行 = 一个魔方。
+    // 拆成一把一张 sheet,每个魔方独占一行(各自出图),与本地生成路径同构。
+    if (event === '333mbf' || event === '333mbo') {
+      [...main, ...extras].forEach((r, ai) => {
+        const cubeRows: AttemptScramble[] = r.scramble
+          .split('\n')
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .map((s, ci) => ({ label: String(ci + 1), scramble: s, isExtra: r.is_extra }));
+        sheets.push({
+          event,
+          roundIdx,
+          groupIdx: groupIdxOf(groupId),
+          format: inferFormat(event, main.length || 1),
+          attemptNumber: ai,
+          attempts: cubeRows,
+          totalGroups,
+        });
+      });
+      continue;
+    }
     const attempts: AttemptScramble[] = [
       ...main.map((r, i) => ({ label: String(i + 1), scramble: r.scramble, isExtra: false })),
       ...extras.map((r, i) => ({ label: `E${i + 1}`, scramble: r.scramble, isExtra: true })),
@@ -219,13 +242,14 @@ function buildSheetsFromWca(rows: WcaScrambleRow[]): RoundSheet[] {
       groupIdx: groupIdxOf(groupId),
       format: inferFormat(event, main.length || 1),
       attempts,
-      totalGroups: groupCountByER.get(`${event}|${roundIdx}`) ?? 1,
+      totalGroups,
     });
   }
   sheets.sort((a, b) => {
     if (a.event !== b.event) return a.event.localeCompare(b.event);
     if (a.roundIdx !== b.roundIdx) return a.roundIdx - b.roundIdx;
-    return a.groupIdx - b.groupIdx;
+    if (a.groupIdx !== b.groupIdx) return a.groupIdx - b.groupIdx;
+    return (a.attemptNumber ?? 0) - (b.attemptNumber ?? 0);
   });
   return sheets;
 }

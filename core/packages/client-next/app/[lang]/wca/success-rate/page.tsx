@@ -130,7 +130,7 @@ function SuccessRatePageInner() {
                   <tr key={r.wcaId}>
                     <td className="wse-rank-col">{(page - 1) * size + i + 1}</td>
                     <td>
-                      <Link href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>{displayCuberName(r.name, isZh)}</Link>
+                      <Link prefetch={false} href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>{displayCuberName(r.name, isZh)}</Link>
                     </td>
                     <td className="wse-value-col">{r.percentage.toFixed(2)}%</td>
                     <td className="wse-value-col">{r.solved}</td>

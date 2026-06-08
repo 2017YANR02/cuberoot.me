@@ -4,6 +4,7 @@
 
 import { fetchUserTimes } from '@cuberoot/shared';
 import type { WcaUserTimes } from '@cuberoot/shared';
+import { statsUrl } from '@/lib/stats-base';
 
 // ── 类型 ──
 
@@ -82,7 +83,7 @@ export async function load(): Promise<void> {
   // NOTE: 预加载 wr_ids.json — 同源请求，极快
   if (!wrIdsCache) {
     try {
-      const resp = await fetch('/stats/wr_ids.json');
+      const resp = await fetch(statsUrl('/stats/wr_ids.json'));
       if (resp.ok) wrIdsCache = await resp.json();
     } catch (e) {
       console.warn('wr_ids.json load failed:', e);

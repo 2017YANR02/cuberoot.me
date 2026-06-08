@@ -98,6 +98,68 @@
     position: static;
 }
 
+/* 合并后:toolbar 里的 CompPicker 一框两用(打字过滤日历 + 粘贴/选中直达详情)。
+   外层 .comp-picker 套用原 search-box 的占位与外观,保持工具栏一致。 */
+.calendar-page .toolbar .search-box-comp {
+    flex: 1;
+    min-width: 180px;
+    max-width: 320px;
+}
+.calendar-page .toolbar .search-box-comp input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    padding-right: 28px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.calendar-page .toolbar .search-box-comp input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+/* 日历下方的「最近浏览」与日历主体留间距 */
+.comp-recent-calendar { margin-top: 32px; }
+
+/* ── view=globe:沉浸全屏地球(复用 /wca/globe 的 MapLibre 组件,dark-locked 配色) ── */
+.comp-globe-view { position: fixed; inset: 0; z-index: 50; }
+.comp-globe-loading {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #14181E; /* globe 为 dark-locked 独立配色,占位匹配其暗背景 */
+    color: rgba(236, 234, 227, 0.55);
+    font-size: 13px;
+    z-index: 50;
+}
+/* 地球视图隐藏 comp 的日历 UI,只留浮动的视图切换器(month-bar)用来切回 */
+.calendar-page--globe > .upcoming-header,
+.calendar-page--globe > .toolbar,
+.calendar-page--globe > .event-chips,
+.calendar-page--globe > .legend,
+.calendar-page--globe > .comp-recent,
+.calendar-page--globe > .mode-status { display: none; }
+/* 特异性 0,3,0 压过 line 388 的基础 `.calendar-page .month-bar`(margin 0.5rem),
+   否则 margin-top 残留 8px 把切换器推得比 globe 顶栏内容偏下、不居中 */
+.calendar-page.calendar-page--globe > .month-bar {
+    position: fixed;
+    top: max(8px, var(--sat, 0px));
+    left: 12px;
+    margin: 0;
+    z-index: 60;
+    width: auto;
+}
+/* 地球顶栏给浮动切换器让出左侧(嵌入态 logo 已隐藏);特异性需高过 globe.css 的
+   .globe-page .globe-topbar(padding shorthand),否则被覆盖 */
+.comp-globe-view .globe-page .globe-topbar { padding-left: 185px; }
+
 .calendar-page .search-box {
     background: var(--surface);
     border: 1px solid var(--border);

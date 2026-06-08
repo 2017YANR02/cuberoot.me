@@ -164,7 +164,7 @@ function GrandSlamPageInner() {
                     <td className="wse-rank-col">{i + 1}</td>
                     <td>
                       {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                      <Link href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>
+                      <Link prefetch={false} href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>
                         {displayCuberName(r.name, isZh)}
                       </Link>
                     </td>

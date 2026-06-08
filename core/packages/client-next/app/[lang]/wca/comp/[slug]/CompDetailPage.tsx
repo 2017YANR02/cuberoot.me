@@ -1645,6 +1645,7 @@ function CuberNameLink({ u, isZh }: { u: User; isZh: boolean }) {
   if (u.wcaid) {
     return (
       <Link
+        prefetch={false}
         href={`/${isZh ? 'zh' : 'en'}/wca/persons/${u.wcaid}`}
         className="cuber-name cuber-link"
         title={title}
@@ -2026,7 +2027,8 @@ function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: Cuber
             <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
             {u.wcaid ? (
               <Link
-                href={`/wca/persons/${u.wcaid}`}
+                prefetch={false}
+                href={`/${isZh ? 'zh' : 'en'}/wca/persons/${u.wcaid}`}
                 className="cuber-link-modal"
                 onClick={onClose}
               >
@@ -2282,7 +2284,8 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
             <Flag iso2={iso2} className="comp-flag" />
             {u.wcaid ? (
               <Link
-                href={`/wca/persons/${u.wcaid}`}
+                prefetch={false}
+                href={`/${isZh ? 'zh' : 'en'}/wca/persons/${u.wcaid}`}
                 className="cuber-link-modal"
                 onClick={onClose}
               >

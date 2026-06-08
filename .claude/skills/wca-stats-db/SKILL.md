@@ -32,14 +32,17 @@ WCA 公开 TSV / 老 Ruby 代码 / 训练数据里到处是 `r.value1, r.value2,
 
 ## ⚠️ 本地 dump ≠ CI 可用表
 
-本地 dump 是 WCA 全量；CI (`update_database.ts`) 只导入 `REQUIRED_TABLES` 15 张：
+本地 dump 是 WCA 全量；CI (`update_database.ts`) 只导入 `REQUIRED_TABLES` 17 张：
 
 ```
 championships, competitions, competition_delegates, continents,
-countries, events, formats, persons, preferred_formats,
+countries, eligible_country_iso2s_for_championship,
+events, formats, persons, preferred_formats,
 ranks_single, ranks_average, result_attempts, results,
-round_types, users
+round_types, scrambles, users
 ```
+
+`scrambles`（2026-06 加，给 /scramble/stats 打乱长度统计用）：列 `event_id` + `scramble`(text) + `competition_id` / `round_type_id` / `group_id` / `is_extra` / `scramble_num`。~0.5GB，全表扫即可。
 
 **本地能 join 到的 `competition_events` / `rounds` / `rounds_*` / `championships_*` 关联表 / `posts` / 任何 `_metadata` 表 → CI 没有。**
 
