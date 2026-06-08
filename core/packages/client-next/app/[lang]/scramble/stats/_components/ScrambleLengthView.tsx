@@ -181,6 +181,14 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
             />
           </div>
 
+          {event === 'minx' && (
+            <p className="scramble-len-footnote">
+              {isZh
+                ? '注：极个别五魔打乱原文漏了空格（如 R--D-- 应为 R-- D--），本页按 move 字母表计数而非空格，故全部记为 77 步。'
+                : 'Note: a handful of megaminx scrambles have a missing space in the raw WCA data (e.g. R--D-- should be R-- D--); counted by move rather than whitespace, so all read 77.'}
+            </p>
+          )}
+
           {stats && (
             <div className="scramble-stats-panel">
               <div className="scramble-stats-panel-title">
