@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Download, CreditCard } from "lucide-react";
 import { list } from "@/lib/db/qr";
 import { Tooltip } from "@/components/Tooltip";
-import { Card, PageHeader, PrimaryLink } from "../../_components/Shell";
+import { Card, GhostLink, PageHeader, PrimaryLink } from "../../_components/Shell";
 import { Field, FormActions, Input, Submit } from "../../_components/Form";
 import { DeleteButton } from "../../_components/DeleteButton";
 import { createQrBatch, deleteQr } from "./actions";
@@ -28,9 +28,12 @@ export default async function AdminQrPage({
         title="二维码 / 落地码"
         subtitle={`共 ${rows.length} 个 code,累计扫码 ${totalScans} 次。落地路径 /qr/[code]`}
         actions={
-          rows.length > 0 ? (
-            <PrimaryLink href="/admin/qr/cards">卡片打印(全部)</PrimaryLink>
-          ) : undefined
+          <>
+            {rows.length > 0 ? (
+              <PrimaryLink href="/admin/qr/cards">卡片打印(全部)</PrimaryLink>
+            ) : null}
+            <GhostLink href="/admin/qr/stats">数据看板</GhostLink>
+          </>
         }
       />
 
