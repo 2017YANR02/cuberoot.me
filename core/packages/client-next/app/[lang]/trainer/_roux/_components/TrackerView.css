@@ -1,0 +1,117 @@
+/* TrackerView (beta tracking trainer). De-MUI: Paper→panel, Box/Grid→flex,
+ * Typography→p/span, Select→native, TextField→input. Tokens only, dual-theme. */
+
+.roux-tracker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.roux-tracker-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+}
+.roux-tracker-panel-center {
+  align-items: center;
+  gap: 6px;
+}
+
+/* scramble row: title + gap + the move list */
+.roux-tracker-scramble-row {
+  display: flex;
+  align-items: baseline;
+}
+.roux-tracker-section-title {
+  color: var(--muted-foreground);
+  font-weight: 500;
+  border-bottom: 3px solid currentColor;
+}
+.roux-tracker-fgap {
+  flex-shrink: 100;
+  flex-basis: 2.5rem;
+  min-width: 1.5em;
+}
+.roux-tracker-scramble {
+  margin: 0;
+  white-space: pre-line;
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+/* controls */
+.roux-tracker-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+}
+.roux-tracker-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.roux-tracker-field .roux-field-label {
+  margin-bottom: 0;
+}
+.roux-tracker-select,
+.roux-tracker-input {
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  padding: 7px 10px;
+}
+.roux-tracker-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 28px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+}
+.roux-tracker-select:focus,
+.roux-tracker-input:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 35%, transparent);
+}
+
+/* nav buttons */
+.roux-tracker-nav {
+  display: flex;
+  gap: 4px;
+}
+
+/* cube panorama */
+.roux-tracker-cubes {
+  display: flex;
+}
+.roux-tracker-cube {
+  flex: 1 1 50%;
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 480px) {
+  .roux-tracker-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .roux-tracker-cubes {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .roux-tracker-scramble {
+    font-size: 1.1rem;
+  }
+}

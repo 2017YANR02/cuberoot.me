@@ -5,9 +5,11 @@
 // Ported from packages/client/src/pages/trainer/TrainerLandingPage.tsx.
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
+import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { Flag, Eye } from 'lucide-react';
+import { Flag, Eye, Blocks } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -15,6 +17,10 @@ import WcaEventSelector from '@/components/WcaEventSelector';
 import { Bld3Hub } from '../3bld/_components/Bld3Hub';
 import { PUZZLE_EVENT, segToEvent } from '../_events';
 import '../trainer.css';
+
+// Roux-method trainer (ported from onionhoney/roux-trainers) — heavy (three.js +
+// in-browser solver), so lazy-load it; only mounts when the 3x3 hub's Roux tab is active.
+const RouxTrainer = dynamic(() => import('../_roux/RouxTrainer'), { ssr: false });
 
 const TRAINABLE_SETS: Record<AlgPuzzle, string[]> = Object.fromEntries(
   ALG_PUZZLES.map(p => [p, ALG_CATALOG[p].map(s => s.slug)])
@@ -57,6 +63,13 @@ export default function TrainerHubClient() {
   const event = segToEvent(seg);
   const puzzle: PuzzleSel = EVENT_PUZZLE[event] ?? '3x3';
   const isBld = puzzle === '3bld';
+  // Roux trainer is 3x3-only; on the 333 hub a tab switches between the alg-set grid and Roux.
+  const is333 = event === '333';
+  const [tab, setTab] = useQueryState(
+    'tab',
+    parseAsStringEnum(['alg', 'roux']).withDefault('alg').withOptions({ history: 'push' }),
+  );
+  const showRoux = is333 && tab === 'roux';
   const [firstCases, setFirstCases] = useState<Record<string, AlgCase | null>>({});
 
   const trainableSets = isBld ? [] : ALG_CATALOG[puzzle].filter(s => TRAINABLE_SETS[puzzle].includes(s.slug));
@@ -92,6 +105,29 @@ export default function TrainerHubClient() {
         />
       </div>
 
+      {is333 && (
+        <div className="trainer-mode-toggle">
+          <button
+            type="button"
+            className={tab === 'alg' ? 'trainer-mode-btn is-active' : 'trainer-mode-btn'}
+            onClick={() => setTab('alg')}
+          >
+            <Flag size={15} /> {isZh ? '公式训练' : 'Alg Training'}
+          </button>
+          <button
+            type="button"
+            className={tab === 'roux' ? 'trainer-mode-btn is-active' : 'trainer-mode-btn'}
+            onClick={() => setTab('roux')}
+          >
+            <Blocks size={15} /> Roux
+          </button>
+        </div>
+      )}
+
+      {showRoux && <RouxTrainer embedded />}
+
+      {!showRoux && (
+      <>
       {isBld && <Bld3Hub embedded />}
 
       {!isBld && trainableSets.length === 0 && (
@@ -166,6 +202,8 @@ export default function TrainerHubClient() {
             })}
           </div>
         </>
+      )}
+      </>
       )}
     </div>
   );
