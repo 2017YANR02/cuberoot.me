@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Download } from "lucide-react";
+import { Download, CreditCard } from "lucide-react";
 import { list } from "@/lib/db/qr";
 import { Tooltip } from "@/components/Tooltip";
 import { Card, PageHeader, PrimaryLink } from "../../_components/Shell";
@@ -117,10 +117,18 @@ export default async function AdminQrPage({
                     <a
                       href={`/api/qr/${r.code}/svg`}
                       download={`qr-${r.code}.svg`}
-                      title="下载二维码 SVG"
+                      title="下载二维码 SVG(仅码)"
                       className="mr-3 inline-flex items-center align-middle text-ink-3 hover:text-brand transition"
                     >
                       <Download size={14} />
+                    </a>
+                    <a
+                      href={`/api/qr/${r.code}/card`}
+                      download={`card-${r.code}.svg`}
+                      title="下载矢量折叠卡 SVG(印刷母版,含出血+裁切线)"
+                      className="mr-3 inline-flex items-center align-middle text-ink-3 hover:text-brand transition"
+                    >
+                      <CreditCard size={14} />
                     </a>
                     <DeleteButton id={r.code} action={deleteQr} />
                   </Td>
