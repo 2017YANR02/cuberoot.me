@@ -1,59 +1,37 @@
 'use client';
 
-// Ported from packages/client/src/components/LangToggle.tsx.
-// Phase 3 [lang]: clicking the toggle swaps the URL's /<lang>/ segment via
-// router.replace so the user lands on the same page in the other locale
-// (e.g. /en/recon → /zh/recon). Falls back to syncLangToUrl on paths without
-// a [lang] segment (root '/', /auth/callback) so the cookie still updates.
+// Three-locale picker: English (bare URL) / 简体中文 (/zh) / 繁體中文 (/zh-Hant).
+// Pattern B path swap: strip any /en, /zh, /zh-Hant prefix, then re-apply the
+// target locale's prefix (English stays bare). Reads the query lazily (not via
+// useSearchParams at render) so this globally mounted control doesn't force
+// pages to bail to CSR during prerender.
 
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { syncLangToUrl } from '@/i18n/i18n-client';
+import { Check } from 'lucide-react';
+import { changeAppLanguage, normalizeAppLang, syncLangToUrl, type AppLang } from '@/i18n/i18n-client';
 
 interface LangToggleProps {
   variant?: 'inline' | 'fixed';
   className?: string;
 }
 
-function TranslateIcon({ size = 16, isZh }: { size?: number; isZh: boolean }) {
-  const back = isZh ? 'A' : '文';
-  const front = isZh ? '文' : 'A';
-  const backIsZh = !isZh;
-  const frontIsZh = isZh;
+const OPTIONS: { code: AppLang; label: string }[] = [
+  { code: 'en', label: 'English' },
+  { code: 'zh', label: '简体中文' },
+  { code: 'zh-Hant', label: '繁體中文' },
+];
+
+function TranslateIcon({ size = 14 }: { size?: number }) {
   const cnFont = "system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif";
   const enFont = "ui-sans-serif, 'Inter', -apple-system, sans-serif";
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 16 16"
-      aria-hidden="true"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 16 16" aria-hidden="true">
       <rect x="0.5" y="0.5" width="10" height="10" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1" />
-      <text
-        x="5.5"
-        y="8.2"
-        textAnchor="middle"
-        fontSize={backIsZh ? 7 : 7.5}
-        fontWeight={backIsZh ? 500 : 700}
-        fontFamily={backIsZh ? cnFont : enFont}
-        fill="currentColor"
-      >
-        {back}
-      </text>
+      <text x="5.5" y="8.2" textAnchor="middle" fontSize={7} fontWeight={500} fontFamily={cnFont} fill="currentColor">文</text>
       <rect x="5.5" y="5.5" width="10" height="10" rx="1.5" fill="currentColor" />
-      <text
-        x="10.5"
-        y="13.2"
-        textAnchor="middle"
-        fontSize={frontIsZh ? 7 : 7.5}
-        fontWeight={frontIsZh ? 500 : 700}
-        fontFamily={frontIsZh ? cnFont : enFont}
-        fill="var(--background)"
-      >
-        {front}
-      </text>
+      <text x="10.5" y="13.2" textAnchor="middle" fontSize={7.5} fontWeight={700} fontFamily={enFont} fill="var(--background)">A</text>
     </svg>
   );
 }
@@ -62,30 +40,44 @@ export default function LangToggle({ variant = 'inline', className }: LangToggle
   const { i18n } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
-  const isZh = i18n.language.startsWith('zh');
+  const current = normalizeAppLang(i18n.language);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-  const toggle = () => {
-    const next = isZh ? 'en' : 'zh';
-    void i18n.changeLanguage(next);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const pick = (next: AppLang) => {
+    setOpen(false);
+    if (next === current) return;
+    changeAppLanguage(next);
     syncLangToUrl(next); // cookie + localStorage + html.lang (also adds ?lang=)
 
-    // Pattern B path swap: English is the BARE path, Chinese is /zh/…. The
-    // browser URL is bare on English pages (the /en render is behind a rewrite),
-    // so strip any leading /en or /zh, then re-shape for the target locale.
     if (!pathname) return;
-    const bare = pathname.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
-    // Read the query lazily (not via useSearchParams at render) so this globally
-    // mounted toggle doesn't force every page to bail to CSR during prerender.
-    // Drop the ?lang= that syncLangToUrl just injected — Pattern B URLs are clean.
+    const bare = pathname.replace(/^\/(en|zh-Hant|zh)(?=\/|$)/, '') || '/';
+    // Drop the ?lang= syncLangToUrl just injected — Pattern B URLs are clean.
     let query = '';
     if (typeof window !== 'undefined') {
       const sp = new URLSearchParams(window.location.search);
       sp.delete('lang');
       query = sp.toString() ? `?${sp.toString()}` : '';
     }
-    const target =
-      next === 'zh' ? `/zh${bare === '/' ? '' : bare}${query}` : `${bare}${query}`;
-    router.replace(target);
+    const prefix = next === 'en' ? '' : `/${next}`;
+    const path = prefix ? `${prefix}${bare === '/' ? '' : bare}` : bare;
+    router.replace(`${path || '/'}${query}`);
   };
 
   const cls = ['lang-toggle', variant === 'fixed' ? 'lang-toggle--fixed' : '', className ?? '']
@@ -93,14 +85,35 @@ export default function LangToggle({ variant = 'inline', className }: LangToggle
     .join(' ');
 
   return (
-    <button
-      type="button"
-      className={cls}
-      onClick={toggle}
-      title={isZh ? 'Switch to English' : '切换为中文'}
-      aria-label={isZh ? 'Switch to English' : '切换为中文'}
-    >
-      <TranslateIcon size={14} isZh={isZh} />
-    </button>
+    <div className="lang-toggle-wrap" ref={ref}>
+      <button
+        type="button"
+        className={cls}
+        onClick={() => setOpen((v) => !v)}
+        title="Language / 语言"
+        aria-label="Language"
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <TranslateIcon size={14} />
+      </button>
+      {open && (
+        <div className="lang-menu" role="menu">
+          {OPTIONS.map((o) => (
+            <button
+              key={o.code}
+              type="button"
+              role="menuitemradio"
+              aria-checked={o.code === current}
+              className={`lang-menu-item${o.code === current ? ' is-active' : ''}`}
+              onClick={() => pick(o.code)}
+            >
+              <span className="lang-menu-check">{o.code === current && <Check size={13} />}</span>
+              <span>{o.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

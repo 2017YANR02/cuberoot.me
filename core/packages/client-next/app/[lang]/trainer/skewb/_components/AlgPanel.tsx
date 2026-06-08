@@ -6,6 +6,8 @@ import SkewbImage from './SkewbImage';
 import HintModal from './HintModal';
 import { CATEGORIES, ALL_ALGS, type SkewbAlgCase } from '../_lib/algs';
 import type { AlgSelectView } from '../_lib/useSkewbTrainer';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 interface Props {
   isZh: boolean;
@@ -58,19 +60,21 @@ export default function AlgPanel({
           disabled={!hasSelection}
         >
           <RefreshCw size={16} />
-          {isZh ? '生成 L2L 案例' : 'Generate L2L Case'}
+          {tr({ zh: '生成 L2L 案例', en: 'Generate L2L Case' })}
         </button>
 
-        <div className="sk-scramble-label">{isZh ? '打乱' : 'Scramble'}</div>
+        <div className="sk-scramble-label">{tr({ zh: '打乱', en: 'Scramble',
+            zhHant: "打亂"
+        })}</div>
         <div className={scramble ? 'sk-scramble-text' : 'sk-scramble-text is-empty'}>
           {scramble ||
             (hasSelection
-              ? isZh
-                ? '点击上方生成'
-                : 'Press generate above'
-              : isZh
-                ? '请至少选择一个类别或案例'
-                : 'Select at least one category or case')}
+              ? tr({ zh: '点击上方生成', en: 'Press generate above',
+                  zhHant: "點選上方生成"
+            })
+              : tr({ zh: '请至少选择一个类别或案例', en: 'Select at least one category or case',
+                  zhHant: "請至少選擇一個類別或案例"
+            }))}
         </div>
 
         {showImg && scramble ? (
@@ -87,14 +91,18 @@ export default function AlgPanel({
               onClick={() => setHintOpen(true)}
             >
               <HelpCircle size={15} />
-              {isZh ? '忘记解法了?' : 'Help! I forgot the solution.'}
+              {tr({ zh: '忘记解法了?', en: 'Help! I forgot the solution.',
+                  zhHant: "忘記解法了?"
+            })}
             </button>
           </div>
         ) : null}
       </div>
 
       <div className="sk-settings">
-        <h2 className="sk-settings-title">{isZh ? '选择案例' : 'Select cases'}</h2>
+        <h2 className="sk-settings-title">{tr({ zh: '选择案例', en: 'Select cases',
+            zhHant: "選擇案例"
+        })}</h2>
 
         {/* category vs case-id view switch */}
         <div className="sk-select-mode">
@@ -103,21 +111,25 @@ export default function AlgPanel({
             className={view === 'category' ? 'sk-select-mode-btn is-active' : 'sk-select-mode-btn'}
             onClick={() => onView('category')}
           >
-            {isZh ? '按类别' : 'By Category'}
+            {tr({ zh: '按类别', en: 'By Category',
+                zhHant: "按類別"
+            })}
           </button>
           <button
             type="button"
             className={view === 'id' ? 'sk-select-mode-btn is-active' : 'sk-select-mode-btn'}
             onClick={() => onView('id')}
           >
-            {isZh ? '按案例编号' : 'By Case ID'}
+            {tr({ zh: '按案例编号', en: 'By Case ID',
+                zhHant: "按案例編號"
+            })}
           </button>
         </div>
 
         {/* convenience toggles */}
         <div className="sk-toggle-group">
           <button type="button" className="sk-toggle-btn" onClick={onToggleAll}>
-            {isZh ? '全部' : 'Toggle All'}
+            {tr({ zh: '全部', en: 'Toggle All' })}
           </button>
           <button type="button" className="sk-toggle-btn" onClick={onTogglePi}>
             {isZh ? 'Pi' : 'Toggle Pi'}
@@ -147,7 +159,7 @@ export default function AlgPanel({
                       checked={on}
                       onChange={() => onToggleCategory(cat.key)}
                     />
-                    {isZh ? cat.zh : cat.en}
+                    {(i18n.language.startsWith('zh') ? cat.zh : cat.en)}
                   </label>
                 );
               })}
@@ -181,7 +193,9 @@ export default function AlgPanel({
             checked={showImg}
             onChange={(e) => onShowImg(e.target.checked)}
           />
-          {isZh ? '显示打乱图' : 'Show scramble image'}
+          {tr({ zh: '显示打乱图', en: 'Show scramble image',
+              zhHant: "顯示打亂圖"
+        })}
         </label>
       </div>
 

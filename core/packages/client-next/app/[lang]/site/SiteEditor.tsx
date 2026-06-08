@@ -21,22 +21,35 @@ interface Props {
 }
 
 const TXT = {
-  titleNew:    { en: 'Add Site',    zh: '新增网站' },
-  titleEdit:   { en: 'Edit Site',   zh: '编辑网站' },
-  group:       { en: 'Group',       zh: '分组' },
-  name:        { en: 'Name',        zh: '名称' },
-  nameEn:      { en: 'Name (EN)',   zh: '英文名（可选）' },
-  nameZh:      { en: 'Name (ZH)',   zh: '中文名（可选）' },
-  url:         { en: 'URL',         zh: '主网址' },
-  altUrls:     { en: 'Mirrors (one per line)', zh: '镜像网址（每行一条）' },
+  titleNew:    { en: 'Add Site',    zh: '新增网站'
+},
+  titleEdit:   { en: 'Edit Site',   zh: '编辑网站'
+},
+  group:       { en: 'Group',       zh: '分组'
+},
+  name:        { en: 'Name',        zh: '名称'
+},
+  nameEn:      { en: 'Name (EN)',   zh: '英文名（可选）'
+},
+  nameZh:      { en: 'Name (ZH)',   zh: '中文名（可选）'
+},
+  url:         { en: 'URL',         zh: '主网址'
+},
+  altUrls:     { en: 'Mirrors (one per line)', zh: '镜像网址（每行一条）'
+},
   author:      { en: 'Author',      zh: '作者' },
-  descEn:      { en: 'Description (EN)', zh: '英文简介' },
-  descZh:      { en: 'Description (ZH)', zh: '中文简介' },
-  youtube:     { en: 'YouTube link', zh: 'YouTube 链接' },
-  tags:        { en: 'Tags (comma)', zh: '标签（逗号分隔）' },
+  descEn:      { en: 'Description (EN)', zh: '英文简介'
+},
+  descZh:      { en: 'Description (ZH)', zh: '中文简介'
+},
+  youtube:     { en: 'YouTube link', zh: 'YouTube 链接'
+},
+  tags:        { en: 'Tags (comma)', zh: '标签（逗号分隔）'
+},
   status:      { en: 'Offline?',    zh: '是否失效' },
   cancel:      { en: 'Cancel',      zh: '取消' },
-  save:        { en: 'Save',        zh: '保存' },
+  save:        { en: 'Save',        zh: '保存'
+},
 } as const;
 
 function emptyDraft(group: GroupId) {

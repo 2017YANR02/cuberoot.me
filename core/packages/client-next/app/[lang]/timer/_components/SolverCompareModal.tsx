@@ -14,6 +14,7 @@ import {
   type SolveResult,
 } from '../_lib/solver/methods';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   scramble: string;
@@ -100,7 +101,9 @@ export default function SolverCompareModal({ scramble, isZh, onClose }: Props) {
           : { maxWidth: 760 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id={titleId}>{isZh ? '解法对比' : 'Method comparison'}</h2>
+        <h2 id={titleId}>{tr({ zh: '解法对比', en: 'Method comparison',
+            zhHant: "解法對比"
+        })}</h2>
 
         <div className="modal-section">
           <div style={scrambleStyle}>{scramble}</div>
@@ -108,7 +111,9 @@ export default function SolverCompareModal({ scramble, isZh, onClose }: Props) {
 
         {busy && (
           <div className="modal-section" style={{ opacity: 0.6, fontSize: 13 }}>
-            {isZh ? '计算中… (首次运行需要构建剪枝表)' : 'Computing… (first run builds prune tables)'}
+            {tr({ zh: '计算中… (首次运行需要构建剪枝表)', en: 'Computing… (first run builds prune tables)',
+                zhHant: "計算中… (首次執行需要構建剪枝表)"
+            })}
           </div>
         )}
 
@@ -142,7 +147,9 @@ export default function SolverCompareModal({ scramble, isZh, onClose }: Props) {
 
         <div className="modal-actions">
           <button ref={closeBtnRef} className="primary" onClick={onClose}>
-            {isZh ? '关闭' : 'Close'}
+            {tr({ zh: '关闭', en: 'Close',
+                zhHant: "關閉"
+            })}
           </button>
         </div>
       </div>
@@ -171,8 +178,10 @@ function MethodCard({ outcome, isZh, bestTotal }: CardProps) {
           {!r
             ? (isZh ? '…' : '…')
             : failed
-              ? (isZh ? '失败' : 'failed')
-              : `${r.totalMoves} ${isZh ? '步' : 'moves'}`}
+              ? (tr({ zh: '失败', en: 'failed',
+                  zhHant: "失敗"
+            }))
+              : `${r.totalMoves} ${tr({ zh: '步', en: 'moves' })}`}
         </span>
       </div>
       {outcome.err && <div style={errStyle}>{outcome.err}</div>}
@@ -186,8 +195,10 @@ function MethodCard({ outcome, isZh, bestTotal }: CardProps) {
               </span>
               <span style={stageMovesStyle}>
                 {s.failed
-                  ? (isZh ? '未找到' : 'no solution')
-                  : (s.moves.length === 0 ? (isZh ? '(跳过)' : '(skip)') : s.moves.join(' '))}
+                  ? (tr({ zh: '未找到', en: 'no solution' }))
+                  : (s.moves.length === 0 ? (tr({ zh: '(跳过)', en: '(skip)',
+                      zhHant: "(跳過)"
+                })) : s.moves.join(' '))}
               </span>
             </div>
           ))}
@@ -225,8 +236,10 @@ function MethodAccordion({ outcome, isZh, bestTotal, open, onToggle }: Accordion
           {!r
             ? (isZh ? '…' : '…')
             : failed
-              ? (isZh ? '失败' : 'failed')
-              : `${r.totalMoves} ${isZh ? '步' : 'moves'}`}
+              ? (tr({ zh: '失败', en: 'failed',
+                  zhHant: "失敗"
+            }))
+              : `${r.totalMoves} ${tr({ zh: '步', en: 'moves' })}`}
         </span>
         <span style={{ marginLeft: 6, opacity: 0.7 }}>{open ? '▾' : '▸'}</span>
       </button>
@@ -243,8 +256,10 @@ function MethodAccordion({ outcome, isZh, bestTotal, open, onToggle }: Accordion
                   </span>
                   <span style={stageMovesStyle}>
                     {s.failed
-                      ? (isZh ? '未找到' : 'no solution')
-                      : (s.moves.length === 0 ? (isZh ? '(跳过)' : '(skip)') : s.moves.join(' '))}
+                      ? (tr({ zh: '未找到', en: 'no solution' }))
+                      : (s.moves.length === 0 ? (tr({ zh: '(跳过)', en: '(skip)',
+                          zhHant: "(跳過)"
+                    })) : s.moves.join(' '))}
                   </span>
                 </div>
               ))}

@@ -18,6 +18,7 @@ import pllMap from '@cuberoot/shared/data/pll.json';
 import ollMap from '@cuberoot/shared/data/oll.json';
 import { VisualCube } from '@/components/VisualCube';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { tr } from '@/i18n/tr';
 
 const typedOllMap = ollMap as Record<string, { name: string; alg: string; alg2: string; group: string }>;
 
@@ -163,12 +164,16 @@ export default function RecognizeClient() {
         : `Press ${currentCase?.name} to continue, Esc to pause`;
     }
     if (gameState === 'playing' && !mistake) {
-      return isZh ? '这是哪个 PLL？输入公式名字' : 'Which PLL is this? Type the algorithm name';
+      return tr({ zh: '这是哪个 PLL？输入公式名字', en: 'Which PLL is this? Type the algorithm name',
+          zhHant: "這是哪個 PLL？輸入公式名字"
+    });
     }
     if (gameState === 'paused') {
       return results.length === 0
         ? t('training.pressSpace')
-        : (isZh ? '按空格继续' : 'Press Space to continue');
+        : (tr({ zh: '按空格继续', en: 'Press Space to continue',
+            zhHant: "按空格繼續"
+        }));
     }
     return '';
   };
@@ -184,8 +189,12 @@ export default function RecognizeClient() {
       <div className="training-page" style={{ padding: '2rem', textAlign: 'center' }}>
         <h2>{t('training.complete')}</h2>
         <p style={{ fontSize: '1.2rem', margin: '1rem 0' }}>
-          {isZh ? '正确' : 'Correct'} <strong style={{ color: '#198754' }}>{correctCount}</strong> /{' '}
-          {isZh ? '总计' : 'Total'} <strong>{results.length}</strong>
+          {tr({ zh: '正确', en: 'Correct',
+              zhHant: "正確"
+        })} <strong style={{ color: '#198754' }}>{correctCount}</strong> /{' '}
+          {tr({ zh: '总计', en: 'Total',
+              zhHant: "總計"
+        })} <strong>{results.length}</strong>
         </p>
         {mistakeCount > 0 && (
           <p style={{ color: '#dc3545' }}>
@@ -194,13 +203,19 @@ export default function RecognizeClient() {
         )}
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
           <button className="btn-primary" onClick={startPersonalized}>
-            {isZh ? '个性化训练（弱项加强）' : 'Personalized (focus weak cases)'}
+            {tr({ zh: '个性化训练（弱项加强）', en: 'Personalized (focus weak cases)',
+                zhHant: "個性化訓練（弱項加強）"
+            })}
           </button>
           <button className="btn-secondary" onClick={restartEvaluation}>
-            {isZh ? '重新评估' : 'Restart evaluation'}
+            {tr({ zh: '重新评估', en: 'Restart evaluation',
+                zhHant: "重新評估"
+            })}
           </button>
           <button className="btn-secondary" onClick={() => router.push('/')}>
-            {isZh ? '返回首页' : 'Home'}
+            {tr({ zh: '返回首页', en: 'Home',
+                zhHant: "返回首頁"
+            })}
           </button>
         </div>
       </div>
@@ -274,8 +289,12 @@ export default function RecognizeClient() {
       {gameState === 'paused' && (
         <button className="btn-primary" onClick={resumePlay} style={{ fontSize: '1.2rem', padding: '0.75rem 2rem' }}>
           {results.length === 0
-            ? (isZh ? '▶ 开始' : '▶ Start')
-            : (isZh ? '▶ 继续' : '▶ Continue')} (Space)
+            ? (tr({ zh: '▶ 开始', en: '▶ Start',
+                zhHant: "▶ 開始"
+            }))
+            : (tr({ zh: '▶ 继续', en: '▶ Continue',
+                zhHant: "▶ 繼續"
+            }))} (Space)
         </button>
       )}
 
@@ -286,11 +305,15 @@ export default function RecognizeClient() {
       {gameState === 'playing' && (
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
           <button className="btn-secondary" onClick={pausePlay}>
-            {isZh ? '暂停 (Esc)' : 'Pause (Esc)'}
+            {tr({ zh: '暂停 (Esc)', en: 'Pause (Esc)',
+                zhHant: "暫停 (Esc)"
+            })}
           </button>
           {!mistake && (
             <button className="btn-secondary" onClick={giveUpOnCase} style={{ opacity: 0.7 }}>
-              {isZh ? '放弃 (S/?)' : 'Give up (S/?)'}
+              {tr({ zh: '放弃 (S/?)', en: 'Give up (S/?)',
+                  zhHant: "放棄 (S/?)"
+            })}
             </button>
           )}
         </div>

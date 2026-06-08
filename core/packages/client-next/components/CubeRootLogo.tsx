@@ -6,6 +6,7 @@
 import HomeLink from '@/components/HomeLink';
 import { useEffectiveTheme } from '@/lib/theme';
 import { useTranslation } from 'react-i18next';
+import { tr } from '@/i18n/tr';
 
 export default function CubeRootLogo({
   className,
@@ -19,7 +20,9 @@ export default function CubeRootLogo({
   const isZh = i18n.language === 'zh';
   const src = eff === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png';
   return (
-    <HomeLink className={className} aria-label={isZh ? '主页' : 'Home'}>
+    <HomeLink className={className} aria-label={tr({ zh: '主页', en: 'Home',
+        zhHant: "主頁"
+    })}>
       <img src={src} alt="CubeRoot" height={height} />
     </HomeLink>
   );

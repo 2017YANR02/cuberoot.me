@@ -30,6 +30,7 @@ import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { User, Users } from 'lucide-react';
 import SoloView from './SoloView';
 import BattleView from './BattleView';
+import { tr } from '@/i18n/tr';
 
 const MODES = ['solo', 'duo'] as const;
 type Mode = typeof MODES[number];
@@ -59,13 +60,17 @@ export default function TimerShell() {
   const switchMode = (next: Mode) => { void setMode(next); };
 
   const modePill = (
-    <div className="shell-mode-pill" role="tablist" aria-label={isZh ? '模式' : 'Mode'}>
+    <div className="shell-mode-pill" role="tablist" aria-label={tr({ zh: '模式', en: 'Mode' })}>
       <button
         type="button"
         role="tab"
         aria-selected={mode === 'solo'}
-        aria-label={isZh ? '单人' : 'Solo'}
-        title={isZh ? '单人' : 'Solo'}
+        aria-label={tr({ zh: '单人', en: 'Solo',
+            zhHant: "單人"
+        })}
+        title={tr({ zh: '单人', en: 'Solo',
+            zhHant: "單人"
+        })}
         className={`shell-mode-opt${mode === 'solo' ? ' active' : ''}`}
         onClick={() => switchMode('solo')}
       >
@@ -75,8 +80,12 @@ export default function TimerShell() {
         type="button"
         role="tab"
         aria-selected={mode === 'duo'}
-        aria-label={isZh ? '双人' : 'Duo'}
-        title={isZh ? '双人' : 'Duo'}
+        aria-label={tr({ zh: '双人', en: 'Duo',
+            zhHant: "雙人"
+        })}
+        title={tr({ zh: '双人', en: 'Duo',
+            zhHant: "雙人"
+        })}
         className={`shell-mode-opt${mode === 'duo' ? ' active' : ''}`}
         onClick={() => switchMode('duo')}
       >

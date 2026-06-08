@@ -19,6 +19,7 @@ import type { Solve } from '../../_lib/types';
 import { effectiveMs } from '../../_lib/types';
 import { formatMs } from '../../_lib/stats';
 import './charts.css';
+import { tr } from '@/i18n/tr';
 
 interface HourChartProps {
   solves: Solve[];
@@ -169,7 +170,7 @@ function Panel({ buckets, isZh, title, width, height }: PanelProps) {
         const yTop = yCount(b.count);
         const h = padT + innerH - yTop;
         const tooltip = b.median !== null
-          ? `${b.label} · n=${b.count} · ${isZh ? '中位' : 'median'} ${formatMs(b.median)}`
+          ? `${b.label} · n=${b.count} · ${tr({ zh: '中位', en: 'median' })} ${formatMs(b.median)}`
           : `${b.label} · n=${b.count}`;
         return (
           <g key={`bar-${i}`}>
@@ -199,7 +200,7 @@ function Panel({ buckets, isZh, title, width, height }: PanelProps) {
             cy={cy}
             r={2.8}
           >
-            <title>{`${b.label} · ${isZh ? '中位' : 'median'} ${formatMs(b.median)} · n=${b.count}`}</title>
+            <title>{`${b.label} · ${tr({ zh: '中位', en: 'median' })} ${formatMs(b.median)} · n=${b.count}`}</title>
           </circle>
         );
       })}
@@ -265,7 +266,9 @@ export default function HourChart({
           viewBox={`0 0 ${width} ${height}`}
           preserveAspectRatio="xMidYMid meet"
           role="img"
-          aria-label={isZh ? '时段分布' : 'When-fastest chart'}
+          aria-label={tr({ zh: '时段分布', en: 'When-fastest chart',
+              zhHant: "時段分佈"
+        })}
         >
           <text
             className="empty-msg"
@@ -274,7 +277,9 @@ export default function HourChart({
             textAnchor="middle"
             dominantBaseline="middle"
           >
-            {isZh ? '至少需 10 次有效成绩' : 'Need 10+ solves'}
+            {tr({ zh: '至少需 10 次有效成绩', en: 'Need 10+ solves',
+                zhHant: "至少需 10 次有效成績"
+            })}
           </text>
         </svg>
       </div>
@@ -286,14 +291,16 @@ export default function HourChart({
       <Panel
         buckets={hourBuckets}
         isZh={isZh}
-        title={isZh ? '按小时（0-23）' : 'By hour (0-23)'}
+        title={tr({ zh: '按小时（0-23）', en: 'By hour (0-23)',
+            zhHant: "按小時（0-23）"
+        })}
         width={width}
         height={height}
       />
       <Panel
         buckets={dowBuckets}
         isZh={isZh}
-        title={isZh ? '按星期' : 'By day of week'}
+        title={tr({ zh: '按星期', en: 'By day of week' })}
         width={width}
         height={height}
       />

@@ -18,6 +18,7 @@
  */
 import { useMemo, useState } from 'react';
 import { TeX, MathText } from './Tex';
+import i18n from '@/i18n/i18n-client';
 
 type HeurMode = 'none' | 'corners' | 'corners-edges';
 
@@ -174,15 +175,15 @@ export default function IdaStarTree({ isZh }: Props) {
   const heurDesc: Record<HeurMode, { zh: string; en: string }> = {
     none: {
       zh: 'h(s) ≡ 1: 没有 PDB,等价于 iterative deepening DFS。f-limit 必须扫遍每个节点,完全无剪枝。',
-      en: 'h(s) ≡ 1: no PDB, equivalent to iterative deepening DFS. The f-limit scans every node, zero pruning.',
+      en: 'h(s) ≡ 1: no PDB, equivalent to iterative deepening DFS. The f-limit scans every node, zero pruning.'
     },
     corners: {
       zh: 'h(s) = 角块 PDB 查表: 预计算"只看 8 个角块"在 G₃ = ⟨180°⟩ 内的最优距离。占 88 MB,提示稍弱(角朝向 + 角排列 = 8!·3⁷ ≈ 8.8 × 10⁷ 种)。',
-      en: 'h(s) = corner-only PDB lookup: precompute the optimal distance restricted to the 8 corners (in G₃ = ⟨180°⟩). 88 MB on disk, mildly informed (8!·3⁷ ≈ 8.8 × 10⁷ entries).',
+      en: 'h(s) = corner-only PDB lookup: precompute the optimal distance restricted to the 8 corners (in G₃ = ⟨180°⟩). 88 MB on disk, mildly informed (8!·3⁷ ≈ 8.8 × 10⁷ entries).'
     },
     'corners-edges': {
       zh: 'h(s) = max(角 PDB, 6-edge PDB): Korf 1997 的经典启发,8.8 × 10⁷ 角条目 + 2 个 6-edge 子集表(各 4.2 × 10⁸,共 ~1.5 GB)。三阶 IDA* 实际用的就是这个,平均剪掉 99.9% 节点。',
-      en: 'h(s) = max(corner PDB, 6-edge PDBs): Korf\'s classic 1997 heuristic. 8.8 × 10⁷ corner entries + two 6-edge subset tables (4.2 × 10⁸ each, ~1.5 GB total). The real-world 3×3 IDA*; prunes ~99.9% of nodes.',
+      en: 'h(s) = max(corner PDB, 6-edge PDBs): Korf\'s classic 1997 heuristic. 8.8 × 10⁷ corner entries + two 6-edge subset tables (4.2 × 10⁸ each, ~1.5 GB total). The real-world 3×3 IDA*; prunes ~99.9% of nodes.'
     },
   };
 
@@ -213,7 +214,7 @@ export default function IdaStarTree({ isZh }: Props) {
       </div>
 
       <p className="god-ida-heur-desc">
-        <MathText>{isZh ? heurDesc[mode].zh : heurDesc[mode].en}</MathText>
+        <MathText>{(i18n.language.startsWith('zh') ? heurDesc[mode].zh : heurDesc[mode].en)}</MathText>
       </p>
 
       {/* counts */}

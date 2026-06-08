@@ -4,6 +4,8 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './algorithms_landing.css';
+import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 interface Topic {
   slug: string;
@@ -96,7 +98,7 @@ const TOPICS: Topic[] = [
 
 export default function AlgorithmsLandingPage() {
   const { i18n } = useTranslation();
-  const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
   useDocumentTitle('算法导览', 'Algorithms');
 
@@ -113,14 +115,16 @@ export default function AlgorithmsLandingPage() {
           <span className="algos-landing-cursor">_</span>
         </h1>
         <p className="algos-landing-sub">
-          {lang === 'zh'
-            ? '魔方求解类算法的长篇导览。一题一篇深度,含数学建模、数据结构、实现细节、性能曲线。'
-            : 'Long-form guides to the cube-solving algorithms running inside CubeRoot. One algorithm per page — math, data structures, implementation, performance.'}
+          {tr({ zh: '魔方求解类算法的长篇导览。一题一篇深度,含数学建模、数据结构、实现细节、性能曲线。', en: 'Long-form guides to the cube-solving algorithms running inside CubeRoot. One algorithm per page — math, data structures, implementation, performance.',
+              zhHant: "魔方求解類演算法的長篇導覽。一題一篇深度,含數學建模、資料結構、實現細節、效能曲線。"
+        })}
         </p>
         <div className="algos-landing-meta">
-          <span>{lang === 'zh' ? '4 篇深度' : '4 deep dives'}</span>
+          <span>{tr({ zh: '4 篇深度', en: '4 deep dives' })}</span>
           <span className="algos-landing-meta-dot">·</span>
-          <span>{lang === 'zh' ? '状态空间搜索 / 启发式剪枝' : 'state-space search / admissible heuristics'}</span>
+          <span>{tr({ zh: '状态空间搜索 / 启发式剪枝', en: 'state-space search / admissible heuristics',
+              zhHant: "狀態空間搜尋 / 啟發式剪枝"
+        })}</span>
         </div>
       </header>
 
@@ -152,7 +156,9 @@ export default function AlgorithmsLandingPage() {
 
       <footer className="algos-landing-foot">
         <div className="algos-landing-foot-line">
-          <span>{lang === 'zh' ? '内容持续增补' : 'Content always growing'}</span>
+          <span>{tr({ zh: '内容持续增补', en: 'Content always growing',
+              zhHant: "內容持續增補"
+        })}</span>
           <span className="algos-landing-meta-dot">·</span>
           <Link href="/">CubeRoot</Link>
         </div>

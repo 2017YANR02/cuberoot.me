@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef } from 'react';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 interface Props {
   isZh: boolean;
@@ -15,47 +17,71 @@ interface ShortcutRow {
 }
 
 const TIMING: ShortcutRow[] = [
-  { keys: ['Space'],     en: 'Hold to ready, release to start. Press to stop.', zh: '按住进入准备，松开开始计时；运行中按下停止。' },
-  { keys: ['Esc'],       en: 'Cancel current attempt (no solve recorded).',     zh: '取消当前尝试（不计成绩）。' },
-  { keys: ['Touch'],     en: 'Same as space — tap-and-hold to ready.',          zh: '同空格 — 按住屏幕进入准备。' },
+  { keys: ['Space'],     en: 'Hold to ready, release to start. Press to stop.', zh: '按住进入准备，松开开始计时；运行中按下停止。'
+},
+  { keys: ['Esc'],       en: 'Cancel current attempt (no solve recorded).',     zh: '取消当前尝试（不计成绩）。'
+},
+  { keys: ['Touch'],     en: 'Same as space — tap-and-hold to ready.',          zh: '同空格 — 按住屏幕进入准备。'
+},
 ];
 
 const HISTORY: ShortcutRow[] = [
-  { keys: ['Z'],         en: 'Delete the last solve (undo).',                   zh: '删除最近一次成绩（撤销）。' },
-  { keys: ['2'],         en: 'Toggle +2 on the last solve (when stopped).',     zh: '已停止时切换最近成绩的 +2 罚时。' },
-  { keys: ['D'],         en: 'Toggle DNF on the last solve (when stopped).',    zh: '已停止时切换最近成绩的 DNF。' },
-  { keys: ['1', '…', '9'], en: 'Open the Nth-most-recent solve detail.',         zh: '打开倒数第 N 次成绩的详情面板。' },
+  { keys: ['Z'],         en: 'Delete the last solve (undo).',                   zh: '删除最近一次成绩（撤销）。'
+},
+  { keys: ['2'],         en: 'Toggle +2 on the last solve (when stopped).',     zh: '已停止时切换最近成绩的 +2 罚时。'
+},
+  { keys: ['D'],         en: 'Toggle DNF on the last solve (when stopped).',    zh: '已停止时切换最近成绩的 DNF。'
+},
+  { keys: ['1', '…', '9'], en: 'Open the Nth-most-recent solve detail.',         zh: '打开倒数第 N 次成绩的详情面板。'
+},
 ];
 
 const MULTISTAGE: ShortcutRow[] = [
-  { keys: ['1'], en: 'During solve: mark Cross done.',          zh: '运行中：标记十字完成。' },
-  { keys: ['2'], en: 'During solve: mark F2L done.',            zh: '运行中：标记 F2L 完成。' },
-  { keys: ['3'], en: 'During solve: mark OLL done.',            zh: '运行中：标记 OLL 完成。' },
+  { keys: ['1'], en: 'During solve: mark Cross done.',          zh: '运行中：标记十字完成。'
+},
+  { keys: ['2'], en: 'During solve: mark F2L done.',            zh: '运行中：标记 F2L 完成。'
+},
+  { keys: ['3'], en: 'During solve: mark OLL done.',            zh: '运行中：标记 OLL 完成。'
+},
 ];
 
 const BLD: ShortcutRow[] = [
-  { keys: ['Enter'], en: 'During BLD solve: mark memo done.',   zh: '盲拧运行中：标记记忆完成。' },
+  { keys: ['Enter'], en: 'During BLD solve: mark memo done.',   zh: '盲拧运行中：标记记忆完成。'
+},
 ];
 
 const NAV: ShortcutRow[] = [
-  { keys: ['→'],         en: 'Next scramble (new one at the end of history).',  zh: '下一条打乱（到末尾则生成新的）。' },
-  { keys: ['←'],         en: 'Previous scramble (revisit history).',            zh: '上一条打乱（回看历史）。' },
-  { keys: [','],         en: 'Generate a new scramble.',                        zh: '生成下一个打乱。' },
-  { keys: ['F'],         en: 'Toggle fullscreen.',                              zh: '切换全屏。' },
-  { keys: ['Click strip'], en: 'Refresh scramble.',                             zh: '点击打乱条换打乱。' },
+  { keys: ['→'],         en: 'Next scramble (new one at the end of history).',  zh: '下一条打乱（到末尾则生成新的）。'
+},
+  { keys: ['←'],         en: 'Previous scramble (revisit history).',            zh: '上一条打乱（回看历史）。'
+},
+  { keys: [','],         en: 'Generate a new scramble.',                        zh: '生成下一个打乱。'
+},
+  { keys: ['F'],         en: 'Toggle fullscreen.',                              zh: '切换全屏。'
+},
+  { keys: ['Click strip'], en: 'Refresh scramble.',                             zh: '点击打乱条换打乱。'
+},
 ];
 
 // Touch-only radial gesture wheel — press the timer area and drag toward a
 // direction (release to fire). Order matches the on-screen wheel.
 const GESTURES: ShortcutRow[] = [
-  { keys: ['→'],  en: 'Drag right: next scramble.',          zh: '向右拖：下一个打乱。' },
-  { keys: ['←'],  en: 'Drag left: previous scramble.',       zh: '向左拖：上一个打乱。' },
-  { keys: ['↗'],  en: 'Drag up-right: clear penalty (OK).',  zh: '右上拖：清除罚时（OK）。' },
-  { keys: ['↑'],  en: 'Drag up: toggle +2.',                 zh: '向上拖：切换 +2。' },
-  { keys: ['↖'],  en: 'Drag up-left: toggle DNF.',           zh: '左上拖：切换 DNF。' },
-  { keys: ['↓'],  en: 'Drag down: delete last solve.',       zh: '向下拖：删除最后一次。' },
-  { keys: ['↙'],  en: 'Drag down-left: note on last solve.', zh: '左下拖：给最后一次加注释。' },
-  { keys: ['↘'],  en: 'Drag down-right: copy scramble.',     zh: '右下拖：复制打乱。' },
+  { keys: ['→'],  en: 'Drag right: next scramble.',          zh: '向右拖：下一个打乱。'
+},
+  { keys: ['←'],  en: 'Drag left: previous scramble.',       zh: '向左拖：上一个打乱。'
+},
+  { keys: ['↗'],  en: 'Drag up-right: clear penalty (OK).',  zh: '右上拖：清除罚时（OK）。'
+},
+  { keys: ['↑'],  en: 'Drag up: toggle +2.',                 zh: '向上拖：切换 +2。'
+},
+  { keys: ['↖'],  en: 'Drag up-left: toggle DNF.',           zh: '左上拖：切换 DNF。'
+},
+  { keys: ['↓'],  en: 'Drag down: delete last solve.',       zh: '向下拖：删除最后一次。'
+},
+  { keys: ['↙'],  en: 'Drag down-left: note on last solve.', zh: '左下拖：给最后一次加注释。'
+},
+  { keys: ['↘'],  en: 'Drag down-right: copy scramble.',     zh: '右下拖：复制打乱。'
+},
 ];
 
 export default function ShortcutsModal({ isZh, onClose }: Props) {
@@ -96,31 +122,47 @@ export default function ShortcutsModal({ isZh, onClose }: Props) {
         style={modalStyle}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id={titleId}>{isZh ? '快捷键' : 'Shortcuts'}</h2>
+        <h2 id={titleId}>{tr({ zh: '快捷键', en: 'Shortcuts',
+            zhHant: "快捷鍵"
+        })}</h2>
 
         {isMobile && (
           <div className="modal-section" style={{ fontSize: 12, color: '#888' }}>
-            {isZh
-              ? '提示：触屏设备无键盘快捷键；接外接键盘后可用以下绑定。'
-              : 'Note: shortcuts apply when an external keyboard is attached.'}
+            {tr({ zh: '提示：触屏设备无键盘快捷键；接外接键盘后可用以下绑定。', en: 'Note: shortcuts apply when an external keyboard is attached.',
+                zhHant: "提示：觸屏裝置無鍵盤快捷鍵；接外接鍵盤後可用以下繫結。"
+            })}
           </div>
         )}
 
-        <Section title={isZh ? '计时' : 'Timing'} rows={TIMING} isZh={isZh} isMobile={isMobile} />
-        <Section title={isZh ? '历史' : 'History'} rows={HISTORY} isZh={isZh} isMobile={isMobile} />
-        <Section title={isZh ? 'CFOP 分阶段（设置里开启）' : 'CFOP splits (enable in settings)'} rows={MULTISTAGE} isZh={isZh} isMobile={isMobile} />
-        <Section title={isZh ? '盲拧（设置里开启）' : 'BLD (enable in settings)'} rows={BLD} isZh={isZh} isMobile={isMobile} />
-        <Section title={isZh ? '导航' : 'Navigation'} rows={NAV} isZh={isZh} isMobile={isMobile} />
+        <Section title={tr({ zh: '计时', en: 'Timing',
+            zhHant: "計時"
+        })} rows={TIMING} isZh={isZh} isMobile={isMobile} />
+        <Section title={tr({ zh: '历史', en: 'History',
+            zhHant: "歷史"
+        })} rows={HISTORY} isZh={isZh} isMobile={isMobile} />
+        <Section title={tr({ zh: 'CFOP 分阶段（设置里开启）', en: 'CFOP splits (enable in settings)',
+            zhHant: "CFOP 分階段（設定裡開啟）"
+        })} rows={MULTISTAGE} isZh={isZh} isMobile={isMobile} />
+        <Section title={tr({ zh: '盲拧（设置里开启）', en: 'BLD (enable in settings)',
+            zhHant: "盲擰（設定裡開啟）"
+        })} rows={BLD} isZh={isZh} isMobile={isMobile} />
+        <Section title={tr({ zh: '导航', en: 'Navigation',
+            zhHant: "導航"
+        })} rows={NAV} isZh={isZh} isMobile={isMobile} />
 
         <div className="modal-section" style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
-          {isZh
-            ? '手势（触屏）：在计时区按住并拖向某方向，松手执行；轻触不拖 = 正常计时。'
-            : 'Gestures (touch): press the timer area and drag toward a direction, release to fire; a plain tap-and-hold still times.'}
+          {tr({ zh: '手势（触屏）：在计时区按住并拖向某方向，松手执行；轻触不拖 = 正常计时。', en: 'Gestures (touch): press the timer area and drag toward a direction, release to fire; a plain tap-and-hold still times.',
+              zhHant: "手勢（觸屏）：在計時區按住並拖向某方向，鬆手執行；輕觸不拖 = 正常計時。"
+        })}
         </div>
-        <Section title={isZh ? '手势' : 'Gestures'} rows={GESTURES} isZh={isZh} isMobile={isMobile} />
+        <Section title={tr({ zh: '手势', en: 'Gestures',
+            zhHant: "手勢"
+        })} rows={GESTURES} isZh={isZh} isMobile={isMobile} />
 
         <div className="modal-actions" style={actionsStyle}>
-          <button ref={closeBtnRef} className="primary" style={closeBtnStyle} onClick={onClose}>{isZh ? '关闭' : 'Close'}</button>
+          <button ref={closeBtnRef} className="primary" style={closeBtnStyle} onClick={onClose}>{tr({ zh: '关闭', en: 'Close',
+              zhHant: "關閉"
+        })}</button>
         </div>
       </div>
     </div>
@@ -147,7 +189,7 @@ function Section({ title, rows, isZh, isMobile }: { title: string; rows: Shortcu
                 </span>
               ))}
             </div>
-            <div className="shortcut-desc" style={descStyle}>{isZh ? r.zh : r.en}</div>
+            <div className="shortcut-desc" style={descStyle}>{(i18n.language.startsWith('zh') ? r.zh : r.en)}</div>
           </div>
         ))}
       </div>

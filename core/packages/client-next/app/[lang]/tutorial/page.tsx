@@ -17,6 +17,8 @@ import { useTutorialCatalog, type CatalogEntry, type Lang } from './_lib/useTuto
 import { TutorialCard } from './_components/TutorialCard';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './tutorial.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 type Tier = 'hero' | 'hero-side' | 'medium' | 'standard' | 'utility';
 
@@ -31,35 +33,49 @@ interface CategoryConfig {
 // 不在表里的 category 自动落到 tier-utility 尾部兜底。
 const CATEGORY_CARDS: CategoryConfig[] = [
   // Tier 1 — 3 张大卡（1 hero + 2 hero-side）
-  { cat: '3x3',       tier: 'hero',      Icon: Grid3x3,   label: { en: '3x3',        zh: '三阶' } },
+  { cat: '3x3',       tier: 'hero',      Icon: Grid3x3,   label: { en: '3x3',        zh: '三阶'
+} },
   { cat: '魔方根',    tier: 'hero-side', Icon: Award,     label: { en: 'CubeRoot Method', zh: '魔方根方法' } },
-  { cat: 'CHS',       tier: 'hero-side', Icon: Languages, label: { en: 'Chinese Resources', zh: '中文资料' } },
+  { cat: 'CHS',       tier: 'hero-side', Icon: Languages, label: { en: 'Chinese Resources', zh: '中文资料'
+} },
   // Tier 2 — medium（3 per row）
   { cat: 'FMC',       tier: 'medium',    Icon: Gauge,     label: { en: 'FMC',        zh: '最少步' } },
-  { cat: '3BLD',      tier: 'medium',    Icon: Eye,       label: { en: '3BLD',       zh: '盲拧' } },
-  { cat: '2x2',       tier: 'medium',    Icon: Square,    label: { en: '2x2',        zh: '二阶' } },
+  { cat: '3BLD',      tier: 'medium',    Icon: Eye,       label: { en: '3BLD',       zh: '盲拧'
+} },
+  { cat: '2x2',       tier: 'medium',    Icon: Square,    label: { en: '2x2',        zh: '二阶'
+} },
   // Tier 3 — standard（4 per row）
   { cat: 'Roux',      tier: 'standard',  Icon: InfinityIcon,  label: { en: 'Roux',       zh: 'Roux' } },
   { cat: 'SQ1',       tier: 'standard',  Icon: Shapes,    label: { en: 'SQ1',        zh: 'SQ1' } },
-  { cat: 'Skewb',     tier: 'standard',  Icon: Diamond,   label: { en: 'Skewb',      zh: '斜转' } },
+  { cat: 'Skewb',     tier: 'standard',  Icon: Diamond,   label: { en: 'Skewb',      zh: '斜转'
+} },
   { cat: 'Non-WCA',   tier: 'standard',  Icon: Sparkles,  label: { en: 'Non-WCA',    zh: '非 WCA' } },
-  { cat: '4x4',       tier: 'standard',  Icon: LayoutGrid, label: { en: '4x4',       zh: '四阶' } },
+  { cat: '4x4',       tier: 'standard',  Icon: LayoutGrid, label: { en: '4x4',       zh: '四阶'
+} },
   { cat: 'Pyraminx',  tier: 'standard',  Icon: Triangle,  label: { en: 'Pyraminx',   zh: '金字塔' } },
-  { cat: '5x5',       tier: 'standard',  Icon: LayoutGrid, label: { en: '5x5',       zh: '五阶' } },
+  { cat: '5x5',       tier: 'standard',  Icon: LayoutGrid, label: { en: '5x5',       zh: '五阶'
+} },
   { cat: 'Megaminx',  tier: 'standard',  Icon: Hexagon,   label: { en: 'Megaminx',   zh: '五魔' } },
   { cat: 'Big',       tier: 'standard',  Icon: Boxes,     label: { en: 'Big Cubes',  zh: '大魔方' } },
-  { cat: 'Big BLD',   tier: 'standard',  Icon: EyeOff,    label: { en: 'Big BLD',    zh: '大魔方盲拧' } },
+  { cat: 'Big BLD',   tier: 'standard',  Icon: EyeOff,    label: { en: 'Big BLD',    zh: '大魔方盲拧'
+} },
   { cat: 'Mehta',     tier: 'standard',  Icon: Workflow,  label: { en: 'Mehta',      zh: 'Mehta' } },
   // Tier 4 — utility（2 per row，小条）
-  { cat: 'Stats',     tier: 'utility',   Icon: BarChart3, label: { en: 'Stats',      zh: '统计' } },
-  { cat: 'Blogs',     tier: 'utility',   Icon: FileText,  label: { en: 'Blogs',      zh: '博客' } },
-  { cat: 'Misc',      tier: 'utility',   Icon: MoreHorizontal, label: { en: 'Misc',  zh: '杂项' } },
+  { cat: 'Stats',     tier: 'utility',   Icon: BarChart3, label: { en: 'Stats',      zh: '统计'
+} },
+  { cat: 'Blogs',     tier: 'utility',   Icon: FileText,  label: { en: 'Blogs',      zh: '博客'
+} },
+  { cat: 'Misc',      tier: 'utility',   Icon: MoreHorizontal, label: { en: 'Misc',  zh: '杂项'
+} },
   { cat: 'Solves',    tier: 'utility',   Icon: Play,      label: { en: 'Solves',     zh: '解法分析' } },
   { cat: 'Tools',     tier: 'utility',   Icon: Wrench,    label: { en: 'Tools',      zh: '工具' } },
-  { cat: 'Hardware',  tier: 'utility',   Icon: Cpu,       label: { en: 'Hardware',   zh: '硬件' } },
+  { cat: 'Hardware',  tier: 'utility',   Icon: Cpu,       label: { en: 'Hardware',   zh: '硬件'
+} },
   { cat: 'Clock',     tier: 'utility',   Icon: Clock,     label: { en: 'Clock',      zh: 'Clock' } },
-  { cat: 'Pretty Patterns', tier: 'utility', Icon: Palette, label: { en: 'Pretty Patterns', zh: '花样' } },
-  { cat: 'Theory',    tier: 'utility',   Icon: BookOpen,  label: { en: 'Theory',     zh: '理论' } },
+  { cat: 'Pretty Patterns', tier: 'utility', Icon: Palette, label: { en: 'Pretty Patterns', zh: '花样'
+} },
+  { cat: 'Theory',    tier: 'utility',   Icon: BookOpen,  label: { en: 'Theory',     zh: '理论'
+} },
 ];
 
 function TutorialIndexPageInner() {
@@ -67,7 +83,7 @@ function TutorialIndexPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   useDocumentTitle('教程', 'Tutorial');
-  const pageLang: Lang = isZh ? 'zh' : 'en';
+  const pageLang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const [show] = useQueryState(
     'show',
     parseAsStringEnum(['hidden']).withOptions({ history: 'replace' }),
@@ -118,7 +134,7 @@ function TutorialIndexPageInner() {
       <div className="tutorial-index-header">
         <div>
           <h1 className="tutorial-index-title">
-            {isZh ? '公式教程' : 'Algorithms'}
+            {tr({ zh: '公式教程', en: 'Algorithms' })}
           </h1>
           <p className="tutorial-index-subtitle">
             {isZh
@@ -131,17 +147,23 @@ function TutorialIndexPageInner() {
           <input
             className="tutorial-search-input"
             type="search"
-            placeholder={isZh ? '搜索全部…' : 'Search all…'}
+            placeholder={tr({ zh: '搜索全部…', en: 'Search all…',
+                zhHant: "搜尋全部…"
+            })}
             value={query}
             onChange={e => setQuery(e.target.value)}
           />
         </div>
       </div>
 
-      {loading && <div className="tutorial-empty-state">{isZh ? '加载中…' : 'Loading…'}</div>}
+      {loading && <div className="tutorial-empty-state">{tr({ zh: '加载中…', en: 'Loading…',
+          zhHant: "載入中…"
+    })}</div>}
       {error && (
         <div className="tutorial-empty-state">
-          {isZh ? '加载失败: ' : 'Load failed: '}
+          {tr({ zh: '加载失败: ', en: 'Load failed: ',
+              zhHant: "載入失敗: "
+        })}
           {error}
         </div>
       )}
@@ -171,13 +193,17 @@ function TutorialIndexPageInner() {
               : `${searchResults.length} result${searchResults.length === 1 ? '' : 's'}`}
             {' · '}
             <button className="tutorial-link-btn" onClick={() => setQuery('')}>
-              {isZh ? '清空搜索' : 'clear search'}
+              {tr({ zh: '清空搜索', en: 'clear search',
+                  zhHant: "清空搜尋"
+            })}
             </button>
           </div>
           <div className="tutorial-card-grid">
             {searchResults.length === 0 && (
               <div className="tutorial-empty-state">
-                {isZh ? '没有匹配的教程' : 'No matching tutorials'}
+                {tr({ zh: '没有匹配的教程', en: 'No matching tutorials',
+                    zhHant: "沒有匹配的教程"
+                })}
               </div>
             )}
             {searchResults.map(entry => (

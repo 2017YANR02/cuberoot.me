@@ -8,6 +8,8 @@ import 'katex/dist/katex.min.css';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './latex_intro.css';
+import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 function TeX({ src }: { src: string }) {
   const html = useMemo(() => katex.renderToString(src, { throwOnError: false, output: 'html', strict: 'ignore' }), [src]);
@@ -653,7 +655,7 @@ const FAMOUS: FamousDoc[] = [
 
 export default function LatexIntroPage() {
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
 
   useDocumentTitle(
@@ -878,7 +880,9 @@ export default function LatexIntroPage() {
                   <span className="cl-cmd">{'\\section'}</span>{'{Introduction}'}{'\n'}
                   Time, clocks and the ordering of events...{'\n'}
                   <span className="cl-cmd">{'\\end'}</span>{'{document}'}{'\n\n'}
-                  <span className="cl-c">{lang === 'zh' ? '% 1985 写, 2026 仍能编译' : '% written in 1985, still compiles in 2026'}</span>
+                  <span className="cl-c">{tr({ zh: '% 1985 写, 2026 仍能编译', en: '% written in 1985, still compiles in 2026',
+                      zhHant: "% 1985 寫, 2026 仍能編譯"
+                })}</span>
                 </code></pre>
               </div>
               <div className="compare-col">
@@ -1030,7 +1034,7 @@ export default function LatexIntroPage() {
                   {e.rows.map((r, j) => (
                     <div className="engine-row" key={j}>
                       <b>{r.k}</b>
-                      <span>{lang === 'zh' ? r.zh : r.en}</span>
+                      <span>{(i18n.language.startsWith('zh') ? r.zh : r.en)}</span>
                     </div>
                   ))}
                   <div className="engine-pick">{lang === 'zh' ? e.zhPick : e.enPick}</div>

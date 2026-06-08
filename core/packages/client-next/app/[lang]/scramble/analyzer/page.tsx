@@ -36,6 +36,7 @@ import { statsUrl } from '@/lib/stats-base';
 import { WheelPicker } from '@/components/WheelPicker';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './analyze.css';
+import i18n from '@/i18n/i18n-client';
 
 const DEFAULT_SCRAMBLE = "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'";
 
@@ -50,11 +51,15 @@ type FilterMode = 'all' | 'full-step' | 'oll-skip' | 'pll-skip' | 'll-skip';
 
 const COLOR_LABEL: Record<CrossColor, { zh: string; en: string }> = {
   White: { zh: '白', en: 'White' },
-  Yellow: { zh: '黄', en: 'Yellow' },
-  Red: { zh: '红', en: 'Red' },
+  Yellow: { zh: '黄', en: 'Yellow'
+},
+  Red: { zh: '红', en: 'Red'
+},
   Orange: { zh: '橙', en: 'Orange' },
-  Blue: { zh: '蓝', en: 'Blue' },
-  Green: { zh: '绿', en: 'Green' },
+  Blue: { zh: '蓝', en: 'Blue'
+},
+  Green: { zh: '绿', en: 'Green'
+},
 };
 
 // WCA real-scramble pools: /stats/scramble/wca_cross/<letter>.json, bucketed by cross length.
@@ -62,11 +67,22 @@ const COLOR_LETTER: Record<CrossColor, string> = {
   White: 'W', Yellow: 'Y', Red: 'R', Orange: 'O', Blue: 'B', Green: 'G',
 };
 const ROUND_LABEL: Record<string, { zh: string; en: string }> = {
-  '0': { zh: '资格赛', en: 'Qualification' }, h: { zh: '资格赛', en: 'Qualification' },
-  '1': { zh: '第一轮', en: 'Round 1' }, d: { zh: '第一轮', en: 'Round 1' },
-  '2': { zh: '第二轮', en: 'Round 2' }, e: { zh: '第二轮', en: 'Round 2' },
-  '3': { zh: '复赛', en: 'Semi-Final' }, g: { zh: '第三轮', en: 'Round 3' },
-  c: { zh: '决赛', en: 'Final' }, f: { zh: '决赛', en: 'Final' }, b: { zh: 'B 决赛', en: 'B-Final' },
+  '0': { zh: '资格赛', en: 'Qualification'
+}, h: { zh: '资格赛', en: 'Qualification'
+},
+  '1': { zh: '第一轮', en: 'Round 1'
+}, d: { zh: '第一轮', en: 'Round 1'
+},
+  '2': { zh: '第二轮', en: 'Round 2'
+}, e: { zh: '第二轮', en: 'Round 2'
+},
+  '3': { zh: '复赛', en: 'Semi-Final'
+}, g: { zh: '第三轮', en: 'Round 3'
+},
+  c: { zh: '决赛', en: 'Final'
+}, f: { zh: '决赛', en: 'Final'
+}, b: { zh: 'B 决赛', en: 'B-Final'
+},
 };
 interface WcaEntry { s: string; c: string; d: string; r: string; g: string; n: number; e: string; id?: string }
 interface WcaFile { color: string; bins: Record<string, WcaEntry[]> }
@@ -141,7 +157,7 @@ function FilterChip(props: { active: boolean; title: string; amount: number; onC
 
 function AnalyzePageInner() {
   const { i18n } = useTranslation();
-  const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   useDocumentTitle('打乱分析', 'Scramble Analyzer');
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 

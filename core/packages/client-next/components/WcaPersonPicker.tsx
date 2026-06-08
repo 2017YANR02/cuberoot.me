@@ -9,6 +9,7 @@ import { searchPersons, getPerson, WCA_ID_REGEX, type WcaPersonLite } from '@/li
 import { loadPersonsIndex, searchLocalPersons, isPersonsIndexReady } from '@cuberoot/shared';
 import { ClearButton } from './ClearButton';
 import './wca-person-picker.css';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   value: WcaPersonLite | null;
@@ -183,7 +184,9 @@ export function WcaPersonPicker({
         <div className="cuber-search-popup">
           {staticMatches.length > 0 && (
             <div className="cuber-search-section">
-              <div className="cuber-search-section-label">★ {isZh ? '顶尖选手' : 'Top cubers'}</div>
+              <div className="cuber-search-section-label">★ {tr({ zh: '顶尖选手', en: 'Top cubers',
+                  zhHant: "頂尖選手"
+            })}</div>
               {staticMatches.map(c => (
                 <CuberRow key={`s-${c.id}`} cuber={c} isZh={isZh} onPick={handlePick} />
               ))}
@@ -197,10 +200,14 @@ export function WcaPersonPicker({
             </div>
           )}
           {loading && (
-            <div className="cuber-search-status">{isZh ? '搜索中…' : 'Searching…'}</div>
+            <div className="cuber-search-status">{tr({ zh: '搜索中…', en: 'Searching…',
+                zhHant: "搜尋中…"
+            })}</div>
           )}
           {!loading && staticMatches.length === 0 && apiFiltered.length === 0 && query.trim().length > 0 && (
-            <div className="cuber-search-status">{isZh ? '未找到选手' : 'No matches'}</div>
+            <div className="cuber-search-status">{tr({ zh: '未找到选手', en: 'No matches',
+                zhHant: "未找到選手"
+            })}</div>
           )}
         </div>
       )}

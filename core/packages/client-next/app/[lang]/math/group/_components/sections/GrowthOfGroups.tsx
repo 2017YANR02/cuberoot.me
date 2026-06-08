@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import type { Lang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── Growth computation helpers ────────────────────────────────────────────────
 
@@ -616,7 +617,9 @@ function GrowthComparisonPanel({ lang }: { lang: Lang }) {
         {showCube && (
           <div className="gt-result-row">
             <span className="gt-result-label" style={{ color: COLOR_CUBE }}>
-              β_cube({r}) {r >= 16 ? (lang === 'zh' ? '(估计)' : '(est.)') : ''}
+              β_cube({r}) {r >= 16 ? (tr({ zh: '(估计)', en: '(est.)',
+                  zhHant: "(估計)"
+            })) : ''}
             </span>
             <span className="gt-result-val-strong" style={{ color: COLOR_CUBE }}>
               {r >= 16
@@ -824,7 +827,9 @@ function CubeDistributionPanel({ lang }: { lang: Lang }) {
             <span className="gt-result-val-strong" style={{ color: hovered <= 15 ? COLOR_CUBE : 'var(--ink-faint)' }}>
               {hovered <= 15
                 ? CUBE_SIGMA_EXACT[hovered].toLocaleString()
-                : `~${(CUBE_SIGMA_EST[hovered] ?? 0).toExponential(1)} (${lang === 'zh' ? '估计' : 'est.'})`}
+                : `~${(CUBE_SIGMA_EST[hovered] ?? 0).toExponential(1)} (${tr({ zh: '估计', en: 'est.',
+                    zhHant: "估計"
+                })})`}
             </span>
           </div>
           {hoveredCount !== null && hoveredCount > 0 && (
@@ -951,8 +956,12 @@ function GeometricExplorerPanel({ lang }: { lang: Lang }) {
           </span>
           <span className="gt-result-val">
             {view === 'grid'
-              ? (lang === 'zh' ? '多项式，次数 2 (β ~ r²)' : 'polynomial, degree 2 (β ~ r²)')
-              : (lang === 'zh' ? '指数，速率 3 (β ~ 3ʳ)' : 'exponential, rate 3 (β ~ 3ʳ)')}
+              ? (tr({ zh: '多项式，次数 2 (β ~ r²)', en: 'polynomial, degree 2 (β ~ r²)',
+                  zhHant: "多項式，次數 2 (β ~ r²)"
+            }))
+              : (tr({ zh: '指数，速率 3 (β ~ 3ʳ)', en: 'exponential, rate 3 (β ~ 3ʳ)',
+                  zhHant: "指數，速率 3 (β ~ 3ʳ)"
+            }))}
           </span>
         </div>
       </div>
@@ -1023,7 +1032,9 @@ function Z2DiamondSVG({ r, lang }: { r: number; lang: Lang }) {
       {/* Label */}
       <text x={W / 2} y={H - 4} textAnchor="middle"
         style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
-        |x|+|y| ≤ {r}, {dots.length} {r === 0 ? '' : (lang === 'zh' ? '个点' : 'pts')}
+        |x|+|y| ≤ {r}, {dots.length} {r === 0 ? '' : (tr({ zh: '个点', en: 'pts',
+            zhHant: "個點"
+        }))}
       </text>
     </svg>
   );

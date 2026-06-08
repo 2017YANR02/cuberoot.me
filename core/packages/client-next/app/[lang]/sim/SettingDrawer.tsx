@@ -13,6 +13,7 @@ import CubeGroup from './cuber/group';
 import Cubelet from './cuber/cubelet';
 import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './setting-drawer.css';
+import i18n from '@/i18n/i18n-client';
 
 export interface SimSettings {
   sensitivity: number;
@@ -284,7 +285,7 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
             <div className="sim-keymap-picker">
               {KEYMAP_GROUPS.map((g) => (
                 <div key={g.zh} className="sim-keymap-picker-group">
-                  <div className="sim-keymap-title">{isZh ? g.zh : g.en}</div>
+                  <div className="sim-keymap-title">{(i18n.language.startsWith('zh') ? g.zh : g.en)}</div>
                   <div className="sim-keymap-picker-row">
                     {g.moves.map((m) => (
                       <button

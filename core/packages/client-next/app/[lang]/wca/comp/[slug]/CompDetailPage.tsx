@@ -37,6 +37,8 @@ import { useWcaLiveStream, type WcaLiveRoundUpdate } from '@/hooks/useWcaLiveStr
 import ScheduleView, { ScheduleControls } from './ScheduleView';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import '../comp.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 interface User {
   number: number;
@@ -961,7 +963,9 @@ export default function CompDetailPage() {
   if (loading) {
     const pct = progress && progress.total > 0 ? Math.round(100 * progress.done / progress.total) : 0;
     const stepLabel = (() => {
-      if (!progress) return isZh ? '加载中…' : 'Loading…';
+      if (!progress) return tr({ zh: '加载中…', en: 'Loading…',
+          zhHant: "載入中…"
+    });
       const f = progress.filter ? ` · ${progress.filter}` : '';
       const map: Record<string, string> = isZh
         ? { 'meta': '读取比赛元数据', 'cubing.results': '加载成绩', 'cubing.filter': '加载分组成员', 'wca.fetch': '从 WCA 拉取', 'wca.transform': '解析 WCA 数据', 'wca_live.results': '从 WCA Live 拉取', 'wca_db.query': '从 WCA 数据库读取', 'wca_db.transform': '解析 WCA 数据' }
@@ -980,11 +984,15 @@ export default function CompDetailPage() {
   if (error || !data) {
     return (
       <div className="comp-detail-page">
-        <Link href="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>
+        <Link href="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}</Link>
         <div className="comp-err comp-err-block">
-          <div className="comp-err-title">{isZh ? '加载失败' : 'Failed to load'}</div>
+          <div className="comp-err-title">{tr({ zh: '加载失败', en: 'Failed to load',
+              zhHant: "載入失敗"
+        })}</div>
           <div className="comp-err-detail">{error || 'No data'}</div>
-          <button type="button" className="comp-go-btn" onClick={refresh}>{isZh ? '重试' : 'Retry'}</button>
+          <button type="button" className="comp-go-btn" onClick={refresh}>{tr({ zh: '重试', en: 'Retry',
+              zhHant: "重試"
+        })}</button>
         </div>
       </div>
     );
@@ -1049,7 +1057,7 @@ export default function CompDetailPage() {
     <div className="comp-detail-page">
       <div className="comp-table-section">
         <header className="comp-detail-header">
-          <Link href="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}</Link>
+          <Link href="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}</Link>
           <h1 className="comp-detail-title">
             {(() => {
               const iso2 = compFlagIso2(slug);
@@ -1063,7 +1071,9 @@ export default function CompDetailPage() {
                     type="button"
                     onClick={copyCompName}
                     className="comp-detail-title-name"
-                    title={isZh ? '点击复制比赛名' : 'Click to copy name'}
+                    title={tr({ zh: '点击复制比赛名', en: 'Click to copy name',
+                        zhHant: "點選複製比賽名"
+                    })}
                   >
                     {localizeCompName(slug, decodeEntities(data.name), isZh)}
                     {nameCopied
@@ -1092,8 +1102,12 @@ export default function CompDetailPage() {
                       return `/scramble/gen?${q.toString()}`;
                     })()}
                     className="comp-title-icon comp-title-icon-lucide"
-                    title={isZh ? '查看打乱' : 'View scrambles'}
-                    aria-label={isZh ? '查看打乱' : 'View scrambles'}
+                    title={tr({ zh: '查看打乱', en: 'View scrambles',
+                        zhHant: "檢視打亂"
+                    })}
+                    aria-label={tr({ zh: '查看打乱', en: 'View scrambles',
+                        zhHant: "檢視打亂"
+                    })}
                   >
                     <Shuffle size={18} strokeWidth={1.75} />
                   </Link>
@@ -1103,7 +1117,9 @@ export default function CompDetailPage() {
           </h1>
           <div className="comp-detail-meta">
             {isAdmin && data.availableSources && data.availableSources.length > 1 && (
-              <div className="comp-source-toggle" role="group" aria-label={isZh ? '数据源' : 'Data source'}>
+              <div className="comp-source-toggle" role="group" aria-label={tr({ zh: '数据源', en: 'Data source',
+                  zhHant: "資料來源"
+            })}>
                 {data.availableSources.map(s => {
                   const label = s === 'wca' || s === 'wca_db' ? 'WCA' : s === 'wca_live' ? 'WCA Live' : 'cubing.com';
                   return (
@@ -1121,12 +1137,16 @@ export default function CompDetailPage() {
             )}
             {!isWca && (
               <span className="comp-detail-fetched">
-                {isZh ? '更新于' : 'Updated'} {new Date(data.fetchedAt).toLocaleTimeString()}
+                {tr({ zh: '更新于', en: 'Updated',
+                    zhHant: "更新於"
+                })} {new Date(data.fetchedAt).toLocaleTimeString()}
               </span>
             )}
             {!isWca && <LiveIndicator status={wsStatus} isZh={isZh} />}
             {!isWca && wsStatus !== 'open' && (
-              <button type="button" className="comp-refresh-btn" onClick={refresh} disabled={refreshing} title={isZh ? '刷新' : 'Refresh'}>
+              <button type="button" className="comp-refresh-btn" onClick={refresh} disabled={refreshing} title={tr({ zh: '刷新', en: 'Refresh',
+                  zhHant: "重新整理"
+            })}>
                 <RefreshCw size={14} className={refreshing ? 'is-spinning' : ''} />
               </button>
             )}
@@ -1164,14 +1184,18 @@ export default function CompDetailPage() {
             className={`comp-view-tab${isPsych ? ' is-active' : ''}`}
             onClick={() => onChangeView('psych')}
           >
-            {isZh ? '预排名' : 'Psych Sheet'}
+            {tr({ zh: '预排名', en: 'Psych Sheet',
+                zhHant: "預排名"
+            })}
           </button>
           <button
             type="button"
             className={`comp-view-tab${isSchedule ? ' is-active' : ''}`}
             onClick={() => onChangeView('schedule')}
           >
-            {isZh ? '赛程' : 'Schedule'}
+            {tr({ zh: '赛程', en: 'Schedule',
+                zhHant: "賽程"
+            })}
           </button>
           {isSchedule && (
             <ScheduleControls
@@ -1210,9 +1234,15 @@ export default function CompDetailPage() {
                 <PillToggle
                   value={showCombined}
                   onChange={setCombinedPref}
-                  onLabel={isZh ? '合并双轮' : 'Combined'}
-                  offLabel={isZh ? '合并双轮' : 'Combined'}
-                  ariaLabel={isZh ? '合并双轮成绩' : 'Combine dual rounds'}
+                  onLabel={tr({ zh: '合并双轮', en: 'Combined',
+                      zhHant: "合併雙輪"
+                })}
+                  offLabel={tr({ zh: '合并双轮', en: 'Combined',
+                      zhHant: "合併雙輪"
+                })}
+                  ariaLabel={tr({ zh: '合并双轮成绩', en: 'Combine dual rounds',
+                      zhHant: "合併雙輪成績"
+                })}
                 />
               )}
             </div>
@@ -1291,16 +1321,18 @@ function CompInfoPanel({
 }: { info: CompInfo; isZh: boolean; cubingZh: CubingZhMeta | null }) {
   const dateStr = info.start_date ? formatDateRangeIso(info.start_date, info.end_date) : '';
   const country = info.country_iso2 ? countryName(info.country_iso2.toUpperCase(), isZh) : '';
-  const cityStr = [info.city ? localizeCity(info.city, isZh) : '', country].filter(Boolean).join(isZh ? '、' : ', ');
+  const cityStr = [info.city ? localizeCity(info.city, isZh) : '', country].filter(Boolean).join((i18n.language.startsWith('zh') ? '、' : ', '));
   const todayIso = toIsoDate(new Date());
   const isPast = (iso: string) => !!iso && iso.slice(0, 10) < todayIso;
   const rows: { label: string; value: React.ReactNode; past?: boolean }[] = [];
-  if (dateStr) rows.push({ label: isZh ? '日期' : 'Date', value: dateStr });
+  if (dateStr) rows.push({ label: tr({ zh: '日期', en: 'Date' }), value: dateStr });
   const regOpenIso = info.registration_open ? toIsoDate(new Date(info.registration_open)) : '';
   const regCloseIso = info.registration_close ? toIsoDate(new Date(info.registration_close)) : '';
   if (regOpenIso && regCloseIso) {
     rows.push({
-      label: isZh ? '报名时间' : 'Registration',
+      label: tr({ zh: '报名时间', en: 'Registration',
+          zhHant: "報名時間"
+    }),
       value: formatDateRangeIso(regOpenIso, regCloseIso),
       past: isPast(regCloseIso),
     });
@@ -1313,20 +1345,24 @@ function CompInfoPanel({
   }
   if (info.event_change_deadline_date) {
     const d = toIsoDate(new Date(info.event_change_deadline_date));
-    rows.push({ label: isZh ? '修改截止' : 'Event change deadline', value: d, past: isPast(d) });
+    rows.push({ label: tr({ zh: '修改截止', en: 'Event change deadline' }), value: d, past: isPast(d) });
   }
   if (info.waiting_list_deadline_date) {
     const d = toIsoDate(new Date(info.waiting_list_deadline_date));
-    rows.push({ label: isZh ? '候补截止' : 'Waiting list deadline', value: d, past: isPast(d) });
+    rows.push({ label: tr({ zh: '候补截止', en: 'Waiting list deadline',
+        zhHant: "候補截止"
+    }), value: d, past: isPast(d) });
   }
   if (cityStr && !(isZh && cubingZh?.location)) {
-    rows.push({ label: isZh ? '城市' : 'City', value: cityStr });
+    rows.push({ label: tr({ zh: '城市', en: 'City' }), value: cityStr });
   }
   if (cubingZh?.location) {
     rows.push({ label: '地点', value: cubingZh.location });
   } else {
-    if (info.venue_address) rows.push({ label: isZh ? '地址' : 'Address', value: info.venue_address });
-    if (info.venue_details) rows.push({ label: isZh ? '详情' : 'Details', value: info.venue_details });
+    if (info.venue_address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: info.venue_address });
+    if (info.venue_details) rows.push({ label: tr({ zh: '详情', en: 'Details',
+        zhHant: "詳情"
+    }), value: info.venue_details });
   }
   if (rows.length === 0) return null;
   const activeRows = rows.filter(r => !r.past);
@@ -1431,14 +1467,20 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
       <table className={`comp-table${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
         <thead>
           <tr>
-            <th className="th-place">{isZh ? '名次' : 'Place'}</th>
-            <th className="th-person">{isZh ? '选手' : 'Person'}</th>
+            <th className="th-place">{tr({ zh: '名次', en: 'Place' })}</th>
+            <th className="th-person">{tr({ zh: '选手', en: 'Person',
+                zhHant: "選手"
+            })}</th>
             {(() => {
-              const avgTh = showAvg ? <th key="avg" className={`th-avg${!singleFirst ? ' is-rank-col' : ''}`}>{isZh ? '平均' : 'Average'}</th> : null;
-              const bestTh = <th key="best" className={`th-best${singleFirst ? ' is-rank-col' : ''}`}>{isZh ? '单次' : 'Best'}</th>;
+              const avgTh = showAvg ? <th key="avg" className={`th-avg${!singleFirst ? ' is-rank-col' : ''}`}>{tr({ zh: '平均', en: 'Average' })}</th> : null;
+              const bestTh = <th key="best" className={`th-best${singleFirst ? ' is-rank-col' : ''}`}>{tr({ zh: '单次', en: 'Best',
+                  zhHant: "單次"
+            })}</th>;
               return singleFirst ? [bestTh, avgTh] : [avgTh, bestTh];
             })()}
-            <th className="th-detail" colSpan={attemptCount}>{isZh ? '详情' : 'Detail'}</th>
+            <th className="th-detail" colSpan={attemptCount}>{tr({ zh: '详情', en: 'Detail',
+                zhHant: "詳情"
+            })}</th>
           </tr>
         </thead>
         <tbody>
@@ -1500,7 +1542,9 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
             );
           })}
           {results.length === 0 && (
-            <tr><td colSpan={(showAvg ? 4 : 3) + attemptCount} className="comp-empty">{isZh ? '此轮暂无成绩' : 'No results yet'}</td></tr>
+            <tr><td colSpan={(showAvg ? 4 : 3) + attemptCount} className="comp-empty">{tr({ zh: '此轮暂无成绩', en: 'No results yet',
+                zhHant: "此輪暫無成績"
+            })}</td></tr>
           )}
         </tbody>
       </table>
@@ -1547,15 +1591,23 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
       <table className={`comp-table comp-table-dual${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
         <thead>
           <tr>
-            <th className="th-place">{isZh ? '名次' : 'Place'}</th>
-            <th className="th-person">{isZh ? '选手' : 'Person'}</th>
-            <th className="th-dual-round">{isZh ? '轮次' : 'Round'}</th>
+            <th className="th-place">{tr({ zh: '名次', en: 'Place' })}</th>
+            <th className="th-person">{tr({ zh: '选手', en: 'Person',
+                zhHant: "選手"
+            })}</th>
+            <th className="th-dual-round">{tr({ zh: '轮次', en: 'Round',
+                zhHant: "輪次"
+            })}</th>
             {(() => {
-              const avgTh = showAvg ? <th key="avg" className={`th-avg${!singleFirst ? ' is-rank-col' : ''}`}>{isZh ? '平均' : 'Average'}</th> : null;
-              const bestTh = <th key="best" className={`th-best${singleFirst ? ' is-rank-col' : ''}`}>{isZh ? '单次' : 'Best'}</th>;
+              const avgTh = showAvg ? <th key="avg" className={`th-avg${!singleFirst ? ' is-rank-col' : ''}`}>{tr({ zh: '平均', en: 'Average' })}</th> : null;
+              const bestTh = <th key="best" className={`th-best${singleFirst ? ' is-rank-col' : ''}`}>{tr({ zh: '单次', en: 'Best',
+                  zhHant: "單次"
+            })}</th>;
               return singleFirst ? [bestTh, avgTh] : [avgTh, bestTh];
             })()}
-            <th className="th-detail" colSpan={attemptCount}>{isZh ? '详情' : 'Detail'}</th>
+            <th className="th-detail" colSpan={attemptCount}>{tr({ zh: '详情', en: 'Detail',
+                zhHant: "詳情"
+            })}</th>
           </tr>
         </thead>
         <tbody>
@@ -1630,7 +1682,9 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
             });
           })}
           {rows.length === 0 && (
-            <tr><td colSpan={fixedCols + attemptCount} className="comp-empty">{isZh ? '此轮暂无成绩' : 'No results yet'}</td></tr>
+            <tr><td colSpan={fixedCols + attemptCount} className="comp-empty">{tr({ zh: '此轮暂无成绩', en: 'No results yet',
+                zhHant: "此輪暫無成績"
+            })}</td></tr>
           )}
         </tbody>
       </table>
@@ -1646,7 +1700,7 @@ function CuberNameLink({ u, isZh }: { u: User; isZh: boolean }) {
     return (
       <Link
         prefetch={false}
-        href={`/${isZh ? 'zh' : 'en'}/wca/persons/${u.wcaid}`}
+        href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${u.wcaid}`}
         className="cuber-name cuber-link"
         title={title}
         onClick={e => e.stopPropagation()}
@@ -1711,7 +1765,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
   const router = useRouter();
   // 预排名整行点击:有 WCA ID 直接去选手主页;无 ID 的新人退回弹窗.
   const onRowClick = (u: User) => {
-    if (u.wcaid) router.push(`/${isZh ? 'zh' : 'en'}/wca/persons/${u.wcaid}`);
+    if (u.wcaid) router.push(`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${u.wcaid}`);
     else onClickCuber(u.number);
   };
   const userEvents = useMemo(() => {
@@ -1821,17 +1875,20 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
         <table className="comp-table comp-sor-table">
           <thead>
             <tr>
-              <th className="th-place">{isZh ? '名次' : 'Rank'}</th>
-              <th className="th-person">{isZh ? '选手' : 'Person'}</th>
+              <th className="th-place">{tr({ zh: '名次', en: 'Rank' })}</th>
+              <th className="th-person">{tr({ zh: '选手', en: 'Person',
+                  zhHant: "選手"
+            })}</th>
               {eventIds.map(e => (
                 <th key={e} className="comp-sor-evcol"><EventIcon event={e} className="comp-sor-evicon" /></th>
               ))}
               <th className="comp-sor-total-col">
-                {isZh ? '名次和' : 'Total'}
+                {tr({ zh: '名次和', en: 'Total' })}
                 <InfoTooltip
-                  content={isZh
-                    ? '把所选项目的预排名名次相加(数字越小越靠前)。\n灰色斜体的「(数字)」表示该选手没报这项,按该项「参赛人数+1」(比最后一名再差一名)计入。'
-                    : 'Psych-sheet positions across the selected events added up (lower is better).\nA grey italic "(n)" means the cuber isn’t registered for that event, counted as that event’s "participants + 1" (one worse than last).'}
+                  content={tr({ zh: '把所选项目的预排名名次相加(数字越小越靠前)。\n灰色斜体的「(数字)」表示该选手没报这项,按该项「参赛人数+1」(比最后一名再差一名)计入。', en: 'Psych-sheet positions across the selected events added up (lower is better).\nA grey italic "(n)" means the cuber isn’t registered for that event, counted as that event’s "participants + 1" (one worse than last).',
+                      zhHant: "把所選專案的預排名名次相加(數字越小越靠前)。\n\
+灰色斜體的「(數字)」表示該選手沒報這項,按該項「參賽人數+1」(比最後一名再差一名)計入。"
+                })}
                 />
               </th>
             </tr>
@@ -1861,7 +1918,9 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
               </tr>
             ))}
             {sorRows.length === 0 && (
-              <tr><td colSpan={eventIds.length + 3} className="comp-empty">{isZh ? '暂无数据' : 'No data'}</td></tr>
+              <tr><td colSpan={eventIds.length + 3} className="comp-empty">{tr({ zh: '暂无数据', en: 'No data',
+                  zhHant: "暫無資料"
+            })}</td></tr>
             )}
           </tbody>
         </table>
@@ -1876,11 +1935,15 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
           <>
             <thead>
               <tr>
-                <th className="th-place">{isZh ? '名次' : 'Rank'}</th>
-                <th className="th-person">{isZh ? '选手' : 'Person'}</th>
+                <th className="th-place">{tr({ zh: '名次', en: 'Rank' })}</th>
+                <th className="th-person">{tr({ zh: '选手', en: 'Person',
+                    zhHant: "選手"
+                })}</th>
                 {(() => {
-                  const avgTh = <th key="avg" className={`th-avg${!singleRanked ? ' is-rank-col' : ''}`}>{isZh ? '平均' : 'Average'}</th>;
-                  const singleTh = <th key="single" className={`th-best${singleRanked ? ' is-rank-col' : ''}`}>{isZh ? '单次' : 'Single'}</th>;
+                  const avgTh = <th key="avg" className={`th-avg${!singleRanked ? ' is-rank-col' : ''}`}>{tr({ zh: '平均', en: 'Average' })}</th>;
+                  const singleTh = <th key="single" className={`th-best${singleRanked ? ' is-rank-col' : ''}`}>{tr({ zh: '单次', en: 'Single',
+                      zhHant: "單次"
+                })}</th>;
                   return singleRanked ? [singleTh, avgTh] : [avgTh, singleTh];
                 })()}
               </tr>
@@ -1926,7 +1989,9 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
                 );
               })}
               {psychRows.length === 0 && (
-                <tr><td colSpan={4} className="comp-empty">{isZh ? '暂无数据' : 'No data'}</td></tr>
+                <tr><td colSpan={4} className="comp-empty">{tr({ zh: '暂无数据', en: 'No data',
+                    zhHant: "暫無資料"
+                })}</td></tr>
               )}
             </tbody>
           </>
@@ -1935,8 +2000,12 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
             <thead>
               <tr>
                 <th className="th-place">#</th>
-                <th className="th-person">{isZh ? '选手' : 'Person'}</th>
-                <th>{isZh ? '项目' : 'Events'}</th>
+                <th className="th-person">{tr({ zh: '选手', en: 'Person',
+                    zhHant: "選手"
+                })}</th>
+                <th>{tr({ zh: '项目', en: 'Events',
+                    zhHant: "專案"
+                })}</th>
               </tr>
             </thead>
             <tbody>
@@ -1963,7 +2032,9 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
                 );
               })}
               {rosterRows.length === 0 && (
-                <tr><td colSpan={3} className="comp-empty">{isZh ? '暂无数据' : 'No data'}</td></tr>
+                <tr><td colSpan={3} className="comp-empty">{tr({ zh: '暂无数据', en: 'No data',
+                    zhHant: "暫無資料"
+                })}</td></tr>
               )}
             </tbody>
           </>
@@ -2028,7 +2099,7 @@ function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: Cuber
             {u.wcaid ? (
               <Link
                 prefetch={false}
-                href={`/${isZh ? 'zh' : 'en'}/wca/persons/${u.wcaid}`}
+                href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${u.wcaid}`}
                 className="cuber-link-modal"
                 onClick={onClose}
               >
@@ -2044,7 +2115,9 @@ function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: Cuber
         </header>
         <div className="comp-modal-body">
           {groups.length === 0 ? (
-            <div className="comp-empty">{isZh ? '暂无成绩' : 'No results'}</div>
+            <div className="comp-empty">{tr({ zh: '暂无成绩', en: 'No results',
+                zhHant: "暫無成績"
+            })}</div>
           ) : (
             groups.map(g => (
               <div key={g.ev.i} className="comp-modal-group">
@@ -2052,11 +2125,17 @@ function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: Cuber
                 <table className="comp-modal-table">
                   <thead>
                     <tr>
-                      <th>{isZh ? '轮次' : 'Round'}</th>
-                      <th>{isZh ? '名次' : 'Place'}</th>
-                      <th>{isZh ? '单次' : 'Best'}</th>
-                      <th>{isZh ? '平均' : 'Average'}</th>
-                      <th colSpan={5}>{isZh ? '详情' : 'Detail'}</th>
+                      <th>{tr({ zh: '轮次', en: 'Round',
+                          zhHant: "輪次"
+                    })}</th>
+                      <th>{tr({ zh: '名次', en: 'Place' })}</th>
+                      <th>{tr({ zh: '单次', en: 'Best',
+                          zhHant: "單次"
+                    })}</th>
+                      <th>{tr({ zh: '平均', en: 'Average' })}</th>
+                      <th colSpan={5}>{tr({ zh: '详情', en: 'Detail',
+                          zhHant: "詳情"
+                    })}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2285,7 +2364,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
             {u.wcaid ? (
               <Link
                 prefetch={false}
-                href={`/${isZh ? 'zh' : 'en'}/wca/persons/${u.wcaid}`}
+                href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${u.wcaid}`}
                 className="cuber-link-modal"
                 onClick={onClose}
               >
@@ -2302,10 +2381,12 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
         </header>
         <div className="comp-round-modal-body">
           <div className="comp-round-modal-subtitle">
-            {compName}, {eventDisplayName(ev.i, isZh)}{isZh ? '' : ' '}{roundDisplayName(rd.name, isZh)}
+            {compName}, {eventDisplayName(ev.i, isZh)}{(i18n.language.startsWith('zh') ? '' : ' ')}{roundDisplayName(rd.name, isZh)}
           </div>
           <section className="comp-round-modal-section">
-            <div className="comp-round-modal-label">{isZh ? '详情' : 'Attempts'}</div>
+            <div className="comp-round-modal-label">{tr({ zh: '详情', en: 'Attempts',
+                zhHant: "詳情"
+            })}</div>
             <div className="comp-round-modal-value">
               {attempts.length === 0
                 ? '—'
@@ -2329,7 +2410,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
             </div>
           </section>
           <section className="comp-round-modal-section">
-            <div className="comp-round-modal-label">{isZh ? '平均' : 'Average'}</div>
+            <div className="comp-round-modal-label">{tr({ zh: '平均', en: 'Average' })}</div>
             <div className="comp-round-modal-value">
               {isAverageFormat && effectiveAvg(result) !== 0 ? (
                 (!result.ar && averageBadge === 'PR') ? (
@@ -2349,7 +2430,9 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
             </div>
           </section>
           <section className="comp-round-modal-section">
-            <div className="comp-round-modal-label">{isZh ? '单次' : 'Best'}</div>
+            <div className="comp-round-modal-label">{tr({ zh: '单次', en: 'Best',
+                zhHant: "單次"
+            })}</div>
             <div className="comp-round-modal-value">
               {result.b !== 0 ? (
                 (!result.sr && singleBadge === 'PR') ? (
@@ -2376,24 +2459,36 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
               className="comp-modal-copy-btn"
               onClick={handleCopy}
               disabled={copyState === 'copying'}
-              title={isZh ? '复制为推送文案' : 'Copy as push text'}
+              title={tr({ zh: '复制为推送文案', en: 'Copy as push text',
+                  zhHant: "複製為推送文案"
+            })}
             >
               {copyState === 'done' ? <Check size={14} /> : <Copy size={14} />}
               <span>
                 {copyState === 'done'
-                  ? (isZh ? '已复制' : 'Copied')
+                  ? (tr({ zh: '已复制', en: 'Copied',
+                      zhHant: "已複製"
+                }))
                   : copyState === 'error'
-                    ? (isZh ? '失败' : 'Failed')
+                    ? (tr({ zh: '失败', en: 'Failed',
+                        zhHant: "失敗"
+                    }))
                     : copyState === 'nothing'
-                      ? (isZh ? '无可复制' : 'Nothing')
+                      ? (tr({ zh: '无可复制', en: 'Nothing',
+                          zhHant: "無可複製"
+                    }))
                       : copyState === 'copying'
-                        ? (isZh ? '复制中…' : 'Copying…')
-                        : (isZh ? '复制' : 'Copy')}
+                        ? (tr({ zh: '复制中…', en: 'Copying…',
+                            zhHant: "複製中…"
+                        }))
+                        : (tr({ zh: '复制', en: 'Copy',
+                            zhHant: "複製"
+                        }))}
               </span>
             </button>
           )}
           <button type="button" className="comp-modal-close-btn" onClick={onShowAll}>
-            {isZh ? '所有' : 'All'}
+            {tr({ zh: '所有', en: 'All' })}
           </button>
         </footer>
       </div>
@@ -2404,16 +2499,26 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
 function LiveIndicator({ status, isZh }: { status: WsStatus; isZh: boolean }) {
   const label = (() => {
     switch (status) {
-      case 'open':       return isZh ? '实时' : 'Live';
-      case 'connecting': return isZh ? '连接中' : 'Connecting';
-      case 'closed':     return isZh ? '已断开' : 'Disconnected';
-      case 'error':      return isZh ? '连接失败' : 'Error';
+      case 'open':       return tr({ zh: '实时', en: 'Live',
+          zhHant: "實時"
+    });
+      case 'connecting': return tr({ zh: '连接中', en: 'Connecting',
+          zhHant: "連線中"
+    });
+      case 'closed':     return tr({ zh: '已断开', en: 'Disconnected',
+          zhHant: "已斷開"
+    });
+      case 'error':      return tr({ zh: '连接失败', en: 'Error',
+          zhHant: "連線失敗"
+    });
       default:           return '';
     }
   })();
   if (!label) return null;
   return (
-    <span className={`comp-live-indicator status-${status}`} title={isZh ? 'wss://cubing.com/ws 实时推送' : 'wss://cubing.com/ws live stream'}>
+    <span className={`comp-live-indicator status-${status}`} title={tr({ zh: 'wss://cubing.com/ws 实时推送', en: 'wss://cubing.com/ws live stream',
+        zhHant: "wss://cubing.com/ws 實時推送"
+    })}>
       <span className="comp-live-dot" />
       {label}
     </span>

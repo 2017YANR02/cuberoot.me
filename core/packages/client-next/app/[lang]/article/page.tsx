@@ -17,6 +17,8 @@ import { useAuthStore } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchArticles, type ArticleListItem } from '@/lib/article-api';
 import './article-list.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 function formatDate(iso: string | null): string {
   if (!iso) return '';
@@ -87,14 +89,16 @@ export default function ArticleListPage() {
       <header className="article-list-header">
         <HomeLink className="article-list-back">
           <ChevronLeft size={16} />
-          <span>{isZh ? '首页' : 'Home'}</span>
+          <span>{tr({ zh: '首页', en: 'Home',
+              zhHant: "首頁"
+        })}</span>
         </HomeLink>
       </header>
 
       <div className="article-list-titlerow">
         <h1 className="article-list-title">{t('article.title')}</h1>
         {isLoggedIn && (
-          <Link href={isZh ? '/zh/article/new' : '/en/article/new'} className="article-new-btn">
+          <Link href={(i18n.language.startsWith('zh') ? '/zh/article/new' : '/en/article/new')} className="article-new-btn">
             <PenLine size={15} />
             <span>{t('article.writeOne')}</span>
           </Link>
@@ -125,7 +129,7 @@ export default function ArticleListPage() {
             {mine.map((a) => (
               <Link
                 key={`mine-${a.slug}`}
-                href={`/${isZh ? 'zh' : 'en'}/article/${a.slug}/edit`}
+                href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/article/${a.slug}/edit`}
                 className="article-card"
               >
                 <div className="article-card-title">{a.title}</div>
@@ -148,7 +152,9 @@ export default function ArticleListPage() {
 
       {loadErr && (
         <div className="article-list-empty article-list-error">
-          {(isZh ? '加载失败: ' : 'Failed to load: ') + loadErr}
+          {(tr({ zh: '加载失败: ', en: 'Failed to load: ',
+              zhHant: "載入失敗: "
+        })) + loadErr}
         </div>
       )}
 

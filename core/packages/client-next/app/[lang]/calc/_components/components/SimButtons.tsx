@@ -8,6 +8,7 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCalcStore } from '../stores/calc_store';
 import { sampleOneSolve, simulateForPlayer, simulateRace, type SimResult } from '../engine/sim_engine';
+import { tr } from '@/i18n/tr';
 
 // NOTE: 格式化计数徽章文本
 // 'geo' 模式：×N (p=X%)
@@ -126,9 +127,11 @@ export function SimButtons() {
     <>
       <div className="controls">
         {/* NOTE: 隐藏 rand-fill 按钮 — numpad Rand 和此处都触发 */}
-        <button id="rand-fill" style={{ display: 'none' }} onClick={handleRandFill}>{isZh ? '随机' : 'Rand'}</button>
+        <button id="rand-fill" style={{ display: 'none' }} onClick={handleRandFill}>{tr({ zh: '随机', en: 'Rand',
+            zhHant: "隨機"
+        })}</button>
         {/* NOTE: 隐藏 clear-all 按钮 — Numpad 长按 ⌫ 联动触发 */}
-        <button id="clear-all" style={{ display: 'none' }} onClick={clearAll}>{isZh ? '清空' : 'Clear'}</button>
+        <button id="clear-all" style={{ display: 'none' }} onClick={clearAll}>{tr({ zh: '清空', en: 'Clear' })}</button>
 
         {state.playerEnabled[0] && (
           <>

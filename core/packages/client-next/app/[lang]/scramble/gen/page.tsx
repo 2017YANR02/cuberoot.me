@@ -55,9 +55,12 @@ const VALID_MODES: ReadonlySet<Mode> = new Set(['comp', 'batch', 'paste']);
 
 const MODE_ORDER: Mode[] = ['comp', 'batch', 'paste'];
 const MODE_LABELS: Record<Mode, { zh: string; en: string }> = {
-  comp:  { zh: '比赛', en: 'Comp' },
-  batch: { zh: '批量', en: 'Batch' },
-  paste: { zh: '输入', en: 'Paste' },
+  comp:  { zh: '比赛', en: 'Comp'
+},
+  batch: { zh: '批量', en: 'Batch'
+},
+  paste: { zh: '输入', en: 'Paste'
+},
 };
 
 // 老链接兼容:URL 上 ?mode= 用过的别名都转到当前名。chip 字符串 = URL key。

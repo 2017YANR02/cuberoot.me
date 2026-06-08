@@ -12,6 +12,7 @@ import { summarize, rollingStats, DNF } from './stats';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { shouldAutoAdvance } from '../engine/auto_advance';
 import './average_mode.css';
+import i18n from '@/i18n/i18n-client';
 
 interface Props {
   event?: string;
@@ -41,7 +42,7 @@ DNF
 
 export default function AverageMode({ event }: Props) {
   const { i18n } = useTranslation();
-  const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const isFmc = event === '333fm';
 

@@ -14,6 +14,7 @@ import { toIsoDate, formatDateRangeIso } from '@/lib/wca-date';
 import { countryName } from '@/lib/country-name';
 import { useRecentRecords, RecentRecordsList } from '@/components/RecentRecords';
 import './ongoing_comps.css';
+import i18n from '@/i18n/i18n-client';
 
 interface Props { lang: 'zh' | 'en' }
 
@@ -171,9 +172,12 @@ export default function OngoingComps({ lang }: Props) {
 
   // 只显示有数据的 tab(某分类为空 → 直接隐藏该 tab,不留灰态)
   const allTabs: { key: TabKey; zh: string; en: string; count: number }[] = [
-    { key: 'records',    zh: '纪录', en: 'Records',  count: records.length },
-    { key: 'inProgress', zh: '当前', en: 'Now',      count: buckets.inProgress.length },
-    { key: 'upcoming',   zh: '未来', en: 'Upcoming', count: buckets.upcoming.length },
+    { key: 'records',    zh: '纪录', en: 'Records',  count: records.length
+    },
+    { key: 'inProgress', zh: '当前', en: 'Now',      count: buckets.inProgress.length
+    },
+    { key: 'upcoming',   zh: '未来', en: 'Upcoming', count: buckets.upcoming.length
+    },
     { key: 'past',       zh: '往期', en: 'Past',     count: buckets.past.length },
   ];
   const tabs = allTabs.filter(t => t.count > 0);
@@ -192,7 +196,7 @@ export default function OngoingComps({ lang }: Props) {
               className={`ongoing-comps-tab${isActive ? ' is-active' : ''}`}
               onClick={() => setTab(t.key)}
             >
-              <span>{isZh ? t.zh : t.en}</span>
+              <span>{(i18n.language.startsWith('zh') ? t.zh : t.en)}</span>
             </button>
           );
         })}

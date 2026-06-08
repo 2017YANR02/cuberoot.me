@@ -8,6 +8,7 @@
  * 调用方通常把它放在一个 `.gen-tn-config-group` flex 容器里,后面跟自己的 chip。
  */
 import { useState, type ReactNode } from 'react';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   isZh: boolean;
@@ -28,7 +29,9 @@ export default function HighOrderNxNInput({ isZh, onAdd, children }: Props) {
   };
   return (
     <div className="gen-tn-config-group">
-      <label className="gen-tn-config-label">{isZh ? '高阶 NxN' : 'High-order NxN'}</label>
+      <label className="gen-tn-config-label">{tr({ zh: '高阶 NxN', en: 'High-order NxN',
+          zhHant: "高階 NxN"
+    })}</label>
       <input
         type="number"
         min={8}

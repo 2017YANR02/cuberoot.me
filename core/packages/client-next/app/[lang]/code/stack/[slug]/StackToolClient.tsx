@@ -13,13 +13,15 @@ import { LangCtx, L, type Lang } from '../_lib/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../ts_intro.css';
 import '../stack_intro.css';
+import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 export default function StackToolClient() {
   const params = useParams<{ slug: string | string[] }>();
   const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
   const router = useRouter();
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
 
   const meta = STACK_TOOLS_META.find((t) => t.slug === slug);
@@ -162,7 +164,9 @@ export default function StackToolClient() {
         <main id="top">
           {/* Hero — META alone is enough for instant render */}
           <section className="hero">
-            <div className="hero-tag">// {meta.group} · {lang === 'zh' ? '诞生' : 'born'} {meta.since} · v{meta.version}</div>
+            <div className="hero-tag">// {meta.group} · {tr({ zh: '诞生', en: 'born',
+                zhHant: "誕生"
+            })} {meta.since} · v{meta.version}</div>
             <h1 className="hero-title">
               <span className="hero-name">{meta.name}</span>
               <span className="hero-colon">:</span>
@@ -175,7 +179,7 @@ export default function StackToolClient() {
                   {detail.heroStats.map((stat, i) => (
                     <div className="stat" key={i}>
                       <span className="stat-num">{stat.num}<small>{stat.unit ?? ''}</small></span>
-                      <span className="stat-label">{lang === 'zh' ? stat.zh : stat.en}</span>
+                      <span className="stat-label">{(i18n.language.startsWith('zh') ? stat.zh : stat.en)}</span>
                     </div>
                   ))}
                 </div>
@@ -209,7 +213,7 @@ export default function StackToolClient() {
                   <p className="sec-desc">{t.whatDesc}</p>
                 </header>
                 <div className="stack-intro-prose stack-prose-wide">
-                  {lang === 'zh' ? detail.intro.zh : detail.intro.en}
+                  {(i18n.language.startsWith('zh') ? detail.intro.zh : detail.intro.en)}
                 </div>
               </section>
 
@@ -305,7 +309,7 @@ export default function StackToolClient() {
                   <p className="sec-desc">{t.role}</p>
                 </header>
                 <div className="stack-intro-prose stack-prose-wide stack-prose-quote">
-                  {lang === 'zh' ? detail.cuberoot.zh : detail.cuberoot.en}
+                  {(i18n.language.startsWith('zh') ? detail.cuberoot.zh : detail.cuberoot.en)}
                 </div>
               </section>
 
@@ -358,13 +362,13 @@ export default function StackToolClient() {
         <nav className="stack-pager">
           {prev ? (
             <Link href={`/code/stack/${prev.slug}`} className="stack-pager-link prev">
-              <span className="stack-pager-dir">← {lang === 'zh' ? '上一件' : 'prev'}</span>
+              <span className="stack-pager-dir">← {tr({ zh: '上一件', en: 'prev' })}</span>
               <span className="stack-pager-name">{prev.name}</span>
             </Link>
           ) : <span />}
           {next ? (
             <Link href={`/code/stack/${next.slug}`} className="stack-pager-link next">
-              <span className="stack-pager-dir">{lang === 'zh' ? '下一件' : 'next'} →</span>
+              <span className="stack-pager-dir">{tr({ zh: '下一件', en: 'next' })} →</span>
               <span className="stack-pager-name">{next.name}</span>
             </Link>
           ) : <span />}

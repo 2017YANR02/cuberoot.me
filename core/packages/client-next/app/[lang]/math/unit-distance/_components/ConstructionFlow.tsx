@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { TeX, TeXBlock } from '@/components/math/Tex';
+import i18n from '@/i18n/i18n-client';
 
 type StageId = 'F' | 'tower' | 'K' | 'lattice' | 'project';
 
@@ -108,10 +109,11 @@ const STAGES: Stage[] = [
   {
     id: 'F',
     num: 1,
-    title: { zh: '基场 F', en: 'Base field F' },
+    title: { zh: '基场 F', en: 'Base field F'
+    },
     oneLine: {
       zh: '三次循环、全实数域,起点',
-      en: 'cyclic cubic, totally real',
+      en: 'cyclic cubic, totally real'
     },
     Schematic: SchF,
     detail: {
@@ -134,10 +136,11 @@ const STAGES: Stage[] = [
   {
     id: 'tower',
     num: 2,
-    title: { zh: '无支 pro-3 塔', en: 'Unramified pro-3 tower' },
+    title: { zh: '无支 pro-3 塔', en: 'Unramified pro-3 tower'
+    },
     oneLine: {
       zh: '让度数 [Fⱼ : ℚ] → ∞,根判别式保持常数',
-      en: 'degrees [Fⱼ : ℚ] → ∞, root discriminant stays constant',
+      en: 'degrees [Fⱼ : ℚ] → ∞, root discriminant stays constant'
     },
     Schematic: SchTower,
     detail: {
@@ -164,10 +167,11 @@ const STAGES: Stage[] = [
   {
     id: 'K',
     num: 3,
-    title: { zh: 'CM 扩张 Kⱼ = Fⱼ(i)', en: 'CM extension Kⱼ = Fⱼ(i)' },
+    title: { zh: 'CM 扩张 Kⱼ = Fⱼ(i)', en: 'CM extension Kⱼ = Fⱼ(i)'
+    },
     oneLine: {
       zh: '加入 i,得到复共轭非平凡的 CM 域',
-      en: 'adjoin i — get a CM field where complex conjugation is non-trivial',
+      en: 'adjoin i — get a CM field where complex conjugation is non-trivial'
     },
     Schematic: SchK,
     detail: {
@@ -195,7 +199,7 @@ const STAGES: Stage[] = [
     title: { zh: 'Minkowski 格 Λⱼ', en: 'Minkowski lattice Λⱼ' },
     oneLine: {
       zh: '把 Kⱼ 嵌入 ℂ^fⱼ,得到高维格',
-      en: 'embed Kⱼ ↪ ℂ^fⱼ as a high-dim lattice',
+      en: 'embed Kⱼ ↪ ℂ^fⱼ as a high-dim lattice'
     },
     Schematic: SchLattice,
     detail: {
@@ -222,10 +226,11 @@ const STAGES: Stage[] = [
   {
     id: 'project',
     num: 5,
-    title: { zh: '多圆盘切 + 投影 → Pⱼ', en: 'Polydisc cut + project → Pⱼ' },
+    title: { zh: '多圆盘切 + 投影 → Pⱼ', en: 'Polydisc cut + project → Pⱼ'
+    },
     oneLine: {
       zh: '切出有限子集,投影到第一坐标得 ℝ² 点集',
-      en: 'restrict to finite subset, project to first coord → ℝ² point set',
+      en: 'restrict to finite subset, project to first coord → ℝ² point set'
     },
     Schematic: SchProject,
     detail: {
@@ -284,11 +289,11 @@ export default function ConstructionFlow() {
               >
                 <div className="ud-flow-card-head">
                   <span className="ud-flow-num">{s.num}</span>
-                  <span className="ud-flow-title">{isZh ? s.title.zh : s.title.en}</span>
+                  <span className="ud-flow-title">{(i18n.language.startsWith('zh') ? s.title.zh : s.title.en)}</span>
                   {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </div>
                 <div className="ud-flow-card-schem"><s.Schematic /></div>
-                <div className="ud-flow-card-oneline">{isZh ? s.oneLine.zh : s.oneLine.en}</div>
+                <div className="ud-flow-card-oneline">{(i18n.language.startsWith('zh') ? s.oneLine.zh : s.oneLine.en)}</div>
               </button>
               {i < STAGES.length - 1 && <div className="ud-flow-arrow" aria-hidden>→</div>}
             </div>
@@ -302,10 +307,10 @@ export default function ConstructionFlow() {
           <div className="ud-flow-detail">
             <div className="ud-flow-detail-head">
               <span className="ud-flow-detail-num">Stage {s.num}</span>
-              <span className="ud-flow-detail-title">{isZh ? s.title.zh : s.title.en}</span>
+              <span className="ud-flow-detail-title">{(i18n.language.startsWith('zh') ? s.title.zh : s.title.en)}</span>
             </div>
             <div className="ud-flow-detail-body">
-              {isZh ? s.detail.zh : s.detail.en}
+              {(i18n.language.startsWith('zh') ? s.detail.zh : s.detail.en)}
             </div>
           </div>
         );

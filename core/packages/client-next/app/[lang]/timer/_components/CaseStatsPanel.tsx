@@ -11,6 +11,7 @@ import { effectiveMs } from '../_lib/types';
 import { formatMs } from '../_lib/stats';
 import { OLL_CASES } from '../_lib/scramble/algs/oll_cases';
 import { PLL_CASES } from '../_lib/scramble/algs/pll_cases';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   event: EventId;
@@ -64,18 +65,24 @@ export default function CaseStatsPanel({ event, solves, isZh }: Props) {
   const rows = aggregate(solves);
   return (
     <div className="case-stats-panel">
-      <h3>{isZh ? '每 Case 统计' : 'Per-case stats'}</h3>
+      <h3>{tr({ zh: '每 Case 统计', en: 'Per-case stats',
+          zhHant: "每 Case 統計"
+    })}</h3>
       {rows.length === 0 ? (
-        <div className="case-stats-empty">{isZh ? '尚无记录' : 'No solves yet'}</div>
+        <div className="case-stats-empty">{tr({ zh: '尚无记录', en: 'No solves yet',
+            zhHant: "尚無記錄"
+        })}</div>
       ) : (
         <div className="case-stats-scroll">
           <table className="case-stats-table">
             <thead>
               <tr>
                 <th>{isZh ? 'Case' : 'Case'}</th>
-                <th>{isZh ? '次数' : 'N'}</th>
-                <th>{isZh ? '最佳' : 'Best'}</th>
-                <th>{isZh ? '平均' : 'Mean'}</th>
+                <th>{tr({ zh: '次数', en: 'N',
+                    zhHant: "次數"
+                })}</th>
+                <th>{tr({ zh: '最佳', en: 'Best' })}</th>
+                <th>{tr({ zh: '平均', en: 'Mean' })}</th>
               </tr>
             </thead>
             <tbody>

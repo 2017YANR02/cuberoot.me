@@ -3,6 +3,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import { permSign } from '../cube_state';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 // ── BigInt helpers (all math done in BigInt to avoid precision loss) ──────────
 function bigFactorial(n: number): bigint {
@@ -426,22 +428,25 @@ function IndexSieve() {
       <div style={{ marginTop: 6, fontSize: 12 }}>
         <L zh="奇偶性匹配" en="Parity match" />:
         <strong style={{ marginLeft: 6, color: ok2 ? 'var(--green)' : 'var(--warn)' }}>
-          {ok2 ? (lang === 'zh' ? '是' : 'Yes') : (lang === 'zh' ? '否' : 'No')}
+          {ok2 ? (tr({ zh: '是', en: 'Yes' })) : (tr({ zh: '否', en: 'No' }))}
         </strong>
         <span style={{ color: 'var(--ink-dim)', marginLeft: 6 }}>{ok2 ? '✓' : '✗'}</span>
       </div>
       {/* Enforce checkboxes */}
       <div style={{ marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: 16 }}>
         {[
-          { zh: '启用约束 1: ∑twist≡0', en: 'Enforce: ∑twist≡0' },
-          { zh: '启用约束 2: ∑flip≡0',  en: 'Enforce: ∑flip≡0' },
-          { zh: '启用约束 3: 奇偶匹配',  en: 'Enforce: parity match' },
+          { zh: '启用约束 1: ∑twist≡0', en: 'Enforce: ∑twist≡0'
+        },
+          { zh: '启用约束 2: ∑flip≡0',  en: 'Enforce: ∑flip≡0'
+        },
+          { zh: '启用约束 3: 奇偶匹配',  en: 'Enforce: parity match'
+        },
         ].map((c, i) => (
           <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
             <input type="checkbox" checked={enforceAll[i]}
               onChange={() => setEnforceAll(prev => { const n = [...prev]; n[i] = !n[i]; return n; })}
             />
-            {lang === 'zh' ? c.zh : c.en}
+            {(i18n.language.startsWith('zh') ? c.zh : c.en)}
           </label>
         ))}
       </div>
@@ -505,21 +510,28 @@ function IndexSieve() {
           </span>
           <span style={{ fontWeight: 700, color: legal ? 'var(--green)' : 'var(--warn)' }}>
             {legal
-              ? (lang === 'zh' ? '合法魔方状态' : 'Legal cube state')
-              : (lang === 'zh' ? '不可达（非法）' : 'Unreachable (illegal)')}
+              ? (tr({ zh: '合法魔方状态', en: 'Legal cube state',
+                  zhHant: "合法魔方狀態"
+            }))
+              : (tr({ zh: '不可达（非法）', en: 'Unreachable (illegal)',
+                  zhHant: "不可達（非法）"
+            }))}
           </span>
         </div>
       </div>
       {/* Three invariant lamps */}
       <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 16, fontSize: 13 }}>
         {[
-          { zh: '约束①: ∑角扭转≡0 (mod 3)', en: 'Constraint ①: ∑corner twist ≡ 0 (mod 3)', ok: ok0 },
-          { zh: '约束②: ∑棱翻转≡0 (mod 2)', en: 'Constraint ②: ∑edge flip ≡ 0 (mod 2)', ok: ok1 },
-          { zh: '约束③: 角置换奇偶 = 棱置换奇偶', en: 'Constraint ③: corner perm parity = edge perm parity', ok: ok2 },
+          { zh: '约束①: ∑角扭转≡0 (mod 3)', en: 'Constraint ①: ∑corner twist ≡ 0 (mod 3)', ok: ok0
+        },
+          { zh: '约束②: ∑棱翻转≡0 (mod 2)', en: 'Constraint ②: ∑edge flip ≡ 0 (mod 2)', ok: ok1
+        },
+          { zh: '约束③: 角置换奇偶 = 棱置换奇偶', en: 'Constraint ③: corner perm parity = edge perm parity', ok: ok2
+        },
         ].map((c, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
             {lamp(c.ok, true)}
-            <span style={{ color: 'var(--ink-dim)' }}>{lang === 'zh' ? c.zh : c.en}</span>
+            <span style={{ color: 'var(--ink-dim)' }}>{(i18n.language.startsWith('zh') ? c.zh : c.en)}</span>
           </div>
         ))}
       </div>
@@ -619,8 +631,12 @@ function OrderExplorer() {
           <span style={{ color: twistOk ? 'var(--green)' : 'var(--warn)', fontWeight: 700 }}>
             {vals.reduce((a, b) => a + b, 0) % mod}
             {twistOk
-              ? ` — ${lang === 'zh' ? '合法（和为零）' : 'legal (sum = 0)'}`
-              : ` — ${lang === 'zh' ? '违反约束①' : 'violates constraint ①'}`}
+              ? ` — ${tr({ zh: '合法（和为零）', en: 'legal (sum = 0)',
+                  zhHant: "合法（和為零）"
+            })}`
+              : ` — ${tr({ zh: '违反约束①', en: 'violates constraint ①',
+                  zhHant: "違反約束①"
+            })}`}
           </span>
         </div>
         <div className="gt-result-row">
@@ -643,10 +659,16 @@ function OrderExplorer() {
 function WreathTable() {
   const lang = useLang();
   const rows: { A: string; n: number; mod: bigint; nameZh: string; nameEn: string; order: bigint; note: string }[] = [
-    { A: 'C₂', n: 3,  mod: 2n, nameZh: '超八面体群 B₃', nameEn: 'Hyperoctahedral B₃', order: 48n, note: lang === 'zh' ? '普通正方体对称群' : 'Symmetry of the geometric cube' },
-    { A: 'C₃', n: 8,  mod: 3n, nameZh: '角块圈积',  nameEn: 'Corner wreath',  order: wreathOrder(3n, 8),  note: lang === 'zh' ? '8 角×3 朝向' : '8 corners × 3 orientations' },
-    { A: 'C₂', n: 12, mod: 2n, nameZh: '棱块圈积',  nameEn: 'Edge wreath',    order: wreathOrder(2n, 12), note: lang === 'zh' ? '12 棱×2 翻转' : '12 edges × 2 flips' },
-    { A: 'C₂', n: 12, mod: 2n, nameZh: '超八面体 B₁₂', nameEn: 'Hyperoctahedral B₁₂', order: wreathOrder(2n, 12), note: lang === 'zh' ? '12维符号置换群' : 'Signed permutations of 12 things' },
+    { A: 'C₂', n: 3,  mod: 2n, nameZh: '超八面体群 B₃', nameEn: 'Hyperoctahedral B₃', order: 48n, note: tr({ zh: '普通正方体对称群', en: 'Symmetry of the geometric cube',
+        zhHant: "普通正方體對稱群"
+    }) },
+    { A: 'C₃', n: 8,  mod: 3n, nameZh: '角块圈积',  nameEn: 'Corner wreath',  order: wreathOrder(3n, 8),  note: tr({ zh: '8 角×3 朝向', en: '8 corners × 3 orientations' }) },
+    { A: 'C₂', n: 12, mod: 2n, nameZh: '棱块圈积',  nameEn: 'Edge wreath',    order: wreathOrder(2n, 12), note: tr({ zh: '12 棱×2 翻转', en: '12 edges × 2 flips',
+        zhHant: "12 稜×2 翻轉"
+    }) },
+    { A: 'C₂', n: 12, mod: 2n, nameZh: '超八面体 B₁₂', nameEn: 'Hyperoctahedral B₁₂', order: wreathOrder(2n, 12), note: tr({ zh: '12维符号置换群', en: 'Signed permutations of 12 things',
+        zhHant: "12維符號置換群"
+    }) },
   ];
 
   return (

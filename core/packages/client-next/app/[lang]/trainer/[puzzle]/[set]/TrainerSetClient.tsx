@@ -12,6 +12,8 @@ import { CaseTreePicker } from '../../_components/trainer-components';
 import { resolveAlgPuzzle } from '../../_events';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../trainer.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 export default function TrainerSetClient() {
   const params = useParams<{ puzzle: string; set: string }>();
@@ -20,7 +22,7 @@ export default function TrainerSetClient() {
   const router = useRouter();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const lang = isZh ? 'zh' : 'en';
+  const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   useDocumentTitle('公式训练', 'Algorithm Trainer');
 
   const puzzle = resolveAlgPuzzle(puzzleParam);   // 接受 event code(333)或 legacy puzzle 名(3x3)
@@ -45,7 +47,7 @@ export default function TrainerSetClient() {
     return (
       <div className="trainer-root">
         <div className="trainer-landing-empty">
-          {isZh ? '未知公式集' : 'Unknown set'}: {puzzleParam}/{setSlug}
+          {tr({ zh: '未知公式集', en: 'Unknown set' })}: {puzzleParam}/{setSlug}
         </div>
       </div>
     );
@@ -58,22 +60,26 @@ export default function TrainerSetClient() {
     <div className="trainer-root">
       <div className="trainer-topbar">
         <Link href={`/${lang}/trainer/${puzzleParam}`} className="trainer-back">
-          <ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}
+          <ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}
         </Link>
         <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>
-          {puzzle} · {isZh ? meta.zh : meta.en}
+          {puzzle} · {(i18n.language.startsWith('zh') ? meta.zh : meta.en)}
         </span>
         <button
           className={`trainer-start-btn${!canStart ? ' is-disabled' : ''}`}
           onClick={() => router.push(`${lang === 'zh' ? '/zh' : ''}/trainer/${puzzleParam}/${setSlug}/run`)}
           disabled={!canStart}
         >
-          <Flag size={14} /> {isZh ? '开始训练' : 'Start Training'} ({selectedSet.size})
+          <Flag size={14} /> {tr({ zh: '开始训练', en: 'Start Training',
+              zhHant: "開始訓練"
+        })} ({selectedSet.size})
         </button>
       </div>
 
       {cases.length === 0 ? (
-        <div className="trainer-landing-empty">{isZh ? '加载中…' : 'Loading…'}</div>
+        <div className="trainer-landing-empty">{tr({ zh: '加载中…', en: 'Loading…',
+            zhHant: "載入中…"
+        })}</div>
       ) : (
         <CaseTreePicker
           puzzle={puzzle}

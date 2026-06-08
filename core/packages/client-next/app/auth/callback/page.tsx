@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { apiUrl } from '@/lib/api-base';
-
+import { tr } from '@/i18n/tr';
 
 const ME_URL = 'https://www.worldcubeassociation.org/api/v0/me';
 
@@ -47,13 +47,17 @@ export default function AuthCallbackPage() {
       return;
     }
     if (!accessToken) {
-      setErrorMsg(isZh ? '未获取到 access_token' : 'No access_token received');
+      setErrorMsg(tr({ zh: '未获取到 access_token', en: 'No access_token received',
+          zhHant: "未獲取到 access_token"
+    }));
       return;
     }
 
     const savedState = sessionStorage.getItem('wca_oauth_state');
     if (!savedState || savedState !== state) {
-      setErrorMsg(isZh ? 'OAuth state 不匹配，请重试' : 'OAuth state mismatch, please retry');
+      setErrorMsg(tr({ zh: 'OAuth state 不匹配，请重试', en: 'OAuth state mismatch, please retry',
+          zhHant: "OAuth state 不匹配，請重試"
+    }));
       return;
     }
     sessionStorage.removeItem('wca_oauth_state');
@@ -129,7 +133,9 @@ export default function AuthCallbackPage() {
               borderTopColor: '#60a5fa', borderRadius: '50%',
               animation: 'spin 0.8s linear infinite', marginBottom: 12,
             }} />
-            <div>{isZh ? '正在登录 WCA...' : 'Signing in to WCA...'}</div>
+            <div>{tr({ zh: '正在登录 WCA...', en: 'Signing in to WCA...',
+                zhHant: "正在登入 WCA..."
+            })}</div>
           </div>
         )}
       </div>

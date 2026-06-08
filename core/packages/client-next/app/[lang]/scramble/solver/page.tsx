@@ -569,7 +569,8 @@ function ScrambleSolverPageInner() {
               activeColor={paintColor}
               onActiveColorChange={setPaintColor}
               pixelSize={paintCanvasSize}
-              solveLabel={{ zh: '求打乱', en: 'Derive scramble' }}
+              solveLabel={{ zh: '求打乱', en: 'Derive scramble'
+            }}
               onSolve={(fc) => {
                 if (kociembaBusy) return;
                 runKociembaForState(fc).catch((e: Error) => {

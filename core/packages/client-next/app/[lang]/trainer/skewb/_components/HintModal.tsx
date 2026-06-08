@@ -4,6 +4,7 @@ import { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 import SkewbImage from './SkewbImage';
 import { transftoWCA } from '../_lib/scramble';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   open: boolean;
@@ -49,7 +50,9 @@ export default function HintModal({ open, onClose, id, setup, solutions, isZh }:
             type="button"
             className="sk-modal-close"
             onClick={onClose}
-            aria-label={isZh ? '关闭' : 'Close'}
+            aria-label={tr({ zh: '关闭', en: 'Close',
+                zhHant: "關閉"
+            })}
           >
             <X size={18} />
           </button>
@@ -60,7 +63,7 @@ export default function HintModal({ open, onClose, id, setup, solutions, isZh }:
         </div>
 
         <div className="sk-modal-footer">
-          <div className="sk-modal-label">{isZh ? '解法' : 'Solutions'}</div>
+          <div className="sk-modal-label">{tr({ zh: '解法', en: 'Solutions' })}</div>
           <ul className="sk-modal-solutions">
             {solutions.map((s, i) => (
               <li key={i}>{s}</li>

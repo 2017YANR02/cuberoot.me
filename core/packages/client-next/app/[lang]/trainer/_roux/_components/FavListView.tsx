@@ -17,6 +17,7 @@ import { all_solvers } from '@/lib/roux/CachedSolver';
 import { Modal } from './ui';
 import { useRT } from '../i18n';
 import './FavListView.css';
+import { tr } from '@/i18n/tr';
 
 // Confirm-dialog helper (upstream signature: warnDialog({ confirm })). Upstream
 // shipped only an empty stub; here it is a functional Modal-backed confirm. It
@@ -145,11 +146,13 @@ export default function FavListView(props: { state: AppState; dispatch: React.Di
       }
     >
       <p className="roux-fav-add-help">
-        {isZh ? '在此输入情况（每行一条）' : 'Input your cases here. (one per line)'}
+        {tr({ zh: '在此输入情况（每行一条）', en: 'Input your cases here. (one per line)',
+            zhHant: "在此輸入情況（每行一條）"
+        })}
         <br />
-        {isZh
-          ? '格式：[类别], [打乱公式]。类别 := fb | fbdr | ss-front | ss-back'
-          : 'Format: [category], [setup algorithm]. category := fb | fbdr | ss-front | ss-back'}
+        {tr({ zh: '格式：[类别], [打乱公式]。类别 := fb | fbdr | ss-front | ss-back', en: 'Format: [category], [setup algorithm]. category := fb | fbdr | ss-front | ss-back',
+            zhHant: "格式：[類別], [打亂公式]。類別 := fb | fbdr | ss-front | ss-back"
+        })}
       </p>
       <textarea
         autoFocus

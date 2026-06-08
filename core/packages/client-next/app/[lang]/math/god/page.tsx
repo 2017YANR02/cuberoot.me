@@ -23,6 +23,8 @@ import { PUZZLES, primaryDiameter, WCA_EVENT_ORDER, type PuzzleEntry } from './_
 import { DEEP } from './_components/god_deep_data';
 import { TeX, TeXBlock, MathText } from './_components/Tex';
 import './god.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const GrowthChart = lazy(() => import('./_components/GrowthChart'));
 const Bfs2x2Demo = lazy(() => import('./_components/Bfs2x2Demo'));
@@ -69,9 +71,11 @@ function formatDiameter(p: PuzzleEntry): { tex?: string; text?: string } {
 
 function statusBadge(p: PuzzleEntry, isZh: boolean): { label: string; cls: string } {
   const d = primaryDiameter(p);
-  if (d.status === 'exact') return { label: isZh ? '已证' : 'Proven', cls: 'is-exact' };
-  if (d.status === 'parametric') return { label: isZh ? '平凡' : 'Trivial', cls: 'is-trivial' };
-  return { label: isZh ? '上下界' : 'Bounds', cls: 'is-bounds' };
+  if (d.status === 'exact') return { label: tr({ zh: '已证', en: 'Proven',
+      zhHant: "已證"
+}), cls: 'is-exact' };
+  if (d.status === 'parametric') return { label: tr({ zh: '平凡', en: 'Trivial' }), cls: 'is-trivial' };
+  return { label: tr({ zh: '上下界', en: 'Bounds' }), cls: 'is-bounds' };
 }
 
 /* ───── card ───────────────────────────────────────────────────────── */
@@ -96,10 +100,10 @@ function PuzzleCard({ p, isZh, expanded, onToggle }: {
         <div className="god-card-titleblock">
           <div className="god-card-title">
             <EventIcon event={p.id} className="god-card-eventicon" />
-            <span>{isZh ? p.name.zh : p.name.en}</span>
+            <span>{(i18n.language.startsWith('zh') ? p.name.zh : p.name.en)}</span>
           </div>
           <div className="god-card-states"><TeX src={`|G| = ${sciToTex(p.states.sci)}`} />{p.states.pretty && (
-            <span className="god-card-states-extra"> · {isZh ? p.states.pretty.zh : p.states.pretty.en}</span>
+            <span className="god-card-states-extra"> · {(i18n.language.startsWith('zh') ? p.states.pretty.zh : p.states.pretty.en)}</span>
           )}</div>
         </div>
         <div className="god-card-d-block">
@@ -116,15 +120,15 @@ function PuzzleCard({ p, isZh, expanded, onToggle }: {
 
       {expanded && (
         <div className="god-card-body">
-          <p className="god-card-blurb"><MathText>{isZh ? p.blurb.zh : p.blurb.en}</MathText></p>
+          <p className="god-card-blurb"><MathText>{(i18n.language.startsWith('zh') ? p.blurb.zh : p.blurb.en)}</MathText></p>
 
           {DEEP[p.id] && (
             <div className="god-card-deep">
               {DEEP[p.id].heading && (
-                <h4 className="god-card-deep-h">{isZh ? DEEP[p.id].heading!.zh : DEEP[p.id].heading!.en}</h4>
+                <h4 className="god-card-deep-h">{(i18n.language.startsWith('zh') ? DEEP[p.id].heading!.zh : DEEP[p.id].heading!.en)}</h4>
               )}
               {DEEP[p.id].paragraphs.map((para, i) => (
-                <p key={i} className="god-card-deep-p"><MathText>{isZh ? para.zh : para.en}</MathText></p>
+                <p key={i} className="god-card-deep-p"><MathText>{(i18n.language.startsWith('zh') ? para.zh : para.en)}</MathText></p>
               ))}
             </div>
           )}
@@ -141,7 +145,7 @@ function PuzzleCard({ p, isZh, expanded, onToggle }: {
                         ? m.upper
                         : (m.lower != null ? `${m.lower}–${m.upper}` : <TeX src={`\\le ${m.upper}`} />)}
                     </span>
-                    {m.note && <span className="god-card-metric-note">— {isZh ? m.note.zh : m.note.en}</span>}
+                    {m.note && <span className="god-card-metric-note">— {(i18n.language.startsWith('zh') ? m.note.zh : m.note.en)}</span>}
                   </li>
                 ))}
               </ul>
@@ -641,7 +645,7 @@ function dfs(state, max_depth, g):
               <li key={i} className={`god-tl-item ${m.cls || ''}`}>
                 <div className="god-tl-year">{m.year}</div>
                 <div className="god-tl-dot" />
-                <div className="god-tl-body">{isZh ? m.zh : m.en}</div>
+                <div className="god-tl-body">{(i18n.language.startsWith('zh') ? m.zh : m.en)}</div>
               </li>
             ))}
           </ol>

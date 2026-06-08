@@ -4,6 +4,7 @@
 // 从 legacy distribution_chart.js 移植为 React 组件
 // 架构改进：数据从 props 传入（非 DOM 解析），类型安全
 import React, { useState, useRef, useCallback, useMemo } from 'react';
+import { tr } from '@/i18n/tr';
 
 // ── 颜色板 — 最多 10 名选手同时显示（Claude 暖色系）──
 const COLORS = [
@@ -173,7 +174,7 @@ export default function DistributionChart({ datasets, isZh }: Props) {
             fill={validSets[si].color} fillOpacity={nP > 1 ? 0.7 : 0.85}
             rx={nP === 1 ? 3 : 1}
             style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
-            data-info={`${validSets[si].name} | ${binStart}s–${binEnd}s: ${bins[b]}${isZh ? ' 次' : ''}`}
+            data-info={`${validSets[si].name} | ${binStart}s–${binEnd}s: ${bins[b]}${tr({ zh: ' 次', en: '' })}`}
           />,
         );
         if (subBarW > 8 && (bins[b] >= 3 || nP === 1)) {
@@ -200,9 +201,13 @@ export default function DistributionChart({ datasets, isZh }: Props) {
     // Axis labels
     elements.push(
       <text key="xlabel" x={PAD.l + chartW / 2} y={H - 5}
-        fill="#8a7a6a" fontSize={13} textAnchor="middle">{isZh ? '时间 (秒)' : 'Time (s)'}</text>,
+        fill="#8a7a6a" fontSize={13} textAnchor="middle">{tr({ zh: '时间 (秒)', en: 'Time (s)',
+            zhHant: "時間 (秒)"
+        })}</text>,
       <text key="ylabel" x={0} y={0} fill="#8a7a6a" fontSize={13} textAnchor="middle"
-        transform={`translate(14,${PAD.t + chartH / 2}) rotate(-90)`}>{isZh ? '次数' : 'Count'}</text>,
+        transform={`translate(14,${PAD.t + chartH / 2}) rotate(-90)`}>{tr({ zh: '次数', en: 'Count',
+            zhHant: "次數"
+        })}</text>,
     );
 
     // Mean lines
@@ -288,9 +293,11 @@ export default function DistributionChart({ datasets, isZh }: Props) {
     // Axis labels
     elements.push(
       <text key="kxlabel" x={PAD.l + chartW / 2} y={H - 5}
-        fill="#8a7a6a" fontSize={13} textAnchor="middle">{isZh ? '时间 (秒)' : 'Time (s)'}</text>,
+        fill="#8a7a6a" fontSize={13} textAnchor="middle">{tr({ zh: '时间 (秒)', en: 'Time (s)',
+            zhHant: "時間 (秒)"
+        })}</text>,
       <text key="kylabel" x={0} y={0} fill="#8a7a6a" fontSize={13} textAnchor="middle"
-        transform={`translate(14,${PAD.t + chartH / 2}) rotate(-90)`}>{isZh ? '密度' : 'Density'}</text>,
+        transform={`translate(14,${PAD.t + chartH / 2}) rotate(-90)`}>{tr({ zh: '密度', en: 'Density' })}</text>,
     );
 
     // Mean lines
@@ -376,7 +383,9 @@ export default function DistributionChart({ datasets, isZh }: Props) {
       <line key="bxaxis" x1={PAD.l} y1={PAD.t + chartH} x2={PAD.l + chartW} y2={PAD.t + chartH}
         stroke="#6e6050" strokeWidth={1} />,
       <text key="bxlabel" x={PAD.l + chartW / 2} y={H - 6}
-        fill="#a3a3a3" fontSize={13} textAnchor="middle">{isZh ? '时间 (秒)' : 'Time (s)'}</text>,
+        fill="#a3a3a3" fontSize={13} textAnchor="middle">{tr({ zh: '时间 (秒)', en: 'Time (s)',
+            zhHant: "時間 (秒)"
+        })}</text>,
     );
   }
 
@@ -411,9 +420,13 @@ export default function DistributionChart({ datasets, isZh }: Props) {
             style={{ margin: '0 2px', padding: '4px 14px', fontSize: 13 }}
             onClick={() => setMode(m)}
           >
-            {m === 'histogram' ? (isZh ? '直方图' : 'Histogram')
+            {m === 'histogram' ? (tr({ zh: '直方图', en: 'Histogram',
+                zhHant: "直方圖"
+            }))
               : m === 'kde' ? 'KDE'
-              : (isZh ? '箱线图' : 'Box Plot')}
+              : (tr({ zh: '箱线图', en: 'Box Plot',
+                  zhHant: "箱線圖"
+            }))}
           </button>
         ))}
       </div>

@@ -6,6 +6,7 @@
 // (stats 页 light-locked 用页级 --bg/--text,RecentScrambles 用全局 token)。
 import { useMemo, useState } from 'react';
 import './SubsetColorPicker.css';
+import { tr } from '@/i18n/tr';
 
 export type ColorLetter = 'B' | 'G' | 'O' | 'R' | 'W' | 'Y';
 export type ColorMode = 'cn' | 'quad' | 'dual' | 'single';
@@ -16,8 +17,12 @@ export const COLOR_HEX: Record<ColorLetter, string> = {
   W: '#FFFFFF', Y: '#FEFE00', R: '#EE0000', O: '#FFA100', B: '#0000F2', G: '#00D800',
 };
 export const COLOR_NAME: Record<ColorLetter, { zh: string; en: string }> = {
-  W: { zh: '白', en: 'White' }, Y: { zh: '黄', en: 'Yellow' }, R: { zh: '红', en: 'Red' },
-  O: { zh: '橙', en: 'Orange' }, B: { zh: '蓝', en: 'Blue' }, G: { zh: '绿', en: 'Green' },
+  W: { zh: '白', en: 'White' }, Y: { zh: '黄', en: 'Yellow'
+}, R: { zh: '红', en: 'Red'
+},
+  O: { zh: '橙', en: 'Orange' }, B: { zh: '蓝', en: 'Blue'
+}, G: { zh: '绿', en: 'Green'
+},
 };
 // 渐变里颜色自上而下顺序(与直方图 fillColors 一致)。
 export const GRADIENT_ORDER: ColorLetter[] = ['W', 'Y', 'G', 'B', 'R', 'O'];
@@ -51,8 +56,10 @@ const MODE_ORDER: ColorMode[] = ['dual', 'single', 'cn', 'quad'];
 const MODE_LABEL: Record<ColorMode, { zh: string; en: string }> = {
   cn: { zh: '六色', en: 'CN' },
   quad: { zh: '四色', en: 'Quad' },
-  dual: { zh: '双色', en: 'Dual' },
-  single: { zh: '单色', en: 'Single' },
+  dual: { zh: '双色', en: 'Dual'
+},
+  single: { zh: '单色', en: 'Single'
+},
 };
 
 export interface SubsetOption { id: string; key: string; colors: ColorLetter[] }
@@ -128,17 +135,17 @@ export function SubsetColorPicker({ sel, isZh, className }: { sel: SubsetSelecti
         className="subset-picker-mode"
         value={sel.colorMode}
         onChange={(e) => sel.setColorMode(e.target.value as ColorMode)}
-        aria-label={isZh ? '底色模式' : 'Color mode'}
+        aria-label={tr({ zh: '底色模式', en: 'Color mode' })}
       >
         {MODE_ORDER.map((m) => (
           <option key={m} value={m}>{MODE_LABEL[m][isZh ? 'zh' : 'en']}</option>
         ))}
       </select>
-      <div className="subset-picker-swatches" role="group" aria-label={isZh ? '底色' : 'Bottom color'}>
+      <div className="subset-picker-swatches" role="group" aria-label={tr({ zh: '底色', en: 'Bottom color' })}>
         {sel.options.length === 0
           // 六色(色中性):一个划分方格 tile,与 dual/quad 同视觉语言
           ? (
-              <span className="subset-swatch is-static" title={isZh ? '色中性 全部 6 色' : 'Color-neutral, all six'}>
+              <span className="subset-swatch is-static" title={tr({ zh: '色中性 全部 6 色', en: 'Color-neutral, all six' })}>
                 <SubsetSwatch colors={COLOR_LETTERS} />
               </span>
             )

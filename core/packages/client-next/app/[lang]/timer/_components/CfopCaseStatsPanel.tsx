@@ -21,6 +21,7 @@
 import { useState } from 'react';
 import type { EventId, Solve } from '../_lib/types';
 import { formatMs } from '../_lib/stats';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   event: EventId;
@@ -101,10 +102,12 @@ function CaseTable({
           <thead>
             <tr>
               <th>{isZh ? 'Case' : 'Case'}</th>
-              <th>{isZh ? '次数' : 'N'}</th>
-              <th>{isZh ? '平均' : 'Avg'}</th>
-              <th>{isZh ? '最佳' : 'Best'}</th>
-              <th>{isZh ? '最差' : 'Worst'}</th>
+              <th>{tr({ zh: '次数', en: 'N',
+                  zhHant: "次數"
+            })}</th>
+              <th>{tr({ zh: '平均', en: 'Avg' })}</th>
+              <th>{tr({ zh: '最佳', en: 'Best' })}</th>
+              <th>{tr({ zh: '最差', en: 'Worst' })}</th>
             </tr>
           </thead>
           <tbody>
@@ -139,13 +142,15 @@ function CaseTable({
           onClick={onToggle}
           style={{ marginTop: 6 }}
         >
-          {isZh ? '收起' : 'Collapse'}
+          {tr({ zh: '收起', en: 'Collapse' })}
         </button>
       )}
       {drillCandidates.length > 0 && (
         <div style={{ marginTop: 6, fontSize: '0.9em', opacity: 0.8 }}>
           <span style={{ marginRight: 6 }}>
-            {isZh ? '最慢 Top 3（建议刷）：' : 'Top 3 slowest (drill candidates):'}
+            {tr({ zh: '最慢 Top 3（建议刷）：', en: 'Top 3 slowest (drill candidates):',
+                zhHant: "最慢 Top 3（建議刷）："
+            })}
           </span>
           {drillCandidates.map((r, i) => (
             <span key={r.id} style={{ marginRight: 8, fontVariantNumeric: 'tabular-nums' }}>
@@ -181,11 +186,13 @@ export default function CfopCaseStatsPanel({ event, solves, isZh }: Props) {
   if (ollRows.length === 0 && pllRows.length === 0) {
     return (
       <div className="case-stats-panel">
-        <h3>{isZh ? 'OLL / PLL Case 统计' : 'OLL / PLL case stats'}</h3>
+        <h3>{tr({ zh: 'OLL / PLL Case 统计', en: 'OLL / PLL case stats',
+            zhHant: "OLL / PLL Case 統計"
+        })}</h3>
         <div className="case-stats-empty">
-          {isZh
-            ? '尚无重新分析的成绩。请在设置中点击 "重新分析阶段数据"。'
-            : "No reanalyzed solves yet. Click 'Reanalyze stage data' in settings."}
+          {tr({ zh: '尚无重新分析的成绩。请在设置中点击 "重新分析阶段数据"。', en: "No reanalyzed solves yet. Click 'Reanalyze stage data' in settings.",
+              zhHant: "尚無重新分析的成績。請在設定中點選 \"重新分析階段資料\"。"
+        })}
         </div>
       </div>
     );
@@ -194,7 +201,9 @@ export default function CfopCaseStatsPanel({ event, solves, isZh }: Props) {
   return (
     <div>
       <CaseTable
-        title={isZh ? 'OLL Case 统计' : 'OLL case stats'}
+        title={tr({ zh: 'OLL Case 统计', en: 'OLL case stats',
+            zhHant: "OLL Case 統計"
+        })}
         rows={ollRows}
         showAll={showAllOll}
         onToggle={() => setShowAllOll(v => !v)}
@@ -202,7 +211,9 @@ export default function CfopCaseStatsPanel({ event, solves, isZh }: Props) {
         cap={DEFAULT_CAP}
       />
       <CaseTable
-        title={isZh ? 'PLL Case 统计' : 'PLL case stats'}
+        title={tr({ zh: 'PLL Case 统计', en: 'PLL case stats',
+            zhHant: "PLL Case 統計"
+        })}
         rows={pllRows}
         showAll={showAllPll}
         onToggle={() => setShowAllPll(v => !v)}

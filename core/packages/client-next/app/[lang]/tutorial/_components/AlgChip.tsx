@@ -4,6 +4,7 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Copy, Check } from 'lucide-react';
+import { tr } from '@/i18n/tr';
 
 interface AlgChipProps {
   alg: string;
@@ -62,7 +63,11 @@ export function AlgChip({ alg, algHtml, title }: AlgChipProps) {
       className={'tutorial-chip' + (copied ? ' is-copied' : '')}
       role="button"
       tabIndex={0}
-      title={title ?? (copied ? (isZh ? '已复制' : 'Copied') : (isZh ? '点击复制' : 'Click to copy'))}
+      title={title ?? (copied ? (tr({ zh: '已复制', en: 'Copied',
+          zhHant: "已複製"
+    })) : (tr({ zh: '点击复制', en: 'Click to copy',
+        zhHant: "點選複製"
+    })))}
       onClick={handleClick}
       onKeyDown={handleKey}
     >

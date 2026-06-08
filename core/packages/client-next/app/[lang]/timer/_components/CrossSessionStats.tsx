@@ -10,6 +10,7 @@ import {
 } from '../_lib/stats';
 import { loadAllSessionData, getActiveSessionId } from '../_lib/storage/db';
 import './cross_session.css';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   event: EventId;
@@ -71,7 +72,9 @@ export default function CrossSessionStats({ event, isZh }: Props) {
   if (rows.length === 0) {
     return (
       <div className="xsess-empty">
-        {isZh ? '暂无数据' : 'No data yet'}
+        {tr({ zh: '暂无数据', en: 'No data yet',
+            zhHant: "暫無資料"
+        })}
       </div>
     );
   }
@@ -81,12 +84,14 @@ export default function CrossSessionStats({ event, isZh }: Props) {
       <table className="xsess-table">
         <thead>
           <tr>
-            <th className="xsess-name-col">{isZh ? '分组' : 'Session'}</th>
+            <th className="xsess-name-col">{tr({ zh: '分组', en: 'Session',
+                zhHant: "分組"
+            })}</th>
             <th className="xsess-num">n</th>
             <th className="xsess-num">best</th>
             <th className="xsess-num">ao5</th>
             <th className="xsess-num">ao12</th>
-            <th className="xsess-num">{isZh ? '平均' : 'mean'}</th>
+            <th className="xsess-num">{tr({ zh: '平均', en: 'mean' })}</th>
           </tr>
         </thead>
         <tbody>
@@ -103,7 +108,9 @@ export default function CrossSessionStats({ event, isZh }: Props) {
         </tbody>
         <tfoot>
           <tr className="xsess-all">
-            <td className="xsess-name-col">{isZh ? '合计' : 'All'}</td>
+            <td className="xsess-name-col">{tr({ zh: '合计', en: 'All',
+                zhHant: "合計"
+            })}</td>
             <td className="xsess-num">{all.count}</td>
             <td className={`xsess-num${isEmptyVal(all.best) ? ' muted' : ''}`}>{all.best}</td>
             <td className={`xsess-num${isEmptyVal(all.ao5) ? ' muted' : ''}`}>{all.ao5}</td>

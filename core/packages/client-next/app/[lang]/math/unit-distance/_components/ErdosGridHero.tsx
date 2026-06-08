@@ -14,6 +14,7 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n/i18n-client';
 
 const S = 20;                 // 20 × 20 grid → 400 points
 const PAD = 18;
@@ -108,7 +109,7 @@ export default function ErdosGridHero() {
             <button key={p.k}
               className={`ud-hero-k-btn ${p.k === k ? 'is-on' : ''}`}
               onClick={() => setK(p.k)}
-              title={isZh ? p.zh : p.en}
+              title={(i18n.language.startsWith('zh') ? p.zh : p.en)}
             >
               k = {p.k}
               <span className="ud-hero-k-reps">r₂={p.reps}</span>

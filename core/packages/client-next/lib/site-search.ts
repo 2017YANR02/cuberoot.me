@@ -26,8 +26,8 @@ export interface SiteSearchCard {
   sectionTitleZh: string;
 }
 
-export interface ToolItem { path: string; zh: string; en: string }
-export interface LookupItem { path: string; extraQuery?: string; zh: string; en: string }
+export interface ToolItem { path: string; zh: string; en: string; zhHant?: string }
+export interface LookupItem { path: string; extraQuery?: string; zh: string; en: string; zhHant?: string }
 
 export interface MetricEntry { id: string; labelEn: string; labelZh: string }
 export interface StatEntry { id: string; titleEn: string; titleZh: string; metrics?: MetricEntry[] }
@@ -57,22 +57,34 @@ export interface AlgSetHit { puzzle: string; setSlug: string }
 export const METRIC_LABEL_OVERRIDE: Record<string, string> = { 'Ao3': 'Mo3' };
 
 export const TOOL_ITEMS: ToolItem[] = [
-  { path: '/wca/comp',       zh: '比赛',   en: 'Comp' },
+  { path: '/wca/comp',       zh: '比赛',   en: 'Comp'
+},
   { path: '/wca/comp?view=globe', zh: '地球', en: 'Globe' },
-  { path: '/wca/viz',        zh: '分布',   en: 'Distribution' },
-  { path: '/wca/prediction', zh: '预测',   en: 'Prediction' },
-  { path: '/nemesizer',      zh: '宿敌',   en: 'Nemesizer' },
-  { path: '/calc',           zh: '计算器', en: 'Calculator' },
+  { path: '/wca/viz',        zh: '分布',   en: 'Distribution'
+},
+  { path: '/wca/prediction', zh: '预测',   en: 'Prediction'
+},
+  { path: '/nemesizer',      zh: '宿敌',   en: 'Nemesizer'
+},
+  { path: '/calc',           zh: '计算器', en: 'Calculator'
+},
 ];
 
 export const LOOKUP_ITEMS: LookupItem[] = [
-  { path: '/wca/grand-slam',       zh: '大满贯',       en: 'Grand Slam' },
-  { path: '/wca/all-results',      zh: '全部成绩排名', en: 'All Results' },
-  { path: '/wca/cohort-ranks',     zh: '参赛届别排名', en: 'Cohort Ranks' },
-  { path: '/wca/success-rate',     zh: '项目成功率',   en: 'Success Rate' },
-  { path: '/wca/all-events-done',  zh: '全项目达成',   en: 'All Events Done' },
-  { path: '/wca/sum-of-ranks',     zh: '全项目排名',   en: 'Sum of Ranks' },
-  { path: '/wca/sum-of-ranks', extraQuery: 'hidePodium=1', zh: '全能但无牌', en: 'All-Around · No Podium' },
+  { path: '/wca/grand-slam',       zh: '大满贯',       en: 'Grand Slam'
+},
+  { path: '/wca/all-results',      zh: '全部成绩排名', en: 'All Results'
+},
+  { path: '/wca/cohort-ranks',     zh: '参赛届别排名', en: 'Cohort Ranks'
+},
+  { path: '/wca/success-rate',     zh: '项目成功率',   en: 'Success Rate'
+},
+  { path: '/wca/all-events-done',  zh: '全项目达成',   en: 'All Events Done'
+},
+  { path: '/wca/sum-of-ranks',     zh: '全项目排名',   en: 'Sum of Ranks'
+},
+  { path: '/wca/sum-of-ranks', extraQuery: 'hidePodium=1', zh: '全能但无牌', en: 'All-Around · No Podium'
+},
 ];
 
 const MIN_LEN_LATIN = 2;

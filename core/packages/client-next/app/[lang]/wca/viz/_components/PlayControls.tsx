@@ -5,6 +5,7 @@
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVizStore } from '../_stores/viz_store';
+import { tr } from '@/i18n/tr';
 
 export default function PlayControls() {
   const { i18n } = useTranslation();
@@ -67,7 +68,9 @@ export default function PlayControls() {
   return (
     <div className="controls">
       {/* 播放/暂停按钮 */}
-      <button className="ctrl-btn" id="playBtn" title={isZh ? '播放/暂停 (Space)' : 'Play/Pause (Space)'} onClick={togglePlay}>
+      <button className="ctrl-btn" id="playBtn" title={tr({ zh: '播放/暂停 (Space)', en: 'Play/Pause (Space)',
+          zhHant: "播放/暫停 (Space)"
+    })} onClick={togglePlay}>
         {isPlaying ? (
           <svg className="icon-pause" viewBox="0 0 24 24">
             <rect x="5" y="3" width="4" height="18" />
@@ -109,7 +112,9 @@ export default function PlayControls() {
 
       {/* 同步模式（多选手时显示） */}
       {players.length > 1 && (
-        <div className="sync-group" title={isZh ? '多选手同步模式' : 'Multi-cuber sync mode'}>
+        <div className="sync-group" title={tr({ zh: '多选手同步模式', en: 'Multi-cuber sync mode',
+            zhHant: "多選手同步模式"
+        })}>
           {(['solve', 'date'] as const).map(mode => (
             <button
               key={mode}
@@ -117,8 +122,10 @@ export default function PlayControls() {
               onClick={() => setSyncMode(mode)}
             >
               {mode === 'solve'
-                ? (isZh ? '把数' : 'Solves')
-                : (isZh ? '日期' : 'Date')}
+                ? (tr({ zh: '把数', en: 'Solves',
+                    zhHant: "把數"
+                }))
+                : (tr({ zh: '日期', en: 'Date' }))}
             </button>
           ))}
         </div>

@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import { orderOf } from '../cube_state';
+import { tr } from '@/i18n/tr';
 
 // ── Math helpers ─────────────────────────────────────────────────────────────
 
@@ -200,7 +201,9 @@ function ModularClock({ n, step, animStep, lang }: { n: number; step: number; an
       {/* subgroup size at bottom */}
       <text x={CX} y={270} textAnchor="middle" fontSize={10} fill={isGenerator ? 'var(--green)' : 'var(--ink-dim)'} style={{ fontFamily: 'var(--mono)' }}>
         {step === 0
-          ? (lang === 'zh' ? `⟨0⟩ = {0}, 阶 1` : `⟨0⟩ = {0}, order 1`)
+          ? (tr({ zh: `⟨0⟩ = {0}, 阶 1`, en: `⟨0⟩ = {0}, order 1`,
+              zhHant: "⟨0⟩ = {0}, 階 1"
+        }))
           : isGenerator
             ? (lang === 'zh' ? `⟨${step}⟩ = ℤ/${n}ℤ (生成元)` : `⟨${step}⟩ = ℤ/${n}ℤ (generator)`)
             : `|⟨${step}⟩| = ${n}/${g} = ${subgroupSize}`}
@@ -588,14 +591,14 @@ export default function CyclicModular() {
           <div className="gt-result-row">
             <span className="gt-result-label"><L zh="k 是生成元?" en="k is a generator?" /></span>
             <span className="gt-result-val" style={{ color: isGenerator ? 'var(--green)' : 'var(--warn)' }}>
-              {clockStep === 0 ? (lang === 'zh' ? '否 (k=0)' : 'No (k=0)') : isGenerator ? (lang === 'zh' ? '是 — ⟨k⟩ = ℤ/nℤ' : 'Yes — ⟨k⟩ = ℤ/nℤ') : (lang === 'zh' ? '否' : 'No')}
+              {clockStep === 0 ? (tr({ zh: '否 (k=0)', en: 'No (k=0)' })) : isGenerator ? (tr({ zh: '是 — ⟨k⟩ = ℤ/nℤ', en: 'Yes — ⟨k⟩ = ℤ/nℤ' })) : (tr({ zh: '否', en: 'No' }))}
             </span>
           </div>
           <div className="gt-result-row">
             <span className="gt-result-label"><TeX src={String.raw`\varphi(n)`} /></span>
             <span className="gt-result-val">φ({clockN}) = {phiClockN} &nbsp;
               <span style={{ color: 'var(--ink-faint)', fontSize: 12 }}>
-                [{lang === 'zh' ? '生成元' : 'generators'}: {allGens.join(', ')}]
+                [{tr({ zh: '生成元', en: 'generators' })}: {allGens.join(', ')}]
               </span>
             </span>
           </div>
@@ -735,7 +738,7 @@ export default function CyclicModular() {
           <div className="gt-result-row">
             <span className="gt-result-label"><L zh="(ℤ/nℤ)× 是循环群?" en="(ℤ/nℤ)× cyclic?" /></span>
             <span className="gt-result-val" style={{ color: isCyclic ? 'var(--green)' : 'var(--warn)' }}>
-              {isCyclic ? (lang === 'zh' ? '是' : 'Yes') : (lang === 'zh' ? `否 (n=${mulN} 不在 {1,2,4,pᵏ,2pᵏ})` : `No (n=${mulN} ∉ {1,2,4,pᵏ,2pᵏ})`)}
+              {isCyclic ? (tr({ zh: '是', en: 'Yes' })) : (lang === 'zh' ? `否 (n=${mulN} 不在 {1,2,4,pᵏ,2pᵏ})` : `No (n=${mulN} ∉ {1,2,4,pᵏ,2pᵏ})`)}
             </span>
           </div>
           <div className="gt-result-row">
@@ -743,9 +746,9 @@ export default function CyclicModular() {
             <span className="gt-result-val" style={{ wordBreak: 'break-word' }}>
               {isCyclic
                 ? (primRoots.length > 0
-                  ? `{${primRoots.join(', ')}}  (${lang === 'zh' ? '共' : 'count:' } φ(φ(${mulN}))=${phi(phiMulN)})`
-                  : (lang === 'zh' ? '（退化情形）' : '(degenerate)'))
-                : (lang === 'zh' ? '不存在' : 'none')}
+                  ? `{${primRoots.join(', ')}}  (${tr({ zh: '共', en: 'count:' }) } φ(φ(${mulN}))=${phi(phiMulN)})`
+                  : (tr({ zh: '（退化情形）', en: '(degenerate)' })))
+                : (tr({ zh: '不存在', en: 'none' }))}
             </span>
           </div>
           {selectedUnit !== null && mulUnits.includes(selectedUnit) && (
@@ -859,7 +862,9 @@ export default function CyclicModular() {
           <div className="gt-result-row">
             <span className="gt-result-label"><TeX src={`k \\bmod ${cubeN}`} /></span>
             <span className="gt-result-val" style={{ color: cubePos === 0 ? 'var(--green)' : 'var(--ink)' }}>
-              {cubePos} {cubePos === 0 ? (lang === 'zh' ? '— 复原!' : '— solved!') : ''}
+              {cubePos} {cubePos === 0 ? (tr({ zh: '— 复原!', en: '— solved!',
+                  zhHant: "— 復原!"
+            })) : ''}
             </span>
           </div>
           <div className="gt-result-row">

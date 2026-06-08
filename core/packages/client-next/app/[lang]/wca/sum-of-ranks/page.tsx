@@ -22,6 +22,8 @@ import { apiUrl } from '@/lib/api-base';
 import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelect';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const ACTIVE_EVENTS = [
   '333','222','444','555','666','777',
@@ -40,12 +42,18 @@ const PAGE_SIZE_OPTIONS = [50, 100, 200];
 
 // 项目快速分类(对齐 cubing.pro):点一个 = 直接替换当前选中项
 const EVENT_CATEGORIES: { key: string; zh: string; en: string; events: string[] }[] = [
-  { key: 'speed', zh: '速拧', en: 'Speed', events: ['333','222','444','555','666','777','333oh','clock','minx','pyram','skewb','sq1'] },
-  { key: 'quiet', zh: '安静', en: 'Quiet', events: ['333bf','333fm','444bf','555bf','333mbf'] },
-  { key: 'blind', zh: '盲拧', en: 'Blind', events: ['333bf','444bf','555bf','333mbf'] },
-  { key: 'cubic', zh: '正阶', en: 'Cubic', events: ['333','222','444','555','666','777','333oh'] },
-  { key: 'sub25', zh: '二至五阶', en: '2-5', events: ['222','333','444','555'] },
-  { key: 'shape', zh: '异形', en: 'Other', events: ['clock','minx','pyram','skewb','sq1'] },
+  { key: 'speed', zh: '速拧', en: 'Speed', events: ['333','222','444','555','666','777','333oh','clock','minx','pyram','skewb','sq1']
+},
+  { key: 'quiet', zh: '安静', en: 'Quiet', events: ['333bf','333fm','444bf','555bf','333mbf']
+},
+  { key: 'blind', zh: '盲拧', en: 'Blind', events: ['333bf','444bf','555bf','333mbf']
+},
+  { key: 'cubic', zh: '正阶', en: 'Cubic', events: ['333','222','444','555','666','777','333oh']
+},
+  { key: 'sub25', zh: '二至五阶', en: '2-5', events: ['222','333','444','555']
+},
+  { key: 'shape', zh: '异形', en: 'Other', events: ['clock','minx','pyram','skewb','sq1']
+},
 ];
 
 interface Row {
@@ -72,7 +80,7 @@ interface TimelinePoint { year: number; distinct: number; }
 function SumOfRanksPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  const personHref = (id: string) => `/${isZh ? 'zh' : 'en'}/wca/persons/${id}`;
+  const personHref = (id: string) => `/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${id}`;
   useDocumentTitle('名次和', 'Sum of Ranks');
   // 全部筛选状态走 nuqs(replace,不堆历史);多键改动用 setQ 批量提交一次 URL
   const [q, setQ] = useQueryStates(
@@ -152,7 +160,9 @@ function SumOfRanksPageInner() {
   const [timeline, setTimeline] = useState<TimelinePoint[] | null>(null);
 
   useEffect(() => {
-    if (eventsParam === '__none__') { setData(null); setError(isZh ? '请至少选择一个项目' : 'Select at least one event'); return; }
+    if (eventsParam === '__none__') { setData(null); setError(tr({ zh: '请至少选择一个项目', en: 'Select at least one event',
+        zhHant: "請至少選擇一個專案"
+    })); return; }
     setLoading(true); setError(null);
     const qs = new URLSearchParams();
     qs.set('type', type);
@@ -226,7 +236,9 @@ function SumOfRanksPageInner() {
       tooltip: {
         trigger: 'axis' as const,
         formatter: (ps: Array<{ axisValue: string; data: number }>) =>
-          `${ps[0]!.axisValue}<br/>${isZh ? '人数' : 'cubers'}: <b>${ps[0]!.data}</b>`,
+          `${ps[0]!.axisValue}<br/>${tr({ zh: '人数', en: 'cubers',
+              zhHant: "人數"
+        })}: <b>${ps[0]!.data}</b>`,
       },
       xAxis: {
         type: 'category' as const,
@@ -263,48 +275,68 @@ function SumOfRanksPageInner() {
     <div className="wse-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
+          <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}</Link>
         </div>
         <h1 className="wse-title-row">
-          {isZh ? '全项目排名' : 'Sum of Ranks'}
+          {tr({ zh: '全项目排名', en: 'Sum of Ranks',
+              zhHant: "全專案排名"
+        })}
           <Link
             href="/wca/about/sum-of-ranks"
             className="wse-title-help"
-            title={isZh ? '这页是干啥的?' : 'What is this page?'}
-            aria-label={isZh ? '查看说明' : 'About this page'}
+            title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+                zhHant: "這頁是幹啥的?"
+            })}
+            aria-label={tr({ zh: '查看说明', en: 'About this page',
+                zhHant: "檢視說明"
+            })}
           >
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
         </h1>
-        <p className="wse-subtitle">{isZh ? '把所选项目的(世界 / 国家)排名相加,缺项以该项目"参赛人数+1"(比倒数第一再差一名)计入。"未登领奖台" 按比赛决赛(final round)实际名次过滤' : 'Sum of (world / country) ranks across selected events; missing events default to "participants+1" (one worse than last). "No podium" filters by actual final-round position'}</p>
+        <p className="wse-subtitle">{tr({ zh: '把所选项目的(世界 / 国家)排名相加,缺项以该项目"参赛人数+1"(比倒数第一再差一名)计入。"未登领奖台" 按比赛决赛(final round)实际名次过滤', en: 'Sum of (world / country) ranks across selected events; missing events default to "participants+1" (one worse than last). "No podium" filters by actual final-round position',
+            zhHant: "把所選專案的(世界 / 國家)排名相加,缺項以該專案\"參賽人數+1\"(比倒數第一再差一名)計入。\"未登領獎臺\" 按比賽決賽(final round)實際名次過濾"
+        })}</p>
       </header>
 
       <div className="wse-filters">
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
-          <label>{isZh ? '类型' : 'Type'}</label>
+          <label>{tr({ zh: '类型', en: 'Type',
+              zhHant: "型別"
+        })}</label>
           <select value={type} onChange={e => update('type', e.target.value)}>
-            <option value="single">{isZh ? '单次' : 'Single'}</option>
-            <option value="average">{isZh ? '平均' : 'Average'}</option>
+            <option value="single">{tr({ zh: '单次', en: 'Single',
+                zhHant: "單次"
+            })}</option>
+            <option value="average">{tr({ zh: '平均', en: 'Average' })}</option>
           </select>
         </div>
         <div className="wse-filter">
-          <label>{isZh ? '过滤' : 'Filter'}</label>
+          <label>{tr({ zh: '过滤', en: 'Filter',
+              zhHant: "過濾"
+        })}</label>
           <PillToggle
             className="wse-pill"
             value={hidePodium}
             onChange={v => {
               setQ({ hidePodium: v ? '1' : null, page: null });
             }}
-            onLabel={isZh ? '未登领奖台' : 'No podium'}
-            offLabel={isZh ? '未登领奖台' : 'No podium'}
+            onLabel={tr({ zh: '未登领奖台', en: 'No podium',
+                zhHant: "未登領獎臺"
+            })}
+            offLabel={tr({ zh: '未登领奖台', en: 'No podium',
+                zhHant: "未登領獎臺"
+            })}
           />
         </div>
         <div className="wse-filter" style={{ minWidth: '100%' }}>
           <label>{isZh ? `项目(已选 ${selectedCount} / ${RANK_EVENTS.length})` : `Events (${selectedCount}/${RANK_EVENTS.length} selected)`}</label>
           <div className="wse-events-bar">
-            <button type="button" onClick={selectAll}>{isZh ? '全选' : 'All'}</button>
-            <button type="button" onClick={clearAll}>{isZh ? '清除' : 'None'}</button>
+            <button type="button" onClick={selectAll}>{tr({ zh: '全选', en: 'All',
+                zhHant: "全選"
+            })}</button>
+            <button type="button" onClick={clearAll}>{tr({ zh: '清除', en: 'None' })}</button>
             {EVENT_CATEGORIES.map(cat => (
               <button
                 key={cat.key}
@@ -312,15 +344,19 @@ function SumOfRanksPageInner() {
                 onClick={() => setEvents(cat.events)}
                 className={activeCategory === cat.key ? 'wse-cat-on' : undefined}
               >
-                {isZh ? cat.zh : cat.en}
+                {(i18n.language.startsWith('zh') ? cat.zh : cat.en)}
               </button>
             ))}
             <PillToggle
               className="wse-pill"
               value={includeCancelled}
               onChange={onToggleCancelled}
-              onLabel={isZh ? '废止项' : 'Cancelled'}
-              offLabel={isZh ? '废止项' : 'Cancelled'}
+              onLabel={tr({ zh: '废止项', en: 'Cancelled',
+                  zhHant: "廢止項"
+            })}
+              offLabel={tr({ zh: '废止项', en: 'Cancelled',
+                  zhHant: "廢止項"
+            })}
             />
           </div>
           <WcaEventSelector
@@ -335,16 +371,24 @@ function SumOfRanksPageInner() {
 
       {/* Q1: 指定选手最优项目组合 */}
       <div className="sor-tool">
-        <label className="sor-tool-label">{isZh ? '查选手的最优项目组合' : "A cuber's best event combination"}</label>
+        <label className="sor-tool-label">{tr({ zh: '查选手的最优项目组合', en: "A cuber's best event combination",
+            zhHant: "查選手的最優專案組合"
+        })}</label>
         <WcaPersonPicker
           value={picked}
           onChange={setPicked}
           isZh={isZh}
-          placeholder={isZh ? '搜索选手名 / WCA ID' : 'Search name / WCA ID'}
+          placeholder={tr({ zh: '搜索选手名 / WCA ID', en: 'Search name / WCA ID',
+              zhHant: "搜尋選手名 / WCA ID"
+        })}
           className="sor-tool-picker"
         />
-        {pbLoading && <div className="sor-tool-hint">{isZh ? '计算中…' : 'Loading…'}</div>}
-        {pbError && !pbLoading && <div className="sor-tool-hint">{isZh ? '加载超时,请重试' : 'Timed out, try again'}</div>}
+        {pbLoading && <div className="sor-tool-hint">{tr({ zh: '计算中…', en: 'Loading…',
+            zhHant: "計算中…"
+        })}</div>}
+        {pbError && !pbLoading && <div className="sor-tool-hint">{tr({ zh: '加载超时,请重试', en: 'Timed out, try again',
+            zhHant: "載入超時,請重試"
+        })}</div>}
         {pb && !pbLoading && (
           <div className="sor-pb">
             <div className="sor-pb-head">
@@ -366,7 +410,9 @@ function SumOfRanksPageInner() {
                   </div>
                 );
               }
-              const typeLabel = type === 'single' ? (isZh ? '单次' : 'Single') : (isZh ? '平均' : 'Average');
+              const typeLabel = type === 'single' ? (tr({ zh: '单次', en: 'Single',
+                  zhHant: "單次"
+            })) : (tr({ zh: '平均', en: 'Average' }));
               const combos = b.combos ?? (b.events ? [b.events] : []);
               const comboCount = b.comboCount ?? combos.length;
               return (
@@ -382,7 +428,9 @@ function SumOfRanksPageInner() {
                     {combos.map((evs, i) => (
                       <li key={i} className="sor-pb-combo">
                         <span className="sor-pb-events">{evs.map(ev => <EventIcon key={ev} event={ev} />)}</span>
-                        <button type="button" className="sor-pb-apply" onClick={() => applyCombo(evs, type)}>{isZh ? '应用到榜单' : 'Apply'}</button>
+                        <button type="button" className="sor-pb-apply" onClick={() => applyCombo(evs, type)}>{tr({ zh: '应用到榜单', en: 'Apply',
+                            zhHant: "應用到榜單"
+                        })}</button>
                       </li>
                     ))}
                   </ul>
@@ -401,14 +449,16 @@ function SumOfRanksPageInner() {
       <div className="sor-census">
         <button type="button" className="sor-census-toggle" onClick={() => setCensusOpen(o => !o)} aria-expanded={censusOpen}>
           {censusOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-          {isZh ? '名人堂:谁当过名次和第一?' : 'Hall of fame: who has ever been #1?'}
+          {tr({ zh: '名人堂:谁当过名次和第一?', en: 'Hall of fame: who has ever been #1?',
+              zhHant: "名人堂:誰當過名次和第一?"
+        })}
         </button>
         {censusOpen && (
           <div className="sor-census-body">
             <div className="sor-census-controls">
               {census && (census.years?.length ?? 0) > 1 && census.year != null && (
                 <label className="sor-census-year">
-                  {isZh ? '截至' : 'As of'}
+                  {tr({ zh: '截至', en: 'As of' })}
                   <select value={census.year} onChange={e => setCensusYear(parseInt(e.target.value, 10))}>
                     {[...census.years].reverse().map(y => <option key={y} value={y}>{y}</option>)}
                   </select>
@@ -418,10 +468,14 @@ function SumOfRanksPageInner() {
             {chartOption && (
               <div className="sor-census-chart">
                 <ReactECharts option={chartOption} style={{ height: 190, width: '100%' }} opts={{ renderer: 'canvas' }} onEvents={onChartEvents} />
-                <div className="sor-census-chart-hint">{isZh ? '历年“名次和第一”不同人数 — 点某年看名单' : 'Distinct #1-holders by year — click a year'}</div>
+                <div className="sor-census-chart-hint">{tr({ zh: '历年“名次和第一”不同人数 — 点某年看名单', en: 'Distinct #1-holders by year — click a year',
+                    zhHant: "歷年“名次和第一”不同人數 — 點某年看名單"
+                })}</div>
               </div>
             )}
-            {!census && <div className="sor-tool-hint">{isZh ? '加载中…' : 'Loading…'}</div>}
+            {!census && <div className="sor-tool-hint">{tr({ zh: '加载中…', en: 'Loading…',
+                zhHant: "載入中…"
+            })}</div>}
             {census && (
               <>
                 <p className="sor-census-lead">{isZh
@@ -442,7 +496,7 @@ function SumOfRanksPageInner() {
                 </ol>
                 {census.rows.length > 12 && (
                   <button type="button" className="sor-census-more" onClick={() => setCensusExpanded(e => !e)}>
-                    {censusExpanded ? (isZh ? '收起' : 'Show less') : (isZh ? `展开全部 ${census.distinct} 人` : `Show all ${census.distinct}`)}
+                    {censusExpanded ? (tr({ zh: '收起', en: 'Show less' })) : (isZh ? `展开全部 ${census.distinct} 人` : `Show all ${census.distinct}`)}
                   </button>
                 )}
               </>
@@ -452,7 +506,9 @@ function SumOfRanksPageInner() {
       </div>
 
       <div className="wse-table-wrapper">
-        {loading && <div className="wse-state">{isZh ? '加载中...' : 'Loading...'}</div>}
+        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...',
+            zhHant: "載入中..."
+        })}</div>}
         {error && <div className="wse-state wse-state-error">{error}</div>}
         {data && !loading && (
           <>
@@ -461,13 +517,17 @@ function SumOfRanksPageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{isZh ? '选手' : 'Person'}</th>
+                  <th>{tr({ zh: '选手', en: 'Person',
+                      zhHant: "選手"
+                })}</th>
                   {RANK_EVENTS.map(ev => (
                     <th key={ev} className="wse-sor-evcell" style={{ opacity: selectedSet.has(ev) ? 1 : 0.3 }}>
                       <EventIcon event={ev} />
                     </th>
                   ))}
-                  <th className="wse-value-col">{isZh ? '名次总和' : 'Total'}</th>
+                  <th className="wse-value-col">{tr({ zh: '名次总和', en: 'Total',
+                      zhHant: "名次總和"
+                })}</th>
                 </tr>
               </thead>
               <tbody>

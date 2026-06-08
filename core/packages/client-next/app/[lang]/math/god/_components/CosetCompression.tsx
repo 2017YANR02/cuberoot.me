@@ -14,6 +14,7 @@
  */
 import { useState } from 'react';
 import { TeX, MathText } from './Tex';
+import i18n from '@/i18n/i18n-client';
 
 type StageId = 0 | 1 | 2 | 3 | 4;
 
@@ -54,8 +55,8 @@ const STAGES: Stage[] = [
       'All legal 3×3 states. Lagrange\'s theorem lets us partition by a subgroup H — that\'s the starting point for everything below. A brute-force BFS storing 1 byte/state needs 43 EB; physically impossible.',
     visualGroups: 16,
     visualPerGroup: 16,
-    color: 'var(--god-text-sub)',
-  },
+    color: 'var(--god-text-sub)'
+},
   {
     id: 1,
     zh: '陪集分解 (Lagrange)',
@@ -88,8 +89,8 @@ const STAGES: Stage[] = [
       'The cube\'s geometric symmetry group S₄₈ has 48 elements (24 rotations + 24 mirror-rotations, the O_h point group). Combined with "inverse equivalence" (a state and its inverse have the same distance) we get a 96-fold compression. Two cosets related by some σ, σ(coset_A) = coset_B, share the same distance — compute one. 2.22B ÷ 96 ≈ 23M, but some cosets have self-symmetries (orbit-stabiliser), so the exact reduced count is 55,882,296.',
     visualGroups: 11,
     visualPerGroup: 6,
-    color: 'var(--god-accent)',
-  },
+    color: 'var(--god-accent)'
+},
   {
     id: 3,
     zh: '集合覆盖压缩',
@@ -105,8 +106,8 @@ const STAGES: Stage[] = [
       'Rokicki et al. observed: one IDA* call gives optimal solutions for thousands of "nearby" states. Pack cosets into super-cosets — one call solves ~700k states at once. Greedy set cover collapses the 55.88M symmetry-classes into ~80 super-coset jobs, each ~30 min CPU.',
     visualGroups: 8,
     visualPerGroup: 4,
-    color: 'var(--god-warn)',
-  },
+    color: 'var(--god-warn)'
+},
   {
     id: 4,
     zh: '逐 super-coset 求解',
@@ -142,7 +143,7 @@ export default function CosetCompression({ isZh }: Props) {
                   className={`god-coset-tab ${stage === s.id ? 'is-on' : ''}`}
                   onClick={() => setStage(s.id)}>
             <span className="god-coset-tab-n">{s.id}</span>
-            <span className="god-coset-tab-l">{isZh ? s.zh : s.en}</span>
+            <span className="god-coset-tab-l">{(i18n.language.startsWith('zh') ? s.zh : s.en)}</span>
           </button>
         ))}
       </div>

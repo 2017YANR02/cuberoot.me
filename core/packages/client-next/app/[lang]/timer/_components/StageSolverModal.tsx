@@ -13,6 +13,7 @@ import { useEffect, useId } from 'react';
 import dynamic from 'next/dynamic';
 import { Loader2, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { tr } from '@/i18n/tr';
 
 const StageSolver = dynamic(() => import('@/components/StageSolver'), {
   ssr: false,
@@ -49,12 +50,14 @@ export default function StageSolverModal({ scramble, isZh, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="solver-modal-head">
-          <h2 id={titleId}>{isZh ? '解法提示' : 'Solver hints'}</h2>
+          <h2 id={titleId}>{tr({ zh: '解法提示', en: 'Solver hints' })}</h2>
           <button
             type="button"
             className="solver-modal-x"
             onClick={onClose}
-            aria-label={isZh ? '关闭' : 'Close'}
+            aria-label={tr({ zh: '关闭', en: 'Close',
+                zhHant: "關閉"
+            })}
           >
             <X size={18} />
           </button>

@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import type { Lang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -295,13 +296,15 @@ function WordReducerWidget({ lang, onWordChange }: { lang: Lang; onWordChange: (
       >
         {raw.length === 0 ? (
           <text x={80} y={36} fill="var(--ink-faint)" fontSize={12} style={{ fontFamily: 'var(--sans)', fontStyle: 'italic' }}>
-            {lang === 'zh' ? '输入字母…' : 'Start typing…'}
+            {tr({ zh: '输入字母…', en: 'Start typing…',
+                zhHant: "輸入字母…"
+            })}
           </text>
         ) : (
           <>
             {/* Row 1: raw word */}
             <text x={4} y={14} fill="var(--ink-dim)" fontSize={10} style={{ fontFamily: 'var(--mono)' }}>
-              {lang === 'zh' ? '原字 |w| = ' : 'raw |w| = '}{raw.length}
+              {tr({ zh: '原字 |w| = ', en: 'raw |w| = ' })}{raw.length}
             </text>
             {showRaw.map((l, i) => {
               const cx = tileX(i);
@@ -353,7 +356,9 @@ function WordReducerWidget({ lang, onWordChange }: { lang: Lang; onWordChange: (
 
             {/* Row 2: reduced word */}
             <text x={4} y={20 + ROW_H + 2} fill="var(--ink-dim)" fontSize={10} style={{ fontFamily: 'var(--mono)' }}>
-              {lang === 'zh' ? '约简 |w̄| = ' : 'reduced |w̄| = '}{reduced.length}
+              {tr({ zh: '约简 |w̄| = ', en: 'reduced |w̄| = ',
+                  zhHant: "約簡 |w̄| = "
+            })}{reduced.length}
             </text>
             {showReduced.map((l, i) => {
               const cx = tileX(i);
@@ -374,7 +379,9 @@ function WordReducerWidget({ lang, onWordChange }: { lang: Lang; onWordChange: (
             {reduced.length === 0 && raw.length > 0 && (
               <text x={4} y={20 + ROW_H + 10 + TILE_H / 2 + 4} fill="var(--green)" fontSize={12}
                 style={{ fontFamily: 'var(--mono)', fontWeight: 700 }}>
-                ε {lang === 'zh' ? '(空字, 即单位元)' : '(empty word = identity)'}
+                ε {tr({ zh: '(空字, 即单位元)', en: '(empty word = identity)',
+                    zhHant: "(空字, 即單位元)"
+                })}
               </text>
             )}
           </>
@@ -845,7 +852,9 @@ function SphereSizePanel({ lang }: { lang: Lang }) {
           <text x={groupX(10) + barGroupW / 2} y={PAD.top - 4}
             textAnchor="middle" fontSize={8} fill="var(--warn)"
             style={{ fontFamily: 'var(--mono)' }}>
-            {lang === 'zh' ? '首次分离 ▼' : '1st split ▼'}
+            {tr({ zh: '首次分离 ▼', en: '1st split ▼',
+                zhHant: "首次分離 ▼"
+            })}
           </text>
         )}
 

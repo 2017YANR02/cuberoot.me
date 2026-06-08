@@ -14,6 +14,7 @@ import {
   type TnoodleLocale,
 } from './_tnoodle-translate';
 import { Flag } from '@/components/Flag';
+import { tr } from '@/i18n/tr';
 
 /** Locale → iso2. Empty string for languages without a single national flag (Breton, Esperanto). */
 const LOCALE_TO_ISO2: Record<TnoodleLocale, string> = {
@@ -76,12 +77,18 @@ export default function TranslationsPicker({ selected, onChange, isZh }: Props) 
   const [open, setOpen] = useState(false);
   const selectedSet = new Set(selected);
   const summary = selected.length === 0
-    ? (isZh ? '未选择语言' : 'No languages')
+    ? (tr({ zh: '未选择语言', en: 'No languages',
+        zhHant: "未選擇語言"
+    }))
     : selected.length === TNOODLE_LOCALES.length
-      ? (isZh ? '全部语言' : 'All languages')
+      ? (tr({ zh: '全部语言', en: 'All languages',
+          zhHant: "全部語言"
+    }))
       : selected.length <= 3
         ? selected.map((l) => (isZh ? LOCALE_DISPLAY_NAME[l] : LOCALE_DISPLAY_NAME_EN[l])).join(', ')
-        : `${selected.length} ${isZh ? '种语言' : 'languages'}`;
+        : `${selected.length} ${tr({ zh: '种语言', en: 'languages',
+            zhHant: "種語言"
+        })}`;
 
   const toggle = (locale: TnoodleLocale) => {
     if (selectedSet.has(locale)) {
@@ -97,10 +104,14 @@ export default function TranslationsPicker({ selected, onChange, isZh }: Props) 
         type="button"
         className="gen-tn-translations-summary"
         onClick={() => setOpen((o) => !o)}
-        title={isZh ? '为 FMC 解题纸选择翻译语言' : 'Choose translations for FMC solution sheet'}
+        title={tr({ zh: '为 FMC 解题纸选择翻译语言', en: 'Choose translations for FMC solution sheet',
+            zhHant: "為 FMC 解題紙選擇翻譯語言"
+        })}
       >
         <Languages size={14} />
-        <span className="gen-tn-translations-label">{isZh ? '翻译' : 'Translations'}</span>
+        <span className="gen-tn-translations-label">{tr({ zh: '翻译', en: 'Translations',
+            zhHant: "翻譯"
+        })}</span>
         <span className="gen-tn-translations-count">{summary}</span>
         {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </button>
@@ -112,14 +123,16 @@ export default function TranslationsPicker({ selected, onChange, isZh }: Props) 
               className="gen-tn-translations-btn"
               onClick={() => onChange([...TNOODLE_LOCALES])}
             >
-              {isZh ? '全选' : 'Select All'}
+              {tr({ zh: '全选', en: 'Select All',
+                  zhHant: "全選"
+            })}
             </button>
             <button
               type="button"
               className="gen-tn-translations-btn"
               onClick={() => onChange([])}
             >
-              {isZh ? '清空' : 'Select None'}
+              {tr({ zh: '清空', en: 'Select None' })}
             </button>
           </div>
           <div className="gen-tn-translations-grid">

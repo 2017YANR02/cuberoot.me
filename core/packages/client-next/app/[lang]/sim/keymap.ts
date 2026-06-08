@@ -125,22 +125,22 @@ export const KEYMAP_GROUPS: KeymapGroup[] = [
       { sign: 'l' }, { sign: 'l', reverse: true },
       { sign: 'u' }, { sign: 'u', reverse: true },
       { sign: 'd' }, { sign: 'd', reverse: true },
-    ],
-  },
+    ]
+},
   {
     zh: '中层切片', en: 'Slices',
     moves: [
       { sign: 'M' }, { sign: 'M', reverse: true },
       { sign: 'E' }, { sign: 'E', reverse: true },
       { sign: 'S' }, { sign: 'S', reverse: true },
-    ],
-  },
+    ]
+},
   {
     zh: '整体转', en: 'Rotation',
     moves: [
       { sign: 'x' }, { sign: 'x', reverse: true },
       { sign: 'y' }, { sign: 'y', reverse: true },
       { sign: 'z' }, { sign: 'z', reverse: true },
-    ],
-  },
+    ]
+},
 ];

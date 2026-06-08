@@ -23,6 +23,7 @@ import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { COUNTRY_TO_CONTINENT, type Continent } from '@/lib/country-continents';
 import { exportTop10Video, type ExportProgress } from '@/lib/top10-export';
 import './top10_history.css';
+import { tr } from '@/i18n/tr';
 
 interface PbEvent { d: string; p: string; v: number; c: string }
 interface PersonInfo { name: string; country: string; iso2: string | null }
@@ -408,7 +409,9 @@ export default function Top10HistoryPage({
     setExporting(true);
     exportAbortRef.current = { aborted: false };
     setExportProg({
-      phase: isZh ? '准备...' : 'Preparing...',
+      phase: tr({ zh: '准备...', en: 'Preparing...',
+          zhHant: "準備..."
+    }),
       pct: 0, framesDone: 0, framesTotal: 0,
     });
     // 等 React 提交 overlay,让 previewCanvasRef.current 就位
@@ -429,7 +432,9 @@ export default function Top10HistoryPage({
       if (msg !== 'aborted') {
         console.error('[Top10 Export] failed:', e);
         // eslint-disable-next-line no-alert
-        alert((isZh ? '导出失败:' : 'Export failed: ') + msg);
+        alert((tr({ zh: '导出失败:', en: 'Export failed: ',
+            zhHant: "匯出失敗:"
+        })) + msg);
       }
     } finally {
       setExporting(false);
@@ -447,10 +452,14 @@ export default function Top10HistoryPage({
   );
 
   if (error) {
-    return <div className="t10h-status">{isZh ? '加载失败' : 'Failed to load'}: {error}</div>;
+    return <div className="t10h-status">{tr({ zh: '加载失败', en: 'Failed to load',
+        zhHant: "載入失敗"
+    })}: {error}</div>;
   }
   if (!index) {
-    return <div className="t10h-status">{isZh ? '加载中...' : 'Loading...'}</div>;
+    return <div className="t10h-status">{tr({ zh: '加载中...', en: 'Loading...',
+        zhHant: "載入中..."
+    })}</div>;
   }
 
   const top1Name = top1Person ? displayCuberName(top1Person.name, isZh) : '';
@@ -463,7 +472,9 @@ export default function Top10HistoryPage({
       <div className="t10h-toolbar">
         {!embedded && (
           <div className="t10h-toolbar-title">
-            {isZh ? '全历史 TOP 10 演化' : 'All-time top 10'}
+            {tr({ zh: '全历史 TOP 10 演化', en: 'All-time top 10',
+                zhHant: "全歷史 TOP 10 演化"
+            })}
           </div>
         )}
         {!embedded && (
@@ -475,7 +486,9 @@ export default function Top10HistoryPage({
                 aria-selected={metric === 'single'}
                 className={metric === 'single' ? 'active' : ''}
                 onClick={() => setMetric('single')}
-              >{isZh ? '单次' : 'Single'}</button>
+              >{tr({ zh: '单次', en: 'Single',
+                  zhHant: "單次"
+            })}</button>
               <button
                 type="button"
                 role="tab"
@@ -483,8 +496,10 @@ export default function Top10HistoryPage({
                 className={metric === 'average' ? 'active' : ''}
                 onClick={() => hasAverage && setMetric('average')}
                 disabled={!hasAverage}
-                title={!hasAverage ? (isZh ? '该项目没有平均成绩' : 'No average for this event') : undefined}
-              >{isZh ? '平均' : 'Average'}</button>
+                title={!hasAverage ? (tr({ zh: '该项目没有平均成绩', en: 'No average for this event',
+                    zhHant: "該專案沒有平均成績"
+                })) : undefined}
+              >{tr({ zh: '平均', en: 'Average' })}</button>
             </div>
             <LangToggle />
           </div>
@@ -507,7 +522,9 @@ export default function Top10HistoryPage({
           <div className="t10h-export-overlay">
             <div className="t10h-export-card">
               <div className="t10h-export-title">
-                {isZh ? '导出视频中' : 'Exporting video'}
+                {tr({ zh: '导出视频中', en: 'Exporting video',
+                    zhHant: "匯出影片中"
+                })}
               </div>
               <canvas ref={previewCanvasRef} className="t10h-export-preview" />
               <div className="t10h-export-bar">
@@ -518,7 +535,7 @@ export default function Top10HistoryPage({
               </div>
               <div className="t10h-export-msg">{exportProg.phase}</div>
               <button type="button" className="t10h-export-cancel" onClick={cancelExport}>
-                {isZh ? '取消' : 'Cancel'}
+                {tr({ zh: '取消', en: 'Cancel' })}
               </button>
             </div>
           </div>
@@ -529,7 +546,9 @@ export default function Top10HistoryPage({
               <Flag iso2={top1Person.iso2} className="t10h-holder-flag" />
             )}
             <div className="t10h-holder-text">
-              <div className="t10h-holder-name">{top1Name || (eventLoading ? (isZh ? '加载中…' : 'Loading…') : '')}</div>
+              <div className="t10h-holder-name">{top1Name || (eventLoading ? (tr({ zh: '加载中…', en: 'Loading…',
+                  zhHant: "載入中…"
+            })) : '')}</div>
               <div className="t10h-holder-sub">
                 {top1Person && (isZh
                   ? `保持纪录 ${top1DurationDays} 天`
@@ -624,7 +643,9 @@ export default function Top10HistoryPage({
           type="button"
           className="t10h-play"
           onClick={togglePlay}
-          aria-label={playing ? (isZh ? '暂停' : 'Pause') : (isZh ? '播放' : 'Play')}
+          aria-label={playing ? (tr({ zh: '暂停', en: 'Pause',
+              zhHant: "暫停"
+        })) : (tr({ zh: '播放', en: 'Play' }))}
         >
           {playing ? <Pause size={18} /> : <Play size={18} />}
         </button>
@@ -636,23 +657,29 @@ export default function Top10HistoryPage({
           step={DAY_MS}
           value={Math.floor(dateMs)}
           onChange={handleScrub}
-          aria-label={isZh ? '时间轴' : 'Timeline'}
+          aria-label={tr({ zh: '时间轴', en: 'Timeline',
+              zhHant: "時間軸"
+        })}
         />
-        <div className="t10h-speed" role="group" aria-label={isZh ? '播放模式' : 'Play mode'}>
+        <div className="t10h-speed" role="group" aria-label={tr({ zh: '播放模式', en: 'Play mode' })}>
           <button
             type="button"
             className={playMode === 'time' ? 'active' : ''}
             onClick={() => { setPlayMode('time'); setSpeed(DEFAULT_SPEED); }}
-            title={isZh ? '按时间均匀(每秒推进固定天数)' : 'Uniform by time'}
-          >{isZh ? '按天' : 'Time'}</button>
+            title={tr({ zh: '按时间均匀(每秒推进固定天数)', en: 'Uniform by time',
+                zhHant: "按時間均勻(每秒推進固定天數)"
+            })}
+          >{tr({ zh: '按天', en: 'Time' })}</button>
           <button
             type="button"
             className={playMode === 'pb' ? 'active' : ''}
             onClick={() => { setPlayMode('pb'); setSpeed(1); }}
-            title={isZh ? '按 PB 事件均匀(每秒推进 1 个 PB)' : 'Uniform by PB (1/s)'}
-          >{isZh ? '按 PB' : 'PB'}</button>
+            title={tr({ zh: '按 PB 事件均匀(每秒推进 1 个 PB)', en: 'Uniform by PB (1/s)',
+                zhHant: "按 PB 事件均勻(每秒推進 1 個 PB)"
+            })}
+          >{tr({ zh: '按 PB', en: 'PB' })}</button>
         </div>
-        <div className="t10h-speed" role="group" aria-label={isZh ? '速度' : 'Speed'}>
+        <div className="t10h-speed" role="group" aria-label={tr({ zh: '速度', en: 'Speed' })}>
           {(playMode === 'time' ? SPEEDS : [1]).map(s => (
             <button
               key={s}
@@ -672,7 +699,9 @@ export default function Top10HistoryPage({
           className="t10h-export-btn"
           onClick={handleExport}
           disabled={exporting || events.length === 0}
-          aria-label={isZh ? '导出视频' : 'Export video'}
+          aria-label={tr({ zh: '导出视频', en: 'Export video',
+              zhHant: "匯出影片"
+        })}
           title={isZh ? `导出 mp4(1080p / ${playMode === 'time' ? speed + '天/秒' : '1 PB/秒'})` : `Export mp4 (1080p / ${playMode === 'time' ? speed + 'd/s' : '1 PB/s'})`}
         >
           <Download size={16} />
@@ -686,12 +715,16 @@ export default function Top10HistoryPage({
             : `Data since ${events[0]?.d ?? '—'}. ${events.length} PB events from ${new Set(events.map(e => e.p)).size} cubers who were ever in the historical top ${index.topK}.`}
           <div className="t10h-legend">
             {([
-              ['Asia', isZh ? '亚洲' : 'Asia'],
-              ['Europe', isZh ? '欧洲' : 'Europe'],
-              ['Africa', isZh ? '非洲' : 'Africa'],
-              ['North America', isZh ? '北美' : 'N. America'],
-              ['South America', isZh ? '南美' : 'S. America'],
-              ['Oceania', isZh ? '大洋洲' : 'Oceania'],
+              ['Asia', tr({ zh: '亚洲', en: 'Asia',
+                  zhHant: "亞洲"
+            })],
+              ['Europe', tr({ zh: '欧洲', en: 'Europe',
+                  zhHant: "歐洲"
+            })],
+              ['Africa', tr({ zh: '非洲', en: 'Africa' })],
+              ['North America', tr({ zh: '北美', en: 'N. America' })],
+              ['South America', tr({ zh: '南美', en: 'S. America' })],
+              ['Oceania', tr({ zh: '大洋洲', en: 'Oceania' })],
             ] as Array<[Continent, string]>).map(([c, label]) => (
               <span key={c} className="t10h-legend-item">
                 <span className="t10h-legend-swatch" style={{ background: `hsl(${CONTINENT_HUE[c]} 65% 50%)` }} />

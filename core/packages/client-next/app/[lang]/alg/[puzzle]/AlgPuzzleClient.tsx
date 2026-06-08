@@ -17,6 +17,8 @@ import { eventDisplayName } from '@/lib/wca-events';
 import { CaseThumb } from '@/components/CaseThumb';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../alg.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 /** Old single-segment 3x3 set slugs we used to live at /alg/<slug>. Redirect to /alg/3x3/<slug>. */
 const LEGACY_3X3_SLUGS = new Set(['f2l', 'adv-f2l', 'oll', 'pll']);
@@ -31,7 +33,9 @@ export default function AlgPuzzleClient() {
   const router = useRouter();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const algFallback = isZh ? '公式库' : 'Algorithms';
+  const algFallback = tr({ zh: '公式库', en: 'Algorithms',
+      zhHant: "公式庫"
+});
   const valid_ = isPuzzle(puzzle);
   const algPuzzleTitle = valid_ ? eventDisplayName(puzzle, isZh) || puzzle : (puzzle || algFallback);
   useDocumentTitle(algPuzzleTitle, algPuzzleTitle);
@@ -68,13 +72,17 @@ export default function AlgPuzzleClient() {
   }, [puzzle, valid, sets]);
 
   if (legacyRedirect) {
-    return <div className="alg-root"><div className="alg-empty">{isZh ? '跳转中…' : 'Redirecting…'}</div></div>;
+    return <div className="alg-root"><div className="alg-empty">{tr({ zh: '跳转中…', en: 'Redirecting…',
+        zhHant: "跳轉中…"
+    })}</div></div>;
   }
 
   if (!valid) {
     return (
       <div className="alg-root">
-        <div className="alg-empty">{isZh ? '未知魔方阶' : 'Unknown puzzle'}: {puzzle}</div>
+        <div className="alg-empty">{tr({ zh: '未知魔方阶', en: 'Unknown puzzle',
+            zhHant: "未知魔方階"
+        })}: {puzzle}</div>
       </div>
     );
   }
@@ -83,13 +91,13 @@ export default function AlgPuzzleClient() {
     <div className="alg-root">
       <div className="alg-cat-header">
         <Link href="/alg" className="alg-back">
-          <ArrowLeft size={14} /> {isZh ? '返回' : 'Back'}
+          <ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}
         </Link>
         <h1 className="alg-cat-title">
           <EventIcon event={puzzle} className="alg-cat-title-icon" />
-          <span>{eventDisplayName(puzzle, isZh)} {isZh ? '公式' : 'Algorithms'}</span>
+          <span>{eventDisplayName(puzzle, isZh)} {tr({ zh: '公式', en: 'Algorithms' })}</span>
         </h1>
-        <span className="alg-cat-count">{sets.length} {isZh ? '套' : 'sets'}</span>
+        <span className="alg-cat-count">{sets.length} {tr({ zh: '套', en: 'sets' })}</span>
       </div>
 
       <div className="alg-bento">
@@ -111,9 +119,11 @@ export default function AlgPuzzleClient() {
                   />
                 )}
               </div>
-              <div className="alg-bento-title">{isZh ? s.zh : s.en}</div>
+              <div className="alg-bento-title">{(i18n.language.startsWith('zh') ? s.zh : s.en)}</div>
               <div className="alg-bento-count">
-                {n == null ? '…' : n < 0 ? '!' : `${n} ${isZh ? '个' : 'cases'}`}
+                {n == null ? '…' : n < 0 ? '!' : `${n} ${tr({ zh: '个', en: 'cases',
+                    zhHant: "個"
+                })}`}
               </div>
             </Link>
           );

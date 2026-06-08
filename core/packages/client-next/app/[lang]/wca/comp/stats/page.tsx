@@ -18,6 +18,7 @@ import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './calendar_stats.css';
+import { tr } from '@/i18n/tr';
 
 const EVENT_LIST = ['3x3', '2x2', '4x4', '5x5', '6x6', '7x7', '3bld', '4bld', '5bld', 'oh', 'sq1', 'pyra', 'mega', 'clock', 'skewb', 'fmc', 'mbld'];
 
@@ -156,7 +157,9 @@ export default function CalendarStatsPage() {
   const totalComps = filtered.length;
 
   const scopeLabelOf = useCallback((scope: ReturnType<typeof computeScope>) => {
-    if (!scope || scope.isFull) return isZh ? '全部时间' : 'All time';
+    if (!scope || scope.isFull) return tr({ zh: '全部时间', en: 'All time',
+        zhHant: "全部時間"
+    });
     const fmt = (y: number, m: number) => `${y}-${String(m).padStart(2, '0')}`;
     if (scope.fromY === scope.toY && scope.fromM === scope.toM) return fmt(scope.fromY, scope.fromM);
     return `${fmt(scope.fromY, scope.fromM)} ~ ${fmt(scope.toY, scope.toM)}`;
@@ -182,10 +185,14 @@ export default function CalendarStatsPage() {
     <div className="cs-page">
       <header className="cs-header">
         <div className="cs-header-left">
-          <Link href="/wca/comp" className="cs-back" aria-label={isZh ? '返回比赛' : 'Back to competitions'}>
+          <Link href="/wca/comp" className="cs-back" aria-label={tr({ zh: '返回比赛', en: 'Back to competitions',
+              zhHant: "返回比賽"
+        })}>
             <ArrowLeft size={18} />
           </Link>
-          <h1 className="cs-title">{isZh ? '比赛统计' : 'Competition stats'}</h1>
+          <h1 className="cs-title">{tr({ zh: '比赛统计', en: 'Competition stats',
+              zhHant: "比賽統計"
+        })}</h1>
         </div>
       </header>
 
@@ -194,13 +201,17 @@ export default function CalendarStatsPage() {
           className="cs-filter"
           value={country}
           onChange={setCountry}
-          allLabel={isZh ? '所有国家' : 'All countries'}
+          allLabel={tr({ zh: '所有国家', en: 'All countries',
+              zhHant: "所有國家"
+        })}
         />
         <EventSelect
           events={EVENT_LIST}
           value={event}
           onChange={setEvent}
-          allLabel={isZh ? '所有项目' : 'All events'}
+          allLabel={tr({ zh: '所有项目', en: 'All events',
+              zhHant: "所有專案"
+        })}
           className="cs-filter"
         />
         <div className="cs-summary">
@@ -211,9 +222,13 @@ export default function CalendarStatsPage() {
       </div>
 
       <section className="cs-section">
-        <h2 className="cs-section-title">{isZh ? '月度分布' : 'Monthly distribution'}</h2>
+        <h2 className="cs-section-title">{tr({ zh: '月度分布', en: 'Monthly distribution',
+            zhHant: "月度分佈"
+        })}</h2>
         {totalComps === 0 ? (
-          <div className="cs-empty">{isZh ? '没有匹配的比赛。' : 'No competitions match.'}</div>
+          <div className="cs-empty">{tr({ zh: '没有匹配的比赛。', en: 'No competitions match.',
+              zhHant: "沒有匹配的比賽。"
+        })}</div>
         ) : (
           <div className="cs-heatmap-wrap">
             <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} className="cs-heatmap">
@@ -269,18 +284,20 @@ export default function CalendarStatsPage() {
       {series.length > 0 && (
         <section className="cs-section">
           <div className="cs-line-header">
-            <h2 className="cs-section-title">{isZh ? '时间趋势' : 'Time trend'}</h2>
+            <h2 className="cs-section-title">{tr({ zh: '时间趋势', en: 'Time trend',
+                zhHant: "時間趨勢"
+            })}</h2>
             <div className="cs-granularity-toggle">
               <button
                 type="button"
                 className={`cs-gran-btn${granularity === 'month' ? ' cs-gran-btn--active' : ''}`}
                 onClick={() => setGranularity('month')}
-              >{isZh ? '月' : 'Month'}</button>
+              >{tr({ zh: '月', en: 'Month' })}</button>
               <button
                 type="button"
                 className={`cs-gran-btn${granularity === 'year' ? ' cs-gran-btn--active' : ''}`}
                 onClick={() => setGranularity('year')}
-              >{isZh ? '年' : 'Year'}</button>
+              >{tr({ zh: '年', en: 'Year' })}</button>
             </div>
           </div>
           <LineChart
@@ -300,13 +317,17 @@ export default function CalendarStatsPage() {
       {totalComps > 0 && (
         <section className="cs-section">
           <h2 className="cs-section-title">
-            {isZh ? '比赛数 · 国家排名' : 'Top countries'}
+            {tr({ zh: '比赛数 · 国家排名', en: 'Top countries',
+                zhHant: "比賽數 · 國家排名"
+            })}
             <SectionPlayControls anim={countryAnim} isZh={isZh} />
             <span className="cs-scope-tag">{scopeLabelOf(countryScope)} · {countryTotal.toLocaleString()}</span>
           </h2>
           <SectionScrubber anim={countryAnim} viewIdx={barRange} series={series} granularity={granularity} />
           {byCountry.length === 0 ? (
-            <div className="cs-empty">{isZh ? '该时段没有比赛' : 'No comps in this window'}</div>
+            <div className="cs-empty">{tr({ zh: '该时段没有比赛', en: 'No comps in this window',
+                zhHant: "該時段沒有比賽"
+            })}</div>
           ) : (
             <div className="cs-bars">
               {byCountry.map(([iso, n]) => {
@@ -332,13 +353,17 @@ export default function CalendarStatsPage() {
       {!event && totalComps > 0 && (
         <section className="cs-section">
           <h2 className="cs-section-title">
-            {isZh ? '项目场次' : 'Events offered'}
+            {tr({ zh: '项目场次', en: 'Events offered',
+                zhHant: "專案場次"
+            })}
             <SectionPlayControls anim={eventAnim} isZh={isZh} />
             <span className="cs-scope-tag">{scopeLabelOf(eventScope)}</span>
           </h2>
           <SectionScrubber anim={eventAnim} viewIdx={barRange} series={series} granularity={granularity} />
           {byEvent.length === 0 ? (
-            <div className="cs-empty">{isZh ? '该时段没有比赛' : 'No comps in this window'}</div>
+            <div className="cs-empty">{tr({ zh: '该时段没有比赛', en: 'No comps in this window',
+                zhHant: "該時段沒有比賽"
+            })}</div>
           ) : (
           <div className="cs-bars cs-bars-compact">
             {byEvent.map(([ev, n]) => {
@@ -406,7 +431,9 @@ function SectionPlayControls({ anim, isZh }: { anim: Animator; isZh: boolean }) 
         type="button"
         className="cs-sec-play"
         onClick={anim.toggle}
-        title={anim.playing ? (isZh ? '暂停' : 'Pause') : (isZh ? '播放' : 'Play')}
+        title={anim.playing ? (tr({ zh: '暂停', en: 'Pause',
+            zhHant: "暫停"
+        })) : (tr({ zh: '播放', en: 'Play' }))}
         aria-label={anim.playing ? 'pause' : 'play'}
       >{anim.playing ? '⏸' : '▶'}</button>
       {anim.idx !== null && (
@@ -414,7 +441,7 @@ function SectionPlayControls({ anim, isZh }: { anim: Animator; isZh: boolean }) 
           type="button"
           className="cs-sec-stop"
           onClick={anim.stop}
-          title={isZh ? '停止' : 'Stop'}
+          title={tr({ zh: '停止', en: 'Stop' })}
           aria-label="stop"
         >■</button>
       )}
@@ -600,7 +627,7 @@ function LineChart({ series, granularity, isZh, view, onViewChange, onPointClick
             type="button"
             className="cs-line-reset"
             onClick={() => setView({ start: 0, end: 1 })}
-          >{isZh ? '重置' : 'Reset'}</button>
+          >{tr({ zh: '重置', en: 'Reset' })}</button>
         </div>
       )}
       <svg

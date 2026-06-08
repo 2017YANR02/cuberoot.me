@@ -27,6 +27,7 @@ import { ProgressSliders } from './_components/components/ProgressSliders';
 import AverageMode from './_components/average_mode/AverageMode';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './calc.css';
+import { tr } from '@/i18n/tr';
 
 type CalcTab = 'compare' | 'average';
 
@@ -378,10 +379,14 @@ export function CalcPage() {
               type="button"
               className="calc-mode-toggle calc-mode-toggle-active"
               onClick={() => setTab('compare')}
-              title={isZh ? '切到对比版' : 'Switch to Compare'}
+              title={tr({ zh: '切到对比版', en: 'Switch to Compare',
+                  zhHant: "切到對比版"
+            })}
             >
               <Sigma size={14} />
-              <span>{isZh ? '简易版' : 'Simple'}</span>
+              <span>{tr({ zh: '简易版', en: 'Simple',
+                  zhHant: "簡易版"
+            })}</span>
             </button>
           </div>
           <AverageMode event={event} />
@@ -421,16 +426,24 @@ export function CalcPage() {
               type="button"
               className="calc-mode-toggle"
               onClick={() => setTab('average')}
-              title={isZh ? '切到简易版' : 'Switch to Simple'}
+              title={tr({ zh: '切到简易版', en: 'Switch to Simple',
+                  zhHant: "切到簡易版"
+            })}
             >
               <Sigma size={14} />
-              <span>{isZh ? '简易版' : 'Simple'}</span>
+              <span>{tr({ zh: '简易版', en: 'Simple',
+                  zhHant: "簡易版"
+            })}</span>
             </button>
             <Link
               href="/calc-about"
               className="calc-title-help"
-              title={isZh ? '这页是干啥的?' : 'What is this page?'}
-              aria-label={isZh ? '查看说明' : 'About this page'}
+              title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+                  zhHant: "這頁是幹啥的?"
+            })}
+              aria-label={tr({ zh: '查看说明', en: 'About this page',
+                  zhHant: "檢視說明"
+            })}
             >
               <HelpCircle size={16} strokeWidth={1.75} />
             </Link>

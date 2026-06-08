@@ -19,6 +19,8 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { fetchArticleBySlug, type Article } from '@/lib/article-api';
 import '../../article-list.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const ArticleEditor = dynamic(() => import('@/components/article/ArticleEditor'), {
   ssr: false,
@@ -28,7 +30,7 @@ export default function EditArticlePage() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const params = useParams<{ lang: string; slug: string }>();
-  const lang = params?.lang ?? (isZh ? 'zh' : 'en');
+  const lang = params?.lang ?? ((i18n.language.startsWith('zh') ? 'zh' : 'en'));
   const slug = params?.slug ?? '';
   const router = useRouter();
 
@@ -66,7 +68,9 @@ export default function EditArticlePage() {
       <header className="article-list-header">
         <HomeLink className="article-list-back">
           <ChevronLeft size={16} />
-          <span>{isZh ? '首页' : 'Home'}</span>
+          <span>{tr({ zh: '首页', en: 'Home',
+              zhHant: "首頁"
+        })}</span>
         </HomeLink>
       </header>
 

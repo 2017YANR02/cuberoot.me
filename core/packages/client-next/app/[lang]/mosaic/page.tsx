@@ -9,6 +9,7 @@ import { useMosaicStore } from './_components/state/store';
 import type { Stage } from './_components/state/types';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './mosaic.css';
+import { tr } from '@/i18n/tr';
 
 const UploadStage = dynamic(() => import('./_components/stages/UploadStage'), { ssr: false });
 const CropStage = dynamic(() => import('./_components/stages/CropStage'), { ssr: false });
@@ -70,8 +71,12 @@ export default function MosaicPage() {
               <Link
                 href="/mosaic-about"
                 className="mosaic-title-help"
-                title={i18n.language.startsWith('zh') ? '这页是干啥的?' : 'What is this page?'}
-                aria-label={i18n.language.startsWith('zh') ? '查看说明' : 'About this page'}
+                title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+                    zhHant: "這頁是幹啥的?"
+                })}
+                aria-label={tr({ zh: '查看说明', en: 'About this page',
+                    zhHant: "檢視說明"
+                })}
               >
                 <HelpCircle size={18} strokeWidth={1.75} />
               </Link>

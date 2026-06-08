@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './swift_intro.css';
+import i18n from '@/i18n/i18n-client';
 
 const SWIFT_LOGO_SVG = (
   <svg viewBox="0 0 256 256">
@@ -439,7 +440,7 @@ const FUTURE_CARDS: FutureCard[] = [
 
 export default function SwiftIntroPage() {
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
 
   useDocumentTitle('Swift : 苹果生态的钦定语言', 'Swift : Apple Ecosystem’s Native Tongue');

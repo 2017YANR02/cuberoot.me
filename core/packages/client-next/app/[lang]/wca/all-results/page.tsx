@@ -27,6 +27,8 @@ import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelec
 import ShowToggle, { type ShowMode } from '@/components/wca-stats/ShowToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const EVENTS = [
   '333','222','444','555','666','777',
@@ -203,15 +205,19 @@ function AllResultsPageInner() {
     <div className="wse-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
+          <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}</Link>
         </div>
         <h1 className="wse-title-row">
-          {isZh ? '排名' : 'Rankings'}
+          {tr({ zh: '排名', en: 'Rankings' })}
           <Link
             href="/wca/about/all-results"
             className="wse-title-help"
-            title={isZh ? '这页是干啥的?' : 'What is this page?'}
-            aria-label={isZh ? '查看说明' : 'About this page'}
+            title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+                zhHant: "這頁是幹啥的?"
+            })}
+            aria-label={tr({ zh: '查看说明', en: 'About this page',
+                zhHant: "檢視說明"
+            })}
           >
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
@@ -219,11 +225,19 @@ function AllResultsPageInner() {
         <p className="wse-subtitle">
           {show === 'persons'
             ? (basis === 'cumulative'
-                ? (isZh ? '截至所选年末的累积最佳排名(全球 / 单国家)' : 'Ranking by best up to end of the selected year (worldwide / by country)')
-                : (isZh ? '仅所选年(或月)内取得的最佳排名(全球 / 单国家)' : 'Ranking by best within the selected year (or month)'))
+                ? (tr({ zh: '截至所选年末的累积最佳排名(全球 / 单国家)', en: 'Ranking by best up to end of the selected year (worldwide / by country)',
+                    zhHant: "截至所選年末的累積最佳排名(全球 / 單國家)"
+                }))
+                : (tr({ zh: '仅所选年(或月)内取得的最佳排名(全球 / 单国家)', en: 'Ranking by best within the selected year (or month)',
+                    zhHant: "僅所選年(或月)內取得的最佳排名(全球 / 單國家)"
+                })))
             : (basis === 'cumulative'
-                ? (isZh ? '截至所选年末的全部 valid 成绩,按值升序' : 'All valid results up to end of the selected year, sorted by value')
-                : (isZh ? '所选年 / 月内的全部 valid 成绩,按值升序;可叠加国家 / 选手或比赛搜索' : 'All valid results within the selected year / month, sorted by value'))}
+                ? (tr({ zh: '截至所选年末的全部 valid 成绩,按值升序', en: 'All valid results up to end of the selected year, sorted by value',
+                    zhHant: "截至所選年末的全部 valid 成績,按值升序"
+                }))
+                : (tr({ zh: '所选年 / 月内的全部 valid 成绩,按值升序;可叠加国家 / 选手或比赛搜索', en: 'All valid results within the selected year / month, sorted by value',
+                    zhHant: "所選年 / 月內的全部 valid 成績,按值升序;可疊加國家 / 選手或比賽搜尋"
+                })))}
         </p>
       </header>
 
@@ -236,52 +250,64 @@ function AllResultsPageInner() {
 
       <div className="wse-filters">
         <div className="wse-filter wse-filter-show">
-          <label>{isZh ? '显示' : 'Show'}</label>
+          <label>{tr({ zh: '显示', en: 'Show',
+              zhHant: "顯示"
+        })}</label>
           <ShowToggle value={show} onChange={handleShowChange} isZh={isZh} />
         </div>
         <div className="wse-filter">
-          <label>{isZh ? '类型' : 'Type'}</label>
+          <label>{tr({ zh: '类型', en: 'Type',
+              zhHant: "型別"
+        })}</label>
           <select value={type} onChange={e => update('type', e.target.value)}>
-            <option value="single">{isZh ? '单次' : 'Single'}</option>
-            {allowAvg && <option value="average">{isZh ? '平均' : 'Average'}</option>}
+            <option value="single">{tr({ zh: '单次', en: 'Single',
+                zhHant: "單次"
+            })}</option>
+            {allowAvg && <option value="average">{tr({ zh: '平均', en: 'Average' })}</option>}
           </select>
         </div>
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter wse-filter-show">
-          <label>{isZh ? '口径' : 'Basis'}</label>
+          <label>{tr({ zh: '口径', en: 'Basis',
+              zhHant: "口徑"
+        })}</label>
           <div className="wse-show-toggle">
             <button
               type="button"
               className={basis === 'cumulative' ? 'active' : ''}
               onClick={() => handleBasisChange('cumulative')}
             >
-              {isZh ? '截至' : 'Cumulative'}
+              {tr({ zh: '截至', en: 'Cumulative' })}
             </button>
             <button
               type="button"
               className={basis === 'period' ? 'active' : ''}
               onClick={() => handleBasisChange('period')}
             >
-              {isZh ? '当期' : 'Period'}
+              {tr({ zh: '当期', en: 'Period',
+                  zhHant: "當期"
+            })}
             </button>
           </div>
         </div>
         <div className="wse-filter">
-          <label>{isZh ? '年份' : 'Year'}</label>
+          <label>{tr({ zh: '年份', en: 'Year' })}</label>
           <select value={year} onChange={e => update('year', e.target.value === '0' ? '' : e.target.value)}>
-            {show === 'results' && <option value={0}>{isZh ? '全部年份' : 'All years'}</option>}
+            {show === 'results' && <option value={0}>{tr({ zh: '全部年份', en: 'All years' })}</option>}
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
         <div className="wse-filter">
-          <label>{isZh ? '月份' : 'Month'}</label>
+          <label>{tr({ zh: '月份', en: 'Month' })}</label>
           <select
             value={basis === 'cumulative' ? 0 : month}
             disabled={basis === 'cumulative'}
-            title={basis === 'cumulative' ? (isZh ? '截至口径按年末,不分月' : 'Cumulative basis is year-end; month not applicable') : undefined}
+            title={basis === 'cumulative' ? (tr({ zh: '截至口径按年末,不分月', en: 'Cumulative basis is year-end; month not applicable',
+                zhHant: "截至口徑按年末,不分月"
+            })) : undefined}
             onChange={e => update('month', e.target.value === '0' ? '' : e.target.value)}
           >
-            <option value={0}>{isZh ? '全年' : 'All months'}</option>
+            <option value={0}>{tr({ zh: '全年', en: 'All months' })}</option>
             {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
               <option key={m} value={m}>{m}</option>
             ))}
@@ -289,13 +315,17 @@ function AllResultsPageInner() {
         </div>
         {show === 'results' && (
           <div className="wse-filter wse-filter-q">
-            <label>{isZh ? '搜索' : 'Search'}</label>
+            <label>{tr({ zh: '搜索', en: 'Search',
+                zhHant: "搜尋"
+            })}</label>
             <div className="wse-q-wrap">
               <input
                 type="search"
                 value={qInput}
                 onChange={e => setQInput(e.target.value)}
-                placeholder={isZh ? '选手或比赛名' : 'Person or competition'}
+                placeholder={tr({ zh: '选手或比赛名', en: 'Person or competition',
+                    zhHant: "選手或比賽名"
+                })}
               />
               {qInput && (
                 <ClearButton
@@ -310,7 +340,9 @@ function AllResultsPageInner() {
       </div>
 
       <div className="wse-table-wrapper">
-        {loading && <div className="wse-state">{isZh ? '加载中...' : 'Loading...'}</div>}
+        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...',
+            zhHant: "載入中..."
+        })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {data && !loading && data.mode === 'results' && (
           <>
@@ -321,11 +353,17 @@ function AllResultsPageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{isZh ? '选手' : 'Person'}</th>
+                  <th>{tr({ zh: '选手', en: 'Person',
+                      zhHant: "選手"
+                })}</th>
                   <th className="wse-value-col">{isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average')}</th>
-                  <th>{isZh ? '日期' : 'Date'}</th>
-                  <th>{isZh ? '比赛' : 'Competition'}</th>
-                  <th className="wse-attempts-col">{isZh ? '详细成绩' : 'Solves'}</th>
+                  <th>{tr({ zh: '日期', en: 'Date' })}</th>
+                  <th>{tr({ zh: '比赛', en: 'Competition',
+                      zhHant: "比賽"
+                })}</th>
+                  <th className="wse-attempts-col">{tr({ zh: '详细成绩', en: 'Solves',
+                      zhHant: "詳細成績"
+                })}</th>
                 </tr>
               </thead>
               <tbody>
@@ -334,7 +372,7 @@ function AllResultsPageInner() {
                     <td className="wse-rank-col">{r.rank}</td>
                     <td>
                       {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                      <Link prefetch={false} href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>{displayCuberName(r.name, isZh)}</Link>
+                      <Link prefetch={false} href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${r.wcaId}`}>{displayCuberName(r.name, isZh)}</Link>
                     </td>
                     <td className="wse-value-col">
                       <span className="record-num-cell">
@@ -375,11 +413,17 @@ function AllResultsPageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{isZh ? '选手' : 'Person'}</th>
+                  <th>{tr({ zh: '选手', en: 'Person',
+                      zhHant: "選手"
+                })}</th>
                   <th className="wse-value-col">{isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average')}</th>
-                  <th>{isZh ? '日期' : 'Date'}</th>
-                  <th>{isZh ? '比赛' : 'Competition'}</th>
-                  <th className="wse-attempts-col">{isZh ? '详细成绩' : 'Solves'}</th>
+                  <th>{tr({ zh: '日期', en: 'Date' })}</th>
+                  <th>{tr({ zh: '比赛', en: 'Competition',
+                      zhHant: "比賽"
+                })}</th>
+                  <th className="wse-attempts-col">{tr({ zh: '详细成绩', en: 'Solves',
+                      zhHant: "詳細成績"
+                })}</th>
                 </tr>
               </thead>
               <tbody>
@@ -388,7 +432,7 @@ function AllResultsPageInner() {
                     <td className="wse-rank-col">{r.rank}</td>
                     <td>
                       {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                      <Link prefetch={false} href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>
+                      <Link prefetch={false} href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${r.wcaId}`}>
                         {displayCuberName(r.name, isZh)}
                       </Link>
                     </td>

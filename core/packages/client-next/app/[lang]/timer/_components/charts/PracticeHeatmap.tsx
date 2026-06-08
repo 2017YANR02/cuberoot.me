@@ -27,6 +27,7 @@ import { Flame } from 'lucide-react';
 import type { Solve } from '../../_lib/types';
 import { formatMs } from '../../_lib/stats';
 import './practice_heatmap.css';
+import { tr } from '@/i18n/tr';
 
 interface PracticeHeatmapProps {
   /** All solves across all events (or already-filtered by event — caller's choice). */
@@ -290,10 +291,12 @@ export default function PracticeHeatmap({
   const totalLabel = isZh
     ? `${total} 次于 ${targetYear}`
     : `${total} ${total === 1 ? 'solve' : 'solves'} in ${targetYear}`;
-  const emptyLabel = isZh ? '还没有成绩。' : 'No solves yet.';
+  const emptyLabel = tr({ zh: '还没有成绩。', en: 'No solves yet.',
+      zhHant: "還沒有成績。"
+});
 
-  const prevLabel = isZh ? '上一年' : 'Previous year';
-  const nextLabel = isZh ? '下一年' : 'Next year';
+  const prevLabel = tr({ zh: '上一年', en: 'Previous year' });
+  const nextLabel = tr({ zh: '下一年', en: 'Next year' });
 
   // ---- Streak badge text -----------------------------------------------
   let streakText: string;
@@ -303,11 +306,13 @@ export default function PracticeHeatmap({
       ? `${streak} 天连续`
       : `${streak} day${streak === 1 ? '' : 's'} streak`;
   } else {
-    streakText = isZh ? '今日未练' : 'no streak today';
+    streakText = tr({ zh: '今日未练', en: 'no streak today',
+        zhHant: "今日未練"
+    });
   }
-  const streakTitle = isZh
-    ? '连续每日至少完成一次还原'
-    : 'Consecutive days with at least one solve';
+  const streakTitle = tr({ zh: '连续每日至少完成一次还原', en: 'Consecutive days with at least one solve',
+      zhHant: "連續每日至少完成一次還原"
+});
 
   // ---- Per-cell tooltip -------------------------------------------------
   const cellTooltip = (date: Date, agg: DayAgg): string => {
@@ -319,10 +324,12 @@ export default function PracticeHeatmap({
       ? `${agg.count} 次`
       : `${agg.count} ${agg.count === 1 ? 'solve' : 'solves'}`;
     if (agg.best === null) {
-      const noBest = isZh ? '无有效成绩' : 'all DNF';
+      const noBest = tr({ zh: '无有效成绩', en: 'all DNF',
+          zhHant: "無有效成績"
+    });
       return `${dateStr} · ${solvesPart} · ${noBest}`;
     }
-    const bestPart = (isZh ? '最佳 ' : 'best ') + formatMs(agg.best);
+    const bestPart = (tr({ zh: '最佳 ', en: 'best ' })) + formatMs(agg.best);
     return `${dateStr} · ${solvesPart} · ${bestPart}`;
   };
 
@@ -339,12 +346,12 @@ export default function PracticeHeatmap({
       : `${agg.count} ${agg.count === 1 ? 'solve' : 'solves'}`;
     const bestPart =
       agg.best === null
-        ? (isZh ? '最佳 -' : 'best -')
-        : (isZh ? '最佳 ' : 'best ') + formatMs(agg.best);
+        ? (tr({ zh: '最佳 -', en: 'best -' }))
+        : (tr({ zh: '最佳 ', en: 'best ' })) + formatMs(agg.best);
     const avgPart =
       agg.validCount === 0
-        ? (isZh ? '平均 -' : 'avg -')
-        : (isZh ? '平均 ' : 'avg ') + formatMs(agg.validSum / agg.validCount);
+        ? (tr({ zh: '平均 -', en: 'avg -' }))
+        : (tr({ zh: '平均 ', en: 'avg ' })) + formatMs(agg.validSum / agg.validCount);
     return `${label} · ${solvesPart} · ${bestPart} · ${avgPart}`;
   };
 
@@ -369,8 +376,12 @@ export default function PracticeHeatmap({
               onClick={() => setCalendarExpanded(v => !v)}
             >
               {calendarExpanded
-                ? (isZh ? '收起日历' : 'Hide calendar')
-                : (isZh ? '展开日历' : 'Show calendar')}
+                ? (tr({ zh: '收起日历', en: 'Hide calendar',
+                    zhHant: "收起日曆"
+                }))
+                : (tr({ zh: '展开日历', en: 'Show calendar',
+                    zhHant: "展開日曆"
+                }))}
             </button>
           )}
         </div>

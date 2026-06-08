@@ -20,6 +20,7 @@ import {
   createSession, renameSession, clearSession, deleteSession,
   type SessionMeta,
 } from '../_lib/storage/db';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   isZh: boolean;
@@ -86,7 +87,9 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
   const startCreate = () => {
     setRenamingId(null);
     setCreating(true);
-    setDraft(isZh ? '新分组' : 'New session');
+    setDraft(tr({ zh: '新分组', en: 'New session',
+        zhHant: "新分組"
+    }));
   };
 
   const commitCreate = () => {
@@ -146,9 +149,13 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
         onClick={() => setOpen(o => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        title={isZh ? '切换分组' : 'Switch session'}
+        title={tr({ zh: '切换分组', en: 'Switch session',
+            zhHant: "切換分組"
+        })}
       >
-        <span className="session-trigger-name">{active?.name ?? (isZh ? '分组' : 'Session')}</span>
+        <span className="session-trigger-name">{active?.name ?? (tr({ zh: '分组', en: 'Session',
+            zhHant: "分組"
+        }))}</span>
         <ChevronDown size={14} className="session-trigger-caret" />
       </button>
 
@@ -172,14 +179,16 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
                             if (e.key === 'Enter') commitRename();
                             if (e.key === 'Escape') { setRenamingId(null); setDraft(''); }
                           }}
-                          aria-label={isZh ? '分组名称' : 'Session name'}
+                          aria-label={tr({ zh: '分组名称', en: 'Session name',
+                              zhHant: "分組名稱"
+                        })}
                         />
                         {draft && (
                           <ClearButton
                             onClick={() => setDraft('')}
                             isZh={isZh}
                             preserveFocus
-                            ariaLabel={isZh ? '清空' : 'Clear'}
+                            ariaLabel={tr({ zh: '清空', en: 'Clear' })}
                           />
                         )}
                       </div>
@@ -187,8 +196,12 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
                         type="button"
                         className="session-icon-btn confirm"
                         onClick={commitRename}
-                        title={isZh ? '确认' : 'Confirm'}
-                        aria-label={isZh ? '确认重命名' : 'Confirm rename'}
+                        title={tr({ zh: '确认', en: 'Confirm',
+                            zhHant: "確認"
+                        })}
+                        aria-label={tr({ zh: '确认重命名', en: 'Confirm rename',
+                            zhHant: "確認重新命名"
+                        })}
                       >
                         <Check size={14} />
                       </button>
@@ -210,8 +223,12 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
                           type="button"
                           className="session-icon-btn"
                           onClick={() => startRename(s)}
-                          title={isZh ? '重命名' : 'Rename'}
-                          aria-label={isZh ? '重命名分组' : 'Rename session'}
+                          title={tr({ zh: '重命名', en: 'Rename',
+                              zhHant: "重新命名"
+                        })}
+                          aria-label={tr({ zh: '重命名分组', en: 'Rename session',
+                              zhHant: "重新命名分組"
+                        })}
                         >
                           <Pencil size={13} />
                         </button>
@@ -219,8 +236,12 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
                           type="button"
                           className="session-icon-btn"
                           onClick={() => handleClear(s)}
-                          title={isZh ? '清空成绩' : 'Clear solves'}
-                          aria-label={isZh ? '清空分组成绩' : 'Clear session solves'}
+                          title={tr({ zh: '清空成绩', en: 'Clear solves',
+                              zhHant: "清空成績"
+                        })}
+                          aria-label={tr({ zh: '清空分组成绩', en: 'Clear session solves',
+                              zhHant: "清空分組成績"
+                        })}
                         >
                           <Eraser size={13} />
                         </button>
@@ -230,9 +251,15 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
                           onClick={() => handleDelete(s)}
                           disabled={sessions.length <= 1}
                           title={sessions.length <= 1
-                            ? (isZh ? '至少保留一个分组' : 'Keep at least one session')
-                            : (isZh ? '删除分组' : 'Delete session')}
-                          aria-label={isZh ? '删除分组' : 'Delete session'}
+                            ? (tr({ zh: '至少保留一个分组', en: 'Keep at least one session',
+                                zhHant: "至少保留一個分組"
+                            }))
+                            : (tr({ zh: '删除分组', en: 'Delete session',
+                                zhHant: "刪除分組"
+                            }))}
+                          aria-label={tr({ zh: '删除分组', en: 'Delete session',
+                              zhHant: "刪除分組"
+                        })}
                         >
                           <Trash2 size={13} />
                         </button>
@@ -257,14 +284,16 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
                       if (e.key === 'Enter') commitCreate();
                       if (e.key === 'Escape') { setCreating(false); setDraft(''); }
                     }}
-                    aria-label={isZh ? '新分组名称' : 'New session name'}
+                    aria-label={tr({ zh: '新分组名称', en: 'New session name',
+                        zhHant: "新分組名稱"
+                    })}
                   />
                   {draft && (
                     <ClearButton
                       onClick={() => setDraft('')}
                       isZh={isZh}
                       preserveFocus
-                      ariaLabel={isZh ? '清空' : 'Clear'}
+                      ariaLabel={tr({ zh: '清空', en: 'Clear' })}
                     />
                   )}
                 </div>
@@ -272,8 +301,12 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
                   type="button"
                   className="session-icon-btn confirm"
                   onClick={commitCreate}
-                  title={isZh ? '创建' : 'Create'}
-                  aria-label={isZh ? '创建分组' : 'Create session'}
+                  title={tr({ zh: '创建', en: 'Create',
+                      zhHant: "建立"
+                })}
+                  aria-label={tr({ zh: '创建分组', en: 'Create session',
+                      zhHant: "建立分組"
+                })}
                 >
                   <Check size={14} />
                 </button>
@@ -281,7 +314,9 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
             ) : (
               <button type="button" className="session-add-btn" onClick={startCreate}>
                 <Plus size={14} />
-                <span>{isZh ? '新建分组' : 'New session'}</span>
+                <span>{tr({ zh: '新建分组', en: 'New session',
+                    zhHant: "新建分組"
+                })}</span>
               </button>
             )}
           </div>

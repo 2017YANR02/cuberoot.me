@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import type { Lang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -706,7 +707,9 @@ function ComplexPlaneSVG({ roots, perm, lang }: { roots: RootDef[]; perm: number
       {isIdentity && (
         <text x={W / 2} y={H - 8} textAnchor="middle"
           style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-faint)">
-          {lang === 'zh' ? '恒等置换：每根不动' : 'Identity: every root is fixed'}
+          {tr({ zh: '恒等置换：每根不动', en: 'Identity: every root is fixed',
+              zhHant: "恆等置換：每根不動"
+        })}
         </text>
       )}
     </svg>
@@ -876,11 +879,13 @@ function LatticeSVG({
       {/* Column headers */}
       <text x={LEFT_X + NODE_W / 2} y={14} textAnchor="middle"
         style={{ fontFamily: 'var(--mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '.1em' }} fill="var(--ink-faint)">
-        {lang === 'zh' ? '子群 (大→小)' : 'Subgroups (large→small)'}
+        {tr({ zh: '子群 (大→小)', en: 'Subgroups (large→small)' })}
       </text>
       <text x={RIGHT_X + NODE_W / 2} y={14} textAnchor="middle"
         style={{ fontFamily: 'var(--mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '.1em' }} fill="var(--ink-faint)">
-        {lang === 'zh' ? '不动域 (小→大)' : 'Fixed fields (small→large)'}
+        {tr({ zh: '不动域 (小→大)', en: 'Fixed fields (small→large)',
+            zhHant: "不動域 (小→大)"
+        })}
       </text>
 
       {/* Subgroup edges */}
@@ -992,7 +997,9 @@ function LatticeSVG({
       {/* Reversal label */}
       <text x={W / 2} y={H - 2} textAnchor="middle"
         style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
-        {lang === 'zh' ? '← 包含反向 ↔ 子群越大 = 不动域越小 →' : '← inclusion-reversing: bigger subgroup = smaller fixed field →'}
+        {tr({ zh: '← 包含反向 ↔ 子群越大 = 不动域越小 →', en: '← inclusion-reversing: bigger subgroup = smaller fixed field →',
+            zhHant: "← 包含反向 ↔ 子群越大 = 不動域越小 →"
+        })}
       </text>
     </svg>
   );
@@ -1067,8 +1074,10 @@ function SolvabilityChainSVG({ solv, step, lang }: { solv: SolvabilitySeries; st
           style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700 }}
           fill={solv.solvable ? 'var(--green)' : 'var(--warn)'}>
           {solv.solvable
-            ? (lang === 'zh' ? '✓ 可用根式求解' : '✓ Solvable by radicals')
-            : (lang === 'zh' ? '✗ 不可用根式求解 (A₅ 是单群)' : '✗ NOT solvable by radicals (A₅ is simple)')}
+            ? (tr({ zh: '✓ 可用根式求解', en: '✓ Solvable by radicals' }))
+            : (tr({ zh: '✗ 不可用根式求解 (A₅ 是单群)', en: '✗ NOT solvable by radicals (A₅ is simple)',
+                zhHant: "✗ 不可用根式求解 (A₅ 是單群)"
+            }))}
         </text>
       )}
     </svg>
@@ -1145,10 +1154,14 @@ function PuzzleSolvableView({ lang }: { lang: Lang }) {
         {/* Box: "scrambled cube" */}
         <rect x={10} y={20} width={140} height={90} rx={8} fill="color-mix(in srgb, var(--accent-2) 10%, var(--bg-elev))" stroke="var(--accent-2)" strokeWidth={1.5} />
         <text x={80} y={44} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600 }} fill="var(--accent-2)">
-          {lang === 'zh' ? '打乱状态' : 'Scrambled state'}
+          {tr({ zh: '打乱状态', en: 'Scrambled state',
+              zhHant: "打亂狀態"
+        })}
         </text>
         <text x={80} y={62} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
-          {lang === 'zh' ? '任意置换 ∈ G_cube' : 'any permutation ∈ G_cube'}
+          {tr({ zh: '任意置换 ∈ G_cube', en: 'any permutation ∈ G_cube',
+              zhHant: "任意置換 ∈ G_cube"
+        })}
         </text>
         <text x={80} y={98} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
           |G| = 4.3 × 10¹⁹
@@ -1162,22 +1175,30 @@ function PuzzleSolvableView({ lang }: { lang: Lang }) {
           </marker>
         </defs>
         <text x={169} y={58} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 8 }} fill="var(--green)">
-          {lang === 'zh' ? '≤ 20 步' : '≤ 20 moves'}
+          {tr({ zh: '≤ 20 步', en: '≤ 20 moves' })}
         </text>
         <text x={169} y={78} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 8 }} fill="var(--ink-faint)">
-          {lang === 'zh' ? '（上帝之数）' : "(God's number)"}
+          {tr({ zh: '（上帝之数）', en: "(God's number)",
+              zhHant: "（上帝之數）"
+        })}
         </text>
 
         {/* Box: solved */}
         <rect x={190} y={20} width={140} height={90} rx={8} fill="color-mix(in srgb, var(--green) 10%, var(--bg-elev))" stroke="var(--green)" strokeWidth={1.5} />
         <text x={260} y={44} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600 }} fill="var(--green)">
-          {lang === 'zh' ? '还原状态' : 'Solved state'}
+          {tr({ zh: '还原状态', en: 'Solved state',
+              zhHant: "還原狀態"
+        })}
         </text>
         <text x={260} y={62} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
-          {lang === 'zh' ? '单位元 e ∈ G_cube' : 'identity e ∈ G_cube'}
+          {tr({ zh: '单位元 e ∈ G_cube', en: 'identity e ∈ G_cube',
+              zhHant: "單位元 e ∈ G_cube"
+        })}
         </text>
         <text x={260} y={80} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--green)">
-          {lang === 'zh' ? '可达！(puzzle-solved)' : 'Reachable! (puzzle-solved)'}
+          {tr({ zh: '可达！(puzzle-solved)', en: 'Reachable! (puzzle-solved)',
+              zhHant: "可達！(puzzle-solved)"
+        })}
         </text>
       </svg>
       <p style={{ fontFamily: 'var(--serif)', fontSize: 14, color: 'var(--ink-dim)', lineHeight: 1.6 }}>

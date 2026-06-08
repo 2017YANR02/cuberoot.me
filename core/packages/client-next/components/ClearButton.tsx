@@ -2,6 +2,7 @@
 
 // Ported from packages/client/src/components/ClearButton.tsx.
 import type { JSX } from 'react';
+import { tr } from '@/i18n/tr';
 
 interface ClearButtonProps {
   onClick: () => void;
@@ -22,7 +23,7 @@ export function ClearButton({
   ariaLabel,
   title,
 }: ClearButtonProps): JSX.Element {
-  const label = ariaLabel ?? (isZh ? '清除' : 'Clear');
+  const label = ariaLabel ?? (tr({ zh: '清除', en: 'Clear' }));
   const cls = [
     'clear-btn',
     variant === 'standalone' ? 'clear-btn--standalone' : '',

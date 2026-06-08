@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── Group definitions ─────────────────────────────────────────────────────────
 
@@ -556,7 +557,9 @@ function CycleVisualizer({ group }: { group: SmallGroup }) {
           <text x={SVG_W / 2} y={SVG_H - 12}
             textAnchor="middle" fontSize={12}
             fill="var(--green)" style={{ fontFamily: 'var(--mono)' }}>
-            {lang === 'zh' ? '恒等元 — 每个元素均为不动点' : 'Identity — every element is a fixed point'}
+            {tr({ zh: '恒等元 — 每个元素均为不动点', en: 'Identity — every element is a fixed point',
+                zhHant: "恆等元 — 每個元素均為不動點"
+            })}
           </text>
         )}
       </svg>
@@ -589,7 +592,9 @@ function CycleVisualizer({ group }: { group: SmallGroup }) {
           </span>
           <span className="gt-result-val" style={{ color: 'var(--green)', fontSize: 12 }}>
             {gIdx === 0
-              ? (lang === 'zh' ? '恒等元 — n 个不动点 (唯一例外)' : 'Identity — n fixed points (only exception)')
+              ? (tr({ zh: '恒等元 — n 个不动点 (唯一例外)', en: 'Identity — n fixed points (only exception)',
+                  zhHant: "恆等元 — n 個不動點 (唯一例外)"
+            }))
               : (lang === 'zh'
                 ? `无不动点 — 每个轮换长度均为 ${ord} ✓`
                 : `Fixed-point-free — every cycle has length ${ord} ✓`)}
@@ -650,7 +655,9 @@ function EmbeddingComparator({ group }: { group: SmallGroup }) {
       <svg viewBox={`0 0 ${W} ${H}`} width="100%"
         style={{ display: 'block', maxWidth: W }}
         role="img"
-        aria-label={lang === 'zh' ? 'Cayley 嵌入度对比' : 'Embedding degree comparison'}>
+        aria-label={tr({ zh: 'Cayley 嵌入度对比', en: 'Embedding degree comparison',
+            zhHant: "Cayley 嵌入度對比"
+        })}>
 
         {showCube ? (
           <>
@@ -658,7 +665,7 @@ function EmbeddingComparator({ group }: { group: SmallGroup }) {
             <text x={LABEL_X - 4} y={BAR_Y1 + BAR_H / 2 + 1}
               textAnchor="end" dominantBaseline="middle" fontSize={10} fill="var(--ink-dim)"
               style={{ fontFamily: 'var(--mono)' }}>
-              {lang === 'zh' ? 'Cayley 度' : 'Cayley deg'}
+              {tr({ zh: 'Cayley 度', en: 'Cayley deg' })}
             </text>
             <rect x={BAR_START} y={BAR_Y1} width={barWidth(CUBE_ORDER_LOG)} height={BAR_H}
               fill="color-mix(in srgb, var(--accent) 40%, var(--bg-deep))" rx={3} />
@@ -671,7 +678,9 @@ function EmbeddingComparator({ group }: { group: SmallGroup }) {
             <text x={LABEL_X - 4} y={BAR_Y2 + BAR_H / 2 + 1}
               textAnchor="end" dominantBaseline="middle" fontSize={10} fill="var(--ink-dim)"
               style={{ fontFamily: 'var(--mono)' }}>
-              {lang === 'zh' ? '面块嵌入' : 'Facelet'}
+              {tr({ zh: '面块嵌入', en: 'Facelet',
+                  zhHant: "面塊嵌入"
+            })}
             </text>
             <rect x={BAR_START} y={BAR_Y2} width={barWidth(cubeNatLog)} height={BAR_H}
               fill="color-mix(in srgb, var(--green) 45%, var(--bg-deep))" rx={3} />
@@ -682,7 +691,9 @@ function EmbeddingComparator({ group }: { group: SmallGroup }) {
 
             <text x={W / 2} y={H - 8} textAnchor="middle" fontSize={9} fill="var(--ink-faint)"
               style={{ fontFamily: 'var(--sans)', fontStyle: 'italic' }}>
-              {lang === 'zh' ? '对数坐标轴' : 'Log scale'}
+              {tr({ zh: '对数坐标轴', en: 'Log scale',
+                  zhHant: "對數座標軸"
+            })}
             </text>
           </>
         ) : (
@@ -691,7 +702,7 @@ function EmbeddingComparator({ group }: { group: SmallGroup }) {
             <text x={LABEL_X - 4} y={BAR_Y1 + BAR_H / 2 + 1}
               textAnchor="end" dominantBaseline="middle" fontSize={10} fill="var(--ink-dim)"
               style={{ fontFamily: 'var(--mono)' }}>
-              {lang === 'zh' ? 'Cayley 度 |G|' : 'Cayley deg |G|'}
+              {tr({ zh: 'Cayley 度 |G|', en: 'Cayley deg |G|' })}
             </text>
             <rect x={BAR_START} y={BAR_Y1} width={barWidth(cayleyLog)} height={BAR_H}
               fill="color-mix(in srgb, var(--accent) 40%, var(--bg-deep))" rx={3} />
@@ -704,7 +715,9 @@ function EmbeddingComparator({ group }: { group: SmallGroup }) {
             <text x={LABEL_X - 4} y={BAR_Y2 + BAR_H / 2 + 1}
               textAnchor="end" dominantBaseline="middle" fontSize={10} fill="var(--ink-dim)"
               style={{ fontFamily: 'var(--mono)' }}>
-              {lang === 'zh' ? '最小忠实度 μ' : 'Min faithful μ'}
+              {tr({ zh: '最小忠实度 μ', en: 'Min faithful μ',
+                  zhHant: "最小忠實度 μ"
+            })}
             </text>
             <rect x={BAR_START} y={BAR_Y2} width={barWidth(muLog)} height={BAR_H}
               fill="color-mix(in srgb, var(--green) 45%, var(--bg-deep))" rx={3} />
@@ -716,7 +729,9 @@ function EmbeddingComparator({ group }: { group: SmallGroup }) {
             <text x={W / 2} y={H - 8} textAnchor="middle" fontSize={9} fill="var(--ink-faint)"
               style={{ fontFamily: 'var(--sans)', fontStyle: 'italic' }}>
               {n === mu
-                ? (lang === 'zh' ? `μ = |G| — Cayley 度已是最优` : `μ = |G| — Cayley degree is already optimal`)
+                ? (tr({ zh: `μ = |G| — Cayley 度已是最优`, en: `μ = |G| — Cayley degree is already optimal`,
+                    zhHant: "μ = |G| — Cayley 度已是最優"
+                }))
                 : (lang === 'zh' ? `μ = ${mu} < ${n} = |G| — Cayley 给出上界, 非最优` : `μ = ${mu} < ${n} = |G| — Cayley gives upper bound, not optimal`)}
             </text>
           </>

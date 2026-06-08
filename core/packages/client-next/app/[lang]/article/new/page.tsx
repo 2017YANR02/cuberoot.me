@@ -17,6 +17,8 @@ import HomeLink from '@/components/HomeLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/lib/auth-store';
 import '../article-list.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 // ArticleEditor pulls in CodeMirror; keep it out of any server / SSG path.
 const ArticleEditor = dynamic(() => import('@/components/article/ArticleEditor'), {
@@ -27,7 +29,7 @@ export default function NewArticlePage() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const params = useParams<{ lang: string }>();
-  const lang = params?.lang ?? (isZh ? 'zh' : 'en');
+  const lang = params?.lang ?? ((i18n.language.startsWith('zh') ? 'zh' : 'en'));
   const router = useRouter();
 
   useDocumentTitle(t('article.newArticle'), t('article.newArticle'));
@@ -41,7 +43,9 @@ export default function NewArticlePage() {
       <header className="article-list-header">
         <HomeLink className="article-list-back">
           <ChevronLeft size={16} />
-          <span>{isZh ? '首页' : 'Home'}</span>
+          <span>{tr({ zh: '首页', en: 'Home',
+              zhHant: "首頁"
+        })}</span>
         </HomeLink>
       </header>
 

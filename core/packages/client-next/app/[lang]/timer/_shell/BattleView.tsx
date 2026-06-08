@@ -46,6 +46,8 @@ import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
 
 import '@/app/[lang]/battle/battle.css';
 import './shell.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 // NOTE: 根据打乱字符串长度自动计算字号缩放因子
 // ≤100 字符（2x2~3x3）= 1.0，更长则 sqrt 曲线平滑缩小，最小 0.7
@@ -571,12 +573,16 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
         className={`scramble-text${player.isTiming ? ' hidden' : ''}`}
         data-no-timer
         onClick={copyScramble}
-        title={isZh ? '点击复制打乱' : 'Click to copy'}
+        title={tr({ zh: '点击复制打乱', en: 'Click to copy',
+            zhHant: "點選複製打亂"
+        })}
         style={{ '--scramble-auto': getScrambleAutoScale(myScrambleDisplay || ''), cursor: 'pointer' } as React.CSSProperties}
         dangerouslySetInnerHTML={{ __html: scrambleContent }}
       />
       {scrambleCopied && (
-        <div className="battle-scramble-copied" data-no-timer>{isZh ? '已复制' : 'Copied'}</div>
+        <div className="battle-scramble-copied" data-no-timer>{tr({ zh: '已复制', en: 'Copied',
+            zhHant: "已複製"
+        })}</div>
       )}
 
       {/* 打乱图 — 复用 timer 的 CubingPreview（scramble-display） */}
@@ -664,7 +670,7 @@ function BattleEventButton({ playerId }: { playerId: 0 | 1 }) {
 
   const currentName = (() => {
     const p = PUZZLES.find(x => x.id === value);
-    return p ? (p.name[isZh ? 'zh' : 'en'] || p.name.en) : value;
+    return p ? (p.name[(i18n.language.startsWith('zh') ? 'zh' : 'en')] || p.name.en) : value;
   })();
 
   return (
@@ -719,10 +725,14 @@ function MiddleBar({
         {modePill}
         <span className="key-hint">Enter ↑ · ↓ Space</span>
         <CubeRootLogo className="middle-logo" />
-        <button className="middle-btn" title={isZh ? '历史' : 'History'} onClick={onHistoryClick}>
+        <button className="middle-btn" title={tr({ zh: '历史', en: 'History',
+            zhHant: "歷史"
+        })} onClick={onHistoryClick}>
           <ClipboardList size={16} />
         </button>
-        <button className="middle-btn" title={isZh ? '设置' : 'Settings'} onClick={onSettingsClick}>
+        <button className="middle-btn" title={tr({ zh: '设置', en: 'Settings',
+            zhHant: "設定"
+        })} onClick={onSettingsClick}>
           <SettingsIcon size={16} />
         </button>
       </div>
@@ -786,13 +796,15 @@ function PlayerBgRow({ playerId, isZh }: { playerId: 0 | 1; isZh: boolean }) {
           className="bg-color-picker"
           value={colorVal}
           onChange={onColorChange}
-          title={isZh ? '背景色' : 'Background color'}
+          title={tr({ zh: '背景色', en: 'Background color' })}
         />
         <button
           type="button"
           className={`bg-image-btn${hasImage ? ' has-image' : ''}`}
           onClick={() => fileInputRef.current?.click()}
-          title={isZh ? '上传背景图' : 'Upload image'}
+          title={tr({ zh: '上传背景图', en: 'Upload image',
+              zhHant: "上傳背景圖"
+        })}
         >
           {isZh ? (hasImage ? '已上传' : '图片') : (hasImage ? 'Set' : 'Image')}
         </button>
@@ -807,7 +819,7 @@ function PlayerBgRow({ playerId, isZh }: { playerId: 0 | 1; isZh: boolean }) {
           type="button"
           className="bg-reset-btn"
           onClick={() => store.resetBg(playerId)}
-          title={isZh ? '重置' : 'Reset'}
+          title={tr({ zh: '重置', en: 'Reset' })}
         >
           ✕
         </button>
@@ -821,11 +833,11 @@ function BackgroundSettingsGroup({ mode, isZh }: { mode: string; isZh: boolean }
   const store = useBattleStore();
   return (
     <div className="settings-group">
-      <div className="settings-label">{isZh ? '背景' : 'Background'}</div>
+      <div className="settings-label">{tr({ zh: '背景', en: 'Background' })}</div>
       <PlayerBgRow playerId={0} isZh={isZh} />
       {mode === '1v1' && <PlayerBgRow playerId={1} isZh={isZh} />}
       <div className="setting-item slider-row">
-        <span>{isZh ? '不透明度' : 'Opacity'}</span>
+        <span>{tr({ zh: '不透明度', en: 'Opacity' })}</span>
         <span className="delay-value">{store.bgOpacity.toFixed(2)}</span>
         <input
           type="range"
@@ -855,7 +867,9 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         <div className="settings-header-bar">
           <span className="settings-title">
             <SettingsIcon size={16} />
-            {isZh ? '设置' : 'Settings'}
+            {tr({ zh: '设置', en: 'Settings',
+                zhHant: "設定"
+            })}
           </span>
           <button className="settings-x-btn" onClick={onClose}>✕</button>
         </div>
@@ -866,7 +880,9 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* 项目选择 — 仅 Solo;1v1 已移到 middle-bar 的项目按钮 */}
         {store.mode === 'solo' && (
           <div className="settings-group">
-            <div className="settings-label" data-i18n="puzzle">{isZh ? '项目' : 'PUZZLE'}</div>
+            <div className="settings-label" data-i18n="puzzle">{tr({ zh: '项目', en: 'PUZZLE',
+                zhHant: "專案"
+            })}</div>
             <div className="puzzle-grid">
               {PUZZLES.map(puz => (
                 <button
@@ -877,7 +893,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
                   {isWcaEvent(puz.id)
                     ? <EventIcon event={puz.id} />
                     : <span className="event-fallback">{puz.name.en}</span>}
-                  <span className="puzzle-btn-name">{puz.name[isZh ? 'zh' : 'en'] || puz.name.en}</span>
+                  <span className="puzzle-btn-name">{puz.name[(i18n.language.startsWith('zh') ? 'zh' : 'en')] || puz.name.en}</span>
                 </button>
               ))}
             </div>
@@ -887,7 +903,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* 计时器精确度 */}
         <div className="settings-group">
           <div className="setting-item">
-            <span data-i18n="precision">{isZh ? '精度' : 'Precision'}</span>
+            <span data-i18n="precision">{tr({ zh: '精度', en: 'Precision' })}</span>
             <select
               className="settings-select"
               value={store.timerPrecision}
@@ -904,13 +920,17 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Inspection */}
         <div className="settings-group solo-setting">
           <div className="setting-item">
-            <span data-i18n="inspection">{isZh ? '观察' : 'Inspection'}</span>
+            <span data-i18n="inspection">{tr({ zh: '观察', en: 'Inspection',
+                zhHant: "觀察"
+            })}</span>
             <select
               className="settings-select"
               value={store.inspectionTime}
               onChange={e => store.setInspectionTime(parseInt(e.target.value))}
             >
-              <option value="0">{isZh ? '关闭' : 'OFF'}</option>
+              <option value="0">{tr({ zh: '关闭', en: 'OFF',
+                  zhHant: "關閉"
+            })}</option>
               <option value="8">8s</option>
               <option value="15">15s (WCA)</option>
               <option value="9999">∞</option>
@@ -921,7 +941,9 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Voice */}
         <div className="settings-group solo-setting">
           <div className="setting-item">
-            <span data-i18n="voice">{isZh ? '语音提示' : 'Voice Alert'}</span>
+            <span data-i18n="voice">{tr({ zh: '语音提示', en: 'Voice Alert',
+                zhHant: "語音提示"
+            })}</span>
             <label className="switch">
               <input
                 type="checkbox"
@@ -936,7 +958,9 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Show Image */}
         <div className="settings-group">
           <div className="setting-item">
-            <span data-i18n="show_image">{isZh ? '显示打乱图' : 'Show Image'}</span>
+            <span data-i18n="show_image">{tr({ zh: '显示打乱图', en: 'Show Image',
+                zhHant: "顯示打亂圖"
+            })}</span>
             <label className="switch">
               <input
                 type="checkbox"
@@ -951,7 +975,9 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Scramble Size */}
         <div className="settings-group">
           <div className="setting-item slider-row">
-            <span data-i18n="scramble_size">{isZh ? '打乱大小' : 'Scramble Size'}</span>
+            <span data-i18n="scramble_size">{tr({ zh: '打乱大小', en: 'Scramble Size',
+                zhHant: "打亂大小"
+            })}</span>
             <input
               type="range"
               min="0.5"
@@ -969,13 +995,13 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Phases */}
         <div className="settings-group solo-setting">
           <div className="setting-item">
-            <span data-i18n="phases">{isZh ? '分段' : 'Phases'}</span>
+            <span data-i18n="phases">{tr({ zh: '分段', en: 'Phases' })}</span>
             <select
               className="settings-select"
               value={store.phases}
               onChange={e => store.setPhases(parseInt(e.target.value))}
             >
-              <option value="1">1 ({isZh ? '普通' : 'Normal'})</option>
+              <option value="1">1 ({tr({ zh: '普通', en: 'Normal' })})</option>
               <option value="2">2 (BLD)</option>
               <option value="4">4 (CFOP)</option>
             </select>
@@ -985,7 +1011,9 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Start Delay */}
         <div className="settings-group">
           <div className="setting-item slider-row">
-            <span data-i18n="start_delay">{isZh ? '启动延迟' : 'Start Delay'}</span>
+            <span data-i18n="start_delay">{tr({ zh: '启动延迟', en: 'Start Delay',
+                zhHant: "啟動延遲"
+            })}</span>
             <span className="delay-value">{(store.startDelay / 1000).toFixed(2)}s</span>
             <input
               type="range"
@@ -1008,14 +1036,14 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
             onClose();
           }}>
             {store.showTime ? <EyeOff size={16} /> : <Eye size={16} />}
-            {(store.showTime ? I18N_TEXT.hide_time : I18N_TEXT.show_time)[isZh ? 'zh' : 'en']}
+            {(store.showTime ? I18N_TEXT.hide_time : I18N_TEXT.show_time)[(i18n.language.startsWith('zh') ? 'zh' : 'en')]}
           </button>
           <button className="settings-action-btn danger" onClick={() => {
             store.resetAll();
             onClose();
           }}>
             <RotateCcw size={16} />
-            {isZh ? '全部重置' : 'Reset All'}
+            {tr({ zh: '全部重置', en: 'Reset All' })}
           </button>
         </div>
       </div>
@@ -1173,21 +1201,27 @@ export default function BattleView({ modePill }: BattleViewProps) {
           >
             {/* lucide Timer 替代 icon_timer.png(no-emoji / no raster) */}
             <TimerIcon size={22} className="nav-tab-icon" />
-            <span>{isZh ? '计时' : 'Timer'}</span>
+            <span>{tr({ zh: '计时', en: 'Timer',
+                zhHant: "計時"
+            })}</span>
           </button>
           <button
             className={`nav-tab${store.activeTab === 'results' ? ' active' : ''}`}
             onClick={() => store.switchTab('results')}
           >
             <ClipboardList size={22} />
-            <span>{isZh ? '成绩' : 'Results'}</span>
+            <span>{tr({ zh: '成绩', en: 'Results',
+                zhHant: "成績"
+            })}</span>
           </button>
           <button
             className={`nav-tab${store.activeTab === 'settings' ? ' active' : ''}`}
             onClick={() => store.switchTab('settings')}
           >
             <SettingsIcon size={22} />
-            <span>{isZh ? '设置' : 'Settings'}</span>
+            <span>{tr({ zh: '设置', en: 'Settings',
+                zhHant: "設定"
+            })}</span>
           </button>
         </nav>
       )}

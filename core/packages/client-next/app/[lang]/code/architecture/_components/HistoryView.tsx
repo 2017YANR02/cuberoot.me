@@ -7,6 +7,8 @@ import { useLang } from '../../_lib/Lang';
 import type { Lang } from '../../_lib/Lang';
 import { TIMELINE } from '../_lib/arch-data';
 import COMMITS_DATA from '../timeline_commits.json';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 interface DayEntry { date: string; zh: string; en: string; }
 const DAYS = COMMITS_DATA as DayEntry[];
@@ -18,7 +20,7 @@ function Timeline() {
   return (
     <ol className="timeline">
       {TIMELINE.map((e, i) => {
-        const t = lang === 'zh' ? e.zh : e.en;
+        const t = (i18n.language.startsWith('zh') ? e.zh : e.en);
         const isOpen = open === i;
         return (
           <li key={i} className={`tl-entry tl-${e.tag}${isOpen ? ' open' : ''}`}>
@@ -85,7 +87,7 @@ function CalMonth({ ym, byDate, lang, expanded, onToggle }: {
           return (
             <>
               <div className="cal-day">{day.getDate()}</div>
-              {entry && <div className="cal-note">{lang === 'zh' ? entry.zh : entry.en}</div>}
+              {entry && <div className="cal-note">{(i18n.language.startsWith('zh') ? entry.zh : entry.en)}</div>}
             </>
           );
         }}
@@ -130,19 +132,23 @@ function CommitsCalendar() {
 
   return (
     <div className="cal-stack">
-      <div className="cal-month-nav" role="navigation" aria-label={lang === 'zh' ? '月份切换' : 'Month nav'}>
-        <button type="button" className="cal-nav-btn" onClick={() => gotoIdx(-1)} disabled={idx === 0} aria-label={lang === 'zh' ? '上一月' : 'Previous month'}>
+      <div className="cal-month-nav" role="navigation" aria-label={tr({ zh: '月份切换', en: 'Month nav',
+          zhHant: "月份切換"
+    })}>
+        <button type="button" className="cal-nav-btn" onClick={() => gotoIdx(-1)} disabled={idx === 0} aria-label={tr({ zh: '上一月', en: 'Previous month' })}>
           <ChevronLeft size={16} strokeWidth={1.75} />
         </button>
         <button type="button" className="cal-nav-latest" onClick={() => setIdx(CAL_MONTHS.length - 1)} disabled={idx === CAL_MONTHS.length - 1}>
-          {lang === 'zh' ? '最新' : 'Latest'}
+          {tr({ zh: '最新', en: 'Latest' })}
         </button>
-        <button type="button" className="cal-nav-btn" onClick={() => gotoIdx(1)} disabled={idx === CAL_MONTHS.length - 1} aria-label={lang === 'zh' ? '下一月' : 'Next month'}>
+        <button type="button" className="cal-nav-btn" onClick={() => gotoIdx(1)} disabled={idx === CAL_MONTHS.length - 1} aria-label={tr({ zh: '下一月', en: 'Next month' })}>
           <ChevronRight size={16} strokeWidth={1.75} />
         </button>
         <span className="cal-nav-label">{monthLabel}</span>
         <span className="cal-nav-stat">{lang === 'zh' ? `${activeDays} 天有动静` : `${activeDays} active days`}</span>
-        <span className="cal-nav-hint">{lang === 'zh' ? '键盘 ← → 切换  ·  点格子展开' : '← → keys  ·  click to expand'}</span>
+        <span className="cal-nav-hint">{tr({ zh: '键盘 ← → 切换  ·  点格子展开', en: '← → keys  ·  click to expand',
+            zhHant: "鍵盤 ← → 切換  ·  點格子展開"
+        })}</span>
       </div>
       <CalMonth key={ym} ym={ym} byDate={byDate} lang={lang} expanded={expanded} onToggle={(d) => setExpanded((cur) => cur === d ? null : d)} />
     </div>

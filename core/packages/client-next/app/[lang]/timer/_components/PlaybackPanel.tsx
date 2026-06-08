@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import type { EventId } from '../_lib/types';
 import CubePreview from '../_lib/cube/CubePreview';
+import { tr } from '@/i18n/tr';
 
 interface SolveMoveLite { m: string; ts: number }
 
@@ -103,8 +104,10 @@ export default function PlaybackPanel({ event, scramble, moves, totalMs, isZh }:
   };
 
   const playLabel = playing
-    ? (isZh ? '暂停' : 'Pause')
-    : (idx >= total ? (isZh ? '重播' : 'Replay') : (isZh ? '播放' : 'Play'));
+    ? (tr({ zh: '暂停', en: 'Pause',
+        zhHant: "暫停"
+    }))
+    : (idx >= total ? (tr({ zh: '重播', en: 'Replay' })) : (tr({ zh: '播放', en: 'Play' })));
 
   return (
     <div className="reconstruct-playback">
@@ -118,8 +121,8 @@ export default function PlaybackPanel({ event, scramble, moves, totalMs, isZh }:
             type="button"
             onClick={handleStepBack}
             disabled={idx === 0}
-            title={isZh ? '上一步' : 'Step back'}
-            aria-label={isZh ? '上一步' : 'Step back'}
+            title={tr({ zh: '上一步', en: 'Step back' })}
+            aria-label={tr({ zh: '上一步', en: 'Step back' })}
           >
             <ChevronLeft size={16} />
           </button>
@@ -138,8 +141,8 @@ export default function PlaybackPanel({ event, scramble, moves, totalMs, isZh }:
             type="button"
             onClick={handleStepForward}
             disabled={idx >= total}
-            title={isZh ? '下一步' : 'Step forward'}
-            aria-label={isZh ? '下一步' : 'Step forward'}
+            title={tr({ zh: '下一步', en: 'Step forward' })}
+            aria-label={tr({ zh: '下一步', en: 'Step forward' })}
           >
             <ChevronRight size={16} />
           </button>
@@ -154,7 +157,9 @@ export default function PlaybackPanel({ event, scramble, moves, totalMs, isZh }:
           value={idx}
           onChange={handleScrub}
           disabled={total === 0}
-          aria-label={isZh ? '进度' : 'Scrub'}
+          aria-label={tr({ zh: '进度', en: 'Scrub',
+              zhHant: "進度"
+        })}
         />
 
         <div className="reconstruct-playback-meta">
@@ -169,7 +174,7 @@ export default function PlaybackPanel({ event, scramble, moves, totalMs, isZh }:
                 type="button"
                 className={`reconstruct-playback-speed-btn ${speedMult === s.mult ? 'active' : ''}`}
                 onClick={() => setSpeedMult(s.mult)}
-                title={`${isZh ? '速度' : 'Speed'} ${s.label}`}
+                title={`${tr({ zh: '速度', en: 'Speed' })} ${s.label}`}
               >
                 {s.label}
               </button>

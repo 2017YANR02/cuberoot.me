@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import type { Lang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -563,7 +564,9 @@ function CharDecomposerPanel({ lang }: { lang: Lang }) {
 
           {/* Irrep label column header */}
           <text x={8} y={HEADER_H / 2 + 5} style={{ fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 600 }} fill="var(--ink)">
-            {lang === 'zh' ? '不可约表示' : 'Irreducible'}
+            {tr({ zh: '不可约表示', en: 'Irreducible',
+                zhHant: "不可約表示"
+            })}
           </text>
 
           {/* Class headers */}
@@ -1096,9 +1099,11 @@ function MaschkeAveragingPanel({ lang }: { lang: Lang }) {
             style={{ fontFamily: 'var(--mono)', fontSize: 10 }}
             fill={averaged ? 'var(--green)' : 'var(--accent-2)'}>
             {stepCount === 0
-              ? (lang === 'zh' ? '(初始)' : '(start)')
+              ? (tr({ zh: '(初始)', en: '(start)' }))
               : averaged
-              ? (lang === 'zh' ? '平均后 (G-不变)' : 'averaged (G-invariant)')
+              ? (tr({ zh: '平均后 (G-不变)', en: 'averaged (G-invariant)',
+                  zhHant: "平均後 (G-不變)"
+            }))
               : (lang === 'zh' ? `累计 ${stepCount}/${groupOrder}` : `sum ${stepCount}/${groupOrder}`)}
           </text>
           <circle cx={svgCx + 160} cy={svgCy} r={sc} fill="none" stroke="var(--rule)" strokeWidth={1} />
