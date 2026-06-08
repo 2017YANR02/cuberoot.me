@@ -5,7 +5,7 @@
  */
 import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
-import { POLL_INTERVAL_MS } from './config.js';
+import { POLL_INTERVAL_MS, siteCompUrlFromCubingAlias } from './config.js';
 import { startPoller } from './poll.js';
 
 const MONITOR: MonitorId = 'cubing_comp';
@@ -15,6 +15,7 @@ const UA: Record<string, string> = { 'User-Agent': 'Mozilla/5.0', Accept: 'appli
 interface CubingComp {
   id: number | string;
   name: string;
+  alias?: string;
   url?: string;
   date: { from: number; to: number };
   locations?: { province?: string; city?: string }[];
@@ -66,7 +67,8 @@ function formatCompMessage(comp: CubingComp): { title: string; body: string; url
   return {
     title: `比赛公示快讯! ${comp.name}`,
     body: `📅 ${dateStr} | 📍 ${city} | 👥 ${registered}/${limit}`,
-    url: `https://cubing.com${comp.url ?? ''}`,
+    // 比赛链接指向自有站(alias 去横杠=WCA id);alias 缺失时回退 cubing.com。
+    url: siteCompUrlFromCubingAlias(comp.alias) ?? `https://cubing.com${comp.url ?? ''}`,
   };
 }
 

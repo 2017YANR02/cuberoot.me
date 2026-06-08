@@ -26,6 +26,19 @@ export function siteCompUrl(
   return qs ? `${SITE_BASE}/wca/comp/${wcaId}?${qs}` : `${SITE_BASE}/wca/comp/${wcaId}`;
 }
 
+/**
+ * cubing.com 的 alias 是「插了横杠的 WCA 比赛 id」(HuanggangOpen2026 → Huanggang-Open-2026)。
+ * 去横杠还原成 WCA id 再建自有站链接(WCA id 本身从不含横杠)。alias 缺失 → null,回退原链。
+ */
+export function siteCompUrlFromCubingAlias(
+  alias: string | null | undefined,
+  eventId?: string | null,
+  roundNumber?: number | null,
+): string | null {
+  if (!alias) return null;
+  return siteCompUrl(alias.replace(/-/g, ''), eventId, roundNumber);
+}
+
 /** 纪录类型过滤(两个纪录监控共用),默认 WR/CR/NR。 */
 export const RECORD_TAGS: Set<string> = new Set(
   (process.env.MONITOR_RECORD_TAGS || 'WR,CR,NR')
