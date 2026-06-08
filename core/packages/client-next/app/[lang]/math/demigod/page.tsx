@@ -831,7 +831,7 @@ export default function DemigodPage() {
             <li data-i="9"><a href="https://anonymous.4open.science/r/RubikDemiGodSOSA-E3D5/README" target="_blank" rel="noopener noreferrer">{t('论文官方补充材料 (匿名 git)', 'Paper supplementary materials (anonymous git)', "論文官方補充材料 (匿名 git)")}</a> — {t('500k 样本数据 + 求解证书', '500k sample data + solution certificates', "500k 樣本資料 + 求解證書")}</li>
             <li data-i="10"><a href="https://en.wikipedia.org/wiki/Vertex-transitive_graph" target="_blank" rel="noopener noreferrer">Wikipedia — Vertex-transitive graph</a></li>
             <li data-i="11"><a href="https://en.wikipedia.org/wiki/Hoeffding%27s_inequality" target="_blank" rel="noopener noreferrer">Wikipedia — Hoeffding's inequality</a></li>
-            <li data-i="12"><Link href="/math/god">/math/god</Link> — {t('回到全 WCA 项目的上帝之数总览', "back to the all-WCA-events God's number overview", "回到全 WCA 專案的上帝之數總覽")}</li>
+            <li data-i="12"><Link href="/math/god">/math/god</Link> — {t('回到全 WCA 项目的上帝之数总览', "back to the all-WCA-events God's number overview", "回到全 WCA 項目的上帝之數總覽")}</li>
           </ol>
         </section>
 

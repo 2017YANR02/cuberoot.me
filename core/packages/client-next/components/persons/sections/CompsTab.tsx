@@ -73,7 +73,7 @@ export default function CompsTab({ profile, results, comps, isZh }: Props) {
             <th className="wp-th-sortable" onClick={() => toggleSort('name')}>
               {t('比赛名称', 'Competition', "比賽名稱")} <SortArrow col="name" />
             </th>
-            <th>{t('项目', 'Events', "專案")}</th>
+            <th>{t('项目', 'Events', "項目")}</th>
           </tr>
         </thead>
         <tbody>

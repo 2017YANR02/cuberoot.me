@@ -321,7 +321,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
       const result = await reanalyzeAll(p => {
         setReanalyzeProgress({ scanned: p.scanned, total: p.total });
       });
-      const msg = i18n.language === 'zh-Hant' ? (`已更新 ${result.updated} 條成績，涉及 ${result.eventsTouched.length} 個專案`) : (isZh
+      const msg = i18n.language === 'zh-Hant' ? (`已更新 ${result.updated} 條成績，涉及 ${result.eventsTouched.length} 個項目`) : (isZh
               ? `已更新 ${result.updated} 条成绩，涉及 ${result.eventsTouched.length} 个项目`
               : `Updated ${result.updated} solves across ${result.eventsTouched.length} events`);
       setReanalyzeMsg(msg);
@@ -608,7 +608,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               onChange={(e) => updateSettings({ bldMemo: e.target.checked })}
             />
             <span className="hint">{tr({ zh: '盲拧项目运行中按 Enter 标记记忆完成', en: 'On BLD events, press Enter while running to mark memo done',
-                zhHant: "盲擰專案執行中按 Enter 標記記憶完成"
+                zhHant: "盲擰項目執行中按 Enter 標記記憶完成"
             })}</span>
           </Row>
           <Row label={tr({ zh: '目标时间', en: 'Target time',
@@ -651,7 +651,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               ? (tr({ zh: '关闭', en: 'off',
                   zhHant: "關閉"
             }))
-              : (i18n.language === 'zh-Hant' ? (`每天 ${currentDailyGoal} 次（全部專案合計）`) : (isZh ? `每天 ${currentDailyGoal} 次（全部项目合计）` : `${currentDailyGoal} solves/day (all events)`))}</span>
+              : (i18n.language === 'zh-Hant' ? (`每天 ${currentDailyGoal} 次（全部項目合計）`) : (isZh ? `每天 ${currentDailyGoal} 次（全部项目合计）` : `${currentDailyGoal} solves/day (all events)`))}</span>
           </Row>
           <Row label={tr({ zh: '精度', en: 'Precision' })}>
             <select
@@ -679,7 +679,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               <option value="six">{tr({ zh: '六面', en: 'Six-sided' })}</option>
             </select>
             <span className="hint">{tr({ zh: '仅 3x3 类项目生效', en: '3x3 events only',
-                zhHant: "僅 3x3 類專案生效"
+                zhHant: "僅 3x3 類項目生效"
             })}</span>
           </Row>
         </AccordionSection>
@@ -1130,7 +1130,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                         disabled={disabled || done === 'replace'}
                         onClick={() => importCstimerSession(sess, 'replace')}
                         title={tr({ zh: '清空该项目并以此覆盖', en: 'Clear this event and replace',
-                            zhHant: "清空該專案並以此覆蓋"
+                            zhHant: "清空該項目並以此覆蓋"
                         })}
                       >
                         {done === 'replace' ? (tr({ zh: '已替换', en: 'Replaced',

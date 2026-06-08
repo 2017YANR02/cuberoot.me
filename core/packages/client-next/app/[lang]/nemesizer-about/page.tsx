@@ -52,7 +52,7 @@ export default function NemesizerAboutPage() {
         <p className="nema-section-intro">
           {t(
             '对每个 (选手, 项目) 对,算法计算"相对强度":同场比赛中两人对决的胜负比。宿敌满足三个条件:①他们的成绩比你稍好(WR 差距在一定范围内),②两人有共同参赛经历,③胜率约在 40%-60% 之间(真正的"势均力敌")。服务端用 Hono 在 Node.js 运行,6 个端点预加载到内存。',
-            'For each (person, event) pair, the algorithm computes a relative-strength score based on head-to-head outcomes at shared competitions. A nemesis satisfies: ① they are slightly better (WR gap within a threshold), ② there is sufficient shared competition history, and ③ your mutual win rate is around 40-60% (genuinely competitive). The server runs on Hono/Node.js with 6 endpoints preloaded into memory.', "對每個 (選手, 專案) 對,演算法計算\"相對強度\":同場比賽中兩人對決的勝負比。宿敵滿足三個條件:①他們的成績比你稍好(WR 差距在一定範圍內),②兩人有共同參賽經歷,③勝率約在 40%-60% 之間(真正的\"勢均力敵\")。服務端用 Hono 在 Node.js 執行,6 個端點預載入到記憶體。"
+            'For each (person, event) pair, the algorithm computes a relative-strength score based on head-to-head outcomes at shared competitions. A nemesis satisfies: ① they are slightly better (WR gap within a threshold), ② there is sufficient shared competition history, and ③ your mutual win rate is around 40-60% (genuinely competitive). The server runs on Hono/Node.js with 6 endpoints preloaded into memory.', "對每個 (選手, 項目) 對,演算法計算\"相對強度\":同場比賽中兩人對決的勝負比。宿敵滿足三個條件:①他們的成績比你稍好(WR 差距在一定範圍內),②兩人有共同參賽經歷,③勝率約在 40%-60% 之間(真正的\"勢均力敵\")。服務端用 Hono 在 Node.js 執行,6 個端點預載入到記憶體。"
           )}
         </p>
 
@@ -60,11 +60,11 @@ export default function NemesizerAboutPage() {
         <ul className="nema-list">
           <li>
             <strong>{t('宿敌 (Nemeses)', 'Nemeses', "宿敵 (Nemeses)")}</strong>
-            {t(' — 标准模式:输入 WCA-ID,列出各项目中最符合宿敌条件的对手列表。', ' — standard mode: enter a WCA-ID to see the closest nemeses per event.', " — 標準模式:輸入 WCA-ID,列出各專案中最符合宿敵條件的對手列表。")}
+            {t(' — 标准模式:输入 WCA-ID,列出各项目中最符合宿敌条件的对手列表。', ' — standard mode: enter a WCA-ID to see the closest nemeses per event.', " — 標準模式:輸入 WCA-ID,列出各項目中最符合宿敵條件的對手列表。")}
           </li>
           <li>
             <strong>{t('对决 (Head to head)', 'Head to head', "對決 (Head to head)")}</strong>
-            {t(' — 两位选手直接对比:共同参赛场次、各项目胜负分布、最近对决时间线。', ' — two-person direct comparison: shared competitions, event-by-event win/loss breakdown, recent head-to-head timeline.', " — 兩位選手直接對比:共同參賽場次、各專案勝負分佈、最近對決時間線。")}
+            {t(' — 两位选手直接对比:共同参赛场次、各项目胜负分布、最近对决时间线。', ' — two-person direct comparison: shared competitions, event-by-event win/loss breakdown, recent head-to-head timeline.', " — 兩位選手直接對比:共同參賽場次、各項目勝負分佈、最近對決時間線。")}
           </li>
           <li>
             <strong>{t('假设 (What if)', 'What if', "假設 (What if)")}</strong>
@@ -72,7 +72,7 @@ export default function NemesizerAboutPage() {
           </li>
           <li>
             <strong>{t('统计 (Statistics)', 'Statistics', "統計 (Statistics)")}</strong>
-            {t(' — 全局统计:最多宿敌关系的选手、各项目宿敌密度热图等。', ' — global statistics: cubers with the most nemesis relationships, per-event nemesis density, etc.', " — 全域性統計:最多宿敵關係的選手、各專案宿敵密度熱圖等。")}
+            {t(' — 全局统计:最多宿敌关系的选手、各项目宿敌密度热图等。', ' — global statistics: cubers with the most nemesis relationships, per-event nemesis density, etc.', " — 全域性統計:最多宿敵關係的選手、各項目宿敵密度熱圖等。")}
           </li>
         </ul>
 
@@ -92,17 +92,17 @@ export default function NemesizerAboutPage() {
             title={t('查看宿敌列表', 'View nemesis list', "檢視宿敵列表")}
             body={t(
               '每个项目显示最符合宿敌定义的几位对手:姓名、国籍、相对成绩差距、共同参赛次数。点击任意宿敌可切到对决模式看详情。',
-              'Each event shows the top nemesis candidates: name, nationality, relative result gap, and shared competition count. Click any nemesis to jump to Head-to-Head mode.', "每個專案顯示最符合宿敵定義的幾位對手:姓名、國籍、相對成績差距、共同參賽次數。點選任意宿敵可切到對決模式看詳情。"
+              'Each event shows the top nemesis candidates: name, nationality, relative result gap, and shared competition count. Click any nemesis to jump to Head-to-Head mode.', "每個項目顯示最符合宿敵定義的幾位對手:姓名、國籍、相對成績差距、共同參賽次數。點選任意宿敵可切到對決模式看詳情。"
             )}
             highlight
           />
           <Arrow />
           <Step
             step={3}
-            title={t('切换项目', 'Switch events', "切換專案")}
+            title={t('切换项目', 'Switch events', "切換項目")}
             body={t(
               '页面顶部的项目 chip 可以快速切换查看不同项目的宿敌。也可以只看某个 WCA 大洲 / 国家范围内的宿敌。',
-              'Event chips at the top of the results let you quickly switch events. You can also filter to nemeses from a specific continent or country.', "頁面頂部的專案 chip 可以快速切換檢視不同專案的宿敵。也可以只看某個 WCA 大洲 / 國家範圍內的宿敵。"
+              'Event chips at the top of the results let you quickly switch events. You can also filter to nemeses from a specific continent or country.', "頁面頂部的項目 chip 可以快速切換檢視不同項目的宿敵。也可以只看某個 WCA 大洲 / 國家範圍內的宿敵。"
             )}
           />
         </div>
@@ -111,7 +111,7 @@ export default function NemesizerAboutPage() {
         <ul className="nema-refs">
           <li>
             <Link href="/wca/all-results">{t('全成绩排名', 'All Results', "全成績排名")}</Link>
-            {t(' — 按项目搜索任意选手的历史成绩。', ' — search any cuber\'s results by event.', " — 按專案搜尋任意選手的歷史成績。")}
+            {t(' — 按项目搜索任意选手的历史成绩。', ' — search any cuber\'s results by event.', " — 按項目搜尋任意選手的歷史成績。")}
           </li>
           <li>
             <a href="https://github.com/huizhiLLL/WCA-Nemesizer-API" target="_blank" rel="noopener noreferrer">huizhiLLL/WCA-Nemesizer-API</a>

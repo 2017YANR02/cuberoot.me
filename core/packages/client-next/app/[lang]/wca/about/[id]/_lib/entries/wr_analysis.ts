@@ -22,8 +22,8 @@ const wr_aoxr: AboutEntry = {
         labelZhHant: "檔位數"
     },
     { value: '17', labelZh: '覆盖项目', labelEn: 'Events covered', hintZh: '有 average 的全部 WCA 项目', hintEn: 'All WCA events with averages',
-        labelZhHant: "覆蓋專案",
-        hintZhHant: "有 average 的全部 WCA 專案"
+        labelZhHant: "覆蓋項目",
+        hintZhHant: "有 average 的全部 WCA 項目"
     },
     { value: '排名+历史', labelZh: '两个视图', labelEn: 'Two views', hintZh: '当前榜 + WR 进化时间线', hintEn: 'Current leaderboard + WR evolution timeline',
         labelZhHant: "兩個檢視",
@@ -82,7 +82,7 @@ ORDER BY start_date;`,
       titleEn: 'Ranking: per-person best, top 10',
       bodyZh: '每个选手保留**最佳一个 AoXR**(最小的 = 最快);按项目排到 top 10。',
       bodyEn: 'For each person, keep their single best (smallest) AoXR; sort across persons, top 10 per event.',
-        bodyZhHant: "每個選手保留**最佳一個 AoXR**(最小的 = 最快);按專案排到 top 10。"
+        bodyZhHant: "每個選手保留**最佳一個 AoXR**(最小的 = 最快);按項目排到 top 10。"
     },
     {
       titleZh: 'WR 历史:严格刷新',
@@ -140,7 +140,7 @@ ORDER BY start_date;`,
     },
     { id: 'wr_aoxr', toStat: true, titleZh: '直接打开 AoXR 排名', titleEn: 'Jump to AoXR ranking', hintZh: '看实际数据 / 项目切换', hintEn: 'Live data + event picker',
         titleZhHant: "直接開啟 AoXR 排名",
-        hintZhHant: "看實際資料 / 專案切換"
+        hintZhHant: "看實際資料 / 項目切換"
     },
   ],
     titleZhHant: "AoXR — 單場比賽平均的均值",
@@ -166,7 +166,7 @@ const wr_current: AboutEntry = {
   stats: [
     { value: '17 × 2', labelZh: '行数(满载)', labelEn: 'Rows (full)', hintZh: '每项目 single + average,无并列', hintEn: 'Single + average per event, no ties',
         labelZhHant: "行數(滿載)",
-        hintZhHant: "每專案 single + average,無並列"
+        hintZhHant: "每項目 single + average,無並列"
     },
     { value: 'WR', labelZh: '过滤条件', labelEn: 'Filter', hintZh: 'regional_single/average_record = WR', hintEn: 'regional_single/average_record = WR',
         labelZhHant: "過濾條件"
@@ -212,8 +212,8 @@ ORDER BY r.event_id, c.start_date;`,
       titleEn: 'Group by event, keep the min',
       bodyZh: '遍历每个项目:single 看 `r.best`,average 看 `r.average`。在该项目内取**数值最小**的那条 = 当前 WR。',
       bodyEn: 'For each event: single uses `r.best`, average uses `r.average`. Within that event\'s WR-flagged rows, the minimum value wins — that\'s the standing record.',
-        titleZhHant: "按專案分組,各自取最小值",
-        bodyZhHant: "遍歷每個專案:single 看 `r.best`,average 看 `r.average`。在該專案內取**數值最小**的那條 = 當前 WR。"
+        titleZhHant: "按項目分組,各自取最小值",
+        bodyZhHant: "遍歷每個項目:single 看 `r.best`,average 看 `r.average`。在該項目內取**數值最小**的那條 = 當前 WR。"
     },
     {
       titleZh: '并列时选更早的',
@@ -221,7 +221,7 @@ ORDER BY r.event_id, c.start_date;`,
       bodyZh: '同值并列(常见于 333fm / 333bf 单次)按 `start_date` 升序保留 — 先设出来的优先;但所有并列条目都会被输出,前端表格按项目分组展示。',
       bodyEn: 'Ties (common in 333fm / 333bf singles) are sorted ascending by `start_date` — the earliest holder lists first; every tied row is still emitted, so the table shows all co-holders.',
         titleZhHant: "並列時選更早的",
-        bodyZhHant: "同值並列(常見於 333fm / 333bf 單次)按 `start_date` 升序保留 — 先設出來的優先;但所有並列條目都會被輸出,前端表格按專案分組展示。"
+        bodyZhHant: "同值並列(常見於 333fm / 333bf 單次)按 `start_date` 升序保留 — 先設出來的優先;但所有並列條目都會被輸出,前端表格按項目分組展示。"
     },
     {
       titleZh: '格式化 single 的 attempts',
@@ -236,7 +236,7 @@ ORDER BY r.event_id, c.start_date;`,
       bodyZh: '每条 WR 一行,日期格式化为 `YYYY-MM-DD`,人和比赛名都带 markdown 链接到 WCA 官网。',
       bodyEn: 'One row per standing WR; date as `YYYY-MM-DD`; person / comp rendered as markdown links to the WCA site.',
       highlight: true,
-        titleZhHant: "輸出 (專案, Single/Average, 時間, 人, 日期, 比賽)",
+        titleZhHant: "輸出 (項目, Single/Average, 時間, 人, 日期, 比賽)",
         bodyZhHant: "每條 WR 一行,日期格式化為 `YYYY-MM-DD`,人和比賽名都帶 markdown 連結到 WCA 官網。"
     },
   ],
@@ -302,8 +302,8 @@ const wr_metric: AboutEntry = {
         hintZhHant: "排名 + WR 歷史"
     },
     { value: 'EVENTS_WITH_AO5', labelZh: '覆盖项目', labelEn: 'Event scope', hintZh: '只看正式 ao5 项目(BLD/MBLD/FMC 除外)', hintEn: 'Official ao5 events only (excl. BLD / MBLD / FMC)',
-        labelZhHant: "覆蓋專案",
-        hintZhHant: "只看正式 ao5 專案(BLD/MBLD/FMC 除外)"
+        labelZhHant: "覆蓋項目",
+        hintZhHant: "只看正式 ao5 項目(BLD/MBLD/FMC 除外)"
     },
   ],
   sourceZh: [
@@ -353,8 +353,8 @@ for (const def of METRIC_DEFS) {
       titleEn: 'Rank: per-event top 10 + WR history',
       bodyZh: '基类对每个子类输出双视图:Ranking(每人最佳指标值,项目 Top 10)和 History(按时间扫描严格刷新当前最小值的事件序列)。WR 历史走 `filterWrHistory(strict=true)`。',
       bodyEn: 'Base class emits two panels per child: Ranking (per-person best metric, top 10 by event) and History (chronological scan keeping strict improvements). WR history uses `filterWrHistory(strict=true)`.',
-        titleZhHant: "排名:每專案 Top 10 + WR 歷史",
-        bodyZhHant: "基類對每個子類輸出雙檢視:Ranking(每人最佳指標值,專案 Top 10)和 History(按時間掃描嚴格重新整理當前最小值的事件序列)。WR 歷史走 `filterWrHistory(strict=true)`。"
+        titleZhHant: "排名:每項目 Top 10 + WR 歷史",
+        bodyZhHant: "基類對每個子類輸出雙檢視:Ranking(每人最佳指標值,項目 Top 10)和 History(按時間掃描嚴格重新整理當前最小值的事件序列)。WR 歷史走 `filterWrHistory(strict=true)`。"
     },
     {
       titleZh: '聚合层拼成 MetricPanel[]',
@@ -418,7 +418,7 @@ for (const def of METRIC_DEFS) {
     },
     { id: 'wr_metric', toStat: true, titleZh: '直接打开 Metric 总表', titleEn: 'Jump to Metric explorer', hintZh: '13 个指标 × 项目下拉', hintEn: '13 metrics × event dropdown',
         titleZhHant: "直接開啟 Metric 總表",
-        hintZhHant: "13 個指標 × 專案下拉"
+        hintZhHant: "13 個指標 × 項目下拉"
     },
   ],
     titleZhHant: "指標 (Metric)",
@@ -554,7 +554,7 @@ ORDER BY competition.start_date;`,
     },
     { id: 'wr_dominance', toStat: true, titleZh: '直接打开屠榜表', titleEn: 'Jump to Dominance table', hintZh: '看每项目当前 #1 屠了多少', hintEn: 'See how deep each event\'s #1 dominates',
         titleZhHant: "直接開啟屠榜表",
-        hintZhHant: "看每專案當前 #1 屠了多少"
+        hintZhHant: "看每項目當前 #1 屠了多少"
     },
   ],
     badgeZhHant: "世界紀錄"
@@ -642,7 +642,7 @@ ORDER BY competition.start_date, result.id;`,
       titleEn: 'Ranking: top 10 fastest bestNonPr',
       bodyZh: '每人保留**最快的 non-PR**;按值升序排,每项目 top 10 输出 [rank, person, time, country, date, comp]。',
       bodyEn: 'Keep each person\'s single fastest non-PR; sort ascending, take top 10 per event, output [rank, person, time, country, date, comp].',
-        bodyZhHant: "每人保留**最快的 non-PR**;按值升序排,每專案 top 10 輸出 [rank, person, time, country, date, comp]。"
+        bodyZhHant: "每人保留**最快的 non-PR**;按值升序排,每項目 top 10 輸出 [rank, person, time, country, date, comp]。"
     },
     {
       titleZh: '历史:wrBest 演化 → 倒序展示',
@@ -691,7 +691,7 @@ ORDER BY competition.start_date, result.id;`,
     },
     { id: 'wr_non_pr', toStat: true, titleZh: '直接打开 Non-PR 表', titleEn: 'Jump to Non-PR table', hintZh: '看哪些项目出过这种事', hintEn: 'See which events have seen this',
         titleZhHant: "直接開啟 Non-PR 表",
-        hintZhHant: "看哪些專案出過這種事"
+        hintZhHant: "看哪些項目出過這種事"
     },
   ],
     titleZhHant: "非 PR 的紀錄",
@@ -761,7 +761,7 @@ QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id, event_id
       titleEn: 'Build tmp_first_comp index',
       bodyZh: '每选手每项目的最早 comp 日期 → 临时表;加 (person, event, date) 索引,后面两组 SQL 都靠它做 join 谓词。',
       bodyEn: 'For each (person, event), compute earliest comp date → temp table; add (person, event, date) index. Both downstream SQLs join on this.',
-        bodyZhHant: "每選手每專案的最早 comp 日期 → 臨時表;加 (person, event, date) 索引,後面兩組 SQL 都靠它做 join 謂詞。"
+        bodyZhHant: "每選手每項目的最早 comp 日期 → 臨時表;加 (person, event, date) 索引,後面兩組 SQL 都靠它做 join 謂詞。"
     },
     {
       titleZh: '1st-solve:取首场首轮第 1 attempt',
@@ -784,8 +784,8 @@ QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id, event_id
       titleEn: 'Ranking: top 10 per event',
       bodyZh: '每项目按 first_result 升序前 10。展示 single 时附 5 次 attempt 明细;average 类似但不展开。',
       bodyEn: 'Top 10 per event ascending by first_result. Single rows include the 5-attempt breakdown; average rows omit it.',
-        titleZhHant: "排名:專案內 Top 10",
-        bodyZhHant: "每專案按 first_result 升序前 10。展示 single 時附 5 次 attempt 明細;average 類似但不展開。"
+        titleZhHant: "排名:項目內 Top 10",
+        bodyZhHant: "每項目按 first_result 升序前 10。展示 single 時附 5 次 attempt 明細;average 類似但不展開。"
     },
     {
       titleZh: 'WR 历史:严格递减扫描',
@@ -852,7 +852,7 @@ const average_of: AboutEntry = {
     },
     { value: 'top 15~2000', labelZh: '候选门槛', labelEn: 'Candidate top-N', hintZh: '按项目变化(333 top 15, 333bf top 2000)', hintEn: 'Varies by event (333: 15; 333bf: 2000)',
         labelZhHant: "候選門檻",
-        hintZhHant: "按專案變化(333 top 15, 333bf top 2000)"
+        hintZhHant: "按項目變化(333 top 15, 333bf top 2000)"
     },
     { value: '5%', labelZh: '裁剪比例', labelEn: 'Trim ratio', hintZh: '每端 ceil(N × 5%) 个,共 ~10%', hintEn: 'ceil(N × 5%) per side, ~10% total',
         hintZhHant: "每端 ceil(N × 5%) 個,共 ~10%"
@@ -897,8 +897,8 @@ ORDER BY competition.start_date, round_type.rank;`,
       titleEn: 'Group by (event, person), flatten attempts',
       bodyZh: '在每个项目下,每选手所有 round 按 `(start_date, round_type.rank)` 升序;每轮 attempts 字符串 split 后逐个 push 到 `solves[]` — DNF 标记为 `Infinity`(裁剪后留在尾巴),`0` 跳过(未提交)。',
       bodyEn: 'Within each event, each cuber\'s rounds sort ascending by `(start_date, round_type.rank)`; each round\'s attempts split and stream into `solves[]` — DNF → `Infinity` (gets trimmed off if possible), `0` skipped (not-attempted).',
-        titleZhHant: "按 (專案, 選手) 分組拉直 attempt",
-        bodyZhHant: "在每個專案下,每選手所有 round 按 `(start_date, round_type.rank)` 升序;每輪 attempts 字串 split 後逐個 push 到 `solves[]` — DNF 標記為 `Infinity`(裁剪後留在尾巴),`0` 跳過(未提交)。"
+        titleZhHant: "按 (項目, 選手) 分組拉直 attempt",
+        bodyZhHant: "在每個項目下,每選手所有 round 按 `(start_date, round_type.rank)` 升序;每輪 attempts 字串 split 後逐個 push 到 `solves[]` — DNF 標記為 `Infinity`(裁剪後留在尾巴),`0` 跳過(未提交)。"
     },
     {
       titleZh: '滑动窗口 + WCA 裁剪均值',
@@ -923,7 +923,7 @@ ORDER BY competition.start_date, round_type.rank;`,
       bodyEn: 'Top 10 per event by best AoN ascending. WR History merges everyone\'s pbHistory, sorts by `(endDate, value)`, keeps strict improvements only, reverses for newest-first.',
       highlight: true,
         titleZhHant: "排名 + WR 歷史輸出",
-        bodyZhHant: "每專案 top 10 按 best AoN 升序;WR History 把所有人的 pbHistory 合併按 `(endDate, value)` 升序掃,只留嚴格重新整理當前最小的 — 最後倒序展示。"
+        bodyZhHant: "每項目 top 10 按 best AoN 升序;WR History 把所有人的 pbHistory 合併按 `(endDate, value)` 升序掃,只留嚴格重新整理當前最小的 — 最後倒序展示。"
     },
   ],
   formulae: [

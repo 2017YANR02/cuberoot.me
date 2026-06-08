@@ -254,7 +254,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
         <Link href="/wca/prediction" className="pred-back" aria-label="back">
           <ArrowLeft size={16} />
           <span>{tr({ zh: '返回全项目', en: 'Back to All Events',
-              zhHant: "返回全專案"
+              zhHant: "返回全項目"
         })}</span>
         </Link>
         <button className="pred-toc-btn" onClick={() => setTocOpen(!tocOpen)}>

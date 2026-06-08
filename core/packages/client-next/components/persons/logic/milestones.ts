@@ -285,7 +285,7 @@ export function buildMilestones(
         zh: '大满贯 — 完成全部 17 个现役项目',
         en: 'Grand Slam — completed all 17 active events',
         tags: [{ kind: 'comp', label: compName(latest.compId) }],
-          zhHant: "大滿貫 — 完成全部 17 個現役專案"
+          zhHant: "大滿貫 — 完成全部 17 個現役項目"
     });
     }
   }

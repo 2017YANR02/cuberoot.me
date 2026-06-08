@@ -60,32 +60,32 @@ interface FunStat {
 const FUN_STATS: FunStat[] = [
   // A 各地综合排行
   { id: 'country-sor-single', family: 'A', zh: '各地全项目单次综合排行榜', en: 'Sum of Country Ranks (Single)', endpoint: '/v1/wca/fun/country-sor', shape: 'countrySor', fixed: { type: 'single' }, eventMode: 'multi',
-      zhHant: "各地全專案單次綜合排行榜"
+      zhHant: "各地全項目單次綜合排行榜"
 },
   { id: 'country-sor-average', family: 'A', zh: '各地全项目平均综合排行榜', en: 'Sum of Country Ranks (Average)', endpoint: '/v1/wca/fun/country-sor', shape: 'countrySor', fixed: { type: 'average' }, eventMode: 'multi',
-      zhHant: "各地全專案平均綜合排行榜"
+      zhHant: "各地全項目平均綜合排行榜"
 },
   // B 奖牌 & 名次
   { id: 'medals-all', family: 'B', zh: '全项目累计奖牌榜', en: 'Medal Collection (All Events)', endpoint: '/v1/wca/fun/medals', shape: 'medals', fixed: { type: 'all' },
-      zhHant: "全專案累計獎牌榜"
+      zhHant: "全項目累計獎牌榜"
 },
   { id: 'medals-event', family: 'B', zh: '分项目累计奖牌榜', en: 'Medal Collection (by Event)', endpoint: '/v1/wca/fun/medals', shape: 'medals', fixed: { type: 'event' }, eventMode: 'select',
-      zhHant: "分專案累計獎牌榜"
+      zhHant: "分項目累計獎牌榜"
 },
   { id: 'most-second-all', family: 'B', zh: '全项目第二名次数', en: 'Most 2nd Places (All Events)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '2', type: 'all' }, countLabelZh: '第二名次数', countLabelEn: '2nd Places',
-      zhHant: "全專案第二名次數",
+      zhHant: "全項目第二名次數",
       countLabelZhHant: "第二名次數"
 },
   { id: 'most-second-event', family: 'B', zh: '分项目第二名次数', en: 'Most 2nd Places (by Event)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '2', type: 'event' }, eventMode: 'select', countLabelZh: '第二名次数', countLabelEn: '2nd Places',
-      zhHant: "分專案第二名次數",
+      zhHant: "分項目第二名次數",
       countLabelZhHant: "第二名次數"
 },
   { id: 'most-fourth-all', family: 'B', zh: '全项目第四名次数', en: 'Most 4th Places (All Events)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '4', type: 'all' }, countLabelZh: '第四名次数', countLabelEn: '4th Places',
-      zhHant: "全專案第四名次數",
+      zhHant: "全項目第四名次數",
       countLabelZhHant: "第四名次數"
 },
   { id: 'most-fourth-event', family: 'B', zh: '分项目第四名次数', en: 'Most 4th Places (by Event)', endpoint: '/v1/wca/fun/placements', shape: 'countPerson', fixed: { pos: '4', type: 'event' }, eventMode: 'select', countLabelZh: '第四名次数', countLabelEn: '4th Places',
-      zhHant: "分專案第四名次數",
+      zhHant: "分項目第四名次數",
       countLabelZhHant: "第四名次數"
 },
   { id: 'best-podiums', family: 'B', zh: '赛事领奖台成绩榜', en: 'Best Podiums', endpoint: '/v1/wca/fun/best-podiums', shape: 'bestPodiums', eventMode: 'select',
@@ -486,7 +486,7 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
       cols = [
         { h: t('选手', 'Cuber', "選手"), cell: personCell },
         { h: t('天数', 'Days', "天數"), cell: r => r.standingDays, cls: 'fun-cell-strong' },
-        { h: t('项目', 'Event', "專案"), cell: r => <span className="fun-cell-evt"><EventIcon event={r.eventId} className="fun-evt-icon" /></span> },
+        { h: t('项目', 'Event', "項目"), cell: r => <span className="fun-cell-evt"><EventIcon event={r.eventId} className="fun-evt-icon" /></span> },
         { h: t('类型', 'Type', "型別"), cell: r => r.type === 'average' ? t('平均', 'Average') : t('单次', 'Single', "單次") },
         { h: t('成绩', 'Result', "成績"), cell: r => formatWcaResult(r.value, r.eventId, r.type) },
         { h: t('纪录', 'Record', "紀錄"), cell: r => <RecordBadge record={r.record} variant="inline" /> },

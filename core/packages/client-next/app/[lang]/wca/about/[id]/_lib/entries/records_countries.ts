@@ -72,7 +72,7 @@ GROUP BY result.country_id`,
       bodyZh: '`SUM(IF(pos = 1, 1, 0))` 数金牌,同理银 / 铜。一个领奖台 = 3 行 (3 个项目分别拿牌)。',
       bodyEn: '`SUM(IF(pos = 1, 1, 0))` for gold, similarly silver / bronze. One podium across an event = one row per medalist.',
         titleZhHant: "三種獎牌分別 SUM",
-        bodyZhHant: "`SUM(IF(pos = 1, 1, 0))` 數金牌,同理銀 / 銅。一個領獎臺 = 3 行 (3 個專案分別拿牌)。"
+        bodyZhHant: "`SUM(IF(pos = 1, 1, 0))` 數金牌,同理銀 / 銅。一個領獎臺 = 3 行 (3 個項目分別拿牌)。"
     },
     {
       titleZh: 'join `countries` 取国名',
@@ -180,7 +180,7 @@ ORDER BY gold DESC, silver DESC, bronze DESC LIMIT 100`,
       titleEn: 'Aggregate by person',
       bodyZh: '每个选手一行;同一场比赛多个项目奖牌都计入。',
       bodyEn: 'One row per cuber; multiple medals from one comp (different events) all stack.',
-        bodyZhHant: "每個選手一行;同一場比賽多個專案獎牌都計入。"
+        bodyZhHant: "每個選手一行;同一場比賽多個項目獎牌都計入。"
     },
     {
       titleZh: 'join `persons` 取主身份',
@@ -247,14 +247,14 @@ const current_world_records_by_country: AboutEntry = {
   stats: [
     { value: 'single + average', labelZh: '两类纪录', labelEn: 'Two record types', hintZh: '每个项目最多 2 个当前 WR', hintEn: 'Up to 2 active WRs per event',
         labelZhHant: "兩類紀錄",
-        hintZhHant: "每個專案最多 2 個當前 WR"
+        hintZhHant: "每個項目最多 2 個當前 WR"
     },
     { value: '`e.rank < 900`', labelZh: '只看现役项目', labelEn: 'Active events only', hintZh: '排除已停办项目', hintEn: 'Discontinued events excluded',
-        labelZhHant: "只看現役專案",
-        hintZhHant: "排除已停辦專案"
+        labelZhHant: "只看現役項目",
+        hintZhHant: "排除已停辦項目"
     },
     { value: '`MIN(best/average)`', labelZh: 'WR 判定', labelEn: 'WR check', hintZh: '该项目全局最小 = 当前 WR', hintEn: 'Global min per event = current WR',
-        hintZhHant: "該專案全域性最小 = 當前 WR"
+        hintZhHant: "該項目全域性最小 = 當前 WR"
     },
     { value: 'GROUP_CONCAT', labelZh: '同国合并', labelEn: 'Per-country join', hintZh: '该国 WR 持有者列表', hintEn: 'Country\'s WR holders rendered as list',
         labelZhHant: "同國合併",
@@ -297,7 +297,7 @@ JOIN events e ON e.id = ps.event_id AND e.rank < 900;`,
       bodyZh: '同 `results` 表 `GROUP BY event_id` + `MIN(best)` —— 每项目一个 WR 值。',
       bodyEn: 'Same `results` table, `GROUP BY event_id` + `MIN(best)` — one WR value per event.',
         titleZhHant: "算全域性 WR",
-        bodyZhHant: "同 `results` 表 `GROUP BY event_id` + `MIN(best)` —— 每專案一個 WR 值。"
+        bodyZhHant: "同 `results` 表 `GROUP BY event_id` + `MIN(best)` —— 每項目一個 WR 值。"
     },
     {
       titleZh: '找等值持有者',
@@ -346,7 +346,7 @@ JOIN events e ON e.id = ps.event_id AND e.rank < 900;`,
     },
     { id: 'wr_current', titleZh: '当前 WR 一览', titleEn: 'Current WR snapshot', hintZh: '逐项目列出当前 WR 值', hintEn: 'Per-event WR value listing',
         titleZhHant: "當前 WR 一覽",
-        hintZhHant: "逐專案列出當前 WR 值"
+        hintZhHant: "逐項目列出當前 WR 值"
     },
     { id: 'current_world_records_by_country', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '国家 + 持有人', hintEn: 'Country + holders',
         titleZhHant: "開啟實時榜單",
@@ -573,7 +573,7 @@ WHERE rn = 1 AND record = 'WR'`,
         hintZhHant: "一個 WR 不稀奇,首條就是才稀奇"
     },
     { id: 'records_in_most_events', titleZh: '在最多项目破纪录', titleEn: 'Records in most events', hintZh: '广度对比', hintEn: 'Breadth counterpart',
-        titleZhHant: "在最多專案破紀錄",
+        titleZhHant: "在最多項目破紀錄",
         hintZhHant: "廣度對比"
     },
     { id: 'longest_standing_records', titleZh: '最长保持纪录', titleEn: 'Longest-standing records', hintZh: '纪录之后的生命周期', hintEn: 'What happens to a record afterwards',
@@ -612,7 +612,7 @@ const longest_standing_records: AboutEntry = {
         hintZhHant: "降序天數前 10"
     },
     { value: 'OFFICIAL_EVENTS', labelZh: '只看现役项目', labelEn: 'Active events only', hintZh: '排除已停办', hintEn: 'Discontinued excluded',
-        labelZhHant: "只看現役專案",
+        labelZhHant: "只看現役項目",
         hintZhHant: "排除已停辦"
     },
     { value: 'today / 打破日', labelZh: '截止时间', labelEn: 'End boundary', hintZh: '尚未被破 = 今天', hintEn: 'Still active → today',
@@ -655,7 +655,7 @@ WHERE regional_single_record IN ('AfR','AsR','ER','NAR','OcR','SAR','WR')
       titleEn: 'Bucket by (region, event, type)',
       bodyZh: '`regionRecords` 表:每个区域看哪些 code (e.g. Asia 看 `AsR + WR`,因为 WR 持有者必然在亚洲打出来才同时进 AsR)。',
       bodyEn: 'A `regionRecords` map: each region accepts which codes (e.g. Asia includes `AsR + WR`, since a WR set in Asia also counts as AsR).',
-        titleZhHant: "按 (區域, 專案, 型別) 分桶",
+        titleZhHant: "按 (區域, 項目, 型別) 分桶",
         bodyZhHant: "`regionRecords` 表:每個區域看哪些 code (e.g. Asia 看 `AsR + WR`,因為 WR 持有者必然在亞洲打出來才同時進 AsR)。"
     },
     {
@@ -747,7 +747,7 @@ const longest_streak_of_world_records: AboutEntry = {
     },
     { value: '停办项目', labelZh: '特殊处理', labelEn: 'Special case', hintZh: '末次 WR 截至项目最后一场', hintEn: 'Endpoint = event\'s final comp',
         labelZhHant: "特殊處理",
-        hintZhHant: "末次 WR 截至專案最後一場"
+        hintZhHant: "末次 WR 截至項目最後一場"
     },
   ],
   sourceZh: [
@@ -776,15 +776,15 @@ WHERE regional_single_record = 'WR'
       titleEn: 'Pull every WR row',
       bodyZh: 'single + average WR 都包括,行里同时带项目 + 选手 + 日期 + 比赛。',
       bodyEn: 'Includes both single + average WRs, each row carrying event + person + date + comp.',
-        bodyZhHant: "single + average WR 都包括,行裡同時帶專案 + 選手 + 日期 + 比賽。"
+        bodyZhHant: "single + average WR 都包括,行裡同時帶項目 + 選手 + 日期 + 比賽。"
     },
     {
       titleZh: '按 (项目, 类型) 拆桶',
       titleEn: 'Split by (event, type)',
       bodyZh: 'streak 不跨项目也不跨 single↔average:3x3 single 和 3x3 average 各自独立 streak。',
       bodyEn: 'Streaks don\'t cross events or cross single↔average: 3x3 single and 3x3 average track independently.',
-        titleZhHant: "按 (專案, 型別) 拆桶",
-        bodyZhHant: "streak 不跨專案也不跨 single↔average:3x3 single 和 3x3 average 各自獨立 streak。"
+        titleZhHant: "按 (項目, 型別) 拆桶",
+        bodyZhHant: "streak 不跨項目也不跨 single↔average:3x3 single 和 3x3 average 各自獨立 streak。"
     },
     {
       titleZh: '排序 + 顺序扫',
@@ -809,7 +809,7 @@ WHERE regional_single_record = 'WR'
       bodyEn: 'years = (end − start) / 365.25. Only `count > 1` qualifies; sorted desc; discontinued events apply the special endpoint.',
       highlight: true,
         titleZhHant: "按 years 降序輸出",
-        bodyZhHant: "years = (end − start) / 365.25。`count > 1` 才入榜,降序排,加上停辦專案的特殊截止。"
+        bodyZhHant: "years = (end − start) / 365.25。`count > 1` 才入榜,降序排,加上停辦項目的特殊截止。"
     },
   ],
   edgesZh: [
@@ -839,10 +839,10 @@ WHERE regional_single_record = 'WR'
     },
     { id: 'longest_streak_of_world_records', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '项目 × 类型完整列表', hintEn: 'Full event × type table',
         titleZhHant: "開啟實時榜單",
-        hintZhHant: "專案 × 型別完整列表"
+        hintZhHant: "項目 × 型別完整列表"
     },
   ],
-    titleZhHant: "同一專案同一型別最長連續世界紀錄",
+    titleZhHant: "同一項目同一型別最長連續世界紀錄",
     badgeZhHant: "連擊"
 };
 
@@ -979,7 +979,7 @@ const potentially_seen_world_records: AboutEntry = {
     },
     { value: 'DISTINCT', labelZh: '人 × 比赛去重', labelEn: 'Person × comp distinct', hintZh: '同场多项目不重复', hintEn: 'Multi-event registration deduped',
         labelZhHant: "人 × 比賽去重",
-        hintZhHant: "同場多專案不重複"
+        hintZhHant: "同場多項目不重複"
     },
     { value: 'WR/比赛 求和', labelZh: '汇总方式', labelEn: 'Aggregation', hintZh: '到场 WR 数对人累加', hintEn: 'WRs-per-comp summed per person',
         labelZhHant: "彙總方式",
@@ -1031,7 +1031,7 @@ GROUP BY person_id LIMIT 100`,
       bodyZh: '`SELECT DISTINCT person_id, competition_id FROM results` —— 一人在一场算 1 次,不管打几个项目。',
       bodyEn: '`SELECT DISTINCT person_id, competition_id FROM results` — one cuber per comp = 1, regardless of how many events they entered.',
         titleZhHant: "取每人參加比賽集合",
-        bodyZhHant: "`SELECT DISTINCT person_id, competition_id FROM results` —— 一人在一場算 1 次,不管打幾個專案。"
+        bodyZhHant: "`SELECT DISTINCT person_id, competition_id FROM results` —— 一人在一場算 1 次,不管打幾個項目。"
     },
     {
       titleZh: 'join + SUM 累加',
@@ -1103,8 +1103,8 @@ const records_in_most_events: AboutEntry = {
         hintZhHant: "過去 WR 即使現已超越也算"
     },
     { value: '`event.rank` 排序', labelZh: '项目列展示', labelEn: 'Events list order', hintZh: 'WCA 官方项目顺序', hintEn: 'Official WCA event order',
-        labelZhHant: "專案列展示",
-        hintZhHant: "WCA 官方專案順序"
+        labelZhHant: "項目列展示",
+        hintZhHant: "WCA 官方項目順序"
     },
   ],
   sourceZh: [
@@ -1149,7 +1149,7 @@ ORDER BY event.rank`,
       bodyZh: '`byPerson: Map<person, Set<event>>`;一个项目无论破多少次只算 1。',
       bodyEn: '`byPerson: Map<person, Set<event>>`; an event counted once no matter how many times broken.',
         titleZhHant: "按選手 Set<event> 去重",
-        bodyZhHant: "`byPerson: Map<person, Set<event>>`;一個專案無論破多少次只算 1。"
+        bodyZhHant: "`byPerson: Map<person, Set<event>>`;一個項目無論破多少次只算 1。"
     },
     {
       titleZh: '按 events.size 降序,Top 20',
@@ -1157,7 +1157,7 @@ ORDER BY event.rank`,
       bodyZh: '`results.size` 即"破纪录涉及项目数",降序取 Top 20。',
       bodyEn: '`results.size` = "number of events with records"; sort desc and take Top 20.',
       highlight: true,
-        bodyZhHant: "`results.size` 即\"破紀錄涉及專案數\",降序取 Top 20。"
+        bodyZhHant: "`results.size` 即\"破紀錄涉及項目數\",降序取 Top 20。"
     },
   ],
   edgesZh: [
@@ -1177,7 +1177,7 @@ ORDER BY event.rank`,
     },
     { id: 'first_r_is_wr', titleZh: '首条即 WR', titleEn: 'First record is WR', hintZh: '入门即 WR vs 多项目均刷', hintEn: 'Debut WR vs many-event sweep',
         titleZhHant: "首條即 WR",
-        hintZhHant: "入門即 WR vs 多專案均刷"
+        hintZhHant: "入門即 WR vs 多項目均刷"
     },
     { id: 'longest_standing_records', titleZh: '最长保持纪录', titleEn: 'Longest-standing records', hintZh: '广度 vs 单条寿命', hintEn: 'Breadth vs single-record longevity',
         titleZhHant: "最長保持紀錄",
@@ -1188,7 +1188,7 @@ ORDER BY event.rank`,
         hintZhHant: "3 級別 Top 20"
     },
   ],
-    titleZhHant: "在最多專案中打破紀錄",
+    titleZhHant: "在最多項目中打破紀錄",
     badgeZhHant: "廣度"
 };
 
@@ -1216,7 +1216,7 @@ const winned_week_count: AboutEntry = {
         labelZhHant: "指標"
     },
     { value: '20', labelZh: '每项目条数', labelEn: 'Per-event rows', hintZh: 'Top 20', hintEn: 'Top 20',
-        labelZhHant: "每專案條數"
+        labelZhHant: "每項目條數"
     },
     { value: '并列计数', labelZh: '同周多人', labelEn: 'Co-winners', hintZh: '`DISTINCT (event,best,week)`', hintEn: '`DISTINCT (event,best,week)`' },
   ],
@@ -1257,8 +1257,8 @@ FROM ... GROUP BY event_id, person_id`,
       titleEn: 'Compute per-week per-event MIN(best)',
       bodyZh: '`GROUP BY event_id, week_start_date`,得"该周该项目最快单次"。',
       bodyEn: '`GROUP BY event_id, week_start_date`, yielding "fastest single per event per week".',
-        titleZhHant: "算每週每專案 MIN(best)",
-        bodyZhHant: "`GROUP BY event_id, week_start_date`,得\"該周該專案最快單次\"。"
+        titleZhHant: "算每週每項目 MIN(best)",
+        bodyZhHant: "`GROUP BY event_id, week_start_date`,得\"該周該項目最快單次\"。"
     },
     {
       titleZh: 'join 回 results 找持有者',
@@ -1281,7 +1281,7 @@ FROM ... GROUP BY event_id, person_id`,
       bodyZh: 'JS 里按 `event_id` 桶分,每桶 winned_weeks 降序前 20。',
       bodyEn: 'JS buckets by `event_id`, each bucket sorted desc by winned_weeks, Top 20.',
       highlight: true,
-        titleZhHant: "按專案降序 Top 20",
+        titleZhHant: "按項目降序 Top 20",
         bodyZhHant: "JS 裡按 `event_id` 桶分,每桶 winned_weeks 降序前 20。"
     },
   ],
@@ -1310,7 +1310,7 @@ FROM ... GROUP BY event_id, person_id`,
     },
     { id: 'winned_week_count', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '项目切换 + Top 20', hintEn: 'Event picker + Top 20',
         titleZhHant: "開啟實時榜單",
-        hintZhHant: "專案切換 + Top 20"
+        hintZhHant: "項目切換 + Top 20"
     },
   ],
     titleZhHant: "獲勝週數"
@@ -1568,7 +1568,7 @@ const world_championship_records: AboutEntry = {
         hintZhHant: "不簡單 MIN,要 isComplete()"
     },
     { value: 'EVENTS_ENTRIES', labelZh: '官方项目顺序', labelEn: 'Official event order', hintZh: 'WCA event sort', hintEn: 'WCA event sort',
-        labelZhHant: "官方專案順序"
+        labelZhHant: "官方項目順序"
     },
     { value: '`championship_type = world`', labelZh: '世锦赛过滤', labelEn: 'Worlds filter', hintZh: '同 podium 系列', hintEn: 'Same as podium siblings',
         labelZhHant: "世錦賽過濾"
@@ -1607,7 +1607,7 @@ WHERE championship_type = 'world'`,
       titleEn: 'Bucket by (event, type)',
       bodyZh: '外层循环 `[Single, Average]`,内层 `Map<event, {result, row}>` 追踪当前最佳。',
       bodyEn: 'Outer loop on `[Single, Average]`, inner `Map<event, {result, row}>` tracks current best.',
-        titleZhHant: "按 (專案, 型別) 桶分",
+        titleZhHant: "按 (項目, 型別) 桶分",
         bodyZhHant: "外層迴圈 `[Single, Average]`,內層 `Map<event, {result, row}>` 追蹤當前最佳。"
     },
     {
@@ -1624,7 +1624,7 @@ WHERE championship_type = 'world'`,
       bodyZh: '按 WCA 官方项目顺序 (3x3 → 2x2 → 4x4 → ...) 排序输出 —— 每项目 1 行。',
       bodyEn: 'Output in WCA official event order (3x3 → 2x2 → 4x4 → ...) — one row per event.',
         titleZhHant: "按 EVENTS_ENTRIES 順序輸出",
-        bodyZhHant: "按 WCA 官方專案順序 (3x3 → 2x2 → 4x4 → ...) 排序輸出 —— 每專案 1 行。"
+        bodyZhHant: "按 WCA 官方項目順序 (3x3 → 2x2 → 4x4 → ...) 排序輸出 —— 每項目 1 行。"
     },
     {
       titleZh: '过滤 `isComplete()`',
@@ -1633,7 +1633,7 @@ WHERE championship_type = 'world'`,
       bodyEn: '`!entry.result.isComplete()` (i.e. DNF) — events where all Worlds-history averages are DNF (rare) get skipped.',
       highlight: true,
         titleZhHant: "過濾 `isComplete()`",
-        bodyZhHant: "`!entry.result.isComplete()` (即 DNF) 的專案不輸出 —— 譬如某專案所有 Worlds 歷史 average 都 DNF (罕見),那個專案不上表。"
+        bodyZhHant: "`!entry.result.isComplete()` (即 DNF) 的項目不輸出 —— 譬如某項目所有 Worlds 歷史 average 都 DNF (罕見),那個項目不上表。"
     },
   ],
   edgesZh: [
@@ -1853,7 +1853,7 @@ ORDER BY wrs_count DESC, person.name`,
       titleEn: 'Aggregate per person',
       bodyZh: '每人一行,累计所有项目所有时间。',
       bodyEn: 'One row per cuber, accumulating across all events and all time.',
-        bodyZhHant: "每人一行,累計所有專案所有時間。"
+        bodyZhHant: "每人一行,累計所有項目所有時間。"
     },
     {
       titleZh: '`HAVING wrs_count > 0`',
@@ -1889,8 +1889,8 @@ ORDER BY wrs_count DESC, person.name`,
         hintZhHant: "聚合到國家"
     },
     { id: 'records_in_most_events', titleZh: '项目广度', titleEn: 'Records breadth', hintZh: '次数 vs 项目数', hintEn: 'Count vs distinct events',
-        titleZhHant: "專案廣度",
-        hintZhHant: "次數 vs 專案數"
+        titleZhHant: "項目廣度",
+        hintZhHant: "次數 vs 項目數"
     },
     { id: 'longest_streak_of_world_records', titleZh: '连续 WR 链', titleEn: 'WR streak', hintZh: 'WR 是否连续', hintEn: 'Whether WRs are consecutive',
         titleZhHant: "連續 WR 鏈",

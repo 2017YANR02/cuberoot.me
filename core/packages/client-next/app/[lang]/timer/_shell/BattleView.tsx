@@ -881,7 +881,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {store.mode === 'solo' && (
           <div className="settings-group">
             <div className="settings-label" data-i18n="puzzle">{tr({ zh: '项目', en: 'PUZZLE',
-                zhHant: "專案"
+                zhHant: "項目"
             })}</div>
             <div className="puzzle-grid">
               {PUZZLES.map(puz => (

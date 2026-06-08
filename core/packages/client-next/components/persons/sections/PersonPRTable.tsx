@@ -98,7 +98,7 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
         <table className="wp-pr-table">
           <thead>
             <tr>
-              <th rowSpan={2} className="wp-th-event">{t('项目', 'Event', "專案")}</th>
+              <th rowSpan={2} className="wp-th-event">{t('项目', 'Event', "項目")}</th>
               <th colSpan={4} className="wp-th-group">{t('单次', 'Single', "單次")}</th>
               <th colSpan={4} className="wp-th-group">{t('平均', 'Average')}</th>
               {showPodium && <th colSpan={3} className="wp-th-group wp-th-podium">{t('领奖台', 'Podium', "領獎臺")}</th>}

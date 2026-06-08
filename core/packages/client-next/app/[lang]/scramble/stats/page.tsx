@@ -388,7 +388,7 @@ export default function ScrambleStatsPage() {
   const sourceText = (() => {
     if (scrambleSet === 'wca') {
       const n = currentSet?.sample_count.toLocaleString() ?? '?';
-      return i18n.language === 'zh-Hant' ? (`來源: WCA 歷史 ${n} 條三階打亂,覆蓋三階速擰 / 單手 / 盲擰 / 多盲 / 最少步 / 腳擰 6 個專案;每條按 6 種底色方向(黃 / 紅 / 白 / 橙 / 藍 / 綠)求階段最優步數的分佈。`) : (isZh
+      return i18n.language === 'zh-Hant' ? (`來源: WCA 歷史 ${n} 條三階打亂,覆蓋三階速擰 / 單手 / 盲擰 / 多盲 / 最少步 / 腳擰 6 個項目;每條按 6 種底色方向(黃 / 紅 / 白 / 橙 / 藍 / 綠)求階段最優步數的分佈。`) : (isZh
               ? `来源: WCA 历史 ${n} 条三阶打乱,覆盖三阶速拧 / 单手 / 盲拧 / 多盲 / 最少步 / 脚拧 6 个项目;每条按 6 种底色方向(黄 / 红 / 白 / 橙 / 蓝 / 绿)求阶段最优步数的分布。`
               : `Source: ${n} WCA historical 3×3 scrambles from 6 events (3×3, OH, BLD, Multi-BLD, FMC, Feet); each analyzed across 6 bottom-color orientations (Y/R/W/O/B/G). Distribution of stage-optimal move counts.`);
     }

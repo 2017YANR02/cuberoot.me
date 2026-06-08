@@ -499,7 +499,7 @@ export default function Top10HistoryPage({
                 onClick={() => hasAverage && setMetric('average')}
                 disabled={!hasAverage}
                 title={!hasAverage ? (tr({ zh: '该项目没有平均成绩', en: 'No average for this event',
-                    zhHant: "該專案沒有平均成績"
+                    zhHant: "該項目沒有平均成績"
                 })) : undefined}
               >{tr({ zh: '平均', en: 'Average' })}</button>
             </div>

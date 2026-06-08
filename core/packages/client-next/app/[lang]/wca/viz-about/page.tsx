@@ -69,10 +69,10 @@ export default function VizAboutPage() {
           <Arrow />
           <Step
             step={2}
-            title={t('选项目', 'Pick an event', "選專案")}
+            title={t('选项目', 'Pick an event', "選項目")}
             body={t(
               '项目下拉选择器切换到目标项目。切换时所有已加载选手的成绩一起重新渲染。',
-              'The event dropdown switches the view. All currently-loaded cubers re-render for the new event.', "專案下拉選擇器切換到目標專案。切換時所有已載入選手的成績一起重新渲染。"
+              'The event dropdown switches the view. All currently-loaded cubers re-render for the new event.', "項目下拉選擇器切換到目標項目。切換時所有已載入選手的成績一起重新渲染。"
             )}
           />
           <Arrow />
@@ -100,7 +100,7 @@ export default function VizAboutPage() {
         <p className="va-section-intro">
           {t(
             '成绩通过 WCA API 实时拉取(按选手 + 项目),存在浏览器内存里。没有缓存到服务端 — 每次进页刷新。速度取决于 WCA API 响应时间。',
-            'Results are fetched live from the WCA API (per cuber + event) and kept in browser memory. No server-side caching — refreshes on every page load. Speed depends on WCA API response time.', "成績透過 WCA API 實時拉取(按選手 + 專案),存在瀏覽器記憶體裡。沒有快取到服務端 — 每次進頁重新整理。速度取決於 WCA API 響應時間。"
+            'Results are fetched live from the WCA API (per cuber + event) and kept in browser memory. No server-side caching — refreshes on every page load. Speed depends on WCA API response time.', "成績透過 WCA API 實時拉取(按選手 + 項目),存在瀏覽器記憶體裡。沒有快取到服務端 — 每次進頁重新整理。速度取決於 WCA API 響應時間。"
           )}
         </p>
 

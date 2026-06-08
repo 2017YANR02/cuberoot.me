@@ -86,7 +86,7 @@ export const DEEP: Record<string, DeepBlurb> = {
       {
         zh: '上界 57 来自 Kociemba 的 block-move reduction 估算:先 reduce 到 3×3(中心块还原 + 棱块配对),再用 3×3 算法解。各阶段最坏值之和给出 57 OBTM (Outer Block Turn Metric,允许 Rw / Lw 等宽转作为单步)。两个数之间还有 22 步的鸿沟,十几年没人合拢——4×4 是"最容易研究但最缺成果"的项目。',
         en: 'Upper bound 57 comes from Kociemba\'s block-move reduction estimate: reduce to 3×3 (centres + edge pairing), then solve as 3×3. Sum of per-phase worst cases gives 57 OBTM (Outer Block Turn Metric, where Rw/Lw count as single moves). A 22-move gap has gone un-closed for over a decade — 4×4 is "the most accessible unsolved puzzle, with the least progress".',
-          zhHant: "上界 57 來自 Kociemba 的 block-move reduction 估算:先 reduce 到 3×3(中心塊還原 + 稜塊配對),再用 3×3 演算法解。各階段最壞值之和給出 57 OBTM (Outer Block Turn Metric,允許 Rw / Lw 等寬轉作為單步)。兩個數之間還有 22 步的鴻溝,十幾年沒人合攏——4×4 是\"最容易研究但最缺成果\"的專案。"
+          zhHant: "上界 57 來自 Kociemba 的 block-move reduction 估算:先 reduce 到 3×3(中心塊還原 + 稜塊配對),再用 3×3 演算法解。各階段最壞值之和給出 57 OBTM (Outer Block Turn Metric,允許 Rw / Lw 等寬轉作為單步)。兩個數之間還有 22 步的鴻溝,十幾年沒人合攏——4×4 是\"最容易研究但最缺成果\"的項目。"
     },
     ],
   },
@@ -160,7 +160,7 @@ export const DEEP: Record<string, DeepBlurb> = {
       {
         zh: '魔表是"已经证完了但几乎没人讨论"的项目——它太特殊,以至于很多扭计资料根本不提它。',
         en: "Clock is the rare event whose God's number is fully proved yet almost never discussed — too unlike the cubes, so most cubing literature ignores it.",
-          zhHant: "魔錶是\"已經證完了但幾乎沒人討論\"的專案——它太特殊,以至於很多扭計資料根本不提它。"
+          zhHant: "魔錶是\"已經證完了但幾乎沒人討論\"的項目——它太特殊,以至於很多扭計資料根本不提它。"
     },
     ],
   },
@@ -213,7 +213,7 @@ export const DEEP: Record<string, DeepBlurb> = {
       {
         zh: 'Skewb / Pyraminx / 2×2 三个"小群"项目都恰好是 11 HTM——一个有趣的巧合(或者说,一个反映 ~10⁶-10⁷ 状态空间在 6-9 个生成元下深度尺度的统计现象)。',
         en: 'Skewb / Pyraminx / 2×2 all hit diameter 11 — a curious coincidence (or rather, a statistical artifact of ~10⁶-10⁷ state spaces with 6-9 generators).',
-          zhHant: "Skewb / Pyraminx / 2×2 三個\"小群\"專案都恰好是 11 HTM——一個有趣的巧合(或者說,一個反映 ~10⁶-10⁷ 狀態空間在 6-9 個生成元下深度尺度的統計現象)。"
+          zhHant: "Skewb / Pyraminx / 2×2 三個\"小群\"項目都恰好是 11 HTM——一個有趣的巧合(或者說,一個反映 ~10⁶-10⁷ 狀態空間在 6-9 個生成元下深度尺度的統計現象)。"
     },
     ],
   },

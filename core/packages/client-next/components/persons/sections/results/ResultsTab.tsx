@@ -48,7 +48,7 @@ export default function ResultsTab({ profile, results, comps, reconLookup, isZh 
         <button
           className={`wp-subtab-btn ${sub === 'event' ? 'is-active' : ''}`}
           onClick={() => setSub('event')}
-        >{t('按项目', 'By Event', "按專案")}</button>
+        >{t('按项目', 'By Event', "按項目")}</button>
         <button
           className={`wp-subtab-btn ${sub === 'comp' ? 'is-active' : ''}`}
           onClick={() => setSub('comp')}

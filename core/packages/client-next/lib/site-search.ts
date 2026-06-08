@@ -96,13 +96,13 @@ export const LOOKUP_ITEMS: LookupItem[] = [
       zhHant: "參賽屆別排名"
 },
   { path: '/wca/success-rate',     zh: '项目成功率',   en: 'Success Rate',
-      zhHant: "專案成功率"
+      zhHant: "項目成功率"
 },
   { path: '/wca/all-events-done',  zh: '全项目达成',   en: 'All Events Done',
-      zhHant: "全專案達成"
+      zhHant: "全項目達成"
 },
   { path: '/wca/sum-of-ranks',     zh: '全项目排名',   en: 'Sum of Ranks',
-      zhHant: "全專案排名"
+      zhHant: "全項目排名"
 },
   { path: '/wca/sum-of-ranks', extraQuery: 'hidePodium=1', zh: '全能但无牌', en: 'All-Around · No Podium',
       zhHant: "全能但無牌"

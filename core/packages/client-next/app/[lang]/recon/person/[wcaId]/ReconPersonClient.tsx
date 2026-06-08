@@ -231,7 +231,7 @@ export default function ReconPersonClient() {
                 <thead>
                   <tr>
                     <th className="col-event">{tr({ zh: '项目', en: 'Event',
-                        zhHant: "專案"
+                        zhHant: "項目"
                     })}</th>
                     <th className="col-solver">{tr({ zh: '选手', en: 'Solver',
                         zhHant: "選手"

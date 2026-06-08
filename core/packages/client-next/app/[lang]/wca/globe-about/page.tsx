@@ -58,7 +58,7 @@ export default function GlobeAboutPage() {
         <ul className="gla-list">
           <li>
             <strong>{t('比赛 (Upcoming)', 'Upcoming', "比賽 (Upcoming)")}</strong>
-            {t(' — 显示近期全球 WCA 比赛的聚合点,缩放展开为单场,点击查看日期 / 地点 / 项目。勾选「包含往期」可叠加历史比赛,并用年-月时间范围过滤;右上可切换 色阶 / 热力 / 分国 三种密度风格。', ' — shows clustered upcoming WCA competitions worldwide; zoom in to expand clusters and click for date / location / events. Toggle "Include past" to overlay historical comps with a year-month range filter; the top-right switches density styles: log-scale / heatmap / country choropleth.', " — 顯示近期全球 WCA 比賽的聚合點,縮放展開為單場,點選檢視日期 / 地點 / 專案。勾選「包含往期」可疊加歷史比賽,並用年-月時間範圍過濾;右上可切換 色階 / 熱力 / 分國 三種密度風格。")}
+            {t(' — 显示近期全球 WCA 比赛的聚合点,缩放展开为单场,点击查看日期 / 地点 / 项目。勾选「包含往期」可叠加历史比赛,并用年-月时间范围过滤;右上可切换 色阶 / 热力 / 分国 三种密度风格。', ' — shows clustered upcoming WCA competitions worldwide; zoom in to expand clusters and click for date / location / events. Toggle "Include past" to overlay historical comps with a year-month range filter; the top-right switches density styles: log-scale / heatmap / country choropleth.', " — 顯示近期全球 WCA 比賽的聚合點,縮放展開為單場,點選檢視日期 / 地點 / 項目。勾選「包含往期」可疊加歷史比賽,並用年-月時間範圍過濾;右上可切換 色階 / 熱力 / 分國 三種密度風格。")}
           </li>
           <li>
             <strong>{t('世界纪录 (WR)', 'WR', "世界紀錄 (WR)")} </strong>

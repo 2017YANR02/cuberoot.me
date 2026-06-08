@@ -19,7 +19,10 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const conv = OpenCC.Converter({ from: 'cn', to: 'twp' }); // Taiwan, phrase-level
+const raw = OpenCC.Converter({ from: 'cn', to: 'twp' }); // Taiwan, phrase-level
+// Domain override: s2twp renders 项目 (a cube EVENT) as 專案 (a software project,
+// wrong here). Force 項目 — but keep 開源專案 (the site IS an open-source project).
+export const conv = (s) => raw(s).replace(/專案/g, '項目').replace(/開源項目/g, '開源專案');
 
 const zh = JSON.parse(readFileSync(join(ROOT, 'i18n/zh.json'), 'utf8'));
 const convTree = (n) =>
