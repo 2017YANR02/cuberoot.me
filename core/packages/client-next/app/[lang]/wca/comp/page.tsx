@@ -16,7 +16,6 @@ import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parse
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, Ban, LayoutGrid, HelpCircle, X as XIcon } from 'lucide-react';
-import { getLangQuery } from '@/i18n/i18n-client';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import {
   fetchAllUpcomingCompsJson,
@@ -1431,7 +1430,7 @@ function CalendarPageInner() {
           </Link>
         </h1>
         <div className="upcoming-meta">
-          <Link href={`/wca/comp/stats${getLangQuery()}`} className="globe-link">
+          <Link href="/wca/comp/stats" className="globe-link">
             <BarChart3 size={12} strokeWidth={1.75} /> {isZh ? '统计' : 'Stats'}
           </Link>
         </div>

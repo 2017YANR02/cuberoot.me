@@ -16,7 +16,6 @@ import { loadComps, type Comp } from '@/lib/comp-search';
 import { countryName } from '@/lib/country-name';
 import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
-import { getLangQuery } from '@/i18n/i18n-client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './calendar_stats.css';
 
@@ -183,7 +182,7 @@ export default function CalendarStatsPage() {
     <div className="cs-page">
       <header className="cs-header">
         <div className="cs-header-left">
-          <Link href={`/wca/comp${getLangQuery()}`} className="cs-back" aria-label={isZh ? '返回比赛' : 'Back to competitions'}>
+          <Link href="/wca/comp" className="cs-back" aria-label={isZh ? '返回比赛' : 'Back to competitions'}>
             <ArrowLeft size={18} />
           </Link>
           <h1 className="cs-title">{isZh ? '比赛统计' : 'Competition stats'}</h1>
