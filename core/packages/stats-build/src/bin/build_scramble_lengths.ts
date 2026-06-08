@@ -76,6 +76,11 @@ async function main() {
   let rows = 0;
   let samples = 0;
 
+  // Megaminx scrambles whose raw text glues two moves with a missing space
+  // (e.g. "R--D--") — surfaced on the page so the 77-vs-76 quirk is explained.
+  const MINX_MOVE = /R\+\+|R--|D\+\+|D--|U'|U/g;
+  const minxGlued: { ci: string; r: string; g: string; n: number; tok: string }[] = [];
+
   const bump = (event: string, len: number, ex: Example) => {
     let m = hist.get(event);
     if (!m) { m = new Map(); hist.set(event, m); }
@@ -101,6 +106,11 @@ async function main() {
       for (const s of scrambleMoveSamples(row.event_id, row.scramble)) {
         bump(row.event_id, s.len, [row.competition_id, row.round_type_id, row.group_id, row.scramble_num, s.text, extra]);
       }
+      if (row.event_id === 'minx') {
+        const glued = (row.scramble ?? '').trim().split(/\s+/).filter(Boolean)
+          .filter((t) => (t.match(MINX_MOVE) ?? []).length > 1);
+        if (glued.length) minxGlued.push({ ci: row.competition_id, r: row.round_type_id, g: row.group_id, n: row.scramble_num, tok: glued.join(' ') });
+      }
       if (rows % 1_000_000 === 0) console.log(`  ...${rows.toLocaleString()} rows`);
     });
     stream.on('end', () => res());
@@ -111,6 +121,7 @@ async function main() {
   // recompute the exact referenced set from the final reservoirs.
   const referenced = new Set<string>();
   for (const em of exMap.values()) for (const arr of em.values()) for (const ex of arr) referenced.add(ex[0]);
+  for (const a of minxGlued) referenced.add(a.ci); // need their comp names too
 
   const comps: Record<string, [string, string]> = {};
   await new Promise<void>((res, rej) => {
@@ -130,13 +141,20 @@ async function main() {
 
   const orderedEvents = [...hist.keys()].sort((a, b) => orderIdx(a) - orderIdx(b));
 
-  const events: Record<string, { unit: string; samples: number; counts: Record<string, number> }> = {};
+  interface EventOut {
+    unit: string; samples: number; counts: Record<string, number>;
+    glued?: { ci: string; cn: string; r: string; g: string; n: number; tok: string }[];
+  }
+  const events: Record<string, EventOut> = {};
   for (const ev of orderedEvents) {
     const m = hist.get(ev)!;
     const counts: Record<string, number> = {};
     let n = 0;
     for (const len of [...m.keys()].sort((a, b) => a - b)) { counts[String(len)] = m.get(len)!; n += m.get(len)!; }
     events[ev] = { unit: scrambleLengthUnit(ev), samples: n, counts };
+  }
+  if (events.minx && minxGlued.length) {
+    events.minx.glued = minxGlued.map((a) => ({ ci: a.ci, cn: comps[a.ci]?.[0] ?? a.ci, r: a.r, g: a.g, n: a.n, tok: a.tok }));
   }
 
   const exEvents: Record<string, Record<string, Example[]>> = {};
