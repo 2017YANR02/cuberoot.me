@@ -67,20 +67,25 @@ export default function LangToggle({ variant = 'inline', className }: LangToggle
   const toggle = () => {
     const next = isZh ? 'en' : 'zh';
     void i18n.changeLanguage(next);
-    syncLangToUrl(next);
+    syncLangToUrl(next); // cookie + localStorage + html.lang (also adds ?lang=)
 
-    // Phase 3 path swap: /en/foo → /zh/foo, /zh → /en, etc.
-    // If we're not on a [lang]-prefixed path (e.g. /auth/callback), bail —
-    // cookie has been updated, next navigation will pick the right locale.
+    // Pattern B path swap: English is the BARE path, Chinese is /zh/…. The
+    // browser URL is bare on English pages (the /en render is behind a rewrite),
+    // so strip any leading /en or /zh, then re-shape for the target locale.
     if (!pathname) return;
-    const match = pathname.match(/^\/(en|zh)(\/.*)?$/);
-    if (!match) return;
-    const rest = match[2] ?? '';
-    // Read the query lazily here (not via useSearchParams at render) so this
-    // globally-mounted toggle doesn't force every page to bail to CSR during
-    // static prerender.
-    const query = typeof window !== 'undefined' ? window.location.search : '';
-    router.replace(`/${next}${rest}${query}`);
+    const bare = pathname.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
+    // Read the query lazily (not via useSearchParams at render) so this globally
+    // mounted toggle doesn't force every page to bail to CSR during prerender.
+    // Drop the ?lang= that syncLangToUrl just injected — Pattern B URLs are clean.
+    let query = '';
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      sp.delete('lang');
+      query = sp.toString() ? `?${sp.toString()}` : '';
+    }
+    const target =
+      next === 'zh' ? `/zh${bare === '/' ? '' : bare}${query}` : `${bare}${query}`;
+    router.replace(target);
   };
 
   const cls = ['lang-toggle', variant === 'fixed' ? 'lang-toggle--fixed' : '', className ?? '']

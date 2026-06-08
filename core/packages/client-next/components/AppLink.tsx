@@ -5,22 +5,26 @@ import type { ComponentProps } from 'react';
 
 type Props = ComponentProps<typeof NextLink>;
 
-// Internal absolute paths that must NOT get a /<lang> prefix: route handlers,
-// API, auth/OAuth, static asset trees, SEO files. Match prefix + boundary.
+// Internal absolute paths that must NOT get a /zh prefix: route handlers, API,
+// auth/OAuth, static asset trees, SEO files. Match prefix + boundary.
 const NO_PREFIX = /^\/(v1|api|auth|callback\.html|stats|tools|cubing-chunks|cubeopt|analyze-worker|_next|sitemap\.xml|robots\.txt|sw\.js)(\/|$|\?|#)/;
 
+// Pattern B: English lives at the BARE path; only Chinese is prefixed (/zh).
+// On a bare (English) page useParams().lang is 'en' (the page renders via the
+// /en tree behind a proxy rewrite), so English links stay bare; on /zh pages we
+// prefix /zh. Any stray /en or /zh already in the href is normalized away first.
 export default function AppLink({ href, ...props }: Props) {
   const params = useParams();
-  const lang = typeof params?.lang === 'string' ? params.lang : 'en';
+  const isZh = params?.lang === 'zh';
   let h = href;
   if (
     typeof href === 'string' &&
-    href.startsWith('/') &&                  // internal absolute
-    !href.startsWith('//') &&                // not protocol-relative external
-    !/^\/(en|zh)(\/|$|\?|#)/.test(href) &&   // not already lang-prefixed
+    href.startsWith('/') && // internal absolute
+    !href.startsWith('//') && // not protocol-relative external
     !NO_PREFIX.test(href)
   ) {
-    h = `/${lang}${href === '/' ? '' : href}`;
+    const bare = href.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
+    h = isZh ? `/zh${bare === '/' ? '' : bare}` : bare;
   }
   return <NextLink href={h} {...props} />;
 }

@@ -63,11 +63,13 @@ export default function RecentScrambles({ lang }: Props) {
     void loadFlagData().then((v) => { if (v !== flagVer) setFlagVer(v); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Pattern B: English is bare; only Chinese is /zh-prefixed.
+  const lp = lang === 'zh' ? '/zh' : '';
   // 点比赛名跳 /scramble/gen?comp=<id>(comp tab 直链加载该比赛打乱),不是 /wca/comp。
-  const genHref = (ci: string) => `/${lang}/scramble/gen?comp=${encodeURIComponent(ci)}`;
+  const genHref = (ci: string) => `${lp}/scramble/gen?comp=${encodeURIComponent(ci)}`;
   // 点打乱跳 /scramble/analyzer?scramble=<moves>(空格→_,与 analyzer 自身 URL 同格式)。
   const analyzerHref = (scramble: string) =>
-    `/${lang}/scramble/analyzer?${new URLSearchParams({ scramble: scramble.trim().replace(/ /g, '_') })}`;
+    `${lp}/scramble/analyzer?${new URLSearchParams({ scramble: scramble.trim().replace(/ /g, '_') })}`;
 
   useEffect(() => {
     let on = true;

@@ -55,13 +55,14 @@ export function prefetchComp(compId: string): void {
  * prefetch:false — comp pages are bulk-listed (landing OngoingComps / calendar / search),
  * and Next's default viewport auto-prefetch would background-render dozens of them on
  * every page view. Intent (hover/focus/touch) still warms the comp stats JSON via
- * prefetchComp. Pass `lang` to emit a /<lang>/ href and skip the proxy 308 round-trip.
+ * prefetchComp. Pattern B: English is the bare path, so only `lang === 'zh'`
+ * adds a prefix; English/undefined stay bare (no proxy round-trip either way).
  */
 export function compLinkProps(compId: string, opts?: CompLinkOpts, lang?: 'zh' | 'en') {
   const warm = () => prefetchComp(compId);
   const href = compHref(compId, opts);
   return {
-    href: lang ? `/${lang}${href}` : href,
+    href: lang === 'zh' ? `/zh${href}` : href,
     prefetch: false as const,
     onMouseEnter: warm,
     onFocus: warm,

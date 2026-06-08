@@ -98,7 +98,7 @@ export default function EditArticlePage() {
             body: article.body,
             publishedAt: article.publishedAt,
           }}
-          onSaved={(savedSlug) => router.push(`/${lang}/article/${savedSlug}`)}
+          onSaved={(savedSlug) => router.push(`${lang === 'zh' ? '/zh' : ''}/article/${savedSlug}`)}
         />
       )}
     </div>

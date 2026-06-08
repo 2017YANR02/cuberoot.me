@@ -185,7 +185,7 @@ export default function DeskPetSearch({
         <LandingSearch cards={SEARCH_CARDS} lang={lang} />
       </div>
       <div className="deskpet-toolbar">
-        <button type="button" className="icon-only" onClick={() => { router.push(`/${lang}`); onClose(); }}
+        <button type="button" className="icon-only" onClick={() => { router.push(lang === 'zh' ? '/zh' : '/'); onClose(); }}
           title={t('主页', 'Home')}>
           <Home size={16} />
         </button>
