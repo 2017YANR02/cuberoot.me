@@ -27,7 +27,7 @@ interface EventLengthsJson {
   events: Record<string, EventLen>;
 }
 
-type LenExample = [string, string, string, number, string]; // [compId, round, group, num, text]
+type LenExample = [string, string, string, number, string, (0 | 1)?]; // [compId, round, group, num, text, isExtra?]
 interface ExamplesJson {
   meta: { generated_at: string; per_bin: number };
   comps: Record<string, [string, string]>;
@@ -221,7 +221,7 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
             {selectedBin !== null && !examplesLoading && curExamples && curExamples.length > 0 && (
               <ul className="scramble-stats-examples-list">
                 {curExamples.map((ex, i) => {
-                  const [compId, round, group, num, text] = ex;
+                  const [compId, round, group, num, text, extra] = ex;
                   const comp = examples?.comps[compId];
                   const iso2 = compFlagIso2(compId);
                   const linkable = ANALYZER_EVENTS.has(event);
@@ -248,7 +248,7 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
                             <span className="scramble-stats-examples-comp-name">{localizeCompName(compId, comp[0], isZh)}</span>
                             <span className="scramble-stats-examples-comp-meta">
                               <EventIcon event={event} className="scramble-stats-examples-evt" title={eventName(event, isZh)} />
-                              <span>{compSourceLine(round, group, num, isZh)}</span>
+                              <span>{compSourceLine(round, group, num, isZh, !!extra)}</span>
                             </span>
                           </Link>
                         )}

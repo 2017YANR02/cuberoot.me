@@ -44,7 +44,7 @@ interface DistributionJson {
 }
 
 type ExampleSample = [string, string, string];        // [id, scramble, bottomColor]
-type ExampleCompMeta = [string, string, number, string, string]; // [compId, eventId, scrambleNum, roundType, group]
+type ExampleCompMeta = [string, string, number, string, string, (0 | 1)?]; // [compId, eventId, scrambleNum, roundType, group, isExtra?]
 interface ExamplesSet {
   variants: Record<string, Record<string, Record<string, Record<string, ExampleSample[]>>>>;
   comps?: Record<string, [string, string]>;           // compId → [比赛名, 日期串]
@@ -601,7 +601,7 @@ function ExamplesPanel({
                         <span className="scramble-stats-examples-comp-name">{localizeCompName(m[0], comp[0], isZh)}</span>
                         <span className="scramble-stats-examples-comp-meta">
                           <EventIcon event={m[1]} className="scramble-stats-examples-evt" title={eventLabel(m[1], isZh)} />
-                          <span>{compSourceLine(m[3], m[4], m[2], isZh)}</span>
+                          <span>{compSourceLine(m[3], m[4], m[2], isZh, !!m[5])}</span>
                         </span>
                       </Link>
                     );

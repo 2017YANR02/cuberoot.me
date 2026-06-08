@@ -145,11 +145,13 @@ export function roundTypeShort(id: string, isZh: boolean): string {
   return ROUND_TYPE_SHORT_EN[id] ?? ROUND_TYPE_NAME[id]?.en ?? id;
 }
 
-// 来源行: 轮次 + 组别 + #打乱序号（近期打乱 / scramble 示例卡片共用），如「初赛E组#4」。
-export function compSourceLine(round: string, group: string, num: number, isZh: boolean): string {
+// 来源行: 轮次 + 组别 + 打乱序号（近期打乱 / scramble 示例卡片共用），如「初赛E组#4」。
+// 备用打乱(extra)用 E1/E2 标识,而非 #1/#2（WCA 备打有独立序号,从 1 起）。
+export function compSourceLine(round: string, group: string, num: number, isZh: boolean, isExtra = false): string {
   const r = roundTypeShort(round, isZh);
   const grp = group ? (isZh ? `${group}组` : ` ${group}`) : '';
-  return isZh ? `${r}${grp}#${num}` : `${r}${grp} #${num}`;
+  const tag = isExtra ? `E${num}` : `#${num}`;
+  return isZh ? `${r}${grp}${tag}` : `${r}${grp} ${tag}`;
 }
 
 const FORMAT_NAME: Record<string, { zh: string; enShort: string }> = {
