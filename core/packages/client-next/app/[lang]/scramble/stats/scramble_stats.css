@@ -550,6 +550,12 @@
   font-weight: 400;
   text-transform: none;
 }
+.scramble-len-footnote {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  line-height: 1.5;
+  margin: -0.25rem 0 0.75rem;
+}
 /* ── Dark mode ── */
 @media (prefers-color-scheme: dark) {
   html:not([data-theme=light]) .scramble-stats-page {
