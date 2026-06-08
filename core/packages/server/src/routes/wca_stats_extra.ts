@@ -511,6 +511,58 @@ wcaStatsExtraRoutes.get('/wca/rank-for', async (c) => {
   return c.json(resp);
 });
 
+// ── 2c. /v1/wca/rank-for-batch ──
+// 一次问多条成绩的名次(给 /wca/comp 成绩页预热,让弹窗 NR/WR「秒出」)。
+// 复用 getRankIndex(24h 缓存 + 懒构建)+ lowerBound:每条只是几次二分,代价可忽略;
+// 真正成本是首访 (event,type[,国家]) 时建一次索引,之后全 batch 共享同一份 Int32Array。
+// 单条形态与 GET /wca/rank-for 一致({rank,total,national}),返回顺序对齐入参;无效条目返 null。
+wcaStatsExtraRoutes.post('/wca/rank-for-batch', async (c) => {
+  let body: unknown;
+  try { body = await c.req.json(); } catch { return c.json({ error: 'invalid json' }, 400); }
+  const items = (body as { items?: unknown })?.items;
+  if (!Array.isArray(items)) return c.json({ error: 'items array required' }, 400);
+  if (items.length > 400) return c.json({ error: 'too many items (max 400)' }, 400);
+
+  // 同一批里相同国家只解析一次(resolveCountryFull 不带缓存)。
+  const countryMemo = new Map<string, Awaited<ReturnType<typeof resolveCountryFull>>>();
+  const resolveCountry = async (input: string) => {
+    const hit = countryMemo.get(input);
+    if (hit !== undefined) return hit;
+    const r = await resolveCountryFull(input);
+    countryMemo.set(input, r);
+    return r;
+  };
+
+  const results = await Promise.all((items as unknown[]).map(async (raw) => {
+    const it = raw as { event?: unknown; type?: unknown; value?: unknown; country?: unknown };
+    const event = String(it?.event ?? '').toLowerCase();
+    const type = String(it?.type ?? 'single').toLowerCase();
+    const value = Number(it?.value);
+    const countryInput = (it?.country ? String(it.country) : '').trim();
+    if (!(ACTIVE_EVENTS as readonly string[]).includes(event)) return null;
+    if (type !== 'single' && type !== 'average') return null;
+    if (type === 'average' && (event === '333mbf' || event === '333fm')) return null;
+    if (!Number.isInteger(value) || value <= 0) return null;
+
+    const isAvg = type === 'average';
+    const worldIdx = await getRankIndex(event, isAvg, 'W');
+    if (!worldIdx) return null;
+    const out: Record<string, unknown> = { rank: lowerBound(worldIdx.values, value) + 1, total: worldIdx.values.length };
+    if (countryInput) {
+      const cn = await resolveCountry(countryInput);
+      if (cn) {
+        out.country = cn.iso2 || cn.id;
+        const natIdx = await getRankIndex(event, isAvg, `N:${cn.id}`);
+        if (natIdx) out.national = { rank: lowerBound(natIdx.values, value) + 1, total: natIdx.values.length };
+      }
+    }
+    return out;
+  }));
+
+  c.header('Cache-Control', CACHE_HEADER);
+  return c.json({ results });
+});
+
 // ── 3. /v1/wca/cohort-ranks ──
 wcaStatsExtraRoutes.get('/wca/cohort-ranks', async (c) => {
   const cohort = parseInt(c.req.query('cohort') ?? '0', 10);

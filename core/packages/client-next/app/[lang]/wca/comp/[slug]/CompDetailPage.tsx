@@ -16,7 +16,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
 import { localizeCompName, resolveCompName } from '@/lib/comp-localize';
-import { fetchRankForWca, type RankResult } from '@/lib/rank-client';
+import { fetchRankForWca, getCachedRankForWca, prefetchRanksForWca, type RankResult } from '@/lib/rank-client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { apiUrl } from '@/lib/api-base';
 import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
@@ -849,6 +849,27 @@ export default function CompDetailPage() {
   }, [data, currentRound]);
 
   const [pbMap, setPbMap] = useState<Record<string, PbByEvent | null>>({});
+
+  // 预热当前轮所有破 PR 成绩的 NR/WR 名次进缓存,使成绩弹窗打开时「秒出」(命中缓存即同步渲染)。
+  // 一次 batch 请求;pbMap 到位后重跑以补全需 pb 才能判定的 PR。已缓存项自动跳过。
+  useEffect(() => {
+    if (!data || !currentRound) return;
+    const results = data.resultsByRound[roundKey(currentRound.ev.i, currentRound.rd.i)] || [];
+    if (results.length === 0) return;
+    const isAvgFmt = isAvgRankedFormat(currentRound.rd.f) || isBlindAvgEvent(currentRound.ev.i);
+    const items: { event: string; type: 'single' | 'average'; value: number; country?: string }[] = [];
+    for (const r of results) {
+      const u = data.users[String(r.n)];
+      if (!u) continue;
+      const pb = u.wcaid ? pbMap[u.wcaid] : null;
+      const { singleRank, averageRank } = classifyPr(r, pb ?? null);
+      const country = regionToIso2(u.region).toUpperCase();
+      if (singleRank === 1 && !r.sr && r.b > 0) items.push({ event: r.e, type: 'single', value: r.b, country });
+      const avgVal = effectiveAvg(r);
+      if (averageRank === 1 && !r.ar && isAvgFmt && avgVal > 0) items.push({ event: r.e, type: 'average', value: avgVal, country });
+    }
+    if (items.length > 0) void prefetchRanksForWca(items);
+  }, [data, currentRound, pbMap]);
 
   useEffect(() => {
     if (!data) return;
@@ -2099,8 +2120,9 @@ interface RoundResultModalProps {
 
 function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMap, onShowAll, onClose }: RoundResultModalProps) {
   const [copyState, setCopyState] = useState<'idle' | 'copying' | 'done' | 'nothing' | 'error'>('idle');
-  // 破 PR 时同步查「这成绩在 WCA 历史能排第几」(NR/WR),走 /v1/wca/rank-for(24h 缓存).
-  const [rankInfo, setRankInfo] = useState<{ single: RankResult | null; average: RankResult | null }>({ single: null, average: null });
+  // 破 PR 时显示「这成绩在 WCA 历史能排第几」(NR/WR)。渲染期同步读 rank-client 模块缓存 →
+  // 比赛页已预热则秒出;未命中才在 effect 里单查,回来 bump tick 重渲染。
+  const [, setRankTick] = useState(0);
 
   const prefetchRef = useRef<Promise<{ cn: string; en: string; url: string } | null> | null>(null);
   const prefetchKeyRef = useRef<string>('');
@@ -2173,25 +2195,25 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
     const rd = ev?.rs.find(r => r.i === roundId);
     const arr = data.resultsByRound[roundKey(eventId, roundId)] || [];
     const result = arr.find(rr => rr.n === number);
-    setRankInfo({ single: null, average: null });
     if (!u || !ev || !rd || !result) return;
     const pb = pbMap[u.wcaid];
     const { singleRank, averageRank } = classifyPr(result, pb);
     const country = regionToIso2(u.region).toUpperCase();
-    const wantSingle = singleRank === 1 && !result.sr && result.b > 0;
     const isAvgFmt = isAvgRankedFormat(rd.f) || isBlindAvgEvent(eventId);
     const avgVal = effectiveAvg(result);
+    const wantSingle = singleRank === 1 && !result.sr && result.b > 0;
     const wantAvg = averageRank === 1 && !result.ar && isAvgFmt && avgVal > 0;
-    if (!wantSingle && !wantAvg) return;
+    // 只在缓存未命中(undefined)时才单查;命中(含确定无名次的 null)直接跳过。
+    const tasks: Promise<unknown>[] = [];
+    if (wantSingle && getCachedRankForWca(result.e, result.b, 'single', country) === undefined) {
+      tasks.push(fetchRankForWca(result.e, result.b, 'single', country));
+    }
+    if (wantAvg && getCachedRankForWca(result.e, avgVal, 'average', country) === undefined) {
+      tasks.push(fetchRankForWca(result.e, avgVal, 'average', country));
+    }
+    if (tasks.length === 0) return;
     let cancelled = false;
-    if (wantSingle) {
-      fetchRankForWca(result.e, result.b, 'single', country)
-        .then(r => { if (!cancelled) setRankInfo(prev => ({ ...prev, single: r })); });
-    }
-    if (wantAvg) {
-      fetchRankForWca(result.e, avgVal, 'average', country)
-        .then(r => { if (!cancelled) setRankInfo(prev => ({ ...prev, average: r })); });
-    }
+    Promise.all(tasks).then(() => { if (!cancelled) setRankTick(t => t + 1); });
     return () => { cancelled = true; };
   }, [data, number, eventId, roundId, pbMap]);
 
@@ -2217,8 +2239,13 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
   const avgTagForCopy = result.ar ? String(result.ar) : (averageRank ? 'PR' : '');
   const canCopy = (singleTagForCopy && result.b > 0) || (avgTagForCopy && result.a > 0);
 
+  // 渲染期同步读名次缓存(命中则秒出;未命中=undefined,上面的 effect 会单查后 bump 重渲染)。
+  const country = iso2.toUpperCase();
+  const singleRankInfo = getCachedRankForWca(result.e, result.b, 'single', country);
+  const avgRankInfo = getCachedRankForWca(result.e, effectiveAvg(result), 'average', country);
+
   // 破 PR:把 PR 框 + NR/WR 名次拼成一个右上角标组「PR/NR3/WR3」(只 PR 带框,名次纯文本,/ 分割).
-  const renderPrMark = (info: RankResult | null) => (
+  const renderPrMark = (info: RankResult | null | undefined) => (
     <span className="comp-pr-mark">
       <RecordBadge record="PR" variant="standalone" />
       {info?.national && <span className="comp-pr-mark-rank">/NR{info.national.rank}</span>}
@@ -2305,7 +2332,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
                 (!result.ar && averageBadge === 'PR') ? (
                   <span className="comp-pr-value">
                     {formatLive(effectiveAvg(result), result.e, true)}
-                    {renderPrMark(rankInfo.average)}
+                    {renderPrMark(avgRankInfo)}
                   </span>
                 ) : (
                   <span className="record-num-cell">
@@ -2325,7 +2352,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
                 (!result.sr && singleBadge === 'PR') ? (
                   <span className="comp-pr-value">
                     {formatLive(result.b, result.e, false)}
-                    {renderPrMark(rankInfo.single)}
+                    {renderPrMark(singleRankInfo)}
                   </span>
                 ) : (
                   <span className="record-num-cell">
