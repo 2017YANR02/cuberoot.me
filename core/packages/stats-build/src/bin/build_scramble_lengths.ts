@@ -81,6 +81,12 @@ async function main() {
   const MINX_MOVE = /R\+\+|R--|D\+\+|D--|U'|U/g;
   const minxGlued: { ci: string; r: string; g: string; n: number; tok: string }[] = [];
 
+  // Events whose scramble is a fixed-length random-MOVE sequence: TNoodle always
+  // emits exactly this many moves, so any other length means that competition
+  // used a non-standard scrambler (surfaced on the page, by competition).
+  const FIXED_MOVE_COUNT: Record<string, number> = { '555': 60, '666': 80, '777': 100 };
+  const anomalyMap = new Map<string, Map<string, { lens: Set<number>; n: number }>>(); // event -> comp -> {lens,n}
+
   const bump = (event: string, len: number, ex: Example) => {
     let m = hist.get(event);
     if (!m) { m = new Map(); hist.set(event, m); }
@@ -111,6 +117,17 @@ async function main() {
           .filter((t) => (t.match(MINX_MOVE) ?? []).length > 1);
         if (glued.length) minxGlued.push({ ci: row.competition_id, r: row.round_type_id, g: row.group_id, n: row.scramble_num, tok: glued.join(' ') });
       }
+      const canon = FIXED_MOVE_COUNT[row.event_id];
+      if (canon !== undefined) {
+        const len = (row.scramble ?? '').trim().split(/\s+/).filter(Boolean).length;
+        if (len && len !== canon) {
+          let m = anomalyMap.get(row.event_id);
+          if (!m) { m = new Map(); anomalyMap.set(row.event_id, m); }
+          let a = m.get(row.competition_id);
+          if (!a) { a = { lens: new Set(), n: 0 }; m.set(row.competition_id, a); }
+          a.lens.add(len); a.n++;
+        }
+      }
       if (rows % 1_000_000 === 0) console.log(`  ...${rows.toLocaleString()} rows`);
     });
     stream.on('end', () => res());
@@ -122,6 +139,7 @@ async function main() {
   const referenced = new Set<string>();
   for (const em of exMap.values()) for (const arr of em.values()) for (const ex of arr) referenced.add(ex[0]);
   for (const a of minxGlued) referenced.add(a.ci); // need their comp names too
+  for (const m of anomalyMap.values()) for (const ci of m.keys()) referenced.add(ci);
 
   const comps: Record<string, [string, string]> = {};
   await new Promise<void>((res, rej) => {
@@ -144,6 +162,7 @@ async function main() {
   interface EventOut {
     unit: string; samples: number; counts: Record<string, number>;
     glued?: { ci: string; cn: string; r: string; g: string; n: number; tok: string }[];
+    anomalies?: { ci: string; cn: string; lens: number[]; n: number }[];
   }
   const events: Record<string, EventOut> = {};
   for (const ev of orderedEvents) {
@@ -155,6 +174,13 @@ async function main() {
   }
   if (events.minx && minxGlued.length) {
     events.minx.glued = minxGlued.map((a) => ({ ci: a.ci, cn: comps[a.ci]?.[0] ?? a.ci, r: a.r, g: a.g, n: a.n, tok: a.tok }));
+  }
+  for (const [ev, m] of anomalyMap) {
+    if (!events[ev]) continue;
+    const list = [...m.entries()]
+      .map(([ci, a]) => ({ ci, cn: comps[ci]?.[0] ?? ci, lens: [...a.lens].sort((x, y) => x - y), n: a.n }))
+      .sort((a, b) => b.n - a.n);
+    if (list.length) events[ev].anomalies = list;
   }
 
   const exEvents: Record<string, Record<string, Example[]>> = {};
