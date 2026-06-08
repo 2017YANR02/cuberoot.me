@@ -25,7 +25,8 @@
  */
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { Suspense, useState, useMemo, useCallback, useEffect } from 'react';
+import { useQueryState, parseAsInteger } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
@@ -96,17 +97,22 @@ function nToApproxYear(N: number): number {
   return sliderToYear((lo + hi) / 2);
 }
 
-export default function LuckyLimitPage() {
+function LuckyLimitPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   useDocumentTitle('幸运极限', 'Lucky Limit');
 
+  // ?year= 走 nuqs(replace,不堆历史)。原 raw history.replaceState 已替换。
+  const [yearParam, setYearParam] = useQueryState(
+    'year',
+    parseAsInteger.withOptions({ history: 'replace' }),
+  );
+
   const initialYear = useMemo(() => {
-    if (typeof window === 'undefined') return new Date().getFullYear();
-    const params = new URLSearchParams(window.location.search);
-    const y = parseFloat(params.get('year') ?? '');
-    if (isFinite(y) && y >= 2003) return y;
+    if (yearParam != null && yearParam >= 2003) return yearParam;
     return new Date().getFullYear();
+    // 仅取首帧 URL 作种子(后续 URL 是 state 的派生视图)。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [sliderValue, setSliderValue] = useState<number>(() => yearToSlider(initialYear));
@@ -117,11 +123,8 @@ export default function LuckyLimitPage() {
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const url = new URL(window.location.href);
-    url.searchParams.set('year', Math.round(year).toString());
-    window.history.replaceState(null, '', url.toString());
-  }, [year]);
+    void setYearParam(Math.round(year));
+  }, [year, setYearParam]);
 
   const toggleLang = () => {
     const n = isZh ? 'en' : 'zh';
@@ -529,6 +532,15 @@ export default function LuckyLimitPage() {
         </footer>
       </article>
     </div>
+  );
+}
+
+// nuqs useQueryState 走 next/navigation useSearchParams,需 Suspense 边界。
+export default function LuckyLimitPage() {
+  return (
+    <Suspense fallback={<div className="pred-page" />}>
+      <LuckyLimitPageInner />
+    </Suspense>
   );
 }
 

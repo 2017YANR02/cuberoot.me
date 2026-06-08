@@ -5,7 +5,7 @@
 // 全部 23 榜支持 world / continent / country。数据走 /v1/wca/fun/*(wca_fs_* 预计算)。
 import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useQueryState, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { RegionPicker } from '@/components/RegionPicker';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -107,11 +107,13 @@ function FunStatsInner() {
   const isZh = i18n.language === 'zh';
   const lang = isZh ? 'zh' : 'en';
   useDocumentTitle('趣味统计', 'Fun Statistics');
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
+  // 榜单选择(左侧导航)持久化到 ?stat=,沿用原 replace 语义(不堆历史)
+  const [statParam, setStatParam] = useQueryState(
+    'stat',
+    parseAsString.withOptions({ history: 'replace', scroll: false }),
+  );
 
-  const statId = params.get('stat') || 'medals-all';
+  const statId = statParam || 'medals-all';
   const stat = STAT_BY_ID.get(statId) ?? FUN_STATS[0];
 
   const [region, setRegion] = useState('world');
@@ -188,9 +190,7 @@ function FunStatsInner() {
   }, [stat, region, event, typeAvg, year, page, size, selEvents, availableEvents]);
 
   const selectStat = (id: string) => {
-    const sp = new URLSearchParams(params.toString());
-    sp.set('stat', id);
-    router.replace(`${pathname}?${sp.toString()}`, { scroll: false });
+    void setStatParam(id);
   };
 
   const rows = resp?.rows ?? [];

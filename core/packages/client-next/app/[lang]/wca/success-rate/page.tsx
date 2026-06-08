@@ -3,7 +3,7 @@
 // Ported from packages/client/src/pages/wca_stats/SuccessRatePage.tsx.
 import { Suspense, useEffect, useState } from 'react';
 import Link from '@/components/AppLink';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, HelpCircle } from 'lucide-react';
 import Paginator from '@/components/wca-stats/Paginator';
@@ -34,21 +34,24 @@ function SuccessRatePageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('完成率', 'Success Rate');
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
-  const event = params.get('event') ?? '333bf';
-  const country = params.get('country') ?? '';
-  const minAttempted = parseInt(params.get('minAttempted') ?? '3', 10);
-  const page = parseInt(params.get('page') ?? '1', 10);
-  const size = parseInt(params.get('size') ?? '100', 10);
+  const [q, setQ] = useQueryStates(
+    {
+      event: parseAsString,
+      country: parseAsString,
+      minAttempted: parseAsString,
+      page: parseAsString,
+      size: parseAsString,
+    },
+    { history: 'replace', scroll: false },
+  );
+  const event = q.event ?? '333bf';
+  const country = q.country ?? '';
+  const minAttempted = parseInt(q.minAttempted ?? '3', 10);
+  const page = parseInt(q.page ?? '1', 10);
+  const size = parseInt(q.size ?? '100', 10);
 
   const update = (k: string, v: string, resetPage = true) => {
-    const next = new URLSearchParams(params.toString());
-    if (v) next.set(k, v); else next.delete(k);
-    if (resetPage) next.delete('page');
-    const qs = next.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
+    setQ({ [k]: v || null, ...(resetPage ? { page: null } : {}) } as Parameters<typeof setQ>[0]);
   };
 
   const [data, setData] = useState<{ rows: Row[]; total: number } | null>(null);

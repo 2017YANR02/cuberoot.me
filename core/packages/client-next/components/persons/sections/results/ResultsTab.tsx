@@ -1,7 +1,7 @@
 'use client';
 // 成绩 tab:按项目 / 按比赛 子切换 + 项目图标条(在按项目模式下).
 
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 import { Suspense, lazy, useCallback, useMemo } from 'react';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
@@ -22,17 +22,14 @@ type Sub = 'event' | 'comp';
 
 export default function ResultsTab({ profile, results, comps, reconLookup, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
-  const sp = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-  const rawSub = (sp?.get('sub') ?? 'event').toLowerCase();
+  // 子 tab(按项目 / 按比赛)+ 选中项目均为页内瞬时态 → replace,不堆历史
+  const [q, setQ] = useQueryStates(
+    { sub: parseAsString, event: parseAsString },
+    { history: 'replace', scroll: false },
+  );
+  const rawSub = (q.sub ?? 'event').toLowerCase();
   const sub: Sub = rawSub === 'comp' ? 'comp' : 'event';
-  const updateParams = useCallback((updates: Record<string, string>) => {
-    const next = new URLSearchParams(sp?.toString() ?? '');
-    for (const [k, v] of Object.entries(updates)) next.set(k, v);
-    router.replace(`${pathname}?${next.toString()}`);
-  }, [pathname, router, sp]);
-  const setSub = useCallback((s: Sub) => updateParams({ sub: s }), [updateParams]);
+  const setSub = useCallback((s: Sub) => setQ({ sub: s }), [setQ]);
 
   const eventIds = useMemo(() => {
     const set = new Set<string>();
@@ -40,9 +37,9 @@ export default function ResultsTab({ profile, results, comps, reconLookup, isZh 
     return ALL_EVENT_IDS.filter((eid) => set.has(eid));
   }, [results]);
 
-  const rawEv = (sp?.get('event') ?? '').toLowerCase();
+  const rawEv = (q.event ?? '').toLowerCase();
   const activeEvent = eventIds.includes(rawEv) ? rawEv : (eventIds[0] ?? '333');
-  const setEvent = useCallback((eid: string) => updateParams({ event: eid }), [updateParams]);
+  const setEvent = useCallback((eid: string) => setQ({ event: eid }), [setQ]);
 
   return (
     <div className="wp-results-tab">

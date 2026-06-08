@@ -3,7 +3,7 @@
 // Ported from packages/client/src/pages/wca_stats/AllEventsDonePage.tsx.
 import { Suspense, useEffect, useState } from 'react';
 import Link from '@/components/AppLink';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, HelpCircle } from 'lucide-react';
 import Paginator from '@/components/wca-stats/Paginator';
@@ -32,20 +32,22 @@ function AllEventsDonePageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('全项目达成', 'All Events Done');
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
-  const country = params.get('country') ?? '';
-  const onlyDone = params.get('onlyDone') !== '0';
-  const page = parseInt(params.get('page') ?? '1', 10);
-  const size = parseInt(params.get('size') ?? '100', 10);
+  const [q, setQ] = useQueryStates(
+    {
+      country: parseAsString,
+      onlyDone: parseAsString,
+      page: parseAsString,
+      size: parseAsString,
+    },
+    { history: 'replace', scroll: false },
+  );
+  const country = q.country ?? '';
+  const onlyDone = q.onlyDone !== '0';
+  const page = parseInt(q.page ?? '1', 10);
+  const size = parseInt(q.size ?? '100', 10);
 
   const update = (k: string, v: string, resetPage = true) => {
-    const next = new URLSearchParams(params.toString());
-    if (v) next.set(k, v); else next.delete(k);
-    if (resetPage) next.delete('page');
-    const qs = next.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
+    setQ({ [k]: v || null, ...(resetPage ? { page: null } : {}) } as Parameters<typeof setQ>[0]);
   };
 
   const [data, setData] = useState<{ rows: Row[]; total: number } | null>(null);

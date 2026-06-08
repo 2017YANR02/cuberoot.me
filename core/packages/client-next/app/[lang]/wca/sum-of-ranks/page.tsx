@@ -4,7 +4,7 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight } from 'lucide-react';
 
@@ -74,15 +74,24 @@ function SumOfRanksPageInner() {
   const isZh = i18n.language === 'zh';
   const personHref = (id: string) => `/${isZh ? 'zh' : 'en'}/wca/persons/${id}`;
   useDocumentTitle('名次和', 'Sum of Ranks');
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
-  const type = (params.get('type') ?? 'single') as 'single' | 'average';
-  const country = params.get('country') ?? '';
-  const eventsParam = params.get('events') ?? '';
-  const hidePodium = params.get('hidePodium') === '1';
-  const page = parseInt(params.get('page') ?? '1', 10);
-  const size = parseInt(params.get('size') ?? '100', 10);
+  // 全部筛选状态走 nuqs(replace,不堆历史);多键改动用 setQ 批量提交一次 URL
+  const [q, setQ] = useQueryStates(
+    {
+      type: parseAsString,
+      country: parseAsString,
+      events: parseAsString,
+      hidePodium: parseAsString,
+      page: parseAsString,
+      size: parseAsString,
+    },
+    { history: 'replace', scroll: false },
+  );
+  const type = (q.type ?? 'single') as 'single' | 'average';
+  const country = q.country ?? '';
+  const eventsParam = q.events ?? '';
+  const hidePodium = q.hidePodium === '1';
+  const page = parseInt(q.page ?? '1', 10);
+  const size = parseInt(q.size ?? '100', 10);
 
   const selectedSet = new Set(eventsParam ? eventsParam.split(',').filter(Boolean) : ACTIVE_EVENTS);
   const selectedCount = RANK_EVENTS.filter(e => selectedSet.has(e)).length;
@@ -90,15 +99,8 @@ function SumOfRanksPageInner() {
   // 控制三处: PillToggle 显隐 + selector 是否展示废止项 (否则一个不选时也不渲染 ▾ 三角) + 名人堂/选手
   // 最优的"含废止项"口径 (21 项全集). 主榜单走精确选中子集, 不受此布尔影响.
   const includeCancelled = CANCELLED_EVENTS.some(e => selectedSet.has(e));
-  const pushSearch = (next: URLSearchParams) => {
-    const qs = next.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
-  };
   const update = (k: string, v: string, resetPage = true) => {
-    const next = new URLSearchParams(params.toString());
-    if (v) next.set(k, v); else next.delete(k);
-    if (resetPage) next.delete('page');
-    pushSearch(next);
+    setQ({ [k]: v || null, ...(resetPage ? { page: null } : {}) } as Parameters<typeof setQ>[0]);
   };
   const toggleEvent = (ev: string) => {
     const cur = new Set(selectedSet);
@@ -125,14 +127,11 @@ function SumOfRanksPageInner() {
   )?.key;
   // 把"最优组合"应用到主榜单(组合是世界口径 → 清掉国家筛选 + 切到对应 type)
   const applyCombo = (events: string[], comboType: 'single' | 'average') => {
-    const next = new URLSearchParams(params.toString());
-    next.set('type', comboType);
-    next.delete('country');
-    next.delete('page');
     const set = new Set(events);
-    if (set.size === ACTIVE_EVENTS.length && ACTIVE_EVENTS.every(e => set.has(e))) next.delete('events');
-    else next.set('events', RANK_EVENTS.filter(e => set.has(e)).join(','));
-    pushSearch(next);
+    const eventsVal = (set.size === ACTIVE_EVENTS.length && ACTIVE_EVENTS.every(e => set.has(e)))
+      ? null
+      : RANK_EVENTS.filter(e => set.has(e)).join(',');
+    setQ({ type: comboType, country: null, page: null, events: eventsVal });
   };
 
   const [data, setData] = useState<{ rows: Row[]; total: number; events: string[] } | null>(null);
@@ -295,11 +294,7 @@ function SumOfRanksPageInner() {
             className="wse-pill"
             value={hidePodium}
             onChange={v => {
-              const next = new URLSearchParams(params.toString());
-              if (v) next.set('hidePodium', '1');
-              else next.delete('hidePodium');
-              next.delete('page');
-              pushSearch(next);
+              setQ({ hidePodium: v ? '1' : null, page: null });
             }}
             onLabel={isZh ? '未登领奖台' : 'No podium'}
             offLabel={isZh ? '未登领奖台' : 'No podium'}

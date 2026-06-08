@@ -1,13 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useQueryState, parseAsStringEnum } from 'nuqs';
 import PersonCell from '../_components/PersonCell';
 import { fetchStats, type StatsResponse } from '../_data/nemesizerApi';
 
 interface Props { isZh: boolean; }
 
 type Tab = 'most' | 'few' | 'people' | 'biggest' | 'countries';
+const TAB_KEYS: Tab[] = ['most', 'few', 'people', 'biggest', 'countries'];
 
 const TABS: { id: Tab; en: string; zh: string }[] = [
   { id: 'most',      en: 'Most nemeses',         zh: '最多宿敌' },
@@ -18,15 +19,11 @@ const TABS: { id: Tab; en: string; zh: string }[] = [
 ];
 
 export default function StatsMode({ isZh }: Props) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
-  const tab = ((params.get('tab') as Tab) || 'most');
-  const setParam = useCallback((k: string, v: string) => {
-    const n = new URLSearchParams(params.toString());
-    if (v) n.set(k, v); else n.delete(k);
-    router.replace(`${pathname}?${n.toString()}`, { scroll: false });
-  }, [params, router, pathname]);
+  // 统计子 tab 是页内瞬时态 → replace,不堆历史
+  const [tab, setTab] = useQueryState(
+    'tab',
+    parseAsStringEnum<Tab>(TAB_KEYS).withDefault('most').withOptions({ history: 'replace', scroll: false }),
+  );
 
   const [data, setData] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,7 +43,7 @@ export default function StatsMode({ isZh }: Props) {
           <button
             key={t.id}
             className={tab === t.id ? 'active' : ''}
-            onClick={() => setParam('tab', t.id)}
+            onClick={() => setTab(t.id)}
           >
             {isZh ? t.zh : t.en}
           </button>
