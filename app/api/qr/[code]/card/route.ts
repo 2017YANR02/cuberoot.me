@@ -13,6 +13,7 @@ const MIME: Record<string, string> = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   svg: "image/svg+xml",
+  woff2: "font/woff2",
 };
 
 // 把 public 下的本地艺术图读成 data URI(自包含,印厂收到单文件即可)。
@@ -64,9 +65,13 @@ export async function GET(
   const art =
     url.searchParams.get("noart") === "1" ? undefined : await resolveArt(artSrc);
 
+  // 内嵌 JetBrains Mono(记法字体),母版独立打开也能正确显示公式
+  const monoFont = await resolveArt("/fonts/jetbrains-mono-latin-500-normal.woff2");
+
   const svg = cardSvg(entry, {
     url: qrTargetUrl(code),
     art,
+    monoFont,
     bleed,
     cropMarks,
     pattern,

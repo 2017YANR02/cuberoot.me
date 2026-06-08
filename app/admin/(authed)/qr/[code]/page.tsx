@@ -5,6 +5,7 @@ import { findByCode } from "@/lib/db/qr";
 import { absoluteUrl } from "@/lib/site";
 import { qrSvg } from "@/lib/qr/svg";
 import { linksToText } from "@/lib/qr/links";
+import { algToText } from "@/lib/qr/cardText";
 import { FRONT_ARTS } from "@/components/QrCard";
 import { LiveCardPreview } from "../_LiveCardPreview";
 import { Card, PageHeader, GhostLink } from "../../../_components/Shell";
@@ -142,6 +143,16 @@ export default async function AdminQrEditPage({
                   defaultValue={entry.quote ?? ""}
                   placeholder={"慢就是快\n一次打乱 一次成长"}
                   className="min-h-[70px]"
+                />
+              </Field>
+              <Field
+                label="背面精选公式"
+                hint="格式:名称 | 记法 | 链接(后两段可省)。如 OLL 33 | R U R' U' R' F R F' | /zh/alg/3x3/oll"
+              >
+                <Input
+                  name="alg"
+                  defaultValue={algToText(entry.alg)}
+                  placeholder="OLL 33 | R U R' U' R' F R F'"
                 />
               </Field>
             </div>

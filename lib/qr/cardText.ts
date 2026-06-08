@@ -1,4 +1,21 @@
-import type { QrCode } from "@/lib/db/qr";
+import type { QrAlg, QrCode } from "@/lib/db/qr";
+
+// 背面精选公式文本互转。格式:"名称 | 记法 | 链接"(后两段可省;只写一段当记法)。
+export function parseAlg(raw: string): QrAlg | null {
+  const parts = raw.split("|").map((s) => s.trim());
+  if (parts.length === 1) {
+    return parts[0] ? { moves: parts[0] } : null;
+  }
+  const [name, moves, url] = parts;
+  const mv = (moves || name || "").trim();
+  if (!mv) return null;
+  return { name: name || undefined, moves: mv, url: url || undefined };
+}
+
+export function algToText(alg?: QrAlg | null): string {
+  if (!alg?.moves) return "";
+  return [alg.name, alg.moves, alg.url].filter(Boolean).join(" | ");
+}
 
 // 卡片文案逻辑(纯函数,DOM 卡片 QrCard.tsx 与矢量导出 cardSvg.ts 共用,避免两处漂移)。
 

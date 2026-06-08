@@ -311,6 +311,8 @@ export const inviteCodes = sqliteTable(
 
 export type QrType = "redirect" | "landing";
 export type QrLink = { label: string; href: string; note?: string };
+// 卡片背面精选解法公式:名称(如 OLL 33)+ 记法 + 来源链接(主站 alg 工具)
+export type QrAlg = { name?: string; moves: string; url?: string };
 
 export const qrCodes = sqliteTable("qr_codes", {
   code: text("code").primaryKey(),
@@ -323,6 +325,7 @@ export const qrCodes = sqliteTable("qr_codes", {
   term: text("term"),
   quote: text("quote"),
   frontArt: text("front_art"),
+  alg: text("alg", { mode: "json" }).$type<QrAlg>(),
   scans: integer("scans").notNull().default(0),
   createdAt: integer("created_at").notNull(),
 });

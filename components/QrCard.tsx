@@ -192,6 +192,27 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
         >
           <div style={{ width: m(14.5), height: m(14.5) }} dangerouslySetInnerHTML={{ __html: svg }} />
         </div>
+        {entry.alg?.moves ? (
+          <div style={{ textAlign: "center", lineHeight: 1.15 }}>
+            {entry.alg.name ? (
+              <div style={{ fontSize: m(0.95), fontWeight: 700, color: "#1E4ACB" }}>
+                {entry.alg.name}
+              </div>
+            ) : null}
+            <div
+              style={{
+                fontSize: m(1.1),
+                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                fontWeight: 500,
+                color: "#2A5DF4",
+                letterSpacing: m(0.01),
+                whiteSpace: "nowrap",
+              }}
+            >
+              {entry.alg.moves}
+            </div>
+          </div>
+        ) : null}
       </div>
       <div
         style={{

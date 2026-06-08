@@ -13,6 +13,7 @@ type CardSvgOptions = {
   url: string; // 印进二维码里的落地地址(背面也显示这串,去协议)
   quote?: string; // 正面语录,\n 分行;不传按默认轮换
   art?: string; // 正面艺术图 data URI / URL;有则内嵌位图正面,无则全矢量回退
+  monoFont?: string; // JetBrains Mono woff2 的 data URI;母版内嵌 @font-face 让记法字体独立可渲染
   bleed?: number; // 出血 mm,默认 3
   cropMarks?: boolean; // 角裁切线,默认 true
   pattern?: boolean; // 底纹(背面流派公式 + 无图时正面色块),默认 true
@@ -22,7 +23,8 @@ type CardSvgOptions = {
 const PANEL_W = 20;
 const PANEL_H = 40;
 const FONT = "-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif";
-const MONO = "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace";
+// 记法字体对齐主站 alg 工具(JetBrains Mono);母版里由 monoFont 内嵌 @font-face 兜底
+const MONO = "'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace";
 const BRAND = "#2A5DF4";
 const BRAND_DARK = "#1E4ACB";
 const INK = "#11111A";
@@ -155,6 +157,13 @@ function back(x0: number, top: number, entry: QrCode, url: string, pattern: bool
       text(cx, chipTop - 1.7, 1.1, BRAND_DARK, term, { weight: 700, spacing: 0.06 })
     : "";
 
+  // 背面精选公式:名称 + 记法,衬在二维码下方(url 上方)
+  const alg = entry.alg;
+  const algEl = alg?.moves
+    ? (alg.name ? text(cx, top + 31.9, 0.95, BRAND_DARK, alg.name, { weight: 700 }) : "") +
+      text(cx, top + (alg.name ? 33.7 : 32.8), 1.05, BRAND, alg.moves, { mono: true })
+    : "";
+
   return (
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#backBg)"/>` +
     (pattern ? cubeFacelets(x0, top, "backClip") : "") +
@@ -163,6 +172,7 @@ function back(x0: number, top: number, entry: QrCode, url: string, pattern: bool
     (sub ? text(cx, top + 9.4, 1.2, "#6B7280", sub) : "") +
     termEl +
     qr +
+    algEl +
     text(cx, top + PANEL_H - 3, 1.1, "#9aa1ad", url.replace(/^https?:\/\//, ""), { mono: true })
   );
 }
@@ -198,8 +208,13 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
   const h = PANEL_H + bleed * 2;
   const foldX = bleed + PANEL_W;
 
+  const fontFace = opts.monoFont
+    ? `<style>@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400 700;src:url(${opts.monoFont}) format('woff2');}</style>`
+    : "";
+
   const defs =
     `<defs>` +
+    fontFace +
     `<clipPath id="frontClip"><rect x="${bleed}" y="${bleed}" width="${PANEL_W}" height="${PANEL_H}"/></clipPath>` +
     `<clipPath id="backClip"><rect x="${foldX}" y="${bleed}" width="${PANEL_W}" height="${PANEL_H}"/></clipPath>` +
     `<linearGradient id="frontGlow" x1="0" y1="1" x2="0" y2="0">` +
