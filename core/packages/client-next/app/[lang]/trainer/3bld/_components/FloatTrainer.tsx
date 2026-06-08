@@ -47,6 +47,8 @@ import {
 } from '../_lib/state-gen';
 import { m2pSolve, prewarm } from '../_lib/m2p-bridge';
 import '../3bld.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 export type FloatPiece = 'edge' | 'corner';
 
@@ -254,9 +256,9 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
     }
 
     setInfo(
-      isZh
-        ? '已生成排除模式的 500 条打乱。'
-        : 'Generated 500 eject-mode scrambles.',
+      tr({ zh: '已生成排除模式的 500 条打乱。', en: 'Generated 500 eject-mode scrambles.',
+          zhHant: "已生成排除模式的 500 條打亂。"
+    }),
     );
     return out;
   }, [isEdge, ejectPos, oppScramble, parityMode, isZh]);
@@ -325,20 +327,24 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
   const title = useMemo(
     () =>
       isEdge
-        ? { zh: '棱块浮动训练', en: 'Edge Float Trainer' }
-        : { zh: '角块浮动训练', en: 'Corner Float Trainer' },
+        ? { zh: '棱块浮动训练', en: 'Edge Float Trainer'
+        }
+        : { zh: '角块浮动训练', en: 'Corner Float Trainer'
+        },
     [isEdge],
   );
 
   if (!hydrated) return <div className="bld-trainer-root" />;
 
-  const orderLabel = isZh ? '浮动顺序' : 'Float order';
-  const ejectLabel = isZh ? '排除位置' : 'Eject positions';
+  const orderLabel = tr({ zh: '浮动顺序', en: 'Float order',
+      zhHant: "浮動順序"
+});
+  const ejectLabel = tr({ zh: '排除位置', en: 'Eject positions' });
 
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{isZh ? title.zh : title.en}</h1>
+        <h1>{(i18n.language.startsWith('zh') ? title.zh : title.en)}</h1>
       </div>
 
       <div className="bld-section">
@@ -385,16 +391,22 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
         </div>
 
         <div className="bld-field" style={{ maxWidth: 240, marginTop: 12 }}>
-          <label className="bld-field-label" htmlFor="bld-parity">{isZh ? '奇偶状态' : 'Parity'}</label>
+          <label className="bld-field-label" htmlFor="bld-parity">{tr({ zh: '奇偶状态', en: 'Parity',
+              zhHant: "奇偶狀態"
+        })}</label>
           <select
             id="bld-parity"
             className="bld-select"
             value={parityMode}
             onChange={(e) => setParityMode(Number(e.target.value) as ParityMode)}
           >
-            <option value={0}>{isZh ? '无奇偶' : 'No parity'}</option>
-            <option value={1}>{isZh ? '有奇偶' : 'With parity'}</option>
-            <option value={2}>{isZh ? '随机' : 'Random'}</option>
+            <option value={0}>{tr({ zh: '无奇偶', en: 'No parity',
+                zhHant: "無奇偶"
+            })}</option>
+            <option value={1}>{tr({ zh: '有奇偶', en: 'With parity' })}</option>
+            <option value={2}>{tr({ zh: '随机', en: 'Random',
+                zhHant: "隨機"
+            })}</option>
           </select>
         </div>
 
@@ -406,18 +418,22 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
               onChange={(e) => setOppScramble(e.target.checked)}
             />
             {isEdge
-              ? isZh ? '打乱角块' : 'Scramble corners'
-              : isZh ? '打乱棱块' : 'Scramble edges'}
+              ? tr({ zh: '打乱角块', en: 'Scramble corners',
+                  zhHant: "打亂角塊"
+            })
+              : tr({ zh: '打乱棱块', en: 'Scramble edges',
+                  zhHant: "打亂稜塊"
+            })}
           </label>
         </div>
         <p className="bld-input-summary" style={{ marginTop: 8, marginBottom: 0 }}>
           {floatOrder.trim() === ''
-            ? (isZh
-                ? '浮动顺序留空 = 排除模式（生成 500 条打乱）。'
-                : 'Empty float order = eject mode (500 scrambles).')
-            : (isZh
-                ? '浮动顺序非空 = 正常浮动（遍历副缓冲全部公式）。'
-                : 'Non-empty float order = normal float (covers every sub-buffer alg).')}
+            ? (tr({ zh: '浮动顺序留空 = 排除模式（生成 500 条打乱）。', en: 'Empty float order = eject mode (500 scrambles).',
+                zhHant: "浮動順序留空 = 排除模式（生成 500 條打亂）。"
+            }))
+            : (tr({ zh: '浮动顺序非空 = 正常浮动（遍历副缓冲全部公式）。', en: 'Non-empty float order = normal float (covers every sub-buffer alg).',
+                zhHant: "浮動順序非空 = 正常浮動（遍歷副緩衝全部公式）。"
+            }))}
         </p>
       </div>
 
@@ -430,7 +446,9 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
             disabled={busy}
           >
             <Play size={15} />
-            {isZh ? '生成浮动训练' : 'Generate float training'}
+            {tr({ zh: '生成浮动训练', en: 'Generate float training',
+                zhHant: "生成浮動訓練"
+            })}
           </button>
 
           {isEdge && (
@@ -441,7 +459,9 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
               disabled={busy || scrambles.length === 0}
             >
               <Timer size={15} />
-              {isZh ? '练习计时' : 'Practice timer'}
+              {tr({ zh: '练习计时', en: 'Practice timer',
+                  zhHant: "練習計時"
+            })}
             </button>
           )}
 
@@ -451,7 +471,9 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
               className="bld-btn bld-btn-primary"
             >
               <Timer size={15} />
-              {isZh ? '打开计时器' : 'Open timer'}
+              {tr({ zh: '打开计时器', en: 'Open timer',
+                  zhHant: "開啟計時器"
+            })}
             </Link>
           )}
         </div>
@@ -471,12 +493,16 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
         >
           <div className="bld-modal" role="dialog" aria-modal="true">
             <div className="bld-modal-header">
-              <h3 className="bld-modal-title">{isZh ? '练习计时' : 'Practice timer'}</h3>
+              <h3 className="bld-modal-title">{tr({ zh: '练习计时', en: 'Practice timer',
+                  zhHant: "練習計時"
+            })}</h3>
               <button
                 type="button"
                 className="bld-modal-close"
                 onClick={() => setJumpOpen(false)}
-                aria-label={isZh ? '关闭' : 'Close'}
+                aria-label={tr({ zh: '关闭', en: 'Close',
+                    zhHant: "關閉"
+                })}
               >
                 <X size={18} />
               </button>
@@ -484,7 +510,9 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
 
             <div className="bld-field">
               <label className="bld-field-label" htmlFor="bld-percent">
-                {isZh ? '训练集公式占比' : 'Training-set ratio'}: {percent}%
+                {tr({ zh: '训练集公式占比', en: 'Training-set ratio',
+                    zhHant: "訓練集公式佔比"
+                })}: {percent}%
               </label>
               <input
                 id="bld-percent"
@@ -500,31 +528,41 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
             <div className="bld-options" style={{ marginBottom: 4 }}>
               <label className="bld-check">
                 <input type="checkbox" checked={jumpCorner} onChange={(e) => setJumpCorner(e.target.checked)} />
-                {isZh ? '其他打乱含角块' : 'Pad scrambles include corners'}
+                {tr({ zh: '其他打乱含角块', en: 'Pad scrambles include corners',
+                    zhHant: "其他打亂含角塊"
+                })}
               </label>
               <label className="bld-check">
                 <input type="checkbox" checked={jumpEdge} onChange={(e) => setJumpEdge(e.target.checked)} />
-                {isZh ? '其他打乱含棱块' : 'Pad scrambles include edges'}
+                {tr({ zh: '其他打乱含棱块', en: 'Pad scrambles include edges',
+                    zhHant: "其他打亂含稜塊"
+                })}
               </label>
             </div>
 
             <div className="bld-field" style={{ maxWidth: 220 }}>
-              <label className="bld-field-label" htmlFor="bld-jumpparity">{isZh ? '奇偶状态' : 'Parity'}</label>
+              <label className="bld-field-label" htmlFor="bld-jumpparity">{tr({ zh: '奇偶状态', en: 'Parity',
+                  zhHant: "奇偶狀態"
+            })}</label>
               <select
                 id="bld-jumpparity"
                 className="bld-select"
                 value={jumpParity}
                 onChange={(e) => setJumpParity(Number(e.target.value) as ParityMode)}
               >
-                <option value={0}>{isZh ? '无奇偶' : 'No parity'}</option>
-                <option value={1}>{isZh ? '有奇偶' : 'With parity'}</option>
-                <option value={2}>{isZh ? '随机' : 'Random'}</option>
+                <option value={0}>{tr({ zh: '无奇偶', en: 'No parity',
+                    zhHant: "無奇偶"
+                })}</option>
+                <option value={1}>{tr({ zh: '有奇偶', en: 'With parity' })}</option>
+                <option value={2}>{tr({ zh: '随机', en: 'Random',
+                    zhHant: "隨機"
+                })}</option>
               </select>
             </div>
 
             <div className="bld-modal-actions">
               <button type="button" className="bld-btn" onClick={() => setJumpOpen(false)}>
-                {isZh ? '取消' : 'Cancel'}
+                {tr({ zh: '取消', en: 'Cancel' })}
               </button>
               <button
                 type="button"
@@ -533,7 +571,9 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
                 disabled={busy}
               >
                 <Timer size={15} />
-                {isZh ? '生成并进入计时器' : 'Build & go to timer'}
+                {tr({ zh: '生成并进入计时器', en: 'Build & go to timer',
+                    zhHant: "生成並進入計時器"
+                })}
               </button>
             </div>
           </div>

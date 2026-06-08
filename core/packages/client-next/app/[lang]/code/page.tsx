@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import HomeLink from '@/components/HomeLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './code_index.css';
+import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 interface Card {
   href: string;
@@ -138,7 +140,7 @@ const CARDS: Card[] = [
 
 export default function CodeIndexPage() {
   const { i18n } = useTranslation();
-  const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
   useDocumentTitle('代码', 'Code');
 
@@ -149,7 +151,9 @@ export default function CodeIndexPage() {
       <header className="code-index-head">
         <div className="code-index-topbar">
           <HomeLink className="code-index-back">
-            ← {lang === 'zh' ? '回首页' : 'Home'}
+            ← {tr({ zh: '回首页', en: 'Home',
+                zhHant: "回首頁"
+            })}
           </HomeLink>
         </div>
         <h1 className="code-index-title">
@@ -157,9 +161,9 @@ export default function CodeIndexPage() {
           <span className="code-index-cursor">_</span>
         </h1>
         <p className="code-index-sub">
-          {lang === 'zh'
-            ? '代码相关的两条线:CubeRoot 这个站点本身是怎么搭的,以及一些写给爱好者看的编程语言长篇导览。'
-            : 'Two threads about code: how this site itself is built, and long-form guides to programming languages.'}
+          {tr({ zh: '代码相关的两条线:CubeRoot 这个站点本身是怎么搭的,以及一些写给爱好者看的编程语言长篇导览。', en: 'Two threads about code: how this site itself is built, and long-form guides to programming languages.',
+              zhHant: "程式碼相關的兩條線:CubeRoot 這個站點本身是怎麼搭的,以及一些寫給愛好者看的程式語言長篇導覽。"
+        })}
         </p>
       </header>
 

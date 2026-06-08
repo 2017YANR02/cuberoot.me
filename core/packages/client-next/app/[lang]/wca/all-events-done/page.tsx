@@ -15,6 +15,8 @@ import { apiUrl } from '@/lib/api-base';
 import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelect';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
 
@@ -76,35 +78,49 @@ function AllEventsDonePageInner() {
     <div className="wse-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
+          <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}</Link>
         </div>
         <h1 className="wse-title-row">
-          {isZh ? '全项目达成排名' : 'All Events Achievement'}
+          {tr({ zh: '全项目达成排名', en: 'All Events Achievement',
+              zhHant: "全專案達成排名"
+        })}
           <Link
             href="/wca/about/all-events-done"
             className="wse-title-help"
-            title={isZh ? '这页是干啥的?' : 'What is this page?'}
-            aria-label={isZh ? '查看说明' : 'About this page'}
+            title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+                zhHant: "這頁是幹啥的?"
+            })}
+            aria-label={tr({ zh: '查看说明', en: 'About this page',
+                zhHant: "檢視說明"
+            })}
           >
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
         </h1>
-        <p className="wse-subtitle">{isZh ? '完成全 17 项 WCA 官方项目所用天数(从首次参赛到最后一项达成),即「全项目大满贯」' : 'Days from first WCA comp to completing all 17 events — the all-events grand slam'}</p>
+        <p className="wse-subtitle">{tr({ zh: '完成全 17 项 WCA 官方项目所用天数(从首次参赛到最后一项达成),即「全项目大满贯」', en: 'Days from first WCA comp to completing all 17 events — the all-events grand slam',
+            zhHant: "完成全 17 項 WCA 官方專案所用天數(從首次參賽到最後一項達成),即「全專案大滿貫」"
+        })}</p>
       </header>
 
       <div className="wse-filters">
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
-          <label>{isZh ? '视图' : 'View'}</label>
+          <label>{tr({ zh: '视图', en: 'View',
+              zhHant: "檢視"
+        })}</label>
           <select value={onlyDone ? '1' : '0'} onChange={e => update('onlyDone', e.target.value)}>
-            <option value="1">{isZh ? '全达成' : 'Completed'}</option>
-            <option value="0">{isZh ? '全部' : 'All'}</option>
+            <option value="1">{tr({ zh: '全达成', en: 'Completed',
+                zhHant: "全達成"
+            })}</option>
+            <option value="0">{tr({ zh: '全部', en: 'All' })}</option>
           </select>
         </div>
       </div>
 
       <div className="wse-table-wrapper">
-        {loading && <div className="wse-state">{isZh ? '加载中...' : 'Loading...'}</div>}
+        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...',
+            zhHant: "載入中..."
+        })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {data && !loading && (
           <>
@@ -113,12 +129,24 @@ function AllEventsDonePageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{isZh ? '选手' : 'Person'}</th>
-                  <th className="wse-value-col">{isZh ? '达成天数' : 'Days'}</th>
-                  <th>{isZh ? '达成比赛' : 'At competition'}</th>
-                  <th className="wse-value-col">{isZh ? '比赛场次' : 'Comps'}</th>
-                  {!onlyDone && <th className="wse-value-col">{isZh ? '完成项目' : 'Done'}</th>}
-                  <th>{isZh ? '国家' : 'Country'}</th>
+                  <th>{tr({ zh: '选手', en: 'Person',
+                      zhHant: "選手"
+                })}</th>
+                  <th className="wse-value-col">{tr({ zh: '达成天数', en: 'Days',
+                      zhHant: "達成天數"
+                })}</th>
+                  <th>{tr({ zh: '达成比赛', en: 'At competition',
+                      zhHant: "達成比賽"
+                })}</th>
+                  <th className="wse-value-col">{tr({ zh: '比赛场次', en: 'Comps',
+                      zhHant: "比賽場次"
+                })}</th>
+                  {!onlyDone && <th className="wse-value-col">{tr({ zh: '完成项目', en: 'Done',
+                      zhHant: "完成專案"
+                })}</th>}
+                  <th>{tr({ zh: '国家', en: 'Country',
+                      zhHant: "國家"
+                })}</th>
                 </tr>
               </thead>
               <tbody>
@@ -126,9 +154,9 @@ function AllEventsDonePageInner() {
                   <tr key={r.wcaId}>
                     <td className="wse-rank-col">{(page - 1) * size + i + 1}</td>
                     <td>
-                      <Link prefetch={false} href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>{displayCuberName(r.name, isZh)}</Link>
+                      <Link prefetch={false} href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${r.wcaId}`}>{displayCuberName(r.name, isZh)}</Link>
                     </td>
-                    <td className="wse-value-col">{r.daysToComplete != null ? `${r.daysToComplete.toLocaleString()} ${isZh ? '天' : 'd'}` : '—'}</td>
+                    <td className="wse-value-col">{r.daysToComplete != null ? `${r.daysToComplete.toLocaleString()} ${tr({ zh: '天', en: 'd' })}` : '—'}</td>
                     <td>{r.achievementCompId ? <CompCell compId={r.achievementCompId} compName={r.achievementCompName} isZh={isZh} /> : ''}</td>
                     <td className="wse-value-col">{r.totalCompCount}</td>
                     {!onlyDone && <td className="wse-value-col">{r.doneCount}/17</td>}

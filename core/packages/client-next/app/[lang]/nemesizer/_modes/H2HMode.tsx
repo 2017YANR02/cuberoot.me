@@ -7,6 +7,7 @@ import PersonCell from '../_components/PersonCell';
 import { formatWcaResultK } from '@/lib/wca-format-result';
 import { eventDisplayName } from '@/lib/wca-events';
 import { fetchH2H, type H2HResponse } from '../_data/nemesizerApi';
+import { tr } from '@/i18n/tr';
 
 interface Props { isZh: boolean; }
 
@@ -52,11 +53,15 @@ export default function H2HMode({ isZh }: Props) {
   if (!p1) {
     return (
       <div>
-        <h2 style={{ textAlign: 'center' }}>{isZh ? '正面对决' : 'Head to head!'}</h2>
+        <h2 style={{ textAlign: 'center' }}>{tr({ zh: '正面对决', en: 'Head to head!',
+            zhHant: "正面對決"
+        })}</h2>
         <NemesizerPersonPicker
           isZh={isZh}
           onPick={id => setParam('p1', id)}
-          placeholder={isZh ? '选手 1：WCA ID 或姓名' : 'Person 1: WCA ID or name'}
+          placeholder={tr({ zh: '选手 1：WCA ID 或姓名', en: 'Person 1: WCA ID or name',
+              zhHant: "選手 1：WCA ID 或姓名"
+        })}
         />
       </div>
     );
@@ -65,12 +70,16 @@ export default function H2HMode({ isZh }: Props) {
   if (err && err.startsWith('404')) {
     return (
       <div>
-        <h2 style={{ textAlign: 'center' }}>{isZh ? '正面对决' : 'Head to head!'}</h2>
+        <h2 style={{ textAlign: 'center' }}>{tr({ zh: '正面对决', en: 'Head to head!',
+            zhHant: "正面對決"
+        })}</h2>
         <NemesizerPersonPicker
           isZh={isZh}
           initialQuery={p1}
           onPick={id => setParam('p1', id)}
-          placeholder={isZh ? '没找到该选手' : 'Person not found'}
+          placeholder={tr({ zh: '没找到该选手', en: 'Person not found',
+              zhHant: "沒找到該選手"
+        })}
         />
       </div>
     );
@@ -78,18 +87,24 @@ export default function H2HMode({ isZh }: Props) {
 
   return (
     <div>
-      <h2 style={{ textAlign: 'center' }}>{isZh ? '正面对决' : 'Head to head!'}</h2>
+      <h2 style={{ textAlign: 'center' }}>{tr({ zh: '正面对决', en: 'Head to head!',
+          zhHant: "正面對決"
+    })}</h2>
       <div style={{ textAlign: 'center', margin: '10px' }}>
         <label style={{ marginRight: 18 }}>
-          <input type="radio" checked={show === 'ranks'} onChange={() => setParam('show', 'ranks')} /> {isZh ? '排名' : 'Ranks'}
+          <input type="radio" checked={show === 'ranks'} onChange={() => setParam('show', 'ranks')} /> {tr({ zh: '排名', en: 'Ranks' })}
         </label>
         <label>
-          <input type="radio" checked={show === 'results'} onChange={() => setParam('show', 'results')} /> {isZh ? '成绩' : 'Results'}
+          <input type="radio" checked={show === 'results'} onChange={() => setParam('show', 'results')} /> {tr({ zh: '成绩', en: 'Results',
+              zhHant: "成績"
+        })}
         </label>
       </div>
       {data && (
         <div className="nemesizer-results-summary">
-          {isZh ? '选手 1' : 'Compare'}:{' '}
+          {tr({ zh: '选手 1', en: 'Compare',
+              zhHant: "選手 1"
+        })}:{' '}
           <PersonCell person={{ wcaId: data.p1.wcaId, name: data.p1.name, countryIso2: data.p1.iso2, continentIdx: 0 }} isZh={isZh} />
           {' '}({data.p1.wcaId})
         </div>
@@ -98,9 +113,13 @@ export default function H2HMode({ isZh }: Props) {
         isZh={isZh}
         initialQuery={p2}
         onPick={id => setParam('p2', id)}
-        placeholder={isZh ? '对手：WCA ID 或姓名' : 'With: WCA ID or name'}
+        placeholder={tr({ zh: '对手：WCA ID 或姓名', en: 'With: WCA ID or name',
+            zhHant: "對手：WCA ID 或姓名"
+        })}
       />
-      {loading && !data && <div className="nemesizer-loading">{isZh ? '加载中…' : 'Loading…'}</div>}
+      {loading && !data && <div className="nemesizer-loading">{tr({ zh: '加载中…', en: 'Loading…',
+          zhHant: "載入中…"
+    })}</div>}
       {data && p2 && <Comparison data={data} isZh={isZh} show={show} />}
     </div>
   );
@@ -112,7 +131,9 @@ function Comparison({ data, isZh, show }: { data: H2HResponse; isZh: boolean; sh
       <table className="nemesizer-table">
         <thead>
           <tr>
-            <th>{isZh ? '项目' : 'Event'}</th>
+            <th>{tr({ zh: '项目', en: 'Event',
+                zhHant: "專案"
+            })}</th>
             <th><PersonCell person={{ wcaId: data.p1.wcaId, name: data.p1.name, countryIso2: data.p1.iso2, continentIdx: 0 }} isZh={isZh} /></th>
             <th><PersonCell person={{ wcaId: data.p2.wcaId, name: data.p2.name, countryIso2: data.p2.iso2, continentIdx: 0 }} isZh={isZh} /></th>
           </tr>
@@ -147,6 +168,8 @@ function cellClass(mine: number | undefined, other: number | undefined): string 
 }
 
 function labelEk(ev: string, kind: number, isZh: boolean): string {
-  const suffix = kind === 0 ? (isZh ? '单次' : 'single') : (isZh ? '平均' : 'average');
+  const suffix = kind === 0 ? (tr({ zh: '单次', en: 'single',
+      zhHant: "單次"
+})) : (tr({ zh: '平均', en: 'average' }));
   return `${eventDisplayName(ev, isZh)} ${suffix}`;
 }

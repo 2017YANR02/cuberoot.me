@@ -6,6 +6,7 @@ import { effectiveMs } from '../_lib/types';
 import { formatMs } from '../_lib/stats';
 import CubePreview from '../_lib/cube/CubePreview';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { tr } from '@/i18n/tr';
 
 function BldSplits({ bld, isZh, totalMs }: { bld: NonNullable<Solve['bld']>; isZh: boolean; totalMs: number }) {
   const memo = bld.memoMs;
@@ -13,17 +14,23 @@ function BldSplits({ bld, isZh, totalMs }: { bld: NonNullable<Solve['bld']>; isZ
   return (
     <div className="stage-splits-table">
       <div className="stage-row">
-        <span className="stage-name">{isZh ? '记忆' : 'Memo'}</span>
+        <span className="stage-name">{tr({ zh: '记忆', en: 'Memo',
+            zhHant: "記憶"
+        })}</span>
         <span className="stage-dur">{formatMs(memo)}</span>
         <span className="stage-cum">{formatMs(memo)}</span>
       </div>
       <div className="stage-row">
-        <span className="stage-name">{isZh ? '执行' : 'Execution'}</span>
+        <span className="stage-name">{tr({ zh: '执行', en: 'Execution',
+            zhHant: "執行"
+        })}</span>
         <span className="stage-dur">{formatMs(exec)}</span>
         <span className="stage-cum">{formatMs(totalMs)}</span>
       </div>
       <div className="stage-row stage-total">
-        <span className="stage-name">{isZh ? '总计' : 'Total'}</span>
+        <span className="stage-name">{tr({ zh: '总计', en: 'Total',
+            zhHant: "總計"
+        })}</span>
         <span className="stage-dur"></span>
         <span className="stage-cum">{formatMs(totalMs)}</span>
       </div>
@@ -42,7 +49,7 @@ function StageSplits({ stages, isZh, totalMs }: { stages: NonNullable<Solve['sta
   const pllDur = oll !== undefined ? pll - oll : (f2l !== undefined ? pll - f2l : (cross !== undefined ? pll - cross : pll));
 
   const rows: Array<{ name: string; cum: number | undefined; dur: number | null }> = [
-    { name: isZh ? '十字' : 'Cross', cum: cross, dur: crossDur },
+    { name: tr({ zh: '十字', en: 'Cross' }), cum: cross, dur: crossDur },
     { name: 'F2L',                    cum: f2l,   dur: f2lDur },
     { name: 'OLL',                    cum: oll,   dur: ollDur },
     { name: 'PLL',                    cum: pll,   dur: pllDur },
@@ -57,7 +64,9 @@ function StageSplits({ stages, isZh, totalMs }: { stages: NonNullable<Solve['sta
         </div>
       ))}
       <div className="stage-row stage-total">
-        <span className="stage-name">{isZh ? '总计' : 'Total'}</span>
+        <span className="stage-name">{tr({ zh: '总计', en: 'Total',
+            zhHant: "總計"
+        })}</span>
         <span className="stage-dur"></span>
         <span className="stage-cum">{formatMs(totalMs)}</span>
       </div>
@@ -134,11 +143,15 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
           {solve.penalty === 'DNF' && ' DNF'}
         </h2>
         <div className="modal-section">
-          <div>{isZh ? '原始时间' : 'Raw time'}: {formatMs(solve.timeMs)}</div>
-          <div>{isZh ? '日期' : 'Date'}: {dt.toLocaleString()}</div>
+          <div>{tr({ zh: '原始时间', en: 'Raw time',
+              zhHant: "原始時間"
+        })}: {formatMs(solve.timeMs)}</div>
+          <div>{tr({ zh: '日期', en: 'Date' })}: {dt.toLocaleString()}</div>
         </div>
         <div className="modal-section">
-          <div>{isZh ? '打乱' : 'Scramble'}:</div>
+          <div>{tr({ zh: '打乱', en: 'Scramble',
+              zhHant: "打亂"
+        })}:</div>
           <div className="scramble-text">{solve.scramble}</div>
         </div>
         <div className="modal-section modal-cube-row">
@@ -146,19 +159,25 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
         </div>
         {solve.stages && (
           <div className="modal-section">
-            <h3 className="settings-h3">{isZh ? '分阶段成绩' : 'Stage splits'}</h3>
+            <h3 className="settings-h3">{tr({ zh: '分阶段成绩', en: 'Stage splits',
+                zhHant: "分階段成績"
+            })}</h3>
             <StageSplits stages={solve.stages} isZh={isZh} totalMs={solve.timeMs} />
           </div>
         )}
         {solve.bld && (
           <div className="modal-section">
-            <h3 className="settings-h3">{isZh ? '记忆 / 执行' : 'Memo / Execution'}</h3>
+            <h3 className="settings-h3">{tr({ zh: '记忆 / 执行', en: 'Memo / Execution',
+                zhHant: "記憶 / 執行"
+            })}</h3>
             <BldSplits bld={solve.bld} isZh={isZh} totalMs={solve.timeMs} />
           </div>
         )}
         <div className="modal-section">
           <label>
-            {isZh ? '注释' : 'Comment'}
+            {tr({ zh: '注释', en: 'Comment',
+                zhHant: "註釋"
+            })}
             <textarea
               className="comment-textarea"
               value={comment}
@@ -170,20 +189,26 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
                 setEditing(false);
                 if (comment !== (solve.comment ?? '')) onChangeComment(comment);
               }}
-              placeholder={isZh ? '记录此次成绩的备注…' : 'Notes for this solve…'}
+              placeholder={tr({ zh: '记录此次成绩的备注…', en: 'Notes for this solve…',
+                  zhHant: "記錄此次成績的備註…"
+            })}
             />
           </label>
         </div>
         {moveTargets && moveTargets.length > 0 && onMoveToSession && (
           <div className="modal-section">
             <div className="solve-move-row">
-              <span className="solve-move-label">{isZh ? '移到分组' : 'Move to session'}</span>
+              <span className="solve-move-label">{tr({ zh: '移到分组', en: 'Move to session',
+                  zhHant: "移到分組"
+            })}</span>
               <select
                 className="solve-move-select"
                 value=""
                 onChange={(e) => { const id = e.target.value; if (id) onMoveToSession(id); }}
               >
-                <option value="">{isZh ? '选择分组…' : 'Choose…'}</option>
+                <option value="">{tr({ zh: '选择分组…', en: 'Choose…',
+                    zhHant: "選擇分組…"
+                })}</option>
                 {moveTargets.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
@@ -214,13 +239,19 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
           </button>
           {solve.moves && solve.moves.length > 0 && onOpenReconstruct && (
             <button style={actionBtnStyle} onClick={onOpenReconstruct}>
-              {isZh ? '查看复盘' : 'View reconstruct'}
+              {tr({ zh: '查看复盘', en: 'View reconstruct',
+                  zhHant: "檢視覆盤"
+            })}
             </button>
           )}
           <button className="danger" style={actionBtnStyle} onClick={onDelete}>
-            {isZh ? '删除' : 'Delete'}
+            {tr({ zh: '删除', en: 'Delete',
+                zhHant: "刪除"
+            })}
           </button>
-          <button style={actionBtnStyle} onClick={onClose}>{isZh ? '关闭' : 'Close'}</button>
+          <button style={actionBtnStyle} onClick={onClose}>{tr({ zh: '关闭', en: 'Close',
+              zhHant: "關閉"
+        })}</button>
         </div>
       </div>
     </div>

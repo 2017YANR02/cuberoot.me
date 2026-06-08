@@ -1,5 +1,8 @@
 'use client';
 
+import { tr } from '@/i18n/tr';
+
+
 // Ported from packages/client/src/pages/wca_stats/ShowToggle.tsx.
 
 export type ShowMode = 'persons' | 'results';
@@ -18,14 +21,18 @@ export default function ShowToggle({ value, onChange, isZh }: Props) {
         className={value === 'persons' ? 'active' : ''}
         onClick={() => onChange('persons')}
       >
-        {isZh ? '选手' : 'Persons'}
+        {tr({ zh: '选手', en: 'Persons',
+            zhHant: "選手"
+        })}
       </button>
       <button
         type="button"
         className={value === 'results' ? 'active' : ''}
         onClick={() => onChange('results')}
       >
-        {isZh ? '成绩' : 'Results'}
+        {tr({ zh: '成绩', en: 'Results',
+            zhHant: "成績"
+        })}
       </button>
     </div>
   );

@@ -8,6 +8,7 @@ import {
   searchLocalPersons,
   type WcaPerson,
 } from '@cuberoot/shared';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   isZh: boolean;
@@ -34,7 +35,9 @@ export default function NemesizerPersonPicker({
       <WcaPersonPicker
         mode="inline"
         onSelect={handleSelect}
-        placeholder={placeholder ?? (isZh ? '搜索 WCA ID、姓名、国家或年份' : 'Search WCA ID, name, country or year')}
+        placeholder={placeholder ?? (tr({ zh: '搜索 WCA ID、姓名、国家或年份', en: 'Search WCA ID, name, country or year',
+            zhHant: "搜尋 WCA ID、姓名、國家或年份"
+        }))}
         searchFn={searchFn}
         initialQuery={initialQuery}
         autoConfirmExact={autoConfirmExact}

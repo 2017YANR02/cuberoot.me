@@ -12,6 +12,8 @@ import type { ReactNode } from 'react';
 import { Flag } from '@/components/Flag';
 import { LANGS, LANG_MAP, langDisplay } from '../_lib/langs';
 import { ChevronDown, X, Globe } from 'lucide-react';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 interface PopupProps {
   value: string;
@@ -30,10 +32,14 @@ export function LangPopup({
     <div
       className={`colpi-langpicker-popup ${popupClassName ?? ''}`}
       role="dialog"
-      aria-label={isZh ? '选择语言' : 'Select language'}
+      aria-label={tr({ zh: '选择语言', en: 'Select language',
+          zhHant: "選擇語言"
+    })}
     >
       <div className="colpi-langpicker-popup-head">
-        <span>{title ?? (isZh ? '选择语言' : 'Select words language')}</span>
+        <span>{title ?? (tr({ zh: '选择语言', en: 'Select words language',
+            zhHant: "選擇語言"
+        }))}</span>
         <button type="button" onClick={onClose} aria-label="Close">
           <X size={14} />
         </button>
@@ -46,7 +52,7 @@ export function LangPopup({
             onClick={() => { onChange('all'); onClose(); }}
           >
             <Globe size={14} className="colpi-langpicker-flag" />
-            <span>{isZh ? '全部' : 'All'}</span>
+            <span>{tr({ zh: '全部', en: 'All' })}</span>
           </button>
         )}
         {LANGS.map(l => (
@@ -58,7 +64,7 @@ export function LangPopup({
             title={l.code}
           >
             <Flag iso2={l.iso2} className="colpi-langpicker-flag" />
-            <span>{isZh ? l.zh : l.en}</span>
+            <span>{(i18n.language.startsWith('zh') ? l.zh : l.en)}</span>
           </button>
         ))}
       </div>
@@ -102,7 +108,9 @@ export default function LanguagePicker({
         type="button"
         className="colpi-langpicker-trigger"
         onClick={() => setOpen(o => !o)}
-        title={isZh ? '词条语言' : 'Word language'}
+        title={tr({ zh: '词条语言', en: 'Word language',
+            zhHant: "詞條語言"
+        })}
       >
         {current ? (
           <Flag iso2={current.iso2} className="colpi-langpicker-flag" />
@@ -111,7 +119,9 @@ export default function LanguagePicker({
         )}
         <span className="colpi-langpicker-label">
           {value === 'all'
-            ? (isZh ? '全部语言' : 'All langs')
+            ? (tr({ zh: '全部语言', en: 'All langs',
+                zhHant: "全部語言"
+            }))
             : langDisplay(value, isZh)}
         </span>
         <ChevronDown size={14} />

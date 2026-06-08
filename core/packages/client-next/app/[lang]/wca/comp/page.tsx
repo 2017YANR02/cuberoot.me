@@ -47,17 +47,18 @@ import { countryName } from '@/lib/country-name';
 import { expandCountrySelection } from '@/lib/continent';
 import { fetchCompRounds } from '@/lib/comp-wcif';
 import { statsUrl } from '@/lib/stats-base';
-import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { ClearButton } from '@/components/ClearButton';
 import { CubingIcon } from '@/components/EventIcon';
 import { fetchUserUpcoming, type WcaPersonLite } from '@/lib/wca-api';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { CompPicker } from '@/components/CompPicker';
+import { CompCuberPicker } from '@/components/CompCuberPicker';
 import OnThisDayModal from './_components/OnThisDayModal';
 import MonthGrid from '@/components/MonthGrid';
 import './calendar_page.css';
 import './comp.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 // view=globe 视图:复用 /wca/globe 的 MapLibre 地球,dynamic + ssr:false 懒加载,
 // ~550KB maplibre 仅在切到地球视图时下载,不进日历首屏 bundle。
@@ -232,12 +233,16 @@ function formatRegStatus(open: string | null | undefined, close: string | null |
     return isZh ? `${fmt(open!)} 开放报名` : `Registration opens ${fmt(open!)}`;
   }
   if (closeMs !== null && now >= closeMs) {
-    return isZh ? '报名已截止' : 'Registration closed';
+    return tr({ zh: '报名已截止', en: 'Registration closed',
+        zhHant: "報名已截止"
+    });
   }
   if (closeMs !== null) {
     return isZh ? `${fmt(close!)} 截止` : `Closes ${fmt(close!)}`;
   }
-  return isZh ? '报名中' : 'Registration open';
+  return tr({ zh: '报名中', en: 'Registration open',
+      zhHant: "報名中"
+});
 }
 
 function Flag({ iso2 }: { iso2: string }) {
@@ -558,10 +563,10 @@ function CompModal({ comp, isZh, onClose, t, cancelled }: {
             <Flag iso2={comp.country} />
             <span className={cancelled ? 'modal-title-name is-cancelled' : 'modal-title-name'}>{displayName}</span>
           </Link>
-          {cancelled && <span className="modal-cancelled-tag">{isZh ? '已取消' : 'Cancelled'}</span>}
+          {cancelled && <span className="modal-cancelled-tag">{tr({ zh: '已取消', en: 'Cancelled' })}</span>}
         </h2>
         <div className="modal-meta">
-          {dateStr} · {displayCity}{isZh ? '，' : ', '}{displayCountry}
+          {dateStr} · {displayCity}{(i18n.language.startsWith('zh') ? '，' : ', ')}{displayCountry}
           {comp.competitor_limit > 0 && <span> · {t('upcoming.competitorLimit', { count: comp.competitor_limit })}</span>}
         </div>
         {(() => {
@@ -594,7 +599,7 @@ function CompModal({ comp, isZh, onClose, t, cancelled }: {
                   <span className="record-value mono">{formatWcaResult(r.v, r.e, r.k === 's' ? 'single' : 'average')}</span>
                   <Link
                     prefetch={false}
-                    href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.p}`}
+                    href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${r.p}`}
                     className="record-person"
                   >
                     <SharedFlag iso2={personFlagIso2(r.p)} />
@@ -613,7 +618,7 @@ function CompModal({ comp, isZh, onClose, t, cancelled }: {
                 <Link
                   key={c.id}
                   prefetch={false}
-                  href={`/${isZh ? 'zh' : 'en'}/wca/persons/${c.id}`}
+                  href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${c.id}`}
                   className="cuber-tag"
                 >
                   <SharedFlag iso2={personFlagIso2(c.id)} />
@@ -889,7 +894,9 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   useEffect(() => () => { pageRef.current?.style.removeProperty('--cl-name-width'); }, [pageRef]);
 
   if (items.length === 0) {
-    return <div className="comp-list-empty">{isZh ? '没有匹配的比赛' : 'No competitions match'}</div>;
+    return <div className="comp-list-empty">{tr({ zh: '没有匹配的比赛', en: 'No competitions match',
+        zhHant: "沒有匹配的比賽"
+    })}</div>;
   }
 
   const visible = items.slice(range.start, range.end);
@@ -1419,41 +1426,46 @@ function CalendarPageInner() {
     >
       <header className="upcoming-header">
         <h1 className="upcoming-title">
-          {isZh ? 'WCA 比赛' : 'WCA Competitions'}
+          {tr({ zh: 'WCA 比赛', en: 'WCA Competitions',
+              zhHant: "WCA 比賽"
+        })}
           <Link
             href="/wca/comp-about"
             className="calendar-title-help"
-            title={isZh ? '这页是干啥的?' : 'What is this page?'}
-            aria-label={isZh ? '查看说明' : 'About this page'}
+            title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+                zhHant: "這頁是幹啥的?"
+            })}
+            aria-label={tr({ zh: '查看说明', en: 'About this page',
+                zhHant: "檢視說明"
+            })}
           >
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
         </h1>
         <div className="upcoming-meta">
           <Link href="/wca/comp/stats" className="globe-link">
-            <BarChart3 size={12} strokeWidth={1.75} /> {isZh ? '统计' : 'Stats'}
+            <BarChart3 size={12} strokeWidth={1.75} /> {tr({ zh: '统计', en: 'Stats',
+                zhHant: "統計"
+            })}
           </Link>
         </div>
       </header>
 
       <div className="toolbar">
-        <CompPicker
+        <CompCuberPicker
           className="search-box-comp"
-          value={compQuery}
-          onChange={(v) => setCompQuery(v)}
+          query={compQuery}
+          onQueryChange={setCompQuery}
           onUrlPaste={(id) => router.push(`/wca/comp/${id}`)}
-          onPick={(c) => router.push(`/wca/comp/${c.id}`)}
-          isZh={isZh}
-          placeholder={t('upcoming.searchComp')}
-        />
-        <WcaPersonPicker
-          className="search-box-cuber"
-          value={selectedCuber}
-          onChange={setSelectedCuber}
+          onPickComp={(c) => router.push(`/wca/comp/${c.id}`)}
+          cuber={selectedCuber}
+          onCuberChange={setSelectedCuber}
           staticCubers={staticCubers}
-          matchCount={selectedCuber ? (selectedCuberCompIds?.size ?? null) : null}
-          placeholder={t('upcoming.searchCuber')}
+          cuberMatchCount={selectedCuber ? (selectedCuberCompIds?.size ?? null) : null}
           isZh={isZh}
+          placeholder={tr({ zh: '搜比赛或选手', en: 'Search comps or cubers',
+              zhHant: "搜比賽或選手"
+        })}
         />
         <RegionPicker
           className="country-filter"
@@ -1469,10 +1481,12 @@ function CalendarPageInner() {
           className={`cancelled-toggle${cancelledFilter === 'only' ? ' is-active' : ''}`}
           onClick={() => setCancelledFilter((v) => (v === 'only' ? 'all' : 'only'))}
           aria-pressed={cancelledFilter === 'only'}
-          title={isZh ? '只看已取消的比赛' : 'Show only cancelled competitions'}
+          title={tr({ zh: '只看已取消的比赛', en: 'Show only cancelled competitions',
+              zhHant: "只看已取消的比賽"
+        })}
         >
           <Ban size={14} strokeWidth={1.75} />
-          <span>{isZh ? '已取消' : 'Cancelled'}</span>
+          <span>{tr({ zh: '已取消', en: 'Cancelled' })}</span>
         </button>
         {viewMode === 'calendar' && (
           <div className="mode-toggle" role="tablist">
@@ -1499,14 +1513,20 @@ function CalendarPageInner() {
       </div>
 
       <div className="month-bar">
-        <div className="view-toggle" role="tablist" aria-label={isZh ? '视图切换' : 'View toggle'}>
+        <div className="view-toggle" role="tablist" aria-label={tr({ zh: '视图切换', en: 'View toggle',
+            zhHant: "檢視切換"
+        })}>
           <button
             role="tab"
             aria-selected={viewMode === 'calendar'}
             className={`view-btn ${viewMode === 'calendar' ? 'is-active' : ''}`}
             onClick={() => setViewMode('calendar')}
-            aria-label={isZh ? '日历' : 'Calendar'}
-            title={isZh ? '日历' : 'Calendar'}
+            aria-label={tr({ zh: '日历', en: 'Calendar',
+                zhHant: "日曆"
+            })}
+            title={tr({ zh: '日历', en: 'Calendar',
+                zhHant: "日曆"
+            })}
           >
             <CalendarDays size={16} strokeWidth={1.75} />
           </button>
@@ -1515,8 +1535,12 @@ function CalendarPageInner() {
             aria-selected={viewMode === 'compact'}
             className={`view-btn ${viewMode === 'compact' ? 'is-active' : ''}`}
             onClick={() => setViewMode('compact')}
-            aria-label={isZh ? '紧凑日历(国旗)' : 'Compact (flags)'}
-            title={isZh ? '紧凑日历(国旗)' : 'Compact (flags)'}
+            aria-label={tr({ zh: '紧凑日历(国旗)', en: 'Compact (flags)',
+                zhHant: "緊湊日曆(國旗)"
+            })}
+            title={tr({ zh: '紧凑日历(国旗)', en: 'Compact (flags)',
+                zhHant: "緊湊日曆(國旗)"
+            })}
           >
             <LayoutGrid size={16} strokeWidth={1.75} />
           </button>
@@ -1525,8 +1549,8 @@ function CalendarPageInner() {
             aria-selected={viewMode === 'list'}
             className={`view-btn ${viewMode === 'list' ? 'is-active' : ''}`}
             onClick={() => { setViewMode('list'); setMode('all'); }}
-            aria-label={isZh ? '列表' : 'List'}
-            title={isZh ? '列表' : 'List'}
+            aria-label={tr({ zh: '列表', en: 'List' })}
+            title={tr({ zh: '列表', en: 'List' })}
           >
             <List size={16} strokeWidth={1.75} />
           </button>
@@ -1535,8 +1559,8 @@ function CalendarPageInner() {
             aria-selected={viewMode === 'globe'}
             className={`view-btn ${viewMode === 'globe' ? 'is-active' : ''}`}
             onClick={() => setViewMode('globe')}
-            aria-label={isZh ? '地球' : 'Globe'}
-            title={isZh ? '地球' : 'Globe'}
+            aria-label={tr({ zh: '地球', en: 'Globe' })}
+            title={tr({ zh: '地球', en: 'Globe' })}
           >
             <GlobeIcon size={16} strokeWidth={1.75} />
           </button>
@@ -1546,7 +1570,7 @@ function CalendarPageInner() {
             <button className="nav-btn" onClick={() => gotoMonth(-1)} aria-label="Previous month">
               <ChevronLeft size={16} strokeWidth={1.75} />
             </button>
-            <button className="nav-today" onClick={gotoToday}>{isZh ? '今天' : 'Today'}</button>
+            <button className="nav-today" onClick={gotoToday}>{tr({ zh: '今天', en: 'Today' })}</button>
             <button className="nav-btn" onClick={() => gotoMonth(1)} aria-label="Next month">
               <ChevronRight size={16} strokeWidth={1.75} />
             </button>
@@ -1554,7 +1578,9 @@ function CalendarPageInner() {
               ref={monthBtnRef}
               className="month-label month-label-btn"
               onClick={() => setPickerOpen((o) => o === 'month' ? null : 'month')}
-              aria-label={isZh ? '选择年月' : 'Select year / month'}
+              aria-label={tr({ zh: '选择年月', en: 'Select year / month',
+                  zhHant: "選擇年月"
+            })}
               aria-expanded={pickerOpen === 'month'}
             >
               <span className="month-label-year">{monthYear}</span>
@@ -1570,9 +1596,9 @@ function CalendarPageInner() {
               className={`date-range-pick${dateFrom ? '' : ' is-empty'}`}
               onClick={() => setPickerOpen((o) => o === 'from' ? null : 'from')}
               aria-expanded={pickerOpen === 'from'}
-              aria-label={isZh ? '起始年月' : 'From'}
+              aria-label={tr({ zh: '起始年月', en: 'From' })}
             >
-              {dateFrom || (isZh ? '起始' : 'From')}
+              {dateFrom || (tr({ zh: '起始', en: 'From' }))}
             </button>
             <span className="date-range-sep">~</span>
             <button
@@ -1581,9 +1607,13 @@ function CalendarPageInner() {
               className={`date-range-pick${dateTo ? '' : ' is-empty'}`}
               onClick={() => setPickerOpen((o) => o === 'to' ? null : 'to')}
               aria-expanded={pickerOpen === 'to'}
-              aria-label={isZh ? '结束年月' : 'To'}
+              aria-label={tr({ zh: '结束年月', en: 'To',
+                  zhHant: "結束年月"
+            })}
             >
-              {dateTo || (isZh ? '结束' : 'To')}
+              {dateTo || (tr({ zh: '结束', en: 'To',
+                  zhHant: "結束"
+            }))}
             </button>
             {(dateFrom || dateTo) && (
               <ClearButton
@@ -1628,7 +1658,9 @@ function CalendarPageInner() {
             });
             const cycleHint = max >= 1
               ? (isZh ? `点击切换：关 → max → 1 → ... → ${max} → 关` : `Click to cycle: off → max → 1 → ... → ${max} → off`)
-              : (isZh ? '点击切换：关 → max → 关' : 'Click to cycle: off → max → off');
+              : (tr({ zh: '点击切换：关 → max → 关', en: 'Click to cycle: off → max → off',
+                  zhHant: "點選切換：關 → max → 關"
+            }));
             return (
               <button
                 key={eid}
@@ -1709,7 +1741,9 @@ function CalendarPageInner() {
                 type="button"
                 className="day-number"
                 onClick={() => setOnThisDayDate(day)}
-                title={isZh ? '历年此日的比赛' : 'On this day across all years'}
+                title={tr({ zh: '历年此日的比赛', en: 'On this day across all years',
+                    zhHant: "歷年此日的比賽"
+                })}
               >
                 {day.getDate()}
               </button>
@@ -1793,7 +1827,9 @@ function CalendarPageInner() {
             role: 'button',
             tabIndex: 0,
             onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOnThisDayDate(day); } },
-            title: isZh ? '历年此日的比赛' : 'On this day across all years',
+            title: tr({ zh: '历年此日的比赛', en: 'On this day across all years',
+                zhHant: "歷年此日的比賽"
+            }),
           } : undefined}
           renderDay={(day, { inView, weekIdx, dayIdx }) => {
             if (!inView) return null;
@@ -1811,7 +1847,9 @@ function CalendarPageInner() {
                       ].filter(Boolean).join(' ');
                       const prefetchRounds = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
                       const titleText = tile.count > 1
-                        ? `${countryName(c.country, isZh)} — ${tile.count}${isZh ? ' 场' : ' comps'}`
+                        ? `${countryName(c.country, isZh)} — ${tile.count}${tr({ zh: ' 场', en: ' comps',
+                            zhHant: " 場"
+                        })}`
                         : `${localizeName(c, isZh)} — ${c.top_cubers.length} cubers`;
                       return (
                         <button
@@ -1958,12 +1996,16 @@ function CalendarPageInner() {
       {(viewMode === 'calendar' || viewMode === 'compact') && (
         <div className="legend">
           {viewMode === 'calendar' && mode === 'all' && (
-            <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {isZh ? '一般比赛' : 'No top cubers'}</span>
+            <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {tr({ zh: '一般比赛', en: 'No top cubers',
+                zhHant: "一般比賽"
+            })}</span>
           )}
           {viewMode === 'calendar' && (
             <>
-              <span className="legend-item"><span className="legend-swatch swatch-default" /> {isZh ? '有顶尖选手' : 'Has top cubers'}</span>
-              <span className="legend-item"><span className="legend-swatch swatch-clash" /> {isZh ? '扎堆 (3+)' : 'Clash (3+)'}</span>
+              <span className="legend-item"><span className="legend-swatch swatch-default" /> {tr({ zh: '有顶尖选手', en: 'Has top cubers',
+                  zhHant: "有頂尖選手"
+            })}</span>
+              <span className="legend-item"><span className="legend-swatch swatch-clash" /> {tr({ zh: '扎堆 (3+)', en: 'Clash (3+)' })}</span>
             </>
           )}
           {viewMode === 'calendar' && (
@@ -1982,7 +2024,9 @@ function CalendarPageInner() {
 
       {recent.length > 0 && (
         <div className="comp-recent comp-recent-calendar">
-          <h2 className="comp-recent-title">{isZh ? '最近浏览' : 'Recent'}</h2>
+          <h2 className="comp-recent-title">{tr({ zh: '最近浏览', en: 'Recent',
+              zhHant: "最近瀏覽"
+        })}</h2>
           <ul className="comp-recent-list">
             {recent.map(r => {
               const iso2 = compFlagIso2(r.slug);
@@ -2008,7 +2052,7 @@ function CalendarPageInner() {
                     className="comp-recent-remove"
                     onClick={() => removeRecent(r.slug)}
                     aria-label="Remove"
-                    title={isZh ? '移除' : 'Remove'}
+                    title={tr({ zh: '移除', en: 'Remove' })}
                   >
                     <XIcon size={14} />
                   </button>

@@ -20,6 +20,7 @@ import { Pencil, Trash2, Flag } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { deleteArticle, reportArticle } from '@/lib/article-api';
+import i18n from '@/i18n/i18n-client';
 
 interface ArticleActionsProps {
   slug: string;
@@ -53,7 +54,7 @@ export default function ArticleActions({ slug, authorWcaId, lang }: ArticleActio
 
   if (!mounted || !user) return null;
 
-  const langPrefix = isZh ? 'zh' : 'en';
+  const langPrefix = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const canManage = user.wcaId === authorWcaId || isAdminWcaId(user.wcaId);
 
   async function onDelete() {

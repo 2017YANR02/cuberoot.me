@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import type { Lang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── Data tables: derived and lower central series ─────────────────────────────
 
@@ -504,7 +505,9 @@ function DerivedSeriesPanel({ lang }: { lang: Lang }) {
           <span className="gt-result-val-strong" style={{ color: data.solvable ? 'var(--green)' : 'var(--warn)' }}>
             {data.solvable
               ? (lang === 'zh' ? `是 (导出长度 ${data.derivedLength})` : `Yes (derived length ${data.derivedLength})`)
-              : (lang === 'zh' ? '否 (导出列稳定在非平凡处)' : 'No (series stabilizes above {e})')}
+              : (tr({ zh: '否 (导出列稳定在非平凡处)', en: 'No (series stabilizes above {e})',
+                  zhHant: "否 (匯出列穩定在非平凡處)"
+            }))}
           </span>
         </div>
         <div className="gt-result-row">
@@ -514,7 +517,7 @@ function DerivedSeriesPanel({ lang }: { lang: Lang }) {
           <span className="gt-result-val-strong" style={{ color: data.nilpotent ? 'var(--green)' : 'var(--warn)' }}>
             {data.nilpotent
               ? (lang === 'zh' ? `是 (幂零类 ${data.nilpClass})` : `Yes (nilpotency class ${data.nilpClass})`)
-              : (lang === 'zh' ? '否' : 'No')}
+              : (tr({ zh: '否', en: 'No' }))}
           </span>
         </div>
         {!data.nilpotent && (
@@ -589,11 +592,13 @@ function DerivedSeriesSVG({
         <>
           <text x={leftX + nodeW / 2} y={6} textAnchor="middle"
             style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--accent)">
-            {lang === 'zh' ? '导出列 G^(i)' : 'Derived series G^(i)'}
+            {tr({ zh: '导出列 G^(i)', en: 'Derived series G^(i)',
+                zhHant: "匯出列 G^(i)"
+            })}
           </text>
           <text x={rightX + nodeW / 2} y={6} textAnchor="middle"
             style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--accent-2)">
-            {lang === 'zh' ? '下中心列 γᵢ' : 'Lower central γᵢ'}
+            {tr({ zh: '下中心列 γᵢ', en: 'Lower central γᵢ' })}
           </text>
         </>
       )}
@@ -655,7 +660,9 @@ function DerivedSeriesSVG({
                   markerEnd="url(#snArrowRed)" />
                 <text x={leftX + nodeW + 32} y={y + nodeH / 2 + 12}
                   style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--warn)">
-                  {lang === 'zh' ? '稳定' : 'stable'}
+                  {tr({ zh: '稳定', en: 'stable',
+                      zhHant: "穩定"
+                })}
                 </text>
               </g>
             )}
@@ -717,7 +724,9 @@ function DerivedSeriesSVG({
                   markerEnd="url(#snArrowLC)" />
                 <text x={rightX + nodeW + 32} y={y + nodeH / 2 + 12}
                   style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--accent-2)">
-                  {lang === 'zh' ? '不幂零' : 'not nilpotent'}
+                  {tr({ zh: '不幂零', en: 'not nilpotent',
+                      zhHant: "不冪零"
+                })}
                 </text>
               </g>
             )}
@@ -886,14 +895,20 @@ function SylowCardsSVG({
             {/* Normal badge */}
             <text x={x + 10} y={58} style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600 }} fill={normalColor}>
               {s.normal
-                ? (lang === 'zh' ? '正规 ✓' : 'normal ✓')
-                : (lang === 'zh' ? '不正规 ✗' : 'not normal ✗')}
+                ? (tr({ zh: '正规 ✓', en: 'normal ✓',
+                    zhHant: "正規 ✓"
+                }))
+                : (tr({ zh: '不正规 ✗', en: 'not normal ✗',
+                    zhHant: "不正規 ✗"
+                }))}
             </text>
 
             {showWhy && (
               <text x={x + 10} y={74} style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
                 {s.normal
-                  ? (lang === 'zh' ? `n_p=1 => 正规` : `n_p=1 => unique => normal`)
+                  ? (tr({ zh: `n_p=1 => 正规`, en: `n_p=1 => unique => normal`,
+                      zhHant: "n_p=1 => 正規"
+                }))
                   : (lang === 'zh' ? `n_p=${s.nP}>1 => 不正规` : `n_p=${s.nP}>1 => not unique => non-normal`)}
               </text>
             )}
@@ -1021,7 +1036,9 @@ function GaloisTimelinePanel({ lang }: { lang: Lang }) {
           stroke="var(--gold)" strokeWidth={1.5} strokeDasharray="4 3" />
         <text x={10 + 3 * spacing + 4} y={14}
           style={{ fontFamily: 'var(--mono)', fontSize: 8 }} fill="var(--gold)">
-          {lang === 'zh' ? 'n=5 断崖' : 'n=5 wall'}
+          {tr({ zh: 'n=5 断崖', en: 'n=5 wall',
+              zhHant: "n=5 斷崖"
+        })}
         </text>
 
         {SN_DEGREES.map((d, i) => {
@@ -1059,11 +1076,11 @@ function GaloisTimelinePanel({ lang }: { lang: Lang }) {
         {/* Labels */}
         <text x={10 + 0.5 * spacing} y={trackH - 2} textAnchor="middle"
           style={{ fontFamily: 'var(--mono)', fontSize: 8 }} fill="var(--green)">
-          {lang === 'zh' ? '可解' : 'solvable'}
+          {tr({ zh: '可解', en: 'solvable' })}
         </text>
         <text x={10 + 3.5 * spacing} y={trackH - 2} textAnchor="middle"
           style={{ fontFamily: 'var(--mono)', fontSize: 8 }} fill="var(--warn)">
-          {lang === 'zh' ? '不可解' : 'unsolvable'}
+          {tr({ zh: '不可解', en: 'unsolvable' })}
         </text>
       </svg>
 
@@ -1078,7 +1095,7 @@ function GaloisTimelinePanel({ lang }: { lang: Lang }) {
           {lang === 'zh' ? `阶 ${info.order}` : `order ${info.order}`}  &nbsp;|&nbsp;
           {info.solvable
             ? (lang === 'zh' ? `可解，导出长度 ${info.derivedLength}` : `solvable, derived length ${info.derivedLength}`)
-            : (lang === 'zh' ? '不可解' : 'unsolvable')}
+            : (tr({ zh: '不可解', en: 'unsolvable' }))}
         </div>
         <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-dim)', marginBottom: 6 }}>
           {lang === 'zh' ? info.derivedChainZh : info.derivedChainEn}

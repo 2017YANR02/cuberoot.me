@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { ArticlePostContent, Lang } from '../_lib/useTutorialCatalog';
 import { TutorialContent } from './TutorialContent';
+import { tr } from '@/i18n/tr';
 
 interface TutorialArticleViewProps {
   post: ArticlePostContent;
@@ -16,7 +17,9 @@ export function TutorialArticleView({ post, lang }: TutorialArticleViewProps) {
   if (!html) {
     return (
       <div className="tutorial-content">
-        <p style={{ color: 'var(--tutorial-text-muted)' }}>{isZh ? '(无内容)' : '(no content)'}</p>
+        <p style={{ color: 'var(--tutorial-text-muted)' }}>{tr({ zh: '(无内容)', en: '(no content)',
+            zhHant: "(無內容)"
+        })}</p>
       </div>
     );
   }

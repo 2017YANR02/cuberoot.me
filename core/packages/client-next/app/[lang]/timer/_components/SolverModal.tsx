@@ -9,6 +9,7 @@ import {
   invertSequence,
 } from '../_lib/scramble/kociemba/cube';
 import { warmup333, solve333 } from '../_lib/scramble/kociemba/random_state';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   isZh: boolean;
@@ -49,12 +50,16 @@ export default function SolverModal({ isZh, onClose }: Props) {
     setSolution(null);
     setCopied(false);
     if (mode === 'facelet') {
-      setErr(isZh ? '暂不支持 Facelet 模式，请用 Scramble 模式。' : 'Facelet mode not supported. Use Scramble mode.');
+      setErr(tr({ zh: '暂不支持 Facelet 模式，请用 Scramble 模式。', en: 'Facelet mode not supported. Use Scramble mode.',
+          zhHant: "暫不支援 Facelet 模式，請用 Scramble 模式。"
+    }));
       return;
     }
     const txt = input.trim();
     if (!txt) {
-      setErr(isZh ? '请输入打乱' : 'Enter a scramble');
+      setErr(tr({ zh: '请输入打乱', en: 'Enter a scramble',
+          zhHant: "請輸入打亂"
+    }));
       return;
     }
     let moves: number[];
@@ -103,7 +108,7 @@ export default function SolverModal({ isZh, onClose }: Props) {
         aria-labelledby={titleId}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id={titleId}>{isZh ? '通用求解器' : 'Solver'}</h2>
+        <h2 id={titleId}>{tr({ zh: '通用求解器', en: 'Solver' })}</h2>
 
         <div className="modal-section">
           <div className="solver-radios">
@@ -115,7 +120,9 @@ export default function SolverModal({ isZh, onClose }: Props) {
                 checked={mode === 'scramble'}
                 onChange={() => setMode('scramble')}
               />
-              {isZh ? '打乱' : 'Scramble'}
+              {tr({ zh: '打乱', en: 'Scramble',
+                  zhHant: "打亂"
+            })}
             </label>
             <label className="manual-radio disabled">
               <input
@@ -126,14 +133,18 @@ export default function SolverModal({ isZh, onClose }: Props) {
                 disabled
                 onChange={() => setMode('facelet')}
               />
-              {isZh ? 'Facelet（54 字符，暂不支持）' : 'Facelet (54 chars, not supported)'}
+              {tr({ zh: 'Facelet（54 字符，暂不支持）', en: 'Facelet (54 chars, not supported)',
+                  zhHant: "Facelet（54 字元，暫不支援）"
+            })}
             </label>
           </div>
         </div>
 
         <div className="modal-section">
           <label className="manual-label">
-            {isZh ? '输入' : 'Input'}
+            {tr({ zh: '输入', en: 'Input',
+                zhHant: "輸入"
+            })}
             <textarea
               ref={firstInputRef}
               className="manual-textarea solver-input"
@@ -151,17 +162,21 @@ export default function SolverModal({ isZh, onClose }: Props) {
 
         {!ready && (
           <div className="modal-section solver-loading">
-            {isZh ? '正在加载求解器…' : 'Loading solver…'}
+            {tr({ zh: '正在加载求解器…', en: 'Loading solver…',
+                zhHant: "正在載入求解器…"
+            })}
           </div>
         )}
 
         {solution !== null && (
           <div className="modal-section">
-            <h3 className="settings-h3">{isZh ? '解' : 'Solution'} ({moveCount} {isZh ? '步' : 'moves'})</h3>
+            <h3 className="settings-h3">{tr({ zh: '解', en: 'Solution' })} ({moveCount} {tr({ zh: '步', en: 'moves' })})</h3>
             <div className="scramble-text">{solution}</div>
             {reverseStr && (
               <div className="solver-rev">
-                <div className="solver-rev-lbl">{isZh ? '逆序（作为打乱）：' : 'Inverse (as scramble):'}</div>
+                <div className="solver-rev-lbl">{tr({ zh: '逆序（作为打乱）：', en: 'Inverse (as scramble):',
+                    zhHant: "逆序（作為打亂）："
+                })}</div>
                 <div className="scramble-text">{reverseStr}</div>
               </div>
             )}
@@ -174,12 +189,18 @@ export default function SolverModal({ isZh, onClose }: Props) {
             disabled={solving || !ready}
             onClick={handleSolve}
           >
-            {solving ? (isZh ? '求解中…' : 'Solving…') : (isZh ? '求解' : 'Solve')}
+            {solving ? (tr({ zh: '求解中…', en: 'Solving…' })) : (tr({ zh: '求解', en: 'Solve' }))}
           </button>
           {solution && (
-            <button onClick={onCopy}>{copied ? (isZh ? '已复制' : 'Copied') : (isZh ? '复制' : 'Copy')}</button>
+            <button onClick={onCopy}>{copied ? (tr({ zh: '已复制', en: 'Copied',
+                zhHant: "已複製"
+            })) : (tr({ zh: '复制', en: 'Copy',
+                zhHant: "複製"
+            }))}</button>
           )}
-          <button onClick={onClose}>{isZh ? '关闭' : 'Close'}</button>
+          <button onClick={onClose}>{tr({ zh: '关闭', en: 'Close',
+              zhHant: "關閉"
+        })}</button>
         </div>
       </div>
     </div>

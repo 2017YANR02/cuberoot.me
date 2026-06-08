@@ -27,6 +27,7 @@ import { solveSq1, type Sq1Result } from '../_lib/solver/sq1';
 import { solveMega, type MegaSolveResult } from '../_lib/solver/mega';
 import SolverCompareModal from './SolverCompareModal';
 import StageSolverModal from './StageSolverModal';
+import { tr } from '@/i18n/tr';
 
 type SmallEvent = '222' | 'pyra' | 'skewb';
 type Sq1Event = 'sq1';
@@ -117,8 +118,8 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
 
   const stepResult = stepResults[methodId];
 
-  const title = isZh ? '解法提示' : 'Solver hints';
-  const stepTitle = isZh ? '分步解法' : 'Step-by-step';
+  const title = tr({ zh: '解法提示', en: 'Solver hints' });
+  const stepTitle = tr({ zh: '分步解法', en: 'Step-by-step' });
 
   return (
     <div style={wrapperStyle}>
@@ -160,12 +161,16 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
                 onClick={() => setCompareOpen(true)}
                 style={compareBtnStyle}
               >
-                {isZh ? '对比全部' : 'Compare all'}
+                {tr({ zh: '对比全部', en: 'Compare all',
+                    zhHant: "對比全部"
+                })}
               </button>
             </div>
             {stepComputing && !stepResult && (
               <div style={{ opacity: 0.6, fontSize: 13 }}>
-                {isZh ? '计算中…' : 'Computing…'}
+                {tr({ zh: '计算中…', en: 'Computing…',
+                    zhHant: "計算中…"
+                })}
               </div>
             )}
             {stepResult && (
@@ -178,13 +183,17 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
                     </span>
                     <span style={algStyle}>
                       {s.failed
-                        ? (isZh ? '未找到' : 'no solution')
-                        : (s.moves.length === 0 ? (isZh ? '(跳过)' : '(skip)') : s.moves.join(' '))}
+                        ? (tr({ zh: '未找到', en: 'no solution' }))
+                        : (s.moves.length === 0 ? (tr({ zh: '(跳过)', en: '(skip)',
+                            zhHant: "(跳過)"
+                        })) : s.moves.join(' '))}
                     </span>
                   </div>
                 ))}
                 <div style={rowStyle}>
-                  <span style={labelBestStyle}>{isZh ? '总计' : 'Total'}</span>
+                  <span style={labelBestStyle}>{tr({ zh: '总计', en: 'Total',
+                      zhHant: "總計"
+                })}</span>
                   <span style={countBestStyle}>{stepResult.totalMoves}</span>
                   <span style={algStyle} />
                 </div>
@@ -292,7 +301,9 @@ function SmallPuzzleHints({ scramble, isZh, event }: SmallProps) {
   }, [open, cacheKey, event, scramble]);
 
   const title = isZh ? SMALL_TITLE_ZH[event] : SMALL_TITLE_EN[event];
-  const fullLabel = isZh ? '完整还原' : 'Full solve';
+  const fullLabel = tr({ zh: '完整还原', en: 'Full solve',
+      zhHant: "完整還原"
+});
   const sectionLabel = isZh ? FACE_SECTION_ZH[event] : FACE_SECTION_EN[event];
 
   const minFaceLen = useMemo(() => {
@@ -320,7 +331,9 @@ function SmallPuzzleHints({ scramble, isZh, event }: SmallProps) {
           <div style={bodyStyle}>
             {computing && (
               <div style={{ opacity: 0.6, fontSize: 13 }}>
-                {isZh ? '计算中…' : 'Computing…'}
+                {tr({ zh: '计算中…', en: 'Computing…',
+                    zhHant: "計算中…"
+                })}
               </div>
             )}
             {computed && (
@@ -348,7 +361,7 @@ function SmallPuzzleHints({ scramble, isZh, event }: SmallProps) {
                         {f.moves.length === 0 ? '—' : f.moves.length}
                       </span>
                       <span style={isBest ? algBestStyle : algStyle}>
-                        {f.moves.length === 0 ? (isZh ? '未找到' : 'no solution') : f.moves.join(' ')}
+                        {f.moves.length === 0 ? (tr({ zh: '未找到', en: 'no solution' })) : f.moves.join(' ')}
                       </span>
                     </div>
                   );
@@ -403,7 +416,7 @@ function Sq1Hints({ scramble, isZh }: Sq1Props) {
     };
   }, [open, cacheKey, scramble]);
 
-  const title = isZh ? 'Square-1 解法提示' : 'Square-1 solver hints';
+  const title = tr({ zh: 'Square-1 解法提示', en: 'Square-1 solver hints' });
   const stageNameZh: Record<string, string> = {
     'Shape': '形状',
     'Permutation': '颜色还原',
@@ -425,7 +438,9 @@ function Sq1Hints({ scramble, isZh }: Sq1Props) {
           <div style={bodyStyle}>
             {computing && (
               <div style={{ opacity: 0.6, fontSize: 13 }}>
-                {isZh ? '计算中…' : 'Computing…'}
+                {tr({ zh: '计算中…', en: 'Computing…',
+                    zhHant: "計算中…"
+                })}
               </div>
             )}
             {computed && (
@@ -440,13 +455,15 @@ function Sq1Hints({ scramble, isZh }: Sq1Props) {
                     </span>
                     <span style={algStyle}>
                       {s.failed
-                        ? (isZh ? '未找到' : 'no solution')
+                        ? (tr({ zh: '未找到', en: 'no solution' }))
                         : s.moves.join(' ')}
                     </span>
                   </div>
                 ))}
                 <div style={rowStyle}>
-                  <span style={labelBestStyle}>{isZh ? '总计 (token)' : 'Total (tokens)'}</span>
+                  <span style={labelBestStyle}>{tr({ zh: '总计 (token)', en: 'Total (tokens)',
+                      zhHant: "總計 (token)"
+                })}</span>
                   <span style={countBestStyle}>{computed.totalMoves}</span>
                   <span style={algStyle} />
                 </div>
@@ -500,12 +517,16 @@ function MegaHints({ scramble, isZh }: MegaProps) {
     };
   }, [open, cacheKey, scramble]);
 
-  const title = isZh ? '五魔解法提示' : 'Megaminx solver hints';
-  const stateLabel = isZh ? '当前状态' : 'State';
-  const misplacedLabel = isZh ? '错位贴纸' : 'Misplaced stickers';
-  const noteLabel = isZh
-    ? '完整解法器尚未移植 (见 cstimer/src/js/solver/megaminx.js)'
-    : 'Full solver not yet ported (see cstimer/src/js/solver/megaminx.js)';
+  const title = tr({ zh: '五魔解法提示', en: 'Megaminx solver hints' });
+  const stateLabel = tr({ zh: '当前状态', en: 'State',
+      zhHant: "當前狀態"
+});
+  const misplacedLabel = tr({ zh: '错位贴纸', en: 'Misplaced stickers',
+      zhHant: "錯位貼紙"
+});
+  const noteLabel = tr({ zh: '完整解法器尚未移植 (见 cstimer/src/js/solver/megaminx.js)', en: 'Full solver not yet ported (see cstimer/src/js/solver/megaminx.js)',
+      zhHant: "完整解法器尚未移植 (見 cstimer/src/js/solver/megaminx.js)"
+});
 
   return (
     <div style={wrapperStyle}>
@@ -523,7 +544,9 @@ function MegaHints({ scramble, isZh }: MegaProps) {
           <div style={bodyStyle}>
             {computing && (
               <div style={{ opacity: 0.6, fontSize: 13 }}>
-                {isZh ? '计算中…' : 'Computing…'}
+                {tr({ zh: '计算中…', en: 'Computing…',
+                    zhHant: "計算中…"
+                })}
               </div>
             )}
             {computed && (

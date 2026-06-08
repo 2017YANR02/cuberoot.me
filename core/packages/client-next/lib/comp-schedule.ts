@@ -114,17 +114,28 @@ export function getRoundTypeId(
 }
 
 const ROUND_TYPE_NAME: Record<string, { zh: string; en: string }> = {
-  '0': { zh: '资格赛', en: 'Qualification round' },
-  '1': { zh: '初赛', en: 'First round' },
-  '2': { zh: '复赛', en: 'Second round' },
-  '3': { zh: '半决赛', en: 'Semi Final' },
-  'b': { zh: 'B组决赛', en: 'B Final' },
-  'c': { zh: '组合制决赛', en: 'Final' },
-  'd': { zh: '组合制初赛', en: 'First round' },
-  'e': { zh: '组合制复赛', en: 'Second round' },
-  'f': { zh: '决赛', en: 'Final' },
-  'g': { zh: '组合制半决赛', en: 'Semi Final' },
-  'h': { zh: '组合制资格赛', en: 'Qualification round' },
+  '0': { zh: '资格赛', en: 'Qualification round'
+},
+  '1': { zh: '初赛', en: 'First round'
+},
+  '2': { zh: '复赛', en: 'Second round'
+},
+  '3': { zh: '半决赛', en: 'Semi Final'
+},
+  'b': { zh: 'B组决赛', en: 'B Final'
+},
+  'c': { zh: '组合制决赛', en: 'Final'
+},
+  'd': { zh: '组合制初赛', en: 'First round'
+},
+  'e': { zh: '组合制复赛', en: 'Second round'
+},
+  'f': { zh: '决赛', en: 'Final'
+},
+  'g': { zh: '组合制半决赛', en: 'Semi Final'
+},
+  'h': { zh: '组合制资格赛', en: 'Qualification round'
+},
 };
 export function roundTypeName(id: string, isZh: boolean): string {
   return ROUND_TYPE_NAME[id]?.[isZh ? 'zh' : 'en'] ?? id;
@@ -168,15 +179,20 @@ export function formatName(fmt: string, isZh: boolean): string {
 }
 
 const ACTIVITY_NAMES: Record<string, { zh: string; en: string }> = {
-  registration: { zh: '现场报名', en: 'On-site registration' },
-  checkin: { zh: '签到', en: 'Check-in' },
-  tutorial: { zh: '新手教学', en: 'Tutorial for new competitors' },
+  registration: { zh: '现场报名', en: 'On-site registration'
+},
+  checkin: { zh: '签到', en: 'Check-in'
+},
+  tutorial: { zh: '新手教学', en: 'Tutorial for new competitors'
+},
   multi: { zh: '多盲魔方提交', en: 'Cube submission for 3x3x3 Multi-Blind' },
   breakfast: { zh: '早餐', en: 'Breakfast' },
   lunch: { zh: '午餐', en: 'Lunch' },
   dinner: { zh: '晚餐', en: 'Dinner' },
-  awards: { zh: '颁奖', en: 'Awards' },
-  setup: { zh: '布置', en: 'Setup' },
+  awards: { zh: '颁奖', en: 'Awards'
+},
+  setup: { zh: '布置', en: 'Setup'
+},
   teardown: { zh: '收尾', en: 'Teardown' },
   misc: { zh: '其他', en: 'Other' },
 };

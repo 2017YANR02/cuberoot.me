@@ -2,6 +2,7 @@
 // 包括: God's number 历史 / optimal HTM 分布 / Big-cube scaling 修正
 import { LineChart, type Series } from '../charts';
 import { GODS_NUMBER_HISTORY, GODS_NUMBER_FACTS, OPTIMAL_HTM_DISTRIBUTION, NXN_REDUCTION_STM } from '../theory_data';
+import { tr } from '@/i18n/tr';
 
 interface Props { isZh: boolean }
 
@@ -22,15 +23,21 @@ export function TheoryDeepDive({ isZh }: Props) {
   ];
 
   const fitStmSeries: Series[] = [
-    { name: isZh ? 'STM 实测' : 'STM observed', color: '#0a8a6b', data: stmPts },
-    { name: isZh ? '时间实测 (秒)' : 'Time observed (s)', color: '#c2410c', data: timePts },
+    { name: tr({ zh: 'STM 实测', en: 'STM observed',
+        zhHant: "STM 實測"
+    }), color: '#0a8a6b', data: stmPts },
+    { name: tr({ zh: '时间实测 (秒)', en: 'Time observed (s)',
+        zhHant: "時間實測 (秒)"
+    }), color: '#c2410c', data: timePts },
   ];
 
   return (
     <section className="pred-section" id="theory-deep">
-      <h2>{isZh ? '数学, 信息论, 生物力学下的硬墙' : 'Hard Walls from Math, Information, Biomech'}</h2>
+      <h2>{tr({ zh: '数学, 信息论, 生物力学下的硬墙', en: 'Hard Walls from Math, Information, Biomech',
+          zhHant: "數學, 資訊理論, 生物力學下的硬牆"
+    })}</h2>
 
-      <h3>{isZh ? "God's number 的演化 (3x3, HTM)" : "God's Number Progression (3x3, HTM)"}</h3>
+      <h3>{tr({ zh: "God's number 的演化 (3x3, HTM)", en: "God's Number Progression (3x3, HTM)" })}</h3>
       <p>
         {isZh ? (
           <>
@@ -48,10 +55,12 @@ export function TheoryDeepDive({ isZh }: Props) {
         <table className="pred-fit-table">
           <thead>
             <tr>
-              <th>{isZh ? '年份' : 'Year'}</th>
-              <th>{isZh ? '上界 (HTM)' : 'Bound (HTM)'}</th>
-              <th>{isZh ? '证明者' : 'By'}</th>
-              <th>{isZh ? '方法' : 'Method'}</th>
+              <th>{tr({ zh: '年份', en: 'Year' })}</th>
+              <th>{tr({ zh: '上界 (HTM)', en: 'Bound (HTM)' })}</th>
+              <th>{tr({ zh: '证明者', en: 'By',
+                  zhHant: "證明者"
+            })}</th>
+              <th>{tr({ zh: '方法', en: 'Method' })}</th>
             </tr>
           </thead>
           <tbody>
@@ -82,7 +91,9 @@ export function TheoryDeepDive({ isZh }: Props) {
         )}
       </p>
 
-      <h3>{isZh ? '最优 HTM 步数的分布' : 'Distribution of Optimal HTM Depth'}</h3>
+      <h3>{tr({ zh: '最优 HTM 步数的分布', en: 'Distribution of Optimal HTM Depth',
+          zhHant: "最優 HTM 步數的分佈"
+    })}</h3>
       <p>
         {isZh ? (
           <>
@@ -107,7 +118,7 @@ export function TheoryDeepDive({ isZh }: Props) {
         yFormat={(v) => (v >= 0.01 ? (v * 100).toFixed(1) + '%' : (v * 100).toExponential(0) + '%')}
       />
 
-      <h3>{isZh ? 'NxN 立方尺度律' : 'NxN Cube-Size Scaling'}</h3>
+      <h3>{tr({ zh: 'NxN 立方尺度律', en: 'NxN Cube-Size Scaling' })}</h3>
       <p>
         {isZh ? (
           <>
@@ -133,9 +144,9 @@ export function TheoryDeepDive({ isZh }: Props) {
         xFormat={(v) => v.toString()}
       />
       <p className="pred-note">
-        {isZh
-          ? '左轴对数刻度。两条曲线斜率差就是「TPS 随 N 下降」的视觉化 — 大魔方花时间,不只是因为步数多,更因为每步更慢。'
-          : 'Log y-axis. The slope gap visualizes TPS decay with N — big cubes are slow not just because of more moves, but because every move is slower.'}
+        {tr({ zh: '左轴对数刻度。两条曲线斜率差就是「TPS 随 N 下降」的视觉化 — 大魔方花时间,不只是因为步数多,更因为每步更慢。', en: 'Log y-axis. The slope gap visualizes TPS decay with N — big cubes are slow not just because of more moves, but because every move is slower.',
+            zhHant: "左軸對數刻度。兩條曲線斜率差就是「TPS 隨 N 下降」的視覺化 — 大魔方花時間,不只是因為步數多,更因為每步更慢。"
+        })}
       </p>
     </section>
   );

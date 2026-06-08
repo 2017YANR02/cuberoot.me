@@ -8,6 +8,8 @@ import { ContinentIcon, type ContinentSlug } from '@/components/ContinentIcon';
 import { countryName } from '@/lib/country-name';
 import { isContinentCode, type ContinentCode } from '@/lib/continent';
 import './region_picker.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 interface ContinentInfo {
   slug: ContinentSlug;
@@ -18,8 +20,10 @@ interface ContinentInfo {
 
 const CONTINENTS: ContinentInfo[] = [
   { slug: 'africa',       code: 'AF', zh: '非洲',   en: 'Africa' },
-  { slug: 'asia',         code: 'AS', zh: '亚洲',   en: 'Asia' },
-  { slug: 'europe',       code: 'EU', zh: '欧洲',   en: 'Europe' },
+  { slug: 'asia',         code: 'AS', zh: '亚洲',   en: 'Asia'
+},
+  { slug: 'europe',       code: 'EU', zh: '欧洲',   en: 'Europe'
+},
   { slug: 'northAmerica', code: 'NA', zh: '北美洲', en: 'North America' },
   { slug: 'oceania',      code: 'OC', zh: '大洋洲', en: 'Oceania' },
   { slug: 'southAmerica', code: 'SA', zh: '南美洲', en: 'South America' },
@@ -61,8 +65,12 @@ export function RegionPicker(props: RegionPickerProps) {
     return () => document.removeEventListener('click', handler);
   }, [open]);
 
-  const allText = allLabel ?? (isZh ? '全部区域' : 'All regions');
-  const searchText = searchPlaceholder ?? (isZh ? '搜索...' : 'Search...');
+  const allText = allLabel ?? (tr({ zh: '全部区域', en: 'All regions',
+      zhHant: "全部區域"
+}));
+  const searchText = searchPlaceholder ?? (tr({ zh: '搜索...', en: 'Search...',
+      zhHant: "搜尋..."
+}));
 
   const countries = useMemo(
     () => (restrictTo ? restrictTo.map(c => c.toLowerCase()) : []),
@@ -91,14 +99,14 @@ export function RegionPicker(props: RegionPickerProps) {
         const t = multiTokens[0];
         if (isContinentCode(t)) {
           const c = CONTINENTS.find(c => c.code === t);
-          return c ? (isZh ? c.zh : c.en) : allText;
+          return c ? ((i18n.language.startsWith('zh') ? c.zh : c.en)) : allText;
         }
         return countryName(t, isZh);
       }
       return isZh ? `已选 ${multiTokens.length} 项` : `${multiTokens.length} selected`;
     }
     if (!singleVal || singleVal === 'world') return allText;
-    if (singleSelectedContinent) return isZh ? singleSelectedContinent.zh : singleSelectedContinent.en;
+    if (singleSelectedContinent) return (i18n.language.startsWith('zh') ? singleSelectedContinent.zh : singleSelectedContinent.en);
     return countryName(singleVal, isZh);
   })();
 
@@ -191,7 +199,9 @@ export function RegionPicker(props: RegionPickerProps) {
           <div className="region-picker-list">
             {isMulti && multiTokens.length > 0 && !ql && (
               <>
-                <div className="region-picker-section">{isZh ? '已选' : 'Selected'}</div>
+                <div className="region-picker-section">{tr({ zh: '已选', en: 'Selected',
+                    zhHant: "已選"
+                })}</div>
                 {multiTokens.map(t => {
                   const cont = isContinentCode(t) ? CONTINENTS.find(c => c.code === t) : undefined;
                   return (
@@ -203,7 +213,7 @@ export function RegionPicker(props: RegionPickerProps) {
                       {cont
                         ? <ContinentIcon slug={cont.slug} className="region-picker-continent-icon" />
                         : <Flag iso2={t} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                      <span>{cont ? (isZh ? cont.zh : cont.en) : countryName(t, isZh)}</span>
+                      <span>{cont ? ((i18n.language.startsWith('zh') ? cont.zh : cont.en)) : countryName(t, isZh)}</span>
                       <X size={13} className="region-picker-remove" />
                     </button>
                   );
@@ -217,7 +227,7 @@ export function RegionPicker(props: RegionPickerProps) {
               >{allText}</button>
             )}
             {continentsFiltered.length > 0 && (
-              <div className="region-picker-section">{isZh ? '大洲' : 'Continent'}</div>
+              <div className="region-picker-section">{tr({ zh: '大洲', en: 'Continent' })}</div>
             )}
             {continentsFiltered.map(c => (
               <button
@@ -226,11 +236,13 @@ export function RegionPicker(props: RegionPickerProps) {
                 onClick={isMulti ? () => toggleMultiContinent(c.code) : () => selectSingle(c.slug)}
               >
                 <ContinentIcon slug={c.slug} className="region-picker-continent-icon" />
-                <span>{isZh ? c.zh : c.en}</span>
+                <span>{(i18n.language.startsWith('zh') ? c.zh : c.en)}</span>
               </button>
             ))}
             {countriesFiltered.length > 0 && (
-              <div className="region-picker-section">{isZh ? '地区' : 'Region'}</div>
+              <div className="region-picker-section">{tr({ zh: '地区', en: 'Region',
+                  zhHant: "地區"
+            })}</div>
             )}
             {countriesFiltered.map(iso => (
               <button

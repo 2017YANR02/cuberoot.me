@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../../_lib/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './algorithm_intro.css';
+import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 const ACCENT = '#5BA8FF';
 
@@ -569,7 +571,7 @@ function setPacked(idx: number, val: number): void {
 
 export default function IdaStarPage() {
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
   useDocumentTitle('IDA* + 剪枝表', 'IDA* + prune tables');
 
@@ -596,7 +598,9 @@ export default function IdaStarPage() {
           </header>
 
           <div className="algo-callout">
-            <div className="algo-callout-tag">{lang === 'zh' ? '为何要看这页' : 'Why this page'}</div>
+            <div className="algo-callout-tag">{tr({ zh: '为何要看这页', en: 'Why this page',
+                zhHant: "為何要看這頁"
+            })}</div>
             <p>
               <L
                 zh={<>看完之后,你应该能读懂 <Link href="/code/algorithms/kociemba">Kociemba</Link>、<Link href="/code/algorithms/min2phase">min2phase</Link>、<Link href="/code/algorithms/cfop-std-solver">CFOP std solver</Link> 三张姐妹页里所有"剪枝表 / admissible h / 4-bit pack"之类术语,而不需要再回头解释。</>}
@@ -606,7 +610,7 @@ export default function IdaStarPage() {
           </div>
 
           {SECTIONS.map((s) => {
-            const t = lang === 'zh' ? s.zh : s.en;
+            const t = (i18n.language.startsWith('zh') ? s.zh : s.en);
             return (
               <section key={s.num} className="algo-section">
                 <div className="algo-section-head">

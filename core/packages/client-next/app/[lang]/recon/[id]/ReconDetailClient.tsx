@@ -62,6 +62,8 @@ import {
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../recon.css';
 import './recon_detail.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const YOUTUBE_LOGO = '/assets/youtube_logo.svg';
 const BILIBILI_LOGO = '/assets/bilibili_logo.svg';
@@ -92,7 +94,9 @@ export default function ReconDetailClient() {
   const [error, setError] = useState<string | null>(null);
 
   const reconTitle = (() => {
-    const fallback = isZh ? '复盘' : 'Reconstruction';
+    const fallback = tr({ zh: '复盘', en: 'Reconstruction',
+        zhHant: "覆盤"
+    });
     if (!solve) return fallback;
     const parts: string[] = [];
     const ts = solve.value || (solve.rawTime != null ? formatTime(solve.rawTime) : null);
@@ -824,14 +828,20 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
               <tr>
                 <th>
                   <span className="wp-th-info">
-                    {isZh ? '轮次' : 'Round'}
+                    {tr({ zh: '轮次', en: 'Round',
+                        zhHant: "輪次"
+                    })}
                     <InfoTooltip content={isZh ? ROUND_HINT_ZH : ROUND_HINT_EN} />
                   </span>
                 </th>
-                <th className="wp-th-narrow">{isZh ? '排名' : 'Pos'}</th>
-                <th>{isZh ? '单次' : 'Single'}</th>
-                <th>{isZh ? '平均' : 'Avg'}</th>
-                <th>{isZh ? '详细成绩' : 'Attempts'}</th>
+                <th className="wp-th-narrow">{tr({ zh: '排名', en: 'Pos' })}</th>
+                <th>{tr({ zh: '单次', en: 'Single',
+                    zhHant: "單次"
+                })}</th>
+                <th>{tr({ zh: '平均', en: 'Avg' })}</th>
+                <th>{tr({ zh: '详细成绩', en: 'Attempts',
+                    zhHant: "詳細成績"
+                })}</th>
               </tr>
             </thead>
             <tbody>
@@ -877,7 +887,7 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                         roundTypeId={r.round_type_id}
                         currentReconId={solve.id}
                         findReconForCell={findReconForCell}
-                        langQuery={isZh ? '?lang=zh' : ''}
+                        langQuery={(i18n.language.startsWith('zh') ? '?lang=zh' : '')}
                       />
                     </td>
                   </tr>

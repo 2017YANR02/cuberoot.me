@@ -1,12 +1,15 @@
 // 方法对比段 (CFOP / Roux / ZZ / ...)
 import { METHOD_TABLE } from '../theory_data';
+import { tr } from '@/i18n/tr';
 
 interface Props { isZh: boolean }
 
 export function MethodCompareSection({ isZh }: Props) {
   return (
     <section className="pred-section" id="methods-compare">
-      <h2>{isZh ? '方法演进: STM 步数与极限' : 'Method Evolution: STM Cost & Ceilings'}</h2>
+      <h2>{tr({ zh: '方法演进: STM 步数与极限', en: 'Method Evolution: STM Cost & Ceilings',
+          zhHant: "方法演進: STM 步數與極限"
+    })}</h2>
       <p>
         {isZh ? (
           <>速拧 3x3 不止 CFOP 一种。每个方法都把「打乱 → 还原」拆成不同阶段,阶段数 × 阶段长度一起决定 STM。元数据来自 cubeskills (Zemdegs), speedsolving.com wiki, ZBLL 统计页 (Chris Hardwick), Devagio 的 Mehta 模拟。经验值取现役顶级选手的复盘均值,不是新手或中阶水平。</>
@@ -18,13 +21,25 @@ export function MethodCompareSection({ isZh }: Props) {
         <table className="pred-fit-table pred-method-table">
           <thead>
             <tr>
-              <th>{isZh ? '方法' : 'Method'}</th>
-              <th>{isZh ? '现役顶级 STM' : 'Elite STM'}</th>
-              <th>{isZh ? '理论下界' : 'Floor STM'}</th>
-              <th>{isZh ? 'Alg 数' : 'Algs'}</th>
-              <th>{isZh ? '优势' : 'Pros'}</th>
-              <th>{isZh ? '代价' : 'Cons'}</th>
-              <th>{isZh ? '代表选手' : 'Top user'}</th>
+              <th>{tr({ zh: '方法', en: 'Method' })}</th>
+              <th>{tr({ zh: '现役顶级 STM', en: 'Elite STM',
+                  zhHant: "現役頂級 STM"
+            })}</th>
+              <th>{tr({ zh: '理论下界', en: 'Floor STM',
+                  zhHant: "理論下界"
+            })}</th>
+              <th>{tr({ zh: 'Alg 数', en: 'Algs',
+                  zhHant: "Alg 數"
+            })}</th>
+              <th>{tr({ zh: '优势', en: 'Pros',
+                  zhHant: "優勢"
+            })}</th>
+              <th>{tr({ zh: '代价', en: 'Cons',
+                  zhHant: "代價"
+            })}</th>
+              <th>{tr({ zh: '代表选手', en: 'Top user',
+                  zhHant: "代表選手"
+            })}</th>
             </tr>
           </thead>
           <tbody>

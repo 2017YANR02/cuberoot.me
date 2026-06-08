@@ -15,6 +15,7 @@ import type { Solve } from '../../_lib/types';
 import { effectiveMs } from '../../_lib/types';
 import { averageOfN, formatMs, bestSingle } from '../../_lib/stats';
 import './charts.css';
+import { tr } from '@/i18n/tr';
 
 interface ScatterChartProps {
   solves: Solve[];
@@ -107,7 +108,9 @@ export default function ScatterChart({
         viewBox={`0 0 ${width} ${height}`}
         preserveAspectRatio="xMidYMid meet"
         role="img"
-        aria-label={isZh ? '单次成绩散点图' : 'Per-solve scatter'}
+        aria-label={tr({ zh: '单次成绩散点图', en: 'Per-solve scatter',
+            zhHant: "單次成績散點圖"
+        })}
       >
         <text
           className="empty-msg"
@@ -116,7 +119,9 @@ export default function ScatterChart({
           textAnchor="middle"
           dominantBaseline="middle"
         >
-          {isZh ? '至少 2 次成绩' : 'Need 2+ solves'}
+          {tr({ zh: '至少 2 次成绩', en: 'Need 2+ solves',
+              zhHant: "至少 2 次成績"
+        })}
         </text>
       </svg>
     );
@@ -175,7 +180,9 @@ export default function ScatterChart({
       width={width}
       height={height}
       role="img"
-      aria-label={isZh ? '单次成绩散点图' : 'Per-solve scatter'}
+      aria-label={tr({ zh: '单次成绩散点图', en: 'Per-solve scatter',
+          zhHant: "單次成績散點圖"
+    })}
     >
       {/* Grid: top, mid, bottom */}
       <line

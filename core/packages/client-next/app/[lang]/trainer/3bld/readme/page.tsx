@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../3bld.css';
+import { tr } from '@/i18n/tr';
 
 interface ModuleDoc {
   n: number;
@@ -280,39 +281,41 @@ export default function BldGuidePage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{isZh ? '盲拧训练说明' : '3BLD Guide'}</h1>
+        <h1>{tr({ zh: '盲拧训练说明', en: '3BLD Guide',
+            zhHant: "盲擰訓練說明"
+        })}</h1>
       </div>
 
       {/* ── intro / public-beta note ── */}
       <p className="bld-input-summary" style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
         <Info size={16} style={{ flex: '0 0 auto', marginTop: 2 }} />
         <span>
-          {isZh
-            ? '盲拧训练器的目标是生成贴近实战的打乱,并尽快遍历指定的训练内容,从而更高效地针对特定情况练习。目前主要功能为棱块 / 角块公式训练、读码还原助手,其余页面持续优化新增中。'
-            : 'The 3BLD trainer aims to produce realistic scrambles and traverse a chosen set of cases as fast as possible, so you can drill specific situations more efficiently. The main features today are edge / corner algorithm training and the read & restore helper; other pages are being added and refined.'}
+          {tr({ zh: '盲拧训练器的目标是生成贴近实战的打乱,并尽快遍历指定的训练内容,从而更高效地针对特定情况练习。目前主要功能为棱块 / 角块公式训练、读码还原助手,其余页面持续优化新增中。', en: 'The 3BLD trainer aims to produce realistic scrambles and traverse a chosen set of cases as fast as possible, so you can drill specific situations more efficiently. The main features today are edge / corner algorithm training and the read & restore helper; other pages are being added and refined.',
+              zhHant: "盲擰訓練器的目標是生成貼近實戰的打亂,並儘快遍歷指定的訓練內容,從而更高效地針對特定情況練習。目前主要功能為稜塊 / 角塊公式訓練、讀碼還原助手,其餘頁面持續最佳化新增中。"
+        })}
         </span>
       </p>
 
       <ul className="bld-guide-notes">
         <li>
-          {isZh
-            ? '所有页面的打乱坐标均为还原坐标。'
-            : 'On every page, scramble coordinates are given in the solved-state frame.'}
+          {tr({ zh: '所有页面的打乱坐标均为还原坐标。', en: 'On every page, scramble coordinates are given in the solved-state frame.',
+              zhHant: "所有頁面的打亂座標均為還原座標。"
+        })}
         </li>
         <li>
-          {isZh
-            ? '编码采用彳亍编码(后续会支持自定义编码)。'
-            : 'Lettering uses the Chìchù scheme (custom schemes are planned).'}
+          {tr({ zh: '编码采用彳亍编码(后续会支持自定义编码)。', en: 'Lettering uses the Chìchù scheme (custom schemes are planned).',
+              zhHant: "編碼採用彳亍編碼(後續會支援自定義編碼)。"
+        })}
         </li>
         <li>
-          {isZh
-            ? '暂不写入 cookie,输入的内容请自行保存。'
-            : 'No cookies are set yet — save your inputs yourself.'}
+          {tr({ zh: '暂不写入 cookie,输入的内容请自行保存。', en: 'No cookies are set yet — save your inputs yourself.',
+              zhHant: "暫不寫入 cookie,輸入的內容請自行儲存。"
+        })}
         </li>
         <li>
-          {isZh
-            ? '目前为公测第一版,功能与文案仍在调整中。'
-            : 'This is the first public-beta release; features and wording are still evolving.'}
+          {tr({ zh: '目前为公测第一版,功能与文案仍在调整中。', en: 'This is the first public-beta release; features and wording are still evolving.',
+              zhHant: "目前為公測第一版,功能與文案仍在調整中。"
+        })}
         </li>
       </ul>
 
@@ -340,13 +343,15 @@ export default function BldGuidePage(): JSX.Element {
           <span className="bld-guide-icon">
             <Gauge size={16} />
           </span>
-          <span>{isZh ? '计算性能' : 'Performance'}</span>
+          <span>{tr({ zh: '计算性能', en: 'Performance',
+              zhHant: "計算效能"
+        })}</span>
         </h2>
         <div className="bld-guide-body">
           <p>
-            {isZh
-              ? '所有计算都在你的设备本地完成,速度因此取决于设备性能。在一台桌面级 CPU 上各项操作基本可在 2 秒内完成(目前最慢的是带奇偶的棱块浮动生成)。如遇页面异常卡顿,可向作者反馈。'
-              : 'All computation runs locally on your device, so speed depends on your hardware. On a desktop-class CPU each operation finishes within about 2 seconds (the slowest today is float-edge generation with parity). If a page hangs abnormally, let the author know.'}
+            {tr({ zh: '所有计算都在你的设备本地完成,速度因此取决于设备性能。在一台桌面级 CPU 上各项操作基本可在 2 秒内完成(目前最慢的是带奇偶的棱块浮动生成)。如遇页面异常卡顿,可向作者反馈。', en: 'All computation runs locally on your device, so speed depends on your hardware. On a desktop-class CPU each operation finishes within about 2 seconds (the slowest today is float-edge generation with parity). If a page hangs abnormally, let the author know.',
+                zhHant: "所有計算都在你的裝置本地完成,速度因此取決於裝置效能。在一臺桌面級 CPU 上各項操作基本可在 2 秒內完成(目前最慢的是帶奇偶的稜塊浮動生成)。如遇頁面異常卡頓,可向作者反饋。"
+            })}
           </p>
         </div>
       </section>
@@ -354,7 +359,9 @@ export default function BldGuidePage(): JSX.Element {
       {/* ── credits / acknowledgements ── */}
       <section className="bld-guide-section bld-guide-credits">
         <h2 className="bld-guide-heading">
-          <span>{isZh ? '致谢' : 'Acknowledgements'}</span>
+          <span>{tr({ zh: '致谢', en: 'Acknowledgements',
+              zhHant: "致謝"
+        })}</span>
         </h2>
         <div className="bld-guide-body">
           <p>

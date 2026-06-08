@@ -18,6 +18,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { localizeCompName } from '@/lib/comp-localize';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
 import './today_recon.css';
+import { tr } from '@/i18n/tr';
 
 interface Props { lang: 'zh' | 'en' }
 
@@ -125,8 +126,10 @@ export default function TodayRecon({ lang }: Props) {
   return (
     <div className="today-recon">
       <div className="tr-head">
-        <span className="tr-title">{isZh ? '今日复盘' : 'Recon of the Day'}</span>
-        <Link href="/recon" prefetch={false} className="tr-all">{isZh ? '全部' : 'All recons'}</Link>
+        <span className="tr-title">{tr({ zh: '今日复盘', en: 'Recon of the Day',
+            zhHant: "今日覆盤"
+        })}</span>
+        <Link href="/recon" prefetch={false} className="tr-all">{tr({ zh: '全部', en: 'All recons' })}</Link>
       </div>
 
       <ReconCard solve={first} isZh={isZh} />
@@ -141,7 +144,7 @@ export default function TodayRecon({ lang }: Props) {
             aria-expanded={expanded}
           >
             {expanded
-              ? (isZh ? '收起' : 'Show less')
+              ? (tr({ zh: '收起', en: 'Show less' }))
               : (isZh ? `今日另有 ${rest.length} 条` : `${rest.length} more today`)}
             <ChevronDown size={15} className="tr-more-chevron" aria-hidden="true" />
           </button>

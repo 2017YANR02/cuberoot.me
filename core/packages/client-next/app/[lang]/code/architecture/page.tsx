@@ -9,10 +9,11 @@ import ArchNav from './_components/ArchNav';
 import { SystemTopoSVG, PackageDepsSVG } from './_components/ArchSvgs';
 import { LAYERS, PACKAGES, MODULES } from './_lib/arch-data';
 import './architecture.css';
+import i18n from '@/i18n/i18n-client';
 
 export default function ArchitecturePage() {
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
   useDocumentTitle('站点架构', 'Site Architecture');
 
@@ -133,7 +134,7 @@ export default function ArchitecturePage() {
                   <span className="arch-mod-route">{m.route}</span>
                   <span className={`arch-tag arch-tag-${m.origin}`}>{m.origin}</span>
                 </div>
-                <div className="arch-mod-name">{lang === 'zh' ? m.zh : m.en}</div>
+                <div className="arch-mod-name">{(i18n.language.startsWith('zh') ? m.zh : m.en)}</div>
                 <div className="arch-mod-desc">{lang === 'zh' ? m.zhDesc : m.enDesc}</div>
               </Link>
             ))}

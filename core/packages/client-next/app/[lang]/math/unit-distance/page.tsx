@@ -25,6 +25,7 @@ import { ArrowLeft, ExternalLink, FileText, Sparkles } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import './unit_distance.css';
+import i18n from '@/i18n/i18n-client';
 
 const UnitDistanceSandbox = dynamic(() => import('./_components/UnitDistanceSandbox'), { ssr: false });
 const GridConstruction = dynamic(() => import('./_components/GridConstruction'), { ssr: false });
@@ -34,15 +35,24 @@ const LatticeProjection = dynamic(() => import('./_components/LatticeProjection'
 const ErdosGridHero = dynamic(() => import('./_components/ErdosGridHero'), { ssr: false });
 
 const TIMELINE: ReadonlyArray<{ year: string; lo: string; hi: string; cite: string; zh: string; en: string; final?: boolean }> = [
-  { year: '1946', lo: 'n·c√(log n / log log n)', hi: 'O(n^3/2)', cite: 'Erdős', zh: 'Erdős 提出问题 + 提出猜想 ν(n) ≤ n^(1+C/log log n);K₂,₃-free 给上界 O(n^3/2)', en: 'Erdős states the problem + conjecture ν(n) ≤ n^(1+C/log log n); K₂,₃-free gives upper O(n^3/2)' },
-  { year: '1984', lo: 'n·c√(log n / log log n)', hi: 'O(n^4/3)', cite: 'SST', zh: 'Spencer–Szemerédi–Trotter 把上界压到 O(n^4/3),用 incidence bound', en: 'Spencer–Szemerédi–Trotter improve upper to O(n^4/3) via incidence bound' },
-  { year: '1997', lo: '同上', hi: 'O(n^4/3)', cite: 'Sze', zh: 'Székely 用 crossing number 给出 O(n^4/3) 的 1-页证明', en: 'Székely\'s 1-page crossing-number proof of O(n^4/3)' },
-  { year: '2011', lo: '同上', hi: 'O(n log n)', cite: 'Mat', zh: 'Matoušek 证明大多数范数下 ν 几乎线性 — 暗示 Euclidean 也"应该"如此', en: 'Matoušek: for most norms ν is near-linear — suggesting Euclidean "should" be too' },
-  { year: '2022', lo: '同上', hi: 'O(n^4/3) (constant ↓)', cite: 'ÁP', zh: 'Ágoston & Pálvölgyi 改进 n^4/3 的常数(40 年来唯一进展)', en: 'Ágoston & Pálvölgyi sharpen the constant in n^4/3 (only progress in 40 yrs)' },
-  { year: '2025', lo: '同上', hi: 'O(n log² n) generic', cite: 'ABS / GST', zh: 'Alon–Bucić–Sauermann + Greilhuber–Schildkraut–Tidor:对几乎所有 d 维范数,ν ≤ (d/2 ± o(1)) n log² n', en: 'Alon–Bucić–Sauermann + Greilhuber–Schildkraut–Tidor: ν ≤ (d/2 ± o(1)) n log² n for nearly all d-dim norms' },
-  { year: '2026-05', lo: 'n^(1+δ), δ>0', hi: 'O(n^4/3)', cite: 'OpenAI', zh: 'OpenAI (Chen + 内部模型,Sellke/Sawhney 验证):反例!ν(n) ≥ n^(1+δ) 对无穷多 n — Erdős 猜想 80 年后被否定 (δ 不显式)', en: 'OpenAI (Chen + internal model, Sellke/Sawhney verifying): counterexample! ν(n) ≥ n^(1+δ) for infinitely many n — Erdős\'s 80-yr conjecture falls (δ implicit)' },
-  { year: '2026-05', lo: 'n^(1+6·10⁻³⁸)', hi: 'O(n^4/3)', cite: 'Remarks', zh: 'Remarks (9 人联名,arXiv:2605.20695):人类消化版,显式算出 δ ≈ 6 × 10⁻³⁸,简化为 pro-2 塔 + 单一分裂素数', en: 'Remarks (9-author note, arXiv:2605.20695): human-digested, δ ≈ 6 × 10⁻³⁸ explicit; simplified to pro-2 tower + single split prime' },
-  { year: '2026-05', lo: 'n^1.014114', hi: 'O(n^4/3)', cite: 'Sawin', zh: 'Sawin 单作 (arXiv:2605.20579):大幅改进,δ ≥ 0.014,离 SST 上界只差约 24 倍', en: 'Sawin solo (arXiv:2605.20579): drastic improvement, δ ≥ 0.014, within factor 24 of SST upper', final: true },
+  { year: '1946', lo: 'n·c√(log n / log log n)', hi: 'O(n^3/2)', cite: 'Erdős', zh: 'Erdős 提出问题 + 提出猜想 ν(n) ≤ n^(1+C/log log n);K₂,₃-free 给上界 O(n^3/2)', en: 'Erdős states the problem + conjecture ν(n) ≤ n^(1+C/log log n); K₂,₃-free gives upper O(n^3/2)'
+},
+  { year: '1984', lo: 'n·c√(log n / log log n)', hi: 'O(n^4/3)', cite: 'SST', zh: 'Spencer–Szemerédi–Trotter 把上界压到 O(n^4/3),用 incidence bound', en: 'Spencer–Szemerédi–Trotter improve upper to O(n^4/3) via incidence bound'
+},
+  { year: '1997', lo: '同上', hi: 'O(n^4/3)', cite: 'Sze', zh: 'Székely 用 crossing number 给出 O(n^4/3) 的 1-页证明', en: 'Székely\'s 1-page crossing-number proof of O(n^4/3)'
+},
+  { year: '2011', lo: '同上', hi: 'O(n log n)', cite: 'Mat', zh: 'Matoušek 证明大多数范数下 ν 几乎线性 — 暗示 Euclidean 也"应该"如此', en: 'Matoušek: for most norms ν is near-linear — suggesting Euclidean "should" be too'
+},
+  { year: '2022', lo: '同上', hi: 'O(n^4/3) (constant ↓)', cite: 'ÁP', zh: 'Ágoston & Pálvölgyi 改进 n^4/3 的常数(40 年来唯一进展)', en: 'Ágoston & Pálvölgyi sharpen the constant in n^4/3 (only progress in 40 yrs)'
+},
+  { year: '2025', lo: '同上', hi: 'O(n log² n) generic', cite: 'ABS / GST', zh: 'Alon–Bucić–Sauermann + Greilhuber–Schildkraut–Tidor:对几乎所有 d 维范数,ν ≤ (d/2 ± o(1)) n log² n', en: 'Alon–Bucić–Sauermann + Greilhuber–Schildkraut–Tidor: ν ≤ (d/2 ± o(1)) n log² n for nearly all d-dim norms'
+},
+  { year: '2026-05', lo: 'n^(1+δ), δ>0', hi: 'O(n^4/3)', cite: 'OpenAI', zh: 'OpenAI (Chen + 内部模型,Sellke/Sawhney 验证):反例!ν(n) ≥ n^(1+δ) 对无穷多 n — Erdős 猜想 80 年后被否定 (δ 不显式)', en: 'OpenAI (Chen + internal model, Sellke/Sawhney verifying): counterexample! ν(n) ≥ n^(1+δ) for infinitely many n — Erdős\'s 80-yr conjecture falls (δ implicit)'
+},
+  { year: '2026-05', lo: 'n^(1+6·10⁻³⁸)', hi: 'O(n^4/3)', cite: 'Remarks', zh: 'Remarks (9 人联名,arXiv:2605.20695):人类消化版,显式算出 δ ≈ 6 × 10⁻³⁸,简化为 pro-2 塔 + 单一分裂素数', en: 'Remarks (9-author note, arXiv:2605.20695): human-digested, δ ≈ 6 × 10⁻³⁸ explicit; simplified to pro-2 tower + single split prime'
+},
+  { year: '2026-05', lo: 'n^1.014114', hi: 'O(n^4/3)', cite: 'Sawin', zh: 'Sawin 单作 (arXiv:2605.20579):大幅改进,δ ≥ 0.014,离 SST 上界只差约 24 倍', en: 'Sawin solo (arXiv:2605.20579): drastic improvement, δ ≥ 0.014, within factor 24 of SST upper', final: true
+},
 ];
 
 export default function UnitDistancePage() {
@@ -403,7 +413,7 @@ export default function UnitDistancePage() {
                   <span className="ud-timeline-hi">{row.hi}</span>
                   <span className="ud-timeline-cite">{row.cite}</span>
                 </div>
-                <div className="ud-timeline-text">{isZh ? row.zh : row.en}</div>
+                <div className="ud-timeline-text">{(i18n.language.startsWith('zh') ? row.zh : row.en)}</div>
               </div>
             ))}
           </div>

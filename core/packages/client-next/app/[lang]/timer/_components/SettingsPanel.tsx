@@ -21,6 +21,7 @@ import { eventInfo, type EventId } from '../_lib/types';
 import { WCA_COLORS } from '../_lib/cube/colors';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { CountryInput } from '@/components/CountryInput';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   isZh: boolean;
@@ -256,30 +257,40 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
       setCloudMeta({ exists: true, solveCount, updatedAt, byteSize });
       flashCloudMsg(isZh ? `已上传 ${solveCount} 条到云端` : `Uploaded ${solveCount} solves`);
     } catch {
-      flashCloudMsg(isZh ? '上传失败,请重试' : 'Upload failed, try again');
+      flashCloudMsg(tr({ zh: '上传失败,请重试', en: 'Upload failed, try again',
+          zhHant: "上傳失敗,請重試"
+    }));
     } finally {
       setCloudBusy(false);
     }
   }
 
   async function onCloudRestore(): Promise<void> {
-    const ok = window.confirm(isZh
-      ? '将用云端备份覆盖本地全部成绩,本地未上传的成绩会丢失。确定继续?'
-      : 'This replaces ALL local solves with the cloud backup. Unsynced local solves will be lost. Continue?');
+    const ok = window.confirm(tr({ zh: '将用云端备份覆盖本地全部成绩,本地未上传的成绩会丢失。确定继续?', en: 'This replaces ALL local solves with the cloud backup. Unsynced local solves will be lost. Continue?',
+        zhHant: "將用雲端備份覆蓋本地全部成績,本地未上傳的成績會丟失。確定繼續?"
+    }));
     if (!ok) return;
     setCloudBusy(true);
     try {
       const result = await restoreFromCloud();
       if (result === 'ok') {
         onDataReplaced?.();
-        flashCloudMsg(isZh ? '已从云端恢复' : 'Restored from cloud');
+        flashCloudMsg(tr({ zh: '已从云端恢复', en: 'Restored from cloud',
+            zhHant: "已從雲端恢復"
+        }));
       } else if (result === 'invalid') {
-        flashCloudMsg(isZh ? '云端备份损坏,无法恢复' : 'Cloud backup is corrupt');
+        flashCloudMsg(tr({ zh: '云端备份损坏,无法恢复', en: 'Cloud backup is corrupt',
+            zhHant: "雲端備份損壞,無法恢復"
+        }));
       } else {
-        flashCloudMsg(isZh ? '云端暂无备份' : 'No cloud backup yet');
+        flashCloudMsg(tr({ zh: '云端暂无备份', en: 'No cloud backup yet',
+            zhHant: "雲端暫無備份"
+        }));
       }
     } catch {
-      flashCloudMsg(isZh ? '恢复失败,请重试' : 'Restore failed, try again');
+      flashCloudMsg(tr({ zh: '恢复失败,请重试', en: 'Restore failed, try again',
+          zhHant: "恢復失敗,請重試"
+    }));
     } finally {
       setCloudBusy(false);
     }
@@ -319,7 +330,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
         reanalyzeMsgTimerRef.current = null;
       }, 2000);
     } catch {
-      setReanalyzeMsg(isZh ? '重算失败' : 'Reanalyze failed');
+      setReanalyzeMsg(tr({ zh: '重算失败', en: 'Reanalyze failed',
+          zhHant: "重算失敗"
+    }));
     } finally {
       setReanalyzeBusy(false);
       setReanalyzeProgress(null);
@@ -330,7 +343,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
     try {
       const { json, solveCount, sessionCount } = await exportCstimerJson();
       if (solveCount === 0) {
-        alert(isZh ? '当前没有可导出的成绩。' : 'No solves to export.');
+        alert(tr({ zh: '当前没有可导出的成绩。', en: 'No solves to export.',
+            zhHant: "當前沒有可匯出的成績。"
+        }));
         return;
       }
       const blob = new Blob([json], { type: 'application/json' });
@@ -356,7 +371,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
         cstimerExportTimerRef.current = null;
       }, 1500);
     } catch {
-      alert(isZh ? '导出失败。' : 'Export failed.');
+      alert(tr({ zh: '导出失败。', en: 'Export failed.',
+          zhHant: "匯出失敗。"
+    }));
     }
   }
 
@@ -386,7 +403,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
         csvExportTimerRef.current = null;
       }, 1500);
     } catch {
-      alert(isZh ? '导出失败。' : 'Export failed.');
+      alert(tr({ zh: '导出失败。', en: 'Export failed.',
+          zhHant: "匯出失敗。"
+    }));
     }
   }
 
@@ -399,21 +418,27 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
       const text = String(reader.result);
       const sessions = parseCstimerExport(text);
       if (sessions.length === 0) {
-        alert(isZh ? '未识别为 csTimer 导出文件。' : 'Not a recognized csTimer export.');
+        alert(tr({ zh: '未识别为 csTimer 导出文件。', en: 'Not a recognized csTimer export.',
+            zhHant: "未識別為 csTimer 匯出檔案。"
+        }));
         return;
       }
       setCstimerSessions(sessions);
       setCstimerImported({});
     };
     reader.onerror = () => {
-      alert(isZh ? '读取文件失败。' : 'Failed to read file.');
+      alert(tr({ zh: '读取文件失败。', en: 'Failed to read file.',
+          zhHant: "讀取檔案失敗。"
+    }));
     };
     reader.readAsText(file);
   }
 
   function importCstimerSession(sess: CstimerSessionParsed, mode: 'append' | 'replace'): void {
     if (sess.solves.length === 0) {
-      alert(isZh ? '该会话没有可导入的成绩。' : 'This session has no solves.');
+      alert(tr({ zh: '该会话没有可导入的成绩。', en: 'This session has no solves.',
+          zhHant: "該會話沒有可匯入的成績。"
+    }));
       return;
     }
     if (mode === 'replace') {
@@ -426,15 +451,17 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
       appendSolves(sess.event, sess.solves);
     }
     setCstimerImported(prev => ({ ...prev, [sess.sessionId]: mode }));
-    alert(isZh
-      ? '已导入。请刷新页面以查看更新后的成绩。'
-      : 'Imported. Please reload the page to see the updated solves.');
+    alert(tr({ zh: '已导入。请刷新页面以查看更新后的成绩。', en: 'Imported. Please reload the page to see the updated solves.',
+        zhHant: "已匯入。請重新整理頁面以檢視更新後的成績。"
+    }));
   }
 
   function showBackupPicker(): void {
     const list = listBackups();
     if (list.length === 0) {
-      alert(isZh ? '尚无自动备份。' : 'No auto-backups yet.');
+      alert(tr({ zh: '尚无自动备份。', en: 'No auto-backups yet.',
+          zhHant: "尚無自動備份。"
+    }));
       return;
     }
     const lines = list.map((e, i) => {
@@ -450,7 +477,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
     if (!ans) return;
     const idx = parseInt(ans, 10) - 1;
     if (!Number.isFinite(idx) || idx < 0 || idx >= list.length) {
-      alert(isZh ? '无效序号。' : 'Invalid index.');
+      alert(tr({ zh: '无效序号。', en: 'Invalid index.',
+          zhHant: "無效序號。"
+    }));
       return;
     }
     const target = list[idx]!;
@@ -459,8 +488,12 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
       : `Restore backup from ${new Date(target.ts).toLocaleString()} (overwrites current data)?`)) return;
     const ok = restoreBackup(target.key);
     alert(ok
-      ? (isZh ? '已恢复。请刷新页面。' : 'Restored. Please reload the page.')
-      : (isZh ? '恢复失败。' : 'Restore failed.'));
+      ? (tr({ zh: '已恢复。请刷新页面。', en: 'Restored. Please reload the page.',
+          zhHant: "已恢復。請重新整理頁面。"
+    }))
+      : (tr({ zh: '恢复失败。', en: 'Restore failed.',
+          zhHant: "恢復失敗。"
+    })));
   }
 
   return (
@@ -472,88 +505,120 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
         aria-labelledby="settings-modal-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="settings-modal-title">{isZh ? '设置' : 'Settings'}</h2>
+        <h2 id="settings-modal-title">{tr({ zh: '设置', en: 'Settings',
+            zhHant: "設定"
+        })}</h2>
 
         <AccordionSection
           id="timing"
-          title={isZh ? '计时' : 'Timing'}
+          title={tr({ zh: '计时', en: 'Timing',
+              zhHant: "計時"
+        })}
           defaultExpanded={true}
           useMobile={isMobile}
           expanded={expandedSections}
           setExpanded={setExpandedSections}
         >
-          <Row label={isZh ? '观察时间（秒）' : 'Inspection (sec)'}>
+          <Row label={tr({ zh: '观察时间（秒）', en: 'Inspection (sec)',
+              zhHant: "觀察時間（秒）"
+        })}>
             <input
               type="number" min={0} max={60}
               value={s.inspection}
               onChange={(e) => updateSettings({ inspection: Math.max(0, Math.min(60, Number(e.target.value) || 0)) })}
             />
-            <span className="hint">{s.inspection === 0 ? (isZh ? '关闭' : 'off') : (isZh ? `${s.inspection} 秒（>${s.inspection}s = +2，>${s.inspection + 2}s = DNF）` : `${s.inspection}s (>${s.inspection}s = +2, >${s.inspection + 2}s = DNF)`)}</span>
+            <span className="hint">{s.inspection === 0 ? (tr({ zh: '关闭', en: 'off',
+                zhHant: "關閉"
+            })) : (isZh ? `${s.inspection} 秒（>${s.inspection}s = +2，>${s.inspection + 2}s = DNF）` : `${s.inspection}s (>${s.inspection}s = +2, >${s.inspection + 2}s = DNF)`)}</span>
           </Row>
-          <Row label={isZh ? '按住阈值（毫秒）' : 'Hold threshold (ms)'}>
+          <Row label={tr({ zh: '按住阈值（毫秒）', en: 'Hold threshold (ms)',
+              zhHant: "按住閾值（毫秒）"
+        })}>
             <input
               type="number" min={100} max={2000} step={50}
               value={s.holdMs}
               onChange={(e) => updateSettings({ holdMs: Math.max(100, Math.min(2000, Number(e.target.value) || 550)) })}
             />
           </Row>
-          <Row label={isZh ? '观察启动方式' : 'Inspection trigger'}>
+          <Row label={tr({ zh: '观察启动方式', en: 'Inspection trigger',
+              zhHant: "觀察啟動方式"
+        })}>
             <select
               value={s.inspectionTrigger}
               onChange={(e) => updateSettings({ inspectionTrigger: e.target.value as 'down' | 'up' })}
             >
-              <option value="down">{isZh ? '按下' : 'Press down'}</option>
-              <option value="up">{isZh ? '松开' : 'Release'}</option>
+              <option value="down">{tr({ zh: '按下', en: 'Press down' })}</option>
+              <option value="up">{tr({ zh: '松开', en: 'Release',
+                  zhHant: "鬆開"
+            })}</option>
             </select>
-            <span className="hint">{isZh
-              ? '按下：立即进入观察；松开：松开空格后才进入（Stackmat 习惯）'
-              : 'down: enter on press; up: enter on release (stackmat-style)'}</span>
+            <span className="hint">{tr({ zh: '按下：立即进入观察；松开：松开空格后才进入（Stackmat 习惯）', en: 'down: enter on press; up: enter on release (stackmat-style)',
+                zhHant: "按下：立即進入觀察；鬆開：鬆開空格後才進入（Stackmat 習慣）"
+            })}</span>
           </Row>
-          <Row label={isZh ? '蓝牙自动 ready' : 'Bluetooth auto-ready'}>
+          <Row label={tr({ zh: '蓝牙自动 ready', en: 'Bluetooth auto-ready',
+              zhHant: "藍芽自動 ready"
+        })}>
             <select
               value={s.bluetoothAutoReady}
               onChange={(e) => updateSettings({ bluetoothAutoReady: e.target.value as 'off' | 'still' | 'double-flick' })}
             >
-              <option value="off">{isZh ? '关闭' : 'Off'}</option>
-              <option value="still">{isZh ? '静止 2 秒' : 'Still 2s'}</option>
-              <option value="double-flick">{isZh ? "双反扭 (U U')²" : "Double-flick (U U')²"}</option>
+              <option value="off">{tr({ zh: '关闭', en: 'Off',
+                  zhHant: "關閉"
+            })}</option>
+              <option value="still">{tr({ zh: '静止 2 秒', en: 'Still 2s',
+                  zhHant: "靜止 2 秒"
+            })}</option>
+              <option value="double-flick">{tr({ zh: "双反扭 (U U')²", en: "Double-flick (U U')²",
+                  zhHant: "雙反扭 (U U')²"
+            })}</option>
             </select>
-            <span className="hint">{isZh
-              ? "still = 解完后保持 2 秒不动；double-flick = 解完后做 U U' U U' 确认"
-              : "still = solved + 2s no move; double-flick = perform U U' U U' to confirm"}</span>
+            <span className="hint">{tr({ zh: "still = 解完后保持 2 秒不动；double-flick = 解完后做 U U' U U' 确认", en: "still = solved + 2s no move; double-flick = perform U U' U U' to confirm",
+                zhHant: "still = 解完後保持 2 秒不動；double-flick = 解完後做 U U' U U' 確認"
+            })}</span>
           </Row>
-          <Row label={isZh ? '隐藏运行中的时间' : 'Hide time while running'}>
+          <Row label={tr({ zh: '隐藏运行中的时间', en: 'Hide time while running',
+              zhHant: "隱藏執行中的時間"
+        })}>
             <input
               type="checkbox"
               checked={s.hideTime}
               onChange={(e) => updateSettings({ hideTime: e.target.checked })}
             />
           </Row>
-          <Row label={isZh ? 'CFOP 分阶段计时' : 'CFOP stage splits'}>
+          <Row label={tr({ zh: 'CFOP 分阶段计时', en: 'CFOP stage splits',
+              zhHant: "CFOP 分階段計時"
+        })}>
             <input
               type="checkbox"
               checked={s.multiStage}
               onChange={(e) => updateSettings({ multiStage: e.target.checked })}
             />
-            <span className="hint">{isZh
-              ? '按 1=Cross 完成，2=F2L，3=OLL；蓝牙连接时自动检测'
-              : 'Press 1=Cross, 2=F2L, 3=OLL; auto-detected when bluetooth connected'}</span>
+            <span className="hint">{tr({ zh: '按 1=Cross 完成，2=F2L，3=OLL；蓝牙连接时自动检测', en: 'Press 1=Cross, 2=F2L, 3=OLL; auto-detected when bluetooth connected',
+                zhHant: "按 1=Cross 完成，2=F2L，3=OLL；藍芽連線時自動檢測"
+            })}</span>
           </Row>
-          <Row label={isZh ? '盲拧记忆 / 执行分段' : 'BLD memo split'}>
+          <Row label={tr({ zh: '盲拧记忆 / 执行分段', en: 'BLD memo split',
+              zhHant: "盲擰記憶 / 執行分段"
+        })}>
             <input
               type="checkbox"
               checked={s.bldMemo}
               onChange={(e) => updateSettings({ bldMemo: e.target.checked })}
             />
-            <span className="hint">{isZh
-              ? '盲拧项目运行中按 Enter 标记记忆完成'
-              : 'On BLD events, press Enter while running to mark memo done'}</span>
+            <span className="hint">{tr({ zh: '盲拧项目运行中按 Enter 标记记忆完成', en: 'On BLD events, press Enter while running to mark memo done',
+                zhHant: "盲擰專案執行中按 Enter 標記記憶完成"
+            })}</span>
           </Row>
-          <Row label={isZh ? '目标时间' : 'Target time'}>
+          <Row label={tr({ zh: '目标时间', en: 'Target time',
+              zhHant: "目標時間"
+        })}>
             <input
               type="text"
               value={targetInput}
-              placeholder={isZh ? '例：0:10.50（留空关闭）' : 'e.g. 0:10.50 (blank = off)'}
+              placeholder={tr({ zh: '例：0:10.50（留空关闭）', en: 'e.g. 0:10.50 (blank = off)',
+                  zhHant: "例：0:10.50（留空關閉）"
+            })}
               onChange={(e) => setTargetInput(e.target.value)}
               onBlur={(e) => commitTargetInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitTargetInput((e.target as HTMLInputElement).value); }}
@@ -566,53 +631,69 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                 : (isZh ? `当前 ${eventInfo(event).nameZh}：${formatTargetTime(currentTargetMs)}` : `${eventInfo(event).nameEn}: ${formatTargetTime(currentTargetMs)}`)}
             </span>
           </Row>
-          <Row label={isZh ? '每日目标次数' : 'Daily solve goal'}>
+          <Row label={tr({ zh: '每日目标次数', en: 'Daily solve goal',
+              zhHant: "每日目標次數"
+        })}>
             <input
               type="number"
               min={0}
               step={1}
               value={goalInput}
-              placeholder={isZh ? '例：50（留空 / 0 关闭）' : 'e.g. 50 (blank / 0 = off)'}
+              placeholder={tr({ zh: '例：50（留空 / 0 关闭）', en: 'e.g. 50 (blank / 0 = off)',
+                  zhHant: "例：50（留空 / 0 關閉）"
+            })}
               onChange={(e) => setGoalInput(e.target.value)}
               onBlur={(e) => commitGoalInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitGoalInput((e.target as HTMLInputElement).value); }}
             />
             <span className="hint">{currentDailyGoal === null
-              ? (isZh ? '关闭' : 'off')
+              ? (tr({ zh: '关闭', en: 'off',
+                  zhHant: "關閉"
+            }))
               : (isZh ? `每天 ${currentDailyGoal} 次（全部项目合计）` : `${currentDailyGoal} solves/day (all events)`)}</span>
           </Row>
-          <Row label={isZh ? '精度' : 'Precision'}>
+          <Row label={tr({ zh: '精度', en: 'Precision' })}>
             <select
               value={s.precision}
               onChange={(e) => updateSettings({ precision: Number(e.target.value) as 2 | 3 })}
             >
-              <option value={2}>{isZh ? '0.01 秒' : '0.01s'}</option>
-              <option value={3}>{isZh ? '0.001 秒' : '0.001s'}</option>
+              <option value={2}>{tr({ zh: '0.01 秒', en: '0.01s' })}</option>
+              <option value={3}>{tr({ zh: '0.001 秒', en: '0.001s' })}</option>
             </select>
           </Row>
-          <Row label={isZh ? '颜色中立' : 'Color neutral'}>
+          <Row label={tr({ zh: '颜色中立', en: 'Color neutral',
+              zhHant: "顏色中立"
+        })}>
             <select
               value={s.cnMode}
               onChange={(e) => updateSettings({ cnMode: e.target.value as 'none' | 'single' | 'dual' | 'six' })}
             >
-              <option value="none">{isZh ? '固定白底' : 'None (white)'}</option>
-              <option value="single">{isZh ? '单面随机' : 'Single (random)'}</option>
-              <option value="dual">{isZh ? '双面（白黄）' : 'Dual (white/yellow)'}</option>
-              <option value="six">{isZh ? '六面' : 'Six-sided'}</option>
+              <option value="none">{tr({ zh: '固定白底', en: 'None (white)' })}</option>
+              <option value="single">{tr({ zh: '单面随机', en: 'Single (random)',
+                  zhHant: "單面隨機"
+            })}</option>
+              <option value="dual">{tr({ zh: '双面（白黄）', en: 'Dual (white/yellow)',
+                  zhHant: "雙面（白黃）"
+            })}</option>
+              <option value="six">{tr({ zh: '六面', en: 'Six-sided' })}</option>
             </select>
-            <span className="hint">{isZh ? '仅 3x3 类项目生效' : '3x3 events only'}</span>
+            <span className="hint">{tr({ zh: '仅 3x3 类项目生效', en: '3x3 events only',
+                zhHant: "僅 3x3 類專案生效"
+            })}</span>
           </Row>
         </AccordionSection>
 
         <AccordionSection
           id="sound"
-          title={isZh ? '声音' : 'Sound'}
+          title={tr({ zh: '声音', en: 'Sound',
+              zhHant: "聲音"
+        })}
           defaultExpanded={false}
           useMobile={isMobile}
           expanded={expandedSections}
           setExpanded={setExpandedSections}
         >
-          <Row label={isZh ? '提示音' : 'Sounds'}>
+          <Row label={tr({ zh: '提示音', en: 'Sounds' })}>
             <input
               type="checkbox"
               checked={s.soundsEnabled}
@@ -622,7 +703,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               }}
             />
           </Row>
-          <Row label={isZh ? '音量' : 'Volume'}>
+          <Row label={tr({ zh: '音量', en: 'Volume' })}>
             <input
               type="range" min={0} max={1} step={0.05}
               value={s.volume}
@@ -631,12 +712,16 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             <button
               className="hint-btn"
               onClick={() => play('start')}
-              title={isZh ? '试听' : 'Test'}
+              title={tr({ zh: '试听', en: 'Test',
+                  zhHant: "試聽"
+            })}
             >
               ♪
             </button>
           </Row>
-          <Row label={isZh ? '语音观察' : 'Voice inspection'}>
+          <Row label={tr({ zh: '语音观察', en: 'Voice inspection',
+              zhHant: "語音觀察"
+        })}>
             <select
               value={s.voiceInspection}
               onChange={(e) => {
@@ -645,27 +730,45 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               }}
               disabled={!isVoiceAvailable()}
             >
-              <option value="none">{isZh ? '关闭（用提示音）' : 'Off (beeps)'}</option>
-              <option value="en-male">{isZh ? '英文 男声' : 'English (male)'}</option>
-              <option value="en-female">{isZh ? '英文 女声' : 'English (female)'}</option>
-              <option value="zh-male">{isZh ? '中文 男声' : 'Chinese (male)'}</option>
-              <option value="zh-female">{isZh ? '中文 女声' : 'Chinese (female)'}</option>
+              <option value="none">{tr({ zh: '关闭（用提示音）', en: 'Off (beeps)',
+                  zhHant: "關閉（用提示音）"
+            })}</option>
+              <option value="en-male">{tr({ zh: '英文 男声', en: 'English (male)',
+                  zhHant: "英文 男聲"
+            })}</option>
+              <option value="en-female">{tr({ zh: '英文 女声', en: 'English (female)',
+                  zhHant: "英文 女聲"
+            })}</option>
+              <option value="zh-male">{tr({ zh: '中文 男声', en: 'Chinese (male)',
+                  zhHant: "中文 男聲"
+            })}</option>
+              <option value="zh-female">{tr({ zh: '中文 女声', en: 'Chinese (female)',
+                  zhHant: "中文 女聲"
+            })}</option>
             </select>
             <span className="hint">{isVoiceAvailable()
-              ? (isZh ? '念 8 秒 / 12 秒 / 开始（依系统可用音色）' : 'reads 8s / 12s / go (depends on system voices)')
-              : (isZh ? '浏览器不支持' : 'unsupported by browser')}</span>
+              ? (tr({ zh: '念 8 秒 / 12 秒 / 开始（依系统可用音色）', en: 'reads 8s / 12s / go (depends on system voices)',
+                  zhHant: "念 8 秒 / 12 秒 / 開始（依系統可用音色）"
+            }))
+              : (tr({ zh: '浏览器不支持', en: 'unsupported by browser',
+                  zhHant: "瀏覽器不支援"
+            }))}</span>
           </Row>
         </AccordionSection>
 
         <AccordionSection
           id="metronome"
-          title={isZh ? '节拍器' : 'Metronome'}
+          title={tr({ zh: '节拍器', en: 'Metronome',
+              zhHant: "節拍器"
+        })}
           defaultExpanded={false}
           useMobile={isMobile}
           expanded={expandedSections}
           setExpanded={setExpandedSections}
         >
-          <Row label={isZh ? '开启' : 'Enabled'}>
+          <Row label={tr({ zh: '开启', en: 'Enabled',
+              zhHant: "開啟"
+        })}>
             <input
               type="checkbox"
               checked={s.metronomeOn}
@@ -674,9 +777,11 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                 if (e.target.checked) warmupSound();
               }}
             />
-            <span className="hint">{isZh ? '观察 / 计时阶段播放' : 'ticks during inspection / solve'}</span>
+            <span className="hint">{tr({ zh: '观察 / 计时阶段播放', en: 'ticks during inspection / solve',
+                zhHant: "觀察 / 計時階段播放"
+            })}</span>
           </Row>
-          <Row label={isZh ? '速度（BPM）' : 'Tempo (BPM)'}>
+          <Row label={tr({ zh: '速度（BPM）', en: 'Tempo (BPM)' })}>
             <input
               type="range" min={30} max={300} step={1}
               value={s.metronomeBpm}
@@ -686,26 +791,40 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             <button
               className="hint-btn"
               onClick={tapBpm}
-              title={isZh ? '连续敲击设定速度' : 'Tap repeatedly to set tempo'}
+              title={tr({ zh: '连续敲击设定速度', en: 'Tap repeatedly to set tempo',
+                  zhHant: "連續敲擊設定速度"
+            })}
             >
-              {isZh ? '敲击' : 'Tap'}
+              {tr({ zh: '敲击', en: 'Tap',
+                  zhHant: "敲擊"
+            })}
             </button>
             {tapBpmHint !== null && (
               <span className="hint" style={{ fontVariantNumeric: 'tabular-nums' }}>→ {tapBpmHint}</span>
             )}
-            <span className="hint">{isZh ? '离开本页时自动停止' : 'auto-stops on page leave'}</span>
+            <span className="hint">{tr({ zh: '离开本页时自动停止', en: 'auto-stops on page leave',
+                zhHant: "離開本頁時自動停止"
+            })}</span>
           </Row>
-          <Row label={isZh ? '观察提示音（秒）' : 'Beep at (sec)'}>
+          <Row label={tr({ zh: '观察提示音（秒）', en: 'Beep at (sec)',
+              zhHant: "觀察提示音（秒）"
+        })}>
             <input
               type="text"
               value={beepAtInput}
-              placeholder={isZh ? '例：5,10,15（逗号分隔）' : 'e.g. 5,10,15 (comma-separated)'}
+              placeholder={tr({ zh: '例：5,10,15（逗号分隔）', en: 'e.g. 5,10,15 (comma-separated)',
+                  zhHant: "例：5,10,15（逗號分隔）"
+            })}
               onChange={(e) => setBeepAtInput(e.target.value)}
               onBlur={(e) => commitBeepAtInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitBeepAtInput((e.target as HTMLInputElement).value); }}
             />
-            <button className="hint-btn" onClick={() => { warmupSound(); playInspectionBeep(); }} title={isZh ? '试听' : 'Test'}>
-              {isZh ? '试听' : 'Test'}
+            <button className="hint-btn" onClick={() => { warmupSound(); playInspectionBeep(); }} title={tr({ zh: '试听', en: 'Test',
+                zhHant: "試聽"
+            })}>
+              {tr({ zh: '试听', en: 'Test',
+                  zhHant: "試聽"
+            })}
             </button>
             <span className="hint">{isZh
               ? `观察到这些秒数各响一声（1..60，独立于 8/12 秒）；当前 ${(s.inspectionBeepAt ?? []).length ? s.inspectionBeepAt.join(' / ') + ' 秒' : '关闭'}`
@@ -715,17 +834,23 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
 
         <AccordionSection
           id="sync-seed"
-          title={isZh ? '同步种子' : 'Sync seed'}
+          title={tr({ zh: '同步种子', en: 'Sync seed',
+              zhHant: "同步種子"
+        })}
           defaultExpanded={false}
           useMobile={isMobile}
           expanded={expandedSections}
           setExpanded={setExpandedSections}
         >
-          <Row label={isZh ? '种子' : 'Seed'}>
+          <Row label={tr({ zh: '种子', en: 'Seed',
+              zhHant: "種子"
+        })}>
             <input
               type="text"
               value={seedDraft}
-              placeholder={isZh ? '任意字符串' : 'any string'}
+              placeholder={tr({ zh: '任意字符串', en: 'any string',
+                  zhHant: "任意字串"
+            })}
               onChange={(e) => setSeedDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -746,7 +871,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               }}
               disabled={seedDraft === '' || seedDraft === s.syncSeed}
             >
-              {isZh ? '应用' : 'Apply'}
+              {tr({ zh: '应用', en: 'Apply',
+                  zhHant: "應用"
+            })}
             </button>
             <button
               className="hint-btn"
@@ -757,13 +884,17 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               }}
               disabled={s.syncSeed === null}
             >
-              {isZh ? '清除' : 'Clear'}
+              {tr({ zh: '清除', en: 'Clear' })}
             </button>
           </Row>
-          <Row label={isZh ? '当前' : 'Current'}>
+          <Row label={tr({ zh: '当前', en: 'Current',
+              zhHant: "當前"
+        })}>
             <span className="hint" title={String(seedTick)}>
               {s.syncSeed === null
-                ? (isZh ? '未启用' : 'off')
+                ? (tr({ zh: '未启用', en: 'off',
+                    zhHant: "未啟用"
+                }))
                 : (isZh
                     ? `seed=${s.syncSeed}，第 ${getSeedCounter()} 个打乱`
                     : `seed=${s.syncSeed}, scramble #${getSeedCounter()}`)}
@@ -773,82 +904,108 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               onClick={() => { resetSeedCounter(); setSeedTick((t) => t + 1); }}
               disabled={s.syncSeed === null}
             >
-              {isZh ? '重置计数' : 'Reset counter'}
+              {tr({ zh: '重置计数', en: 'Reset counter',
+                  zhHant: "重置計數"
+            })}
             </button>
           </Row>
           <Row label="">
-            <span className="hint">{isZh
-              ? '相同种子在不同设备打出相同序列；计数会跨刷新保留'
-              : 'same seed → same sequence across devices; counter persists across reloads'}</span>
+            <span className="hint">{tr({ zh: '相同种子在不同设备打出相同序列；计数会跨刷新保留', en: 'same seed → same sequence across devices; counter persists across reloads',
+                zhHant: "相同種子在不同裝置打出相同序列；計數會跨重新整理保留"
+            })}</span>
           </Row>
         </AccordionSection>
 
         <AccordionSection
           id="auto-backup"
-          title={isZh ? '自动备份' : 'Auto-backup'}
+          title={tr({ zh: '自动备份', en: 'Auto-backup',
+              zhHant: "自動備份"
+        })}
           defaultExpanded={false}
           useMobile={isMobile}
           expanded={expandedSections}
           setExpanded={setExpandedSections}
         >
-          <Row label={isZh ? '每 N 次写入触发' : 'Every N saves'}>
+          <Row label={tr({ zh: '每 N 次写入触发', en: 'Every N saves',
+              zhHant: "每 N 次寫入觸發"
+        })}>
             <input
               type="number" min={0} max={30} step={1}
               value={s.autoBackupEvery}
               onChange={(e) => updateSettings({ autoBackupEvery: Math.max(0, Math.min(30, Number(e.target.value) | 0)) })}
             />
             <span className="hint">{s.autoBackupEvery === 0
-              ? (isZh ? '已禁用' : 'disabled')
-              : (isZh ? '保留最近 10 份' : 'keeps last 10')}</span>
+              ? (tr({ zh: '已禁用', en: 'disabled' }))
+              : (tr({ zh: '保留最近 10 份', en: 'keeps last 10' }))}</span>
           </Row>
-          <Row label={isZh ? '操作' : 'Actions'}>
-            <button className="hint-btn" onClick={() => { pushBackup(); alert(isZh ? '已写入备份。' : 'Backup written.'); }}>
-              {isZh ? '立即备份' : 'Back up now'}
+          <Row label={tr({ zh: '操作', en: 'Actions' })}>
+            <button className="hint-btn" onClick={() => { pushBackup(); alert(tr({ zh: '已写入备份。', en: 'Backup written.',
+                zhHant: "已寫入備份。"
+            })); }}>
+              {tr({ zh: '立即备份', en: 'Back up now',
+                  zhHant: "立即備份"
+            })}
             </button>
             <button className="hint-btn" onClick={showBackupPicker}>
-              {isZh ? '查看备份' : 'View backups'}
+              {tr({ zh: '查看备份', en: 'View backups',
+                  zhHant: "檢視備份"
+            })}
             </button>
           </Row>
         </AccordionSection>
 
         <AccordionSection
           id="cloud"
-          title={isZh ? '云备份' : 'Cloud backup'}
+          title={tr({ zh: '云备份', en: 'Cloud backup',
+              zhHant: "雲備份"
+        })}
           defaultExpanded={false}
           useMobile={isMobile}
           expanded={expandedSections}
           setExpanded={setExpandedSections}
         >
           {!user ? (
-            <Row label={isZh ? '登录' : 'Sign in'}>
+            <Row label={tr({ zh: '登录', en: 'Sign in',
+                zhHant: "登入"
+            })}>
               <button className="hint-btn" onClick={() => login()}>
                 <LogIn size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                {isZh ? '登录后备份到云端' : 'Sign in to back up'}
+                {tr({ zh: '登录后备份到云端', en: 'Sign in to back up',
+                    zhHant: "登入後備份到雲端"
+                })}
               </button>
-              <span className="hint">{isZh
-                ? '用 WCA 账号登录,即可把全部成绩存到云端,在其它设备恢复'
-                : 'Sign in with WCA to store all solves in the cloud and restore them on other devices'}</span>
+              <span className="hint">{tr({ zh: '用 WCA 账号登录,即可把全部成绩存到云端,在其它设备恢复', en: 'Sign in with WCA to store all solves in the cloud and restore them on other devices',
+                  zhHant: "用 WCA 賬號登入,即可把全部成績存到雲端,在其它裝置恢復"
+            })}</span>
             </Row>
           ) : (
             <>
-              <Row label={isZh ? '操作' : 'Actions'}>
+              <Row label={tr({ zh: '操作', en: 'Actions' })}>
                 <button
                   className="hint-btn"
                   disabled={cloudBusy}
                   onClick={() => { void onCloudUpload(); }}
-                  title={isZh ? '把本地全部成绩上传到云端(覆盖云端旧备份)' : 'Upload all local solves to the cloud (replaces the cloud copy)'}
+                  title={tr({ zh: '把本地全部成绩上传到云端(覆盖云端旧备份)', en: 'Upload all local solves to the cloud (replaces the cloud copy)',
+                      zhHant: "把本地全部成績上傳到雲端(覆蓋雲端舊備份)"
+                })}
                 >
                   <CloudUpload size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                  {isZh ? '上传到云端' : 'Upload to cloud'}
+                  {tr({ zh: '上传到云端', en: 'Upload to cloud',
+                      zhHant: "上傳到雲端"
+                })}
                 </button>
                 <button
                   className="hint-btn"
                   disabled={cloudBusy}
                   onClick={() => { void onCloudRestore(); }}
-                  title={isZh ? '用云端备份覆盖本地全部成绩' : 'Replace all local solves with the cloud backup'}
+                  title={tr({ zh: '用云端备份覆盖本地全部成绩', en: 'Replace all local solves with the cloud backup',
+                      zhHant: "用雲端備份覆蓋本地全部成績"
+                })}
                 >
                   <CloudDownload size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                  {isZh ? '从云端恢复' : 'Restore from cloud'}
+                  {tr({ zh: '从云端恢复', en: 'Restore from cloud',
+                      zhHant: "從雲端恢復"
+                })}
                 </button>
               </Row>
               <Row label="">
@@ -856,18 +1013,22 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                   cloudMsg !== null
                     ? cloudMsg
                     : cloudMeta === null
-                      ? (isZh ? '正在读取云端状态…' : 'Checking cloud…')
+                      ? (tr({ zh: '正在读取云端状态…', en: 'Checking cloud…',
+                          zhHant: "正在讀取雲端狀態…"
+                    }))
                       : cloudMeta.exists
                         ? (isZh
                             ? `云端 ${cloudMeta.solveCount ?? 0} 条,上次同步 ${formatSyncTime(cloudMeta.updatedAt ?? 0, true)}`
                             : `Cloud: ${cloudMeta.solveCount ?? 0} solves, synced ${formatSyncTime(cloudMeta.updatedAt ?? 0, false)}`)
-                        : (isZh ? '云端暂无备份' : 'No cloud backup yet')
+                        : (tr({ zh: '云端暂无备份', en: 'No cloud backup yet',
+                            zhHant: "雲端暫無備份"
+                        }))
                 }</span>
               </Row>
               <Row label="">
-                <span className="hint">{isZh
-                  ? '恢复会用云端整库覆盖本地(含所有会话);计时器设置项不在备份内。'
-                  : 'Restore replaces ALL local sessions with the cloud copy; timer settings are not included.'}</span>
+                <span className="hint">{tr({ zh: '恢复会用云端整库覆盖本地(含所有会话);计时器设置项不在备份内。', en: 'Restore replaces ALL local sessions with the cloud copy; timer settings are not included.',
+                    zhHant: "恢復會用雲端整庫覆蓋本地(含所有會話);計時器設定項不在備份內。"
+                })}</span>
               </Row>
             </>
           )}
@@ -875,13 +1036,17 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
 
         <AccordionSection
           id="cstimer-io"
-          title={isZh ? '从 csTimer 导入 / 导出' : 'csTimer import / export'}
+          title={tr({ zh: '从 csTimer 导入 / 导出', en: 'csTimer import / export',
+              zhHant: "從 csTimer 匯入 / 匯出"
+        })}
           defaultExpanded={false}
           useMobile={isMobile}
           expanded={expandedSections}
           setExpanded={setExpandedSections}
         >
-          <Row label={isZh ? '选择 JSON 文件' : 'Choose JSON file'}>
+          <Row label={tr({ zh: '选择 JSON 文件', en: 'Choose JSON file',
+              zhHant: "選擇 JSON 檔案"
+        })}>
             <input
               ref={cstimerFileRef}
               type="file"
@@ -893,17 +1058,23 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               className="hint-btn"
               onClick={() => cstimerFileRef.current?.click()}
             >
-              {isZh ? '选择文件…' : 'Choose file…'}
+              {tr({ zh: '选择文件…', en: 'Choose file…',
+                  zhHant: "選擇檔案…"
+            })}
             </button>
-            <span className="hint">{isZh
-              ? '导出来源：csTimer → Local backup → Export'
-              : 'From csTimer → Local backup → Export'}</span>
+            <span className="hint">{tr({ zh: '导出来源：csTimer → Local backup → Export', en: 'From csTimer → Local backup → Export',
+                zhHant: "匯出來源：csTimer → Local backup → Export"
+            })}</span>
           </Row>
-          <Row label={isZh ? '导出所有成绩' : 'Export all solves'}>
+          <Row label={tr({ zh: '导出所有成绩', en: 'Export all solves',
+              zhHant: "匯出所有成績"
+        })}>
             <button
               className="hint-btn"
               onClick={() => { void onCstimerExport(); }}
-              title={isZh ? '下载所有成绩为 csTimer 兼容的 JSON' : 'Download all solves as a csTimer-compatible JSON'}
+              title={tr({ zh: '下载所有成绩为 csTimer 兼容的 JSON', en: 'Download all solves as a csTimer-compatible JSON',
+                  zhHant: "下載所有成績為 csTimer 相容的 JSON"
+            })}
             >
               <Download size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
               {isZh ? 'csTimer JSON' : 'csTimer JSON'}
@@ -911,7 +1082,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             <button
               className="hint-btn"
               onClick={onCsvExport}
-              title={isZh ? '每条成绩一行的 CSV，便于 Excel / Python 分析' : 'One row per solve, for spreadsheets / Python'}
+              title={tr({ zh: '每条成绩一行的 CSV，便于 Excel / Python 分析', en: 'One row per solve, for spreadsheets / Python',
+                  zhHant: "每條成績一行的 CSV，便於 Excel / Python 分析"
+            })}
             >
               <FileSpreadsheet size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
               {isZh ? 'CSV' : 'CSV'}
@@ -945,17 +1118,25 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                         className="hint-btn"
                         disabled={disabled || done === 'append'}
                         onClick={() => importCstimerSession(sess, 'append')}
-                        title={isZh ? '追加到现有成绩' : 'Append to existing solves'}
+                        title={tr({ zh: '追加到现有成绩', en: 'Append to existing solves',
+                            zhHant: "追加到現有成績"
+                        })}
                       >
-                        {done === 'append' ? (isZh ? '已追加' : 'Appended') : (isZh ? '追加' : 'Append')}
+                        {done === 'append' ? (tr({ zh: '已追加', en: 'Appended' })) : (tr({ zh: '追加', en: 'Append' }))}
                       </button>
                       <button
                         className="hint-btn"
                         disabled={disabled || done === 'replace'}
                         onClick={() => importCstimerSession(sess, 'replace')}
-                        title={isZh ? '清空该项目并以此覆盖' : 'Clear this event and replace'}
+                        title={tr({ zh: '清空该项目并以此覆盖', en: 'Clear this event and replace',
+                            zhHant: "清空該專案並以此覆蓋"
+                        })}
                       >
-                        {done === 'replace' ? (isZh ? '已替换' : 'Replaced') : (isZh ? '替换' : 'Replace')}
+                        {done === 'replace' ? (tr({ zh: '已替换', en: 'Replaced',
+                            zhHant: "已替換"
+                        })) : (tr({ zh: '替换', en: 'Replace',
+                            zhHant: "替換"
+                        }))}
                       </button>
                     </div>
                   </div>
@@ -963,14 +1144,16 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               })}
             </div>
           )}
-          <Row label={isZh ? '重算分阶段数据' : 'Reanalyze stage data'}>
+          <Row label={tr({ zh: '重算分阶段数据', en: 'Reanalyze stage data',
+              zhHant: "重算分階段資料"
+        })}>
             <button
               className="hint-btn"
               onClick={() => { void onReanalyze(); }}
               disabled={reanalyzeBusy}
-              title={isZh
-                ? '基于当前精确识别器，重新计算所有有移动记录的成绩的分阶段拆分'
-                : 'Rerun the current exact recognizer over every solve that has recorded moves'}
+              title={tr({ zh: '基于当前精确识别器，重新计算所有有移动记录的成绩的分阶段拆分', en: 'Rerun the current exact recognizer over every solve that has recorded moves',
+                  zhHant: "基於當前精確識別器，重新計算所有有移動記錄的成績的分階段拆分"
+            })}
             >
               <RefreshCw size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
               {reanalyzeBusy
@@ -978,8 +1161,10 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                     ? (isZh
                         ? `处理中… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`
                         : `Working… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`)
-                    : (isZh ? '处理中…' : 'Working…'))
-                : (isZh ? '重新分析' : 'Reanalyze')}
+                    : (tr({ zh: '处理中…', en: 'Working…',
+                        zhHant: "處理中…"
+                    })))
+                : (tr({ zh: '重新分析', en: 'Reanalyze' }))}
             </button>
             {reanalyzeMsg !== null && (
               <span className="hint">{reanalyzeMsg}</span>
@@ -989,23 +1174,33 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
 
         <AccordionSection
           id="appearance"
-          title={isZh ? '外观' : 'Appearance'}
+          title={tr({ zh: '外观', en: 'Appearance',
+              zhHant: "外觀"
+        })}
           defaultExpanded={false}
           useMobile={isMobile}
           expanded={expandedSections}
           setExpanded={setExpandedSections}
         >
-          <Row label={isZh ? '主题' : 'Theme'}>
+          <Row label={tr({ zh: '主题', en: 'Theme',
+              zhHant: "主題"
+        })}>
             <select
               value={s.theme}
               onChange={(e) => updateSettings({ theme: e.target.value as 'dark' | 'light' | 'auto' })}
             >
-              <option value="dark">{isZh ? '深色' : 'Dark'}</option>
-              <option value="light">{isZh ? '浅色' : 'Light'}</option>
-              <option value="auto">{isZh ? '跟随系统' : 'Auto'}</option>
+              <option value="dark">{tr({ zh: '深色', en: 'Dark' })}</option>
+              <option value="light">{tr({ zh: '浅色', en: 'Light',
+                  zhHant: "淺色"
+            })}</option>
+              <option value="auto">{tr({ zh: '跟随系统', en: 'Auto',
+                  zhHant: "跟隨系統"
+            })}</option>
             </select>
           </Row>
-          <Row label={isZh ? '计时器字号' : 'Timer font scale'}>
+          <Row label={tr({ zh: '计时器字号', en: 'Timer font scale',
+              zhHant: "計時器字號"
+        })}>
             <input
               type="range" min={0.5} max={2} step={0.05}
               value={s.timerFontScale}
@@ -1013,7 +1208,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             />
             <span className="hint">{s.timerFontScale.toFixed(2)}×</span>
           </Row>
-          <Row label={isZh ? '打乱字号' : 'Scramble font scale'}>
+          <Row label={tr({ zh: '打乱字号', en: 'Scramble font scale',
+              zhHant: "打亂字號"
+        })}>
             <input
               type="range" min={0.6} max={2.5} step={0.05}
               value={s.scrambleFontScale}
@@ -1021,84 +1218,112 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             />
             <span className="hint">{s.scrambleFontScale.toFixed(2)}×</span>
           </Row>
-          <Row label={isZh ? '紧凑打乱' : 'Compact scramble'}>
+          <Row label={tr({ zh: '紧凑打乱', en: 'Compact scramble',
+              zhHant: "緊湊打亂"
+        })}>
             <input
               type="checkbox"
               checked={s.compactScramble}
               onChange={(e) => updateSettings({ compactScramble: e.target.checked })}
             />
           </Row>
-          <Row label={isZh ? '显示魔方预览' : 'Show cube preview'}>
+          <Row label={tr({ zh: '显示魔方预览', en: 'Show cube preview',
+              zhHant: "顯示魔方預覽"
+        })}>
             <input
               type="checkbox"
               checked={s.showCubePreview}
               onChange={(e) => updateSettings({ showCubePreview: e.target.checked })}
             />
           </Row>
-          <Row label={isZh ? '3D 立方体' : '3D cube'}>
+          <Row label={tr({ zh: '3D 立方体', en: '3D cube',
+              zhHant: "3D 立方體"
+        })}>
             <input
               type="checkbox"
               checked={s.prefer3D}
               onChange={(e) => updateSettings({ prefer3D: e.target.checked })}
             />
-            <span className="hint">{isZh ? '可拖动旋转；关闭则展开 2D 平面' : 'drag to rotate; off = 2D net'}</span>
+            <span className="hint">{tr({ zh: '可拖动旋转；关闭则展开 2D 平面', en: 'drag to rotate; off = 2D net',
+                zhHant: "可拖動旋轉；關閉則展開 2D 平面"
+            })}</span>
           </Row>
-          <Row label={isZh ? '显示图表' : 'Show charts'}>
+          <Row label={tr({ zh: '显示图表', en: 'Show charts',
+              zhHant: "顯示圖表"
+        })}>
             <input
               type="checkbox"
               checked={s.showCharts}
               onChange={(e) => updateSettings({ showCharts: e.target.checked })}
             />
           </Row>
-          <Row label={isZh ? '显示练习日历' : 'Show practice heatmap'}>
+          <Row label={tr({ zh: '显示练习日历', en: 'Show practice heatmap',
+              zhHant: "顯示練習日曆"
+        })}>
             <input
               type="checkbox"
               checked={s.showHeatmap}
               onChange={(e) => updateSettings({ showHeatmap: e.target.checked })}
             />
           </Row>
-          <Row label={isZh ? '点击打乱条' : 'Scramble click action'}>
+          <Row label={tr({ zh: '点击打乱条', en: 'Scramble click action',
+              zhHant: "點選打亂條"
+        })}>
             <select
               value={s.scrambleClickAction}
               onChange={(e) => updateSettings({ scrambleClickAction: e.target.value as 'none' | 'next' | 'copy' })}
             >
-              <option value="none">{isZh ? '无操作' : 'Nothing'}</option>
-              <option value="next">{isZh ? '换下一个' : 'Next scramble'}</option>
-              <option value="copy">{isZh ? '复制到剪贴板' : 'Copy to clipboard'}</option>
+              <option value="none">{tr({ zh: '无操作', en: 'Nothing',
+                  zhHant: "無操作"
+            })}</option>
+              <option value="next">{tr({ zh: '换下一个', en: 'Next scramble',
+                  zhHant: "換下一個"
+            })}</option>
+              <option value="copy">{tr({ zh: '复制到剪贴板', en: 'Copy to clipboard',
+                  zhHant: "複製到剪貼簿"
+            })}</option>
             </select>
           </Row>
-          <Row label={isZh ? '运行中隐藏全部 UI' : 'Hide all UI while running'}>
+          <Row label={tr({ zh: '运行中隐藏全部 UI', en: 'Hide all UI while running',
+              zhHant: "執行中隱藏全部 UI"
+        })}>
             <input
               type="checkbox"
               checked={s.hideAllUiWhileRunning}
               onChange={(e) => updateSettings({ hideAllUiWhileRunning: e.target.checked })}
             />
           </Row>
-          <Row label={isZh ? 'PB 庆祝弹窗' : 'PB celebration toast'}>
+          <Row label={tr({ zh: 'PB 庆祝弹窗', en: 'PB celebration toast',
+              zhHant: "PB 慶祝彈窗"
+        })}>
             <input
               type="checkbox"
               checked={s.pbToast}
               onChange={(e) => updateSettings({ pbToast: e.target.checked })}
             />
-            <span className="hint">{isZh
-              ? '刷新单次/Ao5/Ao12 最佳时显示 3 秒'
-              : 'shows for 3s when single/ao5/ao12 PB is broken'}</span>
+            <span className="hint">{tr({ zh: '刷新单次/Ao5/Ao12 最佳时显示 3 秒', en: 'shows for 3s when single/ao5/ao12 PB is broken',
+                zhHant: "重新整理單次/Ao5/Ao12 最佳時顯示 3 秒"
+            })}</span>
           </Row>
-          <Row label={isZh ? '排名地区' : 'Ranking region'}>
+          <Row label={tr({ zh: '排名地区', en: 'Ranking region',
+              zhHant: "排名地區"
+        })}>
             <CountryInput
               value={(s.rankCountry ?? '').toLowerCase()}
               onChange={(iso2) => updateSettings({ rankCountry: iso2.toUpperCase() })}
-              placeholder={isZh ? '国家(留空只显 WR)' : 'Country (blank = WR only)'}
+              placeholder={tr({ zh: '国家(留空只显 WR)', en: 'Country (blank = WR only)',
+                  zhHant: "國家(留空只顯 WR)"
+            })}
             />
-            <span className="hint">{isZh
-              ? '设国家后停表额外显示 CR(大洲)/ NR(全国)排名;登录 WCA 自动带入'
-              : 'adds CR (continent) / NR (national) ranks; auto-filled when signed in'}</span>
+            <span className="hint">{tr({ zh: '设国家后停表额外显示 CR(大洲)/ NR(全国)排名;登录 WCA 自动带入', en: 'adds CR (continent) / NR (national) ranks; auto-filled when signed in',
+                zhHant: "設國家後停表額外顯示 CR(大洲)/ NR(全國)排名;登入 WCA 自動帶入"
+            })}</span>
           </Row>
         </AccordionSection>
 
         <AccordionSection
           id="cube-colors"
-          title={isZh ? '配色（魔方面）' : 'Cube colors'}
+          title={tr({ zh: '配色（魔方面）', en: 'Cube colors' })}
           defaultExpanded={false}
           useMobile={isMobile}
           expanded={expandedSections}
@@ -1125,19 +1350,25 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             className="reset-btn"
             onClick={() => updateSettings({ colors: {} })}
           >
-            {isZh ? '恢复 WCA 配色' : 'Reset to WCA colors'}
+            {tr({ zh: '恢复 WCA 配色', en: 'Reset to WCA colors',
+                zhHant: "恢復 WCA 配色"
+            })}
           </button>
         </AccordionSection>
 
         <div className="modal-actions">
           <button className="danger" onClick={() => {
-            if (confirm(isZh ? '把所有设置恢复为默认值？' : 'Reset all settings to defaults?')) {
+            if (confirm(tr({ zh: '把所有设置恢复为默认值？', en: 'Reset all settings to defaults?',
+                zhHant: "把所有設定恢復為預設值？"
+            }))) {
               resetSettings();
             }
           }}>
-            {isZh ? '全部重置' : 'Reset all'}
+            {tr({ zh: '全部重置', en: 'Reset all' })}
           </button>
-          <button className="primary" onClick={onClose}>{isZh ? '关闭' : 'Close'}</button>
+          <button className="primary" onClick={onClose}>{tr({ zh: '关闭', en: 'Close',
+              zhHant: "關閉"
+        })}</button>
         </div>
 
       </div>

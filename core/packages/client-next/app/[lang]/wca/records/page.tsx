@@ -24,6 +24,8 @@ import { formatAttempts } from '../all-results/page';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import '../_records.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 interface Row {
   e: string; t: 's' | 'a'; v: number; l: string;
@@ -88,7 +90,7 @@ function RecordsPageInner() {
 
   const manifestCountriesSorted = useMemo(() => {
     if (!manifest) return [];
-    const collator = new Intl.Collator(isZh ? 'zh-Hans-CN' : 'en', { sensitivity: 'base' });
+    const collator = new Intl.Collator((i18n.language.startsWith('zh') ? 'zh-Hans-CN' : 'en'), { sensitivity: 'base' });
     return [...manifest.countries].sort((a, b) => collator.compare(countryName(a, isZh), countryName(b, isZh)));
   }, [manifest, isZh]);
 
@@ -139,14 +141,16 @@ function RecordsPageInner() {
       <header className="wse-header">
         <div className="wse-header-row">
           <Link href={`/wca?lang=${i18n.language}`} className="wse-back">
-            <ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}
+            <ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}
           </Link>
         </div>
-        <h1>{isZh ? '纪录' : 'Records'}</h1>
+        <h1>{tr({ zh: '纪录', en: 'Records',
+            zhHant: "紀錄"
+        })}</h1>
         <p className="wse-subtitle">
-          {isZh
-            ? '历史上所有曾被打破的世界 / 大洲 / 国家纪录'
-            : 'Every world / continental / national record ever set'}
+          {tr({ zh: '历史上所有曾被打破的世界 / 大洲 / 国家纪录', en: 'Every world / continental / national record ever set',
+              zhHant: "歷史上所有曾被打破的世界 / 大洲 / 國家紀錄"
+        })}
         </p>
       </header>
 
@@ -157,12 +161,14 @@ function RecordsPageInner() {
               type="button"
               className={show === 'history' ? 'active' : ''}
               onClick={() => update('show', 'history')}
-            >{isZh ? '历史' : 'History'}</button>
+            >{tr({ zh: '历史', en: 'History',
+                zhHant: "歷史"
+            })}</button>
             <button
               type="button"
               className={show === 'mixed' ? 'active' : ''}
               onClick={() => update('show', 'mixed')}
-            >{isZh ? '混合' : 'Mixed'}</button>
+            >{tr({ zh: '混合', en: 'Mixed' })}</button>
           </div>
 
           <RegionPicker
@@ -183,12 +189,16 @@ function RecordsPageInner() {
       </div>
 
       <div className="wse-table-wrapper">
-        {loading && <div className="wse-state">{isZh ? '加载中...' : 'Loading...'}</div>}
+        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...',
+            zhHant: "載入中..."
+        })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {bundle && !loading && (
           <>
             {visibleRows.length === 0 && (
-              <div className="wse-state">{isZh ? '该区域 / 项目暂无历史纪录' : 'No historical records for this region / event'}</div>
+              <div className="wse-state">{tr({ zh: '该区域 / 项目暂无历史纪录', en: 'No historical records for this region / event',
+                  zhHant: "該區域 / 專案暫無歷史紀錄"
+            })}</div>
             )}
 
             {show === 'history' && grouped && grouped.map(g => (
@@ -241,14 +251,26 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
     <table className="wse-table records-table">
       <thead>
         <tr>
-          <th>{isZh ? '类型' : 'Type'}</th>
-          {showEvent && <th>{isZh ? '项目' : 'Event'}</th>}
-          <th className="wse-value-col">{isZh ? '单次' : 'Single'}</th>
-          <th className="wse-value-col">{isZh ? '平均' : 'Average'}</th>
-          <th>{isZh ? '选手' : 'Person'}</th>
-          <th>{isZh ? '比赛' : 'Competition'}</th>
-          <th>{isZh ? '日期' : 'Date'}</th>
-          <th className="wse-attempts-col">{isZh ? '详细成绩' : 'Solves'}</th>
+          <th>{tr({ zh: '类型', en: 'Type',
+              zhHant: "型別"
+        })}</th>
+          {showEvent && <th>{tr({ zh: '项目', en: 'Event',
+              zhHant: "專案"
+        })}</th>}
+          <th className="wse-value-col">{tr({ zh: '单次', en: 'Single',
+              zhHant: "單次"
+        })}</th>
+          <th className="wse-value-col">{tr({ zh: '平均', en: 'Average' })}</th>
+          <th>{tr({ zh: '选手', en: 'Person',
+              zhHant: "選手"
+        })}</th>
+          <th>{tr({ zh: '比赛', en: 'Competition',
+              zhHant: "比賽"
+        })}</th>
+          <th>{tr({ zh: '日期', en: 'Date' })}</th>
+          <th className="wse-attempts-col">{tr({ zh: '详细成绩', en: 'Solves',
+              zhHant: "詳細成績"
+        })}</th>
         </tr>
       </thead>
       <tbody>
@@ -270,7 +292,7 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
             <td className="wse-value-col">{r.t === 'a' ? formatWcaResult(r.v, r.e, 'average') : ''}</td>
             <td>
               {r.pc && <Flag iso2={r.pc} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-              <Link prefetch={false} href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.p}`}>
+              <Link prefetch={false} href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${r.p}`}>
                 {displayCuberName(r.pn, isZh)}
               </Link>
             </td>

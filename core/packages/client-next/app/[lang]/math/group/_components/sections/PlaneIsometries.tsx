@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── 2D geometry helpers ──────────────────────────────────────────────────────
 
@@ -376,8 +377,10 @@ function TwoMirrorComposer() {
           <span className="gt-result-label"><L zh="复合类型" en="composite type" /></span>
           <span className="gt-result-val-strong" style={{ color: result.type === 'rotation' ? 'var(--green)' : 'var(--gold)' }}>
             {result.type === 'rotation'
-              ? (lang === 'zh' ? '旋转' : 'Rotation')
-              : (lang === 'zh' ? '平移' : 'Translation')}
+              ? (tr({ zh: '旋转', en: 'Rotation',
+                  zhHant: "旋轉"
+            }))
+              : (tr({ zh: '平移', en: 'Translation' }))}
           </span>
         </div>
         <div className="gt-result-row">
@@ -441,7 +444,9 @@ function IsometryClassifier() {
       } else {
         // A = I, translation
         if (Math.hypot(b[0], b[1]) < 1e-6) {
-          classResult = lang === 'zh' ? '恒等变换（零平移）' : 'Identity (zero translation)';
+          classResult = tr({ zh: '恒等变换（零平移）', en: 'Identity (zero translation)',
+              zhHant: "恆等變換（零平移）"
+        });
         } else {
           classResult = lang === 'zh'
             ? `平移 (${Math.round(b[0]*100)/100}, ${Math.round(b[1]*100)/100})`
@@ -490,8 +495,8 @@ function IsometryClassifier() {
   const toSvgY = (y: number) => (-y + VB) / (2*VB) * svgSize;
 
   const directionLabel = Math.abs(detA - 1) < 1e-6
-    ? (lang === 'zh' ? '正向（保向）' : 'Direct (orientation-preserving)')
-    : (lang === 'zh' ? '反向（反向等距）' : 'Opposite (orientation-reversing)');
+    ? (tr({ zh: '正向（保向）', en: 'Direct (orientation-preserving)' }))
+    : (tr({ zh: '反向（反向等距）', en: 'Opposite (orientation-reversing)' }));
 
   return (
     <div className="gt-panel">
@@ -626,8 +631,12 @@ function IsometryClassifier() {
           <span className="gt-result-label"><L zh="决策依据" en="Decision basis" /></span>
           <span className="gt-result-val" style={{ fontSize: 12, color: 'var(--ink-dim)', fontFamily: 'var(--mono)' }}>
             {Math.abs(detA-1) < 1e-6
-              ? (lang === 'zh' ? 'det=+1 → 直接等距 → 检查不动点' : 'det=+1 → direct → check fixed point')
-              : (lang === 'zh' ? 'det=−1 → 反向等距 → 检查 f∘f' : 'det=−1 → opposite → check f∘f')}
+              ? (tr({ zh: 'det=+1 → 直接等距 → 检查不动点', en: 'det=+1 → direct → check fixed point',
+                  zhHant: "det=+1 → 直接等距 → 檢查不動點"
+            }))
+              : (tr({ zh: 'det=−1 → 反向等距 → 检查 f∘f', en: 'det=−1 → opposite → check f∘f',
+                  zhHant: "det=−1 → 反向等距 → 檢查 f∘f"
+            }))}
           </span>
         </div>
       </div>
@@ -770,7 +779,9 @@ function RotationTwoReflections() {
         <div className="gt-result-row">
           <span className="gt-result-label"><L zh="数值验证（误差 < 1e-9）" en="numeric verify (err < 1e-9)" /></span>
           <span className="gt-result-val-strong" style={{ color: verified ? 'var(--green)' : 'var(--warn)' }}>
-            {verified ? (lang === 'zh' ? '通过' : 'pass') : `err ${maxErr.toExponential(2)}`}
+            {verified ? (tr({ zh: '通过', en: 'pass',
+                zhHant: "透過"
+            })) : `err ${maxErr.toExponential(2)}`}
           </span>
         </div>
         <div className="gt-result-row">
@@ -952,24 +963,36 @@ export default function PlaneIsometries() {
         <tbody>
           {[
             {
-              type: lang === 'zh' ? '平移' : 'Translation',
-              det: '+1', fixed: lang === 'zh' ? '无（b≠0）' : 'none (b≠0)',
-              square: lang === 'zh' ? '平移 2b' : 'translation 2b', minRef: '2'
+              type: tr({ zh: '平移', en: 'Translation' }),
+              det: '+1', fixed: tr({ zh: '无（b≠0）', en: 'none (b≠0)',
+                  zhHant: "無（b≠0）"
+            }),
+              square: tr({ zh: '平移 2b', en: 'translation 2b' }), minRef: '2'
             },
             {
-              type: lang === 'zh' ? '旋转' : 'Rotation',
-              det: '+1', fixed: lang === 'zh' ? '唯一（中心 c）' : 'unique (center c)',
-              square: lang === 'zh' ? '旋转 2α' : 'rotation 2α', minRef: '2'
+              type: tr({ zh: '旋转', en: 'Rotation',
+                  zhHant: "旋轉"
+            }),
+              det: '+1', fixed: tr({ zh: '唯一（中心 c）', en: 'unique (center c)' }),
+              square: tr({ zh: '旋转 2α', en: 'rotation 2α',
+                  zhHant: "旋轉 2α"
+            }), minRef: '2'
             },
             {
-              type: lang === 'zh' ? '反射' : 'Reflection',
-              det: '−1', fixed: lang === 'zh' ? '整条镜像线' : 'entire mirror line',
-              square: lang === 'zh' ? '恒等 id' : 'identity', minRef: '1'
+              type: tr({ zh: '反射', en: 'Reflection' }),
+              det: '−1', fixed: tr({ zh: '整条镜像线', en: 'entire mirror line',
+                  zhHant: "整條映象線"
+            }),
+              square: tr({ zh: '恒等 id', en: 'identity',
+                  zhHant: "恆等 id"
+            }), minRef: '1'
             },
             {
-              type: lang === 'zh' ? '滑移反射' : 'Glide reflection',
-              det: '−1', fixed: lang === 'zh' ? '无' : 'none',
-              square: lang === 'zh' ? '非零平移 T_{2v}' : 'nonzero translation T_{2v}', minRef: '3'
+              type: tr({ zh: '滑移反射', en: 'Glide reflection' }),
+              det: '−1', fixed: tr({ zh: '无', en: 'none',
+                  zhHant: "無"
+            }),
+              square: tr({ zh: '非零平移 T_{2v}', en: 'nonzero translation T_{2v}' }), minRef: '3'
             },
           ].map(row => (
             <tr key={row.type}>

@@ -11,6 +11,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { OLL_CASES } from '../_lib/scramble/algs/oll_cases';
 import { PLL_CASES } from '../_lib/scramble/algs/pll_cases';
 import { getSettings, updateSettings } from '../_lib/settings';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   kind: 'oll' | 'pll';
@@ -97,16 +98,22 @@ export default function TrainerSubsetModal({ kind, isZh, onClose }: Props) {
       >
         <h2 id={titleId}>
           {kind === 'oll'
-            ? (isZh ? 'OLL 子集' : 'OLL subset')
-            : (isZh ? 'PLL 子集' : 'PLL subset')}
+            ? (tr({ zh: 'OLL 子集', en: 'OLL subset' }))
+            : (tr({ zh: 'PLL 子集', en: 'PLL subset' }))}
           <span className="trainer-subset-count"> ({count}/{total})</span>
         </h2>
 
         <div className="trainer-subset-toolbar">
-          <button ref={firstButtonRef} type="button" onClick={selectAll}>{isZh ? '全选' : 'Select all'}</button>
-          <button type="button" onClick={selectNone}>{isZh ? '全不选' : 'Clear'}</button>
+          <button ref={firstButtonRef} type="button" onClick={selectAll}>{tr({ zh: '全选', en: 'Select all',
+              zhHant: "全選"
+        })}</button>
+          <button type="button" onClick={selectNone}>{tr({ zh: '全不选', en: 'Clear',
+              zhHant: "全不選"
+        })}</button>
           <button type="button" onClick={disableSubset}>
-            {isZh ? '关闭子集（随机所有）' : 'Disable subset (random all)'}
+            {tr({ zh: '关闭子集（随机所有）', en: 'Disable subset (random all)',
+                zhHant: "關閉子集（隨機所有）"
+            })}
           </button>
         </div>
 
@@ -139,8 +146,10 @@ export default function TrainerSubsetModal({ kind, isZh, onClose }: Props) {
         </div>
 
         <div className="modal-actions">
-          <button type="button" onClick={onClose}>{isZh ? '取消' : 'Cancel'}</button>
-          <button type="button" className="primary" onClick={save}>{isZh ? '保存' : 'Save'}</button>
+          <button type="button" onClick={onClose}>{tr({ zh: '取消', en: 'Cancel' })}</button>
+          <button type="button" className="primary" onClick={save}>{tr({ zh: '保存', en: 'Save',
+              zhHant: "儲存"
+        })}</button>
         </div>
       </div>
     </div>

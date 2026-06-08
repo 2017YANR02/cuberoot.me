@@ -15,6 +15,8 @@ import WcaEventSelector from '@/components/WcaEventSelector';
 import { Bld3Hub } from '../3bld/_components/Bld3Hub';
 import { PUZZLE_EVENT, segToEvent } from '../_events';
 import '../trainer.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const TRAINABLE_SETS: Record<AlgPuzzle, string[]> = Object.fromEntries(
   ALG_PUZZLES.map(p => [p, ALG_CATALOG[p].map(s => s.slug)])
@@ -47,7 +49,7 @@ const SELECTOR_EVENTS = new Set<string>([
 export default function TrainerHubClient() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const lang = isZh ? 'zh' : 'en';
+  const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   useDocumentTitle('训练器', 'Trainer');
   const router = useRouter();
   const params = useParams<{ puzzle: string }>();
@@ -97,13 +99,17 @@ export default function TrainerHubClient() {
       {isBld && <Bld3Hub embedded />}
 
       {!isBld && trainableSets.length === 0 && (
-        <div className="trainer-landing-empty">{isZh ? '此项目暂无可训练公式集' : 'No trainable sets for this puzzle'}</div>
+        <div className="trainer-landing-empty">{tr({ zh: '此项目暂无可训练公式集', en: 'No trainable sets for this puzzle',
+            zhHant: "此專案暫無可訓練公式集"
+        })}</div>
       )}
 
       {!isBld && trainableSets.length > 0 && (
         <>
           <h2 className="trainer-section-title">
-            <Flag size={16} /> {isZh ? '公式训练' : 'Alg Training'}
+            <Flag size={16} /> {tr({ zh: '公式训练', en: 'Alg Training',
+                zhHant: "公式訓練"
+            })}
           </h2>
           <div className="trainer-set-grid">
             {trainableSets.map(s => {
@@ -127,7 +133,7 @@ export default function TrainerHubClient() {
                       />
                     )}
                   </div>
-                  <div className="trainer-set-card-title">{isZh ? s.zh : s.en}</div>
+                  <div className="trainer-set-card-title">{(i18n.language.startsWith('zh') ? s.zh : s.en)}</div>
                 </Link>
               );
             })}
@@ -138,14 +144,18 @@ export default function TrainerHubClient() {
       {is333 && (
         <>
           <h2 className="trainer-section-title">
-            <Blocks size={16} /> {isZh ? '桥式' : 'Roux'}
+            <Blocks size={16} /> {tr({ zh: '桥式', en: 'Roux',
+                zhHant: "橋式"
+            })}
           </h2>
           <div className="trainer-set-grid">
             <Link href={`/${lang}/trainer/roux`} className="trainer-set-card">
               <div className="trainer-set-card-thumb trainer-roux-thumb">
                 <Blocks size={44} strokeWidth={1.5} />
               </div>
-              <div className="trainer-set-card-title">{isZh ? '桥式训练器' : 'Roux Trainer'}</div>
+              <div className="trainer-set-card-title">{tr({ zh: '桥式训练器', en: 'Roux Trainer',
+                  zhHant: "橋式訓練器"
+            })}</div>
             </Link>
           </div>
         </>
@@ -154,7 +164,9 @@ export default function TrainerHubClient() {
       {!isBld && recognizeSets.length > 0 && (
         <>
           <h2 className="trainer-section-title">
-            <Eye size={16} /> {isZh ? '识别训练' : 'Recognition Training'}
+            <Eye size={16} /> {tr({ zh: '识别训练', en: 'Recognition Training',
+                zhHant: "識別訓練"
+            })}
           </h2>
           <div className="trainer-set-grid">
             {recognizeSets.map(s => {
@@ -178,7 +190,7 @@ export default function TrainerHubClient() {
                       />
                     )}
                   </div>
-                  <div className="trainer-set-card-title">{isZh ? s.zh : s.en}</div>
+                  <div className="trainer-set-card-title">{(i18n.language.startsWith('zh') ? s.zh : s.en)}</div>
                 </Link>
               );
             })}

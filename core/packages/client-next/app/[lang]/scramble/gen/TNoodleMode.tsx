@@ -68,13 +68,18 @@ const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 // 变体 (前端先做,后端数据后续接;key 与 /scramble/analyzer + /scramble/stats 对齐)。
 type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo';
 const VARIANTS: { key: VariantKey; zh: string; en: string }[] = [
-  { key: 'std', zh: '标准', en: 'Standard' },
+  { key: 'std', zh: '标准', en: 'Standard'
+},
   { key: 'eo', zh: 'EO', en: 'EO' },
-  { key: 'pair', zh: '基态', en: 'Pair' },
-  { key: 'pseudo', zh: '伪', en: 'Pseudo' },
-  { key: 'pseudo_pair', zh: '伪基态', en: 'Pseudo Pair' },
+  { key: 'pair', zh: '基态', en: 'Pair'
+},
+  { key: 'pseudo', zh: '伪', en: 'Pseudo'
+},
+  { key: 'pseudo_pair', zh: '伪基态', en: 'Pseudo Pair'
+},
   { key: 'f2leo', zh: 'F2LEO', en: 'F2LEO' },
-  { key: 'pseudo_f2leo', zh: '伪 F2LEO', en: 'Pseudo F2LEO' },
+  { key: 'pseudo_f2leo', zh: '伪 F2LEO', en: 'Pseudo F2LEO'
+},
 ];
 // 每变体:阶段集 + 实时引擎能力。std=现有 cross WASM(5 阶段);f2leo/pseudo_f2leo=
 // F2leoSolverWasm 浏览器当场算(4 阶段,无 xxxxc);其余暂仅靠预计算(comp_steps 未生成

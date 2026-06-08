@@ -15,6 +15,8 @@ import { apiUrl } from '@/lib/api-base';
 import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelect';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const EVENTS = [
   '333','222','444','555','666','777',
@@ -89,20 +91,28 @@ function CohortRanksPageInner() {
     <div className="wse-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}</Link>
+          <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}</Link>
         </div>
         <h1 className="wse-title-row">
-          {isZh ? '参赛届别排名' : 'Cohort Ranks'}
+          {tr({ zh: '参赛届别排名', en: 'Cohort Ranks',
+              zhHant: "參賽屆別排名"
+        })}
           <Link
             href="/wca/about/cohort-ranks"
             className="wse-title-help"
-            title={isZh ? '这页是干啥的?' : 'What is this page?'}
-            aria-label={isZh ? '查看说明' : 'About this page'}
+            title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+                zhHant: "這頁是幹啥的?"
+            })}
+            aria-label={tr({ zh: '查看说明', en: 'About this page',
+                zhHant: "檢視說明"
+            })}
           >
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
         </h1>
-        <p className="wse-subtitle">{isZh ? '按选手首次参赛年份分组,组内 PB 排名' : 'PB ranking among cubers whose first WCA competition was in the chosen year'}</p>
+        <p className="wse-subtitle">{tr({ zh: '按选手首次参赛年份分组,组内 PB 排名', en: 'PB ranking among cubers whose first WCA competition was in the chosen year',
+            zhHant: "按選手首次參賽年份分組,組內 PB 排名"
+        })}</p>
       </header>
 
       <WcaEventSelector
@@ -114,23 +124,31 @@ function CohortRanksPageInner() {
 
       <div className="wse-filters">
         <div className="wse-filter">
-          <label>{isZh ? '届别(首参赛年)' : 'Cohort year'}</label>
+          <label>{tr({ zh: '届别(首参赛年)', en: 'Cohort year',
+              zhHant: "屆別(首參賽年)"
+        })}</label>
           <select value={cohort} onChange={e => update('cohort', e.target.value)}>
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
-          <label>{isZh ? '类型' : 'Type'}</label>
+          <label>{tr({ zh: '类型', en: 'Type',
+              zhHant: "型別"
+        })}</label>
           <select value={type} onChange={e => update('type', e.target.value)}>
-            <option value="single">{isZh ? '单次' : 'Single'}</option>
-            {allowAvg && <option value="average">{isZh ? '平均' : 'Average'}</option>}
+            <option value="single">{tr({ zh: '单次', en: 'Single',
+                zhHant: "單次"
+            })}</option>
+            {allowAvg && <option value="average">{tr({ zh: '平均', en: 'Average' })}</option>}
           </select>
         </div>
       </div>
 
       <div className="wse-table-wrapper">
-        {loading && <div className="wse-state">{isZh ? '加载中...' : 'Loading...'}</div>}
+        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...',
+            zhHant: "載入中..."
+        })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {data && !loading && (
           <>
@@ -139,9 +157,13 @@ function CohortRanksPageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{isZh ? '选手' : 'Person'}</th>
+                  <th>{tr({ zh: '选手', en: 'Person',
+                      zhHant: "選手"
+                })}</th>
                   <th className="wse-value-col">{isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average')}</th>
-                  {!country && <th>{isZh ? '国家' : 'Country'}</th>}
+                  {!country && <th>{tr({ zh: '国家', en: 'Country',
+                      zhHant: "國家"
+                })}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -149,7 +171,7 @@ function CohortRanksPageInner() {
                   <tr key={r.wcaId}>
                     <td className="wse-rank-col">{r.rank}</td>
                     <td>
-                      <Link prefetch={false} href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>{displayCuberName(r.name, isZh)}</Link>
+                      <Link prefetch={false} href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${r.wcaId}`}>{displayCuberName(r.name, isZh)}</Link>
                     </td>
                     <td className="wse-value-col">{formatWcaResult(r.value, event, type)}</td>
                     {!country && (

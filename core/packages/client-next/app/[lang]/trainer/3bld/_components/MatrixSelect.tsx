@@ -9,6 +9,7 @@ import { useEffect, useMemo, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CheckCheck, Eraser } from 'lucide-react';
 import { globalState } from '../_lib/lettering';
+import { tr } from '@/i18n/tr';
 
 interface MatrixSelectProps {
   pieceType: 'corner' | 'edge';
@@ -56,11 +57,13 @@ export function MatrixSelect({ pieceType, value, onChange }: MatrixSelectProps):
       <div className="bld-matrix-actions">
         <button type="button" className="bld-btn bld-btn-ghost" onClick={selectAll}>
           <CheckCheck size={15} />
-          {isZh ? '全选' : 'Select all'}
+          {tr({ zh: '全选', en: 'Select all',
+              zhHant: "全選"
+        })}
         </button>
         <button type="button" className="bld-btn bld-btn-ghost" onClick={clearAll}>
           <Eraser size={15} />
-          {isZh ? '清空' : 'Clear'}
+          {tr({ zh: '清空', en: 'Clear' })}
         </button>
       </div>
       <div className="bld-matrix-grid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>

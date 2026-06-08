@@ -28,6 +28,8 @@ import { CrossSportSection } from './_components/components/CrossSport';
 import { MilestoneTableSection } from './_components/components/MilestoneTable';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './_components/prediction.css';
+import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 /** 取最后一行 (物理下界单次) 的 T 值 — 优先用显式 t_phys_single, 其次 decomp 末行计算 */
 function physicalFloorSingle(eventId: string): number | null {
@@ -65,7 +67,7 @@ const SECTIONS = [
 
 export default function PredictionPage() {
   const { i18n } = useTranslation();
-  const lang: 'en' | 'zh' = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: 'en' | 'zh' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const isZh = lang === 'zh';
   useDocumentTitle('预测', 'Prediction');
 
@@ -114,7 +116,9 @@ export default function PredictionPage() {
   }, [data]);
 
   if (err) return <div className="pred-loading">Failed to load: {err}</div>;
-  if (!data) return <div className="pred-loading">Loading {isZh ? '加载中…' : '…'}</div>;
+  if (!data) return <div className="pred-loading">Loading {tr({ zh: '加载中…', en: '…',
+      zhHant: "載入中…"
+})}</div>;
 
   const toggleLang = () => {
     const n = isZh ? 'en' : 'zh';
@@ -175,12 +179,14 @@ export default function PredictionPage() {
       <header className="pred-header">
         <HomeLink className="pred-back" aria-label="back">
           <ArrowLeft size={16} />
-          <span>{isZh ? '返回' : 'Back'}</span>
+          <span>{tr({ zh: '返回', en: 'Back' })}</span>
         </HomeLink>
         <button
           className="pred-toc-btn"
           onClick={() => setTocOpen(!tocOpen)}
-          title={isZh ? '目录' : 'Table of contents'}
+          title={tr({ zh: '目录', en: 'Table of contents',
+              zhHant: "目錄"
+        })}
         >
           {tocOpen ? <XIcon size={16} /> : <Menu size={16} />}
         </button>
@@ -192,7 +198,9 @@ export default function PredictionPage() {
       <div className="pred-layout">
         {/* Sidebar TOC */}
         <aside className={`pred-sidebar${tocOpen ? ' pred-sidebar-open' : ''}`}>
-          <div className="pred-toc-title">{isZh ? '目录' : 'Contents'}</div>
+          <div className="pred-toc-title">{tr({ zh: '目录', en: 'Contents',
+              zhHant: "目錄"
+        })}</div>
 
           <div className="pred-toc-group">
             {SECTIONS.slice(0, 1).map((s) => (
@@ -208,25 +216,33 @@ export default function PredictionPage() {
           </div>
 
           <div className="pred-toc-group">
-            <div className="pred-toc-group-title">{isZh ? '子页面' : 'Sub-pages'}</div>
+            <div className="pred-toc-group-title">{tr({ zh: '子页面', en: 'Sub-pages',
+                zhHant: "子頁面"
+            })}</div>
             <Link
               href="/wca/prediction/333"
               className="pred-toc-item pred-toc-subpage"
               onClick={() => setTocOpen(false)}
             >
-              {isZh ? '三阶深度章节' : '3x3 Deep Dive'}
+              {tr({ zh: '三阶深度章节', en: '3x3 Deep Dive',
+                  zhHant: "三階深度章節"
+            })}
             </Link>
             <Link
               href="/wca/prediction/lucky"
               className="pred-toc-item pred-toc-subpage"
               onClick={() => setTocOpen(false)}
             >
-              {isZh ? '运气预测 (累积概率)' : 'Luck Forecast (cumulative P)'}
+              {tr({ zh: '运气预测 (累积概率)', en: 'Luck Forecast (cumulative P)',
+                  zhHant: "運氣預測 (累積機率)"
+            })}
             </Link>
           </div>
 
           <div className="pred-toc-group">
-            <div className="pred-toc-group-title">{isZh ? '全局分析' : 'Global Analysis'}</div>
+            <div className="pred-toc-group-title">{tr({ zh: '全局分析', en: 'Global Analysis',
+                zhHant: "全域性分析"
+            })}</div>
             {SECTIONS.slice(1, 10).map((s) => (
               <a
                 key={s.id}
@@ -240,7 +256,9 @@ export default function PredictionPage() {
           </div>
 
           <div className="pred-toc-group">
-            <div className="pred-toc-group-title">{isZh ? '分项目章节' : 'Per-Event Chapters'}</div>
+            <div className="pred-toc-group-title">{tr({ zh: '分项目章节', en: 'Per-Event Chapters',
+                zhHant: "分專案章節"
+            })}</div>
             {EVENTS.map((ev, i) => {
               const pctRaw = closenessPcts.find((p) => p.id === ev.id)?.pctRaw ?? null;
               const pct = pctRaw === null ? null : Math.min(100, pctRaw);
@@ -279,12 +297,18 @@ export default function PredictionPage() {
         {/* Main */}
         <article className="pred-article">
           <h1 className="pred-title">
-            {isZh ? '速拧的尽头: 全 WCA 项目极限预测' : 'The Limits of Speedcubing: WCA-Wide Forecast'}
+            {tr({ zh: '速拧的尽头: 全 WCA 项目极限预测', en: 'The Limits of Speedcubing: WCA-Wide Forecast',
+                zhHant: "速擰的盡頭: 全 WCA 專案極限預測"
+            })}
             <Link
               href="/wca/prediction-about"
               className="pred-title-help"
-              title={isZh ? '这页是干啥的?' : 'What is this page?'}
-              aria-label={isZh ? '查看说明' : 'About this page'}
+              title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+                  zhHant: "這頁是幹啥的?"
+            })}
+              aria-label={tr({ zh: '查看说明', en: 'About this page',
+                  zhHant: "檢視說明"
+            })}
             >
               <HelpCircle size={18} strokeWidth={1.75} />
             </Link>
@@ -297,7 +321,9 @@ export default function PredictionPage() {
 
           {/* TL;DR — finding-first */}
           <section className="pred-tldr" id="tldr">
-            <h2>{isZh ? '一句话结论' : 'Top Line'}</h2>
+            <h2>{tr({ zh: '一句话结论', en: 'Top Line',
+                zhHant: "一句話結論"
+            })}</h2>
             <p className="pred-tldr-lede">
               {isZh ? (
                 <>
@@ -313,7 +339,9 @@ export default function PredictionPage() {
             </p>
             <div className="pred-tldr-grid">
               <div className="pred-tldr-block">
-                <div className="pred-tldr-label">{isZh ? '最贴近物理墙' : 'Closest to wall'}</div>
+                <div className="pred-tldr-label">{tr({ zh: '最贴近物理墙', en: 'Closest to wall',
+                    zhHant: "最貼近物理牆"
+                })}</div>
                 <ol className="pred-tldr-list">
                   {closeToWall.map((p) => (
                     <li key={p.id}>
@@ -324,7 +352,9 @@ export default function PredictionPage() {
                 </ol>
               </div>
               <div className="pred-tldr-block">
-                <div className="pred-tldr-label">{isZh ? '最远离物理墙' : 'Most headroom'}</div>
+                <div className="pred-tldr-label">{tr({ zh: '最远离物理墙', en: 'Most headroom',
+                    zhHant: "最遠離物理牆"
+                })}</div>
                 <ol className="pred-tldr-list">
                   {farFromWall.map((p) => (
                     <li key={p.id}>
@@ -335,11 +365,15 @@ export default function PredictionPage() {
                 </ol>
               </div>
               <div className="pred-tldr-block">
-                <div className="pred-tldr-label">{isZh ? '今天的「撞墙」快报' : "Today's headline drops"}</div>
+                <div className="pred-tldr-label">{tr({ zh: '今天的「撞墙」快报', en: "Today's headline drops",
+                    zhHant: "今天的「撞牆」快報"
+                })}</div>
                 <ul className="pred-tldr-list">
                   <li><span>3x3 Single</span> <strong>2.76 s</strong></li>
                   <li><span>3x3 Ao5 ({isZh ? 'ZB' : 'ZB'})</span> <strong>3.71 s</strong></li>
-                  <li><span>{isZh ? '马拉松首次 sub-2' : 'Marathon first sub-2'}</span> <strong>1:59:30</strong></li>
+                  <li><span>{tr({ zh: '马拉松首次 sub-2', en: 'Marathon first sub-2',
+                      zhHant: "馬拉松首次 sub-2"
+                })}</span> <strong>1:59:30</strong></li>
                 </ul>
               </div>
             </div>
@@ -353,12 +387,16 @@ export default function PredictionPage() {
           {/* Pointer to 3x3 deep-dive */}
           <Link href="/wca/prediction/333" className="pred-333-deepdive-cta">
             <div className="pred-333-cta-left">
-              <div className="pred-333-cta-eyebrow">{isZh ? '深度章节' : 'Deep Dive'}</div>
-              <div className="pred-333-cta-title">{isZh ? '三阶魔方: 终极极限预测' : '3x3: The Ultimate Limits Forecast'}</div>
+              <div className="pred-333-cta-eyebrow">{tr({ zh: '深度章节', en: 'Deep Dive',
+                  zhHant: "深度章節"
+            })}</div>
+              <div className="pred-333-cta-title">{tr({ zh: '三阶魔方: 终极极限预测', en: '3x3: The Ultimate Limits Forecast',
+                  zhHant: "三階魔方: 終極極限預測"
+            })}</div>
               <div className="pred-333-cta-sub">
-                {isZh
-                  ? '24 节,涵盖历史, 方法, 数学, 生物力学, 顶级选手, 训练, 统计, 综合预测。'
-                  : '24 sections — history, methods, math, biomech, top cubers, training, stats, ensemble forecast.'}
+                {tr({ zh: '24 节,涵盖历史, 方法, 数学, 生物力学, 顶级选手, 训练, 统计, 综合预测。', en: '24 sections — history, methods, math, biomech, top cubers, training, stats, ensemble forecast.',
+                    zhHant: "24 節,涵蓋歷史, 方法, 數學, 生物力學, 頂級選手, 訓練, 統計, 綜合預測。"
+                })}
               </div>
             </div>
             <div className="pred-333-cta-arrow">→</div>
@@ -367,12 +405,16 @@ export default function PredictionPage() {
           {/* Pointer to lucky-scramble forecast */}
           <Link href="/wca/prediction/lucky" className="pred-333-deepdive-cta pred-lucky-cta">
             <div className="pred-333-cta-left">
-              <div className="pred-333-cta-eyebrow">{isZh ? '运气预测  累积概率' : 'Luck Forecast · Cumulative Probability'}</div>
-              <div className="pred-333-cta-title">{isZh ? '撞上最幸运打乱的概率: 何时高?' : 'When Does Cumulative P of Hitting the Luckiest Scramble Become High?'}</div>
+              <div className="pred-333-cta-eyebrow">{tr({ zh: '运气预测  累积概率', en: 'Luck Forecast · Cumulative Probability',
+                  zhHant: "運氣預測  累積機率"
+            })}</div>
+              <div className="pred-333-cta-title">{tr({ zh: '撞上最幸运打乱的概率: 何时高?', en: 'When Does Cumulative P of Hitting the Luckiest Scramble Become High?',
+                  zhHant: "撞上最幸運打亂的機率: 何時高?"
+            })}</div>
               <div className="pred-333-cta-sub">
-                {isZh
-                  ? '三阶 4.3×10¹⁹ 个状态里只有 262 个能用 ≤2 步解开。单次概率 6×10⁻¹⁸ ≈ 零,但累积概率 P = 1−(1−p)^N 随 N 上涨。要 N₅₀ ≈ 1.2×10¹⁷ 次打乱才有 50% 命中,折算回去三阶 0.27 秒是 ~10¹⁴ 年级别的渐近线。'
-                  : '3x3 has only 262 of 4.3×10^19 states solvable in ≤2 moves. Per-scramble p ≈ 6×10^-18, but cumulative P = 1−(1−p)^N grows with N. N₅₀ ≈ 1.2×10^17 → the 3x3 0.27 s asymptote is ~10^14 yr out.'}
+                {tr({ zh: '三阶 4.3×10¹⁹ 个状态里只有 262 个能用 ≤2 步解开。单次概率 6×10⁻¹⁸ ≈ 零,但累积概率 P = 1−(1−p)^N 随 N 上涨。要 N₅₀ ≈ 1.2×10¹⁷ 次打乱才有 50% 命中,折算回去三阶 0.27 秒是 ~10¹⁴ 年级别的渐近线。', en: '3x3 has only 262 of 4.3×10^19 states solvable in ≤2 moves. Per-scramble p ≈ 6×10^-18, but cumulative P = 1−(1−p)^N grows with N. N₅₀ ≈ 1.2×10^17 → the 3x3 0.27 s asymptote is ~10^14 yr out.',
+                    zhHant: "三階 4.3×10¹⁹ 個狀態裡只有 262 個能用 ≤2 步解開。單次機率 6×10⁻¹⁸ ≈ 零,但累積機率 P = 1−(1−p)^N 隨 N 上漲。要 N₅₀ ≈ 1.2×10¹⁷ 次打亂才有 50% 命中,折算回去三階 0.27 秒是 ~10¹⁴ 年級別的漸近線。"
+                })}
               </div>
             </div>
             <div className="pred-333-cta-arrow">→</div>
@@ -380,27 +422,35 @@ export default function PredictionPage() {
 
           {/* Headline bar chart */}
           <section className="pred-section" id="headline">
-            <h2>{isZh ? '撞墙排名: 一张图看完 16 项' : 'Wall-Closeness Ranking: All 16 Events at a Glance'}</h2>
+            <h2>{tr({ zh: '撞墙排名: 一张图看完 16 项', en: 'Wall-Closeness Ranking: All 16 Events at a Glance',
+                zhHant: "撞牆排名: 一張圖看完 16 項"
+            })}</h2>
             <p>
-              {isZh
-                ? '横轴 = 物理下界 / 当前 WR (%)。越靠右 = 剩余空间越小。这个指标比「WR 是多少」更能反映「项目成熟度」: ratio 99% 的项目即使数字看上去吓人 (比如 0.30 秒),也几乎不会再有大幅改写;ratio 50% 的项目即使数字慢 (Wang 3.08 → Zajder 2.76 → 还能 ~1.5),突破才刚开始。'
-                : 'X-axis = physical floor / current WR (%). Further right = less headroom. This ratio captures "event maturity" better than the raw WR: a 99% event will see very few more WRs even if its absolute number looks impressive; a 50% event still has the steepest part of its curve ahead.'}
+              {tr({ zh: '横轴 = 物理下界 / 当前 WR (%)。越靠右 = 剩余空间越小。这个指标比「WR 是多少」更能反映「项目成熟度」: ratio 99% 的项目即使数字看上去吓人 (比如 0.30 秒),也几乎不会再有大幅改写;ratio 50% 的项目即使数字慢 (Wang 3.08 → Zajder 2.76 → 还能 ~1.5),突破才刚开始。', en: 'X-axis = physical floor / current WR (%). Further right = less headroom. This ratio captures "event maturity" better than the raw WR: a 99% event will see very few more WRs even if its absolute number looks impressive; a 50% event still has the steepest part of its curve ahead.',
+                  zhHant: "橫軸 = 物理下界 / 當前 WR (%)。越靠右 = 剩餘空間越小。這個指標比「WR 是多少」更能反映「專案成熟度」: ratio 99% 的專案即使數字看上去嚇人 (比如 0.30 秒),也幾乎不會再有大幅改寫;ratio 50% 的專案即使數字慢 (Wang 3.08 → Zajder 2.76 → 還能 ~1.5),突破才剛開始。"
+            })}
             </p>
             <HeadlineBar eventSummaries={eventSummaries} isZh={isZh} />
           </section>
 
           {/* 跨项目总览 */}
           <section className="pred-section" id="overview">
-            <h2>{isZh ? '跨项目总览' : 'Cross-Event Overview'}</h2>
+            <h2>{tr({ zh: '跨项目总览', en: 'Cross-Event Overview',
+                zhHant: "跨專案總覽"
+            })}</h2>
             <p>
-              {isZh
-                ? '每张卡片三行: 单次  /  平均  /  微型对比条。微型条横轴是「物理下界 → 当前 WR」的区间,三点分别是 T_phys (绿), 拟合 L (橙), 当前 WR (红)。红点离绿点越近,离物理墙就越近。'
-                : 'Each card has three rows: single, average, microbar. The bar runs from T_phys (green, physical floor) through L (orange, curve-fit trajectory floor) to WR (red, current). Red close to green = wall is closing in.'}
+              {tr({ zh: '每张卡片三行: 单次  /  平均  /  微型对比条。微型条横轴是「物理下界 → 当前 WR」的区间,三点分别是 T_phys (绿), 拟合 L (橙), 当前 WR (红)。红点离绿点越近,离物理墙就越近。', en: 'Each card has three rows: single, average, microbar. The bar runs from T_phys (green, physical floor) through L (orange, curve-fit trajectory floor) to WR (red, current). Red close to green = wall is closing in.',
+                  zhHant: "每張卡片三行: 單次  /  平均  /  微型對比條。微型條橫軸是「物理下界 → 當前 WR」的區間,三點分別是 T_phys (綠), 擬合 L (橙), 當前 WR (紅)。紅點離綠點越近,離物理牆就越近。"
+            })}
             </p>
             <div className="pred-legend-strip">
-              <span className="pred-leg-chip pred-leg-phys">{isZh ? '物理下界 T_phys' : 'Physical floor T_phys'}</span>
-              <span className="pred-leg-chip pred-leg-fit">{isZh ? '拟合 L' : 'Curve-fit L'}</span>
-              <span className="pred-leg-chip pred-leg-wr">{isZh ? '当前 WR' : 'Current WR'}</span>
+              <span className="pred-leg-chip pred-leg-phys">{tr({ zh: '物理下界 T_phys', en: 'Physical floor T_phys' })}</span>
+              <span className="pred-leg-chip pred-leg-fit">{tr({ zh: '拟合 L', en: 'Curve-fit L',
+                  zhHant: "擬合 L"
+            })}</span>
+              <span className="pred-leg-chip pred-leg-wr">{tr({ zh: '当前 WR', en: 'Current WR',
+                  zhHant: "當前 WR"
+            })}</span>
             </div>
             <div className="pred-overview-grid">
               {eventSummaries.map((s) => {
@@ -427,7 +477,9 @@ export default function PredictionPage() {
                       )}
                     </div>
                     <div className="pred-ov-line">
-                      <div className="pred-ov-line-label">{isZh ? '单次' : 'Single'}</div>
+                      <div className="pred-ov-line-label">{tr({ zh: '单次', en: 'Single',
+                          zhHant: "單次"
+                    })}</div>
                       <div className="pred-ov-line-nums">
                         <span className="pred-ov-wr">{s.lastWRval !== null ? formatVal(s.lastWRval, s.ev.scale) : '–'}</span>
                         <span className="pred-ov-pair">
@@ -452,9 +504,11 @@ export default function PredictionPage() {
                       </div>
                     )}
                     <div className="pred-ov-foot">
-                      <span>{s.progressionCount} WR{isZh ? ' 改写' : ' drops'}</span>
+                      <span>{s.progressionCount} WR{tr({ zh: ' 改写', en: ' drops',
+                          zhHant: " 改寫"
+                    })}</span>
                       <span className="pred-ov-foot-sep"> </span>
-                      <span>{s.cumCubers.toLocaleString()} {isZh ? '人' : 'cubers'}</span>
+                      <span>{s.cumCubers.toLocaleString()} {tr({ zh: '人', en: 'cubers' })}</span>
                       {lim?.current_wr_avg_holder && (
                         <>
                           <span className="pred-ov-foot-sep"> </span>
@@ -498,44 +552,60 @@ export default function PredictionPage() {
 
           {/* 方法论 */}
           <section className="pred-section pred-method" id="methods">
-            <h2>{isZh ? '方法论' : 'Methodology'}</h2>
+            <h2>{tr({ zh: '方法论', en: 'Methodology',
+                zhHant: "方法論"
+            })}</h2>
             <ol>
               <li>
-                <strong>{isZh ? '数据源' : 'Source'}{isZh ? '。' : '.'}</strong>{' '}
+                <strong>{tr({ zh: '数据源', en: 'Source',
+                    zhHant: "資料來源"
+                })}{isZh ? '。' : '.'}</strong>{' '}
                 {isZh
                   ? `WCA 全量 results dump,装在本机 MySQL 8 (wca_developer_database 库)。涵盖 1982 至 ${new Date().getFullYear()},全部 16 个项目,共 170 万+ 条 3x3 单次成绩 (其他项目数据规模见各章)。`
                   : `Full WCA results dump in local MySQL 8 (wca_developer_database db). Covers 1982 to ${new Date().getFullYear()}, all 16 events analyzed, 1.7M+ 333 solves (others vary).`}
               </li>
               <li>
-                <strong>{isZh ? '过滤' : 'Filter'}{isZh ? '。' : '.'}</strong>{' '}
-                <code>best &gt; 0</code> {isZh ? '排除 DNF (-1) 与 DNS (-2)' : 'excludes DNF (-1) and DNS (-2)'}; <code>average &gt; 0</code> {isZh ? '同上' : 'same'}{isZh ? '。' : '.'} 333mbf {isZh ? '编码值无法直接比较,单独处理。' : 'uses encoded value, treated separately.'}
+                <strong>{tr({ zh: '过滤', en: 'Filter',
+                    zhHant: "過濾"
+                })}{isZh ? '。' : '.'}</strong>{' '}
+                <code>best &gt; 0</code> {tr({ zh: '排除 DNF (-1) 与 DNS (-2)', en: 'excludes DNF (-1) and DNS (-2)',
+                    zhHant: "排除 DNF (-1) 與 DNS (-2)"
+                })}; <code>average &gt; 0</code> {tr({ zh: '同上', en: 'same' })}{isZh ? '。' : '.'} 333mbf {tr({ zh: '编码值无法直接比较,单独处理。', en: 'uses encoded value, treated separately.',
+                    zhHant: "編碼值無法直接比較,單獨處理。"
+                })}
               </li>
               <li>
-                <strong>{isZh ? '年化' : 'Yearly bucketing'}{isZh ? '。' : '.'}</strong>{' '}
-                {isZh
-                  ? '按 competitions.start_date 的年份归类。当前不完整年份会从拟合数据中自动剔除。'
-                  : 'Grouped by competitions.start_date year. Current year (incomplete) excluded from fits.'}
+                <strong>{tr({ zh: '年化', en: 'Yearly bucketing' })}{isZh ? '。' : '.'}</strong>{' '}
+                {tr({ zh: '按 competitions.start_date 的年份归类。当前不完整年份会从拟合数据中自动剔除。', en: 'Grouped by competitions.start_date year. Current year (incomplete) excluded from fits.',
+                    zhHant: "按 competitions.start_date 的年份歸類。當前不完整年份會從擬合資料中自動剔除。"
+                })}
               </li>
               <li>
-                <strong>{isZh ? '集成模型' : 'Ensemble'}{isZh ? '。' : '.'}</strong>{' '}
-                {isZh
-                  ? '四个模型并行拟合: 主模型是「指数+下限」T(t)=L+A·exp(-k(t-t₀)),用 Gompertz, 幂律, 纯指数三个作对比。按 R² 加权集成,给出 5/25/50 年外推。L 用网格搜索 (步长 0.05 秒 / 0.5 步),每个候选 L 用 log(T-L) 上的 OLS 解析解出 (A, k);物理约束 L < 所有观测值。'
-                  : 'Four models fit in parallel: exp+floor T(t)=L+A·exp(-k(t-t₀)) primary, Gompertz / power / pure-exp as comparison. R²-weighted ensemble drives 5/25/50-year forecasts. L grid-search (step 0.05 s / 0.5 moves); per candidate L: analytic OLS on log(T-L) for (A, k). Physical constraint: L < all observed.'}
+                <strong>{tr({ zh: '集成模型', en: 'Ensemble',
+                    zhHant: "整合模型"
+                })}{isZh ? '。' : '.'}</strong>{' '}
+                {tr({ zh: '四个模型并行拟合: 主模型是「指数+下限」T(t)=L+A·exp(-k(t-t₀)),用 Gompertz, 幂律, 纯指数三个作对比。按 R² 加权集成,给出 5/25/50 年外推。L 用网格搜索 (步长 0.05 秒 / 0.5 步),每个候选 L 用 log(T-L) 上的 OLS 解析解出 (A, k);物理约束 L < 所有观测值。', en: 'Four models fit in parallel: exp+floor T(t)=L+A·exp(-k(t-t₀)) primary, Gompertz / power / pure-exp as comparison. R²-weighted ensemble drives 5/25/50-year forecasts. L grid-search (step 0.05 s / 0.5 moves); per candidate L: analytic OLS on log(T-L) for (A, k). Physical constraint: L < all observed.',
+                    zhHant: "四個模型並行擬合: 主模型是「指數+下限」T(t)=L+A·exp(-k(t-t₀)),用 Gompertz, 冪律, 純指數三個作對比。按 R² 加權整合,給出 5/25/50 年外推。L 用網格搜尋 (步長 0.05 秒 / 0.5 步),每個候選 L 用 log(T-L) 上的 OLS 解析解出 (A, k);物理約束 L < 所有觀測值。"
+                })}
               </li>
               <li>
-                <strong>{isZh ? '物理下界 T_phys' : 'Physical floor T_phys'}{isZh ? '。' : '.'}</strong>{' '}
-                {isZh
-                  ? '步数法 T = M/TPS + R,其中 M 是有公开复盘的平均 STM,TPS 是顶级选手的持续敲击率,R 是识别 + 切换的余量。每个项目独立填表,见各章节「已验证复盘」。'
-                  : 'Step-count T = M/TPS + R, with M = verified reconstruction average STM, TPS = top-cuber sustained rate, R = recognition + switching residual. Filled per event, see each chapter\'s "Verified reconstructions".'}
+                <strong>{tr({ zh: '物理下界 T_phys', en: 'Physical floor T_phys' })}{isZh ? '。' : '.'}</strong>{' '}
+                {tr({ zh: '步数法 T = M/TPS + R,其中 M 是有公开复盘的平均 STM,TPS 是顶级选手的持续敲击率,R 是识别 + 切换的余量。每个项目独立填表,见各章节「已验证复盘」。', en: 'Step-count T = M/TPS + R, with M = verified reconstruction average STM, TPS = top-cuber sustained rate, R = recognition + switching residual. Filled per event, see each chapter\'s "Verified reconstructions".',
+                    zhHant: "步數法 T = M/TPS + R,其中 M 是有公開復盤的平均 STM,TPS 是頂級選手的持續敲擊率,R 是識別 + 切換的餘量。每個專案獨立填表,見各章節「已驗證覆盤」。"
+                })}
               </li>
               <li>
-                <strong>{isZh ? '极值理论 GEV' : 'Extreme-value GEV'}{isZh ? '。' : '.'}</strong>{' '}
-                {isZh
-                  ? '把 WR 单次视为 N 次独立尝试的样本最小值,用 Gumbel 反算 E[min] ≈ μ − σ·√(2 ln N − ln ln N − ln 4π)。这条结果跟拟合, 物理下界三方互校,不依赖单一来源。'
-                  : 'WR single treated as N-sample minimum, Gumbel back-solve E[min] ≈ μ − σ·√(2 ln N − ln ln N − ln 4π). Cross-checked against fit and physical floor — no single-source answer.'}
+                <strong>{tr({ zh: '极值理论 GEV', en: 'Extreme-value GEV',
+                    zhHant: "極值理論 GEV"
+                })}{isZh ? '。' : '.'}</strong>{' '}
+                {tr({ zh: '把 WR 单次视为 N 次独立尝试的样本最小值,用 Gumbel 反算 E[min] ≈ μ − σ·√(2 ln N − ln ln N − ln 4π)。这条结果跟拟合, 物理下界三方互校,不依赖单一来源。', en: 'WR single treated as N-sample minimum, Gumbel back-solve E[min] ≈ μ − σ·√(2 ln N − ln ln N − ln 4π). Cross-checked against fit and physical floor — no single-source answer.',
+                    zhHant: "把 WR 單次視為 N 次獨立嘗試的樣本最小值,用 Gumbel 反算 E[min] ≈ μ − σ·√(2 ln N − ln ln N − ln 4π)。這條結果跟擬合, 物理下界三方互校,不依賴單一來源。"
+                })}
               </li>
               <li>
-                <strong>{isZh ? '复现' : 'Reproduce'}{isZh ? '。' : '.'}</strong>{' '}
+                <strong>{tr({ zh: '复现', en: 'Reproduce',
+                    zhHant: "復現"
+                })}{isZh ? '。' : '.'}</strong>{' '}
                 <code>node .tmp/extract_all_events.mjs</code> → <code>stats/prediction/all_events.json</code>
               </li>
             </ol>
@@ -586,7 +656,9 @@ function ScalingSection({ eventSummaries, isZh }: { eventSummaries: any[]; isZh:
 
   const wrSeries: Series[] = [
     {
-      name: isZh ? '当前 WR (实测时间)' : 'Current WR (time)',
+      name: tr({ zh: '当前 WR (实测时间)', en: 'Current WR (time)',
+          zhHant: "當前 WR (實測時間)"
+    }),
       color: '#c2410c',
       data: points.map((p) => ({ x: p.N, y: p.time })),
     },
@@ -603,7 +675,9 @@ function ScalingSection({ eventSummaries, isZh }: { eventSummaries: any[]; isZh:
 
   return (
     <section className="pred-section" id="scaling">
-      <h2>{isZh ? 'NxN 阶数尺度律: 时间随 N' : 'NxN Scaling: Time vs Cube Size'}</h2>
+      <h2>{tr({ zh: 'NxN 阶数尺度律: 时间随 N', en: 'NxN Scaling: Time vs Cube Size',
+          zhHant: "NxN 階數尺度律: 時間隨 N"
+    })}</h2>
       <p>
         {isZh ? (
           <>
@@ -621,7 +695,9 @@ function ScalingSection({ eventSummaries, isZh }: { eventSummaries: any[]; isZh:
       </p>
       <LineChart
         series={wrSeries}
-        yLabel={isZh ? '时间 (秒)' : 'Time (s)'}
+        yLabel={tr({ zh: '时间 (秒)', en: 'Time (s)',
+            zhHant: "時間 (秒)"
+        })}
         xLabel="N"
         xFormat={(v) => v.toString()}
       />
@@ -635,40 +711,62 @@ function ScalingSection({ eventSummaries, isZh }: { eventSummaries: any[]; isZh:
 function TheoreticalSection({ isZh }: { isZh: boolean }) {
   return (
     <section className="pred-section" id="theory">
-      <h2>{isZh ? '生物力学极限 (TPS + 识别 + 切换)' : 'Biomech Floor (TPS + Recognition + Switching)'}</h2>
+      <h2>{tr({ zh: '生物力学极限 (TPS + 识别 + 切换)', en: 'Biomech Floor (TPS + Recognition + Switching)',
+          zhHant: "生物力學極限 (TPS + 識別 + 切換)"
+    })}</h2>
       <p>
-        {isZh
-          ? '「解长度 × TPS + 识别」的第一性原理分解,给出速拧时间下界。三大输入分别有不同来源 — 解长度受 God\'s number 约束,TPS 受手指 / 击鼓生物力学约束,识别 + 切换是高阶认知噪声。'
-          : 'First-principles "STM × TPS + recognition" decomposition gives the time floor. Three inputs from different sources — STM bounded by God\'s number, TPS bounded by finger/drum biomech, recognition+switching is higher-order cognitive noise.'}
+        {tr({ zh: '「解长度 × TPS + 识别」的第一性原理分解,给出速拧时间下界。三大输入分别有不同来源 — 解长度受 God\'s number 约束,TPS 受手指 / 击鼓生物力学约束,识别 + 切换是高阶认知噪声。', en: 'First-principles "STM × TPS + recognition" decomposition gives the time floor. Three inputs from different sources — STM bounded by God\'s number, TPS bounded by finger/drum biomech, recognition+switching is higher-order cognitive noise.',
+            zhHant: "「解長度 × TPS + 識別」的第一性原理分解,給出速擰時間下界。三大輸入分別有不同來源 — 解長度受 God's number 約束,TPS 受手指 / 擊鼓生物力學約束,識別 + 切換是高階認知噪聲。"
+        })}
       </p>
       <table className="pred-limits">
         <thead>
           <tr>
-            <th>{isZh ? '约束' : 'Constraint'}</th>
-            <th>{isZh ? '乐观' : 'Optimistic'}</th>
-            <th>{isZh ? '现实' : 'Realistic'}</th>
-            <th>{isZh ? '保守' : 'Conservative'}</th>
-            <th>{isZh ? '依据' : 'Source'}</th>
+            <th>{tr({ zh: '约束', en: 'Constraint',
+                zhHant: "約束"
+            })}</th>
+            <th>{tr({ zh: '乐观', en: 'Optimistic',
+                zhHant: "樂觀"
+            })}</th>
+            <th>{tr({ zh: '现实', en: 'Realistic',
+                zhHant: "現實"
+            })}</th>
+            <th>{tr({ zh: '保守', en: 'Conservative' })}</th>
+            <th>{tr({ zh: '依据', en: 'Source',
+                zhHant: "依據"
+            })}</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>{isZh ? '解长度 (3x3, STM)' : 'Solution length (3x3, STM)'}</td>
+            <td>{tr({ zh: '解长度 (3x3, STM)', en: 'Solution length (3x3, STM)',
+                zhHant: "解長度 (3x3, STM)"
+            })}</td>
             <td>24</td><td>49</td><td>55</td>
-            <td>{isZh ? '24 = ZB+lucky / 49 = Geng 平均 / 55 = vanilla CFOP' : '24 = ZB+lucky / 49 = Geng avg / 55 = vanilla CFOP'}</td>
+            <td>{tr({ zh: '24 = ZB+lucky / 49 = Geng 平均 / 55 = vanilla CFOP', en: '24 = ZB+lucky / 49 = Geng avg / 55 = vanilla CFOP' })}</td>
           </tr>
           <tr>
-            <td>{isZh ? '持续 TPS (单选手, ≥3 s)' : 'Sustained TPS (single cuber, ≥3 s)'}</td>
+            <td>{tr({ zh: '持续 TPS (单选手, ≥3 s)', en: 'Sustained TPS (single cuber, ≥3 s)',
+                zhHant: "持續 TPS (單選手, ≥3 s)"
+            })}</td>
             <td>17</td><td>14</td><td>11</td>
-            <td>{isZh ? '14.6 = Wang 3.08 实测, 17 = 100 年外推上界' : 'Wang 3.08 verified 14.6; 17 = 100-year extrapolation'}</td>
+            <td>{tr({ zh: '14.6 = Wang 3.08 实测, 17 = 100 年外推上界', en: 'Wang 3.08 verified 14.6; 17 = 100-year extrapolation',
+                zhHant: "14.6 = Wang 3.08 實測, 17 = 100 年外推上界"
+            })}</td>
           </tr>
           <tr>
-            <td>{isZh ? '识别 + 切换损耗' : 'Recog + switching latency'}</td>
+            <td>{tr({ zh: '识别 + 切换损耗', en: 'Recog + switching latency',
+                zhHant: "識別 + 切換損耗"
+            })}</td>
             <td>0.05 s</td><td>0.1 s</td><td>0.3 s</td>
-            <td>{isZh ? '已含 StackMat 触发反应 (~50 ms)' : 'incl. StackMat trigger reaction (~50 ms)'}</td>
+            <td>{tr({ zh: '已含 StackMat 触发反应 (~50 ms)', en: 'incl. StackMat trigger reaction (~50 ms)',
+                zhHant: "已含 StackMat 觸發反應 (~50 ms)"
+            })}</td>
           </tr>
           <tr className="pred-limits-result">
-            <td><strong>{isZh ? '推导极限' : 'Derived limit'}</strong></td>
+            <td><strong>{tr({ zh: '推导极限', en: 'Derived limit',
+                zhHant: "推導極限"
+            })}</strong></td>
             <td><strong>1.5 s</strong></td>
             <td><strong>3.6 s</strong></td>
             <td><strong>5.3 s</strong></td>
@@ -703,10 +801,18 @@ function TheoreticalSection({ isZh }: { isZh: boolean }) {
         )}
       </p>
       <ul>
-        <li>{isZh ? 'OH 单手: TPS 减半到 ~7-8,解法同 49 STM → 6.5 秒下界。当前 WR 5.66,已经贴到墙上。' : 'OH: TPS halves to ~7-8, same 49 STM → 6.5 s floor. Current WR 5.66 — at the wall.'}</li>
-        <li>{isZh ? '4x4: ~80 STM (含 reduce + 3x3 + parity) × TPS 9 = 8.9 秒 + 1 秒切换 = 9.9 秒。当前 WR 15.18,还有 5 秒优化空间。' : '4x4: ~80 STM (reduce + 3x3 + parity) × TPS 9 = 8.9 s + 1 s switching = 9.9 s. Current WR 15.18 — 5 s headroom.'}</li>
-        <li>{isZh ? 'BLD: 不受 TPS 限制,瓶颈在记忆速度。当前 3BLD WR ~11.67 秒 (Eggins 2026),极限可能 ~5 秒 (类比 Speed Cards 13 秒)。' : '3BLD: not TPS-limited, memo-limited. Current WR 11.67 s (Eggins 2026); plausible floor ~5 s (Speed Cards 13 s analog).'}</li>
-        <li>{isZh ? "FMC: 信息论极限 = God's number 20 HTM (Rokicki 2010);现 WR 16 单次。67% 的打乱需要 18 HTM,仅 2.6% 是 16 — sub-15 几乎只能靠抽中 ≤ 15 HTM 那 0.5% 的稀有打乱。" : "FMC: info-theoretic floor = God's number 20 HTM (Rokicki 2010); current WR 16. 67% of scrambles need 18 HTM and only 2.6% are 16-HTM — sub-15 essentially needs landing on the ≤15-HTM 0.5%."}</li>
+        <li>{tr({ zh: 'OH 单手: TPS 减半到 ~7-8,解法同 49 STM → 6.5 秒下界。当前 WR 5.66,已经贴到墙上。', en: 'OH: TPS halves to ~7-8, same 49 STM → 6.5 s floor. Current WR 5.66 — at the wall.',
+            zhHant: "OH 單手: TPS 減半到 ~7-8,解法同 49 STM → 6.5 秒下界。當前 WR 5.66,已經貼到牆上。"
+        })}</li>
+        <li>{tr({ zh: '4x4: ~80 STM (含 reduce + 3x3 + parity) × TPS 9 = 8.9 秒 + 1 秒切换 = 9.9 秒。当前 WR 15.18,还有 5 秒优化空间。', en: '4x4: ~80 STM (reduce + 3x3 + parity) × TPS 9 = 8.9 s + 1 s switching = 9.9 s. Current WR 15.18 — 5 s headroom.',
+            zhHant: "4x4: ~80 STM (含 reduce + 3x3 + parity) × TPS 9 = 8.9 秒 + 1 秒切換 = 9.9 秒。當前 WR 15.18,還有 5 秒最佳化空間。"
+        })}</li>
+        <li>{tr({ zh: 'BLD: 不受 TPS 限制,瓶颈在记忆速度。当前 3BLD WR ~11.67 秒 (Eggins 2026),极限可能 ~5 秒 (类比 Speed Cards 13 秒)。', en: '3BLD: not TPS-limited, memo-limited. Current WR 11.67 s (Eggins 2026); plausible floor ~5 s (Speed Cards 13 s analog).',
+            zhHant: "BLD: 不受 TPS 限制,瓶頸在記憶速度。當前 3BLD WR ~11.67 秒 (Eggins 2026),極限可能 ~5 秒 (類比 Speed Cards 13 秒)。"
+        })}</li>
+        <li>{tr({ zh: "FMC: 信息论极限 = God's number 20 HTM (Rokicki 2010);现 WR 16 单次。67% 的打乱需要 18 HTM,仅 2.6% 是 16 — sub-15 几乎只能靠抽中 ≤ 15 HTM 那 0.5% 的稀有打乱。", en: "FMC: info-theoretic floor = God's number 20 HTM (Rokicki 2010); current WR 16. 67% of scrambles need 18 HTM and only 2.6% are 16-HTM — sub-15 essentially needs landing on the ≤15-HTM 0.5%.",
+            zhHant: "FMC: 資訊理論極限 = God's number 20 HTM (Rokicki 2010);現 WR 16 單次。67% 的打亂需要 18 HTM,僅 2.6% 是 16 — sub-15 幾乎只能靠抽中 ≤ 15 HTM 那 0.5% 的稀有打亂。"
+        })}</li>
       </ul>
     </section>
   );
@@ -731,17 +837,27 @@ function RegionalSection({ eventSummaries, isZh }: { eventSummaries: any[]; isZh
 
   return (
     <section className="pred-section" id="regional">
-      <h2>{isZh ? '区域格局: 谁在改写纪录' : 'Regional Landscape: Who Sets Records'}</h2>
+      <h2>{tr({ zh: '区域格局: 谁在改写纪录', en: 'Regional Landscape: Who Sets Records',
+          zhHant: "區域格局: 誰在改寫紀錄"
+    })}</h2>
       <p>
-        {isZh ? '当前 16 项 WR 单次持有者的国籍分布:' : 'National breakdown of current WR-single holders across 16 events:'}
+        {tr({ zh: '当前 16 项 WR 单次持有者的国籍分布:', en: 'National breakdown of current WR-single holders across 16 events:',
+            zhHant: "當前 16 項 WR 單次持有者的國籍分佈:"
+        })}
       </p>
       <div className="pred-method-table-wrap">
         <table className="pred-forecast">
           <thead>
             <tr>
-              <th>{isZh ? '国家 / 区域' : 'Country / Region'}</th>
-              <th>{isZh ? 'WR 单次数量' : 'WR singles held'}</th>
-              <th>{isZh ? '项目' : 'Events'}</th>
+              <th>{tr({ zh: '国家 / 区域', en: 'Country / Region',
+                  zhHant: "國家 / 區域"
+            })}</th>
+              <th>{tr({ zh: 'WR 单次数量', en: 'WR singles held',
+                  zhHant: "WR 單次數量"
+            })}</th>
+              <th>{tr({ zh: '项目', en: 'Events',
+                  zhHant: "專案"
+            })}</th>
             </tr>
           </thead>
           <tbody>
@@ -770,15 +886,23 @@ function RegionalSection({ eventSummaries, isZh }: { eventSummaries: any[]; isZh
       </p>
       {recent333WR.length > 0 && (
         <>
-          <h3>{isZh ? '3x3 单次 WR 最近 15 次改写' : '3x3 Single WR — Last 15 Drops'}</h3>
+          <h3>{tr({ zh: '3x3 单次 WR 最近 15 次改写', en: '3x3 Single WR — Last 15 Drops',
+              zhHant: "3x3 單次 WR 最近 15 次改寫"
+        })}</h3>
           <div className="pred-method-table-wrap">
             <table className="pred-forecast">
               <thead>
                 <tr>
-                  <th>{isZh ? '日期' : 'Date'}</th>
-                  <th>{isZh ? '成绩' : 'Result'}</th>
-                  <th>{isZh ? '选手' : 'Person'}</th>
-                  <th>{isZh ? '国籍' : 'Country'}</th>
+                  <th>{tr({ zh: '日期', en: 'Date' })}</th>
+                  <th>{tr({ zh: '成绩', en: 'Result',
+                      zhHant: "成績"
+                })}</th>
+                  <th>{tr({ zh: '选手', en: 'Person',
+                      zhHant: "選手"
+                })}</th>
+                  <th>{tr({ zh: '国籍', en: 'Country',
+                      zhHant: "國籍"
+                })}</th>
                 </tr>
               </thead>
               <tbody>
@@ -805,55 +929,73 @@ function RegionalSection({ eventSummaries, isZh }: { eventSummaries: any[]; isZh
 function CaveatsSection({ isZh }: { isZh: boolean }) {
   return (
     <section className="pred-section" id="caveats">
-      <h2>{isZh ? '局限与陷阱' : 'Caveats & Pitfalls'}</h2>
+      <h2>{tr({ zh: '局限与陷阱', en: 'Caveats & Pitfalls',
+          zhHant: "侷限與陷阱"
+    })}</h2>
       <ol>
         <li>
-          <strong>{isZh ? '极值统计 ≠ 中心趋势。' : 'Extreme value ≠ central tendency.'}</strong>{' '}
-          {isZh
-            ? 'WR 是样本最小值,服从广义极值 (GEV) 分布,不是高斯。样本量从年 100 升到年 26 万 (2000 倍),期望最小值大致下移 σ·√(2 ln N),这部分跟「真实水平在不在涨」没关系。'
-            : 'WR is a sample minimum, GEV-distributed not Gaussian. As N goes from 100/year to 260k/year (2000×), expected min shifts by σ·√(2 ln N) regardless of actual skill change.'}
+          <strong>{tr({ zh: '极值统计 ≠ 中心趋势。', en: 'Extreme value ≠ central tendency.',
+              zhHant: "極值統計 ≠ 中心趨勢。"
+        })}</strong>{' '}
+          {tr({ zh: 'WR 是样本最小值,服从广义极值 (GEV) 分布,不是高斯。样本量从年 100 升到年 26 万 (2000 倍),期望最小值大致下移 σ·√(2 ln N),这部分跟「真实水平在不在涨」没关系。', en: 'WR is a sample minimum, GEV-distributed not Gaussian. As N goes from 100/year to 260k/year (2000×), expected min shifts by σ·√(2 ln N) regardless of actual skill change.',
+              zhHant: "WR 是樣本最小值,服從廣義極值 (GEV) 分佈,不是高斯。樣本量從年 100 升到年 26 萬 (2000 倍),期望最小值大致下移 σ·√(2 ln N),這部分跟「真實水平在不在漲」沒關係。"
+        })}
         </li>
         <li>
-          <strong>{isZh ? '幸运打乱 (lucky scramble)。' : 'Lucky scramble.'}</strong>{' '}
-          {isZh
-            ? '一次 sub-3 单次往往要靠 X-cross + OLL/PLL 跳过。这种复合事件在大样本里是「罕见但可期」的双指数尾;单次 WR 跟「真实 ELO」之间有相当一部分脱钩。'
-            : 'A sub-3 single often relies on X-cross + skip OLL/PLL. Compound rare events have double-exponential tails. Single WRs partially decouple from "true skill ELO."'}
+          <strong>{tr({ zh: '幸运打乱 (lucky scramble)。', en: 'Lucky scramble.',
+              zhHant: "幸運打亂 (lucky scramble)。"
+        })}</strong>{' '}
+          {tr({ zh: '一次 sub-3 单次往往要靠 X-cross + OLL/PLL 跳过。这种复合事件在大样本里是「罕见但可期」的双指数尾;单次 WR 跟「真实 ELO」之间有相当一部分脱钩。', en: 'A sub-3 single often relies on X-cross + skip OLL/PLL. Compound rare events have double-exponential tails. Single WRs partially decouple from "true skill ELO."',
+              zhHant: "一次 sub-3 單次往往要靠 X-cross + OLL/PLL 跳過。這種複合事件在大樣本里是「罕見但可期」的雙指數尾;單次 WR 跟「真實 ELO」之間有相當一部分脫鉤。"
+        })}
         </li>
         <li>
-          <strong>{isZh ? '硬件 / 方法革命的离散性。' : 'Discrete hardware / method revolutions.'}</strong>{' '}
-          {isZh
-            ? '指数衰减把「创新」拍平成一个 k 值。但磁力魔方 (2017), UV 涂层 (2019), GAN 14/15/16 (2022+), 智能魔方训练 (2021+) 都是离散事件,各自给出 2-5% 的阶跃。长期外推会系统性低估「下一次革命」。'
-            : 'Exp decay smears innovation into a single k. But magnets (2017), UV coatings (2019), GAN flagships (2022+), smart-cube training (2021+) are discrete events with 2-5% step changes. Long-horizon forecasts undercount future revolutions.'}
+          <strong>{tr({ zh: '硬件 / 方法革命的离散性。', en: 'Discrete hardware / method revolutions.',
+              zhHant: "硬體 / 方法革命的離散性。"
+        })}</strong>{' '}
+          {tr({ zh: '指数衰减把「创新」拍平成一个 k 值。但磁力魔方 (2017), UV 涂层 (2019), GAN 14/15/16 (2022+), 智能魔方训练 (2021+) 都是离散事件,各自给出 2-5% 的阶跃。长期外推会系统性低估「下一次革命」。', en: 'Exp decay smears innovation into a single k. But magnets (2017), UV coatings (2019), GAN flagships (2022+), smart-cube training (2021+) are discrete events with 2-5% step changes. Long-horizon forecasts undercount future revolutions.',
+              zhHant: "指數衰減把「創新」拍平成一個 k 值。但磁力魔方 (2017), UV 塗層 (2019), GAN 14/15/16 (2022+), 智慧魔方訓練 (2021+) 都是離散事件,各自給出 2-5% 的階躍。長期外推會系統性低估「下一次革命」。"
+        })}
         </li>
         <li>
-          <strong>{isZh ? '执行噪声下限。' : 'Execution noise floor.'}</strong>{' '}
-          {isZh
-            ? '同一选手 × 同一打乱,顶级选手的单次 SD ≈ 0.6-0.9 秒 (社区复盘数据,没有同行评审论文)。Ao5 在 N=5 下 SD 缩 √5 倍,仍有 ~0.3 秒。WR 平均始终大于 WR 单次,二者差距的下界由执行噪声决定,不由极限 L 决定。'
-            : 'Same cuber × same scramble: top-cuber single SD ≈ 0.6–0.9 s (community-derived reconstruction logs; no peer-reviewed paper). Averaging 5 shrinks by √5 to ~0.3 s. WR average > WR single always; the gap floor is execution-noise-bound, not L-bound.'}
+          <strong>{tr({ zh: '执行噪声下限。', en: 'Execution noise floor.',
+              zhHant: "執行噪聲下限。"
+        })}</strong>{' '}
+          {tr({ zh: '同一选手 × 同一打乱,顶级选手的单次 SD ≈ 0.6-0.9 秒 (社区复盘数据,没有同行评审论文)。Ao5 在 N=5 下 SD 缩 √5 倍,仍有 ~0.3 秒。WR 平均始终大于 WR 单次,二者差距的下界由执行噪声决定,不由极限 L 决定。', en: 'Same cuber × same scramble: top-cuber single SD ≈ 0.6–0.9 s (community-derived reconstruction logs; no peer-reviewed paper). Averaging 5 shrinks by √5 to ~0.3 s. WR average > WR single always; the gap floor is execution-noise-bound, not L-bound.',
+              zhHant: "同一選手 × 同一打亂,頂級選手的單次 SD ≈ 0.6-0.9 秒 (社羣覆盤資料,沒有同行評審論文)。Ao5 在 N=5 下 SD 縮 √5 倍,仍有 ~0.3 秒。WR 平均始終大於 WR 單次,二者差距的下界由執行噪聲決定,不由極限 L 決定。"
+        })}
         </li>
         <li>
-          <strong>{isZh ? '生存者 + 选择偏差。' : 'Survivorship + selection bias.'}</strong>{' '}
-          {isZh
-            ? 'WCA 数据库只统计「愿意 + 有机会参赛」的人。大量「训练水平很高但没去参赛」的人不在册。顶级选手的「训练 PB」通常比 WCA 上的 PB 快 5-10%,所以模型 L 对未来真实极限是一个保守的上界。'
-            : 'WCA captures only "those who choose to compete." Many high-skill cubers never enter comps. Elite training-PBs typically beat WCA-PBs by 5-10%, so fitted L is a conservative upper bound on the true future limit.'}
+          <strong>{tr({ zh: '生存者 + 选择偏差。', en: 'Survivorship + selection bias.',
+              zhHant: "生存者 + 選擇偏差。"
+        })}</strong>{' '}
+          {tr({ zh: 'WCA 数据库只统计「愿意 + 有机会参赛」的人。大量「训练水平很高但没去参赛」的人不在册。顶级选手的「训练 PB」通常比 WCA 上的 PB 快 5-10%,所以模型 L 对未来真实极限是一个保守的上界。', en: 'WCA captures only "those who choose to compete." Many high-skill cubers never enter comps. Elite training-PBs typically beat WCA-PBs by 5-10%, so fitted L is a conservative upper bound on the true future limit.',
+              zhHant: "WCA 資料庫只統計「願意 + 有機會參賽」的人。大量「訓練水平很高但沒去參賽」的人不在冊。頂級選手的「訓練 PB」通常比 WCA 上的 PB 快 5-10%,所以模型 L 對未來真實極限是一個保守的上界。"
+        })}
         </li>
         <li>
-          <strong>{isZh ? '区域不均衡 ≠ 能力差异。' : 'Regional imbalance ≠ ability gap.'}</strong>{' '}
-          {isZh
-            ? '近 5 年的 WR 单次集中在中, 美, 菲, 波兰。不是民族能力差异,是赛事密度: 中国年比赛 ~25%,美国 ~20%;在某地能「上场刷 WR」的次数 ∝ 该地年度比赛数。'
-            : 'Recent WR singles concentrate in CN/US/PH/PL. Not innate ability — it\'s comp density: CN ~25% of global, US ~20%. WR opportunities ∝ local annual comps.'}
+          <strong>{tr({ zh: '区域不均衡 ≠ 能力差异。', en: 'Regional imbalance ≠ ability gap.',
+              zhHant: "區域不均衡 ≠ 能力差異。"
+        })}</strong>{' '}
+          {tr({ zh: '近 5 年的 WR 单次集中在中, 美, 菲, 波兰。不是民族能力差异,是赛事密度: 中国年比赛 ~25%,美国 ~20%;在某地能「上场刷 WR」的次数 ∝ 该地年度比赛数。', en: 'Recent WR singles concentrate in CN/US/PH/PL. Not innate ability — it\'s comp density: CN ~25% of global, US ~20%. WR opportunities ∝ local annual comps.',
+              zhHant: "近 5 年的 WR 單次集中在中, 美, 菲, 波蘭。不是民族能力差異,是賽事密度: 中國年比賽 ~25%,美國 ~20%;在某地能「上場刷 WR」的次數 ∝ 該地年度比賽數。"
+        })}
         </li>
         <li>
-          <strong>{isZh ? 'WCA 计时规则演化。' : 'WCA timing rule evolution.'}</strong>{' '}
-          {isZh
-            ? '本报告默认规则不变。但 WCA 实际上从 2025-01-01 起引入了 11f1 帧分析规则 (针对 2024 王艺衡 0.78 Ao5 事件),之后所有 sub-1 二阶单次和 sub-0.9 平均都要走逐帧复核。未来若规则进一步收紧 (例如电子手压传感器),现有 2x2 WR 可能「软退坡」。'
-            : 'Report assumes rules unchanged. In fact WCA enacted Regulation 11f1 on 2025-01-01 (frame-by-frame timer-pad review for WR-class results, responding to the 2024 Yiheng Wang 0.78 ao5 incident). Future tightening (electronic pad-pressure sensors) could "soft-rollback" current 2x2 WRs.'}
+          <strong>{tr({ zh: 'WCA 计时规则演化。', en: 'WCA timing rule evolution.',
+              zhHant: "WCA 計時規則演化。"
+        })}</strong>{' '}
+          {tr({ zh: '本报告默认规则不变。但 WCA 实际上从 2025-01-01 起引入了 11f1 帧分析规则 (针对 2024 王艺衡 0.78 Ao5 事件),之后所有 sub-1 二阶单次和 sub-0.9 平均都要走逐帧复核。未来若规则进一步收紧 (例如电子手压传感器),现有 2x2 WR 可能「软退坡」。', en: 'Report assumes rules unchanged. In fact WCA enacted Regulation 11f1 on 2025-01-01 (frame-by-frame timer-pad review for WR-class results, responding to the 2024 Yiheng Wang 0.78 ao5 incident). Future tightening (electronic pad-pressure sensors) could "soft-rollback" current 2x2 WRs.',
+              zhHant: "本報告預設規則不變。但 WCA 實際上從 2025-01-01 起引入了 11f1 幀分析規則 (針對 2024 王藝衡 0.78 Ao5 事件),之後所有 sub-1 二階單次和 sub-0.9 平均都要走逐幀複核。未來若規則進一步收緊 (例如電子手壓感測器),現有 2x2 WR 可能「軟退坡」。"
+        })}
         </li>
         <li>
-          <strong>{isZh ? '「未验证」引用风险。' : "Unverified citations."}</strong>{' '}
-          {isZh
-            ? '本报告里凡是引用了具体作者 + 年份的物理 / 心理学论文 (Aoki 2001 piano, Rokicki 2010 cube20, Demaine 2011 NxN, Hattori 2024 drum roll Guinness, Joyner 1991 marathon),都逐条联网校验过。任何未列入引用的「知识」以社区复盘为准。'
-            : 'All cited specific-author papers (Aoki 2001 piano, Rokicki 2010 cube20, Demaine 2011 NxN, Hattori 2024 drum roll Guinness, Joyner 1991 marathon) are web-verified. Anything uncited is community reconstruction.'}
+          <strong>{tr({ zh: '「未验证」引用风险。', en: "Unverified citations.",
+              zhHant: "「未驗證」引用風險。"
+        })}</strong>{' '}
+          {tr({ zh: '本报告里凡是引用了具体作者 + 年份的物理 / 心理学论文 (Aoki 2001 piano, Rokicki 2010 cube20, Demaine 2011 NxN, Hattori 2024 drum roll Guinness, Joyner 1991 marathon),都逐条联网校验过。任何未列入引用的「知识」以社区复盘为准。', en: 'All cited specific-author papers (Aoki 2001 piano, Rokicki 2010 cube20, Demaine 2011 NxN, Hattori 2024 drum roll Guinness, Joyner 1991 marathon) are web-verified. Anything uncited is community reconstruction.',
+              zhHant: "本報告裡凡是引用了具體作者 + 年份的物理 / 心理學論文 (Aoki 2001 piano, Rokicki 2010 cube20, Demaine 2011 NxN, Hattori 2024 drum roll Guinness, Joyner 1991 marathon),都逐條聯網校驗過。任何未列入引用的「知識」以社羣覆盤為準。"
+        })}
         </li>
       </ol>
     </section>

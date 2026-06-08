@@ -9,6 +9,7 @@
  */
 import { useMemo } from 'react';
 import { TeX } from '../../god/_components/Tex';
+import { tr } from '@/i18n/tr';
 
 type CMode = 'human' | 'close';
 
@@ -35,11 +36,13 @@ function fmtInt(n: number): string {
 }
 
 function fmtTime(sec: number, isZh: boolean): string {
-  if (sec < 60) return `${sec.toFixed(1)} ${isZh ? '秒' : 's'}`;
-  if (sec < 3600) return `${(sec / 60).toFixed(1)} ${isZh ? '分' : 'min'}`;
-  if (sec < 86400) return `${(sec / 3600).toFixed(1)} ${isZh ? '小时' : 'h'}`;
-  if (sec < 86400 * 365) return `${(sec / 86400).toFixed(1)} ${isZh ? '天' : 'd'}`;
-  return `${(sec / 86400 / 365).toFixed(2)} ${isZh ? '年' : 'yr'}`;
+  if (sec < 60) return `${sec.toFixed(1)} ${tr({ zh: '秒', en: 's' })}`;
+  if (sec < 3600) return `${(sec / 60).toFixed(1)} ${tr({ zh: '分', en: 'min' })}`;
+  if (sec < 86400) return `${(sec / 3600).toFixed(1)} ${tr({ zh: '小时', en: 'h',
+      zhHant: "小時"
+})}`;
+  if (sec < 86400 * 365) return `${(sec / 86400).toFixed(1)} ${tr({ zh: '天', en: 'd' })}`;
+  return `${(sec / 86400 / 365).toFixed(2)} ${tr({ zh: '年', en: 'yr' })}`;
 }
 
 export default function HoeffdingExplorer({

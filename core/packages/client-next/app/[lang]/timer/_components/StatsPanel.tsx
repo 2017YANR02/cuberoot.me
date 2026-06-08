@@ -23,6 +23,7 @@ import {
   formatMs,
 } from '../_lib/stats';
 import { useSettings, updateSettings, MAX_AO_WINDOWS } from '../_lib/settings';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   solves: Solve[];
@@ -83,7 +84,9 @@ export default function StatsPanel({ solves, isZh }: Props) {
     const rows: { key: string; label: string; cur: string; best: string; n?: number }[] = [
       {
         key: 'time',
-        label: isZh ? '单次' : 'time',
+        label: tr({ zh: '单次', en: 'time',
+            zhHant: "單次"
+        }),
         cur: last ? formatMs(effectiveMs(last)) : '-',
         best: formatMs(bestSingle(solves)),
       },
@@ -108,12 +111,12 @@ export default function StatsPanel({ solves, isZh }: Props) {
 
   const extras = useMemo(() => {
     const rows: { lbl: string; val: string }[] = [
-      { lbl: isZh ? '平均' : 'mean',  val: formatMs(meanOfAll(solves)) },
-      { lbl: isZh ? '最差' : 'worst', val: formatMs(worstSingle(solves)) },
+      { lbl: tr({ zh: '平均', en: 'mean' }),  val: formatMs(meanOfAll(solves)) },
+      { lbl: tr({ zh: '最差', en: 'worst' }), val: formatMs(worstSingle(solves)) },
       { lbl: 'mo3',  val: formatMs(meanOfN(solves, 3)) },
-      { lbl: isZh ? 'mo3 最佳' : 'best mo3', val: formatMs(bestMeanOfN(solves, 3)) },
+      { lbl: tr({ zh: 'mo3 最佳', en: 'best mo3' }), val: formatMs(bestMeanOfN(solves, 3)) },
       { lbl: 'bo3',  val: formatMs(bestOfN(solves, 3)) },
-      { lbl: isZh ? 'bo3 最佳' : 'best bo3', val: formatMs(bestBestOfN(solves, 3)) },
+      { lbl: tr({ zh: 'bo3 最佳', en: 'best bo3' }), val: formatMs(bestBestOfN(solves, 3)) },
     ];
     // Live BPA/WPA for any window that is one solve away from completing.
     for (const n of windows) {
@@ -131,8 +134,10 @@ export default function StatsPanel({ solves, isZh }: Props) {
       <div className="stats-table">
         <div className="stats-table-head">
           <span className="st-label" />
-          <span className="st-col">{isZh ? '当前' : 'current'}</span>
-          <span className="st-col">{isZh ? '最佳' : 'best'}</span>
+          <span className="st-col">{tr({ zh: '当前', en: 'current',
+              zhHant: "當前"
+        })}</span>
+          <span className="st-col">{tr({ zh: '最佳', en: 'best' })}</span>
         </div>
         {table.map(r => (
           <div className="stats-row" key={r.key}>
@@ -159,7 +164,9 @@ export default function StatsPanel({ solves, isZh }: Props) {
       {/* Inline "+ add window" picker */}
       <div className="stats-ao-add">
         <button type="button" className="stats-ao-add-btn" onClick={() => setAddOpen(o => !o)} aria-expanded={addOpen}>
-          <Plus size={13} /> {isZh ? '添加窗口' : 'Add window'}
+          <Plus size={13} /> {tr({ zh: '添加窗口', en: 'Add window',
+              zhHant: "新增視窗"
+        })}
         </button>
         {addOpen && (
           <>
@@ -187,13 +194,17 @@ export default function StatsPanel({ solves, isZh }: Props) {
                   min={MIN_AO}
                   max={MAX_AO}
                   value={customDraft}
-                  placeholder={isZh ? '自定义 N' : 'Custom N'}
+                  placeholder={tr({ zh: '自定义 N', en: 'Custom N',
+                      zhHant: "自定義 N"
+                })}
                   onChange={(e) => setCustomDraft(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') addCustom(); }}
                   disabled={atMax}
                 />
                 <button type="button" className="stats-ao-custom-add" onClick={addCustom} disabled={atMax}>
-                  {isZh ? '添加' : 'Add'}
+                  {tr({ zh: '添加', en: 'Add',
+                      zhHant: "新增"
+                })}
                 </button>
               </div>
               {atMax && (
@@ -210,7 +221,9 @@ export default function StatsPanel({ solves, isZh }: Props) {
       <div className="stats-foot">
         <span>σ {sd === null ? '—' : formatMs(Math.round(sd))}</span>
         <span>CV {formatPct(cv)}</span>
-        <span>{isZh ? '总数' : 'count'} {count}</span>
+        <span>{tr({ zh: '总数', en: 'count',
+            zhHant: "總數"
+        })} {count}</span>
       </div>
 
       {expanded && (
@@ -224,12 +237,16 @@ export default function StatsPanel({ solves, isZh }: Props) {
         </div>
       )}
       <button type="button" className="stats-expand-toggle" onClick={() => setExpanded(e => !e)}>
-        {expanded ? (isZh ? '收起' : 'Hide extras') : (isZh ? '显示全部统计' : 'Show all stats')}
+        {expanded ? (tr({ zh: '收起', en: 'Hide extras' })) : (tr({ zh: '显示全部统计', en: 'Show all stats',
+            zhHant: "顯示全部統計"
+        }))}
       </button>
 
       {subX.length > 0 && (
         <>
-          <h3 style={{ marginTop: 12 }}>{isZh ? '阈值占比' : 'Sub-X'}</h3>
+          <h3 style={{ marginTop: 12 }}>{tr({ zh: '阈值占比', en: 'Sub-X',
+              zhHant: "閾值佔比"
+        })}</h3>
           <div className="subx-list">
             {subX.map(x => (
               <div className="subx-row" key={x.threshold}>

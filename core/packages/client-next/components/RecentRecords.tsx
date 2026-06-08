@@ -14,6 +14,7 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import './recent_records.css';
+import { tr } from '@/i18n/tr';
 
 interface RecentRecord {
   id: string;
@@ -189,7 +190,9 @@ export function RecentRecordsList({ filled, isZh }: { filled: RecentRecord[]; is
               className="recent-records-copy"
               onClick={() => handleCopy(r)}
               title={isZh ? (copied ? '已复制' : '复制') : (copied ? 'Copied' : 'Copy')}
-              aria-label={isZh ? '复制' : 'Copy'}
+              aria-label={tr({ zh: '复制', en: 'Copy',
+                  zhHant: "複製"
+            })}
             >
               {copied ? <Check size={13} strokeWidth={1.75} /> : <Copy size={13} strokeWidth={1.75} />}
             </button>

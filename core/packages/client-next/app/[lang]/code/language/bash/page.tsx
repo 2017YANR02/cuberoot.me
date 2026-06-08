@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './bash_intro.css';
+import i18n from '@/i18n/i18n-client';
 
 // Inline SVG: terminal window with a $ prompt + blinking caret
 const BASH_LOGO_SVG = (
@@ -484,7 +485,7 @@ const PITFALLS: PitfallCard[] = [
 
 export default function BashIntroPage() {
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
 
   useDocumentTitle(

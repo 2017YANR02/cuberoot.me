@@ -21,6 +21,8 @@ import AlgPanel from './_components/AlgPanel';
 import OneLookPanel from './_components/OneLookPanel';
 import '../trainer.css';
 import './skewb.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 // Same selector vocabulary as the [puzzle] hub: every alg-set puzzle with ≥1
 // catalog set, plus 333bf (3BLD). SkewbSkills shadows the skewb hub, so we
@@ -33,7 +35,7 @@ const SELECTOR_EVENTS = new Set<string>([
 export default function SkewbTrainerPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const lang = isZh ? 'zh' : 'en';
+  const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const router = useRouter();
   useDocumentTitle('Skewb 技巧训练', 'Skewb Skills');
 
@@ -62,7 +64,8 @@ export default function SkewbTrainerPage() {
   }, [t]);
 
   const modes: { key: SkewbMode; en: string; zh: string; icon: React.ReactNode }[] = [
-    { key: 'flt', en: 'First Layer', zh: '第一层', icon: <Layers size={15} /> },
+    { key: 'flt', en: 'First Layer', zh: '第一层', icon: <Layers size={15} />
+    },
     { key: 'alg', en: 'L2L Alg', zh: 'L2L 公式', icon: <RotateCcw size={15} /> },
     { key: 'ol', en: 'One-Looking', zh: '一步看穿', icon: <Eye size={15} /> },
   ];
@@ -79,15 +82,19 @@ export default function SkewbTrainerPage() {
         />
       </div>
       <div className="sk-root">
-        <h1 className="sk-title">{isZh ? 'Skewb 技巧训练' : 'Skewb Skills'}</h1>
+        <h1 className="sk-title">{tr({ zh: 'Skewb 技巧训练', en: 'Skewb Skills',
+            zhHant: "Skewb 技巧訓練"
+        })}</h1>
         <p className="sk-subtitle">
-          {isZh
-            ? '三种训练模式:第一层、L2L 公式、一步看穿。'
-            : 'Three training modes: First Layer, L2L Algs, and One-Looking.'}
+          {tr({ zh: '三种训练模式:第一层、L2L 公式、一步看穿。', en: 'Three training modes: First Layer, L2L Algs, and One-Looking.',
+              zhHant: "三種訓練模式:第一層、L2L 公式、一步看穿。"
+        })}
         </p>
 
         <Link href={`/${lang}/trainer/skewb/sarahs-advanced`} className="sk-altlink">
-          {isZh ? '经典公式集训练器:Sarah’s Advanced' : "Classic alg-set trainer: Sarah’s Advanced"}
+          {tr({ zh: '经典公式集训练器:Sarah’s Advanced', en: "Classic alg-set trainer: Sarah’s Advanced",
+              zhHant: "經典公式集訓練器:Sarah’s Advanced"
+        })}
           <ArrowRight size={14} />
         </Link>
 
@@ -101,7 +108,7 @@ export default function SkewbTrainerPage() {
               onClick={() => t.setMode(m.key)}
             >
               {m.icon}
-              {isZh ? m.zh : m.en}
+              {(i18n.language.startsWith('zh') ? m.zh : m.en)}
             </button>
           ))}
         </div>
@@ -159,16 +166,14 @@ export default function SkewbTrainerPage() {
           <div className="sk-timer-actions">
             <button type="button" className="sk-timer-btn" onClick={t.toggleTimer}>
               {t.timerState === 'running'
-                ? isZh
-                  ? '停止'
-                  : 'Stop'
-                : isZh
-                  ? '开始'
-                  : 'Start'}
+                ? tr({ zh: '停止', en: 'Stop' })
+                : tr({ zh: '开始', en: 'Start',
+                    zhHant: "開始"
+                })}
             </button>
             <button type="button" className="sk-timer-btn" onClick={t.resetTimer}>
               <TimerReset size={15} />
-              {isZh ? '重置' : 'Reset'}
+              {tr({ zh: '重置', en: 'Reset' })}
             </button>
           </div>
 
@@ -182,7 +187,7 @@ export default function SkewbTrainerPage() {
                 )
               ) : (
                 <>
-                  {isZh ? '本案例最好:' : 'Best for this case: '}
+                  {tr({ zh: '本案例最好:', en: 'Best for this case: ' })}
                   <span className="sk-pb-value">{t.pbText}</span>
                 </>
               )}
@@ -190,11 +195,15 @@ export default function SkewbTrainerPage() {
           ) : null}
 
           <div className="sk-kbd-hint">
-            <span className="sk-kbd">Enter</span> {isZh ? '新打乱' : 'new scramble'}
+            <span className="sk-kbd">Enter</span> {tr({ zh: '新打乱', en: 'new scramble',
+                zhHant: "新打亂"
+            })}
             {'  '}
-            <span className="sk-kbd">Space</span> {isZh ? '开始/停止' : 'start/stop'}
+            <span className="sk-kbd">Space</span> {tr({ zh: '开始/停止', en: 'start/stop',
+                zhHant: "開始/停止"
+            })}
             {'  '}
-            <span className="sk-kbd">R</span> {isZh ? '重置' : 'reset'}
+            <span className="sk-kbd">R</span> {tr({ zh: '重置', en: 'reset' })}
           </div>
         </div>
       </div>

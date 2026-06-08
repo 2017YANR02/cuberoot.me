@@ -2,19 +2,22 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
-import i18n, { detectLanguage, ensureLangInUrl } from './i18n-client';
+import i18n, { detectLanguage, ensureLangInUrl, changeAppLanguage } from './i18n-client';
 
 // `initialLang`: when provided (e.g. from app/[lang]/layout reading URL param),
 // skip the post-hydration detect → changeLanguage dance. No en→zh flash for
-// /zh/* URLs because i18n is set to zh synchronously in render below.
+// /zh/* URLs because i18n is set to the locale synchronously in render below.
 // When omitted (root layout, pre-Phase-3 backward-compat pages), fall back to
 // URL ?lang= / cookie / navigator detection in useEffect.
+//
+// All three catalogs (en/zh/zh-Hant) are static, so there's no runtime
+// conversion and no hydration gating to do here.
 export default function I18nProvider({
   children,
   initialLang,
 }: {
   children: ReactNode;
-  initialLang?: 'zh' | 'en';
+  initialLang?: 'zh' | 'en' | 'zh-Hant';
 }) {
   const [instance] = useState(() => i18n);
 
@@ -34,7 +37,7 @@ export default function I18nProvider({
     const lang = detectLanguage();
     ensureLangInUrl(lang);
     localStorage.setItem('trainer-lang', lang);
-    if (instance.language !== lang) void instance.changeLanguage(lang);
+    if (instance.language !== lang) changeAppLanguage(lang);
   }, [instance, initialLang]);
 
   return <I18nextProvider i18n={instance}>{children}</I18nextProvider>;

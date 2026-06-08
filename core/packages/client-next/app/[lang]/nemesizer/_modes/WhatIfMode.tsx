@@ -12,6 +12,7 @@ import {
   type RelationView,
   type WhatIfResponse,
 } from '../_data/nemesizerApi';
+import { tr } from '@/i18n/tr';
 
 interface Props { isZh: boolean; }
 
@@ -78,9 +79,13 @@ export default function WhatIfMode({ isZh }: Props) {
   if (!person) {
     return (
       <div>
-        <h2 style={{ textAlign: 'center' }}>{isZh ? '假设…？' : 'What if…?'}</h2>
+        <h2 style={{ textAlign: 'center' }}>{tr({ zh: '假设…？', en: 'What if…?',
+            zhHant: "假設…？"
+        })}</h2>
         <p className="nemesizer-results-summary">
-          {isZh ? '假设你在某些项目上的排名不同，看看新的宿敌关系。' : 'Enter alternate ranks for one or more events to see the new you.'}
+          {tr({ zh: '假设你在某些项目上的排名不同，看看新的宿敌关系。', en: 'Enter alternate ranks for one or more events to see the new you.',
+              zhHant: "假設你在某些專案上的排名不同，看看新的宿敵關係。"
+        })}
         </p>
         <NemesizerPersonPicker isZh={isZh} onPick={id => setParam('person', id)} />
       </div>
@@ -90,14 +95,18 @@ export default function WhatIfMode({ isZh }: Props) {
   if (personErr && personErr.startsWith('404')) {
     return (
       <div>
-        <h2 style={{ textAlign: 'center' }}>{isZh ? '假设…？' : 'What if…?'}</h2>
+        <h2 style={{ textAlign: 'center' }}>{tr({ zh: '假设…？', en: 'What if…?',
+            zhHant: "假設…？"
+        })}</h2>
         <NemesizerPersonPicker isZh={isZh} initialQuery={person} onPick={id => setParam('person', id)} />
       </div>
     );
   }
 
   if (!personData) {
-    return <div className="nemesizer-loading">{isZh ? '加载中…' : 'Loading…'}</div>;
+    return <div className="nemesizer-loading">{tr({ zh: '加载中…', en: 'Loading…',
+        zhHant: "載入中…"
+    })}</div>;
   }
 
   const rankByEk = new Map<number, number>();
@@ -109,7 +118,9 @@ export default function WhatIfMode({ isZh }: Props) {
 
   return (
     <div>
-      <h2 style={{ textAlign: 'center' }}>{isZh ? '假设…？' : 'What if…?'}</h2>
+      <h2 style={{ textAlign: 'center' }}>{tr({ zh: '假设…？', en: 'What if…?',
+          zhHant: "假設…？"
+    })}</h2>
       <div className="nemesizer-results-summary">
         <PersonCell person={{ wcaId: personData.wcaId, name: personData.name, countryIso2: personData.iso2, continentIdx: 0 }} isZh={isZh} />
         {' '}({personData.wcaId})
@@ -132,9 +143,15 @@ export default function WhatIfMode({ isZh }: Props) {
       </div>
       <div className="nemesizer-whatif-grid">
         <div className="nemesizer-whatif-row is-header" style={{ fontWeight: 600 }}>
-          <div>{isZh ? '项目' : 'Event'}</div>
-          <div>{isZh ? '真实排名' : 'Real rank'}</div>
-          <div>{isZh ? '假设排名' : 'What if rank'}</div>
+          <div>{tr({ zh: '项目', en: 'Event',
+              zhHant: "專案"
+        })}</div>
+          <div>{tr({ zh: '真实排名', en: 'Real rank',
+              zhHant: "真實排名"
+        })}</div>
+          <div>{tr({ zh: '假设排名', en: 'What if rank',
+              zhHant: "假設排名"
+        })}</div>
         </div>
         {NEMESIZER_EVENTS.flatMap(ev => {
           const evIdx = NEMESIZER_EVENTS.indexOf(ev);
@@ -143,7 +160,9 @@ export default function WhatIfMode({ isZh }: Props) {
             const real = rankByEk.get(ek);
             return (
               <div className="nemesizer-whatif-row" key={`${ev}-${kind}`}>
-                <div>{ev} {kind === 0 ? (isZh ? '单次' : 'single') : (isZh ? '平均' : 'average')}</div>
+                <div>{ev} {kind === 0 ? (tr({ zh: '单次', en: 'single',
+                    zhHant: "單次"
+                })) : (tr({ zh: '平均', en: 'average' }))}</div>
                 <div>{real ?? '—'}</div>
                 <div>
                   <input
@@ -168,11 +187,11 @@ export default function WhatIfMode({ isZh }: Props) {
             {isZh
               ? `原 ${result.origCount}  →  假设后 ${result.newCount}`
               : `Original ${result.origCount}  →  After what-if ${result.newCount}`}
-            {resultLoading && <span className="nemesizer-small-muted" style={{ marginLeft: 8 }}>{isZh ? '更新中…' : 'updating…'}</span>}
+            {resultLoading && <span className="nemesizer-small-muted" style={{ marginLeft: 8 }}>{tr({ zh: '更新中…', en: 'updating…' })}</span>}
           </div>
           <div className="nemesizer-table-wrap">
             <table className="nemesizer-table">
-              <thead><tr><th>WCA ID</th><th>{isZh ? '姓名' : 'Name'}</th></tr></thead>
+              <thead><tr><th>WCA ID</th><th>{tr({ zh: '姓名', en: 'Name' })}</th></tr></thead>
               <tbody>
                 {[...result.persons]
                   .sort((a, b) => a.wcaId.localeCompare(b.wcaId))
@@ -187,7 +206,9 @@ export default function WhatIfMode({ isZh }: Props) {
           </div>
         </>
       )}
-      {!result && resultLoading && <div className="nemesizer-loading">{isZh ? '计算中…' : 'Computing…'}</div>}
+      {!result && resultLoading && <div className="nemesizer-loading">{tr({ zh: '计算中…', en: 'Computing…',
+          zhHant: "計算中…"
+    })}</div>}
     </div>
   );
 }

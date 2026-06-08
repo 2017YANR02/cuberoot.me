@@ -10,12 +10,14 @@ import { useTutorialCatalog, type CatalogEntry, type Lang } from '../../_lib/use
 import { TutorialCard } from '../../_components/TutorialCard';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../tutorial.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 function TutorialCategoryPageInner() {
   const { catalog, loading, error } = useTutorialCatalog();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const pageLang: Lang = isZh ? 'zh' : 'en';
+  const pageLang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const params = useParams<{ cat: string | string[] }>();
   const rawCategory = Array.isArray(params?.cat) ? params.cat[0] : params?.cat;
   const category = rawCategory ? decodeURIComponent(rawCategory) : '';
@@ -25,7 +27,7 @@ function TutorialCategoryPageInner() {
   );
   const showHidden = show === 'hidden';
 
-  const tutorialTitle = category || (isZh ? '教程' : 'Tutorial');
+  const tutorialTitle = category || (tr({ zh: '教程', en: 'Tutorial' }));
   useDocumentTitle(tutorialTitle, tutorialTitle);
 
   const [query, setQuery] = useState('');
@@ -91,7 +93,9 @@ function TutorialCategoryPageInner() {
           <input
             className="tutorial-search-input"
             type="search"
-            placeholder={isZh ? '搜索…' : 'Search…'}
+            placeholder={tr({ zh: '搜索…', en: 'Search…',
+                zhHant: "搜尋…"
+            })}
             value={query}
             onChange={e => setQuery(e.target.value)}
           />
@@ -104,7 +108,7 @@ function TutorialCategoryPageInner() {
             className={'tutorial-category-chip' + (activeSub === 'all' ? ' is-active' : '')}
             onClick={() => setActiveSub('all')}
           >
-            {isZh ? '全部' : 'All'}
+            {tr({ zh: '全部', en: 'All' })}
             <span className="tutorial-category-chip-count">{inCategory.length}</span>
           </button>
           {subcategories.map(({ sc, count }) => (
@@ -113,7 +117,9 @@ function TutorialCategoryPageInner() {
               className={'tutorial-category-chip' + (activeSub === sc ? ' is-active' : '')}
               onClick={() => setActiveSub(sc)}
             >
-              {sc || (isZh ? '未分类' : 'Uncategorized')}
+              {sc || (tr({ zh: '未分类', en: 'Uncategorized',
+                  zhHant: "未分類"
+            }))}
               <span className="tutorial-category-chip-count">{count}</span>
             </button>
           ))}
@@ -121,16 +127,22 @@ function TutorialCategoryPageInner() {
       )}
 
       <div className="tutorial-card-grid">
-        {loading && <div className="tutorial-empty-state">{isZh ? '加载中…' : 'Loading…'}</div>}
+        {loading && <div className="tutorial-empty-state">{tr({ zh: '加载中…', en: 'Loading…',
+            zhHant: "載入中…"
+        })}</div>}
         {error && (
           <div className="tutorial-empty-state">
-            {isZh ? '加载失败: ' : 'Load failed: '}
+            {tr({ zh: '加载失败: ', en: 'Load failed: ',
+                zhHant: "載入失敗: "
+            })}
             {error}
           </div>
         )}
         {!loading && !error && results.length === 0 && (
           <div className="tutorial-empty-state">
-            {isZh ? '没有匹配的教程' : 'No matching tutorials'}
+            {tr({ zh: '没有匹配的教程', en: 'No matching tutorials',
+                zhHant: "沒有匹配的教程"
+            })}
           </div>
         )}
         {results.map(entry => (

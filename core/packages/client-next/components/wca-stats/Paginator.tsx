@@ -3,6 +3,7 @@
 // Ported from packages/client/src/pages/wca_stats/Paginator.tsx.
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   page: number;
@@ -36,7 +37,7 @@ export default function Paginator({
         <ChevronLeft size={14} />
       </button>
       <span className="paginator-text">
-        {isZh ? '第' : 'Page'}{' '}
+        {tr({ zh: '第', en: 'Page' })}{' '}
         <input
           type="number"
           className="paginator-input"
@@ -46,7 +47,9 @@ export default function Paginator({
           onChange={e => setDraft(e.target.value)}
           onBlur={commit}
           onKeyDown={e => { if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur(); }}
-          aria-label={isZh ? '页码' : 'Page number'}
+          aria-label={tr({ zh: '页码', en: 'Page number',
+              zhHant: "頁碼"
+        })}
         />
         {' / ' + totalPages}
       </span>
@@ -54,7 +57,9 @@ export default function Paginator({
         <ChevronRight size={14} />
       </button>
       <select value={size} onChange={e => onSizeChange(parseInt(e.target.value, 10))}>
-        {pageSizeOptions.map(s => <option key={s} value={s}>{s}/{isZh ? '页' : 'pg'}</option>)}
+        {pageSizeOptions.map(s => <option key={s} value={s}>{s}/{tr({ zh: '页', en: 'pg',
+            zhHant: "頁"
+        })}</option>)}
       </select>
     </div>
   );

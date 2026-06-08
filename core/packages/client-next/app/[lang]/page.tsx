@@ -27,6 +27,8 @@ const TodayRecon = dynamic(() => import('@/components/TodayRecon'), {
 import { useEffectiveTheme } from '@/lib/theme';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../landing.css';
+import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 export default function LandingPage() {
   // Landing tab title is just the brand, no page suffix — matches Vite's
@@ -47,7 +49,7 @@ export default function LandingPage() {
     setShowBeian(/(^|\.)cuberoot\.me$/i.test(h) || h === 'localhost' || h === '127.0.0.1');
   }, []);
 
-  const lang: 'zh' | 'en' = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
   const t = useCallback((key: keyof typeof TEXTS) => {
     return TEXTS[key][lang];
@@ -70,8 +72,12 @@ export default function LandingPage() {
       <Link href="/wca" className="wca-hero" prefetch={false}>
         <img src="/icons/wca.svg" alt="WCA" className="wca-hero-logo" />
         <div className="wca-hero-meta">
-          <div className="wca-hero-title">{lang === 'zh' ? 'WCA 统计' : 'WCA Statistics'}</div>
-          <div className="wca-hero-sub">{lang === 'zh' ? '魔方世界所有数据切片 · 80+ 自动生成排名 · 周更' : 'Every slice of the cubing world · 80+ auto-generated rankings · updated weekly'}</div>
+          <div className="wca-hero-title">{tr({ zh: 'WCA 统计', en: 'WCA Statistics',
+              zhHant: "WCA 統計"
+        })}</div>
+          <div className="wca-hero-sub">{tr({ zh: '魔方世界所有数据切片 · 80+ 自动生成排名 · 周更', en: 'Every slice of the cubing world · 80+ auto-generated rankings · updated weekly',
+              zhHant: "魔方世界所有資料切片 · 80+ 自動生成排名 · 周更"
+        })}</div>
         </div>
         <div className="wca-hero-arrow" aria-hidden="true">→</div>
       </Link>
@@ -80,9 +86,9 @@ export default function LandingPage() {
         {SECTIONS.map((sec) => (
           <section key={sec.id} id={`section-${sec.id}`} className="cards-section">
             <div className="section-header">
-              <div className="section-eyebrow">{lang === 'zh' ? sec.eyebrow.zh : sec.eyebrow.en}</div>
-              <h2 className="section-title-serif">{lang === 'zh' ? sec.title.zh : sec.title.en}</h2>
-              <div className="section-sub">{lang === 'zh' ? sec.sub.zh : sec.sub.en}</div>
+              <div className="section-eyebrow">{(i18n.language.startsWith('zh') ? sec.eyebrow.zh : sec.eyebrow.en)}</div>
+              <h2 className="section-title-serif">{(i18n.language.startsWith('zh') ? sec.title.zh : sec.title.en)}</h2>
+              <div className="section-sub">{(i18n.language.startsWith('zh') ? sec.sub.zh : sec.sub.en)}</div>
             </div>
             <div className="cards-container">
               {sec.cards.map((card) => {
@@ -134,7 +140,9 @@ export default function LandingPage() {
       </div>
 
       <div className="footer">
-        <Link href="/about" className="footer-about" prefetch={false}>{lang === 'zh' ? '关于' : 'About'}</Link>
+        <Link href="/about" className="footer-about" prefetch={false}>{tr({ zh: '关于', en: 'About',
+            zhHant: "關於"
+        })}</Link>
         <a
           href="https://github.com/RuiminYan/cuberoot.me"
           target="_blank"

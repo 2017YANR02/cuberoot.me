@@ -29,6 +29,7 @@ import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import Top10HistoryPage from '@/components/wca-stats/Top10HistoryPage';
 import type { Metric as Top10Metric } from '@/lib/top10-axis';
 import '../_wca_stats.css';
+import { tr } from '@/i18n/tr';
 
 interface StatHeader {
   key: string;
@@ -311,7 +312,9 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
             {isZh ? `显示更多（还有 ${remaining} 行）` : `Show more (${remaining} left)`}
           </button>
           <button type="button" className="wca-stats-more-btn" onClick={() => setVisible(filtered.length)}>
-            {isZh ? '全部显示' : 'Show all'}
+            {tr({ zh: '全部显示', en: 'Show all',
+                zhHant: "全部顯示"
+            })}
           </button>
         </div>
       )}
@@ -365,7 +368,9 @@ function WrByCountryYearView({ header, years, cumulative, searchTerm, isZh }: {
             setPlaying(true);
           }}
           className="wr-year-play-btn"
-          title={playing ? (isZh ? '暂停' : 'Pause') : (isZh ? '播放' : 'Play')}
+          title={playing ? (tr({ zh: '暂停', en: 'Pause',
+              zhHant: "暫停"
+        })) : (tr({ zh: '播放', en: 'Play' }))}
           aria-label={playing ? 'Pause' : 'Play'}
         >
           {playing ? <Pause size={16} strokeWidth={2} /> : <Play size={16} strokeWidth={2} />}
@@ -565,7 +570,9 @@ function AoxRankingSection({ header, rows, isZh }: {
             <tr>
               {hasSolves && (
                 <th style={{ textAlign: 'center', cursor: 'pointer', width: 34 }}
-                  title={isZh ? '全选/取消' : 'Select all'}
+                  title={tr({ zh: '全选/取消', en: 'Select all',
+                      zhHant: "全選/取消"
+                })}
                   onClick={toggleAll}>
                   <BarChart3 size={14} strokeWidth={1.75} style={{ verticalAlign: 'middle' }} />
                 </th>
@@ -726,7 +733,7 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSe
         ))}
         {showDedup && (
           <label className="wca-stats-dedup-toggle">
-            <span>{isZh ? '日期去重' : 'Dedup'}</span>
+            <span>{tr({ zh: '日期去重', en: 'Dedup' })}</span>
             <input type="checkbox" checked={dedup} onChange={() => setDedup(!dedup)} />
             <span className="wca-stats-toggle-pill" />
           </label>
@@ -1091,7 +1098,9 @@ export default function WcaStatClient() {
   if (loading) {
     return (
       <div className="wca-stats-page">
-        <div className="wca-stats-loading">{isZh ? '加载中...' : 'Loading...'}</div>
+        <div className="wca-stats-loading">{tr({ zh: '加载中...', en: 'Loading...',
+            zhHant: "載入中..."
+        })}</div>
       </div>
     );
   }
@@ -1100,8 +1109,12 @@ export default function WcaStatClient() {
     return (
       <div className="wca-stats-page">
         <div className="wca-stats-error">
-          <h2>{isZh ? '加载失败' : 'Failed to load'}</h2>
-          <p>{error || (isZh ? '未知错误' : 'Unknown error')}</p>
+          <h2>{tr({ zh: '加载失败', en: 'Failed to load',
+              zhHant: "載入失敗"
+        })}</h2>
+          <p>{error || (tr({ zh: '未知错误', en: 'Unknown error',
+              zhHant: "未知錯誤"
+        }))}</p>
         </div>
       </div>
     );
@@ -1198,12 +1211,14 @@ export default function WcaStatClient() {
       {renderMode === 'empty' && (
         <div className="wca-stats-empty-state">
           <div className="wca-stats-empty-title">
-            {isZh ? '暂无数据' : 'No data yet'}
+            {tr({ zh: '暂无数据', en: 'No data yet',
+                zhHant: "暫無資料"
+            })}
           </div>
           <div className="wca-stats-empty-hint">
-            {isZh
-              ? '此统计项当前为空 —— 可能是下一次 stats-build 会补全,或该口径下无人达成。'
-              : 'This stat is currently empty — either no one meets the criteria, or it has yet to be computed.'}
+            {tr({ zh: '此统计项当前为空 —— 可能是下一次 stats-build 会补全,或该口径下无人达成。', en: 'This stat is currently empty — either no one meets the criteria, or it has yet to be computed.',
+                zhHant: "此統計項當前為空 —— 可能是下一次 stats-build 會補全,或該口徑下無人達成。"
+            })}
           </div>
         </div>
       )}

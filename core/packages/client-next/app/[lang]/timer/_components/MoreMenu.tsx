@@ -10,6 +10,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { MoreHorizontal } from 'lucide-react';
+import { tr } from '@/i18n/tr';
 
 export interface MoreMenuItem {
   icon?: ReactNode;
@@ -45,7 +46,7 @@ export default function MoreMenu({ items, isZh }: Props) {
     };
   }, [open]);
 
-  const tip = isZh ? '更多' : 'More';
+  const tip = tr({ zh: '更多', en: 'More' });
 
   return (
     <div className="more-menu" ref={wrapRef}>

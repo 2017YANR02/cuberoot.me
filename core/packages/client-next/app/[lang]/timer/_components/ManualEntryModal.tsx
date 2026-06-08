@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import type { EventId, Penalty, Solve } from '../_lib/types';
 import { makeSolve } from '../_lib/storage/db';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   event: EventId;
@@ -77,21 +78,31 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
   if (isFmc) {
     const n = Number(stepCount.trim());
     if (stepCount.trim() === '') {
-      parseErr = isZh ? '请输入步数' : 'Enter move count';
+      parseErr = tr({ zh: '请输入步数', en: 'Enter move count',
+          zhHant: "請輸入步數"
+    });
     } else if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
-      parseErr = isZh ? '步数必须是非负整数' : 'Move count must be a non-negative integer';
+      parseErr = tr({ zh: '步数必须是非负整数', en: 'Move count must be a non-negative integer',
+          zhHant: "步數必須是非負整數"
+    });
     } else {
       parsed = { ms: n * 1000, penalty: 'ok' };
     }
   } else {
     const r = parseTimeStr(timeStr);
     if (timeStr.trim() === '') {
-      parseErr = isZh ? '请输入时间' : 'Enter time';
+      parseErr = tr({ zh: '请输入时间', en: 'Enter time',
+          zhHant: "請輸入時間"
+    });
     } else if (!r) {
       if (/^\+2\s+/i.test(timeStr.trim())) {
-        parseErr = isZh ? '+2 时间须 ≥ 2 秒' : '+2 time must be ≥ 2 seconds';
+        parseErr = tr({ zh: '+2 时间须 ≥ 2 秒', en: '+2 time must be ≥ 2 seconds',
+            zhHant: "+2 時間須 ≥ 2 秒"
+        });
       } else {
-        parseErr = isZh ? '时间格式无效' : 'Invalid time';
+        parseErr = tr({ zh: '时间格式无效', en: 'Invalid time',
+            zhHant: "時間格式無效"
+        });
       }
     } else {
       parsed = r;
@@ -148,18 +159,24 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
         onClick={(e) => e.stopPropagation()}
         style={modalStyle}
       >
-        <h2 id={titleId}>{isZh ? '手动录入成绩' : 'Manual entry'}</h2>
+        <h2 id={titleId}>{tr({ zh: '手动录入成绩', en: 'Manual entry',
+            zhHant: "手動錄入成績"
+        })}</h2>
 
         <div className="modal-section">
           <label className="manual-label">
-            {isFmc ? (isZh ? '步数' : 'Move count') : (isZh ? '时间' : 'Time')}
+            {isFmc ? (tr({ zh: '步数', en: 'Move count',
+                zhHant: "步數"
+            })) : (tr({ zh: '时间', en: 'Time',
+                zhHant: "時間"
+            }))}
             {isFmc ? (
               <input
                 ref={firstInputRef}
                 className="manual-input"
                 type="text"
                 inputMode="numeric"
-                placeholder={isZh ? '例如：26' : 'e.g. 26'}
+                placeholder={tr({ zh: '例如：26', en: 'e.g. 26' })}
                 value={stepCount}
                 onChange={(e) => setStepCount(e.target.value)}
                 style={timeInputStyle}
@@ -169,7 +186,7 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
                 ref={firstInputRef}
                 className="manual-input"
                 type="text"
-                placeholder={isZh ? '例如：12.34 或 1:23.45 或 DNF' : 'e.g. 12.34 or 1:23.45 or DNF'}
+                placeholder={tr({ zh: '例如：12.34 或 1:23.45 或 DNF', en: 'e.g. 12.34 or 1:23.45 or DNF' })}
                 value={timeStr}
                 onChange={(e) => setTimeStr(e.target.value)}
                 style={timeInputStyle}
@@ -183,7 +200,9 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
 
         {!isFmc && (
           <div className="modal-section">
-            <div className="manual-label">{isZh ? '罚时' : 'Penalty'}</div>
+            <div className="manual-label">{tr({ zh: '罚时', en: 'Penalty',
+                zhHant: "罰時"
+            })}</div>
             <div className="manual-radios" style={radiosStyle}>
               {(['ok', '+2', 'DNF'] as Penalty[]).map(p => (
                 <label key={p} className="manual-radio" style={radioStyle}>
@@ -203,7 +222,9 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
 
         <div className="modal-section">
           <label className="manual-label">
-            {isZh ? '打乱（留空则用当前打乱）' : 'Scramble (optional, defaults to current)'}
+            {tr({ zh: '打乱（留空则用当前打乱）', en: 'Scramble (optional, defaults to current)',
+                zhHant: "打亂（留空則用當前打亂）"
+            })}
             <textarea
               className="manual-textarea"
               rows={isMobile ? 3 : 2}
@@ -217,13 +238,17 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
 
         <div className="modal-section">
           <label className="manual-label">
-            {isZh ? '注释' : 'Comment'}
+            {tr({ zh: '注释', en: 'Comment',
+                zhHant: "註釋"
+            })}
             <textarea
               className="manual-textarea"
               rows={isMobile ? 3 : 2}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder={isZh ? '可选备注…' : 'Optional notes…'}
+              placeholder={tr({ zh: '可选备注…', en: 'Optional notes…',
+                  zhHant: "可選備註…"
+            })}
               style={textareaStyle}
             />
           </label>
@@ -236,9 +261,11 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
             onClick={handleSave}
             style={actionBtnStyle}
           >
-            {isZh ? '保存' : 'Save'}
+            {tr({ zh: '保存', en: 'Save',
+                zhHant: "儲存"
+            })}
           </button>
-          <button onClick={onClose} style={actionBtnStyle}>{isZh ? '取消' : 'Cancel'}</button>
+          <button onClick={onClose} style={actionBtnStyle}>{tr({ zh: '取消', en: 'Cancel' })}</button>
         </div>
       </div>
     </div>

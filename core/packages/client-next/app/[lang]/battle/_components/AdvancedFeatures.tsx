@@ -20,6 +20,7 @@ import { formatTimePlain } from '@/app/[lang]/timer/_shared/format';
 import { computeAo5, computeAverage, getEffectiveTimeFromEntry, isPBSingleAt } from '@/app/[lang]/timer/_shared/stats-core';
 import { PUZZLES } from './engine/constants';
 import type { SolveEntry } from './engine/types';
+import { tr } from '@/i18n/tr';
 
 // ===== MilestoneToast =====
 // 1:1 翻译自 battle.js showMilestoneToast()（行 2793~2804）
@@ -116,7 +117,9 @@ export function checkFatigueMessage(history: SolveEntry[], locale: string): stri
   }
 
   if (rising >= 4) {
-    return locale === 'zh' ? '建议休息一下 🍵' : 'Take a break? 🍵';
+    return tr({ zh: '建议休息一下 🍵', en: 'Take a break? 🍵',
+        zhHant: "建議休息一下 🍵"
+    });
   }
   return null;
 }
@@ -238,13 +241,17 @@ export function ManualInputDialog({ onClose }: { onClose: () => void }) {
     <div className="ao-detail-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="ao-detail-panel">
         <div className="ao-detail-header">
-          <h3>{locale === 'zh' ? '手动输入成绩' : 'Manual Input'}</h3>
+          <h3>{tr({ zh: '手动输入成绩', en: 'Manual Input',
+              zhHant: "手動輸入成績"
+        })}</h3>
           <button className="ao-detail-close" onClick={onClose}>✕</button>
         </div>
         <div style={{ padding: '8px 0' }}>
           <input
             type="text"
-            placeholder={locale === 'zh' ? '输入时间 (如 8.55 或 1:23.456)' : 'Enter time (e.g. 8.55 or 1:23.456)'}
+            placeholder={tr({ zh: '输入时间 (如 8.55 或 1:23.456)', en: 'Enter time (e.g. 8.55 or 1:23.456)',
+                zhHant: "輸入時間 (如 8.55 或 1:23.456)"
+            })}
             value={timeStr}
             onChange={e => { setTimeStr(e.target.value); setError(false); }}
             onKeyDown={e => { if (e.key === 'Enter') handleSubmit(); }}
@@ -266,7 +273,9 @@ export function ManualInputDialog({ onClose }: { onClose: () => void }) {
               <option value="dnf">DNF</option>
             </select>
             <button className="segmented-btn active" style={{ flex: 1, borderRadius: '6px' }} onClick={handleSubmit}>
-              {locale === 'zh' ? '添加' : 'Add'}
+              {tr({ zh: '添加', en: 'Add',
+                  zhHant: "新增"
+            })}
             </button>
           </div>
         </div>
@@ -316,25 +325,35 @@ export function SimulationPopup({ onClose }: { onClose: () => void }) {
     <div className="ao-detail-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="ao-detail-panel">
         <div className="ao-detail-header">
-          <h3>{locale === 'zh' ? '🎲 模拟赛结果 (1000次)' : '🎲 Competition Sim (1000x)'}</h3>
+          <h3>{tr({ zh: '🎲 模拟赛结果 (1000次)', en: '🎲 Competition Sim (1000x)',
+              zhHant: "🎲 模擬賽結果 (1000次)"
+        })}</h3>
           <button className="ao-detail-close" onClick={onClose}>✕</button>
         </div>
         <div className="sim-results">
           <div className="sim-row">
-            <span className="sim-label">{locale === 'zh' ? '50% 概率 ≤' : '50th percentile'}</span>
+            <span className="sim-label">{tr({ zh: '50% 概率 ≤', en: '50th percentile',
+                zhHant: "50% 機率 ≤"
+            })}</span>
             <span className="sim-value">{ftp(result.p50)}</span>
           </div>
           <div className="sim-row">
-            <span className="sim-label">{locale === 'zh' ? '75% 概率 ≤' : '75th percentile'}</span>
+            <span className="sim-label">{tr({ zh: '75% 概率 ≤', en: '75th percentile',
+                zhHant: "75% 機率 ≤"
+            })}</span>
             <span className="sim-value">{ftp(result.p75)}</span>
           </div>
           <div className="sim-row">
-            <span className="sim-label">{locale === 'zh' ? '95% 概率 ≤' : '95th percentile'}</span>
+            <span className="sim-label">{tr({ zh: '95% 概率 ≤', en: '95th percentile',
+                zhHant: "95% 機率 ≤"
+            })}</span>
             <span className="sim-value">{ftp(result.p95)}</span>
           </div>
         </div>
         <p style={{ color: '#6b7a8d', fontSize: '12px', marginTop: '12px' }}>
-          {locale === 'zh' ? '基于当前成绩分布 Bootstrap 随机抽样 Ao5' : 'Ao5 bootstrap sampled from your current times distribution'}
+          {tr({ zh: '基于当前成绩分布 Bootstrap 随机抽样 Ao5', en: 'Ao5 bootstrap sampled from your current times distribution',
+              zhHant: "基於當前成績分佈 Bootstrap 隨機抽樣 Ao5"
+        })}
         </p>
       </div>
     </div>
@@ -400,7 +419,9 @@ export function HeatmapCalendar({ history, locale }: { history: SolveEntry[]; lo
 
   return (
     <div className="heatmap-container">
-      <div className="heatmap-title">{locale === 'zh' ? '练习日历' : 'Practice Calendar'}</div>
+      <div className="heatmap-title">{tr({ zh: '练习日历', en: 'Practice Calendar',
+          zhHant: "練習日曆"
+    })}</div>
       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ maxWidth: '100%', display: 'block', margin: '0 auto' }}>
         {rects}
       </svg>

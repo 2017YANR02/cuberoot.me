@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './csharp_intro.css';
+import i18n from '@/i18n/i18n-client';
 
 // 256x256 official-purple logo with stylised C# glyph
 const CS_LOGO_SVG = (
@@ -478,7 +479,7 @@ const FUTURE_CARDS: FutureCard[] = [
 
 export default function CsharpIntroPage() {
   const { i18n } = useTranslation();
-  const lang: Lang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
 
   useDocumentTitle(

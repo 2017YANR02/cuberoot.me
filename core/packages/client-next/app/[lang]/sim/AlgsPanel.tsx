@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ALG_CATALOG, loadAlg, type AlgPuzzle, type AlgFile, type AlgCase } from '@cuberoot/shared';
 import './algs-panel.css';
+import i18n from '@/i18n/i18n-client';
 
 interface Props {
   onSelect: (setup: string, alg: string, caseName: string) => void;
@@ -110,7 +111,7 @@ export default function AlgsPanel({ onSelect, onOrderChange, disabled = false }:
         >
           {sets.map((s) => (
             <option key={s.slug} value={s.slug}>
-              {isZh ? s.zh : s.en}
+              {(i18n.language.startsWith('zh') ? s.zh : s.en)}
             </option>
           ))}
         </select>

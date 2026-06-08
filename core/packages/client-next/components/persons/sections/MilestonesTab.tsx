@@ -12,6 +12,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
+import i18n from '@/i18n/i18n-client';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -21,14 +22,22 @@ interface Props {
 }
 
 const TYPE_META: Record<MilestoneType, { zh: string; en: string; cls: string }> = {
-  first_competition:        { zh: '首次参赛',     en: 'First competition',     cls: 'mt-first' },
-  nth_competition:          { zh: '里程数比赛',   en: 'Nth competition',       cls: 'mt-nth' },
-  significant_improvement:  { zh: '显著进步',     en: 'Improvement',           cls: 'mt-imp' },
-  first_podium:             { zh: '首次领奖台',   en: 'First podium',          cls: 'mt-pod' },
-  first_blind_success:      { zh: '盲拧首成',     en: 'Blind first success',   cls: 'mt-bf' },
-  record_breaker:           { zh: '破纪录',       en: 'Record breaker',        cls: 'mt-rec' },
-  grand_slam:               { zh: '大满贯',       en: 'Grand slam',            cls: 'mt-gs' },
-  comeback:                 { zh: '回归',         en: 'Comeback',              cls: 'mt-cb' },
+  first_competition:        { zh: '首次参赛',     en: 'First competition',     cls: 'mt-first'
+},
+  nth_competition:          { zh: '里程数比赛',   en: 'Nth competition',       cls: 'mt-nth'
+},
+  significant_improvement:  { zh: '显著进步',     en: 'Improvement',           cls: 'mt-imp'
+},
+  first_podium:             { zh: '首次领奖台',   en: 'First podium',          cls: 'mt-pod'
+},
+  first_blind_success:      { zh: '盲拧首成',     en: 'Blind first success',   cls: 'mt-bf'
+},
+  record_breaker:           { zh: '破纪录',       en: 'Record breaker',        cls: 'mt-rec'
+},
+  grand_slam:               { zh: '大满贯',       en: 'Grand slam',            cls: 'mt-gs'
+},
+  comeback:                 { zh: '回归',         en: 'Comeback',              cls: 'mt-cb'
+},
 };
 
 export default function MilestonesTab({ profile, results, comps, isZh }: Props) {
@@ -86,7 +95,7 @@ export default function MilestonesTab({ profile, results, comps, isZh }: Props) 
               key={ty}
               className={`wp-ms-chip ${TYPE_META[ty].cls} ${excluded.has(ty) ? 'is-off' : ''}`}
               onClick={() => toggleExclude(ty)}
-            >{isZh ? TYPE_META[ty].zh : TYPE_META[ty].en}</button>
+            >{(i18n.language.startsWith('zh') ? TYPE_META[ty].zh : TYPE_META[ty].en)}</button>
           ))}
         </div>
         <div className="wp-ms-filter-row">
@@ -115,7 +124,7 @@ export default function MilestonesTab({ profile, results, comps, isZh }: Props) 
           <li key={`${m.type}-${i}`} className={`wp-ms-item ${TYPE_META[m.type].cls}`}>
             <span className="wp-ms-date">{m.date}</span>
             <div className="wp-ms-body">
-              <div className="wp-ms-text">{isZh ? m.zh : m.en}</div>
+              <div className="wp-ms-text">{(i18n.language.startsWith('zh') ? m.zh : m.en)}</div>
               {m.tags.length > 0 && (
                 <div className="wp-ms-tags">
                   {m.tags.map((tag, j) => (

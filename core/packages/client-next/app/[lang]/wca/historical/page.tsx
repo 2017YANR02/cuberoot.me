@@ -16,6 +16,8 @@ import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelec
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import '../_historical_ranks.css';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 const EVENTS = [
   '333','222','444','555','666','777',
@@ -117,14 +119,16 @@ function HistoricalRanksPageInner() {
       <header className="wse-header">
         <div className="wse-header-row">
           <Link href={`/wca?lang=${i18n.language}`} className="wse-back">
-            <ChevronLeft size={16} /> {isZh ? '返回' : 'Back'}
+            <ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}
           </Link>
         </div>
-        <h1>{isZh ? '历史排名' : 'Historical Ranks'}</h1>
+        <h1>{tr({ zh: '历史排名', en: 'Historical Ranks',
+            zhHant: "歷史排名"
+        })}</h1>
         <p className="wse-subtitle">
-          {isZh
-            ? '查询任意年末截止时全世界 / 单国家累积最佳排名'
-            : 'Query end-of-year cumulative best rankings, worldwide or by country'}
+          {tr({ zh: '查询任意年末截止时全世界 / 单国家累积最佳排名', en: 'Query end-of-year cumulative best rankings, worldwide or by country',
+              zhHant: "查詢任意年末截止時全世界 / 單國家累積最佳排名"
+        })}
         </p>
       </header>
 
@@ -137,7 +141,7 @@ function HistoricalRanksPageInner() {
 
       <div className="wse-filters">
         <div className="wse-filter">
-          <label>{isZh ? '年份' : 'Year'}</label>
+          <label>{tr({ zh: '年份', en: 'Year' })}</label>
           <select value={year} onChange={(e) => updateParam('year', e.target.value)}>
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
@@ -146,20 +150,26 @@ function HistoricalRanksPageInner() {
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={(v) => updateParam('country', v)} />
 
         <div className="wse-filter">
-          <label>{isZh ? '类型' : 'Type'}</label>
+          <label>{tr({ zh: '类型', en: 'Type',
+              zhHant: "型別"
+        })}</label>
           <select
             value={type}
             onChange={(e) => updateParam('type', e.target.value)}
             disabled={!allowAverage && type === 'average'}
           >
-            <option value="single">{isZh ? '单次' : 'Single'}</option>
-            {allowAverage && <option value="average">{isZh ? '平均' : 'Average'}</option>}
+            <option value="single">{tr({ zh: '单次', en: 'Single',
+                zhHant: "單次"
+            })}</option>
+            {allowAverage && <option value="average">{tr({ zh: '平均', en: 'Average' })}</option>}
           </select>
         </div>
       </div>
 
       <div className="wse-table-wrapper">
-        {loading && <div className="wse-state">{isZh ? '加载中...' : 'Loading...'}</div>}
+        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...',
+            zhHant: "載入中..."
+        })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {data && !loading && (
           <>
@@ -172,9 +182,13 @@ function HistoricalRanksPageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{isZh ? '选手' : 'Person'}</th>
+                  <th>{tr({ zh: '选手', en: 'Person',
+                      zhHant: "選手"
+                })}</th>
                   <th className="wse-value-col">{isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average')}</th>
-                  {!country && <th>{isZh ? '国家' : 'Country'}</th>}
+                  {!country && <th>{tr({ zh: '国家', en: 'Country',
+                      zhHant: "國家"
+                })}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -182,7 +196,7 @@ function HistoricalRanksPageInner() {
                   <tr key={r.wcaId}>
                     <td className="wse-rank-col">{r.rank}</td>
                     <td>
-                      <Link prefetch={false} href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.wcaId}`}>
+                      <Link prefetch={false} href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${r.wcaId}`}>
                         {displayCuberName(r.name, isZh)}
                       </Link>
                     </td>

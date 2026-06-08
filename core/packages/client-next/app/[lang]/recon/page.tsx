@@ -31,6 +31,7 @@ import { EventIcon } from '@/components/EventIcon';
 import { ColFilter, ColFilterCloseContext } from '@/components/ColFilter/ColFilter';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import './recon.css';
+import { tr } from '@/i18n/tr';
 
 // ── 列配置——原版顺序 ──
 
@@ -82,7 +83,7 @@ function RangeFilter({ min, max, onChange }: RangeFilterProps) {
   //   空       → 无过滤
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  const placeholder = isZh ? '12.71 或 12~13' : '12.71 or 12~13';
+  const placeholder = tr({ zh: '12.71 或 12~13', en: '12.71 or 12~13' });
   const closePopover = useContext(ColFilterCloseContext);
   const display = (() => {
     if (min == null && max == null) return '';
@@ -737,8 +738,12 @@ export default function ReconListPage() {
             <Link
               href="/recon-about"
               className="recon-title-help"
-              title={isZh ? '这页是干啥的?' : 'What is this page?'}
-              aria-label={isZh ? '查看说明' : 'About this page'}
+              title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+                  zhHant: "這頁是幹啥的?"
+            })}
+              aria-label={tr({ zh: '查看说明', en: 'About this page',
+                  zhHant: "檢視說明"
+            })}
             >
               <HelpCircle size={18} strokeWidth={1.75} />
             </Link>

@@ -14,6 +14,7 @@ import * as THREE from 'three';
 import World from './cuber/world';
 import { exportSimVideo, type ExportProgress } from './sim_export';
 import './director-panel.css';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   getCanvas: () => HTMLCanvasElement | null;
@@ -59,7 +60,9 @@ export default function DirectorPanel({ getCanvas, getWorld, getRenderer, setup,
     if (!world || !renderer || exporting) return;
     setExporting(true);
     abortRef.current = { aborted: false };
-    setProgress({ phase: isZh ? '准备...' : 'Preparing...', pct: 0, framesDone: 0, framesTotal: 0 });
+    setProgress({ phase: tr({ zh: '准备...', en: 'Preparing...',
+        zhHant: "準備..."
+    }), pct: 0, framesDone: 0, framesTotal: 0 });
     // 等 overlay 挂载后 previewRef 就位
     await new Promise<void>(r => requestAnimationFrame(() => r()));
     try {
@@ -74,7 +77,9 @@ export default function DirectorPanel({ getCanvas, getWorld, getRenderer, setup,
       if (msg !== 'aborted') {
         console.error('[Sim Export] failed:', e);
         // eslint-disable-next-line no-alert
-        alert((isZh ? '导出失败:' : 'Export failed: ') + msg);
+        alert((tr({ zh: '导出失败:', en: 'Export failed: ',
+            zhHant: "匯出失敗:"
+        })) + msg);
       }
     } finally {
       setExporting(false);

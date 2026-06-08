@@ -53,6 +53,7 @@ import { compHref, prefetchComp } from '@/lib/comp-link';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { exportTrailVideo, isVideoExportSupported } from './_lib/trail_video';
 import './globe.css';
+import { tr } from '@/i18n/tr';
 
 type Mode = 'upcoming' | 'cuber' | 'wr';
 type Speed = 0.5 | 1 | 2;
@@ -534,7 +535,9 @@ const TW_CUSTOM_LABEL = 'tw-custom-label';
 const TW_CUSTOM_SOURCE = 'tw-custom';
 
 function patchMapTilerLang(map: maplibregl.Map, isZh: boolean) {
-  const twnLabel = isZh ? '台湾省' : 'Chinese Taipei';
+  const twnLabel = tr({ zh: '台湾省', en: 'Chinese Taipei',
+      zhHant: "臺灣省"
+});
   const rawBase: unknown[] = isZh
     ? ['coalesce', ['get', 'name:zh-Hans'], ['get', 'name:zh'], ['get', 'name:latin'], ['get', 'name']]
     : ['coalesce', ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']];
@@ -2504,12 +2507,18 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     const pts = drawPoints;
     const mode = drawMode;
     if (mode === 'measure' && pts.length >= 2) {
-      setSavedShapes([{ id: `m${Date.now()}`, type: 'measure', name: isZh ? '测距' : 'Measurement', points: pts, createdAt: Date.now() }]);
+      setSavedShapes([{ id: `m${Date.now()}`, type: 'measure', name: tr({ zh: '测距', en: 'Measurement',
+          zhHant: "測距"
+    }), points: pts, createdAt: Date.now() }]);
     } else if ((mode === 'path' || mode === 'polygon')) {
       if (asPolygon && pts.length >= 3) {
-        setSavedShapes([{ id: `g${Date.now()}`, type: 'polygon', name: isZh ? '多边形' : 'Polygon', points: pts, createdAt: Date.now() }]);
+        setSavedShapes([{ id: `g${Date.now()}`, type: 'polygon', name: tr({ zh: '多边形', en: 'Polygon',
+            zhHant: "多邊形"
+        }), points: pts, createdAt: Date.now() }]);
       } else if (pts.length >= 2) {
-        setSavedShapes([{ id: `p${Date.now()}`, type: 'path', name: isZh ? '路径' : 'Path', points: pts, createdAt: Date.now() }]);
+        setSavedShapes([{ id: `p${Date.now()}`, type: 'path', name: tr({ zh: '路径', en: 'Path',
+            zhHant: "路徑"
+        }), points: pts, createdAt: Date.now() }]);
       }
     }
     setDrawMode('none');
@@ -2703,7 +2712,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     const N = cuberComps.length;
     if (!map || N < 2 || recording) return;
     if (!isVideoExportSupported()) {
-      setError(isZh ? '当前浏览器不支持视频导出(需 Chrome / Edge / Safari 16.4+)' : 'Video export needs Chrome / Edge / Safari 16.4+');
+      setError(tr({ zh: '当前浏览器不支持视频导出(需 Chrome / Edge / Safari 16.4+)', en: 'Video export needs Chrome / Edge / Safari 16.4+',
+          zhHant: "當前瀏覽器不支援影片匯出(需 Chrome / Edge / Safari 16.4+)"
+    }));
       return;
     }
     exportAbortRef.current = false;
@@ -2822,7 +2833,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         setTimeout(() => URL.revokeObjectURL(url), 8000);
       }
     } catch {
-      if (!exportAbortRef.current) setError(isZh ? '视频导出失败' : 'Video export failed');
+      if (!exportAbortRef.current) setError(tr({ zh: '视频导出失败', en: 'Video export failed',
+          zhHant: "影片匯出失敗"
+    }));
     } finally {
       setRecording(false);
       setRecordProgress(0);
@@ -2916,7 +2929,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
       <div className={`globe-topbar ${mode === 'cuber' ? 'is-cuber' : ''}`}>
         {mode === 'cuber' ? (
           <>
-            <button className="cuber-back-btn" onClick={() => { setPlaying(false); setMode('upcoming'); }} title={isZh ? '返回工具栏' : 'Back to toolbar'} aria-label="Back">
+            <button className="cuber-back-btn" onClick={() => { setPlaying(false); setMode('upcoming'); }} title={tr({ zh: '返回工具栏', en: 'Back to toolbar',
+                zhHant: "返回工具欄"
+            })} aria-label="Back">
               <ArrowLeft size={16} strokeWidth={1.75} />
             </button>
             {cuber && (
@@ -2949,8 +2964,12 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                   className="cuber-step-btn"
                   onClick={() => { setPlaying(false); setCurrentIndex((i) => Math.max(0, i - 1)); }}
                   disabled={currentIndex <= 0}
-                  aria-label={isZh ? '上一场' : 'Previous'}
-                  title={isZh ? '上一场' : 'Previous'}
+                  aria-label={tr({ zh: '上一场', en: 'Previous',
+                      zhHant: "上一場"
+                })}
+                  title={tr({ zh: '上一场', en: 'Previous',
+                      zhHant: "上一場"
+                })}
                 >
                   <ChevronLeft size={14} strokeWidth={1.75} />
                 </button>
@@ -2970,8 +2989,12 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                   className="cuber-step-btn"
                   onClick={() => { setPlaying(false); setCurrentIndex((i) => Math.min(cuberComps.length - 1, i + 1)); }}
                   disabled={currentIndex >= cuberComps.length - 1}
-                  aria-label={isZh ? '下一场' : 'Next'}
-                  title={isZh ? '下一场' : 'Next'}
+                  aria-label={tr({ zh: '下一场', en: 'Next',
+                      zhHant: "下一場"
+                })}
+                  title={tr({ zh: '下一场', en: 'Next',
+                      zhHant: "下一場"
+                })}
                 >
                   <ChevronRight size={14} strokeWidth={1.75} />
                 </button>
@@ -2986,15 +3009,21 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                     setCurrentIndex(Number(e.target.value));
                   }}
                 />
-                <div className="cuber-view-toggle" title={isZh ? '视图切换' : 'View'}>
+                <div className="cuber-view-toggle" title={tr({ zh: '视图切换', en: 'View',
+                    zhHant: "檢視切換"
+                })}>
                   <button
                     className={`view-btn ${cuberView === 'arc' ? 'is-active' : ''}`}
                     onClick={() => setCuberView('arc')}
-                  >{isZh ? '轨迹' : 'Trail'}</button>
+                  >{tr({ zh: '轨迹', en: 'Trail',
+                      zhHant: "軌跡"
+                })}</button>
                   <button
                     className={`view-btn ${cuberView === 'pillar' ? 'is-active' : ''}`}
                     onClick={() => setCuberView('pillar')}
-                  >{isZh ? '柱状' : 'Pillar'}</button>
+                  >{tr({ zh: '柱状', en: 'Pillar',
+                      zhHant: "柱狀"
+                })}</button>
                 </div>
                 <div className="cuber-speed">
                   {([0.5, 1, 2] as Speed[]).map((s) => (
@@ -3011,8 +3040,12 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                   className="cuber-export-btn"
                   onClick={runTrailExport}
                   disabled={recording || cuberComps.length < 2}
-                  title={isZh ? '导出为视频' : 'Export as video'}
-                  aria-label={isZh ? '导出为视频' : 'Export as video'}
+                  title={tr({ zh: '导出为视频', en: 'Export as video',
+                      zhHant: "匯出為影片"
+                })}
+                  aria-label={tr({ zh: '导出为视频', en: 'Export as video',
+                      zhHant: "匯出為影片"
+                })}
                 >
                   <Download size={15} strokeWidth={1.75} />
                 </button>
@@ -3068,8 +3101,12 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           <Link
             href="/wca/globe-about"
             className="globe-title-help"
-            title={isZh ? '这页是干啥的?' : 'What is this page?'}
-            aria-label={isZh ? '查看说明' : 'About this page'}
+            title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
+                zhHant: "這頁是幹啥的?"
+            })}
+            aria-label={tr({ zh: '查看说明', en: 'About this page',
+                zhHant: "檢視說明"
+            })}
           >
             <HelpCircle size={16} strokeWidth={1.75} />
           </Link>
@@ -3080,7 +3117,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           <input
             className="globe-search-input"
             type="text"
-            placeholder={isZh ? '搜索比赛 / 选手 / 城市 / 地点' : 'Search comp / cuber / city / place'}
+            placeholder={tr({ zh: '搜索比赛 / 选手 / 城市 / 地点', en: 'Search comp / cuber / city / place',
+                zhHant: "搜尋比賽 / 選手 / 城市 / 地點"
+            })}
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }}
             onFocus={() => setSearchOpen(true)}
@@ -3102,19 +3141,25 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
             return (
               <div className="globe-search-results">
                 {compResults.length > 0 && (
-                  <div className="globe-search-group">{isZh ? '比赛' : 'Competitions'}</div>
+                  <div className="globe-search-group">{tr({ zh: '比赛', en: 'Competitions',
+                      zhHant: "比賽"
+                })}</div>
                 )}
                 {compResults.map((c) => (
                   <button key={c.id} className="globe-search-item" onClick={() => goToCompResult(c)}>
                     <span className="globe-search-item-main">
                       {localizeCompName(c.id, c.name)}
-                      <span className={`globe-search-item-tag globe-search-item-tag-${c.tag}`}>{c.tag === 'upcoming' ? (isZh ? '近期' : 'upcoming') : (isZh ? '历史' : 'past')}</span>
+                      <span className={`globe-search-item-tag globe-search-item-tag-${c.tag}`}>{c.tag === 'upcoming' ? (tr({ zh: '近期', en: 'upcoming' })) : (tr({ zh: '历史', en: 'past',
+                          zhHant: "歷史"
+                    }))}</span>
                     </span>
                     <span className="globe-search-item-sub">{c.city}, {countryName(c.country, isZh)} · {c.date}</span>
                   </button>
                 ))}
                 {personResults.length > 0 && (
-                  <div className="globe-search-group">{isZh ? '选手轨迹' : 'Cubers'}</div>
+                  <div className="globe-search-group">{tr({ zh: '选手轨迹', en: 'Cubers',
+                      zhHant: "選手軌跡"
+                })}</div>
                 )}
                 {personResults.map((p) => (
                   <button key={`u${p.wcaId}`} className="globe-search-item" onClick={() => goToPerson(p)}>
@@ -3126,7 +3171,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                   </button>
                 ))}
                 {placeResults.length > 0 && (
-                  <div className="globe-search-group">{isZh ? '地点' : 'Places'}</div>
+                  <div className="globe-search-group">{tr({ zh: '地点', en: 'Places',
+                      zhHant: "地點"
+                })}</div>
                 )}
                 {placeResults.map((r, i) => (
                   <button key={`p${i}`} className="globe-search-item" onClick={() => goToPlaceResult(r)}>
@@ -3135,9 +3182,13 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                   </button>
                 ))}
                 {searchLoading && compResults.length === 0 && personResults.length === 0 && placeResults.length === 0 && (
-                  <div className="globe-search-empty">{isZh ? '搜索中…' : 'Searching…'}</div>
+                  <div className="globe-search-empty">{tr({ zh: '搜索中…', en: 'Searching…',
+                      zhHant: "搜尋中…"
+                })}</div>
                 )}
-                {empty && <div className="globe-search-empty">{isZh ? '无结果' : 'No results'}</div>}
+                {empty && <div className="globe-search-empty">{tr({ zh: '无结果', en: 'No results',
+                    zhHant: "無結果"
+                })}</div>}
               </div>
             );
           })()}
@@ -3146,7 +3197,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         <button
           className={`topbar-tool-btn ${drawMode === 'path' || drawMode === 'polygon' ? 'is-active' : ''}`}
           onClick={() => (drawMode === 'path' || drawMode === 'polygon') ? cancelDrawing() : startDrawing('path')}
-          title={isZh ? '添加路径或多边形' : 'Add path or polygon'}
+          title={tr({ zh: '添加路径或多边形', en: 'Add path or polygon',
+              zhHant: "新增路徑或多邊形"
+        })}
           aria-label="Add path or polygon"
         >
           <svg width={16} height={16} viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -3160,7 +3213,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         <button
           className={`topbar-tool-btn ${drawMode === 'measure' ? 'is-active' : ''}`}
           onClick={() => drawMode === 'measure' ? cancelDrawing() : startDrawing('measure')}
-          title={isZh ? '测距' : 'Measure distance'}
+          title={tr({ zh: '测距', en: 'Measure distance',
+              zhHant: "測距"
+        })}
           aria-label="Measure"
         ><Ruler size={14} strokeWidth={1.75} /></button>
 
@@ -3179,7 +3234,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           </button>
         </div>
         {mode === 'upcoming' && (
-          <div className="density-style-picker" role="tablist" title={isZh ? '密度显示风格' : 'Density style'}>
+          <div className="density-style-picker" role="tablist" title={tr({ zh: '密度显示风格', en: 'Density style',
+              zhHant: "密度顯示風格"
+        })}>
             {(['scale', 'heat', 'country'] as DensityStyle[]).map((s) => {
               const Icon = s === 'scale' ? Layers : s === 'heat' ? Flame : Globe;
               return (
@@ -3200,22 +3257,26 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           </div>
         )}
         {mode === 'upcoming' && (
-          <label className="include-past-toggle" title={isZh ? '在地图上叠加显示往期比赛（蓝色）' : 'Overlay past competitions (blue)'}>
+          <label className="include-past-toggle" title={tr({ zh: '在地图上叠加显示往期比赛（蓝色）', en: 'Overlay past competitions (blue)',
+              zhHant: "在地圖上疊加顯示往期比賽（藍色）"
+        })}>
             <input type="checkbox" checked={includePast} onChange={(e) => setIncludePast(e.target.checked)} />
             <span>{t('globe.includePast')}</span>
           </label>
         )}
         {mode === 'upcoming' && includePast && (
-          <div className="month-range" title={isZh ? '按年月过滤比赛' : 'Filter competitions by month'}>
+          <div className="month-range" title={tr({ zh: '按年月过滤比赛', en: 'Filter competitions by month',
+              zhHant: "按年月過濾比賽"
+        })}>
             <button
               ref={monthFromBtnRef}
               type="button"
               className={`date-range-pick${monthRange ? '' : ' is-empty'}`}
               onClick={() => setMonthPickerOpen((o) => o === 'from' ? null : 'from')}
               aria-expanded={monthPickerOpen === 'from'}
-              aria-label={isZh ? '起始年月' : 'From month'}
+              aria-label={tr({ zh: '起始年月', en: 'From month' })}
             >
-              {monthRange ? monthRange[0] : (isZh ? '起始' : 'From')}
+              {monthRange ? monthRange[0] : (tr({ zh: '起始', en: 'From' }))}
             </button>
             <span className="date-range-sep">~</span>
             <button
@@ -3224,9 +3285,13 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
               className={`date-range-pick${monthRange ? '' : ' is-empty'}`}
               onClick={() => setMonthPickerOpen((o) => o === 'to' ? null : 'to')}
               aria-expanded={monthPickerOpen === 'to'}
-              aria-label={isZh ? '结束年月' : 'To month'}
+              aria-label={tr({ zh: '结束年月', en: 'To month',
+                  zhHant: "結束年月"
+            })}
             >
-              {monthRange ? monthRange[1] : (isZh ? '结束' : 'To')}
+              {monthRange ? monthRange[1] : (tr({ zh: '结束', en: 'To',
+                  zhHant: "結束"
+            }))}
             </button>
             {monthRange && (
               <ClearButton onClick={() => setMonthRange(null)} isZh={isZh} variant="standalone" />
@@ -3268,7 +3333,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
       {drawMode !== 'none' && drawPoints.length === 0 && (
         <div ref={tooltipElRef} className="draw-cursor-tip" style={{ opacity: 0 }}>
           <span className="draw-cursor-tip-plus">+</span>
-          {isZh ? '添加第一个点' : 'Add first point'}
+          {tr({ zh: '添加第一个点', en: 'Add first point',
+              zhHant: "新增第一個點"
+        })}
         </div>
       )}
 
@@ -3291,15 +3358,29 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           : (drawing && (kind === 'path' || kind === 'polygon') && points.length >= 3 ? polygonAreaKm2(points) : null);
 
         const title = isMeasure
-          ? (isZh ? '测距' : 'Measure distance')
-          : (isZh ? '路径或多边形' : 'Path or polygon');
+          ? (tr({ zh: '测距', en: 'Measure distance',
+              zhHant: "測距"
+        }))
+          : (tr({ zh: '路径或多边形', en: 'Path or polygon',
+              zhHant: "路徑或多邊形"
+        }));
         const subtitle = drawing
           ? (isMeasure
-              ? (isZh ? '点击地图依次添加测量点' : 'Click points on the map to measure distance')
-              : (isZh ? '点击地图依次添加点来绘制路径或多边形' : 'Click points on the map to draw a path or polygon'))
+              ? (tr({ zh: '点击地图依次添加测量点', en: 'Click points on the map to measure distance',
+                  zhHant: "點選地圖依次新增測量點"
+            }))
+              : (tr({ zh: '点击地图依次添加点来绘制路径或多边形', en: 'Click points on the map to draw a path or polygon',
+                  zhHant: "點選地圖依次新增點來繪製路徑或多邊形"
+            })))
           : (isMeasure
-              ? (isZh ? '已保存的测量' : 'Saved measurement')
-              : (isPolygon ? (isZh ? '已保存的多边形' : 'Saved polygon') : (isZh ? '已保存的路径' : 'Saved path')));
+              ? (tr({ zh: '已保存的测量', en: 'Saved measurement',
+                  zhHant: "已儲存的測量"
+            }))
+              : (isPolygon ? (tr({ zh: '已保存的多边形', en: 'Saved polygon',
+                  zhHant: "已儲存的多邊形"
+            })) : (tr({ zh: '已保存的路径', en: 'Saved path',
+                zhHant: "已儲存的路徑"
+            }))));
 
         const closeAction = drawing ? cancelDrawing : () => setSavedShapes([]);
 
@@ -3326,14 +3407,18 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                     className="draw-card-icon-btn"
                     onClick={() => setDrawPoints([])}
                     disabled={drawPoints.length === 0}
-                    title={isZh ? '清除当前所有点' : 'Restart'}
+                    title={tr({ zh: '清除当前所有点', en: 'Restart',
+                        zhHant: "清除當前所有點"
+                    })}
                     aria-label="Restart"
                   ><RotateCw size={14} strokeWidth={1.75} /></button>
                   <button
                     className="draw-card-icon-btn"
                     onClick={() => setDrawPoints((arr) => arr.slice(0, -1))}
                     disabled={drawPoints.length === 0}
-                    title={isZh ? '撤销' : 'Undo'}
+                    title={tr({ zh: '撤销', en: 'Undo',
+                        zhHant: "撤銷"
+                    })}
                     aria-label="Undo"
                   ><Undo2 size={14} strokeWidth={1.75} /></button>
                 </>
@@ -3341,7 +3426,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
               <button
                 className="draw-card-icon-btn"
                 onClick={closeAction}
-                title={isZh ? '关闭' : 'Close'}
+                title={tr({ zh: '关闭', en: 'Close',
+                    zhHant: "關閉"
+                })}
                 aria-label="Close"
               ><X size={14} strokeWidth={1.75} /></button>
             </div>
@@ -3349,12 +3436,18 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
             <div className="draw-card-subtitle">{subtitle}</div>
 
             <div className="draw-card-section">
-              <div className="draw-card-section-label">{isMeasure ? (isZh ? '总距离' : 'Total distance') : (isZh ? '周长' : 'Perimeter')}</div>
+              <div className="draw-card-section-label">{isMeasure ? (tr({ zh: '总距离', en: 'Total distance',
+                  zhHant: "總距離"
+            })) : (tr({ zh: '周长', en: 'Perimeter',
+                zhHant: "周長"
+            }))}</div>
               <div className="draw-card-section-value">{fmtDistance(total, isZh)}</div>
             </div>
             {!isMeasure && (
               <div className="draw-card-section">
-                <div className="draw-card-section-label">{isZh ? '面积' : 'Area'}</div>
+                <div className="draw-card-section-label">{tr({ zh: '面积', en: 'Area',
+                    zhHant: "面積"
+                })}</div>
                 <div className="draw-card-section-value">{area !== null ? fmtArea(area, isZh) : '—'}</div>
               </div>
             )}
@@ -3365,12 +3458,16 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                   className="draw-card-save"
                   onClick={() => finishDrawing(false)}
                   disabled={drawPoints.length < 2}
-                >{isZh ? '存为路径' : 'Save as path'}</button>
+                >{tr({ zh: '存为路径', en: 'Save as path',
+                    zhHant: "存為路徑"
+                })}</button>
                 <button
                   className="draw-card-save draw-card-save-secondary"
                   onClick={() => finishDrawing(true)}
                   disabled={drawPoints.length < 3}
-                >{isZh ? '存为多边形' : 'Save as polygon'}</button>
+                >{tr({ zh: '存为多边形', en: 'Save as polygon',
+                    zhHant: "存為多邊形"
+                })}</button>
               </div>
             )}
             {drawing && isMeasure && (
@@ -3379,7 +3476,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                   className="draw-card-save"
                   onClick={() => finishDrawing(false)}
                   disabled={drawPoints.length < 2}
-                >{isZh ? '保存测距' : 'Save measurement'}</button>
+                >{tr({ zh: '保存测距', en: 'Save measurement',
+                    zhHant: "儲存測距"
+                })}</button>
               </div>
             )}
           </div>
@@ -3415,7 +3514,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
               <button
                 className="cuber-skipped-retry"
                 onClick={() => loadCuberPath(cuber)}
-                title={isZh ? '重试' : 'Retry'}
+                title={tr({ zh: '重试', en: 'Retry',
+                    zhHant: "重試"
+                })}
               >↻</button>
             </div>
           )}
@@ -3431,8 +3532,8 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           <button
             className="cuber-record-cancel"
             onClick={cancelTrailExport}
-            aria-label={isZh ? '取消' : 'Cancel'}
-            title={isZh ? '取消' : 'Cancel'}
+            aria-label={tr({ zh: '取消', en: 'Cancel' })}
+            title={tr({ zh: '取消', en: 'Cancel' })}
           >
             <X size={14} strokeWidth={2} />
           </button>
@@ -3443,9 +3544,13 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         className="theme-toggle-floating"
         onClick={() => setTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'satellite' : 'dark')}
         title={
-          theme === 'dark' ? (isZh ? '切到浅色' : 'Switch to light')
-          : theme === 'light' ? (isZh ? '切到卫星' : 'Switch to satellite')
-          : (isZh ? '切到深色' : 'Switch to dark')
+          theme === 'dark' ? (tr({ zh: '切到浅色', en: 'Switch to light',
+              zhHant: "切到淺色"
+        }))
+          : theme === 'light' ? (tr({ zh: '切到卫星', en: 'Switch to satellite',
+              zhHant: "切到衛星"
+        }))
+          : (tr({ zh: '切到深色', en: 'Switch to dark' }))
         }
         aria-label="Toggle theme"
       >
@@ -3460,7 +3565,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         {navPopoverOpen && (
           <div className="nav-popover">
             <div className="nav-popover-row">
-              <label>{isZh ? '俯仰' : 'Tilt'}</label>
+              <label>{tr({ zh: '俯仰', en: 'Tilt' })}</label>
               <input
                 type="range"
                 min={0}
@@ -3472,7 +3577,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
               <span className="nav-popover-val">{Math.round(pitch)}°</span>
             </div>
             <div className="nav-popover-row">
-              <label>{isZh ? '朝向' : 'Heading'}</label>
+              <label>{tr({ zh: '朝向', en: 'Heading' })}</label>
               <input
                 type="range"
                 min={-180}
@@ -3489,7 +3594,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           <button
             className={`map-ctrl-btn ${navPopoverOpen ? 'is-active' : ''}`}
             onClick={() => setNavPopoverOpen((v) => !v)}
-            title={isZh ? '朝向与俯仰' : 'Heading and tilt controls'}
+            title={tr({ zh: '朝向与俯仰', en: 'Heading and tilt controls',
+                zhHant: "朝向與俯仰"
+            })}
             aria-label="Heading and tilt"
             aria-expanded={navPopoverOpen}
           ><Compass size={14} strokeWidth={1.75} /></button>
@@ -3499,10 +3606,16 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
             onClick={() => setProjection(p => p === 'globe' ? 'mercator' : 'globe')}
             title={
               !hasWebGL2 && projection === 'mercator'
-                ? (isZh ? '当前浏览器不支持 3D 地球（需要 WebGL2）' : '3D globe requires WebGL2 (unsupported)')
+                ? (tr({ zh: '当前浏览器不支持 3D 地球（需要 WebGL2）', en: '3D globe requires WebGL2 (unsupported)',
+                    zhHant: "當前瀏覽器不支援 3D 地球（需要 WebGL2）"
+                }))
                 : projection === 'globe'
-                  ? (isZh ? '切换到 2D' : 'Switch to 2D')
-                  : (isZh ? '切换到 3D' : 'Switch to 3D')
+                  ? (tr({ zh: '切换到 2D', en: 'Switch to 2D',
+                      zhHant: "切換到 2D"
+                }))
+                  : (tr({ zh: '切换到 3D', en: 'Switch to 3D',
+                      zhHant: "切換到 3D"
+                }))
             }
             aria-label={projection === 'globe' ? 'Switch to 2D' : 'Switch to 3D'}
           >{projection === 'globe'
@@ -3512,13 +3625,15 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           <button
             className="map-ctrl-btn"
             onClick={() => mapRef.current?.zoomOut()}
-            title={isZh ? '缩小' : 'Zoom out'}
+            title={tr({ zh: '缩小', en: 'Zoom out',
+                zhHant: "縮小"
+            })}
             aria-label="Zoom out"
           ><Minus size={14} strokeWidth={2} /></button>
           <button
             className="map-ctrl-btn"
             onClick={() => mapRef.current?.zoomIn()}
-            title={isZh ? '放大' : 'Zoom in'}
+            title={tr({ zh: '放大', en: 'Zoom in' })}
             aria-label="Zoom in"
           ><Plus size={14} strokeWidth={2} /></button>
         </div>
@@ -3527,7 +3642,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
       <div className="globe-statusbar">
         <div className="globe-statusbar-left">
           <span className="globe-statusbar-attrib">
-            <span className="globe-statusbar-attrib-trigger">ⓘ {isZh ? '数据来源' : 'attributions'}</span>
+            <span className="globe-statusbar-attrib-trigger">ⓘ {tr({ zh: '数据来源', en: 'attributions',
+                zhHant: "資料來源"
+            })}</span>
             <span className="globe-statusbar-attrib-tip">
               {theme === 'satellite'
                 ? <>© <a href="https://nasa.gov" target="_blank" rel="noopener noreferrer">NASA</a> Blue Marble · <a href="https://www.esri.com" target="_blank" rel="noopener noreferrer">Esri</a>, <a href="https://www.maxar.com" target="_blank" rel="noopener noreferrer">Maxar</a>, Earthstar Geographics · labels © <a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">OpenFreeMap</a> · <a href="https://openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors · stars © <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer">Solar System Scope</a> CC BY 4.0</>
@@ -3539,7 +3656,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         <div
           className={`globe-statusbar-right is-${mobileSlot}`}
           onClick={() => setMobileSlot((s) => (s === 'stats' ? 'coords' : 'stats'))}
-          title={isZh ? '点击切换显示' : 'tap to switch'}
+          title={tr({ zh: '点击切换显示', en: 'tap to switch',
+              zhHant: "點選切換顯示"
+        })}
         >
           {mode === 'upcoming' && (
             <span className="globe-statusbar-stats">
@@ -3548,12 +3667,16 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                 <>
                   <span className="globe-statusbar-stats-sep">·</span>
                   {pastLoading && !pastComps
-                    ? <span>{isZh ? '加载往期…' : 'loading past…'}</span>
-                    : <span>{pastStats.comps} {isZh ? '往期' : 'past'}</span>}
+                    ? <span>{tr({ zh: '加载往期…', en: 'loading past…',
+                        zhHant: "載入往期…"
+                    })}</span>
+                    : <span>{pastStats.comps} {tr({ zh: '往期', en: 'past' })}</span>}
                 </>
               )}
               <span className="globe-statusbar-stats-sep">·</span>
-              <span>{includePast ? combinedCountries : upcomingStats.countries} {isZh ? '国家' : 'countries'}</span>
+              <span>{includePast ? combinedCountries : upcomingStats.countries} {tr({ zh: '国家', en: 'countries',
+                  zhHant: "國家"
+            })}</span>
             </span>
           )}
           <span className="globe-statusbar-coords">
@@ -3602,7 +3725,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           open={pickerOpen}
           onSelect={onSelectCuber}
           onClose={() => setPickerOpen(false)}
-          placeholder={isZh ? '搜索选手或 WCA ID...' : 'Search cuber or WCA ID...'}
+          placeholder={tr({ zh: '搜索选手或 WCA ID...', en: 'Search cuber or WCA ID...',
+              zhHant: "搜尋選手或 WCA ID..."
+        })}
         />
       )}
 

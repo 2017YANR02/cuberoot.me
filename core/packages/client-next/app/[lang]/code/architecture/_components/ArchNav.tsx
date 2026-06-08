@@ -3,12 +3,17 @@
 import Link from '@/components/AppLink';
 import { usePathname } from 'next/navigation';
 import { useLang } from '../../_lib/Lang';
+import i18n from '@/i18n/i18n-client';
 
 const TABS = [
-  { path: '/code/architecture',           zh: '概览',    en: 'Overview'   },
-  { path: '/code/architecture/flow',      zh: '请求流程', en: 'Flow'       },
-  { path: '/code/architecture/decisions', zh: '技术决策', en: 'Decisions'  },
-  { path: '/code/architecture/history',   zh: '历程',    en: 'History'    },
+  { path: '/code/architecture',           zh: '概览',    en: 'Overview'
+},
+  { path: '/code/architecture/flow',      zh: '请求流程', en: 'Flow'
+},
+  { path: '/code/architecture/decisions', zh: '技术决策', en: 'Decisions'
+},
+  { path: '/code/architecture/history',   zh: '历程',    en: 'History'
+},
 ] as const;
 
 export default function ArchNav() {
@@ -38,7 +43,7 @@ export default function ArchNav() {
             aria-selected={isActive(tab.path)}
             className={`arch-nav-tab${isActive(tab.path) ? ' active' : ''}`}
           >
-            {lang === 'zh' ? tab.zh : tab.en}
+            {(i18n.language.startsWith('zh') ? tab.zh : tab.en)}
           </Link>
         ))}
       </div>

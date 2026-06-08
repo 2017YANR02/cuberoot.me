@@ -14,6 +14,7 @@ import {
 } from '../engine/calc_engine';
 import { isWR } from '../engine/wr_data';
 import { recordAndUpdate, nextCell, prevCell, navigateToCell, tryAutoAdvance, shouldAutoAdvance } from './Numpad';
+import { tr } from '@/i18n/tr';
 
 // NOTE: 头像按钮状态 — 由 CalcPage 管理，通过 props 传入
 export interface AvatarState {
@@ -311,7 +312,9 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
               className={`me-btn${avatarState?.[p]?.active ? ' me-active' : ''}`}
               title={avatarState?.[p]?.active
                 ? (isZh ? `切换回世界第 ${p + 1} 名` : `Switch back to World #${p + 1}`)
-                : (isZh ? '搜索选手' : 'Search for a player')}
+                : (tr({ zh: '搜索选手', en: 'Search for a player',
+                    zhHant: "搜尋選手"
+                }))}
               data-loading={avatarState?.[p]?.loading && !avatarState[p].active
                 ? avatarState[p].loading
                 : undefined}
@@ -338,7 +341,9 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                 type="text"
                 inputMode="none"
                 disabled={!enabled}
-                placeholder={isZh ? '目标' : 'Target'}
+                placeholder={tr({ zh: '目标', en: 'Target',
+                    zhHant: "目標"
+                })}
                 defaultValue={(() => {
                   const ta = state.getTargetAvg(state.seedOn + p);
                   return ta > 0 ? formatTime(ta, false, isMove, true) : '';

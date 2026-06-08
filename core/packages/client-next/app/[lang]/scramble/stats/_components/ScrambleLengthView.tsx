@@ -18,6 +18,8 @@ import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags
 import { ALL_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { statsUrl } from '@/lib/stats-base';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 interface GluedScramble { ci: string; cn: string; r: string; g: string; n: number; tok: string }
 interface ScrambleAnomaly { ci: string; cn: string; lens: number[]; n: number }
@@ -56,8 +58,10 @@ interface MergeGroup {
   subZh: string; subEn: string;
 }
 const MERGE_GROUPS: MergeGroup[] = [
-  { rep: '333', members: ['333', '333oh'], zh: '三阶速拧', en: '3×3 (speed)', subZh: '含单手', subEn: 'incl. OH' },
-  { rep: '333bf', members: ['333bf', '333mbf'], zh: '三阶盲拧', en: '3×3 (blind)', subZh: '含多盲', subEn: 'incl. MBLD' },
+  { rep: '333', members: ['333', '333oh'], zh: '三阶速拧', en: '3×3 (speed)', subZh: '含单手', subEn: 'incl. OH'
+},
+  { rep: '333bf', members: ['333bf', '333mbf'], zh: '三阶盲拧', en: '3×3 (blind)', subZh: '含多盲', subEn: 'incl. MBLD'
+},
 ];
 const groupForRep = (id: string) => MERGE_GROUPS.find((g) => g.rep === id);
 // Non-representative members hidden from the selector while merged.
@@ -92,7 +96,9 @@ function summarize(counts: Record<string, number>) {
 
 const eventName = (id: string, isZh: boolean) => (isZh ? EVENT_ZH[id] : EVENT_EN[id]) || id;
 const unitLabel = (unit: string, isZh: boolean) =>
-  unit === 'twists' ? (isZh ? '拧次' : 'twists') : (isZh ? '步' : 'moves');
+  unit === 'twists' ? (tr({ zh: '拧次', en: 'twists',
+      zhHant: "擰次"
+})) : (tr({ zh: '步', en: 'moves' }));
 
 export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
   const [data, setData] = useState<EventLengthsJson | null>(null);
@@ -164,7 +170,7 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
     () => (merged ? groupForRep(event) : undefined),
     [merged, event],
   );
-  const curName = activeGroup ? (isZh ? activeGroup.zh : activeGroup.en) : eventName(event, isZh);
+  const curName = activeGroup ? ((i18n.language.startsWith('zh') ? activeGroup.zh : activeGroup.en)) : eventName(event, isZh);
   const curSub = activeGroup ? (isZh ? activeGroup.subZh : activeGroup.subEn) : null;
 
   // Synthesize the merged distribution (sum member counts) or use the raw event.
@@ -215,15 +221,21 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
   }, [selectedBin, examples, activeGroup, event]);
 
   if (error) {
-    return <div className="scramble-stats-error">{isZh ? '加载失败' : 'Load failed'}: {error}</div>;
+    return <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed',
+        zhHant: "載入失敗"
+    })}: {error}</div>;
   }
   if (!data) {
-    return <div className="scramble-stats-loading">{isZh ? '加载中…' : 'Loading…'}</div>;
+    return <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…',
+        zhHant: "載入中…"
+    })}</div>;
   }
 
   const totalN = data.meta.total_scrambles.toLocaleString();
   const isBootstrap = !!(data.meta as { bootstrap?: boolean }).bootstrap;
-  const unitNote = isZh ? '步数;SQ1 计拧次,多盲每方块单独计' : 'moves; Square-1 in twists, multi-blind counted per cube';
+  const unitNote = tr({ zh: '步数;SQ1 计拧次,多盲每方块单独计', en: 'moves; Square-1 in twists, multi-blind counted per cube',
+      zhHant: "步數;SQ1 計擰次,多盲每方塊單獨計"
+});
   const source = isBootstrap
     ? (isZh
       ? `示例样本 ${totalN} 条打乱(取自部分比赛,完整全时段数据每日刷新后生效);按项目统计打乱记号长度(${unitNote})。`
@@ -248,14 +260,20 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
           <PillToggle
             value={merged}
             onChange={setMerged}
-            onLabel={isZh ? '已合并' : 'Merged'}
-            offLabel={isZh ? '分开' : 'Split'}
-            ariaLabel={isZh ? '合并打乱相同的项目' : 'Merge events that share scrambles'}
+            onLabel={tr({ zh: '已合并', en: 'Merged',
+                zhHant: "已合併"
+            })}
+            offLabel={tr({ zh: '分开', en: 'Split',
+                zhHant: "分開"
+            })}
+            ariaLabel={tr({ zh: '合并打乱相同的项目', en: 'Merge events that share scrambles',
+                zhHant: "合併打亂相同的專案"
+            })}
           />
           <span className="scramble-len-merge-hint">
-            {isZh
-              ? '三阶速拧与单手、三盲与多盲打乱相同'
-              : '3×3 speed + OH, and 3BLD + MBLD share scrambles'}
+            {tr({ zh: '三阶速拧与单手、三盲与多盲打乱相同', en: '3×3 speed + OH, and 3BLD + MBLD share scrambles',
+                zhHant: "三階速擰與單手、三盲與多盲打亂相同"
+            })}
           </span>
         </div>
       </div>
@@ -274,16 +292,18 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
               hideLegendColors
               onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
               onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
-              yModeLabel={yMode === 'percent' ? (isZh ? '百分比' : '%') : (isZh ? '数量' : 'count')}
+              yModeLabel={yMode === 'percent' ? (tr({ zh: '百分比', en: '%' })) : (tr({ zh: '数量', en: 'count',
+                  zhHant: "數量"
+            }))}
             />
           </div>
 
           {event === 'minx' && cur.glued && cur.glued.length > 0 && (
             <div className="scramble-len-footnote">
               <span>
-                {isZh
-                  ? '注：极个别五魔打乱原文漏了空格，本页按 move 字母表计数而非空格，故全部记为 77 步。漏空格的打乱：'
-                  : 'Note: a handful of megaminx scrambles have a missing space in the raw WCA data; counted by move rather than whitespace, so all read 77. Affected scramble(s): '}
+                {tr({ zh: '注：极个别五魔打乱原文漏了空格，本页按 move 字母表计数而非空格，故全部记为 77 步。漏空格的打乱：', en: 'Note: a handful of megaminx scrambles have a missing space in the raw WCA data; counted by move rather than whitespace, so all read 77. Affected scramble(s): ',
+                    zhHant: "注：極個別五魔打亂原文漏了空格，本頁按 move 字母表計數而非空格，故全部記為 77 步。漏空格的打亂："
+                })}
               </span>
               {cur.glued.map((gl, i) => {
                 const iso2 = compFlagIso2(gl.ci);
@@ -295,7 +315,9 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
                       {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                       {localizeCompName(gl.ci, gl.cn, isZh)}
                     </Link>
-                    {' '}{compSourceLine(gl.r, gl.g, gl.n, isZh)}（<code>{gl.tok}</code> {isZh ? '应为' : '→'} <code>{fixed}</code>）
+                    {' '}{compSourceLine(gl.r, gl.g, gl.n, isZh)}（<code>{gl.tok}</code> {tr({ zh: '应为', en: '→',
+                        zhHant: "應為"
+                    })} <code>{fixed}</code>）
                   </span>
                 );
               })}
@@ -327,9 +349,9 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
 
           {event === '333ft' && (
             <div className="scramble-len-footnote">
-              {isZh
-                ? '注：脚拧与三阶 / 单手用的是同一套打乱程序(TNoodle 三阶随机状态),但脚拧 2019 年已被 WCA 废止,样本集中在较早的 TNoodle 版本,分布略偏长(众数 20 步,三阶 / 单手为 19),故未并入「三阶(速拧)」,单独列出。'
-                : 'Note: With-Feet uses the same scramble program as 3×3 / One-Handed (TNoodle 3×3 random state), but it was retired by the WCA in 2019, so its sample sits on older TNoodle versions and skews ~1 move longer (mode 20 vs 19). It is therefore kept separate from the merged 3×3 (speed) group.'}
+              {tr({ zh: '注：脚拧与三阶 / 单手用的是同一套打乱程序(TNoodle 三阶随机状态),但脚拧 2019 年已被 WCA 废止,样本集中在较早的 TNoodle 版本,分布略偏长(众数 20 步,三阶 / 单手为 19),故未并入「三阶(速拧)」,单独列出。', en: 'Note: With-Feet uses the same scramble program as 3×3 / One-Handed (TNoodle 3×3 random state), but it was retired by the WCA in 2019, so its sample sits on older TNoodle versions and skews ~1 move longer (mode 20 vs 19). It is therefore kept separate from the merged 3×3 (speed) group.',
+                  zhHant: "注：腳擰與三階 / 單手用的是同一套打亂程式(TNoodle 三階隨機狀態),但腳擰 2019 年已被 WCA 廢止,樣本集中在較早的 TNoodle 版本,分佈略偏長(眾數 20 步,三階 / 單手為 19),故未併入「三階(速擰)」,單獨列出。"
+            })}
             </div>
           )}
 
@@ -337,13 +359,19 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
             <div className="scramble-stats-panel">
               <div className="scramble-stats-panel-title">
                 {curName}
-                {curSub && <span className="scramble-len-sub">{curSub}</span>} {isZh ? '摘要统计' : 'Summary stats'}
+                {curSub && <span className="scramble-len-sub">{curSub}</span>} {tr({ zh: '摘要统计', en: 'Summary stats',
+                    zhHant: "摘要統計"
+                })}
                 <span className="scramble-len-unit">({unitLabel(cur.unit, isZh)})</span>
               </div>
               <div className="scramble-stats-stat-grid">
-                <Cell label={isZh ? '均值' : 'mean'} value={stats.mean.toFixed(2)} />
-                <Cell label={isZh ? '中位数' : 'median'} value={String(stats.median)} />
-                <Cell label={isZh ? '样本' : 'samples'} value={stats.total.toLocaleString()} />
+                <Cell label={tr({ zh: '均值', en: 'mean' })} value={stats.mean.toFixed(2)} />
+                <Cell label={tr({ zh: '中位数', en: 'median',
+                    zhHant: "中位數"
+                })} value={String(stats.median)} />
+                <Cell label={tr({ zh: '样本', en: 'samples',
+                    zhHant: "樣本"
+                })} value={stats.total.toLocaleString()} />
               </div>
             </div>
           )}
@@ -352,15 +380,21 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
             <div className="scramble-stats-panel-title">
               {selectedBin !== null
                 ? (isZh ? `${selectedBin} ${unitLabel(cur.unit, isZh)}打乱样例` : `${selectedBin}-${cur.unit} examples`)
-                : (isZh ? '极端打乱样例' : 'Extreme scrambles')}
+                : (tr({ zh: '极端打乱样例', en: 'Extreme scrambles',
+                    zhHant: "極端打亂樣例"
+                }))}
             </div>
             {selectedBin === null && (
               <div className="scramble-stats-examples-hint">
-                {isZh ? '点击直方图的柱子查看该长度的真实比赛打乱(含极长 / 极短)。' : 'Click a bar to see real competition scrambles of that length (including the extreme long / short ones).'}
+                {tr({ zh: '点击直方图的柱子查看该长度的真实比赛打乱(含极长 / 极短)。', en: 'Click a bar to see real competition scrambles of that length (including the extreme long / short ones).',
+                    zhHant: "點選直方圖的柱子檢視該長度的真實比賽打亂(含極長 / 極短)。"
+                })}
               </div>
             )}
             {selectedBin !== null && examplesLoading && (
-              <div className="scramble-stats-examples-hint">{isZh ? '加载中…' : 'Loading…'}</div>
+              <div className="scramble-stats-examples-hint">{tr({ zh: '加载中…', en: 'Loading…',
+                  zhHant: "載入中…"
+            })}</div>
             )}
             {selectedBin !== null && !examplesLoading && curExamples && curExamples.length > 0 && (
               <ul className="scramble-stats-examples-list">
@@ -405,7 +439,9 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
               </ul>
             )}
             {selectedBin !== null && !examplesLoading && (!curExamples || curExamples.length === 0) && (
-              <div className="scramble-stats-examples-hint">{isZh ? '此长度无样例' : 'No examples for this length'}</div>
+              <div className="scramble-stats-examples-hint">{tr({ zh: '此长度无样例', en: 'No examples for this length',
+                  zhHant: "此長度無樣例"
+            })}</div>
             )}
           </div>
         </>

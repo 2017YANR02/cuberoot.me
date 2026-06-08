@@ -15,6 +15,8 @@ import { detectBluetoothEnv, envAdvice } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle } from '../_lib/bluetooth';
 import { Bluetooth, Battery, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { tr } from '@/i18n/tr';
+import i18n from '@/i18n/i18n-client';
 
 interface Props {
   isZh: boolean;
@@ -103,14 +105,16 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
       >
         <h2 id={titleId}>
           <Bluetooth size={20} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-          {isZh ? '智能魔方' : 'Smart cube'}
+          {tr({ zh: '智能魔方', en: 'Smart cube',
+              zhHant: "智慧魔方"
+        })}
         </h2>
 
         {!supported && advice && (
           <>
             <div className="modal-section bt-warn">
-              <h3 className="bt-warn-title">{isZh ? advice.title.zh : advice.title.en}</h3>
-              <p>{isZh ? advice.body.zh : advice.body.en}</p>
+              <h3 className="bt-warn-title">{(i18n.language.startsWith('zh') ? advice.title.zh : advice.title.en)}</h3>
+              <p>{(i18n.language.startsWith('zh') ? advice.body.zh : advice.body.en)}</p>
             </div>
             {advice.url && (
               <div className="modal-section">
@@ -126,9 +130,9 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
               </div>
             )}
             <div className="modal-section bt-tip">
-              <p>{isZh
-                ? '提示：在 Bluefy 里访问本页后，把它"添加到主屏幕"就能像 App 一样随时打开。'
-                : 'Tip: once Bluefy loads this page, "Add to Home Screen" so it opens like a native app.'}</p>
+              <p>{tr({ zh: '提示：在 Bluefy 里访问本页后，把它"添加到主屏幕"就能像 App 一样随时打开。', en: 'Tip: once Bluefy loads this page, "Add to Home Screen" so it opens like a native app.',
+                  zhHant: "提示：在 Bluefy 裡訪問本頁後，把它\"新增到主螢幕\"就能像 App 一樣隨時開啟。"
+            })}</p>
             </div>
           </>
         )}
@@ -137,18 +141,22 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
           <div className="modal-section bt-tip" style={{ marginBottom: 8 }}>
             <p style={{ color: '#9fd9ad' }}>
               <Check size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-              {isZh ? '检测到 Bluefy — Web Bluetooth 已启用 ✓' : 'Bluefy detected — Web Bluetooth ready ✓'}
+              {tr({ zh: '检测到 Bluefy — Web Bluetooth 已启用 ✓', en: 'Bluefy detected — Web Bluetooth ready ✓',
+                  zhHant: "檢測到 Bluefy — Web Bluetooth 已啟用 ✓"
+            })}
             </p>
           </div>
         )}
 
         {supported && !connected && (
           <div className="modal-section">
-            <p>{isZh
-              ? '点击下方按钮，从浏览器选择你的智能魔方。'
-              : 'Click below to pick your smart cube from the browser picker.'}</p>
+            <p>{tr({ zh: '点击下方按钮，从浏览器选择你的智能魔方。', en: 'Click below to pick your smart cube from the browser picker.',
+                zhHant: "點選下方按鈕，從瀏覽器選擇你的智慧魔方。"
+            })}</p>
             <div style={{ fontSize: 12, color: '#888', marginTop: 6 }}>
-              <div style={{ marginBottom: 4 }}>{isZh ? '当前支持：' : 'Supported:'}</div>
+              <div style={{ marginBottom: 4 }}>{tr({ zh: '当前支持：', en: 'Supported:',
+                  zhHant: "當前支援："
+            })}</div>
               <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55 }}>
                 {(isZh ? SUPPORTED_CUBES_ZH : SUPPORTED_CUBES_EN).map((c) => (
                   <li key={c}>{c}</li>
@@ -161,7 +169,9 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
               onClick={() => { void onConnect(); }}
             >
               <Bluetooth size={14} />
-              <span>{isZh ? '搜索并连接' : 'Search & connect'}</span>
+              <span>{tr({ zh: '搜索并连接', en: 'Search & connect',
+                  zhHant: "搜尋並連線"
+            })}</span>
             </button>
           </div>
         )}
@@ -170,39 +180,51 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
           <>
             <div className="modal-section bt-status" style={statusGridStyle}>
               <div className="bt-row" style={statusRowStyle}>
-                <span className="bt-label">{isZh ? '设备' : 'Device'}</span>
+                <span className="bt-label">{tr({ zh: '设备', en: 'Device',
+                    zhHant: "裝置"
+                })}</span>
                 <span className="bt-value">{cube.status.deviceName}</span>
               </div>
               <div className="bt-row" style={statusRowStyle}>
-                <span className="bt-label">{isZh ? '型号' : 'Brand'}</span>
+                <span className="bt-label">{tr({ zh: '型号', en: 'Brand',
+                    zhHant: "型號"
+                })}</span>
                 <span className="bt-value">{cube.status.brand}</span>
               </div>
               <div className="bt-row" style={statusRowStyle}>
                 <span className="bt-label">
                   <Battery size={14} style={{ verticalAlign: 'middle' }} />{' '}
-                  {isZh ? '电量' : 'Battery'}
+                  {tr({ zh: '电量', en: 'Battery',
+                      zhHant: "電量"
+                })}
                 </span>
                 <span className="bt-value">
                   {cube.status.battery !== null ? `${cube.status.battery}%` : '—'}
                 </span>
               </div>
               <div className="bt-row" style={statusRowStyle}>
-                <span className="bt-label">{isZh ? '状态' : 'State'}</span>
+                <span className="bt-label">{tr({ zh: '状态', en: 'State',
+                    zhHant: "狀態"
+                })}</span>
                 <span className={`bt-value ${cube.solved ? 'ok' : 'unsolved'}`}>
                   {cube.solved
-                    ? <><Check size={14} style={{ verticalAlign: 'middle' }} /> {isZh ? '已还原' : 'Solved'}</>
-                    : <><X size={14} style={{ verticalAlign: 'middle' }} /> {isZh ? '未还原' : 'Unsolved'}</>}
+                    ? <><Check size={14} style={{ verticalAlign: 'middle' }} /> {tr({ zh: '已还原', en: 'Solved',
+                        zhHant: "已還原"
+                    })}</>
+                    : <><X size={14} style={{ verticalAlign: 'middle' }} /> {tr({ zh: '未还原', en: 'Unsolved',
+                        zhHant: "未還原"
+                    })}</>}
                 </span>
               </div>
               <div className="bt-row" style={statusRowStyle}>
-                <span className="bt-label">{isZh ? '最近一步' : 'Last move'}</span>
+                <span className="bt-label">{tr({ zh: '最近一步', en: 'Last move' })}</span>
                 <span className="bt-value mono">{cube.lastMove ?? '—'}</span>
               </div>
             </div>
             <div className="modal-section bt-tip">
-              <p>{isZh
-                ? '把魔方还原到出厂状态后点击下方"重置状态"，然后开始打乱 → 计时 → 还原，魔方还原瞬间会自动停止计时。'
-                : 'Set the cube to its solved state, click "Reset state", then scramble → time → solve. The timer auto-stops when the cube is back to solved.'}</p>
+              <p>{tr({ zh: '把魔方还原到出厂状态后点击下方"重置状态"，然后开始打乱 → 计时 → 还原，魔方还原瞬间会自动停止计时。', en: 'Set the cube to its solved state, click "Reset state", then scramble → time → solve. The timer auto-stops when the cube is back to solved.',
+                  zhHant: "把魔方還原到出廠狀態後點選下方\"重置狀態\"，然後開始打亂 → 計時 → 還原，魔方還原瞬間會自動停止計時。"
+            })}</p>
             </div>
           </>
         )}
@@ -214,19 +236,25 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
           {supported && connected && (
             <>
               <button style={actionBtnStyle} onClick={() => cube.resetState()}>
-                <RotateCcw size={14} /> {isZh ? '重置状态' : 'Reset state'}
+                <RotateCcw size={14} /> {tr({ zh: '重置状态', en: 'Reset state',
+                    zhHant: "重置狀態"
+                })}
               </button>
               <button
                 className="danger"
                 style={actionBtnStyle}
                 onClick={() => { cube.disconnect(); onClose(); }}
               >
-                {isZh ? '断开' : 'Disconnect'}
+                {tr({ zh: '断开', en: 'Disconnect',
+                    zhHant: "斷開"
+                })}
               </button>
             </>
           )}
           <button className="primary" style={actionBtnStyle} onClick={onClose}>
-            {isZh ? '关闭' : 'Close'}
+            {tr({ zh: '关闭', en: 'Close',
+                zhHant: "關閉"
+            })}
           </button>
         </div>
       </div>

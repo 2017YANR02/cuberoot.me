@@ -2,6 +2,7 @@
 
 import { useState, useMemo, type ReactElement } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
+import { tr } from '@/i18n/tr';
 
 // ── 2×2 matrix helpers (column-major: [[a,c],[b,d]] stored as [a,b,c,d]) ─────
 // We store as [m00,m10,m01,m11] i.e. row-major: row0=[m00,m01], row1=[m10,m11]
@@ -612,13 +613,13 @@ function GroupTiler() {
         <div className="gt-result-row">
           <div className="gt-result-label"><L zh="有镜像线" en="has mirrors" /></div>
           <div className="gt-result-val" style={{ color: group.hasMirror ? 'var(--green)' : 'var(--ink-faint)' }}>
-            {group.hasMirror ? (lang === 'zh' ? '是' : 'yes') : (lang === 'zh' ? '否' : 'no')}
+            {group.hasMirror ? (tr({ zh: '是', en: 'yes' })) : (tr({ zh: '否', en: 'no' }))}
           </div>
         </div>
         <div className="gt-result-row">
           <div className="gt-result-label"><L zh="有滑移反射" en="has glide refl" /></div>
           <div className="gt-result-val" style={{ color: group.hasGlide ? 'var(--green)' : 'var(--ink-faint)' }}>
-            {group.hasGlide ? (lang === 'zh' ? '是' : 'yes') : (lang === 'zh' ? '否' : 'no')}
+            {group.hasGlide ? (tr({ zh: '是', en: 'yes' })) : (tr({ zh: '否', en: 'no' }))}
           </div>
         </div>
       </div>
@@ -740,7 +741,11 @@ function RestrictionDial() {
         {/* on/off lattice label */}
         <text x={rex + 8} y={rey + 4} fontSize={10} fontFamily="var(--mono)"
           fill={onLattice ? cols[2] : cols[3]}>
-          {onLattice ? (lang === 'zh' ? '在格点' : 'on lattice') : (lang === 'zh' ? '不在格点' : 'off lattice')}
+          {onLattice ? (tr({ zh: '在格点', en: 'on lattice',
+              zhHant: "在格點"
+        })) : (tr({ zh: '不在格点', en: 'off lattice',
+            zhHant: "不在格點"
+        }))}
         </text>
       </svg>
 
@@ -753,8 +758,8 @@ function RestrictionDial() {
           <div className="gt-result-label"><L zh="是否为整数" en="integer?" /></div>
           <div className="gt-result-val" style={{ color: allowed ? 'var(--green)' : 'var(--warn)', fontWeight: 600 }}>
             {allowed
-              ? `${lang === 'zh' ? '是' : 'yes'} (= ${traceRounded})`
-              : `${lang === 'zh' ? '否' : 'no'} (≈ ${traceStr.slice(0, 7)})`}
+              ? `${tr({ zh: '是', en: 'yes' })} (= ${traceRounded})`
+              : `${tr({ zh: '否', en: 'no' })} (≈ ${traceStr.slice(0, 7)})`}
           </div>
         </div>
         <div className="gt-result-row">
@@ -922,9 +927,15 @@ function OrbifoldCalculator() {
         </span>
         <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-dim)', marginLeft: 12 }}>
           {lang === 'zh' ? verdictZh : verdict}
-          {verdict === 'wallpaper' ? (lang === 'zh' ? ' — 是墙纸群' : ' — valid wallpaper group') :
-           verdict === 'spherical' ? (lang === 'zh' ? ' — 球面 / 多面体群' : ' — spherical / polyhedral') :
-           (lang === 'zh' ? ' — 双曲平面群' : ' — hyperbolic plane group')}
+          {verdict === 'wallpaper' ? (tr({ zh: ' — 是墙纸群', en: ' — valid wallpaper group',
+              zhHant: " — 是牆紙群"
+        })) :
+           verdict === 'spherical' ? (tr({ zh: ' — 球面 / 多面体群', en: ' — spherical / polyhedral',
+               zhHant: " — 球面 / 多面體群"
+        })) :
+           (tr({ zh: ' — 双曲平面群', en: ' — hyperbolic plane group',
+               zhHant: " — 雙曲平面群"
+        }))}
         </span>
         <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-faint)', marginTop: 4 }}>
           χ = 2 − cost = {chi.toFixed(6)}
@@ -1083,10 +1094,10 @@ export default function WallpaperGroups() {
                 <td style={{ color: 'var(--ink-dim)', fontSize: 12 }}>{g.lattice}</td>
                 <td style={{ textAlign: 'center', fontFamily: 'var(--mono)' }}>{g.maxRot}</td>
                 <td style={{ textAlign: 'center', color: g.hasMirror ? 'var(--green)' : 'var(--ink-faint)' }}>
-                  {g.hasMirror ? (lang === 'zh' ? '是' : 'y') : '—'}
+                  {g.hasMirror ? (tr({ zh: '是', en: 'y' })) : '—'}
                 </td>
                 <td style={{ textAlign: 'center', color: g.hasGlide ? 'var(--green)' : 'var(--ink-faint)' }}>
-                  {g.hasGlide ? (lang === 'zh' ? '是' : 'y') : '—'}
+                  {g.hasGlide ? (tr({ zh: '是', en: 'y' })) : '—'}
                 </td>
               </tr>
             ))}
