@@ -6,11 +6,10 @@
  * admin 看到行内 ✏️/🗑/⬆⬇ 按钮 + 每个 group 顶端 + Add。
  *
  * 1:1 port from packages/client/src/pages/sites/SitesPage.tsx (Vite SPA).
- * useSearchParams shape differs in next/navigation (no setter tuple) — use
- * useRouter().replace(pathname + querystring) to write.
+ * URL state (?g group, ?q query) is managed via nuqs (history: 'replace').
  */
 import { Suspense, useMemo, useCallback, useState, useEffect } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { Search, AlertTriangle, Pencil, Trash2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
 import Fuse from 'fuse.js';
@@ -165,18 +164,12 @@ function SitesPageInner() {
   useEffect(() => setMounted(true), []);
   const admin = mounted && isAdmin();
 
-  const params = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-  const group = ((params?.get('g') as GroupId) || DEFAULT_GROUP) as GroupFilter;
-  const query = params?.get('q') || '';
-
-  const setParams = useCallback(
-    (next: URLSearchParams) => {
-      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-    },
-    [router, pathname],
+  const [params, setQuery] = useQueryStates(
+    { g: parseAsString, q: parseAsString },
+    { history: 'replace', scroll: false },
   );
+  const group = ((params.g as GroupId) || DEFAULT_GROUP) as GroupFilter;
+  const query = params.q || '';
 
   const [sites, setSites] = useState<Site[] | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
@@ -193,11 +186,9 @@ function SitesPageInner() {
 
   const setGroup = useCallback(
     (g: GroupFilter) => {
-      const next = new URLSearchParams(params?.toString() ?? '');
-      if (g === DEFAULT_GROUP) next.delete('g'); else next.set('g', g);
-      setParams(next);
+      void setQuery({ g: g === DEFAULT_GROUP ? null : g });
     },
-    [params, setParams],
+    [setQuery],
   );
 
   const [inputValue, setInputValue] = useState(query);
@@ -211,12 +202,10 @@ function SitesPageInner() {
     if (inputValue === query) return;
     if (composing) return;
     const t = setTimeout(() => {
-      const next = new URLSearchParams(params?.toString() ?? '');
-      if (inputValue) next.set('q', inputValue); else next.delete('q');
-      setParams(next);
+      void setQuery({ q: inputValue || null });
     }, 150);
     return () => clearTimeout(t);
-  }, [inputValue, composing, query, params, setParams]);
+  }, [inputValue, composing, query, setQuery]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};

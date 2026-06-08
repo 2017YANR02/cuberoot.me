@@ -3,7 +3,7 @@
 // Ported from packages/client/src/pages/wca_stats/RecordsPage.tsx.
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -48,29 +48,28 @@ function RecordsPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('纪录', 'Records');
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
+  const [q, setQ] = useQueryStates(
+    {
+      show: parseAsString,
+      region: parseAsString,
+      event: parseAsString,
+    },
+    { history: 'replace', scroll: false },
+  );
 
-  const show: Show = params.get('show') === 'mixed' ? 'mixed' : 'history';
-  const region = params.get('region') || 'world';
-  const event = params.get('event') || '';
+  const show: Show = q.show === 'mixed' ? 'mixed' : 'history';
+  const region = q.region || 'world';
+  const event = q.event || '';
 
   useEffect(() => {
-    if (params.get('show') !== 'history' && params.get('show') !== 'mixed') {
-      const next = new URLSearchParams(params.toString());
-      next.set('show', 'history');
-      const qs = next.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname);
+    if (q.show !== 'history' && q.show !== 'mixed') {
+      setQ({ show: 'history' });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params]);
+  }, [q.show]);
 
   const update = (k: string, v: string) => {
-    const next = new URLSearchParams(params.toString());
-    if (v) next.set(k, v); else next.delete(k);
-    const qs = next.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
+    setQ({ [k]: v || null } as Parameters<typeof setQ>[0]);
   };
 
   const [bundle, setBundle] = useState<Bundle | null>(null);

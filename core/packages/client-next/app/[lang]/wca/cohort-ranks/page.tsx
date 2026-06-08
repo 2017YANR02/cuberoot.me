@@ -3,7 +3,7 @@
 // Ported from packages/client/src/pages/wca_stats/CohortRanksPage.tsx.
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, HelpCircle } from 'lucide-react';
 import Paginator from '@/components/wca-stats/Paginator';
@@ -35,23 +35,27 @@ function CohortRanksPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('届别排名', 'Cohort Ranks');
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
+  const [q, setQ] = useQueryStates(
+    {
+      cohort: parseAsString,
+      event: parseAsString,
+      type: parseAsString,
+      country: parseAsString,
+      page: parseAsString,
+      size: parseAsString,
+    },
+    { history: 'replace', scroll: false },
+  );
   const currentYear = new Date().getUTCFullYear();
-  const cohort = parseInt(params.get('cohort') ?? String(currentYear), 10);
-  const event = params.get('event') ?? '333';
-  const type = (params.get('type') ?? 'single') as 'single' | 'average';
-  const country = params.get('country') ?? '';
-  const page = parseInt(params.get('page') ?? '1', 10);
-  const size = parseInt(params.get('size') ?? '100', 10);
+  const cohort = parseInt(q.cohort ?? String(currentYear), 10);
+  const event = q.event ?? '333';
+  const type = (q.type ?? 'single') as 'single' | 'average';
+  const country = q.country ?? '';
+  const page = parseInt(q.page ?? '1', 10);
+  const size = parseInt(q.size ?? '100', 10);
 
   const update = (k: string, v: string, resetPage = true) => {
-    const next = new URLSearchParams(params.toString());
-    if (v) next.set(k, v); else next.delete(k);
-    if (resetPage) next.delete('page');
-    const qs = next.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
+    setQ({ [k]: v || null, ...(resetPage ? { page: null } : {}) } as Parameters<typeof setQ>[0]);
   };
 
   const [data, setData] = useState<{ rows: Row[]; total: number } | null>(null);

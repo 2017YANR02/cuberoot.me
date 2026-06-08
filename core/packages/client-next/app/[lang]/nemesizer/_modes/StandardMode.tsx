@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { useQueryStates, parseAsString } from 'nuqs';
 import NemesizerPersonPicker from '../_components/NemesizerPersonPicker';
 import PersonCell from '../_components/PersonCell';
 import {
@@ -28,22 +28,29 @@ type Order = 'id' | 'name' | 'nemeses' | 'nemesized';
 type Direction = 'up' | 'down';
 
 export default function StandardMode({ isZh }: Props) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
+  // 选手 / 筛选 / 排序均为页内瞬时态 → replace,不堆历史
+  const [q, setQ] = useQueryStates(
+    {
+      person: parseAsString,
+      view: parseAsString,
+      scope: parseAsString,
+      show: parseAsString,
+      order: parseAsString,
+      direction: parseAsString,
+    },
+    { history: 'replace', scroll: false },
+  );
 
-  const person = (params.get('person') ?? '').toUpperCase();
-  const view = (params.get('view') as RelationView) || 'myNem';
-  const scope = (params.get('scope') as Scope) || 'world';
-  const showMode = (params.get('show') as ShowMode) || 'people';
-  const order = (params.get('order') as Order) || 'id';
-  const direction = (params.get('direction') as Direction) || 'up';
+  const person = (q.person ?? '').toUpperCase();
+  const view = (q.view as RelationView) || 'myNem';
+  const scope = (q.scope as Scope) || 'world';
+  const showMode = (q.show as ShowMode) || 'people';
+  const order = (q.order as Order) || 'id';
+  const direction = (q.direction as Direction) || 'up';
 
-  const setParam = useCallback((key: string, value: string) => {
-    const next = new URLSearchParams(params.toString());
-    if (value) next.set(key, value); else next.delete(key);
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-  }, [params, router, pathname]);
+  const setParam = (key: string, value: string) => {
+    setQ({ [key]: value || null });
+  };
   const pick = (wcaId: string) => setParam('person', wcaId);
 
   const [data, setData] = useState<NemesesResponse | null>(null);

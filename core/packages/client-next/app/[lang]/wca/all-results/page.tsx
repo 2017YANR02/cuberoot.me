@@ -9,7 +9,7 @@
  */
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, HelpCircle } from 'lucide-react';
 import Paginator from '@/components/wca-stats/Paginator';
@@ -62,62 +62,71 @@ function AllResultsPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('全部成绩', 'All Results');
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
+  const [query, setQuery] = useQueryStates(
+    {
+      show: parseAsString,
+      event: parseAsString,
+      type: parseAsString,
+      country: parseAsString,
+      year: parseAsString,
+      month: parseAsString,
+      q: parseAsString,
+      page: parseAsString,
+      size: parseAsString,
+      basis: parseAsString,
+    },
+    { history: 'replace', scroll: false },
+  );
 
-  const show: ShowMode = (params.get('show') === 'persons') ? 'persons' : 'results';
-  const event = params.get('event') ?? '333';
-  const type = (params.get('type') ?? 'single') as 'single' | 'average';
-  const country = params.get('country') ?? '';
+  const show: ShowMode = (query.show === 'persons') ? 'persons' : 'results';
+  const event = query.event ?? '333';
+  const type = (query.type ?? 'single') as 'single' | 'average';
+  const country = query.country ?? '';
   const currentYear = new Date().getUTCFullYear();
-  const yearRaw = parseInt(params.get('year') ?? '0', 10);
+  const yearRaw = parseInt(query.year ?? '0', 10);
   const year = show === 'persons' && yearRaw === 0 ? currentYear : yearRaw;
-  const month = parseInt(params.get('month') ?? '0', 10);
-  const qFromUrl = params.get('q') ?? '';
-  const page = parseInt(params.get('page') ?? '1', 10);
-  const size = parseInt(params.get('size') ?? '100', 10);
+  const month = parseInt(query.month ?? '0', 10);
+  const qFromUrl = query.q ?? '';
+  const page = parseInt(query.page ?? '1', 10);
+  const size = parseInt(query.size ?? '100', 10);
   // 口径:截至(到所选年末的累积最佳)/ 当期(仅所选年或月内)。
   // 默认随模式:选手=截至(走快照秒出),成绩=当期(现状)。
-  const basisRaw = params.get('basis');
+  const basisRaw = query.basis;
   const basis: 'period' | 'cumulative' =
     basisRaw === 'cumulative' || basisRaw === 'period'
       ? basisRaw
       : (show === 'persons' ? 'cumulative' : 'period');
 
-  const pushSearch = (next: URLSearchParams) => {
-    const qs = next.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
-  };
-
   const update = (k: string, v: string, resetPage = true) => {
-    const next = new URLSearchParams(params.toString());
-    if (v) next.set(k, v); else next.delete(k);
-    if (resetPage) next.delete('page');
-    if (k === 'event' && v === '333mbf' && next.get('type') === 'average') {
-      next.delete('type');
+    const patch: Record<string, string | null> = { [k]: v || null };
+    if (resetPage) patch.page = null;
+    if (k === 'event' && v === '333mbf' && type === 'average') {
+      patch.type = null;
     }
-    pushSearch(next);
+    setQuery(patch as Parameters<typeof setQuery>[0]);
   };
 
   const handleBasisChange = (v: 'period' | 'cumulative') => {
-    const next = new URLSearchParams(params.toString());
-    next.set('basis', v);
-    if (v === 'cumulative') next.delete('month');   // 截至按年末,月份无意义
-    next.delete('page');
-    pushSearch(next);
+    setQuery({
+      basis: v,
+      ...(v === 'cumulative' ? { month: null } : {}),   // 截至按年末,月份无意义
+      page: null,
+    });
   };
 
   const handleShowChange = (v: ShowMode) => {
-    const next = new URLSearchParams(params.toString());
-    if (v === 'results') next.delete('show'); else next.set('show', v);
     if (v === 'persons') {
-      next.delete('month');
-      next.delete('q');
-      if (!next.get('year') || next.get('year') === '0') next.set('year', String(currentYear));
+      const keepYear = query.year && query.year !== '0';
+      setQuery({
+        show: 'persons',
+        month: null,
+        q: null,
+        ...(keepYear ? {} : { year: String(currentYear) }),
+        page: null,
+      });
+    } else {
+      setQuery({ show: null, page: null });
     }
-    next.delete('page');
-    pushSearch(next);
   };
 
   const [qInput, setQInput] = useState(qFromUrl);
@@ -126,10 +135,7 @@ function AllResultsPageInner() {
     if (show !== 'results') return;
     if (qInput === qFromUrl) return;
     const t = setTimeout(() => {
-      const next = new URLSearchParams(params.toString());
-      if (qInput) next.set('q', qInput); else next.delete('q');
-      next.delete('page');
-      pushSearch(next);
+      setQuery({ q: qInput || null, page: null });
     }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
