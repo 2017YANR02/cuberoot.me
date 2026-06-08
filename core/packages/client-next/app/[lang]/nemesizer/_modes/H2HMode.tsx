@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { useQueryStates, parseAsString } from 'nuqs';
 import NemesizerPersonPicker from '../_components/NemesizerPersonPicker';
 import PersonCell from '../_components/PersonCell';
 import { formatWcaResultK } from '@/lib/wca-format-result';
@@ -13,19 +13,19 @@ interface Props { isZh: boolean; }
 type Show = 'ranks' | 'results';
 
 export default function H2HMode({ isZh }: Props) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
+  // 两位选手 + 展示口径均为页内瞬时态 → replace,不堆历史
+  const [q, setQ] = useQueryStates(
+    { p1: parseAsString, p2: parseAsString, show: parseAsString },
+    { history: 'replace', scroll: false },
+  );
 
-  const p1 = (params.get('p1') ?? '').toUpperCase();
-  const p2 = (params.get('p2') ?? '').toUpperCase();
-  const show: Show = (params.get('show') as Show) || 'results';
+  const p1 = (q.p1 ?? '').toUpperCase();
+  const p2 = (q.p2 ?? '').toUpperCase();
+  const show: Show = (q.show as Show) || 'results';
 
-  const setParam = useCallback((key: string, value: string) => {
-    const next = new URLSearchParams(params.toString());
-    if (value) next.set(key, value); else next.delete(key);
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-  }, [params, router, pathname]);
+  const setParam = (key: string, value: string) => {
+    setQ({ [key]: value || null });
+  };
 
   const [data, setData] = useState<H2HResponse | null>(null);
   const [err, setErr] = useState<string | null>(null);

@@ -1,8 +1,8 @@
 'use client';
 
-import { Suspense, useCallback } from 'react';
+import { Suspense } from 'react';
 import Link from '@/components/AppLink';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { HelpCircle } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -14,24 +14,18 @@ import StatsMode from './_modes/StatsMode';
 import './nemesizer.css';
 
 type Mode = 'standard' | 'h2h' | 'whatif' | 'stats';
+const MODES: Mode[] = ['standard', 'h2h', 'whatif', 'stats'];
 
 function NemesizerInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   useDocumentTitle('宿敌', 'Nemesizer');
 
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
-  const mode = (params.get('mode') as Mode) || 'standard';
-
-  const setMode = useCallback((m: Mode) => {
-    const next = new URLSearchParams();
-    const lang = params.get('lang');
-    if (lang) next.set('lang', lang);
-    next.set('mode', m);
-    router.push(`${pathname}?${next.toString()}`, { scroll: false });
-  }, [params, router, pathname]);
+  // mode 是导航态(在 4 个视图间切换)→ push 进历史,后退能返回上一视图
+  const [mode, setMode] = useQueryState(
+    'mode',
+    parseAsStringEnum<Mode>(MODES).withDefault('standard').withOptions({ history: 'push', scroll: false }),
+  );
 
   return (
     <div className="nemesizer-page">

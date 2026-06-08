@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryStates, parseAsString } from 'nuqs';
 import NemesizerPersonPicker from '../_components/NemesizerPersonPicker';
 import PersonCell from '../_components/PersonCell';
 import { NEMESIZER_EVENTS } from '@cuberoot/shared/nemesizer-format';
@@ -18,12 +18,14 @@ interface Props { isZh: boolean; }
 const DEBOUNCE_MS = 300;
 
 export default function WhatIfMode({ isZh }: Props) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
+  // 选手 + 视图为页内瞬时态 → replace,不堆历史(假设排名 overrides 是本地 state,不入 URL)
+  const [q, setQ] = useQueryStates(
+    { person: parseAsString, view: parseAsString },
+    { history: 'replace', scroll: false },
+  );
 
-  const person = (params.get('person') ?? '').toUpperCase();
-  const view: RelationView = (params.get('view') as RelationView) || 'myNem';
+  const person = (q.person ?? '').toUpperCase();
+  const view: RelationView = (q.view as RelationView) || 'myNem';
   const [overrides, setOverrides] = useState<Map<number, string>>(new Map());
 
   const override = useMemo(() => {
@@ -35,11 +37,9 @@ export default function WhatIfMode({ isZh }: Props) {
     return m;
   }, [overrides]);
 
-  const setParam = useCallback((k: string, v: string) => {
-    const n = new URLSearchParams(params.toString());
-    if (v) n.set(k, v); else n.delete(k);
-    router.replace(`${pathname}?${n.toString()}`, { scroll: false });
-  }, [params, router, pathname]);
+  const setParam = (k: string, v: string) => {
+    setQ({ [k]: v || null });
+  };
 
   const [personData, setPersonData] = useState<PersonDetailResponse | null>(null);
   const [personErr, setPersonErr] = useState<string | null>(null);

@@ -6,8 +6,8 @@
  * Ported 1:1 from packages/client/src/pages/visualcube/VisualCubeEditorPage.tsx.
  *
  * Changes vs Vite:
- *   - react-router useSearchParams/setSearchParams → next/navigation useSearchParams + useRouter().replace
- *     (wrapped in <Suspense> per Next 16 client-component rule).
+ *   - react-router useSearchParams/setSearchParams → nuqs useQueryStates
+ *     (history: 'replace'; wrapped in <Suspense> per Next 16 client-component rule).
  *   - react-router Link → next/link.
  *   - useDocumentTitle imported from @/hooks/useDocumentTitle.
  *   - InteractiveCubeNet reused from app/scramble/solver/_InteractiveCubeNet.tsx.
@@ -27,7 +27,7 @@
  */
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Copy, Check, Download, RotateCcw, Plus, Trash2 } from 'lucide-react';
@@ -407,6 +407,33 @@ function snapRotationOnVariantBoundary(s: EditorState, partial: Partial<EditorSt
   return next;
 }
 
+// All query keys this page owns. `puzzle` is a read-only legacy alias for `pzl`
+// (handled in readInitialFromUrl); the rest are produced by stateToParams. Every
+// key is registered with nuqs so it can be both seeded and cleared on write.
+const URL_KEYS = {
+  pzl: parseAsString,
+  puzzle: parseAsString,
+  size: parseAsString,
+  alg: parseAsString,
+  case: parseAsString,
+  arw: parseAsString,
+  ac: parseAsString,
+  view: parseAsString,
+  stage: parseAsString,
+  sch: parseAsString,
+  r: parseAsString,
+  bg: parseAsString,
+  cc: parseAsString,
+  co: parseAsString,
+  fo: parseAsString,
+  dist: parseAsString,
+} as const;
+// Keys that stateToParams can emit (excludes the read-only `puzzle` alias).
+const URL_WRITE_KEYS = [
+  'pzl', 'size', 'alg', 'case', 'arw', 'ac', 'view', 'stage',
+  'sch', 'r', 'bg', 'cc', 'co', 'fo', 'dist',
+] as const;
+
 function readInitialFromUrl(params: URLSearchParams): EditorState {
   const get = (k: string) => params.get(k);
   const num = (k: string, fallback: number, min?: number, max?: number) => {
@@ -696,15 +723,21 @@ function VisualCubeEditorPageInner() {
   useDocumentTitle('魔方可视化', 'VisualCube');
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  // nuqs owns every URL key this page reads/writes (history: 'replace').
+  const [urlParams, setUrlParams] = useQueryStates(URL_KEYS, { history: 'replace', scroll: false });
+
+  // Rebuild a URLSearchParams from the current nuqs values — feeds the unchanged
+  // readInitialFromUrl / stateToParams comparison logic below.
+  const paramsToSearch = useCallback((p: typeof urlParams): URLSearchParams => {
+    const sp = new URLSearchParams();
+    for (const [k, v] of Object.entries(p)) if (v != null) sp.set(k, v);
+    return sp;
+  }, []);
 
   // Seed once from URL — afterwards URL is a derived view of state.
   const initialRef = useRef<EditorState | null>(null);
   if (initialRef.current === null) {
-    // Construct a URLSearchParams from the read-only Next searchParams object
-    // (it implements toString()).
-    initialRef.current = readInitialFromUrl(new URLSearchParams(searchParams.toString()));
+    initialRef.current = readInitialFromUrl(paramsToSearch(urlParams));
   }
   const [state, setState] = useState<EditorState>(initialRef.current);
 
@@ -799,15 +832,24 @@ function VisualCubeEditorPageInner() {
     onPointerCancel: onPreviewPointerUp,
   };
 
-  // Sync state → URL (replace). Compare against the live search-string snapshot to
-  // avoid a no-op router call which restarts the history entry.
+  // Sync state → URL (replace). Build the full owned-key patch (value or null to
+  // delete) from stateToParams, then compare against the live nuqs snapshot to
+  // avoid a no-op write. Note: nuqs manages keys individually and may order them
+  // differently from stateToParams' custom order — share/API URLs are still built
+  // from stateToParams directly, so only the address-bar key order can differ.
   useEffect(() => {
-    const next = stateToParams(state).toString();
-    const curr = searchParams.toString();
-    if (next !== curr) {
-      router.replace(`/visualcube${next ? '?' + next : ''}`, { scroll: false });
+    const sp = stateToParams(state);
+    const patch: Record<string, string | null> = {};
+    let changed = false;
+    for (const k of URL_WRITE_KEYS) {
+      const nextV = sp.get(k);
+      patch[k] = nextV;
+      if ((urlParams[k] ?? null) !== (nextV ?? null)) changed = true;
     }
-  }, [state, searchParams, router]);
+    // Normalize the read-only `puzzle` alias away once a write happens.
+    if (urlParams.puzzle != null) { patch.puzzle = null; changed = true; }
+    if (changed) void setUrlParams(patch);
+  }, [state, urlParams, setUrlParams]);
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
 

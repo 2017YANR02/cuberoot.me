@@ -7,7 +7,7 @@
  */
 import { Suspense, useEffect, useState } from 'react';
 import Link from '@/components/AppLink';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, HelpCircle } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -45,18 +45,20 @@ function GrandSlamPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('大满贯', 'Grand Slam');
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
-  const event = params.get('event') ?? '';
-  const onlyFirst = params.get('onlyFirst') === '1';
-  const hasWr = params.get('hasWr') === '1';
+  const [q, setQ] = useQueryStates(
+    {
+      event: parseAsString,
+      onlyFirst: parseAsString,
+      hasWr: parseAsString,
+    },
+    { history: 'replace', scroll: false },
+  );
+  const event = q.event ?? '';
+  const onlyFirst = q.onlyFirst === '1';
+  const hasWr = q.hasWr === '1';
 
   const setParam = (k: string, v: string) => {
-    const next = new URLSearchParams(params.toString());
-    if (v) next.set(k, v); else next.delete(k);
-    const qs = next.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
+    setQ({ [k]: v || null } as Parameters<typeof setQ>[0]);
   };
 
   const [rows, setRows] = useState<GsRow[]>([]);

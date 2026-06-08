@@ -3,7 +3,7 @@
 // Ported from packages/client/src/pages/wca_stats/HistoricalRanksPage.tsx.
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import { Flag } from '@/components/Flag';
@@ -52,24 +52,28 @@ function HistoricalRanksPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('历史排名', 'Historical Ranks');
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const [q, setQ] = useQueryStates(
+    {
+      event: parseAsString,
+      year: parseAsString,
+      country: parseAsString,
+      type: parseAsString,
+      page: parseAsString,
+      size: parseAsString,
+    },
+    { history: 'replace', scroll: false },
+  );
 
   const currentYear = new Date().getUTCFullYear();
-  const event = searchParams.get('event') || '333';
-  const year = parseInt(searchParams.get('year') || String(currentYear), 10);
-  const country = searchParams.get('country') || '';
-  const type = (searchParams.get('type') || 'single') as 'single' | 'average';
-  const page = parseInt(searchParams.get('page') || '1', 10);
-  const size = parseInt(searchParams.get('size') || '100', 10);
+  const event = q.event || '333';
+  const year = parseInt(q.year || String(currentYear), 10);
+  const country = q.country || '';
+  const type = (q.type || 'single') as 'single' | 'average';
+  const page = parseInt(q.page || '1', 10);
+  const size = parseInt(q.size || '100', 10);
 
   const updateParam = (k: string, v: string, resetPage = true) => {
-    const next = new URLSearchParams(searchParams.toString());
-    if (v) next.set(k, v); else next.delete(k);
-    if (resetPage) next.delete('page');
-    const qs = next.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
+    setQ({ [k]: v || null, ...(resetPage ? { page: null } : {}) } as Parameters<typeof setQ>[0]);
   };
 
   const [data, setData] = useState<RanksResponse | null>(null);
