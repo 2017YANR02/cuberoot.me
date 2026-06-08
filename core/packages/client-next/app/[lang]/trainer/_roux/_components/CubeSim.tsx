@@ -6,7 +6,8 @@
 //  2) OrbitControls imported from the installed three (0.183) examples bundle
 //     instead of the vendored 0.125 copy.
 //  3) engine imports repointed to @/lib/roux/*.
-//  4) MUI useMediaQuery/useTheme -> site useIsMobile (drag-orbit on >= sm only).
+//  4) Drag-orbit enabled on all viewports (upstream gated it to >= sm via MUI
+//     useMediaQuery; touch-action:none keeps page scroll working off-canvas).
 //  5) chroma-js hint-color mix -> inline lrgb mix (no new dep, matches chroma's
 //     default 'lrgb' mode).
 import React, { useEffect } from 'react'
@@ -15,7 +16,6 @@ import { FaceletCubeT, Face } from '@/lib/roux/Defs';
 import * as THREE from 'three';
 import { arrayEqual } from '@/lib/roux/Math';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { useIsMobile } from '@/hooks/useIsMobile';
 
 type Config = {
     cube: FaceletCubeT, width: number, height: number, colorScheme: Array<string>, facesToReveal: Face[],
@@ -455,7 +455,11 @@ function CubeSim(props: Config) {
     let cubePainter = React.useMemo(drawCube, [])
     // obscureNonLR defaults to false for non-SS modes, true only for SS mode when enabled
 
-    const enableControl = !useIsMobile(599)
+    // Drag-orbit enabled on every viewport. Upstream gated it to >= sm (desktop),
+    // but on touch the OrbitControls constructor sets `touch-action: none` on the
+    // canvas only, so dragging rotates the cube while page scroll still works
+    // anywhere outside it. Mobile users asked to be able to spin the cube.
+    const enableControl = true
 
     let painter = cubePainter(props.cube, {
             width, height, colorScheme, faces: facesToReveal, theme, hintDistance, enableControl,
