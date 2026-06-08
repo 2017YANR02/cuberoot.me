@@ -1,5 +1,5 @@
 import type { QrCode } from "@/lib/db/qr";
-import { qrSvgBody, cubeLogo } from "./svg";
+import { qrSvgBody, cubeLogo, CUBE_FACES } from "./svg";
 import { backText, frontQuote } from "./cardText";
 
 // 整张折叠卡的「印刷母版」:单个自包含、100% 矢量的 SVG(无位图、无 CSS、无外链)。
@@ -46,15 +46,21 @@ function text(
   );
 }
 
-// 魔方记法 / 解法体系缩写,正面底纹用(全矢量文字水印)
+// 魔方记法 + 解法流派缩写,背面底纹用(全矢量文字水印)。CFOP/Roux/ZZ/Petrus… 是主流流派。
 const FORMULA_TOKENS = [
   "R U R' U'", "F2L", "CFOP", "OLL", "PLL", "R' D' R D", "U R U' R'",
-  "Cross", "F R U R' U' F'", "M2 E2 S2", "ZBLL", "Sune", "T-Perm",
-  "Roux", "ZZ", "L' U' L U", "x2 y'", "R U2 R'", "U' L' U L", "COLL",
+  "Cross", "F R U R' U' F'", "ZBLL", "Sune", "T-Perm", "Roux", "ZZ",
+  "Petrus", "L' U' L U", "x2 y'", "R U2 R'", "COLL", "Mehta", "Heise",
 ];
 
-// 正面底纹:斜排的淡白记法文字,clip 在面板内。背景加魔方公式 / 解法缩写(同事需求)。
-function formulaPattern(x0: number, top: number): string {
+// 斜排淡色记法 / 流派文字底纹,clip 在指定面板内。fill / opacity 由调用方按深浅底定。
+function notationPattern(
+  x0: number,
+  top: number,
+  clipId: string,
+  fill: string,
+  opacity: number,
+): string {
   const cx = x0 + PANEL_W / 2;
   const cy = top + PANEL_H / 2;
   const lineH = 2.7;
@@ -66,20 +72,43 @@ function formulaPattern(x0: number, top: number): string {
     for (let k = 0; k < 6; k++) seq.push(FORMULA_TOKENS[(start + k * 2) % FORMULA_TOKENS.length]);
     const dx = i % 2 ? -5 : -2;
     rows.push(
-      `<text x="${x0 + dx}" y="${y.toFixed(2)}" font-family="${MONO}" font-size="1.5" fill="#FFFFFF" fill-opacity="0.11">${esc(seq.join("   "))}</text>`,
+      `<text x="${x0 + dx}" y="${y.toFixed(2)}" font-family="${MONO}" font-size="1.4" fill="${fill}" fill-opacity="${opacity}">${esc(seq.join("   "))}</text>`,
     );
   }
-  return `<g clip-path="url(#frontClip)"><g transform="rotate(-8 ${cx} ${cy})">${rows.join("")}</g></g>`;
+  return `<g clip-path="url(#${clipId})"><g transform="rotate(-8 ${cx} ${cy})">${rows.join("")}</g></g>`;
 }
 
-// 正面:深色封面式,记法底纹 + 顶部魔方 logo + 底部语录 + 品牌名。全矢量。
+// 确定性散点(避免 Math.random,sin 哈希),正面魔方色块底纹用
+function hash01(i: number, seed: number): number {
+  const x = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+// 正面魔方元素:散落的六色小方块(魔方面块),低透明度,clip 在正面板内
+function cubeFacelets(x0: number, top: number): string {
+  const out: string[] = [];
+  for (let i = 0; i < 16; i++) {
+    const fx = x0 + 1 + hash01(i, 1) * (PANEL_W - 3);
+    const fy = top + 1 + hash01(i, 2) * (PANEL_H - 3);
+    const s = 1.1 + hash01(i, 3) * 1.7;
+    const color = CUBE_FACES[Math.floor(hash01(i, 4) * CUBE_FACES.length)];
+    const op = (0.1 + hash01(i, 5) * 0.13).toFixed(2);
+    const rot = (hash01(i, 6) * 44 - 22).toFixed(1);
+    out.push(
+      `<rect x="${fx.toFixed(2)}" y="${fy.toFixed(2)}" width="${s.toFixed(2)}" height="${s.toFixed(2)}" rx="${(s * 0.2).toFixed(2)}" fill="${color}" fill-opacity="${op}" transform="rotate(${rot} ${(fx + s / 2).toFixed(2)} ${(fy + s / 2).toFixed(2)})"/>`,
+    );
+  }
+  return `<g clip-path="url(#frontClip)">${out.join("")}</g>`;
+}
+
+// 正面:深色封面式,魔方色块元素 + 顶部魔方 logo + slogan + 品牌名。全矢量。
 function front(x0: number, top: number, quote: string, pattern: boolean): string {
   const cx = x0 + PANEL_W / 2;
   const lines = quote.split("\n").map((l) => l.trim()).filter(Boolean);
   const main = lines[0] ?? "热爱魔方";
   const subs = lines.slice(1);
 
-  const logoSize = 7;
+  const logoSize = 7.5;
   const logo = cubeLogo(cx - logoSize / 2, top + 5, logoSize);
 
   const mainY = top + PANEL_H - 9;
@@ -90,7 +119,7 @@ function front(x0: number, top: number, quote: string, pattern: boolean): string
 
   return (
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="${INK}"/>` +
-    (pattern ? formulaPattern(x0, top) : "") +
+    (pattern ? cubeFacelets(x0, top) : "") +
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#frontGlow)"/>` +
     logo +
     text(cx, mainY, 2.8, "#FFFFFF", main, { weight: 800 }) +
@@ -99,8 +128,8 @@ function front(x0: number, top: number, quote: string, pattern: boolean): string
   );
 }
 
-// 背面:浅色 + 标题/副标题 + 术语角标 + 二维码白芯片 + 网址。全矢量(二维码内联缩放)。
-function back(x0: number, top: number, entry: QrCode, url: string): string {
+// 背面:浅色 + 解法流派/公式底纹 + 标题/副标题 + 术语角标 + 二维码白芯片 + 网址。全矢量。
+function back(x0: number, top: number, entry: QrCode, url: string, pattern: boolean): string {
   const cx = x0 + PANEL_W / 2;
   const { main, sub } = backText(entry);
   const term = entry.term?.trim();
@@ -123,6 +152,7 @@ function back(x0: number, top: number, entry: QrCode, url: string): string {
 
   return (
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#backBg)"/>` +
+    (pattern ? notationPattern(x0, top, "backClip", BRAND, 0.08) : "") +
     text(cx, top + 6.5, 1.6, BRAND_DARK, main, { weight: 700 }) +
     (sub ? text(cx, top + 9.4, 1.2, "#6B7280", sub) : "") +
     termEl +
@@ -165,6 +195,7 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
   const defs =
     `<defs>` +
     `<clipPath id="frontClip"><rect x="${bleed}" y="${bleed}" width="${PANEL_W}" height="${PANEL_H}"/></clipPath>` +
+    `<clipPath id="backClip"><rect x="${foldX}" y="${bleed}" width="${PANEL_W}" height="${PANEL_H}"/></clipPath>` +
     `<linearGradient id="frontGlow" x1="0" y1="1" x2="0" y2="0">` +
     `<stop offset="0" stop-color="${BRAND}" stop-opacity="0.55"/>` +
     `<stop offset="0.45" stop-color="${BRAND}" stop-opacity="0.12"/>` +
@@ -189,7 +220,7 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
     defs +
     bleedBg +
     front(bleed, bleed, quote, pattern) +
-    back(foldX, bleed, entry, opts.url) +
+    back(foldX, bleed, entry, opts.url, pattern) +
     fold +
     (cropMarks ? cropMarksSvg(bleed, w, h) : "") +
     `</svg>`
