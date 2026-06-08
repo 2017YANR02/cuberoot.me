@@ -17,10 +17,12 @@ import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags
 import { ALL_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { statsUrl } from '@/lib/stats-base';
 
+interface GluedScramble { ci: string; cn: string; r: string; g: string; n: number; tok: string }
 interface EventLen {
   unit: 'moves' | 'twists';
   samples: number;
   counts: Record<string, number>;
+  glued?: GluedScramble[]; // megaminx scrambles with a missing-space move (e.g. R--D--)
 }
 interface EventLengthsJson {
   meta: { generated_at: string; total_scrambles: number; total_samples: number };
@@ -181,12 +183,28 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
             />
           </div>
 
-          {event === 'minx' && (
-            <p className="scramble-len-footnote">
-              {isZh
-                ? '注：极个别五魔打乱原文漏了空格（如 R--D-- 应为 R-- D--），本页按 move 字母表计数而非空格，故全部记为 77 步。'
-                : 'Note: a handful of megaminx scrambles have a missing space in the raw WCA data (e.g. R--D-- should be R-- D--); counted by move rather than whitespace, so all read 77.'}
-            </p>
+          {event === 'minx' && cur.glued && cur.glued.length > 0 && (
+            <div className="scramble-len-footnote">
+              <span>
+                {isZh
+                  ? '注：极个别五魔打乱原文漏了空格，本页按 move 字母表计数而非空格，故全部记为 77 步。漏空格的打乱：'
+                  : 'Note: a handful of megaminx scrambles have a missing space in the raw WCA data; counted by move rather than whitespace, so all read 77. Affected scramble(s): '}
+              </span>
+              {cur.glued.map((gl, i) => {
+                const iso2 = compFlagIso2(gl.ci);
+                const fixed = gl.tok.match(/R\+\+|R--|D\+\+|D--|U'|U/g)?.join(' ') ?? gl.tok;
+                return (
+                  <span key={i} className="scramble-len-glued-item">
+                    {i > 0 && '；'}
+                    <Link href={`/scramble/gen?comp=${encodeURIComponent(gl.ci)}`} prefetch={false} title={gl.cn} className="scramble-len-glued-comp">
+                      {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                      {localizeCompName(gl.ci, gl.cn, isZh)}
+                    </Link>
+                    {' '}{compSourceLine(gl.r, gl.g, gl.n, isZh)}（<code>{gl.tok}</code> {isZh ? '应为' : '→'} <code>{fixed}</code>）
+                  </span>
+                );
+              })}
+            </div>
           )}
 
           {stats && (
