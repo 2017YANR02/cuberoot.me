@@ -6,6 +6,26 @@
 /** 推送总开关。双跑期为 0,只吸收不发;翻 1 才真发(见 bark.ts)。 */
 export const PUSH_ENABLED = process.env.MONITOR_PUSH_ENABLED === '1';
 
+/** 自有站域名(纪录/PR 推送里的比赛链接指向这里,不再外链 WCA Live)。 */
+export const SITE_BASE = 'https://www.cuberoot.me';
+
+/**
+ * 自有站比赛页深链:/wca/comp/<wcaId>?event=<e>&round=<n>。
+ * wcaId 缺失(比赛未关联 WCA id)→ 返 null,调用方回退到原 WCA Live 链接。
+ */
+export function siteCompUrl(
+  wcaId: string | null | undefined,
+  eventId?: string | null,
+  roundNumber?: number | null,
+): string | null {
+  if (!wcaId) return null;
+  const q = new URLSearchParams();
+  if (eventId) q.set('event', eventId);
+  if (roundNumber && roundNumber > 0) q.set('round', String(roundNumber));
+  const qs = q.toString();
+  return qs ? `${SITE_BASE}/wca/comp/${wcaId}?${qs}` : `${SITE_BASE}/wca/comp/${wcaId}`;
+}
+
 /** 纪录类型过滤(两个纪录监控共用),默认 WR/CR/NR。 */
 export const RECORD_TAGS: Set<string> = new Set(
   (process.env.MONITOR_RECORD_TAGS || 'WR,CR,NR')
