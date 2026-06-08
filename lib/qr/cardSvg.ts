@@ -1,6 +1,6 @@
 import type { QrCode } from "@/lib/db/qr";
 import { qrSvgBody, cubeLogo, CUBE_FACES } from "./svg";
-import { backText, frontQuote } from "./cardText";
+import { backText, frontQuote, FORMULA_TOKENS } from "./cardText";
 
 // 整张折叠卡的「印刷母版」:单个自包含、100% 矢量的 SVG(无位图、无 CSS、无外链)。
 // 二维码 / 文字 / 配色 / 魔方图形全是矢量路径,印刷厂可直接收、无限放大不糊。
@@ -12,9 +12,10 @@ import { backText, frontQuote } from "./cardText";
 type CardSvgOptions = {
   url: string; // 印进二维码里的落地地址(背面也显示这串,去协议)
   quote?: string; // 正面语录,\n 分行;不传按默认轮换
+  art?: string; // 正面艺术图 data URI / URL;有则内嵌位图正面,无则全矢量回退
   bleed?: number; // 出血 mm,默认 3
   cropMarks?: boolean; // 角裁切线,默认 true
-  pattern?: boolean; // 正面魔方记法底纹,默认 true
+  pattern?: boolean; // 底纹(背面流派公式 + 无图时正面色块),默认 true
   idx?: number; // 默认语录轮换序号
 };
 
@@ -45,13 +46,6 @@ function text(
     `>${esc(content)}</text>`
   );
 }
-
-// 魔方记法 + 解法流派缩写,背面底纹用(全矢量文字水印)。CFOP/Roux/ZZ/Petrus… 是主流流派。
-const FORMULA_TOKENS = [
-  "R U R' U'", "F2L", "CFOP", "OLL", "PLL", "R' D' R D", "U R U' R'",
-  "Cross", "F R U R' U' F'", "ZBLL", "Sune", "T-Perm", "Roux", "ZZ",
-  "Petrus", "L' U' L U", "x2 y'", "R U2 R'", "COLL", "Mehta", "Heise",
-];
 
 // 斜排淡色记法 / 流派文字底纹,clip 在指定面板内。fill / opacity 由调用方按深浅底定。
 function notationPattern(
@@ -101,30 +95,52 @@ function cubeFacelets(x0: number, top: number): string {
   return `<g clip-path="url(#frontClip)">${out.join("")}</g>`;
 }
 
-// 正面:深色封面式,魔方色块元素 + 顶部魔方 logo + slogan + 品牌名。全矢量。
-function front(x0: number, top: number, quote: string, pattern: boolean): string {
+// 正面:魔方艺术图(内嵌位图,印满含出血)+ 底部压暗 + slogan + 品牌名。
+// 无艺术图时退回全矢量(深色 + 散落魔方色块 + logo),保证始终能出图。
+// art 为 data URI 或可达 URL;artW/artH 是正面含出血的覆盖区(0..foldX, 0..h)。
+function front(
+  bleed: number,
+  foldX: number,
+  h: number,
+  quote: string,
+  pattern: boolean,
+  art?: string,
+): string {
+  const x0 = bleed;
+  const top = bleed;
   const cx = x0 + PANEL_W / 2;
   const lines = quote.split("\n").map((l) => l.trim()).filter(Boolean);
   const main = lines[0] ?? "热爱魔方";
   const subs = lines.slice(1);
-
-  const logoSize = 7.5;
-  const logo = cubeLogo(cx - logoSize / 2, top + 5, logoSize);
 
   const mainY = top + PANEL_H - 9;
   const subEls = subs
     .map((s, i) => text(cx, mainY + 2 + i * 1.7, 1.4, "rgba(255,255,255,0.85)", s))
     .join("");
   const brandY = mainY + 2 + subs.length * 1.7 + 2.6;
+  const slogan =
+    text(cx, mainY, 2.8, "#FFFFFF", main, { weight: 800 }) +
+    subEls +
+    text(cx, brandY, 1.4, "rgba(255,255,255,0.92)", "魔方开放社群", { weight: 700, spacing: 0.1 });
 
+  if (art) {
+    // 艺术图铺满正面(含左/上/下出血),<image> slice 自带裁剪到该矩形
+    return (
+      `<rect x="0" y="0" width="${foldX}" height="${h}" fill="${INK}"/>` +
+      `<image href="${art}" x="0" y="0" width="${foldX}" height="${h}" preserveAspectRatio="xMidYMid slice"/>` +
+      `<rect x="0" y="0" width="${foldX}" height="${h}" fill="url(#frontShade)"/>` +
+      slogan
+    );
+  }
+
+  // 无图回退:全矢量深色封面
+  const logoSize = 7.5;
   return (
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="${INK}"/>` +
     (pattern ? cubeFacelets(x0, top) : "") +
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#frontGlow)"/>` +
-    logo +
-    text(cx, mainY, 2.8, "#FFFFFF", main, { weight: 800 }) +
-    subEls +
-    text(cx, brandY, 1.4, "rgba(255,255,255,0.92)", "魔方开放社群", { weight: 700, spacing: 0.1 })
+    cubeLogo(cx - logoSize / 2, top + 5, logoSize) +
+    slogan
   );
 }
 
@@ -201,6 +217,11 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
     `<stop offset="0.45" stop-color="${BRAND}" stop-opacity="0.12"/>` +
     `<stop offset="1" stop-color="${BRAND}" stop-opacity="0"/>` +
     `</linearGradient>` +
+    `<linearGradient id="frontShade" x1="0" y1="1" x2="0" y2="0">` +
+    `<stop offset="0" stop-color="${INK}" stop-opacity="0.92"/>` +
+    `<stop offset="0.42" stop-color="${INK}" stop-opacity="0.55"/>` +
+    `<stop offset="1" stop-color="${INK}" stop-opacity="0"/>` +
+    `</linearGradient>` +
     `<linearGradient id="backBg" x1="0" y1="0" x2="1" y2="1">` +
     `<stop offset="0" stop-color="#FFFFFF"/>` +
     `<stop offset="0.46" stop-color="#F5F8FF"/>` +
@@ -219,7 +240,7 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}" role="img" aria-label="魔方开放社群二维码卡片">` +
     defs +
     bleedBg +
-    front(bleed, bleed, quote, pattern) +
+    front(bleed, foldX, h, quote, pattern, opts.art) +
     back(foldX, bleed, entry, opts.url, pattern) +
     fold +
     (cropMarks ? cropMarksSvg(bleed, w, h) : "") +

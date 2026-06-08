@@ -2,6 +2,27 @@ import type { QrCode } from "@/lib/db/qr";
 
 // 卡片文案逻辑(纯函数,DOM 卡片 QrCard.tsx 与矢量导出 cardSvg.ts 共用,避免两处漂移)。
 
+// 正面艺术背景图注册表(后台缩略图选择器 + 卡片轮换 + 矢量母版内嵌共用同一份)
+export const FRONT_ARTS: { src: string; label: string }[] = [
+  { src: "/card/front-ink.webp", label: "流彩泼墨" },
+  { src: "/card/front-city.webp", label: "微缩世界" },
+];
+
+// 魔方记法 + 解法流派缩写,背面底纹用。CFOP/Roux/ZZ/Petrus… 是主流流派。
+export const FORMULA_TOKENS = [
+  "R U R' U'", "F2L", "CFOP", "OLL", "PLL", "R' D' R D", "U R U' R'",
+  "Cross", "F R U R' U' F'", "ZBLL", "Sune", "T-Perm", "Roux", "ZZ",
+  "Petrus", "L' U' L U", "x2 y'", "R U2 R'", "COLL", "Mehta", "Heise",
+];
+
+// 一行 N 个 token 的底纹文本(背面 DOM / SVG 共用,保证流派词一致)
+export function formulaRow(rowIndex: number, count = 6): string {
+  const start = (rowIndex * 3) % FORMULA_TOKENS.length;
+  const seq: string[] = [];
+  for (let k = 0; k < count; k++) seq.push(FORMULA_TOKENS[(start + k * 2) % FORMULA_TOKENS.length]);
+  return seq.join("   ");
+}
+
 // 正面默认语录(未填时按序轮换);第一行大字,其余行小字
 export const DEFAULT_QUOTES = [
   "慢就是快\n一次打乱 一次成长",

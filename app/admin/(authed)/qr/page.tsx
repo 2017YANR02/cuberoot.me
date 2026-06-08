@@ -128,7 +128,7 @@ export default async function AdminQrPage({
                     <a
                       href={`/api/qr/${r.code}/card`}
                       download={`card-${r.code}.svg`}
-                      title="下载矢量折叠卡 SVG(印刷母版,含出血+裁切线)"
+                      title="下载折叠卡 SVG(印刷母版:照片正面+矢量背面,含出血+裁切线)"
                       className="mr-3 inline-flex items-center align-middle text-ink-3 hover:text-brand transition"
                     >
                       <CreditCard size={14} />
