@@ -10,6 +10,7 @@ const RESOURCES = [
   { key: "posts", label: "帖子" },
   { key: "orders", label: "订单" },
   { key: "reconcile", label: "对账与流水" },
+  { key: "instructor-payouts", label: "讲师结算" },
   { key: "applications", label: "讲师申请" },
   { key: "coupons", label: "优惠券" },
   { key: "invites", label: "邀请码" },
