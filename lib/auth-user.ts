@@ -100,3 +100,11 @@ export function newApplicationId(): string {
 export function newInstructorId(): string {
   return "i_" + b64url(randomBytes(6));
 }
+
+export function newMembershipId(): string {
+  return "m_" + b64url(randomBytes(9));
+}
+
+export function newPayoutId(): string {
+  return "po_" + b64url(randomBytes(9));
+}

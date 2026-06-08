@@ -69,12 +69,13 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 ## 课程 / 付费墙 / 学习进度
 
 - 课程结构:`courses` (元信息 + price + instructorId) + `lessons` (idx / title / durationSec / videoKey / videoUrl / free)
-- 已购校验:`canAccessCourse(user, course, lesson?)` 返 `{allowed, reason}`,reason ∈ `price_zero / free_lesson / paid / not_logged_in / not_paid`
+- 已购校验:`canAccessCourse(user, course, lesson?)` 返 `{allowed, reason}`,reason ∈ `price_zero / free_lesson / member / paid / not_logged_in / not_paid`(`member` = 有效期内会员畅看全部付费课)
 - 视频取流走 `/api/lessons/[id]/video`(nodejs runtime),校验后 302 到 `signedVideoUrl(key)`。local storage 直接 `/uploads/<key>`,远端 TODO 真签名 URL 防盗链
 - 学习进度 `learning_progress`(`userId,lessonId` 唯一),`LessonPlayer` timeupdate 节流 10s 调 `updateProgress(lessonId,positionSec,completed)`
 - `/me/courses` 我的课程,`courseProgressPercent` 计算完成率,"继续学习" 跳最近 progress 的 lesson
 - admin `_LessonsPanel` 章节编辑,视频 `UploadField` 上传 mp4
 - 兼容老字段:`courses.videoUrl` / `coverUrl` 仍可用;`courses.nextLiveAt`(秒级 timestamp)无值不渲染
+- 会员订阅:`memberships` 表 + `lib/db/membership.ts`(`MEMBERSHIP_PLANS` 月/季/年、`isMember` / `membershipState` / `fulfillMembershipOrder` / `cancelMembershipForOrder`)。下单 `type=membership`,付成功开/续会员(续费叠加 expiresAt),退款撤销。`/membership` 定价订阅页,`/me/membership` 状态页;会员在 `canAccessCourse` 走 `member` 分支畅看付费课
 
 ## 搜索
 
@@ -90,6 +91,8 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 - 下单流程:`placeOrder({couponCode?})` server action → `startPayment(orderId, providerId)`;qrcode 走 `QrCodeModal` 3s 轮询 `/api/orders/[id]/status`
 - 回调统一 `app/api/payments/[provider]/callback/route.ts`(nodejs runtime),provider 可定义 response body
 - 退款 admin 走 `app/actions/refund.ts` `refundOrder`,写 `payment_logs`;对账 `/admin/reconcile`
+- 付款成功/退款副作用统一收口 `lib/db/order-fulfillment.ts` `onOrderPaid` / `onOrderRefunded`(由 `orders.ts` markPaid/markPaidWithProvider/setRefunded 调,覆盖用户付款/渠道回调/后台手动三路);按 `order.type` 派发,新付费类型在此加分支,别散改 markPaid
+- `OrderType` 含 `membership`:`resolveRef` 把 refId 当套餐 id;赛事 `event` 下单前 `checkEventOrderable` 拦已结束/满员,付成功 `bumpRegistered` 占名额、退款 `releaseRegistered` 释放(防超卖)
 
 ## 短信 / 存储 / 上传
 
@@ -107,7 +110,8 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 
 - 字段:`users.role` (`user|instructor|admin`)、`users.instructorId`、`courses.instructorId`、`instructors.userId`
 - `/instructor/{,/courses,/students,/earnings}`,`requireInstructor()` 守门
-- 分成 70% 固定 `INSTRUCTOR_REVENUE_SHARE`(`lib/db/instructor-stats.ts`),月度汇总;**未做结算 `instructor_payouts` 表**,earnings 仅展示
+- 分成 70% 固定 `INSTRUCTOR_REVENUE_SHARE`(`lib/db/instructor-stats.ts`),月度汇总
+- 结算分账:`instructor_payouts` 表(每讲师每月一单,唯一 `(instructorId,period)`)+ `lib/db/instructor-payouts.ts`(`generatePayouts(period)` 按月汇总实收×70% upsert,已 paid 不覆盖;`markPaidPayout` 留 method/reference/note)。admin `/admin/instructor-payouts` 选月生成 + 标记已打款,讲师 `/instructor/earnings` 看到账状态
 - admin 入驻审核通过自动建/绑定 user + 设 role + 双向关联 instructor
 
 ## 管理后台

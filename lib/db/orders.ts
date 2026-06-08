@@ -3,6 +3,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Order, OrderInsert, OrderType, PaymentMethod } from "@/db/schema";
 import { newOrderId } from "@/lib/auth-user";
+import { onOrderPaid, onOrderRefunded } from "@/lib/db/order-fulfillment";
 
 export type { Order, OrderType, PaymentMethod };
 
@@ -71,10 +72,14 @@ export async function create(values: Omit<OrderInsert, "id" | "createdAt" | "sta
 
 export async function markPaid(id: string, method: PaymentMethod): Promise<void> {
   const now = Math.floor(Date.now() / 1000);
+  const before = await findById(id);
   await db
     .update(schema.orders)
     .set({ status: "paid", paymentMethod: method, paidAt: now })
     .where(eq(schema.orders.id, id));
+  if (before && before.status !== "paid") {
+    await onOrderPaid({ ...before, status: "paid", paymentMethod: method, paidAt: now });
+  }
 }
 
 export async function markPaidWithProvider(
@@ -84,6 +89,7 @@ export async function markPaidWithProvider(
   raw: unknown,
 ): Promise<void> {
   const now = Math.floor(Date.now() / 1000);
+  const before = await findById(id);
   await db
     .update(schema.orders)
     .set({
@@ -94,6 +100,16 @@ export async function markPaidWithProvider(
       paidAt: now,
     })
     .where(eq(schema.orders.id, id));
+  if (before && before.status !== "paid") {
+    await onOrderPaid({
+      ...before,
+      status: "paid",
+      paymentMethod: method,
+      providerId,
+      paymentRaw: raw,
+      paidAt: now,
+    });
+  }
 }
 
 export async function cancel(id: string): Promise<void> {
@@ -124,6 +140,9 @@ export async function setRefunded(
       paymentRaw: merged,
     })
     .where(eq(schema.orders.id, id));
+  if (existing && existing.status === "paid") {
+    await onOrderRefunded(existing);
+  }
 }
 
 /**

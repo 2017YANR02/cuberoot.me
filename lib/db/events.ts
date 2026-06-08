@@ -86,4 +86,45 @@ export async function remove(id: string): Promise<void> {
   await db.delete(schema.events).where(eq(schema.events.id, id));
 }
 
+// 赛事名额防超卖。下单前预检:已结束 / 满员则拦截。
+export type EventOrderGuard =
+  | { ok: true }
+  | { ok: false; reason: "not_found" | "closed" | "sold_out" };
+
+export async function checkEventOrderable(
+  eventId: string,
+  qty: number,
+): Promise<EventOrderGuard> {
+  const e = await findById(eventId);
+  if (!e) return { ok: false, reason: "not_found" };
+  if (e.status === "已结束") return { ok: false, reason: "closed" };
+  if (e.registered + qty > e.capacity) return { ok: false, reason: "sold_out" };
+  return { ok: true };
+}
+
+// 付款成功 → 占名额(registered += qty)。预检已挡过满员,此处直加保证计数准确。
+export async function bumpRegistered(eventId: string, qty: number): Promise<void> {
+  const e = await findById(eventId);
+  if (!e) return;
+  db
+    .update(schema.events)
+    .set({ registered: e.registered + Math.max(0, qty) })
+    .where(eq(schema.events.id, eventId))
+    .run();
+}
+
+// 退款 → 释放名额(registered -= qty,不低于 0)。
+export async function releaseRegistered(
+  eventId: string,
+  qty: number,
+): Promise<void> {
+  const e = await findById(eventId);
+  if (!e) return;
+  db
+    .update(schema.events)
+    .set({ registered: Math.max(0, e.registered - Math.max(0, qty)) })
+    .where(eq(schema.events.id, eventId))
+    .run();
+}
+
 export type { CubeEvent };

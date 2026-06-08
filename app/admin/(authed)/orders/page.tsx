@@ -25,6 +25,7 @@ const TYPE_LABEL: Record<OrderType, string> = {
   course: "课程",
   product: "商品",
   event: "赛事",
+  membership: "会员",
 };
 
 const PAY_LABEL: Record<PaymentMethod, string> = {

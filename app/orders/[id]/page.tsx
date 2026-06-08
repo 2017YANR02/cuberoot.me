@@ -35,6 +35,7 @@ const TYPE_LABEL: Record<OrderType, string> = {
   course: "课程",
   product: "商品",
   event: "赛事",
+  membership: "会员",
 };
 
 const PAY_LABEL: Record<PaymentMethod, string> = {
@@ -67,7 +68,8 @@ function fmtDate(ts: number | null): string {
 function resourcePath(type: OrderType, refId: string): string {
   if (type === "course") return `/courses/${refId}`;
   if (type === "product") return `/shop/${refId}`;
-  return `/events/${refId}`;
+  if (type === "event") return `/events/${refId}`;
+  return "/membership";
 }
 
 export default async function OrderDetailPage({
