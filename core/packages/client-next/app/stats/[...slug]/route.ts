@@ -43,7 +43,12 @@ export async function GET(
   const contentType = CONTENT_TYPE[ext] ?? 'application/octet-stream';
   const headers: Record<string, string> = {
     'content-type': contentType,
-    'cache-control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+    // Dev: never cache — stats JSON is regenerated locally and SWR would keep
+    // serving stale data (e.g. an old scramble-length histogram). Prod/Vercel
+    // keep the CDN-friendly SWR policy (self-hosted prod serves via nginx, not here).
+    'cache-control': process.env.NODE_ENV === 'development'
+      ? 'no-store'
+      : 'public, s-maxage=3600, stale-while-revalidate=86400',
   };
   if (rel.startsWith('scramble/downloads/')) {
     const base = path.basename(rel);
