@@ -1,17 +1,14 @@
 import type { CSSProperties } from "react";
 import type { QrCode } from "@/lib/db/qr";
 import { qrTargetUrl } from "@/lib/site";
-import { DEFAULT_QUOTES, backText } from "@/lib/qr/cardText";
+import { DEFAULT_QUOTES, FRONT_ARTS, backText, formulaRow } from "@/lib/qr/cardText";
 
-// 2x4cm 折叠卡:正面(语录 + 艺术图)| 折线 | 背面(唯一二维码)。
+// 2x4cm 折叠卡:正面(slogan + 魔方艺术图)| 折线 | 背面(解法流派公式底纹 + 唯一二维码)。
 // 尺寸走 --s 缩放变量:屏幕放大方便看,打印时由外层把 --s 设回 1 即精确 mm。
 // 纯展示组件,svg(二维码)由调用方传入,卡片打印页与编辑页预览共用。
 
-// 正面艺术背景图可选项(后台缩略图选择器 + 卡片轮换共用同一份注册表)
-export const FRONT_ARTS: { src: string; label: string }[] = [
-  { src: "/card/front-ink.webp", label: "流彩泼墨" },
-  { src: "/card/front-city.webp", label: "微缩世界" },
-];
+// 正面艺术背景图注册表从 cardText 共享(后台选择器 / 卡片轮换 / 矢量母版同源)
+export { FRONT_ARTS };
 
 const displayUrl = (code: string) => qrTargetUrl(code).replace(/^https?:\/\//, "");
 const m = (n: number) => `calc(var(--s) * ${n}mm)`;
@@ -106,6 +103,26 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
             "radial-gradient(42% 22% at 100% 0%, rgba(42,93,244,0.12), transparent 70%), radial-gradient(46% 24% at 0% 100%, rgba(42,93,244,0.10), transparent 70%)",
         }}
       />
+      {/* 解法流派 / 公式底纹(斜排淡蓝,衬在二维码后) */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: `${m(-4)} ${m(-3)}`,
+          transform: "rotate(-8deg)",
+          fontFamily: "ui-monospace, monospace",
+          fontSize: m(1.1),
+          lineHeight: 2.45,
+          color: "#2A5DF4",
+          opacity: 0.08,
+          whiteSpace: "nowrap",
+          pointerEvents: "none",
+        }}
+      >
+        {Array.from({ length: 16 }, (_, i) => (
+          <div key={i}>{formulaRow(i)}</div>
+        ))}
+      </div>
       <div style={{ position: "relative", textAlign: "center", lineHeight: 1.25 }}>
         <div style={{ fontSize: m(1.6), fontWeight: 700, color: "#1E4ACB" }}>{main}</div>
         {sub ? (
