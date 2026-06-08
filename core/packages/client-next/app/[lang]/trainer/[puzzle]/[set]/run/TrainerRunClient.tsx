@@ -2,7 +2,7 @@
 
 // Ported from packages/client/src/pages/trainer/TrainerRunPage.tsx
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Flag, RefreshCw } from 'lucide-react';
