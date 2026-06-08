@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - `packages/server` — Hono + **PostgreSQL 13**（WCA OAuth + recon + alg 公式库 + 训练数据，部署到云服务器;2026-05-06 从 MariaDB 迁过来,MariaDB 服务 + 数据已完整卸载)
    - `packages/shared` — 共享类型(`shared/src/alg.ts` 等);**公式数据全部在 PG `alg_sets/alg_cases` 两张表** (2026-05-06 从 JSON 迁过来),`loadAlg(puzzle, set)` 走 `/api/alg/sets/:p/:s` fetch
    - `packages/visualcube` — 自有 visualcube 封装;CI/server bundle 前必须先 build (`pnpm -F @cuberoot/visualcube build`,产 `dist/index.js`),否则 esbuild/Vercel build 找不到 export
-   - `packages/stats-build` — WCA 统计生成管道（独立 CI 周更）
+   - `packages/stats-build` — WCA 统计生成管道（独立 CI 日更，stats.yml `cron 0 20 * * *`，跟 WCA dump 上游天更）
 3. **`solver/`** — 顶层(pnpm workspace 外,非 package)。魔方求解引擎(Rust,2026-05-31 从已退役的 cube-solver-rust 导入,monorepo 为唯一源)。产 native 分析器喂 `/scramble/*` 数据管道(`update_cross_stats.ps1` 的 `$SolverDir` 指这)+ 编 WASM 给浏览器端。`target/ tables/(~34GB) pkg-web/ pkg-node/` 本地 gitignored(只本机有,repo/CI/线上都没有)。
 
 ## 12 个模块的归属（重要）
@@ -33,7 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Recognize（PLL 识别训练，看图答字母） | `/recognize/pll` | `core/packages/client-next/app/[lang]/recognize/[algSetId]/` | 自有 | ✅ |
 | Frame Count | `/frame-count` | `core/packages/client-next/app/[lang]/frame-count/` | 自有（WebCodecs + mp4box.js） | ✅ |
 | Distribution | `/wca/viz` | `core/packages/client-next/app/[lang]/wca/viz/` | 自有 | ✅ |
-| Calendar (比赛日历) | `/wca/calendar` | `core/packages/client-next/app/[lang]/wca/calendar/` | 自有 | ✅ |
+| Comp (比赛中心:搜索/日历/地球/实时成绩) | `/wca/comp` | `core/packages/client-next/app/[lang]/wca/comp/` | 自有 | ✅ |
 | Scramble（打乱难度分布） | `/scramble/stats` | `core/packages/client-next/app/[lang]/scramble/stats/` + 数据 `stats/scramble/*.json` | 自有（源自 `D:\cube\solver` C++ 分析器产出的 CSV） | ✅ |
 | Mosaic（魔方马赛克生成） | `/mosaic` | `core/packages/client-next/app/[lang]/mosaic/` | ported from [Roman-/mosaic](https://github.com/Roman-/mosaic) | ✅ |
 | Blog | `blog.cuberoot.me`(`/blog` redirect 过去) | 独立 repo `RuiminYan/cuberoot-blog` | 外部托管 | — |
@@ -114,6 +114,7 @@ pnpm --filter @cuberoot/client dev                 # http://127.0.0.1:5173/
 - 报根因 / "修好了" / "done" 前必须有实证(日志 / EXPLAIN ANALYZE / 实际 run 输出 / playwright);未证实的诊断显式标「假设」;性能 / 502 / OOM 类先 profile 取数,禁直接猜架构
 - UI 验证走项目内 Playwright MCP;fixtures 跑全集别采样
 - 新路由 / 新顶层 page 前先 grep routes config 防撞名
+- 路由重命名 / 合并后旧路径直接弃用,不为老链接加 redirect(老 URL 404 可接受)
 
 ## 主题 / 颜色
 

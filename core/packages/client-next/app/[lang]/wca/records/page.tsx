@@ -10,6 +10,7 @@ import WcaEventSelector from '@/components/WcaEventSelector';
 import { EventIcon } from '@/components/EventIcon';
 import { Flag } from '@/components/Flag';
 import { loadFlagData } from '@/lib/country-flags';
+import { statsUrl } from '@/lib/stats-base';
 import { countryName } from '@/lib/country-name';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -80,7 +81,7 @@ function RecordsPageInner() {
   useEffect(() => { void loadFlagData(); }, []);
 
   useEffect(() => {
-    fetch('/stats/records/history/manifest.json')
+    fetch(statsUrl('/stats/records/history/manifest.json'))
       .then(r => r.ok ? r.json() : null)
       .then((j) => { if (j) setManifest({ countries: j.countries }); })
       .catch(() => { /* keep null */ });
@@ -96,7 +97,7 @@ function RecordsPageInner() {
     setLoading(true);
     setError(null);
     setBundle(null);
-    fetch(regionUrl(region))
+    fetch(statsUrl(regionUrl(region)))
       .then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -270,7 +271,7 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
             <td className="wse-value-col">{formatWcaResult(r.v, r.e, r.t === 's' ? 'single' : 'average')}</td>
             <td>
               {r.pc && <Flag iso2={r.pc} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-              <Link href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.p}`}>
+              <Link prefetch={false} href={`/${isZh ? 'zh' : 'en'}/wca/persons/${r.p}`}>
                 {displayCuberName(r.pn, isZh)}
               </Link>
             </td>

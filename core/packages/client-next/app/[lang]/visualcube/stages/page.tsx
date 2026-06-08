@@ -7,6 +7,7 @@
  * (next/link replaces react-router Link; useDocumentTitle is the local hook).
  */
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { VisualCube } from '@/components/VisualCube';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -222,10 +223,13 @@ const SECTIONS: StageSection[] = [
 
 const THUMB_SIZE = 110;
 
-function StageCard({ cubeSize, label, mask }: { cubeSize: number; label: string; mask: string }) {
-  const href = `/visualcube?pzl=${cubeSize}&stage=${encodeURIComponent(mask)}&view=trans`;
+function StageCard({ lang, cubeSize, label, mask }: { lang: string; cubeSize: number; label: string; mask: string }) {
+  // Lang-prefixed href avoids the proxy.ts bare-path 308 on click; prefetch={false}
+  // kills the prefetch storm — this grid renders ~147 cards, and Next's default
+  // viewport prefetch would fire ~147 RSC requests (each 308'd) per page view.
+  const href = `/${lang}/visualcube?pzl=${cubeSize}&stage=${encodeURIComponent(mask)}&view=trans`;
   return (
-    <Link className="vcs-card" href={href} title={`mask=${mask}`}>
+    <Link className="vcs-card" href={href} title={`mask=${mask}`} prefetch={false}>
       <div className="vcs-thumb">
         <VisualCube
           algorithm=""
@@ -243,6 +247,8 @@ function StageCard({ cubeSize, label, mask }: { cubeSize: number; label: string;
 
 export default function VisualCubeStagesPage() {
   const { i18n } = useTranslation();
+  const params = useParams();
+  const lang = typeof params?.lang === 'string' ? params.lang : 'en';
   const isZh = i18n.language === 'zh';
   useDocumentTitle('阶段可视化', 'Visualcube Stages');
 
@@ -253,7 +259,7 @@ export default function VisualCubeStagesPage() {
       <header className="vcs-header">
         <h1>{isZh ? 'VisualCube Stage 速查' : 'VisualCube Stages'}</h1>
         <div className="vcs-header-right">
-          <Link className="vcs-link" href="/visualcube">
+          <Link className="vcs-link" href={`/${lang}/visualcube`}>
             {isZh ? '编辑器' : 'Editor'}
           </Link>
         </div>
@@ -275,6 +281,7 @@ export default function VisualCubeStagesPage() {
             {section.items.map((item) => (
               <StageCard
                 key={`${section.title}-${item.label}`}
+                lang={lang}
                 cubeSize={section.cubeSize}
                 label={item.label}
                 mask={item.mask}

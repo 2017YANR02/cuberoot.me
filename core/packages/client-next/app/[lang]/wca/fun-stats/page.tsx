@@ -295,7 +295,7 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
   const personCell = (r: any) => (
     <span className="fun-cell-person">
       <Flag iso2={r.iso2 ?? ''} spanClassName="country-flag" imgClassName="country-flag-ct" />
-      <Link href={personHref(r.wcaId)}>{displayCuberName(r.name ?? '', isZh)}</Link>
+      <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name ?? '', isZh)}</Link>
     </span>
   );
   const compCell = (r: any) => (
@@ -485,7 +485,7 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
                 <td>{fmtAvg(r.sumValue)}</td>
                 {r.podium?.map((p: any) => (
                   <td key={p.pos}>
-                    {p.wcaId ? <Link href={personHref(p.wcaId)}>{displayCuberName(p.name ?? '', isZh)}</Link> : '—'}
+                    {p.wcaId ? <Link prefetch={false} href={personHref(p.wcaId)}>{displayCuberName(p.name ?? '', isZh)}</Link> : '—'}
                     {p.wcaId && <span className="fun-cell-sub"> {fmtBP(p.value)}</span>}
                   </td>
                 ))}

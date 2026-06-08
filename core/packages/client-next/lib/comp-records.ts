@@ -1,6 +1,7 @@
 // 比赛纪录数据加载
 // 数据源: stats/comp_records_summary.json + stats/comp_records_detail.json
 // Ported from packages/client/src/utils/comp_records.ts.
+import { statsUrl } from './stats-base';
 
 export type RecordTop = 'WR' | 'CR' | 'NR';
 
@@ -22,7 +23,7 @@ let _version = 0;
 export function loadCompRecordsSummary(): Promise<number> {
   if (_summary) return Promise.resolve(_version);
   if (!_summaryPromise) {
-    _summaryPromise = fetch('/stats/comp_records_summary.json')
+    _summaryPromise = fetch(statsUrl('/stats/comp_records_summary.json'))
       .then((r) => (r.ok ? r.json() : {}))
       .catch(() => ({}))
       .then((d: Record<string, RecordTop>) => {
@@ -40,7 +41,7 @@ export function getCompRecordTop(compId: string): RecordTop | null {
 export function loadCompRecordsDetail(): Promise<number> {
   if (_detail) return Promise.resolve(_version);
   if (!_detailPromise) {
-    _detailPromise = fetch('/stats/comp_records_detail.json')
+    _detailPromise = fetch(statsUrl('/stats/comp_records_detail.json'))
       .then((r) => (r.ok ? r.json() : {}))
       .catch(() => ({}))
       .then((d: Record<string, RecordEntry[]>) => {

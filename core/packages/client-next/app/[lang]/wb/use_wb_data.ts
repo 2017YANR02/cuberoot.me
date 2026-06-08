@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { statsUrl } from '@/lib/stats-base';
 import type { WbDataset } from './types';
 
 const URL = '/stats/world_bests.json';
@@ -9,7 +10,7 @@ export function useWbData() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(URL)
+    fetch(statsUrl(URL))
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((j: WbDataset) => { if (!cancelled) setData(j); })
       .catch((e) => { if (!cancelled) setError(String(e?.message ?? e)); });

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { statsUrl } from '@/lib/stats-base';
 
 export type Lang = 'en' | 'zh';
 export type PostView = 'article' | 'algset';
@@ -83,7 +84,7 @@ let catalogPromise: Promise<CatalogEntry[]> | null = null;
 function fetchCatalog(): Promise<CatalogEntry[]> {
   if (catalogCache) return Promise.resolve(catalogCache);
   if (catalogPromise) return catalogPromise;
-  catalogPromise = fetch(CATALOG_URL)
+  catalogPromise = fetch(statsUrl(CATALOG_URL))
     .then(r => {
       if (!r.ok) throw new Error(`catalog fetch ${r.status}`);
       return r.json() as Promise<CatalogEntry[]>;
@@ -135,7 +136,7 @@ export function usePostContent(slug: string | undefined): {
     }
     setLoading(true);
     setError(null);
-    fetch(`/stats/tutorial/posts/${encodeURIComponent(slug)}.json`)
+    fetch(statsUrl(`/stats/tutorial/posts/${encodeURIComponent(slug)}.json`))
       .then(r => {
         if (!r.ok) throw new Error(`post ${slug} not found`);
         return r.json() as Promise<PostContent>;

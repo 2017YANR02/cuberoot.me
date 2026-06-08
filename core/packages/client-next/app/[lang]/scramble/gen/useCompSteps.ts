@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { statsUrl } from '@/lib/stats-base';
 
 // scramble -> [N ints] = 各阶段 × 6 底色(BADGE_ORDER W Y R O B G)。
 //   std = 5 阶段(cross/xc/xxc/xxxc/xxxxc)= 30;f2leo 系 = 4 阶段(无 xxxxc)= 24。
@@ -50,7 +51,7 @@ export function useCompSteps(compId: string | null, variant: CompStepsVariant = 
     }
     let cancelled = false;
     setState(EMPTY);
-    fetch(`/stats/scramble/${DIR[variant]}/${encodeURIComponent(compId)}.json`)
+    fetch(statsUrl(`/stats/scramble/${DIR[variant]}/${encodeURIComponent(compId)}.json`))
       .then((r) => (r.ok ? r.json() : null))
       .then((obj: Record<string, number[]> | null) => {
         if (cancelled) return;

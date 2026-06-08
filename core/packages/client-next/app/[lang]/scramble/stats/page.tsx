@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import DiscreteHistogram, { type HistSeries } from './_components/DiscreteHistogram';
+import ScrambleLengthView from './_components/ScrambleLengthView';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
+import { statsUrl } from '@/lib/stats-base';
 import {
   SubsetColorPicker, useSubsetSelection, fillColorsForSubset,
   COLOR_HEX, type ColorLetter,
@@ -154,6 +156,7 @@ export default function ScrambleStatsPage() {
   const isZh = i18n.language.startsWith('zh');
   useDocumentTitle('打乱分布', 'Scramble Stats');
 
+  const [tab, setTab] = useState<'difficulty' | 'length'>('difficulty');
   const [data, setData] = useState<DistributionJson | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scrambleSet, setScrambleSet] = useState<string>('wca');
@@ -174,7 +177,7 @@ export default function ScrambleStatsPage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    fetch('/stats/scramble/distribution.json')
+    fetch(statsUrl('/stats/scramble/distribution.json'))
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -222,7 +225,7 @@ export default function ScrambleStatsPage() {
   const ensureExamplesLoaded = () => {
     if (examples || examplesLoading) return;
     setExamplesLoading(true);
-    fetch('/stats/scramble/examples.json', { cache: 'no-store' })
+    fetch(statsUrl('/stats/scramble/examples.json'), { cache: 'no-store' })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -290,11 +293,42 @@ export default function ScrambleStatsPage() {
     };
   }, [currentSet, variant, stage]);
 
+  const pageTitle = tab === 'length'
+    ? (isZh ? '打乱长度分布' : 'Scramble Length')
+    : (isZh ? '打乱难度分布' : 'Scramble Distribution');
+  const tabsBar = (
+    <div className="scramble-stats-tabs" role="tablist">
+      <button
+        type="button" role="tab" aria-selected={tab === 'difficulty'}
+        className={`scramble-stats-tab${tab === 'difficulty' ? ' active' : ''}`}
+        onClick={() => setTab('difficulty')}
+      >{isZh ? '十字难度' : 'Cross difficulty'}</button>
+      <button
+        type="button" role="tab" aria-selected={tab === 'length'}
+        className={`scramble-stats-tab${tab === 'length' ? ' active' : ''}`}
+        onClick={() => setTab('length')}
+      >{isZh ? '打乱长度' : 'Scramble length'}</button>
+    </div>
+  );
+
+  if (tab === 'length') {
+    return (
+      <div className="scramble-stats-page">
+        <div className="scramble-stats-header">
+          <h1>{pageTitle}</h1>
+          {tabsBar}
+        </div>
+        <ScrambleLengthView isZh={isZh} />
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="scramble-stats-page">
         <div className="scramble-stats-header">
-          <h1>{isZh ? '打乱难度分布' : 'Scramble Distribution'}</h1>
+          <h1>{pageTitle}</h1>
+          {tabsBar}
         </div>
         <div className="scramble-stats-error">{isZh ? '加载失败' : 'Load failed'}: {error}</div>
       </div>
@@ -305,7 +339,8 @@ export default function ScrambleStatsPage() {
     return (
       <div className="scramble-stats-page">
         <div className="scramble-stats-header">
-          <h1>{isZh ? '打乱难度分布' : 'Scramble Distribution'}</h1>
+          <h1>{pageTitle}</h1>
+          {tabsBar}
         </div>
         <div className="scramble-stats-loading">{isZh ? '加载中…' : 'Loading…'}</div>
       </div>
@@ -337,7 +372,8 @@ export default function ScrambleStatsPage() {
   return (
     <div className="scramble-stats-page">
       <div className="scramble-stats-header">
-        <h1>{isZh ? '打乱难度分布' : 'Scramble Distribution'}</h1>
+        <h1>{pageTitle}</h1>
+        {tabsBar}
         <p className="scramble-stats-note">{sourceText}</p>
       </div>
 

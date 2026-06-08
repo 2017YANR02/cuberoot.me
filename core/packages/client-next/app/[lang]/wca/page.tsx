@@ -15,12 +15,13 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Wrench,
-  CalendarDays, LineChart, TrendingDown, Radio, Target, Calculator, Search,
+  LineChart, TrendingDown, Radio, Target, Calculator, Search,
   ListOrdered, Users, Percent, LayoutGrid, Sigma, Crown, History, Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 import { getLangQuery } from '@/i18n/i18n-client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { statsUrl } from '@/lib/stats-base';
 import { STAT_ICONS } from './wca-stat-icons';
 import '../wca/_wca_stats.css';
 
@@ -37,8 +38,6 @@ const LOOKUP = '__lookup__';
 
 const WCA_TOOLS: { path: string; zh: string; en: string; Icon: LucideIcon }[] = [
   { path: '/wca/comp',       zh: '比赛',     en: 'Comp',         Icon: Radio },
-  { path: '/wca/calendar',   zh: '日历',     en: 'Calendar',     Icon: CalendarDays },
-  { path: '/wca/globe',      zh: '地球',     en: 'Globe',        Icon: Globe2 },
   { path: '/wca/viz',        zh: '分布',     en: 'Distribution', Icon: LineChart },
   { path: '/wca/prediction', zh: '预测',     en: 'Prediction',   Icon: TrendingDown },
   { path: '/nemesizer',      zh: '宿敌',     en: 'Nemesizer',    Icon: Target },
@@ -72,7 +71,7 @@ export default function WcaStatsIndex() {
 
   useEffect(() => {
     const ac = new AbortController();
-    fetch('/stats/index.json', { signal: ac.signal })
+    fetch(statsUrl('/stats/index.json'), { signal: ac.signal })
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

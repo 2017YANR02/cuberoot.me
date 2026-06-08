@@ -104,6 +104,12 @@ const nextConfig: NextConfig = {
       { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
     ];
     return [
+      // Kill-switch service worker (public/sw.js): never cache, so stale Vite-era
+      // clients pick up the self-destruct script on their next update check.
+      {
+        source: "/sw.js",
+        headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
+      },
       {
         source: "/:lang(zh|en)?/scramble/solver",
         headers: [
@@ -161,7 +167,7 @@ const nextConfig: NextConfig = {
       { source: "/scramble-stats", destination: "/scramble/stats", permanent: true },
       { source: "/gen", destination: "/scramble/gen", permanent: true },
       { source: "/patterns", destination: "/scramble/pattern", permanent: true },
-      { source: "/upcoming-comps", destination: "/wca/calendar", permanent: true },
+      { source: "/upcoming-comps", destination: "/wca/comp", permanent: true },
       { source: "/theory", destination: "/math", permanent: true },
       { source: "/theory/group", destination: "/math/group", permanent: true },
       { source: "/theory/god", destination: "/math/god", permanent: true },

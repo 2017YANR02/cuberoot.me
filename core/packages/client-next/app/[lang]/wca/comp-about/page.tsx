@@ -111,14 +111,18 @@ export default function CompAboutPage() {
           )}
         </p>
 
+        <h2 className="ca-section-title">{t('比赛日历', 'Competition calendar')}</h2>
+        <p className="ca-section-intro">
+          {t(
+            '本页主体是一张比赛日历:月历 / 紧凑国旗 / 列表三种视图,默认展示近期与历史的 WCA 比赛。可按顶尖选手、地区(大洲 / 国家)、项目轮次、月份过滤;点任意比赛弹出各轮次 WR / CR / NR 纪录摘要,再一步进入完整成绩。顶部「统计」链接到比赛数量随时间分布的热力图。比赛列表来自每周更新的 all_upcoming_comps.json / all_past_comps.json。',
+            'The body of this page is a competition calendar: month-grid / compact-flags / list views, showing upcoming and past WCA competitions by default. Filter by top cubers, region (continent / country), event rounds, and month; click any competition for its per-round WR / CR / NR record highlights, then drill into full results. The "Stats" link opens a heatmap of competition counts over time. Lists update weekly from all_upcoming_comps.json / all_past_comps.json.',
+          )}
+        </p>
+
         <h2 className="ca-section-title">{t('相关页面', 'See also')}</h2>
         <ul className="ca-refs">
           <li>
-            <Link href="/wca/calendar">{t('比赛日历', 'Competition Calendar')}</Link>
-            {t(' — 近期比赛时间轴 + 选手追踪。', ' — upcoming comps timeline + cuber tracking.')}
-          </li>
-          <li>
-            <Link href="/wca/globe">{t('地球视图', 'Globe view')}</Link>
+            <Link href="/wca/comp?view=globe">{t('地球视图', 'Globe view')}</Link>
             {t(' — 比赛地理分布 3D 地球。', ' — competitions on an interactive 3D globe.')}
           </li>
           <li>

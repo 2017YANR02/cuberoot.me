@@ -1182,25 +1182,8 @@ input:checked + .wca-stats-toggle-pill::after {
    国旗图标（对标 Legacy i18n.js _injectFlagStyles）
    ========================================================================== */
 
-/* NOTE: 覆盖 flag-icons 默认尺寸，使国旗与表格文字对齐 */
-.country-flag {
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 5px;
-  border-radius: 2px;
-  width: 1.25em !important;
-  line-height: 1em !important;
-}
-
-/* NOTE: Chinese Taipei 自定义梅花旗 SVG */
-.country-flag-ct {
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 5px;
-  width: 1.25em;
-  height: 0.9em;
-  border-radius: 2px;
-}
+/* .country-flag / .country-flag-ct 统一规则在 app/globals.css(全局唯一来源,直角无圆角)。
+   此处不再重复定义 —— 裸类名重复会静默覆盖全局改动,改一处不生效(对齐 _historical_ranks.css)。 */
 
 /* ==========================================================================
    语言切换按钮（固定右下角，对标 Legacy i18n.js toggle）

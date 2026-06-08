@@ -1,5 +1,6 @@
 // Ported from packages/client/src/pages/calendar/use_calendar_data.ts.
 import { useEffect, useState } from 'react';
+import { statsUrl } from '@/lib/stats-base';
 
 export interface PastComp {
   id: string;
@@ -25,7 +26,7 @@ let recordsPromise: Promise<CompRecordsSummary> | null = null;
 function fetchPastComps(): Promise<PastComp[]> {
   if (pastCache) return Promise.resolve(pastCache);
   if (pastPromise) return pastPromise;
-  pastPromise = fetch('/stats/all_past_comps.json')
+  pastPromise = fetch(statsUrl('/stats/all_past_comps.json'))
     .then((r) => r.json())
     .then((data: PastComp[]) => { pastCache = data; return data; });
   return pastPromise;
@@ -34,7 +35,7 @@ function fetchPastComps(): Promise<PastComp[]> {
 function fetchRecordsSummary(): Promise<CompRecordsSummary> {
   if (recordsCache) return Promise.resolve(recordsCache);
   if (recordsPromise) return recordsPromise;
-  recordsPromise = fetch('/stats/comp_records_summary.json')
+  recordsPromise = fetch(statsUrl('/stats/comp_records_summary.json'))
     .then((r) => r.json())
     .then((data: CompRecordsSummary) => { recordsCache = data; return data; });
   return recordsPromise;

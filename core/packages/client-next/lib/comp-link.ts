@@ -2,6 +2,7 @@
 // 比赛页内部链接 + WCA URL anchor 解析. compLinkProps tweaked for Next: returns
 // `href` (next/link) instead of `to` (react-router).
 import { apiUrl } from './api-base';
+import { statsUrl } from './stats-base';
 
 export interface CompLinkOpts {
   event?: string;
@@ -40,7 +41,7 @@ const _prefetched = new Set<string>();
 export function prefetchComp(compId: string): void {
   if (_prefetched.has(compId)) return;
   _prefetched.add(compId);
-  fetch(`/stats/comp/${encodeURIComponent(compId)}.json`, { cache: 'force-cache' })
+  fetch(statsUrl(`/stats/comp/${encodeURIComponent(compId)}.json`), { cache: 'force-cache' })
     .then(r => {
       if (r.ok) return;
       fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compId)}`), { cache: 'force-cache' })

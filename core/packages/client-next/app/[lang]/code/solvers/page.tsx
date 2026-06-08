@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Cpu, Database, Gauge, HardDrive, Globe, Layers, CircleCheck, CircleDashed, CircleDot } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { statsUrl } from '@/lib/stats-base';
 import './solvers.css';
 
 // fetch 失败时的回退 (last-known 2026-05-30).
@@ -155,7 +156,7 @@ export default function SolversPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/stats/scramble/distribution.json', { cache: 'no-store' })
+    fetch(statsUrl('/stats/scramble/distribution.json'), { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((j) => {
         const wca = j?.sets?.wca;
