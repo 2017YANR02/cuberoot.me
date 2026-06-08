@@ -553,8 +553,23 @@
 .scramble-len-footnote {
   font-size: 0.78rem;
   color: var(--text-sub);
-  line-height: 1.5;
+  line-height: 1.6;
   margin: -0.25rem 0 0.75rem;
+}
+.scramble-len-glued-comp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+.scramble-len-glued-comp:hover { text-decoration: underline; }
+.scramble-len-glued-comp .country-flag,
+.scramble-len-glued-comp .country-flag-ct { margin-right: 0; font-size: 0.8rem; }
+.scramble-len-footnote code {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  color: var(--text);
+  font-size: 0.95em;
 }
 /* ── Dark mode ── */
 @media (prefers-color-scheme: dark) {
