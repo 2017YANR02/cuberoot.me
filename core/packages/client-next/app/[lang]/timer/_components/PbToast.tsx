@@ -11,6 +11,7 @@
 
 import { useEffect } from 'react';
 import { Trophy } from 'lucide-react';
+import i18n from "@/i18n/i18n-client";
 
 export type PbKind = 'single' | 'ao5' | 'ao12';
 
@@ -23,6 +24,11 @@ interface Props {
 
 const TITLE_ZH: Record<PbKind, string> = {
   single: '新单次最佳!',
+  ao5: '新 Ao5 最佳!',
+  ao12: '新 Ao12 最佳!',
+};
+const TITLE_ZH__Hant: Record<PbKind, string> = {
+  single: '新單次最佳!',
   ao5: '新 Ao5 最佳!',
   ao12: '新 Ao12 最佳!',
 };
@@ -40,7 +46,7 @@ export default function PbToast({ kind, value, isZh, onClose }: Props) {
   }, [kind, value, onClose]);
 
   if (kind === null) return null;
-  const title = isZh ? TITLE_ZH[kind] : TITLE_EN[kind];
+  const title = i18n.language === 'zh-Hant' ? TITLE_ZH__Hant[kind] : (isZh ? TITLE_ZH[kind] : TITLE_EN[kind]);
   return (
     <div className="tmr-pb-card" role="status" aria-live="polite" onClick={onClose}>
       <Trophy size={18} className="tmr-pb-icon" />

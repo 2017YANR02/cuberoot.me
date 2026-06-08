@@ -33,6 +33,14 @@ const SUPPORTED_CUBES_ZH = [
   'MoYu AI（完整解码）',
   'Giiker i3s / Xiaomi（完整解码）',
 ];
+const SUPPORTED_CUBES_ZH__Hant = [
+  'GAN 356 i / i3 / 357（完整解碼）',
+  'GAN 12 / 14（完整解碼）',
+  'QiYi（完整解碼）',
+  'GoCube / Rubik’s Connected（完整解碼）',
+  'MoYu AI（完整解碼）',
+  'Giiker i3s / Xiaomi（完整解碼）',
+];
 const SUPPORTED_CUBES_EN = [
   'GAN 356 i / i3 / 357 (full decode)',
   'GAN 12 / 14 (full decode)',
@@ -158,7 +166,7 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect }: Props
                   zhHant: "當前支援："
             })}</div>
               <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55 }}>
-                {(isZh ? SUPPORTED_CUBES_ZH : SUPPORTED_CUBES_EN).map((c) => (
+                {(i18n.language === 'zh-Hant' ? SUPPORTED_CUBES_ZH__Hant : (isZh ? SUPPORTED_CUBES_ZH : SUPPORTED_CUBES_EN)).map((c) => (
                   <li key={c}>{c}</li>
                 ))}
               </ul>
