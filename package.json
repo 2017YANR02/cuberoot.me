@@ -8,6 +8,7 @@
     "start": "next start -H 127.0.0.1 -p 3100",
     "lint": "next lint",
     "typecheck": "tsgo --noEmit",
+    "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx db/migrate.ts",
     "db:seed": "tsx db/seed.ts"
@@ -40,6 +41,7 @@
     "drizzle-kit": "^0.31.10",
     "tailwindcss": "^4.2.2",
     "tsx": "^4.22.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8"
   }
 }

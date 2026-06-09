@@ -32,6 +32,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # 约定守卫兜底层 (vitest):站内导航禁 onClick 里 router.push/replace,必须真 <a>/<Link>。
+      # 写入即拦由本地 hook 负责,此处拦绕过 hook 的来源(其他 AI / 手改 / web)。早跑早挂,省构建。
+      - name: Convention guards (vitest)
+        run: pnpm test
+
       # 必须排在 build 之前:静态页 (app/sitemap.ts 等) 在构建期就查 DB 预渲染,
       # 没有已建表的 data.db 会报 "no such table"。seed 到默认路径 ./data.db,build 直接读它;
       # 同一份库随包发出去作初始演示数据。

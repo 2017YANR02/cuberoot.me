@@ -167,6 +167,7 @@ function UserMenu({ user }: { user: HeaderUser }) {
   }, [open]);
 
   async function logout() {
+    // allow-button-nav: POST /api/auth/logout 后程序化跳首页(post-mutation 动作),非站内链接跳转
     await fetch("/api/auth/logout", { method: "POST" });
     setOpen(false);
     router.refresh();
@@ -252,6 +253,7 @@ function MobileLogout({ onDone }: { onDone: () => void }) {
     <button
       type="button"
       onClick={async () => {
+        // allow-button-nav: POST /api/auth/logout 后程序化跳首页(post-mutation 动作),非链接跳转
         await fetch("/api/auth/logout", { method: "POST" });
         onDone();
         router.refresh();
