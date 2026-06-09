@@ -1,4 +1,6 @@
 import { loginAction } from "../actions";
+import { loadAdminLoginParams } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const metadata = {
   title: "登录 — 管理后台",
@@ -8,11 +10,10 @@ export const metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
-  const sp = await searchParams;
-  const next = sp.next ?? "/admin";
-  const hasError = sp.error === "1";
+  const { next, error } = await loadAdminLoginParams(searchParams);
+  const hasError = error === "1";
 
   return (
     <div className="min-h-[80vh] grid place-items-center px-4 py-12">

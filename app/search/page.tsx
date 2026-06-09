@@ -11,18 +11,18 @@ import { Section } from "@/components/Section";
 import { Badge } from "@/components/Badge";
 import { searchAll, type SearchType } from "@/lib/db/search";
 import { SearchPageForm } from "./SearchForm";
+import { loadSearchQuery } from "@/lib/search-params";
 import type { Metadata } from "next";
-
-type SP = Promise<{ q?: string }>;
+import type { SearchParams } from "nuqs/server";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: SP;
+  searchParams: Promise<SearchParams>;
 }): Promise<Metadata> {
-  const { q } = await searchParams;
+  const { q } = await loadSearchQuery(searchParams);
   const title = q ? `搜索 “${q}” — 魔方开放社群` : "搜索 — 魔方开放社群";
   return {
     title,
@@ -41,14 +41,14 @@ const TYPE_META: Record<
   posts: { label: "帖子", icon: MessageSquare, href: "/community" },
 };
 
-export default async function SearchPage({ searchParams }: { searchParams: SP }) {
-  const { q } = await searchParams;
-  const query = (q ?? "").trim();
+export default async function SearchPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const { q } = await loadSearchQuery(searchParams);
+  const query = q.trim();
 
   return (
     <Section eyebrow="站内搜索" title="搜索 课程 商品 赛事 资讯 帖子">
       <div className="mb-8 max-w-xl">
-        <SearchPageForm defaultValue={query} />
+        <SearchPageForm />
       </div>
 
       {!query ? (

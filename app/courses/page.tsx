@@ -5,16 +5,15 @@ import { Section } from "@/components/Section";
 import { Badge } from "@/components/Badge";
 import { Pagination } from "@/components/Pagination";
 import { ListSearch } from "@/components/ListSearch";
+import { loadListSearchParams } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const metadata = { title: "课程 — 魔方开放社群" };
 export const dynamic = "force-dynamic";
 
-type SP = Promise<{ q?: string; page?: string }>;
-
-export default async function CoursesPage({ searchParams }: { searchParams: SP }) {
-  const { q, page } = await searchParams;
-  const pageNum = Math.max(1, Number(page) || 1);
-  const result = await listPaged({ q, page: pageNum, pageSize: 12 });
+export default async function CoursesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const { q, page } = await loadListSearchParams(searchParams);
+  const result = await listPaged({ q, page, pageSize: 12 });
 
   return (
     <Section

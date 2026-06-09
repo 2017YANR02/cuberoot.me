@@ -5,19 +5,21 @@ import { qrSvg } from "@/lib/qr/svg";
 import { QrCardUnit } from "@/components/QrCard";
 import { PageHeader, GhostLink } from "../../../_components/Shell";
 import { PrintButton } from "./_PrintButton";
+import { loadQrCardsParams } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function QrCardsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ codes?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
-  const sp = await searchParams;
+  const { codes } = await loadQrCardsParams(searchParams);
   let rows: QrCode[] = await list();
-  if (sp.codes) {
+  if (codes) {
     const set = new Set(
-      sp.codes.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean),
+      codes.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean),
     );
     rows = rows.filter((r) => set.has(r.code));
   }

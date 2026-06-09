@@ -1,4 +1,6 @@
 import { LoginForm } from "./LoginForm";
+import { loadLoginParams } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const metadata = {
   title: "登录 — 魔方开放社群",
@@ -8,12 +10,11 @@ export const metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; invite?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
-  const sp = await searchParams;
-  const raw = sp.next ?? "/";
-  const next = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
-  const invite = (sp.invite ?? "").trim().toUpperCase().slice(0, 16);
+  const { next: rawNext, invite: rawInvite } = await loadLoginParams(searchParams);
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
+  const invite = rawInvite.trim().toUpperCase().slice(0, 16);
 
   return (
     <div className="min-h-[80vh] grid place-items-center px-4 py-12">

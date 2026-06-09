@@ -19,6 +19,8 @@ import {
 } from "../../../_components/Form";
 import { DeleteButton } from "../../../_components/DeleteButton";
 import { saveQr, deleteQr } from "../actions";
+import { loadSavedNotice } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +29,12 @@ export default async function AdminQrEditPage({
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ saved?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
-  const [{ code: rawCode }, sp] = await Promise.all([params, searchParams]);
+  const [{ code: rawCode }, sp] = await Promise.all([
+    params,
+    loadSavedNotice(searchParams),
+  ]);
   const code = String(rawCode ?? "").trim().toLowerCase();
   const entry = await findByCode(code);
   if (!entry) notFound();

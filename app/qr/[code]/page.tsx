@@ -6,6 +6,8 @@ import { ArrowRight, ArrowUpRight, Sparkles } from "lucide-react";
 import { findByCode, incrementScans, type QrLink } from "@/lib/db/qr";
 import { recordEvent } from "@/lib/db/track";
 import { TrackOnce } from "@/components/TrackOnce";
+import { loadQrLandingParams } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const dynamic = "force-dynamic";
 
@@ -28,12 +30,12 @@ export default async function QrLandingPage({
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ stay?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const { code: rawCode } = await params;
   const code = String(rawCode ?? "").trim().toLowerCase().slice(0, 64);
   if (!code) redirect("/");
-  const sp = await searchParams;
+  const { stay } = await loadQrLandingParams(searchParams);
   const entry = await findByCode(code);
 
   if (entry) {
@@ -49,7 +51,7 @@ export default async function QrLandingPage({
       entry.type !== "landing" &&
       entry.target &&
       entry.target !== "/" &&
-      sp.stay !== "1"
+      stay !== "1"
     ) {
       redirect(safeInternal(entry.target));
     }
