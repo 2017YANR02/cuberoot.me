@@ -824,7 +824,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
       events_done: number; total_world_rank: number; total_country_rank: number;
       ranks_world: number[]; ranks_country: number[];
       person_name: string;
-      best_rank: number | null; best_year: number | null;
+      best_rank: number | null; best_year: number | null; best_total: number | null;
     }>(
       `
       SELECT pr.wca_id, pr.country_id,
@@ -832,7 +832,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
              pr.events_done, pr.total_world_rank, pr.total_country_rank,
              pr.ranks_world, pr.ranks_country,
              p.name AS person_name,
-             shb.best_rank AS best_rank, shb.best_year AS best_year
+             shb.best_rank AS best_rank, shb.best_year AS best_year, shb.best_total AS best_total
       FROM wca_person_ranks pr
       JOIN wca_persons p ON p.wca_id = pr.wca_id
       LEFT JOIN wca_countries co ON co.id = pr.country_id
@@ -863,6 +863,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
         ranks: isCountryMode ? r.ranks_country : r.ranks_world,
         bestRank: r.best_rank ?? null,
         bestYear: r.best_year ?? null,
+        bestTotal: r.best_total ?? null,
       })),
     });
   }
