@@ -197,8 +197,18 @@ async function processMetric(isAvg: boolean, countries: Map<string, CountryInfo>
     totpenN.set(g, t);
   }
 
-  // ── Pass B: 逐 (year, person) 累积 done_sum / done_pen(world/cont/country)──
-  interface Acc { ctry: string; cont: string; wSum: number; wPen: number; cSum: number; cPen: number; nSum: number; nPen: number; lastDate: string; lastComp: string }
+  // ── Pass B: 逐 (year, person) 累积 ──
+  // 关键:per-row country/continent 可能不一致(选手当年换国籍 / 早期成绩挂旧国,
+  // 如 2004JIAQ01 2006 的 333 挂 USA、其余挂 China)。必须按 country/continent 分桶累积,
+  // 否则 nPen(逐行国的参与数)与 totpenN(主桶国的参与数)口径错配 → SOR 出负数。
+  interface CtrySub { sum: number; pen: number; n: number }   // Σcr, Σ(fN+1), 命中项数
+  interface ContSub { sum: number; pen: number }              // Σkr, Σ(fK+1)
+  interface Acc {
+    wSum: number; wPen: number;
+    ctry: Map<string, CtrySub>; cont: Map<string, ContSub>;
+    domCtry: string; domCont: string;
+    lastDate: string; lastComp: string;
+  }
   // byYear: Map<year, Map<wcaId, Acc>>
   const byYear = new Map<number, Map<string, Acc>>();
   for (const yr of sortedYears) byYear.set(yr, new Map());
@@ -216,11 +226,12 @@ async function processMetric(isAvg: boolean, countries: Map<string, CountryInfo>
     const kr = +c[K]!; // continent rank
     const ym = byYear.get(yr)!;
     let a = ym.get(id);
-    if (!a) { a = { ctry, cont, wSum: 0, wPen: 0, cSum: 0, cPen: 0, nSum: 0, nPen: 0, lastDate: '', lastComp: '' }; ym.set(id, a); }
-    else { a.ctry = ctry; a.cont = cont; } // 国籍以本年所见为准
+    if (!a) { a = { wSum: 0, wPen: 0, ctry: new Map(), cont: new Map(), domCtry: '', domCont: '', lastDate: '', lastComp: '' }; ym.set(id, a); }
     a.wSum += wr; a.wPen += (fW.get(`${ev}|${yr}`) || 0) + 1;
-    a.cSum += kr; a.cPen += (fK.get(`${ev}|${yr}|${cont}`) || 0) + 1;
-    a.nSum += cr; a.nPen += (fN.get(`${ev}|${yr}|${ctry}`) || 0) + 1;
+    let cs = a.ctry.get(ctry); if (!cs) { cs = { sum: 0, pen: 0, n: 0 }; a.ctry.set(ctry, cs); }
+    cs.sum += cr; cs.pen += (fN.get(`${ev}|${yr}|${ctry}`) || 0) + 1; cs.n++;
+    let ks = a.cont.get(cont); if (!ks) { ks = { sum: 0, pen: 0 }; a.cont.set(cont, ks); }
+    ks.sum += kr; ks.pen += (fK.get(`${ev}|${yr}|${cont}`) || 0) + 1;
     // "最后贡献 SOR 的那场":本 metric 计入项目里 PB 日期最晚的那场
     const date = c[DD];
     if (date && date !== '\\N' && date > a.lastDate) {
@@ -233,6 +244,13 @@ async function processMetric(isAvg: boolean, countries: Map<string, CountryInfo>
   // ── 逐年排名 + emit ──
   for (const yr of sortedYears) {
     const ym = byYear.get(yr)!;
+    // 每人定主国籍 = 当年命中项最多的 country(并列取 id 小);主大洲随主国籍走
+    for (const a of ym.values()) {
+      let dom = '', domN = -1;
+      for (const [c, cs] of a.ctry) { if (cs.n > domN || (cs.n === domN && c < dom)) { domN = cs.n; dom = c; } }
+      a.domCtry = dom;
+      a.domCont = countries.get(dom)?.continent || '?';
+    }
     // world
     {
       const rows: Ranked[] = [];
@@ -242,15 +260,17 @@ async function processMetric(isAvg: boolean, countries: Map<string, CountryInfo>
       for (const r of rows) updateBest(bestWorld, isAvg, r.id, r.rank, yr);
       pushFrame(worldOut[metricKey], yr, rows, ym);
     }
-    // continent buckets
+    // continent buckets(按主大洲;sub 只含该洲命中项 → 跨洲项自动落缺项罚分)
     {
       const buckets = new Map<string, Ranked[]>();
       for (const [id, a] of ym) {
-        const sor = a.cSum + totpenK.get(`${yr}|${a.cont}`)! - a.cPen;
-        (buckets.get(a.cont) || buckets.set(a.cont, []).get(a.cont)!).push({ id, sor, rank: 0 });
+        const cont = a.domCont;
+        if (cont === '?' || cont === 'Multiple Continents') continue;
+        const sub = a.cont.get(cont)!;
+        const sor = sub.sum + totpenK.get(`${yr}|${cont}`)! - sub.pen;
+        (buckets.get(cont) || buckets.set(cont, []).get(cont)!).push({ id, sor, rank: 0 });
       }
       for (const [cont, rows] of buckets) {
-        if (cont === '?' || cont === 'Multiple Continents') continue;
         rows.sort((x, y) => x.sor - y.sor || (x.id < y.id ? -1 : 1));
         assignRanks(rows);
         continentSeen.add(cont);
@@ -259,22 +279,24 @@ async function processMetric(isAvg: boolean, countries: Map<string, CountryInfo>
         pushFrame(out[metricKey], yr, rows, ym);
       }
     }
-    // country buckets
+    // country buckets(按主国籍;sub 只含该国命中项 → 跨国项自动落缺项罚分)
     {
       const buckets = new Map<string, Ranked[]>();
       for (const [id, a] of ym) {
-        const sor = a.nSum + totpenN.get(`${yr}|${a.ctry}`)! - a.nPen;
-        (buckets.get(a.ctry) || buckets.set(a.ctry, []).get(a.ctry)!).push({ id, sor, rank: 0 });
+        const ctry = a.domCtry;
+        if (!countries.get(ctry)?.iso2) continue; // 无 iso2(特殊地区)跳过
+        const sub = a.ctry.get(ctry)!;
+        const sor = sub.sum + totpenN.get(`${yr}|${ctry}`)! - sub.pen;
+        (buckets.get(ctry) || buckets.set(ctry, []).get(ctry)!).push({ id, sor, rank: 0 });
       }
       for (const [ctry, rows] of buckets) {
-        const info = countries.get(ctry);
-        const iso2 = info?.iso2;
-        if (!iso2) continue; // 无 iso2(特殊地区)跳过
+        const info = countries.get(ctry)!;
+        const iso2 = info.iso2!;
         maxCountryCount.set(ctry, Math.max(maxCountryCount.get(ctry) || 0, rows.length));
         rows.sort((x, y) => x.sor - y.sor || (x.id < y.id ? -1 : 1));
         assignRanks(rows);
         for (const r of rows) updateBest(bestCountry, isAvg, r.id, r.rank, yr);
-        countryMeta.set(ctry, { iso2, name: info!.name });
+        countryMeta.set(ctry, { iso2, name: info.name });
         let out = countryOut.get(iso2);
         if (!out) { out = { single: [], average: [] }; countryOut.set(iso2, out); }
         pushFrame(out[metricKey], yr, rows, ym);
@@ -285,7 +307,7 @@ async function processMetric(isAvg: boolean, countries: Map<string, CountryInfo>
   void STORE_K;
 }
 
-function pushFrame(arr: YearFrame[], yr: number, ranked: Ranked[], ym: Map<string, { ctry: string; lastComp?: string }>): void {
+function pushFrame(arr: YearFrame[], yr: number, ranked: Ranked[], ym: Map<string, { domCtry: string; lastComp?: string }>): void {
   const rows: FrameRow[] = [];
   for (let i = 0; i < ranked.length && i < STORE_K; i++) {
     const r = ranked[i]!;
@@ -293,7 +315,7 @@ function pushFrame(arr: YearFrame[], yr: number, ranked: Ranked[], ym: Map<strin
     const comp = a?.lastComp || undefined;
     rows.push({ p: r.id, v: r.sor, r: r.rank, c: comp });
     personsInFrames.add(r.id);
-    if (a) personCountryInFrames.set(r.id, a.ctry);
+    if (a) personCountryInFrames.set(r.id, a.domCtry);
     if (comp) referencedComps.add(comp);
   }
   arr.push({ y: yr, rows });
