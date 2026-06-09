@@ -242,6 +242,19 @@
   font-variant-numeric: tabular-nums;
   font-weight: 500;
 }
+
+/* 历史最佳:名次总和 / #名次 / 年份 三栏右对齐,后两栏定宽 ch → 跨行对齐 */
+.wse-best {
+  display: inline-grid;
+  grid-template-columns: auto 4.5ch 4ch;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.wse-best > span { text-align: right; }
+.wse-best-total { font-weight: 600; }
+.wse-best-rank { opacity: 0.7; }
+.wse-best-year { opacity: 0.5; }
 .wse-attempts-col {
   font-variant-numeric: tabular-nums;
   font-size: 13px;
