@@ -109,29 +109,39 @@ wcaScramblesRoutes.get('/wca/scrambles', async (c) => {
   return c.body(payload, 200, { 'Content-Type': 'application/json' });
 });
 
-// GET /wca/scrambles/random?event=333&count=5 — 从全量镜像随机抽真实打乱(timer 练习池)。
-// 随机起点 id 窗口采样(见 migration 0036):取该 event 的 [min,max] id 范围,随机选一个
-// 起点,沿 id 升序取 count 条。复合索引 (event_id, id) → O(count) 区间扫描(~3ms),不再
-// ORDER BY random() 全表排序(~11.8s)。同一窗口内多为同场同轮(id 聚簇),每次 refill 换
-// 一个随机窗口,整段练习仍覆盖不同比赛。附带比赛元数据(国旗/名称/轮次)供 UI 展示来源。
+// GET /wca/scrambles/random?event=333&count=5&from=&to= — 随机真实打乱(timer 日期范围模式)。
+// 采样策略:先从 wca_competitions(~1.8 万行,按可选 start_date 范围过滤)随机抽 30 场,
+// 再从这些场的该 event 打乱里随机取 count 条。实测 ~33-49ms。两层随机 → 每批跨多达 30 场,
+// 避免「老是同一场」(早期 id 窗口采样的聚簇问题);comp 表扫描 2-3ms 无需额外索引。
+// from/to 省略 = 全年份。附带比赛元数据(国旗/名称/轮次)供 UI 展示来源。
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const COMP_SAMPLE = 30;
 wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
   const event = c.req.query('event') ?? '';
   if (!/^[0-9a-z]{2,6}$/.test(event)) return c.json({ error: 'invalid event' }, 400);
   const count = Math.min(50, Math.max(1, Number(c.req.query('count')) || 1));
+  const from = c.req.query('from') ?? '';
+  const to = c.req.query('to') ?? '';
+
+  // 可选日期边界(已正则校验,可安全拼进子查询 WHERE)。
+  const dateWhere: string[] = [];
+  const dateParams: string[] = [];
+  if (DATE_RE.test(from)) { dateWhere.push('start_date >= ?'); dateParams.push(from); }
+  if (DATE_RE.test(to)) { dateWhere.push('start_date <= ?'); dateParams.push(to); }
+  const compFilter = dateWhere.length ? `WHERE ${dateWhere.join(' AND ')}` : '';
 
   try {
     const rows = await query<ScrambleRow & { comp_name: string | null }>(
-      `WITH b AS (SELECT min(id) AS lo, max(id) AS hi FROM wca_scrambles WHERE event_id = ?)
-       SELECT ws.competition_id, ws.event_id, ws.round_type_id, ws.group_id,
+      `SELECT ws.competition_id, ws.event_id, ws.round_type_id, ws.group_id,
               (ws.is_extra = 1) AS is_extra, ws.scramble_num, ws.scramble,
               c.name AS comp_name
          FROM wca_scrambles ws
-         LEFT JOIN wca_competitions c ON c.id = ws.competition_id
+         JOIN (SELECT id, name FROM wca_competitions ${compFilter}
+                ORDER BY random() LIMIT ${COMP_SAMPLE}) c ON c.id = ws.competition_id
         WHERE ws.event_id = ?
-          AND ws.id >= (SELECT lo + floor(random() * GREATEST(hi - lo, 1))::bigint FROM b)
-        ORDER BY ws.id
+        ORDER BY random()
         LIMIT ?`,
-      [event, event, count],
+      [...dateParams, event, count],
     );
     if (rows.length === 0) return c.json({ error: 'no scrambles for event', event }, 404);
     c.header('Cache-Control', 'no-store');

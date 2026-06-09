@@ -33,7 +33,7 @@ import { type MoreMenuItem } from '../_components/MoreMenu';
 import i18n, { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { generateScramble, registerScramble } from '../_lib/scramble';
-import { peekWca, nextWca, prefetchWca, hasWcaScrambles, wcaMetaFor } from '../_lib/scramble/wca_pool';
+import { peekWca, nextWca, prefetchWca, hasWcaSource, wcaMetaFor, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { Flag } from '@/components/Flag';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
@@ -279,6 +279,26 @@ export default function SoloView({ modePill }: SoloViewProps) {
   // generates a fresh one; in the middle it steps forward through history.
   // Changing event / drill target / kociemba-ready resets history to a single
   // fresh scramble (matches the old memo's regenerate-on-context-change).
+  // The WCA source the pool should draw from, derived from settings. Kept in a
+  // ref so the (stable-identity) scramble callbacks read the live value; the
+  // `sig` string is the *meaningful* identity (excludes compName, which changes
+  // per keystroke while typing in the comp picker) used as the reset trigger.
+  const wcaSpec = useMemo<WcaSourceSpec>(() => ({
+    event,
+    mode: settings.wcaScrambleMode,
+    comp: settings.wcaComp,
+    compName: settings.wcaCompName,
+    round: settings.wcaRound,
+    group: settings.wcaGroup,
+    from: settings.wcaDateFrom,
+    to: settings.wcaDateTo,
+  }), [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo]);
+  const wcaSpecRef = useRef(wcaSpec);
+  wcaSpecRef.current = wcaSpec;
+  const wcaSourceSig = settings.scrambleSource === 'wca'
+    ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}`
+    : 'random';
+
   const genScramble = useCallback((): string => {
     if (drillTarget && drillAllowed) {
       const ds = generateDrillScramble(drillTarget.type, drillTarget.id);
@@ -286,11 +306,12 @@ export default function SoloView({ modePill }: SoloViewProps) {
     }
     // WCA real-scramble mode: take from the pool synchronously when available;
     // '' is a loading placeholder filled async by the effect below.
-    if (settings.scrambleSource === 'wca' && hasWcaScrambles(event)) {
-      return peekWca(event) ?? '';
+    if (settings.scrambleSource === 'wca' && hasWcaSource(wcaSpecRef.current)) {
+      return peekWca(wcaSpecRef.current) ?? '';
     }
     return generateScramble(event);
-  }, [drillTarget, drillAllowed, event, settings.scrambleSource]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig]);
 
   const [scrambleHist, setScrambleHist] = useState<{ list: string[]; idx: number }>(
     () => ({ list: [genScramble()], idx: 0 }),
@@ -308,28 +329,30 @@ export default function SoloView({ modePill }: SoloViewProps) {
   // scramble and fill it in, showing a loading state until it lands.
   const [scrambleLoading, setScrambleLoading] = useState(false);
   useEffect(() => {
-    if (scramble !== '' || settings.scrambleSource !== 'wca' || !hasWcaScrambles(event)) {
+    if (scramble !== '' || settings.scrambleSource !== 'wca' || !hasWcaSource(wcaSpecRef.current)) {
       setScrambleLoading(false);
       return;
     }
     let cancelled = false;
     setScrambleLoading(true);
-    void nextWca(event).then((real) => {
+    void nextWca(wcaSpecRef.current).then((real) => {
       if (cancelled) return;
       setScrambleLoading(false);
       const cur = scrambleHistRef.current;
       if (cur.list[cur.idx] !== '') return;
       const list = [...cur.list];
-      list[cur.idx] = real ?? generateScramble(event); // fetch failed → fall back
+      list[cur.idx] = real ?? generateScramble(event); // fetch failed / comp lacks event → fall back
       applyScrambleHist({ list, idx: cur.idx });
     });
     return () => { cancelled = true; };
-  }, [scramble, settings.scrambleSource, event, applyScrambleHist]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scramble, settings.scrambleSource, wcaSourceSig, applyScrambleHist]);
 
-  // Warm the WCA pool ahead of demand (on event switch / when mode turns on).
+  // Warm the WCA pool ahead of demand (on source change / when mode turns on).
   useEffect(() => {
-    if (settings.scrambleSource === 'wca') prefetchWca(event);
-  }, [settings.scrambleSource, event]);
+    if (settings.scrambleSource === 'wca') prefetchWca(wcaSpecRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.scrambleSource, wcaSourceSig]);
   // What the user sees/copies. SQ1 shows compact notation (4/-36/...) site-wide;
   // the raw canonical form stays in `scramble` for the solver hints / cube preview
   // (their parsers only accept `(a,b)/`). Other events pass through unchanged.
