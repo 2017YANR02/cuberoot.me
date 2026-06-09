@@ -14,7 +14,7 @@ import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
  * Identity always comes from requireAuth(c).wcaId (Bearer JWT) — the client never
  * asserts a userId (unlike the legacy /progress endpoint). `blob` is the verbatim
  * exportJson() string; the client restores it via importJson() (full replace).
- * Upsert shape mirrors routes/recon.ts timer-sync.
+ * Upsert is keyed by wca_id alone — one snapshot per user (whole DB, not per-session).
  */
 export const timerBackupsRoutes = new Hono();
 
@@ -24,7 +24,7 @@ function getIp(c: { req: { header: (name: string) => string | undefined } }): st
 }
 
 // 16 MB — full DBs run ~0.7-3.5 MB, tens of MB with Bluetooth move streams.
-// (timer_sessions' 500KB guard is for a single event/session, far too small here.)
+// (A single event/session is far smaller; this snapshot holds the whole timer DB.)
 const MAX_BLOB_BYTES = 16 * 1024 * 1024;
 
 // Reject oversized bodies BEFORE c.req.json() buffers + parses them — the host is

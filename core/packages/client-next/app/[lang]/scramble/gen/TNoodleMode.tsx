@@ -3,7 +3,7 @@
  * /scramble/gen — "Comp" mode: unified competition scramble sheet UX.
  * Single tab merges 模拟 + WCA paths:
  *   - 不填 / 自由文本 → 配置项目 + 轮数,点 生成 走 cubing/scramble 出随机打乱
- *   - 输入比赛或链接 → 自动加载 WCA 已公布打乱 (/v1/recon/wca-scrambles)
+ *   - 输入比赛或链接 → 自动加载 WCA 已公布打乱 (/v1/wca/scrambles)
  * 两条路径共用 SheetView + PDF 管道。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -177,7 +177,7 @@ async function streamFetchScrambles(
   onProgress: (received: number, total: number) => void,
 ): Promise<WcaScrambleRow[] | null> {
   const candidates = [
-    apiUrl(`/v1/recon/wca-scrambles?compId=${encodeURIComponent(compId)}`),
+    apiUrl(`/v1/wca/scrambles?compId=${encodeURIComponent(compId)}`),
     `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(compId)}/scrambles`,
   ];
   for (const url of candidates) {
