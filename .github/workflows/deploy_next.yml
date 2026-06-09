@@ -18,7 +18,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # 只 checkout 构建需要的 core/ + ops/(仓库根有 stats/ 709MB + tools/ 等 ~1GB 静态残留,
+      # 全量 checkout 要 ~10min)。filter=blob:none 做 partial clone,根静态的 blob 根本不下载。
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            core
+            ops
+          filter: blob:none
 
       - uses: pnpm/action-setup@v4
         with:
