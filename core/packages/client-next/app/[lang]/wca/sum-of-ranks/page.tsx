@@ -184,6 +184,7 @@ function SumOfRanksPageInner() {
     if (country) qs.set('country', country);
     if (eventsParam && eventsParam !== '__none__') qs.set('events', eventsParam);
     if (hidePodium) qs.set('hidePodium', '1');
+    qs.set('v', '2'); // bust 24h 缓存(浏览器 + nginx):v1 表空时缓存了 bestRank=null,灌库后需换 key 让旧响应失效
     fetch(apiUrl(`/v1/wca/sum-of-ranks?${qs.toString()}`))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(setData).catch(e => setError(e.message)).finally(() => setLoading(false));
