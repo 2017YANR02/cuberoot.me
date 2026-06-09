@@ -2,9 +2,10 @@
 
 // Ported from packages/client/src/pages/TrainingPage.tsx
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import OnScreenKeyboard from '@/components/OnScreenKeyboard';
+import Link from '@/components/AppLink';
 import { useSessionStore, useSessionHydrated } from '@/lib/session-store';
 import { scrambleForCase, inverseScramble } from '@/lib/scramble-generator';
 import {
@@ -24,7 +25,6 @@ import i18n from "@/i18n/i18n-client";
 const typedOllMap = ollMap as Record<string, { name: string; alg: string; alg2: string; group: string }>;
 
 export default function RecognizeClient() {
-  const router = useRouter();
   const params = useParams<{ algSetId: string }>();
   const algSetId = (Array.isArray(params?.algSetId) ? params.algSetId[0] : params?.algSetId) ?? '';
   const { t, i18n } = useTranslation();
@@ -213,11 +213,11 @@ export default function RecognizeClient() {
                 zhHant: "重新評估"
             })}
           </button>
-          <button className="btn-secondary" onClick={() => router.push('/')}>
+          <Link className="btn-secondary" href="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
             {tr({ zh: '返回首页', en: 'Home',
                 zhHant: "返回首頁"
             })}
-          </button>
+          </Link>
         </div>
       </div>
     );

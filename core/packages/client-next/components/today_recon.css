@@ -126,17 +126,6 @@
   flex-shrink: 0;
 }
 
-.tr-arrow {
-  font-size: 1.5rem;
-  color: var(--muted-foreground);
-  flex-shrink: 0;
-  transition: transform 0.18s ease, color 0.18s ease;
-}
-.tr-card:hover .tr-arrow {
-  color: var(--accent);
-  transform: translateX(4px);
-}
-
 /* 展开/收起当天其余复盘 */
 .tr-more {
   align-self: center;
@@ -159,7 +148,6 @@
 
 @media (max-width: 560px) {
   .tr-card { gap: 0.85rem; padding: 0.8rem 0.85rem; }
-  .tr-arrow { display: none; }
   .tr-time { font-size: 1.3rem; }
   .tr-time-big { font-size: 1.85rem; }
 }

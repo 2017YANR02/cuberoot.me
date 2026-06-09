@@ -10,6 +10,9 @@
     "start": "next start -H 127.0.0.1 -p 3000",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit",
+    "zh:inject": "node scripts/inject-zhhant.mjs",
+    "zh:gen": "node scripts/gen-zh-hant.mjs",
+    "zh:check": "node scripts/gen-zh-hant.mjs --check && node scripts/inject-zhhant.mjs --check",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint ."

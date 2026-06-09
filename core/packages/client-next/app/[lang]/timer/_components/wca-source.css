@@ -1,0 +1,92 @@
+/* Settings row primitives + WCA real-scramble source config.
+ * Self-contained so WcaSourceConfig styles correctly wherever it renders —
+ * the solo SettingsPanel (which also uses .settings-row* for every Row) and
+ * the duo BattleView settings panel (which does NOT load timer.css). */
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+  font-size: 13px;
+}
+.settings-row-label { flex: 1; color: #ccc; }
+.settings-row-control { display: flex; align-items: center; gap: 8px; }
+.settings-row-control input[type="number"],
+.settings-row-control select {
+  background: #0e0e10;
+  color: #ededed;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+.settings-row-control input[type="number"] { width: 80px; }
+.settings-row-control input[type="range"] { width: 140px; }
+.settings-row-control .hint { color: #888; font-size: 12px; }
+.settings-row-control .hint-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: #aaa;
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.settings-row-control .hint-btn:hover { background: #25252a; color: #fff; }
+.settings-row-control .hint-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.settings-row-control .hint-btn:disabled:hover { background: transparent; color: #aaa; }
+
+/* WCA 真实打乱选源配置(打乱来源=WCA 时展开)。缩进 + 左描边,从属于上面的来源 Row。 */
+.wca-src-config {
+  margin: 4px 0 10px;
+  padding-left: 10px;
+  border-left: 2px solid #2a2a2e;
+}
+.wca-src-dates { gap: 6px; }
+.wca-src-dates input[type="date"] {
+  background: #0e0e10;
+  color: #ededed;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  color-scheme: dark;
+}
+.wca-src-dash { color: #888; }
+.wca-src-hint {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #888;
+}
+.wca-src-warn { color: #e0a14b; }
+/* CompPicker 占满整行;inline × 浮在输入框内需要定位上下文。 */
+/* 「比赛」行:标签只占文字宽,把整条剩余宽度让给比赛控件,长名才不会被挤窄。 */
+.wca-src-comprow { align-items: center; }
+.wca-src-comprow .settings-row-label { flex: 0 0 auto; }
+.wca-src-comppick { position: relative; flex: 1; min-width: 0; }
+.wca-src-comppick > :first-child { width: 100%; }
+/* 已选中一场:国旗 + 名(省略号截断)+ 清除,横向贴合不溢出。 */
+.wca-src-comp-selected { display: flex; align-items: center; gap: 7px; width: 100%; min-width: 0; }
+.wca-src-comp-flag { width: 20px; height: 14px; flex: none; object-fit: cover; border-radius: 2px; }
+.wca-src-comp-name {
+  flex: 1;
+  min-width: 0;
+  /* 完整显示比赛名:能放下就一行,窄屏放不下就换行,绝不截断。 */
+  white-space: normal;
+  overflow-wrap: break-word;
+  color: #ededed;
+}
+:root[data-timer-theme="light"] .wca-src-config { border-left-color: #e0e0e3; }
+:root[data-timer-theme="light"] .wca-src-comp-name { color: #1d1d1f; }
+:root[data-timer-theme="light"] .wca-src-dates input[type="date"] {
+  background: #fff; color: #1d1d1f; border-color: #ccc; color-scheme: light;
+}
+:root[data-timer-theme="light"] .wca-src-hint { color: #777; }
+
+@media (max-width: 540px) {
+  .settings-row { flex-wrap: wrap; }
+}

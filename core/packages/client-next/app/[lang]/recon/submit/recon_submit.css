@@ -275,6 +275,33 @@
 .submit-field-shrink { flex: 0 0 auto; min-width: 0; }
 .submit-block { width: 100%; margin-bottom: 12px; }
 
+/* —— 复用上次填写 —— */
+.submit-reuse-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin-bottom: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.submit-reuse-btn:hover {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+/* 被「复用」带入、尚未编辑的字段:accent 左条 + label 染色,编辑该字段后自动消失 */
+.submit-field--reused > .submit-label { color: var(--accent); }
+.submit-field--reused > :not(.submit-label):not(datalist):not(.submit-hint) {
+  box-shadow: inset 3px 0 0 0 var(--accent);
+}
+
 .submit-label {
   font-size: 0.85rem;
   color: var(--faint-foreground);

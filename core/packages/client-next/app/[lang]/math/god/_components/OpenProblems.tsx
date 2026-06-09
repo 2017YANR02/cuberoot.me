@@ -49,8 +49,7 @@ const PROBLEMS: Problem[] = [
     },
     estimate: {
       zh: '上界压到 40 步,可能需要 ~1000 CPU-年。下界提升到 38-40,需要更紧的 canonical sequence 分析。',
-      en: 'Tightening upper to 40 likely needs ~1000 CPU-years. Lifting lower to 38-40 needs tighter canonical-sequence analysis.',
-        zhHant: "上界壓到 40 步,可能需要 ~1000 CPU-年。下界提升到 38-40,需要更緊的 canonical sequence 分析。"
+      en: 'Tightening upper to 40 likely needs ~1000 CPU-years. Lifting lower to 38-40 needs tighter canonical-sequence analysis.'
     },
   },
   {
@@ -74,8 +73,7 @@ const PROBLEMS: Problem[] = [
     },
     estimate: {
       zh: '146 步的缝合上几乎不可能在 10 年内完成。Megaminx 大概率会一直停留在"上下界相差几十步"的状态。',
-      en: 'A 146-move gap is unlikely to close within 10 years. Megaminx will probably remain "bounds known, exact diameter unknown" indefinitely.',
-        zhHant: "146 步的縫合上幾乎不可能在 10 年內完成。Megaminx 大機率會一直停留在\"上下界相差幾十步\"的狀態。"
+      en: 'A 146-move gap is unlikely to close within 10 years. Megaminx will probably remain "bounds known, exact diameter unknown" indefinitely.'
     },
   },
   {

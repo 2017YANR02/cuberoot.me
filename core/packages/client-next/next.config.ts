@@ -232,7 +232,7 @@ const nextConfig: NextConfig = {
       { source: "/code/mojo", destination: "/code/language/mojo", permanent: true },
       { source: "/code/compare", destination: "/code/language/compare", permanent: true },
       { source: "/code/scramble", destination: "/code/language/scramble", permanent: true },
-      // /battle is retired — the 双人 / Duo experience lives only at /timer?mode=duo.
+      // /battle is retired — the battle experience lives only at /timer?players=2..4.
       // No redirect: old /battle URLs 404 on purpose.
       // /blog/* → blog.cuberoot.me (双轨:境内 nginx 在主域 vhost ^~ /blog/ alias 直 serve;
       // next.cuberoot.me 没这个 alias,统一跳子域。Vite 由 SPA BlogRedirectFallback 兜底,

@@ -134,9 +134,9 @@
     "long_en": "UI/概念参考来源:`/wca` 子页(历史排名 / 大满贯 / 全部成绩排名 / 当年成绩排名 / 参赛届别排名 / 项目成功率 / 全项目达成 / 全项目排名)+ `/wca/persons/:wcaId` 选手详情页(成绩 / 赛事 / 项目统计 / 里程碑 / 点亮城市)"
   },
   {
-    "name": "WCA Regulations Committee — Regulation 5b5f Visual Guide",
-    "url": "https://drive.google.com/file/d/15XszaCGNvy3Dk6X6qERzZWZaDH1RH04z",
-    "zh": "/regulation 规则页:5b5f 拼装缺陷判定可视化指南(内容 + 11 张配图全部来自此官方文档,已注明来源)",
-    "en": "/regulation page: Regulation 5b5f assembly-defect Visual Guide (text + all 11 photos sourced from this official document)"
+    "name": "WCA Regulations & 5b5f Visual Guide",
+    "url": "https://www.worldcubeassociation.org/regulations/full/",
+    "zh": "/regulation 规则页:检查 / 打乱 / 判定 / 罚时等核心条款整理自 WCA 官方《竞赛规则与指南》;末节「拼装缺陷判定」的 11 张配图 + 文字移植自 WCA Regulations Committee《Regulation 5b5f Visual Guide》(均已注明来源)",
+    "en": "/regulation page: core articles (inspection / scrambling / judging / penalties) compiled from the official WCA Regulations & Guidelines; the assembly-defect section reproduces the 11 photos + text from the WCA Regulations Committee's Regulation 5b5f Visual Guide (all credited)"
   }
 ]
