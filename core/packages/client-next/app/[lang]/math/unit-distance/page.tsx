@@ -364,11 +364,13 @@ export default function UnitDistancePage() {
                                   ))}
           </p>
           <p>
-            {isZh ? (
+            {i18n.language === 'zh-Hant' ? (
+              <>挑使 r₂(k) 最大的 k ≤ n,Erdős 得到</>
+            ) : (isZh ? (
               <>挑使 r₂(k) 最大的 k ≤ n,Erdős 得到</>
             ) : (
               <>Choosing k ≤ n with maximum r₂(k), Erdős got</>
-            )}
+            ))}
           </p>
           <div className="ud-formula">
             <TeXBlock src={`\\nu(n) \\;\\ge\\; n \\cdot n^{c / \\log \\log n} \\;=\\; n^{1 + c / \\log \\log n}.`} />

@@ -3240,10 +3240,10 @@ const COSET_SUBGROUPS = [
   { id: 'U',    gens: ['U'],                  name: '⟨U⟩',          orderApprox: 4,            zh: '只转 U', en: 'only U',
       zhHant: "只轉 U"
 },
-  { id: 'U2',   gens: ['U2'],                 name: '⟨U²⟩',         orderApprox: 2,            zh: '只 180° U', en: 'only U2' },
-  { id: 'UD',   gens: ['U', 'D'],             name: '⟨U,D⟩',        orderApprox: 16,           zh: '上下面', en: 'U, D faces' },
-  { id: 'RU',   gens: ['R', 'U'],             name: '⟨R,U⟩',        orderApprox: 73483200,     zh: 'R, U (2 面群)', en: 'R, U (2-gen)' },
-  { id: 'half', gens: ['U2','D2','L2','R2','F2','B2'], name: '⟨U²,D²,L²,R²,F²,B²⟩', orderApprox: 663552, zh: '半圈群 (G₃)', en: 'half-turn G₃' },
+  { id: 'U2',   gens: ['U2'],                 name: '⟨U²⟩',         orderApprox: 2,            zh: '只 180° U', en: 'only U2', zhHant: '只 180° U' },
+  { id: 'UD',   gens: ['U', 'D'],             name: '⟨U,D⟩',        orderApprox: 16,           zh: '上下面', en: 'U, D faces', zhHant: '上下面' },
+  { id: 'RU',   gens: ['R', 'U'],             name: '⟨R,U⟩',        orderApprox: 73483200,     zh: 'R, U (2 面群)', en: 'R, U (2-gen)', zhHant: 'R, U (2 面群)' },
+  { id: 'half', gens: ['U2','D2','L2','R2','F2','B2'], name: '⟨U²,D²,L²,R²,F²,B²⟩', orderApprox: 663552, zh: '半圈群 (G₃)', en: 'half-turn G₃', zhHant: '半圈群 (G₃)' },
 ] as const;
 
 function stateKey(s: CubieState): string {
@@ -3297,7 +3297,7 @@ function CosetVisualizer() {
             onClick={() => setPicked(s.id)}
           >
             <span className="gt-mono" style={{ fontWeight: 600 }}>{s.name}</span>
-            <span style={{ fontSize: 11, color: 'var(--ink-faint)', marginLeft: 8 }}>{(i18n.language.startsWith('zh') ? s.zh : s.en)}</span>
+            <span style={{ fontSize: 11, color: 'var(--ink-faint)', marginLeft: 8 }}>{(i18n.language === 'zh-Hant' ? s.zhHant : (i18n.language.startsWith('zh') ? s.zh : s.en))}</span>
           </button>
         ))}
       </div>

@@ -42,7 +42,7 @@ import {
   type WcaResultRow as WcaResultsRow, type WcaCompetition,
 } from '@/lib/wca-person-api';
 import { computePrRank } from '@/components/persons/logic/progress';
-import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
+import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_ZH_HANT, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
@@ -831,7 +831,7 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                     {tr({ zh: '轮次', en: 'Round',
                         zhHant: "輪次"
                     })}
-                    <InfoTooltip content={isZh ? ROUND_HINT_ZH : ROUND_HINT_EN} />
+                    <InfoTooltip content={i18n.language === 'zh-Hant' ? ROUND_HINT_ZH_HANT : (isZh ? ROUND_HINT_ZH : ROUND_HINT_EN)} />
                   </span>
                 </th>
                 <th className="wp-th-narrow">{tr({ zh: '排名', en: 'Pos' })}</th>
