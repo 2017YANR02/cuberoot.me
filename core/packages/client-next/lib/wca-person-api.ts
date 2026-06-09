@@ -138,6 +138,29 @@ export async function fetchPersonBestRanks(wcaId: string): Promise<PersonBestRan
   return json;
 }
 
+// 选手「全项目排名(SOR)」摘要 — 当前 / 历史最佳的单次 + 平均(世界口径,17 现役项).
+// 数据源同上(wca_person_ranks + sor_historical_best),由 /v1/wca/sum-of-ranks/person 返回.
+export interface PersonSorCell { total: number; rank: number; eventsDone: number; }
+export interface PersonSorBestCell { total: number | null; rank: number; year: number; }
+export interface PersonSorResponse {
+  wcaId: string;
+  single: PersonSorCell | null;
+  average: PersonSorCell | null;
+  bestSingle: PersonSorBestCell | null;
+  bestAverage: PersonSorBestCell | null;
+}
+
+export async function fetchPersonSor(wcaId: string): Promise<PersonSorResponse> {
+  const key = `wca:sor:v1:${wcaId}`;
+  const cached = cacheGet<PersonSorResponse>(key);
+  if (cached) return cached;
+  const res = await fetch(apiUrl(`/v1/wca/sum-of-ranks/person?wcaId=${encodeURIComponent(wcaId)}`));
+  if (!res.ok) throw new Error(`sum-of-ranks/person ${res.status}`);
+  const json = (await res.json()) as PersonSorResponse;
+  cacheSet(key, json);
+  return json;
+}
+
 export interface PersonRankHistoryRow {
   year: number;
   /** 月级数据有 month (1..12),年级数据没有 */

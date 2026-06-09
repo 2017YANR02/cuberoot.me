@@ -16,7 +16,7 @@ import DeskPetGallery from '@/components/DeskPetGallery';
 import { SEARCH_CARDS } from '@/lib/landing-sections';
 
 const CSS = `
-.deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:60;display:flex;
+.deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:100010;display:flex;
   flex-direction:column;align-items:center;justify-content:flex-end;padding:16px 16px max(12vh,48px);
   background:color-mix(in srgb, var(--foreground) 38%, transparent);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}

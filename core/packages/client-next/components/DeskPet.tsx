@@ -208,9 +208,9 @@ const MINI_KEYS: Record<string, keyof MiniTheme['files']> = {
 
 const CSS = `
 .clawd-deskpet{position:fixed;right:max(20px,var(--sar,0px));bottom:max(20px,var(--sab,0px));
-  z-index:40;pointer-events:none;--pet-scale:1;
+  z-index:100000;pointer-events:none;--pet-scale:1; /* above every page modal so it stays draggable */
   width:calc(var(--pet-base) * var(--pet-scale));height:calc(var(--pet-base) * var(--pet-scale));}
-.clawd-deskpet.pet-front{z-index:61;} /* above the search backdrop (60) so it stays sharp */
+.clawd-deskpet.pet-front{z-index:100020;} /* above the search backdrop (100010) so it stays sharp */
 .clawd-deskpet[data-size=s]{--pet-base:192px;}
 .clawd-deskpet[data-size=m]{--pet-base:252px;}
 .clawd-deskpet[data-size=l]{--pet-base:324px;}

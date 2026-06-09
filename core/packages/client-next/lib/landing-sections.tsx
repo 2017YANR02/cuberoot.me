@@ -5,7 +5,7 @@
 import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookMarked, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, ImagePlus, Code as CodeIcon,
-  Brain, Box, Sigma, type LucideIcon,
+  Brain, Box, Sigma, Scale, type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
 
@@ -94,6 +94,9 @@ export const TEXTS: Record<string, { en: string; zh: string
   theoryGroup:     { en: 'Math', zh: '数学',
       zhHant: "數學"
 },
+  regulation:      { en: 'Regulation', zh: '规则',
+      zhHant: "規則"
+},
   comingSoon:      { en: 'Coming soon', zh: '即将上线',
       zhHant: "即將上線"
 },
@@ -160,6 +163,7 @@ export const SECTIONS: Section[] = [
       { id: 'algdb',    href: '/alg',      internal: true, tier: 'medium', Icon: BookMarked, nameKey: 'algdb' },
       { id: 'wiki',     href: '/wiki',     internal: true, tier: 'medium', Icon: BookA,      nameKey: 'wiki' },
       { id: 'article',  href: '/article',  internal: true, tier: 'medium', Icon: BookOpen,   nameKey: 'article' },
+      { id: 'regulation', href: '/regulation', internal: true, tier: 'medium', Icon: Scale, nameKey: 'regulation' },
       { id: 'math-hub', href: '/math', internal: true, tier: 'medium', Icon: Sigma, nameKey: 'theoryGroup' },
     ],
   },

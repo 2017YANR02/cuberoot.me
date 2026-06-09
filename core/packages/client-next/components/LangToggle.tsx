@@ -15,6 +15,10 @@ import { changeAppLanguage, normalizeAppLang, syncLangToUrl, type AppLang } from
 interface LangToggleProps {
   variant?: 'inline' | 'fixed';
   className?: string;
+  /** Switch language in place without a route navigation, so a host overlay
+   *  (e.g. an open modal) keeps its React state. The choice still persists via
+   *  cookie / localStorage / ?lang=. */
+  soft?: boolean;
 }
 
 const OPTIONS: { code: AppLang; label: string }[] = [
@@ -36,7 +40,7 @@ function TranslateIcon({ size = 14 }: { size?: number }) {
   );
 }
 
-export default function LangToggle({ variant = 'inline', className }: LangToggleProps) {
+export default function LangToggle({ variant = 'inline', className, soft = false }: LangToggleProps) {
   const { i18n } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
@@ -65,6 +69,7 @@ export default function LangToggle({ variant = 'inline', className }: LangToggle
     if (next === current) return;
     changeAppLanguage(next);
     syncLangToUrl(next); // cookie + localStorage + html.lang (also adds ?lang=)
+    if (soft) return; // stay on the current route so the host (e.g. an open modal) keeps its state
 
     if (!pathname) return;
     const bare = pathname.replace(/^\/(en|zh-Hant|zh)(?=\/|$)/, '') || '/';

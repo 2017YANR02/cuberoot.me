@@ -436,6 +436,19 @@ function combineSameTag(eventsIn: RecordEvent[], getRank: RankFn): FormattedReco
   const sRank = single.pr_rank || 1;
   const aRank = avg.pr_rank || 1;
   if (tag === 'PR' && (sRank > 1 || aRank > 1)) {
+    // 混合:一个真破 PR(rank 1)、一个非破(rank>1)→ 真破 PR 在前(带名+国旗),非破在后
+    if ((sRank === 1) !== (aRank === 1)) {
+      const prEv = sRank === 1 ? single : avg;   // 真破 PR
+      const npEv = sRank === 1 ? avg : single;   // 非破(PR<rank>)
+      const npRank = sRank === 1 ? aRank : sRank;
+      const prTime = formatTime(prEv.attempt_result, eventId);
+      const npTime = formatTime(npEv.attempt_result, eventId);
+      const prTypeCn = prEv.rec_type === 'single' ? '单次' : '平均';
+      const npTypeCn = npEv.rec_type === 'single' ? '单次' : '平均';
+      const cn = `成绩快讯! ${prTime}${cnEvent}${prTypeCn}PR ${cnName}${personFlag} | ${npTime}${npTypeCn}PR${npRank} | ${cnCompLabel}`;
+      const en = `Result News! ${prTime} ${enEvent} ${typeEn(eventId, prEv.rec_type)} PR ${enName}${personFlag} | ${npTime} ${typeEn(eventId, npEv.rec_type)} PR${npRank} | ${enCompLabel}`;
+      return { cn, en, url: single.url };
+    }
     const rsS = sRank > 1 ? `PR${sRank}` : 'PR';
     const rsA = aRank > 1 ? `PR${aRank}` : 'PR';
     const cn = `成绩快讯! ${tS}单次${rsS}, ${tA}平均${rsA}${cnEvent} ${cnName} | ${cnCompLabel}`;

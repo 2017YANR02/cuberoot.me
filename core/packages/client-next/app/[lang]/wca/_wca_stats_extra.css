@@ -438,6 +438,18 @@
 .sor-pb-count { font-size: 12px; color: var(--muted-foreground); }
 .sor-pb-combos { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
 .sor-pb-combo { display: flex; align-items: center; gap: 10px; }
+.sor-pb-expand {
+  margin-top: 8px; background: none; cursor: pointer; font-size: 13px;
+  padding: 4px 12px; border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--accent);
+}
+.sor-pb-expand:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.sor-pb-expand:disabled { opacity: 0.6; cursor: default; }
+.sor-pb-expand-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.sor-pb-expand-row .sor-pb-expand { margin-top: 0; }
+.sor-pb-collapse { background: none; border: none; color: var(--muted-foreground); font-size: 13px; cursor: pointer; padding: 4px 0; }
+.sor-pb-collapse:hover { text-decoration: underline; color: var(--foreground); }
 
 /* SoR main table: flag + name inline in the person cell */
 .wse-person-cell { display: inline-flex; align-items: center; gap: 6px; }
