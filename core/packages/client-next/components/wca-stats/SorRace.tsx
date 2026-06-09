@@ -45,6 +45,7 @@ const SPEEDS = [
   { ms: 850, labelZh: '标准', labelEn: 'Normal' },
   { ms: 450, labelZh: '快', labelEn: 'Fast' },
 ] as const;
+const SPEED_LABEL_HANT: Record<number, string | undefined> = { 1400: '慢', 850: '標準', 450: '快' };
 const DEFAULT_SPEED = 850;
 
 const CONTINENT_LABEL: Record<string, { zh: string; en: string; zhHant: string }> = {
@@ -61,11 +62,6 @@ function rowHeightPx(): number {
   if (window.matchMedia('(max-width: 480px)').matches) return 34;
   if (window.matchMedia('(max-width: 768px)').matches) return 38;
   return 44;
-}
-
-function flagEmoji(iso2: string | null | undefined): string {
-  if (!iso2 || iso2.length !== 2) return '';
-  return String.fromCodePoint(...[...iso2.toUpperCase()].map(c => 0x1f1e6 + c.charCodeAt(0) - 65));
 }
 
 export default function SorRace() {
@@ -239,7 +235,7 @@ export default function SorRace() {
         {scopeKind === 'country' && (
           <select className="sor-race-select" value={countryIso} onChange={e => setCountryIso(e.target.value)}>
             {index.scopes.countries.map(c => (
-              <option key={c.iso2} value={c.iso2}>{flagEmoji(c.iso2)} {c.name}</option>
+              <option key={c.iso2} value={c.iso2}>{c.name}</option>
             ))}
           </select>
         )}
@@ -318,16 +314,18 @@ export default function SorRace() {
         <div className="t10h-speed" role="group" aria-label={tr({ zh: '速度', en: 'Speed', zhHant: '速度' })}>
           {SPEEDS.map(s => (
             <button key={s.ms} type="button" className={s.ms === speed ? 'active' : ''} onClick={() => setSpeed(s.ms)}>
-              {isZh ? s.labelZh : s.labelEn}
+              {i18n.language === 'zh-Hant' ? (SPEED_LABEL_HANT[s.ms] ?? s.labelZh) : (isZh ? s.labelZh : s.labelEn)}
             </button>
           ))}
         </div>
       </footer>
 
       <div className="t10h-note">
-        {isZh
+        {i18n.language === 'zh-Hant'
+          ? `SOR(名次和)= 一個人在 17 個現役項目上世界排名之和,越小越強;缺項按該項參與人數 + 1 計罰分。條形長度為同年相對強度,數字為真實 SOR 值。`
+          : (isZh
           ? `SOR(名次和)= 一个人在 17 个现役项目上世界排名之和,越小越强;缺项按该项参与人数 + 1 计罚分。条形长度为同年相对强度,数字为真实 SOR 值。`
-          : `SOR (Sum of Ranks) = a cuber's world ranks across the 17 active events summed; lower is stronger. Missing events count as participants + 1. Bar length is relative within the year; the number is the actual SOR.`}
+          : `SOR (Sum of Ranks) = a cuber's world ranks across the 17 active events summed; lower is stronger. Missing events count as participants + 1. Bar length is relative within the year; the number is the actual SOR.`)}
         <div className="t10h-legend">
           {(Object.keys(CONTINENT_LABEL) as Continent[]).map(c => (
             <span key={c} className="t10h-legend-item">
