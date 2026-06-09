@@ -20,7 +20,26 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # checkout 只取构建 + GH Pages 镜像 commit 实际碰的目录,跳过仓库根 stats/ 709MB + tools/ 等
+      # ~1GB 静态残留(blob:none partial clone)。cone 必须含 "Sync dist to root + Commit" 步要 add 的
+      # 全部根目录(_assets/fonts/ffmpeg/...),否则那些目录的镜像更新会被 sparse 跳过;根级散文件
+      # (index.html/sw.js 等)cone 模式自动带上。stats/ 等 out-of-cone 子树 commit 时按父树 SHA 原样保留.
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            core
+            ops
+            _assets
+            fonts
+            ffmpeg
+            icons
+            textures
+            donate
+            analyze-worker
+            cubeopt
+            images
+            app
+          filter: blob:none
 
       - uses: pnpm/action-setup@v4
         with:
