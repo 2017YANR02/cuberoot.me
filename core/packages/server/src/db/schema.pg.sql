@@ -195,8 +195,9 @@ CREATE TABLE wca_scrambles (
   scramble_num   INT         NOT NULL,
   scramble       TEXT        NOT NULL
 );
-CREATE INDEX idx_wca_scr_comp  ON wca_scrambles(competition_id);
-CREATE INDEX idx_wca_scr_event ON wca_scrambles(event_id);
+CREATE INDEX idx_wca_scr_comp     ON wca_scrambles(competition_id);
+-- (event_id, id):指定 event 取全场 + 随机 id 窗口采样(/random 池,见 migration 0036)。
+CREATE INDEX idx_wca_scr_event_id ON wca_scrambles(event_id, id);
 
 -- ── 11. alg_submissions (NEW — never existed in MariaDB) ──
 CREATE TABLE alg_submissions (

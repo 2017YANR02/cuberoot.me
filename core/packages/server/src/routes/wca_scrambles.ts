@@ -110,22 +110,45 @@ wcaScramblesRoutes.get('/wca/scrambles', async (c) => {
 });
 
 // GET /wca/scrambles/random?event=333&count=5 — 从全量镜像随机抽真实打乱(timer 练习池)。
+// 随机起点 id 窗口采样(见 migration 0036):取该 event 的 [min,max] id 范围,随机选一个
+// 起点,沿 id 升序取 count 条。复合索引 (event_id, id) → O(count) 区间扫描(~3ms),不再
+// ORDER BY random() 全表排序(~11.8s)。同一窗口内多为同场同轮(id 聚簇),每次 refill 换
+// 一个随机窗口,整段练习仍覆盖不同比赛。附带比赛元数据(国旗/名称/轮次)供 UI 展示来源。
 wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
   const event = c.req.query('event') ?? '';
   if (!/^[0-9a-z]{2,6}$/.test(event)) return c.json({ error: 'invalid event' }, 400);
   const count = Math.min(50, Math.max(1, Number(c.req.query('count')) || 1));
 
   try {
-    const rows = await query<{ scramble: string }>(
-      `SELECT scramble FROM wca_scrambles
-        WHERE event_id = ?
-        ORDER BY random()
+    const rows = await query<ScrambleRow & { comp_name: string | null }>(
+      `WITH b AS (SELECT min(id) AS lo, max(id) AS hi FROM wca_scrambles WHERE event_id = ?)
+       SELECT ws.competition_id, ws.event_id, ws.round_type_id, ws.group_id,
+              (ws.is_extra = 1) AS is_extra, ws.scramble_num, ws.scramble,
+              c.name AS comp_name
+         FROM wca_scrambles ws
+         LEFT JOIN wca_competitions c ON c.id = ws.competition_id
+        WHERE ws.event_id = ?
+          AND ws.id >= (SELECT lo + floor(random() * GREATEST(hi - lo, 1))::bigint FROM b)
+        ORDER BY ws.id
         LIMIT ?`,
-      [event, count],
+      [event, event, count],
     );
     if (rows.length === 0) return c.json({ error: 'no scrambles for event', event }, 404);
     c.header('Cache-Control', 'no-store');
-    return c.json({ event, scrambles: rows.map((r) => r.scramble) });
+    return c.json({
+      event,
+      // 短键对齐首页 RecentScrambles 的 meta 形态(ci/cn/e/r/g/n/x),payload 也更小。
+      scrambles: rows.map((r) => ({
+        scramble: r.scramble,
+        ci: r.competition_id,
+        cn: r.comp_name ?? r.competition_id,
+        e: r.event_id,
+        r: r.round_type_id,
+        g: r.group_id,
+        n: r.scramble_num,
+        x: r.is_extra ? 1 : 0,
+      })),
+    });
   } catch (err) {
     console.error('[wca-scrambles] random failed:', err);
     return c.json({ error: 'query failed' }, 500);

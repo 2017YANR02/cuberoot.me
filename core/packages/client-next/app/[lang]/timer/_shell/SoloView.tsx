@@ -25,7 +25,7 @@ import {
   Eye, EyeOff, ListOrdered, LineChart, RefreshCw, ChevronLeft, Brain, X,
 } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
-import { CubingIcon } from '@/components/EventIcon/EventIcon';
+import { CubingIcon, EventIcon } from '@/components/EventIcon/EventIcon';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { petReact } from '@/lib/deskpet';
@@ -33,7 +33,12 @@ import { type MoreMenuItem } from '../_components/MoreMenu';
 import i18n, { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { generateScramble, registerScramble } from '../_lib/scramble';
+import { peekWca, nextWca, prefetchWca, hasWcaScrambles, wcaMetaFor } from '../_lib/scramble/wca_pool';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
+import { Flag } from '@/components/Flag';
+import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
+import { localizeCompName } from '@/lib/comp-localize';
+import { compSourceLine } from '@/lib/comp-schedule';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
 import { warmup333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';
 import { useTimer } from '../_lib/useTimer';
@@ -279,8 +284,13 @@ export default function SoloView({ modePill }: SoloViewProps) {
       const ds = generateDrillScramble(drillTarget.type, drillTarget.id);
       if (ds) return ds.scramble;
     }
+    // WCA real-scramble mode: take from the pool synchronously when available;
+    // '' is a loading placeholder filled async by the effect below.
+    if (settings.scrambleSource === 'wca' && hasWcaScrambles(event)) {
+      return peekWca(event) ?? '';
+    }
     return generateScramble(event);
-  }, [drillTarget, drillAllowed, event]);
+  }, [drillTarget, drillAllowed, event, settings.scrambleSource]);
 
   const [scrambleHist, setScrambleHist] = useState<{ list: string[]; idx: number }>(
     () => ({ list: [genScramble()], idx: 0 }),
@@ -293,11 +303,60 @@ export default function SoloView({ modePill }: SoloViewProps) {
     setScrambleHist(next);
   }, []);
   const scramble = scrambleHist.list[scrambleHist.idx] ?? '';
+
+  // WCA mode: an empty slot means the pool was momentarily dry — fetch a real
+  // scramble and fill it in, showing a loading state until it lands.
+  const [scrambleLoading, setScrambleLoading] = useState(false);
+  useEffect(() => {
+    if (scramble !== '' || settings.scrambleSource !== 'wca' || !hasWcaScrambles(event)) {
+      setScrambleLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setScrambleLoading(true);
+    void nextWca(event).then((real) => {
+      if (cancelled) return;
+      setScrambleLoading(false);
+      const cur = scrambleHistRef.current;
+      if (cur.list[cur.idx] !== '') return;
+      const list = [...cur.list];
+      list[cur.idx] = real ?? generateScramble(event); // fetch failed → fall back
+      applyScrambleHist({ list, idx: cur.idx });
+    });
+    return () => { cancelled = true; };
+  }, [scramble, settings.scrambleSource, event, applyScrambleHist]);
+
+  // Warm the WCA pool ahead of demand (on event switch / when mode turns on).
+  useEffect(() => {
+    if (settings.scrambleSource === 'wca') prefetchWca(event);
+  }, [settings.scrambleSource, event]);
   // What the user sees/copies. SQ1 shows compact notation (4/-36/...) site-wide;
   // the raw canonical form stays in `scramble` for the solver hints / cube preview
   // (their parsers only accept `(a,b)/`). Other events pass through unchanged.
   const displayScramble = formatScrambleForEvent(event, scramble);
   const canPrevScramble = scrambleHist.idx > 0;
+
+  // WCA mode: source of the current real scramble (comp / event / round / group),
+  // shown under the strip the same way the landing page's RecentScrambles does.
+  // Flag + comp name need the lazily-loaded comp index; bump flagVer when it lands.
+  const [flagVer, setFlagVer] = useState(() => flagDataVersion());
+  useEffect(() => {
+    if (settings.scrambleSource !== 'wca') return;
+    void loadFlagData().then((v) => setFlagVer((cur) => (v !== cur ? v : cur)));
+  }, [settings.scrambleSource]);
+  const wcaSource = settings.scrambleSource === 'wca' && !scrambleLoading ? wcaMetaFor(scramble) : null;
+  const wcaSrcDisplay = useMemo(() => {
+    if (!wcaSource) return null;
+    return {
+      ci: wcaSource.ci,
+      iso2: compFlagIso2(wcaSource.ci),
+      name: localizeCompName(wcaSource.ci, wcaSource.cn, isZh),
+      event: wcaSource.e,
+      meta: compSourceLine(wcaSource.r, wcaSource.g, wcaSource.n, isZh, !!wcaSource.x),
+    };
+    // flagVer: re-derive flag + localized name once the comp index loads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wcaSource, isZh, flagVer]);
 
   // Click-to-copy flash (cstimer-style). Reads the live scramble via ref so the
   // helper stays stable; shows a brief "已复制" badge.
@@ -1373,7 +1432,9 @@ export default function SoloView({ modePill }: SoloViewProps) {
                   <ChevronLeft size={14} />
                 </button>
               )}
-              <span className="scramble-text">{displayScramble || <span className="scramble-empty">—</span>}</span>
+              <span className="scramble-text">{scrambleLoading
+                ? <span className="scramble-loading">{tr({ zh: '加载真实打乱…', en: 'Loading real scramble…', zhHant: '載入真實打亂…' })}</span>
+                : (displayScramble || <span className="scramble-empty">—</span>)}</span>
               {scrambleCopied && (
                 <span className="scramble-copied-flash" data-no-timer>{tr({ zh: '已复制', en: 'Copied',
                     zhHant: "已複製"
@@ -1390,6 +1451,20 @@ export default function SoloView({ modePill }: SoloViewProps) {
               >
                 <RefreshCw size={14} />
               </button>
+              {wcaSrcDisplay && (
+                <a
+                  className="scramble-src"
+                  data-no-timer
+                  href={`${isZh ? '/zh' : ''}/scramble/gen?comp=${encodeURIComponent(wcaSrcDisplay.ci)}`}
+                  onClick={(e) => e.stopPropagation()}
+                  title={tr({ zh: '查看该比赛打乱', en: 'View this competition', zhHant: '檢視該比賽打亂' })}
+                >
+                  {wcaSrcDisplay.iso2 && <Flag iso2={wcaSrcDisplay.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                  <span className="scramble-src-name">{wcaSrcDisplay.name}</span>
+                  <EventIcon event={wcaSrcDisplay.event} className="scramble-src-evt" />
+                  <span className="scramble-src-meta">{wcaSrcDisplay.meta}</span>
+                </a>
+              )}
             </div>
           }
           cornerSlot={settings.showCubePreview ? (
