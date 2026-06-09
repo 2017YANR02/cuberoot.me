@@ -391,6 +391,61 @@ async function main() {
     }
   }
 
+  // 演示二维码(落地码 + 跳转码):/progress 页与 /admin/qr/cards 用作示例。
+  // 含背面精选公式 alg,新环境直接有案例图 + 记法;已存在则只更新展示字段,保留 scans。
+  const QR_CODES: Array<typeof schema.qrCodes.$inferInsert> = [
+    {
+      code: "demo-landing",
+      label: "演示聚合卡 batch-demo",
+      type: "landing",
+      target: "/",
+      title: "解锁魔方进阶之路",
+      intro: "课程 / 商城 / 赛事 / 社群,一站直达。",
+      links: [
+        { label: "系统课", href: "/courses", note: "0 基础到竞速" },
+        { label: "商城", href: "/shop" },
+        { label: "赛事报名", href: "/events" },
+        { label: "进入社群", href: "/community" },
+      ],
+      term: "CFOP",
+      quote: "慢就是快\n一次打乱 一次成长",
+      frontArt: null,
+      alg: { name: "OLL 33", moves: "R U R' U' R' F R F'", url: "https://cuberoot.me/zh/alg/3x3/oll" },
+      scans: 0,
+      createdAt: now,
+    },
+    {
+      code: "demo-redirect",
+      label: "演示跳转卡",
+      type: "redirect",
+      target: "/courses",
+      alg: { name: "T (F2L)", moves: "U' R' F R F' R U' R'", url: "https://cuberoot.me/zh/alg/3x3/f2l" },
+      scans: 0,
+      createdAt: now,
+    },
+  ];
+
+  for (const q of QR_CODES) {
+    await db
+      .insert(schema.qrCodes)
+      .values(q)
+      .onConflictDoUpdate({
+        target: schema.qrCodes.code,
+        set: {
+          label: q.label,
+          type: q.type,
+          target: q.target,
+          title: q.title ?? null,
+          intro: q.intro ?? null,
+          links: q.links ?? null,
+          term: q.term ?? null,
+          quote: q.quote ?? null,
+          frontArt: q.frontArt ?? null,
+          alg: q.alg ?? null,
+        },
+      });
+  }
+
   console.log("seeded:", DB_PATH);
 }
 
