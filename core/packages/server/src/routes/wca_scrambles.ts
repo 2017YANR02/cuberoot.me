@@ -109,56 +109,91 @@ wcaScramblesRoutes.get('/wca/scrambles', async (c) => {
   return c.body(payload, 200, { 'Content-Type': 'application/json' });
 });
 
-// GET /wca/scrambles/random?event=333&count=5&from=&to= — 随机真实打乱(timer 日期范围模式)。
-// 采样策略:先从 wca_competitions(~1.8 万行,按可选 start_date 范围过滤)随机抽 30 场,
-// 再从这些场的该 event 打乱里随机取 count 条。实测 ~33-49ms。两层随机 → 每批跨多达 30 场,
-// 避免「老是同一场」(早期 id 窗口采样的聚簇问题);comp 表扫描 2-3ms 无需额外索引。
-// from/to 省略 = 全年份。附带比赛元数据(国旗/名称/轮次)供 UI 展示来源。
+// GET /wca/scrambles/random?event=333&count=5&from=&to= — 随机真实打乱(timer 练习池)。
+//
+// 无日期边界(默认/全时段):「抽奖号」飞镖采样。每行有永久随机 rnd∈[0,1)(migration 0037),
+//   随机 dart∈[0,1) 落点,取该 event 中 rnd>=dart 的 next count 条;末尾不足则从头(rnd<dart 的最小者)
+//   环绕补齐。单次 (event_id,rnd,id) 索引区间扫描,只读 count 行 —— ~1ms,且对每条打乱严格(边际)均匀,
+//   不必先抽比赛(根治早期「老是同一场」聚簇)。
+// 有日期边界:comp-sampling —— 先从 wca_competitions(~1.8 万行,按 start_date 过滤)随机抽 30 场,
+//   再从这些场的该 event 打乱里随机取 count 条(~33-49ms)。窄范围下比飞镖稳(飞镖叠日期谓词会退化成稀疏扫描)。
+// 两路都 LEFT/INNER JOIN 取比赛名,附带元数据(国旗/名称/轮次)供 UI 展示来源。
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const COMP_SAMPLE = 30;
+type RandomRow = ScrambleRow & { comp_name: string | null };
+const RANDOM_COLS = `ws.competition_id, ws.event_id, ws.round_type_id, ws.group_id,
+        (ws.is_extra = 1) AS is_extra, ws.scramble_num, ws.scramble, c.name AS comp_name`;
+
+// wca_scrambles 行 → 首页 RecentScrambles 的短键 meta(ci/cn/e/r/g/n/x),payload 也更小。
+function toScrambleMeta(r: RandomRow) {
+  return {
+    scramble: r.scramble,
+    ci: r.competition_id,
+    cn: r.comp_name ?? r.competition_id,
+    e: r.event_id,
+    r: r.round_type_id,
+    g: r.group_id,
+    n: r.scramble_num,
+    x: r.is_extra ? 1 : 0,
+  };
+}
+
 wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
   const event = c.req.query('event') ?? '';
   if (!/^[0-9a-z]{2,6}$/.test(event)) return c.json({ error: 'invalid event' }, 400);
   const count = Math.min(50, Math.max(1, Number(c.req.query('count')) || 1));
   const from = c.req.query('from') ?? '';
   const to = c.req.query('to') ?? '';
-
-  // 可选日期边界(已正则校验,可安全拼进子查询 WHERE)。
-  const dateWhere: string[] = [];
-  const dateParams: string[] = [];
-  if (DATE_RE.test(from)) { dateWhere.push('start_date >= ?'); dateParams.push(from); }
-  if (DATE_RE.test(to)) { dateWhere.push('start_date <= ?'); dateParams.push(to); }
-  const compFilter = dateWhere.length ? `WHERE ${dateWhere.join(' AND ')}` : '';
+  const hasFrom = DATE_RE.test(from);
+  const hasTo = DATE_RE.test(to);
 
   try {
-    const rows = await query<ScrambleRow & { comp_name: string | null }>(
-      `SELECT ws.competition_id, ws.event_id, ws.round_type_id, ws.group_id,
-              (ws.is_extra = 1) AS is_extra, ws.scramble_num, ws.scramble,
-              c.name AS comp_name
-         FROM wca_scrambles ws
-         JOIN (SELECT id, name FROM wca_competitions ${compFilter}
-                ORDER BY random() LIMIT ${COMP_SAMPLE}) c ON c.id = ws.competition_id
-        WHERE ws.event_id = ?
-        ORDER BY random()
-        LIMIT ?`,
-      [...dateParams, event, count],
-    );
+    let rows: RandomRow[];
+    if (!hasFrom && !hasTo) {
+      // 全时段:抽奖号飞镖采样。dart 在应用侧生成,便于环绕补齐复用同一落点。
+      const dart = Math.random();
+      rows = await query<RandomRow>(
+        `SELECT ${RANDOM_COLS}
+           FROM wca_scrambles ws
+           LEFT JOIN wca_competitions c ON c.id = ws.competition_id
+          WHERE ws.event_id = ? AND ws.rnd >= ?
+          ORDER BY ws.rnd, ws.id
+          LIMIT ?`,
+        [event, dart, count],
+      );
+      if (rows.length < count) {
+        // 落点偏高、尾部不足 → 从头(最小 rnd)环绕补齐,凑满 count。
+        const more = await query<RandomRow>(
+          `SELECT ${RANDOM_COLS}
+             FROM wca_scrambles ws
+             LEFT JOIN wca_competitions c ON c.id = ws.competition_id
+            WHERE ws.event_id = ? AND ws.rnd < ?
+            ORDER BY ws.rnd, ws.id
+            LIMIT ?`,
+          [event, dart, count - rows.length],
+        );
+        rows = rows.concat(more);
+      }
+    } else {
+      // 日期范围:comp-sampling。日期已正则校验,可安全拼进子查询 WHERE。
+      const dateWhere: string[] = [];
+      const dateParams: string[] = [];
+      if (hasFrom) { dateWhere.push('start_date >= ?'); dateParams.push(from); }
+      if (hasTo) { dateWhere.push('start_date <= ?'); dateParams.push(to); }
+      rows = await query<RandomRow>(
+        `SELECT ${RANDOM_COLS}
+           FROM wca_scrambles ws
+           JOIN (SELECT id, name FROM wca_competitions WHERE ${dateWhere.join(' AND ')}
+                  ORDER BY random() LIMIT ${COMP_SAMPLE}) c ON c.id = ws.competition_id
+          WHERE ws.event_id = ?
+          ORDER BY random()
+          LIMIT ?`,
+        [...dateParams, event, count],
+      );
+    }
     if (rows.length === 0) return c.json({ error: 'no scrambles for event', event }, 404);
     c.header('Cache-Control', 'no-store');
-    return c.json({
-      event,
-      // 短键对齐首页 RecentScrambles 的 meta 形态(ci/cn/e/r/g/n/x),payload 也更小。
-      scrambles: rows.map((r) => ({
-        scramble: r.scramble,
-        ci: r.competition_id,
-        cn: r.comp_name ?? r.competition_id,
-        e: r.event_id,
-        r: r.round_type_id,
-        g: r.group_id,
-        n: r.scramble_num,
-        x: r.is_extra ? 1 : 0,
-      })),
-    });
+    return c.json({ event, scrambles: rows.map(toScrambleMeta) });
   } catch (err) {
     console.error('[wca-scrambles] random failed:', err);
     return c.json({ error: 'query failed' }, 500);
