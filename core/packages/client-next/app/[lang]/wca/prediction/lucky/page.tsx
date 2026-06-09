@@ -219,7 +219,7 @@ function LuckyLimitPageInner() {
         return { x: yearToLogX(y), y: time };
       });
       return {
-        name: isZh ? ev.name_zh : ev.name_en,
+        name: i18n.language === 'zh-Hant' ? (ev.name_zhHant ?? ev.name_zh) : (isZh ? ev.name_zh : ev.name_en),
         color: colors[id] ?? '#888',
         data,
       };

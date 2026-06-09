@@ -22,7 +22,7 @@ function Timeline() {
   return (
     <ol className="timeline">
       {TIMELINE.map((e, i) => {
-        const t = (i18n.language.startsWith('zh') ? e.zh : e.en);
+        const t = (i18n.language === 'zh-Hant' ? (e.zhHant ?? e.zh) : (i18n.language.startsWith('zh') ? e.zh : e.en));
         const isOpen = open === i;
         return (
           <li key={i} className={`tl-entry tl-${e.tag}${isOpen ? ' open' : ''}`}>

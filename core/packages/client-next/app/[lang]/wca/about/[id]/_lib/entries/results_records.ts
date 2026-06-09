@@ -135,7 +135,8 @@ LIMIT 100;`,
     },
   ],
     titleZhHant: "最佳潛在 FMC 平均",
-    badgeZhHant: "潛在最佳"
+    badgeZhHant: "潛在最佳",
+    edgesZhHant: ["\"潛在\"是關鍵 — 三個 slot 的最佳可能來自三個不同的人,所以這條 mean 並不是任何選手本人達成過的成績。", "只看 `value > 0`:DNF (-1)、DNS (-2)、未提交 (0) 全被剔。三個 slot 全 DNF 的輪次根本進不了榜。", "FMC 的 value 列存的就是整數步數,**沒有** ×100 編碼 — 不要去乘 100,會把所有 mean 放大成兩位小數後離譜的數。", "`MIN` 而非 `MAX`:FMC 步數越**少**越好,跟 BLD points 編碼恰好相反。"]
 };
 
 // ──── best_round ────────────────────────────────────────────────────────────
@@ -265,7 +266,8 @@ LIMIT 10;`,
     },
   ],
     titleZhHant: "最佳輪次",
-    badgeZhHant: "輪次"
+    badgeZhHant: "輪次",
+    edgesZhHant: ["BLD 項目按 `single` 排,其它按 `average`:這是項目固有規則,不可調。", "不足 3 人的 round 被過濾(`third_result IS NOT NULL`)。所以小賽事冷門項目可能整項目都沒有上榜行。", "`333mbf` 的 sum 列顯示的是 **points 之和**,不是 WCA value 之和 — 跟其它項目的 clock-format 步調不同,看的時候要意識到單位差異。", "同一場比賽的預賽 / 決賽可以同時上榜(它們是兩個不同的 `round_type_id`)。"]
 };
 
 // ──── most_frequent_results ─────────────────────────────────────────────────
@@ -381,7 +383,8 @@ WHERE event_id != '333mbo';
     },
   ],
     titleZhHant: "最常出現的成績",
-    badgeZhHant: "頻次"
+    badgeZhHant: "頻次",
+    edgesZhHant: ["`333mbo` (multi-BLD old style) 整體被排除 — 它在 2009 年已被 `333mbf` 取代,資料點太少且編碼不同。", "DNF / DNS / 未提交不計入頻次,所以即使 BLD 項目裡 DNF 大量出現,榜單也只展示成功 attempt。", "FMC 的 attempt 是步數(integer),所以容易出現極高頻整數(如 `28`、`29`、`30`);timed 項目則是釐秒,整 `.00`、`.50` 偏多反映\"讀秒手動停\"的人因偏差。", "同一 result 的 5 個 attempt 全都進入計數 — 不只是 best / 不只是 average 用到的 3 個。"]
 };
 
 // ──── moving_average ────────────────────────────────────────────────────────
@@ -512,7 +515,8 @@ ORDER BY competition.start_date, round_type.rank;
         hintZhHant: "看每項目 top 50"
     },
   ],
-    titleZhHant: "移動平均"
+    titleZhHant: "移動平均",
+    edgesZhHant: ["BLD 系列(`333bf / 333mbf / 333mbo / 444bf / 555bf`)整組被排除 — 它們以 single 為排名口徑,放進 EMA 沒意義。", "`< 5 averages` 整段被剔。所以新人即使 5 個 ao5 飆到 sub-7 也得攢夠數才上榜。", "EMA 對**單次大失誤**記憶很短(幾個 average 之後就忘了),所以\"最近退步\"的選手比 ao12/ao50 更快從榜上掉下來。", "不像 `average_of_x` 那種\"連續 N 次官方還原\"的固定視窗口徑 — EMA 是軟視窗,沒有\"截斷\"。"]
 };
 
 // ──── smallest_diff_between_single_and_average ──────────────────────────────
@@ -654,7 +658,8 @@ WHERE event_id != '333fm' AND average > 0;
         hintZhHant: "21 項目 top 10"
     },
   ],
-    titleZhHant: "最小的單次與平均差距"
+    titleZhHant: "最小的單次與平均差距",
+    edgesZhHant: ["`333fm` 整體被排除 — FMC 是整數步數,`28 / 28 / 28 / 30 / 29` → single=28, mean=28.67,這種 `diff = 0` 在每場 FMC 都有,放進來淹沒榜單。", "BLD 系列只有 `333bf` / `444bf` / `555bf` 有 average(`mo3`),`333mbf` 沒有 average;BLD 的 `mo3` 沒去頭尾,所以 `single ≤ mo3` 仍然成立但口徑不同。", "diff 用釐秒整數算,展示用 2 位小數 — `diff = 0.00` 和 `diff = 0.01` 在榜上同時存在很正常。", "不是\"最相似 single 和 average\"在 WCA 歷史的查詢 — 而是**同一 round 內**的差。兩個不同 round 的\"巧合一致\"不會上榜。"]
 };
 
 // ──── yearly_rankings ───────────────────────────────────────────────────────
@@ -785,6 +790,7 @@ WHERE YEAR(competition.start_date) = YEAR(CURDATE());
         hintZhHant: "21 項目 × {Single, Average} 共 ~42 面板"
     },
   ],
+    edgesZhHant: ["\"當年\"= `YEAR(CURDATE())`,即 build 時的伺服器日曆年。跨年那一刻整張榜從零開始重新累積。", "`sub_id = 1` 過濾副身份(改名 / 換國籍 / 多 WCA ID 的 dump 行)。", "BLD multi (`333mbf`) 沒有 average,所以它的 Average panel 永遠是空 — 渲染時整 panel 不會顯示。", "每人去重是\"全年最佳\",不是\"每場比賽最佳\" — 不是按 round / comp / round_type 分。一個人哪怕全年比了 30 場,這裡也只算他/她最快的那一條。"]
 };
 
 export const RESULTS_RECORDS_ABOUT: Record<string, AboutEntry> = {

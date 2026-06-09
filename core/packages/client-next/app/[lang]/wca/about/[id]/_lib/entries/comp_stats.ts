@@ -125,7 +125,8 @@ LIMIT 100;`,
     },
   ],
     titleZhHant: "每場比賽平均參賽項目數",
-    badgeZhHant: "賽事"
+    badgeZhHant: "賽事",
+    edgesZhHant: ["沒報名但出現在 `results` 表的輪次才算 —— 報了名但沒去現場(DNS 整輪)的選手不計入。", "\"項目數\"是 distinct event,不是 distinct 輪數 —— 一個人在 3x3 打了 3 輪和 1 輪算同等貢獻。", "榜首通常是早期小型綜合賽 —— 項目數穩,人少時均值容易往上推。"]
 };
 
 // ──── competition_days_count_by_region ──────────────────────────────────────
@@ -249,7 +250,8 @@ WHERE country_id NOT IN ('XA','XE','XF','XM','XN','XO','XS','XW')
     },
   ],
     titleZhHant: "按區域統計比賽天數",
-    badgeZhHant: "賽事"
+    badgeZhHant: "賽事",
+    edgesZhHant: ["\"天數\"含首尾兩端 —— 單日賽是 1,不是 0。", "`country_id NOT IN (...)` 排除 7 個 X 程式碼,這些是 WCA 給跨域賽用的虛擬國別,統計上沒有意義。", "World 檔只有 1 行,均值是全球所有比賽的總天數除以總場次。"]
 };
 
 // ──── competitions_count_by_week ────────────────────────────────────────────
@@ -372,7 +374,8 @@ ORDER BY competitions_count DESC, week_start_date DESC;`,
     },
   ],
     titleZhHant: "每週比賽數量",
-    badgeZhHant: "賽事"
+    badgeZhHant: "賽事",
+    edgesZhHant: ["一場跨周的多日賽只按 `start_date` 歸一週 —— 週一開始週二結束的不會被分到兩週。", "過濾了 `cancelled_at IS NOT NULL`,2020 疫情期間的取消高峰不會冒出來。", "\"List\" 列的 WCA URL 引數 `state=custom` 不會跟未來未公開比賽混在一起。"]
 };
 
 // ──── competitions_per_year_by_country ──────────────────────────────────────
@@ -513,7 +516,8 @@ ORDER BY competitions_per_year DESC;`,
     },
   ],
     titleZhHant: "每年每國比賽數",
-    badgeZhHant: "賽事"
+    badgeZhHant: "賽事",
+    edgesZhHant: ["從 `results` 起 join 比從 `competitions` 起 join 嚴:掛在日曆但 0 人出賽的\"幽靈比賽\"不會算進 `competitions` 計數。", "`years` 是連續小數(不是整數),所以 \"2.37 年辦 18 場\" 算出來是 7.59/年。", "`CURDATE()` 是 SQL 引擎當下的時間,每次重跑 dump 都會前進 —— 國家排名會有微弱的\"自然衰減\",新一年沒辦賽比例會下降。"]
 };
 
 // ──── dnf_rate_by_event ─────────────────────────────────────────────────────
@@ -642,7 +646,8 @@ GROUP BY r.event_id;`,
     },
   ],
     titleZhHant: "各項目 DNF 率",
-    badgeZhHant: "項目"
+    badgeZhHant: "項目",
+    edgesZhHant: ["分母**不含** DNS(`-2`)和空槽(`0`)—— 真沒上 / 沒填的不算\"嘗試\"。改了分母口徑會讓所有數都偏低。", "一輪記錄 = 至多 5 個 attempt,但很多項目只有 1-3 attempt(BLD / FMC 等)。聚合時單 attempt 是原子,不是單輪。", "MBLD 項目的 attempt 是\"複合 attempt\"(一組 cube),DNF 由整體判定;比例不是\"每立方體 DNF 率\"。"]
 };
 
 // ──── fewest_competitors_contest ────────────────────────────────────────────
@@ -768,7 +773,8 @@ ORDER BY competitors_count;`,
     },
   ],
     titleZhHant: "參賽人數最少的比賽",
-    badgeZhHant: "賽事"
+    badgeZhHant: "賽事",
+    edgesZhHant: ["\"出賽 = 有 `results` 行\" —— 該選手可能整輪 DNS(SQL 裡 `value > 0` 都沒有),只要 `result_attempts` 裡掛了行就算。", "`HAVING competitors_count <= 15` 寫死,要看更大規模需自己改 SQL —— 這是個\"小賽\"專題榜。", "歷史上單人比賽極少,通常是疫情期間允許的 1 人或 2 人特殊場。"]
 };
 
 // ──── most_records_at_single_competition ────────────────────────────────────
@@ -898,7 +904,8 @@ WHERE (regional_single_record IS NOT NULL AND regional_single_record != '')
     },
   ],
     titleZhHant: "單場比賽最多紀錄",
-    badgeZhHant: "賽事"
+    badgeZhHant: "賽事",
+    edgesZhHant: ["WR 行同時也是 CR、也是 NR —— 三檔的程式碼集層層包含,確保高檔紀錄在所有低檔裡都計入。", "一行可能 single 和 average **都**破了紀錄,記為 2 個紀錄(不是 1)。", "`sub_id = 1` 過濾副身份後,某位曾改名的選手的所有比賽仍歸到主名下,不會被切碎。", "只看 `regional_*_record` 標記,不二次校驗數值 —— 若 WCA 後續 retroactive 撤銷某條紀錄,統計會隨 dump 更新跟隨。"]
 };
 
 export const COMP_STATS_ABOUT: Record<string, AboutEntry> = {

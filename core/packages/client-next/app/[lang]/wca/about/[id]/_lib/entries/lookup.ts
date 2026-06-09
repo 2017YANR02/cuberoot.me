@@ -125,7 +125,8 @@ ORDER BY gs.best_value NULLS LAST;`,
     },
   ],
     titleZhHant: "大滿貫 — 同一項目集齊三冠 + WR",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["大洲冠軍賽歸屬看選手**當前**國籍對應的大洲(`persons.country_id` → `countries.continent_id`),不是比賽舉辦地。換國籍的選手可能\"重新具備資格\"。", "\"領獎臺\" 嚴格按 `pos` 取(WCA 官方裁定),不重算成績 — 即使有人 DNF average 但 `pos = 3` 也算上。", "`greater_china` 等多國共享冠軍賽透過 `eligible_country_iso2s_for_championship` 反查;臺灣 / 香港 / 澳門選手在 China Championship 上的領獎臺計入國錦檔。", "`onlyFirst` 不要求三場是同一年 — 只要三場都拿過金牌即可,時間跨度不限。"]
 };
 
 // ──── all-results ──────────────────────────────────────────────────────────
@@ -253,7 +254,8 @@ ORDER BY q.value ASC, q.wca_id ASC;`,
     },
   ],
     titleZhHant: "全部成績排名 — 全 11M 行的可分頁搜尋",
-    badgeZhHant: "查詢"
+    badgeZhHant: "查詢",
+    edgesZhHant: ["`OFFSET 1 M+` 是真實負載 — 資料集大到要這種寫法。直接 `ORDER BY + LIMIT/OFFSET + 三表 JOIN` 單寫法在 PG 上深頁要 10 s+,被慢日誌釘過。", "`person_country_id` 是**該次比賽時**選手的國籍(per result 列),不是當前國籍 — 國旗在歷史成績裡展示的是當年的旗。", "`q` 同時空 + 沒條件時全表掃,但 LIMIT 200 防止 ILIKE 命中 100k 選手時 IN list 爆掉。", "`333mbf` 沒有 average — 請求 `type=average` 直接 400,不靜默返空。"]
 };
 
 // ──── cohort-ranks ─────────────────────────────────────────────────────────
@@ -367,7 +369,8 @@ LIMIT ? OFFSET ?;`,
         hintZhHant: "看屆別 / 項目 / 國家切換"
     },
   ],
-    titleZhHant: "參賽屆別排名 — 按\"首參賽年\"分組排名"
+    titleZhHant: "參賽屆別排名 — 按\"首參賽年\"分組排名",
+    edgesZhHant: ["cohort = **首參賽年**,與選手出生年 / 註冊 WCA-ID 年都無關 — 一個 2018 第一次比賽的選手永遠是 2018 屆,即便有 2019 改的 WCA-ID 也不變。", "生涯累積 = 今天為止,不是 cohort 當年內 — \"2010 屆的 333 第一\"看的是這個人至今 PB,不是他 2010 年內的成績。", "`333mbf` 沒有 average — `type=average` 400,與 all-results 同口徑。", "同分並列(`assignRanks()` 用 `prevVal` 比較);PG 端 ORDER BY 加 `wca_id ASC` 兜底,翻頁穩定。"]
 };
 
 // ──── success-rate ─────────────────────────────────────────────────────────
@@ -494,7 +497,8 @@ LIMIT ? OFFSET ?;`,
     },
   ],
     titleZhHant: "項目成功率 — solved / attempted",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["`r.best = 0` 是 WCA 編碼裡的 DNS(Did Not Start),不能跟 DNF 混。`attempted` 不計入 DNS — 否則一個登記了但沒上手的輪次會拖低比例。", "attempts(5 次 raw)不直接看 — 用最終 `best`。一個 attempts = [4321, -1, -1, -1, -1] 的輪次 `best = 4321 > 0`,算 1 個 solved + 1 個 attempted。", "不區分 single / average。333bf / 444bf / 555bf / 333mbf 這類項目的 average 行根本不存在(WCA 規則),mo3 也是聚合統計形式,這裡只看 best。", "榜單按百分比看是高分高;不同項目 baseline 差異大 — 333 幾乎人均 99%+,333mbf 60% 已是頂級。"]
 };
 
 // ──── all-events-done ──────────────────────────────────────────────────────
@@ -634,7 +638,8 @@ LIMIT ? OFFSET ?;`,
     },
   ],
     titleZhHant: "全項目達成 — 集齊 17 項所用的天數",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["\"17 項\" 是**今天**的口徑(`ACTIVE_EVENTS`)。Magic / Master Magic / 333ft / 333mbo 等已廢止項目不計 — 歷史上沒人需要擰 21 項才算\"全勤\"。", "只要 single 有效就算 — 不要求 average。這對盲擰 / 大盲(沒 average 的項目)友好,否則 `333mbf` 永遠算不上。", "同一項目的\"首次有效\"取最早 — 一個選手 2008 年 4x4 DNF / 2010 才 valid,我們把 2010 那場算成 `firstDone[4x4]`。", "`country` 過濾是按選手**當前**國籍(`country_id`),不是首參賽時國籍 — 換國籍的選手會跟著挪。"]
 };
 
 // ──── sum-of-ranks ─────────────────────────────────────────────────────────
@@ -776,7 +781,8 @@ ORDER BY subset_total ASC;`,
         hintZhHant: "看預設 17 項 + 子集 picker + hidePodium 切換"
     },
   ],
-    titleZhHant: "全項目排名 — 17 項世界排名之和"
+    titleZhHant: "全項目排名 — 17 項世界排名之和",
+    edgesZhHant: ["`333mbf` 在 average 檢視裡**跳過**,不參與累加 — 它沒有 average 這種概念;真用 17 項的 average sum 會讓它單挑一類人。", "缺項懲罰 = 該項目\"參賽人數 + 1\",不是固定大數。這避免冷門項目(參賽人數少)和熱門項目權重失衡 — 跳過 333 損失約 30 萬排名,跳過 333mbf 只損失幾千。", "`hidePodium` 只過濾主查詢行,不改 CTE 的參賽人數 — 否則隱藏一個 podium 選手會讓其他人的\"缺項罰\"變小,語義混亂。", "`country` 給定 → ORDER BY `total_country_rank`,返回的 `ranks` 陣列也切到 `ranks_country` — 同一行下\"按國家看排名\"是一致 view。"]
 };
 
 export const LOOKUP_ABOUT: Record<string, AboutEntry> = {

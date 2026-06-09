@@ -11,12 +11,12 @@ export default function RequestTracer() {
   const [pid, setPid] = useState<string>(TRACER_PATTERNS[0].id);
   const p = TRACER_PATTERNS.find(x => x.id === pid)!;
   const lit = new Set<StageId>(p.lit);
-  const txt = (i18n.language.startsWith('zh') ? p.zh : p.en);
+  const txt = (i18n.language === 'zh-Hant' ? (p.zhHant ?? p.zh) : (i18n.language.startsWith('zh') ? p.zh : p.en));
   return (
     <div className="tracer">
       <div className="tracer-tabs" role="tablist">
         {TRACER_PATTERNS.map((pat) => {
-          const t = (i18n.language.startsWith('zh') ? pat.zh : pat.en);
+          const t = (i18n.language === 'zh-Hant' ? (pat.zhHant ?? pat.zh) : (i18n.language.startsWith('zh') ? pat.zh : pat.en));
           const active = pid === pat.id;
           return (
             <button
