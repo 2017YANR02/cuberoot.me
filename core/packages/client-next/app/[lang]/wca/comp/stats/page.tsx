@@ -73,7 +73,8 @@ export default function CalendarStatsPage() {
 
   const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const monthsZh = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-  const monthLabels = isZh ? monthsZh : monthsEn;
+  const monthsZhHant = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+  const monthLabels = i18n.language === 'zh-Hant' ? monthsZhHant : (isZh ? monthsZh : monthsEn);
 
   const series = useMemo(() => {
     if (years.length === 0) return [] as { year: number; month: number; count: number }[];

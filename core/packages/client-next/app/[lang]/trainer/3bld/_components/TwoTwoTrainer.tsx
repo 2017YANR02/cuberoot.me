@@ -47,10 +47,7 @@ const SPEC = {
     otherScrambleZh: '打乱棱块',
     otherScrambleEn: 'Scramble edges',
     caseLabel: '2C2C',
-      titleZhHant: "2C2C 訓練",
-      twiststateZhHant: "是否帶翻",
-      otherScrambleZhHant: "打亂稜塊"
-},
+  },
   edge: {
     titleZh: '2E2E 训练',
     titleEn: '2E2E Trainer',
@@ -62,11 +59,22 @@ const SPEC = {
     otherScrambleZh: '打乱角块',
     otherScrambleEn: 'Scramble corners',
     caseLabel: '2E2E',
-      titleZhHant: "2E2E 訓練",
-      twiststateZhHant: "是否帶翻",
-      otherScrambleZhHant: "打亂角塊"
-},
+  },
 } as const;
+
+// recipe B: sibling lookup tables (key = piece) for zh-Hant, value | undefined.
+const TITLE_HANT: Record<Piece, string | undefined> = {
+  corner: '2C2C 訓練',
+  edge: '2E2E 訓練',
+};
+const TWISTSTATE_HANT: Record<Piece, string | undefined> = {
+  corner: '是否帶翻',
+  edge: '是否帶翻',
+};
+const OTHER_SCRAMBLE_HANT: Record<Piece, string | undefined> = {
+  corner: '打亂稜塊',
+  edge: '打亂角塊',
+};
 
 export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null {
   const { i18n } = useTranslation();
@@ -232,7 +240,7 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{isZh ? spec.titleZh : spec.titleEn}</h1>
+        <h1>{i18n.language === 'zh-Hant' ? (TITLE_HANT[piece] ?? spec.titleZh) : (isZh ? spec.titleZh : spec.titleEn)}</h1>
       </div>
 
       <BldConfigBar
@@ -257,11 +265,11 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
         <div className="bld-options">
           <label className="bld-check">
             <input type="checkbox" checked={otherScramble} onChange={(e) => setOtherScramble(e.target.checked)} />
-            {isZh ? spec.otherScrambleZh : spec.otherScrambleEn}
+            {i18n.language === 'zh-Hant' ? (OTHER_SCRAMBLE_HANT[piece] ?? spec.otherScrambleZh) : (isZh ? spec.otherScrambleZh : spec.otherScrambleEn)}
           </label>
           <label className="bld-check">
             <input type="checkbox" checked={twist} onChange={(e) => setTwist(e.target.checked)} />
-            {isZh ? spec.twiststateZh : spec.twiststateEn}
+            {i18n.language === 'zh-Hant' ? (TWISTSTATE_HANT[piece] ?? spec.twiststateZh) : (isZh ? spec.twiststateZh : spec.twiststateEn)}
           </label>
           <label className="bld-check">
             <input type="checkbox" checked={excludeTop} onChange={(e) => setExcludeTop(e.target.checked)} />

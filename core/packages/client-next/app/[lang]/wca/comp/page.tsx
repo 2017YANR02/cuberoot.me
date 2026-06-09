@@ -177,6 +177,7 @@ const EVENT_ORDER = WCA_EVENT_ORDER;
 
 const WEEKDAY_EN = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const WEEKDAY_ZH = ['一','二','三','四','五','六','日'];
+const WEEKDAY_ZH_HANT = ['一','二','三','四','五','六','日'];
 
 // ── 工具函数 ──────────────────────────────────────────────────────────────
 
@@ -1417,7 +1418,7 @@ function CalendarPageInner() {
   const today = new Date();
   const monthYear = String(viewDate.getFullYear());
   const monthMm = String(viewDate.getMonth() + 1).padStart(2, '0');
-  const weekdays = isZh ? WEEKDAY_ZH : WEEKDAY_EN;
+  const weekdays = i18n.language === 'zh-Hant' ? WEEKDAY_ZH_HANT : (isZh ? WEEKDAY_ZH : WEEKDAY_EN);
 
   return (
     <div

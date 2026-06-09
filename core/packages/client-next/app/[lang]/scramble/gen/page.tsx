@@ -84,7 +84,7 @@ const LEGACY_MODE_ALIAS: Record<string, Mode> = {
 function GenPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = useCallback((zh: string, en: string) => (isZh ? zh : en), [isZh]);
+  const t = useCallback((zh: string, en: string, zhHant?: string) => (i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en)), [isZh]);
   useDocumentTitle('打乱生成器', 'Scramble Generator', "打亂生成器");
 
   // Prewarm the heaviest random-state scramblers while the user is reading the
@@ -148,12 +148,12 @@ function GenPageInner() {
         <div className="gen-title">
           <Shuffle size={20} className="gen-title-icon" />
           <h1>
-            {t('打乱生成器', 'Scramble Generator')}
+            {t('打乱生成器', 'Scramble Generator', '打亂生成器')}
             <Link
               href="/scramble/gen-about"
               className="gen-title-help"
-              title={t('生成器是怎么工作的?', 'How does the generator work?')}
-              aria-label={t('查看打乱生成器说明', 'About the scramble generator')}
+              title={t('生成器是怎么工作的?', 'How does the generator work?', '生成器是怎麼工作的?')}
+              aria-label={t('查看打乱生成器说明', 'About the scramble generator', '檢視打亂生成器說明')}
             >
               <HelpCircle size={18} strokeWidth={1.75} />
             </Link>
@@ -167,7 +167,7 @@ function GenPageInner() {
           items={MODE_ORDER}
           value={mode}
           onChange={setMode}
-          getLabel={(m) => t(MODE_LABELS[m].zh, MODE_LABELS[m].en)}
+          getLabel={(m) => t(MODE_LABELS[m].zh, MODE_LABELS[m].en, MODE_LABELS[m].zhHant)}
         />
       </header>
 

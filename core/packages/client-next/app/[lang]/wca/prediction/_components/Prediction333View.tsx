@@ -300,7 +300,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
 
           <ActiveSectionContext.Provider value={activeId}>
 
-          <Section id="tldr" titleZh="一句话结论" titleEn="Top Line" isZh={isZh}>
+          <Section id="tldr" titleZh="一句话结论" titleEn="Top Line" titleZhHant="一句話結論" isZh={isZh}>
             <div className="pred-tldr pred-tldr-333">
               <p className="pred-tldr-lede">
                 {i18n.language === 'zh-Hant' ? ((
@@ -363,7 +363,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             </div>
           </Section>
 
-          <Section id="history" titleZh="23 年 WR 编年史" titleEn="23-Year WR Chronicle" isZh={isZh}>
+          <Section id="history" titleZh="23 年 WR 编年史" titleEn="23-Year WR Chronicle" titleZhHant="23 年 WR 編年史" isZh={isZh}>
             <p>
               {i18n.language === 'zh-Hant' ? ((
                                               <>WCA 2003 年 8 月 23-24 日在多倫多 (Ontario Science Centre) 世錦賽上成立,同時改寫了停了 21 年的單次 WR — 美國選手 Dan Knights 用 <strong>16.71 秒</strong> 打破了 Minh Thai 1982 年的 22.95。此後 23 年,單次 WR 一路從 16.71 壓到 Zajder 2.76,<strong>縮了 6.06 倍</strong>,平均每年下降 ~7%。注意 1982 那場不在本文趨勢模型中 — 中間 21 年的「無資料空窗」對擬合沒意義。</>
@@ -535,7 +535,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             {!isZh && <Longform text={COMPETITIONS_DETAIL_EN} />}
           </Section>
 
-          <Section id="reconstructions" titleZh="著名复盘 (STM / TPS)" titleEn="Famous Reconstructions" isZh={isZh}>
+          <Section id="reconstructions" titleZh="著名复盘 (STM / TPS)" titleEn="Famous Reconstructions" titleZhHant="著名覆盤 (STM / TPS)" isZh={isZh}>
             <p>
               {i18n.language === 'zh-Hant' ? (<>每次單次 WR 都對應一個 (打亂, 解, STM, TPS) 四元組。擺到一起看最清楚: <strong>TPS 一路漲,STM 因為幸運打亂 + 方法躍遷而出現非線性跳水</strong>。Wang 45 STM × 14.61 TPS (高 TPS 路徑);Geng 33 STM × 10.81 TPS (高效路徑);Zajder 29 STM × 10.50 TPS (高效 + ZBLL 組合)。</>) : (isZh
                                               ? <>每次单次 WR 都对应一个 (打乱, 解, STM, TPS) 四元组。摆到一起看最清楚: <strong>TPS 一路涨,STM 因为幸运打乱 + 方法跃迁而出现非线性跳水</strong>。Wang 45 STM × 14.61 TPS (高 TPS 路径);Geng 33 STM × 10.81 TPS (高效路径);Zajder 29 STM × 10.50 TPS (高效 + ZBLL 组合)。</>
@@ -576,7 +576,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
 
           </Section>
 
-          <Section id="state-space" titleZh="状态空间 4.3×10¹⁹" titleEn="State Space 4.3×10¹⁹" isZh={isZh}>
+          <Section id="state-space" titleZh="状态空间 4.3×10¹⁹" titleEn="State Space 4.3×10¹⁹" titleZhHant="狀態空間 4.3×10¹⁹" isZh={isZh}>
             <p>{i18n.language === 'zh-Hant' ? (<>3x3 魔方的可達狀態總數 <strong>43,252,003,274,489,856,000 ≈ 4.3 × 10¹⁹</strong>:</>) : (isZh ? <>3x3 魔方的可达状态总数 <strong>43,252,003,274,489,856,000 ≈ 4.3 × 10¹⁹</strong>:</> : <>3x3 has <strong>43,252,003,274,489,856,000 ≈ 4.3 × 10¹⁹</strong> reachable states:</>)}</p>
             <pre className="pred-formula">{`|G| = (8! · 3^7) · (12! · 2^11) / 2 = 4.3252 × 10^19
 
@@ -643,7 +643,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             </p>
           </Section>
 
-          <Section id="optimal-dist" titleZh="随机打乱的最优 HTM 分布" titleEn="Random Scramble Optimal HTM Distribution" isZh={isZh}>
+          <Section id="optimal-dist" titleZh="随机打乱的最优 HTM 分布" titleEn="Random Scramble Optimal HTM Distribution" titleZhHant="隨機打亂的最優 HTM 分佈" isZh={isZh}>
             <p>
               {i18n.language === 'zh-Hant' ? (<>cube20.org 全狀態列舉給出的分佈。<strong>67% 的隨機打亂需要正好 18 HTM 最優解</strong>,平均 17.92 HTM,中位 18。只有 ~4.9 × 10⁸ 個狀態需要 20 HTM (~10⁻¹¹)。</>) : (isZh
                                               ? <>cube20.org 全状态枚举给出的分布。<strong>67% 的随机打乱需要正好 18 HTM 最优解</strong>,平均 17.92 HTM,中位 18。只有 ~4.9 × 10⁸ 个状态需要 20 HTM (~10⁻¹¹)。</>
@@ -665,7 +665,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             {!isZh && <Longform text={SOLVER_SOFTWARE_EN} />}
           </Section>
 
-          <Section id="metrics" titleZh="度量学: HTM vs STM vs QTM vs ATM" titleEn="Metrics: HTM vs STM vs QTM vs ATM" isZh={isZh}>
+          <Section id="metrics" titleZh="度量学: HTM vs STM vs QTM vs ATM" titleEn="Metrics: HTM vs STM vs QTM vs ATM" titleZhHant="度量學: HTM vs STM vs QTM vs ATM" isZh={isZh}>
             <p>{tr({ zh: '不同度量学算不同的事:', en: 'Different metrics count different things:',
                 zhHant: "不同度量學算不同的事:"
             })}</p>
@@ -702,7 +702,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             {!isZh && <Longform text={MATH_DETAIL_EN} />}
           </Section>
 
-          <Section id="method-cfop" titleZh="CFOP 解剖学: Cross → F2L → OLL → PLL" titleEn="CFOP Anatomy: Cross → F2L → OLL → PLL" isZh={isZh}>
+          <Section id="method-cfop" titleZh="CFOP 解剖学: Cross → F2L → OLL → PLL" titleEn="CFOP Anatomy: Cross → F2L → OLL → PLL" titleZhHant="CFOP 解剖學: Cross → F2L → OLL → PLL" isZh={isZh}>
             <p>
               {i18n.language === 'zh-Hant' ? (<>CFOP 由 Jessica Fridrich 1997 年公開,跟 Hans Dockhorn 和 Anneke Treep 等人 1980 年代的獨立工作匯流,共 <strong>119 個核心演算法</strong> (41 F2L + 57 OLL + 21 PLL),頂級實際跑 ~<strong>57.5 HTM</strong>。23 年 WR 歷程裡絕對的主流方法。</>) : (isZh
                                               ? <>CFOP 由 Jessica Fridrich 1997 年公开,跟 Hans Dockhorn 和 Anneke Treep 等人 1980 年代的独立工作汇流,共 <strong>119 个核心算法</strong> (41 F2L + 57 OLL + 21 PLL),顶级实际跑 ~<strong>57.5 HTM</strong>。23 年 WR 历程里绝对的主流方法。</>
@@ -787,16 +787,16 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             </div>
             <p>{i18n.language === 'zh-Hant' ? (<><strong>4 個 PLL 視覺樣本</strong>:</>) : (isZh ? <><strong>4 个 PLL 视觉样本</strong>:</> : <><strong>4 iconic PLL previews</strong>:</>)}</p>
             <div className="pred-pll-gallery">
-              <PllPreview letter="T" alg="R U R' U' R' F R2 U' R' U' R U R' F'" isZh={isZh} note_en="Adjacent corner + adjacent edge swap" note_zh="角对角 + 棱相邻换" />
-              <PllPreview letter="Ja" alg="x R2 F R F' R U2 r' U r U2 x'" isZh={isZh} note_en="Adjacent corner swap, no edge cycle" note_zh="角相邻换,无棱循环" />
-              <PllPreview letter="H" alg="M2 U M2 U2 M2 U M2" isZh={isZh} note_en="4-fold symmetric edge swap; rarest PLL" note_zh="4 重对称棱换;最罕见 PLL" />
-              <PllPreview letter="Y" alg="F R U' R' U' R U R' F' R U R' U' R' F R F'" isZh={isZh} note_en="Corner diag + edge diag (Y on side)" note_zh="角斜 + 棱斜 (侧面 Y 形)" />
+              <PllPreview letter="T" alg="R U R' U' R' F R2 U' R' U' R U R' F'" isZh={isZh} note_en="Adjacent corner + adjacent edge swap" note_zh="角对角 + 棱相邻换" note_zhHant="角對角 + 稜相鄰換" />
+              <PllPreview letter="Ja" alg="x R2 F R F' R U2 r' U r U2 x'" isZh={isZh} note_en="Adjacent corner swap, no edge cycle" note_zh="角相邻换,无棱循环" note_zhHant="角相鄰換,無稜迴圈" />
+              <PllPreview letter="H" alg="M2 U M2 U2 M2 U M2" isZh={isZh} note_en="4-fold symmetric edge swap; rarest PLL" note_zh="4 重对称棱换;最罕见 PLL" note_zhHant="4 重對稱稜換;最罕見 PLL" />
+              <PllPreview letter="Y" alg="F R U' R' U' R U R' F' R U R' U' R' F R F'" isZh={isZh} note_en="Corner diag + edge diag (Y on side)" note_zh="角斜 + 棱斜 (侧面 Y 形)" note_zhHant="角斜 + 稜斜 (側面 Y 形)" />
             </div>
 
             {!isZh && <Longform text={ALGORITHMS_CATALOG_EN} />}
           </Section>
 
-          <Section id="method-zb" titleZh="ZB / ZBLS / ZBLL — 顶级方法栈" titleEn="ZB / ZBLS / ZBLL — The Elite Stack" isZh={isZh}>
+          <Section id="method-zb" titleZh="ZB / ZBLS / ZBLL — 顶级方法栈" titleEn="ZB / ZBLS / ZBLL — The Elite Stack" titleZhHant="ZB / ZBLS / ZBLL — 頂級方法棧" isZh={isZh}>
             <p>
               {i18n.language === 'zh-Hant' ? (<>ZB 方法把 CFOP 的 OLL + PLL 替換為 <strong>ZBLS (302-303 個 case)</strong> + <strong>ZBLL (493 個 case)</strong>。ZBLS 解最後一對 F2L 的同時把 LL 4 稜朝向也解掉;ZBLL 在 EO 已知的前提下 1 個演算法解掉整個 LL。</>) : (isZh
                                               ? <>ZB 方法把 CFOP 的 OLL + PLL 替换为 <strong>ZBLS (302-303 个 case)</strong> + <strong>ZBLL (493 个 case)</strong>。ZBLS 解最后一对 F2L 的同时把 LL 4 棱朝向也解掉;ZBLL 在 EO 已知的前提下 1 个算法解掉整个 LL。</>
@@ -852,7 +852,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             </p>
           </Section>
 
-          <Section id="lookahead" titleZh="F2L lookahead — 顶级速度的真正瓶颈" titleEn="F2L Lookahead — The Real Bottleneck" isZh={isZh}>
+          <Section id="lookahead" titleZh="F2L lookahead — 顶级速度的真正瓶颈" titleEn="F2L Lookahead — The Real Bottleneck" titleZhHant="F2L lookahead — 頂級速度的真正瓶頸" isZh={isZh}>
             <p>
               {i18n.language === 'zh-Hant' ? (<><strong>Lookahead</strong> = 執行第 N 對的同時,眼睛已經在追第 N+1 對。<strong>故意把執行放慢,給眼睛留出反應時間,總時間反而更快</strong>。Zemdegs 的 CubeSkills 分三階段:</>) : (isZh
                                               ? <><strong>Lookahead</strong> = 执行第 N 对的同时,眼睛已经在追第 N+1 对。<strong>故意把执行放慢,给眼睛留出反应时间,总时间反而更快</strong>。Zemdegs 的 CubeSkills 分三阶段:</>
@@ -866,7 +866,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             <p>{i18n.language === 'zh-Hant' ? (<><strong>lookahead 失效的三種情形</strong>: 幸運打亂, multislotting, pseudoslotting。</>) : (isZh ? <><strong>lookahead 失效的三种情形</strong>: 幸运打乱, multislotting, pseudoslotting。</> : <><strong>3 lookahead failure modes</strong>: lucky scrambles, multislotting, pseudoslotting.</>)}</p>
           </Section>
 
-          <Section id="inspection" titleZh="Inspection 运筹 — 15 秒怎么用" titleEn="Inspection — How to Spend 15 Seconds" isZh={isZh}>
+          <Section id="inspection" titleZh="Inspection 运筹 — 15 秒怎么用" titleEn="Inspection — How to Spend 15 Seconds" titleZhHant="Inspection 運籌 — 15 秒怎麼用" isZh={isZh}>
             <p>{i18n.language === 'zh-Hant' ? (<><strong>WCA A3</strong>: inspection 上限 15 秒,16-17 秒 +2,≥ 17 秒 DNF。頂級選手流程:</>) : (isZh ? <><strong>WCA A3</strong>: inspection 上限 15 秒,16-17 秒 +2,≥ 17 秒 DNF。顶级选手流程:</> : <><strong>WCA A3</strong>: 15s cap, 16-17s +2, ≥17s DNF. Elite flow:</>)}</p>
             <ol>
               <li>{i18n.language === 'zh-Hant' ? (<><strong>0-5 秒</strong>: 掃色中性,鎖定最優 cross 顏色。</>) : (isZh ? <><strong>0-5 秒</strong>: 扫色中性,锁定最优 cross 颜色。</> : <><strong>0-5 s</strong>: CN scan, lock best cross color.</>)}</li>
@@ -877,7 +877,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             <p>{i18n.language === 'zh-Hant' ? (<><strong>X-cross inspection</strong> 是難度最高也回報最大的。<strong>CN 選手比固定色看到 X-cross 的機率多 ~5 倍</strong>。</>) : (isZh ? <><strong>X-cross inspection</strong> 是难度最高也回报最大的。<strong>CN 选手比固定色看到 X-cross 的概率多 ~5 倍</strong>。</> : <><strong>X-cross inspection</strong> is the hardest, most rewarding skill. <strong>CN cubers see X-cross ~5× more often</strong>.</>)}</p>
           </Section>
 
-          <Section id="skips" titleZh="幸运打乱 + skip 概率" titleEn="Lucky Scrambles + Skip Probability" isZh={isZh}>
+          <Section id="skips" titleZh="幸运打乱 + skip 概率" titleEn="Lucky Scrambles + Skip Probability" titleZhHant="幸運打亂 + skip 機率" isZh={isZh}>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table pred-method-table">
                 <thead><tr><th>{tr({ zh: '事件', en: 'Event' })}</th><th>P</th><th>%</th><th>{tr({ zh: '说明', en: 'Note',
@@ -902,7 +902,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             </p>
           </Section>
 
-          <Section id="hardware" titleZh="硬件 1980-2026" titleEn="Hardware 1980-2026" isZh={isZh}>
+          <Section id="hardware" titleZh="硬件 1980-2026" titleEn="Hardware 1980-2026" titleZhHant="硬體 1980-2026" isZh={isZh}>
             <p>
               {i18n.language === 'zh-Hant' ? (<>46 年硬體演化分四段: <strong>1980-2010 原始期</strong> (原版 Rubik / Type-A) → <strong>2010-2014 現代速擰誕生</strong> (DaYan GuHong / ZhanChi / MoYu AoLong) → <strong>2016-2020 磁鐵革命</strong> (Cubicle Mod / GAN 356 Air UM / GAN 11 M Pro 核心磁) → <strong>2021-2026 磁場網路 + 智慧化</strong> (GAN 12-16 MagLev / MoYu Super RS3M)。</>) : (isZh
                                               ? <>46 年硬件演化分四段: <strong>1980-2010 原始期</strong> (原版 Rubik / Type-A) → <strong>2010-2014 现代速拧诞生</strong> (DaYan GuHong / ZhanChi / MoYu AoLong) → <strong>2016-2020 磁铁革命</strong> (Cubicle Mod / GAN 356 Air UM / GAN 11 M Pro 核心磁) → <strong>2021-2026 磁场网络 + 智能化</strong> (GAN 12-16 MagLev / MoYu Super RS3M)。</>
@@ -968,7 +968,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             {!isZh && <Longform text={ENGINEERING_EN} />}
           </Section>
 
-          <Section id="smart-cube" titleZh="智能魔方革命 (2019-2026)" titleEn="Smart Cube Revolution (2019-2026)" isZh={isZh}>
+          <Section id="smart-cube" titleZh="智能魔方革命 (2019-2026)" titleEn="Smart Cube Revolution (2019-2026)" titleZhHant="智慧魔方革命 (2019-2026)" isZh={isZh}>
             <p>
               {i18n.language === 'zh-Hant' ? (<>智慧魔方 = BLE + 陀螺儀 + 電池 + 配套 App。<strong>GAN 356 i (2019)</strong> 是首款大規模商業化的 BLE 速擰魔方。之後有 i2 (2021), i3 (2022), i Carry 2 (2024 — 無底座,700 小時電池)。配套 App: GAN Cube Station, Cubeast (第三方專業級), csTimer (開源,2020+ 支援 BLE)。</>) : (isZh
                                               ? <>智能魔方 = BLE + 陀螺仪 + 电池 + 配套 App。<strong>GAN 356 i (2019)</strong> 是首款大规模商业化的 BLE 速拧魔方。之后有 i2 (2021), i3 (2022), i Carry 2 (2024 — 无底座,700 小时电池)。配套 App: GAN Cube Station, Cubeast (第三方专业级), csTimer (开源,2020+ 支持 BLE)。</>
@@ -986,7 +986,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             </p>
           </Section>
 
-          <Section id="biomech" titleZh="生物力学: TPS 的硬天花板" titleEn="Biomech: The TPS Ceiling" isZh={isZh}>
+          <Section id="biomech" titleZh="生物力学: TPS 的硬天花板" titleEn="Biomech: The TPS Ceiling" titleZhHant="生物力學: TPS 的硬天花板" isZh={isZh}>
             <p>{tr({ zh: '三个独立的生物力学来源:', en: 'Three independent biomech benchmarks:',
                 zhHant: "三個獨立的生物力學來源:"
             })}</p>
@@ -1024,99 +1024,139 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             {!isZh && <Longform text={PSYCHOLOGY_EN} />}
           </Section>
 
-          <Section id="cubers" titleZh="顶级选手画像" titleEn="Top Cuber Profiles" isZh={isZh}>
+          <Section id="cubers" titleZh="顶级选手画像" titleEn="Top Cuber Profiles" titleZhHant="頂級選手畫像" isZh={isZh}>
             <CuberCard isZh={isZh} name="Feliks Zemdegs" nation="AU" born="1995-12-20"
               accolades_en="121 all-time WRs · 228 continental records · WC2013 + WC2015 champion · longest Ao5 dominance (~9 years)"
               accolades_zh="121 项 WR,228 项洲纪录,2013/2015 双届世锦,Ao5 单人霸榜 ~9 年"
+              accolades_zhHant="121 項 WR,228 項洲紀錄,2013/2015 雙屆世錦,Ao5 單人霸榜 ~9 年"
               method_en="Pure CFOP + intuitive F2L, lookahead pioneer. No ZBLL."
               method_zh="纯 CFOP + 直觉 F2L,lookahead 流派开山,不用 ZBLL。"
+              method_zhHant="純 CFOP + 直覺 F2L,lookahead 流派開山,不用 ZBLL。"
               training_en="Self-developed CubeSkills framework: metronome F2L drills, blindfolded pair drilling, 'X-look' constraints."
               training_zh="自创 CubeSkills 教练体系: 节拍器 F2L,盲 pair 训练,强制「X-look」。"
+              training_zhHant="自創 CubeSkills 教練體系: 節拍器 F2L,盲 pair 訓練,強制「X-look」。"
               hardware_en="Eastsheen → DaYan → MoYu → GAN (sponsor)"
               hardware_zh="Eastsheen → DaYan → MoYu → GAN (赞助)"
+              hardware_zhHant="Eastsheen → DaYan → MoYu → GAN (贊助)"
               current_en="Active competitor (Worlds 2025 semis), finance career, married 2026"
-              current_zh="仍参赛 (2025 世锦半决),金融业,2026 年结婚" />
+              current_zh="仍参赛 (2025 世锦半决),金融业,2026 年结婚"
+              current_zhHant="仍參賽 (2025 世錦半決),金融業,2026 年結婚" />
             <CuberCard isZh={isZh} name="Max Park" nation="US" born="2001-11-28"
               accolades_en="Held 3x3 single WR 4 times (final 3.13) · Ao5 WR 4 times · WC2017 + WC2023 champion · big-cube specialist"
               accolades_zh="单次 WR 4 次 (终止于 3.13),Ao5 WR 4 次,2017/2023 双届世锦,大魔方专家"
+              accolades_zhHant="單次 WR 4 次 (終止於 3.13),Ao5 WR 4 次,2017/2023 雙屆世錦,大魔方專家"
               method_en="CFOP + partial ZBLL (Sune/Antisune subset)"
               method_zh="CFOP + 部分 ZBLL (Sune/Antisune 子集)"
+              method_zhHant="CFOP + 部分 ZBLL (Sune/Antisune 子集)"
               training_en="~5 hours/day, autism support context"
               training_zh="日均 ~5 小时,自闭症支持背景"
+              training_zhHant="日均 ~5 小時,自閉症支援背景"
               hardware_en="QiYi X-Man Tornado V3 Pioneer (3.13 cube)"
               hardware_zh="QiYi X-Man Tornado V3 Pioneer (3.13 用此)"
+              hardware_zhHant="QiYi X-Man Tornado V3 Pioneer (3.13 用此)"
               current_en="Active top-10, Netflix doc subject"
-              current_zh="仍 top 10 现役,Netflix 纪录片主角" />
+              current_zh="仍 top 10 现役,Netflix 纪录片主角"
+              current_zhHant="仍 top 10 現役,Netflix 紀錄片主角" />
             <CuberCard isZh={isZh} name="Yiheng Wang (王艺衡)" nation="CN" born="2013-12-16"
               accolades_en="Single WR 3.08 (Feb 2025) · 9 consecutive Ao5 WRs · WC2025 champion · highest verified WR TPS 14.61"
               accolades_zh="单次 WR 3.08 (2025-02),Ao5 WR 9 连,2025 世锦冠军,现役 WR 最高 TPS 14.61"
+              accolades_zhHant="單次 WR 3.08 (2025-02),Ao5 WR 9 連,2025 世錦冠軍,現役 WR 最高 TPS 14.61"
               method_en="CFOP with ZZ-style block building, partial ZBLL"
               method_zh="CFOP + ZZ 风格 block building + 部分 ZBLL"
+              method_zhHant="CFOP + ZZ 風格 block building + 部分 ZBLL"
               training_en="Beijing-area community. 2024 2x2 sliding scandal (0.78 ao5 revoked)."
               training_zh="北京一带的速拧圈;2024 年 2x2 滑计时事件 (0.78 Ao5 被撤销)。"
+              training_zhHant="北京一帶的速擰圈;2024 年 2x2 滑計時事件 (0.78 Ao5 被撤銷)。"
               hardware_en="MoYu Super WeiLong V2"
               hardware_zh="MoYu Super WeiLong V2"
+              hardware_zhHant="MoYu Super WeiLong V2"
               current_en="Age 12, ranked #2 average / #3 single in May 2026"
-              current_zh="12 岁,2026-05 平均 #2,单次 #3" />
+              current_zh="12 岁,2026-05 平均 #2,单次 #3"
+              current_zhHant="12 歲,2026-05 平均 #2,單次 #3" />
             <CuberCard isZh={isZh} name="Xuanyi Geng (耿暄一)" nation="CN" born="2017-03-21"
               accolades_en="Current Ao5 WR 3.71 · single WR 3.05 (Apr 2025, age 7-8) · youngest WR holder ever · first Ao5 sub-4 ever"
               accolades_zh="现 Ao5 WR 3.71,单次 WR 3.05 (2025-04, 7-8 岁),史上最年轻 WR,首次 Ao5 sub-4"
+              accolades_zhHant="現 Ao5 WR 3.71,單次 WR 3.05 (2025-04, 7-8 歲),史上最年輕 WR,首次 Ao5 sub-4"
               method_en="Full ZB = ZBLS + full ZBLL"
               method_zh="全 ZB = ZBLS + 全 ZBLL"
+              method_zhHant="全 ZB = ZBLS + 全 ZBLL"
               training_en="Suzhou native, GAN-sponsored child prodigy program"
               training_zh="苏州人,GAN 童星培养计划"
+              training_zhHant="蘇州人,GAN 童星培養計劃"
               hardware_en="GAN flagship (16 MagLev MAX-class)"
               hardware_zh="GAN 旗舰 (16 MagLev MAX 级)"
+              hardware_zhHant="GAN 旗艦 (16 MagLev MAX 級)"
               current_en="Age 8, dominant junior, full-ZB pioneer at WR speed"
-              current_zh="8 岁,主导少年圈,WR 速度首批全 ZB 用户" />
+              current_zh="8 岁,主导少年圈,WR 速度首批全 ZB 用户"
+              current_zhHant="8 歲,主導少年圈,WR 速度首批全 ZB 使用者" />
             <CuberCard isZh={isZh} name="Teodor Zajder" nation="PL" born="~2016-2017"
               accolades_en="Current single WR 2.76 (Feb 2026, age 9) · first sub-3 ever · largest PB-to-WR jump (4.09 → 2.76)"
               accolades_zh="现单次 WR 2.76 (2026-02, 9 岁),史上首次 sub-3,现代 PB-to-WR 最大跳跃 (4.09 → 2.76)"
+              accolades_zhHant="現單次 WR 2.76 (2026-02, 9 歲),史上首次 sub-3,現代 PB-to-WR 最大跳躍 (4.09 → 2.76)"
               method_en="CFOP + ZBLL"
               method_zh="CFOP + ZBLL"
+              method_zhHant="CFOP + ZBLL"
               training_en="Gdańsk Polish cubing club. Trained on GAN 12 M (2021 hardware!)"
               training_zh="格但斯克波兰魔方俱乐部,用 GAN 12 M (2021 硬件) 训练"
+              training_zhHant="格但斯克波蘭魔方俱樂部,用 GAN 12 M (2021 硬體) 訓練"
               hardware_en="GAN 12 MagLev (Teodor Zajder Signature)"
               hardware_zh="GAN 12 MagLev (Teodor Zajder Signature)"
+              hardware_zhHant="GAN 12 MagLev (Teodor Zajder Signature)"
               current_en="Before WR was ranked #378 globally with 4.09 PB. The 2.76 was his first sub-4 official solve."
-              current_zh="WR 前世界 #378 排名,PB 4.09。2.76 是他官方首次 sub-4。" />
+              current_zh="WR 前世界 #378 排名,PB 4.09。2.76 是他官方首次 sub-4。"
+              current_zhHant="WR 前世界 #378 排名,PB 4.09。2.76 是他官方首次 sub-4。" />
             <CuberCard isZh={isZh} name="Tymon Kolasiński" nation="PL" born="2005-06-21"
               accolades_en="4x4/5x5 WR holder · Former 3x3 Ao5 WR (5.09, 4.86) · Knows full ZBLL · Euros 2024 4-event sweep"
               accolades_zh="4x4/5x5 现 WR,曾持 3x3 Ao5 WR,全 ZBLL,2024 欧锦 4 项全冠"
+              accolades_zhHant="4x4/5x5 現 WR,曾持 3x3 Ao5 WR,全 ZBLL,2024 歐錦 4 項全冠"
               method_en="CFOP/ZB hybrid, pioneer of 3x3 pseudoslotting"
               method_zh="CFOP/ZB 混合,推广 3x3 pseudoslotting"
+              method_zhHant="CFOP/ZB 混合,推廣 3x3 pseudoslotting"
               training_en="~6 hours/day (2h algs + 4h solves)"
               training_zh="日均 6 小时 (2 小时算法 + 4 小时解)"
+              training_zhHant="日均 6 小時 (2 小時演算法 + 4 小時解)"
               hardware_en="GAN"
               hardware_zh="GAN"
+              hardware_zhHant="GAN"
               current_en="Defining big-cube specialist of this era"
-              current_zh="本时代大魔方第一人" />
+              current_zh="本时代大魔方第一人"
+              current_zhHant="本時代大魔方第一人" />
             <CuberCard isZh={isZh} name="Yusheng Du (杜宇生)" nation="CN" born="~1998"
               accolades_en="3.47 single (Nov 2018) — held WR 4y 7m"
               accolades_zh="3.47 单次 (2018-11) — 持 WR 4 年 7 个月"
+              accolades_zhHant="3.47 單次 (2018-11) — 持 WR 4 年 7 個月"
               method_en="CFOP — XX-cross + COLL with PLL skip (27 STM × 7.78 TPS)"
               method_zh="CFOP — XX-cross + COLL 配 PLL skip (27 STM × 7.78 TPS)"
+              method_zhHant="CFOP — XX-cross + COLL 配 PLL skip (27 STM × 7.78 TPS)"
               training_en="Post-WR transitioned to business — Yushen Academy + MoYu Huameng cube line"
               training_zh="WR 后转商,玉神魔方学院 + MoYu 华梦魔方线"
+              training_zhHant="WR 後轉商,玉神魔方學院 + MoYu 華夢魔方線"
               hardware_en="GAN 356 X"
               hardware_zh="GAN 356 X"
+              hardware_zhHant="GAN 356 X"
               current_en="Still active occasionally, major figure in China's cubing business"
-              current_zh="仍偶尔参赛,中国魔方商业圈的大佬" />
+              current_zh="仍偶尔参赛,中国魔方商业圈的大佬"
+              current_zhHant="仍偶爾參賽,中國魔方商業圈的大佬" />
             <CuberCard isZh={isZh} name="Eduardo Silva Damasceno" nation="BR" born="~2005"
               accolades_en="First publicly verified full 1LLL learner (2022, 3,915 algorithms)"
               accolades_zh="首位公认全 1LLL 学完者 (2022,3915 个算法)"
+              accolades_zhHant="首位公認全 1LLL 學完者 (2022,3915 個演算法)"
               method_en="CFOP + full 1LLL"
               method_zh="CFOP + 全 1LLL"
+              method_zhHant="CFOP + 全 1LLL"
               training_en="Self-driven 1LLL learning project, several years"
               training_zh="自驱 1LLL 学习项目,持续数年"
+              training_zhHant="自驅 1LLL 學習項目,持續數年"
               hardware_en="—"
               hardware_zh="—"
+              hardware_zhHant="—"
               current_en="Mid-tier competitor; 1LLL recognition prevents WR-level performance"
-              current_zh="中阶选手;1LLL 识别速度限制 WR 表现" />
+              current_zh="中阶选手;1LLL 识别速度限制 WR 表现"
+              current_zhHant="中階選手;1LLL 識別速度限制 WR 表現" />
 
           </Section>
 
-          <Section id="training" titleZh="训练学方法 — 量化的练习路径" titleEn="Training Methodology — Quantitative Practice" isZh={isZh}>
+          <Section id="training" titleZh="训练学方法 — 量化的练习路径" titleEn="Training Methodology — Quantitative Practice" titleZhHant="訓練學方法 — 量化的練習路徑" isZh={isZh}>
             <p>{i18n.language === 'zh-Hant' ? (<><strong>累計 solves 與 PB 閾值關係</strong> (社羣共識):</>) : (isZh ? <><strong>累计 solves 与 PB 阈值关系</strong> (社区共识):</> : <><strong>Cumulative solves vs PB threshold</strong> (community consensus):</>)}</p>
             <div className="pred-method-table-wrap">
               <table className="pred-fit-table pred-method-table">
@@ -1159,7 +1199,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             <p>{i18n.language === 'zh-Hant' ? (<><strong>訓練 PB 跟 WCA PB 的差距</strong>: 5-10%。原因: 魔方冷啟動, 打亂驗證延遲, 緊張, 沒熱身。</>) : (isZh ? <><strong>训练 PB 跟 WCA PB 的差距</strong>: 5-10%。原因: 魔方冷启动, 打乱验证延迟, 紧张, 没热身。</> : <><strong>Training-comp gap</strong>: 5-10%. Causes: cube cooldown, scramble verification delay, anxiety, no warmup.</>)}</p>
           </Section>
 
-          <Section id="stats" titleZh="统计建模: 4 个独立模型" titleEn="Statistical Modeling: 4 Independent Models" isZh={isZh}>
+          <Section id="stats" titleZh="统计建模: 4 个独立模型" titleEn="Statistical Modeling: 4 Independent Models" titleZhHant="統計建模: 4 個獨立模型" isZh={isZh}>
             <p>{tr({ zh: '4 个候选模型:', en: 'Four candidate models:',
                 zhHant: "4 個候選模型:"
             })}</p>
@@ -1190,7 +1230,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
             <p>{i18n.language === 'zh-Hant' ? (<><strong>BMA 結果:</strong> 磁鐵時代加速 (post-2017) 讓 GEV (重尾) 最準。權重: GEV 0.55, Exp-floor 0.30, Gompertz 0.15。</>) : (isZh ? <><strong>BMA 结果:</strong> 磁铁时代加速 (post-2017) 让 GEV (重尾) 最准。权重: GEV 0.55, Exp-floor 0.30, Gompertz 0.15。</> : <><strong>Key finding.</strong> Magnet-era acceleration (post-2017) makes GEV most accurate. BMA: GEV 0.55, Exp-floor 0.30, Gompertz 0.15.</>)}</p>
           </Section>
 
-          <Section id="gev" titleZh="GEV 极值理论" titleEn="GEV Extreme Value Theory" isZh={isZh}>
+          <Section id="gev" titleZh="GEV 极值理论" titleEn="GEV Extreme Value Theory" titleZhHant="GEV 極值理論" isZh={isZh}>
             <p>{i18n.language === 'zh-Hant' ? (<>WR 單次本質上是 <strong>N 次獨立嘗試的樣本最小值</strong>。Gumbel 漸近:</>) : (isZh ? <>WR 单次本质上是 <strong>N 次独立尝试的样本最小值</strong>。Gumbel 渐近:</> : <>WR single = <strong>sample minimum of N attempts</strong>. Gumbel asymptotic:</>)}</p>
             <pre className="pred-formula">{`log T_min ≈ μ − σ · √(2 ln N) + σ · (ln ln N + ln 4π) / (2√(2 ln N))
 
@@ -1203,7 +1243,7 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
             <p>{i18n.language === 'zh-Hant' ? (<><strong>3 個失效模式</strong>: (1) log-normal 下尾被物理 floor 截斷,公式沒這約束;(2) 各次解不獨立 (硬體代際 / 同期組非平穩);(3) N → ∞ 時 Gumbel 不停外推,真實極值受 16-STM 下界硬截。嚴格建模用 <strong>reverse-Weibull (ξ &lt; 0)</strong>,給出有限端點 τ ≈ 2.0 秒,跟物理 floor 一致。</>) : (isZh ? <><strong>3 个失效模式</strong>: (1) log-normal 下尾被物理 floor 截断,公式没这约束;(2) 各次解不独立 (硬件代际 / 同期组非平稳);(3) N → ∞ 时 Gumbel 不停外推,真实极值受 16-STM 下界硬截。严格建模用 <strong>reverse-Weibull (ξ &lt; 0)</strong>,给出有限端点 τ ≈ 2.0 秒,跟物理 floor 一致。</> : <><strong>Three failure modes</strong>: (1) lower tail truncated by physical floor; (2) non-iid (hardware era / cohort non-stationary); (3) Gumbel extrapolates to 0 as N→∞ vs cube20.org 16-STM floor. Rigorous modeling uses <strong>reverse-Weibull (ξ &lt; 0)</strong> giving finite endpoint τ ≈ 2.0 s, matching physical floor.</>)}</p>
           </Section>
 
-          <Section id="forecast" titleZh="综合预测 — Single + Ao5 (BMA Ensemble)" titleEn="Final Forecast — Single + Ao5 (BMA Ensemble)" isZh={isZh}>
+          <Section id="forecast" titleZh="综合预测 — Single + Ao5 (BMA Ensemble)" titleEn="Final Forecast — Single + Ao5 (BMA Ensemble)" titleZhHant="綜合預測 — Single + Ao5 (BMA Ensemble)" isZh={isZh}>
             <div className="pred-forecast-dash">
               <div className="pred-forecast-col">
                 <h3>{tr({ zh: '单次 WR 预测', en: 'Single WR Forecast',
@@ -1314,7 +1354,7 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
             </div>
           </Section>
 
-          <Section id="caveats" titleZh="局限与陷阱" titleEn="Caveats & Pitfalls" isZh={isZh}>
+          <Section id="caveats" titleZh="局限与陷阱" titleEn="Caveats & Pitfalls" titleZhHant="侷限與陷阱" isZh={isZh}>
             <ol>
               <li>{i18n.language === 'zh-Hant' ? (<><strong>未來的「方法革命」是離散事件。</strong> ZB → 1LLL 或者全新方法不會出現在已有的曲線趨勢裡。歷史上每 8-10 年一次方法革命。</>) : (isZh ? <><strong>未来的「方法革命」是离散事件。</strong> ZB → 1LLL 或者全新方法不会出现在已有的曲线趋势里。历史上每 8-10 年一次方法革命。</> : <><strong>Future "method revolutions" are discrete.</strong> ZB→1LLL or new methods aren't in the trend. Cadence ~8-10 years.</>)}</li>
               <li>{i18n.language === 'zh-Hant' ? (<><strong>極值統計的樣本依賴。</strong> N 增長 → 期望最小值下移 1-2% (N = 10⁷)。</>) : (isZh ? <><strong>极值统计的样本依赖。</strong> N 增长 → 期望最小值下移 1-2% (N = 10⁷)。</> : <><strong>Extreme-value sample dependence.</strong> More attempts → expected min drops 1-2% (N = 10⁷).</>)}</li>
@@ -1361,25 +1401,23 @@ T_min ≈ 4.5 × exp(−0.12 × √(2 × 16.12))
   );
 }
 
-function Section({ id, titleZh, titleEn, isZh, children }: { id: string; titleZh: string; titleEn: string; isZh: boolean; children: React.ReactNode
-    titleZhHant?: string;
- }) {
+function Section({ id, titleZh, titleEn, titleZhHant, isZh, children }: { id: string; titleZh: string; titleEn: string; titleZhHant?: string; isZh: boolean; children: React.ReactNode }) {
   const activeId = useContext(ActiveSectionContext);
   if (id !== activeId) return null;
   return (
     <section className="pred-section" id={id}>
-      <h2>{isZh ? titleZh : titleEn}</h2>
+      <h2>{i18n.language === 'zh-Hant' ? (titleZhHant ?? titleZh) : (isZh ? titleZh : titleEn)}</h2>
       {children}
     </section>
   );
 }
 
-function PllPreview({ letter, alg, isZh, note_en, note_zh }: { letter: string; alg: string; isZh: boolean; note_en: string; note_zh: string }) {
+function PllPreview({ letter, alg, isZh, note_en, note_zh, note_zhHant }: { letter: string; alg: string; isZh: boolean; note_en: string; note_zh: string; note_zhHant?: string }) {
   return (
     <div className="pred-pll-card">
       <div className="pred-pll-letter">{letter}-perm</div>
       <VisualCube algorithm={alg} view="pll" size={120} />
-      <p className="pred-pll-note">{isZh ? note_zh : note_en}</p>
+      <p className="pred-pll-note">{i18n.language === 'zh-Hant' ? (note_zhHant ?? note_zh) : (isZh ? note_zh : note_en)}</p>
       <code className="pred-pll-alg">{alg}</code>
     </div>
   );
@@ -1387,18 +1425,18 @@ function PllPreview({ letter, alg, isZh, note_en, note_zh }: { letter: string; a
 
 function CuberCard({
   isZh, name, nation, born,
-  accolades_en, accolades_zh,
-  method_en, method_zh,
-  training_en, training_zh,
-  hardware_en, hardware_zh,
-  current_en, current_zh,
+  accolades_en, accolades_zh, accolades_zhHant,
+  method_en, method_zh, method_zhHant,
+  training_en, training_zh, training_zhHant,
+  hardware_en, hardware_zh, hardware_zhHant,
+  current_en, current_zh, current_zhHant,
 }: {
   isZh: boolean; name: string; nation: string; born: string;
-  accolades_en: string; accolades_zh: string;
-  method_en: string; method_zh: string;
-  training_en: string; training_zh: string;
-  hardware_en: string; hardware_zh: string;
-  current_en: string; current_zh: string;
+  accolades_en: string; accolades_zh: string; accolades_zhHant?: string;
+  method_en: string; method_zh: string; method_zhHant?: string;
+  training_en: string; training_zh: string; training_zhHant?: string;
+  hardware_en: string; hardware_zh: string; hardware_zhHant?: string;
+  current_en: string; current_zh: string; current_zhHant?: string;
 }) {
   return (
     <div className="pred-cuber-card">
@@ -1406,17 +1444,17 @@ function CuberCard({
         <span className="pred-cuber-name">{name}</span>
         <span className="pred-cuber-meta">{nation} · {tr({ zh: '生', en: 'b.' })} {born}</span>
       </div>
-      <div className="pred-cuber-row"><strong>{tr({ zh: '成就', en: 'Accolades' })}:</strong> {isZh ? accolades_zh : accolades_en}</div>
-      <div className="pred-cuber-row"><strong>{tr({ zh: '方法', en: 'Method' })}:</strong> {isZh ? method_zh : method_en}</div>
+      <div className="pred-cuber-row"><strong>{tr({ zh: '成就', en: 'Accolades' })}:</strong> {i18n.language === 'zh-Hant' ? (accolades_zhHant ?? accolades_zh) : (isZh ? accolades_zh : accolades_en)}</div>
+      <div className="pred-cuber-row"><strong>{tr({ zh: '方法', en: 'Method' })}:</strong> {i18n.language === 'zh-Hant' ? (method_zhHant ?? method_zh) : (isZh ? method_zh : method_en)}</div>
       <div className="pred-cuber-row"><strong>{tr({ zh: '训练', en: 'Training',
           zhHant: "訓練"
-    })}:</strong> {isZh ? training_zh : training_en}</div>
+    })}:</strong> {i18n.language === 'zh-Hant' ? (training_zhHant ?? training_zh) : (isZh ? training_zh : training_en)}</div>
       <div className="pred-cuber-row"><strong>{tr({ zh: '硬件', en: 'Hardware',
           zhHant: "硬體"
-    })}:</strong> {isZh ? hardware_zh : hardware_en}</div>
+    })}:</strong> {i18n.language === 'zh-Hant' ? (hardware_zhHant ?? hardware_zh) : (isZh ? hardware_zh : hardware_en)}</div>
       <div className="pred-cuber-row pred-cuber-current"><strong>{tr({ zh: '现状', en: 'Current',
           zhHant: "現狀"
-    })}:</strong> {isZh ? current_zh : current_en}</div>
+    })}:</strong> {i18n.language === 'zh-Hant' ? (current_zhHant ?? current_zh) : (isZh ? current_zh : current_en)}</div>
     </div>
   );
 }

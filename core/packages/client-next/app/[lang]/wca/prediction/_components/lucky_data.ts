@@ -193,21 +193,22 @@ export interface EventLucky {
   /** display: 与 events.ts 的 id 区分非 Tier-1 项目, 单位标注. */
   notes_zh?: string;
   notes_en?: string;
+  notes_zhHant?: string;
 }
 
 export const LUCKY_EVENTS: Record<string, EventLucky> = {
   '333':   { id: '333',   dist: D_333,   tps_now: 14.6, tps_ceil: 17,  setup_s: 0.15, scramble_share: 1.00 },
   '222':   { id: '222',   dist: D_222,   tps_now: 12,   tps_ceil: 16,  setup_s: 0.10, scramble_share: 0.85 },
-  '444':   { id: '444',   dist: D_444,   tps_now: 9.5,  tps_ceil: 12,  setup_s: 0.80, scramble_share: 0.70, notes_zh: '深度分布为近似', notes_en: 'depth distribution approximated' },
-  '555':   { id: '555',   dist: D_555,   tps_now: 8.5,  tps_ceil: 11,  setup_s: 1.20, scramble_share: 0.55, notes_zh: '深度分布为近似', notes_en: 'depth distribution approximated' },
-  '666':   { id: '666',   dist: D_666,   tps_now: 6.5,  tps_ceil: 9,   setup_s: 1.50, scramble_share: 0.25, notes_zh: '深度分布为近似', notes_en: 'depth distribution approximated' },
-  '777':   { id: '777',   dist: D_777,   tps_now: 5.5,  tps_ceil: 8,   setup_s: 2.00, scramble_share: 0.20, notes_zh: '深度分布为近似', notes_en: 'depth distribution approximated' },
+  '444':   { id: '444',   dist: D_444,   tps_now: 9.5,  tps_ceil: 12,  setup_s: 0.80, scramble_share: 0.70, notes_zh: '深度分布为近似', notes_en: 'depth distribution approximated', notes_zhHant: '深度分佈為近似' },
+  '555':   { id: '555',   dist: D_555,   tps_now: 8.5,  tps_ceil: 11,  setup_s: 1.20, scramble_share: 0.55, notes_zh: '深度分布为近似', notes_en: 'depth distribution approximated', notes_zhHant: '深度分佈為近似' },
+  '666':   { id: '666',   dist: D_666,   tps_now: 6.5,  tps_ceil: 9,   setup_s: 1.50, scramble_share: 0.25, notes_zh: '深度分布为近似', notes_en: 'depth distribution approximated', notes_zhHant: '深度分佈為近似' },
+  '777':   { id: '777',   dist: D_777,   tps_now: 5.5,  tps_ceil: 8,   setup_s: 2.00, scramble_share: 0.20, notes_zh: '深度分布为近似', notes_en: 'depth distribution approximated', notes_zhHant: '深度分佈為近似' },
   '333oh': { id: '333oh', dist: D_333,   tps_now: 7.5,  tps_ceil: 10,  setup_s: 0.20, scramble_share: 0.40 },
-  'clock': { id: 'clock', dist: D_CLOCK, tps_now: 9,    tps_ceil: 13,  setup_s: 0.15, scramble_share: 0.25, notes_zh: '深度分布为近似', notes_en: 'depth distribution approximated' },
-  'minx':  { id: 'minx',  dist: D_MINX,  tps_now: 7,    tps_ceil: 10,  setup_s: 1.50, scramble_share: 0.18, notes_zh: '深度分布为近似', notes_en: 'depth distribution approximated' },
+  'clock': { id: 'clock', dist: D_CLOCK, tps_now: 9,    tps_ceil: 13,  setup_s: 0.15, scramble_share: 0.25, notes_zh: '深度分布为近似', notes_en: 'depth distribution approximated', notes_zhHant: '深度分佈為近似' },
+  'minx':  { id: 'minx',  dist: D_MINX,  tps_now: 7,    tps_ceil: 10,  setup_s: 1.50, scramble_share: 0.18, notes_zh: '深度分布为近似', notes_en: 'depth distribution approximated', notes_zhHant: '深度分佈為近似' },
   'pyram': { id: 'pyram', dist: D_PYRAM, tps_now: 9,    tps_ceil: 13,  setup_s: 0.10, scramble_share: 0.55 },
   'skewb': { id: 'skewb', dist: D_SKEWB, tps_now: 10,   tps_ceil: 13,  setup_s: 0.10, scramble_share: 0.40 },
-  'sq1':   { id: 'sq1',   dist: D_SQ1,   tps_now: 6,    tps_ceil: 10,  setup_s: 0.30, scramble_share: 0.28, notes_zh: '深度分布为近似', notes_en: 'depth distribution approximated' },
+  'sq1':   { id: 'sq1',   dist: D_SQ1,   tps_now: 6,    tps_ceil: 10,  setup_s: 0.30, scramble_share: 0.28, notes_zh: '深度分布为近似', notes_en: 'depth distribution approximated', notes_zhHant: '深度分佈為近似' },
 };
 
 /* ============================================================

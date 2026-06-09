@@ -88,13 +88,13 @@ export interface StackTool {
     outlookDesc: ReactNode;
   };
   heroStats: HeroStat[];
-  intro: { zh: ReactNode; en: ReactNode };
+  intro: { zh: ReactNode; en: ReactNode; zhHant?: ReactNode };
   history: StackHistoryItem[];
   concepts: ConceptCard[];
   whyCards: WhyCard[];
   adopters: Adopter[];
   outlook: OutlookCard[];
-  cuberoot: { zh: ReactNode; en: ReactNode };
+  cuberoot: { zh: ReactNode; en: ReactNode; zhHant?: ReactNode };
   links: { label: string; href: string }[];
 }
 

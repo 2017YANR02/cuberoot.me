@@ -6,19 +6,18 @@ import { useLang } from '../../_lib/Lang';
 import i18n from '@/i18n/i18n-client';
 
 const TABS = [
-  { path: '/code/architecture',           zh: '概览',    en: 'Overview',
-      zhHant: "概覽"
-},
-  { path: '/code/architecture/flow',      zh: '请求流程', en: 'Flow',
-      zhHant: "請求流程"
-},
-  { path: '/code/architecture/decisions', zh: '技术决策', en: 'Decisions',
-      zhHant: "技術決策"
-},
-  { path: '/code/architecture/history',   zh: '历程',    en: 'History',
-      zhHant: "歷程"
-},
+  { path: '/code/architecture',           zh: '概览',    en: 'Overview' },
+  { path: '/code/architecture/flow',      zh: '请求流程', en: 'Flow' },
+  { path: '/code/architecture/decisions', zh: '技术决策', en: 'Decisions' },
+  { path: '/code/architecture/history',   zh: '历程',    en: 'History' },
 ] as const;
+
+const TAB_HANT: Record<string, string | undefined> = {
+  '/code/architecture': '概覽',
+  '/code/architecture/flow': '請求流程',
+  '/code/architecture/decisions': '技術決策',
+  '/code/architecture/history': '歷程',
+};
 
 export default function ArchNav() {
   const lang = useLang();
@@ -47,7 +46,7 @@ export default function ArchNav() {
             aria-selected={isActive(tab.path)}
             className={`arch-nav-tab${isActive(tab.path) ? ' active' : ''}`}
           >
-            {(i18n.language.startsWith('zh') ? tab.zh : tab.en)}
+            {i18n.language === 'zh-Hant' ? (TAB_HANT[tab.path] ?? tab.zh) : (i18n.language.startsWith('zh') ? tab.zh : tab.en)}
           </Link>
         ))}
       </div>
