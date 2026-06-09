@@ -19,7 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      # 只需 core/(根有 stats/ 709MB + tools/ 等 ~1GB 静态残留);blob:none partial clone 跳过下载.
       - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            core
+          filter: blob:none
 
       - uses: pnpm/action-setup@v6
         with:
