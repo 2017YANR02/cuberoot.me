@@ -1,0 +1,253 @@
+# SOR(Sum of Ranks)预计算周更 — 全自动替代本地 update_sor.ps1 手动管道。
+#   inputs:  ssh 从生产 PG 导 4 个 TSV(dump_sor_inputs.sh;数据由每日 stats.yml 刷新。
+#            pe.tsv 导的是 wca_person_ranks 排名 —— 对排名再 competition-rank 结果不变,
+#            与喂 PB 值字节等价,已用 rows 模式 4 套 × 5 选手 diff 实证)
+#   compute: matrix 5 路并行 —— sor_player_best 4 套(single/average × 17/21)+
+#            census(history 当前年 + census_np 最新年)。预计算只在 runner 跑,绝不碰生产机(会 OOM)。
+#   publish: 拼 7 列 copy.tsv + load.sql → scp → apply_load.sh → 清 nginx 缓存 → curl 验收。
+# 口径:与 /wca/sum-of-ranks「废止项」开关二态一致;census 历史年份冻结,只刷当前年;
+#       no_podium(未登台)v1 仅最新年,整体重灌。
+name: SOR precompute
+
+on:
+  schedule:
+    # UTC 每周一 04:00 — 选手参赛缓慢变化,周更够用;距 stats.yml(每天 20:00)的灌库窗口足够远
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'core/sorcalc/**'
+
+# 按事件分组:push 语法门不排在数小时的周更 run 后面;schedule 与 dispatch 各自串行
+concurrency:
+  group: sor-${{ github.event_name }}
+  cancel-in-progress: false
+
+jobs:
+  # push 改 sorcalc 源时只验编译,不跑全量
+  check:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: cargo build
+        working-directory: core/sorcalc
+        run: cargo build --release
+
+  inputs:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/sor_id
+          chmod 600 ~/.ssh/sor_id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Export input matrices from prod PG
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          set -euo pipefail
+          SSH="ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i $HOME/.ssh/sor_id $DEPLOY_USER@$DEPLOY_HOST"
+          mkdir -p sor_data
+          YEAR=$(date -u +%Y)
+          echo "$YEAR" > sor_data/year.txt
+          $SSH '/usr/local/bin/dump_sor_inputs.sh pe'            > sor_data/pe.tsv
+          $SSH '/usr/local/bin/dump_sor_inputs.sh persons'       > sor_data/persons.tsv
+          $SSH "/usr/local/bin/dump_sor_inputs.sh hrs $YEAR"     > sor_data/hrs_snapshot.tsv
+          $SSH '/usr/local/bin/dump_sor_inputs.sh no_podium'     > sor_data/no_podium.tsv
+          wc -l sor_data/*.tsv
+
+      - name: Sanity-check inputs
+        run: |
+          set -euo pipefail
+          # pe / hrs 必须 21 项齐全(含 4 废止项),缺项 = 导出口径坏了,fail-fast
+          test "$(cut -f1 sor_data/pe.tsv | sort -u | wc -l)" -eq 21
+          test "$(cut -f1 sor_data/hrs_snapshot.tsv | sort -u | wc -l)" -eq 21
+          test "$(wc -l < sor_data/persons.tsv)" -ge 200000
+          test "$(wc -l < sor_data/no_podium.tsv)" -ge 200000
+          test "$(wc -l < sor_data/pe.tsv)" -ge 900000
+          echo "inputs OK"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sor-inputs
+          path: sor_data/
+          retention-days: 7
+
+  compute:
+    needs: inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { id: single-17,  typ: single,  nev: 17 }
+          - { id: single-21,  typ: single,  nev: 21 }
+          - { id: average-17, typ: average, nev: 17 }
+          - { id: average-21, typ: average, nev: 21 }
+          - { id: census }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: sor-inputs
+          path: sor_data
+
+      - name: cargo build
+        working-directory: core/sorcalc
+        run: cargo build --release
+
+      - name: Run sorcalc (${{ matrix.id }})
+        env:
+          SOR_DATA_DIR: ${{ github.workspace }}/sor_data
+          SORCALC_THREADS: '4'   # CI runner 打满即可,本机留核规则不适用
+        run: |
+          set -euo pipefail
+          EXE=core/sorcalc/target/release/sorcalc
+          if [ "${{ matrix.id }}" = census ]; then
+            YEAR=$(cat sor_data/year.txt)
+            # np=false 当前年 + np=true 最新年(v1 语义),各 ~1h。
+            # 注意 history/census_np 是 argv[1](不是 typ 后面的 mode),传错会被 unknown mode 静默吞掉
+            "$EXE" history "$YEAR"
+            "$EXE" census_np "$YEAR"
+            test "$(wc -l < "sor_data/census_yearly_${YEAR}.tsv")" -ge 40
+            test "$(cut -f2,3 "sor_data/census_yearly_${YEAR}.tsv" | sort -u | wc -l)" -eq 4
+            test -s sor_data/census_np.tsv
+          else
+            "$EXE" "${{ matrix.typ }}" precompute 21 "${{ matrix.nev }}"
+            # 全集 ~28 万人;明显偏低 = 预计算半途坏了,别让烂数据进 publish
+            test "$(wc -l < "sor_data/best_${{ matrix.typ }}_${{ matrix.nev }}.tsv")" -ge 200000
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sor-out-${{ matrix.id }}
+          path: |
+            sor_data/best_*.tsv
+            sor_data/census_*.tsv
+          retention-days: 7
+
+  publish:
+    needs: [inputs, compute]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: sor-inputs
+          path: sor_data
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: sor-out-*
+          path: out
+          merge-multiple: true
+
+      - name: Assemble copy.tsv + load.sql
+        run: |
+          set -euo pipefail
+          YEAR=$(cat sor_data/year.txt)
+          mkdir -p import
+
+          # sor_player_best.copy.tsv — 7 列: wca_id is_avg scope incl_cancelled best_rank combo_count best_events
+          # 在每行 wca_id 后插 is_avg/world/incl_cancelled(同 update_sor.ps1 第 2 步)
+          add() {
+            awk -v p="\t$2\tworld\t$3" '{ i = index($0, "\t"); if (i > 0) print substr($0, 1, i-1) p substr($0, i) }' \
+              "out/best_$1.tsv" >> import/sor_player_best.copy.tsv
+          }
+          : > import/sor_player_best.copy.tsv
+          add single_17  f f
+          add single_21  f t
+          add average_17 t f
+          add average_21 t t
+          # 4 套二态各自非空,缺任一套 = UI 对应口径整列 null
+          test "$(cut -f2,4 import/sor_player_best.copy.tsv | sort -u | wc -l)" -eq 4
+
+          cp "out/census_yearly_${YEAR}.tsv" import/sor_census_yearly.copy.tsv
+          cp out/census_np.tsv import/sor_census_np.copy.tsv
+          # census 单年文件里 year 列必须全是当前年(DELETE 范围只删当年)
+          test -z "$(awk -F'\t' -v y="$YEAR" '$1 != y' import/sor_census_yearly.copy.tsv)"
+
+          cat > import/load.sql <<SQL
+          \\set ON_ERROR_STOP 1
+          -- sor_player_best: 幂等 ALTER + 改 PK + TRUNCATE 全量重灌(同 update_sor.ps1 的 load_sor_pb.sql)
+          CREATE TABLE IF NOT EXISTS sor_player_best (
+            wca_id VARCHAR(20) NOT NULL, is_avg BOOLEAN NOT NULL, scope VARCHAR(8) NOT NULL DEFAULT 'world',
+            incl_cancelled BOOLEAN NOT NULL DEFAULT true, best_rank INTEGER NOT NULL,
+            combo_count INTEGER NOT NULL DEFAULT 1, best_events TEXT NOT NULL,
+            PRIMARY KEY (wca_id, is_avg, scope, incl_cancelled)
+          );
+          ALTER TABLE sor_player_best ADD COLUMN IF NOT EXISTS combo_count INTEGER NOT NULL DEFAULT 1;
+          ALTER TABLE sor_player_best ADD COLUMN IF NOT EXISTS incl_cancelled BOOLEAN NOT NULL DEFAULT true;
+          TRUNCATE sor_player_best;
+          \\copy sor_player_best (wca_id, is_avg, scope, incl_cancelled, best_rank, combo_count, best_events) FROM 'sor_player_best.copy.tsv';
+          ANALYZE sor_player_best;
+          -- sor_census_yearly: 历史冻结 —— np=false 只删重灌当前年;np=true v1 仅最新年,整体重灌
+          -- (列序同 load_sor_yearly.sql / load_sor_census_np.sql)
+          ALTER TABLE sor_census_yearly ADD COLUMN IF NOT EXISTS no_podium BOOLEAN NOT NULL DEFAULT false;
+          DELETE FROM sor_census_yearly WHERE no_podium = false AND year = ${YEAR};
+          \\copy sor_census_yearly (year, is_avg, incl_cancelled, rank, wca_id, subsets_won) FROM 'sor_census_yearly.copy.tsv';
+          DELETE FROM sor_census_yearly WHERE no_podium = true;
+          \\copy sor_census_yearly (year, is_avg, incl_cancelled, no_podium, rank, wca_id, subsets_won) FROM 'sor_census_np.copy.tsv';
+          ANALYZE sor_census_yearly;
+          SELECT incl_cancelled, is_avg, count(*) FROM sor_player_best GROUP BY 1,2 ORDER BY 1,2;
+          SELECT no_podium, is_avg, incl_cancelled, count(*) FROM sor_census_yearly WHERE year = ${YEAR} GROUP BY 1,2,3 ORDER BY 1,2,3;
+          SQL
+          wc -l import/*
+
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/sor_id
+          chmod 600 ~/.ssh/sor_id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Upload + apply on server
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        # NOTE: -T -n + ServerAlive 防 ssh 半挂死(同 stats.yml);apply_load.sh 自带空文件预检
+        run: |
+          set -euo pipefail
+          SSH="ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i $HOME/.ssh/sor_id $DEPLOY_USER@$DEPLOY_HOST"
+          $SSH 'mkdir -p /tmp/sor_import && rm -rf /tmp/sor_import/*'
+          scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/sor_id \
+            import/load.sql import/*.copy.tsv "$DEPLOY_USER@$DEPLOY_HOST:/tmp/sor_import/"
+          $SSH '/usr/local/bin/apply_load.sh /tmp/sor_import sor_apply'
+
+      - name: Purge nginx api cache (sum-of-ranks)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        # player-best/player-combos/census 同表同源,前缀一把清(24h api_cache 持旧数据)
+        run: |
+          ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/sor_id \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            'grep -rl "sum-of-ranks" /var/cache/nginx/api/ 2>/dev/null | xargs -r rm -f; true'
+
+      - name: Acceptance check (live API)
+        run: |
+          set -euo pipefail
+          YEAR=$(cat sor_data/year.txt)
+          for c in 0 1; do
+            curl -fsS "https://api.cuberoot.me/v1/wca/sum-of-ranks/player-best?wcaId=2009ZEMD01&cancelled=$c" \
+              | jq -e '.best.single.rank >= 1 and .best.average.rank >= 1'
+          done
+          curl -fsS "https://api.cuberoot.me/v1/wca/sum-of-ranks/census?timeline=1" \
+            | jq -e --argjson y "$YEAR" '[.points[] | select(.year == $y)] | length == 1'
+          echo "acceptance OK"

@@ -9,6 +9,10 @@
   - 脚本本身跟具体表无关:扫 `$IMPORT_DIR/*.copy.tsv` 全部非空 + 跑 `psql -e -v ON_ERROR_STOP=1 -f load.sql`
   - 新增数据流不用复制脚本,builder 写好 `load.sql + *.copy.tsv` + `stats.yml` 加一行 ssh 即可
 
+- `dump_sor_inputs.sh` — SOR 预计算输入矩阵导出,接受 `pe | persons | hrs <year> | no_podium`,TSV 到 stdout。
+  - `sor.yml` inputs job 经 ssh 调用,喂 `core/sorcalc`(数据源 wca_person_ranks / wca_persons / historical_ranks_snapshot,均由每日 stats.yml 刷新)
+  - 与 `dump_fingerprints.sh` 不同:SQL 失败必须非零退出(CI fail-fast),不吞错
+
 - `apply_migrations.sh` — schema migration runner,接受 `<migrations_dir>` 一个参数。
   - `deploy_core.yml` 在 pm2 restart **之前** 调用,跑 `core/packages/server/migrations/*.sql` 里没跑过的
   - `_schema_migrations` ledger 表跳过已应用;每个 migration 一个 `BEGIN/COMMIT` 事务 + `ON_ERROR_STOP=1`
