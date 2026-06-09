@@ -273,6 +273,10 @@ async function main() {
   const [persons] = await conn.query<mysql.RowDataPacket[]>(
     `SELECT wca_id, name, country_id FROM persons WHERE sub_id = 1`,
   );
+  // 比赛 id→name reference(仅供 sor_over_time_build 解析"最后贡献 SOR 的那场比赛"名;不灌 PG)
+  const [competitions] = await conn.query<mysql.RowDataPacket[]>(
+    `SELECT id, name FROM competitions`,
+  );
 
   // 国家 → 大洲映射(snapshot 计算需要)
   const continentOf = new Map<string, string>();
@@ -300,7 +304,14 @@ async function main() {
     }
     f.end();
   }
-  console.log(`  continents=${continents.length} countries=${countries.length} persons=${persons.length}`);
+  {
+    const f = createWriteStream(resolve(outDir, 'wca_competitions.copy.tsv'));
+    for (const c of competitions) {
+      f.write(`${pgEsc(c['id'] as string)}\t${pgEsc(c['name'] as string)}\n`);
+    }
+    f.end();
+  }
+  console.log(`  continents=${continents.length} countries=${countries.length} persons=${persons.length} competitions=${competitions.length}`);
 
   // NOTE: 不输出 wca_ranks_single / wca_ranks_average ── historical_ranks_snapshot 当年快照
   // 自带完整 world/country/continent rank,API 直接查它即可,无需额外维护当前 rank 表.
