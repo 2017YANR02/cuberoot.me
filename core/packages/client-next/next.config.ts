@@ -110,6 +110,44 @@ const nextConfig: NextConfig = {
         source: "/sw.js",
         headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
       },
+      // Long-cache bare public/ assets. Next only auto-immutables hashed
+      // /_next/static/*; files served straight from public/ default to
+      // `max-age=0, must-revalidate`, so every page navigation re-validates
+      // (304) the DeskPet SVG frames (~98 of them), icons, fonts and favicon.
+      // Each 304 is a billable Vercel Edge Request — measured at ~22% of all
+      // traffic — and is the dominant reason Edge Requests overran the limit
+      // while Functions/CPU did not (pure request-count, no compute). One
+      // change covers Vercel AND the origin (nginx proxies Next's headers).
+      // Art/fonts are content-stable → immutable 1y (rename to bust). Icons /
+      // favicon may change → 30d so a new logo propagates without a rename.
+      {
+        source: "/deskpet/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
+      {
+        source: "/fonts/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
+      {
+        source: "/icons/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+      },
+      {
+        source: "/_assets/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+      },
+      {
+        source: "/favicon.ico",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+      },
+      {
+        source: "/beian-badge.png",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+      },
+      {
+        source: "/cstimer_logo.png",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+      },
       {
         source: "/:lang(zh|en)?/scramble/solver",
         headers: [
