@@ -1,0 +1,35 @@
+# Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / G / bin 13
+# Population in this bin: 28
+# Samples listed: 28 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-09
+# Columns: id,scramble,bottom_color
+
+5934,L2 D2 R2 D2 L2 U R2 D' B2 U2 R2 F2 U' B' L' F D B R2 L' D2 R' D' ,G
+5954,D2 R2 D2 B2 D R2 B2 R2 U2 R2 U' L2 R' F' U L' B' D B' R' F' ,G
+7325,U2 R2 U B2 U' L2 B2 U' R2 F2 U2 R2 U2 B' L' U' R F2 R2 F' D B L' ,G
+7326,D' L2 U F2 D' F2 U B2 L2 D2 L2 F2 L2 U' F' R' U B D F2 R' F' L' ,G
+9845,F2 R2 D2 R2 U R2 D' R2 F2 L2 B2 D' L2 U' B' L F' D2 R2 U' R' D' B' L' ,G
+9846,U2 B2 U B2 L2 U2 B2 R2 U' B2 D' F2 L2 U2 L' F' L2 U R D F' L B L2 U' ,G
+9847,B2 L2 D2 F2 D R2 L2 D L2 D B2 U2 L2 U' F' L' B' D B2 R U2 R2 F' U' L' ,G
+15500,R2 U R2 U2 B2 F2 R2 F2 D F2 U2 R2 U' B2 L2 R' F' L U' B' D' F2 L F' U' ,G
+15501,B2 L2 B2 U R2 L2 F2 U F2 U' B2 U B2 R' B' F' U R2 F2 U R' L' F' ,G
+27206,D' L2 U F2 D2 L2 U' F2 R2 B2 R2 U2 F2 D B' D2 U2 R' D L' B' U' F' R' U' ,G
+29775,B2 F2 D2 R2 D L2 B2 F2 D' L2 U' F2 L2 U B' R' D' L' F' U B F2 R ,G
+29776,R2 B2 U' F2 D' L2 U2 B2 U B2 L2 D' B2 U' B' R' F L2 U' L' D' R2 F R' U' ,G
+29777,L2 B2 U F2 R2 D' R2 U2 L2 F2 D' L2 U' R2 U' L' F' R L2 D U2 F' U' L B U' ,G
+34581,U2 L2 U' R2 F2 R2 F2 U' F2 R2 U' R2 L2 F' R' B L2 D' L' U' R2 B R U' ,G
+36964,B2 U' B2 F2 R2 L2 U' B2 L2 D2 B2 R2 F2 U2 F' R L U B' F D' U F' D' U' L' ,G
+40881,U2 L2 U R2 L2 B2 R2 D R2 D R2 B2 D' B' F' R' B2 L2 D U' F' R' L' ,G
+64180,D2 R2 F2 D B2 U' R2 D F2 L2 U' F2 R2 F' R2 U2 R U B D L F' R' U' ,G
+66606,F2 U2 L2 F2 L2 D' F2 U2 B2 F2 D' R2 D2 U' R' B D' F' L F2 U' R2 B R U' ,G
+66607,D U2 B2 F2 L2 D R2 B2 U2 F2 U' F' L' F2 D B U B2 L' F R' U' ,G
+218741,D' B2 D2 R2 F2 U R2 U L2 B2 D L2 U' B2 U' L' F' L' B' U R F L' D2 F U' ,G
+218742,U F2 D' R2 B2 U2 R2 F2 L2 U' F2 U' F2 U2 L' F' L' B' U R F L' D2 F U' ,G
+218747,D2 R2 U L2 B2 U' F2 D' L2 B2 L2 D' L2 U2 L' D2 B' U' F D B2 R B' U2 L' ,G
+218748,R2 D B2 F2 D' U2 L2 B2 R2 B2 D' R2 U' L' D2 B' U' F D B2 R B' U2 L' ,G
+244186,L2 U2 F2 U' F2 L2 D R2 D' F2 D2 U' R2 U L' D2 F U R B' L' D' F' U L' ,G
+244486,F2 R2 L2 D2 F2 D F2 U' F2 D L2 D B2 L2 F' L B' U2 R2 D' R' U' F' L' ,G
+245466,R2 F2 U' F2 U' F2 U2 L2 F2 U' F2 D' B2 R2 U2 R' B L' F2 U F D B2 L' B' U' ,G
+246297,D F2 R2 L2 D B2 F2 R2 D2 U B2 D2 L' D2 F U R B' L' D' F' U L' ,G
+355845,L2 U2 F2 U' B2 R2 D F2 R2 D B2 U' F2 D L' U2 B U' R' D' F' L B L2 ,G

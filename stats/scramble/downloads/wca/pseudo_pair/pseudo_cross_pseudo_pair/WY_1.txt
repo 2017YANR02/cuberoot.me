@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / WY / bin 1
-# Population in this bin: 336
+# Population in this bin: 338
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-06
+# Generated: 2026-06-09
 # Columns: id,scramble,bottom_color
 
 5640748001,U2 R' U L F B2 R L2 U' F2 R2 L2 D2 R2 L2 F2 B L D,Y
@@ -58,7 +58,7 @@
 3852511001,U2 B' D B' L2 U' L U F' L' F' R U2 F2 L2 F2 R' B2,W
 5569300001,B' F2 L U2 L D2 F2 L U' R2 F D2 L R' F2 L' R' B2,W
 5416109001,U' R2 D' B2 U D' F' U' B2 L D F2 U R2 F2 B2 L2 D2 L',W
-501679001,L2 B' U2 L2 B' D2 F D2 U2 B' U2 R F' D2 B2 R2 D' F2 U,W
+5690708001,U' L U' B U' L2 B2 U F2 U2 F2 L2 U R' D' U2 B D' B' R2,W
 505712001,R D2 B D F B' D2 B2 U2 L' F' L2 D2 F2 R2 B2 R2 D2,W
 5456522001,U' L U2 F2 L' B2 U B' D B2 U D B2 R2 U2 B' L2 B',Y
 3588340001,R' B R L2 U2 L2 D B2 F2 U L2 U R2 B L D' F2 U' F L,W
@@ -154,7 +154,7 @@
 1537053001,F' L2 B2 L2 F L2 F' R2 U2 B D B L' R D' F2 L' R B D',Y
 1552674001,F2 L' D2 L F2 R' U2 L2 B D' L D R2 B' D2 U2 L2 F' R2,W
 4828902071,D2 F' B2 L2 U' L2 D B2 U' B2 R2 L' F' L' U F L' U2 B' L B2,Y
-3828324014,U2 R B R2 B2 F2 D2 U' R2 D L2 U' B2 R F2 U2 L2 B' U F2 L B',W
+5687939001,F2 D2 B2 L2 R2 D R2 F2 D L2 F R2 D' L B2 D' B2 F2 R2,Y
 1609879001,R' F2 U2 L' B2 D2 F2 R F2 D R U' L' D L' D2 B R' U2 F2 L' F,W
 4665237001,L B F L2 F' D2 U2 F R2 D' L' B U2 B' L F D' R',W
 1655432001,U' D F' B' L2 F' U D R U' L2 F2 B2 D B2 L',Y
