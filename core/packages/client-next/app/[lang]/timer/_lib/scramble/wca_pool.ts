@@ -1,16 +1,22 @@
 /**
  * WCA real-scramble pool — feeds the timer with actual past WCA competition
- * scrambles (mirrored server-side in wca_scrambles, served by
- * /v1/wca/scrambles/random). generateScramble() is synchronous, so we keep a
- * small in-memory queue per WCA event and refill it in the background; the
- * SoloView shows a brief loading state when the queue is momentarily empty.
+ * scrambles. Two source modes (chosen in settings → WcaSourceConfig):
  *
- * Each scramble carries its source metadata (competition / event / round /
- * group / number) so the SoloView can show where it came from — same shape as
- * the landing page's RecentScrambles meta (ci/cn/e/r/g/n/x). Metadata is keyed
- * by the (normalized) scramble string, looked up via wcaMetaFor().
+ *   'date': uniformly random across official scrambles in a date range. Fetched
+ *           from /v1/wca/scrambles/random (server samples ~30 random comps in
+ *           range → random scrambles), refilled in the background.
+ *   'comp': one specific competition, optionally narrowed to a round / group.
+ *           Loaded once via fetchWcaScrambles (cached) and served in competition
+ *           order (round → group → number), looping.
+ *
+ * generateScramble() is synchronous, so each source keeps an in-memory queue
+ * keyed by its spec; the SoloView shows a brief loading state when a queue is
+ * momentarily empty. Each scramble carries its source metadata (ci/cn/e/r/g/n/x,
+ * same shape as the landing RecentScrambles meta), keyed by the normalized
+ * scramble string and looked up via wcaMetaFor().
  */
 import { apiUrl } from '@/lib/api-base';
+import { fetchWcaScrambles } from '@/lib/wca-results-api';
 import type { EventId } from '../types';
 
 // timer EventId → WCA scrambles event_id. Events absent here have no real
@@ -27,21 +33,34 @@ const FETCH_COUNT = 50;
 const REFILL_AT = 8;
 const META_CAP = 1000; // 元数据 Map 软上限,超出按插入序丢最旧。
 
+// 比赛轮次先后(初赛→决赛),用于 comp 模式按真实赛程顺序排打乱。
+const ROUND_SEQ: Record<string, number> = {
+  '1': 0, 'd': 0, 'h': 0, '2': 1, 'e': 1, 'g': 1, '3': 2, 'b': 3, 'c': 3, 'f': 3,
+};
+
+/** Where the timer should draw real scrambles from (derived from TimerSettings). */
+export interface WcaSourceSpec {
+  event: EventId;
+  mode: 'date' | 'comp';
+  comp: string;        // competition_id (comp mode)
+  compName: string;    // competition display name (comp mode)
+  round: string;       // round_type_id filter, '' = all (comp mode)
+  group: string;       // group_id filter, '' = all (comp mode)
+  from: string;        // 'YYYY-MM-DD', '' = no lower bound (date mode)
+  to: string;          // 'YYYY-MM-DD', '' = no upper bound (date mode)
+}
+
 /** 一条真实打乱的来源元数据(键名对齐首页 RecentScrambles 的 ScrMeta)。 */
 export interface WcaScrambleMeta {
-  ci: string;          // competition_id
-  cn: string;          // 比赛英文名(localizeCompName 再本地化)
-  e: string;           // event_id
-  r: string;           // round_type_id
-  g: string;           // group_id
-  n: number;           // scramble_num
-  x: 0 | 1;            // is_extra
+  ci: string; cn: string; e: string; r: string; g: string; n: number; x: 0 | 1;
 }
 interface RandomItem extends WcaScrambleMeta { scramble: string }
 
 const pools: Record<string, string[]> = {};
 const inflight: Record<string, Promise<void> | undefined> = {};
 const metaByScramble = new Map<string, WcaScrambleMeta>();
+// comp 模式:过滤 + 排序后的整场打乱(按 specKey 缓存,refill 时循环灌回队列)。
+const compRows: Record<string, { scramble: string; meta: WcaScrambleMeta }[]> = {};
 
 /** Normalize stray non-ASCII punctuation (e.g. a Pyraminx scramble that used ’
  *  instead of ') so cubing.js / renderers accept the move string. */
@@ -49,8 +68,17 @@ function normalize(s: string): string {
   return s.replace(/[‘’ʼ′]/g, "'");
 }
 
-function wcaEvent(event: EventId): string | undefined {
-  return EVENT_MAP[event];
+function wev(spec: WcaSourceSpec): string | undefined {
+  return EVENT_MAP[spec.event];
+}
+
+/** Stable cache key for this source. null = no real scrambles possible (event
+ *  unmapped, or comp mode with no competition picked yet). */
+function specKey(spec: WcaSourceSpec): string | null {
+  const w = wev(spec);
+  if (!w) return null;
+  if (spec.mode === 'comp') return spec.comp ? `c|${spec.comp}|${w}|${spec.round}|${spec.group}` : null;
+  return `d|${w}|${spec.from}|${spec.to}`;
 }
 
 function rememberMeta(s: string, m: WcaScrambleMeta): void {
@@ -62,68 +90,116 @@ function rememberMeta(s: string, m: WcaScrambleMeta): void {
   }
 }
 
-async function fill(wev: string): Promise<void> {
-  if (inflight[wev]) return inflight[wev];
+/** comp mode: load the comp once (cached), filter to event + round + group,
+ *  sort in competition order, and (re)fill the queue — loops indefinitely. */
+async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
+  const w = wev(spec);
+  if (!w) return;
+  let rows = compRows[key];
+  if (!rows) {
+    const all = await fetchWcaScrambles(spec.comp);
+    rows = (all ?? [])
+      .filter((r) => r.event_id === w
+        && (!spec.round || r.round_type_id === spec.round)
+        && (!spec.group || r.group_id === spec.group))
+      .sort((a, b) => {
+        const ra = ROUND_SEQ[a.round_type_id] ?? 9, rb = ROUND_SEQ[b.round_type_id] ?? 9;
+        if (ra !== rb) return ra - rb;
+        if (a.group_id !== b.group_id) return a.group_id < b.group_id ? -1 : 1;
+        if (a.is_extra !== b.is_extra) return a.is_extra ? 1 : -1;
+        return a.scramble_num - b.scramble_num;
+      })
+      .map((r) => ({
+        scramble: normalize(r.scramble),
+        meta: { ci: spec.comp, cn: spec.compName || spec.comp, e: w, r: r.round_type_id, g: r.group_id, n: r.scramble_num, x: (r.is_extra ? 1 : 0) as 0 | 1 },
+      }));
+    compRows[key] = rows;
+  }
+  if (rows.length === 0) return; // 该比赛没有此 event → 队列保持空 → 调用方回退随机生成
+  const q = (pools[key] ??= []);
+  for (const it of rows) { q.push(it.scramble); rememberMeta(it.scramble, it.meta); }
+}
+
+/** date mode: top up from the server's random sampler (optionally date-bounded). */
+async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
+  const w = wev(spec);
+  if (!w) return;
+  const qs = new URLSearchParams({ event: w, count: String(FETCH_COUNT) });
+  if (spec.from) qs.set('from', spec.from);
+  if (spec.to) qs.set('to', spec.to);
+  const res = await fetch(apiUrl(`/v1/wca/scrambles/random?${qs.toString()}`));
+  if (!res.ok) return;
+  const data = (await res.json()) as { scrambles?: RandomItem[] };
+  if (!Array.isArray(data.scrambles)) return;
+  const q = (pools[key] ??= []);
+  for (const it of data.scrambles) {
+    if (!it?.scramble) continue;
+    const s = normalize(it.scramble);
+    q.push(s);
+    rememberMeta(s, { ci: it.ci, cn: it.cn, e: it.e, r: it.r, g: it.g, n: it.n, x: it.x });
+  }
+}
+
+function fill(spec: WcaSourceSpec): Promise<void> {
+  const key = specKey(spec);
+  if (!key) return Promise.resolve();
+  const existing = inflight[key];
+  if (existing) return existing;
   const p = (async () => {
     try {
-      const res = await fetch(
-        apiUrl(`/v1/wca/scrambles/random?event=${encodeURIComponent(wev)}&count=${FETCH_COUNT}`),
-      );
-      if (res.ok) {
-        const data = (await res.json()) as { scrambles?: RandomItem[] };
-        if (Array.isArray(data.scrambles)) {
-          const q = (pools[wev] ??= []);
-          for (const it of data.scrambles) {
-            if (!it?.scramble) continue;
-            const s = normalize(it.scramble);
-            q.push(s);
-            rememberMeta(s, { ci: it.ci, cn: it.cn, e: it.e, r: it.r, g: it.g, n: it.n, x: it.x });
-          }
-        }
-      }
+      if (spec.mode === 'comp') await fillComp(spec, key);
+      else await fillDate(spec, key);
     } catch {
       /* network error — caller falls back to a generated scramble */
     } finally {
-      inflight[wev] = undefined;
+      inflight[key] = undefined;
     }
   })();
-  inflight[wev] = p;
+  inflight[key] = p;
   return p;
 }
 
-/** Whether this event has real WCA scrambles available. */
-export function hasWcaScrambles(event: EventId): boolean {
-  return wcaEvent(event) !== undefined;
+/** Whether this source can yield real scrambles (event mapped + comp picked in
+ *  comp mode). Whether the picked comp actually has the event is resolved async;
+ *  an empty result falls back to a generated scramble. */
+export function hasWcaSource(spec: WcaSourceSpec): boolean {
+  return specKey(spec) !== null;
 }
 
-/** Warm the pool ahead of time (on event switch / when WCA mode turns on). */
-export function prefetchWca(event: EventId): void {
-  const wev = wcaEvent(event);
-  if (!wev) return;
-  if ((pools[wev]?.length ?? 0) < REFILL_AT) void fill(wev);
+/** Warm the pool ahead of time (on spec change / when WCA mode turns on). */
+export function prefetchWca(spec: WcaSourceSpec): void {
+  const key = specKey(spec);
+  if (!key) return;
+  if ((pools[key]?.length ?? 0) < REFILL_AT) void fill(spec);
 }
 
-/** Synchronous take — returns a scramble if the pool has one (and tops it up in
+/** Synchronous take — returns a scramble if the queue has one (and tops it up in
  *  the background), else null so the caller can show loading and await nextWca. */
-export function peekWca(event: EventId): string | null {
-  const wev = wcaEvent(event);
-  if (!wev) return null;
-  const s = pools[wev]?.shift() ?? null;
-  if ((pools[wev]?.length ?? 0) < REFILL_AT) void fill(wev);
+export function peekWca(spec: WcaSourceSpec): string | null {
+  const key = specKey(spec);
+  if (!key) return null;
+  const s = pools[key]?.shift() ?? null;
+  if ((pools[key]?.length ?? 0) < REFILL_AT) void fill(spec);
   return s;
 }
 
-/** Async take — ensures the pool is filled, then returns one. null if the event
- *  has no real scrambles or the fetch failed. */
-export async function nextWca(event: EventId): Promise<string | null> {
-  const wev = wcaEvent(event);
-  if (!wev) return null;
-  if ((pools[wev]?.length ?? 0) === 0) await fill(wev);
-  return pools[wev]?.shift() ?? null;
+/** Async take — ensures the queue is filled, then returns one. null if the source
+ *  has no real scrambles (e.g. picked comp lacks the event) or the fetch failed. */
+export async function nextWca(spec: WcaSourceSpec): Promise<string | null> {
+  const key = specKey(spec);
+  if (!key) return null;
+  if ((pools[key]?.length ?? 0) === 0) await fill(spec);
+  return pools[key]?.shift() ?? null;
 }
 
 /** Source metadata for a scramble previously dispensed by this pool, else null
  *  (locally generated scramble, or one evicted from the capped meta map). */
 export function wcaMetaFor(scramble: string): WcaScrambleMeta | null {
   return metaByScramble.get(normalize(scramble)) ?? null;
+}
+
+/** timer EventId → WCA scrambles event_id (undefined if this event has no real
+ *  competition scrambles). Exposed for the source-config UI (round/group derivation). */
+export function wcaEventId(event: EventId): string | undefined {
+  return EVENT_MAP[event];
 }

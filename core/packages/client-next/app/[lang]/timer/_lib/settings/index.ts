@@ -83,6 +83,16 @@ export interface TimerSettings {
   /** Scramble source: 'random' = locally generated, 'wca' = real past WCA competition scrambles. */
   scrambleSource: 'random' | 'wca';
 
+  /** WCA sub-mode: 'date' = uniformly random within a date range, 'comp' = a specific
+   *  competition (optionally narrowed to one round / group). */
+  wcaScrambleMode: 'date' | 'comp';
+  wcaComp: string;       // competition_id (comp mode)
+  wcaCompName: string;   // competition display name (comp mode)
+  wcaRound: string;      // round_type_id filter, '' = all rounds (comp mode)
+  wcaGroup: string;      // group_id filter, '' = all groups (comp mode)
+  wcaDateFrom: string;   // 'YYYY-MM-DD', '' = no lower bound (date mode)
+  wcaDateTo: string;     // 'YYYY-MM-DD', '' = no upper bound (date mode)
+
   /** Action when user clicks the scramble strip. */
   scrambleClickAction: 'none' | 'next' | 'copy';
 
@@ -180,6 +190,13 @@ export const DEFAULTS: TimerSettings = {
   voiceInspection: 'none',
   statsAoWindows: [5, 12],
   scrambleSource: 'random',
+  wcaScrambleMode: 'date',
+  wcaComp: '',
+  wcaCompName: '',
+  wcaRound: '',
+  wcaGroup: '',
+  wcaDateFrom: '',
+  wcaDateTo: '',
   scrambleClickAction: 'copy',
   scrambleClickMigrated: false,
   hideAllUiWhileRunning: false,

@@ -1133,6 +1133,40 @@
 }
 .settings-row-control .hint-btn:disabled:hover { background: transparent; color: #aaa; }
 
+/* WCA 真实打乱选源配置(打乱来源=WCA 时展开)。缩进 + 左描边,从属于上面的来源 Row。 */
+.wca-src-config {
+  margin: 4px 0 10px;
+  padding-left: 10px;
+  border-left: 2px solid #2a2a2e;
+}
+.wca-src-dates { gap: 6px; }
+.wca-src-dates input[type="date"] {
+  background: #0e0e10;
+  color: #ededed;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  color-scheme: dark;
+}
+.wca-src-dash { color: #888; }
+.wca-src-hint {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #888;
+}
+.wca-src-warn { color: #e0a14b; }
+/* CompPicker 占满整行;inline × 浮在输入框内需要定位上下文。 */
+.wca-src-comprow { align-items: flex-start; }
+.wca-src-comppick { position: relative; flex: 1; min-width: 0; }
+.wca-src-comppick > :first-child { width: 100%; }
+:root[data-timer-theme="light"] .wca-src-config { border-left-color: #e0e0e3; }
+:root[data-timer-theme="light"] .wca-src-dates input[type="date"] {
+  background: #fff; color: #1d1d1f; border-color: #ccc; color-scheme: light;
+}
+:root[data-timer-theme="light"] .wca-src-hint { color: #777; }
+
 /* PB celebration toast */
 .pb-toast {
   position: fixed;
