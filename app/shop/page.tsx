@@ -5,23 +5,16 @@ import { Section } from "@/components/Section";
 import { Badge } from "@/components/Badge";
 import { Pagination } from "@/components/Pagination";
 import { ListSearch } from "@/components/ListSearch";
-import { loadListSearchParams } from "@/lib/search-params";
+import { loadShopListParams } from "@/lib/search-params";
+import { ShopCategories } from "@/components/ShopCategories";
 import type { SearchParams } from "nuqs/server";
 
 export const metadata = { title: "商城 — 魔方开放社群" };
 export const dynamic = "force-dynamic";
 
-const CATEGORIES: { key: string; label: string }[] = [
-  { key: "全部", label: "全部" },
-  { key: "竞速魔方", label: "竞速魔方" },
-  { key: "异形", label: "异形" },
-  { key: "配件", label: "配件" },
-  { key: "周边", label: "周边" },
-];
-
 export default async function ShopPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const { q, page } = await loadListSearchParams(searchParams);
-  const result = await listPaged({ q, page, pageSize: 12 });
+  const { q, page, category } = await loadShopListParams(searchParams);
+  const result = await listPaged({ q, page, pageSize: 12, category: category ?? undefined });
 
   return (
     <Section
@@ -31,21 +24,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     >
       <ListSearch placeholder="搜索商品、品牌..." />
 
-      <div className="flex flex-wrap gap-2 mb-8">
-        {CATEGORIES.map((c) => (
-          <span
-            key={c.key}
-            className={
-              "rounded-full px-3 py-1.5 text-[13px] border " +
-              (c.key === "全部"
-                ? "border-brand bg-brand-soft text-brand-dark"
-                : "border-line text-ink-2 bg-white")
-            }
-          >
-            {c.label}
-          </span>
-        ))}
-      </div>
+      <ShopCategories />
 
       {q && (
         <div className="mb-6 text-[13px] text-ink-3">
@@ -99,7 +78,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         page={result.page}
         totalPages={result.totalPages}
         basePath="/shop"
-        params={{ q }}
+        params={{ q, category: category ?? undefined }}
       />
     </Section>
   );

@@ -27,6 +27,14 @@ export const listSearchParams = {
 export const loadListSearchParams = createLoader(listSearchParams);
 export const serializeListSearchParams = createSerializer(listSearchParams);
 
+// 商城在 list 基础上多一个分类筛选(「全部」= 无 category 参数)
+export const PRODUCT_CATEGORIES = ["竞速魔方", "异形", "配件", "周边"] as const;
+export const shopListParams = {
+  ...listSearchParams,
+  category: parseAsStringLiteral(PRODUCT_CATEGORIES),
+};
+export const loadShopListParams = createLoader(shopListParams);
+
 /* ---------- 站内搜索 /search:仅关键词 ---------- */
 export const searchQueryParams = {
   q: parseAsString.withDefault(""),
