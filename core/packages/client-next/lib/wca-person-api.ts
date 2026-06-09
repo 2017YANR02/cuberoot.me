@@ -138,10 +138,12 @@ export async function fetchPersonBestRanks(wcaId: string): Promise<PersonBestRan
   return json;
 }
 
-// 选手「全项目排名(SOR)」摘要 — 当前 / 历史最佳的单次 + 平均(世界口径,17 现役项).
+// 选手「全项目排名(SOR)」摘要 — 当前 / 历史最佳的单次 + 平均(17 现役项,世界/洲际/地区三档名次).
 // 数据源同上(wca_person_ranks + sor_historical_best),由 /v1/wca/sum-of-ranks/person 返回.
-export interface PersonSorCell { total: number; rank: number; eventsDone: number; }
-export interface PersonSorBestCell { total: number | null; rank: number; year: number; }
+// rank.continent / rank.country 为 null = 数据未填充 / 无对应 scope → 前端该列留空.
+export interface SorRankTriple { world: number; continent: number | null; country: number | null; }
+export interface PersonSorCell { total: number; rank: SorRankTriple; eventsDone: number; }
+export interface PersonSorBestCell { total: number | null; rank: SorRankTriple; year: number; }
 export interface PersonSorResponse {
   wcaId: string;
   single: PersonSorCell | null;
@@ -151,7 +153,7 @@ export interface PersonSorResponse {
 }
 
 export async function fetchPersonSor(wcaId: string): Promise<PersonSorResponse> {
-  const key = `wca:sor:v1:${wcaId}`;
+  const key = `wca:sor:v2:${wcaId}`;
   const cached = cacheGet<PersonSorResponse>(key);
   if (cached) return cached;
   const res = await fetch(apiUrl(`/v1/wca/sum-of-ranks/person?wcaId=${encodeURIComponent(wcaId)}`));

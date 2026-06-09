@@ -61,6 +61,8 @@ export interface AboutRelated {
   hintEn?: string;
   /** 跳到 stat 详情而非 about (默认 about) */
   toStat?: boolean;
+  /** 覆盖 toStat 生成的内部链接(需带 query 时用,如合并到 all-results 的名次和) */
+  statHref?: string;
   /** 完全外部链接(覆盖前两者) */
   href?: string;
     titleZhHant?: string;

@@ -101,10 +101,10 @@ export const LOOKUP_ITEMS: LookupItem[] = [
   { path: '/wca/all-events-done',  zh: '全项目达成',   en: 'All Events Done',
       zhHant: "全項目達成"
 },
-  { path: '/wca/sum-of-ranks',     zh: '全项目排名',   en: 'Sum of Ranks',
+  { path: '/wca/all-results',     extraQuery: 'events=all', zh: '全项目排名',   en: 'Sum of Ranks',
       zhHant: "全項目排名"
 },
-  { path: '/wca/sum-of-ranks', extraQuery: 'hidePodium=1', zh: '全能但无牌', en: 'All-Around · No Podium',
+  { path: '/wca/all-results', extraQuery: 'events=all&hidePodium=1', zh: '全能但无牌', en: 'All-Around · No Podium',
       zhHant: "全能但無牌"
 },
 ];

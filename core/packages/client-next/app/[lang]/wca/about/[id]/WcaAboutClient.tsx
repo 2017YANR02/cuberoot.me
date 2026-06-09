@@ -129,7 +129,7 @@ function RelatedCard({ rel, isZh }: { rel: AboutRelated; isZh: boolean }) {
       </a>
     );
   }
-  const to = rel.toStat ? `/wca/${rel.id}` : `/wca/about/${rel.id}`;
+  const to = rel.statHref ?? (rel.toStat ? `/wca/${rel.id}` : `/wca/about/${rel.id}`);
   return <Link className="wcaa-related-card" href={to}>{inner}</Link>;
 }
 

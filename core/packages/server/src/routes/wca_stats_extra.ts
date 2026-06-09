@@ -1095,41 +1095,74 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/person', async (c) => {
   if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) return c.json({ error: 'Invalid wcaId' }, 400);
 
   const [prRows, bestRows] = await Promise.all([
-    query<{ is_avg: boolean; total_world_rank: number; events_done: number }>(
-      `SELECT is_avg, total_world_rank, events_done FROM wca_person_ranks WHERE wca_id = ?`,
+    query<{
+      is_avg: boolean; events_done: number;
+      total_world_rank: number; total_continent_rank: number; total_country_rank: number;
+      continent_id: string; country_id: string;
+    }>(
+      `SELECT is_avg, events_done, total_world_rank, total_continent_rank, total_country_rank, continent_id, country_id
+       FROM wca_person_ranks WHERE wca_id = ?`,
       [wcaId],
     ),
-    query<{ is_avg: boolean; best_rank: number; best_year: number; best_total: number | null }>(
-      `SELECT is_avg, best_rank, best_year, best_total FROM sor_historical_best WHERE wca_id = ? AND scope = 'world'`,
+    query<{ is_avg: boolean; scope: string; best_rank: number; best_year: number; best_total: number | null }>(
+      `SELECT is_avg, scope, best_rank, best_year, best_total FROM sor_historical_best WHERE wca_id = ?`,
       [wcaId],
     ),
   ]);
 
-  // 当前世界 SOR 名次 = 全员里 total_world_rank 严格更小者数 + 1(并列共享名次).~290k 行 COUNT,24h 缓存.
+  // 当前 SOR 名次 = 同 scope 里 total_*_rank 严格更小者数 + 1(并列共享名次).~290k 行 × 3 scope COUNT,24h 缓存.
+  // continent/country 走各自专用索引(pr_continent_total / pr_country_total).
   const rankRows = await Promise.all(prRows.map(pr =>
-    query<{ n: string }>(
-      `SELECT COUNT(*) AS n FROM wca_person_ranks WHERE is_avg = ? AND total_world_rank < ?`,
-      [pr.is_avg, pr.total_world_rank],
+    query<{ world: string; continent: string; country: string }>(
+      `SELECT
+         (SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND total_world_rank < ?) AS world,
+         (SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND continent_id = ? AND total_continent_rank < ?) AS continent,
+         (SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND country_id = ? AND total_country_rank < ?) AS country`,
+      [pr.is_avg, pr.total_world_rank,
+       pr.is_avg, pr.continent_id, pr.total_continent_rank,
+       pr.is_avg, pr.country_id, pr.total_country_rank],
     ),
   ));
 
+  type RankTriple = { world: number; continent: number | null; country: number | null };
   const out: {
     wcaId: string;
-    single: { total: number; rank: number; eventsDone: number } | null;
-    average: { total: number; rank: number; eventsDone: number } | null;
-    bestSingle: { total: number | null; rank: number; year: number } | null;
-    bestAverage: { total: number | null; rank: number; year: number } | null;
+    single: { total: number; rank: RankTriple; eventsDone: number } | null;
+    average: { total: number; rank: RankTriple; eventsDone: number } | null;
+    bestSingle: { total: number | null; rank: RankTriple; year: number } | null;
+    bestAverage: { total: number | null; rank: RankTriple; year: number } | null;
   } = { wcaId, single: null, average: null, bestSingle: null, bestAverage: null };
 
   prRows.forEach((pr, i) => {
-    const rank = (rankRows[i]?.[0] ? parseInt(rankRows[i]![0]!.n, 10) : 0) + 1;
-    const cell = { total: pr.total_world_rank, rank, eventsDone: pr.events_done };
+    const row = rankRows[i]?.[0];
+    const world = (row ? parseInt(row.world, 10) : 0) + 1;
+    // 洲际/地区:仅当对应 total>0 且有 scope id 时才算(数据未填充 → null → 前端留空,不误显 #1)
+    const continent = pr.total_continent_rank > 0 && pr.continent_id
+      ? (row ? parseInt(row.continent, 10) : 0) + 1 : null;
+    const country = pr.total_country_rank > 0 && pr.country_id
+      ? (row ? parseInt(row.country, 10) : 0) + 1 : null;
+    const cell = { total: pr.total_world_rank, rank: { world, continent, country }, eventsDone: pr.events_done };
     if (pr.is_avg) out.average = cell; else out.single = cell;
   });
-  for (const b of bestRows) {
-    const cell = { total: b.best_total ?? null, rank: b.best_rank, year: b.best_year };
-    if (b.is_avg) out.bestAverage = cell; else out.bestSingle = cell;
-  }
+
+  // 历史最佳:按 (is_avg, scope) 归并;total/year 取 world 那行(成绩列与年份小字以世界口径为代表),
+  // 洲际/地区各取自身 scope 的 best_rank.无 world 行(理论不会)则整块不出.
+  const bestBy = { single: new Map<string, typeof bestRows[number]>(), average: new Map<string, typeof bestRows[number]>() };
+  for (const b of bestRows) (b.is_avg ? bestBy.average : bestBy.single).set(b.scope, b);
+  const buildBest = (m: Map<string, typeof bestRows[number]>) => {
+    const w = m.get('world'); if (!w) return null;
+    return {
+      total: w.best_total ?? null,
+      rank: {
+        world: w.best_rank,
+        continent: m.get('continent')?.best_rank ?? null,
+        country: m.get('country')?.best_rank ?? null,
+      } as RankTriple,
+      year: w.best_year,
+    };
+  };
+  out.bestSingle = buildBest(bestBy.single);
+  out.bestAverage = buildBest(bestBy.average);
 
   c.header('Cache-Control', CACHE_HEADER);
   return c.json(out);
