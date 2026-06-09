@@ -149,14 +149,22 @@ const nextConfig: NextConfig = {
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
       },
       {
+        source: "/assets/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+      },
+      {
         source: "/:lang(zh|en)?/scramble/solver",
         headers: [
           { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
         ],
       },
-      // cubeopt-wasm: 主 worker + 9 个 emscripten pthread 模块 + .wasm
-      { source: "/cubeopt/:path*", headers: workerAsset },
+      // cubeopt-wasm: 主 worker + 9 个 emscripten pthread 模块 + .wasm。
+      // wasm/mjs 内容稳定 → immutable(同时保留 COEP/CORP);大文件,缓存还省 Origin Transfer。
+      {
+        source: "/cubeopt/:path*",
+        headers: [...workerAsset, { key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
       // Turbopack/构建产物里的 module worker(kociemba.worker.ts 等)
       { source: "/_next/static/:path*", headers: workerAsset },
       // cubing.js search worker(经 app/cubing-chunks 路由 handler 提供)

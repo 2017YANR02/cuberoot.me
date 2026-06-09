@@ -124,6 +124,7 @@ export default function ByCompList({ results, comps, reconLookup, isZh }: Props)
             <div className="wp-bycomp-header">
               <Link
                 {...compLinkProps(comp.id)}
+                prefetch={false}
                 className="wp-bycomp-name"
               ><CompCell compId={comp.id} compName={comp.name} isZh={isZh} /></Link>
               <span className="wp-bycomp-date">{formatDateRangeIso(comp.start_date, comp.end_date)}</span>
