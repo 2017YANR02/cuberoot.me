@@ -6,9 +6,9 @@
 # 用本地缓存:  pwsh update_cross_stats.ps1 -UseCached     (取数不联网, 用 cache/ 最新 export zip)
 # 干跑(只读):  pwsh update_cross_stats.ps1 -DryRun -SourceCsv D:\cube\scramble\wca_scramble\input\wca_scrambles_info.csv
 # 只本地不发布: pwsh update_cross_stats.ps1 -NoPublish
-# 选变体补缺: pwsh update_cross_stats.ps1 -Variants pseudo,pseudo_pair   (默认 eo,pseudo,pseudo_pair)
-# pair 单独跑: pwsh update_cross_stats.ps1 -Variants pair                (~2/s, 全量补 ~165h, 分块可中断续跑)
-# f2leo 系:   pwsh update_cross_stats.ps1 -Variants f2leo,pseudo_f2leo  (大表快路径, 真实打乱实测: f2leo 用 huge 联合表 ~31/s, pseudo_f2leo 用 huge 电池 ~81/s; 首次需全量补, 默认不含)
+# 选变体补缺: pwsh update_cross_stats.ps1 -Variants pseudo,pseudo_pair   (默认全 6: eo,pseudo,pseudo_pair,pair,f2leo,pseudo_f2leo)
+# pair 单独跑: pwsh update_cross_stats.ps1 -Variants pair                (~2/s, 全量补 ~165h, 分块可中断续跑; 现已入默认, 增量只补 delta)
+# f2leo 系:   pwsh update_cross_stats.ps1 -Variants f2leo,pseudo_f2leo  (大表快路径, 真实打乱实测: f2leo 用 huge 联合表 ~31/s, pseudo_f2leo 用 huge 电池 ~81/s; 首次需全量补, 现已入默认)
 # 只跑一两块: pwsh update_cross_stats.ps1 -Variants eo -MaxChunks 1     (eo 一块=2000≈40min, 跑完照常发布, 还差的下次续; 免人工盯/kill)
 # 不补变体:   pwsh update_cross_stats.ps1 -Variants @()
 #
@@ -22,7 +22,7 @@ param(
   [string]$SourceCsv,     # 测试源 (input 形状 csv) 替代下载 export
   [switch]$NoPublish,     # 跑完只更新本地 csv + JSON, 不 commit/push/scp
   [switch]$SkipSolve,     # 调试: 跳过 incremental + std 解算, 复用上次取数/solver 产出, 直接走追加/变体/发布
-  [string[]]$Variants = @('eo','pseudo','pseudo_pair'),  # 跟 std 锁步补缺的变体 (@()=只 std)。pair / f2leo / pseudo_f2leo 默认不含(pair ~2/s 太慢; f2leo 系首次需全量补), 需手动 -Variants 指定
+  [string[]]$Variants = @('eo','pseudo','pseudo_pair','pair','f2leo','pseudo_f2leo'),  # 跟 std 锁步补缺的全部 6 变体 (@()=只 std)。瓶颈始终是 eo ~0.9/s; 想快跑显式 -Variants eo,pseudo,pseudo_pair 跳过新加的 pair/f2leo 系
   [int]$ChunkSize = 20000, # 显式传则覆盖所有变体的分块大小; 不传则用每变体默认(见 $VARIANT_CHUNK: eo/pair=2000, 其余=20000)。逐块追加, 中断只丢当前块
   [int]$MaxChunks = 0,     # >0: 每个变体最多跑 N 块就停, 之后照常重算+发布(还差的下次 run 自动续)。0=补满。用于"只跑一两块"而无需人工盯/中途 kill
   [switch]$PublishOnly,    # 跳过取数/解算/变体, 直接用当前 CSV 状态重算 distribution+comp-steps 并发布(把已落盘但未发布的累积变更推上线)
@@ -55,7 +55,7 @@ $StaticHost  = 'root@cuberoot'                 # 免密 ssh 别名
 $StaticDest  = '/www/wwwroot/toolkit/stats'    # nginx 静态根 (self-hosted + Vercel fallback 都从这服)
 
 # 变体 -> analyzer exe。suffix 恒为 _<变体名>, 故输出文件名 = <输入名>_<变体名>.csv。
-# std 不在此: 它单独走 new_no_wide_move.txt 的全量 diff (见下)。pair ~2/s 最慢, 不在默认 -Variants 里, 需显式 -Variants pair。
+# std 不在此: 它单独走 new_no_wide_move.txt 的全量 diff (见下)。eo ~0.9/s 是瓶颈; pair/f2leo/pseudo_f2leo 现已入默认(增量只补 delta, 想跳过用显式 -Variants)。
 $VARIANT_EXE = @{
   eo           = 'eo_cross_analyzer.exe'
   pseudo       = 'pseudo_analyzer.exe'
@@ -314,7 +314,7 @@ function Estimate($count,$rate){
 # 返回 @{Variants;MaxChunks;NoPublish} 套用到主流程; 取消返回 $null。
 function Invoke-CrossWizard([int]$nNew){
   $order    = @('eo','pseudo','pseudo_pair','pair','f2leo','pseudo_f2leo')
-  $defaults = @('eo','pseudo','pseudo_pair')
+  $coreFast = @('eo','pseudo','pseudo_pair')   # [D] 快速收窄到的"核心快"组; 全 6 现都是默认, 向导初始全勾选
   Write-Host "`n================ 交互向导 ================" -ForegroundColor Magenta
   Write-Host ("新 std 打乱: {0} 条  (≈{1} 解算)" -f $nNew,(Estimate $nNew 115)) -ForegroundColor White
   Write-Host '扫描各变体待补 (行数比对) ...' -ForegroundColor DarkGray
@@ -332,14 +332,14 @@ function Invoke-CrossWizard([int]$nNew){
   $vItems = @()
   $ki = 1
   foreach($v in $order){
-    $isDef = $defaults -contains $v
+    $isCore = $coreFast -contains $v
     if($miss[$v] -lt 0){ $note = 'CSV 不存在' }
     else { $proj = $miss[$v] + $nNew; $note = ("待补 {0}  +新std {1}  ≈{2}" -f $miss[$v],$proj,(Estimate $proj $VARIANT_RATE[$v])) }
-    $vItems += @{ Name=$v; Key="$ki"; Selected=$isDef; Group=$(if($isDef){'default'}else{'optin'}); Note=$note }
+    $vItems += @{ Name=$v; Key="$ki"; Selected=$true; Group=$(if($isCore){'core'}else{'heavy'}); Note=$note }
     $ki++
   }
   $ok = Read-MultiSelect -Prompt '补哪些变体?' -Items $vItems `
-    -GroupShortcuts @{ D=@{Group='default';Label='Default'}; O=@{Group='optin';Label='Opt-in'} }
+    -GroupShortcuts @{ D=@{Group='core';Label='核心快(eo系)'}; O=@{Group='heavy';Label='重型(pair/f2leo系)'} }
   if(-not $ok){ return $null }   # Esc 取消
   $chosen = @($vItems | Where-Object { $_.Selected } | ForEach-Object { $_.Name })
 

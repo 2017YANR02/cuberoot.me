@@ -159,4 +159,7 @@ export const STACK_TOOLS_META: StackToolMeta[] = [
   { slug: 'capacitor', name: "Capacitor", version: '8.3.4', since: '2019-05', group: 'frontend', accent: '#119EFF', bright: '#5BBAFF', glyph: "‖",
     zh: { tagline: "把 Web 应用套成 iOS / Android 原生壳", role: "本站移动端就是它 —— 同一份 Next.js 站点塞进系统 WebView, 双 runner CI 出 APK + IPA。" },
     en: { tagline: "Wrap a web app into an iOS / Android native shell", role: "The site's mobile build is this — the same Next.js site dropped into a system WebView, dual-runner CI producing APK + IPA." } },
+  { slug: 'nuqs', name: "nuqs", version: '2.8.9', since: '2020-05', group: 'frontend', accent: '#F59E0B', bright: '#FBBF24', glyph: "?=",
+    zh: { tagline: "像 useState, 但状态存在 URL query 里", role: "全站页内状态(tab / 筛选 / 排序 / 搜索 / 浮层)进 URL 的唯一方式。33 个页面在用, CI 强制禁裸 history.pushState。" },
+    en: { tagline: "Like useState, but stored in the URL query string", role: "The single way page-level state (tabs / filters / sort / search / overlays) goes into the URL site-wide — 33 pages use it, CI forbids raw history.pushState." } },
 ];
