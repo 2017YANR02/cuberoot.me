@@ -1,6 +1,6 @@
 import { list } from "@/lib/db/invites";
 import { db, schema } from "@/db";
-import { Card, PageHeader } from "../../_components/Shell";
+import { Card, PageHeader, Th, Td } from "../../_components/Shell";
 import { Field, FormActions, Input, Submit } from "../../_components/Form";
 import { DeleteButton } from "../../_components/DeleteButton";
 import { createInvite, deleteInvite } from "./actions";
@@ -103,25 +103,5 @@ export default async function AdminInvitesPage({
         </div>
       </Card>
     </div>
-  );
-}
-
-function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <th className={"px-4 py-3 text-left font-medium " + className}>{children}</th>;
-}
-
-function Td({
-  children,
-  className = "",
-  colSpan,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  colSpan?: number;
-}) {
-  return (
-    <td className={"px-4 py-3 align-middle " + className} colSpan={colSpan}>
-      {children}
-    </td>
   );
 }

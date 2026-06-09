@@ -1,5 +1,5 @@
 import { listWithUser } from "@/lib/db/orders";
-import { PageHeader, Card } from "../../_components/Shell";
+import { PageHeader, Card, Th, Td } from "../../_components/Shell";
 import { Badge } from "@/components/Badge";
 import { adminCancelOrder, adminMarkPaid } from "./actions";
 import { refundOrderFromForm } from "@/app/actions/refund";
@@ -168,25 +168,5 @@ export default async function AdminOrdersPage({
         </div>
       </Card>
     </div>
-  );
-}
-
-function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <th className={"px-4 py-3 text-left font-medium " + className}>{children}</th>;
-}
-
-function Td({
-  children,
-  className = "",
-  colSpan,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  colSpan?: number;
-}) {
-  return (
-    <td className={"px-4 py-3 align-middle " + className} colSpan={colSpan}>
-      {children}
-    </td>
   );
 }

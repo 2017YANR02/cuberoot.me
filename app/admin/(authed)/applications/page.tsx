@@ -1,5 +1,5 @@
 import { list } from "@/lib/db/applications";
-import { PageHeader, Card, GhostLink } from "../../_components/Shell";
+import { PageHeader, Card, GhostLink, Th, Td } from "../../_components/Shell";
 import { Badge } from "@/components/Badge";
 import type { ApplicationStatus } from "@/db/schema";
 
@@ -80,25 +80,5 @@ export default async function ApplicationsAdminPage() {
         </div>
       </Card>
     </div>
-  );
-}
-
-function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <th className={"px-4 py-3 text-left font-medium " + className}>{children}</th>;
-}
-
-function Td({
-  children,
-  className = "",
-  colSpan,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  colSpan?: number;
-}) {
-  return (
-    <td className={"px-4 py-3 align-middle " + className} colSpan={colSpan}>
-      {children}
-    </td>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireInstructor } from "@/lib/auth/instructor";
 import { studentsByInstructor } from "@/lib/db/instructor-stats";
+import { Th, Td } from "@/components/DataTable";
 
 export const dynamic = "force-dynamic";
 
@@ -102,24 +103,5 @@ export default async function InstructorStudentsPage({
         </div>
       ) : null}
     </div>
-  );
-}
-
-function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <th className={"px-4 py-3 text-left font-medium " + className}>{children}</th>;
-}
-function Td({
-  children,
-  className = "",
-  colSpan,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  colSpan?: number;
-}) {
-  return (
-    <td className={"px-4 py-3 align-middle " + className} colSpan={colSpan}>
-      {children}
-    </td>
   );
 }

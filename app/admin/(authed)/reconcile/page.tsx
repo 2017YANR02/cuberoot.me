@@ -1,7 +1,7 @@
 import { db, schema } from "@/db";
 import { sql } from "drizzle-orm";
 import { recent } from "@/lib/db/payment-logs";
-import { PageHeader, Card } from "../../_components/Shell";
+import { PageHeader, Card, Th, Td } from "../../_components/Shell";
 import { Badge } from "@/components/Badge";
 import type { PaymentMethod, PaymentLogKind } from "@/db/schema";
 
@@ -194,31 +194,5 @@ export default async function AdminReconcilePage() {
         </div>
       </Card>
     </div>
-  );
-}
-
-function Th({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return <th className={"px-4 py-3 text-left font-medium " + className}>{children}</th>;
-}
-
-function Td({
-  children,
-  className = "",
-  colSpan,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  colSpan?: number;
-}) {
-  return (
-    <td className={"px-4 py-3 align-middle " + className} colSpan={colSpan}>
-      {children}
-    </td>
   );
 }

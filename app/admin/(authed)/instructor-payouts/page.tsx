@@ -1,4 +1,4 @@
-import { PageHeader, Card } from "../../_components/Shell";
+import { PageHeader, Card, Th, Td } from "../../_components/Shell";
 import { Badge } from "@/components/Badge";
 import { listPayouts, payoutSummary } from "@/lib/db/instructor-payouts";
 import { generatePayoutsFromForm, markPaidFromForm } from "./actions";
@@ -178,25 +178,5 @@ function Stat({ label, value }: { label: string; value: string }) {
       <div className="text-[13px] text-ink-3">{label}</div>
       <div className="mt-1 text-[24px] font-semibold text-ink">{value}</div>
     </div>
-  );
-}
-
-function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <th className={"px-4 py-3 text-left font-medium " + className}>{children}</th>;
-}
-
-function Td({
-  children,
-  className = "",
-  colSpan,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  colSpan?: number;
-}) {
-  return (
-    <td className={"px-4 py-3 align-middle " + className} colSpan={colSpan}>
-      {children}
-    </td>
   );
 }
