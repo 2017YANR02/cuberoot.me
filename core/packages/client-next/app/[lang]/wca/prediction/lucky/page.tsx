@@ -65,6 +65,7 @@ interface Row {
   source: 'exact' | 'partial' | 'approx';
   notes_zh?: string;
   notes_en?: string;
+  notes_zhHant?: string;
 }
 
 /** 概率友好格式化 — 多区间不同精度 */
@@ -154,6 +155,7 @@ function LuckyLimitPageInner() {
         source: lucky.dist.source,
         notes_zh: lucky.notes_zh,
         notes_en: lucky.notes_en,
+        notes_zhHant: lucky.notes_zhHant,
       });
     }
     return list;
@@ -631,7 +633,7 @@ function EventCard({ row, isZh }: { row: Row; isZh: boolean }) {
   return (
     <div className="lucky-card">
       <div className="lucky-card-header">
-        <span className="lucky-card-name">{isZh ? ev.name_zh : ev.name_en}</span>
+        <span className="lucky-card-name">{i18n.language === 'zh-Hant' ? (ev.name_zhHant ?? ev.name_zh) : (isZh ? ev.name_zh : ev.name_en)}</span>
         <span className="lucky-card-id">{ev.id}</span>
         {row.source === 'exact' && <span className="lucky-card-badge" title={tr({ zh: '精确分布', en: 'Exact',
             zhHant: "精確分佈"
@@ -669,7 +671,7 @@ function EventCard({ row, isZh }: { row: Row; isZh: boolean }) {
       </div>
       {(row.notes_zh || row.notes_en) && (
         <div className="lucky-card-note">
-          {isZh ? (row.notes_zh ?? row.notes_en) : (row.notes_en ?? row.notes_zh)}
+          {i18n.language === 'zh-Hant' ? (row.notes_zhHant ?? row.notes_zh ?? row.notes_en) : (isZh ? (row.notes_zh ?? row.notes_en) : (row.notes_en ?? row.notes_zh))}
         </div>
       )}
     </div>

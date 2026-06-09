@@ -20,7 +20,7 @@ export interface DeepBlurb {
 
 export const DEEP: Record<string, DeepBlurb> = {
   '222': {
-    heading: { zh: '小到一晚就能 BFS', en: 'Small enough to BFS overnight' },
+    heading: { zh: '小到一晚就能 BFS', en: 'Small enough to BFS overnight', zhHant: '小到一晚就能 BFS' },
     paragraphs: [
       {
         zh: '2×2 群 G 只有 367 万状态,因为它只有 8 个角块、没有边块、没有中心。固定 DBL 角作为锚以消去"整体旋转"的等价类,剩下 7 个可动角块 × 6 个朝向自由度 = 7! × 3⁶ = 3,674,160。一台 1981 年的 PC 都能在合理时间内 BFS 完整张 Cayley 图。',
@@ -277,7 +277,7 @@ export const DEEP: Record<string, DeepBlurb> = {
   },
 
   '333fm': {
-    heading: { zh: 'FMC 的硬上限就是 20', en: 'FMC has a hard ceiling at 20' },
+    heading: { zh: 'FMC 的硬上限就是 20', en: 'FMC has a hard ceiling at 20', zhHant: 'FMC 的硬上限就是 20' },
     paragraphs: [
       {
         zh: 'Fewest Moves Challenge 给选手 1 小时,要求找出 ≤ N 步的解,N 越小分越高。理论上 N 永远存在 ≤ 20 步的解(2010 cube20.org 证明)。',

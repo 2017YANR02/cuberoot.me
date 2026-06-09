@@ -125,7 +125,7 @@ function PuzzleCard({ p, isZh, expanded, onToggle }: {
           {DEEP[p.id] && (
             <div className="god-card-deep">
               {DEEP[p.id].heading && (
-                <h4 className="god-card-deep-h">{(i18n.language.startsWith('zh') ? DEEP[p.id].heading!.zh : DEEP[p.id].heading!.en)}</h4>
+                <h4 className="god-card-deep-h">{(i18n.language === 'zh-Hant' ? (DEEP[p.id].heading!.zhHant ?? DEEP[p.id].heading!.zh) : (i18n.language.startsWith('zh') ? DEEP[p.id].heading!.zh : DEEP[p.id].heading!.en))}</h4>
               )}
               {DEEP[p.id].paragraphs.map((para, i) => (
                 <p key={i} className="god-card-deep-p"><MathText>{(i18n.language === 'zh-Hant' ? (para.zhHant ?? para.zh) : (i18n.language.startsWith('zh') ? para.zh : para.en))}</MathText></p>
@@ -413,7 +413,7 @@ export default function GodNumberPage() {
                                         ))}</p>
             </div>
             <div className="god-primer-cell">
-              <h3>{isZh ? <>5. Lagrange 定理 ⇒ 陪集分解</> : <>5. Lagrange ⇒ coset decomposition</>}</h3>
+              <h3>{i18n.language === 'zh-Hant' ? (<>5. Lagrange 定理 ⇒ 陪集分解</>) : (isZh ? <>5. Lagrange 定理 ⇒ 陪集分解</> : <>5. Lagrange ⇒ coset decomposition</>)}</h3>
               <p>{i18n.language === 'zh-Hant' ? ((
                                           <>任何子群 <TeX src="H \subset G" /> 都把 <TeX src="G" /> 切成 <TeX src="|G|/|H|" /> 個互不相交的等價類(陪集)。Kociemba 演算法用 <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" />(<TeX src="|H| \approx 1.95 \times 10^{10}" />)把 <TeX src="4.3 \times 10^{19}" /> 狀態劃成 2,217,093,120 個陪集——每個陪集只需求一次解,數量減少 10 個數量級。</>
                                         )) : (isZh ? (

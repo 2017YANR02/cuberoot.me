@@ -83,6 +83,7 @@ interface StatData {
   titleZh: string;
   note?: string;
   noteZh?: string;
+  noteZhHant?: string;
   header: StatHeader[];
   rows?: unknown[][];
   sections?: StatSection[];
@@ -1130,7 +1131,7 @@ export default function WcaStatClient() {
       <div className="wca-stats-header">
         <h1>{i18n.language === 'zh-Hant' ? (data.titleZhHant ?? data.titleZh) : (isZh ? data.titleZh : data.title)}</h1>
         {data.note && (
-          <p className="wca-stats-note">{isZh ? (data.noteZh ?? data.note) : data.note}</p>
+          <p className="wca-stats-note">{i18n.language === 'zh-Hant' ? (data.noteZhHant ?? data.noteZh ?? data.note) : (isZh ? (data.noteZh ?? data.note) : data.note)}</p>
         )}
       </div>
 

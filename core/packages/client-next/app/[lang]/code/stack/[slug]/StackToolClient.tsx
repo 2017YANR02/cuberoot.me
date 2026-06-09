@@ -213,7 +213,7 @@ export default function StackToolClient() {
                   <p className="sec-desc">{t.whatDesc}</p>
                 </header>
                 <div className="stack-intro-prose stack-prose-wide">
-                  {(i18n.language.startsWith('zh') ? detail.intro.zh : detail.intro.en)}
+                  {i18n.language === 'zh-Hant' ? (detail.intro.zhHant ?? detail.intro.zh) : (i18n.language.startsWith('zh') ? detail.intro.zh : detail.intro.en)}
                 </div>
               </section>
 
@@ -309,7 +309,7 @@ export default function StackToolClient() {
                   <p className="sec-desc">{t.role}</p>
                 </header>
                 <div className="stack-intro-prose stack-prose-wide stack-prose-quote">
-                  {(i18n.language.startsWith('zh') ? detail.cuberoot.zh : detail.cuberoot.en)}
+                  {i18n.language === 'zh-Hant' ? (detail.cuberoot.zhHant ?? detail.cuberoot.zh) : (i18n.language.startsWith('zh') ? detail.cuberoot.zh : detail.cuberoot.en)}
                 </div>
               </section>
 

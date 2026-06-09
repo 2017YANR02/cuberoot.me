@@ -50,14 +50,14 @@ const HISTORY: ReadonlyArray<{ year: number; lo: number; hi: number; final?: boo
   { year: 2010, lo: 20, hi: 20, final: true },
 ];
 
-const BEGINNERS_205: ReadonlyArray<[string, string, number]> = [
-  ['White cross', '白色十字', 20],
-  ['White corners', '白色角块', 60],
-  ['Edges of the second layer', '第二层棱块', 80],
-  ['Yellow cross', '黄色十字', 18],
-  ['Permuting yellow edges', '黄色棱块换位', 21],
-  ['Permuting yellow corners', '黄色角块换位', 24],
-  ['Orienting yellow corners', '黄色角块定向', 42],
+const BEGINNERS_205: ReadonlyArray<[string, string, number, string]> = [
+  ['White cross', '白色十字', 20, '白色十字'],
+  ['White corners', '白色角块', 60, '白色角塊'],
+  ['Edges of the second layer', '第二层棱块', 80, '第二層稜塊'],
+  ['Yellow cross', '黄色十字', 18, '黃色十字'],
+  ['Permuting yellow edges', '黄色棱块换位', 21, '黃色稜塊換位'],
+  ['Permuting yellow corners', '黄色角块换位', 24, '黃色角塊換位'],
+  ['Orienting yellow corners', '黄色角块定向', 42, '黃色角塊定向'],
 ];
 const TOTAL_205 = BEGINNERS_205.reduce((a, b) => a + b[2], 0);
 
@@ -369,7 +369,7 @@ export default function DemigodPage() {
               <TeX src={`\\phi(x)^{-1} \\star \\phi(y) \\;=\\; (v \\star u^{-1} \\star x)^{-1} \\star (v \\star u^{-1} \\star y) \\;=\\; x^{-1} \\star y,`} />
             </div>
             <p style={{ margin: '0.5rem 0' }}>
-              {isZh ? <>所以 <TeX src="(x, y) \in E \iff x^{-1} \star y \in S \iff \phi(x)^{-1} \star \phi(y) \in S \iff (\phi(x), \phi(y)) \in E" />。<span className="dg-qed">∎</span></> : <>so <TeX src="(x, y) \in E \iff x^{-1} \star y \in S \iff \phi(x)^{-1} \star \phi(y) \in S \iff (\phi(x), \phi(y)) \in E" />. <span className="dg-qed">∎</span></>}
+              {i18n.language === 'zh-Hant' ? (<>所以 <TeX src="(x, y) \in E \iff x^{-1} \star y \in S \iff \phi(x)^{-1} \star \phi(y) \in S \iff (\phi(x), \phi(y)) \in E" />。<span className="dg-qed">∎</span></>) : (isZh ? <>所以 <TeX src="(x, y) \in E \iff x^{-1} \star y \in S \iff \phi(x)^{-1} \star \phi(y) \in S \iff (\phi(x), \phi(y)) \in E" />。<span className="dg-qed">∎</span></> : <>so <TeX src="(x, y) \in E \iff x^{-1} \star y \in S \iff \phi(x)^{-1} \star \phi(y) \in S \iff (\phi(x), \phi(y)) \in E" />. <span className="dg-qed">∎</span></>)}
             </p>
           </div>
 
@@ -447,7 +447,7 @@ export default function DemigodPage() {
               <TeX src={`\\Pr[\\mu \\ge \\hat\\mu + 0.18] \\;\\le\\; 2\\exp\\!\\left(\\frac{-2|S| \\cdot 0.1^{2}}{205^{2}}\\right) \\;<\\; 2\\exp\\!\\left(\\frac{-|S|}{1\\,541\\,939}\\right).`} />
             </div>
             <p style={{ margin: '0.5rem 0' }}>
-              {isZh ? <>再用 Theorem 2 (<TeX src="D < 2\mu" />):</> : <>Then by Theorem 2 (<TeX src="D < 2\mu" />):</>}
+              {i18n.language === 'zh-Hant' ? (<>再用 Theorem 2 (<TeX src="D < 2\mu" />):</>) : (isZh ? <>再用 Theorem 2 (<TeX src="D < 2\mu" />):</> : <>Then by Theorem 2 (<TeX src="D < 2\mu" />):</>)}
             </p>
             <div className="dg-formula">
               <TeX src={`\\Pr[D \\ge 2\\hat\\mu + 0.36] \\;\\le\\; \\Pr[2\\mu \\ge 2\\hat\\mu + 0.36] \\;<\\; 2\\exp\\!\\left(\\frac{-|S|}{1\\,541\\,939}\\right).`} />
@@ -535,9 +535,9 @@ export default function DemigodPage() {
                                   ))}
           </p>
           <div className="dg-205-table">
-            {BEGINNERS_205.map(([en, zh, moves]) => (
+            {BEGINNERS_205.map(([en, zh, moves, zhHant]) => (
               <div key={en} className="dg-205-row">
-                <div>{isZh ? zh : en}</div>
+                <div>{i18n.language === 'zh-Hant' ? zhHant : (isZh ? zh : en)}</div>
                 <div>{moves}</div>
               </div>
             ))}
