@@ -202,6 +202,27 @@
   color: var(--muted-foreground);
 }
 .wse-state-error { color: #ff7676; }
+/* 排名页:已选项目数 + 模式标签(单项 / 名次和),由事件选择器选中数量驱动 */
+.wse-mode-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin: 10px 0 2px;
+}
+.wse-mode-chip {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  border: 1px solid var(--border-default);
+}
+.wse-mode-chip.single { color: var(--muted-foreground); }
+.wse-mode-chip.sor {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
 .wse-result-meta {
   font-size: 13px;
   color: var(--muted-foreground);
@@ -406,50 +427,7 @@
   .wse-table th, .wse-table td { padding: 6px 8px; font-size: 13px; }
 }
 
-/* ── Sum-of-Ranks insights: 个人最优组合 (.sor-tool/.sor-pb) + 名人堂 (.sor-census) ── */
-.sor-tool { display: flex; flex-direction: column; gap: 8px; margin: 0 0 12px; }
-.sor-tool-label { font-size: 13px; color: var(--muted-foreground); }
-.sor-tool-picker { max-width: 360px; }
-.sor-tool-hint { font-size: 13px; color: var(--faint-foreground); }
-
-.sor-pb {
-  display: flex; flex-direction: column; gap: 8px;
-  max-width: 520px; margin-top: 4px; padding: 12px 14px; border-radius: 8px;
-  background: color-mix(in srgb, var(--foreground) 4%, transparent);
-  border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
-}
-.sor-pb-head { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.sor-pb-head a { color: var(--foreground); text-decoration: none; }
-.sor-pb-head a:hover { color: var(--accent); }
-.sor-pb-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.sor-pb-type { font-size: 12px; color: var(--muted-foreground); min-width: 30px; }
-.sor-pb-rank { font-weight: 700; font-variant-numeric: tabular-nums; }
-.sor-pb-events { display: inline-flex; align-items: center; gap: 2px; }
-.sor-pb-events :is(img, svg) { width: 20px; height: 20px; }
-.sor-pb-apply {
-  margin-left: auto; font-size: 12px; padding: 3px 10px; border-radius: 6px; cursor: pointer;
-  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--accent);
-}
-.sor-pb-apply:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
-.sor-pb-note { font-size: 12px; color: var(--faint-foreground); }
-.sor-pb-rank-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.sor-pb-count { font-size: 12px; color: var(--muted-foreground); }
-.sor-pb-combos { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
-.sor-pb-combo { display: flex; align-items: center; gap: 10px; }
-.sor-pb-expand {
-  margin-top: 8px; background: none; cursor: pointer; font-size: 13px;
-  padding: 4px 12px; border-radius: 6px;
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-  color: var(--accent);
-}
-.sor-pb-expand:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-.sor-pb-expand:disabled { opacity: 0.6; cursor: default; }
-.sor-pb-expand-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
-.sor-pb-expand-row .sor-pb-expand { margin-top: 0; }
-.sor-pb-collapse { background: none; border: none; color: var(--muted-foreground); font-size: 13px; cursor: pointer; padding: 4px 0; }
-.sor-pb-collapse:hover { text-decoration: underline; color: var(--foreground); }
+/* ── Sum-of-Ranks 名人堂 (.sor-census) ── 个人最优组合 (.sor-tool/.sor-pb) 已抽到 components/wca-stats/best-combos.css(排名页 + 选手页共用) ── */
 
 /* SoR main table: flag + name inline in the person cell */
 .wse-person-cell { display: inline-flex; align-items: center; gap: 6px; }
@@ -486,5 +464,4 @@
 
 @media (max-width: 480px) {
   .sor-census-list { grid-template-columns: 1fr; }
-  .sor-pb-apply { margin-left: 0; }
 }

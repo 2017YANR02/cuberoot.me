@@ -63,12 +63,16 @@ function dateOrNull(v: Date | string | null | undefined): string {
 }
 
 // 给排序好的列表分配 world/country/continent rank,并列同名次
+// 一次遍历同时出 world / country / continent 三档名次(standard competition ranking,并列共享最低名次).
+// continentOf(国→洲映射)可选:省略时 kr 退化为单桶(调用方忽略即可),向后兼容旧调用.
 function assignRanks(
   list: Array<{ wcaId: string; val: number; country: string }>,
-): Map<string, { wr: number; cr: number }> {
-  const out = new Map<string, { wr: number; cr: number }>();
+  continentOf?: Map<string, string>,
+): Map<string, { wr: number; cr: number; kr: number }> {
+  const out = new Map<string, { wr: number; cr: number; kr: number }>();
   let prevVal = -1, prevWr = 0;
   const ctry = new Map<string, { prev: number; rank: number; count: number }>();
+  const cont = new Map<string, { prev: number; rank: number; count: number }>();
   list.forEach((it, i) => {
     let wr: number;
     if (it.val === prevVal) wr = prevWr;
@@ -79,7 +83,14 @@ function assignRanks(
     if (it.val === cs.prev) cr = cs.rank;
     else { cr = cs.count + 1; cs.prev = it.val; cs.rank = cr; }
     cs.count++;
-    out.set(it.wcaId, { wr, cr });
+    const ck = continentOf?.get(it.country) ?? '';
+    let ks = cont.get(ck);
+    if (!ks) { ks = { prev: -1, rank: 0, count: 0 }; cont.set(ck, ks); }
+    let kr: number;
+    if (it.val === ks.prev) kr = ks.rank;
+    else { kr = ks.count + 1; ks.prev = it.val; ks.rank = kr; }
+    ks.count++;
+    out.set(it.wcaId, { wr, cr, kr });
   });
   return out;
 }
@@ -843,13 +854,16 @@ async function main() {
   // 供 sum-of-ranks 子集 API 显式勾选时按需求和(见 server wca_stats_extra.ts).
   console.log('[pr] writing person_ranks...');
   // 先算每个 event(含废止项)的全球+国家 ranks(对所有人)
-  const eventRanks: { single: Map<string, { wr: number; cr: number; val: number }>; avg: Map<string, { wr: number; cr: number; val: number }> }[] = [];
+  const eventRanks: { single: Map<string, { wr: number; cr: number; kr: number; val: number }>; avg: Map<string, { wr: number; cr: number; kr: number; val: number }> }[] = [];
   // 也记录每个 event 的参赛人数(用作缺项默认 rank).world 总和用全球计数,
   // country 总和必须用"该国该项"计数(缺项 = 比该国倒数第一再差一名),否则国家榜罚分被全球量级放大.
+  // continent 同理用"该洲该项"计数.
   const eventParticipantsSingle: number[] = [];
   const eventParticipantsAvg: number[] = [];
   const eventParticipantsCountrySingle: Map<string, number>[] = [];
   const eventParticipantsCountryAvg: Map<string, number>[] = [];
+  const eventParticipantsContinentSingle: Map<string, number>[] = [];
+  const eventParticipantsContinentAvg: Map<string, number>[] = [];
   for (let i = 0; i < RANK_EVENTS.length; i++) {
     const ev = RANK_EVENTS[i]!;
     const acc = accByEvent.get(ev) ?? new Map<string, Acc>();
@@ -861,21 +875,33 @@ async function main() {
     }
     sList.sort((x, y) => x.val - y.val);
     aList.sort((x, y) => x.val - y.val);
-    const sRanks = assignRanks(sList);
-    const aRanks = assignRanks(aList);
-    const sMap = new Map<string, { wr: number; cr: number; val: number }>();
-    const aMap = new Map<string, { wr: number; cr: number; val: number }>();
+    const sRanks = assignRanks(sList, continentOf);
+    const aRanks = assignRanks(aList, continentOf);
+    const sMap = new Map<string, { wr: number; cr: number; kr: number; val: number }>();
+    const aMap = new Map<string, { wr: number; cr: number; kr: number; val: number }>();
     for (const it of sList) sMap.set(it.wcaId, { ...sRanks.get(it.wcaId)!, val: it.val });
     for (const it of aList) aMap.set(it.wcaId, { ...aRanks.get(it.wcaId)!, val: it.val });
     eventRanks.push({ single: sMap, avg: aMap });
     eventParticipantsSingle.push(sList.length);
     eventParticipantsAvg.push(aList.length);
     const csMap = new Map<string, number>();
-    for (const it of sList) csMap.set(it.country, (csMap.get(it.country) ?? 0) + 1);
+    const ksMap = new Map<string, number>();
+    for (const it of sList) {
+      csMap.set(it.country, (csMap.get(it.country) ?? 0) + 1);
+      const ck = continentOf.get(it.country) ?? '';
+      ksMap.set(ck, (ksMap.get(ck) ?? 0) + 1);
+    }
     eventParticipantsCountrySingle.push(csMap);
+    eventParticipantsContinentSingle.push(ksMap);
     const caMap = new Map<string, number>();
-    for (const it of aList) caMap.set(it.country, (caMap.get(it.country) ?? 0) + 1);
+    const kaMap = new Map<string, number>();
+    for (const it of aList) {
+      caMap.set(it.country, (caMap.get(it.country) ?? 0) + 1);
+      const ck = continentOf.get(it.country) ?? '';
+      kaMap.set(ck, (kaMap.get(ck) ?? 0) + 1);
+    }
     eventParticipantsCountryAvg.push(caMap);
+    eventParticipantsContinentAvg.push(kaMap);
   }
 
   // ════════════ A 各地综合排行 (wca_fs_country_ranks + _meta) ════════════
@@ -998,12 +1024,13 @@ async function main() {
   }
   for (const pid of allActivePids) {
     const country = personCountry.get(pid) ?? '';
+    const continent = continentOf.get(country) ?? '';
     const bfp = bestFinalPos.get(pid) ?? 0;
     // single
     {
       const ranksW: number[] = new Array(RANK_EVENTS.length).fill(0);
       const ranksC: number[] = new Array(RANK_EVENTS.length).fill(0);
-      let totalW = 0, totalC = 0, doneN = 0;
+      let totalW = 0, totalC = 0, totalK = 0, doneN = 0;
       for (let i = 0; i < ACTIVE_EVENTS.length; i++) {
         const r = eventRanks[i]!.single.get(pid);
         if (r) {
@@ -1011,11 +1038,13 @@ async function main() {
           ranksC[i] = r.cr;
           totalW += r.wr;
           totalC += r.cr;
+          totalK += r.kr;
           doneN++;
         } else {
-          // 缺项默认: participants+1 (world 用全球计数, country 用该国该项计数)
+          // 缺项默认: participants+1 (world 用全球计数, country/continent 用该国/该洲该项计数)
           totalW += eventParticipantsSingle[i]! + 1;
           totalC += (eventParticipantsCountrySingle[i]!.get(country) ?? 0) + 1;
+          totalK += (eventParticipantsContinentSingle[i]!.get(continent) ?? 0) + 1;
         }
       }
       // 废止项:只填数组,不计入 total/doneN
@@ -1024,7 +1053,7 @@ async function main() {
         if (r) { ranksW[i] = r.wr; ranksC[i] = r.cr; }
       }
       prStream.write(
-        `${pgEsc(pid)}\t${bool(false)}\t${pgEsc(country)}\t${doneN}\t${totalW}\t${totalC}\t${bfp}\t${intArr(ranksW)}\t${intArr(ranksC)}\n`,
+        `${pgEsc(pid)}\t${bool(false)}\t${pgEsc(country)}\t${doneN}\t${totalW}\t${totalC}\t${bfp}\t${intArr(ranksW)}\t${intArr(ranksC)}\t${pgEsc(continent)}\t${totalK}\n`,
       );
       prCount++;
     }
@@ -1032,7 +1061,7 @@ async function main() {
     {
       const ranksW: number[] = new Array(RANK_EVENTS.length).fill(0);
       const ranksC: number[] = new Array(RANK_EVENTS.length).fill(0);
-      let totalW = 0, totalC = 0, doneN = 0;
+      let totalW = 0, totalC = 0, totalK = 0, doneN = 0;
       for (let i = 0; i < ACTIVE_EVENTS.length; i++) {
         // 333mbf 没有 average — 跳过(填 0)
         if (ACTIVE_EVENTS[i] === '333mbf') {
@@ -1044,10 +1073,12 @@ async function main() {
           ranksC[i] = r.cr;
           totalW += r.wr;
           totalC += r.cr;
+          totalK += r.kr;
           doneN++;
         } else {
           totalW += eventParticipantsAvg[i]! + 1;
           totalC += (eventParticipantsCountryAvg[i]!.get(country) ?? 0) + 1;
+          totalK += (eventParticipantsContinentAvg[i]!.get(continent) ?? 0) + 1;
         }
       }
       // 废止项 avg:只填数组(333mbo 无 average → map 空 → 留 0),不计入 total/doneN
@@ -1056,7 +1087,7 @@ async function main() {
         if (r) { ranksW[i] = r.wr; ranksC[i] = r.cr; }
       }
       prStream.write(
-        `${pgEsc(pid)}\t${bool(true)}\t${pgEsc(country)}\t${doneN}\t${totalW}\t${totalC}\t${bfp}\t${intArr(ranksW)}\t${intArr(ranksC)}\n`,
+        `${pgEsc(pid)}\t${bool(true)}\t${pgEsc(country)}\t${doneN}\t${totalW}\t${totalC}\t${bfp}\t${intArr(ranksW)}\t${intArr(ranksC)}\t${pgEsc(continent)}\t${totalK}\n`,
       );
       prCount++;
     }
@@ -1235,7 +1266,7 @@ TRUNCATE wca_fs_person_year_solves;
 \\! rm -f wca_success_rate.copy.tsv
 \\copy wca_all_events_done (wca_id, country_id, done_count, is_done, first_comp_id, first_comp_date, achievement_comp_id, achievement_comp_date, days_to_complete, total_comp_count) FROM 'wca_all_events_done.copy.tsv';
 \\! rm -f wca_all_events_done.copy.tsv
-\\copy wca_person_ranks (wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world, ranks_country) FROM 'wca_person_ranks.copy.tsv';
+\\copy wca_person_ranks (wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world, ranks_country, continent_id, total_continent_rank) FROM 'wca_person_ranks.copy.tsv';
 \\! rm -f wca_person_ranks.copy.tsv
 \\copy wca_fs_country_ranks (is_avg, country_id, sum, events_present, per_event_rank) FROM 'wca_fs_country_ranks.copy.tsv';
 \\! rm -f wca_fs_country_ranks.copy.tsv
