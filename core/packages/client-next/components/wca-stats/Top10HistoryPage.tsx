@@ -21,11 +21,11 @@ import LangToggle from '@/components/LangToggle';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { type Continent } from '@/lib/country-continents';
-import { colorForRow, CONTINENT_HUE } from '@/lib/bar-race-colors';
+import { CONTINENT_HUE } from '@/lib/bar-race-colors';
+import BarRaceChart from '@/components/wca-stats/BarRaceChart';
 import { exportTop10Video, type ExportProgress } from '@/lib/top10-export';
 import './top10_history.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface PbEvent { d: string; p: string; v: number; c: string }
 interface PersonInfo { name: string; country: string; iso2: string | null }
@@ -50,7 +50,6 @@ const SPEEDS = [5, 30, 100, 365] as const;
 const DEFAULT_SPEED = 30;
 const SHOW_N = 10;
 const DAY_MS = 86400000;
-const BAR_FRAC = 60;
 // NOTE: 行高(px) — 必须和 CSS .t10h-stage 的 --row-h 保持一致;
 //   响应式断点用 matchMedia 切换
 function rowHeightPx(): number {
@@ -337,12 +336,6 @@ export default function Top10HistoryPage({
       .slice(0, SHOW_N);
   }, [replay]);
 
-  const rankByPid = useMemo(() => {
-    const m = new Map<string, number>();
-    top10.forEach((row, i) => m.set(row.pid, i));
-    return m;
-  }, [top10]);
-
   const axisMaxV = top10.length > 0 ? top10[top10.length - 1].v : 1000;
   const axis = useMemo(() => axisFor(eventId, metric, axisMaxV), [eventId, metric, axisMaxV]);
 
@@ -542,63 +535,23 @@ export default function Top10HistoryPage({
           </div>
         </div>
 
-        {!axis.hideAxis && (
-          <div className="t10h-axis" aria-hidden="true">
-            {ticks.map(v => (
-              <span key={v} className="t10h-tick" style={{ left: `${(v / axis.max) * BAR_FRAC}%` }}>
-                {tickLabel(v, eventId, metric)}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div
-          className="t10h-bars"
-          style={{ height: `${SHOW_N * rowH}px` }}
-        >
-          {ticks.length > 0 && (
-            <div className="t10h-grid" aria-hidden="true">
-              {ticks.map(v => (
-                <span
-                  key={v}
-                  className={`t10h-grid-line${v === 0 ? ' t10h-grid-line-zero' : ''}`}
-                  style={{ left: `${(v / axis.max) * BAR_FRAC}%` }}
-                />
-              ))}
-            </div>
-          )}
-
-          {top10.map(row => {
+        <BarRaceChart
+          rows={top10.map((row, idx) => {
             const person = index.persons[row.pid];
             const comp = index.comps[row.c];
             const compNameRaw = comp?.name ?? row.c;
             const compName = localizeCompName(row.c, compNameRaw, isZh);
-            const personName = person ? displayCuberName(person.name, isZh) : row.pid;
-            const widthPct = (row.v / axis.max) * BAR_FRAC;
-            const rank = rankByPid.get(row.pid) ?? 0;
-            const color = colorForRow(row.pid, person?.country);
             const compIso2 = compFlagIso2(row.c);
-            return (
-              <div
-                key={row.pid}
-                className="t10h-row"
-                style={{ transform: `translateY(${rank * rowH}px)` }}
-              >
-                <div className="t10h-rank">{rank + 1}</div>
-                <a
-                  className="t10h-bar"
-                  href={wcaPersonUrl(row.pid)}
-                  target="_blank"
-                  rel="noopener"
-                  style={{ width: `${widthPct}%`, background: color }}
-                  title={personName}
-                >
-                  {person?.iso2 && (
-                    <Flag iso2={person.iso2} className="t10h-bar-flag" />
-                  )}
-                  <span className="t10h-bar-name">{personName}</span>
-                </a>
-                <span className="t10h-value">{formatWcaResult(row.v, eventId, fmtKind)}</span>
+            return {
+              key: row.pid,
+              href: wcaPersonUrl(row.pid),
+              name: person ? displayCuberName(person.name, isZh) : row.pid,
+              iso2: person?.iso2 ?? null,
+              country: person?.country,
+              value: row.v,
+              valueLabel: formatWcaResult(row.v, eventId, fmtKind),
+              rankLabel: idx + 1,
+              trailing: (
                 <Link
                   className="t10h-comp"
                   {...compLinkProps(row.c, { event: eventId })}
@@ -607,10 +560,16 @@ export default function Top10HistoryPage({
                   {compIso2 && <Flag iso2={compIso2} className="t10h-comp-flag" />}
                   <span className="t10h-comp-name">{compName}</span>
                 </Link>
-              </div>
-            );
+              ),
+            };
           })}
-        </div>
+          axisMax={axis.max}
+          ticks={ticks}
+          tickLabel={(v) => tickLabel(v, eventId, metric)}
+          hideAxisLabels={axis.hideAxis}
+          rowH={rowH}
+          showN={SHOW_N}
+        />
       </div>
 
       <footer className="t10h-controls">
