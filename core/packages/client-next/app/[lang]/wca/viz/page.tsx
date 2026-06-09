@@ -25,6 +25,7 @@ import Link from '@/components/AppLink';
 import { HelpCircle } from 'lucide-react';
 import './viz.css';
 import { tr } from '@/i18n/tr';
+import i18n from "@/i18n/i18n-client";
 
 // NOTE: WCA 项目列表
 const EVENTS = [
@@ -147,7 +148,7 @@ export default function VizPage() {
 });
   const renderName = (p: typeof players[number]) => {
     const iso2 = personFlagIso2(p.wcaId);
-    const name = isZh ? p.nameZh : p.name;
+    const name = i18n.language === 'zh-Hant' ? (p.nameZhHant ?? p.nameZh) : (isZh ? p.nameZh : p.name);
     return (
       <>
         {iso2 && <Flag iso2={iso2} className="viz-title-flag" />}

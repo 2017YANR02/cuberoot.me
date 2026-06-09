@@ -236,6 +236,7 @@ export interface Pattern {
   lit: StageId[];
   cacheHit: boolean;
   eta: string;
+    zhHant?: { label: string; detail: string };
 }
 export const TRACER_PATTERNS: Pattern[] = [
   {
@@ -246,7 +247,8 @@ export const TRACER_PATTERNS: Pattern[] = [
     eta: '~200ms 首次  ·  完全不打 API',
     zh: { label: '打开首页', detail: 'LandingPage 是构建期静态预渲染 (SSG) 的 HTML, 由 CDN / nginx 直出, 不进 Next 函数; 客户端 hydrate 后再 client 端取动态数据 (近期比赛 / 纪录)。' },
     en: { label: 'Open home', detail: 'LandingPage is build-time static (SSG) HTML served straight from CDN / nginx — no Next function runs; the client hydrates and then fetches dynamic data (upcoming comps / records) client-side.' },
-  },
+      zhHant: { label: '開啟首頁', detail: 'LandingPage 是構建期靜態預渲染 (SSG) 的 HTML, 由 CDN / nginx 直出, 不進 Next 函式; 客戶端 hydrate 後再 client 端取動態資料 (近期比賽 / 紀錄)。' }
+},
   {
     id: 'recon-fresh',
     route: '/recon/abc',
@@ -255,7 +257,8 @@ export const TRACER_PATTERNS: Pattern[] = [
     eta: '~40ms (API 部分)',
     zh: { label: '首次打开复盘', detail: 'Next 服端渲染 shell 返回后, 客户端 hydrate 调 apiUrl("/v1/recon/abc")。/v1/recon/* 不在 24h cache 白名单, 整条管道穿透:Hono 查 PG, 反序列化, 返回 JSON。' },
     en: { label: 'First-time recon view', detail: 'After Next streams the SSR shell back, the client hydrates and fetches apiUrl("/v1/recon/abc"). /v1/recon/* is not in the 24h proxy_cache allowlist, so the request flows through to Hono → PG, deserializes, returns JSON.' },
-  },
+      zhHant: { label: '首次開啟復盤', detail: 'Next 服端渲染 shell 返回後, 客戶端 hydrate 調 apiUrl("/v1/recon/abc")。/v1/recon/* 不在 24h cache 白名單, 整條管道穿透:Hono 查 PG, 反序列化, 返回 JSON。' }
+},
   {
     id: 'wca-cached',
     route: '/wca/all-results?show=persons',
@@ -264,7 +267,8 @@ export const TRACER_PATTERNS: Pattern[] = [
     eta: '< 10ms (cache hit)',
     zh: { label: '回访 WCA 统计', detail: '24h 内重复访问 stat 数据。nginx proxy_cache 在 :api 这一层 hit, 直接吐 JSON, 不打 Hono、不打 PG。每天首次访问才真正穿透。' },
     en: { label: 'Revisit WCA stat', detail: 'Repeat visit within 24h. nginx proxy_cache hits at the :api stage, returns JSON directly — Hono and PG untouched. Only the first request each day pierces the cache.' },
-  },
+      zhHant: { label: '回訪 WCA 統計', detail: '24h 內重複訪問 stat 資料。nginx proxy_cache 在 :api 這一層 hit, 直接吐 JSON, 不打 Hono、不打 PG。每天首次訪問才真正穿透。' }
+},
   {
     id: 'iframe-fork',
     route: '/tools/cstimer/index.html',
@@ -273,7 +277,8 @@ export const TRACER_PATTERNS: Pattern[] = [
     eta: '< 10ms (静态)',
     zh: { label: '打开 fork 内部页', detail: 'fork 项目的内部页面 (iframe src)。nginx 直接服 /tools/cstimer/ 静态 HTML, 不打 Next, 不打 API。从 Next 路由 /cstimer 进来时再加一层 Next page + iframe 套娃。' },
     en: { label: 'Fork inner page', detail: 'Inside-iframe page of a forked project. nginx serves /tools/cstimer/ static HTML directly — no Next, no API. From the Next route /cstimer, you wrap an extra Next page + iframe around this.' },
-  },
+      zhHant: { label: '開啟 fork 內部頁', detail: 'fork 項目的內部頁面 (iframe src)。nginx 直接服 /tools/cstimer/ 靜態 HTML, 不打 Next, 不打 API。從 Next 路由 /cstimer 進來時再加一層 Next page + iframe 套娃。' }
+},
 ];
 
 export interface TLEntry {
@@ -281,6 +286,7 @@ export interface TLEntry {
   tag: 'migration' | 'dx' | 'feature' | 'infra';
   zh: { title: string; body: string; expand: string };
   en: { title: string; body: string; expand: string };
+    zhHant?: { title: string; body: string; expand: string };
 }
 export const TIMELINE: TLEntry[] = [
   {
@@ -296,7 +302,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'Fixed pages move from per-request SSR to build-time static prerender (SSG; ~128 route-groups served from CDN, zero compute). On Vercel, /stats/* big JSON now 307-redirects to static.cuberoot.me (no longer proxied through a function, also clearing the big-file 502s); landing links drop prefetch. Function invocations / CPU / memory expected to drop to ~1/4.',
       expand: 'Root cause: the root layout did await cookies()/headers() in render to resolve locale, opting the whole tree into dynamic rendering — every page hit a serverless function on each request. Fix: move locale ownership to [lang]/layout (I18nProvider initialLang + generateStaticParams en/zh), strip dynamic APIs from the root layout, set html[lang] via an inline script from the URL. Two SSG gotchas: (1) react-i18next defaults to useSuspense + async init, so useTranslation suspended during prerender → empty HTML; fixed with initImmediate:false + useSuspense:false. (2) the globally-mounted LangToggle called useSearchParams at render, forcing every page to BAILOUT_TO_CLIENT_SIDE_RENDERING (empty shell); switched to reading window.location.search on click. ~18 query-driven pages stay SSG client-shells; data still fetched client-side from api.cuberoot.me.',
     },
-  },
+      zhHant: {
+                title: 'Vercel 用量最佳化: 頁面靜態化 (SSG) + 大檔案不過函式',
+                body: '固定頁從動態 SSR 改成構建期靜態預渲染 (SSG, ~128 組走 CDN 零計算);/stats/* 大 JSON 在 Vercel 改 307 重定向到 static.cuberoot.me (不再經函式中轉, 順帶消掉大檔案 502);首頁連結關預取。函式呼叫 / CPU / 記憶體預期降到約 1/4。',
+                expand: '根因: 根 layout 渲染時 await cookies()/headers() 讀語言, 把整樹釘成動態, 每個頁面每次訪問都進 serverless 函式。改法: 語言歸屬下移到 [lang]/layout (I18nProvider initialLang + generateStaticParams en/zh), 根 layout 去動態 API 轉靜態, html[lang] 由內聯指令碼按 URL 設。踩到兩個靜態化坑: (1) react-i18next 預設 useSuspense + 非同步 init, prerender 時 useTranslation suspend → 空 HTML, 改 initImmediate:false + useSuspense:false; (2) 全域性掛載的 LangToggle 在 render 調 useSearchParams, 讓每頁 BAILOUT_TO_CLIENT_SIDE_RENDERING 出空殼, 改成 click 時讀 window.location.search。~18 個查詢驅動頁 (WCA 統計表 / 打亂工具 / sim 等) 維持 SSG client-shell, 資料仍 client 端從 api.cuberoot.me 取。',
+              }
+},
   {
     date: '2026-05-27',
     tag: 'migration',
@@ -310,7 +321,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'cuberoot.me cuts over: one DNS line → self-hosted VM nginx → systemd cuberoot-next (Next standalone); the other line → Vercel edge → same Next code. DNS provider handles the split. The retired Vite SPA is taken down (2026-05-27), only local localhost:5173 kept for comparison. GH Pages mirror is now disabled.',
       expand: 'Backend skeleton unchanged (Hono+PG); front-end framework swaps React Router → Next.js App Router + Turbopack, new code lives in packages/client-next/. One Next codebase runs in two places: one DNS line = standard Next standalone on systemd (deploy_next.yml CI build + tar + scp + atomic swap + health check), the other = Vercel Hobby auto-deploy from GitHub. Three Vercel-specific gotchas: (1) standalone + outputFileTracingRoot trip Vercel Turbopack into manifest ENOENT (vercel/next.js#88579) — gated by VERCEL=1 env; (2) /stats/* and /tools/* are not bundled into Vercel functions — route handlers fall back to static.cuberoot.me; (3) /zh/wca/comp/[slug] needs force-dynamic or useSearchParams throws DYNAMIC_SERVER_USAGE 500. HTTP-01 cert issued under a minute, zero user-visible downtime.',
     },
-  },
+      zhHant: {
+                title: 'Phase 4 完成: 主域從 Vite SPA 切到 Next.js',
+                body: 'cuberoot.me 主域換底:一條線路 → 自有 VM nginx → systemd cuberoot-next (Next standalone),另一條線路 → Vercel edge → 同份 Next 程式碼。DNS provider 自帶分流。舊 Vite SPA 同期下線(2026-05-27),只保留本地 localhost:5173 作對比。GH Pages 映象不再用。',
+                expand: '架構骨架不變(後端 Hono+PG 不動),前端框架換 React Router → Next.js App Router + Turbopack,新程式碼在 packages/client-next/。同一份 Next 程式碼兩邊跑:一條線路 = systemd 標準 next standalone(deploy_next.yml CI build + tar + scp + 原子 swap + 健康檢查),另一條 = Vercel Hobby 自動從 GitHub 部署。Vercel 上踩到 3 個坑:(1) standalone + outputFileTracingRoot 跟 Vercel Turbopack 撞 manifest ENOENT (vercel/next.js#88579), VERCEL=1 env gate 跳過;(2) /stats/* /tools/* 在 Vercel 沒打進 bundle, route handler 加 fallback fetch static.cuberoot.me;(3) /zh/wca/comp/[slug] 必須 force-dynamic 否則 useSearchParams 拋 DYNAMIC_SERVER_USAGE 500。cert HTTP-01 challenge 1 分鐘內簽發, 全程零 downtime。',
+              }
+},
   {
     date: '2026-05-14',
     tag: 'feature',
@@ -324,7 +340,12 @@ export const TIMELINE: TLEntry[] = [
       body: '(1) /sim virtual cube Playground (port of huazhechen/cuber, three.js engine + 4 modes: free play / replay / algs / record); (2) /comp cubing.com live-competition mirror (direct WS push); (3) shadcn-style theme token system + ThemeToggle (light/dark/system) + theme-tokens skill; (4) blog.cuberoot.me subdomain split-horizon DNS (nginx alias / GH Pages, WP legacy slug redirect); (5) Nemesizer goes server-side (dataset + algo into Hono, six endpoints + 24h nginx cache).',
       expand: '/sim: 14 files / ~1400 lines added; cuber\'s ~2200-line TS engine fully ported + WCA standard sticker colors + cubelet thickness for 3D tiles + AmbientLight ×π fix for r155+ physical lighting; redo stack / full keyboard map / settings drawer / 24-key mobile keypad / Player replay / Algs browser (reuses existing /api/alg/sets) / Director (PNG snapshot + canvas captureStream MediaRecorder). /comp uses direct WS instead of polling — live finishes + flag / record badge / i18n. shadcn theme uses hex tokens + color-mix derivations (no hand-coded #888 etc.); light-locked / dark-locked pages get page-scope color-scheme locks. Blog subdomain on acme.sh dns_ali auto-renew; same day finalised ruiminyan.github.io → cuberoot.me references repo-wide. Nemesizer was previously a 9MB client bundle; now the server preloads .bin.gz at startup + 24h nginx /v1/nemesizer/* cache + pm2 reload on stats refresh. Same day also: top-right cluster unified + /about expanded + upstream logos + credits single-source JSON (credits_data.json drives README + /about) + 255-line RegionPicker + 338-line DESIGN.md + 194-line THEMING.md documentation.',
     },
-  },
+      zhHant: {
+                title: '單日 5 件併發: /sim + /comp + 主題 token + blog 子域 + Nemesizer SaaS',
+                body: '(1) /sim 虛擬魔方 Playground 上線 (port huazhechen/cuber, three.js 引擎 + 4 模式 free play / replay / algs / record); (2) /comp cubing.com 直播比賽映象 (直 WS 實時推送); (3) shadcn-style 主題 token 系統 + ThemeToggle (light/dark/system) + theme-tokens skill; (4) blog.cuberoot.me 子域 DNS 分線路 (nginx alias / GH Pages,WP 舊 slug 重定向); (5) Nemesizer server-side 化 (dataset+algo 移入 Hono,6 端點 + nginx 24h cache)。',
+                expand: '/sim 總 14 檔案 ~1400 行新增, cuber 引擎 ~2200 行 TS 完整 port + WCA 標準配色 + cubelet thickness 立體貼片 + AmbientLight ×π 修 r155+ 物理光照, 配 redo 棧 / 全鍵盤 / 設定抽屜 / 移動 24 鍵盤 / Player 回放 / Algs 庫 (複用現有 /api/alg/sets) / Director (PNG 截圖 + canvas captureStream MediaRecorder)。/comp 直 WS 取代 polling, 選手成績即時更新 + flag/record badge/i18n。shadcn 主題用 hex token + color-mix 衍生 (禁硬碼 #888 等), light-locked / dark-locked 頁用 page-scope color-scheme 鎖。blog 子域 acme.sh dns_ali 自動續, 同期 ruiminyan.github.io → cuberoot.me 全倉引用替換。Nemesizer 之前是 client 9MB bundle, 現在 server 啟動載入 .bin.gz 進記憶體 + nginx /v1/nemesizer/* 24h 快取 + pm2 reload on stats refresh。同日 landing 右上角 cluster 統一 + /about 頁擴 + upstream logos + credits 單源 JSON (credits_data.json 驅動 README + /about) + RegionPicker 255 行新元件 + DESIGN.md 338 行 + THEMING.md 194 行圖設/主題文件體系。',
+              }
+},
   {
     date: '2026-05-12',
     tag: 'dx',
@@ -338,7 +359,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'PC localhost / same-WiFi phone (ts.net) / cellular phone (dev.cuberoot.me) all hot-reload — three reverse proxies, one vite client. This page (/code/architecture) was rewritten from plain prose into illustrated long-form, validated live on all three.',
       expand: 'Cellular previously couldn\'t use ts.net Funnel (PC behind cross-border routing, relay flaky); added dev.cuberoot.me over frp reverse tunnel → self-hosted VM nginx, forced TLS + token, port 7000 public but safe. Section 09 has the full triple-entry derivation: a hardcoded clientPort forces everyone through one entry. Delete it, let the client derive from its own page URL — three entries each compute their own correct values, browser normalizes the empty port.',
     },
-  },
+      zhHant: {
+                title: 'HMR 三入口 + dev.cuberoot.me 隧道 + /code/architecture 重寫',
+                body: 'PC localhost / 同 WiFi 手機 (ts.net) / 蜂窩外網手機 (dev.cuberoot.me) 三端實時 HMR — 不同反代,同一份 vite client。這頁同日從純文字改成圖文長版, 一邊寫一邊在三端驗證。',
+                expand: '蜂窩下原來 ts.net Funnel 因 PC 跨境路由不穩, 新加 dev.cuberoot.me 走 frp 反向隧道 → 自有云伺服器 nginx, 強制 TLS + token, 公網開放 7000 但安全。本頁第 09 節有 HMR 三入口完整推導:寫死 clientPort 等於全員遵守一個入口, 刪掉讓 client 跟著 page URL 自己算 — 三端各自正確, 瀏覽器自己規範化空埠。',
+              }
+},
   {
     date: '2026-05-10',
     tag: 'feature',
@@ -352,7 +378,12 @@ export const TIMELINE: TLEntry[] = [
       body: '3x3 commutator analyzer (723-line CommutatorPage + 1131-line engine.ts + 497-line CSS). Same day /site goes backend (hardcoded sites.ts → nav_sites table + admin editor).',
       expand: 'Commutator decomposition is a high-demand BLD/FMC tool previously requiring third-party sites. /site nav migrated from static TS array to PG-backed with an admin editor. Infrastructure also gained a self-hosted 39-line schema migration runner (no Flyway etc.) + ssh keepalive + healthcheck.yml workflow.',
     },
-  },
+      zhHant: {
+                title: '/alg/commutator 換位分解工具上線',
+                body: '3x3 commutator 分解器 (CommutatorPage 723 行 + engine.ts 1131 行 + 497 行 CSS)。同日 /site 後端化 (從硬編 sites.ts 改成 nav_sites 表 + admin 編輯)。',
+                expand: '換位分解是 BLD / FMC 圈高頻需求, 之前要去外站。同期把 /site 站點導航從靜態 ts 陣列遷到 PG 後端 + admin 編輯 UI。基礎設施側上線自寫 39 行 schema migration runner (不裝 Flyway 等重型工具) + ssh keepalive + healthcheck.yml workflow。',
+              }
+},
   {
     date: '2026-05-08',
     tag: 'feature',
@@ -366,7 +397,12 @@ export const TIMELINE: TLEntry[] = [
       body: '(1) /memo + /memo/colpi memory training (314-line v1 → same-day PG backend with colpi_words/votes + voting API + 11.7k-word mirror); (2) /scramble unified hub + /scramble/solver (cubeopt-wasm port); (3) /wca/historical + 7 cubing.pro-style stat subpages (grand slam / all / year / cohort / success rate / all events done / sum of ranks) shipped in one commit; (4) /recognize/:algSetId generic recognition route wired, trainer reworked as 41-set entry; (5) /code adds Java / JavaScript / Mojo + CompareScramble.',
       expand: 'colpi = colored-pi memory training (used by CFOP/blindfolded community, 11.7k words mirrored from bestsiteever.net). /scramble/solver is a React port of cs0x7f/cubeopt-wasm + 9 wasm workers (sw.ts COOP/COEP for SAB). The 7 stat pages are backed by 6 new PG tables + 5M+ rows / 382 MB initial load. After /recognize generalisation, legacy OllTrainingPage / Zbll* / Zbls* (4713 lines total) were removed. historical_ranks now flows through build → scp → PG → Hono → nginx 24h cache.',
     },
-  },
+      zhHant: {
+                title: '單日 7 個獨立功能上線 (/memo / /scramble Hub / 7 張 stat 子頁 / /recognize 路由 / +3 lang)',
+                body: '(1) /memo Hub + /memo/colpi 記憶訓練頁 (314 行初版 → 同日後端化到 PG colpi_words/votes 雙表 + 投票 API + 11.7k 詞映象); (2) /scramble 統一 Hub + /scramble/solver (cubeopt-wasm port); (3) /wca/historical + 7 張 cubing.pro 風格 stat 子頁 (大滿貫/全部/當年/屆別/成功率/全達成/名次和) 同 commit 上線; (4) /recognize/:algSetId 通用識別路由掛上, trainer 改造為 41-set 通用入口; (5) /code 加 Java / JavaScript / Mojo + CompareScramble。',
+                expand: 'colpi 是 colored-pi 記憶訓練 (CFOP/blindfolded 圈用 11.7k 詞從 bestsiteever.net 映象)。/scramble/solver 是 cs0x7f/cubeopt-wasm 的 React port + 9 套 wasm worker (sw.ts 注 COOP/COEP for SAB)。7 張 stat 配套 6 張新 PG 表 + 5M+ rows / 382 MB 初始灌庫。/recognize 通用化後舊的 OllTrainingPage / Zbll* / Zbls* 共 4713 行廢程式碼刪除。後端 historical_ranks 走 build → scp → PG → Hono → nginx 24h cache 五層管道。',
+              }
+},
   {
     date: '2026-05-07',
     tag: 'feature',
@@ -380,7 +416,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'Single 24-file commit shipping 9 languages: C / C++ / Go / Kotlin / TypeScript / Rust / Python / Zig / Swift, plus CodeLandingPage + CompareAo5Page — 22294 lines added.',
       expand: 'Each page uses speedcubing scenarios as examples (e.g. computing Ao5 in C / Rust / TS). Same day: Alg admin gains drag-reorder + X-Admin-Key channel. 5/8 added Java / JavaScript / Mojo; 5/12 added another 9 (C# / Ruby / PHP / Lua / Haskell + HTML / CSS / Bash / SQL), totalling 21 languages/markup.',
     },
-  },
+      zhHant: {
+                title: '/code 程式語言入門站上線 (9 種語言一次上)',
+                body: '一次 24-file commit 把 9 種語言同時上線: C / C++ / Go / Kotlin / TypeScript / Rust / Python / Zig / Swift, 加 CodeLandingPage + CompareAo5Page, 共 22294 行新增。',
+                expand: '內容方向是"魔方 + 這門語言" — 每頁用速擰場景做例子 (eg. Ao5 計算用 C / Rust / TS 各寫一遍)。同日 Alg admin 加 DnD 排序 + X-Admin-Key 通道。5/8 又加 Java / JavaScript / Mojo, 5/12 再加 C# / Ruby / PHP / Lua / Haskell + HTML / CSS / Bash / SQL 共 9 頁, 總計 21 種語言/標記。',
+              }
+},
   {
     date: '2026-05-06',
     tag: 'migration',
@@ -394,7 +435,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'Same day: MariaDB → PG 13 + 41 alg JSONs into PG + wipe baota + PHP + WP. The VM now runs only nginx + Node + PG.',
       expand: 'PG migration uses jsonb / window functions / partial indexes to simplify recon / alg / stats across the board. pg_dump on a systemd timer at 03:00 UTC, 30-day retention. Algs now editable directly in the browser (X-Admin-Key or OAuth) — no commit + redeploy. Blog was statically archived from WordPress (later split into blog.cuberoot.me subdomain + GH Pages mirror on 2026-05-14).',
     },
-  },
+      zhHant: {
+                title: '三件遷移同日完成 (PG / alg DB / 卸寶塔)',
+                body: '同一天: MariaDB → PG 13 整體遷移 + 41 個 alg JSON → DB + 寶塔 + PHP + WP 全卸。雲伺服器只剩 nginx + Node + PG。',
+                expand: 'PG 遷移用 jsonb / window function / partial index 讓 recon / alg / stats 程式碼全簡化一檔。pg_dump systemd timer 每天 03:00 UTC 備份留 30 天。Alg 網頁可直接編輯 (X-Admin-Key 或 OAuth), 不用 commit + redeploy。Blog 從 WordPress 整站靜態化歸檔 (後來 2026-05-14 又拆出 blog.cuberoot.me 子域 + GH Pages 映象)。',
+              }
+},
   {
     date: '2026-05-03',
     tag: 'feature',
@@ -408,7 +454,12 @@ export const TIMELINE: TLEntry[] = [
       body: '5 new routes: /visualcube full-feature image editor + /patterns library + /average + /gen + /today. Same day /alg → /tutorial wholesale rename + VisualCube as a service (esbuild + Node + /v1/visualcube.svg + service worker).',
       expand: '/visualcube is a React rewrite mimicking visualcube.roudai.net: full ICubeOptions parameter set + URL query state sync + 5 export actions. /patterns collects fancy puzzle patterns. VisualCube SaaS means browsers no longer compute facelet positions live — everything renders server-side and caches. sq1/megaminx/pyraminx/skewb also wired up via sr-puzzlegen — no more hand-written cube SVG.',
     },
-  },
+      zhHant: {
+                title: '5 個新頁同日上線 + VisualCube 服務化',
+                body: '5 個新路由: /visualcube 全功能圖片編輯器 + /patterns 花式圖樣庫 + /average + /gen + /today。同時 /alg → /tutorial 整體改名 + VisualCube 服務化 (esbuild + Node 渲染 + /v1/visualcube.svg + service worker)。',
+                expand: '/visualcube 是仿 visualcube.roudai.net 的 React 重寫, ICubeOptions 全參 + URL query state sync + 5 個 export action。/patterns 是收藏的"花式圖樣"。VisualCube 服務化讓瀏覽器不用再現場跑 visualcube 算面位置, 統一服務端渲染 + 快取。同期把 sq1/megaminx/pyraminx/skewb 也接 sr-puzzlegen, 手寫魔方 SVG 一律禁。',
+              }
+},
   {
     date: '2026-04-30 ~ 05-01',
     tag: 'feature',
@@ -422,7 +473,12 @@ export const TIMELINE: TLEntry[] = [
       body: '4-30: /prediction event theoretical-limits + forecasts (667-line PredictionPage + 317-line EventSection + 315-line charts.tsx). 5-1: /algdb (scrape from speedcubedb) + /prediction completed with TheoreticalLimitView. Concurrently /calendar gains list view + range filter + per-event round chips.',
       expand: '/wca/prediction uses WCA history to estimate each event\'s "theoretical limit" then extrapolates. /algdb is a 3x3 algorithm reference (OLL / PLL / F2L); meanwhile Recon submit gains cubedb.net-style autofill + cubing.js cube3 stage detection. ClearButton component unifies all input × buttons; the 207-line CuberSearchInput later reused across pages.',
     },
-  },
+      zhHant: {
+                title: '/wca/prediction + /algdb + /calendar 列表檢視上線',
+                body: '4-30 上 /prediction 項目理論極限與預測頁 (667 行 PredictionPage + 317 行 EventSection + 315 行 charts.tsx)。5-1 上 /algdb 公式庫 (從 speedcubedb scrape) + /prediction 完成 TheoreticalLimitView。同期 /calendar 加列表檢視 + 範圍過濾 + 每項目輪次 chip。',
+                expand: '/wca/prediction 是用 WCA 歷史資料估每項目"理論極限"再外推。/algdb 是 3x3 公式查詢庫 (OLL / PLL / F2L), 同期 Recon submit 加 cubedb.net 風格自動補全 + cubing.js cube3 階段識別。ClearButton 抽元件統一所有 input 的清除 × 按鈕, CuberSearchInput 207 行獨立元件後續被多頁複用。',
+              }
+},
   {
     date: '2026-04-26 ~ 27',
     tag: 'feature',
@@ -436,7 +492,12 @@ export const TIMELINE: TLEntry[] = [
       body: '4-26: /timer rewritten in TypeScript from scratch (Kociemba + 2D preview + histogram + cstimer JSON I/O + full event coverage). 4-27: 116 commits in one day adding BLD / stage timing / smartcube BT / 3D preview / WCA inspection / share URL / mobile polish / CFOP multi-stage / cstimer gSolver port / 5 BLE protocols.',
       expand: 'csTimer iframe is still retained — /timer is the native-React, site-i18n, WCA-login, cloud-sync timer. The 5 BLE protocols are GAN / Moyu / QiYi / GiiKER / Heykube. Same day: shared components first wave (EventIcon / EventSelect / RecordSelect / RecordBadge) extracted; WcaAuth + AuthCallbackPage rebuilt.',
     },
-  },
+      zhHant: {
+                title: '/timer 速擰計時器上線 (TS 重寫 + 116 commits 增強日)',
+                body: '4-26 把 /timer 從零做 TS 重寫 (Kociemba + 2D 預覽 + 直方圖 + cstimer JSON I/O + 全項目)。4-27 一天打了 116 commits 把 BLD / 分階段 timing / 智慧立方藍芽 / 3D 預覽 / WCA inspection / share URL / 全套移動適配 / CFOP 多階段 / cstimer 演算法引擎 port / 5 個藍芽協議全做了。',
+                expand: 'cstimer iframe 仍保留, /timer 是 nativeReact + 站點 i18n + WCA 登入 + 雲同步的速擰計時器。5 個藍芽協議指 GAN / Moyu / QY / GiiKER / Heykube。同日 shared components 第一波 (EventIcon / EventSelect / RecordSelect / RecordBadge) 抽出, WcaAuth + AuthCallbackPage 重做。',
+              }
+},
   {
     date: '2026-04-24 ~ 25',
     tag: 'feature',
@@ -450,7 +511,12 @@ export const TIMELINE: TLEntry[] = [
       body: '4-24: /sites navigation (2539-line sites.ts) + /mosaic generator (port from Roman-/mosaic) + /nemesizer v1 + /alg internal AlgCategoryPage. 4-25: Nemesizer completed (port from speedsolving wiki) + /wca/persons + /wca/persons/:wcaId (WcaPersonPicker 280k local index <20ms) + /wb world unofficial rankings.',
       expand: 'Nemesizer concept from speedsolving wiki: "your nemesis" = the cuber regionally ranked just behind you in an event who hasn\'t passed you yet. /wca/persons is a WCA cuber profile lookup with Hero card + PR table + last 12 comps. Same two-day window also extracted WheelPicker (354 lines) and RecordBadge generic components.',
     },
-  },
+      zhHant: {
+                title: '5 個新頁兩天上線 (/sites / /mosaic / /nemesizer / /wca/persons / /wb)',
+                body: '4-24: /sites 站點導航 (2539 行 sites.ts) + /mosaic 魔方馬賽克生成器 (port from Roman-/mosaic) + /nemesizer 初版 + /alg 內部 AlgCategoryPage。4-25: Nemesizer 完工 (port speedsolving wiki) + /wca/persons 與 /wca/persons/:wcaId (WcaPersonPicker 280k 本地索引 <20ms 搜尋) + /wb 全球非官方紀錄排名。',
+                expand: 'Nemesizer 概念來自 speedsolving wiki: "你的剋星" = 在你某項目區域內, 名次緊追你但還沒超過你的人。/wca/persons 是 WCA 選手主頁查詢, 配 Hero card + PR table + 最近 12 場。這兩天還順手抽了 WheelPicker (354 行) 和 RecordBadge 通用元件。',
+              }
+},
   {
     date: '2026-04-22',
     tag: 'feature',
@@ -464,7 +530,12 @@ export const TIMELINE: TLEntry[] = [
       body: '389-line ScrambleStatsPage + 208-line DiscreteHistogram + new core/packages/scramble-stats-build/ package (240-line CSV → distribution.json builder).',
       expand: 'Data comes from D:\\cube\\solver — a C++ analyzer producing CSVs (1M+ scrambles per event, with cross / x-cross / EO / orientation stage distributions), turned into visualisations. Later (5-3) extended to sq1 / megaminx / pyraminx / skewb non-cube puzzles.',
     },
-  },
+      zhHant: {
+                title: '/scramble-stats 打亂難度分佈頁上線',
+                body: 'ScrambleStatsPage 389 行 + DiscreteHistogram 208 行離散直方圖 + 新建 core/packages/scramble-stats-build/ 包 (CSV → distribution.json 240 行 builder)。',
+                expand: '資料來源是 D:\\cube\\solver 這個 C++ 分析器跑出來的 CSV (每個項目 1M+ 打亂, 含 cross / x-cross / EO / 朝向 等階段分佈), 轉成視覺化分佈。後續 5-3 加 sq1 / megaminx / pyraminx / skewb 多面體支援。',
+              }
+},
   {
     date: '2026-04-23',
     tag: 'feature',
@@ -478,7 +549,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'AlgIndexPage list + AlgPostPage detail + AlgArticleView/Card/Chip/Content + useAlgCatalog hook + 681-line alg.css + 5 CaseCard/Modal/AlgsetView components.',
       expand: 'Initial data came from docx-parsed JSON; two weeks later (5-6) it moved into PG. On 5-3 the URL was wholesale renamed from /alg to /tutorial, freeing /alg for the later /algdb algorithm reference.',
     },
-  },
+      zhHant: {
+                title: '/alg 教程 SPA 上線 (docx → SPA, 後改名 /tutorial)',
+                body: 'AlgIndexPage 列表 + AlgPostPage 詳情 + AlgArticleView/Card/Chip/Content + useAlgCatalog hook + 681 行 alg.css + 5 個 CaseCard/Modal/AlgsetView 元件。',
+                expand: '當時資料來源是 docx 解析出的 JSON, 兩週後 (5-6) 才整體進 PG。5-3 把 /alg URL 整體改名為 /tutorial, 把 /alg 讓給後來的 /algdb 公式庫。',
+              }
+},
   {
     date: '2026-04-16 ~ 18',
     tag: 'feature',
@@ -492,7 +568,12 @@ export const TIMELINE: TLEntry[] = [
       body: '4-16: /globe launches (903-line three.js earth showing upcoming comps) + Landing rewrite (-283/+155 lines slim-down + LandingCubeHero decorative 3D cube). 4-17 ~ 18: another 372 + 949 lines of rewriting, plus Milky Way background, marker clustering, search (368 lines).',
       expand: '/wca/globe was the leap from "data display" to "immersive visualisation". LandingCubeHero loops S\' U\' M\' y2 at the top of Landing, with cubing/twisty lazy-loaded. 4-20 added world_records_by_country stat + cn_disputed_patches.geojson correcting Sino-Indian / Sino-Nepalese disputed borders.',
     },
-  },
+      zhHant: {
+                title: '/wca/globe 地球頁 + Landing 重寫',
+                body: '4-16 上 /globe (903 行 GlobePage 用 three.js 轉動地球展未來比賽點) + Landing 重寫 (-283/+155 行減重 + LandingCubeHero 裝飾 3D 魔方)。4-17 ~ 18 繼續重寫 372 行 + 949 行, 加銀河系背景紋理 + 比賽 marker 聚合 + 搜尋 (368 行)。',
+                expand: '/wca/globe 是項目從"資料展示"到"沉浸式視覺化"的躍遷。同期 LandingCubeHero 在 Landing 頂部迴圈跑 S\' U\' M\' y2 裝飾動畫, cubing/twisty 懶載入。4-20 再加 world_records_by_country 統計 + cn_disputed_patches.geojson 修中印 / 中尼爭議邊界。',
+              }
+},
   {
     date: '2026-04-06 ~ 16',
     tag: 'feature',
@@ -506,7 +587,12 @@ export const TIMELINE: TLEntry[] = [
       body: '4-6 from zero (819-line page + 800-line CSS + WebCodecs frame buffer hook). 4-7 wires up @ffmpeg/ffmpeg + WebCodecs GPU zero-drop hardware pipeline. 4-8 two-tier render fix with Gemini collaboration. 4-13 adds A-key dedup + IndexedDB MRU dir memory + two-phase thumbnails + pinch zoom. 4-14 timestamp-based start-frame back-calc + Mark + Solve bands. 4-15 VideoInfoPanels codec/audio/VFR diagnostics.',
       expand: 'Frame Count is a precise frame-counting tool for competition judges / cubers — video FPS instability / VFR / iOS Safari compatibility are real pain points. Almost every day in those 10 days shipped a concrete feature or bug fix, not vague "iteration". WebCodecs is a Chrome 94+ API; combined with OffscreenCanvas crop + VideoEncoder + mp4-muxer it gives a zero-drop hardware export pipeline.',
     },
-  },
+      zhHant: {
+                title: '/frame-count 數幀工具上線 (10 天迭代成型)',
+                body: '4-6 從零起步 (819 行頁面 + 800 行 CSS + WebCodecs 幀緩衝 hook). 4-7 接 @ffmpeg/ffmpeg + WebCodecs GPU 零丟幀硬體管線. 4-8 與 Gemini 協作做兩層渲染修丟幀. 4-13 加 A 鍵去重 + IndexedDB MRU 目錄記憶 + 兩階段縮圖 + pinch 縮放. 4-14 加 timestamp 起表幀反推法 + Mark + Solve bands. 4-15 加 VideoInfoPanels codec/audio/VFR 診斷面板.',
+                expand: 'Frame Count 是給比賽裁判 / 選手用的精確數幀工具 — 影片 fps 不穩 / VFR / iOS Safari 相容是真實痛點。10 天裡幾乎每天都有具體的功能或 bug 修, 不是水的"持續迭代"。WebCodecs 是 Chrome 94+ API, 用硬體解碼 + OffscreenCanvas crop + VideoEncoder + mp4-muxer 做零丟幀匯出管線。',
+              }
+},
   {
     date: '2026-04',
     tag: 'dx',
@@ -520,7 +606,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'Previously the references-only root tsconfig made tsc --noEmit silently no-op — typos passed forever.',
       expand: 'Detection: insert a fake identifier and run typecheck. Now incremental ~12s; CI uses --force to clear cache and re-check fully.',
     },
-  },
+      zhHant: {
+                title: 'typecheck 切到 tsc -b',
+                body: '之前 references-only 根 tsconfig 讓 tsc --noEmit 靜默空跑, typo 永遠過。',
+                expand: '驗證手段:故意寫個不存在的識別符號, 跑 typecheck 看會不會報。現在 typecheck 12s 增量、CI 用 --force 清快取全量。',
+              }
+},
   {
     date: '2026-03-24',
     tag: 'migration',
@@ -534,7 +625,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'Fastify was wired up on -03-23; replaced wholesale by Hono the next day, all 22 endpoints converted.',
       expand: 'Hono chosen for TS-first + declarative routing + ~5MB deps (an order cleaner than Fastify/Express). Runs under pm2, nginx reverse-proxies to :3001. The backend stack changed three times in two weeks: Firestore → PHP/MariaDB (3-04) → Fastify (3-23) → Hono (3-24).',
     },
-  },
+      zhHant: {
+                title: 'Fastify → Hono (24 小時內換)',
+                body: '前一天 (-03-23) 剛把 Fastify 接好, 第二天就整體換成 Hono, 22 個端點全轉。',
+                expand: '換 Hono 是因為 TS-first + 路由宣告式 + 依賴 ~5MB (比 Fastify/Express 一個量級乾淨)。跑在 pm2 下, nginx 反代到 :3001。半個月時間裡後端棧換了三次:Firestore → PHP/MariaDB (3-04) → Fastify (3-23) → Hono (3-24)。',
+              }
+},
   {
     date: '2026-03-23',
     tag: 'migration',
@@ -548,7 +644,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'Migrated a pile of jQuery / static-HTML tools onto a React 19 + Vite + pnpm/Turbo monorepo. cubing.js TwistyPlayer adopted the same day.',
       expand: 'Initial four packages: client + server + shared + stats-build. Client launched with 12 tool pages (calc / recon / viz / battle ...), grew to 24+ over six months. Once cubing.js landed, all PLL / OLL / scramble animations standardized on TwistyPlayer; hand-written cube SVG was retired. The single biggest structural leap in the project.',
     },
-  },
+      zhHant: {
+                title: 'React + TS monorepo 上線 + cubing.js',
+                body: '從一堆 jQuery / 靜態 HTML 工具整體遷到 React 19 + Vite + pnpm/Turbo monorepo。同一天接 cubing.js TwistyPlayer。',
+                expand: '初始 4 個包:client + server + shared + stats-build。client 一開始遷了 12 個工具頁 (calc / recon / viz / battle 等), 後續半年漲到 24+。cubing.js 落地後所有 PLL / OLL / scramble 動畫統一走 TwistyPlayer, 手寫魔方 SVG 全廢。這是項目結構最大的一次躍變。',
+              }
+},
   {
     date: '2026-03-21',
     tag: 'feature',
@@ -562,7 +663,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'KDE / histogram / ridgeline / line — 4 views + multi-player comparison + zoom/pan. 3-22 adds cumulative histogram + card tooltips + line zoom/pan + Non-PR WR stat.',
       expand: '/wca/viz visualises distributions across the cuber population — KDE shows where the mass concentrates, ridgeline shows progression. Multi-cuber comparison lets you overlay your distribution against top cubers. On 3-24 the page was Reactified into the monorepo.',
     },
-  },
+      zhHant: {
+                title: '/wca/viz 成績分佈頁上線',
+                body: 'KDE / 直方圖 / 山脊圖 / 折線 4 種檢視 + 多選手對比 + zoom/pan。3-22 再加累積直方圖 + tooltip 卡片化 + 折線 zoom/pan + Non-PR WR 統計。',
+                expand: '/wca/viz 是"看 cuber 群體成績分佈"的視覺化頁 — KDE 看哪個時段最厚, ridgeline 看進階軌跡。多選手對比可以把你和頂級 cuber 同框看分佈差。3-24 這頁接著被 React 化收編進 monorepo。',
+              }
+},
   {
     date: '2026-03-12 ~ 15',
     tag: 'feature',
@@ -576,7 +682,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'Four forks / ports in four days: HTH Calc (carykh/hthgrapher), Alg-Trainers (mihlefeld), csTimer (cs0x7f, GPL-3.0 self-hosted), 1v1 Battle (MatteoColombo/cube_challenge_timer).',
       expand: 'csTimer is self-hosted (the whole upstream vendored into /cstimer/), not iframed; the other three were embedded statically at the time. After the monorepo landed (2026-03-23) Calc and Battle were rewritten in React; Alg-Trainers stayed in fork form.',
     },
-  },
+      zhHant: {
+                title: '第一輪工具整合 (HTH Calc / Alg-Trainers / csTimer / 1v1 Battle)',
+                body: '4 天內整合 4 個 fork / port: HTH Calc (carykh/hthgrapher), Alg-Trainers (mihlefeld), csTimer (cs0x7f, GPL-3.0 self-hosted), 1v1 Battle (MatteoColombo/cube_challenge_timer)。',
+                expand: 'csTimer 是 self-hosted (整個項目 vendor 進 /cstimer/) 不是 iframe; 其它 3 個當時還是靜態嵌入。後來 (2026-03-23 monorepo 上線後) Calc / Battle 被重寫成 React, Alg-Trainers 保留 fork 形態。',
+              }
+},
   {
     date: '2026-03-04',
     tag: 'migration',
@@ -590,7 +701,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'Firestore — adopted only days earlier — was replaced with self-hosted PHP + MariaDB on a cloud VM. The first "run my own machine" moment.',
       expand: 'Firestore had cross-region latency issues plus complicated quotas — wrong fit for a site whose audience is concentrated in one geography. This VM later evolved into the current cloud-server (2026-05 finally stripped out baota panel + PHP together).',
     },
-  },
+      zhHant: {
+                title: 'Firestore → PHP + MariaDB (自有云伺服器)',
+                body: '上線沒幾天的 Firestore 後端就被換成自有云伺服器上自建的 PHP + MariaDB。第一次"自己運維一臺機器"。',
+                expand: 'Firestore 跨區延遲太高 + 配額太複雜, 不適合主要使用者群單一地理位置的站點。這臺 VM 後來也是現役那臺的雛形 (2026-05 才把寶塔 panel 和 PHP 一起拆掉)。',
+              }
+},
   {
     date: '2026-02-27',
     tag: 'feature',
@@ -604,7 +720,12 @@ export const TIMELINE: TLEntry[] = [
       body: '/recon launches: a CSV-to-JSON solve library with 2017 solves from 89 cubers. Same day: WCA OAuth login + Firestore community storage.',
       expand: 'Initially used the implicit grant to bypass CORS. Phase 1 stored data in static CSV; later went into MariaDB (2026-03-04), then PG (2026-05-06). Recon was the first feature with "login + write", which pulled the site from a showcase into a collaborative tool.',
     },
-  },
+      zhHant: {
+                title: '/recon Phase 1 + WCA OAuth',
+                body: '/recon 上線: csv → JSON 覆盤庫 2017 條, 89 個選手。同一天接 WCA OAuth 登入 + Firestore 社羣覆盤儲存。',
+                expand: '一開始用 implicit grant 繞 CORS。Phase 1 的成績庫是 CSV 靜態檔案, 後來 (2026-03-04) 才進 MariaDB, (2026-05-06) 又進 PG。Recon 是項目第一個有"登入 + 寫入"的功能, 把站點從展示性質拉到協作性質。',
+              }
+},
   {
     date: '2026-02-26',
     tag: 'feature',
@@ -618,7 +739,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'Upcoming Comps page (later renamed /calendar): lists future competitions + top cubers attending + current/former WR badges + 24h cache.',
       expand: 'Data sources: WCA API + cubing.com for non-WCA comps (the WCA API doesn\'t include unofficial NF events). This was the site\'s first "time-sensitive" page — not just historical data, but a forward view. Later 4-30 adds list view, 4-28 adds /calendar/stats subpage.',
     },
-  },
+      zhHant: {
+                title: 'Upcoming Comps 比賽追蹤器上線',
+                body: 'Upcoming Comps 頁 (後來叫 /calendar): 列未來比賽 + 頂級選手 + 現/前 WR badge + 24h 快取。',
+                expand: '資料來源: WCA API + 部分非官方比賽接 cubing.com (WCA API 不覆蓋非官方 NF 比賽)。這是站點第一個"有時效性"的頁 — 不只看歷史成績, 還展望未來。後續 4-30 加列表檢視, 4-28 加 /calendar/stats 子頁。',
+              }
+},
   {
     date: '2026-02-18',
     tag: 'feature',
@@ -632,7 +758,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'The site evolved from a single index.html into one with a real homepage. Two entry cards (Solver / WCA Stats), plus i18n (en/zh).',
       expand: 'Solver (forked from or18/RubiksSolverDemo) had its UI translated to Chinese the same day. This is when the site started to feel like a product. Eventually 26 cards grew out of this layout.',
     },
-  },
+      zhHant: {
+                title: '第一個 Landing 頁 — Solver + WCA Stats 雙卡',
+                body: '從單頁 index.html 變成有真正"首頁"的站點。Solver 和 WCA Stats 兩張入口卡, 配 i18n (en/zh)。',
+                expand: '同期把 Solver (or18/RubiksSolverDemo fork) 的 UI 文字也翻譯成中文。這是站點開始有"產品形態"的起點。後來 26 張卡片都從這裡長出來。',
+              }
+},
   {
     date: '2026-02-17',
     tag: 'infra',
@@ -646,7 +777,12 @@ export const TIMELINE: TLEntry[] = [
       body: 'GitHub Actions pulls the WCA public dump weekly, runs statistics scripts, commits the artifacts. The site\'s first automated data pipeline.',
       expand: 'Originally a set of Ruby scripts, later rewritten in TypeScript inside the stats-build package (2026-03-23 monorepo). Inspired by jonatanklosko/wca_statistics; grew into 80+ stat pages.',
     },
-  },
+      zhHant: {
+                title: 'WCA Statistics 資料管道 (CI 周更)',
+                body: 'GitHub Actions 每週從 WCA 公開 dump 拉資料, 跑統計指令碼, 產物入倉。第一次"自動化資料流水線"。',
+                expand: '當時是 Ruby 指令碼, 後來 (2026-03-23 monorepo) 整體重寫為 TS 跑在 stats-build 包裡。原項目靈感來自 jonatanklosko/wca_statistics, 後來擴到 80+ 張統計頁。',
+              }
+},
   {
     date: '2025-12-13',
     tag: 'infra',
@@ -660,5 +796,10 @@ export const TIMELINE: TLEntry[] = [
       body: 'A repo on GitHub Pages, an empty index.html, a README. That\'s it.',
       expand: 'The day-one push had no tools, no backend, no data — just a shell. Over the next two months it slowly accumulated forked tool pages (Solver, Alg-Trainers, etc.). The first feature with real data didn\'t arrive until 2026-02-17 (WCA Statistics), meaning the first 65 days were essentially layout work.',
     },
-  },
+      zhHant: {
+                title: '項目誕生 — 一個 index.html',
+                body: 'GitHub Pages 上的一個 repo, 一個空的 index.html, 一份 README。完。',
+                expand: '初次 push 那天沒有任何工具 / 後端 / 資料, 就是個殼。後兩個月裡慢慢往裡塞 fork 的工具頁 (Solver / Alg-Trainers 等)。整站第一個有資料的功能要等到 2026-02-17 的 WCA Statistics 才出現 — 也就是說前 65 天基本只在排版。',
+              }
+},
 ];

@@ -144,7 +144,8 @@ ORDER BY start_date;`,
     },
   ],
     titleZhHant: "AoXR — 單場比賽平均的均值",
-    badgeZhHant: "世界紀錄"
+    badgeZhHant: "世界紀錄",
+    edgesZhHant: ["只算 `average > 0` 的輪次。DNF 平均(value = -1)和未提交(value = 0)被排除 — 一個選手即使打了 4 輪但有一輪 DNF,會被算成 Ao3R 而不是 Ao4R。", "同日兩條不同比賽的 AoXR 不會合並 — 每條都是獨立\"事件\"。", "與 WCA 官方\"Average of X solves\"(ao5/mo3)完全不同 — 這裡 X 是**輪次數**,不是單次還原數。", "`sub_id = 1` 過濾副身份(改名、換國籍的選手 dump 裡會有多行 persons,只取主行)。"]
 };
 
 // ──── wr_current ────────────────────────────────────────────────────────────
@@ -270,7 +271,8 @@ ORDER BY r.event_id, c.start_date;`,
     },
   ],
     titleZhHant: "當前世界紀錄",
-    badgeZhHant: "世界紀錄"
+    badgeZhHant: "世界紀錄",
+    edgesZhHant: ["WR 標誌由 WCA 官方在 dump 裡直接打 — 不需要本地重算,但意味著新打破的 WR 要等下次 dump 重新整理才顯示。", "Single 和 average 各自獨立 — 一行 `results` 可能 single=WR、average 不是,或反之。", "並列的 single WR(尤其 333fm 歷史 22 / 333bf 極快單次)全部展示,前端表格不去重。", "該 stat 沒有 history 檢視 — 歷史演化看 `wr_metric` 的 Single / Average 子項。"]
 };
 
 // ──── wr_metric ─────────────────────────────────────────────────────────────
@@ -422,7 +424,8 @@ for (const def of METRIC_DEFS) {
     },
   ],
     titleZhHant: "指標 (Metric)",
-    badgeZhHant: "世界紀錄"
+    badgeZhHant: "世界紀錄",
+    edgesZhHant: ["所有指標只覆蓋**有 ao5 的項目**(`EVENTS_WITH_AO5`);BLD / MBLD / FMC 沒有 5 次組,這頁不參與。", "BPA / WPA 用前 4 次,順序敏感:第幾次 attempt 由 `attempt_number` 決定,SQL 裡 `GROUP_CONCAT(ORDER BY attempt_number)` 保證順序。", "Worst Counting 要求至多 1 次 DNF(否則 ao5 本身 DNF);Worst 要求 5 次全有效。", "Median 計算 ≥ 3 次 DNF 時返 null(不輸出),否則取排序後 index=2 — DNF 會\"擠\"中位數向更高有效成績偏。"]
 };
 
 // ──── wr_dominance ──────────────────────────────────────────────────────────
@@ -557,7 +560,8 @@ ORDER BY competition.start_date;`,
         hintZhHant: "看每項目當前 #1 屠了多少"
     },
   ],
-    badgeZhHant: "世界紀錄"
+    badgeZhHant: "世界紀錄",
+    edgesZhHant: ["**平 (tied) 成績不計入屠榜** — `bisectLeft` 找的是第一個 `>= target` 的位置,等於 `others_best` 的成績不算 P 的贏分。", "Single 和 Average 是完全獨立的兩份掃描 — Single 在 attempt 級(同輪 5 次都算),Average 在輪級。", "\"日期邊界\"是按 `start_date` 字串切的 — 同日多場比賽會合並在一個 boundary 同時結算,不會拆成兩次。", "榜首換人時 `firstDom` 也會重置 — 新王朝從 0 開始累計,展示的不是該人成績從首條開始而是從他**奪榜**那天起的累計。"]
 };
 
 // ──── wr_non_pr ─────────────────────────────────────────────────────────────
@@ -695,7 +699,8 @@ ORDER BY competition.start_date, result.id;`,
     },
   ],
     titleZhHant: "非 PR 的紀錄",
-    badgeZhHant: "世界紀錄"
+    badgeZhHant: "世界紀錄",
+    edgesZhHant: ["**平 PB 算 PR 不算 non-PR** — `val <= pb` 時進入 PR 分支,只有 `val > pb` 才進 non-PR 池。", "Single 和 Average 各自獨立 — 同一行 `results` 裡 best 可能是 PR、average 是 non-PR,反之亦然。", "WR History 的\"Improvement\"百分比公式:`(prev - cur) / prev × 100%`;首條留空。", "排名展示每人**最快的一條** non-PR,不展示其餘 non-PR — 同一選手在歷史裡有幾十次刷自己最好但仍不刷 PB 的輪次,這裡只看最強那條。"]
 };
 
 // ──── wr_newcomer ───────────────────────────────────────────────────────────
@@ -827,7 +832,8 @@ QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id, event_id
     },
   ],
     titleZhHant: "新人首戰 (Newcomer)",
-    badgeZhHant: "世界紀錄"
+    badgeZhHant: "世界紀錄",
+    edgesZhHant: ["**兩個資料來源不會合並** — 1st-solve 和 1st-comp 是不同口徑,某人可能在 1st-solve 榜很高但 1st-comp 名次普通(因為同場後續輪沒刷得更快)。", "`round_type_id ∈ {1, 0, d}` 是 WCA 資料 dump 的\"首輪\"約定:1 = combined round 1,0 = round 1,d = qualification round。其他 `c f g e` 等都是後續輪。", "FMC 不走這頁(其 round_type 劃分跟普通項目不同),average 算的是 mean of 3。", "WR History 用 `< minSoFar`(嚴格小於) — 跟其他 stat 一致,不展示並列。Improvement 用 `(prev - cur) / prev × 100%`,保留 1 位小數。"]
 };
 
 // ──── average_of ────────────────────────────────────────────────────────────
@@ -966,7 +972,8 @@ ORDER BY competition.start_date, round_type.rank;`,
     },
   ],
     titleZhHant: "滾動平均 (Rolling Average)",
-    badgeZhHant: "世界紀錄"
+    badgeZhHant: "世界紀錄",
+    edgesZhHant: ["**跨比賽跨輪**,跟 WCA 官方 ao5(同一輪 5 次)完全不同。AoN 的視窗可能橫跨好幾年。", "MBLD / MBLD-old (`333mbf` / `333mbo`)不參與 — 它們的 attempt 結構不同。", "裁剪比例 5% 是寫死的;N=3 時 k=1(去掉最快最慢);N=5 時 k=1(等價 WCA ao5);N=1000 時 k=50。", "WR History 候選只包含 top-N + WR 持有者(SQL 已過濾),所以\"全民最大 Ao1000\" 的真正持有者不一定在 — 但這頁只關心強者側,無傷大雅。"]
 };
 
 // ──── consecutive_sub_5_average ────────────────────────────────────────────
@@ -1105,7 +1112,8 @@ ORDER BY result.person_id, competition.start_date, round_type.rank;`,
         hintZhHant: "看誰連續多少場過線"
     },
   ],
-    titleZhHant: "連續 sub-5 平均"
+    titleZhHant: "連續 sub-5 平均",
+    edgesZhHant: ["**項目固定 3x3x3**(`event_id = '333'`),其他項目即便有 sub-5 average 也不參與。", "閾值是**嚴格小於 500**(即 < 5.00 秒) — 5.00 整數算\"未過線\"中斷 streak。DNF 也算中斷。", "WR History 用 `>=`(允許並列也記)— 跟其他大多數 WR history 的 strict `<` 不同,這是這條 stat 的特殊行為。", "count == 1 不入庫 — 也就是說一次 sub-5 average 單獨出現不算一段 streak,至少要連續 2 次。"]
 };
 
 // ──── 导出聚合 ──────────────────────────────────────────────────────────────

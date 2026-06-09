@@ -76,6 +76,7 @@ export interface SubMilestone {
   value: number;
   note_en: string;
   note_zh: string;
+    note_zhHant?: string;
 }
 
 function annotateSub(rows: RawSub[], kind: 'single' | 'ao5'): SubMilestone[] {

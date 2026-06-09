@@ -91,6 +91,7 @@ interface StatData {
   metricGroups?: MetricGroup[];
   years?: number[];
   cumulative?: Record<string, number[]>;
+    titleZhHant?: string;
 }
 
 function getAllPanelsFromMetric(mp: MetricPanel): StatPanel[] {
@@ -1127,7 +1128,7 @@ export default function WcaStatClient() {
   return (
     <div className="wca-stats-page">
       <div className="wca-stats-header">
-        <h1>{isZh ? data.titleZh : data.title}</h1>
+        <h1>{i18n.language === 'zh-Hant' ? (data.titleZhHant ?? data.titleZh) : (isZh ? data.titleZh : data.title)}</h1>
         {data.note && (
           <p className="wca-stats-note">{isZh ? (data.noteZh ?? data.note) : data.note}</p>
         )}

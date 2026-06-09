@@ -194,8 +194,8 @@ export default function WcaAboutClient() {
       <main className="wcaa-main">
         <div className="wcaa-title-row">
           <h1 className="wcaa-title">{i18n.language === 'zh-Hant' ? (entry.titleZhHant ?? entry.titleZh) : (isZh ? entry.titleZh : entry.titleEn)}</h1>
-          {(isZh ? entry.badgeZh : entry.badgeEn) && (
-            <span className="wcaa-badge">{isZh ? entry.badgeZh : entry.badgeEn}</span>
+          {(i18n.language === 'zh-Hant' ? (entry.badgeZhHant ?? entry.badgeZh) : (isZh ? entry.badgeZh : entry.badgeEn)) && (
+            <span className="wcaa-badge">{i18n.language === 'zh-Hant' ? (entry.badgeZhHant ?? entry.badgeZh) : (isZh ? entry.badgeZh : entry.badgeEn)}</span>
           )}
         </div>
 
@@ -234,13 +234,13 @@ export default function WcaAboutClient() {
           </>
         )}
 
-        {((isZh ? entry.edgesZh : entry.edgesEn) ?? []).length > 0 && (
+        {((i18n.language === 'zh-Hant' ? (entry.edgesZhHant ?? entry.edgesZh) : (isZh ? entry.edgesZh : entry.edgesEn)) ?? []).length > 0 && (
           <>
             <h2 className="wcaa-section-title">{tr({ zh: '口径与边界', en: 'Caveats & edges',
                 zhHant: "口徑與邊界"
             })}</h2>
             <ul className="wcaa-edges">
-              {(isZh ? entry.edgesZh! : entry.edgesEn!).map((e, i) => (
+              {(i18n.language === 'zh-Hant' ? (entry.edgesZhHant ?? entry.edgesZh!) : (isZh ? entry.edgesZh! : entry.edgesEn!)).map((e, i) => (
                 <li key={i} dangerouslySetInnerHTML={{ __html: inlineFormat(e) }} />
               ))}
             </ul>

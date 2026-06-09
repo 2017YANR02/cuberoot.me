@@ -36,6 +36,7 @@ interface ModuleDoc {
   bodyZh: JSX.Element;
   bodyEn: JSX.Element;
     titleZhHant?: string;
+    bodyZhHant?: JSX.Element;
 }
 
 export default function BldGuidePage(): JSX.Element {
@@ -345,7 +346,7 @@ export default function BldGuidePage(): JSX.Element {
               <span>{i18n.language === 'zh-Hant' ? (m.titleZhHant ?? m.titleZh) : (isZh ? m.titleZh : m.titleEn)}</span>
             )}
           </h2>
-          <div className="bld-guide-body">{isZh ? m.bodyZh : m.bodyEn}</div>
+          <div className="bld-guide-body">{i18n.language === 'zh-Hant' ? (m.bodyZhHant ?? m.bodyZh) : (isZh ? m.bodyZh : m.bodyEn)}</div>
         </section>
       ))}
 

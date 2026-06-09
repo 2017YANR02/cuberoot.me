@@ -500,7 +500,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
                       <td className="pred-num">{m.year}</td>
                       <td className="pred-num">{m.date}</td>
                       <td>{m.holder}</td>
-                      <td className="pred-num-small">{isZh ? m.note_zh : m.note_en}</td>
+                      <td className="pred-num-small">{i18n.language === 'zh-Hant' ? (m.note_zhHant ?? m.note_zh) : (isZh ? m.note_zh : m.note_en)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -523,7 +523,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
                       <td className="pred-num">{m.year}</td>
                       <td className="pred-num">{m.date}</td>
                       <td>{m.holder}</td>
-                      <td className="pred-num-small">{isZh ? m.note_zh : m.note_en}</td>
+                      <td className="pred-num-small">{i18n.language === 'zh-Hant' ? (m.note_zhHant ?? m.note_zh) : (isZh ? m.note_zh : m.note_en)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -561,7 +561,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
                     })}:</strong> <code>{r.scramble}</code></div>
                   )}
                   {r.solution && <pre className="pred-recon-solution">{r.solution}</pre>}
-                  <p className="pred-recon-note">{isZh ? r.significance_zh : r.significance_en}</p>
+                  <p className="pred-recon-note">{i18n.language === 'zh-Hant' ? (r.significance_zhHant ?? r.significance_zh) : (isZh ? r.significance_zh : r.significance_en)}</p>
                   {r.source && <a className="pred-recon-source" href={r.source} target="_blank" rel="noopener noreferrer">{tr({ zh: '来源', en: 'source',
                       zhHant: "來源"
                 })} ↗</a>}
@@ -617,7 +617,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
                 })}</th><th>{tr({ zh: '方法', en: 'Method' })}</th></tr></thead>
                 <tbody>
                   {GODS_NUMBER_HISTORY.map((g) => (
-                    <tr key={g.year}><td>{g.year}</td><td className="pred-num"><strong>{g.bound_htm}</strong></td><td>{g.who}</td><td>{isZh ? g.note_zh : g.note_en}</td></tr>
+                    <tr key={g.year}><td>{g.year}</td><td className="pred-num"><strong>{g.bound_htm}</strong></td><td>{g.who}</td><td>{i18n.language === 'zh-Hant' ? (g.note_zhHant ?? g.note_zh) : (isZh ? g.note_zh : g.note_en)}</td></tr>
                   ))}
                 </tbody>
               </table>
@@ -722,12 +722,12 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
                 <tbody>
                   {CFOP_BREAKDOWN.map((s) => (
                     <tr key={s.step}>
-                      <td><strong>{isZh ? s.step_zh : s.step}</strong></td>
+                      <td><strong>{i18n.language === 'zh-Hant' ? (s.step_zhHant ?? s.step_zh) : (isZh ? s.step_zh : s.step)}</strong></td>
                       <td className="pred-num">{s.alg_count}</td>
                       <td className="pred-num">{s.avg_stm}</td>
                       <td className="pred-num">{s.recognition_s.toFixed(2)}</td>
                       <td className="pred-num">{s.avg_time_s.toFixed(2)}</td>
-                      <td>{isZh ? s.description_zh : s.description_en}</td>
+                      <td>{i18n.language === 'zh-Hant' ? (s.description_zhHant ?? s.description_zh) : (isZh ? s.description_zh : s.description_en)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -812,7 +812,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
                 })}</th></tr></thead>
                 <tbody>
                   {ZBLL_GROUPS.map((g) => (
-                    <tr key={g.coll}><td><strong>{g.coll}</strong></td><td className="pred-num">{g.count}</td><td className="pred-num">{g.avg_stm.toFixed(1)}</td><td>{isZh ? g.description_zh : g.description_en}</td></tr>
+                    <tr key={g.coll}><td><strong>{g.coll}</strong></td><td className="pred-num">{g.count}</td><td className="pred-num">{g.avg_stm.toFixed(1)}</td><td>{i18n.language === 'zh-Hant' ? (g.description_zhHant ?? g.description_zh) : (isZh ? g.description_zh : g.description_en)}</td></tr>
                   ))}
                 </tbody>
               </table>
@@ -886,10 +886,10 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
                 <tbody>
                   {SKIP_PROBABILITIES.map((s) => (
                     <tr key={s.event_en}>
-                      <td>{isZh ? s.event_zh : s.event_en}</td>
+                      <td>{i18n.language === 'zh-Hant' ? (s.event_zhHant ?? s.event_zh) : (isZh ? s.event_zh : s.event_en)}</td>
                       <td className="pred-num"><code>1/{Math.round(1 / s.p)}</code></td>
                       <td className="pred-num"><strong>{s.p_pct.toFixed(3)}%</strong></td>
-                      <td className="pred-num-small">{isZh ? s.note_zh : s.note_en}</td>
+                      <td className="pred-num-small">{i18n.language === 'zh-Hant' ? (s.note_zhHant ?? s.note_zh) : (isZh ? s.note_zh : s.note_en)}</td>
                     </tr>
                   ))}
                 </tbody>

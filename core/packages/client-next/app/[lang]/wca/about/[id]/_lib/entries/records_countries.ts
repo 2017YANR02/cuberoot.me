@@ -115,7 +115,8 @@ GROUP BY result.country_id`,
     },
   ],
     titleZhHant: "各國海外最佳獎牌收藏",
-    badgeZhHant: "國家"
+    badgeZhHant: "國家",
+    edgesZhHant: ["\"海外\"按舉辦國判定,不是地理遠近 —— 大陸內鄰國 (中日韓互訪) 也算海外。", "只看 Final + Combined Final 兩類決賽輪 —— 預賽 / 半決名次不計入獎牌。", "WCA 的 `pos` 在 DNF 也會賦值 (按 best 排),所以再加 `best > 0` 排掉 \"DNF 拿第一\"。", "\"獎牌\"沿用 WCA 標準 —— 決賽前 3 即領獎臺,即使決賽 < 8 人也算 (規則未要求最低人數)。"]
 };
 
 // ──── best_medal_collection_from_abroad_by_person ───────────────────────────
@@ -226,7 +227,8 @@ ORDER BY gold DESC, silver DESC, bronze DESC LIMIT 100`,
     },
   ],
     titleZhHant: "個人海外最佳獎牌收藏",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["選手改國籍後,舊比賽的 `result.country_id` **不會回填** —— 歷史獎牌按當時國籍判定海外/主場,符合直覺。", "同一選手在同一比賽拿多個項目金牌會累計 (e.g. 3x3 + 2x2 + OH 都金牌 = +3 金)。", "Limit 100 截斷意味著尾部選手在這裡看不到,但完整 by_country 加總能反推。"]
 };
 
 // ──── current_world_records_by_country ──────────────────────────────────────
@@ -354,7 +356,8 @@ JOIN events e ON e.id = ps.event_id AND e.rank < 900;`,
     },
   ],
     titleZhHant: "各國當前世界紀錄數量",
-    badgeZhHant: "國家"
+    badgeZhHant: "國家",
+    edgesZhHant: ["\"當前\"= dump 時間點 (每月更新);新 WR 打破後下一次 dump 才會反映。", "並列 WR (同值多人) 都算,所以個別項目可能 2-3 個國家同時各 +1。", "停辦項目 (`e.rank ≥ 900`) 整個被排除 —— 那些 \"永久 WR\" 不參與現役榜。", "與 `world_records_by_country` 區別:那個是歷史累計,這個只數當前持有。"]
 };
 
 // ──── delegated_competition_per_year ────────────────────────────────────────
@@ -468,7 +471,8 @@ HAVING delegated >= 5`,
         titleZhHant: "開啟實時榜單"
     },
   ],
-    titleZhHant: "每年代表比賽數"
+    titleZhHant: "每年代表比賽數",
+    edgesZhHant: ["服役跨度按\"代表過的比賽\"算,不是 WCA 內部任命期 —— 間斷不計入分母 (但通常 Delegate 不會真正斷籤)。", "若代表只簽過 1 場,DATEDIFF 是 0,會除零;`HAVING ≥ 5` 順帶防了。", "副代表 (Trainee) 在 `competition_delegates` 裡也是一行,會算進總數 —— 包含見習經歷。"]
 };
 
 // ──── first_r_is_wr ─────────────────────────────────────────────────────────
@@ -585,7 +589,8 @@ WHERE rn = 1 AND record = 'WR'`,
         hintZhHant: "完整名單 + 日期 + 比賽"
     },
   ],
-    titleZhHant: "首次破紀錄即世界紀錄"
+    titleZhHant: "首次破紀錄即世界紀錄",
+    edgesZhHant: ["\"首次\"按 `start_date` 排,同日多場比賽 / 同場多項目的並列首條都會進 `rn = 1` (單條記錄裡 single + average 同時算 NR/CR/WR 也會拆 2 行)。", "只要 record **不是空字串 / NULL** 就算 regional record;NR / CR / WR 三級都收進 UNION,再過濾。", "WCA 的 `regional_*_record` 是當時打破時的標記,不會因後續被超越而清除 —— 歷史 WR 不會\"降級\"。"]
 };
 
 // ──── longest_standing_records ──────────────────────────────────────────────
@@ -715,7 +720,8 @@ WHERE regional_single_record IN ('AfR','AsR','ER','NAR','OcR','SAR','WR')
     },
   ],
     titleZhHant: "最長保持紀錄",
-    badgeZhHant: "壽命"
+    badgeZhHant: "壽命",
+    edgesZhHant: ["\"被打破\"判定基於值嚴格更小 (`Number(r2[type]) < Number(r[type])`),平了不算打破。", "同人多次破自己的紀錄,每條都算獨立條目,壽命算到下次他自己又破。", "`OFFICIAL_EVENTS` 過濾:`333mbo` / `magic` 等停辦項目不進榜 —— 它們的\"永久紀錄\"不公平。", "WR 持有人通常在自己洲也持有 CR,所以同一條 WR 會在 World + 其洲 2 個區塊各出現一次。"]
 };
 
 // ──── longest_streak_of_world_records ───────────────────────────────────────
@@ -843,7 +849,8 @@ WHERE regional_single_record = 'WR'
     },
   ],
     titleZhHant: "同一項目同一型別最長連續世界紀錄",
-    badgeZhHant: "連擊"
+    badgeZhHant: "連擊",
+    edgesZhHant: ["streak 不要求\"嚴格重新整理\":WCA `regional_*_record = WR` 本身就是當時貼的標 (能貼說明改進了),所以掃到的每條都已經是 WR。", "同一人在不同項目同時連擊 → 拆成 2 個 streak (每項目獨立)。", "\"仍在保持\"的活 streak 用 today 算 years;實際可能下個月就被破,數字會變。", "停辦項目走 `DISCONTINUED_EVENTS = [333ft, magic, mmagic, 333mbo]` 的特殊路徑 —— 這些項目最後的 WR 持有人會用項目\"死亡日\"截止。"]
 };
 
 // ──── most_delegated_competitions ───────────────────────────────────────────
@@ -951,7 +958,8 @@ ORDER BY delegated_count DESC`,
     },
   ],
     titleZhHant: "代表比賽最多",
-    badgeZhHant: "累計"
+    badgeZhHant: "累計",
+    edgesZhHant: ["Trainee Delegate (見習代表) 也是 `competition_delegates` 的一行,會被計入 —— 累計數包含見習經歷。", "Senior Delegate / 區域代表角色不影響計數 —— 只要在那場比賽掛名 Delegate 就 +1。", "從未代表過的人不上榜 —— 不是\"所有 Delegate 列表\",而是\"代表過至少 1 場\"。"]
 };
 
 // ──── potentially_seen_world_records ────────────────────────────────────────
@@ -1073,7 +1081,8 @@ GROUP BY person_id LIMIT 100`,
     },
   ],
     titleZhHant: "可能目擊過的世界紀錄",
-    badgeZhHant: "現場"
+    badgeZhHant: "現場",
+    edgesZhHant: ["\"目擊\"是理論值 —— 選手實際不一定在該輪在場,可能在午餐 / 沒看螢幕。", "同場 single + average 雙 WR 算 2 次 —— 即使是同一個選手同一輪,也都貢獻。", "只統計 WR;NR / CR 不算 —— 想拓寬換 records_in_most_events 思路。", "Top 100 截斷:尾部幾千名選手 ≥ 1 的有很多,看不見。"]
 };
 
 // ──── records_in_most_events ────────────────────────────────────────────────
@@ -1189,7 +1198,8 @@ ORDER BY event.rank`,
     },
   ],
     titleZhHant: "在最多項目中打破紀錄",
-    badgeZhHant: "廣度"
+    badgeZhHant: "廣度",
+    edgesZhHant: ["\"項目\"按 `event.name` 字串去重 —— 已停辦項目 (magic / 333mbo) 都計入,因為是歷史口徑。", "NR 在小國家相對容易拿,所以 National tier 榜單偏向\"項目多 × 國家小\"的選手;3 個級別一起看更公平。", "`sub_id = 1` 過濾改名 / 國籍變化的副行,避免同人多算。"]
 };
 
 // ──── winned_week_count ─────────────────────────────────────────────────────
@@ -1313,7 +1323,8 @@ FROM ... GROUP BY event_id, person_id`,
         hintZhHant: "項目切換 + Top 20"
     },
   ],
-    titleZhHant: "獲勝週數"
+    titleZhHant: "獲勝週數",
+    edgesZhHant: ["ISO 周以週一為起點(用 `WEEKDAY()`,週一 = 0,週日 = 6) —— 跨年 W52/W01 都按數學推,不走 ISO `YEARWEEK()` 複雜規則。", "沒有比賽的周不計入 (沒人跑出 week_best) —— 比如聖誕 / 疫情期間會有\"空周\"。", "同周並列 (多人同值) 全部算贏家,不分先後日期 —— 這是 WCA \"regional records 同分並列\"的延伸。", "只看 single,不算 average —— 類似指標用 average 會受 5 次/掐尾規則影響,口徑複雜。"]
 };
 
 // ──── world_championship_podiums_by_country ─────────────────────────────────
@@ -1430,7 +1441,8 @@ GROUP BY result.country_id`,
     },
   ],
     titleZhHant: "各國世錦賽領獎臺次數",
-    badgeZhHant: "世錦賽"
+    badgeZhHant: "世錦賽",
+    edgesZhHant: ["世錦賽辦過的屆數有限 (1982 第一屆,2003 復辦後每 2 年一屆),所以總樣本遠小於\"海外獎牌\";頂部國家以少勝多。", "`championships` 表對每場比賽只掛 1 個 championship_type;WC + CC 雙掛的情況 (一個比賽同時是世錦賽和洲錦賽) 極少。", "同 medal_from_abroad,`best > 0` 防 DNF \"登頂\"。"]
 };
 
 // ──── world_championship_podiums_by_person ──────────────────────────────────
@@ -1542,7 +1554,8 @@ GROUP BY person_id`,
     },
   ],
     titleZhHant: "世錦賽領獎臺次數(選手)",
-    badgeZhHant: "世錦賽"
+    badgeZhHant: "世錦賽",
+    edgesZhHant: ["選手國籍變化:dump 裡 `result.country_id` 是當時國籍,不會回填;但 `persons.country_id` (sub_id = 1) 顯示當前國籍。\"國家\"列可能跟歷史身份不符。", "同屆世錦賽多項目多領獎臺 → 多次累計 (無去重)。", "Worlds 樣本量小,前 5 大概覆蓋一半 —— 頭部效應明顯。"]
 };
 
 // ──── world_championship_records ────────────────────────────────────────────
@@ -1664,7 +1677,8 @@ WHERE championship_type = 'world'`,
     },
   ],
     titleZhHant: "世錦賽紀錄",
-    badgeZhHant: "世錦賽"
+    badgeZhHant: "世錦賽",
+    edgesZhHant: ["\"世錦賽紀錄\"≠ WR;比 WR 慢的成績照樣可以是 WCR (e.g. 某項目 WR 在某屆非 Worlds 比賽打出,Worlds 上的最佳 < WR)。", "不限決賽 —— 預賽打出超快單次也算 (雖然實際罕見,因為決賽通常是表現高點)。", "FMC / MBLD 的 average 計算用 `SolveTime` 內部規則;MBLD `best` 用 score 編碼 (嘗試 / 完成 / 時間),不要直接看數值。"]
 };
 
 // ──── world_records_by_country ──────────────────────────────────────────────
@@ -1791,7 +1805,8 @@ ORDER BY year, country.name`,
     },
   ],
     titleZhHant: "各國世界紀錄數量",
-    badgeZhHant: "國家"
+    badgeZhHant: "國家",
+    edgesZhHant: ["歷史 WR 不會因後續超越而清除標記 —— 算的就是\"曾經的 WR\",所以同一項目 WR 進化史裡每條都進總數。", "\"國家\"按打破 WR 時的選手國籍 (`result.country_id` 當時值);改國籍後舊 WR 仍歸原國。", "WCA dump 是歷史口徑,WR 標記跟\"破紀錄順序\"綁死 (並列 WR 都打標);所以同值並列時 2 個國家各 +1。", "`/globe` 把 `cumulative` 一幀幀對映成 choropleth,時間軸回放 1982 → 今天的 WR 集中度演化。"]
 };
 
 // ──── world_records_by_person ───────────────────────────────────────────────
@@ -1905,7 +1920,8 @@ ORDER BY wrs_count DESC, person.name`,
     },
   ],
     titleZhHant: "個人世界紀錄數量",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["同人同場刷自己 = 累計;e.g. 同場預賽 + 半決 + 決賽 single 都破 WR = 3 個 WR。", "WR 持有人改國籍不影響 WR 計數,隻影響 by_country 歸屬。", "與 `records_in_most_events` (項目廣度) 不同 —— 這裡數次數,那邊數不同項目數。", "沒單獨\"當前\"版,要看當前 WR 數走 `current_world_records_by_country` (但那是國家維度,WCA 沒出當前 WR by person 的官方榜)。"]
 };
 
 export const RECORDS_COUNTRIES_ABOUT: Record<string, AboutEntry> = {
