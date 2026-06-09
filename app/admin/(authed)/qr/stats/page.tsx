@@ -5,7 +5,7 @@ import {
   statsByCode,
   statsSummary,
 } from "@/lib/db/qr-stats";
-import { Card, GhostLink, PageHeader } from "../../../_components/Shell";
+import { Card, GhostLink, PageHeader, Th, Td } from "../../../_components/Shell";
 
 export const dynamic = "force-dynamic";
 
@@ -189,25 +189,5 @@ function SummaryCard({
         </span>
       </span>
     </Card>
-  );
-}
-
-function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <th className={"px-4 py-3 text-left font-medium " + className}>{children}</th>;
-}
-
-function Td({
-  children,
-  className = "",
-  colSpan,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  colSpan?: number;
-}) {
-  return (
-    <td className={"px-4 py-3 align-middle " + className} colSpan={colSpan}>
-      {children}
-    </td>
   );
 }

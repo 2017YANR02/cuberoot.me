@@ -4,6 +4,7 @@ import {
   INSTRUCTOR_REVENUE_SHARE,
 } from "@/lib/db/instructor-stats";
 import { listByInstructor } from "@/lib/db/instructor-payouts";
+import { Th, Td } from "@/components/DataTable";
 
 export const dynamic = "force-dynamic";
 
@@ -186,24 +187,5 @@ function Stat({
       <div className="mt-1 text-[24px] font-semibold text-ink">{value}</div>
       {hint ? <div className="mt-2 text-[12px] text-ink-3">{hint}</div> : null}
     </div>
-  );
-}
-
-function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <th className={"px-4 py-3 text-left font-medium " + className}>{children}</th>;
-}
-function Td({
-  children,
-  className = "",
-  colSpan,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  colSpan?: number;
-}) {
-  return (
-    <td className={"px-4 py-3 align-middle " + className} colSpan={colSpan}>
-      {children}
-    </td>
   );
 }

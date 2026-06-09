@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+// 数据表单元格抽到 components/DataTable,admin / instructor 共用;这里 re-export 保持旧 import 路径
+export { Th, Td } from "@/components/DataTable";
+
 export function PageHeader({
   title,
   subtitle,

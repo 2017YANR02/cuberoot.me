@@ -22,7 +22,7 @@ export default async function InstructorLayout({
   const { instructor } = await requireInstructor();
   return (
     <div className="bg-bg-soft min-h-[80vh]">
-      <div className="grid md:grid-cols-[220px_1fr] min-h-[80vh]">
+      <div className="flex flex-col md:grid md:grid-cols-[220px_minmax(0,1fr)] min-h-[80vh]">
         <aside className="border-b md:border-b-0 md:border-r border-line bg-white md:flex md:flex-col">
           <div className="p-5">
             <Link
@@ -53,7 +53,7 @@ export default async function InstructorLayout({
             </Link>
           </div>
         </aside>
-        <main className="px-5 md:px-8 py-8 bg-bg-soft">{children}</main>
+        <main className="min-w-0 px-5 md:px-8 py-8 bg-bg-soft">{children}</main>
       </div>
     </div>
   );

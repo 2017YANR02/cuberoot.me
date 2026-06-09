@@ -5,6 +5,7 @@ import {
   INSTRUCTOR_REVENUE_SHARE,
 } from "@/lib/db/instructor-stats";
 import { Badge } from "@/components/Badge";
+import { Th, Td } from "@/components/DataTable";
 import type { OrderStatus } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
@@ -124,24 +125,4 @@ export default async function InstructorHome() {
 function maskPhone(p: string): string {
   if (!p || p.length < 7) return p;
   return p.slice(0, 3) + "****" + p.slice(-4);
-}
-
-function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <th className={"px-4 py-3 text-left font-medium " + className}>{children}</th>;
-}
-
-function Td({
-  children,
-  className = "",
-  colSpan,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  colSpan?: number;
-}) {
-  return (
-    <td className={"px-4 py-3 align-middle " + className} colSpan={colSpan}>
-      {children}
-    </td>
-  );
 }
