@@ -4,10 +4,12 @@
 // 复选框:显示排名 / 显示领奖台.
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from '@/components/AppLink';
+import { ArrowUpRight } from 'lucide-react';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { fetchPersonBestRanks, type WcaPersonProfile, type WcaResultRow, type PersonBestRanksResponse } from '@/lib/wca-person-api';
+import { fetchPersonBestRanks, fetchPersonSor, type WcaPersonProfile, type WcaResultRow, type PersonBestRanksResponse, type PersonSorResponse } from '@/lib/wca-person-api';
 import { countPodiumByEvent } from '../logic/podium';
 import i18n from "@/i18n/i18n-client";
 
@@ -163,7 +165,76 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
           </tbody>
         </table>
       </div>
+
+      <PersonSorSummary wcaId={profile.person.wca_id} isZh={isZh} />
     </section>
+  );
+}
+
+// 全项目排名(Sum of Ranks)摘要:当前 / 历史最佳的单次 + 平均(世界口径).
+// 数据 lazy fetch;无数据(端点未上线 / 选手无 SOR)时整块不渲染,不破坏页面.
+function PersonSorSummary({ wcaId, isZh }: { wcaId: string; isZh: boolean }) {
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const [sor, setSor] = useState<PersonSorResponse | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSor(null);
+    fetchPersonSor(wcaId)
+      .then((j) => { if (!cancelled) setSor(j); })
+      .catch(() => { /* 端点未上线 / 选手无 SOR:静默隐藏 */ });
+    return () => { cancelled = true; };
+  }, [wcaId]);
+
+  if (!sor || (!sor.single && !sor.average && !sor.bestSingle && !sor.bestAverage)) return null;
+
+  const cur = (cell: PersonSorResponse['single']) =>
+    cell ? (
+      <span className="wp-sor-cell">
+        <span className="wp-sor-total">{cell.total}</span>
+        <span className="wp-sor-rank">{t(`世界第 ${cell.rank}`, `World #${cell.rank}`, `世界第 ${cell.rank}`)}</span>
+      </span>
+    ) : <span className="wp-sor-dash">—</span>;
+  const best = (cell: PersonSorResponse['bestSingle']) =>
+    cell ? (
+      <span className="wp-sor-cell">
+        {cell.total != null && <span className="wp-sor-total">{cell.total}</span>}
+        <span className="wp-sor-rank">#{cell.rank}</span>
+        <span className="wp-sor-year">{cell.year}</span>
+      </span>
+    ) : <span className="wp-sor-dash">—</span>;
+
+  return (
+    <div className="wp-sor">
+      <div className="wp-sor-head">
+        <Link href="/wca/sum-of-ranks" className="wp-sor-title">
+          {t('全项目排名', 'Sum of Ranks', '全項目排名')}
+          <ArrowUpRight size={13} />
+        </Link>
+        <span className="wp-sor-scope">{t('世界 · 现役 17 项', 'World · 17 events', '世界 · 現役 17 項')}</span>
+      </div>
+      <table className="wp-sor-table">
+        <thead>
+          <tr>
+            <th />
+            <th>{t('当前', 'Current', '當前')}</th>
+            <th>{t('历史最佳', 'Best ever', '歷史最佳')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">{t('单次', 'Single', '單次')}</th>
+            <td>{cur(sor.single)}</td>
+            <td>{best(sor.bestSingle)}</td>
+          </tr>
+          <tr>
+            <th scope="row">{t('平均', 'Average')}</th>
+            <td>{cur(sor.average)}</td>
+            <td>{best(sor.bestAverage)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }
 

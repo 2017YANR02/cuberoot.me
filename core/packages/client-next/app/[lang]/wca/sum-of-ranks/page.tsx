@@ -165,6 +165,10 @@ function SumOfRanksPageInner() {
   const [pb, setPb] = useState<PlayerBest | null>(null);
   const [pbLoading, setPbLoading] = useState(false);
   const [pbError, setPbError] = useState(false);
+  // 「展开全部并列组合」懒加载分页:pbMore = 内联前 16 之后追加的组合(server 头部固定切前 16).
+  const [pbMore, setPbMore] = useState<string[][]>([]);
+  const [pbMoreLoading, setPbMoreLoading] = useState(false);
+  const [pbExpanded, setPbExpanded] = useState(false);
   // Q2: 名人堂(懒加载,展开才拉)
   const [raceOpen, setRaceOpen] = useState(false);
   const [census, setCensus] = useState<Census | null>(null);
@@ -209,6 +213,28 @@ function SumOfRanksPageInner() {
       .finally(() => { clearTimeout(timer); if (!done) setPbLoading(false); });
     return () => { done = true; clearTimeout(timer); ctrl.abort(); };
   }, [picked, includeCancelled]);
+
+  // 选手 / 类型 / 含废止口径变了,重置「展开全部」状态
+  useEffect(() => { setPbMore([]); setPbExpanded(false); }, [picked, type, includeCancelled]);
+
+  // 懒加载下一页并列组合(每页 100;offset 从内联的前 16 之后接续).
+  const PB_PAGE = 100;
+  const loadMoreCombos = async () => {
+    if (!picked || pbMoreLoading) return;
+    setPbMoreLoading(true);
+    const offset = 16 + pbMore.length; // server 内联头部固定前 16
+    const qs = new URLSearchParams({
+      wcaId: picked.id, isAvg: type === 'average' ? '1' : '0',
+      offset: String(offset), limit: String(PB_PAGE),
+    });
+    if (includeCancelled) qs.set('cancelled', '1');
+    try {
+      const r = await fetch(apiUrl(`/v1/wca/sum-of-ranks/player-combos?${qs.toString()}`)).then(res => res.ok ? res.json() : null);
+      if (r?.combos?.length) setPbMore(prev => [...prev, ...r.combos]);
+    } catch { /* 静默:超时/网络错误时停在已加载的页 */ } finally {
+      setPbMoreLoading(false);
+    }
+  };
 
   // 名人堂某年名单(展开时 + type/含废止/未登台/年份变化时拉)
   useEffect(() => {
@@ -461,10 +487,41 @@ function SumOfRanksPageInner() {
                         })}</button>
                       </li>
                     ))}
+                    {pbExpanded && pbMore.map((evs, i) => (
+                      <li key={`m${i}`} className="sor-pb-combo">
+                        <span className="sor-pb-events">{evs.map((ev, k) => <EventIcon key={`${ev}${k}`} event={ev} />)}</span>
+                        <button type="button" className="sor-pb-apply" onClick={() => applyCombo(evs, type)}>{tr({ zh: '应用到榜单', en: 'Apply',
+                            zhHant: "應用到榜單"
+                        })}</button>
+                      </li>
+                    ))}
                   </ul>
-                  {comboCount > combos.length && (
-                    <div className="sor-pb-note">{i18n.language === 'zh-Hant' ? (`僅列出項目數最少的 ${combos.length} 種`) : (isZh ? `仅列出项目数最少的 ${combos.length} 种` : `Showing the ${combos.length} with fewest events`)}</div>
-                  )}
+                  {comboCount > combos.length && (() => {
+                    const loaded = combos.length + (pbExpanded ? pbMore.length : 0);
+                    if (!pbExpanded) {
+                      return (
+                        <button type="button" className="sor-pb-expand" onClick={() => { setPbExpanded(true); loadMoreCombos(); }}>
+                          {i18n.language === 'zh-Hant' ? (`展開全部 ${comboCount.toLocaleString()} 種`) : (isZh ? `展开全部 ${comboCount.toLocaleString()} 种` : `Show all ${comboCount.toLocaleString()}`)}
+                        </button>
+                      );
+                    }
+                    return (
+                      <div className="sor-pb-expand-row">
+                        {loaded < comboCount ? (
+                          <button type="button" className="sor-pb-expand" disabled={pbMoreLoading} onClick={loadMoreCombos}>
+                            {pbMoreLoading
+                              ? tr({ zh: '加载中…', en: 'Loading…', zhHant: '載入中…' })
+                              : (i18n.language === 'zh-Hant'
+                                  ? `載入更多 (${loaded.toLocaleString()}/${comboCount.toLocaleString()})`
+                                  : (isZh ? `加载更多 (${loaded.toLocaleString()}/${comboCount.toLocaleString()})` : `Load more (${loaded.toLocaleString()}/${comboCount.toLocaleString()})`))}
+                          </button>
+                        ) : (
+                          <span className="sor-pb-note">{i18n.language === 'zh-Hant' ? (`已全部展開 ${comboCount.toLocaleString()} 種`) : (isZh ? `已全部展开 ${comboCount.toLocaleString()} 种` : `All ${comboCount.toLocaleString()} shown`)}</span>
+                        )}
+                        <button type="button" className="sor-pb-collapse" onClick={() => { setPbExpanded(false); setPbMore([]); }}>{tr({ zh: '收起', en: 'Collapse', zhHant: '收起' })}</button>
+                      </div>
+                    );
+                  })()}
                 </>
               );
             })()}

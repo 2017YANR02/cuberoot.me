@@ -132,5 +132,11 @@
     "zh": "/wca 各子页 + 选手详情页 UI/概念参考",
     "en": "UI / concept reference for /wca sub-pages + person detail page",
     "long_en": "UI/概念参考来源:`/wca` 子页(历史排名 / 大满贯 / 全部成绩排名 / 当年成绩排名 / 参赛届别排名 / 项目成功率 / 全项目达成 / 全项目排名)+ `/wca/persons/:wcaId` 选手详情页(成绩 / 赛事 / 项目统计 / 里程碑 / 点亮城市)"
+  },
+  {
+    "name": "WCA Regulations Committee — Regulation 5b5f Visual Guide",
+    "url": "https://drive.google.com/file/d/15XszaCGNvy3Dk6X6qERzZWZaDH1RH04z",
+    "zh": "/regulation 规则页:5b5f 拼装缺陷判定可视化指南(内容 + 11 张配图全部来自此官方文档,已注明来源)",
+    "en": "/regulation page: Regulation 5b5f assembly-defect Visual Guide (text + all 11 photos sourced from this official document)"
   }
 ]

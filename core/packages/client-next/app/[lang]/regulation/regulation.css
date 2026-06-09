@@ -1,0 +1,177 @@
+/* ─── /regulation — WCA Regulation 5b5f Visual Guide ───
+ * 双主题:走 :root token 自动翻 light/dark。WCA 蓝作页面 accent(dark 提亮)。
+ * 判定色用 signal token。配图来自官方 Visual Guide(已注明来源)。
+ * ────────────────────────────────────────────────────── */
+
+.reg-page {
+  --bg: var(--background);
+  --card: var(--card);
+  --ink: var(--foreground);
+  --ink-dim: var(--muted-foreground);
+  --ink-faint: var(--faint-foreground);
+  --rule: var(--border-default);
+  --rule-strong: var(--border-strong);
+  --blue: #1773b8;                 /* WCA guide blue (dark 下提亮见下) */
+  --ok: var(--signal-success);
+  --bad: var(--signal-danger);
+  --warn: var(--signal-warning);
+  --info: var(--signal-info);
+
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 17px;
+  line-height: 1.7;
+  padding: 56px 24px 120px;
+  -webkit-font-smoothing: antialiased;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme=light]) .reg-page { --blue: #5ba9e0; }
+}
+html[data-theme=dark] .reg-page { --blue: #5ba9e0; }
+
+.reg-wrap { max-width: 880px; margin: 0 auto; }
+
+/* ── Hero ───────────────────────────────────────── */
+.reg-hero { margin-bottom: 8px; }
+.reg-eyebrow {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: var(--font-mono);
+  font-size: 12px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--blue); margin-bottom: 18px;
+}
+.reg-eyebrow img { width: 22px; height: 22px; display: block; }
+.reg-title {
+  font-size: clamp(36px, 7vw, 62px);
+  font-weight: 800; line-height: 1.02; letter-spacing: -.025em;
+  margin: 0 0 8px;
+}
+.reg-title .reg-code { color: var(--blue); }
+.reg-subtitle {
+  font-size: clamp(17px, 2.6vw, 23px); font-weight: 600;
+  color: var(--ink-dim); margin: 0 0 24px;
+}
+.reg-lede { font-size: 18px; color: var(--ink-dim); margin: 0 0 26px; max-width: 64ch; }
+
+.reg-source {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--ink-dim); text-decoration: none;
+  border: 1px solid var(--rule); border-radius: 999px;
+  padding: 8px 15px; transition: border-color .14s, color .14s;
+}
+.reg-source:hover { border-color: var(--blue); color: var(--blue); }
+.reg-source svg { flex-shrink: 0; }
+
+/* ── Section heads ──────────────────────────────── */
+.reg-sec { margin-top: 76px; }
+.reg-sec-eyebrow {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: 10px;
+}
+.reg-sec-title {
+  font-size: clamp(24px, 3.6vw, 33px); font-weight: 700;
+  letter-spacing: -.018em; margin: 0 0 26px;
+}
+.reg-sec-lede { font-size: 17px; color: var(--ink-dim); margin: -12px 0 26px; max-width: 62ch; }
+
+/* ── Regulation quote ───────────────────────────── */
+.reg-quote {
+  padding: 2px 0 2px 24px;
+  border-left: 3px solid var(--blue);
+  margin: 0 0 26px;
+}
+.reg-quote-num {
+  display: inline-block; font-family: var(--font-mono);
+  font-size: 13px; font-weight: 600; color: var(--blue); margin-bottom: 9px;
+}
+.reg-quote-text { font-size: 19px; line-height: 1.62; color: var(--ink); margin: 0; }
+
+/* ── Key principle callout ──────────────────────── */
+.reg-key {
+  background: color-mix(in srgb, var(--blue) 7%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--blue) 26%, var(--rule));
+  border-radius: 14px;
+  padding: 26px 28px;
+}
+.reg-key-label {
+  display: flex; align-items: center; gap: 9px;
+  font-weight: 700; color: var(--blue); margin-bottom: 12px;
+  font-size: 14px; letter-spacing: .02em;
+}
+.reg-key-text { font-size: 18px; line-height: 1.66; color: var(--ink); margin: 0; }
+
+/* ── Considerations list ────────────────────────── */
+.reg-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 18px; }
+.reg-list li {
+  position: relative; padding-left: 26px;
+  color: var(--ink-dim); font-size: 16.5px; line-height: 1.65;
+}
+.reg-list li::before {
+  content: ''; position: absolute; left: 4px; top: 10px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--blue);
+}
+
+/* ── Examples ───────────────────────────────────── */
+.reg-examples { margin-top: 8px; }
+.reg-ex {
+  display: grid; grid-template-columns: 320px 1fr; gap: 34px;
+  padding: 40px 0; border-top: 1px solid var(--rule); align-items: start;
+}
+.reg-ex:first-child { border-top: 0; padding-top: 8px; }
+.reg-ex-media { position: relative; }
+.reg-ex-img {
+  width: 100%; height: auto; display: block;
+  border-radius: 12px; border: 1px solid var(--rule); background: var(--card);
+}
+.reg-ex-n {
+  font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint);
+  letter-spacing: .06em; text-transform: uppercase; margin-bottom: 11px;
+}
+.reg-ex-verdict {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-weight: 700; font-size: 14px; padding: 5px 13px;
+  border-radius: 999px; margin-bottom: 15px;
+}
+.reg-ex-verdict::before {
+  content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor;
+}
+.v-solved   { color: var(--ok);   background: color-mix(in srgb, var(--ok) 15%, transparent); }
+.v-dnf      { color: var(--bad);  background: color-mix(in srgb, var(--bad) 15%, transparent); }
+.v-plus2    { color: var(--warn); background: color-mix(in srgb, var(--warn) 18%, transparent); }
+.v-delegate { color: var(--info); background: color-mix(in srgb, var(--info) 15%, transparent); }
+.reg-ex-text { font-size: 16.5px; line-height: 1.72; color: var(--ink-dim); margin: 0; }
+
+/* ── Explanation ────────────────────────────────── */
+.reg-explain { display: grid; grid-template-columns: 1fr 300px; gap: 38px; align-items: start; }
+.reg-explain-text p { margin: 0 0 16px; color: var(--ink-dim); font-size: 16.5px; line-height: 1.72; }
+.reg-explain-text p:last-child { margin-bottom: 0; }
+.reg-explain-img {
+  width: 100%; height: auto; display: block;
+  border-radius: 12px; border: 1px solid var(--rule); background: var(--card);
+}
+
+/* ── Footer / credit ────────────────────────────── */
+.reg-footer {
+  margin-top: 88px; padding-top: 30px; border-top: 1px solid var(--rule);
+  font-size: 14px; color: var(--ink-faint); line-height: 1.75;
+}
+.reg-footer a { color: var(--blue); text-decoration: none; }
+.reg-footer a:hover { text-decoration: underline; }
+.reg-footer strong { color: var(--ink-dim); font-weight: 600; }
+.reg-revisions {
+  margin-top: 18px; font-family: var(--font-mono);
+  font-size: 11.5px; color: var(--ink-faint); line-height: 1.8;
+}
+
+/* ── Responsive ─────────────────────────────────── */
+@media (max-width: 720px) {
+  .reg-page { padding: 38px 18px 84px; font-size: 16px; }
+  .reg-sec { margin-top: 60px; }
+  .reg-ex { grid-template-columns: 1fr; gap: 18px; padding: 32px 0; }
+  .reg-ex-media { max-width: 440px; }
+  .reg-explain { grid-template-columns: 1fr; gap: 20px; }
+  .reg-explain-img { max-width: 440px; }
+  .reg-quote-text { font-size: 17.5px; }
+  .reg-key-text { font-size: 16.5px; }
+}
