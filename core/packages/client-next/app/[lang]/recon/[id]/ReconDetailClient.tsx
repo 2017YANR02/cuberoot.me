@@ -1034,11 +1034,14 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime }: {
                       {stats.tps > 0 && <span>{stats.tps} TPS</span>}
                     </div>
                   )}
+                  <Link
+                    href={`/recon/${reconId}/alt/${idx}`}
+                    title={t('recon.playAlt')}
+                    style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+                  >
                   <pre
                     className="detail-solution-text alt-solution-text"
                     style={{ cursor: 'pointer' }}
-                    onClick={() => router.push(`/recon/${reconId}/alt/${idx}`)}
-                    title={t('recon.playAlt')}
                   >
                     {alt.solution.split(/\r?\n/).map((line, li) => {
                       const nl = li > 0 ? '\n' : '';
@@ -1048,6 +1051,7 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime }: {
                       return <span key={li}>{nl}{line}</span>;
                     })}
                   </pre>
+                  </Link>
                 </div>
                 <div className="alt-card-actions">
                   <ItemMenu items={[

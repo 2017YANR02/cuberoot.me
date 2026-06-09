@@ -511,6 +511,12 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             zhHant: "設定"
         })}</h2>
 
+        <p className="settings-gesture-hint">
+          {tr({ zh: '按住并拖动呼出轮盘', en: 'Press & drag to open the wheel',
+              zhHant: "按住並拖動撥出輪盤"
+        })}
+        </p>
+
         <AccordionSection
           id="scramble-source"
           title={tr({ zh: '打乱来源', en: 'Scramble source',
@@ -528,11 +534,11 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               value={s.scrambleSource}
               onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' })}
             >
-              <option value="random">{tr({ zh: '随机生成', en: 'Random',
-                  zhHant: "隨機生成"
-            })}</option>
               <option value="wca">{tr({ zh: 'WCA 真实比赛打乱', en: 'Real WCA comp scrambles',
                   zhHant: "WCA 真實比賽打亂"
+            })}</option>
+              <option value="random">{tr({ zh: '随机生成', en: 'Random',
+                  zhHant: "隨機生成"
             })}</option>
             </select>
           </Row>

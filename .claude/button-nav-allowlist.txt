@@ -1,0 +1,8 @@
+# 站内导航 hook (~/.claude/hooks/block-button-navigation.ps1) 的本项目豁免清单。
+# 每行一个文件路径后缀;onClick 里 router.push/replace 在这些文件里是有意为之(非链接伪装成按钮)。
+# 理由见 tests/no-button-navigation.test.ts 的 ALLOWLIST(两处保持一致)。
+app/[lang]/recon/submit/ReconSubmitForm.tsx
+app/[lang]/trainer/[puzzle]/[set]/TrainerSetClient.tsx
+app/[lang]/recon/[id]/alt/AltSubmitForm.tsx
+app/[lang]/scramble/gen/SheetView.tsx
+components/DeskPetSearch.tsx

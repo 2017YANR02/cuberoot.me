@@ -6,11 +6,42 @@
  */
 
 import { create } from 'zustand';
-import type { PlayerState, SolveEntry, Session, WinnerValue, BattleMode, BattleLayout, TabName } from './types';
+import type { PlayerState, SolveEntry, Session, BattleMode, BattleLayout, TabName } from './types';
 import { PENALTY, LS_PREFIX, MIN_SOLVE_TIME } from './constants';
 import type { PenaltyType } from './constants';
 import { generateScramble, generateScrambleImageUrl } from './scramble_engine';
 import { getEffectiveTimeFromEntry, computeAo5, computeAverage } from '@/app/[lang]/timer/_shared/stats-core';
+import { getSettings } from '@/app/[lang]/timer/_lib/settings';
+import { peekWca, nextWca, prefetchWca, hasWcaSource, type WcaSourceSpec } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
+import type { EventId } from '@/app/[lang]/timer/_lib/types';
+
+// Battle puzzle id → timer EventId (so the shared wca_pool, keyed by timer
+// EventId, accepts battle's WCA-native ids). Unmapped ids pass through; events
+// with no real comp scrambles (fto / kilominx) resolve to no source and fall
+// back to a generated scramble.
+const BATTLE_TO_TIMER_EVENT: Record<string, EventId> = {
+  minx: 'mega', pyram: 'pyra',
+  '333bf': '333bld', '444bf': '444bld', '555bf': '555bld', '333mbf': '333mbld',
+};
+export function battleToTimerEvent(id: string): EventId {
+  return (BATTLE_TO_TIMER_EVENT[id] ?? id) as EventId;
+}
+
+/** Build the WCA source spec for a battle puzzle, reading the shared timer
+ *  settings (scramble source config is shared across Solo + Duo). */
+function wcaSpecFor(puzzleId: string): WcaSourceSpec {
+  const st = getSettings();
+  return {
+    event: battleToTimerEvent(puzzleId),
+    mode: st.wcaScrambleMode,
+    comp: st.wcaComp,
+    compName: st.wcaCompName,
+    round: st.wcaRound,
+    group: st.wcaGroup,
+    from: st.wcaDateFrom,
+    to: st.wcaDateTo,
+  };
+}
 
 // SSR shim: Next renders Server Components without window/localStorage.
 // We give a no-op store so module-level `localStorage.getItem(...)` calls don't
@@ -62,12 +93,19 @@ function isBLD(puzzleId: string): boolean {
   return ['333bf', '444bf', '555bf'].includes(puzzleId);
 }
 
-// NOTE: 启动时载入两人的 puzzle。新 key (battle_puzzle_0/_1) 缺失时回退到旧 key (battle_puzzle)
-function loadInitialPuzzleIds(): [string, string] {
+// NOTE: 引擎固定承载 4 个玩家槽位;实际参战人数由 playerCount (2~4) 决定,
+//   多余槽位保持空闲,不参与状态机/渲染。
+export const MAX_PLAYERS = 4;
+
+function freshPlayers(): PlayerState[] {
+  return Array.from({ length: MAX_PLAYERS }, (_, i) => createPlayer(i));
+}
+
+// NOTE: 启动时载入各槽位的 puzzle。新 key (battle_puzzle_N) 缺失时回退到旧 key (battle_puzzle)
+function loadInitialPuzzleIds(): string[] {
   const legacy = localStorage.getItem(LS_PREFIX + 'puzzle');
-  const p0 = localStorage.getItem(LS_PREFIX + 'puzzle_0') ?? legacy ?? '333';
-  const p1 = localStorage.getItem(LS_PREFIX + 'puzzle_1') ?? legacy ?? '333';
-  return [p0, p1];
+  return Array.from({ length: MAX_PLAYERS }, (_, i) =>
+    localStorage.getItem(LS_PREFIX + `puzzle_${i}`) ?? legacy ?? '333');
 }
 
 // NOTE: Web Speech API 语音播报（零依赖）— 1:1 翻译自 battle.js（行 1975~1990）
@@ -119,11 +157,13 @@ export function findBestAverage(
 export interface BattleState {
   // NOTE: Solo/1v1 模式（'solo' 或 '1v1'）
   mode: BattleMode;
-  // NOTE: 1v1 布局（versus=面对面, side=并排）
+  // NOTE: 1v1 布局（versus=面对面, side=并排）;3/4 人时由 UI 强制田字格,忽略此值
   layout: BattleLayout;
+  // NOTE: 参战人数(2~4)。所有 per-player 数组固定 MAX_PLAYERS 长,只有前 playerCount 个槽位参战
+  playerCount: number;
   // 每位玩家的项目 ID。Solo 只用 puzzleIds[0]
-  // NOTE: 1v1 中两人始终独立选；同 id 时强制同 scramble（见 loadNewScramble）
-  puzzleIds: [string, string];
+  // NOTE: 1v1 中各自独立选；同 id 的玩家强制同 scramble（见 loadNewScramble）
+  puzzleIds: string[];
   // 是否显示计时中的时间
   showTime: boolean;
   // 是否显示打乱图
@@ -139,11 +179,11 @@ export interface BattleState {
   // NOTE: 背景不透明度（0.1~1.0），双方共用
   bgOpacity: number;
   // NOTE: 每位玩家自定义背景色（hex；空串 = 默认黑底）
-  bgColors: [string, string];
+  bgColors: string[];
   // NOTE: 每位玩家自定义背景图（base64 data URL；null = 不用图片）
-  bgImages: [string | null, string | null];
+  bgImages: (string | null)[];
   // NOTE: 每位玩家的 event picker 是否打开(打开时在自己 TimerArea 内覆盖大网格)
-  eventPickerOpen: [boolean, boolean];
+  eventPickerOpen: boolean[];
   // NOTE: 计时器精确度（小数位数：0=秒, 1=0.1s, 2=0.01s, 3=0.001s）
   timerPrecision: number;
   // NOTE: 启动延时（ms），按住多久后才能开始计时
@@ -153,17 +193,17 @@ export interface BattleState {
   // NOTE: 目标 Ao5 时间（秒，用于进度条显示）
   goalTime: number;
   // 每位玩家当前的打乱
-  scrambles: [string | null, string | null];
+  scrambles: (string | null)[];
   // 每位玩家当前的打乱图 data URL
-  scrambleImageUrls: [string | null, string | null];
+  scrambleImageUrls: (string | null)[];
   // 每位玩家是否正在加载打乱
-  scrambleLoadings: [boolean, boolean];
+  scrambleLoadings: boolean[];
   // 赢家标识
-  winner: WinnerValue;
+  winners: number[];
   // NOTE: 红灯→绿灯的延时计时器 ID
   readyTimer: ReturnType<typeof setTimeout> | null;
   // 两个玩家状态
-  players: [PlayerState, PlayerState];
+  players: PlayerState[];
   // NOTE: 撤销栈
   undoStack: Array<{ index: number; entry: SolveEntry }>;
   // NOTE: Session 管理
@@ -188,10 +228,12 @@ export interface BattleState {
   deleteLast: () => void;
   toggleShowTime: () => void;
   resetAll: () => void;
-  // target=0/1 只换该侧。Solo 始终 target=0；1v1 各自独立
-  changePuzzle: (target: 0 | 1, puzzleId: string) => void;
+  // target 只换该玩家。Solo 始终 target=0；1v1 各自独立
+  changePuzzle: (target: number, puzzleId: string) => void;
   setMode: (mode: BattleMode) => void;
   setLayout: (layout: BattleLayout) => void;
+  // NOTE: 参战人数(2~4)。切换时重置回合/比分,按槽位重新加载各自历史
+  setPlayerCount: (n: number) => void;
   setInspectionTime: (time: number) => void;
   setVoice: (voice: boolean) => void;
   setPhases: (phases: number) => void;
@@ -199,13 +241,13 @@ export interface BattleState {
   setScrambleScale: (scale: number) => void;
   setBgOpacity: (opacity: number) => void;
   // NOTE: 单侧背景色;传空串清除
-  setBgColor: (playerId: 0 | 1, color: string) => void;
+  setBgColor: (playerId: number, color: string) => void;
   // NOTE: 单侧背景图(base64);传 null 清除。返回 false 表示图片超过 BG_MAX_BYTES
-  setBgImage: (playerId: 0 | 1, dataUrl: string | null) => void;
+  setBgImage: (playerId: number, dataUrl: string | null) => void;
   // NOTE: 单侧背景重置(色 + 图都清)
-  resetBg: (playerId: 0 | 1) => void;
+  resetBg: (playerId: number) => void;
   // NOTE: 切换 / 关闭某玩家的 event picker overlay
-  setEventPickerOpen: (playerId: 0 | 1, open: boolean) => void;
+  setEventPickerOpen: (playerId: number, open: boolean) => void;
   setTimerPrecision: (precision: number) => void;
   setStartDelay: (delay: number) => void;
   setGoalTime: (goal: number) => void;
@@ -248,6 +290,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   // NOTE: 初始值 — 1:1 翻译自 battle.js state 对象（行 99~141）
   mode: (localStorage.getItem(LS_PREFIX + 'mode') as BattleMode) || '1v1',
   layout: (localStorage.getItem(LS_PREFIX + 'layout') as BattleLayout) || 'versus',
+  // NOTE: 人数由 URL ?players= 驱动(BattleView 同步进来),不持久化
+  playerCount: 2,
   puzzleIds: loadInitialPuzzleIds(),
   showTime: localStorage.getItem(LS_PREFIX + 'showTime') !== 'false',
   showImage: localStorage.getItem(LS_PREFIX + 'showImage') !== 'false',
@@ -256,25 +300,21 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   phases: parseInt(localStorage.getItem(LS_PREFIX + 'phases') || '1') || 1,
   scrambleScale: parseFloat(localStorage.getItem(LS_PREFIX + 'scrambleScale') || '1.0') || 1.0,
   bgOpacity: parseFloat(localStorage.getItem(LS_PREFIX + 'bgOpacity') || '1.0') || 1.0,
-  bgColors: [
-    localStorage.getItem(LS_PREFIX + 'bg_color_0') || '',
-    localStorage.getItem(LS_PREFIX + 'bg_color_1') || '',
-  ],
-  bgImages: [
-    localStorage.getItem(LS_PREFIX + 'bg_img_0'),
-    localStorage.getItem(LS_PREFIX + 'bg_img_1'),
-  ],
-  eventPickerOpen: [false, false],
+  bgColors: Array.from({ length: MAX_PLAYERS }, (_, i) =>
+    localStorage.getItem(LS_PREFIX + `bg_color_${i}`) || ''),
+  bgImages: Array.from({ length: MAX_PLAYERS }, (_, i) =>
+    localStorage.getItem(LS_PREFIX + `bg_img_${i}`)),
+  eventPickerOpen: Array.from({ length: MAX_PLAYERS }, () => false),
   timerPrecision: (() => { const v = localStorage.getItem(LS_PREFIX + 'timerPrecision'); return v !== null ? parseInt(v) : 3; })(),
   startDelay: (() => { const v = localStorage.getItem(LS_PREFIX + 'startDelay'); return v !== null ? parseInt(v) : 300; })(),
   enabledAverages: JSON.parse(localStorage.getItem(LS_PREFIX + 'enabledAverages') || '[5, 12]'),
   goalTime: parseFloat(localStorage.getItem(LS_PREFIX + 'goalTime') || '0') || 0,
-  scrambles: [null, null],
-  scrambleImageUrls: [null, null],
-  scrambleLoadings: [false, false],
-  winner: -2,
+  scrambles: Array.from({ length: MAX_PLAYERS }, () => null),
+  scrambleImageUrls: Array.from({ length: MAX_PLAYERS }, () => null),
+  scrambleLoadings: Array.from({ length: MAX_PLAYERS }, () => false),
+  winners: [],
   readyTimer: null,
-  players: [createPlayer(0), createPlayer(1)],
+  players: freshPlayers(),
   undoStack: [],
   sessionId: localStorage.getItem(LS_PREFIX + 'sessionId') || '1',
   sessions: JSON.parse(localStorage.getItem(LS_PREFIX + 'sessions') || '[{"id":"1","name":"Session 1"}]'),
@@ -293,29 +333,38 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       localStorage.removeItem(LS_PREFIX + 'puzzle');
       localStorage.removeItem(LS_PREFIX + 'splitPuzzles');
       localStorage.setItem(VERSION_KEY, 'done');
-      set({ puzzleIds: ['333', '333'] });
+      set({ puzzleIds: Array.from({ length: MAX_PLAYERS }, () => '333') });
     }
     get().loadSolveHistory();
     get().loadNewScramble();
   },
 
   // ===== 打乱生成 =====
-  // playerId 不传则两人都重生（Solo 始终只对 0 生效）
-  // NOTE: 不变量——1v1 模式下 puzzleIds[0] === puzzleIds[1] 时,scrambles 必须相等。
-  //   即使只针对单侧调用,若两人同 puzzle,也强制把新 scramble 同步到另一侧。
+  // playerId 不传则全员重生（Solo 始终只对 0 生效）
+  // NOTE: 不变量——1v1 模式下同 puzzle 的玩家 scrambles 必须相等。
+  //   即使只针对单侧调用,影响范围也扩展到该玩家所在的整个同 puzzle 组。
   loadNewScramble: (playerId?: number) => {
     const s = get();
+    const n = s.mode === 'solo' ? 1 : s.playerCount;
     const targets = playerId === undefined
-      ? (s.mode === 'solo' ? [0] : [0, 1])
+      ? Array.from({ length: n }, (_, i) => i)
       : [playerId];
 
-    const sharedPuzzle = s.mode === '1v1' && s.puzzleIds[0] === s.puzzleIds[1];
-    // NOTE: 同 puzzle 时,影响范围扩展到双方
-    const affected = sharedPuzzle ? [0, 1] : targets;
+    // NOTE: 按 puzzle 分组——每组共享一条打乱
+    const groups = new Map<string, number[]>();
+    for (const t of targets) {
+      const puz = s.puzzleIds[t];
+      if (groups.has(puz)) continue;
+      groups.set(puz, Array.from({ length: n }, (_, i) => i).filter(i => s.puzzleIds[i] === puz));
+    }
+    const affected = [...groups.values()].flat();
+    // WCA 真实打乱模式(打乱来源在共享的 timer 设置里,Solo / Duo 同一份配置)
+    const useWca = getSettings().scrambleSource === 'wca';
 
-    const loadings: [boolean, boolean] = [...s.scrambleLoadings];
-    const scramblesNext: [string | null, string | null] = [...s.scrambles];
-    const imagesNext: [string | null, string | null] = [...s.scrambleImageUrls];
+    // 1) 把受影响的槽位标记为加载中(清掉旧打乱)
+    const loadings: boolean[] = [...s.scrambleLoadings];
+    const scramblesNext: (string | null)[] = [...s.scrambles];
+    const imagesNext: (string | null)[] = [...s.scrambleImageUrls];
     for (const i of affected) {
       loadings[i] = true;
       scramblesNext[i] = null;
@@ -323,38 +372,43 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     }
     set({ scrambleLoadings: loadings, scrambles: scramblesNext, scrambleImageUrls: imagesNext });
 
-    const after = get();
-    const newScrambles: [string | null, string | null] = [...after.scrambles];
-    const newImages: [string | null, string | null] = [...after.scrambleImageUrls];
-    const newLoadings: [boolean, boolean] = [...after.scrambleLoadings];
+    // 把一个具体打乱写进若干槽位(同 puzzle 共享时一份复制给两人),并解除 loading。
+    // 打乱图由 TimerArea 的 CubingPreview 从打乱串直接渲染,scrambleImageUrls 已是死状态
+    // (无组件读取),故不再调 generateScrambleImageUrl(该函数在 Next port 缺 image.js 全局会抛)。
+    const commit = (idxs: number[], text: string) => {
+      const cur = get();
+      const ns: (string | null)[] = [...cur.scrambles];
+      const ni: (string | null)[] = [...cur.scrambleImageUrls];
+      const nl: boolean[] = [...cur.scrambleLoadings];
+      for (const i of idxs) { ns[i] = text; ni[i] = null; nl[i] = false; }
+      set({ scrambles: ns, scrambleImageUrls: ni, scrambleLoadings: nl });
+    };
 
-    if (sharedPuzzle) {
-      // 一份 scramble 复制给两人
-      const puzzleId = after.puzzleIds[0];
-      const text = generateScramble(puzzleId);
-      const img = (after.showImage && text && !text.startsWith('⚠️'))
-        ? generateScrambleImageUrl(puzzleId, text)
-        : null;
-      newScrambles[0] = text;
-      newScrambles[1] = text;
-      newImages[0] = img;
-      newImages[1] = img;
-      newLoadings[0] = false;
-      newLoadings[1] = false;
-    } else {
-      for (const i of affected) {
-        const puzzleId = after.puzzleIds[i];
-        const text = generateScramble(puzzleId);
-        newScrambles[i] = text;
-        newLoadings[i] = false;
-        if (after.showImage && text && !text.startsWith('⚠️')) {
-          newImages[i] = generateScrambleImageUrl(puzzleId, text);
-        } else {
-          newImages[i] = null;
-        }
+    // 队列为空时异步取一条真实打乱填回。期间若 puzzle 改了 / 关了 WCA / 已被填,放弃;
+    // 取不到(该比赛无此项目 / 网络失败)→ 回退本地生成。
+    const fillWca = (idxs: number[], puzzleId: string, spec: WcaSourceSpec) => {
+      void nextWca(spec).then((real) => {
+        if (getSettings().scrambleSource !== 'wca') return;
+        const cur = get();
+        for (const i of idxs) if (cur.puzzleIds[i] !== puzzleId) return;
+        if (idxs.some((i) => cur.scrambles[i] != null)) return;
+        commit(idxs, real ?? generateScramble(puzzleId));
+      });
+    };
+
+    // 2) 派发:同 puzzle 组一份复制给全组;不同 puzzle 各组独立生成
+    const drawInto = (idxs: number[], puzzleId: string) => {
+      const spec = useWca ? wcaSpecFor(puzzleId) : null;
+      if (spec && hasWcaSource(spec)) {
+        const sync = peekWca(spec);
+        if (sync != null) commit(idxs, sync);
+        else fillWca(idxs, puzzleId, spec); // 队列空 → 保持 loading,异步填
+      } else {
+        commit(idxs, generateScramble(puzzleId));
       }
-    }
-    set({ scrambles: newScrambles, scrambleImageUrls: newImages, scrambleLoadings: newLoadings });
+    };
+
+    for (const [puz, idxs] of groups) drawInto(idxs, puz);
   },
 
   // ===== 状态机核心 =====
@@ -364,8 +418,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const s = get();
     const isSolo = s.mode === 'solo';
 
-    // NOTE: Solo 模式只处理 player 0
+    // NOTE: Solo 模式只处理 player 0;1v1 忽略未参战槽位
     if (isSolo && playerId !== 0) return false;
+    if (!isSolo && playerId >= s.playerCount) return false;
 
     const p = s.players[playerId];
 
@@ -377,7 +432,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       }
       if (p.isInspecting) {
         // NOTE: 观察中按下 → 进入准备状态
-        const newPlayers = [...s.players] as [PlayerState, PlayerState];
+        const newPlayers = [...s.players];
         newPlayers[playerId] = { ...p, isReady: true };
         set({ players: newPlayers });
         get().checkBothReady();
@@ -391,7 +446,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
           const numPhases = isBLD(s.puzzleIds[0]) ? 2 : s.phases;
           if (numPhases > 1 && p.phaseSplits.length < numPhases - 1) {
             // 记录分段时间（不停表）
-            const newPlayers = [...s.players] as [PlayerState, PlayerState];
+            const newPlayers = [...s.players];
             newPlayers[playerId] = {
               ...p,
               phaseSplits: [...p.phaseSplits, elapsed],
@@ -406,7 +461,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
           } else if (p.inspectionPenalty === 'dnf') {
             penalty = PENALTY.DNF;
           }
-          const newPlayers = [...s.players] as [PlayerState, PlayerState];
+          const newPlayers = [...s.players];
           newPlayers[playerId] = {
             ...p,
             time: elapsed,
@@ -422,7 +477,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       }
       if (!p.hasFinished && !p.canStart && s.scrambles[0]) {
         // 空闲状态按下 → 准备
-        const newPlayers = [...s.players] as [PlayerState, PlayerState];
+        const newPlayers = [...s.players];
         newPlayers[playerId] = { ...p, isReady: true };
         set({ players: newPlayers });
         get().checkBothReady();
@@ -431,9 +486,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       return false;
     }
 
-    // === 1v1 模式原有逻辑 ===
-    const [p0, p1] = s.players;
-    if (p0.hasFinished && p1.hasFinished) {
+    // === 1v1 模式原有逻辑(推广到 N 人:全员完成才能进入下一轮) ===
+    if (s.players.slice(0, s.playerCount).every(pl => pl.hasFinished)) {
       get().resetForNextRound();
     }
 
@@ -443,7 +497,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     if (ps.isTiming) {
       const elapsed = performance.now() - ps.startTime;
       if (elapsed > MIN_SOLVE_TIME) {
-        const newPlayers = [...get().players] as [PlayerState, PlayerState];
+        const newPlayers = [...get().players];
         newPlayers[playerId] = {
           ...ps,
           time: elapsed,
@@ -457,7 +511,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       }
       return true;
     } else if (!ps.hasFinished && !ps.canStart && get().scrambles[playerId]) {
-      const newPlayers = [...get().players] as [PlayerState, PlayerState];
+      const newPlayers = [...get().players];
       newPlayers[playerId] = { ...ps, isReady: true };
       set({ players: newPlayers });
       get().checkBothReady();
@@ -472,6 +526,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const isSolo = s.mode === 'solo';
 
     if (isSolo && playerId !== 0) return;
+    if (!isSolo && playerId >= s.playerCount) return;
 
     const p = s.players[playerId];
 
@@ -480,14 +535,14 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       if (p.canStart) {
         // NOTE: inspection 开启时，松手开始观察倒计时
         if (s.inspectionTime > 0 && !p.isInspecting && !p.isTiming) {
-          const newPlayers = [...s.players] as [PlayerState, PlayerState];
+          const newPlayers = [...s.players];
           newPlayers[playerId] = { ...p, canStart: false, isReady: false };
           set({ players: newPlayers });
           get().startInspection(playerId);
           return;
         }
         // 松手开始计时
-        const newPlayers = [...s.players] as [PlayerState, PlayerState];
+        const newPlayers = [...s.players];
         newPlayers[playerId] = {
           ...p,
           canStart: false,
@@ -505,7 +560,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       }
       if (p.isReady && !p.isTiming && !p.hasFinished) {
         get().cancelReadyTimer();
-        const newPlayers = [...s.players] as [PlayerState, PlayerState];
+        const newPlayers = [...s.players];
         newPlayers[playerId] = { ...p, isReady: false };
         set({ players: newPlayers });
       }
@@ -514,10 +569,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
 
     // === 1v1 模式原有逻辑 ===
     if (p.canStart) {
-      // --- 第一名玩家松手触发，强制双方同时开始计时 ---
+      // --- 第一名玩家松手触发，强制全员同时开始计时 ---
       const startTime = performance.now();
-      const newPlayers = [...s.players] as [PlayerState, PlayerState];
-      for (let i = 0; i < 2; i++) {
+      const newPlayers = [...s.players];
+      for (let i = 0; i < s.playerCount; i++) {
         const player = s.players[i];
         if (player.canStart) {
           newPlayers[i] = {
@@ -535,7 +590,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     } else if (p.isReady && !p.isTiming && !p.hasFinished) {
       // NOTE: 对方未就绪时松手 → 恢复 idle（黑色），取消红灯延时
       get().cancelReadyTimer();
-      const newPlayers = [...s.players] as [PlayerState, PlayerState];
+      const newPlayers = [...s.players];
       newPlayers[playerId] = { ...p, isReady: false };
       set({ players: newPlayers });
     }
@@ -554,7 +609,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         const timer = setTimeout(() => {
           const curr = get();
           if (curr.players[0].isReady) {
-            const newPlayers = [...curr.players] as [PlayerState, PlayerState];
+            const newPlayers = [...curr.players];
             newPlayers[0] = { ...curr.players[0], canStart: true };
             set({ players: newPlayers, readyTimer: null });
           }
@@ -563,15 +618,16 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       }
       return;
     }
-    // === 1v1 原有逻辑 ===
-    const [p0, p1] = s.players;
-    if (p0.isReady && !p0.canStart && p1.isReady && !p1.canStart) {
+    // === 1v1 原有逻辑(推广到 N 人:全员按住才进入红灯延时) ===
+    const active = s.players.slice(0, s.playerCount);
+    if (active.every(pl => pl.isReady && !pl.canStart)) {
       const timer = setTimeout(() => {
         const curr = get();
-        if (curr.players[0].isReady && curr.players[1].isReady) {
-          const newPlayers = [...curr.players] as [PlayerState, PlayerState];
-          newPlayers[0] = { ...curr.players[0], canStart: true };
-          newPlayers[1] = { ...curr.players[1], canStart: true };
+        if (curr.players.slice(0, curr.playerCount).every(pl => pl.isReady)) {
+          const newPlayers = [...curr.players];
+          for (let i = 0; i < curr.playerCount; i++) {
+            newPlayers[i] = { ...curr.players[i], canStart: true };
+          }
           set({ players: newPlayers, readyTimer: null });
         }
       }, s.startDelay);
@@ -603,7 +659,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         };
         // NOTE: 多阶段分段记录
         if (p.phaseSplits.length > 0) entry.phases = [...p.phaseSplits, p.time];
-        const newPlayers = [...s.players] as [PlayerState, PlayerState];
+        const newPlayers = [...s.players];
         newPlayers[0] = { ...p, solveHistory: [...p.solveHistory, entry] };
         set({ players: newPlayers });
         get().saveSolveHistory();
@@ -615,12 +671,11 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       }
       return;
     }
-    // === 1v1 原有逻辑 ===
-    const [p0, p1] = s.players;
-    if (p0.hasFinished && p1.hasFinished) {
+    // === 1v1 原有逻辑(推广到 N 人:全员停表才记轮) ===
+    if (s.players.slice(0, s.playerCount).every(pl => pl.hasFinished)) {
       // NOTE: 记录成绩到历史
-      const newPlayers = [...s.players] as [PlayerState, PlayerState];
-      for (let i = 0; i < 2; i++) {
+      const newPlayers = [...s.players];
+      for (let i = 0; i < s.playerCount; i++) {
         const pi = s.players[i];
         newPlayers[i] = {
           ...pi,
@@ -647,7 +702,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     if (isSolo) {
       const p = s.players[0];
       get().clearInspection(0);
-      const newPlayers = [...s.players] as [PlayerState, PlayerState];
+      const newPlayers = [...s.players];
       newPlayers[0] = {
         ...p,
         isReady: false,
@@ -659,9 +714,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       set({ players: newPlayers });
       return;
     }
-    // === 1v1 原有逻辑 ===
-    const newPlayers = [...s.players] as [PlayerState, PlayerState];
-    for (let i = 0; i < 2; i++) {
+    // === 1v1 原有逻辑(推广到 N 人) ===
+    const newPlayers = [...s.players];
+    for (let i = 0; i < s.playerCount; i++) {
       newPlayers[i] = {
         ...s.players[i],
         isReady: false,
@@ -670,39 +725,27 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         hasFinished: false,
       };
     }
-    set({ players: newPlayers, winner: -2 });
+    set({ players: newPlayers, winners: [] });
   },
 
-  // 1:1 翻译自 battle.js computeWinner()（行 963~1001）
+  // 1:1 翻译自 battle.js computeWinner()（行 963~1001;推广到 N 人,最小有效成绩者胜,可并列）
   computeWinner: () => {
     const s = get();
-    const [p0, p1] = s.players;
     const effectiveTimeFn = (player: PlayerState) => {
       if (player.penalty === PENALTY.DNF) return Infinity;
       if (player.penalty === PENALTY.PLUS2) return player.time + 2000;
       return player.time;
     };
-    const t0 = effectiveTimeFn(p0);
-    const t1 = effectiveTimeFn(p1);
+    const times = s.players.slice(0, s.playerCount).map(effectiveTimeFn);
+    const min = Math.min(...times);
+    // 全 DNF → 无胜者(不加分);并列最快 → 共享胜利各 +1
+    const winners = min === Infinity ? [] : times.flatMap((t, i) => (t === min ? [i] : []));
 
-    let winner: WinnerValue = -2;
-    const newPlayers = [...s.players] as [PlayerState, PlayerState];
-
-    if (t0 === Infinity && t1 === Infinity) {
-      winner = -2;
-    } else if (t0 < t1) {
-      winner = 0;
-      newPlayers[0] = { ...p0, points: p0.points + 1 };
-    } else if (t1 < t0) {
-      winner = 1;
-      newPlayers[1] = { ...p1, points: p1.points + 1 };
-    } else {
-      winner = -1;
-      newPlayers[0] = { ...p0, points: p0.points + 1 };
-      newPlayers[1] = { ...p1, points: p1.points + 1 };
+    const newPlayers = [...s.players];
+    for (const i of winners) {
+      newPlayers[i] = { ...newPlayers[i], points: newPlayers[i].points + 1 };
     }
-
-    set({ winner, players: newPlayers });
+    set({ winners, players: newPlayers });
   },
 
   // ===== 罚时处理 =====
@@ -712,7 +755,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const p = s.players[playerId];
     if (!p.hasFinished || p.isTiming) return;
 
-    const newPlayers = [...s.players] as [PlayerState, PlayerState];
+    const newPlayers = [...s.players];
     newPlayers[playerId] = { ...p, penalty: penaltyType };
 
     if (s.mode === 'solo') {
@@ -730,9 +773,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       return;
     }
 
-    // === 1v1 原有逻辑 ===
+    // === 1v1 原有逻辑(推广到 N 人) ===
     // NOTE: 更新历史中最后一条记录的 penalty
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < s.playerCount; i++) {
       const ph = [...newPlayers[i].solveHistory];
       if (ph.length > 0) {
         ph[ph.length - 1] = {
@@ -744,27 +787,22 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     }
     set({ players: newPlayers });
 
-    // NOTE: 双方完成后才重算积分
-    if (newPlayers[0].hasFinished && newPlayers[1].hasFinished) {
+    // NOTE: 全员完成后才重算积分
+    if (newPlayers.slice(0, s.playerCount).every(pl => pl.hasFinished)) {
       get().removeLastWinner();
       get().computeWinner();
       get().saveSolveHistory();
     }
   },
 
-  // 1:1 翻译自 battle.js removeLastWinner()（行 1184~1196）
+  // 1:1 翻译自 battle.js removeLastWinner()（行 1184~1196;按 winners 列表撤销加分）
   removeLastWinner: () => {
     const s = get();
-    const newPlayers = [...s.players] as [PlayerState, PlayerState];
-    if (s.winner === 0) {
-      newPlayers[0] = { ...s.players[0], points: s.players[0].points - 1 };
-    } else if (s.winner === 1) {
-      newPlayers[1] = { ...s.players[1], points: s.players[1].points - 1 };
-    } else if (s.winner === -1) {
-      newPlayers[0] = { ...s.players[0], points: s.players[0].points - 1 };
-      newPlayers[1] = { ...s.players[1], points: s.players[1].points - 1 };
+    const newPlayers = [...s.players];
+    for (const i of s.winners) {
+      newPlayers[i] = { ...newPlayers[i], points: newPlayers[i].points - 1 };
     }
-    set({ winner: -2, players: newPlayers });
+    set({ winners: [], players: newPlayers });
   },
 
   // ===== 设置操作 =====
@@ -774,7 +812,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     if (s.mode === 'solo') {
       const p = s.players[0];
       if (p.solveHistory.length === 0) return;
-      const newPlayers = [...s.players] as [PlayerState, PlayerState];
+      const newPlayers = [...s.players];
       newPlayers[0] = {
         ...p,
         solveHistory: p.solveHistory.slice(0, -1),
@@ -786,11 +824,11 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       get().saveSolveHistory();
       return;
     }
-    // === 1v1 原有逻辑 ===
-    if (!s.players[0].hasFinished || !s.players[1].hasFinished) return;
+    // === 1v1 原有逻辑(推广到 N 人) ===
+    if (!s.players.slice(0, s.playerCount).every(pl => pl.hasFinished)) return;
     get().removeLastWinner();
-    const newPlayers = [...s.players] as [PlayerState, PlayerState];
-    for (let i = 0; i < 2; i++) {
+    const newPlayers = [...s.players];
+    for (let i = 0; i < s.playerCount; i++) {
       newPlayers[i] = {
         ...s.players[i],
         time: 0,
@@ -812,9 +850,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
 
   // 1:1 翻译自 battle.js resetAll()（行 1151~1182）
   resetAll: () => {
-    const newPlayers: [PlayerState, PlayerState] = [createPlayer(0), createPlayer(1)];
+    const newPlayers = freshPlayers();
     set({
-      winner: -2,
+      winners: [],
       players: newPlayers,
       undoStack: [],
     });
@@ -823,65 +861,62 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     s.loadNewScramble();
   },
 
-  // target=0/1 → 仅换该侧。Solo 始终 target=0；1v1 由 BattleEventPicker 各自调用
-  // NOTE: 改完单侧后,若两人现在 id 相等则触发双人 loadNewScramble
-  //       (loadNewScramble 内部会走"同 puzzle ⇒ 一份 scramble 复制给双方"分支)
-  changePuzzle: (target: 0 | 1, newPuzzleId: string) => {
+  // target → 仅换该玩家。Solo 始终 target=0；1v1 各自调用
+  // NOTE: 同 puzzle 共享 scramble 由 loadNewScramble 的分组逻辑处理
+  changePuzzle: (target: number, newPuzzleId: string) => {
     const s = get();
     if (s.puzzleIds[target] === newPuzzleId) return;
 
     s.saveSolveHistory();
 
-    const newPuzzleIds: [string, string] = [...s.puzzleIds];
+    const newPuzzleIds: string[] = [...s.puzzleIds];
     newPuzzleIds[target] = newPuzzleId;
     localStorage.setItem(LS_PREFIX + `puzzle_${target}`, newPuzzleId);
-    if (newPuzzleIds[0] === newPuzzleIds[1]) {
+    if (newPuzzleIds.slice(0, s.playerCount).every(p => p === newPuzzleIds[0])) {
       localStorage.setItem(LS_PREFIX + 'puzzle', newPuzzleIds[0]);
     }
 
     // 重置受影响玩家的当前回合（保留 points，loadSolveHistory 会替换 history）
-    const newPlayers = [...s.players] as [PlayerState, PlayerState];
+    const newPlayers = [...s.players];
     newPlayers[target] = createPlayer(target);
     newPlayers[target].points = s.players[target].points;
 
-    // NOTE: 另一玩家也重置当前回合状态(保留 points / history)。
-    //   否则 P0 切项目后,P1 还卡在上轮 hasFinished=true,playerDown 拒绝进入红灯。
+    // NOTE: 其他玩家也重置当前回合状态(保留 points / history)。
+    //   否则 P0 切项目后,其他人还卡在上轮 hasFinished=true,playerDown 拒绝进入红灯。
     if (s.mode === '1v1') {
-      const other = (1 - target) as 0 | 1;
-      newPlayers[other] = {
-        ...s.players[other],
-        isReady: false,
-        canStart: false,
-        isTiming: false,
-        hasFinished: false,
-        isInspecting: false,
-        inspectionPenalty: null,
-        pointerId: null,
-        time: 0,
-      };
+      for (let i = 0; i < s.playerCount; i++) {
+        if (i === target) continue;
+        newPlayers[i] = {
+          ...s.players[i],
+          isReady: false,
+          canStart: false,
+          isTiming: false,
+          hasFinished: false,
+          isInspecting: false,
+          inspectionPenalty: null,
+          pointerId: null,
+          time: 0,
+        };
+      }
     }
 
     set({
       puzzleIds: newPuzzleIds,
-      winner: -2,
+      winners: [],
       players: newPlayers,
     });
     get().loadSolveHistory();
-    // NOTE: 同 id 走双人分支(共享 scramble);否则只重生该侧
-    if (newPuzzleIds[0] === newPuzzleIds[1] && s.mode === '1v1') {
-      get().loadNewScramble();
-    } else {
-      get().loadNewScramble(target);
-    }
+    // NOTE: loadNewScramble 内部按同 puzzle 分组,共享组整体重生
+    get().loadNewScramble(target);
   },
 
   setMode: (mode: BattleMode) => {
     get().saveSolveHistory();
     localStorage.setItem(LS_PREFIX + 'mode', mode);
-    const newPlayers: [PlayerState, PlayerState] = [createPlayer(0), createPlayer(1)];
+    const newPlayers = freshPlayers();
     set({
       mode,
-      winner: -2,
+      winners: [],
       players: newPlayers,
       activeTab: 'timer',
     });
@@ -893,8 +928,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     if (s.layout === layout) return; // NOTE: 避免重复设置
     localStorage.setItem(LS_PREFIX + 'layout', layout);
     // NOTE: 保留玩家累积数据（solveHistory, points），仅重置当前回合状态
-    const newPlayers = [...s.players] as [PlayerState, PlayerState];
-    for (let i = 0; i < 2; i++) {
+    const newPlayers = [...s.players];
+    for (let i = 0; i < s.playerCount; i++) {
       newPlayers[i] = {
         ...s.players[i],
         isReady: false,
@@ -904,8 +939,28 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         pointerId: null,
       };
     }
-    set({ layout, winner: -2, players: newPlayers });
+    set({ layout, winners: [], players: newPlayers });
     // NOTE: scrMgr 可能还没加载（自动横屏检测比脚本加载快）
+    if (typeof window.scrMgr !== 'undefined') {
+      get().loadNewScramble();
+    }
+  },
+
+  // NOTE: 参战人数(2~4)。切换 = 开新一局:重置回合/比分,按槽位重新加载各自历史
+  setPlayerCount: (n: number) => {
+    const count = Math.max(2, Math.min(MAX_PLAYERS, n));
+    const s = get();
+    if (s.playerCount === count) return;
+    s.saveSolveHistory();
+    get().cancelReadyTimer();
+    set({
+      playerCount: count,
+      winners: [],
+      players: freshPlayers(),
+      eventPickerOpen: Array.from({ length: MAX_PLAYERS }, () => false),
+    });
+    get().loadSolveHistory();
+    // NOTE: scrMgr 可能还没加载(URL 同步比脚本加载快,init 稍后会统一生成)
     if (typeof window.scrMgr !== 'undefined') {
       get().loadNewScramble();
     }
@@ -931,8 +986,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     set({ showImage: show });
     if (show) {
       const s = get();
-      const newImages: [string | null, string | null] = [...s.scrambleImageUrls];
-      const targets = s.mode === 'solo' ? [0] : [0, 1];
+      const newImages: (string | null)[] = [...s.scrambleImageUrls];
+      const targets = s.mode === 'solo' ? [0] : Array.from({ length: s.playerCount }, (_, i) => i);
       for (const i of targets) {
         const sc = s.scrambles[i];
         if (sc && !sc.startsWith('⚠️')) {
@@ -941,7 +996,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       }
       set({ scrambleImageUrls: newImages });
     } else {
-      set({ scrambleImageUrls: [null, null] });
+      set({ scrambleImageUrls: Array.from({ length: MAX_PLAYERS }, () => null) });
     }
   },
 
@@ -958,10 +1013,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   },
 
   // NOTE: 设置背景色;同时清掉图片(色 / 图二选一)
-  setBgColor: (playerId: 0 | 1, color: string) => {
+  setBgColor: (playerId: number, color: string) => {
     const s = get();
-    const newColors: [string, string] = [...s.bgColors];
-    const newImages: [string | null, string | null] = [...s.bgImages];
+    const newColors: string[] = [...s.bgColors];
+    const newImages: (string | null)[] = [...s.bgImages];
     newColors[playerId] = color;
     newImages[playerId] = null;
     if (color) localStorage.setItem(LS_PREFIX + `bg_color_${playerId}`, color);
@@ -971,10 +1026,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   },
 
   // NOTE: 设置背景图(base64);同时清掉颜色
-  setBgImage: (playerId: 0 | 1, dataUrl: string | null) => {
+  setBgImage: (playerId: number, dataUrl: string | null) => {
     const s = get();
-    const newImages: [string | null, string | null] = [...s.bgImages];
-    const newColors: [string, string] = [...s.bgColors];
+    const newImages: (string | null)[] = [...s.bgImages];
+    const newColors: string[] = [...s.bgColors];
     newImages[playerId] = dataUrl;
     if (dataUrl) {
       newColors[playerId] = '';
@@ -990,10 +1045,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     set({ bgImages: newImages, bgColors: newColors });
   },
 
-  resetBg: (playerId: 0 | 1) => {
+  resetBg: (playerId: number) => {
     const s = get();
-    const newColors: [string, string] = [...s.bgColors];
-    const newImages: [string | null, string | null] = [...s.bgImages];
+    const newColors: string[] = [...s.bgColors];
+    const newImages: (string | null)[] = [...s.bgImages];
     newColors[playerId] = '';
     newImages[playerId] = null;
     localStorage.removeItem(LS_PREFIX + `bg_color_${playerId}`);
@@ -1001,12 +1056,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     set({ bgColors: newColors, bgImages: newImages });
   },
 
-  setEventPickerOpen: (playerId: 0 | 1, open: boolean) => {
+  setEventPickerOpen: (playerId: number, open: boolean) => {
     const s = get();
-    const next: [boolean, boolean] = [...s.eventPickerOpen];
-    next[playerId] = open;
     // NOTE: 同一时刻只允许一个玩家的 picker 开着(避免遮挡 + 简化交互)
-    if (open) next[1 - playerId] = false;
+    const next = s.eventPickerOpen.map((v, i) => (i === playerId ? open : (open ? false : v)));
     set({ eventPickerOpen: next });
   },
 
@@ -1045,10 +1098,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const s = get();
     s.saveSolveHistory();
     localStorage.setItem(LS_PREFIX + 'sessionId', newSessionId);
-    const newPlayers: [PlayerState, PlayerState] = [createPlayer(0), createPlayer(1)];
+    const newPlayers = freshPlayers();
     set({
       sessionId: newSessionId,
-      winner: -2,
+      winners: [],
       players: newPlayers,
     });
     get().loadSolveHistory();
@@ -1063,11 +1116,11 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const newSessions = [...s.sessions, { id: newId, name }];
     localStorage.setItem(LS_PREFIX + 'sessions', JSON.stringify(newSessions));
     localStorage.setItem(LS_PREFIX + 'sessionId', newId);
-    const newPlayers: [PlayerState, PlayerState] = [createPlayer(0), createPlayer(1)];
+    const newPlayers = freshPlayers();
     set({
       sessions: newSessions,
       sessionId: newId,
-      winner: -2,
+      winners: [],
       players: newPlayers,
     });
     get().loadNewScramble();
@@ -1103,11 +1156,11 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     localStorage.setItem(LS_PREFIX + 'sessions', JSON.stringify(newSessions));
     const newSessionId = newSessions[0].id;
     localStorage.setItem(LS_PREFIX + 'sessionId', newSessionId);
-    const newPlayers: [PlayerState, PlayerState] = [createPlayer(0), createPlayer(1)];
+    const newPlayers = freshPlayers();
     set({
       sessions: newSessions,
       sessionId: newSessionId,
-      winner: -2,
+      winners: [],
       players: newPlayers,
     });
     get().loadSolveHistory();
@@ -1118,7 +1171,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const s = get();
     if (s.undoStack.length === 0) return;
     const lastUndo = s.undoStack[s.undoStack.length - 1];
-    const newPlayers = [...s.players] as [PlayerState, PlayerState];
+    const newPlayers = [...s.players];
     const p = newPlayers[0];
     const newHistory = [...p.solveHistory];
     newHistory.splice(lastUndo.index, 0, lastUndo.entry);
@@ -1137,7 +1190,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const entry = p.solveHistory[index];
     const newHistory = [...p.solveHistory];
     newHistory.splice(index, 1);
-    const newPlayers = [...s.players] as [PlayerState, PlayerState];
+    const newPlayers = [...s.players];
     newPlayers[0] = { ...p, solveHistory: newHistory };
     set({
       players: newPlayers,
@@ -1146,58 +1199,49 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     get().saveSolveHistory();
   },
 
-  // NOTE: 1v1 删除某一轮 — 同时去掉双方在 index 处的 entry。
+  // NOTE: 1v1 删除某一轮 — 同时去掉所有参战玩家在 index 处的 entry。
   //   只有最后一轮能精准撤销 points(中间轮次的胜负已固定,不重算历史)。
   deleteVsRound: (index: number) => {
     const s = get();
     if (s.mode !== '1v1') return;
-    const h0 = s.players[0].solveHistory;
-    const h1 = s.players[1].solveHistory;
-    const total = Math.max(h0.length, h1.length);
+    const n = s.playerCount;
+    const total = Math.max(...s.players.slice(0, n).map(p => p.solveHistory.length));
     if (index < 0 || index >= total) return;
 
     const isLast = index === total - 1;
-    let p0Points = s.players[0].points;
-    let p1Points = s.players[1].points;
+    const newPoints = s.players.map(p => p.points);
 
-    // NOTE: 仅对最新一轮撤销 points
+    // NOTE: 仅对最新一轮撤销 points——按该轮 entry 重算胜者(可并列),逐一减分
     if (isLast) {
-      const e0 = h0[index];
-      const e1 = h1[index];
-      if (e0 && e1) {
+      const entries = s.players.slice(0, n).map(p => p.solveHistory[index]);
+      if (entries.every(e => e !== undefined)) {
         const tEff = (e: SolveEntry) =>
           e.penalty === 'dnf' ? Infinity : (e.penalty === '+2' ? e.time + 2000 : e.time);
-        const t0 = tEff(e0);
-        const t1 = tEff(e1);
-        if (t0 === Infinity && t1 === Infinity) {
-          // 双 DNF 没加过分,不动
-        } else if (t0 < t1) {
-          p0Points = Math.max(0, p0Points - 1);
-        } else if (t1 < t0) {
-          p1Points = Math.max(0, p1Points - 1);
-        } else {
-          p0Points = Math.max(0, p0Points - 1);
-          p1Points = Math.max(0, p1Points - 1);
+        const times = entries.map(e => tEff(e as SolveEntry));
+        const min = Math.min(...times);
+        if (min !== Infinity) {
+          for (let i = 0; i < n; i++) {
+            if (times[i] === min) newPoints[i] = Math.max(0, newPoints[i] - 1);
+          }
         }
       }
     }
 
-    const newPlayers = [...s.players] as [PlayerState, PlayerState];
-    for (let i = 0; i < 2; i++) {
+    const newPlayers = [...s.players];
+    for (let i = 0; i < n; i++) {
       const p = s.players[i];
       if (index < p.solveHistory.length) {
         const newH = [...p.solveHistory];
         newH.splice(index, 1);
         newPlayers[i] = { ...p, solveHistory: newH };
       }
+      newPlayers[i] = { ...newPlayers[i], points: newPoints[i] };
     }
-    newPlayers[0] = { ...newPlayers[0], points: p0Points };
-    newPlayers[1] = { ...newPlayers[1], points: p1Points };
 
     set({
       players: newPlayers,
-      // NOTE: 删除的是当前一轮 → 撤销当前 winner 显示
-      winner: isLast ? -2 : s.winner,
+      // NOTE: 删除的是当前一轮 → 撤销当前 winners 显示
+      winners: isLast ? [] : s.winners,
     });
     get().saveSolveHistory();
   },
@@ -1214,7 +1258,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         const toSave = h.length > 1000 ? h.slice(-1000) : h;
         localStorage.setItem(key, JSON.stringify(toSave));
       } else {
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < s.playerCount; i++) {
           const key = `${LS_PREFIX}1v1_history_${s.sessionId}_${s.puzzleIds[i]}_${i}`;
           const h = s.players[i].solveHistory;
           const toSave = h.length > 1000 ? h.slice(-1000) : h;
@@ -1232,12 +1276,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       if (s.mode === 'solo') {
         const key = `${LS_PREFIX}solo_history_${s.sessionId}_${s.puzzleIds[0]}`;
         const data = localStorage.getItem(key);
-        const newPlayers = [...s.players] as [PlayerState, PlayerState];
+        const newPlayers = [...s.players];
         newPlayers[0] = { ...s.players[0], solveHistory: data ? JSON.parse(data) : [] };
         set({ players: newPlayers });
       } else {
-        const newPlayers = [...s.players] as [PlayerState, PlayerState];
-        for (let i = 0; i < 2; i++) {
+        const newPlayers = [...s.players];
+        for (let i = 0; i < s.playerCount; i++) {
           const key = `${LS_PREFIX}1v1_history_${s.sessionId}_${s.puzzleIds[i]}_${i}`;
           const data = localStorage.getItem(key);
           newPlayers[i] = { ...s.players[i], solveHistory: data ? JSON.parse(data) : [] };
@@ -1282,7 +1326,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         if (elapsed >= limit + 2) {
           // >limit+2s → 自动 DNF
           clearInterval(timer);
-          const newPlayers = [...curr.players] as [PlayerState, PlayerState];
+          const newPlayers = [...curr.players];
           newPlayers[playerId] = {
             ...cp,
             inspectionPenalty: 'dnf',
@@ -1299,7 +1343,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
           get().checkBothFinished();
         } else if (elapsed >= limit) {
           // NOTE: +2 罚时标记（UI 组件读取 inspectionPenalty 来显示）
-          const newPlayers = [...curr.players] as [PlayerState, PlayerState];
+          const newPlayers = [...curr.players];
           newPlayers[playerId] = { ...cp, inspectionPenalty: '+2' };
           set({ players: newPlayers });
         }
@@ -1307,7 +1351,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       }
     }, 100);
 
-    const newPlayers = [...s.players] as [PlayerState, PlayerState];
+    const newPlayers = [...s.players];
     newPlayers[playerId] = {
       ...p,
       isInspecting: true,
@@ -1325,7 +1369,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     if (p.inspectionTimer) {
       clearInterval(p.inspectionTimer);
     }
-    const newPlayers = [...s.players] as [PlayerState, PlayerState];
+    const newPlayers = [...s.players];
     newPlayers[playerId] = {
       ...p,
       isInspecting: false,
@@ -1436,3 +1480,17 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     }
   },
 }));
+
+/** Warm the WCA pool ahead of demand for all active players' current puzzles
+ *  (no-op unless the shared scramble source is set to WCA). */
+export function prefetchBattleScrambles(): void {
+  if (getSettings().scrambleSource !== 'wca') return;
+  const st = useBattleStore.getState();
+  const seen = new Set<string>();
+  for (const pid of st.puzzleIds.slice(0, st.playerCount)) {
+    if (seen.has(pid)) continue;
+    seen.add(pid);
+    const spec = wcaSpecFor(pid);
+    if (hasWcaSource(spec)) prefetchWca(spec);
+  }
+}

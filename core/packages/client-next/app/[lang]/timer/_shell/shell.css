@@ -85,34 +85,20 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 }
 .shell-topbar-brand img { height: 24px; width: auto; display: block; }
 
-/* Mode pill — green-active segmented control (project convention). */
-.shell-mode-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px;
-  border-radius: 999px;
-  background: var(--shell-chip);
-  border: 1px solid var(--shell-divider);
-}
-.shell-mode-opt {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  border: 0;
-  background: transparent;
-  color: var(--muted-foreground);
+/* 人数下拉 — 替代旧 solo/duo 模式 pill,solo topbar 和 battle middle-bar 共用 */
+.shell-players-select {
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 9px;
+  background: var(--shell-chip, var(--background));
+  border: 1px solid var(--shell-divider, var(--border-strong));
+  color: var(--foreground);
   font-size: 13px;
-  font-weight: 500;
-  border-radius: 999px;
   cursor: pointer;
-  transition: background 120ms, color 120ms;
+  outline: none;
 }
-.shell-mode-opt:hover { color: var(--foreground); }
-.shell-mode-opt.active {
-  background: var(--signal-success);
-  color: var(--accent-foreground);
+.shell-players-select:focus-visible {
+  border-color: var(--accent);
 }
 
 /* Event pill + popover */
@@ -275,23 +261,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    via --muted-foreground, so set the pure token directly to win (0,2,0 > 0,1,0). */
 .timing-surface-scramble .scramble-text { word-break: break-word; color: var(--scramble-fg); }
 .timing-surface-scramble .scramble-empty { color: var(--faint-foreground); }
-.scramble-refresh,
-.scramble-prev {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  flex: none;
-  transition: background 120ms, color 120ms;
-}
-.scramble-refresh:hover,
-.scramble-prev:hover { background: var(--shell-hover); color: var(--foreground); }
 
 /* Click-to-copy flash badge, sits inline next to the scramble. */
 .scramble-copied-flash {
@@ -479,15 +448,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Penalties / delete are gesture-only now (radial wheel). In the stopped-row,
-   right under the time, a one-line tip points the user at the gesture. */
-.timing-surface .shell-gesture-tip {
-  font-size: 12px;
-  color: var(--muted-foreground);
-  text-align: center;
-  padding: 0 12px;
-}
-
 /* PB celebration toast — floating overlay. MUST be position:fixed so it stays
    out of the .timer-shell grid (desktop), otherwise it auto-places as an
    unnamed grid item and stretches the topbar row, shifting the digits down. */
@@ -576,17 +536,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .shell-stat-lbl { font-size: 11px; color: var(--muted-foreground); }
 .shell-stat-lbl::after { content: ':'; }
 .shell-stat-val { font-size: 14px; color: var(--foreground); font-variant-numeric: tabular-nums; }
-
-.shell-swipe-hint {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 4px 16px;
-  padding: 6px 12px 10px;
-  font-size: 12px;
-  color: var(--muted-foreground);
-}
 
 /* ── Radial gesture wheel (cstimer-style press-and-drag dial) ────── */
 .gesture-wheel {
@@ -1062,16 +1011,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 /* ── Phone (<480px) ─────────────────────────────────────── */
 @media (max-width: 480px) {
   .shell-topbar { gap: 6px; padding: 6px 10px; min-height: 44px; }
-  /* Icon-only mode pill on phone — keep a clean >=36px tap target with the
-     lucide Timer / Swords glyph centered; active stays green (locked above). */
-  .shell-mode-opt {
-    width: 38px;
-    height: 36px;
-    padding: 0;
-    justify-content: center;
-  }
-  .shell-mode-opt span { display: none; }
-  .shell-mode-opt svg { width: 18px; height: 18px; }
+  .shell-players-select { padding: 0 4px; font-size: 12px; }
   .shell-event-btn { padding: 5px 10px; font-size: 12px; }
   /* Anchor the picker to the viewport (not the off-center button) so a wide
      grid never runs off the right edge; full-width with 8px gutters. */
@@ -1088,13 +1028,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   .shell-stat-rail { bottom: 8px; }
   .shell-stat-val { font-size: 13px; }
   .timing-surface-scramble { top: 8px; }
-  /* Pin the refresh to the strip's top-right so it never wraps onto its own
-     orphaned line; bump it to a 40px touch target. */
-  .timing-surface-scramble .scramble-strip { position: relative; padding-right: 40px; }
-  .timing-surface-scramble .scramble-refresh { position: absolute; top: 0; right: 0; width: 40px; height: 40px; }
-  /* Prev button (only present when there's history) sits top-left, mirroring refresh. */
-  .timing-surface-scramble .scramble-strip.has-prev { padding-left: 40px; }
-  .timing-surface-scramble .scramble-prev { position: absolute; top: 0; left: 0; width: 40px; height: 40px; }
   /* Clear the bottom-left global auth avatar so the leftmost nav button
      (成绩 / Times) isn't under it; symmetric so the 3 flex:1 buttons stay centered. */
   .timer-shell .shell-bottombar { padding-left: 56px; padding-right: 56px; }
@@ -1215,10 +1148,8 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 
 /* Keyboard focus ring — the shell had none, so tab-focus fell back to the
    near-invisible UA outline on the dark surface. Token-only, both themes. */
-.shell-mode-opt:focus-visible,
 .shell-event-btn:focus-visible,
 .shell-topbar .tb-btn:focus-visible,
-.scramble-refresh:focus-visible,
 .shell-corner-net .cube-preview-toggle:focus-visible,
 .shell-bottombar-btn:focus-visible,
 .shell-panel-tab:focus-visible,
@@ -1298,13 +1229,11 @@ body:has(.battle-container .penalty-dropdown.open) .clawd-deskpet {
    above already keeps the rows painting over the avatar; this just stops
    the leftmost label from being physically hidden behind it. */
 .timer-shell .shell-stat-rail { padding-left: 60px; padding-right: 60px; }
-.timer-shell .shell-swipe-hint { padding-left: 60px; padding-right: 60px; }
 
 /* Fullscreen: hide chrome rows, keep just the surface. */
 .timer-shell.fullscreen .shell-topbar,
 .timer-shell.fullscreen .shell-bottombar,
 .timer-shell.fullscreen .shell-stat-rail,
-.timer-shell.fullscreen .shell-undersurface,
-.timer-shell.fullscreen .shell-swipe-hint {
+.timer-shell.fullscreen .shell-undersurface {
   display: none;
 }

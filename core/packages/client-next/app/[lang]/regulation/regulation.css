@@ -51,19 +51,18 @@ html[data-theme=dark] .reg-page { --blue: #5ba9e0; }
   font-size: clamp(17px, 2.6vw, 23px); font-weight: 600;
   color: var(--ink-dim); margin: 0 0 24px;
 }
-.reg-lede { font-size: 18px; color: var(--ink-dim); margin: 0 0 26px; max-width: 64ch; }
-
-.reg-source {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-size: 13px; color: var(--ink-dim); text-decoration: none;
-  border: 1px solid var(--rule); border-radius: 999px;
-  padding: 8px 15px; transition: border-color .14s, color .14s;
-}
-.reg-source:hover { border-color: var(--blue); color: var(--blue); }
-.reg-source svg { flex-shrink: 0; }
+.reg-lede { font-size: 18px; color: var(--ink-dim); margin: 0; max-width: 64ch; }
 
 /* ── Section heads ──────────────────────────────── */
-.reg-sec { margin-top: 76px; }
+.reg-sec { margin-top: 76px; scroll-margin-top: 24px; }
+.reg-sec-major {
+  margin-top: 96px; padding-top: 56px;
+  border-top: 2px solid color-mix(in srgb, var(--blue) 30%, var(--rule));
+}
+.reg-sub-title {
+  font-size: clamp(20px, 2.8vw, 25px); font-weight: 700;
+  letter-spacing: -.015em; margin: 52px 0 22px;
+}
 .reg-sec-eyebrow {
   font-family: var(--font-mono); font-size: 12px; letter-spacing: .07em;
   text-transform: uppercase; color: var(--ink-faint); margin-bottom: 10px;
@@ -164,6 +163,134 @@ html[data-theme=dark] .reg-page { --blue: #5ba9e0; }
   font-size: 11.5px; color: var(--ink-faint); line-height: 1.8;
 }
 
+/* ── TOC chips ──────────────────────────────────── */
+.reg-toc { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+.reg-toc a {
+  display: inline-flex; align-items: center;
+  font-size: 14px; padding: 7px 14px;
+  border: 1px solid var(--rule); border-radius: 999px;
+  color: var(--ink-dim); text-decoration: none;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.reg-toc a:hover {
+  border-color: var(--blue); color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 8%, transparent);
+}
+
+/* ── Inspection timeline ────────────────────────── */
+.reg-timeline { margin: 30px 0 0; }
+.reg-timeline-track {
+  position: relative; height: 14px; border-radius: 7px;
+  background: linear-gradient(90deg,
+    var(--ok) 0, var(--ok) 78.9%,
+    var(--warn) 78.9%, var(--warn) 89.5%,
+    var(--bad) 89.5%, var(--bad) 100%);
+}
+.reg-timeline-tick {
+  position: absolute; top: -4px; width: 2px; height: 22px;
+  background: var(--bg); transform: translateX(-50%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--foreground) 22%, transparent);
+}
+.reg-timeline-axis { position: relative; height: 22px; margin-top: 8px; }
+.reg-timeline-num {
+  position: absolute; transform: translateX(-50%);
+  font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-dim);
+}
+.reg-timeline-legend {
+  list-style: none; padding: 0; margin: 18px 0 0;
+  display: flex; flex-wrap: wrap; gap: 8px 22px;
+  font-size: 14.5px; color: var(--ink-dim);
+}
+.reg-timeline-legend li { display: flex; align-items: center; gap: 8px; }
+.reg-timeline-legend li::before {
+  content: ''; width: 11px; height: 11px; border-radius: 3px; background: var(--ink-faint);
+}
+.reg-timeline-legend li.ok::before   { background: var(--ok); }
+.reg-timeline-legend li.warn::before { background: var(--warn); }
+.reg-timeline-legend li.bad::before  { background: var(--bad); }
+.reg-timeline-legend li.tick::before {
+  background: var(--bg); box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--foreground) 35%, transparent);
+}
+
+/* ── Angle figures (misalignment) ───────────────── */
+.reg-angle-row {
+  display: flex; gap: 44px; justify-content: center; flex-wrap: wrap;
+  margin: 10px 0 4px;
+}
+.reg-angle { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.reg-angle-ok   { color: var(--ok); }
+.reg-angle-warn { color: var(--warn); }
+.reg-angle-svg { width: 152px; height: 152px; }
+.reg-angle-target { fill: none; stroke: var(--rule-strong); stroke-width: 2; stroke-dasharray: 4 5; }
+.reg-angle-cur {
+  fill: color-mix(in srgb, currentColor 13%, transparent);
+  stroke: currentColor; stroke-width: 2.5;
+}
+.reg-angle-arc { fill: none; stroke: currentColor; stroke-width: 2.5; }
+.reg-angle-deg { fill: currentColor; font-family: var(--font-mono); font-size: 15px; font-weight: 600; text-anchor: middle; }
+.reg-angle-cap { font-size: 14.5px; color: var(--ink-dim); text-align: center; max-width: 18ch; }
+
+/* ── Tables ─────────────────────────────────────── */
+.reg-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 16px; }
+.reg-table th {
+  text-align: left; font-weight: 600; color: var(--ink-faint);
+  font-size: 12px; letter-spacing: .05em; text-transform: uppercase;
+  padding: 0 14px 11px; border-bottom: 1px solid var(--rule);
+}
+.reg-table td {
+  padding: 14px; border-bottom: 1px solid var(--rule);
+  color: var(--ink); vertical-align: middle;
+}
+.reg-table tr:last-child td { border-bottom: 0; }
+.reg-evt { display: inline-flex; align-items: center; gap: 11px; }
+.reg-evt .cubing-icon { font-size: 24px; color: var(--blue); }
+.reg-evt-text { color: var(--ink-dim); font-size: 15.5px; }
+.reg-num { font-family: var(--font-mono); font-weight: 600; color: var(--blue); }
+
+/* ── Event chips (random-move events) ───────────── */
+.reg-evt-chips { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+.reg-evt-chip {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 9px 15px; border: 1px solid var(--rule); border-radius: 12px;
+  font-size: 15px; color: var(--ink);
+}
+.reg-evt-chip .cubing-icon { font-size: 22px; color: var(--blue); }
+.reg-foot-note { margin: 22px 0 0; font-size: 14.5px; color: var(--ink-faint); }
+
+/* ── Penalty grid ───────────────────────────────── */
+.reg-pen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.reg-pen-card { border: 1px solid var(--rule); border-radius: 14px; padding: 24px 26px; }
+.reg-pen-card.plus2 {
+  border-color: color-mix(in srgb, var(--warn) 38%, var(--rule));
+  background: color-mix(in srgb, var(--warn) 6%, var(--card));
+}
+.reg-pen-card.dnf {
+  border-color: color-mix(in srgb, var(--bad) 38%, var(--rule));
+  background: color-mix(in srgb, var(--bad) 6%, var(--card));
+}
+.reg-pen-head { display: flex; align-items: center; gap: 11px; font-weight: 700; font-size: 18px; margin-bottom: 18px; }
+.reg-pen-card.plus2 .reg-pen-head { color: var(--warn); }
+.reg-pen-card.dnf .reg-pen-head { color: var(--bad); }
+.reg-pen-badge {
+  font-family: var(--font-mono); font-weight: 700; font-size: 16px;
+  padding: 2px 10px; border-radius: 8px;
+  background: color-mix(in srgb, var(--warn) 20%, transparent);
+}
+.reg-pen-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.reg-pen-list li { position: relative; padding-left: 21px; color: var(--ink-dim); font-size: 15.5px; line-height: 1.6; }
+.reg-pen-list li::before { content: ''; position: absolute; left: 3px; top: 9px; width: 6px; height: 6px; border-radius: 50%; }
+.reg-pen-card.plus2 .reg-pen-list li::before { background: var(--warn); }
+.reg-pen-card.dnf   .reg-pen-list li::before { background: var(--bad); }
+
+/* ── Special-event cards ────────────────────────── */
+.reg-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.reg-card { border: 1px solid var(--rule); border-radius: 14px; padding: 22px 24px; }
+.reg-card-head { display: flex; align-items: center; gap: 13px; margin-bottom: 14px; }
+.reg-card-icon { font-size: 38px; color: var(--blue); }
+.reg-card-title { font-weight: 700; font-size: 17px; line-height: 1.2; }
+.reg-card-sub { font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em; color: var(--ink-faint); margin-top: 3px; }
+.reg-card p { margin: 0; color: var(--ink-dim); font-size: 15px; line-height: 1.66; }
+
 /* ── Responsive ─────────────────────────────────── */
 @media (max-width: 720px) {
   .reg-page { padding: 38px 18px 84px; font-size: 16px; }
@@ -174,4 +301,10 @@ html[data-theme=dark] .reg-page { --blue: #5ba9e0; }
   .reg-explain-img { max-width: 440px; }
   .reg-quote-text { font-size: 17.5px; }
   .reg-key-text { font-size: 16.5px; }
+  .reg-sec-major { margin-top: 72px; padding-top: 44px; }
+  .reg-pen-grid { grid-template-columns: 1fr; gap: 16px; }
+  .reg-cards { grid-template-columns: 1fr; gap: 14px; }
+  .reg-angle-row { gap: 28px; }
+  .reg-angle-svg { width: 130px; height: 130px; }
+  .reg-timeline-legend { gap: 8px 16px; font-size: 13.5px; }
 }

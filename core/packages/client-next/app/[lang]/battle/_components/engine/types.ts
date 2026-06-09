@@ -52,10 +52,6 @@ export interface Session {
   name: string;
 }
 
-// NOTE: 赢家标识
-// -2=未决 -1=平局 0=下方 1=上方
-export type WinnerValue = -2 | -1 | 0 | 1;
-
 // NOTE: 模式类型
 export type BattleMode = 'solo' | '1v1';
 
