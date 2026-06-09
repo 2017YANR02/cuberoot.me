@@ -1267,6 +1267,21 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               onChange={(e) => updateSettings({ showHeatmap: e.target.checked })}
             />
           </Row>
+          <Row label={tr({ zh: '打乱来源', en: 'Scramble source',
+              zhHant: "打亂來源"
+        })}>
+            <select
+              value={s.scrambleSource}
+              onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' })}
+            >
+              <option value="random">{tr({ zh: '随机生成', en: 'Random',
+                  zhHant: "隨機生成"
+            })}</option>
+              <option value="wca">{tr({ zh: 'WCA 真实比赛打乱', en: 'Real WCA comp scrambles',
+                  zhHant: "WCA 真實比賽打亂"
+            })}</option>
+            </select>
+          </Row>
           <Row label={tr({ zh: '点击打乱条', en: 'Scramble click action',
               zhHant: "點選打亂條"
         })}>

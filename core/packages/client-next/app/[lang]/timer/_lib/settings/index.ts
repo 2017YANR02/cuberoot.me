@@ -80,6 +80,9 @@ export interface TimerSettings {
    */
   statsAoWindows: number[];
 
+  /** Scramble source: 'random' = locally generated, 'wca' = real past WCA competition scrambles. */
+  scrambleSource: 'random' | 'wca';
+
   /** Action when user clicks the scramble strip. */
   scrambleClickAction: 'none' | 'next' | 'copy';
 
@@ -176,6 +179,7 @@ export const DEFAULTS: TimerSettings = {
   cnMode: 'none',
   voiceInspection: 'none',
   statsAoWindows: [5, 12],
+  scrambleSource: 'random',
   scrambleClickAction: 'copy',
   scrambleClickMigrated: false,
   hideAllUiWhileRunning: false,
