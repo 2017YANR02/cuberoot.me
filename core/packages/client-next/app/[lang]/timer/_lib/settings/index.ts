@@ -88,6 +88,7 @@ export interface TimerSettings {
   wcaScrambleMode: 'date' | 'comp';
   wcaComp: string;       // competition_id (comp mode)
   wcaCompName: string;   // competition display name (comp mode)
+  wcaCompCountry: string; // competition country iso2, for the selected-comp flag (comp mode)
   wcaRound: string;      // round_type_id filter, '' = all rounds (comp mode)
   wcaGroup: string;      // group_id filter, '' = all groups (comp mode)
   wcaDateFrom: string;   // 'YYYY-MM-DD', '' = no lower bound (date mode)
@@ -189,10 +190,11 @@ export const DEFAULTS: TimerSettings = {
   cnMode: 'none',
   voiceInspection: 'none',
   statsAoWindows: [5, 12],
-  scrambleSource: 'random',
+  scrambleSource: 'wca',
   wcaScrambleMode: 'date',
   wcaComp: '',
   wcaCompName: '',
+  wcaCompCountry: '',
   wcaRound: '',
   wcaGroup: '',
   wcaDateFrom: '',

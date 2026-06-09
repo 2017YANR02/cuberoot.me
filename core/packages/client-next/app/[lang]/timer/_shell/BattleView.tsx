@@ -11,9 +11,13 @@
  * avoid a risky Windows directory git-mv while the dev watcher holds files.
  *
  * Changes vs the old standalone page:
- *   - accepts the shell `modePill` and renders it into the battle middle-bar
+ *   - accepts the shell `playersControl` (人数 select) and renders it into the
+ *     battle middle-bar; player count itself comes in as a prop from TimerShell
  *   - mode is always 1v1 (the face of 双人/Duo); the internal solo/1v1 toggle was
  *     removed — the top-level 单人/Solo (SoloView) covers single-player
+ *   - supports 2~4 players (?players= URL param): 2 keeps the original
+ *     versus/side layouts; 3/4 render a 田字格 grid (top cells rotated 180°),
+ *     with per-cell score/event/penalty controls (CellControls)
  *   - per-player event picker uses components/WcaEventSelector (green active)
  *     instead of BattleEventPicker + the in-area overlay grid
  *   - the ⚔️ emoji opponent prefix + icon_timer.png nav icon are replaced with
@@ -23,10 +27,10 @@
  *   - imports re-pointed to timer/_shared (stats-core / format)
  */
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings as SettingsIcon, ClipboardList, Trophy, RotateCcw, Eye, EyeOff, Swords, Timer as TimerIcon } from 'lucide-react';
-import { useBattleStore } from '@/app/[lang]/battle/_components/engine/battle_store';
+import { useBattleStore, battleToTimerEvent, prefetchBattleScrambles } from '@/app/[lang]/battle/_components/engine/battle_store';
 import { KEY_MAP, PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from '@/app/[lang]/battle/_components/engine/constants';
 import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format';
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
@@ -43,6 +47,13 @@ import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent } from '@/lib/wca-events';
 import RankBadge from './RankBadge';
 import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
+import { useSettings, updateSettings } from '@/app/[lang]/timer/_lib/settings';
+import WcaSourceConfig from '@/app/[lang]/timer/_components/WcaSourceConfig';
+import { wcaMetaFor } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
+import { Flag } from '@/components/Flag';
+import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
+import { localizeCompName } from '@/lib/comp-localize';
+import { compSourceLine } from '@/lib/comp-schedule';
 
 import '@/app/[lang]/battle/battle.css';
 import './shell.css';
@@ -137,6 +148,13 @@ function useScrambleScript() {
 }
 
 // NOTE: 键盘控制 hook — 1:1 翻译自 battle.js handleKeyDown/handleKeyUp（行 755~783）
+// 输入控件聚焦时跳过(设置面板里有比赛搜索输入框,空格/字母不能被计时器吃掉)
+function isTypingTarget(e: KeyboardEvent): boolean {
+  const t = e.target as HTMLElement | null;
+  if (!t) return false;
+  return t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable;
+}
+
 function useKeyboardControls() {
   const keyPressedRef = useRef<Record<string, boolean>>({});
 
@@ -146,8 +164,11 @@ function useKeyboardControls() {
 
       const playerId = KEY_MAP[e.key];
       if (playerId === undefined) return;
+      if (isTypingTarget(e)) return;
 
       if (store.mode === 'solo' && playerId !== 0) return;
+      // 未参战槽位的键不拦(4 人键位 Q/P 在 2 人模式下保持正常输入行为)
+      if (store.mode !== 'solo' && playerId >= store.playerCount) return;
 
       e.preventDefault();
 
@@ -158,13 +179,16 @@ function useKeyboardControls() {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      const store = useBattleStore.getState();
       const playerId = KEY_MAP[e.key];
       if (playerId === undefined) return;
+      if (isTypingTarget(e)) return;
+      if (store.mode !== 'solo' && playerId >= store.playerCount) return;
 
       e.preventDefault();
       keyPressedRef.current[e.key] = false;
 
-      useBattleStore.getState().playerUp(playerId);
+      store.playerUp(playerId);
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -201,8 +225,8 @@ function useTimerAnimation(playerId: number, timeRef: React.RefObject<HTMLDivEle
           }
           // NOTE: 对手已停表时，在对手区域实时显示此玩家还在跑的时间
           // 1:1 翻译自 battle.js startTimerAnimation()（行 928~930）
-          // 只写时间到 #opponent-N 子 span(图标静态)
-          if (curr.mode === '1v1') {
+          // 只写时间到 #opponent-N 子 span(图标静态);仅 2 人模式有镜像区
+          if (curr.mode === '1v1' && curr.playerCount === 2) {
             const oppId = 1 - playerId;
             if (curr.players[oppId].hasFinished) {
               const oppEl = document.getElementById(`opponent-${oppId}`);
@@ -260,7 +284,7 @@ function useInspectionDisplay(playerId: number, timeRef: React.RefObject<HTMLDiv
 function useOpponentDisplay(playerId: number, iconRef: React.RefObject<HTMLSpanElement | null>) {
   useEffect(() => {
     const unsubscribe = useBattleStore.subscribe((state) => {
-      if (state.mode !== '1v1') return;
+      if (state.mode !== '1v1' || state.playerCount !== 2) return;
 
       const el = document.getElementById(`opponent-${playerId}`);
       if (!el) return;
@@ -376,6 +400,10 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
   const scrambleRef = useRef<HTMLDivElement>(null);
   const [scrambleCopied, setScrambleCopied] = useState(false);
   const copiedTimerRef = useRef<number | null>(null);
+  // WCA 来源行:打乱图正下方显示「国旗 + 比赛名 · 轮次/组别」。国旗 + 中文名需异步
+  // 加载的比赛索引,落地后 bump flagVer 重渲。
+  const [flagVer, setFlagVer] = useState(() => flagDataVersion());
+  useEffect(() => { void loadFlagData().then((v) => setFlagVer((cur) => (v !== cur ? v : cur))); }, []);
 
   // NOTE: 高频计时器动画（不走 React re-render）
   useTimerAnimation(playerId, timeRef);
@@ -396,7 +424,7 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
 
       el.setPointerCapture(e.pointerId);
 
-      const newPlayers = [...curr.players] as [typeof curr.players[0], typeof curr.players[1]];
+      const newPlayers = [...curr.players];
       newPlayers[playerId] = { ...p, pointerId: e.pointerId };
       useBattleStore.setState({ players: newPlayers });
 
@@ -408,7 +436,7 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
       const p = curr.players[playerId];
       if (p.pointerId !== e.pointerId) return;
 
-      const newPlayers = [...curr.players] as [typeof curr.players[0], typeof curr.players[1]];
+      const newPlayers = [...curr.players];
       newPlayers[playerId] = { ...p, pointerId: null };
       useBattleStore.setState({ players: newPlayers });
 
@@ -420,7 +448,7 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
       const p = curr.players[playerId];
       if (p.pointerId !== e.pointerId) return;
 
-      const newPlayers = [...curr.players] as [typeof curr.players[0], typeof curr.players[1]];
+      const newPlayers = [...curr.players];
       newPlayers[playerId] = { ...p, pointerId: null };
       useBattleStore.setState({ players: newPlayers });
 
@@ -498,8 +526,7 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
     'time-display',
     player.penalty === PENALTY.PLUS2 ? 'penalty-plus2' : '',
     player.penalty === PENALTY.DNF ? 'penalty-dnf' : '',
-    store.winner === playerId ? 'winner' : '',
-    store.winner === -1 && player.hasFinished ? 'winner' : '',
+    store.winners.includes(playerId) ? 'winner' : '',
   ].filter(Boolean).join(' ');
 
   const ao5 = computeAo5(player.solveHistory);
@@ -517,6 +544,20 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
     ? `<span class="loading">${I18N_TEXT.generating[store.locale]}</span>`
     : (myScrambleDisplay || '');
 
+  // WCA 来源:当前打乱若来自真实比赛(wca_pool 派发过),显示其比赛 / 轮次 / 组别。
+  // 随机生成的打乱不在 meta 表里 → 返回 null,这行自然不显示。
+  const wmeta = (!myLoading && myScramble) ? wcaMetaFor(myScramble) : null;
+  const wcaSrc = useMemo(() => {
+    if (!wmeta) return null;
+    return {
+      iso2: compFlagIso2(wmeta.ci),
+      name: localizeCompName(wmeta.ci, wmeta.cn, isZh),
+      meta: compSourceLine(wmeta.r, wmeta.g, wmeta.n, isZh, !!wmeta.x),
+    };
+    // flagVer: 比赛索引落地后重新派生国旗 + 中文名。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wmeta, isZh, flagVer]);
+
   const bgColor = store.bgColors[playerId];
   const bgImage = store.bgImages[playerId];
   const bgStyle: React.CSSProperties = {
@@ -528,8 +569,9 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
   // NOTE: 回合结束(本方完成且未计时)显示 RankBadge
   const showRank = player.hasFinished && !player.isTiming && player.time > 0;
   const rankCentis = showRank ? effectiveCentis(player.time, player.penalty) : null;
-  // 对手已完成才显示对手区(图标默认隐藏,subscribe 控制显隐)
-  const oppShown = store.players[1 - playerId].hasFinished && !store.players[1 - playerId].isTiming;
+  // 对手已完成才显示对手区(图标默认隐藏,subscribe 控制显隐);仅 2 人模式有镜像区
+  const opp = store.playerCount === 2 ? store.players[1 - playerId] : null;
+  const oppShown = !!opp && opp.hasFinished && !opp.isTiming;
 
   return (
     <div
@@ -557,8 +599,8 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
         dangerouslySetInnerHTML={{ __html: ao5Text }}
       />
 
-      {/* 对手成绩（仅 versus 布局）— ⚔️ 用 lucide Swords 静态渲染,RAF 只写时间到子 span */}
-      {store.mode === '1v1' && store.layout === 'versus' && (
+      {/* 对手成绩（仅 2 人 versus 布局）— ⚔️ 用 lucide Swords 静态渲染,RAF 只写时间到子 span */}
+      {store.mode === '1v1' && store.playerCount === 2 && store.layout === 'versus' && (
         <div className="opponent-display">
           <span className="opponent-icon" ref={oppIconRef} style={{ display: oppShown ? '' : 'none' }}>
             <Swords size={14} />
@@ -592,10 +634,58 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
         )}
       </div>
 
-      {/* Event picker 全区域覆盖 — 由 middle-bar 上的图标按钮触发,改用 WcaEventSelector */}
-      {store.eventPickerOpen[playerId] && (
-        <EventPickerOverlay playerId={playerId as 0 | 1} />
+      {/* WCA 来源行(真实比赛打乱时) */}
+      {wcaSrc && !player.isTiming && (
+        <div className="battle-scramble-src" data-no-timer>
+          <Flag iso2={wcaSrc.iso2} className="battle-src-flag" />
+          <span className="battle-src-name">{wcaSrc.name}</span>
+          {wcaSrc.meta && <span className="battle-src-meta">{wcaSrc.meta}</span>}
+        </div>
       )}
+
+      {/* 多人田字格:比分/项目/罚时归各自区域(2 人模式这些在 middle-bar) */}
+      {store.mode === '1v1' && store.playerCount > 2 && (
+        <CellControls playerId={playerId} />
+      )}
+
+      {/* Event picker 全区域覆盖 — 由项目图标按钮触发,改用 WcaEventSelector */}
+      {store.eventPickerOpen[playerId] && (
+        <EventPickerOverlay playerId={playerId} />
+      )}
+    </div>
+  );
+}
+
+// ===== CellControls — 多人田字格 cell 内控制条 =====
+// 比分 + 项目 + 罚时,随 cell 旋转朝向各自玩家;pointer 停止冒泡防误触发计时
+
+function CellControls({ playerId }: { playerId: number }) {
+  const points = useBattleStore(s => s.players[playerId].points);
+  const isWin = useBattleStore(s => s.winners.includes(playerId));
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const stop = (e: PointerEvent) => e.stopPropagation();
+    el.addEventListener('pointerdown', stop);
+    el.addEventListener('pointerup', stop);
+    el.addEventListener('pointercancel', stop);
+    return () => {
+      el.removeEventListener('pointerdown', stop);
+      el.removeEventListener('pointerup', stop);
+      el.removeEventListener('pointercancel', stop);
+    };
+  }, []);
+
+  return (
+    <div className="cell-controls" ref={ref} data-no-timer>
+      <span className="score-value">
+        {points}
+        {isWin && <Trophy className="score-trophy" size={14} />}
+      </span>
+      <BattleEventButton playerId={playerId} />
+      <PenaltyDropdown playerId={playerId} />
     </div>
   );
 }
@@ -603,7 +693,7 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
 // ===== EventPickerOverlay 组件 =====
 // 覆盖整个 player-area,内部用项目站全站统一的 WcaEventSelector(绿色 active)
 
-function EventPickerOverlay({ playerId }: { playerId: 0 | 1 }) {
+function EventPickerOverlay({ playerId }: { playerId: number }) {
   const store = useBattleStore();
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -654,8 +744,8 @@ function EventPickerOverlay({ playerId }: { playerId: 0 | 1 }) {
   );
 }
 
-// ===== BattleEventButton — middle-bar 上的 trigger 图标 =====
-function BattleEventButton({ playerId }: { playerId: 0 | 1 }) {
+// ===== BattleEventButton — middle-bar / cell 控制条上的 trigger 图标 =====
+function BattleEventButton({ playerId }: { playerId: number }) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const value = useBattleStore(s => s.puzzleIds[playerId]);
@@ -687,43 +777,51 @@ function BattleEventButton({ playerId }: { playerId: 0 | 1 }) {
 }
 
 // ===== MiddleBar 组件 =====
-// 1:1 翻译自 battle/index.html middle-bar 结构 + 模式 pill 注入
+// 1:1 翻译自 battle/index.html middle-bar 结构 + 人数下拉注入
+// 多人(>2)时左右比分区移到各 cell 的 CellControls,这里只留中间操作区
 
 function MiddleBar({
   onSettingsClick,
   onHistoryClick,
-  modePill,
+  playersControl,
+  playerCount,
 }: {
   onSettingsClick: () => void;
   onHistoryClick?: () => void;
-  modePill?: React.ReactNode;
+  playersControl?: React.ReactNode;
+  playerCount: number;
 }) {
   const store = useBattleStore();
-  const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
-  const { players, winner, layout } = store;
+  const { players, winners, layout } = store;
+  const grid = playerCount > 2;
 
   // NOTE: versus 布局 → P1(上方/旋转180°) 在左，P0(下方) 在右
   //       side   布局 → P0(左) 在左，P1(右) 在右 — 与计时区域位置一致
   const leftId  = layout === 'side' ? 0 : 1;
   const rightId = layout === 'side' ? 1 : 0;
 
+  const keyHint = playerCount === 4
+    ? 'Q P ↑ · ↓ Space Enter'
+    : (playerCount === 3 ? 'Q ↑ · ↓ Space Enter' : 'Enter ↑ · ↓ Space');
+
   return (
     <div className="middle-bar" data-no-timer>
-      {/* 左侧比分 + 项目 + 罚时 */}
-      <div className="score-section">
-        <span className="score-value">
-          {players[leftId].points}
-          {(winner === leftId || winner === -1) && <Trophy className="score-trophy" size={14} />}
-        </span>
-        <BattleEventButton playerId={leftId as 0 | 1} />
-        <PenaltyDropdown playerId={leftId} />
-      </div>
+      {/* 左侧比分 + 项目 + 罚时(2 人模式) */}
+      {!grid && (
+        <div className="score-section">
+          <span className="score-value">
+            {players[leftId].points}
+            {winners.includes(leftId) && <Trophy className="score-trophy" size={14} />}
+          </span>
+          <BattleEventButton playerId={leftId} />
+          <PenaltyDropdown playerId={leftId} />
+        </div>
+      )}
 
       {/* 中间操作按钮 */}
       <div className="middle-actions">
-        {modePill}
-        <span className="key-hint">Enter ↑ · ↓ Space</span>
+        {playersControl}
+        <span className="key-hint">{keyHint}</span>
         <CubeRootLogo className="middle-logo" />
         <button className="middle-btn" title={tr({ zh: '历史', en: 'History',
             zhHant: "歷史"
@@ -737,15 +835,17 @@ function MiddleBar({
         </button>
       </div>
 
-      {/* 右侧比分 + 项目 + 罚时 */}
-      <div className="score-section">
-        <span className="score-value">
-          {(winner === rightId || winner === -1) && <Trophy className="score-trophy" size={14} />}
-          {players[rightId].points}
-        </span>
-        <BattleEventButton playerId={rightId as 0 | 1} />
-        <PenaltyDropdown playerId={rightId} />
-      </div>
+      {/* 右侧比分 + 项目 + 罚时(2 人模式) */}
+      {!grid && (
+        <div className="score-section">
+          <span className="score-value">
+            {winners.includes(rightId) && <Trophy className="score-trophy" size={14} />}
+            {players[rightId].points}
+          </span>
+          <BattleEventButton playerId={rightId} />
+          <PenaltyDropdown playerId={rightId} />
+        </div>
+      )}
     </div>
   );
 }
@@ -753,7 +853,7 @@ function MiddleBar({
 
 // ===== BackgroundSettingsGroup 组件 =====
 
-function PlayerBgRow({ playerId, isZh }: { playerId: 0 | 1; isZh: boolean }) {
+function PlayerBgRow({ playerId, isZh }: { playerId: number; isZh: boolean }) {
   const store = useBattleStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -831,11 +931,13 @@ function PlayerBgRow({ playerId, isZh }: { playerId: 0 | 1; isZh: boolean }) {
 
 function BackgroundSettingsGroup({ mode, isZh }: { mode: string; isZh: boolean }) {
   const store = useBattleStore();
+  const rowCount = mode === '1v1' ? store.playerCount : 1;
   return (
     <div className="settings-group">
       <div className="settings-label">{tr({ zh: '背景', en: 'Background' })}</div>
-      <PlayerBgRow playerId={0} isZh={isZh} />
-      {mode === '1v1' && <PlayerBgRow playerId={1} isZh={isZh} />}
+      {Array.from({ length: rowCount }, (_, i) => (
+        <PlayerBgRow key={i} playerId={i} isZh={isZh} />
+      ))}
       <div className="setting-item slider-row">
         <span>{tr({ zh: '不透明度', en: 'Opacity' })}</span>
         <span className="delay-value">{store.bgOpacity.toFixed(2)}</span>
@@ -856,6 +958,7 @@ function BackgroundSettingsGroup({ mode, isZh }: { mode: string; isZh: boolean }
 
 function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const store = useBattleStore();
+  const settings = useSettings();
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
 
@@ -899,6 +1002,39 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
             </div>
           </div>
         )}
+
+        {/* 打乱来源 — 复用 Solo 的 WcaSourceConfig + 共享 timer 设置(随机 / WCA 真实比赛打乱)。
+            Duo 同 puzzle 时双方拿同一条真实打乱(沿用共享 scramble 不变量)。 */}
+        <div className="settings-group">
+          <div className="settings-label">{tr({ zh: '打乱来源', en: 'Scramble source',
+              zhHant: "打亂來源"
+          })}</div>
+          <div className="setting-item">
+            <span>{tr({ zh: '来源', en: 'Source',
+                zhHant: "來源"
+            })}</span>
+            <select
+              className="settings-select"
+              value={settings.scrambleSource}
+              onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' })}
+            >
+              <option value="wca">{tr({ zh: 'WCA 真实比赛打乱', en: 'Real WCA comp scrambles',
+                  zhHant: "WCA 真實比賽打亂"
+              })}</option>
+              <option value="random">{tr({ zh: '随机生成', en: 'Random',
+                  zhHant: "隨機生成"
+              })}</option>
+            </select>
+          </div>
+          {settings.scrambleSource === 'wca' && (
+            <WcaSourceConfig
+              isZh={isZh}
+              event={battleToTimerEvent(store.puzzleIds[0])}
+              settings={settings}
+              updateSettings={updateSettings}
+            />
+          )}
+        </div>
 
         {/* 计时器精确度 */}
         <div className="settings-group">
@@ -1054,22 +1190,29 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
 // ===== 主组件 =====
 
 interface BattleViewProps {
-  /** 注入到 battle middle-bar 的模式 pill */
-  modePill?: React.ReactNode;
+  /** 参战人数(2~4),由 TimerShell 的 ?players= URL 参数驱动 */
+  playerCount: number;
+  /** 人数下拉(TimerShell 构建),注入到 middle-bar */
+  playersControl?: React.ReactNode;
 }
 
-export default function BattleView({ modePill }: BattleViewProps) {
+export default function BattleView({ playerCount, playersControl }: BattleViewProps) {
   useScrambleScript();
   useKeyboardControls();
 
   const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
-  useDocumentTitle('双人', 'Duo', "雙人");
   const store = useBattleStore();
   const { mode } = store;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [vsHistoryOpen, setVsHistoryOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // NOTE: 人数由 URL 驱动(TimerShell),store 跟随同步
+  useEffect(() => {
+    useBattleStore.getState().setPlayerCount(playerCount);
+  }, [playerCount]);
+
+  useDocumentTitle(playerCount > 2 ? '多人' : '双人', playerCount > 2 ? 'Multi' : 'Duo', playerCount > 2 ? "多人" : "雙人");
   // SSG/first-paint gate: battle_store 默认值从 localStorage 读 (mode/layout/...),
   // SSR shim 返 null → 默认 1v1/versus,client 端读到真实值就不同。SSG /timer 页
   // 出空占位,client 挂载后再 render(镜像 TimerShell 的 mounted 门控)。
@@ -1090,6 +1233,19 @@ export default function BattleView({ modePill }: BattleViewProps) {
   useEffect(() => {
     useBattleStore.getState().setLocale(i18n.language);
   }, [i18n.language]);
+
+  // 打乱来源(共享 timer 设置)变化时,预热 WCA 池并重生当前打乱。compName 逐键变动
+  // 不计入签名(只看 comp id),避免边搜边换。首挂载跳过(init 已生成首个打乱)。
+  const settings = useSettings();
+  const wcaSig = settings.scrambleSource === 'wca'
+    ? `wca|${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}`
+    : 'random';
+  const wcaSigInitRef = useRef(true);
+  useEffect(() => {
+    prefetchBattleScrambles();
+    if (wcaSigInitRef.current) { wcaSigInitRef.current = false; return; }
+    useBattleStore.getState().loadNewScramble();
+  }, [wcaSig]);
 
   // NOTE: 监听 checkMilestone/checkFatigue 派发的自定义事件
   useEffect(() => {
@@ -1162,13 +1318,35 @@ export default function BattleView({ modePill }: BattleViewProps) {
     return <div className="battle-container" />;
   }
 
+  // 3/4 人:田字格布局(忽略 versus/side,横竖屏同构)
+  const isGrid = mode === '1v1' && playerCount > 2;
+  const middleBar = (
+    <MiddleBar
+      onSettingsClick={handleSettingsClick}
+      onHistoryClick={() => setVsHistoryOpen(true)}
+      playersControl={playersControl}
+      playerCount={playerCount}
+    />
+  );
+
   return (
-    <div className={`battle-container${mode === '1v1' && store.layout === 'side' ? ' side-layout' : ''}`}>
+    <div className={`battle-container${mode === '1v1' && !isGrid && store.layout === 'side' ? ' side-layout' : ''}${isGrid ? ' grid-layout' : ''}`}>
+
+      {/* === 田字格布局：上排旋转 180° 面向对面;3 人时上排单区跨两列 === */}
+      {isGrid && (
+        <div className={`grid-players${playerCount === 3 ? ' grid-p3' : ''}`}>
+          <TimerArea playerId={2} rotated />
+          {playerCount === 4 && <TimerArea playerId={3} rotated />}
+          {middleBar}
+          <TimerArea playerId={0} />
+          <TimerArea playerId={1} />
+        </div>
+      )}
 
       {/* === Side 布局：左右分屏，每侧独立 scramble === */}
-      {mode === '1v1' && store.layout === 'side' && (
+      {mode === '1v1' && !isGrid && store.layout === 'side' && (
         <>
-          <MiddleBar onSettingsClick={handleSettingsClick} onHistoryClick={() => setVsHistoryOpen(true)} modePill={modePill} />
+          {middleBar}
           <div className="side-players">
             <TimerArea playerId={0} />
             <div className="side-divider" />
@@ -1178,10 +1356,10 @@ export default function BattleView({ modePill }: BattleViewProps) {
       )}
 
       {/* === Versus 布局：上下分屏 === */}
-      {mode === '1v1' && store.layout === 'versus' && (
+      {mode === '1v1' && !isGrid && store.layout === 'versus' && (
         <>
           <TimerArea playerId={1} rotated />
-          <MiddleBar onSettingsClick={handleSettingsClick} onHistoryClick={() => setVsHistoryOpen(true)} modePill={modePill} />
+          {middleBar}
           <TimerArea playerId={0} />
         </>
       )}
@@ -1191,10 +1369,10 @@ export default function BattleView({ modePill }: BattleViewProps) {
         <TimerArea playerId={0} />
       )}
 
-      {/* 底部导航栏 — Solo 模式;模式 pill 也塞在这里(solo 没 middle-bar) */}
+      {/* 底部导航栏 — Solo 模式;人数下拉也塞在这里(solo 没 middle-bar) */}
       {mode === 'solo' && (
         <nav className="bottom-nav" data-no-timer>
-          <div className="bottom-nav-mode">{modePill}</div>
+          <div className="bottom-nav-mode">{playersControl}</div>
           <button
             className={`nav-tab${store.activeTab === 'timer' ? ' active' : ''}`}
             onClick={() => store.switchTab('timer')}

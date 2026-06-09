@@ -227,7 +227,7 @@ export default function OngoingComps({ lang }: Props) {
           </div>
         ) : (
           <div key={`d-${g.date}`} className="ongoing-comps-group ongoing-comps-group-date">
-            <span className="ongoing-comps-date">{g.date}</span>
+            <span className="ongoing-comps-date">{g.date.slice(5)}</span>
             <div className="ongoing-comps-list">
               {g.comps.map(c => (
                 <Link

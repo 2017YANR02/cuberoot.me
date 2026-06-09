@@ -134,6 +134,10 @@ pnpm --filter @cuberoot/client dev                 # http://127.0.0.1:5173/
 
 写任何 CSS 色值 (背景 / 文字 / 边框 / hover) 前调 `theme-tokens` skill —— token 表 + dark-locked 页清单 + color-mix 衍生规则在那里。禁 `#888 #aaa` 等硬码灰阶。
 
+## 繁体字(zh-Hant)
+
+繁体一律 OpenCC 生成,禁手敲(人/AI 同):`tr({zh,en})` 只写简体+英文,写完跑 `pnpm -F @cuberoot/client-next zh:inject`;三路分支用 `node scripts/conv.mjs "简体"` 取值粘贴。守卫:PreToolUse hook 写入即拦 + CI `tests/zh-hant-drift.test.ts`(跑 `zh:check`)。**禁全仓盲跑 inject 当"归一"**——它只管 tr() 参数和已有 zhHant 的对象,typed 数据对象走 3-way(见 `scripts/ZHHANT_RECIPE.md`)。
+
 ## Skill 路由
 
 主题命中 trigger 时主动调对应 skill,不要凭记忆。skill 描述 + triggers 已由 harness 自动加载,触发即可,**不要在此再列索引表**(双倍信息,白付 token)。

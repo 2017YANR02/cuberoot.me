@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import type { ReconSolve } from '@cuberoot/shared';
 import {
   getRecon, addRecon, updateRecon, deleteRecon,
-  checkDuplicate, listRecons, resolveShortUrl,
+  checkDuplicate, listRecons, listPersonRecons, resolveShortUrl,
 } from '@/lib/recon-api';
 import { Flag } from '@/components/Flag';
 import { ClearButton } from '@/components/ClearButton';
@@ -57,11 +57,10 @@ import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { parseSq1Tokens, formatScrambleForEvent } from '@/lib/sq1-svg';
 import type { Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowLeft, ArrowRightLeft, Box, ChevronDown, ChevronRight, Home, Loader2, LogIn, UserPlus } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, Box, ChevronDown, ChevronRight, History, Home, Loader2, LogIn, UserPlus } from 'lucide-react';
 import '../recon.css';
 import './recon_submit.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 // ── Constants ──
 
@@ -72,6 +71,40 @@ const ROUNDS_FALLBACK = ['1', '2', '3', 'f'];
 const SOLVE_NUM_CAP_BY_FORMAT: Record<RoundFormat, number> = {
   '1': 1, '2': 2, '3': 3, '5': 5, 'a': 5, 'm': 3, 'h': 30,
 };
+
+// 复用上次填写:存到 localStorage 的元数据字段。刻意排除每把都变的
+// 成绩(rawTime)/单次(value)/单次纪录/WCA 打乱/最优打乱/解法,以及「第几把」
+// —— 带上 # 会触发表单的自动获取,用上一把数据回填那几项,违背保持空白的本意。
+const LAST_META_KEY = 'recon.lastMeta.v1';
+const REUSE_KEYS: (keyof ReconSolve)[] = [
+  'official', 'event', 'method',
+  'person', 'personId', 'personCountry', 'coPersons',
+  'comp', 'compWcaId', 'country', 'city',
+  'round', 'groupId', 'date',
+  'average', 'aoType', 'regionalAverageRecord',
+  'cube', 'videoUrl', 'note', 'caption',
+  'reconer', 'reconerId', 'reconDate',
+];
+// 其中带可见高亮标记的字段(纯值 / 自动获取字段不标)
+const REUSE_MARK_KEYS = [
+  'person', 'event', 'official', 'comp', 'coPersons',
+  'round', 'groupId', 'date',
+  'videoUrl', 'method', 'cube', 'note',
+  'reconer', 'reconDate',
+];
+const hasMetaVal = (v: unknown) =>
+  v != null && v !== '' && !(Array.isArray(v) && v.length === 0);
+// 从一条已有复盘里抽出可复用的元数据(日期字段归一化为 yyyy-mm-dd)
+function buildReuseMeta(src: Partial<ReconSolve>): Partial<ReconSolve> {
+  const meta: Record<string, unknown> = {};
+  for (const k of REUSE_KEYS) {
+    const v = (src as Record<string, unknown>)[k];
+    if (v != null) meta[k] = v;
+  }
+  if (typeof meta.date === 'string') meta.date = toDateInput(meta.date);
+  if (typeof meta.reconDate === 'string') meta.reconDate = toDateInput(meta.reconDate);
+  return meta as Partial<ReconSolve>;
+}
 
 /** N 轮赛 → round 选项数组。N=1→只有 Final,N=4→R1+R2+R3+F。 */
 function roundsForCount(n: number): string[] {
@@ -207,9 +240,28 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [compRounds, setCompRounds] = useState<Record<string, RoundFormat[]> | null>(null);
   const isMobile = useIsMobile();
 
+  // 复用上次填写:lastMeta = 上次提交的元数据快照(localStorage);
+  // reusedFields = 当前被「复用」带入、尚未编辑的字段 key(用于高亮标记)。
+  const [lastMeta, setLastMeta] = useState<Partial<ReconSolve> | null>(null);
+  const [reusedFields, setReusedFields] = useState<Set<string>>(() => new Set());
+
+  const pruneReused = useCallback((keys: string | string[]) => {
+    setReusedFields(prev => {
+      if (prev.size === 0) return prev;
+      const arr = Array.isArray(keys) ? keys : [keys];
+      let changed = false;
+      const next = new Set(prev);
+      for (const k of arr) if (next.delete(k)) changed = true;
+      return changed ? next : prev;
+    });
+  }, []);
+
   const setField = useCallback(<K extends keyof ReconSolve>(key: K, value: ReconSolve[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
-  }, []);
+    pruneReused(key as string);
+  }, [pruneReused]);
+
+  const reusedCls = (key: string) => (reusedFields.has(key) ? ' submit-field--reused' : '');
 
   /** textarea 自适应高度 */
   const autoResize = useCallback((el: HTMLTextAreaElement) => {
@@ -371,11 +423,49 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       country: (c.country || '').toLowerCase(),
       date: c.start_date,
     }));
-  }, [isZh]);
+    pruneReused(['comp', 'date']);
+  }, [isZh, pruneReused]);
 
   const clearPickedComp = useCallback(() => {
     setForm(prev => ({ ...prev, comp: '', compWcaId: '', country: '', date: '' }));
-  }, []);
+    pruneReused(['comp', 'date']);
+  }, [pruneReused]);
+
+  // ── 复用上次填写 ──
+  // 进入新建表单时确定「上次」的来源:优先本浏览器的 localStorage 快照(上次提交即写),
+  // 没有则从服务端拉本人最近一条复盘当兜底 —— 这样首次使用也能有「复用上次」按钮。
+  useEffect(() => {
+    if (isEditing || fromId) return;
+    try {
+      const raw = localStorage.getItem(LAST_META_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') { setLastMeta(parsed as Partial<ReconSolve>); return; }
+      }
+    } catch { /* ignore corrupt cache */ }
+    const wcaId = authUser?.wcaId;
+    if (!wcaId) return;
+    let cancelled = false;
+    listPersonRecons(wcaId).then(list => {
+      if (cancelled || !Array.isArray(list) || list.length === 0) return;
+      const sorted = [...list].sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+      // 本人作为「复盘者」提交的最近一条;没有则退而取最近一条(作为选手参与)
+      const mine = sorted.find(s => s.reconerId === wcaId) ?? sorted[0];
+      if (mine) setLastMeta(buildReuseMeta(mine));
+    }).catch(() => { /* 端点缺失 / 网络错误:静默无按钮 */ });
+    return () => { cancelled = true; };
+  }, [isEditing, fromId, authUser]);
+
+  const applyLastMeta = useCallback(() => {
+    if (!lastMeta) return;
+    setForm(prev => ({ ...prev, ...lastMeta }));
+    if (lastMeta.average != null) setAvgInput(formatTimeInput(lastMeta.average));
+    const marks = new Set<string>();
+    for (const k of REUSE_MARK_KEYS) {
+      if (hasMetaVal((lastMeta as Record<string, unknown>)[k])) marks.add(k);
+    }
+    setReusedFields(marks);
+  }, [lastMeta]);
 
   // ── Live solution stats ──
   const stats = useMemo(() => {
@@ -815,10 +905,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       return { ...prev, coPersons: [...list, { name: p.name, id: p.id, country: p.country_iso2 ?? '' }] };
     });
     setAddingCo(false);
-  }, []);
+    pruneReused('coPersons');
+  }, [pruneReused]);
   const removeCoPerson = useCallback((idx: number) => {
     setForm(prev => ({ ...prev, coPersons: (prev.coPersons ?? []).filter((_, i) => i !== idx) }));
-  }, []);
+    pruneReused('coPersons');
+  }, [pruneReused]);
 
   // ── Reconer ──
   const [reconerCountry, setReconerCountry] = useState<string>('');
@@ -963,6 +1055,15 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         router.push(`${langPrefix}/recon/${editId}`);
       } else {
         const created = await addRecon(data);
+        // 存元数据快照供下次「复用上次」(只在新建时更新)
+        try {
+          const meta: Record<string, unknown> = {};
+          for (const k of REUSE_KEYS) {
+            const v = (data as Record<string, unknown>)[k];
+            if (v !== undefined) meta[k] = v;
+          }
+          localStorage.setItem(LAST_META_KEY, JSON.stringify(meta));
+        } catch { /* quota / serialization */ }
         router.push(`${langPrefix}/recon/${created.id}`);
       }
     } catch (err) {
@@ -1083,6 +1184,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
         <div className="submit-form-pane">
           <div className="submit-form">
+            {lastMeta && (
+              <button type="button" className="submit-reuse-btn" onClick={applyLastMeta}>
+                <History size={14} />
+                {tr({ zh: '复用上次填写', en: 'Reuse last entry', zhHant: '複用上次填寫' })}
+              </button>
+            )}
             {/* === Competition info — default open === */}
             <CollapsibleSection
               title={tr({ zh: '比赛信息', en: 'Competition',
@@ -1092,7 +1199,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             >
               {/* Hero row: solver / event / time */}
               <div className="submit-hero">
-                <div className={`submit-field ${form.personId ? 'submit-field-shrink' : ''}`}>
+                <div className={`submit-field ${form.personId ? 'submit-field-shrink' : ''}${reusedCls('person')}`}>
                   <span className="submit-label">{t('recon.solver')} *</span>
                   {solverLite ? (
                     <div className={`submit-solver-pill${lockIdentity ? ' submit-solver-pill--locked' : ''}`}>
@@ -1111,7 +1218,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     />
                   )}
                 </div>
-                <label className="submit-field">
+                <label className={`submit-field${reusedCls('event')}`}>
                   <span className="submit-label">{t('recon.event')} *</span>
                   {lockIdentity ? (
                     <div className="submit-readonly-text">
@@ -1167,7 +1274,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
               {solverLite && (
                 <div className="submit-row">
-                  <div className="submit-field">
+                  <div className={`submit-field${reusedCls('coPersons')}`}>
                     <span className="submit-label">{tr({ zh: '共同完成者', en: 'Co-solvers' })}</span>
                     <div className="submit-cosolvers">
                       {(form.coPersons ?? []).map((c, i) => (
@@ -1200,7 +1307,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               )}
 
               <div className="submit-row">
-                <label className="submit-field submit-field-narrow">
+                <label className={`submit-field submit-field-narrow${reusedCls('official')}`}>
                   <span className="submit-label">WCA</span>
                   {lockIdentity ? (
                     <div className="submit-readonly-text">{form.official ? 'WCA' : t('recon.badge.nonWca')}</div>
@@ -1211,7 +1318,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     </select>
                   )}
                 </label>
-                <div className={`submit-field ${form.compWcaId ? 'submit-field-shrink' : ''}`}>
+                <div className={`submit-field ${form.compWcaId ? 'submit-field-shrink' : ''}${reusedCls('comp')}`}>
                   <span className="submit-label">{t('recon.competition')}</span>
                   {form.compWcaId ? (
                     <div className={`submit-comp-pill${lockIdentity ? ' submit-comp-pill--locked' : ''}`}>
@@ -1264,7 +1371,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               )}
 
               <div className="submit-row">
-                <label className="submit-field">
+                <label className={`submit-field${reusedCls('round')}`}>
                   <span className="submit-label">{t('recon.round')}</span>
                   {lockIdentity ? (
                     <div className="submit-readonly-text">{form.round ? localizeRound(form.round, t) : ''}</div>
@@ -1293,12 +1400,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     </select>
                   )}
                 </label>
-                <label className="submit-field">
+                <label className={`submit-field${reusedCls('groupId')}`}>
                   <span className="submit-label">{t('recon.group')}</span>
                   <input type="text" value={form.groupId || ''} onChange={e => setField('groupId', e.target.value)}
                     placeholder="A/B/C" maxLength={1} />
                 </label>
-                <label className="submit-field">
+                <label className={`submit-field${reusedCls('date')}`}>
                   <span className="submit-label">{t('recon.date')}</span>
                   <input type="text" value={form.date || ''} onChange={e => setField('date', e.target.value)}
                     placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
@@ -1579,7 +1686,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 zhHant: "後設資料"
             })}>
               <div className="submit-row">
-                <label className="submit-field submit-field-wide">
+                <label className={`submit-field submit-field-wide${reusedCls('videoUrl')}`}>
                   <span className="submit-label">{t('recon.videoUrl')}</span>
                   <textarea
                     value={form.videoUrl || ''}
@@ -1611,7 +1718,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               </div>
 
               <div className="submit-row">
-                <label className="submit-field">
+                <label className={`submit-field${reusedCls('method')}`}>
                   <span className="submit-label">{t('recon.method')}</span>
                   <input
                     type="text"
@@ -1623,11 +1730,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     {METHODS.map(m => <option key={m} value={m} />)}
                   </datalist>
                 </label>
-                <label className="submit-field">
+                <label className={`submit-field${reusedCls('cube')}`}>
                   <span className="submit-label">{t('recon.cube')}</span>
                   <input type="text" value={form.cube || ''} onChange={e => setField('cube', e.target.value)} />
                 </label>
-                <label className="submit-field submit-field-wide">
+                <label className={`submit-field submit-field-wide${reusedCls('note')}`}>
                   <span className="submit-label">{t('recon.note')}</span>
                   <textarea
                     value={form.note || ''}
@@ -1640,7 +1747,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               </div>
 
               <div className="submit-row">
-                <div className={`submit-field ${(form.reconer || form.reconerId) ? 'submit-field-shrink' : ''}`}>
+                <div className={`submit-field ${(form.reconer || form.reconerId) ? 'submit-field-shrink' : ''}${reusedCls('reconer')}`}>
                   <span className="submit-label">{t('recon.reconstructor')}</span>
                   {(form.reconer || form.reconerId) ? (
                     <div className="submit-solver-pill">
@@ -1659,7 +1766,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     />
                   )}
                 </div>
-                <label className="submit-field">
+                <label className={`submit-field${reusedCls('reconDate')}`}>
                   <span className="submit-label">{t('recon.reconDate')}</span>
                   <input type="text" value={form.reconDate || ''} onChange={e => setField('reconDate', e.target.value)}
                     placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />

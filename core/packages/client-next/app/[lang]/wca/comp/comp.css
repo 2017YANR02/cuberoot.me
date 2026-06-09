@@ -173,6 +173,7 @@
   color: var(--foreground);
   cursor: pointer;
   text-align: left;
+  text-decoration: none;
   font-size: inherit;
 }
 .comp-recent-link:hover {

@@ -27,7 +27,6 @@ const TodayRecon = dynamic(() => import('@/components/TodayRecon'), {
 import { useEffectiveTheme } from '@/lib/theme';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../landing.css';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 export default function LandingPage() {
@@ -76,11 +75,10 @@ export default function LandingPage() {
           <div className="wca-hero-title">{tr({ zh: 'WCA 统计', en: 'WCA Statistics',
               zhHant: "WCA 統計"
         })}</div>
-          <div className="wca-hero-sub">{tr({ zh: '魔方世界所有数据切片 · 80+ 自动生成排名 · 周更', en: 'Every slice of the cubing world · 80+ auto-generated rankings · updated weekly',
-              zhHant: "魔方世界所有資料切片 · 80+ 自動生成排名 · 周更"
+          <div className="wca-hero-sub">{tr({ zh: '魔方世界所有数据切片', en: 'Every slice of the cubing world',
+              zhHant: "魔方世界所有資料切片"
         })}</div>
         </div>
-        <div className="wca-hero-arrow" aria-hidden="true">→</div>
       </Link>
 
       <div className="cards-sections">

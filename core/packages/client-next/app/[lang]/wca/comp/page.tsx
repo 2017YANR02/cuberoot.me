@@ -40,7 +40,7 @@ import {
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { loadFlagData, personFlagIso2, compNameZh, countryToIso2, compFlagIso2 } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
-import { compLinkProps, prefetchComp } from '@/lib/comp-link';
+import { compLinkProps } from '@/lib/comp-link';
 import { defaultCancelledCutoffIso, isCancelledComp, compNameMatches } from '@/lib/comp-search';
 import { localizeCity } from '@/lib/city-localize';
 import { countryName } from '@/lib/country-name';
@@ -2034,20 +2034,16 @@ function CalendarPageInner() {
               const display = localizeCompName(r.slug, decodeEntities(r.name), isZh);
               return (
                 <li key={r.slug} className="comp-recent-item">
-                  <button
-                    type="button"
+                  <Link
+                    {...compLinkProps(r.slug)}
                     className="comp-recent-link"
-                    onClick={() => router.push(`/wca/comp/${r.slug}`)}
-                    onMouseEnter={() => prefetchComp(r.slug)}
-                    onFocus={() => prefetchComp(r.slug)}
-                    onTouchStart={() => prefetchComp(r.slug)}
                   >
                     <span className="comp-recent-name">
                       {iso2 && <SharedFlag iso2={iso2} className="comp-flag" />}
                       <span>{display}</span>
                     </span>
                     <span className="comp-recent-slug">{r.slug}</span>
-                  </button>
+                  </Link>
                   <button
                     type="button"
                     className="comp-recent-remove"

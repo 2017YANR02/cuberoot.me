@@ -3,14 +3,14 @@
 /**
  * TimerShell — the mode host for /timer.
  *
- * Renders a top-left segmented [单人 Solo | 双人 Duo] pill and switches
- * between SoloView and (Phase 3) BattleView. The mode (?mode=solo | ?mode=duo)
- * is owned by nuqs (useQueryState). The param is always present in the URL: solo
- * is the default but is NOT omitted (clearOnDefault:false), and a bare /timer
- * normalizes itself to /timer?mode=solo on mount (replace, no history entry).
- * solo↔duo is a genuine big-mode switch between two distinct full-screen
- * experiences, so it pushes a history entry (history:'push') → browser back /
- * iOS edge-swipe returns to the previous mode.
+ * One URL param owns the whole experience: ?players=1..4 (nuqs, default 1,
+ * omitted from the URL when solo). players=1 renders SoloView; players>=2
+ * renders BattleView (2 = the original versus/side duo, 3/4 = 田字格 grid).
+ * The old ?mode=solo|duo param and the solo/duo segmented pill are gone — the
+ * single 人数 select (rendered here, injected into each view's chrome) is the
+ * only switcher. Changing player count is a genuine big-mode switch between
+ * full-screen experiences, so it pushes a history entry (history:'push') →
+ * browser back / iOS edge-swipe returns to the previous count.
  *
  * SSG note: useQueryState calls useSearchParams, but app/[lang]/layout.tsx wraps
  * pages in <Suspense>, so static generation does not bail. To avoid an SSR /
@@ -18,89 +18,48 @@
  * keep a `mounted` gate on the BattleView render: first client paint is always
  * SoloView, and we only swap to BattleView after mount once nuqs has read the
  * real URL param.
- *
- * Phase 1: BattleView does not exist yet — selecting 对战 flips the mode and
- * renders Solo with a small "coming soon" notice (TODO: swap in <BattleView/>
- * in Phase 3 at the marked import point).
  */
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { User, Users } from 'lucide-react';
+import { useQueryState, parseAsInteger } from 'nuqs';
 import SoloView from './SoloView';
 import BattleView from './BattleView';
 import { tr } from '@/i18n/tr';
 
-const MODES = ['solo', 'duo'] as const;
-type Mode = typeof MODES[number];
-
 export default function TimerShell() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
+  const isZh = i18n.language.startsWith('zh');
   const [mounted, setMounted] = useState(false);
-  const [mode, setMode] = useQueryState(
-    'mode',
-    parseAsStringEnum<Mode>([...MODES])
-      .withDefault('solo')
-      .withOptions({ history: 'push', clearOnDefault: false }),
+  const [playersParam, setPlayersParam] = useQueryState(
+    'players',
+    parseAsInteger.withDefault(1).withOptions({ history: 'push' }),
   );
+  const playerCount = Math.max(1, Math.min(4, playersParam));
 
-  // First client paint stays on SoloView (matches the SSG prerender) — only swap
-  // in BattleView after mount once nuqs has hydrated ?mode from the real URL.
-  // Also force the mode param into the URL: a bare /timer becomes /timer?mode=solo
-  // (replace, so back doesn't trap on the bare URL).
-  useEffect(() => {
-    setMounted(true);
-    if (!new URLSearchParams(window.location.search).has('mode')) {
-      void setMode('solo', { history: 'replace' });
-    }
-  }, [setMode]);
+  useEffect(() => { setMounted(true); }, []);
 
-  const switchMode = (next: Mode) => { void setMode(next); };
-
-  const modePill = (
-    <div className="shell-mode-pill" role="tablist" aria-label={tr({ zh: '模式', en: 'Mode' })}>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={mode === 'solo'}
-        aria-label={tr({ zh: '单人', en: 'Solo',
-            zhHant: "單人"
-        })}
-        title={tr({ zh: '单人', en: 'Solo',
-            zhHant: "單人"
-        })}
-        className={`shell-mode-opt${mode === 'solo' ? ' active' : ''}`}
-        onClick={() => switchMode('solo')}
-      >
-        <User size={16} />
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={mode === 'duo'}
-        aria-label={tr({ zh: '双人', en: 'Duo',
-            zhHant: "雙人"
-        })}
-        title={tr({ zh: '双人', en: 'Duo',
-            zhHant: "雙人"
-        })}
-        className={`shell-mode-opt${mode === 'duo' ? ' active' : ''}`}
-        onClick={() => switchMode('duo')}
-      >
-        <Users size={16} />
-      </button>
-    </div>
+  const playersControl = (
+    <select
+      className="shell-players-select"
+      value={playerCount}
+      onChange={(e) => { void setPlayersParam(parseInt(e.target.value)); }}
+      title={tr({ zh: '人数', en: 'Players', zhHant: '人數' })}
+      aria-label={tr({ zh: '人数', en: 'Players', zhHant: '人數' })}
+    >
+      {[1, 2, 3, 4].map(n => (
+        <option key={n} value={n}>{isZh ? `${n}人` : `${n}P`}</option>
+      ))}
+    </select>
   );
 
   // First paint is always Solo (mounted gate keeps SSG calm). After mount, if
-  // ?mode=duo we render <BattleView/> (the Duo experience); the mode pill is
-  // injected into its middle-bar / bottom-nav. Switching modes never remounts the
+  // ?players>=2 we render <BattleView/>; the players select is injected into
+  // its middle-bar (battle) / topbar (solo). Switching never remounts the
   // page — each view owns its own engine state.
-  if (mounted && mode === 'duo') {
-    return <BattleView modePill={modePill} />;
+  if (mounted && playerCount >= 2) {
+    return <BattleView playerCount={playerCount} playersControl={playersControl} />;
   }
 
-  return <SoloView modePill={modePill} />;
+  return <SoloView playersControl={playersControl} />;
 }

@@ -22,7 +22,7 @@ import {
   Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
   Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText,
   FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe,
-  Eye, EyeOff, ListOrdered, LineChart, RefreshCw, ChevronLeft, Brain, X,
+  Eye, EyeOff, ListOrdered, LineChart, Brain, X,
 } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { CubingIcon, EventIcon } from '@/components/EventIcon/EventIcon';
@@ -178,14 +178,12 @@ function useMediaQuery(query: string): boolean {
 type PanelTab = 'times' | 'chart' | 'tools';
 type ChartKind = 'histogram' | 'trend' | 'scatter' | 'hour' | 'heatmap';
 
-/** Slot rendered by TimerShell into the topbar between the mode pill and the
- *  right-hand toggles. SoloView fills it via portal-free render-prop. */
 interface SoloViewProps {
-  /** The mode pill node, injected by the shell to live at the topbar left. */
-  modePill?: React.ReactNode;
+  /** The players (人数) select node, injected by the shell at the topbar left. */
+  playersControl?: React.ReactNode;
 }
 
-export default function SoloView({ modePill }: SoloViewProps) {
+export default function SoloView({ playersControl }: SoloViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('计时器', 'Timer', "計時器");
@@ -357,7 +355,6 @@ export default function SoloView({ modePill }: SoloViewProps) {
   // the raw canonical form stays in `scramble` for the solver hints / cube preview
   // (their parsers only accept `(a,b)/`). Other events pass through unchanged.
   const displayScramble = formatScrambleForEvent(event, scramble);
-  const canPrevScramble = scrambleHist.idx > 0;
 
   // WCA mode: source of the current real scramble (comp / event / round / group),
   // shown under the strip the same way the landing page's RecentScrambles does.
@@ -1352,7 +1349,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
       <header className="shell-topbar surface-chrome">
         <CubeRootLogo className="shell-topbar-brand" />
         <div className="shell-topbar-left">
-          {modePill}
+          {playersControl}
           <div className="shell-event-pick">
             <button
               type="button"
@@ -1419,7 +1416,7 @@ export default function SoloView({ modePill }: SoloViewProps) {
           onMouseUp={onCenterMouseUp}
           scrambleSlot={
             <div
-              className={`scramble-strip${settings.compactScramble ? ' compact' : ''}${canPrevScramble ? ' has-prev' : ''}`}
+              className={`scramble-strip${settings.compactScramble ? ' compact' : ''}`}
               style={{ '--scramble-scale': settings.scrambleFontScale } as React.CSSProperties}
               onClick={() => {
                 const action = settings.scrambleClickAction;
@@ -1439,48 +1436,21 @@ export default function SoloView({ modePill }: SoloViewProps) {
                       zhHant: "點選換一個打亂"
                 }))}
             >
-              {canPrevScramble && (
-                <button
-                  type="button"
-                  className="scramble-prev"
-                  data-no-timer
-                  onClick={(e) => { e.stopPropagation(); prevScramble(); }}
-                  title={tr({ zh: '上一条打乱（←）', en: 'Previous scramble (←)',
-                      zhHant: "上一條打亂（←）"
-                })}
-                  aria-label={tr({ zh: '上一条打乱', en: 'Previous scramble',
-                      zhHant: "上一條打亂"
-                })}
-                >
-                  <ChevronLeft size={14} />
-                </button>
-              )}
               <span className="scramble-text">{scrambleLoading
-                ? <span className="scramble-loading">{tr({ zh: '加载真实打乱…', en: 'Loading real scramble…', zhHant: '載入真實打亂…' })}</span>
+                ? <span className="scramble-loading">{tr({ zh: '加载真实打乱…', en: 'Loading real scramble…', zhHant: "載入真實打亂…" })}</span>
                 : (displayScramble || <span className="scramble-empty">—</span>)}</span>
               {scrambleCopied && (
                 <span className="scramble-copied-flash" data-no-timer>{tr({ zh: '已复制', en: 'Copied',
                     zhHant: "已複製"
                 })}</span>
               )}
-              <button
-                type="button"
-                className="scramble-refresh"
-                data-no-timer
-                onClick={(e) => { e.stopPropagation(); nextScramble(); }}
-                title={tr({ zh: '换一个打乱（→）', en: 'New scramble (→)',
-                    zhHant: "換一個打亂（→）"
-                })}
-              >
-                <RefreshCw size={14} />
-              </button>
               {wcaSrcDisplay && (
                 <a
                   className="scramble-src"
                   data-no-timer
                   href={`${isZh ? '/zh' : ''}/scramble/gen?comp=${encodeURIComponent(wcaSrcDisplay.ci)}`}
                   onClick={(e) => e.stopPropagation()}
-                  title={tr({ zh: '查看该比赛打乱', en: 'View this competition', zhHant: '檢視該比賽打亂' })}
+                  title={tr({ zh: '查看该比赛打乱', en: 'View this competition', zhHant: "檢視該比賽打亂" })}
                 >
                   {wcaSrcDisplay.iso2 && <Flag iso2={wcaSrcDisplay.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                   <span className="scramble-src-name">{wcaSrcDisplay.name}</span>
@@ -1599,13 +1569,6 @@ export default function SoloView({ modePill }: SoloViewProps) {
           )}
           {timer.phase === 'stopped' && solves.length > 0 && (
             <div className="shell-stopped-row">
-              {/* Penalties / delete moved to the gesture wheel; tell the user how
-                  to reach them right where the +2 / DNF buttons used to sit. */}
-              <div className="shell-gesture-tip" data-no-timer>
-                {tr({ zh: '按住并拖动呼出轮盘', en: 'Press & drag to open the wheel',
-                    zhHant: "按住並拖動撥出輪盤"
-                })}
-              </div>
               <div className="shell-rank-slot">
                 <RankBadge eventId={event} centis={stoppedCentis} type="single" country={rankCountry} isZh={isZh} />
               </div>
@@ -1649,15 +1612,6 @@ export default function SoloView({ modePill }: SoloViewProps) {
           </div>
         )}
 
-        {/* First-run gesture hint (before any solve, both platforms). Once the
-            user has solves, the in-context tip in the stopped-row takes over. */}
-        {solves.length === 0 && (
-          <div className="shell-swipe-hint surface-chrome">
-            {tr({ zh: '按住并拖动呼出轮盘', en: 'Press & drag to open the wheel',
-                zhHant: "按住並拖動撥出輪盤"
-            })}
-          </div>
-        )}
       </div>
 
       {/* ── Side panel: desktop dock / phone bottom sheet ────── */}

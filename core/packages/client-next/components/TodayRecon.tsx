@@ -19,7 +19,6 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
 import './today_recon.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props { lang: 'zh' | 'en' }
 
@@ -87,8 +86,6 @@ function ReconCard({ solve, isZh }: { solve: ReconSolve; isZh: boolean }) {
           </div>
         )}
       </div>
-
-      <span className="tr-arrow" aria-hidden="true">→</span>
     </Link>
   );
 }
@@ -146,7 +143,7 @@ export default function TodayRecon({ lang }: Props) {
           >
             {expanded
               ? (tr({ zh: '收起', en: 'Show less' }))
-              : (i18n.language === 'zh-Hant' ? (`今日另有 ${rest.length} 條`) : (isZh ? `今日另有 ${rest.length} 条` : `${rest.length} more today`))}
+              : (tr({ zh: '更多', en: 'More', zhHant: '更多' }))}
             <ChevronDown size={15} className="tr-more-chevron" aria-hidden="true" />
           </button>
         </>
