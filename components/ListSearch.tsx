@@ -1,68 +1,57 @@
 "use client";
 
 import { Search, X } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useTransition } from "react";
+import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 
 type Props = {
-  basePath: string;
   placeholder?: string;
 };
 
-export function ListSearch({ basePath, placeholder = "搜索..." }: Props) {
-  const router = useRouter();
-  const sp = useSearchParams();
-  const initial = sp?.get("q") ?? "";
-  const [value, setValue] = useState(initial);
+export function ListSearch({ placeholder = "搜索..." }: Props) {
+  const [isPending, startTransition] = useTransition();
+  // URL is the single source of truth: `q` drives the server query, and a new
+  // search resets `page` back to 1. shallow:false re-runs the RSC so results
+  // update live; throttle keeps typing from hammering the server每个键.
+  const [{ q }, setParams] = useQueryStates(
+    {
+      q: parseAsString.withDefault(""),
+      page: parseAsInteger,
+    },
+    { shallow: false, throttleMs: 350, startTransition },
+  );
 
-  function submit(next: string) {
-    const usp = new URLSearchParams();
-    const trimmed = next.trim();
-    if (trimmed) usp.set("q", trimmed);
-    const qs = usp.toString();
-    router.push(qs ? `${basePath}?${qs}` : basePath);
-  }
-
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    submit(value);
-  }
-
-  function clear() {
-    setValue("");
-    submit("");
+  function setQuery(next: string) {
+    setParams({ q: next || null, page: null });
   }
 
   return (
     <form
-      onSubmit={onSubmit}
+      onSubmit={(e) => e.preventDefault()}
       className="mb-8 flex w-full max-w-md items-center gap-2 rounded-[14px] border border-line bg-white pl-3 pr-1.5 py-1.5 focus-within:border-brand/60"
     >
-      <Search size={15} className="text-ink-3 shrink-0" />
+      <Search
+        size={15}
+        className={`shrink-0 ${isPending ? "text-brand animate-pulse" : "text-ink-3"}`}
+      />
       <input
         type="search"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
+        value={q}
+        onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
         className="flex-1 bg-transparent text-[14px] text-ink placeholder:text-ink-3 outline-none"
         autoComplete="off"
       />
-      {value ? (
+      {q ? (
         <button
           type="button"
           aria-label="清空"
-          onClick={clear}
+          onClick={() => setQuery("")}
           className="grid h-7 w-7 place-items-center rounded-md text-ink-3 hover:bg-bg-soft hover:text-ink"
         >
           <X size={14} />
         </button>
       ) : null}
-      <button
-        type="submit"
-        className="rounded-md bg-brand px-3 py-1.5 text-[13px] text-white hover:bg-brand-dark transition"
-      >
-        搜索
-      </button>
     </form>
   );
 }

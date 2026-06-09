@@ -25,7 +25,7 @@ export default async function NewsPage({ searchParams }: { searchParams: SP }) {
 
   return (
     <Section eyebrow="资讯中心" title="最新动态 · 平台 · 赛事 · 教学 · 行业">
-      <ListSearch basePath="/news" placeholder="搜索资讯标题、正文..." />
+      <ListSearch placeholder="搜索资讯标题、正文..." />
 
       {q && (
         <div className="mb-6 text-[13px] text-ink-3">
