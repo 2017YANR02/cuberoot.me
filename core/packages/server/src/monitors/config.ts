@@ -9,21 +9,32 @@ export const PUSH_ENABLED = process.env.MONITOR_PUSH_ENABLED === '1';
 /** 自有站域名(纪录/PR 推送里的比赛链接指向这里,不再外链 WCA Live)。 */
 export const SITE_BASE = 'https://www.cuberoot.me';
 
+/** 中国相关地区(比赛链接落 /zh 中文站):大陆 / 港 / 澳 / 台。 */
+const CHINESE_REGIONS = new Set(['CN', 'HK', 'MO', 'TW']);
+
+/** iso2 属中国相关地区 → 比赛链接走 /zh 中文站(Pattern B:英文裸路径,中文 /zh)。 */
+export function isChineseRegion(iso2: string | null | undefined): boolean {
+  return !!iso2 && CHINESE_REGIONS.has(iso2.toUpperCase());
+}
+
 /**
  * 自有站比赛页深链:/wca/comp/<wcaId>?event=<e>&round=<n>。
  * wcaId 缺失(比赛未关联 WCA id)→ 返 null,调用方回退到原 WCA Live 链接。
+ * zh=true(中国比赛)→ 落 /zh 中文站。
  */
 export function siteCompUrl(
   wcaId: string | null | undefined,
   eventId?: string | null,
   roundNumber?: number | null,
+  zh = false,
 ): string | null {
   if (!wcaId) return null;
   const q = new URLSearchParams();
   if (eventId) q.set('event', eventId);
   if (roundNumber && roundNumber > 0) q.set('round', String(roundNumber));
   const qs = q.toString();
-  return qs ? `${SITE_BASE}/wca/comp/${wcaId}?${qs}` : `${SITE_BASE}/wca/comp/${wcaId}`;
+  const base = `${SITE_BASE}${zh ? '/zh' : ''}/wca/comp/${wcaId}`;
+  return qs ? `${base}?${qs}` : base;
 }
 
 /**
@@ -34,9 +45,10 @@ export function siteCompUrlFromCubingAlias(
   alias: string | null | undefined,
   eventId?: string | null,
   roundNumber?: number | null,
+  zh = false,
 ): string | null {
   if (!alias) return null;
-  return siteCompUrl(alias.replace(/-/g, ''), eventId, roundNumber);
+  return siteCompUrl(alias.replace(/-/g, ''), eventId, roundNumber, zh);
 }
 
 /** 纪录类型过滤(两个纪录监控共用),默认 WR/CR/NR。 */

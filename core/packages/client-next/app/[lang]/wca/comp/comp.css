@@ -1523,6 +1523,19 @@ td.is-pr {
 .sched-fc .fc-timegrid-event-short .fc-event-main-frame { line-height: 1.25; }
 .sched-fc .fc-event-time { font-weight: 600; font-variant-numeric: tabular-nums; }
 .sched-fc .fc-event-title { font-weight: 500; }
+/* 非比赛活动(签到 / 午餐 / 颁奖 / 其他)走 display:'background' 退成背景带,不抢
+   列宽。覆盖 FullCalendar 给整块的 0.3 opacity(会把标签也压淡),改用 token 淡调
+   承载「次要」感,标签保持可读。 */
+.sched-fc .fc-bg-event {
+  opacity: 1;
+  background-color: color-mix(in srgb, var(--foreground) 9%, transparent) !important;
+}
+.sched-fc .fc-bg-event .fc-event-title {
+  font-style: normal;
+  font-weight: 600;
+  padding: 2px 6px;
+  color: var(--muted-foreground);
+}
 .sched-fc .fc-scrollgrid,
 .sched-fc .fc-theme-standard td,
 .sched-fc .fc-theme-standard th { border-color: var(--border-default); }

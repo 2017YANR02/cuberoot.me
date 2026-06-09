@@ -10,14 +10,14 @@
 pwsh core/packages/scramble-stats-build/update_cross_stats.ps1
 ```
 
-下载最新 results export → 挑出未处理的新打乱 → std_analyzer 全 5 阶段 → 追加 master → 默认再跟 std 锁步补 eo/pseudo/pseudo_pair(按 id 缺补,分块可续)→ 重算 JSON → commit & push + scp static。任一步失败即停。
+下载最新 results export → 挑出未处理的新打乱 → std_analyzer 全 5 阶段 → 追加 master → 默认再跟 std 锁步补全 6 变体 eo/pseudo/pseudo_pair/pair/f2leo/pseudo_f2leo(按 id 缺补,分块可续)→ 重算 JSON → commit & push + scp static。任一步失败即停。
 
 ### 交互向导
 
 **真人终端裸跑(无任何参数)会自动进向导**。UI 移植自 `D:\cube\upload-video\upload.ps1`(原生配色 + `SetCursorPosition` 原地重绘):`↑↓` 移动、`Space` 多选切换、`Enter` 确认、`Esc` 取消。先在取数**前**问 TSV 来源,取数后扫描各变体待补条数并按实测速率估时,逐项问:
 
 0. **TSV 来源**(单选,仅当 `cache/` 有可用 zip 才问):下载官方最新 export / 用本地缓存最新 zip 不联网(后者等价 `-UseCached`,export_date 从文件名还原,stamp 仍稳定)。
-1. **补哪些变体**(多选 ■/□,带每变体待补数 + 估时):快捷键 `[A]`ll 全选、`[D]`efault 切默认组 `eo/pseudo/pseudo_pair`、`[O]`pt-in 切 `pair/f2leo/pseudo_f2leo`;数字 `1..6` 切单项。
+1. **补哪些变体**(多选 ■/□,带每变体待补数 + 估时):**初始全 6 勾选**(全是默认);快捷键 `[A]`ll 全选、`[D]` 收窄到核心快组 `eo/pseudo/pseudo_pair`、`[O]` 收窄到重型组 `pair/f2leo/pseudo_f2leo`;数字 `1..6` 切单项。
 2. **每变体最多跑几块**(单选,数字键直选):补满 / 1 / 2 / 5 块(等价 `-MaxChunks N`)。
 3. **是否发布**(Yes/No,`●`/`○`):发布(push + scp)/ 仅本地(等价 `-NoPublish`)。
 
@@ -35,7 +35,7 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1
 | `-SourceCsv <path>` | 用本地 `input` 形状 csv 当源替代下载(测试) |
 | `-NoPublish` | 跑完只更新本地 std.csv + JSON,不 commit/push/scp(想先 review) |
 | `-SkipSolve` | 调试:跳过 incremental + std 解算,复用上次取数/solver 产出(`new_no_wide_move.txt` + `_std.csv`),直接走追加/变体/发布。需上一次正常 run 留下的产物 |
-| `-Variants <list>` | 跟 std 锁步补缺的变体,默认 `eo,pseudo,pseudo_pair`;`@()`=只 std。**pair / f2leo / pseudo_f2leo 不在默认**:pair 暖表 ~200/s(全量补 ~1.7h);f2leo/pseudo_f2leo 现走大表快路径(真实打乱实测 f2leo 用 huge 联合表 ~31/s、pseudo_f2leo 用 huge 电池 ~81/s,均需 CUBE_ALLOW_HUGE_TABLES=1 已默认设;首跑全量回填),要显式 `-Variants pair` 或 `-Variants f2leo,pseudo_f2leo` |
+| `-Variants <list>` | 跟 std 锁步补缺的变体,**默认全 6** `eo,pseudo,pseudo_pair,pair,f2leo,pseudo_f2leo`(2026-06-09 起 pair/f2leo/pseudo_f2leo 也入默认);`@()`=只 std。瓶颈始终是 eo ~0.9/s。pair 速率两处记法不一(RUNBOOK 暖表 ~200/s,脚本 `$VARIANT_RATE` 记 2/s——未现测,沿用脚本估时偏保守);f2leo/pseudo_f2leo 走大表快路径(真实打乱实测 f2leo huge 联合表 ~31/s、pseudo_f2leo huge 电池 ~81/s,均需 `CUBE_ALLOW_HUGE_TABLES=1` 已默认设)。增量只补 delta;想快跑显式 `-Variants eo,pseudo,pseudo_pair` 跳过重型三项 |
 | `-ChunkSize <n>` | 变体补缺分块大小(显式则覆盖每变体默认 `$VARIANT_CHUNK`:eo/pair=2000、其余 20000):逐块校验+追加,中断只丢当前块、下次自动续 |
 | `-MaxChunks <n>` | **每个变体最多跑 N 块就停**,之后照常重算 + 发布(还差的下次 run 自动续);`0`=补满(默认)。用于"只跑一两块"而无需人工中途 kill。例:`-Variants eo -MaxChunks 1` = 跑一块 eo(2000≈40min)→ 发布 |
 
@@ -52,7 +52,7 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1
 1. **取数** `incremental.py`:下 `results/v2/tsv`(~344 MB,按 export_date 缓存)→ 抽 `Scrambles.tsv` + `Competitions.tsv` → 过滤 333 系列 & **未处理的 scrambleId**(对 `std.csv` 已处理集合做差,能接住回填)→ 拆多盲(`|`→行)+ 去宽层 → `incremental/new_no_wide_move.txt`。顺便刷新 `competitions.tsv` + 写 `export_date.txt`。(std 无新增也**不早退**,继续走变体补缺。)
 2. **std solver** `std_analyzer.exe`:`CUBE_TABLE_DIR` + `CUBE_ALLOW_HUGE_TABLES=1` + `CUBE_RUN_FULL_STD=1`,stdin 喂文件名,`[PROG] N/total` 实时进度。热态 **std ~115 条/秒**(旧 16 核满核基准;现钉 14 线程略低),冷启首条多花几分钟 mmap 巨表。
 3. **追加 std master**(LF 安全):`stats/std.csv` ← solver 输出;`wca_scrambles_no_wide_move.txt` ← 新打乱(=变体补缺基准);`input/wca_scrambles_split_mbf.csv` ← 新元数据。
-4. **变体补缺**(`-Variants`,默认 eo/pseudo/pseudo_pair):每个变体算 `master no_wide_move 的 id − 该变体 csv 已有 id = 待补` → 对应 analyzer(`solver/target/release/<v>_analyzer.exe`,env 同需 huge)**分块 solve + 逐块校验行数后追加**,中断可续(下次重算 missing 自动接上)。实测速率(旧 16 核满核、huge 表全模式,2026-05-30 核实;现钉 14 线程略低):**pseudo ~390/s、pseudo_pair ~47/s**(旧记 18/35 偏低)、**eo ~0.9/s**(~13M 节点/条,全量 89.5k ≈ 27h,最慢长极)、pair ~200/s(暖表)。**analyzer 是整块 `rayon par_iter` 攒进内存 Vec、跑完才一次性写 CSV**(`executor.rs::run_batch`),故中断丢在飞的整块 → chunk 越小 save point 越密。每变体默认 chunk 见脚本 `$VARIANT_CHUNK`(eo=2000≈37min、pair=2000 暖表≈10s/块、其余=20000≈9-18min),显式 `-ChunkSize` 覆盖全部。**pair 不在默认**:暖表 ~200/s,全量补 ~1.7h(首块冷读 huge 表 ~95s,之后 OS page cache 命中),显式 `-Variants pair` 跑。**f2leo / pseudo_f2leo 也不在默认**(opt-in):它们是小表分析器(`f2leo_analyzer.exe` / `pseudo_f2leo_analyzer.exe`,常驻 ~40MB,只用 mt_edge2/edge4/corn/edge + 自建 ~18MB xcross + ~272KB cross 剪枝表,**不碰 huge 表、不需要 `CUBE_ALLOW_HUGE_TABLES`**),显式 `-Variants f2leo,pseudo_f2leo`,首跑全量回填全部 ~1.29M id。
+4. **变体补缺**(`-Variants`,默认全 6 eo/pseudo/pseudo_pair/pair/f2leo/pseudo_f2leo):每个变体算 `master no_wide_move 的 id − 该变体 csv 已有 id = 待补` → 对应 analyzer(`solver/target/release/<v>_analyzer.exe`,env 同需 huge)**分块 solve + 逐块校验行数后追加**,中断可续(下次重算 missing 自动接上)。实测速率(旧 16 核满核、huge 表全模式,2026-05-30 核实;现钉 14 线程略低):**pseudo ~390/s、pseudo_pair ~47/s**(旧记 18/35 偏低)、**eo ~0.9/s**(~13M 节点/条,全量 89.5k ≈ 27h,最慢长极)、pair ~200/s(暖表)。**analyzer 是整块 `rayon par_iter` 攒进内存 Vec、跑完才一次性写 CSV**(`executor.rs::run_batch`),故中断丢在飞的整块 → chunk 越小 save point 越密。每变体默认 chunk 见脚本 `$VARIANT_CHUNK`(eo=2000≈37min、pair=2000 暖表≈10s/块、其余=20000≈9-18min),显式 `-ChunkSize` 覆盖全部。**pair/f2leo/pseudo_f2leo 2026-06-09 起入默认**(增量只补 delta;想跳过显式 `-Variants eo,pseudo,pseudo_pair`)。pair 速率有争议:本 RUNBOOK/SKILL 记暖表 ~200/s(首块冷读 huge 表 ~95s,之后 page cache 命中,全量 ~1.7h),但脚本 `$VARIANT_RATE` 仍记 2/s——**未现测核实,沿用脚本估时偏保守**。f2leo/pseudo_f2leo 走 huge 表快路径(脚本估 f2leo ~31/s、pseudo_f2leo ~81/s;早期"小表 ~40MB 不碰 huge"版 ~7.4/s 已被取代),首跑全量回填 ~1.29M id(WCA 集现已近满,只差增量)。
 5. **重算**:`build`(distribution.json + examples.json + 下载 txt,**读全部变体故任一变即重算**)+ 仅当有新 std 时再跑 `build:wca-cross`(6 色池,每条带完整 `id` 含后三位)+ `build:comp-steps`(每场预计算表 `comp_steps/<id>.json`,gen 页"秒出")。RNG 固定种子 + `SCRAMBLE_STATS_STAMP`=export_date → 数据不变则产物逐字节不变。
 6. **发布**:`git add stats/scramble` → commit(英文 msg)→ `pull --rebase --autostash` → push(触发 Vercel)→ tar 打包 `scp` 到 static(self-hosted nginx + Vercel fallback 都从这服)。
 

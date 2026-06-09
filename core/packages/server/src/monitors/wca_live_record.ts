@@ -8,7 +8,7 @@
  */
 import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
-import { RECORD_TAGS, NR_COUNTRIES, POLL_INTERVAL_MS, siteCompUrl } from './config.js';
+import { RECORD_TAGS, NR_COUNTRIES, POLL_INTERVAL_MS, siteCompUrl, isChineseRegion } from './config.js';
 import { startPoller } from './poll.js';
 import { enrichName } from './names.js';
 import { formatRecords } from '../routes/wca_format.js';
@@ -151,9 +151,9 @@ async function recordToEvent(r: RecentRecord): Promise<RecordEvent> {
     comp_name: competition.name,
     comp_name_en: competition.name,
     comp_iso2: compIso2,
-    // 比赛链接指向自有站(带 event+round 深链);未关联 WCA id 时回退 WCA Live。
+    // 比赛链接指向自有站(带 event+round 深链);中国比赛落 /zh;未关联 WCA id 时回退 WCA Live。
     url:
-      siteCompUrl(competition.wcaId, ev.id, round.number)
+      siteCompUrl(competition.wcaId, ev.id, round.number, isChineseRegion(compIso2))
       ?? `https://live.worldcubeassociation.org/competitions/${competition.id}/rounds/${round.id}`,
   };
 }

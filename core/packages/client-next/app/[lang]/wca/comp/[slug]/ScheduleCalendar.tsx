@@ -38,10 +38,13 @@ export default function ScheduleCalendar({
           title: localizeActivityName(a, data.rounds, isZh, eventDisplayName),
           start: a.startTime,
           end: a.endTime,
+          // 非比赛活动(签到 / 午餐 / 颁奖 / 其他)退成背景带,不抢列宽:否则一段长签到
+          // 会把整天劈成两列,真正的比赛轮次被挤到半宽。蓝色实块=要参加的轮次。
+          display: isOther ? 'background' : 'auto',
           backgroundColor: color,
           borderColor: color,
           textColor: readableTextColor(color),
-          extendedProps: { room: a.roomName },
+          extendedProps: { room: a.roomName, isOther },
         };
       }),
     [data, isZh],

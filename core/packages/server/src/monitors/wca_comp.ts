@@ -5,7 +5,7 @@
  */
 import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
-import { POLL_INTERVAL_MS, siteCompUrl } from './config.js';
+import { POLL_INTERVAL_MS, siteCompUrl, isChineseRegion } from './config.js';
 import { startPoller } from './poll.js';
 
 const MONITOR: MonitorId = 'wca_comp';
@@ -71,8 +71,11 @@ function formatCompMessage(comp: WcaComp): { title: string; body: string; url: s
   return {
     title: `🌍WCA新赛! ${comp.name}`,
     body: `📅 ${dateRange} | 📍 ${city} ${flag} | 🏷️ ${eventCount}个项目${limitStr}`,
-    // 比赛链接指向自有站(comp.id 即 WCA 比赛 id);缺失时回退 WCA 官网。
-    url: siteCompUrl(comp.id) ?? comp.url ?? `https://www.worldcubeassociation.org/competitions/${comp.id}`,
+    // 比赛链接指向自有站(comp.id 即 WCA 比赛 id);中国比赛落 /zh;缺失时回退 WCA 官网。
+    url:
+      siteCompUrl(comp.id, undefined, undefined, isChineseRegion(comp.country_iso2))
+      ?? comp.url
+      ?? `https://www.worldcubeassociation.org/competitions/${comp.id}`,
   };
 }
 
