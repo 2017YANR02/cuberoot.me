@@ -589,11 +589,11 @@ function SumOfRanksPageInner() {
                     {showBest && (
                       <td className="wse-value-col">
                         {r.bestRank != null ? (
-                          <>
-                            {r.bestTotal != null && <b>{r.bestTotal}</b>}
-                            <span style={{ opacity: 0.7, marginLeft: r.bestTotal != null ? 6 : 0 }}>#{r.bestRank}</span>
-                            <span style={{ opacity: 0.55, marginLeft: 4 }}>{r.bestYear}</span>
-                          </>
+                          <span className="wse-best">
+                            <span className="wse-best-total">{r.bestTotal ?? ''}</span>
+                            <span className="wse-best-rank">#{r.bestRank}</span>
+                            <span className="wse-best-year">{r.bestYear}</span>
+                          </span>
                         ) : '—'}
                       </td>
                     )}
