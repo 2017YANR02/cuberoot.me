@@ -1,7 +1,10 @@
 #!/usr/bin/env pwsh
-# Sum-of-Ranks「查选手最优组合」(sor_player_best) 手动刷新管道 (按需触发, 非定时; 仅本地).
-# 前置: 本机 .tmp/sor 下有 sorcalc 源 + 输入矩阵 pe.tsv/persons.tsv (由上游从 PG wca_person_ranks 导出).
-#       这些是 local-only, gitignored. 本脚本只负责 sorcalc 预计算 -> 拼 copy.tsv -> 灌 prod -> 清缓存.
+# Sum-of-Ranks「查选手最优组合」(sor_player_best) 手动刷新管道 (按需触发; 仅本地).
+# ⚠️ 2026-06 起常规刷新走 CI 周更 (.github/workflows/sor.yml, 每周一 04:00 UTC + 手动 dispatch),
+#    本脚本保留作本地兜底 / rows 定点重算后的 -SkipSolve 装配发布.
+# 前置: sorcalc 源已提交在 core/sorcalc/ (cargo build --release); 输入矩阵 pe.tsv/persons.tsv
+#       在本机 .tmp/sor (local-only, gitignored; 服务器侧可用 dump_sor_inputs.sh 重导).
+#       本脚本只负责 sorcalc 预计算 -> 拼 copy.tsv -> 灌 prod -> 清缓存.
 #
 # 一键全跑:      pwsh update_sor.ps1                 (4 套预计算 ~1.5-2h + 灌库 + 清缓存)
 # 复用已算:      pwsh update_sor.ps1 -SkipSolve      (用现有 best_{single,average}_{17,21}.tsv, 只拼+灌+清)
@@ -25,7 +28,8 @@ try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
 # ---- 本机布局 ----
 $SorDir   = 'D:\cube\cuberoot.me\core\.tmp\sor'
-$Exe      = Join-Path $SorDir 'sorcalc\target\release\sorcalc.exe'
+$Exe      = 'D:\cube\cuberoot.me\core\sorcalc\target\release\sorcalc.exe'
+$env:SOR_DATA_DIR = $SorDir   # sorcalc 读输入/写输出的目录 (源码已参数化, 不再硬编码)
 $CopyTsv  = Join-Path $SorDir 'sor_player_best.copy.tsv'
 $LoadSql  = Join-Path $SorDir 'load_sor_pb.sql'        # 运行时生成的 pb-only 灌库脚本
 $RepoRoot = 'D:\cube\cuberoot.me'
@@ -46,7 +50,7 @@ function Get-DbPassword {
   return $m.Groups[1].Value
 }
 
-if (-not (Test-Path $Exe)) { throw "sorcalc not built: $Exe (cargo build --release in .tmp/sor/sorcalc)" }
+if (-not (Test-Path $Exe)) { throw "sorcalc not built: $Exe (cargo build --release in core/sorcalc)" }
 
 # ---- 1. sorcalc 预计算 (4 套, 串行, BelowNormal, 留 2 核) ----
 if ($DryRun) {
