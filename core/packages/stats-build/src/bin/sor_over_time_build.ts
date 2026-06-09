@@ -113,13 +113,14 @@ async function streamLines(file: string, onLine: (cols: string[]) => void): Prom
   }
 }
 
-// 全局最高名次累积(跨两 metric):key = `${isAvg}\t${wcaId}` → {rank, year}
-const bestWorld = new Map<string, { rank: number; year: number }>();
-const bestCountry = new Map<string, { rank: number; year: number }>();
-function updateBest(map: Map<string, { rank: number; year: number }>, isAvg: boolean, id: string, rank: number, year: number) {
+// 全局最高名次累积(跨两 metric):key = `${isAvg}\t${wcaId}` → {rank, year, total}
+// total = 取得该最佳名次那一年的 SOR 名次总和(供主榜「历史最佳」列同时显示总和+排名)
+const bestWorld = new Map<string, { rank: number; year: number; total: number }>();
+const bestCountry = new Map<string, { rank: number; year: number; total: number }>();
+function updateBest(map: Map<string, { rank: number; year: number; total: number }>, isAvg: boolean, id: string, rank: number, year: number, total: number) {
   const k = `${isAvg ? 1 : 0}\t${id}`;
   const cur = map.get(k);
-  if (!cur || rank < cur.rank) map.set(k, { rank, year });
+  if (!cur || rank < cur.rank) map.set(k, { rank, year, total });
 }
 
 const personsInFrames = new Set<string>();        // 出现在任一榜单的人 → 进 index.persons
@@ -257,7 +258,7 @@ async function processMetric(isAvg: boolean, countries: Map<string, CountryInfo>
       for (const [id, a] of ym) rows.push({ id, sor: a.wSum + totpenW.get(yr)! - a.wPen, rank: 0 });
       rows.sort((x, y) => x.sor - y.sor || (x.id < y.id ? -1 : 1));
       assignRanks(rows);
-      for (const r of rows) updateBest(bestWorld, isAvg, r.id, r.rank, yr);
+      for (const r of rows) updateBest(bestWorld, isAvg, r.id, r.rank, yr, r.sor);
       pushFrame(worldOut[metricKey], yr, rows, ym);
     }
     // continent buckets(按主大洲;sub 只含该洲命中项 → 跨洲项自动落缺项罚分)
@@ -295,7 +296,7 @@ async function processMetric(isAvg: boolean, countries: Map<string, CountryInfo>
         maxCountryCount.set(ctry, Math.max(maxCountryCount.get(ctry) || 0, rows.length));
         rows.sort((x, y) => x.sor - y.sor || (x.id < y.id ? -1 : 1));
         assignRanks(rows);
-        for (const r of rows) updateBest(bestCountry, isAvg, r.id, r.rank, yr);
+        for (const r of rows) updateBest(bestCountry, isAvg, r.id, r.rank, yr, r.sor);
         countryMeta.set(ctry, { iso2, name: info.name });
         let out = countryOut.get(iso2);
         if (!out) { out = { single: [], average: [] }; countryOut.set(iso2, out); }
@@ -390,17 +391,17 @@ async function main() {
   console.log(`[sor] comps referenced=${referencedComps.size} named=${Object.keys(comps).length} missing=${compMiss}`);
 
   // ── best-rank TSV(world + country)→ PG ──
-  // 列:wca_id, is_avg, scope('world'|'country'), best_rank, best_year
+  // 列:wca_id, is_avg, scope('world'|'country'), best_rank, best_year, best_total
   const bestPath = resolve(OUT_DIR, 'sor_historical_best.copy.tsv');
   const bs = createWriteStream(bestPath);
   let bestRows = 0;
   for (const [k, v] of bestWorld) {
     const [isAvg, id] = k.split('\t');
-    bs.write(`${id}\t${isAvg === '1'}\tworld\t${v.rank}\t${v.year}\n`); bestRows++;
+    bs.write(`${id}\t${isAvg === '1'}\tworld\t${v.rank}\t${v.year}\t${v.total}\n`); bestRows++;
   }
   for (const [k, v] of bestCountry) {
     const [isAvg, id] = k.split('\t');
-    bs.write(`${id}\t${isAvg === '1'}\tcountry\t${v.rank}\t${v.year}\n`); bestRows++;
+    bs.write(`${id}\t${isAvg === '1'}\tcountry\t${v.rank}\t${v.year}\t${v.total}\n`); bestRows++;
   }
   await new Promise<void>((res) => bs.end(() => res()));
 
@@ -412,10 +413,11 @@ async function main() {
       `\n-- ── sor_historical_best(由 sor_over_time_build.ts 追加)──\n` +
       `CREATE TABLE IF NOT EXISTS sor_historical_best (\n` +
       `  wca_id VARCHAR(20) NOT NULL, is_avg BOOLEAN NOT NULL, scope VARCHAR(10) NOT NULL,\n` +
-      `  best_rank INTEGER NOT NULL, best_year SMALLINT NOT NULL,\n` +
+      `  best_rank INTEGER NOT NULL, best_year SMALLINT NOT NULL, best_total INTEGER,\n` +
       `  PRIMARY KEY (wca_id, is_avg, scope)\n);\n` +
+      `ALTER TABLE sor_historical_best ADD COLUMN IF NOT EXISTS best_total INTEGER;\n` + // 旧表补列(CREATE IF NOT EXISTS 不会加列)
       `BEGIN;\nTRUNCATE sor_historical_best;\n` +
-      `\\copy sor_historical_best (wca_id, is_avg, scope, best_rank, best_year) FROM 'sor_historical_best.copy.tsv';\n` +
+      `\\copy sor_historical_best (wca_id, is_avg, scope, best_rank, best_year, best_total) FROM 'sor_historical_best.copy.tsv';\n` +
       `COMMIT;\nANALYZE sor_historical_best;\n`,
     );
     console.log('[sor] appended sor_historical_best load block to load.sql');
