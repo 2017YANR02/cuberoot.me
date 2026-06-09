@@ -1332,7 +1332,7 @@ function CompInfoPanel({
 }: { info: CompInfo; isZh: boolean; cubingZh: CubingZhMeta | null }) {
   const dateStr = info.start_date ? formatDateRangeIso(info.start_date, info.end_date) : '';
   const country = info.country_iso2 ? countryName(info.country_iso2.toUpperCase(), isZh) : '';
-  const cityStr = [info.city ? localizeCity(info.city, isZh) : '', country].filter(Boolean).join((i18n.language.startsWith('zh') ? '、' : ', '));
+  const cityStr = [info.city ? localizeCity(info.city, isZh) : '', country].filter(Boolean).join((i18n.language.startsWith('zh') ? ',' : ', '));
   const todayIso = toIsoDate(new Date());
   const isPast = (iso: string) => !!iso && iso.slice(0, 10) < todayIso;
   const rows: { label: string; value: React.ReactNode; past?: boolean }[] = [];
