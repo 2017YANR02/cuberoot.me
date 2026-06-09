@@ -4,6 +4,8 @@ import { Card, PageHeader, Th, Td } from "../../_components/Shell";
 import { Field, FormActions, Input, Submit } from "../../_components/Form";
 import { DeleteButton } from "../../_components/DeleteButton";
 import { createInvite, deleteInvite } from "./actions";
+import { loadErrorNotice } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +22,9 @@ const ERR: Record<string, string> = {
 export default async function AdminInvitesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
-  const [rows, sp] = await Promise.all([list(), searchParams]);
+  const [rows, sp] = await Promise.all([list(), loadErrorNotice(searchParams)]);
 
   const ownerIds = Array.from(new Set(rows.map((r) => r.ownerId)));
   let nicknames: Record<string, string> = {};

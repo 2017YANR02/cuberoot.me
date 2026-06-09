@@ -5,23 +5,17 @@ import {
   listErrors,
   listSlowRequests,
 } from "@/lib/db/logs";
+import {
+  loadLogsParams,
+  serializeLogsParams,
+  type LogTab,
+} from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 import { PageHeader } from "../../_components/Shell";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 50;
-
-type Tab = "errors" | "slow";
-
-function parseTab(v: string | undefined): Tab {
-  return v === "slow" ? "slow" : "errors";
-}
-
-function parsePage(v: string | undefined): number {
-  const n = Number(v);
-  if (!Number.isFinite(n) || n < 1) return 1;
-  return Math.floor(n);
-}
 
 function formatTime(ts: number): string {
   const d = new Date(ts * 1000);
@@ -32,11 +26,9 @@ function formatTime(ts: number): string {
 export default async function AdminLogs({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; page?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
-  const sp = await searchParams;
-  const tab = parseTab(sp.tab);
-  const page = parsePage(sp.page);
+  const { tab, page } = await loadLogsParams(searchParams);
   const offset = (page - 1) * PAGE_SIZE;
 
   const [errorRows, errorTotal, slowRows, slowTotal] = await Promise.all([
@@ -57,10 +49,16 @@ export default async function AdminLogs({
       />
 
       <div className="mb-4 flex gap-1 text-[13px]">
-        <TabLink active={tab === "errors"} href="/admin/logs?tab=errors">
+        <TabLink
+          active={tab === "errors"}
+          href={serializeLogsParams("/admin/logs", { tab: "errors", page: 1 })}
+        >
           错误日志 <span className="ml-1 text-ink-3">({errorTotal})</span>
         </TabLink>
-        <TabLink active={tab === "slow"} href="/admin/logs?tab=slow">
+        <TabLink
+          active={tab === "slow"}
+          href={serializeLogsParams("/admin/logs", { tab: "slow", page: 1 })}
+        >
           慢请求 <span className="ml-1 text-ink-3">({slowTotal})</span>
         </TabLink>
       </div>
@@ -219,7 +217,7 @@ function Pagination({
   page,
   totalPages,
 }: {
-  tab: Tab;
+  tab: LogTab;
   page: number;
   totalPages: number;
 }) {
@@ -229,7 +227,7 @@ function Pagination({
   return (
     <div className="mt-4 flex items-center justify-end gap-2 text-[13px]">
       <Link
-        href={`/admin/logs?tab=${tab}&page=${prev}`}
+        href={serializeLogsParams("/admin/logs", { tab, page: prev })}
         aria-disabled={page <= 1}
         className={
           "rounded-md border border-line px-3 py-1.5 " +
@@ -244,7 +242,7 @@ function Pagination({
         第 {page} / {totalPages} 页
       </span>
       <Link
-        href={`/admin/logs?tab=${tab}&page=${next}`}
+        href={serializeLogsParams("/admin/logs", { tab, page: next })}
         aria-disabled={page >= totalPages}
         className={
           "rounded-md border border-line px-3 py-1.5 " +

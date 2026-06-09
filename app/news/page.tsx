@@ -5,6 +5,8 @@ import { Section } from "@/components/Section";
 import { Badge } from "@/components/Badge";
 import { Pagination } from "@/components/Pagination";
 import { ListSearch } from "@/components/ListSearch";
+import { loadListSearchParams } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const metadata = { title: "资讯 — 魔方开放社群" };
 export const dynamic = "force-dynamic";
@@ -16,12 +18,9 @@ const TONE: Record<string, "brand" | "neutral" | "success" | "warning"> = {
   行业: "neutral",
 };
 
-type SP = Promise<{ q?: string; page?: string }>;
-
-export default async function NewsPage({ searchParams }: { searchParams: SP }) {
-  const { q, page } = await searchParams;
-  const pageNum = Math.max(1, Number(page) || 1);
-  const result = await listPaged({ q, page: pageNum, pageSize: 12 });
+export default async function NewsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const { q, page } = await loadListSearchParams(searchParams);
+  const result = await listPaged({ q, page, pageSize: 12 });
 
   return (
     <Section eyebrow="资讯中心" title="最新动态 · 平台 · 赛事 · 教学 · 行业">

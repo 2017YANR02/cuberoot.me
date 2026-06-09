@@ -4,6 +4,8 @@ import { Badge } from "@/components/Badge";
 import { adminCancelOrder, adminMarkPaid } from "./actions";
 import { refundOrderFromForm } from "@/app/actions/refund";
 import type { OrderStatus, OrderType, PaymentMethod } from "@/db/schema";
+import { loadOrderNotice } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const dynamic = "force-dynamic";
 
@@ -49,9 +51,9 @@ function fmtDate(ts: number): string {
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; refunded?: string; id?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
-  const sp = await searchParams;
+  const sp = await loadOrderNotice(searchParams);
   const rows = await listWithUser();
   const total = rows.length;
   const paidTotal = rows

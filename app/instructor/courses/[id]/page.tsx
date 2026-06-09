@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { requireInstructor } from "@/lib/auth/instructor";
 import { findByIdForInstructor } from "@/lib/db/courses";
 import { saveOwnedCourse } from "../actions";
+import { loadSavedNotice } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const dynamic = "force-dynamic";
 
@@ -21,10 +23,10 @@ export default async function InstructorEditCoursePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ saved?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const { id } = await params;
-  const sp = await searchParams;
+  const { saved } = await loadSavedNotice(searchParams);
   const { instructor } = await requireInstructor();
   const course = await findByIdForInstructor(id, instructor.id);
   if (!course) {
@@ -43,7 +45,7 @@ export default async function InstructorEditCoursePage({
         <p className="mt-1 text-[13px] text-ink-3">{course.title}</p>
       </div>
 
-      {sp.saved ? (
+      {saved ? (
         <div className="mb-4 rounded-[14px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-800">
           已保存
         </div>

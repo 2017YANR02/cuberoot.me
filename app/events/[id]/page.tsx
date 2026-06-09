@@ -6,6 +6,8 @@ import { Badge } from "@/components/Badge";
 import { CouponBox } from "@/components/CouponBox";
 import { ogImageUrl } from "@/lib/site";
 import { placeOrderFromForm } from "@/app/actions/order";
+import { loadErrorNotice } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 const STATUS_TONE: Record<EventStatus, "success" | "warning" | "muted"> = {
   报名中: "success",
@@ -52,10 +54,10 @@ export default async function EventDetail({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const { id } = await params;
-  const { error } = await searchParams;
+  const { error } = await loadErrorNotice(searchParams);
   const e = await findEvent(id);
   if (!e) notFound();
 

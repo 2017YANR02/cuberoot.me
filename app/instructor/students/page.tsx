@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireInstructor } from "@/lib/auth/instructor";
 import { studentsByInstructor } from "@/lib/db/instructor-stats";
 import { Th, Td } from "@/components/DataTable";
+import { loadPageParams, serializePageParams } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const dynamic = "force-dynamic";
 
@@ -24,10 +26,9 @@ function maskPhone(p: string): string {
 export default async function InstructorStudentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
-  const sp = await searchParams;
-  const page = Math.max(1, Number(sp.page ?? 1) || 1);
+  const { page } = await loadPageParams(searchParams);
   const { instructor } = await requireInstructor();
   const { items, total, totalPages, pageSize } = await studentsByInstructor(
     instructor.id,
@@ -85,7 +86,7 @@ export default async function InstructorStudentsPage({
           <div className="flex gap-2">
             {page > 1 ? (
               <Link
-                href={`/instructor/students?page=${page - 1}`}
+                href={serializePageParams("/instructor/students", { page: page - 1 })}
                 className="rounded-md border border-line bg-white px-3 py-1.5 hover:border-brand/40 transition"
               >
                 上一页
@@ -93,7 +94,7 @@ export default async function InstructorStudentsPage({
             ) : null}
             {page < totalPages ? (
               <Link
-                href={`/instructor/students?page=${page + 1}`}
+                href={serializePageParams("/instructor/students", { page: page + 1 })}
                 className="rounded-md border border-line bg-white px-3 py-1.5 hover:border-brand/40 transition"
               >
                 下一页

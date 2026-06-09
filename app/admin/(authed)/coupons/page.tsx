@@ -3,6 +3,8 @@ import { Card, PageHeader, Th, Td } from "../../_components/Shell";
 import { Field, FormActions, Input, Select, Submit } from "../../_components/Form";
 import { DeleteButton } from "../../_components/DeleteButton";
 import { createCoupon, deleteCoupon } from "./actions";
+import { loadErrorNotice } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const dynamic = "force-dynamic";
 
@@ -15,9 +17,9 @@ function fmtDate(ts: number | null): string {
 export default async function AdminCouponsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
-  const [rows, sp] = await Promise.all([list(), searchParams]);
+  const [rows, sp] = await Promise.all([list(), loadErrorNotice(searchParams)]);
 
   return (
     <div>

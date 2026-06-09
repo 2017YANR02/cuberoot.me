@@ -9,6 +9,8 @@ import { cancelOrderFromForm, startPaymentFromForm } from "@/app/actions/order";
 import { enabledProviders, getProvider } from "@/lib/payments/registry";
 import type { ProviderId } from "@/lib/payments/types";
 import type { OrderStatus, OrderType, PaymentMethod } from "@/db/schema";
+import { loadOrderFlowParams } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const metadata = {
   title: "订单详情 — 魔方开放社群",
@@ -77,14 +79,10 @@ export default async function OrderDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams?: Promise<{
-    stripe_session_id?: string;
-    pay?: string;
-    provider?: string;
-  }>;
+  searchParams?: Promise<SearchParams>;
 }) {
   const { id } = await params;
-  const sp = searchParams ? await searchParams : undefined;
+  const sp = searchParams ? await loadOrderFlowParams(searchParams) : null;
   const stripeSessionId = sp?.stripe_session_id;
   const user = await requireUser(`/orders/${id}`);
   const order = await findByIdForUser(id, user.id);
@@ -95,9 +93,7 @@ export default async function OrderDetailPage({
       ? readPendingCodeUrl(order)
       : null;
   const pendingProvider =
-    pendingCodeUrl && sp?.provider
-      ? getProvider(sp.provider as ProviderId)
-      : null;
+    pendingCodeUrl && sp?.provider ? getProvider(sp.provider) : null;
 
   return (
     <section className="container-page py-12">

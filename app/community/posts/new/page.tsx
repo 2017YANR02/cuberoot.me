@@ -4,6 +4,8 @@ import { requireUser } from "@/lib/auth-user";
 import { CIRCLE_META } from "@/lib/db/posts";
 import type { CircleId } from "@/db/schema";
 import { createPostFromForm } from "@/app/actions/community";
+import { loadNewPostParams } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const metadata = { title: "发帖 — 社群" };
 export const dynamic = "force-dynamic";
@@ -13,17 +15,10 @@ const CIRCLE_ORDER: CircleId[] = ["newbie", "speed", "blind", "campus"];
 export default async function NewPostPage({
   searchParams,
 }: {
-  searchParams: Promise<{ circle?: string; error?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
   await requireUser("/community/posts/new");
-  const sp = await searchParams;
-  const initialCircle: CircleId =
-    sp.circle === "newbie" ||
-    sp.circle === "speed" ||
-    sp.circle === "blind" ||
-    sp.circle === "campus"
-      ? sp.circle
-      : "newbie";
+  const { circle: initialCircle, error } = await loadNewPostParams(searchParams);
 
   return (
     <div className="container-page py-12 md:py-16 max-w-3xl">
@@ -39,7 +34,7 @@ export default async function NewPostPage({
         发帖
       </h1>
 
-      {sp.error === "missing" ? (
+      {error === "missing" ? (
         <div className="mb-5 rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-[13px] text-amber-700">
           请填写完整:圈子、标题、正文都不能为空。
         </div>

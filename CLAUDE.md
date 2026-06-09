@@ -84,6 +84,11 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 - 统一接口 `lib/db/search.ts` `searchCourses / Products / Events / News / Posts` + `searchAll(q, limitPerType)`
 - `/search?q=` 分组结果页;`HeaderSearch` 在 header 右侧;列表页用 `ListSearch` + `Pagination`(server 渲染分页)
 
+## URL 参数(nuqs)
+
+- 全站 typed search param 唯一源 `lib/search-params.ts`:服务端页面 `await loadXxx(searchParams)` 解析(禁手写 `Number(page)||1` / 直接解构 `searchParams`),分页 / Tab 链接用对应 `serializeXxx(base, {...})` 拼,客户端交互框(`ListSearch` / `SearchForm`)用 `nuqs` 的 `useQueryState` 配 `shallow:false`(实时重跑 RSC)。新页面读参数照此走,新增参数集在该文件加一组 parser
+- 不归 nuqs:纯导航(`router.push`)、登录后重定向、埋点取原始 querystring、`/api/qr/*` 带钳制 / hex 校验的图像接口 —— 继续 next/navigation 与 `request.nextUrl.searchParams`
+
 ## 支付
 
 - provider 抽象 `lib/payments/`:`mock_wechat` / `mock_alipay` / `stripe` / `wechat` / `alipay`,接口返 `redirect | qrcode | done`

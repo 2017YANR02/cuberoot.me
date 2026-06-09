@@ -6,6 +6,8 @@ import { Card, GhostLink, PageHeader, PrimaryLink, Th, Td } from "../../_compone
 import { Field, FormActions, Input, Submit } from "../../_components/Form";
 import { DeleteButton } from "../../_components/DeleteButton";
 import { createQrBatch, deleteQr } from "./actions";
+import { loadErrorNotice } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +19,9 @@ function fmtDate(ts: number): string {
 export default async function AdminQrPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
-  const [rows, sp] = await Promise.all([list(), searchParams]);
+  const [rows, sp] = await Promise.all([list(), loadErrorNotice(searchParams)]);
   const totalScans = rows.reduce((s, r) => s + r.scans, 0);
 
   return (
