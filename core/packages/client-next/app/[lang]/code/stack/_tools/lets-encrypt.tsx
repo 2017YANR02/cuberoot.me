@@ -44,10 +44,18 @@ export const LETSENCRYPT: StackTool = {
     outlookDesc: <>The five-year direction is clear: shorter and shorter lifetimes (90 → 45 → an eventual 6-day target), IP-address certs going GA, OCSP being phased out in favor of CRLs, and ARI smoothing the global renewal stampede. Let’s Encrypt is moving "certificate" from a yearly event to a weekly automatic one.</>,
   },
   heroStats: [
-    { num: '~10', unit: 'M', zh: <>每天签发证书数 <em>2026 Q1 · CT log</em></>, en: <>certs issued per day <em>2026 Q1 · CT log</em></> },
-    { num: '54', unit: '%', zh: <>公网新签发占比 <em>2026 Q1</em></>, en: <>of new public-web issuance <em>2026 Q1</em></> },
-    { num: '90', unit: 'd', zh: <>当前默认寿命 <em>2026 → 45d roadmap</em></>, en: <>current default lifetime <em>2026 → 45d roadmap</em></> },
-    { num: '10', unit: 'y', zh: <>公开运营满 10 年 <em>2015-12 起</em></>, en: <>since the 2015-12 public beta <em>10 years</em></> },
+    { num: '~10', unit: 'M', zh: <>每天签发证书数 <em>2026 Q1 · CT log</em></>, en: <>certs issued per day <em>2026 Q1 · CT log</em></>,
+        zhHant: <>每天簽發證書數 <em>2026 Q1 · CT log</em></>
+    },
+    { num: '54', unit: '%', zh: <>公网新签发占比 <em>2026 Q1</em></>, en: <>of new public-web issuance <em>2026 Q1</em></>,
+        zhHant: <>公網新簽發佔比 <em>2026 Q1</em></>
+    },
+    { num: '90', unit: 'd', zh: <>当前默认寿命 <em>2026 → 45d roadmap</em></>, en: <>current default lifetime <em>2026 → 45d roadmap</em></>,
+        zhHant: <>當前預設壽命 <em>2026 → 45d roadmap</em></>
+    },
+    { num: '10', unit: 'y', zh: <>公开运营满 10 年 <em>2015-12 起</em></>, en: <>since the 2015-12 public beta <em>10 years</em></>,
+        zhHant: <>公開運營滿 10 年 <em>2015-12 起</em></>
+    },
   ],
   intro: {
     zh: (

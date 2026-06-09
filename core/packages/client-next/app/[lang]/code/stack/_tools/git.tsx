@@ -44,10 +44,18 @@ export const GIT: StackTool = {
     outlookDesc: <>SHA-256 migration crawls forward; 2.54 promotes it from experimental to "opt-in default for new repos." Jujutsu (jj), a new-gen VCS that reuses git's storage but replaces the UX, picked up early adopters through 2025–2026. AI agents are reshaping commit cadence — what counts as a commit, when to rebase, how to bisect — under Claude Code / Cursor.</>,
   },
   heroStats: [
-    { num: '2', unit: '.54', zh: <>当前稳定版 <em>2026-04-21 · 2.54.0</em></>, en: <>current stable <em>2026-04-21 · 2.54.0</em></> },
-    { num: '21', unit: 'y', zh: <>从 2005 至今 <em>统一了几乎所有代码</em></>, en: <>since 2005 <em>now hosts almost all code</em></> },
-    { num: '14', zh: <>天写出第一版 <em>BitKeeper 撤销授权后</em></>, en: <>days to first working version <em>after BitKeeper revocation</em></> },
-    { num: '4', zh: <>种 object 撑起整个模型 <em>blob / tree / commit / tag</em></>, en: <>object kinds underpin the whole model <em>blob / tree / commit / tag</em></> },
+    { num: '2', unit: '.54', zh: <>当前稳定版 <em>2026-04-21 · 2.54.0</em></>, en: <>current stable <em>2026-04-21 · 2.54.0</em></>,
+        zhHant: <>當前穩定版 <em>2026-04-21 · 2.54.0</em></>
+    },
+    { num: '21', unit: 'y', zh: <>从 2005 至今 <em>统一了几乎所有代码</em></>, en: <>since 2005 <em>now hosts almost all code</em></>,
+        zhHant: <>從 2005 至今 <em>統一了幾乎所有程式碼</em></>
+    },
+    { num: '14', zh: <>天写出第一版 <em>BitKeeper 撤销授权后</em></>, en: <>days to first working version <em>after BitKeeper revocation</em></>,
+        zhHant: <>天寫出第一版 <em>BitKeeper 撤銷授權後</em></>
+    },
+    { num: '4', zh: <>种 object 撑起整个模型 <em>blob / tree / commit / tag</em></>, en: <>object kinds underpin the whole model <em>blob / tree / commit / tag</em></>,
+        zhHant: <>種 object 撐起整個模型 <em>blob / tree / commit / tag</em></>
+    },
   ],
   intro: {
     zh: (

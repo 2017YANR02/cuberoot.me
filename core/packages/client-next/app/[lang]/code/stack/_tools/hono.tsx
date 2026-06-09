@@ -44,10 +44,18 @@ export const HONO: StackTool = {
     outlookDesc: <>Hono is already the de-facto standard in the Workers ecosystem and is replacing Express on Node. Next up: first-class JSR, Standard Schema landing (replacing zod-specific bindings), and deeper integration between the RPC client and React Server Actions.</>,
   },
   heroStats: [
-    { num: '4', unit: '.12', zh: <>当前稳定版 <em>2026-05 · 4.12.18</em></>, en: <>current stable <em>2026-05 · 4.12.18</em></> },
-    { num: '20', unit: 'M', zh: <>npm 周下载 <em>2026-05</em></>, en: <>weekly npm downloads <em>2026-05</em></> },
-    { num: '14', unit: 'KB', zh: <>核心大小 (min+gz) <em>无运行时依赖</em></>, en: <>core size, min+gz <em>zero runtime deps</em></> },
-    { num: '22', zh: <>本站后端端点 <em>cuberoot.me /v1/*</em></>, en: <>backend endpoints on this site <em>cuberoot.me /v1/*</em></> },
+    { num: '4', unit: '.12', zh: <>当前稳定版 <em>2026-05 · 4.12.18</em></>, en: <>current stable <em>2026-05 · 4.12.18</em></>,
+        zhHant: <>當前穩定版 <em>2026-05 · 4.12.18</em></>
+    },
+    { num: '20', unit: 'M', zh: <>npm 周下载 <em>2026-05</em></>, en: <>weekly npm downloads <em>2026-05</em></>,
+        zhHant: <>npm 周下載 <em>2026-05</em></>
+    },
+    { num: '14', unit: 'KB', zh: <>核心大小 (min+gz) <em>无运行时依赖</em></>, en: <>core size, min+gz <em>zero runtime deps</em></>,
+        zhHant: <>核心大小 (min+gz) <em>無執行時依賴</em></>
+    },
+    { num: '22', zh: <>本站后端端点 <em>cuberoot.me /v1/*</em></>, en: <>backend endpoints on this site <em>cuberoot.me /v1/*</em></>,
+        zhHant: <>本站後端端點 <em>cuberoot.me /v1/*</em></>
+    },
   ],
   intro: {
     zh: (

@@ -44,10 +44,16 @@ export const OBSIDIAN: StackTool = {
     outlookDesc: <>MCP servers wiring Obsidian vaults into Claude / Cursor is the dominant trend of late 2026. The obsidian-cli toolchain matures in parallel; "agent queries / appends notes" goes from idea to a routine script. Properties + Dataview 4.0 turn the vault into a semi-structured database.</>,
   },
   heroStats: [
-    { num: '1', unit: 'M+', zh: <>注册用户 <em>2026 公开估计</em></>, en: <>registered users <em>2026 public estimate</em></> },
+    { num: '1', unit: 'M+', zh: <>注册用户 <em>2026 公开估计</em></>, en: <>registered users <em>2026 public estimate</em></>,
+        zhHant: <>註冊使用者 <em>2026 公開估計</em></>
+    },
     { num: '2000', unit: '+', zh: <>community plugins <em>obsidian.md/plugins</em></>, en: <>community plugins <em>obsidian.md/plugins</em></> },
-    { num: '100', unit: '%', zh: <>markdown — 文件属于你 <em>无云锁</em></>, en: <>markdown — files are yours <em>no cloud lock-in</em></> },
-    { num: '1.7', zh: <>当前稳定版 <em>2026-04</em></>, en: <>current stable <em>2026-04</em></> },
+    { num: '100', unit: '%', zh: <>markdown — 文件属于你 <em>无云锁</em></>, en: <>markdown — files are yours <em>no cloud lock-in</em></>,
+        zhHant: <>markdown — 檔案屬於你 <em>無雲鎖</em></>
+    },
+    { num: '1.7', zh: <>当前稳定版 <em>2026-04</em></>, en: <>current stable <em>2026-04</em></>,
+        zhHant: <>當前穩定版 <em>2026-04</em></>
+    },
   ],
   intro: {
     zh: (

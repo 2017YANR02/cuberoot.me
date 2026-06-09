@@ -44,10 +44,18 @@ export const CURL: StackTool = {
     outlookDesc: <>HTTP/3 is broadly default-on in the 8.x line; the Rust hyper backend is maturing past experimental; wcurl, a "friendly" wrapper, started landing as a default package in Debian and others through 2024. Daniel continues full-time at wolfSSL on curl; the 30th anniversary lands in 2026-11 — "how far one person's open-source tool can go" keeps extending its ceiling.</>,
   },
   heroStats: [
-    { num: '20', unit: 'B', zh: <>200 亿 安装规模 <em>2026 估计 · daniel.haxx.se</em></>, en: <>20 B installations <em>2026 est. · daniel.haxx.se</em></> },
-    { num: '29', unit: 'y', zh: <>一个 maintainer 二十九年 <em>1996-11 至今</em></>, en: <>one maintainer for 29 years <em>since 1996-11</em></> },
-    { num: '28', unit: '+', zh: <>支持的网络协议 <em>HTTP/HTTPS/FTP/MQTT/...</em></>, en: <>network protocols supported <em>HTTP/HTTPS/FTP/MQTT/...</em></> },
-    { num: '110', unit: 'OS', zh: <>跑过的操作系统 <em>28 种 CPU 架构</em></>, en: <>operating systems it runs on <em>28 CPU architectures</em></> },
+    { num: '20', unit: 'B', zh: <>200 亿 安装规模 <em>2026 估计 · daniel.haxx.se</em></>, en: <>20 B installations <em>2026 est. · daniel.haxx.se</em></>,
+        zhHant: <>200 億 安裝規模 <em>2026 估計 · daniel.haxx.se</em></>
+    },
+    { num: '29', unit: 'y', zh: <>一个 maintainer 二十九年 <em>1996-11 至今</em></>, en: <>one maintainer for 29 years <em>since 1996-11</em></>,
+        zhHant: <>一個 maintainer 二十九年 <em>1996-11 至今</em></>
+    },
+    { num: '28', unit: '+', zh: <>支持的网络协议 <em>HTTP/HTTPS/FTP/MQTT/...</em></>, en: <>network protocols supported <em>HTTP/HTTPS/FTP/MQTT/...</em></>,
+        zhHant: <>支援的網路協議 <em>HTTP/HTTPS/FTP/MQTT/...</em></>
+    },
+    { num: '110', unit: 'OS', zh: <>跑过的操作系统 <em>28 种 CPU 架构</em></>, en: <>operating systems it runs on <em>28 CPU architectures</em></>,
+        zhHant: <>跑過的作業系統 <em>28 種 CPU 架構</em></>
+    },
   ],
   intro: {
     zh: (

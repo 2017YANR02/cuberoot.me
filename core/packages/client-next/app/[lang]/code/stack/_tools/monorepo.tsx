@@ -44,10 +44,18 @@ export const MONOREPO: StackTool = {
     outlookDesc: <>tsc references + Turbo cache push incremental rebuilds into the sub-second range. Nx Cloud / Turbo Remote Cache let CI share artifacts across machines. "polyrepo + git submodule" is effectively gone from new projects. Next stop: SBOM / supply-chain attestation is naturally easier in a monorepo — one tree, one manifest.</>,
   },
   heroStats: [
-    { num: '4', zh: <>核心 workspace 数 <em>client / server / shared / stats-build</em></>, en: <>core workspaces <em>client / server / shared / stats-build</em></> },
-    { num: '~140', unit: 'k', zh: <>跨包源码总量 (LOC) <em>client 占 ~85%</em></>, en: <>cross-package source LoC <em>client is ~85%</em></> },
-    { num: '1', zh: <>共享 types 包, 零运行时 <em>@cuberoot/shared</em></>, en: <>shared types package, zero runtime <em>@cuberoot/shared</em></> },
-    { num: '2B', unit: '+', zh: <>Google Piper 同根树代码量 <em>对照参考</em></>, en: <>LoC in Google's Piper monorepo <em>reference point</em></> },
+    { num: '4', zh: <>核心 workspace 数 <em>client / server / shared / stats-build</em></>, en: <>core workspaces <em>client / server / shared / stats-build</em></>,
+        zhHant: <>核心 workspace 數 <em>client / server / shared / stats-build</em></>
+    },
+    { num: '~140', unit: 'k', zh: <>跨包源码总量 (LOC) <em>client 占 ~85%</em></>, en: <>cross-package source LoC <em>client is ~85%</em></>,
+        zhHant: <>跨包原始碼總量 (LOC) <em>client 佔 ~85%</em></>
+    },
+    { num: '1', zh: <>共享 types 包, 零运行时 <em>@cuberoot/shared</em></>, en: <>shared types package, zero runtime <em>@cuberoot/shared</em></>,
+        zhHant: <>共享 types 包, 零執行時 <em>@cuberoot/shared</em></>
+    },
+    { num: '2B', unit: '+', zh: <>Google Piper 同根树代码量 <em>对照参考</em></>, en: <>LoC in Google's Piper monorepo <em>reference point</em></>,
+        zhHant: <>Google Piper 同根樹程式碼量 <em>對照參考</em></>
+    },
   ],
   intro: {
     zh: (

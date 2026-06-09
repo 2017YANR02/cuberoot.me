@@ -179,7 +179,7 @@ export default function StackToolClient() {
                   {detail.heroStats.map((stat, i) => (
                     <div className="stat" key={i}>
                       <span className="stat-num">{stat.num}<small>{stat.unit ?? ''}</small></span>
-                      <span className="stat-label">{(i18n.language.startsWith('zh') ? stat.zh : stat.en)}</span>
+                      <span className="stat-label">{(i18n.language === 'zh-Hant' ? (stat.zhHant ?? stat.zh) : (i18n.language.startsWith('zh') ? stat.zh : stat.en))}</span>
                     </div>
                   ))}
                 </div>

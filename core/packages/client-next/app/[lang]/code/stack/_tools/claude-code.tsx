@@ -44,10 +44,18 @@ export const CLAUDE_CODE: StackTool = {
     outlookDesc: <>Second half of 2026 watch: cloud agents (scheduled routines already in) and a maturing plugin marketplace. The open MCP protocol positions Claude Code as an ecosystem hub rather than a dead-end. Lock-in is still the open worry — every piece sits inside Anthropic.</>,
   },
   heroStats: [
-    { num: '2', unit: '.x', zh: <>当前主线版本 <em>2026-05</em></>, en: <>current major <em>2026-05</em></> },
-    { num: '15', unit: '+', zh: <>内置工具数 <em>Read / Edit / Bash / ...</em></>, en: <>built-in tools <em>Read / Edit / Bash / ...</em></> },
-    { num: '5', zh: <>本页并发 subagent 数 <em>2026-05-18</em></>, en: <>subagents writing this page <em>2026-05-18</em></> },
-    { num: '100', unit: '%', zh: <>本站维护流量 <em>cuberoot.me</em></>, en: <>of this site's maintenance traffic <em>cuberoot.me</em></> },
+    { num: '2', unit: '.x', zh: <>当前主线版本 <em>2026-05</em></>, en: <>current major <em>2026-05</em></>,
+        zhHant: <>當前主線版本 <em>2026-05</em></>
+    },
+    { num: '15', unit: '+', zh: <>内置工具数 <em>Read / Edit / Bash / ...</em></>, en: <>built-in tools <em>Read / Edit / Bash / ...</em></>,
+        zhHant: <>內建工具數 <em>Read / Edit / Bash / ...</em></>
+    },
+    { num: '5', zh: <>本页并发 subagent 数 <em>2026-05-18</em></>, en: <>subagents writing this page <em>2026-05-18</em></>,
+        zhHant: <>本頁併發 subagent 數 <em>2026-05-18</em></>
+    },
+    { num: '100', unit: '%', zh: <>本站维护流量 <em>cuberoot.me</em></>, en: <>of this site's maintenance traffic <em>cuberoot.me</em></>,
+        zhHant: <>本站維護流量 <em>cuberoot.me</em></>
+    },
   ],
   intro: {
     zh: (

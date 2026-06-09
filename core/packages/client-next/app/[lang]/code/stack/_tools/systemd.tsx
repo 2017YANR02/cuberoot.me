@@ -44,10 +44,18 @@ export const SYSTEMD: StackTool = {
     outlookDesc: <>systemd 260 just removed the last SysV compat code and raised the minimum kernel to 5.10. The roadmap keeps absorbing things that used to live in third-party tools (sysext / confext / homed / portabled) into the same unit abstraction. The container / VM boundary continues to blur; "one host runs a swarm of lightweight namespaces" is now the default pattern.</>,
   },
   heroStats: [
-    { num: '260', zh: <>当前稳定版 <em>2026-03 · systemd 260</em></>, en: <>current stable <em>2026-03 · systemd 260</em></> },
-    { num: '16', unit: 'y', zh: <>从 2010 至今 <em>主流 Linux 发行版默认 init</em></>, en: <>since 2010 <em>default init across mainstream distros</em></> },
-    { num: '#1', zh: <>Linux init 系统市占 <em>主流发行版几乎全用</em></>, en: <>Linux init by share <em>basically every mainstream distro</em></> },
-    { num: '6', zh: <>主流 unit 类型 <em>service / socket / timer / mount / path / target</em></>, en: <>common unit types <em>service / socket / timer / mount / path / target</em></> },
+    { num: '260', zh: <>当前稳定版 <em>2026-03 · systemd 260</em></>, en: <>current stable <em>2026-03 · systemd 260</em></>,
+        zhHant: <>當前穩定版 <em>2026-03 · systemd 260</em></>
+    },
+    { num: '16', unit: 'y', zh: <>从 2010 至今 <em>主流 Linux 发行版默认 init</em></>, en: <>since 2010 <em>default init across mainstream distros</em></>,
+        zhHant: <>從 2010 至今 <em>主流 Linux 發行版預設 init</em></>
+    },
+    { num: '#1', zh: <>Linux init 系统市占 <em>主流发行版几乎全用</em></>, en: <>Linux init by share <em>basically every mainstream distro</em></>,
+        zhHant: <>Linux init 系統市佔 <em>主流發行版幾乎全用</em></>
+    },
+    { num: '6', zh: <>主流 unit 类型 <em>service / socket / timer / mount / path / target</em></>, en: <>common unit types <em>service / socket / timer / mount / path / target</em></>,
+        zhHant: <>主流 unit 型別 <em>service / socket / timer / mount / path / target</em></>
+    },
   ],
   intro: {
     zh: (

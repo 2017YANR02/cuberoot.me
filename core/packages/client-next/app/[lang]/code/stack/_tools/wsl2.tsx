@@ -44,10 +44,18 @@ export const WSL2: StackTool = {
     outlookDesc: <>The May 2025 open-sourcing is the biggest turn: most of the kernel / CLI / networking stack landed in <code>microsoft/WSL</code>, and the community can now patch directly. The last year of releases (2.7.x) centers on networking: virtiofs directory mounts, IPv6 over virtio, DNS tunneling for VirtioProxy mode. Mirrored networking plus auto memory reclaim make it feel ever more like an "invisible" Linux box.</>,
   },
   heroStats: [
-    { num: '2.7.3', zh: <>当前稳定版 <em>2026-04-25</em></>, en: <>current stable <em>2026-04-25</em></> },
-    { num: '2', zh: <>当前架构 <em>真 Linux 内核 + Hyper-V VM</em></>, en: <>current architecture <em>real Linux kernel + Hyper-V VM</em></> },
-    { num: '~10', unit: 'y', zh: <>从 2016 WSL 1 至今 <em>2020 年 WSL 2 GA</em></>, en: <>since WSL 1 in 2016 <em>WSL 2 GA in 2020</em></> },
-    { num: '2025', unit: '·05', zh: <>WSL 开源 <em>Build 2025</em></>, en: <>WSL open-sourced <em>at Build 2025</em></> },
+    { num: '2.7.3', zh: <>当前稳定版 <em>2026-04-25</em></>, en: <>current stable <em>2026-04-25</em></>,
+        zhHant: <>當前穩定版 <em>2026-04-25</em></>
+    },
+    { num: '2', zh: <>当前架构 <em>真 Linux 内核 + Hyper-V VM</em></>, en: <>current architecture <em>real Linux kernel + Hyper-V VM</em></>,
+        zhHant: <>當前架構 <em>真 Linux 核心 + Hyper-V VM</em></>
+    },
+    { num: '~10', unit: 'y', zh: <>从 2016 WSL 1 至今 <em>2020 年 WSL 2 GA</em></>, en: <>since WSL 1 in 2016 <em>WSL 2 GA in 2020</em></>,
+        zhHant: <>從 2016 WSL 1 至今 <em>2020 年 WSL 2 GA</em></>
+    },
+    { num: '2025', unit: '·05', zh: <>WSL 开源 <em>Build 2025</em></>, en: <>WSL open-sourced <em>at Build 2025</em></>,
+        zhHant: <>WSL 開源 <em>Build 2025</em></>
+    },
   ],
   intro: {
     zh: (

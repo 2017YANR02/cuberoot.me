@@ -7,6 +7,7 @@ export interface HeroStat {
   unit?: string;
   zh: ReactNode;
   en: ReactNode;
+    zhHant?: ReactNode;
 }
 
 export interface StackHistoryItem {

@@ -44,10 +44,18 @@ export const I18NEXT: StackTool = {
     outlookDesc: <>HOT: AI translation pipelines (DeepL / GPT-4) feed JSON directly; type-safe keys make IDE jump-to-definition behave like TS types; React Server Components compat is landing in react-i18next 16 alpha; mobile and web share one resource pool.</>,
   },
   heroStats: [
-    { num: '10', unit: 'M/wk', zh: <>npm 周下载 <em>2026-05, react-i18next 同级</em></>, en: <>weekly npm downloads <em>2026-05, react-i18next is similar</em></> },
-    { num: '24', unit: '.x', zh: <>i18next 当前主版本 <em>react-i18next 15.x</em></>, en: <>i18next current major <em>react-i18next 15.x</em></> },
-    { num: '2', unit: 'lng', zh: <>本站在用语言 <em>zh / en, 切换持久化</em></>, en: <>languages on this site <em>zh / en, persisted</em></> },
-    { num: '14', unit: 'y', zh: <>从 2011 起 <em>API 没大变</em></>, en: <>since 2011 <em>API barely shifted</em></> },
+    { num: '10', unit: 'M/wk', zh: <>npm 周下载 <em>2026-05, react-i18next 同级</em></>, en: <>weekly npm downloads <em>2026-05, react-i18next is similar</em></>,
+        zhHant: <>npm 周下載 <em>2026-05, react-i18next 同級</em></>
+    },
+    { num: '24', unit: '.x', zh: <>i18next 当前主版本 <em>react-i18next 15.x</em></>, en: <>i18next current major <em>react-i18next 15.x</em></>,
+        zhHant: <>i18next 當前主版本 <em>react-i18next 15.x</em></>
+    },
+    { num: '2', unit: 'lng', zh: <>本站在用语言 <em>zh / en, 切换持久化</em></>, en: <>languages on this site <em>zh / en, persisted</em></>,
+        zhHant: <>本站在用語言 <em>zh / en, 切換持久化</em></>
+    },
+    { num: '14', unit: 'y', zh: <>从 2011 起 <em>API 没大变</em></>, en: <>since 2011 <em>API barely shifted</em></>,
+        zhHant: <>從 2011 起 <em>API 沒大變</em></>
+    },
   ],
   intro: {
     zh: (

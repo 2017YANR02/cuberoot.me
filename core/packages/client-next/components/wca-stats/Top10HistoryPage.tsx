@@ -20,7 +20,8 @@ import { EventIcon } from '@/components/EventIcon/EventIcon';
 import LangToggle from '@/components/LangToggle';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
-import { COUNTRY_TO_CONTINENT, type Continent } from '@/lib/country-continents';
+import { type Continent } from '@/lib/country-continents';
+import { colorForRow, CONTINENT_HUE } from '@/lib/bar-race-colors';
 import { exportTop10Video, type ExportProgress } from '@/lib/top10-export';
 import './top10_history.css';
 import { tr } from '@/i18n/tr';
@@ -61,34 +62,6 @@ function rowHeightPx(): number {
 
 function isoToMs(iso: string): number { return new Date(iso + 'T00:00:00Z').getTime(); }
 function msToIso(ms: number): string { return new Date(ms).toISOString().slice(0, 10); }
-
-// NOTE: 按大洲固定 hue + 选手 ID 微调亮度/饱和度（含 rank 1，不再走金色特判）
-//   6 大洲 + Multiple Continents 各自一个固定色相;country → continent 走静态映射表
-const CONTINENT_HUE: Record<Continent, number> = {
-  'Asia': 0,                  // 红
-  'Europe': 220,              // 蓝
-  'Africa': 30,               // 橙
-  'North America': 140,       // 绿
-  'South America': 280,       // 紫
-  'Oceania': 180,             // 青
-  'Multiple Continents': 0,   // 灰(下方特判,降饱和)
-};
-function hashStr(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return h;
-}
-function colorForRow(pid: string, country: string | null | undefined): string {
-  const ph = hashStr(pid);
-  const continent = country ? COUNTRY_TO_CONTINENT[country] : undefined;
-  if (!continent || continent === 'Multiple Continents') {
-    return `hsl(0 0% ${42 + ((ph >>> 0) % 16)}%)`;  // 灰阶
-  }
-  const hue = CONTINENT_HUE[continent];
-  const lightness = 42 + ((ph >>> 0) % 16);    // 42-57%
-  const saturation = 55 + ((ph >>> 4) % 20);   // 55-74%
-  return `hsl(${hue} ${saturation}% ${lightness}%)`;
-}
 
 function findEventIdxByDate(events: PbEvent[], dateIso: string): number {
   let lo = 0, hi = events.length - 1, ans = -1;

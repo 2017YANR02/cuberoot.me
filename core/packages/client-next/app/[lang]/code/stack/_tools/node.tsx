@@ -44,10 +44,18 @@ export const NODE: StackTool = {
     outlookDesc: <>Node 22 inlined fetch / test / watch / --run and unflagged require(esm). After pressure from Bun / Deno, Node is actually the one moving fastest. The next LTS (24 "Krypton") shipped 2025-04.</>,
   },
   heroStats: [
-    { num: '22', unit: '.22.3', zh: <>当前 LTS 稳定版 <em>2026-05-13 · Jod</em></>, en: <>current LTS stable <em>2026-05-13 · Jod</em></> },
-    { num: '17', unit: 'y', zh: <>从 2009 至今 <em>JS 服务端实质标准</em></>, en: <>since 2009 <em>de facto JS server</em></> },
-    { num: '2.2', unit: 'M', zh: <>npm 包总数 <em>npmjs.com 2026-05</em></>, en: <>packages on npm <em>npmjs.com 2026-05</em></> },
-    { num: '2027', unit: '-04', zh: <>22 LTS 维护期截止 <em>active LTS → 2026-10</em></>, en: <>22 LTS end of maintenance <em>active LTS → 2026-10</em></> },
+    { num: '22', unit: '.22.3', zh: <>当前 LTS 稳定版 <em>2026-05-13 · Jod</em></>, en: <>current LTS stable <em>2026-05-13 · Jod</em></>,
+        zhHant: <>當前 LTS 穩定版 <em>2026-05-13 · Jod</em></>
+    },
+    { num: '17', unit: 'y', zh: <>从 2009 至今 <em>JS 服务端实质标准</em></>, en: <>since 2009 <em>de facto JS server</em></>,
+        zhHant: <>從 2009 至今 <em>JS 服務端實質標準</em></>
+    },
+    { num: '2.2', unit: 'M', zh: <>npm 包总数 <em>npmjs.com 2026-05</em></>, en: <>packages on npm <em>npmjs.com 2026-05</em></>,
+        zhHant: <>npm 包總數 <em>npmjs.com 2026-05</em></>
+    },
+    { num: '2027', unit: '-04', zh: <>22 LTS 维护期截止 <em>active LTS → 2026-10</em></>, en: <>22 LTS end of maintenance <em>active LTS → 2026-10</em></>,
+        zhHant: <>22 LTS 維護期截止 <em>active LTS → 2026-10</em></>
+    },
   ],
   intro: {
     zh: (

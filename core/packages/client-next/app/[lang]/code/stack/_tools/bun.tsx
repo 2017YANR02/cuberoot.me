@@ -44,10 +44,18 @@ export const BUN: StackTool = {
     outlookDesc: <>Whether 2025-2026 is the inflection year where new projects default to Bun increasingly looks like yes. Windows support has matured, bun test is displacing Jest, the pm2 / nodemon class of "old Node" tooling is catching up on Bun compatibility. The monorepo-governance gap to pnpm is still real, though.</>,
   },
   heroStats: [
-    { num: '1', unit: '.2', zh: <>当前稳定版 <em>2026-05 估</em></>, en: <>current stable <em>2026-05 est.</em></> },
-    { num: '~3', unit: 'x', zh: <>Bun.serve vs Node http 简单 JSON 吞吐 <em>oven-sh 公开 bench</em></>, en: <>Bun.serve vs Node http simple JSON throughput <em>oven-sh public bench</em></> },
-    { num: '~10', unit: 'ms', zh: <>冷启动 (vs Node ~30ms) <em>serverless friendly</em></>, en: <>cold start (vs Node ~30ms) <em>serverless friendly</em></> },
-    { num: '0', zh: <>cuberoot.me 当前在用的 Bun 进程 <em>诚实数字</em></>, en: <>Bun processes used by cuberoot.me today <em>honest number</em></> },
+    { num: '1', unit: '.2', zh: <>当前稳定版 <em>2026-05 估</em></>, en: <>current stable <em>2026-05 est.</em></>,
+        zhHant: <>當前穩定版 <em>2026-05 估</em></>
+    },
+    { num: '~3', unit: 'x', zh: <>Bun.serve vs Node http 简单 JSON 吞吐 <em>oven-sh 公开 bench</em></>, en: <>Bun.serve vs Node http simple JSON throughput <em>oven-sh public bench</em></>,
+        zhHant: <>Bun.serve vs Node http 簡單 JSON 吞吐 <em>oven-sh 公開 bench</em></>
+    },
+    { num: '~10', unit: 'ms', zh: <>冷启动 (vs Node ~30ms) <em>serverless friendly</em></>, en: <>cold start (vs Node ~30ms) <em>serverless friendly</em></>,
+        zhHant: <>冷啟動 (vs Node ~30ms) <em>serverless friendly</em></>
+    },
+    { num: '0', zh: <>cuberoot.me 当前在用的 Bun 进程 <em>诚实数字</em></>, en: <>Bun processes used by cuberoot.me today <em>honest number</em></>,
+        zhHant: <>cuberoot.me 當前在用的 Bun 程序 <em>誠實數字</em></>
+    },
   ],
   intro: {
     zh: (
