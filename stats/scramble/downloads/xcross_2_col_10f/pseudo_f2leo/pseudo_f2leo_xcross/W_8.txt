@@ -1,5 +1,5 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / W / bin 8
-# Population in this bin: 652
+# Population in this bin: 664
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: scrambles.txt
 # Generated: 2026-06-09
@@ -22,7 +22,7 @@
 45,B2 L2 D2 B2 D' B2 U2 B2 F2 L2 D' L2 F2 U L' F' D B R U' F2 R2 L' F U' ,W
 6588,F2 D' B2 D' F2 R2 D' R2 D' R2 U2 F2 U B' R F' D' F2 L' B R U2 L2 ,W
 6784,R2 D L2 D F2 D B2 R2 F2 U2 L2 D' B2 D' U' L' F U' B L2 U R L' U2 F ,W
-51,L2 B2 R2 U L2 D R2 U' B2 U L2 F2 R2 F2 U2 L' F' D B R U' F2 R2 L' F' ,W
+399857,L2 D' F2 R2 U2 F2 L2 D' R2 B2 R2 L2 D R' U2 L2 B' F' R D' L' B' U' ,W
 218721,U' L2 U' R2 D2 B2 R2 B2 U' F2 D2 F2 R2 F' L' B D' U F' L' D' R L2 ,W
 6275,D2 R2 U B2 D' F2 U B2 D' F2 D' B2 R2 U' F' R' B D L F' R' F2 U' ,W
 58,F2 L2 B2 L2 U F2 U R2 B2 D2 B2 F2 D B' D' R' F U B' R' L B' D' U' ,W
@@ -45,7 +45,7 @@
 111,R2 D F2 D B2 D R2 U L2 F2 D2 B2 U2 L' F L B' D R L' U B' U2 ,W
 6971,R2 D2 F2 U B2 R2 D2 L2 D' L2 U R2 U B2 U' R' U' F' L2 F2 L B R' D' F' U' ,W
 6317,D' R2 B2 D F2 D R2 U' L2 U R2 B2 L2 U' R' B' U' F' R' L' U2 F' U' ,W
-125,U2 F2 D' L2 D' B2 L2 D' L2 F2 U' L2 U L2 U2 F L' B U' R D U2 F R' U2 ,W
+399862,B2 R2 D' F2 U B2 R2 U2 R2 U R2 B2 D F2 U' B' R F2 U' R' F' R L B ,W
 6956,B2 D2 R2 B2 L2 B2 U L2 U F2 D' R2 D' R2 F' D2 F2 R' L' F D' B' R U ,W
 134,L2 B2 R2 U' R2 D2 F2 D F2 U' B2 L' B' D R U F L' B' D2 ,W
 218729,D F2 D R2 D' R2 F2 D F2 L2 D F2 R2 U' F' R' L' B' R2 B' D B' R' F' ,W
@@ -144,7 +144,7 @@
 7279,U' F2 D B2 U2 L2 B2 D B2 L2 U' F2 D B2 U' R' B D' F' L F2 U' R2 B R U' ,W
 218708,U' R2 F2 D' R2 D R2 D' B2 R2 U B2 D L2 F' D' R' B L D' F' R' B2 L2 U' ,W
 7239,L2 F2 D B2 F2 U2 R2 U' F2 U L2 U' L' F R' U B D F2 R' F U' ,W
-7024,D B2 D' F2 L2 B2 L2 D R2 U' B2 L2 U' F' U R' B' L' F' R' U F2 R' ,W
+387151,D' L2 F2 R2 B2 D R2 D2 B2 F2 D' L2 U2 B2 F' R B R2 D R2 L F' R U' ,W
 697,U F2 U2 L2 U' B2 F2 L2 D L2 B2 R2 U2 R' U2 B' L D F U R' U2 B U2 ,W
 6965,U F2 D' L2 B2 D2 F2 U' B2 D' F2 R2 F2 U2 F' R B' U' B2 L' F R' U ,W
 5971,B2 D R2 B2 U R2 D B2 L2 U2 B2 D B2 R2 B' R' D U' F D2 R' L' F' U' ,W

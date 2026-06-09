@@ -1,6 +1,6 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / ORWY / bin 6
-# Population in this bin: 142
-# Samples listed: 142 (all entries in this bin)
+# Population in this bin: 149
+# Samples listed: 149 (all entries in this bin)
 # Source: scrambles.txt
 # Generated: 2026-06-09
 # Columns: id,scramble,bottom_color
@@ -147,3 +147,10 @@
 6883,R2 U2 F2 U F2 D L2 U' L2 B2 U' L2 B2 D' L' D B' D' F' R D R2 L' F' ,R
 6887,D' R2 D B2 L2 U2 F2 L2 D' F2 D L2 F2 U' B' D R' D2 F L' B U' R U ,R
 6889,R2 F2 L2 D B2 D' F2 R2 F2 L2 U2 B2 D2 U L' U2 F D B U2 R' L' F' D2 ,R
+399857,L2 D' F2 R2 U2 F2 L2 D' R2 B2 R2 L2 D R' U2 L2 B' F' R D' L' B' U' ,R
+399858,B2 U F2 R2 D' R2 U2 R2 F2 D' R2 D F2 L2 U B' R F2 U' R' F' R L B ,R
+399859,F2 D L2 U' B2 R2 U' F2 U L2 U' R2 F2 L2 U R' B' F U' B2 L U' R B' U' ,R
+399860,D R2 F2 U' R2 F2 D2 R2 B2 U R2 F2 D' R' U2 L2 B F R' D L F ,R
+399861,F2 R2 F2 R2 D' B2 L2 D2 R2 U' L2 B2 D' U' R' D' B F' R U' L' F' D U' L' ,R
+399862,B2 R2 D' F2 U B2 R2 U2 R2 U R2 B2 D F2 U' B' R F2 U' R' F' R L B ,R
+399863,B2 U L2 F2 D2 R2 F2 U F2 L2 D R2 D' L2 R' B' F U' B2 L U' R B' U' ,R

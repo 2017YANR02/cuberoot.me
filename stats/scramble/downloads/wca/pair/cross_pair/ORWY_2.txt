@@ -1,5 +1,5 @@
 # Scramble samples — pair / cross_pair / ORWY / bin 2
-# Population in this bin: 774
+# Population in this bin: 778
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09

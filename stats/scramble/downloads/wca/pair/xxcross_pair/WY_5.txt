@@ -1,6 +1,6 @@
 # Scramble samples — pair / xxcross_pair / WY / bin 5
-# Population in this bin: 33
-# Samples listed: 33 (all entries in this bin)
+# Population in this bin: 35
+# Samples listed: 35 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
 # Columns: id,scramble,bottom_color
@@ -38,3 +38,5 @@
 5413681001,F2 R U2 F2 R' D2 L2 D2 F' D2 R U2 F L2 B' R,W
 5437284001,F2 D B2 L2 D' L2 R2 D2 R2 F' R2 F2 U2 B' R B R2 D' F',W
 5539194001,L2 U2 B2 F2 L2 U' B2 D' R2 L U2 F U' B2 D' F' U2 B' D2,Y
+5690390001,R2 B2 F2 L' F2 U2 B2 U' B' U' B R F' L' F D U F L' F,Y
+5691926001,B2 F2 U2 F2 L D2 R D' F D2 L2 D F' L2 F2 L U2 B,W

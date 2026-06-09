@@ -1,5 +1,5 @@
 # Scramble samples — f2leo / f2leo_cross / BG / bin 2
-# Population in this bin: 294
+# Population in this bin: 296
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
@@ -177,7 +177,7 @@
 3017349001,L2 D' F2 D2 U2 B U2 B' R2 F2 L2 R B2 R' U L' D' L,G
 5539335001,U' D L2 D R2 B U' F2 L2 D2 F D2 B2 R2 B R2 D2 L' U,B
 3021912001,F D2 L D2 B2 R' F2 D R F2 R' U2 R' U2 F2 D2 R2 B2 U' B,B
-3035380001,D2 L' F' B2 D F' R2 D F2 L' U' L2 F2 U2 D' L2 U2 L2,G
+5689894001,L U B2 R2 F2 L' D2 L' R D2 B2 U L D2 B' R2 U' L2 D2,B
 3049191001,U' F2 R2 U L2 U' R2 U' L D' L U2 R' F' L' D F L,B
 5359866025,D' B2 U2 B' F L2 B' R2 U2 D R U2 F D' L2 U' L B2 U L2,B
 3093989001,B2 D2 L2 D R2 B2 D' B2 L2 U2 R2 F' U' B2 U' F' U' R' U',B

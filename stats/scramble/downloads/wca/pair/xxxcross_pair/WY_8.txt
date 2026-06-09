@@ -1,5 +1,5 @@
 # Scramble samples — pair / xxxcross_pair / WY / bin 8
-# Population in this bin: 240
+# Population in this bin: 242
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
@@ -104,7 +104,7 @@
 1797022001,B' U L2 B2 D' L2 F2 R2 B2 F2 D L' F' R F L B2 D2 L2,W
 1810530001,L2 U2 B2 L' B2 U2 L' U B2 L' D' F2 L' F U2 R2 F',W
 4693415001,R' D2 B2 R2 D' F2 U F2 U R D2 U2 L' U F' D' B' L',Y
-4919336001,B' R B D B2 U' F2 D B2 U R' U' R F' R2 B' L U',Y
+5690390001,R2 B2 F2 L' F2 U2 B2 U' B' U' B R F' L' F D U F L' F,Y
 1921497001,U' B U2 B' U2 R2 B' R' D B' D R2 F' D2 L2 U2,Y
 1968946001,D R' B2 L2 D2 R' D2 R U2 B2 D' F' L2 U2 B' U' R B' U2,W
 1982768001,U D L F B' U D2 R2 B U2 F U2 R2 B' L2 D2 U',W

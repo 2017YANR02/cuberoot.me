@@ -1,6 +1,6 @@
 # Scramble samples — f2leo / f2leo_xcross / BGWY / bin 3
-# Population in this bin: 145
-# Samples listed: 145 (all entries in this bin)
+# Population in this bin: 146
+# Samples listed: 146 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
 # Columns: id,scramble,bottom_color
@@ -150,3 +150,4 @@
 5513183001,B R2 U' F2 B' D' B U2 R2 F2 U D F2 D' B2 L2 D2 L,B
 5562422001,F2 U' B' U' B2 U F2 R D2 B' R' B2 L' U2 F2 U2 R U2,G
 5603706001,U2 F D2 F R2 U2 L B2 L2 F2 U F2 U D R2 D L2 F D',W
+5688308051,F' U' F' D2 B2 D2 L' D2 R' D2 U R' U2 R2 U' B' D' U B R2,Y
