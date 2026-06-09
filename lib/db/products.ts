@@ -15,11 +15,13 @@ export async function listPaged({
   q,
   page = 1,
   pageSize = 12,
-}: ListOpts = {}): Promise<PagedResult<Product>> {
+  category,
+}: ListOpts & { category?: ProductCategory } = {}): Promise<PagedResult<Product>> {
   const safePage = Math.max(1, Math.floor(page));
   const offset = (safePage - 1) * pageSize;
   const query = q?.trim() ?? "";
 
+  // 关键词搜索走 FTS,跨全部分类(category 仅作用于浏览态)
   if (query) {
     const [items, total] = await Promise.all([
       searchProducts(query, { limit: pageSize, offset }),
@@ -34,14 +36,17 @@ export async function listPaged({
     };
   }
 
+  const where = category ? eq(schema.products.category, category) : undefined;
   const totalRow = db
     .select({ n: sql<number>`COUNT(*)` })
     .from(schema.products)
+    .where(where)
     .all();
   const total = totalRow[0]?.n ?? 0;
   const items = db
     .select()
     .from(schema.products)
+    .where(where)
     .limit(pageSize)
     .offset(offset)
     .all();
