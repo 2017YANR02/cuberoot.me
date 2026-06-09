@@ -93,7 +93,7 @@
       "[OCSEF 2017](https://www.worldcubeassociation.org/competitions/OCSEFOpen2017)"
     ],
     [
-      "7.11",
+      "7.12",
       8,
       "4x4x4 Blindfolded",
       "Single",
@@ -786,6 +786,15 @@
       "[Central Asian Tour Astana 2025](https://www.worldcubeassociation.org/competitions/CentralAsianTourAstana2025)"
     ],
     [
+      "1.70",
+      3,
+      "5x5x5 Cube",
+      "Single",
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "[DuPage Fall 2024](https://www.worldcubeassociation.org/competitions/DuPageFall2024)",
+      "Still active"
+    ],
+    [
       "1.69",
       5,
       "3x3x3 With Feet",
@@ -793,15 +802,6 @@
       "[Daniel Rose-Levine](https://www.worldcubeassociation.org/persons/2015ROSE01)",
       "[SE Champ 2018](https://www.worldcubeassociation.org/competitions/SEChamp2018)",
       "[Medan 10th Anniversary 2019](https://www.worldcubeassociation.org/competitions/Medan10thAnniversary2019)"
-    ],
-    [
-      "1.69",
-      3,
-      "5x5x5 Cube",
-      "Single",
-      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-      "[DuPage Fall 2024](https://www.worldcubeassociation.org/competitions/DuPageFall2024)",
-      "Still active"
     ],
     [
       "1.65",
@@ -975,6 +975,15 @@
       "[Gdansk Open 2008](https://www.worldcubeassociation.org/competitions/GdanskOpen2008)"
     ],
     [
+      "1.41",
+      2,
+      "Square-1",
+      "Average",
+      "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
+      "[Gem City Ohio Showdown 2025](https://www.worldcubeassociation.org/competitions/GemCityOhioShowdown2025)",
+      "Still active"
+    ],
+    [
       "1.40",
       3,
       "Rubik's Magic",
@@ -982,15 +991,6 @@
       "[Jaap Scherphuis](https://www.worldcubeassociation.org/persons/2003SCHE01)",
       "[German Open 2004](https://www.worldcubeassociation.org/competitions/GermanOpen2004)",
       "[Polish Open 2005](https://www.worldcubeassociation.org/competitions/PolishOpen2005)"
-    ],
-    [
-      "1.40",
-      2,
-      "Square-1",
-      "Average",
-      "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
-      "[Gem City Ohio Showdown 2025](https://www.worldcubeassociation.org/competitions/GemCityOhioShowdown2025)",
-      "Still active"
     ],
     [
       "1.38",
@@ -1823,20 +1823,20 @@
     [
       "0.41",
       2,
-      "3x3x3 Blindfolded",
-      "Average",
-      "[Max Hilliard](https://www.worldcubeassociation.org/persons/2015HILL09)",
-      "[PBQ Berkeley 2018](https://www.worldcubeassociation.org/competitions/PBQBerkeley2018)",
-      "[Cube for Cambodia 2019](https://www.worldcubeassociation.org/competitions/CubeforCambodia2019)"
-    ],
-    [
-      "0.40",
-      2,
       "Rubik's Cube",
       "Average",
       "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
       "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
       "Still active"
+    ],
+    [
+      "0.41",
+      2,
+      "3x3x3 Blindfolded",
+      "Average",
+      "[Max Hilliard](https://www.worldcubeassociation.org/persons/2015HILL09)",
+      "[PBQ Berkeley 2018](https://www.worldcubeassociation.org/competitions/PBQBerkeley2018)",
+      "[Cube for Cambodia 2019](https://www.worldcubeassociation.org/competitions/CubeforCambodia2019)"
     ],
     [
       "0.40",
