@@ -229,7 +229,9 @@ function SumOfRanksPageInner() {
     });
     if (includeCancelled) qs.set('cancelled', '1');
     try {
-      const r = await fetch(apiUrl(`/v1/wca/sum-of-ranks/player-combos?${qs.toString()}`)).then(res => res.ok ? res.json() : null);
+      // no-store: 分页端点带 24h Cache-Control,若走浏览器缓存,重灌数据后旧的空/旧页会被缓存死(点了没反应)。
+      // 浏览器不缓存,nginx 仍按 s-maxage 缓存挡住 PG(发布时 update_sor.ps1 清 nginx)。
+      const r = await fetch(apiUrl(`/v1/wca/sum-of-ranks/player-combos?${qs.toString()}`), { cache: 'no-store' }).then(res => res.ok ? res.json() : null);
       if (r?.combos?.length) setPbMore(prev => [...prev, ...r.combos]);
     } catch { /* 静默:超时/网络错误时停在已加载的页 */ } finally {
       setPbMoreLoading(false);
