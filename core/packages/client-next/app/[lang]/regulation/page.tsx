@@ -7,7 +7,7 @@
 import { useTranslation } from 'react-i18next';
 import { Info, ExternalLink, FileText } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { T } from '@/i18n/tr';
+import { T, tr } from '@/i18n/tr';
 import './regulation.css';
 
 const SOURCE_URL = 'https://drive.google.com/file/d/15XszaCGNvy3Dk6X6qERzZWZaDH1RH04z';
@@ -106,8 +106,7 @@ const CONSIDERATIONS: { zh: string; en: string }[] = [
 ];
 
 export default function RegulationPage() {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
+  useTranslation(); // subscribe to language toggle so tr() alt strings re-evaluate
 
   useDocumentTitle('规则:5b5f 可视化指南', 'Regulation: 5b5f Visual Guide', '規則:5b5f 視覺化指南');
 
@@ -218,7 +217,7 @@ export default function RegulationPage() {
                     <img
                       className="reg-ex-img"
                       src={`/images/regulation/${ex.img}.jpg`}
-                      alt={isZh ? `实例 ${ex.n}` : `Example ${ex.n}`}
+                      alt={tr({ zh: `实例 ${ex.n}`, en: `Example ${ex.n}` })}
                       loading="lazy"
                       width={1341}
                       height={1500}
@@ -268,7 +267,7 @@ export default function RegulationPage() {
             <img
               className="reg-explain-img"
               src="/images/regulation/explanation.jpg"
-              alt={isZh ? '4×4 与 3×3 棱块对比' : '4×4 vs 3×3 edge piece'}
+              alt={tr({ zh: '4×4 与 3×3 棱块对比', en: '4×4 vs 3×3 edge piece' })}
               loading="lazy"
               width={1341}
               height={1500}
