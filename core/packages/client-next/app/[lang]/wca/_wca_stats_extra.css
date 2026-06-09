@@ -309,8 +309,9 @@
   color: var(--accent-foreground);
 }
 /* 过滤 / 废止项 pill:贴合文字(默认 110px 是给 on/off 文案不同的开关用的);
-   flex-shrink:0 防止在 events-bar flex 里被压窄到文字钻进滑钮下面 */
-.pill-toggle.wse-pill { min-width: 0; flex-shrink: 0; height: 26px; font-size: 12px; }
+   flex-shrink:0 防止在 events-bar flex 里被压窄到文字钻进滑钮下面;
+   align-self:flex-start 防止在 column flex 的 .wse-filter 里被 stretch 拉满整列宽(手机端半屏长) */
+.pill-toggle.wse-pill { min-width: 0; flex-shrink: 0; align-self: flex-start; height: 26px; font-size: 12px; }
 
 /* 数据细节列 */
 .wse-detail-cell {
