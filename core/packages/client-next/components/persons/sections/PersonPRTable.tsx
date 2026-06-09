@@ -163,17 +163,17 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
               );
             })}
           </tbody>
+          <PersonSorSummary wcaId={profile.person.wca_id} isZh={isZh} showPodium={showPodium} />
         </table>
       </div>
-
-      <PersonSorSummary wcaId={profile.person.wca_id} isZh={isZh} />
     </section>
   );
 }
 
-// 全项目排名(Sum of Ranks)摘要:当前 / 历史最佳的单次 + 平均(世界口径).
+// 全项目排名(Sum of Ranks)摘要 — 作为 PR 表内的附加 tbody,列与上方对齐:
+//   世界排名 → 「世界」列(RankCell 同款配色),SOR 总分 → 「成绩」列,洲际/地区暂留空.
 // 数据 lazy fetch;无数据(端点未上线 / 选手无 SOR)时整块不渲染,不破坏页面.
-function PersonSorSummary({ wcaId, isZh }: { wcaId: string; isZh: boolean }) {
+function PersonSorSummary({ wcaId, isZh, showPodium }: { wcaId: string; isZh: boolean; showPodium: boolean }) {
   const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const [sor, setSor] = useState<PersonSorResponse | null>(null);
 
@@ -188,53 +188,70 @@ function PersonSorSummary({ wcaId, isZh }: { wcaId: string; isZh: boolean }) {
 
   if (!sor || (!sor.single && !sor.average && !sor.bestSingle && !sor.bestAverage)) return null;
 
-  const cur = (cell: PersonSorResponse['single']) =>
-    cell ? (
-      <span className="wp-sor-cell">
-        <span className="wp-sor-total">{cell.total}</span>
-        <span className="wp-sor-rank">{t(`世界第 ${cell.rank}`, `World #${cell.rank}`, `世界第 ${cell.rank}`)}</span>
-      </span>
-    ) : <span className="wp-sor-dash">—</span>;
-  const best = (cell: PersonSorResponse['bestSingle']) =>
-    cell ? (
-      <span className="wp-sor-cell">
-        {cell.total != null && <span className="wp-sor-total">{cell.total}</span>}
-        <span className="wp-sor-rank">#{cell.rank}</span>
-        <span className="wp-sor-year">{cell.year}</span>
-      </span>
-    ) : <span className="wp-sor-dash">—</span>;
+  const colCount = 1 + 4 + 4 + (showPodium ? 3 : 0);
+
+  // SOR 总分落「成绩」列(右对齐 tabular),历史最佳行附年份小字
+  const totalCell = (total: number | null | undefined, year?: number) => (
+    <td className="wp-cell-result wp-sor-total-cell">
+      {total == null ? '' : (
+        <>
+          <span className="wp-sor-total-num">{total}</span>
+          {year != null && <span className="wp-sor-year-sub">{year}</span>}
+        </>
+      )}
+    </td>
+  );
+  const rankCell = (rank: number | null | undefined) =>
+    rank == null ? <td /> : <td><RankCell r={rank} /></td>;
+
+  const dataRow = (
+    key: string,
+    label: string,
+    single: { total: number | null; rank: number } | null,
+    average: { total: number | null; rank: number } | null,
+    sYear?: number,
+    aYear?: number,
+  ) => (
+    <tr key={key} className="wp-sor-row">
+      <th scope="row" className="wp-cell-event wp-sor-rowlabel">{label}</th>
+      {rankCell(single?.rank)}
+      <td className="wp-sor-blank" />
+      <td className="wp-sor-blank" />
+      {totalCell(single?.total, sYear)}
+      {totalCell(average?.total, aYear)}
+      {rankCell(average?.rank)}
+      <td className="wp-sor-blank" />
+      <td className="wp-sor-blank" />
+      {showPodium && <><td className="wp-sor-blank" /><td className="wp-sor-blank" /><td className="wp-sor-blank" /></>}
+    </tr>
+  );
 
   return (
-    <div className="wp-sor">
-      <div className="wp-sor-head">
-        <Link href="/wca/sum-of-ranks" className="wp-sor-title">
-          {t('全项目排名', 'Sum of Ranks', '全項目排名')}
-          <ArrowUpRight size={13} />
-        </Link>
-        <span className="wp-sor-scope">{t('世界 · 现役 17 项', 'World · 17 events', '世界 · 現役 17 項')}</span>
-      </div>
-      <table className="wp-sor-table">
-        <thead>
-          <tr>
-            <th />
-            <th>{t('当前', 'Current', '當前')}</th>
-            <th>{t('历史最佳', 'Best ever', '歷史最佳')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">{t('单次', 'Single', '單次')}</th>
-            <td>{cur(sor.single)}</td>
-            <td>{best(sor.bestSingle)}</td>
-          </tr>
-          <tr>
-            <th scope="row">{t('平均', 'Average')}</th>
-            <td>{cur(sor.average)}</td>
-            <td>{best(sor.bestAverage)}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <tbody className="wp-sor-tbody">
+      <tr className="wp-sor-section">
+        <th colSpan={colCount}>
+          <Link href="/wca/sum-of-ranks" className="wp-sor-title" title={t('全项目排名 (Sum of Ranks)', 'Sum of Ranks', '全項目排名 (Sum of Ranks)')}>
+            <span className="wp-sor-sigma">Σ</span>
+            <ArrowUpRight size={13} />
+          </Link>
+          <span className="wp-sor-scope">{t('世界 现役 17 项', 'World, 17 events', '世界 現役 17 項')}</span>
+        </th>
+      </tr>
+      {dataRow(
+        'cur',
+        t('当前', 'Current', '當前'),
+        sor.single ? { total: sor.single.total, rank: sor.single.rank } : null,
+        sor.average ? { total: sor.average.total, rank: sor.average.rank } : null,
+      )}
+      {(sor.bestSingle || sor.bestAverage) && dataRow(
+        'best',
+        t('历史最佳', 'Best ever', '歷史最佳'),
+        sor.bestSingle ? { total: sor.bestSingle.total, rank: sor.bestSingle.rank } : null,
+        sor.bestAverage ? { total: sor.bestAverage.total, rank: sor.bestAverage.rank } : null,
+        sor.bestSingle?.year,
+        sor.bestAverage?.year,
+      )}
+    </tbody>
   );
 }
 
