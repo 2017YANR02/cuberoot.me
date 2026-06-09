@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / O / bin 2
-# Population in this bin: 129
-# Samples listed: 129 (all entries in this bin)
+# Population in this bin: 130
+# Samples listed: 130 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-06
+# Generated: 2026-06-09
 # Columns: id,scramble,bottom_color
 
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,O
@@ -134,3 +134,4 @@
 5600897001,R F' R F2 R D' R F' R U2 F2 B2 D B2 D R2 F2 L2,O
 5604508001,F2 U2 L U' R2 F2 D' L2 F2 L' D2 R2 B2 D2 F2 D2 R B U L' F,O
 5677610006,B2 L2 U2 F2 D L2 F' L R B' D' F2 L D U B' D F' L2,O
+5684386001,B U R2 U2 L' D2 F2 R D B D U2 R' B2 L F2 L' F2 L,O

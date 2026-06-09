@@ -2,7 +2,7 @@
 # Population in this bin: 476
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-06
+# Generated: 2026-06-09
 # Columns: id,scramble,bottom_color
 
 3261628010,B2 L2 F2 U B2 D2 F2 D' F2 L' U2 R2 U L2 U' B' D L B' L,W
