@@ -30,7 +30,7 @@ export default async function ShopPage({ searchParams }: { searchParams: SP }) {
       title="官方商城直供 · 精选高品质魔方与周边"
       subtitle="竞速主力、异形挑战、专业配件、限定文创周边,平台直发,所有商品均经过专业玩家筛选。"
     >
-      <ListSearch basePath="/shop" placeholder="搜索商品、品牌..." />
+      <ListSearch placeholder="搜索商品、品牌..." />
 
       <div className="flex flex-wrap gap-2 mb-8">
         {CATEGORIES.map((c) => (

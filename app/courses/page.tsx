@@ -22,7 +22,7 @@ export default async function CoursesPage({ searchParams }: { searchParams: SP }
       title="覆盖入门到竞速全阶段的魔方课程"
       subtitle="从层先法启蒙到 CFOP / 盲拧 / ZBLL 高阶训练,既有体系化录播,也有直播与一对一私教。"
     >
-      <ListSearch basePath="/courses" placeholder="搜索课程、讲师、标签..." />
+      <ListSearch placeholder="搜索课程、讲师、标签..." />
 
       {q && (
         <div className="mb-6 text-[13px] text-ink-3">

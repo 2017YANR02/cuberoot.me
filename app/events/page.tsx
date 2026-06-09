@@ -28,7 +28,7 @@ export default async function EventsPage({ searchParams }: { searchParams: SP })
       title="发布、承办、运营 · 全国魔方赛事一站式入口"
       subtitle="平台承接 WCA 官方赛、城市开放赛、线上挑战赛、社群交流赛全链路服务,从策划到执行全包。"
     >
-      <ListSearch basePath="/events" placeholder="搜索赛事、城市、场馆..." />
+      <ListSearch placeholder="搜索赛事、城市、场馆..." />
 
       {q && (
         <div className="mb-6 text-[13px] text-ink-3">

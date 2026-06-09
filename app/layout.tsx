@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 import "./fonts.css";
 import { SiteHeader, type HeaderUser } from "@/components/SiteHeader";
@@ -58,14 +59,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="zh-CN">
       <body>
-        <SiteHeader user={headerUser} />
-        <main>{children}</main>
-        <SiteFooter />
-        <Suspense fallback={null}>
-          <TrackPageView />
-        </Suspense>
-        <SwRegister />
-        <PwaInstallButton />
+        <NuqsAdapter>
+          <SiteHeader user={headerUser} />
+          <main>{children}</main>
+          <SiteFooter />
+          <Suspense fallback={null}>
+            <TrackPageView />
+          </Suspense>
+          <SwRegister />
+          <PwaInstallButton />
+        </NuqsAdapter>
       </body>
     </html>
   );
