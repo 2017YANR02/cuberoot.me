@@ -44,10 +44,18 @@ export const NEXT_JS: StackTool = {
     outlookDesc: <>Next 16 is the first GA waypoint on the "Turbopack default + explicit caching" path. Stabilizing Cache Components, promoting Turbopack filesystem caching, and turning the React Compiler on by default are the 2026 storyline.</>,
   },
   heroStats: [
-    { num: '16', unit: '.2.6', zh: <>当前稳定版 <em>2026-05</em></>, en: <>current stable <em>2026-05</em></> },
-    { num: '128', unit: '+', zh: <>本站 SSG 静态页 <em>切 CDN</em></>, en: <>prerendered pages on this site <em>CDN-served</em></> },
-    { num: '10', unit: '×', zh: <>Fast Refresh 提速 (Turbopack) <em>官方数据</em></>, en: <>faster Fast Refresh via Turbopack <em>official</em></> },
-    { num: '10', unit: 'y', zh: <>从 2016 至今 <em>React 首推框架</em></>, en: <>since 2016 <em>React's recommended start</em></> },
+    { num: '16', unit: '.2.6', zh: <>当前稳定版 <em>2026-05</em></>, en: <>current stable <em>2026-05</em></>,
+        zhHant: <>當前穩定版 <em>2026-05</em></>
+    },
+    { num: '128', unit: '+', zh: <>本站 SSG 静态页 <em>切 CDN</em></>, en: <>prerendered pages on this site <em>CDN-served</em></>,
+        zhHant: <>本站 SSG 靜態頁 <em>切 CDN</em></>
+    },
+    { num: '10', unit: '×', zh: <>Fast Refresh 提速 (Turbopack) <em>官方数据</em></>, en: <>faster Fast Refresh via Turbopack <em>official</em></>,
+        zhHant: <>Fast Refresh 提速 (Turbopack) <em>官方資料</em></>
+    },
+    { num: '10', unit: 'y', zh: <>从 2016 至今 <em>React 首推框架</em></>, en: <>since 2016 <em>React's recommended start</em></>,
+        zhHant: <>從 2016 至今 <em>React 首推框架</em></>
+    },
   ],
   intro: {
     zh: (

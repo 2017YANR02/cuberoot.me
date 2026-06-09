@@ -160,53 +160,63 @@ export interface Detail {
   title: string;
   zh: ReactNode;
   en: ReactNode;
+    zhHant?: ReactNode;
 }
 export const DETAILS: Detail[] = [
   {
     title: 'SharedArrayBuffer · COOP/COEP',
     zh: <><strong>/scramble/solver</strong> 和 <strong>/scramble/analyzer</strong> 跑 cubeopt-wasm, 需要 <code>SharedArrayBuffer</code>。仅这两条 route 由 nginx 注入 <code>COOP=same-origin</code> + <code>COEP=require-corp</code> 进 cross-origin isolated。其它 24 张卡完全干净, 登录回调不受影响。</>,
     en: <><strong>/scramble/solver</strong> and <strong>/scramble/analyzer</strong> run cubeopt-wasm and require <code>SharedArrayBuffer</code>. Only those two routes get nginx-injected <code>COOP=same-origin</code> + <code>COEP=require-corp</code> for cross-origin isolation. Every other page stays clean — login callbacks unaffected.</>,
-  },
+      zhHant: <><strong>/scramble/solver</strong> 和 <strong>/scramble/analyzer</strong> 跑 cubeopt-wasm, 需要 <code>SharedArrayBuffer</code>。僅這兩條 route 由 nginx 注入 <code>COOP=same-origin</code> + <code>COEP=require-corp</code> 進 cross-origin isolated。其它 24 張卡完全乾淨, 登入回撥不受影響。</>
+},
   {
     title: 'apiUrl() 是唯一的 fetch 入口',
     zh: <>客户端不能硬编码 origin。<code>lib/api-base.ts</code> 的 <code>apiUrl()</code> 用 <code>import.meta.env.DEV</code> 切换:dev 走 <code>next.config.ts</code> 里 <code>rewrites()</code> 反代 <code>api.cuberoot.me</code>, prod 直打 <code>api.cuberoot.me</code>。<code>hostname</code> 检测会被 Tailscale / LAN IP 骗到, 绝对禁用。</>,
     en: <>Client never hardcodes origin. <code>lib/api-base.ts</code> uses <code>import.meta.env.DEV</code>: dev → <code>next.config.ts</code> <code>rewrites()</code> proxy to <code>api.cuberoot.me</code>, prod → direct <code>api.cuberoot.me</code>. <code>hostname</code> checks get fooled by Tailscale / LAN IP — banned.</>,
-  },
+      zhHant: <>客戶端不能硬編碼 origin。<code>lib/api-base.ts</code> 的 <code>apiUrl()</code> 用 <code>import.meta.env.DEV</code> 切換:dev 走 <code>next.config.ts</code> 裡 <code>rewrites()</code> 反代 <code>api.cuberoot.me</code>, prod 直打 <code>api.cuberoot.me</code>。<code>hostname</code> 檢測會被 Tailscale / LAN IP 騙到, 絕對禁用。</>
+},
   {
     title: 'cubing.js + sr-puzzlegen + visualcube 三件套',
     zh: <><strong>cubing.js</strong> 渲染动画 (TwistyPlayer)、跑 3x3 / 4x4 求解器。<strong>sr-puzzlegen</strong> 出 sq1 / megaminx / pyraminx / skewb 静态 SVG。<strong>visualcube</strong> 出 NxN 状态图 (F2L / OLL / PLL / ZBLL)。三者各管一块, <strong>禁止手写魔方 SVG</strong>。</>,
     en: <><strong>cubing.js</strong> for animation (TwistyPlayer) and 3x3/4x4 solvers. <strong>sr-puzzlegen</strong> for sq1 / megaminx / pyraminx / skewb SVGs. <strong>visualcube</strong> for NxN state images (F2L / OLL / PLL / ZBLL). Three libs, three lanes — <strong>hand-written cube SVG is banned</strong>.</>,
-  },
+      zhHant: <><strong>cubing.js</strong> 渲染動畫 (TwistyPlayer)、跑 3x3 / 4x4 求解器。<strong>sr-puzzlegen</strong> 出 sq1 / megaminx / pyraminx / skewb 靜態 SVG。<strong>visualcube</strong> 出 NxN 狀態圖 (F2L / OLL / PLL / ZBLL)。三者各管一塊, <strong>禁止手寫魔方 SVG</strong>。</>
+},
   {
     title: 'i18n — 两种 pattern 并存',
     zh: <>大段文案走 <code>t()</code> + <code>en.json</code> / <code>zh.json</code>;组件内零散文案走 <code>isZh ? 'X' : 'Y'</code> 三元。<code>LangToggle</code> 每页右上角, 默认跟系统语言。WCA 比赛中文名独立走 <code>comp_names_zh.json</code>。</>,
     en: <>Long blocks → <code>t()</code> + <code>en.json</code>/<code>zh.json</code>; inline strings → <code>isZh ? 'X' : 'Y'</code> ternary. <code>LangToggle</code> sits top-right on every page. Chinese comp names live in a separate <code>comp_names_zh.json</code>.</>,
-  },
+      zhHant: <>大段文案走 <code>t()</code> + <code>en.json</code> / <code>zh.json</code>;元件內零散文案走 <code>isZh ? 'X' : 'Y'</code> 三元。<code>LangToggle</code> 每頁右上角, 預設跟系統語言。WCA 比賽中文名獨立走 <code>comp_names_zh.json</code>。</>
+},
   {
     title: 'Theme — dark / light / system 三态',
     zh: <>shadcn 风 token (<code>--background --foreground --muted-foreground --accent --signal-*</code>) 在 <code>:root</code>, light 默认 + <code>@media (prefers-color-scheme: dark)</code> + <code>html[data-theme]</code> 双轨反盖。衍生色一律 <code>color-mix(in srgb, var(--base) X%, transparent)</code>, 改 base 一处自动跟。<code>ThemeToggle</code> 每页右上角循环 system → light → dark, 存 <code>localStorage.theme</code>, 启动 <code>bootstrapTheme()</code> 挂 <code>html[data-theme]</code>。8 页支持切换 (3 双主题 + 4 dark-locked + 1 light-locked), 其它老页跑 legacy <code>--bg-primary --text-primary</code> 不动。</>,
     en: <>shadcn-style tokens (<code>--background --foreground --muted-foreground --accent --signal-*</code>) live in <code>:root</code>, light defaults + <code>@media (prefers-color-scheme: dark)</code> + <code>html[data-theme]</code> dual override. Derivations always go through <code>color-mix(in srgb, var(--base) X%, transparent)</code> so changing one base ripples to all. <code>ThemeToggle</code> sits top-right and cycles system → light → dark, persists to <code>localStorage.theme</code>, applied via <code>bootstrapTheme()</code> at startup. 8 pages support switching (3 dual-theme + 4 dark-locked + 1 light-locked); legacy pages still use the old <code>--bg-primary --text-primary</code> tokens untouched.</>,
-  },
+      zhHant: <>shadcn 風 token (<code>--background --foreground --muted-foreground --accent --signal-*</code>) 在 <code>:root</code>, light 預設 + <code>@media (prefers-color-scheme: dark)</code> + <code>html[data-theme]</code> 雙軌反蓋。衍生色一律 <code>color-mix(in srgb, var(--base) X%, transparent)</code>, 改 base 一處自動跟。<code>ThemeToggle</code> 每頁右上角迴圈 system → light → dark, 存 <code>localStorage.theme</code>, 啟動 <code>bootstrapTheme()</code> 掛 <code>html[data-theme]</code>。8 頁支援切換 (3 雙主題 + 4 dark-locked + 1 light-locked), 其它老頁跑 legacy <code>--bg-primary --text-primary</code> 不動。</>
+},
   {
     title: 'WCA 统计的脆弱三角',
     zh: <>新增一个 stat 表要同步改三处:<code>stats-build/src/bin/*.ts</code> (写 TSV)、<code>.github/workflows/stats.yml</code> (scp 清单)、<code>ops/sql/load.sql</code> (<code>\copy</code> 引用)。漏一处, 服务器表静默为空, nginx 还缓存 24 小时。dry-run grep 三段对照是唯一保险。</>,
     en: <>Adding a stat table needs three coordinated edits: <code>stats-build/src/bin/*.ts</code> (writes TSV), <code>.github/workflows/stats.yml</code> (scp manifest), <code>ops/sql/load.sql</code> (<code>\copy</code> reference). Miss one and the server table silently empties — nginx still caches 24h. The only safety net: a 30-second grep dry-run across all three.</>,
-  },
+      zhHant: <>新增一個 stat 表要同步改三處:<code>stats-build/src/bin/*.ts</code> (寫 TSV)、<code>.github/workflows/stats.yml</code> (scp 清單)、<code>ops/sql/load.sql</code> (<code>\copy</code> 引用)。漏一處, 伺服器表靜默為空, nginx 還快取 24 小時。dry-run grep 三段對照是唯一保險。</>
+},
   {
     title: 'fork / port / own 三种治理',
     zh: <><strong>fork</strong> (csTimer / Solver / Alg Trainers) = upstream 静态资源原样托管, 只改外层包装。<strong>port</strong> (Calc / Battle / Mosaic) = 把别人的 React / HTML 重写一遍。<strong>own</strong> (其它 11 个) = 自己设计 + 实现。改 fork / port 前必须确认 upstream。</>,
     en: <><strong>fork</strong> (csTimer / Solver / Alg Trainers) = upstream assets hosted as-is, only the outer shell is ours. <strong>port</strong> (Calc / Battle / Mosaic) = someone else's React / HTML, rewritten in this repo. <strong>own</strong> (the other 11) = designed and built here. Touching a fork or port? Check upstream first.</>,
-  },
+      zhHant: <><strong>fork</strong> (csTimer / Solver / Alg Trainers) = upstream 靜態資源原樣託管, 只改外層包裝。<strong>port</strong> (Calc / Battle / Mosaic) = 把別人的 React / HTML 重寫一遍。<strong>own</strong> (其它 11 個) = 自己設計 + 實現。改 fork / port 前必須確認 upstream。</>
+},
   {
     title: '状态管理 — Zustand(内存)+ nuqs(URL)',
     zh: <>客户端内存 / 持久化状态走 <strong>Zustand</strong>:<code>auth_store</code> (WCA OAuth 用户)、<code>settingsStore</code> (主题 / 语言, persist)、<code>sessionStore</code> (当前 solve 会话, persist)、<code>statsStore</code> (WCA stats 查询)、<code>trainerStore</code> (训练状态, persist)、<code>recon_store</code> (复盘缓存);页面级 store 跟着各自 page 走 (battle / calc / mosaic / viz)。模式统一:<code>create()</code> 返回 hook, 不用 Provider, 不写 reducer。<strong>URL 状态</strong>(在哪个视图 / tab / 筛选 / 搜索)统一走 <strong>nuqs</strong> 的 <code>useQueryState</code> 写进 query params — 刷新可恢复、能分享深链、前进后退正常:大视图 / tab / 模式 / 浮层 push 进历史(后退能返回), 筛选 / 排序 / 搜索 replace(不堆历史)。禁裸 <code>history.pushState/replaceState</code> + 手写 popstate, 一个 PreToolUse hook 写入即拦 + 一条 vitest 守卫在 CI 兜底, 仅 maplibre / zustand 数据序列化等少数处豁免。</>,
     en: <>In-memory / persisted client state uses <strong>Zustand</strong>: <code>auth_store</code> (WCA OAuth user), <code>settingsStore</code> (theme / lang, persisted), <code>sessionStore</code> (active solve session, persisted), <code>statsStore</code> (WCA stats query), <code>trainerStore</code> (drill state, persisted), <code>recon_store</code> (recon cache); page-local stores live next to their pages (battle / calc / mosaic / viz). One pattern throughout: <code>create()</code> returns a hook — no Provider, no reducer. <strong>URL state</strong> (which view / tab / filter / search) goes through <strong>nuqs</strong> <code>useQueryState</code> into the query params — survives refresh, shareable deep links, correct back/forward: big views / tabs / modes / overlays push to history (back returns), filters / sort / search replace (no history pile-up). Raw <code>history.pushState/replaceState</code> and hand-rolled popstate are banned — a PreToolUse hook blocks them at write time and a vitest guard backstops CI, with only a few exemptions (maplibre, zustand data serialization).</>,
-  },
+      zhHant: <>客戶端記憶體 / 持久化狀態走 <strong>Zustand</strong>:<code>auth_store</code> (WCA OAuth 使用者)、<code>settingsStore</code> (主題 / 語言, persist)、<code>sessionStore</code> (當前 solve 會話, persist)、<code>statsStore</code> (WCA stats 查詢)、<code>trainerStore</code> (訓練狀態, persist)、<code>recon_store</code> (覆盤快取);頁面級 store 跟著各自 page 走 (battle / calc / mosaic / viz)。模式統一:<code>create()</code> 返回 hook, 不用 Provider, 不寫 reducer。<strong>URL 狀態</strong>(在哪個檢視 / tab / 篩選 / 搜尋)統一走 <strong>nuqs</strong> 的 <code>useQueryState</code> 寫進 query params — 重新整理可恢復、能分享深鏈、前進後退正常:大檢視 / tab / 模式 / 浮層 push 進歷史(後退能返回), 篩選 / 排序 / 搜尋 replace(不堆歷史)。禁裸 <code>history.pushState/replaceState</code> + 手寫 popstate, 一個 PreToolUse hook 寫入即攔 + 一條 vitest 守衛在 CI 兜底, 僅 maplibre / zustand 資料序列化等少數處豁免。</>
+},
   {
     title: 'npm registry — 我们用 pnpm 但拉的是 npm',
     zh: <><code>pnpm install</code> 跑的是从 <code>registry.npmjs.org</code> 下 tarball 这件事。yarn / pnpm / bun 都是同一 registry 的不同客户端, 都共享 <code>package.json</code> + <code>semver</code> + lockfile 这套 npm 定义的协议。选 pnpm 是因为硬链接 store 省盘 + Turbo cache 友好 + monorepo workspaces 体验好;但 4M+ 包 + 周下载几千亿次的护城河, 始终在 npm 那一头。</>,
     en: <><code>pnpm install</code> still fetches tarballs from <code>registry.npmjs.org</code>. yarn / pnpm / bun are different clients of the same registry, all sharing the <code>package.json</code> + <code>semver</code> + lockfile protocol that npm defined. We pick pnpm for hard-linked store (disk savings), Turbo-cache friendliness, and good workspaces — but the moat (4M+ packages, hundreds of billions of weekly downloads) is at npm's end.</>,
-  },
+      zhHant: <><code>pnpm install</code> 跑的是從 <code>registry.npmjs.org</code> 下 tarball 這件事。yarn / pnpm / bun 都是同一 registry 的不同客戶端, 都共享 <code>package.json</code> + <code>semver</code> + lockfile 這套 npm 定義的協議。選 pnpm 是因為硬連結 store 省盤 + Turbo cache 友好 + monorepo workspaces 體驗好;但 4M+ 包 + 周下載幾千億次的護城河, 始終在 npm 那一頭。</>
+},
 ];
 
 export type StageId = 'browser' | 'edge' | 'spa' | 'fetch' | 'api' | 'hono' | 'pg';

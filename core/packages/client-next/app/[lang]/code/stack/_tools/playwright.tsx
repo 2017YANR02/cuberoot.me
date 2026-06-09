@@ -45,9 +45,15 @@ export const PLAYWRIGHT: StackTool = {
   },
   heroStats: [
     { num: '3', zh: <>引擎同 API <em>Chromium / Firefox / WebKit</em></>, en: <>engines, one API <em>Chromium / Firefox / WebKit</em></> },
-    { num: '#1', zh: <>npm 周下载量 E2E 框架 <em>2026</em></>, en: <>E2E framework by weekly npm downloads <em>2026</em></> },
-    { num: '6', unit: 'y', zh: <>从 2020-01 至今 <em>已是默认选项</em></>, en: <>since 2020-01 <em>now the default</em></> },
-    { num: '1', unit: '.60', zh: <>当前稳定版 <em>2026-05</em></>, en: <>current stable <em>2026-05</em></> },
+    { num: '#1', zh: <>npm 周下载量 E2E 框架 <em>2026</em></>, en: <>E2E framework by weekly npm downloads <em>2026</em></>,
+        zhHant: <>npm 周下載量 E2E 框架 <em>2026</em></>
+    },
+    { num: '6', unit: 'y', zh: <>从 2020-01 至今 <em>已是默认选项</em></>, en: <>since 2020-01 <em>now the default</em></>,
+        zhHant: <>從 2020-01 至今 <em>已是預設選項</em></>
+    },
+    { num: '1', unit: '.60', zh: <>当前稳定版 <em>2026-05</em></>, en: <>current stable <em>2026-05</em></>,
+        zhHant: <>當前穩定版 <em>2026-05</em></>
+    },
   ],
   intro: {
     zh: (

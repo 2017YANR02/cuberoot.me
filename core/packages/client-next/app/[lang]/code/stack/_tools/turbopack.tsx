@@ -46,10 +46,18 @@ export const TURBOPACK: StackTool = {
     outlookDesc: <>Next 16 making Turbopack the default is a milestone, but the story isn't over: filesystem caching (on by default in dev, still opt-in for build) reuses work across restarts and is still beta; a webpack-plugin compatibility layer, remaining Sass / Less gaps, and standalone use (outside Next) are the next storyline. Long-term it shares a Rust dep-graph backend with the same company's Turborepo.</>,
   },
   heroStats: [
-    { num: '16', zh: <>Next.js 16 起设为默认打包器 <em>2025-10 GA</em></>, en: <>default bundler since Next.js 16 <em>2025-10 GA</em></> },
-    { num: '10', unit: '×', zh: <>Fast Refresh 提速 (vs webpack) <em>Vercel 官方数据</em></>, en: <>faster Fast Refresh vs webpack <em>Vercel official</em></> },
-    { num: '3', unit: 'y', zh: <>从 2022 alpha 到 16 默认 <em>逐步转正</em></>, en: <>from 2022 alpha to v16 default <em>gradual graduation</em></> },
-    { num: '1', zh: <>种内核覆盖 dev + build <em>统一依赖图</em></>, en: <>one core covers dev + build <em>unified graph</em></> },
+    { num: '16', zh: <>Next.js 16 起设为默认打包器 <em>2025-10 GA</em></>, en: <>default bundler since Next.js 16 <em>2025-10 GA</em></>,
+        zhHant: <>Next.js 16 起設為預設打包器 <em>2025-10 GA</em></>
+    },
+    { num: '10', unit: '×', zh: <>Fast Refresh 提速 (vs webpack) <em>Vercel 官方数据</em></>, en: <>faster Fast Refresh vs webpack <em>Vercel official</em></>,
+        zhHant: <>Fast Refresh 提速 (vs webpack) <em>Vercel 官方資料</em></>
+    },
+    { num: '3', unit: 'y', zh: <>从 2022 alpha 到 16 默认 <em>逐步转正</em></>, en: <>from 2022 alpha to v16 default <em>gradual graduation</em></>,
+        zhHant: <>從 2022 alpha 到 16 預設 <em>逐步轉正</em></>
+    },
+    { num: '1', zh: <>种内核覆盖 dev + build <em>统一依赖图</em></>, en: <>one core covers dev + build <em>unified graph</em></>,
+        zhHant: <>種核心覆蓋 dev + build <em>統一依賴圖</em></>
+    },
   ],
   intro: {
     zh: (

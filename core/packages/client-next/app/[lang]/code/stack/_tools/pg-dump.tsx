@@ -44,10 +44,18 @@ export const PG_DUMP: StackTool = {
     outlookDesc: <>pg_dump itself doesn't need an "outlook" — it's a tool that has been stable for thirty years and intentionally cedes PITR + large-cluster duty to pg_basebackup / Barman / pgBackRest. The action is around it: PG 17 added incremental backups in pg_basebackup, PG 18 added OAuth. pg_dump itself just tracks the server.</>,
   },
   heroStats: [
-    { num: '30', unit: 'y', zh: <>自 1996 PostgreSQL 6.0 起 <em>同 PG 寿命</em></>, en: <>since PostgreSQL 6.0 in 1996 <em>same lifetime as PG itself</em></> },
-    { num: '03', unit: ':00', zh: <>cuberoot.me 每日 dump 时间 <em>UTC, systemd timer</em></>, en: <>cuberoot.me nightly dump time <em>UTC, systemd timer</em></> },
-    { num: '30', unit: 'd', zh: <>滚动备份保留 <em>/root/archive 自动清理</em></>, en: <>rolling backup retention <em>/root/archive auto-cleanup</em></> },
-    { num: '13', unit: '.23', zh: <>当前 server 跟 dump 工具版本 <em>EOL 2025-11-13</em></>, en: <>current server + tool version <em>EOL 2025-11-13</em></> },
+    { num: '30', unit: 'y', zh: <>自 1996 PostgreSQL 6.0 起 <em>同 PG 寿命</em></>, en: <>since PostgreSQL 6.0 in 1996 <em>same lifetime as PG itself</em></>,
+        zhHant: <>自 1996 PostgreSQL 6.0 起 <em>同 PG 壽命</em></>
+    },
+    { num: '03', unit: ':00', zh: <>cuberoot.me 每日 dump 时间 <em>UTC, systemd timer</em></>, en: <>cuberoot.me nightly dump time <em>UTC, systemd timer</em></>,
+        zhHant: <>cuberoot.me 每日 dump 時間 <em>UTC, systemd timer</em></>
+    },
+    { num: '30', unit: 'd', zh: <>滚动备份保留 <em>/root/archive 自动清理</em></>, en: <>rolling backup retention <em>/root/archive auto-cleanup</em></>,
+        zhHant: <>滾動備份保留 <em>/root/archive 自動清理</em></>
+    },
+    { num: '13', unit: '.23', zh: <>当前 server 跟 dump 工具版本 <em>EOL 2025-11-13</em></>, en: <>current server + tool version <em>EOL 2025-11-13</em></>,
+        zhHant: <>當前 server 跟 dump 工具版本 <em>EOL 2025-11-13</em></>
+    },
   ],
   intro: {
     zh: (

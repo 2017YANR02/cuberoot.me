@@ -44,10 +44,18 @@ export const GITHUB: StackTool = {
     outlookDesc: <>Copilot workflows go deeply agentic (Workspace / Coding Agent / auto-fix-the-red-PR) — past demo, now mainstream adoption. Actions remains the OSS default CI; competitors find it harder to catch up after the arm64 private GA and sweeping price cut. Codespaces adoption is gated by "will individual devs pay monthly?" — team scenarios adopt faster. The competitive landscape with GitLab / Gitea / Codeberg / Sourcehut is stable long-term: GitHub holds the OSS default, the rest each hold a self-hosted / privacy / minimalist / non-profit niche.</>,
   },
   heroStats: [
-    { num: '150', unit: 'M+', zh: <>注册用户 <em>2025-05 官方披露</em></>, en: <>registered users <em>per GitHub, May 2025</em></> },
-    { num: '1', unit: 'B+', zh: <>仓库数过 10 亿 <em>2025-06 GitHub 公告</em></>, en: <>repositories surpassed <em>per GitHub, June 2025</em></> },
-    { num: '7.5', unit: 'B$', zh: <>Microsoft 收购对价 <em>2018-06-04 宣布</em></>, en: <>Microsoft acquisition price <em>announced 2018-06-04</em></> },
-    { num: '18', unit: 'y', zh: <>自 2008-04-10 上线 <em>OSS 默认归宿</em></>, en: <>since 2008-04-10 launch <em>now the OSS default home</em></> },
+    { num: '150', unit: 'M+', zh: <>注册用户 <em>2025-05 官方披露</em></>, en: <>registered users <em>per GitHub, May 2025</em></>,
+        zhHant: <>註冊使用者 <em>2025-05 官方披露</em></>
+    },
+    { num: '1', unit: 'B+', zh: <>仓库数过 10 亿 <em>2025-06 GitHub 公告</em></>, en: <>repositories surpassed <em>per GitHub, June 2025</em></>,
+        zhHant: <>倉庫數過 10 億 <em>2025-06 GitHub 公告</em></>
+    },
+    { num: '7.5', unit: 'B$', zh: <>Microsoft 收购对价 <em>2018-06-04 宣布</em></>, en: <>Microsoft acquisition price <em>announced 2018-06-04</em></>,
+        zhHant: <>Microsoft 收購對價 <em>2018-06-04 宣佈</em></>
+    },
+    { num: '18', unit: 'y', zh: <>自 2008-04-10 上线 <em>OSS 默认归宿</em></>, en: <>since 2008-04-10 launch <em>now the OSS default home</em></>,
+        zhHant: <>自 2008-04-10 上線 <em>OSS 預設歸宿</em></>
+    },
   ],
   intro: {
     zh: (

@@ -44,10 +44,18 @@ export const VITEST: StackTool = {
     outlookDesc: <>With Browser Mode stable, "component test = real browser" finally escapes jsdom's inaccuracies. Visual regression ships in the box, retiring the need for Percy / Chromatic-style services. Compiler-aware tests and in-source testing keep pushing the unit-test boundary closer to the source.</>,
   },
   heroStats: [
-    { num: '4', unit: '.1', zh: <>当前稳定版 <em>2026-05 · 4.1.6</em></>, en: <>current stable <em>2026-05 · 4.1.6</em></> },
-    { num: '5', unit: 'y', zh: <>从 2021-12 至今 <em>四个 major</em></>, en: <>since 2021-12 <em>four majors</em></> },
-    { num: '#1', zh: <>Vite 生态默认测试器 <em>Vue / Nuxt 钦定</em></>, en: <>default runner in the Vite world <em>Vue / Nuxt official</em></> },
-    { num: '60', unit: 'M+', zh: <>npm 周下载 <em>2026-05</em></>, en: <>weekly downloads on npm <em>2026-05</em></> },
+    { num: '4', unit: '.1', zh: <>当前稳定版 <em>2026-05 · 4.1.6</em></>, en: <>current stable <em>2026-05 · 4.1.6</em></>,
+        zhHant: <>當前穩定版 <em>2026-05 · 4.1.6</em></>
+    },
+    { num: '5', unit: 'y', zh: <>从 2021-12 至今 <em>四个 major</em></>, en: <>since 2021-12 <em>four majors</em></>,
+        zhHant: <>從 2021-12 至今 <em>四個 major</em></>
+    },
+    { num: '#1', zh: <>Vite 生态默认测试器 <em>Vue / Nuxt 钦定</em></>, en: <>default runner in the Vite world <em>Vue / Nuxt official</em></>,
+        zhHant: <>Vite 生態預設測試器 <em>Vue / Nuxt 欽定</em></>
+    },
+    { num: '60', unit: 'M+', zh: <>npm 周下载 <em>2026-05</em></>, en: <>weekly downloads on npm <em>2026-05</em></>,
+        zhHant: <>npm 周下載 <em>2026-05</em></>
+    },
   ],
   intro: {
     zh: (

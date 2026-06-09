@@ -44,10 +44,16 @@ export const RSYNC: StackTool = {
     outlookDesc: <>The Jan 2025 wave of 6 CVEs put rsync front-and-center in security circles, and once 3.4.0 shipped, people realized this thirty-year-old tool is still <strong>irreplaceable</strong>. zsync / rclone / restic each cover a slice, but "two POSIX ends, one command, only the delta" still has no better answer.</>,
   },
   heroStats: [
-    { num: '30', unit: 'y', zh: <>1996 年至今 <em>POSIX 同步事实标准</em></>, en: <>since 1996 <em>de-facto POSIX sync standard</em></> },
+    { num: '30', unit: 'y', zh: <>1996 年至今 <em>POSIX 同步事实标准</em></>, en: <>since 1996 <em>de-facto POSIX sync standard</em></>,
+        zhHant: <>1996 年至今 <em>POSIX 同步事實標準</em></>
+    },
     { num: '6', zh: <>2025-01 一次性 CVE <em>3.4.0 一次清完</em></>, en: <>CVEs fixed at once in 2025-01 <em>cleared by 3.4.0</em></> },
-    { num: '1', unit: ' line', zh: <>一行命令同步整棵目录 <em>没 server, 没 schema</em></>, en: <>one command syncs a whole tree <em>no server, no schema</em></> },
-    { num: '3', unit: '.4.2', zh: <>当前稳定版 <em>2026-04-28</em></>, en: <>current stable <em>2026-04-28</em></> },
+    { num: '1', unit: ' line', zh: <>一行命令同步整棵目录 <em>没 server, 没 schema</em></>, en: <>one command syncs a whole tree <em>no server, no schema</em></>,
+        zhHant: <>一行命令同步整棵目錄 <em>沒 server, 沒 schema</em></>
+    },
+    { num: '3', unit: '.4.2', zh: <>当前稳定版 <em>2026-04-28</em></>, en: <>current stable <em>2026-04-28</em></>,
+        zhHant: <>當前穩定版 <em>2026-04-28</em></>
+    },
   ],
   intro: {
     zh: (

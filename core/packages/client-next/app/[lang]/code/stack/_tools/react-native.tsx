@@ -44,10 +44,18 @@ export const REACT_NATIVE: StackTool = {
     outlookDesc: <>0.82 (2025-10) is the "New Architecture only" milestone, with the old bridge fully gone. Ahead: the Hermes V1 engine, React 19 concurrency on native, and Expo becoming the official default framework.</>,
   },
   heroStats: [
-    { num: '0.85', unit: '.3', zh: <>当前稳定版 <em>2026-05</em></>, en: <>current stable <em>2026-05</em></> },
-    { num: '2', unit: '端', zh: <>一套代码 iOS + Android <em>外加 RN Web</em></>, en: <>platforms from one codebase <em>plus RN Web</em></> },
-    { num: '11', unit: 'y', zh: <>从 2015 至今 <em>跨端老将</em></>, en: <>since 2015 <em>a cross-platform veteran</em></> },
-    { num: '0.76', unit: '', zh: <>新架构成默认起点 <em>2024-10</em></>, en: <>New Architecture default from <em>2024-10</em></> },
+    { num: '0.85', unit: '.3', zh: <>当前稳定版 <em>2026-05</em></>, en: <>current stable <em>2026-05</em></>,
+        zhHant: <>當前穩定版 <em>2026-05</em></>
+    },
+    { num: '2', unit: '端', zh: <>一套代码 iOS + Android <em>外加 RN Web</em></>, en: <>platforms from one codebase <em>plus RN Web</em></>,
+        zhHant: <>一套程式碼 iOS + Android <em>外加 RN Web</em></>
+    },
+    { num: '11', unit: 'y', zh: <>从 2015 至今 <em>跨端老将</em></>, en: <>since 2015 <em>a cross-platform veteran</em></>,
+        zhHant: <>從 2015 至今 <em>跨端老將</em></>
+    },
+    { num: '0.76', unit: '', zh: <>新架构成默认起点 <em>2024-10</em></>, en: <>New Architecture default from <em>2024-10</em></>,
+        zhHant: <>新架構成預設起點 <em>2024-10</em></>
+    },
   ],
   intro: {
     zh: (

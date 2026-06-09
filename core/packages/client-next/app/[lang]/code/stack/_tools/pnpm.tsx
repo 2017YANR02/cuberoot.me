@@ -44,10 +44,18 @@ export const PNPM: StackTool = {
     outlookDesc: <>v11 (2026-04) replaces the "one JSON per package" store with a single SQLite file, tightens supply-chain defaults, and requires Node 22+. Next up: catalog / overrides standardizing further — dependency hygiene in large monorepos only gets easier from here.</>,
   },
   heroStats: [
-    { num: '11', unit: '.1', zh: <>当前稳定 <em>2026-05 · 11.1.2</em></>, en: <>current stable <em>2026-05 · 11.1.2</em></> },
-    { num: '~3', unit: 'x', zh: <>同条件下比 npm 快 <em>warm install ~755 ms</em></>, en: <>warm install vs npm <em>~755 ms</em></> },
-    { num: '1', unit: 'x', zh: <>每个版本只存一份 <em>全局 store 去重</em></>, en: <>one copy per version <em>global store dedup</em></> },
-    { num: '9', unit: 'y', zh: <>从 2017 至今 <em>稳步迭代,无大破大立</em></>, en: <>since 2017 <em>steady, no scorched-earth majors</em></> },
+    { num: '11', unit: '.1', zh: <>当前稳定 <em>2026-05 · 11.1.2</em></>, en: <>current stable <em>2026-05 · 11.1.2</em></>,
+        zhHant: <>當前穩定 <em>2026-05 · 11.1.2</em></>
+    },
+    { num: '~3', unit: 'x', zh: <>同条件下比 npm 快 <em>warm install ~755 ms</em></>, en: <>warm install vs npm <em>~755 ms</em></>,
+        zhHant: <>同條件下比 npm 快 <em>warm install ~755 ms</em></>
+    },
+    { num: '1', unit: 'x', zh: <>每个版本只存一份 <em>全局 store 去重</em></>, en: <>one copy per version <em>global store dedup</em></>,
+        zhHant: <>每個版本只存一份 <em>全域性 store 去重</em></>
+    },
+    { num: '9', unit: 'y', zh: <>从 2017 至今 <em>稳步迭代,无大破大立</em></>, en: <>since 2017 <em>steady, no scorched-earth majors</em></>,
+        zhHant: <>從 2017 至今 <em>穩步迭代,無大破大立</em></>
+    },
   ],
   intro: {
     zh: (
