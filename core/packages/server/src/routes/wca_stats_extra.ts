@@ -1124,41 +1124,50 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/person', async (c) => {
     ),
   ));
 
-  type RankTriple = { world: number; continent: number | null; country: number | null };
+  // 三个独立指标(都是 Σ 17 现役项,只是求和的 rank 不同):
+  //   SoWR = Σ世界名次(值 total_world_rank,天然按世界排) / SoCR = Σ洲际名次(按本洲排) / SoNR = Σ国家名次(按本国排)
+  // 每个指标各带「和值 + 自身 scope 的名次」.SoCR 数据未填充(total=0)时返 null → 前端显示 build 中.
+  type MetricCell = { total: number; rank: number };           // 当前:和值 + 名次
+  type MetricBest = { total: number | null; rank: number; year: number };
+  type MetricTriple<T> = { sowr: T | null; socr: T | null; sonr: T | null };
+  // 过渡兼容旧客户端(v2 读 .total/.rank.{world,continent,country}/.year);客户端 v3 收敛后可删这两块 legacy 字段.
+  type LegacyRank = { world: number; continent: number | null; country: number | null };
   const out: {
-    wcaId: string;
-    single: { total: number; rank: RankTriple; eventsDone: number } | null;
-    average: { total: number; rank: RankTriple; eventsDone: number } | null;
-    bestSingle: { total: number | null; rank: RankTriple; year: number } | null;
-    bestAverage: { total: number | null; rank: RankTriple; year: number } | null;
-  } = { wcaId, single: null, average: null, bestSingle: null, bestAverage: null };
+    wcaId: string; countryId: string; continentId: string;
+    single: (MetricTriple<MetricCell> & { eventsDone: number; total: number; rank: LegacyRank }) | null;
+    average: (MetricTriple<MetricCell> & { eventsDone: number; total: number; rank: LegacyRank }) | null;
+    bestSingle: (MetricTriple<MetricBest> & { total: number | null; rank: LegacyRank; year: number }) | null;
+    bestAverage: (MetricTriple<MetricBest> & { total: number | null; rank: LegacyRank; year: number }) | null;
+  } = { wcaId, countryId: '', continentId: '', single: null, average: null, bestSingle: null, bestAverage: null };
 
   prRows.forEach((pr, i) => {
+    out.countryId = pr.country_id; out.continentId = pr.continent_id;
     const row = rankRows[i]?.[0];
-    const world = (row ? parseInt(row.world, 10) : 0) + 1;
-    // 洲际/地区:仅当对应 total>0 且有 scope id 时才算(数据未填充 → null → 前端留空,不误显 #1)
-    const continent = pr.total_continent_rank > 0 && pr.continent_id
-      ? (row ? parseInt(row.continent, 10) : 0) + 1 : null;
-    const country = pr.total_country_rank > 0 && pr.country_id
-      ? (row ? parseInt(row.country, 10) : 0) + 1 : null;
-    const cell = { total: pr.total_world_rank, rank: { world, continent, country }, eventsDone: pr.events_done };
+    const sowr: MetricCell = { total: pr.total_world_rank, rank: (row ? parseInt(row.world, 10) : 0) + 1 };
+    const socr: MetricCell | null = pr.total_continent_rank > 0 && pr.continent_id
+      ? { total: pr.total_continent_rank, rank: (row ? parseInt(row.continent, 10) : 0) + 1 } : null;
+    const sonr: MetricCell | null = pr.total_country_rank > 0 && pr.country_id
+      ? { total: pr.total_country_rank, rank: (row ? parseInt(row.country, 10) : 0) + 1 } : null;
+    const cell = {
+      sowr, socr, sonr, eventsDone: pr.events_done,
+      total: sowr.total, rank: { world: sowr.rank, continent: socr?.rank ?? null, country: sonr?.rank ?? null }, // legacy
+    };
     if (pr.is_avg) out.average = cell; else out.single = cell;
   });
 
-  // 历史最佳:按 (is_avg, scope) 归并;total/year 取 world 那行(成绩列与年份小字以世界口径为代表),
-  // 洲际/地区各取自身 scope 的 best_rank.无 world 行(理论不会)则整块不出.
+  // 历史最佳:sor_historical_best 的 world/continent/country 三 scope 正好就是 SoWR/SoCR/SoNR 各自的历史最佳.
   const bestBy = { single: new Map<string, typeof bestRows[number]>(), average: new Map<string, typeof bestRows[number]>() };
   for (const b of bestRows) (b.is_avg ? bestBy.average : bestBy.single).set(b.scope, b);
+  const cellOf = (b?: typeof bestRows[number]): MetricBest | null =>
+    b ? { total: b.best_total ?? null, rank: b.best_rank, year: b.best_year } : null;
   const buildBest = (m: Map<string, typeof bestRows[number]>) => {
-    const w = m.get('world'); if (!w) return null;
+    if (m.size === 0) return null;
+    const w = m.get('world');
     return {
-      total: w.best_total ?? null,
-      rank: {
-        world: w.best_rank,
-        continent: m.get('continent')?.best_rank ?? null,
-        country: m.get('country')?.best_rank ?? null,
-      } as RankTriple,
-      year: w.best_year,
+      sowr: cellOf(m.get('world')), socr: cellOf(m.get('continent')), sonr: cellOf(m.get('country')),
+      // legacy(过渡兼容旧客户端):
+      total: w?.best_total ?? null, year: w?.best_year ?? 0,
+      rank: { world: w?.best_rank ?? 0, continent: m.get('continent')?.best_rank ?? null, country: m.get('country')?.best_rank ?? null },
     };
   };
   out.bestSingle = buildBest(bestBy.single);
