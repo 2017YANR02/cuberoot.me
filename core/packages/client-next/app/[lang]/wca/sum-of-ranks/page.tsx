@@ -548,17 +548,17 @@ function SumOfRanksPageInner() {
                   <th>{tr({ zh: '选手', en: 'Person',
                       zhHant: "選手"
                 })}</th>
-                  {RANK_EVENTS.map(ev => (
-                    <th key={ev} className="wse-sor-evcell" style={{ opacity: selectedSet.has(ev) ? 1 : 0.3 }}>
-                      <EventIcon event={ev} />
-                    </th>
-                  ))}
                   <th className="wse-value-col">{tr({ zh: '名次总和', en: 'Total',
                       zhHant: "名次總和"
                 })}</th>
                   {showBest && <th className="wse-value-col">{tr({ zh: '历史最佳', en: 'Best ever',
                       zhHant: "歷史最佳"
                 })}</th>}
+                  {RANK_EVENTS.map(ev => (
+                    <th key={ev} className="wse-sor-evcell" style={{ opacity: selectedSet.has(ev) ? 1 : 0.3 }}>
+                      <EventIcon event={ev} />
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -571,16 +571,6 @@ function SumOfRanksPageInner() {
                         <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                       </span>
                     </td>
-                    {RANK_EVENTS.map((ev, j) => {
-                      const rk = r.ranks[j] ?? 0;
-                      const cls = rk > 0 && rk <= 3 ? `wse-sor-evcell podium-${rk}` :
-                                  rk === 0 ? 'wse-sor-evcell empty' : 'wse-sor-evcell';
-                      return (
-                        <td key={ev} className={cls} style={{ opacity: selectedSet.has(ev) ? 1 : 0.3 }}>
-                          {rk > 0 ? rk : ''}
-                        </td>
-                      );
-                    })}
                     <td className="wse-value-col">{
                       r.subsetTotal != null ? r.subsetTotal :
                       isCountryMode ? r.totalCountryRank :
@@ -597,6 +587,16 @@ function SumOfRanksPageInner() {
                         ) : '—'}
                       </td>
                     )}
+                    {RANK_EVENTS.map((ev, j) => {
+                      const rk = r.ranks[j] ?? 0;
+                      const cls = rk > 0 && rk <= 3 ? `wse-sor-evcell podium-${rk}` :
+                                  rk === 0 ? 'wse-sor-evcell empty' : 'wse-sor-evcell';
+                      return (
+                        <td key={ev} className={cls} style={{ opacity: selectedSet.has(ev) ? 1 : 0.3 }}>
+                          {rk > 0 ? rk : ''}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
