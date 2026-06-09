@@ -218,6 +218,51 @@ const ACTIVITY_NAMES: Record<string, { zh: string; en: string
   misc: { zh: '其他', en: 'Other' },
 };
 
+// 常见 misc / 杂项活动名(组织者自由填的英文)→ 中文。WCA 站只显示原名,我们额外补中译;
+// 键统一小写去空白比对,表外的名字(已是中文或太特殊)原样显示。简体字面量由 3-way
+// 构建就地转繁体(同 FORMAT_NAME,无需 zhHant)。
+const MISC_NAME_ZH: Record<string, string> = {
+  'opening': '开幕式',
+  'opening ceremony': '开幕式',
+  'opening intro': '开场介绍',
+  'opening introduction': '开场介绍',
+  'intro': '开场介绍',
+  'introduction': '开场介绍',
+  'welcome': '欢迎',
+  'closing': '闭幕式',
+  'closing ceremony': '闭幕式',
+  'awards': '颁奖',
+  'award ceremony': '颁奖典礼',
+  'awards ceremony': '颁奖典礼',
+  'prize ceremony': '颁奖典礼',
+  'group photo': '合影',
+  'group photos': '合影',
+  'photo': '合影',
+  'briefing': '赛前说明',
+  'competitor briefing': '选手须知',
+  "competitors' briefing": '选手须知',
+  'tutorial': '新手教学',
+  'warmup': '热身',
+  'warm-up': '热身',
+  'warm up': '热身',
+  'break': '休息',
+  'lunch': '午餐',
+  'lunch break': '午餐',
+  'dinner': '晚餐',
+  'breakfast': '早餐',
+  'setup': '布置',
+  'teardown': '收尾',
+  'cleanup': '清理',
+  'clean up': '清理',
+  'q&a': '问答',
+};
+
+// 杂项活动名本地化:英文环境原样;中文环境查已知名表,翻不了原样(组织者已自定义)。
+function localizeMiscName(name: string, isZh: boolean): string {
+  if (!isZh) return name;
+  return MISC_NAME_ZH[name.trim().toLowerCase()] ?? name;
+}
+
 // eventId of an activity (or '' for other-*)
 export function eventOfActivity(a: { activityCode: string }): string {
   const { eventId } = parseActivityCode(a.activityCode);
@@ -247,6 +292,11 @@ export function localizeActivityName(
   if (eventId === 'other') {
     const key = activity.activityCode.split('-')[1] ?? '';
     const dict = ACTIVITY_NAMES[key];
+    const name = activity.name.trim();
+    // 语义类型(签到 / 午餐 / 颁奖…)用字典翻译,组织者留默认英文名也显示中文。
+    // `misc` 是杂项兜底、或未知类型:真正的标签在 activity.name(如 "Opening Intro"),
+    // 按常见名表翻成中文,翻不了就原样;name 为空再退回字典「其他」。
+    if ((key === 'misc' || !dict) && name) return localizeMiscName(name, isZh);
     return dict ? dict[isZh ? 'zh' : 'en'] : activity.name;
   }
   // Attempt-scheduled activities (FM/MBLD) carry an -a suffix; the round is keyed by round id.
