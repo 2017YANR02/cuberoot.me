@@ -376,14 +376,21 @@ html[data-theme=dark] .wp-page {
     font-size: 0.68rem; font-weight: 400; color: var(--wp-text-mute);
     white-space: normal; max-width: 9em; line-height: 1.2;
 }
-/* 数据格:当前(和值 + scope 名次)在上,历史最佳小字在下 */
-.wp-sor-mcell { text-align: left; vertical-align: top; padding: 8px 12px !important; }
-.wp-sor-cur { display: inline-flex; align-items: baseline; gap: 7px; flex-wrap: wrap; }
+/* 名次格:落对应 scope 列(世界/洲际/地区),与上方逐项名次同列对齐;当前名次在上,历史最佳小字在下 */
+.wp-sor-rcell { text-align: center; vertical-align: top; padding: 8px 6px !important; }
+.wp-sor-rcell .wp-rank { display: block; }
+.wp-sor-best-rk {
+    display: block; margin-top: 2px;
+    font-size: 0.62rem; font-weight: 400; color: var(--wp-text-mute);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+/* 和值格:落「成绩」列,Σ 值大字在上,历史最佳和值小字在下 */
+.wp-sor-scell { vertical-align: top; padding-top: 8px !important; }
 .wp-sor-sum { font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; color: var(--wp-text); }
-.wp-sor-rk { font-size: 0.78rem; color: var(--wp-text-sub); display: inline-flex; align-items: baseline; gap: 3px; }
-.wp-sor-best {
-    display: block; margin-top: 3px;
-    font-size: 0.7rem; font-weight: 400; color: var(--wp-text-mute);
+.wp-sor-smute { color: var(--wp-text-mute); }
+.wp-sor-best-sum {
+    display: block; margin-top: 2px;
+    font-size: 0.62rem; font-weight: 400; color: var(--wp-text-mute);
     font-variant-numeric: tabular-nums;
 }
 
