@@ -122,7 +122,8 @@ LIMIT 100`,
     },
   ],
     titleZhHant: "每年每人比賽數",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["分母用 dump 的當天,不是\"末場到首場\";一個 2008 出道、2012 後退役的選手仍按 18 年計算,頻率會被稀釋。", "同一週末跨地兩場算兩場 —— `competition_id` 不同即不同場。", "副身份(改名 / 換國籍,`sub_id > 1`)不參與 — 只取主行。"]
 };
 
 // ──── longest_competitions_path ─────────────────────────────────────────────
@@ -245,7 +246,8 @@ ORDER BY start_date, end_date`,
     },
   ],
     titleZhHant: "最長比賽路徑",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["相鄰兩場同一場館 → 距離 0;同一城市不同場館 → 幾 km,仍計入。", "球面假設忽略地形/航路;不代表真實飛行里程,但在 WCA 巡遊級距離尺度上誤差可忽略。", "跨日多日比賽只在路徑裡出現一次(`competition_id` 維度去重)。"]
 };
 
 // ──── longest_streak_of_competitions_in_own_country ─────────────────────────
@@ -356,7 +358,8 @@ ORDER BY competition.start_date`,
     },
   ],
     titleZhHant: "在本國最長連續參賽",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["\"漏掉一場\"的判定是基於該國所有比賽 —— 你不參加的話,即便是 1000 公里外的小賽也會斷 streak。", "只看主身份(`sub_id = 1`);改國籍的選手要按改後那一段算。", "streak 仍在進行中(沒斷過)也會被收錄 —— `lastCompetition` 留空。"]
 };
 
 // ──── longest_streak_of_personal_records ────────────────────────────────────
@@ -464,7 +467,8 @@ ORDER BY competition.start_date, round_type.rank`,
     },
   ],
     titleZhHant: "最長連續個人紀錄參賽記錄",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["平 PR 算,因為 `<=`;嚴格意義上\"重新整理\"的口徑要 `<` —— 這裡寬鬆。", "只要該比賽**任一項目任一指標** PR,整場算 PR 比賽;打 6 項 PR 跟打 1 項 PR 計數相同。", "`best = -1` / `0`(DNF / 未提交)不會觸發 PR,因為 `val > 0` 守門。"]
 };
 
 // ──── longest_streak_of_podiums ─────────────────────────────────────────────
@@ -572,7 +576,8 @@ ORDER BY competition.start_date, round_type.rank`,
     },
   ],
     titleZhHant: "最長連續登臺記錄",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["\"未辦該項目的比賽\"自動跳過 —— 該 (人, 項目) 在那場沒有 row,迴圈不接觸 `currentByEvent.event`。", "決賽全 DNF (`single = -1` 或 `0`)即便名次 ≤ 3 也不算,因為 `single > 0` 守門。", "只看決賽 —— 半決賽拿第 1 進決賽拿第 5,這場算\"無登臺\"。"]
 };
 
 // ──── longest_time_to_sub_10 ────────────────────────────────────────────────
@@ -685,7 +690,8 @@ ORDER BY years DESC LIMIT 100`,
     },
   ],
     titleZhHant: "最長達到 sub-10 三階平均的時間",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["\"首場比賽\"含所有項目,所以哪怕你只為參加 BLD,然後 5 年後才打 sub-10 3x3,這 5 年也算進來。", "只挑事後已 sub-10 的人 —— \"永遠 sub-10 不了\"的選手不上榜。", "首次 sub-10 是按**比賽日期**而非具體輪次時刻;同日先慢輪再快輪 → 用該比賽 `start_date`。"]
 };
 
 // ──── most_attended_competitions_in_single_month ────────────────────────────
@@ -796,7 +802,8 @@ ORDER BY attended_within_month DESC`,
     },
   ],
     titleZhHant: "單月參賽最多",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["\"自然月\"切割比\"30 天滑窗\"寬鬆 —— 月底 30 號 + 月初 1 號 + 2 號其實是連續 3 天,但跨月切成兩桶各 1 + 2。", "只看比賽 `start_date`,多日賽延伸到下個月也只按起始月算。", "跨年最瘋狂的\"夏 + 秋 + 冬\"季節性堆賽,本指標看不到 —— 見單週指標更密。"]
 };
 
 // ──── most_attended_competitions_in_single_week ─────────────────────────────
@@ -906,7 +913,8 @@ ORDER BY attended_within_week DESC`,
     },
   ],
     titleZhHant: "單週內最多參加比賽數",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["周邊界是 ISO(週一首日),不是美式(週日首日);跨週末的雙天比賽只算起始日所在周。", "週末跨大洲多場是常見上榜套路:北美早場 + 歐洲晚場 + 亞洲後日,3 場剛好。", "同月版本能漏掉跨月的連續周,這個版本能補;反過來同一周內 3 場可能跨不同月。"]
 };
 
 // ──── most_competitions_abroad ──────────────────────────────────────────────
@@ -1018,7 +1026,8 @@ LIMIT 100`,
     },
   ],
     titleZhHant: "海外參賽最多",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["改國籍的選手:舊國 + 新國時期分別貢獻\"海外\"判定 —— 各時段都按當時註冊國比對,合理。", "一個旅居者長期住在 B 國但還掛 A 國國籍 → 在 B 國所有比賽都被標海外,實際卻是\"主場\"。", "`competition.country_id != result.country_id`,**不**和 `persons.country_id`(當前國籍)比 —— 這是歷史準確性 vs 當前快照的取捨。"]
 };
 
 // ──── most_completed_solves ─────────────────────────────────────────────────
@@ -1133,7 +1142,8 @@ JOIN countries / continents / events ...`,
     },
   ],
     titleZhHant: "最多完成還原數",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["MBLD 在 `result_attempts` 裡只佔一兩條 attempt 行,但 cube 數能上 60+ —— 本指標按 attempt 數,所以 MBLD 單場只貢獻 1-2 算\"完成\",不按 cube 數算。", "`value > 0` 包括所有完成,不區分項目 —— FMC 的\"分數\"也算 1 次完成。", "DNF 不扣分,但作為 attempts 計入分母 —— 平局時少 DNF 的贏。"]
 };
 
 // ──── most_distinct_dates_competed_on ───────────────────────────────────────
@@ -1249,7 +1259,8 @@ HAVING attended_dates >= 100`,
     },
   ],
     titleZhHant: "最多不同參賽日期",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["`nums` 上限 9 → 不支援 11 日及以上比賽(目前 WCA 沒有,穩)。", "`MM/DD` 抹年份 —— 跨年同日不重複計數,所以\"在多少天打過賽\"是跨多年合併後的去重數。", "2 月按 29 天作分母 —— 非閏年的 2/29 在 5 個月份按資料合理性掛掉,但 % 顯示偏低 1/29 不修。"]
 };
 
 // ──── most_solves_before_bld_success ────────────────────────────────────────
@@ -1355,7 +1366,8 @@ ORDER BY competition.start_date, round_type.rank`,
     },
   ],
     titleZhHant: "盲擰成功前最多嘗試次數",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["`value = 0`(未嘗試 / 退場)被排除 —— 它們不是真正的\"失敗\",別汙染計數。", "只統計**最終成功過**的選手 —— 從未成功的不進榜,但他們其實可能更\"努力\"。這是上榜口徑的取捨。", "MBLD 的 attempt 跟 BLD 用同 `value` 編碼,但語義不同(MBLD value = 難度分),`> 0` 仍能正確判定為成功。"]
 };
 
 // ──── most_visited_continents ───────────────────────────────────────────────
@@ -1458,7 +1470,8 @@ ORDER BY visited_continents DESC`,
     },
   ],
     titleZhHant: "去過最多大洲參賽",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["WCA 沒有南極洲比賽,所以 6 是真實上限;能跑滿 6 的人極少。", "同一個洲多個國家不會因為多了一個洲 count —— 用 `continent_id` 而不是 `country_id`。", "`_Multiple Continents` 排除後,洲際 FMC 郵寄賽對該指標沒貢獻。"]
 };
 
 // ──── most_visited_countries ────────────────────────────────────────────────
@@ -1561,7 +1574,8 @@ LIMIT 100`,
     },
   ],
     titleZhHant: "去過最多國家參賽",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["本國算作 1 個國家 —— 跟\"海外參賽\"指標互補(海外 = 總國家數 - 1,前提是去過本國)。", "沒有 `HAVING` 閾值 —— 直接拉 top 100,因為只去過 1 國的人太多,排序後自然落到尾部。", "改國籍前後比賽地都按\"比賽 country_id\"算,所以不受 selfish 改名影響。"]
 };
 
 // ──── name_parts_count ──────────────────────────────────────────────────────
@@ -1657,7 +1671,8 @@ WHERE sub_id = 1`,
     },
   ],
     titleZhHant: "姓名詞數統計",
-    badgeZhHant: "人口學"
+    badgeZhHant: "人口學",
+    edgesZhHant: ["括號本地化只剝**帶前導空格**的括號 —— \"Name(Local)\" 不帶空格不剝;實際 WCA 都規範化為 \"Name (Local)\",安全。", "\"O'Brien\"、\"de la Rosa\" 這種含撇號 / 連字元 / 字首詞的 part 數會偏多 —— 沒語言學拆分,純空格切。", "`split(' ')` 在多空格上會產生空 part —— WCA 資料乾淨,實際不會觸發。"]
 };
 
 // ──── shortest_time_to_reach_milestone_in_comps_count ──────────────────────
@@ -1765,7 +1780,8 @@ ORDER BY start_date`,
     },
   ],
     titleZhHant: "最短時間達到比賽數里程碑",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["\"+1\" 讓首尾同日(理論上 5 場同日)算 1 天而不是 0 —— 跟 `competitions_per_year_by_person` 用 365.25 的精確口徑不同。", "里程碑順序按 count 升序輸出(5 → 300);UI 端要展示完整光譜。", "部分項目特別多 / 高頻選手在 5 場里程碑上幾乎全是同週末連開 —— top 20 經常 1-3 天。"]
 };
 
 // ──── shortest_time_to_get_all_singles ──────────────────────────────────────
@@ -1877,7 +1893,8 @@ ORDER BY start_date`,
     },
   ],
     titleZhHant: "最短時間獲得所有項目單次成績",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["\"首場比賽\"含所有項目 —— 你打過 OH 再回頭補 3x3 single,起算點是 OH 那場。", "只看**當前**官方項目;退役項目(magic / clock 老規則等,rank ≥ 900)不要求。", "`best > 0` 排 DNF,因此 DNF 拼到最後湊數不算 —— 真要成功一次。"]
 };
 
 // ──── shortest_time_to_get_all_singles_and_averages ─────────────────────────
@@ -1989,7 +2006,8 @@ ORDER BY start_date`,
     },
   ],
     titleZhHant: "最短時間獲得所有項目的單次和平均成績",
-    badgeZhHant: "選手"
+    badgeZhHant: "選手",
+    edgesZhHant: ["BLD 系列(`333bf/444bf/555bf`)只有 3 attempts,要 ≥ 2 成功才會產生 average → 這一關常常卡住挑戰者數月。", "MBLD 因沒 average 完全不在 average 候選條件裡(`N − 1`);3x3 FMC 有 average(\"三次平均\"),要湊齊。", "`firstSuccesses` 含同事件 single + average 各自最早日 —— 兩者日期可不同(先 single 後 average 很常見)。"]
 };
 
 export const JOURNEY_ABOUT: Record<string, AboutEntry> = {

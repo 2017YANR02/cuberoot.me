@@ -21,6 +21,7 @@ interface Card {
   Icon: typeof BarChart3;
   zh: { title: string; desc: string };
   en: { title: string; desc: string };
+    zhHant?: { title: string; desc: string };
 }
 
 const CARDS: Card[] = [
@@ -29,31 +30,36 @@ const CARDS: Card[] = [
     Icon: Dices,
     zh: { title: '生成', desc: '17 个 WCA 项目的随机状态打乱,tnoodle 风格 PDF' },
     en: { title: 'Generate', desc: 'Random-state scrambles for 17 WCA events, tnoodle-style PDF' },
-  },
+      zhHant: { title: '生成', desc: '17 個 WCA 項目的隨機狀態打亂,tnoodle 風格 PDF' }
+},
   {
     to: '/scramble/solver',
     Icon: Sparkles,
     zh: { title: '求解', desc: '3x3 任意状态最少步公式 — wasm 多线程' },
     en: { title: 'Solve', desc: 'Optimal HTM solution for any 3x3 state — multithreaded wasm' },
-  },
+      zhHant: { title: '求解', desc: '3x3 任意狀態最少步公式 — wasm 多執行緒' }
+},
   {
     to: '/scramble/analyzer',
     Icon: Microscope,
     zh: { title: '分析', desc: '3x3 打乱 → 6 色 cross / F2L / OLL / PLL 完整 CFOP 解' },
     en: { title: 'Analyze', desc: '3x3 scramble → all-color cross / F2L / OLL / PLL CFOP paths' },
-  },
+      zhHant: { title: '分析', desc: '3x3 打亂 → 6 色 cross / F2L / OLL / PLL 完整 CFOP 解' }
+},
   {
     to: '/scramble/stats',
     Icon: BarChart3,
     zh: { title: '分布', desc: 'WCA 历史 1,200,000 条三阶打乱阶段最优步数分布' },
     en: { title: 'Distribution', desc: 'Stage-optimal HTM distribution over 1.2M WCA 3x3 scrambles' },
-  },
+      zhHant: { title: '分佈', desc: 'WCA 歷史 1,200,000 條三階打亂階段最優步數分佈' }
+},
   {
     to: '/scramble/pattern',
     Icon: Wand2,
     zh: { title: '图案', desc: '著名 3x3 / 4x4 / 5x5 / 6x6 / 7x7 图案集 (棋盘 / 十字 / 立方体中立方等)' },
     en: { title: 'Pattern', desc: 'Famous pretty patterns for 3×3 / 4×4 / 5×5 / 6×6 / 7×7 (checkerboard, cross, cube-in-cube, …)' },
-  },
+      zhHant: { title: '圖案', desc: '著名 3x3 / 4x4 / 5x5 / 6x6 / 7x7 圖案集 (棋盤 / 十字 / 立方體中立方等)' }
+},
 ];
 
 export default function ScrambleHubPage() {
@@ -72,8 +78,8 @@ export default function ScrambleHubPage() {
         {CARDS.map((c) => (
           <Link key={c.to} href={c.to} className="hub-card">
             <c.Icon size={28} />
-            <div className="hub-card-title">{((i18n.language.startsWith('zh') ? c.zh : c.en)).title}</div>
-            <div className="hub-card-desc">{((i18n.language.startsWith('zh') ? c.zh : c.en)).desc}</div>
+            <div className="hub-card-title">{((i18n.language === 'zh-Hant' ? (c.zhHant ?? c.zh) : (i18n.language.startsWith('zh') ? c.zh : c.en))).title}</div>
+            <div className="hub-card-desc">{((i18n.language === 'zh-Hant' ? (c.zhHant ?? c.zh) : (i18n.language.startsWith('zh') ? c.zh : c.en))).desc}</div>
           </Link>
         ))}
       </div>

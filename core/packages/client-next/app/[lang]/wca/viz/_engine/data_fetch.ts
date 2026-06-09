@@ -34,7 +34,8 @@ export interface PlayerData {
   ghostKDE: KDEPoint[] | null;
   ghostMean: number;
   colorIdx: number;
-  meanTrail: MeanTrailPoint[];      // NOTE: 均值轨迹拖尾 [{ x: meanVal, frame: frameIdx }]
+  meanTrail: MeanTrailPoint[];
+    nameZhHant?: string;
 }
 
 // NOTE: WCA 轮次类型 ID → 英文/中文名称，供 tooltip 和 CSV 导出共用

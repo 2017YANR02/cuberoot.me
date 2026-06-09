@@ -18,6 +18,7 @@ interface Card {
   Icon: typeof Sigma;
   zh: { title: string; desc: string };
   en: { title: string; desc: string };
+    zhHant?: { title: string; desc: string };
 }
 
 const CARDS: Card[] = [
@@ -26,25 +27,29 @@ const CARDS: Card[] = [
     Icon: InfinityIcon,
     zh: { title: '上帝之数', desc: '17 个 WCA 项目的群直径 (精确值 / 上下界) + 群论 + 现场 BFS' },
     en: { title: "God's number", desc: 'Cayley-graph diameter for all 17 WCA puzzles (exact / bounds) + group theory + live BFS' },
-  },
+      zhHant: { title: '上帝之數', desc: '17 個 WCA 項目的群直徑 (精確值 / 上下界) + 群論 + 現場 BFS' }
+},
   {
     to: '/math/demigod',
     Icon: Dices,
     zh: { title: '半神之数', desc: 'Merino & Subercaseaux 2024:用 500k 样本 + Hoeffding 证 D ≤ 36,概率上界互动版' },
     en: { title: "Demigod's number", desc: 'Merino & Subercaseaux 2024: 500k samples + Hoeffding prove D ≤ 36 — the high-probability bound interactive' },
-  },
+      zhHant: { title: '半神之數', desc: 'Merino & Subercaseaux 2024:用 500k 樣本 + Hoeffding 證 D ≤ 36,機率上界互動版' }
+},
   {
     to: '/math/group',
     Icon: Sigma,
     zh: { title: '魔方与群', desc: '群论长文 62 节,100+ 互动可视化面板,KaTeX 渲染' },
     en: { title: 'Cube as a group', desc: '62-section group-theory essay, 100+ interactive visual panels, KaTeX-rendered' },
-  },
+      zhHant: { title: '魔方與群', desc: '群論長文 62 節,100+ 互動視覺化面板,KaTeX 渲染' }
+},
   {
     to: '/math/unit-distance',
     Icon: Ruler,
     zh: { title: '单位距离问题', desc: 'OpenAI 2026:AI 自主推翻 Erdős 1946 平面单位距离猜想,5 个互动可视化' },
     en: { title: 'Unit distance problem', desc: 'OpenAI 2026: AI autonomously disproves Erdős 1946 planar unit-distance conjecture — 5 interactive visualisations' },
-  },
+      zhHant: { title: '單位距離問題', desc: 'OpenAI 2026:AI 自主推翻 Erdős 1946 平面單位距離猜想,5 個互動視覺化' }
+},
 ];
 
 export default function MathLandingPage() {
@@ -63,8 +68,8 @@ export default function MathLandingPage() {
         {CARDS.map((c) => (
           <Link key={c.to} href={c.to} className="hub-card">
             <c.Icon size={28} />
-            <div className="hub-card-title">{((i18n.language.startsWith('zh') ? c.zh : c.en)).title}</div>
-            <div className="hub-card-desc">{((i18n.language.startsWith('zh') ? c.zh : c.en)).desc}</div>
+            <div className="hub-card-title">{((i18n.language === 'zh-Hant' ? (c.zhHant ?? c.zh) : (i18n.language.startsWith('zh') ? c.zh : c.en))).title}</div>
+            <div className="hub-card-desc">{((i18n.language === 'zh-Hant' ? (c.zhHant ?? c.zh) : (i18n.language.startsWith('zh') ? c.zh : c.en))).desc}</div>
           </Link>
         ))}
       </div>

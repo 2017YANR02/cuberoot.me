@@ -395,12 +395,12 @@ export default function ResourcesPage(): JSX.Element {
               {sec.icon}
               <h2>{(i18n.language === 'zh-Hant' ? (sec.zhHant ?? sec.zh) : (i18n.language.startsWith('zh') ? sec.zh : sec.en))}</h2>
             </div>
-            {(isZh ? sec.noteZh : sec.noteEn) && (
-              <p className="bld-res-section-note">{isZh ? sec.noteZh : sec.noteEn}</p>
+            {(i18n.language === 'zh-Hant' ? (sec.noteZhHant ?? sec.noteZh) : (isZh ? sec.noteZh : sec.noteEn)) && (
+              <p className="bld-res-section-note">{i18n.language === 'zh-Hant' ? (sec.noteZhHant ?? sec.noteZh) : (isZh ? sec.noteZh : sec.noteEn)}</p>
             )}
             <div className="bld-res-list">
               {sec.links.map((l) => {
-                const desc = isZh ? l.descZh : l.descEn;
+                const desc = i18n.language === 'zh-Hant' ? (l.descZhHant ?? l.descZh) : (isZh ? l.descZh : l.descEn);
                 return (
                   <a
                     key={l.href + l.en}

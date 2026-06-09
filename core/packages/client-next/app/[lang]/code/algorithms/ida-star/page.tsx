@@ -15,6 +15,7 @@ interface Section {
   num: string;
   zh: { title: ReactNode; body: ReactNode };
   en: { title: ReactNode; body: ReactNode };
+    zhHant?: { title: ReactNode; body: ReactNode };
 }
 
 const SECTIONS: Section[] = [
@@ -55,7 +56,24 @@ const SECTIONS: Section[] = [
         </>
       ),
     },
-  },
+      zhHant: {
+                title: <>BFS / A* 為何不夠</>,
+                body: (
+                  <>
+                    <p>
+                      魔方狀態空間 4.33×10¹⁹,直接 BFS 一遍跑完不現實。退而求其次,A* 加啟發式能砍掉大量搜尋樹枝,
+                      但 A* 的 OPEN/CLOSED 列表要駐在記憶體裡 —— 任意時刻活節點數 ≈ 解長度對應的"邊界球面",
+                      對 20 步左右的最短解,這個球面也得 10¹² 以上,顯然裝不下。
+                    </p>
+                    <p>
+                      <strong>IDA* (Iterative Deepening A*)</strong> 的破解辦法很樸素:用<strong>深度優先</strong>
+                      的方式跑 A*,不存 OPEN/CLOSED。空間從 O(b<sup>d</sup>) 退到 O(d),代價是同一棵子樹要重複展開
+                      log 多次。對魔方這種 b≈13、d≤20 的小深度高分支問題,這個 trade 極其划算。
+                    </p>
+                  </>
+                ),
+              }
+},
   {
     num: '02',
     zh: {
@@ -142,7 +160,48 @@ function search(node: State, path: Move[], g: number, bound: number): number {
         </>
       ),
     },
-  },
+      zhHant: {
+                title: <>核心迴圈 — 迭代加深</>,
+                body: (
+                  <>
+                    <p>
+                      IDA* 不預設深度,而是從一個<strong>初始閾值</strong> h(start) 出發,做受限 DFS:
+                      只展開滿足 g + h ≤ <code>bound</code> 的節點。如果當前 bound 沒找到解,
+                      把 bound 抬高到 DFS 期間遇到的"最小溢位 f 值",再來一遍。每輪搜尋空間嚴格變大,直到找到解為止。
+                    </p>
+                    <pre className="algo-code">{`function idaStar(start: State): Move[] | null {
+  let bound = h(start);
+  while (true) {
+    const t = search(start, [], 0, bound);
+    if (t === FOUND) return solution;
+    if (t === Infinity) return null;   // 無解
+    bound = t;                          // 下一輪門檻 = 這輪最小溢位 f
+  }
+}
+
+function search(node: State, path: Move[], g: number, bound: number): number {
+  const f = g + h(node);
+  if (f > bound) return f;              // 剪掉:下一輪再考慮
+  if (isGoal(node)) { solution = path; return FOUND; }
+  let min = Infinity;
+  for (const m of moves(node, path)) {  // 含 move pruning
+    const child = apply(node, m);
+    path.push(m);
+    const t = search(child, path, g + 1, bound);
+    if (t === FOUND) return FOUND;
+    if (t < min) min = t;
+    path.pop();
+  }
+  return min;
+}`}</pre>
+                    <p>
+                      兩個不變數保證正確性:(1) 每輪 DFS 找出的解必然 ≤ bound;(2) bound 單調遞增。
+                      只要 h 是 admissible 的 (≤ 真實距離),IDA* 找到的就是最優解。
+                    </p>
+                  </>
+                ),
+              }
+},
   {
     num: '03',
     zh: {
@@ -195,7 +254,32 @@ function search(node: State, path: Move[], g: number, bound: number): number {
         </>
       ),
     },
-  },
+      zhHant: {
+                title: <>啟發式 — admissible & consistent</>,
+                body: (
+                  <>
+                    <p>
+                      搜尋質量完全取決於啟發式 h。兩個性質要分清楚:
+                    </p>
+                    <ul>
+                      <li><strong>Admissible (可接受)</strong>:h(n) ≤ d*(n),即估計永不高估。這是最優性保證的底線。</li>
+                      <li><strong>Consistent (一致 / 單調)</strong>:對任意鄰居 n', h(n) ≤ 1 + h(n'),即三角不等式。
+                        更強的條件,在 A* 裡允許 CLOSED 不重開;在 IDA* 裡允許跳過對 g + h 的某些重判。</li>
+                    </ul>
+                    <p>
+                      魔方語境下,所有"距離到 solved 的下界估計"都自動 admissible。常見構造:
+                      統計某個<strong>子狀態</strong>(部分塊或部分座標)到歸位的真實最短步數,
+                      預計算成查表 —— 這就是<strong>剪枝表 / 模式資料庫 (Pattern Database)</strong>。
+                    </p>
+                    <p>
+                      子狀態選得越大,h 越緊 (越接近真實距離),剪枝越狠;但表也越大。
+                      實踐上是幾張<strong>互不相交</strong>的小表取 <code>max</code> —— 仍然 admissible,
+                      又用了組合下界。
+                    </p>
+                  </>
+                ),
+              }
+},
   {
     num: '04',
     zh: {
@@ -241,7 +325,28 @@ function search(node: State, path: Move[], g: number, bound: number): number {
         </>
       ),
     },
-  },
+      zhHant: {
+                title: <>剪枝表 — Pattern Database</>,
+                body: (
+                  <>
+                    <p>
+                      把"子狀態 s → 到歸位最短距離"做成一張陣列 <code>prune[s]</code>,
+                      搜尋時 O(1) 查表。這是 IDA* 在魔方上的靈魂。
+                    </p>
+                    <p>
+                      Kociemba phase 1 的典型構造:取 (corner-orient, UD-slice) 這個二元子狀態,
+                      空間 = 3⁷ × C(12,4) = 2187 × 495 = 1,082,565。每個值存一個距離整數,1MB 量級。
+                      phase 1 的 IDA* 就用 <code>max(corner_prune, edge_prune, slice_prune)</code> 當 h。
+                    </p>
+                    <p>
+                      自研的 CFOP std solver 走更激進的路線:每個 CFOP 階段都有自己的剪枝表,
+                      而且 F2L 多槽位<strong>共用</strong>一份表(透過共軛變換把 4 個槽位對映到同一個標準槽位 —— 詳見
+                      <Link href="/code/algorithms/cfop-std-solver">CFOP 多階段求解器</Link>)。
+                    </p>
+                  </>
+                ),
+              }
+},
   {
     num: '05',
     zh: {
@@ -297,7 +402,33 @@ function setPacked(idx: number, val: number): void {
         </>
       ),
     },
-  },
+      zhHant: {
+                title: <>4-bit 緊湊儲存</>,
+                body: (
+                  <>
+                    <p>
+                      剪枝表的距離值通常 ≤ 14 (魔方各子狀態的"直徑"都不大),所以單個 entry 4 bit 就夠。
+                      把兩個 entry 塞進一位元組,表的體積直接砍半。
+                    </p>
+                    <pre className="algo-code">{`function packed(idx: number): number {
+  const byte = table[idx >>> 1];
+  return (idx & 1) ? (byte & 0x0F) : (byte >>> 4);
+}
+
+function setPacked(idx: number, val: number): void {
+  const i = idx >>> 1;
+  if (idx & 1) table[i] = (table[i] & 0xF0) | (val & 0x0F);
+  else         table[i] = (table[i] & 0x0F) | ((val & 0x0F) << 4);
+}`}</pre>
+                    <p>
+                      上限 14 也很少卡到 —— 真正塞不下時還有更省的"<strong>距離 mod 3</strong>"trick:
+                      只存 (d mod 3) 用 2 bit,搜尋時用鄰居反推真實距離(d(n) = d(n') ± 1,
+                      知道 mod 3 就能定唯一)。能把表再砍半,但訪存邏輯稍麻煩。
+                    </p>
+                  </>
+                ),
+              }
+},
   {
     num: '06',
     zh: {
@@ -371,7 +502,42 @@ function setPacked(idx: number, val: number): void {
         </>
       ),
     },
-  },
+      zhHant: {
+                title: <>逆向 BFS 填表</>,
+                body: (
+                  <>
+                    <p>
+                      剪枝表的"距離值"必須是真實最短距離。直接從每個 state 跑 BFS 太慢 (N 次 BFS, N 是表大小)。
+                      標準做法:<strong>一次</strong> BFS,從<strong>歸位狀態出發,反向</strong>展開,逐層標距離。
+                      對每個未標記的鄰居寫入 d = 當前層 + 1,直到全部 entry 都被覆蓋。
+                    </p>
+                    <pre className="algo-code">{`function buildPruneTable(N: number): Uint8Array {
+  const table = new Uint8Array(N).fill(0xFF);
+  table[encode(SOLVED)] = 0;
+  let depth = 0, filled = 1;
+  while (filled < N) {
+    for (let s = 0; s < N; s++) {
+      if (table[s] !== depth) continue;
+      for (const m of MOVES) {
+        const t = encode(apply(decode(s), m));
+        if (table[t] === 0xFF) {
+          table[t] = depth + 1;
+          filled++;
+        }
+      }
+    }
+    depth++;
+  }
+  return table;
+}`}</pre>
+                    <p>
+                      注意是從 solved 出發,因為<strong>所有轉動都是雙射可逆</strong>,正向距離 = 反向距離。
+                      實際工程裡上面的迴圈不會真的 O(N²) 掃每層,會用一個 frontier 陣列按層推進。
+                    </p>
+                  </>
+                ),
+              }
+},
   {
     num: '07',
     zh: {
@@ -414,7 +580,28 @@ function setPacked(idx: number, val: number): void {
         </>
       ),
     },
-  },
+      zhHant: {
+                title: <>移動剪枝 (Move pruning)</>,
+                body: (
+                  <>
+                    <p>
+                      實際分支因子遠小於 18。兩條規則就能把它壓到 ~13:
+                    </p>
+                    <ul>
+                      <li><strong>同面不連續</strong>:剛轉過 U,就別再轉 U / U' / U²。這一面所有可能結果已經包括在上一步,
+                        連續轉就是繞彎路。</li>
+                      <li><strong>同軸反序</strong>:U 和 D 互不影響(轉的是不同面),
+                        連續轉 U-D 跟連續轉 D-U 等價。規定一個固定序就夠,反過來直接剪掉。</li>
+                    </ul>
+                    <p>
+                      實現上,在 <code>moves(node, path)</code> 裡看上一步是什麼面,過濾掉衝突候選。
+                      分支因子從 18 砍到大約 13.34,看著不多,但 <code>13<sup>20</sup> / 18<sup>20</sup></code>
+                      差出 10⁵ 倍。
+                    </p>
+                  </>
+                ),
+              }
+},
   {
     num: '08',
     zh: {
@@ -457,7 +644,26 @@ function setPacked(idx: number, val: number): void {
         </>
       ),
     },
-  },
+      zhHant: {
+                title: <>對稱歸一化</>,
+                body: (
+                  <>
+                    <p>
+                      魔方有 48 個對稱(24 個旋轉 × 2 個映象)。某個狀態 s 和它的 48 個對稱像 σ(s) 解長相同,
+                      剪枝表完全可以只存"等價類代表"。表大小直接除以 ~48(實際去掉 stabilizer 後是 16 左右)。
+                    </p>
+                    <p>
+                      min2phase 把這種"對稱壓縮"做到了極致 —— Huge prune (CornUDSliceFlip / CornEdg)
+                      沒有對稱壓縮根本裝不進記憶體。代價是查表時需要先做"對稱歸一化": 把當前 cube 狀態對映到
+                      canonical 形態,再查表。
+                    </p>
+                    <p>
+                      想看完整對稱壓縮實現 → <Link href="/code/algorithms/min2phase">min2phase</Link>。
+                    </p>
+                  </>
+                ),
+              }
+},
   {
     num: '09',
     zh: {
@@ -522,7 +728,53 @@ function setPacked(idx: number, val: number): void {
         </>
       ),
     },
-  },
+      zhHant: {
+                title: <>效能直覺</>,
+                body: (
+                  <>
+                    <p>
+                      一次 IDA* 求解的耗時大致由三個因素決定:
+                    </p>
+                    <ul>
+                      <li><strong>h 的緊度</strong> — h 越接近 d*,剪枝越早。緊度從 0.5 提到 0.8 通常帶來 10× 速度。</li>
+                      <li><strong>分支因子</strong> — 同 d,b 從 18 降到 13 是 (13/18)<sup>d</sup> 的成本壓縮。</li>
+                      <li><strong>表訪問區域性性</strong> — 剪枝表頻繁訪問,裝下到 L2 cache 比 L3 快幾倍。
+                        這是為什麼 4-bit pack / mod-3 trick 不只是省空間,也是提速。</li>
+                    </ul>
+                    <table className="algo-table">
+                      <thead>
+                        <tr>
+                          <th><L zh="應用" en="Application" /></th>
+                          <th><L zh="剪枝表" en="Prune tables" /></th>
+                          <th className="num"><L zh="典型耗時" en="Typical cost" /></th>
+                          <th><L zh="連結" en="Page" /></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>Kociemba phase 1</td>
+                          <td><L zh="CO × UDslice / EO × UDslice (~1MB 每張)" en="CO×UDslice / EO×UDslice (~1MB each)" /></td>
+                          <td className="num">~10ms</td>
+                          <td><Link href="/code/algorithms/kociemba">Kociemba</Link></td>
+                        </tr>
+                        <tr>
+                          <td>min2phase</td>
+                          <td><L zh="Huge sym-compressed (~30MB)" en="Huge sym-compressed (~30MB)" /></td>
+                          <td className="num"><L zh="< 5ms 平均" en="< 5ms avg" /></td>
+                          <td><Link href="/code/algorithms/min2phase">min2phase</Link></td>
+                        </tr>
+                        <tr>
+                          <td><L zh="CFOP std solver / 單階段" en="CFOP std solver / per stage" /></td>
+                          <td><L zh="F2L 槽共用 (Lehmer + 共軛)" en="F2L slot-shared (Lehmer + conjugation)" /></td>
+                          <td className="num">~1–50ms</td>
+                          <td><Link href="/code/algorithms/cfop-std-solver">CFOP std</Link></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </>
+                ),
+              }
+},
   {
     num: '10',
     zh: {
@@ -566,7 +818,28 @@ function setPacked(idx: number, val: number): void {
         </>
       ),
     },
-  },
+      zhHant: {
+                title: <>本站三處用到 IDA*</>,
+                body: (
+                  <>
+                    <p>
+                      CubeRoot 站內三類求解器都建在 IDA* 之上:
+                    </p>
+                    <ol>
+                      <li><Link href="/code/algorithms/kociemba">Kociemba 二階段</Link> — phase 1 / phase 2 各自一次 IDA*,
+                        三張子狀態剪枝表取 max 當 h。</li>
+                      <li><Link href="/code/algorithms/min2phase">min2phase</Link> — phase 1 和 phase 2 交錯搜尋,
+                        對稱壓縮的 huge prune 當 h,幾毫秒出解。</li>
+                      <li><Link href="/code/algorithms/cfop-std-solver">CFOP std solver</Link> — 5 個 CFOP 階段
+                        各跑一次 IDA*,F2L 槽位用共軛變換共用剪枝表,5 階段間下界傳播。</li>
+                    </ol>
+                    <p>
+                      模板都一樣,差別在<strong>用什麼子狀態做剪枝表 / 怎麼壓縮這張表 / 階段怎麼銜接</strong>。
+                    </p>
+                  </>
+                ),
+              }
+},
 ];
 
 export default function IdaStarPage() {
@@ -610,7 +883,7 @@ export default function IdaStarPage() {
           </div>
 
           {SECTIONS.map((s) => {
-            const t = (i18n.language.startsWith('zh') ? s.zh : s.en);
+            const t = (i18n.language === 'zh-Hant' ? (s.zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en));
             return (
               <section key={s.num} className="algo-section">
                 <div className="algo-section-head">

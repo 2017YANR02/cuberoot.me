@@ -114,7 +114,8 @@ WHERE round_type_id IN ('c', 'f') AND pos > 3;`,
     },
   ],
     titleZhHant: "最佳非領獎臺成績 — 離獎牌最近的眼淚",
-    badgeZhHant: "榮譽"
+    badgeZhHant: "榮譽",
+    edgesZhHant: ["只看決賽 (`round_type c / f`) —— 預賽 / 半決裡第 4 名不算,即使時間很快也無視。", "`pos > 3` 是 WCA 官方給的名次,平局並列規則已包含在內(並列第 3 仍然算第 3,不算\"非領獎臺\")。", "DNF 主成績(`value = -1`)排序時被推到最末,所以不會汙染榜單(`SolveTime` 類負責)。", "`sub_id = 1` 過濾改名 / 換國籍生成的副 person 行,避免重複。"]
 };
 
 // ──── complete_competition_winners ───────────────────────────────────────
@@ -237,7 +238,8 @@ ORDER BY events_count DESC, person.name;`,
     },
   ],
     titleZhHant: "完全比賽冠軍 — 包圓一場賽事",
-    badgeZhHant: "榮譽"
+    badgeZhHant: "榮譽",
+    edgesZhHant: ["`best > 0` 排除 DNF —— 即使你\"獲得\"了第一名而成績是 DNF,這條記錄被過濾(很少見但理論可能,比如全員 DNF 時按 best 順序仍有 pos = 1)。", "`round_type_id IN ('c', 'f')` 只看最終輪,避免預賽\"區域性第一\"誤判。", "沒有項目數下限,N = 1 的\"獨項目比賽\"也會被包含(理論上單項目賽拿冠軍就算包圓)。表頭按 N 倒排,這些天然沉底。", "`sub_id = 1` 讓某選手換國籍後,只用主行匹配,不重複出現。"]
 };
 
 // ──── most_4th_places ────────────────────────────────────────────────────
@@ -360,7 +362,8 @@ ORDER BY 4th_places_count DESC;`,
         hintZhHant: "看 top 100 完整名單"
     },
   ],
-    badgeZhHant: "榮譽"
+    badgeZhHant: "榮譽",
+    edgesZhHant: ["只看決賽 —— 預賽 / 半決出第 4 名不算(WCA 早期偶有\"奇數輪\"也透過 final flag 涵蓋)。", "`best > 0` 關鍵 —— 決賽 DNF 時 pos 仍按提交順序填到 4,這條會被過濾掉,以免\"運氣 4th\"灌水。", "所有項目混在一起 cumulatively 累計,不分單 / 平均 —— 一個 3x3 單 4 + 一個 333bf 4 = 2。", "LIMIT 100 是渲染體面值,真實 4 次的人遠不止 100;長尾不可見。"]
 };
 
 // ──── most_competitions_before_winning ───────────────────────────────────
@@ -488,7 +491,8 @@ ORDER BY start_date;`,
     },
   ],
     titleZhHant: "首次獲勝前參加最多比賽 — 漫長的等待",
-    badgeZhHant: "榮譽"
+    badgeZhHant: "榮譽",
+    edgesZhHant: ["沒在該項目裡贏過的人會被 `findIndex` 返回 -1,直接跳過 —— 這是設計:我們要的是\"贏了之後回頭數等了多久\",還沒贏的沒法算。", "`is_final === 1 AND place === 1 AND best > 0` 三條必須同時成立,純 DNF 決賽的\"幽靈冠軍\"被濾掉。", "\"參加了該項目的比賽\"用 `eventRows.filter(r => event_id === eventId)` 隱式定義 —— 不在該項目上場的比賽不計入等待長度。", "sub_id = 1 + 一個選手即使換 wca_id 也只看主行,etc.(若 wca_id 真換了則視為兩個人 — WCA 極少改 wca_id)。"]
 };
 
 // ──── most_finals ────────────────────────────────────────────────────────
@@ -609,7 +613,8 @@ ORDER BY finals_count DESC;`,
     },
   ],
     titleZhHant: "進入決賽最多 — 長青指標",
-    badgeZhHant: "榮譽"
+    badgeZhHant: "榮譽",
+    edgesZhHant: ["不過濾 `best > 0` —— DNF 決賽也算一次出場。因為這條 stat 數的是\"進決賽的事件\",不是\"贏決賽\"。", "所有項目混合 —— 跑 17 個項目的 generalist 會自然佔便宜;single-event 選手再強也無法靠一個項目擠進前 100。", "LIMIT 100 是渲染體面值,長尾不可見。", "`sub_id = 1` 合併改名 / 換籍生成的副 person 行。"]
 };
 
 // ──── most_podiums_at_single_competition ─────────────────────────────────
@@ -739,7 +744,8 @@ JOIN competitions competition ON competition.id = competition_id;`,
     },
   ],
     titleZhHant: "單場比賽登臺最多 — 一站收割",
-    badgeZhHant: "榮譽"
+    badgeZhHant: "榮譽",
+    edgesZhHant: ["`best > 0` 排除 DNF —— pos 仍能是 1 / 2 / 3 但成績是 DNF 的\"虛擬領獎\"會被濾掉(`SolveTime` value = -1 表示 DNF)。", "只看決賽,不看預賽 —— 例如 WC 那種多輪比賽只算最後一輪的名次。", "不分項目地累計 —— 一個人在 333 拿 3 + 444 拿 3 + ... 可以快速堆到 ≥ 10。", "`HAVING podiums_count >= 10` 是硬截斷,9 塊獎牌的\"差一點\"不可見。"]
 };
 
 // ──── most_podiums_together ──────────────────────────────────────────────
@@ -877,7 +883,8 @@ GROUP BY event_id, competition_id;`,
     },
   ],
     titleZhHant: "最多共同登臺次數 — 對子與三人組",
-    badgeZhHant: "榮譽"
+    badgeZhHant: "榮譽",
+    edgesZhHant: ["只看決賽 + `pos <= 3` + `best > 0` —— DNF 不算\"登臺\",虛擬同臺被排除。", "`sub_id = 1` 讓改名 / 換籍後的副 person 行不汙染。一個換過國籍的選手仍按同一個人累計。", "平局並列第 3 時 podium 可能有 4 人,所有 C(4, 2) = 6 對都計入 —— 這就是為啥某些\"低水平區域大賽\"對子頻次格外高。", "GROUP_CONCAT 預設有長度上限(MySQL 1024 位元組);WCA 單領獎臺通常 3 - 5 人,遠不超,實際安全。"]
 };
 
 // ──── worst_result_on_podium ─────────────────────────────────────────────
@@ -998,7 +1005,8 @@ WHERE round_type_id IN ('c', 'f') AND pos <= 3;`,
     },
   ],
     titleZhHant: "領獎臺最差成績 — 也能拿獎",
-    badgeZhHant: "榮譽"
+    badgeZhHant: "榮譽",
+    edgesZhHant: ["排除主成績 DNF / DNS —— 否則一堆\"DNF 拿獎\"會佔滿表(全場翻車時 pos 仍是 1)。次成績可以是 DNF。", "`pos <= 3` 用的是 WCA 官方名次,平局並列已包含 —— 並列第 3 也能進表。", "`sub_id = 1` 濾副 person 行。", "按項目分組所以\"333 拿亞軍 30 秒\"和\"333mbld 拿亞軍 99/99\"不可比 —— 看的是每個項目自己的地板。"]
 };
 
 export const PODIUMS_ABOUT: Record<string, AboutEntry> = {

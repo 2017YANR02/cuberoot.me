@@ -5,13 +5,27 @@
 // God's number 演化 + 距离分布
 // ──────────────────────────────────────────────────────────
 
-export const GODS_NUMBER_HISTORY: Array<{ year: number; bound_htm: number; who: string; note_en: string; note_zh: string }> = [
-  { year: 1981, bound_htm: 52, who: 'Morwen Thistlethwaite', note_en: 'four-stage group reduction', note_zh: '四阶段群约简' },
-  { year: 1990, bound_htm: 42, who: 'Hans Kloosterman', note_en: 'improved cosets', note_zh: '改进余类' },
-  { year: 1995, bound_htm: 29, who: 'Michael Reid', note_en: 'pruning tables', note_zh: '剪枝表' },
-  { year: 2007, bound_htm: 26, who: 'Kunkle & Cooperman', note_en: 'parallel coset search', note_zh: '并行余类搜索' },
-  { year: 2008, bound_htm: 22, who: 'Tomas Rokicki', note_en: 'symmetry reduction', note_zh: '对称约简' },
-  { year: 2010, bound_htm: 20, who: 'Rokicki / Kociemba / Davidson / Dethridge', note_en: '~35 CPU-years on donated Google compute (proven optimal)', note_zh: '~35 CPU-年的 Google 算力 (proven optimal)' },
+export const GODS_NUMBER_HISTORY: Array<{ year: number; bound_htm: number; who: string; note_en: string; note_zh: string
+        note_zhHant?: string;
+ }> = [
+  { year: 1981, bound_htm: 52, who: 'Morwen Thistlethwaite', note_en: 'four-stage group reduction', note_zh: '四阶段群约简',
+      note_zhHant: '四階段群約簡'
+},
+  { year: 1990, bound_htm: 42, who: 'Hans Kloosterman', note_en: 'improved cosets', note_zh: '改进余类',
+      note_zhHant: '改進餘類'
+},
+  { year: 1995, bound_htm: 29, who: 'Michael Reid', note_en: 'pruning tables', note_zh: '剪枝表',
+      note_zhHant: '剪枝表'
+},
+  { year: 2007, bound_htm: 26, who: 'Kunkle & Cooperman', note_en: 'parallel coset search', note_zh: '并行余类搜索',
+      note_zhHant: '並行餘類搜尋'
+},
+  { year: 2008, bound_htm: 22, who: 'Tomas Rokicki', note_en: 'symmetry reduction', note_zh: '对称约简',
+      note_zhHant: '對稱約簡'
+},
+  { year: 2010, bound_htm: 20, who: 'Rokicki / Kociemba / Davidson / Dethridge', note_en: '~35 CPU-years on donated Google compute (proven optimal)', note_zh: '~35 CPU-年的 Google 算力 (proven optimal)',
+      note_zhHant: '~35 CPU-年的 Google 算力 (proven optimal)'
+},
 ];
 
 /** Distribution of optimal HTM depth for uniformly random 3x3 scrambles.

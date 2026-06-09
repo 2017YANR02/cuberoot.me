@@ -107,4 +107,5 @@ export interface AboutEntry {
   related?: AboutRelated[];
     titleZhHant?: string;
     badgeZhHant?: string;
+    edgesZhHant?: string[];
 }
