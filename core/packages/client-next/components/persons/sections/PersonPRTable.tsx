@@ -174,7 +174,7 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
               );
             })}
           </tbody>
-          <PersonSorSummary wcaId={profile.person.wca_id} isZh={isZh} showPodium={showPodium} countryIso2={profile.person.country_iso2} />
+          <PersonSorSummary wcaId={profile.person.wca_id} isZh={isZh} showPodium={showPodium} countryIso2={profile.person.country_iso2} historical={mode === 'historical'} />
         </table>
       </div>
     </section>
@@ -183,10 +183,10 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
 
 // 全项目名次和(Sum of Ranks)摘要 — PR 表底部附加 tbody,三个独立指标各一行:
 //   SoWR = Σ世界名次(按世界排) / SoCR = Σ洲际名次(按本洲排) / SoNR = Σ国家名次(按本国排).
-//   每行 单次 / 平均 各显示「和值 + 该 scope 名次」+ 历史最佳小字.
-//   SoCR 数据未填充(socr=null)时该行显示占位(— 本洲名 —),不误显.
-// 数据 lazy fetch;整块无数据时不渲染,不破坏页面.
-function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2 }: { wcaId: string; isZh: boolean; showPodium: boolean; countryIso2: string }) {
+//   名次落各自 scope 列(与逐项名次对齐),Σ和值落「成绩」列.
+//   跟随表头「当前 / 历史最佳排名」toggle:historical=true 时整块显示历史最佳(名次 + 年份),否则显示当前.
+//   SoCR 数据未填充(socr=null)时该行显示占位 —,不误显.数据 lazy fetch;整块无数据时不渲染.
+function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical }: { wcaId: string; isZh: boolean; showPodium: boolean; countryIso2: string; historical: boolean }) {
   const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const [sor, setSor] = useState<PersonSorResponse | null>(null);
 
@@ -205,7 +205,12 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2 }: { wcaId: str
   const cont = CONTINENT_NAME[sor.continentId];
   const continentLabel = cont ? t(cont.zh, cont.en, cont.zhHant) : t('本洲', 'Continent', '本洲');
   const countryLabel = countryIso2 ? countryName(countryIso2, isZh) : t('本国', 'Country', '本國');
-  const yy = (year: number) => `'${String(year).padStart(4, '0').slice(2)}`;
+  // 当前 / 历史最佳 按表头 toggle 二选一:historical → 取该指标历史最佳(含年份),否则取当前.
+  type Disp = { rank: number; total: number | null; year?: number };
+  const pick = (cur: SorMetricCell | null | undefined, best: SorMetricBest | null | undefined): Disp | null =>
+    historical
+      ? (best && best.rank > 0 ? { rank: best.rank, total: best.total, year: best.year } : null)
+      : (cur ? { rank: cur.rank, total: cur.total } : null);
 
   // 指标行标签后缀挂该 scope 的具体地名(洲/国),让「在哪排名」一目了然;名次本身落对齐列.
   const METRICS: { key: 'sowr' | 'socr' | 'sonr'; abbr: string; label: string }[] = [
@@ -216,20 +221,19 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2 }: { wcaId: str
   const scopeCol = (key: 'sowr' | 'socr' | 'sonr') => key === 'sowr' ? 'world' : key === 'socr' ? 'continent' : 'country';
 
   // 名次格:只在该指标对应的 scope 列填名次(SoWR→世界 / SoCR→洲际 / SoNR→地区),与上方逐项名次同列对齐;其余列空.
-  const rankTd = (col: 'world' | 'continent' | 'country', key: 'sowr' | 'socr' | 'sonr', cur: SorMetricCell | null | undefined, best: SorMetricBest | null | undefined) => {
+  const rankTd = (col: 'world' | 'continent' | 'country', key: 'sowr' | 'socr' | 'sonr', d: Disp | null) => {
     if (scopeCol(key) !== col) return <td className="wp-sor-blank" />;
     return (
       <td className="wp-sor-rcell">
-        {cur ? <RankCell r={cur.rank} /> : <span className="wp-rank wp-rank-tier-mute">—</span>}
-        {best && best.rank > 0 && <span className="wp-sor-best-rk">{t('历', 'best', '歷')} #{best.rank}{best.year ? ` ${yy(best.year)}` : ''}</span>}
+        {d ? <RankCell r={d.rank} /> : <span className="wp-rank wp-rank-tier-mute">—</span>}
       </td>
     );
   };
-  // 和值格(落「成绩」列,与逐项成绩同列):Σ 值 + 历史最佳和值小字.
-  const sumTd = (cur: SorMetricCell | null | undefined, best: SorMetricBest | null | undefined) => (
+  // 和值格(落「成绩」列,与逐项成绩同列):Σ 值;历史模式下附达到该最佳名次的年份小字.
+  const sumTd = (d: Disp | null) => (
     <td className="wp-cell-result wp-sor-scell">
-      {cur ? <span className="wp-sor-sum">{cur.total}</span> : <span className="wp-sor-smute">—</span>}
-      {best && best.total != null && <span className="wp-sor-best-sum">{best.total}</span>}
+      {d && d.total != null ? <span className="wp-sor-sum">{d.total}</span> : <span className="wp-sor-smute">—</span>}
+      {historical && d?.year ? <span className="wp-sor-best-sum">{d.year}</span> : null}
     </td>
   );
 
@@ -246,22 +250,22 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2 }: { wcaId: str
         </th>
       </tr>
       {METRICS.map((m) => {
-        const sCur = sor.single?.[m.key]; const aCur = sor.average?.[m.key];
-        const sBest = sor.bestSingle?.[m.key]; const aBest = sor.bestAverage?.[m.key];
+        const s = pick(sor.single?.[m.key], sor.bestSingle?.[m.key]);
+        const a = pick(sor.average?.[m.key], sor.bestAverage?.[m.key]);
         return (
           <tr key={m.key} className="wp-sor-row">
             <th scope="row" className="wp-cell-event wp-sor-rowlabel">
               <span className="wp-sor-abbr">{m.abbr}</span>
               <span className="wp-sor-mlabel">{m.label}</span>
             </th>
-            {rankTd('world', m.key, sCur, sBest)}
-            {rankTd('continent', m.key, sCur, sBest)}
-            {rankTd('country', m.key, sCur, sBest)}
-            {sumTd(sCur, sBest)}
-            {sumTd(aCur, aBest)}
-            {rankTd('world', m.key, aCur, aBest)}
-            {rankTd('continent', m.key, aCur, aBest)}
-            {rankTd('country', m.key, aCur, aBest)}
+            {rankTd('world', m.key, s)}
+            {rankTd('continent', m.key, s)}
+            {rankTd('country', m.key, s)}
+            {sumTd(s)}
+            {sumTd(a)}
+            {rankTd('world', m.key, a)}
+            {rankTd('continent', m.key, a)}
+            {rankTd('country', m.key, a)}
             {showPodium && <><td className="wp-sor-blank" /><td className="wp-sor-blank" /><td className="wp-sor-blank" /></>}
           </tr>
         );
