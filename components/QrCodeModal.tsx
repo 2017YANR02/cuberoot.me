@@ -73,6 +73,7 @@ export function QrCodeModal({
   }, [orderId, router]);
 
   const close = () => {
+    // allow-button-nav: 关闭支付二维码弹窗(模态 dismiss 动作),replace 去掉 ?pay= query,非链接跳转
     router.replace(closeHref);
   };
 
