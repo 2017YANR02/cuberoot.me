@@ -207,22 +207,29 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2 }: { wcaId: str
   const countryLabel = countryIso2 ? countryName(countryIso2, isZh) : t('本国', 'Country', '本國');
   const yy = (year: number) => `'${String(year).padStart(4, '0').slice(2)}`;
 
-  const METRICS: { key: 'sowr' | 'socr' | 'sonr'; abbr: string; label: string; scope: string }[] = [
-    { key: 'sowr', abbr: 'SoWR', label: t('世界名次和', 'Sum of World Ranks', '世界名次和'), scope: t('世界', 'World', '世界') },
-    { key: 'socr', abbr: 'SoCR', label: t('洲际名次和', 'Sum of Continent Ranks', '洲際名次和'), scope: continentLabel },
-    { key: 'sonr', abbr: 'SoNR', label: t('国家名次和', 'Sum of National Ranks', '國家名次和'), scope: countryLabel },
+  // 指标行标签后缀挂该 scope 的具体地名(洲/国),让「在哪排名」一目了然;名次本身落对齐列.
+  const METRICS: { key: 'sowr' | 'socr' | 'sonr'; abbr: string; label: string }[] = [
+    { key: 'sowr', abbr: 'SoWR', label: t('世界名次和', 'Sum of World Ranks', '世界名次和') },
+    { key: 'socr', abbr: 'SoCR', label: t('洲际名次和', 'Sum of Continent Ranks', '洲際名次和') + (cont ? ` · ${continentLabel}` : '') },
+    { key: 'sonr', abbr: 'SoNR', label: t('国家名次和', 'Sum of National Ranks', '國家名次和') + (countryIso2 ? ` · ${countryLabel}` : '') },
   ];
+  const scopeCol = (key: 'sowr' | 'socr' | 'sonr') => key === 'sowr' ? 'world' : key === 'socr' ? 'continent' : 'country';
 
-  // 一格(单次或平均):当前「和值 + scope名次」+ 历史最佳小字;无当前数据则占位「— scope —」.
-  const metricCell = (cur: SorMetricCell | null | undefined, best: SorMetricBest | null | undefined, scope: string) => (
-    <td colSpan={4} className="wp-sor-mcell">
-      <span className="wp-sor-cur">
-        <span className="wp-sor-sum">{cur ? cur.total : '—'}</span>
-        <span className="wp-sor-rk">{scope}{cur ? <RankCell r={cur.rank} /> : <span className="wp-rank wp-rank-tier-mute">—</span>}</span>
-      </span>
-      {best && best.rank > 0 && (
-        <span className="wp-sor-best">{t('历史', 'best', '歷史')} {best.total ?? '—'} #{best.rank}{best.year ? ` ${yy(best.year)}` : ''}</span>
-      )}
+  // 名次格:只在该指标对应的 scope 列填名次(SoWR→世界 / SoCR→洲际 / SoNR→地区),与上方逐项名次同列对齐;其余列空.
+  const rankTd = (col: 'world' | 'continent' | 'country', key: 'sowr' | 'socr' | 'sonr', cur: SorMetricCell | null | undefined, best: SorMetricBest | null | undefined) => {
+    if (scopeCol(key) !== col) return <td className="wp-sor-blank" />;
+    return (
+      <td className="wp-sor-rcell">
+        {cur ? <RankCell r={cur.rank} /> : <span className="wp-rank wp-rank-tier-mute">—</span>}
+        {best && best.rank > 0 && <span className="wp-sor-best-rk">{t('历', 'best', '歷')} #{best.rank}{best.year ? ` ${yy(best.year)}` : ''}</span>}
+      </td>
+    );
+  };
+  // 和值格(落「成绩」列,与逐项成绩同列):Σ 值 + 历史最佳和值小字.
+  const sumTd = (cur: SorMetricCell | null | undefined, best: SorMetricBest | null | undefined) => (
+    <td className="wp-cell-result wp-sor-scell">
+      {cur ? <span className="wp-sor-sum">{cur.total}</span> : <span className="wp-sor-smute">—</span>}
+      {best && best.total != null && <span className="wp-sor-best-sum">{best.total}</span>}
     </td>
   );
 
@@ -238,17 +245,27 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2 }: { wcaId: str
           <span className="wp-sor-scope">{t('现役 17 项', '17 events', '現役 17 項')}</span>
         </th>
       </tr>
-      {METRICS.map((m) => (
-        <tr key={m.key} className="wp-sor-row">
-          <th scope="row" className="wp-cell-event wp-sor-rowlabel">
-            <span className="wp-sor-abbr">{m.abbr}</span>
-            <span className="wp-sor-mlabel">{m.label}</span>
-          </th>
-          {metricCell(sor.single?.[m.key], sor.bestSingle?.[m.key], m.scope)}
-          {metricCell(sor.average?.[m.key], sor.bestAverage?.[m.key], m.scope)}
-          {showPodium && <td className="wp-sor-blank" colSpan={3} />}
-        </tr>
-      ))}
+      {METRICS.map((m) => {
+        const sCur = sor.single?.[m.key]; const aCur = sor.average?.[m.key];
+        const sBest = sor.bestSingle?.[m.key]; const aBest = sor.bestAverage?.[m.key];
+        return (
+          <tr key={m.key} className="wp-sor-row">
+            <th scope="row" className="wp-cell-event wp-sor-rowlabel">
+              <span className="wp-sor-abbr">{m.abbr}</span>
+              <span className="wp-sor-mlabel">{m.label}</span>
+            </th>
+            {rankTd('world', m.key, sCur, sBest)}
+            {rankTd('continent', m.key, sCur, sBest)}
+            {rankTd('country', m.key, sCur, sBest)}
+            {sumTd(sCur, sBest)}
+            {sumTd(aCur, aBest)}
+            {rankTd('world', m.key, aCur, aBest)}
+            {rankTd('continent', m.key, aCur, aBest)}
+            {rankTd('country', m.key, aCur, aBest)}
+            {showPodium && <><td className="wp-sor-blank" /><td className="wp-sor-blank" /><td className="wp-sor-blank" /></>}
+          </tr>
+        );
+      })}
     </tbody>
   );
 }
