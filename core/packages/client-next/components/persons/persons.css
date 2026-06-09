@@ -321,52 +321,38 @@ html[data-theme=dark] .wp-page {
 .wp-cell-podium-n { font-variant-numeric: tabular-nums; text-align: right; color: var(--wp-text); }
 .wp-podium-zero { color: var(--wp-text-mute); }
 
-/* ── 全项目排名 (Sum of Ranks) 摘要 — PR 卡片末尾 ─────────────────── */
-.wp-sor {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--wp-border);
-}
-.wp-sor-head {
-    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
-    margin-bottom: 8px;
+/* ── 全项目排名 (Σ Sum of Ranks) — PR 表内附加行,列与上方对齐 ──────── */
+/* 区段标题行:Σ 链接 + 口径,跨全表左对齐,顶部加粗分隔 */
+.wp-sor-section th {
+    text-align: left !important;
+    padding: 14px 12px 8px 16px !important;
+    border-top: 2px solid var(--wp-border);
+    white-space: nowrap;
 }
 .wp-sor-title {
-    display: inline-flex; align-items: center; gap: 3px;
-    font-size: 0.9rem; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 2px;
     color: var(--wp-text); text-decoration: none;
+    text-transform: none; letter-spacing: 0;
+    vertical-align: middle;
 }
 .wp-sor-title:hover { color: var(--wp-accent); }
-.wp-sor-scope { font-size: 0.74rem; color: var(--wp-text-mute); }
-.wp-sor-table {
-    border-collapse: collapse;
-    font-size: 0.85rem;
+.wp-sor-sigma { font-size: 1.1rem; font-weight: 700; line-height: 1; }
+.wp-sor-scope {
+    margin-left: 10px;
+    font-size: 0.74rem; font-weight: 400;
+    color: var(--wp-text-mute);
+    text-transform: none; letter-spacing: 0;
 }
-.wp-sor-table thead th {
-    padding: 4px 16px 6px 0;
-    text-align: left;
-    font-size: 0.72rem; font-weight: 500;
-    text-transform: uppercase; letter-spacing: 0.04em;
-    color: var(--wp-text-sub);
-}
-.wp-sor-table tbody th {
-    padding: 6px 16px 6px 0;
-    text-align: left;
-    font-weight: 500;
-    color: var(--wp-text-sub);
-}
-.wp-sor-table tbody td {
-    padding: 6px 16px 6px 0;
-    text-align: left;
-}
-.wp-sor-cell {
-    display: inline-flex; align-items: baseline; gap: 6px;
+/* 行标签(当前 / 历史最佳)落「项目」列,左对齐弱化 */
+.wp-sor-rowlabel { color: var(--wp-text-sub) !important; font-weight: 500; }
+/* SOR 总分:大字加粗,历史最佳行年份小字另起一行 */
+.wp-sor-total-cell .wp-sor-total-num { font-weight: 700; }
+.wp-sor-year-sub {
+    display: block;
+    font-size: 0.7rem; font-weight: 400;
+    color: var(--wp-text-mute);
     font-variant-numeric: tabular-nums;
 }
-.wp-sor-total { font-size: 0.95rem; font-weight: 700; color: var(--wp-text); }
-.wp-sor-rank { font-size: 0.8rem; color: var(--wp-blue); }
-.wp-sor-year { font-size: 0.8rem; color: var(--wp-text-mute); }
-.wp-sor-dash { color: var(--wp-text-mute); }
 
 /* ── Tabs ─────────────────────────────────────────────────────────── */
 .wp-tabs-card { padding: 0; }
