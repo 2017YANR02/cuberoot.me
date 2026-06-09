@@ -12,7 +12,7 @@
 # 全部照备。新增「用户表」无需登记(默认就备,只有派生大表才需加进下面排除列表)。
 #
 # 加密用 PGPASSWORD env;不写 pgpass 文件。
-# 留 30 天滚动覆盖,过期自动删。同时备份 /root/core-api/.env (含 DB 密码 / JWT / WCA OAuth)。
+# 留 7 天滚动覆盖,过期自动删(本机每日拉副本另留 30 天)。同时备份 /root/core-api/.env (含 DB 密码 / JWT / WCA OAuth)。
 set -e
 ARCHIVE=/root/archive
 DATE=$(date -u +%Y-%m-%d)
@@ -51,8 +51,8 @@ fi
 
 mv "$ARCHIVE/pg-recon-$DATE.sql.gz.tmp" "$ARCHIVE/pg-recon-$DATE.sql.gz"
 
-# 删 30 天前的备份
-find "$ARCHIVE" -name "pg-recon-*.sql.gz" -mtime +30 -delete
+# 删 7 天前的备份
+find "$ARCHIVE" -name "pg-recon-*.sql.gz" -mtime +7 -delete
 
 echo "OK: $ARCHIVE/pg-recon-$DATE.sql.gz ($SIZE bytes)"
 
@@ -60,6 +60,6 @@ echo "OK: $ARCHIVE/pg-recon-$DATE.sql.gz ($SIZE bytes)"
 if [ -f /root/core-api/.env ]; then
   cp /root/core-api/.env "$ARCHIVE/env-$DATE"
   chmod 600 "$ARCHIVE/env-$DATE"
-  find "$ARCHIVE" -name "env-*" -mtime +30 -delete
+  find "$ARCHIVE" -name "env-*" -mtime +7 -delete
   echo "OK: $ARCHIVE/env-$DATE"
 fi
