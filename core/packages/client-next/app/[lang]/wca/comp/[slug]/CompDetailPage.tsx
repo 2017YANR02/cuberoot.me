@@ -481,16 +481,21 @@ export default function CompDetailPage() {
     if (ev?.rs.some(r => r.i === roundUrlParam)) return roundUrlParam;
     return '';
   }, [roundUrlParam, data, eventParam]);
-  // 未来/未开始比赛无任何成绩 → 默认显示预排名;有成绩或用户显式选择则按选择.
+  // 未来/未开始比赛无任何成绩 → 默认显示预排名;报名开始前(连预排名都还没人报名)默认显示赛程;
+  // 有成绩或用户显式选择则按选择.
   const hasResults = useMemo(
     () => !!data && Object.values(data.resultsByRound).some(arr => arr.length > 0),
     [data],
   );
+  const beforeRegOpen = useMemo(() => {
+    const t = compInfo?.registration_open ? Date.parse(compInfo.registration_open) : NaN;
+    return Number.isFinite(t) && Date.now() < t;
+  }, [compInfo]);
   const viewParam: 'live' | 'psych' | 'schedule' =
     explicitView === 'psych' ? 'psych'
       : explicitView === 'schedule' ? 'schedule'
         : explicitView === 'live' ? 'live'
-          : (data && !hasResults) ? 'psych' : 'live';
+          : (data && !hasResults) ? (beforeRegOpen ? 'schedule' : 'psych') : 'live';
   const isPsych = viewParam === 'psych';
   const isSchedule = viewParam === 'schedule';
   const schedView: 'calendar' | 'table' = layoutParam === 'table' ? 'table' : 'calendar';

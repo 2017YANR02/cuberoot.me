@@ -67,8 +67,8 @@ function formatCompMessage(comp: CubingComp): { title: string; body: string; url
   return {
     title: `比赛公示快讯! ${comp.name}`,
     body: `📅 ${dateStr} | 📍 ${city} | 👥 ${registered}/${limit}`,
-    // 比赛链接指向自有站(alias 去横杠=WCA id);alias 缺失时回退 cubing.com。
-    url: siteCompUrlFromCubingAlias(comp.alias) ?? `https://cubing.com${comp.url ?? ''}`,
+    // 比赛链接指向自有站(alias 去横杠=WCA id);粗饼仅收中国大陆比赛,恒落 /zh;alias 缺失时回退 cubing.com。
+    url: siteCompUrlFromCubingAlias(comp.alias, undefined, undefined, true) ?? `https://cubing.com${comp.url ?? ''}`,
   };
 }
 

@@ -27,6 +27,7 @@ const LOADERS: Record<string, () => Promise<{ default: StackTool }>> = {
   'nginx': () => import('../_tools/nginx'),
   'node': () => import('../_tools/node'),
   'npm': () => import('../_tools/npm'),
+  'nuqs': () => import('../_tools/nuqs'),
   'obsidian': () => import('../_tools/obsidian'),
   'openssh': () => import('../_tools/openssh'),
   'pg-dump': () => import('../_tools/pg-dump'),
