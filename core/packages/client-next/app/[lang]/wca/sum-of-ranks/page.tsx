@@ -74,8 +74,9 @@ interface Row {
   totalCountryRank?: number;
   subsetTotal?: number;
   ranks: number[];
-  bestRank?: number | null;   // 历史最高 SOR 名次(当前 scope,仅默认 17 项视图返回)
+  bestRank?: number | null;   // 历史最佳 SOR 名次(当前 scope,仅默认 17 项视图返回)
   bestYear?: number | null;
+  bestTotal?: number | null;  // 取得该最佳名次那年的名次总和
 }
 
 // combos = all subsets tied at `rank` (fewest events first, capped server-side); comboCount = full tied count.
@@ -184,7 +185,7 @@ function SumOfRanksPageInner() {
     if (country) qs.set('country', country);
     if (eventsParam && eventsParam !== '__none__') qs.set('events', eventsParam);
     if (hidePodium) qs.set('hidePodium', '1');
-    qs.set('v', '2'); // bust 24h 缓存(浏览器 + nginx):v1 表空时缓存了 bestRank=null,灌库后需换 key 让旧响应失效
+    qs.set('v', '3'); // bust 24h 缓存(浏览器 + nginx);改 best_total 列 / 灌库后换 key 让旧响应失效
     fetch(apiUrl(`/v1/wca/sum-of-ranks?${qs.toString()}`))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(setData).catch(e => setError(e.message)).finally(() => setLoading(false));
@@ -555,8 +556,8 @@ function SumOfRanksPageInner() {
                   <th className="wse-value-col">{tr({ zh: '名次总和', en: 'Total',
                       zhHant: "名次總和"
                 })}</th>
-                  {showBest && <th className="wse-value-col">{tr({ zh: '历史最高', en: 'Best ever',
-                      zhHant: "歷史最高"
+                  {showBest && <th className="wse-value-col">{tr({ zh: '历史最佳', en: 'Best ever',
+                      zhHant: "歷史最佳"
                 })}</th>}
                 </tr>
               </thead>
@@ -587,7 +588,13 @@ function SumOfRanksPageInner() {
                     }</td>
                     {showBest && (
                       <td className="wse-value-col">
-                        {r.bestRank != null ? <>#{r.bestRank}<span style={{ opacity: 0.55, marginLeft: 4 }}>{r.bestYear}</span></> : '—'}
+                        {r.bestRank != null ? (
+                          <>
+                            {r.bestTotal != null && <b>{r.bestTotal}</b>}
+                            <span style={{ opacity: 0.7, marginLeft: r.bestTotal != null ? 6 : 0 }}>#{r.bestRank}</span>
+                            <span style={{ opacity: 0.55, marginLeft: 4 }}>{r.bestYear}</span>
+                          </>
+                        ) : '—'}
                       </td>
                     )}
                   </tr>
