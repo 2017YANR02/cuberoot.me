@@ -152,7 +152,7 @@ const scrambleCache = new Map<string, Promise<WcaScrambleRow[] | null>>();
 export function fetchWcaScrambles(compId: string): Promise<WcaScrambleRow[] | null> {
   const hit = scrambleCache.get(compId);
   if (hit) return hit;
-  const proxyUrl = apiUrl(`/v1/recon/wca-scrambles?compId=${encodeURIComponent(compId)}`);
+  const proxyUrl = apiUrl(`/v1/wca/scrambles?compId=${encodeURIComponent(compId)}`);
   const directUrl = `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(compId)}/scrambles`;
   const parse = (j: unknown): WcaScrambleRow[] | null => Array.isArray(j) ? j as WcaScrambleRow[] : null;
   const p = fetch(proxyUrl)

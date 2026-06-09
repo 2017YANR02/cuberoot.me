@@ -2,7 +2,7 @@
  * Recon 核心 CRUD 路由（阶段 1-4）
  * 端点：list, get, add, update, delete, checkDuplicate, searchSolvers,
  *       comments CRUD, edits, history, wca-attempts, bili-cover, user-stats,
- *       list-persons, timer-sync
+ *       list-persons
  * NOTE: 迁移自 PHP recon/api/index.php → Hono
  */
 import { Hono } from 'hono';
@@ -585,7 +585,7 @@ reconRoutes.get('/recon/cubing-attempts', async (c) => {
   return c.json({ attempts });
 });
 
-// NOTE: WCA 官方比赛 results / scrambles 已 posted 后基本 immutable —— DB write-through 缓存,
+// NOTE: WCA 官方比赛 results 已 posted 后基本 immutable —— DB write-through 缓存,
 // 让"同轮次还原"在第二位用户/设备上秒加载。30 天 TTL 兼顾偶发的赛后修订(罚时/DNF 调整)。
 const WCA_CACHE_TTL_DAYS = 30;
 
@@ -652,64 +652,6 @@ reconRoutes.get('/recon/wca-results', async (c) => {
   }
 
   c.header('Cache-Control', hasAny ? 'public, max-age=86400' : 'public, max-age=60');
-  c.header('X-Cache', 'MISS');
-  return c.body(payload, 200, { 'Content-Type': 'application/json' });
-});
-
-// GET /v1/recon/wca-scrambles?compId= — 缓存式代理 WCA scrambles
-reconRoutes.get('/recon/wca-scrambles', async (c) => {
-  const compId = c.req.query('compId') ?? '';
-  if (!compId) return c.json({ error: 'compId required' }, 400);
-  if (!/^[A-Za-z0-9_-]+$/.test(compId)) return c.json({ error: 'invalid compId' }, 400);
-
-  try {
-    const rows = await query<{ payload: string }>(
-      `SELECT payload FROM wca_scrambles_cache
-        WHERE comp_id = ?
-          AND fetched_at > NOW() - INTERVAL '${WCA_CACHE_TTL_DAYS} days'`,
-      [compId],
-    );
-    if (rows[0]?.payload) {
-      c.header('Cache-Control', 'public, max-age=86400');
-      c.header('X-Cache', 'HIT');
-      return c.body(rows[0].payload, 200, { 'Content-Type': 'application/json' });
-    }
-  } catch (err) {
-    console.error('[wca-scrambles] cache read failed:', err);
-  }
-
-  const url = `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(compId)}/scrambles`;
-  let upstream: unknown[] | null = null;
-  try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'CubeRoot-Recon/1.0' },
-      signal: AbortSignal.timeout(30000),
-    });
-    if (!res.ok) return c.json({ error: 'WCA API unavailable', status: res.status }, 502);
-    upstream = await res.json();
-  } catch (err) {
-    console.error('[wca-scrambles] fetch failed:', err);
-    return c.json({ error: 'WCA API unreachable', detail: String((err as Error)?.message ?? err) }, 502);
-  }
-  if (!Array.isArray(upstream)) return c.json({ error: 'WCA API malformed' }, 502);
-
-  const payload = JSON.stringify(upstream);
-  if (upstream.length > 0) {
-    try {
-      await query(
-        `INSERT INTO wca_scrambles_cache (comp_id, payload)
-         VALUES (?, ?)
-         ON CONFLICT (comp_id) DO UPDATE SET
-           payload = EXCLUDED.payload,
-           fetched_at = NOW()`,
-        [compId, payload],
-      );
-    } catch (err) {
-      console.error('[wca-scrambles] cache write failed:', err);
-    }
-  }
-
-  c.header('Cache-Control', upstream.length > 0 ? 'public, max-age=86400' : 'public, max-age=60');
   c.header('X-Cache', 'MISS');
   return c.body(payload, 200, { 'Content-Type': 'application/json' });
 });
@@ -797,52 +739,6 @@ reconRoutes.get('/recon/list-persons', async (c) => {
   );
   c.header('Cache-Control', 'public, max-age=300');
   return c.json(rows);
-});
-
-// GET /v1/recon/timer-sync (拉取) + POST /v1/recon/timer-sync (写入)
-reconRoutes.get('/recon/timer-sync', async (c) => {
-  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-  const authUser = await requireAuth(c);
-  const rows = await query<{
-    session_id: string; puzzle_id: string; solves: string; updated_at: number;
-  }>(
-    'SELECT session_id, puzzle_id, solves, updated_at FROM timer_sessions WHERE wca_id = ?',
-    [authUser.wcaId]
-  );
-  return c.json(rows.map(r => ({
-    sessionId: r.session_id,
-    puzzleId: r.puzzle_id,
-    solves: JSON.parse(String(r.solves)),
-    updatedAt: Number(r.updated_at),
-  })));
-});
-
-reconRoutes.post('/recon/timer-sync', async (c) => {
-  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-  checkRateLimit(getIp(c));
-  const authUser = await requireAuth(c);
-  const body = await c.req.json<{ sessionId?: string; puzzleId?: string; solves?: unknown }>();
-
-  if (!body.sessionId || !body.puzzleId) {
-    return c.json({ error: 'sessionId and puzzleId are required' }, 400);
-  }
-
-  const solvesJson = JSON.stringify(body.solves ?? []);
-  // NOTE: 防止单次 payload 过大（限 500KB）
-  if (Buffer.byteLength(solvesJson, 'utf8') > 512000) {
-    return c.json({ error: 'Payload too large (max 500KB)' }, 413);
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  await query(
-    `INSERT INTO timer_sessions (wca_id, session_id, puzzle_id, solves, updated_at)
-     VALUES (?, ?, ?, ?, ?)
-     ON CONFLICT (wca_id, session_id, puzzle_id) DO UPDATE SET
-       solves = EXCLUDED.solves,
-       updated_at = EXCLUDED.updated_at`,
-    [authUser.wcaId, body.sessionId, body.puzzleId, solvesJson, now]
-  );
-  return c.json({ ok: true, updatedAt: now });
 });
 
 // ==================== 动态参数路由（必须在所有具名路由之后注册） ====================
