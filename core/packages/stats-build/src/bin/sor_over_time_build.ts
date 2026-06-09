@@ -42,6 +42,7 @@ const OUT_DIR = process.env.OUT_DIR || resolve(__dirname, '../../output/historic
 const SNAP = process.env.SNAP_TSV || resolve(OUT_DIR, 'historical_ranks_snapshot.copy.tsv');
 const COUNTRIES_TSV = process.env.COUNTRIES_TSV || resolve(OUT_DIR, 'wca_countries.copy.tsv');
 const PERSONS_TSV = process.env.PERSONS_TSV || resolve(OUT_DIR, 'wca_persons.copy.tsv');
+const COMPS_TSV = process.env.COMPS_TSV || resolve(OUT_DIR, 'wca_competitions.copy.tsv');
 const STATS_DIR = process.env.STATS_DIR || resolve(__dirname, '../../../../../stats');
 const SOR_DIR = resolve(STATS_DIR, 'sor_over_time');
 
@@ -49,7 +50,7 @@ const SOR_DIR = resolve(STATS_DIR, 'sor_over_time');
 interface CountryInfo { iso2: string | null; continent: string; name: string }
 function loadCountries(): Map<string, CountryInfo> {
   const m = new Map<string, CountryInfo>();
-  for (const line of readFileSync(COUNTRIES_TSV, 'utf-8').split('\n')) {
+  for (const line of readFileSync(COUNTRIES_TSV, 'utf-8').split(/\r?\n/)) {
     if (!line) continue;
     const [id, iso2, name, contRaw] = line.split('\t');
     if (!id) continue;
@@ -63,7 +64,7 @@ function loadCountries(): Map<string, CountryInfo> {
 }
 function loadPersonNames(): Map<string, string> {
   const m = new Map<string, string>();
-  for (const line of readFileSync(PERSONS_TSV, 'utf-8').split('\n')) {
+  for (const line of readFileSync(PERSONS_TSV, 'utf-8').split(/\r?\n/)) {
     if (!line) continue;
     const tab1 = line.indexOf('\t');
     if (tab1 < 0) continue;
@@ -71,6 +72,21 @@ function loadPersonNames(): Map<string, string> {
     const tab2 = line.indexOf('\t', tab1 + 1);
     const name = tab2 < 0 ? line.slice(tab1 + 1) : line.slice(tab1 + 1, tab2);
     m.set(wcaId, name);
+  }
+  return m;
+}
+// comp_id → 英文名(仅供 index.comps;缺失则前端回退显示 comp_id)
+function loadCompNames(): Map<string, string> {
+  const m = new Map<string, string>();
+  if (!existsSync(COMPS_TSV)) {
+    console.log(`[sor] WARN: ${COMPS_TSV} not found — comp names fall back to id`);
+    return m;
+  }
+  for (const line of readFileSync(COMPS_TSV, 'utf-8').split(/\r?\n/)) {
+    if (!line) continue;
+    const tab = line.indexOf('\t');
+    if (tab < 0) continue;
+    m.set(line.slice(0, tab), line.slice(tab + 1));
   }
   return m;
 }
@@ -86,7 +102,7 @@ function assignRanks(rows: Ranked[]): void {
   }
 }
 
-interface FrameRow { p: string; v: number; r: number }
+interface FrameRow { p: string; v: number; r: number; c?: string }
 interface YearFrame { y: number; rows: FrameRow[] }
 
 async function streamLines(file: string, onLine: (cols: string[]) => void): Promise<void> {
@@ -108,6 +124,7 @@ function updateBest(map: Map<string, { rank: number; year: number }>, isAvg: boo
 
 const personsInFrames = new Set<string>();        // 出现在任一榜单的人 → 进 index.persons
 const personCountryInFrames = new Map<string, string>(); // wcaId → country_id(最后见)
+const referencedComps = new Set<string>();        // 任一榜单行引用到的"最后贡献比赛" → 进 index.comps
 
 // 输出:scope → { single: YearFrame[], average: YearFrame[] }
 interface ScopeOut { single: YearFrame[]; average: YearFrame[] }
@@ -125,6 +142,8 @@ async function processMetric(isAvg: boolean, countries: Map<string, CountryInfo>
   const W = isAvg ? 9 : 6;   // *_world_rank
   const N = isAvg ? 10 : 7;  // *_country_rank
   const K = isAvg ? 11 : 8;  // *_continent_rank
+  const CD = isAvg ? 15 : 12; // best_*_comp_id
+  const DD = isAvg ? 16 : 13; // best_*_date(YYYY-MM-DD,取最晚的那场作"最后贡献比赛")
 
   // ── Pass A: 各 scope 各 (event, year) 参与人数(rank>0 计数) ──
   // fW: `${ev}|${yr}` → count;fK: `${ev}|${yr}|${cont}`;fN: `${ev}|${yr}|${ctry}`
@@ -179,7 +198,7 @@ async function processMetric(isAvg: boolean, countries: Map<string, CountryInfo>
   }
 
   // ── Pass B: 逐 (year, person) 累积 done_sum / done_pen(world/cont/country)──
-  interface Acc { ctry: string; cont: string; wSum: number; wPen: number; cSum: number; cPen: number; nSum: number; nPen: number }
+  interface Acc { ctry: string; cont: string; wSum: number; wPen: number; cSum: number; cPen: number; nSum: number; nPen: number; lastDate: string; lastComp: string }
   // byYear: Map<year, Map<wcaId, Acc>>
   const byYear = new Map<number, Map<string, Acc>>();
   for (const yr of sortedYears) byYear.set(yr, new Map());
@@ -197,11 +216,18 @@ async function processMetric(isAvg: boolean, countries: Map<string, CountryInfo>
     const kr = +c[K]!; // continent rank
     const ym = byYear.get(yr)!;
     let a = ym.get(id);
-    if (!a) { a = { ctry, cont, wSum: 0, wPen: 0, cSum: 0, cPen: 0, nSum: 0, nPen: 0 }; ym.set(id, a); }
+    if (!a) { a = { ctry, cont, wSum: 0, wPen: 0, cSum: 0, cPen: 0, nSum: 0, nPen: 0, lastDate: '', lastComp: '' }; ym.set(id, a); }
     else { a.ctry = ctry; a.cont = cont; } // 国籍以本年所见为准
     a.wSum += wr; a.wPen += (fW.get(`${ev}|${yr}`) || 0) + 1;
     a.cSum += kr; a.cPen += (fK.get(`${ev}|${yr}|${cont}`) || 0) + 1;
     a.nSum += cr; a.nPen += (fN.get(`${ev}|${yr}|${ctry}`) || 0) + 1;
+    // "最后贡献 SOR 的那场":本 metric 计入项目里 PB 日期最晚的那场
+    const date = c[DD];
+    if (date && date !== '\\N' && date > a.lastDate) {
+      a.lastDate = date;
+      const comp = c[CD];
+      a.lastComp = (comp && comp !== '\\N') ? comp : '';
+    }
   });
 
   // ── 逐年排名 + emit ──
@@ -259,14 +285,16 @@ async function processMetric(isAvg: boolean, countries: Map<string, CountryInfo>
   void STORE_K;
 }
 
-function pushFrame(arr: YearFrame[], yr: number, ranked: Ranked[], ym: Map<string, { ctry: string }>): void {
+function pushFrame(arr: YearFrame[], yr: number, ranked: Ranked[], ym: Map<string, { ctry: string; lastComp?: string }>): void {
   const rows: FrameRow[] = [];
   for (let i = 0; i < ranked.length && i < STORE_K; i++) {
     const r = ranked[i]!;
-    rows.push({ p: r.id, v: r.sor, r: r.rank });
-    personsInFrames.add(r.id);
     const a = ym.get(r.id);
+    const comp = a?.lastComp || undefined;
+    rows.push({ p: r.id, v: r.sor, r: r.rank, c: comp });
+    personsInFrames.add(r.id);
     if (a) personCountryInFrames.set(r.id, a.ctry);
+    if (comp) referencedComps.add(comp);
   }
   arr.push({ y: yr, rows });
 }
@@ -279,7 +307,8 @@ async function main() {
 
   const countries = loadCountries();
   const personNames = loadPersonNames();
-  console.log(`[sor] countries=${countries.size} persons=${personNames.size}`);
+  const compNames = loadCompNames();
+  console.log(`[sor] countries=${countries.size} persons=${personNames.size} comps=${compNames.size}`);
 
   console.log('[sor] single...');
   await processMetric(false, countries);
@@ -317,6 +346,13 @@ async function main() {
   }
   const continentList = [...continentSeen].sort();
   countryList.sort((a, b) => a.name.localeCompare(b.name));
+  // 被引用到的"最后贡献比赛" → id→name(缺名的省略,前端回退 id)
+  const comps: Record<string, string> = {};
+  let compMiss = 0;
+  for (const id of referencedComps) {
+    const n = compNames.get(id);
+    if (n) comps[id] = n; else compMiss++;
+  }
   const allYears = new Set<number>();
   for (const f of worldOut.single) allYears.add(f.y);
   const index = {
@@ -325,9 +361,11 @@ async function main() {
     storeK: STORE_K,
     showN: 10,
     scopes: { world: true, continents: continentList, countries: countryList },
+    comps,
     persons,
   };
   writeFileSync(resolve(STATS_DIR, 'sor_over_time.json'), JSON.stringify(index));
+  console.log(`[sor] comps referenced=${referencedComps.size} named=${Object.keys(comps).length} missing=${compMiss}`);
 
   // ── best-rank TSV(world + country)→ PG ──
   // 列:wca_id, is_avg, scope('world'|'country'), best_rank, best_year
