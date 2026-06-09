@@ -21,6 +21,7 @@ import { eventInfo, type EventId } from '../_lib/types';
 import { WCA_COLORS } from '../_lib/cube/colors';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { CountryInput } from '@/components/CountryInput';
+import WcaSourceConfig from './WcaSourceConfig';
 import { tr } from '@/i18n/tr';
 import i18n from "@/i18n/i18n-client";
 
@@ -509,6 +510,36 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
         <h2 id="settings-modal-title">{tr({ zh: '设置', en: 'Settings',
             zhHant: "設定"
         })}</h2>
+
+        <AccordionSection
+          id="scramble-source"
+          title={tr({ zh: '打乱来源', en: 'Scramble source',
+              zhHant: "打亂來源"
+        })}
+          defaultExpanded={true}
+          useMobile={isMobile}
+          expanded={expandedSections}
+          setExpanded={setExpandedSections}
+        >
+          <Row label={tr({ zh: '来源', en: 'Source',
+              zhHant: "來源"
+        })}>
+            <select
+              value={s.scrambleSource}
+              onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' })}
+            >
+              <option value="random">{tr({ zh: '随机生成', en: 'Random',
+                  zhHant: "隨機生成"
+            })}</option>
+              <option value="wca">{tr({ zh: 'WCA 真实比赛打乱', en: 'Real WCA comp scrambles',
+                  zhHant: "WCA 真實比賽打亂"
+            })}</option>
+            </select>
+          </Row>
+          {s.scrambleSource === 'wca' && (
+            <WcaSourceConfig isZh={isZh} event={event} settings={s} updateSettings={updateSettings} />
+          )}
+        </AccordionSection>
 
         <AccordionSection
           id="timing"
@@ -1266,21 +1297,6 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               checked={s.showHeatmap}
               onChange={(e) => updateSettings({ showHeatmap: e.target.checked })}
             />
-          </Row>
-          <Row label={tr({ zh: '打乱来源', en: 'Scramble source',
-              zhHant: "打亂來源"
-        })}>
-            <select
-              value={s.scrambleSource}
-              onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' })}
-            >
-              <option value="random">{tr({ zh: '随机生成', en: 'Random',
-                  zhHant: "隨機生成"
-            })}</option>
-              <option value="wca">{tr({ zh: 'WCA 真实比赛打乱', en: 'Real WCA comp scrambles',
-                  zhHant: "WCA 真實比賽打亂"
-            })}</option>
-            </select>
           </Row>
           <Row label={tr({ zh: '点击打乱条', en: 'Scramble click action',
               zhHant: "點選打亂條"
