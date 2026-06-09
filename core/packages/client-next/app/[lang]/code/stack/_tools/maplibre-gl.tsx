@@ -44,10 +44,18 @@ export const MAPLIBRE_GL: StackTool = {
     outlookDesc: <>5.x promotes a true 3D globe projection to first-class status, no longer a flat Mercator approximation. The MapLibre Tile (MLT) format, a next-gen vector tile spec announced in early 2026, compresses and decodes faster than MVT. Companion tooling (the Rust-based Martin tile server, single-file PMTiles) keeps lowering the self-hosting bar, and v6 is already in development.</>,
   },
   heroStats: [
-    { num: '5', unit: '.24', zh: <>当前稳定版 <em>2026 · npm maplibre-gl 5.24.0</em></>, en: <>current stable <em>2026 · npm maplibre-gl 5.24.0</em></> },
-    { num: 'v1', unit: '.13', zh: <>fork 自此版本 <em>Mapbox GL JS 最后 BSD 开源版</em></>, en: <>forked from this version <em>last BSD-licensed Mapbox GL JS</em></> },
-    { num: '0', unit: 'token', zh: <>无强制 API key <em>瓦片可完全自托管</em></>, en: <>no mandatory API key <em>tiles fully self-hostable</em></> },
-    { num: 'LF', zh: <>Linux Foundation 孵化 <em>选举产生的技术指导委员会治理</em></>, en: <>Linux Foundation incubated <em>elected technical steering committee</em></> },
+    { num: '5', unit: '.24', zh: <>当前稳定版 <em>2026 · npm maplibre-gl 5.24.0</em></>, en: <>current stable <em>2026 · npm maplibre-gl 5.24.0</em></>,
+        zhHant: <>當前穩定版 <em>2026 · npm maplibre-gl 5.24.0</em></>
+    },
+    { num: 'v1', unit: '.13', zh: <>fork 自此版本 <em>Mapbox GL JS 最后 BSD 开源版</em></>, en: <>forked from this version <em>last BSD-licensed Mapbox GL JS</em></>,
+        zhHant: <>fork 自此版本 <em>Mapbox GL JS 最後 BSD 開源版</em></>
+    },
+    { num: '0', unit: 'token', zh: <>无强制 API key <em>瓦片可完全自托管</em></>, en: <>no mandatory API key <em>tiles fully self-hostable</em></>,
+        zhHant: <>無強制 API key <em>瓦片可完全自託管</em></>
+    },
+    { num: 'LF', zh: <>Linux Foundation 孵化 <em>选举产生的技术指导委员会治理</em></>, en: <>Linux Foundation incubated <em>elected technical steering committee</em></>,
+        zhHant: <>Linux Foundation 孵化 <em>選舉產生的技術指導委員會治理</em></>
+    },
   ],
   intro: {
     zh: (

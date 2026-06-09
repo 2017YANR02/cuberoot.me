@@ -1,0 +1,33 @@
+/* NOTE: SorRace 专属 — 顶部 scope/metric 控制条 + 下拉,复用 top10_history.css 的舞台/横条 */
+.sor-race .sor-race-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+}
+
+.sor-race .sor-race-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: #1f1f1f url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 8px center;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  color: #ededed;
+  font-size: 13px;
+  padding: 6px 26px 6px 10px;
+  cursor: pointer;
+  max-width: 240px;
+}
+.sor-race .sor-race-select:hover { border-color: #3a3a3a; }
+.sor-race .sor-race-select:focus { outline: none; border-color: #4d8eff; }
+.sor-race .sor-race-select option { background: #1f1f1f; color: #ededed; }
+
+@media (max-width: 480px) {
+  .sor-race .sor-race-bar { gap: 8px; padding: 8px; }
+  .sor-race .sor-race-select { max-width: 160px; font-size: 12px; }
+}

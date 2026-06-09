@@ -79,7 +79,7 @@ export default function ArchDecisionsPage() {
             {DETAILS.map((d) => (
               <article key={d.title} className="arch-detail">
                 <h3 className="arch-detail-title">{d.title}</h3>
-                <p className="arch-detail-body">{(i18n.language.startsWith('zh') ? d.zh : d.en)}</p>
+                <p className="arch-detail-body">{(i18n.language === 'zh-Hant' ? (d.zhHant ?? d.zh) : (i18n.language.startsWith('zh') ? d.zh : d.en))}</p>
               </article>
             ))}
           </div>

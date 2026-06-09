@@ -178,29 +178,73 @@ function PuzzleCard({ p, isZh, expanded, onToggle }: {
 
 /* ───── timeline ───────────────────────────────────────────────────── */
 
-interface Milestone { year: number; zh: ReactNode; en: ReactNode; cls?: string }
+interface Milestone { year: number; zh: ReactNode; en: ReactNode; cls?: string
+    zhHant?: ReactNode;
+ }
 const MILESTONES: Milestone[] = [
-  { year: 1974, zh: <>Ernő Rubik 在布达佩斯发明"魔方"。最初用作教学具,演示三维结构、空间想象与组合学。</>, en: <>Ernő Rubik invents the Magic Cube in Budapest as a teaching aid for 3-D structure, spatial reasoning, and combinatorics.</> },
-  { year: 1979, zh: <>魔方上市为大众玩具;西方数学家立刻意识到它是"<TeX src="4.3 \times 10^{19}" /> 阶的有限群"。</>, en: <>Cube hits commercial shelves; Western mathematicians immediately recognise it as a finite group of order <TeX src="4.3 \times 10^{19}" />.</> },
-  { year: 1981, zh: <>David Singmaster 出版《Notes on Rubik's Magic Cube》——首次系统化记号(URFDLB) + 群论术语,为后来所有研究奠基。</>, en: <>David Singmaster publishes Notes on Rubik's Magic Cube — the first systematic notation (URFDLB) and group-theoretic terminology underpinning everything since.</> },
-  { year: 1981, zh: <>2×2 / Pyraminx / Skewb 的 BFS 在第一代 PC 上跑通 ⇒ 各自直径 11(三个不同群恰好同直径)。</>, en: <>2×2 / Pyraminx / Skewb BFS feasible on early PCs ⇒ each diameter is 11 (a coincidence across three different groups).</>, cls: 'is-multi' },
-  { year: 1982, zh: <>Morwen Thistlethwaite 公布 4-phase 算法:<TeX src="G_{0} \to G_{1} \to G_{2} \to G_{3} \to \{e\}" />,每阶段查预计算表,上界 <TeX src="\le 52" /> HTM。</>, en: <>Morwen Thistlethwaite publishes the 4-phase algorithm: <TeX src="G_{0} \to G_{1} \to G_{2} \to G_{3} \to \{e\}" />, each phase from a precomputed table, capping 3×3 at <TeX src="\le 52" /> HTM.</> },
-  { year: 1990, zh: <>Hans Kloosterman 把上界压到 42 步;同年多位作者将其压到 40-37。</>, en: <>Hans Kloosterman tightens the upper bound to 42; several authors that year reach 40-37.</> },
-  { year: 1992, zh: <>Herbert Kociemba 发表 2-phase 算法,引入子群 <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" />(他叫 P1 或 <TeX src="G_{1}" />);把 3×3 切成 22 亿陪集,每个陪集 <TeX src="\le 30" /> HTM,合计上界 <TeX src="\le 30" />。</>, en: <>Herbert Kociemba publishes the 2-phase algorithm with <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" /> (his "P1" / "<TeX src="G_{1}" />"): 2.2 billion cosets, each <TeX src="\le 30" /> HTM, total <TeX src="\le 30" />.</> },
-  { year: 1995, zh: <>Michael Reid 用计算机辅助穷举证明 superflip 需 <TeX src="\ge 20" /> 步 ⇒ 3×3 下界跳到 20,并证 Kociemba 上界 <TeX src="\le 22" />。下界 20 / 上界 22 这个 2-步缝隙将持续 15 年。</>, en: <>Michael Reid uses computer-assisted enumeration to prove superflip needs <TeX src="\ge 20" /> ⇒ 3×3 lower bound = 20; also proves Kociemba's bound <TeX src="\le 22" />. The 20/22 gap stands for 15 years.</> },
-  { year: 2005, zh: <>Mike Masonjones 用 BFS 证 Square-1 twist metric 直径 = 13。</>, en: <>Mike Masonjones BFS-proves Square-1 twist-metric diameter = 13.</> },
-  { year: 2006, zh: <>Silviu Radu 把三阶上界压到 27;次年(2007)Rokicki 加入研究,压到 26。</>, en: <>Silviu Radu pushes 3×3 upper bound to 27; Rokicki joins in 2007 and gets it to 26.</> },
-  { year: 2008, zh: <>Tomas Rokicki 用 Sun 的 8GB 集群把上界一路压到 22 步 —— Reid 1995 的目标终于达到,但还没合拢。</>, en: <>Tomas Rokicki uses Sun's 8-GB cluster to drop the upper bound to 22 — finally reaching Reid's 1995 target, but the gap is not closed.</> },
-  { year: 2010, zh: <>Rokicki · Kociemba · Davidson · Dethridge 在 Google 跑 35 CPU-年,把 22 亿陪集用对称压到 5588 万,再用集合覆盖压到 ~80 个 super-cosets。每个 super-coset 实际求解,无反例。2010-07-13 宣布:3×3 HTM 直径 = 20。</>, en: <>Rokicki · Kociemba · Davidson · Dethridge spend 35 CPU-years on Google: symmetry compresses 2.2B cosets to 55.88M, set-cover absorbs neighbours into ~80 super-cosets, each actually solved. No counterexample. 2010-07-13: 3×3 HTM diameter = 20.</>, cls: 'is-major' },
-  { year: 2011, zh: <>Erik Demaine 等人 (arXiv:1106.5736 "Algorithms for Solving Rubik's Cubes") 证 <TeX src="N \times N" /> 魔方上帝之数 = <TeX src="\Theta(N^{2}/\log N)" />,通过并行子算法 + cubie 对易类划分。这是 <TeX src="N \times N" /> 渐近的严格证明。</>, en: <>Erik Demaine et al. (arXiv:1106.5736 "Algorithms for Solving Rubik's Cubes") prove <TeX src="N \times N" /> God's number is <TeX src="\Theta(N^{2}/\log N)" /> via parallel sub-algorithms + cubie commuting-class partitioning. The rigorous <TeX src="N \times N" /> asymptotic.</> },
-  { year: 2012, zh: <>Herbert Kociemba 用对易面计数证 Megaminx 下界 = 48 HTM。</>, en: <>Herbert Kociemba proves Megaminx lower bound = 48 HTM via commuting-faces counting.</> },
-  { year: 2014, zh: <>Rokicki & Davidson 用同套陪集框架证 3×3 QTM 直径 = 26;Jakob Kogler 用 front-cross 陪集证 Rubik's Clock 直径 = 12;Rokicki 单独证 3×3 STM 直径 = 18。一年三个新精确直径。</>, en: <>Rokicki & Davidson prove 3×3 QTM diameter = 26 with the same coset framework; Jakob Kogler proves Rubik's Clock diameter = 12 via front-cross cosets; Rokicki separately proves 3×3 STM diameter = 18. Three new exact diameters in one year.</>, cls: 'is-major' },
-  { year: 2017, zh: <>Shuang Chen (WCA 2008CHEN27) 用 722 GB 磁盘 BFS + 3816 对称陪集,证 Square-1 face-turn 直径 = 31。磁盘 BFS 第一次在 cube 领域达到这种规模。</>, en: <>Shuang Chen (WCA 2008CHEN27) uses 722 GB disk BFS + 3816 symmetry cosets to prove Square-1 face-turn diameter = 31. The first cubing-domain disk-BFS at this scale.</> },
-  { year: 2018, zh: <>Sebastiano Tronto 与 Vincent Sheu 在 SpeedSolving 公布 4×4 OBTM 下界 <TeX src="\ge 35" />。</>, en: <>Sebastiano Tronto and Vincent Sheu publish the 4×4 OBTM lower bound <TeX src="\ge 35" /> on SpeedSolving.</> },
-  { year: 2020, zh: <>Graham Siggins 创下 MBLD 世界纪录 62/65。MBLD 群论上完全平凡(<TeX src="20 \cdot k" /> 直径),记录是记忆 + 体力的极限。</>, en: <>Graham Siggins sets the MBLD world record 62/65. MBLD is group-theoretically trivial (diameter <TeX src="20 \cdot k" />); the record is a memory + endurance limit.</> },
-  { year: 2022, zh: <>Yusheng Du 三阶 4.86s WR(已被 Yiheng Wang 4.86 平 + 后续超越),平均解 ~40 HTM,远高于 20 的理论最优。</>, en: <>Yusheng Du sets 3×3 WR at 4.86s (later tied / surpassed by Yiheng Wang), avg solution ~40 HTM, far above the 20 theoretical optimum.</> },
-  { year: 2024, zh: <>Merino & Subercaseaux (arXiv:2501.00144) 提出"Demigod's number" —— 用 500k 随机样本 + Hoeffding 在 5 小时内证 <TeX src="D \le 36" />,误证概率 <TeX src="< 10^{-10}" />。详见 <Link href="/math/demigod" style={{ color: 'var(--accent)', textDecoration: 'none', borderBottom: '1px dotted currentColor' }}>专门页面</Link>。</>, en: <>Merino & Subercaseaux (arXiv:2501.00144) propose a "Demigod's number" — 500k random samples + Hoeffding prove <TeX src="D \le 36" /> in 5 hours, error probability <TeX src="< 10^{-10}" />. <Link href="/math/demigod" style={{ color: 'var(--accent)', textDecoration: 'none', borderBottom: '1px dotted currentColor' }}>Dedicated page</Link>.</> },
-  { year: 2025, zh: <>cube20.org 发布 Rubik's Clock 完整距离分布,作为 2014 Kogler 证明的 11 年后独立复核。</>, en: <>cube20.org publishes Rubik's Clock full distance distribution as an independent re-verification of Kogler's 2014 proof, 11 years on.</> },
+  { year: 1974, zh: <>Ernő Rubik 在布达佩斯发明"魔方"。最初用作教学具,演示三维结构、空间想象与组合学。</>, en: <>Ernő Rubik invents the Magic Cube in Budapest as a teaching aid for 3-D structure, spatial reasoning, and combinatorics.</>,
+      zhHant: <>Ernő Rubik 在布達佩斯發明"魔方"。最初用作教學具,演示三維結構、空間想象與組合學。</>
+},
+  { year: 1979, zh: <>魔方上市为大众玩具;西方数学家立刻意识到它是"<TeX src="4.3 \times 10^{19}" /> 阶的有限群"。</>, en: <>Cube hits commercial shelves; Western mathematicians immediately recognise it as a finite group of order <TeX src="4.3 \times 10^{19}" />.</>,
+      zhHant: <>魔方上市為大眾玩具;西方數學家立刻意識到它是"<TeX src="4.3 \times 10^{19}" /> 階的有限群"。</>
+},
+  { year: 1981, zh: <>David Singmaster 出版《Notes on Rubik's Magic Cube》——首次系统化记号(URFDLB) + 群论术语,为后来所有研究奠基。</>, en: <>David Singmaster publishes Notes on Rubik's Magic Cube — the first systematic notation (URFDLB) and group-theoretic terminology underpinning everything since.</>,
+      zhHant: <>David Singmaster 出版《Notes on Rubik's Magic Cube》——首次系統化記號(URFDLB) + 群論術語,為後來所有研究奠基。</>
+},
+  { year: 1981, zh: <>2×2 / Pyraminx / Skewb 的 BFS 在第一代 PC 上跑通 ⇒ 各自直径 11(三个不同群恰好同直径)。</>, en: <>2×2 / Pyraminx / Skewb BFS feasible on early PCs ⇒ each diameter is 11 (a coincidence across three different groups).</>, cls: 'is-multi',
+      zhHant: <>2×2 / Pyraminx / Skewb 的 BFS 在第一代 PC 上跑通 ⇒ 各自直徑 11(三個不同群恰好同直徑)。</>
+},
+  { year: 1982, zh: <>Morwen Thistlethwaite 公布 4-phase 算法:<TeX src="G_{0} \to G_{1} \to G_{2} \to G_{3} \to \{e\}" />,每阶段查预计算表,上界 <TeX src="\le 52" /> HTM。</>, en: <>Morwen Thistlethwaite publishes the 4-phase algorithm: <TeX src="G_{0} \to G_{1} \to G_{2} \to G_{3} \to \{e\}" />, each phase from a precomputed table, capping 3×3 at <TeX src="\le 52" /> HTM.</>,
+      zhHant: <>Morwen Thistlethwaite 公佈 4-phase 演算法:<TeX src="G_{0} \to G_{1} \to G_{2} \to G_{3} \to \{e\}" />,每階段查預計算表,上界 <TeX src="\le 52" /> HTM。</>
+},
+  { year: 1990, zh: <>Hans Kloosterman 把上界压到 42 步;同年多位作者将其压到 40-37。</>, en: <>Hans Kloosterman tightens the upper bound to 42; several authors that year reach 40-37.</>,
+      zhHant: <>Hans Kloosterman 把上界壓到 42 步;同年多位作者將其壓到 40-37。</>
+},
+  { year: 1992, zh: <>Herbert Kociemba 发表 2-phase 算法,引入子群 <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" />(他叫 P1 或 <TeX src="G_{1}" />);把 3×3 切成 22 亿陪集,每个陪集 <TeX src="\le 30" /> HTM,合计上界 <TeX src="\le 30" />。</>, en: <>Herbert Kociemba publishes the 2-phase algorithm with <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" /> (his "P1" / "<TeX src="G_{1}" />"): 2.2 billion cosets, each <TeX src="\le 30" /> HTM, total <TeX src="\le 30" />.</>,
+      zhHant: <>Herbert Kociemba 發表 2-phase 演算法,引入子群 <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" />(他叫 P1 或 <TeX src="G_{1}" />);把 3×3 切成 22 億陪集,每個陪集 <TeX src="\le 30" /> HTM,合計上界 <TeX src="\le 30" />。</>
+},
+  { year: 1995, zh: <>Michael Reid 用计算机辅助穷举证明 superflip 需 <TeX src="\ge 20" /> 步 ⇒ 3×3 下界跳到 20,并证 Kociemba 上界 <TeX src="\le 22" />。下界 20 / 上界 22 这个 2-步缝隙将持续 15 年。</>, en: <>Michael Reid uses computer-assisted enumeration to prove superflip needs <TeX src="\ge 20" /> ⇒ 3×3 lower bound = 20; also proves Kociemba's bound <TeX src="\le 22" />. The 20/22 gap stands for 15 years.</>,
+      zhHant: <>Michael Reid 用計算機輔助窮舉證明 superflip 需 <TeX src="\ge 20" /> 步 ⇒ 3×3 下界跳到 20,並證 Kociemba 上界 <TeX src="\le 22" />。下界 20 / 上界 22 這個 2-步縫隙將持續 15 年。</>
+},
+  { year: 2005, zh: <>Mike Masonjones 用 BFS 证 Square-1 twist metric 直径 = 13。</>, en: <>Mike Masonjones BFS-proves Square-1 twist-metric diameter = 13.</>,
+      zhHant: <>Mike Masonjones 用 BFS 證 Square-1 twist metric 直徑 = 13。</>
+},
+  { year: 2006, zh: <>Silviu Radu 把三阶上界压到 27;次年(2007)Rokicki 加入研究,压到 26。</>, en: <>Silviu Radu pushes 3×3 upper bound to 27; Rokicki joins in 2007 and gets it to 26.</>,
+      zhHant: <>Silviu Radu 把三階上界壓到 27;次年(2007)Rokicki 加入研究,壓到 26。</>
+},
+  { year: 2008, zh: <>Tomas Rokicki 用 Sun 的 8GB 集群把上界一路压到 22 步 —— Reid 1995 的目标终于达到,但还没合拢。</>, en: <>Tomas Rokicki uses Sun's 8-GB cluster to drop the upper bound to 22 — finally reaching Reid's 1995 target, but the gap is not closed.</>,
+      zhHant: <>Tomas Rokicki 用 Sun 的 8GB 叢集把上界一路壓到 22 步 —— Reid 1995 的目標終於達到,但還沒合攏。</>
+},
+  { year: 2010, zh: <>Rokicki · Kociemba · Davidson · Dethridge 在 Google 跑 35 CPU-年,把 22 亿陪集用对称压到 5588 万,再用集合覆盖压到 ~80 个 super-cosets。每个 super-coset 实际求解,无反例。2010-07-13 宣布:3×3 HTM 直径 = 20。</>, en: <>Rokicki · Kociemba · Davidson · Dethridge spend 35 CPU-years on Google: symmetry compresses 2.2B cosets to 55.88M, set-cover absorbs neighbours into ~80 super-cosets, each actually solved. No counterexample. 2010-07-13: 3×3 HTM diameter = 20.</>, cls: 'is-major',
+      zhHant: <>Rokicki · Kociemba · Davidson · Dethridge 在 Google 跑 35 CPU-年,把 22 億陪集用對稱壓到 5588 萬,再用集合覆蓋壓到 ~80 個 super-cosets。每個 super-coset 實際求解,無反例。2010-07-13 宣佈:3×3 HTM 直徑 = 20。</>
+},
+  { year: 2011, zh: <>Erik Demaine 等人 (arXiv:1106.5736 "Algorithms for Solving Rubik's Cubes") 证 <TeX src="N \times N" /> 魔方上帝之数 = <TeX src="\Theta(N^{2}/\log N)" />,通过并行子算法 + cubie 对易类划分。这是 <TeX src="N \times N" /> 渐近的严格证明。</>, en: <>Erik Demaine et al. (arXiv:1106.5736 "Algorithms for Solving Rubik's Cubes") prove <TeX src="N \times N" /> God's number is <TeX src="\Theta(N^{2}/\log N)" /> via parallel sub-algorithms + cubie commuting-class partitioning. The rigorous <TeX src="N \times N" /> asymptotic.</>,
+      zhHant: <>Erik Demaine 等人 (arXiv:1106.5736 "Algorithms for Solving Rubik's Cubes") 證 <TeX src="N \times N" /> 魔方上帝之數 = <TeX src="\Theta(N^{2}/\log N)" />,透過並行子演算法 + cubie 對易類劃分。這是 <TeX src="N \times N" /> 漸近的嚴格證明。</>
+},
+  { year: 2012, zh: <>Herbert Kociemba 用对易面计数证 Megaminx 下界 = 48 HTM。</>, en: <>Herbert Kociemba proves Megaminx lower bound = 48 HTM via commuting-faces counting.</>,
+      zhHant: <>Herbert Kociemba 用對易面計數證 Megaminx 下界 = 48 HTM。</>
+},
+  { year: 2014, zh: <>Rokicki & Davidson 用同套陪集框架证 3×3 QTM 直径 = 26;Jakob Kogler 用 front-cross 陪集证 Rubik's Clock 直径 = 12;Rokicki 单独证 3×3 STM 直径 = 18。一年三个新精确直径。</>, en: <>Rokicki & Davidson prove 3×3 QTM diameter = 26 with the same coset framework; Jakob Kogler proves Rubik's Clock diameter = 12 via front-cross cosets; Rokicki separately proves 3×3 STM diameter = 18. Three new exact diameters in one year.</>, cls: 'is-major',
+      zhHant: <>Rokicki & Davidson 用同套陪集框架證 3×3 QTM 直徑 = 26;Jakob Kogler 用 front-cross 陪集證 Rubik's Clock 直徑 = 12;Rokicki 單獨證 3×3 STM 直徑 = 18。一年三個新精確直徑。</>
+},
+  { year: 2017, zh: <>Shuang Chen (WCA 2008CHEN27) 用 722 GB 磁盘 BFS + 3816 对称陪集,证 Square-1 face-turn 直径 = 31。磁盘 BFS 第一次在 cube 领域达到这种规模。</>, en: <>Shuang Chen (WCA 2008CHEN27) uses 722 GB disk BFS + 3816 symmetry cosets to prove Square-1 face-turn diameter = 31. The first cubing-domain disk-BFS at this scale.</>,
+      zhHant: <>Shuang Chen (WCA 2008CHEN27) 用 722 GB 磁碟 BFS + 3816 對稱陪集,證 Square-1 face-turn 直徑 = 31。磁碟 BFS 第一次在 cube 領域達到這種規模。</>
+},
+  { year: 2018, zh: <>Sebastiano Tronto 与 Vincent Sheu 在 SpeedSolving 公布 4×4 OBTM 下界 <TeX src="\ge 35" />。</>, en: <>Sebastiano Tronto and Vincent Sheu publish the 4×4 OBTM lower bound <TeX src="\ge 35" /> on SpeedSolving.</>,
+      zhHant: <>Sebastiano Tronto 與 Vincent Sheu 在 SpeedSolving 公佈 4×4 OBTM 下界 <TeX src="\ge 35" />。</>
+},
+  { year: 2020, zh: <>Graham Siggins 创下 MBLD 世界纪录 62/65。MBLD 群论上完全平凡(<TeX src="20 \cdot k" /> 直径),记录是记忆 + 体力的极限。</>, en: <>Graham Siggins sets the MBLD world record 62/65. MBLD is group-theoretically trivial (diameter <TeX src="20 \cdot k" />); the record is a memory + endurance limit.</>,
+      zhHant: <>Graham Siggins 創下 MBLD 世界紀錄 62/65。MBLD 群論上完全平凡(<TeX src="20 \cdot k" /> 直徑),記錄是記憶 + 體力的極限。</>
+},
+  { year: 2022, zh: <>Yusheng Du 三阶 4.86s WR(已被 Yiheng Wang 4.86 平 + 后续超越),平均解 ~40 HTM,远高于 20 的理论最优。</>, en: <>Yusheng Du sets 3×3 WR at 4.86s (later tied / surpassed by Yiheng Wang), avg solution ~40 HTM, far above the 20 theoretical optimum.</>,
+      zhHant: <>Yusheng Du 三階 4.86s WR(已被 Yiheng Wang 4.86 平 + 後續超越),平均解 ~40 HTM,遠高於 20 的理論最優。</>
+},
+  { year: 2024, zh: <>Merino & Subercaseaux (arXiv:2501.00144) 提出"Demigod's number" —— 用 500k 随机样本 + Hoeffding 在 5 小时内证 <TeX src="D \le 36" />,误证概率 <TeX src="< 10^{-10}" />。详见 <Link href="/math/demigod" style={{ color: 'var(--accent)', textDecoration: 'none', borderBottom: '1px dotted currentColor' }}>专门页面</Link>。</>, en: <>Merino & Subercaseaux (arXiv:2501.00144) propose a "Demigod's number" — 500k random samples + Hoeffding prove <TeX src="D \le 36" /> in 5 hours, error probability <TeX src="< 10^{-10}" />. <Link href="/math/demigod" style={{ color: 'var(--accent)', textDecoration: 'none', borderBottom: '1px dotted currentColor' }}>Dedicated page</Link>.</>,
+      zhHant: <>Merino & Subercaseaux (arXiv:2501.00144) 提出"Demigod's number" —— 用 500k 隨機樣本 + Hoeffding 在 5 小時內證 <TeX src="D \le 36" />,誤證機率 <TeX src="< 10^{-10}" />。詳見 <Link href="/math/demigod" style={{ color: 'var(--accent)', textDecoration: 'none', borderBottom: '1px dotted currentColor' }}>專門頁面</Link>。</>
+},
+  { year: 2025, zh: <>cube20.org 发布 Rubik's Clock 完整距离分布,作为 2014 Kogler 证明的 11 年后独立复核。</>, en: <>cube20.org publishes Rubik's Clock full distance distribution as an independent re-verification of Kogler's 2014 proof, 11 years on.</>,
+      zhHant: <>cube20.org 釋出 Rubik's Clock 完整距離分佈,作為 2014 Kogler 證明的 11 年後獨立複核。</>
+},
 ];
 
 /* ───── page ───────────────────────────────────────────────────────── */
@@ -695,7 +739,7 @@ function dfs(state, max_depth, g):
               <li key={i} className={`god-tl-item ${m.cls || ''}`}>
                 <div className="god-tl-year">{m.year}</div>
                 <div className="god-tl-dot" />
-                <div className="god-tl-body">{(i18n.language.startsWith('zh') ? m.zh : m.en)}</div>
+                <div className="god-tl-body">{(i18n.language === 'zh-Hant' ? (m.zhHant ?? m.zh) : (i18n.language.startsWith('zh') ? m.zh : m.en))}</div>
               </li>
             ))}
           </ol>

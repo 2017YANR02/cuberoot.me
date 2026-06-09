@@ -44,10 +44,18 @@ export const REACT_ROUTER: StackTool = {
     outlookDesc: <>Post-v7 the roadmap forks: library mode for pure SPAs (this site), framework mode for apps that want SSR / RSC. RSC support in framework mode is maturing alongside React 19 through 2026. The View Transitions API and React Compiler integration are the next pieces on the table.</>,
   },
   heroStats: [
-    { num: '7', unit: '.x', zh: <>当前主版本 <em>2024-11 GA · 仍在 7.x</em></>, en: <>current major <em>2024-11 GA · still on 7.x</em></> },
-    { num: '13', unit: 'M', zh: <>npm 周下载 <em>react-router-dom 2026</em></>, en: <>weekly npm downloads <em>react-router-dom 2026</em></> },
-    { num: '24', unit: '+', zh: <>本站工具页路由数 <em>全部 lazy</em></>, en: <>tool pages routed here <em>all lazy</em></> },
-    { num: '12', unit: 'y', zh: <>从 2014 至今 <em>React 路由事实标准</em></>, en: <>since 2014 <em>de facto standard in React</em></> },
+    { num: '7', unit: '.x', zh: <>当前主版本 <em>2024-11 GA · 仍在 7.x</em></>, en: <>current major <em>2024-11 GA · still on 7.x</em></>,
+        zhHant: <>當前主版本 <em>2024-11 GA · 仍在 7.x</em></>
+    },
+    { num: '13', unit: 'M', zh: <>npm 周下载 <em>react-router-dom 2026</em></>, en: <>weekly npm downloads <em>react-router-dom 2026</em></>,
+        zhHant: <>npm 周下載 <em>react-router-dom 2026</em></>
+    },
+    { num: '24', unit: '+', zh: <>本站工具页路由数 <em>全部 lazy</em></>, en: <>tool pages routed here <em>all lazy</em></>,
+        zhHant: <>本站工具頁路由數 <em>全部 lazy</em></>
+    },
+    { num: '12', unit: 'y', zh: <>从 2014 至今 <em>React 路由事实标准</em></>, en: <>since 2014 <em>de facto standard in React</em></>,
+        zhHant: <>從 2014 至今 <em>React 路由事實標準</em></>
+    },
   ],
   intro: {
     zh: (

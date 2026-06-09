@@ -44,10 +44,18 @@ export const REACT: StackTool = {
     outlookDesc: <>React 19 isn't the destination. RSC is finally being natively supported outside Next / Remix in 2026; the React Compiler automates the hand-written perf code; native targets (React Native 0.80+ / visionOS) share the same component model.</>,
   },
   heroStats: [
-    { num: '#1', zh: <>前端框架月下载量 <em>npm trends 2026</em></>, en: <>frontend lib by monthly downloads <em>npm trends 2026</em></> },
-    { num: '40', unit: '%', zh: <>全球 top 1000 网站使用 <em>HTTP Archive</em></>, en: <>of the global top-1000 sites <em>HTTP Archive</em></> },
-    { num: '13', unit: 'y', zh: <>从 2013 至今 <em>13 年仍是主流</em></>, en: <>since 2013 <em>still mainstream</em></> },
-    { num: '19', unit: '.2', zh: <>当前稳定版 <em>2026-05 · 19.2.6</em></>, en: <>current stable <em>2026-05 · 19.2.6</em></> },
+    { num: '#1', zh: <>前端框架月下载量 <em>npm trends 2026</em></>, en: <>frontend lib by monthly downloads <em>npm trends 2026</em></>,
+        zhHant: <>前端框架月下載量 <em>npm trends 2026</em></>
+    },
+    { num: '40', unit: '%', zh: <>全球 top 1000 网站使用 <em>HTTP Archive</em></>, en: <>of the global top-1000 sites <em>HTTP Archive</em></>,
+        zhHant: <>全球 top 1000 網站使用 <em>HTTP Archive</em></>
+    },
+    { num: '13', unit: 'y', zh: <>从 2013 至今 <em>13 年仍是主流</em></>, en: <>since 2013 <em>still mainstream</em></>,
+        zhHant: <>從 2013 至今 <em>13 年仍是主流</em></>
+    },
+    { num: '19', unit: '.2', zh: <>当前稳定版 <em>2026-05 · 19.2.6</em></>, en: <>current stable <em>2026-05 · 19.2.6</em></>,
+        zhHant: <>當前穩定版 <em>2026-05 · 19.2.6</em></>
+    },
   ],
   intro: {
     zh: (
