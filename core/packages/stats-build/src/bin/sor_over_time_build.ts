@@ -5,7 +5,7 @@
 //   - stats/sor_over_time/world.json               ← { single: YearFrame[], average: YearFrame[] }
 //   - stats/sor_over_time/continent/{Cont}.json
 //   - stats/sor_over_time/country/{ISO2}.json
-//   - output/historical_ranks/sor_historical_best.copy.tsv  ← 每人历史最高 SOR 名次(world+country),CI 灌 PG 供主榜徽标
+//   - output/historical_ranks/sor_historical_best.copy.tsv  ← 每人历史最高 SOR 名次(world+continent+country),CI 灌 PG 供主榜徽标 + 选手页 Σ 行
 //
 // 口径严格对齐生产主榜 wca_stats_extra_build.ts:
 //   - SOR = Σ_17现役项目 ( 有名次 ? rank : 缺项罚分 ),罚分 = 该 scope 该项参与人数 + 1
@@ -116,6 +116,7 @@ async function streamLines(file: string, onLine: (cols: string[]) => void): Prom
 // 全局最高名次累积(跨两 metric):key = `${isAvg}\t${wcaId}` → {rank, year, total}
 // total = 取得该最佳名次那一年的 SOR 名次总和(供主榜「历史最佳」列同时显示总和+排名)
 const bestWorld = new Map<string, { rank: number; year: number; total: number }>();
+const bestContinent = new Map<string, { rank: number; year: number; total: number }>();
 const bestCountry = new Map<string, { rank: number; year: number; total: number }>();
 function updateBest(map: Map<string, { rank: number; year: number; total: number }>, isAvg: boolean, id: string, rank: number, year: number, total: number) {
   const k = `${isAvg ? 1 : 0}\t${id}`;
@@ -274,6 +275,7 @@ async function processMetric(isAvg: boolean, countries: Map<string, CountryInfo>
       for (const [cont, rows] of buckets) {
         rows.sort((x, y) => x.sor - y.sor || (x.id < y.id ? -1 : 1));
         assignRanks(rows);
+        for (const r of rows) updateBest(bestContinent, isAvg, r.id, r.rank, yr, r.sor);
         continentSeen.add(cont);
         let out = continentOut.get(cont);
         if (!out) { out = { single: [], average: [] }; continentOut.set(cont, out); }
@@ -390,14 +392,18 @@ async function main() {
   writeFileSync(resolve(STATS_DIR, 'sor_over_time.json'), JSON.stringify(index));
   console.log(`[sor] comps referenced=${referencedComps.size} named=${Object.keys(comps).length} missing=${compMiss}`);
 
-  // ── best-rank TSV(world + country)→ PG ──
-  // 列:wca_id, is_avg, scope('world'|'country'), best_rank, best_year, best_total
+  // ── best-rank TSV(world + continent + country)→ PG ──
+  // 列:wca_id, is_avg, scope('world'|'continent'|'country'), best_rank, best_year, best_total
   const bestPath = resolve(OUT_DIR, 'sor_historical_best.copy.tsv');
   const bs = createWriteStream(bestPath);
   let bestRows = 0;
   for (const [k, v] of bestWorld) {
     const [isAvg, id] = k.split('\t');
     bs.write(`${id}\t${isAvg === '1'}\tworld\t${v.rank}\t${v.year}\t${v.total}\n`); bestRows++;
+  }
+  for (const [k, v] of bestContinent) {
+    const [isAvg, id] = k.split('\t');
+    bs.write(`${id}\t${isAvg === '1'}\tcontinent\t${v.rank}\t${v.year}\t${v.total}\n`); bestRows++;
   }
   for (const [k, v] of bestCountry) {
     const [isAvg, id] = k.split('\t');

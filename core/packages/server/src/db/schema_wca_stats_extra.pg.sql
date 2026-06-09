@@ -142,9 +142,11 @@ CREATE TABLE IF NOT EXISTS wca_person_ranks (
   wca_id              VARCHAR(20) NOT NULL,
   is_avg              BOOLEAN NOT NULL,
   country_id          VARCHAR(50) NOT NULL,
+  continent_id        VARCHAR(50) NOT NULL DEFAULT '',  -- 该选手当前国籍所属大洲(分桶/索引用);migration 0038 加
   events_done         SMALLINT NOT NULL,
   total_world_rank    INTEGER NOT NULL,    -- SUM(world_rank);缺项=该项参赛人数+1
   total_country_rank  INTEGER NOT NULL,
+  total_continent_rank INTEGER NOT NULL DEFAULT 0,      -- SUM(continent_rank);缺项=该洲该项参赛人数+1;migration 0038 加
   best_final_pos      SMALLINT NOT NULL,   -- 跨 event 累积:final round (round_type c/f) 的 MIN(pos>0);0=从未在 final 拿过有效成绩
   ranks_world         INTEGER[] NOT NULL,  -- 21 元素,对应 RANK_EVENTS 顺序 (0-16 活跃,17-20 废止);0=该项无成绩
   ranks_country       INTEGER[] NOT NULL,
@@ -152,6 +154,7 @@ CREATE TABLE IF NOT EXISTS wca_person_ranks (
 );
 CREATE INDEX IF NOT EXISTS pr_total ON wca_person_ranks (is_avg, country_id, total_world_rank);
 CREATE INDEX IF NOT EXISTS pr_country_total ON wca_person_ranks (is_avg, country_id, total_country_rank);
+CREATE INDEX IF NOT EXISTS pr_continent_total ON wca_person_ranks (is_avg, continent_id, total_continent_rank);
 
 -- 元信息 — 沿用 meta_historical (key/value/updated_at),按 key 分:
 --   wca_stats_extra_imported_at = 最近一次导入

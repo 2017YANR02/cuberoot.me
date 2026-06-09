@@ -776,7 +776,7 @@ ORDER BY subset_total ASC;`,
         titleZhHant: "參賽屆別排名",
         hintZhHant: "單項目按屆別看,sum-of-ranks 全項目無屆別"
     },
-    { id: 'sum-of-ranks', toStat: true, titleZh: '直接打开 Sum of Ranks', titleEn: 'Open Sum of Ranks', hintZh: '看默认 17 项 + 子集 picker + hidePodium 切换', hintEn: 'Live table — default 17 events + subset picker + hidePodium toggle',
+    { id: 'sum-of-ranks', toStat: true, statHref: '/wca/all-results?events=all', titleZh: '直接打开 Sum of Ranks', titleEn: 'Open Sum of Ranks', hintZh: '看默认 17 项 + 子集 picker + hidePodium 切换', hintEn: 'Live table — default 17 events + subset picker + hidePodium toggle',
         titleZhHant: "直接開啟 Sum of Ranks",
         hintZhHant: "看預設 17 項 + 子集 picker + hidePodium 切換"
     },

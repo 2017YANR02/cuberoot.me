@@ -117,6 +117,30 @@ html[data-theme=dark] .wp-page {
     color: var(--wp-text);
 }
 
+/* ── 最优项目组合(复用全局 .sor-pb / .sor-tool-hint,见 components/wca-stats/best-combos.css)── */
+.wp-combos-card {
+    padding: 18px 20px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.wp-combos-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+}
+.wp-combos-title {
+    margin: 0; font-size: 1rem; font-weight: 600; color: var(--wp-text);
+}
+.wp-combos-sub {
+    margin: 0; font-size: 0.82rem; color: var(--wp-text-sub); max-width: 640px; line-height: 1.5;
+}
+.wp-combos-bodies {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    margin-top: 2px; align-items: start;
+}
+.wp-combos-bodies .sor-pb { max-width: none; }
+@media (max-width: 768px) {
+    .wp-combos-bodies { grid-template-columns: 1fr; }
+}
+
 /* ── Hero ──────────────────────────────────────────────────────────── */
 .wp-hero-card {
     background: var(--wp-surface);

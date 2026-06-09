@@ -9,7 +9,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { fetchPersonBestRanks, fetchPersonSor, type WcaPersonProfile, type WcaResultRow, type PersonBestRanksResponse, type PersonSorResponse } from '@/lib/wca-person-api';
+import { fetchPersonBestRanks, fetchPersonSor, type WcaPersonProfile, type WcaResultRow, type PersonBestRanksResponse, type PersonSorResponse, type SorRankTriple } from '@/lib/wca-person-api';
 import { countPodiumByEvent } from '../logic/podium';
 import i18n from "@/i18n/i18n-client";
 
@@ -171,7 +171,8 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
 }
 
 // 全项目排名(Sum of Ranks)摘要 — 作为 PR 表内的附加 tbody,列与上方对齐:
-//   世界排名 → 「世界」列(RankCell 同款配色),SOR 总分 → 「成绩」列,洲际/地区暂留空.
+//   世界/洲际/地区名次 → 对应三列(RankCell 同款配色),SOR 总分 → 「成绩」列.
+//   洲际/地区名次为 null(数据未填充 / 无 scope)时该格留空,不误显.
 // 数据 lazy fetch;无数据(端点未上线 / 选手无 SOR)时整块不渲染,不破坏页面.
 function PersonSorSummary({ wcaId, isZh, showPodium }: { wcaId: string; isZh: boolean; showPodium: boolean }) {
   const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
@@ -207,21 +208,21 @@ function PersonSorSummary({ wcaId, isZh, showPodium }: { wcaId: string; isZh: bo
   const dataRow = (
     key: string,
     label: string,
-    single: { total: number | null; rank: number } | null,
-    average: { total: number | null; rank: number } | null,
+    single: { total: number | null; rank: SorRankTriple } | null,
+    average: { total: number | null; rank: SorRankTriple } | null,
     sYear?: number,
     aYear?: number,
   ) => (
     <tr key={key} className="wp-sor-row">
       <th scope="row" className="wp-cell-event wp-sor-rowlabel">{label}</th>
-      {rankCell(single?.rank)}
-      <td className="wp-sor-blank" />
-      <td className="wp-sor-blank" />
+      {rankCell(single?.rank.world)}
+      {rankCell(single?.rank.continent)}
+      {rankCell(single?.rank.country)}
       {totalCell(single?.total, sYear)}
       {totalCell(average?.total, aYear)}
-      {rankCell(average?.rank)}
-      <td className="wp-sor-blank" />
-      <td className="wp-sor-blank" />
+      {rankCell(average?.rank.world)}
+      {rankCell(average?.rank.continent)}
+      {rankCell(average?.rank.country)}
       {showPodium && <><td className="wp-sor-blank" /><td className="wp-sor-blank" /><td className="wp-sor-blank" /></>}
     </tr>
   );
@@ -230,7 +231,7 @@ function PersonSorSummary({ wcaId, isZh, showPodium }: { wcaId: string; isZh: bo
     <tbody className="wp-sor-tbody">
       <tr className="wp-sor-section">
         <th colSpan={colCount}>
-          <Link href="/wca/sum-of-ranks" className="wp-sor-title" title={t('全项目排名 (Sum of Ranks)', 'Sum of Ranks', '全項目排名 (Sum of Ranks)')}>
+          <Link href="/wca/all-results?events=all" className="wp-sor-title" title={t('全项目排名 (Sum of Ranks)', 'Sum of Ranks', '全項目排名 (Sum of Ranks)')}>
             <span className="wp-sor-sigma">Σ</span>
             <ArrowUpRight size={13} />
           </Link>
