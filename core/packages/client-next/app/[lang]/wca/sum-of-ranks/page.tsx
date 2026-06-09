@@ -10,6 +10,8 @@ import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight } from 'lucide-react
 
 // echarts-for-react 仅客户端(无 SSR),历史名人堂的时间线图用.
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
+// SOR 排名演化 bar chart race — 懒加载(展开才挂 + 拉数据,省首屏)
+const SorRace = dynamic(() => import('@/components/wca-stats/SorRace'), { ssr: false });
 import Paginator from '@/components/wca-stats/Paginator';
 import { EventIcon } from '@/components/EventIcon';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -72,6 +74,8 @@ interface Row {
   totalCountryRank?: number;
   subsetTotal?: number;
   ranks: number[];
+  bestRank?: number | null;   // 历史最高 SOR 名次(当前 scope,仅默认 17 项视图返回)
+  bestYear?: number | null;
 }
 
 // combos = all subsets tied at `rank` (fewest events first, capped server-side); comboCount = full tied count.
@@ -161,6 +165,7 @@ function SumOfRanksPageInner() {
   const [pbLoading, setPbLoading] = useState(false);
   const [pbError, setPbError] = useState(false);
   // Q2: 名人堂(懒加载,展开才拉)
+  const [raceOpen, setRaceOpen] = useState(false);
   const [census, setCensus] = useState<Census | null>(null);
   const [censusOpen, setCensusOpen] = useState(false);
   const [censusExpanded, setCensusExpanded] = useState(false);
@@ -227,6 +232,8 @@ function SumOfRanksPageInner() {
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
   const isCountryMode = !!country;
+  // 历史最高列:仅默认 17 项视图(server 走快路径)才带 bestRank 字段
+  const showBest = !!data && data.rows.length > 0 && 'bestRank' in data.rows[0]!;
 
   // 时间线图 option(本页 dark-locked,echarts 不解析 CSS var → 运行时取 token 值)
   const selYear = census?.year ?? null;
@@ -306,6 +313,17 @@ function SumOfRanksPageInner() {
             zhHant: "把所選項目的(世界 / 國家)排名相加,缺項以該項目\"參賽人數+1\"(比倒數第一再差一名)計入。\"未登領獎臺\" 按比賽決賽(final round)實際名次過濾"
         })}</p>
       </header>
+
+      {/* SOR 排名演化 race(世界 / 大洲 / 国家),懒挂 */}
+      <div className="sor-census" style={{ marginBottom: 16 }}>
+        <button type="button" className="sor-census-toggle" onClick={() => setRaceOpen(o => !o)} aria-expanded={raceOpen}>
+          {raceOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          {tr({ zh: 'SOR 排名演化(世界 / 大洲 / 国家)', en: 'SOR over time (World / Continent / Country)',
+              zhHant: "SOR 排名演化(世界 / 大洲 / 國家)"
+          })}
+        </button>
+        {raceOpen && <SorRace />}
+      </div>
 
       <div className="wse-filters">
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
@@ -536,6 +554,9 @@ function SumOfRanksPageInner() {
                   <th className="wse-value-col">{tr({ zh: '名次总和', en: 'Total',
                       zhHant: "名次總和"
                 })}</th>
+                  {showBest && <th className="wse-value-col">{tr({ zh: '历史最高', en: 'Best ever',
+                      zhHant: "歷史最高"
+                })}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -563,6 +584,11 @@ function SumOfRanksPageInner() {
                       isCountryMode ? r.totalCountryRank :
                       r.totalWorldRank
                     }</td>
+                    {showBest && (
+                      <td className="wse-value-col">
+                        {r.bestRank != null ? <>#{r.bestRank}<span style={{ opacity: 0.55, marginLeft: 4 }}>{r.bestYear}</span></> : '—'}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

@@ -813,7 +813,10 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
   if (orderCol) {
     const offset = (page - 1) * size;
     const totalParams = [...params];
-    params.push(size, offset);
+    // 历史最高 SOR 名次徽标:LEFT JOIN sor_historical_best(同 scope 同 is_avg).
+    // JOIN 在 WHERE 之前 → 其 ? 占位排在 where 参数前.表未灌数据时返回 NULL,不报错.
+    const bestScope = isCountryMode ? 'country' : 'world';
+    const dataParams = [isAvg, bestScope, ...params, size, offset];
 
     const rows = await query<{
       wca_id: string; country_id: string;
@@ -821,21 +824,25 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
       events_done: number; total_world_rank: number; total_country_rank: number;
       ranks_world: number[]; ranks_country: number[];
       person_name: string;
+      best_rank: number | null; best_year: number | null;
     }>(
       `
       SELECT pr.wca_id, pr.country_id,
              co.iso2 AS iso2,
              pr.events_done, pr.total_world_rank, pr.total_country_rank,
              pr.ranks_world, pr.ranks_country,
-             p.name AS person_name
+             p.name AS person_name,
+             shb.best_rank AS best_rank, shb.best_year AS best_year
       FROM wca_person_ranks pr
       JOIN wca_persons p ON p.wca_id = pr.wca_id
       LEFT JOIN wca_countries co ON co.id = pr.country_id
+      LEFT JOIN sor_historical_best shb
+        ON shb.wca_id = pr.wca_id AND shb.is_avg = ? AND shb.scope = ?
       WHERE ${where.join(' AND ')}
       ORDER BY ${orderCol} ASC, pr.wca_id ASC
       LIMIT ? OFFSET ?
       `,
-      params,
+      dataParams,
     );
     const totalRow = await query<{ n: string }>(
       `SELECT COUNT(*) AS n FROM wca_person_ranks pr WHERE ${where.join(' AND ')}`,
@@ -854,6 +861,8 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
         totalWorldRank: r.total_world_rank,
         totalCountryRank: r.total_country_rank,
         ranks: isCountryMode ? r.ranks_country : r.ranks_world,
+        bestRank: r.best_rank ?? null,
+        bestYear: r.best_year ?? null,
       })),
     });
   }

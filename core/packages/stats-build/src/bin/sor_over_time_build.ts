@@ -18,7 +18,7 @@
 //   SNAP_TSV=.tmp/sor-feature/sor_snap.tsv OUT_DIR=packages/stats-build/output/historical_ranks \
 //     npx tsx src/bin/sor_over_time_build.ts
 
-import { createReadStream, createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync } from 'fs';
+import { createReadStream, createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync, appendFileSync, existsSync } from 'fs';
 import { createInterface } from 'readline';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -343,6 +343,25 @@ async function main() {
     bs.write(`${id}\t${isAvg === '1'}\tcountry\t${v.rank}\t${v.year}\n`); bestRows++;
   }
   await new Promise<void>((res) => bs.end(() => res()));
+
+  // 追加 load 块到 historical_ranks 的 load.sql(builder 先写,这里追加)→ 同一 apply_load 通道灌库.
+  // 表未灌前 server LEFT JOIN 返回 NULL;CREATE IF NOT EXISTS 自足(migration 0033 也建,双保险).
+  const loadSqlPath = resolve(OUT_DIR, 'load.sql');
+  if (existsSync(loadSqlPath)) {
+    appendFileSync(loadSqlPath,
+      `\n-- ── sor_historical_best(由 sor_over_time_build.ts 追加)──\n` +
+      `CREATE TABLE IF NOT EXISTS sor_historical_best (\n` +
+      `  wca_id VARCHAR(20) NOT NULL, is_avg BOOLEAN NOT NULL, scope VARCHAR(10) NOT NULL,\n` +
+      `  best_rank INTEGER NOT NULL, best_year SMALLINT NOT NULL,\n` +
+      `  PRIMARY KEY (wca_id, is_avg, scope)\n);\n` +
+      `BEGIN;\nTRUNCATE sor_historical_best;\n` +
+      `\\copy sor_historical_best (wca_id, is_avg, scope, best_rank, best_year) FROM 'sor_historical_best.copy.tsv';\n` +
+      `COMMIT;\nANALYZE sor_historical_best;\n`,
+    );
+    console.log('[sor] appended sor_historical_best load block to load.sql');
+  } else {
+    console.log('[sor] WARN: load.sql not found in OUT_DIR — run historical_ranks_build first (best-rank not loaded)');
+  }
 
   const idxMb = (statSync(resolve(STATS_DIR, 'sor_over_time.json')).size / 1024 / 1024).toFixed(2);
   console.log(`\n=== Done in ${((Date.now() - t0) / 1000).toFixed(1)}s ===`);
