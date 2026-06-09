@@ -22,7 +22,10 @@ const BLOCKED_BOTS = [
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
-      { userAgent: '*', allow: '/' },
+      // /stats/* (JSON data) and /api/* (live endpoints) are machine-fetched by
+      // the app, never content — keep all crawlers out so they stop re-crawling
+      // raw data files (Baidu alone hit /stats/*.json thousands of times/day).
+      { userAgent: '*', allow: '/', disallow: ['/stats/', '/api/'] },
       { userAgent: BLOCKED_BOTS, disallow: '/' },
     ],
     sitemap: 'https://www.cuberoot.me/sitemap.xml',
