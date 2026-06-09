@@ -138,22 +138,25 @@ export async function fetchPersonBestRanks(wcaId: string): Promise<PersonBestRan
   return json;
 }
 
-// 选手「全项目排名(SOR)」摘要 — 当前 / 历史最佳的单次 + 平均(17 现役项,世界/洲际/地区三档名次).
-// 数据源同上(wca_person_ranks + sor_historical_best),由 /v1/wca/sum-of-ranks/person 返回.
-// rank.continent / rank.country 为 null = 数据未填充 / 无对应 scope → 前端该列留空.
-export interface SorRankTriple { world: number; continent: number | null; country: number | null; }
-export interface PersonSorCell { total: number; rank: SorRankTriple; eventsDone: number; }
-export interface PersonSorBestCell { total: number | null; rank: SorRankTriple; year: number; }
+// 选手「全项目名次和」摘要 — 三个独立指标(都是 Σ 17 现役项,只是求和的 rank 不同):
+//   SoWR = Sum of World Ranks(Σ世界名次,天然按世界排) / SoCR = Sum of Continent Ranks(按本洲排)
+//   SoNR = Sum of National Ranks(按本国排).每个指标各带「和值 total + 自身 scope 名次 rank」.
+// 单个指标为 null = 该统计无数据(如 SoCR 数据未填充).由 /v1/wca/sum-of-ranks/person 返回.
+export interface SorMetricCell { total: number; rank: number; }                  // 当前
+export interface SorMetricBest { total: number | null; rank: number; year: number; } // 历史最佳
+export interface SorMetricTriple<T> { sowr: T | null; socr: T | null; sonr: T | null; }
 export interface PersonSorResponse {
   wcaId: string;
-  single: PersonSorCell | null;
-  average: PersonSorCell | null;
-  bestSingle: PersonSorBestCell | null;
-  bestAverage: PersonSorBestCell | null;
+  countryId: string;
+  continentId: string;
+  single: (SorMetricTriple<SorMetricCell> & { eventsDone: number }) | null;
+  average: (SorMetricTriple<SorMetricCell> & { eventsDone: number }) | null;
+  bestSingle: SorMetricTriple<SorMetricBest> | null;
+  bestAverage: SorMetricTriple<SorMetricBest> | null;
 }
 
 export async function fetchPersonSor(wcaId: string): Promise<PersonSorResponse> {
-  const key = `wca:sor:v2:${wcaId}`;
+  const key = `wca:sor:v3:${wcaId}`;
   const cached = cacheGet<PersonSorResponse>(key);
   if (cached) return cached;
   const res = await fetch(apiUrl(`/v1/wca/sum-of-ranks/person?wcaId=${encodeURIComponent(wcaId)}`));
