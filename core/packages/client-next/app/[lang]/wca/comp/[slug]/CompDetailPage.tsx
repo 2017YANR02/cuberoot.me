@@ -36,6 +36,7 @@ import { useLiveStream, applyResultPatch, type LivePatch, type WsStatus } from '
 import { useWcaLiveStream, type WcaLiveRoundUpdate } from '@/hooks/useWcaLiveStream';
 import ScheduleView, { ScheduleControls } from './ScheduleView';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
+import LangToggle from '@/components/LangToggle';
 import '../comp.css';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
@@ -1319,7 +1320,10 @@ export default function CompDetailPage() {
           data={data}
           isZh={isZh}
           pbMap={pbMap}
-          onSelectRound={(eventId, roundId) => setModal({ kind: 'round', number: modal.number, eventId, roundId })}
+          onSelectRound={(eventId, roundId) => {
+            onChangeRound(roundKey(eventId, roundId)); // 同步 event/round 进 URL → 页面背景也切到该轮
+            setModal({ kind: 'round', number: modal.number, eventId, roundId });
+          }}
           onClose={() => setModal(null)}
         />
       )}
@@ -2475,29 +2479,9 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
             })}
             >
               {copyState === 'done' ? <Check size={14} /> : <Copy size={14} />}
-              <span>
-                {copyState === 'done'
-                  ? (tr({ zh: '已复制', en: 'Copied',
-                      zhHant: "已複製"
-                }))
-                  : copyState === 'error'
-                    ? (tr({ zh: '失败', en: 'Failed',
-                        zhHant: "失敗"
-                    }))
-                    : copyState === 'nothing'
-                      ? (tr({ zh: '无可复制', en: 'Nothing',
-                          zhHant: "無可複製"
-                    }))
-                      : copyState === 'copying'
-                        ? (tr({ zh: '复制中…', en: 'Copying…',
-                            zhHant: "複製中…"
-                        }))
-                        : (tr({ zh: '复制', en: 'Copy',
-                            zhHant: "複製"
-                        }))}
-              </span>
             </button>
           )}
+          <LangToggle soft variant="inline" />
           <button type="button" className="comp-modal-close-btn" onClick={onShowAll}>
             {tr({ zh: '所有', en: 'All' })}
           </button>

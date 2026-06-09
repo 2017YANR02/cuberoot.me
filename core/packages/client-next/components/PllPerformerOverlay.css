@@ -1,10 +1,10 @@
 /* Clawd PLL Performer — enlarged focused overlay. All colors via theme tokens.
-   z-index sits above the desk pet (~61); scrim + blur like DeskPetGallery. */
+   z-index sits above the desk pet (pet-front 100020); scrim + blur like DeskPetGallery. */
 
 .pll-perf-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 72;
+  z-index: 100030;
   display: flex;
   align-items: center;
   justify-content: center;

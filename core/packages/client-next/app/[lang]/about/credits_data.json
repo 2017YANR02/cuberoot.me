@@ -167,5 +167,12 @@
     "zh": "桥式训练器(/trainer/333 的 Roux 标签;引擎 + three.js 渲染器全量 port 为 React、去 MUI;作者 Onionhoney,GPL-3.0)",
     "en": "Roux trainer (/trainer/333 Roux tab; engine + three.js renderer fully ported to React, de-MUI'd; author Onionhoney, GPL-3.0)",
     "long_en": "Roux-method trainer collection — first-block / analyzer / FS / SS / CMLL / LSE trainers + in-browser Roux solver + three.js cube renderer, ported to React (MUI removed) and embedded under the `/trainer/333` Roux tab (author Onionhoney, GPL-3.0)"
+  },
+  {
+    "name": "WCA Regulations Committee — Regulation 5b5f Visual Guide",
+    "url": "https://drive.google.com/file/d/15XszaCGNvy3Dk6X6qERzZWZaDH1RH04z",
+    "zh": "/regulation 规则页:5b5f 拼装缺陷判定可视化指南(内容 + 11 张配图全部来自此官方文档,已注明来源)",
+    "en": "/regulation page: Regulation 5b5f assembly-defect Visual Guide (text + all 11 photos sourced from this official document)",
+    "long_en": "official WCA Regulations Committee slide deck explaining how 5b5f judges pieces that are partially detached or not fully placed; its text and all example photos are reproduced with attribution on the `/regulation` page"
   }
 ]

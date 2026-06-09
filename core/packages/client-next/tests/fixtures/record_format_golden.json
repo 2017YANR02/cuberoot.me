@@ -647,6 +647,53 @@
     }
   },
   {
+    "name": "combine_pr_mixed_break_nonbreak",
+    "input": {
+      "events": [
+        {
+          "tag": "PR",
+          "rec_type": "single",
+          "event_id": "333",
+          "attempt_result": 372,
+          "person_name": "Zhaokun Li (李昭昆)",
+          "person_iso2": "CN",
+          "comp_name": "黄冈公开赛2026",
+          "comp_name_en": "HuanggangOpen2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 5
+        },
+        {
+          "tag": "PR",
+          "rec_type": "average",
+          "event_id": "333",
+          "attempt_result": 434,
+          "person_name": "Zhaokun Li (李昭昆)",
+          "person_iso2": "CN",
+          "comp_name": "黄冈公开赛2026",
+          "comp_name_en": "HuanggangOpen2026",
+          "comp_iso2": "CN",
+          "url": "https://live.worldcubeassociation.org/link/competitions/x",
+          "pr_rank": 1
+        }
+      ]
+    },
+    "with_rank": {
+      "cn": "成绩快讯! 4.34三阶魔方平均PR 李昭昆🇨🇳 | 3.72单次PR5 | 黄冈公开赛2026🇨🇳",
+      "en": "Result News! 4.34 3x3 Avg PR Zhaokun Li🇨🇳 | 3.72 Single PR5 | HuanggangOpen2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x",
+      "ranks": [
+        5,
+        3
+      ]
+    },
+    "no_rank": {
+      "cn": "成绩快讯! 4.34三阶魔方平均PR 李昭昆🇨🇳 | 3.72单次PR5 | 黄冈公开赛2026🇨🇳",
+      "en": "Result News! 4.34 3x3 Avg PR Zhaokun Li🇨🇳 | 3.72 Single PR5 | HuanggangOpen2026🇨🇳",
+      "url": "https://live.worldcubeassociation.org/link/competitions/x"
+    }
+  },
+  {
     "name": "fmc_single",
     "input": {
       "events": [

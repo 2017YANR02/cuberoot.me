@@ -9,7 +9,7 @@ import { X, Boxes } from 'lucide-react';
 import { PET_GALLERY } from '@/lib/deskpet-gallery';
 
 const CSS = `
-.deskpet-gallery-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;
+.deskpet-gallery-overlay{position:fixed;inset:0;z-index:100040;display:flex;align-items:center;
   justify-content:center;padding:24px 16px;overflow:auto;
   background:color-mix(in srgb, var(--foreground) 45%, transparent);
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
