@@ -20,15 +20,18 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # checkout 只取构建 + GH Pages 镜像 commit 实际碰的目录,跳过仓库根 stats/ 709MB + tools/ 等
-      # ~1GB 静态残留(blob:none partial clone)。cone 必须含 "Sync dist to root + Commit" 步要 add 的
-      # 全部根目录(_assets/fonts/ffmpeg/...),否则那些目录的镜像更新会被 sparse 跳过;根级散文件
-      # (index.html/sw.js 等)cone 模式自动带上。stats/ 等 out-of-cone 子树 commit 时按父树 SHA 原样保留.
+      # checkout 只取构建 + GH Pages 镜像 commit 实际碰的目录,跳过仓库根 stats/ 707MB + tools/ 等
+      # ~1GB 静态残留(blob:none partial clone)。cone 必须含:
+      #   - "Sync dist to root + Commit" 步要 add 的全部根目录(_assets/fonts/ffmpeg/...),否则镜像更新被跳过;
+      #   - stats/prediction(1.1MB)—— 退役 Vite client 唯一的 build-time 静态 import
+      #     (packages/client/src/pages/prediction/data/wr333_history.ts),少了它 tsc -b 直接 TS2307 炸。
+      # 根级散文件(index.html/sw.js 等)cone 模式自动带上;stats/ 其余 out-of-cone 子树 commit 时按父树 SHA 原样保留.
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
             core
             ops
+            stats/prediction
             _assets
             fonts
             ffmpeg
