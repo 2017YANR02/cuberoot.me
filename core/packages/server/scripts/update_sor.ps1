@@ -126,5 +126,6 @@ if ($LASTEXITCODE -ne 0) { throw "scp failed" }
 Write-Host "[$(Get-Date -Format HH:mm:ss)] load prod ($PgDb)"
 & ssh $Server "PGPASSWORD=$pw psql -U $PgUser -h 127.0.0.1 -d $PgDb -v ON_ERROR_STOP=1 -f /tmp/load_sor_pb.sql"
 if ($LASTEXITCODE -ne 0) { throw "prod load failed" }
-& ssh $Server 'grep -rl "sum-of-ranks/player-best" /var/cache/nginx/api/ 2>/dev/null | xargs -r rm -f; true'
-Write-Host "[$(Get-Date -Format HH:mm:ss)] done — sor_player_best 已刷新, nginx player-best 缓存已清"
+# player-best (内联 head) + player-combos (展开分页) 同源同表, 一起清 (前缀 player- 覆盖两者)
+& ssh $Server 'grep -rl "sum-of-ranks/player-" /var/cache/nginx/api/ 2>/dev/null | xargs -r rm -f; true'
+Write-Host "[$(Get-Date -Format HH:mm:ss)] done — sor_player_best 已刷新, nginx player-best/combos 缓存已清"
