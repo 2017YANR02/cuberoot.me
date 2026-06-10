@@ -39,6 +39,7 @@ comp_name_diff.txt
 
 # Claude Code 本机专属配置（权限白名单，不共享）
 .claude/settings.local.json
+core/.claude/settings.local.json
 # Claude Code agent worktrees（每个数 GB，纯本机临时产物）
 .claude/worktrees/
 # Playwright MCP 临时日志

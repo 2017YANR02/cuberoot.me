@@ -44,6 +44,8 @@ export default function PersonDetailClient() {
   const [comps, setComps] = useState<WcaCompetition[] | null>(null);
   const [reconLookup, setReconLookup] = useState<Map<string, number> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // 「废止项」口径开关:Σ 名次和行(PR 表底部)与「最优项目组合」共用一份状态
+  const [inclCancelled, setInclCancelled] = useState(false);
 
   useEffect(() => {
     if (!wcaId) return; // wait until the id is resolved from the URL
@@ -94,8 +96,8 @@ export default function PersonDetailClient() {
       <PageHeader t={t} wcaId={profile.person.wca_id} />
       <main className="wp-main">
         <PersonHero profile={profile} results={results} isZh={isZh} />
-        <PersonPRTable profile={profile} results={results} isZh={isZh} />
-        <PersonBestCombos wcaId={profile.person.wca_id} isZh={isZh} />
+        <PersonPRTable profile={profile} results={results} isZh={isZh} inclCancelled={inclCancelled} onInclCancelledChange={setInclCancelled} />
+        <PersonBestCombos wcaId={profile.person.wca_id} isZh={isZh} inclCancelled={inclCancelled} />
         <PersonTabs profile={profile} results={results} comps={comps} reconLookup={reconLookup} isZh={isZh} />
       </main>
     </div>
