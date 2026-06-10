@@ -684,30 +684,28 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             }))
               : (i18n.language === 'zh-Hant' ? (`每天 ${currentDailyGoal} 次（全部項目合計）`) : (isZh ? `每天 ${currentDailyGoal} 次（全部项目合计）` : `${currentDailyGoal} solves/day (all events)`))}</span>
           </Row>
-          <Row label={tr({ zh: '计时途中精度', en: 'Live precision',
-              zhHant: "計時途中精度"
+          <Row label={tr({ zh: '计时途中', en: 'Live',
+              zhHant: "計時途中"
         })}>
             <select
               value={s.runningPrecision}
               onChange={(e) => updateSettings({ runningPrecision: Number(e.target.value) as 0 | 1 | 2 | 3 })}
             >
-              <option value={0}>{tr({ zh: '整数秒 (x)', en: 'whole sec (x)',
-                  zhHant: "整數秒 (x)"
-            })}</option>
-              <option value={1}>{tr({ zh: '0.1 秒 (x.x)', en: '0.1s (x.x)' })}</option>
-              <option value={2}>{tr({ zh: '0.01 秒 (x.xx)', en: '0.01s (x.xx)' })}</option>
-              <option value={3}>{tr({ zh: '0.001 秒 (x.xxx)', en: '0.001s (x.xxx)' })}</option>
+              <option value={0}>x</option>
+              <option value={1}>x.x</option>
+              <option value={2}>x.xx</option>
+              <option value={3}>x.xxx</option>
             </select>
           </Row>
-          <Row label={tr({ zh: '最终成绩精度', en: 'Final precision',
-              zhHant: "最終成績精度"
+          <Row label={tr({ zh: '最终成绩', en: 'Final',
+              zhHant: "最終成績"
         })}>
             <select
               value={s.precision}
               onChange={(e) => updateSettings({ precision: Number(e.target.value) as 2 | 3 })}
             >
-              <option value={2}>{tr({ zh: '0.01 秒 (x.xx)', en: '0.01s (x.xx)' })}</option>
-              <option value={3}>{tr({ zh: '0.001 秒 (x.xxx)', en: '0.001s (x.xxx)' })}</option>
+              <option value={2}>x.xx</option>
+              <option value={3}>x.xxx</option>
             </select>
           </Row>
           <Row label={tr({ zh: '颜色中立', en: 'Color neutral',

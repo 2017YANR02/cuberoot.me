@@ -10,6 +10,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CompPicker } from '@/components/CompPicker';
 import { ClearButton } from '@/components/ClearButton';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { Flag } from '@/components/Flag';
 import { localizeCompName } from '@/lib/comp-localize';
 import type { Comp } from '@/lib/comp-search';
@@ -204,10 +205,9 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings 
             zhHant: "自動打卡"
         })}</span>
         <span className="settings-row-control">
-          <input
-            type="checkbox"
-            checked={settings.autoMarkWcaScramble}
-            onChange={(e) => updateSettings({ autoMarkWcaScramble: e.target.checked })}
+          <PillToggle
+            value={settings.autoMarkWcaScramble}
+            onChange={(v) => updateSettings({ autoMarkWcaScramble: v })}
           />
         </span>
       </div>
