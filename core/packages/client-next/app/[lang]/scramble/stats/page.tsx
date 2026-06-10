@@ -424,12 +424,36 @@ export default function ScrambleStatsPage() {
     </div>
   );
 
+  // Dataset toggle (difficulty tab only): the two top-level sets (WCA / xcross)
+  // become a PillToggle sitting just left of the merge toggle. Rendered only when
+  // exactly two top-level datasets exist.
+  const topSets = data ? Object.entries(data.sets).filter(([, s]) => !s.event) : [];
+  const datasetToggle = (tab === 'difficulty' && topSets.length === 2) ? (() => {
+    const [k0, s0] = topSets[0];
+    const [k1, s1] = topSets[1];
+    const lab = (s: SetData) => (isZh && s.label_zh) ? s.label_zh : s.label;
+    return (
+      <PillToggle
+        value={dataset === k0}
+        onChange={(v) => setDataset(v ? k0 : k1)}
+        onLabel={lab(s0)}
+        offLabel={lab(s1)}
+        ariaLabel={tr({ zh: '数据集', en: 'Dataset',
+            zhHant: "資料集"
+        })}
+      />
+    );
+  })() : null;
+
   // Shared header: WCA-event selector sits ABOVE the tab bar so it drives both
   // the difficulty tab and the length tab.
   const header = (
     <div className="scramble-stats-header">
       <h1>{pageTitle}</h1>
       <div className="scramble-stats-event-bar">
+        <div className="scramble-stats-tabrow">
+          {tabsBar}
+          {datasetToggle}
         {(tab === 'length' || dataset === 'wca') && (
           <div className="scramble-len-merge">
             <PillToggle
@@ -456,6 +480,7 @@ export default function ScrambleStatsPage() {
             </span>
           </div>
         )}
+        </div>
         <WcaEventSelector
           availableEvents={availableEvents}
           selectedEvent={event}
@@ -464,7 +489,6 @@ export default function ScrambleStatsPage() {
           onlyAvailable
         />
       </div>
-      {tabsBar}
     </div>
   );
 
@@ -534,58 +558,18 @@ export default function ScrambleStatsPage() {
 
   const vData = currentSet.variants[variant];
 
-  const sourceText = (() => {
-    if (scrambleSet === 'wca') {
-      const n = currentSet.sample_count.toLocaleString();
-      return i18n.language === 'zh-Hant' ? (`來源: WCA 歷史 ${n} 條三階打亂,覆蓋三階速擰 / 單手 / 盲擰 / 多盲 / 最少步 / 腳擰 6 個項目;每條按 6 種底色方向(黃 / 紅 / 白 / 橙 / 藍 / 綠)求階段最優步數的分佈。`) : (isZh
-              ? `来源: WCA 历史 ${n} 条三阶打乱,覆盖三阶速拧 / 单手 / 盲拧 / 多盲 / 最少步 / 脚拧 6 个项目;每条按 6 种底色方向(黄 / 红 / 白 / 橙 / 蓝 / 绿)求阶段最优步数的分布。`
-              : `Source: ${n} WCA historical 3×3 scrambles from 6 events (3×3, OH, BLD, Multi-BLD, FMC, Feet); each analyzed across 6 bottom-color orientations (Y/R/W/O/B/G). Distribution of stage-optimal move counts.`);
-    }
-    if (currentSet.event) {
-      // WCA per-event subset — same scrambler family, this event's own sample.
-      // tr() 模板 + 占位替换:zhHant 由 zh:inject 机器生成,AI/人不写繁体。
-      const n = currentSet.sample_count.toLocaleString();
-      const ev = eventLabel(currentSet.event, isZh);
-      const tpl = tr({
-        zh: '来源: WCA 历史 {ev} 项目 {n} 条打乱(六个三阶项目共用同一打乱程序,分布理论同形);每条按 6 种底色方向求阶段最优步数的分布。',
-        en: 'Source: {n} WCA historical {ev} scrambles (all six 3×3 events share one scrambler, so distributions are theoretically identical); each analyzed across 6 bottom-color orientations.',
-          zhHant: "來源: WCA 歷史 {ev} 項目 {n} 條打亂(六個三階項目共用同一打亂程式,分佈理論同形);每條按 6 種底色方向求階段最優步數的分佈。"
-    });
-      return tpl.replace('{ev}', ev).replace('{n}', n);
-    }
-    const labelDisp = (isZh && currentSet.label_zh) ? currentSet.label_zh : currentSet.label;
-    const n = currentSet.sample_count.toLocaleString();
-    return i18n.language === 'zh-Hant' ? (`來源: ${labelDisp},共 ${n} 條樣本;每條按 6 種底色方向求階段最優步數的分佈。`) : (isZh
-          ? `来源: ${labelDisp},共 ${n} 条样本;每条按 6 种底色方向求阶段最优步数的分布。`
-          : `Source: ${labelDisp} (${n} samples); each analyzed across 6 bottom-color orientations.`);
-  })();
-
-  // 数据集下拉只列顶级 set(per-event 子集由顶部项目选择器路由,不进下拉)
-  const datasetOptions = Object.entries(data.sets)
-    .filter(([, s]) => !s.event)
-    .map(([key, s]) => ({
-      value: key,
-      label: `${(isZh && s.label_zh) ? s.label_zh : s.label} (${s.sample_count.toLocaleString()})`,
-    }));
+  const sampleCount = tr({ zh: '{n} 条样本', en: '{n} samples',
+      zhHant: "{n} 條樣本"
+}).replace('{n}', currentSet.sample_count.toLocaleString());
 
   return (
     <div className="scramble-stats-page">
       {header}
-      <p className="scramble-stats-note">{sourceText}</p>
 
       <div className="scramble-stats-controls">
         <div className="scramble-stats-color-control">
           <SubsetColorPicker sel={sel} isZh={isZh} />
         </div>
-        <label>
-          <select value={dataset} onChange={(e) => setDataset(e.target.value)} aria-label={tr({ zh: '数据集', en: 'Dataset',
-              zhHant: "資料集"
-        })}>
-            {datasetOptions.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </label>
         <label>
           <select value={variant} onChange={(e) => setVariant(e.target.value as VariantKey)} aria-label={tr({ zh: '变体', en: 'Variant',
               zhHant: "變體"
@@ -604,6 +588,7 @@ export default function ScrambleStatsPage() {
             ))}
           </select>
         </label>
+        <span className="scramble-stats-count">{sampleCount}</span>
       </div>
 
       <div className="scramble-stats-chart-wrapper">

@@ -560,17 +560,33 @@
   text-transform: none;
 }
 /* 合并相同打乱项目的开关 */
+.scramble-stats-tabrow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.7rem;
+}
+.scramble-stats-tabrow .scramble-stats-tabs {
+  margin: 0;
+}
 .scramble-len-merge {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin-bottom: 0.7rem;
   flex-wrap: wrap;
 }
 .scramble-len-merge-hint {
   font-size: 0.78rem;
   color: var(--text-sub);
   line-height: 1.4;
+}
+.scramble-stats-count {
+  font-size: 0.82rem;
+  color: var(--text-sub);
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+  white-space: nowrap;
 }
 .scramble-len-footnote {
   font-size: 0.78rem;
