@@ -198,6 +198,24 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings 
           )}
         </>
       )}
+
+      <div className="settings-row wca-src-automark">
+        <span className="settings-row-label">{tr({ zh: '自动打卡', en: 'Auto-mark done',
+            zhHant: "自動打卡"
+        })}</span>
+        <span className="settings-row-control">
+          <input
+            type="checkbox"
+            checked={settings.autoMarkWcaScramble}
+            onChange={(e) => updateSettings({ autoMarkWcaScramble: e.target.checked })}
+          />
+        </span>
+      </div>
+      <p className="wca-src-hint">
+        {tr({ zh: '做完一把后自动把这条真实打乱标记为「做过」(公开,带成绩),省去每把手动点击。需登录。', en: 'After each solve, auto-mark this real scramble as done (public, with your time) — no manual click per solve. Sign-in required.',
+            zhHant: "做完一把後自動把這條真實打亂標記為「做過」(公開,帶成績),省去每把手動點選。需登入。"
+        })}
+      </p>
     </div>
   );
 }
