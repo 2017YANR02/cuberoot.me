@@ -34,8 +34,12 @@ export interface TimerSettings {
   /** Show histogram + trend charts in the bottom panel. */
   showCharts: boolean;
 
-  /** Time precision: 2 = centiseconds, 3 = milliseconds. */
+  /** Final-result precision: 2 = centiseconds (x.xx), 3 = milliseconds (x.xxx). */
   precision: 2 | 3;
+
+  /** Running (live) display precision: 0 = whole seconds (cstimer style),
+   *  1 = x.x, 2 = x.xx, 3 = x.xxx. */
+  runningPrecision: 0 | 1 | 2 | 3;
 
   /** Scale factor for the big timer display (0.5..2). */
   timerFontScale: number;
@@ -180,6 +184,7 @@ export const DEFAULTS: TimerSettings = {
   showCubePreview: true,
   showCharts: true,
   precision: 2,
+  runningPrecision: 0,
   timerFontScale: 1,
   scrambleFontScale: 1,
   holdMs: 550,
