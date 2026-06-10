@@ -1,0 +1,9 @@
+# Scramble samples — f2leo / f2leo_xxcross / BGORWY / bin 12
+# Population in this bin: 2
+# Samples listed: 2 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-09
+# Columns: id,scramble,bottom_color
+
+1173762,D2 R2 U B2 R2 D F2 U L2 U B2 F2 L2 B' F' R' B2 L2 D U' F' R' L' ,B
+1251320,U2 B2 D' R2 B2 U' B2 F2 R2 U L2 U' F2 L' D2 B' U' R' F L D B U' L' ,B
