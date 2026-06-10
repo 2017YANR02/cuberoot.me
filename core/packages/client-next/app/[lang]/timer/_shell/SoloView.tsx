@@ -443,6 +443,30 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     setMarkBusy(false);
   }, [wcaSource, curMarkKey, authUser, myMark, solves]);
 
+  // 已标记的打乱出新成绩(新 solve / 改罚秒)时自动把成绩同步到打卡,
+  // 这样「先标记后做」「做完又改罚秒」也不丢成绩。按 event 记最后一条 solve 的
+  // 签名,首次加载/切 event 只登记不触发;DNF 不上报(保留旧成绩)。
+  const lastSolveSigRef = useRef<Record<string, string>>({});
+  useEffect(() => {
+    const s = solves[solves.length - 1];
+    const sig = s ? `${s.id}|${s.timeMs}|${s.penalty}` : '';
+    const prev = lastSolveSigRef.current[event];
+    if (sig === prev) return;
+    lastSolveSigRef.current[event] = sig;
+    if (prev === undefined || !s || !authUser) return;
+    if (s.penalty === 'DNF') return;
+    const meta = wcaMetaFor(s.scramble);
+    if (!meta) return;
+    const key = markKey(meta);
+    const cached = marksCache[key];
+    if (!cached?.marks.some((m) => m.wcaId === authUser.wcaId)) return; // 没标记过这条,不动
+    const timeCs = Math.round((s.timeMs + (s.penalty === '+2' ? 2000 : 0)) / 10);
+    addMark(meta, timeCs, authUser.country || '')
+      .then(() => fetchMarks(meta))
+      .then((d) => setMarksCache((cur) => ({ ...cur, [key]: d })))
+      .catch(() => { /* 网络失败静默,下次成绩变更再试 */ });
+  }, [solves, event, authUser, marksCache]);
+
   // Click-to-copy flash (cstimer-style). Reads the live scramble via ref so the
   // helper stays stable; shows a brief "已复制" badge.
   const [scrambleCopied, setScrambleCopied] = useState(false);
