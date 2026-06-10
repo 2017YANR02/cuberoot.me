@@ -1052,8 +1052,20 @@ async function main() {
         const r = eventRanks[i]!.single.get(pid);
         if (r) { ranksW[i] = r.wr; ranksC[i] = r.cr; }
       }
+      // 21 项口径(含废止)名次和:独立按「有 rank 取 rank,否则该 scope 参赛人数+1」逐项累加,
+      // 与 server 子集求和的 SQL CASE 表达式逐字节一致(不沿用 17 口径的 333mbf 跳过特例).
+      let totalW21 = 0, totalC21 = 0, totalK21 = 0;
+      for (let i = 0; i < RANK_EVENTS.length; i++) {
+        const r = eventRanks[i]!.single.get(pid);
+        if (r) { totalW21 += r.wr; totalC21 += r.cr; totalK21 += r.kr; }
+        else {
+          totalW21 += eventParticipantsSingle[i]! + 1;
+          totalC21 += (eventParticipantsCountrySingle[i]!.get(country) ?? 0) + 1;
+          totalK21 += (eventParticipantsContinentSingle[i]!.get(continent) ?? 0) + 1;
+        }
+      }
       prStream.write(
-        `${pgEsc(pid)}\t${bool(false)}\t${pgEsc(country)}\t${doneN}\t${totalW}\t${totalC}\t${bfp}\t${intArr(ranksW)}\t${intArr(ranksC)}\t${pgEsc(continent)}\t${totalK}\n`,
+        `${pgEsc(pid)}\t${bool(false)}\t${pgEsc(country)}\t${doneN}\t${totalW}\t${totalC}\t${bfp}\t${intArr(ranksW)}\t${intArr(ranksC)}\t${pgEsc(continent)}\t${totalK}\t${totalW21}\t${totalC21}\t${totalK21}\n`,
       );
       prCount++;
     }
@@ -1086,8 +1098,21 @@ async function main() {
         const r = eventRanks[i]!.avg.get(pid);
         if (r) { ranksW[i] = r.wr; ranksC[i] = r.cr; }
       }
+      // 21 项口径(含废止):同 single,统一「有 rank 取 rank,否则参赛人数+1」.
+      // 无 average 的 333mbf/333mbo 此处按罚分 0+1 计入(全员同加,排名不变),与子集 SQL 一致;
+      // 17 口径 total 的「跳过 333mbf」特例不带入 21 口径.
+      let totalW21 = 0, totalC21 = 0, totalK21 = 0;
+      for (let i = 0; i < RANK_EVENTS.length; i++) {
+        const r = eventRanks[i]!.avg.get(pid);
+        if (r) { totalW21 += r.wr; totalC21 += r.cr; totalK21 += r.kr; }
+        else {
+          totalW21 += eventParticipantsAvg[i]! + 1;
+          totalC21 += (eventParticipantsCountryAvg[i]!.get(country) ?? 0) + 1;
+          totalK21 += (eventParticipantsContinentAvg[i]!.get(continent) ?? 0) + 1;
+        }
+      }
       prStream.write(
-        `${pgEsc(pid)}\t${bool(true)}\t${pgEsc(country)}\t${doneN}\t${totalW}\t${totalC}\t${bfp}\t${intArr(ranksW)}\t${intArr(ranksC)}\t${pgEsc(continent)}\t${totalK}\n`,
+        `${pgEsc(pid)}\t${bool(true)}\t${pgEsc(country)}\t${doneN}\t${totalW}\t${totalC}\t${bfp}\t${intArr(ranksW)}\t${intArr(ranksC)}\t${pgEsc(continent)}\t${totalK}\t${totalW21}\t${totalC21}\t${totalK21}\n`,
       );
       prCount++;
     }
@@ -1266,7 +1291,7 @@ TRUNCATE wca_fs_person_year_solves;
 \\! rm -f wca_success_rate.copy.tsv
 \\copy wca_all_events_done (wca_id, country_id, done_count, is_done, first_comp_id, first_comp_date, achievement_comp_id, achievement_comp_date, days_to_complete, total_comp_count) FROM 'wca_all_events_done.copy.tsv';
 \\! rm -f wca_all_events_done.copy.tsv
-\\copy wca_person_ranks (wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world, ranks_country, continent_id, total_continent_rank) FROM 'wca_person_ranks.copy.tsv';
+\\copy wca_person_ranks (wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world, ranks_country, continent_id, total_continent_rank, total_world_rank_21, total_country_rank_21, total_continent_rank_21) FROM 'wca_person_ranks.copy.tsv';
 \\! rm -f wca_person_ranks.copy.tsv
 \\copy wca_fs_country_ranks (is_avg, country_id, sum, events_present, per_event_rank) FROM 'wca_fs_country_ranks.copy.tsv';
 \\! rm -f wca_fs_country_ranks.copy.tsv

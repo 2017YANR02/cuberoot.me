@@ -346,46 +346,12 @@ html[data-theme=dark] .wp-page {
 .wp-podium-zero { color: var(--wp-text-mute); }
 
 /* ── 全项目排名 (Σ Sum of Ranks) — PR 表内附加行,列与上方对齐 ──────── */
-/* 区段标题行:Σ 链接 + 口径,跨全表左对齐,顶部加粗分隔 */
-.wp-sor-section th {
-    text-align: left !important;
-    padding: 14px 12px 8px 16px !important;
-    border-top: 2px solid var(--wp-border);
-    white-space: nowrap;
-}
-.wp-sor-title {
-    display: inline-flex; align-items: center; gap: 2px;
-    color: var(--wp-text); text-decoration: none;
-    text-transform: none; letter-spacing: 0;
-    vertical-align: middle;
-}
-.wp-sor-title:hover { color: var(--wp-accent); }
-.wp-sor-sigma { font-size: 1.1rem; font-weight: 700; line-height: 1; }
-.wp-sor-scope {
-    margin-left: 10px;
-    font-size: 0.74rem; font-weight: 400;
-    color: var(--wp-text-mute);
-    text-transform: none; letter-spacing: 0;
-}
-.wp-sor-title { gap: 5px; }
-/* 指标行标签(SoWR/SoCR/SoNR + 中文名)落「项目」列,缩写在上、名在下小字 */
-.wp-sor-rowlabel { text-align: left !important; vertical-align: top; padding: 8px 12px 8px 16px !important; }
+/* 与逐项 PR 行之间的加粗分隔(原区段标题行已删,分隔线落到第一行上沿) */
+.wp-sor-tbody tr:first-child th, .wp-sor-tbody tr:first-child td { border-top: 2px solid var(--wp-border); }
+/* 指标行标签(SoWR/SoCR/SoNR)落「项目」列,全名 + scope 地名走 title tooltip */
+.wp-sor-rowlabel { cursor: default; }
 .wp-sor-abbr { display: block; font-weight: 700; font-size: 0.82rem; color: var(--wp-text); letter-spacing: 0.01em; }
-.wp-sor-mlabel {
-    display: block; margin-top: 1px;
-    font-size: 0.68rem; font-weight: 400; color: var(--wp-text-mute);
-    white-space: normal; max-width: 9em; line-height: 1.2;
-}
-/* 名次格:落对应 scope 列(世界/洲际/地区),与上方逐项名次同列对齐;当前名次在上,历史最佳小字在下 */
-.wp-sor-rcell { text-align: center; vertical-align: top; padding: 8px 6px !important; }
-.wp-sor-rcell .wp-rank { display: block; }
-.wp-sor-best-rk {
-    display: block; margin-top: 2px;
-    font-size: 0.62rem; font-weight: 400; color: var(--wp-text-mute);
-    font-variant-numeric: tabular-nums; white-space: nowrap;
-}
-/* 和值格:落「成绩」列,Σ 值大字在上,历史最佳和值小字在下 */
-.wp-sor-scell { vertical-align: top; padding-top: 8px !important; }
+/* 名次格 / 和值格不覆盖对齐与 padding —— 继承 tbody 默认(右对齐 + 10px 12px)才能与上方逐项格严格同列 */
 .wp-sor-sum { font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; color: var(--wp-text); }
 .wp-sor-smute { color: var(--wp-text-mute); }
 .wp-sor-best-sum {

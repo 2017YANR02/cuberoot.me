@@ -5,12 +5,14 @@
 
 import { useEffect, useState } from 'react';
 import { apiUrl } from '@/lib/api-base';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { BestComboBody, type PlayerBest } from '@/components/wca-stats/BestComboBody';
 import { tr } from '@/i18n/tr';
 
-export default function PersonBestCombos({ wcaId, isZh }: { wcaId: string; isZh: boolean }) {
-  const [includeCancelled, setIncludeCancelled] = useState(false);
+// 「废止项」口径受控:唯一开关在 PR 表工具栏(PersonPRTable),状态在 PersonDetailClient,本卡只跟随
+export default function PersonBestCombos({ wcaId, isZh, inclCancelled }: {
+  wcaId: string; isZh: boolean; inclCancelled: boolean;
+}) {
+  const includeCancelled = inclCancelled;
   const [pb, setPb] = useState<PlayerBest | null>(null);
 
   useEffect(() => {
@@ -39,12 +41,6 @@ export default function PersonBestCombos({ wcaId, isZh }: { wcaId: string; isZh:
     <section className="wp-card wp-combos-card">
       <div className="wp-combos-head">
         <h2 className="wp-combos-title">{tr({ zh: '最优项目组合', en: 'Best event combination', zhHant: '最優項目組合' })}</h2>
-        <PillToggle
-          value={includeCancelled}
-          onChange={setIncludeCancelled}
-          onLabel={tr({ zh: '废止项', en: 'Cancelled', zhHant: '廢止項' })}
-          offLabel={tr({ zh: '废止项', en: 'Cancelled', zhHant: '廢止項' })}
-        />
       </div>
       <p className="wp-combos-sub">{tr({
         zh: '在所有项目子集里,使 TA 名次和最低(世界排名最高)的组合;缺项以该项目「参赛人数+1」计入。',

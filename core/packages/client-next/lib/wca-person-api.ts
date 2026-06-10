@@ -140,26 +140,32 @@ export async function fetchPersonBestRanks(wcaId: string): Promise<PersonBestRan
 
 // 选手「全项目名次和」摘要 — 三个独立指标(都是 Σ 17 现役项,只是求和的 rank 不同):
 //   SoWR = Sum of World Ranks(Σ世界名次,天然按世界排) / SoCR = Sum of Continent Ranks(按本洲排)
-//   SoNR = Sum of National Ranks(按本国排).每个指标各带「和值 total + 自身 scope 名次 rank」.
-// 单个指标为 null = 该统计无数据(如 SoCR 数据未填充).由 /v1/wca/sum-of-ranks/person 返回.
-export interface SorMetricCell { total: number; rank: number; }                  // 当前
+//   SoNR = Sum of National Ranks(按本国排).每个指标各带「和值 total + 自身 scope 名次 rank」,
+//   外加子排名(同指标值在更窄池子重排):SoWR 带 continentRank/countryRank,SoCR 带 countryRank.
+// 单个指标为 null = 该统计无数据(如 SoCR 数据未填充);子排名缺位 = 旧缓存响应,留白即可.
+// 由 /v1/wca/sum-of-ranks/person 返回.
+export interface SorMetricCell { total: number; rank: number; continentRank?: number; countryRank?: number; } // 当前
 export interface SorMetricBest { total: number | null; rank: number; year: number; } // 历史最佳
 export interface SorMetricTriple<T> { sowr: T | null; socr: T | null; sonr: T | null; }
 export interface PersonSorResponse {
   wcaId: string;
   countryId: string;
   continentId: string;
+  /** true = 21 项口径(含 4 废止);此时 bestSingle/bestAverage 恒 null(历史最佳仅 17 口径) */
+  inclCancelled?: boolean;
   single: (SorMetricTriple<SorMetricCell> & { eventsDone: number }) | null;
   average: (SorMetricTriple<SorMetricCell> & { eventsDone: number }) | null;
   bestSingle: SorMetricTriple<SorMetricBest> | null;
   bestAverage: SorMetricTriple<SorMetricBest> | null;
 }
 
-export async function fetchPersonSor(wcaId: string): Promise<PersonSorResponse> {
-  const key = `wca:sor:v3:${wcaId}`;
+export async function fetchPersonSor(wcaId: string, inclCancelled = false): Promise<PersonSorResponse> {
+  // v4: 加子排名字段(SoWR continentRank/countryRank, SoCR countryRank)→ 旧缓存须 miss
+  const key = `wca:sor:v4:${wcaId}:${inclCancelled ? 21 : 17}`;
   const cached = cacheGet<PersonSorResponse>(key);
   if (cached) return cached;
-  const res = await fetch(apiUrl(`/v1/wca/sum-of-ranks/person?wcaId=${encodeURIComponent(wcaId)}`));
+  const qs = `wcaId=${encodeURIComponent(wcaId)}${inclCancelled ? '&cancelled=1' : ''}`;
+  const res = await fetch(apiUrl(`/v1/wca/sum-of-ranks/person?${qs}`));
   if (!res.ok) throw new Error(`sum-of-ranks/person ${res.status}`);
   const json = (await res.json()) as PersonSorResponse;
   cacheSet(key, json);

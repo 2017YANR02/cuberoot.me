@@ -14,7 +14,9 @@ if ([string]::IsNullOrEmpty($payload)) { exit 0 }
 # 无任何 CJK 表意文字 → 不可能含繁体,放行
 if ($payload -notmatch '[㐀-䶿一-鿿豈-﫿]') { exit 0 }
 
-$detector = Join-Path $env:CLAUDE_PROJECT_DIR 'core/packages/client-next/scripts/hook-detect-handwritten-trad.mjs'
+# 按脚本自身位置解析 (<repo>/.claude/hooks/ → <repo>/core/...),不依赖 CLAUDE_PROJECT_DIR —
+# 会话可能根在仓库根或 core/,后者下用 PROJECT_DIR 拼会 fail-open(2026-06-09 实翻车:core 会话繁体写入未被拦)
+$detector = Join-Path $PSScriptRoot '../../core/packages/client-next/scripts/hook-detect-handwritten-trad.mjs'
 if (-not (Test-Path $detector)) { exit 0 }  # fail open
 
 $payload | & node $detector
