@@ -21,9 +21,15 @@ import { eventInfo, type EventId } from '../_lib/types';
 import { WCA_COLORS } from '../_lib/cube/colors';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { CountryInput } from '@/components/CountryInput';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import WcaSourceConfig from './WcaSourceConfig';
 import { tr } from '@/i18n/tr';
 import i18n from "@/i18n/i18n-client";
+
+/** 布尔设置统一用 PillToggle 无文字 iOS 风开关,替代裸 checkbox。 */
+function BoolToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return <PillToggle value={value} onChange={onChange} />;
+}
 
 interface Props {
   isZh: boolean;
@@ -618,20 +624,12 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '隐藏运行中的时间', en: 'Hide time while running',
               zhHant: "隱藏執行中的時間"
         })}>
-            <input
-              type="checkbox"
-              checked={s.hideTime}
-              onChange={(e) => updateSettings({ hideTime: e.target.checked })}
-            />
+            <BoolToggle value={s.hideTime} onChange={(v) => updateSettings({ hideTime: v })} />
           </Row>
           <Row label={tr({ zh: 'CFOP 分阶段计时', en: 'CFOP stage splits',
               zhHant: "CFOP 分階段計時"
         })}>
-            <input
-              type="checkbox"
-              checked={s.multiStage}
-              onChange={(e) => updateSettings({ multiStage: e.target.checked })}
-            />
+            <BoolToggle value={s.multiStage} onChange={(v) => updateSettings({ multiStage: v })} />
             <span className="hint">{tr({ zh: '按 1=Cross 完成，2=F2L，3=OLL；蓝牙连接时自动检测', en: 'Press 1=Cross, 2=F2L, 3=OLL; auto-detected when bluetooth connected',
                 zhHant: "按 1=Cross 完成，2=F2L，3=OLL；藍芽連線時自動檢測"
             })}</span>
@@ -639,11 +637,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '盲拧记忆 / 执行分段', en: 'BLD memo split',
               zhHant: "盲擰記憶 / 執行分段"
         })}>
-            <input
-              type="checkbox"
-              checked={s.bldMemo}
-              onChange={(e) => updateSettings({ bldMemo: e.target.checked })}
-            />
+            <BoolToggle value={s.bldMemo} onChange={(v) => updateSettings({ bldMemo: v })} />
             <span className="hint">{tr({ zh: '盲拧项目运行中按 Enter 标记记忆完成', en: 'On BLD events, press Enter while running to mark memo done',
                 zhHant: "盲擰項目執行中按 Enter 標記記憶完成"
             })}</span>
@@ -732,14 +726,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           setExpanded={setExpandedSections}
         >
           <Row label={tr({ zh: '提示音', en: 'Sounds' })}>
-            <input
-              type="checkbox"
-              checked={s.soundsEnabled}
-              onChange={(e) => {
-                updateSettings({ soundsEnabled: e.target.checked });
-                if (e.target.checked) warmupSound();
-              }}
-            />
+            <BoolToggle value={s.soundsEnabled} onChange={(v) => { updateSettings({ soundsEnabled: v }); if (v) warmupSound(); }} />
           </Row>
           <Row label={tr({ zh: '音量', en: 'Volume' })}>
             <input
@@ -807,14 +794,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '开启', en: 'Enabled',
               zhHant: "開啟"
         })}>
-            <input
-              type="checkbox"
-              checked={s.metronomeOn}
-              onChange={(e) => {
-                updateSettings({ metronomeOn: e.target.checked });
-                if (e.target.checked) warmupSound();
-              }}
-            />
+            <BoolToggle value={s.metronomeOn} onChange={(v) => { updateSettings({ metronomeOn: v }); if (v) warmupSound(); }} />
             <span className="hint">{tr({ zh: '观察 / 计时阶段播放', en: 'ticks during inspection / solve',
                 zhHant: "觀察 / 計時階段播放"
             })}</span>
@@ -1259,29 +1239,17 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '紧凑打乱', en: 'Compact scramble',
               zhHant: "緊湊打亂"
         })}>
-            <input
-              type="checkbox"
-              checked={s.compactScramble}
-              onChange={(e) => updateSettings({ compactScramble: e.target.checked })}
-            />
+            <BoolToggle value={s.compactScramble} onChange={(v) => updateSettings({ compactScramble: v })} />
           </Row>
-          <Row label={tr({ zh: '显示魔方预览', en: 'Show cube preview',
-              zhHant: "顯示魔方預覽"
+          <Row label={tr({ zh: '打乱图', en: 'Scramble image',
+              zhHant: "打亂圖"
         })}>
-            <input
-              type="checkbox"
-              checked={s.showCubePreview}
-              onChange={(e) => updateSettings({ showCubePreview: e.target.checked })}
-            />
+            <BoolToggle value={s.showCubePreview} onChange={(v) => updateSettings({ showCubePreview: v })} />
           </Row>
           <Row label={tr({ zh: '3D 立方体', en: '3D cube',
               zhHant: "3D 立方體"
         })}>
-            <input
-              type="checkbox"
-              checked={s.prefer3D}
-              onChange={(e) => updateSettings({ prefer3D: e.target.checked })}
-            />
+            <BoolToggle value={s.prefer3D} onChange={(v) => updateSettings({ prefer3D: v })} />
             <span className="hint">{tr({ zh: '可拖动旋转；关闭则展开 2D 平面', en: 'drag to rotate; off = 2D net',
                 zhHant: "可拖動旋轉；關閉則展開 2D 平面"
             })}</span>
@@ -1289,20 +1257,12 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '显示图表', en: 'Show charts',
               zhHant: "顯示圖表"
         })}>
-            <input
-              type="checkbox"
-              checked={s.showCharts}
-              onChange={(e) => updateSettings({ showCharts: e.target.checked })}
-            />
+            <BoolToggle value={s.showCharts} onChange={(v) => updateSettings({ showCharts: v })} />
           </Row>
           <Row label={tr({ zh: '显示练习日历', en: 'Show practice heatmap',
               zhHant: "顯示練習日曆"
         })}>
-            <input
-              type="checkbox"
-              checked={s.showHeatmap}
-              onChange={(e) => updateSettings({ showHeatmap: e.target.checked })}
-            />
+            <BoolToggle value={s.showHeatmap} onChange={(v) => updateSettings({ showHeatmap: v })} />
           </Row>
           <Row label={tr({ zh: '点击打乱条', en: 'Scramble click action',
               zhHant: "點選打亂條"
@@ -1325,23 +1285,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '运行中隐藏全部 UI', en: 'Hide all UI while running',
               zhHant: "執行中隱藏全部 UI"
         })}>
-            <input
-              type="checkbox"
-              checked={s.hideAllUiWhileRunning}
-              onChange={(e) => updateSettings({ hideAllUiWhileRunning: e.target.checked })}
-            />
-          </Row>
-          <Row label={tr({ zh: 'PB 庆祝弹窗', en: 'PB celebration toast',
-              zhHant: "PB 慶祝彈窗"
-        })}>
-            <input
-              type="checkbox"
-              checked={s.pbToast}
-              onChange={(e) => updateSettings({ pbToast: e.target.checked })}
-            />
-            <span className="hint">{tr({ zh: '刷新单次/Ao5/Ao12 最佳时显示 3 秒', en: 'shows for 3s when single/ao5/ao12 PB is broken',
-                zhHant: "重新整理單次/Ao5/Ao12 最佳時顯示 3 秒"
-            })}</span>
+            <BoolToggle value={s.hideAllUiWhileRunning} onChange={(v) => updateSettings({ hideAllUiWhileRunning: v })} />
           </Row>
           <Row label={tr({ zh: '排名地区', en: 'Ranking region',
               zhHant: "排名地區"
