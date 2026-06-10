@@ -49,7 +49,7 @@ const BLOCK_CYCLE: Record<string, Metric[]> = {
 const cycleOf = (v?: string): Metric[] => (v && BLOCK_CYCLE[v]) || METRIC_CYCLE;
 const metricBadgeLabel = (m: Metric): string =>
   m === 'cross' ? 'C'
-    : m === 'bf2b' ? '123×2'
+    : m === 'bf2b' ? '123x2'
       : m === 'beo' ? 'EO'
         : m === 'beoline' ? 'EOLine'
           : m === 'bdr' ? 'DR'

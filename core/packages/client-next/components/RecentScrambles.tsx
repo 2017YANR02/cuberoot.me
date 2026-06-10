@@ -51,7 +51,7 @@ const VARIANT_LABEL: Record<string, { zh: string; en: string
       zhHant: "偽 F2LEO"
 },
   '123': { zh: '1x2x3', en: '1x2x3' },
-  '123x2': { zh: '1x2x3 ×2', en: '1x2x3 ×2' },
+  '123x2': { zh: '1x2x3 x2', en: '1x2x3 x2' },
   '222': { zh: '2x2x2', en: '2x2x2' },
   '223': { zh: '2x2x3', en: '2x2x3' },
   eoline: { zh: 'EOLine', en: 'EOLine' },
@@ -71,7 +71,7 @@ const METRIC_LABEL: Record<string, { zh: string; en: string
   fbsquare: { zh: '1x2x2', en: '1x2x2' },
   rouxs1: { zh: '1x2x3', en: '1x2x3' },
   block223: { zh: '2x2x3', en: '2x2x3' },
-  f2b: { zh: '1x2x3 ×2', en: '1x2x3 ×2' },
+  f2b: { zh: '1x2x3 x2', en: '1x2x3 x2' },
   eo: { zh: 'EO', en: 'EO' },
   eoline: { zh: 'EOLine', en: 'EOLine' },
   dr: { zh: 'DR', en: 'DR' },
