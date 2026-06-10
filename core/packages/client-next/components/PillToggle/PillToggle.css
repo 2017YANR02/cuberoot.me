@@ -56,8 +56,8 @@
    固定尺寸滑轨 + 白色宽胶囊滑钮;off 深灰轨,on 蓝轨。 */
 .pill-toggle--switch {
   min-width: 0;
-  width: 46px;
-  height: 26px;
+  width: 38px;
+  height: 22px;
   padding: 0;
   justify-content: flex-start;
 }
@@ -66,11 +66,11 @@
   justify-content: flex-start;
 }
 .pill-toggle--switch .pill-toggle-dot {
-  width: 24px;
-  height: 20px;
-  border-radius: 999px;
-  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  left: 2px;
 }
 .pill-toggle--switch.is-on .pill-toggle-dot {
-  left: calc(100% - 27px);
+  left: calc(100% - 20px);
 }
