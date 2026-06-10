@@ -98,7 +98,8 @@ export const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = 
   'average_of_1000': () => import('../statistics/average_of_1000.js'),
   // NOTE: 阶段 D-1 — 简单剩余
   'consecutive_sub_5_average': () => import('../statistics/consecutive_sub_5_average.js'),
-  'mbf_average': () => import('../statistics/mbf_average.js'),
+  // mbf_average 独立页已退役(2026-06-10):MBLD Mo3 平均改由 all-results(完整榜)
+  // + wr_metric「平均」(排名+历史)承载;MbfAverage 类仍是 wr_current/wr_average_history 的引擎。
   // NOTE: 阶段 D-2 — Rankings 基类
   'yearly_rankings': () => import('../statistics/yearly_rankings.js'),
   // NOTE: 阶段 D-3 — 多维面板统计

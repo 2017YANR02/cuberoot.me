@@ -2,6 +2,8 @@
 import { Statistic } from '../core/statistic.js';
 import { EVENTS, EVENTS_ENTRIES } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
+import { MbfAverage } from './mbf_average.js';
+import type { StatJson } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
 export class WrCurrent extends Statistic {
@@ -9,8 +11,10 @@ export class WrCurrent extends Statistic {
     super();
     this.title = 'Current world records';
     this.titleZh = '当前世界纪录';
-    this.note = 'Shows the current world record single and average for each official event.';
-    this.noteZh = '显示每个官方项目的当前世界纪录单次和平均。';
+    this.note = 'Shows the current world record single and average for each official event. '
+      + 'The 333mbf average row is the all-time best unofficial Mo3 (mean of 3) — WCA does not track a Multi-Blind average.';
+    this.noteZh = '显示每个官方项目的当前世界纪录单次和平均。'
+      + '333mbf 的平均行为历史最佳非官方 Mo3(三次均值)——WCA 不追踪多盲平均。';
     this.tableHeader = {
       'Event': 'left',
       'Type': 'left',
@@ -41,6 +45,27 @@ export class WrCurrent extends Statistic {
          OR r.regional_average_record = 'WR'
       ORDER BY r.event_id, c.start_date
     `;
+  }
+
+  // NOTE: 基类 toJson 跑 transform(官方 single/average),再补 333mbf 的非官方 Mo3 平均行,
+  // 紧跟在 333mbf 单次行之后。Mo3 取历史最佳(WCA 无"当前"多盲平均口径)。
+  async toJson(): Promise<StatJson> {
+    const json = await super.toJson();
+    const mbldName = EVENTS['333mbf'];
+    const best = await new MbfAverage().bestRankingRow(mbldName);
+    if (best) {
+      // best: [rank, person_link, mo3Str, country_id, dateStr, competition_link, details]
+      const avgRow: unknown[] = [mbldName, 'Average', best[2], best[1], best[4], best[5], best[6]];
+      const rows = json.rows as unknown[][];
+      let insertAt = rows.findIndex(r => r[0] === mbldName);
+      if (insertAt < 0) {
+        rows.push(avgRow);
+      } else {
+        while (insertAt + 1 < rows.length && rows[insertAt + 1][0] === mbldName) insertAt++;
+        rows.splice(insertAt + 1, 0, avgRow);
+      }
+    }
+    return json;
   }
 
   // 按项目遍历 → 找当前 WR single 和 average → 用 SolveTime 格式化
