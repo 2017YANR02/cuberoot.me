@@ -23,7 +23,8 @@ export default function PersonBestCombos({ wcaId, isZh, inclCancelled }: {
     let done = false;
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 15000);
-    const qs = new URLSearchParams({ wcaId, v: '4' });
+    // v=5: 2026-06-10 响应加 eventCounts/listedCount(剖析行),bump 甩掉浏览器 HTTP 缓存里的旧 shape
+    const qs = new URLSearchParams({ wcaId, v: '5' });
     if (includeCancelled) qs.set('cancelled', '1');
     fetch(apiUrl(`/v1/wca/sum-of-ranks/player-best?${qs.toString()}`), { signal: ctrl.signal })
       .then(r => (r.ok ? r.json() : null))
