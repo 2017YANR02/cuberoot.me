@@ -1,0 +1,15 @@
+# Scramble samples — eoline / eo / Y / bin 3
+# Population in this bin: 8
+# Samples listed: 8 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-09
+# Columns: id,scramble,bottom_color
+
+4759,R2 U F2 L2 U2 R2 U L2 U2 F2 U F2 D2 U2 B' D' U B F' U R' L' F' ,Y
+5963,D F2 R2 D' B2 R2 B2 L2 D2 R2 D' L2 U' L2 B' D R L2 U' B' L' B2 D2 F' U' ,Y
+6001,F2 U2 L2 F2 R2 L2 D U R2 F2 D' U' R' B' F' R' L' D' U' L' ,Y
+29126,R2 D2 R2 F2 D U B2 L2 U2 L2 U R' L' D' U' B' F' U' ,Y
+218699,R2 U2 B2 R2 D U R2 L2 F2 L2 D' U' B' R' L' B' F' D' U' F' ,Y
+218700,B2 R2 D U2 F2 D' B2 F2 R2 L2 U' F2 U' L2 B' R' L' B' F' D' U' F' ,Y
+218736,R2 U B2 U' B2 U' B2 D2 L2 D R2 D F2 L2 U2 B' R' L' B' F' D' U' F' ,Y
+218749,R2 L2 D2 F2 U' F2 R2 U2 F2 R2 L' D2 B F' L2 U' R' L D' F2 U2 ,Y
