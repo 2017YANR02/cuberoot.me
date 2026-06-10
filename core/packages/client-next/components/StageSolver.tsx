@@ -136,7 +136,10 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const need = needOf(method);
   const stages = STAGE_LABELS[method];
   const eager = stage <= EAGER_MAX[method];
-  const poolSize = useMemo(() => poolSizeForDevice(), []);
+  // 设备并行度只在客户端可知;Node 21+ SSR 也有全局 navigator(hardwareConcurrency=构建机核数)
+  // 会渲染出 4,移动端客户端是 2 → hydration mismatch。挂载后再取,水合期两端都渲染占位值。
+  const [poolSize, setPoolSize] = useState<number | null>(null);
+  useEffect(() => { setPoolSize(poolSizeForDevice()); }, []);
   // 当前 need 首次要加载的表(按内存降序)+ 合计,用于 loading 提示。
   const tableInfo = useMemo(() => {
     const rows = TABLE_SETS[need]
@@ -146,7 +149,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   }, [need]);
 
   // 共享池:need(cross/variant/f2leo)变化时取/建对应池,等首个 worker 就绪。
+  // poolSize 挂载后才可知(null=未挂载),到位前不建池(只 null→值 一次,不会重建)。
   useEffect(() => {
+    if (poolSize == null) return;
     let cancelled = false;
     setStatus('loading');
     setErrMsg('');
@@ -361,10 +366,15 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             ))}
           </ul>
           <div className="stsv-tables-total">
-            {t(
-              `共 ${tableInfo.rows.length} 张表 ≈ ${fmtBytes(tableInfo.total)} · ${poolSize} 路并行各一份`,
-              `${tableInfo.rows.length} tables ≈ ${fmtBytes(tableInfo.total)} · one copy per worker × ${poolSize}`,
-            )}
+            {poolSize == null
+              ? t(
+                `共 ${tableInfo.rows.length} 张表 ≈ ${fmtBytes(tableInfo.total)}`,
+                `${tableInfo.rows.length} tables ≈ ${fmtBytes(tableInfo.total)}`,
+              )
+              : t(
+                `共 ${tableInfo.rows.length} 张表 ≈ ${fmtBytes(tableInfo.total)} · ${poolSize} 路并行各一份`,
+                `${tableInfo.rows.length} tables ≈ ${fmtBytes(tableInfo.total)} · one copy per worker × ${poolSize}`,
+              )}
           </div>
         </div>
       )}
@@ -535,7 +545,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             <dl className="stsv-modal-kv">
               <div>
                 <dt>{t('引擎', 'Engine')}</dt>
-                <dd>Rust → WASM · {t(`${poolSize} 路并行`, `${poolSize}-way`)}</dd>
+                <dd>Rust → WASM · {t(`${poolSize ?? '…'} 路并行`, `${poolSize ?? '…'}-way`)}</dd>
               </div>
               {totalMs != null && (
                 <div>
