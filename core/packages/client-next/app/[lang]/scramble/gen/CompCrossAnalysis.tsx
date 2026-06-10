@@ -33,14 +33,14 @@ export const METRICS: { key: Metric; label: string }[] = [
   { key: 'b123', label: '1x2x3' },
   { key: 'b222', label: '2x2x2' },
   { key: 'b223', label: '2x2x3' },
-  { key: 'bf2b', label: '1x2x3 ×2' },
+  { key: 'bf2b', label: '1x2x3 x2' },
   { key: 'beo', label: 'EO' },
   { key: 'beoline', label: 'EOLine' },
   { key: 'bdr', label: 'DR' },
 ];
-/** 块类/轴类指标显示名(b122 → 1x2x2,bf2b → 1x2x3 ×2,beo → EO …);非此类返回 null。 */
+/** 块类/轴类指标显示名(b122 → 1x2x2,bf2b → 1x2x3 x2,beo → EO …);非此类返回 null。 */
 export const blockMetricName = (m: Metric): string | null =>
-  m === 'bf2b' ? '1x2x3 ×2'
+  m === 'bf2b' ? '1x2x3 x2'
     : m === 'beo' ? 'EO'
       : m === 'beoline' ? 'EOLine'
         : m === 'bdr' ? 'DR'
