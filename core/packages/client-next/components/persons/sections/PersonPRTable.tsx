@@ -3,13 +3,14 @@
 // 切换 当前 / 历史最佳排名 (历史从 server 拉 historical_ranks_snapshot 衍生数据).
 // 复选框:显示排名 / 显示领奖台.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { fetchPersonBestRanks, fetchPersonSor, fetchPersonSubset, type WcaPersonProfile, type WcaResultRow, type PersonBestRanksResponse, type PersonSorResponse, type SorMetricCell, type SorMetricBest } from '@/lib/wca-person-api';
 import { ClearButton } from '@/components/ClearButton';
+import { apiUrl } from '@/lib/api-base';
 import { countryName } from '@/lib/country-name';
 import { countPodiumByEvent } from '../logic/podium';
 
@@ -55,15 +56,33 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
   const [histLoading, setHistLoading] = useState(false);
   const [histError, setHistError] = useState<string | null>(null);
   // 自选组合:点击项目行多选,组合三指标落在底部 Σ 块的「自选」行(仅当前模式).
-  // 默认全选该选手有 PR 的项目(= 表里全部行);× 清空后再逐行点选.
-  const allPrEvents = () => new Set(ALL_EVENT_IDS.filter(eid => profile.personal_records[eid]));
-  const [selEvents, setSelEvents] = useState<ReadonlySet<string>>(allPrEvents);
-  useEffect(() => { setSelEvents(allPrEvents()); }, [profile.person.wca_id]);  // eslint-disable-line react-hooks/exhaustive-deps
-  const toggleEvent = (eid: string) => setSelEvents(prev => {
-    const next = new Set(prev);
-    if (next.has(eid)) next.delete(eid); else next.add(eid);
-    return next;
-  });
+  // 默认选中该选手的「最优项目组合」(单次最优的第一个组合,无单次用平均;player-best 现成接口,
+  // 与下方组合卡同 URL 共享浏览器 HTTP 缓存);用户动过选择后不再覆盖.
+  const [selEvents, setSelEvents] = useState<ReadonlySet<string>>(new Set());
+  const selTouched = useRef(false);
+  useEffect(() => { setSelEvents(new Set()); selTouched.current = false; }, [profile.person.wca_id]);
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetch(apiUrl(`/v1/wca/sum-of-ranks/player-best?wcaId=${encodeURIComponent(profile.person.wca_id)}&v=5`), { signal: ctrl.signal })
+      .then(r => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d || selTouched.current) return;
+        // 只取 ≥2 项的组合(单项最优 = 该项自身名次,自选行不显示,预选只剩一行孤绿没意义)
+        const pick = (b?: { combos?: string[][] }) => b?.combos?.find(cb => cb.length >= 2);
+        const combo = pick(d.best?.single) ?? pick(d.best?.average);
+        if (combo) setSelEvents(new Set(combo));
+      })
+      .catch(() => { /* 不在 sor_player_best:保持空选 */ });
+    return () => ctrl.abort();
+  }, [profile.person.wca_id]);
+  const toggleEvent = (eid: string) => {
+    selTouched.current = true;
+    setSelEvents(prev => {
+      const next = new Set(prev);
+      if (next.has(eid)) next.delete(eid); else next.add(eid);
+      return next;
+    });
+  };
 
   // lazy load 历史最佳排名 数据
   useEffect(() => {
@@ -202,7 +221,7 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
               );
             })}
           </tbody>
-          <PersonSorSummary wcaId={profile.person.wca_id} isZh={isZh} showPodium={showPodium} countryIso2={profile.person.country_iso2} historical={mode === 'historical'} inclCancelled={inclCancelled} selEvents={selEvents} onClearSel={() => setSelEvents(new Set())} />
+          <PersonSorSummary wcaId={profile.person.wca_id} isZh={isZh} showPodium={showPodium} countryIso2={profile.person.country_iso2} historical={mode === 'historical'} inclCancelled={inclCancelled} selEvents={selEvents} onClearSel={() => { selTouched.current = true; setSelEvents(new Set()); }} />
         </table>
       </div>
     </section>
