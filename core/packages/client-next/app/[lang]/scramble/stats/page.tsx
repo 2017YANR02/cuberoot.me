@@ -5,7 +5,10 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import DiscreteHistogram, { type HistSeries } from './_components/DiscreteHistogram';
-import ScrambleLengthView from './_components/ScrambleLengthView';
+import ScrambleLengthView, {
+  type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN,
+} from './_components/ScrambleLengthView';
+import WcaEventSelector from '@/components/WcaEventSelector';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import { compSourceLine } from '@/lib/comp-schedule';
@@ -37,6 +40,7 @@ interface VariantData {
 interface SetData {
   label: string;
   label_zh: string | null;
+  event?: string;            // per-event 子集(wca_333oh 等)带;顶级数据集无
   sample_count: number;
   variants: Record<string, VariantData>;
 }
@@ -72,11 +76,20 @@ const EVENT_LABEL: Record<string, { zh: string; en: string
       zhHant: "3x3 腳擰"
 },
   '333mbf': { zh: '3x3 多盲', en: '3x3 MBLD' },
+  '333fm': { zh: '3x3 最少步', en: '3x3 FMC' },
 };
 function eventLabel(e: string, isZh: boolean): string {
   const m = EVENT_LABEL[e];
   return m ? ((i18n.language === 'zh-Hant' ? (m.zhHant ?? m.zh) : (i18n.language.startsWith('zh') ? m.zh : m.en))) : e;
 }
+
+// 难度 tab 目前只有三阶有数据 —— 这 6 个 WCA 项目全是三阶魔方、全用 TNoodle 三阶随机态打乱,
+// 故它们的阶段难度分布完全相同,共用同一份 distribution 数据。其余项目(4x4/金字塔/SQ1 等)
+// 暂无难度数据,选中显示占位(用户后续会逐个加入)。
+const DIFFICULTY_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft', '333mbf', '333mbo']);
+
+// 页面标题单一来源:h1 与 document.title(浏览器标签页)都从这里取,改标题只改这一处。
+const PAGE_TITLE = { zh: '打乱统计', en: 'Scramble Stats', zhHant: "打亂統計" };
 
 // 下拉顺序 = distribution JSON 键枚举:数字键(123/222/223)永远最前,字符串键按
 // build.ts VARIANTS 插入序 —— 123x2/eoline/dr 落尾部。标签走共享 lib/scramble-variants。
@@ -167,18 +180,30 @@ function computeStats(counts: Record<string, number>) {
 export default function ScrambleStatsPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('打乱分布', 'Scramble Stats', "打亂分佈");
+  useDocumentTitle(PAGE_TITLE.zh, PAGE_TITLE.en, PAGE_TITLE.zhHant);
 
   const [tab, setTab] = useState<'difficulty' | 'length'>('difficulty');
   const [data, setData] = useState<DistributionJson | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [scrambleSet, setScrambleSet] = useState<string>('wca');
+  // Shared WCA-event selector (above the tabs) — drives both the length tab and
+  // the difficulty tab. event_lengths.json is tiny (~2KB), fetched once here.
+  // event '' = difficulty tab's "全部三阶" merged pool (the length tab folds it to 333).
+  const [event, setEvent] = useState<string>('');
+  const [merged, setMerged] = useState(true);
+  const [lengthsData, setLengthsData] = useState<EventLengthsJson | null>(null);
+  const [lengthsError, setLengthsError] = useState<string | null>(null);
+  // Difficulty data source (top-level set: wca / xcross_2_col_10f). The actually
+  // displayed set additionally routes through the event selector: wca + 333oh →
+  // per-event set 'wca_333oh'; non-wca datasets are synthetic (no event split).
+  const [dataset, setDataset] = useState<string>('wca');
   const [variant, setVariant] = useState<VariantKey>('std');
   const [stage, setStage] = useState<string>('cross');
   const sel = useSubsetSelection('cn');
   const [yMode, setYMode] = useState<YMode>('percent');
   const [chartMode, setChartMode] = useState<ChartMode>('pdf');
   const [examples, setExamples] = useState<ExamplesJson | null>(null);
+  // per-event 示例分片缓存:setKey(wca_333oh 等)→ 该项目自己的 reservoir 示例
+  const [evExamples, setEvExamples] = useState<Record<string, ExamplesSet | null>>({});
   const [examplesLoading, setExamplesLoading] = useState(false);
   const [examplesError, setExamplesError] = useState<string | null>(null);
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
@@ -190,7 +215,8 @@ export default function ScrambleStatsPage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    fetch(statsUrl('/stats/scramble/distribution.json'))
+    // v= bump:2026-06-10 加 per-event sets(shape 变更,防缓存旧 JSON)
+    fetch(statsUrl('/stats/scramble/distribution.json') + '?v=20260610pe')
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -200,11 +226,66 @@ export default function ScrambleStatsPage() {
   }, []);
 
   useEffect(() => {
-    if (data && !data.sets[scrambleSet]) {
-      const first = Object.keys(data.sets)[0];
-      if (first) setScrambleSet(first);
+    fetch(statsUrl('/stats/scramble/event_lengths.json'))
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(setLengthsData)
+      .catch((e) => setLengthsError(String(e)));
+  }, []);
+
+  // Events offered in the shared selector — those with length data.
+  // Difficulty tab: all 3×3-family events are individually selectable (per-event
+  // distribution sets) plus an "All" entry for the merged pool; synthetic
+  // datasets (xcross) have no event split, so collapse the family to 333 there.
+  // Length tab: hide the merged-away members (333oh / 333mbf) while merging is on.
+  const availableEvents = useMemo(() => {
+    const all = new Set(lengthsData ? Object.keys(lengthsData.events) : []);
+    if (tab === 'difficulty') {
+      if (dataset !== 'wca') for (const id of DIFFICULTY_EVENTS) if (id !== '333') all.delete(id);
+    } else if (merged) {
+      for (const id of MERGED_HIDDEN) all.delete(id);
     }
-  }, [data, scrambleSet]);
+    return all;
+  }, [lengthsData, merged, tab, dataset]);
+
+  // Length tab has no "All" pseudo-event and merging hides member events — fold
+  // '' onto 333 and any merged member onto its rep.
+  useEffect(() => {
+    if (tab !== 'length') return;
+    if (event === '') { setEvent('333'); return; }
+    if (!merged) return;
+    const g = MERGE_GROUPS.find((g) => g.rep !== event && g.members.includes(event));
+    if (g) setEvent(g.rep);
+  }, [tab, merged, event]);
+
+  // Synthetic datasets have no per-event split — fold the family (and '') onto 333.
+  useEffect(() => {
+    if (tab === 'difficulty' && dataset !== 'wca' && event !== '333' && (event === '' || DIFFICULTY_EVENTS.has(event))) {
+      setEvent('333');
+    }
+  }, [tab, dataset, event]);
+
+  // Effective distribution set: top-level dataset, routed through the event
+  // selector for the WCA source ('' = merged pool; per-event otherwise).
+  const scrambleSet = useMemo(() => {
+    if (dataset !== 'wca') return dataset;
+    return (event !== '' && DIFFICULTY_EVENTS.has(event)) ? `wca_${event}` : 'wca';
+  }, [dataset, event]);
+
+  // Keep the selection on an event that actually has length data ('' = the
+  // difficulty tab's merged-family pseudo-event, always valid there).
+  useEffect(() => {
+    if (lengthsData && event !== '' && !lengthsData.events[event]) {
+      const first = Object.keys(lengthsData.events)[0];
+      if (first) setEvent(first);
+    }
+  }, [lengthsData, event]);
+
+  useEffect(() => {
+    if (data && !data.sets[dataset]) {
+      const first = Object.keys(data.sets).find((k) => !data.sets[k].event);
+      if (first) setDataset(first);
+    }
+  }, [data, dataset]);
 
   const currentSet = useMemo(() => data?.sets[scrambleSet] ?? null, [data, scrambleSet]);
 
@@ -235,7 +316,22 @@ export default function ScrambleStatsPage() {
     return currentSet.variants[variant]?.data[stage]?.[subsetKey]?.example_bins ?? [];
   }, [currentSet, variant, stage, subsetKey]);
 
+  // per-event 选择时示例走独立分片(该项目自己的 reservoir);合并池/xcross 走 examples.json
+  const isPerEvent = dataset === 'wca' && scrambleSet !== 'wca';
   const ensureExamplesLoaded = () => {
+    if (isPerEvent) {
+      if (scrambleSet in evExamples) return;
+      setEvExamples((m) => ({ ...m, [scrambleSet]: null }));
+      setExamplesLoading(true);
+      fetch(statsUrl(`/stats/scramble/examples_${scrambleSet}.json`), { cache: 'no-store' })
+        .then((r) => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+        .then((j) => { setEvExamples((m) => ({ ...m, [scrambleSet]: j })); setExamplesLoading(false); })
+        .catch((e) => { setExamplesError(String(e)); setExamplesLoading(false); });
+      return;
+    }
     if (examples || examplesLoading) return;
     setExamplesLoading(true);
     fetch(statsUrl('/stats/scramble/examples.json'), { cache: 'no-store' })
@@ -262,10 +358,12 @@ export default function ScrambleStatsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrambleSet, variant, stage, subsetKey, previewBins.length]);
 
+  // 当前示例来源:per-event 选择 → 该项目的分片;否则 examples.json 的顶级 set。
+  const exSet = isPerEvent ? (evExamples[scrambleSet] ?? null) : (examples?.sets[dataset] ?? null);
   const currentSamples = useMemo<ExampleSample[] | null>(() => {
-    if (selectedBin === null || !examples) return null;
-    return examples.sets[scrambleSet]?.variants[variant]?.[stage]?.[subsetKey]?.[String(selectedBin)] ?? null;
-  }, [examples, scrambleSet, variant, stage, subsetKey, selectedBin]);
+    if (selectedBin === null || !exSet) return null;
+    return exSet.variants[variant]?.[stage]?.[subsetKey]?.[String(selectedBin)] ?? null;
+  }, [exSet, variant, stage, subsetKey, selectedBin]);
 
   const series = useMemo<HistSeries[]>(() => {
     if (!currentSet) return [];
@@ -306,21 +404,16 @@ export default function ScrambleStatsPage() {
     };
   }, [currentSet, variant, stage]);
 
-  const pageTitle = tab === 'length'
-    ? (tr({ zh: '打乱统计', en: 'Scramble Stats',
-        zhHant: "打亂統計"
-    }))
-    : (tr({ zh: '打乱难度分布', en: 'Scramble Distribution',
-        zhHant: "打亂難度分佈"
-    }));
+  // Single stable title — shared with document.title via PAGE_TITLE.
+  const pageTitle = tr(PAGE_TITLE);
   const tabsBar = (
     <div className="scramble-stats-tabs" role="tablist">
       <button
         type="button" role="tab" aria-selected={tab === 'difficulty'}
         className={`scramble-stats-tab${tab === 'difficulty' ? ' active' : ''}`}
         onClick={() => setTab('difficulty')}
-      >{tr({ zh: '十字难度', en: 'Cross difficulty',
-          zhHant: "十字難度"
+      >{tr({ zh: '难度', en: 'Difficulty',
+          zhHant: "難度"
     })}</button>
       <button
         type="button" role="tab" aria-selected={tab === 'length'}
@@ -332,14 +425,49 @@ export default function ScrambleStatsPage() {
     </div>
   );
 
+  // Shared header: WCA-event selector sits ABOVE the tab bar so it drives both
+  // the difficulty tab and the length tab.
+  const header = (
+    <div className="scramble-stats-header">
+      <h1>{pageTitle}</h1>
+      <div className="scramble-stats-event-bar">
+        <WcaEventSelector
+          availableEvents={availableEvents}
+          selectedEvent={event}
+          onSelect={setEvent}
+          isZh={isZh}
+          onlyAvailable
+          allowAll={tab === 'difficulty' && dataset === 'wca'}
+        />
+      </div>
+      {tabsBar}
+    </div>
+  );
+
   if (tab === 'length') {
     return (
       <div className="scramble-stats-page">
-        <div className="scramble-stats-header">
-          <h1>{pageTitle}</h1>
-          {tabsBar}
+        {header}
+        {lengthsError
+          ? <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed',
+              zhHant: "載入失敗"
+        })}: {lengthsError}</div>
+          : <ScrambleLengthView isZh={isZh} data={lengthsData} event={event} merged={merged} onMerged={setMerged} />}
+      </div>
+    );
+  }
+
+  // Difficulty tab — only 3×3-family events ('' = merged family pool) have
+  // stage-difficulty data for now.
+  if (event !== '' && !DIFFICULTY_EVENTS.has(event)) {
+    return (
+      <div className="scramble-stats-page">
+        {header}
+        <div className="scramble-stats-loading">
+          {tr({ zh: '该项目暂无难度数据,即将加入', en: 'Difficulty data for this puzzle is coming soon',
+              zhHant: "該項目暫無難度資料,即將加入"
+        })}
         </div>
-        <ScrambleLengthView isZh={isZh} />
       </div>
     );
   }
@@ -347,10 +475,7 @@ export default function ScrambleStatsPage() {
   if (error) {
     return (
       <div className="scramble-stats-page">
-        <div className="scramble-stats-header">
-          <h1>{pageTitle}</h1>
-          {tabsBar}
-        </div>
+        {header}
         <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed',
             zhHant: "載入失敗"
         })}: {error}</div>
@@ -361,10 +486,7 @@ export default function ScrambleStatsPage() {
   if (!data) {
     return (
       <div className="scramble-stats-page">
-        <div className="scramble-stats-header">
-          <h1>{pageTitle}</h1>
-          {tabsBar}
-        </div>
+        {header}
         <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…',
             zhHant: "載入中…"
         })}</div>
@@ -372,16 +494,42 @@ export default function ScrambleStatsPage() {
     );
   }
 
-  const vData = currentSet?.variants[variant];
+  // Per-event set missing from the JSON (e.g. stats not yet regenerated for
+  // this deploy) — show a placeholder rather than an empty chart.
+  if (!currentSet) {
+    return (
+      <div className="scramble-stats-page">
+        {header}
+        <div className="scramble-stats-loading">
+          {tr({ zh: '该项目难度数据生成中,稍后再来', en: 'Per-event difficulty data is being generated, check back soon',
+              zhHant: "該項目難度資料生成中,稍後再來"
+        })}
+        </div>
+      </div>
+    );
+  }
+
+  const vData = currentSet.variants[variant];
 
   const sourceText = (() => {
     if (scrambleSet === 'wca') {
-      const n = currentSet?.sample_count.toLocaleString() ?? '?';
+      const n = currentSet.sample_count.toLocaleString();
       return i18n.language === 'zh-Hant' ? (`來源: WCA 歷史 ${n} 條三階打亂,覆蓋三階速擰 / 單手 / 盲擰 / 多盲 / 最少步 / 腳擰 6 個項目;每條按 6 種底色方向(黃 / 紅 / 白 / 橙 / 藍 / 綠)求階段最優步數的分佈。`) : (isZh
               ? `来源: WCA 历史 ${n} 条三阶打乱,覆盖三阶速拧 / 单手 / 盲拧 / 多盲 / 最少步 / 脚拧 6 个项目;每条按 6 种底色方向(黄 / 红 / 白 / 橙 / 蓝 / 绿)求阶段最优步数的分布。`
               : `Source: ${n} WCA historical 3×3 scrambles from 6 events (3×3, OH, BLD, Multi-BLD, FMC, Feet); each analyzed across 6 bottom-color orientations (Y/R/W/O/B/G). Distribution of stage-optimal move counts.`);
     }
-    if (!currentSet) return '';
+    if (currentSet.event) {
+      // WCA per-event subset — same scrambler family, this event's own sample.
+      // tr() 模板 + 占位替换:zhHant 由 zh:inject 机器生成,AI/人不写繁体。
+      const n = currentSet.sample_count.toLocaleString();
+      const ev = eventLabel(currentSet.event, isZh);
+      const tpl = tr({
+        zh: '来源: WCA 历史 {ev} 项目 {n} 条打乱(六个三阶项目共用同一打乱程序,分布理论同形);每条按 6 种底色方向求阶段最优步数的分布。',
+        en: 'Source: {n} WCA historical {ev} scrambles (all six 3×3 events share one scrambler, so distributions are theoretically identical); each analyzed across 6 bottom-color orientations.',
+          zhHant: "來源: WCA 歷史 {ev} 項目 {n} 條打亂(六個三階項目共用同一打亂程式,分佈理論同形);每條按 6 種底色方向求階段最優步數的分佈。"
+    });
+      return tpl.replace('{ev}', ev).replace('{n}', n);
+    }
     const labelDisp = (isZh && currentSet.label_zh) ? currentSet.label_zh : currentSet.label;
     const n = currentSet.sample_count.toLocaleString();
     return i18n.language === 'zh-Hant' ? (`來源: ${labelDisp},共 ${n} 條樣本;每條按 6 種底色方向求階段最優步數的分佈。`) : (isZh
@@ -389,23 +537,32 @@ export default function ScrambleStatsPage() {
           : `Source: ${labelDisp} (${n} samples); each analyzed across 6 bottom-color orientations.`);
   })();
 
-  const setOptions = Object.entries(data.sets).map(([key, s]) => ({
-    value: key,
-    label: `${(isZh && s.label_zh) ? s.label_zh : s.label} (${s.sample_count.toLocaleString()})`,
-  }));
+  // 数据集下拉只列顶级 set(per-event 子集由顶部项目选择器路由,不进下拉)
+  const datasetOptions = Object.entries(data.sets)
+    .filter(([, s]) => !s.event)
+    .map(([key, s]) => ({
+      value: key,
+      label: `${(isZh && s.label_zh) ? s.label_zh : s.label} (${s.sample_count.toLocaleString()})`,
+    }));
 
   return (
     <div className="scramble-stats-page">
-      <div className="scramble-stats-header">
-        <h1>{pageTitle}</h1>
-        {tabsBar}
-        <p className="scramble-stats-note">{sourceText}</p>
-      </div>
+      {header}
+      <p className="scramble-stats-note">{sourceText}</p>
 
       <div className="scramble-stats-controls">
         <div className="scramble-stats-color-control">
           <SubsetColorPicker sel={sel} isZh={isZh} />
         </div>
+        <label>
+          <select value={dataset} onChange={(e) => setDataset(e.target.value)} aria-label={tr({ zh: '数据集', en: 'Dataset',
+              zhHant: "資料集"
+        })}>
+            {datasetOptions.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </label>
         <label>
           <select value={variant} onChange={(e) => setVariant(e.target.value as VariantKey)} aria-label={tr({ zh: '变体', en: 'Variant',
               zhHant: "變體"
@@ -441,9 +598,6 @@ export default function ScrambleStatsPage() {
           yModeLabel={yMode === 'percent' ? (tr({ zh: '百分比', en: '%' })) : (tr({ zh: '数量', en: 'count',
               zhHant: "數量"
         }))}
-          setOptions={setOptions}
-          activeSet={scrambleSet}
-          onSetChange={setScrambleSet}
         />
       </div>
 
@@ -476,8 +630,8 @@ export default function ScrambleStatsPage() {
         loading={examplesLoading}
         errorText={examplesError}
         samples={currentSamples}
-        comps={examples?.sets[scrambleSet]?.comps}
-        idMeta={examples?.sets[scrambleSet]?.idMeta}
+        comps={exSet?.comps}
+        idMeta={exSet?.idMeta}
       />
 
       {cnBenefit && (

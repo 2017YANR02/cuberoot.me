@@ -8,14 +8,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
-import WcaEventSelector from '@/components/WcaEventSelector';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
-import { ALL_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
+import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { statsUrl } from '@/lib/stats-base';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { tr } from '@/i18n/tr';
@@ -30,7 +29,7 @@ interface EventLen {
   glued?: GluedScramble[]; // megaminx scrambles with a missing-space move (e.g. R--D--)
   anomalies?: ScrambleAnomaly[]; // fixed-length events: comps whose scrambles deviate (non-standard scrambler)
 }
-interface EventLengthsJson {
+export interface EventLengthsJson {
   meta: { generated_at: string; total_scrambles: number; total_samples: number };
   events: Record<string, EventLen>;
 }
@@ -59,7 +58,7 @@ interface MergeGroup {
     zhHant?: string;
     subZhHant?: string;
 }
-const MERGE_GROUPS: MergeGroup[] = [
+export const MERGE_GROUPS: MergeGroup[] = [
   { rep: '333', members: ['333', '333oh'], zh: '三阶速拧', en: '3×3 (speed)', subZh: '含单手', subEn: 'incl. OH',
       zhHant: "三階速擰",
       subZhHant: "含單手"
@@ -70,7 +69,7 @@ const MERGE_GROUPS: MergeGroup[] = [
 ];
 const groupForRep = (id: string) => MERGE_GROUPS.find((g) => g.rep === id);
 // Non-representative members hidden from the selector while merged.
-const MERGED_HIDDEN = new Set(MERGE_GROUPS.flatMap((g) => g.members.filter((m) => m !== g.rep)));
+export const MERGED_HIDDEN = new Set(MERGE_GROUPS.flatMap((g) => g.members.filter((m) => m !== g.rep)));
 
 function summarize(counts: Record<string, number>) {
   const entries = Object.entries(counts)
@@ -105,23 +104,18 @@ const unitLabel = (unit: string, isZh: boolean) =>
       zhHant: "擰次"
 })) : (tr({ zh: '步', en: 'moves' }));
 
-export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
-  const [data, setData] = useState<EventLengthsJson | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [event, setEvent] = useState('333');
-  const [merged, setMerged] = useState(true);
+export default function ScrambleLengthView({ isZh, data, event, merged, onMerged }: {
+  isZh: boolean;
+  data: EventLengthsJson | null;
+  event: string;
+  merged: boolean;
+  onMerged: (v: boolean) => void;
+}) {
   const [yMode, setYMode] = useState<'percent' | 'count'>('percent');
   const [chartMode, setChartMode] = useState<'pdf' | 'cdf'>('pdf');
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
   const [examples, setExamples] = useState<ExamplesJson | null>(null);
   const [examplesLoading, setExamplesLoading] = useState(false);
-
-  useEffect(() => {
-    fetch(statsUrl('/stats/scramble/event_lengths.json'))
-      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(setData)
-      .catch((e) => setError(String(e)));
-  }, []);
 
   // Flag index for example comp cards (bump version to re-render once loaded).
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
@@ -138,34 +132,6 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
       .catch(() => setExamplesLoading(false));
   };
   const handleBarClick = (bin: number) => { setSelectedBin(bin); ensureExamples(); };
-
-  const available = useMemo(
-    () => new Set(data ? Object.keys(data.events) : []),
-    [data],
-  );
-  // While merged, hide the non-representative members (their distribution is
-  // folded into the rep); 333ft stays visible as its own event.
-  const selectorAvailable = useMemo(() => {
-    if (!merged) return available;
-    const s = new Set(available);
-    for (const id of MERGED_HIDDEN) s.delete(id);
-    return s;
-  }, [available, merged]);
-
-  // Keep the selection on an event that actually has data.
-  useEffect(() => {
-    if (data && !data.events[event]) {
-      const first = ALL_EVENT_IDS.find((id) => data.events[id]);
-      if (first) setEvent(first);
-    }
-  }, [data, event]);
-
-  // Merging hides member events — fold any selected member onto its rep.
-  useEffect(() => {
-    if (!merged) return;
-    const g = MERGE_GROUPS.find((g) => g.rep !== event && g.members.includes(event));
-    if (g) setEvent(g.rep);
-  }, [merged, event]);
 
   // Switching event clears the selected length bin (examples no longer apply).
   useEffect(() => { setSelectedBin(null); }, [event]);
@@ -225,11 +191,6 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
     return out.length ? out : null;
   }, [selectedBin, examples, activeGroup, event]);
 
-  if (error) {
-    return <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed',
-        zhHant: "載入失敗"
-    })}: {error}</div>;
-  }
   if (!data) {
     return <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…',
         zhHant: "載入中…"
@@ -254,17 +215,10 @@ export default function ScrambleLengthView({ isZh }: { isZh: boolean }) {
       <p className="scramble-stats-note">{source}</p>
 
       <div className="scramble-len-events">
-        <WcaEventSelector
-          availableEvents={selectorAvailable}
-          selectedEvent={event}
-          onSelect={setEvent}
-          isZh={isZh}
-          onlyAvailable
-        />
         <div className="scramble-len-merge">
           <PillToggle
             value={merged}
-            onChange={setMerged}
+            onChange={onMerged}
             onLabel={tr({ zh: '已合并', en: 'Merged',
                 zhHant: "已合併"
             })}
