@@ -311,6 +311,85 @@ export class F2leoSolverWasm {
 if (Symbol.dispose) F2leoSolverWasm.prototype[Symbol.dispose] = F2leoSolverWasm.prototype.free;
 
 /**
+ * Roux 第一块(方块 / 1x2x3)+ Petrus(2x2x2 / 2x2x3)组合求解器。4 张小表:
+ * mt_edge3 (~743KB) + mt_corn2 (~36KB) + mt_edge2 (~38KB) + mt_corn (~1.7KB)。
+ * FB 方块与 2x2x2 全表构造时即建(微型/毫秒级);1x2x3 全表(5,322,240 态)与
+ * 2x2x3 启发式表惰性构建(首次相关查询现场 BFS,~秒级),两者共享 1x2x3 表。
+ * stage 编号:0=FB 方块 1=1x2x3 2=2x2x2 3=2x2x3。
+ */
+export class Roux223SolverWasm {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        Roux223SolverWasmFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_roux223solverwasm_free(ptr, 0);
+    }
+    /**
+     * @param {Uint8Array} mt_edge3
+     * @param {Uint8Array} mt_corn2
+     * @param {Uint8Array} mt_edge2
+     * @param {Uint8Array} mt_corn
+     */
+    constructor(mt_edge3, mt_corn2, mt_edge2, mt_corn) {
+        const ptr0 = passArray8ToWasm0(mt_edge3, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passArray8ToWasm0(mt_corn2, wasm.__wbindgen_malloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passArray8ToWasm0(mt_edge2, wasm.__wbindgen_malloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ptr3 = passArray8ToWasm0(mt_corn, wasm.__wbindgen_malloc);
+        const len3 = WASM_VECTOR_LEN;
+        const ret = wasm.roux223solverwasm_new(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3);
+        this.__wbg_ptr = ret;
+        Roux223SolverWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。`m` 前缀 =
+     * rot + y^k;`c` = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名)。
+     * @param {string} scramble
+     * @param {number} stage
+     * @param {number} face
+     * @param {number} extra
+     * @param {number} cap
+     * @returns {string}
+     */
+    solve_moves(scramble, stage, face, extra, cap) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.roux223solverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, stage, face, extra, cap);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
+     * 单阶段 6 视角(stage 0=FB方块 1=1x2x3 2=2x2x2 3=2x2x3),顺序对应 ROTS。
+     * @param {string} scramble
+     * @param {number} stage
+     * @returns {Uint32Array}
+     */
+    solve_stage(scramble, stage) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.roux223solverwasm_solve_stage(this.__wbg_ptr, ptr0, len0, stage);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+}
+if (Symbol.dispose) Roux223SolverWasm.prototype[Symbol.dispose] = Roux223SolverWasm.prototype.free;
+
+/**
  * 其余 comp 变体的浏览器小表求解(count-only,逐格 bit-exact 对照大表/huge 路径)。
  * pair / eo / pseudo / pseudo_pair —— 各自 native analyzer 用 ~10GB+ huge 表「联合」
  * 验证多槽是否解出,wasm 装不下;这里复用各 solver 的 `*_small` cascade:显式逐槽
@@ -470,6 +549,9 @@ const CrossSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined'
 const F2leoSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_f2leosolverwasm_free(ptr, 1));
+const Roux223SolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_roux223solverwasm_free(ptr, 1));
 const VariantSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_variantsolverwasm_free(ptr, 1));

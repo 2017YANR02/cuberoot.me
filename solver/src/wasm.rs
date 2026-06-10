@@ -11,6 +11,7 @@ use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 
 use crate::block222_solver::{block_label, Block222Solver, Y_NAMES};
+use crate::block223_solver::{block223_label, Block223Solver};
 use crate::cross_solver::CrossSolver;
 use crate::cube_common::{state_space, string_to_alg, MOVE_NAMES};
 use crate::eo_cross_solver::EOSmallSolver;
@@ -21,6 +22,7 @@ use crate::prune_tables::PackedPruneTable;
 use crate::pseudo_f2leo_solver::PseudoF2leoSolver;
 use crate::pseudo_pair_solver::PseudoPairSmallSolver;
 use crate::pseudo_xcross_solver::PseudoSmallSolver;
+use crate::roux_s1_solver::{s1_block_label, square_label, FbSquareSolver, RouxS1Solver};
 use crate::xcross_solver::XCrossSolver;
 
 /// 6 个 cube 视角(哪一面当底)。顺序对应 CSV 后缀 _z0/_z2/_z3/_z1/_x3/_x1。
@@ -107,6 +109,160 @@ impl Block222SolverWasm {
                 (fmt_moves(&frame, &s.moves), block_label(fi, s.yk).to_string())
             })
             .collect();
+        sols_json(len, &items)
+    }
+}
+
+/// Roux 第一块(方块 / 1x2x3)+ Petrus(2x2x2 / 2x2x3)组合求解器。4 张小表:
+/// mt_edge3 (~743KB) + mt_corn2 (~36KB) + mt_edge2 (~38KB) + mt_corn (~1.7KB)。
+/// FB 方块与 2x2x2 全表构造时即建(微型/毫秒级);1x2x3 全表(5,322,240 态)与
+/// 2x2x3 启发式表惰性构建(首次相关查询现场 BFS,~秒级),两者共享 1x2x3 表。
+/// stage 编号:0=FB 方块 1=1x2x3 2=2x2x2 3=2x2x3。
+#[wasm_bindgen]
+pub struct Roux223SolverWasm {
+    mt_e3: Arc<MoveTable>,
+    mt_c2: Arc<MoveTable>,
+    mt_e2: Arc<MoveTable>,
+    fbsq: FbSquareSolver,
+    b222: Block222Solver,
+    s1: RefCell<Option<RouxS1Solver>>,
+    b223: RefCell<Option<Block223Solver>>,
+}
+
+#[wasm_bindgen]
+impl Roux223SolverWasm {
+    #[wasm_bindgen(constructor)]
+    pub fn new(
+        mt_edge3: &[u8],
+        mt_corn2: &[u8],
+        mt_edge2: &[u8],
+        mt_corn: &[u8],
+    ) -> Roux223SolverWasm {
+        let mt_e3 = Arc::new(MoveTable::from_bin(mt_edge3, state_space::EDGE3 as u32, 18));
+        let mt_c2 = Arc::new(MoveTable::from_bin(mt_corn2, state_space::CORNER2 as u32, 18));
+        let mt_e2 = Arc::new(MoveTable::from_bin(mt_edge2, state_space::EDGE2 as u32, 18));
+        let mt_c = Arc::new(MoveTable::from_bin(mt_corn, state_space::CORNER as u32, 18));
+        Roux223SolverWasm {
+            fbsq: FbSquareSolver::from_tables(mt_c.clone(), mt_e2.clone()),
+            b222: Block222Solver::from_tables(mt_e3.clone(), mt_c),
+            s1: RefCell::new(None),
+            b223: RefCell::new(None),
+            mt_e3,
+            mt_c2,
+            mt_e2,
+        }
+    }
+
+    fn ensure_s1(&self) {
+        if self.s1.borrow().is_none() {
+            *self.s1.borrow_mut() =
+                Some(RouxS1Solver::from_tables(self.mt_c2.clone(), self.mt_e3.clone()));
+        }
+    }
+
+    fn ensure_223(&self) {
+        self.ensure_s1();
+        if self.b223.borrow().is_none() {
+            let s1 = self.s1.borrow().as_ref().unwrap().clone();
+            *self.b223.borrow_mut() = Some(Block223Solver::from_s1(s1, self.mt_e2.clone()));
+        }
+    }
+
+    /// 单阶段 6 视角(stage 0=FB方块 1=1x2x3 2=2x2x2 3=2x2x3),顺序对应 ROTS。
+    pub fn solve_stage(&self, scramble: &str, stage: u32) -> Vec<u32> {
+        let alg = string_to_alg(scramble);
+        match stage {
+            0 => self.fbsq.get_stats(&alg, &ROTS),
+            1 => {
+                self.ensure_s1();
+                self.s1.borrow().as_ref().unwrap().get_stats(&alg, &ROTS)
+            }
+            2 => self.b222.get_stats(&alg, &ROTS),
+            _ => {
+                self.ensure_223();
+                self.b223.borrow().as_ref().unwrap().get_stats(&alg, &ROTS)
+            }
+        }
+    }
+
+    /// 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。`m` 前缀 =
+    /// rot + y^k;`c` = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名)。
+    pub fn solve_moves(&self, scramble: &str, stage: u32, face: u32, extra: u32, cap: u32) -> String {
+        let alg = string_to_alg(scramble);
+        let fi = (face as usize).min(5);
+        let rot = ROTS[fi];
+        let frame = |yk: usize| -> String {
+            let y = Y_NAMES[yk];
+            if rot.is_empty() {
+                y.to_string()
+            } else if y.is_empty() {
+                rot.to_string()
+            } else {
+                format!("{} {}", rot, y)
+            }
+        };
+        let (len, items): (u32, Vec<(String, String)>) = match stage {
+            0 => {
+                let (len, sols) = self.fbsq.enumerate_face(&alg, rot, extra, cap as usize);
+                (
+                    len,
+                    sols.iter()
+                        .map(|s| {
+                            (
+                                fmt_moves(&frame(s.yk), &s.moves),
+                                square_label(fi, s.yk, s.which).to_string(),
+                            )
+                        })
+                        .collect(),
+                )
+            }
+            1 => {
+                self.ensure_s1();
+                let b = self.s1.borrow();
+                let (len, sols) = b.as_ref().unwrap().enumerate_face(&alg, rot, extra, cap as usize);
+                (
+                    len,
+                    sols.iter()
+                        .map(|s| {
+                            (
+                                fmt_moves(&frame(s.yk), &s.moves),
+                                s1_block_label(fi, s.yk).to_string(),
+                            )
+                        })
+                        .collect(),
+                )
+            }
+            2 => {
+                let (len, sols) = self.b222.enumerate_face(&alg, rot, extra, cap as usize);
+                (
+                    len,
+                    sols.iter()
+                        .map(|s| {
+                            (
+                                fmt_moves(&frame(s.yk), &s.moves),
+                                block_label(fi, s.yk).to_string(),
+                            )
+                        })
+                        .collect(),
+                )
+            }
+            _ => {
+                self.ensure_223();
+                let b = self.b223.borrow();
+                let (len, sols) = b.as_ref().unwrap().enumerate_face(&alg, rot, extra, cap as usize);
+                (
+                    len,
+                    sols.iter()
+                        .map(|s| {
+                            (
+                                fmt_moves(&frame(s.yk), &s.moves),
+                                block223_label(fi, s.yk).to_string(),
+                            )
+                        })
+                        .collect(),
+                )
+            }
+        };
         sols_json(len, &items)
     }
 }

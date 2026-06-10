@@ -33,10 +33,10 @@ const FACE_L: u8 = 2;
 const FACE_B: u8 = 5;
 
 /// 8 个角的 cstimer 风格名,索引 = 角编号(见 cube_common MOVE_STATES 标号)。
-const CORNER_NAMES: [&str; 8] = ["ULB", "UBR", "URF", "UFL", "DBL", "DRB", "DFR", "DLF"];
+pub(crate) const CORNER_NAMES: [&str; 8] = ["ULB", "UBR", "URF", "UFL", "DBL", "DRB", "DFR", "DLF"];
 
 /// 角编号 → 面集合 bitmask(bit = 面类型)。
-const CORNER_FACE_MASK: [u8; 8] = [
+pub(crate) const CORNER_FACE_MASK: [u8; 8] = [
     1 << FACE_U | 1 << FACE_B | 1 << FACE_L, // 0 ULB
     1 << FACE_U | 1 << FACE_B | 1 << 3,      // 1 UBR
     1 << FACE_U | 1 << 4 | 1 << 3,           // 2 URF
@@ -48,8 +48,8 @@ const CORNER_FACE_MASK: [u8; 8] = [
 ];
 
 /// (rot, yk) 共轭的复合面映射:探针法(对每面取代表 move 走 alg_rotation + rot_map),
-/// 与求解路径用同一套变换,保证标签与实际求的块一致。
-fn face_map(rot: &str, yk: usize) -> [u8; 6] {
+/// 与求解路径用同一套变换,保证标签与实际求的块一致。roux_s1 / block223 标签同用。
+pub(crate) fn face_map(rot: &str, yk: usize) -> [u8; 6] {
     let rm = rot_map();
     let mut map = [0u8; 6];
     for t in 0..6u8 {
