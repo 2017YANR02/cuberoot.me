@@ -54,7 +54,7 @@ const BROWSER: BrowserSolver[] = [
   { key: 'pseudo_pair', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '深阶段 数十秒', enLatency: 'deep stages tens of seconds' },
   { key: 'f2leo / pseudo_f2leo', zhEngine: '小表 ~40MB/worker', enEngine: 'small tables ~40MB/worker', zhLatency: 'cross ~2.8s', enLatency: 'cross ~2.8s' },
   { key: '2x2x2 block', zhEngine: 'Block222SolverWasm (~0.7MB/worker)', enEngine: 'Block222SolverWasm (~0.7MB/worker)', zhLatency: '全 6 视角即时', enLatency: 'all 6 views instant' },
-  { key: '1x2x3 (Roux FB) / 2x2x3', zhEngine: 'Roux223SolverWasm (~0.8MB/worker)', enEngine: 'Roux223SolverWasm (~0.8MB/worker)', zhLatency: '方块/2x2x2 即时; 1x2x3 与 2x2x3 首算建表 ~秒级', enLatency: 'square/2x2x2 instant; 1x2x3 & 2x2x3 build tables on first solve (~seconds)' },
+  { key: '1x2x3 / 2x2x3', zhEngine: 'Roux223SolverWasm (~0.8MB/worker)', enEngine: 'Roux223SolverWasm (~0.8MB/worker)', zhLatency: '方块/2x2x2 即时; 1x2x3 与 2x2x3 首算建表 ~秒级', enLatency: 'square/2x2x2 instant; 1x2x3 & 2x2x3 build tables on first solve (~seconds)' },
 ];
 
 // 每个原生分析器实际 mmap 的磁盘表 (D:\cube\cuberoot.me\solver\tables\, 大小为真实文件字节).

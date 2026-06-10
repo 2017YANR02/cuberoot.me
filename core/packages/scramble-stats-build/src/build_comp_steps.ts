@@ -37,6 +37,10 @@ const TARGETS: Target[] = [
   { csv: 'pair.csv', stages: 4, outDir: 'comp_steps_pair' },
   { csv: 'f2leo.csv', stages: 4, outDir: 'comp_steps_f2leo' },
   { csv: 'pseudo_f2leo.csv', stages: 4, outDir: 'comp_steps_pseudo_f2leo' },
+  // 块类(UI key 123/222/223;123 的 CSV 管道名是 roux)
+  { csv: 'roux.csv', stages: 2, outDir: 'comp_steps_123' },
+  { csv: '222.csv', stages: 1, outDir: 'comp_steps_222' },
+  { csv: '223.csv', stages: 1, outDir: 'comp_steps_223' },
 ];
 
 // 与 client useCompSteps.normScramble 一致:trim + 多空格压单空格。

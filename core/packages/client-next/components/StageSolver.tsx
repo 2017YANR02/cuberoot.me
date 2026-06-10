@@ -46,7 +46,7 @@ const METHODS: { key: Method; label: string }[] = [
   { key: 'pseudo_pair', label: 'Pseudo Pair' },
   { key: 'f2leo', label: 'F2LEO' },
   { key: 'pseudo_f2leo', label: 'Pseudo F2LEO' },
-  { key: '123', label: '1x2x3 (Roux FB)' },
+  { key: '123', label: '1x2x3' },
   { key: '222', label: '2x2x2' },
   { key: '223', label: '2x2x3' },
 ];

@@ -58,6 +58,102 @@ function poolSize(): number {
  * @param variantId VariantSolverWasm 编号(pair=0/eo=1/pseudo=2/pseudo_pair=3)
  * @param stages 阶段数(pair/pseudo/pseudo_pair=4,eo=5)
  */
+// 块类变体 → Roux223SolverWasm 的 flat 阶段 id(0=1x2x2 方块 1=1x2x3 2=2x2x2 3=2x2x3)。
+const ROUX223_STAGE_IDS: Record<string, number[]> = { '123': [0, 1], '222': [2], '223': [3] };
+
+/**
+ * 123 / 222 / 223 浏览器内求解(count-only),need 'roux223' 共享一个 WASM 类。
+ * 两遍同 useVariantStepMap:首阶段先出(123 的 1x2x2 / 单阶段变体即全部),余下阶段后台补。
+ */
+export function useRoux223StepMap(
+  scrambles: string[],
+  enabled: boolean,
+  variant: string,
+): VariantState {
+  const [state, setState] = useState<VariantState>(IDLE);
+  const poolRef = useRef<RustCrossPool | null>(null);
+  const cacheRef = useRef<Map<string, Map<string, number[]>>>(new Map());
+  const lastArrRef = useRef<string[] | null>(null);
+
+  useEffect(() => () => { poolRef.current?.terminate(); poolRef.current = null; }, []);
+
+  useEffect(() => {
+    if (!enabled) { setState(IDLE); return; }
+    const stageIds = ROUX223_STAGE_IDS[variant] ?? [0];
+    if (scrambles.length === 0) {
+      setState({ map: new Map(), crossReady: true, fullReady: true, done: 0, total: 0, error: null });
+      return;
+    }
+    if (lastArrRef.current !== scrambles) { lastArrRef.current = scrambles; cacheRef.current.clear(); }
+
+    const full = stageIds.length * 6;
+    const map = cacheRef.current.get(variant) ?? new Map<string, number[]>();
+    cacheRef.current.set(variant, map);
+    const total = scrambles.length;
+    const len = (s: string) => map.get(s)?.length ?? 0;
+    const countAtLeast = (n: number) => scrambles.reduce((acc, s) => acc + (len(s) >= n ? 1 : 0), 0);
+
+    if (scrambles.every((s) => len(s) >= full)) {
+      setState({ map, crossReady: true, fullReady: true, done: total, total, error: null });
+      return;
+    }
+
+    let cancelled = false;
+    let lastFlush = 0;
+    const flush = (crossReady: boolean, fullReady: boolean, target: number) => {
+      if (!cancelled) setState({ map, crossReady, fullReady, done: countAtLeast(target), total, error: null });
+    };
+    flush(scrambles.every((s) => len(s) >= 6), false, 6);
+
+    if (!poolRef.current) poolRef.current = createRustCrossPool(poolSize(), 'roux223');
+    const pool = poolRef.current;
+
+    (async () => {
+      try {
+        await Promise.race([
+          pool.ready,
+          new Promise<never>((_, rej) => setTimeout(() => rej(new Error('worker load timeout (>60s)')), 60000)),
+        ]);
+
+        // pass 1:首阶段 — 默认视图先出(首个 worker 惰性建表后即查表级)。
+        const firstTodo = scrambles.filter((s) => len(s) < 6);
+        await Promise.all(firstTodo.map(async (s) => {
+          try { const v = await pool.solveRoux223Stage(s, stageIds[0]); if (!cancelled && len(s) < 6) map.set(s, remap6(v)); }
+          catch { /* 跳过该打乱 */ }
+          const now = Date.now();
+          if (now - lastFlush > 120) { lastFlush = now; flush(false, false, 6); }
+        }));
+        if (cancelled) return;
+        flush(true, false, 6);
+
+        // pass 2:余下阶段逐个补(123 的 1x2x3;单阶段变体无此遍)。
+        if (stageIds.length > 1) {
+          const fullTodo = scrambles.filter((s) => len(s) < full);
+          await Promise.all(fullTodo.map(async (s) => {
+            try {
+              const vals = (map.get(s) ?? []).slice(0, 6);
+              for (const sid of stageIds.slice(1)) {
+                const v = await pool.solveRoux223Stage(s, sid);
+                vals.push(...remap6(v));
+              }
+              if (!cancelled) map.set(s, vals);
+            } catch { /* 跳过 */ }
+            const now = Date.now();
+            if (now - lastFlush > 400) { lastFlush = now; flush(true, false, full); }
+          }));
+        }
+        flush(true, true, full);
+      } catch (e) {
+        if (!cancelled) setState((prev) => ({ ...prev, error: String((e as Error)?.message ?? e) }));
+      }
+    })();
+
+    return () => { cancelled = true; pool.clearQueue(); };
+  }, [scrambles, enabled, variant]);
+
+  return state;
+}
+
 export function useVariantStepMap(
   scrambles: string[],
   enabled: boolean,
