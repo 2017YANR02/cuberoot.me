@@ -774,6 +774,15 @@
                 ],
                 [
                   5,
+                  "[Baiqiang Dong (董百强)](https://www.worldcubeassociation.org/persons/2008DONG06)",
+                  "17",
+                  "China",
+                  "2026-06-06",
+                  "[More Than One Cube Shanghai 2026](https://www.worldcubeassociation.org/competitions/MoreThanOneCubeShanghai2026)",
+                  "23 17 DNF"
+                ],
+                [
+                  6,
                   "[Yiwei Liu (刘伊玮)](https://www.worldcubeassociation.org/persons/2012LIUY03)",
                   "17",
                   "China",
@@ -782,49 +791,40 @@
                   "25 23 17"
                 ],
                 [
-                  6,
-                  "[Harry Savage](https://www.worldcubeassociation.org/persons/2013SAVA01)",
-                  "17",
-                  "United Kingdom",
-                  "2019-01-19",
-                  "[British Blind Off 2019](https://www.worldcubeassociation.org/competitions/TGBBO2019)",
-                  "27 31 17"
-                ],
-                [
                   7,
-                  "[Mark Boyanowski](https://www.worldcubeassociation.org/persons/2014BOYA01)",
+                  "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
                   "17",
                   "USA",
-                  "2019-06-08",
-                  "[Mental Breakdown Minnesota 2019](https://www.worldcubeassociation.org/competitions/MentalBreakdownMinnesota2019)",
-                  "17 28 22"
+                  "2026-05-02",
+                  "[Evanston FMC Spring 2026](https://www.worldcubeassociation.org/competitions/EvanstonFMCSpring2026)",
+                  "17 18 22"
                 ],
                 [
                   8,
+                  "[Yongqiang Peng (彭永强)](https://www.worldcubeassociation.org/persons/2013PENG02)",
+                  "17",
+                  "China",
+                  "2026-06-06",
+                  "[More Than One Cube Shanghai 2026](https://www.worldcubeassociation.org/competitions/MoreThanOneCubeShanghai2026)",
+                  "25 17 27"
+                ],
+                [
+                  9,
+                  "[Qijun Miao (缪其隽)](https://www.worldcubeassociation.org/persons/2014MIAO02)",
+                  "17",
+                  "China",
+                  "2026-06-06",
+                  "[More Than One Cube Shanghai 2026](https://www.worldcubeassociation.org/competitions/MoreThanOneCubeShanghai2026)",
+                  "24 17 23"
+                ],
+                [
+                  10,
                   "[Firstian Fushada (符逢城)](https://www.worldcubeassociation.org/persons/2015FUSH01)",
                   "17",
                   "Indonesia",
                   "2025-02-07",
                   "[Singapore Championship 2025](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2025)",
                   "22 17 22"
-                ],
-                [
-                  9,
-                  "[Kyeongmin Choi (최경민)](https://www.worldcubeassociation.org/persons/2017CHOI07)",
-                  "17",
-                  "Korea",
-                  "2024-02-29",
-                  "[WCC FMC Leap Day 2024](https://www.worldcubeassociation.org/competitions/WCCFMCLeapDay2024)",
-                  "24 17 22"
-                ],
-                [
-                  10,
-                  "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
-                  "17",
-                  "Poland",
-                  "2025-03-01",
-                  "[5BLD Masters Opole 2025](https://www.worldcubeassociation.org/competitions/5BLDMastersOpole2025)",
-                  "22 20 17"
                 ]
               ]
             },
@@ -47346,21 +47346,21 @@
                 ],
                 [
                   4,
-                  "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
-                  "4.74",
-                  "Poland",
-                  "2025-09-27",
-                  "[Energy Cube Białołęka 2025](https://www.worldcubeassociation.org/competitions/EnergyCubeBialoleka2025)",
-                  "7.86 4.60 4.74 4.70 4.63"
-                ],
-                [
-                  5,
                   "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
                   "4.74",
                   "Poland",
                   "2025-01-25",
                   "[Piła Open 2025](https://www.worldcubeassociation.org/competitions/PilaOpen2025)",
                   "4.47 5.35 4.61 4.74 4.67"
+                ],
+                [
+                  5,
+                  "[Teodor Zajder](https://www.worldcubeassociation.org/persons/2021ZAJD03)",
+                  "4.74",
+                  "Poland",
+                  "2025-09-27",
+                  "[Energy Cube Białołęka 2025](https://www.worldcubeassociation.org/competitions/EnergyCubeBialoleka2025)",
+                  "7.86 4.60 4.74 4.70 4.63"
                 ],
                 [
                   6,
