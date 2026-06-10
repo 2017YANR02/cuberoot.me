@@ -122,6 +122,35 @@ const VARIANTS: VariantSpec[] = [
     angleToColor: ANGLE_COLOR_STD,
     colFor: (stage, angle) => `${stage}_${angle}`,
   },
+  {
+    // 双 1x2x3(UI key 123x2;管道名/CSV 叫 f2b):D 层 4 角 + 6 棱联合最优。
+    // 每角度列 = 该底色 2 个块对(侧轴 LR/FB)的最小步数
+    key: '123x2',
+    file: 'f2b.csv',
+    id_col: 'id',
+    stages: ['f2b'],
+    angleToColor: ANGLE_COLOR_STD,
+    colFor: (stage, angle) => `${stage}_${angle}`,
+  },
+  {
+    // ZZ EOLine:eo = 全 12 棱定向(每底色 2 水平轴最小);eoline = eo + 线棱归位。
+    // EO/DR 只依赖轴 ⇒ 对面底色列天然同值(z0≡z2 等),展示口径不变
+    key: 'eoline',
+    file: 'eoline.csv',
+    id_col: 'id',
+    stages: ['eo', 'eoline'],
+    angleToColor: ANGLE_COLOR_STD,
+    colFor: (stage, angle) => `${stage}_${angle}`,
+  },
+  {
+    // DR(Kociemba phase-1 最优):降到 ⟨U,D,L2,R2,F2,B2⟩ 陪集;单阶段
+    key: 'dr',
+    file: 'dr.csv',
+    id_col: 'id',
+    stages: ['dr'],
+    angleToColor: ANGLE_COLOR_STD,
+    colFor: (stage, angle) => `${stage}_${angle}`,
+  },
 ];
 
 interface Hist {

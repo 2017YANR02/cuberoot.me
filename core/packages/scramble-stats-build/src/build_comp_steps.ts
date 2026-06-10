@@ -41,6 +41,10 @@ const TARGETS: Target[] = [
   { csv: 'roux.csv', stages: 2, outDir: 'comp_steps_123' },
   { csv: '222.csv', stages: 1, outDir: 'comp_steps_222' },
   { csv: '223.csv', stages: 1, outDir: 'comp_steps_223' },
+  // 双 1x2x3(UI key 123x2;CSV 管道名 f2b)+ EOLine 系 + DR
+  { csv: 'f2b.csv', stages: 1, outDir: 'comp_steps_123x2' },
+  { csv: 'eoline.csv', stages: 2, outDir: 'comp_steps_eoline' },
+  { csv: 'dr.csv', stages: 1, outDir: 'comp_steps_dr' },
 ];
 
 // 与 client useCompSteps.normScramble 一致:trim + 多空格压单空格。

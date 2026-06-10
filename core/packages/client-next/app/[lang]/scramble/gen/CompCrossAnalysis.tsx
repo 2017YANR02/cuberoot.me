@@ -18,9 +18,10 @@ import type { StepMapState, StepMetric } from './useStepMap';
 import { normScramble, type CompStepsState } from './useCompSteps';
 import type { RoundSheet } from './SheetView';
 
-// b122/b123/b222/b223 = 块类指标(1x2x2 方块 / 1x2x3 / 2x2x2 / 2x2x3),数据在各自变体
-// 的 comp_steps_<key> 里按阶段序排(123 两阶段,222/223 单阶段)。
-export type Metric = 'cross' | StepMetric | 'b122' | 'b123' | 'b222' | 'b223';
+// b122/b123/b222/b223/bf2b = 块类指标(1x2x2 方块 / 1x2x3 / 2x2x2 / 2x2x3 / 双1x2x3),
+// beo/beoline/bdr = EOLine 系与 DR;数据在各自变体的 comp_steps_<key> 里按阶段序排
+// (123/eoline 两阶段,其余单阶段)。
+export type Metric = 'cross' | StepMetric | 'b122' | 'b123' | 'b222' | 'b223' | 'bf2b' | 'beo' | 'beoline' | 'bdr';
 // 指标 tab 列表(UI 在 TNoodleMode 渲染,与 toggles 同一行)。
 export const METRICS: { key: Metric; label: string }[] = [
   { key: 'cross', label: '十字' },
@@ -32,14 +33,23 @@ export const METRICS: { key: Metric; label: string }[] = [
   { key: 'b123', label: '1x2x3' },
   { key: 'b222', label: '2x2x2' },
   { key: 'b223', label: '2x2x3' },
+  { key: 'bf2b', label: '1x2x3 ×2' },
+  { key: 'beo', label: 'EO' },
+  { key: 'beoline', label: 'EOLine' },
+  { key: 'bdr', label: 'DR' },
 ];
-/** 块类指标显示名(b122 → 1x2x2);非块类返回 null。 */
+/** 块类/轴类指标显示名(b122 → 1x2x2,bf2b → 1x2x3 ×2,beo → EO …);非此类返回 null。 */
 export const blockMetricName = (m: Metric): string | null =>
-  m.startsWith('b') ? `${m[1]}x${m[2]}x${m[3]}` : null;
+  m === 'bf2b' ? '1x2x3 ×2'
+    : m === 'beo' ? 'EO'
+      : m === 'beoline' ? 'EOLine'
+        : m === 'bdr' ? 'DR'
+          : m.startsWith('b') ? `${m[1]}x${m[2]}x${m[3]}` : null;
 // comp_steps [30] 里各阶段的起始下标(每阶段 6 底色)。逐行徽标切片也用它。
 export const METRIC_OFFSET: Record<Metric, number> = {
   cross: 0, xc: 6, xxc: 12, xxxc: 18, xxxxc: 24,
   b122: 0, b123: 6, b222: 0, b223: 0,
+  bf2b: 0, beo: 0, beoline: 6, bdr: 0,
 };
 const EMPTY_MAP: Map<string, number[]> = new Map();
 
