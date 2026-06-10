@@ -7,6 +7,7 @@ import {
   duplicate,
   isProtectedQr,
   remove,
+  rename,
   setDisabled,
   update,
   type CardLayout,
@@ -68,9 +69,20 @@ function parseLayout(raw: string): CardLayout | null {
 export async function saveQr(f: FormData): Promise<void> {
   const code = String(f.get("code") ?? "").trim();
   if (!code) redirect("/admin/qr");
+
+  // 改 code(主键):新值与当前不同才尝试改名,失败不阻断其余字段保存、回显错误
+  let effective = code;
+  let codeErr = "";
+  const newCode = String(f.get("newCode") ?? "").trim();
+  if (newCode && newCode.toLowerCase() !== code.toLowerCase()) {
+    const res = await rename(code, newCode);
+    if (res.ok) effective = res.code;
+    else codeErr = res.reason;
+  }
+
   const type: QrType =
     String(f.get("type") ?? "redirect") === "landing" ? "landing" : "redirect";
-  await update(code, {
+  await update(effective, {
     label: String(f.get("label") ?? ""),
     type,
     target: String(f.get("target") ?? "/"),
@@ -84,7 +96,7 @@ export async function saveQr(f: FormData): Promise<void> {
     links: parseLinks(String(f.get("links") ?? "")),
   });
   revalidatePath("/admin/qr");
-  revalidatePath(`/admin/qr/${code}`);
-  revalidatePath(`/qr/${code}`);
-  redirect(`/admin/qr/${code}?saved=1`);
+  revalidatePath(`/admin/qr/${effective}`);
+  revalidatePath(`/qr/${effective}`);
+  redirect(`/admin/qr/${effective}?saved=1${codeErr ? `&codeErr=${codeErr}` : ""}`);
 }
