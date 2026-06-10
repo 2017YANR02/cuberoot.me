@@ -4,8 +4,7 @@
 // 复选框:显示排名 / 显示领奖台.
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from '@/components/AppLink';
-import { ArrowUpRight } from 'lucide-react';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { formatWcaResult } from '@/lib/wca-format-result';
@@ -28,6 +27,9 @@ interface Props {
   profile: WcaPersonProfile;
   results: WcaResultRow[] | null;
   isZh: boolean;
+  /** 「废止项」口径(21 项含废止),状态在 PersonDetailClient,与「最优项目组合」共用 */
+  inclCancelled: boolean;
+  onInclCancelledChange: (v: boolean) => void;
 }
 
 type Mode = 'current' | 'historical';
@@ -45,7 +47,7 @@ function RankCell({ r }: { r: number | null | undefined }) {
   return <span className={`wp-rank ${rankTier(r)}`}>{r}</span>;
 }
 
-export default function PersonPRTable({ profile, results, isZh }: Props) {
+export default function PersonPRTable({ profile, results, isZh, inclCancelled, onInclCancelledChange }: Props) {
   const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const [mode, setMode] = useState<Mode>('current');
   const [hist, setHist] = useState<PersonBestRanksResponse | null>(null);
@@ -98,6 +100,14 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
             onClick={() => setMode('historical')}
           >{t('历史最佳排名', 'Historical Best', "歷史最佳排名")}</button>
         </div>
+        {/* 「废止项」口径开关(全页唯一):控制底部 Σ 名次和行 + 下方「最优项目组合」卡.
+            历史最佳无 21 口径数据,historical 模式下 Σ 行不受其影响,但开关保留给组合卡用 */}
+        <PillToggle
+          value={inclCancelled}
+          onChange={onInclCancelledChange}
+          onLabel={t('废止项', 'Cancelled')}
+          offLabel={t('废止项', 'Cancelled')}
+        />
       </div>
 
       {mode === 'historical' && histLoading && (
@@ -174,7 +184,7 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
               );
             })}
           </tbody>
-          <PersonSorSummary wcaId={profile.person.wca_id} isZh={isZh} showPodium={showPodium} countryIso2={profile.person.country_iso2} historical={mode === 'historical'} />
+          <PersonSorSummary wcaId={profile.person.wca_id} isZh={isZh} showPodium={showPodium} countryIso2={profile.person.country_iso2} historical={mode === 'historical'} inclCancelled={inclCancelled} />
         </table>
       </div>
     </section>
@@ -186,31 +196,35 @@ export default function PersonPRTable({ profile, results, isZh }: Props) {
 //   名次落各自 scope 列(与逐项名次对齐),Σ和值落「成绩」列.
 //   跟随表头「当前 / 历史最佳排名」toggle:historical=true 时整块显示历史最佳(名次 + 年份),否则显示当前.
 //   SoCR 数据未填充(socr=null)时该行显示占位 —,不误显.数据 lazy fetch;整块无数据时不渲染.
-function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical }: { wcaId: string; isZh: boolean; showPodium: boolean; countryIso2: string; historical: boolean }) {
+function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, inclCancelled }: { wcaId: string; isZh: boolean; showPodium: boolean; countryIso2: string; historical: boolean; inclCancelled: boolean }) {
   const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const [sor, setSor] = useState<PersonSorResponse | null>(null);
+  // 历史最佳只有 17 口径(sor_historical_best 无废止维度)→ historical 模式忽略开关,免得三行全空
+  const effCancelled = inclCancelled && !historical;
 
+  useEffect(() => { setSor(null); }, [wcaId]);  // 换人清空;切口径保留旧值不闪
   useEffect(() => {
     let cancelled = false;
-    setSor(null);
-    fetchPersonSor(wcaId)
+    fetchPersonSor(wcaId, effCancelled)
       .then((j) => { if (!cancelled) setSor(j); })
       .catch(() => { /* 端点未上线 / 选手无 SOR:静默隐藏 */ });
     return () => { cancelled = true; };
-  }, [wcaId]);
+  }, [wcaId, effCancelled]);
 
-  if (!sor || (!sor.single && !sor.average && !sor.bestSingle && !sor.bestAverage)) return null;
+  if (!sor) return null;
+  // 17 口径全空 = 选手无 SOR → 整块隐藏;21 口径空(_21 列未填充)时保留行显示占位,不让开关把块切没
+  if (!sor.single && !sor.average && !sor.bestSingle && !sor.bestAverage && !effCancelled) return null;
 
-  const colCount = 1 + 4 + 4 + (showPodium ? 3 : 0);
   const cont = CONTINENT_NAME[sor.continentId];
   const continentLabel = cont ? t(cont.zh, cont.en, cont.zhHant) : t('本洲', 'Continent', '本洲');
   const countryLabel = countryIso2 ? countryName(countryIso2, isZh) : t('本国', 'Country', '本國');
   // 当前 / 历史最佳 按表头 toggle 二选一:historical → 取该指标历史最佳(含年份),否则取当前.
-  type Disp = { rank: number; total: number | null; year?: number };
+  // 子排名(continentRank/countryRank)只有当前模式有(历史最佳专表只存自身 scope).
+  type Disp = { rank: number; total: number | null; year?: number; continentRank?: number; countryRank?: number };
   const pick = (cur: SorMetricCell | null | undefined, best: SorMetricBest | null | undefined): Disp | null =>
     historical
       ? (best && best.rank > 0 ? { rank: best.rank, total: best.total, year: best.year } : null)
-      : (cur ? { rank: cur.rank, total: cur.total } : null);
+      : (cur ? { rank: cur.rank, total: cur.total, continentRank: cur.continentRank, countryRank: cur.countryRank } : null);
 
   // 指标行标签后缀挂该 scope 的具体地名(洲/国),让「在哪排名」一目了然;名次本身落对齐列.
   const METRICS: { key: 'sowr' | 'socr' | 'sonr'; abbr: string; label: string }[] = [
@@ -220,9 +234,13 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical }: 
   ];
   const scopeCol = (key: 'sowr' | 'socr' | 'sonr') => key === 'sowr' ? 'world' : key === 'socr' ? 'continent' : 'country';
 
-  // 名次格:只在该指标对应的 scope 列填名次(SoWR→世界 / SoCR→洲际 / SoNR→地区),与上方逐项名次同列对齐;其余列空.
+  // 名次格:指标自身 scope 列填名次(SoWR→世界 / SoCR→洲际 / SoNR→地区),比 scope 更窄的列填子排名
+  // (同指标值在本洲/本国池子重排;仅当前模式有,历史/旧缓存缺位时留白),其余列空.与上方逐项名次同列对齐.
   const rankTd = (col: 'world' | 'continent' | 'country', key: 'sowr' | 'socr' | 'sonr', d: Disp | null) => {
-    if (scopeCol(key) !== col) return <td className="wp-sor-blank" />;
+    if (scopeCol(key) !== col) {
+      const sub = col === 'continent' ? d?.continentRank : col === 'country' ? d?.countryRank : undefined;
+      return sub ? <td className="wp-sor-rcell"><RankCell r={sub} /></td> : <td className="wp-sor-blank" />;
+    }
     return (
       <td className="wp-sor-rcell">
         {d ? <RankCell r={d.rank} /> : <span className="wp-rank wp-rank-tier-mute">—</span>}
@@ -239,24 +257,13 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical }: 
 
   return (
     <tbody className="wp-sor-tbody">
-      <tr className="wp-sor-section">
-        <th colSpan={colCount}>
-          <Link href="/wca/all-results?events=all" className="wp-sor-title" title={t('全项目名次和 (Sum of Ranks)', 'Sum of Ranks', '全項目名次和 (Sum of Ranks)')}>
-            <span className="wp-sor-sigma">Σ</span>
-            {t('全项目名次和', 'Sum of Ranks', '全項目名次和')}
-            <ArrowUpRight size={13} />
-          </Link>
-          <span className="wp-sor-scope">{t('现役 17 项', '17 events', '現役 17 項')}</span>
-        </th>
-      </tr>
       {METRICS.map((m) => {
         const s = pick(sor.single?.[m.key], sor.bestSingle?.[m.key]);
         const a = pick(sor.average?.[m.key], sor.bestAverage?.[m.key]);
         return (
           <tr key={m.key} className="wp-sor-row">
-            <th scope="row" className="wp-cell-event wp-sor-rowlabel">
+            <th scope="row" className="wp-cell-event wp-sor-rowlabel" title={m.label}>
               <span className="wp-sor-abbr">{m.abbr}</span>
-              <span className="wp-sor-mlabel">{m.label}</span>
             </th>
             {rankTd('world', m.key, s)}
             {rankTd('continent', m.key, s)}

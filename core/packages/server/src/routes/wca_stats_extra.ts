@@ -1086,21 +1086,27 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/player-combos', async (c) => {
 });
 
 // ── 7d. /v1/wca/sum-of-ranks/person?wcaId= ──
-// 单个选手的「全项目排名(SOR)」摘要,给 /wca/persons/:id 页用.世界口径,17 现役项.
-//   当前: total_world_rank(= 名次总和) + 在全员里的世界 SOR 名次(COUNT total<我 +1);单次 / 平均各一.
-//   历史最佳: sor_historical_best(scope='world')的 best_total / best_rank / best_year;单次 / 平均各一.
+// 单个选手的「全项目排名(SOR)」摘要,给 /wca/persons/:id 页用.
+//   ?cancelled=1 → 21 项口径(含 4 废止,读 total_*_rank_21 列;未填充时返 null);默认 17 现役项.
+//   当前: total_*_rank(= 名次总和) + 各 scope SOR 名次(COUNT total<我 +1);单次 / 平均各一.
+//   历史最佳: sor_historical_best 仅 17 口径 → cancelled=1 时 bestSingle/bestAverage 返 null.
 // 选手无 SOR 数据(从未有成绩 / 只打废止项)时对应字段返 null,不报错.
 wcaStatsExtraRoutes.get('/wca/sum-of-ranks/person', async (c) => {
   const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
   if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) return c.json({ error: 'Invalid wcaId' }, 400);
+  const inclCancelled = c.req.query('cancelled') === '1' || c.req.query('cancelled') === 'true';
+  // 口径列(固定字符串,非用户输入):17 → total_*_rank;21 → total_*_rank_21(migration 0039,日更 builder 填充)
+  const wCol = inclCancelled ? 'total_world_rank_21' : 'total_world_rank';
+  const kCol = inclCancelled ? 'total_continent_rank_21' : 'total_continent_rank';
+  const cCol = inclCancelled ? 'total_country_rank_21' : 'total_country_rank';
 
-  const [prRows, bestRows] = await Promise.all([
+  const [prRowsRaw, bestRows] = await Promise.all([
     query<{
       is_avg: boolean; events_done: number;
       total_world_rank: number; total_continent_rank: number; total_country_rank: number;
       continent_id: string; country_id: string;
     }>(
-      `SELECT is_avg, events_done, total_world_rank, total_continent_rank, total_country_rank, continent_id, country_id
+      `SELECT is_avg, events_done, ${wCol} AS total_world_rank, ${kCol} AS total_continent_rank, ${cCol} AS total_country_rank, continent_id, country_id
        FROM wca_person_ranks WHERE wca_id = ?`,
       [wcaId],
     ),
@@ -1109,17 +1115,27 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/person', async (c) => {
       [wcaId],
     ),
   ]);
+  // 21 口径列未填充(builder 还没跑)时 total=0 → 该行按无数据处理,防止 COUNT(0<0) 全员误判
+  const prRows = prRowsRaw.filter(pr => pr.total_world_rank > 0);
 
-  // 当前 SOR 名次 = 同 scope 里 total_*_rank 严格更小者数 + 1(并列共享名次).~290k 行 × 3 scope COUNT,24h 缓存.
-  // continent/country 走各自专用索引(pr_continent_total / pr_country_total).
+  // 当前 SOR 名次 = 同 scope 里 total_*_rank 严格更小者数 + 1(并列共享名次).~290k 行 × 6 COUNT,24h 缓存.
+  // 对角线 3 个(各指标自身 scope)+ 子排名 3 个(SoWR 在本洲/本国、SoCR 在本国 — 同指标值换更窄池子重排).
+  // world_ctry 走 pr_total(is_avg,country_id,total_world_rank)精确命中;world_cont / cont_ctry 走
+  // pr_continent_total / pr_country_total 前缀(is_avg,洲/国)圈池子后过滤,池子最大 ~10 万行,可接受.
   const rankRows = await Promise.all(prRows.map(pr =>
-    query<{ world: string; continent: string; country: string }>(
+    query<{ world: string; world_cont: string; world_ctry: string; continent: string; cont_ctry: string; country: string }>(
       `SELECT
-         (SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND total_world_rank < ?) AS world,
-         (SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND continent_id = ? AND total_continent_rank < ?) AS continent,
-         (SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND country_id = ? AND total_country_rank < ?) AS country`,
+         (SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND ${wCol} < ?) AS world,
+         (SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND continent_id = ? AND ${wCol} < ?) AS world_cont,
+         (SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND country_id = ? AND ${wCol} < ?) AS world_ctry,
+         (SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND continent_id = ? AND ${kCol} < ?) AS continent,
+         (SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND country_id = ? AND ${kCol} < ?) AS cont_ctry,
+         (SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND country_id = ? AND ${cCol} < ?) AS country`,
       [pr.is_avg, pr.total_world_rank,
+       pr.is_avg, pr.continent_id, pr.total_world_rank,
+       pr.is_avg, pr.country_id, pr.total_world_rank,
        pr.is_avg, pr.continent_id, pr.total_continent_rank,
+       pr.is_avg, pr.country_id, pr.total_continent_rank,
        pr.is_avg, pr.country_id, pr.total_country_rank],
     ),
   ));
@@ -1127,25 +1143,33 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/person', async (c) => {
   // 三个独立指标(都是 Σ 17 现役项,只是求和的 rank 不同):
   //   SoWR = Σ世界名次(值 total_world_rank,天然按世界排) / SoCR = Σ洲际名次(按本洲排) / SoNR = Σ国家名次(按本国排)
   // 每个指标各带「和值 + 自身 scope 的名次」.SoCR 数据未填充(total=0)时返 null → 前端显示 build 中.
-  type MetricCell = { total: number; rank: number };           // 当前:和值 + 名次
+  // 子排名(同指标值在更窄池子重排):SoWR 另带 continentRank/countryRank,SoCR 另带 countryRank.
+  type MetricCell = { total: number; rank: number; continentRank?: number; countryRank?: number }; // 当前:和值 + 名次(+子排名)
   type MetricBest = { total: number | null; rank: number; year: number };
   type MetricTriple<T> = { sowr: T | null; socr: T | null; sonr: T | null };
   // 过渡兼容旧客户端(v2 读 .total/.rank.{world,continent,country}/.year);客户端 v3 收敛后可删这两块 legacy 字段.
   type LegacyRank = { world: number; continent: number | null; country: number | null };
   const out: {
-    wcaId: string; countryId: string; continentId: string;
+    wcaId: string; countryId: string; continentId: string; inclCancelled: boolean;
     single: (MetricTriple<MetricCell> & { eventsDone: number; total: number; rank: LegacyRank }) | null;
     average: (MetricTriple<MetricCell> & { eventsDone: number; total: number; rank: LegacyRank }) | null;
     bestSingle: (MetricTriple<MetricBest> & { total: number | null; rank: LegacyRank; year: number }) | null;
     bestAverage: (MetricTriple<MetricBest> & { total: number | null; rank: LegacyRank; year: number }) | null;
-  } = { wcaId, countryId: '', continentId: '', single: null, average: null, bestSingle: null, bestAverage: null };
+  } = { wcaId, countryId: '', continentId: '', inclCancelled, single: null, average: null, bestSingle: null, bestAverage: null };
 
   prRows.forEach((pr, i) => {
     out.countryId = pr.country_id; out.continentId = pr.continent_id;
     const row = rankRows[i]?.[0];
-    const sowr: MetricCell = { total: pr.total_world_rank, rank: (row ? parseInt(row.world, 10) : 0) + 1 };
+    const sowr: MetricCell = {
+      total: pr.total_world_rank, rank: (row ? parseInt(row.world, 10) : 0) + 1,
+      ...(row && pr.continent_id ? { continentRank: parseInt(row.world_cont, 10) + 1 } : {}),
+      ...(row && pr.country_id ? { countryRank: parseInt(row.world_ctry, 10) + 1 } : {}),
+    };
     const socr: MetricCell | null = pr.total_continent_rank > 0 && pr.continent_id
-      ? { total: pr.total_continent_rank, rank: (row ? parseInt(row.continent, 10) : 0) + 1 } : null;
+      ? {
+          total: pr.total_continent_rank, rank: (row ? parseInt(row.continent, 10) : 0) + 1,
+          ...(row && pr.country_id ? { countryRank: parseInt(row.cont_ctry, 10) + 1 } : {}),
+        } : null;
     const sonr: MetricCell | null = pr.total_country_rank > 0 && pr.country_id
       ? { total: pr.total_country_rank, rank: (row ? parseInt(row.country, 10) : 0) + 1 } : null;
     const cell = {
@@ -1170,8 +1194,9 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/person', async (c) => {
       rank: { world: w?.best_rank ?? 0, continent: m.get('continent')?.best_rank ?? null, country: m.get('country')?.best_rank ?? null },
     };
   };
-  out.bestSingle = buildBest(bestBy.single);
-  out.bestAverage = buildBest(bestBy.average);
+  // sor_historical_best 仅 17 口径,21 口径无历史数据 → cancelled=1 时不误返
+  out.bestSingle = inclCancelled ? null : buildBest(bestBy.single);
+  out.bestAverage = inclCancelled ? null : buildBest(bestBy.average);
 
   c.header('Cache-Control', CACHE_HEADER);
   return c.json(out);
