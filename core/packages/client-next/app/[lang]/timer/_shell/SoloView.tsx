@@ -1561,8 +1561,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                     <CheckCircle2 size={12} />
                     {curMarks && curMarks.count > 0
                       ? (tr({ zh: `${curMarks.count} 人做过`, en: `${curMarks.count} did it`, zhHant: `${curMarks.count} 人做過` }))
-                      : (tr({ zh: '标记已做', en: 'Mark done',
-                          zhHant: "標記已做"
+                      : (tr({ zh: '还没人做过', en: 'None yet',
+                          zhHant: "還沒人做過"
                     }))}
                   </button>
                   {marksOpen && (
