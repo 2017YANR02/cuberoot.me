@@ -61,12 +61,3 @@
 .sor-pb-anat-dim { opacity: 0.45; }
 .sor-pb-anat-free { display: inline-flex; align-items: center; gap: 2px; }
 .sor-pb-anat-pct { font-size: 11px; color: var(--faint-foreground); font-variant-numeric: tabular-nums; }
-
-/* 自选组合计算器 */
-.sor-pb-lab-open { align-self: flex-start; margin-top: 0; }
-.sor-pb-lab-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.sor-pb-lab-result { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; min-height: 22px; }
-.sor-pb-lab-total { font-variant-numeric: tabular-nums; color: var(--muted-foreground); font-size: 13px; }
-.sor-pb-lab-rank { font-weight: 700; font-variant-numeric: tabular-nums; }
-.sor-pb-lab-penalty { font-size: 12px; color: var(--faint-foreground); }
-.sor-pb-lab-pending { font-size: 13px; color: var(--faint-foreground); }
