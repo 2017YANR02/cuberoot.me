@@ -226,8 +226,8 @@ export function countAll(solves: Solve[]): number {
   return solves.length;
 }
 
-/** Format ms as "1:23.45" or "12.34". DNF/Infinity → "DNF". */
-export function formatMs(ms: number | null, precision: 2 | 3 = 2): string {
+/** Format ms as "1:23.45" / "12.34" / "12" (precision 0). DNF/Infinity → "DNF". */
+export function formatMs(ms: number | null, precision: 0 | 1 | 2 | 3 = 2): string {
   if (ms === null) return '-';
   if (!Number.isFinite(ms)) return 'DNF';
   if (ms < 0) ms = 0;
@@ -235,13 +235,14 @@ export function formatMs(ms: number | null, precision: 2 | 3 = 2): string {
   const minutes = Math.floor(totalMs / 60000);
   const seconds = Math.floor((totalMs % 60000) / 1000);
   const millis = totalMs % 1000;
-  const fracStr = precision === 3
-    ? millis.toString().padStart(3, '0')
-    : Math.floor(millis / 10).toString().padStart(2, '0');
+  // precision 位小数;0 = 只到整数秒(无小数点)。millis(0..999) 截到对应位数。
+  const frac = precision > 0
+    ? '.' + Math.floor(millis / 10 ** (3 - precision)).toString().padStart(precision, '0')
+    : '';
   if (minutes > 0) {
-    return `${minutes}:${seconds.toString().padStart(2, '0')}.${fracStr}`;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}${frac}`;
   }
-  return `${seconds}.${fracStr}`;
+  return `${seconds}${frac}`;
 }
 
 /** Standard deviation (ms) of an array of effective times — null if < 2 valid. */
