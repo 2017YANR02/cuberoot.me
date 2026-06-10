@@ -366,6 +366,21 @@ html[data-theme=dark] .wp-page {
     background: color-mix(in srgb, #4ade80 5%, transparent);
 }
 .wp-sor-custom-rowlabel { vertical-align: middle; }
+/* 现算进度:细绿条按经过时间增长 + 秒数(无真实进度,纯安抚等待) */
+.wp-sor-custom-progress {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 6px; position: relative;
+    height: 3px; border-radius: 2px;
+    background: color-mix(in srgb, #4ade80 16%, transparent);
+}
+.wp-sor-custom-progress-bar {
+    height: 100%; border-radius: 2px; background: #4ade80;
+    transition: width 0.12s linear;
+}
+.wp-sor-custom-progress-secs {
+    position: absolute; right: 0; top: 6px;
+    font-size: 0.62rem; color: var(--wp-text-mute); font-variant-numeric: tabular-nums;
+}
 
 /* ── Tabs ─────────────────────────────────────────────────────────── */
 .wp-tabs-card { padding: 0; }
