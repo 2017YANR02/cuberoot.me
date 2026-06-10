@@ -104,8 +104,9 @@ const VARIANTS: VariantSpec[] = [
     colFor: (stage, angle) => `${stage}_${angle}`,
   },
   {
-    // Roux 第一块:fbsquare = FB 方块(1角+2棱, 每底色 8 目标最小);rouxs1 = 1x2x3(每底色 4 块最小)
-    key: 'roux',
+    // Roux 第一块(UI key 按块尺寸叫 123;管道名/CSV 仍叫 roux):
+    // fbsquare = 1x2x2 方块(1角+2棱, 每底色 8 目标最小);rouxs1 = 1x2x3(每底色 4 块最小)
+    key: '123',
     file: 'roux.csv',
     id_col: 'id',
     stages: ['fbsquare', 'rouxs1'],
