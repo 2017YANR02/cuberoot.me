@@ -97,6 +97,28 @@ export class F2leoSolverWasm {
 }
 
 /**
+ * Roux 第一块(方块 / 1x2x3)+ Petrus(2x2x2 / 2x2x3)组合求解器。4 张小表:
+ * mt_edge3 (~743KB) + mt_corn2 (~36KB) + mt_edge2 (~38KB) + mt_corn (~1.7KB)。
+ * FB 方块与 2x2x2 全表构造时即建(微型/毫秒级);1x2x3 全表(5,322,240 态)与
+ * 2x2x3 启发式表惰性构建(首次相关查询现场 BFS,~秒级),两者共享 1x2x3 表。
+ * stage 编号:0=FB 方块 1=1x2x3 2=2x2x2 3=2x2x3。
+ */
+export class Roux223SolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    constructor(mt_edge3: Uint8Array, mt_corn2: Uint8Array, mt_edge2: Uint8Array, mt_corn: Uint8Array);
+    /**
+     * 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。`m` 前缀 =
+     * rot + y^k;`c` = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名)。
+     */
+    solve_moves(scramble: string, stage: number, face: number, extra: number, cap: number): string;
+    /**
+     * 单阶段 6 视角(stage 0=FB方块 1=1x2x3 2=2x2x2 3=2x2x3),顺序对应 ROTS。
+     */
+    solve_stage(scramble: string, stage: number): Uint32Array;
+}
+
+/**
  * 其余 comp 变体的浏览器小表求解(count-only,逐格 bit-exact 对照大表/huge 路径)。
  * pair / eo / pseudo / pseudo_pair —— 各自 native analyzer 用 ~10GB+ huge 表「联合」
  * 验证多槽是否解出,wasm 装不下;这里复用各 solver 的 `*_small` cascade:显式逐槽
@@ -139,6 +161,7 @@ export interface InitOutput {
     readonly __wbg_block222solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_crosssolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_f2leosolverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_roux223solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_variantsolverwasm_free: (a: number, b: number) => void;
     readonly block222solverwasm_new: (a: number, b: number, c: number, d: number) => number;
     readonly block222solverwasm_solve: (a: number, b: number, c: number) => [number, number];
@@ -154,6 +177,9 @@ export interface InitOutput {
     readonly f2leosolverwasm_solve_f2leo_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly f2leosolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
     readonly f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
+    readonly roux223solverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => number;
+    readonly roux223solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
+    readonly roux223solverwasm_solve_stage: (a: number, b: number, c: number, d: number) => [number, number];
     readonly variantsolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number, q: number, r: number, s: number, t: number, u: number, v: number, w: number, x: number, y: number, z: number) => number;
     readonly variantsolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
     readonly variantsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
