@@ -7,11 +7,17 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import AppLink from '@/components/AppLink';
 import { EventIcon } from '@/components/EventIcon';
+import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
 import { apiUrl } from '@/lib/api-base';
 import { tr } from '@/i18n/tr';
 import './best-combos.css';
 
-export interface ComboBest { rank: number; combos?: string[][]; events?: string[]; comboCount?: number; }
+export interface ComboBest {
+  rank: number; combos?: string[][]; events?: string[]; comboCount?: number;
+  /** 每个项目出现在多少个并列组合里(剖析行用);旧缓存响应可能缺位 → 不渲染剖析 */
+  eventCounts?: Record<string, number>;
+  listedCount?: number;
+}
 export interface PlayerBest {
   wcaId: string; name: string; countryId: string; iso2: string | null;
   best: { single?: ComboBest; average?: ComboBest };
@@ -80,6 +86,60 @@ export function BestComboBody({
         <span className="sor-pb-rank">{isZh ? `世界第 ${b.rank}` : `World #${b.rank}`}</span>
         {comboCount > 1 && <span className="sor-pb-count">{i18n.language === 'zh-Hant' ? `${comboCount} 種組合並列` : isZh ? `${comboCount} 种组合并列` : `${comboCount} tied combos`}</span>}
       </div>
+      {comboCount > 1 && b.eventCounts && (() => {
+        // 组合剖析:支柱(在所有并列组合里,必选)/ 毒药(不在任何组合里,必避)/ 自由项(出现比例).
+        // 只在并列 >1 时有信息量;单组合时支柱=组合本身,与上面列表重复,不渲染.
+        const counts = b.eventCounts;
+        const denom = b.listedCount ?? comboCount;
+        const universe = ALL_EVENT_IDS.filter(ev => includeCancelled || !CANCELLED_EVENT_IDS.has(ev));
+        const pillars = universe.filter(ev => (counts[ev] ?? 0) >= denom);
+        const poison = universe.filter(ev => !(counts[ev] ?? 0));
+        const free = universe
+          .map(ev => ({ ev, n: counts[ev] ?? 0 }))
+          .filter(f => f.n > 0 && f.n < denom)
+          .sort((a, z) => z.n - a.n);
+        if (free.length === 0 && poison.length === 0) return null;
+        return (
+          <div className="sor-pb-anatomy">
+            {pillars.length > 0 && (
+              <div className="sor-pb-anat-row">
+                <span className="sor-pb-anat-label sor-pb-anat-pillar" title={tr({ zh: `支柱:出现在全部 ${denom.toLocaleString()} 个最优组合里,少了就到不了这个名次`, en: `Pillars: in all ${denom.toLocaleString()} optimal combos — required for this rank` })}>{tr({ zh: '必选', en: 'Always',
+                    zhHant: "必選"
+                })}</span>
+                <span className="sor-pb-anat-items">{pillars.map(ev => <EventIcon key={ev} event={ev} />)}</span>
+              </div>
+            )}
+            {free.length > 0 && (
+              <div className="sor-pb-anat-row">
+                <span className="sor-pb-anat-label" title={tr({ zh: '自由项:只出现在部分最优组合里,怎么搭都行;数字 = 出现比例', en: 'Flexible: in some optimal combos; number = share of combos containing it',
+                    zhHant: "自由項:只出現在部分最優組合裡,怎麼搭都行;數字 = 出現比例"
+                })}>{tr({ zh: '随意', en: 'Optional',
+                    zhHant: "隨意"
+                })}</span>
+                <span className="sor-pb-anat-items">
+                  {free.map(f => {
+                    const pct = Math.min(99, Math.max(1, Math.round((f.n / denom) * 100)));
+                    return (
+                      <span key={f.ev} className="sor-pb-anat-free" title={tr({ zh: `${pct}% 的最优组合包含它`, en: `In ${pct}% of optimal combos` })}>
+                        <EventIcon event={f.ev} />
+                        <span className="sor-pb-anat-pct">{pct}%</span>
+                      </span>
+                    );
+                  })}
+                </span>
+              </div>
+            )}
+            {poison.length > 0 && (
+              <div className="sor-pb-anat-row">
+                <span className="sor-pb-anat-label sor-pb-anat-poison" title={tr({ zh: '毒药:不在任何最优组合里,加进来名次只会更差', en: 'Poison: in none of the optimal combos — adding it always hurts',
+                    zhHant: "毒藥:不在任何最優組合裡,加進來名次只會更差"
+                })}>{tr({ zh: '必避', en: 'Never' })}</span>
+                <span className="sor-pb-anat-items sor-pb-anat-dim">{poison.map(ev => <EventIcon key={ev} event={ev} />)}</span>
+              </div>
+            )}
+          </div>
+        );
+      })()}
       <ul className="sor-pb-combos">
         {combos.map((evs, i) => (
           <li key={i} className="sor-pb-combo">
