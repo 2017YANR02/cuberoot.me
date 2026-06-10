@@ -142,22 +142,22 @@ html[data-theme=dark] .wp-page {
 }
 
 /* ── Hero ──────────────────────────────────────────────────────────── */
+/* 紧凑横排:头像 | 国旗+姓名+ID | (右侧)统计;窄屏统计换行落第二行 */
 .wp-hero-card {
     background: var(--wp-surface);
     border: 1px solid var(--wp-border);
     border-radius: 14px;
     box-shadow: var(--wp-shadow);
-    padding: 24px;
-    display: flex; flex-direction: column; gap: 16px;
+    padding: 14px 20px;
+    display: flex; flex-direction: row; align-items: center;
+    flex-wrap: wrap; gap: 12px 28px;
 }
 .wp-hero-avatar-wrap {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 12px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--wp-border);
+    display: flex; flex-direction: row; align-items: center;
+    gap: 14px;
 }
 .wp-hero-avatar {
-    width: 100px; height: 100px; border-radius: 50%;
+    width: 64px; height: 64px; border-radius: 50%;
     overflow: hidden; flex-shrink: 0;
     background: var(--wp-bg); border: 1px solid var(--wp-border);
 }
@@ -165,7 +165,7 @@ html[data-theme=dark] .wp-page {
 .wp-hero-avatar-fb {
     width: 100%; height: 100%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 2rem; color: var(--wp-text-mute);
+    font-size: 1.4rem; color: var(--wp-text-mute);
     background: linear-gradient(135deg, var(--wp-bg), var(--wp-accent-soft));
 }
 .wp-hero-name {
@@ -186,25 +186,16 @@ html[data-theme=dark] .wp-page {
 .wp-hero-gender-m { color: var(--wp-blue); }
 .wp-hero-gender-f { color: var(--wp-pink); }
 .wp-hero-table {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0;
-    border: 1px solid var(--wp-border);
-    border-radius: 10px;
-    overflow: hidden;
+    display: flex; align-items: center; gap: 32px;
+    margin-left: auto;
 }
-.wp-hero-cell {
-    padding: 14px 16px;
-    text-align: center;
-    border-right: 1px solid var(--wp-border);
-}
-.wp-hero-cell:last-child { border-right: none; }
+.wp-hero-cell { text-align: center; }
 .wp-hero-cell-label {
     font-size: 0.72rem;
     color: var(--wp-text-mute);
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    margin-bottom: 6px;
+    margin-bottom: 3px;
 }
 .wp-hero-cell-value {
     display: inline-flex; align-items: center; gap: 6px;
@@ -885,11 +876,8 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 @media (max-width: 720px) {
     .wp-header { padding: 10px 12px; }
     .wp-main { padding: 12px 12px 48px; }
-    .wp-hero-card { padding: 16px; gap: 12px; }
-    .wp-hero-table { grid-template-columns: 1fr 1fr; }
-    .wp-hero-cell { border-right: none; border-bottom: 1px solid var(--wp-border); }
-    .wp-hero-cell:nth-child(odd) { border-right: 1px solid var(--wp-border); }
-    .wp-hero-cell:nth-last-child(-n+2) { border-bottom: none; }
+    .wp-hero-card { padding: 12px 16px; gap: 10px 20px; }
+    .wp-hero-table { margin-left: 0; gap: 24px; }
     .wp-pr-card, .wp-tab-body { padding: 12px; }
     .wp-tabs-bar { padding: 12px 12px 0; }
     .wp-pr-table thead th, .wp-pr-table tbody th, .wp-pr-table tbody td { padding: 6px 6px; }
