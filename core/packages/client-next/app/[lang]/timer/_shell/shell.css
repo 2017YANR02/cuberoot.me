@@ -396,10 +396,9 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 10px;
+  padding: 0;
   border: none;
-  border-radius: 999px;
-  background: var(--accent-soft);
+  background: none;
   color: var(--accent);
   /* 与 /wca/records 徽章一致的 Inter sans(含 loading 占位 "WR …");不用 mono. */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
