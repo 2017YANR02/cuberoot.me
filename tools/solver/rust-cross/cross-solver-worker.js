@@ -16,7 +16,8 @@ let solver = null;       // CrossSolverWasm(std cross/xc..xxxxc),需 52MB pt_cro
 let f2leoSolver = null;  // F2leoSolverWasm(f2leo / pseudo),只需小表子集
 let variantSolver = null;// VariantSolverWasm(pair / eo / pseudo / pseudo_pair),小表显式逐槽追踪
 let block222Solver = null;// Block222SolverWasm(2x2x2 块),仅 mt_edge3+mt_corn(~745KB),距离表现场 BFS
-let roux223Solver = null; // Roux223SolverWasm(Roux FB 方块/1x2x3 + Petrus 2x2x2/2x2x3),4 张小表 ~820KB
+let roux223Solver = null; // Roux223SolverWasm(FB 方块/1x2x3/双1x2x3 + Petrus 2x2x2/2x2x3),4 张小表 ~820KB
+let eoDrSolver = null;    // EoDrSolverWasm(EO/EOLine/DR),零表下载,微表现场建
 
 async function fetchTable(url) {
   const res = await fetch(url);
@@ -52,10 +53,13 @@ async function init(glueUrl, wasmUrl, tablesBase, need) {
     const [e3, c] = await Promise.all(['mt_edge3', 'mt_corn'].map(get));
     block222Solver = new mod.Block222SolverWasm(e3, c);
   } else if (need === 'roux223') {
-    // Roux FB(方块/1x2x3)+ Petrus(2x2x2/2x2x3):4 张小表;方块与 2x2x2 即建,
-    // 1x2x3 全表(5.3M 态)与 2x2x3 启发式表首次查询时惰性 BFS(~秒级)。
+    // FB(方块/1x2x3/双1x2x3)+ Petrus(2x2x2/2x2x3):4 张小表;方块与 2x2x2 即建,
+    // 1x2x3 全表(5.3M 态)与 2x2x3 启发式表首次查询时惰性 BFS(~秒级);f2b 复用 1x2x3 表。
     const [e3, c2, e2, c] = await Promise.all(['mt_edge3', 'mt_corn2', 'mt_edge2', 'mt_corn'].map(get));
     roux223Solver = new mod.Roux223SolverWasm(e3, c2, e2, c);
+  } else if (need === 'eodr') {
+    // EO/EOLine/DR:零表下载,全部微表现场从内置运动学建(EOLine 即建,DR 首查惰性)。
+    eoDrSolver = new mod.EoDrSolverWasm();
   } else {
     const [a, b, c, d, e, f] = await Promise.all(
       ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'].map(get)
@@ -139,17 +143,31 @@ self.onmessage = async (e) => {
     } else if (msg.type === 'roux223_stage') {
       if (!roux223Solver) throw new Error('roux223 solver not initialized');
       const t0 = performance.now();
-      // 单阶段 6 视角(stage 0=FB方块 1=1x2x3 2=2x2x2 3=2x2x3),物理面序 z0/z2/z3/z1/x3/x1。
+      // 单阶段 6 视角(stage 0=FB方块 1=1x2x3 2=2x2x2 3=2x2x3 4=双1x2x3),物理面序 z0/z2/z3/z1/x3/x1。
       const out = roux223Solver.solve_stage(msg.scramble, msg.stage | 0);
       self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
     } else if (msg.type === 'roux223_moves') {
       if (!roux223Solver) throw new Error('roux223 solver not initialized');
       const t0 = performance.now();
-      // 单视角多解:前缀 = rot + y^k,c = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名)。
+      // 单视角多解:前缀 = rot + y^k,c = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名 / f2b "D(LR)")。
       const json = roux223Solver.solve_moves(
         msg.scramble, msg.stage | 0, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
       );
       self.postMessage({ type: 'roux223_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+    } else if (msg.type === 'eodr_stage') {
+      if (!eoDrSolver) throw new Error('eodr solver not initialized');
+      const t0 = performance.now();
+      // 单阶段 6 视角(stage 0=EO 1=EOLine 2=DR),物理面序 z0/z2/z3/z1/x3/x1。
+      const out = eoDrSolver.solve_stage(msg.scramble, msg.stage | 0);
+      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+    } else if (msg.type === 'eodr_moves') {
+      if (!eoDrSolver) throw new Error('eodr solver not initialized');
+      const t0 = performance.now();
+      // 单视角多解:前缀 = rot + y^k,c = 目标标签(EO 轴 "FB" / EOLine "D(FB)" / DR 轴 "UD")。
+      const json = eoDrSolver.solve_moves(
+        msg.scramble, msg.stage | 0, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
+      );
+      self.postMessage({ type: 'eodr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'variant_moves') {
       if (!variantSolver) throw new Error('variant solver not initialized');
       const t0 = performance.now();
