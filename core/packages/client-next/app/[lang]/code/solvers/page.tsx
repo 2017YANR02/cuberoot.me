@@ -41,6 +41,9 @@ const NATIVE: NativeSolver[] = [
   { key: '222', stages: 1, fbRows: 1_297_444, rate: 1_250_000, tier: 'small', zhWhy: '2x2x2 块 (1 角 + 3 棱) 全空间仅 253,440 态, 精确距离表直查零搜索', enWhy: '2x2x2 block (corner + 3 edges) — 253,440 states total, exact distance table lookup, zero search' },
   { key: '123', stages: 2, fbRows: 1_297_444, rate: 600_000, tier: 'small', zhWhy: 'Roux 第一块: 1x2x2 方块 (1角+2棱, 前/后双微表) + 1x2x3 (2角+3棱, 5,322,240 态全表), 精确距离表直查零搜索', enWhy: 'Roux first block: 1x2x2 square (corner + 2 edges, front/back micro-tables) + 1x2x3 (2 corners + 3 edges, 5,322,240-state full table) — exact lookups, zero search' },
   { key: '223', stages: 1, fbRows: 1_297_444, rate: 19_000, tier: 'small', zhWhy: 'Petrus 2x2x3 (2角+5棱) 全空间 ~1.5G 态放不下全表, IDA* + max(1x2x3 全表, 角2+DB/DF 表) 可采纳下界', enWhy: 'Petrus 2x2x3 (2 corners + 5 edges) — 1.5G states, too big for a full table; IDA* with admissible h = max(1x2x3 full table, corners+DB/DF table)' },
+  { key: 'eoline', stages: 2, fbRows: 1_297_444, rate: 350_000, tier: 'small', zhWhy: 'EO (2,048 态) + EOLine (294,912 态) 全空间微表, 零外部表, 精确距离直查零搜索', enWhy: 'EO (2,048 states) + EOLine (294,912 states) full-space micro-tables, zero external tables — exact lookups, zero search' },
+  { key: 'dr', stages: 1, fbRows: 1_297_444, rate: 12_000, tier: 'small', zhWhy: 'DR (Kociemba phase-1) 全空间 ~2.2G 态, IDA* + max(eo×slice, co×slice) 双 ~1M 精确表, 全现场建零外部表', enWhy: 'DR (Kociemba phase 1) — ~2.2G states; IDA* with admissible h = max(eo×slice, co×slice), two ~1M exact tables built in RAM, zero external tables' },
+  { key: '123x2', stages: 1, fbRows: 0, rate: 220, tier: 'mid', zhWhy: '双 1x2x3 联合最优平均 ~11.5 步, 搜索深;5 张精确子目标表 max 剪枝, 其中 {块+2角} 表 2.68G 态落盘 mmap', enWhy: 'dual-1x2x3 joint optimum averages ~11.5 moves — deep search; pruned by max of 5 exact subgoal tables, incl. a 2.68G-state block+corners table mmapped from disk' },
 ];
 
 interface BrowserSolver { key: string; zhEngine: string; enEngine: string; zhLatency: string; enLatency: string; }
@@ -55,6 +58,8 @@ const BROWSER: BrowserSolver[] = [
   { key: 'f2leo / pseudo_f2leo', zhEngine: '小表 ~40MB/worker', enEngine: 'small tables ~40MB/worker', zhLatency: 'cross ~2.8s', enLatency: 'cross ~2.8s' },
   { key: '2x2x2 block', zhEngine: 'Block222SolverWasm (~0.7MB/worker)', enEngine: 'Block222SolverWasm (~0.7MB/worker)', zhLatency: '全 6 视角即时', enLatency: 'all 6 views instant' },
   { key: '1x2x3 / 2x2x3', zhEngine: 'Roux223SolverWasm (~0.8MB/worker)', enEngine: 'Roux223SolverWasm (~0.8MB/worker)', zhLatency: '方块/2x2x2 即时; 1x2x3 与 2x2x3 首算建表 ~秒级', enLatency: 'square/2x2x2 instant; 1x2x3 & 2x2x3 build tables on first solve (~seconds)' },
+  { key: '1x2x3 ×2', zhEngine: 'Roux223SolverWasm 轻档 (免 2.68G 大表)', enEngine: 'Roux223SolverWasm light tier (no 2.68G table)', zhLatency: '单格 毫秒~秒级; 解法枚举 数秒~数十秒', enLatency: 'per-cell ms–seconds; solution enumeration seconds to tens of seconds' },
+  { key: 'EO / EOLine / DR', zhEngine: 'EoDrSolverWasm (零表下载, 微表现场建)', enEngine: 'EoDrSolverWasm (zero downloads, micro-tables built in-browser)', zhLatency: 'EO/EOLine 即时; DR 首算建表 ~1s 后毫秒级', enLatency: 'EO/EOLine instant; DR builds tables on first solve (~1s), then ms' },
 ];
 
 // 每个原生分析器实际 mmap 的磁盘表 (D:\cube\cuberoot.me\solver\tables\, 大小为真实文件字节).
@@ -140,6 +145,24 @@ const TABLES: Record<string, SolverTbls> = {
     builtZh: '不落盘剪枝:内存现场 BFS 出 1x2x3 全表 (5,322,240 态) 与角2+DB/DF 表 (266,112 态) 作可采纳下界, IDA* 取两者 max;h=0 即块成',
     builtEn: 'no on-disk prune: 1x2x3 full table (5,322,240 states) + corners+DB/DF table (266,112 states) BFS-built in RAM as admissible bounds; IDA* prunes on their max; h=0 means the block is done',
     builtZhHant: '不落盤剪枝:記憶體現場 BFS 出 1x2x3 全表 (5,322,240 態) 與角2+DB/DF 表 (266,112 態) 作可採納下界, IDA* 取兩者 max;h=0 即塊成',
+  },
+  eoline: {
+    move: [],
+    prune: [],
+    builtZh: '零盘表:eo12/线棱微 move 表与全空间精确距离表 (2,048 + 294,912 态) 全部现场从内置运动学构建;查长度 O(1) 直查无搜索',
+    builtEn: 'no disk tables at all: eo12/line micro move tables + exact full-space distance tables (2,048 + 294,912 states) built in RAM from built-in kinematics; O(1) lookups, zero search',
+  },
+  dr: {
+    move: [],
+    prune: [],
+    builtZh: '零盘表:eo/co/slice 微 move 表与两张 ~1M 态精确距离表全部现场构建;IDA* 取两者 max, h=0 即达 DR',
+    builtEn: 'no disk tables at all: eo/co/slice micro move tables + two ~1M-state exact distance tables built in RAM; IDA* prunes on their max; h=0 means DR reached',
+  },
+  '123x2': {
+    move: [{ n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }],
+    prune: [{ n: 'pt_f2b_be3c2', b: 1341204496 }],
+    builtZh: '内存现场 BFS 出 6 棱联合表 (111.5M 态) 与 4 角联合表;{整块+对侧2角} 表 (2.68G 态) 首跑 BFS 落盘 pt_f2b_be3c2.bin, 后续 mmap 秒开;IDA* 取 5 张精确子目标表 max',
+    builtEn: '6-edge joint table (111.5M states) + 4-corner table BFS-built in RAM; the block+far-corners table (2.68G states) is BFS-built once, cached to pt_f2b_be3c2.bin and mmapped after; IDA* prunes on the max of 5 exact subgoal tables',
   },
 };
 
