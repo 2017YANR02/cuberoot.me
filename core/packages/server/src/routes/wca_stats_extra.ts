@@ -14,7 +14,8 @@
  *   GET /v1/wca/all-events-done?country=&hidePodiumless=&page=&size=
  *   GET /v1/wca/sum-of-ranks?type=&country=&events=&hidePodium=&page=&size=
  *   GET /v1/wca/sum-of-ranks/census?type=&cancelled=&no_podium=&year=&timeline=  (历史名人堂:历年名次和第一)
- *   GET /v1/wca/sum-of-ranks/player-best?wcaId=           (指定选手最优项目组合)
+ *   GET /v1/wca/sum-of-ranks/player-best?wcaId=           (指定选手最优项目组合 + 支柱/毒药/自由项剖析)
+ *   GET /v1/wca/sum-of-ranks/person-subset?wcaId=&events= (自选组合计算器:该子集下选手的名次和+世界第几)
  *   GET /v1/wca/person-best-ranks?wcaId=
  *   GET /v1/wca/person-rank-history?wcaId=&eventId=
  *
@@ -1032,21 +1033,40 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/player-best', async (c) => {
   // best_events 现存「全部」并列组合(sorcalc 去掉了 KEEP 封顶),这里只切前 16 个(项目数最少优先)
   // 给内联头部用 —— 避免每次选手选择都把极端全能者(如 Luke ~8 万组合, 数 MB)整坨拉过来.
   // 完整列表走分页端点 /sum-of-ranks/player-combos(懒加载).combo_count = 完整并列总数.
-  const rows = await query<{ is_avg: boolean; best_rank: number; combo_count: number; best_events: string }>(
-    `SELECT is_avg, best_rank, combo_count,
-            array_to_string((string_to_array(best_events, ';'))[1:16], ';') AS best_events
-     FROM sor_player_best WHERE wca_id = ? AND scope = 'world' AND incl_cancelled = ?`,
-    [wcaId, inclCancelled],
-  );
+  // eventCounts = 每个项目出现在多少个并列组合里(支柱/毒药/自由项剖析用):PG 内 unnest 聚合,
+  // 只回 ≤21 行,不把全文本拉过来.最坏(8.3 万组合,3.8MB)实测 ~0.9s,nginx 24h 缓存兜底;常人微秒级.
+  const [rows, countRows] = await Promise.all([
+    query<{ is_avg: boolean; best_rank: number; combo_count: number; listed_count: number; best_events: string }>(
+      `SELECT is_avg, best_rank, combo_count,
+              cardinality(string_to_array(best_events, ';'))::int AS listed_count,
+              array_to_string((string_to_array(best_events, ';'))[1:16], ';') AS best_events
+       FROM sor_player_best WHERE wca_id = ? AND scope = 'world' AND incl_cancelled = ?`,
+      [wcaId, inclCancelled],
+    ),
+    query<{ is_avg: boolean; ev: string; n: number }>(
+      `SELECT s.is_avg, ev.ev, COUNT(*)::int AS n
+       FROM sor_player_best s,
+            LATERAL unnest(string_to_array(s.best_events, ';')) AS combo(combo),
+            LATERAL unnest(string_to_array(combo.combo, ',')) AS ev(ev)
+       WHERE s.wca_id = ? AND s.scope = 'world' AND s.incl_cancelled = ?
+       GROUP BY s.is_avg, ev.ev`,
+      [wcaId, inclCancelled],
+    ),
+  ]);
+  const countsBy: Record<string, Record<string, number>> = { single: {}, average: {} };
+  for (const r of countRows) countsBy[r.is_avg ? 'average' : 'single']![r.ev] = r.n;
   // best_events(切片后)= ';' 分隔的前 16 个最优组合, 每组合内部 ',' 分隔 event id (项目数最少优先).
   // combo_count = 并列该名次的全部子集数(可能 > 这里列出的 16 个).
-  const best: Record<string, { rank: number; combos: string[][]; comboCount: number }> = {};
+  const best: Record<string, { rank: number; combos: string[][]; comboCount: number; listedCount: number; eventCounts: Record<string, number> }> = {};
   for (const r of rows) {
     const combos = r.best_events ? r.best_events.split(';').map(c => c.split(',')) : [];
-    best[r.is_avg ? 'average' : 'single'] = {
+    const type = r.is_avg ? 'average' : 'single';
+    best[type] = {
       rank: r.best_rank,
       combos,
       comboCount: r.combo_count ?? combos.length,
+      listedCount: r.listed_count ?? combos.length,
+      eventCounts: countsBy[type]!,
     };
   }
 
@@ -1083,6 +1103,57 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/player-combos', async (c) => {
   const combos = (r.page ?? []).map(s => s.split(','));
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({ wcaId, isAvg, inclCancelled, total: r.combo_count ?? 0, offset, limit, combos });
+});
+
+// ── 7c-ter. /v1/wca/sum-of-ranks/person-subset?wcaId=&isAvg=&events= ──
+// 自选组合计算器:给定项目子集,算该选手的名次和 + 世界第几(COUNT 严格更小 + 1,并列共享名次).
+// 口径与 /sum-of-ranks 子集路径逐字节一致:缺项 = 该 scope 该项「参赛人数+1」.世界 scope.
+// 两遍全表扫(~29 万行 × 子集求和),同主榜单子集查询量级(~0.5-1.5s 冷),nginx 24h 按 URL 缓存;
+// 客户端按 RANK_EVENTS 顺序发 events 串,保证同一组合 URL 唯一 → 缓存命中.
+wcaStatsExtraRoutes.get('/wca/sum-of-ranks/person-subset', async (c) => {
+  const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
+  if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) return c.json({ error: 'Invalid wcaId' }, 400);
+  const isAvg = c.req.query('isAvg') === '1' || c.req.query('isAvg') === 'true';
+  const idxSet = new Set<number>();
+  for (const e of (c.req.query('events') ?? '').split(',').map(s => s.trim()).filter(Boolean)) {
+    const i = RANK_EVENTS.indexOf(e as typeof RANK_EVENTS[number]);
+    if (i >= 0) idxSet.add(i);
+  }
+  if (idxSet.size === 0) return c.json({ error: 'Invalid events list' }, 400);
+  const idxs = [...idxSet].sort((a, b) => a - b);
+
+  const epSelect = idxs.map(i =>
+    `SUM(CASE WHEN ranks_world[${i + 1}] > 0 THEN 1 ELSE 0 END)::INTEGER AS p${i}`
+  ).join(', ');
+  const sumExpr = idxs.map(i =>
+    `(CASE WHEN pr.ranks_world[${i + 1}] > 0 THEN pr.ranks_world[${i + 1}] ELSE ep.p${i} + 1 END)`
+  ).join(' + ');
+  const doneExpr = idxs.map(i => `(CASE WHEN pr.ranks_world[${i + 1}] > 0 THEN 1 ELSE 0 END)`).join(' + ');
+
+  const rows = await query<{ total: number; done: number; better: string }>(
+    `WITH ep AS (
+       SELECT ${epSelect} FROM wca_person_ranks WHERE is_avg = ?
+     ), me AS (
+       SELECT (${sumExpr}) AS total, (${doneExpr}) AS done
+       FROM wca_person_ranks pr CROSS JOIN ep
+       WHERE pr.wca_id = ? AND pr.is_avg = ?
+     )
+     SELECT m.total, m.done,
+            (SELECT COUNT(*) FROM wca_person_ranks pr CROSS JOIN ep WHERE pr.is_avg = ? AND (${sumExpr}) < m.total) AS better
+     FROM me m`,
+    [isAvg, wcaId, isAvg, isAvg],
+  );
+  const events = idxs.map(i => RANK_EVENTS[i]);
+  if (rows.length === 0) {
+    // 该选手该 type 无任何排名(如从无平均成绩)→ 名次无意义,返 null(不缓存)
+    return c.json({ wcaId, isAvg, events, total: null, rank: null, eventsDone: 0 });
+  }
+  const r = rows[0]!;
+  c.header('Cache-Control', CACHE_HEADER);
+  return c.json({
+    wcaId, isAvg, events,
+    total: r.total, rank: parseInt(r.better, 10) + 1, eventsDone: r.done,
+  });
 });
 
 // ── 7d. /v1/wca/sum-of-ranks/person?wcaId= ──
