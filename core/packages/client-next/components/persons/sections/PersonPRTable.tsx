@@ -54,9 +54,11 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
   const [hist, setHist] = useState<PersonBestRanksResponse | null>(null);
   const [histLoading, setHistLoading] = useState(false);
   const [histError, setHistError] = useState<string | null>(null);
-  // 自选组合:点击项目行多选,组合名次和 + 世界名次落在底部 Σ 块的「自选」行(仅当前模式)
-  const [selEvents, setSelEvents] = useState<ReadonlySet<string>>(new Set());
-  useEffect(() => { setSelEvents(new Set()); }, [profile.person.wca_id]);
+  // 自选组合:点击项目行多选,组合三指标落在底部 Σ 块的「自选」行(仅当前模式).
+  // 默认全选该选手有 PR 的项目(= 表里全部行);× 清空后再逐行点选.
+  const allPrEvents = () => new Set(ALL_EVENT_IDS.filter(eid => profile.personal_records[eid]));
+  const [selEvents, setSelEvents] = useState<ReadonlySet<string>>(allPrEvents);
+  useEffect(() => { setSelEvents(allPrEvents()); }, [profile.person.wca_id]);  // eslint-disable-line react-hooks/exhaustive-deps
   const toggleEvent = (eid: string) => setSelEvents(prev => {
     const next = new Set(prev);
     if (next.has(eid)) next.delete(eid); else next.add(eid);
