@@ -1136,6 +1136,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     ? { id: form.personId, name: form.person ?? form.personId, country_iso2: form.personCountry ?? '' }
     : null;
 
+  // 非 WCA 比赛的轮次 / 成绩 / 单次 / 纪录都是手填,没有 WCA 自动获取与重建之说,
+  // 编辑时仍应可改;身份锁只对 WCA 官方比赛的这些值字段生效(选手 / 项目 / 比赛仍按 lockIdentity 锁)。
+  const lockValues = lockIdentity && !!form.official;
+
   return (
     <div className="recon-page submit-page">
       <div className="submit-header">
@@ -1373,7 +1377,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               <div className="submit-row">
                 <label className={`submit-field${reusedCls('round')}`}>
                   <span className="submit-label">{t('recon.round')}</span>
-                  {lockIdentity ? (
+                  {lockValues ? (
                     <div className="submit-readonly-text">{form.round ? localizeRound(form.round, t) : ''}</div>
                   ) : (
                     <select value={form.round || ''} onChange={e => setField('round', e.target.value)}>
@@ -1386,7 +1390,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </label>
                 <label className="submit-field">
                   <span className="submit-label">#</span>
-                  {lockIdentity ? (
+                  {lockValues ? (
                     <div className="submit-readonly-text">{form.solveNum ?? ''}</div>
                   ) : (
                     <select
@@ -1424,9 +1428,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       setAvgAutoSource(null);
                       avgAutoFilledRef.current = false;
                     }}
-                    readOnly={lockIdentity || !!avgAutoSource}
-                    className={(lockIdentity || avgAutoSource) ? 'submit-input-locked' : undefined}
-                    title={lockIdentity ? (tr({ zh: '身份字段不可改;如需修改请重建', en: 'identity field, locked',
+                    readOnly={lockValues || !!avgAutoSource}
+                    className={(lockValues || avgAutoSource) ? 'submit-input-locked' : undefined}
+                    title={lockValues ? (tr({ zh: '身份字段不可改;如需修改请重建', en: 'identity field, locked',
                         zhHant: "身份欄位不可改;如需修改請重建"
                     }))
                       : avgAutoSource ? (tr({ zh: '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取', en: 'auto-filled, read-only; change person/comp/event/round to refetch',
@@ -1451,9 +1455,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       setSingleAutoSource(null);
                       singleAutoFilledRef.current = false;
                     }}
-                    readOnly={lockIdentity || !!singleAutoSource}
-                    className={(lockIdentity || singleAutoSource) ? 'submit-input-locked' : undefined}
-                    title={lockIdentity ? (tr({ zh: '身份字段不可改;如需修改请重建', en: 'identity field, locked',
+                    readOnly={lockValues || !!singleAutoSource}
+                    className={(lockValues || singleAutoSource) ? 'submit-input-locked' : undefined}
+                    title={lockValues ? (tr({ zh: '身份字段不可改;如需修改请重建', en: 'identity field, locked',
                         zhHant: "身份欄位不可改;如需修改請重建"
                     }))
                       : singleAutoSource ? (tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch',
@@ -1468,7 +1472,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </label>
                 <label className="submit-field">
                   <span className="submit-label">{t('recon.badge.singleRecord')}</span>
-                  {lockIdentity ? (
+                  {lockValues ? (
                     <div className="submit-readonly-text">
                       {form.regionalSingleRecord
                         ? <RecordBadge record={form.regionalSingleRecord} variant="inline" iso2={form.personCountry} />
@@ -1489,7 +1493,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </label>
                 <label className="submit-field">
                   <span className="submit-label">{t('recon.badge.averageRecord')}</span>
-                  {lockIdentity ? (
+                  {lockValues ? (
                     <div className="submit-readonly-text">
                       {form.regionalAverageRecord
                         ? <RecordBadge record={form.regionalAverageRecord} variant="inline" iso2={form.personCountry} />
