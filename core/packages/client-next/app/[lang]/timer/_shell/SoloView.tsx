@@ -1425,8 +1425,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           <a
             className="tb-btn"
             href={`${isZh ? '/zh' : ''}/timer/marks`}
-            title={tr({ zh: '打乱足迹', en: 'Scramble marks' })}
-            aria-label={tr({ zh: '打乱足迹', en: 'Scramble marks' })}
+            title={tr({ zh: '打乱足迹', en: 'Scramble marks',
+                zhHant: "打亂足跡"
+            })}
+            aria-label={tr({ zh: '打乱足迹', en: 'Scramble marks',
+                zhHant: "打亂足跡"
+            })}
           >
             <Footprints size={14} />
           </a>
