@@ -147,9 +147,6 @@ export interface TimerSettings {
    */
   inspectionTrigger: 'down' | 'up';
 
-  /** Show a celebratory toast when a solve sets a new PB (single / ao5 / ao12). */
-  pbToast: boolean;
-
   /**
    * Per-event target time (time-attack mode). Map keyed by EventId; missing or
    * null entries disable the indicator for that event. Positive integer ms only.
@@ -215,7 +212,6 @@ export const DEFAULTS: TimerSettings = {
   autoBackupEvery: 10,
   bluetoothAutoReady: 'off',
   inspectionTrigger: 'down',
-  pbToast: true,
   targetMsByEvent: {},
   dailySolveGoal: null,
   rankCountry: '',
