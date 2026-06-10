@@ -34,7 +34,7 @@ function fmtBytes(b: number): string {
   return `${b} B`;
 }
 
-export type Method = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo';
+export type Method = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | '222';
 const VARIANT_ID: Record<'pair' | 'eo' | 'pseudo' | 'pseudo_pair', number> = {
   pair: 0, eo: 1, pseudo: 2, pseudo_pair: 3,
 };
@@ -46,6 +46,7 @@ const METHODS: { key: Method; label: string }[] = [
   { key: 'pseudo_pair', label: 'Pseudo Pair' },
   { key: 'f2leo', label: 'F2LEO' },
   { key: 'pseudo_f2leo', label: 'Pseudo F2LEO' },
+  { key: '222', label: '2x2x2' },
 ];
 const STAGE_LABELS: Record<Method, string[]> = {
   std: ['Cross', 'XC', 'XXC', 'XXXC', 'XXXXC'],
@@ -55,17 +56,20 @@ const STAGE_LABELS: Record<Method, string[]> = {
   pseudo_pair: ['P-Cross + Pair', 'P-XC + Pair', 'P-XXC + Pair', 'P-XXXC + Pair'],
   f2leo: ['F2LEO Cross', 'F2LEO XC', 'F2LEO XXC', 'F2LEO XXXC'],
   pseudo_f2leo: ['P-F2LEO Cross', 'P-F2LEO XC', 'P-F2LEO XXC', 'P-F2LEO XXXC'],
+  '222': ['2x2x2'],
 };
 // 自动批算(eager)的最深阶段;更深的留点击按需(单视角搜索重,弱小表启发式)。
 const EAGER_MAX: Record<Method, number> = {
-  std: 3, eo: 2, pair: 3, pseudo: 3, pseudo_pair: 2, f2leo: 1, pseudo_f2leo: 1,
+  std: 3, eo: 2, pair: 3, pseudo: 3, pseudo_pair: 2, f2leo: 1, pseudo_f2leo: 1, '222': 0,
 };
-type Kind = 'std' | 'variant' | 'f2leo';
+type Kind = 'std' | 'variant' | 'f2leo' | 'block222';
 const kindOf = (m: Method): Kind =>
-  m === 'std' ? 'std' : m === 'f2leo' || m === 'pseudo_f2leo' ? 'f2leo' : 'variant';
+  m === 'std' ? 'std'
+    : m === 'f2leo' || m === 'pseudo_f2leo' ? 'f2leo'
+      : m === '222' ? 'block222' : 'variant';
 const needOf = (m: Method): PoolNeed => {
   const k = kindOf(m);
-  return k === 'std' ? 'cross' : k === 'f2leo' ? 'f2leo' : 'variant';
+  return k === 'std' ? 'cross' : k === 'f2leo' ? 'f2leo' : k === 'block222' ? 'block222' : 'variant';
 };
 
 // 6 视角:rot ""/z2/z'/z/x'/x → 底面 D/U/L/R/F/B(与 ROTS / solve*Stage 返回序一致)。
@@ -188,7 +192,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       } else {
         const vals = kind === 'f2leo'
           ? await pool.solveF2leoStage(scr, method === 'pseudo_f2leo', stage)
-          : await pool.solveVariantStage(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], stage);
+          : kind === 'block222'
+            ? await pool.solveBlock222Stage(scr)
+            : await pool.solveVariantStage(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], stage);
         if (computeReq.current === my) {
           for (let i = 0; i < 6; i++) result[i] = vals[i] ?? null;
           setCounts(result.slice());
@@ -246,7 +252,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         ? await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap: limit })
         : kind === 'f2leo'
           ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: SOL_SLACK, cap: limit })
-          : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap: limit });
+          : kind === 'block222'
+            ? await pool.solveBlock222Moves(scr, f, { extra: SOL_SLACK, cap: limit })
+            : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap: limit });
       if (movesReq.current === my) {
         setMoves(res);
         setSelSol(0);
@@ -418,7 +426,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                   onClick={() => clickFace(i)}
                   data-empty={counts[i] == null}
                   style={{ '--face-bg': CUBE_FILL[f.face], '--face-fg': CUBE_ON_FILL[f.face] } as CSSProperties}
-                  title={t(`${f.face} 面十字 · 点击求解`, `${f.face}-face cross · click to solve`)}
+                  title={method === '222'
+                    ? t(`${f.face} 底 2x2x2 块 · 点击求解`, `${f.face}-bottom 2x2x2 block · click to solve`)
+                    : t(`${f.face} 面十字 · 点击求解`, `${f.face}-face cross · click to solve`)}
                 >
                   {counts[i] != null ? (
                     <span className="stsv-angle-n">{counts[i]}</span>
@@ -448,7 +458,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                   <strong>{stages[stage]}</strong>
                   <span
                     className="stsv-sols-face"
-                    title={t(`${FACES[selFace].face} 面十字`, `${FACES[selFace].face}-face cross`)}
+                    title={method === '222'
+                      ? t(`${FACES[selFace].face} 底 2x2x2 块`, `${FACES[selFace].face}-bottom 2x2x2 block`)
+                      : t(`${FACES[selFace].face} 面十字`, `${FACES[selFace].face}-face cross`)}
                   >
                     <i className="stsv-sols-swatch" style={{ background: CUBE_FILL[FACES[selFace].face] }} />
                   </span>

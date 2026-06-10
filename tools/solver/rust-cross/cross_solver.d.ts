@@ -1,6 +1,30 @@
 /* tslint:disable */
 /* eslint-disable */
 
+/**
+ * 2x2x2 块求解(1 角 + 3 棱)。表最小:mt_edge3 (~743KB) + mt_corn (~1.7KB),
+ * 全空间精确距离表构造时现场 BFS(253,440 态,毫秒级)——查长度 O(1),枚举首达即最优。
+ * 每视角 = 该底色 4 个贴底块;解前缀 = rot + y^k,`c` = 块标签(URF..DRB)。
+ */
+export class Block222SolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    constructor(mt_edge3: Uint8Array, mt_corn: Uint8Array);
+    /**
+     * 6 视角最优步数(每视角 = 4 贴底块最小),顺序对应 ROTS。
+     */
+    solve(scramble: string): Uint32Array;
+    /**
+     * 单视角(face 0..5)最优步数。
+     */
+    solve_face(scramble: string, face: number): number;
+    /**
+     * 单视角多解 JSON(同 CrossSolverWasm::solve_moves 形状)。4 个贴底块合并枚举,
+     * 按长度排序;`m` 前缀 = rot + y^k(1~2 个旋转 token),`c` = 块标签。
+     */
+    solve_moves(scramble: string, face: number, extra: number, cap: number): string;
+}
+
 export class CrossSolverWasm {
     free(): void;
     [Symbol.dispose](): void;
@@ -112,9 +136,14 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
+    readonly __wbg_block222solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_crosssolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_f2leosolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_variantsolverwasm_free: (a: number, b: number) => void;
+    readonly block222solverwasm_new: (a: number, b: number, c: number, d: number) => number;
+    readonly block222solverwasm_solve: (a: number, b: number, c: number) => [number, number];
+    readonly block222solverwasm_solve_face: (a: number, b: number, c: number, d: number) => number;
+    readonly block222solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
     readonly crosssolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => number;
     readonly crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];

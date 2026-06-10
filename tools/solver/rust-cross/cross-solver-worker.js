@@ -15,6 +15,7 @@
 let solver = null;       // CrossSolverWasm(std cross/xc..xxxxc),需 52MB pt_cross_C4E0
 let f2leoSolver = null;  // F2leoSolverWasm(f2leo / pseudo),只需小表子集
 let variantSolver = null;// VariantSolverWasm(pair / eo / pseudo / pseudo_pair),小表显式逐槽追踪
+let block222Solver = null;// Block222SolverWasm(2x2x2 块),仅 mt_edge3+mt_corn(~745KB),距离表现场 BFS
 
 async function fetchTable(url) {
   const res = await fetch(url);
@@ -45,6 +46,10 @@ async function init(glueUrl, wasmUrl, tablesBase, need) {
        'pt_cross', 'pt_ep4eo12', 'mt_edge2', 'mt_eo12', 'mt_eo12_alt', 'mt_ep4', 'pt_pscross'].map(get),
     );
     variantSolver = new mod.VariantSolverWasm(c4e0, insc4, pair, e4, c, e, cross, ep4eo12, e2, eo12, eo12alt, ep4, pscross);
+  } else if (need === 'block222') {
+    // 2x2x2 块:全站最轻(2 张表 ~745KB),距离表构造时现场 BFS(毫秒级)。
+    const [e3, c] = await Promise.all(['mt_edge3', 'mt_corn'].map(get));
+    block222Solver = new mod.Block222SolverWasm(e3, c);
   } else {
     const [a, b, c, d, e, f] = await Promise.all(
       ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'].map(get)
@@ -111,6 +116,20 @@ self.onmessage = async (e) => {
       // 单阶段 6 值。cross(stage 0)先出,深阶段后台补。
       const out = variantSolver.solve_stage(msg.scramble, msg.variant | 0, msg.stage | 0);
       self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+    } else if (msg.type === 'block222_stage') {
+      if (!block222Solver) throw new Error('block222 solver not initialized');
+      const t0 = performance.now();
+      // 6 视角(每视角 = 该底色 4 个贴底块最小),物理面序 z0/z2/z3/z1/x3/x1。
+      const out = block222Solver.solve(msg.scramble);
+      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+    } else if (msg.type === 'block222_moves') {
+      if (!block222Solver) throw new Error('block222 solver not initialized');
+      const t0 = performance.now();
+      // 单视角多解:4 贴底块合并按长度排序;前缀 = rot + y^k,c = 块标签(URF..DRB)。
+      const json = block222Solver.solve_moves(
+        msg.scramble, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
+      );
+      self.postMessage({ type: 'block222_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'variant_moves') {
       if (!variantSolver) throw new Error('variant solver not initialized');
       const t0 = performance.now();

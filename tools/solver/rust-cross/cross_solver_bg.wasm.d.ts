@@ -1,9 +1,14 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
+export const __wbg_block222solverwasm_free: (a: number, b: number) => void;
 export const __wbg_crosssolverwasm_free: (a: number, b: number) => void;
 export const __wbg_f2leosolverwasm_free: (a: number, b: number) => void;
 export const __wbg_variantsolverwasm_free: (a: number, b: number) => void;
+export const block222solverwasm_new: (a: number, b: number, c: number, d: number) => number;
+export const block222solverwasm_solve: (a: number, b: number, c: number) => [number, number];
+export const block222solverwasm_solve_face: (a: number, b: number, c: number, d: number) => number;
+export const block222solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
 export const crosssolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => number;
 export const crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
 export const crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];

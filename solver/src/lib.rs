@@ -6,6 +6,7 @@ pub mod cube_common;
 pub mod move_tables;
 pub mod prune_tables;
 
+pub mod block222_solver;
 pub mod cross_solver;
 pub mod executor;
 pub mod xcross_solver;

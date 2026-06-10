@@ -38,6 +38,7 @@ const NATIVE: NativeSolver[] = [
   { key: 'pair', stages: 4, fbRows: 1_293_570, rate: 200, tier: 'huge', zhWhy: '不在默认补缺 (opt-in), 暖表后 ~200/s 已全量回填', enWhy: 'opt-in (off the default run), ~200/s once tables warm — fully backfilled' },
   { key: 'f2leo', stages: 4, fbRows: 252, rate: 31, tier: 'huge', zhWhy: '联合大表剪枝 (同 std huge 表) + 自由棱 EO 门控, 4 阶段无 xxxxcross', enWhy: 'joint big-table pruning (same huge tables as std) + free-edge EO gating, 4 stages no xxxxcross' },
   { key: 'pseudo_f2leo', stages: 4, fbRows: 252, rate: 81, tier: 'huge', zhWhy: 'pseudo 大表电池 (C4E + corner2/3 + edge2/3) max + 自由棱 EO, 4 阶段无 xxxxcross', enWhy: 'pseudo big-table battery (C4E + corner2/3 + edge2/3) max + free-edge EO, 4 stages no xxxxcross' },
+  { key: '222', stages: 1, fbRows: 1_297_444, rate: 1_250_000, tier: 'small', zhWhy: '2x2x2 块 (1 角 + 3 棱) 全空间仅 253,440 态, 精确距离表直查零搜索', enWhy: '2x2x2 block (corner + 3 edges) — 253,440 states total, exact distance table lookup, zero search' },
 ];
 
 interface BrowserSolver { key: string; zhEngine: string; enEngine: string; zhLatency: string; enLatency: string; }
@@ -50,6 +51,7 @@ const BROWSER: BrowserSolver[] = [
   { key: 'pseudo', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '~5s', enLatency: '~5s' },
   { key: 'pseudo_pair', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '深阶段 数十秒', enLatency: 'deep stages tens of seconds' },
   { key: 'f2leo / pseudo_f2leo', zhEngine: '小表 ~40MB/worker', enEngine: 'small tables ~40MB/worker', zhLatency: 'cross ~2.8s', enLatency: 'cross ~2.8s' },
+  { key: '2x2x2 block', zhEngine: 'Block222SolverWasm (~0.7MB/worker)', enEngine: 'Block222SolverWasm (~0.7MB/worker)', zhLatency: '全 6 视角即时', enLatency: 'all 6 views instant' },
 ];
 
 // 每个原生分析器实际 mmap 的磁盘表 (D:\cube\cuberoot.me\solver\tables\, 大小为真实文件字节).
@@ -115,6 +117,13 @@ const TABLES: Record<string, SolverTbls> = {
     builtEn: 'combo heuristic = max(per-pair C4E, corner2/3 group, edge2/3 group) + leaf EO gating on free edges; plus pscross prune (~272KB) built in-RAM for the cross stage',
       builtZhHant: "combo 啟發式 = max(每對 C4E, 角組 corner2/3, 稜組 edge2/3) + 葉子門控自由稜 EO;另現場建 pscross 剪枝 (~272KB, 記憶體) 供 cross 階段"
 },
+  '222': {
+    move: [{ n: 'mt_edge3', b: 760332 }, { n: 'mt_corn', b: 1740 }],
+    prune: [],
+    builtZh: '不落盘剪枝:全空间精确距离表 (253,440 态, ~248KB) 构造时内存现场 BFS;查长度 O(1) 直查无搜索',
+    builtEn: 'no on-disk prune: exact full-space distance table (253,440 states, ~248KB) BFS-built in RAM at startup; length queries are O(1) lookups, zero search',
+    builtZhHant: '不落盤剪枝:全空間精確距離表 (253,440 態, ~248KB) 構造時記憶體現場 BFS;查長度 O(1) 直查無搜尋',
+  },
 };
 
 function fmtBytes(b: number): string {
@@ -209,10 +218,10 @@ export default function SolversPage() {
               : 'The staged cube-solver fleet: native analyzers (feeding the scramble distribution + per-comp precompute) and browser WASM (live solve on the gen page) — coverage, throughput, memory.'}
           </p>
           <div className="solv-herostats">
-            <div className="solv-stat"><span className="solv-stat-num">7</span><span className="solv-stat-label">{zh ? '原生分析器' : 'native analyzers'}</span></div>
+            <div className="solv-stat"><span className="solv-stat-num">8</span><span className="solv-stat-label">{zh ? '原生分析器' : 'native analyzers'}</span></div>
             <div className="solv-stat"><span className="solv-stat-num">~34<small>GB</small></span><span className="solv-stat-label">{zh ? '剪枝表' : 'pruning tables'}</span></div>
-            <div className="solv-stat"><span className="solv-stat-num">{completeN}<small>/7</small></span><span className="solv-stat-label">{zh ? '已补齐' : 'fully covered'}</span></div>
-            <div className="solv-stat"><span className="solv-stat-num">0.9–390<small>/s</small></span><span className="solv-stat-label">{zh ? '吞吐跨度' : 'throughput span'}</span></div>
+            <div className="solv-stat"><span className="solv-stat-num">{completeN}<small>/8</small></span><span className="solv-stat-label">{zh ? '已补齐' : 'fully covered'}</span></div>
+            <div className="solv-stat"><span className="solv-stat-num">0.9–1.25M<small>/s</small></span><span className="solv-stat-label">{zh ? '吞吐跨度' : 'throughput span'}</span></div>
           </div>
         </header>
 
@@ -266,7 +275,7 @@ export default function SolversPage() {
               <div className="solv-perf" key={s.key}>
                 <div className="solv-perf-top">
                   <span className="solv-row-name">{s.key}</span>
-                  <span className="solv-perf-rate">{s.rate}<small> /s</small></span>
+                  <span className="solv-perf-rate">{s.rate >= 10000 ? `${(s.rate / 1e6).toFixed(2)}M` : s.rate}<small> /s</small></span>
                 </div>
                 <div className="solv-bar">
                   <div className="solv-bar-fill solv-fill-rate" style={{ width: `${rateBarPct(s.rate)}%` }} />
@@ -291,6 +300,13 @@ export default function SolversPage() {
               <p>{zh
                 ? 'mmap GB 级联合/电池剪枝表 (CEE/CCE/C4C5C6 / pair huge / E0E1E2 等)。eo 工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap。f2leo 复用 std 的 pair huge 表 (各 ~10GB);pseudo_f2leo 用 pseudo 电池 (corner3 862MB + edge3 1GB 等), 各仅多叶子自由棱 EO 门控。'
                 : 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. eo peaks ~24GB working set but only ~0.1GB private — read-only shared mmap. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating.'}</p>
+            </article>
+            <article className="solv-mem-card">
+              <div className="solv-mem-tier"><Cpu size={13} strokeWidth={2} /> small</div>
+              <div className="solv-mem-list">222</div>
+              <p>{zh
+                ? '仅 mt_edge3 (743KB) + mt_corn (1.7KB) 两张移动表;全空间精确距离表 (~248KB) 启动时内存现场 BFS, 不落盘。无 GB 级依赖, 可与任意 huge 变体并发。'
+                : 'Only mt_edge3 (743KB) + mt_corn (1.7KB) move tables; the exact full-space distance table (~248KB) is BFS-built in RAM at startup, never written to disk. No GB-scale dependency — runs alongside any huge variant.'}</p>
             </article>
             <article className="solv-mem-card solv-mem-wide">
               <div className="solv-mem-tier"><Cpu size={13} strokeWidth={2} /> {zh ? '并行' : 'parallelism'}</div>

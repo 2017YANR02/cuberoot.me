@@ -77,7 +77,7 @@ function eventLabel(e: string, isZh: boolean): string {
   return m ? ((i18n.language === 'zh-Hant' ? (m.zhHant ?? m.zh) : (i18n.language.startsWith('zh') ? m.zh : m.en))) : e;
 }
 
-type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo';
+type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | '222';
 type YMode = 'percent' | 'count';
 type ChartMode = 'pdf' | 'cdf';
 
@@ -101,6 +101,7 @@ const VARIANT_LABEL: Record<VariantKey, { en: string; zh: string
   pseudo_f2leo: { en: 'Pseudo F2LEO', zh: '伪 F2LEO',
       zhHant: "偽 F2LEO"
 },
+  '222': { en: '2x2x2', zh: '2x2x2' },
 };
 
 const STAGE_LABEL: Record<string, { en: string; zh: string
@@ -137,6 +138,9 @@ const STAGE_LABEL: Record<string, { en: string; zh: string
   f2l: { en: 'XXXXCross', zh: 'XXXXCross' },
   xxxxcross: { en: 'XXXXCross', zh: 'XXXXCross' },
   eo_xxxxcross: { en: 'XXXXCross', zh: 'XXXXCross' },
+  block222: { en: '2x2x2 Block', zh: '2x2x2 块',
+      zhHant: "2x2x2 塊"
+},
 };
 
 const labelStage = (s: string, isZh: boolean) => STAGE_LABEL[s] ? STAGE_LABEL[s][isZh ? 'zh' : 'en'] : s;
@@ -422,7 +426,7 @@ export default function ScrambleStatsPage() {
               zhHant: "變體"
         })}>
             {currentSet && (Object.keys(currentSet.variants) as VariantKey[]).map((v) => (
-              <option key={v} value={v}>{VARIANT_LABEL[v][(i18n.language.startsWith('zh') ? 'zh' : 'en')]}</option>
+              <option key={v} value={v}>{VARIANT_LABEL[v]?.[(i18n.language.startsWith('zh') ? 'zh' : 'en')] ?? v}</option>
             ))}
           </select>
         </label>

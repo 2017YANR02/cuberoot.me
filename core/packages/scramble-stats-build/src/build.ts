@@ -94,6 +94,15 @@ const VARIANTS: VariantSpec[] = [
     angleToColor: ANGLE_COLOR_STD,
     colFor: (stage, angle) => `${stage}_${angle}`,
   },
+  {
+    // 2x2x2 块(1 角 + 3 棱, cstimer 同语义);单阶段。每角度列 = 该底色 4 个贴底块的最小步数
+    key: '222',
+    file: '222.csv',
+    id_col: 'id',
+    stages: ['block222'],
+    angleToColor: ANGLE_COLOR_STD,
+    colFor: (stage, angle) => `${stage}_${angle}`,
+  },
 ];
 
 interface Hist {
