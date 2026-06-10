@@ -23,6 +23,7 @@ import {
   formatMs,
 } from '../_lib/stats';
 import { useSettings, updateSettings, MAX_AO_WINDOWS } from '../_lib/settings';
+import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { tr } from '@/i18n/tr';
 import i18n from "@/i18n/i18n-client";
 
@@ -157,7 +158,11 @@ export default function StatsPanel({ solves, isZh }: Props) {
               )}
             </span>
             <span className={`st-cur ${isEmptyVal(r.cur) ? 'muted' : ''}`}>{r.cur}</span>
-            <span className={`st-best ${isEmptyVal(r.best) ? 'muted' : ''}`}>{r.best}</span>
+            <span className={`st-best ${isEmptyVal(r.best) ? 'muted' : ''}`}>
+              {r.best}
+              {/* 当前值=历史最佳 → 这把/这个窗口刚刷新或追平了个人最佳,标 PR。 */}
+              {!isEmptyVal(r.best) && r.cur === r.best && <RecordBadge record="PR" variant="inline" />}
+            </span>
           </div>
         ))}
       </div>

@@ -22,7 +22,7 @@ import {
   Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
   Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText,
   FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe,
-  Eye, EyeOff, ListOrdered, LineChart, Brain, X, CheckCircle2,
+  ListOrdered, LineChart, Brain, X, CheckCircle2, Footprints,
 } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { CubingIcon, EventIcon } from '@/components/EventIcon/EventIcon';
@@ -73,7 +73,6 @@ import { decodeReplayParam } from '../_lib/share/decode';
 import { extractReplayParam } from '../_lib/share/paste_import';
 import SettingsPanel from '../_components/SettingsPanel';
 import GoalProgress from '../_components/GoalProgress';
-import PbToast, { type PbKind } from '../_components/PbToast';
 import ShortcutsModal from '../_components/ShortcutsModal';
 import BluetoothModal from '../_components/BluetoothModal';
 import TrainerSubsetModal from '../_components/TrainerSubsetModal';
@@ -198,18 +197,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
-  // Cube preview Eye toggle — default ON (visible) on phone per redesign.
-  const [previewHidden, setPreviewHidden] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    const legacy = localStorage.getItem('timer.mobilePreviewHidden');
-    if (legacy !== null && localStorage.getItem('timer.preview.hidden') === null) {
-      try { localStorage.setItem('timer.preview.hidden', legacy); } catch { /* ignore */ }
-    }
-    return localStorage.getItem('timer.preview.hidden') === '1';
-  });
-  useEffect(() => {
-    try { localStorage.setItem('timer.preview.hidden', previewHidden ? '1' : '0'); } catch { /* ignore */ }
-  }, [previewHidden]);
   // Enlarged corner net (phone tap-to-enlarge).
   const [previewEnlarged, setPreviewEnlarged] = useState(false);
 
@@ -486,13 +473,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
 
   // ── Solve recording ─────────────────────────────────────────────
   const [lastPenalty, setLastPenalty] = useState<Penalty | null>(null);
-  const [pbToast, setPbToast] = useState<{ kind: PbKind; value: string } | null>(null);
   // Generic undo/info toast for swipe-delete etc.
   const [infoToast, setInfoToast] = useState<{ msg: string; undo?: () => void } | null>(null);
   const byEventRef = useRef(byEvent);
   useEffect(() => { byEventRef.current = byEvent; }, [byEvent]);
-  const pbToastEnabledRef = useRef(settings.pbToast);
-  useEffect(() => { pbToastEnabledRef.current = settings.pbToast; }, [settings.pbToast]);
   const scrambleAtStartRef = useRef<string>(scramble);
   const eventAtStartRef = useRef<EventId>(event);
   const caseIdAtStartRef = useRef<string | null>(null);
@@ -527,24 +511,15 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     if (movesRef.current.length > 0) solve.moves = movesRef.current.slice();
     setLastPenalty(res.autoPenalty);
 
-    if (pbToastEnabledRef.current) {
+    // 破纪录(单次/Ao5/Ao12)时桌宠开心一下;不再弹横幅,纪录改在统计面板用 PR 标体现。
+    {
       const before = byEventRef.current[ev] ?? [];
       const after = [...before, solve];
-      const beforeSingle = bestSingle(before);
-      const afterSingle = bestSingle(after);
-      const beforeAo5 = bestAverageOfN(before, 5);
-      const afterAo5 = bestAverageOfN(after, 5);
-      const beforeAo12 = bestAverageOfN(before, 12);
-      const afterAo12 = bestAverageOfN(after, 12);
       const isNew = (b: number | null, a: number | null): boolean =>
         a !== null && Number.isFinite(a) && (b === null || !Number.isFinite(b) || a < b);
-      let kind: PbKind | null = null;
-      let value: number | null = null;
-      if (isNew(beforeAo12, afterAo12))      { kind = 'ao12';   value = afterAo12; }
-      else if (isNew(beforeAo5, afterAo5))   { kind = 'ao5';    value = afterAo5; }
-      else if (isNew(beforeSingle, afterSingle)) { kind = 'single'; value = afterSingle; }
-      if (kind && value !== null) {
-        setPbToast({ kind, value: formatMs(value, settings.precision) });
+      if (isNew(bestAverageOfN(before, 12), bestAverageOfN(after, 12))
+        || isNew(bestAverageOfN(before, 5), bestAverageOfN(after, 5))
+        || isNew(bestSingle(before), bestSingle(after))) {
         petReact('happy');
       }
     }
@@ -1447,6 +1422,14 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           </div>
         </div>
         <div className="shell-topbar-right">
+          <a
+            className="tb-btn"
+            href={`${isZh ? '/zh' : ''}/timer/marks`}
+            title={tr({ zh: '打乱足迹', en: 'Scramble marks' })}
+            aria-label={tr({ zh: '打乱足迹', en: 'Scramble marks' })}
+          >
+            <Footprints size={14} />
+          </a>
           <button
             type="button"
             className={`tb-btn${bluetoothCube.status.connected ? ' connected' : ''}`}
@@ -1562,42 +1545,20 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             </div>
           }
           cornerSlot={settings.showCubePreview ? (
-            <div className={`shell-corner-net${previewHidden ? ' hidden' : ''}`}>
-              {/* Reserve box keeps the cube's height even when hidden, so the
-                  toggle below stays put. Cube height = var(--cube-h). */}
+            <div className="shell-corner-net">
               <div className="shell-corner-net-imgbox">
-                {!previewHidden && (
-                  <button
-                    type="button"
-                    className="shell-corner-net-img"
-                    data-no-timer
-                    onClick={() => setPreviewEnlarged(true)}
-                    title={tr({ zh: '点击放大', en: 'Tap to enlarge',
-                        zhHant: "點選放大"
-                    })}
-                  >
-                    <CubePreview event={event} scramble={scramble} height="var(--cube-h)" colors={settings.colors} visualization={settings.prefer3D ? '3D' : '2D'} />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="shell-corner-net-img"
+                  data-no-timer
+                  onClick={() => setPreviewEnlarged(true)}
+                  title={tr({ zh: '点击放大', en: 'Tap to enlarge',
+                      zhHant: "點選放大"
+                  })}
+                >
+                  <CubePreview event={event} scramble={scramble} height="var(--cube-h)" colors={settings.colors} visualization={settings.prefer3D ? '3D' : '2D'} />
+                </button>
               </div>
-              <button
-                type="button"
-                className="cube-preview-toggle"
-                data-no-timer
-                onClick={() => setPreviewHidden(h => !h)}
-                title={previewHidden ? (tr({ zh: '显示打乱预览', en: 'Show preview',
-                    zhHant: "顯示打亂預覽"
-                })) : (tr({ zh: '隐藏打乱预览', en: 'Hide preview',
-                    zhHant: "隱藏打亂預覽"
-                }))}
-                aria-label={previewHidden ? (tr({ zh: '显示打乱预览', en: 'Show scramble preview',
-                    zhHant: "顯示打亂預覽"
-                })) : (tr({ zh: '隐藏打乱预览', en: 'Hide scramble preview',
-                    zhHant: "隱藏打亂預覽"
-                }))}
-              >
-                {previewHidden ? <Eye size={16} /> : <EyeOff size={16} />}
-              </button>
             </div>
           ) : undefined}
         >
@@ -1805,8 +1766,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       )}
 
       {settingsOpen && <SettingsPanel isZh={isZh} event={event} onClose={() => setSettingsOpen(false)} onDataReplaced={() => setByEvent(loadAll())} />}
-
-      <PbToast kind={pbToast?.kind ?? null} value={pbToast?.value ?? ''} isZh={isZh} onClose={() => setPbToast(null)} />
 
       {infoToast && (
         <div className="shell-info-toast" role="status">
