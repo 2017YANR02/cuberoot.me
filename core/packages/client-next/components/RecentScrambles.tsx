@@ -14,6 +14,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
+import { VARIANT_ORDER, variantLabel } from '@/lib/scramble-variants';
 import './recent_scrambles.css';
 import { tr } from '@/i18n/tr';
 
@@ -28,35 +29,6 @@ interface RecentScramblesJson {
   // variant -> metric -> subsetKey -> step(字符串) -> [id, 取最少步的底色字母][]（每桶 ≤12 条）
   rank: Record<string, Record<string, Record<string, Record<string, [string, ColorLetter][]>>>>;
 }
-
-const VARIANT_ORDER = ['std', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo', '123', '123x2', '222', '223', 'eoline', 'dr'];
-const VARIANT_LABEL: Record<string, { zh: string; en: string
-        zhHant?: string;
- }> = {
-  std: { zh: '标准', en: 'Standard',
-      zhHant: "標準"
-},
-  eo: { zh: 'EO', en: 'EO' },
-  pseudo: { zh: '伪', en: 'Pseudo',
-      zhHant: "偽"
-},
-  pseudo_pair: { zh: '伪基态', en: 'Pseudo Pair',
-      zhHant: "偽基態"
-},
-  pair: { zh: '基态', en: 'Pair',
-      zhHant: "基態"
-},
-  f2leo: { zh: 'F2LEO', en: 'F2LEO' },
-  pseudo_f2leo: { zh: '伪 F2LEO', en: 'Pseudo F2LEO',
-      zhHant: "偽 F2LEO"
-},
-  '123': { zh: '1x2x3', en: '1x2x3' },
-  '123x2': { zh: '1x2x3 x2', en: '1x2x3 x2' },
-  '222': { zh: '2x2x2', en: '2x2x2' },
-  '223': { zh: '2x2x3', en: '2x2x3' },
-  eoline: { zh: 'EOLine', en: 'EOLine' },
-  dr: { zh: 'DR', en: 'DR' },
-};
 
 const METRIC_ORDER = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc', 'block222', 'fbsquare', 'rouxs1', 'block223', 'f2b', 'eo', 'eoline', 'dr'];
 const METRIC_LABEL: Record<string, { zh: string; en: string
@@ -130,7 +102,7 @@ export default function RecentScrambles({ lang }: Props) {
   }), [data]);
 
   // clamp selections to what's available (variant switch may drop a metric, etc.)
-  const curVariant = variants.includes(variant) ? variant : (variants[0] ?? 'std');
+  const curVariant = (variants as string[]).includes(variant) ? variant : (variants[0] ?? 'std');
   const metrics = useMemo(() => {
     const r = data?.rank?.[curVariant];
     return r ? METRIC_ORDER.filter((m) => m in r) : [];
@@ -163,7 +135,7 @@ export default function RecentScrambles({ lang }: Props) {
         })}
         >
           {variants.map((v) => (
-            <option key={v} value={v}>{VARIANT_LABEL[v]?.[isZh ? 'zh' : 'en'] ?? v}</option>
+            <option key={v} value={v}>{variantLabel(v, isZh)}</option>
           ))}
         </select>
         <select
