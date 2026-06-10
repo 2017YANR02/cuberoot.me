@@ -1141,7 +1141,8 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/person-subset', async (c) => {
   }
   const m0 = meRows[0]!;
   const hasCtry = m0.country_id !== '';
-  const hasCont = m0.continent_id !== '' && m0.kc > 0;
+  const hasContId = m0.continent_id !== '';      // 洲桶存在 → SoWR 的本洲子排名可算(只要 continent_id + 世界和)
+  const hasCont = hasContId && m0.kc > 0;        // ranks_continent 已灌 → SoCR(洲际名次和)本身才可算
 
   // 每 scope 一套「该项参赛人数」CTE + 求和表达式(CASE 缺项罚分);列名取自固定白名单,非用户输入
   const partsOf = (col: string) => idxs.map(i =>
@@ -1168,7 +1169,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/person-subset', async (c) => {
     `(SELECT COUNT(*) FROM wca_person_ranks pr CROSS JOIN ep WHERE pr.is_avg = ? AND (${sumW}) < m.tw) AS w_world`,
   ];
   params.push(isAvg);
-  if (hasCont) { counts.push(`(SELECT COUNT(*) FROM wca_person_ranks pr CROSS JOIN ep WHERE pr.is_avg = ? AND pr.continent_id = ? AND (${sumW}) < m.tw) AS w_cont`); params.push(isAvg, m0.continent_id); }
+  if (hasContId) { counts.push(`(SELECT COUNT(*) FROM wca_person_ranks pr CROSS JOIN ep WHERE pr.is_avg = ? AND pr.continent_id = ? AND (${sumW}) < m.tw) AS w_cont`); params.push(isAvg, m0.continent_id); }
   if (hasCtry) { counts.push(`(SELECT COUNT(*) FROM wca_person_ranks pr CROSS JOIN ep WHERE pr.is_avg = ? AND pr.country_id = ? AND (${sumW}) < m.tw) AS w_ctry`); params.push(isAvg, m0.country_id); }
   if (hasCont) { counts.push(`(SELECT COUNT(*) FROM wca_person_ranks pr CROSS JOIN epc WHERE pr.is_avg = ? AND pr.continent_id = ? AND (${sumK}) < m.tk) AS k_cont`); params.push(isAvg, m0.continent_id); }
   if (hasCont && hasCtry) { counts.push(`(SELECT COUNT(*) FROM wca_person_ranks pr CROSS JOIN epc WHERE pr.is_avg = ? AND pr.country_id = ? AND (${sumK}) < m.tk) AS k_ctry`); params.push(isAvg, m0.country_id); }
