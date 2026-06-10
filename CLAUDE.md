@@ -54,6 +54,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **后端 API**:Hono 服 `api.cuberoot.me`(同一台自有服务器,nginx 反代到 127.0.0.1:3001)。
 - **Blog (`/blog/` + `blog.cuberoot.me`)**:独立 `cuberoot-blog` repo 静态归档,blog.cuberoot.me 双轨(自有 nginx alias / GH Pages)按 DNS 分线路。主域 `/blog` 走 next.config.ts redirect → blog.cuberoot.me。详 memory `reference_blog_subdomain`。
 - 前端调 API **必须**用 `utils/api_base.ts` 的 `apiUrl()`(client-next 在 `lib/api-base.ts`),不要硬编码 origin。
+- **API 缓存头分层**:可变数据端点浏览器层 `max-age≤3600`,长缓存只给 nginx 用 `s-maxage`;空/暂态 payload 发 `no-store`;改响应 shape 必须 bump fetch URL 的 `v=` 参数。仅天然不可变数据(已结束比赛/确定性计算)可浏览器长缓存。CI 守卫 `tests/server-cache-headers.test.ts`。
 - `/stats/*.json` fetch 走 `statsUrl()`(`lib/stats-base.ts` / `shared/src/api/stats-base.ts`),别写相对路径(Vercel 上相对 `/stats/*` 多一跳 307,白吃 edge request)。
 - **Pattern B 英文落裸地址**(2026-06-08):英文走裸 URL,中文走 `/zh`;裸路径 proxy rewrite 到 `/en`(零跳转),中文环境裸→307→`/zh`;无 MIGRATED_PATHS 白名单,新路由免登记。内部 `<Link>` 用 `components/AppLink`(en 出裸、zh 补 `/zh`),别裸 `next/link`;非 Link 导航(`router.push`/服务端 `redirect`/raw `<a>`)手动 `${lang==='zh'?'/zh':''}` 前缀,别硬编码 `/${lang}`。
 - 切 dev/prod API base 永远用 `import.meta.env.DEV`,**禁** `hostname === 'localhost'` 检查 — LAN IP / Tailscale `*.ts.net` / 隧道域名都不匹配,会错走 prod 跨域被 CORS 拦死。`shared/` 包不能 import client utils,直接 `(import.meta as { env?: { DEV?: boolean } }).env?.DEV`。

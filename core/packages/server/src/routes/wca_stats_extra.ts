@@ -19,7 +19,8 @@
  *   GET /v1/wca/person-best-ranks?wcaId=
  *   GET /v1/wca/person-rank-history?wcaId=&eventId=
  *
- * 所有端点 Cache-Control: 1 day —— 每周才变.
+ * 缓存分层(2026-06-10 起):nginx s-maxage=86400(重灌后 stats.yml 全清);浏览器 max-age=300 ——
+ * 数据日更可变,浏览器层一旦钉住坏/旧响应,nginx purge 与站点清数据都够不到,只能等过期(踩过 24h).
  */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
@@ -46,7 +47,8 @@ const RANK_EVENTS = [...ACTIVE_EVENTS, ...CANCELLED_EVENTS] as const;
 
 export const MAX_SIZE = 200;
 export const DEFAULT_SIZE = 100;
-export const CACHE_HEADER = 'public, max-age=86400, s-maxage=86400';
+// 浏览器层必须短:这族数据天天重灌,长 max-age 会把暂态/旧 shape 响应钉死在用户浏览器里 24h
+export const CACHE_HEADER = 'public, max-age=300, s-maxage=86400';
 
 // NaN 防御:parseInt('abc') = NaN,Math.max/min(NaN) 仍 NaN → 绑进 LIMIT/OFFSET 触发 query error。
 function intParam(raw: string | undefined, dflt: number): number {
