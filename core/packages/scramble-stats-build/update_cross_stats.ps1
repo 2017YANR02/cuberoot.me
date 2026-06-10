@@ -549,8 +549,18 @@ if($NoPublish){
     $tgz = Join-Path $env:TEMP 'cuberoot_scramble_publish.tgz'
     Write-Host "  [1/3] tar 打包 stats/scramble ..." -ForegroundColor DarkCyan
     $t0 = Get-Date
-    tar -czf $tgz -C (Join-Path $RepoRoot 'stats') scramble
-    if($LASTEXITCODE -ne 0){ throw 'tar 打包失败' }
+    Remove-Item $tgz -Force -ErrorAction SilentlyContinue
+    # tar 异步起进程 + 主线程每 5s 打当前压缩字节数(Start-Job 里 Write-Host 会被缓冲到
+    # Receive-Job 才出, 看不到实时进度, 所以用主线程轮询)。上次全量 ~280MB 可对照估完成度。
+    $tarP = Start-Process tar -ArgumentList '-czf',$tgz,'-C',(Join-Path $RepoRoot 'stats'),'scramble' -NoNewWindow -PassThru
+    while(-not $tarP.HasExited){
+      Start-Sleep -Seconds 5
+      if(Test-Path $tgz){
+        $cur = [math]::Round((Get-Item $tgz).Length/1MB,1)
+        Write-Host ("        tar ... {0} MB ({1}s)" -f $cur, [int]((Get-Date)-$t0).TotalSeconds) -ForegroundColor DarkGray
+      }
+    }
+    if($tarP.ExitCode -ne 0){ throw 'tar 打包失败' }
     $mb = [math]::Round((Get-Item $tgz).Length/1MB,1)
     Write-Host "  [1/3] tar 完成 ${mb} MB (用时 $([int]((Get-Date)-$t0).TotalSeconds)s)" -ForegroundColor DarkCyan
     # scp 单次网络传输, 非 TTY 下无内置进度条; 故起一个后台 poller 每 3s 读远端 _publish.tgz 大小, 打 N/total MB。
