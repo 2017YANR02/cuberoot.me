@@ -1221,12 +1221,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       return remaining.toString();
     }
     if (timer.phase === 'running') {
-      return settings.hideTime ? '…' : formatMs(timer.displayMs, 2).replace(/\.\d+$/, '');
+      return settings.hideTime ? '…' : formatMs(timer.displayMs, settings.runningPrecision);
     }
     if (timer.phase === 'stopped' && lastPenalty === 'DNF') return 'DNF';
     if (timer.phase === 'stopped' && lastPenalty === '+2') return formatMs(timer.displayMs + 2000, settings.precision) + '+';
     return formatMs(timer.displayMs, settings.precision);
-  }, [timer.phase, timer.inspectionDisplayMs, timer.displayMs, inspectionLimit, lastPenalty, settings.hideTime, settings.precision]);
+  }, [timer.phase, timer.inspectionDisplayMs, timer.displayMs, inspectionLimit, lastPenalty, settings.hideTime, settings.precision, settings.runningPrecision]);
 
   const fontSize = `calc(clamp(64px, 14vw, 192px) * ${settings.timerFontScale})`;
 
