@@ -10,6 +10,7 @@ use std::sync::Arc;
 
 use wasm_bindgen::prelude::*;
 
+use crate::block222_solver::{block_label, Block222Solver, Y_NAMES};
 use crate::cross_solver::CrossSolver;
 use crate::cube_common::{state_space, string_to_alg, MOVE_NAMES};
 use crate::eo_cross_solver::EOSmallSolver;
@@ -52,6 +53,62 @@ fn sols_json(len: u32, sols: &[(String, String)]) -> String {
         .collect::<Vec<_>>()
         .join(",");
     format!("{{\"len\":{},\"sols\":[{}]}}", len, arr)
+}
+
+/// 2x2x2 块求解(1 角 + 3 棱)。表最小:mt_edge3 (~743KB) + mt_corn (~1.7KB),
+/// 全空间精确距离表构造时现场 BFS(253,440 态,毫秒级)——查长度 O(1),枚举首达即最优。
+/// 每视角 = 该底色 4 个贴底块;解前缀 = rot + y^k,`c` = 块标签(URF..DRB)。
+#[wasm_bindgen]
+pub struct Block222SolverWasm {
+    solver: Block222Solver,
+}
+
+#[wasm_bindgen]
+impl Block222SolverWasm {
+    #[wasm_bindgen(constructor)]
+    pub fn new(mt_edge3: &[u8], mt_corn: &[u8]) -> Block222SolverWasm {
+        let mt_e3 = Arc::new(MoveTable::from_bin(mt_edge3, state_space::EDGE3 as u32, 18));
+        let mt_c = Arc::new(MoveTable::from_bin(mt_corn, state_space::CORNER as u32, 18));
+        Block222SolverWasm {
+            solver: Block222Solver::from_tables(mt_e3, mt_c),
+        }
+    }
+
+    /// 6 视角最优步数(每视角 = 4 贴底块最小),顺序对应 ROTS。
+    pub fn solve(&self, scramble: &str) -> Vec<u32> {
+        let alg = string_to_alg(scramble);
+        self.solver.get_stats(&alg, &ROTS)
+    }
+
+    /// 单视角(face 0..5)最优步数。
+    pub fn solve_face(&self, scramble: &str, face: u32) -> u32 {
+        let alg = string_to_alg(scramble);
+        self.solver.get_stats(&alg, &[ROTS[(face as usize).min(5)]])[0]
+    }
+
+    /// 单视角多解 JSON(同 CrossSolverWasm::solve_moves 形状)。4 个贴底块合并枚举,
+    /// 按长度排序;`m` 前缀 = rot + y^k(1~2 个旋转 token),`c` = 块标签。
+    pub fn solve_moves(&self, scramble: &str, face: u32, extra: u32, cap: u32) -> String {
+        let alg = string_to_alg(scramble);
+        let fi = (face as usize).min(5);
+        let rot = ROTS[fi];
+        let (len, sols) = self.solver.enumerate_face(&alg, rot, extra, cap as usize);
+        let items: Vec<(String, String)> = sols
+            .iter()
+            .map(|s| {
+                let y = Y_NAMES[s.yk];
+                let frame = if rot.is_empty() {
+                    y.to_string()
+                } else if y.is_empty() {
+                    rot.to_string()
+                } else {
+                    format!("{} {}", rot, y)
+                };
+                (fmt_moves(&frame, &s.moves), block_label(fi, s.yk).to_string())
+            })
+            .collect();
+        sols_json(len, &items)
+    }
 }
 
 #[wasm_bindgen]
