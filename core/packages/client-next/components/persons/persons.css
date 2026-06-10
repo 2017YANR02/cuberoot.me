@@ -369,6 +369,12 @@ html[data-theme=dark] .wp-page {
 }
 .wp-row-selected .wp-event-icon { color: #4ade80; }
 .wp-sor-custom-label { display: flex; align-items: center; gap: 6px; }
+/* 自选三行(SoWR/SoCR/SoNR 镜像)整组淡绿底,与上方选中行同色系成一对 */
+.wp-pr-table tbody tr.wp-sor-custom td,
+.wp-pr-table tbody tr.wp-sor-custom th {
+    background: color-mix(in srgb, #4ade80 5%, transparent);
+}
+.wp-sor-custom-rowlabel { vertical-align: middle; }
 
 /* ── Tabs ─────────────────────────────────────────────────────────── */
 .wp-tabs-card { padding: 0; }
