@@ -14,7 +14,10 @@ use crate::block222_solver::{block_label, Block222Solver, Y_NAMES};
 use crate::block223_solver::{block223_label, Block223Solver};
 use crate::cross_solver::CrossSolver;
 use crate::cube_common::{state_space, string_to_alg, MOVE_NAMES};
+use crate::dr_solver::{dr_axis_label, DrSolver};
 use crate::eo_cross_solver::EOSmallSolver;
+use crate::eoline_solver::{eo_axis_label, eoline_label, EOLineSolver};
+use crate::f2b_solver::{f2b_label, F2BSolver};
 use crate::f2leo_solver::F2leoSolver;
 use crate::move_tables::MoveTable;
 use crate::pair_solver::PairSolver;
@@ -113,11 +116,12 @@ impl Block222SolverWasm {
     }
 }
 
-/// Roux 第一块(方块 / 1x2x3)+ Petrus(2x2x2 / 2x2x3)组合求解器。4 张小表:
+/// Roux 第一块(方块 / 1x2x3 / 双 1x2x3)+ Petrus(2x2x2 / 2x2x3)组合求解器。4 张小表:
 /// mt_edge3 (~743KB) + mt_corn2 (~36KB) + mt_edge2 (~38KB) + mt_corn (~1.7KB)。
 /// FB 方块与 2x2x2 全表构造时即建(微型/毫秒级);1x2x3 全表(5,322,240 态)与
-/// 2x2x3 启发式表惰性构建(首次相关查询现场 BFS,~秒级),两者共享 1x2x3 表。
-/// stage 编号:0=FB 方块 1=1x2x3 2=2x2x2 3=2x2x3。
+/// 2x2x3 启发式表惰性构建(首次相关查询现场 BFS,~秒级);2x2x3 与 f2b 共享 1x2x3 表
+/// (f2b 零额外构建:同一张表 y2 共轭双查 IDA*)。
+/// stage 编号:0=FB 方块 1=1x2x3 2=2x2x2 3=2x2x3 4=双 1x2x3(f2b)。
 #[wasm_bindgen]
 pub struct Roux223SolverWasm {
     mt_e3: Arc<MoveTable>,
@@ -127,6 +131,7 @@ pub struct Roux223SolverWasm {
     b222: Block222Solver,
     s1: RefCell<Option<RouxS1Solver>>,
     b223: RefCell<Option<Block223Solver>>,
+    f2b: RefCell<Option<F2BSolver>>,
 }
 
 #[wasm_bindgen]
@@ -147,6 +152,7 @@ impl Roux223SolverWasm {
             b222: Block222Solver::from_tables(mt_e3.clone(), mt_c),
             s1: RefCell::new(None),
             b223: RefCell::new(None),
+            f2b: RefCell::new(None),
             mt_e3,
             mt_c2,
             mt_e2,
@@ -168,7 +174,15 @@ impl Roux223SolverWasm {
         }
     }
 
-    /// 单阶段 6 视角(stage 0=FB方块 1=1x2x3 2=2x2x2 3=2x2x3),顺序对应 ROTS。
+    fn ensure_f2b(&self) {
+        self.ensure_s1();
+        if self.f2b.borrow().is_none() {
+            let s1 = self.s1.borrow().as_ref().unwrap().clone();
+            *self.f2b.borrow_mut() = Some(F2BSolver::from_s1(s1));
+        }
+    }
+
+    /// 单阶段 6 视角(stage 0=FB方块 1=1x2x3 2=2x2x2 3=2x2x3 4=双1x2x3),顺序对应 ROTS。
     pub fn solve_stage(&self, scramble: &str, stage: u32) -> Vec<u32> {
         let alg = string_to_alg(scramble);
         match stage {
@@ -178,6 +192,10 @@ impl Roux223SolverWasm {
                 self.s1.borrow().as_ref().unwrap().get_stats(&alg, &ROTS)
             }
             2 => self.b222.get_stats(&alg, &ROTS),
+            4 => {
+                self.ensure_f2b();
+                self.f2b.borrow().as_ref().unwrap().get_stats(&alg, &ROTS)
+            }
             _ => {
                 self.ensure_223();
                 self.b223.borrow().as_ref().unwrap().get_stats(&alg, &ROTS)
@@ -186,7 +204,8 @@ impl Roux223SolverWasm {
     }
 
     /// 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。`m` 前缀 =
-    /// rot + y^k;`c` = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名)。
+    /// rot + y^k;`c` = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名 /
+    /// f2b "D(LR)" 块对)。
     pub fn solve_moves(&self, scramble: &str, stage: u32, face: u32, extra: u32, cap: u32) -> String {
         let alg = string_to_alg(scramble);
         let fi = (face as usize).min(5);
@@ -246,6 +265,22 @@ impl Roux223SolverWasm {
                         .collect(),
                 )
             }
+            4 => {
+                self.ensure_f2b();
+                let b = self.f2b.borrow();
+                let (len, sols) = b.as_ref().unwrap().enumerate_face(&alg, rot, extra, cap as usize);
+                (
+                    len,
+                    sols.iter()
+                        .map(|s| {
+                            (
+                                fmt_moves(&frame(s.yk), &s.moves),
+                                f2b_label(fi, s.yk).to_string(),
+                            )
+                        })
+                        .collect(),
+                )
+            }
             _ => {
                 self.ensure_223();
                 let b = self.b223.borrow();
@@ -257,6 +292,103 @@ impl Roux223SolverWasm {
                             (
                                 fmt_moves(&frame(s.yk), &s.moves),
                                 block223_label(fi, s.yk).to_string(),
+                            )
+                        })
+                        .collect(),
+                )
+            }
+        };
+        sols_json(len, &items)
+    }
+}
+
+/// EOLine / DR 求解器(全自包含,**零表下载**):eo12/line/co8/slice 微 move 表与
+/// 全部距离表现场从内置运动学构建。EOLine 即时构建(~1MB BFS);DR 惰性
+/// (两张 ~1M 距离表,首次查询时建)。
+/// stage 编号:0=EO 1=EOLine 2=DR。
+#[wasm_bindgen]
+pub struct EoDrSolverWasm {
+    eoline: EOLineSolver,
+    dr: RefCell<Option<DrSolver>>,
+}
+
+#[wasm_bindgen]
+impl EoDrSolverWasm {
+    #[wasm_bindgen(constructor)]
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> EoDrSolverWasm {
+        EoDrSolverWasm {
+            eoline: EOLineSolver::new(),
+            dr: RefCell::new(None),
+        }
+    }
+
+    fn ensure_dr(&self) {
+        if self.dr.borrow().is_none() {
+            *self.dr.borrow_mut() = Some(DrSolver::new());
+        }
+    }
+
+    /// 单阶段 6 视角(stage 0=EO 1=EOLine 2=DR),顺序对应 ROTS。
+    /// EO/DR 只依赖轴:对面底色列天然同值。
+    pub fn solve_stage(&self, scramble: &str, stage: u32) -> Vec<u32> {
+        let alg = string_to_alg(scramble);
+        match stage {
+            0 => self.eoline.get_stats_eo(&alg, &ROTS),
+            1 => self.eoline.get_stats(&alg, &ROTS),
+            _ => {
+                self.ensure_dr();
+                self.dr.borrow().as_ref().unwrap().get_stats(&alg, &ROTS)
+            }
+        }
+    }
+
+    /// 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。`m` 前缀 =
+    /// rot + y^k;`c` = 目标标签(EO 轴 "FB" / EOLine "D(FB)" / DR 轴 "UD")。
+    pub fn solve_moves(&self, scramble: &str, stage: u32, face: u32, extra: u32, cap: u32) -> String {
+        let alg = string_to_alg(scramble);
+        let fi = (face as usize).min(5);
+        let rot = ROTS[fi];
+        let frame = |yk: usize| -> String {
+            let y = Y_NAMES[yk];
+            if rot.is_empty() {
+                y.to_string()
+            } else if y.is_empty() {
+                rot.to_string()
+            } else {
+                format!("{} {}", rot, y)
+            }
+        };
+        let (len, items): (u32, Vec<(String, String)>) = match stage {
+            0 | 1 => {
+                let (len, sols) =
+                    self.eoline
+                        .enumerate_face(&alg, rot, stage as usize, extra, cap as usize);
+                (
+                    len,
+                    sols.iter()
+                        .map(|s| {
+                            let label = if stage == 0 {
+                                eo_axis_label(fi, s.yk)
+                            } else {
+                                eoline_label(fi, s.yk)
+                            };
+                            (fmt_moves(&frame(s.yk), &s.moves), label.to_string())
+                        })
+                        .collect(),
+                )
+            }
+            _ => {
+                self.ensure_dr();
+                let b = self.dr.borrow();
+                let (len, sols) = b.as_ref().unwrap().enumerate_face(&alg, rot, extra, cap as usize);
+                (
+                    len,
+                    sols.iter()
+                        .map(|s| {
+                            (
+                                fmt_moves(&frame(s.yk), &s.moves),
+                                dr_axis_label(fi, s.yk).to_string(),
                             )
                         })
                         .collect(),

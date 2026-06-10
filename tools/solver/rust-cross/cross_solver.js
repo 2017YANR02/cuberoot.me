@@ -194,6 +194,71 @@ export class CrossSolverWasm {
 if (Symbol.dispose) CrossSolverWasm.prototype[Symbol.dispose] = CrossSolverWasm.prototype.free;
 
 /**
+ * EOLine / DR 求解器(全自包含,**零表下载**):eo12/line/co8/slice 微 move 表与
+ * 全部距离表现场从内置运动学构建。EOLine 即时构建(~1MB BFS);DR 惰性
+ * (两张 ~1M 距离表,首次查询时建)。
+ * stage 编号:0=EO 1=EOLine 2=DR。
+ */
+export class EoDrSolverWasm {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        EoDrSolverWasmFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_eodrsolverwasm_free(ptr, 0);
+    }
+    constructor() {
+        const ret = wasm.eodrsolverwasm_new();
+        this.__wbg_ptr = ret;
+        EoDrSolverWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。`m` 前缀 =
+     * rot + y^k;`c` = 目标标签(EO 轴 "FB" / EOLine "D(FB)" / DR 轴 "UD")。
+     * @param {string} scramble
+     * @param {number} stage
+     * @param {number} face
+     * @param {number} extra
+     * @param {number} cap
+     * @returns {string}
+     */
+    solve_moves(scramble, stage, face, extra, cap) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.eodrsolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, stage, face, extra, cap);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
+     * 单阶段 6 视角(stage 0=EO 1=EOLine 2=DR),顺序对应 ROTS。
+     * EO/DR 只依赖轴:对面底色列天然同值。
+     * @param {string} scramble
+     * @param {number} stage
+     * @returns {Uint32Array}
+     */
+    solve_stage(scramble, stage) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.eodrsolverwasm_solve_stage(this.__wbg_ptr, ptr0, len0, stage);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+}
+if (Symbol.dispose) EoDrSolverWasm.prototype[Symbol.dispose] = EoDrSolverWasm.prototype.free;
+
+/**
  * F2LEO / Pseudo F2LEO 浏览器内求解(count-only)。小表:复用 mt_edge2/edge4/corn/edge
  * + pt_cross(f2leo),pseudo 另现场建 4-seed cross + D-AUF xcross 剪枝表(~18MB)。
  * 不需要 pt_cross_C4E0 / huge 表。
@@ -311,11 +376,12 @@ export class F2leoSolverWasm {
 if (Symbol.dispose) F2leoSolverWasm.prototype[Symbol.dispose] = F2leoSolverWasm.prototype.free;
 
 /**
- * Roux 第一块(方块 / 1x2x3)+ Petrus(2x2x2 / 2x2x3)组合求解器。4 张小表:
+ * Roux 第一块(方块 / 1x2x3 / 双 1x2x3)+ Petrus(2x2x2 / 2x2x3)组合求解器。4 张小表:
  * mt_edge3 (~743KB) + mt_corn2 (~36KB) + mt_edge2 (~38KB) + mt_corn (~1.7KB)。
  * FB 方块与 2x2x2 全表构造时即建(微型/毫秒级);1x2x3 全表(5,322,240 态)与
- * 2x2x3 启发式表惰性构建(首次相关查询现场 BFS,~秒级),两者共享 1x2x3 表。
- * stage 编号:0=FB 方块 1=1x2x3 2=2x2x2 3=2x2x3。
+ * 2x2x3 启发式表惰性构建(首次相关查询现场 BFS,~秒级);2x2x3 与 f2b 共享 1x2x3 表
+ * (f2b 零额外构建:同一张表 y2 共轭双查 IDA*)。
+ * stage 编号:0=FB 方块 1=1x2x3 2=2x2x2 3=2x2x3 4=双 1x2x3(f2b)。
  */
 export class Roux223SolverWasm {
     __destroy_into_raw() {
@@ -350,7 +416,8 @@ export class Roux223SolverWasm {
     }
     /**
      * 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。`m` 前缀 =
-     * rot + y^k;`c` = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名)。
+     * rot + y^k;`c` = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名 /
+     * f2b "D(LR)" 块对)。
      * @param {string} scramble
      * @param {number} stage
      * @param {number} face
@@ -373,7 +440,7 @@ export class Roux223SolverWasm {
         }
     }
     /**
-     * 单阶段 6 视角(stage 0=FB方块 1=1x2x3 2=2x2x2 3=2x2x3),顺序对应 ROTS。
+     * 单阶段 6 视角(stage 0=FB方块 1=1x2x3 2=2x2x2 3=2x2x3 4=双1x2x3),顺序对应 ROTS。
      * @param {string} scramble
      * @param {number} stage
      * @returns {Uint32Array}
@@ -546,6 +613,9 @@ const Block222SolverWasmFinalization = (typeof FinalizationRegistry === 'undefin
 const CrossSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_crosssolverwasm_free(ptr, 1));
+const EoDrSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_eodrsolverwasm_free(ptr, 1));
 const F2leoSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_f2leosolverwasm_free(ptr, 1));
