@@ -1,5 +1,86 @@
 /* @ts-self-types="./cross_solver.d.ts" */
 
+/**
+ * 2x2x2 块求解(1 角 + 3 棱)。表最小:mt_edge3 (~743KB) + mt_corn (~1.7KB),
+ * 全空间精确距离表构造时现场 BFS(253,440 态,毫秒级)——查长度 O(1),枚举首达即最优。
+ * 每视角 = 该底色 4 个贴底块;解前缀 = rot + y^k,`c` = 块标签(URF..DRB)。
+ */
+export class Block222SolverWasm {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        Block222SolverWasmFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_block222solverwasm_free(ptr, 0);
+    }
+    /**
+     * @param {Uint8Array} mt_edge3
+     * @param {Uint8Array} mt_corn
+     */
+    constructor(mt_edge3, mt_corn) {
+        const ptr0 = passArray8ToWasm0(mt_edge3, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passArray8ToWasm0(mt_corn, wasm.__wbindgen_malloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ret = wasm.block222solverwasm_new(ptr0, len0, ptr1, len1);
+        this.__wbg_ptr = ret;
+        Block222SolverWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * 6 视角最优步数(每视角 = 4 贴底块最小),顺序对应 ROTS。
+     * @param {string} scramble
+     * @returns {Uint32Array}
+     */
+    solve(scramble) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.block222solverwasm_solve(this.__wbg_ptr, ptr0, len0);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * 单视角(face 0..5)最优步数。
+     * @param {string} scramble
+     * @param {number} face
+     * @returns {number}
+     */
+    solve_face(scramble, face) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.block222solverwasm_solve_face(this.__wbg_ptr, ptr0, len0, face);
+        return ret >>> 0;
+    }
+    /**
+     * 单视角多解 JSON(同 CrossSolverWasm::solve_moves 形状)。4 个贴底块合并枚举,
+     * 按长度排序;`m` 前缀 = rot + y^k(1~2 个旋转 token),`c` = 块标签。
+     * @param {string} scramble
+     * @param {number} face
+     * @param {number} extra
+     * @param {number} cap
+     * @returns {string}
+     */
+    solve_moves(scramble, face, extra, cap) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.block222solverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, face, extra, cap);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+}
+if (Symbol.dispose) Block222SolverWasm.prototype[Symbol.dispose] = Block222SolverWasm.prototype.free;
+
 export class CrossSolverWasm {
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
@@ -380,6 +461,9 @@ function __wbg_get_imports() {
     };
 }
 
+const Block222SolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_block222solverwasm_free(ptr, 1));
 const CrossSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_crosssolverwasm_free(ptr, 1));

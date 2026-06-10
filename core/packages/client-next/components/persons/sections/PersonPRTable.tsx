@@ -322,8 +322,9 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
         // 自选组合三行:与上方主行同构(SoWR/SoCR/SoNR 各一行,列对齐),person-subset 现算;
         // socr 在 ranks_continent 灌数据前为 null(该行留 —,stats 管道跑完自动点亮)
         const pending = subsetLoading || !subset;
+        // 重算期间(增删项目)不留旧值原地误导 — 整组回到 … 占位,新结果到了一起换
         const toDisp = (cell: SorMetricCell | null | undefined): Disp | null =>
-          cell ? { rank: cell.rank, total: cell.total, continentRank: cell.continentRank, countryRank: cell.countryRank } : null;
+          !pending && cell ? { rank: cell.rank, total: cell.total, continentRank: cell.continentRank, countryRank: cell.countryRank } : null;
         return METRICS.map((m, mi) => {
           const s = toDisp(subset?.single?.[m.key]);
           const a = toDisp(subset?.average?.[m.key]);
