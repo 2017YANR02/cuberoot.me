@@ -175,6 +175,20 @@ export async function fetchPersonSor(wcaId: string, inclCancelled = false): Prom
   return json;
 }
 
+// 自选组合:任意项目子集下该选手的名次和 + 世界名次(PR 表行多选驱动,/sum-of-ranks/person-subset 现算).
+// 不走 localStorage(浏览器 HTTP 缓存 300s + nginx 24h 已够);events 按 RANK_EVENTS 顺序拼,URL 唯一保缓存命中.
+export interface PersonSubsetResponse {
+  wcaId: string; isAvg: boolean; events: string[];
+  total: number | null; rank: number | null; eventsDone: number;
+}
+
+export async function fetchPersonSubset(wcaId: string, events: string[], isAvg: boolean, signal?: AbortSignal): Promise<PersonSubsetResponse> {
+  const qs = `wcaId=${encodeURIComponent(wcaId)}&isAvg=${isAvg ? '1' : '0'}&events=${encodeURIComponent(events.join(','))}`;
+  const res = await fetch(apiUrl(`/v1/wca/sum-of-ranks/person-subset?${qs}`), { signal });
+  if (!res.ok) throw new Error(`sum-of-ranks/person-subset ${res.status}`);
+  return (await res.json()) as PersonSubsetResponse;
+}
+
 export interface PersonRankHistoryRow {
   year: number;
   /** 月级数据有 month (1..12),年级数据没有 */

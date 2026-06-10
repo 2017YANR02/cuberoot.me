@@ -8,7 +8,8 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { fetchPersonBestRanks, fetchPersonSor, type WcaPersonProfile, type WcaResultRow, type PersonBestRanksResponse, type PersonSorResponse, type SorMetricCell, type SorMetricBest } from '@/lib/wca-person-api';
+import { fetchPersonBestRanks, fetchPersonSor, fetchPersonSubset, type WcaPersonProfile, type WcaResultRow, type PersonBestRanksResponse, type PersonSorResponse, type SorMetricCell, type SorMetricBest } from '@/lib/wca-person-api';
+import { ClearButton } from '@/components/ClearButton';
 import { countryName } from '@/lib/country-name';
 import { countPodiumByEvent } from '../logic/podium';
 
@@ -53,6 +54,14 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
   const [hist, setHist] = useState<PersonBestRanksResponse | null>(null);
   const [histLoading, setHistLoading] = useState(false);
   const [histError, setHistError] = useState<string | null>(null);
+  // 自选组合:点击项目行多选,组合名次和 + 世界名次落在底部 Σ 块的「自选」行(仅当前模式)
+  const [selEvents, setSelEvents] = useState<ReadonlySet<string>>(new Set());
+  useEffect(() => { setSelEvents(new Set()); }, [profile.person.wca_id]);
+  const toggleEvent = (eid: string) => setSelEvents(prev => {
+    const next = new Set(prev);
+    if (next.has(eid)) next.delete(eid); else next.add(eid);
+    return next;
+  });
 
   // lazy load 历史最佳排名 数据
   useEffect(() => {
@@ -162,9 +171,16 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
 
               const pod = podium.get(eid);
 
+              const selectable = mode === 'current';
+              const selected = selEvents.has(eid);
               return (
-                <tr key={eid}>
-                  <th scope="row" className="wp-cell-event">
+                <tr
+                  key={eid}
+                  className={`${selectable ? 'wp-row-selectable' : ''}${selected ? ' wp-row-selected' : ''}`}
+                  onClick={selectable ? () => toggleEvent(eid) : undefined}
+                  aria-selected={selectable ? selected : undefined}
+                >
+                  <th scope="row" className="wp-cell-event" title={selectable ? t('点击多选项目,自选组合的名次和落在下方「自选」行', 'Click rows to multi-select events; the combined sum of ranks appears in the Custom row below') : undefined}>
                     <span className="wp-event-inner">
                       <EventIcon event={eid} className="wp-event-icon" />
                     </span>
@@ -184,7 +200,7 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
               );
             })}
           </tbody>
-          <PersonSorSummary wcaId={profile.person.wca_id} isZh={isZh} showPodium={showPodium} countryIso2={profile.person.country_iso2} historical={mode === 'historical'} inclCancelled={inclCancelled} />
+          <PersonSorSummary wcaId={profile.person.wca_id} isZh={isZh} showPodium={showPodium} countryIso2={profile.person.country_iso2} historical={mode === 'historical'} inclCancelled={inclCancelled} selEvents={selEvents} onClearSel={() => setSelEvents(new Set())} />
         </table>
       </div>
     </section>
@@ -196,7 +212,7 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
 //   名次落各自 scope 列(与逐项名次对齐),Σ和值落「成绩」列.
 //   跟随表头「当前 / 历史最佳排名」toggle:historical=true 时整块显示历史最佳(名次 + 年份),否则显示当前.
 //   SoCR 数据未填充(socr=null)时该行显示占位 —,不误显.数据 lazy fetch;整块无数据时不渲染.
-function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, inclCancelled }: { wcaId: string; isZh: boolean; showPodium: boolean; countryIso2: string; historical: boolean; inclCancelled: boolean }) {
+function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, inclCancelled, selEvents, onClearSel }: { wcaId: string; isZh: boolean; showPodium: boolean; countryIso2: string; historical: boolean; inclCancelled: boolean; selEvents: ReadonlySet<string>; onClearSel: () => void }) {
   const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
   const [sor, setSor] = useState<PersonSorResponse | null>(null);
   // 历史最佳只有 17 口径(sor_historical_best 无废止维度)→ historical 模式忽略开关,免得三行全空
@@ -210,6 +226,31 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
       .catch(() => { /* 端点未上线 / 选手无 SOR:静默隐藏 */ });
     return () => { cancelled = true; };
   }, [wcaId, effCancelled]);
+
+  // 自选组合(行多选驱动):单次 + 平均两路并发现算,防抖 450ms;洲际/地区名次暂无(端点只算世界 scope)
+  type SubsetCell = { total: number; rank: number } | null;
+  const [subset, setSubset] = useState<{ single: SubsetCell; average: SubsetCell } | null>(null);
+  const [subsetLoading, setSubsetLoading] = useState(false);
+  useEffect(() => {
+    if (selEvents.size === 0) { setSubset(null); setSubsetLoading(false); return; }
+    setSubsetLoading(true);
+    const ctrl = new AbortController();
+    const events = ALL_EVENT_IDS.filter(e => selEvents.has(e)); // RANK_EVENTS 顺序 → URL 唯一保缓存命中
+    const debounce = setTimeout(() => {
+      const timer = setTimeout(() => ctrl.abort(), 20000);
+      Promise.all([false, true].map(avg =>
+        fetchPersonSubset(wcaId, events, avg, ctrl.signal).catch(() => null),
+      )).then(([s, a]) => {
+        if (ctrl.signal.aborted) return;
+        setSubset({
+          single: s && s.rank != null && s.total != null ? { total: s.total, rank: s.rank } : null,
+          average: a && a.rank != null && a.total != null ? { total: a.total, rank: a.rank } : null,
+        });
+        setSubsetLoading(false);
+      }).finally(() => clearTimeout(timer));
+    }, 450);
+    return () => { clearTimeout(debounce); ctrl.abort(); };
+  }, [selEvents, wcaId]);
 
   if (!sor) return null;
   // 17 口径全空 = 选手无 SOR → 整块隐藏;21 口径空(_21 列未填充)时保留行显示占位,不让开关把块切没
@@ -277,6 +318,41 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
           </tr>
         );
       })}
+      {!historical && selEvents.size > 0 && (() => {
+        // 自选组合行:上表行多选驱动,世界名次 + 名次和现算;洲际/地区列暂空(端点只算世界 scope,后续补)
+        const pending = subsetLoading || !subset;
+        const rcell = (d: { rank: number } | null) => (
+          <td className="wp-sor-rcell">
+            {pending && !d ? <span className="wp-rank wp-rank-tier-mute">…</span> : d ? <RankCell r={d.rank} /> : <span className="wp-rank wp-rank-tier-mute">—</span>}
+          </td>
+        );
+        const scell = (d: { total: number } | null) => (
+          <td className="wp-cell-result wp-sor-scell">
+            {pending && !d ? <span className="wp-sor-smute">…</span> : d ? <span className="wp-sor-sum">{d.total}</span> : <span className="wp-sor-smute">—</span>}
+          </td>
+        );
+        const s = subset?.single ?? null;
+        const a = subset?.average ?? null;
+        return (
+          <tr className="wp-sor-row wp-sor-custom">
+            <th scope="row" className="wp-cell-event wp-sor-rowlabel" title={t(`自选组合(已选 ${selEvents.size} 项):名次和与按它重排的世界名次;点上方项目行增删`, `Custom combo (${selEvents.size} events): sum of ranks + world position when re-ranked by it; click rows above to edit`)}>
+              <span className="wp-sor-abbr wp-sor-custom-label">
+                {t('自选', 'Custom')}
+                <ClearButton variant="standalone" className="wp-sor-custom-clear" onClick={onClearSel} title={t('清除所选项目', 'Clear selection')} />
+              </span>
+            </th>
+            {rcell(s)}
+            <td className="wp-sor-blank" />
+            <td className="wp-sor-blank" />
+            {scell(s)}
+            {scell(a)}
+            {rcell(a)}
+            <td className="wp-sor-blank" />
+            <td className="wp-sor-blank" />
+            {showPodium && <><td className="wp-sor-blank" /><td className="wp-sor-blank" /><td className="wp-sor-blank" /></>}
+          </tr>
+        );
+      })()}
     </tbody>
   );
 }
