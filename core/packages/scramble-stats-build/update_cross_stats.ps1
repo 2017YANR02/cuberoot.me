@@ -22,7 +22,7 @@ param(
   [string]$SourceCsv,     # 测试源 (input 形状 csv) 替代下载 export
   [switch]$NoPublish,     # 跑完只更新本地 csv + JSON, 不 commit/push/scp
   [switch]$SkipSolve,     # 调试: 跳过 incremental + std 解算, 复用上次取数/solver 产出, 直接走追加/变体/发布
-  [string[]]$Variants = @('eo','pseudo','pseudo_pair','pair','f2leo','pseudo_f2leo','222'),  # 跟 std 锁步补缺的全部 7 变体 (@()=只 std)。瓶颈始终是 eo ~0.9/s; 想快跑显式 -Variants eo,pseudo,pseudo_pair 跳过新加的 pair/f2leo 系
+  [string[]]$Variants = @('eo','pseudo','pseudo_pair','pair','f2leo','pseudo_f2leo','222','roux','223'),  # 跟 std 锁步补缺的全部 9 变体 (@()=只 std)。瓶颈始终是 eo ~0.9/s; 想快跑显式 -Variants eo,pseudo,pseudo_pair 跳过新加的 pair/f2leo 系
   [int]$ChunkSize = 20000, # 显式传则覆盖所有变体的分块大小; 不传则用每变体默认(见 $VARIANT_CHUNK: eo/pair=2000, 其余=20000)。逐块追加, 中断只丢当前块
   [int]$MaxChunks = 0,     # >0: 每个变体最多跑 N 块就停, 之后照常重算+发布(还差的下次 run 自动续)。0=补满。用于"只跑一两块"而无需人工盯/中途 kill
   [switch]$PublishOnly,    # 跳过取数/解算/变体, 直接用当前 CSV 状态重算 distribution+comp-steps 并发布(把已落盘但未发布的累积变更推上线)
@@ -64,6 +64,8 @@ $VARIANT_EXE = @{
   f2leo        = 'f2leo_analyzer.exe'
   pseudo_f2leo = 'pseudo_f2leo_analyzer.exe'
   '222'        = 'block222_analyzer.exe'   # 键必须字符串: $Name 是 string, int 键查不到
+  roux         = 'roux_analyzer.exe'       # FB 方块 + 1x2x3 双阶段, 全表直查
+  '223'        = 'block223_analyzer.exe'   # Petrus 2x2x3, IDA* (h = max(s1 全表, 角2+DB/DF 表))
 }
 
 # 每变体默认 chunk(显式 -ChunkSize 覆盖全部)。analyzer 攒完整块才写盘 + 追加 = 中断丢在飞的整块,
@@ -77,6 +79,8 @@ $VARIANT_CHUNK = @{
   f2leo        = 20000
   pseudo_f2leo = 20000
   '222'        = 200000   # 查表零搜索 ~1.25M/s, 一块秒级
+  roux         = 200000   # 同 222 全表直查, 一块秒级
+  '223'        = 50000    # IDA* ~19k/s (WCA 集; 难题集 ~4.4k/s), 一块数秒
 }
 
 # 实测速率 (条/秒, 旧 16 核满核 huge 表全模式基准; 仅向导估时用, 见 RUNBOOK)。std ~115/s。
@@ -89,6 +93,8 @@ $VARIANT_RATE = @{
   f2leo        = 31
   pseudo_f2leo = 81
   '222'        = 1250000
+  roux         = 600000
+  '223'        = 19000
 }
 
 function Step($m){ Write-Host "`n=== $m ===" -ForegroundColor Cyan }
@@ -316,7 +322,7 @@ function Estimate($count,$rate){
 # 交互向导: 取数后调。扫描各变体待补 -> 弹问题(变体/每变体几块/是否发布)-> 总览确认。
 # 返回 @{Variants;MaxChunks;NoPublish} 套用到主流程; 取消返回 $null。
 function Invoke-CrossWizard([int]$nNew){
-  $order    = @('eo','pseudo','pseudo_pair','pair','f2leo','pseudo_f2leo','222')
+  $order    = @('eo','pseudo','pseudo_pair','pair','f2leo','pseudo_f2leo','222','roux','223')
   $coreFast = @('eo','pseudo','pseudo_pair')   # [D] 快速收窄到的"核心快"组; 全 6 现都是默认, 向导初始全勾选
   Write-Host "`n================ 交互向导 ================" -ForegroundColor Magenta
   Write-Host ("新 std 打乱: {0} 条  (≈{1} 解算)" -f $nNew,(Estimate $nNew 115)) -ForegroundColor White

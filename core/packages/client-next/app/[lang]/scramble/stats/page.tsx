@@ -77,7 +77,7 @@ function eventLabel(e: string, isZh: boolean): string {
   return m ? ((i18n.language === 'zh-Hant' ? (m.zhHant ?? m.zh) : (i18n.language.startsWith('zh') ? m.zh : m.en))) : e;
 }
 
-type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | '222';
+type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | '222' | 'roux' | '223';
 type YMode = 'percent' | 'count';
 type ChartMode = 'pdf' | 'cdf';
 
@@ -102,6 +102,10 @@ const VARIANT_LABEL: Record<VariantKey, { en: string; zh: string
       zhHant: "偽 F2LEO"
 },
   '222': { en: '2x2x2', zh: '2x2x2' },
+  roux: { en: 'Roux FB', zh: '桥式第一块',
+      zhHant: "橋式第一塊"
+},
+  '223': { en: '2x2x3', zh: '2x2x3' },
 };
 
 const STAGE_LABEL: Record<string, { en: string; zh: string
@@ -140,6 +144,15 @@ const STAGE_LABEL: Record<string, { en: string; zh: string
   eo_xxxxcross: { en: 'XXXXCross', zh: 'XXXXCross' },
   block222: { en: '2x2x2 Block', zh: '2x2x2 块',
       zhHant: "2x2x2 塊"
+},
+  fbsquare: { en: 'FB Square', zh: '第一块方块',
+      zhHant: "第一塊方塊"
+},
+  rouxs1: { en: 'First Block', zh: '第一块',
+      zhHant: "第一塊"
+},
+  block223: { en: '2x2x3 Block', zh: '2x2x3 块',
+      zhHant: "2x2x3 塊"
 },
 };
 

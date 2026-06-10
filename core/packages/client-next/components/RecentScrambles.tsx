@@ -29,7 +29,7 @@ interface RecentScramblesJson {
   rank: Record<string, Record<string, Record<string, Record<string, [string, ColorLetter][]>>>>;
 }
 
-const VARIANT_ORDER = ['std', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo'];
+const VARIANT_ORDER = ['std', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo', '222', 'roux', '223'];
 const VARIANT_LABEL: Record<string, { zh: string; en: string
         zhHant?: string;
  }> = {
@@ -50,9 +50,14 @@ const VARIANT_LABEL: Record<string, { zh: string; en: string
   pseudo_f2leo: { zh: '伪 F2LEO', en: 'Pseudo F2LEO',
       zhHant: "偽 F2LEO"
 },
+  '222': { zh: '2x2x2', en: '2x2x2' },
+  roux: { zh: '桥式第一块', en: 'Roux FB',
+      zhHant: "橋式第一塊"
+},
+  '223': { zh: '2x2x3', en: '2x2x3' },
 };
 
-const METRIC_ORDER = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc'];
+const METRIC_ORDER = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc', 'block222', 'fbsquare', 'rouxs1', 'block223'];
 const METRIC_LABEL: Record<string, { zh: string; en: string
         zhHant?: string;
  }> = {
@@ -61,6 +66,18 @@ const METRIC_LABEL: Record<string, { zh: string; en: string
   xxc: { zh: 'XXCross', en: 'XXCross' },
   xxxc: { zh: 'XXXCross', en: 'XXXCross' },
   xxxxc: { zh: 'XXXXCross', en: 'XXXXCross' },
+  block222: { zh: '2x2x2 块', en: '2x2x2 Block',
+      zhHant: "2x2x2 塊"
+},
+  fbsquare: { zh: '第一块方块', en: 'FB Square',
+      zhHant: "第一塊方塊"
+},
+  rouxs1: { zh: '第一块', en: 'First Block',
+      zhHant: "第一塊"
+},
+  block223: { zh: '2x2x3 块', en: '2x2x3 Block',
+      zhHant: "2x2x3 塊"
+},
 };
 
 export default function RecentScrambles({ lang }: Props) {

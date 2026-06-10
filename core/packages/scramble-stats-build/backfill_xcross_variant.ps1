@@ -12,7 +12,7 @@
 #      pwsh backfill_xcross_variant.ps1 -Variant pseudo_f2leo                 (补满, 14 线程)
 [CmdletBinding()]
 param(
-  [ValidateSet('f2leo','pseudo_f2leo','222')]
+  [ValidateSet('f2leo','pseudo_f2leo','222','roux','223')]
   [string]$Variant = 'pseudo_f2leo',
   [double]$Hours = 0,        # >0: 本次最多跑几小时 (墙钟), 到点 chunk 边界停; 0=补满不限时
   [int]$Threads = 14,        # RAYON 线程数 (全局上限 14)
@@ -32,7 +32,7 @@ $StatDir   = Join-Path $SetDir 'stat'
 $WorkDir   = Join-Path $SetDir '_backfill'
 $null = New-Item -ItemType Directory -Force -Path $WorkDir
 
-$EXE = @{ f2leo = 'f2leo_analyzer.exe'; pseudo_f2leo = 'pseudo_f2leo_analyzer.exe'; '222' = 'block222_analyzer.exe' }
+$EXE = @{ f2leo = 'f2leo_analyzer.exe'; pseudo_f2leo = 'pseudo_f2leo_analyzer.exe'; '222' = 'block222_analyzer.exe'; roux = 'roux_analyzer.exe'; '223' = 'block223_analyzer.exe' }
 $exe = Join-Path $RelDir $EXE[$Variant]
 if(-not (Test-Path $exe)){ throw "analyzer 不存在: $exe" }
 $csv = Join-Path $StatDir "$Variant.csv"

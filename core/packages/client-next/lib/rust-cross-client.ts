@@ -11,7 +11,7 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260610a';
+const V = 'v=20260610b';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -26,6 +26,7 @@ export const TABLE_BYTES: Record<string, number> = {
   mt_edge3: 760332,
   mt_edge4: 18247692,
   mt_corn: 1740,
+  mt_corn2: 36300,
   mt_edge: 1740,
   mt_eo12: 147468,
   mt_eo12_alt: 147468,
@@ -33,7 +34,7 @@ export const TABLE_BYTES: Record<string, number> = {
 };
 
 // 各 need 首次加载的表清单 —— 必须与 cross-solver-worker.js 的 init 分支严格一致。
-export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222', string[]> = {
+export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223', string[]> = {
   cross: ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
   f2leo: ['pt_cross', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
   variant: [
@@ -41,6 +42,7 @@ export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222', stri
     'pt_cross', 'pt_ep4eo12', 'mt_edge2', 'mt_eo12', 'mt_eo12_alt', 'mt_ep4', 'pt_pscross',
   ],
   block222: ['mt_edge3', 'mt_corn'],
+  roux223: ['mt_edge3', 'mt_corn2', 'mt_edge2', 'mt_corn'],
 };
 
 /** 单条解法:m = 带视角前缀的步骤串;c = 该解的 F2L 槽位标签(如 "BL FR"),无槽阶段为空串。
@@ -105,6 +107,15 @@ export interface RustCrossPool {
     face: number,
     opts?: { extra?: number; cap?: number },
   ): Promise<MovesTimed>;
+  /** Roux/Petrus 块单阶段 6 视角(stage 0=FB方块 1=1x2x3 2=2x2x2 3=2x2x3),物理面序 z0/z2/z3/z1/x3/x1。 */
+  solveRoux223Stage(scramble: string, stage: number): Promise<number[]>;
+  /** Roux/Petrus 块单视角多解。前缀 = rot + y^k,c = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名)。 */
+  solveRoux223Moves(
+    scramble: string,
+    stage: number,
+    face: number,
+    opts?: { extra?: number; cap?: number },
+  ): Promise<MovesTimed>;
   /** 丢弃所有「排队未派发」的任务(已在 worker 里跑的 ≤size 个无法中断)。切变体/打乱集时调,
    *  避免新请求(如快 cross)排在旧变体一堆慢任务后面干等。被丢的任务 reject('cancelled')。 */
   clearQueue(): void;
@@ -125,7 +136,7 @@ interface PoolWorker {
   dead: boolean;
 }
 
-export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | 'variant' | 'block222' = 'cross'): RustCrossPool {
+export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' = 'cross'): RustCrossPool {
   const size = Math.max(1, maxSize);
   const all: PoolWorker[] = [];
   const idle: PoolWorker[] = [];
@@ -212,7 +223,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
       pw.job = null;
       if (job) {
         if (m.type === 'face') job.resolve({ value: m.value, ms: m.ms });
-        else if (m.type === 'moves' || m.type === 'variant_moves' || m.type === 'f2leo_moves' || m.type === 'block222_moves') job.resolve({ ...m.data, ms: m.ms });
+        else if (m.type === 'moves' || m.type === 'variant_moves' || m.type === 'f2leo_moves' || m.type === 'block222_moves' || m.type === 'roux223_moves') job.resolve({ ...m.data, ms: m.ms });
         else job.resolve(m.values);
       }
       assign(pw);
@@ -284,6 +295,15 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
     solveBlock222Moves(scramble, face, opts = {}) {
       return submit({
         type: 'block222_moves', id: nextId++, scramble, face,
+        extra: opts.extra ?? 0, cap: opts.cap ?? 20,
+      }) as Promise<MovesTimed>;
+    },
+    solveRoux223Stage(scramble, stage) {
+      return submit({ type: 'roux223_stage', id: nextId++, scramble, stage }) as Promise<number[]>;
+    },
+    solveRoux223Moves(scramble, stage, face, opts = {}) {
+      return submit({
+        type: 'roux223_moves', id: nextId++, scramble, stage, face,
         extra: opts.extra ?? 0, cap: opts.cap ?? 20,
       }) as Promise<MovesTimed>;
     },

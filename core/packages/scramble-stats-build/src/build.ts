@@ -103,6 +103,24 @@ const VARIANTS: VariantSpec[] = [
     angleToColor: ANGLE_COLOR_STD,
     colFor: (stage, angle) => `${stage}_${angle}`,
   },
+  {
+    // Roux 第一块:fbsquare = FB 方块(1角+2棱, 每底色 8 目标最小);rouxs1 = 1x2x3(每底色 4 块最小)
+    key: 'roux',
+    file: 'roux.csv',
+    id_col: 'id',
+    stages: ['fbsquare', 'rouxs1'],
+    angleToColor: ANGLE_COLOR_STD,
+    colFor: (stage, angle) => `${stage}_${angle}`,
+  },
+  {
+    // Petrus 2x2x3(2角+5棱);单阶段。每角度列 = 该底色 4 个 2x2x3 块的最小步数
+    key: '223',
+    file: '223.csv',
+    id_col: 'id',
+    stages: ['block223'],
+    angleToColor: ANGLE_COLOR_STD,
+    colFor: (stage, angle) => `${stage}_${angle}`,
+  },
 ];
 
 interface Hist {

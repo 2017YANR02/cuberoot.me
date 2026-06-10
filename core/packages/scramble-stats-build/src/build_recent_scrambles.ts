@@ -42,8 +42,10 @@ const SUBSETS: { key: string; colors: string[] }[] = [
   { key: subsetKey(ALL6), colors: [...ALL6] },
 ];
 
-interface Variant { key: string; file: string; stages: string[] }
+interface Variant { key: string; file: string; stages: string[]; metrics?: string[] }
 // stages mirror build.ts VARIANTS; std/eo = 5 stages, the rest = 4 (no xxxxcross).
+// metrics 缺省 = 按位置映射 METRICS(cross/xc/...);块类变体(222/roux/223)的阶段不是
+// 十字递进, 直接用 stage 名当 metric 键, 客户端 METRIC_LABEL 同名注册。
 const VARIANTS: Variant[] = [
   { key: 'std', file: 'std.csv', stages: ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'] },
   { key: 'eo', file: 'eo.csv', stages: ['eo_cross', 'eo_xcross', 'eo_xxcross', 'eo_xxxcross', 'eo_xxxxcross'] },
@@ -52,6 +54,9 @@ const VARIANTS: Variant[] = [
   { key: 'pair', file: 'pair.csv', stages: ['cross_pair', 'xcross_pair', 'xxcross_pair', 'xxxcross_pair'] },
   { key: 'f2leo', file: 'f2leo.csv', stages: ['f2leo_cross', 'f2leo_xcross', 'f2leo_xxcross', 'f2leo_xxxcross'] },
   { key: 'pseudo_f2leo', file: 'pseudo_f2leo.csv', stages: ['pseudo_f2leo_cross', 'pseudo_f2leo_xcross', 'pseudo_f2leo_xxcross', 'pseudo_f2leo_xxxcross'] },
+  { key: '222', file: '222.csv', stages: ['block222'], metrics: ['block222'] },
+  { key: 'roux', file: 'roux.csv', stages: ['fbsquare', 'rouxs1'], metrics: ['fbsquare', 'rouxs1'] },
+  { key: '223', file: '223.csv', stages: ['block223'], metrics: ['block223'] },
 ];
 
 interface NewMeta { scramble: string; compId: string; event: string; round: string; group: string; num: number; extra: boolean }
@@ -135,10 +140,11 @@ async function main() {
   for (const v of VARIANTS) {
     const csvPath = path.join(csvDir, v.file);
     if (!fs.existsSync(csvPath)) { console.log(`[recent-scrambles] skip ${v.key} (no ${v.file})`); continue; }
+    const mkeys = v.metrics ?? METRICS;
     const vr: Record<string, Record<string, StepBuckets>> = {};
     for (let si = 0; si < v.stages.length; si++) {
-      vr[METRICS[si]] = {};
-      for (const s of SUBSETS) vr[METRICS[si]][s.key] = {};
+      vr[mkeys[si]] = {};
+      for (const s of SUBSETS) vr[mkeys[si]][s.key] = {};
     }
     const colIdx: Record<string, Record<string, number>> = {}; // metric -> color -> col index
     const rl = readline.createInterface({ input: fs.createReadStream(csvPath, 'utf-8'), crlfDelay: Infinity });
@@ -152,7 +158,7 @@ async function main() {
         const idxMap = new Map<string, number>();
         cols.forEach((h, i) => idxMap.set(h, i));
         for (let si = 0; si < v.stages.length; si++) {
-          const m = METRICS[si];
+          const m = mkeys[si];
           colIdx[m] = {};
           for (const c of COLORS) {
             const col = `${v.stages[si]}_${COLOR_ANGLE[c]}`;
@@ -168,7 +174,7 @@ async function main() {
       const parts = line.split(',');
       const id = parts[0];
       for (let si = 0; si < v.stages.length; si++) {
-        const m = METRICS[si];
+        const m = mkeys[si];
         const vals: Record<string, number> = {};
         for (const c of COLORS) vals[c] = Number(parts[colIdx[m][c]]);
         for (const s of SUBSETS) {

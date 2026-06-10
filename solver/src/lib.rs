@@ -7,8 +7,10 @@ pub mod move_tables;
 pub mod prune_tables;
 
 pub mod block222_solver;
+pub mod block223_solver;
 pub mod cross_solver;
 pub mod executor;
+pub mod roux_s1_solver;
 pub mod xcross_solver;
 
 // --- native-only(依赖 rayon / 磁盘表生成 / mmap manager,WASM 不编)---

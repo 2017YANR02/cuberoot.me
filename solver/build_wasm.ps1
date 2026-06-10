@@ -30,7 +30,7 @@ wasm-bindgen $wasm --out-dir $out --target web --out-name cross_solver
 Write-Host "[3/4] gzip tables..." -ForegroundColor Cyan
 $tdir = Join-Path $out "tables"
 New-Item -ItemType Directory -Force -Path $tdir | Out-Null
-$names = @("pt_cross", "pt_cross_C4E0", "mt_edge2", "mt_edge3", "mt_edge4", "mt_corn", "mt_edge", "pt_cross_ins_C4", "pt_pair_C4E0", "pt_ep4eo12", "mt_eo12", "mt_eo12_alt", "mt_ep4", "pt_pscross")
+$names = @("pt_cross", "pt_cross_C4E0", "mt_edge2", "mt_edge3", "mt_edge4", "mt_corn", "mt_corn2", "mt_edge", "pt_cross_ins_C4", "pt_pair_C4E0", "pt_ep4eo12", "mt_eo12", "mt_eo12_alt", "mt_ep4", "pt_pscross")
 foreach ($n in $names) {
   $src = Join-Path $root "tables\$n.bin"
   $dst = Join-Path $tdir "$n.bin.gz"
