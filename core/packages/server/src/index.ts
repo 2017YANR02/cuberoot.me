@@ -26,6 +26,7 @@ import { wcaRecentRecordsRoutes, startRecentRecordsPoller } from './routes/wca_r
 import { timerBackupsRoutes } from './routes/timer_backups.js';
 import { wcaScheduleRoutes } from './routes/wca_schedule.js';
 import { wcaScramblesRoutes } from './routes/wca_scrambles.js';
+import { scrambleMarksRoutes } from './routes/scramble_marks.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
 import { ensureDaemon as ensureCube555Daemon } from './cube555/daemon.js';
 import { getCurrentRecords } from './utils/current_records.js';
@@ -101,6 +102,7 @@ app.route('/v1', wcaRecentRecordsRoutes);
 app.route('/v1', timerBackupsRoutes);
 app.route('/v1', wcaScheduleRoutes);
 app.route('/v1', wcaScramblesRoutes);
+app.route('/v1', scrambleMarksRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).
