@@ -1,12 +1,13 @@
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
-import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
+import { requireAuth, checkRateLimit, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
 
 /**
  * /v1/scramble-marks — 公开「打卡」:登录用户给做过的 WCA 真实比赛打乱做标记。
  *
  *   GET    /scramble-marks?ci=&e=&r=&g=&x=&n=   某条打乱的标记列表(公开)
- *   GET    /scramble-marks/recent?event=&wcaId=&before=&limit=   最近标记 feed(公开)
+ *   GET    /scramble-marks/recent?event=&wcaId=&q=&before=&limit=   最近标记 feed(公开)
+ *   DELETE /scramble-marks/:id                   按 id 删一条(本人 / 管理员)
  *   POST   /scramble-marks                       标记(登录,upsert,可带成绩)
  *   DELETE /scramble-marks?ci=&e=&r=&g=&x=&n=    取消自己的标记(登录)
  *
@@ -93,12 +94,14 @@ interface FeedRow extends MarkRow {
   scramble: string | null; comp_name: string | null;
 }
 
-// GET /scramble-marks/recent?event=&wcaId=&before=&limit= — 最近标记 feed(/timer/marks)。
+// GET /scramble-marks/recent?event=&wcaId=&q=&before=&limit= — 最近标记 feed(/timer/marks)。
 // keyset 分页:before = 上页最后一条的 id。打乱原文从镜像 join(极新比赛可能为 null)。
+// q:模糊搜选手名 / 比赛名 / 比赛 id(ILIKE,大小写不敏感)。
 scrambleMarksRoutes.get('/scramble-marks/recent', async (c) => {
   c.header('Cache-Control', 'no-store');
   const event = c.req.query('event') ?? '';
   const wcaId = c.req.query('wcaId') ?? '';
+  const q = (c.req.query('q') ?? '').trim().slice(0, 80);
   const before = Number(c.req.query('before')) || 0;
   const limit = Math.min(50, Math.max(1, Number(c.req.query('limit')) || 30));
   if (event && !/^[0-9a-z]{2,6}$/.test(event)) return c.json({ error: 'invalid event' }, 400);
@@ -108,6 +111,12 @@ scrambleMarksRoutes.get('/scramble-marks/recent', async (c) => {
   const params: (string | number)[] = [];
   if (event) { where.push('m.event_id = ?'); params.push(event); }
   if (wcaId) { where.push('m.wca_id = ?'); params.push(wcaId); }
+  if (q) {
+    // LIKE 通配符转义,把用户输入当字面量匹配。
+    const like = `%${q.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;
+    where.push('(m.name ILIKE ? OR wc.name ILIKE ? OR m.competition_id ILIKE ?)');
+    params.push(like, like, like);
+  }
   if (before > 0) { where.push('m.id < ?'); params.push(before); }
   const rows = await query<FeedRow>(
     `SELECT m.id, m.wca_id, m.name, m.country, m.time_cs, m.created_at,
@@ -187,7 +196,7 @@ scrambleMarksRoutes.post('/scramble-marks', async (c) => {
   return c.json({ ok: true, createdAt: now });
 });
 
-// DELETE /scramble-marks?ci=&e=&r=&g=&x=&n= — 取消自己的标记。
+// DELETE /scramble-marks?ci=&e=&r=&g=&x=&n= — 取消自己的标记(timer 弹层「取消标记」)。
 scrambleMarksRoutes.delete('/scramble-marks', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
@@ -198,5 +207,26 @@ scrambleMarksRoutes.delete('/scramble-marks', async (c) => {
     `DELETE FROM scramble_marks WHERE wca_id = ? AND ${KEY_WHERE}`,
     [authUser.wcaId, ...keyParams(key)],
   );
+  return c.json({ ok: true });
+});
+
+// DELETE /scramble-marks/:id — 按 id 删一条(/timer/marks feed 行内删除)。
+// 本人删自己;管理员可删任何人(最高权限)。
+scrambleMarksRoutes.delete('/scramble-marks/:id', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const authUser = await requireAuth(c);
+  const id = Number(c.req.param('id'));
+  if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'invalid id' }, 400);
+  const rows = await query<{ wca_id: string }>(
+    'SELECT wca_id FROM scramble_marks WHERE id = ?',
+    [id],
+  );
+  if (rows.length === 0) return c.json({ ok: true }); // 幂等:已不存在也算成功
+  const isAdmin = ADMIN_WCA_IDS.includes(authUser.wcaId);
+  if (rows[0].wca_id !== authUser.wcaId && !isAdmin) {
+    return c.json({ error: 'Cannot delete others’ marks' }, 403);
+  }
+  await query('DELETE FROM scramble_marks WHERE id = ?', [id]);
   return c.json({ ok: true });
 });

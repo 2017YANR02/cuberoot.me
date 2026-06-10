@@ -3,24 +3,26 @@
 /**
  * /timer/marks — 打乱足迹:全站最近的 WCA 真实打乱「打卡」feed(公开)。
  * 登录用户在 /timer 用 WCA 真实打乱练习时可标记做过的打乱(可带成绩);
- * 这里按时间倒序展示所有人的标记,?wcaId= 过滤单人(「只看我的」)。
- * keyset 分页(before=上页最后一条 id),数据走 /v1/scramble-marks/recent。
+ * 这里按时间倒序展示所有人的标记。
+ *   ?wcaId= 过滤单人(「只看我的」)、?q= 搜选手/比赛(服务端 ILIKE)。
+ * 每行可删:本人删自己,管理员删任何人。keyset 分页(before=上页最后一条 id)。
  */
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQueryState, parseAsString } from 'nuqs';
-import { CheckCircle2 } from 'lucide-react';
+import { useQueryStates, parseAsString } from 'nuqs';
+import { CheckCircle2, Search, Trash2 } from 'lucide-react';
 import AppLink from '@/components/AppLink';
+import { ClearButton } from '@/components/ClearButton';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/name-utils';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { tr } from '@/i18n/tr';
-import { fetchRecentMarks, type RecentMark } from '../_lib/marks';
+import { fetchRecentMarks, deleteMarkById, type RecentMark } from '../_lib/marks';
 import { formatMs } from '../_lib/stats';
 import './marks.css';
 
@@ -38,13 +40,28 @@ function MarksFeed() {
   // SSR/首帧统一为未登录,挂载后再放开,避免 hydration mismatch。
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const admin = mounted && isAdmin();
 
-  const [wcaIdFilter, setWcaIdFilter] = useQueryState('wcaId', parseAsString.withDefault(''));
+  const [{ wcaId: wcaIdFilter, q }, setQuery] = useQueryStates(
+    { wcaId: parseAsString.withDefault(''), q: parseAsString.withDefault('') },
+    { history: 'replace', scroll: false },
+  );
 
   const [marks, setMarks] = useState<RecentMark[] | null>(null);
   const [loadErr, setLoadErr] = useState(false);
   const [done, setDone] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [deleting, setDeleting] = useState<number | null>(null);
+
+  // 搜索框:本地 input + 防抖写回 URL(?q)。
+  const [searchInput, setSearchInput] = useState(q);
+  const [composing, setComposing] = useState(false);
+  useEffect(() => { setSearchInput((prev) => (prev === q ? prev : q)); }, [q]);
+  useEffect(() => {
+    if (searchInput === q || composing) return;
+    const t = setTimeout(() => void setQuery({ q: searchInput || null }), 250);
+    return () => clearTimeout(t);
+  }, [searchInput, composing, q, setQuery]);
 
   // 比赛名/国旗索引懒加载完成后重渲一次。
   const [, setFlagVer] = useState(() => flagDataVersion());
@@ -55,7 +72,7 @@ function MarksFeed() {
     setMarks(null);
     setLoadErr(false);
     setDone(false);
-    fetchRecentMarks({ wcaId: wcaIdFilter || undefined, limit: PAGE_SIZE })
+    fetchRecentMarks({ wcaId: wcaIdFilter || undefined, q: q || undefined, limit: PAGE_SIZE })
       .then((rows) => {
         if (cancel) return;
         setMarks(rows);
@@ -63,22 +80,40 @@ function MarksFeed() {
       })
       .catch(() => { if (!cancel) setLoadErr(true); });
     return () => { cancel = true; };
-  }, [wcaIdFilter]);
+  }, [wcaIdFilter, q]);
 
   const loadMore = useCallback(() => {
     const last = marks?.[marks.length - 1];
     if (!last || loadingMore) return;
     setLoadingMore(true);
-    fetchRecentMarks({ wcaId: wcaIdFilter || undefined, limit: PAGE_SIZE, before: last.id })
+    fetchRecentMarks({ wcaId: wcaIdFilter || undefined, q: q || undefined, limit: PAGE_SIZE, before: last.id })
       .then((rows) => {
         setMarks((cur) => [...(cur ?? []), ...rows]);
         setDone(rows.length < PAGE_SIZE);
       })
       .catch(() => { /* 下一次点重试 */ })
       .finally(() => setLoadingMore(false));
-  }, [marks, loadingMore, wcaIdFilter]);
+  }, [marks, loadingMore, wcaIdFilter, q]);
 
   const mineOnly = mounted && !!user && wcaIdFilter === user.wcaId;
+  const canDelete = (m: RecentMark) => mounted && !!user && (m.wcaId === user.wcaId || admin);
+
+  const onDelete = useCallback(async (m: RecentMark) => {
+    const isOwn = !!user && m.wcaId === user.wcaId;
+    const msg = isOwn
+      ? tr({ zh: '删除这条标记?', en: 'Delete this mark?', zhHant: '刪除這條標記?' })
+      : tr({ zh: `以管理员身份删除 ${displayCuberName(m.name, isZh) || m.wcaId} 的这条标记?`,
+             en: `Delete ${displayCuberName(m.name, isZh) || m.wcaId}'s mark as admin?` });
+    if (!window.confirm(msg)) return;
+    setDeleting(m.id);
+    try {
+      await deleteMarkById(m.id);
+      setMarks((cur) => (cur ?? []).filter((x) => x.id !== m.id));
+    } catch {
+      window.alert(tr({ zh: '删除失败,稍后再试。', en: 'Delete failed — try again.', zhHant: '刪除失敗,稍後再試。' }));
+    }
+    setDeleting(null);
+  }, [user, isZh]);
 
   return (
     <div className="scrmarks-page">
@@ -97,25 +132,36 @@ function MarksFeed() {
         })}</AppLink>
       </p>
 
-      {mounted && user && (
-        <div className="scrmarks-filter">
+      <div className="scrmarks-search">
+        <Search size={15} className="scrmarks-search-icon" />
+        <input
+          className="scrmarks-search-input"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onCompositionStart={() => setComposing(true)}
+          onCompositionEnd={(e) => { setComposing(false); setSearchInput(e.currentTarget.value); }}
+          placeholder={tr({ zh: '搜索选手 / 比赛…', en: 'Search cuber / competition…', zhHant: '搜尋選手 / 比賽…' })}
+        />
+        {searchInput && <ClearButton onClick={() => setSearchInput('')} isZh={isZh} variant="inline" />}
+      </div>
+
+      <div className="scrmarks-filter">
+        {mounted && user && (
           <button
             type="button"
             className={`scrmarks-mine${mineOnly ? ' on' : ''}`}
-            onClick={() => void setWcaIdFilter(mineOnly ? null : user.wcaId)}
+            onClick={() => void setQuery({ wcaId: mineOnly ? null : user.wcaId })}
           >
             {tr({ zh: '只看我的', en: 'Mine only' })}
           </button>
-        </div>
-      )}
-      {wcaIdFilter && !mineOnly && (
-        <div className="scrmarks-filter">
+        )}
+        {wcaIdFilter && !mineOnly && (
           <span className="scrmarks-filter-tag">
             {wcaIdFilter}
-            <button type="button" onClick={() => void setWcaIdFilter(null)} aria-label="clear">×</button>
+            <button type="button" onClick={() => void setQuery({ wcaId: null })} aria-label="clear">×</button>
           </span>
-        </div>
-      )}
+        )}
+      </div>
 
       {loadErr && <p className="scrmarks-empty">{tr({ zh: '加载失败,稍后再试。', en: 'Failed to load — try again later.',
           zhHant: "載入失敗,稍後再試。"
@@ -124,9 +170,9 @@ function MarksFeed() {
           zhHant: "載入中…"
     })}</p>}
       {!loadErr && marks !== null && marks.length === 0 && (
-        <p className="scrmarks-empty">{tr({ zh: '还没有任何标记。', en: 'No marks yet.',
-            zhHant: "還沒有任何標記。"
-        })}</p>
+        <p className="scrmarks-empty">{q
+          ? (tr({ zh: '没有匹配的标记。', en: 'No matching marks.', zhHant: '沒有匹配的標記。' }))
+          : (tr({ zh: '还没有任何标记。', en: 'No marks yet.', zhHant: '還沒有任何標記。' }))}</p>
       )}
 
       {marks !== null && marks.length > 0 && (
@@ -143,6 +189,19 @@ function MarksFeed() {
                   </AppLink>
                   {m.timeCs != null && <span className="scrmarks-time">{formatMs(m.timeCs * 10)}</span>}
                   <span className="scrmarks-date">{fmtDate(m.createdAt)}</span>
+                  {canDelete(m) && (
+                    <button
+                      type="button"
+                      className="scrmarks-del"
+                      disabled={deleting === m.id}
+                      onClick={() => void onDelete(m)}
+                      title={m.wcaId === user?.wcaId
+                        ? (tr({ zh: '删除', en: 'Delete', zhHant: '刪除' }))
+                        : (tr({ zh: '管理员删除', en: 'Delete (admin)', zhHant: '管理員刪除' }))}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
                 </div>
                 <div className="scrmarks-row-src">
                   <EventIcon event={m.e} className="scrmarks-evt" />
