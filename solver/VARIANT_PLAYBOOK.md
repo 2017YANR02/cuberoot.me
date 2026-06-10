@@ -197,7 +197,22 @@ eoline 的 yk 与 yk+2 同目标(get_stats/enumerate 只跑 yk 0/1),dr 对 y 完
 | Thistlethwaite HTR | DR 后 HTR 陪集 | 三轴 DR max 可采纳但弱(伪 HTR) | ❌ 暂缓(条件式阶段 + 弱启发式) |
 
 至此 cstimer 全部 3x3 求解器语义已覆盖(Cross/XCross/EOLine/EOCross/Roux S1/S1+S2/
-2x2x2/Petrus 223/Cross+F2L=XXXXC/EO+DR);剩余 = 非 3x3 puzzle(SQ1 S1+S2 / Pyraminx V /
-Skewb Face / 2x2x2 face)与 HTR。
+2x2x2/Petrus 223/Cross+F2L=XXXXC/EO+DR)。
 
 设计新变体时先在此表对号入座,空间 ≤3000 万就走 block222 全表模板,否则走 pair/eo 启发式模板。
+
+## 7. 还没做的(待办路线图,2026-06-10)
+
+**现有 3x3 引擎里基本做完了。** 用户问"还要做哪些求解器"时,答案分三档:
+
+1. **直接能做、只是暂缓的(本引擎内,低风险)**
+   - **HTR(Thistlethwaite,DR 后再降到 HTR 陪集)**:件/坐标都能表达,难点是好的可采纳启发式(三轴 DR-max 偏弱 → 伪 HTR)。要做就照 dr_solver 的 IDA* 模板,先接受弱启发式跑通,再视速率加大表。这是唯一"3x3 引擎内还没做"的标准阶段。
+
+2. **需要先给引擎补能力(中风险,一次投入解锁多个)**
+   - **受限 move 集搜索**:真 Roux S1+S2(S2 限 `M/U/R/r`)、HTR phase-2(限 `⟨U,D,L2,R2,F2,B2⟩` 当**搜索空间**而非仅目标)、FMC 式分阶段都卡在这。现 `valid_moves()` 是 18 步全集 + 相邻面剪枝,没有"只许某子集"的开关。加一个 move-mask 参数贯穿 search/enumerate 即可,之后这些一次性都能做。
+   - 注:本站口径已用 **f2b 联合最优**替代了 cstimer 的"Roux S1+S2 条件式",所以真受限 S2 不是刚需,属于 nice-to-have。
+
+3. **需要另写 puzzle 引擎(大投入,且偏离本引擎用途)**
+   - SQ1 S1+S2 / Pyraminx V / Skewb Face / 2x2x2(口袋魔方):都不是 3x3,`cube_common`(8角12棱模型)不覆盖,要各自的状态模型。**而且**本求解器舰队的用途是「3x3 打乱的分阶段难度统计」(喂 `/scramble/*`),这些 puzzle 属于另一个 feature,不在本管道范围 —— 真要做先跟用户确认是不是这个引擎该管。
+
+**简言之**:3x3 分阶段统计这个目标基本收口;下一个自然增量是 HTR(档1),想更进一步先补受限 move 集(档2)。档3 是另一个项目级决策,别默认开工。
