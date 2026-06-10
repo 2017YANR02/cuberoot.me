@@ -101,9 +101,7 @@ const VARIANT_LABEL: Record<VariantKey, { en: string; zh: string
   pseudo_f2leo: { en: 'Pseudo F2LEO', zh: '伪 F2LEO',
       zhHant: "偽 F2LEO"
 },
-  '123': { en: '1x2x3 (Roux FB)', zh: '1x2x3 (桥式)',
-      zhHant: "1x2x3 (橋式)"
-},
+  '123': { en: '1x2x3', zh: '1x2x3' },
   '222': { en: '2x2x2', zh: '2x2x2' },
   '223': { en: '2x2x3', zh: '2x2x3' },
 };
@@ -142,18 +140,10 @@ const STAGE_LABEL: Record<string, { en: string; zh: string
   f2l: { en: 'XXXXCross', zh: 'XXXXCross' },
   xxxxcross: { en: 'XXXXCross', zh: 'XXXXCross' },
   eo_xxxxcross: { en: 'XXXXCross', zh: 'XXXXCross' },
-  block222: { en: '2x2x2 Block', zh: '2x2x2 块',
-      zhHant: "2x2x2 塊"
-},
-  fbsquare: { en: '1x2x2 Square', zh: '1x2x2 方块',
-      zhHant: "1x2x2 方塊"
-},
-  rouxs1: { en: '1x2x3 Block', zh: '1x2x3 块',
-      zhHant: "1x2x3 塊"
-},
-  block223: { en: '2x2x3 Block', zh: '2x2x3 块',
-      zhHant: "2x2x3 塊"
-},
+  block222: { en: '2x2x2', zh: '2x2x2' },
+  fbsquare: { en: '1x2x2', zh: '1x2x2' },
+  rouxs1: { en: '1x2x3', zh: '1x2x3' },
+  block223: { en: '2x2x3', zh: '2x2x3' },
 };
 
 const labelStage = (s: string, isZh: boolean) => STAGE_LABEL[s] ? STAGE_LABEL[s][isZh ? 'zh' : 'en'] : s;

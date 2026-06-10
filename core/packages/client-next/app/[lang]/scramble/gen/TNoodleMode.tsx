@@ -60,13 +60,13 @@ import { useCrossMap } from './useCrossMap';
 import { useCompSteps, normScramble } from './useCompSteps';
 import { displaySq1ForEvent } from './_svg/sq1_svg';
 import { useF2leoStepMap } from './useF2leoStepMap';
-import { useVariantStepMap, VARIANT_WASM_ID } from './useVariantStepMap';
+import { useRoux223StepMap, useVariantStepMap, VARIANT_WASM_ID } from './useVariantStepMap';
 import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
 // 变体 (前端先做,后端数据后续接;key 与 /scramble/analyzer + /scramble/stats 对齐)。
-type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo';
+type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | '123' | '222' | '223';
 const VARIANTS: { key: VariantKey; zh: string; en: string
     zhHant?: string;
  }[] = [
@@ -87,6 +87,9 @@ const VARIANTS: { key: VariantKey; zh: string; en: string
   { key: 'pseudo_f2leo', zh: '伪 F2LEO', en: 'Pseudo F2LEO',
       zhHant: "偽 F2LEO"
 },
+  { key: '123', zh: '1x2x3', en: '1x2x3' },
+  { key: '222', zh: '2x2x2', en: '2x2x2' },
+  { key: '223', zh: '2x2x3', en: '2x2x3' },
 ];
 // 每变体:阶段集 + 实时引擎能力。std=现有 cross WASM(5 阶段);f2leo/pseudo_f2leo=
 // F2leoSolverWasm 浏览器当场算(4 阶段,无 xxxxc);其余暂仅靠预计算(comp_steps 未生成
@@ -95,7 +98,7 @@ const STD_STAGES: Metric[] = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc'];
 const F2L_STAGES: Metric[] = ['cross', 'xc', 'xxc', 'xxxc'];
 // engine:'variant' = VariantSolverWasm 小表浏览器现算(pair 已接;eo/pseudo/pseudo_pair
 // solver 就绪后从 'none' 改 'variant')。'none' = 仅 comp_steps 预计算,无 client 引擎。
-const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2leo' | 'variant' | 'none' }> = {
+const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2leo' | 'variant' | 'roux223' | 'none' }> = {
   std: { stages: STD_STAGES, engine: 'std' },
   eo: { stages: STD_STAGES, engine: 'variant' },
   pair: { stages: F2L_STAGES, engine: 'variant' },
@@ -103,6 +106,10 @@ const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2le
   pseudo_pair: { stages: F2L_STAGES, engine: 'variant' },
   f2leo: { stages: F2L_STAGES, engine: 'f2leo' },
   pseudo_f2leo: { stages: F2L_STAGES, engine: 'f2leo' },
+  // 块类:Roux223SolverWasm 浏览器现算(need 'roux223' 单类共享),comp_steps 命中则秒出。
+  '123': { stages: ['b122', 'b123'], engine: 'roux223' },
+  '222': { stages: ['b222'], engine: 'roux223' },
+  '223': { stages: ['b223'], engine: 'roux223' },
 };
 const EMPTY_STEP: StepMapState = { map: null, ready: true, done: 0, total: 0, error: null };
 const EMPTY_MAP_TN: Map<string, number[]> = new Map();
@@ -115,6 +122,10 @@ const STAGE_LABEL: Record<Metric, { zh: string; en: string
   xxc: { zh: 'XXCross', en: 'XXCross' },
   xxxc: { zh: 'XXXCross', en: 'XXXCross' },
   xxxxc: { zh: 'XXXXCross', en: 'XXXXCross' },
+  b122: { zh: '1x2x2', en: '1x2x2' },
+  b123: { zh: '1x2x3', en: '1x2x3' },
+  b222: { zh: '2x2x2', en: '2x2x2' },
+  b223: { zh: '2x2x3', en: '2x2x3' },
 };
 
 interface Props {
@@ -858,11 +869,11 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   );
   const vspec = VARIANT_SPEC[variant];
   const variantEngine = vspec.engine;
-  // metric 落在当前变体阶段集外(切变体后)→ 视为 cross,避免越界取数。
-  const safeMetric: Metric = vspec.stages.includes(metric) ? metric : 'cross';
+  // metric 落在当前变体阶段集外(切变体后)→ 视为该变体首阶段(std=cross),避免越界取数。
+  const safeMetric: Metric = vspec.stages.includes(metric) ? metric : vspec.stages[0];
   // 切变体后复位越界 metric(同步 select)。
   useEffect(() => {
-    if (!VARIANT_SPEC[variant].stages.includes(metric)) setMetric('cross');
+    if (!VARIANT_SPEC[variant].stages.includes(metric)) setMetric(VARIANT_SPEC[variant].stages[0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variant]);
 
@@ -905,6 +916,22 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     VARIANT_WASM_ID[variant] ?? 0,
     vspec.stages.length,
   );
+  // 123 / 222 / 223:Roux223SolverWasm 浏览器现算(同上,comp_steps 未覆盖的打乱)。
+  const roux223Scrambles = variantEngine === 'roux223' ? uncovered : NO_SCRAMBLES;
+  const roux223Live = useRoux223StepMap(roux223Scrambles, variantEngine === 'roux223', variant);
+  const roux223CrossMap = useMemo(() => {
+    const m = new Map<string, number[]>();
+    if (variantEngine === 'roux223' && roux223Live.map) for (const [s, v] of roux223Live.map) m.set(s, v.slice(0, 6));
+    return m;
+  }, [variantEngine, roux223Live.map, roux223Live.done, roux223Live.crossReady]);
+  const roux223MetricMap = useMemo(() => {
+    const m = new Map<string, number[]>();
+    const off = METRIC_OFFSET[safeMetric];
+    if (variantEngine === 'roux223' && roux223Live.map) {
+      for (const [s, v] of roux223Live.map) if (v.length >= off + 6) m.set(s, v.slice(off, off + 6));
+    }
+    return m;
+  }, [variantEngine, roux223Live.map, roux223Live.done, roux223Live.fullReady, safeMetric]);
   const variantCrossMap = useMemo(() => {
     const m = new Map<string, number[]>();
     if (variantEngine === 'variant' && variantLive.map) for (const [s, v] of variantLive.map) m.set(s, v.slice(0, 6));
@@ -921,17 +948,22 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   // 按引擎统一选源喂 CompCrossAnalysis。cross 视图 gate 在 crossReady(秒出),深阶段 gate 在 fullReady。
   const cxCrossMap = variantEngine === 'f2leo' ? f2leoCrossMap
     : variantEngine === 'variant' ? variantCrossMap
+    : variantEngine === 'roux223' ? roux223CrossMap
     : (variantEngine === 'std' ? crossA.map : EMPTY_MAP_TN);
   const cxReady = variantEngine === 'f2leo' ? f2leoLive.crossReady
     : variantEngine === 'variant' ? variantLive.crossReady
+    : variantEngine === 'roux223' ? roux223Live.crossReady
     : (variantEngine === 'std' ? crossA.ready : true);
   const cxStep: StepMapState = variantEngine === 'f2leo'
     ? { map: f2leoMetricMap, ready: f2leoLive.fullReady, done: f2leoLive.done, total: f2leoLive.total, error: f2leoLive.error }
     : variantEngine === 'variant'
       ? { map: variantMetricMap, ready: variantLive.fullReady, done: variantLive.done, total: variantLive.total, error: variantLive.error }
-      : (variantEngine === 'std' ? stepLive : EMPTY_STEP);
+      : variantEngine === 'roux223'
+        ? { map: roux223MetricMap, ready: roux223Live.fullReady, done: roux223Live.done, total: roux223Live.total, error: roux223Live.error }
+        : (variantEngine === 'std' ? stepLive : EMPTY_STEP);
   const cxStepUncovered = variantEngine === 'f2leo' ? f2leoScrambles.length
     : variantEngine === 'variant' ? variantScrambles.length
+    : variantEngine === 'roux223' ? roux223Scrambles.length
     : (variantEngine === 'std' ? stepUncovered.length : 0);
   // 逐行徽标取值(BADGE_ORDER 6 值),无数据 → undefined。
   const rowDigits = useCallback((scr: string, m: Metric): number[] | undefined => {
@@ -949,8 +981,12 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       const fv = variantLive.map?.get(scr);
       if (fv && fv.length >= off + 6) return fv.slice(off, off + 6);
     }
+    if (variantEngine === 'roux223') {
+      const fv = roux223Live.map?.get(scr);
+      if (fv && fv.length >= off + 6) return fv.slice(off, off + 6);
+    }
     return undefined;
-  }, [variantEngine, crossA.map, compSteps.map, stepLive.map, f2leoLive.map, variantLive.map, safeMetric]);
+  }, [variantEngine, crossA.map, compSteps.map, stepLive.map, f2leoLive.map, variantLive.map, roux223Live.map, safeMetric]);
   // 稳定引用:CompCrossAnalysis 把它当 sheets333,身份不稳会让上报 filter 的 effect
   // 每 render 都 fire → setState 循环。
   const sheetsInEvent = useMemo(
