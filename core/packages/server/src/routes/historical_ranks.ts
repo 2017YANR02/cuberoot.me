@@ -141,7 +141,7 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
   );
   const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
 
-  c.header('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+  c.header('Cache-Control', 'public, max-age=300, s-maxage=86400');
   return c.json({
     event,
     year,
@@ -176,7 +176,7 @@ historicalRanksRoutes.get('/wca/historical-ranks/countries', async (c) => {
   }>(
     `SELECT id, iso2, name, continent_id FROM wca_countries ORDER BY name`,
   );
-  c.header('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+  c.header('Cache-Control', 'public, max-age=300, s-maxage=86400');
   return c.json({
     countries: rows.map(r => ({
       id: r.id,
@@ -193,7 +193,7 @@ historicalRanksRoutes.get('/wca/historical-ranks/meta', async (c) => {
   const rows = await query<{ value: string; updated_at: Date | string }>(
     `SELECT value, updated_at FROM meta_historical WHERE key = 'last_imported_at'`,
   );
-  c.header('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+  c.header('Cache-Control', 'public, max-age=300, s-maxage=3600');
   return c.json({
     lastImportedAt: rows[0]?.updated_at ?? null,
   });
