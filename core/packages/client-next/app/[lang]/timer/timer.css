@@ -216,6 +216,119 @@
 :root[data-timer-theme="light"] .scramble-src:hover .scramble-src-name { color: #111; }
 :root[data-timer-theme="light"] .scramble-src-meta { color: #888; }
 
+/* 打卡:来源行旁的「N 人做过」chip + 名单弹层。与 .scramble-src 同字体复位。 */
+.scramble-marks {
+  position: relative;
+  display: inline-flex;
+  vertical-align: bottom;
+  margin-top: 8px;
+  margin-left: 10px;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  word-spacing: normal;
+}
+.scramble-marks-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #7d7d85;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.scramble-marks-chip:hover { color: #fff; }
+.scramble-marks-chip.marked { color: #66bb6a; }
+.scramble-marks-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 24px));
+  text-align: left;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #ccc;
+  background: #1a1a1e;
+  border: 1px solid #2a2a30;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  cursor: default;
+}
+.scramble-marks-pop-head {
+  padding: 8px 12px 4px;
+  font-weight: 600;
+  color: #9a9aa2;
+  font-size: 11.5px;
+}
+.scramble-marks-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 12px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.scramble-marks-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  white-space: nowrap;
+}
+.scramble-marks-name {
+  color: #d6d6dc;
+  text-decoration: none;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.scramble-marks-name:hover { color: #fff; }
+.scramble-marks-time { color: #66bb6a; font-variant-numeric: tabular-nums; }
+.scramble-marks-date { color: #6a6a72; margin-left: auto; font-size: 11px; }
+.scramble-marks-empty { padding: 6px 12px; color: #8a8a92; }
+.scramble-marks-pop-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px 10px;
+}
+.scramble-marks-toggle {
+  font-size: 12px;
+  color: #0c0c0e;
+  background: #66bb6a;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.scramble-marks-toggle:disabled { opacity: 0.6; cursor: default; }
+.scramble-marks-toggle.marked { background: #2a2a30; color: #bbb; }
+.scramble-marks-all { color: #7d7d85; text-decoration: none; font-size: 12px; }
+.scramble-marks-all:hover { color: #fff; }
+:root[data-timer-theme="light"] .scramble-marks-chip { color: #888; }
+:root[data-timer-theme="light"] .scramble-marks-chip:hover { color: #111; }
+:root[data-timer-theme="light"] .scramble-marks-chip.marked { color: #2e7d32; }
+:root[data-timer-theme="light"] .scramble-marks-pop {
+  color: #333;
+  background: #fff;
+  border-color: #ddd;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+:root[data-timer-theme="light"] .scramble-marks-pop-head { color: #777; }
+:root[data-timer-theme="light"] .scramble-marks-name { color: #333; }
+:root[data-timer-theme="light"] .scramble-marks-name:hover { color: #000; }
+:root[data-timer-theme="light"] .scramble-marks-time { color: #2e7d32; }
+:root[data-timer-theme="light"] .scramble-marks-date { color: #999; }
+:root[data-timer-theme="light"] .scramble-marks-empty { color: #888; }
+:root[data-timer-theme="light"] .scramble-marks-toggle.marked { background: #eee; color: #555; }
+:root[data-timer-theme="light"] .scramble-marks-all { color: #888; }
+:root[data-timer-theme="light"] .scramble-marks-all:hover { color: #111; }
+
 /* --- Center timer ------------------------------------------- */
 .timer-center {
   flex: 1 1 auto;

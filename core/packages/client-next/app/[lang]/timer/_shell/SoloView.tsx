@@ -22,7 +22,7 @@ import {
   Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
   Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText,
   FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe,
-  Eye, EyeOff, ListOrdered, LineChart, Brain, X,
+  Eye, EyeOff, ListOrdered, LineChart, Brain, X, CheckCircle2,
 } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { CubingIcon, EventIcon } from '@/components/EventIcon/EventIcon';
@@ -39,6 +39,9 @@ import { Flag } from '@/components/Flag';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
+import { useAuthStore } from '@/lib/auth-store';
+import { displayCuberName } from '@/lib/name-utils';
+import { fetchMarks, addMark, removeMark, markKey, type ScrambleMark } from '../_lib/marks';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
 import { warmup333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';
 import { useTimer } from '../_lib/useTimer';
@@ -377,6 +380,68 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     // flagVer: re-derive flag + localized name once the comp index loads.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wcaSource, isZh, flagVer]);
+
+  // ── 打卡:当前真实打乱的公开标记(谁做过这条打乱)──────────────
+  // 列表按 markKey 缓存(同会话内重看同一条不重拉);登录用户可标记/取消,
+  // 标记时自动带上本次在该打乱上的最近一次非 DNF 成绩。
+  const authUser = useAuthStore((st) => st.user);
+  const [marksOpen, setMarksOpen] = useState(false);
+  const [markBusy, setMarkBusy] = useState(false);
+  const [marksCache, setMarksCache] = useState<Record<string, { count: number; marks: ScrambleMark[] }>>({});
+  const marksBoxRef = useRef<HTMLSpanElement | null>(null);
+  const curMarkKey = wcaSource ? markKey(wcaSource) : null;
+  const curMarks = curMarkKey ? marksCache[curMarkKey] : undefined;
+  const myMark = !!(authUser && curMarks?.marks.some((m) => m.wcaId === authUser.wcaId));
+
+  useEffect(() => {
+    setMarksOpen(false);
+    if (!wcaSource || !curMarkKey) return;
+    if (marksCache[curMarkKey]) return;
+    const key = curMarkKey, src = wcaSource;
+    // 轻微防抖:快速连点「换打乱」时不为路过的打乱发请求。
+    const t = window.setTimeout(() => {
+      fetchMarks(src)
+        .then((d) => setMarksCache((cur) => ({ ...cur, [key]: d })))
+        .catch(() => { /* 读失败静默,chip 显示「标记」兜底 */ });
+    }, 400);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [curMarkKey]);
+
+  // 点弹层外部关闭。
+  useEffect(() => {
+    if (!marksOpen) return;
+    const onDown = (ev: PointerEvent) => {
+      if (marksBoxRef.current && !marksBoxRef.current.contains(ev.target as Node)) setMarksOpen(false);
+    };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [marksOpen]);
+
+  const toggleMark = useCallback(async () => {
+    if (!wcaSource || !curMarkKey) return;
+    if (!authUser) { useAuthStore.getState().login(); return; }
+    setMarkBusy(true);
+    try {
+      if (myMark) {
+        await removeMark(wcaSource);
+      } else {
+        // 最近一次做这条打乱的非 DNF 成绩(centiseconds),没有就只打卡不带成绩。
+        const curScramble = scrambleHistRef.current.list[scrambleHistRef.current.idx] ?? '';
+        let timeCs: number | null = null;
+        for (let i = solves.length - 1; i >= 0; i--) {
+          const s = solves[i];
+          if (s.scramble !== curScramble || s.penalty === 'DNF') continue;
+          timeCs = Math.round((s.timeMs + (s.penalty === '+2' ? 2000 : 0)) / 10);
+          break;
+        }
+        await addMark(wcaSource, timeCs, authUser.country || '');
+      }
+      const d = await fetchMarks(wcaSource);
+      setMarksCache((cur) => ({ ...cur, [curMarkKey]: d }));
+    } catch { /* 写失败静默,保持原状态 */ }
+    setMarkBusy(false);
+  }, [wcaSource, curMarkKey, authUser, myMark, solves]);
 
   // Click-to-copy flash (cstimer-style). Reads the live scramble via ref so the
   // helper stays stable; shows a brief "已复制" badge.
@@ -1457,6 +1522,74 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                   <EventIcon event={wcaSrcDisplay.event} className="scramble-src-evt" />
                   <span className="scramble-src-meta">{wcaSrcDisplay.meta}</span>
                 </a>
+              )}
+              {wcaSrcDisplay && wcaSource && (
+                <span className="scramble-marks" data-no-timer ref={marksBoxRef} onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    className={`scramble-marks-chip${myMark ? ' marked' : ''}`}
+                    onClick={() => setMarksOpen((o) => !o)}
+                    title={tr({ zh: '谁做过这条打乱', en: 'Who has done this scramble',
+                        zhHant: "誰做過這條打亂"
+                    })}
+                  >
+                    <CheckCircle2 size={12} />
+                    {curMarks && curMarks.count > 0
+                      ? (tr({ zh: `${curMarks.count} 人做过`, en: `${curMarks.count} did it`, zhHant: `${curMarks.count} 人做過` }))
+                      : (tr({ zh: '标记已做', en: 'Mark done',
+                          zhHant: "標記已做"
+                    }))}
+                  </button>
+                  {marksOpen && (
+                    <div className="scramble-marks-pop">
+                      <div className="scramble-marks-pop-head">
+                        {tr({ zh: '做过这条打乱的人', en: 'Solved this scramble',
+                            zhHant: "做過這條打亂的人"
+                        })}
+                      </div>
+                      {curMarks && curMarks.marks.length > 0 ? (
+                        <ul className="scramble-marks-list">
+                          {curMarks.marks.map((m) => (
+                            <li key={m.wcaId}>
+                              {m.country && <Flag iso2={m.country} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                              <a href={`${isZh ? '/zh' : ''}/wca/persons/${encodeURIComponent(m.wcaId)}`} className="scramble-marks-name">
+                                {displayCuberName(m.name, isZh) || m.wcaId}
+                              </a>
+                              {m.timeCs != null && <span className="scramble-marks-time">{formatMs(m.timeCs * 10)}</span>}
+                              <span className="scramble-marks-date">{new Date(m.createdAt * 1000).toISOString().slice(0, 10)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="scramble-marks-empty">
+                          {tr({ zh: '还没有人标记过,来做第一个', en: 'No one yet — be the first',
+                              zhHant: "還沒有人標記過,來做第一個"
+                        })}
+                        </div>
+                      )}
+                      <div className="scramble-marks-pop-foot">
+                        <button type="button" className={`scramble-marks-toggle${myMark ? ' marked' : ''}`} disabled={markBusy} onClick={() => void toggleMark()}>
+                          {authUser
+                            ? (myMark
+                              ? (tr({ zh: '取消标记', en: 'Unmark',
+                                  zhHant: "取消標記"
+                            }))
+                              : (tr({ zh: '标记已做', en: 'Mark done',
+                                  zhHant: "標記已做"
+                            })))
+                            : (tr({ zh: '登录后标记', en: 'Sign in to mark',
+                                zhHant: "登入後標記"
+                            }))}
+                        </button>
+                        <a href={`${isZh ? '/zh' : ''}/timer/marks`} className="scramble-marks-all">
+                          {tr({ zh: '全站标记', en: 'All marks',
+                              zhHant: "全站標記"
+                        })}
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </span>
               )}
             </div>
           }
