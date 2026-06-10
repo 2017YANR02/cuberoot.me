@@ -430,20 +430,13 @@ export default function ScrambleStatsPage() {
     <div className="scramble-stats-header">
       <h1>{pageTitle}</h1>
       <div className="scramble-stats-event-bar">
-        <WcaEventSelector
-          availableEvents={availableEvents}
-          selectedEvent={event}
-          onSelect={setEvent}
-          isZh={isZh}
-          onlyAvailable
-        />
         {(tab === 'length' || dataset === 'wca') && (
           <div className="scramble-len-merge">
             <PillToggle
               value={merged}
               onChange={setMerged}
-              onLabel={tr({ zh: '已合并', en: 'Merged',
-                  zhHant: "已合併"
+              onLabel={tr({ zh: '合并', en: 'Merged',
+                  zhHant: "合併"
             })}
               offLabel={tr({ zh: '分开', en: 'Split',
                   zhHant: "分開"
@@ -463,6 +456,13 @@ export default function ScrambleStatsPage() {
             </span>
           </div>
         )}
+        <WcaEventSelector
+          availableEvents={availableEvents}
+          selectedEvent={event}
+          onSelect={setEvent}
+          isZh={isZh}
+          onlyAvailable
+        />
       </div>
       {tabsBar}
     </div>
