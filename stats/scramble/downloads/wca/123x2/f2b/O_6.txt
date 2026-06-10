@@ -1,0 +1,8 @@
+# Scramble samples — 123x2 / f2b / O / bin 6
+# Population in this bin: 1
+# Samples listed: 1 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-09
+# Columns: id,scramble,bottom_color,competition,round
+
+5634547001,R B2 R' U2 R U2 R U2 R2 D R2 U L2 D' B' R' B2 D2,O,Tomelloso Open 2026,333oh R1 B #2

@@ -1,0 +1,39 @@
+# Scramble samples — 123x2 / f2b / O / bin 7
+# Population in this bin: 32
+# Samples listed: 32 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-09
+# Columns: id,scramble,bottom_color,competition,round
+
+197066001,D' F U2 B2 L2 D' L' F2 B' R U2 R2 F B2 L2 B' R2 L2 F,O,Torneo Medellín Explora 2015,333 R1 A E2
+225722001,D' R2 L' B' U L D B U R' B2 U2 R U2 R U2 L2 F2 L' F2,O,Italian Open 2015,333 R1 D #3
+265788001,F' U' F R U R' U F' U' F' D2 F2 U' R2 F2 D F2,O,Utah Spring: Gotta go Fast 2016,333 R1 C E2
+274049001,U2 R2 F2 D U2 R2 U L2 B2 R F U B2 F' U2 B2 L' F' D L2,O,Indian Nationals 2016,333 R1 K #4
+317646001,B2 D2 L2 D F' B L2 U' R' F L' B2 R2 F2 L B2 R D2 R,O,Slow N Steady Spring 2016,333 R3 C #3
+327213001,U L' D' R2 F2 U' L' F' R2 L F' U2 R2 D R2 F2 U2 D,O,SoCal Supercomp 2016,333oh R1 B E2
+661389013,F2 D2 L U2 R' B2 L R D2 R B U F' U' L' F' U L2 B2 D B' L2,O,Speed Days Kraśnik 2017,333mbf Final A #1
+752904024,D2 U F2 D R2 U L2 U R' D B U L2 F' L2 U B D2 B2 F' L' F2,O,CubingUSA Southeast Championship 2018,333mbf Final B #1
+875773001,R D2 F2 D' F' L2 B2 L F B2 D2 R2 F2 D L2 F2 L2 B2,O,Tembleque Open 2018,333oh R1 A E1
+899948001,L2 U' F R U2 F D' F U' F R' B2 R2 F2 B2 D2 R U2,O,Vancouver Select 2018,333ft Final A #4
+970718001,L F2 L D2 R2 D2 U2 L' F2 L' D' R B2 F' L2 D' B' D2 R B',O,Happy New Year Cubing Nijmegen 2019,333oh Final B #5
+1037528001,L2 D' F D' F' D L2 B2 U' F' L2 B' U2 D2 B L2 D2,O,Voronezh Open 2019,333oh Final A #4
+1215667001,F' U B2 L2 B L U F B L' B' R B2 L U2 F2 L D2 L2,O,Byczy Cube Race 2019,333 R1 C #5
+1844063001,R' U2 D2 B2 L D' F2 U R' F' B2 R2 B U2 F' B' R' F',O,Cubing Khan Shatyr Open 2022,333 R1 G #1
+1881328001,U B' D2 B' F' D2 U2 F L2 B' U' B' D2 R D B2 F' U L,O,Cubing Returns Bengaluru 2022,333 R1 L #1
+2238216025,F' R2 B2 U2 R2 F U2 F R2 U R' F' U B U' B2 F2 D' B',O,Esprit Cube Open Bayonne 2022,333mbf Final A #1
+2349361001,L B R2 B D' F2 U R2 D2 B2 D' F D' F L' B' D2 R2,O,TCG Power Up 2022,333 R1 A E2
+2425698016,R' F2 R D2 R2 D2 F L D F L2 B' U2 B' D2 F' L D' L' F',O,Buckeye Big Brain 2023,333mbf Final A #2
+2697471001,L D F2 D2 R U2 F2 R2 U2 B2 L' F2 U' R' D' F L' B F,O,FargoDome 2023,333 R1 B #2
+3067514001,L' F' R2 B2 F2 D' L2 B2 U2 B' L B R2 U' B2 L2 B' U,O,Square-Fun in Bloomsburg 2023,333 R1 A #2
+3298250096,D2 B2 U2 B2 L' F' R' U2 F2 D F2 D F2 B2 R2 U' B' D2 L B',O,Mountain View Multi Madness 2023,333mbf R1 C #1
+3621386001,F' R2 U' R' F2 L' U L F D2 B2 U L2 U2 R2 L2 U L2 B2,O,Graz Open 2024,333 R1 C #5
+3757884011,R2 D2 B' L2 B2 F2 U B2 D2 L' B L R D R' B2 D2 B' L2,O,Swedish Championship 2024,333mbf Final A #1
+3828328031,R' U2 F D' R F' B2 D' B2 R' F2 L' F2 L' U2 L2 D2 R B L',O,Rio Cubolympics 2024,333mbf Final B #3
+4084246001,L B2 D F2 D2 U2 R2 U L' D' L2 B D2 B2 L D2 F2 U,O,Trieste Speedcubing 2024,333 Final B #3
+4222005001,R D2 U' B2 D2 U L D' B D' R' D R' D2 B F L,O,Cubing for Yuval 2024,333oh R1 F E1
+4806462003,L' B' L' D2 L' F2 B' U' R2 U2 L2 D' B2 D2 L2 B' U F L',O,Nada Que Ver Lebrija 2025,333mbf Final A #1
+4898934002,F2 R2 F2 U2 L U' B2 L U' R B2 R' L B2 R2 U L2 U2,O,Swedish Blind Marathon 2025,333mbf Final A #1
+4943370001,F' B' R U' D B' D F D L2 B' L2 D2 F' L2 F' D2 U',O,Cube en Baie Open 2025,333oh R1 A #3
+5021392001,D' B' D2 B2 L' F D' R U2 R' F2 R' U2 R2 F2 U2 R' U2 F,O,Villa María al Cubo 2025,333 R1 B #1
+5045487001,R L F' D' L' B2 D L2 U' F2 L F2 D2 B' D2 F L2,O,Manchester Favourites I 2025,333 R2 A #2
+5502471001,B' D2 B2 R' F2 R2 U2 B2 U2 R D2 F L2 B2 D' L' D2 R' B,O,UIUC Spring 2026,333 R2 A #2
