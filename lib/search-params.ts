@@ -107,8 +107,8 @@ export const loadOrderNotice = createLoader(orderNoticeParams);
 export const errorNoticeParams = { error: parseAsString };
 export const loadErrorNotice = createLoader(errorNoticeParams);
 
-// 仅 `?saved=1`(admin 二维码编辑)
-export const savedNoticeParams = { saved: parseAsString };
+// `?saved=1` + 改 code 失败回显 `?codeErr=exists|invalid`(admin 二维码编辑)
+export const savedNoticeParams = { saved: parseAsString, codeErr: parseAsString };
 export const loadSavedNotice = createLoader(savedNoticeParams);
 
 // 二维码卡片打印:`?codes=a,b`

@@ -50,6 +50,16 @@ export default async function AdminQrEditPage({
       {sp.saved === "1" ? (
         <div className="mb-6 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-[13px] text-emerald-700">
           已保存。
+          {sp.codeErr ? (
+            <span className="ml-2 text-amber-700">
+              但 code 未改:
+              {sp.codeErr === "exists"
+                ? "该 code 已被占用,换一个。"
+                : sp.codeErr === "protected"
+                  ? "演示码的 code 不可改。"
+                  : "code 非法(仅小写字母 / 数字 / 连字符)。"}
+            </span>
+          ) : null}
         </div>
       ) : null}
 
@@ -78,6 +88,23 @@ export default async function AdminQrEditPage({
           <form action={saveQr} id="qr-edit-form" className="grid gap-4">
             <input type="hidden" name="code" value={entry.code} />
             <TypeSectionToggle />
+            {isProtectedQr(entry.code) ? (
+              <Field label="Code" hint="演示码,固定不可改">
+                <Input defaultValue={entry.code} disabled />
+              </Field>
+            ) : (
+              <Field
+                label="Code"
+                hint="二维码身份。改它二维码图案会变,已印出去的旧码会失效;仅小写字母 / 数字 / 连字符"
+              >
+                <Input
+                  name="newCode"
+                  defaultValue={entry.code}
+                  pattern="[a-z0-9-]+"
+                  placeholder={entry.code}
+                />
+              </Field>
+            )}
             <Field label="批次标签" hint="内部备注,不展示给用户">
               <Input name="label" defaultValue={entry.label} required />
             </Field>

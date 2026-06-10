@@ -150,6 +150,32 @@ export async function duplicate(code: string): Promise<string | null> {
   return next;
 }
 
+// 把字符串规范成合法 code(小写 + [a-z0-9-],去首尾连字符,截断 64)
+export function slugifyCode(raw: string): string {
+  return normalize(raw)
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+}
+
+export type RenameResult =
+  | { ok: true; code: string }
+  | { ok: false; reason: "invalid" | "exists" | "protected" | "notfound" };
+
+// 改 code(主键):code 进了二维码地址,改了二维码图案就变,印过的码会失效 → UI 须警示。
+// 演示码不可改;新 code 须合法且未被占用。统计等行数据随主键一起保留。
+export async function rename(oldCode: string, newCodeRaw: string): Promise<RenameResult> {
+  const from = normalize(oldCode);
+  if (isProtectedQr(from)) return { ok: false, reason: "protected" };
+  const to = slugifyCode(newCodeRaw);
+  if (!to) return { ok: false, reason: "invalid" };
+  if (to === from) return { ok: true, code: from };
+  if (await findByCode(to)) return { ok: false, reason: "exists" };
+  if (!(await findByCode(from))) return { ok: false, reason: "notfound" };
+  await db.update(schema.qrCodes).set({ code: to }).where(eq(schema.qrCodes.code, from));
+  return { ok: true, code: to };
+}
+
 // 停用 / 恢复:作废一个码只翻 disabled 标记、不删数据,扫码落地页给「已停用」提示,
 // 可随时恢复。二维码无硬删(印出去的码硬删会 404、统计与配置全丢),只用停用作废。
 export async function setDisabled(code: string, disabled: boolean): Promise<void> {
