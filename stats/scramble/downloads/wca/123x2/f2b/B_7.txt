@@ -1,0 +1,38 @@
+# Scramble samples — 123x2 / f2b / B / bin 7
+# Population in this bin: 31
+# Samples listed: 31 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-09
+# Columns: id,scramble,bottom_color,competition,round
+
+25868001,D' U2 L2 B2 D B2 R2 F2 L2 U2 R' F U2 B' U2 B' D L D2 B2 U',B,Erfurt Open 2014,333oh Final A #2
+202717001,U' L2 D L2 R2 B2 U' R F L D B2 L U F U B2 L R2,B,Pergamino Open 2015,333oh Final E E1
+241662001,D B2 D' B2 D B2 U F2 U2 B2 L B2 F' U L' U2 F L U' L2,B,Beskidy Cubing Day 2016,333 R1 C #3
+272516001,L2 D2 F' B2 D2 L2 B D2 R' U2 R B2 U2 L D2 F2 L',B,Cilegon Open 2016,333 Final A E2
+326119001,D2 F2 R2 F D2 B F' D2 L2 R' D L' F L U F U2 L R2 B2,B,Tlaxcala Open 2016,333 R2 A #3
+348737001,R' B' R2 L U' R' B' U L2 F' R' B2 R U2 D2 F2 L D2 L',B,Xela Open 2016,333 R2 A #4
+409463001,F' L2 D2 L' B R2 B' R' D' R' L F' B2 D2 R2 F' B2,B,Lucia Open 2016,333 R1 C E2
+660679021,B2 U' L2 D' F2 U' L2 D B2 F' R2 B2 D U2 R U2 B2 U F2 D,B,Clásico 2015,333mbf Final A #1
+660804007,F2 D' R2 F2 R2 D B2 D2 B' L2 B2 D L' D R2 U' B R2,B,Italian Championship 2015,333mbf Final A #1
+726755034,B2 L2 B R2 F2 D2 B U2 B' D' B2 F' L F2 D2 R' U' L2 R' F L2,B,Brilliant Big & Blind Blast 2018,333mbf Final A #1
+857709011,L2 R2 D2 R2 F U2 F' L' F2 L F2 R' D2 U B2 D L2 F L' F,B,Michigan 2018,333mbf Final A #1
+985746001,L2 F2 D' B2 R2 D' B2 L' U' R D' L' U' R B U' L F2 U,B,Gobbler Cube Day Winter 2019,333oh R1 C #1
+1333224001,L2 F' L2 F2 D2 F' U2 L2 D2 R D B' R' D2 L2 B' R2 B' U2 L' F',B,Shandong Open 2019,333mbf Final A #1
+2402697001,F L2 D2 F' D F2 B' L2 B L' D2 L2 F2 L2 U F2 B,B,Cubing on the Octagon 2022,333 R1 C #4
+2568710001,F U B D' L2 B2 D L2 F2 D' R2 F' D U R' D2 B' R',B,Pickering B 2023,333 R1 B #2
+2593942001,D2 L2 D2 U' F2 D' R' D' U' R' F' R' U2 L R U' L2,B,Wiltshire Spring 2023,333 R1 C #1
+2780734001,L U' L U' D2 F L' F2 U2 B' L2 F' R2 B L2 D' L2 F',B,Monterrey Bogotá II 2023,333 R1 D E1
+3299798001,B' U' B2 D' R2 D' B2 F2 D2 R2 F2 U B R B2 L2 B' U2 B,B,No Clock in Lužice 2023,333 Final A E1
+3716526001,B' U L B D2 B F R2 D2 F2 D L B U' R' B2 F2 U2,B,Mother Earth's Charter Spring 2024,333 R1 G #5
+4225573001,R' D' R2 U' F L' F U' L F2 U2 R' B2 U2 L' B2 R2 U,B,Green Fall 2024,333 Final A #4
+4310083001,L2 U' D2 R' F2 U R' B' D2 B2 L' D F2 U2 R2 F2 R2 U2 L' F,B,Verona Big & Blind 2024,333mbf Final A #1
+4340177001,F2 L2 B2 U' L2 D F L U' R2 B D2 F D B2 D2 U' F',B,Tierra del Fuego 2024,333oh R1 A #3
+4407619001,R' F L U' L B L' D2 R U B2 U2 B2 D' R2 D' B2 U' B2 R2,B,TCG Space lV Santa Anita 2025,333 R1 B #1
+4503410001,L U R' B2 L F' U L B' U2 R B2 R2 U2 L' F2 B2 R2,B,Avenida Chile XX 2025,333oh R1 B E1
+4511569001,B R' F2 B2 U2 F' D' B R2 B2 R2 U2 R2 D' B2 U B U' L',B,Pragyan Cube Open 2025,333oh R1 C #4
+4652207001,F2 L' F' D2 L' D2 R F2 U L R2 B' L' F' L' B',B,Front Royal Spring 2025,333 R2 B #3
+5005824001,F2 R F U' D F' B' L' U L2 D R2 B L2 F2 B R2 B2 U2 B R,B,Jaqueca Di Tella 2025,333bf Final A #2
+5327568001,L' D2 R' D2 F2 L' D2 R' B F R2 D2 R U2 R2 F' D' F' R' D2,B,Dublin Pick 'N' Mix 2026,333bf Final B #4
+5420793001,L U2 R D2 L2 B2 R' D' R2 B D2 U L' U L2 U2 L,B,Pinoy Side Events Open 2026,333 Final A #5
+5464536001,L2 R2 B' D2 F' L2 R2 F2 U R' U2 R D' F2 L' D2 R2 U R',B,Bremium Cubing 2026,333 R1 B E2
+5549790001,R F2 R F R' D B2 L U L' D2 F R2 F2 B' L2 D2 L2 U2 B' L2,B,Brighton 3x3 Day 2026,333bf Final A #5
