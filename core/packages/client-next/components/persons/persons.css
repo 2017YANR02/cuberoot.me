@@ -360,6 +360,16 @@ html[data-theme=dark] .wp-page {
     font-variant-numeric: tabular-nums;
 }
 
+/* ── 项目行多选 → Σ 块「自选」行 ─────────────────────────────────── */
+.wp-row-selectable { cursor: pointer; }
+/* 选中行:全站项目选择器同款绿 active(#4ade80,锁定值见 WcaEventSelector.css),压过通用 hover */
+.wp-pr-table tbody tr.wp-row-selected td,
+.wp-pr-table tbody tr.wp-row-selected th {
+    background: color-mix(in srgb, #4ade80 9%, transparent);
+}
+.wp-row-selected .wp-event-icon { color: #4ade80; }
+.wp-sor-custom-label { display: flex; align-items: center; gap: 6px; }
+
 /* ── Tabs ─────────────────────────────────────────────────────────── */
 .wp-tabs-card { padding: 0; }
 .wp-tabs-bar {
