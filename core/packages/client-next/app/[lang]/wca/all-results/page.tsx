@@ -10,6 +10,7 @@
  */
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
+import { UnofficialMark } from '@/components/UnofficialMark';
 import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
@@ -153,9 +154,9 @@ function AllResultsPageInner() {
     basisRaw === 'cumulative' || basisRaw === 'period'
       ? basisRaw
       : (show === 'persons' ? 'cumulative' : 'period');
-  // 333mbf 无平均
-  const allowAvg = singleEvent !== '333mbf';
-  const effType: 'single' | 'average' = (mode === 'single' && !allowAvg) ? 'single' : type;
+  // 多盲平均 = 非官方 Mo3(builder 现算进 wca_results_top),单项可排;名次和不计入
+  const isMbldAvg = singleEvent === '333mbf';
+  const effType: 'single' | 'average' = type === 'average' ? 'average' : 'single';
 
   // ---- 事件选择(累加) ----
   const serializeEvents = (set: Set<string>): string => {
@@ -459,7 +460,7 @@ function AllResultsPageInner() {
               <label>{tr({ zh: '类型', en: 'Type', zhHant: '型別' })}</label>
               <select value={effType} onChange={e => update('type', e.target.value)}>
                 <option value="single">{tr({ zh: '单次', en: 'Single', zhHant: '單次' })}</option>
-                {allowAvg && <option value="average">{tr({ zh: '平均', en: 'Average' })}</option>}
+                <option value="average">{tr({ zh: '平均', en: 'Average' })}</option>
               </select>
             </div>
             <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
@@ -513,7 +514,7 @@ function AllResultsPageInner() {
                     <tr>
                       <th className="wse-rank-col">#</th>
                       <th>{tr({ zh: '选手', en: 'Person', zhHant: '選手' })}</th>
-                      <th className="wse-value-col">{i18n.language === 'zh-Hant' ? (effType === 'single' ? '單次' : '平均') : isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}</th>
+                      <th className="wse-value-col">{i18n.language === 'zh-Hant' ? (effType === 'single' ? '單次' : '平均') : isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}{isMbldAvg && effType === 'average' && <UnofficialMark />}</th>
                       <th>{tr({ zh: '日期', en: 'Date' })}</th>
                       <th>{tr({ zh: '比赛', en: 'Competition', zhHant: '比賽' })}</th>
                       <th className="wse-attempts-col">{tr({ zh: '详细成绩', en: 'Solves', zhHant: '詳細成績' })}</th>
@@ -555,7 +556,7 @@ function AllResultsPageInner() {
                     <tr>
                       <th className="wse-rank-col">#</th>
                       <th>{tr({ zh: '选手', en: 'Person', zhHant: '選手' })}</th>
-                      <th className="wse-value-col">{i18n.language === 'zh-Hant' ? (effType === 'single' ? '單次' : '平均') : isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}</th>
+                      <th className="wse-value-col">{i18n.language === 'zh-Hant' ? (effType === 'single' ? '單次' : '平均') : isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}{isMbldAvg && effType === 'average' && <UnofficialMark />}</th>
                       <th>{tr({ zh: '日期', en: 'Date' })}</th>
                       <th>{tr({ zh: '比赛', en: 'Competition', zhHant: '比賽' })}</th>
                       <th className="wse-attempts-col">{tr({ zh: '详细成绩', en: 'Solves', zhHant: '詳細成績' })}</th>
@@ -597,6 +598,12 @@ function AllResultsPageInner() {
                 <option value="single">{tr({ zh: '单次', en: 'Single', zhHant: '單次' })}</option>
                 <option value="average">{tr({ zh: '平均', en: 'Average' })}</option>
               </select>
+              {/* 名次和的平均走官方数据,多盲无官方平均 → 不计入,明确告知 */}
+              {type === 'average' && selectedSet.has('333mbf') && (
+                <span className="wse-sor-note">{tr({ zh: '多盲平均(非官方 Mo3)不计入名次和', en: 'Multi-Blind average (unofficial Mo3) is not counted in the sum of ranks',
+                    zhHant: "多盲平均(非官方 Mo3)不計入名次和"
+                })}</span>
+              )}
             </div>
             <div className="wse-filter">
               <label>{tr({ zh: '过滤', en: 'Filter', zhHant: '過濾' })}</label>

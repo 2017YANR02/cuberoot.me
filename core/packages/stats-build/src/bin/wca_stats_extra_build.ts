@@ -12,6 +12,7 @@ import { createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync, ex
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
+import { computeMbfMo3 } from '../core/mbf_average.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -582,6 +583,20 @@ async function main() {
             `${eventId}\t${bool(true)}\t${r.average}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\t${rt}\t${fm}\t${tag}\n`,
           );
           allTopCount++;
+        }
+      }
+      // 333mbf 无官方平均:补一行 is_avg=true(value=非官方 Mo3),供 all-results 单项平均排名。
+      // 仅 3 次全成功才有效;tag 留空(无官方纪录)。名次和走 sor 表,不取此行。
+      if (eventId === '333mbf') {
+        const mo3 = computeMbfMo3(r.attempts.map(v => v ?? 0));
+        if (mo3 > 0) {
+          fullTopTotal++;
+          if (wrtWrite) {
+            allTopStream.write(
+              `${eventId}\t${bool(true)}\t${mo3}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\t${rt}\t${fm}\t\n`,
+            );
+            allTopCount++;
+          }
         }
       }
 

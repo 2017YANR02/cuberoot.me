@@ -637,9 +637,6 @@ GROUP BY r.event_id;`,
         titleZhHant: "BLD 首次成功前的嘗試",
         hintZhHant: "DNF 集中的盲擰角度"
     },
-    { id: 'mbf_average', titleZh: 'MBF 平均', titleEn: 'MBF average', hintZh: 'MBLD 完成度细项', hintEn: 'MBLD attempt-completeness companion',
-        hintZhHant: "MBLD 完成度細項"
-    },
     { id: 'dnf_rate_by_event', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '21 个项目排序', hintEn: 'All 21 events ranked',
         titleZhHant: "檢視實時榜單",
         hintZhHant: "21 個項目排序"

@@ -465,3 +465,11 @@
 @media (max-width: 480px) {
   .sor-census-list { grid-template-columns: 1fr; }
 }
+
+/* 名次和:多盲平均不计入的提示 */
+.wse-sor-note {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  max-width: 200px;
+  line-height: 1.3;
+}

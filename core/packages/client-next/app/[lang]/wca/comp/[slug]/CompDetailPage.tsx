@@ -31,6 +31,8 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { EventIcon } from '@/components/EventIcon';
 import { formatWcaResult } from '@/lib/wca-format-result';
+import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
+import { UnofficialMark } from '@/components/UnofficialMark';
 import { rememberRecent } from '../page';
 import { useLiveStream, applyResultPatch, type LivePatch, type WsStatus } from '@/hooks/useLiveStream';
 import { useWcaLiveStream, type WcaLiveRoundUpdate } from '@/hooks/useWcaLiveStream';
@@ -203,11 +205,16 @@ function computeWcaAverage(attempts: number[]): number {
   return roundWcaAvg(counted.reduce((s, v) => s + v, 0) / n);
 }
 
-// 展示/排名用的平均值:上游有值用上游,否则盲拧项目现算.
+// 展示/排名用的平均值:上游有值用上游,否则现算.
+// 盲拧项目上游本就不给平均,全程现算(百分秒同尺度).
+// 其他平均赛制(如 FMC mo3)若某次 DNF,上游平均给 0 而非 -1 → 漏判,
+// 此时现算只用来补 DNF(-1);正值不回填(避免 FMC 等异尺度误差),仍以上游为准.
 function effectiveAvg(r: LiveResult): number {
   if (r.a && r.a !== 0) return r.a;
+  if (isMbldEvent(r.e)) return computeMbfMo3(r.v); // 多盲非官方 Mo3
   if (isBlindAvgEvent(r.e)) return computeWcaAverage(r.v);
-  return r.a;
+  const computed = computeWcaAverage(r.v);
+  return computed < 0 ? computed : r.a;
 }
 
 // WCA ID (PleaseBeQuietXian2025) → cubing.com dash slug (Please-Be-Quiet-Xian-2025)。
@@ -251,17 +258,28 @@ function roundDisplayName(rdName: string, isZh: boolean): string {
 // 一个项目的前两轮作为「双轮」:选手两轮都打,取两轮更好的成绩排名 (9v4);两轮成绩
 // 都计入世界排名/纪录 (9v4a);轮间不淘汰 (9v5)。avg 赛制比更好的平均 (并列看单次),
 // best 赛制比更好的单次 (9f6/9f8)。
+// 双轮赛制 (WCA Reg 9v) 是 2026 年新规,此前的比赛绝无双轮。WCA ID 末尾恒为 4 位年份。
+const DUAL_ROUND_FIRST_YEAR = 2026;
+function compYearFromSlug(slug: string): number {
+  const m = slug.match(/(\d{4})$/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
 function dualPairFor(
   ev: EventMeta | undefined,
   resultsByRound: Record<string, LiveResult[]>,
+  compYear: number,
 ): { r1: RoundMeta; r2: RoundMeta } | null {
   if (!ev || ev.rs.length < 2) return null;
   const r1 = ev.rs[0];
   const r2 = ev.rs[1];
   if (ev.dual === true) return { r1, r2 }; // cubing.com data-events 显式标记 (权威)
+  // 兜底推断仅对 2026 起的比赛生效:双轮是 2026 新规,老比赛即便高晋级率也绝非双轮
+  // (如某 2023 多盲第二轮 10/12=83% 只是宽松晋级,不是合并双轮)。
+  if (compYear < DUAL_ROUND_FIRST_YEAR) return null;
   if (r1.f !== r2.f) return null; // 兜底推断要求两轮同赛制 (9v3)
-  // 兜底 (WCA / WCA Live / WCA DB 源无标记):非双轮按 9p1 最多晋级 75%,
-  // 第二轮人数 ≥ 第一轮 80% ⇒ 100% 晋级 ⇒ 双轮 (排除并列略超 75% 的常规轮)。
+  // 兜底 (WCA / WCA Live / WCA DB 源无标记):常规轮按 9p1 最多晋级 75%,
+  // 第二轮人数 ≥ 第一轮 80% ⇒ 实为 100% 晋级 ⇒ 双轮 (排除并列略超 75% 的常规轮)。
   const n1 = (resultsByRound[roundKey(ev.i, r1.i)] || []).length;
   const n2 = (resultsByRound[roundKey(ev.i, r2.i)] || []).length;
   if (n1 >= 4 && n2 >= n1 * 0.8) return { r1, r2 };
@@ -838,9 +856,10 @@ export default function CompDetailPage() {
   }, [data, currentRound, filteredResults]);
 
   // 双轮赛制:当前项目的双轮对 (前两轮) + 当前轮是否属于双轮 + 合并开关 (默认开)。
+  const compYear = useMemo(() => compYearFromSlug(slug), [slug]);
   const dualPair = useMemo(
-    () => (data && currentRound ? dualPairFor(currentRound.ev, data.resultsByRound) : null),
-    [data, currentRound],
+    () => (data && currentRound ? dualPairFor(currentRound.ev, data.resultsByRound, compYear) : null),
+    [data, currentRound, compYear],
   );
   const currentIsDual = !!(dualPair && currentRound
     && (currentRound.rd.i === dualPair.r1.i || currentRound.rd.i === dualPair.r2.i));
@@ -1033,7 +1052,7 @@ export default function CompDetailPage() {
     // 双轮 + 合并视图:第一轮和第二轮渲染同一张合并表 → 合为一个循环档(用第一轮代表),
     // 且整个事件的轮次都进循环(含尚无成绩的决赛),让点图标能从合并视图直达决赛,
     // 而不是在两张相同的合并表之间空转。非双轮 / 未合并时维持原行为(只循环有成绩的轮)。
-    const dp = showCombined ? dualPairFor(ev, data.resultsByRound) : null;
+    const dp = showCombined ? dualPairFor(ev, data.resultsByRound, compYear) : null;
     let cycleRounds: RoundMeta[];
     if (dp) {
       cycleRounds = ev.rs.filter(rd => rd.i !== dp.r2.i);
@@ -1471,7 +1490,9 @@ interface ResultsTableProps {
 function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber, compIso2 }: ResultsTableProps) {
   if (!round) return null;
   const isAverageFormat = isAvgRankedFormat(round.f);
-  const showAvg = isAverageFormat || isBlindAvgEvent(round.e);
+  // 多盲 Bo3 显示非官方 Mo3 平均(WCA 不追踪);Bo1/Bo2 无平均不显示
+  const isMbldMo3 = isMbldEvent(round.e) && round.f === '3';
+  const showAvg = isAverageFormat || isBlindAvgEvent(round.e) || isMbldMo3;
   const singleFirst = !isAverageFormat; // 按单次排名的项目 (含 3 盲 bo5 / 4/5 盲 bo3):单次列在平均列前
   const formatAttempts = round.f === 'a' || round.f === '' ? 5 : round.f === 'm' ? 3 : parseInt(round.f, 10) || 1;
   const maxRowAttempts = results.reduce((m, r) => Math.max(m, r.v.length), 0);
@@ -1487,7 +1508,12 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                 zhHant: "選手"
             })}</th>
             {(() => {
-              const avgTh = showAvg ? <th key="avg" className={`th-avg${!singleFirst ? ' is-rank-col' : ''}`}>{tr({ zh: '平均', en: 'Average' })}</th> : null;
+              const avgTh = showAvg ? (
+                <th key="avg" className={`th-avg${!singleFirst ? ' is-rank-col' : ''}`}>
+                  {tr({ zh: '平均', en: 'Average' })}
+                  {isMbldMo3 && <UnofficialMark />}
+                </th>
+              ) : null;
               const bestTh = <th key="best" className={`th-best${singleFirst ? ' is-rank-col' : ''}`}>{tr({ zh: '单次', en: 'Best',
                   zhHant: "單次"
             })}</th>;
@@ -2157,6 +2183,7 @@ function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: Cuber
                     {g.entries.map(en => {
                       const { result } = en;
                       const isAverageFormat = isAvgRankedFormat(en.rd.f) || isBlindAvgEvent(en.ev.i);
+                      const showAvg = isAverageFormat || (isMbldEvent(en.ev.i) && en.rd.f === '3'); // 多盲 Bo3 非官方 Mo3
                       const { singleRank, averageRank } = classifyPr(result, pb);
                       const singleBadge = prBadgeFor(singleRank);
                       const averageBadge = prBadgeFor(averageRank);
@@ -2178,8 +2205,8 @@ function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: Cuber
                               : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
                           </td>
                           <td>
-                            {isAverageFormat ? formatLive(effectiveAvg(result), result.e, true) : ''}
-                            {isAverageFormat && (result.ar
+                            {showAvg ? formatLive(effectiveAvg(result), result.e, true) : ''}
+                            {showAvg && (result.ar
                               ? <RecordBadge record={String(result.ar)} variant="inline" iso2={regionToIso2(u.region)} />
                               : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null)}
                           </td>
@@ -2327,6 +2354,8 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
   const singleBadge = prBadgeFor(singleRank);
   const averageBadge = prBadgeFor(averageRank);
   const isAverageFormat = isAvgRankedFormat(rd.f) || isBlindAvgEvent(eventId);
+  // 多盲 Bo3 也展示非官方 Mo3(不参与排名,仅附加显示)
+  const showAvgSection = isAverageFormat || (isMbldEvent(eventId) && rd.f === '3');
   const place = idx >= 0 && result.b !== 0 ? idx + 1 : null;
   const iso2 = regionToIso2(u.region);
   const attempts = result.v.filter(v => v !== 0);
@@ -2425,9 +2454,12 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
             </div>
           </section>
           <section className="comp-round-modal-section">
-            <div className="comp-round-modal-label">{tr({ zh: '平均', en: 'Average' })}</div>
+            <div className="comp-round-modal-label">
+              {tr({ zh: '平均', en: 'Average' })}
+              {isMbldEvent(eventId) && rd.f === '3' && <UnofficialMark />}
+            </div>
             <div className="comp-round-modal-value">
-              {isAverageFormat && effectiveAvg(result) !== 0 ? (
+              {showAvgSection && effectiveAvg(result) !== 0 ? (
                 (!result.ar && averageBadge === 'PR') ? (
                   <span className="comp-pr-value">
                     {formatLive(effectiveAvg(result), result.e, true)}

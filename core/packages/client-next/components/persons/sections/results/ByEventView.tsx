@@ -24,7 +24,16 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { findReconForAttempt } from '@/lib/recon-attempt-lookup';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
+import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
+import { UnofficialMark } from '@/components/UnofficialMark';
 import i18n from "@/i18n/i18n-client";
+
+// MBLD 无官方平均 → 用非官方 Mo3(从该轮 attempts 现算);其它项目用官方 average。
+function effectiveAverage(r: WcaResultRow, eventId: string): number {
+  if (r.average && r.average !== 0) return r.average;
+  if (isMbldEvent(eventId)) return computeMbfMo3(r.attempts);
+  return r.average;
+}
 
 interface Props {
   profile: WcaPersonProfile;
@@ -249,7 +258,7 @@ function EventRoundsList({
             </th>
             <th className="wp-th-narrow">{t('排名', 'Pos')}</th>
             <th>{t('单次', 'Single', "單次")}</th>
-            <th>{t('平均', 'Avg')}</th>
+            <th>{t('平均', 'Avg')}{isMbldEvent(eventId) && <UnofficialMark />}</th>
             <th>{t('详细成绩', 'Attempts', "詳細成績")}</th>
           </tr>
         </thead>
@@ -306,7 +315,7 @@ function EventRoundsList({
                 </td>
                 <td className="wp-cell-result">
                   <span className="record-num-cell">
-                    {formatWcaResult(r.average, eventId, 'average')}
+                    {formatWcaResult(effectiveAverage(r, eventId), eventId, 'average')}
                     {r.regional_average_record
                       ? <RecordBadge record={r.regional_average_record} variant="inline" />
                       : averageRank
@@ -352,7 +361,8 @@ function BestChart({
   let bestAvg = Infinity;
   const points = rows.map((r) => {
     const sAxis = r.best > 0 ? toAxisValue(r.best, eventId, 'single') : null;
-    const aAxis = r.average > 0 ? toAxisValue(r.average, eventId, 'average') : null;
+    const avgVal = effectiveAverage(r, eventId); // MBLD 用非官方 Mo3
+    const aAxis = avgVal > 0 ? toAxisValue(avgVal, eventId, 'average') : null;
     let prS = false, prA = false;
     if (sAxis !== null && sAxis < bestSingle) { prS = true; bestSingle = sAxis; }
     if (aAxis !== null && aAxis < bestAvg)    { prA = true; bestAvg = aAxis; }
@@ -364,7 +374,8 @@ function BestChart({
   const xData = points.map((_, i) => String(i + 1));
   const interval = points.length > 12 ? Math.ceil(points.length / 10) : 0;
   const singleLabel = t('单次', 'Single', "單次");
-  const avgLabel    = t('平均', 'Avg');
+  // MBLD 平均为非官方 Mo3,图例直接标明,省去图内额外标记
+  const avgLabel    = isMbld ? t('平均(非官方 Mo3)', 'Avg (unofficial Mo3)') : t('平均', 'Avg');
 
   const PR_RED = '#ef4444';
   const SINGLE_COLOR = '#3b82f6';
@@ -391,7 +402,7 @@ function BestChart({
         }
         if (p.aAxis !== null) {
           const pr = p.prA ? ` <span style="color:${PR_RED}">PR</span>` : '';
-          tip += `<span style="display:inline-block;width:10px;height:10px;background:${AVG_COLOR};border-radius:50%;margin-right:6px;vertical-align:middle"></span>${avgLabel}: ${formatWcaResult(p.r.average, eventId, 'average')}${pr}<br/>`;
+          tip += `<span style="display:inline-block;width:10px;height:10px;background:${AVG_COLOR};border-radius:50%;margin-right:6px;vertical-align:middle"></span>${avgLabel}: ${formatWcaResult(effectiveAverage(p.r, eventId), eventId, 'average')}${pr}<br/>`;
         }
         return tip;
       },

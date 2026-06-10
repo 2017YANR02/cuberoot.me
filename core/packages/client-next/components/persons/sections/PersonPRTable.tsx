@@ -13,6 +13,8 @@ import { ClearButton } from '@/components/ClearButton';
 import { apiUrl } from '@/lib/api-base';
 import { countryName } from '@/lib/country-name';
 import { countPodiumByEvent } from '../logic/podium';
+import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
+import { UnofficialMark } from '@/components/UnofficialMark';
 
 // WCA 大洲 id(continentId,带前缀 _)→ 本地化短名,供 SoCR 的 scope 标签用.
 const CONTINENT_NAME: Record<string, { zh: string; en: string; zhHant: string }> = {
@@ -96,6 +98,18 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
 
   const podium = useMemo(() => results ? countPodiumByEvent(results) : new Map(), [results]);
   const showPodium = mode === 'current'; // 历史最佳排名 模式不显示领奖台
+
+  // MBLD 无官方平均:从全部 333mbf 成绩现算历史最佳非官方 Mo3(无 3 次有效轮 → null)。
+  const bestMbfMo3 = useMemo(() => {
+    if (!results) return null;
+    let best: number | null = null;
+    for (const r of results) {
+      if (!isMbldEvent(r.event_id)) continue;
+      const mo3 = computeMbfMo3(r.attempts);
+      if (mo3 > 0 && (best === null || mo3 < best)) best = mo3;
+    }
+    return best;
+  }, [results]);
 
   // 用哪些项目? 当前模式 = profile.personal_records 有 PR 的项目;历史 = 同集合并 ∪ hist.events.
   const eventIds = useMemo(() => {
@@ -186,9 +200,12 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
               const sValue = showHist
                 ? (histEv?.single?.world?.value ?? histEv?.single?.country?.value ?? null)
                 : (cur?.single?.best ?? null);
-              const aValue = showHist
+              let aValue = showHist
                 ? (histEv?.average?.world?.value ?? histEv?.average?.country?.value ?? null)
                 : (cur?.average?.best ?? null);
+              // MBLD 无官方平均,两种模式都用非官方 Mo3 兜底(历史最佳排名口径也无 Mo3 排名)
+              const aIsUnofficial = isMbldEvent(eid) && aValue === null && bestMbfMo3 !== null;
+              if (aIsUnofficial) aValue = bestMbfMo3;
 
               const pod = podium.get(eid);
 
@@ -210,7 +227,7 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
                   <td><RankCell r={sRank.continent} /></td>
                   <td><RankCell r={sRank.country} /></td>
                   <td className="wp-cell-result">{sValue === null ? '—' : formatWcaResult(sValue, eid, 'single')}</td>
-                  <td className="wp-cell-result">{aValue === null ? '—' : formatWcaResult(aValue, eid, 'average')}</td>
+                  <td className="wp-cell-result">{aValue === null ? '—' : <>{formatWcaResult(aValue, eid, 'average')}{aIsUnofficial && <UnofficialMark />}</>}</td>
                   <td><RankCell r={aRank.world} /></td>
                   <td><RankCell r={aRank.continent} /></td>
                   <td><RankCell r={aRank.country} /></td>
