@@ -66,7 +66,7 @@ import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-c
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
 // 变体 (前端先做,后端数据后续接;key 与 /scramble/analyzer + /scramble/stats 对齐)。
-type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | '123' | '222' | '223';
+type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | '123' | '222' | '223' | '123x2' | 'eoline' | 'dr';
 const VARIANTS: { key: VariantKey; zh: string; en: string
     zhHant?: string;
  }[] = [
@@ -88,8 +88,11 @@ const VARIANTS: { key: VariantKey; zh: string; en: string
       zhHant: "偽 F2LEO"
 },
   { key: '123', zh: '1x2x3', en: '1x2x3' },
+  { key: '123x2', zh: '1x2x3 ×2', en: '1x2x3 ×2' },
   { key: '222', zh: '2x2x2', en: '2x2x2' },
   { key: '223', zh: '2x2x3', en: '2x2x3' },
+  { key: 'eoline', zh: 'EOLine', en: 'EOLine' },
+  { key: 'dr', zh: 'DR', en: 'DR' },
 ];
 // 每变体:阶段集 + 实时引擎能力。std=现有 cross WASM(5 阶段);f2leo/pseudo_f2leo=
 // F2leoSolverWasm 浏览器当场算(4 阶段,无 xxxxc);其余暂仅靠预计算(comp_steps 未生成
@@ -106,10 +109,14 @@ const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2le
   pseudo_pair: { stages: F2L_STAGES, engine: 'variant' },
   f2leo: { stages: F2L_STAGES, engine: 'f2leo' },
   pseudo_f2leo: { stages: F2L_STAGES, engine: 'f2leo' },
-  // 块类:Roux223SolverWasm 浏览器现算(need 'roux223' 单类共享),comp_steps 命中则秒出。
+  // 块族:Roux223SolverWasm / EoDrSolverWasm 浏览器现算(useRoux223StepMap 内部按
+  // variant 选池 need),comp_steps 命中则秒出。
   '123': { stages: ['b122', 'b123'], engine: 'roux223' },
+  '123x2': { stages: ['bf2b'], engine: 'roux223' },
   '222': { stages: ['b222'], engine: 'roux223' },
   '223': { stages: ['b223'], engine: 'roux223' },
+  eoline: { stages: ['beo', 'beoline'], engine: 'roux223' },
+  dr: { stages: ['bdr'], engine: 'roux223' },
 };
 const EMPTY_STEP: StepMapState = { map: null, ready: true, done: 0, total: 0, error: null };
 const EMPTY_MAP_TN: Map<string, number[]> = new Map();
@@ -126,6 +133,10 @@ const STAGE_LABEL: Record<Metric, { zh: string; en: string
   b123: { zh: '1x2x3', en: '1x2x3' },
   b222: { zh: '2x2x2', en: '2x2x2' },
   b223: { zh: '2x2x3', en: '2x2x3' },
+  bf2b: { zh: '1x2x3 ×2', en: '1x2x3 ×2' },
+  beo: { zh: 'EO', en: 'EO' },
+  beoline: { zh: 'EOLine', en: 'EOLine' },
+  bdr: { zh: 'DR', en: 'DR' },
 };
 
 interface Props {

@@ -28,23 +28,39 @@ import i18n from "@/i18n/i18n-client";
 // 行内展开第一次点开时才按需加载(ssr:false,纯 client 组件)。
 const StageSolver = dynamic(() => import('@/components/StageSolver'), { ssr: false });
 
-// gen 变体 key 与 StageSolver Method 一一对应(std/eo/pair/pseudo/pseudo_pair/f2leo/pseudo_f2leo/123/222/223)。
-const VARIANT_METHODS = new Set<string>(['std', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo', '123', '222', '223']);
-const variantToMethod = (v: string): Method => (VARIANT_METHODS.has(v) ? (v as Method) : 'std');
-// metric → StageSolver initialStage 索引(cross=0 / xc=1 / …;块类:b122/b222=0,
-// b123=方法 123 的阶段 1,b223=方法 223 的阶段 1 — 方法不同所以全局表不冲突)。
-const METRIC_STAGE_IDX: Record<Metric, number> = { cross: 0, xc: 1, xxc: 2, xxxc: 3, xxxxc: 4, b122: 0, b123: 1, b222: 0, b223: 1 };
+// gen 变体 key 与 StageSolver Method 对应(123x2 是方法 123 的第 3 阶段,无独立方法)。
+const VARIANT_METHODS = new Set<string>(['std', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo', '123', '222', '223', 'eoline', 'dr']);
+const variantToMethod = (v: string): Method =>
+  v === '123x2' ? '123' : VARIANT_METHODS.has(v) ? (v as Method) : 'std';
+// metric → StageSolver initialStage 索引(cross=0 / xc=1 / …;块族:b122/b222=0,
+// b123=方法 123 的阶段 1,bf2b=方法 123 的阶段 2,b223=方法 223 的阶段 1,
+// beo/beoline=方法 eoline 的阶段 0/1,bdr=方法 dr 的阶段 0 — 方法不同所以全局表不冲突)。
+const METRIC_STAGE_IDX: Record<Metric, number> = {
+  cross: 0, xc: 1, xxc: 2, xxxc: 3, xxxxc: 4,
+  b122: 0, b123: 1, b222: 0, b223: 1, bf2b: 2, beo: 0, beoline: 1, bdr: 0,
+};
 
-// 逐行徽标点击循环顺序;块类变体只在自家阶段集内循环。label: cross='C',块类=尺寸数字,其它=大写指标名。
+// 逐行徽标点击循环顺序;块族变体只在自家阶段集内循环。label: cross='C',块类=尺寸数字,其它=大写指标名。
 const METRIC_CYCLE: Metric[] = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc'];
-const BLOCK_CYCLE: Record<string, Metric[]> = { '123': ['b122', 'b123'], '222': ['b222'], '223': ['b223'] };
+const BLOCK_CYCLE: Record<string, Metric[]> = {
+  '123': ['b122', 'b123'], '222': ['b222'], '223': ['b223'],
+  '123x2': ['bf2b'], eoline: ['beo', 'beoline'], dr: ['bdr'],
+};
 const cycleOf = (v?: string): Metric[] => (v && BLOCK_CYCLE[v]) || METRIC_CYCLE;
 const metricBadgeLabel = (m: Metric): string =>
-  m === 'cross' ? 'C' : m.startsWith('b') ? m.slice(1) : m.toUpperCase();
+  m === 'cross' ? 'C'
+    : m === 'bf2b' ? '123×2'
+      : m === 'beo' ? 'EO'
+        : m === 'beoline' ? 'EOLine'
+          : m === 'bdr' ? 'DR'
+            : m.startsWith('b') ? m.slice(1) : m.toUpperCase();
 // metric → analyzer `stage` 查询值(analyzer 当前支持 cross/xcross/xxcross/xxxcross;
 // xxxxcross 先带上,等 analyzer 支持即生效,暂不支持时它会回落到 cross)。
-// 块类指标无 stage 查询值(空串即不带),深链只保留 scramble。
-const METRIC_STAGE: Record<Metric, string> = { cross: 'cross', xc: 'xcross', xxc: 'xxcross', xxxc: 'xxxcross', xxxxc: 'xxxxcross', b122: '', b123: '', b222: '', b223: '' };
+// 块族指标无 stage 查询值(空串即不带),深链只保留 scramble。
+const METRIC_STAGE: Record<Metric, string> = {
+  cross: 'cross', xc: 'xcross', xxc: 'xxcross', xxxc: 'xxxcross', xxxxc: 'xxxxcross',
+  b122: '', b123: '', b222: '', b223: '', bf2b: '', beo: '', beoline: '', bdr: '',
+};
 
 export interface AttemptScramble {
   /** Display label, e.g. "1", "2", "E1", "E2". For MBLD this is the cube number. */

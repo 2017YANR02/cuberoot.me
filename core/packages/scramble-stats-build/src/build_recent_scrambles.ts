@@ -57,6 +57,9 @@ const VARIANTS: Variant[] = [
   { key: '123', file: 'roux.csv', stages: ['fbsquare', 'rouxs1'], metrics: ['fbsquare', 'rouxs1'] },
   { key: '222', file: '222.csv', stages: ['block222'], metrics: ['block222'] },
   { key: '223', file: '223.csv', stages: ['block223'], metrics: ['block223'] },
+  { key: '123x2', file: 'f2b.csv', stages: ['f2b'], metrics: ['f2b'] },
+  { key: 'eoline', file: 'eoline.csv', stages: ['eo', 'eoline'], metrics: ['eo', 'eoline'] },
+  { key: 'dr', file: 'dr.csv', stages: ['dr'], metrics: ['dr'] },
 ];
 
 interface NewMeta { scramble: string; compId: string; event: string; round: string; group: string; num: number; extra: boolean }

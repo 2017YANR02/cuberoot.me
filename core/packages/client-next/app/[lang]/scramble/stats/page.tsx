@@ -77,7 +77,7 @@ function eventLabel(e: string, isZh: boolean): string {
   return m ? ((i18n.language === 'zh-Hant' ? (m.zhHant ?? m.zh) : (i18n.language.startsWith('zh') ? m.zh : m.en))) : e;
 }
 
-type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | '123' | '222' | '223';
+type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | '123' | '222' | '223' | '123x2' | 'eoline' | 'dr';
 type YMode = 'percent' | 'count';
 type ChartMode = 'pdf' | 'cdf';
 
@@ -102,8 +102,13 @@ const VARIANT_LABEL: Record<VariantKey, { en: string; zh: string
       zhHant: "偽 F2LEO"
 },
   '123': { en: '1x2x3', zh: '1x2x3' },
+  // 下拉顺序 = distribution JSON 键枚举:数字键(123/222/223)永远最前,字符串键按
+  // build.ts VARIANTS 插入序 —— 123x2/eoline/dr 落尾部
+  '123x2': { en: '1x2x3 ×2', zh: '1x2x3 ×2' },
   '222': { en: '2x2x2', zh: '2x2x2' },
   '223': { en: '2x2x3', zh: '2x2x3' },
+  eoline: { en: 'EOLine', zh: 'EOLine' },
+  dr: { en: 'DR', zh: 'DR' },
 };
 
 const STAGE_LABEL: Record<string, { en: string; zh: string
@@ -144,6 +149,10 @@ const STAGE_LABEL: Record<string, { en: string; zh: string
   fbsquare: { en: '1x2x2', zh: '1x2x2' },
   rouxs1: { en: '1x2x3', zh: '1x2x3' },
   block223: { en: '2x2x3', zh: '2x2x3' },
+  f2b: { en: '1x2x3 ×2', zh: '1x2x3 ×2' },
+  eo: { en: 'EO', zh: 'EO' },
+  eoline: { en: 'EOLine', zh: 'EOLine' },
+  dr: { en: 'DR', zh: 'DR' },
 };
 
 const labelStage = (s: string, isZh: boolean) => STAGE_LABEL[s] ? STAGE_LABEL[s][isZh ? 'zh' : 'en'] : s;

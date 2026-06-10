@@ -58,12 +58,20 @@ function poolSize(): number {
  * @param variantId VariantSolverWasm 编号(pair=0/eo=1/pseudo=2/pseudo_pair=3)
  * @param stages 阶段数(pair/pseudo/pseudo_pair=4,eo=5)
  */
-// 块类变体 → Roux223SolverWasm 的 flat 阶段 id(0=1x2x2 方块 1=1x2x3 2=2x2x2 3=2x2x3)。
-const ROUX223_STAGE_IDS: Record<string, number[]> = { '123': [0, 1], '222': [2], '223': [3] };
+// 块族变体 → (WASM 池 need, flat 阶段 id 列表)。
+// roux223:0=1x2x2 方块 1=1x2x3 2=2x2x2 3=2x2x3 4=双1x2x3;eodr:0=EO 1=EOLine 2=DR。
+const BLOCK_SPEC: Record<string, { need: 'roux223' | 'eodr'; ids: number[] }> = {
+  '123': { need: 'roux223', ids: [0, 1] },
+  '222': { need: 'roux223', ids: [2] },
+  '223': { need: 'roux223', ids: [3] },
+  '123x2': { need: 'roux223', ids: [4] },
+  eoline: { need: 'eodr', ids: [0, 1] },
+  dr: { need: 'eodr', ids: [2] },
+};
 
 /**
- * 123 / 222 / 223 浏览器内求解(count-only),need 'roux223' 共享一个 WASM 类。
- * 两遍同 useVariantStepMap:首阶段先出(123 的 1x2x2 / 单阶段变体即全部),余下阶段后台补。
+ * 块族(123/123x2/222/223 走 Roux223SolverWasm;eoline/dr 走 EoDrSolverWasm 零表)
+ * 浏览器内求解(count-only)。两遍同 useVariantStepMap:首阶段先出,余下阶段后台补。
  */
 export function useRoux223StepMap(
   scrambles: string[],
@@ -72,14 +80,16 @@ export function useRoux223StepMap(
 ): VariantState {
   const [state, setState] = useState<VariantState>(IDLE);
   const poolRef = useRef<RustCrossPool | null>(null);
+  const poolNeedRef = useRef<'roux223' | 'eodr' | null>(null);
   const cacheRef = useRef<Map<string, Map<string, number[]>>>(new Map());
   const lastArrRef = useRef<string[] | null>(null);
 
-  useEffect(() => () => { poolRef.current?.terminate(); poolRef.current = null; }, []);
+  useEffect(() => () => { poolRef.current?.terminate(); poolRef.current = null; poolNeedRef.current = null; }, []);
 
   useEffect(() => {
     if (!enabled) { setState(IDLE); return; }
-    const stageIds = ROUX223_STAGE_IDS[variant] ?? [0];
+    const spec = BLOCK_SPEC[variant] ?? BLOCK_SPEC['123'];
+    const stageIds = spec.ids;
     if (scrambles.length === 0) {
       setState({ map: new Map(), crossReady: true, fullReady: true, done: 0, total: 0, error: null });
       return;
@@ -105,8 +115,18 @@ export function useRoux223StepMap(
     };
     flush(scrambles.every((s) => len(s) >= 6), false, 6);
 
-    if (!poolRef.current) poolRef.current = createRustCrossPool(poolSize(), 'roux223');
+    // 跨族切换(roux223 ↔ eodr,装的 WASM 类不同)→ 换池。
+    if (poolRef.current && poolNeedRef.current !== spec.need) {
+      poolRef.current.terminate();
+      poolRef.current = null;
+    }
+    if (!poolRef.current) {
+      poolRef.current = createRustCrossPool(poolSize(), spec.need);
+      poolNeedRef.current = spec.need;
+    }
     const pool = poolRef.current;
+    const solveStage = (s: string, sid: number) =>
+      spec.need === 'eodr' ? pool.solveEoDrStage(s, sid) : pool.solveRoux223Stage(s, sid);
 
     (async () => {
       try {
@@ -118,7 +138,7 @@ export function useRoux223StepMap(
         // pass 1:首阶段 — 默认视图先出(首个 worker 惰性建表后即查表级)。
         const firstTodo = scrambles.filter((s) => len(s) < 6);
         await Promise.all(firstTodo.map(async (s) => {
-          try { const v = await pool.solveRoux223Stage(s, stageIds[0]); if (!cancelled && len(s) < 6) map.set(s, remap6(v)); }
+          try { const v = await solveStage(s, stageIds[0]); if (!cancelled && len(s) < 6) map.set(s, remap6(v)); }
           catch { /* 跳过该打乱 */ }
           const now = Date.now();
           if (now - lastFlush > 120) { lastFlush = now; flush(false, false, 6); }
@@ -126,14 +146,14 @@ export function useRoux223StepMap(
         if (cancelled) return;
         flush(true, false, 6);
 
-        // pass 2:余下阶段逐个补(123 的 1x2x3;单阶段变体无此遍)。
+        // pass 2:余下阶段逐个补(双阶段族的第二阶段;单阶段变体无此遍)。
         if (stageIds.length > 1) {
           const fullTodo = scrambles.filter((s) => len(s) < full);
           await Promise.all(fullTodo.map(async (s) => {
             try {
               const vals = (map.get(s) ?? []).slice(0, 6);
               for (const sid of stageIds.slice(1)) {
-                const v = await pool.solveRoux223Stage(s, sid);
+                const v = await solveStage(s, sid);
                 vals.push(...remap6(v));
               }
               if (!cancelled) map.set(s, vals);

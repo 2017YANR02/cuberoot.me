@@ -29,7 +29,7 @@ interface RecentScramblesJson {
   rank: Record<string, Record<string, Record<string, Record<string, [string, ColorLetter][]>>>>;
 }
 
-const VARIANT_ORDER = ['std', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo', '123', '222', '223'];
+const VARIANT_ORDER = ['std', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo', '123', '123x2', '222', '223', 'eoline', 'dr'];
 const VARIANT_LABEL: Record<string, { zh: string; en: string
         zhHant?: string;
  }> = {
@@ -51,11 +51,14 @@ const VARIANT_LABEL: Record<string, { zh: string; en: string
       zhHant: "偽 F2LEO"
 },
   '123': { zh: '1x2x3', en: '1x2x3' },
+  '123x2': { zh: '1x2x3 ×2', en: '1x2x3 ×2' },
   '222': { zh: '2x2x2', en: '2x2x2' },
   '223': { zh: '2x2x3', en: '2x2x3' },
+  eoline: { zh: 'EOLine', en: 'EOLine' },
+  dr: { zh: 'DR', en: 'DR' },
 };
 
-const METRIC_ORDER = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc', 'block222', 'fbsquare', 'rouxs1', 'block223'];
+const METRIC_ORDER = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc', 'block222', 'fbsquare', 'rouxs1', 'block223', 'f2b', 'eo', 'eoline', 'dr'];
 const METRIC_LABEL: Record<string, { zh: string; en: string
         zhHant?: string;
  }> = {
@@ -68,6 +71,10 @@ const METRIC_LABEL: Record<string, { zh: string; en: string
   fbsquare: { zh: '1x2x2', en: '1x2x2' },
   rouxs1: { zh: '1x2x3', en: '1x2x3' },
   block223: { zh: '2x2x3', en: '2x2x3' },
+  f2b: { zh: '1x2x3 ×2', en: '1x2x3 ×2' },
+  eo: { zh: 'EO', en: 'EO' },
+  eoline: { zh: 'EOLine', en: 'EOLine' },
+  dr: { zh: 'DR', en: 'DR' },
 };
 
 export default function RecentScrambles({ lang }: Props) {
