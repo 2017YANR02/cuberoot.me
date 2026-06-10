@@ -94,6 +94,10 @@ export interface TimerSettings {
   wcaDateFrom: string;   // 'YYYY-MM-DD', '' = no lower bound (date mode)
   wcaDateTo: string;     // 'YYYY-MM-DD', '' = no upper bound (date mode)
 
+  /** Auto-mark each WCA real scramble as done (public) after a non-DNF solve,
+   *  when signed in. Default on — saves a manual click per solve. */
+  autoMarkWcaScramble: boolean;
+
   /** Action when user clicks the scramble strip. */
   scrambleClickAction: 'none' | 'next' | 'copy';
 
@@ -199,6 +203,7 @@ export const DEFAULTS: TimerSettings = {
   wcaGroup: '',
   wcaDateFrom: '',
   wcaDateTo: '',
+  autoMarkWcaScramble: true,
   scrambleClickAction: 'copy',
   scrambleClickMigrated: false,
   hideAllUiWhileRunning: false,
