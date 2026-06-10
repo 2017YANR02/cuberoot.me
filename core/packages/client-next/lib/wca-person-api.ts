@@ -160,15 +160,18 @@ export interface PersonSorResponse {
 }
 
 export async function fetchPersonSor(wcaId: string, inclCancelled = false): Promise<PersonSorResponse> {
-  // v4: 加子排名字段(SoWR continentRank/countryRank, SoCR countryRank)→ 旧缓存须 miss
-  const key = `wca:sor:v4:${wcaId}:${inclCancelled ? 21 : 17}`;
+  // v5: v4 期间全 null 响应(21 口径 _21 未填充)曾被缓存 24h,数据灌上后用户还看一天「—」→ 换键甩掉毒缓存
+  const key = `wca:sor:v5:${wcaId}:${inclCancelled ? 21 : 17}`;
   const cached = cacheGet<PersonSorResponse>(key);
   if (cached) return cached;
-  const qs = `wcaId=${encodeURIComponent(wcaId)}${inclCancelled ? '&cancelled=1' : ''}`;
+  // v=5 进 URL:响应带 max-age=86400,浏览器 HTTP 缓存按 URL 钉 24h(nginx purge/localStorage 清除都管不到);
+  // 换 URL 才能甩掉曾被钉住的全 null 响应
+  const qs = `wcaId=${encodeURIComponent(wcaId)}${inclCancelled ? '&cancelled=1' : ''}&v=5`;
   const res = await fetch(apiUrl(`/v1/wca/sum-of-ranks/person?${qs}`));
   if (!res.ok) throw new Error(`sum-of-ranks/person ${res.status}`);
   const json = (await res.json()) as PersonSorResponse;
-  cacheSet(key, json);
+  // 全空 = 暂态(数据未灌/未收录),不入 24h 缓存,下次访问重查
+  if (json.single || json.average) cacheSet(key, json);
   return json;
 }
 

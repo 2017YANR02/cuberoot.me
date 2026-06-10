@@ -1070,7 +1070,8 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/player-best', async (c) => {
     };
   }
 
-  c.header('Cache-Control', CACHE_HEADER);
+  // 无任何组合(新选手尚未进 sor_player_best)是暂态,禁 24h 缓存;周更灌上后立即可见
+  c.header('Cache-Control', rows.length > 0 ? CACHE_HEADER : 'no-store');
   return c.json({
     wcaId, name: pers[0]!.name, countryId: pers[0]!.country_id, iso2: pers[0]!.iso2,
     scope: 'world', inclCancelled, best,
@@ -1269,7 +1270,10 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/person', async (c) => {
   out.bestSingle = inclCancelled ? null : buildBest(bestBy.single);
   out.bestAverage = inclCancelled ? null : buildBest(bestBy.average);
 
-  c.header('Cache-Control', CACHE_HEADER);
+  // 全空(21 口径 _21 未填充 / 选手两 type 都无排名)是暂态,禁 24h 缓存 —— 否则数据灌上后
+  // nginx/客户端还要再瞎一天(2026-06-10 用户实际踩到).有数据才发长缓存.
+  if (out.single || out.average) c.header('Cache-Control', CACHE_HEADER);
+  else c.header('Cache-Control', 'no-store');
   return c.json(out);
 });
 
