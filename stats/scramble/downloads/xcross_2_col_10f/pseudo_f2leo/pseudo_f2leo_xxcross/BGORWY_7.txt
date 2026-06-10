@@ -1,6 +1,6 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BGORWY / bin 7
-# Population in this bin: 103
-# Samples listed: 103 (all entries in this bin)
+# Population in this bin: 105
+# Samples listed: 105 (all entries in this bin)
 # Source: scrambles.txt
 # Generated: 2026-06-09
 # Columns: id,scramble,bottom_color
@@ -108,3 +108,5 @@
 638212,B2 R2 B2 U L2 D L2 D2 F2 U' R2 U' L2 D B' L' D R' B2 D B F' L ,G
 643611,B2 L2 D R2 U F2 L2 D2 F2 L2 D' R2 D' L2 F' R' B D L2 B2 L' F' R' U2 ,G
 643612,F2 L2 U' F2 L2 B2 L2 U' B2 U R2 U2 B2 F' L' D' R' B' F D' F2 D' R' U' ,G
+648823,D' L2 F2 D' B2 D' B2 L2 U2 R2 D F' L2 U' L' B' R F' D L U' ,G
+648824,U R2 D L2 D2 F2 U F2 U' L2 B2 L2 U B2 U2 F' R B' L2 U' L' F R U' ,G

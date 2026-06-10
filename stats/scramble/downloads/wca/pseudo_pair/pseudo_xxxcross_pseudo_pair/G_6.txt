@@ -3,17 +3,17 @@
 # Samples listed: 12 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,G
-430292001,U2 L2 R2 B' R2 B F U' L U' B L2 B L2 F' R' U B,G
-504494001,F L2 D' B' U' F2 U B' R D R F2 B2 R' L' U2 L,G
-577465001,D F2 U R2 D' F2 U' B' R2 D2 B U2 L' D' B' U' L' B2,G
-681376024,F U2 F2 R2 F2 L2 B' L2 R B L D2 R2 B' D' B2 R B2 U' F' L B,G
-705795001,L U2 L' D2 R F2 R' U2 L' F2 U R2 U2 B2 R' B2 R2 U2 B' R',G
-2478962001,F D' B D2 R2 B2 L B R' B2 U F U2 F' D2 B' L2 B',G
-2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,G
-4511552001,R2 F2 R B D' R D R D' B2 D B2 D' R2 D' L2 B2 L2,G
-4711986001,L' B U B U' B D2 L' B' U B2 D' B2 U D2,G
-4924926027,B U2 B' R2 B' U2 B D2 U2 B2 R B2 D' U2 B' L U' L' D2 R2 D,G
-5632126001,L' F' R2 U2 L2 U2 B F L2 F' R' F R2 D' R B2 L R F2 L',G
+188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,G,LMDL Open 2015,333 R1 B #3
+430292001,U2 L2 R2 B' R2 B F U' L U' B L2 B L2 F' R' U B,G,Chișinău Winter 2017,333 R2 B #2
+504494001,F L2 D' B' U' F2 U B' R D R F2 B2 R' L' U2 L,G,GLS Cup II 2017,333 R2 C E2
+577465001,D F2 U R2 D' F2 U' B' R2 D2 B U2 L' D' B' U' L' B2,G,Bicho Legal Open 2017,333 R1 A #2
+681376024,F U2 F2 R2 F2 L2 B' L2 R B L D2 R2 B' D' B2 R B2 U' F' L B,G,Swisscubing Mental Breakdown 2018,333mbf Final A #3
+705795001,L U2 L' D2 R F2 R' U2 L' F2 U R2 U2 B2 R' B2 R2 U2 B' R',G,Colegio Newton Yura 2018,333 R2 B E1
+2478962001,F D' B D2 R2 B2 L B R' B2 U F U2 F' D2 B' L2 B',G,Empire State Winter Whirl 2023,333oh Final B #3
+2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,G,Pickering D 2023,333 R2 B #2
+4511552001,R2 F2 R B D' R D R D' B2 D B2 D' R2 D' L2 B2 L2,G,Pragyan Cube Open 2025,333oh R1 A #1
+4711986001,L' B U B U' B D2 L' B' U B2 D' B2 U D2,G,Cubing in School Westminster 2025,333 R1 A E1
+4924926027,B U2 B' R2 B' U2 B D2 U2 B2 R B2 D' U2 B' L U' L' D2 R2 D,G,Peterborough Qualification Day 2025,333mbf Final A #1
+5632126001,L' F' R2 U2 L2 U2 B F L2 F' R' F R2 D' R B2 L R F2 L',G,Long Island No Sound 2026,333mbf Final A #1

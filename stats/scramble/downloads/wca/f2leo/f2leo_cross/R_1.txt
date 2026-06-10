@@ -3,17 +3,17 @@
 # Samples listed: 12 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-672623001,R2 U2 B2 L R' F2 R2 B' R2 D' B2 D L R' F2 U2 R' B,R
-830892001,F2 L2 D U L2 D R2 D R2 U' B R' D' B2 R B U' F2 U,R
-1141158001,U2 F2 R' B2 L B2 R2 B2 F U2 R' B' L' F L F' R' F2,R
-1480268001,U2 R2 U2 B' F U2 B L2 F L2 R' B2 L2 D' B D2 B D R' U,R
-1965608001,B L U2 F' L' D2 B2 L D R2 D2 R D2 B2 R' F2 R2 U' L' F',R
-2587828001,U' F2 R' D2 L2 B2 F2 D2 B2 D' L B R' B U2 R2 B2 L U2,R
-2635277001,B' D2 U2 L2 B' D2 B' R2 B2 L2 U' F2 L' F' R' D R F U,R
-2920424001,B2 F2 R' U2 B2 D2 B2 L2 U2 D' R' F' L2 U R2 F2 U2 B' D,R
-3311768001,R2 U' F2 R' B2 D F' R2 L U' R' B2 L' B2 R' F2 L' F2 D2 L B,R
-4881503001,U' L2 B2 U B2 D' U' R2 U B2 R F2 D L2 R' D' U' R2 U',R
-5337151001,L2 U' B2 D2 L2 U L2 U2 R D L' D2 L B2 F2 R' D2 L' D,R
-5430199006,L2 F2 R U R2 U L2 D' B2 D2 R2 U' L' R B R' B' U' R B R',R
+672623001,R2 U2 B2 L R' F2 R2 B' R2 D' B2 D L R' F2 U2 R' B,R,Liberty Science Center Open 2017,333oh R1 B #1
+830892001,F2 L2 D U L2 D R2 D R2 U' B R' D' B2 R B U' F2 U,R,Hefei Summer 2018,333 R1 I E2
+1141158001,U2 F2 R' B2 L B2 R2 B2 F U2 R' B' L' F L F' R' F2,R,Guwahati Summer Open 2019,333oh R1 B E2
+1480268001,U2 R2 U2 B' F U2 B L2 F L2 R' B2 L2 D' B D2 B D R' U,R,AZCubing Winter 2019,333 Final A E2
+1965608001,B L U2 F' L' D2 B2 L D R2 D2 R D2 B2 R' F2 R2 U' L' F',R,UBC Side Events 2022,333mbf Final A #1
+2587828001,U' F2 R' D2 L2 B2 F2 D2 B2 D' L B R' B U2 R2 B2 L U2,R,Holiday Open 2023,333 R1 C E2
+2635277001,B' D2 U2 L2 B' D2 B' R2 B2 L2 U' F2 L' F' R' D R F U,R,Carquef'Open 2023,333 R1 C #5
+2920424001,B2 F2 R' U2 B2 D2 B2 L2 U2 D' R' F' L2 U R2 F2 U2 B' D,R,Monterrey Bogotá III 2023,333oh R1 A #1
+3311768001,R2 U' F2 R' B2 D F' R2 L U' R' B2 L' B2 R' F2 L' F2 D2 L B,R,Mildura Madness 2023,333bf R1 A #2
+4881503001,U' L2 B2 U B2 D' U' R2 U B2 R F2 D L2 R' D' U' R2 U',R,Naucalli Ce 2025,333 R1 C #5
+5337151001,L2 U' B2 D2 L2 U L2 U2 R D L' D2 L B2 F2 R' D2 L' D,R,Just Judge Jura 2026,333bf Final A #4
+5430199006,L2 F2 R U R2 U L2 D' B2 D2 R2 U' L' R B R' B' U' R B R',R,Blind Madrid 2026,333mbf Final A #1

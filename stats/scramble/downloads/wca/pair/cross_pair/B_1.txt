@@ -3,22 +3,22 @@
 # Samples listed: 17 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-213504001,B2 U2 L2 D2 F2 D2 F' L F' L2 D B2 F D' B' U2 R U2,B
-320651001,F' U2 B F U2 F L2 F' L2 R U2 L' B' D B D R' D' R2 B',B
-660587002,R2 D B2 R2 D' U' R2 U R' F' D' L2 U B' D F L F' R' U L' F,B
-702343001,B' D2 F' D2 L2 U2 F R2 F' D2 L' B L2 F D F' D R' B D,B
-824872001,D B2 F2 U R2 B2 D F2 U' R2 U' B F2 L' F2 R' U2 L' R F L',B
-927977001,U2 R' D' F2 L' U B D' F2 D' R' F2 R' B2 R B2 L B2 L',B
-944546001,U2 L U2 F2 L U2 B D' B F' D2 F R B2 L2 U2 F,B
-2153137015,L2 D' R2 B2 D F2 L2 R2 B R' D R2 B D' R2 U' L2 R B L2 U2,B
-2642362001,R L D F2 D' R2 F' D R2 D2 L' F2 R' U2 R' U2 L2 D2 L2,B
-3185423001,U' B' D L2 D2 R2 D' R2 F2 R F' D R' D' U R2 D L' F,B
-3672488001,R2 B2 L2 D2 U F2 U' L2 U' F' U' L' F2 L' D' B2 F2 R2,B
-4480203001,D2 B' R L' F' U L' U R2 D' F2 R2 F2 B2 U2 L2 F2 R' F D',B
-4678636001,B' L' D L' U2 B2 L' U2 D B2 U' L' R' F L' B',B
-4799697001,R D L2 B' U2 F D2 U2 F2 R2 F R' B D2 F2 U L' B2,B
-5322151001,L U2 R2 B' F U2 B R2 F' L2 D' L2 B D2 R2 D2 L D B',B
-5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',B
-5572071001,D2 F2 U' F R D2 F' U D2 R B2 L2 U' B2 R2 B2 U',B
+213504001,B2 U2 L2 D2 F2 D2 F' L F' L2 D B2 F D' B' U2 R U2,B,AZCubing Fall 2015,333oh Final A #4
+320651001,F' U2 B F U2 F L2 F' L2 R U2 L' B' D B D R' D' R2 B',B,Lexington Summer 2016,333oh R1 A #4
+660587002,R2 D B2 R2 D' U' R2 U R' F' D' L2 U B' D F L F' R' U L' F,B,PLS Autumn Reda 2014,333mbf Final A #1
+702343001,B' D2 F' D2 L2 U2 F R2 F' D2 L' B L2 F D F' D R' B D,B,Oradea Cubing Open 2018,333 R1 B #1
+824872001,D B2 F2 U R2 B2 D F2 U' R2 U' B F2 L' F2 R' U2 L' R F L',B,Bolivia Nationals 2018,333bf Final A E1
+927977001,U2 R' D' F2 L' U B D' F2 D' R' F2 R' B2 R B2 L B2 L',B,Saitama 2018,333 R1 A #3
+944546001,U2 L U2 F2 L U2 B D' B F' D2 F R B2 L2 U2 F,B,Zibo Open 2018,333oh Final A #3
+2153137015,L2 D' R2 B2 D F2 L2 R2 B R' D R2 B D' R2 U' L2 R B L2 U2,B,NZ North Island Championship 2022,333mbf Final A #1
+2642362001,R L D F2 D' R2 F' D R2 D2 L' F2 R' U2 R' U2 L2 D2 L2,B,Cavarzere Cube Days 2023,333 Final A E2
+3185423001,U' B' D L2 D2 R2 D' R2 F2 R F' D R' D' U R2 D L' F,B,Hong Kong Championship 2023,333oh R1 B E1
+3672488001,R2 B2 L2 D2 U F2 U' L2 U' F' U' L' F2 L' D' B2 F2 R2,B,RioMar Kennedy Fortaleza 2024,333 R2 C E1
+4480203001,D2 B' R L' F' U L' U R2 D' F2 R2 F2 B2 U2 L2 F2 R' F D',B,Central Asian Tour Astana 2025,333oh R1 B E2
+4678636001,B' L' D L' U2 B2 L' U2 D B2 U' L' R' F L' B',B,Martigny Open 2025,333 R2 A #1
+4799697001,R D L2 B' U2 F D2 U2 F2 R2 F R' B D2 F2 U L' B2,B,Damásio Open 2025,333 R1 B E1
+5322151001,L U2 R2 B' F U2 B R2 F' L2 D' L2 B D2 R2 D2 L D B',B,Chanteloup Open 2026,333 R1 A E2
+5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',B,Langenstein City Blind Open 2026,333mbf Final B #1
+5572071001,D2 F2 U' F R D2 F' U D2 R B2 L2 U' B2 R2 B2 U',B,National Trail Open OH 2026,333 R2 B #4

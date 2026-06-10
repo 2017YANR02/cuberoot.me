@@ -3,6 +3,6 @@
 # Samples listed: 1 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-4888230001,R2 F' R L' U2 L2 F' U2 D L2 U R2 F2 B2 R2 B D B2 L',B
+4888230001,R2 F' R L' U2 L2 F' U2 D L2 U R2 F2 B2 R2 B D B2 L',B,IEEE Cubing Nepal 2025,333 Final A #5

@@ -3,10 +3,10 @@
 # Samples listed: 5 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-1141158001,U2 F2 R' B2 L B2 R2 B2 F U2 R' B' L' F L F' R' F2,R
-2726056001,L2 F D' L2 D B2 D2 R2 F2 U B2 U' L F2 U2 R' D2 B D',O
-4881503001,U' L2 B2 U B2 D' U' R2 U B2 R F2 D L2 R' D' U' R2 U',R
-5337151001,L2 U' B2 D2 L2 U L2 U2 R D L' D2 L B2 F2 R' D2 L' D,R
-5467116001,D' F' L2 B2 D B2 R2 D' L2 D' R' B' R' D2 R' D F R2,O
+1141158001,U2 F2 R' B2 L B2 R2 B2 F U2 R' B' L' F L F' R' F2,R,Guwahati Summer Open 2019,333oh R1 B E2
+2726056001,L2 F D' L2 D B2 D2 R2 F2 U B2 U' L F2 U2 R' D2 B D',O,Anzio Open 2023,333 Final A #1
+4881503001,U' L2 B2 U B2 D' U' R2 U B2 R F2 D L2 R' D' U' R2 U',R,Naucalli Ce 2025,333 R1 C #5
+5337151001,L2 U' B2 D2 L2 U L2 U2 R D L' D2 L B2 F2 R' D2 L' D,R,Just Judge Jura 2026,333bf Final A #4
+5467116001,D' F' L2 B2 D B2 R2 D' L2 D' R' B' R' D2 R' D F R2,O,Sumgait Spring Open 2026,333 R1 A #4

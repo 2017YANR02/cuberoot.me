@@ -3,8 +3,8 @@
 # Samples listed: 3 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-1123091001,R2 D2 U B2 U2 L2 R U2 B' U F' L D U' L2 R' U' F2,B
-1146922001,U2 F' D B2 R L' F2 D' B2 R2 B R2 D2 R2 D' L2 D L2 U2 L2,B
-5034297037,F U' R' D2 B L2 B R2 F' L2 R2 F' L' F R2 U B R2 F' R D,B
+1123091001,R2 D2 U B2 U2 L2 R U2 B' U F' L D U' L2 R' U' F2,B,CubingUSA Southeast Championship 2019,333ft Final A #5
+1146922001,U2 F' D B2 R L' F2 D' B2 R2 B R2 D2 R2 D' L2 D L2 U2 L2,B,Uzbekistan Big Cubes Spring 2019,333 Final A #3
+5034297037,F U' R' D2 B L2 B R2 F' L2 R2 F' L' F R2 U B R2 F' R D,B,Cubing Kerala Travancore Open 2025,333mbf Final A #1

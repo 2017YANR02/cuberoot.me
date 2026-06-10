@@ -3,7 +3,7 @@
 # Samples listed: 2 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-2601150001,F U F2 L F2 D2 U' B2 U' B2 R F U2 B2 U R F',Y
-5210415001,U' D R2 U R D2 L' U2 F' L2 F' R2 U' L2 U F2 R2 U,Y
+2601150001,F U F2 L F2 D2 U' B2 U' B2 R F U2 B2 U R F',Y,Romerike Easter Open 2023,333 R2 A #3
+5210415001,U' D R2 U R D2 L' U2 F' L2 F' R2 U' L2 U F2 R2 U,Y,Kent Fall 2025,333 R1 D #3

@@ -1,5 +1,5 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / W / bin 8
-# Population in this bin: 686
+# Population in this bin: 701
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: scrambles.txt
 # Generated: 2026-06-09
@@ -19,7 +19,7 @@
 218723,R2 B2 L2 D L2 D R2 D L2 D U2 R2 U' F' D B' R' D R L F' U R ,W
 6353,R2 D' L2 D' F2 R2 L2 U' L2 U2 R2 B2 U2 F' L B' D' R' F' U2 F2 U2 L' ,W
 5955,L2 B2 U2 L2 B2 D' F2 D B2 U' F2 D R2 U B2 L F' R2 F2 D' R U' B F U L' ,W
-45,B2 L2 D2 B2 D' B2 U2 B2 F2 L2 D' L2 F2 U L' F' D B R U' F2 R2 L' F U' ,W
+654384,B2 D L2 U2 R2 U B2 D B2 U' B2 U2 B' U L F2 L2 F' R' B D L U' ,W
 6588,F2 D' B2 D' F2 R2 D' R2 D' R2 U2 F2 U B' R F' D' F2 L' B R U2 L2 ,W
 6784,R2 D L2 D F2 D B2 R2 F2 U2 L2 D' B2 D' U' L' F U' B L2 U R L' U2 F ,W
 399857,L2 D' F2 R2 U2 F2 L2 D' R2 B2 R2 L2 D R' U2 L2 B' F' R D' L' B' U' ,W
@@ -79,7 +79,7 @@
 304,U' F2 U R2 U R2 L2 D R2 B2 U B2 D L2 U' L' F' U' L' B R L' F2 U' F' ,W
 6859,U R2 B2 U2 B2 L2 F2 R2 U' B2 F2 R2 U' L' F D B R' L' U2 F' ,W
 145992,L2 B2 D2 R2 U' L2 D' R2 F2 R2 U' F2 R' L' B' L2 F' R' L U' ,W
-6874,L2 U' L2 B2 U' F2 U B2 D' F2 D2 U' F2 L2 R' U2 B' F' L D R B D2 U2 ,W
+654387,R2 F2 D L2 U' F2 R2 L2 U L2 D F2 D' L' B F' R' F R2 F2 U' F L' ,W
 352,F2 U L2 D2 F2 U R2 U' B2 L2 D' L2 D' B2 U2 R' D F L' U R B2 D B' F' ,W
 1038,F2 U2 F2 R2 U' L2 B2 U B2 D' R2 U F2 R2 B' R2 D L D R' F' U' L B' ,W
 381,L2 D' B2 D F2 L2 U2 B2 R2 U' F2 L2 U F2 U' R' B' R' D' F' U L B D R' U' ,W

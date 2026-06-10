@@ -3,9 +3,9 @@
 # Samples listed: 4 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-348737001,R' B' R2 L U' R' B' U L2 F' R' B2 R U2 D2 F2 L D2 L',B
-753670001,U2 B2 L2 D' L2 B2 U R2 U R F U2 F R' U' R' F,B
-4151708001,B' R2 U2 F' L2 U L' B D' F' U' F2 U L2 B' D2,B
-4475748001,F2 D' L' D F' D' L U L2 F' R2 D2 L' D2 R F2 R2 B2,B
+348737001,R' B' R2 L U' R' B' U L2 F' R' B2 R U2 D2 F2 L D2 L',B,Xela Open 2016,333 R2 A #4
+753670001,U2 B2 L2 D' L2 B2 U R2 U R F U2 F R' U' R' F,B,Chanquete Open 2018,333 R2 B #1
+4151708001,B' R2 U2 F' L2 U L' B D' F' U' F2 U L2 B' D2,B,Rubik's WCA African Championship 2024,333oh R1 C E1
+4475748001,F2 D' L' D F' D' L U L2 F' R2 D2 L' D2 R F2 R2 B2,B,Brazuca al Cubo I 2025,333 R2 A #5

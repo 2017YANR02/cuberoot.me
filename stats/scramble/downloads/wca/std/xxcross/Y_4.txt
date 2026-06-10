@@ -3,23 +3,23 @@
 # Samples listed: 18 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-52675001,B' R2 U' R D' R2 U D2 B U B2 D' F2 B2 D2 B2 D L2,Y
-352796001,F2 U2 B D2 B D2 U2 L' B2 U2 R B L2 U L2 U B F,Y
-353826001,B2 U F2 U' B2 D L2 D' U L' B' D2 L F L D U' B' U' L' F,Y
-667364001,U' R2 D2 L2 D' F2 D' R2 B' U2 L' B' U2 R2 B' L2 B R2,Y
-826009001,F2 U2 F2 L' U2 L D2 F R' B2 L' U2 R' B' R U L F',Y
-1095758001,U2 F2 L F2 R B2 U2 R B' L2 F R' B2 D2 B U B2 U2 B,Y
-1933469001,B2 F D2 B2 F' R2 D' R' U' L B2 R' F' L' D' R2 B,Y
-2249121001,D F2 D2 R B2 R' D2 F2 D L U L' B2 D' R' F R,Y
-2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,Y
-2700440001,U' B2 D' U2 F' D2 F U' R2 F' L B2 L' B F U',Y
-3126076001,D2 F' D' R2 U2 R' F' D' R' U D' L2 U2 L D2 R F2 R,Y
-3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y
-4495002001,L2 U F2 U' B2 L2 U B2 U' L2 F2 L' U2 F' U F' U2 R,Y
-4797982028,L' B' U' F' U' R2 F L2 F D F L2 D2 F' R2 U2 B2 L',Y
-4816312001,U2 B2 D2 L' U L' U2 F L2 B L2 U2 D R2 U2 L2 D',Y
-4922615001,D F R2 F' R2 U2 R2 D2 U2 R' U R D' R B R' B2 L' B2 L B2,Y
-5023976001,B2 F U2 L2 D B2 F2 U R' D R' D L2 F' L' F' D2,Y
-5693041049,F2 L2 F U2 B L2 R2 F2 R2 L U B' R2 F D U F U R2 B' L2,Y
+52675001,B' R2 U' R D' R2 U D2 B U B2 D' F2 B2 D2 B2 D L2,Y,ABHC 2014,333oh Final A #1
+352796001,F2 U2 B D2 B D2 U2 L' B2 U2 R B L2 U L2 U B F,Y,The Most Serene Competition 2016,333 R2 B #3
+353826001,B2 U F2 U' B2 D L2 D' U L' B' D2 L F L D U' B' U' L' F,Y,August Bank Holiday Competition 2016,333bf R1 A #3
+667364001,U' R2 D2 L2 D' F2 D' R2 B' U2 L' B' U2 R2 B' L2 B R2,Y,MTD Spring 2017,333oh Final B #2
+826009001,F2 U2 F2 L' U2 L D2 F R' B2 L' U2 R' B' R U L F',Y,Kansai Summer 2018,333 R1 C #5
+1095758001,U2 F2 L F2 R B2 U2 R B' L2 F R' B2 D2 B U B2 U2 B,Y,Xi'an Cherry Blossom 2019,333 R2 D #2
+1933469001,B2 F D2 B2 F' R2 D' R' U' L B2 R' F' L' D' R2 B,Y,Colorado Cubing Weekend 2022,333 R2 A #4
+2249121001,D F2 D2 R B2 R' D2 F2 D L U L' B2 D' R' F R,Y,Mongolia Championship 2022,333 R1 F #2
+2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,Y,Pickering D 2023,333 R2 B #2
+2700440001,U' B2 D' U2 F' D2 F U' R2 F' L B2 L' B F U',Y,I Candanguim 2023,333 Final B #4
+3126076001,D2 F' D' R2 U2 R' F' D' R' U D' L2 U2 L D2 R F2 R,Y,South Deerfield Side Events 2023,333 R1 C #5
+3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y,Folkets Kub Alvesta 2024,333oh Final B E1
+4495002001,L2 U F2 U' B2 L2 U B2 U' L2 F2 L' U2 F' U F' U2 R,Y,Cube n' Chill in Chiang Mai 2025,333 R2 B #1
+4797982028,L' B' U' F' U' R2 F L2 F D F L2 D2 F' R2 U2 B2 L',Y,Perdiendo el Tiempo en Granada 2025,333mbf Final A #2
+4816312001,U2 B2 D2 L' U L' U2 F L2 B L2 U2 D R2 U2 L2 D',Y,DFW Cubing Summer 2025,333 R2 B #3
+4922615001,D F R2 F' R2 U2 R2 D2 U2 R' U R D' R B R' B2 L' B2 L B2,Y,Cube More in Ardmore 2025,333bf Final B E1
+5023976001,B2 F U2 L2 D B2 F2 U R' D R' D L2 F' L' F' D2,Y,We Laugh Pohanghang 2025,333oh R1 C #1
+5693041049,F2 L2 F U2 B L2 R2 F2 R2 L U B' R2 F D U F U R2 B' L2,Y,Brilliant Big & Blind Bravo Orlando 2026,333mbf Final B #1

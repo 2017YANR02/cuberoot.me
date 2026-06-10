@@ -1,0 +1,23 @@
+# Scramble samples — 222 / block222 / B / bin 0
+# Population in this bin: 16
+# Samples listed: 16 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-09
+# Columns: id,scramble,bottom_color,competition,round
+
+205892001,F2 D B2 R2 U' F2 L2 U' R' D2 B' F' L2 F' R' D2 U2 R B' L B2,B,Beijing Open 2015,333bf R1 A #2
+280211001,B2 F2 L' F2 U2 L' B2 F2 R' D2 L' B U B' F L D2 B' F2 L2 B,B,Classic San Lorenzo Open 2016,333bf R1 C #2
+406199001,B2 R' U2 L D2 L' R2 U2 R F2 D U' L B L R' B D' U' F2,B,Unifor Open 2016,333 R2 B #2
+609608012,B' D2 B' R2 F2 U2 F R2 F' U2 F' U B2 L D' B R' D' B2 L2 B,B,CET Cubing Paradox 2017,333mbf Final A #1
+753670001,U2 B2 L2 D' L2 B2 U R2 U R F U2 F R' U' R' F,B,Chanquete Open 2018,333 R2 B #1
+975670001,U L' D B U2 R2 D' R' D2 F' R' D B2 U2 F2 D' B2 U' R2,B,Almaty Winter Cube 2019,333 R1 C #2
+987804001,B2 D2 L F2 D2 B2 R' U2 R2 U2 F R2 F' L2 U' B L2 R' D',B,Michigan Cubing Club Alpha 2019,333oh R1 B #2
+1558443001,L D2 R2 B2 D2 L' D2 B2 U B2 D' R' F' R' D' F' U F' L2,B,Trinity Valley Spring 2020,333 R1 C #1
+2080297001,B2 U2 R F L' U2 R2 U F R2 B2 D' F2 B2 L2 D L2 U' L2 D2 B R',B,Bay Area Speedcubin' 36 2022,333bf Final A #1
+2235082001,R' B2 L2 U2 R2 D' U' L2 B2 F' U' F' D B2 R' D2 L2 F',B,Fecap Open 2022,333 R1 A E2
+2599442001,U2 B U2 B' U' R F' U B2 R2 U2 R' U2 R' B2 R2 F2 R',B,UIUC Spring 2023,333 R1 B #4
+2925807001,B2 U2 B' D2 L2 B L2 D2 L2 R' F' D' R2 B2 L2 U F2,B,Torrelavega Open 2023,333 R1 A #1
+4020383005,D2 U2 B2 D' U2 R' D2 U L' D2 R' D' U L F U,B,Shhicago II 2024,333mbf Final B #3
+4230218001,U2 B' D2 R2 D2 R2 B U2 F L F U' R2 D R2 F U L F',B,Wichita Speedcubing Fall 2024,333 R2 B E2
+5020771001,R F' R D2 L' F' B2 R2 D L2 D' R2 B2 U F' L,B,Criciúma Open 2025,333 R2 A #5
+5624083001,D F2 D U' R B' D' F2 D2 U' L2 B2 D' R D2,B,Bayonne Atoutcubes Open 2026,333 R1 D #4

@@ -3,17 +3,17 @@
 # Samples listed: 12 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-661099001,D2 B2 D2 F2 D R2 D' L2 B2 U2 B D F U' L R' B U' R2 B' R2 B',O
-1242615001,B' L2 U2 B2 D2 R2 B' U2 F' L2 R' B2 D R B2 U' R2 B' F U,O
-2688683001,F D2 L U R D B R D' L2 F2 U2 D' F2 B2 U' L' F' D',O
-3027875001,F2 R2 F2 L2 D2 U F' R' D B' L2 U L' B F L U2 F,O
-3483202001,B' F2 D2 U2 L R2 D2 R2 U2 F2 D' B' F D2 U' R D L2 B2,O
-3511638001,B' U' L2 F D2 B2 D2 R2 F2 R2 B2 R' B2 F' L' U2 B2 R U L,O
-3539668001,L F U L2 B' R' L F2 D' B2 R2 L2 D2 L2 U R2 F' L U' R,O
-4186455001,F U R B2 D' L2 U' B2 D' L2 R' F' D U F' R' U2 F D2,O
-4981198001,F' L' U F' U2 B' F2 L2 D2 F2 R' D' U B' D2 R' U2 R,O
-5354113001,B' L2 D F' U R U L' D F2 R2 L2 U' R2 B2 R2 D' F R2,O
-5397159063,D' B' R L' D R2 B' U' B2 D' L2 D R2 U2 L2 B' D' F D2 L' F,O
-5489577001,L' B2 D F2 U' B2 R2 D F2 D2 B2 F R F L' D2 F D' B',O
+661099001,D2 B2 D2 F2 D R2 D' L2 B2 U2 B D F U' L R' B U' R2 B' R2 B',O,CVDB Open 2016,333mbf Final A #1
+1242615001,B' L2 U2 B2 D2 R2 B' U2 F' L2 R' B2 D R B2 U' R2 B' F U,O,Unifranz Cubing Fest 2019,333oh R1 B E1
+2688683001,F D2 L U R D B R D' L2 F2 U2 D' F2 B2 U' L' F' D',O,Seoul Spring 2023,333 Final A #2
+3027875001,F2 R2 F2 L2 D2 U F' R' D B' L2 U L' B F L U2 F,O,Corona Summer 2023,333 R2 A E2
+3483202001,B' F2 D2 U2 L R2 D2 R2 U2 F2 D' B' F D2 U' R D L2 B2,O,In Memoriam José Noles 2024,333 R1 H #4
+3511638001,B' U' L2 F D2 B2 D2 R2 F2 R2 B2 R' B2 F' L' U2 B2 R U L,O,Bucharest Cubing February A 2024,333 R2 B #1
+3539668001,L F U L2 B' R' L F2 D' B2 R2 L2 D2 L2 U R2 F' L U' R,O,Cork Spring 2024,333 R1 C #2
+4186455001,F U R B2 D' L2 U' B2 D' L2 R' F' D U F' R' U2 F D2,O,Pão de Queijo Uberlândia 2024,333 R2 B #2
+4981198001,F' L' U F' U2 B' F2 L2 D2 F2 R' D' U B' D2 R' U2 R,O,Hancock County Summer 2025,333 R1 D #3
+5354113001,B' L2 D F' U R U L' D F2 R2 L2 U' R2 B2 R2 D' F R2,O,Otsu Biwako Winter 2026,333oh R1 A #1
+5397159063,D' B' R L' D R2 B' U' B2 D' L2 D R2 U2 L2 B' D' F D2 L' F,O,Singapore Championship 2026,333mbf Final A #1
+5489577001,L' B2 D F2 U' B2 R2 D F2 D2 B2 F R F L' D2 F D' B',O,IISER Pune PARAM Open 2026,333oh Final A #4

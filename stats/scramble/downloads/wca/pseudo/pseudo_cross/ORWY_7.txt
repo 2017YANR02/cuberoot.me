@@ -3,9 +3,9 @@
 # Samples listed: 4 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-126127001,B2 U' R D L' F B2 U' B' R' L' F U2 B2 R2 B' R2 D2 F' U2,O
-3408548001,U' F D2 F' L2 F' L2 D2 U2 B2 D' L F R B' L' R2 F2 D2,O
-4545976001,U' L2 F2 L2 U2 L2 F' D2 B' U2 B U2 R' B' D' L U B F' D,O
-5435248001,B R2 B' D' R2 F' B' U B2 R2 B2 U2 B2 L' F2 R L2 F L',O
+126127001,B2 U' R D L' F B2 U' B' R' L' F U2 B2 R2 B' R2 D2 F' U2,O,National Cubing Region Open 2015,333 R2 A #1
+3408548001,U' F D2 F' L2 F' L2 D2 U2 B2 D' L F R B' L' R2 F2 D2,O,FSUbers 5.0 2024,333 R1 C #1
+4545976001,U' L2 F2 L2 U2 L2 F' D2 B' U2 B U2 R' B' D' L U B F' D,O,Oredigger Open CO 2025,333 R1 E #4
+5435248001,B R2 B' D' R2 F' B' U B2 R2 B2 U2 B2 L' F2 R L2 F L',O,Gort-a Go Fast 2026,333 R2 A E2

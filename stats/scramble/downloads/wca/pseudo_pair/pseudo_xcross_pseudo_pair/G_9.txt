@@ -3,16 +3,16 @@
 # Samples listed: 11 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-23724001,R2 U2 R' B2 D2 U2 R' U2 R' F L2 B' R D2 R2 U' F' D' B' R' B' L,G
-181613001,D' R' B' L' B2 D' F D B D' R D B2 D B2 D L2 F2 B2 U L2,G
-378543001,B L' U' L' D R B2 D' R2 D' B' R U2 L D2 L B2 U2 R',G
-455521001,B2 U' R2 D' U2 L2 U2 F2 L2 F2 R D' U' F D' R2 B' U' F' L' B',G
-700920001,D2 B' U2 F' R2 B' D2 F L2 F D' B' F' L' U2 L2 U' R' U' F',G
-3698618033,U L2 D' R2 F2 D' U2 L2 B F L U' B' L B U2 R D' B F L,G
-4487498001,L2 D U2 L2 B2 D' B2 R2 B D R F' U' L' F' R' B' F D B R',G
-4989542001,F2 D L2 D F2 D2 L2 F2 L' D' F' L' U' B' R F2 L2 B' R',G
-5147235001,U B2 R' U2 F2 R2 B2 U2 F2 D' B' D U' L' U2 R B' D' F,G
-5384059035,D B2 L2 D2 B2 U L2 D2 F D U' R F' L D' B' R' B' U2,G
-5515801001,U2 L2 B U' L2 D L2 F2 D' R2 L B' R' D' R2 U L B U,G
+23724001,R2 U2 R' B2 D2 U2 R' U2 R' F L2 B' R D2 R2 U' F' D' B' R' B' L,G,JRCA Kansai Spring 2014,333bf Final A #1
+181613001,D' R' B' L' B2 D' F D B D' R D B2 D B2 D L2 F2 B2 U L2,G,Northern Colorado Summer 2015,333oh Final A #2
+378543001,B L' U' L' D R B2 D' R2 D' B' R U2 L D2 L B2 U2 R',G,TKK Open 2016,333 R2 A #3
+455521001,B2 U' R2 D' U2 L2 U2 F2 L2 F2 R D' U' F D' R2 B' U' F' L' B',G,Delhi Open 2017,333 Final B #1
+700920001,D2 B' U2 F' R2 B' D2 F L2 F D' B' F' L' U2 L2 U' R' U' F',G,Inner Mongolia Winter 2018,333oh R1 A #2
+3698618033,U L2 D' R2 F2 D' U2 L2 B F L U' B' L B U2 R D' B F L,G,Hilliard Hippocampus XIV - Earth Day 2024,333mbf Final B #1
+4487498001,L2 D U2 L2 B2 D' B2 R2 B D R F' U' L' F' R' B' F D B R',G,Sandnes Winter 2025,333bf R1 B E2
+4989542001,F2 D L2 D F2 D2 L2 F2 L' D' F' L' U' B' R F2 L2 B' R',G,Slovenian Nationals 2025,333 Final A #2
+5147235001,U B2 R' U2 F2 R2 B2 U2 F2 D' B' D U' L' U2 R B' D' F,G,Crossfield Fall 2025,333 R1 A #4
+5384059035,D B2 L2 D2 B2 U L2 D2 F D U' R F' L D' B' R' B' U2,G,Bara Multi-Blind i Jönköping 2026,333mbf R1 B #1
+5515801001,U2 L2 B U' L2 D L2 F2 D' R2 L B' R' D' R2 U L B U,G,Kublördag Uppsala V - 2026,333 R1 B E2

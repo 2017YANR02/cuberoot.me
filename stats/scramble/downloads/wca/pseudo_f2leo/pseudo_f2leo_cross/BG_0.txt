@@ -3,12 +3,12 @@
 # Samples listed: 7 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-661016003,B2 R2 D2 R F2 D2 L' R' B2 F' R' D2 F' L2 U' F2 R' U2 B' L2 B',B
-932035001,B' D2 F' L' D' B2 D F2 R2 L F' U2 L2 D2 F2 D2 F2 L2 F2,G
-2352400001,R' U R D' F2 B' U' B2 U' B L2 U F2 U2 L2 F2 L2,G
-4517068001,R2 B2 R2 D2 F' L2 D2 B' D2 R' B2 L' F L R' D2 R' U2,G
-4618949001,U' R' D' F2 R2 D' L2 R2 U L2 R D R' D2 F' D' F U,B
-4843398001,F' L B2 R' B' L D2 L' F2 U D2 L' B2 L' F2 B2 R' D2 R2,G
-5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',B
+661016003,B2 R2 D2 R F2 D2 L' R' B2 F' R' D2 F' L2 U' F2 R' U2 B' L2 B',B,Oficina Open 2016,333mbf Final A #1
+932035001,B' D2 F' L' D' B2 D F2 R2 L F' U2 L2 D2 F2 D2 F2 L2 F2,G,Project Jastrzębie-Zdrój 2018,333 R2 A E2
+2352400001,R' U R D' F2 B' U' B2 U' B L2 U F2 U2 L2 F2 L2,G,BCM Arya Cubing Challenge 2022,333oh R1 A E2
+4517068001,R2 B2 R2 D2 F' L2 D2 B' D2 R' B2 L' F L R' D2 R' U2,G,Chill Cubing in Chilliwack 2025,333 R1 D #3
+4618949001,U' R' D' F2 R2 D' L2 R2 U L2 R D R' D2 F' D' F U,B,Moncton 2025,333 R2 C E2
+4843398001,F' L B2 R' B' L D2 L' F2 U D2 L' B2 L' F2 B2 R' D2 R2,G,Taipei Summer Open 2025,333 R1 C E2
+5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',B,Langenstein City Blind Open 2026,333mbf Final B #1

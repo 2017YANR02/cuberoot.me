@@ -3,7 +3,7 @@
 # Samples listed: 2 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-4844589001,U2 R' D' R F' R2 F D2 L' B2 D2 L' D2 F2 D2 R' B2,W
-5086006001,R' D' L' D' F2 D' U2 B2 F2 L2 D2 U' F U F R' U2 F2 R,W
+4844589001,U2 R' D' R F' R2 F D2 L' B2 D2 L' D2 F2 D2 R' B2,W,Aníbal ao Cubo 2025,333 Final A #4
+5086006001,R' D' L' D' F2 D' U2 B2 F2 L2 D2 U' F U F R' U2 F2 R,W,Graz Open 2025,333oh R1 A #3
