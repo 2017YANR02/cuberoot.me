@@ -1,0 +1,32 @@
+# Scramble samples — 123 / rouxs1 / BG / bin 9
+# Population in this bin: 25
+# Samples listed: 25 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-09
+# Columns: id,scramble,bottom_color
+
+1272,D2 F2 R2 B2 F2 D' R2 F2 D' B2 D' R2 D' B' F' R' B2 L2 D U' F' R' L' ,B
+5918,B2 D' L2 F2 U L2 D F2 R2 U' F2 D2 R2 U2 R' L' B' D2 F2 R L' U' ,B
+5920,D R2 B2 F2 D2 L2 U' B2 L2 U' F2 D2 F2 U' R' L' B' D2 F2 R L' U' ,B
+6002,D2 L2 D B2 F2 L2 B2 D' U2 F2 D F2 R2 U' B' F' R' B2 L2 D U' F' R' L' ,B
+6011,R2 D B2 F2 R2 L2 D L2 B2 D2 R2 B2 L2 U2 L' B F D R' L D U' L' D' U' F' ,B
+7297,R2 D L2 D F2 D B2 D F2 D' L2 D' F2 U2 B' L U' F2 D' F' R B D' L' U' ,B
+29125,R2 B2 L2 U2 L2 U' B2 U2 R2 L2 U2 F2 U' L' B' F D B2 U' R' L F' ,B
+29138,D' R2 U2 L2 F2 D U F2 L2 U2 L2 U' B' F' D' U' R' L' ,B
+29140,U' B2 F2 U2 R2 L2 U' B2 U2 B2 L2 F2 L' B' F D B2 U' R' L F' ,B
+36964,B2 U' B2 F2 R2 L2 U' B2 L2 D2 B2 R2 F2 U2 F' R L U B' F D' U F' D' U' L' ,B
+40879,L2 U2 B2 D R2 B2 U2 B2 L2 D2 L2 F2 U F' R L U B' F D' U F' D' U' L' ,B
+40881,U2 L2 U R2 L2 B2 R2 D R2 D R2 B2 D' B' F' R' B2 L2 D U' F' R' L' ,B
+93906,F2 L2 D' U F2 L2 U2 L2 U2 F' R L U B' F D' U F' D' U' L' ,B
+93909,F2 U B2 L2 D2 L2 F2 L2 U2 B2 L2 U' L2 F' R L U B' F D' U F' D' U' L' ,B
+312752,R2 B2 U' R2 D' R2 U' L2 D' B2 D2 B2 R2 L2 F' U' L' U2 B' R2 D R' F' L' U' ,B
+894270,R2 F2 L2 F2 D L2 D F2 D2 F2 U F2 L2 U2 B' L' U' R F2 R2 F' D B L' ,B
+894301,B2 U F2 L2 B2 U2 B2 D R2 U B2 L2 U2 L' B R D' F' U' L' B D2 F' ,B
+900013,U2 L2 D L2 F2 D F2 R2 B2 R2 F2 D' U B' F' R' B2 L2 D U' F' R' L' ,B
+900015,R2 D' U2 L2 D' R2 F2 U B2 R2 B2 U L2 B' F' R' B2 L2 D U' F' R' L' ,B
+900016,R2 D' F2 R2 L2 U F2 D' L2 D2 F2 R2 U B' F' R' B2 L2 D U' F' R' L' ,B
+929090,B2 R2 D2 R2 D' L2 F2 D B2 U' B2 D2 L2 U' B' L D' L2 U' L2 F' R B U L U' ,B
+1204966,F2 U F2 R2 D' R2 D2 R2 U F2 R2 B2 L2 D2 F' R' U B D L2 F2 R' F' L' ,B
+1205846,L2 D2 B2 D' R2 F2 L2 D2 F2 D' R2 F2 D' L2 U' R' F L' U2 B2 D' B' U' R' F' U2 ,B
+1233941,U2 B2 R2 L2 D L2 U' F2 U' R2 U L2 D R2 U' B' R' D F U L2 B2 R' B' L' ,B
+1234502,R2 U2 B2 U' B2 R2 F2 U2 L2 D' F2 L2 U' L2 U' R' F L' U2 B2 D' B' U' R' F' U2 ,B

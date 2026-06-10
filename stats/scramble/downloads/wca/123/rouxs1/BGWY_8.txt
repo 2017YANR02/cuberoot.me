@@ -1,0 +1,39 @@
+# Scramble samples — 123 / rouxs1 / BGWY / bin 8
+# Population in this bin: 32
+# Samples listed: 32 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-09
+# Columns: id,scramble,bottom_color,competition,round
+
+67947001,R2 F' R2 B D2 U2 L2 B' D2 B U L' D' U2 B' R2 D2 R F' D L',B,DJ Open 2014,333 R1 O #1
+113228001,L2 D' L2 D' R2 D' B2 L2 R2 D B' L U' L2 R' D B' U' R' D,B,SP Open 2015,333 R2 B #2
+389946001,U F2 B2 R' B R2 F' D' L U' R' U2 F B' L2 B D2,B,Torneo de Speedcubers 2016,333oh Final A #2
+577573001,U2 R2 F' L2 F' D2 F2 D2 L2 D2 L' F D B' R2 F2 R U L F2 R2,B,Bicho Legal Open 2017,333oh Final B #5
+655313018,F2 L D2 L' U2 F2 R2 D2 R D' F U' R U2 B' D2 U' B2 L2 U' L' F2,B,APJ BLD Open 2017,333mbf Final A #1
+881236017,U F2 D2 U' L2 U' F2 U2 R B' F2 D B F' U B' R' F2 L2 U' B',B,Kaspiy Open 2018,333mbf Final A #1
+957639001,D2 L' U R U2 F2 R2 U' F' B D F R2 F2 B2 R2 B' U2 B' R2,B,Skillcon 2018,333 R1 A #4
+1025192001,D2 F R2 D2 R2 B' F2 L R2 U' R B2 D2 F D B L F2 U B' L2,B,UCSD Winter 2019,333bf R1 A #3
+1054086001,R' U F' U2 R2 F2 L B' U L B R2 F2 U2 L2 U2 B2 R' U2 D2 B2,B,Pragyan Cube Open 2019,333 R1 D #1
+1284819001,L' F' R' F2 D' B L U2 R' D2 R' F2 D' R2 B2 D' R2 D B2 L2,B,Scuppernong Spectacular 2019,333 R2 C E2
+1408956049,U' F2 D L2 B2 U2 L2 D R B' U L' U R F D' R B' U' F' D',B,Thailand Championship 2019,333mbf Final A #1
+1436203001,U2 D L' F2 B D F R U' R2 B2 U2 R2 L2 F' D2 B' D2 F2,B,Cuber's Cafe Open 2019,333 R1 B #3
+2298348001,R' D2 L2 F2 D2 L2 U2 R U2 D F2 L' R2 B D' B' L U2 F' L',B,Siedlce Open 2022,333 R1 A E2
+2327591001,L2 B U' R' U2 L F' D B L' U2 L2 D2 B2 L' U2 R' F2 U2 L,B,Jach'a Cubing 2022,333 R1 B #1
+2468007010,U' R2 U' D2 F2 L' U2 L B2 L R2 F D U2 L' B' U' B2 R B' L',B,MultiShevat Israel 2023,333mbf Final A #1
+3573860001,U L2 F2 D' B2 U' F2 U2 R' B2 R B' F' L D' F' R2 B R,B,First Solves Herrljunga 2024,333 R1 C E1
+3587814001,D F' L R2 F2 U2 B2 F2 U B2 U' L2 U2 L D' F R B2 L' D',B,Aves María Nuevos Campeones 2024,333 R2 A #2
+3798432001,L U2 F2 L U2 B2 L2 R' D2 R2 F D' U B2 R' D2 R' F' R' B',B,SAJ Águas da Prata 2024,333 R2 B #3
+3901701001,B D U2 R2 D2 B2 D F2 D R B' L' B' D2 U' B L D2 R2 B R,B,Lazarillo Open 2024,333bf R2 A #2
+3944447001,L2 D R B' L' D R F R' D B2 D' L2 B2 L2 B2 D2 B2 U' F',B,Singapore Hougang Open 2024,333 R1 E E2
+4107717006,F' L U R B2 D' F2 L U2 D2 B D2 R2 F2 L2 B U2 B D2 B2 L2 U2,B,Lights Out Diliman 2024,333mbf Final A #1
+4195715001,B L2 B2 R2 F2 D' L2 D' B2 D2 B2 U L' F' D L B' F2 D R,B,Cangrejito Azul Veracruz 2024,333oh R2 A #1
+4263539001,U F' U B' U R' L U F' D2 F U2 L2 F R2 F2 U2 B L2 D,B,Rubik's WCA Asian Championship 2024,333oh R1 L #1
+4308903001,U' R2 F' L B' D R L U' L2 B2 U' B2 U2 R2 F2 U B' U' B',B,A Buffalo Cube Day 2024,333 Final A #5
+4375830001,F' D2 L2 R2 F2 D2 U B2 D R2 D' F R' B D2 U L' F' D' F L B,B,Hangzhou Open 2024,333bf R1 C #2
+4674384057,U2 D2 L' D2 B' U F' D' F R' B2 D R2 F2 R2 L2 U' L' B,B,Waterloo Blindfolded 2025,333mbf Final A #1
+4795325001,L B2 D' F D2 B2 R2 D2 F' R2 B D2 B' L' F2 U' F2 R' B L',B,Cube4fun in Bełchatów 2025,333 R1 D #3
+4798521001,U' R' D2 L2 B' D L' D' L2 U2 L2 F2 L2 U2 F2 U R' B' D' L B',B,VIC Side State Championship 2025,333mbf Final A #1
+4841150001,D2 F D2 L2 R2 F' D2 U2 B' U2 L F U' R F' D L' B' R B2,B,Toowoomba Twist Off 2025,333 R2 A #2
+4890789001,D R2 U2 R2 B2 R2 F2 R' B' L' U L' R F' D2 B D2 L U' B',B,FMC at Fosters Pointe 2025,333bf R1 B #3
+5093643001,U F2 R U' F2 D2 F2 R2 B2 U B2 L2 D2 R2 F L' B' R2 D' R,B,Rhein-Neckar Complete Breakdown 2025,333 R1 C #4
+5297405051,F2 U F2 D U B2 R2 D' B R F L' U F' L F' L' B' D2 B D,B,Taiwan Championship 2025,333mbf Final A #1

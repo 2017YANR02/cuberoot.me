@@ -1,0 +1,22 @@
+# Scramble samples — 123 / rouxs1 / G / bin 1
+# Population in this bin: 15
+# Samples listed: 15 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-09
+# Columns: id,scramble,bottom_color,competition,round
+
+55030001,B2 R' B2 D2 L2 F2 D2 L R2 F' L' D U L2 B D' U B L2,G,Ho Chi Minh Open 2014,333 R1 A E2
+393260001,B' R' B2 R B' D R2 F2 U' L' D F2 D' L2 U L2 D' L2 F2,G,Munich Open 2016,333 R2 A #3
+610884001,U B2 U2 F2 U B2 L2 D' F2 L2 F' U' R D' F' L D2 L2 R' D2 L2,G,Hamilton Spring 2017,333bf R1 A #2
+854469001,U' L2 F2 D' L2 D2 B2 D' U' R2 F L F' L2 R' U R2 U' F' U,G,Mexican Championship 2018,333 R2 C #2
+2536709040,F' U2 L F' L2 U F D2 F L2 D' F2 L2 B2 L B2 R' D2 L',G,I Hope It's Solved Calgary 2023,333mbf Final A #2
+2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,G,Pickering D 2023,333 R2 B #2
+2855587001,L B R' U' B2 R' F L' D2 R2 U2 D2 F D2 B R2 U2 B U2 B L2 U2,G,Bay Area Speedcubin' 49 - Berkeley 2023,333bf R1 A #3
+3526033019,L F2 L' F2 D2 B2 U2 R U2 R' U B D R B L2 D F2 L2,G,Glasgow Winter - Scottish Blind Off 2024,333mbf R1 A #2
+4067278042,L2 F2 R F L' U2 R' U2 R2 U F' U' F U' R' U2 L' F2,G,La La Land 2024,333mbf Final B #1
+4356571001,L2 U' R D F2 U' L2 D U2 L2 U' F' L2 R2 D L2 U2 L',G,Kirkland Pyra Fest 2024,333oh R1 B #4
+4665237001,L B F L2 F' D2 U2 F R2 D' L' B U2 B' L F D' R',G,NxN Tlaxcala 2025,333 R1 C E1
+4936524001,U' R D L2 D2 L2 F2 R D2 U2 B' R' B' D2 U2 R2 U F,G,Kubing in Klemzig 2025,333 R2 C #2
+5311568001,D' R' U R' B' R' B2 L D F' D2 B2 U2 L2 B D2 F U2 R2,G,Almaty New Year 2026,333oh R1 B #5
+5583469028,F L2 D2 F U' B2 L U' D' F' R2 B R2 U2 B' D' B2 L2 U2,G,CubingUSA Southeast Championship 2026,333mbf Final A #1
+5592248001,D2 U2 F2 U2 L R B L B' U' B2 R B2 R2 F D2 R2 B R',G,Only 3x3s in Hyderabad May 2026,333mbf Final A #2

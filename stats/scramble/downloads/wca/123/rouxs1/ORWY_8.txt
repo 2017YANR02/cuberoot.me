@@ -1,0 +1,32 @@
+# Scramble samples — 123 / rouxs1 / ORWY / bin 8
+# Population in this bin: 25
+# Samples listed: 25 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-09
+# Columns: id,scramble,bottom_color,competition,round
+
+47928001,F2 L2 B2 D B2 D2 R2 D' B2 D2 B' R' F' R' B' L D' R F2 U' F2,O,Rubik's Cube European Championships 2014,333 R2 A #5
+383882001,F B D' R2 F' R' U R2 F2 L' D2 R2 F' D2 R2 B L2 F L2 D2,O,RoMinx Open 2016,333 R2 B #5
+431666001,B D' R F U D L B R F' U' F2 U2 L' D2 F2 L B2 L' F2 L2,O,Manchester Open 2017,333 R2 C #4
+555434001,B L2 B2 F' U2 L2 F' D2 L2 B R' D U' R' D' L' D F R' U2 B',O,150th Cube Meeting in Brest 2017,333oh R1 A #4
+652479027,D B2 U L2 U' L2 U' L2 U' F2 L2 B' U F' R F2 L2 D' L' B' U L' F,O,WHU Rubik's Cube Days 2017,333mbf Final A #2
+875555001,F2 U2 R2 D2 B' D2 U2 F2 R2 B' D' U2 L' R2 D2 F R D' U' L,O,Tembleque Open 2018,333 R2 A E2
+1025192001,D2 F R2 D2 R2 B' F2 L R2 U' R B2 D2 F D B L F2 U B' L2,O,UCSD Winter 2019,333bf R1 A #3
+1657116001,U2 F D2 L U2 L' R' F2 D2 R2 F R U R' D' L F U2 R,O,Marrickville Autumn Saturday 2021,333oh R1 B #4
+1662145001,U' L2 B' D2 R2 F' L2 U2 F' R2 F' U' L D R' B U R2 F' L,O,Tianjin Summer Solstice 2021,333 R2 B #2
+2257149018,U F' U F2 L2 U2 R2 D' F2 R2 U' B D' L' F2 U' B2 D B' L B',O,Amrita Silence Open 2022,333mbf Final A #2
+2324370001,D' L U' F B2 U B' R2 U D' F' R F2 D2 L U2 D2 B2 L2,O,Franconia Winter 2022,333oh R2 A #3
+2486853001,R D' F2 D' U2 L2 F D2 U2 L2 D' L D' B R' B2 L2 D' L',O,Cambridge Side Events Winter 2023,333bf Final A #2
+2850688031,D2 R2 F2 R2 F2 D2 R' F2 R' F2 B R2 B D B U' L' R' F' D' B R,O,CubingUSA Western Championship 2023,333mbf Final A #1
+3326765001,R L2 D' L2 B2 U L2 U F2 U B U' F R D L' B' F' R' U2,O,Bodocó Open 2023,333 R1 D #3
+3445135001,U' F2 L2 R2 D L2 D2 F2 R2 F2 R2 B F' D' L' F R' F L2 D' R2,O,A New Year in Auckland 2024,333 R2 C #3
+4004204001,B2 U2 L2 U2 F U2 B2 U2 F' L F2 L D' L' B' R D' U F2 L,O,Cubing Millennium Caracas 2024,333 R1 C #4
+4960358001,B' D' B2 D2 L U' B' R B D' F D2 L2 D2 L B2 R D2 L B' L2,O,Delmenhorst Dreht Durch 2025,333bf R1 A E2
+5014231001,U B2 L2 D U B2 D' F2 L2 D' F' R' D' B L' U L2 F' R,O,Cubestuff Centurion Q3 2025,333oh Final A E2
+5077445001,B' R U' L' F' D L2 U' L' F2 L' R2 F2 L2 U2 F2 U F2 U B2,O,Cavite Speedcubing Open XII 2025,333oh Final A #4
+5085891001,F U2 F D F' L' F' B' U' B R U L2 B2 U F2 B2 U' D' B2,O,Graz Open 2025,333 R2 B E1
+5276843001,L' U B2 D2 R' D2 R' D2 R2 B2 L2 R' U' L2 F R D L' D2 B,O,Shin Kong Cube Open - Kaohsiung 2025,333 Final A E1
+5297405051,F2 U F2 D U B2 R2 D' B R F L' U F' L F' L' B' D2 B D,O,Taiwan Championship 2025,333mbf Final A #1
+5337256013,L' U2 R2 B2 F2 U B F' L2 F2 D R2 U' L' R' B2 D' B' L2,O,Just Judge Jura 2026,333mbf Final A #1
+5571654001,B' D' F L2 D' R2 D2 R' B' L B' R2 F2 L2 F R2 F' D',O,Welcome to Washington D.C. 2026,333 R2 B #2
+5690429006,R' D2 L2 D L2 F2 U' L2 R2 F2 D L2 F' D R B D' F U L2 U',O,Headache in Kode 2026,333mbf Final B #3
