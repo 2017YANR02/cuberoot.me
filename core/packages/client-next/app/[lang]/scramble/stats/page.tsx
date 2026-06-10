@@ -12,6 +12,7 @@ import { compSourceLine } from '@/lib/comp-schedule';
 import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { statsUrl } from '@/lib/stats-base';
+import { variantLabel, type ScrambleVariant } from '@/lib/scramble-variants';
 import {
   SubsetColorPicker, useSubsetSelection, fillColorsForSubset,
   COLOR_HEX, type ColorLetter,
@@ -77,39 +78,11 @@ function eventLabel(e: string, isZh: boolean): string {
   return m ? ((i18n.language === 'zh-Hant' ? (m.zhHant ?? m.zh) : (i18n.language.startsWith('zh') ? m.zh : m.en))) : e;
 }
 
-type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | '123' | '222' | '223' | '123x2' | 'eoline' | 'dr';
+// 下拉顺序 = distribution JSON 键枚举:数字键(123/222/223)永远最前,字符串键按
+// build.ts VARIANTS 插入序 —— 123x2/eoline/dr 落尾部。标签走共享 lib/scramble-variants。
+type VariantKey = ScrambleVariant;
 type YMode = 'percent' | 'count';
 type ChartMode = 'pdf' | 'cdf';
-
-const VARIANT_LABEL: Record<VariantKey, { en: string; zh: string
-        zhHant?: string;
- }> = {
-  std: { en: 'Standard', zh: '标准',
-      zhHant: "標準"
-},
-  eo: { en: 'EO', zh: 'EO' },
-  pair: { en: 'Pair', zh: '基态',
-      zhHant: "基態"
-},
-  pseudo: { en: 'Pseudo', zh: '伪',
-      zhHant: "偽"
-},
-  pseudo_pair: { en: 'Pseudo Pair', zh: '伪基态',
-      zhHant: "偽基態"
-},
-  f2leo: { en: 'F2LEO', zh: 'F2LEO' },
-  pseudo_f2leo: { en: 'Pseudo F2LEO', zh: '伪 F2LEO',
-      zhHant: "偽 F2LEO"
-},
-  '123': { en: '1x2x3', zh: '1x2x3' },
-  // 下拉顺序 = distribution JSON 键枚举:数字键(123/222/223)永远最前,字符串键按
-  // build.ts VARIANTS 插入序 —— 123x2/eoline/dr 落尾部
-  '123x2': { en: '1x2x3 x2', zh: '1x2x3 x2' },
-  '222': { en: '2x2x2', zh: '2x2x2' },
-  '223': { en: '2x2x3', zh: '2x2x3' },
-  eoline: { en: 'EOLine', zh: 'EOLine' },
-  dr: { en: 'DR', zh: 'DR' },
-};
 
 const STAGE_LABEL: Record<string, { en: string; zh: string
         zhHant?: string;
@@ -438,7 +411,7 @@ export default function ScrambleStatsPage() {
               zhHant: "變體"
         })}>
             {currentSet && (Object.keys(currentSet.variants) as VariantKey[]).map((v) => (
-              <option key={v} value={v}>{VARIANT_LABEL[v]?.[(i18n.language.startsWith('zh') ? 'zh' : 'en')] ?? v}</option>
+              <option key={v} value={v}>{variantLabel(v, i18n.language.startsWith('zh'))}</option>
             ))}
           </select>
         </label>

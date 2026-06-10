@@ -29,6 +29,7 @@ import { type WcaScrambleRow } from '@/lib/wca-results-api';
 import { fetchCompName } from '@/lib/comp-wcif';
 import { apiUrl } from '@/lib/api-base';
 import { eventDisplayName } from '@/lib/wca-events';
+import { VARIANT_LABEL, VARIANT_ORDER, type ScrambleVariant } from '@/lib/scramble-variants';
 import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { CSTIMER_NONWCA_APPEND, CSTIMER_EVENT_IDS, CSTIMER_EVENTS, cstimerScramble, isCstimerEvent } from '@/lib/cstimer-scramble';
 import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEvent, shapeModSourceEvent } from '@/lib/shape-mod-scramble';
@@ -65,35 +66,11 @@ import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-c
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
-// 变体 (前端先做,后端数据后续接;key 与 /scramble/analyzer + /scramble/stats 对齐)。
-type VariantKey = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | '123' | '222' | '223' | '123x2' | 'eoline' | 'dr';
-const VARIANTS: { key: VariantKey; zh: string; en: string
-    zhHant?: string;
- }[] = [
-  { key: 'std', zh: '标准', en: 'Standard',
-      zhHant: "標準"
-},
-  { key: 'eo', zh: 'EO', en: 'EO' },
-  { key: 'pair', zh: '基态', en: 'Pair',
-      zhHant: "基態"
-},
-  { key: 'pseudo', zh: '伪', en: 'Pseudo',
-      zhHant: "偽"
-},
-  { key: 'pseudo_pair', zh: '伪基态', en: 'Pseudo Pair',
-      zhHant: "偽基態"
-},
-  { key: 'f2leo', zh: 'F2LEO', en: 'F2LEO' },
-  { key: 'pseudo_f2leo', zh: '伪 F2LEO', en: 'Pseudo F2LEO',
-      zhHant: "偽 F2LEO"
-},
-  { key: '123', zh: '1x2x3', en: '1x2x3' },
-  { key: '123x2', zh: '1x2x3 x2', en: '1x2x3 x2' },
-  { key: '222', zh: '2x2x2', en: '2x2x2' },
-  { key: '223', zh: '2x2x3', en: '2x2x3' },
-  { key: 'eoline', zh: 'EOLine', en: 'EOLine' },
-  { key: 'dr', zh: 'DR', en: 'DR' },
-];
+// 变体 (key 与 /scramble/analyzer + /scramble/stats 对齐);标签 + 顺序走共享
+// lib/scramble-variants(单一真源,别再各写一份)。
+type VariantKey = ScrambleVariant;
+const VARIANTS: { key: VariantKey; zh: string; en: string }[] =
+  VARIANT_ORDER.map((key) => ({ key, ...VARIANT_LABEL[key] }));
 // 每变体:阶段集 + 实时引擎能力。std=现有 cross WASM(5 阶段);f2leo/pseudo_f2leo=
 // F2leoSolverWasm 浏览器当场算(4 阶段,无 xxxxc);其余暂仅靠预计算(comp_steps 未生成
 // → 无数据时显示提示)。后端 comp_steps_<variant> 出齐后这些会自动秒载。
