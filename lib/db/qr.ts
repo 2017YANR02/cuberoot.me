@@ -2,19 +2,26 @@ import "server-only";
 import { desc, eq, sql } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { db, schema } from "@/db";
-import type { QrAlg, QrCode, QrCodeInsert, QrLink, QrType } from "@/db/schema";
+import type { CardEl, CardLayout, QrAlg, QrCode, QrCodeInsert, QrLink, QrType } from "@/db/schema";
 
-export type { QrAlg, QrCode, QrLink, QrType };
+export type { CardEl, CardLayout, QrAlg, QrCode, QrLink, QrType };
 
 export type QrUpdate = Partial<
   Pick<
     QrCode,
-    "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote" | "frontArt" | "alg"
+    "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote" | "frontArt" | "alg" | "layout"
   >
 >;
 
 function normalize(code: string): string {
   return code.trim().toLowerCase();
+}
+
+// 演示码:站点用来展示聚合 / 跳转两种形态,永久保留,任何路径都不允许删除(可停用)。
+export const PROTECTED_QR_CODES = ["demo-landing", "demo-redirect"];
+
+export function isProtectedQr(code: string): boolean {
+  return PROTECTED_QR_CODES.includes(normalize(code));
 }
 
 function randomSuffix(len: number): string {
@@ -96,11 +103,65 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
   if (patch.quote !== undefined) next.quote = patch.quote?.trim() || null;
   if (patch.frontArt !== undefined) next.frontArt = patch.frontArt?.trim() || null;
   if (patch.alg !== undefined) next.alg = patch.alg && patch.alg.moves ? patch.alg : null;
+  if (patch.layout !== undefined) {
+    // 只收已知元素键,坐标钳 ±20mm、0.1mm 取整;全空则置 null(回默认布局)
+    const KEYS: CardEl[] = ["quote", "brand", "backText", "term", "qr", "alg"];
+    const clamp = (n: number) => Math.round(Math.max(-20, Math.min(20, n)) * 10) / 10;
+    const out: CardLayout = {};
+    for (const k of KEYS) {
+      const o = patch.layout?.[k];
+      if (!o || !Number.isFinite(o.x) || !Number.isFinite(o.y)) continue;
+      const x = clamp(o.x);
+      const y = clamp(o.y);
+      if (x !== 0 || y !== 0) out[k] = { x, y };
+    }
+    next.layout = Object.keys(out).length > 0 ? out : null;
+  }
   if (patch.links !== undefined) next.links = patch.links;
   if (Object.keys(next).length === 0) return;
   await db.update(schema.qrCodes).set(next).where(eq(schema.qrCodes.code, c));
 }
 
+// 复制为新码:拷贝全部卡面配置(类型/目标/文案/链接/图/公式/布局),
+// 但 code 必然是新的 → 印进码里的地址不同,二维码图案天然不同;扫码数归零。
+export async function duplicate(code: string): Promise<string | null> {
+  const src = await findByCode(code);
+  if (!src) return null;
+  let next = `${src.code}-copy`;
+  for (let i = 2; await findByCode(next); i++) next = `${src.code}-copy-${i}`;
+  const v: QrCodeInsert = {
+    code: next,
+    label: `${src.label} (副本)`,
+    type: src.type,
+    target: src.target,
+    title: src.title,
+    intro: src.intro,
+    links: src.links,
+    term: src.term,
+    quote: src.quote,
+    frontArt: src.frontArt,
+    alg: src.alg,
+    layout: src.layout,
+    scans: 0,
+    disabled: false,
+    createdAt: Math.floor(Date.now() / 1000),
+  };
+  await db.insert(schema.qrCodes).values(v);
+  return next;
+}
+
+// 停用 / 恢复:作废一个码只翻 disabled 标记、不删数据,扫码落地页给「已停用」提示,
+// 可随时恢复。二维码无硬删(印出去的码硬删会 404、统计与配置全丢),只用停用作废。
+export async function setDisabled(code: string, disabled: boolean): Promise<void> {
+  await db
+    .update(schema.qrCodes)
+    .set({ disabled })
+    .where(eq(schema.qrCodes.code, normalize(code)));
+}
+
+// 硬删:仅非演示码可删(演示码 isProtectedQr 兜底拦截);删前请确认,印过的码建议改用停用。
 export async function remove(code: string): Promise<void> {
-  await db.delete(schema.qrCodes).where(eq(schema.qrCodes.code, normalize(code)));
+  const c = normalize(code);
+  if (isProtectedQr(c)) throw new Error(`演示码 ${c} 不可删除`);
+  await db.delete(schema.qrCodes).where(eq(schema.qrCodes.code, c));
 }

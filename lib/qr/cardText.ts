@@ -73,11 +73,14 @@ export type FaceletSpot = {
   rot: number; // deg
 };
 
-// 散落魔方色块的确定性坐标(sin 哈希,避免 Math.random),DOM 卡与矢量卡共用同一份散点。
+// 散落魔方色块的确定性坐标(整数位运算哈希,避免 Math.random),DOM 卡与矢量卡共用同一份散点。
+// 不能用 Math.sin 哈希:sin 末位精度因 V8 版本而异(Node vs 浏览器),会造成 SSR 水合不匹配。
 export function cubeFaceletSpots(count = 14): FaceletSpot[] {
   const h = (i: number, seed: number) => {
-    const v = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453;
-    return v - Math.floor(v);
+    let t = Math.imul(i + 1, 0x9e3779b1) ^ Math.imul(seed + 1, 0x85ebca6b);
+    t = Math.imul(t ^ (t >>> 15), 0x2b2ae35);
+    t ^= t >>> 13;
+    return (t >>> 0) / 4294967296;
   };
   return Array.from({ length: count }, (_, i) => ({
     x: h(i, 1),
@@ -140,19 +143,14 @@ export function frontQuote(entry: Pick<QrCode, "quote">, idx = 0): string {
   return entry.quote?.trim() || DEFAULT_QUOTES[idx % DEFAULT_QUOTES.length];
 }
 
-// 背面主标题 / 副标题:优先用后台填的 title/intro,否则按类型 + 去向兜底
+// 背面主标题:优先用后台填的 title,否则按类型 + 去向兜底
+// 副标题:完全跟随「简介」字段,留空即不显示(所见即所得,不自动拼链接名/兜底文案)
 export function backText(entry: QrCode): { main: string; sub: string } {
   const isLanding = entry.type === "landing";
   const dest = destLabel(entry.target);
   const main =
     entry.title?.trim() ||
     (isLanding ? "扫码进社群" : dest ? `扫码直达${dest}` : "扫码直达");
-  const sub =
-    entry.intro?.trim() ||
-    (isLanding
-      ? entry.links && entry.links.length > 0
-        ? entry.links.map((l) => l.label).join(" / ")
-        : "课程 / 商城 / 赛事 / 社群"
-      : "");
+  const sub = entry.intro?.trim() || "";
   return { main, sub };
 }

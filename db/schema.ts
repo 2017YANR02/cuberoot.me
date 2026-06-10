@@ -367,6 +367,10 @@ export type QrType = "redirect" | "landing";
 export type QrLink = { label: string; href: string; note?: string };
 // 卡片背面精选解法公式:名称(如 OLL 33)+ 记法 + 来源链接(主站 alg 工具)
 export type QrAlg = { name?: string; moves: string; url?: string };
+// 卡面可移动元素:正面语录 / 品牌名,背面文案 / 角标 / 二维码 / 公式区
+export type CardEl = "quote" | "brand" | "backText" | "term" | "qr" | "alg";
+// 各元素相对默认位的偏移(mm),编辑器拖动写入;DOM 卡与矢量母版共用
+export type CardLayout = Partial<Record<CardEl, { x: number; y: number }>>;
 
 export const qrCodes = sqliteTable("qr_codes", {
   code: text("code").primaryKey(),
@@ -380,7 +384,9 @@ export const qrCodes = sqliteTable("qr_codes", {
   quote: text("quote"),
   frontArt: text("front_art"),
   alg: text("alg", { mode: "json" }).$type<QrAlg>(),
+  layout: text("layout", { mode: "json" }).$type<CardLayout>(),
   scans: integer("scans").notNull().default(0),
+  disabled: integer("disabled", { mode: "boolean" }).notNull().default(false),
   createdAt: integer("created_at").notNull(),
 });
 

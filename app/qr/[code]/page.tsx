@@ -20,6 +20,13 @@ function safeInternal(t: string): string {
   return t.startsWith("/") && !t.startsWith("//") ? t : "/";
 }
 
+// 跳转目标:站内路径或 http(s) 外链(B 站 / 公众号文章等),其余落回首页。
+// 外链仍经过本页中转:扫码统计 / 停用 / 改向能力全保留,只是最后一跳出站。
+function safeTarget(t: string): string {
+  if (/^https?:\/\//i.test(t)) return t;
+  return safeInternal(t);
+}
+
 const DEFAULT_LINKS: QrLink[] = [
   { label: "立即体验", href: "/" },
   { label: "进入社群", href: "/community" },
@@ -43,17 +50,43 @@ export default async function QrLandingPage({
     const anonId = (await cookies()).get("cube_anon")?.value ?? null;
     await recordEvent({
       name: "qr_scan",
-      payload: { code: entry.code, type: entry.type, label: entry.label },
+      payload: {
+        code: entry.code,
+        type: entry.type,
+        label: entry.label,
+        disabled: entry.disabled,
+      },
       anonId,
       url: `/qr/${entry.code}`,
     });
+    // 已停用(作废):仍记一次扫码(看死码还有多少流量),但不跳转,显示停用提示页
+    if (entry.disabled) {
+      return (
+        <section className="container-page py-16 max-w-md">
+          <div className="rounded-[14px] border border-line bg-white p-8 text-center">
+            <h1 className="text-[20px] font-semibold text-ink">该二维码已停用</h1>
+            <p className="mt-3 text-[14px] leading-7 text-ink-3">
+              这个入口暂时关闭了。你可以直接访问魔方开放社群首页继续浏览。
+            </p>
+            <div className="mt-6">
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand px-5 py-2.5 text-[14px] font-medium text-white transition hover:bg-brand-dark"
+              >
+                进入魔方开放社群 <ArrowRight size={16} />
+              </Link>
+            </div>
+          </div>
+        </section>
+      );
+    }
     if (
       entry.type !== "landing" &&
       entry.target &&
       entry.target !== "/" &&
       stay !== "1"
     ) {
-      redirect(safeInternal(entry.target));
+      redirect(safeTarget(entry.target));
     }
   }
 
