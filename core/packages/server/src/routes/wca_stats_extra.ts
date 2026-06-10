@@ -1113,9 +1113,28 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/player-combos', async (c) => {
 //   sowr = Σ世界名次(世界名次 + 本洲/本国子排名) / socr = Σ洲际名次(本洲名次 + 本国子排名) / sonr = Σ国家名次(本国名次)
 // 口径与 builder 总和列逐字节一致:缺项 = 该 scope 该项「参赛人数+1」(world 全球计数,country/continent 该国/该洲计数);
 // 名次 = 同 scope 池子里 COUNT 严格更小 + 1(并列共享).socr 依赖 ranks_continent 数组(migration 0040),
-// 未灌数据(cardinality=0)时 socr 返 null 且整响应 no-store(暂态,防钉缓存;灌上后自动恢复长缓存).
-// 量级:~2 遍全表扫(ep + 世界 COUNT)+ 洲/国小池子若干遍,~1-3s 冷,nginx 24h 按 URL 缓存;
-// 客户端按 RANK_EVENTS 顺序发 events 串,保证同一组合 URL 唯一 → 缓存命中.
+// 未灌数据(空数组)时 socr 返 null 且整响应 no-store(暂态,防钉缓存;灌上后自动恢复长缓存).
+// 量级:1 遍全表 COUNT + 洲/国小池子若干遍(每项参赛人数向量走进程内缓存,不再每请求聚合扫),
+// ~1.5-2s 冷,nginx 24h 按 URL 缓存;客户端按 RANK_EVENTS 顺序发 events 串保 URL 唯一 → 缓存命中.
+
+// 「每项参赛人数」向量缓存(21 元素/桶,15min TTL):跟选手与所选组合都无关,只随每日灌库微动;
+// 原版每请求用 3 个聚合 CTE 现算(占 ~40% 行扫),摘出来后 COUNT 变纯扫描.
+const epVecCache = new Map<string, { t: number; p: number[] }>();
+const EP_VEC_TTL = 15 * 60 * 1000;
+async function participantVec(isAvg: boolean, col: 'ranks_world' | 'ranks_country' | 'ranks_continent', scopeCol?: 'country_id' | 'continent_id', scopeId?: string): Promise<number[]> {
+  const key = `${isAvg}|${col}|${scopeId ?? ''}`;
+  const hit = epVecCache.get(key);
+  if (hit && Date.now() - hit.t < EP_VEC_TTL) return hit.p;
+  const sel = RANK_EVENTS.map((_, i) => `SUM(CASE WHEN ${col}[${i + 1}] > 0 THEN 1 ELSE 0 END)::INTEGER AS p${i}`).join(', ');
+  const rows = await query<Record<string, number>>(
+    `SELECT ${sel} FROM wca_person_ranks WHERE is_avg = ?${scopeCol ? ` AND ${scopeCol} = ?` : ''}`,
+    scopeCol ? [isAvg, scopeId] : [isAvg],
+  );
+  const p = RANK_EVENTS.map((_, i) => rows[0]?.[`p${i}`] ?? 0);
+  epVecCache.set(key, { t: Date.now(), p });
+  return p;
+}
+
 wcaStatsExtraRoutes.get('/wca/sum-of-ranks/person-subset', async (c) => {
   const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
   if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) return c.json({ error: 'Invalid wcaId' }, 400);
@@ -1129,9 +1148,9 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/person-subset', async (c) => {
   const idxs = [...idxSet].sort((a, b) => a - b);
   const events = idxs.map(i => RANK_EVENTS[i]);
 
-  // 先取该行的 scope 桶 + ranks_continent 是否已灌(轻查,顺带确认选手存在)
-  const meRows = await query<{ country_id: string; continent_id: string; kc: number }>(
-    `SELECT country_id, continent_id, cardinality(ranks_continent)::int AS kc
+  // 取该选手的三个名次数组 + scope 桶(轻查,顺带确认选手存在)
+  const meRows = await query<{ country_id: string; continent_id: string; ranks_world: number[]; ranks_country: number[]; ranks_continent: number[] }>(
+    `SELECT country_id, continent_id, ranks_world, ranks_country, ranks_continent
      FROM wca_person_ranks WHERE wca_id = ? AND is_avg = ?`,
     [wcaId, isAvg],
   );
@@ -1141,64 +1160,66 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks/person-subset', async (c) => {
   }
   const m0 = meRows[0]!;
   const hasCtry = m0.country_id !== '';
-  const hasContId = m0.continent_id !== '';      // 洲桶存在 → SoWR 的本洲子排名可算(只要 continent_id + 世界和)
-  const hasCont = hasContId && m0.kc > 0;        // ranks_continent 已灌 → SoCR(洲际名次和)本身才可算
+  const hasContId = m0.continent_id !== '';                  // 洲桶存在 → SoWR 的本洲子排名可算(只要 continent_id + 世界和)
+  const hasCont = hasContId && m0.ranks_continent.length > 0; // ranks_continent 已灌 → SoCR(洲际名次和)本身才可算
 
-  // 每 scope 一套「该项参赛人数」CTE + 求和表达式(CASE 缺项罚分);列名取自固定白名单,非用户输入
-  const partsOf = (col: string) => idxs.map(i =>
-    `SUM(CASE WHEN ${col}[${i + 1}] > 0 THEN 1 ELSE 0 END)::INTEGER AS p${i}`
-  ).join(', ');
-  const sumOf = (col: string, cte: string) => idxs.map(i =>
-    `(CASE WHEN pr.${col}[${i + 1}] > 0 THEN pr.${col}[${i + 1}] ELSE ${cte}.p${i} + 1 END)`
+  // 参赛人数向量(进程内缓存)→ 我的三个和 + done 在 TS 里算,SQL 只剩 COUNT
+  const [pw, pn, pk] = await Promise.all([
+    participantVec(isAvg, 'ranks_world'),
+    hasCtry ? participantVec(isAvg, 'ranks_country', 'country_id', m0.country_id) : null,
+    hasCont ? participantVec(isAvg, 'ranks_continent', 'continent_id', m0.continent_id) : null,
+  ]);
+  const sumMe = (arr: number[], pvec: number[]) => idxs.reduce((s, i) => s + ((arr[i] ?? 0) > 0 ? arr[i]! : pvec[i]! + 1), 0);
+  const tw = sumMe(m0.ranks_world, pw);
+  const tn = pn ? sumMe(m0.ranks_country, pn) : null;
+  const tk = pk ? sumMe(m0.ranks_continent, pk) : null;
+  const done = idxs.reduce((s, i) => s + ((m0.ranks_world[i] ?? 0) > 0 ? 1 : 0), 0);
+
+  // 求和表达式:罚分以字面量内联(server 算出的 int,无注入面);无 CTE join → 纯扫描
+  const sumOf = (col: string, pvec: number[]) => idxs.map(i =>
+    `(CASE WHEN ${col}[${i + 1}] > 0 THEN ${col}[${i + 1}] ELSE ${pvec[i]! + 1} END)`
   ).join(' + ');
-  const doneExpr = idxs.map(i => `(CASE WHEN pr.ranks_world[${i + 1}] > 0 THEN 1 ELSE 0 END)`).join(' + ');
-  const sumW = sumOf('ranks_world', 'ep');
-  const sumN = sumOf('ranks_country', 'epn');
-  const sumK = sumOf('ranks_continent', 'epc');
-
-  const params: unknown[] = [isAvg];
-  let ctes = `ep AS (SELECT ${partsOf('ranks_world')} FROM wca_person_ranks WHERE is_avg = ?)`;
-  if (hasCtry) { ctes += `,\n epn AS (SELECT ${partsOf('ranks_country')} FROM wca_person_ranks WHERE is_avg = ? AND country_id = ?)`; params.push(isAvg, m0.country_id); }
-  if (hasCont) { ctes += `,\n epc AS (SELECT ${partsOf('ranks_continent')} FROM wca_person_ranks WHERE is_avg = ? AND continent_id = ?)`; params.push(isAvg, m0.continent_id); }
-  const joins = `CROSS JOIN ep${hasCtry ? ' CROSS JOIN epn' : ''}${hasCont ? ' CROSS JOIN epc' : ''}`;
-  ctes += `,\n me AS (SELECT (${sumW}) AS tw${hasCtry ? `, (${sumN}) AS tn` : ''}${hasCont ? `, (${sumK}) AS tk` : ''}, (${doneExpr}) AS done
-     FROM wca_person_ranks pr ${joins} WHERE pr.wca_id = ? AND pr.is_avg = ?)`;
-  params.push(wcaId, isAvg);
+  const sumW = sumOf('ranks_world', pw);
 
   const counts: string[] = [
-    `(SELECT COUNT(*) FROM wca_person_ranks pr CROSS JOIN ep WHERE pr.is_avg = ? AND (${sumW}) < m.tw) AS w_world`,
+    `(SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND (${sumW}) < ${tw}) AS w_world`,
   ];
-  params.push(isAvg);
-  if (hasContId) { counts.push(`(SELECT COUNT(*) FROM wca_person_ranks pr CROSS JOIN ep WHERE pr.is_avg = ? AND pr.continent_id = ? AND (${sumW}) < m.tw) AS w_cont`); params.push(isAvg, m0.continent_id); }
-  if (hasCtry) { counts.push(`(SELECT COUNT(*) FROM wca_person_ranks pr CROSS JOIN ep WHERE pr.is_avg = ? AND pr.country_id = ? AND (${sumW}) < m.tw) AS w_ctry`); params.push(isAvg, m0.country_id); }
-  if (hasCont) { counts.push(`(SELECT COUNT(*) FROM wca_person_ranks pr CROSS JOIN epc WHERE pr.is_avg = ? AND pr.continent_id = ? AND (${sumK}) < m.tk) AS k_cont`); params.push(isAvg, m0.continent_id); }
-  if (hasCont && hasCtry) { counts.push(`(SELECT COUNT(*) FROM wca_person_ranks pr CROSS JOIN epc WHERE pr.is_avg = ? AND pr.country_id = ? AND (${sumK}) < m.tk) AS k_ctry`); params.push(isAvg, m0.country_id); }
-  if (hasCtry) { counts.push(`(SELECT COUNT(*) FROM wca_person_ranks pr CROSS JOIN epn WHERE pr.is_avg = ? AND pr.country_id = ? AND (${sumN}) < m.tn) AS n_ctry`); params.push(isAvg, m0.country_id); }
+  const params: unknown[] = [isAvg];
+  if (hasContId) { counts.push(`(SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND continent_id = ? AND (${sumW}) < ${tw}) AS w_cont`); params.push(isAvg, m0.continent_id); }
+  if (hasCtry) { counts.push(`(SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND country_id = ? AND (${sumW}) < ${tw}) AS w_ctry`); params.push(isAvg, m0.country_id); }
+  if (hasCont && pk) {
+    const sumK = sumOf('ranks_continent', pk);
+    counts.push(`(SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND continent_id = ? AND (${sumK}) < ${tk}) AS k_cont`); params.push(isAvg, m0.continent_id);
+    if (hasCtry) { counts.push(`(SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND country_id = ? AND (${sumK}) < ${tk}) AS k_ctry`); params.push(isAvg, m0.country_id); }
+  }
+  if (hasCtry && pn) {
+    const sumN = sumOf('ranks_country', pn);
+    counts.push(`(SELECT COUNT(*) FROM wca_person_ranks WHERE is_avg = ? AND country_id = ? AND (${sumN}) < ${tn}) AS n_ctry`); params.push(isAvg, m0.country_id);
+  }
 
   const rows = await query<{
-    tw: number; tn?: number; tk?: number; done: number;
     w_world: string; w_cont?: string; w_ctry?: string; k_cont?: string; k_ctry?: string; n_ctry?: string;
   }>(
-    `WITH ${ctes}\n SELECT m.*, ${counts.join(',\n ')} FROM me m`,
+    `SELECT ${counts.join(',\n ')}`,
     params,
   );
   const r = rows[0]!;
   const rk = (s: string | undefined) => (s != null ? parseInt(s, 10) + 1 : undefined);
 
   const sowr = {
-    total: r.tw, rank: rk(r.w_world)!,
+    total: tw, rank: rk(r.w_world)!,
     ...(r.w_cont != null ? { continentRank: rk(r.w_cont) } : {}),
     ...(r.w_ctry != null ? { countryRank: rk(r.w_ctry) } : {}),
   };
-  const socr = hasCont && r.tk != null
-    ? { total: r.tk, rank: rk(r.k_cont)!, ...(r.k_ctry != null ? { countryRank: rk(r.k_ctry) } : {}) }
+  const socr = hasCont && tk != null
+    ? { total: tk, rank: rk(r.k_cont)!, ...(r.k_ctry != null ? { countryRank: rk(r.k_ctry) } : {}) }
     : null;
-  const sonr = hasCtry && r.tn != null ? { total: r.tn, rank: rk(r.n_ctry)! } : null;
+  const sonr = hasCtry && tn != null ? { total: tn, rank: rk(r.n_ctry)! } : null;
 
   // ranks_continent 未灌(socr 缺位)是暂态 → no-store,数据灌上后自动恢复长缓存(不钉空响应)
   c.header('Cache-Control', hasCont ? CACHE_HEADER : 'no-store');
   return c.json({
-    wcaId, isAvg, events, eventsDone: r.done,
+    wcaId, isAvg, events, eventsDone: done,
     sowr, socr, sonr,
     total: sowr.total, rank: sowr.rank, // legacy v1 字段(浏览器里旧 JS 过渡期用,客户端收敛后可删)
   });

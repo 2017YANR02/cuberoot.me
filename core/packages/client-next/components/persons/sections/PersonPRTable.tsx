@@ -254,6 +254,20 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
     return () => { clearTimeout(debounce); ctrl.abort(); };
   }, [selEvents, wcaId]);
 
+  // 现算进度(无真实 sub-progress,按经过时间渐近到 95%,结果到了 pending 转 false 自然补满消失)
+  const [calc, setCalc] = useState<{ pct: number; secs: number } | null>(null);
+  useEffect(() => {
+    if (!subsetLoading) { setCalc(null); return; }
+    const start = Date.now();
+    const tick = () => {
+      const t = (Date.now() - start) / 1000;
+      setCalc({ pct: Math.min(95, Math.round((1 - Math.exp(-t / 3)) * 100)), secs: t });
+    };
+    tick();
+    const id = setInterval(tick, 120);
+    return () => clearInterval(id);
+  }, [subsetLoading]);
+
   if (!sor) return null;
   // 17 口径全空 = 选手无 SOR → 整块隐藏;21 口径空(_21 列未填充)时保留行显示占位,不让开关把块切没
   if (!sor.single && !sor.average && !sor.bestSingle && !sor.bestAverage && !effCancelled) return null;
@@ -320,7 +334,7 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
           </tr>
         );
       })}
-      {!historical && selEvents.size > 0 && (() => {
+      {!historical && selEvents.size > 1 && (() => {
         // 自选组合三行:与上方主行同构(SoWR/SoCR/SoNR 各一行,列对齐),person-subset 现算;
         // socr 在 ranks_continent 灌数据前为 null(该行留 —,stats 管道跑完自动点亮)
         const pending = subsetLoading || !subset;
@@ -338,6 +352,12 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
                     {t('自选', 'Custom')}
                     <ClearButton variant="standalone" className="wp-sor-custom-clear" onClick={onClearSel} title={t('清除所选项目', 'Clear selection')} />
                   </span>
+                  {pending && calc && (
+                    <span className="wp-sor-custom-progress" aria-hidden>
+                      <span className="wp-sor-custom-progress-bar" style={{ width: `${calc.pct}%` }} />
+                      <span className="wp-sor-custom-progress-secs">{calc.secs.toFixed(1)}s</span>
+                    </span>
+                  )}
                 </th>
               )}
               {rankTd('world', m.key, s, pending)}
