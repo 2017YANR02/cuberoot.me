@@ -175,15 +175,19 @@ export async function fetchPersonSor(wcaId: string, inclCancelled = false): Prom
   return json;
 }
 
-// 自选组合:任意项目子集下该选手的名次和 + 世界名次(PR 表行多选驱动,/sum-of-ranks/person-subset 现算).
+// 自选组合:任意项目子集下该选手的 SoWR/SoCR/SoNR 三指标(PR 表行多选驱动,/sum-of-ranks/person-subset 现算).
 // 不走 localStorage(浏览器 HTTP 缓存 300s + nginx 24h 已够);events 按 RANK_EVENTS 顺序拼,URL 唯一保缓存命中.
+// socr 为 null = ranks_continent 未灌(stats 管道跑完自动恢复)或选手无洲;cell 结构与 Σ 块主行一致.
 export interface PersonSubsetResponse {
-  wcaId: string; isAvg: boolean; events: string[];
-  total: number | null; rank: number | null; eventsDone: number;
+  wcaId: string; isAvg: boolean; events: string[]; eventsDone: number;
+  sowr: SorMetricCell | null;
+  socr: SorMetricCell | null;
+  sonr: SorMetricCell | null;
 }
 
 export async function fetchPersonSubset(wcaId: string, events: string[], isAvg: boolean, signal?: AbortSignal): Promise<PersonSubsetResponse> {
-  const qs = `wcaId=${encodeURIComponent(wcaId)}&isAvg=${isAvg ? '1' : '0'}&events=${encodeURIComponent(events.join(','))}`;
+  // v=2: 2026-06-10 响应从单 total/rank 改三指标(sowr/socr/sonr),bump 甩掉浏览器 HTTP 缓存里的旧 shape
+  const qs = `wcaId=${encodeURIComponent(wcaId)}&isAvg=${isAvg ? '1' : '0'}&events=${encodeURIComponent(events.join(','))}&v=2`;
   const res = await fetch(apiUrl(`/v1/wca/sum-of-ranks/person-subset?${qs}`), { signal });
   if (!res.ok) throw new Error(`sum-of-ranks/person-subset ${res.status}`);
   return (await res.json()) as PersonSubsetResponse;

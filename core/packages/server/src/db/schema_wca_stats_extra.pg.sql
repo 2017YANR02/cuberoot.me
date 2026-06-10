@@ -150,6 +150,7 @@ CREATE TABLE IF NOT EXISTS wca_person_ranks (
   best_final_pos      SMALLINT NOT NULL,   -- 跨 event 累积:final round (round_type c/f) 的 MIN(pos>0);0=从未在 final 拿过有效成绩
   ranks_world         INTEGER[] NOT NULL,  -- 21 元素,对应 RANK_EVENTS 顺序 (0-16 活跃,17-20 废止);0=该项无成绩
   ranks_country       INTEGER[] NOT NULL,
+  ranks_continent     INTEGER[] NOT NULL DEFAULT '{}',  -- 同上,洲际名次;migration 0040 加(自选组合 SoCR 式现算用)
   total_world_rank_21    INTEGER NOT NULL DEFAULT 0,  -- 21 项口径(含 4 废止)名次和;migration 0039 加
   total_country_rank_21  INTEGER NOT NULL DEFAULT 0,
   total_continent_rank_21 INTEGER NOT NULL DEFAULT 0,

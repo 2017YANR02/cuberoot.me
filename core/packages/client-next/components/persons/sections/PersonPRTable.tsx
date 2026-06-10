@@ -227,9 +227,9 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
     return () => { cancelled = true; };
   }, [wcaId, effCancelled]);
 
-  // 自选组合(行多选驱动):单次 + 平均两路并发现算,防抖 450ms;洲际/地区名次暂无(端点只算世界 scope)
-  type SubsetCell = { total: number; rank: number } | null;
-  const [subset, setSubset] = useState<{ single: SubsetCell; average: SubsetCell } | null>(null);
+  // 自选组合(行多选驱动):单次 + 平均两路并发现算,防抖 450ms;三指标(SoWR/SoCR/SoNR)与主行同结构
+  type SubsetTriple = { sowr: SorMetricCell | null; socr: SorMetricCell | null; sonr: SorMetricCell | null };
+  const [subset, setSubset] = useState<{ single: SubsetTriple | null; average: SubsetTriple | null } | null>(null);
   const [subsetLoading, setSubsetLoading] = useState(false);
   useEffect(() => {
     if (selEvents.size === 0) { setSubset(null); setSubsetLoading(false); return; }
@@ -243,8 +243,8 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
       )).then(([s, a]) => {
         if (ctrl.signal.aborted) return;
         setSubset({
-          single: s && s.rank != null && s.total != null ? { total: s.total, rank: s.rank } : null,
-          average: a && a.rank != null && a.total != null ? { total: a.total, rank: a.rank } : null,
+          single: s && s.sowr ? { sowr: s.sowr, socr: s.socr, sonr: s.sonr } : null,
+          average: a && a.sowr ? { sowr: a.sowr, socr: a.socr, sonr: a.sonr } : null,
         });
         setSubsetLoading(false);
       }).finally(() => clearTimeout(timer));
@@ -277,21 +277,21 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
 
   // 名次格:指标自身 scope 列填名次(SoWR→世界 / SoCR→洲际 / SoNR→地区),比 scope 更窄的列填子排名
   // (同指标值在本洲/本国池子重排;仅当前模式有,历史/旧缓存缺位时留白),其余列空.与上方逐项名次同列对齐.
-  const rankTd = (col: 'world' | 'continent' | 'country', key: 'sowr' | 'socr' | 'sonr', d: Disp | null) => {
+  const rankTd = (col: 'world' | 'continent' | 'country', key: 'sowr' | 'socr' | 'sonr', d: Disp | null, pending = false) => {
     if (scopeCol(key) !== col) {
       const sub = col === 'continent' ? d?.continentRank : col === 'country' ? d?.countryRank : undefined;
       return sub ? <td className="wp-sor-rcell"><RankCell r={sub} /></td> : <td className="wp-sor-blank" />;
     }
     return (
       <td className="wp-sor-rcell">
-        {d ? <RankCell r={d.rank} /> : <span className="wp-rank wp-rank-tier-mute">—</span>}
+        {d ? <RankCell r={d.rank} /> : <span className="wp-rank wp-rank-tier-mute">{pending ? '…' : '—'}</span>}
       </td>
     );
   };
   // 和值格(落「成绩」列,与逐项成绩同列):Σ 值;历史模式下附达到该最佳名次的年份小字.
-  const sumTd = (d: Disp | null) => (
+  const sumTd = (d: Disp | null, pending = false) => (
     <td className="wp-cell-result wp-sor-scell">
-      {d && d.total != null ? <span className="wp-sor-sum">{d.total}</span> : <span className="wp-sor-smute">—</span>}
+      {d && d.total != null ? <span className="wp-sor-sum">{d.total}</span> : <span className="wp-sor-smute">{pending ? '…' : '—'}</span>}
       {historical && d?.year ? <span className="wp-sor-best-sum">{d.year}</span> : null}
     </td>
   );
@@ -319,39 +319,36 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
         );
       })}
       {!historical && selEvents.size > 0 && (() => {
-        // 自选组合行:上表行多选驱动,世界名次 + 名次和现算;洲际/地区列暂空(端点只算世界 scope,后续补)
+        // 自选组合三行:与上方主行同构(SoWR/SoCR/SoNR 各一行,列对齐),person-subset 现算;
+        // socr 在 ranks_continent 灌数据前为 null(该行留 —,stats 管道跑完自动点亮)
         const pending = subsetLoading || !subset;
-        const rcell = (d: { rank: number } | null) => (
-          <td className="wp-sor-rcell">
-            {pending && !d ? <span className="wp-rank wp-rank-tier-mute">…</span> : d ? <RankCell r={d.rank} /> : <span className="wp-rank wp-rank-tier-mute">—</span>}
-          </td>
-        );
-        const scell = (d: { total: number } | null) => (
-          <td className="wp-cell-result wp-sor-scell">
-            {pending && !d ? <span className="wp-sor-smute">…</span> : d ? <span className="wp-sor-sum">{d.total}</span> : <span className="wp-sor-smute">—</span>}
-          </td>
-        );
-        const s = subset?.single ?? null;
-        const a = subset?.average ?? null;
-        return (
-          <tr className="wp-sor-row wp-sor-custom">
-            <th scope="row" className="wp-cell-event wp-sor-rowlabel" title={t(`自选组合(已选 ${selEvents.size} 项):名次和与按它重排的世界名次;点上方项目行增删`, `Custom combo (${selEvents.size} events): sum of ranks + world position when re-ranked by it; click rows above to edit`)}>
-              <span className="wp-sor-abbr wp-sor-custom-label">
-                {t('自选', 'Custom')}
-                <ClearButton variant="standalone" className="wp-sor-custom-clear" onClick={onClearSel} title={t('清除所选项目', 'Clear selection')} />
-              </span>
-            </th>
-            {rcell(s)}
-            <td className="wp-sor-blank" />
-            <td className="wp-sor-blank" />
-            {scell(s)}
-            {scell(a)}
-            {rcell(a)}
-            <td className="wp-sor-blank" />
-            <td className="wp-sor-blank" />
-            {showPodium && <><td className="wp-sor-blank" /><td className="wp-sor-blank" /><td className="wp-sor-blank" /></>}
-          </tr>
-        );
+        const toDisp = (cell: SorMetricCell | null | undefined): Disp | null =>
+          cell ? { rank: cell.rank, total: cell.total, continentRank: cell.continentRank, countryRank: cell.countryRank } : null;
+        return METRICS.map((m, mi) => {
+          const s = toDisp(subset?.single?.[m.key]);
+          const a = toDisp(subset?.average?.[m.key]);
+          return (
+            <tr key={`sel-${m.key}`} className="wp-sor-row wp-sor-custom">
+              {mi === 0 && (
+                <th scope="row" rowSpan={3} className="wp-cell-event wp-sor-rowlabel wp-sor-custom-rowlabel" title={t(`自选组合(已选 ${selEvents.size} 项):按所选项目重算的 SoWR/SoCR/SoNR 三行,与上方同列对齐;点上方项目行增删`, `Custom combo (${selEvents.size} events): SoWR/SoCR/SoNR recomputed over the selected events, columns aligned with the rows above; click rows above to edit`)}>
+                  <span className="wp-sor-abbr wp-sor-custom-label">
+                    {t('自选', 'Custom')}
+                    <ClearButton variant="standalone" className="wp-sor-custom-clear" onClick={onClearSel} title={t('清除所选项目', 'Clear selection')} />
+                  </span>
+                </th>
+              )}
+              {rankTd('world', m.key, s, pending)}
+              {rankTd('continent', m.key, s, pending)}
+              {rankTd('country', m.key, s, pending)}
+              {sumTd(s, pending)}
+              {sumTd(a, pending)}
+              {rankTd('world', m.key, a, pending)}
+              {rankTd('continent', m.key, a, pending)}
+              {rankTd('country', m.key, a, pending)}
+              {showPodium && <><td className="wp-sor-blank" /><td className="wp-sor-blank" /><td className="wp-sor-blank" /></>}
+            </tr>
+          );
+        });
       })()}
     </tbody>
   );
