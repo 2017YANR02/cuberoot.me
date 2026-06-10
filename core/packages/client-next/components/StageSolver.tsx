@@ -34,7 +34,7 @@ function fmtBytes(b: number): string {
   return `${b} B`;
 }
 
-export type Method = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | '222' | 'roux' | '223';
+export type Method = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | '123' | '222' | '223';
 const VARIANT_ID: Record<'pair' | 'eo' | 'pseudo' | 'pseudo_pair', number> = {
   pair: 0, eo: 1, pseudo: 2, pseudo_pair: 3,
 };
@@ -46,8 +46,8 @@ const METHODS: { key: Method; label: string }[] = [
   { key: 'pseudo_pair', label: 'Pseudo Pair' },
   { key: 'f2leo', label: 'F2LEO' },
   { key: 'pseudo_f2leo', label: 'Pseudo F2LEO' },
+  { key: '123', label: '1x2x3 (Roux FB)' },
   { key: '222', label: '2x2x2' },
-  { key: 'roux', label: 'Roux FB' },
   { key: '223', label: '2x2x3' },
 ];
 const STAGE_LABELS: Record<Method, string[]> = {
@@ -58,26 +58,26 @@ const STAGE_LABELS: Record<Method, string[]> = {
   pseudo_pair: ['P-Cross + Pair', 'P-XC + Pair', 'P-XXC + Pair', 'P-XXXC + Pair'],
   f2leo: ['F2LEO Cross', 'F2LEO XC', 'F2LEO XXC', 'F2LEO XXXC'],
   pseudo_f2leo: ['P-F2LEO Cross', 'P-F2LEO XC', 'P-F2LEO XXC', 'P-F2LEO XXXC'],
+  '123': ['1x2x2', '1x2x3'],
   '222': ['2x2x2'],
-  roux: ['FB Square', 'FB 1x2x3'],
   '223': ['2x2x2', '2x2x3'],
 };
 // 自动批算(eager)的最深阶段;更深的留点击按需(单视角搜索重,弱小表启发式)。
 const EAGER_MAX: Record<Method, number> = {
-  std: 3, eo: 2, pair: 3, pseudo: 3, pseudo_pair: 2, f2leo: 1, pseudo_f2leo: 1, '222': 0, roux: 1, '223': 1,
+  std: 3, eo: 2, pair: 3, pseudo: 3, pseudo_pair: 2, f2leo: 1, pseudo_f2leo: 1, '123': 1, '222': 0, '223': 1,
 };
 type Kind = 'std' | 'variant' | 'f2leo' | 'block222' | 'roux223';
 const kindOf = (m: Method): Kind =>
   m === 'std' ? 'std'
     : m === 'f2leo' || m === 'pseudo_f2leo' ? 'f2leo'
       : m === '222' ? 'block222'
-        : m === 'roux' || m === '223' ? 'roux223' : 'variant';
+        : m === '123' || m === '223' ? 'roux223' : 'variant';
 const needOf = (m: Method): PoolNeed => {
   const k = kindOf(m);
   return k === 'std' ? 'cross' : k === 'f2leo' ? 'f2leo' : k === 'block222' ? 'block222' : k === 'roux223' ? 'roux223' : 'variant';
 };
-// Roux223SolverWasm 的阶段编号:0=FB方块 1=1x2x3 2=2x2x2 3=2x2x3。
-const roux223Stage = (m: Method, stage: number) => (m === 'roux' ? stage : stage + 2);
+// Roux223SolverWasm 的阶段编号:0=1x2x2 方块 1=1x2x3 2=2x2x2 3=2x2x3。
+const roux223Stage = (m: Method, stage: number) => (m === '123' ? stage : stage + 2);
 
 // 6 视角:rot ""/z2/z'/z/x'/x → 底面 D/U/L/R/F/B(与 ROTS / solve*Stage 返回序一致)。
 // 视角格直接填该底面十字色(取自 lib/cube-colors 全站单一来源),不再写字母。
@@ -114,8 +114,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   // 视角格 / 解法头的目标描述(块类方法按 method+stage 给语义,其余 = 该面十字)。
   const faceDesc = (face: string) =>
     method === '222' ? t(`${face} 底 2x2x2 块`, `${face}-bottom 2x2x2 block`)
-      : method === 'roux' ? (stage === 0
-        ? t(`${face} 底 FB 方块 (1x2x2)`, `${face}-bottom FB square (1x2x2)`)
+      : method === '123' ? (stage === 0
+        ? t(`${face} 底 1x2x2 方块`, `${face}-bottom 1x2x2 square`)
         : t(`${face} 底 1x2x3 块`, `${face}-bottom 1x2x3 block`))
       : method === '223' ? (stage === 0
         ? t(`${face} 底 2x2x2 块`, `${face}-bottom 2x2x2 block`)

@@ -54,8 +54,8 @@ const VARIANTS: Variant[] = [
   { key: 'pair', file: 'pair.csv', stages: ['cross_pair', 'xcross_pair', 'xxcross_pair', 'xxxcross_pair'] },
   { key: 'f2leo', file: 'f2leo.csv', stages: ['f2leo_cross', 'f2leo_xcross', 'f2leo_xxcross', 'f2leo_xxxcross'] },
   { key: 'pseudo_f2leo', file: 'pseudo_f2leo.csv', stages: ['pseudo_f2leo_cross', 'pseudo_f2leo_xcross', 'pseudo_f2leo_xxcross', 'pseudo_f2leo_xxxcross'] },
+  { key: '123', file: 'roux.csv', stages: ['fbsquare', 'rouxs1'], metrics: ['fbsquare', 'rouxs1'] },
   { key: '222', file: '222.csv', stages: ['block222'], metrics: ['block222'] },
-  { key: 'roux', file: 'roux.csv', stages: ['fbsquare', 'rouxs1'], metrics: ['fbsquare', 'rouxs1'] },
   { key: '223', file: '223.csv', stages: ['block223'], metrics: ['block223'] },
 ];
 
