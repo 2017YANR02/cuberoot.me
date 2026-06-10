@@ -203,6 +203,15 @@ function reservoirAdd(r: Reservoir, s: Sample) {
   if (j < K_DOWNLOAD) r.samples[j] = s;
 }
 
+// per-event 预览 reservoir(cap=K_PREVIEW,独立 rng —— 不消耗全局 rng,保证合并池采样
+// 与未分桶时逐字节一致)
+function reservoirAddK(r: Reservoir, s: Sample, cap: number, rngf: () => number) {
+  r.seen++;
+  if (r.samples.length < cap) { r.samples.push(s); return; }
+  const j = Math.floor(rngf() * r.seen);
+  if (j < cap) r.samples[j] = s;
+}
+
 async function loadScrambleMap(txtPath: string): Promise<Map<string, string>> {
   const map = new Map<string, string>();
   const stream = fs.createReadStream(txtPath, { encoding: 'utf-8' });
@@ -212,6 +221,26 @@ async function loadScrambleMap(txtPath: string): Promise<Map<string, string>> {
     const i = line.indexOf(',');
     if (i === -1) continue;
     map.set(line.slice(0, i), line.slice(i + 1));
+  }
+  return map;
+}
+
+// id → WCA event_id (split_mbf 第 4 列)。值 intern 到共享字符串省内存(1.3M 条)。
+async function loadIdEventMap(metaCsv: string): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  const intern = new Map<string, string>();
+  const rl = readline.createInterface({ input: fs.createReadStream(metaCsv, 'utf-8'), crlfDelay: Infinity });
+  let first = true;
+  for await (const line of rl) {
+    if (!line) continue;
+    if (first) { first = false; continue; }
+    const c = line.split(',');
+    const id: string = c[0] ?? '';
+    const raw: string = c[3] ?? '';
+    if (!id || !raw) continue;
+    let ev = intern.get(raw);
+    if (ev === undefined) { ev = raw; intern.set(raw, raw); }
+    map.set(id, ev ?? raw);
   }
   return map;
 }
@@ -294,7 +323,10 @@ const SUBSET_KEYS: string[] = (() => {
   return keys;
 })();
 
-async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap: Map<string, string>) {
+// idEvent(可选,仅 WCA set):id → WCA event_id。提供时额外按项目分桶出 per-event 直方图
+// (六个三阶项目共用同一打乱器,分布理论上同形 —— 分桶是给 UI 按项目查看用,样本量各自缩水)。
+// per-event 桶不做 reservoir 采样(示例 / 下载走合并池,客户端按 idMeta 过滤)。
+async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap: Map<string, string>, idEvent?: Map<string, string>) {
   // 每个 (set,variant) 调用前把 RNG 重新 makeRng 到随 variant key 确定的种子: reservoir 采样只依赖本变体自身数据,
   // 不被上一个变体处理时的 rng() 次数带偏 -> 增量只改一个变体时, 其它变体/set 的示例样本不再 spurious churn。
   let seed = 0x9e3779b9 >>> 0;
@@ -304,6 +336,15 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
   const byStage: Record<string, Record<string, Hist>> = {};
   // NOTE: per stage → per subset key → Map<binValue, Reservoir>
   const resByStage: Record<string, Record<string, Map<number, Reservoir>>> = {};
+  // per event → per stage → per subset key → Hist(惰性建,事件集从数据发现)
+  const byEvent: Map<string, Record<string, Record<string, Hist>>> = new Map();
+  // per event → per stage → per subset → Map<bin, Reservoir>(cap=K_PREVIEW,只做预览示例)
+  const evResByEvent: Map<string, Record<string, Record<string, Map<number, Reservoir>>>> = new Map();
+  const evRowCount: Map<string, number> = new Map();
+  // 独立 rng:event 采样不消耗全局 rng,合并池 reservoir 保持确定性不变
+  let evSeed = 0x55aa55aa >>> 0;
+  for (const ch of spec.key) evSeed = (Math.imul(evSeed, 33) + ch.charCodeAt(0)) >>> 0;
+  const evRng = makeRng(evSeed);
   for (const stage of spec.stages) {
     byStage[stage] = {};
     resByStage[stage] = {};
@@ -312,6 +353,21 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
       resByStage[stage][key] = new Map();
     }
   }
+  const eventBucket = (ev: string): Record<string, Record<string, Hist>> => {
+    let b = byEvent.get(ev);
+    if (!b) {
+      b = {};
+      const r: Record<string, Record<string, Map<number, Reservoir>>> = {};
+      for (const stage of spec.stages) {
+        b[stage] = {};
+        r[stage] = {};
+        for (const key of SUBSET_KEYS) { b[stage][key] = newHist(); r[stage][key] = new Map(); }
+      }
+      byEvent.set(ev, b);
+      evResByEvent.set(ev, r);
+    }
+    return b;
+  };
 
   // NOTE: 每个 subset key 预先映射成它包含的 6 角度列下标中的哪几个（bitmask）
   // 行内遍历时先读 6 角度值，再按 bitmask 取 min
@@ -372,6 +428,8 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
     // NOTE: parts[0] 是 id（全部变体首列均为整数 id）
     const id = parts[0];
     const scramble = scrambleMap.get(id);
+    const ev = idEvent?.get(id);
+    const evHists = ev !== undefined ? eventBucket(ev) : undefined;
     for (const stage of spec.stages) {
       const { colorIdx, subsetMasks } = plans.get(stage)!;
       const vals: number[] = new Array(6);
@@ -391,14 +449,22 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
           }
         }
         bump(byStage[stage][key], m);
+        if (evHists) bump(evHists[stage][key], m);
         if (scramble !== undefined && argi >= 0) {
           const bucketMap = resByStage[stage][key];
           let res = bucketMap.get(m);
           if (!res) { res = newRes(); bucketMap.set(m, res); }
           reservoirAdd(res, [id, scramble, COLOR_LETTERS[argi]]);
+          if (ev !== undefined) {
+            const evBucketMap = evResByEvent.get(ev)![stage][key];
+            let evRes = evBucketMap.get(m);
+            if (!evRes) { evRes = newRes(); evBucketMap.set(m, evRes); }
+            reservoirAddK(evRes, [id, scramble, COLOR_LETTERS[argi]], K_PREVIEW, evRng);
+          }
         }
       }
     }
+    if (ev !== undefined) evRowCount.set(ev, (evRowCount.get(ev) ?? 0) + 1);
     sampleCount++;
     if (sampleCount % 200_000 === 0) {
       process.stdout.write(`  [${spec.key}] ${sampleCount} rows\r`);
@@ -440,6 +506,35 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
     }
   }
 
+  // per-event 变体 JSON(counts only,无 example_bins → 前端自动隐藏下载)
+  // + per-event 预览示例(K_PREVIEW 条/bin,落独立分片文件)
+  const eventJson: Record<string, { sample_count: number; stages: string[]; data: Record<string, Record<string, ReturnType<typeof histToJson>>> }> = {};
+  const eventPreviews: Record<string, Record<string, Record<string, Record<string, Sample[]>>>> = {};
+  for (const [ev, hists] of byEvent) {
+    const evData: Record<string, Record<string, ReturnType<typeof histToJson>>> = {};
+    const evPrev: Record<string, Record<string, Record<string, Sample[]>>> = {};
+    const evRes = evResByEvent.get(ev)!;
+    for (const stage of spec.stages) {
+      evData[stage] = {};
+      evPrev[stage] = {};
+      for (const key of SUBSET_KEYS) {
+        evData[stage][key] = histToJson(hists[stage][key]);
+        const bucketMap = evRes[stage][key];
+        if (bucketMap.size === 0) continue;
+        evPrev[stage][key] = {};
+        for (const b of [...bucketMap.keys()].sort((a, z) => a - z)) {
+          evPrev[stage][key][String(b)] = bucketMap.get(b)!.samples.slice(0, K_PREVIEW);
+        }
+      }
+    }
+    eventJson[ev] = {
+      sample_count: evRowCount.get(ev) ?? 0,
+      stages: spec.stages,
+      data: evData,
+    };
+    eventPreviews[ev] = evPrev;
+  }
+
   return {
     sampleCount,
     json: {
@@ -447,6 +542,8 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
       stages: spec.stages,
       data,
     },
+    eventJson,
+    eventPreviews,
     previewExamples,
     pickedReservoirs,
   };
@@ -583,7 +680,21 @@ async function main() {
     const scrambleMap = await loadScrambleMap(setSpec.scrambles_txt);
     console.log(`  loaded ${scrambleMap.size} scrambles`);
 
+    // WCA set:加载 id→项目映射做 per-event 分桶(自造打乱 set 无 meta → 不分桶)
+    const dataRoot = path.dirname(setSpec.csv_dir);
+    const metaCsv = path.join(dataRoot, 'input', 'wca_scrambles_split_mbf.csv');
+    let idEvent: Map<string, string> | undefined;
+    if (fs.existsSync(metaCsv)) {
+      console.log(`Loading id→event map from ${metaCsv}`);
+      idEvent = await loadIdEventMap(metaCsv);
+      console.log(`  loaded ${idEvent.size} ids`);
+    }
+
     const variantsOut: Record<string, unknown> = {};
+    // per event → variantKey → 变体 JSON / 预览示例
+    const eventVariantsOut: Map<string, Record<string, unknown>> = new Map();
+    const eventExamplesOut: Map<string, Record<string, unknown>> = new Map();
+    const eventMaxCount: Map<string, number> = new Map();
     const examplesOut: Record<string, unknown> = {};
     let maxCount = 0;
     // 下载 txt 延后到比赛 meta join 之后再写(行内带 competition/round 两列);此处只攒任务。
@@ -601,10 +712,19 @@ async function main() {
         continue;
       }
       console.log(`Aggregating ${spec.key} from ${csvPath}`);
-      const { sampleCount, json, previewExamples, pickedReservoirs } = await aggregateVariant(spec, csvPath, scrambleMap);
+      const { sampleCount, json, eventJson, eventPreviews, previewExamples, pickedReservoirs } = await aggregateVariant(spec, csvPath, scrambleMap, idEvent);
       variantsOut[spec.key] = json;
       examplesOut[spec.key] = previewExamples;
       if (sampleCount > maxCount) maxCount = sampleCount;
+      for (const [ev, evJson] of Object.entries(eventJson)) {
+        let bucket = eventVariantsOut.get(ev);
+        if (!bucket) { bucket = {}; eventVariantsOut.set(ev, bucket); }
+        bucket[spec.key] = evJson;
+        if (evJson.sample_count > (eventMaxCount.get(ev) ?? 0)) eventMaxCount.set(ev, evJson.sample_count);
+        let exBucket = eventExamplesOut.get(ev);
+        if (!exBucket) { exBucket = {}; eventExamplesOut.set(ev, exBucket); }
+        exBucket[spec.key] = eventPreviews[ev];
+      }
 
       for (const stage of Object.keys(pickedReservoirs)) {
         for (const subsetKey of Object.keys(pickedReservoirs[stage])) {
@@ -625,18 +745,52 @@ async function main() {
       sample_count: maxCount,
       variants: variantsOut,
     };
+    // per-event 子集:key = `${setKey}_${eventId}`,带 event 字段供前端区分
+    // (前端数据集下拉只列无 event 字段的顶级 set;per-event set 由项目选择器路由)。
+    // 无 examples / downloads —— 示例走合并池按 idMeta 项目过滤。
+    const evKeys = [...eventVariantsOut.keys()].sort();
+    for (const ev of evKeys) {
+      setsOut[`${setSpec.key}_${ev}`] = {
+        label: `${setSpec.label} ${ev}`,
+        label_zh: setSpec.label_zh ? `${setSpec.label_zh} ${ev}` : null,
+        event: ev,
+        sample_count: eventMaxCount.get(ev) ?? 0,
+        variants: eventVariantsOut.get(ev)!,
+      };
+    }
+    if (evKeys.length > 0) {
+      console.log(`  per-event sets: ${evKeys.map((e) => `${e}(${eventMaxCount.get(e)})`).join(', ')}`);
+    }
     // 比赛 meta join(仅有 split_mbf 的 WCA set;自造打乱 set 无 → comps/idMeta 空):
     // 覆盖 示例预览 id + 全部下载样本 id,供 examples.json 与下载 txt 共用。
     let comps: Record<string, [string, string]> = {};
     let idMeta: Record<string, [string, string, number, string, string, (0 | 1)]> = {};
-    const dataRoot = path.dirname(setSpec.csv_dir);
-    const metaCsv = path.join(dataRoot, 'input', 'wca_scrambles_split_mbf.csv');
     if (fs.existsSync(metaCsv)) {
       console.log('Joining competition meta for examples + downloads...');
       ({ comps, idMeta } = await buildExampleCompMeta(examplesOut, metaCsv, path.join(dataRoot, 'competitions.tsv'), downloadIds));
       console.log(`  [examples] ${Object.keys(idMeta).length} ids across ${Object.keys(comps).length} comps`);
     }
     examplesSetsOut[setSpec.key] = { variants: examplesOut, comps, idMeta };
+
+    // per-event 示例分片:examples_<setKey>_<event>.json,选了项目才懒加载。
+    // 每片自带 comps/idMeta(只覆盖本片引用到的 id),shape 对齐 examples.json 的单个 set。
+    for (const [ev, exVariants] of eventExamplesOut) {
+      let shardComps: Record<string, [string, string]> = {};
+      let shardIdMeta: Record<string, [string, string, number, string, string, (0 | 1)]> = {};
+      if (fs.existsSync(metaCsv)) {
+        ({ comps: shardComps, idMeta: shardIdMeta } = await buildExampleCompMeta(
+          exVariants as Record<string, unknown>, metaCsv, path.join(dataRoot, 'competitions.tsv'),
+        ));
+      }
+      const shardPath = path.join(outDir, `examples_${setSpec.key}_${ev}.json`);
+      fs.writeFileSync(shardPath, JSON.stringify({
+        meta: { generated_at: generatedAt },
+        variants: exVariants,
+        comps: shardComps,
+        idMeta: shardIdMeta,
+      }));
+      console.log(`  [examples shard] ${path.basename(shardPath)} (${(fs.statSync(shardPath).size / 1024).toFixed(1)} KB, ${Object.keys(shardIdMeta).length} ids)`);
+    }
 
     // 写每 bin 一个 txt;路径含 setKey 隔离不同 set
     const sourceLabel = path.basename(setSpec.scrambles_txt);

@@ -541,6 +541,9 @@
 }
 
 /* ── 长度视图：项目选择器 + 全项目一览 ── */
+.scramble-stats-event-bar {
+  margin: 0.25rem 0 0.85rem;
+}
 .scramble-len-events {
   margin-bottom: 1rem;
 }
