@@ -42,3 +42,31 @@
 .sor-pb-expand-row .sor-pb-expand { margin-top: 0; }
 .sor-pb-collapse { background: none; border: none; color: var(--muted-foreground); font-size: 13px; cursor: pointer; padding: 4px 0; }
 .sor-pb-collapse:hover { text-decoration: underline; color: var(--foreground); }
+
+/* 组合剖析:必选(支柱)/ 随意(自由项,带出现比例)/ 必避(毒药) */
+.sor-pb-anatomy {
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 6px 0 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+.sor-pb-anat-row { display: flex; align-items: flex-start; gap: 10px; }
+.sor-pb-anat-label {
+  flex: none; min-width: 32px; padding-top: 2px;
+  font-size: 12px; color: var(--muted-foreground); cursor: default;
+}
+.sor-pb-anat-pillar { color: var(--signal-success); }
+.sor-pb-anat-poison { color: var(--destructive); }
+.sor-pb-anat-items { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.sor-pb-anat-items :is(img, svg) { width: 20px; height: 20px; }
+.sor-pb-anat-dim { opacity: 0.45; }
+.sor-pb-anat-free { display: inline-flex; align-items: center; gap: 2px; }
+.sor-pb-anat-pct { font-size: 11px; color: var(--faint-foreground); font-variant-numeric: tabular-nums; }
+
+/* 自选组合计算器 */
+.sor-pb-lab-open { align-self: flex-start; margin-top: 0; }
+.sor-pb-lab-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sor-pb-lab-result { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; min-height: 22px; }
+.sor-pb-lab-total { font-variant-numeric: tabular-nums; color: var(--muted-foreground); font-size: 13px; }
+.sor-pb-lab-rank { font-weight: 700; font-variant-numeric: tabular-nums; }
+.sor-pb-lab-penalty { font-size: 12px; color: var(--faint-foreground); }
+.sor-pb-lab-pending { font-size: 13px; color: var(--faint-foreground); }
