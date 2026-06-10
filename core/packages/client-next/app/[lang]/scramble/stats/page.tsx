@@ -9,6 +9,7 @@ import ScrambleLengthView, {
   type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN,
 } from './_components/ScrambleLengthView';
 import WcaEventSelector from '@/components/WcaEventSelector';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import { compSourceLine } from '@/lib/comp-schedule';
@@ -187,8 +188,9 @@ export default function ScrambleStatsPage() {
   const [error, setError] = useState<string | null>(null);
   // Shared WCA-event selector (above the tabs) — drives both the length tab and
   // the difficulty tab. event_lengths.json is tiny (~2KB), fetched once here.
-  // event '' = difficulty tab's "全部三阶" merged pool (the length tab folds it to 333).
-  const [event, setEvent] = useState<string>('');
+  // merged 双语义:长度 tab = 折叠共打乱组(333+oh / bf+mbf);难度 tab = 全部六个
+  // 三阶项目并成一个池(wca 合并 set)。
+  const [event, setEvent] = useState<string>('333');
   const [merged, setMerged] = useState(true);
   const [lengthsData, setLengthsData] = useState<EventLengthsJson | null>(null);
   const [lengthsError, setLengthsError] = useState<string | null>(null);
@@ -233,43 +235,40 @@ export default function ScrambleStatsPage() {
   }, []);
 
   // Events offered in the shared selector — those with length data.
-  // Difficulty tab: all 3×3-family events are individually selectable (per-event
-  // distribution sets) plus an "All" entry for the merged pool; synthetic
-  // datasets (xcross) have no event split, so collapse the family to 333 there.
+  // Difficulty tab: merged(默认)把 6 个三阶项目折叠成一个 333 入口(= wca 合并池);
+  // 分开时三阶族逐项可选(per-event sets)。synthetic 数据集(xcross)无项目拆分,恒折叠。
   // Length tab: hide the merged-away members (333oh / 333mbf) while merging is on.
   const availableEvents = useMemo(() => {
     const all = new Set(lengthsData ? Object.keys(lengthsData.events) : []);
     if (tab === 'difficulty') {
-      if (dataset !== 'wca') for (const id of DIFFICULTY_EVENTS) if (id !== '333') all.delete(id);
+      if (merged || dataset !== 'wca') for (const id of DIFFICULTY_EVENTS) if (id !== '333') all.delete(id);
     } else if (merged) {
       for (const id of MERGED_HIDDEN) all.delete(id);
     }
     return all;
   }, [lengthsData, merged, tab, dataset]);
 
-  // Length tab has no "All" pseudo-event and merging hides member events — fold
-  // '' onto 333 and any merged member onto its rep.
+  // Length tab merging hides member events — fold any merged member onto its rep.
   useEffect(() => {
-    if (tab !== 'length') return;
-    if (event === '') { setEvent('333'); return; }
-    if (!merged) return;
+    if (tab !== 'length' || !merged) return;
     const g = MERGE_GROUPS.find((g) => g.rep !== event && g.members.includes(event));
     if (g) setEvent(g.rep);
   }, [tab, merged, event]);
 
-  // Synthetic datasets have no per-event split — fold the family (and '') onto 333.
+  // Difficulty tab merged(或 synthetic 数据集)折叠三阶族 — fold onto 333.
   useEffect(() => {
-    if (tab === 'difficulty' && dataset !== 'wca' && event !== '333' && (event === '' || DIFFICULTY_EVENTS.has(event))) {
+    if (tab === 'difficulty' && (merged || dataset !== 'wca') && event !== '333' && DIFFICULTY_EVENTS.has(event)) {
       setEvent('333');
     }
-  }, [tab, dataset, event]);
+  }, [tab, dataset, merged, event]);
 
   // Effective distribution set: top-level dataset, routed through the event
-  // selector for the WCA source ('' = merged pool; per-event otherwise).
+  // selector for the WCA source (merged → 合并池; split → per-event set).
   const scrambleSet = useMemo(() => {
     if (dataset !== 'wca') return dataset;
-    return (event !== '' && DIFFICULTY_EVENTS.has(event)) ? `wca_${event}` : 'wca';
-  }, [dataset, event]);
+    if (merged) return 'wca';
+    return DIFFICULTY_EVENTS.has(event) ? `wca_${event}` : 'wca';
+  }, [dataset, merged, event]);
 
   // Keep the selection on an event that actually has length data ('' = the
   // difficulty tab's merged-family pseudo-event, always valid there).
@@ -437,8 +436,33 @@ export default function ScrambleStatsPage() {
           onSelect={setEvent}
           isZh={isZh}
           onlyAvailable
-          allowAll={tab === 'difficulty' && dataset === 'wca'}
         />
+        {(tab === 'length' || dataset === 'wca') && (
+          <div className="scramble-len-merge">
+            <PillToggle
+              value={merged}
+              onChange={setMerged}
+              onLabel={tr({ zh: '已合并', en: 'Merged',
+                  zhHant: "已合併"
+            })}
+              offLabel={tr({ zh: '分开', en: 'Split',
+                  zhHant: "分開"
+            })}
+              ariaLabel={tr({ zh: '合并打乱相同的项目', en: 'Merge events that share scrambles',
+                  zhHant: "合併打亂相同的項目"
+            })}
+            />
+            <span className="scramble-len-merge-hint">
+              {tab === 'difficulty'
+                ? (tr({ zh: '三阶速拧 / 单手 / 盲拧 / 多盲 / 最少步 / 脚拧打乱相同,合并为一个池', en: 'All six 3×3 events share scrambles; merged into one pool',
+                    zhHant: "三階速擰 / 單手 / 盲擰 / 多盲 / 最少步 / 腳擰打亂相同,合併為一個池"
+                }))
+                : (tr({ zh: '三阶速拧与单手、三盲与多盲打乱相同', en: '3×3 speed + OH, and 3BLD + MBLD share scrambles',
+                    zhHant: "三階速擰與單手、三盲與多盲打亂相同"
+                }))}
+            </span>
+          </div>
+        )}
       </div>
       {tabsBar}
     </div>
@@ -452,14 +476,13 @@ export default function ScrambleStatsPage() {
           ? <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed',
               zhHant: "載入失敗"
         })}: {lengthsError}</div>
-          : <ScrambleLengthView isZh={isZh} data={lengthsData} event={event} merged={merged} onMerged={setMerged} />}
+          : <ScrambleLengthView isZh={isZh} data={lengthsData} event={event} merged={merged} />}
       </div>
     );
   }
 
-  // Difficulty tab — only 3×3-family events ('' = merged family pool) have
-  // stage-difficulty data for now.
-  if (event !== '' && !DIFFICULTY_EVENTS.has(event)) {
+  // Difficulty tab — only 3×3-family events have stage-difficulty data for now.
+  if (!DIFFICULTY_EVENTS.has(event)) {
     return (
       <div className="scramble-stats-page">
         {header}

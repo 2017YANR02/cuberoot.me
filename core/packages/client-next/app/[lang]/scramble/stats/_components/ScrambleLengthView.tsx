@@ -8,7 +8,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import { compSourceLine } from '@/lib/comp-schedule';
@@ -104,12 +103,11 @@ const unitLabel = (unit: string, isZh: boolean) =>
       zhHant: "擰次"
 })) : (tr({ zh: '步', en: 'moves' }));
 
-export default function ScrambleLengthView({ isZh, data, event, merged, onMerged }: {
+export default function ScrambleLengthView({ isZh, data, event, merged }: {
   isZh: boolean;
   data: EventLengthsJson | null;
   event: string;
   merged: boolean;
-  onMerged: (v: boolean) => void;
 }) {
   const [yMode, setYMode] = useState<'percent' | 'count'>('percent');
   const [chartMode, setChartMode] = useState<'pdf' | 'cdf'>('pdf');
@@ -213,29 +211,6 @@ export default function ScrambleLengthView({ isZh, data, event, merged, onMerged
   return (
     <>
       <p className="scramble-stats-note">{source}</p>
-
-      <div className="scramble-len-events">
-        <div className="scramble-len-merge">
-          <PillToggle
-            value={merged}
-            onChange={onMerged}
-            onLabel={tr({ zh: '已合并', en: 'Merged',
-                zhHant: "已合併"
-            })}
-            offLabel={tr({ zh: '分开', en: 'Split',
-                zhHant: "分開"
-            })}
-            ariaLabel={tr({ zh: '合并打乱相同的项目', en: 'Merge events that share scrambles',
-                zhHant: "合併打亂相同的項目"
-            })}
-          />
-          <span className="scramble-len-merge-hint">
-            {tr({ zh: '三阶速拧与单手、三盲与多盲打乱相同', en: '3×3 speed + OH, and 3BLD + MBLD share scrambles',
-                zhHant: "三階速擰與單手、三盲與多盲打亂相同"
-            })}
-          </span>
-        </div>
-      </div>
 
       {cur && (
         <>
