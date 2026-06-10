@@ -44,13 +44,24 @@ $env:CUBE_ALLOW_HUGE_TABLES = '1'
 
 function Log($m){ $line = "[{0}] {1}" -f (Get-Date -Format 'HH:mm:ss'), $m; Write-Host $line; Add-Content -LiteralPath $log -Value $line }
 function Lc($p){ $n=0; foreach($l in [IO.File]::ReadLines($p)){ $n++ }; $n }
+# 瞬时文件锁(Windows 索引器 / 杀软 / 并发读)退避重试: 失败按 attempt 线性退避, 用尽才抛。
+function Retry([scriptblock]$op, [int]$tries=8, [int]$delayMs=400){
+  for($a=1; ; $a++){
+    try { return & $op }
+    catch { if($a -ge $tries){ throw }; Start-Sleep -Milliseconds ($delayMs * $a) }
+  }
+}
 function AppendData($dst,$src,$skipHeader){
   # LF 安全追加: 先确保 dst 末尾有换行, 再逐行 append (可选跳过源 header)
+  # 关键: Open/StreamWriter 用 FileShare.ReadWrite + 重试, 容忍其它进程并发持有句柄(否则瞬时锁直接崩)。
   $needNL=$false
   if((Test-Path $dst) -and ((Get-Item $dst).Length -gt 0)){
-    $fs=[IO.File]::Open($dst,'Open','ReadWrite'); [void]$fs.Seek(-1,'End'); $needNL=($fs.ReadByte() -ne 10); $fs.Close()
+    $needNL = Retry {
+      $fs=[IO.File]::Open($dst,[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::ReadWrite)
+      try { [void]$fs.Seek(-1,'End'); ($fs.ReadByte() -ne 10) } finally { $fs.Dispose() }
+    }
   }
-  $sw=New-Object IO.StreamWriter($dst,$true,[Text.UTF8Encoding]::new($false))
+  $sw = Retry { New-Object IO.StreamWriter($dst,$true,[Text.UTF8Encoding]::new($false)) }
   if($needNL){ $sw.Write("`n") }
   $i=0
   foreach($line in [IO.File]::ReadLines($src)){ if($skipHeader -and $i -eq 0){ $i++; continue }; $sw.Write($line); $sw.Write("`n"); $i++ }
