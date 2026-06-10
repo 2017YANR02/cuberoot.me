@@ -41,7 +41,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { useAuthStore } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/name-utils';
-import { fetchMarks, addMark, removeMark, markKey, type ScrambleMark } from '../_lib/marks';
+import { fetchMarks, addMark, markKey, type ScrambleMark } from '../_lib/marks';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
 import { warmup333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';
 import { useTimer } from '../_lib/useTimer';
@@ -381,12 +381,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wcaSource, isZh, flagVer]);
 
-  // ── 打卡:当前真实打乱的公开标记(谁做过这条打乱)──────────────
-  // 列表按 markKey 缓存(同会话内重看同一条不重拉);登录用户可标记/取消,
-  // 标记时自动带上本次在该打乱上的最近一次非 DNF 成绩。
+  // ── 打卡:当前真实打乱的公开标记(谁做过这条打乱,纯展示)──────────
+  // 标记由「做完自动打卡」负责(下方 effect);这里只读 + 弹层看名单。
+  // 列表按 markKey 缓存(同会话内重看同一条不重拉)。
   const authUser = useAuthStore((st) => st.user);
   const [marksOpen, setMarksOpen] = useState(false);
-  const [markBusy, setMarkBusy] = useState(false);
   const [marksCache, setMarksCache] = useState<Record<string, { count: number; marks: ScrambleMark[] }>>({});
   const marksBoxRef = useRef<HTMLSpanElement | null>(null);
   const curMarkKey = wcaSource ? markKey(wcaSource) : null;
@@ -418,30 +417,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     return () => document.removeEventListener('pointerdown', onDown);
   }, [marksOpen]);
 
-  const toggleMark = useCallback(async () => {
-    if (!wcaSource || !curMarkKey) return;
-    if (!authUser) { useAuthStore.getState().login(); return; }
-    setMarkBusy(true);
-    try {
-      if (myMark) {
-        await removeMark(wcaSource);
-      } else {
-        // 最近一次做这条打乱的非 DNF 成绩(centiseconds),没有就只打卡不带成绩。
-        const curScramble = scrambleHistRef.current.list[scrambleHistRef.current.idx] ?? '';
-        let timeCs: number | null = null;
-        for (let i = solves.length - 1; i >= 0; i--) {
-          const s = solves[i];
-          if (s.scramble !== curScramble || s.penalty === 'DNF') continue;
-          timeCs = Math.round((s.timeMs + (s.penalty === '+2' ? 2000 : 0)) / 10);
-          break;
-        }
-        await addMark(wcaSource, timeCs, authUser.country || '');
-      }
-      const d = await fetchMarks(wcaSource);
-      setMarksCache((cur) => ({ ...cur, [curMarkKey]: d }));
-    } catch { /* 写失败静默,保持原状态 */ }
-    setMarkBusy(false);
-  }, [wcaSource, curMarkKey, authUser, myMark, solves]);
 
   // 做完一把真实打乱(非 DNF、已登录)后自动打卡 + 同步成绩。
   //   开关开(默认):无论标没标记都 upsert —— 省去每把手动点「标记已做」。
@@ -1548,70 +1523,38 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                   <span className="scramble-src-meta">{wcaSrcDisplay.meta}</span>
                 </a>
               )}
-              {wcaSrcDisplay && wcaSource && (
+              {wcaSrcDisplay && wcaSource && curMarks && curMarks.count > 0 && (
                 <span className="scramble-marks" data-no-timer ref={marksBoxRef} onClick={(e) => e.stopPropagation()}>
                   <button
                     type="button"
                     className={`scramble-marks-chip${myMark ? ' marked' : ''}`}
                     onClick={() => setMarksOpen((o) => !o)}
-                    title={tr({ zh: '谁做过这条打乱', en: 'Who has done this scramble',
+                    title={tr({ zh: '谁做过这条打乱', en: 'Who did this scramble',
                         zhHant: "誰做過這條打亂"
                     })}
                   >
                     <CheckCircle2 size={12} />
-                    {curMarks && curMarks.count > 0
-                      ? (tr({ zh: `${curMarks.count} 人做过`, en: `${curMarks.count} did it`, zhHant: `${curMarks.count} 人做過` }))
-                      : (tr({ zh: '还没人做过', en: 'None yet',
-                          zhHant: "還沒人做過"
-                    }))}
+                    {tr({ zh: `${curMarks.count} 人做过`, en: `${curMarks.count} did it`, zhHant: `${curMarks.count} 人做過` })}
                   </button>
                   {marksOpen && (
                     <div className="scramble-marks-pop">
-                      <div className="scramble-marks-pop-head">
-                        {tr({ zh: '做过这条打乱的人', en: 'Solved this scramble',
-                            zhHant: "做過這條打亂的人"
+                      <ul className="scramble-marks-list">
+                        {curMarks.marks.map((m) => (
+                          <li key={m.wcaId}>
+                            {m.country && <Flag iso2={m.country} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                            <a href={`${isZh ? '/zh' : ''}/wca/persons/${encodeURIComponent(m.wcaId)}`} className="scramble-marks-name">
+                              {displayCuberName(m.name, isZh) || m.wcaId}
+                            </a>
+                            {m.timeCs != null && <span className="scramble-marks-time">{formatMs(m.timeCs * 10)}</span>}
+                            <span className="scramble-marks-date">{new Date(m.createdAt * 1000).toISOString().slice(0, 10)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <a href={`${isZh ? '/zh' : ''}/timer/marks`} className="scramble-marks-all">
+                        {tr({ zh: '全站足迹', en: 'All marks',
+                            zhHant: "全站足跡"
                         })}
-                      </div>
-                      {curMarks && curMarks.marks.length > 0 ? (
-                        <ul className="scramble-marks-list">
-                          {curMarks.marks.map((m) => (
-                            <li key={m.wcaId}>
-                              {m.country && <Flag iso2={m.country} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                              <a href={`${isZh ? '/zh' : ''}/wca/persons/${encodeURIComponent(m.wcaId)}`} className="scramble-marks-name">
-                                {displayCuberName(m.name, isZh) || m.wcaId}
-                              </a>
-                              {m.timeCs != null && <span className="scramble-marks-time">{formatMs(m.timeCs * 10)}</span>}
-                              <span className="scramble-marks-date">{new Date(m.createdAt * 1000).toISOString().slice(0, 10)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <div className="scramble-marks-empty">
-                          {tr({ zh: '还没有人标记过,来做第一个', en: 'No one yet — be the first',
-                              zhHant: "還沒有人標記過,來做第一個"
-                        })}
-                        </div>
-                      )}
-                      <div className="scramble-marks-pop-foot">
-                        <button type="button" className={`scramble-marks-toggle${myMark ? ' marked' : ''}`} disabled={markBusy} onClick={() => void toggleMark()}>
-                          {authUser
-                            ? (myMark
-                              ? (tr({ zh: '取消标记', en: 'Unmark',
-                                  zhHant: "取消標記"
-                            }))
-                              : (tr({ zh: '标记已做', en: 'Mark done',
-                                  zhHant: "標記已做"
-                            })))
-                            : (tr({ zh: '登录后标记', en: 'Sign in to mark',
-                                zhHant: "登入後標記"
-                            }))}
-                        </button>
-                        <a href={`${isZh ? '/zh' : ''}/timer/marks`} className="scramble-marks-all">
-                          {tr({ zh: '全站标记', en: 'All marks',
-                              zhHant: "全站標記"
-                        })}
-                        </a>
-                      </div>
+                      </a>
                     </div>
                   )}
                 </span>
