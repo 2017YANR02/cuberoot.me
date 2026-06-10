@@ -24,7 +24,39 @@
 }
 .scrmarks-sub a:hover { text-decoration: underline; }
 
-.scrmarks-filter { margin-bottom: 14px; }
+.scrmarks-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  max-width: 360px;
+}
+.scrmarks-search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--faint-foreground);
+  pointer-events: none;
+}
+.scrmarks-search-input {
+  width: 100%;
+  padding: 7px 30px 7px 32px;
+  font-size: 13.5px;
+  color: var(--foreground);
+  background: var(--muted);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  outline: none;
+}
+.scrmarks-search-input:focus { border-color: var(--ring); }
+.scrmarks-search-input::placeholder { color: var(--faint-foreground); }
+
+.scrmarks-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  min-height: 28px;
+}
 .scrmarks-mine {
   font-size: 12.5px;
   padding: 4px 12px;
@@ -103,6 +135,19 @@
   color: var(--faint-foreground);
   font-size: 12px;
 }
+.scrmarks-del {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border: none;
+  background: none;
+  color: var(--faint-foreground);
+  cursor: pointer;
+  border-radius: 4px;
+}
+.scrmarks-del:hover:not(:disabled) { color: var(--destructive); }
+.scrmarks-del:disabled { opacity: 0.4; cursor: default; }
 
 .scrmarks-row-src {
   display: flex;

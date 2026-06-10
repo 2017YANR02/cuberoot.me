@@ -53,7 +53,7 @@ export async function addMark(k: ScrambleKey, timeCs: number | null, country: st
   await handleApi<{ ok: boolean }>(res);
 }
 
-/** 取消自己的标记。 */
+/** 取消自己的标记(按自然键,timer 弹层用)。 */
 export async function removeMark(k: ScrambleKey): Promise<void> {
   const res = await fetch(apiUrl(`${ENDPOINT}?${keyQs(k)}`), {
     method: 'DELETE',
@@ -62,13 +62,23 @@ export async function removeMark(k: ScrambleKey): Promise<void> {
   await handleApi<{ ok: boolean }>(res);
 }
 
-/** 最近标记 feed(/timer/marks)。keyset 分页:before = 上页最后一条 id。 */
+/** 按 id 删一条标记(feed 行内删除);本人删自己,管理员删任何人。 */
+export async function deleteMarkById(id: number): Promise<void> {
+  const res = await fetch(apiUrl(`${ENDPOINT}/${id}`), {
+    method: 'DELETE',
+    headers: authHeaders(false),
+  });
+  await handleApi<{ ok: boolean }>(res);
+}
+
+/** 最近标记 feed(/timer/marks)。keyset 分页:before = 上页最后一条 id;q 模糊搜。 */
 export async function fetchRecentMarks(opts: {
-  event?: string; wcaId?: string; before?: number; limit?: number;
+  event?: string; wcaId?: string; q?: string; before?: number; limit?: number;
 } = {}): Promise<RecentMark[]> {
   const qs = new URLSearchParams();
   if (opts.event) qs.set('event', opts.event);
   if (opts.wcaId) qs.set('wcaId', opts.wcaId);
+  if (opts.q) qs.set('q', opts.q);
   if (opts.before) qs.set('before', String(opts.before));
   if (opts.limit) qs.set('limit', String(opts.limit));
   const res = await fetch(apiUrl(`${ENDPOINT}/recent${qs.size > 0 ? `?${qs}` : ''}`));
