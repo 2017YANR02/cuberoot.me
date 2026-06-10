@@ -415,3 +415,14 @@ a {
   border: 1.5px solid #2c5aa0;
   border-radius: 3px;
 }
+
+/* 非官方指标小标记(多盲平均 Mo3 等):弱化超标,跟在「平均」标签后。 */
+.unofficial-mark {
+  margin-left: 4px;
+  font-size: 0.62em;
+  font-weight: 400;
+  color: var(--muted-foreground);
+  vertical-align: super;
+  cursor: help;
+  white-space: nowrap;
+}

@@ -7,6 +7,7 @@ import { Statistic } from '../core/statistic.js';
 import { EVENTS, headerZh, eventZh } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
 import { ATTEMPTS_SUBQUERY } from '../core/database.js';
+import { mbfMo3 } from '../core/mbf_average.js';
 import type { StatJson, StatPanel, StatSection, TableHeader } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -78,15 +79,6 @@ export class MbfAverage extends Statistic {
     `;
   }
 
-  // NOTE: DD/TTTTT/MM 分别取均值后拼接
-  private mbfMo3(v1: number, v2: number, v3: number): number {
-    const vals = [v1, v2, v3];
-    const dd = Math.round(vals.reduce((s, v) => s + Math.floor(v / 10_000_000), 0) / 3);
-    const ttttt = Math.round(vals.reduce((s, v) => s + Math.floor(v / 100) % 100_000, 0) / 3);
-    const mm = Math.round(vals.reduce((s, v) => s + v % 100, 0) / 3);
-    return dd * 10_000_000 + ttttt * 100 + mm;
-  }
-
   private formatMo3(mo3Value: number): string {
     return new SolveTime('333mbf', 'single', mo3Value).clockFormat();
   }
@@ -107,7 +99,7 @@ export class MbfAverage extends Statistic {
       // NOTE: Mo3 需要恰好 3 个正值 attempt
       if (vals.length < 3 || vals[0] <= 0 || vals[1] <= 0 || vals[2] <= 0) continue;
       const [v1, v2, v3] = vals;
-      const mo3 = this.mbfMo3(v1, v2, v3);
+      const mo3 = mbfMo3(v1, v2, v3);
       computed.push({ row: r, metric: mo3, v1, v2, v3 });
     }
     // NOTE: 内存管理——遍历完成后释放原始查询结果
@@ -193,6 +185,14 @@ export class MbfAverage extends Statistic {
     if (eventName === mbfName) return this._mbfRanking6col;
     if (eventName === MBO_EVENT_NAME) return MBO_RANKING;
     return [];
+  }
+
+  // NOTE: 供 WrCurrent 委托——历史最佳 Mo3 那一行（7 列，含 Details）。
+  // [rank, person_link, mo3Str, country_id, dateStr, competition_link, details]
+  async bestRankingRow(eventName: string): Promise<unknown[] | null> {
+    await this.computeData();
+    const rows = this._ranking[eventName];
+    return rows && rows.length > 0 ? rows[0] : null;
   }
 
   // NOTE: 覆写 toJson——输出 panels（Ranking + History），双项目分节

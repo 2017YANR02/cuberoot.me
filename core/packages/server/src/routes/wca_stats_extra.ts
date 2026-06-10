@@ -160,7 +160,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   if (basis !== 'period' && basis !== 'cumulative') return c.json({ error: 'Invalid basis' }, 400);
   if (group !== 'result' && group !== 'person') return c.json({ error: 'Invalid group' }, 400);
   if (type !== 'single' && type !== 'average') return c.json({ error: 'Invalid type' }, 400);
-  if (event === '333mbf' && type === 'average') return c.json({ error: 'No average for 333mbf' }, 400);
+  // 333mbf 平均 = 非官方 Mo3,数据由 wca_results_top 的 is_avg=true 行提供(builder 现算写入)。
   const cn = await resolveCountry(country);
   if (!cn.ok) return c.json({ error: cn.err }, 400);
   if (year && (year < 2003 || year > new Date().getUTCFullYear() + 1)) {

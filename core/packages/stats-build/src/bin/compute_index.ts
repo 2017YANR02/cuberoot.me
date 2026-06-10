@@ -18,7 +18,6 @@ const ALL_MERGED = new Set([
   'wr_bao5', 'wr_wao5', 'wr_mo5', 'wr_bpa', 'wr_wpa',
   'wr_median', 'wr_best_counting', 'wr_worst_counting', 'wr_worst',
   'wr_variance', 'wr_best_average_ratio',
-  'mbf_average',
   'wr_ao1r', 'wr_ao2r', 'wr_ao3r', 'wr_ao4r',
   'average_of_3', 'average_of_5', 'average_of_12',
   'average_of_25', 'average_of_50', 'average_of_100', 'average_of_1000',
