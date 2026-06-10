@@ -3,12 +3,12 @@
 # Samples listed: 7 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-678393001,L2 F B2 D2 L' B L' D2 R2 B2 U2 D2 R2 B' D2 F2 L2,R
-786434010,U2 B2 R D2 R' D2 U2 R' U2 R' U L' U' L' B2 U' B2 L2,R
-981166001,U' D L2 F U R2 F2 B U2 B L2 D L2 D R2 U F2,O
-1389153001,B2 R2 D' B2 D' B2 U2 L U R U' B F2 U' L' U',O
-5041993001,B2 F2 L D2 R F2 U B2 F2 R2 D' U2 L' R2 U2,O
-5383629001,B2 D2 B2 U' F2 L2 D' B2 U R U' L' D' B D2 B D' U B' D' B,R
-5539376001,R D L2 F D' R2 F U2 F2 U D2 F2 R2 U L2 F2 L2,O
+678393001,L2 F B2 D2 L' B L' D2 R2 B2 U2 D2 R2 B' D2 F2 L2,R,Kharkiv Winter 2017,333 R1 C #5
+786434010,U2 B2 R D2 R' D2 U2 R' U2 R' U L' U' L' B2 U' B2 L2,R,YJ Fest 2018,333mbf Final A #1
+981166001,U' D L2 F U R2 F2 B U2 B L2 D L2 D R2 U F2,O,Florence Winter 2019,333ft Final A #3
+1389153001,B2 R2 D' B2 D' B2 U2 L U R U' B F2 U' L' U',O,Munich Open 2019,333 R2 E #2
+5041993001,B2 F2 L D2 R F2 U B2 F2 R2 D' U2 L' R2 U2,O,Hanoi Summer 2025,333 R2 D #4
+5383629001,B2 D2 B2 U' F2 L2 D' B2 U R U' L' D' B D2 B D' U B' D' B,R,Kielce Open 2026,333bf R1 B #1
+5539376001,R D L2 F D' R2 F U2 F2 U D2 F2 R2 U L2 F2 L2,O,NZ South Island Championship 2026,333 R2 C #2

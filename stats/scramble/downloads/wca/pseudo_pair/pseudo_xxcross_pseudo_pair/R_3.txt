@@ -3,11 +3,11 @@
 # Samples listed: 6 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-100145001,F' L2 F2 U2 L2 F2 U2 L2 U2 F' R U' L' D' U L' F U F2 U',R
-424204001,R2 F U2 L2 F R2 F L2 D2 F2 U' B L R' U B' L F L D2,R
-433280001,U2 F' R2 B U2 B' D2 U2 L2 D' U' R' B2 U R B2 L' D2 U',R
-682432001,D2 F2 L' F D' F R' D' R2 L' U' R2 D2 R2 L' F2 U2 R,R
-701333022,L2 B2 F2 L D2 L F2 L F2 U2 R B' U R2 U' L2 B' L' B F2 L B2,R
-3835363001,F L U' B' R2 F' D2 U2 B R F L B' D F2 D B,R
+100145001,F' L2 F2 U2 L2 F2 U2 L2 U2 F' R U' L' D' U L' F U F2 U',R,PB Smashathon 2015,333 R1 G E1
+424204001,R2 F U2 L2 F R2 F L2 D2 F2 U' B L R' U B' L F L D2,R,Greece Winter Open 2016,333 R2 B E2
+433280001,U2 F' R2 B U2 B' D2 U2 L2 D' U' R' B2 U R B2 L' D2 U',R,Santa Fe Open 2016,333 Final A E2
+682432001,D2 F2 L' F D' F R' D' R2 L' U' R2 D2 R2 L' F2 U2 R,R,Tulcan Open 2018,333 R1 B #2
+701333022,L2 B2 F2 L D2 L F2 L F2 U2 R B' U R2 U' L2 B' L' B F2 L B2,R,Please Be Quiet LA 2018,333mbf Final B #3
+3835363001,F L U' B' R2 F' D2 U2 B R F L B' D F2 D B,R,Battle of Waterloo 2024,333oh R1 A #4

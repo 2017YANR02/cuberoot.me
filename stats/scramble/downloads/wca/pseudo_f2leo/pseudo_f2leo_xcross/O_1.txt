@@ -3,8 +3,8 @@
 # Samples listed: 3 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-1644525001,L2 D' B' R' B2 U' R2 B2 D2 R2 D' R' B U2 R2 D U' L',O
-3516176001,R' U' F U B2 D' L2 U' F2 U2 F2 L' U' L' D B' U' B' F2 U2 R2 U2 R' U' F,O
-3590416001,B2 R' U2 B2 D2 R2 B2 L2 F' D2 B' D2 L' B U2 L' R,O
+1644525001,L2 D' B' R' B2 U' R2 B2 D2 R2 D' R' B U2 R2 D U' L',O,Xi'an Cherry Blossom AM 2021,333 R1 C #2
+3516176001,R' U' F U B2 D' L2 U' F2 U2 F2 L' U' L' D B' U' B' F2 U2 R2 U2 R' U' F,O,Love Is Blind Lima 2024,333fm Final A #1
+3590416001,B2 R' U2 B2 D2 R2 B2 L2 F' D2 B' D2 L' B U2 L' R,O,Nýliðamót Kubbafélagsins 2024,333 R2 C #2

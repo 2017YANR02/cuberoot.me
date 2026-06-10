@@ -3,6 +3,6 @@
 # Samples listed: 1 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-1675715001,U R' B' L2 F2 D F2 L2 B2 U' R' U' B' U' R2 F R',O
+1675715001,U R' B' L2 F2 D F2 L2 B2 U' R' U' B' U' R2 F R',O,Bucharest Cubing Days 2021,333 R2 A #1

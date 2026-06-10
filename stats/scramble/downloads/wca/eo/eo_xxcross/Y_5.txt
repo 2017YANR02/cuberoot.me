@@ -3,16 +3,16 @@
 # Samples listed: 11 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-1404900001,F2 U B U' B' L D' L2 U2 R2 B R2 B2 L2 F2 D L2,Y
-2249121001,D F2 D2 R B2 R' D2 F2 D L U L' B2 D' R' F R,Y
-2894139001,F2 B L U B R U D R F2 B' R2 U2 B L2 U2 F R2 U2 D2 L2 U,Y
-3030632001,U B' L2 D2 F' D2 L2 U' B' R2 F D F U B D,Y
-3095972001,R' B2 R' F U2 F' R' F2 L' U2 L2 F2 L D2 L2 U2,Y
-3375800001,L F' U D2 F2 R' L' F' B2 L F' U2 L2 B' U2 B' D2 F2 L2,Y
-3687446001,R' U' F L2 D2 F2 D2 R2 D2 B' D2 F D2 L' B2 L' U2 F R D F' U' R' U' F,Y
-4054367001,U' R' B' U' B U R U D B' U' F B L2 U2 B2,Y
-4816312001,U2 B2 D2 L' U L' U2 F L2 B L2 U2 D R2 U2 L2 D',Y
-5349091014,L D' L2 U2 B D2 R2 D2 L2 B2 F' R' D' L' R2 D F2 U' L' F2,Y
-5690374048,R2 U F U2 L' F2 B2 R' F D' L F2 D2 L2 F2 U' D' L' F,Y
+1404900001,F2 U B U' B' L D' L2 U2 R2 B R2 B2 L2 F2 D L2,Y,Chengdu Winter 2019,333oh R1 A #5
+2249121001,D F2 D2 R B2 R' D2 F2 D L U L' B2 D' R' F R,Y,Mongolia Championship 2022,333 R1 F #2
+2894139001,F2 B L U B R U D R F2 B' R2 U2 B L2 U2 F R2 U2 D2 L2 U,Y,Lebrija 2023,333bf Final B #1
+3030632001,U B' L2 D2 F' D2 L2 U' B' R2 F D F U B D,Y,Puzzling at the Shopping Centre Plaza in Salo 2023,333 R2 A #4
+3095972001,R' B2 R' F U2 F' R' F2 L' U2 L2 F2 L D2 L2 U2,Y,Minnesota Cube Day 2023,333 R2 A E1
+3375800001,L F' U D2 F2 R' L' F' B2 L F' U2 L2 B' U2 B' D2 F2 L2,Y,Speedcuber Peru II Lima 2023,333 R2 E #4
+3687446001,R' U' F L2 D2 F2 D2 R2 D2 B' D2 F D2 L' B2 L' U2 F R D F' U' R' U' F,Y,Half Turns in Hallett Cove 2024,333fm Final A #3
+4054367001,U' R' B' U' B U R U D B' U' F B L2 U2 B2,Y,Cubi Koronel 2024,333oh Final A E1
+4816312001,U2 B2 D2 L' U L' U2 F L2 B L2 U2 D R2 U2 L2 D',Y,DFW Cubing Summer 2025,333 R2 B #3
+5349091014,L D' L2 U2 B D2 R2 D2 L2 B2 F' R' D' L' R2 D F2 U' L' F2,Y,Casagiove Winter 2026,333mbf Final A #1
+5690374048,R2 U F U2 L' F2 B2 R' F D' L F2 D2 L2 F2 U' D' L' F,Y,Headache in Kode 2026,333mbf R1 A #1

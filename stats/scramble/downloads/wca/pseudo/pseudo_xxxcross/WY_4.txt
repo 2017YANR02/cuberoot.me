@@ -3,6 +3,6 @@
 # Samples listed: 1 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y
+3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y,Folkets Kub Alvesta 2024,333oh Final B E1

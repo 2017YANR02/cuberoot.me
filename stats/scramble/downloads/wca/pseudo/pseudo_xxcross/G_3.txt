@@ -3,23 +3,23 @@
 # Samples listed: 18 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-55145001,L2 B' F' R2 F2 L2 B' U' L2 B' U2 L' F U' F R2,G
-80535001,R F' U2 L2 U D2 R U D' B U' L2 B R2 B' D2 B,G
-221498001,B D2 F L2 B' L2 U2 B L R B U2 F2 D2 R U' B' D2 U B' L2,G
-661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G
-661443001,U F2 D' R2 D' U' B2 U' R2 F L D R' B2 F2 U R2 U' L' D2 L2 U',G
-868528001,B2 L2 U L2 U B2 L2 R' F2 L F' R' B U2 F' R' B2 D U',G
-1017548001,D' U2 R2 D2 U' B2 L2 R2 U' R B' R B U R D R' F,G
-1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',G
-1226502001,R D2 L2 R' B2 F2 R' F2 D2 F2 U' F' L2 F D B' D' R F,G
-1728229001,F2 U R L' F' L F' D B' R2 L D2 B2 L' F2 R' B2 U' B,G
-1902384001,D B' D L' D2 L B2 D2 R D2 R2 B R F' D R D2 L R,G
-2404308001,B D' L F' L2 U' F2 D2 U L2 D' L U' F2 L' D2 U F,G
-2517887001,F D U2 L' F2 U2 L D2 R' B' L2 U B' F2 U' B2 D2 R',G
-2622391001,U2 B U2 F R B2 R2 B U' F2 D' F2 U2 L2 F2 L U2 R U2,G
-4085197001,D2 F L2 B' D B' D L' F2 D B L2 U L2 B2 U2 D' R2,G
-4524717001,R2 U2 F2 D' L' B D B D2 F2 L2 F D2 F R2 B R2 F2,G
-5025875001,D2 R' F2 R' U2 R U2 F U2 F2 R D' L2 D' L U F' L,G
-5306686001,B F' R2 D2 F R2 F L B' D2 B2 L2 D' L' B L D,G
+55145001,L2 B' F' R2 F2 L2 B' U' L2 B' U2 L' F U' F R2,G,360 Degree Wellness Open 2014,333 R1 B #4
+80535001,R F' U2 L2 U D2 R U D' B U' L2 B R2 B' D2 B,G,Plaza de las Américas 2014,333oh Final A #1
+221498001,B D2 F L2 B' L2 U2 B L R B U2 F2 D2 R U' B' D2 U B' L2,G,Tecsup Speedcubing Open 2015,333bf Final A #1
+661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G,CubingUSA Nationals 2017,333mbf Final A #2
+661443001,U F2 D' R2 D' U' B2 U' R2 F L D R' B2 F2 U R2 U' L' D2 L2 U',G,Korean Championship 2017,333mbf Final A #1
+868528001,B2 L2 U L2 U B2 L2 R' F2 L F' R' B U2 F' R' B2 D U',G,4th Guwahati Open 2018,333 R1 F E2
+1017548001,D' U2 R2 D2 U' B2 L2 R2 U' R B' R B U R D R' F,G,Izhevsk Winter Cube 2019,333 R1 D E2
+1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',G,High Wycombe Open 2019,333 R2 B #2
+1226502001,R D2 L2 R' B2 F2 R' F2 D2 F2 U' F' L2 F D B' D' R F,G,CCC Qualification Voronezh 2019,333 R2 A #2
+1728229001,F2 U R L' F' L F' D B' R2 L D2 B2 L' F2 R' B2 U' B,G,BrizZon Side Open III 2021,333bf R2 B #1
+1902384001,D B' D L' D2 L B2 D2 R D2 R2 B R F' D R D2 L R,G,Stevenage Spring 2022,333 R2 C #3
+2404308001,B D' L F' L2 U' F2 D2 U L2 D' L U' F2 L' D2 U F,G,NTU Welcome 2023,333 R1 E E1
+2517887001,F D U2 L' F2 U2 L D2 R' B' L2 U B' F2 U' B2 D2 R',G,Lincolnshire Winter 2023,333oh Final B #5
+2622391001,U2 B U2 F R B2 R2 B U' F2 D' F2 U2 L2 F2 L U2 R U2,G,Abierto de Pascuas 2023,333 R1 A #4
+4085197001,D2 F L2 B' D B' D L' F2 D B L2 U L2 B2 U2 D' R2,G,Summer Vibe Puck 2024,333 R2 A #4
+4524717001,R2 U2 F2 D' L' B D B D2 F2 L2 F D2 F R2 B R2 F2,G,Spark Melbourne February 2025,333 R1 D E1
+5025875001,D2 R' F2 R' U2 R U2 F U2 F2 R D' L2 D' L U F' L,G,Kushtia Cube Open 2025,333 R1 A #5
+5306686001,B F' R2 D2 F R2 F L B' D2 B2 L2 D' L' B L D,G,Westport Icebreaker 2026,333 R1 A #5

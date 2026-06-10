@@ -3,20 +3,20 @@
 # Samples listed: 15 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-260937001,D2 R2 B U2 B' F2 R2 F2 R2 U' B L R2 U' R' F' R2 F2 U,B
-342445001,L' R2 F2 R' U2 B2 U2 L2 D L' F' L' U B2 L D2 U' F',B
-661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G
-728799001,R2 F' L F' D2 R' L2 D2 R2 L' U R2 B2 R2 F2 L2 U R2,Y
-841822001,R L U2 L' B' L B' U' F2 L D2 R L F2 R,G
-1084160001,R2 L' U L' D2 F2 U2 R2 F L2 B D B2 L2 F2 L2 U F2 U2,B
-1092036001,B2 U B2 D' B2 U F2 R2 U' R F L F L2 U2 R D' L D,Y
-1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',Y
-1560478007,L' B2 F2 L2 U2 R D2 R U2 R B2 U' R' F' U2 B2 U R' F' D F' L' F',Y
-1940152001,U L2 U2 L2 U' R D R F U2 F2 D' R B' R F2,B
-3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y
-3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,W
-4164219001,F' U' D2 R' U F2 L D' U2 R2 B D2 R2 F D2 F' R D',W
-4381910004,U F2 U' B2 L2 D B2 L' R' F' U F' L2 R2 F' L' D F2 D',Y
-5513603001,D2 F U' B R U2 R U' D L2 B2 D' B2 U2 L2 F2 L2 F,Y
+260937001,D2 R2 B U2 B' F2 R2 F2 R2 U' B L R2 U' R' F' R2 F2 U,B,Big Apple Cube Clash 2016,333oh R2 B #1
+342445001,L' R2 F2 R' U2 B2 U2 L2 D L' F' L' U B2 L D2 U' F',B,SSN Cube Open 2016,333 R1 H #4
+661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G,CubingUSA Nationals 2017,333mbf Final A #2
+728799001,R2 F' L F' D2 R' L2 D2 R2 L' U R2 B2 R2 F2 L2 U R2,Y,Marikina City Open 2018,333 R1 B #1
+841822001,R L U2 L' B' L B' U' F2 L D2 R L F2 R,G,CubingUSA Nationals 2018,333oh R1 K #1
+1084160001,R2 L' U L' D2 F2 U2 R2 F L2 B D B2 L2 F2 L2 U F2 U2,B,Yancheng Spring 2019,333 R1 A #3
+1092036001,B2 U B2 D' B2 U F2 R2 U' R F L F L2 U2 R D' L D,Y,Indian Nationals 2019,333oh R1 H #2
+1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',Y,High Wycombe Open 2019,333 R2 B #2
+1560478007,L' B2 F2 L2 U2 R D2 R U2 R B2 U' R' F' U2 B2 U R' F' D F' L' F',Y,Mémorial François Courtès - Un Temps pour Lui 2020,333mbf Final A #1
+1940152001,U L2 U2 L2 U' R D R F U2 F2 D' R B' R F2,B,3x3x3 Only Hamilton B 2022,333 R1 B #1
+3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y,Folkets Kub Alvesta 2024,333oh Final B E1
+3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,W,Longjum'Open 2024,333oh R1 A #4
+4164219001,F' U' D2 R' U F2 L D' U2 R2 B D2 R2 F D2 F' R D',W,Hublife Speedcubing 2024,333 R1 D #2
+4381910004,U F2 U' B2 L2 D B2 L' R' F' U F' L2 R2 F' L' D F2 D',Y,I Hope It's Solved Edmonton 2024,333mbf Final A #3
+5513603001,D2 F U' B R U2 R U' D L2 B2 D' B2 U2 L2 F2 L2 F,Y,DFW Cubing Spring 2026,333 Final B #1

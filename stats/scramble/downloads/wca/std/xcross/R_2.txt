@@ -3,16 +3,16 @@
 # Samples listed: 11 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-149376001,L' D' R' F2 U2 L U B' R L F2 D2 L2 F' R2 U2 B' R2 U2 F',R
-342445001,L' R2 F2 R' U2 B2 U2 L2 D L' F' L' U B2 L D2 U' F',R
-724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R
-1456647001,D2 F2 D2 B L F L' F' B D' F2 B2 L2 F2 D F2 U L2 U2,R
-1561971001,D' U L2 R2 U B2 R2 U2 R2 F L2 R' D' U' R' D' B F2 L,R
-3579673001,B2 U' L2 F2 D2 U' R2 U2 F2 R2 B' R' U' L' U F2 L' R,R
-4616143001,B R2 U F L2 F' B2 D F2 U' L2 D' F2 D2 B' L U',R
-4772369001,R' U R2 B' R2 F2 R2 D R2 L F2 R U2 B' L' U R2,R
-5306467001,B' L2 D2 F' R2 U2 F' D2 U2 L D' L B2 R D' F2 U2 B2,R
-5508904028,U2 F' D2 F2 U2 B' D2 R2 D F' D2 R D' R F U' R2 D2 L B',R
-5571248001,R' U' F U2 F2 R2 B2 U B2 R2 U B2 R D2 U L2 F2 D' U2 B' U' R' U' F,R
+149376001,L' D' R' F2 U2 L U B' R L F2 D2 L2 F' R2 U2 B' R2 U2 F',R,Velbert Open 2015,333oh R1 A #3
+342445001,L' R2 F2 R' U2 B2 U2 L2 D L' F' L' U B2 L D2 U' F',R,SSN Cube Open 2016,333 R1 H #4
+724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R,RGIT Cube Open 2018,333oh R1 A #4
+1456647001,D2 F2 D2 B L F L' F' B D' F2 B2 L2 F2 D F2 U L2 U2,R,Indianapolis Cubes Winter 2019,333 R1 G #3
+1561971001,D' U L2 R2 U B2 R2 U2 R2 F L2 R' D' U' R' D' B F2 L,R,Frankfurt Cube Days 2020,333 Final A #4
+3579673001,B2 U' L2 F2 D2 U' R2 U2 F2 R2 B' R' U' L' U F2 L' R,R,Iloilo City of Love Open 2024,333oh Final C #5
+4616143001,B R2 U F L2 F' B2 D F2 U' L2 D' F2 D2 B' L U',R,Xuzhou Newcomers 2025,333 R2 F #5
+4772369001,R' U R2 B' R2 F2 R2 D R2 L F2 R U2 B' L' U R2,R,VIC State Championship 2025,333 R1 C E2
+5306467001,B' L2 D2 F' R2 U2 F' D2 U2 L D' L B2 R D' F2 U2 B2,R,Weston-super-Mare Winter 2026,333 R2 A #3
+5508904028,U2 F' D2 F2 U2 B' D2 R2 D F' D2 R D' R F U' R2 D2 L B',R,No Peeking Calgary 2026,333mbf Final A #2
+5571248001,R' U' F U2 F2 R2 B2 U B2 R2 U B2 R D2 U L2 F2 D' U2 B' U' R' U' F,R,Fewest Moves Bogotá XII 2026,333fm Final A #2

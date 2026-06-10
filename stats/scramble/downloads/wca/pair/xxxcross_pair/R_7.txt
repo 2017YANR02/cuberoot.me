@@ -3,14 +3,14 @@
 # Samples listed: 9 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-239354001,D' R2 B2 R2 U' F2 D' F U F L' F U' F D F2 D B2 L2 U2,R
-733249020,F2 U' B2 U2 L2 B2 F2 D F2 U2 F' D' F U' R2 F2 U' L F L B2,R
-1065348001,U R2 F' D B R' F B2 D B2 L U' B2 L2 U2 R2 U' D2,R
-1923620001,B' L2 U2 B' U2 F R2 F2 R2 D' R2 D2 R' U2 F' U' R' F' L',R
-3031013009,U2 L' F2 B' R' D' R' U' L2 U' B2 U D' F2 L2 D F L2 U B R,R
-3267639001,L D R2 D2 B L B U' B D2 L2 U2 D' F2 R2 L2 D' R2,R
-3492724001,U2 L B F' U2 F2 D2 B' D' L2 R2 B2 U' R2 B U2 R',R
-4049432001,L B D2 L' D L2 B2 U B2 U2 F2 R' U' L B2 F2 U2,R
-5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R
+239354001,D' R2 B2 R2 U' F2 D' F U F L' F U' F D F2 D B2 L2 U2,R,Great Indian Cubeathon 2016,333bf Final A #1
+733249020,F2 U' B2 U2 L2 B2 F2 D F2 U2 F' D' F U' R2 F2 U' L F L B2,R,Nacionales Uruguayas UCHI 2018,333mbf Final B #2
+1065348001,U R2 F' D B R' F B2 D B2 L U' B2 L2 U2 R2 U' D2,R,Speedsolving Huancayo 2019,333oh R1 A #3
+1923620001,B' L2 U2 B' U2 F R2 F2 R2 D' R2 D2 R' U2 F' U' R' F' L',R,Sherwood Park Spring 2022,333 R1 E #5
+3031013009,U2 L' F2 B' R' D' R' U' L2 U' B2 U D' F2 L2 D F L2 U B R,R,Pace Blind 'n Crazy Stockholm 2023,333mbf Final A #2
+3267639001,L D R2 D2 B L B U' B D2 L2 U2 D' F2 R2 L2 D' R2,R,Vermont Cubikon 2023,333 Final A #3
+3492724001,U2 L B F' U2 F2 D2 B' D' L2 R2 B2 U' R2 B U2 R',R,HCHS Winter Open 2024,333 R1 B #2
+4049432001,L B D2 L' D L2 B2 U B2 U2 F2 R' U' L B2 F2 U2,R,Telangana Cube Championship 2024,333oh R1 E E1
+5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026,333 R2 B E2

@@ -3,7 +3,7 @@
 # Samples listed: 2 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R
-4463879001,B' D2 B U2 F2 R2 D2 L' D L' F2 U' L B2 L' R F' U,R
+724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R,RGIT Cube Open 2018,333oh R1 A #4
+4463879001,B' D2 B U2 F2 R2 D2 L' D L' F2 U' L B2 L' R F' U,R,Aldeilla Winter Open 2025,333oh Final A #2

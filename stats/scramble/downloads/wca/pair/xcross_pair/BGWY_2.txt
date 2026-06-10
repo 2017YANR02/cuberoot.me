@@ -3,13 +3,13 @@
 # Samples listed: 8 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-254507001,U2 R F' D L' U F' L' U F' D' R2 F2 D2 F2 U2 R2 F2 B,G
-1092036001,B2 U B2 D' B2 U F2 R2 U' R F L F L2 U2 R D' L D,Y
-1391001001,R F2 D' F D F' U' L F U' B2 U2 L' U2 L F2 B2 L' U2 R,Y
-3061368001,F R' U R D R U' R U R2 L F2 U2 R' U2 L' F2 U2,Y
-3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y
-3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,W
-4380412001,U2 B2 F2 L D2 F2 R2 F D L2 F' R' D' B2 L B' L,G
-4381910004,U F2 U' B2 L2 D B2 L' R' F' U F' L2 R2 F' L' D F2 D',Y
+254507001,U2 R F' D L' U F' L' U F' D' R2 F2 D2 F2 U2 R2 F2 B,G,Molina Open 2016,333 R2 C #2
+1092036001,B2 U B2 D' B2 U F2 R2 U' R F L F L2 U2 R D' L D,Y,Indian Nationals 2019,333oh R1 H #2
+1391001001,R F2 D' F D F' U' L F U' B2 U2 L' U2 L F2 B2 L' U2 R,Y,Caracolí Open 2019,333 R1 F #4
+3061368001,F R' U R D R U' R U R2 L F2 U2 R' U2 L' F2 U2,Y,Cerrado Open 2023,333 R2 B #2
+3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y,Folkets Kub Alvesta 2024,333oh Final B E1
+3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,W,Longjum'Open 2024,333oh R1 A #4
+4380412001,U2 B2 F2 L D2 F2 R2 F D L2 F' R' D' B2 L B' L,G,Clash of Cubers: Celebes Speedcubing Masters 2024,333 Final B E1
+4381910004,U F2 U' B2 L2 D B2 L' R' F' U F' L2 R2 F' L' D F2 D',Y,I Hope It's Solved Edmonton 2024,333mbf Final A #3

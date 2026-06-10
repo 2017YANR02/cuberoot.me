@@ -3,13 +3,13 @@
 # Samples listed: 8 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-174119001,L R U2 B2 R U2 F2 U2 L D' B' R' B' D B F R D L' U,W
-230545001,B D2 B2 R2 F' D2 L2 U2 F2 U2 B' L' B2 U R' F' R B' F2 U2 L,W
-531090001,U R2 D' B2 D U2 B' R F U' L' R2 B' D2 F R' F2 L',W
-775044001,U2 F2 D2 L' B U' B2 D' R L' U' R2 U' R2 L2 F2 U2 R2 U' L2 U',W
-972284046,U2 F2 L2 U' R2 D B2 F2 D B R2 F2 U' R F L' U2 F D' B' L,W
-3687091001,R2 D' F2 R2 B2 D' B2 D2 R2 B L B' L2 R U' R' B' F U' R',W
-4167605001,D' F' R2 U2 L2 R2 F' U2 L2 F' L2 B' U2 R U L' B' D2 B R' F2,W
-4444071001,R' U F' B2 R B' L F' U R2 D2 L B2 L D2 R' B2 L2,W
+174119001,L R U2 B2 R U2 F2 U2 L D' B' R' B' D B F R D L' U,W,Wuxi Open 2015,333oh R1 A #5
+230545001,B D2 B2 R2 F' D2 L2 U2 F2 U2 B' L' B2 U R' F' R B' F2 U2 L,W,Dallas Winter 2015,333 R1 A #5
+531090001,U R2 D' B2 D U2 B' R F U' L' R2 B' D2 F R' F2 L',W,3rd Guwahati Open 2017,333 R1 D #4
+775044001,U2 F2 D2 L' B U' B2 D' R L' U' R2 U' R2 L2 F2 U2 R2 U' L2 U',W,San Marcos SB Open 2018,333 R1 D #4
+972284046,U2 F2 L2 U' R2 D B2 F2 D B R2 F2 U' R F L' U2 F D' B' L,W,Speedcubing Camp Minsk 2019,333mbf Final A #2
+3687091001,R2 D' F2 R2 B2 D' B2 D2 R2 B L B' L2 R U' R' B' F U' R',W,Cubing at the Y - Stoughton 2024,333 R1 A #5
+4167605001,D' F' R2 U2 L2 R2 F' U2 L2 F' L2 B' U2 R U L' B' D2 B R' F2,W,Plaza Madero Chía 2024,333 Final B #1
+4444071001,R' U F' B2 R B' L F' U R2 D2 L B2 L D2 R' B2 L2,W,Hvidovre Mini Januar 2025,333oh Final A #5

@@ -3,7 +3,7 @@
 # Samples listed: 2 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-2338423001,R2 U2 R2 D L2 D' U' L2 F2 B' L R2 D' R' D2 F U R' D,B
-2550948003,F2 L F2 D' L2 R2 D2 R2 B2 D U2 F2 L' B2 D' R' F L2 U B R,B
+2338423001,R2 U2 R2 D L2 D' U' L2 F2 B' L R2 D' R' D2 F U R' D,B,Cube4fun in Lublin 2022,333 R2 A #2
+2550948003,F2 L F2 D' L2 R2 D2 R2 B2 D U2 F2 L' B2 D' R' F L2 U B R,B,Please Be Quiet Joburg 2023,333mbf Final A #1

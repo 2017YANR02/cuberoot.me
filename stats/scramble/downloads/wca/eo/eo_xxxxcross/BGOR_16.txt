@@ -3,6 +3,6 @@
 # Samples listed: 1 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-2993517001,U2 R F2 D2 B2 U2 R2 U2 R' F' R2 U' L' D' B D2 R F' U,B
+2993517001,U2 R F2 D2 B2 U2 R2 U2 R' F' R2 U' L' D' B D2 R F' U,B,Aves María Teams 2023,333 R2 C #4

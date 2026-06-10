@@ -3,9 +3,9 @@
 # Samples listed: 4 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-205892001,F2 D B2 R2 U' F2 L2 U' R' D2 B' F' L2 F' R' D2 U2 R B' L B2,Y
-238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,W
-2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,Y
-4230218001,U2 B' D2 R2 D2 R2 B U2 F L F U' R2 D R2 F U L F',W
+205892001,F2 D B2 R2 U' F2 L2 U' R' D2 B' F' L2 F' R' D2 U2 R B' L B2,Y,Beijing Open 2015,333bf R1 A #2
+238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,W,Great Indian Cubeathon 2016,333oh R1 G E1
+2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,Y,Pickering D 2023,333 R2 B #2
+4230218001,U2 B' D2 R2 D2 R2 B U2 F L F U' R2 D R2 F U L F',W,Wichita Speedcubing Fall 2024,333 R2 B E2

@@ -3,13 +3,13 @@
 # Samples listed: 8 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-11678001,R2 D' L2 B2 D2 U' R2 F2 D L2 R2 B R F R2 F L D' F R' U',O
-1169772001,U B R' U' D F' L' U2 R' B L2 D' B2 L2 U' D2 B2 L2 U F2,O
-1817166001,U R' D' R' L2 B R2 B' D2 U2 B' D2 R2 L D' U F' U2 R U2,O
-1827227001,L B2 F2 R F2 L' R2 F2 U2 F' L B' D2 R U R2 D L F U2,O
-2354763043,D2 L B2 F2 R U2 F2 L D2 R2 F D' B2 L F R' B U B' D' L' F,O
-3450813001,D R U' L D' R D B D F R2 F2 U R2 B2 D2 B2 U R2 U,O
-4222130001,U2 B D' U2 L2 D2 B2 D2 F2 R2 B2 R U2 D L' F R2 B D' U,O
-4231650001,L2 F L2 B' R2 B' D2 B R2 U R B D L2 F' U2 R' U' B2 F,O
+11678001,R2 D' L2 B2 D2 U' R2 F2 D L2 R2 B R F R2 F L D' F R' U',O,Coliseo de Tovar 2014,333 Final A #4
+1169772001,U B R' U' D F' L' U2 R' B L2 D' B2 L2 U' D2 B2 L2 U F2,O,Copa Black Horse 2019,333 R2 A #5
+1817166001,U R' D' R' L2 B R2 B' D2 U2 B' D2 R2 L D' U F' U2 R U2,O,TCG Summer Arequipa 2022,333 R2 A #4
+1827227001,L B2 F2 R F2 L' R2 F2 U2 F' L B' D2 R U R2 D L F U2,O,Welcome Back Portland 2022,333 Final A E1
+2354763043,D2 L B2 F2 R U2 F2 L D2 R2 F D' B2 L F R' B U B' D' L' F,O,Cariló Open 2022,333mbf Final A #1
+3450813001,D R U' L D' R D B D F R2 F2 U R2 B2 D2 B2 U R2 U,O,Southern Solves Invercargill 2024,333oh Final A #1
+4222130001,U2 B D' U2 L2 D2 B2 D2 F2 R2 B2 R U2 D L' F R2 B D' U,O,Cubing in Unicentro Maracay 2024,333 R1 A #4
+4231650001,L2 F L2 B' R2 B' D2 B R2 U R B D L2 F' U2 R' U' B2 F,O,Liga SLP Jornada Verde 2024,333 R1 A E1

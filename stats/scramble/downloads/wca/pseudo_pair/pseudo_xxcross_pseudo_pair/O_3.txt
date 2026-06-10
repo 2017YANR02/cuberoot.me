@@ -3,12 +3,12 @@
 # Samples listed: 7 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-74824001,D R2 D2 L2 B2 D2 R U' B R' D2 L2 R' F' R F' U,O
-930025001,L2 B2 L2 U' F2 R2 D2 L D' B L D2 L2 D2 L2 B2 L2 B2,O
-2655130001,U2 L2 B' D2 B2 D2 L2 F' R2 U' F R U' L D2 F' D R2 B,O
-3115470026,D R U' R' F2 R2 D L D L' B R2 L2 D2 F' L2 B L2 D,O
-4055124001,R' F U2 L2 R B2 U2 L2 R F2 U L2 F' U2 B' L2 B R' U L2 U,O
-4776336001,R B2 L D' U2 R2 U F2 U2 B2 U L D2 F' U2 B D R',O
-5475354001,D' B' D' B R' F2 D R B R' B' D2 F2 B' D2 B' D2 L2,O
+74824001,D R2 D2 L2 B2 D2 R U' B R' D2 L2 R' F' R F' U,O,Slow n Steady Fall 2014,333 R1 B E1
+930025001,L2 B2 L2 U' F2 R2 D2 L D' B L D2 L2 D2 L2 B2 L2 B2,O,Trinity Valley Open 2018,333 R1 D E1
+2655130001,U2 L2 B' D2 B2 D2 L2 F' R2 U' F R U' L D2 F' D R2 B,O,Swallow Spring 2023,333 R1 B #5
+3115470026,D R U' R' F2 R2 D L D L' B R2 L2 D2 F' L2 B L2 D,O,BMME 3x3 Day 2023,333mbf Final B #1
+4055124001,R' F U2 L2 R B2 U2 L2 R F2 U L2 F' U2 B' L2 B R' U L2 U,O,CubingUSA New England Championship 2024,333bf R1 B E2
+4776336001,R B2 L D' U2 R2 U F2 U2 B2 U L D2 F' U2 B D R',O,Surrey Monday Open 2025,333 Final A E1
+5475354001,D' B' D' B R' F2 D R B R' B' D2 F2 B' D2 B' D2 L2,O,Parets Open 2026,333 Final O #2

@@ -1,6 +1,6 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / R / bin 9
-# Population in this bin: 188
-# Samples listed: 188 (all entries in this bin)
+# Population in this bin: 205
+# Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: scrambles.txt
 # Generated: 2026-06-09
 # Columns: id,scramble,bottom_color
@@ -19,7 +19,7 @@
 6449,U' F2 U L2 B2 U' R2 B2 D2 B2 U' L2 F2 U2 L' F' R B2 D B L' F' U ,R
 6450,U2 L2 U' R2 D' B2 L2 B2 U' F2 D R2 L' B R' D' L B L' F' L U ,R
 6452,D2 R2 U R2 U' L2 U F2 U B2 R2 F2 L2 U B' U R F' U2 R' L' F D' R ,R
-6456,F2 D R2 F2 D' R2 D2 F2 U F2 D B2 R2 B2 L' D2 L2 B F L' D R B D ,R
+716914,B2 L2 D L2 B2 U' L2 B2 U' R2 D F2 R2 D' L' B' R L2 D2 U B' D' L F U' ,R
 6469,D' L2 B2 D2 R2 B2 U R2 U F2 R2 B2 R2 B' U R F' U2 R' L' F D' R' ,R
 6777,F2 D' R2 L2 B2 D F2 L2 F2 U L2 D U2 L' B2 D B R F' L U' B' U2 ,R
 6781,R2 F2 R2 D' U' F2 D' F2 L2 D B2 R2 F2 D L' B R' D' L B L' F' L U2 ,R
@@ -170,7 +170,7 @@
 634843,R2 U L2 U B2 F2 D B2 D L2 D' R2 U2 F' U' F2 L B' D R' U L2 B' L' ,R
 634852,D L2 U F2 D' B2 F2 U' F2 U' R2 U' B2 R2 U' L' D F' U' L' B' R D F U2 L' U' ,R
 635934,L2 U F2 U F2 U' B2 L2 D' F2 L2 U R2 F2 U' L' B' D' L' F' R U B R2 D L' ,R
-635943,F2 R2 U' B2 D B2 L2 F2 R2 D L2 U L2 U L' B D2 F D' R' U B' U2 F' L' ,R
+651940,L2 U B2 D' R2 B2 R2 F2 U' L2 D2 U' B2 R2 B' U R L' U' B2 F L' U' B L' ,R
 635952,U2 F2 D B2 D R2 D2 R2 U' F2 U' L2 F2 D2 U2 B' U R L' U' B2 F L' U' B L' ,R
 637897,U L2 B2 R2 D' L2 D B2 L2 U2 B2 L2 U' B2 R' F' D' B' L' U R L2 F ,R
 639388,D' F2 U' B2 D B2 D R2 U' B2 U F2 U R2 U2 F' L F2 U' B' D' L F' R U ,R
@@ -183,7 +183,7 @@
 641501,B2 D' R2 U2 L2 F2 U' L2 B2 F2 D' B2 U2 R2 L' B' R' U F D L D2 B' U2 F' ,R
 641510,B2 U F2 D2 B2 U' L2 D' F2 U R2 U F' R' B L2 D' L' U' R2 B R' U' ,R
 641519,U B2 F2 L2 U2 F2 U B2 D' F2 U L2 R' F' D' B' L' U R L2 F ,R
-642085,L2 F2 D' B2 D' B2 R2 B2 F2 D2 B2 U' L2 U L' B' L2 D R U B' L F ,R
+716912,D R2 L2 B2 D2 R2 D F2 D2 R2 D F' R' B L2 D' L' U' R2 B R' U' ,R
 642094,U' R2 B2 R2 U L2 D L2 F2 R2 F2 U' B2 U' F' L F2 U' B' D' L F' R U ,R
 642103,B2 D R2 B2 U B2 F2 R2 U2 B2 D F2 R2 U B' U R L' U' B2 F L' U' B L' ,R
 642949,U' L2 D B2 D' B2 L2 U' B2 L2 U' R2 F2 R2 B' L' B2 F D U2 L' U' B R U' ,R
@@ -193,3 +193,15 @@
 643593,R2 D' B2 R2 D R2 F2 U2 B2 D B2 D B2 L2 U' B' D2 L B2 D' F' U' L' B' R' ,R
 645329,R2 D R2 U' R2 B2 D B2 D B2 R2 F2 U' R' F' L B2 U' B' D' F2 L F' U' ,R
 645338,R2 U F2 D B2 F2 L2 U F2 D' F2 U L2 D' L' B F D R' L D U' L' D' U' F' ,R
+646582,R2 F2 R2 U' R2 U B2 U2 L2 B2 R2 U L' D F' U' L' B' R D F U2 L' U' ,R
+646591,R2 L2 B2 D2 R2 D R2 F2 D' B2 D' R2 D2 L2 F' U' F2 L B' D R' U L2 B' L' ,R
+647547,R2 B2 L2 D F2 U2 R2 D2 L2 U' F2 U2 R' F' D' B' L' U R L2 F ,R
+647554,B2 U' L2 B2 U R2 B2 U2 F2 D2 U' F2 U' F2 U' F' R' B L2 D' L' U' R2 B R' U' ,R
+648166,R2 D' L2 D2 F2 D R2 U' R2 F2 L2 U F2 U' L2 B' R' D' L' F' U B F2 R U ,R
+718503,D L2 B2 D' R2 B2 U B2 R2 D' B2 R2 U' L' F R' B2 U B D F2 R' F' U' ,R
+648184,D' L2 B2 U B2 L2 U2 R2 D B2 R2 U R2 D2 R2 L' B' D' L' F' R U B R2 D L' ,R
+650056,U L2 D F2 D' R2 F2 U2 B2 D' B2 F2 L2 D2 R' B2 D F' R L B D' U' F' L' ,R
+650065,U' F2 U L2 B2 F2 D' F2 D R2 D' L2 F2 D' B' U2 R' D U2 F U' B2 R' B' L' ,R
+651097,F2 L2 U2 L2 D B2 U2 B2 R2 B2 L2 U2 F2 L' B D2 F D' R' U B' U2 F' L' ,R
+718500,L2 U2 F2 D L2 F2 R2 L2 U R2 D' R2 U B' R2 L D R' F' U' B' L' U2 ,R
+651929,F2 R2 D R2 D2 U' F2 L2 F2 R2 D F2 R2 F' L F2 U' B' D' L F' R U ,R

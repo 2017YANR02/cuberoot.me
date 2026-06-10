@@ -3,12 +3,12 @@
 # Samples listed: 7 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-409306001,F2 L2 B L2 B L2 D2 R' D2 R' U' R2 B' F' L D' L U,W
-466802001,U' R2 B2 U F2 U F2 L2 B2 R2 B' D F' D' U2 B' F2,W
-660851016,D2 R2 D2 F L2 R2 D2 B F' D2 F' L' U2 B U' R B L2 R2 U' L2 U',W
-2209757001,D L' F2 R' D2 R U F2 L' U D2 L2 D' B2 U F2,W
-3265042001,U' R D F R2 D' B' D2 L2 D2 L F2 D2 L D2 L U L2,W
-3763216001,L' F' D' B2 D U2 R2 U' L2 B2 U' B' D2 R' B' L' F' R2,W
-3840270001,R2 B2 D' B D' B U2 R2 F D B2 L2 B2 D' F',W
+409306001,F2 L2 B L2 B L2 D2 R' D2 R' U' R2 B' F' L D' L U,W,Cape Town 2016,333 R1 C #4
+466802001,U' R2 B2 U F2 U F2 L2 B2 R2 B' D F' D' U2 B' F2,W,Shanghai Spring 2017,333 R1 A #4
+660851016,D2 R2 D2 F L2 R2 D2 B F' D2 F' L' U2 B U' R B L2 R2 U' L2 U',W,Two days in Vitebsk 2015,333mbf Final A #1
+2209757001,D L' F2 R' D2 R U F2 L' U D2 L2 D' B2 U F2,W,Cubing Returns To Colombo 2022,333 Final B #5
+3265042001,U' R D F R2 D' B' D2 L2 D2 L F2 D2 L D2 L U L2,W,Scarborough Fall A 2023,333 R1 E #2
+3763216001,L' F' D' B2 D U2 R2 U' L2 B2 U' B' D2 R' B' L' F' R2,W,Košice Open 2024,333 Final A E2
+3840270001,R2 B2 D' B D' B U2 R2 F D B2 L2 B2 D' F',W,CubingUSA Heartland Championship 2024,333oh Final A #5

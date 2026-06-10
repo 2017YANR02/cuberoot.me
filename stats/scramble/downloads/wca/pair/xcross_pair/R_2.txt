@@ -3,8 +3,8 @@
 # Samples listed: 3 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R
-1561971001,D' U L2 R2 U B2 R2 U2 R2 F L2 R' D' U' R' D' B F2 L,R
-3579673001,B2 U' L2 F2 D2 U' R2 U2 F2 R2 B' R' U' L' U F2 L' R,R
+724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R,RGIT Cube Open 2018,333oh R1 A #4
+1561971001,D' U L2 R2 U B2 R2 U2 R2 F L2 R' D' U' R' D' B F2 L,R,Frankfurt Cube Days 2020,333 Final A #4
+3579673001,B2 U' L2 F2 D2 U' R2 U2 F2 R2 B' R' U' L' U F2 L' R,R,Iloilo City of Love Open 2024,333oh Final C #5

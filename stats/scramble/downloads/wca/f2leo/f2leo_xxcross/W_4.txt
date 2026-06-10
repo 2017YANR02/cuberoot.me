@@ -3,7 +3,7 @@
 # Samples listed: 2 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,W
-4324135001,D' L2 F2 U R' D' L' B F2 R F2 R B2 L U2 F D2,W
+3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,W,Longjum'Open 2024,333oh R1 A #4
+4324135001,D' L2 F2 U R' D' L' B F2 R F2 R B2 L U2 F D2,W,Barcelona Open 2024,333 R1 E #5

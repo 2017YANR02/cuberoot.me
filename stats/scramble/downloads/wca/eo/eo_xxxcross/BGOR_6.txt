@@ -3,8 +3,8 @@
 # Samples listed: 3 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-1028250001,D2 F' D2 B' D2 F L2 D2 B2 D B' U B2 D2 L' R U B2,G
-3081803001,B' L D' B2 D' F U2 R2 U2 L2 U B2 R2 U F2 L2 D' B,G
-3492724001,U2 L B F' U2 F2 D2 B' D' L2 R2 B2 U' R2 B U2 R',R
+1028250001,D2 F' D2 B' D2 F L2 D2 B2 D B' U B2 D2 L' R U B2,G,Idéale Nabeul Open 2019,333 Final A #4
+3081803001,B' L D' B2 D' F U2 R2 U2 L2 U B2 R2 U F2 L2 D' B,G,Oxente Open 2023,333oh Final A #1
+3492724001,U2 L B F' U2 F2 D2 B' D' L2 R2 B2 U' R2 B U2 R',R,HCHS Winter Open 2024,333 R1 B #2

@@ -3,11 +3,11 @@
 # Samples listed: 6 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-594019001,B' R' B R2 L' U' F2 R U' F2 D2 B' D2 B2 U2 F R2 F U2,O
-1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',O
-2497401001,F U2 F' L2 B' L2 F' D B' D2 F D' U2 L R2 B D R2,O
-3155239001,U2 R D2 B2 L' F2 U2 L D2 B' L B D' B2 R' B F L' U2 L2,O
-3262236001,D2 R D B R2 B D L2 U2 D2 F' U2 B2 U2 F' D2 U' R,O
-4578226001,R D R' B R2 B' L2 F2 D2 F' D2 F' L' D2 F U F',O
+594019001,B' R' B R2 L' U' F2 R U' F2 D2 B' D2 B2 U2 F R2 F U2,O,Music City Fall 2017,333oh R1 C #2
+1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',O,High Wycombe Open 2019,333 R2 B #2
+2497401001,F U2 F' L2 B' L2 F' D B' D2 F D' U2 L R2 B D R2,O,Waterloo Favourites B 2023,333oh Final A #3
+3155239001,U2 R D2 B2 L' F2 U2 L D2 B' L B D' B2 R' B F L' U2 L2,O,Ankuram Open Saturday 2023,333bf Final B E1
+3262236001,D2 R D B R2 B D L2 U2 D2 F' U2 B2 U2 F' D2 U' R,O,Madrid Cundinamarca II 2023,333 R2 B E2
+4578226001,R D R' B R2 B' L2 F2 D2 F' D2 F' L' D2 F U F',O,Wichita Art Museum 2025,333 Final A #1

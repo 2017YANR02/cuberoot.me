@@ -190,8 +190,9 @@ async function buildExampleCompMeta(
   examplesOut: Record<string, unknown>,
   metaCsv: string,
   compTsv: string,
+  extraIds?: Set<string>,
 ): Promise<{ comps: Record<string, [string, string]>; idMeta: Record<string, [string, string, number, string, string, (0 | 1)]> }> {
-  const ids = new Set<string>();
+  const ids = new Set<string>(extraIds);
   for (const preview of Object.values(examplesOut)) {
     const byStage = preview as Record<string, Record<string, Record<string, Sample[]>>>;
     for (const stage of Object.values(byStage))
@@ -403,7 +404,14 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
   };
 }
 
-// NOTE: 单个 bin 的 txt 下载文件；header 写明 variant/stage/subset/bin + 样本量；主体 CSV 风格 id,scramble,bottom_color
+// 轮次代号 → 英文短名(对齐 client lib/comp-schedule.ts ROUND_TYPE_SHORT_EN;txt 是语言中立文件)
+const ROUND_SHORT: Record<string, string> = {
+  '0': 'Q', '1': 'R1', '2': 'R2', '3': 'R3',
+  'b': 'BF', 'c': 'Final', 'd': 'R1', 'e': 'R2', 'f': 'Final', 'g': 'R3', 'h': 'Q',
+};
+
+// NOTE: 单个 bin 的 txt 下载文件；header 写明 variant/stage/subset/bin + 样本量;
+// 主体 CSV 风格 id,scramble,bottom_color;WCA set 另带 competition,round 两列(meta 可得时)
 function buildBinTxt(
   variantKey: string,
   stage: string,
@@ -412,7 +420,10 @@ function buildBinTxt(
   res: { samples: Sample[]; seen: number },
   generatedAt: string,
   source: string,
+  comps?: Record<string, [string, string]>,
+  idMeta?: Record<string, [string, string, number, string, string, (0 | 1)]>,
 ): string {
+  const withMeta = !!idMeta && Object.keys(idMeta).length > 0;
   const lines: string[] = [];
   lines.push(`# Scramble samples — ${variantKey} / ${stage} / ${subsetKey} / bin ${bin}`);
   lines.push(`# Population in this bin: ${res.seen}`);
@@ -423,10 +434,20 @@ function buildBinTxt(
   }
   lines.push(`# Source: ${source}`);
   lines.push(`# Generated: ${generatedAt}`);
-  lines.push('# Columns: id,scramble,bottom_color');
+  lines.push(withMeta ? '# Columns: id,scramble,bottom_color,competition,round' : '# Columns: id,scramble,bottom_color');
   lines.push('');
   for (const [id, scr, color] of res.samples) {
-    lines.push(`${id},${scr},${color}`);
+    const m = idMeta?.[id];
+    if (m) {
+      const comp = comps?.[m[0]];
+      const compDisp = comp ? `${comp[0]}${comp[1] ? ` (${comp[1]})` : ''}` : m[0];
+      const round = ROUND_SHORT[m[3]] ?? m[3];
+      const grp = m[4] ? ` ${m[4]}` : '';
+      const tag = m[5] ? `E${m[2]}` : `#${m[2]}`;
+      lines.push(`${id},${scr},${color},${compDisp},${m[1]} ${round}${grp} ${tag}`);
+    } else {
+      lines.push(`${id},${scr},${color}`);
+    }
   }
   return lines.join('\n') + '\n';
 }
@@ -517,6 +538,12 @@ async function main() {
     const variantsOut: Record<string, unknown> = {};
     const examplesOut: Record<string, unknown> = {};
     let maxCount = 0;
+    // 下载 txt 延后到比赛 meta join 之后再写(行内带 competition/round 两列);此处只攒任务。
+    const pendingTxts: Array<{
+      variantKey: string; stage: string; subsetKey: string; bin: number;
+      res: { samples: Sample[]; seen: number };
+    }> = [];
+    const downloadIds = new Set<string>();
     for (const spec of VARIANTS) {
       const csvPath = path.join(setSpec.csv_dir, spec.file);
       if (!fs.existsSync(csvPath)) {
@@ -531,19 +558,14 @@ async function main() {
       examplesOut[spec.key] = previewExamples;
       if (sampleCount > maxCount) maxCount = sampleCount;
 
-      // 写每 bin 一个 txt;路径含 setKey 隔离不同 set
-      const sourceLabel = path.basename(setSpec.scrambles_txt);
       for (const stage of Object.keys(pickedReservoirs)) {
         for (const subsetKey of Object.keys(pickedReservoirs[stage])) {
           const binMap = pickedReservoirs[stage][subsetKey];
           const binsSorted = Object.keys(binMap).map(Number).sort((a, b) => a - b);
           for (const bin of binsSorted) {
-            const txt = buildBinTxt(spec.key, stage, subsetKey, bin, binMap[String(bin)], generatedAt, sourceLabel);
-            const filePath = path.join(downloadsDir, setSpec.key, spec.key, stage, `${subsetKey}_${bin}.txt`);
-            fs.mkdirSync(path.dirname(filePath), { recursive: true });
-            fs.writeFileSync(filePath, txt);
-            txtFilesWritten++;
-            txtTotalBytes += txt.length;
+            const res = binMap[String(bin)];
+            for (const s of res.samples) downloadIds.add(s[0]);
+            pendingTxts.push({ variantKey: spec.key, stage, subsetKey, bin, res });
           }
         }
       }
@@ -555,17 +577,29 @@ async function main() {
       sample_count: maxCount,
       variants: variantsOut,
     };
-    // 示例补"来自哪场比赛"(仅有 split_mbf 的 WCA set;自造打乱 set 无 → comps/idMeta 空)
+    // 比赛 meta join(仅有 split_mbf 的 WCA set;自造打乱 set 无 → comps/idMeta 空):
+    // 覆盖 示例预览 id + 全部下载样本 id,供 examples.json 与下载 txt 共用。
     let comps: Record<string, [string, string]> = {};
     let idMeta: Record<string, [string, string, number, string, string, (0 | 1)]> = {};
     const dataRoot = path.dirname(setSpec.csv_dir);
     const metaCsv = path.join(dataRoot, 'input', 'wca_scrambles_split_mbf.csv');
     if (fs.existsSync(metaCsv)) {
-      console.log('Joining competition meta for examples...');
-      ({ comps, idMeta } = await buildExampleCompMeta(examplesOut, metaCsv, path.join(dataRoot, 'competitions.tsv')));
+      console.log('Joining competition meta for examples + downloads...');
+      ({ comps, idMeta } = await buildExampleCompMeta(examplesOut, metaCsv, path.join(dataRoot, 'competitions.tsv'), downloadIds));
       console.log(`  [examples] ${Object.keys(idMeta).length} ids across ${Object.keys(comps).length} comps`);
     }
     examplesSetsOut[setSpec.key] = { variants: examplesOut, comps, idMeta };
+
+    // 写每 bin 一个 txt;路径含 setKey 隔离不同 set
+    const sourceLabel = path.basename(setSpec.scrambles_txt);
+    for (const p of pendingTxts) {
+      const txt = buildBinTxt(p.variantKey, p.stage, p.subsetKey, p.bin, p.res, generatedAt, sourceLabel, comps, idMeta);
+      const filePath = path.join(downloadsDir, setSpec.key, p.variantKey, p.stage, `${p.subsetKey}_${p.bin}.txt`);
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      fs.writeFileSync(filePath, txt);
+      txtFilesWritten++;
+      txtTotalBytes += txt.length;
+    }
   }
 
   const out = {

@@ -3,19 +3,19 @@
 # Samples listed: 14 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-111084001,U R' D R2 U2 B2 R U' B U' D2 F2 D2 F2 R2 B L2 F2 L2,Y
-160669001,R' B2 L' D2 L2 R' D2 L2 F D' R2 B R' F2 L2 B' L F L B,Y
-359450001,F' D L B2 U' R2 B U' R' F' U2 F' U2 D2 F D2 L2 B2 U2,Y
-661450030,F2 D2 L R' D2 L B2 L R2 B' D' U B2 U' R2 D B D2 U2 L B2,Y
-753847001,L' F2 R2 D2 R B2 F2 U2 R F2 R B' L B2 F2 U B R D2 U',Y
-2488006001,R2 F' R' B2 R D2 R2 U2 B2 D2 F2 L' B U2 L R' U B R D,Y
-2601150001,F U F2 L F2 D2 U' B2 U' B2 R F U2 B2 U R F',Y
-2674616001,D2 F2 L2 U R2 F2 L2 U' B2 U' L' F2 U' B U B2 R' B L',Y
-4487534001,R' D2 L2 B' R2 B' F U2 D' F' L' D2 L2 U L' F L2 F2,Y
-4640170001,B' L2 F' D' B2 U2 D' F' R' B2 U2 L' B2 U2 L' U2 R' F2 L,Y
-4805553001,R2 B' D F2 R F2 U2 L2 D2 F' D U2 R D' L' R',Y
-5021781001,R' F' U D' R2 F D2 L' R2 F2 L2 U D2 F2 D' L2 F R' F2,Y
-5033358001,D B L' U B2 D' U' R2 U' R2 B2 R B2 R' D B' L U',Y
-5210415001,U' D R2 U R D2 L' U2 F' L2 F' R2 U' L2 U F2 R2 U,Y
+111084001,U R' D R2 U2 B2 R U' B U' D2 F2 D2 F2 R2 B L2 F2 L2,Y,Osijek Open 2015,333oh R2 B #3
+160669001,R' B2 L' D2 L2 R' D2 L2 F D' R2 B R' F2 L2 B' L F L B,Y,Cube-a-Thon 2015,333bf Final A #3
+359450001,F' D L B2 U' R2 B U' R' F' U2 F' U2 D2 F D2 L2 B2 U2,Y,Swiss Nationals 2016,333 R2 C #3
+661450030,F2 D2 L R' D2 L B2 L R2 B' D' U B2 U' R2 D B D2 U2 L B2,Y,Heartland Championships 2017,333mbf Final A #1
+753847001,L' F2 R2 D2 R B2 F2 U2 R F2 R B' L B2 F2 U B R D2 U',Y,Stenay Open 2018,333ft Final A #3
+2488006001,R2 F' R' B2 R D2 R2 U2 B2 D2 F2 L' B U2 L R' U B R D,Y,Aldeilla Open 2023,333 R2 A #1
+2601150001,F U F2 L F2 D2 U' B2 U' B2 R F U2 B2 U R F',Y,Romerike Easter Open 2023,333 R2 A #3
+2674616001,D2 F2 L2 U R2 F2 L2 U' B2 U' L' F2 U' B U B2 R' B L',Y,Perth Autumn 2023,333 R2 D #2
+4487534001,R' D2 L2 B' R2 B' F U2 D' F' L' D2 L2 U L' F L2 F2,Y,Sandnes Winter 2025,333oh Final A #3
+4640170001,B' L2 F' D' B2 U2 D' F' R' B2 U2 L' B2 U2 L' U2 R' F2 L,Y,South East Louisiana Open 2025,333 R1 A #3
+4805553001,R2 B' D F2 R F2 U2 L2 D2 F' D U2 R D' L' R',Y,SM Manila Speedcubing Warm-Up 2025,333 R1 A #4
+5021781001,R' F' U D' R2 F D2 L' R2 F2 L2 U D2 F2 D' L2 F R' F2,Y,Liberty Science Center Fall A 2025,333 R1 A #1
+5033358001,D B L' U B2 D' U' R2 U' R2 B2 R B2 R' D B' L U',Y,SEK-Alborán Almerimar Open 2025,333 R1 B #3
+5210415001,U' D R2 U R D2 L' U2 F' L2 F' R2 U' L2 U F2 R2 U,Y,Kent Fall 2025,333 R1 D #3

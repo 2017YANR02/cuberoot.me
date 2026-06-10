@@ -3,6 +3,6 @@
 # Samples listed: 1 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
 # Generated: 2026-06-09
-# Columns: id,scramble,bottom_color
+# Columns: id,scramble,bottom_color,competition,round
 
-2744424001,U2 F B U' R' D R2 F D2 R L2 F D2 R2 F L2 F U2 F2 U2,R
+2744424001,U2 F B U' R' D R2 F D2 R L2 F D2 R2 F L2 F U2 F2 U2,R,SacCubing XIV 2023,333oh Final A E2
