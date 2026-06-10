@@ -1,0 +1,207 @@
+# Scramble samples — 123 / fbsquare / R / bin 0
+# Population in this bin: 804
+# Samples listed: 200 (uniform reservoir sample; cap = 200)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-09
+# Columns: id,scramble,bottom_color,competition,round
+
+5691925006,L D2 L' U2 L D2 L2 B2 U B D U L D2 R' B D B' L B,R,Swisscubing Cup Mental Breakdown I 2026,333mbf Final B #1
+1966557001,B2 U' B2 L D' B2 D' L' D2 B U2 B2 R2 B' L2 U F' L,R,Pulmapelipäivät 2022,333oh Final A #2
+10225001,D' B2 R2 B2 D2 B2 F2 R2 B R' U' B L2 B F' R2 D' L B',R,Zaragoza Open 2014,333 R1 B #3
+2724742001,F2 D2 B D2 F U2 F L2 U2 D' B L' D L' B L F' L2 B',R,Atatürk Cube Weekend 2023,333oh R1 B E2
+3283361001,U' R2 L2 B2 D F' R D' B2 L2 F' D2 F U2 R2 F' L' B' L2,R,Swoop in Again Oxford 2023,333 R1 A #4
+3518429025,B2 U2 R2 U' F2 L2 D' B2 L2 U R' B F' R' U' L' R' F' D' B' L,R,Cube With Retention in Denton 2024,333mbf R1 B #1
+57538001,R U F R' B' R' U F D L2 U2 L F2 L2 B2 R' D2 B2 U2,R,Aaruush Cube Open 2014,333oh R1 B E1
+5593376001,F' D' B2 R L2 U F' R D R U2 F2 R2 B2 U B2 D' B2 L2,R,West-Fries Open 2026,333 R1 A #5
+1093736001,B2 R' F2 U2 B2 U2 L B2 R2 U F L2 R' D' R' U' B' F' D',R,Hamburg International 2019,333 R2 D #5
+1052475001,R F B2 U' L2 B R' D2 L U L2 B D2 F R2 B2 D2 R2,R,Madiun Happy Cubing 2019,333 R1 C #1
+2497305001,U2 F2 D2 R2 F2 R2 U F R' D L R' B F L' B U R2 F',R,Waterloo Favourites B 2023,333 R1 B #1
+3402903001,D2 F U' L F2 D2 R' L2 D' B2 R2 D F2 B2 U D L' B' R,R,Canada's Best in the West 2024,333oh Final A #4
+1602471016,R' F2 U2 L' D2 F2 L B2 U' F L U2 L U2 R' D2 R' D B' D',R,Iruña Open 2020,333mbf Final A #1
+1921497001,U' B U2 B' U2 R2 B' R' D B' D R2 F' D2 L2 U2,R,MSU Quiet Qualifier 2022,333bf Final B E1
+2648079001,R2 F2 D' B2 L2 D B2 F L B D F R B' R' U' B2 U,R,Szokolya Open 2023,333oh Final A #2
+3942595001,F2 D2 B L2 U2 F2 D2 B2 F2 L' D U B2 L D F D2 R' B,R,Los Reyes del Cubo II Chiclayo 2024,333 R1 B E1
+4680143001,B R2 D2 F' D2 R2 F' R2 D' R B2 U' L' B2 R' D B' L,R,Viña Keep Going 2025,333 R1 B E1
+94843001,B2 D2 F2 R2 F2 D' L2 D F2 L' F U2 B2 U' B U' F2 U R,R,Austin Cubing Limits 2015,333oh Final B E1
+3160056001,L2 F R2 B F U2 B D' R' B F2 D2 F' L2 F U' L2,R,SCZ Speedcubing Party 2023,333 R1 D #3
+3209431018,B L2 U' F' U2 R2 B U2 L2 F L F U B U2 L' B U' B',R,NZ North Island Championship 2023,333mbf Final A #1
+4898929012,L2 B' R2 U' B2 U' B2 D L2 U' B2 U' L' F D2 U2 B' U' L R B' L,R,Swedish Blind Marathon 2025,333mbf R1 A #2
+111261001,R2 B2 D2 L2 B' U2 B' D2 B2 R' F2 U L2 B U' L' R' D' F D',R,MAD Cube Weekend 2015,333 R1 C E1
+2782830001,R2 U B2 F2 U L2 U L F' D2 L D' R' B' D U2 R U,R,Bay Area Speedcubin' 47 - Berkeley Pride 2023,333 R1 C #3
+119880001,L2 U2 F' L2 B2 L2 F L2 R2 D2 U' F R F' L' R2 B F2 R',R,Tokyo Pyraminx Open 2015,333 R1 A #5
+877404001,D2 U' F R F' R F' R U L' F' L2,R,Sofia Autumn 2018,333 Final A E1
+123612001,F2 D' B2 D L2 B2 U2 F2 L B2 U B R2 F R2 U L B2 L2,R,Polish Open 2015,333oh Final A E2
+1024085016,D2 R D2 U2 R B2 R2 U2 R' B L' U2 B' U' B2 D2 F2 U2 R B R,R,I Hope It's Solved Edmonton 2019,333mbf Final B #1
+126150001,B2 R F2 B R2 U' R2 B2 R' D2 B U2 D2 B R2 D2 R2 U2 L2,R,National Cubing Region Open 2015,333 R2 D #3
+2474108001,L' D2 B2 R2 U2 L2 D B2 L' B' F' L' F' U' B2 D U' F2,R,IISER-K Spring Open 2023,333oh R1 B #3
+137394001,D' F2 B2 R B D B' D2 F2 R' D R2 F R2 L2 U2 B' R2 U2,R,Mega Rubik 2015,333 R2 B #4
+1333224001,L2 F' L2 F2 D2 F' U2 L2 D2 R D B' R' D2 L2 B' R2 B' U2 L' F',R,Shandong Open 2019,333mbf Final A #1
+169900001,L2 B' D' F' R' B2 D' B D' F D2 L2 D2 F2 B U2 R2 F2 L2,R,Moldavian Nationals 2015,333oh R1 A #2
+4626887067,B L D2 F' D' R' B2 R' B R' B R2 D2 F L2 B L2 B' L2,R,New York Multimate PBQ 2025,333mbf Final B #1
+179852001,B R2 U2 F2 D2 F U R' D' B' R D' L' D' F' U' R2,R,Twisting Fingers in New Taipei City 2015,333 R1 B #5
+4359298001,B2 U' B2 U2 B2 R2 F2 U B2 D' B' D2 R' F2 R F R2 U',R,Tartu Open 2024,333 Final B #4
+3154986001,L' D2 R2 B U' B2 F2 R2 B2 U B2 D L R D L' F2 L2 F',R,Cochabamba Feria al Cubo 2023,333 R1 C #1
+4335744012,F2 L B L2 D' L F B2 U' F U R2 U2 F2 L2 D R2 L2 B,R,Cuarto Aldeilla: 33 Horas Ruleta Open 2024,333mbf Final A #1
+3789356001,L2 U2 F U2 F L2 B D' B D2 R D B2 L' U2 B' U B,R,Washtenaw Qualifiers 2024,333 R2 D #4
+4942521028,F U B2 R L B' U F2 D R F' D' B2 R2 F2 R2 U' L2 U' L B',R,Rubik's Irish Championship 2025,333mbf Final A #1
+1078066001,U2 B2 D2 L2 B2 L U2 L2 R' U R' D' B' F' R' U' B2 F2 R B,R,SBU Spring 2019,333 R1 C #2
+3593205020,L D R' U' R D L D2 F' D2 B' U2 B' R2 F D2 R D2 R' B L' F',R,Borlänge Open 2024,333mbf Final A #2
+2846569033,L F' L2 U2 B2 D2 R D2 U2 L' F D' R' B' L' R B L' D L B,R,Mini Minnesota Summer 2023,333mbf Final A #2
+4169942001,B2 L2 F2 R2 F2 U' R2 L U B D2 L' F D2 L' B2 D' B',R,Estonian Championship 2024,333 Final B #5
+867943001,F2 B' R2 F2 U' F2 U' B' R F' D' L B2 R' F2 R' U2 F2 L2,R,LPU National Cube Challenge 2018,333 R1 D E2
+5572648001,D L F L D' F' B R' B2 U2 L U2 L' U2 L2 U2 B D2,R,Granada Open 2026,333 R2 B #3
+2774071001,U F2 U' R' U L2 B2 U F2 D B2 U L R2 B' F2 L B2 D2,R,Sydney Square-1v1 2023,333oh R1 B #1
+226884001,B2 R2 U' R2 U' B2 R2 D2 R2 U2 F D2 L B2 R D' F U2 R2 F,R,Cape Town Open 2015,333 R2 D #1
+4173602030,F L' U F L2 F D' L U L U' D' R2 U' R2 B2 D2 F2 L' F2,R,Götalandsmästerskapet 2024,333mbf Final B #1
+4328082029,D2 L' D' B U D2 B R L2 U2 R2 U2 F2 D F2 B2 U2 R F L' F,R,Spanish Championship 2024,333mbf Final A #2
+1180456039,R2 B' L2 B2 L2 R2 D2 B U2 L B D' B' L2 B D' U' B2 D2 B R,R,GLS Cup II 2019,333mbf Final A #1
+5076375001,L U B2 R' D' B2 D2 F' D R2 F2 R' B2 L U2 D2 L2 D2 F2,R,Australian Nationals 2025,333 R2 A #1
+231547001,B2 U2 L2 D' R2 B2 U' B2 R' B' D' B' R' B D B' R2 D U,R,Lyon Christmas Open 2015,333 R1 A #3
+1217510001,L' U D' L2 D L' B' U2 L F2 D' R D2 L2 B2 R2 L,R,West Branch Summer 2019,333 R2 A #1
+5372239001,B2 R2 D2 U2 R U2 L2 D2 B' D' L R2 B' U2 B2 R U' F2 U' B R,R,Curitiba Contra o Tempo 2026,333bf Final A E2
+2451763001,U' B2 L F D' L2 B L2 U B' R2 L2 B2 D' B2 D2 B2 L,R,Sandnes Winter 2023,333oh R1 B E1
+4427853049,U B U D' L2 U' D L B' L F D' F2 B2 D R2 U' R2,R,SacQuiet Winter 2025,333mbf Final A #1
+1121756024,U' B2 D2 B2 L2 U R2 U B2 D' F D' U' B D' R' U2 B L' F2 U2 L' F',R,Virginia Qualifier 2019,333mbf Final A #1
+1634641001,U2 L' F U2 R2 U' B2 D' F' R2 D2 R' B2 U2 R' F2 U2 L',R,A New Year in Auckland 2021,333 R1 B E1
+1524846001,R' F2 L2 U2 R' D2 B' L2 B F' R2 U' L2 B' U2 F2 U,R,Washington Championship 2020,333 R1 A #3
+1089757001,F2 B' D2 L2 U L' B2 D R' U D2 F' R2 U2 D2 B' D2 L2 F D2,R,Grudziądz Open 2019,333 R1 A #2
+1800796001,R2 B' F2 U' F2 R2 U' F2 D' B' R B L2 F' D2 F U L',R,North Star Cubing Challenge 2022,333 R2 C #4
+2454611001,D2 B R' U2 L' D2 B2 F2 L2 U' R' F2 D U L U2 B D,R,Istres Open 2023,333 R1 A #3
+2622896001,R2 U L2 D2 B2 U' F2 U' B' D' R F U' L F' L2 D2 U' B',R,Cubing up the UP 2023,333 R1 B #4
+3308280001,D2 R' B2 U2 L B2 L2 F2 D' B R D2 F2 U' F2 U' B' D,R,Maloka al Cubo Bogotá 2023,333 R2 A E2
+285986001,L' B2 D2 L R2 B2 D' L B2 L2 F2 U' R F' L2 D2 R2,R,U.R.A. Spring 2016,333oh R1 B #4
+5485981001,D2 U2 R' B2 U2 L2 D2 R2 F' L U2 F D U L2 B' D' U2 F2,R,Budapest Open 2026,333oh R1 B #2
+290142001,U2 B U2 L' B2 U' L D' B2 D' R F' D2 L2 B' U2 B L2 U2,R,MIT Spring 2016,333oh Final A #3
+5243609001,U B2 U2 L U2 F R B R2 F2 B L2 F U2 L' U B U2,R,Uberlândia Open 2025,333 Final B #4
+300654001,L2 F' L2 U2 L' B' U R' F2 R2 U' R2 F' U2 F U2 B U2,R,2nd Guwahati Open 2016,333 Final A E2
+4734089001,U2 B2 U' L2 F U2 F D2 F2 R' B2 R B2 D2 L2 B2 L D L',R,Metropolis Lara League II 2025,333 R1 A E1
+2760031001,D R2 F2 D' F2 B' L B' R U2 R2 L' F2 R2 B2 F' D L',R,Uppsalaligan 3: Vaccinium Oxycoccos - 2023,333 Final A E2
+5340459001,D2 L' U2 R' D2 U2 L' U B' D2 B2 R D2 U2 F U L2 D',R,Saskatoon Winter 2026,333 R1 B #2
+2737934009,L' U' L2 U' F2 L2 B2 U' F2 U R F2 U2 F' U L U F R2 B R',R,Hessen Open 2023,333mbf Final A #1
+3984656001,D' R2 D' F2 R2 U' R2 B' F' U2 B L' B D2 F2 D' U2 F,R,Bursa Summer 2024,333 R2 A #3
+1902368001,F' U F B2 D' F B R' U R' U F2 U F2 R2 B,R,Stevenage Spring 2022,333 R2 A #1
+4025649001,F D R' U2 R2 D' L2 D' L2 B2 U' B D L2 F' L2 F2 U' L,R,Huánuco al Cubo 2024,333oh Final A #3
+930021001,D' B2 R2 U' B2 U' F2 U L' F' L' U2 F2 U L' F2 U2 L2 U',R,Trinity Valley Open 2018,333 R1 D #2
+3149383001,D F2 U' R' B' L' U2 D' F' D U2 F2 R B2 R U2 R2 F2 U2 R,R,Balkan Open 2023,333 R1 C #1
+3048421001,L B' L2 U' F2 U' L2 D R2 U L' F2 D2 B' D L' B L' U,R,Tbilisi September Open 2023,333 R2 B E1
+1389107001,L' U2 R2 L2 U R' L B' L' F' R B2 U' B2 R2 U2 D' F2,R,Munich Open 2019,333 R1 D #5
+2080297001,B2 U2 R F L' U2 R2 U F R2 B2 D' F2 B2 L2 D L2 U' L2 D2 B R',R,Bay Area Speedcubin' 36 2022,333bf Final A #1
+351076001,U R2 F2 U F2 L2 D' F2 D2 U' R D' U2 B F2 U B2 L' B R2,R,CCC Summer Open 2016,333 R2 B #1
+1987421001,F U' L' B2 R2 B L2 F U2 F' R2 L' B' R2 F' L B2 L2 B2,R,WA Open 2022,333 R2 C #5
+1187225001,R2 U' L2 D B2 U2 F2 U' F' D' U L D' L' U2 B U' L D,R,Cape Fear Cubing 2019,333 R1 C #4
+1095733001,U L2 F' B U' D' R F2 L' F R2 B2 D2 B2 R2 D' L2 D R2 U,R,Xi'an Cherry Blossom 2019,333 R1 J #5
+365680001,F' U R' D2 R' B2 U2 L2 U' B' D2 L' F2 R2 D2 L2 D2 R2,R,VIT Rubik's Cube Challenge 2016,333 R1 F #1
+5547711001,L U2 B L2 D2 L2 F2 D2 F2 L' B R B U B' F' R' B2,R,Brockport Bash 2026,333 R2 A #5
+2087013001,B' U F2 D2 B2 R D2 B2 U2 L2 D' B2 R' F' R' D2 L' U' B' L',R,Portugalete 700 Open 2022,333bf R1 A #3
+5006395057,D2 L' F2 U2 B2 D' U L2 U2 L B' R F D2 R' U' B L' B' L',R,New York Quiet Championship 2025,333mbf Final A #2
+887417001,L' U2 B2 L2 D2 L2 D2 B2 D' F' R2 B2 D' L2 R2 U' L' D,R,Dragon Cubing 2018,333 R2 A E2
+2793065001,U' B' R2 F2 U2 L2 R2 U2 L2 B' U' L' U F' L2 B D2 B,R,Colorado Mountain Tour - Avon 2023,333oh R1 B E2
+399126001,U' L2 U B2 D2 F2 R2 D2 L' F2 L D2 F R' U' R' U B2 U' L2 U',R,Samara Open 2016,333bf Final A #1
+401596001,F U D' L2 D L' B U2 R' D2 F' U2 B2 U R2 U' B2 L2 U',R,Berkeley Fall 2016,333 R1 J E1
+3730357035,U2 D R' D F R' U' D B' R L U' F2 D F2 D B2 D2 L' F2,R,Big & Blind & Clock Vantaa 2024,333mbf Final A #1
+408541001,L2 D2 B2 R2 D U2 F2 R2 B2 F L F2 R2 F' L D F,R,Athens Winter 2016,333ft R1 A #3
+5134874001,F L2 D2 R U2 R' B2 F2 U2 R2 D B2 F' U2 L' U' F' L2 U',R,VR Bengaluru Cube Open A 2025,333 Final B E1
+3384440001,U L2 F' U' F' L U2 F L' B' R2 F U2 F R2 B L2 U',R,Julekubing 2023,333 R1 A #2
+420498001,B2 R U2 B2 F2 L2 F2 L D2 F' D2 R U B2 R U2 L2 D' B,R,Santa Claus Cube Race 2016,333 R3 B #4
+944546001,U2 L U2 F2 L U2 B D' B F' D2 F R B2 L2 U2 F,R,Zibo Open 2018,333oh Final A #3
+2851339001,R2 B L2 B U2 F' U2 B U2 R2 U2 F' R' U B L' U2 B D2 U',R,Toros Open 2023,333 R2 A #4
+1703057001,U2 D' B L2 U' R2 B R F' B' R2 B' L2 D2 L2 U' B2 U2,R,Fremantle Fast Fingers 2021,333 R1 C E2
+456906001,F' R U R U2 D F' D R' D B2 R2 D R2 F2 B2 U2 D R2,R,SynoCubix Open 2017,333 R1 J E2
+472099001,R2 D R2 U L2 F' D F R' U2 B2 U L2 F2 R2 F2 U2 B2 U L2,R,SCMU ICT Open 2017,333 R1 D E2
+4979833001,U F2 R' B' D2 L2 R2 B' R2 B L2 B2 R' D' B' D2 R F2 L,R,Israel Championship 2025,333 R1 C #1
+482153001,L U F U' B' R F2 B2 L F L2 F2 D R2 F2 U B2 L2 B2 L2,R,Rubik Soletta Santiago 2017,333 R1 F E2
+5184988001,L2 U B U2 B' L2 U2 B' D2 F D2 B2 U' L' B2 U' B' L' U,R,Celebes Championship 2025,333oh R1 B #4
+2786753001,F L' F2 D2 F D2 B' U2 B L2 F2 D' L2 B' L' B L2,R,Big E Slice 2023,333oh R1 A #3
+2076776001,U2 B' L R2 F2 L2 U' L2 D2 U2 F2 B' U' R D L' B2 F2,R,Perth Puzzle Marathon 2022,333 R1 D #1
+5286282001,R D2 B2 F' R2 U2 B' L2 U2 L2 B2 F' U B2 L' U F L U B',R,Tocancipá III 2025,333 Final B E2
+495545001,D2 R2 F2 R D2 F2 L' D' L U' L' B' U B R2 F2 U',R,L.P. 3600 Rubik 2017,333 Final B #2
+523429001,F B2 R D F2 B' L D2 B2 U F2 R2 B U2 F2 U2 B D2 B',R,Nacionales de SpeedCubing 2017,333oh R1 A #5
+524259001,B2 D2 R2 F2 U B2 U R2 B2 R2 U' F' R U' B2 R D2 R' D R F',R,City of Joy Open 2017,333 Final B #5
+1358787001,D' U' R2 U L2 U B2 U2 R2 F D2 U L' D' U2 B' R D B' U2,R,ERAU Speedcubing Fall 2019,333 R2 B #2
+528192001,R2 B2 L2 D2 B' L2 D2 B' D' B U2 R' D L2 U2 L2 D B' R,R,Berlin Summer Cube Days 2017,333 R1 D #1
+3011738020,F2 L2 F2 D L2 D' B2 R2 D L' B2 L D' B U2 B U' F' U L' F',R,Silent Brasília 2023,333mbf Final A #2
+4990513001,R2 U F2 R' B2 L' U2 L2 B2 D F' R2 F U2 R2 D U2 R2,R,Dublin Autumn Solving 2025,333oh R1 A #1
+2121143001,L D B' R2 D2 L2 D F2 U' B2 F' L' B U' R' D2 B R',R,Cubing Comes To Pondy 2022,333 R1 G #3
+4864645001,U2 F2 L U2 L2 D2 U2 L U L F2 D' L' U2 B2 R U2 F L,R,FLIP Open 2025,333 R1 B E2
+2254132001,B U2 B' D2 R2 U2 L2 U2 F2 U2 R' D B2 R' U2 R' F2 D' R',R,Vienna Open 2022,333oh R1 A #2
+2939551001,L' B D2 F' D2 F2 D2 F D2 F2 D' B R' F R' B2 L2 D L,R,Maru Cube Day 2023,333 R3 C #1
+5084894001,L' R' D2 R F2 L' D2 L F2 U' F2 U' R D B' U2 F' L2 D,R,Cubing for Yuval Israel 2025,333 R2 G #2
+3017726001,F2 D2 B2 R2 D2 B' U2 F' U' F U2 L' D2 U2 L2 R' D L2,R,Tajikistan Nationals 2023,333 R1 A E1
+4276274001,B2 D2 B L2 B' L2 B2 L2 B' D2 U' L' D2 F D' U L B2 D,R,Colombian Nationals Avenida Chile 2024,333 R1 D E1
+1840282001,U2 D B D' R2 L2 D' R' F2 R' F2 D2 L2 B2 L2 D' R2 B2,R,Swisscubing Cup I 2022,333 Final A #1
+2517674001,B2 U F R2 F' L' U L' U' R2 L2 B2 U F2 D2 L2 U' F2,R,Lincolnshire Winter 2023,333 R1 A #3
+580783001,R' U' F L2 R2 F' L2 F U2 L2 R2 B' R2 B2 U R U' R D' F L' D F R' U' F,R,Ural Open 2017,333fm Final A #2
+582639001,D' B2 D B2 U2 B2 D L2 R2 D' F L2 D2 R U2 F' R B D',R,Hong Kong Open 2017,333 Final A E2
+5273986001,F' R' B2 D2 R2 D2 R D2 B' L B2 D2 L2 B2 F L' U,R,New Zealand Nationals 2025,333 R1 D E1
+2002935001,L' U2 B2 D2 R B2 L U2 B' R' B2 D L2 F U' F2 D U L B',R,New York Championship 2022,333bf R1 A #2
+592161001,L D2 U2 F2 R B2 R' F2 U R' U' B' R2 D' U F U F2 D,R,Beijing Ten Years Open 2017,333 R1 F #2
+1137464001,F2 D2 U2 L2 U2 B' F' R2 U B2 F' U B2 U2 L' U',R,Play Cube X4 2019,333 R1 C #4
+4937384001,U2 B2 U2 R F2 L U2 L' R' B' D B U' B2 U' F2 U' L2 R' B' L,R,Vietnam Championship 2025,333bf R1 B E1
+4639211001,L2 D2 L U L' D' B D2 B2 L' U2 R F2 R' F' U L2 F,R,UCD Cube Days 2025,333 R1 B #1
+3565345001,D2 F' L' D L2 R F2 L' R' B2 U' R2 U B L' U' B,R,Taichung Open 2024,333 R1 B #5
+622407001,F2 L2 R2 B L2 B2 F2 D2 R' D F2 U2 B2 F R D L B' R',R,Criciúma Open 2017,333 R2 C #2
+1018202001,B' D2 B2 L2 D2 B2 L2 B' U2 F2 R U R2 B2 D' U B R' F2 L2,R,Pasión Cubera Honduras 2019,333 R1 A #4
+3414596001,D' F L B R F R2 F D' F2 D B2 L2 U' F2 L U' B,R,DFW Winter Variation 2024,333 R1 A #5
+4231813031,F' U R D2 F2 L B2 U2 L' D2 R' F D L2 U R F D U F2 L B2,R,DNFeandont Tijuana 2024,333mbf Final A #1
+5257828001,D F U2 F2 L' B2 F2 R' F D' L U F2 D F2 R2 F,R,Portugal Championship 2025,333 R1 D #1
+1415265001,F U2 F D2 F2 L2 R2 F D U' R' B' F2 R2 D' L2 R D' R2,R,Michigan Cubing Club Delta 2019,333 R1 D E2
+642203001,F U' L B' R D2 L' U B' L B2 U2 B' U2 F' R2 F' U2,R,Raipur Cube Challenge 2.0 2017,333 R1 D E2
+644416001,D F2 L2 D B2 U2 F2 D' L2 U L B F U L2 F U2 R D2,R,PSKubing 2017,333oh R1 B #3
+5598381001,B2 R2 F B' R' L' B R' B2 R2 U2 L2 B' U2 R2 U' F,R,Passo Fundo Cubing 2026,333oh Final A #1
+4937847047,F' R2 U' L2 U L2 R2 B2 D B L F2 L D2 B' L' R D' L' B,R,BrizZon Side Open IV 2025,333mbf Final B #1
+1915392001,F' D2 F D' L2 U B L2 U B' D2 F2 B2 L' B2 D2 R' B2,R,Starkvegas Spring 2022,333 R1 A #2
+3470255001,R' D2 L2 F2 L' F2 D2 R F2 U' L2 F D' L' B2 U L' B' D,R,Bolivia Cubing Tour - SCZ 2024,333 R1 C #1
+4054707001,R' F L2 B U2 F2 U R2 B2 F2 U2 L2 F U' B' R' B2 D,R,DFW Back to School 2024,333 R2 B #2
+660634019,U F2 R F U' R' B2 D2 R' U' R2 D2 L2 U F2 D' R2 F2,R,Pré-Mundial 2015,333mbf Final A #1
+816854001,F2 R2 U R2 U F2 D' L F L' U' F' L' D2 B D',R,Vantaa Open 2018,333oh R2 C #4
+1239812060,U' L2 F2 D' B2 U2 F2 D' R' B F U' L F R2 U' L2 R2 F' R2 B' L',R,China Championship 2019,333mbf Final A #2
+1083629001,U2 B D2 R2 B2 L2 B' F2 U2 F2 D' R2 B' L F2 R2 F R2,R,German Open 2019,333 R2 C #4
+660727037,D' B2 R2 B2 R2 D' B2 F2 D L2 R' F2 U R' U B2 L' F2 L2 U',R,Finnish Open 2015,333mbf Final A #1
+660745047,R D2 R2 F2 L B2 L U2 R' U L2 R B' R' D' R' U F' L' U2 B',R,Radomsko Cube Theory 2015,333mbf Final A #1
+1394463001,D' L2 F B R2 B2 R' U L2 F R2 F2 L' B2 L2 D2 F2 D2 F2 L,R,Hangzhou Autumn 2019,333 R1 A #3
+1274947001,B' L' D L2 U2 R' F R' F2 D2 R2 F2 R2 F' D2 R2 U2 B2,R,August Bank Holiday Celebration 2019,333 R2 B #4
+3812425001,F2 R' F2 L' B2 D2 B2 L B' F' R F D' R' B' L R D2,R,Utah Valley Favorites 2024,333 Final B #5
+3460364001,L2 D2 L2 R2 B D2 L2 B U L2 R' F' R2 U' B L2 F' U' B2,R,Istres Open 2024,333 R1 C #2
+4292109001,R2 D L2 U' F2 D2 U' B' F L2 B D' L' D' B2 L' B,R,Karnataka Cube Championship 2024,333 R1 A #4
+2373682015,F2 L B' D L2 F' U D2 L2 U2 D2 F' R2 B L2 B U2 B2 L' B' L' F',R,Top 75 Percent Proceed in Sala 2022,333mbf Final A #1
+661105020,L B2 D2 B2 L' F2 R' F2 R2 D2 B' R' D' L' B' R' B' U2 F U L B,R,Sesc Camaquã 2016,333mbf Final A #1
+3935535001,B2 F2 D' U2 L2 D F2 L F D L U2 F2 U2 R B R' U',R,Edén Bogotá 2024,333 Final A #5
+1626494001,D' B L' F2 B' D F2 R2 D F' R2 D' F2 R2 D F2 R2 D',R,Cubing Cafetalon Recargado 2020,333 R2 B #5
+2638562001,D2 B2 R2 B2 U L2 B2 R2 U' B' R D B' F' D2 U' F2 U' R' B R2,R,IndalOpen 2023,333bf Final B #1
+1502427001,U' B2 R L' D' L' D2 R B' R' F U2 B2 D2 B2 R2 D' B2 D,R,Cubing with Manatees 2020,333 Final A #4
+849679001,L F U B2 D2 R2 B2 L F' U F2 L2 F D2 B R2 B' D2 F2 U2 L2,R,LGA Open 2018,333oh Final C #2
+3608744001,B L' D L2 D' L2 D F2 R2 U' B2 U2 R' U' B' R F2 L2 B2,R,İstanbul Cube Day B 2024,333 R1 A #2
+664025001,B2 L D2 B2 U2 B2 L' R' D2 L2 R2 F' L2 D' R2 U L U2 L2 R2,R,Classic City 4 Charity 2017,333 R1 A #3
+4515097001,D L D2 R2 D2 U2 L' D' B2 L' B2 U2 L2 U B L B',R,Risbjerg Februar 2025,333oh R1 A #4
+2447768001,R' U' F2 L2 U2 R' B2 L D2 R' U2 F' D L F' R F' R B,R,Cube Fiesta Surat 2023,333 Final A E2
+677002001,F R2 D2 B2 U2 F U2 B' L B' D2 R B2 F U L' D2 L2,R,Rubik's Cube Mumbai Open 2017,333 R1 H E1
+2581015021,L' B' U F2 R' F' U F' U B2 L2 B2 U' B2 U2 L2 D' B' D B' L2,R,Bratislava BLD Open 2023,333mbf Final A #2
+1137767001,F D' R B' U F2 L' B R B2 U L2 B2 D' F2 B2 L2 U B2 L2,R,Play Cube X4 2019,333oh Final A E1
+840216001,F R2 B2 L2 R2 B U2 B' L2 B' U B' D' R' D B' R' F2 L' F,R,Korean Championship 2018,333oh R1 A #5
+687042001,F2 U2 R2 D B2 L2 D F2 D2 R' B L' R2 F' D' B U2 L' D2 R,R,South Enough 2018,333 R1 C #5
+1044517001,L2 U B2 D B2 D2 L2 D R D R' B' D' B2 L' U' L D' F',R,CubingUSA Oregon Championship 2019,333 R1 B E1
+2500831001,F' U' L F' U' B2 U2 B L U2 B' L2 F2 R2 F D2 F',R,Ohio State RPAC Cube Clash 2023,333 R1 B #3
+833126001,D2 B L2 D2 B' U2 B F2 L2 B L' U L B U L U' R' B' R',R,Ekat Summer 2018,333ft Final B #1
+709364001,D2 B D B R2 F' U R L D' R2 F2 B2 L U2 L U2 D2 R' U2,R,Annuntia Open 2018,333oh Final B E1
+3182666001,F' D2 F' L2 U2 F U2 R2 U2 F' U2 R F' U' F2 L F' L D' F2,R,Three Rounds Aventura 2023,333 R2 A #2
+1193789001,L' U' L F U L U2 L2 F' U2 B2 L2 F2 R' B2 U2 R' L,R,Belgian Solstice 2019,333oh R1 B #3
+723560009,D' L2 B2 U B2 D U L2 U' L' D2 U' B' D B' D2 F D' L2 U,R,San Jose Cubing 2018,333mbf Final A #1
+727276001,D' R2 D L' U' R2 B R' F L2 D' B2 L2 F2 R2 B L2 U2 F2,R,Guildford Open 2018,333oh R1 A E1
+734041001,D' B2 F2 R2 U R2 D2 R2 B2 U' L D2 R D2 U L' D' U' B',R,Wiler Würfelfest 2018,333 R2 B #3
+751198001,L U' R F2 R2 L' D L2 U F' L2 D' B2 U R2 B2 U' F2 D',R,High Wycombe Open 2018,333 R1 D #4
+752541001,F U2 B' D2 B2 U2 B' D2 L2 D' F L2 D2 B D' F' L' F2 D',R,CubingUSA Southeast Championship 2018,333oh R1 C E2
+1470097001,F U2 B2 D2 L2 B2 U2 B U2 F2 R B' F2 D' F2 R2 U B L U L B' L',R,Nanchang Winter 2019,333bf Final A E2
+4003966001,R2 F' D' F2 U2 B U2 F' R2 B2 L B L2 U' L' B' U2,R,Autotalo Anime Adventure IX 2024,333oh Final A #4
+846356008,L' D2 L B2 U2 R U2 L2 U L2 B L D2 L2 B2 R2 U' B' D2 L,R,Batam Open 2018,333mbf Final A #1
+759291001,F U' L F2 U B' R D' R2 U' F' U2 R2 F2 B L2 U2 F' R2,R,Oakridge Cube Open - April 2018,333 R1 G E1
+2338928001,F2 U' L2 D' U' R2 F2 R2 B2 D' R2 B2 R' B F2 U2 L' B D B,R,Vardagscubing I - Uppsala 2022,333oh Final B E1
+3648716001,B2 D' F L' U2 F R2 B' D2 U2 R2 F R F' U F D2 L D,R,Santa Barbara Cubing 2024,333oh Final A #5
+4837956001,D' L B' L' D2 F2 L' B2 R D2 L' D' F R2 B2 U R2 B',R,Ulaanbaatar Summer 2025,333oh Final B #5
+780526016,U' B2 U2 B2 L2 D2 U' R2 B2 U R2 F L' U' B' R' U2 L' U' B U' L',R,Mindanao Championships 2018,333mbf Final A #1
+787312001,B' U F2 L D2 F' L' D' F2 B' U2 B2 R' F2 R2 D2 L U2 L2 F2,R,CubingUSA Great Lakes Championship 2018,333 R2 B E1
+4836284001,B' D L' D R2 D' R2 U' B2 D2 R' B L2 B' R U2 L B2,R,Cubing in the Cornfields IA 2025,333 R1 B #4
+4262484001,U R D2 U F L2 B D2 U2 R2 B' L B U R2 D2 F' R,R,Rubik's WCA Asian Championship 2024,333 R1 AP E1
+806068001,B2 D2 F2 D2 R B2 L2 R' D2 U F' D2 L2 R B' R' B2 L2 B',R,Santa Ana Open 2018,333oh Final D E1
+4105485047,F2 D2 B D2 L2 F R2 D' B' D2 L D L' U2 L' D' L U2 L2 U2,R,SacQuiet Fall 2024,333mbf Final A #1
+2235082001,R' B2 L2 U2 R2 D' U' L2 B2 F' U' F' D B2 R' D2 L2 F',R,Fecap Open 2022,333 R1 A E2
+1225953001,R2 F L2 F' D2 B L2 F L2 F2 L2 D' L' U R F' L U2 F L2 F,R,Heze Open 2019,333 R1 C E1

@@ -1,0 +1,15 @@
+# Scramble samples — 123 / rouxs1 / W / bin 1
+# Population in this bin: 8
+# Samples listed: 8 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-09
+# Columns: id,scramble,bottom_color,competition,round
+
+1328740001,U B2 U' L2 D F2 R2 F2 L2 D2 R2 B U' B R F U2 L' U R' F',W,Santa Barbara Fall 2019,333 R2 B E1
+2114409006,U2 L2 F2 L2 D' L2 U2 R' D' L B L' D' U2 B2 F2 U' B2 L2 U,W,SacQuiet 2022,333mbf Final A #2
+3140543001,B' L' D2 R2 U L U' F2 L' F R2 B2 D L2 B2 L2 U B2 U,W,Speedcube Battle Vallekas 2023,333 R1 D #4
+3308280001,D2 R' B2 U2 L B2 L2 F2 D' B R D2 F2 U' F2 U' B' D,W,Maloka al Cubo Bogotá 2023,333 R2 A E2
+3777094001,R2 L B2 U2 L B U2 L F' U' R B2 U2 L2 F2 R' B2 L U2 B R',W,Eretum III: Mental Edition 2024,333bf R1 A #3
+4935724029,B U' L2 U F2 U' R2 U2 B2 R2 U' R U2 B' R F2 D2 B' D' L',W,Kooyong Clock Clash 2025,333mbf Final A #1
+5528193001,R U' F2 U' L2 R2 D2 R2 F' R2 B' D' B2 D2 L D' R F',W,Caminos de Guanajuato - León 2026,333 R1 A E2
+5645801001,D2 F2 D2 B' F2 L2 B R D R B2 U' F' L' B2 D2 R F,W,Las Palmas Ahome 2026,333oh R2 A E2

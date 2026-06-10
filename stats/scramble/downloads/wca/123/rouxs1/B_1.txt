@@ -1,0 +1,16 @@
+# Scramble samples — 123 / rouxs1 / B / bin 1
+# Population in this bin: 9
+# Samples listed: 9 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-09
+# Columns: id,scramble,bottom_color,competition,round
+
+74824001,D R2 D2 L2 B2 D2 R U' B R' D2 L2 R' F' R F' U,B,Slow n Steady Fall 2014,333 R1 B E1
+386120001,R' D R2 F U F2 L2 F R' B2 L2 D L2 U' B2 D B2 D' B2,B,RubIquitos 2016,333 R1 A #1
+589543001,D' F2 L2 D' L2 D L2 F2 D' R' D2 U' L D2 B D' L' R D' F2,B,Goldenfields Open 2017,333oh Final B #3
+866024001,F2 U2 L' F2 U2 R2 F2 D2 F R2 B R F L D L' U F,B,II Recife Open 2018,333 Final A E2
+1170989001,F2 L2 D2 U2 B L2 D2 B L' F2 L' R F2 R B' L' U B' L,B,Tuzo Clásico 2019,333bf Final A #3
+3653203001,R' D U R2 B2 D R2 B2 F2 R2 U' R U2 L' B' D' L' R' F',B,Rahn Education Open 2024,333oh Final A #1
+5020771001,R F' R D2 L' F' B2 R2 D L2 D' R2 B2 U F' L,B,Criciúma Open 2025,333 R2 A #5
+5317240001,R U B D' B2 U L2 B2 D' U2 L2 R B D' L D2 R D' F,B,Super Duper San Diego 2026,333oh R2 A E2
+5335171001,D L2 D2 L2 F' R U' L R2 F D2 F2 B' L2 F2 R2 L2 U',B,Tassie Summer 2026,333 R2 C E2
