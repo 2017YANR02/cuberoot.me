@@ -43,7 +43,7 @@
     ],
     [
       78,
-      "[Olivia Trace](https://www.worldcubeassociation.org/persons/2015TRAC01)",
+      "[Aubrey Trace](https://www.worldcubeassociation.org/persons/2015TRAC01)",
       "[Johns Hopkins Winter 2015](https://www.worldcubeassociation.org/competitions/JohnsHopkinsWinter2015)",
       null
     ],
@@ -78,6 +78,18 @@
       null
     ],
     [
+      70,
+      "[Roman Sokolovskyi](https://www.worldcubeassociation.org/persons/2021SOKO03)",
+      "[Cubes Masters Zhytomyr 2021](https://www.worldcubeassociation.org/competitions/CubesMastersZhytomyr2021)",
+      null
+    ],
+    [
+      70,
+      "[Leo Alanen](https://www.worldcubeassociation.org/persons/2022ALAN02)",
+      "[Pulmapelipäivät 2022](https://www.worldcubeassociation.org/competitions/Pulmapelipaivat2022)",
+      null
+    ],
+    [
       69,
       "[Nolan Yiu](https://www.worldcubeassociation.org/persons/2016YIUN01)",
       "[Berkeley Fall 2016](https://www.worldcubeassociation.org/competitions/BerkeleyFall2016)",
@@ -87,18 +99,6 @@
       69,
       "[Ivo Stoutjesdijk](https://www.worldcubeassociation.org/persons/2019STOU02)",
       "[Breda Open 2019](https://www.worldcubeassociation.org/competitions/BredaOpen2019)",
-      null
-    ],
-    [
-      69,
-      "[Roman Sokolovskyi](https://www.worldcubeassociation.org/persons/2021SOKO03)",
-      "[Cubes Masters Zhytomyr 2021](https://www.worldcubeassociation.org/competitions/CubesMastersZhytomyr2021)",
-      null
-    ],
-    [
-      69,
-      "[Leo Alanen](https://www.worldcubeassociation.org/persons/2022ALAN02)",
-      "[Pulmapelipäivät 2022](https://www.worldcubeassociation.org/competitions/Pulmapelipaivat2022)",
       null
     ],
     [
@@ -133,6 +133,12 @@
     ],
     [
       65,
+      "[Daniel Pavelich](https://www.worldcubeassociation.org/persons/2015PAVE01)",
+      "[Mishawaka Winter 2017](https://www.worldcubeassociation.org/competitions/MishawakaWinter2017)",
+      null
+    ],
+    [
+      65,
       "[Elizabeth Cutting](https://www.worldcubeassociation.org/persons/2019CUTT01)",
       "[Colorado Qualifier 2019](https://www.worldcubeassociation.org/competitions/ColoradoQualifier2019)",
       null
@@ -153,12 +159,6 @@
       64,
       "[Max Chan](https://www.worldcubeassociation.org/persons/2015CHAN37)",
       "[Manhasset 2015](https://www.worldcubeassociation.org/competitions/ManhassetFall2015)",
-      null
-    ],
-    [
-      64,
-      "[Daniel Pavelich](https://www.worldcubeassociation.org/persons/2015PAVE01)",
-      "[Mishawaka Winter 2017](https://www.worldcubeassociation.org/competitions/MishawakaWinter2017)",
       null
     ],
     [
@@ -324,6 +324,12 @@
       null
     ],
     [
+      55,
+      "[Takeru Victor Muto Asmund](https://www.worldcubeassociation.org/persons/2020ASMU01)",
+      "[Lonely Denmark 2020](https://www.worldcubeassociation.org/competitions/LonelyDenmark2020)",
+      null
+    ],
+    [
       54,
       "[Kevin Arturo Huamán Ruiz](https://www.worldcubeassociation.org/persons/2014RUIZ10)",
       "[UNI-Rubik 2014](https://www.worldcubeassociation.org/competitions/UniRubik2014)",
@@ -345,12 +351,6 @@
       54,
       "[Alexey Tsvetkov](https://www.worldcubeassociation.org/persons/2017TSVE02)",
       "[Pécs Open 2017](https://www.worldcubeassociation.org/competitions/PecsOpen2017)",
-      null
-    ],
-    [
-      54,
-      "[Takeru Victor Muto Asmund](https://www.worldcubeassociation.org/persons/2020ASMU01)",
-      "[Lonely Denmark 2020](https://www.worldcubeassociation.org/competitions/LonelyDenmark2020)",
       null
     ],
     [
@@ -541,6 +541,12 @@
     ],
     [
       50,
+      "[Marko Obradović](https://www.worldcubeassociation.org/persons/2022OBRA01)",
+      "[Petrinja Cube Day 2022](https://www.worldcubeassociation.org/competitions/PetrinjaCubeDay2022)",
+      null
+    ],
+    [
+      50,
       "[Kévin Ky](https://www.worldcubeassociation.org/persons/2022KYKE01)",
       "[Massy Palais'Open A 2022](https://www.worldcubeassociation.org/competitions/MassyPalaisOpenA2022)",
       null
@@ -577,14 +583,14 @@
     ],
     [
       49,
-      "[Shenghai Fang (方胜海)](https://www.worldcubeassociation.org/persons/2016FANG01)",
-      "[Shanghai Spring 2016](https://www.worldcubeassociation.org/competitions/ShanghaiSpring2016)",
+      "[Riley Dexter](https://www.worldcubeassociation.org/persons/2016DEXT01)",
+      "[Cubing Classic 2016](https://www.worldcubeassociation.org/competitions/CubingClassic2016)",
       null
     ],
     [
       49,
-      "[Riley Dexter](https://www.worldcubeassociation.org/persons/2016DEXT01)",
-      "[Cubing Classic 2016](https://www.worldcubeassociation.org/competitions/CubingClassic2016)",
+      "[Shenghai Fang (方胜海)](https://www.worldcubeassociation.org/persons/2016FANG01)",
+      "[Shanghai Spring 2016](https://www.worldcubeassociation.org/competitions/ShanghaiSpring2016)",
       null
     ],
     [
@@ -621,12 +627,6 @@
       49,
       "[Ethan Qiu](https://www.worldcubeassociation.org/persons/2022QIUE03)",
       "[Flower City 2022](https://www.worldcubeassociation.org/competitions/FlowerCityCubeFest2022)",
-      null
-    ],
-    [
-      49,
-      "[Marko Obradović](https://www.worldcubeassociation.org/persons/2022OBRA01)",
-      "[Petrinja Cube Day 2022](https://www.worldcubeassociation.org/competitions/PetrinjaCubeDay2022)",
       null
     ]
   ]

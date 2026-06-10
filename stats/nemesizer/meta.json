@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-06-09T22:53:22.282Z",
-  "exportDate": "2026-06-09",
-  "personCount": 290338,
-  "rankCount": 1878553,
+  "generatedAt": "2026-06-10T06:14:01.186Z",
+  "exportDate": "2026-06-10",
+  "personCount": 290652,
+  "rankCount": 1880720,
   "events": [
     {
       "id": "333",
@@ -306,6 +306,12 @@
       "nameEn": "Cuba",
       "nameZh": "Cuba",
       "continentIdx": 3
+    },
+    {
+      "iso2": "cv",
+      "nameEn": "Cabo Verde",
+      "nameZh": "Cabo Verde",
+      "continentIdx": 2
     },
     {
       "iso2": "cy",
