@@ -50,9 +50,7 @@ const VARIANT_LABEL: Record<string, { zh: string; en: string
   pseudo_f2leo: { zh: '伪 F2LEO', en: 'Pseudo F2LEO',
       zhHant: "偽 F2LEO"
 },
-  '123': { zh: '1x2x3 (桥式)', en: '1x2x3 (Roux FB)',
-      zhHant: "1x2x3 (橋式)"
-},
+  '123': { zh: '1x2x3', en: '1x2x3' },
   '222': { zh: '2x2x2', en: '2x2x2' },
   '223': { zh: '2x2x3', en: '2x2x3' },
 };
@@ -66,18 +64,10 @@ const METRIC_LABEL: Record<string, { zh: string; en: string
   xxc: { zh: 'XXCross', en: 'XXCross' },
   xxxc: { zh: 'XXXCross', en: 'XXXCross' },
   xxxxc: { zh: 'XXXXCross', en: 'XXXXCross' },
-  block222: { zh: '2x2x2 块', en: '2x2x2 Block',
-      zhHant: "2x2x2 塊"
-},
-  fbsquare: { zh: '1x2x2 方块', en: '1x2x2 Square',
-      zhHant: "1x2x2 方塊"
-},
-  rouxs1: { zh: '1x2x3 块', en: '1x2x3 Block',
-      zhHant: "1x2x3 塊"
-},
-  block223: { zh: '2x2x3 块', en: '2x2x3 Block',
-      zhHant: "2x2x3 塊"
-},
+  block222: { zh: '2x2x2', en: '2x2x2' },
+  fbsquare: { zh: '1x2x2', en: '1x2x2' },
+  rouxs1: { zh: '1x2x3', en: '1x2x3' },
+  block223: { zh: '2x2x3', en: '2x2x3' },
 };
 
 export default function RecentScrambles({ lang }: Props) {
