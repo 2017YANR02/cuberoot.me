@@ -88,7 +88,7 @@ const VARIANTS: { key: VariantKey; zh: string; en: string
       zhHant: "偽 F2LEO"
 },
   { key: '123', zh: '1x2x3', en: '1x2x3' },
-  { key: '123x2', zh: '1x2x3 ×2', en: '1x2x3 ×2' },
+  { key: '123x2', zh: '1x2x3 x2', en: '1x2x3 x2' },
   { key: '222', zh: '2x2x2', en: '2x2x2' },
   { key: '223', zh: '2x2x3', en: '2x2x3' },
   { key: 'eoline', zh: 'EOLine', en: 'EOLine' },
@@ -133,7 +133,7 @@ const STAGE_LABEL: Record<Metric, { zh: string; en: string
   b123: { zh: '1x2x3', en: '1x2x3' },
   b222: { zh: '2x2x2', en: '2x2x2' },
   b223: { zh: '2x2x3', en: '2x2x3' },
-  bf2b: { zh: '1x2x3 ×2', en: '1x2x3 ×2' },
+  bf2b: { zh: '1x2x3 x2', en: '1x2x3 x2' },
   beo: { zh: 'EO', en: 'EO' },
   beoline: { zh: 'EOLine', en: 'EOLine' },
   bdr: { zh: 'DR', en: 'DR' },

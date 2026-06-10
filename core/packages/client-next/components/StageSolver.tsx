@@ -60,7 +60,7 @@ const STAGE_LABELS: Record<Method, string[]> = {
   pseudo_pair: ['P-Cross + Pair', 'P-XC + Pair', 'P-XXC + Pair', 'P-XXXC + Pair'],
   f2leo: ['F2LEO Cross', 'F2LEO XC', 'F2LEO XXC', 'F2LEO XXXC'],
   pseudo_f2leo: ['P-F2LEO Cross', 'P-F2LEO XC', 'P-F2LEO XXC', 'P-F2LEO XXXC'],
-  '123': ['1x2x2', '1x2x3', '1x2x3 ×2'],
+  '123': ['1x2x2', '1x2x3', '1x2x3 x2'],
   '222': ['2x2x2'],
   '223': ['2x2x2', '2x2x3'],
   eoline: ['EO', 'EOLine'],
