@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
-import type { QrCode } from "@/lib/db/qr";
-import { qrTargetUrl } from "@/lib/site";
+import type { CardEl, CardLayout, QrCode } from "@/lib/db/qr";
 import {
   CUBE_FACES,
   DEFAULT_QUOTES,
@@ -18,8 +17,13 @@ import {
 // 正面艺术背景图注册表从 cardText 共享(后台选择器 / 卡片轮换 / 矢量母版同源)
 export { FRONT_ARTS };
 
-const displayUrl = (code: string) => qrTargetUrl(code).replace(/^https?:\/\//, "");
 const m = (n: number) => `calc(var(--s) * ${n}mm)`;
+
+// 元素位置微调(编辑器拖动写入,mm):translate 只动自己,不影响兄弟布局
+const elShift = (layout: CardLayout | null | undefined, key: CardEl): CSSProperties =>
+  layout?.[key]
+    ? { transform: `translate(${m(layout[key]!.x)}, ${m(layout[key]!.y)})` }
+    : {};
 
 const PANEL_BASE: CSSProperties = {
   width: m(20),
@@ -33,11 +37,20 @@ const PANEL_BASE: CSSProperties = {
 };
 
 // 正面:艺术图铺满 + 底部压暗 + 语录/品牌叠底(无二维码)。杂志封面式。
-function FrontPanel({ quote, art }: { quote: string; art: string }) {
+function FrontPanel({
+  quote,
+  art,
+  layout,
+}: {
+  quote: string;
+  art: string;
+  layout: CardLayout | null | undefined;
+}) {
   const lines = quote.split("\n").map((l) => l.trim()).filter(Boolean);
   const [main, ...subs] = lines.length ? lines : ["热爱魔方"];
   return (
     <div
+      data-panel="front"
       style={{
         ...PANEL_BASE,
         justifyContent: "flex-end",
@@ -62,7 +75,10 @@ function FrontPanel({ quote, art }: { quote: string; art: string }) {
             "linear-gradient(to top, rgba(17,17,26,0.9) 0%, rgba(17,17,26,0.6) 42%, transparent 100%)",
         }}
       />
-      <div style={{ position: "relative", textAlign: "center" }}>
+      <div
+        data-el="quote"
+        style={{ position: "relative", textAlign: "center", ...elShift(layout, "quote") }}
+      >
         <div style={{ fontSize: m(2.6), fontWeight: 800, lineHeight: 1.18 }}>{main}</div>
         {subs.map((s, i) => (
           <div
@@ -72,17 +88,21 @@ function FrontPanel({ quote, art }: { quote: string; art: string }) {
             {s}
           </div>
         ))}
-        <div
-          style={{
-            marginTop: m(1.2),
-            fontSize: m(1.4),
-            fontWeight: 700,
-            letterSpacing: m(0.1),
-            color: "rgba(255,255,255,0.92)",
-          }}
-        >
-          魔方开放社群
-        </div>
+      </div>
+      <div
+        data-el="brand"
+        style={{
+          position: "relative",
+          textAlign: "center",
+          marginTop: m(1.2),
+          fontSize: m(1.4),
+          fontWeight: 700,
+          letterSpacing: m(0.1),
+          color: "rgba(255,255,255,0.92)",
+          ...elShift(layout, "brand"),
+        }}
+      >
+        魔方开放社群
       </div>
     </div>
   );
@@ -94,6 +114,7 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
   const { main, sub } = backText(entry);
   return (
     <div
+      data-panel="back"
       style={{
         ...PANEL_BASE,
         position: "relative",
@@ -150,7 +171,15 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
           <div key={i}>{formulaRow(i)}</div>
         ))}
       </div>
-      <div style={{ position: "relative", textAlign: "center", lineHeight: 1.25 }}>
+      <div
+        data-el="backText"
+        style={{
+          position: "relative",
+          textAlign: "center",
+          lineHeight: 1.25,
+          ...elShift(entry.layout, "backText"),
+        }}
+      >
         <div style={{ fontSize: m(1.6), fontWeight: 700, color: "#1E4ACB" }}>{main}</div>
         {sub ? (
           <div style={{ fontSize: m(1.2), color: "#6B7280", marginTop: m(0.5) }}>{sub}</div>
@@ -167,6 +196,7 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
       >
         {!entry.alg?.moves && term ? (
           <div
+            data-el="term"
             style={{
               fontSize: m(1.1),
               fontWeight: 700,
@@ -177,25 +207,37 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
               borderRadius: m(2),
               padding: `${m(0.2)} ${m(0.9)}`,
               whiteSpace: "nowrap",
+              ...elShift(entry.layout, "term"),
             }}
           >
             {term}
           </div>
         ) : null}
         <div
+          data-el="qr"
           style={{
             background: "#fff",
             borderRadius: m(1.4),
             padding: m(0.8),
             border: `${m(0.14)} solid #E5E8EE`,
             boxShadow: "0 1px 4px rgba(30,74,203,0.14)",
+            ...elShift(entry.layout, "qr"),
           }}
         >
           <div style={{ width: m(14.5), height: m(14.5) }} dangerouslySetInnerHTML={{ __html: svg }} />
         </div>
         {/* 精选公式:案例图(魔方)正上方对齐 记法,不显示名称 */}
         {entry.alg?.moves ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: m(0.5) }}>
+          <div
+            data-el="alg"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: m(0.5),
+              ...elShift(entry.layout, "alg"),
+            }}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={algImgUrl(entry.alg) ?? ""}
@@ -216,18 +258,6 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
             </div>
           </div>
         ) : null}
-      </div>
-      <div
-        style={{
-          position: "relative",
-          fontSize: m(1.1),
-          color: "#9aa1ad",
-          fontFamily: "ui-monospace, monospace",
-          wordBreak: "break-all",
-          textAlign: "center",
-        }}
-      >
-        {displayUrl(entry.code)}
       </div>
     </div>
   );
@@ -250,7 +280,7 @@ export function QrCardUnit({
       className="qr-unit"
       style={{ display: "flex", border: `${m(0.2)} dashed #c4c9d4`, background: "#fff" }}
     >
-      <FrontPanel quote={quote} art={art} />
+      <FrontPanel quote={quote} art={art} layout={entry.layout} />
       <div style={{ borderLeft: `${m(0.2)} dotted #c4c9d4` }} />
       <BackPanel entry={entry} svg={svg} />
     </div>

@@ -1,15 +1,44 @@
 "use client";
 
-import { Printer } from "lucide-react";
+import { Download } from "lucide-react";
+import { useState } from "react";
 
-export function PrintButton() {
+// 下载折叠卡的矢量印刷母版 SVG(含出血 + 裁切线),而非打印当前网页。
+// 多张时逐个抓 blob 触发下载;idx 透传给接口控制正面艺术图轮换。
+export function PrintButton({ codes }: { codes: string[] }) {
+  const [busy, setBusy] = useState(false);
+
+  async function download() {
+    if (busy || codes.length === 0) return;
+    setBusy(true);
+    try {
+      for (let i = 0; i < codes.length; i++) {
+        const code = codes[i];
+        const res = await fetch(`/api/qr/${code}/card?idx=${i}`);
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = `card-${code}.svg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(href);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <button
       type="button"
-      onClick={() => window.print()}
-      className="inline-flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-[13px] font-medium text-white hover:bg-brand-dark transition"
+      onClick={download}
+      disabled={busy}
+      className="inline-flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-[13px] font-medium text-white hover:bg-brand-dark transition disabled:opacity-60"
     >
-      <Printer size={14} /> 打印 / 存 PDF
+      <Download size={14} /> {busy ? "下载中…" : `下载 SVG (${codes.length})`}
     </button>
   );
 }

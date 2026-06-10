@@ -1,4 +1,4 @@
-import type { QrCode } from "@/lib/db/qr";
+import type { CardEl, CardLayout, QrCode } from "@/lib/db/qr";
 import { qrSvgBody, cubeLogo, CUBE_FACES } from "./svg";
 import { backText, frontQuote, FORMULA_TOKENS, cubeFaceletSpots } from "./cardText";
 
@@ -33,6 +33,14 @@ const INK = "#11111A";
 
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+// 元素位置微调:把一段 svg 包进 translate 组(无偏移原样返回),与 DOM 卡 elShift 同语义
+const shift = (layout: CardLayout | null | undefined, key: CardEl, body: string): string => {
+  const o = layout?.[key];
+  return o && (o.x !== 0 || o.y !== 0)
+    ? `<g transform="translate(${o.x} ${o.y})">${body}</g>`
+    : body;
+};
 
 function text(
   x: number,
@@ -97,7 +105,8 @@ function front(
   h: number,
   quote: string,
   pattern: boolean,
-  art?: string,
+  art: string | undefined,
+  layout: CardLayout | null | undefined,
 ): string {
   const x0 = bleed;
   const top = bleed;
@@ -112,9 +121,12 @@ function front(
     .join("");
   const brandY = mainY + 2 + subs.length * 1.7 + 2.6;
   const slogan =
-    text(cx, mainY, 2.8, "#FFFFFF", main, { weight: 800 }) +
-    subEls +
-    text(cx, brandY, 1.4, "rgba(255,255,255,0.92)", "魔方开放社群", { weight: 700, spacing: 0.1 });
+    shift(layout, "quote", text(cx, mainY, 2.8, "#FFFFFF", main, { weight: 800 }) + subEls) +
+    shift(
+      layout,
+      "brand",
+      text(cx, brandY, 1.4, "rgba(255,255,255,0.92)", "魔方开放社群", { weight: 700, spacing: 0.1 }),
+    );
 
   if (art) {
     // 艺术图铺满正面(含左/上/下出血),<image> slice 自带裁剪到该矩形
@@ -169,14 +181,21 @@ function back(
   const chipX = cx - chip / 2;
   const chipTop = top + (hasAlg ? 12 : 15.75);
   const scale = (chip - pad * 2) / dim;
-  const qr =
+  const qr = shift(
+    entry.layout,
+    "qr",
     `<rect x="${chipX}" y="${chipTop}" width="${chip}" height="${chip}" rx="1.4" fill="#FFFFFF" stroke="#E5E8EE" stroke-width="0.14"/>` +
-    `<g transform="translate(${(chipX + pad).toFixed(3)} ${(chipTop + pad).toFixed(3)}) scale(${scale.toFixed(4)})">${inner}</g>`;
+      `<g transform="translate(${(chipX + pad).toFixed(3)} ${(chipTop + pad).toFixed(3)}) scale(${scale.toFixed(4)})">${inner}</g>`,
+  );
 
   // 术语角标:仅无精选公式时显示在二维码上方
   const termEl = !hasAlg && term
-    ? `<rect x="${cx - (term.length * 1.2 + 1.8) / 2}" y="${chipTop - 3.4}" width="${term.length * 1.2 + 1.8}" height="2.4" rx="1.2" fill="rgba(42,93,244,0.10)" stroke="rgba(42,93,244,0.28)" stroke-width="0.12"/>` +
-      text(cx, chipTop - 1.7, 1.1, BRAND_DARK, term, { weight: 700, spacing: 0.06 })
+    ? shift(
+        entry.layout,
+        "term",
+        `<rect x="${cx - (term.length * 1.2 + 1.8) / 2}" y="${chipTop - 3.4}" width="${term.length * 1.2 + 1.8}" height="2.4" rx="1.2" fill="rgba(42,93,244,0.10)" stroke="rgba(42,93,244,0.28)" stroke-width="0.12"/>` +
+          text(cx, chipTop - 1.7, 1.1, BRAND_DARK, term, { weight: 700, spacing: 0.06 }),
+      )
     : "";
 
   // 精选公式区:案例图(魔方)正上方对齐 记法,衬在二维码下方。不显示名称。
@@ -189,19 +208,22 @@ function back(
     const movesEl = movesPath
       ? `<path transform="translate(${(cx - movesPath.width / 2).toFixed(3)} ${movesY})" d="${movesPath.d}" fill="${BRAND}"/>`
       : text(cx, movesY, 1.1, BRAND, entry.alg!.moves, { mono: true, weight: 500 });
-    algEl = caseImg + movesEl;
+    algEl = shift(entry.layout, "alg", caseImg + movesEl);
   }
 
   return (
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#backBg)"/>` +
     (pattern ? cubeFacelets(x0, top, "backClip") : "") +
     (pattern ? notationPattern(x0, top, "backClip", BRAND, 0.08) : "") +
-    text(cx, top + 6.5, 1.6, BRAND_DARK, main, { weight: 700 }) +
-    (sub ? text(cx, top + 9.4, 1.2, "#6B7280", sub) : "") +
+    shift(
+      entry.layout,
+      "backText",
+      text(cx, top + 6.5, 1.6, BRAND_DARK, main, { weight: 700 }) +
+        (sub ? text(cx, top + 9.4, 1.2, "#6B7280", sub) : ""),
+    ) +
     termEl +
     qr +
-    algEl +
-    text(cx, top + PANEL_H - 3, 1.1, "#9aa1ad", url.replace(/^https?:\/\//, ""), { mono: true })
+    algEl
   );
 }
 
@@ -273,7 +295,7 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}" role="img" aria-label="魔方开放社群二维码卡片">` +
     defs +
     bleedBg +
-    front(bleed, foldX, h, quote, pattern, opts.art) +
+    front(bleed, foldX, h, quote, pattern, opts.art, entry.layout) +
     back(foldX, bleed, entry, opts.url, pattern, opts.algSvg, opts.movesPath) +
     fold +
     (cropMarks ? cropMarksSvg(bleed, w, h) : "") +

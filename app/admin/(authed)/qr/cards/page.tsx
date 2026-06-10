@@ -49,7 +49,7 @@ export default async function QrCardsPage({
             <div className="flex gap-2">
               <GhostLink href="/admin/qr">返回列表</GhostLink>
               <GhostLink href="/admin/qr/stats">数据看板</GhostLink>
-              <PrintButton />
+              <PrintButton codes={rows.map((r) => r.code)} />
             </div>
           }
         />
@@ -59,8 +59,7 @@ export default async function QrCardsPage({
           </div>
         ) : (
           <p className="mb-6 text-[12px] text-ink-3">
-            下方为放大预览,打印时自动回到实际 2×4cm。打印前在浏览器打印设置里勾选「背景图形」,否则正面图与二维码不显示。
-            印刷厂母版(含出血 + 裁切线)在列表页每行「下载折叠卡 SVG」。
+            下方为放大预览。点「下载 SVG」逐张导出印刷厂母版(全矢量,含出血 + 裁切线,自包含单文件),直接交印厂,不走网页打印。
           </p>
         )}
       </div>
