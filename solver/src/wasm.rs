@@ -12,6 +12,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::block222_solver::{block_label, Block222Solver, Y_NAMES};
 use crate::block223_solver::{block223_label, Block223Solver};
+use crate::chain_solver::{chain_json, parse_chain_config, ChainSolver};
 use crate::cross_solver::CrossSolver;
 use crate::cube_common::{state_space, string_to_alg, MOVE_NAMES};
 use crate::dr_solver::{dr_axis_label, DrSolver};
@@ -573,6 +574,40 @@ impl FrSolverWasm {
             }
             None => sols_json(u32::MAX, &[]),
         }
+    }
+}
+
+/// 链式求解器(mallard P3):EO→DR→HTR→[FR]→Finish 一次编排,单 HOME 帧,零表下载。
+/// 惰性 ensure:首次 solve_chain 现场建 EOLine/DR(2×~1M)/HTR(2.8MB)/htr2(648KB)
+/// 距离表(数秒);fr.enabled 的请求再惰性建 FR 陪集表(更慢,一次性)。
+#[wasm_bindgen]
+pub struct ChainSolverWasm {
+    inner: RefCell<Option<ChainSolver>>,
+}
+
+#[wasm_bindgen]
+impl ChainSolverWasm {
+    #[wasm_bindgen(constructor)]
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> ChainSolverWasm {
+        ChainSolverWasm { inner: RefCell::new(None) }
+    }
+
+    fn ensure(&self) {
+        if self.inner.borrow().is_none() {
+            *self.inner.borrow_mut() = Some(ChainSolver::new());
+        }
+    }
+
+    /// scramble + 配置 JSON(per-stage {enabled,extra,cap,min,max,axes,excluded} +
+    /// maxChains,'{}' = 默认)→ {"chains":[{"steps":[{kind,variant,m,len,cum}],
+    /// "total":N}]}。m = HOME 帧步骤串(无视角前缀)。打乱不可解析或无链 →
+    /// {"chains":[]} 哨兵;非法配置 JSON 整体回落默认配置。
+    pub fn solve_chain(&self, scramble: &str, config_json: &str) -> String {
+        self.ensure();
+        let cfg = parse_chain_config(config_json);
+        let b = self.inner.borrow();
+        chain_json(&b.as_ref().unwrap().solve_chain(scramble, &cfg))
     }
 }
 

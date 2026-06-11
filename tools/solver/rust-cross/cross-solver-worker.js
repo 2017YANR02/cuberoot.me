@@ -21,6 +21,7 @@ let eoDrSolver = null;    // EoDrSolverWasm(EO/EOLine/DR),零表下载,微表现
 let htrSolver = null;     // HtrSolverWasm(DR→HTR),零表下载,2.8MB 距离表首查惰性现场 BFS
 let htr2Solver = null;    // HtrPhase2SolverWasm(G3→solved),零表下载,648KB 距离表首查惰性现场 BFS
 let frSolver = null;      // FrSolverWasm(HTR→FR,Floppy 还原),零表下载,3456 态陪集表首查惰性现场 BFS
+let chainSolver = null;   // ChainSolverWasm(mallard 链式 EO→DR→HTR→[FR]→Finish),零表下载,首查惰性建全套距离表
 
 async function fetchTable(url) {
   const res = await fetch(url);
@@ -75,6 +76,10 @@ async function init(glueUrl, wasmUrl, tablesBase, need) {
   } else if (need === 'fr') {
     // FR(HTR→FR,Floppy 还原):零表下载,3456 态陪集移动/距离表首查惰性现场 BFS。
     frSolver = new mod.FrSolverWasm();
+  } else if (need === 'chain') {
+    // 链式(EO→DR→HTR→[FR]→Finish):零表下载;首次 solve_chain 现场建
+    // EOLine/DR/HTR/htr2 距离表(数秒),fr.enabled 再惰性建 FR 陪集表。
+    chainSolver = new mod.ChainSolverWasm();
   } else {
     const [a, b, c, d, e, f] = await Promise.all(
       ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'].map(get)
@@ -225,6 +230,13 @@ self.onmessage = async (e) => {
         msg.scramble, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
       );
       self.postMessage({ type: 'fr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+    } else if (msg.type === 'chain_solve') {
+      if (!chainSolver) throw new Error('chain solver not initialized');
+      const t0 = performance.now();
+      // 链式求解:config = JSON 串(per-stage {enabled,extra,cap,min,max,axes,excluded} + maxChains)。
+      // data = { chains:[{steps:[{kind,variant,m,len,cum}],total}] },m 为 HOME 帧步骤串(无视角前缀)。
+      const json = chainSolver.solve_chain(msg.scramble, msg.config || '{}');
+      self.postMessage({ type: 'chain_solve', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'variant_moves') {
       if (!variantSolver) throw new Error('variant solver not initialized');
       const t0 = performance.now();
