@@ -348,6 +348,8 @@ export function CardEditor({
         readOnly
       />
 
+      {/* 左:卡片预览(点元素拖动构图);右:被选元素的编辑面板 */}
+      <div className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
       {/* px/py 给四角裁切线留出成品边外的空间,免被 overflow 裁掉 */}
       <div className="overflow-x-auto px-12 py-12">
         <div
@@ -410,8 +412,8 @@ export function CardEditor({
         </div>
       </div>
 
-      <div className="mx-auto max-w-[560px]">
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[12px] text-ink-3">
+      <div>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink-3">
         <span>点元素编辑,按住拖动移位;改完点右上角「保存」生效。</span>
         <label className="inline-flex cursor-pointer items-center gap-1.5">
           <input
@@ -656,8 +658,13 @@ export function CardEditor({
             </>
           ) : null}
         </div>
-      ) : null}
+      ) : (
+        <div className="mt-3 rounded-md border border-dashed border-line bg-bg-soft/50 p-4 text-[12px] leading-relaxed text-ink-3">
+          点左侧卡面上的元素(正面图 / 语录 / 二维码 / 背面文案)在此编辑。
+        </div>
+      )}
       {/* 保存按钮已统一到页面右上角(form={formId} 跨 DOM 提交),此处不再放 */}
+      </div>
       </div>
     </div>
   );
