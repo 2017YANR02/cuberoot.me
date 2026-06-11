@@ -438,7 +438,8 @@ export function CardEditor({
                       : "border-line hover:border-brand/40")
                   }
                 >
-                  <img src={o.src} alt={o.label} className="block aspect-[1/2] w-full object-cover" />
+                  {/* 按真实比例完整显示(深色补边),别像 cover 那样裁出假比例误导 */}
+                  <img src={o.src} alt={o.label} className="block aspect-[1/2] w-full object-contain bg-[#11111A]" />
                   <span className="block py-0.5 text-center text-[11px] text-ink-2">
                     {o.label}
                   </span>
@@ -446,7 +447,7 @@ export function CardEditor({
               ))}
               {s.art && !FRONT_ARTS.some((o) => o.src === s.art) ? (
                 <span className="w-[72px] overflow-hidden rounded-md border border-brand ring-2 ring-brand/30 bg-white">
-                  <img src={s.art} alt="自己上传的图" className="block aspect-[1/2] w-full object-cover" />
+                  <img src={s.art} alt="自己上传的图" className="block aspect-[1/2] w-full object-contain bg-[#11111A]" />
                   <span className="block py-0.5 text-center text-[11px] text-ink-2">
                     自己上传
                   </span>
