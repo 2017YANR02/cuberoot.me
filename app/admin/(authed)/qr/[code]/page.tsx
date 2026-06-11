@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { Download, Scissors } from "lucide-react";
 import { findByCode, isProtectedQr } from "@/lib/db/qr";
 import { absoluteUrl } from "@/lib/site";
 import { qrSvg } from "@/lib/qr/svg";
 import { CardEditor } from "./_CardEditor";
+import { HeaderDownloads } from "./_HeaderDownloads";
 import { LinksEditor } from "./_LinksEditor";
 import { TypeSectionToggle } from "./_TypeSectionToggle";
 import { Card, PageHeader, GhostLink } from "../../../_components/Shell";
@@ -48,23 +48,8 @@ export default async function AdminQrEditPage({
             >
               保存
             </button>
-            {/* 下载读的是已保存的库数据,故紧挨保存:先存再下 */}
-            <a
-              href={`/api/qr/${entry.code}/card`}
-              download={`card-${entry.code}.svg`}
-              title="整张 2×4cm 折叠卡印刷母版:正面图 + 背面码,含 3mm 出血 + 四角裁切线,直接交印厂"
-              className="inline-flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-3 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition"
-            >
-              <Scissors size={14} /> 下载折叠卡(带裁切线)
-            </a>
-            <a
-              href={`/api/qr/${entry.code}/card?crop=0`}
-              download={`card-${entry.code}-nocrop.svg`}
-              title="无四角裁切线的干净版,适合截图 / 预览 / 嵌入展示;送印请用带裁切线的"
-              className="inline-flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-3 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition"
-            >
-              <Download size={14} /> 不带裁切线
-            </a>
+            {/* 下载前先自动保存,再下已存版本(组件内处理) */}
+            <HeaderDownloads code={entry.code} formId="qr-edit-form" />
             <GhostLink href="/admin/qr">返回列表</GhostLink>
           </div>
         }
