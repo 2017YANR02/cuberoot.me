@@ -162,6 +162,13 @@
       "when": 1781167308108,
       "tag": "0022_seed_rembrandt_prompt",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1781167408108,
+      "tag": "0023_seed_more_prompt_styles",
+      "breakpoints": true
     }
   ]
 }
