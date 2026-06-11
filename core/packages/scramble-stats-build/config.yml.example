@@ -15,3 +15,7 @@ sets:
 
 # 老格式(单 set,等价于 sets: [{key: wca, ...}])仍兼容:
 # csv_dir: D:/cube/scramble/wca_scramble/stats
+
+# 非 3x3 puzzle 整解最优步数分布管线(update_puzzle_stats.ps1 / build_puzzle_dist.ts)的数据根:
+# <root>/<puzzle>/scrambles.txt + <puzzle>.csv
+puzzle_data_dir: D:/cube/scramble/puzzle
