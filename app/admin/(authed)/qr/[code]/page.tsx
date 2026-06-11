@@ -39,7 +39,7 @@ export default async function AdminQrEditPage({
         title={`编辑 ${entry.code}`}
         subtitle={`累计扫码 ${entry.scans} 次,落地 /qr/${entry.code}`}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* 全页唯一保存:跨 DOM 提交右侧设置表单(含卡片编辑器的隐藏字段) */}
             <button
               type="submit"
@@ -48,6 +48,23 @@ export default async function AdminQrEditPage({
             >
               保存
             </button>
+            {/* 下载读的是已保存的库数据,故紧挨保存:先存再下 */}
+            <a
+              href={`/api/qr/${entry.code}/card`}
+              download={`card-${entry.code}.svg`}
+              title="整张 2×4cm 折叠卡印刷母版:正面图 + 背面码,含 3mm 出血 + 四角裁切线,直接交印厂"
+              className="inline-flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-3 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition"
+            >
+              <Scissors size={14} /> 下载折叠卡(带裁切线)
+            </a>
+            <a
+              href={`/api/qr/${entry.code}/card?crop=0`}
+              download={`card-${entry.code}-nocrop.svg`}
+              title="无四角裁切线的干净版,适合截图 / 预览 / 嵌入展示;送印请用带裁切线的"
+              className="inline-flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-3 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition"
+            >
+              <Download size={14} /> 不带裁切线
+            </a>
             <GhostLink href="/admin/qr">返回列表</GhostLink>
           </div>
         }
@@ -78,24 +95,6 @@ export default async function AdminQrEditPage({
             formId="qr-edit-form"
             landingUrl={landingUrl}
           />
-          <div className="mx-auto mt-3 grid w-full max-w-[560px] grid-cols-2 gap-2">
-            <a
-              href={`/api/qr/${entry.code}/card`}
-              download={`card-${entry.code}.svg`}
-              title="整张 2×4cm 折叠卡印刷母版:正面图 + 背面码,含 3mm 出血 + 四角裁切线,直接交印厂"
-              className="flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-4 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition"
-            >
-              <Scissors size={14} /> 下载折叠卡(带裁切线)
-            </a>
-            <a
-              href={`/api/qr/${entry.code}/card?crop=0`}
-              download={`card-${entry.code}-nocrop.svg`}
-              title="无四角裁切线的干净版,适合截图 / 预览 / 嵌入展示;送印请用左边带裁切线的"
-              className="flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-4 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition"
-            >
-              <Download size={14} /> 不带裁切线
-            </a>
-          </div>
         </Card>
 
         <div className="grid gap-6">
