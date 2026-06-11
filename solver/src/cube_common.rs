@@ -525,11 +525,26 @@ pub fn string_to_alg(s: &str) -> Vec<Move> {
 
 // ---------- valid_moves (move pruning matrix) ----------
 
+/// (flat, counts) 形状:flat[prev][i] = 第 i 个合法 move 索引,counts[prev] = 个数。
+pub type ValidMovesTable = ([[u8; 18]; 20], [u8; 20]);
+
+/// allowed-moves bitmask:bit m(= Move::index)为 1 表示该 move 可用。
+pub type MoveMask = u32;
+
+/// 全 18 个 move 都可用(= 现状 valid_moves 行为)。
+pub const MASK_ALL: MoveMask = (1 << 18) - 1;
+
+/// 由 move 索引列表构造 mask(如 htr_solver::G2_MOVES)。
+#[inline]
+pub fn move_mask_of(moves: &[u8]) -> MoveMask {
+    moves.iter().fold(0, |acc, &m| acc | 1 << m)
+}
+
 /// valid_moves[prev]: 给定上一步 move(20 = 18 + 2 sentinel:18 表示无上一步,
 /// 但 C++ 是 0..=18,这里同样保留 20 槽 0..20 防越界,实际只填到 18)。
 /// 返回 (flat, counts):flat[prev * 18 + i] = 第 i 个合法 move 索引,counts[prev] = 个数。
-pub fn valid_moves() -> &'static ([[u8; 18]; 20], [u8; 20]) {
-    static V: OnceLock<([[u8; 18]; 20], [u8; 20])> = OnceLock::new();
+pub fn valid_moves() -> &'static ValidMovesTable {
+    static V: OnceLock<ValidMovesTable> = OnceLock::new();
     V.get_or_init(|| {
         let mut flat = [[0u8; 18]; 20];
         let mut cnt = [0u8; 20];
@@ -549,6 +564,27 @@ pub fn valid_moves() -> &'static ([[u8; 18]; 20], [u8; 20]) {
         }
         (flat, cnt)
     })
+}
+
+/// valid_moves 按 mask 过滤后的副本:每行是 valid_moves() 同行的子序列(顺序不变)。
+/// mask == MASK_ALL 时与 *valid_moves() 逐位相等。每次现算(20×18 循环),
+/// 搜索前取一次、整轮搜索复用引用。
+pub fn valid_moves_masked(mask: MoveMask) -> ValidMovesTable {
+    let (flat, cnt) = valid_moves();
+    let mut nf = [[0u8; 18]; 20];
+    let mut nc = [0u8; 20];
+    for prev in 0..20 {
+        let mut c = 0;
+        for k in 0..cnt[prev] as usize {
+            let m = flat[prev][k];
+            if mask >> m & 1 == 1 {
+                nf[prev][c] = m;
+                c += 1;
+            }
+        }
+        nc[prev] = c as u8;
+    }
+    (nf, nc)
 }
 
 // ---------- 移动表构造引擎 ----------
@@ -1011,6 +1047,37 @@ mod tests {
         let allowed: Vec<u8> = flat[0][..n].to_vec();
         for &m in &allowed {
             assert_ne!(m / 3, 0, "U-axis move allowed after U");
+        }
+    }
+
+    #[test]
+    fn valid_moves_masked_full_is_bitwise_identical() {
+        assert_eq!(valid_moves_masked(MASK_ALL), *valid_moves());
+    }
+
+    #[test]
+    fn valid_moves_masked_subset_rows() {
+        // G2 = U U2 U' D D2 D' L2 R2 F2 B2
+        let g2: [u8; 10] = [0, 1, 2, 3, 4, 5, 7, 10, 13, 16];
+        let mask = move_mask_of(&g2);
+        assert_eq!(mask.count_ones(), 10);
+        let (flat, cnt) = valid_moves_masked(mask);
+        let (full_flat, full_cnt) = valid_moves();
+        // 无上一步:恰好 G2 的 10 个,顺序与编号序一致
+        assert_eq!(cnt[18], 10);
+        assert_eq!(&flat[18][..10], &g2);
+        for prev in 0..=18usize {
+            // 每行 = 全集同行去掉 mask 外 move,顺序保持
+            let want: Vec<u8> = full_flat[prev][..full_cnt[prev] as usize]
+                .iter()
+                .copied()
+                .filter(|&m| mask >> m & 1 == 1)
+                .collect();
+            assert_eq!(&flat[prev][..cnt[prev] as usize], want.as_slice());
+            // 行尾未填充槽保持 0
+            for k in cnt[prev] as usize..18 {
+                assert_eq!(flat[prev][k], 0);
+            }
         }
     }
 
