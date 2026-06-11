@@ -6,8 +6,9 @@ import {
 } from "@/lib/db/prompt-templates";
 import { PROMPT_PREAMBLE, PROMPT_DIMENSIONS } from "@/lib/qr/prompt";
 import { Card, GhostLink, PageHeader } from "../../../_components/Shell";
-import { Field, Input, Select, Submit, TextArea } from "../../../_components/Form";
+import { Field, Input, Submit, TextArea } from "../../../_components/Form";
 import { DeleteButton } from "../../../_components/DeleteButton";
+import { NewEntryFields } from "./_NewEntryFields";
 import {
   createPrompt,
   updatePrompt,
@@ -180,19 +181,7 @@ export default async function AdminPromptTemplatesPage({
             <Field label="名称" hint="如 科技发光 / 春节">
               <Input name="name" required placeholder="名称" />
             </Field>
-            <Field label="维度" hint="整套预设=完整一套;选某维度=该维度的一块积木">
-              <Select name="dimension" defaultValue="">
-                <option value="">整套预设模板</option>
-                {PROMPT_DIMENSIONS.map((d) => (
-                  <option key={d.key} value={d.key}>
-                    {d.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="分组(可选)" hint="仅整套模板用,如 大片 / 插画">
-              <Input name="category" placeholder="通用" />
-            </Field>
+            <NewEntryFields />
           </div>
           <Field label="描述正文" hint="只写画面描述,别写文字/语录;通用头自动加前面。积木写短句,整套写完整风格">
             <TextArea
