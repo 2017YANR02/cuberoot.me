@@ -111,8 +111,15 @@
 - [x] **P4b** analyzer bin `skewb_analyzer.rs` + `tests/e2e_skewb.rs`。✅ 2026-06-11 `e19a58529`(2 文件,executor/solver 零改动)。走 raw 通道(skewb 全大写但语义非 3x3,X2=240° 走 string_to_alg 会错映);bin 3 单测(全 8 记号 / round-trip×60 / 件级 IDDFS oracle×32)+ e2e 双 baseline(真实 WCA 5 条 9/9/9/8/8 + 手算 5 条)锁死;P4a 4/4 不塌、全量 lib 126/0;smoke 5 条全 ≤11。
 - [x] **P4c** 统计管线:PUZZLES 注册表加 skewb。✅ 2026-06-11 `b6c965160`(3 文件)。event `skewb`,label_zh「斜转」(对齐站内十余处既有叫法);350 条两跑绿(首跑+增量),dist 7..10 峰值 9 全 ≤11;client 契约零改动。
 - [x] **P4d** WASM 类 + 重建仪式 + `/scramble/skewb`。✅ 2026-06-11 `57057e6bd`(10 文件)。SkewbSolverWasm 零下载惰性 BFS(首查 node 2.5s/浏览器 3.3s,复查 <1ms);V bump 20260611i,skewb_ 跳过 3x3 normalizeScramble;预览零新 SVG(ScramblePreview2D 按 event 已路由 skewb_svg.ts);hub 卡片「斜转求解」。门全绿:cargo + 冒烟 12/12 + cubing.js replay 12/12 + 浏览器实产 3/3 + typecheck(主 loop 复核 EXIT=0,harness 诊断又是过期快照)+ playwright 桌面+390px en/zh 0 error。⚠坑(SQ1 参考):cubing.js skewb kpuzzle 给 CENTERS 记 mod-4 orientation(物理不可见),isIdentical 严格比对误判"未还原",experimentalIsSolved 对 skewb 未实现——replay 口径=角(位置+扭转)+中心位置,忽略中心自转。
-- [ ] **P4e** 看板登记 + **📦 MANUAL(Skewb)** 交接写 §3。门:typecheck + code-tokens-drift 绿。
-#### EPIC 3.4 — SQ1 S1+S2(~3.4 亿 shape-reachable,双阶段 search + 剪枝表,非全表;solver 参考 `scramble_sq1_new.js`)— 照范式 + 双阶段,最重,最后做(P5a–P5e)
+- [x] **P4e** 看板登记 + **📦 MANUAL(Skewb)** 交接写 §3。✅ 2026-06-11 `abf2cb466`(1 文件)。NATIVE/TABLES/BROWSER/概览卡照 pyraminx 范本;typecheck EXIT=0 + 39 守卫绿。**EPIC 3.3(Skewb)代码侧全链路完成**,MANUAL 交接见 §3。
+
+#### EPIC 3.4 — SQ1 S1+S2(~3.4 亿 shape-reachable,双阶段 search + 剪枝表,非全表;solver 参考 cstimer `scramble_sq1_new.js`,min2phase 风格 WCA 标准最优)
+> 最重的一个,与前三只 puzzle 的"全表 BFS"模板不同:走双阶段 search + `SquarePrun` 式剪枝表(几 MB 级内存表,仍零盘表目标;若推导出需 >1G 落盘表 → 停,按 §0.10 大表特例红灯问用户)。打乱记号 `(x,y)` twist 对 + `/` slash;步数度量先按 cstimer 口径推导(slash 计 1 步,twist 计法在 P5a 定死并对公开 God 数核验)。cubing.js sq1 kpuzzle 比对注意 P4d 的中心自转坑同类问题 + memory 提的 sr-puzzlegen sq1 渲染坑(预览用现有 `_svg/sq1_svg.ts` / `lib/sq1-svg.ts`)。
+- [ ] **P5a** Rust 核心 `sq1_solver.rs`(key `sq1`,shape/层状态模型,双阶段 search + 剪枝表)。门:cargo test --release sq1 绿,含独立暴力对照(浅层 IDDFS oracle)+ 已知最优案例核验;God 数/分布对公开数据(twist metric 口径写死)。
+- [ ] **P5b** analyzer bin `sq1_analyzer.rs` + `tests/e2e_sq1.rs`(raw 通道,吃全 WCA sq1 记号 `(x,y)/`)。门:e2e 绿 + smoke 形状对。
+- [ ] **P5c** 统计管线:PUZZLES 注册表加 sq1(event_id `sq1`)+ 小样本验形。门:端到端小样本绿。
+- [ ] **P5d** WASM 类 + 重建仪式 + `/scramble/sq1`(PuzzleOptimalSolver 新 spec;预览走现有 sq1 svg;求解耗时若秒级需 loading 态)。门:typecheck + node 冒烟相等 + playwright(replay 独立验证,注意 kpuzzle 等价口径)。
+- [ ] **P5e** 看板登记 + **📦 MANUAL(SQ1)** 交接写 §3。门:typecheck + code-tokens-drift 绿。
 
 ---
 
@@ -151,6 +158,7 @@
 - 2026-06-11 — **P4b** skewb analyzer + e2e,`e19a58529`。raw 通道;双 baseline 锁死;lib 126/0;smoke 5 条全 ≤11。下一个 = P4c。
 - 2026-06-11 — **P4c** skewb 统计管线,`b6c965160`。PUZZLES + ps1 表项;350 条两跑验形,dist 峰值 9。下一个 = P4d。
 - 2026-06-11 — **P4d** skewb WASM + /scramble/skewb,`57057e6bd`。replay 12/12 + 浏览器 3/3;cubing.js skewb 中心自转坑记入 §1 条目。下一个 = P4e。
+- 2026-06-11 — **P4e** skewb 看板登记,`abf2cb466`。typecheck + 39 守卫绿。**EPIC 3.3 完成**,MANUAL(Skewb) 交接入 §3;EPIC 3.4(SQ1)细化为 P5a–P5e。**本 session 连续推进 14 单元(P2b–P4e),按 §0.7 安全网停一次,/clear 重 /loop 续(下一个 = P5a,SQ1 双阶段,最重)。**
 
 ---
 
@@ -176,6 +184,12 @@
   3. 发布:scp 到 static.cuberoot.me `/stats/scramble/`(同 pocket,一次发布两 puzzle 一起带)。
   4. stats 页 tab:`/scramble/stats` 非 3x3 puzzle 分布 tab 与 pocket 共用待办(契约 `lib/puzzle-distribution.ts` 已就位)。
   5. 看板 rate 回填:全量跑完实测后改 `/code/solvers` NATIVE pyraminx 的 `rate: null`。
+- **📦 MANUAL(Skewb) 交接**(2026-06-11,P4a–P4e 代码侧全绿落地,等用户在场手动):
+  1. 灌注:`update_puzzle_stats.ps1`(默认 -Puzzles 空=全部注册含 skewb;语料=Scrambles.tsv event `skewb`,id 差集增量,-MaxNew 可分批)。
+  2. 产出:`stats/scramble/puzzle_distribution.json` 的 `puzzles.skewb`(metric=htm,350 条样本峰值 9 全 ≤11)。
+  3. 发布:scp 到 static.cuberoot.me `/stats/scramble/`(与 pocket/pyraminx 一次发布一起带)。
+  4. stats 页 tab:`/scramble/stats` 非 3x3 puzzle 分布 tab 与 pocket/pyraminx 共用待办(契约 `lib/puzzle-distribution.ts` 已就位)。
+  5. 看板 rate 回填:全量跑完实测后改 `/code/solvers` NATIVE skewb 的 `rate: null`。
 - **📦 MANUAL(HTR) 交接**(2026-06-11,H1–H5 代码侧已全绿落地,等用户在场手动):
   1. **先拍板口径**:WCA master 随机打乱直灌 htr_analyzer 会得全 `-`(随机打乱不在 DR 态,H2 实证)。可选:(a) 不灌全量统计,htr 只做 analyzer 在线查询(现状即此,零额外工作);(b) 输入集改"先过 DR 阶段后的态"(需定义 DR 解的选取规则,管道要串 dr→htr);(c) 只灌天然 DR 态子集(~1/19万,样本太稀,不推荐)。
   2. 若选 (b):统计管道注册(update_cross_stats.ps1 / build 流程加 `_htr` 列)→ 灌 master/xcross → `stats/scramble/distribution.json` 进 htr 分桶。
