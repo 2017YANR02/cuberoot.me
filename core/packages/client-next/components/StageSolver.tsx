@@ -19,7 +19,7 @@ import { createPortal } from 'react-dom';
 import { Loader2, Copy, Check, Play, Info, X } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
-import { HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, TABLE_BYTES, TABLE_SETS } from '@/lib/rust-cross-client';
+import { FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, TABLE_BYTES, TABLE_SETS } from '@/lib/rust-cross-client';
 import { getRustCrossPool, dropRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import { normalizeScramble } from '@/lib/cross-solver';
 import { variantLabel, stageLabel, VARIANT_STAGES } from '@/lib/scramble-variants';
@@ -39,7 +39,8 @@ function fmtBytes(b: number): string {
 // HTR_NOT_DR 哨兵 → 格子显示 '-'(同 native analyzer CSV),且不参与最优(min)统计。
 // 'htr2'(HTR phase-2,G3→solved)同理:输入须已处于该视角 HTR,否则引擎返回
 // HTR2_NOT_HTR 哨兵 → 同样显示 '-' 且不参与 min。
-export type Method = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | 'block' | 'eoline' | 'dr' | 'htr' | 'htr2';
+// 'fr'(Floppy 还原,HTR→FR)同理:输入须已处于该视角 HTR,否则引擎返回 FR_NOT_HTR 哨兵。
+export type Method = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | 'block' | 'eoline' | 'dr' | 'htr' | 'htr2' | 'fr';
 const VARIANT_ID: Record<'pair' | 'eo' | 'pseudo' | 'pseudo_pair', number> = {
   pair: 0, eo: 1, pseudo: 2, pseudo_pair: 3,
 };
@@ -48,15 +49,15 @@ const VARIANT_ID: Record<'pair' | 'eo' | 'pseudo' | 'pseudo_pair', number> = {
 // 块族(原 123/222/223)聚合为一个方法 'block',块形状落在阶段下拉。
 const METHOD_KEYS: Method[] = [
   'std', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
-  'block', 'eoline', 'dr', 'htr', 'htr2',
+  'block', 'eoline', 'dr', 'htr', 'htr2', 'fr',
 ];
 // 阶段键序 + 显示名同样走 scramble-variants(VARIANT_STAGES / stageLabel),
 // WASM 阶段索引 i ↔ VARIANT_STAGES[method][i],与 /scramble/stats 完全同名。
 // 自动批算(eager)的最深阶段;更深的留点击按需(单视角搜索重,弱小表启发式)。
 const EAGER_MAX: Record<Method, number> = {
-  std: 3, eo: 2, pair: 3, pseudo: 3, pseudo_pair: 2, f2leo: 1, pseudo_f2leo: 1, block: 3, eoline: 1, dr: 0, htr: 0, htr2: 0,
+  std: 3, eo: 2, pair: 3, pseudo: 3, pseudo_pair: 2, f2leo: 1, pseudo_f2leo: 1, block: 3, eoline: 1, dr: 0, htr: 0, htr2: 0, fr: 0,
 };
-type Kind = 'std' | 'variant' | 'f2leo' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2';
+type Kind = 'std' | 'variant' | 'f2leo' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr';
 // block 方法按阶段分流:block222 阶段走专用 Block222SolverWasm,其余走 Roux223SolverWasm
 // (其阶段 id 0..4 恰与 VARIANT_STAGES.block 的索引一一对应,无需映射)。
 const kindOf = (m: Method, stageKey: string): Kind =>
@@ -65,7 +66,8 @@ const kindOf = (m: Method, stageKey: string): Kind =>
       : m === 'block' ? (stageKey === 'block222' ? 'block222' : 'roux223')
         : m === 'eoline' || m === 'dr' ? 'eodr'
           : m === 'htr' ? 'htr'
-            : m === 'htr2' ? 'htr2' : 'variant';
+            : m === 'htr2' ? 'htr2'
+              : m === 'fr' ? 'fr' : 'variant';
 // 池按方法选:'block' 全程用 roux223 池(其 worker 表是 block222 的超集,init 时两个
 // 求解器都建),方法内切阶段不换池、不重拉表。
 const needOf = (m: Method): PoolNeed =>
@@ -74,7 +76,8 @@ const needOf = (m: Method): PoolNeed =>
       : m === 'block' ? 'roux223'
         : m === 'eoline' || m === 'dr' ? 'eodr'
           : m === 'htr' ? 'htr'
-            : m === 'htr2' ? 'htr2' : 'variant';
+            : m === 'htr2' ? 'htr2'
+              : m === 'fr' ? 'fr' : 'variant';
 // EoDrSolverWasm 的阶段编号:0=EO 1=EOLine 2=DR。
 const eoDrStage = (m: Method, stage: number) => (m === 'eoline' ? stage : 2);
 
@@ -98,9 +101,9 @@ const LIMIT_OPTIONS = [5, 10, 25, 50];
 // 步骤前缀可能含 1~2 个旋转 token(eo/f2leo 破 y 对称时如 "x' y")。算实际转动数时剥掉。
 const moveLen = (sol: string) => sol.replace(/^([xyz][2']?\s+)+/, '').split(/\s+/).filter(Boolean).length;
 
-// 条件式阶段(htr / htr2)在非 DR / 非 HTR 视角返回哨兵(两者同值 0xffffffff):
+// 条件式阶段(htr / htr2 / fr)在非 DR / 非 HTR 视角返回哨兵(三者同值 0xffffffff):
 // 该格显示 '-',且不参与 best / min 统计。
-const isSentinel = (v: number | null | undefined): boolean => v === HTR_NOT_DR || v === HTR2_NOT_HTR;
+const isSentinel = (v: number | null | undefined): boolean => v === HTR_NOT_DR || v === HTR2_NOT_HTR || v === FR_NOT_HTR;
 
 interface Props {
   scramble: string;
@@ -131,7 +134,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       : method === 'dr' ? t(`${face} 轴 DR`, `${face}-axis DR`)
         : method === 'htr' ? t(`${face} 轴 HTR(需已处于该轴 DR)`, `${face}-axis HTR (requires DR on this axis)`)
           : method === 'htr2' ? t(`${face} 轴 HTR 收尾(需已处于该轴 HTR)`, `${face}-axis HTR-finish (requires HTR on this axis)`)
-            : t(`${face} 面十字`, `${face}-face cross`);
+            : method === 'fr' ? t(`${face} 轴 Floppy 还原(需已处于该轴 HTR)`, `${face}-axis Floppy Reduction (requires HTR on this axis)`)
+              : t(`${face} 面十字`, `${face}-face cross`);
 
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errMsg, setErrMsg] = useState('');
@@ -247,7 +251,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                   ? await pool.solveHtrStage(scr)
                   : kind === 'htr2'
                     ? await pool.solveHtr2Stage(scr)
-                    : await pool.solveVariantStage(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], stage);
+                    : kind === 'fr'
+                      ? await pool.solveFrStage(scr)
+                      : await pool.solveVariantStage(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], stage);
         if (computeReq.current === my) {
           for (let i = 0; i < 6; i++) result[i] = vals[i] ?? null;
           setCounts(result.slice());
@@ -315,7 +321,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                   ? await pool.solveHtrMoves(scr, f, { extra: SOL_SLACK, cap: limit })
                   : kind === 'htr2'
                     ? await pool.solveHtr2Moves(scr, f, { extra: SOL_SLACK, cap: limit })
-                    : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap: limit });
+                    : kind === 'fr'
+                      ? await pool.solveFrMoves(scr, f, { extra: SOL_SLACK, cap: limit })
+                      : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap: limit });
       if (movesReq.current === my) {
         setMoves(res);
         setSelSol(0);
@@ -533,6 +541,14 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
               )}
             </div>
           )}
+          {method === 'fr' && (
+            <div className="stsv-hint">
+              {t(
+                'Floppy 还原为条件式阶段:仅当该视角已处于 HTR 时给出 HTR→FR 最优步数,否则显示 -。',
+                'Floppy Reduction is conditional: a view shows its optimal HTR→FR move count only when it is already in HTR; otherwise it shows -.',
+              )}
+            </div>
+          )}
           {!eager && (
             <div className="stsv-hint">
               {t(
@@ -565,7 +581,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                     {isSentinel(moves.len)
                       ? (method === 'htr2'
                         ? t('该视角未处于 HTR,HTR 收尾不适用', 'This view is not in HTR, so HTR-finish does not apply')
-                        : t('该视角未处于 DR,HTR 不适用', 'This view is not in DR, so HTR does not apply'))
+                        : method === 'fr'
+                          ? t('该视角未处于 HTR,Floppy 还原不适用', 'This view is not in HTR, so Floppy Reduction does not apply')
+                          : t('该视角未处于 DR,HTR 不适用', 'This view is not in DR, so HTR does not apply'))
                       : t('该视角已解(0 步)', 'Already solved (0 moves)')}
                   </div>
                 )}
