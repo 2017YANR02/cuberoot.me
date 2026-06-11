@@ -63,7 +63,7 @@
       soft-gate 解除:真 HTR 无需大表——全空间 = cp 8!(40320,目标 Hc 96)× 轨道组合 C(8,4)=70 = 2,822,400 态,2.8MB 内存精确表现场 BFS,零盘表零启发式,查表即最优。|G3|=663,552=96×6912 闭包验证;DR→HTR God's number 实测 13。
 - [x] **H2** analyzer bin `src/bin/htr_analyzer.rs`(suffix `_htr`)+ `tests/e2e_htr.rs`。门:e2e 绿 + smoke 5 条打乱 CSV 形状对。✅ 2026-06-11 e2e 1 绿 + H1 5 测试仍绿 + smoke 5+5 形状对。语义=条件式阶段:DR 视角出精确步数,非 DR 视角出 `-`(build.ts anyBad 守卫跳行)。
 - [x] **H3** WASM 类 + 重建仪式(`build_wasm.ps1` $names → copy pkg-web 产物到 `tools/solver/rust-cross/` → 手维护 worker 加 `need==='htr'` 分支 → `lib/rust-cross-client.ts` bump `V`+TABLE_BYTES/TABLE_SETS+接口 → `rust-cross-pool.ts` PoolNeed)。门:typecheck 干净。✅ 2026-06-11 typecheck tsgo+tsc 双绿(主 loop 复核);零盘表 `TABLE_SETS.htr=[]` 零下载,wasm 首查惰性 BFS ~335ms;非 DR 哨兵 `HTR_NOT_DR`(u32::MAX);node 冒烟 native↔wasm 逐格相等。
-- [ ] **H4** `components/StageSolver.tsx` 集成(Method/METHODS/STAGE_LABELS/EAGER_MAX/kindOf/needOf/computeAll/fetchMoves 各加分支)。门:playwright analyzer 桌面+390px 过,native↔WASM 逐格相等,0 console error。
+- [x] **H4** `components/StageSolver.tsx` 集成(Method/METHODS/STAGE_LABELS/EAGER_MAX/kindOf/needOf/computeAll/fetchMoves 各加分支)。门:playwright analyzer 桌面+390px 过,native↔WASM 逐格相等,0 console error。✅ 2026-06-11 playwright 8/8 PASS,native↔WASM 12/12 格相等,0 error;哨兵 `-` 渲染 + min 统计排除验证;htr 故意不进 VARIANT_ORDER(原始打乱非 DR,gen/recent 下拉无意义,归 MANUAL)。
 - [ ] **H5** `/code/solvers` 看板同步(TABLES/NATIVE/BROWSER/hero,调 `solvers-tables` skill)。门:typecheck + `tests/code-tokens-drift` 绿。
 - [ ] **📦 MANUAL(HTR)** 统计管道注册 + 灌 master/xcross + stats/gen/recent UI 接入 + 发布 — 写进 §3 交接,**loop 跳过,继续 EPIC 2**。
 
@@ -89,6 +89,7 @@
 - 2026-06-11 — **H1** HTR Rust 核心 + 测试,`ef61f9f7f`。上轮宿主机卡死遗留的未提交代码经独立核对后原样验收(零重写);全空间 2.8M 态内存精确表,soft-gate 解除;5 测试全绿含暴力对照,God's number=13。
 - 2026-06-11 — **H2** HTR analyzer bin + e2e,`9f61985bf`。7 列 CSV(_htr 后缀)与 dr_analyzer 同构;e2e 绿、H1 测试未塌、smoke 形状对。
 - 2026-06-11 — **H3** HTR WASM 类 + 重建仪式,`015e0ad58`。HtrSolverWasm + worker htr 分支 + client V bump(20260611a)+ PoolNeed;顺手补了 eodr 上次漏的 2 个 stale .d.ts;typecheck 主 loop 双工具复核绿。
+- 2026-06-11 — **H4** StageSolver 集成 HTR,`c753f09c5`。8 登记点对齐 eoline + scramble-variants 4 点 + TNoodleMode 类型 ripple;HTR_NOT_DR 哨兵 7 处接线(主 loop grep 复核);playwright 独立 agent 验收 8/8 PASS。
 
 ---
 
