@@ -229,6 +229,29 @@ export class PocketSolverWasm {
 }
 
 /**
+ * Pyraminx(金字塔)整解最优求解器(全自包含,**零表下载**):0.9MB 核心全空间
+ * 精确距离表首次查询时惰性现场 BFS(lean 构造,不存 29.9MB 联合移动表,RefCell
+ * 缓存)。吃全 WCA pyram 记号(大写 U/L/R/B 核心 + 小写 u/l/r/b 顶点,可带 '/2,
+ * 阶 3 下 X2 = X');非法记号抛 JS 异常。口径(精确):总 HTM = 核心查表最优 +
+ * #错位 tips。God's number 核心 11 / 含 tips 15。
+ */
+export class PyraminxSolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    constructor();
+    /**
+     * 整解最优 HTM 步数(0..=15,含 tips)。非法记号 → Err(JS 异常)。
+     */
+    solve(scramble: string): number;
+    /**
+     * 一条最优解 JSON(同 PocketSolverWasm::solve_moves 形状,单条):
+     * {"len":N,"sols":[{"m":"U L' B ... r b'","c":""}]}。`m` = 核心大写解 +
+     * 小写 tip 收尾(无整体旋转前缀),`c` 恒空串。非法记号 → Err(JS 异常)。
+     */
+    solve_moves(scramble: string): string;
+}
+
+/**
  * Roux 第一块(方块 / 1x2x3 / 双 1x2x3)+ Petrus(2x2x2 / 2x2x3)组合求解器。4 张小表:
  * mt_edge3 (~743KB) + mt_corn2 (~36KB) + mt_edge2 (~38KB) + mt_corn (~1.7KB)。
  * FB 方块与 2x2x2 全表构造时即建(微型/毫秒级);1x2x3 全表(5,322,240 态)与
@@ -301,6 +324,7 @@ export interface InitOutput {
     readonly __wbg_htrphase2solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_htrsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_pocketsolverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_pyraminxsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_roux223solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_variantsolverwasm_free: (a: number, b: number) => void;
     readonly block222solverwasm_new: (a: number, b: number, c: number, d: number) => number;
@@ -334,6 +358,9 @@ export interface InitOutput {
     readonly pocketsolverwasm_new: () => number;
     readonly pocketsolverwasm_solve: (a: number, b: number, c: number) => number;
     readonly pocketsolverwasm_solve_moves: (a: number, b: number, c: number) => [number, number];
+    readonly pyraminxsolverwasm_new: () => number;
+    readonly pyraminxsolverwasm_solve: (a: number, b: number, c: number) => [number, number, number];
+    readonly pyraminxsolverwasm_solve_moves: (a: number, b: number, c: number) => [number, number, number, number];
     readonly roux223solverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => number;
     readonly roux223solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly roux223solverwasm_solve_stage: (a: number, b: number, c: number, d: number) => [number, number];
@@ -345,6 +372,7 @@ export interface InitOutput {
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+    readonly __externref_table_dealloc: (a: number) => void;
     readonly __wbindgen_start: () => void;
 }
 

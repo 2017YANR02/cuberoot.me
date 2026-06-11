@@ -23,6 +23,7 @@ let htr2Solver = null;    // HtrPhase2SolverWasm(G3→solved),零表下载,648KB
 let frSolver = null;      // FrSolverWasm(HTR→FR,Floppy 还原),零表下载,3456 态陪集表首查惰性现场 BFS
 let chainSolver = null;   // ChainSolverWasm(mallard 链式 EO→DR→HTR→[FR]→Finish),零表下载,首查惰性建全套距离表
 let pocketSolver = null;  // PocketSolverWasm(2x2x2 口袋魔方整解最优),零表下载,3.6MB 距离表首查惰性现场 BFS
+let pyraminxSolver = null; // PyraminxSolverWasm(金字塔整解最优,含 tips),零表下载,0.9MB 核心距离表首查惰性现场 BFS
 
 async function fetchTable(url) {
   const res = await fetch(url);
@@ -84,6 +85,9 @@ async function init(glueUrl, wasmUrl, tablesBase, need) {
   } else if (need === 'pocket') {
     // 2x2x2 口袋魔方整解最优:零表下载,3.6MB 全空间精确距离表首查惰性现场 BFS(lean,无 mt)。
     pocketSolver = new mod.PocketSolverWasm();
+  } else if (need === 'pyraminx') {
+    // 金字塔整解最优(核心+tips):零表下载,0.9MB 核心全空间距离表首查惰性现场 BFS(lean,无 mt)。
+    pyraminxSolver = new mod.PyraminxSolverWasm();
   } else {
     const [a, b, c, d, e, f] = await Promise.all(
       ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'].map(get)
@@ -253,6 +257,18 @@ self.onmessage = async (e) => {
       // 一条最优解:m 前缀 = 整体旋转(打乱含 D/L/B 时归一所需,可为空),c 恒空串。
       const json = pocketSolver.solve_moves(msg.scramble);
       self.postMessage({ type: 'pocket_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+    } else if (msg.type === 'pyraminx_len') {
+      if (!pyraminxSolver) throw new Error('pyraminx solver not initialized');
+      const t0 = performance.now();
+      // 金字塔整解最优 HTM 步数(0..=15,含 tips)。全 WCA pyram 记号(大写核心 + 小写 tips)。
+      const v = pyraminxSolver.solve(msg.scramble);
+      self.postMessage({ type: 'variant', id: msg.id, values: [v], ms: performance.now() - t0 });
+    } else if (msg.type === 'pyraminx_moves') {
+      if (!pyraminxSolver) throw new Error('pyraminx solver not initialized');
+      const t0 = performance.now();
+      // 一条最优解:m = 核心大写解 + 小写 tip 收尾(无整体旋转前缀),c 恒空串。
+      const json = pyraminxSolver.solve_moves(msg.scramble);
+      self.postMessage({ type: 'pyraminx_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'variant_moves') {
       if (!variantSolver) throw new Error('variant solver not initialized');
       const t0 = performance.now();
