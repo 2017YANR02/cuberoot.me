@@ -216,3 +216,24 @@ eoline 的 yk 与 yk+2 同目标(get_stats/enumerate 只跑 yk 0/1),dr 对 y 完
    - SQ1 S1+S2 / Pyraminx V / Skewb Face / 2x2x2(口袋魔方):都不是 3x3,`cube_common`(8角12棱模型)不覆盖,要各自的状态模型。**而且**本求解器舰队的用途是「3x3 打乱的分阶段难度统计」(喂 `/scramble/*`),这些 puzzle 属于另一个 feature,不在本管道范围 —— 真要做先跟用户确认是不是这个引擎该管。
 
 **简言之**:3x3 分阶段统计这个目标基本收口;下一个自然增量是 HTR(档1),想更进一步先补受限 move 集(档2)。档3 是另一个项目级决策,别默认开工。
+
+## 8. 非 3x3 puzzle 统计管线范式(EPIC 3,2x2x2 pocket 先行,2026-06-11)
+
+3x3 的多视角阶段管道(§3)对非 3x3 不适用;非 3x3 管道统计 = **整解最优步数分布**
+(WCA 该项目打乱语料 → 最优 analyzer → 长度分桶)。新 puzzle(pyraminx / skewb / sq1)照搬四处:
+
+1. **analyzer bin**(范本 `pocket_analyzer.rs`):CSV 两列 `id,<key>`,值 = 整解最优步数;
+   key 用 puzzle 名(pocket / pyraminx / skewb / sq1)。
+2. **管道脚本** `scramble-stats-build/update_puzzle_stats.ps1` 的 `$PUZZLE` 表加一行
+   (key → WCA event_id + analyzer exe)。语料自动从 3x3 管道抽好的
+   `incremental/tsv/Scrambles.tsv` 按 event_id 过滤(缺则从 cache zip 流式抽),增量落
+   `D:\cube\scramble\puzzle\<key>\scrambles.txt` + `<key>.csv`(id 差集分块解算)。
+3. **build 侧** `src/build_puzzle_dist.ts` 的 `PUZZLES` 加一行(key/event/label/label_zh/metric)
+   → 产 `stats/scramble/puzzle_distribution.json`:`puzzles.<key> = { event, label, label_zh,
+   metric, sample_count, dist:{min,max,counts} }`(dist 形状 = distribution.json 的 HistEntry,
+   前端 DiscreteHistogram/computeStats 直接复用)。
+4. **客户端契约** `client-next/lib/puzzle-distribution.ts`(类型 + `fetchPuzzleDistribution()`
+   走 statsUrl);改 shape 两处同步 + bump `V`。
+
+小样本验形:`pwsh update_puzzle_stats.ps1 -Puzzles <key> -MaxNew 300`;
+**全量灌注 + static 发布 = MANUAL**(发布跟 stats/scramble 同一个 tar+scp 仪式)。
