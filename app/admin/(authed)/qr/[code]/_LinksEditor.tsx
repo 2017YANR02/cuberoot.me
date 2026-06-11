@@ -11,8 +11,6 @@ import { linksToText } from "@/lib/qr/links";
 // 提交仍走隐藏 input(name=links)序列化成「标签 | 链接 | 备注」文本,server action 不变。
 
 type Row = QrLink & { _id: number };
-let uidSeq = 0;
-const uid = () => (uidSeq += 1);
 
 export function LinksEditor({
   name,
@@ -21,9 +19,12 @@ export function LinksEditor({
   name: string;
   defaultLinks: QrLink[];
 }) {
+  // 初始 id 用下标(server / client 一致,避免 hydration 不匹配);
+  // 新增行的 id 走 ref 计数器,从初始条数往上递增(只在客户端交互时发生)
   const [links, setLinks] = useState<Row[]>(() =>
-    defaultLinks.map((l) => ({ ...l, _id: uid() })),
+    defaultLinks.map((l, i) => ({ ...l, _id: i })),
   );
+  const nextId = useRef(defaultLinks.length);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const posRef = useRef<Map<number, number>>(new Map());
@@ -71,7 +72,8 @@ export function LinksEditor({
   const patch = (i: number, p: Partial<QrLink>) =>
     setLinks((ls) => ls.map((l, j) => (j === i ? { ...l, ...p } : l)));
   const removeAt = (i: number) => setLinks((ls) => ls.filter((_, j) => j !== i));
-  const add = () => setLinks((ls) => [...ls, { label: "", href: "/", _id: uid() }]);
+  const add = () =>
+    setLinks((ls) => [...ls, { label: "", href: "/", _id: nextId.current++ }]);
 
   // 拖动期间在 window 上挂原生 move/up 监听(结束即摘),不依赖合成事件与 pointer capture
   const startDrag = (e: React.PointerEvent, i: number, id: number) => {
