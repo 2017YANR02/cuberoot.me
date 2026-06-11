@@ -110,7 +110,7 @@
 - [x] **P4a** Rust 核心 `skewb_solver.rs`(key `skewb`)。✅ 2026-06-11 `507a73ca4`。推导修正调研预期:WCA 4 轴 = cubing.js 角 6/4/5/7,{4,5,6} A3 轨道 + {0,1,2,7} A4 轨道,**角 3 完全不动不扭 = 天然全局参照**(无需消朝向);move 数组取自 cubing.js kpuzzle 现场 dump 与 cstimer 4320×2187/3 交叉核对。态数 360×12×3×3^5=3,149,280 闭包实算相符、编码恰双射;God 数 11,分布对 jaapsch 逐项锁。实现即 lean:3.0MB u8 距离表现场 BFS ~1.2s,转移件级现算(full 联合移动表理论 100.8MB 不建,P4d 直接用 lean);4/4 测试绿 + 全量 lib 126/0 + cubing.js 手性 replay 8/8(P4d 消险)。
 - [x] **P4b** analyzer bin `skewb_analyzer.rs` + `tests/e2e_skewb.rs`。✅ 2026-06-11 `e19a58529`(2 文件,executor/solver 零改动)。走 raw 通道(skewb 全大写但语义非 3x3,X2=240° 走 string_to_alg 会错映);bin 3 单测(全 8 记号 / round-trip×60 / 件级 IDDFS oracle×32)+ e2e 双 baseline(真实 WCA 5 条 9/9/9/8/8 + 手算 5 条)锁死;P4a 4/4 不塌、全量 lib 126/0;smoke 5 条全 ≤11。
 - [x] **P4c** 统计管线:PUZZLES 注册表加 skewb。✅ 2026-06-11 `b6c965160`(3 文件)。event `skewb`,label_zh「斜转」(对齐站内十余处既有叫法);350 条两跑绿(首跑+增量),dist 7..10 峰值 9 全 ≤11;client 契约零改动。
-- [ ] **P4d** WASM 类 + 重建仪式 + `/scramble/skewb`(PuzzleOptimalSolver 新 spec;打乱图用现有 `_svg/skewb_svg.ts`)。门:typecheck + node 冒烟相等 + playwright(cubing.js replay 独立验证)。
+- [x] **P4d** WASM 类 + 重建仪式 + `/scramble/skewb`。✅ 2026-06-11 `57057e6bd`(10 文件)。SkewbSolverWasm 零下载惰性 BFS(首查 node 2.5s/浏览器 3.3s,复查 <1ms);V bump 20260611i,skewb_ 跳过 3x3 normalizeScramble;预览零新 SVG(ScramblePreview2D 按 event 已路由 skewb_svg.ts);hub 卡片「斜转求解」。门全绿:cargo + 冒烟 12/12 + cubing.js replay 12/12 + 浏览器实产 3/3 + typecheck(主 loop 复核 EXIT=0,harness 诊断又是过期快照)+ playwright 桌面+390px en/zh 0 error。⚠坑(SQ1 参考):cubing.js skewb kpuzzle 给 CENTERS 记 mod-4 orientation(物理不可见),isIdentical 严格比对误判"未还原",experimentalIsSolved 对 skewb 未实现——replay 口径=角(位置+扭转)+中心位置,忽略中心自转。
 - [ ] **P4e** 看板登记 + **📦 MANUAL(Skewb)** 交接写 §3。门:typecheck + code-tokens-drift 绿。
 #### EPIC 3.4 — SQ1 S1+S2(~3.4 亿 shape-reachable,双阶段 search + 剪枝表,非全表;solver 参考 `scramble_sq1_new.js`)— 照范式 + 双阶段,最重,最后做(P5a–P5e)
 
@@ -150,6 +150,7 @@
 - 2026-06-11 — **P4a** skewb Rust 核心,`507a73ca4`。角 3 天然全局参照(修正调研);3,149,280 闭包验证;God 数 11 对 jaapsch 逐项锁;lean 3.0MB 即主实现;4/4 + lib 126/0 + 手性 8/8。下一个 = P4b。
 - 2026-06-11 — **P4b** skewb analyzer + e2e,`e19a58529`。raw 通道;双 baseline 锁死;lib 126/0;smoke 5 条全 ≤11。下一个 = P4c。
 - 2026-06-11 — **P4c** skewb 统计管线,`b6c965160`。PUZZLES + ps1 表项;350 条两跑验形,dist 峰值 9。下一个 = P4d。
+- 2026-06-11 — **P4d** skewb WASM + /scramble/skewb,`57057e6bd`。replay 12/12 + 浏览器 3/3;cubing.js skewb 中心自转坑记入 §1 条目。下一个 = P4e。
 
 ---
 
