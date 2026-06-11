@@ -304,12 +304,13 @@ export function CardEditor({
         readOnly
       />
 
-      <div className="overflow-x-auto">
+      {/* px/py 给四角裁切线留出成品边外的空间,免被 overflow 裁掉 */}
+      <div className="overflow-x-auto px-12 py-12">
         <div
           ref={wrapRef}
           className="relative mx-auto w-fit [--s:2.2] sm:[--s:2.8] xl:[--s:3.4]"
         >
-          <QrCardUnit entry={merged} svg={svg} />
+          <QrCardUnit entry={merged} svg={svg} cropMarks />
           {/* 正面背景图:整个正面板的底层热区(元素热区叠在其上),拖动平移构图,点击打开图库面板 */}
           <span
             role="button"
