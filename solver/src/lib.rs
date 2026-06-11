@@ -9,11 +9,12 @@ pub mod prune_tables;
 pub mod block222_solver;
 pub mod block223_solver;
 pub mod cross_solver;
-// eoline / dr / f2b:全自包含(微表现场建 / 复用 s1 表),native+wasm 双轨可编。
+// eoline / dr / htr / f2b:全自包含(微表现场建 / 复用 s1 表),native+wasm 双轨可编。
 pub mod dr_solver;
 pub mod eoline_solver;
 pub mod executor;
 pub mod f2b_solver;
+pub mod htr_solver;
 pub mod roux_s1_solver;
 pub mod xcross_solver;
 
