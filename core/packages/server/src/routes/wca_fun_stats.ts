@@ -1,6 +1,6 @@
 /**
  * WCA fun-stats (趣味统计) — port of cubingchina /results/statistics.
- * 18 端点 /v1/wca/fun/*,数据源 wca_fs_*(stats-build 全量重灌)+ wca_results_top(F 按需).
+ * 18 端点 /v1/wca/fun/*,数据源 wca_fs_*(stats-build 全量重灌)+ wca_results_flat(F 按需).
  * 全部支持 region 三态:world / continent(slug 或 _Asia)/ country(iso2 或 WCA id).
  * 每周才变 → Cache-Control 1 day.
  *
@@ -671,13 +671,13 @@ wcaFunStatsRoutes.get('/wca/fun/top100-appearances', async (c) => {
   // 内层 top-200(region 过滤在 LIMIT 前)→ RANK()<=100 → 占席计数 → enrich + 分页
   let topCte: string; let topParams: unknown[];
   if (scope.kind === 'world') {
-    topCte = `SELECT wca_id, value FROM wca_results_top WHERE event_id = ? AND is_avg = ? AND value > 0 ORDER BY value ASC LIMIT 200`;
+    topCte = `SELECT wca_id, value FROM wca_results_flat WHERE event_id = ? AND is_avg = ? AND value > 0 ORDER BY value ASC LIMIT 200`;
     topParams = [event, isAvg];
   } else if (scope.kind === 'country') {
-    topCte = `SELECT wca_id, value FROM wca_results_top WHERE event_id = ? AND is_avg = ? AND value > 0 AND person_country_id = ? ORDER BY value ASC LIMIT 200`;
+    topCte = `SELECT wca_id, value FROM wca_results_flat WHERE event_id = ? AND is_avg = ? AND value > 0 AND person_country_id = ? ORDER BY value ASC LIMIT 200`;
     topParams = [event, isAvg, scope.countryId];
   } else {
-    topCte = `SELECT t.wca_id, t.value FROM wca_results_top t WHERE t.event_id = ? AND t.is_avg = ? AND t.value > 0 AND t.person_country_id IN (SELECT id FROM wca_countries WHERE continent_id = ?) ORDER BY t.value ASC LIMIT 200`;
+    topCte = `SELECT t.wca_id, t.value FROM wca_results_flat t WHERE t.event_id = ? AND t.is_avg = ? AND t.value > 0 AND t.person_country_id IN (SELECT id FROM wca_countries WHERE continent_id = ?) ORDER BY t.value ASC LIMIT 200`;
     topParams = [event, isAvg, scope.continentId];
   }
   const rows = await query<{ wca_id: string; appearances: number; best_value: number; person_name: string; person_country_id: string; iso2: string | null }>(

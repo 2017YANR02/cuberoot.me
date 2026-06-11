@@ -121,7 +121,7 @@ ensureCube555Daemon().catch(err => {
 // 启动立即拉一次,失败不影响 listener.
 startRecentRecordsPoller();
 
-// Warm current-records cache(WR/CR/NR from wca_results_top,首次 ~5-10s 全扫).
+// Warm current-records cache(WR/CR/NR from wca_results_flat,首次 ~5-10s 全扫).
 // 后台跑,不阻塞 listener.正常运行期 24h TTL,/comp 页 fallback 用 peekCurrentRecords()
 // 立即返;若启动后 5-10s 内有请求进来,enrich 跳过(原行为)— 仅短窗影响.
 getCurrentRecords().catch(err => {

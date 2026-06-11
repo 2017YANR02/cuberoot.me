@@ -137,11 +137,11 @@ const all_results: AboutEntry = {
   badgeZh: '查询',
   badgeEn: 'Lookup',
   introZh: [
-    '把 WCA dump 里的全部 single + average 成绩展平成一张 `wca_results_top` 表(~11M 行,无 cap),让前端按项目 / single 还是 average / 国家 / 年 / 月 / 选手或比赛名搜索,翻页深至几百万也得在 <300 ms 内返回。',
+    '把 WCA dump 里的全部 single + average 成绩展平成一张 `wca_results_flat` 表(~11M 行,无 cap),让前端按项目 / single 还是 average / 国家 / 年 / 月 / 选手或比赛名搜索,翻页深至几百万也得在 <300 ms 内返回。',
     '关键挑战在**深分页**:`ORDER BY value LIMIT/OFFSET` 走 OFFSET 1,000,000 时,朴素查询要先 join 三张表再丢弃前 100 万行,要 10 s+。这里用「派生表 + late-join 走 id PK」+ `INCLUDE (id)` 索引,让内子查询走 Index Only Scan 不回表,外层再 enrich 100 行。',
   ],
   introEn: [
-    'Flattens the WCA dump\'s single + average results into one `wca_results_top` table (~11M rows, no cap) so the client can filter by event / single vs average / country / year / month / person or comp name and paginate millions of rows deep in under 300 ms.',
+    'Flattens the WCA dump\'s single + average results into one `wca_results_flat` table (~11M rows, no cap) so the client can filter by event / single vs average / country / year / month / person or comp name and paginate millions of rows deep in under 300 ms.',
     'The hard part is **deep pagination**: `ORDER BY value LIMIT/OFFSET` with `OFFSET 1,000,000` would naïvely join three tables and then discard the first million rows — 10 s+. The route uses a **derived-table + late-join on the id PK** pattern with an `INCLUDE (id)` index so the inner subquery is Index-Only and the outer only enriches 100 rows.',
   ],
   stats: [
@@ -149,7 +149,7 @@ const all_results: AboutEntry = {
         labelZhHant: "行數",
         hintZhHant: "single + average 各佔一行"
     },
-    { value: '6', labelZh: '主索引', labelEn: 'Main indexes', hintZh: 'wrt_main / country / wca_id / comp_id / year / comp_lookup', hintEn: 'wrt_main / country / wca_id / comp_id / year / comp_lookup' },
+    { value: '6', labelZh: '主索引', labelEn: 'Main indexes', hintZh: 'wrf_main / country / wca_id / comp_id / year / comp_lookup', hintEn: 'wrf_main / country / wca_id / comp_id / year / comp_lookup' },
     { value: '< 300 ms', labelZh: 'OFFSET 1 M', labelEn: 'At OFFSET 1 M', hintZh: 'late-join + INCLUDE(id) + VACUUM 后 Heap Fetches = 0', hintEn: 'late-join + INCLUDE(id) + VACUUM → Heap Fetches = 0',
         hintZhHant: "late-join + INCLUDE(id) + VACUUM 後 Heap Fetches = 0"
     },
@@ -172,12 +172,12 @@ const all_results: AboutEntry = {
        t.comp_id, c.name AS comp_name, t.comp_date, t.attempts, p.name
 FROM (
   SELECT t.id, t.value, t.wca_id
-  FROM wca_results_top t
+  FROM wca_results_flat t
   WHERE t.event_id = ? AND t.is_avg = ?
   ORDER BY t.value ASC, t.wca_id ASC
   LIMIT ? OFFSET ?
 ) q
-JOIN wca_results_top t ON t.id = q.id
+JOIN wca_results_flat t ON t.id = q.id
 JOIN wca_persons p ON p.wca_id = t.wca_id
 LEFT JOIN wca_countries co ON co.id = t.person_country_id
 LEFT JOIN wca_competitions c ON c.id = t.comp_id
@@ -188,18 +188,18 @@ ORDER BY q.value ASC, q.wca_id ASC;`,
     {
       titleZh: '基础过滤:event + type',
       titleEn: 'Base filter: event + type',
-      bodyZh: '`event_id` 校验 `VALID_EVENTS`(21 个含废止项目),`type` 只接 `single` / `average`;`333mbf` 拒绝 average。这两个值进 `wrt_main` 索引前缀。',
-      bodyEn: '`event_id` validated against `VALID_EVENTS` (21 incl. discontinued); `type` is `single` or `average` only; `333mbf` rejects `average`. Both values form the leading prefix of `wrt_main`.',
+      bodyZh: '`event_id` 校验 `VALID_EVENTS`(21 个含废止项目),`type` 只接 `single` / `average`;`333mbf` 拒绝 average。这两个值进 `wrf_main` 索引前缀。',
+      bodyEn: '`event_id` validated against `VALID_EVENTS` (21 incl. discontinued); `type` is `single` or `average` only; `333mbf` rejects `average`. Both values form the leading prefix of `wrf_main`.',
         titleZhHant: "基礎過濾:event + type",
-        bodyZhHant: "`event_id` 校驗 `VALID_EVENTS`(21 個含廢止項目),`type` 只接 `single` / `average`;`333mbf` 拒絕 average。這兩個值進 `wrt_main` 索引字首。"
+        bodyZhHant: "`event_id` 校驗 `VALID_EVENTS`(21 個含廢止項目),`type` 只接 `single` / `average`;`333mbf` 拒絕 average。這兩個值進 `wrf_main` 索引字首。"
     },
     {
       titleZh: '附加过滤:country / year / month',
       titleEn: 'Optional filters: country / year / month',
-      bodyZh: '`country` 走 2 字符 ISO2 → 反查 `wca_countries.id`;`year` 落到派生列 `comp_year`(STORED `EXTRACT(YEAR FROM comp_date)::SMALLINT`),`month` 走 `EXTRACT(MONTH FROM comp_date)`。`year` 命中 `wrt_year` 索引;month 是 post-filter。',
-      bodyEn: '`country` accepts 2-char ISO2, resolved via `wca_countries.id`. `year` hits the generated column `comp_year` (`STORED EXTRACT(YEAR FROM comp_date)::SMALLINT`); `month` is `EXTRACT(MONTH FROM comp_date)` as a post-filter. `year` rides the `wrt_year` index.',
+      bodyZh: '`country` 走 2 字符 ISO2 → 反查 `wca_countries.id`;`year` 落到派生列 `comp_year`(STORED `EXTRACT(YEAR FROM comp_date)::SMALLINT`),`month` 走 `EXTRACT(MONTH FROM comp_date)`。`year` 命中 `wrf_year` 索引;month 是 post-filter。',
+      bodyEn: '`country` accepts 2-char ISO2, resolved via `wca_countries.id`. `year` hits the generated column `comp_year` (`STORED EXTRACT(YEAR FROM comp_date)::SMALLINT`); `month` is `EXTRACT(MONTH FROM comp_date)` as a post-filter. `year` rides the `wrf_year` index.',
         titleZhHant: "附加過濾:country / year / month",
-        bodyZhHant: "`country` 走 2 字元 ISO2 → 反查 `wca_countries.id`;`year` 落到派生列 `comp_year`(STORED `EXTRACT(YEAR FROM comp_date)::SMALLINT`),`month` 走 `EXTRACT(MONTH FROM comp_date)`。`year` 命中 `wrt_year` 索引;month 是 post-filter。"
+        bodyZhHant: "`country` 走 2 字元 ISO2 → 反查 `wca_countries.id`;`year` 落到派生列 `comp_year`(STORED `EXTRACT(YEAR FROM comp_date)::SMALLINT`),`month` 走 `EXTRACT(MONTH FROM comp_date)`。`year` 命中 `wrf_year` 索引;month 是 post-filter。"
     },
     {
       titleZh: '自由文本 q:两张表 ILIKE',
@@ -212,19 +212,19 @@ ORDER BY q.value ASC, q.wca_id ASC;`,
     {
       titleZh: '派生表内子查询走 Index Only Scan',
       titleEn: 'Inner derived query stays Index-Only',
-      bodyZh: '内层只 `SELECT id, value, wca_id` — 三列都覆盖在 `wrt_main INCLUDE (id)` 里。`ORDER BY value, wca_id LIMIT ? OFFSET ?` 在索引上线性走,OFFSET 1 M 也只 ~250 ms,`Heap Fetches: 0`(前提 VACUUM 过)。',
-      bodyEn: 'Inner query only `SELECT id, value, wca_id` — all three columns live inside `wrt_main INCLUDE (id)`. `ORDER BY value, wca_id LIMIT ? OFFSET ?` walks the index linearly; OFFSET 1 M still ~250 ms with `Heap Fetches: 0` (assuming a recent VACUUM).',
+      bodyZh: '内层只 `SELECT id, value, wca_id` — 三列都覆盖在 `wrf_main INCLUDE (id)` 里。`ORDER BY value, wca_id LIMIT ? OFFSET ?` 在索引上线性走,OFFSET 1 M 也只 ~250 ms,`Heap Fetches: 0`(前提 VACUUM 过)。',
+      bodyEn: 'Inner query only `SELECT id, value, wca_id` — all three columns live inside `wrf_main INCLUDE (id)`. `ORDER BY value, wca_id LIMIT ? OFFSET ?` walks the index linearly; OFFSET 1 M still ~250 ms with `Heap Fetches: 0` (assuming a recent VACUUM).',
         titleZhHant: "派生表內子查詢走 Index Only Scan",
-        bodyZhHant: "內層只 `SELECT id, value, wca_id` — 三列都覆蓋在 `wrt_main INCLUDE (id)` 裡。`ORDER BY value, wca_id LIMIT ? OFFSET ?` 在索引上線性走,OFFSET 1 M 也只 ~250 ms,`Heap Fetches: 0`(前提 VACUUM 過)。"
+        bodyZhHant: "內層只 `SELECT id, value, wca_id` — 三列都覆蓋在 `wrf_main INCLUDE (id)` 裡。`ORDER BY value, wca_id LIMIT ? OFFSET ?` 在索引上線性走,OFFSET 1 M 也只 ~250 ms,`Heap Fetches: 0`(前提 VACUUM 過)。"
     },
     {
       titleZh: '外层用 id PK 回表 + enrich + 总数',
       titleEn: 'Outer joins via id PK, enrich, count',
-      bodyZh: '`JOIN wca_results_top t ON t.id = q.id` 走 PK,只回 100 行;再 join 三张字典表补 `name` / `comp_name` / `iso2`。并发跑一条 `COUNT(*)` 给 `total`(相同 WHERE)。',
-      bodyEn: '`JOIN wca_results_top t ON t.id = q.id` rides the PK and only resolves 100 rows; three lookup joins add `name` / `comp_name` / `iso2`. A separate `COUNT(*)` with the same WHERE produces `total`.',
+      bodyZh: '`JOIN wca_results_flat t ON t.id = q.id` 走 PK,只回 100 行;再 join 三张字典表补 `name` / `comp_name` / `iso2`。并发跑一条 `COUNT(*)` 给 `total`(相同 WHERE)。',
+      bodyEn: '`JOIN wca_results_flat t ON t.id = q.id` rides the PK and only resolves 100 rows; three lookup joins add `name` / `comp_name` / `iso2`. A separate `COUNT(*)` with the same WHERE produces `total`.',
       highlight: true,
         titleZhHant: "外層用 id PK 回表 + enrich + 總數",
-        bodyZhHant: "`JOIN wca_results_top t ON t.id = q.id` 走 PK,只回 100 行;再 join 三張字典表補 `name` / `comp_name` / `iso2`。併發跑一條 `COUNT(*)` 給 `total`(相同 WHERE)。"
+        bodyZhHant: "`JOIN wca_results_flat t ON t.id = q.id` 走 PK,只回 100 行;再 join 三張字典表補 `name` / `comp_name` / `iso2`。併發跑一條 `COUNT(*)` 給 `total`(相同 WHERE)。"
     },
   ],
   edgesZh: [

@@ -4,7 +4,7 @@
  * 背景:首页 /wca/recent-records 与 /wca/format-record 的 cn/en 文案原本 spawn 跨 repo
  * Python 渲染,Python 每次 eager 同步联网拉世界排名(3 天 cache 过期→110s 串行→5s spawn
  * 超时→熔断→文案空→前端降级到无比赛名 fallback)。本模块把渲染搬进 core-api 进程,
- * 世界排名改查本地 wca_results_top(复用 wca_stats_extra 的 rank-for 引擎),物理删除
+ * 世界排名改查本地 wca_results_flat(复用 wca_stats_extra 的 rank-for 引擎),物理删除
  * spawn + 联网 + 超时 + 熔断整条脆弱链。
  *
  * 渲染纯函数化:`formatCombinedRecords(events, getRank)` 全同步,世界排名通过同步

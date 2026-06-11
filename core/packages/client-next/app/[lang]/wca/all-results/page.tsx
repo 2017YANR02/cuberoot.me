@@ -154,7 +154,7 @@ function AllResultsPageInner() {
     basisRaw === 'cumulative' || basisRaw === 'period'
       ? basisRaw
       : (show === 'persons' ? 'cumulative' : 'period');
-  // 多盲平均 = 非官方 Mo3(builder 现算进 wca_results_top),单项可排;名次和不计入
+  // 多盲平均 = 非官方 Mo3(builder 现算进 wca_results_flat),单项可排;名次和不计入
   const isMbldAvg = singleEvent === '333mbf';
   const effType: 'single' | 'average' = type === 'average' ? 'average' : 'single';
 

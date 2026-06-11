@@ -505,7 +505,7 @@ const ROUND_NAME: Record<string, string> = {
 
 /** 给 cubing.com / WCA Live 源的 data 补 record 相关信息:
  *  - users[*].countryId / continentId 解析填充
- *  - 现有 results 的空 sr/ar 用 wca_results_top 当前 MIN 推断填充
+ *  - 现有 results 的空 sr/ar 用 wca_results_flat 当前 MIN 推断填充
  *  - 附加 currentRecords 快照供 client 给 WS 实时推送的成绩做同款推断
  *  非阻塞:无 records 缓存时全部跳过(首请求秒出,fallback 到原行为). */
 function enrichRecordTags(data: CompData): void {
@@ -514,7 +514,7 @@ function enrichRecordTags(data: CompData): void {
 }
 
 /** 给 cubing / wca / wca_live 源的 data 补 Psych Sheet 用的 personalRecords + per-result pS/pA dense rank:
- *  从 wca_results_top 取每位 wcaid 在该 comp.start_date 之前的全部 distinct single / average 值,
+ *  从 wca_results_flat 取每位 wcaid 在该 comp.start_date 之前的全部 distinct single / average 值,
  *    - MIN 用来填 personalRecords[wcaid][eventId].single/average (Psych Sheet)
  *    - 全部 distinct 值用来给本场每条 result 算 pS/pA dense rank (PR/PR2/PR3 标志)
  *  避免 client 直连 WCA API /persons/<id>(N 个 wcaid 触发 429,大比赛 Psych Sheet 全空).
@@ -543,7 +543,7 @@ async function enrichPersonalRecords(data: CompData): Promise<void> {
   try {
     priorRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; value: number }>(
       `SELECT DISTINCT wca_id, event_id, is_avg, value
-       FROM wca_results_top
+       FROM wca_results_flat
        WHERE wca_id IN (${idQs})
          AND value > 0
          ${dateClause}`,
@@ -559,7 +559,7 @@ async function enrichPersonalRecords(data: CompData): Promise<void> {
     tagRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; record_tag: string }>(
       `SELECT DISTINCT ON (wca_id, event_id, is_avg)
          wca_id, event_id, is_avg, record_tag
-       FROM wca_results_top
+       FROM wca_results_flat
        WHERE wca_id IN (${idQs})
          AND value > 0
          ${dateClause}
@@ -605,7 +605,7 @@ async function enrichPersonalRecords(data: CompData): Promise<void> {
   data.personalRecords = personalRecords;
 
   // pS/pA dense rank:同 tryLoadFromWcaDb 逻辑,按 ROUND_ORDER 累积本场成绩参与排名.
-  // 比赛进行中(WCA 未收录),wca_results_top 不含本场,即用历史值算 PR/PR2/PR3.
+  // 比赛进行中(WCA 未收录),wca_results_flat 不含本场,即用历史值算 PR/PR2/PR3.
   // 无 wcaid 的 newcomer 也参与:用 competitor number 当 group key,seenValues 必空 → 第一次有效成绩 = PR.
   const groups = new Map<string, LiveResult[]>();
   for (const arr of Object.values(data.resultsByRound)) {
@@ -763,7 +763,7 @@ async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<Comp
   return data;
 }
 
-// ─── WCA dump fast-path (PG wca_results_top) ──────────────────────────────
+// ─── WCA dump fast-path (PG wca_results_flat) ──────────────────────────────
 // 已结束 & 已入库的比赛走这条:本地 PG join wca_persons/wca_countries/wca_competitions,
 // 几十 ms 出全部 round 成绩;CI 每周重灌 dump 时一并填新数据.
 // 命中即独占,不再 probe cubing / wca_live / wca REST.
@@ -794,7 +794,7 @@ export async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): 
        p.name AS person_name,
        c.iso2 AS country_iso2,
        comp.name AS comp_name
-     FROM wca_results_top rt
+     FROM wca_results_flat rt
      LEFT JOIN wca_persons      p    ON p.wca_id   = rt.wca_id
      LEFT JOIN wca_countries    c    ON c.id       = rt.person_country_id
      LEFT JOIN wca_competitions comp ON comp.id    = rt.comp_id
@@ -894,7 +894,7 @@ export async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): 
   }
 
   // ── 历史 PR rank 检测 + personalRecords 预填 ─────────────────────────
-  // 对该比赛每位选手每项目,拉 wca_results_top 中 comp_date < 本比赛日期的全部 distinct 值;
+  // 对该比赛每位选手每项目,拉 wca_results_flat 中 comp_date < 本比赛日期的全部 distinct 值;
   // 然后按 ROUND_ORDER 升序遍历本比赛各轮 (1 → 2 → 3 → f),为每条结果计算 dense rank:
   //   rank = (历史已见过的、严格小于本值的 distinct 值数) + 1
   //   旧成绩 rank 在它发生那一刻冻结(本算法只 prepend 历史 + 累积本场,符合时间序冻结语义).
@@ -908,7 +908,7 @@ export async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): 
     const evQs = eventIdsInComp.map(() => '?').join(',');
     const priorRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; value: number }>(
       `SELECT DISTINCT wca_id, event_id, is_avg, value
-       FROM wca_results_top
+       FROM wca_results_flat
        WHERE wca_id IN (${idQs})
          AND event_id IN (${evQs})
          AND comp_date < ?
@@ -940,7 +940,7 @@ export async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): 
     const tagRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; record_tag: string }>(
       `SELECT DISTINCT ON (wca_id, event_id, is_avg)
          wca_id, event_id, is_avg, record_tag
-       FROM wca_results_top
+       FROM wca_results_flat
        WHERE wca_id IN (${idQs})
          AND event_id IN (${evQs})
          AND comp_date < ?
