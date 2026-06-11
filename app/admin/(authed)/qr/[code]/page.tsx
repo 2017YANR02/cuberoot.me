@@ -67,39 +67,51 @@ export default async function AdminQrEditPage({
         </div>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[340px_1fr] items-start">
+      <div className="grid gap-6">
+        <Card className="p-6">
+          <h2 className="text-[15px] font-semibold text-ink mb-4">卡片编辑</h2>
+          <CardEditor
+            entry={entry}
+            svg={svg}
+            formId="qr-edit-form"
+            landingUrl={landingUrl}
+          />
+        </Card>
+
         <div className="grid gap-6">
           <Card className="p-5">
           <h2 className="text-[15px] font-semibold text-ink mb-3">设置</h2>
           <form action={saveQr} id="qr-edit-form" className="grid gap-4">
             <input type="hidden" name="code" value={entry.code} />
             <TypeSectionToggle />
-            {isProtectedQr(entry.code) ? (
-              <Field label="Code" hint="演示码,固定不可改">
-                <Input defaultValue={entry.code} disabled />
+            <div className="grid gap-4 sm:grid-cols-3">
+              {isProtectedQr(entry.code) ? (
+                <Field label="Code" hint="演示码,固定不可改">
+                  <Input defaultValue={entry.code} disabled />
+                </Field>
+              ) : (
+                <Field
+                  label="Code"
+                  hint="二维码身份。改它二维码图案会变,已印出去的旧码会失效;仅小写字母 / 数字 / 连字符"
+                >
+                  <Input
+                    name="newCode"
+                    defaultValue={entry.code}
+                    pattern="[a-z0-9-]+"
+                    placeholder={entry.code}
+                  />
+                </Field>
+              )}
+              <Field label="批次标签" hint="内部备注,不展示给用户">
+                <Input name="label" defaultValue={entry.label} required />
               </Field>
-            ) : (
-              <Field
-                label="Code"
-                hint="二维码身份。改它二维码图案会变,已印出去的旧码会失效;仅小写字母 / 数字 / 连字符"
-              >
-                <Input
-                  name="newCode"
-                  defaultValue={entry.code}
-                  pattern="[a-z0-9-]+"
-                  placeholder={entry.code}
-                />
+              <Field label="类型" hint="跳转码=扫码直达;聚合码=展示多链接落地页">
+                <Select name="type" defaultValue={entry.type}>
+                  <option value="redirect">跳转码 redirect</option>
+                  <option value="landing">聚合码 landing</option>
+                </Select>
               </Field>
-            )}
-            <Field label="批次标签" hint="内部备注,不展示给用户">
-              <Input name="label" defaultValue={entry.label} required />
-            </Field>
-            <Field label="类型" hint="跳转码=扫码直达;聚合码=展示多链接落地页">
-              <Select name="type" defaultValue={entry.type}>
-                <option value="redirect">跳转码 redirect</option>
-                <option value="landing">聚合码 landing</option>
-              </Select>
-            </Field>
+            </div>
 
             <div id="qr-sec-redirect" className="rounded-md border border-line-soft bg-bg-soft p-4">
               <div className="mb-3 text-[13px] font-medium text-ink-2">
@@ -125,7 +137,7 @@ export default async function AdminQrEditPage({
             {/* 保存按钮统一用左侧卡片编辑器底部那个全宽「保存」(form={qr-edit-form}),
                 它在下载按钮之上,符合「先存再下载」流程;此处不再重复放 */}
             <p className="text-[12px] text-ink-3">
-              这里的设置和右侧卡片改动,一起点右上角的「保存」生效。
+              这里的设置和上方卡片改动,一起点右上角的「保存」生效。
             </p>
           </form>
           <div className="mt-4 border-t border-line-soft pt-4">
@@ -176,16 +188,6 @@ export default async function AdminQrEditPage({
         </Card>
 
         </div>
-
-        <Card className="p-6">
-          <h2 className="text-[15px] font-semibold text-ink mb-4">卡片编辑</h2>
-          <CardEditor
-            entry={entry}
-            svg={svg}
-            formId="qr-edit-form"
-            landingUrl={landingUrl}
-          />
-        </Card>
       </div>
     </div>
   );
