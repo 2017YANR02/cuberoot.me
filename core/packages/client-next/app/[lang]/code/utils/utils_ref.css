@@ -1,0 +1,161 @@
+/* /code/utils — quick-reference for the in-house hooks & canonical utils.
+ * Dual-theme via global tokens; code-first cards (no live demos). */
+
+.ur {
+  --ur-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+  position: relative;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  padding: 72px 40px 64px;
+  overflow-x: hidden;
+}
+
+/* ── header ─────────────────────────────── */
+.ur-head { max-width: 1080px; margin: 0 auto 36px; }
+.ur-topbar { margin-bottom: 28px; }
+.ur-back {
+  font-family: var(--ur-mono);
+  font-size: 13px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  transition: color .2s;
+}
+.ur-back:hover { color: var(--accent); }
+
+.ur-title {
+  font-family: var(--ur-mono);
+  font-size: clamp(48px, 9vw, 104px);
+  font-weight: 700;
+  letter-spacing: -.04em;
+  line-height: .95;
+  margin: 0 0 20px;
+  color: var(--foreground);
+}
+.ur-prefix, .ur-cursor { color: var(--accent); }
+.ur-cursor { animation: ur-blink 1.1s steps(2, end) infinite; }
+@keyframes ur-blink { 50% { opacity: 0; } }
+
+.ur-sub {
+  font-size: clamp(15px, 1.6vw, 18px);
+  color: var(--muted-foreground);
+  max-width: 740px;
+  line-height: 1.7;
+  margin: 0 0 24px;
+}
+
+/* ── register-here note ─────────────────── */
+.ur-note {
+  max-width: 1080px;
+  margin: 0 auto 56px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px 20px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  background: var(--accent-soft);
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--foreground);
+}
+.ur-note-mark {
+  font-family: var(--ur-mono);
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.ur-note code {
+  font-family: var(--ur-mono);
+  font-size: .86em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+/* ── category ───────────────────────────── */
+.ur-cat { max-width: 1080px; margin: 0 auto 52px; }
+.ur-cat-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-default);
+}
+.ur-cat-tag {
+  font-family: var(--ur-mono);
+  font-size: 12px;
+  color: var(--faint-foreground);
+}
+.ur-cat-title {
+  font-size: clamp(19px, 2.3vw, 25px);
+  font-weight: 650;
+  letter-spacing: -.01em;
+  margin: 0;
+  color: var(--foreground);
+}
+
+/* ── grid + card ────────────────────────── */
+.ur-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 18px;
+}
+.ur-card {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 20px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+}
+.ur-card-name {
+  font-family: var(--ur-mono);
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--foreground);
+  letter-spacing: -.01em;
+  overflow-wrap: anywhere;
+}
+.ur-card-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  margin: 0;
+}
+
+.ur-code {
+  margin: 0;
+  font-family: var(--ur-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 9px 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ur-code-sig { color: var(--foreground); }
+.ur-code-sub { color: var(--muted-foreground); background: color-mix(in srgb, var(--foreground) 4%, transparent); }
+
+/* ── footer ─────────────────────────────── */
+.ur-foot {
+  max-width: 1080px;
+  margin: 60px auto 0;
+  text-align: center;
+  font-family: var(--ur-mono);
+  font-size: 12px;
+  color: var(--faint-foreground);
+}
+.ur-foot a { color: var(--muted-foreground); text-decoration: none; }
+.ur-foot a:hover { color: var(--accent); }
+.ur-foot-line { display: inline-flex; align-items: center; gap: 10px; }
+
+@media (max-width: 640px) {
+  .ur { padding: 56px 16px 40px; }
+  .ur-grid { grid-template-columns: 1fr; gap: 16px; }
+}

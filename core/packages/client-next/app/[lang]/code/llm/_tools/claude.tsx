@@ -1,5 +1,5 @@
-import type { StackTool } from '../_lib/stack_tool_types';
-import { k, v, s, n, f, p, c } from '../_lib/stack_tool_types';
+import type { StackTool } from '../../stack/_lib/stack_tool_types';
+import { k, v, s, n, f, p, c } from '../../stack/_lib/stack_tool_types';
 
 // ─── Claude (Anthropic LLM family, current: Opus 4.7) ──────────────────────
 

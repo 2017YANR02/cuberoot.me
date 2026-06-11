@@ -1,0 +1,688 @@
+/* Fable 5 intro — palette intentionally locked to Anthropic's brand (ivory /
+   ink / book-cloth coral), independent of site theme tokens per explicit
+   request: this page mirrors anthropic.com's design language, not ours.
+   Locked light like /calc (page-scope color-scheme). */
+
+.fable-page {
+  /* Anthropic brand palette */
+  --fb-bg: #F0EEE6;          /* ivory section bg */
+  --fb-bg-raised: #FAF9F5;   /* card / raised ivory */
+  --fb-ink: #141413;         /* near-black ink */
+  --fb-ink-soft: #534F4A;    /* secondary text */
+  --fb-ink-faint: #87827B;   /* tertiary text */
+  --fb-coral: #D97757;       /* Claude coral */
+  --fb-clay: #CC785C;        /* book cloth */
+  --fb-line: #E3DFD3;        /* hairline border */
+  --fb-line-strong: #CFC9BA;
+  --fb-sky: #6A9BCC;         /* muted comparison blue */
+  --fb-olive: #788C5D;       /* muted comparison green */
+  --fb-serif: 'Tiempos Text', 'Source Serif 4', Charter, Georgia, Cambria, 'Songti SC', 'Noto Serif SC', serif;
+  --fb-sans: 'Styrene A', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --fb-mono: var(--font-mono, ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace);
+
+  color-scheme: light;
+  background: var(--fb-bg);
+  color: var(--fb-ink);
+  font-family: var(--fb-sans);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.fable-shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px 96px;
+}
+
+/* ── top strip ─────────────────────────────────────────── */
+.fable-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+  font-size: 14px;
+}
+.fable-top-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fb-ink-soft);
+  text-decoration: none;
+}
+.fable-top-home:hover { color: var(--fb-ink); }
+.fable-top-mark {
+  font-family: var(--fb-serif);
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  color: var(--fb-ink);
+}
+.fable-top-mark em {
+  font-style: italic;
+  color: var(--fb-clay);
+}
+
+/* ── hero ──────────────────────────────────────────────── */
+.fable-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: center;
+  padding: 56px 0 64px;
+}
+.fable-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fb-ink-faint);
+  margin-bottom: 22px;
+}
+.fable-eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--fb-clay);
+}
+.fable-hero h1 {
+  font-family: var(--fb-serif);
+  font-weight: 450;
+  font-size: clamp(44px, 7vw, 76px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  margin: 0 0 24px;
+}
+.fable-hero h1 em {
+  font-style: italic;
+  color: var(--fb-clay);
+}
+.fable-lede {
+  font-size: 19px;
+  line-height: 1.65;
+  color: var(--fb-ink-soft);
+  max-width: 34em;
+  margin: 0 0 30px;
+}
+.fable-hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+.fable-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 11px 22px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.fable-btn:active { transform: scale(0.98); }
+.fable-btn-dark {
+  background: var(--fb-ink);
+  color: var(--fb-bg-raised);
+}
+.fable-btn-dark:hover { background: #2b2a28; }
+.fable-btn-ghost {
+  border: 1px solid var(--fb-line-strong);
+  color: var(--fb-ink);
+}
+.fable-btn-ghost:hover { background: color-mix(in srgb, var(--fb-ink) 5%, transparent); }
+.fable-model-chip {
+  font-family: var(--fb-mono);
+  font-size: 13px;
+  background: color-mix(in srgb, var(--fb-clay) 12%, transparent);
+  color: var(--fb-clay);
+  border: 1px solid color-mix(in srgb, var(--fb-clay) 30%, transparent);
+  border-radius: 8px;
+  padding: 5px 10px;
+}
+.fable-hero-art { width: 100%; height: auto; display: block; }
+
+/* ── stat band ─────────────────────────────────────────── */
+.fable-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--fb-line);
+  border-bottom: 1px solid var(--fb-line);
+}
+.fable-stat {
+  padding: 28px 24px;
+  border-left: 1px solid var(--fb-line);
+}
+.fable-stat:first-child { border-left: none; }
+.fable-stat-num {
+  font-family: var(--fb-serif);
+  font-size: 38px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.fable-stat-num small {
+  font-size: 20px;
+  color: var(--fb-ink-faint);
+  margin-left: 2px;
+}
+.fable-stat-label {
+  margin-top: 8px;
+  font-size: 13.5px;
+  color: var(--fb-ink-soft);
+}
+
+/* ── sections ──────────────────────────────────────────── */
+.fable-section { padding: 80px 0 0; }
+.fable-kicker {
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fb-clay);
+  margin-bottom: 14px;
+}
+.fable-section h2 {
+  font-family: var(--fb-serif);
+  font-weight: 450;
+  font-size: clamp(30px, 4vw, 42px);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  margin: 0 0 18px;
+  max-width: 20em;
+}
+.fable-section-sub {
+  font-size: 17px;
+  color: var(--fb-ink-soft);
+  max-width: 44em;
+  margin: 0 0 40px;
+}
+
+/* what-is two-col */
+.fable-duo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+.fable-prose p {
+  font-size: 16.5px;
+  color: var(--fb-ink-soft);
+  margin: 0 0 18px;
+}
+.fable-prose strong { color: var(--fb-ink); font-weight: 600; }
+.fable-twin-card {
+  background: var(--fb-bg-raised);
+  border: 1px solid var(--fb-line);
+  border-radius: 20px;
+  padding: 28px;
+}
+.fable-twin-svg { width: 100%; height: auto; display: block; margin-bottom: 18px; }
+.fable-twin-note { font-size: 13.5px; color: var(--fb-ink-faint); line-height: 1.55; }
+
+/* ── tier ladder ──────────────────────────────────────── */
+.fable-ladder { display: flex; flex-direction: column; gap: 16px; }
+.fable-ladder-row {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 170px;
+  align-items: center;
+  gap: 18px;
+}
+.fable-ladder-name {
+  font-family: var(--fb-serif);
+  font-size: 17px;
+  color: var(--fb-ink-soft);
+}
+.fable-ladder-row.is-self .fable-ladder-name { color: var(--fb-clay); font-weight: 600; }
+.fable-ladder-track {
+  height: 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fb-ink) 6%, transparent);
+  overflow: hidden;
+}
+.fable-ladder-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--fb-line-strong);
+}
+.fable-ladder-row.is-self .fable-ladder-fill {
+  background: linear-gradient(90deg, var(--fb-clay), var(--fb-coral));
+}
+.fable-ladder-sub { font-size: 13px; color: var(--fb-ink-faint); }
+
+/* ── real-world proof ─────────────────────────────────── */
+.fable-proof-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.fable-proof-card {
+  background: var(--fb-bg-raised);
+  border: 1px solid var(--fb-line);
+  border-radius: 20px;
+  padding: 26px;
+}
+.fable-proof-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--fb-clay) 12%, transparent);
+  color: var(--fb-clay);
+  margin-bottom: 16px;
+}
+.fable-proof-stat {
+  font-family: var(--fb-serif);
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+.fable-proof-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.fable-proof-desc { font-size: 13.5px; color: var(--fb-ink-soft); line-height: 1.55; }
+
+/* ── comparison table ─────────────────────────────────── */
+.fable-cmp-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--fb-bg-raised);
+  border: 1px solid var(--fb-line);
+  border-radius: 20px;
+  overflow: hidden;
+  font-size: 15px;
+}
+.fable-cmp-table th,
+.fable-cmp-table td {
+  text-align: left;
+  padding: 14px 20px;
+  border-top: 1px solid var(--fb-line);
+  vertical-align: middle;
+}
+.fable-cmp-table thead th {
+  border-top: none;
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fb-ink-faint);
+  font-weight: 600;
+}
+.fable-cmp-table thead th.is-self { color: var(--fb-clay); }
+.fable-cmp-table td:first-child { color: var(--fb-ink-soft); width: 34%; }
+.fable-cmp-table .is-self { background: color-mix(in srgb, var(--fb-clay) 7%, transparent); }
+.fable-cmp-table td.is-self { font-weight: 600; color: var(--fb-ink); }
+.fable-cmp-table td.num { font-family: var(--fb-mono); font-size: 13.5px; }
+.fable-cmp-na { color: var(--fb-ink-faint); vertical-align: middle; }
+
+/* ── FAQ ──────────────────────────────────────────────── */
+.fable-faq { display: flex; flex-direction: column; gap: 12px; }
+.fable-faq-item {
+  background: var(--fb-bg-raised);
+  border: 1px solid var(--fb-line);
+  border-radius: 16px;
+  padding: 4px 22px;
+}
+.fable-faq-item summary {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  list-style: none;
+  cursor: pointer;
+  padding: 16px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--fb-ink);
+}
+.fable-faq-item summary::-webkit-details-marker { display: none; }
+.fable-faq-item summary svg { color: var(--fb-clay); flex: none; }
+.fable-faq-item summary::after {
+  content: '+';
+  margin-left: auto;
+  font-size: 20px;
+  color: var(--fb-ink-faint);
+  font-weight: 400;
+}
+.fable-faq-item[open] summary::after { content: '–'; }
+.fable-faq-item p {
+  margin: 0 0 18px 27px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--fb-ink-soft);
+}
+
+/* ── benchmarks ───────────────────────────────────────── */
+.fable-bench-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.fable-bench-card {
+  background: var(--fb-bg-raised);
+  border: 1px solid var(--fb-line);
+  border-radius: 20px;
+  padding: 26px 26px 22px;
+}
+.fable-bench-name {
+  font-family: var(--fb-serif);
+  font-size: 21px;
+  margin-bottom: 4px;
+}
+.fable-bench-desc {
+  font-size: 13.5px;
+  color: var(--fb-ink-faint);
+  margin-bottom: 20px;
+}
+.fable-bench-row { margin-bottom: 14px; }
+.fable-bench-row:last-child { margin-bottom: 0; }
+.fable-bench-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13.5px;
+  margin-bottom: 5px;
+}
+.fable-bench-label { color: var(--fb-ink-soft); }
+.fable-bench-row.is-self .fable-bench-label { color: var(--fb-ink); font-weight: 600; }
+.fable-bench-value {
+  font-family: var(--fb-mono);
+  font-size: 13px;
+  color: var(--fb-ink-faint);
+}
+.fable-bench-row.is-self .fable-bench-value { color: var(--fb-clay); font-weight: 600; }
+.fable-bench-track {
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fb-ink) 6%, transparent);
+  overflow: hidden;
+}
+.fable-bench-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--fb-line-strong);
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.fable-bench-row.is-self .fable-bench-fill {
+  background: linear-gradient(90deg, var(--fb-clay), var(--fb-coral));
+}
+.fable-bench-foot {
+  margin-top: 24px;
+  font-size: 13px;
+  color: var(--fb-ink-faint);
+}
+
+/* ── capability cards ─────────────────────────────────── */
+.fable-cap-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.fable-cap-card {
+  background: var(--fb-bg-raised);
+  border: 1px solid var(--fb-line);
+  border-radius: 20px;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.fable-cap-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--fb-clay) 12%, transparent);
+  color: var(--fb-clay);
+}
+.fable-cap-card h3 {
+  font-family: var(--fb-serif);
+  font-size: 20px;
+  font-weight: 500;
+  margin: 0;
+}
+.fable-cap-card p {
+  font-size: 14.5px;
+  color: var(--fb-ink-soft);
+  margin: 0;
+  line-height: 1.6;
+}
+.fable-cap-fact {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px dashed var(--fb-line);
+  font-size: 13px;
+  color: var(--fb-clay);
+}
+
+/* ── quotes ───────────────────────────────────────────── */
+.fable-quote-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.fable-quote {
+  border-left: 3px solid var(--fb-clay);
+  background: var(--fb-bg-raised);
+  border-radius: 0 18px 18px 0;
+  padding: 24px 26px;
+}
+.fable-quote p {
+  font-family: var(--fb-serif);
+  font-size: 18px;
+  line-height: 1.55;
+  margin: 0 0 14px;
+}
+.fable-quote cite {
+  font-style: normal;
+  font-size: 13.5px;
+  color: var(--fb-ink-faint);
+}
+
+/* ── safety ───────────────────────────────────────────── */
+.fable-safety-flow {
+  background: var(--fb-bg-raised);
+  border: 1px solid var(--fb-line);
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 24px;
+}
+.fable-safety-svg { width: 100%; height: auto; display: block; }
+.fable-safety-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.fable-safety-card {
+  border: 1px solid var(--fb-line);
+  border-radius: 18px;
+  padding: 22px;
+  background: color-mix(in srgb, var(--fb-bg-raised) 55%, transparent);
+}
+.fable-safety-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+.fable-safety-card h3 svg { color: var(--fb-clay); flex: none; }
+.fable-safety-card p {
+  font-size: 14px;
+  color: var(--fb-ink-soft);
+  margin: 0;
+}
+.fable-safety-foot {
+  margin-top: 22px;
+  font-size: 13.5px;
+  color: var(--fb-ink-faint);
+  max-width: 56em;
+}
+
+/* ── pricing ──────────────────────────────────────────── */
+.fable-price-wrap { overflow-x: auto; }
+.fable-price-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--fb-bg-raised);
+  border: 1px solid var(--fb-line);
+  border-radius: 20px;
+  overflow: hidden;
+  font-size: 15px;
+}
+.fable-price-table th,
+.fable-price-table td {
+  text-align: left;
+  padding: 15px 20px;
+  border-top: 1px solid var(--fb-line);
+  white-space: nowrap;
+}
+.fable-price-table thead th {
+  border-top: none;
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fb-ink-faint);
+  font-weight: 600;
+}
+.fable-price-table .is-self {
+  background: color-mix(in srgb, var(--fb-clay) 7%, transparent);
+}
+.fable-price-table .is-self td:first-child {
+  font-weight: 600;
+  color: var(--fb-clay);
+}
+.fable-price-table td.num { font-family: var(--fb-mono); font-size: 13.5px; }
+
+/* timeline */
+.fable-timeline {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin-top: 36px;
+  position: relative;
+}
+.fable-timeline::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  background: var(--fb-line-strong);
+}
+.fable-tl-item { position: relative; padding: 28px 18px 0 0; }
+.fable-tl-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--fb-bg);
+  border: 2px solid var(--fb-line-strong);
+}
+.fable-tl-item.is-hot::before {
+  background: var(--fb-clay);
+  border-color: var(--fb-clay);
+}
+.fable-tl-date {
+  font-family: var(--fb-mono);
+  font-size: 12.5px;
+  color: var(--fb-clay);
+  margin-bottom: 6px;
+}
+.fable-tl-title { font-size: 15.5px; font-weight: 600; margin-bottom: 4px; }
+.fable-tl-desc { font-size: 13.5px; color: var(--fb-ink-soft); }
+
+/* ── developers ───────────────────────────────────────── */
+.fable-dev {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+.fable-code {
+  background: #1F1E1D;
+  color: #EDEAE3;
+  border-radius: 18px;
+  padding: 24px;
+  font-family: var(--fb-mono);
+  font-size: 13.5px;
+  line-height: 1.7;
+  overflow-x: auto;
+  margin: 0;
+}
+.fable-code .tok-k { color: #D97757; }
+.fable-code .tok-s { color: #B8C97D; }
+.fable-code .tok-c { color: #8C877E; }
+.fable-dev-notes { display: flex; flex-direction: column; gap: 0; }
+.fable-dev-note {
+  display: flex;
+  gap: 12px;
+  padding: 15px 2px;
+  border-top: 1px solid var(--fb-line);
+  font-size: 14.5px;
+  color: var(--fb-ink-soft);
+}
+.fable-dev-note:first-child { border-top: none; padding-top: 4px; }
+.fable-dev-note svg { flex: none; margin-top: 3px; color: var(--fb-clay); }
+.fable-dev-note code {
+  font-family: var(--fb-mono);
+  font-size: 12.5px;
+  background: color-mix(in srgb, var(--fb-ink) 7%, transparent);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
+/* ── footer ───────────────────────────────────────────── */
+.fable-footer {
+  margin-top: 90px;
+  padding-top: 26px;
+  border-top: 1px solid var(--fb-line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  font-size: 13.5px;
+  color: var(--fb-ink-faint);
+}
+.fable-footer a {
+  color: var(--fb-ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid var(--fb-line-strong);
+}
+.fable-footer a:hover { color: var(--fb-clay); border-color: var(--fb-clay); }
+
+/* ── responsive ───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .fable-hero { grid-template-columns: 1fr; gap: 36px; padding-top: 36px; }
+  .fable-hero-art { max-width: 420px; margin: 0 auto; }
+  .fable-stats { grid-template-columns: repeat(2, 1fr); }
+  .fable-stat:nth-child(3) { border-left: none; }
+  .fable-stat { border-top: 1px solid var(--fb-line); }
+  .fable-stat:nth-child(-n + 2) { border-top: none; }
+  .fable-bench-grid,
+  .fable-quote-grid { grid-template-columns: 1fr; }
+  .fable-cap-grid,
+  .fable-safety-grid,
+  .fable-proof-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fable-duo,
+  .fable-dev { grid-template-columns: 1fr; }
+  .fable-ladder-row { grid-template-columns: 96px minmax(0, 1fr); }
+  .fable-ladder-sub { display: none; }
+}
+@media (max-width: 560px) {
+  .fable-shell { padding: 0 16px 72px; }
+  .fable-section { padding-top: 60px; }
+  .fable-cap-grid,
+  .fable-safety-grid,
+  .fable-proof-grid { grid-template-columns: 1fr; }
+  .fable-stats { grid-template-columns: 1fr 1fr; }
+  .fable-stat { padding: 20px 14px; }
+  .fable-stat-num { font-size: 28px; }
+  .fable-timeline { grid-template-columns: 1fr; gap: 22px; }
+  .fable-timeline::before { display: none; }
+  .fable-tl-item { padding-top: 0; padding-left: 26px; }
+  .fable-lede { font-size: 17px; }
+}

@@ -1,0 +1,256 @@
+/* /code/tokens — the site's color-token reference. Dual-theme: page chrome
+ * follows global tokens, while each swatch shows its real light + dark value
+ * side by side regardless of the current theme. */
+
+.tk {
+  --tk-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+  position: relative;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  padding: 72px 40px 64px;
+  overflow-x: hidden;
+}
+
+/* ── header ─────────────────────────────── */
+.tk-head { max-width: 1080px; margin: 0 auto 40px; }
+.tk-topbar { margin-bottom: 28px; }
+.tk-back {
+  font-family: var(--tk-mono);
+  font-size: 13px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  transition: color .2s;
+}
+.tk-back:hover { color: var(--accent); }
+
+.tk-title {
+  font-family: var(--tk-mono);
+  font-size: clamp(48px, 9vw, 104px);
+  font-weight: 700;
+  letter-spacing: -.04em;
+  line-height: .95;
+  margin: 0 0 20px;
+  color: var(--foreground);
+}
+.tk-prefix, .tk-cursor { color: var(--accent); }
+.tk-cursor { animation: tk-blink 1.1s steps(2, end) infinite; }
+@keyframes tk-blink { 50% { opacity: 0; } }
+
+.tk-sub {
+  font-size: clamp(15px, 1.6vw, 18px);
+  color: var(--muted-foreground);
+  max-width: 740px;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ── category ───────────────────────────── */
+.tk-cat { max-width: 1080px; margin: 0 auto 52px; }
+.tk-cat-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-default);
+}
+.tk-cat-tag {
+  font-family: var(--tk-mono);
+  font-size: 12px;
+  color: var(--faint-foreground);
+}
+.tk-cat-title {
+  font-size: clamp(19px, 2.3vw, 25px);
+  font-weight: 650;
+  letter-spacing: -.01em;
+  margin: 0;
+  color: var(--foreground);
+}
+.tk-cat-note {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+  margin: -6px 0 20px;
+  max-width: 760px;
+}
+
+/* ── swatch grid ────────────────────────── */
+.tk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(224px, 1fr));
+  gap: 16px;
+}
+.tk-card {
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  transition: border-color .15s, transform .15s;
+}
+.tk-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border-default));
+  transform: translateY(-1px);
+}
+
+/* two theme chips (light | dark) */
+.tk-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tk-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 8px 8px;
+  border: 1px solid;
+  border-radius: 9px;
+}
+.tk-chip-fill {
+  width: 100%;
+  height: 34px;
+  border-radius: 6px;
+  /* neutral hairline so white / near-bg swatches stay visible on both chips */
+  border: 1px solid rgba(128, 128, 128, .32);
+}
+.tk-chip-ring {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 2.5px solid;
+}
+.tk-chip-aa {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--tk-mono);
+  font-size: 21px;
+  font-weight: 700;
+}
+.tk-chip-txt {
+  font-family: var(--tk-mono);
+  font-size: 10.5px;
+  letter-spacing: .01em;
+}
+
+.tk-card-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: var(--tk-mono);
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--foreground);
+}
+.tk-copy {
+  font-family: var(--tk-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--faint-foreground);
+  white-space: nowrap;
+}
+.tk-card:hover .tk-copy { color: var(--accent); }
+.tk-card-desc {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+/* ── pairing note ───────────────────────── */
+.tk-pair {
+  max-width: 1080px;
+  margin: -28px auto 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--faint-foreground);
+}
+.tk-pair code {
+  font-family: var(--tk-mono);
+  font-size: .92em;
+  color: var(--muted-foreground);
+}
+
+/* ── color-mix recipes ──────────────────── */
+.tk-recipes { display: flex; flex-direction: column; gap: 10px; }
+.tk-recipe {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 14px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+}
+.tk-recipe-swatch {
+  width: 44px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 1px solid rgba(128, 128, 128, .3);
+}
+.tk-recipe-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tk-recipe-code {
+  font-family: var(--tk-mono);
+  font-size: 11.5px;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+.tk-recipe-desc { font-size: 12.5px; color: var(--muted-foreground); }
+
+/* ── theme strategy ─────────────────────── */
+.tk-strat {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.tk-strat-row {
+  display: grid;
+  grid-template-columns: 132px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border-default);
+}
+.tk-strat-row:last-child { border-bottom: none; }
+.tk-strat-mode {
+  font-family: var(--tk-mono);
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--accent);
+}
+.tk-strat-desc { font-size: 12.5px; line-height: 1.5; color: var(--foreground); }
+.tk-strat-pages {
+  font-family: var(--tk-mono);
+  font-size: 11px;
+  color: var(--faint-foreground);
+  text-align: right;
+}
+
+/* ── footer ─────────────────────────────── */
+.tk-foot {
+  max-width: 1080px;
+  margin: 60px auto 0;
+  text-align: center;
+  font-family: var(--tk-mono);
+  font-size: 12px;
+  color: var(--faint-foreground);
+}
+.tk-foot a { color: var(--muted-foreground); text-decoration: none; }
+.tk-foot a:hover { color: var(--accent); }
+.tk-foot-line { display: inline-flex; align-items: center; gap: 10px; }
+
+@media (max-width: 640px) {
+  .tk { padding: 56px 16px 40px; }
+  .tk-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .tk-strat-row { grid-template-columns: 1fr; gap: 5px; }
+  .tk-strat-pages { text-align: left; }
+}
