@@ -77,7 +77,13 @@
 - [x] **⏸ soft-gate(M2)** ✅ 2026-06-11 用户拍板:**做**,key `roux_s2`。展开为 M2a–M2e:
 - [x] **M2a** ~~引擎扩 move 集~~ — **2026-06-11 红灯→用户拍板走伪 roux_s2**(见 §3):原生扩 M/r 撞 18-stride 承重墙(重构引擎 + 重建 34GB 表),弃之。改由 M2b 在现有 18-move + 视角共轭里表达 ⟨M,U,R,r⟩,零引擎改动。M2a 作为"扩引擎"单元取消。
 - [x] ~~**M2b–M2e** roux_s2 全链路~~ — **2026-06-11 用户拍板弃整个 M2**。两路皆绝:扩引擎撞 18-stride 承重墙(M2a)、伪路线 FTM 最优 SB = 现有 `roux_s1_solver` 逐位重复(M2b,cstimer 亦只报 FTM)。roux_s2 不作为独立变体。若日后要 Roux SB 的 FTM 数,复用 `RouxS1Solver` 右块视角即可,无需新变体全链路。
-- [ ] **M3** HTR phase-2(G3→G4 限 ⟨U2,D2,L2,R2,F2,B2⟩ 当**搜索空间**)或等价受限搜索变体。照变体 playbook 全链路 + MANUAL 交接。
+### M3 — HTR phase-2(G3→G4,限 ⟨U2,D2,L2,R2,F2,B2⟩ 搜索;6 双转全在现有 18-move 编码内,用 M1 mask,零引擎改动)
+> 语义:从 HTR 态(G3 陪集已满足)只用 6 种双转降到 solved(G4)。|G3|=663,552(H1 已算)→ 全空间小表可行,照 HTR 零盘表精确表模式。变体 key 建议 `htr2` 或 `htrfin`(M3a 推导时定)。
+- [ ] **M3a** Rust 核心 `htr_phase2_solver.rs` + 测试(pt_basics + 独立暴力对照 + enumerate)。**DESIGN-FIRST**:确认态空间(|G3| 内的可降子集 / 坐标)+ 用 M1 `*_masked`(mask = U2 D2 L2 R2 F2 B2 这 6 位)跑搜索;推导态数别信记忆,测试独立暴力对照。门:`cargo test --release <key>` 绿 + 全量现有测试仍绿。
+- [ ] **M3b** analyzer bin + `tests/e2e_*.rs`。门:e2e 绿 + smoke 形状对。
+- [ ] **M3c** WASM 类 + 重建仪式(照 H3 清单)。门:typecheck 干净。
+- [ ] **M3d** StageSolver UI 集成(照 H4 清单)。门:typecheck + playwright 桌面+390px,native↔WASM 逐格相等,0 console error。
+- [ ] **M3e** `/code/solvers` 看板同步 + **📦 MANUAL(htr2)** 交接写 §3。门:typecheck + code-tokens-drift 绿。
 
 ### EPIC 3 — 独立 puzzle 引擎(档3,每个都 GATED)
 > 非 3x3:`cube_common`(8角12棱)不覆盖,各需独立状态模型;且偏离本舰队"3x3 打乱分阶段难度统计"用途。
