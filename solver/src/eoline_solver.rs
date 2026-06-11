@@ -305,6 +305,54 @@ impl EOLineSolver {
         sols.truncate(cap);
         (best, sols)
     }
+
+    /// 单 (视角, yk) 多解(stage: 0=eo 1=eoline):预算 = 该 yk 最优 + extra。
+    /// enumerate_face 的加法薄包装(不取双 yk 最小):链编排器在兄弟 yk 已完成
+    /// (rot 级 best==0 → 合并枚举返回空)时用它保住本轴解集。
+    pub fn enumerate_face_yk(
+        &self,
+        alg: &[Move],
+        rot: &str,
+        yk: usize,
+        stage: usize,
+        extra: u32,
+        cap: usize,
+    ) -> (u32, Vec<S1Sol>) {
+        let (eo, line) = self.walk(&conj_buf(alg, rot, yk));
+        let best = if stage == 0 {
+            self.pt_eo[eo] as u32
+        } else {
+            self.pt[eo * LINE + line] as u32
+        };
+        let mut sols: Vec<S1Sol> = Vec::new();
+        if best == 0 {
+            return (0, sols);
+        }
+        let budget = best + extra;
+        let mut out = Vec::new();
+        let mut path = Vec::new();
+        for d in best..=budget {
+            if stage == 0 {
+                Self::enumerate_single(&self.mt_eo, &self.pt_eo, eo, d, 18, &mut path, &mut out, cap);
+            } else {
+                crate::roux_s1_solver::enumerate_product(
+                    &self.mt_eo, &self.mt_line, LINE, &self.pt, eo, line, d, 18, &mut path,
+                    &mut out, cap,
+                );
+            }
+            if out.len() >= cap {
+                break;
+            }
+        }
+        sols.extend(out.into_iter().map(|moves| S1Sol {
+            yk,
+            len: moves.len() as u32,
+            moves,
+        }));
+        sols.sort_by_key(|s| s.len);
+        sols.truncate(cap);
+        (best, sols)
+    }
 }
 
 #[cfg(test)]
