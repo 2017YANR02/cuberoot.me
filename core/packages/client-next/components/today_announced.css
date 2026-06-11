@@ -77,6 +77,13 @@
   color: var(--muted-foreground);
 }
 .tac-date { font-variant-numeric: tabular-nums; }
+.tac-limit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-variant-numeric: tabular-nums;
+}
+.tac-limit svg { opacity: 0.8; flex: none; }
 
 .tac-reg {
   font-size: 0.8rem;

@@ -6,7 +6,7 @@
 // 无公示 → 整块隐藏(同 TodayRecon / OngoingComps)。多条时折叠,「更多」展开。
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Users } from 'lucide-react';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import { compLinkProps } from '@/lib/comp-link';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -67,7 +67,10 @@ function AnnouncedCard({ comp, isZh, lang, t }: {
         <span className="tac-date">{dateStr}</span>
         <span>{city ? `${city}${isZh ? '，' : ', '}${country}` : country}</span>
         {comp.competitor_limit ? (
-          <span>{t('upcoming.competitorLimit', { count: comp.competitor_limit })}</span>
+          <span className="tac-limit" title={t('upcoming.competitorLimit', { count: comp.competitor_limit })}>
+            <Users size={13} aria-hidden="true" />
+            {comp.competitor_limit}
+          </span>
         ) : null}
       </div>
       {reg && <div className="tac-reg">{reg}</div>}
