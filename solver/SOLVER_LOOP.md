@@ -95,9 +95,15 @@
 - [x] **P2b** analyzer bin `pocket_analyzer.rs`(输出每打乱最优解长度)+ `tests/e2e_pocket.rs`。✅ 2026-06-11 `65affa381`。CSV `id,pocket` 两列;支持全 18 记号(2x2x2 无中心,D/L/B=对面+整体旋转,analyzer 24 旋转词归一后查表,绕开 coord_of 直投影对 D/L/B 不成立的坑);bin 4 单测含独立 IDDFS oracle 40 组全等 + e2e 绿 + 全量回归未塌(lib 99/0 + 13 e2e);smoke 5 条 WCA 222 → 9/9/10/9/9 全 ≤11。
 - [x] **P2c** 统计管线注册(非 3x3 新管线)。✅ 2026-06-11 `550f71c0d`。新 JSON `stats/scramble/puzzle_distribution.json`(`puzzles.<名>={event,label,label_zh,metric,sample_count,dist:HistEntry}`,前端 DiscreteHistogram/computeStats 直接复用);管道 `update_puzzle_stats.ps1`(-MaxNew/-BuildOnly,语料=Scrambles.tsv 按 event_id 过滤,id 差集增量)+ `build_puzzle_dist.ts` PUZZLES 注册表;client 数据契约 `lib/puzzle-distribution.ts`(UI 在 P2d);范式写入 VARIANT_PLAYBOOK §8。小样本 350 条端到端两跑绿(首跑+增量),峰值 9 吻合公开分布;typecheck EXIT=0。全量灌注+发布留 MANUAL。
 - [x] **P2d** WASM 类 + 重建仪式 + **在线最优求解器 UI**。✅ 2026-06-11 `8b92c6312`(9 文件)。路由 `/scramble/pocket` + hub 卡片;新范式组件 `scramble/_components/PuzzleOptimalSolver.tsx`(spec 驱动 event/title/need/solve/tokenRe,后三 puzzle 各写 spec 复用);nuqs `?scramble=`,2D 展开图,cubing-scramble 222 随机。Rust 关键决策:`new_lean()` 新入口(联合移动表 132MB 浏览器吃不消 → 只建 3.6MB 距离表现场转移)+ `solve_one_any`/`enumerate_any` 24 旋转归一(解带整体旋转前缀);零盘表零下载,V bump 20260611e。门:cargo pocket 6/6(lean↔full 全空间相等)+ node 冒烟 12 条 native↔wasm 相等 + cubing.js replay 12/12 + typecheck/zh 绿 + playwright 桌面+390px 全 PASS 0 error。
-- [ ] **P2e** `/code/solvers` 看板登记 + **📦 MANUAL(2x2x2)** 灌注/发布交接写 §3。门:typecheck + code-tokens-drift 绿。
+- [x] **P2e** `/code/solvers` 看板登记 + **📦 MANUAL(2x2x2)** 灌注/发布交接写 §3。✅ 2026-06-11 `7059b70c1`(1 文件)。NATIVE 加 pocket(rate null「未实测」+ `puzzle:'2x2x2'` 字段如实标非 3x3)、回填进度区 pocket 单独「待灌注」行不掺 3x3 百分比、TABLES 零盘表条目、BROWSER PocketSolverWasm、small 概览卡;typecheck EXIT=0 + tokens-drift/zh-hant-drift 39 测试绿。**EPIC 3.1(2x2x2)代码侧全链路完成**,MANUAL 交接见 §3。
 
-#### EPIC 3.2 — Pyraminx(核心 75,582 × 顶点 3^4;solver 参考 cstimer `pyraminx.js`)— 照 2x2x2 范式展开(P3a–P3e),2x2x2 收尾后细化
+#### EPIC 3.2 — Pyraminx(核心 75,582 × 顶点 3^4 = 933,120;solver 参考 cstimer `pyraminx.js`)
+> 照 2x2x2 范式。注意:顶点(tips)trivial 可分离,核心/含顶点两种步数口径在 P3a 推导时定(WCA 打乱含小写顶点记号 u/l/r/b,analyzer 必须能吃全 WCA pyram 记号);态数/件集合自行从 cstimer 推导并独立暴力对照,别信记忆。
+- [ ] **P3a** Rust 核心 `pyraminx_solver.rs`(key `pyraminx`,独立状态模型,全表 BFS 零盘表)。门:cargo test --release pyraminx 绿,含独立暴力对照 + 距离分布对公开数据。
+- [ ] **P3b** analyzer bin `pyraminx_analyzer.rs` + `tests/e2e_pyraminx.rs`(照 pocket_analyzer;吃全 WCA pyram 记号含顶点)。门:e2e 绿 + smoke 形状对。
+- [ ] **P3c** 统计管线:`build_puzzle_dist.ts` PUZZLES 注册表加 pyraminx(event_id `pyram`)+ 小样本验形(照 playbook §8)。门:端到端小样本绿。
+- [ ] **P3d** WASM 类 + 重建仪式 + `/scramble/pyraminx`(PuzzleOptimalSolver 新 spec)。门:typecheck + node 冒烟 native↔wasm 相等 + playwright(replay 独立验证)。
+- [ ] **P3e** 看板登记 + **📦 MANUAL(Pyraminx)** 交接写 §3。门:typecheck + code-tokens-drift 绿。
 #### EPIC 3.3 — Skewb(3,149,280;/trainer/skewb 已有宿主;solver 参考 `skewb.js`)— 照范式展开(P4a–P4e)
 #### EPIC 3.4 — SQ1 S1+S2(~3.4 亿 shape-reachable,双阶段 search + 剪枝表,非全表;solver 参考 `scramble_sq1_new.js`)— 照范式 + 双阶段,最重,最后做(P5a–P5e)
 
@@ -128,6 +134,7 @@
 - 2026-06-11 — **P2b** pocket analyzer + e2e,`65affa381`(新 session 起点)。全 18 记号经 24 旋转归一;IDDFS 独立 oracle 40 组全等;e2e + 全量回归绿;smoke 5 条形状对。
 - 2026-06-11 — **P2c** 非 3x3 统计管线注册,`550f71c0d`。puzzle_distribution.json 新形态 + update_puzzle_stats.ps1 增量管道 + 数据契约 lib/puzzle-distribution.ts + 范式入 playbook §8;350 条小样本两跑验形。(harness 报 build_puzzle_dist.ts node 类型诊断 = LSP 误报,import 与既有 build.ts 同款且 tsx 实跑两遍绿。)
 - 2026-06-11 — **P2d** pocket WASM + /scramble/pocket 在线最优求解器,`8b92c6312`。new_lean 3.6MB 距离表(弃 132MB 联合移动表)+ 24 旋转归一出解;PuzzleOptimalSolver spec 范式;全门绿(cargo/冒烟/replay/typecheck/playwright)。wasm 产物与并行 session 的 chain 变体 commit(7da7e2c02)字节一致免重复提交。
+- 2026-06-11 — **P2e** pocket 看板登记,`7059b70c1`。typecheck + 39 守卫测试绿。**EPIC 3.1 完成**,MANUAL(2x2x2) 交接入 §3;EPIC 3.2(Pyraminx)按既定计划细化为 P3a–P3e。下一个 = P3a。
 
 ---
 
@@ -141,6 +148,12 @@
 - **📦 MANUAL(htr2) 交接**(2026-06-11,M3a–M3e 代码侧全绿落地,等用户在场手动):同 HTR 一样是条件式阶段——随机 master 打乱直灌 htr_phase2_analyzer 全 `-`(打乱不在 G3)。口径同 MANUAL(HTR):(a) 只做 analyzer 在线查询(现状,零额外工作);或 (b) 输入集用"先降到 HTR(G3)后的态"(需串 htr 阶段)。若灌统计:注册管道 `_htr2` 列 → 灌 → distribution.json htr2 分桶;UI 加 VARIANT_ORDER(M3d 故意未加)+ 各下游登记点;看板 NATIVE htr2 rate 从「未实测」改实测(M3e 已留 null 槽)。
   - ⛔ **2026-06-11 M2b soft-gate:伪路线也死**。推导确认固定 18-move 模型 M 不能当 1 步(M≡R L' x'),伪 roux_s2 只能给 FTM 最优 SB = 与现有 `roux_s1_solver`(全部 24 个物理 1x2x3 块)逐位等价,cstimer 亦只报 FTM。**roux_s2 作为独立有意义变体两条路皆绝(扩引擎撞墙 / 伪路线重复)**。建议:弃整个 M2(M2a–M2e),推进 M3;若仍要 Roux SB 的 FTM 数,复用 `RouxS1Solver` 右块视角即可,无需新变体。等用户定。
 - (MANUAL 交接条目在此累积:变体名 + 待跑的灌注/发布步骤,等用户在场手动跑)
+- **📦 MANUAL(2x2x2 pocket) 交接**(2026-06-11,P2a–P2e 代码侧全绿落地,等用户在场手动):
+  1. 全量灌注:`pwsh solver/update_puzzle_stats.ps1 -Puzzle pocket`(增量、可续跑;analyzer 查表 ~百万/s,瓶颈在 IO/CSV,全量 WCA 222 语料预计分钟级)。
+  2. 产出:`stats/scramble/puzzle_distribution.json`(meta.generated_at + puzzles.pocket.dist)。
+  3. 发布:deploy_mirror 已停 → 手动 scp 到 static.cuberoot.me 的 `/www/wwwroot/toolkit/stats/scramble/`(memory `reference_static_toolkit_deploy`);改响应 shape 须 bump `lib/puzzle-distribution.ts` 的 V。
+  4. UI 待办:`/scramble/stats` 的 puzzle 分桶 tab **尚未接**——P2c 只落数据契约 `lib/puzzle-distribution.ts`(fetchPuzzleDistribution,dist 兼容 DiscreteHistogram/computeStats 直接复用)。
+  5. 看板回填:实测吞吐后回 `/code/solvers` page.tsx 把 pocket 的 `rate: null` 改实测值,「待灌注」行接真实覆盖数。
 - **📦 MANUAL(HTR) 交接**(2026-06-11,H1–H5 代码侧已全绿落地,等用户在场手动):
   1. **先拍板口径**:WCA master 随机打乱直灌 htr_analyzer 会得全 `-`(随机打乱不在 DR 态,H2 实证)。可选:(a) 不灌全量统计,htr 只做 analyzer 在线查询(现状即此,零额外工作);(b) 输入集改"先过 DR 阶段后的态"(需定义 DR 解的选取规则,管道要串 dr→htr);(c) 只灌天然 DR 态子集(~1/19万,样本太稀,不推荐)。
   2. 若选 (b):统计管道注册(update_cross_stats.ps1 / build 流程加 `_htr` 列)→ 灌 master/xcross → `stats/scramble/distribution.json` 进 htr 分桶。
