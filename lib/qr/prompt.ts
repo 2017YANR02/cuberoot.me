@@ -106,4 +106,87 @@ export const DEFAULT_PROMPT_TEMPLATES: DefaultPromptTemplate[] = [
     category: "场景",
     body: "未来赛博都市雨夜,鳞次栉比的高楼由发光魔方堆叠而成,霓虹招牌、全息光带、穿梭的飞行器,湿润地面映出彩色倒影;城中央矗立一颗巨型 WCA 魔方并透出体积光;以蓝紫青为基调、六色霓虹点缀,电影级光影、超清细节,酷炫震撼。",
   },
+  // —— 插画 7 套(手绘 / 版画 / 平面艺术)——
+  {
+    name: "水彩手绘",
+    category: "插画",
+    body: "水彩晕染手绘风,透明水痕与自然笔触,一颗魔方为主体,六色淡彩点染,清新文艺、通透留白。\nEN: watercolor hand-painted illustration, transparent washes and bleeds, a Rubik's cube subject, fresh artsy, airy negative space --ar 1:2",
+  },
+  {
+    name: "低多边形几何",
+    category: "插画",
+    body: "Low Poly 低多边形风格,魔方与背景由三角面拼成,柔和渐变着色,简洁现代、棱面光影。\nEN: low poly geometric art, faceted triangular Rubik's cube and backdrop, gradient shading, clean modern --ar 1:2",
+  },
+  {
+    name: "单线描线条艺术",
+    category: "插画",
+    body: "极简连续单线线描,在浅底或品牌蓝底上勾出魔方轮廓,优雅克制,大量留白,杂志感。\nEN: minimalist single continuous line art, elegant outline of a Rubik's cube, lots of negative space, editorial --ar 1:2",
+  },
+  {
+    name: "童趣手绘涂鸦",
+    category: "插画",
+    body: "马克笔涂鸦手绘风,活泼线条 + 撞色填充,魔方拟人冒个俏皮表情,可爱有趣,适合校园与少儿。\nEN: playful marker doodle sketch, lively lines and vibrant fills, cute anthropomorphic cube, campus vibe --ar 1:2",
+  },
+  {
+    name: "水墨国画意境",
+    category: "插画",
+    body: "中国水墨写意,留白与飞白笔触,淡彩点染六色,一颗魔方如山石静物般沉静,东方禅意、大气留白。",
+  },
+  {
+    name: "浮世绘日本风",
+    category: "插画",
+    body: "日本浮世绘版画风,波浪云纹与粗描线条,魔方融入和风构图,复古沉稳配色,木刻肌理。\nEN: Japanese ukiyo-e woodblock print style, waves and clouds, Rubik's cube motif, retro palette, woodcut texture --ar 1:2",
+  },
+  {
+    name: "剪纸叠层",
+    category: "插画",
+    body: "多层剪纸叠纸艺术,纸张层次与柔和投影,魔方与几何形分层堆叠,手工质感、撞色明快。\nEN: layered paper-cut craft art, stacked paper depth and soft shadows, geometric Rubik's cube, vibrant --ar 1:2",
+  },
+  // —— 质感 5 套(材质 / 工艺)——
+  {
+    name: "黏土定格",
+    category: "质感",
+    body: "黏土 / 橡皮泥定格动画质感,圆润捏制的魔方,柔软手作肌理,柔光布光,可爱治愈。\nEN: claymation stop-motion style, soft handmade clay Rubik's cube, plasticine texture, soft lighting, cute --ar 1:2",
+  },
+  {
+    name: "液态铬金属 Y2K",
+    category: "质感",
+    body: "Y2K 千禧风液态铬金属,镜面流动的金属魔方,彩虹反光与高光,科幻未来、强反射质感。\nEN: Y2K liquid chrome metal, mirror-finish flowing metallic cube, iridescent reflections, futuristic --ar 1:2",
+  },
+  {
+    name: "全息镭射",
+    category: "质感",
+    body: "全息镭射薄膜质感,虹彩渐变光泽,魔方泛七彩反光,梦幻未来、潮流高级。\nEN: holographic iridescent foil, rainbow gradient sheen, prismatic glowing cube, dreamy trendy --ar 1:2",
+  },
+  {
+    name: "微距真实魔方",
+    category: "质感",
+    body: "真实摄影微距特写,实拍三阶魔方一角,浅景深虚化,贴纸纹理、缝隙与高光细腻真实,产品质感。\nEN: macro photography close-up of a real speedcube corner, shallow depth of field, crisp sticker texture --ar 1:2",
+  },
+  {
+    name: "毛绒针织",
+    category: "质感",
+    body: "毛绒 / 针织手作质感,魔方像毛线编织的玩偶,柔软纤维细节,暖萌治愈、柔和布光。\nEN: fluffy knitted yarn craft, plush woven Rubik's cube toy, cozy fiber details, warm cute --ar 1:2",
+  },
+  // —— 氛围 4 套(复古 / 未来 / 宇宙 / 抽象)——
+  {
+    name: "蒸汽波故障",
+    category: "氛围",
+    body: "Vaporwave 蒸汽波 + glitch 故障艺术,网格地平线、落日、紫粉霓虹,魔方带 RGB 错位与扫描线,复古赛博。\nEN: vaporwave glitch art, retro grid horizon, sunset, pink purple neon, RGB-shifted cube, scanlines --ar 1:2",
+  },
+  {
+    name: "合成器浪潮 80s",
+    category: "氛围",
+    body: "Synthwave 80 年代复古未来,霓虹日落网格、棕榈剪影、扫描线,魔方悬浮发光,怀旧炫酷。\nEN: 80s synthwave retrowave, neon sunset grid, palm silhouettes, glowing floating cube, nostalgic --ar 1:2",
+  },
+  {
+    name: "极光星空宇宙",
+    category: "氛围",
+    body: "浩瀚星空与极光,魔方漂浮于深空,星云透出六色辉光、星轨流转,梦幻宏大、深邃神秘。\nEN: cosmic galaxy with aurora, Rubik's cube floating in deep space, six-color nebula glow, dreamy epic --ar 1:2",
+  },
+  {
+    name: "抽象流体渐变",
+    category: "氛围",
+    body: "抽象流体渐变,品牌蓝到六色丝滑融合的色块与气泡,弥散柔光晕染,现代杂志感,主体留一颗精致小魔方。\nEN: abstract fluid gradient, smooth blobs blending brand blue into six colors, soft diffuse glow, editorial --ar 1:2",
+  },
 ];

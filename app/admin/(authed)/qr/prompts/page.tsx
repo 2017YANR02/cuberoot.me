@@ -1,9 +1,19 @@
-import { listPromptTemplates } from "@/lib/db/prompt-templates";
+import {
+  listPromptTemplates,
+  listDeletedPromptTemplates,
+} from "@/lib/db/prompt-templates";
 import { PROMPT_PREAMBLE } from "@/lib/qr/prompt";
 import { Card, GhostLink, PageHeader } from "../../../_components/Shell";
 import { Field, Input, Submit, TextArea } from "../../../_components/Form";
 import { DeleteButton } from "../../../_components/DeleteButton";
-import { createPrompt, updatePrompt, reorderPrompt, deletePrompt } from "./actions";
+import {
+  createPrompt,
+  updatePrompt,
+  reorderPrompt,
+  deletePrompt,
+  restorePrompt,
+  purgePrompt,
+} from "./actions";
 import { loadErrorNotice, loadSavedNotice } from "@/lib/search-params";
 import type { SearchParams } from "nuqs/server";
 
@@ -14,8 +24,9 @@ export default async function AdminPromptTemplatesPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const [rows, err, ok] = await Promise.all([
+  const [rows, trashed, err, ok] = await Promise.all([
     listPromptTemplates(),
+    listDeletedPromptTemplates(),
     loadErrorNotice(searchParams),
     loadSavedNotice(searchParams),
   ]);
@@ -166,12 +177,17 @@ export default async function AdminPromptTemplatesPage({
                     </div>
 
                     <div className="pt-0.5">
-                      <DeleteButton
-                        id={String(t.id)}
-                        action={deletePrompt}
-                        label="删除"
-                        confirm={`确定删除模板「${t.name}」?`}
-                      />
+                      {/* 移到回收站,可恢复,不弹确认 */}
+                      <form action={deletePrompt}>
+                        <input type="hidden" name="id" value={t.id} />
+                        <button
+                          type="submit"
+                          title="移到回收站(可恢复)"
+                          className="text-[13px] text-ink-3 hover:text-red-600"
+                        >
+                          移到回收站
+                        </button>
+                      </form>
                     </div>
                   </div>
                 </li>
@@ -180,6 +196,56 @@ export default async function AdminPromptTemplatesPage({
           </ul>
         )}
       </Card>
+
+      {/* 回收站:软删的模板停在这,可恢复或彻底删除 */}
+      {trashed.length > 0 ? (
+        <Card className="mt-6 p-6">
+          <details>
+            <summary className="cursor-pointer select-none text-[15px] font-semibold text-ink">
+              回收站 <span className="text-[13px] font-normal text-ink-3">{trashed.length} 个</span>
+            </summary>
+            <p className="mt-2 text-[12px] text-ink-3">
+              移到回收站的模板不出现在编辑器选择器里。可「恢复」放回在用列表,或「彻底删除」永久清掉。
+            </p>
+            <ul className="mt-3 divide-y divide-line">
+              {trashed.map((t) => (
+                <li key={t.id} className="flex items-start gap-3 py-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px] font-medium text-ink-2">{t.name}</span>
+                      {t.category ? (
+                        <span className="rounded-full bg-bg-soft px-2 py-0.5 text-[11px] text-ink-3">
+                          {t.category}
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-ink-3">
+                      {t.body}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3 pt-0.5">
+                    <form action={restorePrompt}>
+                      <input type="hidden" name="id" value={t.id} />
+                      <button
+                        type="submit"
+                        className="text-[13px] font-medium text-emerald-700 hover:underline"
+                      >
+                        恢复
+                      </button>
+                    </form>
+                    <DeleteButton
+                      id={String(t.id)}
+                      action={purgePrompt}
+                      label="彻底删除"
+                      confirm={`确定彻底删除模板「${t.name}」?不可恢复。`}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </details>
+        </Card>
+      ) : null}
     </div>
   );
 }
