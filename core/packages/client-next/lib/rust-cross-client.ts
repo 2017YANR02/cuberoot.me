@@ -11,7 +11,7 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260611h';
+const V = 'v=20260611i';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -34,8 +34,8 @@ export const TABLE_BYTES: Record<string, number> = {
 };
 
 // 各 need 首次加载的表清单 —— 必须与 cross-solver-worker.js 的 init 分支严格一致。
-// eodr / htr / htr2 / fr / chain / pocket / pyraminx 零表下载(微表/距离表现场从内置运动学建)。
-export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | 'pocket' | 'pyraminx', string[]> = {
+// eodr / htr / htr2 / fr / chain / pocket / pyraminx / skewb 零表下载(微表/距离表现场从内置运动学建)。
+export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | 'pocket' | 'pyraminx' | 'skewb', string[]> = {
   cross: ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
   f2leo: ['pt_cross', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
   variant: [
@@ -51,6 +51,7 @@ export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222' | 'ro
   chain: [],
   pocket: [],
   pyraminx: [],
+  skewb: [],
 };
 
 /** HTR(条件式阶段)非 DR 视角的哨兵值(u32::MAX):该视角未处于 DR,无 HTR 步数。 */
@@ -200,6 +201,10 @@ export interface RustCrossPool {
   solvePyraminxLen(scramble: string): Promise<number[]>;
   /** 金字塔整解一条最优解。`m` = 核心大写解 + 小写 tip 收尾（无整体旋转前缀），`c` 恒空串。 */
   solvePyraminxMoves(scramble: string): Promise<MovesTimed>;
+  /** 斜转整解最优步数（0..=11,每 120° 一步）。全 WCA skewb 记号 U/L/R/B ± '/2。 */
+  solveSkewbLen(scramble: string): Promise<number[]>;
+  /** 斜转整解一条最优解。`m` = 最优解序列（无整体旋转前缀），`c` 恒空串。 */
+  solveSkewbMoves(scramble: string): Promise<MovesTimed>;
   /** 丢弃所有「排队未派发」的任务(已在 worker 里跑的 ≤size 个无法中断)。切变体/打乱集时调,
    *  避免新请求(如快 cross)排在旧变体一堆慢任务后面干等。被丢的任务 reject('cancelled')。 */
   clearQueue(): void;
@@ -220,7 +225,7 @@ interface PoolWorker {
   dead: boolean;
 }
 
-export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | 'pocket' | 'pyraminx' = 'cross'): RustCrossPool {
+export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | 'pocket' | 'pyraminx' | 'skewb' = 'cross'): RustCrossPool {
   const size = Math.max(1, maxSize);
   const all: PoolWorker[] = [];
   const idle: PoolWorker[] = [];
@@ -307,7 +312,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
       pw.job = null;
       if (job) {
         if (m.type === 'face') job.resolve({ value: m.value, ms: m.ms });
-        else if (m.type === 'moves' || m.type === 'variant_moves' || m.type === 'f2leo_moves' || m.type === 'block222_moves' || m.type === 'roux223_moves' || m.type === 'eodr_moves' || m.type === 'htr_moves' || m.type === 'htr2_moves' || m.type === 'fr_moves' || m.type === 'chain_solve' || m.type === 'pocket_moves' || m.type === 'pyraminx_moves') job.resolve({ ...m.data, ms: m.ms });
+        else if (m.type === 'moves' || m.type === 'variant_moves' || m.type === 'f2leo_moves' || m.type === 'block222_moves' || m.type === 'roux223_moves' || m.type === 'eodr_moves' || m.type === 'htr_moves' || m.type === 'htr2_moves' || m.type === 'fr_moves' || m.type === 'chain_solve' || m.type === 'pocket_moves' || m.type === 'pyraminx_moves' || m.type === 'skewb_moves') job.resolve({ ...m.data, ms: m.ms });
         else job.resolve(m.values);
       }
       assign(pw);
@@ -324,9 +329,11 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
   function submit(msg: Record<string, unknown>): Promise<unknown> {
     // 含 Rw/Fw/旋转的打乱(如 3BLD 朝向尾缀)会让魔方偏离白顶绿前;Rust 端 string_to_alg
     // 直接跳过无法识别 token 会静默算错,故先归正到白顶绿前的纯 HTM 再喂 worker。
-    // pyraminx 例外:pyram 记号(小写 tips)不是 3x3 语义,原样直达 Rust parse_pyraminx。
-    const isPyraminx = typeof msg.type === 'string' && msg.type.startsWith('pyraminx_');
-    if (typeof msg.scramble === 'string' && !isPyraminx) msg.scramble = normalizeScramble(msg.scramble) ?? msg.scramble;
+    // pyraminx / skewb 例外:记号非 3x3 语义(pyram 小写 tips;skewb 角转 120°,X2=240°),
+    // 原样直达 Rust parse_pyraminx / parse_skewb。
+    const isNon333 = typeof msg.type === 'string'
+      && (msg.type.startsWith('pyraminx_') || msg.type.startsWith('skewb_'));
+    if (typeof msg.scramble === 'string' && !isNon333) msg.scramble = normalizeScramble(msg.scramble) ?? msg.scramble;
     return new Promise((resolve, reject) => {
       const job: Job = { msg, resolve, reject };
       const free = idle.pop();
@@ -443,6 +450,12 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
     },
     solvePyraminxMoves(scramble) {
       return submit({ type: 'pyraminx_moves', id: nextId++, scramble }) as Promise<MovesTimed>;
+    },
+    solveSkewbLen(scramble) {
+      return submit({ type: 'skewb_len', id: nextId++, scramble }) as Promise<number[]>;
+    },
+    solveSkewbMoves(scramble) {
+      return submit({ type: 'skewb_moves', id: nextId++, scramble }) as Promise<MovesTimed>;
     },
     clearQueue() { while (queue.length) queue.shift()!.reject(new Error('cancelled')); },
     terminate() { for (const pw of all) pw.w.terminate(); },
