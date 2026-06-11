@@ -19,6 +19,7 @@ use crate::eo_cross_solver::EOSmallSolver;
 use crate::eoline_solver::{eo_axis_label, eoline_label, EOLineSolver};
 use crate::f2b_solver::{f2b_label, F2BSolver};
 use crate::f2leo_solver::F2leoSolver;
+use crate::htr_solver::HtrSolver;
 use crate::move_tables::MoveTable;
 use crate::pair_solver::PairSolver;
 use crate::prune_tables::PackedPruneTable;
@@ -396,6 +397,64 @@ impl EoDrSolverWasm {
             }
         };
         sols_json(len, &items)
+    }
+}
+
+/// HTR(Thistlethwaite DR→HTR)求解器(全自包含,**零表下载**):角置换/轨道移动表与
+/// 全空间 2,822,400 态精确距离表(~2.8MB)全部现场从内置运动学构建,首次查询时惰性 BFS
+/// (RefCell,~秒级);查长度 O(1),枚举首达即最优。条件式阶段:该视角(UD 轴)必须已
+/// 处于 DR,非 DR 视角返回 u32::MAX 哨兵。HTR 仅依赖轴:对面底色同值,且对 y 不变。
+#[wasm_bindgen]
+pub struct HtrSolverWasm {
+    htr: RefCell<Option<HtrSolver>>,
+}
+
+#[wasm_bindgen]
+impl HtrSolverWasm {
+    #[wasm_bindgen(constructor)]
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> HtrSolverWasm {
+        HtrSolverWasm { htr: RefCell::new(None) }
+    }
+
+    fn ensure(&self) {
+        if self.htr.borrow().is_none() {
+            *self.htr.borrow_mut() = Some(HtrSolver::new());
+        }
+    }
+
+    /// 6 视角最优步数(顺序对应 ROTS);该视角非 DR = u32::MAX 哨兵。
+    pub fn solve(&self, scramble: &str) -> Vec<u32> {
+        self.ensure();
+        let alg = string_to_alg(scramble);
+        let b = self.htr.borrow();
+        b.as_ref()
+            .unwrap()
+            .get_stats(&alg, &ROTS)
+            .into_iter()
+            .map(|v| v.unwrap_or(u32::MAX))
+            .collect()
+    }
+
+    /// 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。HTR 对 y 不变
+    /// (解全在 yk=0),`m` 前缀 = rot,`c` = 轴标签(同 DR,如 "UD");
+    /// 该视角非 DR = {"len":4294967295,"sols":[]}。
+    pub fn solve_moves(&self, scramble: &str, face: u32, extra: u32, cap: u32) -> String {
+        self.ensure();
+        let alg = string_to_alg(scramble);
+        let fi = (face as usize).min(5);
+        let rot = ROTS[fi];
+        let b = self.htr.borrow();
+        match b.as_ref().unwrap().enumerate_face(&alg, rot, extra, cap as usize) {
+            Some((len, sols)) => {
+                let items: Vec<(String, String)> = sols
+                    .iter()
+                    .map(|s| (fmt_moves(rot, &s.moves), dr_axis_label(fi, 0).to_string()))
+                    .collect();
+                sols_json(len, &items)
+            }
+            None => sols_json(u32::MAX, &[]),
+        }
     }
 }
 

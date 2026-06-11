@@ -11,7 +11,7 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260610d';
+const V = 'v=20260611a';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -34,8 +34,8 @@ export const TABLE_BYTES: Record<string, number> = {
 };
 
 // 各 need 首次加载的表清单 —— 必须与 cross-solver-worker.js 的 init 分支严格一致。
-// eodr 零表下载(微表现场从内置运动学建)。
-export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr', string[]> = {
+// eodr / htr 零表下载(微表/距离表现场从内置运动学建)。
+export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr', string[]> = {
   cross: ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
   f2leo: ['pt_cross', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
   variant: [
@@ -45,7 +45,11 @@ export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222' | 'ro
   block222: ['mt_edge3', 'mt_corn'],
   roux223: ['mt_edge3', 'mt_corn2', 'mt_edge2', 'mt_corn'],
   eodr: [],
+  htr: [],
 };
+
+/** HTR(条件式阶段)非 DR 视角的哨兵值(u32::MAX):该视角未处于 DR,无 HTR 步数。 */
+export const HTR_NOT_DR = 0xffffffff;
 
 /** 单条解法:m = 带视角前缀的步骤串;c = 该解的 F2L 槽位标签(如 "BL FR"),无槽阶段为空串。
  *  并列最优时不同条可能是不同槽。 */
@@ -127,6 +131,14 @@ export interface RustCrossPool {
     face: number,
     opts?: { extra?: number; cap?: number },
   ): Promise<MovesTimed>;
+  /** HTR(DR→HTR)6 视角,物理面序 z0/z2/z3/z1/x3/x1。条件式阶段:非 DR 视角 = HTR_NOT_DR 哨兵。 */
+  solveHtrStage(scramble: string): Promise<number[]>;
+  /** HTR 单视角多解。前缀 = rot(HTR 对 y 不变),c = 轴标签(同 DR,如 "UD");非 DR 视角 len = HTR_NOT_DR。 */
+  solveHtrMoves(
+    scramble: string,
+    face: number,
+    opts?: { extra?: number; cap?: number },
+  ): Promise<MovesTimed>;
   /** 丢弃所有「排队未派发」的任务(已在 worker 里跑的 ≤size 个无法中断)。切变体/打乱集时调,
    *  避免新请求(如快 cross)排在旧变体一堆慢任务后面干等。被丢的任务 reject('cancelled')。 */
   clearQueue(): void;
@@ -147,7 +159,7 @@ interface PoolWorker {
   dead: boolean;
 }
 
-export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' = 'cross'): RustCrossPool {
+export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' = 'cross'): RustCrossPool {
   const size = Math.max(1, maxSize);
   const all: PoolWorker[] = [];
   const idle: PoolWorker[] = [];
@@ -234,7 +246,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
       pw.job = null;
       if (job) {
         if (m.type === 'face') job.resolve({ value: m.value, ms: m.ms });
-        else if (m.type === 'moves' || m.type === 'variant_moves' || m.type === 'f2leo_moves' || m.type === 'block222_moves' || m.type === 'roux223_moves' || m.type === 'eodr_moves') job.resolve({ ...m.data, ms: m.ms });
+        else if (m.type === 'moves' || m.type === 'variant_moves' || m.type === 'f2leo_moves' || m.type === 'block222_moves' || m.type === 'roux223_moves' || m.type === 'eodr_moves' || m.type === 'htr_moves') job.resolve({ ...m.data, ms: m.ms });
         else job.resolve(m.values);
       }
       assign(pw);
@@ -324,6 +336,15 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
     solveEoDrMoves(scramble, stage, face, opts = {}) {
       return submit({
         type: 'eodr_moves', id: nextId++, scramble, stage, face,
+        extra: opts.extra ?? 0, cap: opts.cap ?? 20,
+      }) as Promise<MovesTimed>;
+    },
+    solveHtrStage(scramble) {
+      return submit({ type: 'htr_stage', id: nextId++, scramble }) as Promise<number[]>;
+    },
+    solveHtrMoves(scramble, face, opts = {}) {
+      return submit({
+        type: 'htr_moves', id: nextId++, scramble, face,
         extra: opts.extra ?? 0, cap: opts.cap ?? 20,
       }) as Promise<MovesTimed>;
     },

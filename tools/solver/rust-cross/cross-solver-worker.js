@@ -18,6 +18,7 @@ let variantSolver = null;// VariantSolverWasm(pair / eo / pseudo / pseudo_pair),
 let block222Solver = null;// Block222SolverWasm(2x2x2 块),仅 mt_edge3+mt_corn(~745KB),距离表现场 BFS
 let roux223Solver = null; // Roux223SolverWasm(FB 方块/1x2x3/双1x2x3 + Petrus 2x2x2/2x2x3),4 张小表 ~820KB
 let eoDrSolver = null;    // EoDrSolverWasm(EO/EOLine/DR),零表下载,微表现场建
+let htrSolver = null;     // HtrSolverWasm(DR→HTR),零表下载,2.8MB 距离表首查惰性现场 BFS
 
 async function fetchTable(url) {
   const res = await fetch(url);
@@ -63,6 +64,9 @@ async function init(glueUrl, wasmUrl, tablesBase, need) {
   } else if (need === 'eodr') {
     // EO/EOLine/DR:零表下载,全部微表现场从内置运动学建(EOLine 即建,DR 首查惰性)。
     eoDrSolver = new mod.EoDrSolverWasm();
+  } else if (need === 'htr') {
+    // HTR(DR→HTR):零表下载,2.8MB 全空间精确距离表首查惰性现场 BFS。
+    htrSolver = new mod.HtrSolverWasm();
   } else {
     const [a, b, c, d, e, f] = await Promise.all(
       ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'].map(get)
@@ -171,6 +175,20 @@ self.onmessage = async (e) => {
         msg.scramble, msg.stage | 0, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
       );
       self.postMessage({ type: 'eodr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+    } else if (msg.type === 'htr_stage') {
+      if (!htrSolver) throw new Error('htr solver not initialized');
+      const t0 = performance.now();
+      // 6 视角(物理面序 z0/z2/z3/z1/x3/x1);条件式阶段:非 DR 视角 = 0xFFFFFFFF 哨兵。
+      const out = htrSolver.solve(msg.scramble);
+      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+    } else if (msg.type === 'htr_moves') {
+      if (!htrSolver) throw new Error('htr solver not initialized');
+      const t0 = performance.now();
+      // 单视角多解:前缀 = rot(HTR 对 y 不变),c = 轴标签(同 DR,如 "UD");非 DR 视角 len=0xFFFFFFFF。
+      const json = htrSolver.solve_moves(
+        msg.scramble, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
+      );
+      self.postMessage({ type: 'htr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'variant_moves') {
       if (!variantSolver) throw new Error('variant solver not initialized');
       const t0 = performance.now();
