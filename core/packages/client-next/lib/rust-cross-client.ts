@@ -11,7 +11,7 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260611f';
+const V = 'v=20260611g';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -73,17 +73,22 @@ export interface MovesResult {
 }
 
 /** 链式求解单步:kind = 阶段类别;variant = mallard 式变体名(eoud / drlr-eoud /
- *  htr-drlr / frud / fin);m = HOME 帧步骤串(无视角前缀);len 本步长;cum 累计长。 */
+ *  htr-drlr / frud / fin);m = 该步 HOME 帧串(无视角前缀);len 本步长;
+ *  cum = 截至该步总步数(N.len + I.len);inv = 整步做在 inverse 打乱上
+ *  (NISS-Before;引擎仅 true 时携带,渲染括号在 UI 层)。 */
 export interface ChainStepResult {
   kind: 'eo' | 'dr' | 'htr' | 'fr' | 'fin';
   variant: string;
   m: string;
   len: number;
   cum: number;
+  inv?: boolean;
 }
-/** 一条链:按 total(全链 HOME 帧总步数)升序返回。 */
+/** 一条链:按 total 升序返回;solution = 线性化最终解 N ++ rev_inv(I)
+ *  (normal 打乱上单序列),total = 其长度。 */
 export interface ChainResult {
   steps: ChainStepResult[];
+  solution: string;
   total: number;
 }
 
@@ -180,9 +185,11 @@ export interface RustCrossPool {
     face: number,
     opts?: { extra?: number; cap?: number },
   ): Promise<MovesTimed>;
-  /** mallard 式链式求解(EO→DR→HTR→[FR]→Finish,单 HOME 帧)。config = JSON 串
-   *  (per-stage {enabled,extra,cap,min,max,axes,excluded} + maxChains,'{}' = 默认)。
-   *  首调会在 worker 内现场建 DR/HTR/htr2 距离表(数秒);fr.enabled 再惰性建 FR 表。 */
+  /** mallard 式链式求解(EO→DR→HTR→[FR]→Finish,单 HOME 帧,NISS-Before)。
+   *  config = JSON 串(per-stage {enabled,extra,cap,min,max,axes,excluded,niss} +
+   *  maxChains,'{}' = 默认;niss 默认 eo/dr/htr/fr 开、fin 强制关;excluded 串 =
+   *  「累计 N '|' 累计 I」,无 '|' = I 空)。首调会在 worker 内现场建 DR/HTR/htr2
+   *  距离表(数秒);fr.enabled 再惰性建 FR 表。 */
   solveChain(scramble: string, config: string): Promise<{ chains: ChainResult[]; ms: number }>;
   /** 2x2x2 口袋魔方整解最优 HTM 步数（0..=11，非条件式阶段无哨兵）。全 18 记号，D/L/B 经 24 旋转归一。 */
   solvePocketLen(scramble: string): Promise<number[]>;
