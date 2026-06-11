@@ -183,14 +183,14 @@ export default function OngoingComps({ lang }: Props) {
   const allTabs: { key: TabKey; zh: string; en: string; count: number
       zhHant?: string;
  }[] = [
-    { key: 'announced',  zh: '公示', en: 'Announced', count: announcedList.length,
-        zhHant: "公示"
-    },
     { key: 'records',    zh: '纪录', en: 'Records',  count: records.length,
         zhHant: "紀錄"
     },
     { key: 'inProgress', zh: '当前', en: 'Now',      count: buckets.inProgress.length,
         zhHant: "當前"
+    },
+    { key: 'announced',  zh: '公示', en: 'Announced', count: announcedList.length,
+        zhHant: "公示"
     },
     { key: 'upcoming',   zh: '未来', en: 'Upcoming', count: buckets.upcoming.length,
         zhHant: "未來"
