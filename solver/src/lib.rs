@@ -8,6 +8,8 @@ pub mod prune_tables;
 
 pub mod block222_solver;
 pub mod block223_solver;
+// chain:mallard 式链式 EO→DR→HTR→[FR]→Finish 编排(全自包含,native+wasm 双轨)。
+pub mod chain_solver;
 pub mod cross_solver;
 // eoline / dr / htr / f2b:全自包含(微表现场建 / 复用 s1 表),native+wasm 双轨可编。
 pub mod dr_solver;

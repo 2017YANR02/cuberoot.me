@@ -25,6 +25,24 @@ export class Block222SolverWasm {
     solve_moves(scramble: string, face: number, extra: number, cap: number): string;
 }
 
+/**
+ * 链式求解器(mallard P3):EO→DR→HTR→[FR]→Finish 一次编排,单 HOME 帧,零表下载。
+ * 惰性 ensure:首次 solve_chain 现场建 EOLine/DR(2×~1M)/HTR(2.8MB)/htr2(648KB)
+ * 距离表(数秒);fr.enabled 的请求再惰性建 FR 陪集表(更慢,一次性)。
+ */
+export class ChainSolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    constructor();
+    /**
+     * scramble + 配置 JSON(per-stage {enabled,extra,cap,min,max,axes,excluded} +
+     * maxChains,'{}' = 默认)→ {"chains":[{"steps":[{kind,variant,m,len,cum}],
+     * "total":N}]}。m = HOME 帧步骤串(无视角前缀)。打乱不可解析或无链 →
+     * {"chains":[]} 哨兵;非法配置 JSON 整体回落默认配置。
+     */
+    solve_chain(scramble: string, config_json: string): string;
+}
+
 export class CrossSolverWasm {
     free(): void;
     [Symbol.dispose](): void;
@@ -185,6 +203,28 @@ export class HtrSolverWasm {
 }
 
 /**
+ * 2x2x2 口袋魔方整解最优求解器(全自包含,**零表下载**):3.6MB 全空间精确距离表
+ * 首次查询时惰性现场 BFS(lean 构造,不存 132MB 联合移动表,RefCell 缓存)。
+ * 任意态都可解(非条件式阶段,无哨兵);支持全 18 面转记号(2x2x2 无中心,
+ * D/L/B 与对面只差整体旋转,24 旋转归一到固定 DBL 帧)。度量 HTM,God's number = 11。
+ */
+export class PocketSolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    constructor();
+    /**
+     * 整解最优 HTM 步数(0..=11)。
+     */
+    solve(scramble: string): number;
+    /**
+     * 一条最优解 JSON(同 Block222SolverWasm::solve_moves 形状,单条):
+     * {"len":N,"sols":[{"m":"x y' R U F2 ...","c":""}]}。`m` 前缀 = 整体旋转
+     * (打乱含 D/L/B 时归一所需,可为空),`c` 恒空串(整解无槽位/视角语义)。
+     */
+    solve_moves(scramble: string): string;
+}
+
+/**
  * Roux 第一块(方块 / 1x2x3 / 双 1x2x3)+ Petrus(2x2x2 / 2x2x3)组合求解器。4 张小表:
  * mt_edge3 (~743KB) + mt_corn2 (~36KB) + mt_edge2 (~38KB) + mt_corn (~1.7KB)。
  * FB 方块与 2x2x2 全表构造时即建(微型/毫秒级);1x2x3 全表(5,322,240 态)与
@@ -249,18 +289,22 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_block222solverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_chainsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_crosssolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_eodrsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_f2leosolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_frsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_htrphase2solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_htrsolverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_pocketsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_roux223solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_variantsolverwasm_free: (a: number, b: number) => void;
     readonly block222solverwasm_new: (a: number, b: number, c: number, d: number) => number;
     readonly block222solverwasm_solve: (a: number, b: number, c: number) => [number, number];
     readonly block222solverwasm_solve_face: (a: number, b: number, c: number, d: number) => number;
     readonly block222solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+    readonly chainsolverwasm_new: () => number;
+    readonly chainsolverwasm_solve_chain: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly crosssolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => number;
     readonly crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];
@@ -283,6 +327,9 @@ export interface InitOutput {
     readonly htrsolverwasm_new: () => number;
     readonly htrsolverwasm_solve: (a: number, b: number, c: number) => [number, number];
     readonly htrsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+    readonly pocketsolverwasm_new: () => number;
+    readonly pocketsolverwasm_solve: (a: number, b: number, c: number) => number;
+    readonly pocketsolverwasm_solve_moves: (a: number, b: number, c: number) => [number, number];
     readonly roux223solverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => number;
     readonly roux223solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly roux223solverwasm_solve_stage: (a: number, b: number, c: number, d: number) => [number, number];
