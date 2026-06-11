@@ -2,7 +2,7 @@
 # Daily pg_dump of cuberoot_db — 只备「不可重建」的用户数据。
 #
 # 为什么排除派生表:整库 12G 里 ~99% 是 CI 从上游 WCA dump 每晚重算的派生统计
-# (wca_results_top / historical_* / wca_fs_* / sor_* 等),备它们纯浪费盘
+# (wca_results_flat / historical_* / wca_fs_* / sor_* 等),备它们纯浪费盘
 # (旧实现每天 874M,4 天就 3.3G,直接把盘顶爆 → historical_ranks 灌库 ENOSPC)。
 # 这里用 --exclude-table-data 只丢这些表的「数据」,保留「schema」:
 # 恢复时结构在,CI 下一轮自动重灌 → dump 缩到 ~9M。
@@ -19,7 +19,7 @@ DATE=$(date -u +%Y-%m-%d)
 mkdir -p "$ARCHIVE"
 
 PGPASSWORD=314159 pg_dump -U recon_user -h 127.0.0.1 -d cuberoot_db \
-  --exclude-table-data='wca_results_top' \
+  --exclude-table-data='wca_results_flat' \
   --exclude-table-data='wca_results_cache' \
   --exclude-table-data='wca_scrambles_cache' \
   --exclude-table-data='wca_competitions' \
