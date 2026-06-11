@@ -7,13 +7,7 @@ import { CardEditor } from "./_CardEditor";
 import { LinksEditor } from "./_LinksEditor";
 import { TypeSectionToggle } from "./_TypeSectionToggle";
 import { Card, PageHeader, GhostLink } from "../../../_components/Shell";
-import {
-  Field,
-  FormActions,
-  Input,
-  Select,
-  Submit,
-} from "../../../_components/Form";
+import { Field, Input, Select } from "../../../_components/Form";
 import { DeleteButton } from "../../../_components/DeleteButton";
 import { saveQr, toggleQrDisabled, deleteQr } from "../actions";
 import { loadSavedNotice } from "@/lib/search-params";
@@ -44,7 +38,19 @@ export default async function AdminQrEditPage({
       <PageHeader
         title={`编辑 ${entry.code}`}
         subtitle={`累计扫码 ${entry.scans} 次,落地 /qr/${entry.code}`}
-        actions={<GhostLink href="/admin/qr">返回列表</GhostLink>}
+        actions={
+          <div className="flex items-center gap-2">
+            {/* 全页唯一保存:跨 DOM 提交右侧设置表单(含卡片编辑器的隐藏字段) */}
+            <button
+              type="submit"
+              form="qr-edit-form"
+              className="inline-flex items-center justify-center rounded-md bg-brand px-4 py-2 text-[13px] font-medium text-white hover:bg-brand-dark transition"
+            >
+              保存
+            </button>
+            <GhostLink href="/admin/qr">返回列表</GhostLink>
+          </div>
+        }
       />
 
       {sp.saved === "1" ? (
@@ -146,9 +152,11 @@ export default async function AdminQrEditPage({
               </Field>
             </div>
 
-            <FormActions>
-              <Submit>保存</Submit>
-            </FormActions>
+            {/* 保存按钮统一用左侧卡片编辑器底部那个全宽「保存」(form={qr-edit-form}),
+                它在下载按钮之上,符合「先存再下载」流程;此处不再重复放 */}
+            <p className="text-[12px] text-ink-3">
+              这里的设置和左侧卡片改动,一起点右上角的「保存」生效。
+            </p>
           </form>
           <div className="mt-4 border-t border-line-soft pt-4">
             {entry.disabled ? (

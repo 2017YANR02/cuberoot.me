@@ -368,7 +368,7 @@ export function CardEditor({
 
       <div className="mx-auto max-w-[560px]">
       <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[12px] text-ink-3">
-        <span>点元素编辑,按住拖动移位;改完点「保存」生效。</span>
+        <span>点元素编辑,按住拖动移位;改完点右上角「保存」生效。</span>
         <label className="inline-flex cursor-pointer items-center gap-1.5">
           <input
             type="checkbox"
@@ -600,14 +600,7 @@ export function CardEditor({
           ) : null}
         </div>
       ) : null}
-
-      <button
-        type="submit"
-        form={formId}
-        className="mt-3 w-full rounded-md bg-brand px-4 py-2 text-[13px] font-medium text-white hover:bg-brand-dark transition"
-      >
-        保存
-      </button>
+      {/* 保存按钮已统一到页面右上角(form={formId} 跨 DOM 提交),此处不再放 */}
       </div>
     </div>
   );
