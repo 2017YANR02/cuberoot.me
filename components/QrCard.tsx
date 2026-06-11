@@ -48,14 +48,16 @@ function FrontPanel({
 }) {
   const lines = quote.split("\n").map((l) => l.trim()).filter(Boolean);
   const [main, ...subs] = lines.length ? lines : ["热爱魔方"];
-  // 正面图几何与矢量母版一致:cover 铺满含出血的整面(默认出血 3mm → 23x46),
-  // 屏幕预览裁掉出血只看成品 20x40,即印刷裁切后的真实画面。
-  // 出血只在左侧 → 图框右移 bleed/2(left -1.5)让画面以成品面为中心,与母版同步。
+  // 正面图几何与矢量母版 cardSvg.ts 一致(默认出血 3mm):屏幕预览(此面板 20x40)裁掉出血
+  // 只看成品,即印刷裁切后的真实画面;母版另渲出血,故图框须撑到盖住出血才不露底。
+  // cover:图框以成品面中心为锚、26x46(left/top -3)盖住 左/上/下 出血,绕成品面中心缩放。
+  // contain:整图完整装进成品面、留 1mm 安全边(18x38),不裁切,空余露深色底。
   // layout.front = 平移(mm)+ 缩放 s(绕成品面中心),编辑器拖动/滑块写入。
-  // fit:"contain" = 整图完整装进成品面、留 1mm 安全边(18x38),不裁切,空余露深色底。
   const ft = layout?.front;
   // 默认完整显示不裁(contain);仅显式 cover 才铺满裁切
   const fitContain = ft?.fit !== "cover";
+  // cover 缩放钳到 ≥1,与母版一致:cover 缩到 <1 会露底,违背「铺满」语义
+  const drawScale = fitContain ? (ft?.s ?? 1) : Math.max(1, ft?.s ?? 1);
   return (
     <div
       data-panel="front"
@@ -90,15 +92,15 @@ function FrontPanel({
                 transformOrigin: `${m(9)} ${m(19)}`,
               }
             : {
-                left: m(-1.5),
+                left: m(-3),
                 top: m(-3),
-                width: m(23),
+                width: m(26),
                 height: m(46),
                 objectFit: "cover" as const,
-                transformOrigin: `${m(11.5)} ${m(23)}`,
+                transformOrigin: `${m(13)} ${m(23)}`,
               }),
           transform: ft
-            ? `translate(${m(ft.x)}, ${m(ft.y)}) scale(${ft.s ?? 1})`
+            ? `translate(${m(ft.x)}, ${m(ft.y)}) scale(${drawScale})`
             : undefined,
         }}
       />

@@ -129,25 +129,22 @@ function front(
     );
 
   if (art) {
-    // 艺术图铺满正面(含左/上/下出血),<image> slice 自带裁剪到该矩形。
-    // 出血只在左侧(右侧是折线),xMid 居中会让取景偏离成品面中心 bleed/2,
-    // 默认补回去:画面以成品面为中心,出血吃右侧多余的画面。
-    // fit:"contain" = 整图完整装进成品面、留 1mm 安全边(meet 不裁切),出血是深色底。
-    // layout.front = 平移(mm)+ 缩放 s(绕成品面中心),与 DOM 卡同一套几何;
-    // 变换后可能越界,clip 回正面出血区。露出的底是深色 INK。
+    // 艺术图正面。两种装法,与 DOM 卡 QrCard.tsx 同一套几何:
+    // cover(铺满):画框以「成品面中心」为锚,尺寸撑到能盖住 左/上/下 出血(右侧到折线即止),
+    //   <image> slice 裁到画框内。缩放只放大(≥1),保证缩放后画框仍盖满含出血整面,绝不露底。
+    // contain(默认完整显示):整图完整装进成品面、留 1mm 安全边(meet 不裁切),四周(含出血)露深色底。
+    // layout.front = 平移(mm)+ 缩放 s(绕成品面中心);变换后可能越界,clip 回正面出血区。
     const ft = layout?.front;
-    // 默认完整显示不裁(contain / meet);仅显式 cover 才铺满裁切(slice)
     const fitContain = ft?.fit !== "cover";
+    const cy = top + PANEL_H / 2;
     const img = fitContain
       ? `<image href="${art}" x="${x0 + 1}" y="${top + 1}" width="${PANEL_W - 2}" height="${PANEL_H - 2}" preserveAspectRatio="xMidYMid meet"/>`
-      : `<image href="${art}" x="0" y="0" width="${foldX}" height="${h}" preserveAspectRatio="xMidYMid slice"/>`;
-    const cy = top + PANEL_H / 2;
-    const center = fitContain ? "" : ` translate(${bleed / 2} 0)`;
+      : `<image href="${art}" x="0" y="0" width="${2 * cx}" height="${2 * cy}" preserveAspectRatio="xMidYMid slice"/>`;
+    // cover 缩放钳到 ≥1(cover 缩到 <1 会从边缘露底,违背「铺满」语义)
+    const drawScale = fitContain ? (ft?.s ?? 1) : Math.max(1, ft?.s ?? 1);
     const body = ft
-      ? `<g transform="translate(${ft.x} ${ft.y}) translate(${cx} ${cy}) scale(${ft.s ?? 1}) translate(${-cx} ${-cy})${center}">${img}</g>`
-      : center
-        ? `<g transform="${center.trim()}">${img}</g>`
-        : img;
+      ? `<g transform="translate(${ft.x} ${ft.y}) translate(${cx} ${cy}) scale(${drawScale}) translate(${-cx} ${-cy})">${img}</g>`
+      : img;
     return (
       `<rect x="0" y="0" width="${foldX}" height="${h}" fill="${INK}"/>` +
       `<g clip-path="url(#frontArtClip)">${body}</g>` +
