@@ -21,6 +21,8 @@ pub mod htr_solver;
 pub mod htr_phase2_solver;
 // pocket:2x2x2 口袋魔方全空间最优(3.6MB 零盘表现场 BFS)。
 pub mod pocket_solver;
+// pyraminx:金字塔核心+顶点全空间最优(0.9MB 零盘表现场 BFS,独立状态模型)。
+pub mod pyraminx_solver;
 pub mod roux_s1_solver;
 pub mod xcross_solver;
 
