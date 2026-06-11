@@ -24,9 +24,6 @@ const RecentScrambles = dynamic(() => import('@/components/RecentScrambles'), {
 const TodayRecon = dynamic(() => import('@/components/TodayRecon'), {
   loading: () => <div style={{ minHeight: 40 }} aria-hidden="true" />,
 });
-const TodayAnnouncedComps = dynamic(() => import('@/components/TodayAnnouncedComps'), {
-  loading: () => <div style={{ minHeight: 40 }} aria-hidden="true" />,
-});
 import { useEffectiveTheme } from '@/lib/theme';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../landing.css';
@@ -68,7 +65,6 @@ export default function LandingPage() {
 
       <RecentScrambles lang={lang} />
       <TodayRecon lang={lang} />
-      <TodayAnnouncedComps lang={lang} />
 
       <OngoingComps lang={lang} />
 
