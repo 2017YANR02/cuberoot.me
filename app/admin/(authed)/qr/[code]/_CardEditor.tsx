@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Download } from "lucide-react";
 import type { CardEl, CardLayout, QrCode, QrType } from "@/lib/db/qr";
 import { QrCardUnit, FRONT_ARTS } from "@/components/QrCard";
 import { FileUpload } from "@/components/FileUpload";
@@ -458,11 +459,21 @@ export function CardEditor({
             <span className="text-[12px] text-ink-3">
               自动轮换:不固定用图,批量打印时按卡片顺序轮流分配图库的图;在意印出来是哪张就选定一张。
             </span>
-            <FileUpload
-              accept="image/*"
-              label="上传自己的正面图"
-              onUploaded={(url) => set("art")(url)}
-            />
+            <div className="grid grid-cols-2 gap-2">
+              <FileUpload
+                accept="image/*"
+                label="上传自己的正面图"
+                onUploaded={(url) => set("art")(url)}
+              />
+              {/* 下载当前生效的正面图原图(自动轮换时下当前展示的第一张) */}
+              <a
+                href={s.art || FRONT_ARTS[0].src}
+                download={(s.art || FRONT_ARTS[0].src).split("/").pop() || "front-art"}
+                className="inline-flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-3 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition"
+              >
+                <Download size={14} /> 下载当前正面图
+              </a>
+            </div>
             <label className="inline-flex cursor-pointer items-center gap-1.5 text-[12px] text-ink-2">
               <input
                 type="checkbox"
