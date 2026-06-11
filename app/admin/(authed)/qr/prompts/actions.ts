@@ -5,7 +5,9 @@ import { revalidatePath } from "next/cache";
 import {
   createPromptTemplate,
   updatePromptTemplate,
-  removePromptTemplate,
+  trashPromptTemplate,
+  restorePromptTemplate,
+  purgePromptTemplate,
   swapPromptTemplateOrder,
 } from "@/lib/db/prompt-templates";
 
@@ -34,9 +36,26 @@ export async function updatePrompt(f: FormData): Promise<void> {
   redirect("/admin/qr/prompts?saved=1");
 }
 
+// 移到回收站(可恢复)
 export async function deletePrompt(f: FormData): Promise<void> {
   const id = Number(f.get("id") ?? 0);
-  if (id) await removePromptTemplate(id);
+  if (id) await trashPromptTemplate(id);
+  refresh();
+  redirect("/admin/qr/prompts");
+}
+
+// 从回收站恢复
+export async function restorePrompt(f: FormData): Promise<void> {
+  const id = Number(f.get("id") ?? 0);
+  if (id) await restorePromptTemplate(id);
+  refresh();
+  redirect("/admin/qr/prompts");
+}
+
+// 彻底删除(不可恢复)
+export async function purgePrompt(f: FormData): Promise<void> {
+  const id = Number(f.get("id") ?? 0);
+  if (id) await purgePromptTemplate(id);
   refresh();
   redirect("/admin/qr/prompts");
 }

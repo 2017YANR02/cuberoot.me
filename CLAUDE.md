@@ -134,6 +134,7 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 - 二维码(活码):`qr_codes` 两类型 `redirect`(扫码直达 target)/ `landing`(落地页 `/qr/[code]` 聚合多链接),`incrementScans` 计扫,预览 `?stay=1`;admin `/admin/qr` 批量生成 + 编辑(类型/标题/简介/链接/术语/正面图/语录)。2x4cm 折叠卡 `components/QrCard.tsx`(正面图+语录 / 背面唯一码),`/admin/qr/cards` 打印,正面图存 `public/card/`(占位图带水印,印前换);链接解析 `lib/qr/links.ts`,svg `lib/qr/svg.ts`,编辑页实时预览 `_LiveCardPreview.tsx`
 - 码域名解耦:印进码里的地址走 `qrTargetUrl(code)`(`lib/site.ts`),base = `NEXT_PUBLIC_QR_BASE`(未设退 `NEXT_PUBLIC_SITE_URL`)+ 前缀 `NEXT_PUBLIC_QR_PATH`(默 `/qr`,上专用短域名设空即 `host/code`)。**印刷前定好域名再生成**,印出去改不了
 - 矢量印刷母版:`/api/qr/[code]/card`(`lib/qr/cardSvg.ts`)出整张折叠卡的 100% 矢量 SVG(无位图/CSS/外链,含出血+裁切线),印刷厂直接收;卡片文案逻辑抽到 `lib/qr/cardText.ts`(DOM 卡 + 矢量卡共用),魔方 logo `cubeLogo()` 与 `qrSvgBody()` 在 `lib/qr/svg.ts`。送印前文字建议「创建轮廓」防缺字
+- 正面图生图提示词:`prompt_templates` 表 + `lib/db/prompt-templates.ts`(软删走 `deleted_at`,`listPromptTemplates` 只返在用);通用头 + 默认模板单一源 `lib/qr/prompt.ts` `DEFAULT_PROMPT_TEMPLATES`(改它后跑生成器出回填迁移)。admin `/admin/qr/prompts` 增删改 + 调序 + 回收站;编辑器正面图面板「提示词工坊」选模板/自写→拼通用头→复制去外部 AI 生图,`qr_codes.front_art_prompt` 记出处。只复制不接图像 API
 - 不接 GA / Plausible / Sentry / Posthog,埋点全自建
 
 ## PWA

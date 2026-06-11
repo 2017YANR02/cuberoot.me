@@ -407,6 +407,8 @@ export const promptTemplates = sqliteTable(
     category: text("category"),
     body: text("body").notNull(),
     sortOrder: integer("sort_order").notNull().default(0),
+    // 软删除:null = 在用;有秒级时间戳 = 在回收站,可恢复或彻底删
+    deletedAt: integer("deleted_at"),
     createdAt: integer("created_at").notNull(),
   },
   (t) => [index("prompt_templates_sort_idx").on(t.sortOrder)],

@@ -1,5 +1,5 @@
 import "server-only";
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, desc, eq, isNull, isNotNull, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { PromptTemplate, PromptTemplateInsert } from "@/db/schema";
 
@@ -11,12 +11,23 @@ export type PromptTemplateInput = {
   body: string;
 };
 
-// 后台列表 + 卡片编辑页选择器共用,按 sortOrder 升序(同序再按 id)
+// 在用模板(未进回收站):后台列表 + 卡片编辑页选择器共用,按 sortOrder 升序(同序再按 id)
 export async function listPromptTemplates(): Promise<PromptTemplate[]> {
   return db
     .select()
     .from(schema.promptTemplates)
+    .where(isNull(schema.promptTemplates.deletedAt))
     .orderBy(asc(schema.promptTemplates.sortOrder), asc(schema.promptTemplates.id))
+    .all();
+}
+
+// 回收站里的模板(已软删),按删除时间倒序(最近删的在前)
+export async function listDeletedPromptTemplates(): Promise<PromptTemplate[]> {
+  return db
+    .select()
+    .from(schema.promptTemplates)
+    .where(isNotNull(schema.promptTemplates.deletedAt))
+    .orderBy(desc(schema.promptTemplates.deletedAt))
     .all();
 }
 
@@ -62,7 +73,24 @@ export async function updatePromptTemplate(
     .where(eq(schema.promptTemplates.id, id));
 }
 
-export async function removePromptTemplate(id: number): Promise<void> {
+// 移到回收站(软删):保留数据,从在用列表与编辑器选择器消失,可恢复
+export async function trashPromptTemplate(id: number): Promise<void> {
+  await db
+    .update(schema.promptTemplates)
+    .set({ deletedAt: Math.floor(Date.now() / 1000) })
+    .where(eq(schema.promptTemplates.id, id));
+}
+
+// 从回收站恢复
+export async function restorePromptTemplate(id: number): Promise<void> {
+  await db
+    .update(schema.promptTemplates)
+    .set({ deletedAt: null })
+    .where(eq(schema.promptTemplates.id, id));
+}
+
+// 彻底删除(不可恢复),仅回收站里的彻底删按钮调用
+export async function purgePromptTemplate(id: number): Promise<void> {
   await db.delete(schema.promptTemplates).where(eq(schema.promptTemplates.id, id));
 }
 
