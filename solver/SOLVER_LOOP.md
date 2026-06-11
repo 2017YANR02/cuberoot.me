@@ -85,11 +85,21 @@
 - [x] **M3d** StageSolver UI 集成(照 H4 清单)。✅ 2026-06-11 `5626a0e9c`(3 文件)。htr↔htr2 各登记点对齐 + isSentinel 统一哨兵;typecheck 主 loop 复核 EXIT=0(我的文件干净);playwright 8/8 PASS、native↔WASM 12/12 格相等、0 相关 console error;htr2 不进 VARIANT_ORDER。文案 zh「HTR 收尾」/en「HTR-finish」,EAGER_MAX=0。
 - [x] **M3e** `/code/solvers` 看板同步 `4cd201d20` + **📦 MANUAL(htr2)** 交接见 §3。✅ 2026-06-11 typecheck EXIT=0(主 loop 复核)+ code-tokens-drift 35/35 + zh-hant-drift 4/4;htr2 登记 TABLES/NATIVE/BROWSER/hero/概览卡,rate 留 null「未实测」。**M3 全链路完成,EPIC 2 收尾。**
 
-### EPIC 3 — 独立 puzzle 引擎(档3,每个都 GATED)
-> 非 3x3:`cube_common`(8角12棱)不覆盖,各需独立状态模型;且偏离本舰队"3x3 打乱分阶段难度统计"用途。
+### EPIC 3 — 独立 puzzle 引擎(档3,非 3x3)
+> 2026-06-11 GATE 解除,用户拍板:**四个全做,且接统计管道**(覆盖调研的"无落点"结论——管道统计 = **整解最优步数分布**:WCA 打乱语料喂最优 solver,每打乱最优解长度分桶,即 `/scramble/stats` 对 3x3 cross 那类难度分布的 puzzle 级单阶段版)。各 puzzle 0 复用 `cube_common`,需独立状态模型(小空间全表 BFS / SQ1 双阶段)。**真正灌百万打乱 + static 发布仍是 📦 MANUAL**(顶部锁定规矩);loop 建 native 引擎 + analyzer + 统计管线注册 + WASM + 在线求解器 + 难度分布 UI + 看板。
+> 顺序(de-risk:先小后大,2x2x2 先把非 3x3 的"统计管道 + 难度分布 UI"那套新管线打通,后三者照搬):**2x2x2 → Pyraminx → Skewb → SQ1**。
+> ⚠ 这是新管线:非 3x3 不进现有 3x3 StageSolver/analyzer,落点是独立"在线求解器 + 难度分布"页面 + `/scramble/stats` 新 puzzle 分桶。第一个 puzzle(2x2x2)的 P2c/P2d 含**新 UI/统计面设计**,后三者复用其范式。
 
-- [ ] **⛔ GATE(P0)** 到此**必停**:逐个列出 SQ1 S1+S2 / Pyraminx V / Skewb Face / 2x2x2 口袋魔方的状态模型成本、是否接 `/scramble` 管道,在 §3 给设计取舍,获用户明确"开工 X + 接不接管道"才继续。
-- [ ] **P1+**(gated,确认后展开)
+#### EPIC 3.1 — 2x2x2 口袋魔方(状态空间 3,674,160 = 7!·3^6,全表 BFS ~3.6MB 零盘表;solver 参考 cstimer `gsolver.js::pocketCube`)
+- [ ] **P2a** Rust 核心 `pocket_solver.rs`(独立 8 角无棱状态模型 + 最优 BFS 全表)+ 测试(pt_basics + 独立暴力对照 + enumerate)。门:`cargo test --release pocket`(或定的 key)绿 + 全量现有测试仍绿。**DESIGN-FIRST**:态数/坐标自行推导(别信记忆),报 God's number(文献 HTM 11 / QTM 14,以实测为准)。
+- [ ] **P2b** analyzer bin `pocket_analyzer.rs`(输出每打乱最优解长度)+ `tests/e2e_pocket.rs`。门:e2e 绿 + smoke 形状对。
+- [ ] **P2c** 统计管线注册(非 3x3 新管线:难度分布的 build 入口 + distribution JSON 形态 + `/scramble/stats` 新 puzzle 分桶 tab 的数据契约;**真正灌注 = MANUAL**,本单元只建管线 + 用小样本验证形状)。门:相关 build/test 守卫绿。
+- [ ] **P2d** WASM 类 + 重建仪式 + **在线最优求解器 UI**(独立页或挂 /scramble;非 3x3 不进 StageSolver)。门:typecheck + playwright native↔WASM 逐格相等,0 console error。
+- [ ] **P2e** `/code/solvers` 看板登记 + **📦 MANUAL(2x2x2)** 灌注/发布交接写 §3。门:typecheck + code-tokens-drift 绿。
+
+#### EPIC 3.2 — Pyraminx(核心 75,582 × 顶点 3^4;solver 参考 cstimer `pyraminx.js`)— 照 2x2x2 范式展开(P3a–P3e),2x2x2 收尾后细化
+#### EPIC 3.3 — Skewb(3,149,280;/trainer/skewb 已有宿主;solver 参考 `skewb.js`)— 照范式展开(P4a–P4e)
+#### EPIC 3.4 — SQ1 S1+S2(~3.4 亿 shape-reachable,双阶段 search + 剪枝表,非全表;solver 参考 `scramble_sq1_new.js`)— 照范式 + 双阶段,最重,最后做(P5a–P5e)
 
 ---
 
@@ -113,6 +123,7 @@
 - 2026-06-11 — **M3c** htr2 WASM + 重建仪式,`a8b9449f4`。HtrPhase2SolverWasm + worker htr2 分支 + V bump + PoolNeed;零盘表;typecheck EXIT=0,node 冒烟 native↔wasm 全等。
 - 2026-06-11 — **M3d** htr2 StageSolver UI,`5626a0e9c`。playwright 8/8 + native↔WASM 12/12;文案 HTR 收尾/HTR-finish。(发现并行 AI 的 arch-data.tsx:316 语法 WIP,非本域。)
 - 2026-06-11 — **M3e** htr2 看板登记,`4cd201d20`。typecheck+drift 全绿。**EPIC 2 完成(M1 done / M2 弃 / M3=htr2 全链路 done)。下一个 = EPIC 3 P0 ⛔ GATE,loop 按协议停。**
+- 2026-06-11 — **EPIC 3 GATE 调研**(`a73a3b5f1`)+ **用户拍板**:四个非 3x3 全做 + 接统计管道(整解最优步数分布,修正调研"无落点");展开 EPIC 3.1–3.4,顺序 2x2x2→Pyraminx→Skewb→SQ1,灌注/发布 MANUAL。下一个 = P2a(2x2x2 核心)。
 
 ---
 
@@ -158,6 +169,8 @@
 3. **更省的替代**:这四个 puzzle 的最优/近最优 solver cstimer 已自带且本站已 vendored——要在线求解器**直接复用 cstimer 引擎**(JS,无需 Rust/WASM 新表),比新写 Rust 引擎成本低一个量级;Rust 新引擎只在"要灌百万级打乱跑批统计"时才值得,而恰恰这点没有 3x3 式分阶段语义支撑。
 
 **一句话给用户**:档3 = 另一个 feature(非 3x3,零复用本引擎,零 master 管道落点);最划算路径是若要在线求解器就复用 cstimer 现成 JS solver,本 Rust 舰队不必扩。等用户明确「做哪个 + 用 cstimer JS 还是新写 Rust + 接不接(其实不该接)管道」。
+
+**✅ 2026-06-11 用户拍板(覆盖上面"无落点"结论)**:四个全做 + **接统计管道**。修正:调研把"无 3x3 多阶段语义"误当成"无管道落点",漏了对这些 puzzle 最自然的单阶段管道统计 = **整解最优步数分布**(WCA 打乱语料喂最优 solver,最优解长度分桶,即 cross-stats 的 puzzle 级单阶段版,这些都是 WCA 项目、语料现成)。接管道也正好让 Rust native 引擎有价值(批量跑百万打乱,cstimer JS 那条省事路不适用)。已展开 EPIC 3.1–3.4(见 §1),顺序 2x2x2→Pyraminx→Skewb→SQ1。**灌注 + 发布仍 MANUAL**。
 
 ---
 
