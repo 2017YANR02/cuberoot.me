@@ -130,14 +130,17 @@ function front(
 
   if (art) {
     // 艺术图铺满正面(含左/上/下出血),<image> slice 自带裁剪到该矩形。
+    // 出血只在左侧(右侧是折线),xMid 居中会让取景偏离成品面中心 bleed/2,
+    // 默认补回去:画面以成品面为中心,出血吃右侧多余的画面。
     // layout.front = 平移(mm)+ 缩放 s(绕成品面中心),与 DOM 卡同一套几何;
     // 变换后可能越界,clip 回正面出血区。露出的底是深色 INK。
     const ft = layout?.front;
     const img = `<image href="${art}" x="0" y="0" width="${foldX}" height="${h}" preserveAspectRatio="xMidYMid slice"/>`;
     const cy = top + PANEL_H / 2;
+    const center = `translate(${bleed / 2} 0)`;
     const body = ft
-      ? `<g transform="translate(${ft.x} ${ft.y}) translate(${cx} ${cy}) scale(${ft.s ?? 1}) translate(${-cx} ${-cy})">${img}</g>`
-      : img;
+      ? `<g transform="translate(${ft.x} ${ft.y}) translate(${cx} ${cy}) scale(${ft.s ?? 1}) translate(${-cx} ${-cy}) ${center}">${img}</g>`
+      : `<g transform="${center}">${img}</g>`;
     return (
       `<rect x="0" y="0" width="${foldX}" height="${h}" fill="${INK}"/>` +
       `<g clip-path="url(#frontArtClip)">${body}</g>` +
