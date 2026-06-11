@@ -938,7 +938,7 @@ function PuzzleSettings({
   onPuzzleChange: (kind: SimPuzzle) => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
-  t: (zh: string, en: string) => string;
+  t: (zh: string, en: string, zhHant?: string) => string;
   applyMove: (m: KeyMove) => void;
   keymap: Record<string, KeyMove>;
   onKeymapChange: (km: Record<string, KeyMove>) => void;
@@ -1015,8 +1015,8 @@ function PuzzleSettings({
         className="sim-puzzle-head"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        aria-label={t('魔方设置', 'Puzzle Settings')}
-        title={t('魔方设置', 'Puzzle Settings')}
+        aria-label={t('魔方设置', 'Puzzle Settings', "魔方設定")}
+        title={t('魔方设置', 'Puzzle Settings', "魔方設定")}
       >
         <ChevronRight size={14} className={'sim-puzzle-caret' + (open ? ' open' : '')} />
         <Settings size={14} />
@@ -1025,7 +1025,7 @@ function PuzzleSettings({
         <div className="sim-puzzle-body">
           <div className="sim-puzzle-row">
             <div className="sim-puzzle-section">
-              <div className="sim-puzzle-section-title">{t('类型', 'Puzzle')}</div>
+              <div className="sim-puzzle-section-title">{t('类型', 'Puzzle', "型別")}</div>
               <PuzzleTypeSelect
                 value={isTwistyLocal ? puzzleKind : (isSq1Local ? 'sq1' : 'nxn')}
                 isZh={isZh}
@@ -1037,7 +1037,7 @@ function PuzzleSettings({
             </div>
             {isNxNLocal && (
               <div className="sim-puzzle-section">
-                <div className="sim-puzzle-section-title">{t('阶数', 'Order')}</div>
+                <div className="sim-puzzle-section-title">{t('阶数', 'Order', "階數")}</div>
                 <div className="sim-puzzle-order-control" ref={wheelRootRef}>
                   <WheelPicker
                     value={order}
@@ -1049,7 +1049,7 @@ function PuzzleSettings({
                     width={72}
                     itemHeight={22}
                     slots={3}
-                    ariaLabel={t('阶数', 'Order')}
+                    ariaLabel={t('阶数', 'Order', "階數")}
                     className="sim-puzzle-order-wheel"
                   />
                   <input
@@ -1072,7 +1072,7 @@ function PuzzleSettings({
             )}
             {isNxNLocal && (
               <div className="sim-puzzle-section">
-                <div className="sim-puzzle-section-title">{t('视觉风格', 'Style')}</div>
+                <div className="sim-puzzle-section-title">{t('视觉风格', 'Style', "視覺風格")}</div>
                 <select
                   className="sim-puzzle-select"
                   value={activePreset}
@@ -1081,7 +1081,7 @@ function PuzzleSettings({
                     if (p) onSettingsChange({ ...settings, ...p.s });
                   }}
                 >
-                  {activePreset === '' && <option value="">{t('自定义', 'Custom')}</option>}
+                  {activePreset === '' && <option value="">{t('自定义', 'Custom', "自定義")}</option>}
                   {STYLE_PRESETS.map((p) => (
                     <option key={p.id} value={p.id}>{t(p.zh, p.en)}</option>
                   ))}
@@ -1093,24 +1093,24 @@ function PuzzleSettings({
               className="sim-keymap-open-btn"
               onClick={() => setKeymapOpen(true)}
             >
-              {t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}
+              {t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts', "鍵盤 / 滑鼠快捷鍵")}
             </button>
             <button
               type="button"
               className="sim-drawer-reset"
               onClick={() => onSettingsChange(DEFAULT_SETTINGS)}
             >
-              {t('恢复默认', 'Reset to defaults')}
+              {t('恢复默认', 'Reset to defaults', "恢復預設")}
             </button>
           </div>
 
           <div className="sim-puzzle-sliders">
-            <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} />
-            <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} />
-            <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} />
+            <Slider label={t('灵敏度', 'Sensitivity', "靈敏度")} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} />
+            <Slider label={t('缩放', 'Scale', "縮放")} value={settings.scale} onChange={(v) => set('scale', v)} />
+            <Slider label={t('透视', 'Perspective', "透視")} value={settings.perspective} onChange={(v) => set('perspective', v)} />
             <Slider label={t('左右', 'Yaw')} value={settings.viewAngle} onChange={(v) => set('viewAngle', v)} />
             <Slider label={t('上下', 'Pitch')} value={settings.viewGradient} onChange={(v) => set('viewGradient', v)} />
-            <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} />
+            <Slider label={t('转动速度', 'Turn speed', "轉動速度")} value={settings.speed} onChange={(v) => set('speed', v)} />
           </div>
           <div className="sim-puzzle-toggles">
             <label className="sim-toggle">
@@ -1119,23 +1119,23 @@ function PuzzleSettings({
                 value={settings.dragEmpty}
                 onChange={(e) => set('dragEmpty', e.target.value as 'orbit' | 'rotate' | 'view')}
               >
-                <option value="orbit">{t('自动转体', 'Auto rotate')}</option>
-                <option value="rotate">{t('整步转体', 'Snap rotate')}</option>
-                <option value="view">{t('视角', 'View')}</option>
+                <option value="orbit">{t('自动转体', 'Auto rotate', "自動轉體")}</option>
+                <option value="rotate">{t('整步转体', 'Snap rotate', "整步轉體")}</option>
+                <option value="view">{t('视角', 'View', "視角")}</option>
               </select>
             </label>
-            <Toggle label={t('动画展示打乱', 'Animate scramble')} value={settings.animateScramble} onChange={(v) => set('animateScramble', v)} />
-            <Toggle label={t('棋盘格背景', 'Checkered background')} value={settings.checkeredBg} onChange={(v) => set('checkeredBg', v)} />
-            <Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} />
-            <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
-            <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
-            <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
-            <Toggle label={t('提示贴片 (背面)', 'Hint facelets (back faces)')} value={settings.hint} onChange={(v) => set('hint', v)} />
+            <Toggle label={t('动画展示打乱', 'Animate scramble', "動畫展示打亂")} value={settings.animateScramble} onChange={(v) => set('animateScramble', v)} />
+            <Toggle label={t('棋盘格背景', 'Checkered background', "棋盤格背景")} value={settings.checkeredBg} onChange={(v) => set('checkeredBg', v)} />
+            <Toggle label={t('锁定大小位置', 'Lock size & position', "鎖定大小位置")} value={settings.lockView} onChange={(v) => set('lockView', v)} />
+            <Toggle label={t('立体贴片', 'Sticker thickness', "立體貼片")} value={settings.thickness} onChange={(v) => set('thickness', v)} />
+            <Toggle label={t('镂空', 'Hollow', "鏤空")} value={settings.hollow} onChange={(v) => set('hollow', v)} />
+            <Toggle label={t('箭头', 'Arrows', "箭頭")} value={settings.arrow} onChange={(v) => set('arrow', v)} />
+            <Toggle label={t('提示贴片 (背面)', 'Hint facelets (back faces)', "提示貼片 (背面)")} value={settings.hint} onChange={(v) => set('hint', v)} />
           </div>
-          <ColorRow label={t('内核色', 'Core color')}>
+          <ColorRow label={t('内核色', 'Core color', "核心色")}>
             <SwatchCell
               color={settings.coreColor}
-              title={t('自定义', 'Custom')}
+              title={t('自定义', 'Custom', "自定義")}
               onPick={(c) => set('coreColor', c)}
             />
             {CORE_COLOR_PRESETS.map((c) => (
@@ -1152,7 +1152,7 @@ function PuzzleSettings({
             label={t('面色', 'Face colors')}
             action={{
               label: 'WCA',
-              title: t('恢复 WCA 默认', 'Reset to WCA defaults'),
+              title: t('恢复 WCA 默认', 'Reset to WCA defaults', "恢復 WCA 預設"),
               onClick: () => set('faceColors', { ...DEFAULT_FACE_COLORS }),
             }}
           >
