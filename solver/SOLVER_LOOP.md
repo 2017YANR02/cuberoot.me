@@ -82,7 +82,7 @@
 - [x] **M3a** Rust 核心 `htr_phase2_solver.rs`(key `htr2`)+ 测试。✅ 2026-06-11 `2996acf17`。态空间=|G3|=663,552(角 Hc=96 × 棱 6912=24³/2),u8 精确表 648KB 现场 BFS,零盘表;mask=G3_MOVES(U2=1 D2=4 L2=7 R2=10 F2=13 B2=16,复用 htr_solver,自逆);4 测试绿含 663,552 全空间暴力对照;全量 lib 90/0 + e2e 全绿(htr/M1 未塌);God's number=15(文献一致,baseline 锁)。
 - [x] **M3b** analyzer bin `htr_phase2_analyzer.rs`(suffix `_htr2`)+ `tests/e2e_htr2.rs`。✅ 2026-06-11 `8e6496a83`。照 htr_analyzer 同构;e2e 绿 + htr/htr2 仍绿(lib 9)+ smoke 形状对。关键:G3 词全程 HTR,6 视角恒同值(异于 H1 DR 词只 UD 轴),baseline 据实测锁。
 - [x] **M3c** WASM 类 `HtrPhase2SolverWasm` + 重建仪式(照 H3 清单)。✅ 2026-06-11 `a8b9449f4`(8 文件)。`TABLE_SETS.htr2=[]` 零下载,哨兵 `HTR2_NOT_HTR`,V bump 20260611b;typecheck 主 loop 复核 EXIT=0(从 core/ 跑;注意别 cd 到仓库根否则 ERR_PNPM_NO_PKG_MANIFEST);cargo htr2 仍绿;node 冒烟 3 G3 词 native↔wasm 6 视角全等。
-- [ ] **M3d** StageSolver UI 集成(照 H4 清单)。门:typecheck + playwright 桌面+390px,native↔WASM 逐格相等,0 console error。
+- [x] **M3d** StageSolver UI 集成(照 H4 清单)。✅ 2026-06-11 `5626a0e9c`(3 文件)。htr↔htr2 各登记点对齐 + isSentinel 统一哨兵;typecheck 主 loop 复核 EXIT=0(我的文件干净);playwright 8/8 PASS、native↔WASM 12/12 格相等、0 相关 console error;htr2 不进 VARIANT_ORDER。文案 zh「HTR 收尾」/en「HTR-finish」,EAGER_MAX=0。
 - [ ] **M3e** `/code/solvers` 看板同步 + **📦 MANUAL(htr2)** 交接写 §3。门:typecheck + code-tokens-drift 绿。
 
 ### EPIC 3 — 独立 puzzle 引擎(档3,每个都 GATED)
@@ -111,6 +111,7 @@
 - 2026-06-11 — **M3a** HTR phase-2 核心 `htr2`,`2996acf17`。663,552 全空间精确表(648KB,零盘表),复用 M1 mask 限 6 双转;663,552 全枚举暴力对照绿,God's number=15。
 - 2026-06-11 — **M3b** htr2 analyzer + e2e,`8e6496a83`。照 htr_analyzer 同构;e2e 绿、lib 9 全绿、smoke 形状对(G3 词 6 视角恒同值)。
 - 2026-06-11 — **M3c** htr2 WASM + 重建仪式,`a8b9449f4`。HtrPhase2SolverWasm + worker htr2 分支 + V bump + PoolNeed;零盘表;typecheck EXIT=0,node 冒烟 native↔wasm 全等。
+- 2026-06-11 — **M3d** htr2 StageSolver UI,`5626a0e9c`。playwright 8/8 + native↔WASM 12/12;文案 HTR 收尾/HTR-finish。(发现并行 AI 的 arch-data.tsx:316 语法 WIP,非本域。)
 
 ---
 
