@@ -54,7 +54,8 @@ function FrontPanel({
   // layout.front = 平移(mm)+ 缩放 s(绕成品面中心),编辑器拖动/滑块写入。
   // fit:"contain" = 整图完整装进成品面、留 1mm 安全边(18x38),不裁切,空余露深色底。
   const ft = layout?.front;
-  const fitContain = ft?.fit === "contain";
+  // 默认完整显示不裁(contain);仅显式 cover 才铺满裁切
+  const fitContain = ft?.fit !== "cover";
   return (
     <div
       data-panel="front"
@@ -75,6 +76,10 @@ function FrontPanel({
         draggable={false}
         style={{
           position: "absolute",
+          // 压过 Tailwind preflight 的 img{max-width:100%;height:auto},
+          // 否则绝对定位背景图宽被钳到 100% 致比例失真
+          maxWidth: "none",
+          maxHeight: "none",
           ...(fitContain
             ? {
                 left: m(1),

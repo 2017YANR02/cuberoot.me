@@ -118,9 +118,10 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
         k === "front" && Number.isFinite(o.s)
           ? Math.round(Math.max(0.5, Math.min(3, o.s!)) * 100) / 100
           : undefined;
-      const fit = k === "front" && o.fit === "contain" ? ("contain" as const) : undefined;
+      // 默认(不存)= 完整显示;仅显式 "cover"(铺满裁切)才落库
+      const fit = k === "front" && o.fit === "cover" ? ("cover" as const) : undefined;
       if (x !== 0 || y !== 0 || (s !== undefined && s !== 1) || fit) {
-        const v: { x: number; y: number; s?: number; fit?: "contain" } = { x, y };
+        const v: { x: number; y: number; s?: number; fit?: "cover" } = { x, y };
         if (s !== undefined && s !== 1) v.s = s;
         if (fit) v.fit = fit;
         out[k] = v;

@@ -136,7 +136,8 @@ function front(
     // layout.front = 平移(mm)+ 缩放 s(绕成品面中心),与 DOM 卡同一套几何;
     // 变换后可能越界,clip 回正面出血区。露出的底是深色 INK。
     const ft = layout?.front;
-    const fitContain = ft?.fit === "contain";
+    // 默认完整显示不裁(contain / meet);仅显式 cover 才铺满裁切(slice)
+    const fitContain = ft?.fit !== "cover";
     const img = fitContain
       ? `<image href="${art}" x="${x0 + 1}" y="${top + 1}" width="${PANEL_W - 2}" height="${PANEL_H - 2}" preserveAspectRatio="xMidYMid meet"/>`
       : `<image href="${art}" x="0" y="0" width="${foldX}" height="${h}" preserveAspectRatio="xMidYMid slice"/>`;

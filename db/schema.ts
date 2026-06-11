@@ -371,9 +371,10 @@ export type QrAlg = { name?: string; moves: string; url?: string };
 export type CardEl = "quote" | "brand" | "backText" | "term" | "qr" | "alg" | "front";
 // 各元素相对默认位的偏移(mm),编辑器拖动写入;DOM 卡与矢量母版共用。
 // s = 缩放倍率(仅 front 用,默认 1;>1 放大 <1 缩小)
-// fit = "contain"(仅 front):整图完整装进成品面不裁切(留 1mm 安全边),空余露深色底;默认铺满裁边
+// fit(仅 front):默认(不填)= 完整显示整图不裁切(留 1mm 安全边),空余露深色底;
+//                "cover" = 铺满整面、超出裁掉
 export type CardLayout = Partial<
-  Record<CardEl, { x: number; y: number; s?: number; fit?: "contain" }>
+  Record<CardEl, { x: number; y: number; s?: number; fit?: "contain" | "cover" }>
 >;
 
 export const qrCodes = sqliteTable("qr_codes", {
