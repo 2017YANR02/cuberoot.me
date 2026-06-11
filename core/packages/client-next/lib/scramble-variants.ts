@@ -10,7 +10,7 @@
 // 方法下拉项,块的具体形状落到阶段下拉(122/123/222/223/F2B)。数据键不变。
 export type ScrambleVariant =
   | 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo'
-  | 'block' | '123' | '123x2' | '222' | '223' | 'eoline' | 'dr' | 'htr';
+  | 'block' | '123' | '123x2' | '222' | '223' | 'eoline' | 'dr' | 'htr' | 'htr2';
 
 export interface VariantLabel { zh: string; en: string }
 
@@ -32,6 +32,8 @@ export const VARIANT_LABEL: Record<ScrambleVariant, VariantLabel> = {
   dr: { zh: 'DR', en: 'DR' },
   // 条件式阶段(输入须已处于该视角 DR,否则 '-'):只进 StageSolver,不进 VARIANT_ORDER。
   htr: { zh: 'HTR', en: 'HTR' },
+  // 条件式阶段(输入须已处于该视角 HTR,否则 '-',G3→solved):同样只进 StageSolver,不进 VARIANT_ORDER。
+  htr2: { zh: 'HTR 收尾', en: 'HTR-finish' },
 };
 
 // 规范展示顺序(RecentScrambles / gen 下拉用;stats 按 distribution.json 键枚举序,不用这个)。
@@ -95,6 +97,7 @@ const STAGE_BASE: Record<string, VariantLabel> = {
   eoline: { zh: 'EOLine', en: 'EOLine' },
   dr: { zh: 'DR', en: 'DR' },
   htr: { zh: 'HTR', en: 'HTR' },
+  htr2: { zh: 'HTR 收尾', en: 'HTR-finish' },
 };
 
 /** 阶段显示名:剥变体前缀/后缀后查表;未知 key 回退原样。 */
@@ -125,4 +128,5 @@ export const VARIANT_STAGES: Record<ScrambleVariant, string[]> = {
   eoline: ['eo', 'eoline'],
   dr: ['dr'],
   htr: ['htr'],
+  htr2: ['htr2'],
 };
