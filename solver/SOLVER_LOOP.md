@@ -134,6 +134,31 @@
   5. static 发布照常规仪式。
 - ~~⏸ soft-gate(M2) 待拍板~~ ✅ 2026-06-11 用户拍板:做,key `roux_s2`,已展开 M2a–M2e(见 §1)。S1+S2 联合 vs 只 S2 留给 M2b 推导后定。
 
+### ⛔ EPIC 3 GATE 调研(2026-06-11,只读 + 推导,等用户拍板「开工哪个 + 接不接管道」)
+
+**核心结论**:四个都是非 3x3 puzzle,`cube_common`(`State{corners:[u8;8],edges:[u8;12]}` + 18-move + Lehmer 编码)是为 3x3 件锁死的,**四者全 0 复用**,各需独立状态模型与移动表(几十~一两百行 Rust 一套,小空间全表 BFS,不落盘大表)。但本舰队用途 = **3x3 打乱的分阶段难度统计喂 `/scramble/*`**;这四个 puzzle 的 scramble 已由 cubing.js + cstimer 引擎现成生成,**没有任何"在 3x3 打乱上做分阶段统计"的语义**——它们各是独立 puzzle,进 master 灌注管道无意义。所以即便做,落点只能是「在线求解器 / 打乱难度直方图独立页」,不是现有 analyzer/gen 管道。
+
+**现成资源(全部已在仓库,不需新造)**:
+- 渲染:`client-next/app/[lang]/scramble/gen/_svg/` 已有 `sq1_svg.ts`/`pyraminx_svg.ts`/`skewb_svg.ts`(+ `mega_svg.ts`);`components/PuzzleSVG.tsx`/`lib/sq1-svg.ts`;`/trainer/skewb` 已上线。
+- 打乱:`lib/cubing-scramble`(cubing.js WCA,含 222/sq1/pyram/skewb)+ `lib/cstimer-scramble` 双轨,`/scramble/gen` 已全部生成 + 画图。
+- 求解参考(cstimer,`D:\cube\cstimer\src\js\`):2x2x2 = `tools/gsolver.js::pocketCube`(BFS gSolver,完整最优,且 333 step solver 已复用其块求解);SQ1 = `scramble/scramble_sq1_new.js`(双阶段 search + `SquarePrun` 剪枝,min2phase 风格 WCA 标准最优);Skewb = `scramble/skewb.js`(`mathlib.Solver(4,2,...)` BFS,普通 + ivy);Pyraminx = `scramble/pyraminx.js`(`mathlib.Solver(4,2,...)` BFS + phase 表)。
+
+**对照表**:
+
+| puzzle | 状态空间(数量级) | 复用现模型? | 工作量量级 | 现成渲染/打乱/solver 参考 | 接 /scramble 管道? | 落点 |
+|---|---|---|---|---|---|---|
+| 2x2x2 口袋 | 3,674,160(7!·3^6) | ❌ 8 角无棱模型 | 小:全表 BFS(~3.7M u8 ≈ 3.6MB)零落盘,~半天 | 全有;solver=gsolver.js pocketCube | ❌ 无 3x3 分阶段语义 | 在线最优求解器 / 打乱难度独立页 |
+| Skewb | 3,149,280 | ❌ 4 轴中心 + 8 角独有件 | 小:全表 BFS ~3MB,~半天 | 全有(/trainer/skewb 已在);solver=skewb.js | ❌ 同上 | 同上(可挂 /trainer/skewb 旁) |
+| Pyraminx | 933,120(核心 75,582 × 顶点 3^4) | ❌ 顶点/边独有件 | 最小:核心全表 BFS 几十 KB,~半天 | 全有;solver=pyraminx.js | ❌ 同上 | 在线最优求解器(顶点 trivial) |
+| SQ1 (S1+S2) | ~3.4 亿(shape-reachable,全态过大) | ❌ shape/层非件模型 | 中:双阶段 search + 剪枝表(照 cstimer 双 prun),非全表 | 全有;solver=scramble_sq1_new.js(双阶段) | ❌ 阶段是 shape→perm,非 3x3 cross/eo/dr | 在线最优求解器 / 步数分布独立页 |
+
+**推荐排序(只摆事实,不替用户决定)**:
+1. **最不该进本管道 = 全部**:四者都没有"3x3 打乱分阶段难度"语义,接 `/scramble` analyzer/gen master 管道无落点。若要做,只做独立"在线求解器 / 难度直方图"页,与本舰队统计管道脱钩。
+2. **若仍要做,性价比序**:Pyraminx(空间最小、表最小、最快)> 2x2x2(空间小、最经典、口袋魔方有受众)> Skewb(空间小,且 /trainer/skewb 已有宿主页)> SQ1(唯一需双阶段 search + 剪枝表、shape 模型最复杂、工作量最大)。
+3. **更省的替代**:这四个 puzzle 的最优/近最优 solver cstimer 已自带且本站已 vendored——要在线求解器**直接复用 cstimer 引擎**(JS,无需 Rust/WASM 新表),比新写 Rust 引擎成本低一个量级;Rust 新引擎只在"要灌百万级打乱跑批统计"时才值得,而恰恰这点没有 3x3 式分阶段语义支撑。
+
+**一句话给用户**:档3 = 另一个 feature(非 3x3,零复用本引擎,零 master 管道落点);最划算路径是若要在线求解器就复用 cstimer 现成 JS solver,本 Rust 舰队不必扩。等用户明确「做哪个 + 用 cstimer JS 还是新写 Rust + 接不接(其实不该接)管道」。
+
 ---
 
 ## §4 测试 / 验证欠账(append-only,内存宽松时优先回补)
