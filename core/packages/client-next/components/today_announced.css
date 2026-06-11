@@ -1,0 +1,121 @@
+/* TodayAnnouncedComps —「今日公示」首页板块:当天公示的 WCA 比赛卡片。
+   卡片样式参考 /wca/comp 详情弹窗,双主题走 :root token。 */
+
+.today-announced {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tac-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+.tac-head-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--foreground);
+  margin-right: auto;
+}
+.tac-head-all {
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+.tac-head-all:hover { color: var(--accent); }
+
+/* 多卡片自适应平铺:窄屏单列,宽屏两列 */
+.tac-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0.7rem;
+}
+
+.tac-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  text-decoration: none;
+  color: var(--foreground);
+  transition: border-color 0.15s, transform 0.15s;
+}
+.tac-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.tac-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.tac-name {
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.25;
+  color: var(--foreground);
+  min-width: 0;
+}
+
+.tac-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.7rem;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+}
+.tac-date { font-variant-numeric: tabular-nums; }
+
+.tac-reg {
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+
+.tac-events {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  margin-top: 0.1rem;
+  color: var(--muted-foreground);
+}
+.tac-event {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* 展开/收起当天其余公示 */
+.tac-more {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.1rem;
+  padding: 0.3rem 0.4rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+  transition: color 0.12s;
+}
+.tac-more:hover { color: var(--accent); }
+.tac-more-chevron { transition: transform 0.18s ease; }
+.tac-more.is-open .tac-more-chevron { transform: rotate(180deg); }
+
+@media (max-width: 560px) {
+  .tac-grid { grid-template-columns: 1fr; }
+  .tac-card { padding: 0.75rem 0.85rem; }
+}
