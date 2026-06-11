@@ -119,6 +119,28 @@ export class F2leoSolverWasm {
 }
 
 /**
+ * HTR phase-2(G3 → solved,只走 6 双转)求解器(全自包含,**零表下载**):角置换/边轨道
+ * 移动表与全空间 663,552 态精确距离表(~648KB)全部现场从内置运动学构建,首次查询时惰性
+ * BFS(RefCell,~亚秒);查长度 O(1),枚举首达即最优。条件式阶段:该视角必须已处于 HTR/G3
+ * 子群,非 HTR 视角返回 u32::MAX 哨兵。对 y 不变。
+ */
+export class HtrPhase2SolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    constructor();
+    /**
+     * 6 视角最优步数(顺序对应 ROTS);该视角非 HTR = u32::MAX 哨兵。
+     */
+    solve(scramble: string): Uint32Array;
+    /**
+     * 单视角多解 JSON(同 HtrSolverWasm::solve_moves 形状)。HTR phase-2 对 y 不变
+     * (解全在 yk=0),`m` 前缀 = rot,`c` = 轴标签(同 DR,如 "UD");
+     * 该视角非 HTR = {"len":4294967295,"sols":[]}。
+     */
+    solve_moves(scramble: string, face: number, extra: number, cap: number): string;
+}
+
+/**
  * HTR(Thistlethwaite DR→HTR)求解器(全自包含,**零表下载**):角置换/轨道移动表与
  * 全空间 2,822,400 态精确距离表(~2.8MB)全部现场从内置运动学构建,首次查询时惰性 BFS
  * (RefCell,~秒级);查长度 O(1),枚举首达即最优。条件式阶段:该视角(UD 轴)必须已
@@ -208,6 +230,7 @@ export interface InitOutput {
     readonly __wbg_crosssolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_eodrsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_f2leosolverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_htrphase2solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_htrsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_roux223solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_variantsolverwasm_free: (a: number, b: number) => void;
@@ -228,6 +251,9 @@ export interface InitOutput {
     readonly f2leosolverwasm_solve_f2leo_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly f2leosolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
     readonly f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
+    readonly htrphase2solverwasm_new: () => number;
+    readonly htrphase2solverwasm_solve: (a: number, b: number, c: number) => [number, number];
+    readonly htrphase2solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
     readonly htrsolverwasm_new: () => number;
     readonly htrsolverwasm_solve: (a: number, b: number, c: number) => [number, number];
     readonly htrsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
