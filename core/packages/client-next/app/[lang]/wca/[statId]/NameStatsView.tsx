@@ -9,6 +9,7 @@ import { Flag } from '@/components/Flag';
 import { countryToIso2, personFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { translatePersonLink, stripChineseParens } from '@/lib/wca-translations';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 import './name-stats.css';
 
 interface Country { c: string; n: number; p: number; }
@@ -109,7 +110,9 @@ export default function NameStatsView({ data, isZh }: { data: NameStatsData; isZ
   const max = useMemo(() => rows.reduce((m, r) => Math.max(m, r[1]), 0), [rows]);
 
   if (!active) return null;
-  const unit = active.id === 'length' ? (isZh ? '字' : '') : (isZh ? '词' : '');
+  const unit = active.id === 'length' ? tr({ zh: '字', en: '' }) : tr({ zh: '词', en: '',
+      zhHant: "詞"
+});
 
   return (
     <div className="ns-view">

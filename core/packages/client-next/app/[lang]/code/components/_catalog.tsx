@@ -14,6 +14,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { tr } from '@/i18n/tr';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { ListSelect } from '@/components/ListSelect';
@@ -57,13 +58,16 @@ function useIsZh() {
 /* ── demos (self-contained, render on a neutral stage) ──────────────────── */
 
 function PillToggleDemo() {
-  const isZh = useIsZh();
   const [a, setA] = useState(true);
   const [b, setB] = useState(false);
   return (
     <div className="cg-row">
       <PillToggle value={a} onChange={setA} ariaLabel="switch" />
-      <PillToggle value={b} onChange={setB} onLabel={isZh ? '开' : 'On'} offLabel={isZh ? '关' : 'Off'} />
+      <PillToggle value={b} onChange={setB} onLabel={tr({ zh: '开', en: 'On',
+          zhHant: "開"
+    })} offLabel={tr({ zh: '关', en: 'Off',
+        zhHant: "關"
+    })} />
     </div>
   );
 }
@@ -89,9 +93,13 @@ function ListSelectDemo() {
   const [v, setV] = useState('');
   const items = [
     { value: '333', label: '3x3x3' },
-    { value: 'us', label: isZh ? '美国' : 'United States', country: 'us' },
-    { value: 'jp', label: isZh ? '日本' : 'Japan', country: 'jp' },
-    { value: 'tw', label: isZh ? '中华台北' : 'Chinese Taipei', country: 'tw' },
+    { value: 'us', label: tr({ zh: '美国', en: 'United States',
+        zhHant: "美國"
+    }), country: 'us' },
+    { value: 'jp', label: tr({ zh: '日本', en: 'Japan' }), country: 'jp' },
+    { value: 'tw', label: tr({ zh: '中华台北', en: 'Chinese Taipei',
+        zhHant: "中華臺北"
+    }), country: 'tw' },
   ];
   return <ListSelect items={items} value={v} onChange={setV} allLabel={isZh ? '全部' : 'All'} searchable />;
 }
