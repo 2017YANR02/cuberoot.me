@@ -189,4 +189,10 @@ export const DEFAULT_PROMPT_TEMPLATES: DefaultPromptTemplate[] = [
     category: "氛围",
     body: "抽象流体渐变,品牌蓝到六色丝滑融合的色块与气泡,弥散柔光晕染,现代杂志感,主体留一颗精致小魔方。\nEN: abstract fluid gradient, smooth blobs blending brand blue into six colors, soft diffuse glow, editorial --ar 1:2",
   },
+  {
+    // 由网络热门人像提示词改写成魔方版(主体换魔方、去掉 3:2 由通用头统一 1:2)
+    name: "伦勃朗暗调速度感",
+    category: "大片",
+    body: "伦勃朗光影布光,仅一束硬光打亮魔方的一面与棱角,其余面没入深邃阴影;整体暗调、明暗对比强烈;魔方身后拉出横向动态模糊拖影,营造疾速旋拧、飞速复原的速度感;纯黑背景,电影级质感,细节丰富,写实摄影质感。\nEN: Rembrandt lighting, a single hard key light on one face and edges of a Rubik's cube, rest in deep shadow, low-key high-contrast, horizontal motion-blur streaks behind it for speed, pure black background, cinematic, photorealistic --ar 1:2",
+  },
 ];

@@ -36,7 +36,18 @@ export default async function AdminPromptTemplatesPage({
       <PageHeader
         title="正面图提示词模板"
         subtitle="卡片正面背景图的生图提示词。改谁的卡就在编辑页选模板一键复制,拿去外部图像 AI 生图再上传"
-        actions={<GhostLink href="/admin/qr">返回二维码</GhostLink>}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            {/* 同页锚点滚到底部回收站,真 a 支持中键新开 */}
+            <a
+              href="#recycle-bin"
+              className="inline-flex items-center justify-center rounded-md border border-line bg-white px-3 py-1.5 text-[13px] text-ink-2 transition hover:border-brand/40 hover:text-ink"
+            >
+              回收站{trashed.length ? `(${trashed.length})` : ""}
+            </a>
+            <GhostLink href="/admin/qr">返回二维码</GhostLink>
+          </div>
+        }
       />
 
       {ok.saved === "1" ? (
@@ -197,17 +208,23 @@ export default async function AdminPromptTemplatesPage({
         )}
       </Card>
 
-      {/* 回收站:软删的模板停在这,可恢复或彻底删除 */}
-      {trashed.length > 0 ? (
-        <Card className="mt-6 p-6">
-          <details>
-            <summary className="cursor-pointer select-none text-[15px] font-semibold text-ink">
-              回收站 <span className="text-[13px] font-normal text-ink-3">{trashed.length} 个</span>
-            </summary>
+      {/* 回收站:软删的模板停在这,可恢复或彻底删除。常驻显示(空也在),顶部锚点跳来 */}
+      <div id="recycle-bin" className="scroll-mt-6">
+      <Card className="mt-6 p-6">
+        <details open={trashed.length > 0}>
+          <summary className="cursor-pointer select-none text-[15px] font-semibold text-ink">
+            回收站 <span className="text-[13px] font-normal text-ink-3">{trashed.length} 个</span>
+          </summary>
+          {trashed.length === 0 ? (
             <p className="mt-2 text-[12px] text-ink-3">
-              移到回收站的模板不出现在编辑器选择器里。可「恢复」放回在用列表,或「彻底删除」永久清掉。
+              空。把模板「移到回收站」后会停在这,可恢复或彻底删除。
             </p>
-            <ul className="mt-3 divide-y divide-line">
+          ) : (
+            <>
+              <p className="mt-2 text-[12px] text-ink-3">
+                移到回收站的模板不出现在编辑器选择器里。可「恢复」放回在用列表,或「彻底删除」永久清掉。
+              </p>
+              <ul className="mt-3 divide-y divide-line">
               {trashed.map((t) => (
                 <li key={t.id} className="flex items-start gap-3 py-3">
                   <div className="min-w-0 flex-1">
@@ -242,10 +259,12 @@ export default async function AdminPromptTemplatesPage({
                   </div>
                 </li>
               ))}
-            </ul>
-          </details>
-        </Card>
-      ) : null}
+              </ul>
+            </>
+          )}
+        </details>
+      </Card>
+      </div>
     </div>
   );
 }
