@@ -2,10 +2,12 @@
    的滚动面板里,无独立 header/expander)。双主题走 :root token。 */
 
 /* 卡片自适应平铺:窄屏单列,宽屏多列(随 OngoingComps 面板宽度) */
+/* 顶部留 2px:外层滚动面板 overflow-y:auto 会裁剪,卡片 hover 上抬 1px 否则会切掉 1px 上边框 */
 .tac-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 0.6rem;
+  padding-top: 2px;
 }
 
 .tac-card {

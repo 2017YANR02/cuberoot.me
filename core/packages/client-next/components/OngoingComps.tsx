@@ -25,6 +25,20 @@ type Group =
   | { kind: 'country'; iso2: string; comps: Comp[] }
   | { kind: 'date'; date: string; comps: Comp[] };
 
+// 各 tab 覆盖的时效窗口 — 跟随当前 tab 的一行 muted 说明 + 每个 tab 的 hover title,
+// 让用户知道每个标签看的是多久内的数据。
+const TAB_SCOPE: Record<TabKey, { zh: string; en: string; zhHant?: string }> = {
+  records:    { zh: '近 10 天',   en: 'last 10 days', zhHant: '近 10 天' },
+  inProgress: { zh: '进行中',     en: 'ongoing',      zhHant: '進行中' },
+  announced:  { zh: '近 48 小时', en: 'last 48h',     zhHant: '近 48 小時' },
+  upcoming:   { zh: '未来 30 天', en: 'next 30 days', zhHant: '未來 30 天' },
+  past:       { zh: '过去 30 天', en: 'past 30 days', zhHant: '過去 30 天' },
+};
+function pickScope(key: TabKey): string {
+  const o = TAB_SCOPE[key];
+  return i18n.language === 'zh-Hant' ? (o.zhHant ?? o.zh) : (i18n.language.startsWith('zh') ? o.zh : o.en);
+}
+
 function stripTrailingYear(s: string): string {
   return s.replace(/\s?\d{4}$/, '').trim();
 }
@@ -201,22 +215,26 @@ export default function OngoingComps({ lang }: Props) {
 
   return (
     <div className="ongoing-comps">
-      <div className="ongoing-comps-tabs" role="tablist">
-        {tabs.map(t => {
-          const isActive = t.key === active;
-          return (
-            <button
-              key={t.key}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              className={`ongoing-comps-tab${isActive ? ' is-active' : ''}`}
-              onClick={() => setTab(t.key)}
-            >
-              <span>{(i18n.language === 'zh-Hant' ? (t.zhHant ?? t.zh) : (i18n.language.startsWith('zh') ? t.zh : t.en))}</span>
-            </button>
-          );
-        })}
+      <div className="ongoing-comps-tabbar">
+        <div className="ongoing-comps-tabs" role="tablist">
+          {tabs.map(t => {
+            const isActive = t.key === active;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                className={`ongoing-comps-tab${isActive ? ' is-active' : ''}`}
+                onClick={() => setTab(t.key)}
+                title={pickScope(t.key)}
+              >
+                <span>{(i18n.language === 'zh-Hant' ? (t.zhHant ?? t.zh) : (i18n.language.startsWith('zh') ? t.zh : t.en))}</span>
+              </button>
+            );
+          })}
+        </div>
+        <span className="ongoing-comps-scope">{pickScope(active)}</span>
       </div>
       <div className="ongoing-comps-groups">
         {active === 'announced' ? (

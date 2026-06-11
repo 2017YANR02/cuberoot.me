@@ -9,11 +9,19 @@
   gap: 0.75rem;
 }
 
+/* tab 行 + 右端时效注脚同处一行(注脚不单独占行),底边线贯穿整行 */
+.ongoing-comps-tabbar {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border-default);
+}
+
 .ongoing-comps-tabs {
+  flex: 1;
+  min-width: 0;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  border-bottom: 1px solid var(--border-default);
 }
 
 .ongoing-comps-tab {
@@ -56,6 +64,18 @@
   bottom: -1px;
   height: 2px;
   background: var(--accent);
+}
+
+/* 当前 tab 的时效窗口 — 贴在 tab 行最右端,与标签同一行(配合每个 tab 的 hover title) */
+.ongoing-comps-scope {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding-left: 0.75rem;
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 /* Shared scroll panel for all four tabs — fixed height, the right-side bar is

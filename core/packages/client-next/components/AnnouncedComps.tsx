@@ -32,6 +32,7 @@ export interface AnnouncedComp {
   registration_open: string | null;
   registration_close: string | null;
   announced_at: string;
+  name_zh?: string | null;
 }
 
 const EVENT_RANK = new Map<string, number>(WCA_EVENT_ORDER.map((e, i) => [e, i]));
@@ -81,7 +82,8 @@ export function AnnouncedCard({ comp, isZh, lang }: {
   lang: 'zh' | 'en';
 }) {
   const { t } = useTranslation();
-  const name = localizeCompName(comp.id, comp.name, isZh);
+  // 服务端实时解析的 cubing.com 中文名优先(公示后 ~20min 即有);否则回退每天一刷的 comp_names_zh.json
+  const name = localizeCompName(comp.id, comp.name, isZh, { explicitNameZh: comp.name_zh });
   const city = comp.city ? (isZh ? localizeCity(comp.city, true) : comp.city) : '';
   const country = countryName(comp.country, isZh);
   const dateStr = formatDateRangeIso(comp.start_date, comp.end_date);

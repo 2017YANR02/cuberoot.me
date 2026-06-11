@@ -4,8 +4,11 @@
  * 数据流:
  *   1. 后台每 20min 拉 WCA REST /competitions?sort=-announced_at,分页直到 announced_at 早于 48h 窗口
  *   2. 落地精简结构(含 announced_at / 项目 / 报名时段 / 人数上限),存内存快照
- *   3. 端点直接吐快照,客户端按访客本地时区过滤出「今天」公示的比赛(48h 窗口覆盖任意时区的当天)
- *   4. nginx proxy_cache + 浏览器 5min 兜底,上游负载 ~3 req/h
+ *   3. 批次含 CN 比赛时,顺手抓一次 cubing.com page 1(已按日期倒序含所有未来 CN 赛),用同一套
+ *      alias→WCA id 规则 + 日期回退实时解析中文名,塞进 name_zh —— 绕开每天一刷的
+ *      comp_names_zh.json 管道(那条链 cron 日更 + [skip ci]/rsync,公示后最坏要等近 24h)。
+ *   4. 端点直接吐快照,客户端按访客本地时区过滤出「今天」公示的比赛(48h 窗口覆盖任意时区的当天)
+ *   5. nginx proxy_cache + 浏览器 5min 兜底,上游负载 ~3 req/h
  *
  * 与 monitors/wca_comp.ts 互补:那个负责推 Bark(每 5min 拉 page1 去重),本端点为首页提供
  * 可读快照,独立运行(不受 MONITORS_ENABLED 门控,休眠监控时本端点照常工作)。
@@ -52,6 +55,7 @@ export interface AnnouncedComp {
   registration_open: string | null;
   registration_close: string | null;
   announced_at: string; // ISO 8601 UTC
+  name_zh: string | null; // cubing.com 中文名(仅 CN 比赛实时解析,无则 null;客户端做 stripWcaPrefix)
 }
 
 interface Snapshot {
@@ -93,7 +97,90 @@ function mapComp(c: WcaComp): AnnouncedComp {
     registration_open: c.registration_open ?? null,
     registration_close: c.registration_close ?? null,
     announced_at: c.announced_at ?? '',
+    name_zh: null,
   };
+}
+
+// ── cubing.com 中文名实时解析(仅 CN 比赛) ────────────────────────────────
+// 忠实复用 stats-build/fetch_comp_names_zh.ts 的 rowPattern + alias 候选规则,但只抓 page 1
+// (列表按日期倒序,所有已公示的未来 CN 赛都在首页)且按 WCA id 直接 join 公示批次,无需全量映射。
+const CUBING_LIST = 'https://cubing.com/competition?year=&type=&province=&event=&page=1';
+// 一行:<td>YYYY-MM-DD[~END]</td><td><a class="comp-type-*" href=".../competition|live/<alias>">中文名</a>
+const CUBING_ROW_RE =
+  /<td>(\d{4}-\d{2}-\d{2})(?:~(?:\d{4}-)?(?:\d{2}-)?\d{2})?<\/td>\s*<td>\s*<a[^>]*class="comp-type-\w+"[^>]*href="https:\/\/cubing\.com\/(?:competition|live)\/([^"?]+)"[^>]*>(.*?)<\/a>/gs;
+const TAG_STRIP = /<[^>]+>/g;
+
+// 从 cubing.com URL alias 推测可能的 WCA ID(WCA ID 常省略 'Open' / 'Cubing' 前缀,故多候选)。
+function aliasToWcaIdCandidates(alias: string): string[] {
+  const tokens = alias.split('-');
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const push = (cand: string) => {
+    if (cand && !seen.has(cand)) { seen.add(cand); out.push(cand); }
+  };
+  push(tokens.join(''));
+  if (tokens.includes('Open')) push(tokens.filter((t) => t !== 'Open').join(''));
+  if (tokens.length && tokens[0] === 'Cubing') {
+    const rest = tokens.slice(1);
+    push(rest.join(''));
+    if (rest.includes('Open')) push(rest.filter((t) => t !== 'Open').join(''));
+  }
+  const start = tokens.length && tokens[0] === 'Cubing' ? 1 : 0;
+  const yearTokens = tokens.filter((t) => /^\d{4}$/.test(t));
+  if (tokens.length - start >= 2 && yearTokens.length) {
+    push(tokens[start]! + tokens[start + 1]! + yearTokens[0]!);
+  }
+  return out;
+}
+
+// 抓 cubing.com page 1,返回 wcaId→中文名(alias 候选) + start_date→中文名[](唯一回退)。
+async function scrapeCubingCnZh(): Promise<{ byId: Map<string, string>; byDate: Map<string, string[]> }> {
+  const byId = new Map<string, string>();
+  const byDate = new Map<string, string[]>();
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  let html: string;
+  try {
+    const r = await fetch(CUBING_LIST, { headers: { 'User-Agent': 'cuberoot.me' }, signal: ctrl.signal });
+    if (!r.ok) throw new Error(`cubing.com HTTP ${r.status}`);
+    html = await r.text();
+  } finally {
+    clearTimeout(t);
+  }
+  for (const m of html.matchAll(CUBING_ROW_RE)) {
+    const date = m[1]!;
+    const alias = m[2]!;
+    const zh = m[3]!.replace(TAG_STRIP, '').trim();
+    if (!zh || alias.startsWith('?') || !zh.includes('WCA')) continue; // 只收 WCA 赛(中文名必含 WCA)
+    for (const cand of aliasToWcaIdCandidates(alias)) {
+      if (!byId.has(cand)) byId.set(cand, zh);
+    }
+    const arr = byDate.get(date) ?? [];
+    arr.push(zh);
+    byDate.set(date, arr);
+  }
+  return { byId, byDate };
+}
+
+// 给批次里的 CN 比赛挂 name_zh(alias id 命中优先,失败按 start_date 唯一回退)。失败静默。
+async function attachCnZhNames(comps: AnnouncedComp[]): Promise<void> {
+  if (!comps.some((c) => c.country === 'cn')) return;
+  let maps: { byId: Map<string, string>; byDate: Map<string, string[]> };
+  try {
+    maps = await scrapeCubingCnZh();
+  } catch (err) {
+    console.warn('[announced-comps] cubing.com zh fetch failed:', (err as Error).message);
+    return;
+  }
+  for (const c of comps) {
+    if (c.country !== 'cn') continue;
+    let zh = maps.byId.get(c.id);
+    if (!zh && c.start_date) {
+      const cand = maps.byDate.get(c.start_date);
+      if (cand && cand.length === 1) zh = cand[0];
+    }
+    if (zh) c.name_zh = zh;
+  }
 }
 
 async function fetchOnce(): Promise<void> {
@@ -121,6 +208,7 @@ async function fetchOnce(): Promise<void> {
     await sleep(500);
   }
   out.sort((a, b) => b.announced_at.localeCompare(a.announced_at));
+  await attachCnZhNames(out); // CN 比赛实时挂 cubing.com 中文名(失败静默,不阻断快照)
   snapshot = { fetchedAt: Date.now(), comps: out };
 }
 
