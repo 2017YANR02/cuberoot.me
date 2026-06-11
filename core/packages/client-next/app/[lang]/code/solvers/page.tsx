@@ -24,7 +24,7 @@ interface NativeSolver {
   key: string;
   stages: number;
   fbRows: number; // 回退行数 (fetch 失败时用)
-  rate: number; // tasks/sec, native, 16 核 (curated, 2026-05-30 实测; f2leo 系 2026-05-31)
+  rate: number | null; // tasks/sec, native, 16 核 (curated, 2026-05-30 实测; f2leo 系 2026-05-31); null = 未实测 (统计回填未接)
   tier: 'huge' | 'mid' | 'small';
   zhWhy: string; enWhy: string;
 }
@@ -43,6 +43,7 @@ const NATIVE: NativeSolver[] = [
   { key: '223', stages: 1, fbRows: 1_297_444, rate: 19_000, tier: 'small', zhWhy: 'Petrus 2x2x3 (2角+5棱) 全空间 ~1.5G 态放不下全表, IDA* + max(1x2x3 全表, 角2+DB/DF 表) 可采纳下界', enWhy: 'Petrus 2x2x3 (2 corners + 5 edges) — 1.5G states, too big for a full table; IDA* with admissible h = max(1x2x3 full table, corners+DB/DF table)' },
   { key: 'eoline', stages: 2, fbRows: 1_297_444, rate: 350_000, tier: 'small', zhWhy: 'EO (2,048 态) + EOLine (294,912 态) 全空间微表, 零外部表, 精确距离直查零搜索', enWhy: 'EO (2,048 states) + EOLine (294,912 states) full-space micro-tables, zero external tables — exact lookups, zero search' },
   { key: 'dr', stages: 1, fbRows: 1_297_444, rate: 12_000, tier: 'small', zhWhy: 'DR (Kociemba phase-1) 全空间 ~2.2G 态, IDA* + max(eo×slice, co×slice) 双 ~1M 精确表, 全现场建零外部表', enWhy: 'DR (Kociemba phase 1) — ~2.2G states; IDA* with admissible h = max(eo×slice, co×slice), two ~1M exact tables built in RAM, zero external tables' },
+  { key: 'htr', stages: 1, fbRows: 0, rate: null, tier: 'small', zhWhy: 'DR→HTR 条件式阶段: 输入须处于该视角 DR 态, 非 DR 出哨兵;全空间 2,822,400 态精确表查表即最优;统计口径待定未接回填, 吞吐未实测', enWhy: 'conditional DR→HTR stage: input must already be in DR for the view, non-DR yields a sentinel; 2,822,400-state exact table — lookups are optimal; stats wiring pending, throughput not yet measured' },
   { key: '123x2', stages: 1, fbRows: 0, rate: 220, tier: 'mid', zhWhy: '双 1x2x3 联合最优平均 ~11.5 步, 搜索深;5 张精确子目标表 max 剪枝, 其中 {块+2角} 表 2.68G 态落盘 mmap', enWhy: 'dual-1x2x3 joint optimum averages ~11.5 moves — deep search; pruned by max of 5 exact subgoal tables, incl. a 2.68G-state block+corners table mmapped from disk' },
 ];
 
@@ -60,6 +61,7 @@ const BROWSER: BrowserSolver[] = [
   { key: '1x2x3 / 2x2x3', zhEngine: 'Roux223SolverWasm (~0.8MB/worker)', enEngine: 'Roux223SolverWasm (~0.8MB/worker)', zhLatency: '方块/2x2x2 即时; 1x2x3 与 2x2x3 首算建表 ~秒级', enLatency: 'square/2x2x2 instant; 1x2x3 & 2x2x3 build tables on first solve (~seconds)' },
   { key: '1x2x3 ×2', zhEngine: 'Roux223SolverWasm 轻档 (免 2.68G 大表)', enEngine: 'Roux223SolverWasm light tier (no 2.68G table)', zhLatency: '单格 毫秒~秒级; 解法枚举 数秒~数十秒', enLatency: 'per-cell ms–seconds; solution enumeration seconds to tens of seconds' },
   { key: 'EO / EOLine / DR', zhEngine: 'EoDrSolverWasm (零表下载, 微表现场建)', enEngine: 'EoDrSolverWasm (zero downloads, micro-tables built in-browser)', zhLatency: 'EO/EOLine 即时; DR 首算建表 ~1s 后毫秒级', enLatency: 'EO/EOLine instant; DR builds tables on first solve (~1s), then ms' },
+  { key: 'HTR (DR→HTR)', zhEngine: 'HtrSolverWasm (零表下载, 全空间精确表现场建)', enEngine: 'HtrSolverWasm (zero downloads, exact full-space table built in-browser)', zhLatency: '首算建表 ~335ms 后即时; 非 DR 出哨兵', enLatency: 'first solve builds the table (~335ms), then instant; non-DR yields a sentinel' },
 ];
 
 // 每个原生分析器实际 mmap 的磁盘表 (D:\cube\cuberoot.me\solver\tables\, 大小为真实文件字节).
@@ -157,6 +159,12 @@ const TABLES: Record<string, SolverTbls> = {
     prune: [],
     builtZh: '零盘表:eo/co/slice 微 move 表与两张 ~1M 态精确距离表全部现场构建;IDA* 取两者 max, h=0 即达 DR',
     builtEn: 'no disk tables at all: eo/co/slice micro move tables + two ~1M-state exact distance tables built in RAM; IDA* prunes on their max; h=0 means DR reached',
+  },
+  htr: {
+    move: [],
+    prune: [],
+    builtZh: '零盘表:DR→HTR 全空间精确距离表 (2,822,400 态 = 角置换 8! 40,320 × 轨道 4 棱位置组合 C(8,4)=70, ~2.8MB) 首查惰性内存 BFS (native ~5s);查长度 O(1), 枚举首达即最优, DR→HTR God 数实测 13;非 DR 输入出哨兵',
+    builtEn: 'no disk tables at all: exact full-space DR→HTR distance table (2,822,400 states = corner perm 8! 40,320 × C(8,4)=70 orbit-edge placements, ~2.8MB) lazily BFS-built in RAM on first query (~5s native); O(1) length lookups, first hit in enumeration is optimal — measured DR→HTR God\'s number 13; non-DR inputs yield a sentinel',
   },
   '123x2': {
     move: [{ n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }],
@@ -311,14 +319,16 @@ export default function SolversPage() {
             <span className="solv-sec-note">{zh ? '本机 16 核, huge 表全模式 (log 缩放)' : '16-core, full huge-table mode (log scale)'}</span>
           </header>
           <div className="solv-rows">
-            {[...NATIVE].sort((a, b) => b.rate - a.rate).map((s) => (
+            {[...NATIVE].sort((a, b) => (b.rate ?? -1) - (a.rate ?? -1)).map((s) => (
               <div className="solv-perf" key={s.key}>
                 <div className="solv-perf-top">
                   <span className="solv-row-name">{s.key}</span>
-                  <span className="solv-perf-rate">{s.rate >= 10000 ? `${(s.rate / 1e6).toFixed(2)}M` : s.rate}<small> /s</small></span>
+                  <span className="solv-perf-rate">{s.rate == null
+                    ? <small>{zh ? '未实测' : 'n/a'}</small>
+                    : <>{s.rate >= 10000 ? `${(s.rate / 1e6).toFixed(2)}M` : s.rate}<small> /s</small></>}</span>
                 </div>
                 <div className="solv-bar">
-                  <div className="solv-bar-fill solv-fill-rate" style={{ width: `${rateBarPct(s.rate)}%` }} />
+                  <div className="solv-bar-fill solv-fill-rate" style={{ width: `${s.rate == null ? 0 : rateBarPct(s.rate)}%` }} />
                 </div>
                 <p className="solv-perf-why">{zh ? s.zhWhy : s.enWhy}</p>
               </div>
@@ -343,10 +353,10 @@ export default function SolversPage() {
             </article>
             <article className="solv-mem-card">
               <div className="solv-mem-tier"><Cpu size={13} strokeWidth={2} /> small</div>
-              <div className="solv-mem-list">222</div>
+              <div className="solv-mem-list">222 / 123 / 223 / eoline / dr / htr</div>
               <p>{zh
-                ? '仅 mt_edge3 (743KB) + mt_corn (1.7KB) 两张移动表;全空间精确距离表 (~248KB) 启动时内存现场 BFS, 不落盘。无 GB 级依赖, 可与任意 huge 变体并发。'
-                : 'Only mt_edge3 (743KB) + mt_corn (1.7KB) move tables; the exact full-space distance table (~248KB) is BFS-built in RAM at startup, never written to disk. No GB-scale dependency — runs alongside any huge variant.'}</p>
+                ? '222/123/223 仅 mt_corn/mt_corn2/mt_edge2/mt_edge3 微移动表 (各家合计 <1MB);eoline/dr/htr 零盘表。精确距离/剪枝表启动或首查时内存现场 BFS (htr 全空间 2,822,400 态 ~2.8MB), 不落盘。无 GB 级依赖, 可与任意 huge 变体并发。'
+                : '222/123/223 use only micro move tables (mt_corn/mt_corn2/mt_edge2/mt_edge3, <1MB each analyzer); eoline/dr/htr need zero disk tables. Exact distance/prune tables are BFS-built in RAM at startup or first query (htr: full 2,822,400-state space, ~2.8MB), never written to disk. No GB-scale dependency — runs alongside any huge variant.'}</p>
             </article>
             <article className="solv-mem-card solv-mem-wide">
               <div className="solv-mem-tier"><Cpu size={13} strokeWidth={2} /> {zh ? '并行' : 'parallelism'}</div>
