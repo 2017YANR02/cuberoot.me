@@ -37,6 +37,14 @@ pub trait SolverWrapper: Send + Sync {
     fn solve(alg: &[Move], id: &str) -> String;
 }
 
+/// 原始字符串版接口:非 3x3 记号的 puzzle(pyraminx 小写 tip 等)用,
+/// alg 不经 `string_to_alg`,由 wrapper 自己解析(解析失败行输出 `id,-`)。
+pub trait RawSolverWrapper: Send + Sync {
+    fn global_init();
+    fn get_csv_header() -> String;
+    fn solve_raw(alg: &str, id: &str) -> String;
+}
+
 /// 把 "输入文件名" 转换成 "输出文件名"。
 /// 规则与 C++ 一致:去掉最后一个 ".",拼 suffix + ".csv"。
 pub fn output_filename(input: &str, suffix: &str) -> PathBuf {
@@ -78,11 +86,55 @@ pub fn parse_tasks_file<P: AsRef<Path>>(path: P) -> std::io::Result<Vec<(String,
     Ok(parse_tasks_reader(r))
 }
 
+/// 原始字符串版任务解析:每行 "id,alg" 或纯 "alg",alg 不做记号解析。
+pub fn parse_tasks_raw_reader<R: BufRead>(r: R) -> Vec<(String, String)> {
+    let mut tasks = Vec::new();
+    for line in r.lines().map_while(Result::ok) {
+        let trimmed = line.trim_end_matches('\r');
+        if trimmed.is_empty() {
+            continue;
+        }
+        if let Some(pos) = trimmed.find(',') {
+            tasks.push((trimmed[..pos].to_string(), trimmed[pos + 1..].to_string()));
+        } else {
+            let next_id = (tasks.len() + 1).to_string();
+            tasks.push((next_id, trimmed.to_string()));
+        }
+    }
+    tasks
+}
+
+pub fn parse_tasks_raw_file<P: AsRef<Path>>(path: P) -> std::io::Result<Vec<(String, String)>> {
+    let f = std::fs::File::open(path)?;
+    let r = std::io::BufReader::new(f);
+    Ok(parse_tasks_raw_reader(r))
+}
+
 /// 跑一次完整 batch:输入文件 → CSV 输出。
 /// 不读 stdin,适合从代码直接调用。
 #[cfg(not(target_arch = "wasm32"))]
 pub fn run_batch<W: SolverWrapper>(input_file: &str, suffix: &str) -> std::io::Result<PathBuf> {
     let tasks = parse_tasks_file(input_file)?;
+    run_batch_core(tasks, input_file, suffix, W::get_csv_header(), |alg, id| W::solve(alg, id))
+}
+
+/// 原始字符串版 batch(`RawSolverWrapper`)。
+#[cfg(not(target_arch = "wasm32"))]
+pub fn run_batch_raw<W: RawSolverWrapper>(input_file: &str, suffix: &str) -> std::io::Result<PathBuf> {
+    let tasks = parse_tasks_raw_file(input_file)?;
+    run_batch_core(tasks, input_file, suffix, W::get_csv_header(), |alg, id| {
+        W::solve_raw(alg, id)
+    })
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn run_batch_core<T: Send + Sync>(
+    tasks: Vec<(String, T)>,
+    input_file: &str,
+    suffix: &str,
+    header: String,
+    solve: impl Fn(&T, &str) -> String + Send + Sync,
+) -> std::io::Result<PathBuf> {
     if tasks.is_empty() {
         eprintln!("[WARN] no tasks in {}", input_file);
     }
@@ -99,7 +151,7 @@ pub fn run_batch<W: SolverWrapper>(input_file: &str, suffix: &str) -> std::io::R
         .par_iter_mut()
         .zip(tasks.par_iter())
         .for_each(|(slot, (id, alg))| {
-            *slot = W::solve(alg, id);
+            *slot = solve(alg, id);
             let c = completed.fetch_add(1, Ordering::Relaxed) + 1;
             if c as usize % progress_step == 0 {
                 eprintln!("[PROG] {}/{}", c, total);
@@ -108,7 +160,7 @@ pub fn run_batch<W: SolverWrapper>(input_file: &str, suffix: &str) -> std::io::R
 
     let f = std::fs::File::create(&out_path)?;
     let mut w = std::io::BufWriter::new(f);
-    writeln!(w, "{}", W::get_csv_header())?;
+    writeln!(w, "{}", header)?;
     for line in &results {
         writeln!(w, "{}", line)?;
     }
@@ -131,6 +183,18 @@ pub fn run_batch<W: SolverWrapper>(input_file: &str, suffix: &str) -> std::io::R
 #[cfg(not(target_arch = "wasm32"))]
 pub fn run_analyzer_app<W: SolverWrapper>(suffix: &str) {
     W::global_init();
+    analyzer_stdin_loop(|name| run_batch::<W>(name, suffix));
+}
+
+/// 原始字符串版 stdin 循环(`RawSolverWrapper`)。
+#[cfg(not(target_arch = "wasm32"))]
+pub fn run_analyzer_app_raw<W: RawSolverWrapper>(suffix: &str) {
+    W::global_init();
+    analyzer_stdin_loop(|name| run_batch_raw::<W>(name, suffix));
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn analyzer_stdin_loop(run: impl Fn(&str) -> std::io::Result<PathBuf>) {
     let stdin = std::io::stdin();
     let mut lock = stdin.lock();
     loop {
@@ -146,7 +210,7 @@ pub fn run_analyzer_app<W: SolverWrapper>(suffix: &str) {
         if name.is_empty() || name == "exit" {
             break;
         }
-        if let Err(e) = run_batch::<W>(name, suffix) {
+        if let Err(e) = run(name) {
             eprintln!("[ERROR] {}: {}", name, e);
         }
     }
