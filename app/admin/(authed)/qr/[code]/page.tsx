@@ -4,6 +4,7 @@ import { listPromptTemplates, listPromptBlocks } from "@/lib/db/prompt-templates
 import { absoluteUrl } from "@/lib/site";
 import { qrSvg } from "@/lib/qr/svg";
 import { CardEditor } from "./_CardEditor";
+import { PromptComposer } from "./_PromptComposer";
 import { HeaderDownloads } from "./_HeaderDownloads";
 import { LinksEditor } from "./_LinksEditor";
 import { TypeSectionToggle } from "./_TypeSectionToggle";
@@ -78,8 +79,16 @@ export default async function AdminQrEditPage({
             svg={svg}
             formId="qr-edit-form"
             landingUrl={landingUrl}
+          />
+        </Card>
+
+        {/* 提示词组合器:常驻,挪到卡片编辑下方占整条宽 */}
+        <Card className="p-6">
+          <PromptComposer
             templates={templates}
             blocks={blocks}
+            formId="qr-edit-form"
+            defaultPrompt={entry.frontArtPrompt ?? ""}
           />
         </Card>
 
