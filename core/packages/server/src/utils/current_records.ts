@@ -2,10 +2,10 @@
  * 当前 WCA 纪录快照(WR / CR / NR)— 用于 cubing.com / WCA Live 源比赛页 fallback.
  *
  * 场景:比赛进行中或刚结束、WCA 还没公示这几天里,cubing.com / WCA Live 的
- * single_record_tag 是空,但成绩可能已破纪录.这时拿 wca_results_top
+ * single_record_tag 是空,但成绩可能已破纪录.这时拿 wca_results_flat
  * (已公示数据)的当前 MIN 比一下,若 result <= 现 WR/CR/NR 就把 tag 填上.
  *
- * 性能:wca_results_top ~11M 行,GROUP BY + MIN 即使走索引也要全扫.因此:
+ * 性能:wca_results_flat ~11M 行,GROUP BY + MIN 即使走索引也要全扫.因此:
  *   1. 内存缓存 24h.
  *   2. peekCurrentRecords() 非阻塞 — 没缓存时立即返 null(后台 fire-and-forget 加载).
  *   3. server 启动时 warm 一次,正常运行期始终有缓存.
@@ -61,13 +61,13 @@ async function load(): Promise<CurrentRecords | null> {
     const [wrRows, nrRows] = await Promise.all([
       query<{ event_id: string; is_avg: boolean; v: number }>(
         `SELECT event_id, is_avg, MIN(value)::INT AS v
-         FROM wca_results_top
+         FROM wca_results_flat
          WHERE value > 0
          GROUP BY event_id, is_avg`,
       ),
       query<{ event_id: string; is_avg: boolean; person_country_id: string; v: number }>(
         `SELECT event_id, is_avg, person_country_id, MIN(value)::INT AS v
-         FROM wca_results_top
+         FROM wca_results_flat
          WHERE value > 0
          GROUP BY event_id, is_avg, person_country_id`,
       ),

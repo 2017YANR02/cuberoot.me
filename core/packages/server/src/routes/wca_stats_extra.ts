@@ -1,7 +1,7 @@
 /**
  * WCA stats extra — 6 + 2 个 cubing.pro 风格统计 tab / 选手页查询路由.
  *
- * 数据源: wca_grand_slam / wca_results_top
+ * 数据源: wca_grand_slam / wca_results_flat
  *         wca_cohort_ranks / wca_success_rate / wca_all_events_done / wca_person_ranks
  *         + historical_ranks_snapshot(选手页 PR 历史 + 排名折线)
  * 每周由 GH Actions 重灌(同 historical_ranks).
@@ -142,7 +142,7 @@ wcaStatsExtraRoutes.get('/wca/grand-slam', async (c) => {
 
 // ── 2. /v1/wca/all-results ──
 // 全量(无 cap):11M 行,WHERE 用 event_id + is_avg + 可选 country / year / month / q,
-// ORDER BY value 走 wrt_main / wrt_country / wrt_wca_id / wrt_comp_id 索引.
+// ORDER BY value 走 wrf_main / wrf_country / wrf_wca_id / wrf_comp_id 索引.
 // q 在 wca_persons.name 和 wca_competitions.name 上 ILIKE,各 LIMIT 200.
 wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   const event = (c.req.query('event') ?? '333').toLowerCase();
@@ -160,7 +160,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   if (basis !== 'period' && basis !== 'cumulative') return c.json({ error: 'Invalid basis' }, 400);
   if (group !== 'result' && group !== 'person') return c.json({ error: 'Invalid group' }, 400);
   if (type !== 'single' && type !== 'average') return c.json({ error: 'Invalid type' }, 400);
-  // 333mbf 平均 = 非官方 Mo3,数据由 wca_results_top 的 is_avg=true 行提供(builder 现算写入)。
+  // 333mbf 平均 = 非官方 Mo3,数据由 wca_results_flat 的 is_avg=true 行提供(builder 现算写入)。
   const cn = await resolveCountry(country);
   if (!cn.ok) return c.json({ error: cn.err }, 400);
   if (year && (year < 2003 || year > new Date().getUTCFullYear() + 1)) {
@@ -179,7 +179,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
       // 截至:到该年末为止(月份在截至口径下无意义,前端置灰,这里忽略)
       where.push(`t.comp_year <= ?`); params.push(year);
     } else {
-      // 当期:仅该自然年(+ 可选月份;表达式与 wrt_month 索引对齐才能走索引)
+      // 当期:仅该自然年(+ 可选月份;表达式与 wrf_month 索引对齐才能走索引)
       where.push(`t.comp_year = ?`); params.push(year);
       if (month) { where.push(`(EXTRACT(MONTH FROM t.comp_date))::int = ?`); params.push(month); }
     }
@@ -218,10 +218,10 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   const totalParams = [...params];
   const dataParams = [...params, size, offset];
 
-  // ── group=person:每选手一行(区间内最佳),实时聚合 over wca_results_top ──
+  // ── group=person:每选手一行(区间内最佳),实时聚合 over wca_results_flat ──
   // bests: DISTINCT ON 取每人最小值 + 其 PB 上下文(comp/date/attempts);
   // RANK 按 value 给名次(选了国家时即国家名次,因 where 已限定单国家);
-  // 走 wrt_year(当期年 / 截至年 comp_year<=)/ wrt_month(当期月),~0.4–1s;LIMIT 后再 join 字典表只 enrich 100 行.
+  // 走 wrf_year(当期年 / 截至年 comp_year<=)/ wrf_month(当期月),~0.4–1s;LIMIT 后再 join 字典表只 enrich 100 行.
   // 选手页恒带 year(persons 模式 year=0 会被前端兜成当年),不会触发全时段全量聚合.
   if (group === 'person') {
     const [rows, totalRow] = await Promise.all([
@@ -234,7 +234,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
         WITH bests AS (
           SELECT DISTINCT ON (t.wca_id)
                  t.wca_id, t.value, t.person_country_id, t.comp_id, t.comp_date, t.attempts
-          FROM wca_results_top t
+          FROM wca_results_flat t
           WHERE ${where.join(' AND ')}
           ORDER BY t.wca_id, t.value ASC
         ),
@@ -256,7 +256,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
         dataParams,
       ),
       query<{ n: string }>(
-        `SELECT COUNT(*) AS n FROM (SELECT DISTINCT t.wca_id FROM wca_results_top t WHERE ${where.join(' AND ')}) s`,
+        `SELECT COUNT(*) AS n FROM (SELECT DISTINCT t.wca_id FROM wca_results_flat t WHERE ${where.join(' AND ')}) s`,
         totalParams,
       ),
     ]);
@@ -275,7 +275,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   }
 
   // 派生表 + late join 走 id PK 回表:
-  // 内子查询只 SELECT (id, value, wca_id) — 三列都覆盖在 wrt_main INCLUDE (id) 索引里,
+  // 内子查询只 SELECT (id, value, wca_id) — 三列都覆盖在 wrf_main INCLUDE (id) 索引里,
   // OFFSET 1M 走纯 Index Only Scan, ~250ms (Heap Fetches: 0,需 VACUUM 让 visibility map up-to-date).
   // 外层用 id PK 回表+三张字典表 join,只 enrich 100 行 ~10ms.
   // 直查 + LIMIT/OFFSET + 三 JOIN 的写法会让 PG 先 join 后 OFFSET,深页 ~10s+.
@@ -294,12 +294,12 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
              t.record_tag
       FROM (
         SELECT t.id, t.value, t.wca_id
-        FROM wca_results_top t
+        FROM wca_results_flat t
         WHERE ${where.join(' AND ')}
         ORDER BY t.value ASC, t.wca_id ASC
         LIMIT ? OFFSET ?
       ) q
-      JOIN wca_results_top t ON t.id = q.id
+      JOIN wca_results_flat t ON t.id = q.id
       JOIN wca_persons p ON p.wca_id = t.wca_id
       LEFT JOIN wca_countries co ON co.id = t.person_country_id
       LEFT JOIN wca_competitions c ON c.id = t.comp_id
@@ -308,7 +308,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
       dataParams,
     ),
     query<{ n: string }>(
-      `SELECT COUNT(*) AS n FROM wca_results_top t WHERE ${where.join(' AND ')}`,
+      `SELECT COUNT(*) AS n FROM wca_results_flat t WHERE ${where.join(' AND ')}`,
       totalParams,
     ),
   ]);
@@ -332,7 +332,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
 // "我这个成绩放进 WCA 历史能排第几" —— 给 /timer 速拧计时器的世界排名徽章用.
 //   GET /v1/wca/rank-for?event=333&type=single&centis=984
 //
-// 语义(重要):wca_results_top 是「一行一条成绩」(每人每场每轮都有行,同一人重复多次,见
+// 语义(重要):wca_results_flat 是「一行一条成绩」(每人每场每轮都有行,同一人重复多次,见
 //   wca_stats_extra_build.ts + schema 注释),不是「一行一人最佳」.WCA 官方世界排名是「按选手
 //   个人最佳去重」(distinct person whose PB < value),所以名次 = 「PR 严格小于 value 的人数」+ 1.
 //
@@ -348,7 +348,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
 // 内存:只存排好序的 value(不存 wca_id).333 single ~数十万人 ≈ 1-2MB Int32Array.懒构建,只缓存
 //   实际被请求过的 (event,type),不预热全项目(服务器 RAM 紧张).
 //
-// 索引:GROUP BY wca_id 的 MIN(value) 走 wrt_main(event_id,is_avg,value,wca_id) Index Only Scan.
+// 索引:GROUP BY wca_id 的 MIN(value) 走 wrf_main(event_id,is_avg,value,wca_id) Index Only Scan.
 // Cache-Control 同其它端点 1 天(每周才变).
 interface RankIndex {
   /** 该 (event,type) 每位上榜选手的个人最佳(centiseconds),升序 */
@@ -368,17 +368,17 @@ async function buildRankIndex(event: string, isAvg: boolean, scope: string): Pro
     let sql: string;
     const params: unknown[] = [event, isAvg];
     if (scope === 'W') {
-      sql = `SELECT MIN(value)::int AS m FROM wca_results_top
+      sql = `SELECT MIN(value)::int AS m FROM wca_results_flat
              WHERE event_id = ? AND is_avg = ? AND value > 0
              GROUP BY wca_id`;
     } else if (scope.startsWith('N:')) {
-      sql = `SELECT MIN(value)::int AS m FROM wca_results_top
+      sql = `SELECT MIN(value)::int AS m FROM wca_results_flat
              WHERE event_id = ? AND is_avg = ? AND value > 0 AND person_country_id = ?
              GROUP BY wca_id`;
       params.push(scope.slice(2));
     } else {
       // 'K:<continentId>' —— join wca_countries 取该大洲全部国家
-      sql = `SELECT MIN(t.value)::int AS m FROM wca_results_top t
+      sql = `SELECT MIN(t.value)::int AS m FROM wca_results_flat t
              JOIN wca_countries co ON co.id = t.person_country_id
              WHERE t.event_id = ? AND t.is_avg = ? AND t.value > 0 AND co.continent_id = ?
              GROUP BY t.wca_id`;
@@ -443,7 +443,7 @@ function lowerBound(arr: Int32Array, target: number): number {
 // 复刻退役 Python wca_rankings.get_world_rank:成绩进世界前 100 返名次,否则 null.
 // rank = (个人最佳严格小于 value 的选手数) + 1 = WCA 官方按选手 PB 去重的名次,
 // 与 /wca/rank-for 共用 getRankIndex 缓存(同一份 Int32Array,内存零额外).
-// ⚠️ 行为变更:数据源从「WCA 官网实时 Top100」变成本地 wca_results_top(stats-build 周更).
+// ⚠️ 行为变更:数据源从「WCA 官网实时 Top100」变成本地 wca_results_flat(stats-build 周更).
 //   两次周更间的新破纪录,/WRn 分母缺最近一周 → 名次可能系统性偏小几名(WR/Top10 无感,
 //   NR/CR 的 /WRnn 偶尔偏小且无人察觉).可接受 —— 换来彻底脱离 spawn/联网/超时/熔断脆链.
 //   333fm average 这里走得通(getRankIndex 不像 /wca/rank-for 端点那样拒它).

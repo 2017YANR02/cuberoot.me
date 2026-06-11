@@ -207,9 +207,9 @@ jobs:
         run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/apply_load.sh /tmp/wca_import historical_ranks_apply'
 
       # ── WCA stats extra:6 个 cubing.pro 风格 stats(grand_slam / all_results 等) ──
-      # 增量:先拉服务器现有 per-comp 指纹,builder 只重灌指纹变动比赛的 wca_results_top 行
+      # 增量:先拉服务器现有 per-comp 指纹,builder 只重灌指纹变动比赛的 wca_results_flat 行
       # (不再每天全量 DROP+重建翻倍撑爆磁盘).拉取失败/脚本未部署 → 空文件 → builder 退回全量(安全兜底).
-      - name: Fetch current fingerprints (incremental wca_results_top)
+      - name: Fetch current fingerprints (incremental wca_results_flat)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -233,7 +233,7 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         working-directory: core/packages/stats-build/output/wca_stats_extra
         # scp 整个 output 目录:增量 / 全量产出的文件集不同
-        # (全量含 wca_results_top.copy.tsv;增量含 wca_results_top_delta.tsv + wca_results_top_del.txt).
+        # (全量含 wca_results_flat.copy.tsv;增量含 wca_results_flat_delta.tsv + wca_results_flat_del.txt).
         run: |
           ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'mkdir -p /tmp/wca_stats_extra && rm -rf /tmp/wca_stats_extra/*'
           scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id ./* \

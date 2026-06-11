@@ -4,7 +4,7 @@
  * 协议: POST body `{events: [<RecordEvent>, ...]}` → `{cn, en, url}`。
  *       events 长度 1 = 单条,长度 2 = 同 round 合并(WCA Live single+average 双纪录)。
  *
- * 实现: 本地纯函数渲染(utils/record_format),世界排名查本地 wca_results_top(复用
+ * 实现: 本地纯函数渲染(utils/record_format),世界排名查本地 wca_results_flat(复用
  *       wca_stats_extra 的 rank-for 引擎)。已删除原先 spawn 跨 repo Python `/opt/wca-monitor`
  *       + 联网拉 WCA 官网排名 + 5s 超时 + 熔断的整条脆弱链。
  */
