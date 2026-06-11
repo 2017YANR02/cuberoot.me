@@ -14,7 +14,6 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import i18n from "@/i18n/i18n-client";
 
 const W = 700, H = 380;
 const M = { top: 24, right: 18, bottom: 44, left: 56 };
@@ -224,13 +223,13 @@ export default function BoundsChart() {
       <p className="ud-sandbox-hint">
         {i18n.language === 'zh-Hant' ? ((
                         <>
-                          <strong className="ud-disproved-text">{t('為什麼是反駁:', 'Why this is a disproof:')}</strong>
+                          <strong className="ud-disproved-text">為什麼是反駁:</strong>
                           {' '}Erdős 1946 猜想上界 <span className="ud-mono">1 + C/log log n</span> 隨 n 增長是<em>下降</em>到 1 的曲線;OpenAI 2026 的新下界 <span className="ud-mono">1 + δ</span> 是一條<em>水平直線</em>。任何水平直線最終會穿過任何下降到 1 的曲線 — 穿越之後,猜想就破了。改 δ 滑塊看穿越點 <span className="ud-mono">n ≈ exp(exp(C/δ))</span>。<br/>
                           <span className="ud-text-mute">(圖中 C、δ 取誇張值以讓穿越在 n ≈ 10^{Math.min(crossLogN, X_MAX).toFixed(0)} 處可見;論文中真實 δ 可能極小,穿越點是天文數字 — 但只要 δ &gt; 0,定理依然成立。)</span>
                         </>
                       )) : (isZh ? (
                         <>
-                          <strong className="ud-disproved-text">{t('为什么是反驳:', 'Why this is a disproof:', "為什麼是反駁:")}</strong>
+                          <strong className="ud-disproved-text">为什么是反驳:</strong>
                           {' '}Erdős 1946 猜想上界 <span className="ud-mono">1 + C/log log n</span> 随 n 增长是<em>下降</em>到 1 的曲线;OpenAI 2026 的新下界 <span className="ud-mono">1 + δ</span> 是一条<em>水平直线</em>。任何水平直线最终会穿过任何下降到 1 的曲线 — 穿越之后,猜想就破了。改 δ 滑块看穿越点 <span className="ud-mono">n ≈ exp(exp(C/δ))</span>。<br/>
                           <span className="ud-text-mute">(图中 C、δ 取夸张值以让穿越在 n ≈ 10^{Math.min(crossLogN, X_MAX).toFixed(0)} 处可见;论文中真实 δ 可能极小,穿越点是天文数字 — 但只要 δ &gt; 0,定理依然成立。)</span>
                         </>
