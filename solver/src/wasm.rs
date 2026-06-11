@@ -19,6 +19,7 @@ use crate::eo_cross_solver::EOSmallSolver;
 use crate::eoline_solver::{eo_axis_label, eoline_label, EOLineSolver};
 use crate::f2b_solver::{f2b_label, F2BSolver};
 use crate::f2leo_solver::F2leoSolver;
+use crate::fr_solver::FrSolver;
 use crate::htr_phase2_solver::HtrPhase2Solver;
 use crate::htr_solver::HtrSolver;
 use crate::move_tables::MoveTable;
@@ -504,6 +505,64 @@ impl HtrPhase2SolverWasm {
         let fi = (face as usize).min(5);
         let rot = ROTS[fi];
         let b = self.htr2.borrow();
+        match b.as_ref().unwrap().enumerate_face(&alg, rot, extra, cap as usize) {
+            Some((len, sols)) => {
+                let items: Vec<(String, String)> = sols
+                    .iter()
+                    .map(|s| (fmt_moves(rot, &s.moves), dr_axis_label(fi, 0).to_string()))
+                    .collect();
+                sols_json(len, &items)
+            }
+            None => sols_json(u32::MAX, &[]),
+        }
+    }
+}
+
+/// FR(Floppy Reduction,HTR/G3 → FR)求解器(全自包含,**零表下载**):H=⟨L2,R2,F2,B2⟩
+/// 右陪集空间(3456 态)移动表 + 精确距离表全部现场从内置运动学构建,首次查询时惰性
+/// BFS(RefCell,~秒级);查长度 O(1),枚举首达即最优。条件式阶段:该视角必须已处于
+/// HTR/G3 子群,非 HTR 视角返回 u32::MAX 哨兵。对 y 不变;视角轴 = [UD,UD,LR,LR,FB,FB]。
+#[wasm_bindgen]
+pub struct FrSolverWasm {
+    fr: RefCell<Option<FrSolver>>,
+}
+
+#[wasm_bindgen]
+impl FrSolverWasm {
+    #[wasm_bindgen(constructor)]
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> FrSolverWasm {
+        FrSolverWasm { fr: RefCell::new(None) }
+    }
+
+    fn ensure(&self) {
+        if self.fr.borrow().is_none() {
+            *self.fr.borrow_mut() = Some(FrSolver::new());
+        }
+    }
+
+    /// 6 视角最优步数(顺序对应 ROTS);该视角非 HTR = u32::MAX 哨兵。
+    pub fn solve(&self, scramble: &str) -> Vec<u32> {
+        self.ensure();
+        let alg = string_to_alg(scramble);
+        let b = self.fr.borrow();
+        b.as_ref()
+            .unwrap()
+            .get_stats(&alg, &ROTS)
+            .into_iter()
+            .map(|v| v.unwrap_or(u32::MAX))
+            .collect()
+    }
+
+    /// 单视角多解 JSON(同 HtrPhase2SolverWasm::solve_moves 形状)。FR 对 y 不变
+    /// (解全在 yk=0),`m` 前缀 = rot,`c` = 该视角 FR 轴标签(UD/FB/LR,同 DR);
+    /// 该视角非 HTR = {"len":4294967295,"sols":[]}。
+    pub fn solve_moves(&self, scramble: &str, face: u32, extra: u32, cap: u32) -> String {
+        self.ensure();
+        let alg = string_to_alg(scramble);
+        let fi = (face as usize).min(5);
+        let rot = ROTS[fi];
+        let b = self.fr.borrow();
         match b.as_ref().unwrap().enumerate_face(&alg, rot, extra, cap as usize) {
             Some((len, sols)) => {
                 let items: Vec<(String, String)> = sols
