@@ -96,6 +96,8 @@ const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2le
   '223': { stages: ['b223'], engine: 'roux223' },
   eoline: { stages: ['beo', 'beoline'], engine: 'roux223' },
   dr: { stages: ['bdr'], engine: 'roux223' },
+  // htr 为条件式阶段(原始打乱不适用),不进 VARIANT_ORDER 下拉;条目仅满足类型完备。
+  htr: { stages: [], engine: 'none' },
 };
 const EMPTY_STEP: StepMapState = { map: null, ready: true, done: 0, total: 0, error: null };
 const EMPTY_MAP_TN: Map<string, number[]> = new Map();
@@ -857,7 +859,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const crossA = useCrossMap(showCross && is333Family && variantEngine === 'std' ? analysisScrambles : NO_SCRAMBLES);
   // 预计算步数表:每个变体取自己的 comp_steps 目录(命中秒出)。404 → std/f2leo 退实时
   // 引擎;无 client 引擎的变体(eo/pair/pseudo/pseudo_pair)显示「暂无数据」而非永远转圈。
-  const compSteps = useCompSteps(showCross && is333Family ? loadedCompId : null, dataVariant as Exclude<VariantKey, 'block'>);
+  const compSteps = useCompSteps(showCross && is333Family ? loadedCompId : null, dataVariant as Exclude<VariantKey, 'block' | 'htr'>);
   const uncovered = useMemo(() => {
     if (!(showCross && is333Family) || !compSteps.ready) return NO_SCRAMBLES;
     if (!compSteps.map) return analysisScrambles;
