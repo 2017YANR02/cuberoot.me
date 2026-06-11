@@ -71,7 +71,7 @@
 > 现 `valid_moves()` = 18 步全集 + 相邻面剪枝,无"只许子集"开关。加一个 allowed-moves bitmask 贯穿
 > search/enumerate,一次投入解锁真 Roux S2 / HTR phase-2 / FMC 分阶段。
 
-- [ ] **M1** 引擎加 move-mask 参数,贯穿 `cube_common` 的 valid_moves/search/enumerate。门:**全部现有 `cargo test --release` 仍绿(承重墙不能塌)**,且 mask=全集时与现状逐位相等(加一条对照测试锁死)。
+- [x] **M1** 引擎加 move-mask 参数,贯穿 `cube_common` 的 valid_moves/search/enumerate。门:**全部现有 `cargo test --release` 仍绿(承重墙不能塌)**,且 mask=全集时与现状逐位相等(加一条对照测试锁死)。✅ 2026-06-11 全量 94/94 绿(1m27s);MoveMask=u32 对齐 Move::index,`*_masked` 新入口零破坏;4 条新测试(表级×2 + 全集逐位相等 + 限 G2 暴力对照)。
 - [ ] **⏸ soft-gate(M2)** 真 Roux S1+S2(S2 限 ⟨M,U,R,r⟩)是 **nice-to-have**(本站口径已用 `123x2` f2b 联合最优替代)。开工前在 §3 确认"还做不做、key 叫啥"。确认后照变体 playbook 全链路(core+test+wasm+ui+board)+ MANUAL 交接。
 - [ ] **M3** HTR phase-2(G3→G4 限 ⟨U2,D2,L2,R2,F2,B2⟩ 当**搜索空间**)或等价受限搜索变体。照变体 playbook 全链路 + MANUAL 交接。
 
@@ -91,6 +91,7 @@
 - 2026-06-11 — **H3** HTR WASM 类 + 重建仪式,`015e0ad58`。HtrSolverWasm + worker htr 分支 + client V bump(20260611a)+ PoolNeed;顺手补了 eodr 上次漏的 2 个 stale .d.ts;typecheck 主 loop 双工具复核绿。
 - 2026-06-11 — **H4** StageSolver 集成 HTR,`c753f09c5`。8 登记点对齐 eoline + scramble-variants 4 点 + TNoodleMode 类型 ripple;HTR_NOT_DR 哨兵 7 处接线(主 loop grep 复核);playwright 独立 agent 验收 8/8 PASS。
 - 2026-06-11 — **H5** /code/solvers 看板登记 HTR,`af97a2c0a`。EPIC 1 代码侧全部完成;MANUAL(HTR) 交接写入 §3。
+- 2026-06-11 — **M1** 引擎 move-mask 能力,`07e93483d`。u32 bitmask + `*_masked` 入口;全量 94/94 绿,mask=全集逐位相等锁死 + 限 G2 暴力对照。**loop 停在 M2 soft-gate 等用户拍板。**
 
 ---
 
@@ -104,6 +105,7 @@
   3. UI 接入:`VARIANT_ORDER` 加 htr(H4 故意未加,gen/recent 下拉才会出现)、RecentScrambles / stats 页 / SheetView / CompCrossAnalysis / useCompSteps / useVariantStepMap 各登记点(H4 摘要列过,grep `'eoline'` 对照)。
   4. 看板回填:`/code/solvers` NATIVE htr 的 rate 从「未实测」改实测值(H5 已留 null 槽位)。
   5. static 发布照常规仪式。
+- **⏸ soft-gate(M2) 待拍板**(2026-06-11,M1 已就绪解锁):真 Roux S2 限 ⟨M,U,R,r⟩ 是 nice-to-have(本站口径已用 `123x2` f2b 联合最优替代)。需用户定:(1) 还做不做;(2) key 叫啥(候选 `roux_s2` / `rouxs2`);(3) S1+S2 联合还是只 S2。注意 M 层转动引擎现以 8角12棱建模,M/r 这类含中层/宽转的 move 集是否已在 Move 编码内需先核(若无则 M2 比 mask 更深,涉及 move 集扩展)。决定后 loop 继续;若跳过 M2,下一个是 M3(HTR phase-2,无 gate)。
 
 ---
 
