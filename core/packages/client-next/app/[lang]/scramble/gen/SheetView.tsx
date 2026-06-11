@@ -90,7 +90,7 @@ export interface RoundSheet {
 interface SheetViewProps {
   sheet: RoundSheet;
   isZh: boolean;
-  t: (zh: string, en: string) => string;
+  t: (zh: string, en: string, zhHant?: string) => string;
   clockColors?: Record<string, string>;
   sq1Colors?: Record<string, string>;
   megaColors?: Record<string, string>;
@@ -130,8 +130,8 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
   // WCA round_type_id 'f'/'h' (final/combined final) 都映射到 roundIdx=3,
   // 与轮数无关 —— 2 轮赛的 final 也是 idx=3,不能写"第 4 轮"。
   const roundLabel = roundIdx === 3
-    ? t('决赛', 'Final')
-    : `${t('第', 'Round')} ${roundIdx + 1}${t('轮', '')}`;
+    ? t('决赛', 'Final', "決賽")
+    : `${t('第', 'Round')} ${roundIdx + 1}${t('轮', '', "輪")}`;
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   // 行内展开:一次只展开一条(手风琴),按 scramble 字符串记忆(过滤/重排都稳)。
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -200,7 +200,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
     if (showExtraDivider) {
       rows.push(
         <tr key={`div-${i}`} className="gen-tn-extras-divider">
-          <td colSpan={colSpan}>{t('备用打乱', 'Extra Scrambles')}</td>
+          <td colSpan={colSpan}>{t('备用打乱', 'Extra Scrambles', "備用打亂")}</td>
         </tr>,
       );
     }
@@ -222,13 +222,13 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
         ref={isSelected ? selectedRowRef : undefined}
         className={rowCls}
         onClick={rowInteractive ? () => onRowClick(a) : undefined}
-        title={rowInteractive ? (canAnalyze ? t('点击展开解法', 'Click to expand solutions') : t('点击选中(链接定位)', 'Click to select (deep link)')) : undefined}
+        title={rowInteractive ? (canAnalyze ? t('点击展开解法', 'Click to expand solutions', "點選展開解法") : t('点击选中(链接定位)', 'Click to select (deep link)', "點選選中(連結定位)")) : undefined}
         style={{ cursor: rowInteractive ? 'pointer' : 'default' }}
       >
         <td
           className="gen-tn-attempt-num"
           onClick={a.scramble ? (e) => { e.stopPropagation(); copyAttempt(i, a.scramble); } : undefined}
-          title={a.scramble ? t('复制打乱', 'Copy scramble') : undefined}
+          title={a.scramble ? t('复制打乱', 'Copy scramble', "複製打亂") : undefined}
           style={{ cursor: a.scramble ? 'pointer' : undefined }}
         >
           <span className="gen-tn-attempt-label">{a.label}</span>
@@ -237,8 +237,8 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
               type="button"
               className="gen-tn-copy-btn"
               onClick={(e) => { e.stopPropagation(); copyAttempt(i, a.scramble); }}
-              title={t('复制打乱', 'Copy scramble')}
-              aria-label={t('复制打乱', 'Copy scramble')}
+              title={t('复制打乱', 'Copy scramble', "複製打亂")}
+              aria-label={t('复制打乱', 'Copy scramble', "複製打亂")}
             >
               <Copy size={13} />
             </button>
@@ -259,7 +259,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
                 return (
                   <span
                     className="gen-tn-cross-badge is-clickable"
-                    title={t('点击切换 十字/XC/XXC/XXXC/XXXXC', 'Click to cycle Cross / XC / XXC / XXXC / XXXXC')}
+                    title={t('点击切换 十字/XC/XXC/XXXC/XXXXC', 'Click to cycle Cross / XC / XXC / XXXC / XXXXC', "點選切換 十字/XC/XXC/XXXC/XXXXC")}
                     onClick={(e) => { e.stopPropagation(); cycleMetric(a.scramble); }}
                   >
                     {/* 该行指标与顶部「阶段」一致时不重复显示标签;被逐行切到不同指标才标出来 */}
@@ -275,7 +275,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
             />
           </div>
           {copiedIdx === i && (
-            <span className="gen-tn-copy-toast" aria-live="polite">{t('已复制', 'Copied')}</span>
+            <span className="gen-tn-copy-toast" aria-live="polite">{t('已复制', 'Copied', "已複製")}</span>
           )}
         </td>
         {showPreview && (
@@ -292,7 +292,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
                   sq1Colors={sq1Colors}
                   megaColors={megaColors}
                   fullSizeLink
-                  linkTitle={t('打开大图', 'Open full-size image')}
+                  linkTitle={t('打开大图', 'Open full-size image', "開啟大圖")}
                 />
               );
             })()}
@@ -320,7 +320,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
                     e.preventDefault();
                     router.push(analyzerHref(a.scramble, em));
                   }}
-                  title={t('在分析器中打开', 'Open in analyzer')}
+                  title={t('在分析器中打开', 'Open in analyzer', "在分析器中開啟")}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 4,
                     textDecoration: 'none', cursor: 'pointer', padding: '2px 4px',

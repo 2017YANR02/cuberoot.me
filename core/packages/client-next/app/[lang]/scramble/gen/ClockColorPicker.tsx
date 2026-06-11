@@ -19,7 +19,7 @@ import {
 interface Props {
   colors: Record<string, string> | undefined;
   onChange: (colors: Record<string, string> | undefined) => void;
-  t: (zh: string, en: string) => string;
+  t: (zh: string, en: string, zhHant?: string) => string;
 }
 
 const ZH_LABEL: Record<ClockColorKey, string> = {
@@ -87,11 +87,11 @@ export default function ClockColorPicker({ colors, onChange, t }: Props) {
           onClick={() => onChange(undefined)}
           disabled={isDefault}
         >
-          {t('恢复默认配色', 'Reset to default')}
+          {t('恢复默认配色', 'Reset to default', "恢復預設配色")}
         </button>
       </div>
       <details className="gen-tn-clock-details">
-        <summary>{t('自定义配色', 'Customize colors')}</summary>
+        <summary>{t('自定义配色', 'Customize colors', "自定義配色")}</summary>
         <div className="gen-tn-clock-chips">
           {CLOCK_COLOR_KEYS.map((k) => (
             <label

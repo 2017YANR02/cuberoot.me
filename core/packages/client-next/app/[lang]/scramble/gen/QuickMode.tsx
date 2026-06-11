@@ -53,7 +53,7 @@ function formatMs(ms: number): string {
 type SubMode = 'batch' | 'paste';
 
 interface Props {
-  t: (zh: string, en: string) => string;
+  t: (zh: string, en: string, zhHant?: string) => string;
   /** 由 GenPage 的顶层 tab 决定:'gen' = 批量, 'text' = 输入 */
   subMode: SubMode;
   /** 是否在每行右侧渲染打乱图(2D net SVG)。off ⇒ 网页 + PDF 都不出。 */
@@ -366,7 +366,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
                 type="button"
                 onClick={() => toggleEvent(id)}
                 className="gen-count-chip is-active"
-                title={t('点击移除', 'Click to remove')}
+                title={t('点击移除', 'Click to remove', "點選移除")}
               >
                 {eventDisplayName(id, isZh)}
               </button>
@@ -377,13 +377,13 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
         <Scramble333ModePicker active333={events.has('333')} isZh={isZh} />
         {events.has('sq1') && (
           <div className="gen-sq1-format">
-            <span className="gen-sq1-format-label">{t('SQ1 记号', 'SQ1 notation')}</span>
+            <span className="gen-sq1-format-label">{t('SQ1 记号', 'SQ1 notation', "SQ1 記號")}</span>
             <PillToggle
               value={sq1Compact}
               onChange={onSq1CompactChange}
-              onLabel={t('简写', 'Compact')}
+              onLabel={t('简写', 'Compact', "簡寫")}
               offLabel={t('完整', 'Full')}
-              ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full')}
+              ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full', "SQ1 打亂記號:簡寫或完整")}
             />
           </div>
         )}
@@ -400,13 +400,13 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
                   value={count}
                   onCommit={setCount}
                   className="gen-count-input gen-count-input--combo"
-                  aria-label={t('每项打乱数', 'Scrambles per event')}
+                  aria-label={t('每项打乱数', 'Scrambles per event', "每項打亂數")}
                 />
                 <button
                   type="button"
                   className="gen-count-combo-trigger"
                   onClick={() => setCountOpen((o) => !o)}
-                  aria-label={t('打开预设', 'Open presets')}
+                  aria-label={t('打开预设', 'Open presets', "開啟預設")}
                   aria-expanded={countOpen}
                 >
                   <ChevronDown size={14} />
@@ -437,7 +437,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
               icon={<RefreshCw size={14} className={loading ? 'gen-spin' : ''} />}
               label={loading
                 ? <span className="gen-btn-progress-num">{`${genProgress?.done ?? 0}/${genProgress?.total ?? count}`}</span>
-                : t(`生成 (${count}/项)`, `Generate (${count}/event)`)}
+                : t(`生成 (${count}/项)`, `Generate (${count}/event)`, `生成 (${count}/項)`)}
               progress={genProgress}
               onClick={regenerate}
               disabled={loading}
@@ -448,8 +448,8 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
             type="button"
             className="gen-btn"
             onClick={onTogglePreview}
-            title={showPreview ? t('隐藏打乱图', 'Hide preview') : t('显示打乱图', 'Show preview')}
-            aria-label={showPreview ? t('隐藏打乱图', 'Hide preview') : t('显示打乱图', 'Show preview')}
+            title={showPreview ? t('隐藏打乱图', 'Hide preview', "隱藏打亂圖") : t('显示打乱图', 'Show preview', "顯示打亂圖")}
+            aria-label={showPreview ? t('隐藏打乱图', 'Hide preview', "隱藏打亂圖") : t('显示打乱图', 'Show preview', "顯示打亂圖")}
             aria-pressed={!showPreview}
           >
             {showPreview ? <ImageIcon size={14} /> : <ImageOff size={14} />}
@@ -463,7 +463,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
               progress={pdfProgress}
               onClick={downloadPdf}
               disabled={pdfBuilding}
-              title={t('下载 PDF', 'Download PDF')}
+              title={t('下载 PDF', 'Download PDF', "下載 PDF")}
             />
           )}
         </div>
@@ -494,7 +494,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
                 className="gen-tn-paste-area"
                 value={pasteTexts[ev] ?? ''}
                 onChange={(e) => setPasteTexts((prev) => ({ ...prev, [ev]: e.target.value }))}
-                placeholder={t('每行一条打乱;开头 "1. " / "1) " 编号会自动去掉', 'One scramble per line; leading "1. " / "1) " numbering is auto-stripped')}
+                placeholder={t('每行一条打乱;开头 "1. " / "1) " 编号会自动去掉', 'One scramble per line; leading "1. " / "1) " numbering is auto-stripped', "每行一條打亂;開頭 \"1. \" / \"1) \" 編號會自動去掉")}
                 rows={5}
                 spellCheck={false}
               />
@@ -506,7 +506,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
       {/* 批次总耗时(gen 模式才显示) */}
       {subMode === 'batch' && batchWallMs !== null && totalScrambles > 0 && (
         <div className="gen-tn-bench-total">
-          {t('总耗时', 'Batch')} {formatMs(batchWallMs)}    {totalScrambles} {t('个打乱', 'scrambles')}
+          {t('总耗时', 'Batch', "總耗時")} {formatMs(batchWallMs)}    {totalScrambles} {t('个打乱', 'scrambles', "個打亂")}
         </div>
       )}
 
@@ -522,10 +522,10 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
               <div key={ev} className="gen-tn-sheet">
                 <div className="gen-tn-sheet-header">
                   <EventIcon event={ev} />
-                  <span>{eventDisplayName(ev, isZh)} {arr.length} {t('个打乱', 'scrambles')}</span>
+                  <span>{eventDisplayName(ev, isZh)} {arr.length} {t('个打乱', 'scrambles', "個打亂")}</span>
                   {ti && ti.count > 0 && (
                     <span className="gen-tn-bench">
-                      {formatMs(ti.wallMs)}    {t('平均', 'avg')} {formatMs(ti.avgMs)}    {t('首条', 'first')} {formatMs(ti.firstMs)}
+                      {formatMs(ti.wallMs)}    {t('平均', 'avg')} {formatMs(ti.avgMs)}    {t('首条', 'first', "首條")} {formatMs(ti.firstMs)}
                     </span>
                   )}
                 </div>
@@ -537,14 +537,14 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
                         key={`${i}-${s.slice(0, 4)}`}
                         className={copiedKey === key ? 'is-copied' : ''}
                         onClick={() => copyOne(ev, i, s)}
-                        title={t('点击复制', 'Click to copy')}
+                        title={t('点击复制', 'Click to copy', "點選複製")}
                         style={{ cursor: 'pointer' }}
                       >
                         <td className="gen-tn-attempt-num">{i + 1}</td>
                         <td className="gen-tn-attempt-scramble">
                           <ScrambleLines scramble={s} className="gen-tn-attempt-line" />
                           {copiedKey === key && (
-                            <span className="gen-tn-copy-toast" aria-live="polite">{t('已复制', 'Copied')}</span>
+                            <span className="gen-tn-copy-toast" aria-live="polite">{t('已复制', 'Copied', "已複製")}</span>
                           )}
                         </td>
                         {showPreview && (
@@ -555,7 +555,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
                                 scramble={s}
                                 size={48}
                                 fullSizeLink
-                                linkTitle={t('打开大图', 'Open full-size image')}
+                                linkTitle={t('打开大图', 'Open full-size image', "開啟大圖")}
                               />
                             )}
                           </td>

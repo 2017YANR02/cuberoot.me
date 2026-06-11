@@ -104,7 +104,7 @@ const EMPTY_MAP_TN: Map<string, number[]> = new Map();
 // 阶段下拉显示名走 lib/scramble-variants 的 stageLabel(b 前缀指标键已在表内别名)。
 
 interface Props {
-  t: (zh: string, en: string) => string;
+  t: (zh: string, en: string, zhHant?: string) => string;
   isZh: boolean;
   showPreview: boolean;
   onTogglePreview: () => void;
@@ -614,7 +614,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         resolveName(),
       ]);
       if (!data || data.length === 0) {
-        setError(t('未找到该比赛或暂无已公布的打乱', 'Competition not found or no published scrambles'));
+        setError(t('未找到该比赛或暂无已公布的打乱', 'Competition not found or no published scrambles', "未找到該比賽或暫無已公佈的打亂"));
         return;
       }
       const built = buildSheetsFromWca(data);
@@ -626,7 +626,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       setLoadedCompName(name);
       setUrlQuery({ comp: compId });
     } catch (err) {
-      setError(t('网络错误', 'Network error') + ': ' + (err instanceof Error ? err.message : String(err)));
+      setError(t('网络错误', 'Network error', "網路錯誤") + ': ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
       setLoadProgress(null);
@@ -1066,7 +1066,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   }, [loaded, showCross, is333Family, prewarmNeed]);
 
   const fmtKB = (b: number) => `${(b / 1024).toFixed(b < 10240 ? 1 : 0)} KB`;
-  const placeholder = t('输入 WCA 比赛或链接,或自定义比赛名', 'Enter a WCA comp / link, or a custom name');
+  const placeholder = t('输入 WCA 比赛或链接,或自定义比赛名', 'Enter a WCA comp / link, or a custom name', "輸入 WCA 比賽或連結,或自定義比賽名");
 
   // picker 三态:已加载真比赛 / mock 已生成(标题 readonly) / picker 输入态
   const compPickerNode = (
@@ -1081,7 +1081,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
           <Link
             href={`/wca/comp/${encodeURIComponent(loadedCompId)}`}
             className="gen-tn-comp-link"
-            title={t('查看比赛成绩', 'View competition results')}
+            title={t('查看比赛成绩', 'View competition results', "檢視比賽成績")}
           >
             <CompCell compId={loadedCompId} compName={loadedCompName} isZh={isZh} />
           </Link>
@@ -1089,8 +1089,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
             variant="standalone"
             onClick={reset}
             isZh={isZh}
-            ariaLabel={t('取消比赛', 'Clear competition')}
-            title={t('取消比赛', 'Clear competition')}
+            ariaLabel={t('取消比赛', 'Clear competition', "取消比賽")}
+            title={t('取消比赛', 'Clear competition', "取消比賽")}
           />
         </div>
       ) : loaded ? (
@@ -1107,8 +1107,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
               setEvents({});
             }}
             isZh={isZh}
-            ariaLabel={t('清空所有项目', 'Clear all events')}
-            title={t('清空所有项目', 'Clear all events')}
+            ariaLabel={t('清空所有项目', 'Clear all events', "清空所有項目")}
+            title={t('清空所有项目', 'Clear all events', "清空所有項目")}
           />
         </div>
       ) : (
@@ -1126,8 +1126,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
             type="button"
             className="gen-btn gen-tn-comp-random"
             onClick={pickRandomComp}
-            title={t('随机抽一场 WCA 比赛', 'Pick a random WCA competition')}
-            aria-label={t('随机抽一场 WCA 比赛', 'Pick a random WCA competition')}
+            title={t('随机抽一场 WCA 比赛', 'Pick a random WCA competition', "隨機抽一場 WCA 比賽")}
+            aria-label={t('随机抽一场 WCA 比赛', 'Pick a random WCA competition', "隨機抽一場 WCA 比賽")}
             disabled={loading}
           >
             <Dices size={14} />
@@ -1158,16 +1158,16 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
               primary
               icon={<RefreshCw size={14} className="gen-spin" />}
               label={(() => {
-                if (!loadProgress) return t('加载中…', 'Loading…');
+                if (!loadProgress) return t('加载中…', 'Loading…', "載入中…");
                 const { done, total } = loadProgress;
                 if (total > 0) return `${fmtKB(done)} / ${fmtKB(total)}`;
                 if (done > 0) return fmtKB(done);
-                return t('加载中…', 'Loading…');
+                return t('加载中…', 'Loading…', "載入中…");
               })()}
               progress={loadProgress}
               onClick={() => { /* no-op while loading */ }}
               disabled
-              title={t('加载打乱', 'Load scrambles')}
+              title={t('加载打乱', 'Load scrambles', "載入打亂")}
             />
           ) : (
             <ProgressButton
@@ -1179,15 +1179,15 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
               progress={genProgress}
               onClick={generate}
               disabled={enabledEvents.length === 0 || generating}
-              title={t('生成打乱', 'Generate scrambles')}
+              title={t('生成打乱', 'Generate scrambles', "生成打亂")}
             />
           )}
           <button
             type="button"
             className="gen-btn"
             onClick={onTogglePreview}
-            title={showPreview ? t('隐藏打乱图', 'Hide preview') : t('显示打乱图', 'Show preview')}
-            aria-label={showPreview ? t('隐藏打乱图', 'Hide preview') : t('显示打乱图', 'Show preview')}
+            title={showPreview ? t('隐藏打乱图', 'Hide preview', "隱藏打亂圖") : t('显示打乱图', 'Show preview', "顯示打亂圖")}
+            aria-label={showPreview ? t('隐藏打乱图', 'Hide preview', "隱藏打亂圖") : t('显示打乱图', 'Show preview', "顯示打亂圖")}
             aria-pressed={!showPreview}
           >
             {showPreview ? <ImageIcon size={14} /> : <ImageOff size={14} />}
@@ -1201,7 +1201,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
               progress={pdfProgress}
               onClick={downloadPdf}
               disabled={pdfBuilding}
-              title={t('下载 PDF (tnoodle 风格)', 'Download PDF (tnoodle style)')}
+              title={t('下载 PDF (tnoodle 风格)', 'Download PDF (tnoodle style)', "下載 PDF (tnoodle 風格)")}
             />
           )}
           {!loadedCompId && !loaded && (Object.keys(events).length > 0 || generating) && (
@@ -1217,8 +1217,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 setSelected(null);
                 setEvents({});
               }}
-              title={generating ? t('取消生成', 'Cancel generation') : t('清空所有项目', 'Clear all events')}
-              aria-label={generating ? t('取消生成', 'Cancel generation') : t('清空所有项目', 'Clear all events')}
+              title={generating ? t('取消生成', 'Cancel generation') : t('清空所有项目', 'Clear all events', "清空所有項目")}
+              aria-label={generating ? t('取消生成', 'Cancel generation') : t('清空所有项目', 'Clear all events', "清空所有項目")}
             >
               <X size={14} />
             </button>
@@ -1303,19 +1303,19 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       {/* SQ1 记号开关:涉及 sq1 时显示。简写(全站默认)/ 完整(WCA 官方打乱纸风格) */}
       {sq1Involved && (
         <div className="gen-sq1-format">
-          <span className="gen-sq1-format-label">{t('SQ1 记号', 'SQ1 notation')}</span>
+          <span className="gen-sq1-format-label">{t('SQ1 记号', 'SQ1 notation', "SQ1 記號")}</span>
           <PillToggle
             value={sq1Compact}
             onChange={onSq1CompactChange}
-            onLabel={t('简写', 'Compact')}
+            onLabel={t('简写', 'Compact', "簡寫")}
             offLabel={t('完整', 'Full')}
-            ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full')}
+            ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full', "SQ1 打亂記號:簡寫或完整")}
           />
         </div>
       )}
 
       {loaded ? null : enabledEvents.length === 0 ? (
-        <div className="gen-tn-empty">{t('点击上方图标添加项目', 'Tap an event icon above to add it')}</div>
+        <div className="gen-tn-empty">{t('点击上方图标添加项目', 'Tap an event icon above to add it', "點選上方圖示新增項目")}</div>
       ) : (
         <div className="gen-tn-event-list">
           {enabledEvents.map((ev) => {
@@ -1329,8 +1329,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                     type="button"
                     className="gen-tn-event-remove"
                     onClick={() => toggleEvent(ev)}
-                    title={t('移除项目', 'Remove event')}
-                    aria-label={t('移除项目', 'Remove event')}
+                    title={t('移除项目', 'Remove event', "移除項目")}
+                    aria-label={t('移除项目', 'Remove event', "移除項目")}
                   >
                     <X size={14} />
                   </button>
@@ -1353,7 +1353,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                         <span className="gen-tn-format-static">{FORMAT_LABEL[r.format]}</span>
                       )}
                       <label className="gen-tn-mini-num">
-                        <span>{t('组', 'Sets')}</span>
+                        <span>{t('组', 'Sets', "組")}</span>
                         <NumberCommitInput
                           min={1} max={20}
                           value={r.scrambleSets}
@@ -1412,24 +1412,24 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 onChange={setShowCross}
                 onLabel={t('分析', 'Analysis')}
                 offLabel={t('分析', 'Analysis')}
-                ariaLabel={t('显示十字步数分析', 'Show cross analysis')}
+                ariaLabel={t('显示十字步数分析', 'Show cross analysis', "顯示十字步數分析")}
               />
               {showCross && roundIdxsInEvent.length > 1 && (
                 <PillToggle
                   value={analysisAll}
                   onChange={setAnalysisAll}
                   onLabel={t('全部', 'All')}
-                  offLabel={t('本轮', 'This round')}
-                  ariaLabel={t('分析范围', 'Analysis scope')}
+                  offLabel={t('本轮', 'This round', "本輪")}
+                  ariaLabel={t('分析范围', 'Analysis scope', "分析範圍")}
                 />
               )}
               {showCross && (
                 <PillToggle
                   value={includeExtras}
                   onChange={setIncludeExtras}
-                  onLabel={t('备打', 'Extras')}
-                  offLabel={t('备打', 'Extras')}
-                  ariaLabel={t('含备用打乱', 'Include extra scrambles')}
+                  onLabel={t('备打', 'Extras', "備打")}
+                  offLabel={t('备打', 'Extras', "備打")}
+                  ariaLabel={t('含备用打乱', 'Include extra scrambles', "含備用打亂")}
                 />
               )}
               {showCross && (
@@ -1437,7 +1437,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                   className="gen-cx-modesel"
                   value={variant}
                   onChange={(e) => setVariant(e.target.value as VariantKey)}
-                  aria-label={t('变体', 'Variant')}
+                  aria-label={t('变体', 'Variant', "變體")}
                 >
                   {VARIANTS.map((v) => (
                     <option key={v.key} value={v.key}>{t(v.zh, v.en)}</option>
@@ -1449,7 +1449,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                   className="gen-cx-modesel"
                   value={safeMetric}
                   onChange={(e) => setMetric(e.target.value as Metric)}
-                  aria-label={t('阶段', 'Stage')}
+                  aria-label={t('阶段', 'Stage', "階段")}
                 >
                   {vspec.stages.map((mk) => (
                     <option key={mk} value={mk}>{stageLabel(mk, isZh)}</option>

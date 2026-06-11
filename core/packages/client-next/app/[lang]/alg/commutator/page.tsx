@@ -171,14 +171,14 @@ function SettingsPanel({
 }: {
     settings: Settings;
     updateSetting: <K extends keyof Settings>(k: K, v: Settings[K]) => void;
-    t: (zh: string, en: string) => string;
+    t: (zh: string, en: string, zhHant?: string) => string;
 }) {
     return (
         <section className="cmt-pane">
-            <h3 className="cmt-section-title">{t('设置', 'Settings')}</h3>
+            <h3 className="cmt-section-title">{t('设置', 'Settings', "設定")}</h3>
             <div className="cmt-settings">
                 <div className="cmt-setting-row">
-                    <span>{t('阶数', 'Order')}:</span>
+                    <span>{t('阶数', 'Order', "階數")}:</span>
                     <input
                         type="text"
                         inputMode="numeric"
@@ -191,31 +191,31 @@ function SettingsPanel({
                 </div>
 
                 <CheckRow
-                    label={t('所有换位子加外括号', 'Outer bracket for all commutators')}
+                    label={t('所有换位子加外括号', 'Outer bracket for all commutators', "所有換位子加外括號")}
                     checked={settings.outerBracket}
                     onChange={(v) => updateSetting('outerBracket', v)}
-                    help={t('勾选: [a:[b,c][d,e]]\n不勾: a:[[b,c]+[d,e]]', 'Checked: [a:[b,c][d,e]]\nUnchecked: a:[[b,c]+[d,e]]')}
+                    help={t('勾选: [a:[b,c][d,e]]\n不勾: a:[[b,c]+[d,e]]', 'Checked: [a:[b,c][d,e]]\nUnchecked: a:[[b,c]+[d,e]]', "勾選: [a:[b,c][d,e]]\n不勾: a:[[b,c]+[d,e]]")}
                 />
 
                 <CheckRow
-                    label={t('Initial Replace (输入端: r → R M\')', 'Initial Replace')}
+                    label={t('Initial Replace (输入端: r → R M\')', 'Initial Replace', "Initial Replace (輸入端: r → R M')")}
                     checked={settings.initialReplace}
                     onChange={(v) => updateSetting('initialReplace', v)}
-                    help={t('替换双层转动 (e.g. r → R M\')', 'Replace double layer turns (e.g. r → R M\')')}
+                    help={t('替换双层转动 (e.g. r → R M\')', 'Replace double layer turns (e.g. r → R M\')', "替換雙層轉動 (e.g. r → R M')")}
                 />
 
                 <CheckRow
-                    label={t('Final Replace (输出端: R M\' → r)', 'Final Replace')}
+                    label={t('Final Replace (输出端: R M\' → r)', 'Final Replace', "Final Replace (輸出端: R M' → r)")}
                     checked={settings.finalReplace}
                     onChange={(v) => updateSetting('finalReplace', v)}
-                    help={t('输出回拼双层 (e.g. R M\' → r)', 'Replace double layer turns (e.g. R M\' → r)')}
+                    help={t('输出回拼双层 (e.g. R M\' → r)', 'Replace double layer turns (e.g. R M\' → r)', "輸出回拼雙層 (e.g. R M' → r)")}
                 />
 
                 <CheckRow
-                    label={t('Commute (处理可交换转动)', 'Commute')}
+                    label={t('Commute (处理可交换转动)', 'Commute', "Commute (處理可交換轉動)")}
                     checked={settings.commute}
                     onChange={(v) => updateSetting('commute', v)}
-                    help={t('R 和 L 等可交换的转动', 'Handle commute moves (e.g. R and L)')}
+                    help={t('R 和 L 等可交换的转动', 'Handle commute moves (e.g. R and L)', "R 和 L 等可交換的轉動")}
                 />
 
                 <div className="cmt-setting-row">
@@ -228,14 +228,14 @@ function SettingsPanel({
                         value={settings.maxDepth}
                         onChange={(e) => updateSetting('maxDepth', e.target.value)}
                     />
-                    <Help title={t('搜索深度上限\n0 表示首个可解深度', 'Upper bound of search depth\n0 means first solvable depth')} />
+                    <Help title={t('搜索深度上限\n0 表示首个可解深度', 'Upper bound of search depth\n0 means first solvable depth', "搜尋深度上限\n0 表示首個可解深度")} />
                 </div>
 
                 <div className="cmt-setting-row" style={{ marginTop: 4 }}>
-                    <span style={{ width: '100%', color: 'var(--cmt-text-sub)', fontSize: '0.85rem' }}>{t('排序规则', 'Sorting rules')}:</span>
+                    <span style={{ width: '100%', color: 'var(--cmt-text-sub)', fontSize: '0.85rem' }}>{t('排序规则', 'Sorting rules', "排序規則")}:</span>
                 </div>
                 <div className="cmt-setting-row">
-                    <span>{t('C:[A,B] 评分 = ', 'Score of C:[A,B] = ')}</span>
+                    <span>{t('C:[A,B] 评分 = ', 'Score of C:[A,B] = ', "C:[A,B] 評分 = ")}</span>
                     <input
                         type="text"
                         inputMode="decimal"
@@ -254,11 +254,11 @@ function SettingsPanel({
                         onChange={(e) => updateSetting('abMinScore', e.target.value)}
                     />
                     <span>· stm(B) + stm(C)</span>
-                    <Help title={t('假设 stm(A) ≥ stm(B), stm = slice turn metric\n按评分从低到高排序', 'Assumes stm(A) ≥ stm(B). stm = slice turn metric.\nResults sorted by score, ascending.')} />
+                    <Help title={t('假设 stm(A) ≥ stm(B), stm = slice turn metric\n按评分从低到高排序', 'Assumes stm(A) ≥ stm(B). stm = slice turn metric.\nResults sorted by score, ascending.', "假設 stm(A) ≥ stm(B), stm = slice turn metric\n按評分從低到高排序")} />
                 </div>
 
                 <div className="cmt-setting-row">
-                    <span>{t('加项惩罚', 'Addition penalty')}:</span>
+                    <span>{t('加项惩罚', 'Addition penalty', "加項懲罰")}:</span>
                     <input
                         type="text"
                         inputMode="decimal"
@@ -267,14 +267,14 @@ function SettingsPanel({
                         value={settings.addScore}
                         onChange={(e) => updateSetting('addScore', e.target.value)}
                     />
-                    <Help title={t('换位子组合的额外评分', 'Score for commutator combo')} />
+                    <Help title={t('换位子组合的额外评分', 'Score for commutator combo', "換位子組合的額外評分")} />
                 </div>
 
                 <CheckRow
-                    label={t('快速模式 (只输出第一个解)', 'Fast (single result)')}
+                    label={t('快速模式 (只输出第一个解)', 'Fast (single result)', "快速模式 (只輸出第一個解)")}
                     checked={settings.fast}
                     onChange={(v) => updateSetting('fast', v)}
-                    help={t('只显示一个结果, 速度更快', 'Show one result only')}
+                    help={t('只显示一个结果, 速度更快', 'Show one result only', "只顯示一個結果, 速度更快")}
                 />
             </div>
         </section>
@@ -311,21 +311,21 @@ function Help({ title }: { title: string }) {
     );
 }
 
-function HomeTab({ onTry, t }: { onTry: () => void; t: (zh: string, en: string) => string }) {
+function HomeTab({ onTry, t }: { onTry: () => void; t: (zh: string, en: string, zhHant?: string) => string }) {
     return (
         <section className="cmt-pane cmt-home-pane">
             <div>
                 <h2>Commutator</h2>
                 <h4>{t('描述', 'Description')}</h4>
                 <ul>
-                    <li>{t('分解三阶魔方公式', "Decompose a Rubik's cube algorithm.")}</li>
-                    <li>{t('展开三阶魔方换位子记号', "Expand a Rubik's cube commutator notation.")}</li>
-                    <li>{t('分解自由群算法', 'Decompose a free group algorithm.')}</li>
-                    <li>{t('批量分解 Excel 文件中的公式', 'Decompose for algorithms in an excel file.')}</li>
+                    <li>{t('分解三阶魔方公式', "Decompose a Rubik's cube algorithm.", "分解三階魔方公式")}</li>
+                    <li>{t('展开三阶魔方换位子记号', "Expand a Rubik's cube commutator notation.", "展開三階魔方換位子記號")}</li>
+                    <li>{t('分解自由群算法', 'Decompose a free group algorithm.', "分解自由群演算法")}</li>
+                    <li>{t('批量分解 Excel 文件中的公式', 'Decompose for algorithms in an excel file.', "批次分解 Excel 檔案中的公式")}</li>
                     <li>……</li>
                 </ul>
                 <button type="button" className="cmt-btn cmt-btn-secondary" onClick={onTry}>
-                    {t('开始使用', 'Try It Out')}
+                    {t('开始使用', 'Try It Out', "開始使用")}
                 </button>
             </div>
         </section>
@@ -344,7 +344,7 @@ function DecomposeTab({
 }: {
     settings: Settings;
     updateSetting: <K extends keyof Settings>(k: K, v: Settings[K]) => void;
-    t: (zh: string, en: string) => string;
+    t: (zh: string, en: string, zhHant?: string) => string;
 }) {
     const [alg, setAlg] = useState('');
     const [output, setOutput] = useState('');
@@ -391,12 +391,12 @@ function DecomposeTab({
             <SettingsPanel settings={settings} updateSetting={updateSetting} t={t} />
 
             <section className="cmt-pane">
-                <label className="cmt-input-label" htmlFor="cmt-alg">{t('输入', 'Input')}</label>
+                <label className="cmt-input-label" htmlFor="cmt-alg">{t('输入', 'Input', "輸入")}</label>
                 <input
                     id="cmt-alg"
                     type="text"
                     className="cmt-alg-input"
-                    placeholder={t('输入公式 (e.g. R U R\' U\')', 'Enter an algorithm')}
+                    placeholder={t('输入公式 (e.g. R U R\' U\')', 'Enter an algorithm', "輸入公式 (e.g. R U R' U')")}
                     value={alg}
                     onChange={(e) => setAlg(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') onDecompose(); }}
@@ -405,15 +405,15 @@ function DecomposeTab({
                 />
                 <div className="cmt-actions">
                     <button type="button" className="cmt-btn" onClick={onDecompose} disabled={working}>
-                        {working ? t('计算中…', 'Working…') : t('分解', 'Decompose Me')}
+                        {working ? t('计算中…', 'Working…', "計算中…") : t('分解', 'Decompose Me')}
                     </button>
                     <button type="button" className="cmt-btn cmt-btn-secondary" onClick={onExpand} disabled={working}>
-                        {t('展开', 'Expand Me')}
+                        {t('展开', 'Expand Me', "展開")}
                     </button>
                 </div>
 
                 <div style={{ marginTop: 16 }}>
-                    <label className="cmt-output-label" htmlFor="cmt-out">{t('输出', 'Output')}</label>
+                    <label className="cmt-output-label" htmlFor="cmt-out">{t('输出', 'Output', "輸出")}</label>
                     <textarea
                         id="cmt-out"
                         className="cmt-output-area"
@@ -425,13 +425,13 @@ function DecomposeTab({
                     <div className="cmt-output-actions">
                         <button type="button" className="cmt-copy-btn" onClick={copy} disabled={!output}>
                             {copied ? <Check size={12} /> : <Copy size={12} />}
-                            {copied ? t('已复制', 'Copied') : t('复制', 'Copy')}
+                            {copied ? t('已复制', 'Copied', "已複製") : t('复制', 'Copy', "複製")}
                         </button>
                     </div>
                 </div>
 
                 <div style={{ marginTop: 14, fontSize: '0.82rem', color: 'var(--cmt-text-mute)' }}>
-                    {t('试试: ', 'Try: ')}
+                    {t('试试: ', 'Try: ', "試試: ")}
                     {PRESETS.map((p, i) => (
                         <span key={p}>
                             {i > 0 && <span style={{ margin: '0 6px' }}>·</span>}
@@ -455,7 +455,7 @@ function ExcelTab({
 }: {
     settings: Settings;
     updateSetting: <K extends keyof Settings>(k: K, v: Settings[K]) => void;
-    t: (zh: string, en: string) => string;
+    t: (zh: string, en: string, zhHant?: string) => string;
 }) {
     const [status, setStatus] = useState<{ msg: string; isError?: boolean } | null>(null);
     const [tableHtml, setTableHtml] = useState('');
@@ -463,7 +463,7 @@ function ExcelTab({
     const fileExpRef = useRef<HTMLInputElement>(null);
 
     const handleFile = useCallback(async (file: File, mode: 'decompose' | 'expand') => {
-        setStatus({ msg: t('读取文件中…', 'Reading file…') });
+        setStatus({ msg: t('读取文件中…', 'Reading file…', "讀取檔案中…") });
         setTableHtml('');
         try {
             const buf = await file.arrayBuffer();
@@ -486,7 +486,7 @@ function ExcelTab({
             }
             const titles = [...titleSet];
 
-            setStatus({ msg: t(`处理 ${maxRow} 行…`, `Processing ${maxRow} rows…`) });
+            setStatus({ msg: t(`处理 ${maxRow} 行…`, `Processing ${maxRow} rows…`, `處理 ${maxRow} 行…`) });
 
             const arrOut: string[][] = [];
             const escapeHtml = (s: string) => s.replace(/[&<>"']/g, ch => (
@@ -539,9 +539,9 @@ function ExcelTab({
             ]), 'Readme');
             XLSX.writeFile(newWb, 'output.xlsx');
 
-            setStatus({ msg: t(`完成! 已下载 output.xlsx (共 ${maxRow} 行)`, `Done. output.xlsx downloaded (${maxRow} rows)`) });
+            setStatus({ msg: t(`完成! 已下载 output.xlsx (共 ${maxRow} 行)`, `Done. output.xlsx downloaded (${maxRow} rows)`, `完成! 已下載 output.xlsx (共 ${maxRow} 行)`) });
         } catch (e) {
-            setStatus({ msg: `${t('错误', 'Error')}: ${(e as Error).message}`, isError: true });
+            setStatus({ msg: `${t('错误', 'Error', "錯誤")}: ${(e as Error).message}`, isError: true });
         } finally {
             if (fileDecRef.current) fileDecRef.current.value = '';
             if (fileExpRef.current) fileExpRef.current.value = '';
@@ -556,11 +556,11 @@ function ExcelTab({
                 <p className="cmt-excel-blurb">
                     {t(
                         '导入 Excel 文件 (.xlsx / .xls / .csv), 批量分解或展开其中所有公式, 自动下载 output.xlsx。',
-                        'Import an excel file (*.xlsx, *.xls, *.csv) to decompose or expand every algorithm inside. Output downloads as output.xlsx.'
+                        'Import an excel file (*.xlsx, *.xls, *.csv) to decompose or expand every algorithm inside. Output downloads as output.xlsx.', "匯入 Excel 檔案 (.xlsx / .xls / .csv), 批次分解或展開其中所有公式, 自動下載 output.xlsx。"
                     )}
                 </p>
                 <p className="cmt-excel-blurb">
-                    {t('可先下载示例文件: ', 'You can download the example file: ')}
+                    {t('可先下载示例文件: ', 'You can download the example file: ', "可先下載示例檔案: ")}
                     <a href="https://github.com/nbwzx/commutator/raw/main/assets/files/test.xlsx" target="_blank" rel="noopener noreferrer">test.xlsx</a>
                 </p>
 
@@ -575,7 +575,7 @@ function ExcelTab({
                 </div>
 
                 <div className="cmt-file-row">
-                    <strong>{t('展开 (Expand):', 'Expand:')}</strong>
+                    <strong>{t('展开 (Expand):', 'Expand:', "展開 (Expand):")}</strong>
                     <input
                         ref={fileExpRef}
                         type="file"
@@ -596,22 +596,22 @@ function ExcelTab({
     );
 }
 
-function IntroTab({ t }: { t: (zh: string, en: string) => string }) {
+function IntroTab({ t }: { t: (zh: string, en: string, zhHant?: string) => string }) {
     return (
         <section className="cmt-pane cmt-intro-pane">
-            <h2>{t('换位子理论', 'Introduction')}</h2>
-            <p>{t('用换位子记号分解公式。', 'Decompose algorithms in commutator notation.')}</p>
+            <h2>{t('换位子理论', 'Introduction', "換位子理論")}</h2>
+            <p>{t('用换位子记号分解公式。', 'Decompose algorithms in commutator notation.', "用換位子記號分解公式。")}</p>
 
             <p>
-                {t('设 ', 'Let ')}<span className="cmt-math">G</span>
-                {t(' 为任意群。若 ', ' be any group. If ')}<span className="cmt-math">a, b ∈ G</span>
-                {t(',则 ', ', then the commutator of ')}<span className="cmt-math">a</span>
-                {t(' 与 ', ' and ')}<span className="cmt-math">b</span>
-                {t(' 的换位子为 ', ' is the element ')}<span className="cmt-math">[a, b] = a b a⁻¹ b⁻¹</span>。
-                {t('表达式 ', ' The expression ')}<span className="cmt-math">x : a</span>
+                {t('设 ', 'Let ', "設 ")}<span className="cmt-math">G</span>
+                {t(' 为任意群。若 ', ' be any group. If ', " 為任意群。若 ")}<span className="cmt-math">a, b ∈ G</span>
+                {t(',则 ', ', then the commutator of ', ",則 ")}<span className="cmt-math">a</span>
+                {t(' 与 ', ' and ', " 與 ")}<span className="cmt-math">b</span>
+                {t(' 的换位子为 ', ' is the element ', " 的換位子為 ")}<span className="cmt-math">[a, b] = a b a⁻¹ b⁻¹</span>。
+                {t('表达式 ', ' The expression ', "表示式 ")}<span className="cmt-math">x : a</span>
                 {t(' 表示 ', ' denotes the conjugate of ')}<span className="cmt-math">a</span>
                 {t(' 被 ', ' by ')}<span className="cmt-math">x</span>
-                {t(' 共轭后的结果, 即 ', ', defined as ')}<span className="cmt-math">x a x⁻¹</span>。
+                {t(' 共轭后的结果, 即 ', ', defined as ', " 共軛後的結果, 即 ")}<span className="cmt-math">x a x⁻¹</span>。
                 {t('因此 ', ' Therefore, ')}<span className="cmt-math">c : [a, b]</span>
                 {t(' 表示 ', ' means ')}<span className="cmt-math">c a b a⁻¹ b⁻¹ c⁻¹</span>。
             </p>
@@ -622,15 +622,15 @@ function IntroTab({ t }: { t: (zh: string, en: string) => string }) {
             </p>
 
             <p>
-                {t('在数学中, 自由群 ', 'In mathematics, the free group ')}<span className="cmt-math">F_S</span>
-                {t(' 在给定集合 ', ' over a given set ')}<span className="cmt-math">S</span>
-                {t(' 上的元素由 S 的成员所构成的字 (word) 组成 — 仅当群公理决定两字相等时才视为同一元素 (例: ', ' consists of all words built from members of S — two words are equal only if the group axioms force them to be (e.g. ')}
+                {t('在数学中, 自由群 ', 'In mathematics, the free group ', "在數學中, 自由群 ")}<span className="cmt-math">F_S</span>
+                {t(' 在给定集合 ', ' over a given set ', " 在給定集合 ")}<span className="cmt-math">S</span>
+                {t(' 上的元素由 S 的成员所构成的字 (word) 组成 — 仅当群公理决定两字相等时才视为同一元素 (例: ', ' consists of all words built from members of S — two words are equal only if the group axioms force them to be (e.g. ', " 上的元素由 S 的成員所構成的字 (word) 組成 — 僅當群公理決定兩字相等時才視為同一元素 (例: ")}
                 <span className="cmt-math">s t = s u u⁻¹ t</span>{t(',但 ', ' but ')}<span className="cmt-math">s ≠ t⁻¹</span>
                 {t(')。', ').')}
             </p>
 
             <p>
-                {t('许多三阶魔方的 3-cycle / 5-cycle 公式都可以分解为换位子。', "Many 3-cycle and 5-cycle algorithms in a Rubik's cube can be decomposed into commutators.")}
+                {t('许多三阶魔方的 3-cycle / 5-cycle 公式都可以分解为换位子。', "Many 3-cycle and 5-cycle algorithms in a Rubik's cube can be decomposed into commutators.", "許多三階魔方的 3-cycle / 5-cycle 公式都可以分解為換位子。")}
             </p>
 
             <h3>{t('示例 1', 'Example 1')}</h3>
@@ -650,57 +650,57 @@ Output: "D:[F' R U' R',D' R D R']"`}</pre>
             <pre>{`Input:  s = "R' F' R D' R D R2 F2 R2 D' R' D R' F' R"
 Output: "R' F':[R D' R D R2,F2]"`}</pre>
 
-            <h3>{t('示例 5 (无解)', 'Example 5 (no solution)')}</h3>
+            <h3>{t('示例 5 (无解)', 'Example 5 (no solution)', "示例 5 (無解)")}</h3>
             <pre>{`Input:  s = "R U R'"
 Output: "Not found."`}</pre>
 
-            <h3>{t('约束', 'Constraints')}</h3>
+            <h3>{t('约束', 'Constraints', "約束")}</h3>
             <ul>
-                <li>{t('输入仅由英文字母 (动作记号) 组成。', 's consists of only English letters.')}</li>
+                <li>{t('输入仅由英文字母 (动作记号) 组成。', 's consists of only English letters.', "輸入僅由英文字母 (動作記號) 組成。")}</li>
             </ul>
         </section>
     );
 }
 
-function AboutTab({ t }: { t: (zh: string, en: string) => string }) {
+function AboutTab({ t }: { t: (zh: string, en: string, zhHant?: string) => string }) {
     return (
         <section className="cmt-pane cmt-about-pane">
             <h3>{t('原作者', 'Original Author')}</h3>
             <p>
-                {t('换位子算法与原版 Web 工具由 ', 'The commutator algorithm and original web tool are by ')}
+                {t('换位子算法与原版 Web 工具由 ', 'The commutator algorithm and original web tool are by ', "換位子演算法與原版 Web 工具由 ")}
                 <a href="https://zixingwang.com" target="_blank" rel="noopener noreferrer">Zixing Wang</a>
                 {t(' (', ' (')}<a href="https://github.com/nbwzx/commutator" target="_blank" rel="noopener noreferrer">nbwzx/commutator</a>{')'}{t('。', '.')}
             </p>
 
-            <h3>{t('本页', 'This Port')}</h3>
+            <h3>{t('本页', 'This Port', "本頁")}</h3>
             <p>
                 {t('本页将原 Bootstrap 多页站点重构为单页 React 工具, 嵌入到 cuberoot.me 公式库下。原 TypeScript 引擎 ',
-                  'This page rewraps the original multi-page Bootstrap site as a single React tool inside cuberoot.me Algorithm DB. The original TypeScript engine ')}
+                  'This page rewraps the original multi-page Bootstrap site as a single React tool inside cuberoot.me Algorithm DB. The original TypeScript engine ', "本頁將原 Bootstrap 多頁站點重構為單頁 React 工具, 嵌入到 cuberoot.me 公式庫下。原 TypeScript 引擎 ")}
                 <code>commutator.ts</code>
                 {t(' 仅做最小修改 (去掉 IIFE 包装, 改为 ES module 导出), 算法行为完全一致。',
-                  ' is unchanged apart from stripping the IIFE wrapper for ES module export — algorithm behavior is identical.')}
+                  ' is unchanged apart from stripping the IIFE wrapper for ES module export — algorithm behavior is identical.', " 僅做最小修改 (去掉 IIFE 包裝, 改為 ES module 匯出), 演算法行為完全一致。")}
             </p>
 
-            <h3>{t('许可', 'License')}</h3>
+            <h3>{t('许可', 'License', "許可")}</h3>
             <p>
-                {t('原项目以 ', 'The upstream project is licensed under ')}
+                {t('原项目以 ', 'The upstream project is licensed under ', "原項目以 ")}
                 <a href="https://mit-license.org" target="_blank" rel="noopener noreferrer">MIT</a>
-                {t(' 协议发布; 本端口同样遵守该许可。', '; this port inherits the same license.')}
+                {t(' 协议发布; 本端口同样遵守该许可。', '; this port inherits the same license.', " 協議釋出; 本埠同樣遵守該許可。")}
             </p>
 
-            <h3>{t('致谢', 'Support / Credits')}</h3>
+            <h3>{t('致谢', 'Support / Credits', "致謝")}</h3>
             <ul>
                 <li>{t('Excel 解析: ', 'Excel parsing: ')}<a href="https://sheetjs.com" target="_blank" rel="noopener noreferrer">SheetJS</a></li>
                 <li>
-                    {t('原页面图: ', 'Original homepage image: ')}
+                    {t('原页面图: ', 'Original homepage image: ', "原頁面圖: ")}
                     <a href="https://commons.wikimedia.org/wiki/File:Cayley_graph_of_F2.svg" target="_blank" rel="noopener noreferrer">Dbenbenn — Cayley graph of F₂</a>
                 </li>
                 <li>
-                    {t('原作者感谢 ', 'Original author thanks ')}
+                    {t('原作者感谢 ', 'Original author thanks ', "原作者感謝 ")}
                     <a href="https://github.com/abunickabhi" target="_blank" rel="noopener noreferrer">Abhijeet Ghodgaonkar</a>,{' '}
                     <a href="https://github.com/lgarron" target="_blank" rel="noopener noreferrer">Lucas Garron</a>,{' '}
                     <a href="https://github.com/jarlly678" target="_blank" rel="noopener noreferrer">Songtao Mao</a>
-                    {t(' 对原项目的建议。', ' for their valuable suggestions on the upstream project.')}
+                    {t(' 对原项目的建议。', ' for their valuable suggestions on the upstream project.', " 對原項目的建議。")}
                 </li>
             </ul>
         </section>
