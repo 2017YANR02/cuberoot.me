@@ -76,8 +76,7 @@
 - [x] **M1** 引擎加 move-mask 参数,贯穿 `cube_common` 的 valid_moves/search/enumerate。门:**全部现有 `cargo test --release` 仍绿(承重墙不能塌)**,且 mask=全集时与现状逐位相等(加一条对照测试锁死)。✅ 2026-06-11 全量 94/94 绿(1m27s);MoveMask=u32 对齐 Move::index,`*_masked` 新入口零破坏;4 条新测试(表级×2 + 全集逐位相等 + 限 G2 暴力对照)。
 - [x] **⏸ soft-gate(M2)** ✅ 2026-06-11 用户拍板:**做**,key `roux_s2`。展开为 M2a–M2e:
 - [x] **M2a** ~~引擎扩 move 集~~ — **2026-06-11 红灯→用户拍板走伪 roux_s2**(见 §3):原生扩 M/r 撞 18-stride 承重墙(重构引擎 + 重建 34GB 表),弃之。改由 M2b 在现有 18-move + 视角共轭里表达 ⟨M,U,R,r⟩,零引擎改动。M2a 作为"扩引擎"单元取消。
-- [⛔] **M2b** 伪 roux_s2 — **2026-06-11 soft-gate(见 §3):实质重复,建议弃**。推导:固定 18-move 模型 M 无法当 1 步(M≡R L' x',x' 是旋转非面转),伪路线只能给 FTM 最优 SB;而 Roux SB=右侧 1x2x3 块,与现有 `roux_s1_solver`(504×10560 全表 + 24 视角覆盖全部 24 个物理 1x2x3 块)逐位等价,cstimer roux1.js 亦只报 FTM。无现有变体没有的新统计。等用户定:弃整个 M2 → M3?
-- [ ] ~~**M2c/M2d/M2e**~~ analyzer / WASM+UI / 看板 —— **依赖 M2b 产出真求解器;M2b 既弃则一并取消**(若用户仍要 Roux SB 的 FTM 统计,直接暴露 `RouxS1Solver` 右块视角即可,无需新变体全链路)。
+- [x] ~~**M2b–M2e** roux_s2 全链路~~ — **2026-06-11 用户拍板弃整个 M2**。两路皆绝:扩引擎撞 18-stride 承重墙(M2a)、伪路线 FTM 最优 SB = 现有 `roux_s1_solver` 逐位重复(M2b,cstimer 亦只报 FTM)。roux_s2 不作为独立变体。若日后要 Roux SB 的 FTM 数,复用 `RouxS1Solver` 右块视角即可,无需新变体全链路。
 - [ ] **M3** HTR phase-2(G3→G4 限 ⟨U2,D2,L2,R2,F2,B2⟩ 当**搜索空间**)或等价受限搜索变体。照变体 playbook 全链路 + MANUAL 交接。
 
 ### EPIC 3 — 独立 puzzle 引擎(档3,每个都 GATED)
@@ -102,6 +101,7 @@
 - 2026-06-11 — **M2a 红灯**(见 §3):扩 ⟨M,U,R,r⟩ move 集撞 18-stride 承重墙(36 文件 + 34GB 表),触"绝不重构 cube_common"红线。loop 按协议停,等用户三选一。
 - 2026-06-11 — **M2 拍板:伪 roux_s2**。用户选 (A),M2a 扩引擎取消,M2b 改"18-move+共轭"伪路线 + design-first soft-gate(若实质=已有 123 系则停)。红灯解除,继续。
 - 2026-06-11 — **M2b soft-gate:伪路线亦死**(见 §3)。固定 18-move 模型 M 不可当 1 步,伪 roux_s2 = roux_s1 重复。roux_s2 整个 epic 两路皆绝。loop 停,等用户定弃 M2→M3。未写代码。
+- 2026-06-11 — **用户拍板弃整个 M2**(M2a–M2e 全取消,零代码)。下一个 = M3(HTR phase-2)。
 
 ---
 
