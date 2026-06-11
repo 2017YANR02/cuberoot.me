@@ -35,10 +35,14 @@ export class ChainSolverWasm {
     [Symbol.dispose](): void;
     constructor();
     /**
-     * scramble + 配置 JSON(per-stage {enabled,extra,cap,min,max,axes,excluded} +
-     * maxChains,'{}' = 默认)→ {"chains":[{"steps":[{kind,variant,m,len,cum}],
-     * "total":N}]}。m = HOME 帧步骤串(无视角前缀)。打乱不可解析或无链 →
-     * {"chains":[]} 哨兵;非法配置 JSON 整体回落默认配置。
+     * scramble + 配置 JSON(per-stage {enabled,extra,cap,min,max,axes,excluded,
+     * niss} + maxChains,'{}' = 默认;niss 默认 eo/dr/htr/fr 开、fin 强制关)→
+     * {"chains":[{"steps":[{kind,variant,m,len,cum,inv?}],"solution":"...",
+     * "total":N}]}。m = 该步 HOME 帧串(无视角前缀);"inv":true = 整步做在
+     * inverse 打乱上(NISS-Before);solution = 线性化最终解 N ++ rev_inv(I)
+     * (normal 打乱上单序列),total = 其长度;cum = 截至该步总步数 N.len+I.len。
+     * excluded 串 = 「累计 N '|' 累计 I」(无 '|' = I 空,向后兼容)。打乱不可
+     * 解析或无链 → {"chains":[]} 哨兵;非法配置 JSON 整体回落默认配置。
      */
     solve_chain(scramble: string, config_json: string): string;
 }
