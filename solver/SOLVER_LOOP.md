@@ -97,9 +97,9 @@
 - [x] **P2d** WASM 类 + 重建仪式 + **在线最优求解器 UI**。✅ 2026-06-11 `8b92c6312`(9 文件)。路由 `/scramble/pocket` + hub 卡片;新范式组件 `scramble/_components/PuzzleOptimalSolver.tsx`(spec 驱动 event/title/need/solve/tokenRe,后三 puzzle 各写 spec 复用);nuqs `?scramble=`,2D 展开图,cubing-scramble 222 随机。Rust 关键决策:`new_lean()` 新入口(联合移动表 132MB 浏览器吃不消 → 只建 3.6MB 距离表现场转移)+ `solve_one_any`/`enumerate_any` 24 旋转归一(解带整体旋转前缀);零盘表零下载,V bump 20260611e。门:cargo pocket 6/6(lean↔full 全空间相等)+ node 冒烟 12 条 native↔wasm 相等 + cubing.js replay 12/12 + typecheck/zh 绿 + playwright 桌面+390px 全 PASS 0 error。
 - [x] **P2e** `/code/solvers` 看板登记 + **📦 MANUAL(2x2x2)** 灌注/发布交接写 §3。✅ 2026-06-11 `7059b70c1`(1 文件)。NATIVE 加 pocket(rate null「未实测」+ `puzzle:'2x2x2'` 字段如实标非 3x3)、回填进度区 pocket 单独「待灌注」行不掺 3x3 百分比、TABLES 零盘表条目、BROWSER PocketSolverWasm、small 概览卡;typecheck EXIT=0 + tokens-drift/zh-hant-drift 39 测试绿。**EPIC 3.1(2x2x2)代码侧全链路完成**,MANUAL 交接见 §3。
 
-#### EPIC 3.2 — Pyraminx(核心 75,582 × 顶点 3^4 = 933,120;solver 参考 cstimer `pyraminx.js`)
-> 照 2x2x2 范式。注意:顶点(tips)trivial 可分离,核心/含顶点两种步数口径在 P3a 推导时定(WCA 打乱含小写顶点记号 u/l/r/b,analyzer 必须能吃全 WCA pyram 记号);态数/件集合自行从 cstimer 推导并独立暴力对照,别信记忆。
-- [ ] **P3a** Rust 核心 `pyraminx_solver.rs`(key `pyraminx`,独立状态模型,全表 BFS 零盘表)。门:cargo test --release pyraminx 绿,含独立暴力对照 + 距离分布对公开数据。
+#### EPIC 3.2 — Pyraminx(核心 933,120 × 顶点 3^4=81 → 含 tips 75,582,720;solver 参考 cstimer `pyraminx.js`)
+> 照 2x2x2 范式。注意:顶点(tips)trivial 可分离,步数口径已在 P3a 锁定(总 HTM = 核心查表最优 + 错位 tip 数,有定理证明 + 75.6M 全空间验证);WCA 打乱含小写顶点记号 u/l/r/b,analyzer 必须能吃全记号。
+- [x] **P3a** Rust 核心 `pyraminx_solver.rs`(key `pyraminx`)。✅ 2026-06-11 `2f5a4427c`。独立 PyraState(6 棱偶置换 360×翻转 32 + 4 轴心 3^4),move 几何 Rodrigues 实算推导与 cstimer 逐项吻合;核心 933,120 全可达(闭包独立验证,原条目"75,582"系含 tips 总数 75,582,720 的截断笔误,已实算修正);核心距离表 0.9MB+移动表 29.9MB 现场建 ~1s 零盘表;口径=核心最优+错位 tip 数(精确,联合 BFS 75.6M 逐态验证加法公式);God's number 核心 11(分布对 jaapsch 逐项锁)/含 tips 15(卷积逐项断言);5/5 测试绿 + 全量 lib 116/0 + cubing.js 手性 replay 4/4。
 - [ ] **P3b** analyzer bin `pyraminx_analyzer.rs` + `tests/e2e_pyraminx.rs`(照 pocket_analyzer;吃全 WCA pyram 记号含顶点)。门:e2e 绿 + smoke 形状对。
 - [ ] **P3c** 统计管线:`build_puzzle_dist.ts` PUZZLES 注册表加 pyraminx(event_id `pyram`)+ 小样本验形(照 playbook §8)。门:端到端小样本绿。
 - [ ] **P3d** WASM 类 + 重建仪式 + `/scramble/pyraminx`(PuzzleOptimalSolver 新 spec)。门:typecheck + node 冒烟 native↔wasm 相等 + playwright(replay 独立验证)。
@@ -135,6 +135,7 @@
 - 2026-06-11 — **P2c** 非 3x3 统计管线注册,`550f71c0d`。puzzle_distribution.json 新形态 + update_puzzle_stats.ps1 增量管道 + 数据契约 lib/puzzle-distribution.ts + 范式入 playbook §8;350 条小样本两跑验形。(harness 报 build_puzzle_dist.ts node 类型诊断 = LSP 误报,import 与既有 build.ts 同款且 tsx 实跑两遍绿。)
 - 2026-06-11 — **P2d** pocket WASM + /scramble/pocket 在线最优求解器,`8b92c6312`。new_lean 3.6MB 距离表(弃 132MB 联合移动表)+ 24 旋转归一出解;PuzzleOptimalSolver spec 范式;全门绿(cargo/冒烟/replay/typecheck/playwright)。wasm 产物与并行 session 的 chain 变体 commit(7da7e2c02)字节一致免重复提交。
 - 2026-06-11 — **P2e** pocket 看板登记,`7059b70c1`。typecheck + 39 守卫测试绿。**EPIC 3.1 完成**,MANUAL(2x2x2) 交接入 §3;EPIC 3.2(Pyraminx)按既定计划细化为 P3a–P3e。下一个 = P3a。
+- 2026-06-11 — **P3a** pyraminx Rust 核心,`2f5a4427c`。核心 933,120(修正 backlog 笔误)/含 tips 75.6M 全空间验证;口径=核心最优+tip 数(定理+全空间断言);God 数 11/15 对公开数据逐项锁;5/5 + lib 116/0 + cubing.js 手性 4/4。
 
 ---
 
