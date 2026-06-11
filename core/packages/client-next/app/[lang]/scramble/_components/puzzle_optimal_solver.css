@@ -1,0 +1,165 @@
+/* 非 3x3 在线整解最优求解器(PuzzleOptimalSolver)— pocket 先行,后续 puzzle 复用 */
+
+.pos-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  color: var(--foreground);
+}
+
+.pos-page h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.pos-lead {
+  margin: 0 0 1.25rem;
+  color: var(--muted-foreground);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.pos-input-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.pos-input-wrap {
+  position: relative;
+  flex: 1 1 280px;
+  display: flex;
+}
+
+.pos-input {
+  width: 100%;
+  padding: 0.55rem 2rem 0.55rem 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 8px;
+}
+
+.pos-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.pos-input-wrap .clear-btn {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.pos-random-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.9rem;
+  color: var(--primary-foreground);
+  background: var(--primary);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pos-random-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.pos-error {
+  margin: 0.8rem 0 0;
+  color: var(--destructive);
+  font-size: 0.9rem;
+}
+
+.pos-error code {
+  font-family: var(--font-mono);
+}
+
+.pos-preview {
+  margin-top: 1.1rem;
+}
+
+.pos-result {
+  margin-top: 1.1rem;
+}
+
+.pos-solving {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+
+.pos-spin {
+  animation: pos-spin 0.9s linear infinite;
+}
+
+@keyframes pos-spin {
+  to { transform: rotate(360deg); }
+}
+
+.pos-result-len {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.pos-result-num {
+  font-size: 2rem;
+  font-weight: 650;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.pos-result-metric {
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+
+.pos-result-ms {
+  margin-left: auto;
+  color: var(--faint-foreground);
+  font-size: 0.78rem;
+}
+
+.pos-result-sol {
+  margin: 0.55rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  word-break: break-word;
+  user-select: all;
+}
+
+.pos-result-solved {
+  margin: 0.55rem 0 0;
+  color: var(--signal-success);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 480px) {
+  .pos-page {
+    padding: 1rem 0.75rem 2rem;
+  }
+
+  .pos-page h1 {
+    font-size: 1.3rem;
+  }
+
+  .pos-random-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
