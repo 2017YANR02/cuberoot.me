@@ -108,6 +108,13 @@
     "long_en": "algorithm database powering `/algdb` (2x2/3x3/4x4/5x5 alg sets — F2L, OLL, PLL, COLL, ZBLL, 1LLL, OLLCP, VLS, parity, L2E, L2C, …; scraped via `scramble-stats-build/bin/scrape_speedcubedb.ts`)"
   },
   {
+    "name": "speedcubedb.com/analyze",
+    "url": "https://speedcubedb.com/analyze",
+    "zh": "打乱分析器算法来源(/scramble/analyzer 的 CFOP 解法枚举)",
+    "en": "Scramble analyzer algorithm (CFOP solution enumerator for /scramble/analyzer)",
+    "long_en": "CFOP solution-enumeration algorithm (cross + F2L + OLL + PLL) ported into the `/scramble/analyzer` page"
+  },
+  {
     "name": "nbwzx/commutator",
     "url": "https://github.com/nbwzx/commutator",
     "zh": "换位子分解 / 展开引擎(Zixing Wang;ES module 重封装,UI 重写 React)",

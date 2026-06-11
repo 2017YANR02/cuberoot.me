@@ -54,7 +54,7 @@ export const STAT_ICONS: Record<string, LucideIcon> = {
   most_solves_before_bld_success: EyeOff,
   most_visited_continents: Globe2,
   most_visited_countries: MapPin,
-  name_parts_count: Type,
+  name_stats: Type,
   shortest_time_to_reach_milestone_in_comps_count: Flag,
   shortest_time_to_get_all_singles: Grid2x2,
   shortest_time_to_get_all_singles_and_averages: LayoutGrid,

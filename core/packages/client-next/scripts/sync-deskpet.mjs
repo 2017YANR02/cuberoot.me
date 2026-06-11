@@ -43,6 +43,13 @@ const SOURCES = [
   { id: 'cloudling', from: 'themes/cloudling/assets', to: 'deskpet/cloudling', prefix: 'cloudling-', exts: ['.svg', '.apng'] },
 ];
 
+// Turbopack dev does not serve `.apng` (404), so we store APNG assets on disk as
+// `.png` — APNG is a valid PNG container, browsers animate it from the .png
+// extension just the same. Upstream still ships `.apng`; normalize on copy and in
+// every drift comparison so the registry (.png) ↔ theme.json (.apng) ↔ disk (.png)
+// diff stays clean.
+const toLocal = (f) => (f.endsWith('.apng') ? f.slice(0, -5) + '.png' : f);
+
 const c = {
   dim: (s) => `\x1b[2m${s}\x1b[0m`,
   bold: (s) => `\x1b[1m${s}\x1b[0m`,
@@ -102,7 +109,7 @@ function copyAssets() {
       if (!src.exts.some((e) => f.endsWith(e))) continue;
       const a = join(fromDir, f);
       if (!statSync(a).isFile()) continue;
-      const b = join(toDir, f);
+      const b = join(toDir, toLocal(f));
       const exists = existsSync(b);
       const diff = exists ? hash(a) !== hash(b) : true;
       if (!exists) added++;
@@ -126,10 +133,10 @@ function upstreamFiles(themeJsonPath) {
   const out = new Set();
   const re = /\.(svg|apng)$/;
   const walk = (v) => {
-    if (typeof v === 'string') { if (re.test(v)) out.add(v); }
+    if (typeof v === 'string') { if (re.test(v)) out.add(toLocal(v)); }
     else if (Array.isArray(v)) v.forEach(walk);
     else if (v && typeof v === 'object') {
-      for (const [k, val] of Object.entries(v)) { if (re.test(k)) out.add(k); walk(val); }
+      for (const [k, val] of Object.entries(v)) { if (re.test(k)) out.add(toLocal(k)); walk(val); }
     }
   };
   walk(j);
@@ -143,7 +150,7 @@ function registryFiles() {
   for (const id of SOURCES.map((s) => s.id)) {
     const m = new RegExp(`${id}:\\s*\\{[\\s\\S]*?files:\\s*\\{([\\s\\S]*?)\\}`).exec(tsx);
     const set = new Set();
-    if (m) for (const f of m[1].match(/[\w-]+\.(?:svg|apng)/g) || []) set.add(f);
+    if (m) for (const f of m[1].match(/[\w-]+\.(?:svg|apng|png)/g) || []) set.add(toLocal(f));
     byId[id] = set;
   }
   return byId;
@@ -151,7 +158,7 @@ function registryFiles() {
 
 function diskFiles(toDir) {
   const d = join(PUBLIC, toDir);
-  return new Set(existsSync(d) ? readdirSync(d).filter((f) => /\.(svg|apng)$/.test(f)) : []);
+  return new Set(existsSync(d) ? readdirSync(d).filter((f) => /\.(svg|apng|png)$/.test(f)).map(toLocal) : []);
 }
 
 console.log('\n' + c.bold('Mapping drift') + c.dim(' (theme.json ↔ DeskPet THEMES ↔ disk)'));

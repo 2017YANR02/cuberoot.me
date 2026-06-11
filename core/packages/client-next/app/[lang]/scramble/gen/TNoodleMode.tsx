@@ -29,7 +29,7 @@ import { type WcaScrambleRow } from '@/lib/wca-results-api';
 import { fetchCompName } from '@/lib/comp-wcif';
 import { apiUrl } from '@/lib/api-base';
 import { eventDisplayName } from '@/lib/wca-events';
-import { VARIANT_LABEL, VARIANT_ORDER, type ScrambleVariant } from '@/lib/scramble-variants';
+import { VARIANT_LABEL, VARIANT_ORDER, BLOCK_STAGE_VARIANT, stageLabel, type ScrambleVariant } from '@/lib/scramble-variants';
 import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { CSTIMER_NONWCA_APPEND, CSTIMER_EVENT_IDS, CSTIMER_EVENTS, cstimerScramble, isCstimerEvent } from '@/lib/cstimer-scramble';
 import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEvent, shapeModSourceEvent } from '@/lib/shape-mod-scramble';
@@ -86,8 +86,10 @@ const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2le
   pseudo_pair: { stages: F2L_STAGES, engine: 'variant' },
   f2leo: { stages: F2L_STAGES, engine: 'f2leo' },
   pseudo_f2leo: { stages: F2L_STAGES, engine: 'f2leo' },
-  // 块族:Roux223SolverWasm / EoDrSolverWasm 浏览器现算(useRoux223StepMap 内部按
-  // variant 选池 need),comp_steps 命中则秒出。
+  // 块族:UI 聚合为方法 'block'(阶段=块形状);数据层按 metric 经 BLOCK_STAGE_VARIANT
+  // 映射回 123/222/223/123x2(comp_steps 文件 + WASM need 都按底层变体取)。
+  // Roux223SolverWasm / EoDrSolverWasm 浏览器现算,comp_steps 命中则秒出。
+  block: { stages: ['b122', 'b123', 'b222', 'b223', 'bf2b'], engine: 'roux223' },
   '123': { stages: ['b122', 'b123'], engine: 'roux223' },
   '123x2': { stages: ['bf2b'], engine: 'roux223' },
   '222': { stages: ['b222'], engine: 'roux223' },
@@ -97,24 +99,7 @@ const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2le
 };
 const EMPTY_STEP: StepMapState = { map: null, ready: true, done: 0, total: 0, error: null };
 const EMPTY_MAP_TN: Map<string, number[]> = new Map();
-// 阶段下拉显示名(metric → 标签);XCross 系沿用 stats 写法,中英一致。
-const STAGE_LABEL: Record<Metric, { zh: string; en: string
-        zhHant?: string;
- }> = {
-  cross: { zh: '十字', en: 'Cross' },
-  xc: { zh: 'XCross', en: 'XCross' },
-  xxc: { zh: 'XXCross', en: 'XXCross' },
-  xxxc: { zh: 'XXXCross', en: 'XXXCross' },
-  xxxxc: { zh: 'XXXXCross', en: 'XXXXCross' },
-  b122: { zh: '1x2x2', en: '1x2x2' },
-  b123: { zh: '1x2x3', en: '1x2x3' },
-  b222: { zh: '2x2x2', en: '2x2x2' },
-  b223: { zh: '2x2x3', en: '2x2x3' },
-  bf2b: { zh: '1x2x3 x2', en: '1x2x3 x2' },
-  beo: { zh: 'EO', en: 'EO' },
-  beoline: { zh: 'EOLine', en: 'EOLine' },
-  bdr: { zh: 'DR', en: 'DR' },
-};
+// 阶段下拉显示名走 lib/scramble-variants 的 stageLabel(b 前缀指标键已在表内别名)。
 
 interface Props {
   t: (zh: string, en: string) => string;
@@ -859,6 +844,9 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const variantEngine = vspec.engine;
   // metric 落在当前变体阶段集外(切变体后)→ 视为该变体首阶段(std=cross),避免越界取数。
   const safeMetric: Metric = vspec.stages.includes(metric) ? metric : vspec.stages[0];
+  // UI 聚合方法 'block' → 数据层底层变体由当前 metric 决定(b122/b123→123,b222→222,
+  // b223→223,bf2b→123x2);comp_steps 文件 + WASM need 都按它取。
+  const dataVariant: VariantKey = variant === 'block' ? (BLOCK_STAGE_VARIANT[safeMetric] ?? '123') : variant;
   // 切变体后复位越界 metric(同步 select)。
   useEffect(() => {
     if (!VARIANT_SPEC[variant].stages.includes(metric)) setMetric(VARIANT_SPEC[variant].stages[0]);
@@ -869,7 +857,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const crossA = useCrossMap(showCross && is333Family && variantEngine === 'std' ? analysisScrambles : NO_SCRAMBLES);
   // 预计算步数表:每个变体取自己的 comp_steps 目录(命中秒出)。404 → std/f2leo 退实时
   // 引擎;无 client 引擎的变体(eo/pair/pseudo/pseudo_pair)显示「暂无数据」而非永远转圈。
-  const compSteps = useCompSteps(showCross && is333Family ? loadedCompId : null, variant);
+  const compSteps = useCompSteps(showCross && is333Family ? loadedCompId : null, dataVariant as Exclude<VariantKey, 'block'>);
   const uncovered = useMemo(() => {
     if (!(showCross && is333Family) || !compSteps.ready) return NO_SCRAMBLES;
     if (!compSteps.map) return analysisScrambles;
@@ -906,7 +894,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   );
   // 123 / 222 / 223:Roux223SolverWasm 浏览器现算(同上,comp_steps 未覆盖的打乱)。
   const roux223Scrambles = variantEngine === 'roux223' ? uncovered : NO_SCRAMBLES;
-  const roux223Live = useRoux223StepMap(roux223Scrambles, variantEngine === 'roux223', variant);
+  const roux223Live = useRoux223StepMap(roux223Scrambles, variantEngine === 'roux223', dataVariant);
   const roux223CrossMap = useMemo(() => {
     const m = new Map<string, number[]>();
     if (variantEngine === 'roux223' && roux223Live.map) for (const [s, v] of roux223Live.map) m.set(s, v.slice(0, 6));
@@ -1462,7 +1450,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                   aria-label={t('阶段', 'Stage')}
                 >
                   {vspec.stages.map((mk) => (
-                    <option key={mk} value={mk}>{t(STAGE_LABEL[mk].zh, STAGE_LABEL[mk].en)}</option>
+                    <option key={mk} value={mk}>{stageLabel(mk, isZh)}</option>
                   ))}
                 </select>
               )}
@@ -1536,7 +1524,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 rowDigits={showCross && is333Family ? rowDigits : undefined}
                 analyzable={showCross && is333Family}
                 metric={metric}
-                variant={variant}
+                variant={dataVariant}
                 selectedLabel={selected && sh.groupIdx === selected.groupIdx ? selected.label : null}
                 onSelectScramble={(label) => selectScramble(sh.groupIdx, label)}
                 clockColors={!loadedCompId && sh.event === 'clock' ? events[sh.event]?.colors : undefined}

@@ -1,0 +1,202 @@
+/* name_stats 可视化(/wca/* dark-locked,直接用 token) */
+
+.ns-view {
+  margin-top: 6px;
+}
+
+/* tabs */
+.ns-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.ns-tab {
+  padding: 7px 18px;
+  border-radius: 9px;
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.ns-tab:hover {
+  color: var(--foreground);
+  border-color: var(--border-strong);
+}
+
+.ns-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* list */
+.ns-list {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.ns-row {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+/* main: key + bar + count */
+.ns-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ns-key {
+  flex: 0 0 auto;
+  min-width: 2.8em;
+  text-align: right;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.ns-unit {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  margin-left: 2px;
+}
+
+.ns-bar {
+  flex: 1 1 auto;
+  height: 12px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  overflow: hidden;
+}
+
+.ns-bar-fill {
+  height: 100%;
+  min-width: 3px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, transparent), var(--accent));
+}
+
+.ns-count {
+  flex: 0 0 auto;
+  min-width: 5.2em;
+  text-align: right;
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.ns-count-unit {
+  font-size: .72rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  margin-left: 2px;
+}
+
+/* sub: 缩进对齐到 bar 起点下方 */
+.ns-sub {
+  padding-left: calc(2.8em + 14px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* country flag + pct chips */
+.ns-countries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 15px;
+}
+
+.ns-country {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.ns-country-name {
+  margin-right: 4px;
+}
+
+/* names: 行内流式,长名按空格换行,国旗紧贴名字 */
+.ns-names {
+  line-height: 2;
+  font-size: 13.5px;
+}
+
+.ns-person {
+  display: inline;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.ns-person:hover {
+  text-decoration: underline;
+}
+
+.ns-sep {
+  color: var(--muted-foreground);
+}
+
+.ns-more {
+  color: var(--muted-foreground);
+}
+
+.ns-names-details > summary {
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+
+.ns-names-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ns-names-details > summary::before {
+  content: '▸';
+  font-size: 10px;
+  transition: transform .15s;
+}
+
+.ns-names-details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.ns-names-details[open] > summary {
+  margin-bottom: 8px;
+}
+
+/* 窄屏收紧 */
+@media (max-width: 480px) {
+  .ns-key {
+    font-size: 1.25rem;
+    min-width: 2.2em;
+  }
+  .ns-main {
+    gap: 10px;
+  }
+  .ns-count {
+    min-width: 0;
+  }
+  .ns-sub {
+    padding-left: calc(2.2em + 10px);
+  }
+}

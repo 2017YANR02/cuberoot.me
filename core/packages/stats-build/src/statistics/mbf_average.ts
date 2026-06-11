@@ -1,27 +1,16 @@
-// NOTE: 333mbf/333mbo Mo3 平均值
-// 333mbf：从 DB 计算 Mo3，WCA 编码 0DDTTTTTMM，DD/TTTTT/MM 分别取均值（ROUND）后拼接
-// 333mbo：历史上仅 1 人完成过 3 轮，硬编码数据
-// 此类同时作为独立统计页面和数据提供者（供 WrAverageHistory 委托）
+// NOTE: 333mbf/333mbo Mo3 平均值——数据引擎(非页面)
+// 独立页 /wca/mbf_average 已退役(2026-06-10);此类不再产页面 JSON,只作数据提供者:
+//   wr_current        → bestRankingRow()(历史最佳 Mo3 一行)
+//   wr_average_history → rankingFor() / historyFor()(排名 + WR 历史)
+// 算法:333mbf 从 DB 算 Mo3,WCA 编码 0DDTTTTTMM 拆 DD/TTTTT/MM 各取均值(ROUND)再拼;
+//      333mbo 历史上仅 1 人完成过 3 轮,硬编码。
 import { formatDate, calcDays, filterWrHistory } from '../core/format_date.js';
 import { Statistic } from '../core/statistic.js';
-import { EVENTS, headerZh, eventZh } from '../core/events.js';
+import { EVENTS } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
 import { ATTEMPTS_SUBQUERY } from '../core/database.js';
 import { mbfMo3 } from '../core/mbf_average.js';
-import type { StatJson, StatPanel, StatSection, TableHeader } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
-
-// NOTE: 排名表头（标准 RANKING_HEADER + Details）
-const RANKING_HEADER: TableHeader = {
-  '#': 'right', 'Person': 'left', 'Mo3': 'right',
-  'Country': 'left', 'Date': 'left', 'Competition': 'left', 'Details': 'left',
-};
-
-// NOTE: 历史表头（7 列，含 Details）——独立页面使用
-const HISTORY_HEADER: TableHeader = {
-  'Mo3': 'right', 'Improvement': 'right', 'Days': 'right',
-  'Person': 'left', 'Date': 'left', 'Competition': 'left', 'Details': 'left',
-};
 
 // NOTE: 333mbo 历史上仅 Constantin Ceausu 在 ECC 2006 完成过 Mo3
 // 三次成绩均无时间记录（旧格式不记录时间），硬编码显示字符串
@@ -58,7 +47,6 @@ export class MbfAverage extends Statistic {
       'WCA 编码值 0DDTTTTTMM 被拆分为 DD（99 减差值）、TTTTT（秒数）和 MM（失败数）。' +
       '三次尝试各部分分别取均值并四舍五入后重新拼接，用于排名。' +
       '333mbo 数据为硬编码（历史上仅有一人完成过 Mo3）。';
-    this.tableHeader = HISTORY_HEADER;
   }
 
   query(): string {
@@ -193,54 +181,5 @@ export class MbfAverage extends Statistic {
     await this.computeData();
     const rows = this._ranking[eventName];
     return rows && rows.length > 0 ? rows[0] : null;
-  }
-
-  // NOTE: 覆写 toJson——输出 panels（Ranking + History），双项目分节
-  async toJson(): Promise<StatJson> {
-    await this.computeData();
-
-    const mbfName = EVENTS['333mbf'];
-
-    const buildHeader = (header: TableHeader) =>
-      Object.entries(header).map(([label, align]) => ({
-        key: label.toLowerCase().replace(/\s+/g, '_'),
-        label, labelZh: headerZh(label), align,
-      }));
-
-    const rankingSections: StatSection[] = Object.entries(this._ranking)
-      .filter(([, rows]) => rows.length > 0)
-      .map(([title, rows]) => ({ title, titleZh: eventZh(title), rows }));
-
-    // NOTE: history 数据结构：{ event_name => rows }
-    const historyData: Record<string, unknown[][]> = {
-      [mbfName]: this._mbfHistory,
-      [MBO_EVENT_NAME]: MBO_HISTORY,
-    };
-    const historySections: StatSection[] = Object.entries(historyData)
-      .filter(([, rows]) => rows.length > 0)
-      .map(([title, rows]) => ({ title, titleZh: eventZh(title), rows }));
-
-    const panels: StatPanel[] = [
-      {
-        id: 'ranking', labelEn: 'Ranking', labelZh: '排名',
-        header: buildHeader(RANKING_HEADER),
-        sections: rankingSections,
-      },
-      {
-        id: 'history', labelEn: 'History', labelZh: '历史',
-        header: buildHeader(HISTORY_HEADER),
-        sections: historySections,
-      },
-    ];
-
-    return {
-      id: this.id,
-      title: this.title,
-      titleZh: this.titleZh || this.title,
-      ...(this.note ? { note: this.note } : {}),
-      ...(this.noteZh ? { noteZh: this.noteZh } : {}),
-      header: [],
-      panels,
-    };
   }
 }

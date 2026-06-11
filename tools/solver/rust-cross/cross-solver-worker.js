@@ -55,8 +55,11 @@ async function init(glueUrl, wasmUrl, tablesBase, need) {
   } else if (need === 'roux223') {
     // FB(方块/1x2x3/双1x2x3)+ Petrus(2x2x2/2x2x3):4 张小表;方块与 2x2x2 即建,
     // 1x2x3 全表(5.3M 态)与 2x2x3 启发式表首次查询时惰性 BFS(~秒级);f2b 复用 1x2x3 表。
+    // 表是 block222 所需(mt_edge3+mt_corn)的超集 → 顺手把 Block222 求解器也建上,
+    // UI「砖」方法内切阶段(含 2x2x2)同一个池服务,不用换池重载。
     const [e3, c2, e2, c] = await Promise.all(['mt_edge3', 'mt_corn2', 'mt_edge2', 'mt_corn'].map(get));
     roux223Solver = new mod.Roux223SolverWasm(e3, c2, e2, c);
+    block222Solver = new mod.Block222SolverWasm(e3, c);
   } else if (need === 'eodr') {
     // EO/EOLine/DR:零表下载,全部微表现场从内置运动学建(EOLine 即建,DR 首查惰性)。
     eoDrSolver = new mod.EoDrSolverWasm();

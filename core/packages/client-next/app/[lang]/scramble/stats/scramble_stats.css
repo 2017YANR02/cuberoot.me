@@ -442,6 +442,13 @@
   flex-shrink: 0;
   margin-top: 0.12rem;
 }
+.scramble-stats-examples-cube {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: flex-start;
+  line-height: 0;
+  margin-top: 0.05rem;
+}
 .scramble-stats-examples-body {
   display: flex;
   flex-direction: column;

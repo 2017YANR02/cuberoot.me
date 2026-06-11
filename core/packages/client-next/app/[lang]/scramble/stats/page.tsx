@@ -11,12 +11,16 @@ import ScrambleLengthView, {
 import WcaEventSelector from '@/components/WcaEventSelector';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
+import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { Flag } from '@/components/Flag';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { statsUrl } from '@/lib/stats-base';
-import { variantLabel, type ScrambleVariant } from '@/lib/scramble-variants';
+import {
+  variantLabel, stageLabel, isBlockVariant, VARIANT_STAGES, BLOCK_STAGE_VARIANT,
+  type ScrambleVariant,
+} from '@/lib/scramble-variants';
 import {
   SubsetColorPicker, useSubsetSelection, fillColorsForSubset,
   COLOR_HEX, type ColorLetter,
@@ -98,51 +102,7 @@ type VariantKey = ScrambleVariant;
 type YMode = 'percent' | 'count';
 type ChartMode = 'pdf' | 'cdf';
 
-const STAGE_LABEL: Record<string, { en: string; zh: string
-        zhHant?: string;
- }> = {
-  cross: { en: 'Cross', zh: '十字' },
-  eo_cross: { en: 'Cross', zh: '十字' },
-  cross_pair: { en: 'Cross', zh: '十字' },
-  pseudo_cross: { en: 'Cross', zh: '十字' },
-  pseudo_cross_pseudo_pair: { en: 'Cross', zh: '十字' },
-  xcross: { en: 'XCross', zh: 'XCross' },
-  eo_xcross: { en: 'XCross', zh: 'XCross' },
-  xcross_pair: { en: 'XCross', zh: 'XCross' },
-  pseudo_xcross: { en: 'XCross', zh: 'XCross' },
-  pseudo_xcross_pseudo_pair: { en: 'XCross', zh: 'XCross' },
-  xxcross: { en: 'XXCross', zh: 'XXCross' },
-  eo_xxcross: { en: 'XXCross', zh: 'XXCross' },
-  xxcross_pair: { en: 'XXCross', zh: 'XXCross' },
-  pseudo_xxcross: { en: 'XXCross', zh: 'XXCross' },
-  pseudo_xxcross_pseudo_pair: { en: 'XXCross', zh: 'XXCross' },
-  xxxcross: { en: 'XXXCross', zh: 'XXXCross' },
-  eo_xxxcross: { en: 'XXXCross', zh: 'XXXCross' },
-  xxxcross_pair: { en: 'XXXCross', zh: 'XXXCross' },
-  pseudo_xxxcross: { en: 'XXXCross', zh: 'XXXCross' },
-  pseudo_xxxcross_pseudo_pair: { en: 'XXXCross', zh: 'XXXCross' },
-  f2leo_cross: { en: 'Cross', zh: '十字' },
-  pseudo_f2leo_cross: { en: 'Cross', zh: '十字' },
-  f2leo_xcross: { en: 'XCross', zh: 'XCross' },
-  pseudo_f2leo_xcross: { en: 'XCross', zh: 'XCross' },
-  f2leo_xxcross: { en: 'XXCross', zh: 'XXCross' },
-  pseudo_f2leo_xxcross: { en: 'XXCross', zh: 'XXCross' },
-  f2leo_xxxcross: { en: 'XXXCross', zh: 'XXXCross' },
-  pseudo_f2leo_xxxcross: { en: 'XXXCross', zh: 'XXXCross' },
-  f2l: { en: 'XXXXCross', zh: 'XXXXCross' },
-  xxxxcross: { en: 'XXXXCross', zh: 'XXXXCross' },
-  eo_xxxxcross: { en: 'XXXXCross', zh: 'XXXXCross' },
-  block222: { en: '2x2x2', zh: '2x2x2' },
-  fbsquare: { en: '1x2x2', zh: '1x2x2' },
-  rouxs1: { en: '1x2x3', zh: '1x2x3' },
-  block223: { en: '2x2x3', zh: '2x2x3' },
-  f2b: { en: '1x2x3 x2', zh: '1x2x3 x2' },
-  eo: { en: 'EO', zh: 'EO' },
-  eoline: { en: 'EOLine', zh: 'EOLine' },
-  dr: { en: 'DR', zh: 'DR' },
-};
-
-const labelStage = (s: string, isZh: boolean) => STAGE_LABEL[s] ? STAGE_LABEL[s][isZh ? 'zh' : 'en'] : s;
+// 阶段显示名走全站单一真源 lib/scramble-variants 的 stageLabel(剥变体前缀/后缀)。
 
 function computeStats(counts: Record<string, number>) {
   const entries = Object.entries(counts)
@@ -562,6 +522,17 @@ export default function ScrambleStatsPage() {
       zhHant: "{n} 條樣本"
 }).replace('{n}', currentSet.sample_count.toLocaleString());
 
+  // 方法下拉:数据层块变体(123/123x2/222/223)聚合显示为「砖」;阶段下拉列块形状,
+  // 选中时经 BLOCK_STAGE_VARIANT 落回底层变体,数据/示例/下载全走原 variant+stage 键。
+  const methodOptions = (Object.keys(currentSet.variants) as VariantKey[]).reduce<VariantKey[]>((acc, v) => {
+    const k = isBlockVariant(v) ? 'block' : v;
+    if (!acc.includes(k as VariantKey)) acc.push(k as VariantKey);
+    return acc;
+  }, []);
+  const blockStages = VARIANT_STAGES.block.filter((s) =>
+    currentSet.variants[BLOCK_STAGE_VARIANT[s]]?.stages.includes(s));
+  const isBlockUi = isBlockVariant(variant);
+
   return (
     <div className="scramble-stats-page">
       {header}
@@ -571,20 +542,36 @@ export default function ScrambleStatsPage() {
           <SubsetColorPicker sel={sel} isZh={isZh} />
         </div>
         <label>
-          <select value={variant} onChange={(e) => setVariant(e.target.value as VariantKey)} aria-label={tr({ zh: '变体', en: 'Variant',
+          <select
+            value={isBlockUi ? 'block' : variant}
+            onChange={(e) => {
+              const v = e.target.value as VariantKey;
+              if (v === 'block') {
+                const s = blockStages[0];
+                if (s) { setVariant(BLOCK_STAGE_VARIANT[s] as VariantKey); setStage(s); }
+              } else setVariant(v);
+            }}
+            aria-label={tr({ zh: '变体', en: 'Variant',
               zhHant: "變體"
         })}>
-            {currentSet && (Object.keys(currentSet.variants) as VariantKey[]).map((v) => (
+            {methodOptions.map((v) => (
               <option key={v} value={v}>{variantLabel(v, i18n.language.startsWith('zh'))}</option>
             ))}
           </select>
         </label>
         <label>
-          <select value={stage} onChange={(e) => setStage(e.target.value)} aria-label={tr({ zh: '阶段', en: 'Stage',
+          <select
+            value={stage}
+            onChange={(e) => {
+              const s = e.target.value;
+              if (isBlockUi && BLOCK_STAGE_VARIANT[s]) setVariant(BLOCK_STAGE_VARIANT[s] as VariantKey);
+              setStage(s);
+            }}
+            aria-label={tr({ zh: '阶段', en: 'Stage',
               zhHant: "階段"
         })}>
-            {currentStages.map((s) => (
-              <option key={s} value={s}>{labelStage(s, isZh)}</option>
+            {(isBlockUi ? blockStages : currentStages).map((s) => (
+              <option key={s} value={s}>{stageLabel(s, isZh)}</option>
             ))}
           </select>
         </label>
@@ -791,6 +778,16 @@ function ExamplesPanel({
                   style={{ background: COLOR_HEX[color as ColorLetter] ?? '#888' }}
                   title={tr({ zh: '朝下的底色', en: 'Bottom color' })}
                 />
+                <Link
+                  className="scramble-stats-examples-cube"
+                  href={`/${lang}/scramble/analyzer?${new URLSearchParams({ scramble: scr.trim().replace(/ /g, '_') })}`}
+                  prefetch={false}
+                  aria-label={tr({ zh: '打乱图', en: 'Scramble image',
+                      zhHant: "打亂圖"
+                })}
+                >
+                  <ScramblePreview2D event="333" scramble={scr.trim()} size={26} />
+                </Link>
                 <div className="scramble-stats-examples-body">
                   <Link
                     className="scramble-stats-examples-scramble"
