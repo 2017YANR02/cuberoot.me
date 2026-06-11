@@ -6,17 +6,27 @@ import type { CSSProperties } from 'react';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { STACK_TOOLS_META } from '../_lib/stack_meta';
-import { loadStackTool } from '../_lib/stack_data';
-import type { StackTool } from '../_lib/stack_tool_types';
-import { LangCtx, L, type Lang } from '../_lib/Lang';
+import { STACK_TOOLS_META } from '../stack/_lib/stack_meta';
+import { loadStackTool } from '../stack/_lib/stack_data';
+import type { StackTool } from '../stack/_lib/stack_tool_types';
+import { LangCtx, L, type Lang } from '../stack/_lib/Lang';
+import { LLM_TOOLS_META } from '../llm/_lib/llm_meta';
+import { loadLlmTool } from '../llm/_lib/llm_data';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import '../ts_intro.css';
-import '../stack_intro.css';
+import '../stack/ts_intro.css';
+import '../stack/stack_intro.css';
 import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
-export default function StackToolClient() {
+// One shell, two sections: /code/stack and /code/llm share this intro renderer.
+const SECTIONS = {
+  stack: { base: '/code/stack', meta: STACK_TOOLS_META, load: loadStackTool },
+  llm: { base: '/code/llm', meta: LLM_TOOLS_META, load: loadLlmTool },
+} as const;
+export type ToolSection = keyof typeof SECTIONS;
+
+export default function CodeToolIntroClient({ section = 'stack' }: { section?: ToolSection }) {
+  const { base, meta: META, load } = SECTIONS[section];
   const params = useParams<{ slug: string | string[] }>();
   const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
   const router = useRouter();
@@ -24,10 +34,10 @@ export default function StackToolClient() {
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const meta = STACK_TOOLS_META.find((t) => t.slug === slug);
-  const idx = meta ? STACK_TOOLS_META.findIndex((t) => t.slug === slug) : -1;
-  const prev = idx > 0 ? STACK_TOOLS_META[idx - 1] : null;
-  const next = idx >= 0 && idx < STACK_TOOLS_META.length - 1 ? STACK_TOOLS_META[idx + 1] : null;
+  const meta = META.find((t) => t.slug === slug);
+  const idx = meta ? META.findIndex((t) => t.slug === slug) : -1;
+  const prev = idx > 0 ? META[idx - 1] : null;
+  const next = idx >= 0 && idx < META.length - 1 ? META[idx + 1] : null;
 
   const [detail, setDetail] = useState<StackTool | null>(null);
 
@@ -35,15 +45,15 @@ export default function StackToolClient() {
     if (!slug || !meta) return;
     setDetail(null);
     let cancelled = false;
-    loadStackTool(slug).then((d) => { if (!cancelled) setDetail(d); });
+    load(slug).then((d) => { if (!cancelled) setDetail(d); });
     return () => { cancelled = true; };
   }, [slug, meta]);
 
   useDocumentTitle(meta?.name ?? '', meta?.name ?? '');
 
   useEffect(() => {
-    if (!meta) router.replace('/code/stack');
-  }, [meta, router]);
+    if (!meta) router.replace(base);
+  }, [meta, router, base]);
 
   useEffect(() => {
     if (!detail) return;
@@ -145,7 +155,7 @@ export default function StackToolClient() {
         <div className="glow glow-br" style={{ background: `radial-gradient(circle, ${meta.accent}55 0%, transparent 70%)`, opacity: 0.25 }} />
 
         <nav className="nav">
-          <Link className="nav-logo" href="/code/stack">
+          <Link className="nav-logo" href={base}>
             <span className="stack-nav-glyph" style={{ background: meta.accent }}>{meta.glyph}</span>
             <span>{meta.name}</span>
             <span className="nav-tag">: {mt.tagline}</span>
@@ -361,13 +371,13 @@ export default function StackToolClient() {
 
         <nav className="stack-pager">
           {prev ? (
-            <Link href={`/code/stack/${prev.slug}`} className="stack-pager-link prev">
+            <Link href={`${base}/${prev.slug}`} className="stack-pager-link prev">
               <span className="stack-pager-dir">← {tr({ zh: '上一件', en: 'prev' })}</span>
               <span className="stack-pager-name">{prev.name}</span>
             </Link>
           ) : <span />}
           {next ? (
-            <Link href={`/code/stack/${next.slug}`} className="stack-pager-link next">
+            <Link href={`${base}/${next.slug}`} className="stack-pager-link next">
               <span className="stack-pager-dir">{tr({ zh: '下一件', en: 'next' })} →</span>
               <span className="stack-pager-name">{next.name}</span>
             </Link>
@@ -375,7 +385,7 @@ export default function StackToolClient() {
         </nav>
 
         <footer className="stack-foot">
-          <Link href="/code/stack">/code/stack</Link>
+          <Link href={base}>{base}</Link>
           <span>·</span>
           <Link href="/code">/code</Link>
           <span>·</span>
