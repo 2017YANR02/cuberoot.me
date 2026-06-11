@@ -34,6 +34,8 @@ export interface OptimalSolverSpec {
   solve: (pool: RustCrossPool, scramble: string) => Promise<MovesTimed>;
   /** 合法记号(token 级校验,如 /^[URFDLB][2']?$/) */
   tokenRe: RegExp;
+  /** 输入框占位示例(可选;默认 3x3 系示例,记号集不同的 puzzle 应自带以免教错记号) */
+  placeholder?: { zh: string; en: string; zhHant?: string };
 }
 
 interface SolveOutcome {
@@ -123,7 +125,7 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
             type="text"
             value={scramble}
             onChange={(e) => void setScramble(e.target.value)}
-            placeholder={tr({ zh: '输入打乱,如 R U R\' F2 U\'', en: "Enter a scramble, e.g. R U R' F2 U'",
+            placeholder={tr(spec.placeholder ?? { zh: '输入打乱,如 R U R\' F2 U\'', en: "Enter a scramble, e.g. R U R' F2 U'",
                 zhHant: "輸入打亂,如 R U R' F2 U'"
             })}
             spellCheck={false}
