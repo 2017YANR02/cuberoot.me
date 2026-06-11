@@ -58,6 +58,28 @@ export class CrossSolverWasm {
 }
 
 /**
+ * EOLine / DR 求解器(全自包含,**零表下载**):eo12/line/co8/slice 微 move 表与
+ * 全部距离表现场从内置运动学构建。EOLine 即时构建(~1MB BFS);DR 惰性
+ * (两张 ~1M 距离表,首次查询时建)。
+ * stage 编号:0=EO 1=EOLine 2=DR。
+ */
+export class EoDrSolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    constructor();
+    /**
+     * 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。`m` 前缀 =
+     * rot + y^k;`c` = 目标标签(EO 轴 "FB" / EOLine "D(FB)" / DR 轴 "UD")。
+     */
+    solve_moves(scramble: string, stage: number, face: number, extra: number, cap: number): string;
+    /**
+     * 单阶段 6 视角(stage 0=EO 1=EOLine 2=DR),顺序对应 ROTS。
+     * EO/DR 只依赖轴:对面底色列天然同值。
+     */
+    solve_stage(scramble: string, stage: number): Uint32Array;
+}
+
+/**
  * F2LEO / Pseudo F2LEO 浏览器内求解(count-only)。小表:复用 mt_edge2/edge4/corn/edge
  * + pt_cross(f2leo),pseudo 另现场建 4-seed cross + D-AUF xcross 剪枝表(~18MB)。
  * 不需要 pt_cross_C4E0 / huge 表。
@@ -97,11 +119,34 @@ export class F2leoSolverWasm {
 }
 
 /**
- * Roux 第一块(方块 / 1x2x3)+ Petrus(2x2x2 / 2x2x3)组合求解器。4 张小表:
+ * HTR(Thistlethwaite DR→HTR)求解器(全自包含,**零表下载**):角置换/轨道移动表与
+ * 全空间 2,822,400 态精确距离表(~2.8MB)全部现场从内置运动学构建,首次查询时惰性 BFS
+ * (RefCell,~秒级);查长度 O(1),枚举首达即最优。条件式阶段:该视角(UD 轴)必须已
+ * 处于 DR,非 DR 视角返回 u32::MAX 哨兵。HTR 仅依赖轴:对面底色同值,且对 y 不变。
+ */
+export class HtrSolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    constructor();
+    /**
+     * 6 视角最优步数(顺序对应 ROTS);该视角非 DR = u32::MAX 哨兵。
+     */
+    solve(scramble: string): Uint32Array;
+    /**
+     * 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。HTR 对 y 不变
+     * (解全在 yk=0),`m` 前缀 = rot,`c` = 轴标签(同 DR,如 "UD");
+     * 该视角非 DR = {"len":4294967295,"sols":[]}。
+     */
+    solve_moves(scramble: string, face: number, extra: number, cap: number): string;
+}
+
+/**
+ * Roux 第一块(方块 / 1x2x3 / 双 1x2x3)+ Petrus(2x2x2 / 2x2x3)组合求解器。4 张小表:
  * mt_edge3 (~743KB) + mt_corn2 (~36KB) + mt_edge2 (~38KB) + mt_corn (~1.7KB)。
  * FB 方块与 2x2x2 全表构造时即建(微型/毫秒级);1x2x3 全表(5,322,240 态)与
- * 2x2x3 启发式表惰性构建(首次相关查询现场 BFS,~秒级),两者共享 1x2x3 表。
- * stage 编号:0=FB 方块 1=1x2x3 2=2x2x2 3=2x2x3。
+ * 2x2x3 启发式表惰性构建(首次相关查询现场 BFS,~秒级);2x2x3 与 f2b 共享 1x2x3 表
+ * (f2b 零额外构建:同一张表 y2 共轭双查 IDA*)。
+ * stage 编号:0=FB 方块 1=1x2x3 2=2x2x2 3=2x2x3 4=双 1x2x3(f2b)。
  */
 export class Roux223SolverWasm {
     free(): void;
@@ -109,11 +154,12 @@ export class Roux223SolverWasm {
     constructor(mt_edge3: Uint8Array, mt_corn2: Uint8Array, mt_edge2: Uint8Array, mt_corn: Uint8Array);
     /**
      * 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。`m` 前缀 =
-     * rot + y^k;`c` = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名)。
+     * rot + y^k;`c` = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名 /
+     * f2b "D(LR)" 块对)。
      */
     solve_moves(scramble: string, stage: number, face: number, extra: number, cap: number): string;
     /**
-     * 单阶段 6 视角(stage 0=FB方块 1=1x2x3 2=2x2x2 3=2x2x3),顺序对应 ROTS。
+     * 单阶段 6 视角(stage 0=FB方块 1=1x2x3 2=2x2x2 3=2x2x3 4=双1x2x3),顺序对应 ROTS。
      */
     solve_stage(scramble: string, stage: number): Uint32Array;
 }
@@ -160,7 +206,9 @@ export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_block222solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_crosssolverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_eodrsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_f2leosolverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_htrsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_roux223solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_variantsolverwasm_free: (a: number, b: number) => void;
     readonly block222solverwasm_new: (a: number, b: number, c: number, d: number) => number;
@@ -172,11 +220,17 @@ export interface InitOutput {
     readonly crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_face: (a: number, b: number, c: number, d: number, e: number) => number;
     readonly crosssolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
+    readonly eodrsolverwasm_new: () => number;
+    readonly eodrsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
+    readonly eodrsolverwasm_solve_stage: (a: number, b: number, c: number, d: number) => [number, number];
     readonly f2leosolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => number;
     readonly f2leosolverwasm_solve_f2leo: (a: number, b: number, c: number) => [number, number];
     readonly f2leosolverwasm_solve_f2leo_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly f2leosolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
     readonly f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
+    readonly htrsolverwasm_new: () => number;
+    readonly htrsolverwasm_solve: (a: number, b: number, c: number) => [number, number];
+    readonly htrsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
     readonly roux223solverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => number;
     readonly roux223solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly roux223solverwasm_solve_stage: (a: number, b: number, c: number, d: number) => [number, number];
