@@ -26,6 +26,7 @@ interface NativeSolver {
   fbRows: number; // 回退行数 (fetch 失败时用)
   rate: number | null; // tasks/sec, native, 16 核 (curated, 2026-05-30 实测; f2leo 系 2026-05-31); null = 未实测 (统计回填未接)
   tier: 'huge' | 'mid' | 'small';
+  puzzle?: string; // 非 3x3 独立 puzzle (整魔方, 非 3x3 子阶段); 统计走 puzzle_distribution.json 新管线
   zhWhy: string; enWhy: string;
 }
 
@@ -45,6 +46,7 @@ const NATIVE: NativeSolver[] = [
   { key: 'dr', stages: 1, fbRows: 1_297_444, rate: 12_000, tier: 'small', zhWhy: 'DR (Kociemba phase-1) 全空间 ~2.2G 态, IDA* + max(eo×slice, co×slice) 双 ~1M 精确表, 全现场建零外部表', enWhy: 'DR (Kociemba phase 1) — ~2.2G states; IDA* with admissible h = max(eo×slice, co×slice), two ~1M exact tables built in RAM, zero external tables' },
   { key: 'htr', stages: 1, fbRows: 0, rate: null, tier: 'small', zhWhy: 'DR→HTR 条件式阶段: 输入须处于该视角 DR 态, 非 DR 出哨兵;全空间 2,822,400 态精确表查表即最优;统计口径待定未接回填, 吞吐未实测', enWhy: 'conditional DR→HTR stage: input must already be in DR for the view, non-DR yields a sentinel; 2,822,400-state exact table — lookups are optimal; stats wiring pending, throughput not yet measured' },
   { key: 'htr2', stages: 1, fbRows: 0, rate: null, tier: 'small', zhWhy: 'HTR→solved 收尾阶段 (G3→G4): 输入须处于 HTR 态, 非 HTR 出哨兵;全空间 663,552 态精确表查表即最优;统计口径待定未接回填, 吞吐未实测', enWhy: 'HTR→solved finish stage (G3→G4): input must already be in HTR, non-HTR yields a sentinel; 663,552-state exact table — lookups are optimal; stats wiring pending, throughput not yet measured' },
+  { key: 'pocket', stages: 1, fbRows: 0, rate: null, tier: 'small', puzzle: '2x2x2', zhWhy: '非 3x3 独立 puzzle: 2x2x2 整魔方全空间 3,674,160 态 (7!·3^6, 固定 DBL 角消整体朝向) 精确距离表查表即最优, God 数实测 11 HTM;统计走 puzzle_distribution.json 新管线, 全量灌注待跑, 吞吐未实测', enWhy: 'standalone non-3x3 puzzle: the whole 2x2x2 — full-space 3,674,160-state (7!·3^6, DBL corner fixed to kill whole-cube rotation) exact distance table, lookups are optimal, measured God\'s number 11 HTM; stats go through the new puzzle_distribution.json pipeline, full pour pending, throughput not yet measured' },
   { key: '123x2', stages: 1, fbRows: 0, rate: 220, tier: 'mid', zhWhy: '双 1x2x3 联合最优平均 ~11.5 步, 搜索深;5 张精确子目标表 max 剪枝, 其中 {块+2角} 表 2.68G 态落盘 mmap', enWhy: 'dual-1x2x3 joint optimum averages ~11.5 moves — deep search; pruned by max of 5 exact subgoal tables, incl. a 2.68G-state block+corners table mmapped from disk' },
 ];
 
@@ -64,6 +66,7 @@ const BROWSER: BrowserSolver[] = [
   { key: 'EO / EOLine / DR', zhEngine: 'EoDrSolverWasm (零表下载, 微表现场建)', enEngine: 'EoDrSolverWasm (zero downloads, micro-tables built in-browser)', zhLatency: 'EO/EOLine 即时; DR 首算建表 ~1s 后毫秒级', enLatency: 'EO/EOLine instant; DR builds tables on first solve (~1s), then ms' },
   { key: 'HTR (DR→HTR)', zhEngine: 'HtrSolverWasm (零表下载, 全空间精确表现场建)', enEngine: 'HtrSolverWasm (zero downloads, exact full-space table built in-browser)', zhLatency: '首算建表 ~335ms 后即时; 非 DR 出哨兵', enLatency: 'first solve builds the table (~335ms), then instant; non-DR yields a sentinel' },
   { key: 'HTR finish (HTR→solved)', zhEngine: 'HtrPhase2SolverWasm (零表下载, 全空间精确表现场建)', enEngine: 'HtrPhase2SolverWasm (zero downloads, exact full-space table built in-browser)', zhLatency: '首算建表后即时; 非 HTR 出哨兵', enLatency: 'first solve builds the table, then instant; non-HTR yields a sentinel' },
+  { key: '2x2x2 pocket', zhEngine: 'PocketSolverWasm (零表下载, 3.6MB 距离表现场建, 免 132MB 移动表)', enEngine: 'PocketSolverWasm (zero downloads, 3.6MB distance table built in-wasm, no 132MB move table)', zhLatency: '首算惰性建表后即时; /scramble/pocket 在线出最优解', enLatency: 'lazy first-solve build, then instant; serves optimal solutions on /scramble/pocket' },
 ];
 
 // 每个原生分析器实际 mmap 的磁盘表 (D:\cube\cuberoot.me\solver\tables\, 大小为真实文件字节).
@@ -173,6 +176,12 @@ const TABLES: Record<string, SolverTbls> = {
     prune: [],
     builtZh: '零盘表:HTR→solved (G3→G4) 全空间精确距离表 (663,552 态 = 角 HTR 子群 Hc 96 × 棱 6,912, ~648KB) 首查惰性内存 BFS;查长度 O(1), 枚举首达即最优, HTR→solved God 数实测 15;非 HTR 输入出哨兵',
     builtEn: 'no disk tables at all: exact full-space HTR→solved (G3→G4) distance table (663,552 states = HTR corner subgroup Hc 96 × 6,912 edges, ~648KB) lazily BFS-built in RAM on first query; O(1) length lookups, first hit in enumeration is optimal — measured HTR→solved God\'s number 15; non-HTR inputs yield a sentinel',
+  },
+  pocket: {
+    move: [],
+    prune: [],
+    builtZh: '零盘表:独立 2x2x2 全空间精确距离表 (3,674,160 态 = 7!·3^6, 固定 DBL 角消整体朝向, ~3.6MB) + 联合移动表 (~132MB) 启动时内存现场 BFS (亚秒级);查长度 O(1) 直查无搜索, God 数实测 11 HTM;全 18 记号经 24 旋转归一 (2x2x2 无中心, D/L/B = 对面 + 整体旋转)',
+    builtEn: 'no disk tables at all: standalone 2x2x2 — exact full-space distance table (3,674,160 states = 7!·3^6, DBL corner fixed to kill whole-cube rotation, ~3.6MB) + joint move table (~132MB) BFS-built in RAM at startup (sub-second); O(1) length lookups, zero search — measured God\'s number 11 HTM; all 18 move tokens normalized through 24 rotations (no centers: D/L/B = opposite face + rotation)',
   },
   '123x2': {
     move: [{ n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }],
@@ -291,7 +300,7 @@ export default function SolversPage() {
             </span>
           </header>
           <div className="solv-rows">
-            {NATIVE.map((s) => {
+            {NATIVE.filter((s) => !s.puzzle).map((s) => {
               const rows = rowsOf(s);
               const status = deriveStatus(rows, target);
               const pct = Math.min(100, (rows / target) * 100);
@@ -316,6 +325,27 @@ export default function SolversPage() {
                 </div>
               );
             })}
+            {/* 非 3x3 独立 puzzle: 语料与目标都不同 (puzzle_distribution.json 新管线), 不对 3x3 目标算百分比 */}
+            {NATIVE.filter((s) => s.puzzle).map((s) => (
+              <div className="solv-row" key={s.key}>
+                <div className="solv-row-head">
+                  <span className="solv-row-name">{s.key}</span>
+                  <span className="solv-badge solv-badge-seed">
+                    <CircleDashed size={12} strokeWidth={2.2} />
+                    {zh ? '待灌注' : 'pending'}
+                  </span>
+                  <span className="solv-row-stages">{s.puzzle}</span>
+                </div>
+                <div className="solv-bar">
+                  <div className="solv-bar-fill solv-fill-seed" style={{ width: '0.4%' }} />
+                </div>
+                <div className="solv-row-foot">
+                  <span className="solv-row-rows">{zh
+                    ? '非 3x3 独立 puzzle · 语料 = WCA 222 打乱, 走 puzzle_distribution.json 新管线, 不计入上方 3x3 目标'
+                    : 'standalone non-3x3 puzzle · corpus = WCA 222 scrambles via the new puzzle_distribution.json pipeline — not counted against the 3x3 target above'}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -361,10 +391,10 @@ export default function SolversPage() {
             </article>
             <article className="solv-mem-card">
               <div className="solv-mem-tier"><Cpu size={13} strokeWidth={2} /> small</div>
-              <div className="solv-mem-list">222 / 123 / 223 / eoline / dr / htr / htr2</div>
+              <div className="solv-mem-list">222 / 123 / 223 / eoline / dr / htr / htr2 / pocket</div>
               <p>{zh
-                ? '222/123/223 仅 mt_corn/mt_corn2/mt_edge2/mt_edge3 微移动表 (各家合计 <1MB);eoline/dr/htr/htr2 零盘表。精确距离/剪枝表启动或首查时内存现场 BFS (htr 全空间 2,822,400 态 ~2.8MB, htr2 663,552 态 ~648KB), 不落盘。无 GB 级依赖, 可与任意 huge 变体并发。'
-                : '222/123/223 use only micro move tables (mt_corn/mt_corn2/mt_edge2/mt_edge3, <1MB each analyzer); eoline/dr/htr/htr2 need zero disk tables. Exact distance/prune tables are BFS-built in RAM at startup or first query (htr: full 2,822,400-state space, ~2.8MB; htr2: 663,552 states, ~648KB), never written to disk. No GB-scale dependency — runs alongside any huge variant.'}</p>
+                ? '222/123/223 仅 mt_corn/mt_corn2/mt_edge2/mt_edge3 微移动表 (各家合计 <1MB);eoline/dr/htr/htr2/pocket 零盘表。精确距离/剪枝表启动或首查时内存现场 BFS (htr 全空间 2,822,400 态 ~2.8MB, htr2 663,552 态 ~648KB, pocket 独立 2x2x2 全空间 3,674,160 态 ~3.6MB + 移动表 ~132MB), 不落盘。无 GB 级依赖, 可与任意 huge 变体并发。'
+                : '222/123/223 use only micro move tables (mt_corn/mt_corn2/mt_edge2/mt_edge3, <1MB each analyzer); eoline/dr/htr/htr2/pocket need zero disk tables. Exact distance/prune tables are BFS-built in RAM at startup or first query (htr: full 2,822,400-state space, ~2.8MB; htr2: 663,552 states, ~648KB; pocket: the full standalone 2x2x2, 3,674,160 states, ~3.6MB + ~132MB move table), never written to disk. No GB-scale dependency — runs alongside any huge variant.'}</p>
             </article>
             <article className="solv-mem-card solv-mem-wide">
               <div className="solv-mem-tier"><Cpu size={13} strokeWidth={2} /> {zh ? '并行' : 'parallelism'}</div>
