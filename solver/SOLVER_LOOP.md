@@ -75,7 +75,7 @@
 
 - [x] **M1** 引擎加 move-mask 参数,贯穿 `cube_common` 的 valid_moves/search/enumerate。门:**全部现有 `cargo test --release` 仍绿(承重墙不能塌)**,且 mask=全集时与现状逐位相等(加一条对照测试锁死)。✅ 2026-06-11 全量 94/94 绿(1m27s);MoveMask=u32 对齐 Move::index,`*_masked` 新入口零破坏;4 条新测试(表级×2 + 全集逐位相等 + 限 G2 暴力对照)。
 - [x] **⏸ soft-gate(M2)** ✅ 2026-06-11 用户拍板:**做**,key `roux_s2`。展开为 M2a–M2e:
-- [ ] **M2a** 引擎扩 move 集支持 ⟨M,U,R,r⟩(M/r 含中层/宽转,不在现有 18 面转编码;8角12棱无中心建模,M 转需朝向跟踪或共轭技巧——**先推导设计写成本**,若需重构状态模型超出"加 move"量级 → 红灯写 §3 等确认)。门:现有全量 `cargo test --release` 仍绿 + 新 move 物理正确性测试(独立 replay 对照)。
+- [⛔] **M2a** 引擎扩 move 集支持 ⟨M,U,R,r⟩ — **2026-06-11 红灯(见 §3)**:件层面可表达,但 18-stride 编码是承重墙(36 文件 + 34GB 表硬编码 18),原生扩 move 集 = 重构表生成引擎 + 重建全部表,触红线。等用户在三条路里选(伪 roux_s2 / 真重构 / 弃 M2)。
 - [ ] **M2b** Rust 核心 `roux_s2_solver.rs` + 测试(pt_basics + 独立暴力对照 + enumerate)。语义对齐 cstimer Roux S2 口径(输入须 FB 已成的条件式阶段,照 htr 哨兵先例;还是 S1+S2 联合——推导后定,结论写 §2)。门:`cargo test --release roux_s2` 绿。
 - [ ] **M2c** analyzer bin `src/bin/roux_s2_analyzer.rs`(suffix `_roux_s2`)+ `tests/e2e_roux_s2.rs`。门:e2e 绿 + smoke 形状对。
 - [ ] **M2d** WASM 类 + 重建仪式 + StageSolver UI 集成(照 H3+H4 清单)。门:typecheck 干净 + playwright 桌面+390px,native↔WASM 逐格相等,0 console error。
@@ -101,12 +101,16 @@
 - 2026-06-11 — **M1** 引擎 move-mask 能力,`07e93483d`。u32 bitmask + `*_masked` 入口;全量 94/94 绿,mask=全集逐位相等锁死 + 限 G2 暴力对照。
 - 2026-06-11 — **M2 soft-gate 解除**:用户拍板做,key `roux_s2`,展开 M2a–M2e(下一个 = M2a)。
 - 2026-06-11 — **协议改版**:§0.7/§0.9 改为标准 Ralph"跑到底"——删除原 §0.9b"6-8 单元预防性停 + 让用户 /clear"的非标准摩擦;退出只认 backlog 空 / GATE / 红灯 / 空转 / ~15 单元安全网。依据:Ralph Wiggum 社区标准用法(状态在文件、跑到完成信号才停)。
+- 2026-06-11 — **M2a 红灯**(见 §3):扩 ⟨M,U,R,r⟩ move 集撞 18-stride 承重墙(36 文件 + 34GB 表),触"绝不重构 cube_common"红线。loop 按协议停,等用户三选一。
 
 ---
 
 ## §3 BLOCKERS / 需用户决策 / MANUAL 交接
 
 - 磁盘历史(决策依据):`solver/tables/` ~34GB;曾有 6.6G 表、剩余一度 5.5G。任何 >1G 新表先 `df -h` + 红灯确认。
+- **⛔ M2a 红灯 — 扩 move 集撞承重墙(2026-06-11,等用户三选一)**:
+  - **推导**:8角12棱无中心模型在"件"层面能表达 M(4 棱 cycle+flip)/ r(=R∘M'),朝向参照无矛盾(cstimer 也不在求解器里用 M 切片搜索,M/r 只在记号层)。但整个 move-table / 剪枝 / 搜索 **硬编码 stride=18**(`valid_moves` 用 `i/3==prev/3` 面剪枝、`MASK_ALL=(1<<18)-1`、`INV_MOVE:[u8;18]`、`create_multi_move_table` 列宽 18、坐标乘 18),**36 个源文件 + 34GB 表**全建在 18-stride 上。原生加 M/r(索引≥18)= 重构表生成引擎 + 重建全部表,明确触 §0.3 红线。
+  - **三条路**:(A) **伪 roux_s2**(推荐):M2b 的 ⟨M,U,R,r⟩ 搜索不扩引擎,在现有 18-move + 视角共轭里表达 Roux S2 阶段(M=共轭切片组合、r=R+M'),输出用记号规整器译回 M/r 显示。零引擎重构,落在现有 mask+conj+pseudo 能力内。(B) **真重构**:stride 18→24 改表生成引擎 + 重建 34GB 表(磁盘紧 + 波及全舰队,高风险)。(C) **弃 M2**:roux_s2 本是 nice-to-have,本站口径已用 `123x2` f2b 联合最优替代;直接跳到 M3。
 - (MANUAL 交接条目在此累积:变体名 + 待跑的灌注/发布步骤,等用户在场手动跑)
 - **📦 MANUAL(HTR) 交接**(2026-06-11,H1–H5 代码侧已全绿落地,等用户在场手动):
   1. **先拍板口径**:WCA master 随机打乱直灌 htr_analyzer 会得全 `-`(随机打乱不在 DR 态,H2 实证)。可选:(a) 不灌全量统计,htr 只做 analyzer 在线查询(现状即此,零额外工作);(b) 输入集改"先过 DR 阶段后的态"(需定义 DR 解的选取规则,管道要串 dr→htr);(c) 只灌天然 DR 态子集(~1/19万,样本太稀,不推荐)。
