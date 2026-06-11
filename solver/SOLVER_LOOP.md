@@ -79,7 +79,7 @@
 - [x] ~~**M2b–M2e** roux_s2 全链路~~ — **2026-06-11 用户拍板弃整个 M2**。两路皆绝:扩引擎撞 18-stride 承重墙(M2a)、伪路线 FTM 最优 SB = 现有 `roux_s1_solver` 逐位重复(M2b,cstimer 亦只报 FTM)。roux_s2 不作为独立变体。若日后要 Roux SB 的 FTM 数,复用 `RouxS1Solver` 右块视角即可,无需新变体全链路。
 ### M3 — HTR phase-2(G3→G4,限 ⟨U2,D2,L2,R2,F2,B2⟩ 搜索;6 双转全在现有 18-move 编码内,用 M1 mask,零引擎改动)
 > 语义:从 HTR 态(G3 陪集已满足)只用 6 种双转降到 solved(G4)。|G3|=663,552(H1 已算)→ 全空间小表可行,照 HTR 零盘表精确表模式。变体 key 建议 `htr2` 或 `htrfin`(M3a 推导时定)。
-- [ ] **M3a** Rust 核心 `htr_phase2_solver.rs` + 测试(pt_basics + 独立暴力对照 + enumerate)。**DESIGN-FIRST**:确认态空间(|G3| 内的可降子集 / 坐标)+ 用 M1 `*_masked`(mask = U2 D2 L2 R2 F2 B2 这 6 位)跑搜索;推导态数别信记忆,测试独立暴力对照。门:`cargo test --release <key>` 绿 + 全量现有测试仍绿。
+- [x] **M3a** Rust 核心 `htr_phase2_solver.rs`(key `htr2`)+ 测试。✅ 2026-06-11 `2996acf17`。态空间=|G3|=663,552(角 Hc=96 × 棱 6912=24³/2),u8 精确表 648KB 现场 BFS,零盘表;mask=G3_MOVES(U2=1 D2=4 L2=7 R2=10 F2=13 B2=16,复用 htr_solver,自逆);4 测试绿含 663,552 全空间暴力对照;全量 lib 90/0 + e2e 全绿(htr/M1 未塌);God's number=15(文献一致,baseline 锁)。
 - [ ] **M3b** analyzer bin + `tests/e2e_*.rs`。门:e2e 绿 + smoke 形状对。
 - [ ] **M3c** WASM 类 + 重建仪式(照 H3 清单)。门:typecheck 干净。
 - [ ] **M3d** StageSolver UI 集成(照 H4 清单)。门:typecheck + playwright 桌面+390px,native↔WASM 逐格相等,0 console error。
@@ -108,6 +108,7 @@
 - 2026-06-11 — **M2 拍板:伪 roux_s2**。用户选 (A),M2a 扩引擎取消,M2b 改"18-move+共轭"伪路线 + design-first soft-gate(若实质=已有 123 系则停)。红灯解除,继续。
 - 2026-06-11 — **M2b soft-gate:伪路线亦死**(见 §3)。固定 18-move 模型 M 不可当 1 步,伪 roux_s2 = roux_s1 重复。roux_s2 整个 epic 两路皆绝。loop 停,等用户定弃 M2→M3。未写代码。
 - 2026-06-11 — **用户拍板弃整个 M2**(M2a–M2e 全取消,零代码)。下一个 = M3(HTR phase-2)。
+- 2026-06-11 — **M3a** HTR phase-2 核心 `htr2`,`2996acf17`。663,552 全空间精确表(648KB,零盘表),复用 M1 mask 限 6 双转;663,552 全枚举暴力对照绿,God's number=15。
 
 ---
 
