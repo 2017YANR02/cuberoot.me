@@ -118,8 +118,13 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
         k === "front" && Number.isFinite(o.s)
           ? Math.round(Math.max(0.5, Math.min(3, o.s!)) * 100) / 100
           : undefined;
-      if (x !== 0 || y !== 0 || (s !== undefined && s !== 1))
-        out[k] = s !== undefined && s !== 1 ? { x, y, s } : { x, y };
+      const fit = k === "front" && o.fit === "contain" ? ("contain" as const) : undefined;
+      if (x !== 0 || y !== 0 || (s !== undefined && s !== 1) || fit) {
+        const v: { x: number; y: number; s?: number; fit?: "contain" } = { x, y };
+        if (s !== undefined && s !== 1) v.s = s;
+        if (fit) v.fit = fit;
+        out[k] = v;
+      }
     }
     next.layout = Object.keys(out).length > 0 ? out : null;
   }

@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CardEl, CardLayout, QrCode, QrType } from "@/lib/db/qr";
 import { QrCardUnit, FRONT_ARTS } from "@/components/QrCard";
+import { FileUpload } from "@/components/FileUpload";
 import { algToText, parseAlg } from "@/lib/qr/cardText";
 
 // 所见即所得卡片编辑器(简易 PS):卡上所有元素([data-el])可直接拖动移位,
@@ -89,7 +90,7 @@ export function CardEditor({
         const next =
           Math.round(Math.max(0.5, Math.min(3, cur.s * Math.exp(-e.deltaY * 0.002))) * 100) / 100;
         const layout = { ...p.layout };
-        if (cur.x === 0 && cur.y === 0 && next === 1) delete layout.front;
+        if (cur.x === 0 && cur.y === 0 && next === 1 && !cur.fit) delete layout.front;
         else layout.front = { ...cur, s: next };
         return { ...p, layout };
       });
@@ -149,12 +150,12 @@ export function CardEditor({
       else delete layout[key];
       return { ...p, layout };
     });
-  // 正面图平移/缩放(layout.front):增量合并,回到默认(0,0,×1)就删键
-  const setFront = (patch: Partial<{ x: number; y: number; s: number }>) =>
+  // 正面图平移/缩放/完整显示(layout.front):增量合并,回到默认(0,0,×1,铺满)就删键
+  const setFront = (patch: Partial<{ x: number; y: number; s: number; fit?: "contain" }>) =>
     setS((p) => {
       const next = { x: 0, y: 0, s: 1, ...p.layout.front, ...patch };
       const layout = { ...p.layout };
-      if (next.x === 0 && next.y === 0 && next.s === 1) delete layout.front;
+      if (next.x === 0 && next.y === 0 && next.s === 1 && !next.fit) delete layout.front;
       else layout.front = next;
       return { ...p, layout };
     });
@@ -443,9 +444,34 @@ export function CardEditor({
                   </span>
                 </button>
               ))}
+              {s.art && !FRONT_ARTS.some((o) => o.src === s.art) ? (
+                <span className="w-[72px] overflow-hidden rounded-md border border-brand ring-2 ring-brand/30 bg-white">
+                  <img src={s.art} alt="自己上传的图" className="block aspect-[1/2] w-full object-cover" />
+                  <span className="block py-0.5 text-center text-[11px] text-ink-2">
+                    自己上传
+                  </span>
+                </span>
+              ) : null}
             </div>
             <span className="text-[12px] text-ink-3">
               自动轮换:不固定用图,批量打印时按卡片顺序轮流分配图库的图;在意印出来是哪张就选定一张。
+            </span>
+            <FileUpload
+              accept="image/*"
+              label="上传自己的正面图"
+              onUploaded={(url) => set("art")(url)}
+            />
+            <label className="inline-flex cursor-pointer items-center gap-1.5 text-[12px] text-ink-2">
+              <input
+                type="checkbox"
+                checked={s.layout.front?.fit === "contain"}
+                onChange={(e) => setFront({ fit: e.target.checked ? "contain" : undefined })}
+                className="accent-brand"
+              />
+              完整显示整张图,一点不裁
+            </label>
+            <span className="text-[12px] text-ink-3">
+              勾选后整张图缩到能完全装进卡面,四边都保住(预留 1mm,印厂裁歪也碰不到图);图和卡片比例不一致时,空出来的地方是深色底。不勾则铺满整面,超出部分裁掉。
             </span>
             <div className="flex items-center gap-2.5 text-[12px] text-ink-2">
               <span className="shrink-0">缩放</span>
