@@ -297,26 +297,63 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
   );
 }
 
-// 一张折叠卡单元:正面 | 折线 | 背面,外框为裁剪虚线
+// 四角裁切标记:对应印刷母版的裁切线(成品边外侧,落在出血里)。
+// 黑线 + 白色描边(boxShadow spread),深色正面 / 浅色背面角上都看得见。
+// 绝对定位、不占布局尺寸,故不影响卡片 bounding box 与编辑器热区测量。
+function CropMarks() {
+  const mark = (s: CSSProperties): CSSProperties => ({
+    position: "absolute",
+    background: "#111",
+    boxShadow: `0 0 0 ${m(0.09)} #fff`,
+    ...s,
+  });
+  const H = { width: m(3), height: m(0.12) }; // 横向裁切线
+  const V = { width: m(0.12), height: m(3) }; // 纵向裁切线
+  const a = m(-0.06); // 贴边(线宽一半)
+  const o = m(-3.6); // 外端(成品边外 3.6mm,与母版一致)
+  return (
+    <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+      <span style={mark({ ...H, left: o, top: a })} />
+      <span style={mark({ ...V, top: o, left: a })} />
+      <span style={mark({ ...H, right: o, top: a })} />
+      <span style={mark({ ...V, top: o, right: a })} />
+      <span style={mark({ ...H, left: o, bottom: a })} />
+      <span style={mark({ ...V, bottom: o, left: a })} />
+      <span style={mark({ ...H, right: o, bottom: a })} />
+      <span style={mark({ ...V, bottom: o, right: a })} />
+    </div>
+  );
+}
+
+// 一张折叠卡单元:正面 | 折线 | 背面,外框为裁剪虚线。
+// cropMarks:叠加四角裁切标记(编辑预览开,与「带裁切线」母版一致;打印页默认关)。
 export function QrCardUnit({
   entry,
   svg,
   idx = 0,
+  cropMarks = false,
 }: {
   entry: QrCode;
   svg: string;
   idx?: number;
+  cropMarks?: boolean;
 }) {
   const quote = entry.quote?.trim() || DEFAULT_QUOTES[idx % DEFAULT_QUOTES.length];
   const art = entry.frontArt?.trim() || FRONT_ARTS[idx % FRONT_ARTS.length].src;
   return (
     <div
       className="qr-unit"
-      style={{ display: "flex", border: `${m(0.2)} dashed #c4c9d4`, background: "#fff" }}
+      style={{
+        display: "flex",
+        position: "relative",
+        border: `${m(0.2)} dashed #c4c9d4`,
+        background: "#fff",
+      }}
     >
       <FrontPanel quote={quote} art={art} layout={entry.layout} />
       <div style={{ borderLeft: `${m(0.2)} dotted #c4c9d4` }} />
       <BackPanel entry={entry} svg={svg} />
+      {cropMarks ? <CropMarks /> : null}
     </div>
   );
 }
