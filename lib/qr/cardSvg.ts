@@ -129,10 +129,18 @@ function front(
     );
 
   if (art) {
-    // 艺术图铺满正面(含左/上/下出血),<image> slice 自带裁剪到该矩形
+    // 艺术图铺满正面(含左/上/下出血),<image> slice 自带裁剪到该矩形。
+    // layout.front = 平移(mm)+ 缩放 s(绕成品面中心),与 DOM 卡同一套几何;
+    // 变换后可能越界,clip 回正面出血区。露出的底是深色 INK。
+    const ft = layout?.front;
+    const img = `<image href="${art}" x="0" y="0" width="${foldX}" height="${h}" preserveAspectRatio="xMidYMid slice"/>`;
+    const cy = top + PANEL_H / 2;
+    const body = ft
+      ? `<g transform="translate(${ft.x} ${ft.y}) translate(${cx} ${cy}) scale(${ft.s ?? 1}) translate(${-cx} ${-cy})">${img}</g>`
+      : img;
     return (
       `<rect x="0" y="0" width="${foldX}" height="${h}" fill="${INK}"/>` +
-      `<image href="${art}" x="0" y="0" width="${foldX}" height="${h}" preserveAspectRatio="xMidYMid slice"/>` +
+      `<g clip-path="url(#frontArtClip)">${body}</g>` +
       `<rect x="0" y="0" width="${foldX}" height="${h}" fill="url(#frontShade)"/>` +
       slogan
     );
@@ -266,6 +274,7 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
     `<defs>` +
     fontFace +
     `<clipPath id="frontClip"><rect x="${bleed}" y="${bleed}" width="${PANEL_W}" height="${PANEL_H}"/></clipPath>` +
+    `<clipPath id="frontArtClip"><rect x="0" y="0" width="${foldX}" height="${h}"/></clipPath>` +
     `<clipPath id="backClip"><rect x="${foldX}" y="${bleed}" width="${PANEL_W}" height="${PANEL_H}"/></clipPath>` +
     `<linearGradient id="frontGlow" x1="0" y1="1" x2="0" y2="0">` +
     `<stop offset="0" stop-color="${BRAND}" stop-opacity="0.55"/>` +
