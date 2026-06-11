@@ -152,7 +152,7 @@ export function CardEditor({
       return { ...p, layout };
     });
   // 正面图平移/缩放/完整显示(layout.front):增量合并,回到默认(0,0,×1,铺满)就删键
-  const setFront = (patch: Partial<{ x: number; y: number; s: number; fit?: "contain" }>) =>
+  const setFront = (patch: Partial<{ x: number; y: number; s: number; fit?: "cover" }>) =>
     setS((p) => {
       const next = { x: 0, y: 0, s: 1, ...p.layout.front, ...patch };
       const layout = { ...p.layout };
@@ -272,6 +272,42 @@ export function CardEditor({
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
+  };
+
+  // 把当前正面图(全分辨率)转 PNG 下载:canvas 画原图再导出,像素与原图一致、无损。
+  // 同源(/card、/uploads)不会污染 canvas;外链转换失败则退回直接打开原图。
+  const [pngBusy, setPngBusy] = useState(false);
+  const downloadArtPng = async () => {
+    if (pngBusy) return;
+    const src = s.art || FRONT_ARTS[0].src;
+    const base = (src.split("/").pop() || "front-art").replace(/\.[^.]+$/, "");
+    setPngBusy(true);
+    try {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = src;
+      await img.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext("2d")!.drawImage(img, 0, 0);
+      const blob: Blob | null = await new Promise((res) =>
+        canvas.toBlob(res, "image/png"),
+      );
+      if (!blob) throw new Error("toBlob null");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${base}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(src, "_blank", "noopener");
+    } finally {
+      setPngBusy(false);
+    }
   };
 
   const merged: QrCode = {
@@ -465,25 +501,28 @@ export function CardEditor({
                 label="上传自己的正面图"
                 onUploaded={(url) => set("art")(url)}
               />
-              {/* 下载当前生效的正面图原图(自动轮换时下当前展示的第一张) */}
-              <a
-                href={s.art || FRONT_ARTS[0].src}
-                download={(s.art || FRONT_ARTS[0].src).split("/").pop() || "front-art"}
-                className="inline-flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-3 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition"
+              {/* 下载当前正面图原图为 PNG(全分辨率、无损;自动轮换时下当前展示的第一张) */}
+              <button
+                type="button"
+                onClick={downloadArtPng}
+                disabled={pngBusy}
+                title="下载当前正面图的 PNG 原图,全分辨率无损,可在其他软件二次编辑"
+                className="inline-flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-3 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition disabled:opacity-60"
               >
-                <Download size={14} /> 下载当前正面图
-              </a>
+                <Download size={14} /> {pngBusy ? "导出中…" : "下载正面图 PNG"}
+              </button>
             </div>
             <label className="inline-flex cursor-pointer items-center gap-1.5 text-[12px] text-ink-2">
               <input
                 type="checkbox"
-                checked={s.layout.front?.fit === "contain"}
+                checked={s.layout.front?.fit !== "cover"}
                 onChange={(e) =>
-                  // 勾选即要看整图:顺带清掉残留的平移/缩放,否则放大状态会把边又裁掉
+                  // 默认勾选=完整显示;勾选时顺带清掉残留平移/缩放,保证一点不裁。
+                  // 取消勾选=铺满整面(超出裁掉)
                   setFront(
                     e.target.checked
-                      ? { fit: "contain", x: 0, y: 0, s: 1 }
-                      : { fit: undefined },
+                      ? { fit: undefined, x: 0, y: 0, s: 1 }
+                      : { fit: "cover" },
                   )
                 }
                 className="accent-brand"
