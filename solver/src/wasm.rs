@@ -25,6 +25,7 @@ use crate::htr_phase2_solver::HtrPhase2Solver;
 use crate::htr_solver::HtrSolver;
 use crate::move_tables::MoveTable;
 use crate::pair_solver::PairSolver;
+use crate::pocket_solver::PocketSolver;
 use crate::prune_tables::PackedPruneTable;
 use crate::pseudo_f2leo_solver::PseudoF2leoSolver;
 use crate::pseudo_pair_solver::PseudoPairSmallSolver;
@@ -608,6 +609,48 @@ impl ChainSolverWasm {
         let cfg = parse_chain_config(config_json);
         let b = self.inner.borrow();
         chain_json(&b.as_ref().unwrap().solve_chain(scramble, &cfg))
+    }
+}
+
+/// 2x2x2 口袋魔方整解最优求解器(全自包含,**零表下载**):3.6MB 全空间精确距离表
+/// 首次查询时惰性现场 BFS(lean 构造,不存 132MB 联合移动表,RefCell 缓存)。
+/// 任意态都可解(非条件式阶段,无哨兵);支持全 18 面转记号(2x2x2 无中心,
+/// D/L/B 与对面只差整体旋转,24 旋转归一到固定 DBL 帧)。度量 HTM,God's number = 11。
+#[wasm_bindgen]
+pub struct PocketSolverWasm {
+    pocket: RefCell<Option<PocketSolver>>,
+}
+
+#[wasm_bindgen]
+impl PocketSolverWasm {
+    #[wasm_bindgen(constructor)]
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> PocketSolverWasm {
+        PocketSolverWasm { pocket: RefCell::new(None) }
+    }
+
+    fn ensure(&self) {
+        if self.pocket.borrow().is_none() {
+            *self.pocket.borrow_mut() = Some(PocketSolver::new_lean());
+        }
+    }
+
+    /// 整解最优 HTM 步数(0..=11)。
+    pub fn solve(&self, scramble: &str) -> u32 {
+        self.ensure();
+        let alg = string_to_alg(scramble);
+        self.pocket.borrow().as_ref().unwrap().solve_one_any(&alg)
+    }
+
+    /// 一条最优解 JSON(同 Block222SolverWasm::solve_moves 形状,单条):
+    /// {"len":N,"sols":[{"m":"x y' R U F2 ...","c":""}]}。`m` 前缀 = 整体旋转
+    /// (打乱含 D/L/B 时归一所需,可为空),`c` 恒空串(整解无槽位/视角语义)。
+    pub fn solve_moves(&self, scramble: &str) -> String {
+        self.ensure();
+        let alg = string_to_alg(scramble);
+        let sol = self.pocket.borrow().as_ref().unwrap().enumerate_any(&alg);
+        let items = vec![(fmt_moves(&sol.rot, &sol.moves), String::new())];
+        sols_json(sol.len, &items)
     }
 }
 

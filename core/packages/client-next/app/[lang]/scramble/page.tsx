@@ -1,18 +1,19 @@
 'use client';
 
 /**
- * /scramble — hub for the 5 打乱-相关 子工具
+ * /scramble — hub for the 打乱-相关 子工具
  *   /scramble/stats     —— 打乱难度分布(WCA 1.2M 历史样本)
  *   /scramble/gen       —— 批量生成打乱
  *   /scramble/analyzer  —— 3x3 CFOP 打乱分析
  *   /scramble/solver    —— cubeopt 最优解 + 状态求解
+ *   /scramble/pocket    —— 2x2x2 整解最优求解(Rust WASM 全空间精确表)
  *   /scramble/pattern   —— 著名 NxN 图案集
  *
  * 1:1 port from packages/client/src/pages/scramble/ScrambleHubPage.tsx (Vite SPA).
  */
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { BarChart3, Dices, Microscope, Sparkles, Wand2 } from 'lucide-react';
+import { BarChart3, Box, Dices, Microscope, Sparkles, Wand2 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import i18n from '@/i18n/i18n-client';
 
@@ -52,6 +53,13 @@ const CARDS: Card[] = [
     zh: { title: '分布', desc: 'WCA 历史 1,200,000 条三阶打乱阶段最优步数分布' },
     en: { title: 'Distribution', desc: 'Stage-optimal HTM distribution over 1.2M WCA 3x3 scrambles' },
       zhHant: { title: '分佈', desc: 'WCA 歷史 1,200,000 條三階打亂階段最優步數分佈' }
+},
+  {
+    to: '/scramble/pocket',
+    Icon: Box,
+    zh: { title: '2x2x2 求解', desc: '任意 2x2x2 打乱的整解最优 HTM 解 — 全空间精确表' },
+    en: { title: '2x2x2 Solve', desc: 'Optimal HTM solution for any 2x2x2 scramble — exact full-space table' },
+      zhHant: { title: '2x2x2 求解', desc: '任意 2x2x2 打亂的整解最優 HTM 解 — 全空間精確表' }
 },
   {
     to: '/scramble/pattern',
