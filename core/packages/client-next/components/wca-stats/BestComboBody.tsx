@@ -61,7 +61,6 @@ export function BestComboBody({
 
   const b = pb.best[type];
   if (!b) {
-    const typeZh = type === 'average' ? '平均' : '单次';
     const other = type === 'average' ? 'single' : 'average';
     const hasOther = mentionOtherType && !!pb.best[other];
     return (
@@ -69,7 +68,7 @@ export function BestComboBody({
         {i18n.language === 'zh-Hant'
           ? `該選手在全部 21 個項目裡都沒有有效${type === 'average' ? '平均' : '單次'}成績(${type === 'average' ? '比如只打過多盲等無平均的項目,或平均全 DNF' : '單次記錄缺失'})${hasOther ? `;但有${other === 'average' ? '平均' : '單次'}最優組合,切上方“型別”檢視` : ''}`
           : isZh
-            ? `该选手在全部 21 个项目里都没有有效${typeZh}成绩(${type === 'average' ? '比如只打过多盲等无平均的项目,或平均全 DNF' : '单次记录缺失'})${hasOther ? `;但有${other === 'average' ? '平均' : '单次'}最优组合,切上方“类型”查看` : ''}`
+            ? `该选手在全部 21 个项目里都没有有效${type === 'average' ? '平均' : '单次'}成绩(${type === 'average' ? '比如只打过多盲等无平均的项目,或平均全 DNF' : '单次记录缺失'})${hasOther ? `;但有${other === 'average' ? '平均' : '单次'}最优组合,切上方“类型”查看` : ''}`
             : `No valid ${type} result in any of the 21 events${hasOther ? ` — but a ${other} combo exists, switch "Type" above` : ''}`}
       </div>
     );
