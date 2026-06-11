@@ -19,8 +19,10 @@ export async function createPrompt(f: FormData): Promise<void> {
   const name = String(f.get("name") ?? "").trim();
   const category = String(f.get("category") ?? "").trim();
   const body = String(f.get("body") ?? "").trim();
+  // dimension 空 = 整套预设模板;否则是某维度的组合积木
+  const dimension = String(f.get("dimension") ?? "").trim();
   if (!name || !body) redirect("/admin/qr/prompts?error=invalid");
-  await createPromptTemplate({ name, category, body });
+  await createPromptTemplate({ name, category, body, dimension });
   refresh();
   redirect("/admin/qr/prompts?saved=1");
 }

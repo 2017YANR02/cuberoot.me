@@ -169,6 +169,20 @@
       "when": 1781167408108,
       "tag": "0023_seed_more_prompt_styles",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1781169007693,
+      "tag": "0024_hesitant_blue_shield",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1781169107693,
+      "tag": "0025_seed_prompt_blocks",
+      "breakpoints": true
     }
   ]
 }

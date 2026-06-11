@@ -406,6 +406,8 @@ export const promptTemplates = sqliteTable(
     name: text("name").notNull(),
     category: text("category"),
     body: text("body").notNull(),
+    // 组合积木维度(风格/主体/主题/构图/光影);null = 整套预设模板(preset)
+    dimension: text("dimension"),
     sortOrder: integer("sort_order").notNull().default(0),
     // 软删除:null = 在用;有秒级时间戳 = 在回收站,可恢复或彻底删
     deletedAt: integer("deleted_at"),

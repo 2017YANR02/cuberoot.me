@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { findByCode, isProtectedQr } from "@/lib/db/qr";
-import { listPromptTemplates } from "@/lib/db/prompt-templates";
+import { listPromptTemplates, listPromptBlocks } from "@/lib/db/prompt-templates";
 import { absoluteUrl } from "@/lib/site";
 import { qrSvg } from "@/lib/qr/svg";
 import { CardEditor } from "./_CardEditor";
@@ -23,10 +23,11 @@ export default async function AdminQrEditPage({
   params: Promise<{ code: string }>;
   searchParams: Promise<SearchParams>;
 }) {
-  const [{ code: rawCode }, sp, templates] = await Promise.all([
+  const [{ code: rawCode }, sp, templates, blocks] = await Promise.all([
     params,
     loadSavedNotice(searchParams),
     listPromptTemplates(),
+    listPromptBlocks(),
   ]);
   const code = String(rawCode ?? "").trim().toLowerCase();
   const entry = await findByCode(code);
@@ -78,6 +79,7 @@ export default async function AdminQrEditPage({
             formId="qr-edit-form"
             landingUrl={landingUrl}
             templates={templates}
+            blocks={blocks}
           />
         </Card>
 
