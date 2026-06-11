@@ -24,6 +24,8 @@ pub mod pocket_solver;
 // pyraminx:金字塔核心+顶点全空间最优(0.9MB 零盘表现场 BFS,独立状态模型)。
 pub mod pyraminx_solver;
 pub mod roux_s1_solver;
+// skewb:斜转方块全空间最优(3.0MB 零盘表现场 BFS,独立状态模型)。
+pub mod skewb_solver;
 pub mod xcross_solver;
 
 // --- native-only(依赖 rayon / 磁盘表生成 / mmap manager,WASM 不编)---
