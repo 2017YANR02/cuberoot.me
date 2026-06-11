@@ -20,8 +20,9 @@ import { Loader2, Copy, Check, Play, Info, X } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { type MovesTimed, type RustCrossPool, TABLE_BYTES, TABLE_SETS } from '@/lib/rust-cross-client';
-import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
+import { getRustCrossPool, dropRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import { normalizeScramble } from '@/lib/cross-solver';
+import { variantLabel, stageLabel, VARIANT_STAGES } from '@/lib/scramble-variants';
 import './StageSolver.css';
 
 function fmtMs(ms: number): string {
@@ -34,56 +35,38 @@ function fmtBytes(b: number): string {
   return `${b} B`;
 }
 
-export type Method = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | '123' | '222' | '223' | 'eoline' | 'dr';
+export type Method = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | 'block' | 'eoline' | 'dr';
 const VARIANT_ID: Record<'pair' | 'eo' | 'pseudo' | 'pseudo_pair', number> = {
   pair: 0, eo: 1, pseudo: 2, pseudo_pair: 3,
 };
-const METHODS: { key: Method; label: string }[] = [
-  { key: 'std', label: 'Standard' },
-  { key: 'eo', label: 'EO' },
-  { key: 'pair', label: 'Pair' },
-  { key: 'pseudo', label: 'Pseudo' },
-  { key: 'pseudo_pair', label: 'Pseudo Pair' },
-  { key: 'f2leo', label: 'F2LEO' },
-  { key: 'pseudo_f2leo', label: 'Pseudo F2LEO' },
-  { key: '123', label: '1x2x3' },
-  { key: '222', label: '2x2x2' },
-  { key: '223', label: '2x2x3' },
-  { key: 'eoline', label: 'EOLine' },
-  { key: 'dr', label: 'DR' },
+// 方法名走全站单一真源 lib/scramble-variants(VARIANT_LABEL),别再本地复制一份。
+// 这里只定引擎支持的方法顺序(按 WASM kind 分组),标签 = variantLabel(key, isZh)。
+// 块族(原 123/222/223)聚合为一个方法 'block',块形状落在阶段下拉。
+const METHOD_KEYS: Method[] = [
+  'std', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
+  'block', 'eoline', 'dr',
 ];
-const STAGE_LABELS: Record<Method, string[]> = {
-  std: ['Cross', 'XC', 'XXC', 'XXXC', 'XXXXC'],
-  eo: ['EO Cross', 'EO XC', 'EO XXC', 'EO XXXC', 'EO XXXXC'],
-  pair: ['Cross + Pair', 'XC + Pair', 'XXC + Pair', 'XXXC + Pair'],
-  pseudo: ['Pseudo Cross', 'Pseudo XC', 'Pseudo XXC', 'Pseudo XXXC'],
-  pseudo_pair: ['P-Cross + Pair', 'P-XC + Pair', 'P-XXC + Pair', 'P-XXXC + Pair'],
-  f2leo: ['F2LEO Cross', 'F2LEO XC', 'F2LEO XXC', 'F2LEO XXXC'],
-  pseudo_f2leo: ['P-F2LEO Cross', 'P-F2LEO XC', 'P-F2LEO XXC', 'P-F2LEO XXXC'],
-  '123': ['1x2x2', '1x2x3', '1x2x3 x2'],
-  '222': ['2x2x2'],
-  '223': ['2x2x2', '2x2x3'],
-  eoline: ['EO', 'EOLine'],
-  dr: ['DR'],
-};
+// 阶段键序 + 显示名同样走 scramble-variants(VARIANT_STAGES / stageLabel),
+// WASM 阶段索引 i ↔ VARIANT_STAGES[method][i],与 /scramble/stats 完全同名。
 // 自动批算(eager)的最深阶段;更深的留点击按需(单视角搜索重,弱小表启发式)。
 const EAGER_MAX: Record<Method, number> = {
-  std: 3, eo: 2, pair: 3, pseudo: 3, pseudo_pair: 2, f2leo: 1, pseudo_f2leo: 1, '123': 1, '222': 0, '223': 1, eoline: 1, dr: 0,
+  std: 3, eo: 2, pair: 3, pseudo: 3, pseudo_pair: 2, f2leo: 1, pseudo_f2leo: 1, block: 3, eoline: 1, dr: 0,
 };
 type Kind = 'std' | 'variant' | 'f2leo' | 'block222' | 'roux223' | 'eodr';
-const kindOf = (m: Method): Kind =>
+// block 方法按阶段分流:block222 阶段走专用 Block222SolverWasm,其余走 Roux223SolverWasm
+// (其阶段 id 0..4 恰与 VARIANT_STAGES.block 的索引一一对应,无需映射)。
+const kindOf = (m: Method, stageKey: string): Kind =>
   m === 'std' ? 'std'
     : m === 'f2leo' || m === 'pseudo_f2leo' ? 'f2leo'
-      : m === '222' ? 'block222'
-        : m === '123' || m === '223' ? 'roux223'
-          : m === 'eoline' || m === 'dr' ? 'eodr' : 'variant';
-const needOf = (m: Method): PoolNeed => {
-  const k = kindOf(m);
-  return k === 'std' ? 'cross' : k === 'f2leo' ? 'f2leo' : k === 'block222' ? 'block222' : k === 'roux223' ? 'roux223' : k === 'eodr' ? 'eodr' : 'variant';
-};
-// Roux223SolverWasm 的阶段编号:0=1x2x2 方块 1=1x2x3 2=2x2x2 3=2x2x3 4=双1x2x3。
-const roux223Stage = (m: Method, stage: number) =>
-  m === '123' ? (stage === 2 ? 4 : stage) : stage + 2;
+      : m === 'block' ? (stageKey === 'block222' ? 'block222' : 'roux223')
+        : m === 'eoline' || m === 'dr' ? 'eodr' : 'variant';
+// 池按方法选:'block' 全程用 roux223 池(其 worker 表是 block222 的超集,init 时两个
+// 求解器都建),方法内切阶段不换池、不重拉表。
+const needOf = (m: Method): PoolNeed =>
+  m === 'std' ? 'cross'
+    : m === 'f2leo' || m === 'pseudo_f2leo' ? 'f2leo'
+      : m === 'block' ? 'roux223'
+        : m === 'eoline' || m === 'dr' ? 'eodr' : 'variant';
 // EoDrSolverWasm 的阶段编号:0=EO 1=EOLine 2=DR。
 const eoDrStage = (m: Method, stage: number) => (m === 'eoline' ? stage : 2);
 
@@ -121,15 +104,15 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
   // 视角格 / 解法头的目标描述(块类方法按 method+stage 给语义,其余 = 该面十字)。
   const faceDesc = (face: string) =>
-    method === '222' ? t(`${face} 底 2x2x2 块`, `${face}-bottom 2x2x2 block`)
-      : method === '123' ? (stage === 0
-        ? t(`${face} 底 1x2x2 方块`, `${face}-bottom 1x2x2 square`)
-        : stage === 1
-          ? t(`${face} 底 1x2x3 块`, `${face}-bottom 1x2x3 block`)
-          : t(`${face} 底双 1x2x3 块`, `${face}-bottom dual 1x2x3 blocks`))
-      : method === '223' ? (stage === 0
-        ? t(`${face} 底 2x2x2 块`, `${face}-bottom 2x2x2 block`)
-        : t(`${face} 底 2x2x3 块`, `${face}-bottom 2x2x3 block`))
+    method === 'block' ? (stage === 0
+      ? t(`${face} 底 1x2x2 方块`, `${face}-bottom 1x2x2 square`)
+      : stage === 1
+        ? t(`${face} 底 1x2x3 块`, `${face}-bottom 1x2x3 block`)
+        : stage === 2
+          ? t(`${face} 底 2x2x2 块`, `${face}-bottom 2x2x2 block`)
+          : stage === 3
+            ? t(`${face} 底 2x2x3 块`, `${face}-bottom 2x2x3 block`)
+            : t(`${face} 底双 1x2x3 块(F2B)`, `${face}-bottom first 2 blocks (F2B)`))
       : method === 'eoline' ? (stage === 0
         ? t(`${face} 底 EO(整棱定向)`, `${face}-bottom EO (all edges oriented)`)
         : t(`${face} 底 EOLine`, `${face}-bottom EOLine`))
@@ -165,8 +148,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   statusRef.current = status;
   const firstScrambleRun = useRef(true);
 
+  const stages = VARIANT_STAGES[method];
   const need = needOf(method);
-  const stages = STAGE_LABELS[method];
   const eager = stage <= EAGER_MAX[method];
   // 设备并行度只在客户端可知;Node 21+ SSR 也有全局 navigator(hardwareConcurrency=构建机核数)
   // 会渲染出 4,移动端客户端是 2 → hydration mismatch。挂载后再取,水合期两端都渲染占位值。
@@ -182,6 +165,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
   // 共享池:need(cross/variant/f2leo)变化时取/建对应池,等首个 worker 就绪。
   // poolSize 挂载后才可知(null=未挂载),到位前不建池(只 null→值 一次,不会重建)。
+  // 加载不设硬超时(慢网下 60s 假报错比慢更糟):真实失败由 pool.ready reject 进 error,
+  // 拖太久由 elapsed 计时驱动「网络较慢 + 重试」提示,重试 = 弃池重建。
+  const [retryTick, setRetryTick] = useState(0);
   useEffect(() => {
     if (poolSize == null) return;
     let cancelled = false;
@@ -189,15 +175,23 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     setErrMsg('');
     const pool = getRustCrossPool(need, poolSize);
     poolRef.current = pool;
-    const timeout = new Promise<never>((_, rej) =>
-      setTimeout(() => rej(new Error(t('加载超时(>60s),请重试或检查网络', 'load timeout (>60s) — retry or check network'))), 60000),
-    );
-    Promise.race([pool.ready, timeout])
+    pool.ready
       .then(() => { if (!cancelled) setStatus('ready'); })
       .catch((e) => { if (!cancelled) { setStatus('error'); setErrMsg(e?.message || String(e)); } });
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [need, poolSize]);
+  }, [need, poolSize, retryTick]);
+  const retryLoad = useCallback(() => {
+    dropRustCrossPool();
+    setRetryTick((n) => n + 1);
+  }, []);
+  // loading 经过秒数(给用户进度感;≥15s 提示网络较慢并出重试按钮)。
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (status !== 'loading') return;
+    setElapsed(0);
+    const id = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [status, need, retryTick]);
 
   // 方法切换后把 stage 收进合法范围。
   useEffect(() => {
@@ -215,7 +209,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     setComputing(true);
     setTotalMs(null);
     const wall = performance.now();
-    const kind = kindOf(method);
+    const kind = kindOf(method, stages[stage] ?? '');
     try {
       if (kind === 'std') {
         await Promise.all(FACES.map(async (_f, f) => {
@@ -232,7 +226,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           : kind === 'block222'
             ? await pool.solveBlock222Stage(scr)
             : kind === 'roux223'
-              ? await pool.solveRoux223Stage(scr, roux223Stage(method, stage))
+              ? await pool.solveRoux223Stage(scr, stage)
               : kind === 'eodr'
                 ? await pool.solveEoDrStage(scr, eoDrStage(method, stage))
                 : await pool.solveVariantStage(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], stage);
@@ -286,7 +280,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     setSelSol(0);
     try {
       const scr = scrambleRef.current.trim();
-      const kind = kindOf(method);
+      const kind = kindOf(method, stages[stage] ?? '');
       // 搜索深度恒定 = 最优+SLACK(=旧「+2」档,不引入新的性能成本);cap=用户选的展示条数,
       // 引擎按长度升序收集、够数即停。条数填不满时(短解不够)如实返回更少。
       const res = kind === 'std'
@@ -296,7 +290,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           : kind === 'block222'
             ? await pool.solveBlock222Moves(scr, f, { extra: SOL_SLACK, cap: limit })
             : kind === 'roux223'
-              ? await pool.solveRoux223Moves(scr, roux223Stage(method, stage), f, { extra: SOL_SLACK, cap: limit })
+              ? await pool.solveRoux223Moves(scr, stage, f, { extra: SOL_SLACK, cap: limit })
               : kind === 'eodr'
                 ? await pool.solveEoDrMoves(scr, eoDrStage(method, stage), f, { extra: SOL_SLACK, cap: limit })
                 : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap: limit });
@@ -391,11 +385,53 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
   return (
     <section className={`stsv${compact ? ' stsv-compact' : ''}`}>
+      {/* 控件常驻:求解器加载期间也能切方法/阶段/条数(切方法即换池),UI 不被 loading 替换。 */}
+      <div className="stsv-controls">
+        <label className="stsv-control">
+          <span>{t('方法', 'Method')}</span>
+          <select value={method} onChange={(e) => setMethod(e.target.value as Method)}>
+            {METHOD_KEYS.map((k) => <option key={k} value={k}>{variantLabel(k, lang === 'zh')}</option>)}
+          </select>
+        </label>
+        <label className="stsv-control">
+          <span>{t('阶段', 'Stage')}</span>
+          <select value={stage} onChange={(e) => setStage(Number(e.target.value))}>
+            {stages.map((k, i) => <option key={k} value={i}>{stageLabel(k, lang === 'zh')}</option>)}
+          </select>
+        </label>
+        <label className="stsv-control">
+          <span>{t('显示条数', 'Show')}</span>
+          <select value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
+            {LIMIT_OPTIONS.map((n) => (
+              <option key={n} value={n}>{t(`最多 ${n} 条`, `Up to ${n}`)}</option>
+            ))}
+          </select>
+        </label>
+        <button
+          className="stsv-compute"
+          onClick={() => { wantAuto.current = true; void computeAll(); }}
+          disabled={computing || status !== 'ready'}
+        >
+          {computing ? <Loader2 size={14} className="stsv-spin" /> : null}
+          {t('计算', 'Compute')}
+        </button>
+        <button
+          type="button"
+          className="stsv-diag"
+          onClick={() => setInfoOpen(true)}
+          title={t('求解器信息', 'Solver info')}
+          aria-label={t('求解器信息', 'Solver info')}
+        >
+          <Info size={15} />
+        </button>
+      </div>
+
       {status === 'loading' && (
         <div className="stsv-loading">
           <div className="stsv-status">
             <Loader2 size={14} className="stsv-spin" />
             {t('加载求解器与数据表(仅首次)…', 'Loading solver + tables (first time only)…')}
+            {elapsed >= 3 && <span className="stsv-elapsed">{elapsed}s</span>}
           </div>
           <ul className="stsv-tables">
             {tableInfo.rows.map((r) => (
@@ -416,54 +452,23 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                 `${tableInfo.rows.length} tables ≈ ${fmtBytes(tableInfo.total)} · one copy per worker × ${poolSize}`,
               )}
           </div>
+          {elapsed >= 15 && (
+            <div className="stsv-slow">
+              {t('网络较慢,仍在下载…', 'Slow network — still downloading…')}
+              <button type="button" className="stsv-retry" onClick={retryLoad}>{t('重试', 'Retry')}</button>
+            </div>
+          )}
         </div>
       )}
       {status === 'error' && (
-        <div className="stsv-status stsv-err">{t('初始化失败', 'Init failed')}: {errMsg}</div>
+        <div className="stsv-status stsv-err">
+          {t('初始化失败', 'Init failed')}: {errMsg}
+          <button type="button" className="stsv-retry" onClick={retryLoad}>{t('重试', 'Retry')}</button>
+        </div>
       )}
 
       {status === 'ready' && (
         <>
-          <div className="stsv-controls">
-            <label className="stsv-control">
-              <span>{t('方法', 'Method')}</span>
-              <select value={method} onChange={(e) => setMethod(e.target.value as Method)}>
-                {METHODS.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
-              </select>
-            </label>
-            <label className="stsv-control">
-              <span>{t('阶段', 'Stage')}</span>
-              <select value={stage} onChange={(e) => setStage(Number(e.target.value))}>
-                {stages.map((l, i) => <option key={i} value={i}>{l}</option>)}
-              </select>
-            </label>
-            <label className="stsv-control">
-              <span>{t('显示条数', 'Show')}</span>
-              <select value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
-                {LIMIT_OPTIONS.map((n) => (
-                  <option key={n} value={n}>{t(`最多 ${n} 条`, `Up to ${n}`)}</option>
-                ))}
-              </select>
-            </label>
-            <button
-              className="stsv-compute"
-              onClick={() => { wantAuto.current = true; void computeAll(); }}
-              disabled={computing}
-            >
-              {computing ? <Loader2 size={14} className="stsv-spin" /> : null}
-              {t('计算', 'Compute')}
-            </button>
-            <button
-              type="button"
-              className="stsv-diag"
-              onClick={() => setInfoOpen(true)}
-              title={t('求解器信息', 'Solver info')}
-              aria-label={t('求解器信息', 'Solver info')}
-            >
-              <Info size={15} />
-            </button>
-          </div>
-
           {/* 6 视角对比:点格选视角;最优(min)视角带 best 标记 */}
           <div className="stsv-angles">
             {FACES.map((f, i) => {
@@ -503,7 +508,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             <div className="stsv-result">
               <div className="stsv-sols">
                 <div className="stsv-sols-head">
-                  <strong>{stages[stage]}</strong>
+                  <strong>{stageLabel(stages[stage], lang === 'zh')}</strong>
                   <span
                     className="stsv-sols-face"
                     title={faceDesc(FACES[selFace].face)}

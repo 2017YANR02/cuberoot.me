@@ -18,6 +18,7 @@ import { eventDisplayName } from '@/lib/wca-events';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
 import { isAnalysableScramble } from '@/lib/cross-solver';
 import type { Method } from '@/components/StageSolver';
+import { isBlockVariant } from '@/lib/scramble-variants';
 import type { WcaFormat } from './_wca-round';
 import type { Metric } from './CompCrossAnalysis';
 import ScrambleLines from './ScrambleLines';
@@ -28,16 +29,15 @@ import i18n from "@/i18n/i18n-client";
 // 行内展开第一次点开时才按需加载(ssr:false,纯 client 组件)。
 const StageSolver = dynamic(() => import('@/components/StageSolver'), { ssr: false });
 
-// gen 变体 key 与 StageSolver Method 对应(123x2 是方法 123 的第 3 阶段,无独立方法)。
-const VARIANT_METHODS = new Set<string>(['std', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo', '123', '222', '223', 'eoline', 'dr']);
+// gen 变体 key 与 StageSolver Method 对应(块族数据变体 123/123x2/222/223 都归聚合方法 block)。
+const NON_BLOCK_METHODS = new Set<string>(['std', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo', 'eoline', 'dr']);
 const variantToMethod = (v: string): Method =>
-  v === '123x2' ? '123' : VARIANT_METHODS.has(v) ? (v as Method) : 'std';
-// metric → StageSolver initialStage 索引(cross=0 / xc=1 / …;块族:b122/b222=0,
-// b123=方法 123 的阶段 1,bf2b=方法 123 的阶段 2,b223=方法 223 的阶段 1,
-// beo/beoline=方法 eoline 的阶段 0/1,bdr=方法 dr 的阶段 0 — 方法不同所以全局表不冲突)。
+  isBlockVariant(v) || v === 'block' ? 'block' : NON_BLOCK_METHODS.has(v) ? (v as Method) : 'std';
+// metric → StageSolver initialStage 索引(cross=0 / xc=1 / …;块族走方法 block 的
+// 阶段序 [122, 123, 222, 223, F2B];beo/beoline=方法 eoline 的阶段 0/1,bdr=方法 dr 的阶段 0)。
 const METRIC_STAGE_IDX: Record<Metric, number> = {
   cross: 0, xc: 1, xxc: 2, xxxc: 3, xxxxc: 4,
-  b122: 0, b123: 1, b222: 0, b223: 1, bf2b: 2, beo: 0, beoline: 1, bdr: 0,
+  b122: 0, b123: 1, b222: 2, b223: 3, bf2b: 4, beo: 0, beoline: 1, bdr: 0,
 };
 
 // 逐行徽标点击循环顺序;块族变体只在自家阶段集内循环。label: cross='C',块类=尺寸数字,其它=大写指标名。
@@ -49,7 +49,7 @@ const BLOCK_CYCLE: Record<string, Metric[]> = {
 const cycleOf = (v?: string): Metric[] => (v && BLOCK_CYCLE[v]) || METRIC_CYCLE;
 const metricBadgeLabel = (m: Metric): string =>
   m === 'cross' ? 'C'
-    : m === 'bf2b' ? '123x2'
+    : m === 'bf2b' ? 'F2B'
       : m === 'beo' ? 'EO'
         : m === 'beoline' ? 'EOLine'
           : m === 'bdr' ? 'DR'

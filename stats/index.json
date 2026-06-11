@@ -374,9 +374,9 @@
           "titleZh": "参赛国家最多"
         },
         {
-          "id": "name_parts_count",
-          "titleEn": "Name parts count",
-          "titleZh": "姓名词数分布"
+          "id": "name_stats",
+          "titleEn": "Name statistics",
+          "titleZh": "姓名统计"
         },
         {
           "id": "shortest_time_to_reach_milestone_in_comps_count",

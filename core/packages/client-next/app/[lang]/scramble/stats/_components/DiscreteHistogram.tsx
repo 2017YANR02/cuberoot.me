@@ -106,8 +106,13 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
   const fmtCount = (n: number) => n.toLocaleString();
   const fmtPct = (p: number) => {
     if (p === 0) return '0%';
-    if (p < 0.001) return `${(p * 100).toFixed(2)}%`;
-    if (p < 0.01) return `${(p * 100).toFixed(1)}%`;
+    // 概率 < 1% 时改写成 1/N 频率(分子恒为 1),取 2 位有效数字避免长尾噪声
+    if (p < 0.01) {
+      const n = 1 / p;
+      const mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(n)) - 1));
+      const denom = Math.round(n / mag) * mag;
+      return `1/${denom.toLocaleString()}`;
+    }
     return `${(p * 100).toFixed(1)}%`;
   };
 
