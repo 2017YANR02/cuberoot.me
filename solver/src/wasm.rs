@@ -28,6 +28,7 @@ use crate::pair_solver::PairSolver;
 use crate::pocket_solver::PocketSolver;
 use crate::prune_tables::PackedPruneTable;
 use crate::pseudo_f2leo_solver::PseudoF2leoSolver;
+use crate::pyraminx_solver::{parse_pyraminx, PyraminxSolver};
 use crate::pseudo_pair_solver::PseudoPairSmallSolver;
 use crate::pseudo_xcross_solver::PseudoSmallSolver;
 use crate::roux_s1_solver::{s1_block_label, square_label, FbSquareSolver, RouxS1Solver};
@@ -655,6 +656,49 @@ impl PocketSolverWasm {
         let sol = self.pocket.borrow().as_ref().unwrap().enumerate_any(&alg);
         let items = vec![(fmt_moves(&sol.rot, &sol.moves), String::new())];
         sols_json(sol.len, &items)
+    }
+}
+
+/// Pyraminx(金字塔)整解最优求解器(全自包含,**零表下载**):0.9MB 核心全空间
+/// 精确距离表首次查询时惰性现场 BFS(lean 构造,不存 29.9MB 联合移动表,RefCell
+/// 缓存)。吃全 WCA pyram 记号(大写 U/L/R/B 核心 + 小写 u/l/r/b 顶点,可带 '/2,
+/// 阶 3 下 X2 = X');非法记号抛 JS 异常。口径(精确):总 HTM = 核心查表最优 +
+/// #错位 tips。God's number 核心 11 / 含 tips 15。
+#[wasm_bindgen]
+pub struct PyraminxSolverWasm {
+    pyra: RefCell<Option<PyraminxSolver>>,
+}
+
+#[wasm_bindgen]
+impl PyraminxSolverWasm {
+    #[wasm_bindgen(constructor)]
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> PyraminxSolverWasm {
+        PyraminxSolverWasm { pyra: RefCell::new(None) }
+    }
+
+    fn ensure(&self) {
+        if self.pyra.borrow().is_none() {
+            *self.pyra.borrow_mut() = Some(PyraminxSolver::new_lean());
+        }
+    }
+
+    /// 整解最优 HTM 步数(0..=15,含 tips)。非法记号 → Err(JS 异常)。
+    pub fn solve(&self, scramble: &str) -> Result<u32, JsError> {
+        let alg = parse_pyraminx(scramble).map_err(|e| JsError::new(&e))?;
+        self.ensure();
+        Ok(self.pyra.borrow().as_ref().unwrap().solve_one(&alg))
+    }
+
+    /// 一条最优解 JSON(同 PocketSolverWasm::solve_moves 形状,单条):
+    /// {"len":N,"sols":[{"m":"U L' B ... r b'","c":""}]}。`m` = 核心大写解 +
+    /// 小写 tip 收尾(无整体旋转前缀),`c` 恒空串。非法记号 → Err(JS 异常)。
+    pub fn solve_moves(&self, scramble: &str) -> Result<String, JsError> {
+        let alg = parse_pyraminx(scramble).map_err(|e| JsError::new(&e))?;
+        self.ensure();
+        let sol = self.pyra.borrow().as_ref().unwrap().enumerate_lean(&alg);
+        let items = vec![(sol.to_string_moves(), String::new())];
+        Ok(sols_json(sol.len, &items))
     }
 }
 

@@ -7,13 +7,14 @@
  *   /scramble/analyzer  —— 3x3 CFOP 打乱分析
  *   /scramble/solver    —— cubeopt 最优解 + 状态求解
  *   /scramble/pocket    —— 2x2x2 整解最优求解(Rust WASM 全空间精确表)
+ *   /scramble/pyraminx  —— 金字塔整解最优求解(Rust WASM 核心全空间精确表 + tips)
  *   /scramble/pattern   —— 著名 NxN 图案集
  *
  * 1:1 port from packages/client/src/pages/scramble/ScrambleHubPage.tsx (Vite SPA).
  */
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { BarChart3, Box, Dices, Microscope, Sparkles, Wand2 } from 'lucide-react';
+import { BarChart3, Box, Dices, Microscope, Pyramid, Sparkles, Wand2 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import i18n from '@/i18n/i18n-client';
 
@@ -60,6 +61,13 @@ const CARDS: Card[] = [
     zh: { title: '2x2x2 求解', desc: '任意 2x2x2 打乱的整解最优 HTM 解 — 全空间精确表' },
     en: { title: '2x2x2 Solve', desc: 'Optimal HTM solution for any 2x2x2 scramble — exact full-space table' },
       zhHant: { title: '2x2x2 求解', desc: '任意 2x2x2 打亂的整解最優 HTM 解 — 全空間精確表' }
+},
+  {
+    to: '/scramble/pyraminx',
+    Icon: Pyramid,
+    zh: { title: '金字塔求解', desc: '任意金字塔打乱的整解最优 HTM 解 — 核心全空间精确表 + 顶点' },
+    en: { title: 'Pyraminx Solve', desc: 'Optimal HTM solution for any Pyraminx scramble — exact core table plus tips' },
+      zhHant: { title: '金字塔求解', desc: '任意金字塔打亂的整解最優 HTM 解 — 核心全空間精確表 + 頂點' }
 },
   {
     to: '/scramble/pattern',

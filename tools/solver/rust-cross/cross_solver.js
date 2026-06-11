@@ -677,6 +677,74 @@ export class PocketSolverWasm {
 if (Symbol.dispose) PocketSolverWasm.prototype[Symbol.dispose] = PocketSolverWasm.prototype.free;
 
 /**
+ * Pyraminx(金字塔)整解最优求解器(全自包含,**零表下载**):0.9MB 核心全空间
+ * 精确距离表首次查询时惰性现场 BFS(lean 构造,不存 29.9MB 联合移动表,RefCell
+ * 缓存)。吃全 WCA pyram 记号(大写 U/L/R/B 核心 + 小写 u/l/r/b 顶点,可带 '/2,
+ * 阶 3 下 X2 = X');非法记号抛 JS 异常。口径(精确):总 HTM = 核心查表最优 +
+ * #错位 tips。God's number 核心 11 / 含 tips 15。
+ */
+export class PyraminxSolverWasm {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        PyraminxSolverWasmFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_pyraminxsolverwasm_free(ptr, 0);
+    }
+    constructor() {
+        const ret = wasm.pyraminxsolverwasm_new();
+        this.__wbg_ptr = ret;
+        PyraminxSolverWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * 整解最优 HTM 步数(0..=15,含 tips)。非法记号 → Err(JS 异常)。
+     * @param {string} scramble
+     * @returns {number}
+     */
+    solve(scramble) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.pyraminxsolverwasm_solve(this.__wbg_ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return ret[0] >>> 0;
+    }
+    /**
+     * 一条最优解 JSON(同 PocketSolverWasm::solve_moves 形状,单条):
+     * {"len":N,"sols":[{"m":"U L' B ... r b'","c":""}]}。`m` = 核心大写解 +
+     * 小写 tip 收尾(无整体旋转前缀),`c` 恒空串。非法记号 → Err(JS 异常)。
+     * @param {string} scramble
+     * @returns {string}
+     */
+    solve_moves(scramble) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.pyraminxsolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0);
+            var ptr2 = ret[0];
+            var len2 = ret[1];
+            if (ret[3]) {
+                ptr2 = 0; len2 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred3_0 = ptr2;
+            deferred3_1 = len2;
+            return getStringFromWasm0(ptr2, len2);
+        } finally {
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
+    }
+}
+if (Symbol.dispose) PyraminxSolverWasm.prototype[Symbol.dispose] = PyraminxSolverWasm.prototype.free;
+
+/**
  * Roux 第一块(方块 / 1x2x3 / 双 1x2x3)+ Petrus(2x2x2 / 2x2x3)组合求解器。4 张小表:
  * mt_edge3 (~743KB) + mt_corn2 (~36KB) + mt_edge2 (~38KB) + mt_corn (~1.7KB)。
  * FB 方块与 2x2x2 全表构造时即建(微型/毫秒级);1x2x3 全表(5,322,240 态)与
@@ -889,6 +957,10 @@ if (Symbol.dispose) VariantSolverWasm.prototype[Symbol.dispose] = VariantSolverW
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
+        __wbg_Error_ef53bc310eb298a0: function(arg0, arg1) {
+            const ret = Error(getStringFromWasm0(arg0, arg1));
+            return ret;
+        },
         __wbg___wbindgen_throw_1506f2235d1bdba0: function(arg0, arg1) {
             throw new Error(getStringFromWasm0(arg0, arg1));
         },
@@ -935,6 +1007,9 @@ const HtrSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
 const PocketSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_pocketsolverwasm_free(ptr, 1));
+const PyraminxSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_pyraminxsolverwasm_free(ptr, 1));
 const Roux223SolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_roux223solverwasm_free(ptr, 1));
@@ -1009,6 +1084,12 @@ function passStringToWasm0(arg, malloc, realloc) {
 
     WASM_VECTOR_LEN = offset;
     return ptr;
+}
+
+function takeFromExternrefTable0(idx) {
+    const value = wasm.__wbindgen_externrefs.get(idx);
+    wasm.__externref_table_dealloc(idx);
+    return value;
 }
 
 let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });

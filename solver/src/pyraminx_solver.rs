@@ -371,6 +371,70 @@ impl PyraminxSolver {
         let len = (core.len() + tips.len()) as u32;
         PyraminxSol { len, core, tips }
     }
+
+    /// 轻量构造(WASM 用):只建 0.9MB 核心距离表,**不存**联合移动表(new() 的
+    /// mt 为 933,120×8×4B ≈ 29.9MB,浏览器线性内存不必吃)。BFS 转移现场
+    /// decode/encode 逐态计算,总转换次数与 new() 建表相同,只省内存。
+    /// 注意:lean 实例的 mt 为空,查询走 solve_one / solve_split / enumerate_lean
+    /// (全程 State 级,不依赖 mt);不要调 enumerate(走 mt 回溯)。
+    pub fn new_lean() -> Self {
+        let solved = encode_core(&PyraState::SOLVED);
+        let mut dist = vec![255u8; PYRA_CORE_STATES];
+        dist[solved] = 0;
+        let mut frontier = vec![solved as u32];
+        let mut d = 0u8;
+        while !frontier.is_empty() {
+            let mut next = Vec::new();
+            for &i in &frontier {
+                let st = decode_core(i as usize);
+                for m in 0..8u8 {
+                    let mut s2 = st;
+                    s2.apply(PyraMove { axis: m / 2, prime: m % 2 == 1, tip: false });
+                    let ni = encode_core(&s2);
+                    if dist[ni] == 255 {
+                        dist[ni] = d + 1;
+                        next.push(ni as u32);
+                    }
+                }
+            }
+            d += 1;
+            frontier = next;
+        }
+        PyraminxSolver { mt: Vec::new(), dist, solved }
+    }
+
+    /// 一条最优解(State 级回溯,不依赖 mt,lean 实例可用):语义同 enumerate。
+    pub fn enumerate_lean(&self, alg: &[PyraMove]) -> PyraminxSol {
+        let st0 = Self::state_after(alg);
+        let mut st = st0;
+        let mut d = self.dist[encode_core(&st)];
+        let mut core = Vec::with_capacity(d as usize);
+        while d > 0 {
+            let before = d;
+            for m in 0..8u8 {
+                let mv = PyraMove { axis: m / 2, prime: m % 2 == 1, tip: false };
+                let mut ns = st;
+                ns.apply(mv);
+                if self.dist[encode_core(&ns)] == d - 1 {
+                    core.push(mv);
+                    st = ns;
+                    d -= 1;
+                    break;
+                }
+            }
+            assert!(d < before, "distance table walk stuck");
+        }
+        let mut tips = Vec::new();
+        for i in 0..4u8 {
+            // 核心解后 tip_i = r_i(不随核心解选取变,见模块注释)。
+            let r = (st0.tips[i as usize] + 3 - st0.co[i as usize]) % 3;
+            if r != 0 {
+                tips.push(PyraMove { axis: i, prime: r == 1, tip: true });
+            }
+        }
+        let len = (core.len() + tips.len()) as u32;
+        PyraminxSol { len, core, tips }
+    }
 }
 
 #[cfg(test)]
@@ -559,6 +623,35 @@ mod tests {
         }
         let sol = s.enumerate(&[]);
         assert_eq!(sol.len, 0);
+    }
+
+    /// lean 构造(WASM 路径,零 mt)与 full 构造距离表全空间逐格相等;
+    /// enumerate_lean 与 enumerate 同长,且物理 replay 全归位(含 tips)。
+    #[test]
+    fn lean_matches_full() {
+        let full = PyraminxSolver::new();
+        let lean = PyraminxSolver::new_lean();
+        assert!(lean.mt.is_empty());
+        assert_eq!(lean.solved, full.solved);
+        assert_eq!(lean.dist, full.dist, "lean dist != full dist");
+        assert_eq!(lean.max_depth(), 11);
+
+        for seed in 0..40u64 {
+            let len = 1 + (seed as usize) % 25;
+            let alg = pseudo_word(11000 + seed, len, false);
+            let best = full.solve_one(&alg);
+            assert_eq!(lean.solve_one(&alg), best, "seed={}", seed);
+            let sol = lean.enumerate_lean(&alg);
+            assert_eq!(sol.len, best, "seed={}", seed);
+            assert_eq!(full.enumerate(&alg).len, best, "seed={}", seed);
+
+            let mut st = PyraState::SOLVED;
+            st.apply_all(&alg);
+            st.apply_all(&sol.core);
+            st.apply_all(&sol.tips);
+            assert_eq!(st, PyraState::SOLVED, "lean solution not solved, seed={}", seed);
+        }
+        assert_eq!(lean.enumerate_lean(&[]).len, 0);
     }
 
     /// 含 tips 全空间联合 BFS(16 move,75,582,720 态):闭包态数、God's number = 15、
