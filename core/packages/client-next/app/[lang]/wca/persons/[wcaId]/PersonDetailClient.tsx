@@ -104,12 +104,12 @@ export default function PersonDetailClient() {
   );
 }
 
-function PageHeader({ t, wcaId }: { t: (zh: string, en: string) => string; wcaId?: string }) {
+function PageHeader({ t, wcaId }: { t: (zh: string, en: string, zhHant?: string) => string; wcaId?: string }) {
   return (
     <header className="wp-header">
       <Link href="/wca/persons" className="wp-back">
         <ChevronLeft size={16} />
-        <span>{t('选手搜索', 'Search')}</span>
+        <span>{t('选手搜索', 'Search', "選手搜尋")}</span>
       </Link>
       <div className="wp-header-right">
         {wcaId && (

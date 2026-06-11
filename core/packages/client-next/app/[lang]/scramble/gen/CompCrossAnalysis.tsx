@@ -66,12 +66,12 @@ interface Props {
   letters: ColorLetter[];
   /** 点击步数 → 把选中步 + 命中打乱集合上报,父级据此过滤下方打乱表。 */
   onFilterChange?: (filter: CrossFilter | null) => void;
-  t: (zh: string, en: string) => string;
+  t: (zh: string, en: string, zhHant?: string) => string;
 }
 
-function roundLabel(idx: number, t: (zh: string, en: string) => string): string {
-  if (idx === 3) return t('决赛', 'Final');
-  return `${t('第', 'R')}${idx + 1}${t('轮', '')}`;
+function roundLabel(idx: number, t: (zh: string, en: string, zhHant?: string) => string): string {
+  if (idx === 3) return t('决赛', 'Final', "決賽");
+  return `${t('第', 'R')}${idx + 1}${t('轮', '', "輪")}`;
 }
 
 function segColor(step: number, min: number, max: number): string {
@@ -159,10 +159,10 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
     : stepUncoveredCount === 0 ? true : step.ready;
   const metricName = t(stageLabel(metric, true), stageLabel(metric, false));
   const progressLabel = !pre.ready
-    ? t('加载预计算数据中…', 'Loading precomputed data…')
+    ? t('加载预计算数据中…', 'Loading precomputed data…', "載入預計算資料中…")
     : metric === 'cross'
-      ? t('计算十字步数中…', 'Computing cross lengths…')
-      : t(`计算 ${metricName} 步数中… (${step.done}/${step.total})`, `Computing ${metricName} lengths… (${step.done}/${step.total})`);
+      ? t('计算十字步数中…', 'Computing cross lengths…', "計算十字步數中…")
+      : t(`计算 ${metricName} 步数中… (${step.done}/${step.total})`, `Computing ${metricName} lengths… (${step.done}/${step.total})`, `計算 ${metricName} 步數中… (${step.done}/${step.total})`);
 
   const gMin = data.totalHist.min;
   const gMax = data.totalHist.max;
@@ -194,30 +194,30 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
 
   // ── 两种视图共享的数据行 ──
   const dataRows = [
-    { key: 'total', name: t('总计', 'Total'), groups: data.totalGroups, hist: data.totalHist },
+    { key: 'total', name: t('总计', 'Total', "總計"), groups: data.totalGroups, hist: data.totalHist },
     ...(data.rounds.length > 1
       ? data.rounds.map((r) => ({ key: `r${r.idx}`, name: roundLabel(r.idx, t), groups: r.groups, hist: r.hist }))
       : []),
   ];
 
   const rowHead = (name: string, scr: number, groups: number) => (
-    <div className="gen-cx-rowhead" title={`${t('打乱数', 'Scrambles')}: ${scr}　${t('组数', 'Groups')}: ${groups}`}>
+    <div className="gen-cx-rowhead" title={`${t('打乱数', 'Scrambles', "打亂數")}: ${scr}　${t('组数', 'Groups', "組數")}: ${groups}`}>
       <span className="gen-cx-rowname">{name}</span>
-      <span className="gen-cx-rowsub">{scr} · {groups}{t('组', 'g')}</span>
+      <span className="gen-cx-rowsub">{scr} · {groups}{t('组', 'g', "組")}</span>
     </div>
   );
 
   return (
     <section className="gen-cx-panel">
       {step.error ? (
-        <p className="gen-cx-pending">{t('计算失败', 'Computation failed')}: {step.error}</p>
+        <p className="gen-cx-pending">{t('计算失败', 'Computation failed', "計算失敗")}: {step.error}</p>
       ) : !activeReady && data.totalHist.total === 0 ? (
         <p className="gen-cx-loading"><Loader2 size={15} className="gen-spin" />{progressLabel}</p>
       ) : data.totalHist.total === 0 ? (
         <p className="gen-cx-pending">{
           engineless && !pre.map
-            ? t('该变体此比赛暂无预计算数据(等待服务端补算)。', 'No precomputed data for this variant in this competition yet.')
-            : t('该比赛没有可分析的三阶打乱。', 'No analysable 3x3 scrambles in this competition.')
+            ? t('该变体此比赛暂无预计算数据(等待服务端补算)。', 'No precomputed data for this variant in this competition yet.', "該變體此比賽暫無預計算資料(等待服務端補算)。")
+            : t('该比赛没有可分析的三阶打乱。', 'No analysable 3x3 scrambles in this competition.', "該比賽沒有可分析的三階打亂。")
         }</p>
       ) : (
         <>
@@ -234,7 +234,7 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
                       type="button"
                       className={`gen-cx-legbtn${selStep != null && selStep !== s ? ' is-dim' : ''}${selStep === s ? ' is-sel' : ''}`}
                       onClick={() => toggleStep(s)}
-                      title={t(`筛选 ${s} 步`, `Filter ${s}`)}
+                      title={t(`筛选 ${s} 步`, `Filter ${s}`, `篩選 ${s} 步`)}
                     >
                       <i className="gen-cx-dot" style={{ background: segColor(s, gMin, gMax) }} />
                       {t(`${s}步`, `${s}`)}
@@ -243,13 +243,13 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
                 ))}
               </ul>
             ) : <span />}
-            <div className="gen-cx-viewtoggle" role="group" aria-label={t('视图', 'View')}>
+            <div className="gen-cx-viewtoggle" role="group" aria-label={t('视图', 'View', "檢視")}>
               <button
                 type="button"
                 className={`gen-cx-viewbtn${view === 'heatmap' ? ' is-on' : ''}`}
                 onClick={() => setView('heatmap')}
-                title={t('热力网格', 'Heatmap grid')}
-                aria-label={t('热力网格', 'Heatmap grid')}
+                title={t('热力网格', 'Heatmap grid', "熱力網格")}
+                aria-label={t('热力网格', 'Heatmap grid', "熱力網格")}
               >
                 <LayoutGrid size={14} />
               </button>
@@ -257,8 +257,8 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
                 type="button"
                 className={`gen-cx-viewbtn${view === 'bars' ? ' is-on' : ''}`}
                 onClick={() => setView('bars')}
-                title={t('条形图', 'Stacked bars')}
-                aria-label={t('条形图', 'Stacked bars')}
+                title={t('条形图', 'Stacked bars', "條形圖")}
+                aria-label={t('条形图', 'Stacked bars', "條形圖")}
               >
                 <BarChart3 size={14} />
               </button>
@@ -283,7 +283,7 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
                   type="button"
                   className={`gen-cx-hm-colhead${selStep != null && selStep !== s ? ' is-dim' : ''}${selStep === s ? ' is-sel' : ''}`}
                   onClick={() => toggleStep(s)}
-                  title={t(`筛选 ${s} 步`, `Filter ${s}`)}
+                  title={t(`筛选 ${s} 步`, `Filter ${s}`, `篩選 ${s} 步`)}
                 >
                   <i className="gen-cx-dot" style={{ background: segColor(s, gMin, gMax) }} />{s}
                 </button>

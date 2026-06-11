@@ -26,7 +26,6 @@ import {
   type Category, type Pattern, type PuzzleSize,
 } from './_data/patterns_data';
 import './patterns.css';
-import i18n from '@/i18n/i18n-client';
 
 const ALL: 'all' = 'all';
 type Filter = typeof ALL | Category;
@@ -93,7 +92,7 @@ export default function PatternsPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   useDocumentTitle('图案', 'Patterns', "圖案");
-  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (lang === 'zh' ? zh : en);
 
   const [puzzle, setPuzzle] = useState<PuzzleSize>('3x3x3');
   const [filter, setFilter] = useState<Filter>(ALL);
@@ -141,7 +140,7 @@ export default function PatternsPage() {
       <header className="pat-header">
         <div className="pat-title">
           <Sparkles size={20} className="pat-title-icon" />
-          <h1>{t('图案集', 'Cube Patterns')}</h1>
+          <h1>{t('图案集', 'Cube Patterns', "圖案集")}</h1>
         </div>
       </header>
 
@@ -182,7 +181,7 @@ export default function PatternsPage() {
         </nav>
 
         {visiblePatterns.length === 0 ? (
-          <div className="pat-empty">{t('暂无图案', 'No patterns yet')}</div>
+          <div className="pat-empty">{t('暂无图案', 'No patterns yet', "暫無圖案")}</div>
         ) : (
           <ul className="pat-grid">
             {visiblePatterns.map((p) => (
@@ -221,7 +220,7 @@ function PatternModal({
 }: {
   pattern: Pattern;
   lang: 'zh' | 'en';
-  t: (zh: string, en: string) => string;
+  t: (zh: string, en: string, zhHant?: string) => string;
   onClose: () => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -257,7 +256,7 @@ function PatternModal({
           <code className="pat-modal-alg">{pattern.alg}</code>
           <button type="button" className="pat-modal-copy" onClick={copy} aria-label="copy">
             {copied ? <Check size={14} /> : <Copy size={14} />}
-            <span>{copied ? t('已复制', 'Copied') : t('复制', 'Copy')}</span>
+            <span>{copied ? t('已复制', 'Copied', "已複製") : t('复制', 'Copy', "複製")}</span>
           </button>
         </div>
       </div>
