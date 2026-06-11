@@ -1,9 +1,9 @@
 'use client';
 
-// Landing「今日公示」— /v1/comp/announced 里当天(访客本地时区)公示的 WCA 比赛。
-// 卡片样式参考 /wca/comp 详情弹窗:旗 + 名 / 日期·城市·国家·人数上限 / 报名状态 / 项目图标。
+// Landing「今日公示」— /v1/comp/announced 里最近 48 小时公示的 WCA 比赛(滚动窗口)。
+// 卡片样式参考 /wca/comp 详情弹窗:旗 + 名 / 日期 城市 国家 人数上限 / 报名状态 / 项目图标。
 // 数据:apiUrl('/v1/comp/announced')(后端后台轮询 WCA announced_at,48h 窗口)。
-// 当天无公示 → 整块隐藏(同 TodayRecon / OngoingComps)。多条时折叠,「更多」展开。
+// 无公示 → 整块隐藏(同 TodayRecon / OngoingComps)。多条时折叠,「更多」展开。
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { ChevronDown } from 'lucide-react';
@@ -16,7 +16,7 @@ import { loadFlagData } from '@/lib/country-flags';
 import { formatRegStatus } from '@/lib/comp-reg-status';
 import { Flag } from '@/components/Flag';
 import { CubingIcon } from '@/components/EventIcon';
-import { formatDateRangeIso, toIsoDate } from '@/lib/wca-date';
+import { formatDateRangeIso } from '@/lib/wca-date';
 import { apiUrl } from '@/lib/api-base';
 import { useTranslation } from 'react-i18next';
 import { tr } from '@/i18n/tr';
@@ -112,21 +112,21 @@ export default function TodayAnnouncedComps({ lang }: Props) {
     };
   }, []);
 
-  // 访客本地时区的「今天」公示(announced_at 的本地日 === 今天本地日)
-  const todays = useMemo(() => {
+  // 最近 48 小时内公示(滚动窗口,不卡日历日;服务端也是 48h 窗口,这里精确到当下)
+  const recent = useMemo(() => {
     if (!comps) return [];
-    const today = toIsoDate(new Date());
+    const cutoff = Date.now() - 48 * 60 * 60 * 1000;
     return comps.filter((c) => {
       if (!c.announced_at) return false;
-      const d = new Date(c.announced_at);
-      return !Number.isNaN(d.getTime()) && toIsoDate(d) === today;
+      const ms = new Date(c.announced_at).getTime();
+      return !Number.isNaN(ms) && ms >= cutoff;
     });
   }, [comps]);
 
-  if (todays.length === 0) return null;
+  if (recent.length === 0) return null;
 
-  const shown = expanded ? todays : todays.slice(0, INITIAL_SHOWN);
-  const rest = todays.length - INITIAL_SHOWN;
+  const shown = expanded ? recent : recent.slice(0, INITIAL_SHOWN);
+  const rest = recent.length - INITIAL_SHOWN;
 
   return (
     <div className="today-announced">
