@@ -320,4 +320,11 @@ export const CATALOG: ComponentEntry[] = [
     zh: '打乱的 2D 平面展开图(WCA net)。"打乱图"统一用它,不是 3D iso。',
     en: 'The 2D unfolded scramble net (WCA net). "Scramble image" means this, not a 3D iso view.',
   },
+  {
+    name: 'ChainExplorer',
+    import: 'components/ChainExplorer.tsx',
+    category: 'more',
+    zh: 'mallard 式 FMC 分步还原链浏览器(EO→DR→HTR→FR→收尾)。Rust→WASM 链式求解,逐阶段轴 / 步数窗口 / 排除控制 + 单个共享 3D 播放器。需 WASM 求解器池,/scramble/analyzer 底部在用。',
+    en: 'Mallard-style FMC step-chain explorer (EO→DR→HTR→FR→Finish). Rust→WASM chained solving with per-stage axis / length-window / exclude controls and one shared 3D player. Needs the WASM solver pool; mounted at the bottom of /scramble/analyzer.',
+  },
 ];
