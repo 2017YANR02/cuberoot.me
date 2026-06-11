@@ -195,4 +195,77 @@ export const DEFAULT_PROMPT_TEMPLATES: DefaultPromptTemplate[] = [
     category: "大片",
     body: "伦勃朗光影布光,仅一束硬光打亮魔方的一面与棱角,其余面没入深邃阴影;整体暗调、明暗对比强烈;魔方身后拉出横向动态模糊拖影,营造疾速旋拧、飞速复原的速度感;纯黑背景,电影级质感,细节丰富,写实摄影质感。\nEN: Rembrandt lighting, a single hard key light on one face and edges of a Rubik's cube, rest in deep shadow, low-key high-contrast, horizontal motion-blur streaks behind it for speed, pure black background, cinematic, photorealistic --ar 1:2",
   },
+  // —— 大片 4 套(电影感摄影,接伦勃朗那路)——
+  {
+    name: "高速水花定格",
+    category: "大片",
+    body: "一颗 WCA 魔方坠入彩色液体激起皇冠状水花四溅,高速摄影瞬间定格,深色背景,水珠晶莹剔透、动感凝固,商业广告级超清。\nEN: high-speed splash photography, a Rubik's cube hitting colorful liquid, crown-shaped splash frozen mid-air, dark backdrop, glossy droplets, commercial grade --ar 1:2",
+  },
+  {
+    name: "逆光黄昏剪影",
+    category: "大片",
+    body: "黄昏暖金逆光,一颗魔方逆光剪影、边缘镶一圈金边,空气中浮尘与丁达尔光束,温暖电影感、氛围浓郁、浅景深。\nEN: golden hour backlight, a Rubik's cube rim-lit silhouette with glowing edge, floating dust and god rays, warm cinematic atmosphere --ar 1:2",
+  },
+  {
+    name: "长曝光光绘",
+    category: "大片",
+    body: "暗背景下用魔方六色光线长曝光绘出环绕魔方的流动光轨与笔触,光绘摄影质感,炫彩流动、动感拖尾。\nEN: long-exposure light painting, six-color luminous trails swirling around a cube, dark background, glowing motion streaks --ar 1:2",
+  },
+  {
+    name: "双重曝光",
+    category: "大片",
+    body: "双重曝光艺术,一颗魔方的轮廓里叠映城市天际线或浩瀚星空,黑白到品牌蓝过渡,文艺高级、留白讲究。\nEN: double exposure art, a Rubik's cube silhouette filled with a city skyline or starfield, monochrome to brand blue, editorial --ar 1:2",
+  },
+  // —— 质感 4 套(摄影材质)——
+  {
+    name: "移轴微缩摄影",
+    category: "质感",
+    body: "移轴镜头微缩效果,俯拍像玩具模型般的速拧桌面/赛场,魔方与小人前后景深虚化成「迷你世界」,清新可爱、明快布光。\nEN: tilt-shift miniature photography, toy-like cubing desk from above, shallow blur into a tiny world, cute bright --ar 1:2",
+  },
+  {
+    name: "黑金奢华",
+    category: "质感",
+    body: "纯黑背景配金色描边与流光,一颗魔方点缀金箔与镜面反光,低调奢华、高端克制、强反射质感。\nEN: black and gold luxury, pure black background, gold accents, gold-foil and mirror reflections on a cube, premium --ar 1:2",
+  },
+  {
+    name: "复古胶片颗粒",
+    category: "质感",
+    body: "35mm 胶片质感,暖旧色调、轻微颗粒与漏光,一颗魔方静物,怀旧文艺、复古摄影氛围。\nEN: 35mm film grain photography, warm vintage tones, subtle grain and light leaks, a cube still life, nostalgic --ar 1:2",
+  },
+  {
+    name: "极简纯色产品摄影",
+    category: "质感",
+    body: "极简产品摄影,纯品牌蓝或柔色背景,一颗魔方居中,柔和投影与高光,干净留白、电商主图级。\nEN: minimal product photography, solid pastel or brand-blue backdrop, centered Rubik's cube, soft shadow and highlight, clean ecommerce --ar 1:2",
+  },
+  // —— 插画 6 套(设计 / IP / 场景)——
+  {
+    name: "扁平吉祥物卡通",
+    category: "插画",
+    body: "扁平矢量卡通,一颗拟人魔方吉祥物有手脚和俏皮表情,活泼友好、品牌 IP 感,撞色简洁、干净描边。\nEN: flat vector cartoon mascot, cute anthropomorphic Rubik's cube character with limbs and face, brand IP, vibrant --ar 1:2",
+  },
+  {
+    name: "包豪斯几何",
+    category: "插画",
+    body: "包豪斯 / 构成主义平面设计,红黄蓝基本几何形与粗线条网格,魔方融入构成,理性现代、克制有秩序。\nEN: Bauhaus constructivist graphic design, primary geometric shapes and bold grid lines, cube integrated, modern --ar 1:2",
+  },
+  {
+    name: "等距桌面场景",
+    category: "插画",
+    body: "等距 2.5D 插画,一张速拧玩家的桌面:魔方、计时器、键盘、奖牌、绿植与台灯,干净描边、柔和阴影,温馨整洁。\nEN: isometric 2.5D illustration of a cuber's desk: cube, timer, keyboard, medal, plant, lamp, clean lines, cozy --ar 1:2",
+  },
+  {
+    name: "新中式金箔",
+    category: "插画",
+    body: "新中式设计,水墨留白配金箔线条与几何窗棂纹样,一颗魔方典雅居中,东方高级、克制大气。",
+  },
+  {
+    name: "街头涂鸦嘻哈",
+    category: "插画",
+    body: "街头涂鸦 / 喷漆风,粗犷字符纹理与六色喷溅,魔方带潮流贴纸炸街感,叛逆活力、嘻哈街头。\nEN: street graffiti spray-paint style, gritty textures and color splatter, sticker-bomb Rubik's cube, hip-hop street --ar 1:2",
+  },
+  {
+    name: "蒸汽朋克齿轮",
+    category: "插画",
+    body: "蒸汽朋克,黄铜齿轮、管道与铆钉机械构造环绕一颗机械感魔方,暖棕金属色、复古工业、精密细节。\nEN: steampunk brass gears, pipes and rivets around a mechanical Rubik's cube, warm copper, vintage industrial, intricate --ar 1:2",
+  },
 ];
