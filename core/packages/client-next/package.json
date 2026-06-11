@@ -12,7 +12,7 @@
     "typecheck:tsc": "tsc --noEmit",
     "zh:inject": "node scripts/inject-zhhant.mjs",
     "zh:gen": "node scripts/gen-zh-hant.mjs",
-    "zh:check": "node scripts/gen-zh-hant.mjs --check && node scripts/inject-zhhant.mjs --check",
+    "zh:check": "node scripts/gen-zh-hant.mjs --check && node scripts/inject-zhhant.mjs --check && node scripts/check-handwritten-trad.mjs --check",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint ."

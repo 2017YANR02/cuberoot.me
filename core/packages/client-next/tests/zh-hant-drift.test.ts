@@ -3,11 +3,14 @@
 //
 // 这是 codegen freshness gate(大厂标准的 regenerate-and-diff):直接以 --check 模式
 // 跑两个权威生成器,任何「漏跑 codemod / 手写漂移」都会让它们非零退出 → CI 红。
-//   - gen-zh-hant.mjs   : t() 目录 i18n/zh-Hant.json 必须 === OpenCC(zh.json)
-//   - inject-zhhant.mjs : 每个 {zh,en} 对象(tr() 入参 + 数据对象)的 zhHant 必须 === OpenCC(zh)
+//   - gen-zh-hant.mjs           : t() 目录 i18n/zh-Hant.json 必须 === OpenCC(zh.json)
+//   - inject-zhhant.mjs         : 每个 {zh,en} 对象(tr() 入参 + 数据对象)的 zhHant 必须 === OpenCC(zh)
+//   - check-handwritten-trad.mjs: 内联三路 i18n.language==='zh-Hant' ? 繁 : (isZh?简:en) 的繁体分支
+//                                 必须 === conv(同一三路里的简体兄弟),抓内联手敲错字
 //
-// 三路分支(i18n.language==='zh-Hant' ? 繁 : 原)那一类不在本测试覆盖范围内(无法廉价
-// 再生成校验),靠写时 PreToolUse 钩子 .claude/hooks/block-handwritten-trad.* 拦手敲。
+// s2twp 不可逆(算法→演算法),故无法对三路分支做"再生成-比对";改为拿繁体分支跟它在同一
+// 三目里的简体兄弟比(conv 只动汉字字形,${}/标签/英文不变),与 inject 的 zhHant:=conv(zh) 同理。
+// PreToolUse 钩子 .claude/hooks/block-handwritten-trad.* 是写时左移兜底,本测试是权威红灯。
 //
 // CI 跑 vitest(不跑 eslint),故约定靠本测试当红灯。修复:cd packages/client-next && pnpm zh:gen && pnpm zh:inject
 import { describe, it, expect } from 'vitest';
@@ -41,4 +44,9 @@ describe('zh-Hant convention — Traditional is OpenCC-generated, never hand-aut
     const r = runCheck('inject-zhhant.mjs');
     expect(r.ok, '\n' + r.out).toBe(true);
   }, 180_000); // ts-morph parses the whole app/components/lib/hooks tree
+
+  it('inline 3-way Traditional branch === conv(zh sibling) (check-handwritten-trad.mjs --check)', () => {
+    const r = runCheck('check-handwritten-trad.mjs');
+    expect(r.ok, '\n' + r.out).toBe(true);
+  }, 180_000);
 });
