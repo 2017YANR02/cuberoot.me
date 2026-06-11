@@ -130,11 +130,22 @@ jobs:
             echo "seeded /var/lib/cube-platform/data.db from bundle"
           fi
 
+          # 上传文件同样外置持久化:真身在 /var/lib/cube-platform/uploads,
+          # 部署目录里 public/uploads 是指向它的软链,换目录不丢图。
+          # 首次接管:老目录里若是真实 uploads(历史上传),先并入真身再换链。
+          mkdir -p /var/lib/cube-platform/uploads
+          if [ -d "$LIVE/public/uploads" ] && [ ! -L "$LIVE/public/uploads" ]; then
+            cp -a "$LIVE/public/uploads/." /var/lib/cube-platform/uploads/
+            echo "migrated existing uploads to /var/lib/cube-platform/uploads"
+          fi
+
           if [ -d "$LIVE" ]; then
             find /www/wwwroot -maxdepth 1 -name 'cube-platform.bak-*' -exec rm -rf {} +
             mv "$LIVE" "$BACKUP"
           fi
           mv "$STAGE" "$LIVE"
+          rm -rf "$LIVE/public/uploads"
+          ln -s /var/lib/cube-platform/uploads "$LIVE/public/uploads"
 
           # 对持久库应用未跑过的迁移(自包含迁移器,drizzle __drizzle_migrations 兼容);
           # 失败则回滚到上一版本,不让新代码碰到缺列的库

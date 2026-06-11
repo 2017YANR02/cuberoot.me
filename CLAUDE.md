@@ -150,6 +150,7 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 - nginx vhost 不在本 repo,在 cuberoot.me repo `ops/nginx/platform.cuberoot.me.conf`。
 - CI 两坑:node-version 必须 24(better-sqlite3 ABI);`db:migrate+seed` 排在 `next build` 前(`app/sitemap.ts` 构建期查 DB)。build 时设 `NEXT_PUBLIC_SITE_URL=https://platform.cuberoot.me`。
 - 持久库 `/var/lib/cube-platform/data.db`(`DB_PATH` env,部署目录外),重新部署不覆盖;首次从 bundle seed。
+- 上传文件真身 `/var/lib/cube-platform/uploads`,部署时软链进 `LIVE/public/uploads`,换目录不丢图。
 - 持久库已存在时,部署 restart 前跑 `ops/migrate.cjs`(随包发,自包含、drizzle `__drizzle_migrations` 兼容)补未应用迁移;失败回滚。加表加列正常写 drizzle migration 即可,不用手 ALTER。
 - secrets:`DEPLOY_HOST/USER/SSH_KEY` 在 cube-platform repo,key 是专用 `platform-deploy-ci`(跟 mira / 主站分开)。
 - `ADMIN_PASSWORD` / `SESSION_SECRET` 线上仍是代码默认值(`admin123` / `dev-cube-secret-change-me`),要硬化在 systemd unit 加 `Environment=`(别 commit 真值)。
