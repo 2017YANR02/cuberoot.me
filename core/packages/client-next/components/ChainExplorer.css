@@ -272,6 +272,16 @@
   color: var(--muted-foreground);
   padding: 1px 6px;
 }
+/* mallard 末行:线性化最终解(N ++ rev_inv(I),normal 打乱上的单序列) */
+.chx-solution {
+  margin: 2px 0 0 1.6em;
+  padding: 1px 6px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  color: var(--muted-foreground);
+  overflow-x: auto;
+  white-space: nowrap;
+}
 
 /* 共享播放器:左侧固定,跟随页面滚动黏顶(同 StageSolver) */
 .chx-player {
@@ -309,6 +319,9 @@
     min-width: 100%;
   }
   .chx-steps {
+    margin-left: 0.4em;
+  }
+  .chx-solution {
     margin-left: 0.4em;
   }
 }
