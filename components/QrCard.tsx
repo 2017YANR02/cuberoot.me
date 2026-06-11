@@ -48,6 +48,10 @@ function FrontPanel({
 }) {
   const lines = quote.split("\n").map((l) => l.trim()).filter(Boolean);
   const [main, ...subs] = lines.length ? lines : ["热爱魔方"];
+  // 正面图几何与矢量母版一致:cover 铺满含出血的整面(默认出血 3mm → 23x46),
+  // 屏幕预览裁掉出血只看成品 20x40,即印刷裁切后的真实画面。
+  // layout.front = 平移(mm)+ 缩放 s(绕成品面中心),编辑器拖动/滑块写入。
+  const ft = layout?.front;
   return (
     <div
       data-panel="front"
@@ -58,11 +62,27 @@ function FrontPanel({
         overflow: "hidden",
         color: "#fff",
         backgroundColor: "#11111A",
-        backgroundImage: `url(${art})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
       }}
     >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={art}
+        alt=""
+        aria-hidden
+        draggable={false}
+        style={{
+          position: "absolute",
+          left: m(-3),
+          top: m(-3),
+          width: m(23),
+          height: m(46),
+          objectFit: "cover",
+          transformOrigin: `${m(13)} ${m(23)}`,
+          transform: ft
+            ? `translate(${m(ft.x)}, ${m(ft.y)}) scale(${ft.s ?? 1})`
+            : undefined,
+        }}
+      />
       <div
         aria-hidden
         style={{

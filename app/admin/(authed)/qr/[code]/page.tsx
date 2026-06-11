@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Download } from "lucide-react";
+import { Download, Scissors } from "lucide-react";
 import { findByCode, isProtectedQr } from "@/lib/db/qr";
 import { absoluteUrl } from "@/lib/site";
 import { qrSvg } from "@/lib/qr/svg";
@@ -72,14 +72,24 @@ export default async function AdminQrEditPage({
             formId="qr-edit-form"
             landingUrl={landingUrl}
           />
-          <a
-            href={`/api/qr/${entry.code}/card`}
-            download={`card-${entry.code}.svg`}
-            title="整张 2×4cm 折叠卡印刷母版:正面图 + 背面码,含出血 + 裁切线,直接交印厂"
-            className="mx-auto mt-3 flex w-full max-w-[560px] items-center justify-center gap-1.5 rounded-md border border-line bg-white px-4 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition"
-          >
-            <Download size={14} /> 下载折叠卡
-          </a>
+          <div className="mx-auto mt-3 grid w-full max-w-[560px] grid-cols-2 gap-2">
+            <a
+              href={`/api/qr/${entry.code}/card`}
+              download={`card-${entry.code}.svg`}
+              title="整张 2×4cm 折叠卡印刷母版:正面图 + 背面码,含 3mm 出血 + 四角裁切线,直接交印厂"
+              className="flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-4 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition"
+            >
+              <Scissors size={14} /> 下载折叠卡(带裁切线)
+            </a>
+            <a
+              href={`/api/qr/${entry.code}/card?crop=0`}
+              download={`card-${entry.code}-nocrop.svg`}
+              title="无四角裁切线的干净版,适合截图 / 预览 / 嵌入展示;送印请用左边带裁切线的"
+              className="flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-4 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition"
+            >
+              <Download size={14} /> 不带裁切线
+            </a>
+          </div>
         </Card>
 
         <div className="grid gap-6">

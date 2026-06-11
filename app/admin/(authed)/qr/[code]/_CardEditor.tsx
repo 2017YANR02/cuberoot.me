@@ -19,6 +19,7 @@ const EL_LABEL: Record<CardEl, string> = {
   term: "术语角标",
   qr: "二维码",
   alg: "精选公式",
+  front: "正面背景图",
 };
 
 // 元素点击(非拖动)打开的编辑面板;brand 只可移动无面板
@@ -29,6 +30,7 @@ const EL_PANEL: Record<CardEl, Region | null> = {
   term: "back",
   qr: "qr",
   alg: "alg",
+  front: "art",
 };
 
 const ALL_ELS: CardEl[] = ["quote", "brand", "backText", "term", "qr", "alg"];
@@ -69,6 +71,32 @@ export function CardEditor({
   const wrapRef = useRef<HTMLDivElement>(null);
   // 各元素实测框(相对卡片容器 px),热区据此贴合渲染
   const [boxes, setBoxes] = useState<Partial<Record<CardEl, Box>>>({});
+
+  // 悬停正面图滚轮缩放(native 非 passive 监听才能 preventDefault 拦住页面滚动);
+  // 挂在整卡容器上、按坐标判定在正面板内,盖在语录/品牌热区上时也能缩放
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const onWheel = (e: WheelEvent) => {
+      const panel = wrap.querySelector<HTMLElement>('[data-panel="front"]');
+      if (!panel) return;
+      const r = panel.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)
+        return;
+      e.preventDefault();
+      setS((p) => {
+        const cur = { x: 0, y: 0, s: 1, ...p.layout.front };
+        const next =
+          Math.round(Math.max(0.5, Math.min(3, cur.s * Math.exp(-e.deltaY * 0.002))) * 100) / 100;
+        const layout = { ...p.layout };
+        if (cur.x === 0 && cur.y === 0 && next === 1) delete layout.front;
+        else layout.front = { ...cur, s: next };
+        return { ...p, layout };
+      });
+    };
+    wrap.addEventListener("wheel", onWheel, { passive: false });
+    return () => wrap.removeEventListener("wheel", onWheel);
+  }, []);
 
   useEffect(() => {
     const sync = (e: Event) => {
@@ -119,6 +147,15 @@ export function CardEditor({
       const layout = { ...p.layout };
       if (off) layout[key] = off;
       else delete layout[key];
+      return { ...p, layout };
+    });
+  // 正面图平移/缩放(layout.front):增量合并,回到默认(0,0,×1)就删键
+  const setFront = (patch: Partial<{ x: number; y: number; s: number }>) =>
+    setS((p) => {
+      const next = { x: 0, y: 0, s: 1, ...p.layout.front, ...patch };
+      const layout = { ...p.layout };
+      if (next.x === 0 && next.y === 0 && next.s === 1) delete layout.front;
+      else layout.front = next;
       return { ...p, layout };
     });
 
@@ -202,6 +239,39 @@ export function CardEditor({
     window.addEventListener("pointercancel", onUp);
   };
 
+  // 拖动正面背景图:平移构图(mm 存 layout.front),磁吸回默认位;位移 <4px 视为点击打开图库面板
+  const startArtDrag = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const panel = wrapRef.current?.querySelector<HTMLElement>('[data-panel="front"]');
+    if (!panel) return;
+    const pxPerMm = panel.getBoundingClientRect().width / PANEL_MM;
+    const f0 = { x: 0, y: 0, ...s.layout.front };
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let moved = false;
+
+    const onMove = (ev: PointerEvent) => {
+      if (Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) > 4) moved = true;
+      if (!moved) return;
+      let ox = Math.max(-20, Math.min(20, f0.x + (ev.clientX - startX) / pxPerMm));
+      let oy = Math.max(-20, Math.min(20, f0.y + (ev.clientY - startY) / pxPerMm));
+      if (snapOn && !ev.altKey) {
+        if (Math.abs(ox) < SNAP_MM) ox = 0;
+        if (Math.abs(oy) < SNAP_MM) oy = 0;
+      }
+      setFront({ x: Math.round(ox * 20) / 20, y: Math.round(oy * 20) / 20 });
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      if (!moved) setActive((a) => (a === "art" ? null : "art"));
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  };
+
   const merged: QrCode = {
     ...entry,
     type: s.type,
@@ -239,17 +309,17 @@ export function CardEditor({
           className="relative mx-auto w-fit [--s:2.2] sm:[--s:2.8] xl:[--s:3.4]"
         >
           <QrCardUnit entry={merged} svg={svg} />
-          {/* 正面背景图:整个正面板的底层点击区(元素热区叠在其上) */}
-          <button
-            type="button"
-            title="点击编辑:正面背景图"
+          {/* 正面背景图:整个正面板的底层热区(元素热区叠在其上),拖动平移构图,点击打开图库面板 */}
+          <span
+            role="button"
+            title="拖动调整构图,点击编辑:正面背景图"
             aria-label="正面背景图"
-            onClick={() => setActive(active === "art" ? null : "art")}
+            onPointerDown={startArtDrag}
             className={
-              "absolute rounded-md transition " +
+              "absolute touch-none select-none rounded-md transition " +
               (active === "art"
-                ? "ring-2 ring-brand bg-brand/10"
-                : "hover:ring-2 hover:ring-brand/50 hover:bg-brand/5")
+                ? "ring-2 ring-brand bg-brand/10 cursor-grab"
+                : "cursor-grab hover:ring-2 hover:ring-brand/50 hover:bg-brand/5")
             }
             style={{ left: 0, top: 0, width: "50%", height: "100%" }}
           />
@@ -376,6 +446,33 @@ export function CardEditor({
             </div>
             <span className="text-[12px] text-ink-3">
               自动轮换:不固定用图,批量打印时按卡片顺序轮流分配图库的图;在意印出来是哪张就选定一张。
+            </span>
+            <div className="flex items-center gap-2.5 text-[12px] text-ink-2">
+              <span className="shrink-0">缩放</span>
+              <input
+                type="range"
+                min={50}
+                max={300}
+                step={1}
+                value={Math.round((s.layout.front?.s ?? 1) * 100)}
+                onChange={(e) => setFront({ s: Number(e.target.value) / 100 })}
+                className="w-full accent-brand"
+              />
+              <span className="w-10 shrink-0 text-right font-mono">
+                {Math.round((s.layout.front?.s ?? 1) * 100)}%
+              </span>
+              {s.layout.front ? (
+                <button
+                  type="button"
+                  onClick={() => setOffset("front", null)}
+                  className="shrink-0 text-brand hover:underline"
+                >
+                  复位
+                </button>
+              ) : null}
+            </div>
+            <span className="text-[12px] text-ink-3">
+              直接拖卡面上的图挪构图,鼠标悬在图上滚滚轮也能缩放;缩小能装下更多画面,但露出的边角是深色底。预览即裁切后成品,出血里多印的部分会被裁掉。
             </span>
             </>
           ) : null}

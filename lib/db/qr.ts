@@ -105,7 +105,8 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
   if (patch.alg !== undefined) next.alg = patch.alg && patch.alg.moves ? patch.alg : null;
   if (patch.layout !== undefined) {
     // 只收已知元素键,坐标钳 ±20mm、0.1mm 取整;全空则置 null(回默认布局)
-    const KEYS: CardEl[] = ["quote", "brand", "backText", "term", "qr", "alg"];
+    // front 额外带缩放 s(0.5~3,0.01 取整,1 = 默认铺满不存)
+    const KEYS: CardEl[] = ["quote", "brand", "backText", "term", "qr", "alg", "front"];
     const clamp = (n: number) => Math.round(Math.max(-20, Math.min(20, n)) * 10) / 10;
     const out: CardLayout = {};
     for (const k of KEYS) {
@@ -113,7 +114,12 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
       if (!o || !Number.isFinite(o.x) || !Number.isFinite(o.y)) continue;
       const x = clamp(o.x);
       const y = clamp(o.y);
-      if (x !== 0 || y !== 0) out[k] = { x, y };
+      const s =
+        k === "front" && Number.isFinite(o.s)
+          ? Math.round(Math.max(0.5, Math.min(3, o.s!)) * 100) / 100
+          : undefined;
+      if (x !== 0 || y !== 0 || (s !== undefined && s !== 1))
+        out[k] = s !== undefined && s !== 1 ? { x, y, s } : { x, y };
     }
     next.layout = Object.keys(out).length > 0 ? out : null;
   }
