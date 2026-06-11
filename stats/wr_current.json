@@ -2,8 +2,8 @@
   "id": "wr_current",
   "title": "Current world records",
   "titleZh": "当前世界纪录",
-  "note": "Shows the current world record single and average for each official event.",
-  "noteZh": "显示每个官方项目的当前世界纪录单次和平均。",
+  "note": "Shows the current world record single and average for each official event. The 333mbf average row is the all-time best unofficial Mo3 (mean of 3) — WCA does not track a Multi-Blind average.",
+  "noteZh": "显示每个官方项目的当前世界纪录单次和平均。333mbf 的平均行为历史最佳非官方 Mo3(三次均值)——WCA 不追踪多盲平均。",
   "header": [
     {
       "key": "event",
@@ -572,6 +572,15 @@
         "63/65 58:23",
         "58/68 1:00:00"
       ]
+    ],
+    [
+      "3x3x3 Multi-Blind",
+      "Average",
+      "58/60 59:37",
+      "[Graham Siggins](https://www.worldcubeassociation.org/persons/2016SIGG01)",
+      "2019-11-08",
+      "[OSU Blind Weekend 2019](https://www.worldcubeassociation.org/competitions/OSUBlindWeekend2019)",
+      "57/60 59:05 59/60 59:46 58/60 1:00:00"
     ],
     [
       "3x3x3 With Feet",

@@ -93,7 +93,7 @@
       "[OCSEF 2017](https://www.worldcubeassociation.org/competitions/OCSEFOpen2017)"
     ],
     [
-      "7.12",
+      "7.13",
       8,
       "4x4x4 Blindfolded",
       "Single",
@@ -975,7 +975,7 @@
       "[Gdansk Open 2008](https://www.worldcubeassociation.org/competitions/GdanskOpen2008)"
     ],
     [
-      "1.41",
+      "1.42",
       2,
       "Square-1",
       "Average",
@@ -1274,6 +1274,15 @@
     [
       "0.94",
       2,
+      "5x5x5 Cube",
+      "Average",
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)",
+      "Still active"
+    ],
+    [
+      "0.94",
+      2,
       "3x3x3 With Feet",
       "Average",
       "[Gabriel Pereira Campanha](https://www.worldcubeassociation.org/persons/2012CAMP03)",
@@ -1288,15 +1297,6 @@
       "[Máté Horváth](https://www.worldcubeassociation.org/persons/2007HORV01)",
       "[Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
       "[Belgian Open 2008](https://www.worldcubeassociation.org/competitions/BelgianOpen2008)"
-    ],
-    [
-      "0.94",
-      2,
-      "5x5x5 Cube",
-      "Average",
-      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-      "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)",
-      "Still active"
     ],
     [
       "0.92",
@@ -1821,7 +1821,7 @@
       "[Xi'an Cherry Blossom 2015](https://www.worldcubeassociation.org/competitions/XianCherryBlossom2015)"
     ],
     [
-      "0.41",
+      "0.42",
       2,
       "Rubik's Cube",
       "Average",
