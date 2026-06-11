@@ -5,15 +5,19 @@
  *
  * EO → DR → HTR → [FR] → Finish 链式求解(Rust→WASM ChainSolverWasm,零表下载,
  * 距离表 worker 内现场建)。逐阶段可调:轴(UD/FB/LR)、枚举窗口 extra(最优+N)、
- * 可选步数上限、候选数 cap;FR 默认关(首次启用建表 ~10s)。每步可「排除」——把该步
- * 的累计 HOME 帧序列加进该阶段 excluded 黑名单(引擎按累计序列精确匹配,只回喂引擎
- * 自己产出的串)并自动重算。所有链共用一个 3D 播放器(点链/点步加载),不开 N 个 WebGL。
+ * 可选步数上限、候选数 cap、NISS(允许整步落在 inverse 打乱上,默认开;Finish 强制
+ * 关);FR 默认关(首次启用建表 ~10s)。inverse 侧步骤按 mallard 记号括号渲染
+ * `(R U)`,每链下方给出线性化最终解 `Solution (N): ...`(= N ++ rev_inv(I),normal
+ * 打乱上的单序列),播放器一律走线性化序列。每步可「排除」——把该步的累计双侧
+ * 序列对(`累计N|累计I`,与引擎 is_excluded 的 pair 语义一致)加进该阶段 excluded
+ * 黑名单(只回喂引擎自己产出的串)并自动重算。所有链共用一个 3D 播放器(点链/
+ * 点步加载),不开 N 个 WebGL。
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2, Ban, X, Play } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
-import type { ChainResult, RustCrossPool } from '@/lib/rust-cross-client';
+import type { ChainResult, ChainStepResult, RustCrossPool } from '@/lib/rust-cross-client';
 import { getRustCrossPool, poolSizeForDevice } from '@/lib/rust-cross-pool';
 import { normalizeScramble } from '@/lib/cross-solver';
 import './ChainExplorer.css';
@@ -29,6 +33,8 @@ interface StageUI {
   max: number | null;
   /** 本阶段跨轴合并后保留候选数(≤10,更深组合爆炸)。 */
   cap: number;
+  /** NISS-Before:允许整步落在 inverse 打乱上(引擎默认开;Finish 强制关)。 */
+  niss: boolean;
 }
 
 const AXES: Axis[] = ['ud', 'fb', 'lr'];
@@ -38,12 +44,13 @@ const CAP_OPTIONS = [1, 3, 5, 10];
 const MAX_CHAINS_OPTIONS = [5, 10, 20];
 
 // 引擎默认(solver/src/chain_solver.rs ChainConfig::default):eo extra1 cap5 /
-// dr extra0 cap5 / htr extra1 cap3 / fr extra0;fin 固定 extra0 cap1 不可调。
+// dr extra0 cap5 / htr extra1 cap3 / fr extra0,niss 全开;fin 固定 extra0 cap1
+// niss 关,不可调。
 const STAGE_DEFAULTS: Record<'eo' | 'dr' | 'htr' | 'fr', StageUI> = {
-  eo: { axes: AXES, extra: 1, max: null, cap: 5 },
-  dr: { axes: AXES, extra: 0, max: null, cap: 5 },
-  htr: { axes: AXES, extra: 1, max: null, cap: 3 },
-  fr: { axes: AXES, extra: 0, max: null, cap: 3 },
+  eo: { axes: AXES, extra: 1, max: null, cap: 5, niss: true },
+  dr: { axes: AXES, extra: 0, max: null, cap: 5, niss: true },
+  htr: { axes: AXES, extra: 1, max: null, cap: 3, niss: true },
+  fr: { axes: AXES, extra: 0, max: null, cap: 3, niss: true },
 };
 
 const STAGE_ROWS: { key: 'eo' | 'dr' | 'htr' | 'fr'; label: string }[] = [
@@ -64,6 +71,29 @@ function initStages(): Record<'eo' | 'dr' | 'htr' | 'fr', StageUI> {
 
 function fmtMs(ms: number): string {
   return ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${Math.round(ms)}ms`;
+}
+
+/** rev_inv 的 move 串镜像(同引擎):倒序 + 翻转后缀 '' ↔ "'"(U2 不变)。 */
+function revInv(tokens: string[]): string[] {
+  return tokens
+    .slice()
+    .reverse()
+    .map((m) => (m.endsWith('2') ? m : m.endsWith("'") ? m.slice(0, -1) : `${m}'`));
+}
+
+/** 截至第 upto 步(不含)的线性化序列(normal 打乱上):N ++ rev_inv(I)。 */
+function linearize(steps: ChainStepResult[], upto: number): string {
+  const n: string[] = [];
+  const i: string[] = [];
+  for (const s of steps.slice(0, upto)) {
+    if (s.m) (s.inv ? i : n).push(...s.m.split(' '));
+  }
+  return [...n, ...revInv(i)].join(' ');
+}
+
+/** 整链线性化最终解:优先引擎下发的 solution,缺(旧 worker)则本地拼。 */
+function chainSolution(c: ChainResult): string {
+  return c.solution || linearize(c.steps, c.steps.length);
 }
 
 interface Props {
@@ -104,7 +134,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
     const { stages: st, frEnabled: fr, excluded: ex, maxChains: mc } = cfgRef.current;
     const stageJson = (k: 'eo' | 'dr' | 'htr' | 'fr') => {
       const s = st[k];
-      const o: Record<string, unknown> = { extra: s.extra, cap: s.cap, excluded: ex[k] };
+      const o: Record<string, unknown> = { extra: s.extra, cap: s.cap, niss: s.niss, excluded: ex[k] };
       if (k !== 'htr') o.axes = s.axes; // HTR 轴继承 DR(引擎语义),不下发
       if (s.max != null) o.max = s.max;
       return o;
@@ -182,13 +212,19 @@ export default function ChainExplorer({ scramble, lang }: Props) {
     });
   }, []);
 
-  // 排除某链第 stepIdx 步:加该步的「累计 HOME 帧序列」(steps[0..=i].m 拼接,与引擎
-  // is_excluded 的 cum+step 精确匹配语义一致)进该阶段黑名单。只回喂引擎产出的串。
+  // 排除某链第 stepIdx 步:加该步的「累计双侧序列对」(steps[0..=i] 按 inv 分到
+  // N/I 两侧各自拼接,序列化为 `累计N|累计I`,与引擎 is_excluded 的 pair 精确匹配
+  // 语义一致;I 空省略 '|' = 引擎向后兼容形)进该阶段黑名单。只回喂引擎产出的串。
   const excludeStep = useCallback((chain: ChainResult, stepIdx: number) => {
     const step = chain.steps[stepIdx];
-    const cum = chain.steps.slice(0, stepIdx + 1).map((s) => s.m).filter(Boolean).join(' ');
+    const upto = chain.steps.slice(0, stepIdx + 1);
+    const side = (inv: boolean) =>
+      upto.filter((s) => !!s.inv === inv).map((s) => s.m).filter(Boolean).join(' ');
+    const cumN = side(false);
+    const cumI = side(true);
+    const key = cumI ? `${cumN}|${cumI}` : cumN;
     setExcluded((prev) => (
-      prev[step.kind].includes(cum) ? prev : { ...prev, [step.kind]: [...prev[step.kind], cum] }
+      prev[step.kind].includes(key) ? prev : { ...prev, [step.kind]: [...prev[step.kind], key] }
     ));
   }, []);
 
@@ -206,18 +242,28 @@ export default function ChainExplorer({ scramble, lang }: Props) {
     }));
   }, []);
 
+  // 播放器序列必须线性化(inverse 侧片段不能按步序直接拼在 normal 打乱后):
+  // 整链走引擎 solution,前缀本地按同一公式拼 N ++ rev_inv(I)。
   const selAlg = useMemo(() => {
     if (!sel || !chains) return null;
     const c = chains[sel.chain];
     if (!c) return null;
-    const upto = sel.step == null ? c.steps.length : sel.step + 1;
-    return c.steps.slice(0, upto).map((s) => s.m).filter(Boolean).join(' ');
+    if (sel.step == null) return chainSolution(c);
+    return linearize(c.steps, sel.step + 1);
   }, [sel, chains]);
 
   const stageName = (k: StageKey) =>
     k === 'fr' ? t('Floppy 还原 (FR)', 'Floppy Reduction (FR)')
       : k === 'fin' ? t('收尾 (Finish)', 'Finish')
         : k.toUpperCase();
+
+  // 排除项展示:pair key(`N|I`)的 I 侧按 NISS 记号括号化;存储值保持引擎精确串。
+  const exclLabel = (x: string) => {
+    const p = x.indexOf('|');
+    const n = p < 0 ? x : x.slice(0, p);
+    const i = p < 0 ? '' : x.slice(p + 1);
+    return [n, i ? `(${i})` : ''].filter(Boolean).join(' ') || t('(0 步)', '(0 moves)');
+  };
 
   const busy = computing || warming;
 
@@ -295,6 +341,15 @@ export default function ChainExplorer({ scramble, lang }: Props) {
                   {CAP_OPTIONS.map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
               </label>
+              <label className="chx-axis">
+                <input
+                  type="checkbox"
+                  checked={s.niss}
+                  disabled={disabled}
+                  onChange={(e) => setStage(key, { niss: e.target.checked })}
+                />
+                {t('允许逆向 (NISS)', 'Allow inverse (NISS)')}
+              </label>
               {isFr && !frEnabled && (
                 <span className="chx-fr-hint">{t('首次启用需建表约 10 秒', 'first enable builds tables ~10s')}</span>
               )}
@@ -303,7 +358,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
                   <span className="chx-excl-label">{t('已排除', 'Excluded')}</span>
                   {excluded[key].map((x, i) => (
                     <span key={`${x}-${i}`} className="chx-excl-row">
-                      <code>{x || t('(0 步)', '(0 moves)')}</code>
+                      <code>{exclLabel(x)}</code>
                       <button
                         className="chx-excl-x"
                         onClick={() => removeExcluded(key, i)}
@@ -326,7 +381,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
               <span className="chx-excl-label">{t('已排除', 'Excluded')}</span>
               {excluded.fin.map((x, i) => (
                 <span key={`${x}-${i}`} className="chx-excl-row">
-                  <code>{x || t('(0 步)', '(0 moves)')}</code>
+                  <code>{exclLabel(x)}</code>
                   <button
                     className="chx-excl-x"
                     onClick={() => removeExcluded('fin', i)}
@@ -401,7 +456,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
                       className={`chx-step${sel?.chain === i && sel?.step === j ? ' is-active' : ''}`}
                       onClick={() => select(i, j)}
                     >
-                      <code>{s.m || '—'}</code>
+                      <code>{s.inv ? `(${s.m})` : (s.m || '—')}</code>
                       <span className="chx-step-meta">{`// ${s.variant} (${s.len}/${s.cum})`}</span>
                       <button
                         className="chx-step-ban"
@@ -414,6 +469,11 @@ export default function ChainExplorer({ scramble, lang }: Props) {
                     </div>
                   ))}
                 </div>
+                {c.steps.length > 0 && (
+                  <div className="chx-solution">
+                    {`Solution (${c.total}): ${chainSolution(c)}`}
+                  </div>
+                )}
               </li>
             ))}
           </ol>
