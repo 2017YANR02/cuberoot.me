@@ -15,7 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'rea
 import { useQueryStates, parseAsString, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight, Copy, Loader2, Check, Shuffle, Dices } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Loader2, Check, Shuffle } from 'lucide-react';
 import { solveCross, normalizeScramble } from '@/lib/cross-solver';
 import {
   Analyzer,
@@ -30,13 +30,17 @@ import {
 } from './analyze_worker_client';
 import TwistySection from '@/components/TwistySection';
 import StageSolver from '@/components/StageSolver';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { Flag } from '@/components/Flag';
+import { ScramblePreview2D } from '@/components/ScramblePreview2D';
+import { EventIcon } from '@/components/EventIcon/EventIcon';
+import { localizeCompName } from '@/lib/comp-localize';
+import { compSourceLine } from '@/lib/comp-schedule';
 import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { statsUrl } from '@/lib/stats-base';
-import { WheelPicker } from '@/components/WheelPicker';
+import { variantLabel, stageLabel } from '@/lib/scramble-variants';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './analyze.css';
-import i18n from '@/i18n/i18n-client';
 
 const DEFAULT_SCRAMBLE = "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'";
 
@@ -71,37 +75,6 @@ const COLOR_LABEL: Record<CrossColor, { zh: string; en: string
 // WCA real-scramble pools: /stats/scramble/wca_cross/<letter>.json, bucketed by cross length.
 const COLOR_LETTER: Record<CrossColor, string> = {
   White: 'W', Yellow: 'Y', Red: 'R', Orange: 'O', Blue: 'B', Green: 'G',
-};
-const ROUND_LABEL: Record<string, { zh: string; en: string
-        zhHant?: string;
- }> = {
-  '0': { zh: '资格赛', en: 'Qualification',
-      zhHant: "資格賽"
-}, h: { zh: '资格赛', en: 'Qualification',
-    zhHant: "資格賽"
-},
-  '1': { zh: '第一轮', en: 'Round 1',
-      zhHant: "第一輪"
-}, d: { zh: '第一轮', en: 'Round 1',
-    zhHant: "第一輪"
-},
-  '2': { zh: '第二轮', en: 'Round 2',
-      zhHant: "第二輪"
-}, e: { zh: '第二轮', en: 'Round 2',
-    zhHant: "第二輪"
-},
-  '3': { zh: '复赛', en: 'Semi-Final',
-      zhHant: "複賽"
-}, g: { zh: '第三轮', en: 'Round 3',
-    zhHant: "第三輪"
-},
-  c: { zh: '决赛', en: 'Final',
-      zhHant: "決賽"
-}, f: { zh: '决赛', en: 'Final',
-    zhHant: "決賽"
-}, b: { zh: 'B 决赛', en: 'B-Final',
-    zhHant: "B 決賽"
-},
 };
 interface WcaEntry { s: string; c: string; d: string; r: string; g: string; n: number; e: string; id?: string }
 interface WcaFile { color: string; bins: Record<string, WcaEntry[]> }
@@ -159,6 +132,7 @@ const URL_KEYS = {
   stage: parseAsStringEnum<Stage>(STAGE_VALUES),
   variant: parseAsStringEnum<Variant>(VARIANT_VALUES),
   colors: parseAsString,
+  src: parseAsStringEnum<'wca' | 'random'>(['wca', 'random']),
   worker: parseAsStringEnum(['ts', 'legacy']),
 };
 
@@ -250,18 +224,24 @@ function AnalyzePageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scramble, howfar, stage, variant, colors]);
 
-  // WCA real-scramble pool + cross-step filter
-  const [wcaColor, setWcaColor] = useState<CrossColor>('White');
-  const [wcaBins, setWcaBins] = useState<number[] | null>(null);
-  const [wcaStep, setWcaStep] = useState<number | null>(null);
+  // 打乱来源:WCA 真实打乱(带比赛信息)/ 随机生成(cubing.js,无比赛信息)。
+  const [scrSource, setScrSource] = useState<'wca' | 'random'>(() => initUrlRef.current.src ?? 'wca');
+  useEffect(() => {
+    void setUrlState({ src: scrSource === 'wca' ? null : scrSource });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrSource]);
+
+  // WCA real-scramble pool。颜色 + 步数都是「可选过滤器」,默认「任意」=随机抽一条真实打乱。
+  // 颜色文件互不相交(每色 ~1500 条独立样本),任意颜色 = 随机挑一个颜色文件再抽。
+  const [wcaColor, setWcaColor] = useState<CrossColor | 'any'>('any');
+  const [wcaLen, setWcaLen] = useState<number | 'any'>('any');
+  const [wcaBins, setWcaBins] = useState<number[] | null>(null); // 选定具体颜色后该色的步数桶
   const [wcaMeta, setWcaMeta] = useState<WcaEntry | null>(null);
   const [wcaLoading, setWcaLoading] = useState(false);
   const [crossSol, setCrossSol] = useState<{ length: number; moves: string[] } | null>(null);
-  const [wheelIdx, setWheelIdx] = useState(0); // 滚筒锚点 = wcaBins 的索引(兼容跳号)
-  const [wheelOpen, setWheelOpen] = useState(false); // 滚筒默认折叠成数字按钮,点击才展开
+  const [crossColor, setCrossColor] = useState<CrossColor>('White'); // 十字解读数用的颜色 = 实际抽到的颜色
   const [, setFlagDataVer] = useState(0); // 国旗映射异步加载完后触发重渲染
   const wcaCacheRef = useRef<Map<string, WcaFile>>(new Map());
-  const wheelWrapRef = useRef<HTMLDivElement>(null);
 
   const [running, setRunning] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -276,6 +256,7 @@ function AnalyzePageInner() {
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [xcrossFallback, setXcrossFallback] = useState<boolean>(false);
   const [variantUnsupported, setVariantUnsupported] = useState<boolean>(false);
+  const [cfopOpen, setCfopOpen] = useState(false); // 「CFOP 解法枚举」折叠区;分析时自动展开
   const analyzerRef = useRef<Analyzer>(new Analyzer());
   const startTimeRef = useRef<number>(0);
 
@@ -375,7 +356,7 @@ function AnalyzePageInner() {
   async function fillRandom() {
     try {
       const s = await randomThreeByThreeScramble();
-      if (s) setScramble(s);
+      if (s) { setScramble(s); setWcaMeta(null); } // 随机打乱无比赛信息,清掉残留 meta
     } catch (err) {
       console.warn('random scramble failed', err);
     }
@@ -400,65 +381,49 @@ function AnalyzePageInner() {
     }
   }, []);
 
-  const selectWcaColor = useCallback(async (color: CrossColor) => {
+  // 选具体颜色:加载该色文件取步数桶供「步数」下拉;切回任意则清空(任意不按步数过滤)。
+  const selectWcaColor = useCallback(async (color: CrossColor | 'any') => {
     setWcaColor(color);
-    setWcaStep(null);
+    setWcaLen('any');
     setWcaMeta(null);
+    if (color === 'any') { setWcaBins(null); return; }
     const data = await loadWcaColor(color);
     setWcaBins(data ? Object.keys(data.bins).map(Number).sort((a, b) => a - b) : null);
   }, [loadWcaColor]);
 
-  const pickWca = useCallback((color: CrossColor, step: number) => {
-    const data = wcaCacheRef.current.get(COLOR_LETTER[color]);
-    const arr = data?.bins[String(step)];
-    if (!arr || !arr.length) return;
-    const entry = arr[Math.floor(Math.random() * arr.length)];
+  // 抽一条真实打乱:任意颜色→随机挑色;任意步数(或任意颜色)→该色全部桶合并随机。
+  const drawWca = useCallback(async () => {
+    const color: CrossColor = wcaColor === 'any'
+      ? CROSS_COLORS[Math.floor(Math.random() * CROSS_COLORS.length)]
+      : wcaColor;
+    const data = await loadWcaColor(color);
+    if (!data) return;
+    const pool: WcaEntry[] = (wcaColor !== 'any' && wcaLen !== 'any' && data.bins[String(wcaLen)])
+      ? data.bins[String(wcaLen)]
+      : Object.values(data.bins).flat();
+    if (!pool.length) return;
+    const entry = pool[Math.floor(Math.random() * pool.length)];
     setScramble(entry.s);
-    setWcaStep(step);
     setWcaMeta(entry);
-  }, []);
+    setCrossColor(color);
+  }, [wcaColor, wcaLen, loadWcaColor]);
 
-  // Lazily load the default color's pool after first paint (208KB, only on idle).
+  // Lazily warm the default color's pool after first paint (only on idle) so the
+  // first 任意 draw is snappy. Doesn't pick a scramble — user clicks 换一个.
   useEffect(() => {
-    const t = setTimeout(() => { void selectWcaColor('White'); }, 300);
+    const t = setTimeout(() => { void loadWcaColor('White'); }, 300);
     return () => clearTimeout(t);
-  }, [selectWcaColor]);
+  }, [loadWcaColor]);
 
   // Optimal cross solution for the loaded scramble (first call builds tables ~0.5s, then instant).
   useEffect(() => {
     if (!wcaMeta) { setCrossSol(null); return; }
-    const t = setTimeout(() => setCrossSol(solveCross(wcaMeta.s, wcaColor)), 0);
+    const t = setTimeout(() => setCrossSol(solveCross(wcaMeta.s, crossColor)), 0);
     return () => clearTimeout(t);
-  }, [wcaMeta, wcaColor]);
+  }, [wcaMeta, crossColor]);
 
   // 国旗映射(comp_countries 等)首屏后异步拉,完成后重渲染让旗出现。
   useEffect(() => { void loadFlagData().then(setFlagDataVer); }, []);
-
-  // bins 加载 / 换色后把滚筒居中到中间档(不自动取打乱,等用户滚定再取)。
-  useEffect(() => {
-    if (wcaBins && wcaBins.length) setWheelIdx(Math.floor(wcaBins.length / 2));
-  }, [wcaBins]);
-
-  const wheelRenderSlot = useCallback(
-    (i: number) => (wcaBins && wcaBins[i] != null ? String(wcaBins[i]) : ''),
-    [wcaBins],
-  );
-  const wheelSettle = useCallback((i: number) => {
-    if (wcaBins && wcaBins[i] != null) pickWca(wcaColor, wcaBins[i]);
-    setWheelOpen(false); // 滚定即收起浮层
-  }, [wcaBins, wcaColor, pickWca]);
-
-  // 滚筒展开后点外面 / Esc 收起
-  useEffect(() => {
-    if (!wheelOpen) return;
-    const onDown = (e: PointerEvent) => {
-      if (wheelWrapRef.current && !wheelWrapRef.current.contains(e.target as Node)) setWheelOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setWheelOpen(false); };
-    document.addEventListener('pointerdown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey); };
-  }, [wheelOpen]);
 
   const wcaComp = wcaMeta ? resolveComp(wcaMeta.c) : null;
 
@@ -477,27 +442,134 @@ function AnalyzePageInner() {
       </header>
 
       <div className="analyze-input-row">
-        <button
-          className="analyze-shuffle"
-          onClick={fillRandom}
-          disabled={running}
-          title={t('生成随机 WCA 打乱', 'Generate random WCA scramble')}
-          aria-label={t('生成随机打乱', 'Generate random scramble')}
-        >
-          <Shuffle size={14} />
-        </button>
+        {/* 当前打乱的 2D 打乱图(点击看大图);打乱文字唯一来源是右侧输入框,不再重复 */}
+        <div className="analyze-input-img">
+          <ScramblePreview2D
+            event="333"
+            scramble={scramble.trim()}
+            size={44}
+            fullSizeLink
+            linkTitle={t('查看大图', 'View full size')}
+          />
+        </div>
         <input
           className="analyze-scramble"
           type="text"
           value={scramble}
-          onChange={(e) => setScramble(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') runAnalyze(); }}
+          onChange={(e) => { setScramble(e.target.value); setWcaMeta(null); }}
+          onKeyDown={(e) => { if (e.key === 'Enter') { setCfopOpen(true); runAnalyze(); } }}
           placeholder={t('输入打乱（标准 WCA 记号）', 'Scramble (WCA notation)')}
           spellCheck={false}
           autoCapitalize="off"
           autoCorrect="off"
           inputMode="text"
         />
+      </div>
+
+      <div className="analyze-wca">
+        {/* 来源切换:WCA 真实打乱(带比赛信息)/ 随机生成 */}
+        <PillToggle
+          value={scrSource === 'wca'}
+          onChange={(v) => setScrSource(v ? 'wca' : 'random')}
+          onLabel={t('WCA 真实打乱', 'Real WCA scramble')}
+          offLabel={t('随机生成', 'Random')}
+          ariaLabel={t('打乱来源', 'Scramble source')}
+          className="analyze-src-pill"
+        />
+
+        {scrSource === 'wca' ? (
+          <>
+            {/* 颜色 + 步数都是可选过滤器,默认「任意」= 随机一条真实打乱 */}
+            <select
+              className="analyze-wca-color"
+              value={wcaColor}
+              onChange={(e) => { void selectWcaColor(e.target.value as CrossColor | 'any'); }}
+              disabled={running}
+              aria-label={t('十字颜色', 'Cross color')}
+            >
+              <option value="any">{t('任意颜色', 'Any color')}</option>
+              {CROSS_COLORS.map((c) => (
+                <option key={c} value={c}>
+                  {t(`${COLOR_LABEL[c].zh}十字`, `${COLOR_LABEL[c].en} cross`)}
+                </option>
+              ))}
+            </select>
+            {wcaColor !== 'any' && (
+              <select
+                className="analyze-wca-color"
+                value={String(wcaLen)}
+                onChange={(e) => setWcaLen(e.target.value === 'any' ? 'any' : Number(e.target.value))}
+                disabled={running || !wcaBins}
+                aria-label={t('十字步数', 'Cross length')}
+              >
+                <option value="any">{t('任意步数', 'Any length')}</option>
+                {(wcaBins ?? []).map((n) => (
+                  <option key={n} value={n}>{t(`${n} 步`, `${n} moves`)}</option>
+                ))}
+              </select>
+            )}
+            <button
+              className="analyze-wca-reshuffle"
+              onClick={() => void drawWca()}
+              disabled={running || wcaLoading}
+              title={t('换一条真实打乱', 'Draw another real scramble')}
+              aria-label={t('换一条真实打乱', 'Draw another real scramble')}
+            >
+              {wcaLoading ? <Loader2 size={13} className="analyze-spin" /> : <Shuffle size={13} />}
+            </button>
+          </>
+        ) : (
+          <button
+            className="analyze-wca-reshuffle"
+            onClick={() => void fillRandom()}
+            disabled={running}
+            title={t('换一个随机打乱', 'New random scramble')}
+            aria-label={t('换一个随机打乱', 'New random scramble')}
+          >
+            <Shuffle size={13} />
+          </button>
+        )}
+      </div>
+
+      {/* 来源信息行:WCA 真实打乱显示比赛出处,随机显示标签;不重复打乱文字/图 */}
+      <div className="analyze-srcline">
+        {scrSource === 'wca' && wcaMeta && (
+          <Link
+            href={`/${lang}/scramble/gen?comp=${wcaComp?.id ?? ''}`}
+            className="analyze-scr-src"
+            title={t('在生成器中打开该比赛', 'Open this competition in the generator')}
+          >
+            {wcaComp?.iso && <Flag iso2={wcaComp.iso} className="analyze-scr-flag" />}
+            <span className="analyze-scr-comp">{localizeCompName(wcaComp?.id ?? '', wcaMeta.c, lang === 'zh')}</span>
+            <EventIcon event={wcaMeta.e} className="analyze-scr-evt" />
+            <span className="analyze-scr-meta">{compSourceLine(wcaMeta.r, wcaMeta.g, wcaMeta.n, lang === 'zh')}</span>
+          </Link>
+        )}
+        {crossSol && (
+          <span className="analyze-scr-cross">
+            {t(`${COLOR_LABEL[crossColor].zh}十字`, `${COLOR_LABEL[crossColor].en} cross`)}
+            {' '}({crossSol.length}): {crossSol.moves.join(' ') || '—'}
+          </span>
+        )}
+      </div>
+
+      <section className="analyze-primary">
+        <h2 className="analyze-primary-title">
+          {t('逐阶段最优解', 'Optimal Stage Solver')}
+        </h2>
+        <StageSolver scramble={scramble} lang={lang} />
+      </section>
+
+      <details
+        className="analyze-cfop"
+        open={cfopOpen}
+        onToggle={(e) => setCfopOpen((e.currentTarget as HTMLDetailsElement).open)}
+      >
+        <summary>
+          {t('CFOP 解法枚举', 'CFOP Solution Enumerator')}
+        </summary>
+
+      <div className="analyze-filters">
         <button
           className="analyze-go"
           onClick={runAnalyze}
@@ -506,126 +578,6 @@ function AnalyzePageInner() {
           {running ? <Loader2 size={16} className="analyze-spin" /> : null}
           {t('分析', 'Analyze')}
         </button>
-      </div>
-
-      <div className="analyze-wca">
-        <span className="analyze-wca-label">
-          <Dices size={13} />
-          {t('WCA 真实打乱', 'Real WCA scramble')}
-        </span>
-        <select
-          className="analyze-wca-color"
-          value={wcaColor}
-          onChange={(e) => { void selectWcaColor(e.target.value as CrossColor); }}
-          disabled={running}
-          aria-label={t('十字颜色', 'Cross color')}
-        >
-          {CROSS_COLORS.map((c) => (
-            <option key={c} value={c}>
-              {t(`${COLOR_LABEL[c].zh}十字`, `${COLOR_LABEL[c].en} cross`)}
-            </option>
-          ))}
-        </select>
-        <div className="analyze-wca-steps" ref={wheelWrapRef}>
-          {wcaBins && wcaBins.length ? (
-            <>
-              <button
-                type="button"
-                className="analyze-wca-steptrigger"
-                onClick={() => setWheelOpen((o) => !o)}
-                disabled={running}
-                aria-label={t('十字步数', 'Cross length')}
-                aria-expanded={wheelOpen}
-                title={t('点击选择十字步数', 'Click to pick cross length')}
-              >
-                <span>{wcaBins[wheelIdx] != null ? t(`${wcaBins[wheelIdx]} 步`, String(wcaBins[wheelIdx])) : '—'}</span>
-                <ChevronDown size={13} />
-              </button>
-              {wheelOpen && (
-                <div className="analyze-wca-wheelpop">
-                  <WheelPicker
-                    className="analyze-wca-wheel"
-                    value={wheelIdx}
-                    minValue={0}
-                    maxValue={wcaBins.length - 1}
-                    renderSlot={wheelRenderSlot}
-                    onChange={setWheelIdx}
-                    onSettle={wheelSettle}
-                    width={50}
-                    slots={7}
-                    itemHeight={28}
-                    disabled={running}
-                    ariaLabel={t('十字步数', 'Cross length')}
-                  />
-                </div>
-              )}
-            </>
-          ) : (
-            <Loader2 size={14} className="analyze-spin" aria-label={t('加载中', 'Loading')} />
-          )}
-        </div>
-        {wcaMeta && wcaStep != null && (
-          <button
-            className="analyze-wca-reshuffle"
-            onClick={() => pickWca(wcaColor, wcaStep)}
-            disabled={running || wcaLoading}
-            title={t('同条件换一个', 'Another with same filter')}
-            aria-label={t('同条件换一个', 'Another with same filter')}
-          >
-            <Shuffle size={13} />
-          </button>
-        )}
-      </div>
-
-      {wcaMeta && (
-        <div className="analyze-wca-meta">
-          <Link
-            href={`/${lang}/scramble/gen?comp=${wcaComp?.id ?? ''}`}
-            className="analyze-wca-complink"
-            title={t('在生成器中打开该比赛', 'Open this competition in the generator')}
-          >
-            {wcaComp?.iso && <Flag iso2={wcaComp.iso} className="analyze-wca-flag" />}
-            <span className="analyze-wca-comp">{wcaMeta.c}</span>
-          </Link>
-          {wcaMeta.d && <span className="analyze-wca-date">{wcaMeta.d}</span>}
-          <span className="analyze-wca-round">
-            {ROUND_LABEL[wcaMeta.r]?.[lang] ?? wcaMeta.r}
-            {wcaMeta.g ? (lang === 'zh' ? ` ${wcaMeta.g} 组` : ` Group ${wcaMeta.g}`) : ''}
-            {` #${wcaMeta.n}`}
-          </span>
-          {wcaMeta.id && <span className="analyze-wca-id">{t('打乱序号', 'Scramble')} {wcaMeta.id}</span>}
-          {wcaMeta.e !== '333' && <span className="analyze-wca-event">{wcaMeta.e}</span>}
-          {crossSol && (
-            <span className="analyze-wca-cross">
-              {t(`${COLOR_LABEL[wcaColor].zh}十字`, `${COLOR_LABEL[wcaColor].en} cross`)}
-              {' '}({crossSol.length}): {crossSol.moves.join(' ') || '—'}
-            </span>
-          )}
-        </div>
-      )}
-
-      <section className="analyze-primary">
-        <h2 className="analyze-primary-title">
-          {t('逐阶段最优解 (Rust WASM)', 'Optimal Stage Solver (Rust WASM)')}
-        </h2>
-        <p className="analyze-primary-sub">
-          {t(
-            '逐视角最优步数 + 具体转动 + 多解 + 动画,支持标准 / EO / Pair / Pseudo / F2LEO 等 7 种方法',
-            'per-orientation optimal length + actual moves + multiple solutions + animation; 7 methods',
-          )}
-        </p>
-        <StageSolver scramble={scramble} lang={lang} />
-      </section>
-
-      <details className="analyze-cfop">
-        <summary>
-          {t(
-            '全 CFOP 解法枚举(十字 + F2L + OLL + PLL)',
-            'Full CFOP solution enumerator (Cross + F2L + OLL + PLL)',
-          )}
-        </summary>
-
-      <div className="analyze-filters">
         <label className="analyze-control">
           <select
             value={variant}
@@ -633,11 +585,9 @@ function AnalyzePageInner() {
             onChange={(e) => setVariant(e.target.value as Variant)}
             disabled={running}
           >
-            <option value="std">{t('标准', 'Standard')}</option>
-            <option value="eo">EO</option>
-            <option value="pair">{t('基态', 'Pair')}</option>
-            <option value="pseudo">{t('伪', 'Pseudo')}</option>
-            <option value="pseudo_pair">{t('伪基态', 'Pseudo Pair')}</option>
+            {VARIANT_VALUES.map((v) => (
+              <option key={v} value={v}>{variantLabel(v, lang === 'zh')}</option>
+            ))}
           </select>
         </label>
         <label className="analyze-control">
@@ -647,10 +597,9 @@ function AnalyzePageInner() {
             onChange={(e) => setStage(e.target.value as Stage)}
             disabled={running}
           >
-            <option value="cross">Cross</option>
-            <option value="xcross">XCross</option>
-            <option value="xxcross">XXCross</option>
-            <option value="xxxcross">XXXCross</option>
+            {STAGE_VALUES.map((s) => (
+              <option key={s} value={s}>{stageLabel(s, lang === 'zh')}</option>
+            ))}
           </select>
         </label>
         <select
@@ -809,12 +758,6 @@ function AnalyzePageInner() {
         </div>
       )}
 
-      <footer className="analyze-footer">
-        {t('算法移植自', 'Algorithm ported from')}{' '}
-        <a href="https://speedcubedb.com/analyze" target="_blank" rel="noopener noreferrer">
-          speedcubedb.com/analyze
-        </a>
-      </footer>
       </details>
     </div>
   );

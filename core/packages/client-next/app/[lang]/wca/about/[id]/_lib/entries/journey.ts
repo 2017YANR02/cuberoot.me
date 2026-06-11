@@ -1578,11 +1578,11 @@ LIMIT 100`,
     edgesZhHant: ["本國算作 1 個國家 —— 跟\"海外參賽\"指標互補(海外 = 總國家數 - 1,前提是去過本國)。", "沒有 `HAVING` 閾值 —— 直接拉 top 100,因為只去過 1 國的人太多,排序後自然落到尾部。", "改國籍前後比賽地都按\"比賽 country_id\"算,所以不受 selfish 改名影響。"]
 };
 
-// ──── name_parts_count ──────────────────────────────────────────────────────
-const name_parts_count: AboutEntry = {
-  id: 'name_parts_count',
-  titleZh: '姓名词数统计',
-  titleEn: 'Name parts count',
+// ──── name_stats ────────────────────────────────────────────────────────────
+const name_stats: AboutEntry = {
+  id: 'name_stats',
+  titleZh: '姓名统计',
+  titleEn: 'Name statistics',
   badgeZh: '人口学',
   badgeEn: 'Demographic',
   introZh: [
@@ -1665,12 +1665,12 @@ WHERE sub_id = 1`,
         titleZhHant: "去過最多國家",
         hintZhHant: "另一個跨國維度"
     },
-    { id: 'name_parts_count', toStat: true, titleZh: '查看实时分布', titleEn: 'Jump to live distribution', hintZh: '各 part 数 + top 国家', hintEn: 'Each part-count + top countries',
+    { id: 'name_stats', toStat: true, titleZh: '查看实时分布', titleEn: 'Jump to live distribution', hintZh: '各 part 数 + top 国家', hintEn: 'Each part-count + top countries',
         titleZhHant: "檢視實時分佈",
         hintZhHant: "各 part 數 + top 國家"
     },
   ],
-    titleZhHant: "姓名詞數統計",
+    titleZhHant: "姓名統計",
     badgeZhHant: "人口學",
     edgesZhHant: ["括號本地化只剝**帶前導空格**的括號 —— \"Name(Local)\" 不帶空格不剝;實際 WCA 都規範化為 \"Name (Local)\",安全。", "\"O'Brien\"、\"de la Rosa\" 這種含撇號 / 連字元 / 字首詞的 part 數會偏多 —— 沒語言學拆分,純空格切。", "`split(' ')` 在多空格上會產生空 part —— WCA 資料乾淨,實際不會觸發。"]
 };
@@ -2025,7 +2025,7 @@ export const JOURNEY_ABOUT: Record<string, AboutEntry> = {
   most_solves_before_bld_success,
   most_visited_continents,
   most_visited_countries,
-  name_parts_count,
+  name_stats,
   shortest_time_to_reach_milestone_in_comps_count,
   shortest_time_to_get_all_singles,
   shortest_time_to_get_all_singles_and_averages,

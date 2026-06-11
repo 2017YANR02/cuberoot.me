@@ -16,35 +16,14 @@ import { histogram, type Histogram } from '@/lib/comp-cross';
 import { reduceDigits, type ColorLetter } from '@/lib/cross-color-subset';
 import type { StepMapState, StepMetric } from './useStepMap';
 import { normScramble, type CompStepsState } from './useCompSteps';
+import { stageLabel } from '@/lib/scramble-variants';
 import type { RoundSheet } from './SheetView';
 
 // b122/b123/b222/b223/bf2b = 块类指标(1x2x2 方块 / 1x2x3 / 2x2x2 / 2x2x3 / 双1x2x3),
 // beo/beoline/bdr = EOLine 系与 DR;数据在各自变体的 comp_steps_<key> 里按阶段序排
 // (123/eoline 两阶段,其余单阶段)。
 export type Metric = 'cross' | StepMetric | 'b122' | 'b123' | 'b222' | 'b223' | 'bf2b' | 'beo' | 'beoline' | 'bdr';
-// 指标 tab 列表(UI 在 TNoodleMode 渲染,与 toggles 同一行)。
-export const METRICS: { key: Metric; label: string }[] = [
-  { key: 'cross', label: '十字' },
-  { key: 'xc', label: 'XC' },
-  { key: 'xxc', label: 'XXC' },
-  { key: 'xxxc', label: 'XXXC' },
-  { key: 'xxxxc', label: 'XXXXC' },
-  { key: 'b122', label: '1x2x2' },
-  { key: 'b123', label: '1x2x3' },
-  { key: 'b222', label: '2x2x2' },
-  { key: 'b223', label: '2x2x3' },
-  { key: 'bf2b', label: '1x2x3 x2' },
-  { key: 'beo', label: 'EO' },
-  { key: 'beoline', label: 'EOLine' },
-  { key: 'bdr', label: 'DR' },
-];
-/** 块类/轴类指标显示名(b122 → 1x2x2,bf2b → 1x2x3 x2,beo → EO …);非此类返回 null。 */
-export const blockMetricName = (m: Metric): string | null =>
-  m === 'bf2b' ? '1x2x3 x2'
-    : m === 'beo' ? 'EO'
-      : m === 'beoline' ? 'EOLine'
-        : m === 'bdr' ? 'DR'
-          : m.startsWith('b') ? `${m[1]}x${m[2]}x${m[3]}` : null;
+// 指标显示名统一走 lib/scramble-variants 的 stageLabel(b 前缀指标键已在表内别名)。
 // comp_steps [30] 里各阶段的起始下标(每阶段 6 底色)。逐行徽标切片也用它。
 export const METRIC_OFFSET: Record<Metric, number> = {
   cross: 0, xc: 6, xxc: 12, xxxc: 18, xxxxc: 24,
@@ -178,7 +157,7 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
   const activeReady = !pre.ready ? false
     : metric === 'cross' ? ready
     : stepUncoveredCount === 0 ? true : step.ready;
-  const metricName = metric === 'cross' ? t('十字', 'Cross') : (blockMetricName(metric) ?? metric.toUpperCase());
+  const metricName = t(stageLabel(metric, true), stageLabel(metric, false));
   const progressLabel = !pre.ready
     ? t('加载预计算数据中…', 'Loading precomputed data…')
     : metric === 'cross'

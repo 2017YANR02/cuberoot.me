@@ -18,7 +18,7 @@ export interface PetGalleryGroup {
   anims: PetAnim[];
   // SVGs whose animation is driven by an embedded <script> (cloudling). Scripts
   // don't run inside <img>, so these must render via <object> or they show a
-  // blank/initial frame. CSS-keyframe SVGs (cubing/clawd) and .apng animate in <img>.
+  // blank/initial frame. CSS-keyframe SVGs (cubing/clawd) and .png animate in <img>.
   scripted?: boolean;
   // Optional CSS zoom: several characters are authored small inside a large canvas
   // (cloud centered with float headroom; pixel crab/pig sitting low with jump
@@ -173,36 +173,36 @@ export const PET_GALLERY: PetGalleryGroup[] = [
   {
     id: 'calico', zh: '三花猫 Calico', en: 'Calico', base: '/deskpet/calico/',
     anims: [
-      { file: 'calico-idle.apng', zh: '待机', en: 'Idle',
+      { file: 'calico-idle.png', zh: '待机', en: 'Idle',
           zhHant: "待機"
     },
-      { file: 'calico-thinking.apng', zh: '思考', en: 'Thinking' },
-      { file: 'calico-working-typing.apng', zh: '打字', en: 'Typing' },
-      { file: 'calico-working-building.apng', zh: '搭建', en: 'Building' },
-      { file: 'calico-working-juggling.apng', zh: '抛接', en: 'Juggling',
+      { file: 'calico-thinking.png', zh: '思考', en: 'Thinking' },
+      { file: 'calico-working-typing.png', zh: '打字', en: 'Typing' },
+      { file: 'calico-working-building.png', zh: '搭建', en: 'Building' },
+      { file: 'calico-working-juggling.png', zh: '抛接', en: 'Juggling',
           zhHant: "拋接"
     },
-      { file: 'calico-working-conducting.apng', zh: '指挥', en: 'Conducting',
+      { file: 'calico-working-conducting.png', zh: '指挥', en: 'Conducting',
           zhHant: "指揮"
     },
-      { file: 'calico-working-sweeping.apng', zh: '打扫', en: 'Sweeping',
+      { file: 'calico-working-sweeping.png', zh: '打扫', en: 'Sweeping',
           zhHant: "打掃"
     },
-      { file: 'calico-working-carrying.apng', zh: '搬运', en: 'Carrying',
+      { file: 'calico-working-carrying.png', zh: '搬运', en: 'Carrying',
           zhHant: "搬運"
     },
-      { file: 'calico-happy.apng', zh: '开心', en: 'Happy',
+      { file: 'calico-happy.png', zh: '开心', en: 'Happy',
           zhHant: "開心"
     },
-      { file: 'calico-error.apng', zh: '出错', en: 'Error',
+      { file: 'calico-error.png', zh: '出错', en: 'Error',
           zhHant: "出錯"
     },
-      { file: 'calico-notification.apng', zh: '提醒', en: 'Notification' },
-      { file: 'calico-yawning.apng', zh: '打哈欠', en: 'Yawn' },
-      { file: 'calico-sleeping.apng', zh: '睡觉', en: 'Sleeping',
+      { file: 'calico-notification.png', zh: '提醒', en: 'Notification' },
+      { file: 'calico-yawning.png', zh: '打哈欠', en: 'Yawn' },
+      { file: 'calico-sleeping.png', zh: '睡觉', en: 'Sleeping',
           zhHant: "睡覺"
     },
-      { file: 'calico-waking.apng', zh: '醒来', en: 'Waking',
+      { file: 'calico-waking.png', zh: '醒来', en: 'Waking',
           zhHant: "醒來"
     },
     ],

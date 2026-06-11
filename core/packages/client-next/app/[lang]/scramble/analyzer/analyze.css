@@ -53,7 +53,16 @@
     display: flex;
     align-items: stretch;
     gap: 0;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.6rem;
+}
+
+/* 当前打乱的小图,贴在输入框左侧,与输入框/分析按钮分离(独立缩略图,非按钮) */
+.analyze-input-img {
+    flex: 0 0 auto;
+    margin-right: 0.5rem;
+    display: flex;
+    align-items: center;
+    line-height: 0;
 }
 
 .analyze-scramble {
@@ -61,9 +70,7 @@
     min-width: 0;
     background: var(--az-surface);
     border: 1px solid var(--az-border-strong);
-    border-right: 0;
-    border-left: 0;
-    border-radius: 0;
+    border-radius: 6px;
     padding: 0.55rem 0.75rem;
     font-family: 'JetBrains Mono', 'Menlo', monospace;
     font-size: 0.9rem;
@@ -75,48 +82,24 @@
     border-color: var(--az-accent);
 }
 
-.analyze-shuffle {
-    background: var(--az-surface);
-    border: 1px solid var(--az-border-strong);
-    border-radius: 6px 0 0 6px;
-    padding: 0 0.7rem;
-    cursor: pointer;
-    color: var(--az-text);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.analyze-shuffle:hover:not(:disabled) {
-    background: var(--az-accent-soft);
-    border-color: var(--az-accent);
-    color: var(--az-accent);
-}
-
-.analyze-shuffle:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
+/* CFOP 枚举区的「分析」按钮(独立,不再与输入框拼接) */
 .analyze-go {
-    background: var(--az-surface);
-    border: 1px solid var(--az-border-strong);
-    border-radius: 0 6px 6px 0;
-    padding: 0 1rem;
+    background: var(--az-accent);
+    border: 1px solid var(--az-accent);
+    border-radius: 6px;
+    padding: 0.4rem 1.1rem;
     font-size: 0.9rem;
     cursor: pointer;
-    color: var(--az-text);
+    color: #fff;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    min-width: 6rem;
     justify-content: center;
 }
 
 .analyze-go:hover:not(:disabled) {
-    background: var(--az-accent-soft);
+    background: color-mix(in srgb, var(--az-accent) 85%, black);
     border-color: var(--az-accent);
-    color: var(--az-accent);
 }
 
 .analyze-go:disabled {
@@ -272,96 +255,6 @@
     border-color: var(--az-accent);
 }
 
-.analyze-wca-steps {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    min-height: 1.7rem;
-}
-
-/* 折叠态:跟「白十字」下拉同款的小按钮,只显示当前十字步数 */
-.analyze-wca-steptrigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.2rem;
-    min-width: 2.6rem;
-    background: var(--az-surface);
-    border: 1px solid var(--az-border-strong);
-    border-radius: 5px;
-    padding: 0.25rem 0.35rem 0.25rem 0.5rem;
-    font-size: 0.82rem;
-    color: var(--az-text);
-    cursor: pointer;
-    font-family: inherit;
-    font-variant-numeric: tabular-nums;
-}
-
-.analyze-wca-steptrigger:hover:not(:disabled),
-.analyze-wca-steptrigger[aria-expanded='true'] {
-    border-color: var(--az-accent);
-}
-
-.analyze-wca-steptrigger:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.analyze-wca-steptrigger svg {
-    color: var(--az-text-mute);
-    flex: 0 0 auto;
-}
-
-/* 展开态:浮层覆盖,不挤占布局;水平居中于触发按钮 */
-.analyze-wca-wheelpop {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 30;
-    padding: 4px;
-    background: var(--az-surface);
-    border: 1px solid var(--az-border-strong);
-    border-radius: 8px;
-    box-shadow: 0 8px 24px color-mix(in srgb, black 28%, transparent);
-    animation: az-wheelpop-in 0.14s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes az-wheelpop-in {
-    from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
-    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-/* WCA 步数滚筒:复用通用 WheelPicker,套 analyzer 主题 token(light/dark 自动翻) */
-.wheel-picker.analyze-wca-wheel {
-    min-height: 0;
-    height: 150px;
-    flex: 0 0 auto;
-    --wp-bg: color-mix(in srgb, var(--az-text) 6%, transparent);
-    --wp-text: var(--az-text-mute);
-    --wp-text-active: var(--az-accent);
-    --wp-highlight: var(--az-accent-soft);
-    --wp-text-fade-2: color-mix(in srgb, var(--az-text-mute) 65%, transparent);
-    --wp-text-fade-3: color-mix(in srgb, var(--az-text-mute) 42%, transparent);
-    --wp-text-fade-4: color-mix(in srgb, var(--az-text-mute) 22%, transparent);
-    --wp-highlight-h: 30px;
-}
-
-.analyze-wca-wheel .wheel-picker-item {
-    font-size: 0.95rem;
-    font-family: inherit;
-    padding: 4px 0;
-    font-variant-numeric: tabular-nums;
-}
-
-.analyze-wca-flag {
-    width: 1.2em;
-    border-radius: 2px;
-    align-self: center;
-    box-shadow: 0 0 0 0.5px var(--az-border-strong);
-}
-
 .analyze-wca-reshuffle {
     display: inline-flex;
     align-items: center;
@@ -386,56 +279,67 @@
     cursor: not-allowed;
 }
 
-.analyze-wca-meta {
+/* 来源切换用通用 PillToggle(蓝色 iOS 开关);宽度跟随两标签较长者,避免翻转时跳动 */
+.pill-toggle.analyze-src-pill {
+    min-width: 7.5rem;
+    font-size: 0.82rem;
+}
+
+/* 来源信息行:比赛出处 / 随机标签 / 提示 + 十字解,单行(打乱文字与图不在此重复) */
+.analyze-srcline {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
+    align-items: center;
     gap: 0.3rem 0.7rem;
     margin-bottom: 0.85rem;
     font-size: 0.82rem;
 }
 
-.analyze-wca-complink {
+.analyze-scr-src {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
+    flex-wrap: wrap;
+    gap: 0.35rem;
     text-decoration: none;
-    color: inherit;
+    color: var(--az-text-sub);
+    font-size: 0.8rem;
 }
 
-.analyze-wca-comp {
-    color: var(--az-text);
-    font-weight: 500;
-}
-
-.analyze-wca-complink:hover .analyze-wca-comp {
+.analyze-scr-src:hover .analyze-scr-comp {
     color: var(--az-accent);
     text-decoration: underline;
 }
 
-.analyze-wca-date,
-.analyze-wca-round {
+.analyze-scr-flag {
+    width: 1.2em;
+    border-radius: 2px;
+    box-shadow: 0 0 0 0.5px var(--az-border-strong);
+}
+
+.analyze-scr-comp {
+    color: var(--az-text);
+    font-weight: 500;
+}
+
+.analyze-scr-evt {
+    width: 1em;
+    height: 1em;
     color: var(--az-text-mute);
 }
 
-.analyze-wca-id {
+.analyze-scr-meta {
     color: var(--az-text-mute);
-    font-family: var(--font-mono, monospace);
-    font-size: 0.76rem;
 }
 
-.analyze-wca-event {
-    color: var(--az-text-sub);
-    border: 1px solid var(--az-border);
-    border-radius: 3px;
-    padding: 0 0.3rem;
-    font-size: 0.72rem;
-    text-transform: uppercase;
+.analyze-scr-srctag {
+    color: var(--az-text-mute);
+    font-size: 0.8rem;
 }
 
-.analyze-wca-cross {
+.analyze-scr-cross {
     color: var(--az-text-sub);
     font-family: var(--font-mono, monospace);
+    font-size: 0.78rem;
 }
 
 .analyze-elapsed {
@@ -631,25 +535,6 @@
     text-align: center;
 }
 
-.analyze-footer {
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--az-border);
-    color: var(--az-text-mute);
-    font-size: 0.8rem;
-    text-align: center;
-}
-
-.analyze-footer a {
-    color: var(--az-text-sub);
-    text-decoration: underline;
-    text-decoration-color: var(--az-border-strong);
-}
-
-.analyze-footer a:hover {
-    color: var(--az-accent);
-}
-
 /* ── Mobile (<480px) ── */
 
 @media (max-width: 480px) {
@@ -660,7 +545,6 @@
     .analyze-sub { font-size: 0.82rem; }
     .analyze-scramble { font-size: 0.82rem; padding: 0.5rem 0.6rem; }
     .analyze-go { padding: 0 0.7rem; min-width: 4.5rem; font-size: 0.82rem; }
-    .analyze-shuffle { padding: 0 0.55rem; }
     .analyze-filter-chip { min-width: 4rem; padding: 0.45rem 0.65rem; }
     .analyze-filter-title { font-size: 0.8rem; }
     .analyze-stats, .analyze-filters { font-size: 0.85rem; }
@@ -700,19 +584,12 @@ html[data-theme=dark] .analyze-page {
   margin-bottom: 1.5rem;
 }
 
+/* 与 .analyze-cfop > summary 同字号/字重/颜色,两个区块标题视觉一致 */
 .analyze-primary-title {
   margin: 0 0 0.2rem 0;
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--az-text);
-}
-
-.analyze-primary-sub {
-  margin: 0 0 0.85rem 0;
   color: var(--az-text-sub);
-  font-size: 0.85rem;
-  line-height: 1.4;
 }
 
 /* ── SECONDARY: 全 CFOP 解法枚举(默认折叠) ── */
@@ -736,20 +613,8 @@ html[data-theme=dark] .analyze-page {
   display: none;
 }
 
-.analyze-cfop > summary::before {
-  content: '▸';
-  display: inline-block;
-  margin-right: 0.45rem;
-  color: var(--az-text-mute);
-  transition: transform 120ms;
-}
-
 .analyze-cfop[open] > summary {
   margin-bottom: 0.85rem;
-}
-
-.analyze-cfop[open] > summary::before {
-  transform: rotate(90deg);
 }
 
 .analyze-cfop > summary:hover {

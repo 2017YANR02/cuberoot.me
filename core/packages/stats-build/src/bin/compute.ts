@@ -32,7 +32,7 @@ export const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = 
   'world_records_by_person': () => import('../statistics/world_records_by_person.js'),
   // NOTE: 阶段 A — Statistic + transform
   'dnf_rate_by_event': () => import('../statistics/dnf_rate_by_event.js'),
-  'name_parts_count': () => import('../statistics/name_parts_count.js'),
+  'name_stats': () => import('../statistics/name_stats.js'),
   'competitions_count_by_week': () => import('../statistics/competitions_count_by_week.js'),
   'average_event_count_by_competition': () => import('../statistics/average_event_count_by_competition.js'),
   'best_potential_fmc_mean': () => import('../statistics/best_potential_fmc_mean.js'),

@@ -47,9 +47,11 @@ export async function GET(
       // .wasm 不走 stale-while-revalidate 缓存:一旦某次以错 MIME 缓存,SWR 每次都先
       // 把旧的(错 MIME)喂给 worker、后台才更新,要 reload 多次才自愈。dev 下 wasm 仅
       // 343KB,本地直取无感,no-store 杜绝 MIME 污染复发。其余资源(尤其 52MB 表)照常缓存。
+      // max-age 必须给:s-maxage 浏览器不认,且本响应无 Last-Modified/ETag 可协商,
+      // 缺 max-age = 每个 worker 每次换池都全量重拉 ~30MB 表(首载分钟级的根因)。
       const cacheControl = ext === '.wasm'
         ? 'no-store'
-        : 'public, s-maxage=86400, stale-while-revalidate=86400';
+        : 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=86400';
       return new Response(new Uint8Array(data), {
         headers: { 'content-type': contentType, 'cache-control': cacheControl },
       });
@@ -78,7 +80,7 @@ export async function GET(
       const ct = CONTENT_TYPE[ext] ?? upstream.headers.get('content-type') ?? 'application/octet-stream';
       const buf = await upstream.arrayBuffer();
       return new Response(buf, {
-        headers: { 'content-type': ct, 'cache-control': 'public, s-maxage=86400, stale-while-revalidate=86400' },
+        headers: { 'content-type': ct, 'cache-control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=86400' },
       });
     } catch {
       return new Response('upstream error', { status: 502 });

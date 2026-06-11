@@ -14,7 +14,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
-import { VARIANT_ORDER, variantLabel } from '@/lib/scramble-variants';
+import { VARIANT_ORDER, variantLabel, stageLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT } from '@/lib/scramble-variants';
 import './recent_scrambles.css';
 import { tr } from '@/i18n/tr';
 
@@ -30,24 +30,8 @@ interface RecentScramblesJson {
   rank: Record<string, Record<string, Record<string, Record<string, [string, ColorLetter][]>>>>;
 }
 
-const METRIC_ORDER = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc', 'block222', 'fbsquare', 'rouxs1', 'block223', 'f2b', 'eo', 'eoline', 'dr'];
-const METRIC_LABEL: Record<string, { zh: string; en: string
-        zhHant?: string;
- }> = {
-  cross: { zh: '十字', en: 'Cross' },
-  xc: { zh: 'XCross', en: 'XCross' },
-  xxc: { zh: 'XXCross', en: 'XXCross' },
-  xxxc: { zh: 'XXXCross', en: 'XXXCross' },
-  xxxxc: { zh: 'XXXXCross', en: 'XXXXCross' },
-  block222: { zh: '2x2x2', en: '2x2x2' },
-  fbsquare: { zh: '1x2x2', en: '1x2x2' },
-  rouxs1: { zh: '1x2x3', en: '1x2x3' },
-  block223: { zh: '2x2x3', en: '2x2x3' },
-  f2b: { zh: '1x2x3 x2', en: '1x2x3 x2' },
-  eo: { zh: 'EO', en: 'EO' },
-  eoline: { zh: 'EOLine', en: 'EOLine' },
-  dr: { zh: 'DR', en: 'DR' },
-};
+// 指标显示名走 lib/scramble-variants 的 stageLabel(xc/xxc 等短键已在表内别名)。
+const METRIC_ORDER = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc', 'fbsquare', 'rouxs1', 'block222', 'block223', 'f2b', 'eo', 'eoline', 'dr'];
 
 export default function RecentScrambles({ lang }: Props) {
   const isZh = lang === 'zh';
@@ -95,21 +79,35 @@ export default function RecentScrambles({ lang }: Props) {
   }, []);
 
   // variants that actually carry data this batch (a variant with all-empty rows is hidden)
-  const variants = useMemo(() => VARIANT_ORDER.filter((v) => {
+  // 数据层块变体(123/123x2/222/223)在 UI 聚合为一个方法 'block';metric 经
+  // BLOCK_STAGE_VARIANT 映射回各自数据变体取数。
+  const hasData = (v: string) => {
     const r = data?.rank?.[v];
     if (!r) return false;
     return Object.values(r).some((byColor) => Object.values(byColor).some((byStep) => Object.keys(byStep).length > 0));
-  }), [data]);
+  };
+  const variants = useMemo(() => VARIANT_ORDER.filter((v) =>
+    v === 'block' ? BLOCK_DATA_VARIANTS.some(hasData) : hasData(v),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [data]);
 
   // clamp selections to what's available (variant switch may drop a metric, etc.)
   const curVariant = (variants as string[]).includes(variant) ? variant : (variants[0] ?? 'std');
   const metrics = useMemo(() => {
+    if (curVariant === 'block') {
+      return METRIC_ORDER.filter((m) => {
+        const dv = BLOCK_STAGE_VARIANT[m];
+        return dv !== undefined && m in (data?.rank?.[dv] ?? {});
+      });
+    }
     const r = data?.rank?.[curVariant];
     return r ? METRIC_ORDER.filter((m) => m in r) : [];
   }, [data, curVariant]);
   const curMetric = metrics.includes(metric) ? metric : (metrics[0] ?? 'cross');
+  // block 方法按当前 metric 取底层数据变体;其余变体即数据键本身。
+  const dataVariant = curVariant === 'block' ? (BLOCK_STAGE_VARIANT[curMetric] ?? '123') : curVariant;
   // 当前切片的步数分桶；步数选择器列出可选步数,默认跟随最少步
-  const byStep = data?.rank?.[curVariant]?.[curMetric]?.[sel.subsetKey];
+  const byStep = data?.rank?.[dataVariant]?.[curMetric]?.[sel.subsetKey];
   const steps = useMemo(() => Object.keys(byStep ?? {}).map(Number).sort((a, b) => a - b), [byStep]);
   const curStep = (step != null && steps.includes(step)) ? step : (steps[0] ?? null);
   const entries = (curStep != null ? byStep?.[String(curStep)] : undefined) ?? [];
@@ -147,7 +145,7 @@ export default function RecentScrambles({ lang }: Props) {
         })}
         >
           {metrics.map((m) => (
-            <option key={m} value={m}>{METRIC_LABEL[m]?.[isZh ? 'zh' : 'en'] ?? m}</option>
+            <option key={m} value={m}>{stageLabel(m, isZh)}</option>
           ))}
         </select>
         <select
