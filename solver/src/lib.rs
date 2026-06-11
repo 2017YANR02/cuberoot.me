@@ -15,6 +15,7 @@ pub mod eoline_solver;
 pub mod executor;
 pub mod f2b_solver;
 pub mod htr_solver;
+pub mod htr_phase2_solver;
 pub mod roux_s1_solver;
 pub mod xcross_solver;
 
