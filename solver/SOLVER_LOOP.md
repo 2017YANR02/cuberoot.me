@@ -103,8 +103,15 @@
 - [x] **P3b** analyzer bin `pyraminx_analyzer.rs` + `tests/e2e_pyraminx.rs`(照 pocket_analyzer;吃全 WCA pyram 记号含顶点)。✅ 2026-06-11。CSV `id,pyraminx` 两列,口径=P3a 锁定(核心查表最优+错位 tip 数);pyram 小写 tip 记号进不了 3x3 `string_to_alg` → executor.rs 新增 raw 字符串通道(`RawSolverWrapper`/`run_analyzer_app_raw`,batch/stdin 循环抽私有泛型核与 Move 版共用,旧接口签名不动),解析失败行出 `id,-` 不中断;bin 3 单测(全 16 记号±'±2 / 已还原 0 / 单 tip 1 / `U u'`=2 / 字符串 round-trip 与 lib 直查 60 组逐位一致 / 独立联合 IDDFS oracle 32 组全等)+ e2e 双文件 baseline 锁死(WCA 形态 5 条 + 记号边角 5 条手算)均绿;executor 7/7、pocket e2e+bin 回归绿;全量 lib 120 绿(唯一红 = 并行 session chain_solver.rs 未提交 WIP 的 golden replay,与本单元无关);smoke 5 条 WCA pyram → 10/11/10/11/11 全 ≤15。
 - [x] **P3c** 统计管线:PUZZLES 注册表加 pyraminx。✅ 2026-06-11 `68f8b24f4`(3 文件)。event `pyram`,metric htm 含 tips;ps1 加 analyzer 表项 + 顺手修 -Puzzles 默认值(空=全部注册,原硬码 pocket 与 docstring 矛盾);client 契约泛型零改动;小样本 350 条两跑绿(首跑+增量),dist 7..13 峰值 11 全 ≤15,与 P3b smoke 吻合。
 - [x] **P3d** WASM 类 + 重建仪式 + `/scramble/pyraminx`。✅ 2026-06-11 `15646376c`(12 文件)。照 pocket new_lean 路线:0.9MB 核心距离表现场转移(弃 29.9MB 联合移动表),wasm 首查惰性 BFS node 408ms/浏览器 613ms 后续 <1ms;解=核心大写+tips 小写;V bump 20260611h,TABLE_SETS.pyraminx=[] 零下载,pyram 跳过 3x3 normalizeScramble;PuzzleOptimalSolver 加可选 placeholder prop(默认示例 F2 对 pyram 非法,防教错);门全绿:cargo 6/6 + node 冒烟 12 条相等 + cubing.js replay 12/12(isIdentical)+ typecheck/zh + playwright 桌面+390px en/zh 0 error(主 loop 复核 typecheck EXIT=0,harness 中途诊断系过期快照)。
-- [ ] **P3e** 看板登记 + **📦 MANUAL(Pyraminx)** 交接写 §3。门:typecheck + code-tokens-drift 绿。
-#### EPIC 3.3 — Skewb(3,149,280;/trainer/skewb 已有宿主;solver 参考 `skewb.js`)— 照范式展开(P4a–P4e)
+- [x] **P3e** 看板登记 + **📦 MANUAL(Pyraminx)** 交接写 §3。✅ 2026-06-11 `f9ce5ef61`(1 文件)。NATIVE/TABLES/BROWSER/概览卡照 pocket 范本;顺手把待灌注行语料文案按 event 参数化(去 pocket 硬码);typecheck EXIT=0 + 39 守卫测试绿。**EPIC 3.2(Pyraminx)代码侧全链路完成**,MANUAL 交接见 §3。
+
+#### EPIC 3.3 — Skewb(全空间 3,149,280;/trainer/skewb 已有宿主;solver 参考 cstimer `skewb.js`,`mathlib.Solver(4,2,...)` BFS)
+> 照范式。注意:Skewb 件 = 8 角(两轨道各 4)+ 6 中心,WCA 打乱记号 U/L/R/B ± '(角转);态数/件集合/固定参照自行从 cstimer 推导并独立暴力对照,别信记忆(3,149,280 待实算验证);God's number 文献 11(对公开分布逐项锁)。
+- [ ] **P4a** Rust 核心 `skewb_solver.rs`(key `skewb`,独立状态模型,全表 BFS 零盘表;评估 lean 路线供浏览器)。门:cargo test --release skewb 绿,含独立暴力对照 + 距离分布对公开数据。
+- [ ] **P4b** analyzer bin `skewb_analyzer.rs` + `tests/e2e_skewb.rs`(executor raw 通道或 Move 通道按记号定)。门:e2e 绿 + smoke 形状对。
+- [ ] **P4c** 统计管线:PUZZLES 注册表加 skewb(event_id `skewb`)+ 小样本验形。门:端到端小样本绿。
+- [ ] **P4d** WASM 类 + 重建仪式 + `/scramble/skewb`(PuzzleOptimalSolver 新 spec;打乱图用现有 `_svg/skewb_svg.ts`)。门:typecheck + node 冒烟相等 + playwright(cubing.js replay 独立验证)。
+- [ ] **P4e** 看板登记 + **📦 MANUAL(Skewb)** 交接写 §3。门:typecheck + code-tokens-drift 绿。
 #### EPIC 3.4 — SQ1 S1+S2(~3.4 亿 shape-reachable,双阶段 search + 剪枝表,非全表;solver 参考 `scramble_sq1_new.js`)— 照范式 + 双阶段,最重,最后做(P5a–P5e)
 
 ---
@@ -139,6 +146,7 @@
 - 2026-06-11 — **P3b** pyraminx analyzer + e2e,`ed5722750`。executor 新增 raw 字符串通道(小写 tip 进不了 string_to_alg);bin 3 单测含独立 IDDFS oracle + e2e baseline 锁死全绿;pocket/executor 回归绿;smoke 5 条 WCA pyram 10/11/10/11/11 全 ≤15。lib 唯一红 = 并行 chain_solver WIP,非本单元。下一个 = P3c。
 - 2026-06-11 — **P3c** pyraminx 统计管线,`68f8b24f4`。PUZZLES 加 pyram + ps1 表项与默认值修正;350 条两跑验形,dist 峰值 11。下一个 = P3d。
 - 2026-06-11 — **P3d** pyraminx WASM + /scramble/pyraminx,`15646376c`。lean 0.9MB 现场转移,首查 ~0.6s;replay 12/12;playwright en/zh 双断点全 PASS。下一个 = P3e。
+- 2026-06-11 — **P3e** pyraminx 看板登记,`f9ce5ef61`。typecheck + 39 守卫绿。**EPIC 3.2 完成**,MANUAL(Pyraminx) 交接入 §3;EPIC 3.3(Skewb)细化为 P4a–P4e。下一个 = P4a。
 
 ---
 
@@ -158,6 +166,12 @@
   3. 发布:deploy_mirror 已停 → 手动 scp 到 static.cuberoot.me 的 `/www/wwwroot/toolkit/stats/scramble/`(memory `reference_static_toolkit_deploy`);改响应 shape 须 bump `lib/puzzle-distribution.ts` 的 V。
   4. UI 待办:`/scramble/stats` 的 puzzle 分桶 tab **尚未接**——P2c 只落数据契约 `lib/puzzle-distribution.ts`(fetchPuzzleDistribution,dist 兼容 DiscreteHistogram/computeStats 直接复用)。
   5. 看板回填:实测吞吐后回 `/code/solvers` page.tsx 把 pocket 的 `rate: null` 改实测值,「待灌注」行接真实覆盖数。
+- **📦 MANUAL(Pyraminx) 交接**(2026-06-11,P3a–P3e 代码侧全绿落地,等用户在场手动):
+  1. 灌注:`update_puzzle_stats.ps1`(默认 -Puzzles 空=全部注册含 pyraminx;语料=Scrambles.tsv event `pyram`,id 差集增量,-MaxNew 可分批)。
+  2. 产出:`stats/scramble/puzzle_distribution.json` 的 `puzzles.pyraminx`(metric=htm 含 tips,预期峰值 11 全 ≤15)。
+  3. 发布:scp 到 static.cuberoot.me `/stats/scramble/`(同 pocket,一次发布两 puzzle 一起带)。
+  4. stats 页 tab:`/scramble/stats` 非 3x3 puzzle 分布 tab 与 pocket 共用待办(契约 `lib/puzzle-distribution.ts` 已就位)。
+  5. 看板 rate 回填:全量跑完实测后改 `/code/solvers` NATIVE pyraminx 的 `rate: null`。
 - **📦 MANUAL(HTR) 交接**(2026-06-11,H1–H5 代码侧已全绿落地,等用户在场手动):
   1. **先拍板口径**:WCA master 随机打乱直灌 htr_analyzer 会得全 `-`(随机打乱不在 DR 态,H2 实证)。可选:(a) 不灌全量统计,htr 只做 analyzer 在线查询(现状即此,零额外工作);(b) 输入集改"先过 DR 阶段后的态"(需定义 DR 解的选取规则,管道要串 dr→htr);(c) 只灌天然 DR 态子集(~1/19万,样本太稀,不推荐)。
   2. 若选 (b):统计管道注册(update_cross_stats.ps1 / build 流程加 `_htr` 列)→ 灌 master/xcross → `stats/scramble/distribution.json` 进 htr 分桶。
