@@ -52,7 +52,7 @@ export function HeaderDownloads({ code, formId }: { code: string; formId: string
         className="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition"
       >
         <Download size={14} />
-        下载折叠卡
+        折叠卡
         <ChevronDown size={13} className={`transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
