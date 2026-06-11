@@ -24,6 +24,7 @@ let frSolver = null;      // FrSolverWasm(HTR→FR,Floppy 还原),零表下载,3
 let chainSolver = null;   // ChainSolverWasm(mallard 链式 EO→DR→HTR→[FR]→Finish),零表下载,首查惰性建全套距离表
 let pocketSolver = null;  // PocketSolverWasm(2x2x2 口袋魔方整解最优),零表下载,3.6MB 距离表首查惰性现场 BFS
 let pyraminxSolver = null; // PyraminxSolverWasm(金字塔整解最优,含 tips),零表下载,0.9MB 核心距离表首查惰性现场 BFS
+let skewbSolver = null;   // SkewbSolverWasm(斜转整解最优),零表下载,3.0MB 全空间距离表首查惰性现场 BFS
 
 async function fetchTable(url) {
   const res = await fetch(url);
@@ -88,6 +89,9 @@ async function init(glueUrl, wasmUrl, tablesBase, need) {
   } else if (need === 'pyraminx') {
     // 金字塔整解最优(核心+tips):零表下载,0.9MB 核心全空间距离表首查惰性现场 BFS(lean,无 mt)。
     pyraminxSolver = new mod.PyraminxSolverWasm();
+  } else if (need === 'skewb') {
+    // 斜转整解最优:零表下载,3.0MB 全空间(3,149,280 态)距离表首查惰性现场 BFS(无 mt)。
+    skewbSolver = new mod.SkewbSolverWasm();
   } else {
     const [a, b, c, d, e, f] = await Promise.all(
       ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'].map(get)
@@ -269,6 +273,18 @@ self.onmessage = async (e) => {
       // 一条最优解:m = 核心大写解 + 小写 tip 收尾(无整体旋转前缀),c 恒空串。
       const json = pyraminxSolver.solve_moves(msg.scramble);
       self.postMessage({ type: 'pyraminx_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+    } else if (msg.type === 'skewb_len') {
+      if (!skewbSolver) throw new Error('skewb solver not initialized');
+      const t0 = performance.now();
+      // 斜转整解最优步数(0..=11,每 120° 一步)。全 WCA skewb 记号 U/L/R/B ± '/2。
+      const v = skewbSolver.solve(msg.scramble);
+      self.postMessage({ type: 'variant', id: msg.id, values: [v], ms: performance.now() - t0 });
+    } else if (msg.type === 'skewb_moves') {
+      if (!skewbSolver) throw new Error('skewb solver not initialized');
+      const t0 = performance.now();
+      // 一条最优解:m = 最优解序列(无整体旋转前缀),c 恒空串。
+      const json = skewbSolver.solve_moves(msg.scramble);
+      self.postMessage({ type: 'skewb_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'variant_moves') {
       if (!variantSolver) throw new Error('variant solver not initialized');
       const t0 = performance.now();

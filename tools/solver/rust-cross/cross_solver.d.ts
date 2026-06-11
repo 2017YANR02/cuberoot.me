@@ -276,6 +276,28 @@ export class Roux223SolverWasm {
 }
 
 /**
+ * Skewb(斜转)整解最优求解器(全自包含,**零表下载**):3.0MB 全空间
+ * (3,149,280 态)精确距离表首次查询时惰性现场 BFS(转移件级 decode/apply/encode,
+ * 无联合移动表,RefCell 缓存)。吃全 WCA skewb 记号(U/L/R/B,后缀 '/2/2',
+ * 阶 3 下 X2 = X');非法记号抛 JS 异常。God's number = 11。
+ */
+export class SkewbSolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    constructor();
+    /**
+     * 整解最优步数(0..=11,每 120° 一步)。非法记号 → Err(JS 异常)。
+     */
+    solve(scramble: string): number;
+    /**
+     * 一条最优解 JSON(同 PocketSolverWasm::solve_moves 形状,单条):
+     * {"len":N,"sols":[{"m":"U L' B ...","c":""}]}。`m` = 最优解序列
+     * (无整体旋转前缀),`c` 恒空串。非法记号 → Err(JS 异常)。
+     */
+    solve_moves(scramble: string): string;
+}
+
+/**
  * 其余 comp 变体的浏览器小表求解(count-only,逐格 bit-exact 对照大表/huge 路径)。
  * pair / eo / pseudo / pseudo_pair —— 各自 native analyzer 用 ~10GB+ huge 表「联合」
  * 验证多槽是否解出,wasm 装不下;这里复用各 solver 的 `*_small` cascade:显式逐槽
@@ -326,6 +348,7 @@ export interface InitOutput {
     readonly __wbg_pocketsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_pyraminxsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_roux223solverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_skewbsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_variantsolverwasm_free: (a: number, b: number) => void;
     readonly block222solverwasm_new: (a: number, b: number, c: number, d: number) => number;
     readonly block222solverwasm_solve: (a: number, b: number, c: number) => [number, number];
@@ -364,6 +387,9 @@ export interface InitOutput {
     readonly roux223solverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => number;
     readonly roux223solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly roux223solverwasm_solve_stage: (a: number, b: number, c: number, d: number) => [number, number];
+    readonly skewbsolverwasm_new: () => number;
+    readonly skewbsolverwasm_solve: (a: number, b: number, c: number) => [number, number, number];
+    readonly skewbsolverwasm_solve_moves: (a: number, b: number, c: number) => [number, number, number, number];
     readonly variantsolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number, q: number, r: number, s: number, t: number, u: number, v: number, w: number, x: number, y: number, z: number) => number;
     readonly variantsolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
     readonly variantsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];

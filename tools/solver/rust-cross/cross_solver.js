@@ -826,6 +826,73 @@ export class Roux223SolverWasm {
 if (Symbol.dispose) Roux223SolverWasm.prototype[Symbol.dispose] = Roux223SolverWasm.prototype.free;
 
 /**
+ * Skewb(斜转)整解最优求解器(全自包含,**零表下载**):3.0MB 全空间
+ * (3,149,280 态)精确距离表首次查询时惰性现场 BFS(转移件级 decode/apply/encode,
+ * 无联合移动表,RefCell 缓存)。吃全 WCA skewb 记号(U/L/R/B,后缀 '/2/2',
+ * 阶 3 下 X2 = X');非法记号抛 JS 异常。God's number = 11。
+ */
+export class SkewbSolverWasm {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        SkewbSolverWasmFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_skewbsolverwasm_free(ptr, 0);
+    }
+    constructor() {
+        const ret = wasm.skewbsolverwasm_new();
+        this.__wbg_ptr = ret;
+        SkewbSolverWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * 整解最优步数(0..=11,每 120° 一步)。非法记号 → Err(JS 异常)。
+     * @param {string} scramble
+     * @returns {number}
+     */
+    solve(scramble) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.skewbsolverwasm_solve(this.__wbg_ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return ret[0] >>> 0;
+    }
+    /**
+     * 一条最优解 JSON(同 PocketSolverWasm::solve_moves 形状,单条):
+     * {"len":N,"sols":[{"m":"U L' B ...","c":""}]}。`m` = 最优解序列
+     * (无整体旋转前缀),`c` 恒空串。非法记号 → Err(JS 异常)。
+     * @param {string} scramble
+     * @returns {string}
+     */
+    solve_moves(scramble) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.skewbsolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0);
+            var ptr2 = ret[0];
+            var len2 = ret[1];
+            if (ret[3]) {
+                ptr2 = 0; len2 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred3_0 = ptr2;
+            deferred3_1 = len2;
+            return getStringFromWasm0(ptr2, len2);
+        } finally {
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
+    }
+}
+if (Symbol.dispose) SkewbSolverWasm.prototype[Symbol.dispose] = SkewbSolverWasm.prototype.free;
+
+/**
  * 其余 comp 变体的浏览器小表求解(count-only,逐格 bit-exact 对照大表/huge 路径)。
  * pair / eo / pseudo / pseudo_pair —— 各自 native analyzer 用 ~10GB+ huge 表「联合」
  * 验证多槽是否解出,wasm 装不下;这里复用各 solver 的 `*_small` cascade:显式逐槽
@@ -1013,6 +1080,9 @@ const PyraminxSolverWasmFinalization = (typeof FinalizationRegistry === 'undefin
 const Roux223SolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_roux223solverwasm_free(ptr, 1));
+const SkewbSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_skewbsolverwasm_free(ptr, 1));
 const VariantSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_variantsolverwasm_free(ptr, 1));
