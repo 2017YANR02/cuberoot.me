@@ -99,10 +99,13 @@ export async function GET(
     idx,
   });
 
+  // dl=1 走 attachment 强制下载(前端「保存后自动下载」用,导航即下文件不离开页面)
+  const download = url.searchParams.get("dl") === "1";
+  const fileName = `card-${code}${cropMarks ? "" : "-nocrop"}.svg`;
   return new Response(svg, {
     headers: {
       "Content-Type": "image/svg+xml; charset=utf-8",
-      "Content-Disposition": `inline; filename="card-${code}.svg"`,
+      "Content-Disposition": `${download ? "attachment" : "inline"}; filename="${fileName}"`,
       "Cache-Control": "no-store",
     },
   });
