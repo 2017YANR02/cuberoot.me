@@ -13,12 +13,13 @@ import { Flag } from '@/components/Flag';
 import { toIsoDate, formatDateRangeIso } from '@/lib/wca-date';
 import { countryName } from '@/lib/country-name';
 import { useRecentRecords, RecentRecordsList } from '@/components/RecentRecords';
+import { useAnnouncedComps, AnnouncedCard } from '@/components/AnnouncedComps';
 import './ongoing_comps.css';
 import i18n from '@/i18n/i18n-client';
 
 interface Props { lang: 'zh' | 'en' }
 
-type TabKey = 'upcoming' | 'inProgress' | 'past' | 'records';
+type TabKey = 'announced' | 'upcoming' | 'inProgress' | 'past' | 'records';
 
 type Group =
   | { kind: 'country'; iso2: string; comps: Comp[] }
@@ -91,6 +92,8 @@ export default function OngoingComps({ lang }: Props) {
   const [comps, setComps] = useState<Comp[] | null>(null);
   const [tab, setTab] = useState<TabKey | null>(null);
   const { filled: records } = useRecentRecords(isZh);
+  const announced = useAnnouncedComps();
+  const announcedList = announced ?? [];
 
   useEffect(() => {
     let mounted = true;
@@ -150,15 +153,21 @@ export default function OngoingComps({ lang }: Props) {
     else if (buckets.upcoming.length > 0) setTab('upcoming');
     else if (buckets.past.length > 0) setTab('past');
     else if (records.length > 0) setTab('records');
-  }, [tab, buckets, records]);
+    else if (announcedList.length > 0) setTab('announced');
+  }, [tab, buckets, records, announcedList.length]);
 
   const active: TabKey =
     tab ??
     (buckets.inProgress.length > 0 ? 'inProgress'
       : buckets.upcoming.length > 0 ? 'upcoming'
       : buckets.past.length > 0 ? 'past'
-      : 'records');
-  const activeComps = active === 'records' ? [] : (buckets[active] ?? []);
+      : records.length > 0 ? 'records'
+      : 'announced');
+  const activeComps: Comp[] =
+    active === 'inProgress' ? buckets.inProgress
+      : active === 'upcoming' ? buckets.upcoming
+      : active === 'past' ? buckets.past
+      : [];
 
   const groups = useMemo<Group[]>(() => {
     if (active === 'inProgress') return groupByCountry(activeComps);
@@ -168,12 +177,15 @@ export default function OngoingComps({ lang }: Props) {
   }, [activeComps, active]);
 
   const total = buckets.upcoming.length + buckets.inProgress.length + buckets.past.length;
-  if (total === 0 && records.length === 0) return null;
+  if (total === 0 && records.length === 0 && announcedList.length === 0) return null;
 
   // 只显示有数据的 tab(某分类为空 → 直接隐藏该 tab,不留灰态)
   const allTabs: { key: TabKey; zh: string; en: string; count: number
       zhHant?: string;
  }[] = [
+    { key: 'announced',  zh: '公示', en: 'Announced', count: announcedList.length,
+        zhHant: "公示"
+    },
     { key: 'records',    zh: '纪录', en: 'Records',  count: records.length,
         zhHant: "紀錄"
     },
@@ -207,7 +219,13 @@ export default function OngoingComps({ lang }: Props) {
         })}
       </div>
       <div className="ongoing-comps-groups">
-        {active === 'records' ? (
+        {active === 'announced' ? (
+          <div className="tac-grid">
+            {announcedList.map((c) => (
+              <AnnouncedCard key={c.id} comp={c} isZh={isZh} lang={lang} />
+            ))}
+          </div>
+        ) : active === 'records' ? (
           <RecentRecordsList filled={records} isZh={isZh} />
         ) : groups.map(g => g.kind === 'country' ? (
           <div key={`c-${g.iso2}`} className="ongoing-comps-group">
