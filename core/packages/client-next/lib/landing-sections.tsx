@@ -220,4 +220,7 @@ export const SEARCH_CARDS: LandingSearchCard[] = [
         sectionTitleZh: sec.eyebrow.zh,
       })),
   ),
+  // /code 子页,不在落地页网格上,单列于此让全站搜索仍能找到
+  { id: 'code-llm', href: '/code/llm', internal: true, nameEn: 'Large Language Models', nameZh: '大模型', sectionTitleEn: 'Code', sectionTitleZh: '代码', nameZhHant: '大模型', sectionTitleZhHant: '程式碼' },
+  { id: 'fable', href: '/code/llm/fable', internal: true, nameEn: 'Claude Fable 5', nameZh: 'Claude Fable 5', sectionTitleEn: 'Code', sectionTitleZh: '代码', nameZhHant: 'Claude Fable 5', sectionTitleZhHant: '程式碼' },
 ];

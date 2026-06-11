@@ -261,6 +261,56 @@ a {
   box-shadow: 0 2px 8px color-mix(in srgb, var(--foreground) 20%, transparent);
 }
 
+/* LangToggle dropdown menu — default style (downward, right-aligned popover).
+   Without this the menu is unstyled and its items flow inline. Hosts that need
+   another anchor (e.g. the comp round-modal footer opens upward) override it
+   with a more specific selector. */
+.lang-toggle-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.lang-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  min-width: 132px;
+  padding: 4px;
+  background: var(--popover);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--foreground) 18%, transparent);
+}
+.lang-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.85rem;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+.lang-menu-item:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+.lang-menu-item.is-active {
+  color: var(--accent);
+}
+.lang-menu-check {
+  display: inline-flex;
+  width: 13px;
+  flex-shrink: 0;
+}
+
 .theme-toggle-inline {
   padding: 0;
   border: none;

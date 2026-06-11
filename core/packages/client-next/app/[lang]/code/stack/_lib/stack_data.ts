@@ -6,8 +6,6 @@ import type { StackTool } from './stack_tool_types';
 const LOADERS: Record<string, () => Promise<{ default: StackTool }>> = {
   'bun': () => import('../_tools/bun'),
   'capacitor': () => import('../_tools/capacitor'),
-  'claude': () => import('../_tools/claude'),
-  'claude-code': () => import('../_tools/claude-code'),
   'cloudflare-dns': () => import('../_tools/cloudflare-dns'),
   'cubing-js': () => import('../_tools/cubing-js'),
   'curl': () => import('../_tools/curl'),
