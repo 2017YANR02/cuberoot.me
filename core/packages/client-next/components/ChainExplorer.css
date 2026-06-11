@@ -288,6 +288,10 @@
 @media (max-width: 720px) {
   .chx-result {
     flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .chx-chains {
+    max-width: 100%;
   }
   .chx-player {
     position: static;
