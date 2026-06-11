@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Download } from "lucide-react";
+import { Download, Copy, Check } from "lucide-react";
 import type { CardEl, CardLayout, QrCode, QrType } from "@/lib/db/qr";
 import { QrCardUnit, FRONT_ARTS } from "@/components/QrCard";
 import { FileUpload } from "@/components/FileUpload";
 import { algToText, parseAlg } from "@/lib/qr/cardText";
+import { assemblePrompt } from "@/lib/qr/prompt";
+
+// 后台传入的提示词模板(只取编辑器要用的字段)
+export type PromptTpl = { id: number; name: string; category: string | null; body: string };
 
 // 所见即所得卡片编辑器(简易 PS):卡上所有元素([data-el])可直接拖动移位,
 // 带磁吸对齐(面板中线 / 默认位 / 其他元素中心,洋红参考线提示,Alt 暂时关闭,可整体开关)。
@@ -49,11 +53,13 @@ export function CardEditor({
   svg,
   formId,
   landingUrl,
+  templates,
 }: {
   entry: QrCode;
   svg: string;
   formId: string;
   landingUrl: string;
+  templates: PromptTpl[];
 }) {
   const [s, setS] = useState({
     type: entry.type as QrType,
@@ -63,6 +69,7 @@ export function CardEditor({
     intro: entry.intro ?? "",
     quote: entry.quote ?? "",
     art: entry.frontArt ?? "",
+    artPrompt: entry.frontArtPrompt ?? "",
     algRaw: algToText(entry.alg),
     layout: (entry.layout ?? {}) as CardLayout,
   });
@@ -279,6 +286,31 @@ export function CardEditor({
   // 把当前正面图(全分辨率)转 PNG 下载:canvas 画原图再导出,像素与原图一致、无损。
   // 同源(/card、/uploads)不会污染 canvas;外链转换失败则退回直接打开原图。
   const [pngBusy, setPngBusy] = useState(false);
+  // 提示词工坊:复制按钮的「已复制」反馈
+  const [copied, setCopied] = useState(false);
+  const copyPrompt = async () => {
+    const text = s.artPrompt.trim();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // 无 clipboard 权限时退回选区复制
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+      } catch {
+        /* 实在不行就算了,用户可手动选中文本框复制 */
+      }
+      ta.remove();
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  };
   const downloadArtPng = async () => {
     if (pngBusy) return;
     const src = s.art || FRONT_ARTS[0].src;
@@ -339,6 +371,7 @@ export function CardEditor({
       <input type="hidden" name="intro" value={s.intro} form={formId} readOnly />
       <input type="hidden" name="quote" value={s.quote} form={formId} readOnly />
       <input type="hidden" name="frontArt" value={s.art} form={formId} readOnly />
+      <input type="hidden" name="frontArtPrompt" value={s.artPrompt} form={formId} readOnly />
       <input type="hidden" name="alg" value={s.algRaw} form={formId} readOnly />
       <input
         type="hidden"
@@ -568,6 +601,91 @@ export function CardEditor({
             <span className="text-[12px] text-ink-3">
               直接拖卡面上的图挪构图,鼠标悬在图上滚滚轮也能缩放;铺满模式只能放大(裁掉更多边缘),要看更全整张图就勾上面的「完整显示」。预览即裁切后成品,出血里多印的部分会被裁掉。
             </span>
+
+            {/* 提示词工坊:选模板或自己写 → 复制 → 拿去外部图像 AI 生图 → 下载 → 用上方「上传自己的正面图」传回来 */}
+            <div className="mt-1 grid gap-2.5 border-t border-line pt-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-medium text-ink-2">用 AI 生成新背景图</span>
+                <a
+                  href="/admin/qr/prompts"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[12px] text-brand hover:underline"
+                >
+                  管理模板
+                </a>
+              </div>
+              <span className="text-[12px] leading-relaxed text-ink-3">
+                选个风格模板(或在下框自己改提示词)→ 复制 → 拿去即梦 / Midjourney / SD 生图 → 下载无水印竖版高清图 → 用上面的「上传自己的正面图」传回来。语录和品牌名不用让 AI 写,系统自动叠。
+              </span>
+              {templates.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {templates.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => set("artPrompt")(assemblePrompt(t.body))}
+                      title={t.body}
+                      className="rounded-full border border-line bg-white px-2.5 py-1 text-[12px] text-ink-2 transition hover:border-brand/50 hover:text-brand"
+                    >
+                      {t.name}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-[12px] text-ink-3">
+                  还没有模板,去
+                  <a
+                    href="/admin/qr/prompts"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-brand hover:underline"
+                  >
+                    提示词模板
+                  </a>
+                  页新增。
+                </span>
+              )}
+              <textarea
+                value={s.artPrompt}
+                onChange={(e) => set("artPrompt")(e.target.value)}
+                placeholder="点上面的风格模板自动填入,或在这里自己写 / 修改提示词…"
+                className={INPUT_CLS + " min-h-[120px] leading-relaxed"}
+              />
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <button
+                  type="button"
+                  onClick={copyPrompt}
+                  disabled={!s.artPrompt.trim()}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-[13px] font-medium text-white transition hover:bg-brand-dark disabled:opacity-50"
+                >
+                  {copied ? (
+                    <>
+                      <Check size={14} /> 已复制
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={14} /> 复制提示词
+                    </>
+                  )}
+                </button>
+                {s.artPrompt.trim() ? (
+                  <button
+                    type="button"
+                    onClick={() => set("artPrompt")("")}
+                    className="text-[12px] text-ink-3 hover:text-brand"
+                  >
+                    清空
+                  </button>
+                ) : null}
+                <span className="text-[12px] text-ink-3">
+                  复制内容已含通用头(WCA 配色 + 1:2 + 无文字)。
+                </span>
+              </div>
+              <span className="text-[12px] text-ink-3">
+                这段提示词会随「保存」记到本码,下次打开能看到这张图当时怎么生成的,方便复刻 / 微调同款。
+              </span>
+            </div>
             </>
           ) : null}
 

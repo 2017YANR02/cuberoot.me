@@ -34,6 +34,7 @@ export default async function AdminQrPage({
             {rows.length > 0 ? (
               <PrimaryLink href="/admin/qr/cards">卡片打印(全部)</PrimaryLink>
             ) : null}
+            <GhostLink href="/admin/qr/prompts">提示词模板</GhostLink>
             <GhostLink href="/admin/qr/stats">数据看板</GhostLink>
           </>
         }
