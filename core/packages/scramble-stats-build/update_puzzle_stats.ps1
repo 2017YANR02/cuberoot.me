@@ -14,7 +14,7 @@
 #       任一步失败即停。
 [CmdletBinding()]
 param(
-  [string[]]$Puzzles = @('pocket'),
+  [string[]]$Puzzles = @(),   # 空 = 全部已注册 puzzle
   [int]$MaxNew = 0,        # >0: 本次最多新增 N 条语料(小样本验形/限量增量); 0=取满
   [int]$ChunkSize = 200000,# analyzer 分块大小(pocket 全表直查 ~百万/s, 一块秒级)
   [switch]$BuildOnly       # 跳过取数/解算, 直接用现有 CSV 重算 JSON
@@ -38,8 +38,11 @@ $PkgDir      = $PSScriptRoot
 # puzzle 注册表: key -> WCA event_id + analyzer exe (suffix 恒 _<key>)。
 # 新 puzzle = 此处加一行 + build_puzzle_dist.ts 的 PUZZLES 加一行。
 $PUZZLE = @{
-  pocket = @{ event = '222'; exe = 'pocket_analyzer.exe' }
+  pocket   = @{ event = '222';   exe = 'pocket_analyzer.exe' }
+  pyraminx = @{ event = 'pyram'; exe = 'pyraminx_analyzer.exe' }
 }
+
+if (-not $Puzzles -or $Puzzles.Count -eq 0) { $Puzzles = @($PUZZLE.Keys | Sort-Object) }
 
 function Step($m){ Write-Host "`n=== $m ===" -ForegroundColor Cyan }
 
