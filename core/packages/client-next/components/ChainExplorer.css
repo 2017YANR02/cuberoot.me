@@ -1,0 +1,310 @@
+/* ChainExplorer — mallard 式 FMC 分步还原链(analyzer 底部)。
+   颜色全走全站 token(自动 light/dark),无卡片外框,层级靠 margin/gap。 */
+
+.chx {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 逐阶段配置行 ── */
+.chx-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 12px;
+}
+.chx-stage {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+.chx-stage.is-off > :not(.chx-stage-name):not(.chx-fr-hint) {
+  opacity: 0.45;
+}
+.chx-stage-name {
+  min-width: 9.5em;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.chx-fr-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+.chx-fr-hint {
+  font-size: 12px;
+  color: var(--faint-foreground);
+}
+.chx-axes {
+  display: inline-flex;
+  gap: 10px;
+}
+.chx-axis {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  user-select: none;
+}
+.chx-axes-note {
+  font-size: 12px;
+  color: var(--faint-foreground);
+}
+.chx-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.chx-field select,
+.chx-field input {
+  font: inherit;
+  padding: 2px 6px;
+  background: var(--card);
+  color: var(--foreground);
+  border: 1px solid var(--input);
+  border-radius: 5px;
+}
+.chx-field select:focus,
+.chx-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.chx-num {
+  width: 4.2em;
+}
+
+/* ── 排除列表(阶段行下的可移除行) ── */
+.chx-excl {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding-left: 1em;
+}
+.chx-excl-label {
+  font-size: 11px;
+  color: var(--faint-foreground);
+}
+.chx-excl-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--accent-soft);
+  border-radius: 4px;
+  padding: 1px 4px 1px 6px;
+}
+.chx-excl-row code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+.chx-excl-x {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 1px;
+  cursor: pointer;
+  color: var(--muted-foreground);
+}
+.chx-excl-x:hover {
+  color: var(--accent);
+}
+
+/* ── 计算行 ── */
+.chx-run {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-bottom: 10px;
+}
+.chx-compute {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border: none;
+}
+.chx-compute:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.chx-status {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.chx-spin {
+  animation: chx-spin 1s linear infinite;
+}
+@keyframes chx-spin {
+  to { transform: rotate(360deg); }
+}
+.chx-err {
+  font-size: 13px;
+  color: var(--destructive);
+  margin-bottom: 8px;
+}
+.chx-empty {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  padding: 4px 0;
+}
+
+/* ── 结果:链列表 + 单个共享播放器(播放器在左,列表在右,同 StageSolver) ── */
+.chx-result {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 18px;
+  align-items: flex-start;
+  margin-top: 4px;
+}
+.chx-chains {
+  flex: 1;
+  min-width: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.chx-chain-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.chx-chain-head:hover {
+  background: var(--accent-soft);
+}
+.chx-chain.is-active .chx-chain-head {
+  background: var(--accent-soft);
+}
+.chx-chain-play {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--muted-foreground);
+}
+.chx-chain-play:hover,
+.chx-chain.is-active .chx-chain-play {
+  color: var(--accent);
+}
+.chx-chain-n {
+  font-size: 12px;
+  color: var(--faint-foreground);
+}
+.chx-chain-total {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+/* mallard solution-panel 风:每链一个 mono 块,逐步一行 */
+.chx-steps {
+  margin: 2px 0 0 1.6em;
+  overflow-x: auto;
+}
+.chx-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.chx-step:hover {
+  background: var(--accent-soft);
+}
+.chx-step.is-active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.chx-step code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+.chx-step-meta {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.chx-step-ban {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--faint-foreground);
+}
+.chx-step-ban:hover {
+  color: var(--accent);
+}
+.chx-step-empty {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+  color: var(--muted-foreground);
+  padding: 1px 6px;
+}
+
+/* 共享播放器:左侧固定,跟随页面滚动黏顶(同 StageSolver) */
+.chx-player {
+  flex: 0 0 300px;
+  position: sticky;
+  top: 12px;
+}
+.chx-player twisty-player {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* ── 窄屏 ── */
+@media (max-width: 720px) {
+  .chx-result {
+    flex-direction: column-reverse;
+  }
+  .chx-player {
+    position: static;
+    flex-basis: auto;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+}
+@media (max-width: 480px) {
+  .chx-stage {
+    gap: 4px 10px;
+  }
+  .chx-stage-name {
+    min-width: 100%;
+  }
+  .chx-steps {
+    margin-left: 0.4em;
+  }
+}
