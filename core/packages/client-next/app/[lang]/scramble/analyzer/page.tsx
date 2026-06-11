@@ -30,6 +30,7 @@ import {
 } from './analyze_worker_client';
 import TwistySection from '@/components/TwistySection';
 import StageSolver from '@/components/StageSolver';
+import ChainExplorer from '@/components/ChainExplorer';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { Flag } from '@/components/Flag';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
@@ -257,6 +258,7 @@ function AnalyzePageInner() {
   const [xcrossFallback, setXcrossFallback] = useState<boolean>(false);
   const [variantUnsupported, setVariantUnsupported] = useState<boolean>(false);
   const [cfopOpen, setCfopOpen] = useState(false); // 「CFOP 解法枚举」折叠区;分析时自动展开
+  const [chainOpen, setChainOpen] = useState(false); // 「FMC 分步还原链」折叠区(链式求解最重,默认收起)
   const analyzerRef = useRef<Analyzer>(new Analyzer());
   const startTimeRef = useRef<number>(0);
 
@@ -758,6 +760,17 @@ function AnalyzePageInner() {
         </div>
       )}
 
+      </details>
+
+      <details
+        className="analyze-chain"
+        open={chainOpen}
+        onToggle={(e) => setChainOpen((e.currentTarget as HTMLDetailsElement).open)}
+      >
+        <summary>
+          {t('FMC 分步还原链', 'FMC Step Chain')}
+        </summary>
+        <ChainExplorer scramble={scramble} lang={lang} />
       </details>
     </div>
   );

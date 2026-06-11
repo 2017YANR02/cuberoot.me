@@ -620,3 +620,32 @@ html[data-theme=dark] .analyze-page {
 .analyze-cfop > summary:hover {
   color: var(--az-accent);
 }
+
+/* ── TERTIARY: FMC 分步还原链(mallard 式链式求解,默认折叠;与 .analyze-cfop 同款) ── */
+.analyze-chain {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--az-border);
+  padding-top: 1rem;
+}
+
+.analyze-chain > summary {
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--az-text-sub);
+  padding: 0.25rem 0;
+  list-style: none;
+  user-select: none;
+}
+
+.analyze-chain > summary::-webkit-details-marker {
+  display: none;
+}
+
+.analyze-chain[open] > summary {
+  margin-bottom: 0.85rem;
+}
+
+.analyze-chain > summary:hover {
+  color: var(--az-accent);
+}
