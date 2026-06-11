@@ -32,6 +32,7 @@ interface PuzzleSpec {
 const PUZZLES: PuzzleSpec[] = [
   { key: 'pocket', event: '222', label: '2x2x2', label_zh: '二阶', metric: 'htm' },
   { key: 'pyraminx', event: 'pyram', label: 'Pyraminx', label_zh: '金字塔', metric: 'htm' }, // 总 HTM 含 tips
+  { key: 'skewb', event: 'skewb', label: 'Skewb', label_zh: '斜转', metric: 'htm' },
 ];
 
 interface Hist { min: number; max: number; counts: Map<number, number> }
