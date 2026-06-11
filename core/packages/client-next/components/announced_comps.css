@@ -1,0 +1,80 @@
+/* AnnouncedComps —「公示」tab 内容:最近 48h 公示的 WCA 比赛卡片(渲染在 OngoingComps
+   的滚动面板里,无独立 header/expander)。双主题走 :root token。 */
+
+/* 卡片自适应平铺:窄屏单列,宽屏多列(随 OngoingComps 面板宽度) */
+.tac-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0.6rem;
+}
+
+.tac-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  text-decoration: none;
+  color: var(--foreground);
+  transition: border-color 0.15s, transform 0.15s;
+}
+.tac-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.tac-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.tac-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  color: var(--foreground);
+  min-width: 0;
+}
+
+.tac-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.7rem;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+  text-transform: none;
+  letter-spacing: normal;
+}
+.tac-date { font-variant-numeric: tabular-nums; }
+.tac-limit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-variant-numeric: tabular-nums;
+}
+.tac-limit svg { opacity: 0.8; flex: none; }
+
+.tac-reg {
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+
+.tac-events {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  margin-top: 0.1rem;
+  color: var(--muted-foreground);
+}
+.tac-event {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+@media (max-width: 560px) {
+  .tac-grid { grid-template-columns: 1fr; }
+}
