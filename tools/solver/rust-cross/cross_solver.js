@@ -376,6 +376,69 @@ export class F2leoSolverWasm {
 if (Symbol.dispose) F2leoSolverWasm.prototype[Symbol.dispose] = F2leoSolverWasm.prototype.free;
 
 /**
+ * HTR(Thistlethwaite DR→HTR)求解器(全自包含,**零表下载**):角置换/轨道移动表与
+ * 全空间 2,822,400 态精确距离表(~2.8MB)全部现场从内置运动学构建,首次查询时惰性 BFS
+ * (RefCell,~秒级);查长度 O(1),枚举首达即最优。条件式阶段:该视角(UD 轴)必须已
+ * 处于 DR,非 DR 视角返回 u32::MAX 哨兵。HTR 仅依赖轴:对面底色同值,且对 y 不变。
+ */
+export class HtrSolverWasm {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        HtrSolverWasmFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_htrsolverwasm_free(ptr, 0);
+    }
+    constructor() {
+        const ret = wasm.htrsolverwasm_new();
+        this.__wbg_ptr = ret;
+        HtrSolverWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * 6 视角最优步数(顺序对应 ROTS);该视角非 DR = u32::MAX 哨兵。
+     * @param {string} scramble
+     * @returns {Uint32Array}
+     */
+    solve(scramble) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.htrsolverwasm_solve(this.__wbg_ptr, ptr0, len0);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。HTR 对 y 不变
+     * (解全在 yk=0),`m` 前缀 = rot,`c` = 轴标签(同 DR,如 "UD");
+     * 该视角非 DR = {"len":4294967295,"sols":[]}。
+     * @param {string} scramble
+     * @param {number} face
+     * @param {number} extra
+     * @param {number} cap
+     * @returns {string}
+     */
+    solve_moves(scramble, face, extra, cap) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.htrsolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, face, extra, cap);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+}
+if (Symbol.dispose) HtrSolverWasm.prototype[Symbol.dispose] = HtrSolverWasm.prototype.free;
+
+/**
  * Roux 第一块(方块 / 1x2x3 / 双 1x2x3)+ Petrus(2x2x2 / 2x2x3)组合求解器。4 张小表:
  * mt_edge3 (~743KB) + mt_corn2 (~36KB) + mt_edge2 (~38KB) + mt_corn (~1.7KB)。
  * FB 方块与 2x2x2 全表构造时即建(微型/毫秒级);1x2x3 全表(5,322,240 态)与
@@ -619,6 +682,9 @@ const EoDrSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
 const F2leoSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_f2leosolverwasm_free(ptr, 1));
+const HtrSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_htrsolverwasm_free(ptr, 1));
 const Roux223SolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_roux223solverwasm_free(ptr, 1));
