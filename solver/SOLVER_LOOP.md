@@ -107,7 +107,7 @@
 
 #### EPIC 3.3 — Skewb(全空间 3,149,280;/trainer/skewb 已有宿主;solver 参考 cstimer `skewb.js`,`mathlib.Solver(4,2,...)` BFS)
 > 照范式。注意:Skewb 件 = 8 角(两轨道各 4)+ 6 中心,WCA 打乱记号 U/L/R/B ± '(角转);态数/件集合/固定参照自行从 cstimer 推导并独立暴力对照,别信记忆(3,149,280 待实算验证);God's number 文献 11(对公开分布逐项锁)。
-- [ ] **P4a** Rust 核心 `skewb_solver.rs`(key `skewb`,独立状态模型,全表 BFS 零盘表;评估 lean 路线供浏览器)。门:cargo test --release skewb 绿,含独立暴力对照 + 距离分布对公开数据。
+- [x] **P4a** Rust 核心 `skewb_solver.rs`(key `skewb`)。✅ 2026-06-11 `507a73ca4`。推导修正调研预期:WCA 4 轴 = cubing.js 角 6/4/5/7,{4,5,6} A3 轨道 + {0,1,2,7} A4 轨道,**角 3 完全不动不扭 = 天然全局参照**(无需消朝向);move 数组取自 cubing.js kpuzzle 现场 dump 与 cstimer 4320×2187/3 交叉核对。态数 360×12×3×3^5=3,149,280 闭包实算相符、编码恰双射;God 数 11,分布对 jaapsch 逐项锁。实现即 lean:3.0MB u8 距离表现场 BFS ~1.2s,转移件级现算(full 联合移动表理论 100.8MB 不建,P4d 直接用 lean);4/4 测试绿 + 全量 lib 126/0 + cubing.js 手性 replay 8/8(P4d 消险)。
 - [ ] **P4b** analyzer bin `skewb_analyzer.rs` + `tests/e2e_skewb.rs`(executor raw 通道或 Move 通道按记号定)。门:e2e 绿 + smoke 形状对。
 - [ ] **P4c** 统计管线:PUZZLES 注册表加 skewb(event_id `skewb`)+ 小样本验形。门:端到端小样本绿。
 - [ ] **P4d** WASM 类 + 重建仪式 + `/scramble/skewb`(PuzzleOptimalSolver 新 spec;打乱图用现有 `_svg/skewb_svg.ts`)。门:typecheck + node 冒烟相等 + playwright(cubing.js replay 独立验证)。
@@ -147,6 +147,7 @@
 - 2026-06-11 — **P3c** pyraminx 统计管线,`68f8b24f4`。PUZZLES 加 pyram + ps1 表项与默认值修正;350 条两跑验形,dist 峰值 11。下一个 = P3d。
 - 2026-06-11 — **P3d** pyraminx WASM + /scramble/pyraminx,`15646376c`。lean 0.9MB 现场转移,首查 ~0.6s;replay 12/12;playwright en/zh 双断点全 PASS。下一个 = P3e。
 - 2026-06-11 — **P3e** pyraminx 看板登记,`f9ce5ef61`。typecheck + 39 守卫绿。**EPIC 3.2 完成**,MANUAL(Pyraminx) 交接入 §3;EPIC 3.3(Skewb)细化为 P4a–P4e。下一个 = P4a。
+- 2026-06-11 — **P4a** skewb Rust 核心,`507a73ca4`。角 3 天然全局参照(修正调研);3,149,280 闭包验证;God 数 11 对 jaapsch 逐项锁;lean 3.0MB 即主实现;4/4 + lib 126/0 + 手性 8/8。下一个 = P4b。
 
 ---
 
