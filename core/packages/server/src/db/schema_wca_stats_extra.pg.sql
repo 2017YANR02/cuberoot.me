@@ -4,7 +4,7 @@
 --
 -- 6 个表:
 --   wca_grand_slam        : 大满贯(WC + Continental + National 领奖台 + WR)
---   wca_results_top       : 全部成绩排行(top 5000 ww + top 500/country, per event×type)
+--   wca_results_flat       : 全部成绩排行(top 5000 ww + top 500/country, per event×type)
 --   wca_cohort_ranks      : 参赛届别排行(每届首参赛年的人累积最佳)
 --   wca_success_rate      : 项目成功率(每人 solved/attempted)
 --   wca_all_events_done   : 全项目达成(每人完成 17 项的耗时)
@@ -43,14 +43,15 @@ CREATE TABLE IF NOT EXISTS wca_grand_slam (
 );
 CREATE INDEX IF NOT EXISTS gs_event ON wca_grand_slam (event_id);
 
--- ── wca_results_top: 全部成绩排行 (~11M 行,无 cap) ──
--- `_top` 是历史名:最初是 top 5000 ww + top 500/country,后扩成全量,名字保留避免 rename.
+-- ── wca_results_flat: 全部成绩排行 (~11M 行,无 cap) ──
+-- 原名 wca_results_top(最初 top 5000 ww + top 500/country,故叫 top),后去 cap 扩成全量,
+-- 名实不符 → 2026-06-10 改名 wca_results_flat(展平 single+average),见 migrations/0042;索引 wrt_→wrf_.
 -- 一行 = 一次 valid (best 或 average) 成绩.同人同 comp 多 round 可能重复.
 -- 客户端按 (event, is_avg) 过滤后 ORDER BY value 翻页,可叠加 country / year / month / 选手 / 比赛搜索.
 --
 -- 重要:此文件只是 schema 参考,apply.sh 不调它.每周 CI 实际是 load.sql 里 DROP+CREATE+COPY,
 -- 所以 schema 改动要同步到 wca_stats_extra_build.ts 里 loadSql 模板.
-CREATE TABLE IF NOT EXISTS wca_results_top (
+CREATE TABLE IF NOT EXISTS wca_results_flat (
   event_id           VARCHAR(20) NOT NULL,
   is_avg             BOOLEAN NOT NULL,
   value              INTEGER NOT NULL,
@@ -65,20 +66,20 @@ CREATE TABLE IF NOT EXISTS wca_results_top (
   record_tag         VARCHAR(3) NOT NULL DEFAULT ''   -- single(is_avg=false 时) 或 average(is_avg=true 时) 的 regional_*_record (AsR/NAR/SAR/OcR/AfR 3 字符)
 );
 -- 主索引: ORDER BY value LIMIT/OFFSET — 全量翻页主路径
-CREATE INDEX IF NOT EXISTS wrt_main ON wca_results_top (event_id, is_avg, value, wca_id);
+CREATE INDEX IF NOT EXISTS wrf_main ON wca_results_flat (event_id, is_avg, value, wca_id);
 -- 国家过滤路径(走索引按 value 排序)
-CREATE INDEX IF NOT EXISTS wrt_country ON wca_results_top (event_id, is_avg, person_country_id, value);
+CREATE INDEX IF NOT EXISTS wrf_country ON wca_results_flat (event_id, is_avg, person_country_id, value);
 -- 选手 / 比赛搜索路径(IN list);q 命中条数少,走该索引比 main + filter 快
-CREATE INDEX IF NOT EXISTS wrt_wca_id ON wca_results_top (event_id, is_avg, wca_id, value);
-CREATE INDEX IF NOT EXISTS wrt_comp_id ON wca_results_top (event_id, is_avg, comp_id, value);
+CREATE INDEX IF NOT EXISTS wrf_wca_id ON wca_results_flat (event_id, is_avg, wca_id, value);
+CREATE INDEX IF NOT EXISTS wrf_comp_id ON wca_results_flat (event_id, is_avg, comp_id, value);
 -- /comp 页面 fast-path: 单 comp 拉全部成绩,无 event 过滤
-CREATE INDEX IF NOT EXISTS wrt_comp_lookup ON wca_results_top (comp_id);
+CREATE INDEX IF NOT EXISTS wrf_comp_lookup ON wca_results_flat (comp_id);
 -- /comp/<id> 赛前 PR 查询专用,见 migrations/0007_wrt_prior_pr_index.sql
-CREATE INDEX IF NOT EXISTS wrt_prior_pr ON wca_results_top (wca_id, event_id, is_avg, comp_date) INCLUDE (value);
--- 排名页"当期·年" + "截至·年(comp_year<=)":走 wrt_year(comp_year 是 stored 生成列)
-CREATE INDEX IF NOT EXISTS wrt_year ON wca_results_top (event_id, is_avg, comp_year, value, wca_id) INCLUDE (id);
+CREATE INDEX IF NOT EXISTS wrf_prior_pr ON wca_results_flat (wca_id, event_id, is_avg, comp_date) INCLUDE (value);
+-- 排名页"当期·年" + "截至·年(comp_year<=)":走 wrf_year(comp_year 是 stored 生成列)
+CREATE INDEX IF NOT EXISTS wrf_year ON wca_results_flat (event_id, is_avg, comp_year, value, wca_id) INCLUDE (id);
 -- 排名页"当期·月"(选手模式 DISTINCT ON 切片):月份用表达式进索引,免整表改写;替代旧 wrt_country_year
-CREATE INDEX IF NOT EXISTS wrt_month ON wca_results_top (event_id, is_avg, comp_year, ((EXTRACT(MONTH FROM comp_date))::int), value, wca_id);
+CREATE INDEX IF NOT EXISTS wrf_month ON wca_results_flat (event_id, is_avg, comp_year, ((EXTRACT(MONTH FROM comp_date))::int), value, wca_id);
 -- 注:实际 DDL 以 wca_stats_extra_build.ts 的 loadSql 为准(此文件仅参考,apply.sh 不调)
 
 -- ── wca_cohort_ranks: 参赛届别排行 (~10M 行) ──

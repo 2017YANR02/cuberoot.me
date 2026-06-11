@@ -75,6 +75,6 @@ MONITOR_NR_COUNTRIES=CN,US,AU,CA,PL,KR,RU
 ## 与 Python 的已知差异(双跑时不算 bug)
 
 - WCA Live 纪录的中文比赛名:本移植推**英文**比赛名(与 Python 一致);中文化是后续可选项。
-- 世界排名 `/WRn`:源从 WCA 官网实时 Top100 → 本地 `wca_results_top`(stats 周更),两次周更间新纪录
+- 世界排名 `/WRn`:源从 WCA 官网实时 Top100 → 本地 `wca_results_flat`(stats 周更),两次周更间新纪录
   名次可能偏小几名(WR/Top10 无感)。见 `record_format.ts` / `wca_stats_extra.ts`。
 - `cubing_record` 的日期/时区:cubing 比赛日期按 `Asia/Shanghai` 取(中国比赛),旧 Python 走服务器本地 TZ。

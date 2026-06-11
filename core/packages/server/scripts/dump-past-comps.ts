@@ -130,8 +130,8 @@ async function upsertState(slug: string, contentHash: string): Promise<void> {
 //       之后没有更晚场次可涟漪;新成绩从不影响更早的旧比赛);
 //     - 已被涟漪标 NULL 的比赛也不当源(它是结果不是原因,避免过渡期自我级联放大)。
 //   旧逻辑无脑 arm 选手「所有」比赛(含更早的),是这条管道又重又慢的根因;这版用日期下界砍掉白刷。
-//   日期取 wca_competitions.start_date(= wca_results_top.comp_date 的去规范化值,与冻结口径一致),
-//   避免对 11M 行 wca_results_top 做聚合。单条多-CTE 语句完成(连接池下 temp 表跨 query 不可见)。
+//   日期取 wca_competitions.start_date(= wca_results_flat.comp_date 的去规范化值,与冻结口径一致),
+//   避免对 11M 行 wca_results_flat 做聚合。单条多-CTE 语句完成(连接池下 temp 表跨 query 不可见)。
 //   (person_dump_state 表自此弃用,保留不删以便回滚。)
 async function reconcileRipple(): Promise<{ armed: number; persons: number; srcComps: number }> {
   const rows = await query<{ armed_comps: string; affected_persons: string; src_comps: string }>(
@@ -146,13 +146,13 @@ async function reconcileRipple(): Promise<{ armed: number; persons: number; srcC
      ),
      person_min AS (
        SELECT pc.wca_id, MIN(src.comp_date) AS min_changed
-         FROM src JOIN wca_results_top pc ON pc.comp_id = src.comp_id
+         FROM src JOIN wca_results_flat pc ON pc.comp_id = src.comp_id
         GROUP BY pc.wca_id
      ),
      ripple AS (
        SELECT DISTINCT px.comp_id
          FROM person_min pm
-         JOIN wca_results_top px ON px.wca_id = pm.wca_id AND px.comp_date > pm.min_changed
+         JOIN wca_results_flat px ON px.wca_id = pm.wca_id AND px.comp_date > pm.min_changed
      ),
      armed AS (
        UPDATE comp_dump_state SET dumped_content_hash = NULL

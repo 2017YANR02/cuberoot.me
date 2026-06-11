@@ -5,7 +5,7 @@
  * `/WRxx` 后缀。排名变化缓慢,本地缓存 3 天(rankings_cache.json,与本模块同目录,gitignored)。
  *
  * 自包含:只用 fetch + fs,不碰 PG。服务器自己的纪录文案走 routes/wca_stats_extra 的
- * worldRankTop100(查本地 wca_results_top),那是另一套语境;本工具是本地离线 CLI,保持
+ * worldRankTop100(查本地 wca_results_flat),那是另一套语境;本工具是本地离线 CLI,保持
  * Python 版「只靠联网、任意机器可跑」的特性。
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
