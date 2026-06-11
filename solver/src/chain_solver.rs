@@ -379,7 +379,13 @@ impl Search<'_> {
                 .eoline
                 .solve_one_eo(alg, rot, 0)
                 .min(self.s.eoline.solve_one_eo(alg, rot, 1));
-            let (_, sols) = self.s.eoline.enumerate_face(alg, rot, 0, hi - rot_best, EO_ENUM_CAP);
+            // 兄弟 yk 已 EO 完成(rot_best==0)时 enumerate_face 早返回空解集,
+            // 本轴(axis_best>0)会整支静默消失 → 退回单 yk 枚举兜住本轴。
+            let sols = if rot_best == 0 {
+                self.s.eoline.enumerate_face_yk(alg, rot, yk, 0, hi - axis_best, EO_ENUM_CAP).1
+            } else {
+                self.s.eoline.enumerate_face(alg, rot, 0, hi - rot_best, EO_ENUM_CAP).1
+            };
             let refs: Vec<&S1Sol> = sols.iter().filter(|x| x.yk == yk).collect();
             let inv = inv_conj_map(rot, yk);
             for (mv, len) in windowed(cfg, axis_best, &refs, &inv, &self.excl[0], cum) {
@@ -713,10 +719,13 @@ mod mini_json {
         }
     }
 
+    /// 嵌套深度上限:敌意深嵌套配置直接拒绝(防 wasm 栈溢出)。
+    const MAX_DEPTH: usize = 64;
+
     pub fn parse(s: &str) -> Option<J> {
         let b = s.as_bytes();
         let mut p = 0usize;
-        let v = val(b, &mut p)?;
+        let v = val(b, &mut p, 0)?;
         ws(b, &mut p);
         if p == b.len() {
             Some(v)
@@ -731,11 +740,14 @@ mod mini_json {
         }
     }
 
-    fn val(b: &[u8], p: &mut usize) -> Option<J> {
+    fn val(b: &[u8], p: &mut usize, depth: usize) -> Option<J> {
+        if depth > MAX_DEPTH {
+            return None;
+        }
         ws(b, p);
         match *b.get(*p)? {
-            b'{' => obj(b, p),
-            b'[' => arr(b, p),
+            b'{' => obj(b, p, depth),
+            b'[' => arr(b, p, depth),
             b'"' => string(b, p).map(J::Str),
             b't' => lit(b, p, b"true").map(|_| J::Bool(true)),
             b'f' => lit(b, p, b"false").map(|_| J::Bool(false)),
@@ -809,7 +821,7 @@ mod mini_json {
         }
     }
 
-    fn arr(b: &[u8], p: &mut usize) -> Option<J> {
+    fn arr(b: &[u8], p: &mut usize, depth: usize) -> Option<J> {
         *p += 1; // '['
         let mut items = Vec::new();
         ws(b, p);
@@ -818,7 +830,7 @@ mod mini_json {
             return Some(J::Arr(items));
         }
         loop {
-            items.push(val(b, p)?);
+            items.push(val(b, p, depth + 1)?);
             ws(b, p);
             match *b.get(*p)? {
                 b',' => {
@@ -833,7 +845,7 @@ mod mini_json {
         }
     }
 
-    fn obj(b: &[u8], p: &mut usize) -> Option<J> {
+    fn obj(b: &[u8], p: &mut usize, depth: usize) -> Option<J> {
         *p += 1; // '{'
         let mut kv = Vec::new();
         ws(b, p);
@@ -849,7 +861,7 @@ mod mini_json {
                 return None;
             }
             *p += 1;
-            kv.push((k, val(b, p)?));
+            kv.push((k, val(b, p, depth + 1)?));
             ws(b, p);
             match *b.get(*p)? {
                 b',' => {
@@ -1239,6 +1251,82 @@ mod tests {
         assert_eq!(c.dr.cap, 5);
         // excluded 归一:解析为 move 索引序列(F=12,R'=11)。
         assert_eq!(parse_excluded(&c.eo.excluded)[0], vec![12u8, 11]);
+    }
+
+    // ---------- EO sibling-yk 兜底:某轴已 EO 完成时,同 rot 兄弟轴不消失 ----------
+
+    /// 仅 U/D/L/R/F2/B2 的词:FB 轴 EO 天然完成(无 F/B 四分之一转),LR/UD 破。
+    const EO_FB_COMPLETE: &str = "U R2 D' L F2 U' B2 L2 D R' U2 L' D2 R F2 B2 U L D' R2";
+
+    #[test]
+    fn chain_eo_sibling_axis_fallback() {
+        let s = solver();
+        let alg = string_to_alg(EO_FB_COMPLETE);
+        // fixture 前提:EO 恰好只在 FB 轴完成。
+        assert_eq!(s.eoline.solve_one_eo(&alg, "", 0), 0, "FB must be EO-complete");
+        let lr_best = s.eoline.solve_one_eo(&alg, "", 1);
+        let ud_best = s.eoline.solve_one_eo(&alg, "x'", 0);
+        assert!(lr_best > 0 && ud_best > 0, "LR/UD must not be EO-complete");
+
+        // bug 实锤:rot 级合并枚举因 yk0 best==0 早返回空 → LR 解集为空(修前
+        // stage_eo 据此把 LR 整支静默丢掉);单 yk 枚举兜回非空解集。
+        let (b, sols) = s.eoline.enumerate_face(&alg, "", 0, lr_best + 1, EO_ENUM_CAP);
+        assert_eq!(b, 0);
+        assert!(sols.is_empty(), "rot-level enumerate must be empty when sibling yk best==0");
+        let (b1, sols1) = s.eoline.enumerate_face_yk(&alg, "", 1, 0, 1, EO_ENUM_CAP);
+        assert_eq!(b1, lr_best);
+        assert!(!sols1.is_empty() && sols1.iter().all(|x| x.yk == 1));
+
+        // 链级回归:限定 EO 轴 = LR(修前该支消失 → 0 条链),修后有链且复原。
+        let mut cfg = ChainConfig::default();
+        cfg.eo.axes = vec![Axis::Lr];
+        let chains = s.solve_chain(EO_FB_COMPLETE, &cfg);
+        assert!(!chains.is_empty(), "sibling-axis EO branch must survive");
+        for c in &chains {
+            assert_eq!(c.steps[0].kind, "eo");
+            assert_eq!(c.steps[0].variant, "eolr");
+            assert!(c.steps[0].len > 0, "eolr step must be nontrivial");
+            assert_eq!(apply_all(EO_FB_COMPLETE, &c.steps), State::SOLVED);
+        }
+
+        // UD 轴(rot x',兄弟槽位 EO 未完成)走原 rot 级路径,同样有链且复原。
+        let mut cfg = ChainConfig::default();
+        cfg.eo.axes = vec![Axis::Ud];
+        let chains = s.solve_chain(EO_FB_COMPLETE, &cfg);
+        assert!(!chains.is_empty());
+        for c in &chains {
+            assert_eq!(c.steps[0].variant, "eoud");
+            assert_eq!(apply_all(EO_FB_COMPLETE, &c.steps), State::SOLVED);
+        }
+
+        // 默认配置(全 3 轴):FB 出零步候选,链仍全部复原。
+        let chains = s.solve_chain(EO_FB_COMPLETE, &ChainConfig::default());
+        assert!(!chains.is_empty());
+        for c in &chains {
+            assert_eq!(apply_all(EO_FB_COMPLETE, &c.steps), State::SOLVED);
+        }
+    }
+
+    // ---------- mini_json 深度上限:敌意深嵌套 → 拒绝(回落默认),不 panic ----------
+
+    #[test]
+    fn chain_config_json_depth_limit() {
+        // ≤64 层可解析;>64 层拒绝;1 万层不栈溢出。
+        let ok = format!("{}1{}", "[".repeat(60), "]".repeat(60));
+        assert!(mini_json::parse(&ok).is_some());
+        let over = format!("{}1{}", "[".repeat(65), "]".repeat(65));
+        assert!(mini_json::parse(&over).is_none());
+        let hostile = format!("{}1{}", "[".repeat(10_000), "]".repeat(10_000));
+        assert!(mini_json::parse(&hostile).is_none());
+        // 对象嵌套同限。
+        let deep_obj =
+            format!("{}1{}", "{\"a\":".repeat(10_000), "}".repeat(10_000));
+        assert!(mini_json::parse(&deep_obj).is_none());
+        // 配置层:敌意输入整体回落默认配置,不 panic。
+        let cfg = parse_chain_config(&hostile);
+        assert_eq!(cfg.max_chains, 10);
+        assert!(cfg.eo.enabled && !cfg.fr.enabled);
+        assert_eq!(cfg.eo.cap, 5);
     }
 
     // ---------- 固定 fixture 的 JSON 输出(node wasm parity 对照用) ----------
