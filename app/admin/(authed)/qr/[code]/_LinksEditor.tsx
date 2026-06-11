@@ -57,7 +57,9 @@ export function LinksEditor({
       if (d && id === d.id) {
         r.style.transition = "none";
         r.style.transform = `translateY(${d.desiredTop - top}px) scale(1.02)`;
-      } else if (prev != null && prev !== top) {
+      } else if (d && prev != null && prev !== top) {
+        // 仅拖动排序时才 FLIP 平滑换位;非拖动的整体位移(如保存后冒出提示条
+        // 把列表下推)不该animate,否则行会无故上下滑
         r.style.transition = "none";
         r.style.transform = `translateY(${prev - top}px)`;
         requestAnimationFrame(() => {
