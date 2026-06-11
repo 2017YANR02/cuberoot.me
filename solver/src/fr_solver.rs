@@ -405,6 +405,385 @@ mod tests {
         h_set().contains(&key_of_st(st))
     }
 
+    // ===================================================================
+    //  独立 FB/LR 视角金标准(mallard P1b) —— 闭合「reframing 未验证」缺口。
+    //
+    //  现状(a37f2c910):fr_golden_independent_brute_force 只对 rot∈["","z2"]
+    //  (UD / z2-不变路径)独立核对距离值 + 只物理回放 rot=""。FB/LR(x/z 系)
+    //  视角的 FR 距离「值」从未被任何独立预言机验证——只有 is_fr 布尔被查。
+    //  FR 目标 H_UD=⟨F2,B2,L2,R2⟩ 仅 y / z2 不变(不像 htr2 全对称解态那样对
+    //  x/z 不变),故 x/z(FB/LR)视角给出真正不同的距离,reframing/轴 bug 会漏检。
+    //
+    //  下面的预言机:(1) 在 HOME 帧独立建三套 floppy 收尾子群 H_UD/H_FB/H_LR
+    //  (各自纯 State 级 4-双转 BFS 闭包,无陪集坐标、无旋转代码);(2) 由「距离
+    //  到该 floppy 态 == 0 ⟺ 输入 ∈ 该 H」自证哪个 rot 对应哪条轴;(3) 对每条轴
+    //  独立 6-双转全空间 BFS(以整 H 为种子),逐态对照 solver 的对应视角距离;
+    //  (4) 物理回放:取 FB / LR 视角 enumerate_face 解,用本测试自建(不调
+    //  alg_rotation / rot_map / conj_buf)的逆向 face-relabel 把解 move 映回
+    //  HOME 帧物理施于输入态,断言落入 H_FB / H_LR ——reframing 有 bug 必落空。
+    // ===================================================================
+
+    /// FB floppy 收尾子群 H_FB = ⟨U2,D2,L2,R2⟩(F/B 不动)的 State 级闭包成员集。
+    fn h_fb_set() -> &'static HashSet<[u8; 20]> {
+        static V: OnceLock<HashSet<[u8; 20]>> = OnceLock::new();
+        V.get_or_init(|| state_subgroup_closure(&[1, 4, 7, 10])) // U2 D2 L2 R2
+    }
+
+    /// LR floppy 收尾子群 H_LR = ⟨U2,D2,F2,B2⟩(L/R 不动)的 State 级闭包成员集。
+    fn h_lr_set() -> &'static HashSet<[u8; 20]> {
+        static V: OnceLock<HashSet<[u8; 20]>> = OnceLock::new();
+        V.get_or_init(|| state_subgroup_closure(&[1, 4, 13, 16])) // U2 D2 F2 B2
+    }
+
+    /// 纯 State 级:从 SOLVED 用给定双转 BFS,返回闭包成员 key 集(独立,无坐标/无旋转)。
+    fn state_subgroup_closure(gens: &[u8]) -> HashSet<[u8; 20]> {
+        let mut seen: HashSet<[u8; 20]> = HashSet::new();
+        seen.insert(key_of_st(&State::SOLVED));
+        let mut frontier = vec![State::SOLVED];
+        while !frontier.is_empty() {
+            let mut next = Vec::new();
+            for st in &frontier {
+                for &m in gens {
+                    let ns = st.applied(Move::from_index(m as usize));
+                    if seen.insert(key_of_st(&ns)) {
+                        next.push(ns);
+                    }
+                }
+            }
+            frontier = next;
+        }
+        seen
+    }
+
+    /// 独立 6-双转全空间 BFS:以整个 H 为距离 0 种子,返回每个 G3 态 key → 该轴 FR 距离。
+    /// 与 solver 的陪集表完全不同代码路径,纯 State 20-byte 成员。
+    fn axis_brute_dist(h: &HashSet<[u8; 20]>) -> HashMap<[u8; 20], u8> {
+        let mut bdist: HashMap<[u8; 20], u8> = HashMap::with_capacity(700_000);
+        let mut frontier: Vec<State> = Vec::new();
+        for &k in h {
+            bdist.insert(k, 0);
+            frontier.push(state_from_key(&k));
+        }
+        let mut d = 0u8;
+        while !frontier.is_empty() {
+            let mut next = Vec::new();
+            for st in &frontier {
+                for &m in &G3_MOVES {
+                    let ns = st.applied(Move::from_index(m as usize));
+                    let k = key_of_st(&ns);
+                    if let std::collections::hash_map::Entry::Vacant(e) = bdist.entry(k) {
+                        e.insert(d + 1);
+                        next.push(ns);
+                    }
+                }
+            }
+            d += 1;
+            frontier = next;
+        }
+        bdist
+    }
+
+    fn state_from_key(k: &[u8; 20]) -> State {
+        let mut corners = [0u8; 8];
+        let mut edges = [0u8; 12];
+        corners.copy_from_slice(&k[..8]);
+        edges.copy_from_slice(&k[8..]);
+        State { corners, edges }
+    }
+
+    /// 本测试**自建**的旋转 face-relabel(独立于 solver 的 alg_rotation)。
+    /// 返回 6 元 face 置换 f:原 move 的 type t → f[t](type 序 U,D,L,R,F,B = 0..6)。
+    /// 数值与几何旋转一致:对解 move 取逆置换即可把「rot 帧」解映回 HOME 帧物理 move。
+    fn rot_face_perm(rot: &str) -> [u8; 6] {
+        // 单 rotation token 的 face 置换(独立手写,与 cube_common::alg_rotation 同几何)。
+        let single = |t: &str| -> [u8; 6] {
+            match t {
+                "x" => [5, 4, 2, 3, 0, 1],
+                "x2" => [1, 0, 2, 3, 5, 4],
+                "x'" => [4, 5, 2, 3, 1, 0],
+                "y" => [0, 1, 5, 4, 2, 3],
+                "y2" => [0, 1, 3, 2, 5, 4],
+                "y'" => [0, 1, 4, 5, 3, 2],
+                "z" => [3, 2, 0, 1, 4, 5],
+                "z2" => [1, 0, 3, 2, 4, 5],
+                "z'" => [2, 3, 1, 0, 4, 5],
+                _ => [0, 1, 2, 3, 4, 5],
+            }
+        };
+        let mut f = [0u8, 1, 2, 3, 4, 5];
+        for tok in rot.split_whitespace() {
+            let g = single(tok);
+            // 复合:新 f'[t] = g[f[t]](先 f 再 g,顺序与逐 token relabel 一致)。
+            let mut nf = [0u8; 6];
+            for t in 0..6 {
+                nf[t] = g[f[t] as usize];
+            }
+            f = nf;
+        }
+        f
+    }
+
+    /// face 置换的逆。
+    fn inv_face_perm(f: &[u8; 6]) -> [u8; 6] {
+        let mut inv = [0u8; 6];
+        for t in 0..6 {
+            inv[f[t] as usize] = t as u8;
+        }
+        inv
+    }
+
+    /// 用 face 置换把单 move 重标(type t → fp[t],power 不变)。独立,不调 alg_convert_rotation。
+    fn relabel_move(m: u8, fp: &[u8; 6]) -> u8 {
+        let t = (m / 3) as usize;
+        let p = m % 3;
+        3 * fp[t] + p
+    }
+
+    /// **金标准(非循环)— FB / LR 视角 FR 距离 + 物理回放**。
+    ///
+    /// 不复用 solver 的陪集坐标(距离对照走独立 6-双转 BFS),也不复用 solver 的
+    /// rotation/reframing 代码判定回放结果(H_FB/H_LR 成员判定 + 本测试自建逆 relabel)。
+    #[test]
+    fn fr_fb_lr_independent_oracle() {
+        let s = FrSolver::new();
+
+        // ---- 0) 轴↔rot 自证:某视角到其 floppy 态距离 == 0 ⟺ 输入 ∈ 该 H。----
+        // ROTS6 = ["", "z2", "z'", "z", "x'", "x"];本测试需独立确认 x/z 系归属哪条轴。
+        let h_ud = h_set();
+        let h_fb = h_fb_set();
+        let h_lr = h_lr_set();
+        // 三套 H 互不同(否则下面的区分无意义),且都是 ⟨4 双转⟩ floppy 子群(阶 192)。
+        assert_eq!(h_ud.len(), 192, "|H_UD| changed");
+        assert_eq!(h_fb.len(), 192, "|H_FB| changed");
+        assert_eq!(h_lr.len(), 192, "|H_LR| changed");
+        assert_ne!(h_ud, h_fb, "H_UD == H_FB?!");
+        assert_ne!(h_ud, h_lr, "H_UD == H_LR?!");
+        assert_ne!(h_fb, h_lr, "H_FB == H_LR?!");
+
+        // 取若干 HTR fixture(G3 词),按其在三套 H 的成员资格自证 rot 归属。
+        // 规则:某 rot 视角 dist==0 当且仅当 HOME 态 ∈ 该轴 H,则该 rot 对应该轴。
+        let classify = |alg: &[Move]| -> (State, bool, bool, bool) {
+            let mut st = State::SOLVED;
+            for &m in alg {
+                st.apply(m);
+            }
+            let k = key_of_st(&st);
+            (st, h_ud.contains(&k), h_fb.contains(&k), h_lr.contains(&k))
+        };
+        // 对每个 ROTS6 索引,统计「视角 dist==0」与「∈H_axis」是否对每条轴一致。
+        // 找出每个 rot 唯一匹配的轴(三套 H 各不同 ⇒ 唯一)。
+        let mut axis_of_rot: [Option<&str>; 6] = [None; 6]; // "UD"/"FB"/"LR"
+        for (ri, rot) in ROTS6.iter().enumerate() {
+            // 收集足够多 fixture 区分:既要有 ∈ 又要有 ∉ 该 H 的样本。
+            let mut ok_ud = true;
+            let mut ok_fb = true;
+            let mut ok_lr = true;
+            for seed in 0..200u64 {
+                // 多样 fixture:有的就在某 H 里(短词),有的不在。
+                let alg = pseudo_word(9000 + seed, (seed % 6) as usize, &G3_MOVES);
+                let d0 = s.solve_one(&alg, rot, 0);
+                assert!(d0.is_some(), "G3 fixture must be HTR rot={}", rot);
+                let zero = d0.unwrap() == 0;
+                let (_, in_ud, in_fb, in_lr) = classify(&alg);
+                if zero != in_ud {
+                    ok_ud = false;
+                }
+                if zero != in_fb {
+                    ok_fb = false;
+                }
+                if zero != in_lr {
+                    ok_lr = false;
+                }
+            }
+            let matches: Vec<&str> = [("UD", ok_ud), ("FB", ok_fb), ("LR", ok_lr)]
+                .iter()
+                .filter(|(_, ok)| *ok)
+                .map(|(n, _)| *n)
+                .collect();
+            assert_eq!(
+                matches.len(),
+                1,
+                "rot {} (idx {}) must map to exactly one axis, got {:?}",
+                rot,
+                ri,
+                matches
+            );
+            axis_of_rot[ri] = Some(matches[0]);
+        }
+        // 锁基线:派生的轴归属(同时也是「reframing 把哪条物理轴搬到 UD 坐标」的真值)。
+        let labels: Vec<&str> = axis_of_rot.iter().map(|a| a.unwrap()).collect();
+        assert_eq!(
+            labels,
+            vec!["UD", "UD", "LR", "LR", "FB", "FB"],
+            "ROTS6 axis mapping changed (reframing semantics drift!)"
+        );
+
+        // ---- 1) FB / LR 各一条全空间独立 BFS(以整 H 为种子,663,552 态)。----
+        // 代表 rot:FB → "x"(idx5);LR → "z"(idx3)。
+        let fb_rot = ROTS6[5]; // "x"
+        let lr_rot = ROTS6[3]; // "z"
+        assert_eq!(axis_of_rot[5], Some("FB"));
+        assert_eq!(axis_of_rot[3], Some("LR"));
+
+        let bdist_fb = axis_brute_dist(h_fb);
+        let bdist_lr = axis_brute_dist(h_lr);
+        assert_eq!(bdist_fb.len(), G3_STATES, "FB brute space != |G3|");
+        assert_eq!(bdist_lr.len(), G3_STATES, "LR brute space != |G3|");
+
+        // 全空间一致性:零距离集恰为对应 H。
+        assert_eq!(
+            bdist_fb.values().filter(|&&v| v == 0).count(),
+            h_fb.len(),
+            "FB zero set != H_FB"
+        );
+        assert_eq!(
+            bdist_lr.values().filter(|&&v| v == 0).count(),
+            h_lr.len(),
+            "LR zero set != H_LR"
+        );
+
+        // 大量随机 G3 词:HOME 态 = walk(alg);solver 该视角距离 == 独立 BFS[HOME 态]。
+        for seed in 0..600u64 {
+            let alg = pseudo_word(20_000 + seed, 16, &G3_MOVES);
+            let mut st = State::SOLVED;
+            for &m in &alg {
+                st.apply(m);
+            }
+            let k = key_of_st(&st);
+
+            let d_fb = s.solve_one(&alg, fb_rot, 0).expect("HTR (FB)");
+            assert_eq!(
+                d_fb, bdist_fb[&k] as u32,
+                "FB view dist mismatch seed={} (solver {} vs indep {})",
+                seed, d_fb, bdist_fb[&k]
+            );
+            let d_lr = s.solve_one(&alg, lr_rot, 0).expect("HTR (LR)");
+            assert_eq!(
+                d_lr, bdist_lr[&k] as u32,
+                "LR view dist mismatch seed={} (solver {} vs indep {})",
+                seed, d_lr, bdist_lr[&k]
+            );
+
+            // 跨索引一致性:同轴的两个 rot 必给同距离(z' 与 z 同 LR;x' 与 x 同 FB)。
+            assert_eq!(
+                s.solve_one(&alg, ROTS6[2], 0),
+                s.solve_one(&alg, ROTS6[3], 0),
+                "LR two-rot disagree seed={}",
+                seed
+            );
+            assert_eq!(
+                s.solve_one(&alg, ROTS6[4], 0),
+                s.solve_one(&alg, ROTS6[5], 0),
+                "FB two-rot disagree seed={}",
+                seed
+            );
+        }
+
+        // ---- 3) 物理回放(关键反 reframing 检查)。----
+        // 取 FB / LR 视角 enumerate_face 解,用本测试自建的逆 face-relabel 把解 move 映回
+        // HOME 帧物理 move,施于输入态,断言落入 H_FB / H_LR(独立成员判定,不调 solver coord)。
+        // 自建逆 relabel 几何须先自证 == solver 的 conj 帧效果(对 alg 端):
+        for (rot, h, bdist, axis) in [
+            (fb_rot, h_fb, &bdist_fb, "FB"),
+            (lr_rot, h_lr, &bdist_lr, "LR"),
+        ] {
+            let fp = rot_face_perm(rot);
+            let inv = inv_face_perm(&fp);
+
+            for seed in 0..40u64 {
+                let alg = pseudo_word(30_000 + seed, 14, &G3_MOVES);
+
+                // HOME 态。
+                let mut st_home = State::SOLVED;
+                for &m in &alg {
+                    st_home.apply(m);
+                }
+                let best_indep = bdist[&key_of_st(&st_home)] as u32;
+
+                let (best, sols) = s.enumerate_face(&alg, rot, 1, 24).unwrap();
+                assert_eq!(
+                    best, best_indep,
+                    "{} best != independent min seed={}",
+                    axis, seed
+                );
+                // best 也须 == solve_one(独立查表一致)。
+                assert_eq!(best, s.solve_one(&alg, rot, 0).unwrap());
+
+                if best == 0 {
+                    assert!(sols.is_empty(), "{} best==0 → no enumerated sol", axis);
+                    assert!(h.contains(&key_of_st(&st_home)), "{} best==0 ∉ H", axis);
+                    continue;
+                }
+                assert!(!sols.is_empty(), "{} no sols seed={}", axis, seed);
+                assert!(sols.iter().any(|x| x.len == best), "{} optimal missing", axis);
+
+                for sol in &sols {
+                    assert!(sol.len >= best && sol.len <= best + 1, "{} budget", axis);
+                    assert!(
+                        sol.moves.iter().all(|&m| is_g3(m as usize)),
+                        "{} non-G3 move",
+                        axis
+                    );
+                    // 物理回放:解 move(在 rot 视角帧)→ 逆 relabel → HOME 帧物理 move,
+                    // 施于 HOME 态,独立断言 ∈ 该轴 H。reframing/轴 bug 会令此处落空。
+                    let mut st = st_home;
+                    for &m in &sol.moves {
+                        let pm = relabel_move(m, &inv);
+                        assert!(is_g3(pm as usize), "{} relabeled non-G3", axis);
+                        st.apply(Move::from_index(pm as usize));
+                    }
+                    assert!(
+                        h.contains(&key_of_st(&st)),
+                        "{} replayed sol does NOT land in H_{} (reframing bug!) seed={}",
+                        axis,
+                        axis,
+                        seed
+                    );
+                    // 步数也独立核对:回放后 HOME 态距该轴 floppy = 0(已在 H)。
+                    assert_eq!(bdist[&key_of_st(&st)], 0, "{} replayed dist != 0", axis);
+                }
+            }
+        }
+
+        // ---- 4) 自证逆 relabel 正确:对 alg 做 (rot 帧) 等价 ⟺ solver conj_buf。----
+        // 这是把「自建逆 relabel」与 solver reframing 对接的桥;若不等,上面的回放
+        // 几何前提就站不住。用 solver 公开的 solve_one(经 conj_buf)与「自建 fp 重标
+        // 后从 SOLVED 走、再判该轴 H」对照,确保两条路径同义(但成员判定仍独立)。
+        for (rot, h, axis) in [(fb_rot, h_fb, "FB"), (lr_rot, h_lr, "LR")] {
+            let fp = rot_face_perm(rot);
+            for seed in 0..60u64 {
+                let alg = pseudo_word(40_000 + seed, 13, &G3_MOVES);
+                // 自建:把 alg 各 move 用 fp 重标后从 SOLVED 走得 State_relabel。
+                let mut st_rl = State::SOLVED;
+                for &m in &alg {
+                    let rm = relabel_move(m.index() as u8, &fp);
+                    st_rl.apply(Move::from_index(rm as usize));
+                }
+                // solver 视角 dist==0 ⟺ conj_buf(alg,rot,0) 走到的 State ∈ H_UD。
+                // 自建路径:relabel 后的 State ∈ H_UD(同一几何),应一致。
+                let solver_zero = s.solve_one(&alg, rot, 0).unwrap() == 0;
+                let selfbuilt_zero = h_set().contains(&key_of_st(&st_rl));
+                assert_eq!(
+                    solver_zero, selfbuilt_zero,
+                    "{} self-built relabel disagrees with solver conj frame seed={}",
+                    axis, seed
+                );
+                // 并且:HOME 态 ∈ 该轴 H ⟺ relabel 态 ∈ H_UD(轴↔UD 的几何对应)。
+                let mut st_home = State::SOLVED;
+                for &m in &alg {
+                    st_home.apply(m);
+                }
+                assert_eq!(
+                    h.contains(&key_of_st(&st_home)),
+                    h_set().contains(&key_of_st(&st_rl)),
+                    "{} axis-H vs relabeled-H_UD disagree seed={}",
+                    axis,
+                    seed
+                );
+            }
+        }
+    }
+
     /// 复用闭包尺寸断言(锁住与 htr2 共享的 Hc / G3-edge 机制)。
     #[test]
     fn fr_reused_closure_sizes() {
