@@ -20,6 +20,7 @@ let roux223Solver = null; // Roux223SolverWasm(FB 方块/1x2x3/双1x2x3 + Petrus
 let eoDrSolver = null;    // EoDrSolverWasm(EO/EOLine/DR),零表下载,微表现场建
 let htrSolver = null;     // HtrSolverWasm(DR→HTR),零表下载,2.8MB 距离表首查惰性现场 BFS
 let htr2Solver = null;    // HtrPhase2SolverWasm(G3→solved),零表下载,648KB 距离表首查惰性现场 BFS
+let frSolver = null;      // FrSolverWasm(HTR→FR,Floppy 还原),零表下载,3456 态陪集表首查惰性现场 BFS
 
 async function fetchTable(url) {
   const res = await fetch(url);
@@ -71,6 +72,9 @@ async function init(glueUrl, wasmUrl, tablesBase, need) {
   } else if (need === 'htr2') {
     // HTR phase-2(G3→solved):零表下载,648KB 全空间精确距离表首查惰性现场 BFS。
     htr2Solver = new mod.HtrPhase2SolverWasm();
+  } else if (need === 'fr') {
+    // FR(HTR→FR,Floppy 还原):零表下载,3456 态陪集移动/距离表首查惰性现场 BFS。
+    frSolver = new mod.FrSolverWasm();
   } else {
     const [a, b, c, d, e, f] = await Promise.all(
       ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'].map(get)
@@ -207,6 +211,20 @@ self.onmessage = async (e) => {
         msg.scramble, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
       );
       self.postMessage({ type: 'htr2_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+    } else if (msg.type === 'fr_stage') {
+      if (!frSolver) throw new Error('fr solver not initialized');
+      const t0 = performance.now();
+      // 6 视角(物理面序 z0/z2/z3/z1/x3/x1);条件式阶段:非 HTR 视角 = 0xFFFFFFFF 哨兵。
+      const out = frSolver.solve(msg.scramble);
+      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+    } else if (msg.type === 'fr_moves') {
+      if (!frSolver) throw new Error('fr solver not initialized');
+      const t0 = performance.now();
+      // 单视角多解:前缀 = rot(FR 对 y 不变),c = 该视角 FR 轴标签(UD/FB/LR);非 HTR 视角 len=0xFFFFFFFF。
+      const json = frSolver.solve_moves(
+        msg.scramble, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
+      );
+      self.postMessage({ type: 'fr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'variant_moves') {
       if (!variantSolver) throw new Error('variant solver not initialized');
       const t0 = performance.now();

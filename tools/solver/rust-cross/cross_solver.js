@@ -376,6 +376,69 @@ export class F2leoSolverWasm {
 if (Symbol.dispose) F2leoSolverWasm.prototype[Symbol.dispose] = F2leoSolverWasm.prototype.free;
 
 /**
+ * FR(Floppy Reduction,HTR/G3 → FR)求解器(全自包含,**零表下载**):H=⟨L2,R2,F2,B2⟩
+ * 右陪集空间(3456 态)移动表 + 精确距离表全部现场从内置运动学构建,首次查询时惰性
+ * BFS(RefCell,~秒级);查长度 O(1),枚举首达即最优。条件式阶段:该视角必须已处于
+ * HTR/G3 子群,非 HTR 视角返回 u32::MAX 哨兵。对 y 不变;视角轴 = [UD,UD,LR,LR,FB,FB]。
+ */
+export class FrSolverWasm {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        FrSolverWasmFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_frsolverwasm_free(ptr, 0);
+    }
+    constructor() {
+        const ret = wasm.frsolverwasm_new();
+        this.__wbg_ptr = ret;
+        FrSolverWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * 6 视角最优步数(顺序对应 ROTS);该视角非 HTR = u32::MAX 哨兵。
+     * @param {string} scramble
+     * @returns {Uint32Array}
+     */
+    solve(scramble) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.frsolverwasm_solve(this.__wbg_ptr, ptr0, len0);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * 单视角多解 JSON(同 HtrPhase2SolverWasm::solve_moves 形状)。FR 对 y 不变
+     * (解全在 yk=0),`m` 前缀 = rot,`c` = 该视角 FR 轴标签(UD/FB/LR,同 DR);
+     * 该视角非 HTR = {"len":4294967295,"sols":[]}。
+     * @param {string} scramble
+     * @param {number} face
+     * @param {number} extra
+     * @param {number} cap
+     * @returns {string}
+     */
+    solve_moves(scramble, face, extra, cap) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.frsolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, face, extra, cap);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+}
+if (Symbol.dispose) FrSolverWasm.prototype[Symbol.dispose] = FrSolverWasm.prototype.free;
+
+/**
  * HTR phase-2(G3 → solved,只走 6 双转)求解器(全自包含,**零表下载**):角置换/边轨道
  * 移动表与全空间 663,552 态精确距离表(~648KB)全部现场从内置运动学构建,首次查询时惰性
  * BFS(RefCell,~亚秒);查长度 O(1),枚举首达即最优。条件式阶段:该视角必须已处于 HTR/G3
@@ -745,6 +808,9 @@ const EoDrSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
 const F2leoSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_f2leosolverwasm_free(ptr, 1));
+const FrSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_frsolverwasm_free(ptr, 1));
 const HtrPhase2SolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_htrphase2solverwasm_free(ptr, 1));
