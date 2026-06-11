@@ -101,7 +101,7 @@
 > 照 2x2x2 范式。注意:顶点(tips)trivial 可分离,步数口径已在 P3a 锁定(总 HTM = 核心查表最优 + 错位 tip 数,有定理证明 + 75.6M 全空间验证);WCA 打乱含小写顶点记号 u/l/r/b,analyzer 必须能吃全记号。
 - [x] **P3a** Rust 核心 `pyraminx_solver.rs`(key `pyraminx`)。✅ 2026-06-11 `2f5a4427c`。独立 PyraState(6 棱偶置换 360×翻转 32 + 4 轴心 3^4),move 几何 Rodrigues 实算推导与 cstimer 逐项吻合;核心 933,120 全可达(闭包独立验证,原条目"75,582"系含 tips 总数 75,582,720 的截断笔误,已实算修正);核心距离表 0.9MB+移动表 29.9MB 现场建 ~1s 零盘表;口径=核心最优+错位 tip 数(精确,联合 BFS 75.6M 逐态验证加法公式);God's number 核心 11(分布对 jaapsch 逐项锁)/含 tips 15(卷积逐项断言);5/5 测试绿 + 全量 lib 116/0 + cubing.js 手性 replay 4/4。
 - [x] **P3b** analyzer bin `pyraminx_analyzer.rs` + `tests/e2e_pyraminx.rs`(照 pocket_analyzer;吃全 WCA pyram 记号含顶点)。✅ 2026-06-11。CSV `id,pyraminx` 两列,口径=P3a 锁定(核心查表最优+错位 tip 数);pyram 小写 tip 记号进不了 3x3 `string_to_alg` → executor.rs 新增 raw 字符串通道(`RawSolverWrapper`/`run_analyzer_app_raw`,batch/stdin 循环抽私有泛型核与 Move 版共用,旧接口签名不动),解析失败行出 `id,-` 不中断;bin 3 单测(全 16 记号±'±2 / 已还原 0 / 单 tip 1 / `U u'`=2 / 字符串 round-trip 与 lib 直查 60 组逐位一致 / 独立联合 IDDFS oracle 32 组全等)+ e2e 双文件 baseline 锁死(WCA 形态 5 条 + 记号边角 5 条手算)均绿;executor 7/7、pocket e2e+bin 回归绿;全量 lib 120 绿(唯一红 = 并行 session chain_solver.rs 未提交 WIP 的 golden replay,与本单元无关);smoke 5 条 WCA pyram → 10/11/10/11/11 全 ≤15。
-- [ ] **P3c** 统计管线:`build_puzzle_dist.ts` PUZZLES 注册表加 pyraminx(event_id `pyram`)+ 小样本验形(照 playbook §8)。门:端到端小样本绿。
+- [x] **P3c** 统计管线:PUZZLES 注册表加 pyraminx。✅ 2026-06-11 `68f8b24f4`(3 文件)。event `pyram`,metric htm 含 tips;ps1 加 analyzer 表项 + 顺手修 -Puzzles 默认值(空=全部注册,原硬码 pocket 与 docstring 矛盾);client 契约泛型零改动;小样本 350 条两跑绿(首跑+增量),dist 7..13 峰值 11 全 ≤15,与 P3b smoke 吻合。
 - [ ] **P3d** WASM 类 + 重建仪式 + `/scramble/pyraminx`(PuzzleOptimalSolver 新 spec)。门:typecheck + node 冒烟 native↔wasm 相等 + playwright(replay 独立验证)。
 - [ ] **P3e** 看板登记 + **📦 MANUAL(Pyraminx)** 交接写 §3。门:typecheck + code-tokens-drift 绿。
 #### EPIC 3.3 — Skewb(3,149,280;/trainer/skewb 已有宿主;solver 参考 `skewb.js`)— 照范式展开(P4a–P4e)
@@ -137,6 +137,7 @@
 - 2026-06-11 — **P2e** pocket 看板登记,`7059b70c1`。typecheck + 39 守卫测试绿。**EPIC 3.1 完成**,MANUAL(2x2x2) 交接入 §3;EPIC 3.2(Pyraminx)按既定计划细化为 P3a–P3e。下一个 = P3a。
 - 2026-06-11 — **P3a** pyraminx Rust 核心,`2f5a4427c`。核心 933,120(修正 backlog 笔误)/含 tips 75.6M 全空间验证;口径=核心最优+tip 数(定理+全空间断言);God 数 11/15 对公开数据逐项锁;5/5 + lib 116/0 + cubing.js 手性 4/4。
 - 2026-06-11 — **P3b** pyraminx analyzer + e2e,`ed5722750`。executor 新增 raw 字符串通道(小写 tip 进不了 string_to_alg);bin 3 单测含独立 IDDFS oracle + e2e baseline 锁死全绿;pocket/executor 回归绿;smoke 5 条 WCA pyram 10/11/10/11/11 全 ≤15。lib 唯一红 = 并行 chain_solver WIP,非本单元。下一个 = P3c。
+- 2026-06-11 — **P3c** pyraminx 统计管线,`68f8b24f4`。PUZZLES 加 pyram + ps1 表项与默认值修正;350 条两跑验形,dist 峰值 11。下一个 = P3d。
 
 ---
 
