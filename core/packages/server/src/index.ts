@@ -27,6 +27,7 @@ import { timerBackupsRoutes } from './routes/timer_backups.js';
 import { wcaScheduleRoutes } from './routes/wca_schedule.js';
 import { wcaScramblesRoutes } from './routes/wca_scrambles.js';
 import { scrambleMarksRoutes } from './routes/scramble_marks.js';
+import { announcedCompsRoutes, startAnnouncedCompsPoller } from './routes/announced_comps.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
 import { ensureDaemon as ensureCube555Daemon } from './cube555/daemon.js';
 import { getCurrentRecords } from './utils/current_records.js';
@@ -103,6 +104,7 @@ app.route('/v1', timerBackupsRoutes);
 app.route('/v1', wcaScheduleRoutes);
 app.route('/v1', wcaScramblesRoutes);
 app.route('/v1', scrambleMarksRoutes);
+app.route('/v1', announcedCompsRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).
@@ -143,6 +145,9 @@ startPrewarmCron();
 // wca-monitor 推送套件(WCA Live 纪录/PR + 粗饼纪录/比赛 + WCA 比赛)后台 poller.
 // MONITORS_ENABLED!=1 时直接返回(休眠);MONITOR_PUSH_ENABLED!=1 时只 DRY 日志不真推.
 startMonitors();
+
+// 首页「今日公示」数据源:后台轮询 WCA announced_at(独立于监控门控).启动 90s 后首拉,之后每 20min.
+startAnnouncedCompsPoller();
 
 const PORT = Number(process.env.PORT) || 3001;
 
