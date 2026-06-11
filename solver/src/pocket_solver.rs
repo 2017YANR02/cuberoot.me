@@ -17,6 +17,8 @@
 //!
 //! 度量:HTM(U2 算 1 步)。实测 God's number 见 max_depth() / pt_basics 测试。
 
+use std::sync::OnceLock;
+
 use crate::cube_common::{move_state, Move, State};
 
 /// 2x2x2 的 9 个 move(U U2 U' R R2 R' F F2 F'),固定 DBL 角。
@@ -46,6 +48,52 @@ const FACT7: [usize; 7] = [1, 1, 2, 6, 24, 120, 720];
 pub struct PocketSol {
     pub len: u32,
     pub moves: Vec<u8>,
+}
+
+/// 任意 18-move 打乱的解(经 24 旋转归一):rot 为整体旋转前缀(显示用,如 "x y'",
+/// 空串=无旋转);rot_moves 为该旋转对角作用的等价 move 词(replay/验证用);
+/// moves 为归一帧下的 URF 解序列。物理含义:对打乱态先整体转 rot,再做 moves 即还原。
+#[derive(Clone, Debug)]
+pub struct PocketAnySol {
+    pub len: u32,
+    pub rot: String,
+    pub rot_moves: Vec<u8>,
+    pub moves: Vec<u8>,
+}
+
+/// 24 个整体旋转:(显示名如 "x y'",其对角作用的等价 move 词)。首项 ("", [])。
+/// 旋转对角的作用 = move 对:x = R L'、y = U D'、z = F B'(中层只动棱/中心,2x2x2 无)。
+/// 与 pocket_analyzer::rot24 同构,这里带显示名供在线求解器输出旋转前缀。
+pub fn pocket_rot24() -> &'static [(String, Vec<Move>)] {
+    static V: OnceLock<Vec<(String, Vec<Move>)>> = OnceLock::new();
+    V.get_or_init(|| {
+        use Move::*;
+        let a: [(&str, &[Move]); 6] = [
+            ("", &[]),
+            ("x", &[R, LPrime]),
+            ("x2", &[R2, L2]),
+            ("x'", &[RPrime, L]),
+            ("z", &[F, BPrime]),
+            ("z'", &[FPrime, B]),
+        ];
+        let b: [(&str, &[Move]); 4] =
+            [("", &[]), ("y", &[U, DPrime]), ("y2", &[U2, D2]), ("y'", &[UPrime, D])];
+        let mut out = Vec::with_capacity(24);
+        for (an, aw) in a {
+            for (bn, bw) in b {
+                let name = match (an.is_empty(), bn.is_empty()) {
+                    (true, true) => String::new(),
+                    (true, false) => bn.to_string(),
+                    (false, true) => an.to_string(),
+                    (false, false) => format!("{} {}", an, bn),
+                };
+                let mut w = aw.to_vec();
+                w.extend_from_slice(bw);
+                out.push((name, w));
+            }
+        }
+        out
+    })
 }
 
 pub struct PocketSolver {
@@ -308,6 +356,174 @@ impl PocketSolver {
         }
         PocketSol { len: moves.len() as u32, moves }
     }
+
+    /// 轻量构造(WASM 用):只建 3.6MB 全空间距离表,**不存**联合移动表(new() 的
+    /// mt 为 POCKET_STATES×9×4B ≈ 132MB,浏览器线性内存吃不消)。BFS 转移现场由
+    /// 角运动学逐态计算,总转换次数与 new() 建表相同(每态 9 次),只省内存不加时。
+    /// 注意:lean 实例的 mt 为空,查询只能走 solve_one / solve_one_any / enumerate_any
+    /// (全程 State 级投影,不依赖 mt);不要调 enumerate(走 mt 回溯)。
+    pub fn new_lean() -> Self {
+        let mut pcp = [[0u8; 8]; 18];
+        let mut pco = [[0u8; 8]; 18];
+        for m in Move::ALL {
+            let (cp, co) = move_state(m).cp_co();
+            pcp[m.index()] = cp;
+            pco[m.index()] = co;
+        }
+
+        let mut fixed = usize::MAX;
+        for c in 0..8usize {
+            let untouched = POCKET_MOVES.iter().all(|&m| {
+                let m = m as usize;
+                pcp[m][c] == c as u8 && pco[m][c] == 0
+            });
+            if untouched {
+                assert_eq!(fixed, usize::MAX, "more than one fixed corner");
+                fixed = c;
+            }
+        }
+        assert_ne!(fixed, usize::MAX, "no fixed corner under U/R/F");
+
+        let mut movable = [0u8; 7];
+        let mut to_slot = [255u8; 8];
+        let mut n = 0;
+        for c in 0..8u8 {
+            if c as usize != fixed {
+                movable[n] = c;
+                to_slot[c as usize] = n as u8;
+                n += 1;
+            }
+        }
+        debug_assert_eq!(n, 7);
+
+        let to_coord = |cp_full: &[u8; 8], co_full: &[u8; 8]| -> (usize, usize) {
+            let mut perm = [0u8; 7];
+            let mut ori = [0u8; 6];
+            for i in 0..7 {
+                let pos = movable[i] as usize;
+                perm[i] = to_slot[cp_full[pos] as usize];
+                if i < 6 {
+                    ori[i] = co_full[pos];
+                }
+            }
+            (cp_rank(&perm), co_rank(&ori))
+        };
+        let from_coord = |cpr: usize, cor: usize| -> ([u8; 8], [u8; 8]) {
+            let perm = cp_unrank(cpr);
+            let ori6 = co_unrank(cor);
+            let mut cp_full = [0u8; 8];
+            let mut co_full = [0u8; 8];
+            cp_full[fixed] = fixed as u8;
+            co_full[fixed] = 0;
+            let mut osum = 0u8;
+            for i in 0..7 {
+                let pos = movable[i] as usize;
+                cp_full[pos] = movable[perm[i] as usize];
+                let o = if i < 6 {
+                    let v = ori6[i];
+                    osum += v;
+                    v
+                } else {
+                    (3 - osum % 3) % 3
+                };
+                co_full[pos] = o;
+            }
+            (cp_full, co_full)
+        };
+
+        // 全空间 BFS:转移现场算(from_coord → 9 move → to_coord),不落 mt。
+        let mut dist = vec![255u8; POCKET_STATES];
+        let solved = {
+            let (cp, co) = State::SOLVED.cp_co();
+            let (cr, or) = to_coord(&cp, &co);
+            cr * CO6 + or
+        };
+        dist[solved] = 0;
+        let mut frontier = vec![solved as u32];
+        let mut d = 0u8;
+        while !frontier.is_empty() {
+            let mut next = Vec::new();
+            for &i in &frontier {
+                let idx = i as usize;
+                let (cp_full, co_full) = from_coord(idx / CO6, idx % CO6);
+                for &mv in &POCKET_MOVES {
+                    let mv = mv as usize;
+                    let (mcp, mco) = (&pcp[mv], &pco[mv]);
+                    let mut ncp = [0u8; 8];
+                    let mut nco = [0u8; 8];
+                    for i in 0..8 {
+                        ncp[i] = cp_full[mcp[i] as usize];
+                        nco[i] = (co_full[mcp[i] as usize] + mco[i]) % 3;
+                    }
+                    let (cr, or) = to_coord(&ncp, &nco);
+                    let ni = cr * CO6 + or;
+                    if dist[ni] == 255 {
+                        dist[ni] = d + 1;
+                        next.push(ni as u32);
+                    }
+                }
+            }
+            d += 1;
+            frontier = next;
+        }
+
+        PocketSolver { mt: Vec::new(), dist, fixed, movable }
+    }
+
+    /// 任意打乱末态归一到固定 DBL 帧:在 24 个整体旋转里找唯一使 DBL 角归位归向者。
+    /// 返回(归一后全角态,选中的旋转条目)。与 pocket_analyzer::pocket_len 同语义
+    /// (整体旋转不改最优解长,解经共轭等长)。
+    fn normalize_state(&self, alg: &[Move]) -> (State, &'static (String, Vec<Move>)) {
+        let mut st = State::SOLVED;
+        for &m in alg {
+            st.apply(m);
+        }
+        for entry in pocket_rot24() {
+            let mut st2 = st;
+            for &m in &entry.1 {
+                st2.apply(m);
+            }
+            let (cp, co) = st2.cp_co();
+            if cp[self.fixed] as usize == self.fixed && co[self.fixed] == 0 {
+                return (st2, entry);
+            }
+        }
+        unreachable!("no whole-cube rotation fixes the DBL corner");
+    }
+
+    /// 任意 18 记号打乱(含 D/L/B:2x2x2 无中心,与对面只差整体旋转)的最优 HTM 步数。
+    pub fn solve_one_any(&self, alg: &[Move]) -> u32 {
+        let (st, _) = self.normalize_state(alg);
+        self.dist[self.state_coord(&st)] as u32
+    }
+
+    /// 任意 18 记号打乱的一条最优解:24 旋转归一后回溯距离表(State 级,不依赖 mt,
+    /// lean 实例可用)。物理含义:打乱后先整体转 rot,再做 moves 即还原。
+    pub fn enumerate_any(&self, alg: &[Move]) -> PocketAnySol {
+        let (mut st, entry) = self.normalize_state(alg);
+        let mut d = self.dist[self.state_coord(&st)];
+        let len = d as u32;
+        let mut moves = Vec::new();
+        while d > 0 {
+            let before = d;
+            for &mv in &POCKET_MOVES {
+                let ns = st.applied(Move::from_index(mv as usize));
+                if self.dist[self.state_coord(&ns)] == d - 1 {
+                    moves.push(mv);
+                    st = ns;
+                    d -= 1;
+                    break;
+                }
+            }
+            assert!(d < before, "distance table walk stuck");
+        }
+        PocketAnySol {
+            len,
+            rot: entry.0.clone(),
+            rot_moves: entry.1.iter().map(|m| m.index() as u8).collect(),
+            moves,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -539,6 +755,124 @@ mod tests {
                 }
             }
             assert_eq!(got, want, "seed={}", seed);
+        }
+    }
+
+    /// lean 构造(WASM 路径,零 mt)与 full 构造距离表全空间逐格相等。
+    #[test]
+    fn lean_matches_full() {
+        let full = PocketSolver::new();
+        let lean = PocketSolver::new_lean();
+        assert!(lean.mt.is_empty());
+        assert_eq!(lean.fixed, full.fixed);
+        assert_eq!(lean.movable, full.movable);
+        assert_eq!(lean.dist, full.dist, "lean dist != full dist");
+        assert_eq!(lean.max_depth(), 11);
+    }
+
+    /// 24 旋转归一入口(solve_one_any / enumerate_any,WASM 在线求解器走这):
+    /// rot24 互异且首项空;纯旋转词=0;全 18 单 move=1;URF 词与 solve_one 逐位一致;
+    /// 全 18 打乱 replay(打乱 + rot_moves + 解 → 角全归位)+ 短词 IDDFS 独立最优性对照。
+    #[test]
+    fn any_normalization_and_replay() {
+        let s = PocketSolver::new_lean();
+
+        // rot24:24 个互异旋转(末态角排列互异),首项为空
+        assert_eq!(pocket_rot24().len(), 24);
+        assert!(pocket_rot24()[0].0.is_empty() && pocket_rot24()[0].1.is_empty());
+        let mut ends: Vec<[u8; 8]> = pocket_rot24()
+            .iter()
+            .map(|(_, w)| {
+                let mut st = State::SOLVED;
+                for &m in w {
+                    st.apply(m);
+                }
+                st.corners
+            })
+            .collect();
+        ends.sort();
+        ends.dedup();
+        assert_eq!(ends.len(), 24, "rot24 not all distinct");
+
+        // 纯旋转词 = 0;全 18 单 move = 1(D/L/B 与对面只差整体旋转)
+        for (_, w) in pocket_rot24() {
+            assert_eq!(s.solve_one_any(w), 0);
+        }
+        for m in Move::ALL {
+            assert_eq!(s.solve_one_any(&[m]), 1, "single move {}", m.name());
+        }
+        assert_eq!(s.solve_one_any(&string_to_alg("D U'")), 0);
+        assert_eq!(s.solve_one_any(&string_to_alg("L2 R2 U2")), 1);
+
+        // URF 词:归一为恒等,与 solve_one 逐位一致
+        for seed in 0..30u64 {
+            let len = 1 + (seed as usize) % 14;
+            let alg = pseudo_word(11000 + seed, len, &POCKET_MOVES);
+            assert_eq!(s.solve_one_any(&alg), s.solve_one(&alg), "seed={}", seed);
+        }
+
+        // 全 18 打乱:enumerate_any replay → 角全归位;len == solve_one_any ≤ 词长
+        for seed in 0..40u64 {
+            let len = 1 + (seed as usize) % 12;
+            let alg = pseudo_scramble(13000 + seed, len);
+            let best = s.solve_one_any(&alg);
+            assert!(best as usize <= len, "seed={}", seed);
+            let sol = s.enumerate_any(&alg);
+            assert_eq!(sol.len, best, "enum_any len != optimal, seed={}", seed);
+            assert!(sol.moves.iter().all(|&m| POCKET_MOVES.contains(&m)));
+            let mut st = State::SOLVED;
+            for &m in &alg {
+                st.apply(m);
+            }
+            for &m in sol.rot_moves.iter().chain(sol.moves.iter()) {
+                st.apply(Move::from_index(m as usize));
+            }
+            assert_eq!(st.corners, State::SOLVED.corners, "any-solution not solved, seed={}", seed);
+        }
+
+        // 短词独立 IDDFS 最优性对照(目标 = 24 个旋转后的 solved 角态,绕开归一与距离表)
+        let goals: Vec<[u8; 8]> = pocket_rot24()
+            .iter()
+            .map(|(_, w)| {
+                let mut st = State::SOLVED;
+                for &m in w {
+                    st.apply(m);
+                }
+                st.corners
+            })
+            .collect();
+        fn dfs(st: &State, depth: u32, prev: i32, goals: &[[u8; 8]]) -> bool {
+            if depth == 0 {
+                return goals.contains(&st.corners);
+            }
+            for &mv in &POCKET_MOVES {
+                let m = mv as usize;
+                if prev >= 0 && m / 3 == prev as usize / 3 {
+                    continue;
+                }
+                let ns = st.applied(Move::from_index(m));
+                if dfs(&ns, depth - 1, m as i32, goals) {
+                    return true;
+                }
+            }
+            false
+        }
+        for seed in 0..20u64 {
+            let len = 1 + (seed as usize) % 5;
+            let alg = pseudo_scramble(17000 + seed, len);
+            let got = s.solve_one_any(&alg);
+            let mut st = State::SOLVED;
+            for &m in &alg {
+                st.apply(m);
+            }
+            let mut want = u32::MAX;
+            for dd in 0..=len as u32 {
+                if dfs(&st, dd, -1, &goals) {
+                    want = dd;
+                    break;
+                }
+            }
+            assert_eq!(got, want, "seed={} alg={:?}", seed, alg);
         }
     }
 }
