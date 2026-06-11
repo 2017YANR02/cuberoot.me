@@ -17,6 +17,8 @@ pub mod f2b_solver;
 pub mod fr_solver;
 pub mod htr_solver;
 pub mod htr_phase2_solver;
+// pocket:2x2x2 口袋魔方全空间最优(3.6MB 零盘表现场 BFS)。
+pub mod pocket_solver;
 pub mod roux_s1_solver;
 pub mod xcross_solver;
 
