@@ -136,7 +136,7 @@
 - 2026-06-11 — **P2d** pocket WASM + /scramble/pocket 在线最优求解器,`8b92c6312`。new_lean 3.6MB 距离表(弃 132MB 联合移动表)+ 24 旋转归一出解;PuzzleOptimalSolver spec 范式;全门绿(cargo/冒烟/replay/typecheck/playwright)。wasm 产物与并行 session 的 chain 变体 commit(7da7e2c02)字节一致免重复提交。
 - 2026-06-11 — **P2e** pocket 看板登记,`7059b70c1`。typecheck + 39 守卫测试绿。**EPIC 3.1 完成**,MANUAL(2x2x2) 交接入 §3;EPIC 3.2(Pyraminx)按既定计划细化为 P3a–P3e。下一个 = P3a。
 - 2026-06-11 — **P3a** pyraminx Rust 核心,`2f5a4427c`。核心 933,120(修正 backlog 笔误)/含 tips 75.6M 全空间验证;口径=核心最优+tip 数(定理+全空间断言);God 数 11/15 对公开数据逐项锁;5/5 + lib 116/0 + cubing.js 手性 4/4。
-- 2026-06-11 — **P3b** pyraminx analyzer + e2e。executor 新增 raw 字符串通道(小写 tip 进不了 string_to_alg);bin 3 单测含独立 IDDFS oracle + e2e baseline 锁死全绿;pocket/executor 回归绿;smoke 5 条 WCA pyram 10/11/10/11/11 全 ≤15。lib 唯一红 = 并行 chain_solver WIP,非本单元。下一个 = P3c。
+- 2026-06-11 — **P3b** pyraminx analyzer + e2e,`ed5722750`。executor 新增 raw 字符串通道(小写 tip 进不了 string_to_alg);bin 3 单测含独立 IDDFS oracle + e2e baseline 锁死全绿;pocket/executor 回归绿;smoke 5 条 WCA pyram 10/11/10/11/11 全 ≤15。lib 唯一红 = 并行 chain_solver WIP,非本单元。下一个 = P3c。
 
 ---
 
