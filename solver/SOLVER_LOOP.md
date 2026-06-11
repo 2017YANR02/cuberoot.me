@@ -92,7 +92,7 @@
 
 #### EPIC 3.1 — 2x2x2 口袋魔方(状态空间 3,674,160 = 7!·3^6,全表 BFS ~3.6MB 零盘表;solver 参考 cstimer `gsolver.js::pocketCube`)
 - [x] **P2a** Rust 核心 `pocket_solver.rs`(key `pocket`)。✅ 2026-06-11 `c1c6c18db`。3,674,160=7!·3^6 全表 BFS 零盘表,9 move(U/R/F×3,固定 DBL 角消整体朝向);4 测试绿含全 3,674,160 暴力对照,全量 98 lib + e2e 绿;God's number=11 HTM,距离分布逐项吻合公开数据。
-- [ ] **P2b** analyzer bin `pocket_analyzer.rs`(输出每打乱最优解长度)+ `tests/e2e_pocket.rs`。门:e2e 绿 + smoke 形状对。
+- [x] **P2b** analyzer bin `pocket_analyzer.rs`(输出每打乱最优解长度)+ `tests/e2e_pocket.rs`。✅ 2026-06-11 `65affa381`。CSV `id,pocket` 两列;支持全 18 记号(2x2x2 无中心,D/L/B=对面+整体旋转,analyzer 24 旋转词归一后查表,绕开 coord_of 直投影对 D/L/B 不成立的坑);bin 4 单测含独立 IDDFS oracle 40 组全等 + e2e 绿 + 全量回归未塌(lib 99/0 + 13 e2e);smoke 5 条 WCA 222 → 9/9/10/9/9 全 ≤11。
 - [ ] **P2c** 统计管线注册(非 3x3 新管线:难度分布的 build 入口 + distribution JSON 形态 + `/scramble/stats` 新 puzzle 分桶 tab 的数据契约;**真正灌注 = MANUAL**,本单元只建管线 + 用小样本验证形状)。门:相关 build/test 守卫绿。
 - [ ] **P2d** WASM 类 + 重建仪式 + **在线最优求解器 UI**(独立页或挂 /scramble;非 3x3 不进 StageSolver)。门:typecheck + playwright native↔WASM 逐格相等,0 console error。
 - [ ] **P2e** `/code/solvers` 看板登记 + **📦 MANUAL(2x2x2)** 灌注/发布交接写 §3。门:typecheck + code-tokens-drift 绿。
@@ -125,6 +125,7 @@
 - 2026-06-11 — **M3e** htr2 看板登记,`4cd201d20`。typecheck+drift 全绿。**EPIC 2 完成(M1 done / M2 弃 / M3=htr2 全链路 done)。下一个 = EPIC 3 P0 ⛔ GATE,loop 按协议停。**
 - 2026-06-11 — **EPIC 3 GATE 调研**(`a73a3b5f1`)+ **用户拍板**:四个非 3x3 全做 + 接统计管道(整解最优步数分布,修正调研"无落点");展开 EPIC 3.1–3.4,顺序 2x2x2→Pyraminx→Skewb→SQ1,灌注/发布 MANUAL。下一个 = P2a(2x2x2 核心)。
 - 2026-06-11 — **P2a** 2x2x2 核心 `pocket`,`c1c6c18db`。3,674,160 全表 BFS 零盘表,God's number=11 HTM,全枚举暴力对照绿。**本 session 已推进 ~15 单元(H1–H5/M1/M2a-b/M3a-e/GATE/P2a)+ 大量决策对话,按 §0.7 安全网停一次,/clear 重 /loop 续(下一个 = P2b)。**
+- 2026-06-11 — **P2b** pocket analyzer + e2e,`65affa381`(新 session 起点)。全 18 记号经 24 旋转归一;IDDFS 独立 oracle 40 组全等;e2e + 全量回归绿;smoke 5 条形状对。
 
 ---
 
