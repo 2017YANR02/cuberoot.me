@@ -29,15 +29,17 @@
    commit(英文 message,结尾带 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`),**不 push**。**按 §0.10 跳过了验收门(欠测试)时** message 加前缀 `[untested]` 并登记 §4。
    主 loop 只在摘要里核对拿到了 commit 短 hash。
 6. **更新并提交本文件**:勾掉任务;§2 追加一行(日期 + 单元 + commit 短 hash);生成了 MANUAL 交接就写 §3、有测试欠账就写 §4。然后 `git add solver/SOLVER_LOOP.md` 单独 commit(这步主 loop 自己做,小输出)——进度文件也版本化,`/clear` 重启 + git log 都能续上。
-7. **决定下一步**:
-   - 还有未 gate 的 backlog → `ScheduleWakeup`(self-paced:一般 ~150–240s 起下一个单元保持上下文新鲜;
-     若有长 build/test 在后台跑,delay 对齐它),**原样回传同一条 /loop 指令**。
-   - **空转自断**:连续 ~3 轮醒来都因内存紧 / 无可做活而**没推进任何单元** → **停 loop、不再 ScheduleWakeup**,提示用户腾内存,**别无限空转烧 token**。
-   - backlog 见底 / 下一个是 gate → **停**(不 ScheduleWakeup),正文给收尾总结。
-8. **每轮目标一个可验收单元**:commit 完再调度下一轮,让进度落盘、上下文可重置。
-9. **上下文防腐(主 loop 必须一直瘦)**:真相只在 git(代码)+ 本文件(§1 进度 / §3 决策),**从不靠"记得"**;每轮从读文件重建状态。注意:**ScheduleWakeup 不清 context、同一 session 累积**,而单个 session 过 ~40% 就开始腐烂(找中间信息 / 守指令变差),**远早于 harness 接近满才触发的 auto-compact——别指望它兜底**。所以:
-   - (a) 每个单元的重活全在 fresh 子 agent 里干、干完即弃(见 §0.3),主 loop 每轮只净增"一次文件读 + 一段 ≤20 行摘要",跑几十单元也进不了腐烂区;
-   - (b) **主 loop 自感已变长**(已发生过 summarize / 历史明显长 / 本 session 已编排 ~6–8 个单元)→ **完成当前单元 commit 后主动停 loop**,不 ScheduleWakeup,正文提示用户:`/clear` 后重新敲同一条 `/loop` 即可——状态全在本文件 + git,**重置零损失**。
+7. **决定下一步(标准 Ralph:跑到底,不中途停)**:默认**一路推进直到 backlog 清空**,不预防性急停、不让用户中途 /clear。只有以下情形停:
+   - **还有未 gate 的 backlog** → `ScheduleWakeup`(self-paced:一般 ~150–240s 起下一个单元;若有长 build/test 在后台跑,delay 对齐它),**原样回传同一条 /loop 指令**。这是常态,持续到 backlog 见底。
+   - **完成信号:backlog 全部打勾 / 下一个是 `⛔ GATE` / `⏸ soft-gate`** → **停**(不 ScheduleWakeup),正文给收尾总结。这是唯一的"正常结束"。
+   - **红灯**(验收门真跑两次仍不过)→ 停,写 §3,等用户。
+   - **空转自断**:连续 ~3 轮醒来都因内存紧 / 无可做活而**没推进任何单元** → 停、不再 ScheduleWakeup,提示用户腾内存。
+   - **安全网(max-iterations 类比)**:单 session 连续推进 **~15 个单元**仍没到完成信号 → 完成当前单元后停一次,正文提示 `/clear` 重 `/loop` 续(纯防失控烧 token 的硬上限,不是常规节奏;远高于一般 EPIC 的单元数,正常 backlog 跑完都到不了)。
+8. **每轮目标一个可验收单元**:commit 完再调度下一轮,让进度落盘、可断点续。
+9. **上下文防腐(主 loop 必须一直瘦)**:真相只在 git(代码)+ 本文件(§1 进度 / §3 决策),**从不靠"记得"**;每轮从读文件重建状态。
+   - (a) **核心机制**:每个单元的重活全在 fresh 子 agent 里干、干完即弃(见 §0.3)——这等价于标准 bash-Ralph 的"每轮 fresh 上下文",只是粒度在单元。主 loop 每轮只净增"一次文件读 + 一段 ≤20 行摘要",**所以才敢一路跑到底**。
+   - (b) **派发要短**:给子 agent 的 prompt 别堆几十行内联 spec——详细 spec 写进 §1 该单元条目(或 `solver/specs/<unit>.md`),派发时只给"读 §1 的 X 单元 / specs/X.md 执行 + 验收门 + §0.5 提交规则"几行指针。主 loop 越瘦,能连跑的单元越多。
+   - (c) **真腐烂兜底**:若中途真的触发了 summarize / auto-compact(不是预防性,是实际发生了),无妨——状态全在文件 + git,读文件即重建;继续跑。只有 §0.7 的 ~15 单元安全网才主动停。
 10. **内存门(本机 32GB 总,但常被占满——实测某刻仅 3.0GB 可用,务必防 OOM)**:跑 cargo(release 编译峰值 ~2GB)、native 建表/跑表、playwright(Chromium ~0.5GB/实例)前**先查可用内存**(`Get-CimInstance Win32_OperatingSystem` 的 FreePhysicalMemory,KB)。**绝不并发两个重进程**(两个 cargo / cargo+playwright / 多浏览器),严格串行。内存不够时 = **降级跳过、记账、继续,不死等也不红灯**(用户 2026-06-11 定):
     - 跑得动 `cargo check`/debug 但跑不动 `cargo test --release` 全量 → 至少 `cargo check` 确认能编过,把 release 全测 + playwright 标欠账。
     - **地基底线(不可跳)**:每个变体的 Rust 核心(H1 / M1 这类下游都依赖的单元)的**独立暴力对照测试**(playbook 金标准,内存占用小、吃内存的是编译)**内存再紧也必须跑**;只许欠 release 全量 e2e / playwright。**绝不让未验证的地基喂给下游单元**(否则在错地基上白盖楼)。
@@ -97,7 +99,8 @@
 - 2026-06-11 — **H4** StageSolver 集成 HTR,`c753f09c5`。8 登记点对齐 eoline + scramble-variants 4 点 + TNoodleMode 类型 ripple;HTR_NOT_DR 哨兵 7 处接线(主 loop grep 复核);playwright 独立 agent 验收 8/8 PASS。
 - 2026-06-11 — **H5** /code/solvers 看板登记 HTR,`af97a2c0a`。EPIC 1 代码侧全部完成;MANUAL(HTR) 交接写入 §3。
 - 2026-06-11 — **M1** 引擎 move-mask 能力,`07e93483d`。u32 bitmask + `*_masked` 入口;全量 94/94 绿,mask=全集逐位相等锁死 + 限 G2 暴力对照。
-- 2026-06-11 — **M2 soft-gate 解除**:用户拍板做,key `roux_s2`,展开 M2a–M2e。本 session 已编排 6 单元,按 §0.9b 主动停 loop,用户 `/clear` 后重 `/loop` 零损续上(下一个 = M2a)。
+- 2026-06-11 — **M2 soft-gate 解除**:用户拍板做,key `roux_s2`,展开 M2a–M2e(下一个 = M2a)。
+- 2026-06-11 — **协议改版**:§0.7/§0.9 改为标准 Ralph"跑到底"——删除原 §0.9b"6-8 单元预防性停 + 让用户 /clear"的非标准摩擦;退出只认 backlog 空 / GATE / 红灯 / 空转 / ~15 单元安全网。依据:Ralph Wiggum 社区标准用法(状态在文件、跑到完成信号才停)。
 
 ---
 
