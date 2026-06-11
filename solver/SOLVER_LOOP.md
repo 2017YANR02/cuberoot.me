@@ -83,7 +83,7 @@
 - [x] **M3b** analyzer bin `htr_phase2_analyzer.rs`(suffix `_htr2`)+ `tests/e2e_htr2.rs`。✅ 2026-06-11 `8e6496a83`。照 htr_analyzer 同构;e2e 绿 + htr/htr2 仍绿(lib 9)+ smoke 形状对。关键:G3 词全程 HTR,6 视角恒同值(异于 H1 DR 词只 UD 轴),baseline 据实测锁。
 - [x] **M3c** WASM 类 `HtrPhase2SolverWasm` + 重建仪式(照 H3 清单)。✅ 2026-06-11 `a8b9449f4`(8 文件)。`TABLE_SETS.htr2=[]` 零下载,哨兵 `HTR2_NOT_HTR`,V bump 20260611b;typecheck 主 loop 复核 EXIT=0(从 core/ 跑;注意别 cd 到仓库根否则 ERR_PNPM_NO_PKG_MANIFEST);cargo htr2 仍绿;node 冒烟 3 G3 词 native↔wasm 6 视角全等。
 - [x] **M3d** StageSolver UI 集成(照 H4 清单)。✅ 2026-06-11 `5626a0e9c`(3 文件)。htr↔htr2 各登记点对齐 + isSentinel 统一哨兵;typecheck 主 loop 复核 EXIT=0(我的文件干净);playwright 8/8 PASS、native↔WASM 12/12 格相等、0 相关 console error;htr2 不进 VARIANT_ORDER。文案 zh「HTR 收尾」/en「HTR-finish」,EAGER_MAX=0。
-- [ ] **M3e** `/code/solvers` 看板同步 + **📦 MANUAL(htr2)** 交接写 §3。门:typecheck + code-tokens-drift 绿。
+- [x] **M3e** `/code/solvers` 看板同步 `4cd201d20` + **📦 MANUAL(htr2)** 交接见 §3。✅ 2026-06-11 typecheck EXIT=0(主 loop 复核)+ code-tokens-drift 35/35 + zh-hant-drift 4/4;htr2 登记 TABLES/NATIVE/BROWSER/hero/概览卡,rate 留 null「未实测」。**M3 全链路完成,EPIC 2 收尾。**
 
 ### EPIC 3 — 独立 puzzle 引擎(档3,每个都 GATED)
 > 非 3x3:`cube_common`(8角12棱)不覆盖,各需独立状态模型;且偏离本舰队"3x3 打乱分阶段难度统计"用途。
@@ -112,6 +112,7 @@
 - 2026-06-11 — **M3b** htr2 analyzer + e2e,`8e6496a83`。照 htr_analyzer 同构;e2e 绿、lib 9 全绿、smoke 形状对(G3 词 6 视角恒同值)。
 - 2026-06-11 — **M3c** htr2 WASM + 重建仪式,`a8b9449f4`。HtrPhase2SolverWasm + worker htr2 分支 + V bump + PoolNeed;零盘表;typecheck EXIT=0,node 冒烟 native↔wasm 全等。
 - 2026-06-11 — **M3d** htr2 StageSolver UI,`5626a0e9c`。playwright 8/8 + native↔WASM 12/12;文案 HTR 收尾/HTR-finish。(发现并行 AI 的 arch-data.tsx:316 语法 WIP,非本域。)
+- 2026-06-11 — **M3e** htr2 看板登记,`4cd201d20`。typecheck+drift 全绿。**EPIC 2 完成(M1 done / M2 弃 / M3=htr2 全链路 done)。下一个 = EPIC 3 P0 ⛔ GATE,loop 按协议停。**
 
 ---
 
@@ -122,6 +123,7 @@
   - **推导**:8角12棱无中心模型在"件"层面能表达 M(4 棱 cycle+flip)/ r(=R∘M'),朝向参照无矛盾(cstimer 也不在求解器里用 M 切片搜索,M/r 只在记号层)。但整个 move-table / 剪枝 / 搜索 **硬编码 stride=18**(`valid_moves` 用 `i/3==prev/3` 面剪枝、`MASK_ALL=(1<<18)-1`、`INV_MOVE:[u8;18]`、`create_multi_move_table` 列宽 18、坐标乘 18),**36 个源文件 + 34GB 表**全建在 18-stride 上。原生加 M/r(索引≥18)= 重构表生成引擎 + 重建全部表,明确触 §0.3 红线。
   - **三条路**:(A) **伪 roux_s2**(推荐):M2b 的 ⟨M,U,R,r⟩ 搜索不扩引擎,在现有 18-move + 视角共轭里表达 Roux S2 阶段(M=共轭切片组合、r=R+M'),输出用记号规整器译回 M/r 显示。零引擎重构,落在现有 mask+conj+pseudo 能力内。(B) **真重构**:stride 18→24 改表生成引擎 + 重建 34GB 表(磁盘紧 + 波及全舰队,高风险)。(C) **弃 M2**:roux_s2 本是 nice-to-have,本站口径已用 `123x2` f2b 联合最优替代;直接跳到 M3。
   - ✅ **2026-06-11 用户拍板:走 (A) 伪 roux_s2**。M2a"扩引擎"取消,M2b 改伪路线 + design-first soft-gate(伪路线若实质等于已有 123 系就停,别造重复)。红灯解除,loop 继续。
+- **📦 MANUAL(htr2) 交接**(2026-06-11,M3a–M3e 代码侧全绿落地,等用户在场手动):同 HTR 一样是条件式阶段——随机 master 打乱直灌 htr_phase2_analyzer 全 `-`(打乱不在 G3)。口径同 MANUAL(HTR):(a) 只做 analyzer 在线查询(现状,零额外工作);或 (b) 输入集用"先降到 HTR(G3)后的态"(需串 htr 阶段)。若灌统计:注册管道 `_htr2` 列 → 灌 → distribution.json htr2 分桶;UI 加 VARIANT_ORDER(M3d 故意未加)+ 各下游登记点;看板 NATIVE htr2 rate 从「未实测」改实测(M3e 已留 null 槽)。
   - ⛔ **2026-06-11 M2b soft-gate:伪路线也死**。推导确认固定 18-move 模型 M 不能当 1 步(M≡R L' x'),伪 roux_s2 只能给 FTM 最优 SB = 与现有 `roux_s1_solver`(全部 24 个物理 1x2x3 块)逐位等价,cstimer 亦只报 FTM。**roux_s2 作为独立有意义变体两条路皆绝(扩引擎撞墙 / 伪路线重复)**。建议:弃整个 M2(M2a–M2e),推进 M3;若仍要 Roux SB 的 FTM 数,复用 `RouxS1Solver` 右块视角即可,无需新变体。等用户定。
 - (MANUAL 交接条目在此累积:变体名 + 待跑的灌注/发布步骤,等用户在场手动跑)
 - **📦 MANUAL(HTR) 交接**(2026-06-11,H1–H5 代码侧已全绿落地,等用户在场手动):
