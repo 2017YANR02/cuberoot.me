@@ -52,7 +52,9 @@ function FrontPanel({
   // 屏幕预览裁掉出血只看成品 20x40,即印刷裁切后的真实画面。
   // 出血只在左侧 → 图框右移 bleed/2(left -1.5)让画面以成品面为中心,与母版同步。
   // layout.front = 平移(mm)+ 缩放 s(绕成品面中心),编辑器拖动/滑块写入。
+  // fit:"contain" = 整图完整装进成品面、留 1mm 安全边(18x38),不裁切,空余露深色底。
   const ft = layout?.front;
+  const fitContain = ft?.fit === "contain";
   return (
     <div
       data-panel="front"
@@ -73,12 +75,23 @@ function FrontPanel({
         draggable={false}
         style={{
           position: "absolute",
-          left: m(-1.5),
-          top: m(-3),
-          width: m(23),
-          height: m(46),
-          objectFit: "cover",
-          transformOrigin: `${m(11.5)} ${m(23)}`,
+          ...(fitContain
+            ? {
+                left: m(1),
+                top: m(1),
+                width: m(18),
+                height: m(38),
+                objectFit: "contain" as const,
+                transformOrigin: `${m(9)} ${m(19)}`,
+              }
+            : {
+                left: m(-1.5),
+                top: m(-3),
+                width: m(23),
+                height: m(46),
+                objectFit: "cover" as const,
+                transformOrigin: `${m(11.5)} ${m(23)}`,
+              }),
           transform: ft
             ? `translate(${m(ft.x)}, ${m(ft.y)}) scale(${ft.s ?? 1})`
             : undefined,
