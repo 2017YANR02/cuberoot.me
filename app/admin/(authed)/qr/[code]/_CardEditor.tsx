@@ -465,7 +465,14 @@ export function CardEditor({
               <input
                 type="checkbox"
                 checked={s.layout.front?.fit === "contain"}
-                onChange={(e) => setFront({ fit: e.target.checked ? "contain" : undefined })}
+                onChange={(e) =>
+                  // 勾选即要看整图:顺带清掉残留的平移/缩放,否则放大状态会把边又裁掉
+                  setFront(
+                    e.target.checked
+                      ? { fit: "contain", x: 0, y: 0, s: 1 }
+                      : { fit: undefined },
+                  )
+                }
                 className="accent-brand"
               />
               完整显示整张图,一点不裁
