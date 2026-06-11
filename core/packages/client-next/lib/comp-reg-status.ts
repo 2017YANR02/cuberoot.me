@@ -1,5 +1,5 @@
 // 报名时段文案 — 比赛页弹窗 + 首页「今日公示」共用。
-// 未到 → "X 开放报名";进行中 → "X 截止";已截止 → "报名已截止"。ISO 转用户本地时区。
+// 未到 → "X 报名";进行中 → "X 截止";已截止 → "报名已截止"。ISO 转用户本地时区。
 // 两个字段都没有时返回 null。
 import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
@@ -24,7 +24,7 @@ export function formatRegStatus(
   const openMs = open ? new Date(open).getTime() : null;
   const closeMs = close ? new Date(close).getTime() : null;
   if (openMs !== null && now < openMs) {
-    return i18n.language === 'zh-Hant' ? (`${fmt(open!)} 開放報名`) : (isZh ? `${fmt(open!)} 开放报名` : `Registration opens ${fmt(open!)}`);
+    return i18n.language === 'zh-Hant' ? (`${fmt(open!)} 報名`) : (isZh ? `${fmt(open!)} 报名` : `Registration opens ${fmt(open!)}`);
   }
   if (closeMs !== null && now >= closeMs) {
     return tr({ zh: '报名已截止', en: 'Registration closed',
