@@ -5,14 +5,17 @@
 // 跑两个权威生成器,任何「漏跑 codemod / 手写漂移」都会让它们非零退出 → CI 红。
 //   - gen-zh-hant.mjs           : t() 目录 i18n/zh-Hant.json 必须 === OpenCC(zh.json)
 //   - inject-zhhant.mjs         : 每个 {zh,en} 对象(tr() 入参 + 数据对象)的 zhHant 必须 === OpenCC(zh)
-//   - check-handwritten-trad.mjs: 内联三路 i18n.language==='zh-Hant' ? 繁 : (isZh?简:en) 的繁体分支
-//                                 必须 === conv(同一三路里的简体兄弟),抓内联手敲错字
+//   - gen-ternary-zhhant.mjs    : 内联三路 i18n.language==='zh-Hant' ? 繁 : (isZh?简:en) 的繁体分支
+//                                 必须 === conv(同一三路里的简体兄弟),整支全文严格比对(无 stripBraces)
+//   - gen-localt-zhhant.mjs     : 局部 t(zh,en,zhHant?) helper 调用的第三参,必须 === conv(第一参)
+//                                 (简繁同形时不带第三参);抓缺失/过期/手写的局部 t 繁体
 //
-// s2twp 不可逆(算法→演算法),故无法对三路分支做"再生成-比对";改为拿繁体分支跟它在同一
-// 三目里的简体兄弟比(conv 只动汉字字形,${}/标签/英文不变),与 inject 的 zhHant:=conv(zh) 同理。
-// PreToolUse 钩子 .claude/hooks/block-handwritten-trad.* 是写时左移兜底,本测试是权威红灯。
+// 三者都是"简体唯一源 + 再生成-比对"的生成器:gen-ternary 拿繁支跟同三目里的简体兄弟比
+// (conv 只动汉字字形,${}/标签/英文不变;简支必须是纯简体源,不嵌套 t()/tr()、不用预算的
+// 语言变量,否则 conv(简)≠繁)。写时另有 PreToolUse 钩子 .claude/hooks/block-handwritten-trad.*
+// 绝对拦截 AI 在 UI 源码里手敲/搬运任何繁体字符(繁体只能由上述生成器经 fs 写入),本测试是权威红灯。
 //
-// CI 跑 vitest(不跑 eslint),故约定靠本测试当红灯。修复:cd packages/client-next && pnpm zh:gen && pnpm zh:inject
+// CI 跑 vitest(不跑 eslint),故约定靠本测试当红灯。修复:cd packages/client-next && pnpm zh:gen && pnpm zh:inject && pnpm zh:gen-ternary
 import { describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -45,8 +48,13 @@ describe('zh-Hant convention — Traditional is OpenCC-generated, never hand-aut
     expect(r.ok, '\n' + r.out).toBe(true);
   }, 180_000); // ts-morph parses the whole app/components/lib/hooks tree
 
-  it('inline 3-way Traditional branch === conv(zh sibling) (check-handwritten-trad.mjs --check)', () => {
-    const r = runCheck('check-handwritten-trad.mjs');
+  it('inline 3-way Traditional branch === conv(zh sibling) (gen-ternary-zhhant.mjs --check)', () => {
+    const r = runCheck('gen-ternary-zhhant.mjs');
+    expect(r.ok, '\n' + r.out).toBe(true);
+  }, 180_000);
+
+  it('local t() 3rd arg === conv(1st arg) (gen-localt-zhhant.mjs --check)', () => {
+    const r = runCheck('gen-localt-zhhant.mjs');
     expect(r.ok, '\n' + r.out).toBe(true);
   }, 180_000);
 });

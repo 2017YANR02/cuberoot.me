@@ -149,8 +149,8 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
         <PillToggle
           value={inclCancelled}
           onChange={onInclCancelledChange}
-          onLabel={t('废止项', 'Cancelled')}
-          offLabel={t('废止项', 'Cancelled')}
+          onLabel={t('废止项', 'Cancelled', "廢止項")}
+          offLabel={t('废止项', 'Cancelled', "廢止項")}
         />
       </div>
 
@@ -218,7 +218,7 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
                   onClick={selectable ? () => toggleEvent(eid) : undefined}
                   aria-selected={selectable ? selected : undefined}
                 >
-                  <th scope="row" className="wp-cell-event" title={selectable ? t('点击多选项目,自选组合的名次和落在下方「自选」行', 'Click rows to multi-select events; the combined sum of ranks appears in the Custom row below') : undefined}>
+                  <th scope="row" className="wp-cell-event" title={selectable ? t('点击多选项目,自选组合的名次和落在下方「自选」行', 'Click rows to multi-select events; the combined sum of ranks appears in the Custom row below', "點選多選項目,自選組合的名次和落在下方「自選」行") : undefined}>
                     <span className="wp-event-inner">
                       <EventIcon event={eid} className="wp-event-icon" />
                     </span>
@@ -309,7 +309,7 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
   if (!sor.single && !sor.average && !sor.bestSingle && !sor.bestAverage && !effCancelled) return null;
 
   const cont = CONTINENT_NAME[sor.continentId];
-  const continentLabel = cont ? t(cont.zh, cont.en, cont.zhHant) : t('本洲', 'Continent', '本洲');
+  const continentLabel = cont ? t(cont.zh, cont.en, cont.zhHant) : t('本洲', 'Continent');
   const countryLabel = countryIso2 ? countryName(countryIso2, isZh) : t('本国', 'Country', '本國');
   // 当前 / 历史最佳 按表头 toggle 二选一:historical → 取该指标历史最佳(含年份),否则取当前.
   // 子排名(continentRank/countryRank)只有当前模式有(历史最佳专表只存自身 scope).
@@ -321,7 +321,7 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
 
   // 指标行标签后缀挂该 scope 的具体地名(洲/国),让「在哪排名」一目了然;名次本身落对齐列.
   const METRICS: { key: 'sowr' | 'socr' | 'sonr'; abbr: string; label: string }[] = [
-    { key: 'sowr', abbr: 'SoWR', label: t('世界名次和', 'Sum of World Ranks', '世界名次和') },
+    { key: 'sowr', abbr: 'SoWR', label: t('世界名次和', 'Sum of World Ranks') },
     { key: 'socr', abbr: 'SoCR', label: t('洲际名次和', 'Sum of Continent Ranks', '洲際名次和') + (cont ? ` · ${continentLabel}` : '') },
     { key: 'sonr', abbr: 'SoNR', label: t('国家名次和', 'Sum of National Ranks', '國家名次和') + (countryIso2 ? ` · ${countryLabel}` : '') },
   ];
@@ -383,10 +383,10 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
           return (
             <tr key={`sel-${m.key}`} className="wp-sor-row wp-sor-custom">
               {mi === 0 && (
-                <th scope="row" rowSpan={3} className="wp-cell-event wp-sor-rowlabel wp-sor-custom-rowlabel" title={t(`自选组合(已选 ${selEvents.size} 项):按所选项目重算的 SoWR/SoCR/SoNR 三行,与上方同列对齐;点上方项目行增删`, `Custom combo (${selEvents.size} events): SoWR/SoCR/SoNR recomputed over the selected events, columns aligned with the rows above; click rows above to edit`)}>
+                <th scope="row" rowSpan={3} className="wp-cell-event wp-sor-rowlabel wp-sor-custom-rowlabel" title={t(`自选组合(已选 ${selEvents.size} 项):按所选项目重算的 SoWR/SoCR/SoNR 三行,与上方同列对齐;点上方项目行增删`, `Custom combo (${selEvents.size} events): SoWR/SoCR/SoNR recomputed over the selected events, columns aligned with the rows above; click rows above to edit`, `自選組合(已選 ${selEvents.size} 項):按所選項目重算的 SoWR/SoCR/SoNR 三行,與上方同列對齊;點上方項目行增刪`)}>
                   <span className="wp-sor-abbr wp-sor-custom-label">
-                    {t('自选', 'Custom')}
-                    <ClearButton variant="standalone" className="wp-sor-custom-clear" onClick={onClearSel} title={t('清除所选项目', 'Clear selection')} />
+                    {t('自选', 'Custom', "自選")}
+                    <ClearButton variant="standalone" className="wp-sor-custom-clear" onClick={onClearSel} title={t('清除所选项目', 'Clear selection', "清除所選項目")} />
                   </span>
                   {pending && calc && (
                     <span className="wp-sor-custom-progress" aria-hidden>

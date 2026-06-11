@@ -1,22 +1,23 @@
 #!/usr/bin/env node
-// PreToolUse detector: block hand-typed WRONG Traditional in client-next source.
-// Traditional here is OpenCC output (s2twp), never authored by hand.
+// PreToolUse detector: ABSOLUTE ban on hand-typed Traditional Chinese in client-next
+// UI source. Traditional here is exclusively an OpenCC build artifact — it enters the
+// tree ONLY through the fs-writing generators (inject-zhhant / gen-zh-hant /
+// gen-ternary-zhhant), never through an Edit/Write tool call. So any Traditional-only
+// glyph in the text THIS edit adds means a human/AI typed (or moved) it by hand → block.
 //
-// Reconstructs the post-edit file (Edit/MultiEdit splice, or Write content),
-// parses it, and runs the shared inline-3-way verifier: every
-//   i18n.language === 'zh-Hant' ? (繁) : (isZh ? 简 : en)
-// must have 繁 === conv(简 sibling). A mismatch — the exact gap the old
-// new-minus-old char check missed when Traditional was carried across an edit —
-// blocks with exit 2. Correct conv-pasted Traditional passes, so the legit
-// ternary workflow isn't obstructed.
+// This is intentionally stricter than "is the Traditional correct": even a perfectly
+// converted string is rejected if hand-typed, because the only sanctioned path is
+// "edit the Simplified source, then run the generator". That closes the hole the old
+// 繁===conv(简) checker had — carrying existing Traditional across an edit (e.g.
+// 開放報名→報名) slipped through because every glyph already existed. Here we don't
+// diff against the old text at all: new text with any Traditional glyph is blocked.
 //
-// Scope split: zhHant fields (tr() args / objects with zhHant) and the t()
-// catalog are owned by inject-zhhant / gen-zh-hant and their CI --check; this
-// hook + check-handwritten-trad.mjs own the inline-ternary case. Same core
-// module (lib/trad-ternary-check.mjs) so write-time and CI agree exactly.
+// Scope: only client-next app/components/lib/hooks .ts/.tsx (where rendered site copy
+// lives). Generated catalogs (i18n/**), tests, scripts, docs are out of scope. The
+// freshness of generated Traditional is enforced separately by CI
+// (tests/zh-hant-drift.test.ts → the three --check generators).
 //
-// Fails OPEN (exit 0) on any parse/scope/reconstruct miss: CI
-// (tests/zh-hant-drift.test.ts) is the authoritative gate; this is shift-left.
+// Fails OPEN (exit 0) on any parse/scope miss: CI is the authoritative gate.
 import { existsSync, readFileSync } from 'node:fs';
 
 // Only client-next UI source. Generated/doc/test/data dirs are out of scope.
@@ -29,32 +30,18 @@ function inScope(p) {
   return /\/(app|components|lib|hooks)\//.test(f);
 }
 
-// Splice new_string in for the first occurrence of old_string. Returns null if
-// old_string isn't found verbatim (whitespace drift) → caller fails open.
-function spliceOnce(base, oldStr, newStr) {
-  if (oldStr === '') return null;
-  const idx = base.indexOf(oldStr);
-  if (idx < 0) return null;
-  return base.slice(0, idx) + newStr + base.slice(idx + oldStr.length);
+// Text this tool call ADDS. We only look at inserted text, never the old/base content,
+// so moving Traditional you didn't author is still caught (and correctly so).
+function addedText(tool, ti) {
+  if (tool === 'Write') return ti.content ?? '';
+  if (tool === 'Edit') return ti.new_string ?? '';
+  if (tool === 'MultiEdit' && Array.isArray(ti.edits)) {
+    return ti.edits.map((e) => e?.new_string ?? '').join('\n');
+  }
+  return '';
 }
 
-// Rebuild the file content as it WOULD be after this tool call.
-function postEditContent(tool, ti) {
-  const fp = ti.file_path;
-  if (tool === 'Write') return ti.content ?? '';
-  if (!existsSync(fp)) return null;
-  const base = readFileSync(fp, 'utf8');
-  if (tool === 'Edit') return spliceOnce(base, ti.old_string ?? '', ti.new_string ?? '');
-  if (tool === 'MultiEdit' && Array.isArray(ti.edits)) {
-    let cur = base;
-    for (const e of ti.edits) {
-      cur = spliceOnce(cur, e.old_string ?? '', e.new_string ?? '');
-      if (cur === null) return null;
-    }
-    return cur;
-  }
-  return null;
-}
+const CJK = /[㐀-䶿一-鿿豈-﫿]/;
 
 let raw = '';
 process.stdin.setEncoding('utf8');
@@ -70,36 +57,48 @@ process.stdin.on('end', async () => {
   const ti = payload.tool_input ?? {};
   if (!inScope(ti.file_path)) process.exit(0);
 
-  let post;
-  try {
-    post = postEditContent(tool, ti);
-  } catch {
-    process.exit(0);
-  }
-  if (post == null) process.exit(0);
+  const added = addedText(tool, ti);
+  if (!CJK.test(added)) process.exit(0); // no Han at all → nothing to check
 
-  // Defer the heavy imports (ts-morph + opencc) until we actually have content
-  // to parse — keeps the common no-op path cheap.
-  let violations;
-  try {
-    const { Project } = await import('ts-morph');
-    const { collectViolations } = await import('./lib/trad-ternary-check.mjs');
-    const project = new Project({ skipAddingFilesFromTsConfig: true, compilerOptions: { jsx: 4 } });
-    const sf = project.createSourceFile(ti.file_path, post, { overwrite: true });
-    violations = collectViolations(sf);
-  } catch {
-    process.exit(0); // fail open on any tooling error
+  // For Write, only NEW Traditional should block — re-writing a file that already holds
+  // generated Traditional verbatim is legitimate. Subtract glyphs present on disk so we
+  // flag introductions, not faithful rewrites. (Edit/MultiEdit insert text, so their
+  // "added" is genuinely new and isn't subtracted.)
+  let onDisk = '';
+  if (tool === 'Write' && existsSync(ti.file_path)) {
+    try { onDisk = readFileSync(ti.file_path, 'utf8'); } catch { /* treat as empty */ }
   }
-  if (!violations.length) process.exit(0);
 
-  const lines = violations
-    .slice(0, 8)
-    .map((v) => `  行 ${v.line}\n    手写: ${JSON.stringify(v.got)}\n    应为: ${JSON.stringify(v.expected)}`)
-    .join('\n');
+  let t2s;
+  try {
+    const OpenCC = await import('opencc-js');
+    t2s = OpenCC.Converter({ from: 'tw', to: 'cn' });
+  } catch {
+    process.exit(0); // tooling missing → fail open, CI catches it
+  }
+
+  // Traditional-only glyph = a Han char that the tw→cn converter rewrites (i.e. it is
+  // not already its own Simplified form). 单 stays 单; 單 → 单, so 單 is flagged.
+  const isTrad = (ch) => CJK.test(ch) && t2s(ch) !== ch;
+  const onDiskTrad = tool === 'Write' ? new Set([...onDisk].filter(isTrad)) : null;
+
+  const hits = [];
+  for (const ch of added) {
+    if (!isTrad(ch)) continue;
+    if (onDiskTrad && onDiskTrad.has(ch)) continue; // already in the file → faithful rewrite
+    if (!hits.includes(ch)) hits.push(ch);
+  }
+  if (!hits.length) process.exit(0);
+
   process.stderr.write(
-    `⛔ 内联三路的繁体分支与简体兄弟不一致(手写繁体)在 ${String(ti.file_path).replace(/\\/g, '/')}\n` +
-      `本仓库繁体一律由 OpenCC 生成,禁手敲。改法:繁体分支用 \`node scripts/conv.mjs "简体"\` 取值粘贴。\n` +
-      `${lines}\n` +
+    `⛔ 检测到手写繁体字符 ${JSON.stringify(hits.slice(0, 30).join(''))} ` +
+      `在 ${String(ti.file_path).replace(/\\/g, '/')}\n` +
+      `本仓库繁体一律由 OpenCC 生成,任何文件都禁止手敲/搬运繁体(人 / AI 同)。\n` +
+      `正确做法:只写简体源,繁体交给生成器经 fs 写入——\n` +
+      `  内联三路  i18n.language==='zh-Hant' ? 繁 : (isZh?简:en):简支写好后跑 \`pnpm zh:gen-ternary\`(繁支自动生成)\n` +
+      `  局部 t(zh,en,zhHant?) 第三参:只写 t('简','en') 后跑 \`pnpm zh:gen-localt\`(第三参自动生成)\n` +
+      `  tr({zh,en}) / 数据对象 zhHant:跑 \`pnpm zh:inject\`\n` +
+      `  t() 目录:改 i18n/zh.json 后跑 \`pnpm zh:gen\`\n` +
       `详见 packages/client-next/scripts/ZHHANT_RECIPE.md。\n`,
   );
   process.exit(2);
