@@ -50,7 +50,7 @@ export default async function AdminQrEditPage({
             </button>
             {/* 下载前先自动保存,再下已存版本(组件内处理) */}
             <HeaderDownloads code={entry.code} formId="qr-edit-form" />
-            <GhostLink href="/admin/qr">返回列表</GhostLink>
+            <GhostLink href="/admin/qr">返回</GhostLink>
           </div>
         }
       />
@@ -67,17 +67,7 @@ export default async function AdminQrEditPage({
         </div>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px] items-start">
-        <Card className="p-6">
-          <h2 className="text-[15px] font-semibold text-ink mb-4">卡片编辑</h2>
-          <CardEditor
-            entry={entry}
-            svg={svg}
-            formId="qr-edit-form"
-            landingUrl={landingUrl}
-          />
-        </Card>
-
+      <div className="grid gap-6 lg:grid-cols-[340px_1fr] items-start">
         <div className="grid gap-6">
           <Card className="p-5">
           <h2 className="text-[15px] font-semibold text-ink mb-3">设置</h2>
@@ -135,7 +125,7 @@ export default async function AdminQrEditPage({
             {/* 保存按钮统一用左侧卡片编辑器底部那个全宽「保存」(form={qr-edit-form}),
                 它在下载按钮之上,符合「先存再下载」流程;此处不再重复放 */}
             <p className="text-[12px] text-ink-3">
-              这里的设置和左侧卡片改动,一起点右上角的「保存」生效。
+              这里的设置和右侧卡片改动,一起点右上角的「保存」生效。
             </p>
           </form>
           <div className="mt-4 border-t border-line-soft pt-4">
@@ -186,6 +176,16 @@ export default async function AdminQrEditPage({
         </Card>
 
         </div>
+
+        <Card className="p-6">
+          <h2 className="text-[15px] font-semibold text-ink mb-4">卡片编辑</h2>
+          <CardEditor
+            entry={entry}
+            svg={svg}
+            formId="qr-edit-form"
+            landingUrl={landingUrl}
+          />
+        </Card>
       </div>
     </div>
   );
