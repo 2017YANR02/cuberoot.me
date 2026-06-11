@@ -14,6 +14,30 @@ export function assemblePrompt(body: string): string {
   return `${PROMPT_PREAMBLE}\n\n${body.trim()}`;
 }
 
+// 维度组合器:用户从「风格 / 主体 / 主题 / 构图 / 光影」各选一项(可留空),按序叠成完整提示词。
+// PromptDimension 是组合积木的维度;preset(整套模板)的 dimension 为 null。
+export const PROMPT_DIMENSIONS = [
+  { key: "风格", label: "风格", hint: "画面的艺术风格 / 媒介" },
+  { key: "主体", label: "内容主体", hint: "画面里画什么" },
+  { key: "主题", label: "主题场景", hint: "节日 / 场合 / 氛围设定" },
+  { key: "构图", label: "构图视角", hint: "镜头与排布" },
+  { key: "光影", label: "光影色调", hint: "打光与配色" },
+] as const;
+
+export type PromptDimension = (typeof PROMPT_DIMENSIONS)[number]["key"];
+
+export const PROMPT_DIMENSION_KEYS: PromptDimension[] = PROMPT_DIMENSIONS.map((d) => d.key);
+
+export function isPromptDimension(v: unknown): v is PromptDimension {
+  return typeof v === "string" && PROMPT_DIMENSION_KEYS.includes(v as PromptDimension);
+}
+
+// 选中的各维度正文(按维度顺序)→ 通用头 + 叠加;空项跳过
+export function composePrompt(parts: (string | null | undefined)[]): string {
+  const body = parts.map((p) => p?.trim()).filter(Boolean).join("，");
+  return assemblePrompt(body);
+}
+
 // 内置 16 个默认风格(从历史会话沉淀)。库为空时由迁移回填进 prompt_templates,
 // 之后用户在后台增删改都落库,这份常量只作首次种子。
 export type DefaultPromptTemplate = {
@@ -268,4 +292,62 @@ export const DEFAULT_PROMPT_TEMPLATES: DefaultPromptTemplate[] = [
     category: "插画",
     body: "蒸汽朋克,黄铜齿轮、管道与铆钉机械构造环绕一颗机械感魔方,暖棕金属色、复古工业、精密细节。\nEN: steampunk brass gears, pipes and rivets around a mechanical Rubik's cube, warm copper, vintage industrial, intricate --ar 1:2",
   },
+];
+
+// 维度组合积木:每条只描述「一个维度」的取向(原子、可正交叠加),供组合器拼装。
+// dimension 取 PROMPT_DIMENSIONS 的 key。库为空时由迁移回填,后台可增删改。
+export type DefaultPromptBlock = {
+  dimension: PromptDimension;
+  name: string;
+  body: string;
+};
+
+export const DEFAULT_PROMPT_BLOCKS: DefaultPromptBlock[] = [
+  // —— 风格(只描述艺术风格 / 媒介,不带主体)——
+  { dimension: "风格", name: "科技发光", body: "科技未来风,边缘发光、细微光粒子与极淡科技网格,冷调高级质感" },
+  { dimension: "风格", name: "3D 渲染", body: "C4D / OC 立体渲染,亚克力玻璃光泽、柔和影棚布光,产品级精致" },
+  { dimension: "风格", name: "写实摄影", body: "写实原生摄影质感,真实材质、细腻高光与景深,电影级超清" },
+  { dimension: "风格", name: "水彩手绘", body: "水彩晕染手绘,透明水痕与自然笔触,清新文艺通透" },
+  { dimension: "风格", name: "水墨国风", body: "中国水墨写意,留白与飞白笔触、淡彩点染,东方意境" },
+  { dimension: "风格", name: "赛博霓虹", body: "赛博朋克霓虹,蓝紫青基调、霓虹辉光与全息光带,炫酷未来" },
+  { dimension: "风格", name: "扁平矢量", body: "扁平矢量插画,平涂色块与干净描边,简洁现代" },
+  { dimension: "风格", name: "像素体素", body: "体素 / 像素 8-bit 复古游戏风,撞色方块、几何趣味" },
+  { dimension: "风格", name: "黏土定格", body: "黏土 / 橡皮泥定格质感,圆润手作肌理、柔光,可爱治愈" },
+  { dimension: "风格", name: "伦勃朗暗调", body: "伦勃朗硬光暗调,强明暗对比、深邃阴影,电影级戏剧感" },
+  { dimension: "风格", name: "复古胶片", body: "35mm 胶片质感,暖旧色调、轻微颗粒与漏光,怀旧文艺" },
+  { dimension: "风格", name: "蒸汽朋克", body: "蒸汽朋克,黄铜齿轮管道铆钉机械构造,暖棕金属、复古工业精密" },
+  { dimension: "风格", name: "全息镭射", body: "全息镭射虹彩薄膜光泽,七彩反光,梦幻潮流" },
+  { dimension: "风格", name: "极简留白", body: "极简主义,大面积留白与柔和渐变,克制高级、杂志编排感" },
+  // —— 主体(画面里画什么)——
+  { dimension: "主体", name: "单颗悬浮魔方", body: "一颗 WCA 三阶魔方悬浮于画面中上方,边缘高光、主体清晰锐利" },
+  { dimension: "主体", name: "散落魔方与道具", body: "几颗 WCA 魔方与速拧道具(计时器、润滑油、钥匙扣)错落散布" },
+  { dimension: "主体", name: "魔方城市", body: "由魔方搭建的微缩城市与建筑群,海量趣味细节、欢乐繁忙" },
+  { dimension: "主体", name: "魔方爆裂分解", body: "一颗魔方爆裂分解,小方块与彩色碎屑向四周飞散并拖出动态轨迹" },
+  { dimension: "主体", name: "拟人魔方吉祥物", body: "一颗拟人魔方吉祥物,有手脚和俏皮表情,活泼友好、品牌 IP 感" },
+  { dimension: "主体", name: "魔方拼成大图案", body: "成百上千颗微缩魔方整齐拼贴成六色渐变的马赛克色域" },
+  { dimension: "主体", name: "速拧手部特写", body: "速拧选手手部正飞快转动魔方的特写,手指利落、动感十足" },
+  { dimension: "主体", name: "各阶魔方一排", body: "二阶到七阶各种阶数魔方整齐排开,层次丰富、阵列感" },
+  // —— 主题(节日 / 场合 / 氛围设定)——
+  { dimension: "主题", name: "春节", body: "春节氛围,红灯笼、烟花、祥云与中国红配金点缀,喜庆热闹" },
+  { dimension: "主题", name: "圣诞", body: "圣诞氛围,雪花、松枝、礼盒与暖色灯串,温馨梦幻" },
+  { dimension: "主题", name: "万圣节", body: "万圣节氛围,月夜、南瓜灯与剪影,神秘俏皮" },
+  { dimension: "主题", name: "校园青春", body: "校园青春场景,书本、社团与活力气息,清新阳光" },
+  { dimension: "主题", name: "电竞赛事", body: "电竞 / 赛事舞台,聚光灯、看台与夺冠氛围,热血竞技" },
+  { dimension: "主题", name: "未来太空", body: "未来太空场景,星空、星云与失重悬浮,宏大科幻" },
+  { dimension: "主题", name: "暑期夏日", body: "夏日清凉,海浪、椰树、冰饮与明媚阳光,活力满满" },
+  { dimension: "主题", name: "生日庆典", body: "生日派对,气球、彩带、蛋糕与撒花,欢乐温暖" },
+  // —— 构图(镜头与排布)——
+  { dimension: "构图", name: "居中特写", body: "主体居中偏上特写,中下大量负空间留白用于叠文字" },
+  { dimension: "构图", name: "等距俯视", body: "等距 2.5D 俯视视角,模型般整齐排布、纵深规整" },
+  { dimension: "构图", name: "微距浅景深", body: "微距特写浅景深,主体锐利、背景奶油般柔化虚化" },
+  { dimension: "构图", name: "大场景鸟瞰", body: "大场景鸟瞰全景,丰富细节与空间纵深" },
+  { dimension: "构图", name: "低角仰视", body: "低角度仰视,主体高大、英雄气势" },
+  { dimension: "构图", name: "对称构图", body: "严格对称构图,均衡稳重、秩序感强" },
+  // —— 光影(打光与配色)——
+  { dimension: "光影", name: "影棚硬光暗调", body: "影棚单束硬光配深色背景,强高光与深阴影对比,戏剧暗调" },
+  { dimension: "光影", name: "柔和晨光", body: "柔和自然晨光,通透明亮、淡淡光晕,清新干净" },
+  { dimension: "光影", name: "霓虹辉光", body: "霓虹辉光打光,冷蓝紫与品牌蓝交映,赛博炫彩" },
+  { dimension: "光影", name: "暖金黄昏", body: "暖金黄昏逆光,丁达尔光束与边缘镶光,温暖氛围" },
+  { dimension: "光影", name: "品牌蓝主调", body: "以品牌蓝 #2A5DF4 为主的统一蓝调,点缀魔方六色" },
+  { dimension: "光影", name: "六色撞色", body: "高饱和魔方六色撞色,明快活泼、对比强烈" },
 ];

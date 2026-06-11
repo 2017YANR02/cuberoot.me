@@ -6,10 +6,25 @@ import type { CardEl, CardLayout, QrCode, QrType } from "@/lib/db/qr";
 import { QrCardUnit, FRONT_ARTS } from "@/components/QrCard";
 import { FileUpload } from "@/components/FileUpload";
 import { algToText, parseAlg } from "@/lib/qr/cardText";
-import { assemblePrompt } from "@/lib/qr/prompt";
+import {
+  assemblePrompt,
+  composePrompt,
+  PROMPT_DIMENSIONS,
+  type PromptDimension,
+} from "@/lib/qr/prompt";
 
-// 后台传入的提示词模板(只取编辑器要用的字段)
+// 后台传入的提示词数据(只取编辑器要用的字段)
 export type PromptTpl = { id: number; name: string; category: string | null; body: string };
+export type PromptBlk = { id: number; name: string; dimension: string | null; body: string };
+
+// 各维度默认未选
+const EMPTY_BLOCK_SEL: Record<PromptDimension, number | null> = {
+  风格: null,
+  主体: null,
+  主题: null,
+  构图: null,
+  光影: null,
+};
 
 // 所见即所得卡片编辑器(简易 PS):卡上所有元素([data-el])可直接拖动移位,
 // 带磁吸对齐(面板中线 / 默认位 / 其他元素中心,洋红参考线提示,Alt 暂时关闭,可整体开关)。
@@ -54,12 +69,14 @@ export function CardEditor({
   formId,
   landingUrl,
   templates,
+  blocks,
 }: {
   entry: QrCode;
   svg: string;
   formId: string;
   landingUrl: string;
   templates: PromptTpl[];
+  blocks: PromptBlk[];
 }) {
   const [s, setS] = useState({
     type: entry.type as QrType,
@@ -70,6 +87,7 @@ export function CardEditor({
     quote: entry.quote ?? "",
     art: entry.frontArt ?? "",
     artPrompt: entry.frontArtPrompt ?? "",
+    blockSel: EMPTY_BLOCK_SEL as Record<PromptDimension, number | null>,
     algRaw: algToText(entry.alg),
     layout: (entry.layout ?? {}) as CardLayout,
   });
@@ -311,6 +329,27 @@ export function CardEditor({
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1500);
   };
+
+  // 维度组合器:按 blockSel 取各维度选中积木的正文,按维度序拼成完整提示词写入文本框
+  const composeFromSel = (sel: Record<PromptDimension, number | null>): string => {
+    const bodies = PROMPT_DIMENSIONS.map((d) => {
+      const id = sel[d.key];
+      return id ? (blocks.find((b) => b.id === id)?.body ?? null) : null;
+    });
+    return bodies.some(Boolean) ? composePrompt(bodies) : "";
+  };
+  // 点维度积木:同维度再点一次=取消;变更后即时重组文本框
+  const pickBlock = (dim: PromptDimension, id: number) =>
+    setS((p) => {
+      const sel = { ...p.blockSel, [dim]: p.blockSel[dim] === id ? null : id };
+      return { ...p, blockSel: sel, artPrompt: composeFromSel(sel) };
+    });
+  // 用整套预设:直接填入,并清空维度选区(两种填法互斥,最后一次操作为准)
+  const usePreset = (body: string) =>
+    setS((p) => ({ ...p, blockSel: { ...EMPTY_BLOCK_SEL }, artPrompt: assemblePrompt(body) }));
+  const clearComposer = () =>
+    setS((p) => ({ ...p, blockSel: { ...EMPTY_BLOCK_SEL }, artPrompt: "" }));
+
   const downloadArtPng = async () => {
     if (pngBusy) return;
     const src = s.art || FRONT_ARTS[0].src;
@@ -602,8 +641,8 @@ export function CardEditor({
               直接拖卡面上的图挪构图,鼠标悬在图上滚滚轮也能缩放;铺满模式只能放大(裁掉更多边缘),要看更全整张图就勾上面的「完整显示」。预览即裁切后成品,出血里多印的部分会被裁掉。
             </span>
 
-            {/* 提示词工坊:选模板或自己写 → 复制 → 拿去外部图像 AI 生图 → 下载 → 用上方「上传自己的正面图」传回来 */}
-            <div className="mt-1 grid gap-2.5 border-t border-line pt-3">
+            {/* 提示词工坊:按维度组合 / 用整套模板 → 复制 → 外部 AI 生图 → 用上方「上传」传回来 */}
+            <div className="mt-1 grid gap-3 border-t border-line pt-3">
               <div className="flex items-center justify-between">
                 <span className="text-[13px] font-medium text-ink-2">用 AI 生成新背景图</span>
                 <a
@@ -612,44 +651,75 @@ export function CardEditor({
                   rel="noreferrer"
                   className="text-[12px] text-brand hover:underline"
                 >
-                  管理模板
+                  管理提示词
                 </a>
               </div>
               <span className="text-[12px] leading-relaxed text-ink-3">
-                选个风格模板(或在下框自己改提示词)→ 复制 → 拿去即梦 / Midjourney / SD 生图 → 下载无水印竖版高清图 → 用上面的「上传自己的正面图」传回来。语录和品牌名不用让 AI 写,系统自动叠。
+                按维度各挑一项(可留空)自动拼成提示词,或点下方「整套现成模板」一键填入 → 复制 → 拿去即梦 / Midjourney / SD 生图 → 下载无水印竖版高清图 → 用上面的「上传自己的正面图」传回来。语录和品牌名不用让 AI 写,系统自动叠。
               </span>
+
+              {/* 维度组合器:每个维度单选(再点一次取消),选中即时拼进下方文本框 */}
+              <div className="grid gap-2.5">
+                {PROMPT_DIMENSIONS.map((d) => {
+                  const opts = blocks.filter((b) => b.dimension === d.key);
+                  if (opts.length === 0) return null;
+                  return (
+                    <div key={d.key} className="grid gap-1">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-[12px] font-medium text-ink-2">{d.label}</span>
+                        <span className="text-[11px] text-ink-3">{d.hint}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {opts.map((b) => {
+                          const on = s.blockSel[d.key] === b.id;
+                          return (
+                            <button
+                              key={b.id}
+                              type="button"
+                              onClick={() => pickBlock(d.key, b.id)}
+                              title={b.body}
+                              className={
+                                "rounded-full border px-2.5 py-1 text-[12px] transition " +
+                                (on
+                                  ? "border-brand bg-brand/5 text-brand ring-1 ring-brand/30"
+                                  : "border-line bg-white text-ink-2 hover:border-brand/50 hover:text-brand")
+                              }
+                            >
+                              {b.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 整套现成模板(折叠,点了一键填入并清空维度选区) */}
               {templates.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {templates.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => set("artPrompt")(assemblePrompt(t.body))}
-                      title={t.body}
-                      className="rounded-full border border-line bg-white px-2.5 py-1 text-[12px] text-ink-2 transition hover:border-brand/50 hover:text-brand"
-                    >
-                      {t.name}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-[12px] text-ink-3">
-                  还没有模板,去
-                  <a
-                    href="/admin/qr/prompts"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-brand hover:underline"
-                  >
-                    提示词模板
-                  </a>
-                  页新增。
-                </span>
-              )}
+                <details className="rounded-md border border-line bg-bg-soft/40 px-3 py-2">
+                  <summary className="cursor-pointer select-none text-[12px] font-medium text-ink-2">
+                    或直接用整套现成模板({templates.length})
+                  </summary>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {templates.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => usePreset(t.body)}
+                        title={t.body}
+                        className="rounded-full border border-line bg-white px-2.5 py-1 text-[12px] text-ink-2 transition hover:border-brand/50 hover:text-brand"
+                      >
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
+                </details>
+              ) : null}
               <textarea
                 value={s.artPrompt}
                 onChange={(e) => set("artPrompt")(e.target.value)}
-                placeholder="点上面的风格模板自动填入,或在这里自己写 / 修改提示词…"
+                placeholder="上面挑维度或选整套模板会自动拼到这里,也可直接在此写 / 改提示词…"
                 className={INPUT_CLS + " min-h-[120px] leading-relaxed"}
               />
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
@@ -672,7 +742,7 @@ export function CardEditor({
                 {s.artPrompt.trim() ? (
                   <button
                     type="button"
-                    onClick={() => set("artPrompt")("")}
+                    onClick={clearComposer}
                     className="text-[12px] text-ink-3 hover:text-brand"
                   >
                     清空

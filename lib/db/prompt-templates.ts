@@ -1,5 +1,5 @@
 import "server-only";
-import { asc, desc, eq, isNull, isNotNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, isNotNull, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { PromptTemplate, PromptTemplateInsert } from "@/db/schema";
 
@@ -9,14 +9,35 @@ export type PromptTemplateInput = {
   name: string;
   category?: string | null;
   body: string;
+  dimension?: string | null;
 };
 
-// 在用模板(未进回收站):后台列表 + 卡片编辑页选择器共用,按 sortOrder 升序(同序再按 id)
+// 在用整套预设模板(dimension 为 null,未进回收站):编辑器「整套模板」快速选 + 后台管理。
 export async function listPromptTemplates(): Promise<PromptTemplate[]> {
   return db
     .select()
     .from(schema.promptTemplates)
-    .where(isNull(schema.promptTemplates.deletedAt))
+    .where(
+      and(
+        isNull(schema.promptTemplates.dimension),
+        isNull(schema.promptTemplates.deletedAt),
+      ),
+    )
+    .orderBy(asc(schema.promptTemplates.sortOrder), asc(schema.promptTemplates.id))
+    .all();
+}
+
+// 在用维度组合积木(dimension 非 null,未进回收站):编辑器组合器 + 后台管理。
+export async function listPromptBlocks(): Promise<PromptTemplate[]> {
+  return db
+    .select()
+    .from(schema.promptTemplates)
+    .where(
+      and(
+        isNotNull(schema.promptTemplates.dimension),
+        isNull(schema.promptTemplates.deletedAt),
+      ),
+    )
     .orderBy(asc(schema.promptTemplates.sortOrder), asc(schema.promptTemplates.id))
     .all();
 }
@@ -40,19 +61,26 @@ export async function findPromptTemplate(id: number): Promise<PromptTemplate | u
   return rows[0];
 }
 
-// 新模板排到末尾(当前最大 sortOrder + 10)
+// 新模板 / 积木排到同维度末尾(同维度当前最大 sortOrder + 10,预设与各维度各自独立排序)
 export async function createPromptTemplate(input: PromptTemplateInput): Promise<number> {
   const name = input.name.trim();
   const body = input.body.trim();
   if (!name || !body) throw new Error("name / body 必填");
+  const dimension = input.dimension?.trim() || null;
   const maxRow = db
     .select({ m: sql<number>`coalesce(max(${schema.promptTemplates.sortOrder}), 0)` })
     .from(schema.promptTemplates)
+    .where(
+      dimension
+        ? eq(schema.promptTemplates.dimension, dimension)
+        : isNull(schema.promptTemplates.dimension),
+    )
     .get();
   const v: PromptTemplateInsert = {
     name,
     category: input.category?.trim() || null,
     body,
+    dimension,
     sortOrder: (maxRow?.m ?? 0) + 10,
     createdAt: Math.floor(Date.now() / 1000),
   };
@@ -60,6 +88,7 @@ export async function createPromptTemplate(input: PromptTemplateInput): Promise<
   return Number(res.lastInsertRowid);
 }
 
+// 编辑名称 / 正文 / 分组(维度不在此改,避免错位;要换维度删了重建)
 export async function updatePromptTemplate(
   id: number,
   input: PromptTemplateInput,
