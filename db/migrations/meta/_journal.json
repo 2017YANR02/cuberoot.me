@@ -127,6 +127,20 @@
       "when": 1781117167379,
       "tag": "0017_brown_peter_quill",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1781164681088,
+      "tag": "0018_daffy_stryfe",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1781164781088,
+      "tag": "0019_seed_prompt_templates",
+      "breakpoints": true
     }
   ]
 }

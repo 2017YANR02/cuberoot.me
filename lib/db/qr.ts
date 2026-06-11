@@ -9,7 +9,7 @@ export type { CardEl, CardLayout, QrAlg, QrCode, QrLink, QrType };
 export type QrUpdate = Partial<
   Pick<
     QrCode,
-    "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote" | "frontArt" | "alg" | "layout"
+    "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote" | "frontArt" | "frontArtPrompt" | "alg" | "layout"
   >
 >;
 
@@ -102,6 +102,7 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
   if (patch.term !== undefined) next.term = patch.term?.trim() || null;
   if (patch.quote !== undefined) next.quote = patch.quote?.trim() || null;
   if (patch.frontArt !== undefined) next.frontArt = patch.frontArt?.trim() || null;
+  if (patch.frontArtPrompt !== undefined) next.frontArtPrompt = patch.frontArtPrompt?.trim() || null;
   if (patch.alg !== undefined) next.alg = patch.alg && patch.alg.moves ? patch.alg : null;
   if (patch.layout !== undefined) {
     // 只收已知元素键,坐标钳 ±20mm、0.1mm 取整;全空则置 null(回默认布局)
@@ -152,6 +153,7 @@ export async function duplicate(code: string): Promise<string | null> {
     term: src.term,
     quote: src.quote,
     frontArt: src.frontArt,
+    frontArtPrompt: src.frontArtPrompt,
     alg: src.alg,
     layout: src.layout,
     scans: 0,

@@ -388,12 +388,29 @@ export const qrCodes = sqliteTable("qr_codes", {
   term: text("term"),
   quote: text("quote"),
   frontArt: text("front_art"),
+  // 记录当前正面图是用哪条生图提示词产出的(自定义 / 模板),方便日后复刻、微调同款
+  frontArtPrompt: text("front_art_prompt"),
   alg: text("alg", { mode: "json" }).$type<QrAlg>(),
   layout: text("layout", { mode: "json" }).$type<CardLayout>(),
   scans: integer("scans").notNull().default(0),
   disabled: integer("disabled", { mode: "boolean" }).notNull().default(false),
   createdAt: integer("created_at").notNull(),
 });
+
+// 卡片正面背景图的「生图提示词」模板:后台可增删改,卡片编辑页一键复制喂给外部图像 AI。
+// body = 风格描述正文(通用头由代码自动拼在前);sortOrder 升序排列。
+export const promptTemplates = sqliteTable(
+  "prompt_templates",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull(),
+    category: text("category"),
+    body: text("body").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("prompt_templates_sort_idx").on(t.sortOrder)],
+);
 
 export type EventsTrack = typeof eventsTrack.$inferSelect;
 export type EventsTrackInsert = typeof eventsTrack.$inferInsert;
@@ -403,6 +420,8 @@ export type InviteCode = typeof inviteCodes.$inferSelect;
 export type InviteCodeInsert = typeof inviteCodes.$inferInsert;
 export type QrCode = typeof qrCodes.$inferSelect;
 export type QrCodeInsert = typeof qrCodes.$inferInsert;
+export type PromptTemplate = typeof promptTemplates.$inferSelect;
+export type PromptTemplateInsert = typeof promptTemplates.$inferInsert;
 export type PaymentLog = typeof paymentLogs.$inferSelect;
 export type PaymentLogInsert = typeof paymentLogs.$inferInsert;
 
