@@ -332,6 +332,11 @@ impl HtrSolver {
         self.solve_one(alg, rot, 0)
     }
 
+    /// 各视角统计(同 DrSolver::get_stats 形状);该视角非 DR → None。
+    pub fn get_stats(&self, alg: &[Move], rots: &[&str]) -> Vec<Option<u32>> {
+        rots.iter().map(|r| self.solve_face(alg, r)).collect()
+    }
+
     /// 枚举恰好 depth 步的解(只走 G2 move)。
     #[allow(clippy::too_many_arguments)]
     fn enum_paths(
