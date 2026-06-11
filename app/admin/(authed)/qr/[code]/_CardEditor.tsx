@@ -88,8 +88,9 @@ export function CardEditor({
       e.preventDefault();
       setS((p) => {
         const cur = { x: 0, y: 0, s: 1, ...p.layout.front };
+        const floor = cur.fit === "cover" ? 1 : 0.5; // cover 不能缩到露底
         const next =
-          Math.round(Math.max(0.5, Math.min(3, cur.s * Math.exp(-e.deltaY * 0.002))) * 100) / 100;
+          Math.round(Math.max(floor, Math.min(3, cur.s * Math.exp(-e.deltaY * 0.002))) * 100) / 100;
         const layout = { ...p.layout };
         if (cur.x === 0 && cur.y === 0 && next === 1 && !cur.fit) delete layout.front;
         else layout.front = { ...cur, s: next };
@@ -155,6 +156,7 @@ export function CardEditor({
   const setFront = (patch: Partial<{ x: number; y: number; s: number; fit?: "cover" }>) =>
     setS((p) => {
       const next = { x: 0, y: 0, s: 1, ...p.layout.front, ...patch };
+      if (next.fit === "cover") next.s = Math.max(1, next.s); // cover 缩放只放大,保证铺满不露底
       const layout = { ...p.layout };
       if (next.x === 0 && next.y === 0 && next.s === 1 && !next.fit) delete layout.front;
       else layout.front = next;
@@ -323,6 +325,11 @@ export function CardEditor({
     layout: s.layout,
   };
   const hasOffsets = Object.keys(s.layout).length > 0;
+  // 正面图缩放:cover 钳到 ≥100%(滑块与渲染一致,WYSIWYG),contain 可缩到 50%
+  const frontIsCover = s.layout.front?.fit === "cover";
+  const frontScalePct = Math.round(
+    Math.max(frontIsCover ? 1 : 0.5, s.layout.front?.s ?? 1) * 100,
+  );
 
   return (
     <div>
@@ -536,15 +543,15 @@ export function CardEditor({
               <span className="shrink-0">缩放</span>
               <input
                 type="range"
-                min={50}
+                min={frontIsCover ? 100 : 50}
                 max={300}
                 step={1}
-                value={Math.round((s.layout.front?.s ?? 1) * 100)}
+                value={frontScalePct}
                 onChange={(e) => setFront({ s: Number(e.target.value) / 100 })}
                 className="w-full accent-brand"
               />
               <span className="w-10 shrink-0 text-right font-mono">
-                {Math.round((s.layout.front?.s ?? 1) * 100)}%
+                {frontScalePct}%
               </span>
               {s.layout.front ? (
                 <button
@@ -557,7 +564,7 @@ export function CardEditor({
               ) : null}
             </div>
             <span className="text-[12px] text-ink-3">
-              直接拖卡面上的图挪构图,鼠标悬在图上滚滚轮也能缩放;缩小能装下更多画面,但露出的边角是深色底。预览即裁切后成品,出血里多印的部分会被裁掉。
+              直接拖卡面上的图挪构图,鼠标悬在图上滚滚轮也能缩放;铺满模式只能放大(裁掉更多边缘),要看更全整张图就勾上面的「完整显示」。预览即裁切后成品,出血里多印的部分会被裁掉。
             </span>
             </>
           ) : null}
