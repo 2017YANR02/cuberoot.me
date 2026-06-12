@@ -50,6 +50,7 @@
 .phub-name-line { display: inline-flex; align-items: center; min-width: 0; }
 .phub-name {
   margin: 0;
+  /* 选手名是动态任意汉字,静态子集楷体盖不全会半楷半宋,故走全覆盖系统衬线(不用 --font-serif) */
   font-family: 'Fraunces', 'Times New Roman', serif;
   font-size: 1.6rem; font-weight: 500;
   letter-spacing: -0.01em;

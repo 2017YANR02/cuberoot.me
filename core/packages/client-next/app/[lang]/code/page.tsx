@@ -222,6 +222,23 @@ const CARDS: Card[] = [
     },
   },
   {
+    href: '/code/wca-export',
+    glyph: '⛁',
+    accent: '#5BA8FF',
+    zh: {
+      title: 'WST 数据导出',
+      sub: 'WCA Developer Export',
+      tagline: 'WCA 每天发布的完整数据库快照:1982 年至今全部比赛/选手/成绩/轮次配置/打乱。站内所有 WCA 统计都从它离线构建',
+      meta: '每日 · 22 表 · 离线管道源',
+    },
+    en: {
+      title: 'WST Export',
+      sub: 'WCA Developer Export',
+      tagline: 'The full WCA database snapshot published daily: every comp / person / result / round config / scramble since 1982. Every WCA stat here is built offline from it',
+      meta: 'Daily · 22 tables · pipeline source',
+    },
+  },
+  {
     href: '/code/wcif',
     glyph: '◇',
     accent: '#4A90D9',

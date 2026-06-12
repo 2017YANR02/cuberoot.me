@@ -64,3 +64,25 @@
   src: url('/fonts/fraunces-latin-wght-normal.woff2') format('woff2-variations'),
        url('/fonts/fraunces-latin-wght-normal.woff2') format('woff2');
 }
+
+/* LXGW WenKai 霞鹜文楷 — 中文标题(Phase 1 静态子集,仅标题字 ~526 字,配 Fraunces 拉丁衬线)。
+   unicode-range 锁 CJK + 中文标点:只有标题里出现中文时才下载这个 woff2,纯拉丁标题不碰。
+   子集由构建期收集的标题文本生成(useDocumentTitle + landing-sections + about);
+   缺字优雅回退系统宋体。来源 lxgw/LxgwWenKai v1.522,SIL OFL 1.1。 */
+@font-face {
+  font-family: 'LXGW WenKai';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  /* ?v= 内容版本:子集重跑(subset-cjk-heading.py 加了新标题字)后 +1,否则缓存客户端拿不到新字形 */
+  src: url('/fonts/lxgw-wenkai-heading.woff2?v=2') format('woff2');
+  unicode-range: U+3000-303F, U+3400-4DBF, U+4E00-9FFF, U+FF00-FFEF;
+}
+@font-face {
+  font-family: 'LXGW WenKai';
+  font-style: normal;
+  font-weight: 500 600;
+  font-display: swap;
+  src: url('/fonts/lxgw-wenkai-heading-500.woff2?v=2') format('woff2');
+  unicode-range: U+3000-303F, U+3400-4DBF, U+4E00-9FFF, U+FF00-FFEF;
+}

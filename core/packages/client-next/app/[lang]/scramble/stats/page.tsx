@@ -5,6 +5,7 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import DiscreteHistogram, { type HistSeries } from './_components/DiscreteHistogram';
+import PuzzleDistView from './_components/PuzzleDistView';
 import ScrambleLengthView, {
   type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN,
 } from './_components/ScrambleLengthView';
@@ -92,6 +93,11 @@ function eventLabel(e: string, isZh: boolean): string {
 // 故它们的阶段难度分布完全相同,共用同一份 distribution 数据。其余项目(4x4/金字塔/SQ1 等)
 // 暂无难度数据,选中显示占位(用户后续会逐个加入)。
 const DIFFICULTY_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft', '333mbf', '333mbo']);
+
+// 非 3x3 puzzle:WCA event_id → puzzle_distribution.json 的 key。选中这些项目时,
+// 难度 tab 显示该 puzzle 的整解步数分布(数据来自独立 native solver 管线)。
+// sq1 是近最优(双阶段上界),其余三个是精确最优 —— 口径差异在 PuzzleDistView 里标注。
+const PUZZLE_EVENT_MAP: Record<string, string> = { '222': 'pocket', pyram: 'pyraminx', skewb: 'skewb', sq1: 'sq1' };
 
 // 页面标题单一来源:h1 与 document.title(浏览器标签页)都从这里取,改标题只改这一处。
 const PAGE_TITLE = { zh: '打乱统计', en: 'Scramble Stats', zhHant: "打亂統計" };
@@ -365,6 +371,8 @@ export default function ScrambleStatsPage() {
 
   // Single stable title — shared with document.title via PAGE_TITLE.
   const pageTitle = tr(PAGE_TITLE);
+  // 非 3x3 puzzle 项目:难度 tab 显示 puzzle 整解分布,3x3 专属的合并/数据集开关无意义,隐藏。
+  const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
   const tabsBar = (
     <div className="scramble-stats-tabs" role="tablist">
       <button
@@ -388,7 +396,7 @@ export default function ScrambleStatsPage() {
   // become a PillToggle sitting just left of the merge toggle. Rendered only when
   // exactly two top-level datasets exist.
   const topSets = data ? Object.entries(data.sets).filter(([, s]) => !s.event) : [];
-  const datasetToggle = (tab === 'difficulty' && topSets.length === 2) ? (() => {
+  const datasetToggle = (tab === 'difficulty' && !isPuzzleEvent && topSets.length === 2) ? (() => {
     const [k0, s0] = topSets[0];
     const [k1, s1] = topSets[1];
     const lab = (s: SetData) => (isZh && s.label_zh) ? s.label_zh : s.label;
@@ -414,7 +422,7 @@ export default function ScrambleStatsPage() {
         <div className="scramble-stats-tabrow">
           {tabsBar}
           {datasetToggle}
-        {(tab === 'length' || dataset === 'wca') && (
+        {(tab === 'length' || (dataset === 'wca' && !isPuzzleEvent)) && (
           <div className="scramble-len-merge">
             <PillToggle
               value={merged}
@@ -465,8 +473,17 @@ export default function ScrambleStatsPage() {
     );
   }
 
-  // Difficulty tab — only 3×3-family events have stage-difficulty data for now.
+  // Difficulty tab — 非 3x3 族:接 native solver 管线的 puzzle 整解最优步数分布。
   if (!DIFFICULTY_EVENTS.has(event)) {
+    const puzzleKey = PUZZLE_EVENT_MAP[event];
+    if (puzzleKey) {
+      return (
+        <div className="scramble-stats-page">
+          {header}
+          <PuzzleDistView isZh={isZh} puzzleKey={puzzleKey} />
+        </div>
+      );
+    }
     return (
       <div className="scramble-stats-page">
         {header}

@@ -72,7 +72,7 @@
 
 .wb-title h1 {
     margin: 0;
-    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-family: var(--font-serif);
     font-size: 1.4rem;
     font-weight: 500;
     letter-spacing: -0.01em;

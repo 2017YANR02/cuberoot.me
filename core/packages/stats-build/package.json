@@ -7,7 +7,8 @@
     "compute": "tsx src/bin/compute.ts",
     "validate-queries": "tsx src/bin/validate_queries.ts",
     "nemesizer": "tsx src/bin/nemesizer.ts",
-    "gen-persons-search": "tsx src/bin/gen_persons_search.ts"
+    "gen-persons-search": "tsx src/bin/gen_persons_search.ts",
+    "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
     "@cuberoot/shared": "workspace:*",
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
+    "@typescript/native-preview": "7.0.0-dev.20260517.1",
     "tsx": "^4.19.0",
     "typescript": "^5.8.0"
   }

@@ -1,4 +1,6 @@
-# 十字统计刷新 (手动增量管道, 按需触发非定时)
+# 更新打乱统计 — A. 三阶阶段难度 (手动增量管道, 按需触发非定时)
+
+> 这是「更新打乱统计」的**三阶部分**(skill `update-scramble-stats` 管道 A)。非 3x3 整解(二阶/金字塔/斜转/未来 SQ1)是平行的管道 B,走 `update_puzzle_stats.ps1` + `build_puzzle_examples.ts`,与本文件解耦,见 skill 与 `solver/VARIANT_PLAYBOOK.md` §8。
 
 把 WCA 新公示的打乱(三阶 / 单手 / 脚拧 / 三盲 / 多盲 / FMC)增量算进 `cross / xc / xxc / xxxc / xxxxc × 6 底色` 的统计,刷新 `/scramble/stats` 全局分布图 + `/scramble/analyzer` 的真实打乱池。
 

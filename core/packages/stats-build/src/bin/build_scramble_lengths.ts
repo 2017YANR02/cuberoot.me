@@ -71,8 +71,10 @@ async function main() {
     database: DB_CONFIG.database,
   });
 
-  const hist = new Map<string, Map<number, number>>();      // event -> len -> count
-  const exMap = new Map<string, Map<number, Example[]>>();   // event -> len -> reservoir
+  const hist = new Map<string, Map<number, number>>();      // event -> len -> count (HTM)
+  const exMap = new Map<string, Map<number, Example[]>>();   // event -> len -> reservoir (HTM)
+  const histQtm = new Map<string, Map<number, number>>();    // event -> qtmLen -> count (3x3-family)
+  const exMapQtm = new Map<string, Map<number, Example[]>>(); // event -> qtmLen -> reservoir
   let rows = 0;
   let samples = 0;
 
@@ -87,19 +89,29 @@ async function main() {
   const FIXED_MOVE_COUNT: Record<string, number> = { '555': 60, '666': 80, '777': 100 };
   const anomalyMap = new Map<string, Map<string, { lens: Set<number>; n: number }>>(); // event -> comp -> {lens,n}
 
-  const bump = (event: string, len: number, ex: Example) => {
-    let m = hist.get(event);
-    if (!m) { m = new Map(); hist.set(event, m); }
+  // 把一条样本计入指定的 hist + 示例 reservoir(HTM 与 QTM 复用同一逻辑)。
+  const bumpInto = (
+    histMap: Map<string, Map<number, number>>,
+    exMaps: Map<string, Map<number, Example[]>>,
+    event: string, len: number, ex: Example,
+  ) => {
+    let m = histMap.get(event);
+    if (!m) { m = new Map(); histMap.set(event, m); }
     const c = (m.get(len) ?? 0) + 1; // running count for this bin → reservoir denominator
     m.set(len, c);
-    samples++;
 
-    let em = exMap.get(event);
-    if (!em) { em = new Map(); exMap.set(event, em); }
+    let em = exMaps.get(event);
+    if (!em) { em = new Map(); exMaps.set(event, em); }
     let arr = em.get(len);
     if (!arr) { arr = []; em.set(len, arr); }
     if (arr.length < K) arr.push(ex);
     else { const j = Math.floor(rand() * c); if (j < K) arr[j] = ex; }
+  };
+  // HTM(所有项目)+ 可选 QTM(3x3-family,sample.qtm 有值时)。
+  const bump = (event: string, s: { len: number; qtm?: number }, ex: Example) => {
+    bumpInto(hist, exMap, event, s.len, ex);
+    samples++;
+    if (s.qtm !== undefined) bumpInto(histQtm, exMapQtm, event, s.qtm, ex);
   };
 
   await new Promise<void>((res, rej) => {
@@ -110,7 +122,7 @@ async function main() {
       rows++;
       const extra: 0 | 1 = row.is_extra ? 1 : 0;
       for (const s of scrambleMoveSamples(row.event_id, row.scramble)) {
-        bump(row.event_id, s.len, [row.competition_id, row.round_type_id, row.group_id, row.scramble_num, s.text, extra]);
+        bump(row.event_id, s, [row.competition_id, row.round_type_id, row.group_id, row.scramble_num, s.text, extra]);
       }
       if (row.event_id === 'minx') {
         const glued = (row.scramble ?? '').trim().split(/\s+/).filter(Boolean)
@@ -138,6 +150,7 @@ async function main() {
   // recompute the exact referenced set from the final reservoirs.
   const referenced = new Set<string>();
   for (const em of exMap.values()) for (const arr of em.values()) for (const ex of arr) referenced.add(ex[0]);
+  for (const em of exMapQtm.values()) for (const arr of em.values()) for (const ex of arr) referenced.add(ex[0]);
   for (const a of minxGlued) referenced.add(a.ci); // need their comp names too
   for (const m of anomalyMap.values()) for (const ci of m.keys()) referenced.add(ci);
 
@@ -161,16 +174,24 @@ async function main() {
 
   interface EventOut {
     unit: string; samples: number; counts: Record<string, number>;
+    counts_qtm?: Record<string, number>; // 3x3-family:QTM 计步直方图(前端可切)
     glued?: { ci: string; cn: string; r: string; g: string; n: number; tok: string }[];
     anomalies?: { ci: string; cn: string; lens: number[]; n: number }[];
   }
+  const sortedCounts = (m: Map<number, number>): Record<string, number> => {
+    const counts: Record<string, number> = {};
+    for (const len of [...m.keys()].sort((a, b) => a - b)) counts[String(len)] = m.get(len)!;
+    return counts;
+  };
   const events: Record<string, EventOut> = {};
   for (const ev of orderedEvents) {
     const m = hist.get(ev)!;
-    const counts: Record<string, number> = {};
     let n = 0;
-    for (const len of [...m.keys()].sort((a, b) => a - b)) { counts[String(len)] = m.get(len)!; n += m.get(len)!; }
-    events[ev] = { unit: scrambleLengthUnit(ev), samples: n, counts };
+    for (const v of m.values()) n += v;
+    const out: EventOut = { unit: scrambleLengthUnit(ev), samples: n, counts: sortedCounts(m) };
+    const mq = histQtm.get(ev);
+    if (mq) out.counts_qtm = sortedCounts(mq);
+    events[ev] = out;
   }
   if (events.minx && minxGlued.length) {
     events.minx.glued = minxGlued.map((a) => ({ ci: a.ci, cn: comps[a.ci]?.[0] ?? a.ci, r: a.r, g: a.g, n: a.n, tok: a.tok }));
@@ -183,13 +204,16 @@ async function main() {
     if (list.length) events[ev].anomalies = list;
   }
 
-  const exEvents: Record<string, Record<string, Example[]>> = {};
-  for (const ev of orderedEvents) {
-    const em = exMap.get(ev)!;
+  const byLenObj = (em: Map<number, Example[]>): Record<string, Example[]> => {
     const byLen: Record<string, Example[]> = {};
     for (const len of [...em.keys()].sort((a, b) => a - b)) byLen[String(len)] = em.get(len)!;
-    exEvents[ev] = byLen;
-  }
+    return byLen;
+  };
+  const exEvents: Record<string, Record<string, Example[]>> = {};
+  for (const ev of orderedEvents) exEvents[ev] = byLenObj(exMap.get(ev)!);
+  // QTM 示例分桶(3x3-family);前端切到 QTM 时点 bin 用这套。
+  const exEventsQtm: Record<string, Record<string, Example[]>> = {};
+  for (const [ev, em] of exMapQtm) exEventsQtm[ev] = byLenObj(em);
 
   const generated_at = new Date().toISOString();
   mkdirSync(dirname(OUT), { recursive: true });
@@ -201,6 +225,7 @@ async function main() {
     meta: { generated_at, per_bin: K },
     comps,
     events: exEvents,
+    events_qtm: exEventsQtm,
   }));
 
   console.log(`Wrote ${OUT}`);

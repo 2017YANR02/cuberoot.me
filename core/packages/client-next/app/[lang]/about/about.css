@@ -36,7 +36,7 @@
 }
 
 .about-title {
-  font-family: 'Fraunces', 'Times New Roman', serif;
+  font-family: var(--font-serif);
   font-size: 2rem;
   font-weight: 400;
   letter-spacing: -0.01em;
@@ -51,7 +51,7 @@
 }
 
 .about-section-title {
-  font-family: 'Fraunces', 'Times New Roman', serif;
+  font-family: var(--font-serif);
   font-size: 1.2rem;
   font-weight: 500;
   margin: 0 0 1rem;
