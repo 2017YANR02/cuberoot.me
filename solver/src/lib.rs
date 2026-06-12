@@ -26,7 +26,7 @@ pub mod pyraminx_solver;
 pub mod roux_s1_solver;
 // skewb:斜转方块全空间最优(3.0MB 零盘表现场 BFS,独立状态模型)。
 pub mod skewb_solver;
-// sq1:Square-1 twist-metric 最优(双阶段 search + 投影剪枝表 ~4MB 现场建,零盘表,独立状态模型)。
+// sq1:Square-1 twist-metric 最优(双阶段 search + 五张投影剪枝表 ~43MB 现场建,零盘表,独立状态模型)。
 pub mod sq1_solver;
 pub mod xcross_solver;
 
