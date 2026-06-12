@@ -75,6 +75,10 @@ body {
   --font-mono: 'Roboto Mono', ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   /* 正文无衬线字体单源(首页纪录、统计数字等用它),与 body 同一份栈 */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* 衬线展示标题单源(落地/about/wiki/统计等大标题):拉丁走 Fraunces,中文落自托管
+     LXGW WenKai 楷体(标题静态子集,见 app/fonts.css + scripts/subset-cjk-heading.py),
+     缺字回退系统宋体。任何衬线标题都该用 var(--font-serif),别再散写 'Fraunces' 字面栈。 */
+  --font-serif: 'Fraunces', 'LXGW WenKai', 'Times New Roman', serif;
 
   /* timer state colors (Solo + Battle) */
   --timer-idle: var(--foreground);

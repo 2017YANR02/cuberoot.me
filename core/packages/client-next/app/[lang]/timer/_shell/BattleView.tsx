@@ -1018,8 +1018,8 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
               value={settings.scrambleSource}
               onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' })}
             >
-              <option value="wca">{tr({ zh: 'WCA 真实比赛打乱', en: 'Real WCA comp scrambles',
-                  zhHant: "WCA 真實比賽打亂"
+              <option value="wca">{tr({ zh: 'WCA 真题', en: 'WCA real',
+                  zhHant: "WCA 真題"
               })}</option>
               <option value="random">{tr({ zh: '随机生成', en: 'Random',
                   zhHant: "隨機生成"

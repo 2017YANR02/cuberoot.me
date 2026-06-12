@@ -72,7 +72,7 @@
     border: 1px solid var(--az-border-strong);
     border-radius: 6px;
     padding: 0.55rem 0.75rem;
-    font-family: 'Menlo', monospace;
+    font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 0.9rem;
     color: var(--az-text);
     outline: none;
@@ -518,7 +518,7 @@
     border: 1px solid var(--az-border);
     background: var(--az-surface);
     padding: 0.65rem 0.85rem;
-    font-family: 'Menlo', monospace;
+    font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 0.83rem;
     line-height: 1.45;
     color: var(--az-text);
@@ -579,73 +579,38 @@ html[data-theme=dark] .analyze-page {
     --az-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-/* ── PRIMARY: 逐阶段最优解 (StageSolver) ── */
-.analyze-primary {
+/* ── 顶部三选一:逐阶段最优解 / CFOP 枚举 / FMC 链(选中谁渲染谁) ── */
+.analyze-tool-tabs {
+  display: flex;
+  gap: 1.4rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0 1.1rem;
+  border-bottom: 1px solid var(--az-border);
+}
+.analyze-tool-tab {
+  appearance: none;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 0.4rem 0.1rem;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--az-text-sub);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.analyze-tool-tab:hover {
+  color: var(--az-accent);
+}
+.analyze-tool-tab.is-active {
+  color: var(--az-accent);
+  border-bottom-color: var(--az-accent);
+}
+
+.analyze-primary,
+.analyze-cfop-panel,
+.analyze-chain-panel {
   margin-bottom: 1.5rem;
-}
-
-/* 与 .analyze-cfop > summary 同字号/字重/颜色,两个区块标题视觉一致 */
-.analyze-primary-title {
-  margin: 0 0 0.2rem 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--az-text-sub);
-}
-
-/* ── SECONDARY: 全 CFOP 解法枚举(默认折叠) ── */
-.analyze-cfop {
-  margin-top: 1.5rem;
-  border-top: 1px solid var(--az-border);
-  padding-top: 1rem;
-}
-
-.analyze-cfop > summary {
-  cursor: pointer;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--az-text-sub);
-  padding: 0.25rem 0;
-  list-style: none;
-  user-select: none;
-}
-
-.analyze-cfop > summary::-webkit-details-marker {
-  display: none;
-}
-
-.analyze-cfop[open] > summary {
-  margin-bottom: 0.85rem;
-}
-
-.analyze-cfop > summary:hover {
-  color: var(--az-accent);
-}
-
-/* ── TERTIARY: FMC 分步还原链(mallard 式链式求解,默认折叠;与 .analyze-cfop 同款) ── */
-.analyze-chain {
-  margin-top: 1.5rem;
-  border-top: 1px solid var(--az-border);
-  padding-top: 1rem;
-}
-
-.analyze-chain > summary {
-  cursor: pointer;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--az-text-sub);
-  padding: 0.25rem 0;
-  list-style: none;
-  user-select: none;
-}
-
-.analyze-chain > summary::-webkit-details-marker {
-  display: none;
-}
-
-.analyze-chain[open] > summary {
-  margin-bottom: 0.85rem;
-}
-
-.analyze-chain > summary:hover {
-  color: var(--az-accent);
 }

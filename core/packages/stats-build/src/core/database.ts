@@ -31,6 +31,9 @@ export const REQUIRED_TABLES = [
   'events', 'formats', 'persons', 'preferred_formats',
   'ranks_single', 'ranks_average', 'result_attempts', 'results',
   'round_types', 'scrambles', 'users',
+  // gen_all_comps.ts 用:每场每项目 round-1 的 time_limit / cutoff / advancement_condition + qualification
+  // （WCIF 形状 JSON）→ comp_round_meta.json。developer dump 自带这两张表。
+  'rounds', 'competition_events',
 ] as const;
 
 // NOTE: 导入后追加的自定义索引

@@ -14,8 +14,9 @@ export type { WcaUpcomingComp, WcaCompDetail } from './api/wca_search';
 export {
   fetchAllUpcomingCompsJson,
   fetchAllPastCompsJson,
+  fetchCompRoundMetaJson,
 } from './api/comps_json';
-export type { UpcomingCompRecord, PastCompRecord } from './api/comps_json';
+export type { UpcomingCompRecord, PastCompRecord, RoundMeta, CompRoundMetaMap } from './api/comps_json';
 export { useWcaAuth, WcaAuth } from './hooks/useWcaAuth';
 export { WcaPersonPicker } from './components/WcaPersonPicker';
 export {

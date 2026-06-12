@@ -234,6 +234,18 @@ eoline 的 yk 与 yk+2 同目标(get_stats/enumerate 只跑 yk 0/1),dr 对 y 完
    前端 DiscreteHistogram/computeStats 直接复用)。
 4. **客户端契约** `client-next/lib/puzzle-distribution.ts`(类型 + `fetchPuzzleDistribution()`
    走 statsUrl);改 shape 两处同步 + bump `V`。
+5. **示例 reservoir(必做,别只产直方图)** `src/build_puzzle_examples.ts` → 产
+   `stats/scramble/puzzle_examples.json`:`puzzles.<key> = { bins:{ "<len>":[[id,scramble],…] },
+   comps:{ci:[名,日期]}, idMeta:{id:[ci,event,num,round,group,extra]} }`。每个步数 bin 蓄水池
+   采样 K≈20 条,比赛元数据 join 同 3x3(`build.ts` 的 `buildExampleCompMeta`:Scrambles.tsv
+   列 competition_id/round_type_id/group_id/is_extra/scramble_num + Competitions.tsv 比赛名)。
+   客户端契约 `lib/puzzle-examples.ts`。**漏了这步 = puzzle 难度页没有「点某步数看真实比赛打乱卡片」,
+   与 3x3 难度 tab 不对等(用户 2026-06-12 明确要求对等)。**
+6. **UI 消费(必做)** `/scramble/stats` 难度 tab:WCA event_id → puzzle key 的映射
+   `PUZZLE_EVENT_MAP`(page.tsx)把二阶/金字塔/斜转接进**共享的 WCA 项目选择器那一排**
+   (不要另起 tab / 内部下拉);选中 → `PuzzleDistView`(直方图 + 摘要统计 + **可点 bin → 示例卡片**,
+   示例预览走 `ScramblePreview2D event=<event_id>`,非 333)。3x3 专属的合并/数据集开关对 puzzle 隐藏。
 
-小样本验形:`pwsh update_puzzle_stats.ps1 -Puzzles <key> -MaxNew 300`;
-**全量灌注 + static 发布 = MANUAL**(发布跟 stats/scramble 同一个 tar+scp 仪式)。
+小样本验形:`pwsh update_puzzle_stats.ps1 -Puzzles <key> -MaxNew 300`(分布)+ 跑 examples build;
+**全量灌注 + static 发布 = MANUAL**(`puzzle_distribution.json` + `puzzle_examples.json` 一起
+tar+scp,跟 stats/scramble 同仪式)。

@@ -168,11 +168,16 @@
   border: none;
 }
 .chx-dual-ticks {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 2px;
+  position: relative;
+  height: 14px;
+  margin: 0 7px;
   font-size: 10.5px;
   color: var(--faint-foreground);
+}
+.chx-dual-ticks span {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
 }
 .chx-dual-ticks .is-in {
   color: var(--accent);
@@ -484,6 +489,30 @@
 }
 
 /* ── 排除列表 ── */
+/* mallard 式「排除: <当前步>」一键按钮(橙色填充) */
+.chx-excl-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 12px;
+  padding: 7px 12px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chx-excl-add:hover {
+  background: color-mix(in srgb, var(--accent) 88%, black);
+}
+.chx-excl-add code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12.5px;
+  font-weight: 400;
+  white-space: nowrap;
+}
 .chx-excl-list {
   display: flex;
   flex-wrap: wrap;

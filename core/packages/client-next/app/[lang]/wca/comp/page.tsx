@@ -20,8 +20,11 @@ import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import {
   fetchAllUpcomingCompsJson,
   fetchAllPastCompsJson,
+  fetchCompRoundMetaJson,
   type UpcomingCompRecord,
   type PastCompRecord,
+  type RoundMeta,
+  type CompRoundMetaMap,
 } from '@cuberoot/shared';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { displayCuberName } from '@/lib/name-utils';
@@ -46,7 +49,7 @@ import { formatRegStatus } from '@/lib/comp-reg-status';
 import { localizeCity } from '@/lib/city-localize';
 import { countryName } from '@/lib/country-name';
 import { expandCountrySelection } from '@/lib/continent';
-import { fetchCompRounds } from '@/lib/comp-wcif';
+import { fetchCompRounds, fetchCompWcif } from '@/lib/comp-wcif';
 import { statsUrl } from '@/lib/stats-base';
 import { ClearButton } from '@/components/ClearButton';
 import { CubingIcon } from '@/components/EventIcon';
@@ -146,6 +149,8 @@ interface Competition {
   rounds?: Record<string, number>;
   /** event 短码 → 该项目报名/参赛人数（upcoming=WCIF 报名聚合，past=results 实际参赛）；缺省时格子留空 */
   event_regs?: Record<string, number>;
+  /** event 短码 → round-1 WCIF 紧凑配置（限时/及格/晋级/资格）。未来比赛内联自 JSON；过去比赛由懒加载 meta 文件补；缺时运行时 WCIF 兜底 */
+  roundMeta?: Record<string, RoundMeta>;
   competitor_limit: number;
   /** 实际参赛人数（过去比赛 all_past_comps.json 提供；未来比赛无此数据） */
   competitors?: number;
@@ -636,6 +641,7 @@ function adaptAllComp(w: UpcomingCompRecord, topCuberMap: Map<string, TopCuber[]
     events: w.events,
     rounds: w.rounds,
     event_regs: w.event_regs,
+    roundMeta: w.round_meta,
     competitor_limit: w.competitor_limit,
     registration_open: w.registration_open ?? undefined,
     registration_close: w.registration_close ?? undefined,
@@ -687,12 +693,87 @@ function readQFromUrl(): string {
 type ViewMode = 'calendar' | 'compact' | 'list' | 'globe';
 const VIEW_MODES: ViewMode[] = ['calendar', 'compact', 'list', 'globe'];
 
-type EventMetric = 'rounds' | 'regs';
-const EVENT_METRICS: EventMetric[] = ['rounds', 'regs'];
+// 列表视图每个项目格子显示什么。rounds/regs 走静态字段；其余 4 个走 round-1 WCIF meta（仅 upcoming）。
+type EventMetric = 'rounds' | 'regs' | 'timeLimit' | 'cutoff' | 'advancement' | 'qualification';
+const EVENT_METRICS: EventMetric[] = ['rounds', 'regs', 'timeLimit', 'cutoff', 'advancement', 'qualification'];
+// 需要运行时 WCIF round-1 meta 的 metric（rounds/regs 不需要）
+const WCIF_META_METRICS = new Set<EventMetric>(['timeLimit', 'cutoff', 'advancement', 'qualification']);
+// 值较宽（时间 / 及格线 / 晋级）的 metric — 列表事件列要加宽，避免 1.3rem 挤不下 "10:00"
+const WIDE_METRICS = new Set<EventMetric>(['timeLimit', 'cutoff', 'advancement']);
 
-// 列表视图按人数排序：col 选实际人数 / 上限 / 满员率(实际÷上限)，dir 降/升；null = 默认按日期倒序
-type SortCol = 'competitors' | 'limit' | 'ratio';
-type ListSort = { col: SortCol; dir: 'asc' | 'desc' } | null;
+function pad2n(n: number): string { return n < 10 ? `0${n}` : `${n}`; }
+/** 厘秒 → 紧凑时长 "M:SS" / "H:MM:SS"（时间上限用，始终真实时间，不走事件语义） */
+function fmtDurationCs(cs: number): string {
+  const t = Math.round(cs / 100);
+  const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+  return h > 0 ? `${h}:${pad2n(m)}:${pad2n(s)}` : `${m}:${pad2n(s)}`;
+}
+
+/** 结果串去掉无意义的 ".00" 尾巴，让格子更紧凑（"1:15.00"→"1:15"、"30.00"→"30"；非零厘秒保留） */
+function compactResult(s: string): string { return s.replace(/\.00$/, ''); }
+
+/** 一个项目格子在给定 metric 下的显示文本 + tooltip。wcaEid 用于事件语义结果格式化，shortEid 用于读静态字段。
+ *  meta 为解析后的 round-1 紧凑配置（来自静态 JSON / 懒加载 / 运行时兜底），缺则留空。 */
+function eventCellContent(
+  metric: EventMetric,
+  wcaEid: string,
+  shortEid: string,
+  c: Competition,
+  meta: RoundMeta | undefined,
+  isZh: boolean,
+): { text: string; title?: string } {
+  if (metric === 'rounds' || metric === 'regs') {
+    const src = metric === 'regs' ? c.event_regs : c.rounds;
+    const v = src?.[shortEid];
+    return { text: v != null ? String(v) : '' };
+  }
+  if (!meta) return { text: '' };
+  if (metric === 'timeLimit') {
+    if (meta.tl == null) return { text: '' };
+    const d = fmtDurationCs(meta.tl);
+    return {
+      text: meta.cum ? `∑${d}` : d,
+      title: meta.cum
+        ? (isZh ? `累计时间上限 ${d}` : `Cumulative time limit ${d}`)
+        : (isZh ? `时间上限 ${d}` : `Time limit ${d}`),
+    };
+  }
+  if (metric === 'cutoff') {
+    if (!meta.co) return { text: '' };
+    const [n, res] = meta.co;
+    const r = compactResult(formatWcaResult(res, wcaEid, 'single'));
+    const bo = n ? (isZh ? `（取${n}把）` : ` (best of ${n})`) : '';
+    return { text: r, title: (isZh ? `及格线 ${r}` : `Cutoff ${r}`) + bo };
+  }
+  if (metric === 'advancement') {
+    if (!meta.adv) return { text: '' };
+    const kind = meta.adv[0];
+    const level = Number(meta.adv.slice(1));
+    if (kind === 'r') return { text: `T${level}`, title: isZh ? `前 ${level} 名晋级` : `Top ${level} advance` };
+    if (kind === 'p') return { text: `${level}%`, title: isZh ? `前 ${level}% 晋级` : `Top ${level}% advance` };
+    const r = compactResult(formatWcaResult(level, wcaEid, 'single'));
+    return { text: `≤${r}`, title: isZh ? `成绩 ≤ ${r} 晋级` : `Advance if ≤ ${r}` };
+  }
+  // qualification: q = "type:resultType:level"
+  if (!meta.q) return { text: '' };
+  const [qType, qRes, qLevel] = meta.q.split(':');
+  const lv = qLevel ? compactResult(formatWcaResult(Number(qLevel), wcaEid, 'single')) : '';
+  const parts = [qType, qRes, lv].filter(Boolean).join(' ');
+  return { text: 'Q', title: (isZh ? '参赛资格要求：' : 'Qualification: ') + parts };
+}
+
+// 列表视图整场列 metric：实际人数 / 上限(competitorLimit) / 满员率(实际÷上限) / 不显示。
+// 三列合并成一列，由左下拉选当前显示哪个；点列头按它升/降排序。
+type CompMetric = 'competitors' | 'limit' | 'ratio' | 'none';
+const COMP_METRICS: CompMetric[] = ['competitors', 'limit', 'ratio', 'none'];
+type SortDir = 'asc' | 'desc' | null;
+
+function compColTitle(m: CompMetric, isZh: boolean): string {
+  if (m === 'competitors') return isZh ? '实际参赛人数' : 'Competitors';
+  if (m === 'limit') return isZh ? '人数上限' : 'Competitor limit';
+  if (m === 'ratio') return isZh ? '满员率(实际/上限)' : 'Fill rate (competitors/limit)';
+  return '';
+}
 
 /** 满员率 = min(实际人数 / 人数上限, 100%)；缺人数 / 无上限(0) → null。
  *  人数>上限(上限填错 / 多阶段 / 多地点等)视为已满员，封顶 100%，不出现 >100% 的脏值 */
@@ -741,13 +822,13 @@ function measureMaxNameCityPx(comps: Competition[], isZh: boolean, containerPx?:
     const total = nameWs[i] + gapPx + ctx.measureText(cityStr).width;
     if (total > maxTotal) maxTotal = total;
   }
-  // 视口上限: container 减掉其他列总宽（date + flag + days + competitors + limit + ratio + 21 events + gaps + padding）
-  // 其他列在 768px 以上 = 7.2 + 1.4 + 1.6 + 2.6 + 2.6 + 2.8 + 21*1.3 = 45.5rem，加 27 列 6px gap + 12px*2 padding
+  // 视口上限: container 减掉其他列总宽（date + flag + days + 整场单列 + 21 events + gaps + padding）
+  // 其他列在 768px 以上 = 7.2 + 1.4 + 1.6 + 2.8 + 21*1.3 ≈ 40.3rem（窄值 metric），加 25 列 gap + padding
   let cap = LIST_NAME_CELL_MAX_PX;
   if (containerPx != null && containerPx > 0) {
     const isNarrow = window.innerWidth <= 768;
-    const otherColsRem = isNarrow ? (5.5 + 1.2 + 1.4 + 2.3 + 2.3 + 2.4 + 21 * 1.1) : (7.2 + 1.4 + 1.6 + 2.6 + 2.6 + 2.8 + 21 * 1.3);
-    const gapPaddingPx = isNarrow ? (4 * 27 + 8 * 2) : (6 * 27 + 12 * 2);
+    const otherColsRem = isNarrow ? (5.5 + 1.2 + 1.4 + 2.4 + 21 * 1.1) : (7.2 + 1.4 + 1.6 + 2.8 + 21 * 1.3);
+    const gapPaddingPx = isNarrow ? (4 * 25 + 8 * 2) : (6 * 25 + 12 * 2);
     const avail = containerPx - otherColsRem * rootFontPx - gapPaddingPx;
     cap = Math.min(cap, Math.max(LIST_NAME_CELL_MIN_PX, avail));
   }
@@ -756,12 +837,18 @@ function measureMaxNameCityPx(comps: Competition[], isZh: boolean, containerPx?:
 
 interface RowItem { comp: Competition; key: string }
 
-function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso, pageRef, sortState, eventMetric }: {
+function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso, pageRef, compMetric, compSortDir, eventMetric, pastMeta }: {
   comps: Competition[];
   isZh: boolean;
   onSelect: (c: Competition) => void;
-  /** 每个项目格子显示：'rounds'=轮次数 / 'regs'=报名(参赛)人数 */
+  /** 每个项目格子显示：'rounds'=轮次数 / 'regs'=报名人数 / WCIF round-1 配置 */
   eventMetric: EventMetric;
+  /** 过去比赛 round-1 meta 懒加载表（comp id → short → RoundMeta）；未加载 / 未来比赛为 null */
+  pastMeta: CompRoundMetaMap | null;
+  /** 整场列显示哪个 metric：实际人数 / 上限 / 满员率 / 不显示 */
+  compMetric: CompMetric;
+  /** 整场列排序方向；null = 按日期倒序 */
+  compSortDir: SortDir;
   /** 当前可见区域所在年份（用于在 chip 行 sticky 显示）；可见为空时传 null */
   onYearChange: (info: { year: string; count: number } | null) => void;
   /** 横向滚动容器 — 父组件用它和 chip 表头同步 scrollLeft */
@@ -770,19 +857,20 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   cancelledCutoffIso: string;
   /** .calendar-page 根元素 ref —— 用来按当前可视行最长 name+city 写 --cl-name-width */
   pageRef: React.RefObject<HTMLDivElement | null>;
-  /** 人数排序状态；null = 按日期倒序 */
-  sortState: ListSort;
 }) {
-  // 默认按日期倒序；人数排序时按所选列(实际/上限)排，缺值(0/缺省)恒沉底，同值再按日期倒序
+  // 整场列单值取值：实际人数 / 上限 / 满员率
+  const compVal = useCallback((c: Competition): number | null | undefined =>
+    compMetric === 'competitors' ? c.competitors
+      : compMetric === 'limit' ? c.competitor_limit
+        : compMetric === 'ratio' ? fillRate(c)
+          : null, [compMetric]);
+  // 默认按日期倒序；排序激活且整场 metric 非 none 时按整场值排，缺值(0/缺省)恒沉底，同值再按日期倒序
   const items = useMemo<RowItem[]>(() => {
     const sorted = [...comps];
-    if (sortState) {
-      const col = sortState.col;
-      const mul = sortState.dir === 'asc' ? 1 : -1;
-      const getVal = (c: Competition): number | null | undefined =>
-        col === 'competitors' ? c.competitors : col === 'limit' ? c.competitor_limit : fillRate(c);
+    if (compSortDir && compMetric !== 'none') {
+      const mul = compSortDir === 'asc' ? 1 : -1;
       sorted.sort((a, b) => {
-        const av = getVal(a), bv = getVal(b);
+        const av = compVal(a), bv = compVal(b);
         const aM = av == null || av <= 0;
         const bM = bv == null || bv <= 0;
         if (aM && bM) return b.start_date.localeCompare(a.start_date);
@@ -795,7 +883,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
       sorted.sort((a, b) => b.start_date.localeCompare(a.start_date));
     }
     return sorted.map((c) => ({ comp: c, key: c.id }));
-  }, [comps, sortState]);
+  }, [comps, compSortDir, compMetric, compVal]);
   const yearCounts = useMemo(() => {
     const m = new Map<string, number>();
     for (const c of comps) {
@@ -845,13 +933,14 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
 
   // 通知父组件当前 sticky 年份（真正可见的最顶行的年份 — 用 range.top 而不是 range.start，
   // 后者带 LIST_BUFFER 上缓冲会指向视口外往上 8 行的位置，导致跨年时年份显示滞后）
+  const sorted = !!compSortDir && compMetric !== 'none';
   useEffect(() => {
-    // 人数排序时列表非时间序，sticky 年份无意义 → 置空
-    if (items.length === 0 || sortState) { onYearChange(null); return; }
+    // 整场排序时列表非时间序，sticky 年份无意义 → 置空
+    if (items.length === 0 || sorted) { onYearChange(null); return; }
     const idx = Math.min(range.top, items.length - 1);
     const year = items[idx].comp.start_date.slice(0, 4);
     onYearChange({ year, count: yearCounts.get(year) ?? 0 });
-  }, [range.top, items, yearCounts, onYearChange, sortState]);
+  }, [range.top, items, yearCounts, onYearChange, sorted]);
 
   // 视口内 upcoming 比赛(无静态 rounds)自动 WCIF 预取 — 让用户不用 hover 也能看到轮次数。
   // fetchCompRounds 内部有 inflight + cache 去重,浏览器同 host 并发上限 6,自然节流。
@@ -859,22 +948,37 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
   useEffect(() => {
     let cancelled = false;
+    // round-1 WCIF meta（限时/及格/晋级/资格）只对 upcoming 比赛运行时拉取 —— 过去比赛
+    // WCA dump 本就没有这些字段，且 list 含 ~17k 过去赛，逐行拉 WCIF 会狂打 WCA。
+    const wantMeta = WCIF_META_METRICS.has(eventMetric);
+    const todayIso = toIsoDate(new Date());
     const window = items.slice(range.start, range.end);
     for (const it of window) {
       const c = it.comp;
-      if (c.rounds && Object.keys(c.rounds).length > 0) continue;
-      fetchCompRounds(c.id).then((wcif) => {
+      const isUpcoming = (c.end_date || c.start_date) >= todayIso;
+      if (!isUpcoming) continue;
+      const needRounds = !(c.rounds && Object.keys(c.rounds).length > 0);
+      const needMeta = wantMeta && !c.roundMeta;
+      if (!needRounds && !needMeta) continue;
+      fetchCompWcif(c.id).then((w) => {
         if (cancelled) return;
-        const mapped: Record<string, number> = {};
-        for (const [eid, formats] of Object.entries(wcif)) {
-          mapped[WCA_EVENT_ID_TO_SHORT[eid] ?? eid] = formats.length;
+        if (needRounds) {
+          const mapped: Record<string, number> = {};
+          for (const [eid, formats] of Object.entries(w.rounds)) {
+            mapped[WCA_EVENT_ID_TO_SHORT[eid] ?? eid] = formats.length;
+          }
+          c.rounds = mapped;
         }
-        c.rounds = mapped;
+        const meta: Record<string, RoundMeta> = {};
+        for (const [eid, mm] of Object.entries(w.meta)) {
+          meta[WCA_EVENT_ID_TO_SHORT[eid] ?? eid] = mm;
+        }
+        c.roundMeta = meta;
         forceUpdate();
       });
     }
     return () => { cancelled = true; };
-  }, [range.start, range.end, items]);
+  }, [range.start, range.end, items, eventMetric]);
 
   // 视口自适应 name+city 列宽：测当前渲染窗口（含 LIST_BUFFER 缓冲）max name+city，写到
   // .calendar-page 的 --cl-name-width。滚动到长名行时 cell 扩、滚出再收，
@@ -927,6 +1031,8 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
           const prefetch = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
           const events = c.events ?? [];
           const cancelled = isCancelledComp(c, cancelledCutoffIso);
+          // 该场 round-1 meta：未来比赛内联 / 运行时兜底走 c.roundMeta；过去比赛走懒加载的 pastMeta 表
+          const cMeta = c.roundMeta ?? pastMeta?.[c.id];
           return (
             <button
               key={it.key}
@@ -954,29 +1060,24 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
             })}>
                 {daysBetween(parseLocalDate(c.start_date), parseLocalDate(endDate)) + 1}
               </span>
-              <span className="cl-people-cell" title={tr({ zh: '实际参赛人数', en: 'Competitors',
-                  zhHant: "實際參賽人數"
-            })}>
-                {c.competitors != null ? c.competitors : ''}
-              </span>
-              <span className="cl-people-cell cl-limit-cell" title={tr({ zh: '人数上限', en: 'Competitor limit',
-                  zhHant: "人數上限"
-              })}>
-                {c.competitor_limit > 0 ? c.competitor_limit : ''}
-              </span>
-              <span className="cl-people-cell cl-ratio-cell" title={tr({ zh: '满员率(实际/上限)', en: 'Fill rate (competitors/limit)',
-                  zhHant: "滿員率(實際/上限)"
-              })}>
-                {(() => { const r = fillRate(c); return r == null ? '' : `${Math.round(r * 100)}%`; })()}
+              <span
+                className={`cl-people-cell${compMetric === 'ratio' || compMetric === 'limit' ? ' cl-limit-cell' : ''}`}
+                title={compMetric === 'none' ? undefined : compColTitle(compMetric, isZh)}
+              >
+                {(() => {
+                  if (compMetric === 'competitors') return c.competitors != null ? c.competitors : '';
+                  if (compMetric === 'limit') return c.competitor_limit > 0 ? c.competitor_limit : '';
+                  if (compMetric === 'ratio') { const r = fillRate(c); return r == null ? '' : `${Math.round(r * 100)}%`; }
+                  return '';
+                })()}
               </span>
               {EVENT_ORDER.map((eid) => {
                 const shortEid = WCA_EVENT_ID_TO_SHORT[eid] ?? eid;
-                const src = eventMetric === 'regs' ? c.event_regs : c.rounds;
-                const v = src?.[shortEid];
                 const has = events.includes(shortEid);
+                const { text, title } = eventCellContent(eventMetric, eid, shortEid, c, cMeta?.[shortEid], isZh);
                 return (
-                  <span key={eid} className="cl-event-cell">
-                    {v != null ? v : (has ? '·' : '')}
+                  <span key={eid} className="cl-event-cell" title={title}>
+                    {text !== '' ? text : (has ? '·' : '')}
                   </span>
                 );
               })}
@@ -1058,8 +1159,22 @@ function CalendarPageInner() {
   const [dateTo, setDateTo] = useState('');
   // 列表 sticky 年份（chip 行左侧 cell 显示）；CompList 滚动时回调更新
   const [currentYear, setCurrentYear] = useState<{ year: string; count: number } | null>(null);
-  // 列表视图人数排序（实际/上限列头单击循环 降→升→默认日期序）
-  const [listSort, setListSort] = useState<ListSort>(null);
+  // 列表整场列显示哪个 metric（实际人数/上限/满员率/不显示）。replace 不堆历史。
+  const [compMetric, setCompMetric] = useQueryState(
+    'cmetric',
+    parseAsStringEnum<CompMetric>(COMP_METRICS).withDefault('competitors').withOptions({ history: 'replace', scroll: false }),
+  );
+  // 整场列排序方向（列头单击循环 降→升→默认日期序）；切换 metric 不重置
+  const [compSortDir, setCompSortDir] = useState<SortDir>(null);
+  // 过去比赛 round-1 meta（~4MB）懒加载：仅列表视图选中 限时/及格/晋级/资格 时才拉
+  const [pastMeta, setPastMeta] = useState<CompRoundMetaMap | null>(null);
+  const pastMetaTriedRef = useRef(false);
+  useEffect(() => {
+    if (viewMode !== 'list' || !WCIF_META_METRICS.has(eventMetric)) return;
+    if (pastMetaTriedRef.current) return;
+    pastMetaTriedRef.current = true;
+    fetchCompRoundMetaJson().then(setPastMeta).catch(() => { pastMetaTriedRef.current = false; });
+  }, [viewMode, eventMetric]);
   // 已取消过滤：'all' = 默认包含；'only' = 仅展示已取消
   const [cancelledFilter, setCancelledFilter] = useState<'all' | 'only'>('all');
   // 三个 popover 共用一份 state：'month' = 日历模式月份选择；'from'/'to' = 列表模式年月范围
@@ -1483,6 +1598,8 @@ function CalendarPageInner() {
     <div
       ref={pageRef}
       className={`calendar-page${viewMode === 'list' ? ' calendar-page--list' : ''}${viewMode === 'compact' ? ' calendar-page--compact' : ''}${viewMode === 'globe' ? ' calendar-page--globe' : ''}`}
+      data-wide-metric={viewMode === 'list' && WIDE_METRICS.has(eventMetric) ? '' : undefined}
+      data-comp-none={viewMode === 'list' && compMetric === 'none' ? '' : undefined}
     >
       <header className="upcoming-header">
         <h1 className="upcoming-title">
@@ -1687,26 +1804,32 @@ function CalendarPageInner() {
                                           ? `共 ${displayedComps.length.toLocaleString()} 场`
                                           : `${displayedComps.length.toLocaleString()} comps`)}
             </span>
-            <div className="list-metric-toggle" role="group" aria-label={tr({ zh: '项目格子显示', en: 'Per-event cell', zhHant: '項目格子顯示' })}>
-              <button
-                type="button"
-                className={`view-btn ${eventMetric === 'rounds' ? 'is-active' : ''}`}
-                aria-pressed={eventMetric === 'rounds'}
-                onClick={() => setEventMetric('rounds')}
-                title={tr({ zh: '每个项目格子显示轮次数', en: 'Show round count per event', zhHant: '每個項目格子顯示輪次數' })}
-              >
-                {tr({ zh: '轮次', en: 'Rounds', zhHant: '輪次' })}
-              </button>
-              <button
-                type="button"
-                className={`view-btn ${eventMetric === 'regs' ? 'is-active' : ''}`}
-                aria-pressed={eventMetric === 'regs'}
-                onClick={() => setEventMetric('regs')}
-                title={tr({ zh: '每个项目格子显示报名 / 参赛人数', en: 'Show entries per event', zhHant: '每個項目格子顯示報名 / 參賽人數' })}
-              >
-                {tr({ zh: '人数', en: 'Entries', zhHant: '人數' })}
-              </button>
-            </div>
+            <select
+              className="list-metric-select"
+              value={compMetric}
+              onChange={(e) => setCompMetric(e.target.value as CompMetric)}
+              aria-label={tr({ zh: '整场列显示', en: 'Whole-comp column', zhHant: '整場列顯示' })}
+              title={tr({ zh: '整场一列显示什么（实际人数 / 上限 / 满员率），点列头可排序', en: 'What the whole-comp column shows (competitors / limit / fill rate); click header to sort', zhHant: '整場一列顯示什麼（實際人數 / 上限 / 滿員率），點列頭可排序' })}
+            >
+              <option value="competitors">{tr({ zh: '实际人数', en: 'Competitors', zhHant: '實際人數' })}</option>
+              <option value="limit">{tr({ zh: '人数上限', en: 'Limit', zhHant: '人數上限' })}</option>
+              <option value="ratio">{tr({ zh: '满员率', en: 'Fill rate', zhHant: '滿員率' })}</option>
+              <option value="none">{tr({ zh: '整场不显示', en: 'Hide whole-comp', zhHant: '整場不顯示' })}</option>
+            </select>
+            <select
+              className="list-metric-select"
+              value={eventMetric}
+              onChange={(e) => setEventMetric(e.target.value as EventMetric)}
+              aria-label={tr({ zh: '项目格子显示', en: 'Per-event cell', zhHant: '項目格子顯示' })}
+              title={tr({ zh: '每个项目格子显示什么（限时 / 及格 / 晋级 / 资格仅未来比赛有）', en: 'What each event cell shows (time limit / cutoff / advancement / qualification: upcoming only)', zhHant: '每個項目格子顯示什麼（限時 / 及格 / 晉級 / 資格僅未來比賽有）' })}
+            >
+              <option value="rounds">{tr({ zh: '轮次', en: 'Rounds', zhHant: '輪次' })}</option>
+              <option value="regs">{tr({ zh: '人数', en: 'Entries', zhHant: '人數' })}</option>
+              <option value="timeLimit">{tr({ zh: '限时', en: 'Time limit', zhHant: '限時' })}</option>
+              <option value="cutoff">{tr({ zh: '及格线', en: 'Cutoff', zhHant: '及格線' })}</option>
+              <option value="advancement">{tr({ zh: '晋级', en: 'Advance', zhHant: '晉級' })}</option>
+              <option value="qualification">{tr({ zh: '参赛资格', en: 'Qualify', zhHant: '參賽資格' })}</option>
+            </select>
           </div>
         )}
       </div>
@@ -1792,37 +1915,26 @@ function CalendarPageInner() {
               <span className="cl-h-spacer" aria-hidden="true" />
               <span className="cl-h-spacer" aria-hidden="true" />
               {daysChip}
-              {([
-                ['competitors', Users, tr({ zh: '实际参赛人数(点击排序)', en: 'Competitors (click to sort)',
-                    zhHant: "實際參賽人數(點選排序)"
-                })],
-                ['limit', Gauge, tr({ zh: '人数上限(点击排序)', en: 'Competitor limit (click to sort)',
-                    zhHant: "人數上限(點選排序)"
-                })],
-                ['ratio', Percent, tr({ zh: '满员率 实际/上限(点击排序)', en: 'Fill rate, competitors/limit (click to sort)',
-                    zhHant: "滿員率 實際/上限(點選排序)"
-                })],
-              ] as const).map(([col, Icon, title]) => {
-                const on = listSort?.col === col;
+              {compMetric === 'none' ? (
+                <span className="cl-h-spacer" aria-hidden="true" />
+              ) : (() => {
+                const CompIcon = compMetric === 'competitors' ? Users : compMetric === 'limit' ? Gauge : Percent;
+                const on = !!compSortDir;
                 return (
                   <button
-                    key={col}
                     type="button"
                     className={`cl-col-icon cl-col-sort${on ? ' is-active' : ''}`}
-                    title={title}
+                    title={compColTitle(compMetric, isZh) + (isZh ? '(点击排序)' : ' (click to sort)')}
                     aria-pressed={on}
-                    onClick={() => setListSort((cur) =>
-                      !cur || cur.col !== col ? { col, dir: 'desc' }
-                        : cur.dir === 'desc' ? { col, dir: 'asc' }
-                          : null)}
+                    onClick={() => setCompSortDir((cur) => cur === 'desc' ? 'asc' : cur === 'asc' ? null : 'desc')}
                   >
-                    {on && (listSort!.dir === 'desc'
+                    {on && (compSortDir === 'desc'
                       ? <ChevronDown size={11} strokeWidth={2.25} />
                       : <ChevronUp size={11} strokeWidth={2.25} />)}
-                    <Icon size={15} strokeWidth={1.75} />
+                    <CompIcon size={15} strokeWidth={1.75} />
                   </button>
                 );
-              })}
+              })()}
               {chips}
             </div>
           );
@@ -1843,8 +1955,10 @@ function CalendarPageInner() {
           isZh={isZh}
           onSelect={setSelectedComp}
           onYearChange={setCurrentYear}
-          sortState={listSort}
+          compMetric={compMetric}
+          compSortDir={compSortDir}
           eventMetric={eventMetric}
+          pastMeta={pastMeta}
           outerRef={listScrollRef}
           cancelledCutoffIso={cancelledCutoffIso}
           pageRef={pageRef}

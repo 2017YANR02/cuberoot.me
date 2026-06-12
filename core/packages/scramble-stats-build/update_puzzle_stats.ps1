@@ -153,7 +153,8 @@ if (-not $BuildOnly) {
       if ($LASTEXITCODE -ne 0) { throw "[$name] analyzer 失败 (块 @$i)" }
       $outRows = 0; foreach($l in [IO.File]::ReadLines($chunkOut)){ $outRows++ }
       if ($outRows -ne $n + 1) { throw "[$name] 块 @$i 行数不符: 期望 $($n+1)(含 header) 实得 $outRows" }
-      $withHeader = -not (Test-Path $csv)
+      # master 不存在 *或* 空(被清空重灌)都要保留 chunk 表头,否则 build 报缺列
+      $withHeader = (-not (Test-Path $csv)) -or ((Get-Item $csv).Length -eq 0)
       Append-Lines $csv $chunkOut (-not $withHeader)
       Write-Host "  块 @$i +$n -> $csv"
     }

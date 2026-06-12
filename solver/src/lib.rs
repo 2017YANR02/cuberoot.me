@@ -28,6 +28,8 @@ pub mod roux_s1_solver;
 pub mod skewb_solver;
 // sq1:Square-1 twist-metric 最优(双阶段 search + 五张投影剪枝表 ~43MB 现场建,零盘表,独立状态模型)。
 pub mod sq1_solver;
+// sq1 two-phase:cstimer 移植的近最优 SQ1 求解器(slash 数,毫秒级;管道默认走它)。
+pub mod sq1_twophase;
 pub mod xcross_solver;
 
 // --- native-only(依赖 rayon / 磁盘表生成 / mmap manager,WASM 不编)---

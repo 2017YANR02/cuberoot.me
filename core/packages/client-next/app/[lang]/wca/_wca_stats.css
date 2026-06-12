@@ -647,7 +647,7 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-index-title {
-  font-family: 'Fraunces', 'Times New Roman', serif;
+  font-family: var(--font-serif);
   font-size: clamp(1.6rem, 3.6vw, 2.4rem);
   font-weight: 400;
   line-height: 1.1;
@@ -833,7 +833,7 @@ input:checked + .wca-stats-toggle-pill::after {
 
 .wca-stats-index-section-header h2 {
   margin: 0;
-  font-family: 'Fraunces', 'Times New Roman', serif;
+  font-family: var(--font-serif);
   font-size: 1.15rem;
   font-weight: 500;
   letter-spacing: -0.01em;

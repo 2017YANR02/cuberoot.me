@@ -13,6 +13,8 @@ import type { RowDataPacket } from 'mysql2';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_PATH = resolve(__dirname, '../../../../../stats/all_past_comps.json');
+// round-1 WCIF 配置（限时/及格/晋级/资格）大文件，列表视图按需懒加载（不内联进 all_past_comps，避免它再涨 ~5MB）
+const META_OUTPUT_PATH = resolve(__dirname, '../../../../../stats/comp_round_meta.json');
 
 // NOTE: WCA 内部 event_id → 前端短名（与 fetch_upcoming_comps.ts EVENT_DISPLAY_ORDER 保持一致）
 const EVENT_SHORT: Record<string, string> = {
@@ -46,6 +48,44 @@ interface RoundRow extends RowDataPacket {
   event_id: string;
   round_count: number;
   person_count: number;
+}
+
+interface MetaRow extends RowDataPacket {
+  competition_id: string;
+  event_id: string;
+  time_limit: string | null;
+  cutoff: string | null;
+  advancement_condition: string | null;
+}
+interface QualRow extends RowDataPacket {
+  competition_id: string;
+  event_id: string;
+  qualification: string | null;
+}
+
+// 紧凑 round-1 meta（与 shared RoundMeta 一致，键省略即无）
+interface RoundMeta {
+  tl?: number;
+  cum?: 1;
+  co?: [number, number];
+  adv?: string;
+  q?: string;
+}
+
+function safeParse<T>(s: string | null): T | null {
+  if (!s) return null;
+  try { return JSON.parse(s) as T; } catch { return null; }
+}
+function encodeAdv(a: { type?: string; level?: number } | null): string | undefined {
+  if (!a || a.level == null) return undefined;
+  if (a.type === 'ranking') return `r${a.level}`;
+  if (a.type === 'percent') return `p${a.level}`;
+  if (a.type === 'attemptResult') return `a${a.level}`;
+  return undefined;
+}
+function encodeQual(q: { type?: string; resultType?: string; level?: number | null } | null): string | undefined {
+  if (!q || !q.type) return undefined;
+  return `${q.type}:${q.resultType ?? ''}:${q.level ?? ''}`;
 }
 
 function fmtDate(d: Date | string): string {
@@ -151,6 +191,56 @@ async function main() {
   const kb = Math.round((Buffer.byteLength(JSON.stringify(out)) / 1024));
   const dur = ((Date.now() - start) / 1000).toFixed(2);
   console.log(`Generated ${OUTPUT_PATH}: ${out.length} comps, ${kb} KB, ${dur}s`);
+
+  // ── round-1 WCIF 配置（过去比赛）→ comp_round_meta.json ──────────────────
+  // rounds.time_limit / cutoff / advancement_condition 与 competition_events.qualification 都是 WCIF 形状的 JSON，
+  // 与 fetch_upcoming_comps.ts 从 WCIF 抽的字段一致。只取 number=1（round-1），过去比赛。
+  const metaStart = Date.now();
+  const metaRows = await query<MetaRow[]>(`
+    SELECT ce.competition_id, ce.event_id, r.time_limit, r.cutoff, r.advancement_condition
+    FROM rounds r
+    JOIN competition_events ce ON ce.id = r.competition_event_id
+    JOIN competitions c ON c.id = ce.competition_id
+    WHERE r.number = 1 AND c.end_date < CURDATE()
+  `);
+  const qualRows = await query<QualRow[]>(`
+    SELECT ce.competition_id, ce.event_id, ce.qualification
+    FROM competition_events ce
+    JOIN competitions c ON c.id = ce.competition_id
+    WHERE c.end_date < CURDATE() AND ce.qualification IS NOT NULL AND ce.qualification <> ''
+  `);
+
+  const metaByComp: Record<string, Record<string, RoundMeta>> = {};
+  const ensure = (comp: string, short: string): RoundMeta => {
+    let m = metaByComp[comp];
+    if (!m) { m = {}; metaByComp[comp] = m; }
+    let e = m[short];
+    if (!e) { e = {}; m[short] = e; }
+    return e;
+  };
+  for (const r of metaRows) {
+    const short = EVENT_SHORT[r.event_id] ?? r.event_id;
+    const tl = safeParse<{ centiseconds?: number; cumulativeRoundIds?: string[] }>(r.time_limit);
+    const co = safeParse<{ numberOfAttempts?: number; attemptResult?: number }>(r.cutoff);
+    const adv = encodeAdv(safeParse(r.advancement_condition));
+    const hasTl = tl && typeof tl.centiseconds === 'number';
+    const hasCo = co && typeof co.numberOfAttempts === 'number' && typeof co.attemptResult === 'number';
+    if (!hasTl && !hasCo && !adv) continue;
+    const e = ensure(r.competition_id, short);
+    if (hasTl) { e.tl = tl!.centiseconds!; if ((tl!.cumulativeRoundIds?.length ?? 0) > 0) e.cum = 1; }
+    if (hasCo) e.co = [co!.numberOfAttempts!, co!.attemptResult!];
+    if (adv) e.adv = adv;
+  }
+  for (const r of qualRows) {
+    const q = encodeQual(safeParse(r.qualification));
+    if (!q) continue;
+    ensure(r.competition_id, EVENT_SHORT[r.event_id] ?? r.event_id).q = q;
+  }
+
+  const metaJson = JSON.stringify(metaByComp);
+  writeFileSync(META_OUTPUT_PATH, metaJson, 'utf-8');
+  const metaKb = Math.round(Buffer.byteLength(metaJson) / 1024);
+  console.log(`Generated ${META_OUTPUT_PATH}: ${Object.keys(metaByComp).length} comps, ${metaKb} KB, ${((Date.now() - metaStart) / 1000).toFixed(2)}s`);
 }
 
 main()
