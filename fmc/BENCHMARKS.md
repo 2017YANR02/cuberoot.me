@@ -47,9 +47,11 @@ tables already generated & cached in IndexedDB), its own default config.
   wins wall-clock on length because its config prunes smarter (DR triggers), not
   because WASM is fast.
 
-> Numbers are on a fast desktop; the production box has a weaker CPU, so absolute
-> `mine` times scale up (still sub-second at the default for typical scrambles,
-> and nginx caches each (scramble, steps) for 7 days).
+> Numbers above are on a fast desktop. The production box has a much weaker CPU,
+> so measured **prod** latency at the default config is ~**1.8–2.4 s** for a hard
+> 20-move scramble (first hit; trivial scrambles are still instant). nginx caches
+> each `(scramble, steps)` for 7 days, so repeats are instant. Prod returns the
+> same totals as dev (22 / 21 / 21 for the three WCA scrambles).
 
 ## Tests
 
