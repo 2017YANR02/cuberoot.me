@@ -1,0 +1,20 @@
+[Unit]
+Description=cubelib FMC solver (mallard engine, vendored fmc/cubelib)
+After=network.target
+
+[Service]
+Type=simple
+# Static musl binary built by deploy_fmc.yml. Listens loopback-only; nginx
+# (api.cuberoot.me) reverse-proxies /v1/fmc/ → here. Generates ~9MB of pruning
+# tables at startup (~0.5s cold, cached under HOME for warm restarts).
+ExecStart=/www/wwwroot/cubelib-fmc/cubelib-server 127.0.0.1:8099
+Environment=HOME=/var/lib/cubelib-fmc
+StateDirectory=cubelib-fmc
+Restart=on-failure
+RestartSec=2
+# Small box (~1.8GB shared by 4 apps + PG): tables are tiny, cap hard.
+MemoryMax=256M
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

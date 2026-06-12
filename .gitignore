@@ -73,3 +73,7 @@ core/packages/server/src/tools/wca_local_names_cache.json
 core/packages/server/src/tools/test_output.txt
 
 .cc-connect/
+
+# vendored cubelib FMC solver build output
+fmc/target/
+fmc/**/target/
