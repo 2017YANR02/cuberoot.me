@@ -116,7 +116,7 @@
 #### EPIC 3.4 — SQ1 S1+S2(~3.4 亿 shape-reachable,双阶段 search + 剪枝表,非全表;solver 参考 cstimer `scramble_sq1_new.js`,min2phase 风格 WCA 标准最优)
 > 最重的一个,与前三只 puzzle 的"全表 BFS"模板不同:走双阶段 search + `SquarePrun` 式剪枝表(几 MB 级内存表,仍零盘表目标;若推导出需 >1G 落盘表 → 停,按 §0.10 大表特例红灯问用户)。打乱记号 `(x,y)` twist 对 + `/` slash;步数度量先按 cstimer 口径推导(slash 计 1 步,twist 计法在 P5a 定死并对公开 God 数核验)。cubing.js sq1 kpuzzle 比对注意 P4d 的中心自转坑同类问题 + memory 提的 sr-puzzlegen sq1 渲染坑(预览用现有 `_svg/sq1_svg.ts` / `lib/sq1-svg.ts`)。
 - [x] **P5a** Rust 核心 `sq1_solver.rs`(key `sq1`,shape/层状态模型,双阶段 search + 剪枝表)。门:cargo test --release sq1 绿,含独立暴力对照(浅层 IDDFS oracle)+ 已知最优案例核验;God 数/分布对公开数据(twist metric 口径写死)。✅ 2026-06-12 `5b7c44950`(实现)+ `0e740eaf5`(性能修复+基线回填)。cstimer SqCubie 同构模型;twist 口径定死(slash=1、层转=0,God 数 13 对 jaapsch 锁死,另用 face-turn metric 深度 0..6 分布锁机械正确性);双阶段 IDDFS,phase-1 五张全空间投影精确表取 max(~43MB nibble 打包现场 BFS,零盘表),phase-2 限方形子群;6/6 绿(oracle/已知最优/公开分布/round-trip/基线)+ 全量 lib 132/0;16 刀深游走最差 7.3s(初版 49min 爆炸已修),典型随机态(d≈10-11)秒级。⚠ P5b/P5c 百万态灌注嫌慢的话:根节点 8 线程并行预计再 ~5×,或批量层并行。
-- [ ] **P5b** analyzer bin `sq1_analyzer.rs` + `tests/e2e_sq1.rs`(raw 通道,吃全 WCA sq1 记号 `(x,y)/`)。门:e2e 绿 + smoke 形状对。
+- [x] **P5b** analyzer bin `sq1_analyzer.rs` + `tests/e2e_sq1.rs`(raw 通道,吃全 WCA sq1 记号 `(x,y)/`)。门:e2e 绿 + smoke 形状对。✅ 2026-06-12 `d104a7a16`(2 文件,executor 零改动)。bin 3 单测(round-trip×20 / 手算边角含 `(0,0)` 容忍 / 字符串通道 vs lib 直查×12)+ e2e 双 baseline(真实 WCA 5 条锁 11,9,10,9,11 含悬挂 `/`;手算 5 条锁 0,1,1,0,0);P5a 6/6 + 全量 lib 132/0 未塌;smoke 全 ≤13。⚠ P5c/灌注预警:单态时长方差大(多数 0.05~4s,少数 d=11/12 态 45~95s,24 条实测),百万态全量前需根节点并行或批量层并行;executor 按首个逗号切 id,sq1 记号含逗号 → **输入行必须带显式 id**(管道语料恒有)。
 - [ ] **P5c** 统计管线:PUZZLES 注册表加 sq1(event_id `sq1`)+ 小样本验形。门:端到端小样本绿。
 - [ ] **P5d** WASM 类 + 重建仪式 + `/scramble/sq1`(PuzzleOptimalSolver 新 spec;预览走现有 sq1 svg;求解耗时若秒级需 loading 态)。门:typecheck + node 冒烟相等 + playwright(replay 独立验证,注意 kpuzzle 等价口径)。
 - [ ] **P5e** 看板登记 + **📦 MANUAL(SQ1)** 交接写 §3。门:typecheck + code-tokens-drift 绿。
@@ -160,6 +160,7 @@
 - 2026-06-11 — **P4d** skewb WASM + /scramble/skewb,`57057e6bd`。replay 12/12 + 浏览器 3/3;cubing.js skewb 中心自转坑记入 §1 条目。下一个 = P4e。
 - 2026-06-11 — **P4e** skewb 看板登记,`abf2cb466`。typecheck + 39 守卫绿。**EPIC 3.3 完成**,MANUAL(Skewb) 交接入 §3;EPIC 3.4(SQ1)细化为 P5a–P5e。**本 session 连续推进 14 单元(P2b–P4e),按 §0.7 安全网停一次,/clear 重 /loop 续(下一个 = P5a,SQ1 双阶段,最重)。**
 - 2026-06-12 — **P5a** SQ1 Rust 核心,`5b7c44950`(实现,被并行 session 打包)+ `0e740eaf5`(性能修复+基线回填)。过程:两个子 agent 先后死于"后台等测试不收尾"(主 loop 直接接管基线回填);初版 16 刀深态 IDDFS 爆炸(单态 49min 单核满载,实测后杀),聚焦修复换五张全空间投影表 max 启发式(节点数 16.5 万倍削减)后最差 7.3s;6/6 + 全量 lib 132/0。教训已写派发模板:cargo 一律前台跑 + 10min 自断。下一个 = P5b。
+- 2026-06-12 — **P5b** sq1 analyzer + e2e,`d104a7a16`。raw 通道照 pyraminx 范本;真实 WCA 5 条 + 手算 5 条双 baseline 锁死;全量 132/0。预警:单态方差大(少数深态 45~95s),灌注侧需并行(写进 P5b 行 + P5c 判断)。下一个 = P5c。
 
 ---
 
