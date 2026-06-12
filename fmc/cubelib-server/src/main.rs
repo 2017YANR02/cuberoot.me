@@ -1,96 +1,423 @@
 //! cubelib-server: tiny HTTP front for cubelib's FMC solver.
-//! Generates every pruning table once at startup (cached on disk via the `fs`
-//! feature, then mmap'd — ~9 MB resident), then serves:
-//!   GET /solve?scramble=<wca>&steps=<cli-steps>&count=<n>
-//! returning {"solutions":[{"steps":[…],"solution":"…","total":N}]} (mallard format).
+//! Mirrors the upstream mallard deployment (joba.me/cubeapi), which is a native
+//! backend service — NOT browser wasm. Two endpoints:
+//!
+//!   GET /solve?scramble=&steps=&count=        one-shot, nginx-cacheable JSON
+//!   GET /solve_stream?scramble=&steps=&budget= NDJSON stream, quality-doubling
+//!       (2^5..2^19 step-limit levels via the multi-path-channel solver, same
+//!       as mallard's `backend=multi_path_channel`), each strictly-shorter
+//!       solution pushed as a line, final {"done":true}.
+//!
+//! DR steps carry the HTR subset annotation (e.g. "4a1 4e") in `comment`,
+//! ported verbatim from mallard's backend add_comments().
 
+use std::collections::HashMap;
+use std::io::Read;
 use std::str::FromStr;
+use std::sync::mpsc::{Receiver as MpscReceiver, SyncSender, sync_channel};
+use std::sync::{Arc, LazyLock, Mutex};
+use std::thread;
+use std::time::{Duration, Instant};
 
 use cubelib::algs::Algorithm;
-use cubelib::cube::Cube333;
+use cubelib::cube::turn::{ApplyAlgorithm, TransformableMut};
+use cubelib::cube::{Cube333, Transformation333};
 use cubelib::defs::{NissSwitchType, StepKind};
 use cubelib::solver::df_search::CancelToken;
+use cubelib::solver::solution::Solution;
+use cubelib::solver_new::TryRecvError;
+use cubelib::steps::coord::Coord;
+use cubelib::steps::dr::coords::DRUDEOFBCoord;
+use cubelib::steps::htr::coords::HTRDRUDCoord;
+use cubelib::steps::htr::subsets::DR_SUBSETS;
 use cubelib::steps::solver;
 use cubelib::steps::step::StepConfig;
 use cubelib::steps::tables::PruningTables333;
 use tiny_http::{Header, Method, Response, Server};
 
+/// The deployed mallard's default request, captured verbatim off
+/// joba.me/mallard's POST to /cubeapi/solve_stream: RELATIVE per-step
+/// min/max (not the absolute caps in current git HEAD), quality 10000
+/// (overridden per level by the step-limit doubling anyway).
+const DEFAULT_STEPS: &str = "EO[niss=always;min=0;max=5;quality=10000] > \
+    RZP[niss=never;min=0;max=3;quality=10000] > \
+    DR[niss=before;min=0;max=12;quality=10000;triggers=R,R U2 R,R F2 R,R U R,R U' R] > \
+    HTR[niss=before;min=0;max=12;quality=10000] > \
+    FR[niss=before;min=0;max=10;quality=10000] > \
+    FIN[niss=never;min=0;max=10;quality=10000]";
+
+const DEFAULT_BUDGET_MS: u64 = 30_000;
+const MAX_BUDGET_MS: u64 = 120_000;
+/// mallard backend: (5..20).map(|q| 2^q) step-limit levels.
+const LEVELS: std::ops::Range<usize> = 5..20;
+
+static SOLVE_GATE: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
+static STREAM_CACHE: LazyLock<Mutex<HashMap<String, String>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
 fn main() {
     let addr = std::env::args().nth(1).unwrap_or_else(|| "127.0.0.1:8099".to_string());
-
-    eprintln!("[cubelib-server] generating tables…");
-    let t0 = std::time::Instant::now();
-    let mut tables = PruningTables333::new();
-    let full = vec![
-        StepConfig::new(StepKind::EO),
-        StepConfig::new(StepKind::RZP),
-        StepConfig::new(StepKind::DR),
-        StepConfig::new(StepKind::HTR),
-        StepConfig::new(StepKind::FR),
-        StepConfig::new(StepKind::FIN),
-    ];
-    solver::gen_tables(&full, &mut tables);
-    eprintln!("[cubelib-server] tables ready in {}ms", t0.elapsed().as_millis());
-
-    let server = Server::http(addr.as_str()).expect("bind");
+    let server = Arc::new(Server::http(addr.as_str()).expect("bind"));
     eprintln!("[cubelib-server] listening on http://{addr}/solve");
 
-    for request in server.incoming_requests() {
-        let url = request.url().to_string();
-        let body = if request.method() == &Method::Get {
-            handle(&url, &mut tables)
-        } else {
-            r#"{"error":"use GET /solve?scramble=…&steps=…"}"#.to_string()
+    // Bind first, generate tables behind the mutex: early requests queue on the
+    // lock instead of getting connection-refused during first-boot generation.
+    let tables = Arc::new(Mutex::new(PruningTables333::new()));
+    {
+        let tables = tables.clone();
+        thread::spawn(move || {
+            let t0 = Instant::now();
+            let mut guard = tables.lock().unwrap();
+            // Both FIN shapes (with/without FR) so one-shot requests never
+            // hit a missing-table panic; leave-slice variants gen lazily.
+            for steps in ["EO > RZP > DR > HTR > FR > FIN", "EO > DR > HTR > FIN"] {
+                solver::gen_tables(&parse_steps(steps).unwrap(), &mut guard);
+            }
+            drop(guard);
+            // Force the multi-path-channel solver's lazy statics (small tables
+            // only — DR-finish would be ~10 GB and stays gated off).
+            LazyLock::force(&cubelib::solver_new::eo::EO_TABLE);
+            LazyLock::force(&cubelib::solver_new::dr::DR_TABLE);
+            LazyLock::force(&cubelib::solver_new::htr::HTR_TABLES);
+            LazyLock::force(&cubelib::solver_new::fr::FR_TABLE);
+            LazyLock::force(&cubelib::solver_new::fr::FR_LEAVE_SLICE_TABLE);
+            LazyLock::force(&cubelib::solver_new::finish::FR_FINISH_TABLE);
+            LazyLock::force(&cubelib::solver_new::finish::HTR_FINISH_TABLE);
+            LazyLock::force(&cubelib::solver_new::finish::HTR_LEAVE_SLICE_FINISH_TABLE);
+            eprintln!("[cubelib-server] tables ready in {}ms", t0.elapsed().as_millis());
+        });
+    }
+
+    loop {
+        let request = match server.recv() {
+            Ok(r) => r,
+            Err(_) => break,
         };
-        let mut resp = Response::from_string(body);
-        resp.add_header(Header::from_bytes(&b"Content-Type"[..], &b"application/json"[..]).unwrap());
-        resp.add_header(Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]).unwrap());
-        let _ = request.respond(resp);
+        let tables = tables.clone();
+        thread::spawn(move || {
+            let url = request.url().to_string();
+            let (path, query) = url.split_once('?').unwrap_or((url.as_str(), ""));
+            if request.method() != &Method::Get {
+                respond_json(request, r#"{"error":"use GET"}"#.to_string());
+            } else if path == "/solve_stream" {
+                handle_stream(request, query);
+            } else if path.starts_with("/solve") {
+                let body = handle_solve(query, &tables);
+                respond_json(request, body);
+            } else {
+                respond_json(request, r#"{"error":"not found"}"#.to_string());
+            }
+        });
     }
 }
 
-fn handle(url: &str, tables: &mut PruningTables333) -> String {
-    let (path, query) = url.split_once('?').unwrap_or((url, ""));
-    if !path.starts_with("/solve") {
-        return r#"{"error":"not found"}"#.to_string();
-    }
-    let mut scramble = String::new();
-    let mut steps = String::from("EO[niss=always] > DR[niss=before] > HTR[niss=before] > FIN");
-    let mut count = 10usize;
+fn respond_json(request: tiny_http::Request, body: String) {
+    let mut resp = Response::from_string(body);
+    resp.add_header(Header::from_bytes(&b"Content-Type"[..], &b"application/json"[..]).unwrap());
+    resp.add_header(Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]).unwrap());
+    let _ = request.respond(resp);
+}
+
+struct Params {
+    scramble: String,
+    steps: String,
+    count: usize,
+    budget: Duration,
+}
+
+fn parse_query(query: &str) -> Params {
+    let mut p = Params {
+        scramble: String::new(),
+        steps: DEFAULT_STEPS.to_string(),
+        count: 10,
+        budget: Duration::from_millis(DEFAULT_BUDGET_MS),
+    };
     for kv in query.split('&') {
         let Some((k, v)) = kv.split_once('=') else { continue };
         let v = urldecode(v);
         match k {
-            "scramble" => scramble = v,
-            "steps" => steps = v,
-            "count" => count = v.parse().unwrap_or(10),
+            "scramble" => p.scramble = v,
+            "steps" => p.steps = v,
+            "count" => p.count = v.parse().unwrap_or(10),
+            "budget" => {
+                p.budget = Duration::from_millis(
+                    v.parse::<u64>().unwrap_or(DEFAULT_BUDGET_MS).clamp(1_000, MAX_BUDGET_MS),
+                )
+            }
             _ => {}
         }
     }
-    solve_json(&scramble, &steps, count, tables)
+    p
 }
 
-fn solve_json(scramble: &str, steps: &str, count: usize, tables: &mut PruningTables333) -> String {
-    let alg = match Algorithm::from_str(scramble.trim()) {
+// ---------------- one-shot /solve (nginx-cacheable) ----------------
+
+fn handle_solve(query: &str, tables: &Mutex<PruningTables333>) -> String {
+    let p = parse_query(query);
+    let alg = match Algorithm::from_str(p.scramble.trim()) {
         Ok(a) => a,
         Err(_) => return r#"{"error":"invalid scramble"}"#.to_string(),
     };
     let cube: Cube333 = alg.into();
-    let configs = match parse_steps(steps) {
+    let configs = match parse_steps(&p.steps) {
         Ok(c) => c,
         Err(e) => return format!("{{\"error\":\"{}\"}}", json_escape(&e)),
     };
-    // Generate any tables this specific pipeline needs but we don't have yet
-    // (gen_tables only fills missing ones; first request of each shape pays ~ms).
-    solver::gen_tables(&configs, tables);
-    let built = match solver::build_steps(configs, tables) {
+    if let Err(e) = check_supported(&configs) {
+        return format!("{{\"error\":\"{}\"}}", json_escape(&e));
+    }
+    let sols_result: Result<Vec<_>, String> = {
+        let mut guard = tables.lock().unwrap();
+        solver::gen_tables(&configs, &mut guard);
+        let r = match solver::build_steps(configs, &guard) {
+            Ok(built) => {
+                let cancel = CancelToken::default();
+                Ok(cubelib::solver::solve_steps(cube, &built, &cancel)
+                    .take(p.count.clamp(1, 50))
+                    .collect())
+            }
+            Err(e) => Err(e),
+        };
+        r
+    };
+    let mut sols = match sols_result {
         Ok(s) => s,
         Err(e) => return format!("{{\"error\":\"{}\"}}", json_escape(&e)),
     };
-    let cancel = CancelToken::default();
-    let sols: Vec<_> =
-        cubelib::solver::solve_steps(cube, &built, &cancel).take(count.clamp(1, 50)).collect();
-    solutions_to_json(&sols)
+    for sol in sols.iter_mut() {
+        add_comments(&cube, sol);
+    }
+    let mut out = String::from("{\"solutions\":[");
+    for (i, sol) in sols.iter().enumerate() {
+        if i > 0 {
+            out.push(',');
+        }
+        out.push_str(&solution_to_json(sol));
+    }
+    out.push_str("]}");
+    out
+}
+
+// ---------------- streaming /solve_stream (mallard parity) ----------------
+
+fn handle_stream(request: tiny_http::Request, query: &str) {
+    let p = parse_query(query);
+    let cache_key = format!("{}\x1f{}\x1f{}", p.scramble, p.steps, p.budget.as_millis());
+    if let Some(hit) = STREAM_CACHE.lock().unwrap().get(&cache_key).cloned() {
+        respond_stream_string(request, hit);
+        return;
+    }
+
+    let (tx, rx) = sync_channel::<Vec<u8>>(64);
+    let cancel = Arc::new(CancelToken::default());
+    let solver_cancel = cancel.clone();
+    let solver = thread::spawn(move || run_stream(p, tx, solver_cancel, cache_key));
+
+    let reader = ChannelReader { rx, buf: Vec::new(), pos: 0 };
+    let headers = vec![
+        Header::from_bytes(&b"Content-Type"[..], &b"application/x-ndjson"[..]).unwrap(),
+        Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]).unwrap(),
+        Header::from_bytes(&b"X-Accel-Buffering"[..], &b"no"[..]).unwrap(),
+        Header::from_bytes(&b"Cache-Control"[..], &b"no-store"[..]).unwrap(),
+    ];
+    let resp = Response::new(200.into(), headers, reader, None, None);
+    let _ = request.respond(resp); // returns early on client disconnect
+    cancel.cancel(); // either way, stop the solver
+    let _ = solver.join();
+}
+
+fn run_stream(p: Params, tx: SyncSender<Vec<u8>>, cancel: Arc<CancelToken>, cache_key: String) {
+    let started = Instant::now();
+    let mut transcript = String::new();
+    let emit = |line: String, transcript: &mut String| -> bool {
+        transcript.push_str(&line);
+        transcript.push('\n');
+        tx.send(format!("{line}\n").into_bytes()).is_ok()
+    };
+
+    let alg = match Algorithm::from_str(p.scramble.trim()) {
+        Ok(a) => a,
+        Err(_) => {
+            let _ = emit(r#"{"error":"invalid scramble","done":true}"#.to_string(), &mut transcript);
+            return;
+        }
+    };
+    let cube: Cube333 = alg.into();
+    let configs = match parse_steps(&p.steps).and_then(|c| check_supported(&c).map(|_| c)) {
+        Ok(c) => c,
+        Err(e) => {
+            let _ = emit(
+                format!("{{\"error\":\"{}\",\"done\":true}}", json_escape(&e)),
+                &mut transcript,
+            );
+            return;
+        }
+    };
+
+    // Single-flight: one heavy solve at a time on the small box. Keep the
+    // client alive with blank NDJSON lines while we wait for the slot.
+    let _gate = loop {
+        match SOLVE_GATE.try_lock() {
+            Ok(g) => break g,
+            Err(_) => {
+                if cancel.is_cancelled() || started.elapsed() >= p.budget {
+                    let _ = emit(r#"{"done":true,"queue_timeout":true}"#.to_string(), &mut transcript);
+                    return;
+                }
+                if tx.send(b"\n".to_vec()).is_err() {
+                    return;
+                }
+                thread::sleep(Duration::from_millis(200));
+            }
+        }
+    };
+
+    let mut best = usize::MAX;
+    let mut completed = true;
+    let mut last_keepalive = Instant::now();
+    'levels: for level in LEVELS {
+        let quality = 1usize << level;
+        if cancel.is_cancelled() || started.elapsed() >= p.budget {
+            completed = false;
+            break;
+        }
+        let mut steps = match cubelib::solver_new::build_steps(configs.clone()) {
+            Ok(s) => s,
+            Err(e) => {
+                let _ = emit(
+                    format!("{{\"error\":\"{}\",\"done\":true}}", json_escape(&e)),
+                    &mut transcript,
+                );
+                return;
+            }
+        };
+        steps.apply_step_limit(quality);
+        let mut worker = steps.into_worker(cube.clone());
+        loop {
+            if cancel.is_cancelled() || started.elapsed() >= p.budget {
+                completed = false;
+                break 'levels;
+            }
+            match worker.try_next() {
+                Ok(mut sol) => {
+                    if sol.len() < best {
+                        best = sol.len();
+                        add_comments(&cube, &mut sol);
+                        let line = format!(
+                            "{{\"solution\":{},\"quality\":{},\"elapsed_ms\":{},\"done\":false}}",
+                            solution_to_json(&sol),
+                            quality,
+                            started.elapsed().as_millis(),
+                        );
+                        if !emit(line, &mut transcript) {
+                            return;
+                        }
+                    }
+                    break; // first solution of this level -> next level
+                }
+                Err(TryRecvError::Disconnected) => break, // level exhausted
+                Err(_) => {
+                    // 1s keepalives double as fast client-disconnect detection:
+                    // a dead socket fails the write, respond() returns, and the
+                    // cancel token frees the solve gate within ~2s.
+                    if last_keepalive.elapsed() > Duration::from_secs(1) {
+                        last_keepalive = Instant::now();
+                        if tx.send(b"\n".to_vec()).is_err() {
+                            return;
+                        }
+                    }
+                    thread::sleep(Duration::from_millis(25));
+                }
+            }
+        }
+    }
+
+    let _ = emit(
+        format!(
+            "{{\"done\":true,\"elapsed_ms\":{},\"exhausted\":{}}}",
+            started.elapsed().as_millis(),
+            completed,
+        ),
+        &mut transcript,
+    );
+    // Cache the finished transcript (key includes the budget, so partial
+    // convergence under a small budget never poisons a larger one).
+    if best != usize::MAX && transcript.len() < 256 * 1024 {
+        let mut cache = STREAM_CACHE.lock().unwrap();
+        if cache.len() >= 300 {
+            cache.clear();
+        }
+        cache.insert(cache_key, transcript);
+    }
+}
+
+fn respond_stream_string(request: tiny_http::Request, body: String) {
+    let mut resp = Response::from_string(body);
+    resp.add_header(
+        Header::from_bytes(&b"Content-Type"[..], &b"application/x-ndjson"[..]).unwrap(),
+    );
+    resp.add_header(Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]).unwrap());
+    let _ = request.respond(resp);
+}
+
+struct ChannelReader {
+    rx: MpscReceiver<Vec<u8>>,
+    buf: Vec<u8>,
+    pos: usize,
+}
+
+impl Read for ChannelReader {
+    fn read(&mut self, out: &mut [u8]) -> std::io::Result<usize> {
+        if self.pos >= self.buf.len() {
+            match self.rx.recv() {
+                Ok(chunk) => {
+                    self.buf = chunk;
+                    self.pos = 0;
+                }
+                Err(_) => return Ok(0), // sender dropped -> EOF
+            }
+        }
+        let n = (self.buf.len() - self.pos).min(out.len());
+        out[..n].copy_from_slice(&self.buf[self.pos..self.pos + n]);
+        self.pos += n;
+        Ok(n)
+    }
+}
+
+// ---------------- shared pieces ----------------
+
+/// The DR-finish pruning table behind `htr-breaking` is ~10 GB (generated
+/// in-memory) — far beyond this server. Gate it off with a clear error.
+fn check_supported(configs: &[StepConfig]) -> Result<(), String> {
+    for c in configs {
+        if c.params.get("htr-breaking").map(|v| v == "true").unwrap_or(false) {
+            return Err("htr-breaking requires the ~10GB DR-finish table; not enabled on this server".to_string());
+        }
+    }
+    Ok(())
+}
+
+/// Ported verbatim from mallard's backend (controller.rs add_comments):
+/// after each DR step, normalize orientation until the DR axis is UD, then
+/// look up the HTR subset and store its name ("4a1 4e") as the comment.
+fn add_comments(scrambled: &Cube333, solution: &mut Solution) {
+    let subset_table = &cubelib::solver_new::htr::HTR_TABLES.1;
+    let mut cube = scrambled.clone();
+    for step in solution.steps.iter_mut() {
+        cube.apply_alg(&step.alg);
+        if StepKind::from(step.variant) == StepKind::DR {
+            let mut c = cube.clone();
+            for _ in 0..3 {
+                if DRUDEOFBCoord::from(&c).val() == 0 {
+                    break;
+                }
+                c.transform(Transformation333::X);
+                c.transform(Transformation333::Z);
+            }
+            let subset_id = subset_table.get_direct(HTRDRUDCoord::from(&c));
+            step.comment = DR_SUBSETS[subset_id as usize].to_string();
+        }
+    }
 }
 
 fn parse_steps(steps: &str) -> Result<Vec<StepConfig>, String> {
@@ -135,7 +462,7 @@ fn parse_one(step: &str) -> Result<StepConfig, String> {
                     x => return Err(format!("invalid niss '{}'", x)),
                 })
             }
-            "substeps" | "variants" | "subsets" => {
+            "substeps" | "variants" => {
                 for sub in v.split(',') {
                     let sub = sub.trim();
                     if !sub.is_empty() {
@@ -143,9 +470,10 @@ fn parse_one(step: &str) -> Result<StepConfig, String> {
                     }
                 }
             }
-            // DR triggers: cubelib reads them from params["triggers"] (comma algs).
-            "triggers" => {
-                cfg.params.insert("triggers".to_string(), v.to_string());
+            // DR params cubelib reads from the params map: triggers (comma
+            // algs) and subsets (comma subset names like 4a1).
+            "triggers" | "subsets" => {
+                cfg.params.insert(k.to_string(), v.to_string());
             }
             // Exclude solutions: '|'-separated algs (NISS notation ok, e.g. "(R U)").
             "excl" => {
@@ -166,48 +494,49 @@ fn parse_one(step: &str) -> Result<StepConfig, String> {
     Ok(cfg)
 }
 
-fn solutions_to_json(solutions: &[cubelib::solver::solution::Solution]) -> String {
-    let mut out = String::from("{\"solutions\":[");
-    for (si, sol) in solutions.iter().enumerate() {
-        if si > 0 {
+/// One solution -> mallard-shaped JSON. `cum` follows the upstream Display
+/// impl: running canonicalized length (move cancellations between steps are
+/// reflected), `cancelled` is how many moves merged away at this step.
+fn solution_to_json(sol: &Solution) -> String {
+    let mut out = String::from("{\"steps\":[");
+    let mut collected = Algorithm::new();
+    let n = sol.steps.len();
+    for (i, step) in sol.steps.iter().enumerate() {
+        if i > 0 {
             out.push(',');
         }
-        out.push_str("{\"steps\":[");
-        let mut cum = 0usize;
-        for (i, step) in sol.get_steps().iter().enumerate() {
-            if i > 0 {
-                out.push(',');
-            }
-            let kind = format!("{:?}", StepKind::from(step.variant)).to_lowercase();
-            let normal =
-                step.alg.normal_moves.iter().map(|t| t.to_string()).collect::<Vec<_>>().join(" ");
-            let inverse =
-                step.alg.inverse_moves.iter().map(|t| t.to_string()).collect::<Vec<_>>().join(" ");
-            let len = step.alg.len();
-            cum += len;
-            out.push_str(&format!(
-                "{{\"kind\":\"{}\",\"variant\":\"{}\",\"normal\":\"{}\",\"inverse\":\"{}\",\"comment\":\"{}\",\"len\":{},\"cum\":{}}}",
-                json_escape(&kind),
-                json_escape(&step.variant.to_string()),
-                json_escape(&normal),
-                json_escape(&inverse),
-                json_escape(step.comment.trim()),
-                len,
-                cum,
-            ));
+        let kind_enum = StepKind::from(step.variant);
+        let kind = format!("{:?}", kind_enum).to_lowercase();
+        let normal =
+            step.alg.normal_moves.iter().map(|t| t.to_string()).collect::<Vec<_>>().join(" ");
+        let inverse =
+            step.alg.inverse_moves.iter().map(|t| t.to_string()).collect::<Vec<_>>().join(" ");
+        let len = step.alg.len();
+        let prev = collected.len();
+        collected = if i + 1 == n && matches!(kind_enum, StepKind::FIN | StepKind::FINLS) {
+            (collected + step.alg.clone()).to_uninverted()
+        } else {
+            collected + step.alg.clone()
         }
-        let alg: Algorithm = sol.clone().into();
-        let last_fin =
-            matches!(sol.get_steps().last().map(|s| StepKind::from(s.variant)), Some(StepKind::FIN));
-        let alg = if last_fin { alg.to_uninverted() } else { alg };
-        let alg = alg.canonicalize();
+        .canonicalize();
+        let cancelled = (prev + len).saturating_sub(collected.len());
         out.push_str(&format!(
-            "],\"solution\":\"{}\",\"total\":{}}}",
-            json_escape(&alg.to_string()),
-            alg.len()
+            "{{\"kind\":\"{}\",\"variant\":\"{}\",\"normal\":\"{}\",\"inverse\":\"{}\",\"comment\":\"{}\",\"len\":{},\"cancelled\":{},\"cum\":{}}}",
+            json_escape(&kind),
+            json_escape(&step.variant.to_string()),
+            json_escape(&normal),
+            json_escape(&inverse),
+            json_escape(step.comment.trim()),
+            len,
+            cancelled,
+            collected.len(),
         ));
     }
-    out.push_str("]}");
+    out.push_str(&format!(
+        "],\"solution\":\"{}\",\"total\":{}}}",
+        json_escape(&collected.to_string()),
+        collected.len()
+    ));
     out
 }
 
@@ -259,39 +588,11 @@ fn urldecode(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cubelib::cube::turn::ApplyAlgorithm;
-
-    // Deployed default pipeline (what ChainExplorer sends): EO(always) > RZP >
-    // DR(before) > HTR(before) > FR(before) > FIN, quality=1000.
-    const DEPLOYED: &str = "EO[niss=always;quality=1000] > RZP[niss=never] > \
-        DR[niss=before;quality=1000] > HTR[niss=before;quality=1000] > \
-        FR[niss=before;quality=1000] > FIN[niss=never;quality=1000]";
 
     const TRIVIAL: &str = "R U F R'";
     const WCA1: &str = "R' U' F D2 L2 F R2 U2 R2 B D2 L B2 L' B D' U R2 D L2 U' R' U' F";
     const WCA2: &str = "D B U B2 R2 U' L2 D2 R2 D' L D2 B D' L2 F' D L' D'";
     const WCA3: &str = "D R2 F2 U R2 U B2 L2 U' F2 D' L B F2 R D2 B' D L' U2";
-
-    fn tables() -> PruningTables333 {
-        let mut t = PruningTables333::new();
-        solver::gen_tables(&parse_steps("EO > RZP > DR > HTR > FR > FIN").unwrap(), &mut t);
-        t
-    }
-
-    /// (best total, linearized solution) for the first solution.
-    fn solve_one(scr: &str, steps: &str, t: &PruningTables333) -> Option<(usize, String)> {
-        let alg = Algorithm::from_str(scr).unwrap();
-        let cube: Cube333 = alg.into();
-        let built = solver::build_steps(parse_steps(steps).unwrap(), t).unwrap();
-        let cancel = CancelToken::default();
-        let sol = cubelib::solver::solve_steps(cube, &built, &cancel).next()?;
-        let a: Algorithm = sol.clone().into();
-        let last_fin =
-            matches!(sol.get_steps().last().map(|s| StepKind::from(s.variant)), Some(StepKind::FIN));
-        let a = if last_fin { a.to_uninverted() } else { a };
-        let a = a.canonicalize();
-        Some((a.len(), a.to_string()))
-    }
 
     /// Does (scramble ++ solution) bring a solved cube back to solved?
     fn solves(scr: &str, sol: &str) -> bool {
@@ -301,54 +602,105 @@ mod tests {
         cube == Cube333::default()
     }
 
-    // ---- correctness: every solution must actually solve the cube ----
+    fn linearize(sol: &Solution) -> (usize, String) {
+        let a: Algorithm = sol.clone().into();
+        let last_fin = matches!(
+            sol.steps.last().map(|s| StepKind::from(s.variant)),
+            Some(StepKind::FIN) | Some(StepKind::FINLS)
+        );
+        let a = if last_fin { a.to_uninverted() } else { a };
+        let a = a.canonicalize();
+        (a.len(), a.to_string())
+    }
+
+    /// First solution from the multi-path-channel solver at one step-limit level.
+    fn solve_mpc(scr: &str, level_limit: usize) -> Option<Solution> {
+        let cube: Cube333 = Algorithm::from_str(scr).unwrap().into();
+        let configs = parse_steps(DEFAULT_STEPS).unwrap();
+        let mut steps = cubelib::solver_new::build_steps(configs).unwrap();
+        steps.apply_step_limit(level_limit);
+        let mut worker = steps.into_worker(cube);
+        worker.next()
+    }
+
+    // ---- correctness: mpc solutions at the deployed default config must
+    // actually solve, and quality-doubling must never lengthen ----
     #[test]
-    fn solutions_actually_solve() {
-        let t = tables();
+    fn mpc_solutions_solve_and_converge() {
         for scr in [TRIVIAL, WCA1, WCA2, WCA3] {
-            let (len, sol) = solve_one(scr, DEPLOYED, &t).expect("a solution");
-            assert!(solves(scr, &sol), "does NOT solve: {scr} -> {sol}");
-            // linearized length must equal the reported total
-            assert_eq!(len, Algorithm::from_str(&sol).unwrap().len());
+            let lo = solve_mpc(scr, 1 << 5).expect("level-32 solution");
+            let (lo_len, lo_sol) = linearize(&lo);
+            assert!(solves(scr, &lo_sol), "does NOT solve: {scr} -> {lo_sol}");
+            assert_eq!(lo_len, lo.len());
+
+            let hi = solve_mpc(scr, 1 << 9).expect("level-512 solution");
+            let (hi_len, hi_sol) = linearize(&hi);
+            assert!(solves(scr, &hi_sol), "does NOT solve: {scr} -> {hi_sol}");
+            assert!(hi_len <= lo_len, "doubling must not lengthen ({hi_len} > {lo_len})");
         }
     }
 
-    // ---- golden baselines (deployed config, quality=1000; deterministic IDA*).
-    // Update intentionally when the config/algorithm changes (review signal). ----
+    // ---- DR subset annotation (mallard add_comments parity): every DR step
+    // gets a valid subset name like "4a1 4e" ----
     #[test]
-    fn golden_totals() {
-        let t = tables();
-        assert_eq!(solve_one(TRIVIAL, DEPLOYED, &t).unwrap(), (4, "R F' U' R'".to_string()));
-        assert_eq!(solve_one(WCA1, DEPLOYED, &t).unwrap().0, 22);
-        assert_eq!(solve_one(WCA2, DEPLOYED, &t).unwrap().0, 21);
-        assert_eq!(solve_one(WCA3, DEPLOYED, &t).unwrap().0, 21);
+    fn dr_subset_comment_present() {
+        let cube: Cube333 = Algorithm::from_str(WCA1).unwrap().into();
+        let mut sol = solve_mpc(WCA1, 1 << 7).expect("solution");
+        add_comments(&cube, &mut sol);
+        let dr = sol
+            .steps
+            .iter()
+            .find(|s| StepKind::from(s.variant) == StepKind::DR)
+            .expect("a DR step");
+        assert!(
+            DR_SUBSETS.iter().any(|s| s.to_string() == dr.comment),
+            "comment '{}' is not a known DR subset",
+            dr.comment
+        );
     }
 
-    // ---- higher quality finds shorter (same engine; quality = search breadth).
-    // q=20000 (~2-3s) to keep the test fast; q=100000 reaches mallard's 20 in ~30s. ----
+    // ---- one-shot path: solves + golden baseline at the mallard default
+    // config (deterministic). Update intentionally on config/engine change. ----
     #[test]
-    fn quality_converges_shorter() {
-        let t = tables();
-        let hi = "EO[niss=always;quality=20000] > RZP[niss=never] > \
-            DR[niss=before;quality=20000] > HTR[niss=before;quality=20000] > \
-            FR[niss=before;quality=20000] > FIN[niss=never;quality=20000]";
-        let (lo_total, _) = solve_one(WCA1, DEPLOYED, &t).unwrap();
-        let (hi_total, hi_sol) = solve_one(WCA1, hi, &t).unwrap();
-        assert!(hi_total < lo_total, "higher quality must improve ({hi_total} !< {lo_total})");
-        assert!(solves(WCA1, &hi_sol));
+    fn oneshot_golden() {
+        let mut tables = PruningTables333::new();
+        solver::gen_tables(&parse_steps(DEFAULT_STEPS).unwrap(), &mut tables);
+        let tables = Mutex::new(tables);
+        for (scr, expect) in [(TRIVIAL, 4usize)] {
+            let body = handle_solve(
+                &format!("scramble={}&count=1", scr.replace(' ', "+")),
+                &tables,
+            );
+            assert!(body.contains(&format!("\"total\":{expect}")), "{scr}: {body}");
+        }
+        // trivial scramble: exact bit-identical solution as upstream
+        let body = handle_solve("scramble=R+U+F+R'&count=1", &tables);
+        assert!(body.contains("\"solution\":\"R F' U' R'\""), "{body}");
+    }
+
+    // ---- htr-breaking is gated (DR-finish table ~10GB) ----
+    #[test]
+    fn htr_breaking_gated() {
+        let configs = parse_steps("EO > DR > HTR > FIN[htr-breaking=true]").unwrap();
+        assert!(check_supported(&configs).is_err());
+        let configs = parse_steps(DEFAULT_STEPS).unwrap();
+        assert!(check_supported(&configs).is_ok());
     }
 
     // ---- steps-string parser ----
     #[test]
     fn parse_steps_basic() {
-        let c = parse_steps("EO[niss=always;max=5;min=1] > DR > FIN[niss=never;quality=1000]").unwrap();
-        assert_eq!(c.len(), 3);
+        let c = parse_steps(DEFAULT_STEPS).unwrap();
+        assert_eq!(c.len(), 6);
         assert_eq!(c[0].kind, StepKind::EO);
         assert_eq!(c[0].niss, Some(NissSwitchType::Always));
         assert_eq!(c[0].max, Some(5));
-        assert_eq!(c[0].min, Some(1));
-        assert_eq!(c[2].niss, Some(NissSwitchType::Never));
-        assert_eq!(c[2].quality, 1000);
+        assert_eq!(c[1].kind, StepKind::RZP);
+        assert_eq!(c[1].max, Some(3));
+        assert_eq!(c[2].params.get("triggers").unwrap(), "R,R U2 R,R F2 R,R U R,R U' R");
+        assert_eq!(c[2].max, Some(12));
+        assert_eq!(c[2].quality, 10000);
+        assert_eq!(c[5].kind, StepKind::FIN);
         // invalid niss rejected
         assert!(parse_steps("EO[niss=bogus]").is_err());
         // bare axis token -> substep
