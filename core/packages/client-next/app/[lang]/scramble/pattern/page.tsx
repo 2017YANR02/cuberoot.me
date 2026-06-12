@@ -65,7 +65,7 @@ function PatternThumb({ pattern, size = 120 }: { pattern: Pattern; size?: number
         view="iso"
         size={size}
         puzzleSize={n}
-        alt={pattern.name_en}
+        alt={pattern.name.en}
       />
     );
   }
@@ -79,10 +79,10 @@ function PatternThumb({ pattern, size = 120 }: { pattern: Pattern; size?: number
     try { svg = renderClockScrambleSvg(pattern.alg, DEFAULT_CLOCK_COLORS); } catch { svg = ''; }
     return svg
       ? <div className="pat-card-clock" style={{ width: size, height: size }} dangerouslySetInnerHTML={{ __html: svg }} />
-      : <div className="pat-card-noprev" aria-label={pattern.name_en}><Sparkles size={36} /><div className="pat-card-noprev-label">Clock</div></div>;
+      : <div className="pat-card-noprev" aria-label={pattern.name.en}><Sparkles size={36} /><div className="pat-card-noprev-label">Clock</div></div>;
   }
   return (
-    <div className="pat-card-noprev" aria-label={pattern.name_en}>
+    <div className="pat-card-noprev" aria-label={pattern.name.en}>
       <Sparkles size={36} />
       <div className="pat-card-noprev-label">{PUZZLE_LABEL[puzzle]}</div>
     </div>
@@ -92,6 +92,10 @@ function PatternThumb({ pattern, size = 120 }: { pattern: Pattern; size?: number
 export default function PatternsPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
+  const langKey: 'zh' | 'en' | 'zhHant' =
+    i18n.language === 'zh-Hant' ? 'zhHant' : i18n.language.startsWith('zh') ? 'zh' : 'en';
+  const pick = (o: { en: string; zh: string; zhHant?: string }) =>
+    langKey === 'zhHant' ? (o.zhHant ?? o.zh) : langKey === 'zh' ? o.zh : o.en;
   useDocumentTitle('图案', 'Patterns', "圖案");
   const t = useT();
 
@@ -176,7 +180,7 @@ export default function PatternsPage() {
               className={`pat-filter${filter === c ? ' is-active' : ''}`}
               onClick={() => setFilter(c)}
             >
-              {CATEGORY_LABEL[c][lang]}
+              {pick(CATEGORY_LABEL[c])}
             </button>
           ))}
         </nav>
@@ -195,8 +199,8 @@ export default function PatternsPage() {
                   <div className="pat-card-preview">
                     <PatternThumb pattern={p} />
                   </div>
-                  <div className="pat-card-name">{lang === 'zh' ? (p.name_zh || p.name_en) : p.name_en}</div>
-                  <div className="pat-card-meta">{CATEGORY_LABEL[p.category][lang]}</div>
+                  <div className="pat-card-name">{pick(p.name)}</div>
+                  <div className="pat-card-meta">{pick(CATEGORY_LABEL[p.category])}</div>
                 </button>
               </li>
             ))}
@@ -207,7 +211,7 @@ export default function PatternsPage() {
       {openPattern && (
         <PatternModal
           pattern={openPattern}
-          lang={lang}
+          pick={pick}
           t={t}
           onClose={() => setOpenId(null)}
         />
@@ -217,10 +221,10 @@ export default function PatternsPage() {
 }
 
 function PatternModal({
-  pattern, lang, t, onClose,
+  pattern, pick, t, onClose,
 }: {
   pattern: Pattern;
-  lang: 'zh' | 'en';
+  pick: (o: { en: string; zh: string; zhHant?: string }) => string;
   t: (zh: string, en: string, zhHant?: string) => string;
   onClose: () => void;
 }) {
@@ -236,7 +240,7 @@ function PatternModal({
 
   const moveCount = pattern.alg.split(/\s+/).filter(Boolean).length;
   const puzzleId = twistyPuzzleId(patternPuzzle(pattern));
-  const displayName = lang === 'zh' ? (pattern.name_zh || pattern.name_en) : pattern.name_en;
+  const displayName = pick(pattern.name);
 
   return (
     <div className="pat-modal-overlay" onClick={onClose} role="dialog">
@@ -246,7 +250,7 @@ function PatternModal({
         </button>
         <h2 className="pat-modal-title">{displayName}</h2>
         <div className="pat-modal-meta">
-          <span className="pat-modal-cat">{CATEGORY_LABEL[pattern.category][lang]}</span>
+          <span className="pat-modal-cat">{pick(CATEGORY_LABEL[pattern.category])}</span>
           <span className="pat-modal-count">{moveCount} {t('步', 'moves')}</span>
         </div>
         <div className="pat-modal-twisty">
