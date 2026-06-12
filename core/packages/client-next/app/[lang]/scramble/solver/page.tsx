@@ -35,6 +35,7 @@ import {
 } from './_kociemba/cube';
 import InteractiveCubeNet, { EMPTY_FACELET, type PaintColor } from './_InteractiveCubeNet';
 import i18n from "@/i18n/i18n-client";
+import { useT } from "@/hooks/useT";
 
 interface SolverInfo {
   name: string;
@@ -84,9 +85,8 @@ function spawnKociembaWorker(): Worker {
 
 function ScrambleSolverPageInner() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
   useDocumentTitle('求解器', 'Solver');
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
 
   const searchParams = useSearchParams();
 

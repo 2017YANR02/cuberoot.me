@@ -26,6 +26,7 @@ import {
   type Category, type Pattern, type PuzzleSize,
 } from './_data/patterns_data';
 import './patterns.css';
+import { useT } from "@/hooks/useT";
 
 const ALL: 'all' = 'all';
 type Filter = typeof ALL | Category;
@@ -92,7 +93,7 @@ export default function PatternsPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   useDocumentTitle('图案', 'Patterns', "圖案");
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (lang === 'zh' ? zh : en);
+  const t = useT();
 
   const [puzzle, setPuzzle] = useState<PuzzleSize>('3x3x3');
   const [filter, setFilter] = useState<Filter>(ALL);

@@ -19,6 +19,7 @@ import { apiUrl } from '@/lib/api-base';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './traffic.css';
 import i18n from "@/i18n/i18n-client";
+import { useT } from "@/hooks/useT";
 
 // echarts-for-react needs to be client-only (no SSR).
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
@@ -69,7 +70,7 @@ export default function TrafficPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('流量', 'Traffic');
-  const T = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const T = useT();
   const user = useAuthStore(s => s.user);
   const login = useAuthStore(s => s.login);
 
@@ -186,7 +187,7 @@ export default function TrafficPage() {
 // ── 子组件 ──────────────────────────────────────────────
 
 function TrafficTimeSeries({ data, isZh }: { data: DailyRow[]; isZh: boolean }) {
-  const T = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const T = useT();
   // 数据少时强制画端点 + 实心,免得 1 天数据完全看不见.
   const sparse = data.length <= 2;
   const option = useMemo(() => ({
@@ -252,7 +253,7 @@ function TrafficTimeSeries({ data, isZh }: { data: DailyRow[]; isZh: boolean }) 
 }
 
 function TopPaths({ rows, isZh }: { rows: PathRow[]; isZh: boolean }) {
-  const T = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const T = useT();
   if (rows.length === 0) {
     return (
       <section className="tr-section">
@@ -283,7 +284,7 @@ function TopPaths({ rows, isZh }: { rows: PathRow[]; isZh: boolean }) {
 }
 
 function TopRefs({ rows, isZh }: { rows: RefRow[]; isZh: boolean }) {
-  const T = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const T = useT();
   if (rows.length === 0) {
     return (
       <section className="tr-section">
@@ -315,7 +316,7 @@ function TopRefs({ rows, isZh }: { rows: RefRow[]; isZh: boolean }) {
 }
 
 function TopCountries({ rows, isZh }: { rows: CountryRow[]; isZh: boolean }) {
-  const T = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const T = useT();
   if (rows.length === 0) {
     return (
       <section className="tr-section">

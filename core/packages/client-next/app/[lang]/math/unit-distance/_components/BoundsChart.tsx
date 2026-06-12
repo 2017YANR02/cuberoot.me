@@ -14,6 +14,7 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useT } from "@/hooks/useT";
 
 const W = 700, H = 380;
 const M = { top: 24, right: 18, bottom: 44, left: 56 };
@@ -53,7 +54,7 @@ function buildPath(samples: Array<[number, number | null]>): string {
 export default function BoundsChart() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
 
   const [delta, setDelta] = useState(0.014);
 

@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Infinity as InfinityIcon, Sigma, Dices, Ruler } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import i18n from '@/i18n/i18n-client';
+import { useT } from "@/hooks/useT";
 
 interface Card {
   to: string;
@@ -54,9 +55,8 @@ const CARDS: Card[] = [
 
 export default function MathLandingPage() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   useDocumentTitle('数学', 'Math', "數學");
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
 
   return (
     <div className="math-hub-page">

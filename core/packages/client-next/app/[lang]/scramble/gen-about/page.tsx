@@ -10,6 +10,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './gen_about.css';
 import i18n from "@/i18n/i18n-client";
+import { useT } from "@/hooks/useT";
 
 interface StepProps {
   step: number;
@@ -34,8 +35,7 @@ function Arrow() {
 
 export default function GenAboutPage() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
   useDocumentTitle('打乱生成器说明', 'Scramble Generator Guide', "打亂生成器說明");
 
   return (

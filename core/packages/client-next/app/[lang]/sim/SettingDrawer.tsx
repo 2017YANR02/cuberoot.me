@@ -14,6 +14,7 @@ import Cubelet from './cuber/cubelet';
 import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './setting-drawer.css';
 import i18n from '@/i18n/i18n-client';
+import { useT } from "@/hooks/useT";
 
 export interface SimSettings {
   sensitivity: number;
@@ -227,8 +228,7 @@ interface KeymapModalProps {
 
 export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeymap }: KeymapModalProps) {
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
   const [editingCode, setEditingCode] = useState<string | null>(null);
 
   useEffect(() => {

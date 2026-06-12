@@ -18,6 +18,7 @@ import { search as cmtSearch, expand as cmtExpand } from './engine';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './commutator.css';
 import i18n from "@/i18n/i18n-client";
+import { useT } from "@/hooks/useT";
 
 type Tab = 'home' | 'decompose' | 'excel' | 'intro' | 'about';
 
@@ -91,9 +92,8 @@ function buildExpandOpts(s: Settings, algorithm: string) {
 
 export default function CommutatorPage() {
     const { i18n } = useTranslation();
-    const isZh = i18n.language.startsWith('zh');
     useDocumentTitle('交换子', 'Commutator', "交換子");
-    const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+    const t = useT();
 
     const [tab, setTab] = useQueryState(
         'tab',

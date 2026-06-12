@@ -26,6 +26,7 @@ import PersonTabs from '@/components/persons/sections/PersonTabs';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '@/components/persons/persons.css';
 import i18n from "@/i18n/i18n-client";
+import { useT } from "@/hooks/useT";
 
 export default function PersonDetailClient() {
   const [wcaId, setWcaId] = useState('');
@@ -37,7 +38,7 @@ export default function PersonDetailClient() {
   }, []);
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
 
   const [profile, setProfile] = useState<WcaPersonProfile | null>(null);
   const [results, setResults] = useState<WcaResultRow[] | null>(null);

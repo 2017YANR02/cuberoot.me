@@ -25,6 +25,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './fun_stats.css';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
+import { useT } from "@/hooks/useT";
 
 const ACTIVE_EVENTS = [
   '333', '222', '444', '555', '666', '777',
@@ -369,7 +370,7 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
   stat: FunStat; rows: Record<string, unknown>[]; resp: ApiResp; isZh: boolean;
   kind: 'single' | 'average'; event: string; personHref: (id: string) => string;
 }) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
   const personCell = (r: any) => (
     <span className="fun-cell-person">
       <Flag iso2={r.iso2 ?? ''} spanClassName="country-flag" imgClassName="country-flag-ct" />

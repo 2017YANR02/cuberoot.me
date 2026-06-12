@@ -26,6 +26,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import './unit_distance.css';
 import i18n from '@/i18n/i18n-client';
+import { useT } from "@/hooks/useT";
 
 const UnitDistanceSandbox = dynamic(() => import('./_components/UnitDistanceSandbox'), { ssr: false });
 const GridConstruction = dynamic(() => import('./_components/GridConstruction'), { ssr: false });
@@ -69,7 +70,7 @@ const TIMELINE: ReadonlyArray<{ year: string; lo: string; hi: string; cite: stri
 export default function UnitDistancePage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
   useDocumentTitle('单位距离问题', 'Unit Distance Problem', "單位距離問題");
 
   return (

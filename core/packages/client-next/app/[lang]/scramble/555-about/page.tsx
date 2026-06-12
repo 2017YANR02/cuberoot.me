@@ -14,6 +14,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './scramble_555_about.css';
 import i18n from "@/i18n/i18n-client";
+import { useT } from "@/hooks/useT";
 
 interface StepProps {
   step: number;
@@ -77,9 +78,8 @@ function Stat({ value, label, hint }: StatProps) {
 
 export default function Scramble555AboutPage() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   useDocumentTitle('5×5 打乱方法', '5×5 Scramble Methods', "5×5 打亂方法");
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
 
   return (
     <div className="s555-page">

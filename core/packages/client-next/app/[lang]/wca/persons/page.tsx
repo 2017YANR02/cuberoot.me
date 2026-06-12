@@ -13,13 +13,14 @@ import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '@/components/persons/persons.css';
+import { useT } from "@/hooks/useT";
 
 const EXAMPLES = ['2009ZEMD01', '2017GARR05', '2007YUNQ01'];
 
 export default function PersonSearchPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
   useDocumentTitle('选手搜索', 'Person Search');
   const router = useRouter();
   const [picked, setPicked] = useState<WcaPersonLite | null>(null);
