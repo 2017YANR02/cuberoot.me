@@ -12,7 +12,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react';
-import { useQueryStates, parseAsString, parseAsInteger, parseAsStringEnum } from 'nuqs';
+import { useQueryState, useQueryStates, parseAsString, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Copy, Loader2, Check, Shuffle } from 'lucide-react';
@@ -53,6 +53,10 @@ const CHAR_COLOR: Record<string, CrossColor> = {
 };
 
 type FilterMode = 'all' | 'full-step' | 'oll-skip' | 'pll-skip' | 'll-skip';
+
+// 顶部三选一:逐阶段最优解 / CFOP 解法枚举 / FMC 分步还原链。选中谁,下方只渲染谁。
+type Tool = 'stage' | 'cfop' | 'fmc';
+const TOOL_VALUES: Tool[] = ['stage', 'cfop', 'fmc'];
 
 const COLOR_LABEL: Record<CrossColor, { zh: string; en: string
         zhHant?: string;
@@ -257,8 +261,11 @@ function AnalyzePageInner() {
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [xcrossFallback, setXcrossFallback] = useState<boolean>(false);
   const [variantUnsupported, setVariantUnsupported] = useState<boolean>(false);
-  const [cfopOpen, setCfopOpen] = useState(false); // 「CFOP 解法枚举」折叠区;分析时自动展开
-  const [chainOpen, setChainOpen] = useState(false); // 「FMC 分步还原链」折叠区(链式求解最重,默认收起)
+  // 顶部工具切换(大 mode → push history,后退可返回)。默认逐阶段最优解。
+  const [tool, setTool] = useQueryState(
+    'tool',
+    parseAsStringEnum<Tool>(TOOL_VALUES).withDefault('stage').withOptions({ history: 'push' }),
+  );
   const analyzerRef = useRef<Analyzer>(new Analyzer());
   const startTimeRef = useRef<number>(0);
 
@@ -436,10 +443,7 @@ function AnalyzePageInner() {
           <h1>{t('打乱分析器', 'Scramble Analyzer')}</h1>
         </div>
         <p className="analyze-sub">
-          {t(
-            '枚举给定 3x3 打乱所有合理的 CFOP 解法（白十字 / 黄十字 / 任意颜色十字 + F2L + OLL + PLL）。',
-            'Enumerate every reasonable CFOP solution for a 3x3 scramble (cross on any color + F2L + OLL + PLL).',
-          )}
+          {t('3x3 打乱分析：阶段最优解 · CFOP 解法枚举 · DR 分步链', '3x3 scramble: stage solver · CFOP enumeration · DR chain')}
         </p>
       </header>
 
@@ -459,7 +463,7 @@ function AnalyzePageInner() {
           type="text"
           value={scramble}
           onChange={(e) => { setScramble(e.target.value); setWcaMeta(null); }}
-          onKeyDown={(e) => { if (e.key === 'Enter') { setCfopOpen(true); runAnalyze(); } }}
+          onKeyDown={(e) => { if (e.key === 'Enter') { void setTool('cfop'); runAnalyze(); } }}
           placeholder={t('输入打乱（标准 WCA 记号）', 'Scramble (WCA notation)')}
           spellCheck={false}
           autoCapitalize="off"
@@ -473,7 +477,7 @@ function AnalyzePageInner() {
         <PillToggle
           value={scrSource === 'wca'}
           onChange={(v) => setScrSource(v ? 'wca' : 'random')}
-          onLabel={t('WCA 真实打乱', 'Real WCA scramble')}
+          onLabel={t('WCA 真题', 'WCA real')}
           offLabel={t('随机生成', 'Random')}
           ariaLabel={t('打乱来源', 'Scramble source')}
           className="analyze-src-pill"
@@ -555,21 +559,32 @@ function AnalyzePageInner() {
         )}
       </div>
 
-      <section className="analyze-primary">
-        <h2 className="analyze-primary-title">
-          {t('逐阶段最优解', 'Optimal Stage Solver')}
-        </h2>
-        <StageSolver scramble={scramble} lang={lang} />
-      </section>
+      <div className="analyze-tool-tabs" role="tablist" aria-label={t('求解器', 'Solver')}>
+        {([
+          ['stage', t('阶段', 'Stage')],
+          ['cfop', t('CFOP', 'CFOP')],
+          ['fmc', t('DR', 'DR')],
+        ] as [Tool, string][]).map(([id, label]) => (
+          <button
+            key={id}
+            role="tab"
+            aria-selected={tool === id}
+            className={`analyze-tool-tab${tool === id ? ' is-active' : ''}`}
+            onClick={() => void setTool(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-      <details
-        className="analyze-cfop"
-        open={cfopOpen}
-        onToggle={(e) => setCfopOpen((e.currentTarget as HTMLDetailsElement).open)}
-      >
-        <summary>
-          {t('CFOP 解法枚举', 'CFOP Solution Enumerator')}
-        </summary>
+      {tool === 'stage' && (
+        <section className="analyze-primary">
+          <StageSolver scramble={scramble} lang={lang} />
+        </section>
+      )}
+
+      {tool === 'cfop' && (
+      <section className="analyze-cfop-panel">
 
       <div className="analyze-filters">
         <button
@@ -760,18 +775,14 @@ function AnalyzePageInner() {
         </div>
       )}
 
-      </details>
+      </section>
+      )}
 
-      <details
-        className="analyze-chain"
-        open={chainOpen}
-        onToggle={(e) => setChainOpen((e.currentTarget as HTMLDetailsElement).open)}
-      >
-        <summary>
-          {t('FMC 分步还原链', 'FMC Step Chain')}
-        </summary>
-        <ChainExplorer scramble={scramble} lang={lang} />
-      </details>
+      {tool === 'fmc' && (
+        <section className="analyze-chain-panel">
+          <ChainExplorer scramble={scramble} lang={lang} />
+        </section>
+      )}
     </div>
   );
 }

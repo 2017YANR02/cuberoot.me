@@ -20,12 +20,19 @@ import YAML from 'yaml';
 // 输入:update_puzzle_stats.ps1 产出的 <puzzle_data_dir>/<key>/<key>.csv(两列 id,<key>,
 // 值 = 该打乱整解最优步数)。缺 CSV 的 puzzle 跳过并打警告(对齐 build.ts 变体语义)。
 
+interface PuzzleAltMetric {
+  metric: string;    // 备选口径 key(sq1: 'slash')
+  valueCol: string;  // 备选口径在 CSV 里的列名
+}
+
 interface PuzzleSpec {
-  key: string;       // puzzle 名 = JSON key = analyzer CSV 值列名 = 数据子目录名
+  key: string;       // puzzle 名 = JSON key = 数据子目录名
   event: string;     // WCA event_id(语料过滤口径,meta 用)
   label: string;
   label_zh: string;
-  metric: string;    // 步数度量(2x2x2 = htm)
+  metric: string;    // 主口径 key(2x2x2 = htm;sq1 = wca)
+  valueCol?: string; // 主口径在 CSV 里的列名(默认 = key;sq1 = 'wca')
+  alt?: PuzzleAltMetric; // 备选口径(sq1 双口径:wca 主 + slash 备,前端可切)
 }
 
 // 新 puzzle 注册处:加一行 + update_puzzle_stats.ps1 的 $PUZZLE 表加对应 analyzer 即可。
@@ -33,7 +40,8 @@ const PUZZLES: PuzzleSpec[] = [
   { key: 'pocket', event: '222', label: '2x2x2', label_zh: '二阶', metric: 'htm' },
   { key: 'pyraminx', event: 'pyram', label: 'Pyraminx', label_zh: '金字塔', metric: 'htm' }, // 总 HTM 含 tips
   { key: 'skewb', event: 'skewb', label: 'Skewb', label_zh: '斜转', metric: 'htm' },
-  { key: 'sq1', event: 'sq1', label: 'Square-1', label_zh: 'SQ1', metric: 'twist' }, // slash=1 步,层转 0 步
+  // sq1 analyzer 出 3 列 id,wca,slash:主口径 WCA 12c4((X,Y)=1+/=1),备选 slash(jaapsch twist)。
+  { key: 'sq1', event: 'sq1', label: 'Square-1', label_zh: 'SQ1', metric: 'wca', valueCol: 'wca', alt: { metric: 'slash', valueCol: 'slash' } },
 ];
 
 interface Hist { min: number; max: number; counts: Map<number, number> }
@@ -90,9 +98,9 @@ async function main() {
       console.warn(`  [skip] ${spec.key}: missing CSV ${csvPath}`);
       continue;
     }
-    const { sampleCount, hist } = await aggregate(csvPath, spec.key);
-    console.log(`  [${spec.key}] ${sampleCount} rows, dist ${hist.min}..${hist.max}`);
-    puzzlesOut[spec.key] = {
+    const { sampleCount, hist } = await aggregate(csvPath, spec.valueCol ?? spec.key);
+    console.log(`  [${spec.key}] ${sampleCount} rows, dist ${hist.min}..${hist.max} (${spec.metric})`);
+    const entry: Record<string, unknown> = {
       event: spec.event,
       label: spec.label,
       label_zh: spec.label_zh,
@@ -100,6 +108,12 @@ async function main() {
       sample_count: sampleCount,
       dist: histToJson(hist),
     };
+    if (spec.alt) {
+      const { hist: altHist } = await aggregate(csvPath, spec.alt.valueCol);
+      console.log(`  [${spec.key}] alt dist ${altHist.min}..${altHist.max} (${spec.alt.metric})`);
+      entry.alt = { metric: spec.alt.metric, dist: histToJson(altHist) };
+    }
+    puzzlesOut[spec.key] = entry;
     keys.push(spec.key);
   }
 

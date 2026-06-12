@@ -1031,9 +1031,17 @@
  * 全集时按真实最长宽度撑开，长名完整显示，所有行 events 列与 chips 表头对齐。
  * comp-list-row（行）与 event-chips-grid（表头）共用 */
 .calendar-page {
-    --cl-cols: 7.2rem 1.4rem var(--cl-name-width, 28rem) 1.6rem 2.6rem 2.6rem 2.8rem repeat(21, 1.3rem);
-    --cl-min-width: 76rem;
+    --cl-ev-w: 1.3rem;
+    --cl-comp-w: 2.8rem;  /* 整场单列（实际人数 / 上限 / 满员率）；选「不显示」时收为 0 */
+    --cl-cols: 7.2rem 1.4rem var(--cl-name-width, 28rem) 1.6rem var(--cl-comp-w) repeat(21, var(--cl-ev-w));
+    --cl-min-width: 73rem;
 }
+/* 宽值 metric（限时 / 及格线 / 晋级）：事件列加宽到能塞下 "10:00" / "≤6:00"，整体网格更宽，横向滚动 */
+.calendar-page[data-wide-metric] {
+    --cl-ev-w: 3rem;
+    --cl-min-width: 108rem;
+}
+.calendar-page[data-comp-none] { --cl-comp-w: 0rem; }
 .calendar-page .comp-list {
     display: flex;
     flex-direction: column;
@@ -1233,19 +1241,18 @@
     gap: 0.35rem;
     flex-wrap: wrap;
 }
-/* 项目格子 metric 切换（轮次 / 人数）— 一条竖线与日期选择器分隔，复用 view-btn 样式 */
-.calendar-page .list-metric-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    margin-left: 0.35rem;
-    padding-left: 0.6rem;
-    border-left: 1px solid var(--border);
+/* 项目格子 metric 选择（轮次 / 人数 / 限时 / 及格 / 晋级 / 资格）— 下拉，与日期选择器留间距 */
+.calendar-page .list-metric-select {
+    margin-left: 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 0.34rem 0.5rem;
+    font-size: 0.8rem;
+    cursor: pointer;
 }
-.calendar-page .list-metric-toggle .view-btn {
-    padding: 0.3rem 0.6rem;
-    font-size: 0.78rem;
-}
+.calendar-page .list-metric-select:hover { border-color: var(--accent); }
 .calendar-page .date-range-pick {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -1476,9 +1483,13 @@
     .calendar-page--compact .compact-flag-tile { width: 16px; height: 12px; }
     /* 虚拟列表：行高固定，移动端横向滚动以保留 21 列对齐 */
     .calendar-page {
-        --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 22rem) 1.4rem 2.3rem 2.3rem 2.4rem repeat(21, 1.1rem);
-        --cl-min-width: 62rem;
+        --cl-ev-w: 1.1rem;
+        --cl-comp-w: 2.4rem;
+        --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 22rem) 1.4rem var(--cl-comp-w) repeat(21, var(--cl-ev-w));
+        --cl-min-width: 56rem;
     }
+    .calendar-page[data-wide-metric] { --cl-ev-w: 2.7rem; --cl-min-width: 90rem; }
+    .calendar-page[data-comp-none] { --cl-comp-w: 0rem; }
     .calendar-page .comp-list { overflow-x: auto; }
     .calendar-page .event-chips-grid { padding: 4px 8px; gap: 4px; }
     .calendar-page .event-chips--list-header .event-chip { width: 20px; height: 20px; }

@@ -170,6 +170,7 @@ html[data-theme=dark] .wp-page {
 }
 .wp-hero-name {
     margin: 0;
+    /* 选手名是动态任意汉字,静态子集楷体盖不全会半楷半宋,故走全覆盖系统衬线(不用 --font-serif) */
     font-family: 'Fraunces', 'Times New Roman', serif;
     font-size: 1.6rem; font-weight: 500;
     color: var(--wp-text); letter-spacing: -0.01em;
@@ -848,7 +849,7 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 }
 .wp-search-title {
     margin: 0 0 6px;
-    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-family: var(--font-serif);
     font-size: 1.5rem; font-weight: 500;
     letter-spacing: -0.01em;
     color: var(--wp-text);

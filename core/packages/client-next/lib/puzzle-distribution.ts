@@ -10,13 +10,19 @@ export interface PuzzleHistEntry {
   counts: Record<string, number>; // 最优步数 -> 打乱条数
 }
 
+export interface PuzzleAltDist {
+  metric: string;         // 备选口径 key(sq1: 'slash')
+  dist: PuzzleHistEntry;
+}
+
 export interface PuzzleDistEntry {
   event: string;          // WCA event_id(语料口径,如 '222')
   label: string;
   label_zh: string | null;
-  metric: string;         // 步数度量('htm' 等)
+  metric: string;         // 主口径('htm' / 'wca' 等)
   sample_count: number;
   dist: PuzzleHistEntry;
+  alt?: PuzzleAltDist;    // 备选口径(sq1: wca 主 + slash 备,前端可切)
 }
 
 export interface PuzzleDistributionJson {
@@ -24,8 +30,8 @@ export interface PuzzleDistributionJson {
   puzzles: Record<string, PuzzleDistEntry>; // key = puzzle 名(pocket / pyraminx / skewb / sq1)
 }
 
-// shape 变更时 bump(防缓存旧 JSON)
-const V = '20260611';
+// shape 变更或数据全量重灌时 bump(防缓存旧 JSON)
+const V = '20260612c';
 
 export async function fetchPuzzleDistribution(): Promise<PuzzleDistributionJson> {
   const r = await fetch(statsUrl('/stats/scramble/puzzle_distribution.json') + `?v=${V}`);

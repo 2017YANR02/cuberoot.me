@@ -19,9 +19,34 @@ export function scrambleLengthUnit(eventId: string): ScrambleLengthUnit {
   return eventId === 'sq1' ? 'twists' : 'moves';
 }
 
+// 3x3-family events: scrambles are pure face turns, so a quarter-turn metric
+// (QTM, where a 180° move like U2 counts as 2) is well-defined alongside HTM.
+// Other puzzles either lack half-turns (pyraminx/skewb/clock/megaminx) or use a
+// different unit (sq1 twists), so QTM is offered only for these.
+const QTM_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft', '333mbf', '333mbo']);
+
+/** Whether the event has a meaningful QTM (quarter-turn) count distinct from HTM. */
+export function supportsQtm(eventId: string): boolean {
+  return QTM_EVENTS.has(eventId);
+}
+
+/** QTM token count of one 3x3 scramble line: a `2`-suffixed move (half turn) = 2. */
+function countQtm(line: string): number {
+  const t = line.trim();
+  if (!t) return 0;
+  let n = 0;
+  for (const tok of t.split(/\s+/)) {
+    if (!tok) continue;
+    n += tok.endsWith('2') ? 2 : 1;
+  }
+  return n;
+}
+
 /** One countable sample: its move-count and the representative scramble text. */
 export interface ScrambleSample {
   len: number;
+  /** QTM count (only for 3x3-family events; undefined otherwise). */
+  qtm?: number;
   /** The scramble this length belongs to — the full string, except multi-blind
    *  where it's the single per-cube 3x3 line. */
   text: string;
@@ -47,7 +72,7 @@ export function scrambleMoveSamples(eventId: string, scramble: string): Scramble
   // Multi-blind (current + retired old format): one 3x3 scramble per line.
   if (eventId === '333mbf' || eventId === '333mbo') {
     return s.split('\n').map((l) => l.trim())
-      .map((l) => ({ len: countTokens(l), text: l }))
+      .map((l) => ({ len: countTokens(l), qtm: countQtm(l), text: l }))
       .filter((x) => x.len > 0);
   }
 
@@ -61,7 +86,9 @@ export function scrambleMoveSamples(eventId: string, scramble: string): Scramble
 
   // Everything else: whitespace tokens (newlines collapse into the same split).
   const n = countTokens(s);
-  return n > 0 ? [{ len: n, text: s }] : [];
+  if (n <= 0) return [];
+  // 3x3-family (333 / 333oh / 333bf / 333fm / 333ft): also carry the QTM count.
+  return supportsQtm(eventId) ? [{ len: n, qtm: countQtm(s), text: s }] : [{ len: n, text: s }];
 }
 
 /** Move-counts only — see scrambleMoveSamples. */

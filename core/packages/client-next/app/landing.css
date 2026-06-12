@@ -56,7 +56,7 @@
 
 /* ── 大标语 ── */
 .landing-page .landing-tagline {
-    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-family: var(--font-serif);
     font-size: clamp(2rem, 5vw, 3.5rem);
     font-weight: 400;
     line-height: 1.05;
@@ -99,7 +99,7 @@
     min-width: 0;
 }
 .landing-page .wca-hero-title {
-    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-family: var(--font-serif);
     font-size: clamp(1.5rem, 3vw, 2rem);
     font-weight: 500;
     letter-spacing: -0.015em;
@@ -148,7 +148,7 @@
     text-transform: uppercase;
 }
 .landing-page .section-title-serif {
-    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-family: var(--font-serif);
     font-size: clamp(1.5rem, 2.6vw, 1.9rem);
     font-weight: 400;
     letter-spacing: -0.015em;
@@ -253,6 +253,7 @@
 }
 
 .landing-page .card-name {
+    font-family: var(--font-serif);
     font-size: 1.2rem;
     font-weight: 600;
     letter-spacing: -0.01em;

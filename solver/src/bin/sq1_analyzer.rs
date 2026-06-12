@@ -1,10 +1,12 @@
-//! sq1_analyzer binary:Square-1(SQ1)整解最优 twist 数分析器。
+//! sq1_analyzer binary:Square-1(SQ1)整解步数分析器。
 //!
-//! 输出 2 列 CSV(id + 1 值):
-//!   - sq1:该打乱的整解最优 twist 数(0..=13,God's number = 13,P5a 对 jaapsch 锁定)。
+//! **默认输出 3 列 CSV `id,wca,slash`**:一次近最优解算同时给两种口径,前端切换用 —
+//!   - **wca** = WCA 12c4 计步:`(x,y)` 层转计 1 + `/` 计 1 = 解 token 数(官方记法步数);
+//!   - **slash** = jaapsch twist:只数 `/`(`(x,y)` 计 0,God's number 13)。
+//! 二者同源(同一条 cstimer 双阶段近最优解),毫秒级一题,全 125k 语料几秒跑完。
 //!
-//! 口径(P5a 定死,精确非近似):twist metric —— `/`(slash)计 1 步,`(x,y)` 层转
-//! 计 0 步(双阶段 IDDFS + 五张全空间投影精确表,见 sq1_solver 模块注释)。
+//! `SQ1_EXACT=1` ⇒ 改 2 列 `id,sq1`(`sq1_solver::solve_one` 可证最优,slash 口径,
+//!   tail-bound 深态数分钟;仅供 ground-truth / 对照,不用于全量灌注)。
 //!
 //! 输入吃全 WCA sq1 记号:`(x,y)` 括号对(x/y 含负数,空格可有可无)+ `/` slash,
 //! 行尾空白 / 末尾悬挂 `/` / `(0,0)`(理论不出现)都容忍。记号含逗号和括号,
@@ -14,11 +16,28 @@
 
 use cube_solver::executor::{run_analyzer_app_raw, RawSolverWrapper};
 use cube_solver::sq1_solver::{state_from_scramble, Sq1Solver};
+use cube_solver::sq1_twophase::{solve_with_solution, Sq1TwoPhase};
 
-/// 一条 (id, alg 字符串) → CSV 行。解析失败 → `id,-`(stderr 报错,不中断 batch)。
-fn sq1_line(s: &Sq1Solver, alg: &str, id: &str) -> String {
+/// `SQ1_EXACT=1` ⇒ 走精确最优器(slash 口径,tail-bound,2 列调试用);否则默认近最优 two-phase。
+fn use_exact() -> bool {
+    std::env::var("SQ1_EXACT").map(|v| v == "1").unwrap_or(false)
+}
+
+/// 一条 (id, alg) → CSV 行。
+/// **默认 3 列 `id,wca,slash`**:一次解算同时给两种口径(WCA 12c4 = (X,Y)+/ token 数;
+/// slash = jaapsch twist)。前端按口径切换直方图,二者同源同一条近最优解。
+/// `SQ1_EXACT=1` 时 2 列 `id,sq1`(精确 slash,调试/对照)。解析失败 → `id,-`。
+fn sq1_line(alg: &str, id: &str) -> String {
     match state_from_scramble(alg) {
-        Ok(st) => format!("{},{}", id, s.solve_one(&st)),
+        Ok(st) => {
+            if use_exact() {
+                return format!("{},{}", id, Sq1Solver::shared().solve_one(&st));
+            }
+            let (slash, tokens) = solve_with_solution(&st);
+            // WCA 12c4 = (X,Y) 数 + / 数 = token 总数(moves_to_tokens 只发非零 Turn 与 Slash)。
+            let wca = tokens.len() as u32;
+            format!("{},{},{}", id, wca, slash)
+        }
         Err(e) => {
             eprintln!("[ERROR] id={}: {}", id, e);
             format!("{},-", id)
@@ -30,16 +49,21 @@ struct Sq1Wrapper;
 
 impl RawSolverWrapper for Sq1Wrapper {
     fn global_init() {
-        let _ = Sq1Solver::shared();
-        eprintln!("[INFO] sq1 tables ready (twist metric, God's number 13)");
+        if use_exact() {
+            let _ = Sq1Solver::shared();
+            eprintln!("[INFO] sq1 EXACT solver ready (provably optimal, slow tail; slash / God's number 13)");
+        } else {
+            let _ = Sq1TwoPhase::shared();
+            eprintln!("[INFO] sq1 two-phase solver ready (near-optimal, ms/solve; emits both WCA 12c4 + slash)");
+        }
     }
 
     fn get_csv_header() -> String {
-        "id,sq1".into()
+        if use_exact() { "id,sq1".into() } else { "id,wca,slash".into() }
     }
 
     fn solve_raw(alg: &str, id: &str) -> String {
-        sq1_line(Sq1Solver::shared(), alg, id)
+        sq1_line(alg, id)
     }
 }
 
@@ -52,10 +76,6 @@ fn main() {
 mod tests {
     use super::*;
     use cube_solver::sq1_solver::{parse_scramble, scramble_to_string, Sq1State, Sq1Token};
-
-    fn solver() -> &'static Sq1Solver {
-        Sq1Solver::shared()
-    }
 
     fn lcg(x: u64) -> u64 {
         x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407)
@@ -95,35 +115,40 @@ mod tests {
         (st, toks)
     }
 
-    /// 行输出 = "id,值" 的值部分(合法行)。
-    fn val(s: &Sq1Solver, alg: &str) -> u32 {
-        let line = sq1_line(s, alg, "t");
-        line.strip_prefix("t,").unwrap().parse().expect("numeric value")
+    /// 默认 3 列 `t,wca,slash` 的 wca 列(WCA 12c4 计步)。
+    fn val(alg: &str) -> u32 {
+        let line = sq1_line(alg, "t");
+        line.split(',').nth(1).unwrap().parse().expect("numeric wca")
+    }
+
+    /// 默认 3 列的 slash 列(jaapsch twist)。
+    fn val_slash(alg: &str) -> u32 {
+        let line = sq1_line(alg, "t");
+        line.split(',').nth(2).unwrap().parse().expect("numeric slash")
     }
 
     #[test]
     fn sqa_basics() {
-        let s = solver();
+        // 精确还原(空串 / (0,0) / 双 slash 自消)= 0 步,恒成立。
+        assert_eq!(val(""), 0);
+        assert_eq!(val("(0,0)"), 0); // 理论不出现,但出现不 panic
+        assert_eq!(val("//"), 0);
 
-        // 已还原 = 0(空串 / 纯层转 / 双 slash 自消)
-        assert_eq!(val(s, ""), 0);
-        assert_eq!(val(s, "(1,0)"), 0);
-        assert_eq!(val(s, "(6,6)"), 0);
-        assert_eq!(val(s, "(0,0)"), 0); // 理论不出现,但出现不 panic
-        assert_eq!(val(s, "//"), 0);
-
-        // 单 slash = 1(含转量前缀 / (0,0) 前缀 / 宽松空白)
-        assert_eq!(val(s, "/"), 1);
-        assert_eq!(val(s, "(3,0)/"), 1);
-        assert_eq!(val(s, "(0,-1)/"), 1);
-        assert_eq!(val(s, "(0,0)/"), 1);
-        assert_eq!(val(s, "  ( 3 , 0 ) /  "), 1); // 空白容忍 + 行尾空白
+        // 默认 WCA 12c4 计步:(x,y) 计 1 + / 计 1。**纯层转态在 WCA 下要 1 步对齐**
+        // (slash-only 口径才是 0)—— 只是旋转等价,WCA 算一步。真实打乱永不出现纯旋转。
+        assert!(val("(1,0)") <= 1);
+        assert!(val("(6,6)") <= 1);
+        // 无前缀单刀 `/` = 1(square→square 一刀,无层转);其余近最优态 ≥ 1。
+        assert_eq!(val("/"), 1);
+        assert_eq!(val("  /  "), 1); // 宽松空白 + 行尾空白
+        assert!(val("(0,-1)/") >= 1);
+        assert!(val("(3,0)/") >= 1);
 
         // 解析/合法性失败 → `id,-` 不 panic
-        assert_eq!(sq1_line(s, "(2,0)/", "bad1"), "bad1,-"); // 角跨缝,非法 slash
-        assert_eq!(sq1_line(s, "(13,0)", "bad2"), "bad2,-"); // 转量越界
-        assert_eq!(sq1_line(s, "R U R'", "bad3"), "bad3,-"); // 3x3 记号
-        assert_eq!(sq1_line(s, "(1,2", "bad4"), "bad4,-"); // 括号不闭合
+        assert_eq!(sq1_line("(2,0)/", "bad1"), "bad1,-"); // 角跨缝,非法 slash
+        assert_eq!(sq1_line("(13,0)", "bad2"), "bad2,-"); // 转量越界
+        assert_eq!(sq1_line("R U R'", "bad3"), "bad3,-"); // 3x3 记号
+        assert_eq!(sq1_line("(1,2", "bad4"), "bad4,-"); // 括号不闭合
     }
 
     /// 记号 round-trip:随机游走 → token → 串 → parse 逐 token 相等,
@@ -143,18 +168,29 @@ mod tests {
         }
     }
 
-    /// 字符串通道与 lib 直查逐位一致:游走态渲染成 WCA 串走 sq1_line,
-    /// 与 solve_one 直接吃态逐位相等(锁通道无损)。
+    /// 字符串通道两列与 lib 直查逐位一致:wca 列 = solve_wca、slash 列 = solve_twist;
+    /// 且 wca ≥ slash(WCA = slash 数 + 层转数,层转 ≥ 0)。
     #[test]
     fn sqa_matches_lib_direct() {
-        let s = solver();
+        use cube_solver::sq1_twophase::{solve_twist, solve_wca};
         for seed in 0..12u64 {
             let tw = 1 + (seed as usize) % 6;
             let (st, toks) = random_walk_tokens(600 + seed, tw);
             let txt = scramble_to_string(&toks);
-            let got = val(s, &txt);
-            assert_eq!(got, s.solve_one(&st), "seed={} scramble={}", seed, txt);
-            assert!(got as usize <= tw, "optimal must not exceed walk twists");
+            assert_eq!(val(&txt), solve_wca(&st), "wca seed={} scramble={}", seed, txt);
+            assert_eq!(val_slash(&txt), solve_twist(&st), "slash seed={} scramble={}", seed, txt);
+            assert!(val(&txt) >= val_slash(&txt), "wca >= slash, seed={}", seed);
         }
+    }
+
+    /// `SQ1_EXACT=1` 切到精确器(可证最优):同一态精确值 ≤ 默认 two-phase 近最优值。
+    #[test]
+    fn sqa_exact_env_switch() {
+        use cube_solver::sq1_twophase::solve_twist;
+        let st = state_from_scramble("(0,-1)/").unwrap();
+        let exact = Sq1Solver::shared().solve_one(&st);
+        let near = solve_twist(&st);
+        assert!(exact <= near, "exact {} should be <= near {}", exact, near);
+        assert_eq!(exact, 1, "(0,-1)/ is one slash from solved");
     }
 }

@@ -1,0 +1,326 @@
+'use client';
+
+// 非 3x3 puzzle 整解最优步数分布展示(EPIC 3 新管线的消费 UI)。
+// 由难度 tab 的共享 WCA 项目选择器驱动:选中二阶/金字塔/斜转 → 传入对应 puzzleKey。
+// 数据 = stats/scramble/puzzle_distribution.json(pocket / pyraminx / skewb;sq1 待 P5d)。
+import { useEffect, useMemo, useState } from 'react';
+import Link from '@/components/AppLink';
+import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
+import { ScramblePreview2D } from '@/components/ScramblePreview2D';
+import { formatScrambleForEvent } from '@/app/[lang]/scramble/gen/_svg/sq1_svg';
+import PillToggle from '@/components/PillToggle/PillToggle';
+import { Flag } from '@/components/Flag';
+import { localizeCompName } from '@/lib/comp-localize';
+import { compFlagIso2 } from '@/lib/country-flags';
+import { compSourceLine } from '@/lib/comp-schedule';
+import {
+  fetchPuzzleDistribution, type PuzzleDistributionJson,
+} from '@/lib/puzzle-distribution';
+import {
+  fetchPuzzleExamples, type PuzzleExamplesEntry,
+} from '@/lib/puzzle-examples';
+import { tr } from '@/i18n/tr';
+
+// puzzle key → 在线求解器路由名(sq1 无求解器页 → 不在表里 → 示例卡不可点)。
+const PUZZLE_ROUTE: Record<string, string> = { pocket: 'pocket', pyraminx: 'pyraminx', skewb: 'skewb' };
+// 2D 预览用的 WCA event_id。
+const PUZZLE_EVENT: Record<string, string> = { pocket: '222', pyraminx: 'pyram', skewb: 'skewb', sq1: 'sq1' };
+
+// 每个 puzzle 一个数据色(图表填充,非 UI 灰阶);沿用魔方色系。
+const PUZZLE_COLOR: Record<string, string> = {
+  pocket: '#f04f4f',   // 红
+  pyraminx: '#2ec27e', // 绿
+  skewb: '#3d7bf0',    // 蓝
+  sq1: '#9b6ef0',      // 紫
+};
+
+// 度量说明(顶点等口径)。sq1 按当前选中口径(wca / slash)给不同说明。
+function metricNote(key: string, metric: string): { zh: string; en: string; zhHant?: string } {
+  if (key === 'pyraminx') {
+    return { zh: 'HTM,含顶点(tips)', en: 'HTM, tips included', zhHant: "HTM,含頂點(tips)" };
+  }
+  if (key === 'sq1') {
+    return metric === 'slash'
+      ? { zh: 'slash 计步(层转计 0,God’s number 13)', en: 'slash count (turns = 0, God’s number 13)', zhHant: 'slash 計步(層轉計 0,God’s number 13)' }
+      : { zh: 'WCA 12c4 计步((X,Y) 计 1、/ 计 1)', en: 'WCA 12c4 ((X,Y) = 1, / = 1)', zhHant: 'WCA 12c4 計步((X,Y) 計 1、/ 計 1)' };
+  }
+  return { zh: 'HTM', en: 'HTM' };
+}
+
+function stats(counts: Record<string, number>) {
+  const entries = Object.entries(counts)
+    .map(([k, v]) => [Number(k), v] as [number, number])
+    .sort((a, b) => a[0] - b[0]);
+  if (entries.length === 0) return null;
+  let total = 0, sum = 0, mode = entries[0][0], modeN = 0;
+  for (const [x, v] of entries) {
+    total += v;
+    sum += x * v;
+    if (v > modeN) { modeN = v; mode = x; }
+  }
+  const pct = (p: number) => {
+    const target = total * p;
+    let cum = 0;
+    for (const [x, v] of entries) { cum += v; if (cum >= target) return x; }
+    return entries[entries.length - 1][0];
+  };
+  return {
+    mean: total > 0 ? sum / total : 0,
+    median: pct(0.5),
+    mode,
+    min: entries[0][0],
+    max: entries[entries.length - 1][0],
+    p90: pct(0.9),
+  };
+}
+
+export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puzzleKey: string }) {
+  const [json, setJson] = useState<PuzzleDistributionJson | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [yMode, setYMode] = useState<'percent' | 'count'>('percent');
+  const [chartMode, setChartMode] = useState<'pdf' | 'cdf'>('pdf');
+  const [examples, setExamples] = useState<Record<string, PuzzleExamplesEntry> | null>(null);
+  const [selectedBin, setSelectedBin] = useState<number | null>(null);
+  // sq1 双口径:'wca'(WCA 12c4,主)/ 'slash'(jaapsch twist)。仅 sq1 有 alt。
+  const [sq1Metric, setSq1Metric] = useState<'wca' | 'slash'>('wca');
+
+  useEffect(() => {
+    let alive = true;
+    fetchPuzzleDistribution()
+      .then((d) => { if (alive) setJson(d); })
+      .catch((e) => { if (alive) setError(String(e)); });
+    fetchPuzzleExamples()
+      .then((d) => { if (alive) setExamples(d.puzzles); })
+      .catch(() => { /* 示例缺失不阻塞直方图 */ });
+    return () => { alive = false; };
+  }, []);
+
+  const entry = json?.puzzles[puzzleKey];
+  const exEntry = examples?.[puzzleKey];
+
+  // 当前口径(sq1 可切;其余 puzzle 恒主口径)。
+  const useAlt = sq1Metric === 'slash' && !!entry?.alt;
+  const hasAlt = !!entry?.alt;
+  const activeMetricKey = useAlt ? entry!.alt!.metric : (entry?.metric ?? '');
+  const activeDist = useAlt ? entry!.alt!.dist : entry?.dist;
+  const activeBins = (useAlt ? exEntry?.binsAlt : exEntry?.bins);
+
+  const series = useMemo<HistSeries[]>(() => {
+    if (!entry || !activeDist) return [];
+    const label = (isZh && entry.label_zh) ? entry.label_zh : entry.label;
+    return [{ name: label, fillColors: [PUZZLE_COLOR[puzzleKey] ?? '#888888'], counts: activeDist.counts }];
+  }, [entry, activeDist, puzzleKey, isZh]);
+
+  const st = useMemo(() => (activeDist ? stats(activeDist.counts) : null), [activeDist]);
+
+  // 有示例的 bin(可点击);默认选中众数 bin(无则取第一个有示例 bin)。
+  const exampleBins = useMemo(
+    () => (activeBins ? Object.keys(activeBins).map(Number).sort((a, b) => a - b) : []),
+    [activeBins],
+  );
+  useEffect(() => {
+    setSelectedBin(null); // 切 puzzle / 口径时清空,等下个 effect 按新数据重选
+  }, [puzzleKey, sq1Metric]);
+  useEffect(() => {
+    if (exampleBins.length === 0) return;
+    setSelectedBin((prev) => {
+      if (prev !== null && exampleBins.includes(prev)) return prev;
+      if (st && exampleBins.includes(st.mode)) return st.mode;
+      return exampleBins[0];
+    });
+  }, [exampleBins, st]);
+
+  if (error) {
+    return <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed', zhHant: '載入失敗' })}: {error}</div>;
+  }
+  if (!json) {
+    return <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…', zhHant: '載入中…' })}</div>;
+  }
+  if (!entry) {
+    return (
+      <div className="scramble-stats-loading">
+        {tr({ zh: '该项目难度数据生成中,稍后再来', en: 'Difficulty data for this puzzle is being generated, check back soon', zhHant: '該項目難度資料生成中,稍後再來' })}
+      </div>
+    );
+  }
+
+  const note = metricNote(puzzleKey, activeMetricKey);
+  const sampleLine = tr({ zh: '{n} 条样本', en: '{n} samples', zhHant: '{n} 條樣本' })
+    .replace('{n}', entry.sample_count.toLocaleString());
+
+  return (
+    <>
+      <div className="scramble-stats-controls">
+        <div className="scramble-stats-puzzle-meta">
+          <span>{sampleLine}</span>
+          <span className="scramble-stats-puzzle-metric">{tr(note)}</span>
+        </div>
+        {hasAlt && (
+          <div className="scramble-stats-puzzle-toggle">
+            <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '计步', en: 'Metric', zhHant: '計步' })}</span>
+            <PillToggle
+              value={sq1Metric === 'slash'}
+              onChange={(v) => setSq1Metric(v ? 'slash' : 'wca')}
+              offLabel="WCA"
+              onLabel="slash"
+              ariaLabel={tr({ zh: 'SQ1 计步口径:WCA 12c4 或 slash', en: 'SQ1 move metric: WCA 12c4 or slash', zhHant: 'SQ1 計步口徑:WCA 12c4 或 slash' })}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="scramble-stats-chart-wrapper">
+        <DiscreteHistogram
+          series={series}
+          isZh={isZh}
+          yMode={yMode}
+          chartMode={chartMode}
+          hideLegendColors
+          clickableBins={exampleBins}
+          selectedBin={selectedBin}
+          onBarClick={(b) => setSelectedBin(b)}
+          onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
+          onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+          yModeLabel={yMode === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count', zhHant: '數量' })}
+        />
+      </div>
+
+      {exEntry && activeBins && selectedBin !== null && (
+        <PuzzleExamplesPanel
+          isZh={isZh}
+          puzzleKey={puzzleKey}
+          selectedBin={selectedBin}
+          bins={activeBins}
+          comps={exEntry.comps}
+          idMeta={exEntry.idMeta}
+        />
+      )}
+
+      {st && (
+        <div className="scramble-stats-panel">
+          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计', en: 'Summary stats', zhHant: '摘要統計' })}</div>
+          <div className="scramble-stats-stat-grid">
+            <Cell label={tr({ zh: '均值', en: 'mean' })} value={st.mean.toFixed(2)} />
+            <Cell label={tr({ zh: '中位数', en: 'median', zhHant: '中位數' })} value={String(st.median)} />
+            <Cell label={tr({ zh: '众数', en: 'mode', zhHant: '眾數' })} value={String(st.mode)} />
+            <Cell label={tr({ zh: '最优', en: 'min', zhHant: '最優' })} value={String(st.min)} />
+            <Cell label={tr({ zh: '最难', en: 'max', zhHant: '最難' })} value={String(st.max)} />
+          </div>
+        </div>
+      )}
+
+      <div className="scramble-stats-meta">
+        <span>
+          {tr({ zh: '生成时间', en: 'Generated', zhHant: '生成時間' })}: {json.meta.generated_at}
+        </span>
+        <span>
+          {puzzleKey === 'sq1'
+            ? (activeMetricKey === 'slash'
+              ? tr({ zh: '口径:整个打乱的近最优解步数,只数 slash(jaapsch twist;双阶段上界,非可证最优)', en: 'Metric: near-optimal solution length, slash count only (jaapsch twist; two-phase upper bound, not provably optimal)', zhHant: '口徑:整個打亂的近最優解步數,只數 slash(jaapsch twist;雙階段上界,非可證最優)' })
+              : tr({ zh: '口径:整个打乱的近最优解步数,WCA 12c4 计步(双阶段上界,非可证最优)', en: 'Metric: near-optimal solution length in WCA 12c4 moves (two-phase upper bound, not provably optimal)', zhHant: '口徑:整個打亂的近最優解步數,WCA 12c4 計步(雙階段上界,非可證最優)' }))
+            : tr({ zh: '口径:整个打乱的最优解步数', en: 'Metric: optimal solution length per scramble', zhHant: '口徑:整個打亂的最優解步數' })}
+        </span>
+      </div>
+    </>
+  );
+}
+
+function Cell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="scramble-stats-stat-cell">
+      <div className="scramble-stats-stat-label">{label}</div>
+      <div className="scramble-stats-stat-value">{value}</div>
+    </div>
+  );
+}
+
+// 点某步数后展示该 bin 的真实比赛打乱示例(对等 3x3 难度 tab 的 ExamplesPanel,去掉底色 chip)。
+// 点打乱图/打乱文字 → 跳该 puzzle 的在线求解器并带入打乱。
+function PuzzleExamplesPanel({
+  isZh,
+  puzzleKey,
+  selectedBin,
+  bins,
+  comps,
+  idMeta,
+}: {
+  isZh: boolean;
+  puzzleKey: string;
+  selectedBin: number;
+  bins: PuzzleExamplesEntry['bins'];
+  comps: PuzzleExamplesEntry['comps'];
+  idMeta: PuzzleExamplesEntry['idMeta'];
+}) {
+  const route = PUZZLE_ROUTE[puzzleKey];
+  const hasSolver = !!route; // sq1 无在线求解器页 → 示例卡不可点,纯展示
+  const previewEvent = PUZZLE_EVENT[puzzleKey] ?? '333';
+  const samples = bins[String(selectedBin)] ?? [];
+  const solverHref = (scr: string) =>
+    `/scramble/${route}?${new URLSearchParams({ scramble: scr.trim() })}`;
+
+  return (
+    <div className="scramble-stats-panel scramble-stats-examples-panel">
+      <div className="scramble-stats-examples-header">
+        <div className="scramble-stats-panel-title">
+          {tr({ zh: '{n} 步示例', en: '{n}-move examples', zhHant: '{n} 步示例' }).replace('{n}', String(selectedBin))}
+        </div>
+      </div>
+      {samples.length > 0 ? (
+        <ul className="scramble-stats-examples-list">
+          {samples.map(([id, scr], i) => {
+            const m = idMeta[id];
+            const comp = m ? comps[m[0]] : undefined;
+            const preview = <ScramblePreview2D event={previewEvent} scramble={scr.trim()} size={26} />;
+            // sq1 显示用简写记号(0 2/4 -5/...),其它 event 原样;SVG 预览仍喂原始串。
+            const display = formatScrambleForEvent(previewEvent, scr.trim());
+            return (
+              <li key={i}>
+                {hasSolver ? (
+                  <Link
+                    className="scramble-stats-examples-cube"
+                    href={solverHref(scr)}
+                    prefetch={false}
+                    aria-label={tr({ zh: '打乱图', en: 'Scramble image', zhHant: '打亂圖' })}
+                  >
+                    {preview}
+                  </Link>
+                ) : (
+                  <span className="scramble-stats-examples-cube">{preview}</span>
+                )}
+                <div className="scramble-stats-examples-body">
+                  {hasSolver ? (
+                    <Link
+                      className="scramble-stats-examples-scramble"
+                      href={solverHref(scr)}
+                      prefetch={false}
+                    >
+                      {display}
+                    </Link>
+                  ) : (
+                    <span className="scramble-stats-examples-scramble">{display}</span>
+                  )}
+                  {comp && m && (() => {
+                    const iso2 = compFlagIso2(m[0]);
+                    return (
+                      <span className="scramble-stats-examples-comp" title={comp[0]}>
+                        {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                        <span className="scramble-stats-examples-comp-name">{localizeCompName(m[0], comp[0], isZh)}</span>
+                        <span className="scramble-stats-examples-comp-meta">
+                          <span>{compSourceLine(m[3], m[4], m[2], isZh, !!m[5])}</span>
+                        </span>
+                      </span>
+                    );
+                  })()}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <div className="scramble-stats-examples-hint">
+          {tr({ zh: '此步数无示例', en: 'No examples for this length', zhHant: '此步數無示例' })}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -6,15 +6,38 @@ import { apiUrl } from './api-base';
 const WCIF_URL = (id: string) =>
   `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(id)}/wcif/public`;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const CACHE_PREFIX = 'wcif-rounds-v2-';
+// v3: cache now stores full CompWcif (rounds + round-1 meta + competitorLimit), not just rounds.
+const CACHE_PREFIX = 'wcif-meta-v3-';
+
+import type { RoundMeta } from '@cuberoot/shared';
 
 export type RoundFormat = '1' | '2' | '3' | '5' | 'a' | 'm' | 'h';
 
 const VALID_FORMATS: ReadonlySet<string> = new Set(['1', '2', '3', '5', 'a', 'm', 'h']);
 
-interface CacheEntry { t: number; v: Record<string, RoundFormat[]>; }
+function encodeAdv(a: { type?: string; level?: number } | null | undefined): string | undefined {
+  if (!a || a.level == null) return undefined;
+  if (a.type === 'ranking') return `r${a.level}`;
+  if (a.type === 'percent') return `p${a.level}`;
+  if (a.type === 'attemptResult') return `a${a.level}`;
+  return undefined;
+}
+function encodeQual(q: { type?: string; resultType?: string; level?: number | null } | null | undefined): string | undefined {
+  if (!q || !q.type) return undefined;
+  return `${q.type}:${q.resultType ?? ''}:${q.level ?? ''}`;
+}
 
-function cacheGet(id: string): Record<string, RoundFormat[]> | null {
+export interface CompWcif {
+  rounds: Record<string, RoundFormat[]>;  // WCA eventId → 各轮 format
+  meta: Record<string, RoundMeta>;         // WCA eventId → round-1 紧凑 meta（与静态 JSON 同形状）
+  competitorLimit: number | null;          // 比赛级人数上限（通常非空）
+}
+
+const EMPTY_WCIF: CompWcif = { rounds: {}, meta: {}, competitorLimit: null };
+
+interface CacheEntry { t: number; v: CompWcif; }
+
+function cacheGet(id: string): CompWcif | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem(CACHE_PREFIX + id);
@@ -25,13 +48,13 @@ function cacheGet(id: string): Record<string, RoundFormat[]> | null {
   } catch { return null; }
 }
 
-function cacheSet(id: string, v: Record<string, RoundFormat[]>): void {
+function cacheSet(id: string, v: CompWcif): void {
   if (typeof window === 'undefined') return;
   try { localStorage.setItem(CACHE_PREFIX + id, JSON.stringify({ t: Date.now(), v })); }
   catch { /* quota / private mode */ }
 }
 
-const inflight = new Map<string, Promise<Record<string, RoundFormat[]>>>();
+const inflight = new Map<string, Promise<CompWcif>>();
 
 const INFO_URL = (id: string) =>
   `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(id)}`;
@@ -163,8 +186,17 @@ export async function fetchCubingZh(wcaId: string): Promise<CubingZhMeta> {
   return p;
 }
 
-export async function fetchCompRounds(compId: string): Promise<Record<string, RoundFormat[]>> {
-  if (!compId) return {};
+interface WcifRoundRaw {
+  format?: string;
+  timeLimit?: { centiseconds?: number; cumulativeRoundIds?: string[] } | null;
+  cutoff?: { numberOfAttempts?: number; attemptResult?: number } | null;
+  advancementCondition?: { type?: string; level?: number } | null;
+}
+interface WcifQualRaw { type?: string; resultType?: string; level?: number }
+
+/** 拉单场 WCIF public：轮次 format + 每个项目 round-1 配置 + qualification + 比赛人数上限。24h localStorage 缓存。 */
+export async function fetchCompWcif(compId: string): Promise<CompWcif> {
+  if (!compId) return EMPTY_WCIF;
   const cached = cacheGet(compId);
   if (cached) return cached;
   const existing = inflight.get(compId);
@@ -172,23 +204,47 @@ export async function fetchCompRounds(compId: string): Promise<Record<string, Ro
   const p = (async () => {
     try {
       const res = await fetch(WCIF_URL(compId));
-      if (!res.ok) return {};
-      const data = await res.json() as { events?: { id: string; rounds?: { format?: string }[] }[] };
-      const out: Record<string, RoundFormat[]> = {};
+      if (!res.ok) return EMPTY_WCIF;
+      const data = await res.json() as {
+        competitorLimit?: number | null;
+        events?: { id: string; qualification?: WcifQualRaw | null; rounds?: WcifRoundRaw[] }[];
+      };
+      const rounds: Record<string, RoundFormat[]> = {};
+      const meta: Record<string, RoundMeta> = {};
       for (const e of data.events ?? []) {
-        out[e.id] = (e.rounds ?? []).map(r => {
+        const rs = e.rounds ?? [];
+        rounds[e.id] = rs.map(r => {
           const f = r.format;
           return (f && VALID_FORMATS.has(f)) ? (f as RoundFormat) : '1';
         });
+        const r1 = rs[0];
+        const m: RoundMeta = {};
+        if (typeof r1?.timeLimit?.centiseconds === 'number') {
+          m.tl = r1.timeLimit.centiseconds;
+          if ((r1.timeLimit.cumulativeRoundIds?.length ?? 0) > 0) m.cum = 1;
+        }
+        if (typeof r1?.cutoff?.numberOfAttempts === 'number' && typeof r1?.cutoff?.attemptResult === 'number') {
+          m.co = [r1.cutoff.numberOfAttempts, r1.cutoff.attemptResult];
+        }
+        const adv = encodeAdv(r1?.advancementCondition);
+        if (adv) m.adv = adv;
+        const q = encodeQual(e.qualification);
+        if (q) m.q = q;
+        if (Object.keys(m).length > 0) meta[e.id] = m;
       }
+      const out: CompWcif = { rounds, meta, competitorLimit: data.competitorLimit ?? null };
       cacheSet(compId, out);
       return out;
     } catch {
-      return {};
+      return EMPTY_WCIF;
     } finally {
       inflight.delete(compId);
     }
   })();
   inflight.set(compId, p);
   return p;
+}
+
+export async function fetchCompRounds(compId: string): Promise<Record<string, RoundFormat[]>> {
+  return (await fetchCompWcif(compId)).rounds;
 }

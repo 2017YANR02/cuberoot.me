@@ -171,7 +171,7 @@ function DualRange({
       </div>
       <div className="chx-dual-ticks">
         {ticks.map((i) => (
-          <span key={i} className={i >= min && i <= max ? 'is-in' : ''}>{i}</span>
+          <span key={i} className={i >= min && i <= max ? 'is-in' : ''} style={{ left: `${pct(i)}%` }}>{i}</span>
         ))}
       </div>
     </div>
@@ -471,6 +471,18 @@ export default function ChainExplorer({ scramble, lang }: Props) {
     if (!s) return null;
     return sel.step === 'full' ? s.solution : linearizePrefix(s.steps, sel.step);
   }, [sel, bestSol, listSols]);
+
+  // 当前展示的解(选中优先,否则最优;= mallard 的「current solution」)。排除 tab
+  // 照 mallard:把当前解在该步的 alg 渲染成一键排除按钮,而不是让用户去上面点图标。
+  const currentSol = useMemo<FmcSolution | null>(() => {
+    if (sel) return sel.src === 'best' ? bestSol : listSols?.[sel.src] ?? null;
+    return bestSol ?? listSols?.[0] ?? null;
+  }, [sel, bestSol, listSols]);
+  const stepIndexForKind = (sol: FmcSolution, kind: StageKey): number =>
+    sol.steps.findIndex((st) => {
+      const raw = st.kind === 'rzp' ? 'dr' : st.kind === 'frls' ? 'fr' : st.kind === 'finls' ? 'fin' : st.kind;
+      return raw === kind;
+    });
 
   const busy = listLoading;
   const useTriggers = enforceTriggers && triggers.length > 0;
@@ -842,11 +854,22 @@ export default function ChainExplorer({ scramble, lang }: Props) {
           ))}
         </div>
         <div className="chx-panel">
-          {excluded[excludeTab].length === 0 ? (
-            <div className="chx-axes-note">
-              {t('在上方解里点禁用图标,把该步解加进这里排除并重算。', 'Click the ban icon on a step above to exclude that step solution and re-solve.')}
-            </div>
-          ) : (
+          {(() => {
+            const j = currentSol ? stepIndexForKind(currentSol, excludeTab) : -1;
+            const mv = j >= 0 && currentSol ? stepMoves(currentSol.steps[j]) : '';
+            return mv ? (
+              <button className="chx-excl-add" onClick={() => excludeStep(currentSol!.steps, j)}>
+                <Ban size={13} />
+                <span>{t('排除', 'Exclude')}</span>
+                <code>{mv}</code>
+              </button>
+            ) : (
+              <div className="chx-axes-note">
+                {t('当前解不含该步。', 'The current solution has no step here.')}
+              </div>
+            );
+          })()}
+          {excluded[excludeTab].length > 0 && (
             <div className="chx-excl-list">
               {excluded[excludeTab].map((x, i) => (
                 <span key={`${x}-${i}`} className="chx-excl-row">

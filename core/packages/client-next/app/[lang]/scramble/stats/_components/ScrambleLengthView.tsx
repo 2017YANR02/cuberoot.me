@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import { compSourceLine } from '@/lib/comp-schedule';
@@ -25,6 +26,7 @@ interface EventLen {
   unit: 'moves' | 'twists';
   samples: number;
   counts: Record<string, number>;
+  counts_qtm?: Record<string, number>; // 3x3-family:QTM 计步直方图(HTM/QTM 可切)
   glued?: GluedScramble[]; // megaminx scrambles with a missing-space move (e.g. R--D--)
   anomalies?: ScrambleAnomaly[]; // fixed-length events: comps whose scrambles deviate (non-standard scrambler)
 }
@@ -38,6 +40,7 @@ interface ExamplesJson {
   meta: { generated_at: string; per_bin: number };
   comps: Record<string, [string, string]>;
   events: Record<string, Record<string, LenExample[]>>;
+  events_qtm?: Record<string, Record<string, LenExample[]>>; // 3x3-family:QTM 长度分桶
 }
 
 const BAR = '#8B7D72'; // neutral warm — no color dimension here
@@ -114,6 +117,8 @@ export default function ScrambleLengthView({ isZh, data, event, merged }: {
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
   const [examples, setExamples] = useState<ExamplesJson | null>(null);
   const [examplesLoading, setExamplesLoading] = useState(false);
+  // 3x3-family 计步口径:'htm'(每 move 1 步,默认)/ 'qtm'(180° = 2 步)。仅有 counts_qtm 时可切。
+  const [lenMetric, setLenMetric] = useState<'htm' | 'qtm'>('htm');
 
   // Flag index for example comp cards (bump version to re-render once loaded).
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
@@ -147,25 +152,33 @@ export default function ScrambleLengthView({ isZh, data, event, merged }: {
     if (!data) return null;
     if (activeGroup) {
       const counts: Record<string, number> = {};
+      const countsQtm: Record<string, number> = {};
       let samples = 0;
       for (const m of activeGroup.members) {
         const ev = data.events[m];
         if (!ev) continue;
         for (const [k, v] of Object.entries(ev.counts)) { counts[k] = (counts[k] ?? 0) + v; samples += v; }
+        if (ev.counts_qtm) for (const [k, v] of Object.entries(ev.counts_qtm)) countsQtm[k] = (countsQtm[k] ?? 0) + v;
       }
-      return { unit: 'moves', samples, counts };
+      return { unit: 'moves', samples, counts, ...(Object.keys(countsQtm).length ? { counts_qtm: countsQtm } : {}) };
     }
     return data.events[event] ?? null;
   }, [data, event, activeGroup]);
 
-  const stats = useMemo(() => (cur ? summarize(cur.counts) : null), [cur]);
+  const hasQtm = !!cur?.counts_qtm;
+  const useQtm = lenMetric === 'qtm' && hasQtm;
+  const activeCounts = useQtm ? cur!.counts_qtm! : (cur?.counts ?? null);
+  // 切口径时清空选中 bin(HTM/QTM 长度不同,旧 bin 不再适用)。
+  useEffect(() => { setSelectedBin(null); }, [lenMetric]);
+
+  const stats = useMemo(() => (activeCounts ? summarize(activeCounts) : null), [activeCounts]);
   const series = useMemo<HistSeries[]>(
-    () => (cur ? [{ name: curName, fillColors: [BAR], counts: cur.counts }] : []),
-    [cur, curName],
+    () => (activeCounts ? [{ name: curName, fillColors: [BAR], counts: activeCounts }] : []),
+    [activeCounts, curName],
   );
   const clickableBins = useMemo(
-    () => (cur ? Object.keys(cur.counts).map(Number) : []),
-    [cur],
+    () => (activeCounts ? Object.keys(activeCounts).map(Number) : []),
+    [activeCounts],
   );
   // When merged, pool the bin's examples across members round-robin (so both
   // events show up, not just the larger one) — each tagged with its source
@@ -174,7 +187,8 @@ export default function ScrambleLengthView({ isZh, data, event, merged }: {
     if (selectedBin === null || !examples) return null;
     const bin = String(selectedBin);
     const members = activeGroup ? activeGroup.members : [event];
-    const lists = members.map((m) => ({ ev: m, arr: examples.events[m]?.[bin] ?? [] }));
+    const src = useQtm ? (examples.events_qtm ?? {}) : examples.events;
+    const lists = members.map((m) => ({ ev: m, arr: src[m]?.[bin] ?? [] }));
     const cap = examples.meta.per_bin;
     const out: { ex: LenExample; ev: string }[] = [];
     for (let i = 0, added = true; added && out.length < cap; i++) {
@@ -187,7 +201,7 @@ export default function ScrambleLengthView({ isZh, data, event, merged }: {
       }
     }
     return out.length ? out : null;
-  }, [selectedBin, examples, activeGroup, event]);
+  }, [selectedBin, examples, activeGroup, event, useQtm]);
 
   if (!data) {
     return <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…',
@@ -211,6 +225,24 @@ export default function ScrambleLengthView({ isZh, data, event, merged }: {
   return (
     <>
       <p className="scramble-stats-note">{source}</p>
+
+      {hasQtm && (
+        <div className="scramble-stats-puzzle-toggle">
+          <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '计步', en: 'Metric', zhHant: '計步' })}</span>
+          <PillToggle
+            value={lenMetric === 'qtm'}
+            onChange={(v) => setLenMetric(v ? 'qtm' : 'htm')}
+            offLabel="HTM"
+            onLabel="QTM"
+            ariaLabel={tr({ zh: '计步口径:HTM(半圈计 1)或 QTM(半圈计 2)', en: 'Move metric: HTM (half turn = 1) or QTM (half turn = 2)', zhHant: '計步口徑:HTM(半圈計 1)或 QTM(半圈計 2)' })}
+          />
+          <span className="scramble-stats-puzzle-toggle-hint">
+            {lenMetric === 'qtm'
+              ? tr({ zh: 'QTM:180° 计 2 步', en: 'QTM: 180° counts as 2', zhHant: 'QTM:180° 計 2 步' })
+              : tr({ zh: 'HTM:每 move 计 1 步', en: 'HTM: each move = 1', zhHant: 'HTM:每 move 計 1 步' })}
+          </span>
+        </div>
+      )}
 
       {cur && (
         <>
