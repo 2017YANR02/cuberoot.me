@@ -10,7 +10,7 @@
  *
  * Next.js port of packages/client/src/pages/gen/GenPage.tsx (1:1 shell).
  */
-import { Suspense, useCallback, useEffect, useState, type CSSProperties } from 'react';
+import { Suspense, useEffect, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsString } from 'nuqs';
 import Link from '@/components/AppLink';
@@ -19,6 +19,7 @@ import LiquidGlassChips from '@/components/LiquidGlassChips';
 import { prewarmScramble } from '@/lib/cubing-scramble';
 import { get333Mode } from '@/lib/scramble-333-mode';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useT } from '@/hooks/useT';
 import QuickMode from './QuickMode';
 import { CUBE_FILL } from '@/lib/cube-colors';
 
@@ -84,7 +85,7 @@ const LEGACY_MODE_ALIAS: Record<string, Mode> = {
 function GenPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = useCallback((zh: string, en: string, zhHant?: string) => (i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en)), [isZh]);
+  const t = useT();
   useDocumentTitle('打乱生成器', 'Scramble Generator', "打亂生成器");
 
   // Prewarm the heaviest random-state scramblers while the user is reading the

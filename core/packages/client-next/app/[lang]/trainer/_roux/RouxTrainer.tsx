@@ -29,6 +29,7 @@ import { rt } from './i18n';
 
 import './roux.css';
 import i18n from "@/i18n/i18n-client";
+import { useT } from "@/hooks/useT";
 
 // [mode key, long label, short label] — ported from AppView.tab_modes.
 // (OLLCP / tracking were commented out upstream; we keep them wired so the
@@ -196,7 +197,7 @@ function RouxTrainer(props: { embedded?: boolean }) {
   const { embedded } = props;
   const { i18n } = useTranslation();
   const isZh = i18n.language?.startsWith('zh');
-  const tt = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const tt = useT();
 
   // Mode in the URL (?m=). push history so the back gesture returns between modes.
   const [mode, setMode] = useQueryState(

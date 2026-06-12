@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { BarChart3, Box, Component, Dices, Microscope, Pyramid, Sparkles, Wand2 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import i18n from '@/i18n/i18n-client';
+import { useT } from "@/hooks/useT";
 
 interface Card {
   to: string;
@@ -88,8 +89,7 @@ const CARDS: Card[] = [
 
 export default function ScrambleHubPage() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
   useDocumentTitle('打乱', 'Scramble', "打亂");
 
   return (

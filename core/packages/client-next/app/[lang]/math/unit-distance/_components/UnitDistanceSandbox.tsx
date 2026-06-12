@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Shuffle, Grid3x3, Hexagon, Triangle } from 'lucide-react';
 import i18n from "@/i18n/i18n-client";
+import { useT } from "@/hooks/useT";
 
 type Preset = 'random' | 'square' | 'triangular' | 'hexagonal';
 interface Pt { x: number; y: number }
@@ -102,7 +103,7 @@ function findUnitPairs(pts: Pt[]): Pair[] {
 export default function UnitDistanceSandbox() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
 
   const [n, setN] = useState(13);
   const [preset, setPreset] = useState<Preset>('triangular');

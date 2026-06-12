@@ -42,6 +42,7 @@ import { ClearButton } from '@/components/ClearButton';
 import '@/app/[lang]/article/article.css';
 import '@/app/[lang]/article/editor.css';
 import i18n from "@/i18n/i18n-client";
+import { useT } from "@/hooks/useT";
 
 // CodeMirror chunk stays out of the server / SSG bundle. ssr:false → only mounts client-side.
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
@@ -118,7 +119,7 @@ export interface ArticleEditorProps {
 export default function ArticleEditor({ mode, initial, onSaved }: ArticleEditorProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const tt = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const tt = useT();
 
   const [title, setTitle] = useState(initial?.title ?? '');
   const [subtitle, setSubtitle] = useState(initial?.subtitle ?? '');
