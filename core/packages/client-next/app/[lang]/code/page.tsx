@@ -171,6 +171,23 @@ const CARDS: Card[] = [
     },
   },
   {
+    href: '/code/fonts',
+    glyph: 'Aa',
+    accent: '#C58AF0',
+    zh: {
+      title: '字体',
+      sub: 'Typography',
+      tagline: '全站用到的每一款字体的集中速查:正文 Inter、等宽 Roboto Mono、衬线 Fraunces、计时器七段、打乱表 PDF 还原三件套。每款带真渲染样张、字重、用途、文件与许可',
+      meta: '7 款自托管 · 全部样张 · 设计令牌',
+    },
+    en: {
+      title: 'Fonts',
+      sub: 'Typography',
+      tagline: 'A quick reference for every font on the site: Inter for body, Roboto Mono for mono, Fraunces serif, the seven-segment timer face, and the three-font scramble-PDF parity set. Each with a live specimen, weights, usage, files and license',
+      meta: '7 self-hosted · live specimens · design tokens',
+    },
+  },
+  {
     href: '/code/utils',
     glyph: 'ƒ',
     accent: '#67C18E',
@@ -202,6 +219,23 @@ const CARDS: Card[] = [
       sub: 'Runbook',
       tagline: 'Hands-on commands for routine maintenance: DB refresh, builds, deploys, backups. Each with prereqs, runtime, gotchas',
       meta: 'Copyable · with context · always growing',
+    },
+  },
+  {
+    href: '/code/wcif',
+    glyph: '◇',
+    accent: '#4A90D9',
+    zh: {
+      title: 'WCIF',
+      sub: 'WCA 比赛数据格式',
+      tagline: 'WCA 比赛交换格式速查:两个端点、Competition/Person/Event/Round 对象、AttemptResult 编码,以及 CubeRoot 怎么用它',
+      meta: '官方 spec v1.1 · 开发 / AI 速查',
+    },
+    en: {
+      title: 'WCIF',
+      sub: 'WCA Competition Format',
+      tagline: 'Quick reference for the WCA Competition Interchange Format: endpoints, Competition/Person/Event/Round objects, AttemptResult encoding, how CubeRoot uses it',
+      meta: 'Official spec v1.1 · dev / AI reference',
     },
   },
 ];
