@@ -8,7 +8,7 @@ name = "cubelib-server"
 path = "src/main.rs"
 
 [dependencies]
-cubelib = { path = "../cubelib", default-features = false, features = ["solver", "serde_support", "333finish", "fs"] }
+cubelib = { path = "../cubelib", default-features = false, features = ["solver", "serde_support", "333finish", "fs", "multi-path-channel-solver"] }
 tiny_http = "0.12"
 
 [profile.release]

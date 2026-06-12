@@ -12,9 +12,13 @@ Environment=HOME=/var/lib/cubelib-fmc
 StateDirectory=cubelib-fmc
 Restart=on-failure
 RestartSec=2
-# Small box (~1.8GB shared by 4 apps + PG): tables are tiny, cap hard.
-MemoryMax=256M
+# Small box (~1.8GB shared by 4 apps + PG). Tables are tiny but deep streaming
+# searches keep ~300MB of heap resident (measured) — soft-throttle at 320M,
+# hard-kill only at 512M. Yield CPU to core-api (solves burn up to 120s).
+MemoryHigh=320M
+MemoryMax=512M
 Nice=10
+CPUWeight=30
 
 [Install]
 WantedBy=multi-user.target

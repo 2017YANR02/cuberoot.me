@@ -549,3 +549,62 @@
     max-width: 100%;
   }
 }
+
+/* ── 行内添加输入(triggers / subsets) ── */
+.chx-inline-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.chx-inline-add input {
+  width: 7em;
+  padding: 3px 8px;
+  font: inherit;
+  font-size: 12px;
+  background: var(--card);
+  color: var(--foreground);
+  border: 1px solid var(--input);
+  border-radius: 7px;
+}
+.chx-inline-add input:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+.chx-inline-add > button {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  background: none;
+  border: 1px dashed var(--border-strong);
+  border-radius: 7px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.chx-inline-add > button:hover {
+  color: var(--foreground);
+  border-style: solid;
+}
+
+/* ── 收敛轨迹(24 → 22 → 20…) ── */
+.chx-trail {
+  margin-left: 10px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.chx-trail small {
+  margin-left: 1px;
+  font-size: 10px;
+  color: var(--faint-foreground);
+}
+
+.chx-hint {
+  display: block;
+  font-size: 11px;
+  color: var(--faint-foreground);
+}
+
+.pill-toggle:disabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}

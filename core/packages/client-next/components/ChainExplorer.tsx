@@ -4,15 +4,16 @@
  * ChainExplorer — mallard 式 FMC 分步还原链(analyzer 底部挂载)。
  *
  * 引擎 = 自有服务器跑的 cubelib(joba.me/mallard 同款,经作者授权 vendoring 进
- * `fmc/`),走 HTTP `GET /v1/fmc/solve?scramble=…&steps=…&count=…`(dev 经 next
- * rewrite 反代本地 :8099,prod 经 nginx 反代到 systemd cubelib-server)。所以 NISS
- * 段前/段内、RZP 行、HTR 子集 `[4a1 4e]`、insertions 等全部与 mallard 逐位一致。
+ * `fmc/`)。与上游同构:mallard 生产版也是后端求解(POST joba.me/cubeapi),
+ * 这里走 `GET /v1/fmc/solve_stream`(NDJSON 流式,服务端按 2^5..2^19 step-limit
+ * 倍增搜索,每出现更短解推一行)。默认请求与部署版 mallard 抓包逐字段一致
+ * (relative min/max + quality=10000 + 默认 DR triggers),所以解收敛到相同长度,
+ * NISS 段前/段内、RZP 行、HTR 子集 `[4a1 4e]` 注释全部一致。
  *
- * 布局复刻 mallard:Steps 标签(EO/DR/HTR/FR/Finish)+ 每步卡片(Step length 双
- * 滑块 → cubelib min-abs/max-abs、Variations 轴 → substeps、NISS 双开关 before/
- * during → never/before/always)→ Solution 等宽面板(逐步 `normal (inverse) //
- * variant [comment] (len/cum)` + `Solution (N): …`)→ Exclude Solutions 标签(禁用
- * 某步解 → excl 参数,重算)。共用一个 3D 播放器。
+ * 布局复刻 mallard:Steps 标签(EO/RZP/DR/HTR/FR/Finish)+ 每步卡片(Step length
+ * 双滑块、Variations 轴、NISS 双开关、DR triggers/subsets、FIN leave-slice)→
+ * Solution 面板(流式收敛,逐步 `normal (inverse) // variant [subset] (len/cum)`)
+ * → Exclude Solutions 标签(排除某步解重算)。共用一个 3D 播放器。
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -23,8 +24,8 @@ import { apiUrl } from '@/lib/api-base';
 import { normalizeScramble } from '@/lib/cross-solver';
 import './ChainExplorer.css';
 
-type StageKey = 'eo' | 'dr' | 'htr' | 'fr' | 'fin';
-type ConfStage = 'eo' | 'dr' | 'htr' | 'fr';
+type StageKey = 'eo' | 'rzp' | 'dr' | 'htr' | 'fr' | 'fin';
+type ConfStage = StageKey;
 type Axis = 'ud' | 'fb' | 'lr';
 
 interface StageUI {
@@ -42,6 +43,7 @@ interface FmcStep {
   inverse: string;
   comment: string;
   len: number;
+  cancelled?: number;
   cum: number;
 }
 interface FmcSolution {
@@ -49,21 +51,34 @@ interface FmcSolution {
   solution: string;
   total: number;
 }
+interface StreamMsg {
+  solution?: FmcSolution;
+  quality?: number;
+  elapsed_ms?: number;
+  done?: boolean;
+  exhausted?: boolean;
+  error?: string;
+}
 
 const AXES: Axis[] = ['ud', 'fb', 'lr'];
 const AXIS_LABEL: Record<Axis, string> = { ud: 'UD', fb: 'FB', lr: 'LR' };
-const STEP_TRACK: Record<ConfStage, number> = { eo: 8, dr: 12, htr: 14, fr: 11 };
-const COUNT = 10;
-
+/** 滑块轨道上限(显示范围);默认值 = 部署版 mallard 抓包原值。 */
+const STEP_TRACK: Record<ConfStage, number> = { eo: 8, rzp: 6, dr: 14, htr: 14, fr: 12, fin: 14 };
 const STAGE_DEFAULTS: Record<ConfStage, StageUI> = {
-  eo: { axes: AXES, min: 0, max: STEP_TRACK.eo, nissBefore: true, nissDuring: true },
-  dr: { axes: AXES, min: 0, max: STEP_TRACK.dr, nissBefore: true, nissDuring: false },
-  htr: { axes: AXES, min: 0, max: STEP_TRACK.htr, nissBefore: true, nissDuring: false },
-  fr: { axes: AXES, min: 0, max: STEP_TRACK.fr, nissBefore: true, nissDuring: false },
+  eo: { axes: AXES, min: 0, max: 5, nissBefore: true, nissDuring: true },
+  rzp: { axes: AXES, min: 0, max: 3, nissBefore: false, nissDuring: false },
+  dr: { axes: AXES, min: 0, max: 12, nissBefore: true, nissDuring: false },
+  htr: { axes: AXES, min: 0, max: 12, nissBefore: true, nissDuring: false },
+  fr: { axes: AXES, min: 0, max: 10, nissBefore: true, nissDuring: false },
+  fin: { axes: AXES, min: 0, max: 10, nissBefore: false, nissDuring: false },
 };
+const DEFAULT_TRIGGERS = ['R', 'R U2 R', 'R F2 R', 'R U R', "R U' R"];
+/** 与上游 60s 窗口一致;服务端单飞 + 转录缓存,重复打乱秒回。 */
+const BUDGET_MS = 60_000;
 
 const TABS: { key: StageKey; label: string }[] = [
   { key: 'eo', label: 'EO' },
+  { key: 'rzp', label: 'RZP' },
   { key: 'dr', label: 'DR' },
   { key: 'htr', label: 'HTR' },
   { key: 'fr', label: 'FR' },
@@ -71,12 +86,11 @@ const TABS: { key: StageKey; label: string }[] = [
 ];
 
 function initStages(): Record<ConfStage, StageUI> {
-  return {
-    eo: { ...STAGE_DEFAULTS.eo, axes: [...STAGE_DEFAULTS.eo.axes] },
-    dr: { ...STAGE_DEFAULTS.dr, axes: [...STAGE_DEFAULTS.dr.axes] },
-    htr: { ...STAGE_DEFAULTS.htr, axes: [...STAGE_DEFAULTS.htr.axes] },
-    fr: { ...STAGE_DEFAULTS.fr, axes: [...STAGE_DEFAULTS.fr.axes] },
-  };
+  const out = {} as Record<ConfStage, StageUI>;
+  for (const k of Object.keys(STAGE_DEFAULTS) as ConfStage[]) {
+    out[k] = { ...STAGE_DEFAULTS[k], axes: [...STAGE_DEFAULTS[k].axes] };
+  }
+  return out;
 }
 
 function fmtMs(ms: number): string {
@@ -171,83 +185,132 @@ export default function ChainExplorer({ scramble, lang }: Props) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   const [stages, setStages] = useState(initStages);
-  const [frEnabled, setFrEnabled] = useState(true); // mallard 默认含 FR(收尾更短)
+  const [frEnabled, setFrEnabled] = useState(true); // mallard 默认含 FR
+  const [triggers, setTriggers] = useState<string[]>(DEFAULT_TRIGGERS);
+  const [enforceTriggers, setEnforceTriggers] = useState(true);
+  const [triggerInput, setTriggerInput] = useState('');
+  const [subsets, setSubsets] = useState<string[]>([]);
+  const [subsetInput, setSubsetInput] = useState('');
+  const [leaveSlice, setLeaveSlice] = useState(false);
+  const [htrBreaking, setHtrBreaking] = useState(false);
   const [activeTab, setActiveTab] = useState<StageKey>('eo');
   const [excludeTab, setExcludeTab] = useState<StageKey>('eo');
   const [axisMenu, setAxisMenu] = useState<ConfStage | null>(null);
   const [excluded, setExcluded] = useState<Record<StageKey, string[]>>({
-    eo: [], dr: [], htr: [], fr: [], fin: [],
+    eo: [], rzp: [], dr: [], htr: [], fr: [], fin: [],
   });
-  const [sols, setSols] = useState<FmcSolution[] | null>(null);
+  const [sol, setSol] = useState<FmcSolution | null>(null);
+  const [trail, setTrail] = useState<{ total: number; ms: number }[]>([]);
   const [ms, setMs] = useState<number | null>(null);
   const [computing, setComputing] = useState(false);
   const [errMsg, setErrMsg] = useState('');
-  const [sel, setSel] = useState<{ chain: number; step: number | null } | null>(null);
+  const [sel, setSel] = useState<number | null | 'full'>(null);
 
   const playerRef = useRef<{ jumpToStart?: (o?: { flash?: boolean }) => void; play?: () => void } | null>(null);
   const reqRef = useRef(0);
   const ranRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   const normScramble = useMemo(() => normalizeScramble(scramble) ?? scramble, [scramble]);
   const scrambleRef = useRef(normScramble);
   scrambleRef.current = normScramble;
 
-  const cfgRef = useRef({ stages, frEnabled, excluded });
-  cfgRef.current = { stages, frEnabled, excluded };
+  const cfgRef = useRef({ stages, frEnabled, excluded, triggers, enforceTriggers, subsets, leaveSlice, htrBreaking });
+  cfgRef.current = { stages, frEnabled, excluded, triggers, enforceTriggers, subsets, leaveSlice, htrBreaking };
 
   /** cubelib niss token from the two toggles. */
   const nissTok = (s: StageUI) => (s.nissDuring ? 'always' : s.nissBefore ? 'before' : 'never');
 
-  /** Build the CLI-style steps string for cubelib.
-   *  quality 驱动搜索宽度(cubelib 默认 100;高 = 更短解但更慢)。滑块走 per-step
-   *  min/max(NOT max-abs —— 那是累计总长封顶,会把硬打乱搜空),仅在收窄时下发。 */
+  /** Build the CLI-style steps string. 与部署版 mallard 的 SolverRequest 逐字段
+   *  对齐:relative min/max 显式下发(absolute 是累计封顶,会把深解剪掉 —— 之前
+   *  卡 20 步的根因)、quality=10000、substeps 显式、triggers 启用时带 RZP。 */
   const buildSteps = useCallback((): string => {
-    const Q = 1000;
-    const { stages: st, frEnabled: fr, excluded: ex } = cfgRef.current;
-    const stage = (key: ConfStage, kindTok: string) => {
+    const c = cfgRef.current;
+    const st = c.stages;
+    const part = (key: ConfStage, extra: string[] = []) => {
       const s = st[key];
-      const parts: string[] = [`niss=${nissTok(s)}`, `quality=${Q}`];
-      if (s.min > 0) parts.push(`min=${s.min}`);
-      if (s.max < STEP_TRACK[key]) parts.push(`max=${s.max}`);
-      // axis restriction → substeps (omit when all selected = cubelib default).
-      if (key !== 'htr' && s.axes.length < AXES.length) {
-        for (const a of s.axes) parts.push(`${kindTok}${a}`);
-      }
-      const exl = ex[key].filter(Boolean);
+      const parts = [`min=${s.min}`, `max=${s.max}`, `niss=${nissTok(s)}`, 'quality=10000'];
+      if (key !== 'rzp') parts.push(`substeps=${s.axes.join(',')}`);
+      parts.push(...extra);
+      const exl = c.excluded[key].filter(Boolean);
       if (exl.length) parts.push(`excl=${exl.join('|')}`);
-      return `${kindTok.toUpperCase()}[${parts.join(';')}]`;
+      return parts;
     };
-    const finExl = ex.fin.filter(Boolean);
-    const fin = `FIN[niss=never;quality=${Q}${finExl.length ? `;excl=${finExl.join('|')}` : ''}]`;
-    const chain = [stage('eo', 'eo'), 'RZP[niss=never]', stage('dr', 'dr'), stage('htr', 'htr')];
-    if (fr) chain.push(stage('fr', 'fr'));
-    chain.push(fin);
+    const useTriggers = c.enforceTriggers && c.triggers.length > 0;
+    const drExtra: string[] = [];
+    if (useTriggers) drExtra.push(`triggers=${c.triggers.join(',')}`);
+    if (c.subsets.length) drExtra.push(`subsets=${c.subsets.join(',')}`);
+    const finExtra: string[] = [];
+    if (!c.frEnabled && c.htrBreaking) finExtra.push('htr-breaking=true');
+
+    const chain = [`EO[${part('eo').join(';')}]`];
+    if (useTriggers) chain.push(`RZP[${part('rzp').join(';')}]`);
+    chain.push(`DR[${part('dr', drExtra).join(';')}]`);
+    chain.push(`HTR[${part('htr').join(';')}]`);
+    if (c.frEnabled) chain.push(`${c.leaveSlice ? 'FRLS' : 'FR'}[${part('fr').join(';')}]`);
+    chain.push(`${c.leaveSlice ? 'FINLS' : 'FIN'}[${part('fin', finExtra).join(';')}]`);
     return chain.join(' > ');
   }, []);
 
   const compute = useCallback(async () => {
     const scr = scrambleRef.current.trim();
     if (!scr) return;
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     const my = ++reqRef.current;
     ranRef.current = true;
     setComputing(true);
     setErrMsg('');
+    setTrail([]);
+    setMs(null);
+    setSel(null);
     const t0 = performance.now();
     try {
       const url = apiUrl(
-        `/v1/fmc/solve?scramble=${encodeURIComponent(scr)}&steps=${encodeURIComponent(buildSteps())}&count=${COUNT}`,
+        `/v1/fmc/solve_stream?scramble=${encodeURIComponent(scr)}&steps=${encodeURIComponent(buildSteps())}&budget=${BUDGET_MS}`,
       );
-      const res = await fetch(url);
+      // 自动重试:上一条流被 abort 后的短窗口内,代理层会复用半死连接报 500
+      // (实测 abort 后立即重发必 500,+800ms 即恢复)。
+      let res = await fetch(url, { signal: ctrl.signal });
+      for (const delay of [600, 1300]) {
+        if (res.ok && res.body) break;
+        await new Promise((r) => setTimeout(r, delay));
+        if (reqRef.current !== my) return;
+        res = await fetch(url, { signal: ctrl.signal });
+      }
       if (reqRef.current !== my) return;
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as { solutions?: FmcSolution[]; error?: string };
-      if (reqRef.current !== my) return;
-      if (data.error) throw new Error(data.error);
-      setSols(data.solutions ?? []);
-      setMs(Math.round(performance.now() - t0));
-      setSel(null);
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      let got = false;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (reqRef.current !== my) { void reader.cancel().catch(() => {}); return; }
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buf.indexOf('\n')) >= 0) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line) continue;
+          let msg: StreamMsg;
+          try { msg = JSON.parse(line) as StreamMsg; } catch { continue; }
+          if (msg.error) setErrMsg(msg.error);
+          if (msg.solution) {
+            got = true;
+            setSol(msg.solution);
+            setTrail((tr) => [...tr, { total: msg.solution!.total, ms: msg.elapsed_ms ?? 0 }]);
+          }
+          if (msg.done) setMs(Math.round(performance.now() - t0));
+        }
+      }
+      if (!got && reqRef.current === my) setSol(null);
     } catch (e) {
-      if (reqRef.current === my) setErrMsg(e instanceof Error ? e.message : String(e));
+      if (!ctrl.signal.aborted && reqRef.current === my) {
+        setErrMsg(e instanceof Error ? e.message : String(e));
+      }
     } finally {
       if (reqRef.current === my) setComputing(false);
     }
@@ -258,9 +321,9 @@ export default function ChainExplorer({ scramble, lang }: Props) {
   useEffect(() => {
     if (firstAuto.current) { firstAuto.current = false; return; }
     if (!ranRef.current) return;
-    const id = setTimeout(() => { void compute(); }, 400);
+    const id = setTimeout(() => { void compute(); }, 600);
     return () => clearTimeout(id);
-  }, [normScramble, stages, frEnabled, compute]);
+  }, [normScramble, stages, frEnabled, triggers, enforceTriggers, subsets, leaveSlice, htrBreaking, compute]);
 
   // 排除列表变化 → 立即重算。
   const firstExcluded = useRef(true);
@@ -268,6 +331,9 @@ export default function ChainExplorer({ scramble, lang }: Props) {
     if (firstExcluded.current) { firstExcluded.current = false; return; }
     if (ranRef.current) void compute();
   }, [excluded, compute]);
+
+  // 卸载时断流。
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const setStage = useCallback((k: ConfStage, patch: Partial<StageUI>) => {
     setStages((prev) => ({ ...prev, [k]: { ...prev[k], ...patch } }));
@@ -290,11 +356,34 @@ export default function ChainExplorer({ scramble, lang }: Props) {
     setAxisMenu(null);
   }, []);
 
-  // 排除某步:把该步的 mallard 记号 alg 加进该阶段黑名单(经 excl 参数回喂引擎)。
-  const excludeStep = useCallback((s: FmcStep) => {
-    const alg = stepMoves(s);
+  const addTrigger = useCallback(() => {
+    const v = triggerInput.trim();
+    if (!v || !/^[RUFLDBrufldb2' ]+$/.test(v)) return;
+    setTriggers((prev) => (prev.includes(v) ? prev : [...prev, v]));
+    setTriggerInput('');
+  }, [triggerInput]);
+
+  const addSubset = useCallback(() => {
+    const v = subsetInput.trim();
+    if (!v || !/^\d[abc]?\d?( \d+e)?$/.test(v)) return;
+    setSubsets((prev) => (prev.includes(v) ? prev : [...prev, v]));
+    setSubsetInput('');
+  }, [subsetInput]);
+
+  // 排除某步:cubelib 的 FilterExcluded 比对的是「截至该步的累计 alg」(canonicalize
+  // 后),与 mallard find_step 的 full_alg 一致 —— 所以这里必须发累计记号,不是单步。
+  const excludeStep = useCallback((steps: FmcStep[], j: number) => {
+    const n: string[] = [];
+    const inv: string[] = [];
+    for (const st of steps.slice(0, j + 1)) {
+      if (st.normal) n.push(st.normal);
+      if (st.inverse) inv.push(st.inverse);
+    }
+    const alg = `${n.join(' ')}${inv.length ? ` (${inv.join(' ')})` : ''}`.trim();
     if (!alg) return;
-    const kind = (s.kind === 'rzp' ? 'dr' : s.kind) as StageKey;
+    const s = steps[j];
+    const raw = s.kind === 'rzp' ? 'dr' : s.kind === 'frls' ? 'fr' : s.kind === 'finls' ? 'fin' : s.kind;
+    const kind = raw as StageKey;
     setExcluded((prev) => (prev[kind].includes(alg) ? prev : { ...prev, [kind]: [...prev[kind], alg] }));
     setExcludeTab(kind);
   }, []);
@@ -303,8 +392,8 @@ export default function ChainExplorer({ scramble, lang }: Props) {
     setExcluded((prev) => ({ ...prev, [k]: prev[k].filter((_, j) => j !== i) }));
   }, []);
 
-  const select = useCallback((chain: number, step: number | null, play = false) => {
-    setSel({ chain, step });
+  const select = useCallback((step: number | 'full', play = false) => {
+    setSel(step);
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const p = playerRef.current;
       try { p?.jumpToStart?.({ flash: false }); } catch { /* */ }
@@ -313,19 +402,86 @@ export default function ChainExplorer({ scramble, lang }: Props) {
   }, []);
 
   const selAlg = useMemo(() => {
-    if (!sel || !sols) return null;
-    const c = sols[sel.chain];
-    if (!c) return null;
-    return sel.step == null ? c.solution : linearizePrefix(c.steps, sel.step);
-  }, [sel, sols]);
+    if (sel == null || !sol) return null;
+    return sel === 'full' ? sol.solution : linearizePrefix(sol.steps, sel);
+  }, [sel, sol]);
 
   const busy = computing;
+  const useTriggers = enforceTriggers && triggers.length > 0;
+
+  const axisChips = (key: ConfStage, disabled: boolean) => {
+    const s = stages[key];
+    const removable = AXES.filter((a) => s.axes.includes(a));
+    const addable = AXES.filter((a) => !s.axes.includes(a));
+    return (
+      <div className="chx-chips">
+        {removable.map((a) => (
+          <span key={a} className="chx-chip">
+            {AXIS_LABEL[a]}
+            <button
+              className="chx-chip-x"
+              disabled={disabled || removable.length <= 1}
+              aria-label={t('移除轴', 'remove axis')}
+              onClick={() => removeAxis(key, a)}
+            >
+              <X size={11} />
+            </button>
+          </span>
+        ))}
+        {addable.length > 0 && (
+          <div className="chx-axis-add">
+            <button
+              className="chx-chip-add"
+              disabled={disabled}
+              aria-label={t('添加轴', 'add axis')}
+              onClick={() => setAxisMenu(axisMenu === key ? null : key)}
+            >
+              <Plus size={12} />
+              <ChevronDown size={12} />
+            </button>
+            {axisMenu === key && (
+              <div className="chx-axis-menu">
+                {addable.map((a) => (
+                  <button key={a} onClick={() => addAxis(key, a)}>{AXIS_LABEL[a]}</button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const nissRows = (key: ConfStage, disabled: boolean) => {
+    const s = stages[key];
+    return (
+      <div className="chx-field-block">
+        <div className="chx-field-label">NISS</div>
+        <label className="chx-niss-row">
+          <span>{t('段前允许切换', 'Allow switching before step')}</span>
+          <PillToggle
+            value={s.nissBefore}
+            disabled={disabled}
+            onChange={(v) => setStage(key, { nissBefore: v, nissDuring: v ? s.nissDuring : false })}
+            ariaLabel="NISS before"
+          />
+        </label>
+        <label className="chx-niss-row">
+          <span>{t('段内允许切换', 'Allow switching during step')}</span>
+          <PillToggle
+            value={s.nissDuring}
+            disabled={disabled}
+            onChange={(v) => setStage(key, { nissDuring: v, nissBefore: v ? true : s.nissBefore })}
+            ariaLabel="NISS during"
+          />
+        </label>
+      </div>
+    );
+  };
 
   const renderStepPanel = (key: ConfStage) => {
     const s = stages[key];
-    const disabled = key === 'fr' && !frEnabled;
-    const removable = AXES.filter((a) => s.axes.includes(a));
-    const addable = AXES.filter((a) => !s.axes.includes(a));
+    const disabled = (key === 'fr' && !frEnabled) || (key === 'rzp' && !useTriggers);
     return (
       <div className={`chx-panel${disabled ? ' is-off' : ''}`}>
         {key === 'fr' && (
@@ -333,6 +489,11 @@ export default function ChainExplorer({ scramble, lang }: Props) {
             <PillToggle value={frEnabled} onChange={setFrEnabled} ariaLabel="enable FR" />
             <span>{t('启用 FR', 'Enable FR')}</span>
           </label>
+        )}
+        {key === 'rzp' && !useTriggers && (
+          <div className="chx-axes-note">
+            {t('RZP 仅在 DR 启用 triggers 时生效。', 'RZP only applies when DR triggers are enforced.')}
+          </div>
         )}
 
         <div className="chx-field-block">
@@ -346,68 +507,93 @@ export default function ChainExplorer({ scramble, lang }: Props) {
           />
         </div>
 
-        <div className="chx-field-block">
-          <div className="chx-field-label">{t('变体轴', 'Variations')}</div>
-          {key === 'htr' ? (
-            <div className="chx-axes-note">{t('继承 DR 轴', 'follows the DR axis')}</div>
-          ) : (
-            <div className="chx-chips">
-              {removable.map((a) => (
-                <span key={a} className="chx-chip">
-                  {AXIS_LABEL[a]}
-                  <button
-                    className="chx-chip-x"
-                    disabled={disabled || removable.length <= 1}
-                    aria-label={t('移除轴', 'remove axis')}
-                    onClick={() => removeAxis(key, a)}
-                  >
-                    <X size={11} />
-                  </button>
-                </span>
-              ))}
-              {addable.length > 0 && (
-                <div className="chx-axis-add">
-                  <button
-                    className="chx-chip-add"
-                    disabled={disabled}
-                    aria-label={t('添加轴', 'add axis')}
-                    onClick={() => setAxisMenu(axisMenu === key ? null : key)}
-                  >
-                    <Plus size={12} />
-                    <ChevronDown size={12} />
-                  </button>
-                  {axisMenu === key && (
-                    <div className="chx-axis-menu">
-                      {addable.map((a) => (
-                        <button key={a} onClick={() => addAxis(key, a)}>{AXIS_LABEL[a]}</button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        {key !== 'rzp' && key !== 'fin' && (
+          <div className="chx-field-block">
+            <div className="chx-field-label">{t('变体轴', 'Variations')}</div>
+            {axisChips(key, disabled)}
+          </div>
+        )}
 
-        <div className="chx-field-block">
-          <div className="chx-field-label">NISS</div>
-          <label className="chx-niss-row">
-            <span>{t('段前允许切换', 'Allow switching before step')}</span>
-            <PillToggle
-              value={s.nissBefore}
-              onChange={(v) => setStage(key, { nissBefore: v })}
-              ariaLabel="NISS before"
-            />
-          </label>
-          <label className="chx-niss-row">
-            <span>{t('段内允许切换', 'Allow switching during step')}</span>
-            <PillToggle
-              value={s.nissDuring}
-              onChange={(v) => setStage(key, { nissDuring: v, nissBefore: v ? true : s.nissBefore })}
-              ariaLabel="NISS during"
-            />
-          </label>
-        </div>
+        {key === 'dr' && (
+          <>
+            <div className="chx-field-block">
+              <div className="chx-field-label">Triggers</div>
+              <label className="chx-niss-row">
+                <span>{t('强制 trigger 结尾(经 RZP)', 'Enforce triggers (via RZP)')}</span>
+                <PillToggle value={enforceTriggers} onChange={setEnforceTriggers} ariaLabel="enforce triggers" />
+              </label>
+              <div className="chx-chips">
+                {triggers.map((tr) => (
+                  <span key={tr} className="chx-chip">
+                    <code>{tr}</code>
+                    <button
+                      className="chx-chip-x"
+                      aria-label={t('移除 trigger', 'remove trigger')}
+                      onClick={() => setTriggers((prev) => prev.filter((x) => x !== tr))}
+                    >
+                      <X size={11} />
+                    </button>
+                  </span>
+                ))}
+                <span className="chx-inline-add">
+                  <input
+                    value={triggerInput}
+                    placeholder={t('如 R U R', "e.g. R U R")}
+                    onChange={(e) => setTriggerInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') addTrigger(); }}
+                  />
+                  <button onClick={addTrigger} aria-label={t('添加 trigger', 'add trigger')}><Plus size={12} /></button>
+                </span>
+              </div>
+            </div>
+            <div className="chx-field-block">
+              <div className="chx-field-label">{t('限定子集', 'Subsets')}</div>
+              <div className="chx-chips">
+                {subsets.map((sub) => (
+                  <span key={sub} className="chx-chip">
+                    <code>{sub}</code>
+                    <button
+                      className="chx-chip-x"
+                      aria-label={t('移除子集', 'remove subset')}
+                      onClick={() => setSubsets((prev) => prev.filter((x) => x !== sub))}
+                    >
+                      <X size={11} />
+                    </button>
+                  </span>
+                ))}
+                <span className="chx-inline-add">
+                  <input
+                    value={subsetInput}
+                    placeholder={t('如 4a1', 'e.g. 4a1')}
+                    onChange={(e) => setSubsetInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') addSubset(); }}
+                  />
+                  <button onClick={addSubset} aria-label={t('添加子集', 'add subset')}><Plus size={12} /></button>
+                </span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {key !== 'fin' && nissRows(key, disabled)}
+
+        {key === 'fin' && (
+          <div className="chx-field-block">
+            <label className="chx-niss-row">
+              <span>{t('留中层(leave slice)', 'Leave slice')}</span>
+              <PillToggle value={leaveSlice} onChange={setLeaveSlice} ariaLabel="leave slice" />
+            </label>
+            {!frEnabled && (
+              <label className="chx-niss-row">
+                <span>
+                  {t('允许破坏 HTR 收尾', 'Allow HTR-breaking finish')}
+                  <small className="chx-hint">{t('(需 ~10GB 表,服务器未启用)', '(needs a ~10GB table; not enabled on this server)')}</small>
+                </span>
+                <PillToggle value={htrBreaking} onChange={setHtrBreaking} ariaLabel="htr breaking" />
+              </label>
+            )}
+          </div>
+        )}
       </div>
     );
   };
@@ -421,22 +607,14 @@ export default function ChainExplorer({ scramble, lang }: Props) {
           {TABS.map(({ key, label }) => (
             <button
               key={key}
-              className={`chx-tab${activeTab === key ? ' is-active' : ''}${key === 'fr' && !frEnabled ? ' is-dim' : ''}`}
+              className={`chx-tab${activeTab === key ? ' is-active' : ''}${(key === 'fr' && !frEnabled) || (key === 'rzp' && !useTriggers) ? ' is-dim' : ''}`}
               onClick={() => setActiveTab(key)}
             >
               {label}
             </button>
           ))}
         </div>
-        {activeTab === 'fin' ? (
-          <div className="chx-panel">
-            <div className="chx-axes-note">
-              {t('固定启用:从 HTR/FR 直接最优还原,NISS 不适用。', 'Always on: optimal solve-out from HTR/FR; NISS not applicable.')}
-            </div>
-          </div>
-        ) : (
-          renderStepPanel(activeTab)
-        )}
+        {renderStepPanel(activeTab)}
       </div>
 
       <div className="chx-run">
@@ -444,7 +622,11 @@ export default function ChainExplorer({ scramble, lang }: Props) {
           {busy ? <Loader2 size={14} className="chx-spin" /> : null}
           {ranRef.current ? t('重新计算', 'Recompute') : t('计算', 'Compute')}
         </button>
-        {computing && <span className="chx-status">{t('求解中…', 'Solving…')}</span>}
+        {computing && (
+          <span className="chx-status">
+            {sol ? t(`已 ${sol.total} 步,继续深化…`, `${sol.total} HTM so far, deepening…`) : t('求解中…', 'Solving…')}
+          </span>
+        )}
         {!busy && ms != null && <span className="chx-status">{fmtMs(ms)}</span>}
       </div>
 
@@ -453,60 +635,71 @@ export default function ChainExplorer({ scramble, lang }: Props) {
       {/* ── Solution ── */}
       <div className="chx-block">
         <h3 className="chx-h">{t('解', 'Solution')}</h3>
-        {!sols && !busy && (
-          <div className="chx-empty">{t('点「计算」生成分步还原链。', 'Click Compute to generate step-by-step chains.')}</div>
+        {!sol && !busy && !errMsg && (
+          <div className="chx-empty">
+            {ms != null
+              ? t('未找到满足当前条件的解,放宽步数范围或移除排除项。', 'No solution matches — widen a length range or remove an exclusion.')
+              : t('点「计算」生成分步还原链。', 'Click Compute to generate the step-by-step chain.')}
+          </div>
         )}
-        {sols && !busy && sols.length === 0 && (
-          <div className="chx-empty">{t('未找到满足当前条件的解,放宽步数范围或移除排除项。', 'No solution matches — widen a length range or remove an exclusion.')}</div>
-        )}
-        {sols && sols.length > 0 && (
+        {sol && (
           <div className="chx-result">
             <ol className="chx-chains">
-              {sols.map((c, i) => (
-                <li key={i} className={`chx-chain${sel?.chain === i ? ' is-active' : ''}`}>
-                  <div
-                    className="chx-chain-head"
-                    onClick={() => select(i, null)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(i, null); } }}
+              <li className="chx-chain is-active">
+                <div
+                  className="chx-chain-head"
+                  onClick={() => select('full')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select('full'); } }}
+                >
+                  <button
+                    className="chx-chain-play"
+                    aria-label={t('播放', 'Play')}
+                    onClick={(e) => { e.stopPropagation(); select('full', true); }}
                   >
-                    <button
-                      className="chx-chain-play"
-                      aria-label={t('播放', 'Play')}
-                      onClick={(e) => { e.stopPropagation(); select(i, null, true); }}
+                    <Play size={11} />
+                  </button>
+                  <span className="chx-chain-total">{sol.total} HTM</span>
+                  {trail.length > 1 && (
+                    <span className="chx-trail">
+                      {trail.map((p, i) => (
+                        <span key={i}>
+                          {i > 0 && ' → '}
+                          {p.total}
+                          <small>@{fmtMs(p.ms)}</small>
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </div>
+                <div className="chx-steps">
+                  {sol.steps.map((s, j) => (
+                    <div
+                      key={j}
+                      className={`chx-step${sel === j ? ' is-active' : ''}`}
+                      onClick={() => select(j)}
                     >
-                      <Play size={11} />
-                    </button>
-                    <span className="chx-chain-n">#{i + 1}</span>
-                    <span className="chx-chain-total">{c.total} HTM</span>
-                  </div>
-                  <div className="chx-steps">
-                    {c.steps.map((s, j) => (
-                      <div
-                        key={j}
-                        className={`chx-step${sel?.chain === i && sel?.step === j ? ' is-active' : ''}`}
-                        onClick={() => select(i, j)}
-                      >
-                        <code className="chx-step-mv">{stepMoves(s) || '—'}</code>
-                        <span className="chx-step-var">{`// ${s.variant}${s.comment ? ` ${s.comment}` : ''}`}</span>
-                        <span className="chx-step-cnt">{`(${s.len}/${s.cum})`}</span>
-                        {stepMoves(s) && (
-                          <button
-                            className="chx-step-ban"
-                            title={t('排除该步解并重算', 'Exclude this step solution and re-solve')}
-                            aria-label={t('排除该步', 'Exclude this step')}
-                            onClick={(e) => { e.stopPropagation(); excludeStep(s); }}
-                          >
-                            <Ban size={11} />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="chx-solution">{`Solution (${c.total}): ${c.solution}`}</div>
-                </li>
-              ))}
+                      <code className="chx-step-mv">{stepMoves(s) || '—'}</code>
+                      <span className="chx-step-var">{`// ${s.variant}${s.comment ? ` [${s.comment}]` : ''}`}</span>
+                      <span className="chx-step-cnt">
+                        {s.cancelled ? `(${s.len}-${s.cancelled}/${s.cum})` : `(${s.len}/${s.cum})`}
+                      </span>
+                      {stepMoves(s) && (
+                        <button
+                          className="chx-step-ban"
+                          title={t('排除该步解并重算', 'Exclude this step solution and re-solve')}
+                          aria-label={t('排除该步', 'Exclude this step')}
+                          onClick={(e) => { e.stopPropagation(); excludeStep(sol.steps, j); }}
+                        >
+                          <Ban size={11} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="chx-solution">{`Solution (${sol.total}): ${sol.solution}`}</div>
+              </li>
             </ol>
 
             {selAlg ? (
@@ -522,7 +715,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
       <div className="chx-block">
         <h3 className="chx-h">{t('排除解', 'Exclude Solutions')}</h3>
         <div className="chx-tabs">
-          {TABS.map(({ key, label }) => (
+          {TABS.filter(({ key }) => key !== 'rzp').map(({ key, label }) => (
             <button
               key={key}
               className={`chx-tab${excludeTab === key ? ' is-active' : ''}`}
@@ -536,7 +729,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
         <div className="chx-panel">
           {excluded[excludeTab].length === 0 ? (
             <div className="chx-axes-note">
-              {t('在上方某条解里点禁用图标,把该步解加进这里排除并重算。', 'Click the ban icon on a step above to exclude that step solution and re-solve.')}
+              {t('在上方解里点禁用图标,把该步解加进这里排除并重算。', 'Click the ban icon on a step above to exclude that step solution and re-solve.')}
             </div>
           ) : (
             <div className="chx-excl-list">

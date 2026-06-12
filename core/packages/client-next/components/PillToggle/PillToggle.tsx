@@ -13,9 +13,10 @@ interface Props {
   offLabel?: string;
   ariaLabel?: string;
   className?: string;
+  disabled?: boolean;
 }
 
-export default function PillToggle({ value, onChange, onLabel, offLabel, ariaLabel, className }: Props) {
+export default function PillToggle({ value, onChange, onLabel, offLabel, ariaLabel, className, disabled }: Props) {
   const isSwitch = !onLabel && !offLabel;
   const ref = useRef<HTMLButtonElement>(null);
   // startX 记起手点;moved=true 表示这次是拖动(松手时不再当 tap 翻转)。
@@ -55,6 +56,7 @@ export default function PillToggle({ value, onChange, onLabel, offLabel, ariaLab
       ref={ref}
       type="button"
       role="switch"
+      disabled={disabled}
       aria-checked={value}
       aria-label={ariaLabel}
       className={`pill-toggle${isSwitch ? ' pill-toggle--switch' : ''}${value ? ' is-on' : ''}${className ? ` ${className}` : ''}`}

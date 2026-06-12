@@ -1,72 +1,97 @@
 # FMC solver — benchmarks & parity (mine vs upstream mallard)
 
-**Same engine.** `fmc/cubelib/` is a verbatim copy of [Jobarion/cubelib](https://github.com/Jobarion/cubelib),
-the exact solver that powers https://joba.me/mallard. So solution *quality* is a
-function of **config**, not of two different solvers. The differences below are
-config + native-vs-WASM, nothing else.
+**Same engine, same architecture.** `fmc/cubelib/` is a verbatim copy of
+[Jobarion/cubelib](https://github.com/Jobarion/cubelib), the solver behind
+https://joba.me/mallard. The deployed mallard is **not** browser WASM: its
+frontend ships `default = ["backend"]` and POSTs to
+`joba.me/cubeapi/solve_stream?backend=multi_path_channel` — a native server
+running the multi-path-channel solver with **step-limit doubling**
+(2^5..2^19), streaming every strictly-shorter solution, 60 s window.
+`cubelib-server` replicates that byte-for-byte: `GET /v1/fmc/solve_stream`
+streams the same NDJSON-style improvements with the same level schedule.
 
-- **mine** = `cubelib-server` (native, vendored cubelib) behind `api.cuberoot.me/v1/fmc`.
-- **upstream** = joba.me/mallard, the same cubelib compiled to **WASM**, solving in a
-  Web Worker in the browser.
+The default request is the **deployed** mallard default, captured verbatim
+off its POST body (relative per-step min/max, quality 10000, the five default
+DR triggers via RZP):
 
-## Speed & solution length
+```
+EO 0-5 niss=always > RZP 0-3 niss=never >
+DR 0-12 niss=before triggers=R,R U2 R,R F2 R,R U R,R U' R >
+HTR 0-12 niss=before > FR 0-10 niss=before > FIN 0-10 niss=never
+```
 
-Measured on the **same machine** (8C16T desktop) so it's a fair native-vs-WASM
-comparison. "mine" = local `cubelib-server` over HTTP at the deployed default
-config (`EO[niss=always] > RZP > DR[niss=before] > HTR[niss=before] > FR[niss=before] > FIN`,
-quality 1000). "mallard" = time from last keystroke to rendered solution (warm —
-tables already generated & cached in IndexedDB), its own default config.
+> Gotcha that cost us 2 moves: current git-HEAD frontend defaults use
+> *absolute* (cumulative) caps (`max-abs=14/20/26/30`). Those prune harder
+> than the deployed *relative* maxima and lock the search out of the
+> shortest solutions (we plateaued at 20 where mallard found 19). Always
+> compare against what production actually sends, not repo defaults.
 
-| scramble | mine: len / time | mallard: len / time |
-|----------|------------------|---------------------|
-| `R U F R'` (trivial)        | 4 HTM / ~6 ms   | 4 HTM / instant |
-| WCA-1 (24-move scramble)    | 22 HTM / ~0.17 s | 20 HTM / ~6.4 s |
-| WCA-2 (19-move scramble)    | 21 HTM / ~0.17 s | 19 HTM / ~5.3 s |
-| WCA-3 (20-move scramble)    | 21 HTM / ~0.18 s | 20 HTM / ~6.4 s |
+## Convergence speed (same desktop, 8C16T)
+
+mine = local `cubelib-server` `/solve_stream`, 60 s budget. upstream =
+joba.me/mallard in a browser (its backend + network), fresh scrambles
+(re-measured live 2026-06-12; mallard's backend also has a DB cache, so only
+first-ever scrambles measure its real solve time).
+
+| scramble | mine: first solution | mine: reach upstream len | upstream shows | mine best @60s |
+|----------|---------------------|--------------------------|----------------|----------------|
+| `R U F R'`| 4 HTM @ 26 ms (`R F' U' R'`, bit-identical) | 26 ms | 4, instant | 4 (exhausted @0.45 s) |
+| WCA-1    | 24 HTM @ 26 ms | **20 @ 5.4 s** | 20 @ ~6.4 s | 20 |
+| WCA-2    | 26 HTM @ 26 ms | **19 @ 5.3 s** | 19 @ 6.2 s (fresh) | 19 |
+| WCA-3    | 25 HTM @ 32 ms | **20 @ 0.09 s** | 20 @ ~6.4 s | **19 @ 31.8 s** |
 
 (WCA-1 `R' U' F D2 L2 F R2 U2 R2 B D2 L B2 L' B D' U R2 D L2 U' R' U' F`,
  WCA-2 `D B U B2 R2 U' L2 D2 R2 D' L D2 B D' L2 F' D L' D'`,
  WCA-3 `D R2 F2 U R2 U B2 L2 U' F2 D' L B F2 R D2 B' D L' U2`.)
 
-### Honest read of the data
+Read of the data:
 
-- **Trivial cases are bit-identical** (`R U F R'` → `R F' U' R'` on both).
-- **mallard finds ~1–2 moves shorter** on hard scrambles. Its default ships a deeper,
-  trigger-optimized search (RZP + DR triggers + high quality) — it spends ~5–6 s to
-  shave those moves.
-- **mine is ~30–40× faster** (~0.17 s vs ~6 s) at the fast default, trading those
-  1–2 moves for latency. The server is loopback + nginx-cached (deterministic per
-  scramble+steps), so repeat queries are instant.
-- **Same engine ⇒ same reachable quality.** Cranking `quality` makes the native
-  solver converge to mallard's length: at `quality=100000` it returns **20 HTM for
-  WCA-1** — identical to mallard — but takes ~30 s on this machine (no trigger
-  optimisation, pure breadth). The fast default is the deliberate latency/length
-  trade for an interactive web tool; users who want the last move or two can raise
-  the search depth.
-- Native (server) is faster per unit of search than WASM (browser); mallard still
-  wins wall-clock on length because its config prunes smarter (DR triggers), not
-  because WASM is fast.
+- **Same lengths, faster everywhere.** At every length upstream displays, we
+  get there sooner (5.4 s vs 6.4 s; 5.3 s vs 6.2 s; 0.09 s vs 6.4 s). On
+  WCA-3 the 60 s window even finds **19** where upstream stops at 20.
+- **First solution ~26 ms** — the streaming UI paints a 24-26 HTM solution
+  effectively instantly, then refines in place (upstream needs ~2-3 s for
+  its first paint incl. debounce + network).
+- Trivial scrambles are bit-identical (`R U F R'` → `R F' U' R'`).
 
-> Numbers above are on a fast desktop. The production box has a much weaker CPU,
-> so measured **prod** latency at the default config is ~**1.8–2.4 s** for a hard
-> 20-move scramble (first hit; trivial scrambles are still instant). nginx caches
-> each `(scramble, steps)` for 7 days, so repeats are instant. Prod returns the
-> same totals as dev (22 / 21 / 21 for the three WCA scrambles).
+> Production box has a much weaker CPU than this desktop, so prod reaches
+> the deep levels later within the same 60 s budget (early levels — the
+> "reach 20-22" part — are still sub-second). The server keeps a transcript
+> cache per (scramble, steps, budget): repeats replay instantly. `/solve`
+> (one-shot) additionally sits behind nginx's 7-day cache.
+
+## Feature parity notes
+
+- **`[4a1 4e]` DR subset annotation**: ported verbatim from mallard's
+  backend `add_comments()` (orientation-normalize until the DR axis is UD,
+  HTR-subset table lookup, `DR_SUBSETS[id]`) — present in both endpoints'
+  JSON (`steps[].comment`) and rendered as `// drlr-eoud [4b2 4e]`.
+- **Exclude solutions**: cubelib's `FilterExcluded` compares the
+  *cumulative* alg up to the excluded step (canonicalized) — the UI sends
+  `N1 N2 (I1 I2)` cumulative notation, like mallard's `find_step` full_alg.
+- **htr-breaking** is gated off with a clear error: its DR-finish pruning
+  table is 40320·40320·24/2 ≈ 19.5 G entries (~10 GB), beyond this server.
+  (That same constant is why cubelib HEAD no longer compiles to wasm32 —
+  the coordinate size overflows 32-bit usize.)
+- Leave-slice (FRLS/FINLS) passes through; insertions (VR) not wired, same
+  as the upstream default flow.
 
 ## Tests
 
-`cargo test -p cubelib-server` (also gates `deploy_fmc.yml`):
+`cargo test -p cubelib-server` (gates `deploy_fmc.yml`):
 
-- **`solutions_actually_solve`** — for the trivial + 3 WCA scrambles, the linearized
-  solution applied to the scramble returns a solved cube (independent State check),
-  and its length equals the reported total.
-- **`golden_totals`** — locks the deployed-config bests (`R U F R'`→4 `R F' U' R'`,
-  WCA-1→22, WCA-2→21, WCA-3→21). Update intentionally if the config/engine changes
-  (acts as a regression signal).
-- **`quality_converges_shorter`** — raising `quality` never lengthens and strictly
-  improves WCA-1, and that shorter solution still solves.
-- **`parse_steps_basic`** — the CLI-style steps-string parser (niss/min/max/quality/
-  substeps, invalid-niss rejection).
+- **`mpc_solutions_solve_and_converge`** — multi-path-channel solutions at
+  the deployed config actually solve (independent state check) for the
+  trivial + 3 WCA scrambles, and doubling the step limit never lengthens.
+- **`dr_subset_comment_present`** — every DR step gets a valid subset name
+  from `DR_SUBSETS` (mallard add_comments parity).
+- **`oneshot_golden`** — `/solve` golden: trivial → 4, `R F' U' R'`
+  bit-identical to upstream.
+- **`htr_breaking_gated`** — the ~10 GB-table config is rejected with a
+  clear error.
+- **`parse_steps_basic`** — the CLI-style steps-string parser (incl. the
+  deployed default string round-trip: triggers, relative min/max, niss).
 
-Reproduce the speed table: `cargo run --release -p cubelib --example bench`
-(native, no HTTP) and the mallard column via the browser on joba.me/mallard.
+Reproduce the convergence table: `cargo run --release -p cubelib --example
+bench` (native, no HTTP), and the upstream column by typing the scrambles
+into joba.me/mallard with devtools open.
