@@ -759,7 +759,9 @@ function eventCellContent(
   const [qType, qRes, qLevel] = meta.q.split(':');
   const lv = qLevel ? compactResult(formatWcaResult(Number(qLevel), wcaEid, 'single')) : '';
   const parts = [qType, qRes, lv].filter(Boolean).join(' ');
-  return { text: 'Q', title: (isZh ? '参赛资格要求：' : 'Qualification: ') + parts };
+  return { text: 'Q', title: tr({ zh: '参赛资格要求：', en: 'Qualification: ',
+      zhHant: "參賽資格要求："
+}) + parts };
 }
 
 // 列表视图整场列 metric：实际人数 / 上限(competitorLimit) / 满员率(实际÷上限) / 不显示。
@@ -768,10 +770,16 @@ type CompMetric = 'competitors' | 'limit' | 'ratio' | 'none';
 const COMP_METRICS: CompMetric[] = ['competitors', 'limit', 'ratio', 'none'];
 type SortDir = 'asc' | 'desc' | null;
 
-function compColTitle(m: CompMetric, isZh: boolean): string {
-  if (m === 'competitors') return isZh ? '实际参赛人数' : 'Competitors';
-  if (m === 'limit') return isZh ? '人数上限' : 'Competitor limit';
-  if (m === 'ratio') return isZh ? '满员率(实际/上限)' : 'Fill rate (competitors/limit)';
+function compColTitle(m: CompMetric): string {
+  if (m === 'competitors') return tr({ zh: '实际参赛人数', en: 'Competitors',
+      zhHant: "實際參賽人數"
+});
+  if (m === 'limit') return tr({ zh: '人数上限', en: 'Competitor limit',
+      zhHant: "人數上限"
+});
+  if (m === 'ratio') return tr({ zh: '满员率(实际/上限)', en: 'Fill rate (competitors/limit)',
+      zhHant: "滿員率(實際/上限)"
+});
   return '';
 }
 
@@ -1062,7 +1070,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
               </span>
               <span
                 className={`cl-people-cell${compMetric === 'ratio' || compMetric === 'limit' ? ' cl-limit-cell' : ''}`}
-                title={compMetric === 'none' ? undefined : compColTitle(compMetric, isZh)}
+                title={compMetric === 'none' ? undefined : compColTitle(compMetric)}
               >
                 {(() => {
                   if (compMetric === 'competitors') return c.competitors != null ? c.competitors : '';
@@ -1924,7 +1932,9 @@ function CalendarPageInner() {
                   <button
                     type="button"
                     className={`cl-col-icon cl-col-sort${on ? ' is-active' : ''}`}
-                    title={compColTitle(compMetric, isZh) + (isZh ? '(点击排序)' : ' (click to sort)')}
+                    title={compColTitle(compMetric) + tr({ zh: '(点击排序)', en: ' (click to sort)',
+                        zhHant: "(點選排序)"
+                    })}
                     aria-pressed={on}
                     onClick={() => setCompSortDir((cur) => cur === 'desc' ? 'asc' : cur === 'asc' ? null : 'desc')}
                   >
