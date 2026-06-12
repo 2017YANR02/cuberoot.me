@@ -169,6 +169,7 @@
 ## §3 BLOCKERS / 需用户决策 / MANUAL 交接
 
 - 磁盘历史(决策依据):`solver/tables/` ~34GB;曾有 6.6G 表、剩余一度 5.5G。任何 >1G 新表先 `df -h` + 红灯确认。
+- **✅ 2026-06-12 MANUAL 灌注+发布完成(pocket/pyraminx/skewb,用户在场手动)**:全量解算 — pocket 435,680(dist 4..11 峰 9)、pyraminx 313,373(6..14 峰 11)、skewb 223,853(7..11 峰 9);`stats/scramble/puzzle_distribution.json` 重算(临时排除 sq1 小样本,build 脚本即改即还原未提交)+ commit `7377bd4d6` + scp static.cuberoot.me `/stats/scramble/`,公网 curl 验证三 puzzle 全量、sq1 缺席。**仍 pending:`/scramble/stats` 的 puzzle 难度分布展示 tab 未做**(P2c 只落数据契约 `lib/puzzle-distribution.ts`,无消费 UI)——数据已上线但网页尚无展示入口。sq1 灌注+发布仍待 P5d soft-gate 拍板后做。
 - **⛔ M2a 红灯 — 扩 move 集撞承重墙(2026-06-11,等用户三选一)**:
   - **推导**:8角12棱无中心模型在"件"层面能表达 M(4 棱 cycle+flip)/ r(=R∘M'),朝向参照无矛盾(cstimer 也不在求解器里用 M 切片搜索,M/r 只在记号层)。但整个 move-table / 剪枝 / 搜索 **硬编码 stride=18**(`valid_moves` 用 `i/3==prev/3` 面剪枝、`MASK_ALL=(1<<18)-1`、`INV_MOVE:[u8;18]`、`create_multi_move_table` 列宽 18、坐标乘 18),**36 个源文件 + 34GB 表**全建在 18-stride 上。原生加 M/r(索引≥18)= 重构表生成引擎 + 重建全部表,明确触 §0.3 红线。
   - **三条路**:(A) **伪 roux_s2**(推荐):M2b 的 ⟨M,U,R,r⟩ 搜索不扩引擎,在现有 18-move + 视角共轭里表达 Roux S2 阶段(M=共轭切片组合、r=R+M'),输出用记号规整器译回 M/r 显示。零引擎重构,落在现有 mask+conj+pseudo 能力内。(B) **真重构**:stride 18→24 改表生成引擎 + 重建 34GB 表(磁盘紧 + 波及全舰队,高风险)。(C) **弃 M2**:roux_s2 本是 nice-to-have,本站口径已用 `123x2` f2b 联合最优替代;直接跳到 M3。
