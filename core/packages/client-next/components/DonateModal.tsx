@@ -101,11 +101,13 @@ export default function DonateModal({ lang, onClose }: Props) {
 
         <div className="donate-qr-row">
           <figure className="donate-qr">
-            <img src="/donate/alipay.jpg" alt="Alipay QR" />
+            <img src="/donate/alipay.webp" alt="Alipay QR" width={600} height={899}
+              loading="eager" decoding="async" fetchPriority="high" />
             <figcaption>{t('支付宝', 'Alipay')}</figcaption>
           </figure>
           <figure className="donate-qr">
-            <img src="/donate/wechat.jpg" alt="WeChat Pay QR" />
+            <img src="/donate/wechat.webp" alt="WeChat Pay QR" width={600} height={814}
+              loading="eager" decoding="async" fetchPriority="high" />
             <figcaption>{t('微信支付', 'WeChat Pay')}</figcaption>
           </figure>
         </div>

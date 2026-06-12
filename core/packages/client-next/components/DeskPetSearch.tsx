@@ -7,13 +7,14 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Maximize2, Coffee, Crosshair, EyeOff, Magnet, Heart, Home, Sparkles, Shuffle, Boxes } from 'lucide-react';
+import { Maximize2, Coffee, EyeOff, Heart, Home, Sparkles, Shuffle, Boxes } from 'lucide-react';
 import LandingSearch from '@/components/LandingSearch';
 import HeaderToggles from '@/components/HeaderToggles';
 import WcaAuth from '@/components/WcaAuth';
 import DonateModal from '@/components/DonateModal';
 import DeskPetGallery from '@/components/DeskPetGallery';
 import { SEARCH_CARDS } from '@/lib/landing-sections';
+import { isAdmin } from '@/lib/auth-store';
 
 const CSS = `
 .deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:100010;display:flex;
@@ -46,26 +47,32 @@ const CSS = `
   width:32px;height:32px;border:0;background:transparent;}
 .deskpet-toolbar .wca-auth-btn:hover,.deskpet-toolbar .wca-auth-trigger:hover{
   background:color-mix(in srgb, var(--foreground) 9%, transparent);}
-/* Auth dropdown opens upward — the toolbar sits at the bottom of the screen. */
-.deskpet-toolbar .wca-auth-dropdown{top:auto;bottom:calc(100% + 6px);}
-/* Lang / palette menus open upward too (desktop toolbar is at the bottom).
-   On mobile the toolbar is pinned to the top, so keep the default downward. */
+/* Desktop toolbar sits at the bottom, so its popups (auth dropdown + lang /
+   palette menus) open upward. On mobile the toolbar is pinned to the top, so
+   they must open downward — scoped to desktop here, overridden below. */
 @media (min-width:769px){
+  .deskpet-toolbar .wca-auth-dropdown{top:auto;bottom:calc(100% + 6px);}
   .deskpet-toolbar .lang-menu{top:auto;bottom:calc(100% + 6px);}
 }
 
 /* Mobile: lift the controls into a fixed bar pinned to the top of the screen,
    one horizontally-scrollable row; the search box stays at the bottom. */
 @media (max-width:768px){
+  /* Wrap instead of horizontal scroll: overflow-x:auto would force overflow-y
+     to compute as auto too, clipping the 45px toolbar over any downward popup
+     menu (lang / appearance / auth). Wrapping keeps overflow visible so the
+     menus show. */
   .deskpet-toolbar{position:fixed;top:0;left:0;right:0;margin:0;
     padding:6px 10px;padding-top:max(6px,var(--sat,0px));
-    flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;gap:2px;
+    flex-wrap:wrap;overflow:visible;justify-content:center;gap:2px;
     background:color-mix(in srgb, var(--background) 82%, transparent);
     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    border-bottom:1px solid var(--border-default);
-    scrollbar-width:none;-ms-overflow-style:none;}
+    border-bottom:1px solid var(--border-default);}
   .deskpet-toolbar>*{flex:0 0 auto;}
-  .deskpet-toolbar::-webkit-scrollbar{display:none;}
+  /* Mobile toolbar is at the top, so popups open downward and left-aligned to
+     their trigger so they don't run off the left edge. */
+  .deskpet-toolbar .lang-menu{left:0;right:auto;top:calc(100% + 4px);bottom:auto;}
+  .deskpet-toolbar .wca-auth-dropdown{top:calc(100% + 4px);bottom:auto;}
   /* Box hugs the keyboard: visualViewport shrinks the backdrop, keep only a
      small breathing gap at the bottom. */
   .deskpet-search-backdrop{padding-bottom:6px;}
@@ -84,8 +91,6 @@ export default function DeskPetSearch({
   onCycleChar,
   onCycleSize,
   onToggleRest,
-  onResetPos,
-  onCling,
   onHide,
   randomMode,
   onToggleRandom,
@@ -101,8 +106,6 @@ export default function DeskPetSearch({
   onCycleChar: () => void;
   onCycleSize: () => void;
   onToggleRest: () => void;
-  onResetPos: () => void;
-  onCling: () => void;
   onHide: () => void;
   randomMode: boolean;
   onToggleRandom: () => void;
@@ -144,6 +147,15 @@ export default function DeskPetSearch({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Prefetch the donate QRs (small WebP) once the search panel is open, so the
+  // heart button shows them instantly instead of fetching on click.
+  useEffect(() => {
+    ['/donate/alipay.webp', '/donate/wechat.webp'].forEach((href) => {
+      const img = new Image();
+      img.src = href;
+    });
+  }, []);
 
   // Mobile keyboard: position:fixed tracks the layout viewport, which doesn't
   // shrink when the on-screen keyboard opens — so the bottom-anchored box ends
@@ -214,13 +226,15 @@ export default function DeskPetSearch({
           title={t('动画图鉴', 'Animations')}>
           <Sparkles size={16} />
         </button>
-        <button type="button" className="icon-only" onClick={() => {
-          window.dispatchEvent(new CustomEvent('clawd:perform'));
-          onClose();
-        }}
-          title={t('PLL 表演', 'PLL Show')}>
-          <Boxes size={16} />
-        </button>
+        {isAdmin() && (
+          <button type="button" className="icon-only" onClick={() => {
+            window.dispatchEvent(new CustomEvent('clawd:perform'));
+            onClose();
+          }}
+            title={t('PLL 表演', 'PLL Show')}>
+            <Boxes size={16} />
+          </button>
+        )}
         <button type="button" className={`icon-only${randomMode ? ' is-active' : ''}`} onClick={onToggleRandom}
           title={randomMode ? t('动画:随机', 'Animation: Random') : t('动画:默认', 'Animation: Default')}>
           <Shuffle size={16} />
@@ -228,14 +242,6 @@ export default function DeskPetSearch({
         <button type="button" className="icon-only" onClick={onToggleRest}
           title={resting ? t('叫醒它', 'Wake up') : t('休息一下', 'Take a nap')}>
           <Coffee size={16} />
-        </button>
-        <button type="button" className="icon-only" onClick={onCling}
-          title={t('贴边', 'Cling')}>
-          <Magnet size={16} />
-        </button>
-        <button type="button" className="icon-only" onClick={onResetPos}
-          title={t('复位', 'Reset')}>
-          <Crosshair size={16} />
         </button>
         <button type="button" className="icon-only" onClick={onHide}
           title={t('隐藏,刷新后恢复', 'Hide, restored on reload')}>
