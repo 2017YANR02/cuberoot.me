@@ -12,9 +12,8 @@
 //! ported verbatim from mallard's backend add_comments().
 
 use std::collections::HashMap;
-use std::io::Read;
+use std::io::Write;
 use std::str::FromStr;
-use std::sync::mpsc::{Receiver as MpscReceiver, SyncSender, sync_channel};
 use std::sync::{Arc, LazyLock, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -199,6 +198,71 @@ fn handle_solve(query: &str, tables: &Mutex<PruningTables333>) -> String {
 }
 
 // ---------------- streaming /solve_stream (mallard parity) ----------------
+//
+// tiny_http's Response pipeline buffers the whole chunked body until EOF
+// (measured: every line arrived only when the budget expired), so we take the
+// raw connection via Request::into_writer() and hand-write an HTTP/1.1
+// chunked response, flushing after every NDJSON line. A failed flush = client
+// disconnected = stop solving immediately (frees the solve gate).
+
+/// Hand-rolled chunked response writer; flush-per-line is the whole point.
+struct StreamSink {
+    w: Box<dyn Write + Send + 'static>,
+    transcript: String,
+    alive: bool,
+}
+
+impl StreamSink {
+    fn open(request: tiny_http::Request) -> Option<StreamSink> {
+        let mut w = request.into_writer();
+        let head = "HTTP/1.1 200 OK\r\n\
+            Content-Type: application/x-ndjson\r\n\
+            Access-Control-Allow-Origin: *\r\n\
+            X-Accel-Buffering: no\r\n\
+            Cache-Control: no-store\r\n\
+            Transfer-Encoding: chunked\r\n\
+            Connection: close\r\n\r\n";
+        if w.write_all(head.as_bytes()).and_then(|_| w.flush()).is_err() {
+            return None;
+        }
+        Some(StreamSink { w, transcript: String::new(), alive: true })
+    }
+
+    fn write_chunk(&mut self, data: &[u8]) -> bool {
+        if !self.alive {
+            return false;
+        }
+        let r = write!(self.w, "{:x}\r\n", data.len())
+            .and_then(|_| self.w.write_all(data))
+            .and_then(|_| self.w.write_all(b"\r\n"))
+            .and_then(|_| self.w.flush());
+        if r.is_err() {
+            self.alive = false;
+        }
+        self.alive
+    }
+
+    /// One NDJSON line: recorded in the transcript (for the replay cache) and
+    /// flushed to the client.
+    fn line(&mut self, line: &str) -> bool {
+        self.transcript.push_str(line);
+        self.transcript.push('\n');
+        self.write_chunk(format!("{line}\n").as_bytes())
+    }
+
+    /// Blank keepalive (not part of the transcript). Doubles as disconnect
+    /// detection: a dead socket fails the flush within ~1-2 ticks.
+    fn keepalive(&mut self) -> bool {
+        self.write_chunk(b"\n")
+    }
+
+    fn finish(mut self) -> String {
+        if self.alive {
+            let _ = self.w.write_all(b"0\r\n\r\n").and_then(|_| self.w.flush());
+        }
+        self.transcript
+    }
+}
 
 fn handle_stream(request: tiny_http::Request, query: &str) {
     let p = parse_query(query);
@@ -207,67 +271,64 @@ fn handle_stream(request: tiny_http::Request, query: &str) {
         respond_stream_string(request, hit);
         return;
     }
-
-    let (tx, rx) = sync_channel::<Vec<u8>>(64);
-    let cancel = Arc::new(CancelToken::default());
-    let solver_cancel = cancel.clone();
-    let solver = thread::spawn(move || run_stream(p, tx, solver_cancel, cache_key));
-
-    let reader = ChannelReader { rx, buf: Vec::new(), pos: 0 };
-    let headers = vec![
-        Header::from_bytes(&b"Content-Type"[..], &b"application/x-ndjson"[..]).unwrap(),
-        Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]).unwrap(),
-        Header::from_bytes(&b"X-Accel-Buffering"[..], &b"no"[..]).unwrap(),
-        Header::from_bytes(&b"Cache-Control"[..], &b"no-store"[..]).unwrap(),
-    ];
-    let resp = Response::new(200.into(), headers, reader, None, None);
-    let _ = request.respond(resp); // returns early on client disconnect
-    cancel.cancel(); // either way, stop the solver
-    let _ = solver.join();
+    let Some(mut sink) = StreamSink::open(request) else { return };
+    let found = run_stream(&p, &mut sink);
+    let complete = sink.alive;
+    let transcript = sink.finish();
+    // Cache only fully-delivered transcripts (key includes the budget, so
+    // partial convergence under a small budget never poisons a larger one).
+    if found && complete && transcript.len() < 256 * 1024 {
+        let mut cache = STREAM_CACHE.lock().unwrap();
+        if cache.len() >= 300 {
+            cache.clear();
+        }
+        cache.insert(cache_key, transcript);
+    }
 }
 
-fn run_stream(p: Params, tx: SyncSender<Vec<u8>>, cancel: Arc<CancelToken>, cache_key: String) {
+/// Returns whether any solution was found.
+fn run_stream(p: &Params, sink: &mut StreamSink) -> bool {
     let started = Instant::now();
-    let mut transcript = String::new();
-    let emit = |line: String, transcript: &mut String| -> bool {
-        transcript.push_str(&line);
-        transcript.push('\n');
-        tx.send(format!("{line}\n").into_bytes()).is_ok()
-    };
 
     let alg = match Algorithm::from_str(p.scramble.trim()) {
         Ok(a) => a,
         Err(_) => {
-            let _ = emit(r#"{"error":"invalid scramble","done":true}"#.to_string(), &mut transcript);
-            return;
+            sink.line(r#"{"error":"invalid scramble","done":true}"#);
+            return false;
         }
     };
     let cube: Cube333 = alg.into();
     let configs = match parse_steps(&p.steps).and_then(|c| check_supported(&c).map(|_| c)) {
         Ok(c) => c,
         Err(e) => {
-            let _ = emit(
-                format!("{{\"error\":\"{}\",\"done\":true}}", json_escape(&e)),
-                &mut transcript,
-            );
-            return;
+            sink.line(&format!("{{\"error\":\"{}\",\"done\":true}}", json_escape(&e)));
+            return false;
         }
     };
 
-    // Single-flight: one heavy solve at a time on the small box. Keep the
-    // client alive with blank NDJSON lines while we wait for the slot.
+    // Single-flight: one heavy solve at a time on the small box. Tell the
+    // client it's queued (UI progress) and keep the socket alive.
+    let mut told_queued = false;
     let _gate = loop {
         match SOLVE_GATE.try_lock() {
             Ok(g) => break g,
             Err(_) => {
-                if cancel.is_cancelled() || started.elapsed() >= p.budget {
-                    let _ = emit(r#"{"done":true,"queue_timeout":true}"#.to_string(), &mut transcript);
-                    return;
+                if started.elapsed() >= p.budget {
+                    sink.line(r#"{"done":true,"queue_timeout":true}"#);
+                    return false;
                 }
-                if tx.send(b"\n".to_vec()).is_err() {
-                    return;
+                if !told_queued {
+                    told_queued = true;
+                    if !sink.line(&format!(
+                        "{{\"queued\":true,\"elapsed_ms\":{}}}",
+                        started.elapsed().as_millis()
+                    )) {
+                        return false;
+                    }
+                } else if !sink.keepalive() {
+                    return false;
                 }
-                thread::sleep(Duration::from_millis(200));
+                thread::sleep(Duration::from_millis(500));
             }
         }
     };
@@ -277,24 +338,29 @@ fn run_stream(p: Params, tx: SyncSender<Vec<u8>>, cancel: Arc<CancelToken>, cach
     let mut last_keepalive = Instant::now();
     'levels: for level in LEVELS {
         let quality = 1usize << level;
-        if cancel.is_cancelled() || started.elapsed() >= p.budget {
+        if started.elapsed() >= p.budget {
             completed = false;
             break;
+        }
+        // Per-level progress marker so the UI can show how deep the search is.
+        if !sink.line(&format!(
+            "{{\"progress\":{{\"limit\":{},\"elapsed_ms\":{}}}}}",
+            quality,
+            started.elapsed().as_millis()
+        )) {
+            return best != usize::MAX;
         }
         let mut steps = match cubelib::solver_new::build_steps(configs.clone()) {
             Ok(s) => s,
             Err(e) => {
-                let _ = emit(
-                    format!("{{\"error\":\"{}\",\"done\":true}}", json_escape(&e)),
-                    &mut transcript,
-                );
-                return;
+                sink.line(&format!("{{\"error\":\"{}\",\"done\":true}}", json_escape(&e)));
+                return best != usize::MAX;
             }
         };
         steps.apply_step_limit(quality);
         let mut worker = steps.into_worker(cube.clone());
         loop {
-            if cancel.is_cancelled() || started.elapsed() >= p.budget {
+            if started.elapsed() >= p.budget {
                 completed = false;
                 break 'levels;
             }
@@ -309,21 +375,18 @@ fn run_stream(p: Params, tx: SyncSender<Vec<u8>>, cancel: Arc<CancelToken>, cach
                             quality,
                             started.elapsed().as_millis(),
                         );
-                        if !emit(line, &mut transcript) {
-                            return;
+                        if !sink.line(&line) {
+                            return true;
                         }
                     }
                     break; // first solution of this level -> next level
                 }
                 Err(TryRecvError::Disconnected) => break, // level exhausted
                 Err(_) => {
-                    // 1s keepalives double as fast client-disconnect detection:
-                    // a dead socket fails the write, respond() returns, and the
-                    // cancel token frees the solve gate within ~2s.
                     if last_keepalive.elapsed() > Duration::from_secs(1) {
                         last_keepalive = Instant::now();
-                        if tx.send(b"\n".to_vec()).is_err() {
-                            return;
+                        if !sink.keepalive() {
+                            return best != usize::MAX;
                         }
                     }
                     thread::sleep(Duration::from_millis(25));
@@ -332,23 +395,12 @@ fn run_stream(p: Params, tx: SyncSender<Vec<u8>>, cancel: Arc<CancelToken>, cach
         }
     }
 
-    let _ = emit(
-        format!(
-            "{{\"done\":true,\"elapsed_ms\":{},\"exhausted\":{}}}",
-            started.elapsed().as_millis(),
-            completed,
-        ),
-        &mut transcript,
-    );
-    // Cache the finished transcript (key includes the budget, so partial
-    // convergence under a small budget never poisons a larger one).
-    if best != usize::MAX && transcript.len() < 256 * 1024 {
-        let mut cache = STREAM_CACHE.lock().unwrap();
-        if cache.len() >= 300 {
-            cache.clear();
-        }
-        cache.insert(cache_key, transcript);
-    }
+    sink.line(&format!(
+        "{{\"done\":true,\"elapsed_ms\":{},\"exhausted\":{}}}",
+        started.elapsed().as_millis(),
+        completed,
+    ));
+    best != usize::MAX
 }
 
 fn respond_stream_string(request: tiny_http::Request, body: String) {
@@ -358,30 +410,6 @@ fn respond_stream_string(request: tiny_http::Request, body: String) {
     );
     resp.add_header(Header::from_bytes(&b"Access-Control-Allow-Origin"[..], &b"*"[..]).unwrap());
     let _ = request.respond(resp);
-}
-
-struct ChannelReader {
-    rx: MpscReceiver<Vec<u8>>,
-    buf: Vec<u8>,
-    pos: usize,
-}
-
-impl Read for ChannelReader {
-    fn read(&mut self, out: &mut [u8]) -> std::io::Result<usize> {
-        if self.pos >= self.buf.len() {
-            match self.rx.recv() {
-                Ok(chunk) => {
-                    self.buf = chunk;
-                    self.pos = 0;
-                }
-                Err(_) => return Ok(0), // sender dropped -> EOF
-            }
-        }
-        let n = (self.buf.len() - self.pos).min(out.len());
-        out[..n].copy_from_slice(&self.buf[self.pos..self.pos + n]);
-        self.pos += n;
-        Ok(n)
-    }
 }
 
 // ---------------- shared pieces ----------------
