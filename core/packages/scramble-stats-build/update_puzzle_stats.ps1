@@ -41,6 +41,7 @@ $PUZZLE = @{
   pocket   = @{ event = '222';   exe = 'pocket_analyzer.exe' }
   pyraminx = @{ event = 'pyram'; exe = 'pyraminx_analyzer.exe' }
   skewb    = @{ event = 'skewb'; exe = 'skewb_analyzer.exe' }
+  sq1      = @{ event = 'sq1';   exe = 'sq1_analyzer.exe' }
 }
 
 if (-not $Puzzles -or $Puzzles.Count -eq 0) { $Puzzles = @($PUZZLE.Keys | Sort-Object) }
