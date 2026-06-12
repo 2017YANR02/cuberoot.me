@@ -11,6 +11,7 @@ import { Palette, Check } from 'lucide-react';
 import { applyPalette, readPalette } from '@/lib/theme';
 import { PALETTES, type PaletteId } from '@/lib/palettes';
 import AppLink from '@/components/AppLink';
+import { tr } from '@/i18n/tr';
 
 const CLASSIC_SWATCH: [string, string, string] = ['#fafafa', '#c15f3c', '#171717'];
 
@@ -29,7 +30,14 @@ export default function PaletteToggle({ className }: { className?: string }) {
   const lang = i18n.language || 'en';
   const isHant = lang.startsWith('zh-Hant');
   const isZh = lang.startsWith('zh');
-  const label = { classic: isHant ? '經典' : isZh ? '经典' : 'Classic', title: isHant ? '配色主題' : isZh ? '配色主题' : 'Color theme' };
+  const label = {
+    classic: tr({ zh: '经典', en: 'Classic',
+        zhHant: "經典"
+    }),
+    title: tr({ zh: '配色主题', en: 'Color theme',
+        zhHant: "配色主題"
+    }),
+  };
   const nameOf = (p: (typeof PALETTES)[number]) => (isHant ? p.zhHant : isZh ? p.zh : p.en);
   const [mounted, setMounted] = useState(false);
   const [current, setCurrent] = useState<PaletteId | null>(null);
@@ -125,7 +133,9 @@ export default function PaletteToggle({ className }: { className?: string }) {
             className="palette-menu-more"
             onClick={() => setOpen(false)}
           >
-            {isHant ? '比較全部 →' : isZh ? '比较全部 →' : 'Compare all →'}
+            {tr({ zh: '比较全部 →', en: 'Compare all →',
+                zhHant: "比較全部 →"
+            })}
           </AppLink>
         </div>
       )}

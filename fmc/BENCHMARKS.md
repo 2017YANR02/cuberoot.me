@@ -54,11 +54,13 @@ Read of the data:
   its first paint incl. debounce + network).
 - Trivial scrambles are bit-identical (`R U F R'` → `R F' U' R'`).
 
-> Production box has a much weaker CPU than this desktop, so prod reaches
-> the deep levels later within the same 60 s budget (early levels — the
-> "reach 20-22" part — are still sub-second). The server keeps a transcript
-> cache per (scramble, steps, budget): repeats replay instantly. `/solve`
-> (one-shot) additionally sits behind nginx's 7-day cache.
+> Production box has a much weaker CPU than this desktop. Measured on prod
+> (2026-06-12): WCA-3 first solution 114 ms, **reaches 20 (= upstream) at
+> 0.93 s vs upstream's 6.4 s**; WCA-2 reaches 20 at ~10-13 s, and the final
+> 19 needs a 120 s budget (106 s) — that last move is a hardware gap, not an
+> engine gap. The server keeps a transcript cache per (scramble, steps,
+> budget): repeats replay instantly. `/solve` (one-shot) additionally sits
+> behind nginx's 7-day cache.
 
 ## Feature parity notes
 
