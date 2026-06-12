@@ -58,6 +58,8 @@ interface StreamMsg {
   done?: boolean;
   exhausted?: boolean;
   error?: string;
+  progress?: { limit: number; elapsed_ms: number };
+  queued?: boolean;
 }
 
 const AXES: Axis[] = ['ud', 'fb', 'lr'];
@@ -199,17 +201,23 @@ export default function ChainExplorer({ scramble, lang }: Props) {
   const [excluded, setExcluded] = useState<Record<StageKey, string[]>>({
     eo: [], rzp: [], dr: [], htr: [], fr: [], fin: [],
   });
-  const [sol, setSol] = useState<FmcSolution | null>(null);
+  // 双轨结果:listSols = 秒出的多解(一次性 /solve,quality 低);bestSol = 深化流
+  // (/solve_stream)逐步收敛的最优解。
+  const [listSols, setListSols] = useState<FmcSolution[] | null>(null);
+  const [bestSol, setBestSol] = useState<FmcSolution | null>(null);
   const [trail, setTrail] = useState<{ total: number; ms: number }[]>([]);
-  const [ms, setMs] = useState<number | null>(null);
-  const [computing, setComputing] = useState(false);
+  const [progress, setProgress] = useState<{ queued?: boolean; limit?: number; elapsedMs: number } | null>(null);
+  const [doneInfo, setDoneInfo] = useState<{ ms: number; exhausted: boolean } | null>(null);
+  const [listLoading, setListLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const [errMsg, setErrMsg] = useState('');
-  const [sel, setSel] = useState<number | null | 'full'>(null);
+  const [sel, setSel] = useState<{ src: 'best' | number; step: number | 'full' } | null>(null);
 
   const playerRef = useRef<{ jumpToStart?: (o?: { flash?: boolean }) => void; play?: () => void } | null>(null);
   const reqRef = useRef(0);
   const ranRef = useRef(false);
-  const abortRef = useRef<AbortController | null>(null);
+  const listAbortRef = useRef<AbortController | null>(null);
+  const streamAbortRef = useRef<AbortController | null>(null);
 
   const normScramble = useMemo(() => normalizeScramble(scramble) ?? scramble, [scramble]);
   const scrambleRef = useRef(normScramble);
@@ -223,13 +231,15 @@ export default function ChainExplorer({ scramble, lang }: Props) {
 
   /** Build the CLI-style steps string. 与部署版 mallard 的 SolverRequest 逐字段
    *  对齐:relative min/max 显式下发(absolute 是累计封顶,会把深解剪掉 —— 之前
-   *  卡 20 步的根因)、quality=10000、substeps 显式、triggers 启用时带 RZP。 */
-  const buildSteps = useCallback((): string => {
+   *  卡 20 步的根因)、substeps 显式、triggers 启用时带 RZP。
+   *  quality:快速多解走 1000(秒出),深化流走 10000(= mallard,实际被服务端
+   *  step-limit 倍增覆盖)。 */
+  const buildSteps = useCallback((quality: number): string => {
     const c = cfgRef.current;
     const st = c.stages;
     const part = (key: ConfStage, extra: string[] = []) => {
       const s = st[key];
-      const parts = [`min=${s.min}`, `max=${s.max}`, `niss=${nissTok(s)}`, 'quality=10000'];
+      const parts = [`min=${s.min}`, `max=${s.max}`, `niss=${nissTok(s)}`, `quality=${quality}`];
       if (key !== 'rzp') parts.push(`substeps=${s.axes.join(',')}`);
       parts.push(...extra);
       const exl = c.excluded[key].filter(Boolean);
@@ -252,39 +262,61 @@ export default function ChainExplorer({ scramble, lang }: Props) {
     return chain.join(' > ');
   }, []);
 
-  const compute = useCallback(async () => {
-    const scr = scrambleRef.current.trim();
-    if (!scr) return;
-    abortRef.current?.abort();
+  /** dev 代理在「上一条流被 abort 后的短窗口」复用半死连接报 500,带退避重试。 */
+  const fetchRetry = useCallback(async (url: string, signal: AbortSignal, my: number) => {
+    let res = await fetch(url, { signal });
+    for (const delay of [600, 1300]) {
+      if (res.ok) break;
+      await new Promise((r) => setTimeout(r, delay));
+      if (reqRef.current !== my) return null;
+      res = await fetch(url, { signal });
+    }
+    return res;
+  }, []);
+
+  /** Phase 1:一次性多解(quality=1000,秒出;nginx 7d 缓存,重复瞬时)。 */
+  const fetchList = useCallback(async (scr: string, my: number) => {
+    listAbortRef.current?.abort();
     const ctrl = new AbortController();
-    abortRef.current = ctrl;
-    const my = ++reqRef.current;
-    ranRef.current = true;
-    setComputing(true);
-    setErrMsg('');
-    setTrail([]);
-    setMs(null);
-    setSel(null);
+    listAbortRef.current = ctrl;
+    setListLoading(true);
+    try {
+      const url = apiUrl(
+        `/v1/fmc/solve?scramble=${encodeURIComponent(scr)}&steps=${encodeURIComponent(buildSteps(1000))}&count=10`,
+      );
+      const res = await fetchRetry(url, ctrl.signal, my);
+      if (!res || reqRef.current !== my) return;
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { solutions?: FmcSolution[]; error?: string };
+      if (reqRef.current !== my) return;
+      if (data.error) throw new Error(data.error);
+      setListSols(data.solutions ?? []);
+    } catch (e) {
+      if (!ctrl.signal.aborted && reqRef.current === my) {
+        setErrMsg(e instanceof Error ? e.message : String(e));
+      }
+    } finally {
+      if (reqRef.current === my) setListLoading(false);
+    }
+  }, [buildSteps, fetchRetry]);
+
+  /** Phase 2:深化流(mallard 同款 step-limit 倍增),逐步更新最优解 + 进度。 */
+  const runStream = useCallback(async (scr: string, my: number) => {
+    streamAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    streamAbortRef.current = ctrl;
+    setStreaming(true);
     const t0 = performance.now();
     try {
       const url = apiUrl(
-        `/v1/fmc/solve_stream?scramble=${encodeURIComponent(scr)}&steps=${encodeURIComponent(buildSteps())}&budget=${BUDGET_MS}`,
+        `/v1/fmc/solve_stream?scramble=${encodeURIComponent(scr)}&steps=${encodeURIComponent(buildSteps(10000))}&budget=${BUDGET_MS}`,
       );
-      // 自动重试:上一条流被 abort 后的短窗口内,代理层会复用半死连接报 500
-      // (实测 abort 后立即重发必 500,+800ms 即恢复)。
-      let res = await fetch(url, { signal: ctrl.signal });
-      for (const delay of [600, 1300]) {
-        if (res.ok && res.body) break;
-        await new Promise((r) => setTimeout(r, delay));
-        if (reqRef.current !== my) return;
-        res = await fetch(url, { signal: ctrl.signal });
-      }
-      if (reqRef.current !== my) return;
+      const res = await fetchRetry(url, ctrl.signal, my);
+      if (!res || reqRef.current !== my) return;
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = '';
-      let got = false;
       for (;;) {
         const { done, value } = await reader.read();
         if (reqRef.current !== my) { void reader.cancel().catch(() => {}); return; }
@@ -298,23 +330,47 @@ export default function ChainExplorer({ scramble, lang }: Props) {
           let msg: StreamMsg;
           try { msg = JSON.parse(line) as StreamMsg; } catch { continue; }
           if (msg.error) setErrMsg(msg.error);
+          if (msg.queued) setProgress({ queued: true, elapsedMs: msg.elapsed_ms ?? 0 });
+          if (msg.progress) setProgress({ limit: msg.progress.limit, elapsedMs: msg.progress.elapsed_ms });
           if (msg.solution) {
-            got = true;
-            setSol(msg.solution);
+            setBestSol(msg.solution);
             setTrail((tr) => [...tr, { total: msg.solution!.total, ms: msg.elapsed_ms ?? 0 }]);
           }
-          if (msg.done) setMs(Math.round(performance.now() - t0));
+          if (msg.done) {
+            setDoneInfo({ ms: Math.round(performance.now() - t0), exhausted: !!msg.exhausted });
+            setProgress(null);
+          }
         }
       }
-      if (!got && reqRef.current === my) setSol(null);
     } catch (e) {
       if (!ctrl.signal.aborted && reqRef.current === my) {
         setErrMsg(e instanceof Error ? e.message : String(e));
       }
     } finally {
-      if (reqRef.current === my) setComputing(false);
+      if (reqRef.current === my) { setStreaming(false); setProgress(null); }
     }
-  }, [buildSteps]);
+  }, [buildSteps, fetchRetry]);
+
+  const compute = useCallback(() => {
+    const scr = scrambleRef.current.trim();
+    if (!scr) return;
+    const my = ++reqRef.current;
+    ranRef.current = true;
+    setErrMsg('');
+    setTrail([]);
+    setDoneInfo(null);
+    setProgress(null);
+    setSel(null);
+    void fetchList(scr, my);
+    void runStream(scr, my);
+  }, [fetchList, runStream]);
+
+  /** 停止深化:只断流,保留已出的解。 */
+  const stopStream = useCallback(() => {
+    streamAbortRef.current?.abort();
+    setStreaming(false);
+    setProgress(null);
+  }, []);
 
   // 打乱 / 配置变化 → 防抖自动重算(仅在已算过之后)。
   const firstAuto = useRef(true);
@@ -333,7 +389,10 @@ export default function ChainExplorer({ scramble, lang }: Props) {
   }, [excluded, compute]);
 
   // 卸载时断流。
-  useEffect(() => () => abortRef.current?.abort(), []);
+  useEffect(() => () => {
+    listAbortRef.current?.abort();
+    streamAbortRef.current?.abort();
+  }, []);
 
   const setStage = useCallback((k: ConfStage, patch: Partial<StageUI>) => {
     setStages((prev) => ({ ...prev, [k]: { ...prev[k], ...patch } }));
@@ -392,8 +451,8 @@ export default function ChainExplorer({ scramble, lang }: Props) {
     setExcluded((prev) => ({ ...prev, [k]: prev[k].filter((_, j) => j !== i) }));
   }, []);
 
-  const select = useCallback((step: number | 'full', play = false) => {
-    setSel(step);
+  const select = useCallback((src: 'best' | number, step: number | 'full', play = false) => {
+    setSel({ src, step });
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const p = playerRef.current;
       try { p?.jumpToStart?.({ flash: false }); } catch { /* */ }
@@ -402,12 +461,42 @@ export default function ChainExplorer({ scramble, lang }: Props) {
   }, []);
 
   const selAlg = useMemo(() => {
-    if (sel == null || !sol) return null;
-    return sel === 'full' ? sol.solution : linearizePrefix(sol.steps, sel);
-  }, [sel, sol]);
+    if (sel == null) return null;
+    const s = sel.src === 'best' ? bestSol : listSols?.[sel.src] ?? null;
+    if (!s) return null;
+    return sel.step === 'full' ? s.solution : linearizePrefix(s.steps, sel.step);
+  }, [sel, bestSol, listSols]);
 
-  const busy = computing;
+  const busy = listLoading;
   const useTriggers = enforceTriggers && triggers.length > 0;
+
+  const renderSteps = (s: FmcSolution, src: 'best' | number) => (
+    <div className="chx-steps">
+      {s.steps.map((st, j) => (
+        <div
+          key={j}
+          className={`chx-step${sel?.src === src && sel?.step === j ? ' is-active' : ''}`}
+          onClick={() => select(src, j)}
+        >
+          <code className="chx-step-mv">{stepMoves(st) || '—'}</code>
+          <span className="chx-step-var">{`// ${st.variant}${st.comment ? ` [${st.comment}]` : ''}`}</span>
+          <span className="chx-step-cnt">
+            {st.cancelled ? `(${st.len}-${st.cancelled}/${st.cum})` : `(${st.len}/${st.cum})`}
+          </span>
+          {stepMoves(st) && (
+            <button
+              className="chx-step-ban"
+              title={t('排除该步解并重算', 'Exclude this step solution and re-solve')}
+              aria-label={t('排除该步', 'Exclude this step')}
+              onClick={(e) => { e.stopPropagation(); excludeStep(s.steps, j); }}
+            >
+              <Ban size={11} />
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 
   const axisChips = (key: ConfStage, disabled: boolean) => {
     const s = stages[key];
@@ -618,16 +707,29 @@ export default function ChainExplorer({ scramble, lang }: Props) {
       </div>
 
       <div className="chx-run">
-        <button className="chx-compute" onClick={() => void compute()} disabled={busy}>
+        <button className="chx-compute" onClick={compute} disabled={busy}>
           {busy ? <Loader2 size={14} className="chx-spin" /> : null}
           {ranRef.current ? t('重新计算', 'Recompute') : t('计算', 'Compute')}
         </button>
-        {computing && (
+        {streaming && (
           <span className="chx-status">
-            {sol ? t(`已 ${sol.total} 步,继续深化…`, `${sol.total} HTM so far, deepening…`) : t('求解中…', 'Solving…')}
+            {progress?.queued
+              ? t('排队中…', 'Queued…')
+              : progress?.limit
+                ? t(`深化中 · 宽度 ${progress.limit} · ${fmtMs(progress.elapsedMs)}`, `Deepening · width ${progress.limit} · ${fmtMs(progress.elapsedMs)}`)
+                : t('深化中…', 'Deepening…')}
           </span>
         )}
-        {!busy && ms != null && <span className="chx-status">{fmtMs(ms)}</span>}
+        {streaming && (
+          <button className="chx-stop" onClick={stopStream}>{t('停止深化', 'Stop')}</button>
+        )}
+        {!streaming && doneInfo && (
+          <span className="chx-status">
+            {doneInfo.exhausted
+              ? t(`已搜尽 (${fmtMs(doneInfo.ms)})`, `Search exhausted (${fmtMs(doneInfo.ms)})`)
+              : t(`深化完成 (${fmtMs(doneInfo.ms)})`, `Deepening done (${fmtMs(doneInfo.ms)})`)}
+          </span>
+        )}
       </div>
 
       {errMsg && <div className="chx-err">{t('求解失败', 'Solve failed')}: {errMsg}</div>}
@@ -635,71 +737,79 @@ export default function ChainExplorer({ scramble, lang }: Props) {
       {/* ── Solution ── */}
       <div className="chx-block">
         <h3 className="chx-h">{t('解', 'Solution')}</h3>
-        {!sol && !busy && !errMsg && (
+        {!bestSol && !listSols && !busy && !streaming && !errMsg && (
           <div className="chx-empty">
-            {ms != null
+            {ranRef.current
               ? t('未找到满足当前条件的解,放宽步数范围或移除排除项。', 'No solution matches — widen a length range or remove an exclusion.')
               : t('点「计算」生成分步还原链。', 'Click Compute to generate the step-by-step chain.')}
           </div>
         )}
-        {sol && (
+        {(bestSol || (listSols && listSols.length > 0)) && (
           <div className="chx-result">
             <ol className="chx-chains">
-              <li className="chx-chain is-active">
-                <div
-                  className="chx-chain-head"
-                  onClick={() => select('full')}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select('full'); } }}
-                >
-                  <button
-                    className="chx-chain-play"
-                    aria-label={t('播放', 'Play')}
-                    onClick={(e) => { e.stopPropagation(); select('full', true); }}
+              {bestSol && (
+                <li className={`chx-chain chx-chain-best${sel?.src === 'best' ? ' is-active' : ''}`}>
+                  <div
+                    className="chx-chain-head"
+                    onClick={() => select('best', 'full')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select('best', 'full'); } }}
                   >
-                    <Play size={11} />
-                  </button>
-                  <span className="chx-chain-total">{sol.total} HTM</span>
-                  {trail.length > 1 && (
-                    <span className="chx-trail">
-                      {trail.map((p, i) => (
-                        <span key={i}>
-                          {i > 0 && ' → '}
-                          {p.total}
-                          <small>@{fmtMs(p.ms)}</small>
-                        </span>
-                      ))}
-                    </span>
-                  )}
-                </div>
-                <div className="chx-steps">
-                  {sol.steps.map((s, j) => (
-                    <div
-                      key={j}
-                      className={`chx-step${sel === j ? ' is-active' : ''}`}
-                      onClick={() => select(j)}
+                    <button
+                      className="chx-chain-play"
+                      aria-label={t('播放', 'Play')}
+                      onClick={(e) => { e.stopPropagation(); select('best', 'full', true); }}
                     >
-                      <code className="chx-step-mv">{stepMoves(s) || '—'}</code>
-                      <span className="chx-step-var">{`// ${s.variant}${s.comment ? ` [${s.comment}]` : ''}`}</span>
-                      <span className="chx-step-cnt">
-                        {s.cancelled ? `(${s.len}-${s.cancelled}/${s.cum})` : `(${s.len}/${s.cum})`}
+                      <Play size={11} />
+                    </button>
+                    <span className="chx-chain-n">{t('最优', 'Best')}</span>
+                    <span className="chx-chain-total">{bestSol.total} HTM</span>
+                    {streaming && <Loader2 size={12} className="chx-spin" />}
+                    {trail.length > 1 && (
+                      <span className="chx-trail">
+                        {trail.map((p, i) => (
+                          <span key={i}>
+                            {i > 0 && ' → '}
+                            {p.total}
+                            <small>@{fmtMs(p.ms)}</small>
+                          </span>
+                        ))}
                       </span>
-                      {stepMoves(s) && (
-                        <button
-                          className="chx-step-ban"
-                          title={t('排除该步解并重算', 'Exclude this step solution and re-solve')}
-                          aria-label={t('排除该步', 'Exclude this step')}
-                          onClick={(e) => { e.stopPropagation(); excludeStep(sol.steps, j); }}
-                        >
-                          <Ban size={11} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                    )}
+                  </div>
+                  {renderSteps(bestSol, 'best')}
+                  <div className="chx-solution">{`Solution (${bestSol.total}): ${bestSol.solution}`}</div>
+                </li>
+              )}
+              {listSols && listSols.length > 0 && (
+                <div className="chx-list-h">
+                  {t('更多解(快速搜索,未必最短)', 'More solutions (fast search, not necessarily shortest)')}
                 </div>
-                <div className="chx-solution">{`Solution (${sol.total}): ${sol.solution}`}</div>
-              </li>
+              )}
+              {(listSols ?? []).map((c, i) => (
+                <li key={i} className={`chx-chain${sel?.src === i ? ' is-active' : ''}`}>
+                  <div
+                    className="chx-chain-head"
+                    onClick={() => select(i, 'full')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(i, 'full'); } }}
+                  >
+                    <button
+                      className="chx-chain-play"
+                      aria-label={t('播放', 'Play')}
+                      onClick={(e) => { e.stopPropagation(); select(i, 'full', true); }}
+                    >
+                      <Play size={11} />
+                    </button>
+                    <span className="chx-chain-n">#{i + 1}</span>
+                    <span className="chx-chain-total">{c.total} HTM</span>
+                  </div>
+                  {renderSteps(c, i)}
+                  <div className="chx-solution">{`Solution (${c.total}): ${c.solution}`}</div>
+                </li>
+              ))}
             </ol>
 
             {selAlg ? (
