@@ -361,8 +361,13 @@ export default function ChainExplorer({ scramble, lang }: Props) {
     setDoneInfo(null);
     setProgress(null);
     setSel(null);
-    void fetchList(scr, my);
-    void runStream(scr, my);
+    // 串行:先秒出多解列表(prod 上并行会和深化流抢 CPU,列表从 ~2s 退化到 ~10s),
+    // 列表到手再开深化流。
+    void (async () => {
+      await fetchList(scr, my);
+      if (reqRef.current !== my) return;
+      void runStream(scr, my);
+    })();
   }, [fetchList, runStream]);
 
   /** 停止深化:只断流,保留已出的解。 */
