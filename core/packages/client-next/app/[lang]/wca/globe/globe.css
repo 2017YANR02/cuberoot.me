@@ -156,7 +156,7 @@
 }
 .globe-page .globe-statusbar-stats-sep { opacity: 0.45; }
 .globe-page .globe-statusbar-coords {
-    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-variant-numeric: tabular-nums;
     color: #ECEAE3;
     white-space: nowrap;
@@ -358,7 +358,7 @@
 .globe-page .draw-card-section-value {
     font-size: 0.85rem;
     color: #C9CDD4;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: ui-monospace, monospace;
     font-variant-numeric: tabular-nums;
 }
 
@@ -498,7 +498,7 @@
 .globe-page .shapes-item-stats {
     font-size: 0.7rem;
     color: #9CA0A8;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: ui-monospace, monospace;
 }
 .globe-page .shapes-item-fly,
 .globe-page .shapes-item-delete {
@@ -549,7 +549,7 @@
 }
 .globe-page .nav-popover-val {
     font-variant-numeric: tabular-nums;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: ui-monospace, monospace;
     font-size: 0.72rem;
     color: #ECEAE3;
     text-align: right;

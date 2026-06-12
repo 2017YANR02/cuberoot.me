@@ -1,7 +1,7 @@
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { FileText } from 'lucide-react';
-import type { CatalogEntry, Lang } from '../_lib/useTutorialCatalog';
+import { tutorialMediaUrl, type CatalogEntry, type Lang } from '../_lib/useTutorialCatalog';
 import { tr } from '@/i18n/tr';
 
 interface TutorialCardProps {
@@ -21,7 +21,7 @@ export function TutorialCard({ entry, lang }: TutorialCardProps) {
     <Link prefetch={false} href={`/tutorial/${entry.slug}`} className="tutorial-card">
       <div className="tutorial-card-thumb">
         {entry.thumb ? (
-          <img src={entry.thumb} alt="" loading="lazy" decoding="async" />
+          <img src={tutorialMediaUrl(entry.thumb)} alt="" loading="lazy" decoding="async" />
         ) : (
           <FileText className="tutorial-card-thumb-placeholder" />
         )}

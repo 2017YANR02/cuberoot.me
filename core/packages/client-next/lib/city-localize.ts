@@ -1,5 +1,4 @@
 // Ported from packages/client/src/utils/city_localize.ts.
-const CJK_RE = /[㐀-鿿豈-﫿]/;
 
 const CITY_ZH: Record<string, string> = {
   'Beijing': '北京', 'Shanghai': '上海', 'Tianjin': '天津', 'Chongqing': '重庆',
@@ -64,7 +63,10 @@ export function normalizeCityKey(city: string): string {
 export function localizeCity(city: string, isZh: boolean): string {
   if (!city) return '';
   const key = normalizeCityKey(city);
-  if (!isZh) return key;
-  if (CJK_RE.test(key)) return key;
-  return CITY_ZH[key] ?? key;
+  // 已知城市才用规整后的简名 / 中文译名;否则回原始全名,避免 normalizeCityKey
+  // 在括号内逗号处截断(如 "전북특별자치도 전주시 (Jeonju-si, Jeonbuk-do)")。
+  const zh = CITY_ZH[key];
+  if (!isZh) return zh ? key : city;
+  if (zh) return zh;
+  return city;
 }

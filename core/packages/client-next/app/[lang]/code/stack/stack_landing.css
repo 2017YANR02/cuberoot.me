@@ -7,7 +7,7 @@
   --text-dim: #8A9AB6;
   --text-faint: #4A5772;
   --accent-leaf: #7BD389;
-  --mono: 'Cascadia Code', 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  --mono: 'Cascadia Code', 'SF Mono', Consolas, monospace;
   --sans: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
 
   position: relative;

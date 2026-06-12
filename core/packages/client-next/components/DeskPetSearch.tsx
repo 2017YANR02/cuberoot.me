@@ -48,6 +48,11 @@ const CSS = `
   background:color-mix(in srgb, var(--foreground) 9%, transparent);}
 /* Auth dropdown opens upward — the toolbar sits at the bottom of the screen. */
 .deskpet-toolbar .wca-auth-dropdown{top:auto;bottom:calc(100% + 6px);}
+/* Lang / palette menus open upward too (desktop toolbar is at the bottom).
+   On mobile the toolbar is pinned to the top, so keep the default downward. */
+@media (min-width:769px){
+  .deskpet-toolbar .lang-menu{top:auto;bottom:calc(100% + 6px);}
+}
 
 /* Mobile: lift the controls into a fixed bar pinned to the top of the screen,
    one horizontally-scrollable row; the search box stays at the bottom. */

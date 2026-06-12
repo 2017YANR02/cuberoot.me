@@ -177,11 +177,11 @@ html[data-theme=dark] .wp-page {
 .wp-hero-name-link { color: inherit; text-decoration: none; }
 .wp-hero-name-link:hover { text-decoration: underline; }
 /* identity: 国旗在名字左侧, WCA ID 在名字下方(左缘与名字对齐) */
-.wp-hero-name-row { display: inline-flex; align-items: center; justify-content: center; gap: 12px; }
-.wp-hero-name-flag { display: inline-flex; flex-shrink: 0; }
+.wp-hero-name-row { display: inline-grid; grid-template-columns: auto auto; align-items: center; justify-content: center; column-gap: 12px; row-gap: 2px; }
+.wp-hero-name-flag { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .wp-hero-name-flag .wp-flag { width: 30px; height: 22px; }
-.wp-hero-name-col { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .wp-hero-name-line { display: inline-flex; align-items: center; gap: 8px; }
+.wp-hero-gender-cell { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .wp-hero-gender { flex-shrink: 0; }
 .wp-hero-gender-m { color: var(--wp-blue); }
 .wp-hero-gender-f { color: var(--wp-pink); }
@@ -487,7 +487,7 @@ html[data-theme=dark] .wp-page {
 }
 .wp-bycomp-name:hover { color: var(--wp-accent); }
 .wp-bycomp-date {
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-family: var(--font-mono);
     font-size: 0.78rem; color: var(--wp-text-mute);
 }
 .wp-bycomp-table {
@@ -521,7 +521,7 @@ html[data-theme=dark] .wp-page {
 }
 .wp-bycomp-table .wp-cell-comp-date {
     margin-top: 2px;
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-family: var(--font-mono);
     font-size: 0.74rem; color: var(--wp-text-mute);
 }
 .wp-bycomp-table tbody tr.wp-row-comp-first td {
@@ -559,15 +559,19 @@ a.wp-round-tag-link:hover {
    class 由 ByEventView / ByCompList useEffect 维护(SPA lazy mount 后 :target 不重绑) */
 .wp-bycomp-table tbody tr.wp-row-target td,
 .wp-bycomp-table tbody tr.wp-row-target:hover td {
-    background: rgba(255, 230, 90, 0.32);
+    background: rgba(255, 224, 70, 0.42);
+}
+/* 左侧实心强调条,让选中行一眼可辨 */
+.wp-bycomp-table tbody tr.wp-row-target td:first-child {
+    box-shadow: inset 3px 0 0 #f5b301;
 }
 @media (prefers-color-scheme: dark) {
     html:not([data-theme=light]) .wp-bycomp-table tbody tr.wp-row-target td {
-        background: rgba(255, 213, 79, 0.18);
+        background: rgba(255, 213, 79, 0.30);
     }
 }
 html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
-    background: rgba(255, 213, 79, 0.18);
+    background: rgba(255, 213, 79, 0.30);
 }
 
 .wp-cell-pos { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
@@ -646,7 +650,7 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 .wp-th-sortable { cursor: pointer; user-select: none; }
 .wp-th-sortable:hover { color: var(--wp-text); }
 .wp-cell-narrow { text-align: center; }
-.wp-cell-mono { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.82rem; }
+.wp-cell-mono { font-family: var(--font-mono); font-size: 0.82rem; }
 .wp-cell-date { color: var(--wp-text-sub); }
 .wp-cell-comp { display: flex; align-items: center; gap: 8px; min-width: 200px; }
 .wp-link-comp { color: var(--wp-blue); text-decoration: none; font-weight: 500; }
@@ -673,7 +677,7 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 }
 .wp-chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
 .wp-chart-grid { stroke: var(--wp-border); stroke-width: 1; }
-.wp-chart-axis { fill: var(--wp-text-mute); font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+.wp-chart-axis { fill: var(--wp-text-mute); font-size: 11px; font-family: var(--font-mono); }
 .wp-chart-line { fill: none; stroke-width: 1.5; }
 .wp-chart-line-single { stroke: var(--wp-blue); }
 .wp-chart-line-avg    { stroke: var(--wp-green); }
@@ -755,7 +759,7 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 }
 .wp-ms-date {
     flex: 0 0 90px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 0.78rem;
     color: var(--wp-text-sub);
     padding-top: 2px;
@@ -876,7 +880,7 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
     border: 1px solid var(--wp-border);
     background: var(--wp-bg);
     color: var(--wp-text-sub);
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-family: var(--font-mono);
     font-size: 0.75rem;
     cursor: pointer;
     transition: all 0.15s;

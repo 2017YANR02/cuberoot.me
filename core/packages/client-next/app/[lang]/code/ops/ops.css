@@ -21,7 +21,7 @@
   --ops-cat-deploy: #7BD389;
   --ops-cat-backup: #E879C9;
 
-  --ops-mono: 'Cascadia Code', 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  --ops-mono: 'Cascadia Code', 'SF Mono', Consolas, monospace;
   --ops-sans: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
 
   position: relative;

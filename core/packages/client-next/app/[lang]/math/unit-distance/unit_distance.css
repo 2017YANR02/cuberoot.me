@@ -21,7 +21,7 @@
   --ud-ok: var(--signal-success);
   --ud-ok-soft: color-mix(in srgb, var(--signal-success) 14%, transparent);
   --ud-grid: color-mix(in srgb, var(--foreground) 10%, transparent);
-  --ud-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+  --ud-mono: 'SF Mono', Menlo, Consolas, monospace;
 
   /* SVG tokens — used by all interactive components */
   --ud-pt: var(--accent);

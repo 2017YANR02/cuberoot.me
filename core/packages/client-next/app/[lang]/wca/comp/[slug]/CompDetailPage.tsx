@@ -229,6 +229,117 @@ function wcaIdToCubingSlug(wcaId: string): string {
 
 function roundKey(e: string, r: string): string { return `${e}:${r}`; }
 
+interface PodiumGroup { ev: EventMeta; rd: RoundMeta; rows: LiveResult[]; }
+
+// WCA 名次比较 (Reg 9f13/9f14):先比排名成绩 (平均赛制按平均、否则按单次),平均并列再比
+// 更好的单次;两者全等才返回 0 (= 并列同名次,Reg 9f15)。live 表 / 领奖台 / 名次计算共用同一口径。
+function rankComparator(byAvg: boolean): (x: LiveResult, y: LiveResult) => number {
+  const rankKey = (v: number) => (v > 0 ? v : Infinity);
+  const cmp = (a: number, b: number) => (a < b ? -1 : a > b ? 1 : 0);
+  return (x, y) => {
+    const primary = byAvg
+      ? cmp(rankKey(effectiveAvg(x)), rankKey(effectiveAvg(y)))
+      : cmp(rankKey(x.b), rankKey(y.b));
+    return primary !== 0 ? primary : cmp(rankKey(x.b), rankKey(y.b));
+  };
+}
+
+// 已排序结果 → 每行竞赛名次 (并列同名次、跳号,Reg 9f15);无成绩 (b===0) → null (显示 '-')。
+function computePlaces(results: LiveResult[], byAvg: boolean): (number | null)[] {
+  const cmpRank = rankComparator(byAvg);
+  const places: (number | null)[] = [];
+  let prevPlace = 0;
+  results.forEach((r, idx) => {
+    if (r.b === 0) { places.push(null); return; }
+    if (idx > 0 && results[idx - 1].b !== 0 && cmpRank(results[idx - 1], r) === 0) {
+      places.push(prevPlace);
+    } else {
+      prevPlace = idx + 1;
+      places.push(prevPlace);
+    }
+  });
+  return places;
+}
+
+// 各项目决赛(最后一个有成绩的轮次)前三名 — 比赛结束后的领奖台。
+// 排名口径镜像 live 视图的 filteredResults;并列第三名一并带上 (Reg 9f15,并列铜牌)。
+function computePodiumGroups(data: CompData): PodiumGroup[] {
+  const out: PodiumGroup[] = [];
+  for (const ev of data.events) {
+    let finalRd: RoundMeta | null = null;
+    for (let i = ev.rs.length - 1; i >= 0; i--) {
+      if ((data.resultsByRound[roundKey(ev.i, ev.rs[i].i)] || []).length > 0) { finalRd = ev.rs[i]; break; }
+    }
+    if (!finalRd) continue;
+    const cmpRank = rankComparator(isAvgRankedFormat(finalRd.f));
+    const ranked = (data.resultsByRound[roundKey(ev.i, finalRd.i)] || []).slice()
+      .filter(r => r.b !== 0)
+      .sort(cmpRank);
+    let cut = Math.min(3, ranked.length);
+    while (cut < ranked.length && cmpRank(ranked[cut], ranked[cut - 1]) === 0) cut++;
+    const top = ranked.slice(0, cut);
+    if (top.length === 0) continue;
+    out.push({ ev, rd: finalRd, rows: top });
+  }
+  return out;
+}
+
+// ── 比赛纪录 (WR / 大洲 / NR) ──────────────────────────────────────────────
+// 记录标志已由上游 (sr / ar) 给定且为最终码 (WR、AsR/NAR/ER/…、NR),无需再推断。
+interface CompRecordEntry {
+  ev: EventMeta;
+  res: LiveResult;
+  type: 'single' | 'average';
+  tag: string;   // WR / AsR / NR / ...
+  value: number; // single→best, average→effectiveAvg
+}
+interface CompRecordGroup { ev: EventMeta; rows: CompRecordEntry[]; }
+
+// 纪录等级排序:世界 → 大洲 → 国家。
+function recordTagRank(tag: string): number {
+  if (tag === 'WR') return 0;
+  if (tag === 'NR') return 2;
+  return 1; // 大洲纪录 (AsR / NAR / ER / OcR / SAR / AfR)
+}
+
+// 扫所有轮次,收集本场产生的所有官方纪录 (单次 sr / 平均 ar)。同一 (项目, 选手, 单次|平均)
+// 只留最好一条 (跨轮多次破纪录时);按 comp.events 顺序分组,组内 WR→大洲→NR、单次先于平均。
+function computeCompRecords(data: CompData): CompRecordGroup[] {
+  const best = new Map<string, CompRecordEntry>();
+  for (const ev of data.events) {
+    for (const rd of ev.rs) {
+      for (const res of data.resultsByRound[roundKey(ev.i, rd.i)] || []) {
+        const push = (type: 'single' | 'average', tag: string, value: number) => {
+          if (!tag || value <= 0) return;
+          const key = `${ev.i}|${res.n}|${type}`;
+          const prev = best.get(key);
+          if (!prev || value < prev.value) best.set(key, { ev, res, type, tag, value });
+        };
+        push('single', res.sr, res.b);
+        push('average', String(res.ar || ''), effectiveAvg(res));
+      }
+    }
+  }
+  const byEvent = new Map<string, CompRecordEntry[]>();
+  for (const e of best.values()) {
+    const arr = byEvent.get(e.ev.i) || [];
+    arr.push(e);
+    byEvent.set(e.ev.i, arr);
+  }
+  const out: CompRecordGroup[] = [];
+  for (const ev of data.events) {
+    const rows = byEvent.get(ev.i);
+    if (!rows || rows.length === 0) continue;
+    rows.sort((a, b) =>
+      (recordTagRank(a.tag) - recordTagRank(b.tag))
+      || (a.type === b.type ? 0 : a.type === 'single' ? -1 : 1)
+      || (a.value - b.value),
+    );
+    out.push({ ev, rows });
+  }
+  return out;
+}
+
 // URL 的轮次统一用数字 1,2,3,4(第几轮),不再用 WCA round_type_id 字母('d'/'f'/...)。
 // 数字 = 该事件 rounds 列表(ev.rs,首轮→决赛有序)中的 1-based 位置;内部仍用 round_type_id 当 key。
 function roundNumToTypeId(data: CompData | null, eventId: string, num: number): string {
@@ -417,7 +528,7 @@ export default function CompDetailPage() {
   );
   const [explicitView, setExplicitView] = useQueryState(
     'view',
-    parseAsStringEnum<'live' | 'psych' | 'schedule'>(['live', 'psych', 'schedule']).withOptions({ history: 'push', scroll: false }),
+    parseAsStringEnum<'live' | 'psych' | 'schedule' | 'podium'>(['live', 'psych', 'schedule', 'podium']).withOptions({ history: 'push', scroll: false }),
   );
   const [psychEventParam, setPsychEventParam] = useQueryState(
     'psychEvent',
@@ -506,17 +617,32 @@ export default function CompDetailPage() {
     () => !!data && Object.values(data.resultsByRound).some(arr => arr.length > 0),
     [data],
   );
+  // 领奖台:各项目决赛前三。比赛结束(所有项目末轮都有成绩)且有领奖台时默认展示。
+  const podiumGroups = useMemo(() => (data ? computePodiumGroups(data) : []), [data]);
+  const compRecords = useMemo(() => (data ? computeCompRecords(data) : []), [data]);
+  const hasPodiumTab = podiumGroups.length > 0 || compRecords.length > 0;
+  const compFinished = useMemo(() => {
+    if (!data || data.events.length === 0) return false;
+    return data.events.every(ev => {
+      const last = ev.rs[ev.rs.length - 1];
+      return !!last && (data.resultsByRound[roundKey(ev.i, last.i)] || []).length > 0;
+    });
+  }, [data]);
   const beforeRegOpen = useMemo(() => {
     const t = compInfo?.registration_open ? Date.parse(compInfo.registration_open) : NaN;
     return Number.isFinite(t) && Date.now() < t;
   }, [compInfo]);
-  const viewParam: 'live' | 'psych' | 'schedule' =
+  const viewParam: 'live' | 'psych' | 'schedule' | 'podium' =
     explicitView === 'psych' ? 'psych'
       : explicitView === 'schedule' ? 'schedule'
-        : explicitView === 'live' ? 'live'
-          : (data && !hasResults) ? (beforeRegOpen ? 'schedule' : 'psych') : 'live';
+        : explicitView === 'podium' ? 'podium'
+          : explicitView === 'live' ? 'live'
+            : (data && !hasResults) ? (beforeRegOpen ? 'schedule' : 'psych')
+              : (compFinished && podiumGroups.length > 0) ? 'podium'
+                : 'live';
   const isPsych = viewParam === 'psych';
   const isSchedule = viewParam === 'schedule';
+  const isPodium = viewParam === 'podium';
   const schedView: 'calendar' | 'table' = layoutParam === 'table' ? 'table' : 'calendar';
   // "Show round details" lives up in the view-tab row (next to the calendar/table
   // toggle); default on so Format / Time limit / Cutoff / Proceed show like WCA.
@@ -811,15 +937,7 @@ export default function CompDetailPage() {
         arr = all.filter(r => set.has(r.n));
       }
     }
-    const f = currentRound.rd.f;
-    const byAvg = isAvgRankedFormat(f);
-    const rankKey = (v: number) => (v > 0 ? v : Infinity);
-    const cmp = (a: number, b: number) => a < b ? -1 : a > b ? 1 : 0;
-    return arr.slice().sort((x, y) => {
-      const primary = byAvg ? cmp(rankKey(effectiveAvg(x)), rankKey(effectiveAvg(y))) : cmp(rankKey(x.b), rankKey(y.b));
-      if (primary !== 0) return primary;
-      return cmp(rankKey(x.b), rankKey(y.b));
-    });
+    return arr.slice().sort(rankComparator(isAvgRankedFormat(currentRound.rd.f)));
   }, [data, currentRound, filterParam]);
 
   const advancers = useMemo(() => {
@@ -949,7 +1067,7 @@ export default function CompDetailPage() {
     setFilterParam(value || null);
   };
 
-  const onChangeView = (value: 'live' | 'psych' | 'schedule') => {
+  const onChangeView = (value: 'live' | 'psych' | 'schedule' | 'podium') => {
     setExplicitView(value); // 显式记录:空成绩比赛点「成绩」不会被默认弹回预排名
   };
 
@@ -1186,7 +1304,7 @@ export default function CompDetailPage() {
 
         {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} />}
 
-        {!isSchedule && (
+        {!isSchedule && !isPodium && (
           <div className="comp-event-bar">
             <WcaEventSelector
               availableEvents={availableEventIds}
@@ -1203,9 +1321,24 @@ export default function CompDetailPage() {
         )}
 
         <div className="comp-view-tabs">
+          {hasPodiumTab && (
+            <button
+              type="button"
+              className={`comp-view-tab${isPodium ? ' is-active' : ''}`}
+              onClick={() => onChangeView('podium')}
+            >
+              {compRecords.length > 0
+                ? tr({ zh: '纪录和领奖台', en: 'Records & Podiums',
+                    zhHant: "紀錄和領獎臺"
+                })
+                : tr({ zh: '领奖台', en: 'Podiums',
+                    zhHant: "領獎臺"
+                })}
+            </button>
+          )}
           <button
             type="button"
-            className={`comp-view-tab${(!isPsych && !isSchedule) ? ' is-active' : ''}`}
+            className={`comp-view-tab${(!isPsych && !isSchedule && !isPodium) ? ' is-active' : ''}`}
             onClick={() => onChangeView('live')}
           >
             {i18n.language === 'zh-Hant' ? ('成績') : (isZh ? '成绩' : (isWca ? 'Results' : 'Live'))}
@@ -1247,6 +1380,35 @@ export default function CompDetailPage() {
             view={schedView}
             detailsExpanded={schedDetailsExpanded}
           />
+        ) : isPodium ? (
+          <>
+            {compRecords.length > 0 && (
+              <>
+                <h2 className="comp-pod-section-h">{tr({ zh: '纪录', en: 'Records',
+                    zhHant: "紀錄"
+                })}</h2>
+                <CompRecordsView
+                  groups={compRecords}
+                  users={data.users}
+                  isZh={isZh}
+                  onClickCuber={n => setModal({ kind: 'all', number: n })}
+                />
+                {podiumGroups.length > 0 && (
+                  <h2 className="comp-pod-section-h">{tr({ zh: '领奖台', en: 'Podiums',
+                      zhHant: "領獎臺"
+                })}</h2>
+                )}
+              </>
+            )}
+            <PodiumView
+              groups={podiumGroups}
+              users={data.users}
+              isZh={isZh}
+              pbMap={pbMap}
+              compIso2={compFlagIso2(slug)}
+              onClickCuber={n => setModal({ kind: 'all', number: n })}
+            />
+          </>
         ) : !isPsych ? (
           <>
             <div className="comp-selectors">
@@ -1350,6 +1512,24 @@ export default function CompDetailPage() {
   );
 }
 
+// WCA 的 venue / venue_details 等字段是 markdown，最常见是 [文本](url) 外链 ——
+// 解析成真链接渲染，其余文本原样；否则前端会把 [文本](url) 当纯文本直出。
+function renderWcaText(text: string): React.ReactNode {
+  const re = /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g;
+  const out: React.ReactNode[] = [];
+  let last = 0, key = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    out.push(
+      <a key={key++} className="comp-info-link" href={m[2]} target="_blank" rel="noopener noreferrer">{m[1]}</a>,
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out.length ? out : text;
+}
+
 function CompInfoPanel({
   info, isZh, cubingZh,
 }: { info: CompInfo; isZh: boolean; cubingZh: CubingZhMeta | null }) {
@@ -1393,10 +1573,10 @@ function CompInfoPanel({
   if (cubingZh?.location) {
     rows.push({ label: '地点', value: cubingZh.location });
   } else {
-    if (info.venue_address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: info.venue_address });
+    if (info.venue_address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: renderWcaText(info.venue_address) });
     if (info.venue_details) rows.push({ label: tr({ zh: '详情', en: 'Details',
         zhHant: "詳情"
-    }), value: info.venue_details });
+    }), value: renderWcaText(info.venue_details) });
   }
   if (rows.length === 0) return null;
   const activeRows = rows.filter(r => !r.past);
@@ -1497,6 +1677,8 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
   const formatAttempts = round.f === 'a' || round.f === '' ? 5 : round.f === 'm' ? 3 : parseInt(round.f, 10) || 1;
   const maxRowAttempts = results.reduce((m, r) => Math.max(m, r.v.length), 0);
   const attemptCount = Math.max(formatAttempts, maxRowAttempts);
+  // 竞赛名次 (并列同名次,Reg 9f15);领奖台奖牌色按名次而非行序染 (并列第一 → 两金,无银)。
+  const places = computePlaces(results, isAverageFormat);
 
   return (
     <div className="comp-table-wrap">
@@ -1541,7 +1723,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                 className={`${cls} comp-row-clickable`}
                 onClick={() => onClickCuber(r.n)}
               >
-                <td className="td-place">{r.b === 0 ? '-' : (idx + 1)}</td>
+                <td className={`td-place${places[idx] === 1 ? ' is-gold' : places[idx] === 2 ? ' is-silver' : places[idx] === 3 ? ' is-bronze' : ''}`}>{places[idx] ?? '-'}</td>
                 <td className="td-person">
                   <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
                   <span
@@ -1589,6 +1771,132 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
           )}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+interface PodiumViewProps {
+  groups: PodiumGroup[];
+  users: Record<string, User>;
+  isZh: boolean;
+  pbMap: Record<string, PbByEvent | null>;
+  compIso2?: string;
+  onClickCuber: (number: number) => void;
+}
+
+// 领奖台:逐项目列出决赛前三,复用 ResultsTable 的列结构/记录标志/成绩格式化。
+function PodiumView({ groups, users, isZh, pbMap, compIso2, onClickCuber }: PodiumViewProps) {
+  if (groups.length === 0) {
+    return <div className="comp-empty">{tr({ zh: '暂无领奖台', en: 'No podiums yet',
+        zhHant: "暫無領獎臺"
+    })}</div>;
+  }
+  return (
+    <div className="comp-podiums">
+      {groups.map(g => (
+        <section key={g.ev.i} className="comp-podium-group">
+          <h3 className="comp-podium-event">
+            <EventIcon event={g.ev.i} className="comp-podium-icon" />
+            <span>{eventDisplayName(g.ev.i, isZh)}</span>
+          </h3>
+          <ResultsTable
+            results={g.rows}
+            users={users}
+            round={g.rd}
+            isZh={isZh}
+            pbMap={pbMap}
+            compIso2={compIso2}
+            onClickCuber={onClickCuber}
+          />
+        </section>
+      ))}
+    </div>
+  );
+}
+
+interface CompRecordsViewProps {
+  groups: CompRecordGroup[];
+  users: Record<string, User>;
+  isZh: boolean;
+  onClickCuber: (number: number) => void;
+}
+
+// 比赛纪录:逐项目列出本场产生的官方纪录 (单次 / 平均),复用成绩表的列结构与记录标志。
+function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewProps) {
+  if (groups.length === 0) return null;
+  return (
+    <div className="comp-records">
+      {groups.map(g => {
+        const attemptCount = g.rows.reduce((m, e) => Math.max(m, e.res.v.length), 0);
+        return (
+          <section key={g.ev.i} className="comp-record-group">
+            <h3 className="comp-podium-event">
+              <EventIcon event={g.ev.i} className="comp-podium-icon" />
+              <span>{eventDisplayName(g.ev.i, isZh)}</span>
+            </h3>
+            <div className="comp-table-wrap">
+              <table className="comp-table">
+                <thead>
+                  <tr>
+                    <th className="th-person">{tr({ zh: '选手', en: 'Person',
+                        zhHant: "選手"
+                    })}</th>
+                    <th className="th-best">{tr({ zh: '单次', en: 'Best',
+                        zhHant: "單次"
+                    })}</th>
+                    <th className="th-avg">{tr({ zh: '平均', en: 'Average' })}</th>
+                    <th className="th-detail" colSpan={attemptCount}>{tr({ zh: '详情', en: 'Detail',
+                        zhHant: "詳情"
+                    })}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {g.rows.map((e, idx) => {
+                    const u = users[String(e.res.n)];
+                    if (!u) return null;
+                    const iso2 = regionToIso2(u.region);
+                    return (
+                      <tr
+                        key={`${e.res.n}:${e.type}:${idx}`}
+                        className={`${idx % 2 === 1 ? 'row-odd' : ''} comp-row-clickable`}
+                        onClick={() => onClickCuber(e.res.n)}
+                      >
+                        <td className="td-person">
+                          <Flag iso2={iso2} className="comp-flag" />
+                          <span className="cuber-name" title={regionDisplay(u.region, isZh)}>
+                            {displayCuberName(u.name, isZh)}
+                          </span>
+                        </td>
+                        <td className="td-best">
+                          {e.type === 'single' && (
+                            <span className="record-num-cell">
+                              {formatLive(e.value, e.ev.i, false)}
+                              <RecordBadge record={e.tag} variant="inline" iso2={iso2} />
+                            </span>
+                          )}
+                        </td>
+                        <td className="td-avg">
+                          {e.type === 'average' && (
+                            <span className="record-num-cell">
+                              {formatLive(e.value, e.ev.i, true)}
+                              <RecordBadge record={e.tag} variant="inline" iso2={iso2} />
+                            </span>
+                          )}
+                        </td>
+                        {Array.from({ length: attemptCount }).map((_, i) => (
+                          <td key={i} className={`td-attempt ${isAo5Bracketed(e.res.v, i) ? 'td-attempt-trimmed' : ''}`}>
+                            {formatLive(e.res.v[i] ?? 0, e.ev.i, false)}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }

@@ -1,0 +1,214 @@
+/* /appearance 配色主题展示页。卡片边框在这里是功能性的(分隔各预览样板),非装饰外框。
+   .ac-preview 是 .palette-scope:内部 var(--*) 解析到该卡的配色;.ac-meta 在作用域外,
+   走整页当前 token,所以会跟随用户已选的主题。 */
+
+.ac-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+.ac-h1 {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin-bottom: 10px;
+}
+
+.ac-lead {
+  color: var(--muted-foreground);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 60ch;
+  margin-bottom: 28px;
+}
+
+.ac-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.ac-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  background: var(--card);
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+  font: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+.ac-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+.ac-card.is-current {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+/* —— scoped preview —— */
+.ac-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 15px 15px 16px;
+  background: var(--background);
+  color: var(--foreground);
+}
+.ac-pv-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ac-pv-faint {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--faint-foreground);
+}
+.ac-pv-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+.ac-pv-title {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--foreground);
+}
+.ac-pv-sub {
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+.ac-pv-panel {
+  display: block;
+  padding: 8px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--card);
+}
+.ac-pv-mono {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+  color: var(--muted-foreground);
+}
+.ac-pv-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 1px;
+}
+.ac-pv-btn {
+  padding: 4px 13px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+.ac-pv-btn-primary,
+.ac-pv-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+}
+.ac-pv-btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.ac-pv-btn-secondary {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+.ac-pv-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ac-pv-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.ac-pv-chip-muted {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+/* 浮层条:展示 --popover / --popover-foreground / --border-strong */
+.ac-pv-pop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 1px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  font-size: 0.76rem;
+}
+.ac-pv-pop-label {
+  flex: 1;
+}
+.ac-pv-pop-check {
+  color: var(--accent);
+}
+
+/* —— meta bar (page tokens, follows current theme);卡片顶部条 —— */
+.ac-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 13px;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--card);
+  color: var(--foreground);
+}
+.ac-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.ac-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ac-scheme {
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.ac-check {
+  color: var(--accent);
+}
+
+@media (max-width: 480px) {
+  .ac-page {
+    padding: 28px 14px 64px;
+  }
+  .ac-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}

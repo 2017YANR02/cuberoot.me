@@ -2,7 +2,7 @@
  * Dual-theme via global tokens; code-first cards (no live demos). */
 
 .ur {
-  --ur-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+  --ur-mono: 'Fira Code', 'SF Mono', Consolas, monospace;
   position: relative;
   min-height: 100vh;
   background: var(--background);

@@ -1,19 +1,38 @@
-// Inline <script> body injected before hydration so html[data-theme] is set
-// BEFORE any CSS resolves. Avoids the white→dark FOUC on first paint.
+// Inline <script> body injected before hydration so html[data-theme] /
+// html[data-palette] is set BEFORE any CSS resolves. Avoids the white→dark FOUC
+// on first paint.
 //
-// Keep this self-contained (no imports), since it's stringified and runs in
-// the document head context.
+// The runtime script body is self-contained (no imports). The palette→scheme
+// map below is baked into the string at build time from lib/palettes.ts, so it
+// can't drift from the real palette list.
+
+import { PALETTES } from './palettes';
+
+const PALETTE_SCHEMES = JSON.stringify(
+  Object.fromEntries(PALETTES.map((p) => [p.id, p.scheme])),
+);
 
 export const THEME_BOOTSTRAP = `(() => {
   try {
-    var t = localStorage.getItem('theme');
-    if (t === 'light' || t === 'dark') {
-      document.documentElement.setAttribute('data-theme', t);
-      document.documentElement.style.colorScheme = t;
+    var de = document.documentElement;
+    var schemes = ${PALETTE_SCHEMES};
+    var pal = localStorage.getItem('palette');
+    var eff;
+    if (pal && schemes[pal]) {
+      // 配色主题优先:整套覆盖 light/dark,自带明暗。
+      de.setAttribute('data-palette', pal);
+      eff = schemes[pal];
+      de.style.colorScheme = eff;
+    } else {
+      var t = localStorage.getItem('theme');
+      if (t === 'light' || t === 'dark') {
+        de.setAttribute('data-theme', t);
+        de.style.colorScheme = t;
+      }
+      eff = (t === 'light' || t === 'dark')
+        ? t
+        : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     }
-    var eff = (t === 'light' || t === 'dark')
-      ? t
-      : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     var link = document.getElementById('app-favicon');
     if (link) {
       link.href = eff === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png';

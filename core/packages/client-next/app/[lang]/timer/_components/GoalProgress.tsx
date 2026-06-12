@@ -48,7 +48,7 @@ export default function GoalProgress({ solves, goal, isZh }: Props) {
     border: `1px solid ${reached ? 'rgba(80, 180, 110, 0.55)' : 'rgba(91, 157, 217, 0.35)'}`,
     background: reached ? 'rgba(80, 180, 110, 0.12)' : 'rgba(91, 157, 217, 0.08)',
     color: reached ? '#7fd99a' : '#cde',
-    fontFamily: 'JetBrains Mono, monospace',
+    fontFamily: 'ui-monospace, monospace',
     fontSize: 12,
     lineHeight: 1.2,
     fontVariantNumeric: 'tabular-nums',

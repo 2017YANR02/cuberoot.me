@@ -1671,6 +1671,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '次数', en: 'count',
                 zhHant: "次數"
             })}</span> <span className="shell-stat-val">{stats.count}</span></span>
+            <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '成功', en: 'solved' })}</span> <span className="shell-stat-val">{stats.solved}/{stats.count}</span></span>
             <span className="shell-stat"><span className="shell-stat-lbl">mean</span> <span className="shell-stat-val">{stats.mean}</span></span>
             <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '最佳', en: 'best' })}</span> <span className="shell-stat-val">{stats.best}</span></span>
             <span className="shell-stat"><span className="shell-stat-lbl">mo3</span> <span className="shell-stat-val">{stats.mo3}</span></span>

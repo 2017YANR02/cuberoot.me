@@ -2,7 +2,7 @@
  * each live demo renders in the same theme its real usage would. */
 
 .cg {
-  --cg-mono: 'Cascadia Code', 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  --cg-mono: 'Cascadia Code', 'SF Mono', Consolas, monospace;
   position: relative;
   min-height: 100vh;
   background: var(--background);

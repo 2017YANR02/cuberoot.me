@@ -36,6 +36,10 @@ export interface PastCompRecord {
   events: string[];
   /** event 短码 → 该项目轮次数（含资格 / 决赛全部）；老 dump 没有这字段时缺省 */
   rounds?: Record<string, number>;
+  /** 实际参赛人数（results 表 DISTINCT person_id）；老 dump 缺省 */
+  competitors?: number;
+  /** 人数上限（competitions.competitor_limit）；0 / 缺省 = 无上限 */
+  competitor_limit?: number;
 }
 
 export async function fetchAllUpcomingCompsJson(): Promise<UpcomingCompRecord[]> {

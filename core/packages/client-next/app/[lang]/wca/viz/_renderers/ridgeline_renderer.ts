@@ -185,7 +185,7 @@ export function drawRidgeline(
 
   // X 轴标签
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.font = '11px "JetBrains Mono", monospace';
+  ctx.font = '11px ui-monospace, monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   for (let x = rGridStart; x <= xMaxVal; x += rNiceStep) {

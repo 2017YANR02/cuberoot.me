@@ -30,7 +30,7 @@
 
   --font-ui: system-ui, -apple-system, 'Segoe UI', 'PingFang SC',
     'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Cascadia Mono', Consolas, 'Courier New',
+  --font-mono: 'Cascadia Mono', Consolas, 'Courier New',
     monospace;
 
   font-family: var(--font-ui);

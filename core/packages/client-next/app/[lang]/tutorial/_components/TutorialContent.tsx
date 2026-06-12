@@ -12,6 +12,7 @@ import parse, {
 import DOMPurify from 'dompurify';
 import Link from '@/components/AppLink';
 import { AlgChip } from './AlgChip';
+import { tutorialMediaUrl } from '../_lib/useTutorialCatalog';
 
 interface TutorialContentProps {
   html: string;
@@ -60,6 +61,13 @@ export function TutorialContent({ html }: TutorialContentProps) {
           const algHtml = /<[a-z]+>/i.test(inner) ? inner : undefined;
           return <AlgChip alg={alg} algHtml={algHtml} />;
         }
+      }
+
+      // 正文图片的 /stats/… 路径 → static origin(免 Vercel 307 + 函数调用)。
+      // 原地改 attribs、返回 undefined 走默认渲染,其余属性原样保留。
+      if (el.name === 'img' && el.attribs?.src?.startsWith('/stats/')) {
+        el.attribs.src = tutorialMediaUrl(el.attribs.src);
+        return undefined;
       }
 
       // 内站链接 /tutorial/... → Next Link

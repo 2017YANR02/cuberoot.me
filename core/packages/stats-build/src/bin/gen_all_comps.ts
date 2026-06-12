@@ -37,6 +37,8 @@ interface Row extends RowDataPacket {
   start_date: Date | string;
   end_date: Date | string;
   events_csv: string | null;
+  competitors_count: number | string | null;
+  competitor_limit: number | string | null;
 }
 
 interface RoundRow extends RowDataPacket {
@@ -68,7 +70,9 @@ async function main() {
       c.longitude / 1000000.0 AS longitude_degrees,
       c.start_date,
       c.end_date,
-      GROUP_CONCAT(DISTINCT r.event_id) AS events_csv
+      GROUP_CONCAT(DISTINCT r.event_id) AS events_csv,
+      COUNT(DISTINCT r.person_id) AS competitors_count,
+      c.competitor_limit
     FROM competitions c
     LEFT JOIN countries co ON co.id = c.country_id
     LEFT JOIN results r ON r.competition_id = c.id
@@ -126,6 +130,8 @@ async function main() {
         end_date: fmtDate(r.end_date),
         events: shortEvents,
         ...(rounds && Object.keys(rounds).length > 0 ? { rounds } : {}),
+        ...(Number(r.competitors_count) > 0 ? { competitors: Number(r.competitors_count) } : {}),
+        ...(Number(r.competitor_limit) > 0 ? { competitor_limit: Number(r.competitor_limit) } : {}),
       };
     });
 

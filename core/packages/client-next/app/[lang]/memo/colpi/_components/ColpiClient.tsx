@@ -12,7 +12,7 @@
  * Ported from packages/client/src/pages/memo/colpi/ColpiPage.tsx.
  */
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import {
   Search, Eye, EyeOff, ThumbsUp, ThumbsDown, Flag as FlagIcon, X,
@@ -113,9 +113,23 @@ export default function ColpiClient() {
   const user = useAuthStore(s => s.user);
   const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
   const router = useRouter();
+  const pathname = usePathname();
   const params = useParams<{ pair?: string | string[] }>();
-  const urlPairRaw = params?.pair;
-  const urlPair: string | undefined = Array.isArray(urlPairRaw) ? urlPairRaw[0] : urlPairRaw;
+  const paramPairRaw = params?.pair;
+  const paramPair: string | undefined = Array.isArray(paramPairRaw) ? paramPairRaw[0] : paramPairRaw;
+  // '_' is the prerendered sentinel ([pair]/page.tsx + next.config rewrite) —
+  // the real pair only exists in the browser URL. Resolve it in an effect
+  // (keyed on pathname so in-page router.replace navigation stays in sync) so
+  // hydration matches the sentinel-rendered HTML.
+  const sentinel = paramPair === '_';
+  const [resolvedPair, setResolvedPair] = useState<string | null>(null);
+  useEffect(() => {
+    if (!sentinel) return;
+    const m = window.location.pathname.match(/\/memo\/colpi\/([^/?#]+)/);
+    setResolvedPair(m ? m[1] : '');
+  }, [sentinel, pathname]);
+  const pairPending = sentinel && resolvedPair === null;
+  const urlPair: string | undefined = sentinel ? (resolvedPair ?? undefined) : paramPair;
 
   // ── data state ──
   const [wordsByPair, setWordsByPair] = useState<Record<string, ColpiWord[]>>({});
@@ -179,12 +193,13 @@ export default function ColpiClient() {
   const activePair: string | null = decoded && isValidPair(decoded, ALPHABET) ? decoded : null;
 
   useEffect(() => {
+    if (pairPending) return; // sentinel route, real pair not yet read from URL
     if (urlPair === undefined) {
       router.replace(`/memo/colpi/${encodeURIComponent(DEFAULT_PAIR)}`);
     } else if (decoded && !isValidPair(decoded, ALPHABET)) {
       router.replace(`/memo/colpi/${encodeURIComponent(DEFAULT_PAIR)}`);
     }
-  }, [urlPair, decoded, router, DEFAULT_PAIR, ALPHABET]);
+  }, [pairPending, urlPair, decoded, router, DEFAULT_PAIR, ALPHABET]);
 
   const setActivePair = (p: string | null) => {
     if (p === null) router.replace('/memo/colpi');

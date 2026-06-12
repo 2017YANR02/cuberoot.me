@@ -39,22 +39,6 @@
   src: url('/fonts/inter-latin-700-normal.woff2') format('woff2');
 }
 
-/* JetBrains Mono — viz / 代码块 */
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/jetbrains-mono-latin-400-normal.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/jetbrains-mono-latin-500-normal.woff2') format('woff2');
-}
-
 /* Roboto Mono — recon 表格成绩列 */
 @font-face {
   font-family: 'Roboto Mono';

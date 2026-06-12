@@ -3,8 +3,8 @@
 /**
  * WCA login/account control — global.
  * Logged-out: icon-only round button.
- * Logged-in: avatar links to the user's personal recon page (/recon/person/:wcaId);
- *            logout lives in that page's header.
+ * Logged-in: avatar links to the user's hub page (/person/:wcaId);
+ *            logout lives in the recon page's header.
  */
 import { useEffect, useState } from 'react';
 import Link from '@/components/AppLink';
@@ -39,7 +39,7 @@ export default function WcaAuth() {
 
   return (
     <Link
-      href={`/recon/person/${user.wcaId}`}
+      href={`/person/${user.wcaId}`}
       className="wca-auth-trigger"
       title={user.name || user.wcaId}
       aria-label={user.name || user.wcaId}
