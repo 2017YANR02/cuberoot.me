@@ -28,10 +28,21 @@
 //! ## 双阶段搜索(cstimer 同构,迭代加深到 twist 最优)
 //! 任何解可分解为「前缀(任意 shape)+ 后缀(每个 slash 时刻都是方形)」:对总步数 T 做
 //! 奇偶步进(T ≡ ml mod 2)的 IDDFS。phase-1 在全态枚举 slash 序列,可采纳剪枝 =
-//! (shape × 角归层 mask × ml)/(shape × 棱归层 mask × ml) 两张全空间投影精确表(各 1.9MB,
-//! 现场 BFS);遇方形态尝试 phase-2 = 限方形子群的精确搜索(剪枝 = 角/棱 8 排列 × ml 双
-//! 80KB 投影表 + canon memo)。phase-2 限制表只在方形子群内可采纳,绝不能当全局启发式
-//! (最优解可能离开方形 shape)。全部表内存现场建,**零盘表**,合计 < 4.1MB。
+//! **五张全空间投影精确表取 max**(各表均为到 solved 轨道的精确投影距离,max 均 9):
+//! - comb:(shape × 角归层 mask × 棱归层 mask × ml)。角/棱各恒 4 件 home 上层 ⇒
+//!   mask 落 C(8,4)=70 组合秩,3678×70×70(nibble 打包 ml 对折)= 18MB;
+//! - c4/e4:(shape × 4 个上层 home 角/棱的具体落位 × ml),落位 = 8 槽取 4 排列
+//!   8·7·6·5=1680 秩,各 6.2MB;c4b/e4b:对称的下层 home 版(逐态值与 c4/e4 互补)。
+//! 历史教训:先前只用 max(角归层, 棱归层) 两张 mask 投影(max 8/9),深度 12-13 时
+//! gap 4-5,16 刀随机态 IDDFS 跑 49min 不可用;现五表 max + 子节点按 h 升序扩展
+//! (同 h 方形子优先,成功迭代尽快踩中解路径),16 刀单态 ≤ ~7s、浅态毫秒级。
+//! 对位枚举借 cstimer Shape_TopMove 增量思路换成 LUT:pattern → 件边界 bitmask B,
+//! 合法对位 a ⟺ {a, a+6} ⊆ B(两切缝都落件边界),搜索热路径零堆分配;
+//! shape id 由 cstimer 二分查找改 O(1) 两表直查(base[pt] + rank[pb])。
+//! 遇方形态尝试 phase-2 = 限方形子群的精确搜索(剪枝 = 角/棱 8 排列 × ml 双
+//! 80KB 投影表 + canon memo,cstimer SquarePrun 同构;入口先以 sq_h+奇偶便宜判废,
+//! 再算 canon)。phase-2 限制表只在方形子群内可采纳,绝不能当全局启发式
+//! (最优解可能离开方形 shape)。全部表内存现场建,**零盘表**,合计 ≈ 43MB。
 
 use std::collections::HashMap;
 use std::sync::OnceLock;
@@ -112,12 +123,16 @@ impl Sq1State {
     }
 
     /// 12bit 角占位 pattern(bit (11-i) = 槽 i 是角;角 = 奇 id)。
+    /// cstimer FullCube_getShapeIdx 同款 nibble-LSB 聚拢位技巧(f: bit 4k → bit k)。
+    #[inline]
     fn layer_pattern(v: u64) -> u16 {
-        let mut p = 0u16;
-        for i in 0..12 {
-            p |= ((Self::nib(v, i) & 1) as u16) << (11 - i);
+        #[inline]
+        fn f(mut x: u32) -> u32 {
+            x |= x >> 3;
+            x |= x >> 6;
+            (x & 15) | ((x >> 12) & 48)
         }
-        p
+        (f((v & 0x11_1111) as u32) | (f(((v >> 24) & 0x11_1111) as u32) << 6)) as u16
     }
 
     pub fn is_square_shape(&self) -> bool {
@@ -308,73 +323,33 @@ fn sq_proj_arrays(s: &Sq1State) -> ([u8; 8], [u8; 8]) {
     (cp, ep)
 }
 
-/// 归层投影表的件类型。
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum MemKind {
-    Corner,
-    Edge,
-}
-
-/// 投影 cells:槽值约定 —— 被跟踪类型 2|home(2=下层 home,3=上层 home);
-/// 非跟踪角 = 1(Edge 表),非跟踪棱 = 0(Corner 表)。
-type Cells = [u8; 24];
-
-fn cells_of_state(s: &Sq1State, kind: MemKind) -> Cells {
-    let mut c = [0u8; 24];
-    for (li, v) in [s.top, s.bottom].into_iter().enumerate() {
-        for i in 0..12 {
-            let n = Sq1State::nib(v, i);
-            let corner = n & 1 == 1;
-            let home_top = n < 8;
-            c[li * 12 + i] = match (kind, corner) {
-                (MemKind::Corner, true) => 2 | home_top as u8,
-                (MemKind::Corner, false) => 0,
-                (MemKind::Edge, true) => 1,
-                (MemKind::Edge, false) => 2 | home_top as u8,
-            };
-        }
-    }
-    c
-}
-
-fn cells_rot(c: &Cells, a: usize, b: usize) -> Cells {
-    let mut o = [0u8; 24];
-    for i in 0..12 {
-        o[i] = c[(i + a) % 12];
-        o[12 + i] = c[12 + (i + b) % 12];
-    }
-    o
-}
-
-fn cells_slash(c: &Cells) -> Cells {
-    let mut o = *c;
-    for i in 0..6 {
-        o.swap(6 + i, 12 + i);
-    }
-    o
-}
-
-fn cells_patterns(c: &Cells, kind: MemKind) -> (u16, u16) {
-    let is_corner = |v: u8| match kind {
-        MemKind::Corner => v >= 2,
-        MemKind::Edge => v == 1,
-    };
-    let mut pt = 0u16;
-    let mut pb = 0u16;
-    for i in 0..12 {
-        pt |= (is_corner(c[i]) as u16) << (11 - i);
-        pb |= (is_corner(c[12 + i]) as u16) << (11 - i);
-    }
-    (pt, pb)
-}
-
 pub struct Sq1Solver {
     shapes: Vec<u32>,
+    /// 合法层 pattern 表(13² 半层组合);仅测试基线断言读。
+    #[allow(dead_code)]
     layer_valid: Vec<bool>,
-    /// (shape × 角归层 mask × ml) 全空间 twist 精确距离,3678×512,旋转不变。
-    cmem: Vec<u8>,
+    /// shape id O(1) 直查:sid = shape_base[pt] + rank_pb[pb](pb 在其 popcount 类内序)。
+    shape_base: Vec<u32>,
+    rank_pb: Vec<u16>,
+    /// pattern(12bit) → 合法对位 a 的 bitmask:旋 a 后两切缝(0、6)都落件边界。
+    /// 件边界集 B 由 pattern 自 slot 0 贪心铺 tiling 得出(对齐态下 tiling 唯一)。
+    legal_rot: Vec<u16>,
+    /// popcount=4 的 8bit mask → C(8,4)=70 组合秩(按 mask 数值序)。
+    rank70: [u8; 256],
+    /// 4 个 3bit 位置字段(field v = 件 v 的槽序号 0..7,互异)→ 8·7·6·5=1680 排列秩。
+    rank1680: Vec<u16>,
+    /// (shape × 角归层 mask × 棱归层 mask × ml) 全空间 twist 精确投影距离,
+    /// 3678×70×70 字节(nibble 打包:低 nibble ml=0 / 高 ml=1;对位特定,
+    /// 只在 slash 对齐态上查询)。
+    comb: Vec<u8>,
+    /// (shape × 4 个上层 home 角的具体落位 × ml) 全空间精确投影,3678×1680 字节(同打包)。
+    c4: Vec<u8>,
     /// 同上,棱。
-    emem: Vec<u8>,
+    e4: Vec<u8>,
+    /// 对称版:4 个下层 home 角的落位(信息与 c4 互补,值逐态不同)。
+    c4b: Vec<u8>,
+    /// 同上,棱。五表取 max 作 phase-1 启发值。
+    e4b: Vec<u8>,
     /// 方形子群内(角 8 排列 × ml)twist 精确距离(限方形,只给 phase-2 用)。
     csq: Vec<u8>,
     /// 同上,棱。
@@ -435,17 +410,130 @@ impl Sq1Solver {
         }
         assert_eq!(shapes.len(), SHAPE_COUNT);
 
+        // O(1) shape id 两表(与 shapes 的 (pt<<12)|pb 升序一致)。
+        let mut class_cnt = [0u32; 13];
+        let mut rank_pb = vec![0u16; 4096];
+        for p in 0..4096usize {
+            if layer_valid[p] {
+                let c = (p as u32).count_ones() as usize;
+                rank_pb[p] = class_cnt[c] as u16;
+                class_cnt[c] += 1;
+            }
+        }
+        let mut shape_base = vec![0u32; 4096];
+        let mut acc = 0u32;
+        for t in 0..4096usize {
+            shape_base[t] = acc;
+            if layer_valid[t] {
+                let need = 16usize.wrapping_sub((t as u32).count_ones() as usize);
+                if need <= 12 {
+                    acc += class_cnt[need];
+                }
+            }
+        }
+        assert_eq!(acc as usize, SHAPE_COUNT);
+
+        // legal_rot:pattern → 自 slot 0 贪心铺 tiling(角占相邻 2 槽)取件边界集 B,
+        // 合法对位 a ⟺ {a, a+6} ⊆ B。奇长角段(铺不平)= 非对齐 pattern,置 0。
+        let mut legal_rot = vec![0u16; 4096];
+        for p in 0..4096u16 {
+            let mut bset = 0u16;
+            let mut i = 0usize;
+            let mut ok = true;
+            while i < 12 {
+                bset |= 1 << i;
+                if (p >> (11 - i)) & 1 == 1 {
+                    if i + 1 >= 12 || (p >> (11 - (i + 1))) & 1 == 0 {
+                        ok = false;
+                        break;
+                    }
+                    i += 2;
+                } else {
+                    i += 1;
+                }
+            }
+            if ok {
+                legal_rot[p as usize] = bset & ((bset >> 6) | (bset << 6)) & 0xFFF;
+            }
+        }
+
+        let mut rank70 = [0u8; 256];
+        let mut r = 0u8;
+        for m in 0..256usize {
+            if (m as u32).count_ones() == 4 {
+                rank70[m] = r;
+                r += 1;
+            }
+        }
+        assert_eq!(r, 70);
+
+        let mut rank1680 = vec![u16::MAX; 4096];
+        let mut rr = 0u16;
+        for p0 in 0..8usize {
+            for p1 in 0..8usize {
+                for p2 in 0..8usize {
+                    for p3 in 0..8usize {
+                        if p0 != p1 && p0 != p2 && p0 != p3 && p1 != p2 && p1 != p3 && p2 != p3 {
+                            rank1680[p0 | (p1 << 3) | (p2 << 6) | (p3 << 9)] = rr;
+                            rr += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(rr, 1680);
+
         let mut s = Sq1Solver {
             shapes,
             layer_valid,
-            cmem: Vec::new(),
-            emem: Vec::new(),
+            shape_base,
+            rank_pb,
+            legal_rot,
+            rank70,
+            rank1680,
+            comb: Vec::new(),
+            c4: Vec::new(),
+            e4: Vec::new(),
+            c4b: Vec::new(),
+            e4b: Vec::new(),
             csq: Vec::new(),
             esq: Vec::new(),
             identity_canon: Sq1State::SOLVED.canon_key(),
         };
-        s.cmem = s.build_mem(MemKind::Corner);
-        s.emem = s.build_mem(MemKind::Edge);
+        // 三张投影表的种子 = solved 的对应投影 id(见各 idx 函数注释)。
+        let pj = |v: u64, f: &dyn Fn(u64) -> u64| -> u64 {
+            let mut o = 0u64;
+            for i in 0..12 {
+                let n = (v >> ((11 - i) * 4)) & 0xF;
+                o |= f(n) << ((11 - i) * 4);
+            }
+            o
+        };
+        let comb_map = |n: u64| (n & 1) | (n & 8);
+        let c4_map = |n: u64| if n & 1 == 1 { if n < 8 { n } else { 9 } } else { 0 };
+        let e4_map = |n: u64| if n & 1 == 1 { 1 } else if n < 8 { n } else { 8 };
+        let c4b_map = |n: u64| if n & 1 == 1 { if n < 8 { 1 } else { n } } else { 0 };
+        let e4b_map = |n: u64| if n & 1 == 1 { 1 } else if n < 8 { 0 } else { n };
+        let seed = |f: &dyn Fn(u64) -> u64| Sq1State {
+            top: pj(SOLVED_TOP, f),
+            bottom: pj(SOLVED_BOTTOM, f),
+            ml: 0,
+        };
+        // BFS 用展开表(×2 ml),完工后 nibble 对折打包(低 nibble ml=0,高 ml=1;
+        // 255→15 哨兵),61MB → 30MB,h 查询大部分驻 L3。
+        let pack_ml = |unp: Vec<u8>| -> Vec<u8> {
+            let n = unp.len() / 2;
+            let mut out = vec![0u8; n];
+            for (j, o) in out.iter_mut().enumerate() {
+                *o = unp[2 * j].min(15) | (unp[2 * j + 1].min(15) << 4);
+            }
+            out
+        };
+        s.comb = pack_ml(s.build_proj(SHAPE_COUNT * 70 * 70 * 2, seed(&comb_map), &Self::comb_idx));
+        s.c4 = pack_ml(s.build_proj(SHAPE_COUNT * 1680 * 2, seed(&c4_map), &Self::c4_idx));
+        s.e4 = pack_ml(s.build_proj(SHAPE_COUNT * 1680 * 2, seed(&e4_map), &Self::e4_idx));
+        s.c4b = pack_ml(s.build_proj(SHAPE_COUNT * 1680 * 2, seed(&c4b_map), &Self::c4b_idx));
+        s.e4b = pack_ml(s.build_proj(SHAPE_COUNT * 1680 * 2, seed(&e4b_map), &Self::e4b_idx));
         let (sig, tau, rhoc, rhoe) = derive_sq_actions();
         s.csq = build_sq(&sig, &rhoc);
         s.esq = build_sq(&tau, &rhoe);
@@ -458,121 +546,256 @@ impl Sq1Solver {
         S.get_or_init(Sq1Solver::new)
     }
 
-    fn shape_id(&self, pt: u16, pb: u16) -> Option<usize> {
-        self.shapes.binary_search(&(((pt as u32) << 12) | pb as u32)).ok()
+    /// O(1) shape id(调用方保证 pt/pb 是切缝对齐合法 pattern 且总 popcount 16)。
+    #[inline]
+    fn shape_id(&self, pt: u16, pb: u16) -> usize {
+        (self.shape_base[pt as usize] + self.rank_pb[pb as usize] as u32) as usize
     }
 
-    /// 真态 → 两张归层表索引(shape_id*512 + mask*2 + ml)。None = 当前对位非法。
-    fn proj(&self, s: &Sq1State) -> Option<(usize, usize)> {
+    /// 单层扫描:按 pattern tiling 序提取(角 home 位串, 棱 home 位串, 角数, 棱数)。
+    /// 只对切缝对齐的层调用(贪心铺与真实 tiling 一致)。
+    #[inline]
+    fn layer_scan(v: u64, p: u16) -> (u8, u8, u32, u32) {
+        let (mut cb, mut eb) = (0u8, 0u8);
+        let (mut nc, mut ne) = (0u32, 0u32);
+        let mut i = 0usize;
+        while i < 12 {
+            let home_top = (Sq1State::nib(v, i) & 8) == 0;
+            if (p >> (11 - i)) & 1 == 1 {
+                cb |= (home_top as u8) << nc;
+                nc += 1;
+                i += 2;
+            } else {
+                eb |= (home_top as u8) << ne;
+                ne += 1;
+                i += 1;
+            }
+        }
+        (cb, eb, nc, ne)
+    }
+
+    /// 联合表索引(((sid×70 + 角 mask 秩)×70 + 棱 mask 秩)×2 + ml)。
+    /// 角/棱 mask 各恒 popcount 4(home 上层的角/棱各 4 件)⇒ 秩落 [0,70)。
+    /// 只对切缝对齐态调用(贪心 tiling 才与真实一致)。
+    fn comb_idx(&self, s: &Sq1State) -> usize {
         let pt = Sq1State::layer_pattern(s.top);
         let pb = Sq1State::layer_pattern(s.bottom);
-        let sid = self.shape_id(pt, pb)?;
-        let mut cmask = 0usize;
-        let mut emask = 0usize;
-        let (mut ck, mut ek) = (0usize, 0usize);
+        let sid = self.shape_id(pt, pb);
+        let (cbt, ebt, nct, net) = Self::layer_scan(s.top, pt);
+        let (cbb, ebb, _, _) = Self::layer_scan(s.bottom, pb);
+        let cmask = (cbt | (cbb << nct)) as usize;
+        let emask = (ebt | (ebb << net)) as usize;
+        ((sid * 70 + self.rank70[cmask] as usize) * 70 + self.rank70[emask] as usize) * 2
+            + s.ml as usize
+    }
+
+    /// 4 个上层 home 角(id 1,3,5,7)在 8 个角槽(tiling 扫描序)的落位 → 1680 秩。
+    fn c4_idx(&self, s: &Sq1State) -> usize {
+        let pt = Sq1State::layer_pattern(s.top);
+        let pb = Sq1State::layer_pattern(s.bottom);
+        let sid = self.shape_id(pt, pb);
+        let mut code = 0usize;
+        let mut ck = 0usize;
         for (v, p) in [(s.top, pt), (s.bottom, pb)] {
             let mut i = 0;
             while i < 12 {
                 if (p >> (11 - i)) & 1 == 1 {
-                    if Sq1State::nib(v, i) < 8 {
-                        cmask |= 1 << ck;
+                    let n = Sq1State::nib(v, i);
+                    if n < 8 {
+                        code |= ck << (((n >> 1) as usize) * 3);
                     }
                     ck += 1;
                     i += 2;
                 } else {
-                    if Sq1State::nib(v, i) < 8 {
-                        emask |= 1 << ek;
+                    i += 1;
+                }
+            }
+        }
+        (sid * 1680 + self.rank1680[code] as usize) * 2 + s.ml as usize
+    }
+
+    /// 对称版:4 个下层 home 角(id 9,b,d,f)的落位((n>>1)&3 ∈ 0..3)。
+    fn c4b_idx(&self, s: &Sq1State) -> usize {
+        let pt = Sq1State::layer_pattern(s.top);
+        let pb = Sq1State::layer_pattern(s.bottom);
+        let sid = self.shape_id(pt, pb);
+        let mut code = 0usize;
+        let mut ck = 0usize;
+        for (v, p) in [(s.top, pt), (s.bottom, pb)] {
+            let mut i = 0;
+            while i < 12 {
+                if (p >> (11 - i)) & 1 == 1 {
+                    let n = Sq1State::nib(v, i);
+                    if n >= 8 {
+                        code |= ck << ((((n >> 1) & 3) as usize) * 3);
+                    }
+                    ck += 1;
+                    i += 2;
+                } else {
+                    i += 1;
+                }
+            }
+        }
+        (sid * 1680 + self.rank1680[code] as usize) * 2 + s.ml as usize
+    }
+
+    /// 对称版:4 个下层 home 棱(id 8,a,c,e)的落位。
+    fn e4b_idx(&self, s: &Sq1State) -> usize {
+        let pt = Sq1State::layer_pattern(s.top);
+        let pb = Sq1State::layer_pattern(s.bottom);
+        let sid = self.shape_id(pt, pb);
+        let mut code = 0usize;
+        let mut ek = 0usize;
+        for (v, p) in [(s.top, pt), (s.bottom, pb)] {
+            let mut i = 0;
+            while i < 12 {
+                if (p >> (11 - i)) & 1 == 1 {
+                    i += 2;
+                } else {
+                    let n = Sq1State::nib(v, i);
+                    if n >= 8 {
+                        code |= ek << ((((n >> 1) & 3) as usize) * 3);
                     }
                     ek += 1;
                     i += 1;
                 }
             }
         }
-        let base = sid * 512 + s.ml as usize;
-        Some((base + cmask * 2, base + emask * 2))
+        (sid * 1680 + self.rank1680[code] as usize) * 2 + s.ml as usize
     }
 
-    /// cells 投影态 → 表索引(扫描序与 proj 严格一致)。
-    fn cells_encode(&self, c: &Cells, ml: u8, kind: MemKind) -> Option<usize> {
-        let (pt, pb) = cells_patterns(c, kind);
-        if !self.layer_valid[pt as usize] || !self.layer_valid[pb as usize] {
-            return None;
-        }
-        let sid = self.shape_id(pt, pb)?;
-        let mut mask = 0usize;
-        let mut k = 0usize;
-        for (off, p) in [(0usize, pt), (12, pb)] {
+    /// 4 个上层 home 棱(id 0,2,4,6)在 8 个棱槽(tiling 扫描序)的落位 → 1680 秩。
+    fn e4_idx(&self, s: &Sq1State) -> usize {
+        let pt = Sq1State::layer_pattern(s.top);
+        let pb = Sq1State::layer_pattern(s.bottom);
+        let sid = self.shape_id(pt, pb);
+        let mut code = 0usize;
+        let mut ek = 0usize;
+        for (v, p) in [(s.top, pt), (s.bottom, pb)] {
             let mut i = 0;
             while i < 12 {
                 if (p >> (11 - i)) & 1 == 1 {
-                    if kind == MemKind::Corner {
-                        if c[off + i] == 3 {
-                            mask |= 1 << k;
-                        }
-                        k += 1;
-                    }
                     i += 2;
                 } else {
-                    if kind == MemKind::Edge {
-                        if c[off + i] == 3 {
-                            mask |= 1 << k;
-                        }
-                        k += 1;
+                    let n = Sq1State::nib(v, i);
+                    if n < 8 {
+                        code |= ek << (((n >> 1) as usize) * 3);
                     }
+                    ek += 1;
                     i += 1;
                 }
             }
         }
-        Some(sid * 512 + mask * 2 + ml as usize)
+        (sid * 1680 + self.rank1680[code] as usize) * 2 + s.ml as usize
     }
 
-    /// (shape × 归层 mask × ml) 全空间投影 BFS(从 solved 轨道,旋转 0 步闭包)。
-    fn build_mem(&self, kind: MemKind) -> Vec<u8> {
-        let mut dist = vec![255u8; SHAPE_COUNT * 512];
-        let id_cells = cells_of_state(&Sq1State::SOLVED, kind);
-        let mut frontier: Vec<(Cells, u8)> = Vec::new();
-        for a in 0..12 {
-            for b in 0..12 {
-                let c = cells_rot(&id_cells, a, b);
-                if let Some(idx) = self.cells_encode(&c, 0, kind) {
-                    if dist[idx] == 255 {
-                        dist[idx] = 0;
-                        frontier.push((c, 0));
+    /// phase-1 启发值 = 五张投影表取 max(单次融合扫描,一次 shape 查找,
+    /// 任一表超过 bound 立即短路返回 None,省后续随机访存)。各表可采纳 ⇒ max 可采纳。
+    fn h_le(&self, s: &Sq1State, pt: u16, pb: u16, bound: u8) -> Option<u8> {
+        let sid = self.shape_id(pt, pb);
+        let (mut cmask, mut emask) = (0usize, 0usize);
+        let (mut codec, mut codee) = (0usize, 0usize);
+        let (mut codecb, mut codeeb) = (0usize, 0usize);
+        let (mut ck, mut ek) = (0usize, 0usize);
+        for (v, p) in [(s.top, pt), (s.bottom, pb)] {
+            let mut i = 0;
+            while i < 12 {
+                let n = Sq1State::nib(v, i);
+                if (p >> (11 - i)) & 1 == 1 {
+                    if n < 8 {
+                        cmask |= 1 << ck;
+                        codec |= ck << (((n >> 1) as usize) * 3);
+                    } else {
+                        codecb |= ck << ((((n >> 1) & 3) as usize) * 3);
                     }
+                    ck += 1;
+                    i += 2;
+                } else {
+                    if n < 8 {
+                        emask |= 1 << ek;
+                        codee |= ek << (((n >> 1) as usize) * 3);
+                    } else {
+                        codeeb |= ek << ((((n >> 1) & 3) as usize) * 3);
+                    }
+                    ek += 1;
+                    i += 1;
                 }
             }
         }
+        // 打包表查询(小表在前,尽早短路省大表访存)。
+        let ml4 = (s.ml as u32) * 4;
+        let h4 = (self.c4[sid * 1680 + self.rank1680[codec] as usize] >> ml4) & 15;
+        if h4 > bound {
+            return None;
+        }
+        let h4b = (self.c4b[sid * 1680 + self.rank1680[codecb] as usize] >> ml4) & 15;
+        if h4b > bound {
+            return None;
+        }
+        let he = (self.e4[sid * 1680 + self.rank1680[codee] as usize] >> ml4) & 15;
+        if he > bound {
+            return None;
+        }
+        let heb = (self.e4b[sid * 1680 + self.rank1680[codeeb] as usize] >> ml4) & 15;
+        if heb > bound {
+            return None;
+        }
+        let ci = (sid * 70 + self.rank70[cmask] as usize) * 70 + self.rank70[emask] as usize;
+        let hc = (self.comb[ci] >> ml4) & 15;
+        if hc > bound {
+            return None;
+        }
+        Some(hc.max(h4).max(he).max(h4b).max(heb))
+    }
+
+    /// 投影全空间 BFS(轨道图:层转 0 步 ⇒ 轨道间无向,自 solved 投影轨道逐层扩展,
+    /// 每发现新轨道把全部合法对位成员标同距)。投影态用真 Sq1State 位打包跑。
+    fn build_proj(
+        &self,
+        size: usize,
+        seed: Sq1State,
+        idx_of: &dyn Fn(&Self, &Sq1State) -> usize,
+    ) -> Vec<u8> {
+        let mut dist = vec![255u8; size];
+        let mark = |y: &Sq1State, d: u8, dist: &mut Vec<u8>| {
+            let ta = self.legal_rot[Sq1State::layer_pattern(y.top) as usize];
+            let tb = self.legal_rot[Sq1State::layer_pattern(y.bottom) as usize];
+            let mut am = ta;
+            while am != 0 {
+                let a = am.trailing_zeros();
+                am &= am - 1;
+                let mut bm = tb;
+                while bm != 0 {
+                    let b = bm.trailing_zeros();
+                    bm &= bm - 1;
+                    let idx = idx_of(self, &y.turned(a, b));
+                    if dist[idx] == 255 {
+                        dist[idx] = d;
+                    }
+                }
+            }
+        };
+        mark(&seed, 0, &mut dist);
+        let mut frontier = vec![seed];
         let mut d = 0u8;
         while !frontier.is_empty() {
             let mut next = Vec::new();
-            for (cells, ml) in &frontier {
-                for a in 0..12 {
-                    for b in 0..12 {
-                        let rc = cells_rot(cells, a, b);
-                        let (pt, pb) = cells_patterns(&rc, kind);
-                        if !self.layer_valid[pt as usize] || !self.layer_valid[pb as usize] {
-                            continue;
-                        }
-                        let ch = cells_slash(&rc);
-                        let cml = ml ^ 1;
-                        let idx = self.cells_encode(&ch, cml, kind).expect("post-slash encodes");
+            for z in &frontier {
+                let ta = self.legal_rot[Sq1State::layer_pattern(z.top) as usize];
+                let tb = self.legal_rot[Sq1State::layer_pattern(z.bottom) as usize];
+                let mut am = ta;
+                while am != 0 {
+                    let a = am.trailing_zeros();
+                    am &= am - 1;
+                    let mut bm = tb;
+                    while bm != 0 {
+                        let b = bm.trailing_zeros();
+                        bm &= bm - 1;
+                        let y = z.turned(a, b).slashed();
+                        let idx = idx_of(self, &y);
                         if dist[idx] == 255 {
-                            dist[idx] = d + 1;
-                            // 旋转闭包:同轨道全部合法对位同距(不入队,子代由代表覆盖)。
-                            for ra in 0..12 {
-                                for rb in 0..12 {
-                                    if ra == 0 && rb == 0 {
-                                        continue;
-                                    }
-                                    let rch = cells_rot(&ch, ra, rb);
-                                    if let Some(ri) = self.cells_encode(&rch, cml, kind) {
-                                        if dist[ri] == 255 {
-                                            dist[ri] = d + 1;
-                                        }
-                                    }
-                                }
-                            }
-                            next.push((ch, cml));
+                            mark(&y, d + 1, &mut dist);
+                            next.push(y);
                         }
                     }
                 }
@@ -606,26 +829,23 @@ impl Sq1Solver {
         if rem == 0 {
             return self.is_goal(s);
         }
-        let tas: Vec<u32> = (0..12)
-            .filter(|&a| {
-                let p = Sq1State::layer_pattern(Sq1State::rotl(s.top, a));
-                p == SQ_PAT_A || p == SQ_PAT_B
-            })
-            .collect();
-        let tbs: Vec<u32> = (0..12)
-            .filter(|&b| {
-                let p = Sq1State::layer_pattern(Sq1State::rotl(s.bottom, b));
-                p == SQ_PAT_A || p == SQ_PAT_B
-            })
-            .collect();
-        for &a in &tas {
-            for &b in &tbs {
+        // 方形层的合法对位 = 保方形对位(切缝对齐 ⟺ pattern 仍是 A/B),共 8 个。
+        let ta = self.legal_rot[Sq1State::layer_pattern(s.top) as usize];
+        let tb = self.legal_rot[Sq1State::layer_pattern(s.bottom) as usize];
+        let mut am = ta;
+        while am != 0 {
+            let a = am.trailing_zeros();
+            am &= am - 1;
+            let mut bm = tb;
+            while bm != 0 {
+                let b = bm.trailing_zeros();
+                bm &= bm - 1;
                 if !allow00 && a == 0 && b == 0 {
                     continue; // 撤销上一刀,冗余(更短解在更小 T 已搜过)
                 }
                 let c = s.turned(a, b).slashed();
                 if !c.is_square_shape() {
-                    continue;
+                    continue; // 两层半相位不配,slash 交换半层后破方形
                 }
                 path.push((a as u8, b as u8));
                 if self.p2_dfs(&c, rem - 1, false, path) {
@@ -645,6 +865,13 @@ impl Sq1Solver {
         memo: &mut P2Memo,
         path: &mut Vec<(u8, u8)>,
     ) -> Option<u8> {
+        let mut t = self.sq_h(s);
+        if (t ^ s.ml) & 1 == 1 {
+            t += 1; // twist 距离奇偶 ≡ ml
+        }
+        if t > cap {
+            return None; // 便宜下界已判废,省 canon_key(144 旋转)+ memo 查询
+        }
         let key = s.canon_key();
         if let Some(&d) = memo.exact.get(&key) {
             if d <= cap {
@@ -653,10 +880,6 @@ impl Sq1Solver {
                 return Some(d);
             }
             return None;
-        }
-        let mut t = self.sq_h(s);
-        if (t ^ s.ml) & 1 == 1 {
-            t += 1; // twist 距离奇偶 ≡ ml
         }
         if let Some(&f) = memo.fail_below.get(&key) {
             t = t.max(f);
@@ -677,44 +900,62 @@ impl Sq1Solver {
         None
     }
 
-    /// phase-1 DFS(全态 slash 枚举 + 投影表剪枝 + 方形处试 phase-2 收尾)。
+    /// phase-1 DFS(全态 slash 枚举 + 联合投影表剪枝 + 方形处试 phase-2 收尾)。
+    /// 入参 pt/pb = s 的两层 pattern(调用方已算);h 剪枝在父节点对子节点做
+    /// (h_le 短路),存活子按 h 升序扩展(成功迭代尽快踩中解路径)。
     fn dfs1(
         &self,
         s: &Sq1State,
+        pt: u16,
+        pb: u16,
         rem: u8,
         allow00: bool,
         memo: &mut P2Memo,
         path: &mut Vec<(u8, u8)>,
     ) -> bool {
-        if s.is_square_shape() {
-            if self.p2_dist_le(s, rem, memo, path).is_some() {
-                return true;
-            }
+        let square = (pt == SQ_PAT_A || pt == SQ_PAT_B) && (pb == SQ_PAT_A || pb == SQ_PAT_B);
+        if square && self.p2_dist_le(s, rem, memo, path).is_some() {
+            return true;
         }
         if rem == 0 {
             return false;
         }
-        let (ci, ei) = self.proj(s).expect("dfs1 state must be slash-ready");
-        let h = self.cmem[ci].max(self.emem[ei]);
-        if h > rem {
-            return false;
-        }
-        let tas: Vec<u32> =
-            (0..12).filter(|&a| Sq1State::layer_clear(Sq1State::rotl(s.top, a))).collect();
-        let tbs: Vec<u32> =
-            (0..12).filter(|&b| Sq1State::layer_clear(Sq1State::rotl(s.bottom, b))).collect();
-        for &a in &tas {
-            for &b in &tbs {
+        // 收集存活子节点 (h, a, b, pt, pb),≤ 144 个,栈上定长。
+        let mut kids = [(0u8, 0u8, 0u8, 0u16, 0u16); 144];
+        let mut n = 0usize;
+        let ta = self.legal_rot[pt as usize];
+        let tb = self.legal_rot[pb as usize];
+        let mut am = ta;
+        while am != 0 {
+            let a = am.trailing_zeros();
+            am &= am - 1;
+            let mut bm = tb;
+            while bm != 0 {
+                let b = bm.trailing_zeros();
+                bm &= bm - 1;
                 if !allow00 && a == 0 && b == 0 {
                     continue;
                 }
                 let c = s.turned(a, b).slashed();
-                path.push((a as u8, b as u8));
-                if self.dfs1(&c, rem - 1, false, memo, path) {
-                    return true;
+                let cpt = Sq1State::layer_pattern(c.top);
+                let cpb = Sq1State::layer_pattern(c.bottom);
+                if let Some(ch) = self.h_le(&c, cpt, cpb, rem - 1) {
+                    // 排序键:h 升序,同 h 方形子优先(p2 有机会直接收尾)。
+                    let sq = (cpt == SQ_PAT_A || cpt == SQ_PAT_B)
+                        && (cpb == SQ_PAT_A || cpb == SQ_PAT_B);
+                    kids[n] = ((ch << 1) | (!sq as u8), a as u8, b as u8, cpt, cpb);
+                    n += 1;
                 }
-                path.pop();
             }
+        }
+        kids[..n].sort_unstable_by_key(|k| k.0);
+        for &(_, a, b, cpt, cpb) in &kids[..n] {
+            let c = s.turned(a as u32, b as u32).slashed();
+            path.push((a, b));
+            if self.dfs1(&c, cpt, cpb, rem - 1, false, memo, path) {
+                return true;
+            }
+            path.pop();
         }
         false
     }
@@ -741,15 +982,16 @@ impl Sq1Solver {
             }
             unreachable!("every layer has a slash-ready alignment");
         };
-        let (ci, ei) = self.proj(&root).expect("normalized root");
-        let mut t = self.cmem[ci].max(self.emem[ei]).max(1);
+        let rpt = Sq1State::layer_pattern(root.top);
+        let rpb = Sq1State::layer_pattern(root.bottom);
+        let mut t = self.h_le(&root, rpt, rpb, 255).unwrap().max(1);
         if (t ^ root.ml) & 1 == 1 {
             t += 1;
         }
         let mut memo = P2Memo { exact: HashMap::new(), fail_below: HashMap::new() };
         loop {
             let mut path: Vec<(u8, u8)> = Vec::new();
-            if self.dfs1(&root, t, true, &mut memo, &mut path) {
+            if self.dfs1(&root, rpt, rpb, t, true, &mut memo, &mut path) {
                 debug_assert_eq!(path.len(), t as usize);
                 let found = path.len() as u32; // 首次成功的实长(= t,防御性取实测)
                 // 装配:root 归一并入第一刀;逐刀 replay 取末态求对位。
@@ -1223,29 +1465,58 @@ mod tests {
     }
 
     /// 自基线(回归锁):投影表规模 / 最大值。改表逻辑必须显式改这里(review 信号)。
+    /// 2026-06-12 表结构变更:phase-1 剪枝从 max(角表 max 8, 棱表 max 9) 换成联合表
+    /// (shape × 角 mask × 棱 mask × ml,见模块头),16 刀深态搜索由 49min 级修到亚秒级;
+    /// 旧 cmem/emem 基线 (514920, 8)/(514920, 9) 随表删除,csq/esq 不变。
     #[test]
     fn sq1_tables_baselines() {
         let s = Sq1Solver::shared();
-        assert_eq!(s.cmem.len(), SHAPE_COUNT * 512);
-        assert_eq!(s.emem.len(), SHAPE_COUNT * 512);
+        assert_eq!(s.comb.len(), SHAPE_COUNT * 70 * 70); // nibble 打包(ml 对折)
+        assert_eq!(s.c4.len(), SHAPE_COUNT * 1680);
+        assert_eq!(s.e4.len(), SHAPE_COUNT * 1680);
+        assert_eq!(s.c4b.len(), SHAPE_COUNT * 1680);
+        assert_eq!(s.e4b.len(), SHAPE_COUNT * 1680);
         assert_eq!(s.csq.len(), 80640);
         assert_eq!(s.esq.len(), 80640);
+        // 打包表:逐 nibble 解包统计(15 = 不可达哨兵)。
+        let stats_packed = |t: &[u8]| -> (usize, u8) {
+            let mut reach = 0usize;
+            let mut mx = 0u8;
+            for &b in t {
+                for v in [b & 15, b >> 4] {
+                    if v != 15 {
+                        reach += 1;
+                        mx = mx.max(v);
+                    }
+                }
+            }
+            (reach, mx)
+        };
         let stats = |t: &[u8]| -> (usize, u8) {
             let reach = t.iter().filter(|&&v| v != 255).count();
             let mx = t.iter().filter(|&&v| v != 255).copied().max().unwrap();
             (reach, mx)
         };
-        let (c_reach, c_max) = stats(&s.cmem);
-        let (e_reach, e_max) = stats(&s.emem);
+        let (k_reach, k_max) = stats_packed(&s.comb);
+        let (c4_reach, c4_max) = stats_packed(&s.c4);
+        let (e4_reach, e4_max) = stats_packed(&s.e4);
+        let (c4b_reach, c4b_max) = stats_packed(&s.c4b);
+        let (e4b_reach, e4b_max) = stats_packed(&s.e4b);
         let (cs_reach, cs_max) = stats(&s.csq);
         let (es_reach, es_max) = stats(&s.esq);
-        eprintln!("cmem reach={} max={}", c_reach, c_max);
-        eprintln!("emem reach={} max={}", e_reach, e_max);
+        eprintln!("comb reach={} max={}", k_reach, k_max);
+        eprintln!("c4   reach={} max={}", c4_reach, c4_max);
+        eprintln!("e4   reach={} max={}", e4_reach, e4_max);
+        eprintln!("c4b  reach={} max={}", c4b_reach, c4b_max);
+        eprintln!("e4b  reach={} max={}", e4b_reach, e4b_max);
         eprintln!("csq  reach={} max={}", cs_reach, cs_max);
         eprintln!("esq  reach={} max={}", es_reach, es_max);
-        assert_eq!((c_reach, c_max), (0, 0), "fill after first run");
-        assert_eq!((e_reach, e_max), (0, 0), "fill after first run");
-        assert_eq!((cs_reach, cs_max), (0, 0), "fill after first run");
-        assert_eq!((es_reach, es_max), (0, 0), "fill after first run");
+        assert_eq!((k_reach, k_max), (36044400, 9)); // 全空间可达,投影直径 9
+        assert_eq!((c4_reach, c4_max), (12358080, 9));
+        assert_eq!((e4_reach, e4_max), (12358080, 9));
+        assert_eq!((c4b_reach, c4b_max), (12358080, 9));
+        assert_eq!((e4b_reach, e4b_max), (12358080, 9));
+        assert_eq!((cs_reach, cs_max), (80640, 7));
+        assert_eq!((es_reach, es_max), (80640, 7));
     }
 }
