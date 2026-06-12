@@ -1,0 +1,3 @@
+[workspace]
+members = ["cubelib", "cubelib-server"]
+resolver = "2"

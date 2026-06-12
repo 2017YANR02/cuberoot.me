@@ -189,9 +189,20 @@ const nextConfig: NextConfig = {
         // Route every real id to that shell so the page never SSRs per request;
         // the client reads the real id from window.location. URL bar is unchanged
         // (rewrite, not redirect). See persons/[wcaId]/page.tsx.
-        { source: "/:lang(en|zh)/wca/persons/:wcaId", destination: "/:lang/wca/persons/_" },
+        { source: "/:lang(en|zh-Hant|zh)/wca/persons/:wcaId", destination: "/:lang/wca/persons/_" },
+        // Colpi letter-pair detail: same sentinel-shell trick as persons above.
+        // Crawlers enumerate the pair space; without this each pair URL burns a
+        // function render after every deploy (per-deployment ISR cache reset).
+        { source: "/:lang(en|zh-Hant|zh)/memo/colpi/:pair", destination: "/:lang/memo/colpi/_" },
       ],
       afterFiles: [
+        // Dev only: FMC chain solver (vendored cubelib) runs as a local native
+        // service on :8099 — proxy /v1/fmc/* to it so ChainExplorer can fetch it
+        // without CORS. Must precede the general /v1 rule. In prod this falls
+        // through to api.cuberoot.me/v1/fmc/* (nginx routes /v1/fmc → cubelib-server).
+        ...(process.env.NODE_ENV === "development"
+          ? [{ source: "/v1/fmc/:path*", destination: "http://127.0.0.1:8099/:path*" }]
+          : []),
         // Dev: proxy backend so loadAlg() etc. don't trip CORS from 127.0.0.1.
         // In prod, apiUrl() builds absolute https://api.cuberoot.me URLs directly.
         { source: "/v1/:path*", destination: "https://api.cuberoot.me/v1/:path*" },

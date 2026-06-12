@@ -1,0 +1,15 @@
+[package]
+name = "cubelib-server"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "cubelib-server"
+path = "src/main.rs"
+
+[dependencies]
+cubelib = { path = "../cubelib", default-features = false, features = ["solver", "serde_support", "333finish", "fs"] }
+tiny_http = "0.12"
+
+[profile.release]
+opt-level = 3

@@ -1,0 +1,90 @@
+# 部署 FMC 求解器(vendored cubelib，joba.me/mallard 同款引擎，经作者授权)到云服务器
+# systemd cubelib-fmc(127.0.0.1:8099），nginx api.cuberoot.me 反代 /v1/fmc/ → 此服务。
+# 静态 musl 编译(免 glibc 版本依赖，GH runner glibc 比服务器 alinux3 新)+ avx2。
+# 服务器拉不到 GitHub，build 必须在 CI 跑。
+name: Deploy FMC solver
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'fmc/**'
+      - 'ops/systemd/cubelib-fmc.service'
+      - '.github/workflows/deploy_fmc.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            fmc
+            ops
+          filter: blob:none
+
+      - name: Install Rust nightly + musl target
+        run: |
+          rustup toolchain install nightly --profile minimal
+          rustup target add x86_64-unknown-linux-musl --toolchain nightly
+          sudo apt-get update && sudo apt-get install -y musl-tools
+
+      # rust-toolchain.toml pins nightly; .cargo/config.toml sets +avx2 for every
+      # target (server CPU has avx2, confirmed). Static musl = runs on any glibc.
+      - name: Build cubelib-server (musl static + avx2)
+        working-directory: fmc
+        run: |
+          cargo build --release --target x86_64-unknown-linux-musl -p cubelib-server
+          BIN=target/x86_64-unknown-linux-musl/release/cubelib-server
+          ls -la "$BIN"
+          file "$BIN" || true
+
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id
+          chmod 600 ~/.ssh/id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: scp binary + systemd unit
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          scp -i ~/.ssh/id fmc/target/x86_64-unknown-linux-musl/release/cubelib-server \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cubelib-server.new"
+          scp -i ~/.ssh/id ops/systemd/cubelib-fmc.service \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cubelib-fmc.service"
+
+      - name: Deploy + restart + healthcheck (auto-rollback)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          set -e
+          mkdir -p /www/wwwroot/cubelib-fmc
+          LIVE=/www/wwwroot/cubelib-fmc/cubelib-server
+          [ -f "$LIVE" ] && cp "$LIVE" "$LIVE.bak" || true
+          chmod +x /tmp/cubelib-server.new
+          mv /tmp/cubelib-server.new "$LIVE"
+          cp /tmp/cubelib-fmc.service /etc/systemd/system/cubelib-fmc.service
+          systemctl daemon-reload
+          systemctl enable cubelib-fmc >/dev/null 2>&1 || true
+          systemctl restart cubelib-fmc
+          sleep 4
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:8099/solve?scramble=R%20U%20F%20R%27&steps=EO%20%3E%20DR%20%3E%20HTR%20%3E%20FIN&count=1" || echo 000)
+          echo "healthcheck HTTP $CODE"
+          if [ "$CODE" != "200" ]; then
+            echo "DEPLOY FAILED — rolling back"
+            if [ -f "$LIVE.bak" ]; then mv "$LIVE.bak" "$LIVE"; systemctl restart cubelib-fmc; fi
+            systemctl status cubelib-fmc --no-pager -l | tail -20 || true
+            exit 1
+          fi
+          rm -f "$LIVE.bak"
+          echo "FMC deploy OK"
+          REMOTE
