@@ -201,11 +201,15 @@
 }
 
 @media (max-width: 600px) {
+    .donate-modal {
+        padding: 1.25rem 1rem 1rem;
+    }
+    /* Keep the two QRs side by side so they don't dominate the viewport; let
+       flex split the width evenly instead of forcing the 220px desktop cap. */
     .donate-qr-row {
-        flex-direction: column;
-        align-items: center;
+        gap: 0.6rem;
     }
     .donate-qr {
-        max-width: 260px;
+        max-width: none;
     }
 }

@@ -894,8 +894,6 @@ export default function DeskPet() {
           onCycleChar={cycleChar}
           onCycleSize={cycleSize}
           onToggleRest={() => { if (resting) ctrlRef.current?.wake(); else ctrlRef.current?.rest(); }}
-          onResetPos={() => ctrlRef.current?.resetPos()}
-          onCling={() => { ctrlRef.current?.cling(); setSearchOpen(false); }}
           onHide={() => { setHidden(true); setSearchOpen(false); }}
           randomMode={randomMode}
           onToggleRandom={toggleRandom}
