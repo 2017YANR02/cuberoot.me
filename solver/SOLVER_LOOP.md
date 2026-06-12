@@ -117,7 +117,8 @@
 > 最重的一个,与前三只 puzzle 的"全表 BFS"模板不同:走双阶段 search + `SquarePrun` 式剪枝表(几 MB 级内存表,仍零盘表目标;若推导出需 >1G 落盘表 → 停,按 §0.10 大表特例红灯问用户)。打乱记号 `(x,y)` twist 对 + `/` slash;步数度量先按 cstimer 口径推导(slash 计 1 步,twist 计法在 P5a 定死并对公开 God 数核验)。cubing.js sq1 kpuzzle 比对注意 P4d 的中心自转坑同类问题 + memory 提的 sr-puzzlegen sq1 渲染坑(预览用现有 `_svg/sq1_svg.ts` / `lib/sq1-svg.ts`)。
 - [x] **P5a** Rust 核心 `sq1_solver.rs`(key `sq1`,shape/层状态模型,双阶段 search + 剪枝表)。门:cargo test --release sq1 绿,含独立暴力对照(浅层 IDDFS oracle)+ 已知最优案例核验;God 数/分布对公开数据(twist metric 口径写死)。✅ 2026-06-12 `5b7c44950`(实现)+ `0e740eaf5`(性能修复+基线回填)。cstimer SqCubie 同构模型;twist 口径定死(slash=1、层转=0,God 数 13 对 jaapsch 锁死,另用 face-turn metric 深度 0..6 分布锁机械正确性);双阶段 IDDFS,phase-1 五张全空间投影精确表取 max(~43MB nibble 打包现场 BFS,零盘表),phase-2 限方形子群;6/6 绿(oracle/已知最优/公开分布/round-trip/基线)+ 全量 lib 132/0;16 刀深游走最差 7.3s(初版 49min 爆炸已修),典型随机态(d≈10-11)秒级。⚠ P5b/P5c 百万态灌注嫌慢的话:根节点 8 线程并行预计再 ~5×,或批量层并行。
 - [x] **P5b** analyzer bin `sq1_analyzer.rs` + `tests/e2e_sq1.rs`(raw 通道,吃全 WCA sq1 记号 `(x,y)/`)。门:e2e 绿 + smoke 形状对。✅ 2026-06-12 `d104a7a16`(2 文件,executor 零改动)。bin 3 单测(round-trip×20 / 手算边角含 `(0,0)` 容忍 / 字符串通道 vs lib 直查×12)+ e2e 双 baseline(真实 WCA 5 条锁 11,9,10,9,11 含悬挂 `/`;手算 5 条锁 0,1,1,0,0);P5a 6/6 + 全量 lib 132/0 未塌;smoke 全 ≤13。⚠ P5c/灌注预警:单态时长方差大(多数 0.05~4s,少数 d=11/12 态 45~95s,24 条实测),百万态全量前需根节点并行或批量层并行;executor 按首个逗号切 id,sq1 记号含逗号 → **输入行必须带显式 id**(管道语料恒有)。
-- [ ] **P5c** 统计管线:PUZZLES 注册表加 sq1(event_id `sq1`)+ 小样本验形。门:端到端小样本绿。
+- [x] **P5c** 统计管线:PUZZLES 注册表加 sq1(event_id `sq1`)+ 小样本验形。门:端到端小样本绿。✅ 2026-06-12 `84ee30e18`(3 文件)。PUZZLES 加 sq1(label Square-1 / SQ1,metric `twist`,叫法对齐全站口径);raw batch 本就 rayon 并行但单态单线程(并行摊量不削尾);两跑绿(首跑 49 条 830s + 增量 1 条 23s),dist 9..12 峰值 11(24/52),God 13 内,与 P5b smoke 吻合;client 契约零改动。⚠ **实测灌注成本远超 P5b 预警**:WCA 随机态平均 ~200 CPU-s/态 + 病态长尾(单态 10min+ 未出解被杀,300 条块 8 线程 37min 未完,尾部主导);样本因此收缩到 52,29 条病态/未测在本地 scratch csv 以 `-` 占位。**全量灌注前置:先做根节点并行(P5a 预留 ~5×)/更强启发式;灌注时清空 `D:\cube\scramble\puzzle\sq1\` 重来或显式回填 `-` 行。**
+- [ ] **⏸ soft-gate(P5d 设计,2026-06-12)** 原 spec 假设「求解耗时若秒级需 loading 态」被 P5c 实测打破(平均 ~200 CPU-s/态 + 10min+ 长尾,WASM 估计再慢 2-3×),在线最优求解器对随机打乱不可用。四选一见 §3,等用户拍板后改写 P5d 再继续。
 - [ ] **P5d** WASM 类 + 重建仪式 + `/scramble/sq1`(PuzzleOptimalSolver 新 spec;预览走现有 sq1 svg;求解耗时若秒级需 loading 态)。门:typecheck + node 冒烟相等 + playwright(replay 独立验证,注意 kpuzzle 等价口径)。
 - [ ] **P5e** 看板登记 + **📦 MANUAL(SQ1)** 交接写 §3。门:typecheck + code-tokens-drift 绿。
 
@@ -161,6 +162,7 @@
 - 2026-06-11 — **P4e** skewb 看板登记,`abf2cb466`。typecheck + 39 守卫绿。**EPIC 3.3 完成**,MANUAL(Skewb) 交接入 §3;EPIC 3.4(SQ1)细化为 P5a–P5e。**本 session 连续推进 14 单元(P2b–P4e),按 §0.7 安全网停一次,/clear 重 /loop 续(下一个 = P5a,SQ1 双阶段,最重)。**
 - 2026-06-12 — **P5a** SQ1 Rust 核心,`5b7c44950`(实现,被并行 session 打包)+ `0e740eaf5`(性能修复+基线回填)。过程:两个子 agent 先后死于"后台等测试不收尾"(主 loop 直接接管基线回填);初版 16 刀深态 IDDFS 爆炸(单态 49min 单核满载,实测后杀),聚焦修复换五张全空间投影表 max 启发式(节点数 16.5 万倍削减)后最差 7.3s;6/6 + 全量 lib 132/0。教训已写派发模板:cargo 一律前台跑 + 10min 自断。下一个 = P5b。
 - 2026-06-12 — **P5b** sq1 analyzer + e2e,`d104a7a16`。raw 通道照 pyraminx 范本;真实 WCA 5 条 + 手算 5 条双 baseline 锁死;全量 132/0。预警:单态方差大(少数深态 45~95s),灌注侧需并行(写进 P5b 行 + P5c 判断)。下一个 = P5c。
+- 2026-06-12 — **P5c** sq1 统计管线,`84ee30e18`。两跑绿(49+1 条),dist 峰值 11;实测平均 ~200 CPU-s/态 + 病态长尾 → P5d「秒级」设计前提被打破,挂 ⏸ soft-gate(§3 四选一),**loop 按协议停,等用户拍板**。(build_puzzle_dist.ts 的 node 类型诊断仍为 P2c 已记录的 LSP 误报。)
 
 ---
 
@@ -228,6 +230,13 @@
 **✅ 2026-06-11 用户拍板(覆盖上面"无落点"结论)**:四个全做 + **接统计管道**。修正:调研把"无 3x3 多阶段语义"误当成"无管道落点",漏了对这些 puzzle 最自然的单阶段管道统计 = **整解最优步数分布**(WCA 打乱语料喂最优 solver,最优解长度分桶,即 cross-stats 的 puzzle 级单阶段版,这些都是 WCA 项目、语料现成)。接管道也正好让 Rust native 引擎有价值(批量跑百万打乱,cstimer JS 那条省事路不适用)。已展开 EPIC 3.1–3.4(见 §1),顺序 2x2x2→Pyraminx→Skewb→SQ1。**灌注 + 发布仍 MANUAL**。
 
 ---
+
+- **⏸ P5d 设计 soft-gate(2026-06-12,等用户拍板)**:P5c 实测 WCA 随机态 twist 最优求解平均 ~200 CPU-s/态、病态长尾 10min+(浏览器 WASM 估计再慢 2-3 倍),`/scramble/sq1` 在线「最优」求解器对随机打乱基本不可用,P5d 原设计前提(秒级 + loading 态)不成立。四选一:
+  - **(A) 双轨 UX**:秒出近似解(需新写 cstimer 式两阶段非最优快解,新工程量约一个子单元)+ 后台继续证最优、可取消——同 FMC 流式先例(`048fb9f93`)。
+  - **(B) 限时最优(最省)**:浏览器 ≤10s 截断,超时显示「状态太深」+ 已证下界;零新引擎工作,页面功能打折。
+  - **(C) 先插 P5a+ 性能单元**:根节点并行 + MITM/更强启发式,目标平均 <5s/态,再按原 spec 做 P5d;管线全量灌注同受益(灌注侧反正需要它)。
+  - **(D) 弃在线求解器**:P5d 缩为纯 WASM 类 + 分布展示,无交互求解。
+  - 推荐:**(C),若仍超秒级再叠 (A)**;只想快点收尾就 (B)。灌注(MANUAL)无论选哪个都建议先做 (C) 的并行部分。
 
 ## §4 测试 / 验证欠账(append-only,内存宽松时优先回补)
 
