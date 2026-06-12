@@ -16,6 +16,7 @@ import { exportSimVideo, type ExportProgress } from './sim_export';
 import './director-panel.css';
 import { tr } from '@/i18n/tr';
 import i18n from "@/i18n/i18n-client";
+import { useT } from "@/hooks/useT";
 
 interface Props {
   getCanvas: () => HTMLCanvasElement | null;
@@ -39,7 +40,7 @@ function download(blob: Blob, name: string): void {
 export default function DirectorPanel({ getCanvas, getWorld, getRenderer, setup, alg }: Props) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
 
   const [exporting, setExporting] = useState(false);
   const [progress, setProgress] = useState<ExportProgress | null>(null);

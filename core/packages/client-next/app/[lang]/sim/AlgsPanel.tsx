@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { ALG_CATALOG, loadAlg, type AlgPuzzle, type AlgFile, type AlgCase } from '@cuberoot/shared';
 import './algs-panel.css';
 import i18n from '@/i18n/i18n-client';
+import { useT } from "@/hooks/useT";
 
 interface Props {
   onSelect: (setup: string, alg: string, caseName: string) => void;
@@ -29,8 +30,7 @@ const PUZZLES_SUPPORTED: AlgPuzzle[] = ['2x2', '3x3', '4x4', '5x5'];
 
 export default function AlgsPanel({ onSelect, onOrderChange, disabled = false }: Props) {
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
 
   const [puzzle, setPuzzle] = useState<AlgPuzzle>('3x3');
   const sets = ALG_CATALOG[puzzle] ?? [];

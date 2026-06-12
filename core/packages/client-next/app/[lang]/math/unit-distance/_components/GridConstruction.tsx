@@ -14,6 +14,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from "@/i18n/i18n-client";
+import { useT } from "@/hooks/useT";
 
 const VIEW = 420;
 const PAD = 24;
@@ -54,7 +55,7 @@ function countUnitPairs(s: number, k: number): Edge[] {
 export default function GridConstruction() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
 
   const [s, setS] = useState(7);
   const [k, setK] = useState(5);

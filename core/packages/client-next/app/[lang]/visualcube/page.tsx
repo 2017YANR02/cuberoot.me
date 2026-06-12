@@ -65,6 +65,7 @@ import {
 import { renderUnfoldedSvg } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
 import { tr } from '@/i18n/tr';
 import i18n from "@/i18n/i18n-client";
+import { useT } from "@/hooks/useT";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -721,9 +722,8 @@ function CopyButton({ getValue, label }: { getValue: () => string; label: string
 
 function VisualCubeEditorPageInner() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
   useDocumentTitle('魔方可视化', 'VisualCube', "魔方視覺化");
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
 
   // nuqs owns every URL key this page reads/writes (history: 'replace').
   const [urlParams, setUrlParams] = useQueryStates(URL_KEYS, { history: 'replace', scroll: false });

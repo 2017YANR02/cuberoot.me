@@ -28,6 +28,7 @@ import { TeX, TeXBlock } from '../god/_components/Tex';
 import { PAPER_MEAN, PAPER_TOTAL } from './_components/DistanceHistogram';
 import './demigod.css';
 import i18n from "@/i18n/i18n-client";
+import { useT } from "@/hooks/useT";
 
 const HoeffdingExplorer = lazy(() => import('./_components/HoeffdingExplorer'));
 const DistanceHistogram = lazy(() => import('./_components/DistanceHistogram'));
@@ -64,7 +65,7 @@ const TOTAL_205 = BEGINNERS_205.reduce((a, b) => a + b[2], 0);
 export default function DemigodPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
   useDocumentTitle('半神之数 (Demigod\'s Number)', "Demigod's Number", "半神之數 (Demigod's Number)");
 
   // Hoeffding explorer state (lifted so Theorem 1 readout stays in sync)

@@ -54,6 +54,7 @@ import {
 } from './keymap';
 import './sim.css';
 import i18n from "@/i18n/i18n-client";
+import { useT } from "@/hooks/useT";
 
 /** Twisty puzzles rendered by cubing.js (not the local cuber engine). */
 export const TWISTY_PUZZLES = ['pyraminx', 'skewb', 'megaminx'] as const;
@@ -114,8 +115,7 @@ interface SimCubeMin {
 
 export default function SimPage() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = useT();
   useDocumentTitle('模拟器', 'Sim', "模擬器");
 
   // Sim editor state in the URL (replace semantics — not navigation).

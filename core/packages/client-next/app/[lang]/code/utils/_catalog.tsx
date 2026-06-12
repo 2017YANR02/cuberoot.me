@@ -39,6 +39,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Sets the document title (CubeRoot suffix, resets on unmount), SSR-safe.',
   },
   {
+    name: 'useT',
+    sig: 'useT(): (zh: string, en: string, zhHant?: string) => string',
+    imp: "import { useT } from '@/hooks/useT';",
+    usage: "const t = useT(); t('图案集', 'Patterns');",
+    category: 'hook',
+    zh: '共享三路翻译器:zh-Hant 取第三参(缺则回退简体),其余按 isZh 二选一。第三参繁体一律 OpenCC 生成(pnpm zh:gen-localt),禁手写。',
+    en: 'Shared 3-way translator: zh-Hant uses the 3rd arg (falls back to zh), else isZh picks. The Traditional 3rd arg is OpenCC-generated, never hand-typed.',
+  },
+  {
     name: 'useIsMobile',
     sig: 'useIsMobile(maxWidth = 768): boolean',
     imp: "import { useIsMobile } from '@/hooks/useIsMobile';",
