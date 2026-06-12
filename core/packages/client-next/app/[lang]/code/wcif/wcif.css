@@ -1,0 +1,168 @@
+.wcif-page {
+    max-width: 56rem;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 4rem;
+    color: var(--foreground);
+}
+
+.wcif-topbar {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 2rem;
+    font-size: 0.85rem;
+}
+.wcif-back {
+    color: var(--muted-foreground);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.wcif-back:hover { color: var(--accent); }
+
+/* ── hero ── */
+.wcif-hero { margin-bottom: 2.5rem; }
+.wcif-hero-route {
+    font-family: 'Roboto Mono', ui-monospace, monospace;
+    font-size: 0.8rem;
+    color: var(--muted-foreground);
+    margin-bottom: 0.5rem;
+}
+.wcif-hero-title {
+    font-family: 'Roboto Mono', ui-monospace, monospace;
+    font-size: clamp(2.4rem, 8vw, 3.6rem);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin: 0;
+    line-height: 1;
+}
+.wcif-hero-sub {
+    font-size: 1rem;
+    color: var(--muted-foreground);
+    margin: 0.4rem 0 0;
+}
+.wcif-hero-tagline {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin: 1rem 0 0;
+    max-width: 44rem;
+}
+.wcif-hero-meta {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 1rem;
+    font-size: 0.82rem;
+    color: var(--muted-foreground);
+}
+.wcif-hero-meta a { color: var(--accent); text-decoration: none; }
+.wcif-hero-meta a:hover { text-decoration: underline; }
+.wcif-meta-sep { color: var(--border-default); }
+
+/* ── sections ── */
+.wcif-section { margin-top: 2.5rem; }
+.wcif-section > h2 {
+    font-size: 1.3rem;
+    font-weight: 650;
+    margin: 0 0 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border-default);
+}
+.wcif-section > h3 {
+    font-family: 'Roboto Mono', ui-monospace, monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 1.5rem 0 0.5rem;
+}
+.wcif-section > p {
+    font-size: 0.92rem;
+    line-height: 1.7;
+    margin: 0.6rem 0;
+}
+.wcif-note {
+    font-size: 0.85rem;
+    color: var(--muted-foreground);
+    border-left: 2px solid var(--border-default);
+    padding-left: 0.8rem;
+}
+.wcif-section-accent > h2 { border-bottom-color: var(--accent); }
+
+/* ── table ── */
+.wcif-table-wrap { overflow-x: auto; margin: 0.75rem 0; }
+.wcif-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+.wcif-table th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    padding: 0.4rem 0.7rem;
+    border-bottom: 1px solid var(--border-default);
+    white-space: nowrap;
+}
+.wcif-table td {
+    padding: 0.45rem 0.7rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-default) 50%, transparent);
+    vertical-align: top;
+    line-height: 1.55;
+}
+.wcif-field-k code {
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+}
+.wcif-field-t code {
+    color: var(--muted-foreground);
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+.wcif-field-d { min-width: 16rem; }
+.wcif-table code {
+    font-family: 'Roboto Mono', ui-monospace, monospace;
+    background: none;
+    padding: 0;
+}
+
+/* ── code block ── */
+.wcif-code {
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+    font-family: 'Roboto Mono', ui-monospace, monospace;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    margin: 0.9rem 0;
+}
+.wcif-code code { background: none; padding: 0; white-space: pre; }
+
+/* ── list ── */
+.wcif-list {
+    margin: 0.6rem 0;
+    padding-left: 1.2rem;
+    font-size: 0.92rem;
+    line-height: 1.8;
+}
+.wcif-list li { margin: 0.3rem 0; }
+.wcif-list strong { color: var(--accent); font-weight: 600; }
+
+/* ── footer ── */
+.wcif-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-default);
+    font-size: 0.85rem;
+}
+.wcif-foot a { color: var(--accent); text-decoration: none; }
+.wcif-foot a:hover { text-decoration: underline; }
+
+@media (max-width: 600px) {
+    .wcif-page { padding: 1rem 0.9rem 3rem; }
+    .wcif-field-d { min-width: 12rem; }
+}
