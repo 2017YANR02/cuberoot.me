@@ -186,7 +186,7 @@
   font-weight: 500;
   font-size: 0.95rem;
 }
-.comp-recent-slug { font-size: 0.8rem; color: var(--muted-foreground); font-family: ui-monospace, monospace; }
+.comp-recent-slug { font-size: 0.8rem; color: var(--muted-foreground); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 
 .comp-recent-remove {
   padding: 8px 10px;

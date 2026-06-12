@@ -21,6 +21,8 @@ export interface UpcomingCompRecord {
   url: string;
   /** event 短码 → 该项目轮次数（来自 WCIF 公开端点）；老 dump 缺时为空对象 */
   rounds?: Record<string, number>;
+  /** event 短码 → 该项目报名人数（WCIF persons[].registration.eventIds 聚合）；老 dump 缺省 */
+  event_regs?: Record<string, number>;
 }
 
 export interface PastCompRecord {
@@ -40,6 +42,8 @@ export interface PastCompRecord {
   competitors?: number;
   /** 人数上限（competitions.competitor_limit）；0 / 缺省 = 无上限 */
   competitor_limit?: number;
+  /** event 短码 → 该项目实际参赛人数（results 按 event DISTINCT person_id）；老 dump 缺省 */
+  event_regs?: Record<string, number>;
 }
 
 export async function fetchAllUpcomingCompsJson(): Promise<UpcomingCompRecord[]> {

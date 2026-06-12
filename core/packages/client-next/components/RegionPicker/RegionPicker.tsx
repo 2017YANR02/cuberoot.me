@@ -174,6 +174,22 @@ export function RegionPicker(props: RegionPickerProps) {
     else (props as SingleProps).onChange('world');
     closeAndClear();
   };
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') { closeAndClear(); return; }
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (showWorld) { clearAll(); return; }
+    if (continentsFiltered.length > 0) {
+      const c = continentsFiltered[0];
+      if (isMulti) { toggleMultiContinent(c.code); closeAndClear(); }
+      else selectSingle(c.slug);
+      return;
+    }
+    if (countriesFiltered.length > 0) {
+      if (isMulti) { toggleMultiCountry(countriesFiltered[0]); closeAndClear(); }
+      else selectSingle(countriesFiltered[0]);
+    }
+  };
 
   const isWorldActive = isMulti ? multiTokens.length === 0 : (!singleVal || singleVal === 'world');
   const isContinentActive = (c: ContinentInfo) =>
@@ -196,6 +212,7 @@ export function RegionPicker(props: RegionPickerProps) {
               autoFocus
               value={q}
               onChange={(e) => setQ(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
               placeholder={searchText}
             />
           </div>
