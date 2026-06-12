@@ -1,66 +1,76 @@
 'use client';
 
 /**
- * ChainExplorer — mallard 式 FMC 分步还原链浏览器(analyzer 底部挂载)。
+ * ChainExplorer — mallard 式 FMC 分步还原链(analyzer 底部挂载)。
  *
- * EO → DR → HTR → [FR] → Finish 链式求解(Rust→WASM ChainSolverWasm,零表下载,
- * 距离表 worker 内现场建)。逐阶段可调:轴(UD/FB/LR)、枚举窗口 extra(最优+N)、
- * 可选步数上限、候选数 cap、NISS(允许整步落在 inverse 打乱上,默认开;Finish 强制
- * 关);FR 默认关(首次启用建表 ~10s)。inverse 侧步骤按 mallard 记号括号渲染
- * `(R U)`,每链下方给出线性化最终解 `Solution (N): ...`(= N ++ rev_inv(I),normal
- * 打乱上的单序列),播放器一律走线性化序列。每步可「排除」——把该步的累计双侧
- * 序列对(`累计N|累计I`,与引擎 is_excluded 的 pair 语义一致)加进该阶段 excluded
- * 黑名单(只回喂引擎自己产出的串)并自动重算。所有链共用一个 3D 播放器(点链/
- * 点步加载),不开 N 个 WebGL。
+ * 引擎 = 自有服务器跑的 cubelib(joba.me/mallard 同款,经作者授权 vendoring 进
+ * `fmc/`),走 HTTP `GET /v1/fmc/solve?scramble=…&steps=…&count=…`(dev 经 next
+ * rewrite 反代本地 :8099,prod 经 nginx 反代到 systemd cubelib-server)。所以 NISS
+ * 段前/段内、RZP 行、HTR 子集 `[4a1 4e]`、insertions 等全部与 mallard 逐位一致。
+ *
+ * 布局复刻 mallard:Steps 标签(EO/DR/HTR/FR/Finish)+ 每步卡片(Step length 双
+ * 滑块 → cubelib min-abs/max-abs、Variations 轴 → substeps、NISS 双开关 before/
+ * during → never/before/always)→ Solution 等宽面板(逐步 `normal (inverse) //
+ * variant [comment] (len/cum)` + `Solution (N): …`)→ Exclude Solutions 标签(禁用
+ * 某步解 → excl 参数,重算)。共用一个 3D 播放器。
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, Ban, X, Play } from 'lucide-react';
+import { Loader2, Ban, X, Play, ChevronDown, Plus } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
-import type { ChainResult, ChainStepResult, RustCrossPool } from '@/lib/rust-cross-client';
-import { getRustCrossPool, poolSizeForDevice } from '@/lib/rust-cross-pool';
+import PillToggle from '@/components/PillToggle/PillToggle';
+import { apiUrl } from '@/lib/api-base';
 import { normalizeScramble } from '@/lib/cross-solver';
 import './ChainExplorer.css';
 
 type StageKey = 'eo' | 'dr' | 'htr' | 'fr' | 'fin';
+type ConfStage = 'eo' | 'dr' | 'htr' | 'fr';
 type Axis = 'ud' | 'fb' | 'lr';
 
 interface StageUI {
   axes: Axis[];
-  /** 枚举窗口:该轴最优 + extra(引擎语义:min 超过最优+extra 必空,故不暴露 min)。 */
-  extra: number;
-  /** 可选步数上限;null = 不限。 */
-  max: number | null;
-  /** 本阶段跨轴合并后保留候选数(≤10,更深组合爆炸)。 */
-  cap: number;
-  /** NISS-Before:允许整步落在 inverse 打乱上(引擎默认开;Finish 强制关)。 */
-  niss: boolean;
+  min: number;
+  max: number;
+  nissBefore: boolean;
+  nissDuring: boolean;
+}
+
+interface FmcStep {
+  kind: string;
+  variant: string;
+  normal: string;
+  inverse: string;
+  comment: string;
+  len: number;
+  cum: number;
+}
+interface FmcSolution {
+  steps: FmcStep[];
+  solution: string;
+  total: number;
 }
 
 const AXES: Axis[] = ['ud', 'fb', 'lr'];
 const AXIS_LABEL: Record<Axis, string> = { ud: 'UD', fb: 'FB', lr: 'LR' };
-const EXTRA_OPTIONS = [0, 1, 2, 3, 4];
-const CAP_OPTIONS = [1, 3, 5, 10];
-const MAX_CHAINS_OPTIONS = [5, 10, 20];
+const STEP_TRACK: Record<ConfStage, number> = { eo: 8, dr: 12, htr: 14, fr: 11 };
+const COUNT = 10;
 
-// 引擎默认(solver/src/chain_solver.rs ChainConfig::default):eo extra1 cap5 /
-// dr extra0 cap5 / htr extra1 cap3 / fr extra0,niss 全开;fin 固定 extra0 cap1
-// niss 关,不可调。
-const STAGE_DEFAULTS: Record<'eo' | 'dr' | 'htr' | 'fr', StageUI> = {
-  eo: { axes: AXES, extra: 1, max: null, cap: 5, niss: true },
-  dr: { axes: AXES, extra: 0, max: null, cap: 5, niss: true },
-  htr: { axes: AXES, extra: 1, max: null, cap: 3, niss: true },
-  fr: { axes: AXES, extra: 0, max: null, cap: 3, niss: true },
+const STAGE_DEFAULTS: Record<ConfStage, StageUI> = {
+  eo: { axes: AXES, min: 0, max: STEP_TRACK.eo, nissBefore: true, nissDuring: true },
+  dr: { axes: AXES, min: 0, max: STEP_TRACK.dr, nissBefore: true, nissDuring: false },
+  htr: { axes: AXES, min: 0, max: STEP_TRACK.htr, nissBefore: true, nissDuring: false },
+  fr: { axes: AXES, min: 0, max: STEP_TRACK.fr, nissBefore: true, nissDuring: false },
 };
 
-const STAGE_ROWS: { key: 'eo' | 'dr' | 'htr' | 'fr'; label: string }[] = [
+const TABS: { key: StageKey; label: string }[] = [
   { key: 'eo', label: 'EO' },
   { key: 'dr', label: 'DR' },
   { key: 'htr', label: 'HTR' },
   { key: 'fr', label: 'FR' },
+  { key: 'fin', label: 'Finish' },
 ];
 
-function initStages(): Record<'eo' | 'dr' | 'htr' | 'fr', StageUI> {
+function initStages(): Record<ConfStage, StageUI> {
   return {
     eo: { ...STAGE_DEFAULTS.eo, axes: [...STAGE_DEFAULTS.eo.axes] },
     dr: { ...STAGE_DEFAULTS.dr, axes: [...STAGE_DEFAULTS.dr.axes] },
@@ -73,7 +83,7 @@ function fmtMs(ms: number): string {
   return ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${Math.round(ms)}ms`;
 }
 
-/** rev_inv 的 move 串镜像(同引擎):倒序 + 翻转后缀 '' ↔ "'"(U2 不变)。 */
+/** rev_inv 的 move 串镜像:倒序 + 翻转后缀 '' ↔ "'"(U2 不变)。 */
 function revInv(tokens: string[]): string[] {
   return tokens
     .slice()
@@ -81,19 +91,75 @@ function revInv(tokens: string[]): string[] {
     .map((m) => (m.endsWith('2') ? m : m.endsWith("'") ? m.slice(0, -1) : `${m}'`));
 }
 
-/** 截至第 upto 步(不含)的线性化序列(normal 打乱上):N ++ rev_inv(I)。 */
-function linearize(steps: ChainStepResult[], upto: number): string {
+/** 截至第 upto 步(含)的线性化序列(normal 打乱上):N ++ rev_inv(I)。 */
+function linearizePrefix(steps: FmcStep[], upto: number): string {
   const n: string[] = [];
   const i: string[] = [];
-  for (const s of steps.slice(0, upto)) {
-    if (s.m) (s.inv ? i : n).push(...s.m.split(' '));
+  for (const s of steps.slice(0, upto + 1)) {
+    if (s.normal) n.push(...s.normal.split(' '));
+    if (s.inverse) i.push(...s.inverse.split(' '));
   }
   return [...n, ...revInv(i)].join(' ');
 }
 
-/** 整链线性化最终解:优先引擎下发的 solution,缺(旧 worker)则本地拼。 */
-function chainSolution(c: ChainResult): string {
-  return c.solution || linearize(c.steps, c.steps.length);
+/** 该步在 mallard 记号下的 move 串:`normal (inverse)`(空则 '—')。 */
+function stepMoves(s: FmcStep): string {
+  const parts: string[] = [];
+  if (s.normal) parts.push(s.normal);
+  if (s.inverse) parts.push(`(${s.inverse})`);
+  return parts.join(' ');
+}
+
+/** 双滑块 [min,max]。 */
+function DualRange({
+  track,
+  min,
+  max,
+  disabled,
+  onChange,
+}: {
+  track: number;
+  min: number;
+  max: number;
+  disabled?: boolean;
+  onChange: (min: number, max: number) => void;
+}) {
+  const ticks = useMemo(() => Array.from({ length: track + 1 }, (_, i) => i), [track]);
+  const pct = (v: number) => (track === 0 ? 0 : (v / track) * 100);
+  return (
+    <div className={`chx-dual${disabled ? ' is-off' : ''}`}>
+      <div className="chx-dual-track">
+        <div className="chx-dual-fill" style={{ left: `${pct(min)}%`, right: `${100 - pct(max)}%` }} />
+        <input
+          type="range"
+          className="chx-dual-input chx-dual-min"
+          min={0}
+          max={track}
+          step={1}
+          value={min}
+          disabled={disabled}
+          aria-label="min length"
+          onChange={(e) => onChange(Math.min(Number(e.target.value), max), max)}
+        />
+        <input
+          type="range"
+          className="chx-dual-input chx-dual-max"
+          min={0}
+          max={track}
+          step={1}
+          value={max}
+          disabled={disabled}
+          aria-label="max length"
+          onChange={(e) => onChange(min, Math.max(Number(e.target.value), min))}
+        />
+      </div>
+      <div className="chx-dual-ticks">
+        {ticks.map((i) => (
+          <span key={i} className={i >= min && i <= max ? 'is-in' : ''}>{i}</span>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 interface Props {
@@ -105,48 +171,53 @@ export default function ChainExplorer({ scramble, lang }: Props) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   const [stages, setStages] = useState(initStages);
-  const [frEnabled, setFrEnabled] = useState(false); // 默认关:首次启用建 FR 表 ~10s
+  const [frEnabled, setFrEnabled] = useState(false);
+  const [activeTab, setActiveTab] = useState<StageKey>('eo');
+  const [excludeTab, setExcludeTab] = useState<StageKey>('eo');
+  const [axisMenu, setAxisMenu] = useState<ConfStage | null>(null);
   const [excluded, setExcluded] = useState<Record<StageKey, string[]>>({
     eo: [], dr: [], htr: [], fr: [], fin: [],
   });
-  const [maxChains, setMaxChains] = useState(10);
-  const [chains, setChains] = useState<ChainResult[] | null>(null);
+  const [sols, setSols] = useState<FmcSolution[] | null>(null);
   const [ms, setMs] = useState<number | null>(null);
   const [computing, setComputing] = useState(false);
-  const [warming, setWarming] = useState(false); // 池首次加载(WASM 拉取/实例化)
   const [errMsg, setErrMsg] = useState('');
   const [sel, setSel] = useState<{ chain: number; step: number | null } | null>(null);
 
-  const poolRef = useRef<RustCrossPool | null>(null);
   const playerRef = useRef<{ jumpToStart?: (o?: { flash?: boolean }) => void; play?: () => void } | null>(null);
   const reqRef = useRef(0);
-  const ranRef = useRef(false); // 是否已手动算过一次(打乱变化才自动重算)
+  const ranRef = useRef(false);
 
   const normScramble = useMemo(() => normalizeScramble(scramble) ?? scramble, [scramble]);
   const scrambleRef = useRef(normScramble);
   scrambleRef.current = normScramble;
 
-  // 配置走 ref:compute 永远读最新 state,自身保持依赖稳定。
-  const cfgRef = useRef({ stages, frEnabled, excluded, maxChains });
-  cfgRef.current = { stages, frEnabled, excluded, maxChains };
+  const cfgRef = useRef({ stages, frEnabled, excluded });
+  cfgRef.current = { stages, frEnabled, excluded };
 
-  const buildConfig = useCallback((): string => {
-    const { stages: st, frEnabled: fr, excluded: ex, maxChains: mc } = cfgRef.current;
-    const stageJson = (k: 'eo' | 'dr' | 'htr' | 'fr') => {
-      const s = st[k];
-      const o: Record<string, unknown> = { extra: s.extra, cap: s.cap, niss: s.niss, excluded: ex[k] };
-      if (k !== 'htr') o.axes = s.axes; // HTR 轴继承 DR(引擎语义),不下发
-      if (s.max != null) o.max = s.max;
-      return o;
+  /** cubelib niss token from the two toggles. */
+  const nissTok = (s: StageUI) => (s.nissDuring ? 'always' : s.nissBefore ? 'before' : 'never');
+
+  /** Build the CLI-style steps string for cubelib. */
+  const buildSteps = useCallback((): string => {
+    const { stages: st, frEnabled: fr, excluded: ex } = cfgRef.current;
+    const stage = (key: ConfStage, kindTok: string) => {
+      const s = st[key];
+      const parts: string[] = [`niss=${nissTok(s)}`, `min-abs=${s.min}`, `max-abs=${s.max}`];
+      // axis restriction → substeps (omit when all selected = cubelib default).
+      if (key !== 'htr' && s.axes.length < AXES.length) {
+        for (const a of s.axes) parts.push(`${kindTok}${a}`);
+      }
+      const exl = ex[key].filter(Boolean);
+      if (exl.length) parts.push(`excl=${exl.join('|')}`);
+      return `${kindTok.toUpperCase()}[${parts.join(';')}]`;
     };
-    return JSON.stringify({
-      maxChains: mc,
-      eo: stageJson('eo'),
-      dr: stageJson('dr'),
-      htr: stageJson('htr'),
-      fr: { enabled: fr, ...stageJson('fr') },
-      fin: { excluded: ex.fin },
-    });
+    const finExl = ex.fin.filter(Boolean);
+    const fin = `FIN[niss=never${finExl.length ? `;excl=${finExl.join('|')}` : ''}]`;
+    const chain = [stage('eo', 'eo'), 'RZP[niss=never]', stage('dr', 'dr'), stage('htr', 'htr')];
+    if (fr) chain.push(stage('fr', 'fr'));
+    chain.push(fin);
+    return chain.join(' > ');
   }, []);
 
   const compute = useCallback(async () => {
@@ -156,83 +227,77 @@ export default function ChainExplorer({ scramble, lang }: Props) {
     ranRef.current = true;
     setComputing(true);
     setErrMsg('');
+    const t0 = performance.now();
     try {
-      // 共享单活跃池:首次(或被其他方法换走后)取链式池,等首个 worker 就绪。
-      const pool = getRustCrossPool('chain', poolSizeForDevice());
-      if (pool !== poolRef.current) {
-        poolRef.current = pool;
-        setWarming(true);
-      }
-      await pool.ready;
+      const url = apiUrl(
+        `/v1/fmc/solve?scramble=${encodeURIComponent(scr)}&steps=${encodeURIComponent(buildSteps())}&count=${COUNT}`,
+      );
+      const res = await fetch(url);
       if (reqRef.current !== my) return;
-      setWarming(false);
-      const res = await pool.solveChain(scr, buildConfig());
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { solutions?: FmcSolution[]; error?: string };
       if (reqRef.current !== my) return;
-      setChains(res.chains);
-      setMs(res.ms);
+      if (data.error) throw new Error(data.error);
+      setSols(data.solutions ?? []);
+      setMs(Math.round(performance.now() - t0));
       setSel(null);
     } catch (e) {
-      if (reqRef.current === my) {
-        setWarming(false);
-        setErrMsg(e instanceof Error ? e.message : String(e));
-      }
+      if (reqRef.current === my) setErrMsg(e instanceof Error ? e.message : String(e));
     } finally {
       if (reqRef.current === my) setComputing(false);
     }
-  }, [buildConfig]);
+  }, [buildSteps]);
 
-  // 打乱变化 → 防抖自动重算(仅在已算过之后;跳过首挂)。
-  const firstScramble = useRef(true);
+  // 打乱 / 配置变化 → 防抖自动重算(仅在已算过之后)。
+  const firstAuto = useRef(true);
   useEffect(() => {
-    if (firstScramble.current) { firstScramble.current = false; return; }
+    if (firstAuto.current) { firstAuto.current = false; return; }
     if (!ranRef.current) return;
-    const id = setTimeout(() => { void compute(); }, 500);
+    const id = setTimeout(() => { void compute(); }, 400);
     return () => clearTimeout(id);
-  }, [normScramble, compute]);
+  }, [normScramble, stages, frEnabled, compute]);
 
-  // 排除列表变化(增/删)→ 自动重算。
+  // 排除列表变化 → 立即重算。
   const firstExcluded = useRef(true);
   useEffect(() => {
     if (firstExcluded.current) { firstExcluded.current = false; return; }
     if (ranRef.current) void compute();
   }, [excluded, compute]);
 
-  const setStage = useCallback((k: 'eo' | 'dr' | 'htr' | 'fr', patch: Partial<StageUI>) => {
+  const setStage = useCallback((k: ConfStage, patch: Partial<StageUI>) => {
     setStages((prev) => ({ ...prev, [k]: { ...prev[k], ...patch } }));
   }, []);
 
-  const toggleAxis = useCallback((k: 'eo' | 'dr' | 'fr', a: Axis) => {
+  const removeAxis = useCallback((k: ConfStage, a: Axis) => {
     setStages((prev) => {
-      const cur = prev[k].axes;
-      const next = cur.includes(a)
-        ? cur.filter((x) => x !== a)
-        : AXES.filter((x) => x === a || cur.includes(x)); // 保持 UD/FB/LR 规范序
-      if (next.length === 0) return prev; // 至少保留一轴
+      const next = prev[k].axes.filter((x) => x !== a);
+      if (next.length === 0) return prev;
       return { ...prev, [k]: { ...prev[k], axes: next } };
     });
   }, []);
 
-  // 排除某链第 stepIdx 步:加该步的「累计双侧序列对」(steps[0..=i] 按 inv 分到
-  // N/I 两侧各自拼接,序列化为 `累计N|累计I`,与引擎 is_excluded 的 pair 精确匹配
-  // 语义一致;I 空省略 '|' = 引擎向后兼容形)进该阶段黑名单。只回喂引擎产出的串。
-  const excludeStep = useCallback((chain: ChainResult, stepIdx: number) => {
-    const step = chain.steps[stepIdx];
-    const upto = chain.steps.slice(0, stepIdx + 1);
-    const side = (inv: boolean) =>
-      upto.filter((s) => !!s.inv === inv).map((s) => s.m).filter(Boolean).join(' ');
-    const cumN = side(false);
-    const cumI = side(true);
-    const key = cumI ? `${cumN}|${cumI}` : cumN;
-    setExcluded((prev) => (
-      prev[step.kind].includes(key) ? prev : { ...prev, [step.kind]: [...prev[step.kind], key] }
-    ));
+  const addAxis = useCallback((k: ConfStage, a: Axis) => {
+    setStages((prev) => {
+      if (prev[k].axes.includes(a)) return prev;
+      const next = AXES.filter((x) => x === a || prev[k].axes.includes(x));
+      return { ...prev, [k]: { ...prev[k], axes: next } };
+    });
+    setAxisMenu(null);
+  }, []);
+
+  // 排除某步:把该步的 mallard 记号 alg 加进该阶段黑名单(经 excl 参数回喂引擎)。
+  const excludeStep = useCallback((s: FmcStep) => {
+    const alg = stepMoves(s);
+    if (!alg) return;
+    const kind = (s.kind === 'rzp' ? 'dr' : s.kind) as StageKey;
+    setExcluded((prev) => (prev[kind].includes(alg) ? prev : { ...prev, [kind]: [...prev[kind], alg] }));
+    setExcludeTab(kind);
   }, []);
 
   const removeExcluded = useCallback((k: StageKey, i: number) => {
     setExcluded((prev) => ({ ...prev, [k]: prev[k].filter((_, j) => j !== i) }));
   }, []);
 
-  // 选中链(step=null)或链内某步:共享播放器载入打乱 + 截至该步的合并序列。
   const select = useCallback((chain: number, step: number | null, play = false) => {
     setSel({ chain, step });
     requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -242,152 +307,243 @@ export default function ChainExplorer({ scramble, lang }: Props) {
     }));
   }, []);
 
-  // 播放器序列必须线性化(inverse 侧片段不能按步序直接拼在 normal 打乱后):
-  // 整链走引擎 solution,前缀本地按同一公式拼 N ++ rev_inv(I)。
   const selAlg = useMemo(() => {
-    if (!sel || !chains) return null;
-    const c = chains[sel.chain];
+    if (!sel || !sols) return null;
+    const c = sols[sel.chain];
     if (!c) return null;
-    if (sel.step == null) return chainSolution(c);
-    return linearize(c.steps, sel.step + 1);
-  }, [sel, chains]);
+    return sel.step == null ? c.solution : linearizePrefix(c.steps, sel.step);
+  }, [sel, sols]);
 
-  const stageName = (k: StageKey) =>
-    k === 'fr' ? t('Floppy 还原 (FR)', 'Floppy Reduction (FR)')
-      : k === 'fin' ? t('收尾 (Finish)', 'Finish')
-        : k.toUpperCase();
+  const busy = computing;
 
-  // 排除项展示:pair key(`N|I`)的 I 侧按 NISS 记号括号化;存储值保持引擎精确串。
-  const exclLabel = (x: string) => {
-    const p = x.indexOf('|');
-    const n = p < 0 ? x : x.slice(0, p);
-    const i = p < 0 ? '' : x.slice(p + 1);
-    return [n, i ? `(${i})` : ''].filter(Boolean).join(' ') || t('(0 步)', '(0 moves)');
-  };
+  const renderStepPanel = (key: ConfStage) => {
+    const s = stages[key];
+    const disabled = key === 'fr' && !frEnabled;
+    const removable = AXES.filter((a) => s.axes.includes(a));
+    const addable = AXES.filter((a) => !s.axes.includes(a));
+    return (
+      <div className={`chx-panel${disabled ? ' is-off' : ''}`}>
+        {key === 'fr' && (
+          <label className="chx-fr-enable">
+            <PillToggle value={frEnabled} onChange={setFrEnabled} ariaLabel="enable FR" />
+            <span>{t('启用 FR', 'Enable FR')}</span>
+          </label>
+        )}
 
-  const busy = computing || warming;
+        <div className="chx-field-block">
+          <div className="chx-field-label">{t('步数范围', 'Step length')}</div>
+          <DualRange
+            track={STEP_TRACK[key]}
+            min={s.min}
+            max={s.max}
+            disabled={disabled}
+            onChange={(min, max) => setStage(key, { min, max })}
+          />
+        </div>
 
-  return (
-    <section className="chx">
-      {/* 逐阶段配置:EO/DR/HTR 恒启用,FR 可开关(默认关),Finish 固定 */}
-      <div className="chx-stages">
-        {STAGE_ROWS.map(({ key }) => {
-          const s = stages[key];
-          const isFr = key === 'fr';
-          const disabled = isFr && !frEnabled;
-          return (
-            <div key={key} className={`chx-stage${disabled ? ' is-off' : ''}`}>
-              <span className="chx-stage-name">
-                {isFr ? (
-                  <label className="chx-fr-toggle">
-                    <input
-                      type="checkbox"
-                      checked={frEnabled}
-                      onChange={(e) => setFrEnabled(e.target.checked)}
-                    />
-                    {stageName('fr')}
-                  </label>
-                ) : stageName(key)}
-              </span>
-              {key === 'htr' ? (
-                <span className="chx-axes-note">{t('轴随 DR', 'axes follow DR')}</span>
-              ) : (
-                <span className="chx-axes">
-                  {AXES.map((a) => (
-                    <label key={a} className="chx-axis">
-                      <input
-                        type="checkbox"
-                        checked={s.axes.includes(a)}
-                        disabled={disabled}
-                        onChange={() => toggleAxis(key as 'eo' | 'dr' | 'fr', a)}
-                      />
-                      {AXIS_LABEL[a]}
-                    </label>
-                  ))}
+        <div className="chx-field-block">
+          <div className="chx-field-label">{t('变体轴', 'Variations')}</div>
+          {key === 'htr' ? (
+            <div className="chx-axes-note">{t('继承 DR 轴', 'follows the DR axis')}</div>
+          ) : (
+            <div className="chx-chips">
+              {removable.map((a) => (
+                <span key={a} className="chx-chip">
+                  {AXIS_LABEL[a]}
+                  <button
+                    className="chx-chip-x"
+                    disabled={disabled || removable.length <= 1}
+                    aria-label={t('移除轴', 'remove axis')}
+                    onClick={() => removeAxis(key, a)}
+                  >
+                    <X size={11} />
+                  </button>
                 </span>
-              )}
-              <label className="chx-field">
-                <span>{t('额外步数', 'Extra')}</span>
-                <select
-                  value={s.extra}
-                  disabled={disabled}
-                  onChange={(e) => setStage(key, { extra: Number(e.target.value) })}
-                >
-                  {EXTRA_OPTIONS.map((n) => <option key={n} value={n}>+{n}</option>)}
-                </select>
-              </label>
-              <label className="chx-field">
-                <span>{t('步数上限', 'Max len')}</span>
-                <input
-                  className="chx-num"
-                  type="number"
-                  min={0}
-                  max={99}
-                  value={s.max ?? ''}
-                  placeholder={t('不限', 'any')}
-                  disabled={disabled}
-                  onChange={(e) => setStage(key, {
-                    max: e.target.value === '' ? null : Math.max(0, Math.min(99, Number(e.target.value))),
-                  })}
-                />
-              </label>
-              <label className="chx-field">
-                <span>{t('候选数', 'Cap')}</span>
-                <select
-                  value={s.cap}
-                  disabled={disabled}
-                  onChange={(e) => setStage(key, { cap: Number(e.target.value) })}
-                >
-                  {CAP_OPTIONS.map((n) => <option key={n} value={n}>{n}</option>)}
-                </select>
-              </label>
-              <label className="chx-axis">
-                <input
-                  type="checkbox"
-                  checked={s.niss}
-                  disabled={disabled}
-                  onChange={(e) => setStage(key, { niss: e.target.checked })}
-                />
-                {t('允许逆向 (NISS)', 'Allow inverse (NISS)')}
-              </label>
-              {isFr && !frEnabled && (
-                <span className="chx-fr-hint">{t('首次启用需建表约 10 秒', 'first enable builds tables ~10s')}</span>
-              )}
-              {excluded[key].length > 0 && (
-                <div className="chx-excl">
-                  <span className="chx-excl-label">{t('已排除', 'Excluded')}</span>
-                  {excluded[key].map((x, i) => (
-                    <span key={`${x}-${i}`} className="chx-excl-row">
-                      <code>{exclLabel(x)}</code>
-                      <button
-                        className="chx-excl-x"
-                        onClick={() => removeExcluded(key, i)}
-                        aria-label={t('移除排除项', 'Remove exclusion')}
-                      >
-                        <X size={11} />
-                      </button>
-                    </span>
-                  ))}
+              ))}
+              {addable.length > 0 && (
+                <div className="chx-axis-add">
+                  <button
+                    className="chx-chip-add"
+                    disabled={disabled}
+                    aria-label={t('添加轴', 'add axis')}
+                    onClick={() => setAxisMenu(axisMenu === key ? null : key)}
+                  >
+                    <Plus size={12} />
+                    <ChevronDown size={12} />
+                  </button>
+                  {axisMenu === key && (
+                    <div className="chx-axis-menu">
+                      {addable.map((a) => (
+                        <button key={a} onClick={() => addAxis(key, a)}>{AXIS_LABEL[a]}</button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          );
-        })}
-        <div className="chx-stage chx-stage-fin">
-          <span className="chx-stage-name">{stageName('fin')}</span>
-          <span className="chx-axes-note">{t('固定启用:从 HTR/FR 直接还原,取单条最优', 'always on: solves out from HTR/FR, single optimal')}</span>
-          {excluded.fin.length > 0 && (
-            <div className="chx-excl">
-              <span className="chx-excl-label">{t('已排除', 'Excluded')}</span>
-              {excluded.fin.map((x, i) => (
+          )}
+        </div>
+
+        <div className="chx-field-block">
+          <div className="chx-field-label">NISS</div>
+          <label className="chx-niss-row">
+            <span>{t('段前允许切换', 'Allow switching before step')}</span>
+            <PillToggle
+              value={s.nissBefore}
+              onChange={(v) => setStage(key, { nissBefore: v })}
+              ariaLabel="NISS before"
+            />
+          </label>
+          <label className="chx-niss-row">
+            <span>{t('段内允许切换', 'Allow switching during step')}</span>
+            <PillToggle
+              value={s.nissDuring}
+              onChange={(v) => setStage(key, { nissDuring: v, nissBefore: v ? true : s.nissBefore })}
+              ariaLabel="NISS during"
+            />
+          </label>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <section className="chx" onClick={() => axisMenu && setAxisMenu(null)}>
+      {/* ── Steps ── */}
+      <div className="chx-block">
+        <h3 className="chx-h">{t('分步', 'Steps')}</h3>
+        <div className="chx-tabs">
+          {TABS.map(({ key, label }) => (
+            <button
+              key={key}
+              className={`chx-tab${activeTab === key ? ' is-active' : ''}${key === 'fr' && !frEnabled ? ' is-dim' : ''}`}
+              onClick={() => setActiveTab(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {activeTab === 'fin' ? (
+          <div className="chx-panel">
+            <div className="chx-axes-note">
+              {t('固定启用:从 HTR/FR 直接最优还原,NISS 不适用。', 'Always on: optimal solve-out from HTR/FR; NISS not applicable.')}
+            </div>
+          </div>
+        ) : (
+          renderStepPanel(activeTab)
+        )}
+      </div>
+
+      <div className="chx-run">
+        <button className="chx-compute" onClick={() => void compute()} disabled={busy}>
+          {busy ? <Loader2 size={14} className="chx-spin" /> : null}
+          {ranRef.current ? t('重新计算', 'Recompute') : t('计算', 'Compute')}
+        </button>
+        {computing && <span className="chx-status">{t('求解中…', 'Solving…')}</span>}
+        {!busy && ms != null && <span className="chx-status">{fmtMs(ms)}</span>}
+      </div>
+
+      {errMsg && <div className="chx-err">{t('求解失败', 'Solve failed')}: {errMsg}</div>}
+
+      {/* ── Solution ── */}
+      <div className="chx-block">
+        <h3 className="chx-h">{t('解', 'Solution')}</h3>
+        {!sols && !busy && (
+          <div className="chx-empty">{t('点「计算」生成分步还原链。', 'Click Compute to generate step-by-step chains.')}</div>
+        )}
+        {sols && !busy && sols.length === 0 && (
+          <div className="chx-empty">{t('未找到满足当前条件的解,放宽步数范围或移除排除项。', 'No solution matches — widen a length range or remove an exclusion.')}</div>
+        )}
+        {sols && sols.length > 0 && (
+          <div className="chx-result">
+            <ol className="chx-chains">
+              {sols.map((c, i) => (
+                <li key={i} className={`chx-chain${sel?.chain === i ? ' is-active' : ''}`}>
+                  <div
+                    className="chx-chain-head"
+                    onClick={() => select(i, null)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(i, null); } }}
+                  >
+                    <button
+                      className="chx-chain-play"
+                      aria-label={t('播放', 'Play')}
+                      onClick={(e) => { e.stopPropagation(); select(i, null, true); }}
+                    >
+                      <Play size={11} />
+                    </button>
+                    <span className="chx-chain-n">#{i + 1}</span>
+                    <span className="chx-chain-total">{c.total} HTM</span>
+                  </div>
+                  <div className="chx-steps">
+                    {c.steps.map((s, j) => (
+                      <div
+                        key={j}
+                        className={`chx-step${sel?.chain === i && sel?.step === j ? ' is-active' : ''}`}
+                        onClick={() => select(i, j)}
+                      >
+                        <code className="chx-step-mv">{stepMoves(s) || '—'}</code>
+                        <span className="chx-step-var">{`// ${s.variant}${s.comment ? ` ${s.comment}` : ''}`}</span>
+                        <span className="chx-step-cnt">{`(${s.len}/${s.cum})`}</span>
+                        {stepMoves(s) && (
+                          <button
+                            className="chx-step-ban"
+                            title={t('排除该步解并重算', 'Exclude this step solution and re-solve')}
+                            aria-label={t('排除该步', 'Exclude this step')}
+                            onClick={(e) => { e.stopPropagation(); excludeStep(s); }}
+                          >
+                            <Ban size={11} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="chx-solution">{`Solution (${c.total}): ${c.solution}`}</div>
+                </li>
+              ))}
+            </ol>
+
+            {selAlg ? (
+              <div className="chx-player">
+                <TwistySection puzzle="3x3x3" scramble={normScramble} alg={selAlg} playerRef={playerRef} />
+              </div>
+            ) : null}
+          </div>
+        )}
+      </div>
+
+      {/* ── Exclude Solutions ── */}
+      <div className="chx-block">
+        <h3 className="chx-h">{t('排除解', 'Exclude Solutions')}</h3>
+        <div className="chx-tabs">
+          {TABS.map(({ key, label }) => (
+            <button
+              key={key}
+              className={`chx-tab${excludeTab === key ? ' is-active' : ''}`}
+              onClick={() => setExcludeTab(key)}
+            >
+              {label}
+              {excluded[key].length > 0 && <span className="chx-tab-dot" />}
+            </button>
+          ))}
+        </div>
+        <div className="chx-panel">
+          {excluded[excludeTab].length === 0 ? (
+            <div className="chx-axes-note">
+              {t('在上方某条解里点禁用图标,把该步解加进这里排除并重算。', 'Click the ban icon on a step above to exclude that step solution and re-solve.')}
+            </div>
+          ) : (
+            <div className="chx-excl-list">
+              {excluded[excludeTab].map((x, i) => (
                 <span key={`${x}-${i}`} className="chx-excl-row">
-                  <code>{exclLabel(x)}</code>
+                  <code>{x}</code>
                   <button
                     className="chx-excl-x"
-                    onClick={() => removeExcluded('fin', i)}
+                    onClick={() => removeExcluded(excludeTab, i)}
                     aria-label={t('移除排除项', 'Remove exclusion')}
                   >
-                    <X size={11} />
+                    <X size={12} />
                   </button>
                 </span>
               ))}
@@ -395,97 +551,6 @@ export default function ChainExplorer({ scramble, lang }: Props) {
           )}
         </div>
       </div>
-
-      {/* 计算行:全局条数 + 计算按钮 + 状态 */}
-      <div className="chx-run">
-        <label className="chx-field">
-          <span>{t('显示条数', 'Show')}</span>
-          <select value={maxChains} onChange={(e) => setMaxChains(Number(e.target.value))}>
-            {MAX_CHAINS_OPTIONS.map((n) => (
-              <option key={n} value={n}>{t(`最多 ${n} 条`, `Up to ${n}`)}</option>
-            ))}
-          </select>
-        </label>
-        <button className="chx-compute" onClick={() => void compute()} disabled={busy}>
-          {busy ? <Loader2 size={14} className="chx-spin" /> : null}
-          {t('计算', 'Compute')}
-        </button>
-        {warming && (
-          <span className="chx-status">{t('正在加载求解器…(仅首次)', 'Loading solver… (first time only)')}</span>
-        )}
-        {computing && !warming && (
-          <span className="chx-status">{t('求解中…(首次需建距离表,数秒)', 'Solving… (first run builds tables, a few seconds)')}</span>
-        )}
-        {!busy && ms != null && <span className="chx-status">{fmtMs(ms)}</span>}
-      </div>
-
-      {errMsg && <div className="chx-err">{t('求解失败', 'Solve failed')}: {errMsg}</div>}
-
-      {chains && !busy && chains.length === 0 && (
-        <div className="chx-empty">{t('未找到满足当前条件的链,试着放宽窗口或移除排除项。', 'No chain satisfies the current constraints — widen a window or remove an exclusion.')}</div>
-      )}
-
-      {chains && chains.length > 0 && (
-        <div className="chx-result">
-          <ol className="chx-chains">
-            {chains.map((c, i) => (
-              <li key={i} className={`chx-chain${sel?.chain === i ? ' is-active' : ''}`}>
-                <div
-                  className="chx-chain-head"
-                  onClick={() => select(i, null)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(i, null); } }}
-                >
-                  <button
-                    className="chx-chain-play"
-                    aria-label={t('播放', 'Play')}
-                    onClick={(e) => { e.stopPropagation(); select(i, null, true); }}
-                  >
-                    <Play size={11} />
-                  </button>
-                  <span className="chx-chain-n">#{i + 1}</span>
-                  <span className="chx-chain-total">{c.total} HTM</span>
-                </div>
-                <div className="chx-steps">
-                  {c.steps.length === 0 ? (
-                    <div className="chx-step-empty">{t('已是还原态(0 步)', 'Already solved (0 moves)')}</div>
-                  ) : c.steps.map((s, j) => (
-                    <div
-                      key={j}
-                      className={`chx-step${sel?.chain === i && sel?.step === j ? ' is-active' : ''}`}
-                      onClick={() => select(i, j)}
-                    >
-                      <code>{s.inv ? `(${s.m})` : (s.m || '—')}</code>
-                      <span className="chx-step-meta">{`// ${s.variant} (${s.len}/${s.cum})`}</span>
-                      <button
-                        className="chx-step-ban"
-                        title={t('排除该步(按累计序列)并重算', 'Exclude this step (by cumulative sequence) and re-solve')}
-                        aria-label={t('排除该步', 'Exclude this step')}
-                        onClick={(e) => { e.stopPropagation(); excludeStep(c, j); }}
-                      >
-                        <Ban size={11} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                {c.steps.length > 0 && (
-                  <div className="chx-solution">
-                    {`Solution (${c.total}): ${chainSolution(c)}`}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ol>
-
-          {/* 单个共享 3D 播放器:跟随选中链 / 步 */}
-          {selAlg ? (
-            <div className="chx-player">
-              <TwistySection puzzle="3x3x3" scramble={normScramble} alg={selAlg} playerRef={playerRef} />
-            </div>
-          ) : null}
-        </div>
-      )}
     </section>
   );
 }

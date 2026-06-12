@@ -115,6 +115,13 @@
     "long_en": "CFOP solution-enumeration algorithm (cross + F2L + OLL + PLL) ported into the `/scramble/analyzer` page"
   },
   {
+    "name": "Jobarion/cubelib + joba.me/mallard",
+    "url": "https://github.com/Jobarion/cubelib",
+    "zh": "FMC 分步还原链行为参考(/scramble/analyzer 底部 EO→DR→HTR→FR→Finish + NISS;UI 仿 joba.me/mallard,FR 坐标 / 链编排 / NISS 全用 Rust + TS 按其行为自有重写,未拷源码)",
+    "en": "FMC step-by-step solver reference (EO→DR→HTR→FR→Finish + NISS chain at the bottom of /scramble/analyzer; UI mirrors joba.me/mallard, engine reimplemented from scratch in Rust + TS — no code copied)",
+    "long_en": "Jobarion's cubelib Rust FMC solver + its joba.me/mallard web UI — behavior & UI reference for the step-by-step EO→DR→HTR→FR→Finish + NISS chain at the bottom of `/scramble/analyzer`. Our FR coordinate, chain orchestrator and NISS logic were reimplemented from scratch in Rust + TypeScript on our own solver engine; no cubelib source was copied"
+  },
+  {
     "name": "nbwzx/commutator",
     "url": "https://github.com/nbwzx/commutator",
     "zh": "换位子分解 / 展开引擎(Zixing Wang;ES module 重封装,UI 重写 React)",
