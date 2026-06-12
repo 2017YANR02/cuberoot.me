@@ -171,7 +171,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   const [stages, setStages] = useState(initStages);
-  const [frEnabled, setFrEnabled] = useState(false);
+  const [frEnabled, setFrEnabled] = useState(true); // mallard 默认含 FR(收尾更短)
   const [activeTab, setActiveTab] = useState<StageKey>('eo');
   const [excludeTab, setExcludeTab] = useState<StageKey>('eo');
   const [axisMenu, setAxisMenu] = useState<ConfStage | null>(null);
@@ -198,12 +198,17 @@ export default function ChainExplorer({ scramble, lang }: Props) {
   /** cubelib niss token from the two toggles. */
   const nissTok = (s: StageUI) => (s.nissDuring ? 'always' : s.nissBefore ? 'before' : 'never');
 
-  /** Build the CLI-style steps string for cubelib. */
+  /** Build the CLI-style steps string for cubelib.
+   *  quality 驱动搜索宽度(cubelib 默认 100;高 = 更短解但更慢)。滑块走 per-step
+   *  min/max(NOT max-abs —— 那是累计总长封顶,会把硬打乱搜空),仅在收窄时下发。 */
   const buildSteps = useCallback((): string => {
+    const Q = 1000;
     const { stages: st, frEnabled: fr, excluded: ex } = cfgRef.current;
     const stage = (key: ConfStage, kindTok: string) => {
       const s = st[key];
-      const parts: string[] = [`niss=${nissTok(s)}`, `min-abs=${s.min}`, `max-abs=${s.max}`];
+      const parts: string[] = [`niss=${nissTok(s)}`, `quality=${Q}`];
+      if (s.min > 0) parts.push(`min=${s.min}`);
+      if (s.max < STEP_TRACK[key]) parts.push(`max=${s.max}`);
       // axis restriction → substeps (omit when all selected = cubelib default).
       if (key !== 'htr' && s.axes.length < AXES.length) {
         for (const a of s.axes) parts.push(`${kindTok}${a}`);
@@ -213,7 +218,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
       return `${kindTok.toUpperCase()}[${parts.join(';')}]`;
     };
     const finExl = ex.fin.filter(Boolean);
-    const fin = `FIN[niss=never${finExl.length ? `;excl=${finExl.join('|')}` : ''}]`;
+    const fin = `FIN[niss=never;quality=${Q}${finExl.length ? `;excl=${finExl.join('|')}` : ''}]`;
     const chain = [stage('eo', 'eo'), 'RZP[niss=never]', stage('dr', 'dr'), stage('htr', 'htr')];
     if (fr) chain.push(stage('fr', 'fr'));
     chain.push(fin);

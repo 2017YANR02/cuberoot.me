@@ -126,6 +126,7 @@ fn parse_one(step: &str) -> Result<StepConfig, String> {
             "min-abs" => cfg.absolute_min = Some(u8::from_str(v).map_err(|_| "bad min-abs")?),
             "max-abs" => cfg.absolute_max = Some(u8::from_str(v).map_err(|_| "bad max-abs")?),
             "limit" => cfg.step_limit = Some(usize::from_str(v).map_err(|_| "bad limit")?),
+            "quality" => cfg.quality = usize::from_str(v).map_err(|_| "bad quality")?,
             "niss" => {
                 cfg.niss = Some(match v {
                     "always" | "true" => NissSwitchType::Always,
@@ -134,13 +135,17 @@ fn parse_one(step: &str) -> Result<StepConfig, String> {
                     x => return Err(format!("invalid niss '{}'", x)),
                 })
             }
-            "substeps" | "variants" | "subsets" | "triggers" => {
+            "substeps" | "variants" | "subsets" => {
                 for sub in v.split(',') {
                     let sub = sub.trim();
                     if !sub.is_empty() {
                         cfg.substeps.get_or_insert_with(Vec::new).push(sub.to_string());
                     }
                 }
+            }
+            // DR triggers: cubelib reads them from params["triggers"] (comma algs).
+            "triggers" => {
+                cfg.params.insert("triggers".to_string(), v.to_string());
             }
             // Exclude solutions: '|'-separated algs (NISS notation ok, e.g. "(R U)").
             "excl" => {
@@ -249,4 +254,105 @@ fn urldecode(s: &str) -> String {
         }
     }
     String::from_utf8_lossy(&out).into_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cubelib::cube::turn::ApplyAlgorithm;
+
+    // Deployed default pipeline (what ChainExplorer sends): EO(always) > RZP >
+    // DR(before) > HTR(before) > FR(before) > FIN, quality=1000.
+    const DEPLOYED: &str = "EO[niss=always;quality=1000] > RZP[niss=never] > \
+        DR[niss=before;quality=1000] > HTR[niss=before;quality=1000] > \
+        FR[niss=before;quality=1000] > FIN[niss=never;quality=1000]";
+
+    const TRIVIAL: &str = "R U F R'";
+    const WCA1: &str = "R' U' F D2 L2 F R2 U2 R2 B D2 L B2 L' B D' U R2 D L2 U' R' U' F";
+    const WCA2: &str = "D B U B2 R2 U' L2 D2 R2 D' L D2 B D' L2 F' D L' D'";
+    const WCA3: &str = "D R2 F2 U R2 U B2 L2 U' F2 D' L B F2 R D2 B' D L' U2";
+
+    fn tables() -> PruningTables333 {
+        let mut t = PruningTables333::new();
+        solver::gen_tables(&parse_steps("EO > RZP > DR > HTR > FR > FIN").unwrap(), &mut t);
+        t
+    }
+
+    /// (best total, linearized solution) for the first solution.
+    fn solve_one(scr: &str, steps: &str, t: &PruningTables333) -> Option<(usize, String)> {
+        let alg = Algorithm::from_str(scr).unwrap();
+        let cube: Cube333 = alg.into();
+        let built = solver::build_steps(parse_steps(steps).unwrap(), t).unwrap();
+        let cancel = CancelToken::default();
+        let sol = cubelib::solver::solve_steps(cube, &built, &cancel).next()?;
+        let a: Algorithm = sol.clone().into();
+        let last_fin =
+            matches!(sol.get_steps().last().map(|s| StepKind::from(s.variant)), Some(StepKind::FIN));
+        let a = if last_fin { a.to_uninverted() } else { a };
+        let a = a.canonicalize();
+        Some((a.len(), a.to_string()))
+    }
+
+    /// Does (scramble ++ solution) bring a solved cube back to solved?
+    fn solves(scr: &str, sol: &str) -> bool {
+        let mut cube = Cube333::default();
+        cube.apply_alg(&Algorithm::from_str(scr).unwrap());
+        cube.apply_alg(&Algorithm::from_str(sol).unwrap());
+        cube == Cube333::default()
+    }
+
+    // ---- correctness: every solution must actually solve the cube ----
+    #[test]
+    fn solutions_actually_solve() {
+        let t = tables();
+        for scr in [TRIVIAL, WCA1, WCA2, WCA3] {
+            let (len, sol) = solve_one(scr, DEPLOYED, &t).expect("a solution");
+            assert!(solves(scr, &sol), "does NOT solve: {scr} -> {sol}");
+            // linearized length must equal the reported total
+            assert_eq!(len, Algorithm::from_str(&sol).unwrap().len());
+        }
+    }
+
+    // ---- golden baselines (deployed config, quality=1000; deterministic IDA*).
+    // Update intentionally when the config/algorithm changes (review signal). ----
+    #[test]
+    fn golden_totals() {
+        let t = tables();
+        assert_eq!(solve_one(TRIVIAL, DEPLOYED, &t).unwrap(), (4, "R F' U' R'".to_string()));
+        assert_eq!(solve_one(WCA1, DEPLOYED, &t).unwrap().0, 22);
+        assert_eq!(solve_one(WCA2, DEPLOYED, &t).unwrap().0, 21);
+        assert_eq!(solve_one(WCA3, DEPLOYED, &t).unwrap().0, 21);
+    }
+
+    // ---- higher quality finds shorter (same engine; quality = search breadth).
+    // q=20000 (~2-3s) to keep the test fast; q=100000 reaches mallard's 20 in ~30s. ----
+    #[test]
+    fn quality_converges_shorter() {
+        let t = tables();
+        let hi = "EO[niss=always;quality=20000] > RZP[niss=never] > \
+            DR[niss=before;quality=20000] > HTR[niss=before;quality=20000] > \
+            FR[niss=before;quality=20000] > FIN[niss=never;quality=20000]";
+        let (lo_total, _) = solve_one(WCA1, DEPLOYED, &t).unwrap();
+        let (hi_total, hi_sol) = solve_one(WCA1, hi, &t).unwrap();
+        assert!(hi_total < lo_total, "higher quality must improve ({hi_total} !< {lo_total})");
+        assert!(solves(WCA1, &hi_sol));
+    }
+
+    // ---- steps-string parser ----
+    #[test]
+    fn parse_steps_basic() {
+        let c = parse_steps("EO[niss=always;max=5;min=1] > DR > FIN[niss=never;quality=1000]").unwrap();
+        assert_eq!(c.len(), 3);
+        assert_eq!(c[0].kind, StepKind::EO);
+        assert_eq!(c[0].niss, Some(NissSwitchType::Always));
+        assert_eq!(c[0].max, Some(5));
+        assert_eq!(c[0].min, Some(1));
+        assert_eq!(c[2].niss, Some(NissSwitchType::Never));
+        assert_eq!(c[2].quality, 1000);
+        // invalid niss rejected
+        assert!(parse_steps("EO[niss=bogus]").is_err());
+        // bare axis token -> substep
+        let d = parse_steps("DR[drud;drfb]").unwrap();
+        assert_eq!(d[0].substeps.as_ref().unwrap().len(), 2);
+    }
 }
