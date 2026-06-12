@@ -45,6 +45,7 @@ interface RoundRow extends RowDataPacket {
   competition_id: string;
   event_id: string;
   round_count: number;
+  person_count: number;
 }
 
 function fmtDate(d: Date | string): string {
@@ -84,20 +85,27 @@ async function main() {
 
   const rows = await query<Row[]>(sql);
 
-  // NOTE: 每场比赛每个项目的轮次数。CI 只导入 REQUIRED_TABLES，没有 competition_events / rounds 表，
-  // 用 results.round_type_id 的 distinct count 等价替代（past comps 已跑的轮次必然有 results）。
+  // NOTE: 每场比赛每个项目的轮次数 + 参赛人数。CI 只导入 REQUIRED_TABLES，没有 competition_events / rounds 表，
+  // 用 results.round_type_id 的 distinct count 等价替代轮次（past comps 已跑的轮次必然有 results）；
+  // 各项目参赛人数 = 该 (comp, event) 下 DISTINCT person_id。
   const roundsSql = `
-    SELECT competition_id, event_id, COUNT(DISTINCT round_type_id) AS round_count
+    SELECT competition_id, event_id,
+      COUNT(DISTINCT round_type_id) AS round_count,
+      COUNT(DISTINCT person_id) AS person_count
     FROM results
     GROUP BY competition_id, event_id
   `;
   const roundRows = await query<RoundRow[]>(roundsSql);
   const roundsByComp = new Map<string, Record<string, number>>();
+  const regsByComp = new Map<string, Record<string, number>>();
   for (const rr of roundRows) {
+    const short = EVENT_SHORT[rr.event_id] ?? rr.event_id;
     let m = roundsByComp.get(rr.competition_id);
     if (!m) { m = {}; roundsByComp.set(rr.competition_id, m); }
-    const short = EVENT_SHORT[rr.event_id] ?? rr.event_id;
     m[short] = Number(rr.round_count);
+    let g = regsByComp.get(rr.competition_id);
+    if (!g) { g = {}; regsByComp.set(rr.competition_id, g); }
+    g[short] = Number(rr.person_count);
   }
 
   const out = rows
@@ -115,6 +123,7 @@ async function main() {
         .map((e) => EVENT_SHORT[e] ?? e)
         .sort((a, b) => (EVENT_RANK[a] ?? 999) - (EVENT_RANK[b] ?? 999));
       const rounds = roundsByComp.get(r.id);
+      const eventRegs = regsByComp.get(r.id);
       const isMulti = MULTI_REGION.has(r.country_id);
       // 多地代码无真实坐标 → 写 null，让 Globe consumer 通过 lat == null 干净地跳过
       return {
@@ -130,6 +139,7 @@ async function main() {
         end_date: fmtDate(r.end_date),
         events: shortEvents,
         ...(rounds && Object.keys(rounds).length > 0 ? { rounds } : {}),
+        ...(eventRegs && Object.keys(eventRegs).length > 0 ? { event_regs: eventRegs } : {}),
         ...(Number(r.competitors_count) > 0 ? { competitors: Number(r.competitors_count) } : {}),
         ...(Number(r.competitor_limit) > 0 ? { competitor_limit: Number(r.competitor_limit) } : {}),
       };

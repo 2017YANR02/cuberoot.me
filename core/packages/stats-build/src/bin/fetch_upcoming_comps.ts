@@ -147,6 +147,7 @@ interface CompEntry {
   cubing_china_url?: string;
   top_cubers: TopCuber[];
   rounds?: Record<string, number>;
+  event_regs?: Record<string, number>;
 }
 
 // ---------- small helpers ----------
@@ -670,6 +671,7 @@ interface AllComp {
   longitude_degrees: number;
   url: string;
   rounds?: Record<string, number>;
+  event_regs?: Record<string, number>;
 }
 
 async function buildUpcomingCompsFromWcif(
@@ -766,15 +768,18 @@ async function buildUpcomingCompsFromWcif(
 interface WcifEntry {
   rounds: Record<string, number>;
   competitors: string[];
+  // event 短码 → 报名该项目的人数（accepted persons 的 registration.eventIds 聚合）
+  eventRegs: Record<string, number>;
 }
 
 function wcifCacheOk(cached: unknown): cached is WcifEntry {
-  // 新缓存格式必须含 rounds + competitors 两个键；旧的纯 rounds dict 视为失效。
+  // 新缓存格式必须含 rounds + competitors + eventRegs 三个键；旧格式（缺 eventRegs）视为失效，重拉。
   return (
     typeof cached === 'object' &&
     cached !== null &&
     'rounds' in cached &&
-    'competitors' in cached
+    'competitors' in cached &&
+    'eventRegs' in cached
   );
 }
 
@@ -805,7 +810,7 @@ async function fetchWcif(compId: string): Promise<WcifEntry | Record<string, nev
   if (typeof data !== 'object' || data === null || !('events' in data)) {
     return {};
   }
-  const d = data as { events?: { id?: string; rounds?: unknown[] }[] | null; persons?: { wcaId?: string; registration?: { status?: string } | null }[] | null };
+  const d = data as { events?: { id?: string; rounds?: unknown[] }[] | null; persons?: { wcaId?: string; registration?: { status?: string; eventIds?: string[] } | null }[] | null };
   const rounds: Record<string, number> = {};
   for (const ev of d.events ?? []) {
     const eid = ev.id;
@@ -816,16 +821,21 @@ async function fetchWcif(compId: string): Promise<WcifEntry | Record<string, nev
     const short = (EVENT_ORDER_MAP[eid] ?? [999, eid])[1] as string;
     rounds[short] = n;
   }
-  // NOTE: persons[].registration 可能为 null（纯 staff/delegate）；只取 accepted 报名者
+  // NOTE: persons[].registration 可能为 null（纯 staff/delegate）；只取 accepted 报名者。
+  //       同一遍里按 registration.eventIds 累加每个项目的报名人数（短名 key，与 rounds 对齐）。
   const competitors: string[] = [];
+  const eventRegs: Record<string, number> = {};
   for (const p of d.persons ?? []) {
     const wid = p.wcaId;
     const reg = p.registration ?? {};
-    if (wid && reg.status === 'accepted') {
-      competitors.push(wid);
+    if (reg.status !== 'accepted') continue;
+    if (wid) competitors.push(wid);
+    for (const eid of reg.eventIds ?? []) {
+      const short = (EVENT_ORDER_MAP[eid] ?? [999, eid])[1] as string;
+      eventRegs[short] = (eventRegs[short] ?? 0) + 1;
     }
   }
-  const out: WcifEntry = { rounds, competitors };
+  const out: WcifEntry = { rounds, competitors, eventRegs };
   writeFileSync(cacheFile, JSON.stringify(out), 'utf-8');
   return out;
 }
@@ -867,10 +877,10 @@ async function fetchWcifBatch(compIds: Iterable<string>): Promise<Record<string,
   for (const cid of pending) {
     try {
       const r = await fetchWcif(cid);
-      out[cid] = wcifCacheOk(r) ? r : { rounds: {}, competitors: [] };
+      out[cid] = wcifCacheOk(r) ? r : { rounds: {}, competitors: [], eventRegs: {} };
     } catch (e) {
       console.log(`[WCIF][WARN] ${cid}: ${(e as Error).message ?? e}`);
-      out[cid] = { rounds: {}, competitors: [] };
+      out[cid] = { rounds: {}, competitors: [], eventRegs: {} };
     }
     done += 1;
     if (done % 50 === 0 || done === pending.length) {
@@ -1040,10 +1050,12 @@ async function main(): Promise<void> {
   }
   for (const c of compsData) {
     c.rounds = wcifMap[c.id!]?.rounds ?? {};
+    c.event_regs = wcifMap[c.id!]?.eventRegs ?? {};
   }
   if (allComps) {
     for (const c of allComps) {
       c.rounds = wcifMap[c.id]?.rounds ?? {};
+      c.event_regs = wcifMap[c.id]?.eventRegs ?? {};
     }
   }
 

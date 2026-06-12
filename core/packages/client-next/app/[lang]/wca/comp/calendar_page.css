@@ -53,7 +53,7 @@
     grid-row: 1 / span 2;
 }
 .calendar-page .upcoming-title {
-    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-family: var(--font-serif);
     font-size: clamp(1.75rem, 4vw, 2.5rem);
     font-weight: 500;
     letter-spacing: -0.02em;
@@ -456,7 +456,7 @@
     text-transform: uppercase;
 }
 .calendar-page .month-label-month {
-    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-family: var(--font-serif);
     font-size: 1.65rem;
     font-weight: 500;
     letter-spacing: -0.02em;
@@ -758,7 +758,8 @@
 }
 
 .calendar-page .modal-title {
-    font-family: 'Fraunces', serif;
+    /* 比赛名是动态任意汉字,静态子集楷体盖不全会半楷半宋,故走全覆盖系统衬线(不用 --font-serif) */
+    font-family: 'Fraunces', 'Times New Roman', serif;
     font-size: 1.4rem;
     font-weight: 500;
     letter-spacing: -0.01em;
@@ -1068,7 +1069,7 @@
     white-space: nowrap;
 }
 .calendar-page .cl-year-num {
-    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-family: var(--font-serif);
     font-size: 1.15rem;
     font-weight: 500;
     letter-spacing: -0.01em;
@@ -1230,6 +1231,20 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+    flex-wrap: wrap;
+}
+/* 项目格子 metric 切换（轮次 / 人数）— 一条竖线与日期选择器分隔，复用 view-btn 样式 */
+.calendar-page .list-metric-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: 0.35rem;
+    padding-left: 0.6rem;
+    border-left: 1px solid var(--border);
+}
+.calendar-page .list-metric-toggle .view-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.78rem;
 }
 .calendar-page .date-range-pick {
     background: var(--surface);

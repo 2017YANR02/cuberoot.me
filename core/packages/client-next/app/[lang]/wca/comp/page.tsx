@@ -12,7 +12,7 @@
  */
 import { Suspense, useState, useEffect, useMemo, useCallback, useRef, useReducer } from 'react';
 import type { CSSProperties } from 'react';
-import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parseAsString } from 'nuqs';
+import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parseAsString, parseAsArrayOf } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, CalendarRange, Ban, LayoutGrid, HelpCircle, Users, Gauge, Percent, X as XIcon } from 'lucide-react';
@@ -144,6 +144,8 @@ interface Competition {
   events: string[];
   /** event 短码 → 该项目轮次数；过去比赛由 all_past_comps.json 静态字段提供，未来比赛打开 modal 时走 WCIF runtime 拉 */
   rounds?: Record<string, number>;
+  /** event 短码 → 该项目报名/参赛人数（upcoming=WCIF 报名聚合，past=results 实际参赛）；缺省时格子留空 */
+  event_regs?: Record<string, number>;
   competitor_limit: number;
   /** 实际参赛人数（过去比赛 all_past_comps.json 提供；未来比赛无此数据） */
   competitors?: number;
@@ -633,6 +635,7 @@ function adaptAllComp(w: UpcomingCompRecord, topCuberMap: Map<string, TopCuber[]
     end_date: w.end_date,
     events: w.events,
     rounds: w.rounds,
+    event_regs: w.event_regs,
     competitor_limit: w.competitor_limit,
     registration_open: w.registration_open ?? undefined,
     registration_close: w.registration_close ?? undefined,
@@ -652,6 +655,7 @@ function adaptPastComp(w: PastCompRecord): Competition {
     end_date: w.end_date,
     events: w.events,
     rounds: w.rounds,
+    event_regs: w.event_regs,
     competitor_limit: w.competitor_limit ?? 0,
     competitors: w.competitors,
     top_cubers: [],
@@ -682,6 +686,9 @@ function readQFromUrl(): string {
 
 type ViewMode = 'calendar' | 'compact' | 'list' | 'globe';
 const VIEW_MODES: ViewMode[] = ['calendar', 'compact', 'list', 'globe'];
+
+type EventMetric = 'rounds' | 'regs';
+const EVENT_METRICS: EventMetric[] = ['rounds', 'regs'];
 
 // 列表视图按人数排序：col 选实际人数 / 上限 / 满员率(实际÷上限)，dir 降/升；null = 默认按日期倒序
 type SortCol = 'competitors' | 'limit' | 'ratio';
@@ -749,10 +756,12 @@ function measureMaxNameCityPx(comps: Competition[], isZh: boolean, containerPx?:
 
 interface RowItem { comp: Competition; key: string }
 
-function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso, pageRef, sortState }: {
+function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso, pageRef, sortState, eventMetric }: {
   comps: Competition[];
   isZh: boolean;
   onSelect: (c: Competition) => void;
+  /** 每个项目格子显示：'rounds'=轮次数 / 'regs'=报名(参赛)人数 */
+  eventMetric: EventMetric;
   /** 当前可见区域所在年份（用于在 chip 行 sticky 显示）；可见为空时传 null */
   onYearChange: (info: { year: string; count: number } | null) => void;
   /** 横向滚动容器 — 父组件用它和 chip 表头同步 scrollLeft */
@@ -962,11 +971,12 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
               </span>
               {EVENT_ORDER.map((eid) => {
                 const shortEid = WCA_EVENT_ID_TO_SHORT[eid] ?? eid;
-                const r = c.rounds?.[shortEid];
+                const src = eventMetric === 'regs' ? c.event_regs : c.rounds;
+                const v = src?.[shortEid];
                 const has = events.includes(shortEid);
                 return (
                   <span key={eid} className="cl-event-cell">
-                    {r != null ? r : (has ? '·' : '')}
+                    {v != null ? v : (has ? '·' : '')}
                   </span>
                 );
               })}
@@ -1002,7 +1012,10 @@ function CalendarPageInner() {
   const [selectedCuber, setSelectedCuber] = useState<WcaPersonLite | null>(null);
   const [selectedCuberCompIds, setSelectedCuberCompIds] = useState<Set<string> | null>(null);
   const [cnRegistrations, setCnRegistrations] = useState<Record<string, string[]> | null>(null);
-  const [countryFilters, setCountryFilters] = useState<string[]>([]);
+  const [countryFilters, setCountryFilters] = useQueryState(
+    'country',
+    parseAsArrayOf(parseAsString).withDefault([]).withOptions({ history: 'replace', scroll: false }),
+  );
   // NOTE: 月份锚点。优先读 URL `?year=YYYY&month=M`（来自 /calendar/stats 热力图深链），
   //       否则用 now（首次加载后若有 upcoming 会跳到最近一场比赛的月份）。
   const [viewDate, setViewDate] = useState<Date>(() => readMonthFromUrl() ?? new Date());
@@ -1028,6 +1041,11 @@ function CalendarPageInner() {
   const [viewMode, setViewMode] = useQueryState(
     'view',
     parseAsStringEnum<ViewMode>(VIEW_MODES).withDefault('calendar').withOptions({ history: 'push' }),
+  );
+  // list 视图每个项目格子显示什么：rounds=轮次数(默认) / regs=报名(参赛)人数。replace 不堆历史。
+  const [eventMetric, setEventMetric] = useQueryState(
+    'metric',
+    parseAsStringEnum<EventMetric>(EVENT_METRICS).withDefault('rounds').withOptions({ history: 'replace', scroll: false }),
   );
   // ?year= ?month= ?q= 走 nuqs(replace,不堆历史)。viewDate/compQuery 仍是真源,
   // 这里只把它们镜像进 URL 方便分享深链;挂载时的初值读取仍走 readMonthFromUrl/readQFromUrl。
@@ -1669,6 +1687,26 @@ function CalendarPageInner() {
                                           ? `共 ${displayedComps.length.toLocaleString()} 场`
                                           : `${displayedComps.length.toLocaleString()} comps`)}
             </span>
+            <div className="list-metric-toggle" role="group" aria-label={tr({ zh: '项目格子显示', en: 'Per-event cell', zhHant: '項目格子顯示' })}>
+              <button
+                type="button"
+                className={`view-btn ${eventMetric === 'rounds' ? 'is-active' : ''}`}
+                aria-pressed={eventMetric === 'rounds'}
+                onClick={() => setEventMetric('rounds')}
+                title={tr({ zh: '每个项目格子显示轮次数', en: 'Show round count per event', zhHant: '每個項目格子顯示輪次數' })}
+              >
+                {tr({ zh: '轮次', en: 'Rounds', zhHant: '輪次' })}
+              </button>
+              <button
+                type="button"
+                className={`view-btn ${eventMetric === 'regs' ? 'is-active' : ''}`}
+                aria-pressed={eventMetric === 'regs'}
+                onClick={() => setEventMetric('regs')}
+                title={tr({ zh: '每个项目格子显示报名 / 参赛人数', en: 'Show entries per event', zhHant: '每個項目格子顯示報名 / 參賽人數' })}
+              >
+                {tr({ zh: '人数', en: 'Entries', zhHant: '人數' })}
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -1806,6 +1844,7 @@ function CalendarPageInner() {
           onSelect={setSelectedComp}
           onYearChange={setCurrentYear}
           sortState={listSort}
+          eventMetric={eventMetric}
           outerRef={listScrollRef}
           cancelledCutoffIso={cancelledCutoffIso}
           pageRef={pageRef}
