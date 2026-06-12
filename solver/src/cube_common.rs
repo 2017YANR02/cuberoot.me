@@ -179,6 +179,27 @@ impl State {
         s.apply(m);
         s
     }
+
+    /// 群逆:`self.compose(&self.inverse()) == SOLVED`(两侧皆是)。
+    /// 件 cp\[i\] 在位置 i、朝向 co\[i\] ⇒ 逆里位置 cp\[i\] 放件 i、朝向 (3-co\[i\])%3;
+    /// 棱朝向 mod 2 自逆。NISS 段内切换要对当前 cube 取逆后继续搜,故必需。
+    pub fn inverse(&self) -> State {
+        let (cp, co) = self.cp_co();
+        let (ep, eo) = self.ep_eo();
+        let mut icp = [0u8; 8];
+        let mut ico = [0u8; 8];
+        let mut iep = [0u8; 12];
+        let mut ieo = [0u8; 12];
+        for i in 0..8 {
+            icp[cp[i] as usize] = i as u8;
+            ico[cp[i] as usize] = (3 - co[i]) % 3;
+        }
+        for i in 0..12 {
+            iep[ep[i] as usize] = i as u8;
+            ieo[ep[i] as usize] = eo[i] % 2;
+        }
+        State::from_parts(icp, ico, iep, ieo)
+    }
 }
 
 impl Default for State {

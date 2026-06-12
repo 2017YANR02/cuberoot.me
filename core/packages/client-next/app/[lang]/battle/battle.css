@@ -239,7 +239,7 @@
 
 .time-display {
     margin-top: 14px;
-    font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
+    font-family: 'Segment7Standard', monospace;
     font-size: clamp(2.5rem, 12vw, 5rem);
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -263,7 +263,7 @@
 }
 
 .opponent-display {
-    font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
+    font-family: 'Segment7Standard', monospace;
     font-size: clamp(1.0rem, 3.5vw, 1.3rem);
     color: var(--faint-foreground);
     text-align: center;
@@ -276,7 +276,7 @@
 .time-display .colon,
 .opponent-display .colon,
 .ao5-display .colon {
-    font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
+    font-family: 'Roboto Mono', monospace;
     font-size: 0.9em;
     vertical-align: 0.08em;
     margin: 0 4px;
@@ -576,7 +576,7 @@
 }
 
 .score-value {
-    font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
+    font-family: 'Segment7Standard', monospace;
     font-weight: 700;
     font-size: 1rem;
     color: var(--foreground);
@@ -1334,7 +1334,7 @@ body.solo .scramble-img {
 }
 
 .round-modal-time {
-    font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
+    font-family: 'Segment7Standard', monospace;
     font-size: 2.4rem;
     font-weight: 700;
     color: var(--foreground);
@@ -1501,7 +1501,7 @@ body.solo .scramble-img {
 }
 
 .history-item .h-time {
-    font-family: 'Segment7Standard', 'JetBrains Mono', monospace;
+    font-family: 'Segment7Standard', monospace;
     color: var(--foreground);
     font-size: 0.95rem;
     min-width: 80px;

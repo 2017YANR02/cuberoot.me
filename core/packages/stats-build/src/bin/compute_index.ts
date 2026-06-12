@@ -70,7 +70,7 @@ const STAT_CATEGORIES = [
     iconName: 'Tent',
     ids: ['average_event_count_by_competition', 'competition_days_count_by_region',
           'competitions_count_by_week', 'competitions_per_year_by_country',
-          'dnf_rate_by_event', 'fewest_competitors_contest',
+          'dnf_rate_by_event',
           'most_records_at_single_competition'],
   },
   {

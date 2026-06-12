@@ -383,7 +383,7 @@
 
   --sans: 'Inter', 'IBM Plex Sans', 'Segoe UI Variable', system-ui, -apple-system, sans-serif;
   --serif: 'Charter', 'Iowan Old Style', 'Georgia', 'Times New Roman', serif;
-  --mono: 'JetBrains Mono', 'Cascadia Code', 'SF Mono', Consolas, monospace;
+  --mono: 'Cascadia Code', 'SF Mono', Consolas, monospace;
 
   background: var(--bg);
   color: var(--ink);

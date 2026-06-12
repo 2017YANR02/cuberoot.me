@@ -159,6 +159,6 @@ export function proxy(req: NextRequest) {
 export const config = {
   // Skip Next internals, API rewrites, worker chunks, and static assets.
   matcher: [
-    '/((?!_next/static|_next/image|favicon\\.ico|icons/|fonts/|cubing-chunks/|v1/|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|woff2?|ttf|otf|css|js|map|wasm|json|xml|txt|geojson|tsv|csv|bin|gz)$).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|icons/|fonts/|cubing-chunks/|v1/|.*\\.(?:png|apng|jpg|jpeg|gif|svg|webp|avif|ico|woff2?|ttf|otf|css|js|mjs|map|wasm|json|xml|txt|html|geojson|tsv|csv|bin|gz|mp3|mp4|webm)$).*)',
   ],
 };

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import type { AlgsetCase } from '../_lib/useTutorialCatalog';
+import { tutorialMediaUrl, type AlgsetCase } from '../_lib/useTutorialCatalog';
 import { AlgChip } from './AlgChip';
 
 interface CaseModalProps {
@@ -29,7 +29,7 @@ export function CaseModal({ caseData, onClose, onPrev, onNext }: CaseModalProps)
         </div>
         <div className="case-modal-body">
           <div className="case-modal-img">
-            {caseData.image && <img src={caseData.image} alt={caseData.label} />}
+            {caseData.image && <img src={tutorialMediaUrl(caseData.image)} alt={caseData.label} />}
           </div>
           <div className="case-modal-algs">
             {caseData.algs

@@ -1,8 +1,0 @@
-# Scramble samples — eo / eo_xcross / G / bin 3
-# Population in this bin: 1
-# Samples listed: 1 (all entries in this bin)
-# Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-09
-# Columns: id,scramble,bottom_color,competition,round
-
-844000001,B F D2 L2 F L2 B' L B2 F R2 B D R F' L B2 R',G,Meizhou Open 2018,333 R1 E E1

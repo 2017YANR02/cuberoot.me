@@ -116,7 +116,7 @@ export function drawCumHistView(
         if (barW > 12 && b.count > 0 && (players.length === 1 || pi === activePlayerIdx)) {
           ctx.save();
           ctx.fillStyle = 'rgba(255,255,255,0.85)';
-          ctx.font = '600 11px "JetBrains Mono", monospace';
+          ctx.font = '600 11px ui-monospace, monospace';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'bottom';
           ctx.fillText(String(b.count), (x1 + x2) / 2, yTop - 3);

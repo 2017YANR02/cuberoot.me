@@ -217,13 +217,20 @@ function EventRoundsList({
     el.classList.add('wp-row-target');
   }, [hash, rows]);
 
+  const hashOf = (compId: string, roundType: string) =>
+    `#r-${compId}-${eventId}-${roundType}`;
   const buildAnchorHref = (compId: string, roundType: string) =>
-    `${pathname}${search}#r-${compId}-${eventId}-${roundType}`;
+    `${pathname}${search}${hashOf(compId, roundType)}`;
 
   // 整行点击 → 切 hash,只是点 td 空白处生效;内部 Link/button 走自己 (closest 'a, button' 时跳过).
+  // Next App Router 改 hash 不触发 hashchange,故手动同步 hash state 让高亮立即生效.
+  const selectRow = (compId: string, roundType: string) => {
+    router.replace(buildAnchorHref(compId, roundType), { scroll: false });
+    setHash(hashOf(compId, roundType));
+  };
   const handleRowClick = (e: React.MouseEvent, compId: string, roundType: string) => {
     if ((e.target as HTMLElement).closest('a, button')) return;
-    router.replace(buildAnchorHref(compId, roundType), { scroll: false });
+    selectRow(compId, roundType);
   };
 
   // 按比赛日期倒序,组内按 round_type 顺序(决赛在上).
@@ -294,6 +301,7 @@ function EventRoundsList({
                     href={buildAnchorHref(r.competition_id, r.round_type_id)}
                     replace
                     scroll={false}
+                    onClick={() => setHash(hashOf(r.competition_id, r.round_type_id))}
                     className={`wp-round-tag wp-round-tag-link ${roundClass(r.round_type_id)}`}
                     title={t('复制到链接', 'Copy link to this row', "複製到連結")}
                   >

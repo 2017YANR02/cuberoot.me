@@ -19,7 +19,7 @@
   --dg-ok: var(--signal-success);
   --dg-ok-soft: color-mix(in srgb, var(--signal-success) 14%, transparent);
   --dg-grid: color-mix(in srgb, var(--foreground) 12%, transparent);
-  --dg-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+  --dg-mono: 'SF Mono', Menlo, Consolas, monospace;
 
   background: var(--dg-bg);
   color: var(--dg-text);

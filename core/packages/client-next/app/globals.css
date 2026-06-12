@@ -70,9 +70,11 @@ body {
   --ring: var(--accent);
 
   --radius: 12px;
-  /* 中文黑体放在 generic monospace 之前:拉丁/数字命中 JetBrains Mono(等宽),
-     汉字回退无衬线黑体(同首页),避免部分系统 monospace CJK 落到宋体 */
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
+  /* 全站唯一等宽:自托管 Roboto Mono(跨设备一致,对标 Anthropic 自托管思路)+ 系统
+     ui-monospace 回退;CJK 黑体放 generic monospace 之前,避免系统 monospace CJK 落宋体 */
+  --font-mono: 'Roboto Mono', ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
+  /* 正文无衬线字体单源(首页纪录、统计数字等用它),与 body 同一份栈 */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* timer state colors (Solo + Battle) */
   --timer-idle: var(--foreground);
@@ -128,14 +130,17 @@ body {
    NOTE: Battle, Trainer (.trainer-root / .bld-trainer-root), Recon (.recon-page)
    and VisualCube editor (.vc-editor-page) are NO LONGER dark-locked — they follow
    the user's chosen theme via the :root token set (chrome fully tokenized in
-   their own CSS). */
-html:has(.wca-stats-page),
-html:has(.wse-page),
-html:has(.wp-page),
-html:has(.records-page),
-html:has(.nemesizer-page),
-html:has(.fun-stats),
-html:has(.tr-page) {
+   their own CSS).
+   `html:root:has()` (0,2,1) outranks the palette blocks `:root[data-palette]`
+   (0,2,0), so a chosen 中国色 palette is ignored here — these data-dense stats
+   pages stay locked to dark for readability. */
+html:root:has(.wca-stats-page),
+html:root:has(.wse-page),
+html:root:has(.wp-page),
+html:root:has(.records-page),
+html:root:has(.nemesizer-page),
+html:root:has(.fun-stats),
+html:root:has(.tr-page) {
   color-scheme: dark;
   --background: #171717;
   --foreground: #ededed;
@@ -186,6 +191,169 @@ html[data-theme=dark] {
   --article-blue-soft: color-mix(in srgb, var(--article-blue) 18%, transparent);
 }
 
+/* ── 中国色「配色主题」(palette) — 叠在 light/dark 之上的可选整套配色 ──
+   选某 palette → <html data-palette=x>;:root[data-palette=x] 特异度 (0,2,0)
+   高于 light/dark 与 dark-lock,能整体盖住。默认无 data-palette = 经典(原赭陶)。
+   色值取自中国传统色,过 WCA 对比度。picker 元数据在 lib/palettes.ts。
+   未列的 --accent-soft / --ring 走 :root 里 var(--accent) 定义自动派生;
+   深底 palette 把 --accent-soft 抬到 16% 增强可见度。 */
+.palette-scope[data-palette=classic] {
+  color-scheme: light;
+  --background: #fafafa;
+  --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: #171717;
+  --primary-foreground: #fafafa;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #171717;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --faint-foreground: #a3a3a3;
+  --accent: #C15F3C;
+  --accent-foreground: #ffffff;
+  --border-default: #e5e5e5;
+  --border-strong: #d4d4d4;
+  --input: #e5e5e5;
+}
+:root[data-palette=claude],
+.palette-scope[data-palette=claude] {
+  /* Anthropic / claude.ai 风:暖奶油纸质底 + 赭陶强调 + 暖墨字。刻意比经典的冷白更暖,做成「暖纸」变体跟经典明显错开。 */
+  color-scheme: light;
+  --background: #ece3d0;
+  --foreground: #2b2620;
+  --card: #f3ecdc;
+  --card-foreground: #2b2620;
+  --popover: #f6f1e4;
+  --popover-foreground: #2b2620;
+  --primary: #2b2620;
+  --primary-foreground: #f3ecdc;
+  --secondary: #e0d4ba;
+  --secondary-foreground: #2b2620;
+  --muted: #e4d9c1;
+  --muted-foreground: #655b49;
+  --faint-foreground: #9c8e74;
+  --accent: #b1502f;
+  --accent-foreground: #ffffff;
+  --border-default: #dccfb4;
+  --border-strong: #cabd9d;
+  --input: #dccfb4;
+}
+:root[data-palette=xinhuang],
+.palette-scope[data-palette=xinhuang] {
+  color-scheme: light;
+  --background: #eef7f2;
+  --foreground: #1f3a2e;
+  --card: #f7fbf8;
+  --card-foreground: #1f3a2e;
+  --popover: #ffffff;
+  --popover-foreground: #1f3a2e;
+  --primary: #1f3a2e;
+  --primary-foreground: #eef7f2;
+  --secondary: #e0efe7;
+  --secondary-foreground: #1f3a2e;
+  --muted: #e4f0ea;
+  --muted-foreground: #5a7a6b;
+  --faint-foreground: #92ab9f;
+  --accent: #277a4b;
+  --accent-foreground: #ffffff;
+  --border-default: #d2e6da;
+  --border-strong: #bcd8c8;
+  --input: #d2e6da;
+}
+:root[data-palette=yanqing],
+.palette-scope[data-palette=yanqing] {
+  color-scheme: light;
+  --background: #f7f4ed;
+  --foreground: #1b1c1f;
+  --card: #fdfbf6;
+  --card-foreground: #1b1c1f;
+  --popover: #ffffff;
+  --popover-foreground: #1b1c1f;
+  --primary: #1b1c1f;
+  --primary-foreground: #f7f4ed;
+  --secondary: #ede8dc;
+  --secondary-foreground: #1b1c1f;
+  --muted: #ece7da;
+  --muted-foreground: #6b6a63;
+  --faint-foreground: #a3a097;
+  --accent: #2376b7;
+  --accent-foreground: #ffffff;
+  --border-default: #ddd6c6;
+  --border-strong: #ccc3ae;
+  --input: #ddd6c6;
+}
+:root[data-palette=danxia],
+.palette-scope[data-palette=danxia] {
+  color-scheme: light;
+  --background: #faf3ec;
+  --foreground: #3a2420;
+  --card: #fefaf5;
+  --card-foreground: #3a2420;
+  --popover: #ffffff;
+  --popover-foreground: #3a2420;
+  --primary: #3a2420;
+  --primary-foreground: #faf3ec;
+  --secondary: #f3e6da;
+  --secondary-foreground: #3a2420;
+  --muted: #f1e4d8;
+  --muted-foreground: #8a6b60;
+  --faint-foreground: #b89c90;
+  --accent: #cc3a52;
+  --accent-foreground: #ffffff;
+  --border-default: #ecdccd;
+  --border-strong: #ddc7b3;
+  --input: #ecdccd;
+}
+:root[data-palette=hantan],
+.palette-scope[data-palette=hantan] {
+  color-scheme: dark;
+  --background: #142b32;
+  --foreground: #dfeae8;
+  --card: #1b3740;
+  --card-foreground: #dfeae8;
+  --popover: #1f3d47;
+  --popover-foreground: #dfeae8;
+  --primary: #dfeae8;
+  --primary-foreground: #142b32;
+  --secondary: #21434d;
+  --secondary-foreground: #dfeae8;
+  --muted: #21434d;
+  --muted-foreground: #93aeab;
+  --faint-foreground: #6b8783;
+  --accent: #e3b59c;
+  --accent-foreground: #142b32;
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --border-default: #2c4f59;
+  --border-strong: #3a5f6a;
+  --input: #2c4f59;
+}
+:root[data-palette=wujin],
+.palette-scope[data-palette=wujin] {
+  color-scheme: dark;
+  --background: #1a1916;
+  --foreground: #e8e1d2;
+  --card: #232019;
+  --card-foreground: #e8e1d2;
+  --popover: #2a261d;
+  --popover-foreground: #e8e1d2;
+  --primary: #e8e1d2;
+  --primary-foreground: #1a1916;
+  --secondary: #2c281f;
+  --secondary-foreground: #e8e1d2;
+  --muted: #2c281f;
+  --muted-foreground: #a59c86;
+  --faint-foreground: #756d5b;
+  --accent: #d9a82a;
+  --accent-foreground: #1a1916;
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --border-default: #353026;
+  --border-strong: #46402f;
+  --input: #353026;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -212,7 +380,7 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-sans);
   background: var(--background);
   color: var(--foreground);
   min-height: 100vh;
@@ -222,6 +390,15 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* 主题切换晕染:走 View Transitions API。lib/theme.ts 的 applyTheme() 用
+   document.startViewTransition 包住 data-theme 切换,浏览器对整页旧→新做交叉
+   淡出。这里把默认 0.25s 放慢到 0.42s,贴近"中国色"的慢过渡气质;不支持的
+   浏览器(无 startViewTransition)自动瞬切,reduced-motion 由 JS 跳过。 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.42s;
 }
 
 /* === Shared toggle / clear-button styles (from packages/client/src/index.css + */
@@ -309,6 +486,53 @@ a {
   display: inline-flex;
   width: 13px;
   flex-shrink: 0;
+}
+
+/* 配色主题 picker(components/PaletteToggle):每项前 3 色块预览。 */
+.palette-menu {
+  min-width: 172px;
+}
+.palette-swatch {
+  display: inline-flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.palette-swatch i {
+  display: block;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 14%, transparent);
+}
+.palette-menu-more {
+  display: block;
+  margin-top: 4px;
+  padding: 7px 10px;
+  border-top: 1px solid var(--border-default);
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.palette-menu-more:hover {
+  color: var(--accent);
+}
+
+/* 统一「外观」菜单(components/AppearanceToggle):明暗 + 配色一个单选。 */
+.appearance-menu {
+  min-width: 184px;
+  max-height: min(70vh, 460px);
+  overflow-y: auto;
+}
+.appearance-sec-label {
+  padding: 6px 10px 3px;
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.appearance-sec-div {
+  margin-top: 3px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-default);
 }
 
 .theme-toggle-inline {

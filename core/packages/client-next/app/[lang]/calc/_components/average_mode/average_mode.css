@@ -96,7 +96,7 @@
     border: 1px solid var(--avg-border);
     border-radius: 8px;
     padding: 10px 12px;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: ui-monospace, monospace;
     font-size: 0.92rem;
     line-height: 1.5;
     color: var(--avg-text);
@@ -156,7 +156,7 @@
 }
 
 .avg-card-value {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: ui-monospace, monospace;
     font-size: 1.1rem;
     color: var(--avg-text);
     font-weight: 600;
@@ -187,7 +187,7 @@
 .avg-table {
     width: 100%;
     border-collapse: collapse;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: ui-monospace, monospace;
     font-size: 0.88rem;
 }
 

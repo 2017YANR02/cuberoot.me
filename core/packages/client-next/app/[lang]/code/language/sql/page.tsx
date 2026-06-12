@@ -40,7 +40,7 @@ const SQL_LOGO_SVG = (
       fill="none" stroke="#9FCBE8" strokeWidth="2" opacity=".4"
     />
     {/* SQL wordmark on top ellipse */}
-    <text x="128" y="82" textAnchor="middle" fontFamily="Cascadia Code, JetBrains Mono, monospace"
+    <text x="128" y="82" textAnchor="middle" fontFamily="Cascadia Code, monospace"
       fontSize="22" fontWeight="700" fill="#0A1014" letterSpacing="2">SQL</text>
   </svg>
 );

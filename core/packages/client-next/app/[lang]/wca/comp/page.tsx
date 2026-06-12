@@ -15,7 +15,7 @@ import type { CSSProperties } from 'react';
 import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parseAsString } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, Ban, LayoutGrid, HelpCircle, X as XIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, CalendarRange, Ban, LayoutGrid, HelpCircle, Users, Gauge, Percent, X as XIcon } from 'lucide-react';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import {
   fetchAllUpcomingCompsJson,
@@ -145,6 +145,8 @@ interface Competition {
   /** event 短码 → 该项目轮次数；过去比赛由 all_past_comps.json 静态字段提供，未来比赛打开 modal 时走 WCIF runtime 拉 */
   rounds?: Record<string, number>;
   competitor_limit: number;
+  /** 实际参赛人数（过去比赛 all_past_comps.json 提供；未来比赛无此数据） */
+  competitors?: number;
   registration_open?: string | null;   // ISO 8601 UTC
   registration_close?: string | null;
   cubing_china_url?: string;
@@ -650,7 +652,8 @@ function adaptPastComp(w: PastCompRecord): Competition {
     end_date: w.end_date,
     events: w.events,
     rounds: w.rounds,
-    competitor_limit: 0,
+    competitor_limit: w.competitor_limit ?? 0,
+    competitors: w.competitors,
     top_cubers: [],
   };
 }
@@ -679,6 +682,17 @@ function readQFromUrl(): string {
 
 type ViewMode = 'calendar' | 'compact' | 'list' | 'globe';
 const VIEW_MODES: ViewMode[] = ['calendar', 'compact', 'list', 'globe'];
+
+// 列表视图按人数排序：col 选实际人数 / 上限 / 满员率(实际÷上限)，dir 降/升；null = 默认按日期倒序
+type SortCol = 'competitors' | 'limit' | 'ratio';
+type ListSort = { col: SortCol; dir: 'asc' | 'desc' } | null;
+
+/** 满员率 = min(实际人数 / 人数上限, 100%)；缺人数 / 无上限(0) → null。
+ *  人数>上限(上限填错 / 多阶段 / 多地点等)视为已满员，封顶 100%，不出现 >100% 的脏值 */
+function fillRate(c: { competitors?: number; competitor_limit: number }): number | null {
+  return c.competitors != null && c.competitor_limit > 0
+    ? Math.min(1, c.competitors / c.competitor_limit) : null;
+}
 
 // ── 列表视图 ──────────────────────────────────────────────────────────────
 // 不分月，按 start_date 倒序排列、按年分组；点行同样打开 CompModal。
@@ -720,13 +734,13 @@ function measureMaxNameCityPx(comps: Competition[], isZh: boolean, containerPx?:
     const total = nameWs[i] + gapPx + ctx.measureText(cityStr).width;
     if (total > maxTotal) maxTotal = total;
   }
-  // 视口上限: container 减掉其他列总宽（date + flag + 21 events + gaps + padding）
-  // 其他列在 768px 以上 = 7.2 + 1.4 + 21*1.3 = 36rem，加 23 列 6px gap + 12px*2 padding 约 162px
+  // 视口上限: container 减掉其他列总宽（date + flag + days + competitors + limit + ratio + 21 events + gaps + padding）
+  // 其他列在 768px 以上 = 7.2 + 1.4 + 1.6 + 2.6 + 2.6 + 2.8 + 21*1.3 = 45.5rem，加 27 列 6px gap + 12px*2 padding
   let cap = LIST_NAME_CELL_MAX_PX;
   if (containerPx != null && containerPx > 0) {
     const isNarrow = window.innerWidth <= 768;
-    const otherColsRem = isNarrow ? (5.5 + 1.2 + 21 * 1.1) : (7.2 + 1.4 + 21 * 1.3);
-    const gapPaddingPx = isNarrow ? (4 * 23 + 8 * 2) : (6 * 23 + 12 * 2);
+    const otherColsRem = isNarrow ? (5.5 + 1.2 + 1.4 + 2.3 + 2.3 + 2.4 + 21 * 1.1) : (7.2 + 1.4 + 1.6 + 2.6 + 2.6 + 2.8 + 21 * 1.3);
+    const gapPaddingPx = isNarrow ? (4 * 27 + 8 * 2) : (6 * 27 + 12 * 2);
     const avail = containerPx - otherColsRem * rootFontPx - gapPaddingPx;
     cap = Math.min(cap, Math.max(LIST_NAME_CELL_MIN_PX, avail));
   }
@@ -735,7 +749,7 @@ function measureMaxNameCityPx(comps: Competition[], isZh: boolean, containerPx?:
 
 interface RowItem { comp: Competition; key: string }
 
-function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso, pageRef }: {
+function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso, pageRef, sortState }: {
   comps: Competition[];
   isZh: boolean;
   onSelect: (c: Competition) => void;
@@ -747,14 +761,32 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   cancelledCutoffIso: string;
   /** .calendar-page 根元素 ref —— 用来按当前可视行最长 name+city 写 --cl-name-width */
   pageRef: React.RefObject<HTMLDivElement | null>;
+  /** 人数排序状态；null = 按日期倒序 */
+  sortState: ListSort;
 }) {
-  // 倒序排列；不再插入"年份分隔"行，年份显示在 chip 行的左侧 sticky cell 里
-  const items = useMemo<RowItem[]>(
-    () => [...comps]
-      .sort((a, b) => b.start_date.localeCompare(a.start_date))
-      .map((c) => ({ comp: c, key: c.id })),
-    [comps],
-  );
+  // 默认按日期倒序；人数排序时按所选列(实际/上限)排，缺值(0/缺省)恒沉底，同值再按日期倒序
+  const items = useMemo<RowItem[]>(() => {
+    const sorted = [...comps];
+    if (sortState) {
+      const col = sortState.col;
+      const mul = sortState.dir === 'asc' ? 1 : -1;
+      const getVal = (c: Competition): number | null | undefined =>
+        col === 'competitors' ? c.competitors : col === 'limit' ? c.competitor_limit : fillRate(c);
+      sorted.sort((a, b) => {
+        const av = getVal(a), bv = getVal(b);
+        const aM = av == null || av <= 0;
+        const bM = bv == null || bv <= 0;
+        if (aM && bM) return b.start_date.localeCompare(a.start_date);
+        if (aM) return 1;
+        if (bM) return -1;
+        if (av !== bv) return (av! - bv!) * mul;
+        return b.start_date.localeCompare(a.start_date);
+      });
+    } else {
+      sorted.sort((a, b) => b.start_date.localeCompare(a.start_date));
+    }
+    return sorted.map((c) => ({ comp: c, key: c.id }));
+  }, [comps, sortState]);
   const yearCounts = useMemo(() => {
     const m = new Map<string, number>();
     for (const c of comps) {
@@ -805,11 +837,12 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   // 通知父组件当前 sticky 年份（真正可见的最顶行的年份 — 用 range.top 而不是 range.start，
   // 后者带 LIST_BUFFER 上缓冲会指向视口外往上 8 行的位置，导致跨年时年份显示滞后）
   useEffect(() => {
-    if (items.length === 0) { onYearChange(null); return; }
+    // 人数排序时列表非时间序，sticky 年份无意义 → 置空
+    if (items.length === 0 || sortState) { onYearChange(null); return; }
     const idx = Math.min(range.top, items.length - 1);
     const year = items[idx].comp.start_date.slice(0, 4);
     onYearChange({ year, count: yearCounts.get(year) ?? 0 });
-  }, [range.top, items, yearCounts, onYearChange]);
+  }, [range.top, items, yearCounts, onYearChange, sortState]);
 
   // 视口内 upcoming 比赛(无静态 rounds)自动 WCIF 预取 — 让用户不用 hover 也能看到轮次数。
   // fetchCompRounds 内部有 inflight + cache 去重,浏览器同 host 并发上限 6,自然节流。
@@ -907,6 +940,26 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
                 <span className="comp-list-name">{displayName}</span>
                 <span className="comp-list-city">{displayCity}</span>
               </span>
+              <span className="cl-days-cell" title={tr({ zh: '天数', en: 'Days',
+                  zhHant: "天數"
+            })}>
+                {daysBetween(parseLocalDate(c.start_date), parseLocalDate(endDate)) + 1}
+              </span>
+              <span className="cl-people-cell" title={tr({ zh: '实际参赛人数', en: 'Competitors',
+                  zhHant: "實際參賽人數"
+            })}>
+                {c.competitors != null ? c.competitors : ''}
+              </span>
+              <span className="cl-people-cell cl-limit-cell" title={tr({ zh: '人数上限', en: 'Competitor limit',
+                  zhHant: "人數上限"
+              })}>
+                {c.competitor_limit > 0 ? c.competitor_limit : ''}
+              </span>
+              <span className="cl-people-cell cl-ratio-cell" title={tr({ zh: '满员率(实际/上限)', en: 'Fill rate (competitors/limit)',
+                  zhHant: "滿員率(實際/上限)"
+              })}>
+                {(() => { const r = fillRate(c); return r == null ? '' : `${Math.round(r * 100)}%`; })()}
+              </span>
               {EVENT_ORDER.map((eid) => {
                 const shortEid = WCA_EVENT_ID_TO_SHORT[eid] ?? eid;
                 const r = c.rounds?.[shortEid];
@@ -967,6 +1020,9 @@ function CalendarPageInner() {
   // 缺 key = 不过滤此项目。chip 单击循环：undefined → 1 → ... → max → 'any' → undefined。
   // 'any' 状态在 UI 上仅通过 is-active 边框体现（badge 空），不显式写"≥1"等文字。
   const [eventFilters, setEventFilters] = useState<Record<string, 'any' | 1 | 2 | 3 | 4>>({});
+  // 按比赛天数过滤：null = 不过滤；1..max = 精确匹配该天数（start~end 跨的天数）。
+  // chip 单击循环：null → 1 → 2 → ... → max → null。
+  const [daysFilter, setDaysFilter] = useState<number | null>(null);
   // 视图状态走 URL(nuqs):切换 push 进历史 → iOS 左缘滑 / 浏览器后退能在视图间返回;
   // 后退 / 前进由 nuqs 自动同步,无需手写 popstate。calendar 为默认值,自动从 URL 省略。
   const [viewMode, setViewMode] = useQueryState(
@@ -984,6 +1040,8 @@ function CalendarPageInner() {
   const [dateTo, setDateTo] = useState('');
   // 列表 sticky 年份（chip 行左侧 cell 显示）；CompList 滚动时回调更新
   const [currentYear, setCurrentYear] = useState<{ year: string; count: number } | null>(null);
+  // 列表视图人数排序（实际/上限列头单击循环 降→升→默认日期序）
+  const [listSort, setListSort] = useState<ListSort>(null);
   // 已取消过滤：'all' = 默认包含；'only' = 仅展示已取消
   const [cancelledFilter, setCancelledFilter] = useState<'all' | 'only'>('all');
   // 三个 popover 共用一份 state：'month' = 日历模式月份选择；'from'/'to' = 列表模式年月范围
@@ -1096,6 +1154,17 @@ function CalendarPageInner() {
     return m;
   }, [activeComps]);
 
+  // 比赛天数过滤的循环上限：取数据里实际最长持续天数，封顶 6（>6 天的比赛在 WCA 几乎不存在，
+  // 避免脏 end_date 把循环拉长）。chip 单击在 1..cap 间循环。
+  const maxDays = useMemo(() => {
+    let m = 1;
+    for (const c of activeComps) {
+      const d = daysBetween(parseLocalDate(c.start_date), parseLocalDate(c.end_date || c.start_date)) + 1;
+      if (d > m) m = d;
+    }
+    return Math.min(m, 6);
+  }, [activeComps]);
+
   // RegionPicker 国家列表(出现过的 iso2,按 count desc),组件保留传入顺序
   const countryOptions = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -1187,6 +1256,10 @@ function CalendarPageInner() {
         if (r == null) return false;
         if (r !== rf) return false;
       }
+      if (daysFilter != null) {
+        const d = daysBetween(parseLocalDate(comp.start_date), parseLocalDate(comp.end_date || comp.start_date)) + 1;
+        if (d !== daysFilter) return false;
+      }
       if (validYM(dateFrom) || validYM(dateTo)) {
         const ym = comp.start_date.slice(0, 7);
         if (validYM(dateFrom) && ym < dateFrom) return false;
@@ -1195,7 +1268,7 @@ function CalendarPageInner() {
       if (cancelledFilter === 'only' && !isCancelledComp(comp, cancelledCutoffIso)) return false;
       return true;
     },
-    [compQuery, selectedCuber, selectedCuberCompIds, countryFilterSet, eventFilters, dateFrom, dateTo, cancelledFilter, cancelledCutoffIso],
+    [compQuery, selectedCuber, selectedCuberCompIds, countryFilterSet, eventFilters, daysFilter, dateFrom, dateTo, cancelledFilter, cancelledCutoffIso],
   );
 
   const displayedComps = useMemo(
@@ -1605,6 +1678,27 @@ function CalendarPageInner() {
         ref={viewMode === 'list' && displayedComps.length > 0 ? chipsHeaderRef : undefined}
       >
         {(() => {
+          // 天数列表头 = 日历图标，下方每行显示该比赛天数；单击图标循环过滤 null → 1 → ... → maxDays → null。
+          const daysActive = daysFilter != null;
+          const daysChip = (
+            <button
+              key="days-filter"
+              className={`event-chip days-chip ${daysActive ? 'is-active' : ''}`}
+              onClick={() => setDaysFilter((cur) => {
+                if (cur == null) return maxDays >= 1 ? 1 : null;
+                return cur + 1 <= maxDays ? cur + 1 : null;
+              })}
+              aria-pressed={daysActive}
+              title={tr({ zh: '比赛天数(单击按天数筛选)', en: 'Competition days (click to filter)',
+                  zhHant: "比賽天數(單擊按天數篩選)"
+              })}
+            >
+              <CalendarRange size={18} strokeWidth={1.75} />
+              <span className={`event-chip-rounds${daysActive ? '' : ' is-empty'}`}>
+                {daysActive ? daysFilter : ''}
+              </span>
+            </button>
+          );
           const chips = EVENT_ORDER.map((eid) => {
             const cur = eventFilters[eid];
             const active = cur !== undefined;
@@ -1645,8 +1739,8 @@ function CalendarPageInner() {
               </button>
             );
           });
-          // 列表模式：用 grid 把 chips 对齐到下方 21 列数字（年份 cell + 2 spacer + 21 chip）
-          if (viewMode !== 'list' || displayedComps.length === 0) return chips;
+          // 列表模式：用 grid 把表头对齐到下方各列（年份 cell + flag/name 两个 spacer + 天数列头 + 21 chip）。
+          if (viewMode !== 'list' || displayedComps.length === 0) return <>{daysChip}{chips}</>;
           return (
             <div className="event-chips-grid">
               <span className="cl-year-cell" aria-live="polite">
@@ -1659,6 +1753,38 @@ function CalendarPageInner() {
               </span>
               <span className="cl-h-spacer" aria-hidden="true" />
               <span className="cl-h-spacer" aria-hidden="true" />
+              {daysChip}
+              {([
+                ['competitors', Users, tr({ zh: '实际参赛人数(点击排序)', en: 'Competitors (click to sort)',
+                    zhHant: "實際參賽人數(點選排序)"
+                })],
+                ['limit', Gauge, tr({ zh: '人数上限(点击排序)', en: 'Competitor limit (click to sort)',
+                    zhHant: "人數上限(點選排序)"
+                })],
+                ['ratio', Percent, tr({ zh: '满员率 实际/上限(点击排序)', en: 'Fill rate, competitors/limit (click to sort)',
+                    zhHant: "滿員率 實際/上限(點選排序)"
+                })],
+              ] as const).map(([col, Icon, title]) => {
+                const on = listSort?.col === col;
+                return (
+                  <button
+                    key={col}
+                    type="button"
+                    className={`cl-col-icon cl-col-sort${on ? ' is-active' : ''}`}
+                    title={title}
+                    aria-pressed={on}
+                    onClick={() => setListSort((cur) =>
+                      !cur || cur.col !== col ? { col, dir: 'desc' }
+                        : cur.dir === 'desc' ? { col, dir: 'asc' }
+                          : null)}
+                  >
+                    {on && (listSort!.dir === 'desc'
+                      ? <ChevronDown size={11} strokeWidth={2.25} />
+                      : <ChevronUp size={11} strokeWidth={2.25} />)}
+                    <Icon size={15} strokeWidth={1.75} />
+                  </button>
+                );
+              })}
               {chips}
             </div>
           );
@@ -1679,6 +1805,7 @@ function CalendarPageInner() {
           isZh={isZh}
           onSelect={setSelectedComp}
           onYearChange={setCurrentYear}
+          sortState={listSort}
           outerRef={listScrollRef}
           cancelledCutoffIso={cancelledCutoffIso}
           pageRef={pageRef}

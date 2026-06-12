@@ -72,7 +72,7 @@
     border: 1px solid var(--az-border-strong);
     border-radius: 6px;
     padding: 0.55rem 0.75rem;
-    font-family: 'JetBrains Mono', 'Menlo', monospace;
+    font-family: 'Menlo', monospace;
     font-size: 0.9rem;
     color: var(--az-text);
     outline: none;
@@ -518,7 +518,7 @@
     border: 1px solid var(--az-border);
     background: var(--az-surface);
     padding: 0.65rem 0.85rem;
-    font-family: 'JetBrains Mono', 'Menlo', monospace;
+    font-family: 'Menlo', monospace;
     font-size: 0.83rem;
     line-height: 1.45;
     color: var(--az-text);

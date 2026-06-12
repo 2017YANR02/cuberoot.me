@@ -352,6 +352,8 @@ export function pbSingleIndex(solves: Solve[]): number {
 /** Compute a row of stats. Returns formatted strings ready for display. */
 export interface StatsSummary {
   count: number;
+  /** Non-DNF solves — the numerator in the success/total ratio. */
+  solved: number;
   best: string;
   worst: string;
   mean: string;
@@ -380,6 +382,7 @@ export interface StatsSummary {
 export function summarize(solves: Solve[]): StatsSummary {
   return {
     count: solves.length,
+    solved: solves.reduce((n, s) => n + (s.penalty === 'DNF' ? 0 : 1), 0),
     best: formatMs(bestSingle(solves)),
     worst: formatMs(worstSingle(solves)),
     mean: formatMs(meanOfAll(solves)),

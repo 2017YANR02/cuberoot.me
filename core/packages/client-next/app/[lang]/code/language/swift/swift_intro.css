@@ -24,7 +24,7 @@
   --code-type: #FFB28C;
   --code-var: #F8EDE5;
   --code-prop: #F8EDE5;
-  --mono: 'Cascadia Code', 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, 'Liberation Mono', monospace;
+  --mono: 'Cascadia Code', 'Fira Code', 'SF Mono', Consolas, 'Liberation Mono', monospace;
   --sans: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
 
   background: var(--bg);

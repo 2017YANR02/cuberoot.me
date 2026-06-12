@@ -3,7 +3,7 @@
  * side by side regardless of the current theme. */
 
 .tk {
-  --tk-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+  --tk-mono: 'Fira Code', 'SF Mono', Consolas, monospace;
   position: relative;
   min-height: 100vh;
   background: var(--background);

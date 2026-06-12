@@ -102,13 +102,20 @@ export default function ByCompList({ results, comps, reconLookup, isZh }: Props)
     el.classList.add('wp-row-target');
   }, [grouped, hash]);
 
+  const hashOf = (compId: string, eventId: string, roundType: string) =>
+    `#r-${compId}-${eventId}-${roundType}`;
   const buildAnchorHref = (compId: string, eventId: string, roundType: string) =>
-    `${pathname}${search}#r-${compId}-${eventId}-${roundType}`;
+    `${pathname}${search}${hashOf(compId, eventId, roundType)}`;
 
   // 整行点击 → 切 hash (replace 防历史污染);内部 Link/button 走自己 (closest 检查跳过).
+  // Next App Router 改 hash 不触发 hashchange,故手动同步 hash state 让高亮立即生效.
+  const selectRow = (compId: string, eventId: string, roundType: string) => {
+    router.replace(buildAnchorHref(compId, eventId, roundType), { scroll: false });
+    setHash(hashOf(compId, eventId, roundType));
+  };
   const handleRowClick = (e: React.MouseEvent, compId: string, eventId: string, roundType: string) => {
     if ((e.target as HTMLElement).closest('a, button')) return;
-    router.replace(buildAnchorHref(compId, eventId, roundType), { scroll: false });
+    selectRow(compId, eventId, roundType);
   };
 
   if (!grouped) return <div className="wp-loading-inline">{t('加载中…', 'Loading…', "載入中…")}</div>;
@@ -168,6 +175,7 @@ export default function ByCompList({ results, comps, reconLookup, isZh }: Props)
                             href={buildAnchorHref(comp.id, r.event_id, r.round_type_id)}
                             replace
                             scroll={false}
+                            onClick={() => setHash(hashOf(comp.id, r.event_id, r.round_type_id))}
                             className={`wp-round-tag wp-round-tag-link ${roundClass(r.round_type_id)}`}
                             title={t('复制到链接', 'Copy link to this row', "複製到連結")}
                           >

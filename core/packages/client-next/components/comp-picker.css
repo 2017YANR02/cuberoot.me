@@ -85,7 +85,7 @@
 }
 
 .comp-picker-id {
-  font-family: monospace;
+  font-family: var(--font-mono);
   color: #d97757;
 }
 

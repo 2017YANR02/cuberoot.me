@@ -53,18 +53,18 @@ export default function PersonHero({ profile, results, isZh }: Props) {
           <span className="wp-hero-name-flag" title={p.country_iso2 ? countryName(p.country_iso2, isZh) : undefined}>
             <Flag iso2={p.country_iso2} className="wp-flag" />
           </span>
-          <div className="wp-hero-name-col">
-            <div className="wp-hero-name-line">
-              <h1 className="wp-hero-name">
-                <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-name-link" title="WCA">{displayName}</a>
-              </h1>
-              {GenderIcon && (
-                <GenderIcon size={18} className={`wp-hero-gender wp-hero-gender-${p.gender}`} aria-label={genderLabel} />
-              )}
-            </div>
-            <div className="wp-hero-id">
-              <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-id-link" title="WCA">{p.wca_id}</a>
-            </div>
+          <div className="wp-hero-name-line">
+            <h1 className="wp-hero-name">
+              <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-name-link" title="WCA">{displayName}</a>
+            </h1>
+          </div>
+          <span className="wp-hero-gender-cell">
+            {GenderIcon && (
+              <GenderIcon size={18} className={`wp-hero-gender wp-hero-gender-${p.gender}`} aria-label={genderLabel} />
+            )}
+          </span>
+          <div className="wp-hero-id">
+            <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-id-link" title="WCA">{p.wca_id}</a>
           </div>
         </div>
       </div>

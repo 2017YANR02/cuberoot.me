@@ -6,6 +6,7 @@ import MonthGrid from '@/components/MonthGrid';
 import { useLang } from '../../_lib/Lang';
 import type { Lang } from '../../_lib/Lang';
 import { TIMELINE } from '../_lib/arch-data';
+// 逐日总结: 面向访客的极简一句话(写作约定见 arch-data.tsx 的 TLEntry 注释), 非技术流水账。
 import COMMITS_DATA from '../timeline_commits.json';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
@@ -14,7 +15,7 @@ interface DayEntry { date: string; zh: string; en: string;
     zhHant?: string;
  }
 const DAYS = COMMITS_DATA as DayEntry[];
-const CAL_MONTHS = ['2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05'];
+const CAL_MONTHS = ['2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
 
 function Timeline() {
   const lang = useLang();

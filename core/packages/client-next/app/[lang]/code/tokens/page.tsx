@@ -161,6 +161,14 @@ export default function CodeTokensPage() {
             </div>
           ))}
         </div>
+        <p className="tk-cat-note" style={{ marginTop: 16 }}>
+          {tr({
+            zh: '另有「配色主题」叠加层:用户在右上「外观」菜单可选 6 套整套皮肤(克劳德 + 5 套中国传统色),经 data-palette 覆盖上面全部令牌——基础令牌不动,只被皮肤盖住。整套并排见 ',
+            en: 'There’s also a palette overlay: from the top-right Appearance menu users pick one of 6 full skins (Claude + 5 Chinese-traditional palettes) that override every token above via data-palette — the base tokens stay put, a skin just sits on top. Compare them side by side at ',
+              zhHant: "另有「配色主題」疊加層:使用者在右上「外觀」選單可選 6 套整套皮膚(克勞德 + 5 套中國傳統色),經 data-palette 覆蓋上面全部令牌——基礎令牌不動,只被皮膚蓋住。整套並排見 "
+        })}
+          <Link href="/appearance">/appearance</Link>
+        </p>
       </section>
 
       <footer className="tk-foot">

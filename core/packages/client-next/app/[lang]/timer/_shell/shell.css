@@ -529,7 +529,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   display: flex;
   align-items: baseline;
   gap: 6px;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   line-height: 1.55;
 }
 .shell-stat-lbl { font-size: 11px; color: var(--muted-foreground); }

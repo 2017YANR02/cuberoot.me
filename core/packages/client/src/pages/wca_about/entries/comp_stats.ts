@@ -92,7 +92,6 @@ LIMIT 100;`,
   ],
   related: [
     { id: 'competitions_per_year_by_country', titleZh: '每年每国比赛数', titleEn: 'Competitions per year by country', hintZh: '另一种"赛事密度"切片', hintEn: 'Sibling slice of competition density' },
-    { id: 'fewest_competitors_contest', titleZh: '参赛人数最少的比赛', titleEn: 'Fewest competitors contest', hintZh: '人数维度的相对面', hintEn: 'Opposite end on the headcount axis' },
     { id: 'most_records_at_single_competition', titleZh: '单场比赛最多纪录', titleEn: 'Most records at a single competition', hintZh: '另一种"单场强度"指标', hintEn: 'Another single-comp intensity metric' },
     { id: 'average_event_count_by_competition', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '完整 top 100', hintEn: 'Full top 100' },
   ],
@@ -484,100 +483,6 @@ GROUP BY r.event_id;`,
   ],
 };
 
-// ──── fewest_competitors_contest ────────────────────────────────────────────
-const fewest_competitors_contest: AboutEntry = {
-  id: 'fewest_competitors_contest',
-  titleZh: '参赛人数最少的比赛',
-  titleEn: 'Fewest competitors contest',
-  badgeZh: '赛事',
-  badgeEn: 'Competition',
-  introZh: [
-    '一场比赛里有几位**实际出赛**的选手?把 `results` 表按 `competition_id` 分组,数 distinct `person_id`。只保留 ≤ 15 人的小型比赛,升序排,榜首往往是邀请赛、首场地区赛或线上特别赛。',
-    '"出赛"只看 `results` 里有没有那个人的记录 —— 报了名但没去现场 / 全 DNS 的不计入。',
-  ],
-  introEn: [
-    'How many people actually **competed** at a comp? Group `results` by `competition_id` and count distinct `person_id`. Keep only comps with ≤ 15 competitors, sort ascending — the top tends to be invitationals, first-ever regional comps, or special online events.',
-    '"Competed" means a row exists in `results` — registered-but-DNS no-shows are not counted.',
-  ],
-  stats: [
-    { value: '≤ 15', labelZh: '门槛', labelEn: 'Threshold', hintZh: '只看小型比赛', hintEn: 'Small comps only' },
-    { value: 'DISTINCT', labelZh: '计数', labelEn: 'Counting', hintZh: 'person_id 去重', hintEn: 'On person_id' },
-    { value: '升序', labelZh: '排序', labelEn: 'Sort', hintZh: '人最少在最上', hintEn: 'Fewest at top' },
-    { value: '2 列', labelZh: '表头', labelEn: 'Columns', hintZh: '人数 + 比赛链接', hintEn: 'Count + comp link' },
-  ],
-  sourceZh: [
-    '一条只读 SQL:内层 `GROUP BY competition_id` 数 distinct 出赛人;`HAVING competitors_count <= 15` 卡门槛;外层 JOIN `competitions` 拿到 `cell_name` 拼 WCA 比赛链接。',
-  ],
-  sourceEn: [
-    'Single read-only SQL: inner `GROUP BY competition_id` counts distinct competitors; `HAVING competitors_count <= 15` applies the cutoff; outer JOIN `competitions` builds the WCA link from `cell_name`.',
-  ],
-  sourceCode: {
-    lang: 'sql',
-    body: `SELECT
-  competitors_count,
-  competition.cell_name
-FROM (
-  SELECT
-    COUNT(DISTINCT person_id) competitors_count,
-    competition_id
-  FROM results
-  GROUP BY competition_id
-  HAVING competitors_count <= 15
-) AS competitors_count_by_competition
-JOIN competitions competition ON competition.id = competition_id
-ORDER BY competitors_count;`,
-  },
-  steps: [
-    {
-      titleZh: '基于真实出赛',
-      titleEn: 'Start from actual results',
-      bodyZh: '从 `results` 起(而不是 `registrations`/`competitions`),没出赛的天然不算。',
-      bodyEn: 'Start from `results` (not `registrations` or `competitions`) — anyone who didn\'t show up is naturally excluded.',
-    },
-    {
-      titleZh: '去重计数',
-      titleEn: 'Count distinct',
-      bodyZh: '`COUNT(DISTINCT person_id)` —— 同一人多项目多轮仍只算一次。',
-      bodyEn: '`COUNT(DISTINCT person_id)` — multi-event multi-round rows from the same person collapse to one.',
-    },
-    {
-      titleZh: '过滤"小型"',
-      titleEn: 'Filter to "small"',
-      bodyZh: '`HAVING competitors_count <= 15` —— 完整 dump 上 LIMIT 没意义,15 是约定的"小赛"上界。',
-      bodyEn: '`HAVING competitors_count <= 15` — a LIMIT on a full dump is meaningless; 15 is the conventional "small comp" upper bound.',
-    },
-    {
-      titleZh: '挂比赛链接',
-      titleEn: 'Attach comp link',
-      bodyZh: '外层 JOIN `competitions`,拼 markdown `[name](.../competitions/<id>)`,前端渲染成可点链接。',
-      bodyEn: 'Outer JOIN `competitions`, build a markdown `[name](.../competitions/<id>)`. The renderer turns this into a clickable link.',
-    },
-    {
-      titleZh: '升序输出',
-      titleEn: 'Sort ascending',
-      bodyZh: '`ORDER BY competitors_count` —— 同票数无打破,前端按 SQL 顺序保留。',
-      bodyEn: '`ORDER BY competitors_count` — ties keep SQL\'s natural order in the UI.',
-      highlight: true,
-    },
-  ],
-  edgesZh: [
-    '"出赛 = 有 `results` 行" —— 该选手可能整轮 DNS(SQL 里 `value > 0` 都没有),只要 `result_attempts` 里挂了行就算。',
-    '`HAVING competitors_count <= 15` 写死,要看更大规模需自己改 SQL —— 这是个"小赛"专题榜。',
-    '历史上单人比赛极少,通常是疫情期间允许的 1 人或 2 人特殊场。',
-  ],
-  edgesEn: [
-    '"Competed" means a `results` row exists — even a fully DNS\'d round still ties a row to the person. Empty-`results` comps would not count anyone.',
-    'The `<= 15` cutoff is hardcoded — this is intentionally a "small comp" leaderboard. Larger thresholds need a SQL edit.',
-    'Single-person comps are very rare historically — usually pandemic-era 1- or 2-person specials.',
-  ],
-  related: [
-    { id: 'average_event_count_by_competition', titleZh: '每场比赛平均项目数', titleEn: 'Avg events per comp', hintZh: '小赛常项目多人少', hintEn: 'Small comps trend high here' },
-    { id: 'competition_days_count_by_region', titleZh: '按区域比赛天数', titleEn: 'Comp days by region', hintZh: '小赛通常 1 天完结', hintEn: 'Small comps usually wrap in a day' },
-    { id: 'most_records_at_single_competition', titleZh: '单场比赛最多纪录', titleEn: 'Most records at one comp', hintZh: '与"人少"对照的"密度高"', hintEn: 'Opposite-end density companion' },
-    { id: 'fewest_competitors_contest', toStat: true, titleZh: '查看实时榜单', titleEn: 'Jump to live data', hintZh: '完整小赛列表', hintEn: 'Full small-comp list' },
-  ],
-};
-
 // ──── most_records_at_single_competition ────────────────────────────────────
 const most_records_at_single_competition: AboutEntry = {
   id: 'most_records_at_single_competition',
@@ -680,6 +585,5 @@ export const COMP_STATS_ABOUT: Record<string, AboutEntry> = {
   competitions_count_by_week,
   competitions_per_year_by_country,
   dnf_rate_by_event,
-  fewest_competitors_contest,
   most_records_at_single_competition,
 };

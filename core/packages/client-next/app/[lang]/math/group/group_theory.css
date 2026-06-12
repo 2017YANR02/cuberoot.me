@@ -19,7 +19,7 @@
 
   --serif: 'EB Garamond', 'Charter', 'Iowan Old Style', 'Georgia', 'Times New Roman', serif;
   --sans: 'Inter', 'IBM Plex Sans', 'Segoe UI Variable', system-ui, -apple-system, sans-serif;
-  --mono: 'JetBrains Mono', 'Cascadia Code', 'SF Mono', Consolas, monospace;
+  --mono: 'Cascadia Code', 'SF Mono', Consolas, monospace;
   --math: 'STIX Two Math', 'Latin Modern Math', 'Cambria Math', 'Times New Roman', serif;
 
   background: var(--bg);

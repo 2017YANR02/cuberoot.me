@@ -10,7 +10,7 @@
     --cmt-border-strong: #d4d4d4;
     --cmt-accent: #C15F3C;
     --cmt-accent-soft: rgba(193, 95, 60, 0.08);
-    --cmt-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --cmt-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--cmt-bg);

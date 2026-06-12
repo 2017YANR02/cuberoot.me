@@ -1,8 +1,0 @@
-# Scramble samples — f2leo / f2leo_xxcross / ORWY / bin 3
-# Population in this bin: 1
-# Samples listed: 1 (all entries in this bin)
-# Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-09
-# Columns: id,scramble,bottom_color,competition,round
-
-3115470026,D R U' R' F2 R2 D L D L' B R2 L2 D2 F' L2 B L2 D,O,BMME 3x3 Day 2023,333mbf Final B #1
