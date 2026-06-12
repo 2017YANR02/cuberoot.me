@@ -1,8 +1,0 @@
-# Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / W / bin 2
-# Population in this bin: 1
-# Samples listed: 1 (all entries in this bin)
-# Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-09
-# Columns: id,scramble,bottom_color,competition,round
-
-661341008,R2 D2 F2 D2 F' D2 U2 B2 D2 L U' R F' U F2 L' B2 F2 L2 U,W,Meguro 2017,333mbf Final A #2

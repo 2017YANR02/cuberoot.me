@@ -143,3 +143,7 @@ pnpm --filter @cuberoot/client dev                 # http://127.0.0.1:5173/
 ## Skill 路由
 
 主题命中 trigger 时主动调对应 skill,不要凭记忆。skill 描述 + triggers 已由 harness 自动加载,触发即可,**不要在此再列索引表**(双倍信息,白付 token)。
+
+## 造求解器 loop
+
+`/loop 继续造求解器`(或"造求解器")= 读 `solver/SOLVER_LOOP.md` 全文,按 §0 LOOP PROTOCOL 推进 §1 backlog 下一个未完成单元;规则/backlog/进度全在那文件,别在此展开。

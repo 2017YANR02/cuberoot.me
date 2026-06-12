@@ -31,8 +31,8 @@ export default function ArchHistoryPage() {
           </h1>
           <p className="arch-subhero-lede">
             <L
-              zh={<>项目 2025-12-13 诞生 (一个空的 index.html), 到现在 5 个月、2300+ 提交。列表视图只挑 <strong>{TIMELINE.length} 件</strong>重大改动讲清楚因果; 日历视图把每天的"非琐碎"提交全列出来, 看哪些天密集打代码。</>}
-              en={<>The project was born 2025-12-13 — a single empty index.html. Five months and 2300+ commits later: the list view covers <strong>{TIMELINE.length} major changes</strong>; the calendar view shows every non-trivial commit by date so you can see which days were heads-down coding.</>}
+              zh={<>项目 2025-12-13 诞生 (一个空的 index.html), 到现在整 6 个月、3400+ 提交。列表视图只挑 <strong>{TIMELINE.length} 件</strong>重大改动讲清楚因果; 日历视图把每天的"非琐碎"提交全列出来, 看哪些天密集打代码。</>}
+              en={<>The project was born 2025-12-13 — a single empty index.html. Six months and 3400+ commits later: the list view covers <strong>{TIMELINE.length} major changes</strong>; the calendar view shows every non-trivial commit by date so you can see which days were heads-down coding.</>}
             />
           </p>
         </header>

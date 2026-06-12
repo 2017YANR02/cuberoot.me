@@ -302,7 +302,7 @@ html[data-theme=dark] .pat-puzzle-select {
 }
 
 .pat-modal-count {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: ui-monospace, monospace;
 }
 
 .pat-modal-twisty {
@@ -333,7 +333,7 @@ html[data-theme=dark] .pat-puzzle-select {
 
 .pat-modal-alg {
     flex: 1;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: ui-monospace, monospace;
     font-size: 0.85rem;
     color: var(--pat-text);
     line-height: 1.45;

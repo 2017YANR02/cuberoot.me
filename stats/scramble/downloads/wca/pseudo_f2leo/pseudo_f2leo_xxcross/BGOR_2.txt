@@ -1,8 +1,0 @@
-# Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BGOR / bin 2
-# Population in this bin: 1
-# Samples listed: 1 (all entries in this bin)
-# Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-09
-# Columns: id,scramble,bottom_color,competition,round
-
-342445001,L' R2 F2 R' U2 B2 U2 L2 D L' F' L' U B2 L D2 U' F',R,SSN Cube Open 2016,333 R1 H #4

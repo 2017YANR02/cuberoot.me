@@ -19,7 +19,6 @@ $stats = @(
   'best_medal_collection_from_abroad_by_person',
   'complete_competition_winners',
   'current_world_records_by_country',
-  'fewest_competitors_contest',
   'most_4th_places',
   'most_attended_competitions_in_single_month',
   'most_competitions_abroad',

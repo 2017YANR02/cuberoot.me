@@ -8,7 +8,7 @@ import {
   Frown, Hash, Hourglass, Flag, Medal, Users, TrendingDown, CalendarDays,
   Route, House, CalendarRange, CalendarClock, Plane, CheckCheck, EyeOff,
   Globe2, MapPin, Type, Grid2x2, LayoutGrid, Boxes, Map as MapIcon, Globe,
-  Percent, UserMinus, Award, Gavel, Zap, Eye, UserRound,
+  Percent, Award, Gavel, Zap, Eye, UserRound,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -64,7 +64,6 @@ export const STAT_ICONS: Record<string, LucideIcon> = {
   competitions_count_by_week: CalendarClock,
   competitions_per_year_by_country: Globe,
   dnf_rate_by_event: Percent,
-  fewest_competitors_contest: UserMinus,
   most_records_at_single_competition: Award,
   // 纪录与国家
   best_medal_collection_from_abroad_by_country: Medal,

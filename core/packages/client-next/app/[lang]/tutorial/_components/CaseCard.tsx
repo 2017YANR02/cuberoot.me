@@ -1,4 +1,4 @@
-import type { AlgsetCase } from '../_lib/useTutorialCatalog';
+import { tutorialMediaUrl, type AlgsetCase } from '../_lib/useTutorialCatalog';
 
 interface CaseCardProps {
   caseData: AlgsetCase;
@@ -12,7 +12,7 @@ export function CaseCard({ caseData, onClick }: CaseCardProps) {
          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}>
       <div className="case-card-img">
         {caseData.image ? (
-          <img src={caseData.image} alt={caseData.label} loading="lazy" />
+          <img src={tutorialMediaUrl(caseData.image)} alt={caseData.label} loading="lazy" />
         ) : (
           <span style={{ color: 'var(--tutorial-text-faint)' }}>—</span>
         )}

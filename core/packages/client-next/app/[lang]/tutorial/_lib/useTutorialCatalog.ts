@@ -78,6 +78,14 @@ export type PostContent = ArticlePostContent | AlgsetPostContent;
 
 const CATALOG_URL = '/stats/tutorial/catalog.json';
 
+// Media/thumb/case-image paths in catalog + post JSON are stored as '/stats/…'.
+// Serve them via statsUrl so prod goes straight to static.cuberoot.me instead
+// of bouncing off the Vercel /stats route handler (307 + a function invocation
+// per image).
+export function tutorialMediaUrl(src: string): string {
+  return src.startsWith('/stats/') ? statsUrl(src) : src;
+}
+
 let catalogCache: CatalogEntry[] | null = null;
 let catalogPromise: Promise<CatalogEntry[]> | null = null;
 

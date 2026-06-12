@@ -33,12 +33,12 @@
   color: var(--accent);
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
-  font-family: 'JetBrains Mono', Menlo, monospace;
+  font-family: Menlo, monospace;
 }
 .lucky-year-N {
   font-size: 12.5px;
   color: var(--muted-foreground);
-  font-family: 'JetBrains Mono', Menlo, monospace;
+  font-family: Menlo, monospace;
   margin-top: 4px;
 }
 .lucky-year-N strong { color: var(--foreground); }
@@ -87,7 +87,7 @@
   font-size: 11.5px;
   color: var(--muted-foreground);
   cursor: pointer;
-  font-family: 'JetBrains Mono', Menlo, monospace;
+  font-family: Menlo, monospace;
 }
 .lucky-slider-tick:hover {
   background: var(--accent-soft);
@@ -131,7 +131,7 @@
   line-height: 1.0;
   color: var(--foreground);
   font-variant-numeric: tabular-nums;
-  font-family: 'JetBrains Mono', Menlo, monospace;
+  font-family: Menlo, monospace;
 }
 .lucky-headline-sub {
   font-size: 12.5px;
@@ -198,7 +198,7 @@
   color: var(--foreground);
 }
 .lucky-card-id {
-  font-family: 'JetBrains Mono', Menlo, monospace;
+  font-family: Menlo, monospace;
   font-size: 11px;
   color: var(--faint-foreground);
 }
@@ -233,7 +233,7 @@
   font-weight: 600;
   color: var(--foreground);
   font-variant-numeric: tabular-nums;
-  font-family: 'JetBrains Mono', Menlo, monospace;
+  font-family: Menlo, monospace;
 }
 .lucky-card-stat-time {
   font-size: 17px;
@@ -273,7 +273,7 @@
 .lucky-prob-table td {
   padding: 8px 10px;
   border-bottom: 1px solid color-mix(in srgb, var(--border-default) 50%, transparent);
-  font-family: 'JetBrains Mono', Menlo, monospace;
+  font-family: Menlo, monospace;
 }
 .lucky-prob-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); }
 .lucky-prob-low { color: var(--faint-foreground); }

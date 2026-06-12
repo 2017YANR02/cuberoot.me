@@ -61,7 +61,7 @@ export function drawGrid(
 
   // X 轴标签（纯数字，单位放在轴标题）
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.font = '12px "JetBrains Mono", monospace';
+  ctx.font = '12px ui-monospace, monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
 
@@ -141,7 +141,7 @@ export function drawLineGrid(
 
   // Y 轴标签
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.font = '12px "JetBrains Mono", monospace';
+  ctx.font = '12px ui-monospace, monospace';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
   for (let y = yStart; y <= yMax; y += yStep) {
@@ -160,7 +160,7 @@ export function drawLineGrid(
 
   // X 轴标签（把数）
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.font = '12px "JetBrains Mono", monospace';
+  ctx.font = '12px ui-monospace, monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   // NOTE: 根据可见范围动态调整刻度间距
@@ -433,7 +433,7 @@ export function drawMeanLabelsOnCanvas(
 ): void {
   ctx.save();
   ctx.textBaseline = 'bottom';
-  ctx.font = '600 12px "JetBrains Mono", monospace';
+  ctx.font = '600 12px ui-monospace, monospace';
 
   for (const mp of meanPositions) {
     const namePrefix = players.length > 1 ? mp.name.slice(0, 3) + ' ' : '';

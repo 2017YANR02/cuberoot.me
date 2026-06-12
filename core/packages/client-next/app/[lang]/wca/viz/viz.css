@@ -31,7 +31,7 @@
 }
 
 .viz-page .mono {
-  font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+  font-family: 'Cascadia Code', monospace;
 }
 
 /* ─── 页面布局 ─── */
@@ -115,7 +115,7 @@
   background: transparent;
   color: var(--text-secondary);
   font-size: 13px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -190,7 +190,7 @@
   align-items: center;
   gap: 5px;
   font-size: 11px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   pointer-events: none;
   transition: left 0.15s ease-out;
 }
@@ -393,7 +393,7 @@
   background: transparent;
   color: var(--text-secondary);
   font-size: 12px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -420,7 +420,7 @@
   padding: 1px 5px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 4px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   background: rgba(255, 255, 255, 0.05);
 }

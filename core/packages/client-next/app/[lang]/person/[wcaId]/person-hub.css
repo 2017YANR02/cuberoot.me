@@ -1,0 +1,102 @@
+/* /person/[wcaId] 聚合页 — 双主题,走全局 :root token。 */
+
+.phub-page {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+}
+
+.phub-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.phub-back {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.phub-back:hover { color: var(--foreground); }
+.phub-logout {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.phub-logout:hover {
+  color: var(--destructive);
+  border-color: color-mix(in srgb, var(--destructive) 45%, transparent);
+}
+
+/* identity: 国旗对齐名字, 性别对齐 WCA ID(2×2 网格) */
+.phub-id-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 2px;
+  margin-bottom: 32px;
+}
+.phub-flag { display: inline-flex; align-items: center; justify-content: center; }
+.phub-flag-img { width: 30px; height: 22px; border-radius: 2px; }
+.phub-name-line { display: inline-flex; align-items: center; min-width: 0; }
+.phub-name {
+  margin: 0;
+  font-family: 'Fraunces', 'Times New Roman', serif;
+  font-size: 1.6rem; font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+.phub-gender-cell { display: inline-flex; align-items: center; justify-content: center; }
+.phub-gender-m { color: var(--signal-info); }
+.phub-gender-f { color: var(--accent); }
+.phub-wid {
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.phub-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.phub-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--foreground);
+  transition: border-color 0.15s, background 0.15s;
+}
+.phub-card:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.phub-card-icon { flex-shrink: 0; color: var(--accent); }
+.phub-card-body { flex: 1; min-width: 0; }
+.phub-card-title { font-size: 1rem; font-weight: 500; color: var(--foreground); }
+.phub-card-desc {
+  margin-top: 3px;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+}
+.phub-card-chev { flex-shrink: 0; color: var(--faint-foreground); }
+.phub-card:hover .phub-card-chev { color: var(--accent); }
+
+@media (max-width: 480px) {
+  .phub-page { padding: 18px 14px 48px; }
+  .phub-name { font-size: 1.4rem; }
+  .phub-card { padding: 14px 14px; gap: 12px; }
+}

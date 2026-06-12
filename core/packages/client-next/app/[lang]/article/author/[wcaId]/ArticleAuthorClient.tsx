@@ -10,14 +10,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, PenLine } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchArticles, type ArticleListItem } from '@/lib/article-api';
 import '../../article-list.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 function formatDate(iso: string | null): string {
   if (!iso) return '';
@@ -90,7 +89,13 @@ export default function ArticleAuthorClient() {
       )}
 
       {articles && articles.length === 0 && (
-        <div className="article-list-empty">{t('article.authorEmpty')}</div>
+        <div className="article-list-empty article-author-empty">
+          <p>{t('article.authorEmpty')}</p>
+          <Link href={`/${langPrefix}/article/new`} className="article-new-btn">
+            <PenLine size={15} />
+            <span>{t('article.writeOne')}</span>
+          </Link>
+        </div>
       )}
 
       {articles && articles.length > 0 && (

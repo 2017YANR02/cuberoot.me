@@ -426,11 +426,6 @@
           "titleZh": "各项目 DNF 率"
         },
         {
-          "id": "fewest_competitors_contest",
-          "titleEn": "Fewest competitors contest",
-          "titleZh": "参赛人数最少的比赛"
-        },
-        {
           "id": "most_records_at_single_competition",
           "titleEn": "Most records at a single competition",
           "titleZh": "单场比赛最多纪录"

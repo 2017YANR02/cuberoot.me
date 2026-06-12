@@ -1,9 +1,0 @@
-# Scramble samples — f2leo / f2leo_xcross / BG / bin 1
-# Population in this bin: 2
-# Samples listed: 2 (all entries in this bin)
-# Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-09
-# Columns: id,scramble,bottom_color,competition,round
-
-238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,G,Great Indian Cubeathon 2016,333oh R1 G E1
-3142148001,U R2 D' F2 U' F2 D' L' B2 D2 F D F' L' U2 L' F2 L',G,T-Town Showdown 2023,333 R1 A E2

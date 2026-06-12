@@ -654,7 +654,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               onChange={(e) => setTargetInput(e.target.value)}
               onBlur={(e) => commitTargetInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitTargetInput((e.target as HTMLInputElement).value); }}
-              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+              style={{ fontFamily: 'ui-monospace, monospace' }}
             />
             <span className="hint">
               <Target size={12} style={{ verticalAlign: '-1px', marginRight: 4 }} />

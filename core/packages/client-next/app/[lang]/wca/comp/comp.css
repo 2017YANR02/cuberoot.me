@@ -737,6 +737,43 @@ td.is-pr {
   padding: 24px 0;
 }
 
+/* ── 领奖台 (各项目决赛前三) ─────────────────────────────────────────── */
+.comp-podiums {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.comp-podium-event {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.comp-podium-icon { font-size: 1.2rem; vertical-align: middle; }
+/* 名次列染奖牌色 (金/银/铜) — 按名次而非行序,并列第一 → 两金无银 (Reg 9f15) */
+.comp-podiums .comp-table tbody td.td-place.is-gold { color: #ffc107; font-weight: 700; }
+.comp-podiums .comp-table tbody td.td-place.is-silver { color: #c0c0c0; font-weight: 700; }
+.comp-podiums .comp-table tbody td.td-place.is-bronze { color: #cd7f32; font-weight: 700; }
+
+/* ── 比赛纪录 (本场产生的 WR / 大洲 / NR) ──────────────────────────────── */
+.comp-records {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-bottom: 26px;
+}
+/* 纪录 / 领奖台 两段小标题 */
+.comp-pod-section-h {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.comp-records + .comp-pod-section-h { margin-top: 4px; }
+
 /* 预排名「名次和」(多选项目) 表 */
 /* InfoTooltip 在最右的「名次和」列头里:浮层右对齐 + 视口夹宽, 避免冲出右边界 (桌面 + 移动统一) */
 .comp-sor-table .info-tooltip-pop {

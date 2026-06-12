@@ -39,7 +39,8 @@ export default function ThemeToggle({ className }: { className?: string }) {
     localStorage.setItem(THEME_KEY, next);
     setTheme(next);
     setExplicit(true);
-    applyTheme(next);
+    // 点 light/dark 开关 = 想要经典明暗,顺手退出配色主题(在同一次淡出里清掉)。
+    applyTheme(next, true, true);
     window.dispatchEvent(new Event('theme-change'));
   };
 

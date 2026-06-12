@@ -1,8 +1,0 @@
-# Scramble samples — 123 / rouxs1 / R / bin 0
-# Population in this bin: 1
-# Samples listed: 1 (all entries in this bin)
-# Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-09
-# Columns: id,scramble,bottom_color,competition,round
-
-255671001,L2 F2 R' U2 B2 R F2 D2 F2 R' D B' D' F2 L F U' B' F',R,Iran Open 2016,333oh R1 A #1

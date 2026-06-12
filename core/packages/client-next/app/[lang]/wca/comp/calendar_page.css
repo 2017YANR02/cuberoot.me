@@ -292,6 +292,10 @@
 .calendar-page .event-chip .cubing-icon {
     font-size: 1.1rem;
 }
+/* 天数列头 chip：lucide 图标走 currentColor，选中(按天数筛选时)变亮绿，与项目 chip 一致 */
+.calendar-page .event-chip.days-chip.is-active { color: #4ade80; }
+/* 列表表头天数 chip 右对齐 + 图标在 chip 内也靠右，跟下方右对齐的天数数字对齐 */
+.calendar-page .event-chips--list-header .days-chip { justify-self: end; justify-content: flex-end; }
 /* 右下角白底圆角标(三视图统一,复刻 WcaEventSelector .event-btn-badge) */
 .calendar-page .event-chip-rounds {
     position: absolute;
@@ -1026,8 +1030,8 @@
  * 全集时按真实最长宽度撑开，长名完整显示，所有行 events 列与 chips 表头对齐。
  * comp-list-row（行）与 event-chips-grid（表头）共用 */
 .calendar-page {
-    --cl-cols: 7.2rem 1.4rem var(--cl-name-width, 28rem) repeat(21, 1.3rem);
-    --cl-min-width: 65rem;
+    --cl-cols: 7.2rem 1.4rem var(--cl-name-width, 28rem) 1.6rem 2.6rem 2.6rem 2.8rem repeat(21, 1.3rem);
+    --cl-min-width: 76rem;
 }
 .calendar-page .comp-list {
     display: flex;
@@ -1145,6 +1149,44 @@
     font-variant-numeric: tabular-nums;
     line-height: 1;
 }
+/* 天数 / 人数 / 上限列：数字右对齐，多位数按个位对齐 */
+.calendar-page .cl-days-cell {
+    text-align: right;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+/* 人数列：实际参赛人数(走 text，是主值) + 人数上限(走 text-sub，次值) */
+.calendar-page .cl-people-cell {
+    text-align: right;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    overflow: hidden;
+}
+.calendar-page .cl-limit-cell { color: var(--text-sub); font-weight: 500; }
+/* 满员率列：实际/上限 百分比，弱色次值 */
+.calendar-page .cl-ratio-cell { color: var(--text-sub); font-weight: 500; }
+/* 列表表头里人数 / 上限列头(可点击排序)：右对齐，压在下方右对齐数字上方；弱色 */
+.calendar-page .cl-col-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    justify-self: end;
+    gap: 1px;
+    color: var(--text-sub);
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font: inherit;
+}
+.calendar-page .cl-col-sort { cursor: pointer; transition: color 0.15s; }
+.calendar-page .cl-col-sort:hover { color: var(--text); }
+.calendar-page .cl-col-sort.is-active { color: #4ade80; }
 
 /* ── 已取消比赛 — 列表 / 日历 / day-list / modal 共享样式 ── */
 .calendar-page .comp-list-row.is-cancelled {
@@ -1419,8 +1461,8 @@
     .calendar-page--compact .compact-flag-tile { width: 16px; height: 12px; }
     /* 虚拟列表：行高固定，移动端横向滚动以保留 21 列对齐 */
     .calendar-page {
-        --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 22rem) repeat(21, 1.1rem);
-        --cl-min-width: 53rem;
+        --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 22rem) 1.4rem 2.3rem 2.3rem 2.4rem repeat(21, 1.1rem);
+        --cl-min-width: 62rem;
     }
     .calendar-page .comp-list { overflow-x: auto; }
     .calendar-page .event-chips-grid { padding: 4px 8px; gap: 4px; }

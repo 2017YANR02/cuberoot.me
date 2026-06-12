@@ -80,7 +80,7 @@
     color: var(--otd-text-mute);
     font-size: 0.78rem;
     font-weight: 600;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: ui-monospace, monospace;
     cursor: pointer;
     transition: all 0.15s;
 }
@@ -139,7 +139,7 @@
 }
 
 .otd-year {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: ui-monospace, monospace;
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--otd-accent);
@@ -151,7 +151,7 @@
     margin-left: auto;
     color: var(--otd-text-mute);
     font-size: 0.76rem;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: ui-monospace, monospace;
 }
 
 .otd-list { list-style: none; margin: 0; padding: 0; }
