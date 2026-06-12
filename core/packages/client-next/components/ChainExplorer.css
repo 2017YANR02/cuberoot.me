@@ -608,3 +608,27 @@
   cursor: default;
   pointer-events: none;
 }
+
+/* ── 深化最优卡 + 快速解列表 ── */
+.chx-chain-best {
+  border-color: var(--accent);
+}
+.chx-list-h {
+  margin: 10px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.chx-stop {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  background: none;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.chx-stop:hover {
+  color: var(--foreground);
+}
