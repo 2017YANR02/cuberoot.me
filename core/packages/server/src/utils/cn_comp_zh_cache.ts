@@ -18,6 +18,7 @@ export interface CnCompZh {
 
 const EMPTY: CnCompZh = { location: null, withdrawDeadline: null, reopenAt: null };
 const CUBING_BASE = 'https://cubing.com';
+const WCA_API_BASE = 'https://www.worldcubeassociation.org/api/v0';
 const SCRAPE_DELAY_MS = 500;
 const STALE_DAYS = 7;
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
@@ -89,8 +90,23 @@ async function resolveCnName(wcaId: string): Promise<string | null> {
     [wcaId],
   );
   if (rows.length > 0 && rows[0].country_id === 'China') return rows[0].name;
-  // 新公示比赛兜底
-  return getUpcomingCnCompName(wcaId);
+  // 新公示比赛兜底:upcoming_comps 缓存
+  const fromUpcoming = await getUpcomingCnCompName(wcaId);
+  if (fromUpcoming) return fromUpcoming;
+  // 当天刚公示:WCA dump(周更)+ upcoming 缓存都还没收录 → 直接问 WCA API 拿名字 + 国家。
+  // client 只对 CN 比赛调本端点,这里再按 country_iso2 复核一次,非 CN 不 scrape。
+  try {
+    const res = await fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}`, {
+      headers: { 'User-Agent': UA, Accept: 'application/json' },
+    });
+    if (res.ok) {
+      const j = (await res.json()) as { name?: string; country_iso2?: string };
+      if (j.country_iso2 === 'CN' && j.name) return j.name;
+    }
+  } catch (e) {
+    console.warn(`[cn-comp-zh] WCA API name lookup ${wcaId}:`, (e as Error).message);
+  }
+  return null;
 }
 
 /** 取中文元数据。DB 命中 = 秒;miss → scrape cubing.com + upsert。 */

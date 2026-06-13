@@ -1167,6 +1167,9 @@ export default function CompDetailPage() {
   const onSelectEvent = (newEventId: string) => {
     const ev = data.events.find(e => e.i === newEventId);
     if (!ev) return;
+    // 赛程视图下点项目 = 钻进该项目成绩(切到「成绩」),否则点击只改 URL 不变内容(死点);
+    // 其余视图维持原行为(同项目循环轮次 / 切项目)。
+    if (isSchedule) onChangeView('live');
     // 双轮 + 合并视图:第一轮和第二轮渲染同一张合并表 → 合为一个循环档(用第一轮代表),
     // 且整个事件的轮次都进循环(含尚无成绩的决赛),让点图标能从合并视图直达决赛,
     // 而不是在两张相同的合并表之间空转。非双轮 / 未合并时维持原行为(只循环有成绩的轮)。
@@ -1304,7 +1307,7 @@ export default function CompDetailPage() {
 
         {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} />}
 
-        {!isSchedule && !isPodium && (
+        {!isPodium && (
           <div className="comp-event-bar">
             <WcaEventSelector
               availableEvents={availableEventIds}
