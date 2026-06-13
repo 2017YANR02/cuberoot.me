@@ -16,6 +16,7 @@ import { formatRegStatus } from '@/lib/comp-reg-status';
 import { Flag } from '@/components/Flag';
 import { CubingIcon } from '@/components/EventIcon';
 import { formatDateRangeIso } from '@/lib/wca-date';
+import { fetchCompRounds } from '@/lib/comp-wcif';
 import { apiUrl } from '@/lib/api-base';
 import { useTranslation } from 'react-i18next';
 import './announced_comps.css';
@@ -92,6 +93,20 @@ export function AnnouncedCard({ comp, isZh, lang }: {
     () => [...comp.events].sort((a, b) => (EVENT_RANK.get(a) ?? 99) - (EVENT_RANK.get(b) ?? 99)),
     [comp.events],
   );
+  // 每个项目的轮次数走 WCIF 懒拉(公示比赛后端只给 event_ids,无轮次)。fetchCompWcif 自带
+  // 24h localStorage 缓存 + inflight 去重;仅当「公示」tab 展示这些卡片时才会跑。
+  // events 是 WCA event id('333'),与 fetchCompRounds 返回的 key 同形,直接取 length。
+  const [rounds, setRounds] = useState<Record<string, number>>({});
+  useEffect(() => {
+    let cancelled = false;
+    fetchCompRounds(comp.id).then((wcifRounds) => {
+      if (cancelled) return;
+      const mapped: Record<string, number> = {};
+      for (const [eid, formats] of Object.entries(wcifRounds)) mapped[eid] = formats.length;
+      setRounds(mapped);
+    }).catch(() => { /* WCIF 缺失 → 不显示轮次,降级为纯图标 */ });
+    return () => { cancelled = true; };
+  }, [comp.id]);
 
   return (
     <Link {...compLinkProps(comp.id, undefined, lang)} className="tac-card">
@@ -112,9 +127,15 @@ export function AnnouncedCard({ comp, isZh, lang }: {
       {reg && <div className="tac-reg">{reg}</div>}
       {events.length > 0 && (
         <div className="tac-events">
-          {events.map((eid) => (
-            <CubingIcon key={eid} icon={`event-${eid}`} className="tac-event" />
-          ))}
+          {events.map((eid) => {
+            const r = rounds[eid];
+            return (
+              <span key={eid} className="tac-event-item">
+                <CubingIcon icon={`event-${eid}`} className="tac-event" />
+                <span className={`tac-event-rounds${r ? '' : ' tac-event-rounds--placeholder'}`}>{r || '·'}</span>
+              </span>
+            );
+          })}
         </div>
       )}
     </Link>
