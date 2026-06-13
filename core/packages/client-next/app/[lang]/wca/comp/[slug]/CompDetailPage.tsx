@@ -555,18 +555,21 @@ export default function CompDetailPage() {
   }, [rawSlug, slug, router]);
 
   const [data, setData] = useState<CompData | null>(null);
-  const compNameTitle = data ? localizeCompName(slug, data.name, isZh) : slug;
+  // cubingZh 实时给当天公示的 CN 比赛提供中文名(绕开 comp_names_zh.json 日更延迟);
+  // 提前声明以便标题 / 复制都能取 nameZh。fetch 在下方 effect(依赖 compInfo)。
+  const [cubingZh, setCubingZh] = useState<CubingZhMeta | null>(null);
+  const compNameTitle = data ? localizeCompName(slug, data.name, isZh, { explicitNameZh: cubingZh?.nameZh }) : slug;
   useDocumentTitle(compNameTitle, compNameTitle);
   const [nameCopied, setNameCopied] = useState(false);
   const copyCompName = useCallback(() => {
     if (!data) return;
     // 复制原始全名(中文不剥 WCA 前缀):2026WCA黄冈魔方公开赛
-    const full = resolveCompName(slug, decodeEntities(data.name), isZh);
+    const full = resolveCompName(slug, decodeEntities(data.name), isZh, { explicitNameZh: cubingZh?.nameZh });
     navigator.clipboard.writeText(full).then(
       () => { setNameCopied(true); setTimeout(() => setNameCopied(false), 1500); },
       e => console.error('[comp copy name] failed:', e),
     );
-  }, [data, slug, isZh]);
+  }, [data, slug, isZh, cubingZh]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -580,7 +583,6 @@ export default function CompDetailPage() {
     | { kind: 'all'; number: number };
   const [modal, setModal] = useState<ModalState | null>(null);
   const [compInfo, setCompInfo] = useState<CompInfo | null>(null);
-  const [cubingZh, setCubingZh] = useState<CubingZhMeta | null>(null);
   useEffect(() => {
     if (!slug) return;
     let cancel = false;
@@ -1212,7 +1214,9 @@ export default function CompDetailPage() {
           <Link href="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}</Link>
           <h1 className="comp-detail-title">
             {(() => {
-              const iso2 = compFlagIso2(slug);
+              // 国家旗:compInfo(权威,来自比赛详情)优先,回退 slug 推断 —— 当天刚公示的比赛
+              // compFlagIso2 还没数据,会丢旗 + 丢 cubing.com 图标,故用 compInfo 兜底。
+              const iso2 = compInfo?.country_iso2?.toLowerCase() || compFlagIso2(slug);
               const cubingSlug = data.cubingSlug || wcaIdToCubingSlug(data.slug);
               const cubingUrl = `https://cubing.com/competition/${cubingSlug}`;
               const wcaUrl = `https://www.worldcubeassociation.org/competitions/${data.slug}`;
@@ -1227,10 +1231,7 @@ export default function CompDetailPage() {
                         zhHant: "點選複製比賽名"
                     })}
                   >
-                    {localizeCompName(slug, decodeEntities(data.name), isZh)}
-                    {nameCopied
-                      ? <Check size={16} className="comp-title-copy-icon is-copied" />
-                      : <Copy size={15} className="comp-title-copy-icon" />}
+                    {localizeCompName(slug, decodeEntities(data.name), isZh, { explicitNameZh: cubingZh?.nameZh })}
                   </button>
                   <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon" title="WCA">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1242,6 +1243,20 @@ export default function CompDetailPage() {
                       <img src="/icons/upstream/cubingcom.ico" alt="cubing.com" />
                     </a>
                   )}
+                  {/* 复制按钮放到 WCA / cubing.com 图标右侧(原在比赛名内,改到图标行尾) */}
+                  <button
+                    type="button"
+                    onClick={copyCompName}
+                    className={`comp-title-icon comp-title-icon-lucide comp-title-copy-btn${nameCopied ? ' is-copied' : ''}`}
+                    title={tr({ zh: '复制比赛名', en: 'Copy name',
+                        zhHant: "複製比賽名"
+                    })}
+                    aria-label={tr({ zh: '复制比赛名', en: 'Copy name',
+                        zhHant: "複製比賽名"
+                    })}
+                  >
+                    {nameCopied ? <Check size={16} /> : <Copy size={15} />}
+                  </button>
                 </>
               );
             })()}
