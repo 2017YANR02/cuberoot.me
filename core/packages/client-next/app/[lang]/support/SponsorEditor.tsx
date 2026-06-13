@@ -1,13 +1,16 @@
 'use client';
 
 /**
- * 弹窗新增/编辑一位赞助者。输入 WCA ID 点查询可自动带出名字 + 头像(从 WCA 拉一次存下)。
+ * 弹窗新增/编辑一位赞助者。顶部「搜索选手」直接按名字 / WCA ID 搜 WCA 选手
+ * (WcaPersonPicker,本地全量索引秒搜),选中自动带出名字 + WCA ID + 头像(拉一次存下)。
+ * 没有 WCA ID 的匿名打赏者可跳过搜索,直接填名字。
  * 保存走 sponsors-api,成功后 onSaved(saved) 由父组件刷新本地列表。
  */
 import { useEffect, useState } from 'react';
-import { X, Search } from 'lucide-react';
-import { tr } from '@/i18n/tr';
-import { fetchPersonCard } from '@/lib/wca-api';
+import { X } from 'lucide-react';
+import { tr, useLang } from '@/i18n/tr';
+import { WcaPersonPicker } from '@/components/WcaPersonPicker';
+import { fetchPersonCard, type WcaPersonLite } from '@/lib/wca-api';
 import { createSponsor, updateSponsor, type Sponsor, type SponsorInput } from '@/lib/sponsors-api';
 
 interface Props {
@@ -28,36 +31,46 @@ function toDraft(s: Sponsor | null) {
 }
 
 export default function SponsorEditor({ initial, onClose, onSaved }: Props) {
+  const lang = useLang();
+  const isZh = lang !== 'en';
   const [draft, setDraft] = useState(() => toDraft(initial));
+  const [picked, setPicked] = useState<WcaPersonLite | null>(
+    initial?.wcaId ? { id: initial.wcaId, name: initial.name, country_iso2: '' } : null,
+  );
   const [saving, setSaving] = useState(false);
-  const [looking, setLooking] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  useEffect(() => setDraft(toDraft(initial)), [initial]);
+  useEffect(() => {
+    setDraft(toDraft(initial));
+    setPicked(initial?.wcaId ? { id: initial.wcaId, name: initial.name, country_iso2: '' } : null);
+  }, [initial]);
+
+  // 编辑已有(带 WCA ID)时补国旗 + 缺失头像,让 chip 显示完整。
+  useEffect(() => {
+    if (!initial?.wcaId) return;
+    let cancel = false;
+    fetchPersonCard(initial.wcaId).then(card => {
+      if (cancel || !card) return;
+      setPicked(p => (p && p.id === card.id ? { ...p, country_iso2: card.country_iso2 } : p));
+      if (card.avatar) setDraft(d => (d.avatarUrl ? d : { ...d, avatarUrl: card.avatar }));
+    });
+    return () => { cancel = true; };
+  }, [initial?.wcaId]);
 
   function set<K extends keyof ReturnType<typeof toDraft>>(k: K, v: string) {
     setDraft(d => ({ ...d, [k]: v }));
   }
 
-  async function lookup() {
-    const id = draft.wcaId.trim().toUpperCase();
-    if (!id) return;
-    setLooking(true);
-    setErr(null);
-    try {
-      const card = await fetchPersonCard(id);
-      if (!card) { setErr(tr({ zh: '未找到该 WCA ID', en: 'WCA ID not found',
-          zhHant: "未找到該 WCA ID"
-    })); return; }
-      setDraft(d => ({
-        ...d,
-        wcaId: card.id,
-        name: d.name.trim() || card.name,
-        avatarUrl: card.avatar || d.avatarUrl,
-      }));
-    } finally {
-      setLooking(false);
+  async function handlePick(c: WcaPersonLite | null) {
+    setPicked(c);
+    if (!c) {
+      // 清除选手:留下名字让 admin 可改 / 转匿名,但去掉 WCA ID + 头像。
+      setDraft(d => ({ ...d, wcaId: '', avatarUrl: '' }));
+      return;
     }
+    setDraft(d => ({ ...d, wcaId: c.id, name: c.name }));
+    const card = await fetchPersonCard(c.id);
+    if (card?.avatar) setDraft(d => ({ ...d, avatarUrl: card.avatar }));
   }
 
   async function handleSave() {
@@ -102,20 +115,18 @@ export default function SponsorEditor({ initial, onClose, onSaved }: Props) {
 
         <div className="sponsor-editor-body">
           <label className="sponsor-editor-row">
-            <span>WCA ID</span>
-            <div className="sponsor-editor-wca">
-              <input
-                value={draft.wcaId}
-                onChange={e => set('wcaId', e.target.value)}
-                placeholder="2017YANR02"
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void lookup(); } }}
-              />
-              <button type="button" onClick={() => void lookup()} disabled={looking} title={tr({ zh: '查询', en: 'Look up',
-                  zhHant: "查詢"
-            })}>
-                <Search size={14} />
-              </button>
-            </div>
+            <span>{tr({ zh: '搜索选手', en: 'Search cuber',
+                zhHant: "搜尋選手"
+            })}</span>
+            <WcaPersonPicker
+              value={picked}
+              onChange={c => void handlePick(c)}
+              isZh={isZh}
+              className="sponsor-editor-picker"
+              placeholder={tr({ zh: '输入名字或 WCA ID', en: 'Name or WCA ID',
+                  zhHant: "輸入名字或 WCA ID"
+            })}
+            />
           </label>
 
           {draft.avatarUrl && (

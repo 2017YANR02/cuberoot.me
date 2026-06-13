@@ -264,22 +264,8 @@
 }
 .sponsor-editor textarea { resize: vertical; }
 
-.sponsor-editor-wca { display: flex; gap: 6px; }
-.sponsor-editor-wca input { flex: 1; }
-.sponsor-editor-wca button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  border: 1px solid var(--input);
-  border-radius: 8px;
-  background: var(--secondary, var(--muted));
-  color: var(--foreground);
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.sponsor-editor-wca button:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
-.sponsor-editor-wca button:disabled { opacity: 0.5; cursor: default; }
+/* 选手搜索框撑满弹窗宽度(组件默认 max-width:320px) */
+.sponsor-editor .sponsor-editor-picker { max-width: none; min-width: 0; }
 
 .sponsor-editor-preview { display: flex; justify-content: center; }
 .sponsor-editor-preview img {

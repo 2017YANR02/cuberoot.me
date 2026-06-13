@@ -86,6 +86,26 @@
     color: var(--text-sub);
 }
 
+.donate-qr-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 0.85rem;
+    padding: 7px 12px;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--text);
+    font-size: 0.8rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.donate-qr-note svg {
+    flex: 0 0 auto;
+    color: var(--accent);
+}
+
 .donate-contact {
     margin: 1rem 0 0;
     padding: 0.85rem 1rem;
