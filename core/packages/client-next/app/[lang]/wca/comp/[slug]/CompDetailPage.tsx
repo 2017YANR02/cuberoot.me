@@ -1242,27 +1242,6 @@ export default function CompDetailPage() {
                       <img src="/icons/upstream/cubingcom.ico" alt="cubing.com" />
                     </a>
                   )}
-                  <Link
-                    href={(() => {
-                      // 带上当前 event + 轮次 → 打乱生成器直接定位到该项目该轮
-                      // (round 用「第几轮」位置,与本页 ?round= 及 gen 的 ?round= 完全一致)。
-                      const q = new URLSearchParams({ comp: slug });
-                      if (eventParam && eventParam !== 'all') {
-                        q.set('event', eventParam);
-                        if (roundParam) q.set('round', String(roundTypeIdToNum(data, eventParam, roundParam)));
-                      }
-                      return `/scramble/gen?${q.toString()}`;
-                    })()}
-                    className="comp-title-icon comp-title-icon-lucide"
-                    title={tr({ zh: '查看打乱', en: 'View scrambles',
-                        zhHant: "檢視打亂"
-                    })}
-                    aria-label={tr({ zh: '查看打乱', en: 'View scrambles',
-                        zhHant: "檢視打亂"
-                    })}
-                  >
-                    <Shuffle size={18} strokeWidth={1.75} />
-                  </Link>
                 </>
               );
             })()}
@@ -1364,6 +1343,27 @@ export default function CompDetailPage() {
                 zhHant: "賽程"
             })}
           </button>
+          {/* 打乱:不是页内视图,而是带当前项目/轮次跳到打乱生成器的比赛模式(AppLink 真 <a>,
+              支持中键新开)。故无 is-active,用 ⇄ 图标暗示「会离开本页」。 */}
+          <Link
+            href={(() => {
+              const q = new URLSearchParams({ comp: slug });
+              if (eventParam && eventParam !== 'all') {
+                q.set('event', eventParam);
+                if (roundParam) q.set('round', String(roundTypeIdToNum(data, eventParam, roundParam)));
+              }
+              return `/scramble/gen?${q.toString()}`;
+            })()}
+            className="comp-view-tab comp-view-tab--link"
+            title={tr({ zh: '查看本场打乱', en: 'View scrambles',
+                zhHant: "檢視本場打亂"
+            })}
+          >
+            <Shuffle size={14} strokeWidth={1.75} />
+            {tr({ zh: '打乱', en: 'Scrambles',
+                zhHant: "打亂"
+            })}
+          </Link>
           {isSchedule && (
             <ScheduleControls
               view={schedView}
