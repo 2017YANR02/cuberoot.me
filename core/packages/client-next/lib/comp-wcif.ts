@@ -136,15 +136,16 @@ export interface CubingZhMeta {
   location: string | null;
   withdrawDeadline: string | null;
   reopenAt: string | null;
+  nameZh: string | null; // cubing.com 原始中文全名(含 WCA/魔方),localizeCompName 会 stripWcaPrefix
 }
-const EMPTY_ZH: CubingZhMeta = { location: null, withdrawDeadline: null, reopenAt: null };
-const ZH_CACHE_PREFIX = 'wca-comp-cubing-zh-v2-';
+const EMPTY_ZH: CubingZhMeta = { location: null, withdrawDeadline: null, reopenAt: null, nameZh: null };
+const ZH_CACHE_PREFIX = 'wca-comp-cubing-zh-v3-';
 const ZH_EMPTY_TTL_MS = 60 * 60 * 1000;
 const ZH_FULL_TTL_MS = 7 * CACHE_TTL_MS;
 const zhInflight = new Map<string, Promise<CubingZhMeta>>();
 
 function isEmptyZh(m: CubingZhMeta): boolean {
-  return !m.location && !m.withdrawDeadline && !m.reopenAt;
+  return !m.location && !m.withdrawDeadline && !m.reopenAt && !m.nameZh;
 }
 
 export async function fetchCubingZh(wcaId: string): Promise<CubingZhMeta> {
@@ -170,6 +171,7 @@ export async function fetchCubingZh(wcaId: string): Promise<CubingZhMeta> {
         location: typeof data.location === 'string' && data.location ? data.location : null,
         withdrawDeadline: typeof data.withdrawDeadline === 'string' && data.withdrawDeadline ? data.withdrawDeadline : null,
         reopenAt: typeof data.reopenAt === 'string' && data.reopenAt ? data.reopenAt : null,
+        nameZh: typeof data.nameZh === 'string' && data.nameZh ? data.nameZh : null,
       };
       if (typeof window !== 'undefined') {
         try { localStorage.setItem(ZH_CACHE_PREFIX + wcaId, JSON.stringify({ t: Date.now(), v: meta })); }

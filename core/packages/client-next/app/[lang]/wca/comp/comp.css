@@ -262,14 +262,9 @@
   align-items: center;
   gap: 6px;
 }
-.comp-title-copy-icon {
-  color: var(--muted-foreground);
-  opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
-  flex-shrink: 0;
-}
-.comp-detail-title-name:hover .comp-title-copy-icon { opacity: 0.7; }
-.comp-title-copy-icon.is-copied { opacity: 1; color: var(--signal-success); }
+/* 复制比赛名按钮:复用 comp-title-icon-lucide(与 WCA / cubing.com 图标同款),复制成功转绿。 */
+.comp-title-copy-btn.is-copied { color: var(--signal-success); }
+.comp-title-copy-btn.is-copied:hover { color: var(--signal-success); }
 .comp-title-icon {
   display: inline-flex;
   align-items: center;
