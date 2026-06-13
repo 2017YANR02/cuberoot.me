@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
 
@@ -37,6 +38,8 @@ jobs:
         run: npx tsx src/bin/fetch_comp_names_zh.ts --refresh
 
       - name: Commit and push
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
@@ -44,7 +47,11 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
+            # commit 带 [skip ci] 避免触发 deploy_next/test 等重 workflow;
+            # 但这样也掐死了 sync_toolkit(靠 push+stats/** 触发),upcoming 数据永远上不了 static。
+            # 故 push 后显式触发 sync_toolkit 把新 stats/*.json rsync 到静态服务器。
             git commit -m "chore: update upcoming comps + comp names zh [skip ci]"
             git pull --rebase origin main
             git push
+            gh workflow run sync_toolkit.yml
           fi
