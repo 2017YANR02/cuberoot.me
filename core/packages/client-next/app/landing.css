@@ -431,7 +431,8 @@
     color: var(--accent);
 }
 
-.landing-page .footer-github {
+.landing-page .footer-github,
+.landing-page .footer-credits {
     display: inline-flex;
     align-items: center;
     gap: 5px;

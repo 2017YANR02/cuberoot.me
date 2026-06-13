@@ -7,6 +7,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { Heart } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import LandingCubeHero from '../_components/LandingCubeHero';
@@ -142,6 +143,12 @@ export default function LandingPage() {
         <Link href="/about" className="footer-about" prefetch={false}>{tr({ zh: '关于', en: 'About',
             zhHant: "關於"
         })}</Link>
+        <Link href="/support" className="footer-credits" prefetch={false}>
+          <Heart size={12} aria-hidden="true" />
+          <span>{tr({ zh: '致谢', en: 'Acknowledgments',
+              zhHant: "致謝"
+        })}</span>
+        </Link>
         <a
           href="https://github.com/RuiminYan/cuberoot.me"
           target="_blank"

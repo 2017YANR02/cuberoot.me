@@ -193,8 +193,26 @@
     text-decoration: underline;
 }
 
+.donate-credits {
+    margin-top: 0.9rem;
+    text-align: center;
+}
+
+.donate-credits a {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.donate-credits a:hover {
+    color: color-mix(in srgb, var(--accent) 88%, black);
+    text-decoration: underline;
+}
+
 .donate-thanks {
-    margin-top: 1rem;
+    margin-top: 0.6rem;
     text-align: center;
     font-size: 0.78rem;
     color: var(--text-sub);
