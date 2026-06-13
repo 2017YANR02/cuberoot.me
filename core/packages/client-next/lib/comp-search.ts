@@ -13,6 +13,11 @@ export interface Comp {
   events?: string[];
   /** 比赛场地经度 — 用来估算比赛当地时区,按比赛本地日期分桶(当前/未来/往期)。 */
   longitude_degrees?: number;
+  /** 报名开放/截止时刻（ISO 8601 UTC）— 仅 upcoming JSON 有；首页「报名」标签用。 */
+  registration_open?: string | null;
+  registration_close?: string | null;
+  /** 人数上限（0/缺省=无上限）— upcoming JSON 有。 */
+  competitor_limit?: number;
 }
 
 export const CANCELLED_BUFFER_DAYS = 60;

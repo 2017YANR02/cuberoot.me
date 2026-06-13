@@ -1,0 +1,218 @@
+/* ─── /regulation/fewest-moves — Appendix E visuals ───
+ * solution-sheet mockup + move counter + metric cards + tool columns.
+ * Tokens come from .reg-page (regulation.css); only local pieces here.
+ * ──────────────────────────────────────────────────── */
+
+/* ── Inline mono token (matches notation .nt-k) ─────── */
+.fm-k {
+  font-family: var(--font-mono);
+  font-size: .9em;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--blue) 11%, transparent);
+  color: var(--blue);
+  white-space: nowrap;
+}
+
+/* ── Solution-sheet mockup ──────────────────────────── */
+.fm-sheet {
+  margin: 6px 0 12px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 14px;
+  background: var(--card);
+  padding: 22px 24px 20px;
+  box-shadow: 0 14px 40px -28px color-mix(in srgb, var(--foreground) 60%, transparent);
+}
+.fm-sheet-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px dashed var(--rule);
+}
+.fm-sheet-title { font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
+.fm-sheet-id {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.fm-sheet-row { margin-bottom: 16px; }
+.fm-sheet-label {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 7px;
+}
+.fm-sheet-scramble,
+.fm-sheet-solution {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.7;
+  letter-spacing: .01em;
+  word-spacing: .12em;
+  overflow-wrap: anywhere;
+}
+.fm-sheet-scramble { color: var(--ink-dim); }
+.fm-sheet-solution { color: var(--ink); font-weight: 600; }
+
+.fm-sheet-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+}
+.fm-sheet-metric {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.fm-counter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--font-mono);
+}
+.fm-counter-n { font-size: 28px; font-weight: 800; color: var(--blue); line-height: 1; }
+.fm-counter-sep { font-size: 18px; color: var(--ink-faint); }
+.fm-counter-max { font-size: 18px; color: var(--ink-dim); font-weight: 600; }
+
+/* progress bar toward the 80-move ceiling */
+.fm-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 5px;
+  margin-top: 12px;
+  background: color-mix(in srgb, var(--foreground) 9%, transparent);
+  overflow: hidden;
+}
+.fm-bar-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  border-radius: 5px;
+  background: linear-gradient(90deg,
+    var(--ok) 0,
+    color-mix(in srgb, var(--ok) 70%, var(--blue)) 100%);
+}
+.fm-sheet-note {
+  font-size: 14.5px;
+  color: var(--ink-dim);
+  margin: 0 0 8px;
+  line-height: 1.6;
+}
+
+/* ── Tools: allowed / not-allowed columns ───────────── */
+.fm-tools {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 4px 0 6px;
+}
+.fm-tool {
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 20px 22px 22px;
+  background: var(--card);
+}
+.fm-tool-ok {
+  border-color: color-mix(in srgb, var(--ok) 32%, var(--rule));
+  background: color-mix(in srgb, var(--ok) 5%, var(--card));
+}
+.fm-tool-bad {
+  border-color: color-mix(in srgb, var(--bad) 32%, var(--rule));
+  background: color-mix(in srgb, var(--bad) 5%, var(--card));
+}
+.fm-tool-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 14px;
+}
+.fm-tool-ok .fm-tool-head { color: var(--ok); }
+.fm-tool-bad .fm-tool-head { color: var(--bad); }
+.fm-tool-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 11px; }
+.fm-tool-list li {
+  position: relative;
+  padding-left: 20px;
+  color: var(--ink-dim);
+  font-size: 15px;
+  line-height: 1.55;
+}
+.fm-tool-list li::before {
+  content: '';
+  position: absolute;
+  left: 3px; top: 9px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.fm-tool-ok .fm-tool-list li::before { background: var(--ok); }
+.fm-tool-bad .fm-tool-list li::before { background: var(--bad); }
+.fm-tool-list b { color: var(--ink); font-weight: 700; }
+
+.fm-foot-note { margin: 18px 0 0; font-size: 14.5px; color: var(--ink-faint); line-height: 1.6; }
+
+/* ── Two-metric cards (OBTM / ETM) ──────────────────── */
+.fm-metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 4px;
+}
+.fm-metric {
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 22px 24px;
+  background: var(--card);
+}
+.fm-metric-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .06em;
+  color: var(--blue);
+  padding: 3px 10px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  margin-bottom: 12px;
+}
+.fm-metric-name { font-weight: 700; font-size: 16px; margin-bottom: 9px; }
+.fm-metric-text { margin: 0; font-size: 15px; line-height: 1.62; color: var(--ink-dim); }
+.fm-metric-text b { color: var(--ink); }
+
+/* ── Regulation reference tag (matches one-handed .oh-tag) ── */
+.fm-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue);
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  white-space: nowrap;
+}
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 600px) {
+  .fm-tools { grid-template-columns: 1fr; gap: 14px; }
+  .fm-metric-grid { grid-template-columns: 1fr; gap: 14px; }
+}
+@media (max-width: 480px) {
+  .fm-sheet { padding: 18px 16px 16px; }
+  .fm-sheet-head { flex-direction: column; gap: 4px; }
+  .fm-sheet-scramble, .fm-sheet-solution { font-size: 13.5px; }
+  .fm-counter-n { font-size: 24px; }
+}

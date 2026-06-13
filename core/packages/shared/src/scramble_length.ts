@@ -45,7 +45,10 @@ function countQtm(line: string): number {
 /** One countable sample: its move-count and the representative scramble text. */
 export interface ScrambleSample {
   len: number;
-  /** QTM count (only for 3x3-family events; undefined otherwise). */
+  /** Alternate-metric count, surfaced as a UI toggle next to `len`:
+   *  - 3x3-family: QTM (a 180° move = 2)
+   *  - sq1: slash count (jaapsch twist; `len` itself is WCA 12c4 = twists + slashes)
+   *  undefined for events with no second metric. */
   qtm?: number;
   /** The scramble this length belongs to — the full string, except multi-blind
    *  where it's the single per-cube 3x3 line. */
@@ -64,9 +67,14 @@ export function scrambleMoveSamples(eventId: string, scramble: string): Scramble
 
   // Square-1: slash-separated (x,y) twist pairs. A whitespace split would count
   // the '/' tokens and break "(1, 0)" with an inner space into two.
+  // Two metrics (WCA Regulation 12c4 vs slash-only), mirrored from the difficulty
+  // tab: `len` = WCA 12c4 (each (x,y) twist = 1 + each '/' slice = 1); the slash
+  // count (jaapsch twist metric) rides along as the alternate.
   if (eventId === 'sq1') {
     const pairs = s.match(/\(\s*-?\d+\s*,\s*-?\d+\s*\)/g);
-    return pairs ? [{ len: pairs.length, text: s }] : [];
+    if (!pairs) return [];
+    const slashes = (s.match(/\//g) ?? []).length;
+    return [{ len: pairs.length + slashes, qtm: slashes, text: s }];
   }
 
   // Multi-blind (current + retired old format): one 3x3 scramble per line.

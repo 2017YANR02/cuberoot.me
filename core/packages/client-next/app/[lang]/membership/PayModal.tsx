@@ -1,0 +1,155 @@
+'use client';
+
+/**
+ * 支付弹窗。先选渠道(支付宝 / 微信)→ 下单拿收银台链接 + 二维码 → 轮询查单。
+ * 桌面端显示二维码扫码;移动端给「前往支付」按钮跳收银台。付款成功 onPaid()。
+ */
+import { useEffect, useRef, useState } from 'react';
+import { X, Loader2, Smartphone, Check } from 'lucide-react';
+import { tr } from '@/i18n/tr';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { createOrder, getOrderStatus, type MembershipPlan, type OrderInfo } from '@/lib/membership-api';
+
+type Channel = 'alipay' | 'wechat';
+
+interface Props {
+  plan: MembershipPlan;
+  isZh: boolean;
+  onClose: () => void;
+  onPaid: () => void;
+}
+
+function price(plan: MembershipPlan): string {
+  const sym = plan.currency === 'CNY' ? '¥' : plan.currency === 'USD' ? '$' : plan.currency === 'EUR' ? '€' : '';
+  const n = plan.priceCents / 100;
+  return sym + (Number.isInteger(n) ? String(n) : n.toFixed(2));
+}
+
+export default function PayModal({ plan, isZh, onClose, onPaid }: Props) {
+  const isMobile = useIsMobile();
+  const [channel, setChannel] = useState<Channel | null>(null);
+  const [order, setOrder] = useState<OrderInfo | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const pollRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+      if (pollRef.current !== null) window.clearTimeout(pollRef.current);
+    };
+  }, [onClose]);
+
+  async function start(ch: Channel) {
+    setChannel(ch);
+    setErr(null);
+    setCreating(true);
+    try {
+      const info = await createOrder(plan.slug, ch);
+      setOrder(info);
+      // 移动端直接跳收银台;桌面端展示二维码并轮询。
+      if (isMobile && info.url) {
+        window.location.href = info.url;
+        return;
+      }
+      pollStatus(info.outTradeNo);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  function pollStatus(no: string, tries = 0) {
+    getOrderStatus(no)
+      .then((r) => {
+        if (r.status === 'paid') { onPaid(); return; }
+        if (r.status === 'pending' && tries < 120) {
+          pollRef.current = window.setTimeout(() => pollStatus(no, tries + 1), 2500);
+        }
+      })
+      .catch(() => {
+        if (tries < 120) pollRef.current = window.setTimeout(() => pollStatus(no, tries + 1), 4000);
+      });
+  }
+
+  return (
+    <div className="mem-pay-backdrop" onClick={onClose}>
+      <div className="mem-pay" onClick={(e) => e.stopPropagation()}>
+        <button className="mem-pay-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close',
+            zhHant: "關閉"
+        })}><X size={18} /></button>
+        <h2 className="mem-pay-title">{isZh ? plan.nameZh : plan.nameEn}</h2>
+        <div className="mem-pay-price">{price(plan)}</div>
+
+        {!order ? (
+          <>
+            <p className="mem-pay-hint">{tr({ zh: '选择支付方式', en: 'Choose a payment method',
+                zhHant: "選擇支付方式"
+            })}</p>
+            <div className="mem-pay-channels">
+              <button className="mem-pay-ch mem-pay-ch-alipay" disabled={creating} onClick={() => start('alipay')}>
+                {creating && channel === 'alipay' ? <Loader2 size={16} className="mem-spin" /> : null}
+                {tr({ zh: '支付宝', en: 'Alipay',
+                    zhHant: "支付寶"
+                })}
+              </button>
+              <button className="mem-pay-ch mem-pay-ch-wechat" disabled={creating} onClick={() => start('wechat')}>
+                {creating && channel === 'wechat' ? <Loader2 size={16} className="mem-spin" /> : null}
+                {tr({ zh: '微信支付', en: 'WeChat Pay' })}
+              </button>
+            </div>
+            {err && <div className="mem-pay-err">{err}</div>}
+          </>
+        ) : (
+          <>
+            {order.qrcode ? (
+              <figure className="mem-pay-qr">
+                <img src={order.qrcode} alt="payment QR" width={220} height={220} />
+                <figcaption>
+                  {channel === 'wechat'
+                    ? tr({ zh: '请用微信扫码支付', en: 'Scan with WeChat to pay',
+                        zhHant: "請用微信掃碼支付"
+                    })
+                    : tr({ zh: '请用支付宝扫码支付', en: 'Scan with Alipay to pay',
+                        zhHant: "請用支付寶掃碼支付"
+                    })}
+                </figcaption>
+              </figure>
+            ) : order.url ? (
+              <a className="mem-pay-go" href={order.url} target="_blank" rel="noopener noreferrer">
+                <Smartphone size={16} /> {tr({ zh: '前往支付', en: 'Go to checkout' })}
+              </a>
+            ) : (
+              <div className="mem-pay-err">{tr({ zh: '未获取到支付链接', en: 'No payment link returned',
+                  zhHant: "未獲取到支付連結"
+            })}</div>
+            )}
+            {order.url && order.qrcode && (
+              <a className="mem-pay-go-link" href={order.url} target="_blank" rel="noopener noreferrer">
+                <Smartphone size={13} /> {tr({ zh: '在手机上打开', en: 'Open on phone',
+                    zhHant: "在手機上開啟"
+                })}
+              </a>
+            )}
+            <div className="mem-pay-waiting">
+              <Loader2 size={14} className="mem-spin" /> {tr({ zh: '等待支付结果…', en: 'Waiting for payment…',
+                  zhHant: "等待支付結果…"
+            })}
+            </div>
+            <p className="mem-pay-tip">
+              <Check size={12} /> {tr({ zh: '支付完成后本页会自动开通,可稍候片刻', en: 'Membership activates automatically once paid — give it a moment',
+                  zhHant: "支付完成後本頁會自動開通,可稍候片刻"
+            })}
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

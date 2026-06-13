@@ -29,6 +29,8 @@ import { wcaScramblesRoutes } from './routes/wca_scrambles.js';
 import { scrambleMarksRoutes } from './routes/scramble_marks.js';
 import { announcedCompsRoutes, startAnnouncedCompsPoller } from './routes/announced_comps.js';
 import { sponsorsRoutes } from './routes/sponsors.js';
+import { membershipRoutes } from './routes/membership.js';
+import { compFollowsRoutes } from './routes/comp_follows.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
 import { ensureDaemon as ensureCube555Daemon } from './cube555/daemon.js';
 import { getCurrentRecords } from './utils/current_records.js';
@@ -107,6 +109,8 @@ app.route('/v1', wcaScramblesRoutes);
 app.route('/v1', scrambleMarksRoutes);
 app.route('/v1', announcedCompsRoutes);
 app.route('/v1', sponsorsRoutes);
+app.route('/v1', membershipRoutes);
+app.route('/v1', compFollowsRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).

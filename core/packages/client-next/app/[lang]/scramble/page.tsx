@@ -15,14 +15,14 @@
  */
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { BarChart3, Box, Component, Dices, Microscope, Pyramid, Sparkles, Wand2 } from 'lucide-react';
+import { Dices, Sparkles, Wand2 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import i18n from '@/i18n/i18n-client';
 import { useT } from "@/hooks/useT";
 
 interface Card {
   to: string;
-  Icon: typeof BarChart3;
+  Icon: typeof Dices;
   zh: { title: string; desc: string };
   en: { title: string; desc: string };
     zhHant?: { title: string; desc: string };
@@ -39,44 +39,9 @@ const CARDS: Card[] = [
   {
     to: '/scramble/solver',
     Icon: Sparkles,
-    zh: { title: '求解', desc: '3x3 任意状态最少步公式 — wasm 多线程' },
-    en: { title: 'Solve', desc: 'Optimal HTM solution for any 3x3 state — multithreaded wasm' },
-      zhHant: { title: '求解', desc: '3x3 任意狀態最少步公式 — wasm 多執行緒' }
-},
-  {
-    to: '/scramble/analyzer',
-    Icon: Microscope,
-    zh: { title: '分析', desc: '3x3 打乱 → 6 色 cross / F2L / OLL / PLL 完整 CFOP 解' },
-    en: { title: 'Analyze', desc: '3x3 scramble → all-color cross / F2L / OLL / PLL CFOP paths' },
-      zhHant: { title: '分析', desc: '3x3 打亂 → 6 色 cross / F2L / OLL / PLL 完整 CFOP 解' }
-},
-  {
-    to: '/scramble/stats',
-    Icon: BarChart3,
-    zh: { title: '分布', desc: 'WCA 历史 1,200,000 条三阶打乱阶段最优步数分布' },
-    en: { title: 'Distribution', desc: 'Stage-optimal HTM distribution over 1.2M WCA 3x3 scrambles' },
-      zhHant: { title: '分佈', desc: 'WCA 歷史 1,200,000 條三階打亂階段最優步數分佈' }
-},
-  {
-    to: '/scramble/pocket',
-    Icon: Box,
-    zh: { title: '2x2x2 求解', desc: '任意 2x2x2 打乱的整解最优 HTM 解 — 全空间精确表' },
-    en: { title: '2x2x2 Solve', desc: 'Optimal HTM solution for any 2x2x2 scramble — exact full-space table' },
-      zhHant: { title: '2x2x2 求解', desc: '任意 2x2x2 打亂的整解最優 HTM 解 — 全空間精確表' }
-},
-  {
-    to: '/scramble/pyraminx',
-    Icon: Pyramid,
-    zh: { title: '金字塔求解', desc: '任意金字塔打乱的整解最优 HTM 解 — 核心全空间精确表 + 顶点' },
-    en: { title: 'Pyraminx Solve', desc: 'Optimal HTM solution for any Pyraminx scramble — exact core table plus tips' },
-      zhHant: { title: '金字塔求解', desc: '任意金字塔打亂的整解最優 HTM 解 — 核心全空間精確表 + 頂點' }
-},
-  {
-    to: '/scramble/skewb',
-    Icon: Component,
-    zh: { title: '斜转求解', desc: '任意斜转打乱的整解最优解 — 全空间精确表,至多 11 步' },
-    en: { title: 'Skewb Solve', desc: 'Optimal solution for any Skewb scramble — exact full-space table, at most 11 moves' },
-      zhHant: { title: '斜轉求解', desc: '任意斜轉打亂的整解最優解 — 全空間精確表,至多 11 步' }
+    zh: { title: '求解', desc: '3×3 最优解 / 逐阶段 / CFOP / DR,2×2×2 / 金字塔 / 斜转最优解,打乱步数分布' },
+    en: { title: 'Solve', desc: 'Optimal 3×3 / stage / CFOP / DR, plus 2×2×2 / Pyraminx / Skewb optimal solvers and step distributions' },
+      zhHant: { title: '求解', desc: '3×3 最優解 / 逐階段 / CFOP / DR,2×2×2 / 金字塔 / 斜轉最優解,打亂步數分佈' }
 },
   {
     to: '/scramble/pattern',

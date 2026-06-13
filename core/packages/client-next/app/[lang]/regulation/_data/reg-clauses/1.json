@@ -1,0 +1,203 @@
+{
+  "articleId": "1",
+  "version": {
+    "en": "April 1, 2026",
+    "zh": "2026年4月1日"
+  },
+  "title": {
+    "en": "Officials",
+    "zh": "工作人员",
+    "zhHant": "工作人員"
+  },
+  "clauses": [
+    {
+      "id": "1a",
+      "depth": 0,
+      "en": "A competition must include a WCA Delegate and an organization team (consisting of one or more individuals) with the following officials: judges, scramblers and score takers.",
+      "zh": "一场比赛必须包含一位WCA代表及一个由以下成员组成的主办团队（包含至少一个人）：裁判，打乱员，录入员。",
+      "zhHant": "一場比賽必須包含一位WCA代表及一個由以下成員組成的主辦團隊（包含至少一個人）：裁判，打亂員，錄入員。"
+    },
+    {
+      "id": "1a1",
+      "depth": 1,
+      "en": "A competition with one or more Head to Head rounds (see [Article I](regulations:article:I)) must also have one or more announcers.",
+      "zh": "具有“一对一”轮次（见[附则I](regulations:article:I)）的比赛必须有一个或多个发令员。",
+      "zhHant": "具有“一對一”輪次（見[附則I](regulations:article:I)）的比賽必須有一個或多個發令員。"
+    },
+    {
+      "id": "1b",
+      "depth": 0,
+      "en": "The organization team of a competition is responsible for logistics before, during, and after the competition.",
+      "zh": "一场比赛的主办团队负责比赛前后的后勤工作。",
+      "zhHant": "一場比賽的主辦團隊負責比賽前後的後勤工作。"
+    },
+    {
+      "id": "1c",
+      "depth": 0,
+      "en": "The WCA Delegate is responsible for ensuring that the competition adheres to the WCA Regulations and any applicable WCA policies or requirements. The WCA Delegate may appoint other members of the organization team to carry out specific responsibilities on their behalf, but is ultimately accountable for how these responsibilities are carried out.",
+      "zh": "WCA代表负责保证比赛遵守WCA规则以及任何适用的WCA政策或者要求。WCA代表可以指定主办团队中的其他人来承担一些职责，但最终将对这些职责的履行负责。",
+      "zhHant": "WCA代表負責保證比賽遵守WCA規則以及任何適用的WCA政策或者要求。WCA代表可以指定主辦團隊中的其他人來承擔一些職責，但最終將對這些職責的履行負責。"
+    },
+    {
+      "id": "1c+",
+      "depth": 0,
+      "en": "[CLARIFICATION] If there are multiple WCA Delegates designated for the competition, \"the WCA Delegate\" refers to any of them. \"The WCA Delegate\" also refers to anyone appointed by a designated WCA Delegate for a relevant responsibility of the WCA Delegate for the competition.",
+      "zh": "[澄清] 如果一场比赛中指定了多个WCA代表，“WCA代表”指的是他们当中任何一个。“WCA代表”也指被WCA代表指定履行相关职责的任何人。",
+      "zhHant": "[澄清] 如果一場比賽中指定了多個WCA代表，“WCA代表”指的是他們當中任何一個。“WCA代表”也指被WCA代表指定履行相關職責的任何人。"
+    },
+    {
+      "id": "1c++",
+      "depth": 0,
+      "en": "[CLARIFICATION] WCA Delegates may attend the competition without being designated to serve in the WCA Delegate role for the competition. \"The WCA Delegate\" does not refer to them unless they have been appointed with a relevant responsibility by a designated WCA Delegate for the competition (see [Regulation 1c+](regulations:regulation:1c+)).",
+      "zh": "[澄清] WCA代表们可以在不被指定担当本场代表角色的情况下参加比赛。除非他们被比赛指定的代表指定履行相关职责（见[规则1c+](regulations:regulation:1c+)），否则“WCA代表”不包括他们。",
+      "zhHant": "[澄清] WCA代表們可以在不被指定擔當本場代表角色的情況下參加比賽。除非他們被比賽指定的代表指定履行相關職責（見[規則1c+](regulations:regulation:1c+)），否則“WCA代表”不包括他們。"
+    },
+    {
+      "id": "1e",
+      "depth": 0,
+      "en": "Each event must have one or more judges.",
+      "zh": "每个项目必须包含至少一名裁判。",
+      "zhHant": "每個項目必須包含至少一名裁判。"
+    },
+    {
+      "id": "1e1",
+      "depth": 1,
+      "en": "A judge is responsible for executing the procedures of the event.",
+      "zh": "裁判需要为某个项目的执行过程负责。",
+      "zhHant": "裁判需要為某個項目的執行過程負責。"
+    },
+    {
+      "id": "1e1a",
+      "depth": 2,
+      "en": "A judge may judge multiple competitors simultaneously at the discretion of the WCA Delegate, as long as the judge is able to ensure that all WCA Regulations are followed at all times.",
+      "zh": "在WCA代表的允许下，裁判可以同时裁多名选手，只要该裁判可以确保整个过程完全遵守WCA规则。",
+      "zhHant": "在WCA代表的允許下，裁判可以同時裁多名選手，只要該裁判可以確保整個過程完全遵守WCA規則。"
+    },
+    {
+      "id": "1e2",
+      "depth": 1,
+      "en": "Every competitor must be available for judging. If required to judge, a competitor may be excused only for a legitimate reason (e.g. being unfamiliar with a puzzle), at the discretion of the WCA Delegate. Penalty: disqualification from an event, multiple events, or all events at that competition (see [Regulation 2k](regulations:regulation:2k)).",
+      "zh": "所有选手必须做好当裁判的准备。如果需要他作为裁判，除非他能给出合理的理由（例如不熟悉这种魔方），否则不允许推辞，由WCA代表决定。惩罚：取消其参加比赛中的一个项目、多个项目或者整场比赛的资格（见[规则2k](regulations:regulation:2k)）。",
+      "zhHant": "所有選手必須做好當裁判的準備。如果需要他作為裁判，除非他能給出合理的理由（例如不熟悉這種魔方），否則不允許推辭，由WCA代表決定。懲罰：取消其參加比賽中的一個項目、多個項目或者整場比賽的資格（見[規則2k](regulations:regulation:2k)）。"
+    },
+    {
+      "id": "1f",
+      "depth": 0,
+      "en": "Each event must have one or more scramblers. Exception: 3x3x3 Fewest Moves.",
+      "zh": "每个项目必须包含至少一名打乱员。例外：三阶最少步。",
+      "zhHant": "每個項目必須包含至少一名打亂員。例外：三階最少步。"
+    },
+    {
+      "id": "1f1",
+      "depth": 1,
+      "en": "A scrambler applies scramble sequences to prepare puzzles for attempts (see [Regulation A2](regulations:regulation:A2)).",
+      "zh": "打乱员将魔方按照打乱公式打乱（见[规则A2](regulations:regulation:A2)）。",
+      "zhHant": "打亂員將魔方按照打亂公式打亂（見[規則A2](regulations:regulation:A2)）。"
+    },
+    {
+      "id": "1f2",
+      "depth": 1,
+      "en": "Every competitor must be available for scrambling. If required to scramble, a competitor may be excused only for a legitimate reason (e.g. being unfamiliar with scrambling notation), at the discretion of the WCA Delegate. Penalty: disqualification from an event, multiple events, or all events at that competition (see [Regulation 2k](regulations:regulation:2k)).",
+      "zh": "所有选手必须做好当打乱员的准备。如果需要他作为打乱员，除非他能给出合理的理由（例如不熟悉打乱标记），否则不允许推辞，由WCA代表决定。惩罚：取消其参加比赛中的一个项目、多个项目或者整场比赛的资格（见[规则2k](regulations:regulation:2k)）。",
+      "zhHant": "所有選手必須做好當打亂員的準備。如果需要他作為打亂員，除非他能給出合理的理由（例如不熟悉打亂標記），否則不允許推辭，由WCA代表決定。懲罰：取消其參加比賽中的一個項目、多個項目或者整場比賽的資格（見[規則2k](regulations:regulation:2k)）。"
+    },
+    {
+      "id": "1g",
+      "depth": 0,
+      "en": "Each event must have one or more score takers.",
+      "zh": "每个项目必须包含至少一名录入员。",
+      "zhHant": "每個項目必須包含至少一名錄入員。"
+    },
+    {
+      "id": "1g1",
+      "depth": 1,
+      "en": "A score taker is responsible for compiling results.",
+      "zh": "录入员负责编辑录入成绩。",
+      "zhHant": "錄入員負責編輯錄入成績。"
+    },
+    {
+      "id": "1g2",
+      "depth": 1,
+      "en": "Changes to the result on a score sheet are only permitted at the discretion of the WCA Delegate.",
+      "zh": "所有对成绩的修改都必须在WCA代表的监督之下进行。",
+      "zhHant": "所有對成績的修改都必須在WCA代表的監督之下進行。"
+    },
+    {
+      "id": "1h",
+      "depth": 0,
+      "en": "Competitors in the same round of an event may compete as a single group or be divided into multiple groups.",
+      "zh": "同项目同一轮的选手可以以一组进行比赛或者被分成若干组。",
+      "zhHant": "同項目同一輪的選手可以以一組進行比賽或者被分成若干組。"
+    },
+    {
+      "id": "1h+",
+      "depth": 0,
+      "en": "[RECOMMENDATION] Competitors in the same group should use the same scramble sequences. Different groups should use different scramble sequences.",
+      "zh": "[建议] 同一组的选手应该使用相同的打乱公式。不同组的选手应该使用不同的打乱公式。",
+      "zhHant": "[建議] 同一組的選手應該使用相同的打亂公式。不同組的選手應該使用不同的打亂公式。"
+    },
+    {
+      "id": "1h++",
+      "depth": 0,
+      "en": "[RECOMMENDATION] All attempts in the final round of an event, as well as all 3x3x3 Fewest Moves attempts, should have the same scramble sequences for all competitors (i.e. only 1 group).",
+      "zh": "[建议] 所有项目最后一轮中的每一次还原，以及三阶最少步项目的所有还原，对于所有的选手应该使用同样的打乱公式（即只有一组）。",
+      "zhHant": "[建議] 所有項目最後一輪中的每一次還原，以及三階最少步項目的所有還原，對於所有的選手應該使用同樣的打亂公式（即只有一組）。"
+    },
+    {
+      "id": "1h+++",
+      "depth": 0,
+      "en": "[ADDITION] Competitors may request to compete at a time different to the scheduled time for the round in a separate group. The WCA Delegate should carefully consider the fairness and practicality of the situation before approving any such requests, and must ensure that such attempts follow [Regulation 9l](regulations:regulation:9l) (i.e. they must start after all competitors have finished their attempts from any previous round of the same event, and finish before any competitor has started an attempt for any following round of the same event). Competitors requesting such accommodations should contact the organization team and WCA Delegate before the competition. Exception: such accommodations are not permitted for 3x3x3 Fewest Moves, which specifies its own limited accommodations in [Regulation E6](regulations:regulation:E6).",
+      "zh": "[附加] 选手可以要求在计划时间以外的时间在单独的组别中参加比赛。WCA代表在同意这样的请求之前应该认真考虑其公平性和可行性，并且必须保证这些尝试符合[规则9l](regulations:regulation:9l)（也就是说他们必须在所有选手完成前一轮比赛之后开始，以及任何人开始该项目的下一轮比赛之前完成）。提出这样要求的选手应该在比赛之前联系主办团队以及WCA代表。例外：这种要求不得用于三阶最少步比赛，在[规则E6](regulations:regulation:E6)中有三阶最少步的相关规定。",
+      "zhHant": "[附加] 選手可以要求在計劃時間以外的時間在單獨的組別中參加比賽。WCA代表在同意這樣的請求之前應該認真考慮其公平性和可行性，並且必須保證這些嘗試符合[規則9l](regulations:regulation:9l)（也就是說他們必須在所有選手完成前一輪比賽之後開始，以及任何人開始該項目的下一輪比賽之前完成）。提出這樣要求的選手應該在比賽之前聯絡主辦團隊以及WCA代表。例外：這種要求不得用於三階最少步比賽，在[規則E6](regulations:regulation:E6)中有三階最少步的相關規定。"
+    },
+    {
+      "id": "1h1",
+      "depth": 1,
+      "en": "Scramblers and judges for a round must not scramble for/judge competitors in their own group before they have finished all of their attempts for the round. The following exceptions apply:",
+      "zh": "某一轮的裁判和打乱员在他们自己完成该轮所有比赛前禁止执裁/打乱同组选手。以下情况例外：",
+      "zhHant": "某一輪的裁判和打亂員在他們自己完成該輪所有比賽前禁止執裁/打亂同組選手。以下情況例外："
+    },
+    {
+      "id": "1h1a",
+      "depth": 2,
+      "en": "For 3x3x3 Fewest Moves, judges may judge competitors in their own group before they have finished their attempt (i.e. while they are competing).",
+      "zh": "对于三阶最少步，裁判可以在完成该次尝试前（即自己也在比赛中）对自己同组选手进行执裁。",
+      "zhHant": "對於三階最少步，裁判可以在完成該次嘗試前（即自己也在比賽中）對自己同組選手進行執裁。"
+    },
+    {
+      "id": "1h1a+",
+      "depth": 2,
+      "en": "[CLARIFICATION] Judges who are competing in a 3x3x3 Fewest Moves attempt they are judging must not begin grading attempts until they have finished their own attempt. They may begin grading before the end of the 60 minutes if they have submitted their attempt early (see [Regulation E2b+](regulations:regulation:E2b+)). They should get another judge to grade their own attempt.",
+      "zh": "[澄清] 正在参与三阶最少步比赛尝试的裁判，在完成自己的尝试之前，不得开始对其他选手的解法进行判卷。如果他们提前提交了解法（见[规则E2b+](regulations:regulation:E2b+)），可以在60分钟比赛时间结束前开始判卷。他们自己的解法应由另一名裁判进行评判。",
+      "zhHant": "[澄清] 正在參與三階最少步比賽嘗試的裁判，在完成自己的嘗試之前，不得開始對其他選手的解法進行判卷。如果他們提前提交了解法（見[規則E2b+](regulations:regulation:E2b+)），可以在60分鐘比賽時間結束前開始判卷。他們自己的解法應由另一名裁判進行評判。"
+    },
+    {
+      "id": "1h1b",
+      "depth": 2,
+      "en": "For 3x3x3 Multi-Blind, competitors may judge other competitors in their own group after they have finished their attempt.",
+      "zh": "对于三阶多盲，选手可以在完成了自己的尝试之后对自己同组的其他选手进行执裁。",
+      "zhHant": "對於三階多盲，選手可以在完成了自己的嘗試之後對自己同組的其他選手進行執裁。"
+    },
+    {
+      "id": "1j",
+      "depth": 0,
+      "en": "All officials may compete in the competition.",
+      "zh": "所有工作人员都可以参加比赛。",
+      "zhHant": "所有工作人員都可以參加比賽。"
+    },
+    {
+      "id": "1k",
+      "depth": 0,
+      "en": "Officials may serve multiple roles (e.g. organization team, WCA Delegate, judge, score taker, scrambler).",
+      "zh": "工作人员可以身兼数职（例如组织团队，WCA代表，裁判，录入员，打乱员）。",
+      "zhHant": "工作人員可以身兼數職（例如組織團隊，WCA代表，裁判，錄入員，打亂員）。"
+    },
+    {
+      "id": "1l",
+      "depth": 0,
+      "en": "Each Head to Head round must have an announcer.",
+      "zh": "每个“一对一”轮次都必须有发令员。",
+      "zhHant": "每個“一對一”輪次都必須有發令員。"
+    }
+  ]
+}

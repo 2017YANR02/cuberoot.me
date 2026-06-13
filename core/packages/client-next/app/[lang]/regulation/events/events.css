@@ -1,0 +1,203 @@
+/* ─── /regulation/events — Article 9 (Events) chapter-specific styles ───
+ * Reuses the shared .reg-* tokens (defined on .reg-page). Only the bits the
+ * event table, format diagram, cutoff flow and limit cards need live here.
+ * Tokens only — no hardcoded greys; color-mix for tints. Mobile-first safe.
+ * ──────────────────────────────────────────────────────────────────── */
+
+/* ── Event family groups + tables ───────────────────────────────── */
+.evt-family { margin-top: 40px; }
+.evt-family:first-of-type { margin-top: 10px; }
+.evt-family-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: clamp(17px, 2.4vw, 20px); font-weight: 700; letter-spacing: -.01em;
+  margin: 0 0 6px;
+}
+.evt-family-title svg { color: var(--blue); flex: none; }
+.evt-family-evticon.cubing-icon { font-size: 20px; color: var(--blue); }
+.evt-family-lede {
+  font-size: 15.5px; color: var(--ink-dim); line-height: 1.62;
+  margin: 0 0 16px; max-width: 62ch;
+}
+
+.evt-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.evt-table { min-width: 460px; }
+.evt-table td:first-child { width: 46%; }
+
+/* ranked-by pill */
+.evt-rank {
+  display: inline-flex; align-items: center;
+  font-size: 13.5px; font-weight: 600;
+  padding: 4px 11px; border-radius: 999px;
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  color: var(--blue);
+}
+.evt-rank-best    { background: color-mix(in srgb, var(--ok) 15%, transparent);   color: var(--ok); }
+.evt-rank-average { background: color-mix(in srgb, var(--blue) 13%, transparent); color: var(--blue); }
+.evt-rank-mean    { background: color-mix(in srgb, var(--info) 15%, transparent); color: var(--info); }
+.evt-rank-points  { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+
+/* ── Format cards (Bo / Mo / Ao) ────────────────────────────────── */
+.evt-fmt-cards {
+  display: grid; gap: 16px; margin-top: 4px;
+  grid-template-columns: repeat(2, 1fr);
+}
+.evt-fmt-card {
+  border: 1px solid var(--rule); border-radius: 14px;
+  padding: 22px 24px; background: var(--card);
+}
+.evt-fmt-card-wide { grid-column: 1 / -1; }
+.evt-fmt-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.evt-fmt-abbr {
+  font-family: var(--font-mono); font-weight: 700; font-size: 17px;
+  color: var(--blue);
+  padding: 3px 11px; border-radius: 8px;
+  background: color-mix(in srgb, var(--blue) 11%, transparent);
+}
+.evt-fmt-name { font-size: 15px; font-weight: 700; color: var(--ink); }
+.evt-fmt-text { margin: 0; font-size: 15px; line-height: 1.62; color: var(--ink-dim); }
+.evt-fmt-rank {
+  margin: 14px 0 0; font-size: 14px; font-weight: 600; color: var(--ink);
+  padding-top: 12px; border-top: 1px dashed var(--rule);
+}
+
+/* ── Ao5 strip (5 attempt chips, best+worst struck) ─────────────── */
+.evt-strip { margin-top: 18px; }
+.evt-strip-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.evt-chip {
+  position: relative; flex: 1 1 0; min-width: 78px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 13px 8px 11px; border-radius: 12px;
+  border: 1px solid var(--rule); background: var(--card);
+}
+.evt-chip-n {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .04em;
+  color: var(--ink-faint);
+}
+.evt-chip-v { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--ink); }
+.evt-chip-tag {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .03em;
+  text-transform: uppercase; margin-top: 2px;
+}
+/* the two dropped attempts: struck through + dimmed */
+.evt-chip-best,
+.evt-chip-worst { opacity: .92; }
+.evt-chip-best  { border-color: color-mix(in srgb, var(--ok) 45%, var(--rule)); }
+.evt-chip-worst { border-color: color-mix(in srgb, var(--bad) 45%, var(--rule)); }
+.evt-chip-best .evt-chip-v,
+.evt-chip-worst .evt-chip-v {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  color: var(--ink-faint);
+}
+.evt-chip-best  .evt-chip-tag { color: var(--ok); }
+.evt-chip-worst .evt-chip-tag { color: var(--bad); }
+/* the kept three get a subtle blue ring */
+.evt-chip-keep { border-color: color-mix(in srgb, var(--blue) 40%, var(--rule)); }
+.evt-chip-keep .evt-chip-v { color: var(--blue); }
+
+.evt-strip-calc {
+  margin-top: 16px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px;
+}
+.evt-strip-calc-label {
+  font-size: 13px; font-weight: 600; color: var(--ink-faint);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.evt-strip-calc-eq { font-family: var(--font-mono); font-size: 15px; color: var(--ink-dim); }
+.evt-strip-calc-eq strong { color: var(--blue); }
+
+/* ── Block sub-heads inside a section (cutoff / limits / rounds) ─── */
+.evt-block-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: clamp(18px, 2.6vw, 22px); font-weight: 700; letter-spacing: -.012em;
+  margin: 48px 0 8px;
+}
+.evt-block-title svg { color: var(--blue); flex: none; }
+.evt-block-lede {
+  font-size: 15.5px; color: var(--ink-dim); line-height: 1.64;
+  margin: 0 0 20px; max-width: 62ch;
+}
+
+/* small monospace regulation tag, inline with list/cell text */
+.evt-tag {
+  font-family: var(--font-mono); font-size: 11.5px;
+  color: var(--ink-faint);
+  padding: 1px 7px; border-radius: 6px; white-space: nowrap;
+  background: color-mix(in srgb, var(--blue) 8%, transparent);
+}
+
+/* ── Cutoff (combined-round) flow diagram ───────────────────────── */
+.evt-cutoff {
+  border: 1px solid var(--rule); border-radius: 16px;
+  padding: 22px 24px; background: var(--card); margin-top: 4px;
+}
+.evt-cutoff-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.evt-cutoff-fmt {
+  font-family: var(--font-mono); font-weight: 700; font-size: 16px; color: var(--blue);
+  padding: 3px 11px; border-radius: 8px;
+  background: color-mix(in srgb, var(--blue) 11%, transparent);
+}
+.evt-cutoff-cap { font-size: 14px; color: var(--ink-dim); }
+.evt-cutoff-flow { display: grid; grid-template-columns: auto auto 1fr; gap: 16px; align-items: center; }
+.evt-cutoff-gate { color: var(--ink-faint); font-size: 22px; line-height: 1; }
+.evt-cutoff-stage-n,
+.evt-cutoff-branch strong {
+  font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+}
+.evt-cutoff-stage-n { color: var(--ink-faint); margin-bottom: 9px; }
+.evt-cutoff-stage-text { margin: 9px 0 0; font-size: 13.5px; color: var(--ink-dim); line-height: 1.5; max-width: 22ch; }
+
+.evt-cutoff-attempts { display: flex; gap: 7px; }
+.evt-att {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 8px;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+  border: 1px solid var(--rule); color: var(--ink-dim); background: var(--bg);
+}
+.evt-att-done { border-color: color-mix(in srgb, var(--ok) 45%, var(--rule)); color: var(--ok); }
+.evt-att-add  {
+  border-color: color-mix(in srgb, var(--blue) 45%, var(--rule)); color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 8%, transparent);
+}
+
+.evt-cutoff-branch { display: grid; gap: 12px; }
+.evt-cutoff-pass, .evt-cutoff-fail {
+  font-size: 14px; color: var(--ink-dim); line-height: 1.55;
+  padding: 12px 15px; border-radius: 12px; border: 1px solid var(--rule);
+}
+.evt-cutoff-pass { border-color: color-mix(in srgb, var(--ok) 32%, var(--rule)); background: color-mix(in srgb, var(--ok) 5%, var(--card)); }
+.evt-cutoff-fail { border-color: color-mix(in srgb, var(--bad) 28%, var(--rule)); background: color-mix(in srgb, var(--bad) 4%, var(--card)); }
+.evt-cutoff-pass strong { color: var(--ok); }
+.evt-cutoff-fail strong { color: var(--bad); }
+.evt-cutoff-pass .evt-cutoff-attempts { margin-top: 10px; }
+
+/* ── Time-limit cards ───────────────────────────────────────────── */
+.evt-limit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 4px; }
+.evt-limit-card {
+  border: 1px solid var(--rule); border-radius: 14px;
+  padding: 20px 22px; background: var(--card);
+}
+.evt-limit-head {
+  display: flex; align-items: center; gap: 9px;
+  font-weight: 700; font-size: 15px; color: var(--ink); margin-bottom: 11px;
+}
+.evt-limit-head svg { color: var(--blue); flex: none; }
+.evt-limit-card p { margin: 0; font-size: 14.5px; line-height: 1.62; color: var(--ink-dim); }
+
+/* rounds table: keep the (numeric) first column tidy */
+.evt-rounds-table td:first-child { width: 42%; white-space: nowrap; }
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .evt-fmt-cards { grid-template-columns: 1fr; }
+  .evt-limit-grid { grid-template-columns: 1fr; }
+  .evt-block-title { margin-top: 40px; }
+
+  /* cutoff flow → vertical stack */
+  .evt-cutoff-flow { grid-template-columns: 1fr; gap: 12px; }
+  .evt-cutoff-gate { transform: rotate(90deg); justify-self: center; }
+  .evt-cutoff-stage-text { max-width: none; }
+
+  /* Ao5 strip: let chips wrap 3-per-row, slightly tighter */
+  .evt-chip { min-width: 64px; padding: 11px 6px 9px; }
+  .evt-chip-v { font-size: 16px; }
+}

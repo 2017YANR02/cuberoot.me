@@ -1,18 +1,19 @@
 ---
 name: update-scramble-stats
-description: "用户要更新 /scramble/stats(打乱难度 / 步数分布)的数据时执行本地手动增量刷新管道(按需触发,非定时)。覆盖三阶(按解法阶段:十字/F2L/EO/DR 等)+ 非 3x3 整解最优步数(二阶/金字塔/斜转,未来含 SQ1)两条管道。只能本地跑(三阶需 solver 34GB 表)。Triggers: \"更新打乱统计\", \"重跑打乱统计\", \"更新打乱分布\", \"更新打乱难度\", \"update scramble stats\", \"更新十字统计\", \"重跑十字统计\", \"跑十字管道\", \"更新 puzzle 统计\", \"更新二阶/金字塔/斜转统计\", \"补 xcross 变体\", \"双色底 10f xcross\", \"backfill_xcross_variant\", \"pseudo_f2leo 回填\", \"难打乱补变体\"."
+description: "用户要更新 /scramble/stats(打乱难度 / 步数分布)的数据时执行本地手动增量刷新管道(按需触发,非定时)。覆盖三阶阶段难度(十字/F2L/EO/DR 等)+ 非 3x3 整解最优步数(二阶/金字塔/斜转/SQ1)+ 三阶整解最优 HTM(333 方法,cubeopt WASM,solver/333opt)三条管道。只能本地跑(三阶需 solver 34GB 表 / 333 需 cubeopt 表)。Triggers: \"更新打乱统计\", \"重跑打乱统计\", \"更新打乱分布\", \"更新打乱难度\", \"update scramble stats\", \"更新十字统计\", \"重跑十字统计\", \"跑十字管道\", \"更新 puzzle 统计\", \"更新二阶/金字塔/斜转统计\", \"补 xcross 变体\", \"双色底 10f xcross\", \"backfill_xcross_variant\", \"pseudo_f2leo 回填\", \"难打乱补变体\", \"更新 333 整解统计\", \"333 整解最优\", \"333 HTM 分布\", \"333opt\"."
 ---
 
 # 更新打乱统计
 
-`/scramble/stats` 的数据按打乱对象分两条**独立**管道,都是本地手动增量(只能本地,三阶需 solver 34GB 表):
+`/scramble/stats` 的数据按打乱对象分三条**独立**管道,都是本地手动增量(只能本地,三阶需 solver 34GB 表 / 333 需 cubeopt 表):
 
 | 管道 | 对象 | 脚本 | 产物 |
 |------|------|------|------|
 | A 三阶阶段难度 | 3x3(十字 / F2L / EO / DR 等多阶段、多变体) | `update_cross_stats.ps1` | `distribution.json` + `wca_cross` + `comp_steps*` |
-| B 非 3x3 整解 | 二阶 / 金字塔 / 斜转(未来 SQ1) | `update_puzzle_stats.ps1` + `build_puzzle_examples.ts` | `puzzle_distribution.json` + `puzzle_examples.json` |
+| B 非 3x3 整解 | 二阶 / 金字塔 / 斜转 / SQ1 | `update_puzzle_stats.ps1` + `build_puzzle_examples.ts` | `puzzle_distribution.json` + `puzzle_examples.json` |
+| C 三阶整解最优 HTM | 3x3(整个魔方最优解,= `distribution.json` 的 `333` 方法) | `solver/333opt/{pull,solve,inject}.mjs` | `distribution.json` + `examples.json` 的 `variants['333']` |
 
-"全部刷新" = 两条都跑;用户只说某个对象就只跑对应那条。**灌注 + 发布(scp static)= 手动**,跟下面各自的发布步同口径。
+"全部刷新" = 三条都跑;用户只说某个对象就只跑对应那条。**灌注 + 发布(scp static)= 手动**,跟下面各自的发布步同口径。
 
 ---
 
@@ -65,3 +66,21 @@ cd core/packages/scramble-stats-build; pnpm exec tsx src/build_puzzle_examples.t
 - **想更准**(deferred):双阶段迭代总长 / 更紧剪枝可逼近最优,代价回到长尾;见 `solver/SOLVER_LOOP.md` P5d。
 - **发布**:`puzzle_distribution.json` + `puzzle_examples.json` 一起 scp 到 static.cuberoot.me 的 `/stats/scramble/`(同 A 的发布口径;改 shape 须 bump `lib/puzzle-distribution.ts` / `lib/puzzle-examples.ts` 的 `V`)。
 - 加新 puzzle(如 SQ1)的全链路范式:`solver/VARIANT_PLAYBOOK.md` §8。
+
+---
+
+## C. 三阶整解最优 HTM(`solver/333opt/`)
+
+整个 3x3 魔方的**最优解 HTM 步数分布** —— 前端在难度 tab 的 **「333」方法**(`distribution.json` 的 `sets.wca.variants['333']`,阶段只 `333`,带 HTM/QTM 钮)。求解走前端同款 cubeopt h48 WASM(Node 里批量跑)。**完整 runbook + 成本 + 15G 表切换在 `solver/333opt/README.md`,跑前先读。**
+
+```bash
+# CWD = solver/333opt/
+node pull.mjs 240     # ① 拉 N 条真实 WCA 333 打乱
+node solve.mjs 7      # ② 7 进程并行最优解(≤7 核,可续跑)→ out.*.csv
+node inject.mjs       # ③ 注入 stats/scramble/{distribution,examples}.json 的 variant '333'
+```
+
+- **表 = 算力天花板**:默认 `cube48opt5` + 972M 表 ~43s/解 → 全量 127 万 ≈ **93 天/7 核,不可行,只能抽样**。生产要 **15G 表(`cube48opt9`,秒级)**,生成后 `MODULE=.../cube48opt9.mjs TABLE=.../<15G>.dat node solve.mjs`(管道不变)。
+- Node 下 emscripten pthreads 不 spawn → 只能进程级并行;表 64M 分块灌 heap 防 OOM。
+- **发布**:`distribution.json` + `examples.json` scp 到 static `/stats/scramble/`(同 A/B);改 shape 须 bump `stats/page.tsx` fetch 的 `?v=`;前端代码改动要 commit+push 才在生产显示。
+- **QTM 待做**:`counts_qtm` 暂空(前端 QTM 钮占位)。细节见 memory `project_333_optimal_difficulty`。

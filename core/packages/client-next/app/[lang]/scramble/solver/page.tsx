@@ -36,6 +36,7 @@ import {
 import InteractiveCubeNet, { EMPTY_FACELET, type PaintColor } from './_InteractiveCubeNet';
 import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
+import SolveTabs from "../_components/SolveTabs";
 
 interface SolverInfo {
   name: string;
@@ -136,6 +137,10 @@ function ScrambleSolverPageInner() {
   const [showScramblePreview, setShowScramblePreview] = useState(true);
   const pendingSolveRef = useRef(false);
   const [autoDownloadTable, setAutoDownloadTable] = useState(true);
+  // Optional save folder (File System Access API). When set, generated tables
+  // are written straight into it instead of the browser's default Downloads.
+  const saveDirRef = useRef<FileSystemDirectoryHandle | null>(null);
+  const [saveDirName, setSaveDirName] = useState<string | null>(null);
   const justGeneratedRef = useRef(false);
   const [showLogs, setShowLogs] = useState(false);
   type InputMode = 'paint' | 'random' | 'paste';
@@ -332,16 +337,14 @@ function ScrambleSolverPageInner() {
         setReadyState('ready');
         setProgress(-1);
       } else if (d.cmd === 'download table') {
-        if (d.code === 0) {
-          const blob = new Blob([new Uint8Array(d.data)], { type: 'application/octet-stream' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = solverInfoRef.current?.table_name || 'cubeopt-table.dat';
-          a.click();
-          URL.revokeObjectURL(url);
+        if (d.code === 0) saveTableBytes(d.data as ArrayBuffer);
+        setReadyState('ready');
+      } else if (d.cmd === 'download table fileapi') {
+        if (d.code !== 0) {
+          alert(t('写入文件失败,请重试或换默认下载', 'Failed to write file — retry or use default download', "寫入檔案失敗,請重試或改用預設下載"));
         }
         setReadyState('ready');
+        setProgress(-1);
       }
     };
   };
@@ -400,17 +403,58 @@ function ScrambleSolverPageInner() {
     if (logsRef.current) logsRef.current.scrollTop = logsRef.current.scrollHeight;
   }, [logs]);
 
-  const generateTable = () => {
+  const generateTable = async () => {
     if (readyState !== 'need-init') return;
+    // Let the user choose where to save the table before the (long) build kicks
+    // off. Runs inside the click gesture so showDirectoryPicker keeps activation.
+    const picker = (window as unknown as {
+      showDirectoryPicker?: (opts?: { mode?: 'read' | 'readwrite' }) => Promise<FileSystemDirectoryHandle>;
+    }).showDirectoryPicker;
+    if (picker) {
+      try {
+        const handle = await picker({ mode: 'readwrite' });
+        saveDirRef.current = handle;
+        setSaveDirName(handle.name);
+      } catch {
+        // user dismissed the picker → fall back to default browser download
+      }
+    }
     setReadyState('busy');
     setLogs('');
     workerRef.current?.postMessage({ cmd: 'generate table' });
   };
-  const downloadTable = () => {
+  const downloadTable = async () => {
     if (readyState !== 'ready') return;
+    const dir = saveDirRef.current;
+    // Preferred: stream the table straight to the chosen folder in 64MB chunks
+    // (worker's 'download table fileapi') — no full-size in-memory copy, which
+    // matters a lot for the multi-GB tables (opt7+).
+    if (dir) {
+      try {
+        const fh = await dir.getFileHandle(solverInfoRef.current?.table_name || 'cubeopt-table.dat', { create: true });
+        setReadyState('busy');
+        workerRef.current?.postMessage({ cmd: 'download table fileapi', data: fh });
+        return;
+      } catch {
+        // permission lost / handle stale → fall back to blob download below
+      }
+    }
     setReadyState('busy');
     workerRef.current?.postMessage({ cmd: 'download table' });
   };
+
+  // Blob fallback (no save folder chosen): the worker already sent a regular
+  // ArrayBuffer copy of the whole table — turn it into a default download.
+  const saveTableBytes = (buf: ArrayBuffer) => {
+    const blob = new Blob([buf], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = solverInfoRef.current?.table_name || 'cubeopt-table.dat';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const onUploadClick = () => fileInputRef.current?.click();
   const onUploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -521,9 +565,7 @@ function ScrambleSolverPageInner() {
   return (
     <div className="cubeopt-page">
       <style>{INLINE_CSS}</style>
-      <header className="cubeopt-header">
-        <h1>{t('最优解 (cubeopt)', 'Optimal Solver (cubeopt)', "最優解 (cubeopt)")}</h1>
-      </header>
+      <SolveTabs puzzle="3x3" mode="solve" sub="optimal" />
 
       {mounted && !sabAvailable && (
         <div className="cubeopt-warn">
@@ -730,6 +772,11 @@ function ScrambleSolverPageInner() {
                 <input type="checkbox" checked={autoDownloadTable} onChange={(e) => setAutoDownloadTable(e.target.checked)} />
                 <span>{t('生成后自动下载', 'Auto-download after gen', "生成後自動下載")}</span>
               </label>
+              {saveDirName && (
+                <span className="save-dir">
+                  {t('保存到', 'Save to', "儲存到")}: <code>{saveDirName}</code>
+                </span>
+              )}
               {readyState === 'need-init' && (
                 <>
                   <button className="btn" onClick={generateTable}>{t('生成表', 'Generate Table')}</button>
@@ -982,6 +1029,14 @@ const INLINE_CSS = `
   user-select: none;
 }
 .auto-dl input { margin: 0; cursor: pointer; }
+.save-dir {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.8rem; color: var(--text-muted, #aaa);
+}
+.save-dir code {
+  font-size: 0.78rem; color: var(--text, #ddd);
+  max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 @media (max-width: 480px) {
   .cubeopt-page { padding: 0.75rem 0.5rem 2rem; }
   .cubeopt-header h1 { font-size: 1.2rem; flex: 1; min-width: 0; }

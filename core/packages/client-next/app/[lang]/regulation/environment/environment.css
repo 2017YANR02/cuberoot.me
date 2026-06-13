@@ -1,0 +1,131 @@
+/* ─── /regulation/environment — Article 7 page-specific styles ───
+ * Reuses .reg-* tokens from ../regulation.css (loaded via RegArticleLayout).
+ * Adds: the solving-station diagram, the venue-zones diagram, and the inline
+ * list lead-icons / regulation tags. All colours are theme tokens.
+ * ─────────────────────────────────────────────────────────────── */
+
+/* ── Solving-station figure ── */
+.env-station,
+.env-zones {
+  margin: 4px 0 30px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  padding: 24px 26px 22px;
+  background: var(--card);
+}
+.env-station-svg,
+.env-zones-svg {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+.env-station-cap,
+.env-zones-cap {
+  margin: 22px auto 0;
+  font-size: 14.5px;
+  line-height: 1.66;
+  color: var(--ink-faint);
+  text-align: center;
+  max-width: 56ch;
+}
+
+/* station parts */
+.env-surface {
+  fill: color-mix(in srgb, var(--ink) 5%, var(--card));
+  stroke: var(--rule);
+  stroke-width: 1.5;
+}
+.env-mat {
+  fill: color-mix(in srgb, var(--blue) 9%, var(--card));
+  stroke: color-mix(in srgb, var(--blue) 32%, var(--rule));
+  stroke-width: 1.5;
+}
+.env-timer {
+  fill: color-mix(in srgb, var(--ink) 12%, var(--card));
+  stroke: var(--rule-strong);
+  stroke-width: 1.5;
+}
+.env-pad {
+  fill: color-mix(in srgb, var(--blue) 38%, var(--card));
+}
+.env-puzzle {
+  fill: color-mix(in srgb, var(--ok) 24%, var(--card));
+  stroke: color-mix(in srgb, var(--ok) 50%, var(--rule));
+  stroke-width: 1.5;
+}
+.env-cover {
+  fill: none;
+  stroke: var(--ink-faint);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+}
+.env-lbl text,
+.env-side {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  fill: var(--ink-dim);
+}
+.env-side { fill: var(--blue); font-weight: 600; }
+
+/* venue zones */
+.env-zone { stroke-width: 1.5; }
+.env-zone-stage {
+  fill: color-mix(in srgb, var(--blue) 7%, var(--card));
+  stroke: color-mix(in srgb, var(--blue) 28%, var(--rule));
+}
+.env-zone-scr {
+  fill: color-mix(in srgb, var(--warn) 8%, var(--card));
+  stroke: color-mix(in srgb, var(--warn) 30%, var(--rule));
+}
+.env-wall {
+  fill: var(--rule-strong);
+}
+.env-mini-station {
+  fill: color-mix(in srgb, var(--blue) 22%, var(--card));
+  stroke: color-mix(in srgb, var(--blue) 40%, var(--rule));
+  stroke-width: 1.2;
+}
+.env-scr-table {
+  fill: color-mix(in srgb, var(--warn) 22%, var(--card));
+  stroke: color-mix(in srgb, var(--warn) 42%, var(--rule));
+  stroke-width: 1.2;
+}
+.env-zone-lbl {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  fill: var(--ink-dim);
+}
+.env-wall-lbl {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: var(--ink-faint);
+}
+
+/* list lead icons + regulation tags (mirror the scrambling chapter) */
+.reg-list .env-li-icon {
+  display: inline-block;
+  vertical-align: -3px;
+  margin-right: 7px;
+  color: var(--blue);
+}
+.reg-list li strong { color: var(--ink); font-weight: 700; }
+.env-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: .03em;
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 11%, transparent);
+  border-radius: 6px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+
+/* narrow screens */
+@media (max-width: 720px) {
+  .env-station,
+  .env-zones { padding: 18px 16px 16px; }
+}

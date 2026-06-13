@@ -6,12 +6,17 @@
 // Goes through the shared subpath ('node' → dist), so CI builds @cuberoot/shared
 // before the test runs (same as skewb-notation.test.ts).
 import { describe, it, expect } from 'vitest';
-import { scrambleMoveLengths, scrambleLengthUnit } from '@cuberoot/shared/scramble-length';
+import { scrambleMoveLengths, scrambleLengthUnit, scrambleMoveSamples } from '@cuberoot/shared/scramble-length';
 
 const len1 = (e: string, s: string) => {
   const a = scrambleMoveLengths(e, s);
   expect(a).toHaveLength(1);
   return a[0];
+};
+const slash1 = (s: string) => {
+  const a = scrambleMoveSamples('sq1', s);
+  expect(a).toHaveLength(1);
+  return a[0].qtm;
 };
 
 describe('scrambleMoveLengths', () => {
@@ -23,12 +28,16 @@ describe('scrambleMoveLengths', () => {
     expect(len1('skewb', "B R L B L U' B' U' B' L U")).toBe(11);
   });
 
-  it('sq1: counts (x,y) twist pairs, not whitespace tokens', () => {
-    expect(len1('sq1', '(-2,3) / (-3,0) / (0,3) / (5,-1) / (1,0) / (6,-3) / (-5,-4) / (2,0) / (0,-2) / (-2,-3) / (-1,0) / (1,-3)')).toBe(12);
+  it('sq1: WCA 12c4 = (x,y) twists + slashes (12 pairs + 11 slashes = 23)', () => {
+    const s = '(-2,3) / (-3,0) / (0,3) / (5,-1) / (1,0) / (6,-3) / (-5,-4) / (2,0) / (0,-2) / (-2,-3) / (-1,0) / (1,-3)';
+    expect(len1('sq1', s)).toBe(23);
+    expect(slash1(s)).toBe(11); // slash-only metric (jaapsch twist)
   });
 
-  it('sq1: trailing slash does not add a pair', () => {
-    expect(len1('sq1', '(6,2) / (-2,-2) / (-3,0) / (3,0) / (2,-4) / (0,-2) / (3,0) / (1,-4) / (-2,-4) / (-2,0) / (0,-2) / (-2,-3) /')).toBe(12);
+  it('sq1: trailing slash is a real slice — counts under WCA but not as a pair (12 + 12 = 24)', () => {
+    const s = '(6,2) / (-2,-2) / (-3,0) / (3,0) / (2,-4) / (0,-2) / (3,0) / (1,-4) / (-2,-4) / (-2,0) / (0,-2) / (-2,-3) /';
+    expect(len1('sq1', s)).toBe(24);
+    expect(slash1(s)).toBe(12);
   });
 
   it('clock: pins + y2 + ALL each count as one token', () => {

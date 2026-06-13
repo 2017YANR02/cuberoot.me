@@ -8,7 +8,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import { compSourceLine } from '@/lib/comp-schedule';
@@ -73,6 +72,58 @@ const groupForRep = (id: string) => MERGE_GROUPS.find((g) => g.rep === id);
 // Non-representative members hidden from the selector while merged.
 export const MERGED_HIDDEN = new Set(MERGE_GROUPS.flatMap((g) => g.members.filter((m) => m !== g.rep)));
 
+// Resolve the displayed distribution for an event: when merging, sum the merge
+// group's member counts; otherwise the raw event. Shared by the view (chart) and
+// the parent page (to decide whether the HTM/QTM • WCA/slash toggle applies).
+export function resolveEventLen(data: EventLengthsJson | null, event: string, merged: boolean): EventLen | null {
+  if (!data) return null;
+  const group = merged ? groupForRep(event) : undefined;
+  if (group) {
+    const counts: Record<string, number> = {};
+    const countsQtm: Record<string, number> = {};
+    let samples = 0;
+    for (const m of group.members) {
+      const ev = data.events[m];
+      if (!ev) continue;
+      for (const [k, v] of Object.entries(ev.counts)) { counts[k] = (counts[k] ?? 0) + v; samples += v; }
+      if (ev.counts_qtm) for (const [k, v] of Object.entries(ev.counts_qtm)) countsQtm[k] = (countsQtm[k] ?? 0) + v;
+    }
+    return { unit: 'moves', samples, counts, ...(Object.keys(countsQtm).length ? { counts_qtm: countsQtm } : {}) };
+  }
+  return data.events[event] ?? null;
+}
+
+// Second move-metric toggle metadata (shown when an event carries counts_qtm):
+// sq1 → WCA 12c4 / slash; 3x3-family → HTM / QTM. Labels/hints shared with the
+// difficulty tab's SQ1 toggle.
+export function lengthAltMeta(event: string) {
+  return event === 'sq1'
+    ? {
+      off: 'WCA', on: 'slash',
+      aria: tr({ zh: '计步口径:WCA 12c4 或 slash', en: 'Metric: WCA 12c4 or slash',
+          zhHant: "計步口徑:WCA 12c4 或 slash"
+    }),
+      offHint: tr({ zh: 'WCA 12c4:(X,Y) 计 1、/ 计 1', en: 'WCA 12c4: (X,Y) = 1, / = 1',
+          zhHant: "WCA 12c4:(X,Y) 計 1、/ 計 1"
+    }),
+      onHint: tr({ zh: 'slash:只计 /(jaapsch)', en: 'slash: count / only (jaapsch)',
+          zhHant: "slash:只計 /(jaapsch)"
+    }),
+    }
+    : {
+      off: 'HTM', on: 'QTM',
+      aria: tr({ zh: '计步口径:HTM(半圈计 1)或 QTM(半圈计 2)', en: 'Move metric: HTM (half turn = 1) or QTM (half turn = 2)',
+          zhHant: "計步口徑:HTM(半圈計 1)或 QTM(半圈計 2)"
+    }),
+      offHint: tr({ zh: 'HTM:每 move 计 1 步', en: 'HTM: each move = 1',
+          zhHant: "HTM:每 move 計 1 步"
+    }),
+      onHint: tr({ zh: 'QTM:180° 计 2 步', en: 'QTM: 180° counts as 2',
+          zhHant: "QTM:180° 計 2 步"
+    }),
+    };
+}
+
 function summarize(counts: Record<string, number>) {
   const entries = Object.entries(counts)
     .map(([k, v]) => [Number(k), v] as [number, number])
@@ -106,19 +157,19 @@ const unitLabel = (unit: string, isZh: boolean) =>
       zhHant: "擰次"
 })) : (tr({ zh: '步', en: 'moves' }));
 
-export default function ScrambleLengthView({ isZh, data, event, merged }: {
+export default function ScrambleLengthView({ isZh, data, event, merged, metric }: {
   isZh: boolean;
   data: EventLengthsJson | null;
   event: string;
   merged: boolean;
+  // 计步口径(由父级控制,钮提到顶栏):3x3-family HTM/QTM、sq1 WCA/slash。
+  metric: 'htm' | 'qtm';
 }) {
   const [yMode, setYMode] = useState<'percent' | 'count'>('percent');
   const [chartMode, setChartMode] = useState<'pdf' | 'cdf'>('pdf');
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
   const [examples, setExamples] = useState<ExamplesJson | null>(null);
   const [examplesLoading, setExamplesLoading] = useState(false);
-  // 3x3-family 计步口径:'htm'(每 move 1 步,默认)/ 'qtm'(180° = 2 步)。仅有 counts_qtm 时可切。
-  const [lenMetric, setLenMetric] = useState<'htm' | 'qtm'>('htm');
 
   // Flag index for example comp cards (bump version to re-render once loaded).
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
@@ -148,28 +199,16 @@ export default function ScrambleLengthView({ isZh, data, event, merged }: {
   const curSub = activeGroup ? (i18n.language === 'zh-Hant' ? (activeGroup.subZhHant ?? activeGroup.subZh) : (isZh ? activeGroup.subZh : activeGroup.subEn)) : null;
 
   // Synthesize the merged distribution (sum member counts) or use the raw event.
-  const cur = useMemo<EventLen | null>(() => {
-    if (!data) return null;
-    if (activeGroup) {
-      const counts: Record<string, number> = {};
-      const countsQtm: Record<string, number> = {};
-      let samples = 0;
-      for (const m of activeGroup.members) {
-        const ev = data.events[m];
-        if (!ev) continue;
-        for (const [k, v] of Object.entries(ev.counts)) { counts[k] = (counts[k] ?? 0) + v; samples += v; }
-        if (ev.counts_qtm) for (const [k, v] of Object.entries(ev.counts_qtm)) countsQtm[k] = (countsQtm[k] ?? 0) + v;
-      }
-      return { unit: 'moves', samples, counts, ...(Object.keys(countsQtm).length ? { counts_qtm: countsQtm } : {}) };
-    }
-    return data.events[event] ?? null;
-  }, [data, event, activeGroup]);
+  const cur = useMemo<EventLen | null>(() => resolveEventLen(data, event, merged), [data, event, merged]);
 
   const hasQtm = !!cur?.counts_qtm;
-  const useQtm = lenMetric === 'qtm' && hasQtm;
+  const useQtm = metric === 'qtm' && hasQtm;
   const activeCounts = useQtm ? cur!.counts_qtm! : (cur?.counts ?? null);
-  // 切口径时清空选中 bin(HTM/QTM 长度不同,旧 bin 不再适用)。
-  useEffect(() => { setSelectedBin(null); }, [lenMetric]);
+  // 切口径时清空选中 bin(两口径长度不同,旧 bin 不再适用)。
+  useEffect(() => { setSelectedBin(null); }, [metric]);
+
+  // sq1 两口径都按「步」计(WCA 12c4 / slash 都是动作计数),不再显示「拧次」。
+  const curUnit = event === 'sq1' ? tr({ zh: '步', en: 'moves' }) : unitLabel(cur?.unit ?? 'moves', isZh);
 
   const stats = useMemo(() => (activeCounts ? summarize(activeCounts) : null), [activeCounts]);
   const series = useMemo<HistSeries[]>(
@@ -209,41 +248,8 @@ export default function ScrambleLengthView({ isZh, data, event, merged }: {
     })}</div>;
   }
 
-  const totalN = data.meta.total_scrambles.toLocaleString();
-  const isBootstrap = !!(data.meta as { bootstrap?: boolean }).bootstrap;
-  const unitNote = tr({ zh: '步数;SQ1 计拧次,多盲每方块单独计', en: 'moves; Square-1 in twists, multi-blind counted per cube',
-      zhHant: "步數;SQ1 計擰次,多盲每方塊單獨計"
-});
-  const source = isBootstrap
-    ? (i18n.language === 'zh-Hant' ? (`示例樣本 ${totalN} 條打亂(取自部分比賽,完整全時段資料每日重新整理後生效);按項目統計打亂記號長度(${unitNote})。`) : (isZh
-            ? `示例样本 ${totalN} 条打乱(取自部分比赛,完整全时段数据每日刷新后生效);按项目统计打乱记号长度(${unitNote})。`
-            : `Sample of ${totalN} scrambles (a few competitions; full all-time data lands on the next daily refresh); scramble notation length per event (${unitNote}).`))
-    : (i18n.language === 'zh-Hant' ? (`來源: WCA 歷史比賽全部 ${totalN} 條打亂原文;按項目統計打亂記號長度(${unitNote})。`) : (isZh
-            ? `来源: WCA 历史比赛全部 ${totalN} 条打乱原文;按项目统计打乱记号长度(${unitNote})。`
-            : `Source: all ${totalN} historical WCA competition scrambles; scramble notation length per event (${unitNote}).`));
-
   return (
     <>
-      <p className="scramble-stats-note">{source}</p>
-
-      {hasQtm && (
-        <div className="scramble-stats-puzzle-toggle">
-          <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '计步', en: 'Metric', zhHant: '計步' })}</span>
-          <PillToggle
-            value={lenMetric === 'qtm'}
-            onChange={(v) => setLenMetric(v ? 'qtm' : 'htm')}
-            offLabel="HTM"
-            onLabel="QTM"
-            ariaLabel={tr({ zh: '计步口径:HTM(半圈计 1)或 QTM(半圈计 2)', en: 'Move metric: HTM (half turn = 1) or QTM (half turn = 2)', zhHant: '計步口徑:HTM(半圈計 1)或 QTM(半圈計 2)' })}
-          />
-          <span className="scramble-stats-puzzle-toggle-hint">
-            {lenMetric === 'qtm'
-              ? tr({ zh: 'QTM:180° 计 2 步', en: 'QTM: 180° counts as 2', zhHant: 'QTM:180° 計 2 步' })
-              : tr({ zh: 'HTM:每 move 计 1 步', en: 'HTM: each move = 1', zhHant: 'HTM:每 move 計 1 步' })}
-          </span>
-        </div>
-      )}
-
       {cur && (
         <>
           <div className="scramble-stats-chart-wrapper">
@@ -328,7 +334,7 @@ export default function ScrambleLengthView({ isZh, data, event, merged }: {
                 {curSub && <span className="scramble-len-sub">{curSub}</span>} {tr({ zh: '摘要统计', en: 'Summary stats',
                     zhHant: "摘要統計"
                 })}
-                <span className="scramble-len-unit">({unitLabel(cur.unit, isZh)})</span>
+                <span className="scramble-len-unit">({curUnit})</span>
               </div>
               <div className="scramble-stats-stat-grid">
                 <Cell label={tr({ zh: '均值', en: 'mean' })} value={stats.mean.toFixed(2)} />
@@ -345,7 +351,7 @@ export default function ScrambleLengthView({ isZh, data, event, merged }: {
           <div className="scramble-stats-panel scramble-stats-examples-panel">
             <div className="scramble-stats-panel-title">
               {selectedBin !== null
-                ? (i18n.language === 'zh-Hant' ? (`${selectedBin} ${unitLabel(cur.unit, isZh)}打亂樣例`) : (isZh ? `${selectedBin} ${unitLabel(cur.unit, isZh)}打乱样例` : `${selectedBin}-${cur.unit} examples`))
+                ? (i18n.language === 'zh-Hant' ? (`${selectedBin} ${curUnit}打亂樣例`) : (isZh ? `${selectedBin} ${curUnit}打乱样例` : `${selectedBin}-${curUnit} examples`))
                 : (tr({ zh: '极端打乱样例', en: 'Extreme scrambles',
                     zhHant: "極端打亂樣例"
                 }))}

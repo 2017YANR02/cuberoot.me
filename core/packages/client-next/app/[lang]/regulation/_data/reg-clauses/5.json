@@ -1,0 +1,210 @@
+{
+  "articleId": "5",
+  "version": {
+    "en": "April 1, 2026",
+    "zh": "2026年4月1日"
+  },
+  "title": {
+    "en": "Puzzle Defects",
+    "zh": "魔方故障",
+    "zhHant": "魔方故障"
+  },
+  "clauses": [
+    {
+      "id": "5a",
+      "depth": 0,
+      "en": "Examples of puzzle defects include: popped parts, pieces twisted in place, and detached screws/caps/stickers.",
+      "zh": "魔方故障的例子包括：POP，某些块原地转，掉贴纸、贴片、盖子等。",
+      "zhHant": "魔方故障的例子包括：POP，某些塊原地轉，掉貼紙、貼片、蓋子等。"
+    },
+    {
+      "id": "5b",
+      "depth": 0,
+      "en": "If a puzzle defect occurs during an attempt, the competitor may choose to either repair the defect and continue the attempt, or to stop the attempt.",
+      "zh": "如果在某次还原中发生了魔方故障，选手可以选择修复魔方继续还原，或是停止还原。",
+      "zhHant": "如果在某次還原中發生了魔方故障，選手可以選擇修復魔方繼續還原，或是停止還原。"
+    },
+    {
+      "id": "5b1",
+      "depth": 1,
+      "en": "If a competitor chooses to repair the puzzle, they must repair only the defective parts. Tools and/or parts of other puzzles must not be used to repair the original puzzle. Penalty: disqualification of the attempt (DNF).",
+      "zh": "如果选手选择修复魔方，他只能修复发生故障的块，其他块或工具禁止被用于修复。惩罚：取消当前还原成绩（DNF）。",
+      "zhHant": "如果選手選擇修復魔方，他只能修復發生故障的塊，其他塊或工具禁止被用於修復。懲罰：取消當前還原成績（DNF）。"
+    },
+    {
+      "id": "5b2",
+      "depth": 1,
+      "en": "Any repair to a puzzle must not give the competitor an advantage in solving the puzzle. Penalty: disqualification of the attempt (DNF).",
+      "zh": "对魔方的修复禁止给还原带来任何优势。惩罚：取消当前还原成绩（DNF）。",
+      "zhHant": "對魔方的修復禁止給還原帶來任何優勢。懲罰：取消當前還原成績（DNF）。"
+    },
+    {
+      "id": "5b3",
+      "depth": 1,
+      "en": "Permitted repairs:",
+      "zh": "允许的修复：",
+      "zhHant": "允許的修復："
+    },
+    {
+      "id": "5b3a",
+      "depth": 2,
+      "en": "If any parts have fallen out or moved out of place, the competitor may place them back.",
+      "zh": "如果任何块掉出了它原有的位置，选手可以将它装回来。",
+      "zhHant": "如果任何塊掉出了它原有的位置，選手可以將它裝回來。"
+    },
+    {
+      "id": "5b3b",
+      "depth": 2,
+      "en": "If the competitor repairs the puzzle but finds that the puzzle is unsolvable later during the solve, they may disassemble and reassemble a maximum of 4 pieces to make the puzzle solvable.",
+      "zh": "如果选手修复魔方后在还原过程中发现魔方变得不可还原，他可以重新拆下并装上至多4个块使得魔方可被还原。",
+      "zhHant": "如果選手修復魔方後在還原過程中發現魔方變得不可還原，他可以重新拆下並裝上至多4個塊使得魔方可被還原。"
+    },
+    {
+      "id": "5b3c",
+      "depth": 2,
+      "en": "If the puzzle is unsolvable, and can be made solvable by rotating a single corner piece, the competitor may correct the corner piece by twisting it in place without disassembling the puzzle. If multiple corner pieces have been twisted as a result of puzzle defects, the competitor may correct these twists, as long as the number of pieces corrected by the competitor does not exceed the number of pieces twisted as a result of puzzle defects.",
+      "zh": "如果魔方无法还原，但通过旋转单个角块即可使其可还原，选手可以通过原地旋转角块来修正，而无需拆装魔方。如果由于魔方故障导致多个角块发生了旋转，选手可以纠正这些旋转，但前提是选手纠正的角块数量不得超过因魔方故障而旋转的角块数量。",
+      "zhHant": "如果魔方無法還原，但透過旋轉單個角塊即可使其可還原，選手可以透過原地旋轉角塊來修正，而無需拆裝魔方。如果由於魔方故障導致多個角塊發生了旋轉，選手可以糾正這些旋轉，但前提是選手糾正的角塊數量不得超過因魔方故障而旋轉的角塊數量。"
+    },
+    {
+      "id": "5b4",
+      "depth": 1,
+      "en": "During a blindfolded phase (see [Regulation B4](regulations:regulation:B4)), all repairs must be performed blindfolded. Penalty: disqualification of the attempt (DNF).",
+      "zh": "在盲拧阶段（见[规则B4](regulations:regulation:B4)），所有修复必须盲进行。惩罚：取消当前还原成绩（DNF）。",
+      "zhHant": "在盲擰階段（見[規則B4](regulations:regulation:B4)），所有修復必須盲進行。懲罰：取消當前還原成績（DNF）。"
+    },
+    {
+      "id": "5b5",
+      "depth": 1,
+      "en": "If some parts of the puzzle are physically detached or not fully placed at the end of the solve, the following regulations apply:",
+      "zh": "如果在结束还原时魔方的一些部分掉出或没有完全归位，则按照参考如下规则判定：",
+      "zhHant": "如果在結束還原時魔方的一些部分掉出或沒有完全歸位，則按照參考如下規則判定："
+    },
+    {
+      "id": "5b5+",
+      "depth": 1,
+      "en": "[EXAMPLE] Examples of parts physically detached, resulting in a solved state: one 3x3x3 center cap, one big cube center piece, an inner piece of a big cube.",
+      "zh": "[举例] 某些块飞出，判定为还原的例子：三阶魔方的一个中心盖，高阶魔方的一个中心块，一个高阶魔方的内部块。",
+      "zhHant": "[舉例] 某些塊飛出，判定為還原的例子：三階魔方的一箇中心蓋，高階魔方的一箇中心塊，一個高階魔方的內部塊。"
+    },
+    {
+      "id": "5b5++",
+      "depth": 1,
+      "en": "[EXAMPLE] Examples of parts physically detached, resulting in a DNF: two 3x3x3 center caps, two big cube center pieces, a 3x3x3 edge piece, a 4x4x4 edge piece (\"wing\"), any combination of two pieces that both have colored parts.",
+      "zh": "[举例] 某些块飞出，判定为DNF的例子：三阶魔方的两个中心盖，两个高阶魔方的中心块，三阶魔方的一个棱块，四阶魔方的一个棱块，含有颜色的两个块的任意组合。",
+      "zhHant": "[舉例] 某些塊飛出，判定為DNF的例子：三階魔方的兩個中心蓋，兩個高階魔方的中心塊，三階魔方的一個稜塊，四階魔方的一個稜塊，含有顏色的兩個塊的任意組合。"
+    },
+    {
+      "id": "5b5a",
+      "depth": 2,
+      "en": "If one or more parts without colored faces are affected, the puzzle is considered solved.",
+      "zh": "一个或多个不含颜色块的部分受影响的情况，则判定为正常还原。",
+      "zhHant": "一個或多個不含顏色塊的部分受影響的情況，則判定為正常還原。"
+    },
+    {
+      "id": "5b5b",
+      "depth": 2,
+      "en": "If one part with one colored face is affected, the puzzle is considered solved.",
+      "zh": "只有一个只含单颜色块的部分受影响，则判定为正常还原。",
+      "zhHant": "只有一個只含單顏色塊的部分受影響，則判定為正常還原。"
+    },
+    {
+      "id": "5b5c",
+      "depth": 2,
+      "en": "If more than one part with one colored face is affected, the puzzle is considered unsolved (DNF).",
+      "zh": "两个及以上只含单颜色块部分受影响，则判定为未还原（DNF）。",
+      "zhHant": "兩個及以上只含單顏色塊部分受影響，則判定為未還原（DNF）。"
+    },
+    {
+      "id": "5b5d",
+      "depth": 2,
+      "en": "If one or more parts with more than one colored face are affected, the puzzle is considered unsolved (DNF).",
+      "zh": "一个及以上含多种颜色块的部分受影响，则判定为未还原（DNF）。",
+      "zhHant": "一個及以上含多種顏色塊的部分受影響，則判定為未還原（DNF）。"
+    },
+    {
+      "id": "5b5e",
+      "depth": 2,
+      "en": "Regulations [5b5c](regulations:regulation:5b5c) and [5b5d](regulations:regulation:5b5d) supersede [5b5a](regulations:regulation:5b5a) and [5b5b](regulations:regulation:5b5b).",
+      "zh": "[规则5b5c](regulations:regulation:5b5c)与[规则5b5d](regulations:regulation:5b5d)比[规则5b5a](regulations:regulation:5b5a)与[规则5b5b](regulations:regulation:5b5b)优先判定.",
+      "zhHant": "[規則5b5c](regulations:regulation:5b5c)與[規則5b5d](regulations:regulation:5b5d)比[規則5b5a](regulations:regulation:5b5a)與[規則5b5b](regulations:regulation:5b5b)優先判定."
+    },
+    {
+      "id": "5b5f",
+      "depth": 2,
+      "en": "If a part is partially detached or not fully placed, its final position is the closest position in which the affected piece would normally fit within the puzzle mechanism, considering the current state of the puzzle. If the final position renders the piece solved, the piece is not considered to be affected by the puzzle defect.",
+      "zh": "如果一个魔方的部件部分掉出或没有完全归位，其最终位置由按照魔方结构通常可以安放的最近位置决定，并参考魔方当前的状态。如果最终位置显示该块已经复原，则该块被认为没有受到魔方故障的影响。",
+      "zhHant": "如果一個魔方的部件部分掉出或沒有完全歸位，其最終位置由按照魔方結構通常可以安放的最近位置決定，並參考魔方當前的狀態。如果最終位置顯示該塊已經復原，則該塊被認為沒有受到魔方故障的影響。"
+    },
+    {
+      "id": "5b5f+",
+      "depth": 2,
+      "en": "[EXAMPLE] There is a [Visual Guide](https://drive.google.com/file/d/15XszaCGNvy3Dk6X6qERzZWZaDH1RH04z/view) available for [Regulation 5b5f](regulations:regulation:5b5f).",
+      "zh": "[举例] 对于[规则5b5f](regulations:regulation:5b5f)，这里有一个[可视化指南](https://drive.google.com/file/d/15XszaCGNvy3Dk6X6qERzZWZaDH1RH04z/view)。",
+      "zhHant": "[舉例] 對於[規則5b5f](regulations:regulation:5b5f)，這裡有一個[視覺化指南](https://drive.google.com/file/d/15XszaCGNvy3Dk6X6qERzZWZaDH1RH04z/view)。"
+    },
+    {
+      "id": "5b5f++",
+      "depth": 2,
+      "en": "[EXAMPLE] A 4x4x4 edge piece (\"wing\") twisted in place is considered solved.",
+      "zh": "[举例] 一个四阶的翼棱在它自己的位置翻转的状态被认为是还原的。",
+      "zhHant": "[舉例] 一個四階的翼稜在它自己的位置翻轉的狀態被認為是還原的。"
+    },
+    {
+      "id": "5b5f+++",
+      "depth": 2,
+      "en": "[EXAMPLE] A corner affected by a corner twist is considered to be placed in a valid position, but such position does not render the piece solved.",
+      "zh": "[举例] 一个旋转了的角块被认为是在它自己的位置，但这样的状态不能得出这块是复原的。",
+      "zhHant": "[舉例] 一個旋轉了的角塊被認為是在它自己的位置，但這樣的狀態不能得出這塊是復原的。"
+    },
+    {
+      "id": "5b5f++++",
+      "depth": 2,
+      "en": "[CLARIFICATION] If there are multiple pieces partially detached or not fully placed, their final position is assessed one at a time. The piece that is closest to an open position is assessed first, and is then considered to occupy that position. This process is repeated until all partially detached or not fully placed pieces have been assessed.",
+      "zh": "[澄清] 如果有多个部分脱落或未完全归位的部件，其最终位置应逐一进行评估。最接近一个空位的部件优先被评估，并被视为占据该位置。重复此过程直到所有部分脱落或未完全归位的部件都被评估完成。",
+      "zhHant": "[澄清] 如果有多個部分脫落或未完全歸位的部件，其最終位置應逐一進行評估。最接近一個空位的部件優先被評估，並被視為佔據該位置。重複此過程直到所有部分脫落或未完全歸位的部件都被評估完成。"
+    },
+    {
+      "id": "5b6",
+      "depth": 1,
+      "en": "Definition: A part is one or more fully connected components from a group of puzzle components that remain connected and do not move relative to each other during ordinary operation of the puzzle (e.g. a 3x3x3 center cap, a Pyraminx tip, a 3x3x3 corner piece missing one face, one face of a 3x3x3 corner piece).",
+      "zh": "定义：一个“部分”指的是由一个或多个零件组成的、在常规操作中不会相对移动的、保持连接在一起的整体(例如：三阶魔方的中心盖、金字塔的小角、缺少一个面的三阶魔方的角块、三阶魔方的角块的一个面等)。",
+      "zhHant": "定義：一個“部分”指的是由一個或多個零件組成的、在常規操作中不會相對移動的、保持連線在一起的整體(例如：三階魔方的中心蓋、金字塔的小角、缺少一個面的三階魔方的角塊、三階魔方的角塊的一個面等)。"
+    },
+    {
+      "id": "5c+",
+      "depth": 0,
+      "en": "[REMINDER] If a competitor has a puzzle defect, this does not grant them the right to an extra attempt.",
+      "zh": "[提醒] 魔方发生故障不能作为选手获得额外还原机会的理由。",
+      "zhHant": "[提醒] 魔方發生故障不能作為選手獲得額外還原機會的理由。"
+    },
+    {
+      "id": "5d",
+      "depth": 0,
+      "en": "The competitor is not permitted to cause a puzzle defect intentionally. Examples of intentionally causing puzzle defects: removing an attached center cap, rotating a corner piece, peeling a sticker.",
+      "zh": "选手不允许故意制造魔方故障。 故意制造魔方故障的例子：取下中心盖、旋转角块、撕下贴纸。",
+      "zhHant": "選手不允許故意製造魔方故障。 故意製造魔方故障的例子：取下中心蓋、旋轉角塊、撕下貼紙。"
+    },
+    {
+      "id": "5d1",
+      "depth": 1,
+      "en": "Exception: the competitor may intentionally cause a puzzle defect while repairing a previous puzzle defect (see [Regulation 5b3b](regulations:regulation:5b3b) and [Regulation 5b3c](regulations:regulation:5b3c)).",
+      "zh": "例外：选手在修复之前的故障的时候（见[规则5b3b](regulations:regulation:5b3b)和[规则5b3c](regulations:regulation:5b3c)）可以故意制造魔方故障。",
+      "zhHant": "例外：選手在修復之前的故障的時候（見[規則5b3b](regulations:regulation:5b3b)和[規則5b3c](regulations:regulation:5b3c)）可以故意製造魔方故障。"
+    },
+    {
+      "id": "5d2",
+      "depth": 1,
+      "en": "Exception: if a competitor incorrectly fixes an existing puzzle defect, for example by rotating a corner piece in the wrong direction (see [Regulation 5b3c](regulations:regulation:5b3c)), this is not considered intentionally causing a puzzle defect.",
+      "zh": "例外：如果选手没有正确修复故障，例如向反方向旋转角块（见[规则5b3c](regulations:regulation:5b3c)），这种情况不被视为故意制造魔方故障。",
+      "zhHant": "例外：如果選手沒有正確修復故障，例如向反方向旋轉角塊（見[規則5b3c](regulations:regulation:5b3c)），這種情況不被視為故意製造魔方故障。"
+    },
+    {
+      "id": "5d3",
+      "depth": 1,
+      "en": "Penalty for intentionally causing a puzzle defect: disqualification of the attempt (DNF).",
+      "zh": "对故意制造魔方故障的惩罚：取消当前还原成绩（DNF）。",
+      "zhHant": "對故意製造魔方故障的懲罰：取消當前還原成績（DNF）。"
+    }
+  ]
+}

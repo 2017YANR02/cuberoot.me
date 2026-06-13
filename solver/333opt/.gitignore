@@ -1,0 +1,7 @@
+# transient working data — commit only the scripts + README
+scrambles.txt
+out.*.csv
+counts.json
+
+# throwaway test scripts (kept locally, never committed)
+_*.mjs

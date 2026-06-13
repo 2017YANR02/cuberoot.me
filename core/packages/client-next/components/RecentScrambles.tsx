@@ -14,7 +14,8 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
-import { VARIANT_ORDER, variantLabel, stageLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT } from '@/lib/scramble-variants';
+import { VARIANT_ORDER, stageLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT } from '@/lib/scramble-variants';
+import { VariantSelect } from '@/components/VariantSelect';
 import './recent_scrambles.css';
 import { tr } from '@/i18n/tr';
 
@@ -86,8 +87,10 @@ export default function RecentScrambles({ lang }: Props) {
     if (!r) return false;
     return Object.values(r).some((byColor) => Object.values(byColor).some((byStep) => Object.keys(byStep).length > 0));
   };
+  // 333 整解首页无数据(无法对近期打乱算整解最优),但仍恒列出占位 —— 与 stats 方法下拉一致;
+  // 选中后下方走空状态。其余变体仍按「本批有数据」过滤。
   const variants = useMemo(() => VARIANT_ORDER.filter((v) =>
-    v === 'block' ? BLOCK_DATA_VARIANTS.some(hasData) : hasData(v),
+    v === '333' ? true : v === 'block' ? BLOCK_DATA_VARIANTS.some(hasData) : hasData(v),
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [data]);
 
@@ -124,42 +127,43 @@ export default function RecentScrambles({ lang }: Props) {
             zhHant: "近期打亂"
         })}</span>
         <SubsetColorPicker sel={sel} isZh={isZh} />
-        <select
+        <VariantSelect
           className="rs-select"
           value={curVariant}
-          onChange={(e) => setVariant(e.target.value)}
-          aria-label={tr({ zh: '变体', en: 'Variant',
+          options={variants}
+          onChange={setVariant}
+          isZh={isZh}
+          ariaLabel={tr({ zh: '变体', en: 'Variant',
               zhHant: "變體"
         })}
-        >
-          {variants.map((v) => (
-            <option key={v} value={v}>{variantLabel(v, isZh)}</option>
-          ))}
-        </select>
-        <select
-          className="rs-select"
-          value={curMetric}
-          onChange={(e) => setMetric(e.target.value)}
-          aria-label={tr({ zh: '类型', en: 'Type',
-              zhHant: "型別"
-        })}
-        >
-          {metrics.map((m) => (
-            <option key={m} value={m}>{stageLabel(m, isZh)}</option>
-          ))}
-        </select>
-        <select
-          className="rs-select"
-          value={curStep ?? ''}
-          onChange={(e) => setStep(Number(e.target.value))}
-          aria-label={tr({ zh: '步数', en: 'Moves',
-              zhHant: "步數"
-        })}
-        >
-          {steps.map((s) => (
-            <option key={s} value={s}>{isZh ? `${s} 步` : `${s}`}</option>
-          ))}
-        </select>
+        />
+        {metrics.length > 0 && (
+          <VariantSelect
+            className="rs-select"
+            value={curMetric}
+            options={metrics}
+            onChange={setMetric}
+            isZh={isZh}
+            label={stageLabel}
+            ariaLabel={tr({ zh: '类型', en: 'Type',
+                zhHant: "型別"
+          })}
+          />
+        )}
+        {steps.length > 0 && (
+          <select
+            className="rs-select"
+            value={curStep ?? ''}
+            onChange={(e) => setStep(Number(e.target.value))}
+            aria-label={tr({ zh: '步数', en: 'Moves',
+                zhHant: "步數"
+          })}
+          >
+            {steps.map((s) => (
+              <option key={s} value={s}>{isZh ? `${s} 步` : `${s}`}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {hero ? (() => {

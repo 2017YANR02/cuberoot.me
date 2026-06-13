@@ -1,16 +1,19 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useQueryState, parseAsString } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import DiscreteHistogram, { type HistSeries } from './_components/DiscreteHistogram';
 import PuzzleDistView from './_components/PuzzleDistView';
 import ScrambleLengthView, {
-  type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN,
+  type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
 } from './_components/ScrambleLengthView';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
+import { HelpCircle } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { Flag } from '@/components/Flag';
@@ -19,9 +22,11 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { statsUrl } from '@/lib/stats-base';
 import {
-  variantLabel, stageLabel, isBlockVariant, VARIANT_STAGES, BLOCK_STAGE_VARIANT,
+  stageLabel, isBlockVariant, VARIANT_ORDER, VARIANT_STAGES, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT,
   type ScrambleVariant,
 } from '@/lib/scramble-variants';
+import { VariantSelect } from '@/components/VariantSelect';
+import SolveTabs, { type SolvePuzzle } from '../_components/SolveTabs';
 import {
   SubsetColorPicker, useSubsetSelection, fillColorsForSubset,
   COLOR_HEX, type ColorLetter,
@@ -34,6 +39,7 @@ interface HistEntry {
   min: number;
   max: number;
   counts: Record<string, number>;
+  counts_qtm?: Record<string, number>; // 333 整解阶段:QTM 计步直方图(HTM/QTM 可切)
   example_bins?: number[];
 }
 
@@ -156,7 +162,12 @@ export default function ScrambleStatsPage() {
   // the difficulty tab. event_lengths.json is tiny (~2KB), fetched once here.
   // merged 双语义:长度 tab = 折叠共打乱组(333+oh / bf+mbf);难度 tab = 全部六个
   // 三阶项目并成一个池(wca 合并 set)。
-  const [event, setEvent] = useState<string>('333');
+  // event 进 URL(nuqs):统一「求解」中心的项目行(?event=222 等)切分布时要响应式;
+  // 也让分享/后退准确。filter 性质 → replace,不堆历史。
+  const [event, setEvent] = useQueryState(
+    'event',
+    parseAsString.withDefault('333').withOptions({ history: 'replace' }),
+  );
   const [merged, setMerged] = useState(true);
   const [lengthsData, setLengthsData] = useState<EventLengthsJson | null>(null);
   const [lengthsError, setLengthsError] = useState<string | null>(null);
@@ -169,6 +180,10 @@ export default function ScrambleStatsPage() {
   const sel = useSubsetSelection('cn');
   const [yMode, setYMode] = useState<YMode>('percent');
   const [chartMode, setChartMode] = useState<ChartMode>('pdf');
+  // 整解(stage '333')专属:HTM(默认,真实数据)/ QTM(占位,数据后续用 15G 表生成)。
+  const [optMetric, setOptMetric] = useState<'htm' | 'qtm'>('htm');
+  // 长度 tab 第二计步口径(钮在顶栏):3x3-family HTM/QTM、sq1 WCA/slash;sq1 默认 slash。
+  const [lenMetric, setLenMetric] = useState<'htm' | 'qtm'>('htm');
   const [examples, setExamples] = useState<ExamplesJson | null>(null);
   // per-event 示例分片缓存:setKey(wca_333oh 等)→ 该项目自己的 reservoir 示例
   const [evExamples, setEvExamples] = useState<Record<string, ExamplesSet | null>>({});
@@ -183,8 +198,8 @@ export default function ScrambleStatsPage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    // v= bump:2026-06-10 加 per-event sets(shape 变更,防缓存旧 JSON)
-    fetch(statsUrl('/stats/scramble/distribution.json') + '?v=20260610pe')
+    // v= bump:2026-06-13 333 整解作独立 method variant(shape 变更,防缓存旧 JSON)
+    fetch(statsUrl('/stats/scramble/distribution.json') + '?v=20260613opt')
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -199,6 +214,9 @@ export default function ScrambleStatsPage() {
       .then(setLengthsData)
       .catch((e) => setLengthsError(String(e)));
   }, []);
+
+  // 长度 tab 切项目:sq1 默认 slash,其余默认 HTM。
+  useEffect(() => { setLenMetric(event === 'sq1' ? 'qtm' : 'htm'); }, [event]);
 
   // Events offered in the shared selector — those with length data.
   // Difficulty tab: merged(默认)把 6 个三阶项目折叠成一个 333 入口(= wca 合并池);
@@ -265,21 +283,40 @@ export default function ScrambleStatsPage() {
     }
   }, [currentStages, stage]);
 
+  // 切项目/数据集后当前方法可能不存在(如 '333' 只在合并池有)——回退到 std。
+  useEffect(() => {
+    if (currentSet && !currentSet.variants[variant] && !isBlockVariant(variant)) setVariant('std');
+  }, [currentSet, variant]);
+
   const subsetKey = sel.subsetKey;
   const selectedColors = sel.selectedColors;
   const modeLabel = i18n.language === 'zh-Hant' ? ({ cn: '六色底', quad: '四色底', dual: '雙色底', single: '單色底' }[sel.colorMode]) : (isZh
       ? { cn: '六色底', quad: '四色底', dual: '双色底', single: '单色底' }[sel.colorMode]
       : { cn: 'CN', quad: 'Quad', dual: 'Dual', single: 'Single' }[sel.colorMode]);
 
-  const previewBins = useMemo<number[]>(() => {
-    if (!currentSet) return [];
-    const counts = currentSet.variants[variant]?.data[stage]?.[subsetKey]?.counts ?? {};
-    return Object.keys(counts).map(Number).sort((a, b) => a - b);
-  }, [currentSet, variant, stage, subsetKey]);
+  // 整解:作为独立「方法」(variant '333'),阶段仅有 '333' 自身;无配色维度,
+  // 数据存在单一伪子集 'ALL',口径走 HTM/QTM 而非颜色选择器。
+  const is333 = variant === '333';
+  const effectiveSubset = is333 ? 'ALL' : subsetKey;
+  // 当前直方图计数:整解 + QTM → counts_qtm(暂空);其余一律 counts。
+  const activeCounts = useMemo<Record<string, number>>(() => {
+    if (!currentSet) return {};
+    const hist = currentSet.variants[variant]?.data[stage]?.[effectiveSubset];
+    if (!hist) return {};
+    return (is333 && optMetric === 'qtm') ? (hist.counts_qtm ?? {}) : hist.counts;
+  }, [currentSet, variant, stage, effectiveSubset, is333, optMetric]);
+
+  // 切换阶段时重置整解口径(离开/进入 333 都回到 HTM)。
+  useEffect(() => { setOptMetric('htm'); }, [stage]);
+
+  const previewBins = useMemo<number[]>(
+    () => Object.keys(activeCounts).map(Number).sort((a, b) => a - b),
+    [activeCounts],
+  );
   const downloadBins = useMemo<number[]>(() => {
     if (!currentSet) return [];
-    return currentSet.variants[variant]?.data[stage]?.[subsetKey]?.example_bins ?? [];
-  }, [currentSet, variant, stage, subsetKey]);
+    return currentSet.variants[variant]?.data[stage]?.[effectiveSubset]?.example_bins ?? [];
+  }, [currentSet, variant, stage, effectiveSubset]);
 
   // per-event 选择时示例走独立分片(该项目自己的 reservoir);合并池/xcross 走 examples.json
   const isPerEvent = dataset === 'wca' && scrambleSet !== 'wca';
@@ -321,29 +358,24 @@ export default function ScrambleStatsPage() {
       setSelectedBin(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scrambleSet, variant, stage, subsetKey, previewBins.length]);
+  }, [scrambleSet, variant, stage, effectiveSubset, optMetric, previewBins.length]);
 
   // 当前示例来源:per-event 选择 → 该项目的分片;否则 examples.json 的顶级 set。
   const exSet = isPerEvent ? (evExamples[scrambleSet] ?? null) : (examples?.sets[dataset] ?? null);
   const currentSamples = useMemo<ExampleSample[] | null>(() => {
     if (selectedBin === null || !exSet) return null;
-    return exSet.variants[variant]?.[stage]?.[subsetKey]?.[String(selectedBin)] ?? null;
-  }, [exSet, variant, stage, subsetKey, selectedBin]);
+    return exSet.variants[variant]?.[stage]?.[effectiveSubset]?.[String(selectedBin)] ?? null;
+  }, [exSet, variant, stage, effectiveSubset, selectedBin]);
 
   const series = useMemo<HistSeries[]>(() => {
-    if (!currentSet) return [];
-    const v = currentSet.variants[variant];
-    if (!v) return [];
-    const stageData = v.data[stage];
-    if (!stageData) return [];
-    const hist = stageData[subsetKey];
-    if (!hist) return [];
+    if (Object.keys(activeCounts).length === 0) return [];
     return [{
-      name: modeLabel,
-      fillColors: fillColorsForSubset(selectedColors),
-      counts: hist.counts,
+      // 整解:中性暖色单色;其余按所选配色子集渐变。
+      name: is333 ? (optMetric === 'qtm' ? 'QTM' : 'HTM') : modeLabel,
+      fillColors: is333 ? ['#8B7D72'] : fillColorsForSubset(selectedColors),
+      counts: activeCounts,
     }];
-  }, [currentSet, variant, stage, subsetKey, selectedColors, modeLabel]);
+  }, [activeCounts, is333, optMetric, selectedColors, modeLabel]);
 
   const extendedStats = useMemo(() => {
     if (series.length !== 1) return null;
@@ -369,10 +401,18 @@ export default function ScrambleStatsPage() {
     };
   }, [currentSet, variant, stage]);
 
-  // Single stable title — shared with document.title via PAGE_TITLE.
-  const pageTitle = tr(PAGE_TITLE);
   // 非 3x3 puzzle 项目:难度 tab 显示 puzzle 整解分布,3x3 专属的合并/数据集开关无意义,隐藏。
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
+
+  // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
+  const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
+  const lenHasQtm = tab === 'length' && !!lenCur?.counts_qtm;
+  const lenAlt = lengthAltMeta(event);
+  // 该项目打乱总数(两口径同总数);顶栏右侧展示。
+  const lenTotal = useMemo(
+    () => (lenCur ? Object.values(lenCur.counts).reduce((a, b) => a + b, 0) : 0),
+    [lenCur],
+  );
   const tabsBar = (
     <div className="scramble-stats-tabs" role="tablist">
       <button
@@ -413,11 +453,19 @@ export default function ScrambleStatsPage() {
     );
   })() : null;
 
+  // 统一「求解」中心:项目行高亮按当前 event 推(3x3 族都算 3×3)。
+  const distPuzzle: SolvePuzzle | null =
+    DIFFICULTY_EVENTS.has(event) ? '3x3'
+      : event === '222' ? '2x2x2'
+        : event === 'pyram' ? 'pyraminx'
+          : event === 'skewb' ? 'skewb'
+            : null;
+
   // Shared header: WCA-event selector sits ABOVE the tab bar so it drives both
   // the difficulty tab and the length tab.
   const header = (
     <div className="scramble-stats-header">
-      <h1>{pageTitle}</h1>
+      <SolveTabs puzzle={distPuzzle} mode="dist" />
       <div className="scramble-stats-event-bar">
         <div className="scramble-stats-tabrow">
           {tabsBar}
@@ -437,16 +485,36 @@ export default function ScrambleStatsPage() {
                   zhHant: "合併打亂相同的項目"
             })}
             />
-            <span className="scramble-len-merge-hint">
-              {tab === 'difficulty'
+            <InfoTooltip
+              icon={HelpCircle}
+              content={tab === 'difficulty'
                 ? (tr({ zh: '三阶速拧 / 单手 / 盲拧 / 多盲 / 最少步 / 脚拧打乱相同,合并为一个池', en: 'All six 3×3 events share scrambles; merged into one pool',
                     zhHant: "三階速擰 / 單手 / 盲擰 / 多盲 / 最少步 / 腳擰打亂相同,合併為一個池"
                 }))
                 : (tr({ zh: '三阶速拧与单手、三盲与多盲打乱相同', en: '3×3 speed + OH, and 3BLD + MBLD share scrambles',
                     zhHant: "三階速擰與單手、三盲與多盲打亂相同"
                 }))}
-            </span>
+            />
           </div>
+        )}
+        {lenHasQtm && (
+          <div className="scramble-stats-puzzle-toggle scramble-len-metric-head">
+            <PillToggle
+              value={lenMetric === 'qtm'}
+              onChange={(v) => setLenMetric(v ? 'qtm' : 'htm')}
+              offLabel={lenAlt.off}
+              onLabel={lenAlt.on}
+              ariaLabel={lenAlt.aria}
+            />
+            <InfoTooltip icon={HelpCircle} content={lenMetric === 'qtm' ? lenAlt.onHint : lenAlt.offHint} />
+          </div>
+        )}
+        {tab === 'length' && lenTotal > 0 && (
+          <span className="scramble-stats-count">
+            {tr({ zh: '共 {n} 条', en: '{n} scrambles',
+                zhHant: "共 {n} 條"
+            }).replace('{n}', lenTotal.toLocaleString())}
+          </span>
         )}
         </div>
         <WcaEventSelector
@@ -468,7 +536,7 @@ export default function ScrambleStatsPage() {
           ? <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed',
               zhHant: "載入失敗"
         })}: {lengthsError}</div>
-          : <ScrambleLengthView isZh={isZh} data={lengthsData} event={event} merged={merged} />}
+          : <ScrambleLengthView isZh={isZh} data={lengthsData} event={event} merged={merged} metric={lenMetric} />}
       </div>
     );
   }
@@ -535,17 +603,22 @@ export default function ScrambleStatsPage() {
 
   const vData = currentSet.variants[variant];
 
+  // 整解阶段样本量 = 该口径直方图总数(目前为抽样雏形);其余用数据集总样本。
+  const sampleN = is333
+    ? Object.values(activeCounts).reduce((a, b) => a + b, 0)
+    : currentSet.sample_count;
   const sampleCount = tr({ zh: '{n} 条样本', en: '{n} samples',
       zhHant: "{n} 條樣本"
-}).replace('{n}', currentSet.sample_count.toLocaleString());
+}).replace('{n}', sampleN.toLocaleString());
 
   // 方法下拉:数据层块变体(123/123x2/222/223)聚合显示为「砖」;阶段下拉列块形状,
   // 选中时经 BLOCK_STAGE_VARIANT 落回底层变体,数据/示例/下载全走原 variant+stage 键。
-  const methodOptions = (Object.keys(currentSet.variants) as VariantKey[]).reduce<VariantKey[]>((acc, v) => {
-    const k = isBlockVariant(v) ? 'block' : v;
-    if (!acc.includes(k as VariantKey)) acc.push(k as VariantKey);
-    return acc;
-  }, []);
+  // 方法下拉顺序走共享 VARIANT_ORDER(与首页 RecentScrambles 一致);块族折叠为 'block'。
+  const methodOptions = VARIANT_ORDER.filter((v) =>
+    v === 'block'
+      ? BLOCK_DATA_VARIANTS.some((b) => !!currentSet.variants[b])
+      : !!currentSet.variants[v],
+  ) as VariantKey[];
   const blockStages = VARIANT_STAGES.block.filter((s) =>
     currentSet.variants[BLOCK_STAGE_VARIANT[s]]?.stages.includes(s));
   const isBlockUi = isBlockVariant(variant);
@@ -555,43 +628,61 @@ export default function ScrambleStatsPage() {
       {header}
 
       <div className="scramble-stats-controls">
-        <div className="scramble-stats-color-control">
-          <SubsetColorPicker sel={sel} isZh={isZh} />
-        </div>
+        {/* 整解(333):无配色 / 方法维度,隐藏颜色选择器与方法下拉,改露 HTM/QTM 口径钮。 */}
+        {!is333 && (
+          <div className="scramble-stats-color-control">
+            <SubsetColorPicker sel={sel} isZh={isZh} />
+          </div>
+        )}
         <label>
-          <select
+          <VariantSelect
             value={isBlockUi ? 'block' : variant}
-            onChange={(e) => {
-              const v = e.target.value as VariantKey;
+            options={methodOptions}
+            onChange={(val) => {
+              const v = val as VariantKey;
               if (v === 'block') {
                 const s = blockStages[0];
                 if (s) { setVariant(BLOCK_STAGE_VARIANT[s] as VariantKey); setStage(s); }
               } else setVariant(v);
             }}
-            aria-label={tr({ zh: '变体', en: 'Variant',
+            isZh={i18n.language.startsWith('zh')}
+            ariaLabel={tr({ zh: '变体', en: 'Variant',
               zhHant: "變體"
-        })}>
-            {methodOptions.map((v) => (
-              <option key={v} value={v}>{variantLabel(v, i18n.language.startsWith('zh'))}</option>
-            ))}
-          </select>
+        })}
+          />
         </label>
         <label>
-          <select
+          <VariantSelect
             value={stage}
-            onChange={(e) => {
-              const s = e.target.value;
+            options={isBlockUi ? blockStages : currentStages}
+            onChange={(s) => {
               if (isBlockUi && BLOCK_STAGE_VARIANT[s]) setVariant(BLOCK_STAGE_VARIANT[s] as VariantKey);
               setStage(s);
             }}
-            aria-label={tr({ zh: '阶段', en: 'Stage',
+            isZh={isZh}
+            label={stageLabel}
+            ariaLabel={tr({ zh: '阶段', en: 'Stage',
               zhHant: "階段"
-        })}>
-            {(isBlockUi ? blockStages : currentStages).map((s) => (
-              <option key={s} value={s}>{stageLabel(s, isZh)}</option>
-            ))}
-          </select>
+        })}
+          />
         </label>
+        {is333 && (
+          <div className="scramble-stats-puzzle-toggle">
+            <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '计步', en: 'Metric', zhHant: '計步' })}</span>
+            <PillToggle
+              value={optMetric === 'qtm'}
+              onChange={(v) => setOptMetric(v ? 'qtm' : 'htm')}
+              offLabel="HTM"
+              onLabel="QTM"
+              ariaLabel={tr({ zh: '计步口径:HTM(半圈计 1)或 QTM(半圈计 2)', en: 'Move metric: HTM (half turn = 1) or QTM (half turn = 2)', zhHant: '計步口徑:HTM(半圈計 1)或 QTM(半圈計 2)' })}
+            />
+            <span className="scramble-stats-puzzle-toggle-hint">
+              {optMetric === 'qtm'
+                ? tr({ zh: 'QTM 计步即将加入', en: 'QTM coming soon', zhHant: 'QTM 計步即將加入' })
+                : tr({ zh: '整解最优步数(HTM)', en: 'Optimal solution length (HTM)', zhHant: '整解最優步數(HTM)' })}
+            </span>
+          </div>
+        )}
         <span className="scramble-stats-count">{sampleCount}</span>
       </div>
 
@@ -790,11 +881,13 @@ function ExamplesPanel({
             const comp = m ? comps?.[m[0]] : undefined;
             return (
               <li key={i}>
-                <span
-                  className="scramble-stats-examples-chip"
-                  style={{ background: COLOR_HEX[color as ColorLetter] ?? '#888' }}
-                  title={tr({ zh: '朝下的底色', en: 'Bottom color' })}
-                />
+                {color && (
+                  <span
+                    className="scramble-stats-examples-chip"
+                    style={{ background: COLOR_HEX[color as ColorLetter] ?? '#888' }}
+                    title={tr({ zh: '朝下的底色', en: 'Bottom color' })}
+                  />
+                )}
                 <Link
                   className="scramble-stats-examples-cube"
                   href={`/${lang}/scramble/analyzer?${new URLSearchParams({ scramble: scr.trim().replace(/ /g, '_') })}`}

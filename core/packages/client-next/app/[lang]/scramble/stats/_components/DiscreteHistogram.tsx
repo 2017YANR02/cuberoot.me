@@ -106,17 +106,20 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
   const fmtCount = (n: number) => n.toLocaleString();
   const fmtPct = (p: number) => {
     if (p === 0) return '0%';
-    // 概率 < 1% 时改写成 1/N 频率(分子恒为 1),取 2 位有效数字避免长尾噪声
+    // 概率 < 1% 时改写成 1/N 频率(分子恒为 1),取 2 位有效数字避免长尾噪声;
+    // 分母用紧凑写法(960,000 → 960k)避免窄柱上标签横向重叠。
     if (p < 0.01) {
       const n = 1 / p;
       const mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(n)) - 1));
       const denom = Math.round(n / mag) * mag;
-      return `1/${denom.toLocaleString()}`;
+      return `1/${compactNum(denom)}`;
     }
     return `${(p * 100).toFixed(1)}%`;
   };
 
   const showLabels = series.length === 1;
+  // 柱多→格窄,标签字号自适应缩小,避免相邻 1/N 标签横向撞在一起。
+  const labelFont = slotW < 22 ? 7.5 : slotW < 28 ? 8.5 : slotW < 36 ? 9.5 : 10;
 
   const gradIdFor = (i: number) => `${gradPrefix}grad${i}`;
 
@@ -230,8 +233,8 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
           return (
             // pointer-events:none 让点到数字标签时穿透到下方整列 hit-rect,不挡选中。
             <g key={`lb${v}`} style={{ pointerEvents: 'none' }}>
-              <text x={cx} y={topY - 12} textAnchor="middle" fontSize="10" style={{ fill: 'var(--text)' }}>{fmtCount(countDisp)}</text>
-              <text x={cx} y={topY} textAnchor="middle" fontSize="10" style={{ fill: 'var(--text-sub)' }}>{fmtPct(pctDisp)}</text>
+              <text x={cx} y={topY - 12} textAnchor="middle" fontSize={labelFont} style={{ fill: 'var(--text)' }}>{fmtCount(countDisp)}</text>
+              <text x={cx} y={topY} textAnchor="middle" fontSize={labelFont} style={{ fill: 'var(--text-sub)' }}>{fmtPct(pctDisp)}</text>
             </g>
           );
         })}
@@ -311,6 +314,13 @@ function gradientStops(colors: string[]) {
 // NOTE: 白色/极浅色填充在 cream 背景上需要灰描边
 function needsStroke(colors: string[]): boolean {
   return colors.some((c) => c.toUpperCase() === '#FFFFFF' || c.toUpperCase() === '#FEFE00');
+}
+
+// 紧凑数字:1000→1k、960000→960k、1500000→1.5M,用于窄柱上的 1/N 标签。
+function compactNum(n: number): string {
+  if (n >= 1e6) { const m = n / 1e6; return `${m >= 10 ? Math.round(m) : m.toFixed(1).replace(/\.0$/, '')}M`; }
+  if (n >= 1e3) { const k = n / 1e3; return `${k >= 100 ? Math.round(k) : k.toFixed(1).replace(/\.0$/, '')}k`; }
+  return n.toLocaleString();
 }
 
 function niceStep(max: number, target: number): number {
