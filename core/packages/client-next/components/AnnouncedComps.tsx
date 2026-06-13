@@ -84,7 +84,10 @@ export function AnnouncedCard({ comp, isZh, lang }: {
 }) {
   const { t } = useTranslation();
   // 服务端实时解析的 cubing.com 中文名优先(公示后 ~20min 即有);否则回退每天一刷的 comp_names_zh.json
-  const name = localizeCompName(comp.id, comp.name, isZh, { explicitNameZh: comp.name_zh });
+  // 公示卡片都是最近 48h 的比赛,年份必然是当年/近年 → 去掉名字尾部的年份(WCA 命名约定年份在末尾),
+  // 日期行已完整展示;两种写法都覆盖:中文「湛江公开赛2026」无空格、英文「... 2026」带空格。
+  const name = localizeCompName(comp.id, comp.name, isZh, { explicitNameZh: comp.name_zh })
+    .replace(/\s*20\d\d\s*$/, '');
   const city = comp.city ? (isZh ? localizeCity(comp.city, true) : comp.city) : '';
   const country = countryName(comp.country, isZh);
   const dateStr = formatDateRangeIso(comp.start_date, comp.end_date);
