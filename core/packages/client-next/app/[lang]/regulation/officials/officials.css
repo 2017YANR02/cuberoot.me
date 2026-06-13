@@ -1,0 +1,123 @@
+/* ─── /regulation/officials — Article 1 page-specific styles ───
+ * Reuses .reg-* tokens from ../regulation.css (loaded via RegArticleLayout).
+ * Adds: the Delegate spotlight, role-card icon sizing tweaks, the
+ * "one person / many roles" fact rows, and the small inline reg tag.
+ * ─────────────────────────────────────────────────────────────── */
+
+/* ── Inline regulation tag (e.g. 1c) ── */
+.off-reg-tag {
+  display: inline-block;
+  margin-left: 9px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 11%, transparent);
+  border-radius: 6px;
+  padding: 1px 7px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* ── Delegate spotlight: the role that sits above the rest ── */
+.off-delegate {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  margin: 4px 0 28px;
+  padding: 24px 26px;
+  border: 1px solid color-mix(in srgb, var(--blue) 30%, var(--rule));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--blue) 6%, var(--card));
+}
+.off-delegate-badge {
+  flex: none;
+  width: 60px;
+  height: 60px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--blue) 14%, transparent);
+  color: var(--blue);
+}
+.off-delegate-body { min-width: 0; }
+.off-delegate-name {
+  display: flex;
+  align-items: center;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  margin-bottom: 8px;
+}
+.off-delegate-text {
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.66;
+  color: var(--ink-dim);
+}
+
+/* ── Role cards: keep the lucide icon nicely boxed ── */
+.off-cards .reg-card-head { align-items: flex-start; }
+.off-cards .reg-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  color: var(--blue);
+}
+
+/* ── "One person, many hats" fact rows ── */
+.off-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 4px 0 28px;
+}
+.off-fact {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 20px 22px;
+  background: var(--card);
+}
+.off-fact-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  color: var(--blue);
+}
+.off-fact-title {
+  display: flex;
+  align-items: center;
+  font-size: 16.5px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  margin-bottom: 7px;
+}
+.off-fact p {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.62;
+  color: var(--ink-dim);
+}
+
+.off-facts + .reg-key { margin-bottom: 26px; }
+
+/* ── Narrow screens: single column ── */
+@media (max-width: 720px) {
+  .off-delegate { gap: 16px; padding: 20px; }
+  .off-delegate-badge { width: 52px; height: 52px; }
+  .off-facts { grid-template-columns: 1fr; gap: 14px; }
+}

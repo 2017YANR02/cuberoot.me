@@ -14,12 +14,14 @@ import { toIsoDate, formatDateRangeIso } from '@/lib/wca-date';
 import { countryName } from '@/lib/country-name';
 import { useRecentRecords, RecentRecordsList } from '@/components/RecentRecords';
 import { useAnnouncedComps, AnnouncedCard } from '@/components/AnnouncedComps';
+import { RegistrationView } from '@/components/RegistrationComps';
+import { countActionableReg } from '@/lib/comp-registration';
 import './ongoing_comps.css';
 import i18n from '@/i18n/i18n-client';
 
 interface Props { lang: 'zh' | 'en' }
 
-type TabKey = 'announced' | 'upcoming' | 'inProgress' | 'past' | 'records';
+type TabKey = 'announced' | 'registration' | 'upcoming' | 'inProgress' | 'past' | 'records';
 
 type Group =
   | { kind: 'country'; iso2: string; comps: Comp[] }
@@ -31,6 +33,7 @@ const TAB_SCOPE: Record<TabKey, { zh: string; en: string; zhHant?: string }> = {
   records:    { zh: '近 10 天',   en: 'last 10 days', zhHant: '近 10 天' },
   inProgress: { zh: '进行中',     en: 'ongoing',      zhHant: '進行中' },
   announced:  { zh: '近 48 小时', en: 'last 48h',     zhHant: '近 48 小時' },
+  registration: { zh: '报名窗口', en: 'registration', zhHant: "報名視窗" },
   upcoming:   { zh: '未来 30 天', en: 'next 30 days', zhHant: '未來 30 天' },
   past:       { zh: '过去 30 天', en: 'past 30 days', zhHant: '過去 30 天' },
 };
@@ -190,8 +193,11 @@ export default function OngoingComps({ lang }: Props) {
     return [];
   }, [activeComps, active]);
 
+  // 「报名」标签:全世界 upcoming 比赛里,视野内还有报名里程碑(开放/截止)的场数。
+  const regCount = useMemo(() => comps ? countActionableReg(comps, Date.now()) : 0, [comps]);
+
   const total = buckets.upcoming.length + buckets.inProgress.length + buckets.past.length;
-  if (total === 0 && records.length === 0 && announcedList.length === 0) return null;
+  if (total === 0 && records.length === 0 && announcedList.length === 0 && regCount === 0) return null;
 
   // 只显示有数据的 tab(某分类为空 → 直接隐藏该 tab,不留灰态)
   const allTabs: { key: TabKey; zh: string; en: string; count: number
@@ -205,6 +211,9 @@ export default function OngoingComps({ lang }: Props) {
     },
     { key: 'announced',  zh: '公示', en: 'Announced', count: announcedList.length,
         zhHant: "公示"
+    },
+    { key: 'registration', zh: '报名', en: 'Register', count: regCount,
+        zhHant: "報名"
     },
     { key: 'upcoming',   zh: '未来', en: 'Upcoming', count: buckets.upcoming.length,
         zhHant: "未來"
@@ -243,6 +252,8 @@ export default function OngoingComps({ lang }: Props) {
               <AnnouncedCard key={c.id} comp={c} isZh={isZh} lang={lang} />
             ))}
           </div>
+        ) : active === 'registration' ? (
+          <RegistrationView comps={comps ?? []} isZh={isZh} lang={lang} />
         ) : active === 'records' ? (
           <RecentRecordsList filled={records} isZh={isZh} />
         ) : groups.map(g => g.kind === 'country' ? (

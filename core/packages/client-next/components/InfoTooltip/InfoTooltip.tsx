@@ -4,7 +4,7 @@
  * native title= 只在 hover 出, 这个是 click-toggle 兼桌面 + 移动.
  */
 import { useState, useEffect, useRef } from 'react';
-import { Info } from 'lucide-react';
+import { Info, type LucideIcon } from 'lucide-react';
 import './info_tooltip.css';
 
 interface Props {
@@ -13,9 +13,11 @@ interface Props {
   /** Info 图标尺寸 (px),默认 11 配合 th 字号 */
   iconSize?: number;
   className?: string;
+  /** 触发图标,默认 Info(ⓘ);传 HelpCircle 等换成圆圈问号 */
+  icon?: LucideIcon;
 }
 
-export function InfoTooltip({ content, iconSize = 11, className }: Props) {
+export function InfoTooltip({ content, iconSize = 11, className, icon: Icon = Info }: Props) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLSpanElement>(null);
 
@@ -44,7 +46,7 @@ export function InfoTooltip({ content, iconSize = 11, className }: Props) {
         aria-expanded={open}
         aria-label="More info"
       >
-        <Info size={iconSize} />
+        <Icon size={iconSize} />
       </button>
       {open && (
         <div className="info-tooltip-pop" role="tooltip">

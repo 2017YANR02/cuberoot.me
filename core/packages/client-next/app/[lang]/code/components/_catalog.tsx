@@ -18,8 +18,11 @@ import { tr } from '@/i18n/tr';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { ListSelect } from '@/components/ListSelect';
+import { VariantSelect } from '@/components/VariantSelect';
+import { VARIANT_ORDER } from '@/lib/scramble-variants';
 import NumberCommitInput from '@/components/NumberCommitInput';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
+import MembershipBadge from '@/components/MembershipBadge';
 import { Flag } from '@/components/Flag';
 import { ContinentIcon } from '@/components/ContinentIcon';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
@@ -104,6 +107,12 @@ function ListSelectDemo() {
   return <ListSelect items={items} value={v} onChange={setV} allLabel={isZh ? '全部' : 'All'} searchable />;
 }
 
+function VariantSelectDemo() {
+  const isZh = useIsZh();
+  const [v, setV] = useState('std');
+  return <VariantSelect value={v} options={VARIANT_ORDER} onChange={setV} isZh={isZh} />;
+}
+
 function EventSelectorDemo() {
   const isZh = useIsZh();
   const [ev, setEv] = useState('333');
@@ -118,6 +127,15 @@ function RecordBadgeDemo() {
       <RecordBadge record="NR" />
       <RecordBadge record="AsR" />
       <RecordBadge record="PR2" />
+    </div>
+  );
+}
+
+function MembershipBadgeDemo() {
+  return (
+    <div className="cg-row">
+      <MembershipBadge />
+      <MembershipBadge lifetime />
     </div>
   );
 }
@@ -219,6 +237,16 @@ export const CATALOG: ComponentEntry[] = [
     Demo: ListSelectDemo,
   },
   {
+    name: 'VariantSelect',
+    import: "import { VariantSelect } from '@/components/VariantSelect';",
+    category: 'input',
+    zh: '打乱方法 / 阶段下拉:首页近期打乱与 /scramble/stats 共用。默认 label=variantLabel(方法),传 label={stageLabel} 即阶段下拉。纯展示,onChange 各页自理。',
+    en: 'Scramble method / stage dropdown shared by the landing Recent Scrambles and /scramble/stats. Default label=variantLabel (method); pass label={stageLabel} for the stage dropdown. Presentational; each page owns onChange.',
+    usage: '<VariantSelect value={v} options={opts} onChange={setV} isZh={isZh} label={stageLabel} />',
+    Demo: VariantSelectDemo,
+    note: { zh: '两页的方法 / 阶段下拉都走它,别再各写一份 <select>。', en: 'Both pages’ method / stage dropdowns route through it — don’t hand-roll another <select>.' },
+  },
+  {
     name: 'NumberCommitInput',
     import: "import NumberCommitInput from '@/components/NumberCommitInput';",
     category: 'input',
@@ -245,6 +273,15 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The single entry point for WCA record badges (WR / CR / NR / AsR / ER / PR-rank …). Pass iso2 to expand a continental record to the right continent.',
     usage: '<RecordBadge record="WR" />',
     Demo: RecordBadgeDemo,
+  },
+  {
+    name: 'MembershipBadge',
+    import: "import MembershipBadge from '@/components/MembershipBadge';",
+    category: 'badge',
+    zh: 'CubeRoot 会员标记(小药丸,Crown 图标)。lifetime 显示「永久会员」并用实心强调色。',
+    en: 'CubeRoot membership pill (Crown icon). With lifetime it reads “Lifetime” in solid accent.',
+    usage: '<MembershipBadge lifetime />',
+    Demo: MembershipBadgeDemo,
   },
   {
     name: 'Flag',

@@ -1,0 +1,97 @@
+/* ─── /regulation/blindfolded — Appendix B (Blindfolded Solving) ───
+ * Page-local visuals: the two-phase "memorize → solve blindfolded" bar
+ * under one running clock, plus the BLD event chips. Reuses .reg-page
+ * tokens (var(--blue/--ink/--rule/...)) defined in ../regulation.css.
+ * ──────────────────────────────────────────────────────────────── */
+
+/* ── Two-phase bar ──────────────────────────────────────────────── */
+.bld-phasebar { margin: 4px 0 0; }
+
+.bld-clock {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 12.5px; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--blue);
+  padding: 6px 14px;
+  border: 1px dashed color-mix(in srgb, var(--blue) 45%, var(--rule));
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+
+.bld-phases {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.bld-phase {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 9px; padding: 26px 20px;
+  border: 1px solid var(--rule); border-radius: 16px;
+  background: var(--card);
+}
+.bld-phase-memo {
+  border-color: color-mix(in srgb, var(--blue) 32%, var(--rule));
+  background: color-mix(in srgb, var(--blue) 6%, var(--card));
+}
+.bld-phase-solve {
+  border-color: color-mix(in srgb, var(--ink) 22%, var(--rule));
+  background: color-mix(in srgb, var(--ink) 4%, var(--card));
+}
+
+.bld-phase-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; border-radius: 50%;
+}
+.bld-phase-memo .bld-phase-icon {
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 14%, transparent);
+}
+.bld-phase-solve .bld-phase-icon {
+  color: var(--ink-dim);
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.bld-phase-name { font-size: 18px; font-weight: 700; letter-spacing: -.01em; color: var(--ink); }
+.bld-phase-desc { font-size: 14px; color: var(--ink-dim); line-height: 1.5; }
+
+.bld-phase-arrow {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; font-weight: 700; color: var(--blue);
+}
+
+.bld-phasebar-cap {
+  margin: 16px 0 0; font-size: 14.5px; line-height: 1.65;
+  color: var(--ink-faint); max-width: 64ch;
+}
+
+/* ── Rule-list inline icons ─────────────────────────────────────── */
+.bld-li-icon {
+  display: inline-block; vertical-align: -3px; margin-right: 8px;
+  color: var(--blue);
+}
+.bld-tag {
+  display: inline-block; font-family: var(--font-mono);
+  font-size: 12px; font-weight: 600; color: var(--blue);
+  padding: 1px 8px; border-radius: 7px; white-space: nowrap;
+  background: color-mix(in srgb, var(--blue) 10%, transparent);
+}
+
+/* ── BLD event chips ────────────────────────────────────────────── */
+.bld-evt-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+.bld-evt-chip {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 11px 18px; border: 1px solid var(--rule); border-radius: 12px;
+  font-size: 16px; font-weight: 600; color: var(--ink);
+}
+.bld-evt-chip .cubing-icon { font-size: 26px; color: var(--blue); }
+.bld-foot-note { margin: 22px 0 0; font-size: 14.5px; color: var(--ink-faint); }
+.bld-foot-note a { color: var(--blue); text-decoration: none; }
+.bld-foot-note a:hover { text-decoration: underline; }
+
+/* ── Mobile (<480px) — stack the phase bar, no horizontal overflow ── */
+@media (max-width: 560px) {
+  .bld-phases { grid-template-columns: 1fr; gap: 10px; }
+  .bld-phase { padding: 22px 18px; }
+  .bld-phase-arrow { transform: rotate(90deg); font-size: 22px; }
+}

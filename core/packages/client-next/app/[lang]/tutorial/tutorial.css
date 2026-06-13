@@ -875,3 +875,480 @@
     margin-left: auto;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   CFOP 教程 — 精美版 (.cfop-pretty)
+   docx 直转内容经 restructureCfop 分节后,在此重排为可导航课程。
+   配色沿用 tutorial 模块自有 light 调色板 + WCA 六面色 + color-mix。
+   ═══════════════════════════════════════════════════════════════ */
+.cfop-pretty {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px 72px;
+  --cfop-soft: color-mix(in srgb, var(--tutorial-accent) 8%, var(--tutorial-bg));
+  --cfop-line: color-mix(in srgb, var(--tutorial-accent) 22%, var(--tutorial-border));
+}
+
+/* ── 阅读进度 ── */
+.cfop-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  z-index: 60;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--tutorial-accent) 14%, transparent);
+}
+.cfop-progress-bar {
+  height: 100%;
+  transform-origin: left center;
+  background: var(--tutorial-accent);
+  transition: transform 90ms linear;
+}
+
+/* ── Hero ── */
+.cfop-hero {
+  padding: 28px 0 4px;
+}
+.cfop-hero-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--tutorial-accent);
+  background: var(--tutorial-accent-soft);
+  border: 1px solid var(--cfop-line);
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+.cfop-hero-title {
+  font-size: clamp(28px, 4.4vw, 42px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  margin: 14px 0 4px;
+  color: var(--tutorial-text);
+}
+.cfop-hero-sub {
+  margin: 0;
+  font-size: 16px;
+  color: var(--tutorial-text-faint);
+  font-weight: 500;
+}
+.cfop-hero-intro {
+  margin: 16px 0 0;
+  max-width: 760px;
+}
+.cfop-hero-intro p {
+  margin: 6px 0;
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--tutorial-text-muted);
+}
+.cfop-hero-intro-alt {
+  font-size: 14px !important;
+  color: var(--tutorial-text-faint) !important;
+}
+
+/* 4 步骤卡 */
+.cfop-pillars {
+  list-style: none;
+  margin: 24px 0 8px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  counter-reset: pillar;
+}
+.cfop-pillar {
+  position: relative;
+}
+.cfop-pillar-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 12px 16px;
+  border: 1px solid var(--tutorial-border);
+  border-radius: 14px;
+  background: var(--tutorial-bg);
+  text-decoration: none;
+  color: var(--tutorial-text);
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+  height: 100%;
+  box-sizing: border-box;
+}
+a.cfop-pillar-link:hover {
+  border-color: var(--tutorial-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--tutorial-accent) 14%, transparent);
+  text-decoration: none;
+}
+.cfop-pillar-step {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--tutorial-accent);
+  background: var(--tutorial-accent-soft);
+  border-radius: 7px;
+}
+.cfop-pillar-img {
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+}
+.cfop-pillar-img img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.cfop-pillar-label {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+a.cfop-pillar-link:hover .cfop-pillar-label {
+  color: var(--tutorial-accent);
+}
+
+/* ── 布局:目录 + 正文 ── */
+.cfop-layout {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+  margin-top: 24px;
+}
+
+/* ── 目录 ── */
+.cfop-toc {
+  position: sticky;
+  top: 16px;
+  align-self: start;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-right: 6px;
+}
+.cfop-toc-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tutorial-text-faint);
+  padding: 0 0 10px 12px;
+}
+.cfop-toc nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border-left: 2px solid var(--tutorial-border);
+}
+.cfop-toc-item {
+  position: relative;
+  display: block;
+  padding: 7px 12px;
+  margin-left: -2px;
+  border-left: 2px solid transparent;
+  font-size: 14px;
+  color: var(--tutorial-text-muted);
+  text-decoration: none;
+  border-radius: 0 6px 6px 0;
+  transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
+  line-height: 1.35;
+}
+.cfop-toc-item:hover {
+  color: var(--tutorial-text);
+  background: var(--tutorial-bg-soft);
+  text-decoration: none;
+}
+.cfop-toc-item.is-sub {
+  padding-left: 26px;
+  font-size: 13px;
+  color: var(--tutorial-text-faint);
+}
+.cfop-toc-item.is-active {
+  color: var(--tutorial-accent);
+  font-weight: 600;
+  border-left-color: var(--tutorial-accent);
+  background: var(--tutorial-accent-soft);
+}
+
+.cfop-toc-mobilebar {
+  display: none;
+}
+.cfop-toc-scrim {
+  display: none;
+}
+
+/* ── 正文 ── */
+.cfop-body {
+  min-width: 0;
+}
+.cfop-pretty .cfop-content {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  font-size: 16px;
+}
+
+/* 分节区块 */
+.cfop-sec {
+  scroll-margin-top: 72px;
+  margin-top: 40px;
+}
+.cfop-sec:first-child {
+  margin-top: 8px;
+}
+.cfop-sec-head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 14px;
+  align-items: center;
+  margin: 0 0 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--tutorial-border);
+}
+.cfop-sec-ic {
+  grid-row: 1 / 3;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--tutorial-accent);
+  background: var(--tutorial-accent-soft);
+  border: 1px solid var(--cfop-line);
+}
+.cfop-sec-ic-svg {
+  width: 21px;
+  height: 21px;
+}
+.cfop-sec-zh {
+  grid-column: 2;
+  align-self: end;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--tutorial-text);
+}
+.cfop-sec-en {
+  grid-column: 2;
+  align-self: start;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tutorial-text-faint);
+}
+/* 英文界面:英文为主标题,中文为副 */
+.cfop-pretty.is-en .cfop-sec-zh {
+  grid-row: 2;
+  align-self: start;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--tutorial-text-faint);
+}
+.cfop-pretty.is-en .cfop-sec-en {
+  grid-row: 1;
+  align-self: end;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--tutorial-text);
+}
+
+/* 扁平加粗短行 → 小标题 */
+.cfop-content .cfop-subhead {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 26px 0 8px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.cfop-content .cfop-subhead::before {
+  content: '';
+  flex: none;
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--tutorial-accent);
+}
+.cfop-content .cfop-subhead strong {
+  font-weight: 700;
+  color: var(--tutorial-text);
+}
+
+/* 正文段落 */
+.cfop-content p {
+  margin-block: 0.6em;
+  color: var(--tutorial-text);
+}
+
+/* 表格:更轻的边、卡片化、紧凑的缩略图 */
+.cfop-content .table-wrap {
+  margin: 14px 0;
+  border: 1px solid var(--tutorial-border);
+  border-radius: 12px;
+  overflow: auto;
+  background: var(--tutorial-bg);
+}
+.cfop-content table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+.cfop-content td,
+.cfop-content th {
+  border: 1px solid color-mix(in srgb, var(--tutorial-border) 70%, transparent);
+  padding: 9px 11px;
+  vertical-align: middle;
+  text-align: center;
+}
+.cfop-content td p {
+  margin: 3px 0;
+  color: var(--tutorial-text);
+}
+.cfop-content table img {
+  display: block;
+  margin: 4px auto;
+  max-height: 92px;
+  width: auto;
+}
+/* colspan 表头行(末层 OLL/PLL 等 + 各种分组带)做成强调带 */
+.cfop-content td[colspan] {
+  background: var(--cfop-soft);
+  text-align: left;
+  font-weight: 600;
+}
+.cfop-content td[colspan] strong {
+  color: var(--tutorial-accent);
+}
+.cfop-content .cfop-ll-anchor {
+  scroll-margin-top: 84px;
+}
+.cfop-content .cfop-ll-anchor > td[colspan] {
+  background: color-mix(in srgb, var(--tutorial-accent) 14%, var(--tutorial-bg));
+}
+
+/* 非表格内的正文大图(打乱图 / 示意图)居中、留白 */
+.cfop-content > .cfop-sec > p > img,
+.cfop-content .cfop-sec > p > img {
+  margin: 14px auto;
+  border-radius: 10px;
+}
+
+/* see-also 链接(F2L/OLL/PLL 互链) */
+.cfop-content .see-also-link {
+  font-weight: 600;
+  border-bottom: 1px dashed var(--tutorial-accent);
+}
+
+/* ── 响应式 ── */
+@media (max-width: 980px) {
+  .cfop-pretty {
+    padding: 0 16px 56px;
+  }
+  .cfop-layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .cfop-toc-mobilebar {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    margin: 0 -16px 8px;
+    padding: 8px 16px;
+    background: color-mix(in srgb, var(--tutorial-bg) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--tutorial-border);
+  }
+  .cfop-toc-mobilebtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid var(--tutorial-border);
+    border-radius: 9px;
+    background: var(--tutorial-bg);
+    color: var(--tutorial-text);
+    font-size: 14px;
+    font-weight: 600;
+    min-height: 40px;
+  }
+  .cfop-toc-current {
+    color: var(--tutorial-accent);
+  }
+  .cfop-toc {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 268px;
+    max-height: none;
+    z-index: 70;
+    background: var(--tutorial-bg);
+    border-right: 1px solid var(--tutorial-border);
+    box-shadow: 0 0 40px rgba(17, 24, 39, 0.18);
+    padding: 18px 14px;
+    transform: translateX(-100%);
+    transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .cfop-toc.is-open {
+    transform: none;
+  }
+  .cfop-toc-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 65;
+    background: rgba(17, 24, 39, 0.36);
+  }
+  .cfop-pillars {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .cfop-pillar-img {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media (max-width: 520px) {
+  .cfop-pillars {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .cfop-pillar-img {
+    width: 72px;
+    height: 72px;
+  }
+  .cfop-hero-title {
+    font-size: 26px;
+  }
+  .cfop-sec-zh {
+    font-size: 19px;
+  }
+  .cfop-content table {
+    font-size: 13px;
+  }
+  .cfop-content td,
+  .cfop-content th {
+    padding: 7px 8px;
+  }
+  .cfop-content table img {
+    max-height: 76px;
+  }
+}

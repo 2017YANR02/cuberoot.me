@@ -3,7 +3,8 @@
 /**
  * 弹窗新增/编辑一位赞助者。顶部「搜索选手」直接按名字 / WCA ID 搜 WCA 选手
  * (WcaPersonPicker,本地全量索引秒搜),选中自动带出名字 + WCA ID + 头像(拉一次存下)。
- * 没有 WCA ID 的匿名打赏者可跳过搜索,直接填名字。
+ * 无独立名字输入框:名字来自选手搜索框 —— 选中选手用其 name,搜不到(没参赛的人)
+ * 则把输入的文字当名字(onQueryChange),WCA ID 留空。
  * 保存走 sponsors-api,成功后 onSaved(saved) 由父组件刷新本地列表。
  */
 import { useEffect, useState } from 'react';
@@ -64,8 +65,8 @@ export default function SponsorEditor({ initial, onClose, onSaved }: Props) {
   async function handlePick(c: WcaPersonLite | null) {
     setPicked(c);
     if (!c) {
-      // 清除选手:留下名字让 admin 可改 / 转匿名,但去掉 WCA ID + 头像。
-      setDraft(d => ({ ...d, wcaId: '', avatarUrl: '' }));
+      // 清除选手:名字/WCA ID/头像一起清,让 admin 重新输入。
+      setDraft(d => ({ ...d, name: '', wcaId: '', avatarUrl: '' }));
       return;
     }
     setDraft(d => ({ ...d, wcaId: c.id, name: c.name }));
@@ -121,12 +122,18 @@ export default function SponsorEditor({ initial, onClose, onSaved }: Props) {
             <WcaPersonPicker
               value={picked}
               onChange={c => void handlePick(c)}
+              onQueryChange={q => { if (!picked) setDraft(d => ({ ...d, name: q })); }}
               isZh={isZh}
               className="sponsor-editor-picker"
               placeholder={tr({ zh: '输入名字或 WCA ID', en: 'Name or WCA ID',
                   zhHant: "輸入名字或 WCA ID"
             })}
             />
+            <span className="sponsor-editor-hint">{tr({
+              zh: '搜不到(没参加过比赛的人)也没关系,按输入的名字记录',
+              en: "Not in WCA? No problem — the typed name is used as-is",
+                zhHant: "搜不到(沒參加過比賽的人)也沒關係,按輸入的名字記錄"
+            })}</span>
           </label>
 
           {draft.avatarUrl && (
@@ -134,11 +141,6 @@ export default function SponsorEditor({ initial, onClose, onSaved }: Props) {
               <img src={draft.avatarUrl} alt="" />
             </div>
           )}
-
-          <label className="sponsor-editor-row">
-            <span>{tr({ zh: '名字', en: 'Name' })} *</span>
-            <input value={draft.name} onChange={e => set('name', e.target.value)} />
-          </label>
 
           <label className="sponsor-editor-row">
             <span>{tr({ zh: '头像链接', en: 'Avatar URL',

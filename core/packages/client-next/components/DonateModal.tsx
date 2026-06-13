@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { User, Mail, Copy, Check, Info } from 'lucide-react';
+import { User, Mail, Copy, Check, Info, Crown } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import './donate-modal.css';
 
@@ -100,6 +100,11 @@ export default function DonateModal({ lang, onClose }: Props) {
         <button className="donate-close" onClick={onClose} aria-label={t('关闭', 'Close')}>✕</button>
         <h2 className="donate-title">{t('支持 CubeRoot', 'Support CubeRoot')}</h2>
 
+        <AppLink href="/membership" className="donate-member-link" onClick={onClose}>
+          <Crown size={ICON_SIZE} strokeWidth={2} />
+          {t('成为会员,解锁专属权益 →', 'Become a member — unlock perks →')}
+        </AppLink>
+
         <div className="donate-qr-row">
           <figure className="donate-qr">
             <img src="/donate/alipay.webp" alt="Alipay QR" width={600} height={899}
@@ -115,8 +120,8 @@ export default function DonateModal({ lang, onClose }: Props) {
 
         <div className="donate-qr-note">
           <Info size={ICON_SIZE} strokeWidth={1.8} aria-hidden="true" />
-          <span>{t('支付时请在备注里写上你的名字,方便登记到致谢名单',
-            'When paying, please add your name in the note so we can list you on the acknowledgments page')}</span>
+          <span>{t('支付时备注名字,方便登记到致谢名单',
+            'Add your name in the payment note to be listed in the acknowledgments')}</span>
         </div>
 
         <dl className="donate-contact">

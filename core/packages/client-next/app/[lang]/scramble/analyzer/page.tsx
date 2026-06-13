@@ -41,6 +41,7 @@ import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { statsUrl } from '@/lib/stats-base';
 import { variantLabel, stageLabel } from '@/lib/scramble-variants';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import SolveTabs from '../_components/SolveTabs';
 import './analyze.css';
 
 const DEFAULT_SCRAMBLE = "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'";
@@ -156,7 +157,7 @@ function FilterChip(props: { active: boolean; title: string; amount: number; onC
 function AnalyzePageInner() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('打乱分析', 'Scramble Analyzer', "打亂分析");
+  useDocumentTitle('求解', 'Solve', "求解");
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   const [urlState, setUrlState] = useQueryStates(URL_KEYS, { history: 'replace', scroll: false });
@@ -339,7 +340,7 @@ function AnalyzePageInner() {
         onError: (err) => {
           console.error('[analyze] worker error', err);
           const msg = err instanceof ErrorEvent ? err.message : err.message;
-          setErrorMsg(msg || t('分析失败,请检查打乱格式', 'Analysis failed, check scramble notation'));
+          setErrorMsg(msg || t('求解失败,请检查打乱格式', 'Solve failed, check scramble notation'));
           setRunning(false);
         },
       },
@@ -438,14 +439,7 @@ function AnalyzePageInner() {
 
   return (
     <div className="analyze-page">
-      <header className="analyze-header">
-        <div className="analyze-header-row">
-          <h1>{t('打乱分析器', 'Scramble Analyzer')}</h1>
-        </div>
-        <p className="analyze-sub">
-          {t('3x3 打乱分析：阶段最优解 · CFOP 解法枚举 · DR 分步链', '3x3 scramble: stage solver · CFOP enumeration · DR chain')}
-        </p>
-      </header>
+      <SolveTabs puzzle="3x3" mode="solve" sub={tool} />
 
       <div className="analyze-input-row">
         {/* 当前打乱的 2D 打乱图(点击看大图);打乱文字唯一来源是右侧输入框,不再重复 */}
@@ -559,24 +553,6 @@ function AnalyzePageInner() {
         )}
       </div>
 
-      <div className="analyze-tool-tabs" role="tablist" aria-label={t('求解器', 'Solver')}>
-        {([
-          ['stage', t('阶段', 'Stage')],
-          ['cfop', t('CFOP', 'CFOP')],
-          ['fmc', t('DR', 'DR')],
-        ] as [Tool, string][]).map(([id, label]) => (
-          <button
-            key={id}
-            role="tab"
-            aria-selected={tool === id}
-            className={`analyze-tool-tab${tool === id ? ' is-active' : ''}`}
-            onClick={() => void setTool(id)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
       {tool === 'stage' && (
         <section className="analyze-primary">
           <StageSolver scramble={scramble} lang={lang} />
@@ -593,7 +569,7 @@ function AnalyzePageInner() {
           disabled={running || !scramble.trim()}
         >
           {running ? <Loader2 size={16} className="analyze-spin" /> : null}
-          {t('分析', 'Analyze')}
+          {t('求解', 'Solve')}
         </button>
         <label className="analyze-control">
           <select

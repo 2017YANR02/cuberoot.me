@@ -1,0 +1,100 @@
+/* ─── /regulation/one-handed — Appendix C visuals ───
+ * do / don't hand panels + inline list icons. Tokens come from .reg-page
+ * (imported via regulation.css), so only the local pieces live here.
+ * ──────────────────────────────────────────────────── */
+
+/* ── Do / don't hand pair ───────────────────────────── */
+.oh-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 4px 0 30px;
+}
+.oh-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 30px 24px 26px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--card);
+  text-align: center;
+}
+.oh-panel-ok {
+  border-color: color-mix(in srgb, var(--ok) 38%, var(--rule));
+  background: color-mix(in srgb, var(--ok) 6%, var(--card));
+  color: var(--ok);
+}
+.oh-panel-bad {
+  border-color: color-mix(in srgb, var(--bad) 38%, var(--rule));
+  background: color-mix(in srgb, var(--bad) 6%, var(--card));
+  color: var(--bad);
+}
+.oh-panel-icons {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+}
+/* the forbidden second hand: mirrored + slash overlay */
+.oh-hand-2 {
+  transform: scaleX(-1);
+  margin-left: 6px;
+  opacity: 0.85;
+}
+.oh-panel-bad .oh-panel-icons::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 118%;
+  height: 3px;
+  background: var(--bad);
+  border-radius: 2px;
+  transform: translate(-50%, -50%) rotate(-22deg);
+}
+.oh-panel-cap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.oh-panel-title {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: .01em;
+}
+.oh-panel-sub {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+  max-width: 26ch;
+}
+
+/* ── Inline list-item icons (shared shape with scrambling) ── */
+.oh-li-icon {
+  display: inline-block;
+  vertical-align: -3px;
+  margin-right: 7px;
+  color: var(--blue);
+}
+
+/* ── Regulation reference tag (matches scrambling .scr-tag) ── */
+.oh-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue);
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  white-space: nowrap;
+}
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 560px) {
+  .oh-pair { grid-template-columns: 1fr; gap: 14px; }
+  .oh-panel { padding: 26px 20px 22px; }
+}

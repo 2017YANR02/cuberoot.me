@@ -308,3 +308,159 @@ html[data-theme=dark] .reg-page { --blue: #5ba9e0; }
   .reg-angle-svg { width: 130px; height: 130px; }
   .reg-timeline-legend { gap: 8px 16px; font-size: 13.5px; }
 }
+
+/* ════════════════════════════════════════════════════════════════
+ * Hub index (/regulation) + per-chapter shell (added for the full
+ * chapter-by-chapter build). Reuses the tokens defined on .reg-page.
+ * ════════════════════════════════════════════════════════════════ */
+
+/* ── Hub: chapter card grid ─────────────────────────────────────── */
+.reg-hub-group { margin-top: 56px; }
+.reg-hub-group:first-of-type { margin-top: 50px; }
+.reg-hub-group-title {
+  font-size: 13px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--ink-faint); margin: 0 0 20px;
+}
+.reg-hub-grid {
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(238px, 1fr));
+}
+.reg-hub-card {
+  display: flex; flex-direction: column; gap: 7px;
+  padding: 22px 22px 24px;
+  border: 1px solid var(--rule); border-radius: 16px;
+  background: var(--card); color: var(--ink); text-decoration: none;
+  position: relative;
+  transition: border-color .15s, transform .15s, box-shadow .15s;
+}
+.reg-hub-card:hover {
+  border-color: var(--blue); transform: translateY(-2px);
+  box-shadow: 0 10px 30px -18px color-mix(in srgb, var(--blue) 70%, transparent);
+}
+.reg-hub-card-icon {
+  display: inline-flex; width: 46px; height: 46px; border-radius: 13px;
+  align-items: center; justify-content: center; margin-bottom: 5px;
+  background: color-mix(in srgb, var(--blue) 12%, transparent); color: var(--blue);
+}
+.reg-hub-card-badge {
+  font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+.reg-hub-card-title { font-size: 19px; font-weight: 700; letter-spacing: -.01em; line-height: 1.2; }
+.reg-hub-card-tag { font-size: 14px; color: var(--ink-dim); line-height: 1.55; }
+
+/* ── Chapter shell: breadcrumb + hero ───────────────────────────── */
+.reg-crumb { margin-bottom: 22px; }
+.reg-crumb-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 14px; color: var(--ink-dim); text-decoration: none;
+  transition: color .15s;
+}
+.reg-crumb-link:hover { color: var(--blue); }
+.reg-article-hero { margin-bottom: 4px; }
+.reg-article-hero .reg-eyebrow { gap: 8px; }
+
+/* ── Callout tone variants (Callout primitive) ──────────────────── */
+.reg-key-warn {
+  background: color-mix(in srgb, var(--warn) 7%, var(--card));
+  border-color: color-mix(in srgb, var(--warn) 30%, var(--rule));
+}
+.reg-key-warn .reg-key-label { color: var(--warn); }
+.reg-key-danger {
+  background: color-mix(in srgb, var(--bad) 7%, var(--card));
+  border-color: color-mix(in srgb, var(--bad) 30%, var(--rule));
+}
+.reg-key-danger .reg-key-label { color: var(--bad); }
+.reg-key-success {
+  background: color-mix(in srgb, var(--ok) 7%, var(--card));
+  border-color: color-mix(in srgb, var(--ok) 30%, var(--rule));
+}
+.reg-key-success .reg-key-label { color: var(--ok); }
+
+/* ── Prev / next chapter nav ────────────────────────────────────── */
+.reg-prevnext {
+  margin-top: 70px; padding-top: 32px; border-top: 1px solid var(--rule);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.reg-pn {
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 18px 20px; border: 1px solid var(--rule); border-radius: 14px;
+  text-decoration: none; color: var(--ink);
+  transition: border-color .15s, background .15s;
+}
+.reg-pn:hover { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 5%, transparent); }
+.reg-pn-next { text-align: right; align-items: flex-end; }
+.reg-pn-empty { border: none; background: none; pointer-events: none; }
+.reg-pn-dir {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 13px; color: var(--blue); font-weight: 600;
+}
+.reg-pn-label {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+.reg-pn-title { font-size: 16px; font-weight: 600; }
+
+/* ── Floating "back to overview" on long chapters ───────────────── */
+.reg-fab {
+  position: fixed; bottom: 26px;
+  right: max(16px, calc((100vw - 880px) / 2));
+  width: 46px; height: 46px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--blue); color: #fff; z-index: 30;
+  box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--blue) 70%, transparent);
+  transition: transform .15s;
+}
+.reg-fab:hover { transform: scale(1.06); }
+
+/* ── Full regulations (collapsible clause list) ─────────────────── */
+.reg-full {
+  margin-top: 70px; padding-top: 30px;
+  border-top: 1px solid var(--rule);
+}
+.reg-full-summary {
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; list-style: none;
+  font-size: clamp(19px, 2.6vw, 22px); font-weight: 700;
+  letter-spacing: -.01em; color: var(--ink);
+  transition: color .15s;
+}
+.reg-full-summary::-webkit-details-marker { display: none; }
+.reg-full-summary:hover { color: var(--blue); }
+.reg-full-summary svg { color: var(--blue); flex: none; }
+.reg-full-chevron { transition: transform .18s ease; }
+.reg-full[open] .reg-full-chevron { transform: rotate(90deg); }
+.reg-full-count {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 500;
+  color: var(--ink-faint); margin-left: 2px;
+}
+.reg-full-body { margin-top: 24px; }
+.reg-full-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 13px; }
+.reg-cl {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: baseline;
+  min-width: 0; padding-left: calc(var(--d, 0) * 1.5em);
+}
+.reg-cl-id {
+  font-family: var(--font-mono); font-size: 12.5px; font-weight: 600;
+  color: var(--blue); white-space: nowrap;
+}
+.reg-cl-text { font-size: 15.5px; line-height: 1.62; color: var(--ink-dim); min-width: 0; overflow-wrap: anywhere; }
+.reg-cl[data-depth="0"] { margin-top: 6px; }
+.reg-cl[data-depth="0"] .reg-cl-text { color: var(--ink); font-weight: 500; }
+.reg-cl[data-depth="0"]:first-child { margin-top: 0; }
+.reg-full-note {
+  margin: 30px 0 0; padding-top: 18px; border-top: 1px solid var(--rule);
+  font-size: 13.5px; color: var(--ink-faint); line-height: 1.7;
+}
+.reg-full-note a { color: var(--blue); text-decoration: none; }
+.reg-full-note a:hover { text-decoration: underline; }
+
+@media (max-width: 720px) {
+  .reg-hub-grid { grid-template-columns: 1fr; }
+  .reg-prevnext { grid-template-columns: 1fr; gap: 12px; }
+  .reg-pn-next { text-align: left; align-items: flex-start; }
+  .reg-fab { display: none; }
+  .reg-full { margin-top: 56px; }
+  .reg-cl { padding-left: calc(var(--d, 0) * 0.85em); gap: 9px; }
+  .reg-cl-text { font-size: 15px; }
+}

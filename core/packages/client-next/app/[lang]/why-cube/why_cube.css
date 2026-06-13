@@ -1,0 +1,352 @@
+/* ─── /why-cube — "Why learn the cube" (for kids & parents) ───
+ * Editorial long-form page. Theme-token driven (auto light/dark); warm --accent
+ * as the page accent. Mirrors the /regulation visual language. Cube imagery is
+ * self-contained (cubing.js TwistyPlayer + inline EventIcon SVGs), no external CDN.
+ * ───────────────────────────────────────────────────────────── */
+
+.wc-page {
+  --bg: var(--background);
+  --card: var(--card);
+  --ink: var(--foreground);
+  --ink-dim: var(--muted-foreground);
+  --ink-faint: var(--faint-foreground);
+  --rule: var(--border-default);
+  --rule-strong: var(--border-strong);
+  --acc: var(--accent);
+
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 17px;
+  line-height: 1.7;
+  padding: 56px 24px 120px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wc-wrap { max-width: 920px; margin: 0 auto; }
+
+/* ── Hero ───────────────────────────────────────── */
+.wc-hero {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 320px);
+  gap: 40px; align-items: center;
+  margin-bottom: 12px;
+}
+.wc-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--acc); margin-bottom: 18px;
+}
+.wc-title {
+  font-family: var(--font-serif, inherit);
+  font-size: clamp(34px, 6.5vw, 60px);
+  font-weight: 800; line-height: 1.04; letter-spacing: -.025em;
+  margin: 0 0 16px;
+}
+.wc-title .wc-accent { color: var(--acc); }
+.wc-subtitle {
+  font-size: clamp(17px, 2.5vw, 22px); font-weight: 600;
+  color: var(--ink); margin: 0 0 16px; line-height: 1.5;
+}
+.wc-lede { font-size: 17px; color: var(--ink-dim); margin: 0; max-width: 58ch; }
+
+.wc-hero-cube {
+  display: flex; align-items: center; justify-content: center;
+  filter: drop-shadow(0 18px 40px color-mix(in srgb, var(--acc) 22%, transparent));
+}
+.wc-hero-cube > div { width: 100%; }
+.wc-hero-cube-ph {
+  width: 100%; aspect-ratio: 4 / 3; border-radius: 16px;
+  background: color-mix(in srgb, var(--acc) 7%, var(--card));
+}
+
+/* ── Trust / stat strip ─────────────────────────── */
+.wc-trust {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+  margin: 40px 0 8px;
+}
+.wc-trust-tight { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin: 28px 0 8px; }
+.wc-stat {
+  padding: 22px 22px;
+  border: 1px solid var(--rule); border-radius: 16px;
+  background: color-mix(in srgb, var(--acc) 4%, var(--card));
+}
+.wc-stat-value {
+  font-family: var(--font-mono);
+  font-size: clamp(18px, 2.4vw, 24px); font-weight: 700;
+  color: var(--acc); line-height: 1.15; letter-spacing: -.01em;
+  overflow-wrap: anywhere;
+}
+.wc-stat-label { margin-top: 9px; font-size: 14px; color: var(--ink-dim); line-height: 1.55; }
+
+/* ── Section ────────────────────────────────────── */
+.wc-sec { margin-top: 84px; scroll-margin-top: 24px; }
+.wc-sec-eyebrow {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--acc); margin-bottom: 10px;
+}
+.wc-sec-title {
+  font-family: var(--font-serif, inherit);
+  font-size: clamp(24px, 3.6vw, 34px); font-weight: 700;
+  letter-spacing: -.018em; margin: 0 0 18px; line-height: 1.15;
+}
+.wc-sec-lede { font-size: 18px; color: var(--ink-dim); margin: -4px 0 26px; max-width: 62ch; }
+.wc-prose { font-size: 16.5px; color: var(--ink-dim); line-height: 1.78; margin: 22px 0 0; max-width: 64ch; }
+.wc-subhead {
+  font-size: clamp(18px, 2.4vw, 21px); font-weight: 700;
+  letter-spacing: -.012em; margin: 44px 0 18px;
+}
+
+/* ── Key callout ────────────────────────────────── */
+.wc-key {
+  margin: 26px 0 0;
+  background: color-mix(in srgb, var(--acc) 6%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--acc) 26%, var(--rule));
+  border-radius: 16px;
+  padding: 24px 28px;
+}
+.wc-key-label {
+  display: flex; align-items: center; gap: 9px;
+  font-weight: 700; color: var(--acc); margin-bottom: 12px;
+  font-size: 14.5px; letter-spacing: .01em;
+}
+.wc-key-text { font-size: 16.5px; line-height: 1.72; color: var(--ink); margin: 0; }
+.wc-key-src {
+  margin-top: 14px; padding-top: 11px;
+  border-top: 1px solid color-mix(in srgb, var(--acc) 14%, var(--rule));
+  font-size: 12.5px; color: var(--ink-faint); line-height: 1.55;
+}
+.wc-key-src a { color: var(--acc); text-decoration: none; }
+.wc-key-src a:hover { text-decoration: underline; }
+.wc-key-info {
+  background: color-mix(in srgb, var(--signal-info) 6%, var(--card));
+  border-color: color-mix(in srgb, var(--signal-info) 28%, var(--rule));
+}
+.wc-key-info .wc-key-label { color: var(--signal-info); }
+.wc-key-success {
+  background: color-mix(in srgb, var(--signal-success) 7%, var(--card));
+  border-color: color-mix(in srgb, var(--signal-success) 30%, var(--rule));
+}
+.wc-key-success .wc-key-label { color: var(--signal-success); }
+.wc-key-warn {
+  background: color-mix(in srgb, var(--signal-warning) 8%, var(--card));
+  border-color: color-mix(in srgb, var(--signal-warning) 32%, var(--rule));
+}
+.wc-key-warn .wc-key-label { color: var(--signal-warning); }
+
+/* ── Benefit grid ───────────────────────────────── */
+.wc-benefits {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+  margin-top: 8px;
+}
+.wc-benefit {
+  padding: 26px 24px;
+  border: 1px solid var(--rule); border-radius: 18px;
+  background: var(--card);
+  transition: border-color .15s, transform .15s, box-shadow .15s;
+}
+.wc-benefit:hover {
+  border-color: color-mix(in srgb, var(--acc) 50%, var(--rule));
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px -22px color-mix(in srgb, var(--acc) 80%, transparent);
+}
+.wc-benefit-icon {
+  display: inline-flex; width: 50px; height: 50px; border-radius: 14px;
+  align-items: center; justify-content: center; margin-bottom: 16px;
+  background: color-mix(in srgb, var(--acc) 12%, transparent); color: var(--acc);
+}
+.wc-benefit-title { font-size: 18px; font-weight: 700; letter-spacing: -.01em; margin-bottom: 9px; }
+.wc-benefit-text { margin: 0; font-size: 15px; color: var(--ink-dim); line-height: 1.68; }
+/* 4-up variant for the computational-thinking pillars */
+.wc-benefits-4 { grid-template-columns: repeat(4, 1fr); }
+.wc-benefits-4 .wc-benefit { padding: 22px 20px; }
+.wc-benefits-4 .wc-benefit-icon { width: 44px; height: 44px; border-radius: 12px; margin-bottom: 13px; }
+.wc-benefits-4 .wc-benefit-title { font-size: 16.5px; }
+
+/* ── Steps (how to start) ───────────────────────── */
+.wc-steps { margin: 4px 0 0; padding: 0; list-style: none; counter-reset: wc-step; display: grid; gap: 16px; }
+.wc-steps li {
+  position: relative; padding-left: 46px; min-height: 32px;
+  font-size: 16px; color: var(--ink-dim); line-height: 1.7;
+}
+.wc-steps li::before {
+  counter-increment: wc-step; content: counter(wc-step);
+  position: absolute; left: 0; top: 0;
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-weight: 700; font-size: 15px;
+  color: var(--acc); background: color-mix(in srgb, var(--acc) 12%, transparent);
+}
+.wc-steps li b { color: var(--ink); font-weight: 700; margin-right: 4px; }
+
+/* ── Bulleted list (China facts) ────────────────── */
+.wc-list { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 15px; }
+.wc-list li {
+  position: relative; padding-left: 24px;
+  font-size: 16px; color: var(--ink-dim); line-height: 1.72;
+}
+.wc-list li::before {
+  content: ''; position: absolute; left: 4px; top: 11px;
+  width: 8px; height: 8px; border-radius: 50%; background: var(--acc);
+}
+
+/* ── Parent FAQ ─────────────────────────────────── */
+.wc-faq { display: grid; gap: 16px; margin-top: 4px; }
+.wc-faq-item { padding: 22px 24px; border: 1px solid var(--rule); border-radius: 16px; background: var(--card); }
+.wc-faq-q {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 9px;
+}
+.wc-faq-q svg { color: var(--acc); flex-shrink: 0; }
+.wc-faq-a { margin: 0; font-size: 15.5px; color: var(--ink-dim); line-height: 1.72; padding-left: 26px; }
+
+/* ── WCA event grid ─────────────────────────────── */
+.wc-evt-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 22px;
+  margin-top: 4px;
+}
+.wc-evt { display: flex; align-items: center; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--rule); }
+.wc-evt-icon { font-size: 34px; color: var(--acc); flex-shrink: 0; display: inline-flex; }
+.wc-evt-icon .cubing-icon { font-size: inherit; }
+.wc-evt-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wc-evt-name { font-weight: 700; font-size: 15.5px; }
+.wc-evt-skill { font-size: 14px; color: var(--ink-dim); line-height: 1.5; }
+
+/* ── Fun (non-WCA) list ─────────────────────────── */
+.wc-fun { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.wc-fun-item {
+  padding: 18px 20px; border: 1px solid var(--rule); border-radius: 14px;
+  background: var(--card); font-size: 15px; color: var(--ink-dim); line-height: 1.62;
+}
+.wc-fun-item b { display: block; color: var(--ink); font-size: 16px; margin-bottom: 5px; }
+
+/* ── Inventor quote ─────────────────────────────── */
+.wc-quote {
+  position: relative; margin: 30px 0 0; padding: 28px 30px 26px;
+  border-left: 3px solid var(--acc);
+  background: color-mix(in srgb, var(--acc) 5%, var(--card));
+  border-radius: 0 16px 16px 0;
+}
+.wc-quote-mark { color: var(--acc); opacity: .5; margin-bottom: 6px; }
+.wc-quote blockquote {
+  margin: 0; font-size: clamp(18px, 2.3vw, 21px); font-weight: 600;
+  line-height: 1.55; color: var(--ink);
+  font-family: var(--font-serif, inherit);
+}
+.wc-quote figcaption { margin-top: 14px; font-size: 14.5px; color: var(--ink-dim); }
+
+/* ── CTA grid ───────────────────────────────────── */
+.wc-cta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 6px; }
+.wc-cta {
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 20px; border: 1px solid var(--rule); border-radius: 14px;
+  background: var(--card); color: var(--ink); text-decoration: none; font-weight: 600;
+  transition: border-color .15s, background .15s, transform .15s;
+}
+.wc-cta > svg:first-child { color: var(--acc); flex-shrink: 0; }
+.wc-cta span { flex: 1; }
+.wc-cta-arrow { color: var(--ink-faint); transition: transform .15s, color .15s; }
+.wc-cta:hover {
+  border-color: color-mix(in srgb, var(--acc) 50%, var(--rule));
+  background: color-mix(in srgb, var(--acc) 6%, var(--card));
+}
+.wc-cta:hover .wc-cta-arrow { color: var(--acc); transform: translateX(3px); }
+
+/* ── Footer / sources ───────────────────────────── */
+.wc-footer {
+  margin-top: 88px; padding-top: 30px; border-top: 1px solid var(--rule);
+  font-size: 14px; color: var(--ink-faint); line-height: 1.75;
+}
+.wc-footer p { margin: 0; max-width: 70ch; }
+.wc-sources { margin-top: 14px !important; }
+.wc-footer a { color: var(--acc); text-decoration: none; }
+.wc-footer a:hover { text-decoration: underline; }
+
+/* ── Cube figures (shared) ──────────────────────── */
+.wc-fig { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 9px; }
+.wc-fig-img {
+  display: flex; align-items: center; justify-content: center;
+  filter: drop-shadow(0 10px 26px color-mix(in srgb, var(--acc) 16%, transparent));
+}
+.wc-fig-img img { display: block; border-radius: 10px; height: auto; max-width: 100%; }
+.wc-fig-cap { font-size: 13.5px; color: var(--ink-dim); text-align: center; line-height: 1.4; }
+/* dynamic-import placeholder — rough square to limit layout shift */
+.wc-cube-ph {
+  display: inline-block; width: 118px; height: 118px; border-radius: 12px;
+  background: color-mix(in srgb, var(--acc) 8%, var(--card));
+}
+
+.wc-subhead-icon { color: var(--acc); vertical-align: -3px; margin-right: 8px; }
+.wc-prose-tight { margin-top: 14px; }
+
+/* ── Scramble → solve flow band ─────────────────── */
+.wc-flow {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  gap: 18px; justify-items: center;
+  margin: 8px 0 30px; padding: 26px 20px;
+  border: 1px solid var(--rule); border-radius: 18px;
+  background: color-mix(in srgb, var(--acc) 4%, var(--card));
+}
+.wc-flow-mid {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  color: var(--acc); text-align: center;
+}
+.wc-flow-arrow { opacity: .85; }
+.wc-flow-note { font-size: 12.5px; color: var(--ink-dim); max-width: 14ch; line-height: 1.4; margin-top: 4px; }
+
+/* ── Pattern gallery ────────────────────────────── */
+.wc-patterns {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 22px 16px; margin-top: 20px;
+}
+
+/* ── Recognize → algorithm cases ────────────────── */
+.wc-cases { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+.wc-case {
+  display: flex; align-items: center; gap: 16px;
+  padding: 18px 20px; border: 1px solid var(--rule); border-radius: 16px; background: var(--card);
+}
+.wc-case > img, .wc-case > .wc-cube-ph { flex-shrink: 0; border-radius: 10px; }
+.wc-case-body { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.wc-case-name { font-weight: 700; font-size: 15px; }
+.wc-case-alg {
+  font-family: var(--font-mono); font-size: 12.5px; line-height: 1.5;
+  color: var(--acc); background: color-mix(in srgb, var(--acc) 9%, transparent);
+  padding: 5px 9px; border-radius: 8px; overflow-wrap: anywhere;
+}
+.wc-case-note { font-size: 13.5px; color: var(--ink-dim); line-height: 1.5; }
+
+/* ── NxN size line-up ───────────────────────────── */
+.wc-sizes {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end;
+  gap: 18px 20px; margin-top: 6px;
+}
+.wc-sizes .wc-fig-cap { font-family: var(--font-mono); font-weight: 700; color: var(--acc); }
+
+/* ── Responsive ─────────────────────────────────── */
+@media (max-width: 860px) {
+  .wc-hero { grid-template-columns: 1fr; gap: 24px; }
+  .wc-hero-cube { order: -1; max-width: 280px; margin: 0 auto; }
+  .wc-benefits { grid-template-columns: repeat(2, 1fr); }
+  .wc-cta-grid { grid-template-columns: repeat(2, 1fr); }
+  .wc-cases { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .wc-page { padding: 38px 18px 84px; font-size: 16px; }
+  .wc-sec { margin-top: 60px; }
+  .wc-trust, .wc-trust-tight { grid-template-columns: 1fr; gap: 12px; }
+  .wc-benefits { grid-template-columns: 1fr; gap: 14px; }
+  .wc-evt-grid { grid-template-columns: 1fr; gap: 2px; }
+  .wc-fun { grid-template-columns: 1fr; }
+  .wc-cta-grid { grid-template-columns: 1fr; }
+  .wc-stat-value { font-size: 19px; }
+  /* flow band: keep the two cubes side by side, drop the middle column below */
+  .wc-flow { grid-template-columns: 1fr 1fr; gap: 14px; padding: 20px 16px; }
+  .wc-flow-mid { grid-column: 1 / -1; order: 3; flex-direction: row; gap: 10px; }
+  .wc-flow-mid > svg { transform: none; }
+  .wc-flow-note { max-width: none; margin-top: 0; }
+  .wc-patterns { grid-template-columns: repeat(3, 1fr); gap: 16px 10px; }
+  .wc-sizes { gap: 14px 12px; }
+}

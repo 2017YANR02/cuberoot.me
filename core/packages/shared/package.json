@@ -36,6 +36,10 @@
       "node": "./dist/admin.js",
       "default": "./src/admin.ts"
     },
+    "./payment": {
+      "node": "./dist/payment.js",
+      "default": "./src/payment.ts"
+    },
     "./data/*.json": "./data/*.json"
   },
   "scripts": {

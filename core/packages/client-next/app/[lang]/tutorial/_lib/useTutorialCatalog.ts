@@ -129,17 +129,27 @@ export function useTutorialCatalog(): {
   return { catalog, loading, error };
 }
 
+const postCache = new Map<string, PostContent>();
+
 export function usePostContent(slug: string | undefined): {
   post: PostContent | null;
   loading: boolean;
   error: string | null;
 } {
-  const [post, setPost] = useState<PostContent | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cached = slug ? postCache.get(slug) ?? null : null;
+  const [post, setPost] = useState<PostContent | null>(cached);
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     if (!slug) {
       setLoading(false);
+      return;
+    }
+    const hit = postCache.get(slug);
+    if (hit) {
+      setPost(hit);
+      setLoading(false);
+      setError(null);
       return;
     }
     setLoading(true);
@@ -149,7 +159,10 @@ export function usePostContent(slug: string | undefined): {
         if (!r.ok) throw new Error(`post ${slug} not found`);
         return r.json() as Promise<PostContent>;
       })
-      .then(setPost)
+      .then(data => {
+        postCache.set(slug, data);
+        setPost(data);
+      })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, [slug]);

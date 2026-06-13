@@ -4,22 +4,28 @@ import { useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { usePostContent, type Lang } from '../_lib/useTutorialCatalog';
 import { TutorialArticleView } from '../_components/TutorialArticleView';
+import { CfopTutorialView } from '../_components/CfopTutorialView';
 import { AlgsetView } from '../_components/AlgsetView';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../tutorial.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
+
+const CFOP_SLUG = 'cfop-tutorial';
 
 export default function TutorialPostClient() {
   const params = useParams<{ slug: string | string[] }>();
   const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
   const { post, loading, error } = usePostContent(slug);
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const pageLang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const [lang, setLang] = useState<Lang>(pageLang);
+  const [view, setView] = useQueryState(
+    'view',
+    parseAsStringEnum(['pretty', 'raw']).withDefault('pretty').withOptions({ history: 'replace' }),
+  );
 
   const postTitle = post ? (post.title[pageLang] ?? post.title[pageLang === 'zh' ? 'en' : 'zh'] ?? post.slug) : (tr({ zh: '教程', en: 'Tutorial' }));
   useDocumentTitle(postTitle, postTitle);
@@ -45,6 +51,7 @@ export default function TutorialPostClient() {
     );
   }
 
+  const isCfop = slug === CFOP_SLUG && post.view === 'article';
   const hasEn = post.view === 'article' ? !!post.content.en : !!post.title.en;
   const hasZh = post.view === 'article' ? !!post.content.zh : !!post.title.zh;
   const title = post.title[lang] ?? post.title[lang === 'zh' ? 'en' : 'zh'] ?? post.slug;
@@ -65,32 +72,57 @@ export default function TutorialPostClient() {
             </>
           )}
           <span className="tutorial-breadcrumb-sep">/</span>
-          <strong>{title}</strong>
+          <strong>{isCfop ? tr({ zh: '三阶 CFOP 教程', en: '3×3 CFOP Tutorial',
+              zhHant: "三階 CFOP 教程"
+        }) : title}</strong>
         </div>
-        <div className="tutorial-lang-switch">
-          <button
-            className={'tutorial-lang-chip' + (lang === 'zh' ? ' is-active' : '')}
-            onClick={() => setLang('zh')}
-            disabled={!hasZh}
-            title={!hasZh ? (tr({ zh: '无中文版', en: 'No Chinese version',
-                zhHant: "無中文版"
-            })) : ''}
-          >
-            中
-          </button>
-          <button
-            className={'tutorial-lang-chip' + (lang === 'en' ? ' is-active' : '')}
-            onClick={() => setLang('en')}
-            disabled={!hasEn}
-            title={!hasEn ? (tr({ zh: '无英文版', en: 'No English version',
-                zhHant: "無英文版"
-            })) : ''}
-          >
-            EN
-          </button>
-        </div>
+        {isCfop ? (
+          <div className="tutorial-lang-switch" role="tablist" aria-label={tr({ zh: '版式', en: 'Layout' })}>
+            <button
+              className={'tutorial-lang-chip' + (view === 'pretty' ? ' is-active' : '')}
+              onClick={() => setView('pretty')}
+            >
+              {tr({ zh: '精美版', en: 'Polished', zhHant: '精美版' })}
+            </button>
+            <button
+              className={'tutorial-lang-chip' + (view === 'raw' ? ' is-active' : '')}
+              onClick={() => setView('raw')}
+            >
+              {tr({ zh: '原始版', en: 'Original', zhHant: '原始版' })}
+            </button>
+          </div>
+        ) : (
+          <div className="tutorial-lang-switch">
+            <button
+              className={'tutorial-lang-chip' + (lang === 'zh' ? ' is-active' : '')}
+              onClick={() => setLang('zh')}
+              disabled={!hasZh}
+              title={!hasZh ? (tr({ zh: '无中文版', en: 'No Chinese version',
+                  zhHant: "無中文版"
+              })) : ''}
+            >
+              中
+            </button>
+            <button
+              className={'tutorial-lang-chip' + (lang === 'en' ? ' is-active' : '')}
+              onClick={() => setLang('en')}
+              disabled={!hasEn}
+              title={!hasEn ? (tr({ zh: '无英文版', en: 'No English version',
+                  zhHant: "無英文版"
+              })) : ''}
+            >
+              EN
+            </button>
+          </div>
+        )}
       </div>
-      {post.view === 'article' ? (
+      {isCfop ? (
+        view === 'pretty' ? (
+          <CfopTutorialView post={post} />
+        ) : (
+          <TutorialArticleView post={post} lang={lang} />
+        )
+      ) : post.view === 'article' ? (
         <TutorialArticleView post={post} lang={lang} />
       ) : (
         <AlgsetView post={post} />

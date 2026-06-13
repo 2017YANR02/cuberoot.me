@@ -1,0 +1,147 @@
+{
+  "articleId": "10",
+  "version": {
+    "en": "April 1, 2026",
+    "zh": "2026年4月1日"
+  },
+  "title": {
+    "en": "Solved State",
+    "zh": "完成状态",
+    "zhHant": "完成狀態"
+  },
+  "clauses": [
+    {
+      "id": "10b",
+      "depth": 0,
+      "en": "Only the resting state of the puzzle, after the timer has been stopped, is considered.",
+      "zh": "只将计时器停止以后魔方的静止状态作为判罚依据。",
+      "zhHant": "只將計時器停止以後魔方的靜止狀態作為判罰依據。"
+    },
+    {
+      "id": "10c",
+      "depth": 0,
+      "en": "The puzzle may be in any orientation at the end of the solve.",
+      "zh": "魔方在结束还原时可以任意朝向。",
+      "zhHant": "魔方在結束還原時可以任意朝向。"
+    },
+    {
+      "id": "10d",
+      "depth": 0,
+      "en": "All parts of a puzzle must be physically attached to the puzzle and fully placed in their required positions. Exception: see [Regulation 5b5](regulations:regulation:5b5).",
+      "zh": "魔方的每一块必须在魔方上它应该在的位置。例外：见[规则5b5](regulations:regulation:5b5)。",
+      "zhHant": "魔方的每一塊必須在魔方上它應該在的位置。例外：見[規則5b5](regulations:regulation:5b5)。"
+    },
+    {
+      "id": "10e",
+      "depth": 0,
+      "en": "A puzzle is solved when all colored parts are reassembled and all parts are aligned within the limits specified below:",
+      "zh": "只有满足各个面都为纯色状态且对齐的限度满足以下条件时，魔方才被认为是已还原的：",
+      "zhHant": "只有滿足各個面都為純色狀態且對齊的限度滿足以下條件時，魔方才被認為是已還原的："
+    },
+    {
+      "id": "10e1",
+      "depth": 1,
+      "en": "For every two adjacent parts (e.g. two parallel, adjacent slices of a cube) of the puzzle that are misaligned by more than the limit described in [Regulation 10f](regulations:regulation:10f), the puzzle is considered to require one additional move to solve (see \"Outer Block Turn Metric\" in [Article 12](regulations:article:12)).",
+      "zh": "如果魔方的任意两个相邻部分（例如两个平行并接触着的转层）未对齐并超出了由[规则10f](regulations:regulation:10f)定义的限度，那么认为魔方还需要额外的一步才能还原（见[第十二章](regulations:article:12)中的\"Outer Block Turn Metric\"）。",
+      "zhHant": "如果魔方的任意兩個相鄰部分（例如兩個平行並接觸著的轉層）未對齊並超出了由[規則10f](regulations:regulation:10f)定義的限度，那麼認為魔方還需要額外的一步才能還原（見[第十二章](regulations:article:12)中的\"Outer Block Turn Metric\"）。"
+    },
+    {
+      "id": "10e1+",
+      "depth": 1,
+      "en": "[CLARIFICATION] For Square-1, because of the shape-shifting property of the puzzle, the metric for misalignments defined in [Regulation 10f4](regulations:regulation:10f4) is different from the metric for the notation, used by the scramble program and defined in [Regulation 12c4](regulations:regulation:12c4).",
+      "zh": "[澄清] 对于Square-1，由于这种魔方形状改变的性质，在[规则10f4](regulations:regulation:10f4)中的用于对齐判断的步数定义和在[规则12c4](regulations:regulation:12c4)中用于打乱程序的步数定义有所不同。",
+      "zhHant": "[澄清] 對於Square-1，由於這種魔方形狀改變的性質，在[規則10f4](regulations:regulation:10f4)中的用於對齊判斷的步數定義和在[規則12c4](regulations:regulation:12c4)中用於打亂程式的步數定義有所不同。"
+    },
+    {
+      "id": "10e2",
+      "depth": 1,
+      "en": "If no further moves are required to bring the puzzle to its solved state, the puzzle is considered solved without penalty.",
+      "zh": "如果该魔方到它的还原状态不需要进一步的转动，则认为它已被还原，不需要额外惩罚。",
+      "zhHant": "如果該魔方到它的還原狀態不需要進一步的轉動，則認為它已被還原，不需要額外懲罰。"
+    },
+    {
+      "id": "10e3",
+      "depth": 1,
+      "en": "If one move is required, the puzzle is considered solved with a time penalty (+2 seconds).",
+      "zh": "如果需要一步，则认为魔方已被还原，但需要加罚时间（+2秒）。",
+      "zhHant": "如果需要一步，則認為魔方已被還原，但需要加罰時間（+2秒）。"
+    },
+    {
+      "id": "10e4",
+      "depth": 1,
+      "en": "If more than one move is required, the puzzle is considered unsolved (DNF).",
+      "zh": "如果需要超过一步，则认为魔方未还原（DNF）。",
+      "zhHant": "如果需要超過一步，則認為魔方未還原（DNF）。"
+    },
+    {
+      "id": "10f",
+      "depth": 0,
+      "en": "Limits of acceptable misalignment for puzzles:",
+      "zh": "对于不同魔方的对齐限度：",
+      "zhHant": "對於不同魔方的對齊限度："
+    },
+    {
+      "id": "10f+",
+      "depth": 0,
+      "en": "[EXPLANATION] The misalignment limits are selected so that they provide a natural cutoff between one state of a puzzle (without penalty) and a state one move away.",
+      "zh": "[解释] 错位限度选择了一个比较自然的方法将两个相差一步的状态区分开来。",
+      "zhHant": "[解釋] 錯位限度選擇了一個比較自然的方法將兩個相差一步的狀態區分開來。"
+    },
+    {
+      "id": "10f1",
+      "depth": 1,
+      "en": "NxNxN Cubes: at most 45 degrees.",
+      "zh": "N阶魔方：最多45度。",
+      "zhHant": "N階魔方：最多45度。"
+    },
+    {
+      "id": "10f2",
+      "depth": 1,
+      "en": "Megaminx: at most 36 degrees.",
+      "zh": "五魔方：最多36度。",
+      "zhHant": "五魔方：最多36度。"
+    },
+    {
+      "id": "10f3",
+      "depth": 1,
+      "en": "Pyraminx and Skewb: at most 60 degrees.",
+      "zh": "金字塔和斜转魔方：最多60度。",
+      "zhHant": "金字塔和斜轉魔方：最多60度。"
+    },
+    {
+      "id": "10f4",
+      "depth": 1,
+      "en": "Square-1: at most 45 degrees (U/D) or 90 degrees (/).",
+      "zh": "Square-1：最多45度（U/D）或90度（/）。",
+      "zhHant": "Square-1：最多45度（U/D）或90度（/）。"
+    },
+    {
+      "id": "10f4+",
+      "depth": 1,
+      "en": "[CLARIFICATION] When counting the moves in case of a misalignment at the end of a solve, X and Y are considered separately. Example: (5, 1) is considered one misalignment, (5, 5) is considered two misalignments.",
+      "zh": "[澄清] 当在还原结束计算没对齐的情况时，X和Y分开考虑。例如：(5,1)被认为差1步还原，(5,5)被认为差2步还原。",
+      "zhHant": "[澄清] 當在還原結束計算沒對齊的情況時，X和Y分開考慮。例如：(5,1)被認為差1步還原，(5,5)被認為差2步還原。"
+    },
+    {
+      "id": "10i",
+      "depth": 0,
+      "en": "The solved state of Clock is achieved when all eighteen inner clock faces point to 12 o'clock.",
+      "zh": "魔表的还原状态是指所有18个内表盘上的指针都已指向12点。",
+      "zhHant": "魔錶的還原狀態是指所有18個內錶盤上的指標都已指向12點。"
+    },
+    {
+      "id": "10i1",
+      "depth": 1,
+      "en": "Inner clock faces that do not clearly point to a particular hour marker are considered to point to the nearest hour marker.",
+      "zh": "内表盘上没有清楚指向某个小时刻度的指针被当作指向最近的小时刻度。",
+      "zhHant": "內錶盤上沒有清楚指向某個小時刻度的指標被當作指向最近的小時刻度。"
+    },
+    {
+      "id": "10i2",
+      "depth": 1,
+      "en": "The solved state of Clock is not affected by loose or popped pin caps.",
+      "zh": "魔表的还原状态不受按钮盖的松动、飞出的影响。",
+      "zhHant": "魔錶的還原狀態不受按鈕蓋的鬆動、飛出的影響。"
+    }
+  ]
+}

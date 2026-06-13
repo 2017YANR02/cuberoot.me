@@ -1,0 +1,371 @@
+{
+  "articleId": "3",
+  "version": {
+    "en": "April 1, 2026",
+    "zh": "2026年4月1日"
+  },
+  "title": {
+    "en": "Puzzles",
+    "zh": "魔方",
+    "zhHant": "魔方"
+  },
+  "clauses": [
+    {
+      "id": "3a",
+      "depth": 0,
+      "en": "Competitors are responsible for providing their puzzles for the competition.",
+      "zh": "选手负责提供他们自己的参赛魔方。",
+      "zhHant": "選手負責提供他們自己的參賽魔方。"
+    },
+    {
+      "id": "3a+",
+      "depth": 0,
+      "en": "[CLARIFICATION] Competitors may use puzzles of any reasonable size, at the discretion of the WCA Delegate.",
+      "zh": "[澄清] 选手可以使用任意合适大小的魔方，由WCA代表决定。",
+      "zhHant": "[澄清] 選手可以使用任意合適大小的魔方，由WCA代表決定。"
+    },
+    {
+      "id": "3a++",
+      "depth": 0,
+      "en": "[ADDITION] By default, a competitor should use the same puzzle for consecutive attempts in a speed solving round. A competitor may switch puzzles between attempts, at the discretion of the judge or WCA Delegate.",
+      "zh": "[附加] 默认的，选手在同一轮里应该使用同一个魔方。选手也可以在每次还原之间更换魔方，由WCA代表决定。",
+      "zhHant": "[附加] 預設的，選手在同一輪裡應該使用同一個魔方。選手也可以在每次還原之間更換魔方，由WCA代表決定。"
+    },
+    {
+      "id": "3a+++",
+      "depth": 0,
+      "en": "[CLARIFICATION] Competitors may borrow puzzles from other competitors privately, to use in competition.",
+      "zh": "[澄清] 选手可以在私下里向其他选手借用魔方参赛。",
+      "zhHant": "[澄清] 選手可以在私下裡向其他選手借用魔方參賽。"
+    },
+    {
+      "id": "3a1",
+      "depth": 1,
+      "en": "Competitors must be ready to submit their puzzles when they are called (see [Regulation 2u](regulations:regulation:2u)).",
+      "zh": "当被要求出赛时，选手必须做好了提交魔方的准备（见[规则2u](regulations:regulation:2u)）。",
+      "zhHant": "當被要求出賽時，選手必須做好了提交魔方的準備（見[規則2u](regulations:regulation:2u)）。"
+    },
+    {
+      "id": "3a1+",
+      "depth": 1,
+      "en": "[CLARIFICATION] Competitors may be disqualified if they do not have a puzzle ready to submit soon after they are called (e.g. if they planned to use a puzzle that another competitor is currently using, and therefore cannot submit a puzzle at the moment).",
+      "zh": "[澄清] 当被要求出赛时，如果该选手没有准备好一个可用的魔方（例如他打算借用他人的魔方，而那人正在比赛，无法马上借出魔方），那么他有可能会被取消参赛资格。",
+      "zhHant": "[澄清] 當被要求出賽時，如果該選手沒有準備好一個可用的魔方（例如他打算借用他人的魔方，而那人正在比賽，無法馬上借出魔方），那麼他有可能會被取消參賽資格。"
+    },
+    {
+      "id": "3a2",
+      "depth": 1,
+      "en": "Puzzles must be fully operational, such that normal scrambling is possible.",
+      "zh": "魔方必须完全可转动，以便被正常的打乱。",
+      "zhHant": "魔方必須完全可轉動，以便被正常的打亂。"
+    },
+    {
+      "id": "3a3",
+      "depth": 1,
+      "en": "Polyhedral puzzles must use a color scheme with one unique color per face in the solved state. Each puzzle variation must have moves, states, and solutions functionally identical to the original puzzle.",
+      "zh": "正多面体魔方必须使用一面一色的配色。所有对魔方的改动必须保证在转动、状态、解法等方面完全等价于改动前的魔方。",
+      "zhHant": "正多面體魔方必須使用一面一色的配色。所有對魔方的改動必須保證在轉動、狀態、解法等方面完全等價於改動前的魔方。"
+    },
+    {
+      "id": "3a4",
+      "depth": 1,
+      "en": "Puzzles must not have electronic components (e.g. Bluetooth or Wi-Fi capabilities, motors, sensors, lights).",
+      "zh": "魔方不能含有电子元件（例如蓝牙或Wi-Fi连接能力、电机、传感器、灯光等）。",
+      "zhHant": "魔方不能含有電子元件（例如藍芽或Wi-Fi連線能力、電機、感測器、燈光等）。"
+    },
+    {
+      "id": "3d",
+      "depth": 0,
+      "en": "Puzzles must have colored parts, which define the color scheme of the puzzle and must be one and only one of the following: colored stickers, colored tiles, colored plastic, or painted/printed colors. All colored parts of a puzzle must be made of a similar material. Exception: for Clock, puzzles do not have colored parts.",
+      "zh": "魔方上必须有有色部分，以便确认该魔方的配色。有色部分必须为以下几种的唯一一种：贴纸、贴片、喷漆或涂料。所有有色部分必须具有相同的材质。例外：魔表并不具备“有色部分”。",
+      "zhHant": "魔方上必須有有色部分，以便確認該魔方的配色。有色部分必須為以下幾種的唯一一種：貼紙、貼片、噴漆或塗料。所有有色部分必須具有相同的材質。例外：魔錶並不具備“有色部分”。"
+    },
+    {
+      "id": "3d1",
+      "depth": 1,
+      "en": "For competitors with a medically documented visual disability, the following exceptions apply:",
+      "zh": "对于有视觉障碍的选手，可采用下述例外规则：",
+      "zhHant": "對於有視覺障礙的選手，可採用下述例外規則："
+    },
+    {
+      "id": "3d1a",
+      "depth": 2,
+      "en": "Blind competitors may use textured puzzles with different textures on different faces. Each face should have a distinct color, to aid in scrambling and judging.",
+      "zh": "盲人选手可以使用以纹理区分不同面的魔方。同一个面上的纹理必须一致。不同面之间应该使用不同的颜色，以便打乱或判决。",
+      "zhHant": "盲人選手可以使用以紋理區分不同面的魔方。同一個面上的紋理必須一致。不同面之間應該使用不同的顏色，以便打亂或判決。"
+    },
+    {
+      "id": "3d1b",
+      "depth": 2,
+      "en": "Color blind competitors who cannot distinguish between the necessary number of colors may use colored parts with additional uniform colors or patterns, if it has been explicitly approved according to [Regulation 2s](regulations:regulation:2s). Additional uniform colors or patterns may come from stickers or be drawn.",
+      "zh": "在根据[规则2s](regulations:regulation:2s)明确批准的前提下，无法辨识足够数量颜色的色盲选手可以使用带有附加颜色或图案的有色部分。其中附加颜色或图案可以来自贴纸或手绘。",
+      "zhHant": "在根據[規則2s](regulations:regulation:2s)明確批准的前提下，無法辨識足夠數量顏色的色盲選手可以使用帶有附加顏色或圖案的有色部分。其中附加顏色或圖案可以來自貼紙或手繪。"
+    },
+    {
+      "id": "3d1b+",
+      "depth": 2,
+      "en": "[CLARIFICATION] Additional uniform colors or patterns do not need to be present on every face, but only on faces where a distinct color cannot be found. Pieces must not have any features (e.g. textures, pattern irregularities) that significantly distinguish them from similar pieces.",
+      "zh": "[澄清] 附加颜色或图案不需要出现在每一面上，只需要在无法辨别不同颜色的面上有即可。这些块不能与其他相似的块有显著区别（例如纹理、不规则的图案）。",
+      "zhHant": "[澄清] 附加顏色或圖案不需要出現在每一面上，只需要在無法辨別不同顏色的面上有即可。這些塊不能與其他相似的塊有顯著區別（例如紋理、不規則的圖案）。"
+    },
+    {
+      "id": "3d2",
+      "depth": 1,
+      "en": "The colors of the colored parts must be solid, with one uniform color per face. Each color must be clearly distinct from the other colors.",
+      "zh": "魔方的有色部分必须是纯色的，同一个面上的颜色必须一致，不同面的颜色之间必须可清晰地区分。",
+      "zhHant": "魔方的有色部分必須是純色的，同一個面上的顏色必須一致，不同面的顏色之間必須可清晰地區分。"
+    },
+    {
+      "id": "3h",
+      "depth": 0,
+      "en": "Modifications that enhance the basic concept of a puzzle are not permitted. Modified versions of puzzles are permitted only if the modification does not make any additional information available to the competitor (e.g. orientation or identity of pieces), compared to an unmodified version of the same puzzle.",
+      "zh": "禁止对魔方进行超常的修改。对魔方的合法修改必须满足：这一修改相比于未修改的同类魔方无法给选手提供任何附加信息（例如区分两个块）。",
+      "zhHant": "禁止對魔方進行超常的修改。對魔方的合法修改必須滿足：這一修改相比於未修改的同類魔方無法給選手提供任何附加資訊（例如區分兩個塊）。"
+    },
+    {
+      "id": "3h+",
+      "depth": 0,
+      "en": "[CLARIFICATION] Puzzles may be refined internally by sanding, lubrication, or modifications which improve stability (e.g. magnets).",
+      "zh": "[澄清] 魔方内部可以被精心打磨、润滑或者修改以提高稳定性（例如加磁）。",
+      "zhHant": "[澄清] 魔方內部可以被精心打磨、潤滑或者修改以提高穩定性（例如加磁）。"
+    },
+    {
+      "id": "3h++",
+      "depth": 0,
+      "en": "[EXAMPLE] Examples of enhancements include: new moves are possible, normal moves are impossible, more pieces or faces are visible, colors on the backside of the puzzle are visible, moves are done automatically, or the puzzles have more/different solved states.",
+      "zh": "[举例] 超常的修改包括：新的转动方式，无法进行常规的转动，可以看到更多的块，可以看到背面的颜色，自动转动，更多或不同的还原状态。",
+      "zhHant": "[舉例] 超常的修改包括：新的轉動方式，無法進行常規的轉動，可以看到更多的塊，可以看到背面的顏色，自動轉動，更多或不同的還原狀態。"
+    },
+    {
+      "id": "3h1",
+      "depth": 1,
+      "en": "\"Pillowed\" puzzles are permitted.",
+      "zh": "可以使用“面包”魔方。",
+      "zhHant": "可以使用“麵包”魔方。"
+    },
+    {
+      "id": "3h2",
+      "depth": 1,
+      "en": "Puzzles whose colored plastic is visible inside the puzzle (e.g. \"stickerless\" puzzles) are permitted. This does not include the following puzzles:",
+      "zh": "可以从内部看到外表面颜色的魔方（例如“六色魔方”）是允许的。但不包括以下魔方：",
+      "zhHant": "可以從內部看到外表面顏色的魔方（例如“六色魔方”）是允許的。但不包括以下魔方："
+    },
+    {
+      "id": "3h2++",
+      "depth": 1,
+      "en": "[CLARIFICATION] \"Stickerless\" puzzles that significantly differ from most mass-produced \"stickerless\" puzzles are only permitted at the discretion of the WCA Delegate.",
+      "zh": "[澄清] 如果某种“六色魔方”和现在大量生产的“六色魔方”有明显的差别，需要由WCA代表决定是否可以使用。",
+      "zhHant": "[澄清] 如果某種“六色魔方”和現在大量生產的“六色魔方”有明顯的差別，需要由WCA代表決定是否可以使用。"
+    },
+    {
+      "id": "3h2a",
+      "depth": 2,
+      "en": "Puzzles with transparent parts that can reasonably reveal more information about the state of the puzzle. Exception: an overlay sticker or a logo (see [Regulation 3l](regulations:regulation:3l)).",
+      "zh": "带有合理可能让选手了解更多关于魔方状态信息的透明部分的魔方是禁止的。例外：半透明贴纸或logo（见[规则3l](regulations:regulation:3l)）。",
+      "zhHant": "帶有合理可能讓選手瞭解更多關於魔方狀態資訊的透明部分的魔方是禁止的。例外：半透明貼紙或logo（見[規則3l](regulations:regulation:3l)）。"
+    },
+    {
+      "id": "3h2a+",
+      "depth": 2,
+      "en": "[ADDITION] Examples of transparent parts that do not reveal more information about the state of the puzzle: internal parts of the puzzle mechanism, transparent Clock cases.",
+      "zh": "[附加] 不透露更多有关魔方状态信息的透明部件举例：魔方的内部结构、透明的魔表外壳。",
+      "zhHant": "[附加] 不透露更多有關魔方狀態資訊的透明部件舉例：魔方的內部結構、透明的魔錶外殼。"
+    },
+    {
+      "id": "3h3",
+      "depth": 1,
+      "en": "Any modifications to a puzzle that result in poor performance by a competitor are not grounds for additional attempts.",
+      "zh": "任何由于对魔方的修改导致的失常发挥都不能作为额外还原机会的理由。",
+      "zhHant": "任何由於對魔方的修改導致的失常發揮都不能作為額外還原機會的理由。"
+    },
+    {
+      "id": "3h4",
+      "depth": 1,
+      "en": "For Clock, the following modifications are permitted:",
+      "zh": "对于魔表，以下修改是允许的：",
+      "zhHant": "對於魔錶，以下修改是允許的："
+    },
+    {
+      "id": "3h4+",
+      "depth": 1,
+      "en": "[CLARIFICATION] For Clock, visual modifications that enhance the ability to determine the orientation of the puzzle are permitted, as traditional puzzle designs already provide this information.",
+      "zh": "[澄清] 魔表可以通过对外观的修改增强其具体朝向的辨识度，因为传统的魔表设计已经提供了这些信息。",
+      "zhHant": "[澄清] 魔錶可以透過對外觀的修改增強其具體朝向的辨識度，因為傳統的魔錶設計已經提供了這些資訊。"
+    },
+    {
+      "id": "3h4a",
+      "depth": 2,
+      "en": "Visual modifications (e.g. paper inserts) are permitted, at the discretion of the WCA Delegate. Any modification must have 12 clear hour markers for each inner clock face, with a distinct indication at 12 o'clock that matches the original puzzle.",
+      "zh": "视觉效果的修改（例如自定义背景图），由WCA代表决定。任何修改必须能清楚地看到各内表盘的12个小时刻度，并且清楚的指明和原有插图一致的12点方向。",
+      "zhHant": "視覺效果的修改（例如自定義背景圖），由WCA代表決定。任何修改必須能清楚地看到各內錶盤的12個小時刻度，並且清楚的指明和原有插圖一致的12點方向。"
+    },
+    {
+      "id": "3h4b",
+      "depth": 2,
+      "en": "Puzzle design customizations that do not give an unfair advantage may be permitted, at the discretion of the WCA Delegate (e.g. checkerboard pattern clocks, faces with a custom design, tape on the side of the Clock).",
+      "zh": "不会产生对他人不公平的优势的设计可以被允许，由WCA代表决定（例如棋盘图案的表、自定义表面、魔表侧面的胶带等）。",
+      "zhHant": "不會產生對他人不公平的優勢的設計可以被允許，由WCA代表決定（例如棋盤圖案的表、自定義表面、魔錶側面的膠帶等）。"
+    },
+    {
+      "id": "3h4c",
+      "depth": 2,
+      "en": "Customizations which distinguish pins from other pins of the same side are permitted, at the discretion of the WCA Delegate.",
+      "zh": "允许可以区分同一面的不同按钮的设计，由WCA代表决定。",
+      "zhHant": "允許可以區分同一面的不同按鈕的設計，由WCA代表決定。"
+    },
+    {
+      "id": "3h4d",
+      "depth": 2,
+      "en": "Logos anywhere on the puzzle, as long as the inner clock faces remain uncovered.",
+      "zh": "任意位置的logo，只要不要遮挡里面的表盘即可。",
+      "zhHant": "任意位置的logo，只要不要遮擋裡面的錶盤即可。"
+    },
+    {
+      "id": "3h5",
+      "depth": 1,
+      "en": "For Clock, loose pins (i.e. pins that can toggle or recede using gravity instead of being directly pressed) are not considered reasonable wear, and puzzles with such pins must not be permitted.",
+      "zh": "魔表上松动的立柱（例如会因为重力而不是人为按压就改变状态的立柱）不被认为是合理的磨损，有这样立柱的魔表不被允许。",
+      "zhHant": "魔錶上鬆動的立柱（例如會因為重力而不是人為按壓就改變狀態的立柱）不被認為是合理的磨損，有這樣立柱的魔錶不被允許。"
+    },
+    {
+      "id": "3j",
+      "depth": 0,
+      "en": "Puzzles must be clean, and must not have any markings, elevated pieces, damage, or other differences that significantly distinguish any piece from a similar piece. Exception: a logo (see [Regulation 3l](regulations:regulation:3l)).",
+      "zh": "魔方必须干净清洁，且不得有任何记号、不平整的块、损伤，或者其他的一些特别之处使得可以分辨两个相似的块。例外：一个logo（见[规则3l](regulations:regulation:3l)）。",
+      "zhHant": "魔方必須乾淨清潔，且不得有任何記號、不平整的塊、損傷，或者其他的一些特別之處使得可以分辨兩個相似的塊。例外：一個logo（見[規則3l](regulations:regulation:3l)）。"
+    },
+    {
+      "id": "3j++",
+      "depth": 0,
+      "en": "[EXAMPLE] There is a [Visual Guide](https://drive.google.com/file/d/1m6THsA8fXRN7QFM4ApJbm6eVODKGbMLx/view) available for [Regulation 3j](regulations:regulation:3j).",
+      "zh": "[举例] 对于[规则3j](regulations:regulation:3j)，这里有一个[可视化指南](https://drive.google.com/file/d/1m6THsA8fXRN7QFM4ApJbm6eVODKGbMLx/view)。",
+      "zhHant": "[舉例] 對於[規則3j](regulations:regulation:3j)，這裡有一個[視覺化指南](https://drive.google.com/file/d/1m6THsA8fXRN7QFM4ApJbm6eVODKGbMLx/view)。"
+    },
+    {
+      "id": "3j1",
+      "depth": 1,
+      "en": "Puzzles are permitted to have reasonable wear, at the discretion of the WCA Delegate.",
+      "zh": "魔方允许有合理的磨损，由WCA代表决定。",
+      "zhHant": "魔方允許有合理的磨損，由WCA代表決定。"
+    },
+    {
+      "id": "3j1a",
+      "depth": 2,
+      "en": "Wear should be considered reasonable if it is a result of normal use of the puzzle and if it does not give significant additional information about the state of the puzzle (e.g. about the location of specific pieces).",
+      "zh": "如果磨损是正常使用魔方的结果，并且没有提供有关魔方状态的重要附加信息（例如：有关特定块的位置），则应该认为磨损是合理的。",
+      "zhHant": "如果磨損是正常使用魔方的結果，並且沒有提供有關魔方狀態的重要附加資訊（例如：有關特定塊的位置），則應該認為磨損是合理的。"
+    },
+    {
+      "id": "3j2",
+      "depth": 1,
+      "en": "Definition: Two pieces are similar to each other if they are identical in shape and size, or mirrored in shape and identical in size.",
+      "zh": "定义：如果两个块的大小一样，且形状一样或互为镜像，则称这两个块是“相似”的。",
+      "zhHant": "定義：如果兩個塊的大小一樣，且形狀一樣或互為映象，則稱這兩個塊是“相似”的。"
+    },
+    {
+      "id": "3j3",
+      "depth": 1,
+      "en": "Corrugated/textured parts which permit the orientation of pieces to be distinguished by feel are not permitted for blindfolded events.",
+      "zh": "在盲拧项目中禁止使用通过触摸可区分方向的贴纸或贴片。",
+      "zhHant": "在盲擰項目中禁止使用透過觸控可區分方向的貼紙或貼片。"
+    },
+    {
+      "id": "3k",
+      "depth": 0,
+      "en": "Puzzles should be approved by the WCA Delegate before use in the competition.",
+      "zh": "魔方在使用之前应该经过WCA代表的检查。",
+      "zhHant": "魔方在使用之前應該經過WCA代表的檢查。"
+    },
+    {
+      "id": "3k1",
+      "depth": 1,
+      "en": "If a non-permitted puzzle is found during a round, the competitor must not continue to use the puzzle, and must submit a replacement.",
+      "zh": "如果在一个轮次中发现一个不被允许使用的魔方被使用，选手不能继续使用这个魔方，而必须提交一个替代魔方。",
+      "zhHant": "如果在一個輪次中發現一個不被允許使用的魔方被使用，選手不能繼續使用這個魔方，而必須提交一個替代魔方。"
+    },
+    {
+      "id": "3k2",
+      "depth": 1,
+      "en": "Penalty for attempts done with puzzles which are not permitted: disqualification of the attempt (DNF). The following exceptions apply:",
+      "zh": "使用不被允许的魔方的惩罚：取消当前还原成绩成绩（DNF）。以下情况例外：",
+      "zhHant": "使用不被允許的魔方的懲罰：取消當前還原成績成績（DNF）。以下情況例外："
+    },
+    {
+      "id": "3k2+",
+      "depth": 1,
+      "en": "[ADDITION] The WCA Delegate should not apply a listed exception if they believe the competitor tried to use a non-permitted puzzle on purpose.",
+      "zh": "[附加] WCA代表如果认为选手故意使用不被允许的魔方，则不应该应用列出的例外。",
+      "zhHant": "[附加] WCA代表如果認為選手故意使用不被允許的魔方，則不應該應用列出的例外。"
+    },
+    {
+      "id": "3k2a",
+      "depth": 2,
+      "en": "If a non-permitted puzzle is found before a round is complete, affected results in the round may be replaced with extra attempts, at the discretion of the WCA Delegate.",
+      "zh": "如果在一个轮次结束前发现一个不被允许使用的魔方被使用，在本轮中受影响的成绩可以分别用一次额外还原来替代，由WCA代表决定。",
+      "zhHant": "如果在一個輪次結束前發現一個不被允許使用的魔方被使用，在本輪中受影響的成績可以分別用一次額外還原來替代，由WCA代表決定。"
+    },
+    {
+      "id": "3l",
+      "depth": 0,
+      "en": "A puzzle may have one or more logos on a colored part. If it does, it must have at most one colored part with a logo or multiple logos. Exception: For 4x4x4 Blindfolded, 5x5x5 Blindfolded, and 3x3x3 Multi-Blind, a puzzle must not have any logos.",
+      "zh": "魔方的有色部分可以有一个或多个logo。如果有，则logo只能出现在最多一个有色部分上面。例外：在四阶盲拧、五阶盲拧和三阶多盲项目中，魔方不允许有logo。",
+      "zhHant": "魔方的有色部分可以有一個或多個logo。如果有，則logo只能出現在最多一個有色部分上面。例外：在四階盲擰、五階盲擰和三階多盲項目中，魔方不允許有logo。"
+    },
+    {
+      "id": "3l+",
+      "depth": 0,
+      "en": "[ADDITION] Logos may feature any reasonable design that does not give a conspicuous advantage (e.g. encoding information that could be used to cheat), and leave the colored part clearly recognizable. Unconventional logos are only permitted at the discretion of the WCA Delegate.",
+      "zh": "[附加] logo可以任意设计，但不能给还原带来明显的优势（例如可以用于作弊的编码信息），且原有有色部分的颜色必须依然可辩。非传统的logo是否允许由WCA代表决定。",
+      "zhHant": "[附加] logo可以任意設計，但不能給還原帶來明顯的優勢（例如可以用於作弊的編碼資訊），且原有有色部分的顏色必須依然可辯。非傳統的logo是否允許由WCA代表決定。"
+    },
+    {
+      "id": "3l++",
+      "depth": 0,
+      "en": "[CLARIFICATION] Logos are permitted for 3x3x3 Blindfolded, but not any other blindfolded events, including 3x3x3 Multi-Blind.",
+      "zh": "[澄清] 带logo的魔方可以在三阶盲拧项目中使用，但不能在任何其它盲拧项目中使用，包括三阶多盲。",
+      "zhHant": "[澄清] 帶logo的魔方可以在三階盲擰項目中使用，但不能在任何其它盲擰項目中使用，包括三階多盲。"
+    },
+    {
+      "id": "3l1",
+      "depth": 1,
+      "en": "The logo must be placed on a center piece. Exceptions for puzzles that do not have center pieces:",
+      "zh": "logo必须位于中心块上。除了下述没有中心块的魔方：",
+      "zhHant": "logo必須位於中心塊上。除了下述沒有中心塊的魔方："
+    },
+    {
+      "id": "3l1+",
+      "depth": 1,
+      "en": "[CLARIFICATION] On NxNxN puzzles, a center piece is any piece with a single colored part. For example, the 5x5x5 Cube has 9 center pieces on each face.",
+      "zh": "[澄清] 在N阶魔方中，中心块是任意一个只有一个颜色的块。例如，五阶魔方每个面有9个中心块。",
+      "zhHant": "[澄清] 在N階魔方中，中心塊是任意一個只有一個顏色的塊。例如，五階魔方每個面有9箇中心塊。"
+    },
+    {
+      "id": "3l1a",
+      "depth": 2,
+      "en": "For Pyraminx and 2x2x2, the logo may be on any piece.",
+      "zh": "对于金字塔和二阶魔方，logo可以位于任何一块上。",
+      "zhHant": "對於金字塔和二階魔方，logo可以位於任何一塊上。"
+    },
+    {
+      "id": "3l1b",
+      "depth": 2,
+      "en": "For Square-1, the logo must be on a piece in the equatorial slice.",
+      "zh": "对于Square-1，logo必须位于中层的某一块上。",
+      "zhHant": "對於Square-1，logo必須位於中層的某一塊上。"
+    },
+    {
+      "id": "3l2",
+      "depth": 1,
+      "en": "The logo may be embossed, engraved, or consist of an overlay sticker.",
+      "zh": "logo允许有凹凸或纹理。",
+      "zhHant": "logo允許有凹凸或紋理。"
+    },
+    {
+      "id": "3m",
+      "depth": 0,
+      "en": "All brands of puzzles and puzzle parts are permitted, as long as the puzzles comply with all WCA Regulations.",
+      "zh": "只要符合WCA规则，可以使用任何品牌的魔方及零部件。",
+      "zhHant": "只要符合WCA規則，可以使用任何品牌的魔方及零部件。"
+    }
+  ]
+}

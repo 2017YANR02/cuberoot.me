@@ -1,0 +1,86 @@
+/* ─── /regulation/speed-solving — Appendix A page-specific styles ───
+ * Reuses .reg-* tokens from ../regulation.css (loaded via RegArticleLayout).
+ * Only adds the start/stop step flow; the inspection visual, callouts and
+ * penalty grid all come from the shared primitives + regulation.css.
+ * ──────────────────────────────────────────────────────────────── */
+
+/* ── Start / stop flow blocks ── */
+.ss-flow {
+  margin: 30px 0 0;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  padding: 24px 26px 12px;
+  background: var(--card);
+}
+.ss-flow + .ss-flow { margin-top: 18px; }
+.ss-flow-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--blue);
+  margin-bottom: 6px;
+}
+.ss-flow-title {
+  font-size: clamp(17px, 2.4vw, 20px);
+  font-weight: 700;
+  letter-spacing: -.01em;
+  margin: 0;
+}
+
+/* ── Numbered steps ── */
+.ss-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.ss-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+  padding: 16px 0;
+  border-top: 1px solid var(--rule);
+}
+.ss-step:first-child { border-top: 0; }
+.ss-step-n {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 13%, transparent);
+}
+.ss-step-body { min-width: 0; }
+.ss-step-title {
+  font-size: 16.5px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 5px;
+  line-height: 1.3;
+}
+.ss-step-text {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.64;
+  color: var(--ink-dim);
+}
+
+/* ── DNF badge: red, distinct from the warn-toned +2 badge ── */
+.reg-pen-badge.ss-dnf-badge {
+  background: color-mix(in srgb, var(--bad) 20%, transparent);
+  color: var(--bad);
+}
+
+/* ── Narrow screens ── */
+@media (max-width: 720px) {
+  .ss-flow { padding: 20px 18px 8px; }
+  .ss-step { gap: 13px; padding: 14px 0; }
+  .ss-step-n { width: 25px; height: 25px; font-size: 13px; }
+}

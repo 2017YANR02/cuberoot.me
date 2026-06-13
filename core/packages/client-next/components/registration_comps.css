@@ -1,0 +1,179 @@
+/* RegistrationComps —「报名」tab 内容(渲染在 OngoingComps 滚动面板里)。
+   按报名里程碑本地日分组的卡片网格 + 登录用户的关注星标。双主题走 :root token。 */
+
+.reg-comps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding-top: 2px; /* 外层面板 overflow 裁剪,留给 hover 上抬 1px */
+}
+
+.reg-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.reg-group-head {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+.reg-group-head--fav {
+  color: var(--accent);
+}
+
+.reg-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(258px, 1fr));
+  gap: 0.55rem;
+}
+
+.rc-card {
+  position: relative;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  transition: border-color 0.15s, transform 0.15s;
+}
+.rc-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.rc-card.is-closed {
+  opacity: 0.6;
+}
+
+/* 关注星标 — 浮在卡片右上角,在 Link 之外(避免锚点里嵌按钮的非法结构) */
+.rc-fav {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--faint-foreground);
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+}
+.rc-fav:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.rc-fav.is-on {
+  color: var(--accent);
+}
+
+.rc-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.7rem 2.1rem 0.7rem 0.85rem; /* 右侧留给星标 */
+  text-decoration: none;
+  color: var(--foreground);
+}
+
+.rc-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.rc-flag {
+  width: 1.2em !important;
+  flex: none;
+}
+.rc-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.25;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rc-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.6rem;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+.rc-date { font-variant-numeric: tabular-nums; }
+
+/* 报名状态 pill — 自适应内容宽度,左对齐 */
+.rc-pill {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.08rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.rc-when { opacity: 0.85; }
+.rc-pill--open {
+  color: var(--signal-success);
+  background: color-mix(in srgb, var(--signal-success) 14%, transparent);
+}
+.rc-pill--close {
+  color: var(--signal-warning);
+  background: color-mix(in srgb, var(--signal-warning) 14%, transparent);
+}
+.rc-pill--urgent {
+  color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 14%, transparent);
+}
+.rc-pill--closed {
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.rc-events {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.4rem;
+  margin-top: 0.05rem;
+  color: var(--muted-foreground);
+}
+.rc-event {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.reg-login-hint {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.1rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: color 0.12s;
+}
+.reg-login-hint:hover { color: var(--accent); }
+
+@media (max-width: 560px) {
+  .reg-cards { grid-template-columns: 1fr; }
+}

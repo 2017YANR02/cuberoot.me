@@ -1,0 +1,362 @@
+.mem-page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 32px 20px 80px;
+}
+
+/* ── header ── */
+.mem-head { margin-bottom: 24px; }
+.mem-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--foreground);
+}
+.mem-title-icon { color: var(--accent); }
+.mem-sub {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ── current status ── */
+.mem-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+}
+.mem-status-text { color: var(--foreground); font-size: 14px; }
+.mem-status-refresh {
+  margin-left: auto;
+  display: inline-flex;
+  background: none;
+  border: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+}
+.mem-status-refresh:hover { color: var(--foreground); background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+
+.mem-paid-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--signal-success);
+  background: color-mix(in srgb, var(--signal-success) 12%, transparent);
+}
+
+.mem-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-foreground);
+  padding: 32px 0;
+  font-size: 15px;
+}
+
+/* ── plans ── */
+.mem-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.mem-plan {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 20px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+}
+.mem-plan.is-feature {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--card));
+}
+.mem-plan-tag {
+  position: absolute;
+  top: -10px;
+  right: 16px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-foreground);
+  background: var(--accent);
+}
+.mem-plan-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 10px;
+}
+.mem-plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.mem-plan-amount { font-size: 30px; font-weight: 700; color: var(--foreground); }
+.mem-plan-unit { font-size: 13px; color: var(--muted-foreground); }
+.mem-plan-perks {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.mem-plan-perks li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.mem-plan-perks svg { color: var(--accent); flex-shrink: 0; }
+.mem-plan-cta {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--primary-foreground);
+  background: var(--primary);
+  transition: background 0.15s;
+}
+.mem-plan-cta:hover { background: color-mix(in srgb, var(--primary) 88%, black); }
+.mem-plan.is-feature .mem-plan-cta { background: var(--accent); color: var(--accent-foreground); }
+.mem-plan.is-feature .mem-plan-cta:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
+
+.mem-note, .mem-foot-note {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+  margin: 8px 0 0;
+}
+.mem-foot-note { margin-top: 20px; }
+.mem-foot-note a { color: var(--accent); }
+.mem-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+}
+
+/* ── pay modal ── */
+.mem-pay-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: color-mix(in srgb, black 55%, transparent);
+}
+.mem-pay {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  padding: 28px 24px 24px;
+  border-radius: 16px;
+  background: var(--popover);
+  text-align: center;
+}
+.mem-pay-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  background: none;
+  border: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  padding: 4px;
+}
+.mem-pay-close:hover { color: var(--foreground); }
+.mem-pay-title { font-size: 18px; font-weight: 700; margin: 0 0 4px; color: var(--foreground); }
+.mem-pay-price { font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 18px; }
+.mem-pay-hint { font-size: 14px; color: var(--muted-foreground); margin: 0 0 14px; }
+.mem-pay-channels { display: flex; flex-direction: column; gap: 10px; }
+.mem-pay-ch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+}
+.mem-pay-ch:disabled { opacity: 0.6; cursor: default; }
+/* 支付宝 / 微信 品牌色(同打赏弹窗,固定品牌识别色) */
+.mem-pay-ch-alipay { background: #1677ff; }
+.mem-pay-ch-wechat { background: #07c160; }
+
+.mem-pay-err {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--destructive);
+}
+.mem-pay-qr { margin: 0 0 12px; }
+.mem-pay-qr img {
+  width: 220px;
+  height: 220px;
+  border-radius: 10px;
+  background: #fff;
+  padding: 8px;
+}
+.mem-pay-qr figcaption { margin-top: 10px; font-size: 13px; color: var(--muted-foreground); }
+.mem-pay-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent-foreground);
+  background: var(--accent);
+  text-decoration: none;
+}
+.mem-pay-go-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: none;
+}
+.mem-pay-waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.mem-pay-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--faint-foreground);
+}
+
+/* ── member contact ── */
+.mem-contact { margin-top: 32px; }
+.mem-contact-title { font-size: 15px; font-weight: 600; color: var(--foreground); margin: 0 0 4px; }
+.mem-contact-hint { font-size: 13px; color: var(--muted-foreground); margin: 0 0 12px; }
+.mem-contact-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.mem-contact-kind, .mem-contact-input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--input);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 14px;
+}
+.mem-contact-input { flex: 1; min-width: 160px; }
+.mem-contact-save {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-foreground);
+  background: var(--primary);
+  cursor: pointer;
+}
+
+/* ── admin ── */
+.mem-admin {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-default);
+}
+.mem-admin-title { font-size: 16px; font-weight: 700; color: var(--foreground); margin: 0 0 16px; }
+.mem-admin-block { margin-bottom: 22px; }
+.mem-admin-subtitle { font-size: 13px; font-weight: 600; color: var(--muted-foreground); margin-bottom: 10px; }
+.mem-admin-grant { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.mem-admin-picker { flex: 1; min-width: 200px; }
+.mem-admin-plansel, .mem-admin-priceinput {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--input);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 14px;
+}
+.mem-admin-priceinput { width: 100px; }
+.mem-admin-grant-btn, .mem-admin-plansave {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-foreground);
+  background: var(--primary);
+  cursor: pointer;
+}
+.mem-admin-grant-btn:disabled { opacity: 0.5; cursor: default; }
+.mem-admin-planrow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.mem-admin-planname { min-width: 90px; font-size: 14px; color: var(--foreground); }
+.mem-admin-list { display: flex; flex-direction: column; gap: 6px; }
+.mem-admin-member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  padding: 6px 0;
+}
+.mem-admin-mname { font-weight: 600; color: var(--foreground); }
+.mem-admin-mwca { color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.mem-admin-mexp { color: var(--muted-foreground); margin-left: auto; }
+.mem-admin-revoke {
+  display: inline-flex;
+  background: none;
+  border: none;
+  color: var(--destructive);
+  cursor: pointer;
+  padding: 4px;
+}
+.mem-admin-empty { font-size: 13px; color: var(--faint-foreground); }
+
+.mem-spin { animation: mem-spin 0.9s linear infinite; }
+@keyframes mem-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 480px) {
+  .mem-page { padding: 24px 14px 64px; }
+  .mem-title { font-size: 22px; }
+  .mem-plans { grid-template-columns: 1fr; }
+}

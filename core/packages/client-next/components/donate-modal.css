@@ -28,6 +28,24 @@
     color: var(--text);
 }
 
+.donate-member-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 0 0 1.1rem;
+    padding: 9px 14px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    text-decoration: none;
+}
+.donate-member-link:hover {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
 .donate-close {
     position: absolute;
     top: 10px;

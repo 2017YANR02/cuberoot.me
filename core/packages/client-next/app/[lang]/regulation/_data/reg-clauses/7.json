@@ -1,0 +1,119 @@
+{
+  "articleId": "7",
+  "version": {
+    "en": "April 1, 2026",
+    "zh": "2026年4月1日"
+  },
+  "title": {
+    "en": "Environment",
+    "zh": "比赛环境",
+    "zhHant": "比賽環境"
+  },
+  "clauses": [
+    {
+      "id": "7b",
+      "depth": 0,
+      "en": "Spectators must remain at least 1.5 meters away from the solving stations when they are in use.",
+      "zh": "观众距离正在使用的比赛区必须保持1.5米以上。",
+      "zhHant": "觀眾距離正在使用的比賽區必須保持1.5米以上。"
+    },
+    {
+      "id": "7c",
+      "depth": 0,
+      "en": "Lighting of the competition area must be given special attention. Lighting should be neutral, such that competitors can easily differentiate among the colors on the puzzles.",
+      "zh": "比赛区的光照必须特别注意。光照应使用白光以便选手可以更容易识别不同的颜色。",
+      "zhHant": "比賽區的光照必須特別注意。光照應使用白光以便選手可以更容易識別不同的顏色。"
+    },
+    {
+      "id": "7e",
+      "depth": 0,
+      "en": "The competition area must be smoke-free.",
+      "zh": "比赛区严禁吸烟。",
+      "zhHant": "比賽區嚴禁吸菸。"
+    },
+    {
+      "id": "7f",
+      "depth": 0,
+      "en": "Solving station:",
+      "zh": "比赛位：",
+      "zhHant": "比賽位："
+    },
+    {
+      "id": "7f1",
+      "depth": 1,
+      "en": "Definitions:",
+      "zh": "定义：",
+      "zhHant": "定義："
+    },
+    {
+      "id": "7f1a",
+      "depth": 2,
+      "en": "Speedsolving timer: An approved timer from the [Approved Timer List](https://drive.google.com/file/d/1UizYZOY4v-t7YnKcXas0hHzekX-NGuhW/view).",
+      "zh": "计时器：在[已批准计时器列表](https://drive.google.com/file/d/1UizYZOY4v-t7YnKcXas0hHzekX-NGuhW/view)中列出的被批准的计时器。",
+      "zhHant": "計時器：在[已批准計時器列表](https://drive.google.com/file/d/1UizYZOY4v-t7YnKcXas0hHzekX-NGuhW/view)中列出的被批准的計時器。"
+    },
+    {
+      "id": "7f1b",
+      "depth": 2,
+      "en": "Mat: The mat on which the speedsolving timer is placed.",
+      "zh": "垫子：计时器所放置在的垫子。",
+      "zhHant": "墊子：計時器所放置在的墊子。"
+    },
+    {
+      "id": "7f1b+",
+      "depth": 2,
+      "en": "[CLARIFICATION] A full-size mat should have minimum dimensions of 30cm (left to right) by 25cm (front to back).",
+      "zh": "[澄清] 全尺寸垫子的大小应至少达到 30厘米（左右）x 25厘米（前后）。",
+      "zhHant": "[澄清] 全尺寸墊子的大小應至少達到 30釐米（左右）x 25釐米（前後）。"
+    },
+    {
+      "id": "7f1c",
+      "depth": 2,
+      "en": "Timer: The speedsolving timer or a stopwatch (for longer attempts).",
+      "zh": "计时装置：计时器或秒表（对于长时间的尝试）。",
+      "zhHant": "計時裝置：計時器或秒錶（對於長時間的嘗試）。"
+    },
+    {
+      "id": "7f1d",
+      "depth": 2,
+      "en": "Surface: The flat surface on which the speedsolving timer is placed. The mat is considered a part of the surface. The timer is not considered a part of the surface.",
+      "zh": "桌面：放置计时器的平面。垫子也被认为是桌面的一部分。计时器不算是桌面的一部分。",
+      "zhHant": "桌面：放置計時器的平面。墊子也被認為是桌面的一部分。計時器不算是桌面的一部分。"
+    },
+    {
+      "id": "7f2",
+      "depth": 1,
+      "en": "The speedsolving timer must be attached to the mat and placed on the surface, with the timer on the side of the mat nearest to the competitor.",
+      "zh": "计时器必须固定在垫子上并且放置在桌面上，且计时器位于垫子靠近选手的一端。",
+      "zhHant": "計時器必須固定在墊子上並且放置在桌面上，且計時器位於墊子靠近選手的一端。"
+    },
+    {
+      "id": "7f3",
+      "depth": 1,
+      "en": "The organization team should modify speedsolving timers to be more robust against common incidents, for example by making the buttons more difficult to press by accident (e.g. by attaching O-rings around the buttons) and securing the battery more firmly (e.g. by padding the battery compartment).",
+      "zh": "主办团队应该对计时器进行修改，例如把按键变得更难意外按到（例如在按键周围加上O形环），以使得它更容易避免一些常见的意外，并且把电池固定得更加牢固（例如加一些垫物）。",
+      "zhHant": "主辦團隊應該對計時器進行修改，例如把按鍵變得更難意外按到（例如在按鍵周圍加上O形環），以使得它更容易避免一些常見的意外，並且把電池固定得更加牢固（例如加一些墊物）。"
+    },
+    {
+      "id": "7h",
+      "depth": 0,
+      "en": "If competitors do not remain at the same solving station for all of their attempts in a round, the competition area must have one or more Competitor Waiting Areas. Exception: rounds with individually scheduled attempts.",
+      "zh": "如果选手不会一直待在同一个比赛位完成整轮比赛，那么比赛区就必须有一个或多个选手等候区。例外：单独进行每次尝试的轮次。",
+      "zhHant": "如果選手不會一直待在同一個比賽位完成整輪比賽，那麼比賽區就必須有一個或多個選手等候區。例外：單獨進行每次嘗試的輪次。"
+    },
+    {
+      "id": "7h2",
+      "depth": 1,
+      "en": "Definition: A Competitor Waiting Area is an area in which competitors in a group wait to be called to a solving station.",
+      "zh": "定义：选手等候区是指一组选手在等待被叫到比赛区比赛时所待的区域。",
+      "zhHant": "定義：選手等候區是指一組選手在等待被叫到比賽區比賽時所待的區域。"
+    },
+    {
+      "id": "7h2+",
+      "depth": 1,
+      "en": "[ADDITION] Competitors in a Competitor Waiting Area who are waiting between attempts should not be able to see the puzzles of the competitors on stage.",
+      "zh": "[附加] 位于选手等候区等待比赛的选手不应该能看到正在比赛的魔方。",
+      "zhHant": "[附加] 位於選手等候區等待比賽的選手不應該能看到正在比賽的魔方。"
+    }
+  ]
+}

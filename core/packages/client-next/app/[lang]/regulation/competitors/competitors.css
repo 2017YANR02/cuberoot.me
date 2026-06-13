@@ -1,0 +1,125 @@
+/* ─── /regulation/competitors — Article 2 page-specific styles ───
+ * Reuses .reg-* tokens from ../regulation.css (loaded via RegArticleLayout).
+ * Adds: the register→stage numbered flow, the responsibilities grid, and
+ * the small inline reg tag.
+ * ──────────────────────────────────────────────────────────────── */
+
+/* ── Inline regulation tag (e.g. 2c) ── */
+.comp-reg-tag {
+  display: inline-block;
+  margin-left: 9px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 11%, transparent);
+  border-radius: 6px;
+  padding: 1px 7px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* ── Registration → stage flow (numbered steps) ── */
+.comp-flow {
+  list-style: none;
+  margin: 4px 0 28px;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.comp-flow-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: start;
+  gap: 16px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 20px 22px;
+  background: var(--card);
+}
+.comp-flow-n {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--blue);
+}
+.comp-flow-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  color: var(--blue);
+}
+.comp-flow-body { min-width: 0; }
+.comp-flow-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  margin-bottom: 6px;
+}
+.comp-flow-desc {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.62;
+  color: var(--ink-dim);
+}
+
+/* ── Responsibilities grid ── */
+.comp-duties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 4px 0 28px;
+}
+.comp-duty {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 18px 20px;
+  background: var(--card);
+}
+.comp-duty-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  color: var(--blue);
+}
+.comp-duty-text {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+}
+.comp-duty-text .comp-reg-tag { margin-left: 7px; }
+
+.comp-duties + .reg-key { margin-bottom: 26px; }
+
+/* ── Narrow screens: single column ── */
+@media (max-width: 720px) {
+  .comp-flow-step { gap: 12px; padding: 18px; }
+  .comp-duties { grid-template-columns: 1fr; gap: 14px; }
+}

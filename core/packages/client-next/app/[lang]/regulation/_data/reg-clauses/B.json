@@ -1,0 +1,273 @@
+{
+  "articleId": "B",
+  "version": {
+    "en": "April 1, 2026",
+    "zh": "2026年4月1日"
+  },
+  "title": {
+    "en": "Blindfolded Solving",
+    "zh": "盲拧",
+    "zhHant": "盲擰"
+  },
+  "clauses": [
+    {
+      "id": "B1",
+      "depth": 0,
+      "en": "Standard speed solving procedures are followed, as described in [Article A](regulations:article:A) (Speed Solving). Additional regulations that supersede the corresponding procedures in [Article A](regulations:article:A) are described below.",
+      "zh": "主要遵循速拧规则，见[规则A](regulations:article:A)（速拧）。与[规则A](regulations:article:A)中的速拧规则不同的附加规则见下文。",
+      "zhHant": "主要遵循速擰規則，見[規則A](regulations:article:A)（速擰）。與[規則A](regulations:article:A)中的速擰規則不同的附加規則見下文。"
+    },
+    {
+      "id": "B1+",
+      "depth": 0,
+      "en": "[REMINDER] The competitor must use a puzzle without textures, markings, or other features that distinguish similar pieces (see [Regulation 3k](regulations:regulation:3k)). This should be given special attention for Blindfolded Solving. Exception: for 3x3x3 Blindfolded, the puzzle may have any logos permitted by [Regulation 3l](regulations:regulation:3l).",
+      "zh": "[提醒] 选手使用的魔方上不能有任何纹理、标记，或是其他可以区分相似块的特性（见[规则3k](regulations:regulation:3k)）。这点在盲拧项目中需要特别注意。例外：对于三阶盲拧，魔方上可以有[规则 3l](regulations:regulation:3l)中所允许的logo。",
+      "zhHant": "[提醒] 選手使用的魔方上不能有任何紋理、標記，或是其他可以區分相似塊的特性（見[規則3k](regulations:regulation:3k)）。這點在盲擰項目中需要特別注意。例外：對於三階盲擰，魔方上可以有[規則 3l](regulations:regulation:3l)中所允許的logo。"
+    },
+    {
+      "id": "B1a",
+      "depth": 1,
+      "en": "There is no inspection period (i.e. the solve starts at the same time as the attempt).",
+      "zh": "没有观察阶段（也就是说尝试开始的时候直接进入还原阶段）。",
+      "zhHant": "沒有觀察階段（也就是說嘗試開始的時候直接進入還原階段）。"
+    },
+    {
+      "id": "B1b",
+      "depth": 1,
+      "en": "The competitor supplies their own blindfold.",
+      "zh": "选手自备眼罩。",
+      "zhHant": "選手自備眼罩。"
+    },
+    {
+      "id": "B1b+",
+      "depth": 1,
+      "en": "[RECOMMENDATION] Blindfolds should be checked by the WCA Delegate before use in the competition.",
+      "zh": "[建议] 眼罩在使用前应该由WCA代表检查。",
+      "zhHant": "[建議] 眼罩在使用前應該由WCA代表檢查。"
+    },
+    {
+      "id": "B2",
+      "depth": 0,
+      "en": "Starting the attempt:",
+      "zh": "开始尝试：",
+      "zhHant": "開始嘗試："
+    },
+    {
+      "id": "B2a",
+      "depth": 1,
+      "en": "The judge resets the timer(s) as in [Regulation A3b](regulations:regulation:A3b) and indicates that they are ready for the competitor to start the attempt (e.g. placing the puzzle cover in front of the competitor, saying \"READY\", giving a thumbs-up signal). The competitor must start the attempt within one minute, else the competitor forfeits the attempt (DNS), at the discretion of the judge.",
+      "zh": "裁判按照[规则A3b](regulations:regulation:A3b)重置计时器和秒表并表示他已准备好让选手开始这次还原（例如把魔方遮挡盒放在选手面前，说“准备好了”，或者做出一个大拇指朝上的手势）。选手必须在之后的一分钟内开始尝试，否则该选手将失去此次尝试机会（DNS），由裁判决定。",
+      "zhHant": "裁判按照[規則A3b](regulations:regulation:A3b)重置計時器和秒錶並表示他已準備好讓選手開始這次還原（例如把魔方遮擋盒放在選手面前，說“準備好了”，或者做出一個大拇指朝上的手勢）。選手必須在之後的一分鐘內開始嘗試，否則該選手將失去此次嘗試機會（DNS），由裁判決定。"
+    },
+    {
+      "id": "B2b",
+      "depth": 1,
+      "en": "When using the speedsolving timer, the competitor uses their fingers to touch the elevated sensor surfaces of the timer. The competitor's palms must be facing down, and located on the side of the timer that is closer to them. Penalty: time penalty (+2 seconds).",
+      "zh": "当使用计时器的时候，选手用他的手指触碰计时器感应区。选手的手掌必须朝下，且位于计时器更靠近选手的那边。惩罚：加罚时间（+2秒）。",
+      "zhHant": "當使用計時器的時候，選手用他的手指觸碰計時器感應區。選手的手掌必須朝下，且位於計時器更靠近選手的那邊。懲罰：加罰時間（+2秒）。"
+    },
+    {
+      "id": "B2c",
+      "depth": 1,
+      "en": "When using the speedsolving timer, the competitor must have no physical contact with the puzzle or the puzzle cover while starting the attempt. Penalty: time penalty (+2 seconds).",
+      "zh": "当使用计时器的时候，选手在开始还原的时候禁止和魔方或遮挡盒有物理接触。惩罚：加罚时间（+2秒）。",
+      "zhHant": "當使用計時器的時候，選手在開始還原的時候禁止和魔方或遮擋盒有物理接觸。懲罰：加罰時間（+2秒）。"
+    },
+    {
+      "id": "B2d",
+      "depth": 1,
+      "en": "When using the speedsolving timer, the competitor should keep their hands on the timer until the timer is ready to start. The timer is started when the competitor removes their hand(s) from the timer. The competitor starts the attempt and the solve by starting the timer.",
+      "zh": "当使用计时器的时候，选手应该将手放在计时器上直到计时器准备好启动。选手通过将手从计时器上移开来启动计时器。启动计时器即视为开始本次还原/尝试。",
+      "zhHant": "當使用計時器的時候，選手應該將手放在計時器上直到計時器準備好啟動。選手透過將手從計時器上移開來啟動計時器。啟動計時器即視為開始本次還原/嘗試。"
+    },
+    {
+      "id": "B2d+",
+      "depth": 1,
+      "en": "[ADDITION] By default, the competitor starts the solve the first time that they start the timer after the judge has indicated that they are ready (see [Regulation B2a](regulations:regulation:B2a)). If they want to check that the timer is in working order, they must (ask and) receive confirmation from the judge each time before starting/resetting the timer during this phase. Penalty for starting and resetting a timer without confirmation from the judge: disqualification of the attempt (DNF).",
+      "zh": "[附加] 在默认情况下，选手在裁判表明准备完毕后第一次启动计时器被认为是开始尝试（见[规则B2a](regulations:regulation:B2a)）。如果选手想检查计时器的工作状态，他必须向裁判询问，并且得到裁判的确认后才能在这个阶段启动/重置计时器。对在不经过裁判确认的情况下启动然后重置计时器的惩罚：取消此次还原资格（DNF）。",
+      "zhHant": "[附加] 在預設情況下，選手在裁判表明準備完畢後第一次啟動計時器被認為是開始嘗試（見[規則B2a](regulations:regulation:B2a)）。如果選手想檢查計時器的工作狀態，他必須向裁判詢問，並且得到裁判的確認後才能在這個階段啟動/重置計時器。對在不經過裁判確認的情況下啟動然後重置計時器的懲罰：取消此次還原資格（DNF）。"
+    },
+    {
+      "id": "B2d1",
+      "depth": 2,
+      "en": "The competitor removes the cover from the puzzle after starting the timer.",
+      "zh": "选手在启动计时器之后移除魔方上的遮挡盒。",
+      "zhHant": "選手在啟動計時器之後移除魔方上的遮擋盒。"
+    },
+    {
+      "id": "B2d2",
+      "depth": 2,
+      "en": "If a stopwatch is in use in addition to the speedsolving timer, the judge starts the stopwatch as soon as the competitor starts the solve.",
+      "zh": "如果在计时器以外还额外使用了秒表，裁判在选手开始还原的同时启动秒表。",
+      "zhHant": "如果在計時器以外還額外使用了秒錶，裁判在選手開始還原的同時啟動秒錶。"
+    },
+    {
+      "id": "B2f",
+      "depth": 1,
+      "en": "When using a stopwatch as the only timer, the competitor confirms they are ready and starts the solve by lifting the cover. The judge starts the stopwatch as soon as the competitor starts the solve.",
+      "zh": "如果使用秒表作为唯一计时设备，当选手确认他已准备好后，选手将遮盖物拿开即作为开始还原的标识，同时裁判启动秒表。",
+      "zhHant": "如果使用秒錶作為唯一計時裝置，當選手確認他已準備好後，選手將遮蓋物拿開即作為開始還原的標識，同時裁判啟動秒錶。"
+    },
+    {
+      "id": "B2f+",
+      "depth": 1,
+      "en": "[CLARIFICATION] Since the competitor starts the solve by lifting the cover, penalties for starting the timer and for touching the cover while starting the attempt do not apply (see [Regulation B2b](regulations:regulation:B2b) and [Regulation B2c](regulations:regulation:B2c)).",
+      "zh": "[澄清] 因为选手是通过拿开遮盖物来开始还原的，启动计时器以及在开始尝试时触碰遮盖物的惩罚在此不适用（见[Regulation B2b](regulations:regulation:B2b)以及[Regulation B2c](regulations:regulation:B2c)）。",
+      "zhHant": "[澄清] 因為選手是透過拿開遮蓋物來開始還原的，啟動計時器以及在開始嘗試時觸碰遮蓋物的懲罰在此不適用（見[Regulation B2b](regulations:regulation:B2b)以及[Regulation B2c](regulations:regulation:B2c)）。"
+    },
+    {
+      "id": "B3",
+      "depth": 0,
+      "en": "Memorization phase:",
+      "zh": "记忆阶段：",
+      "zhHant": "記憶階段："
+    },
+    {
+      "id": "B3a",
+      "depth": 1,
+      "en": "The competitor may pick up the puzzle during the memorization phase.",
+      "zh": "在记忆阶段选手可以拿起魔方。",
+      "zhHant": "在記憶階段選手可以拿起魔方。"
+    },
+    {
+      "id": "B3b",
+      "depth": 1,
+      "en": "The competitor must not make physical notes. Penalty: disqualification of the attempt (DNF).",
+      "zh": "选手禁止做物理标记。惩罚：取消此次还原资格（DNF）。",
+      "zhHant": "選手禁止做物理標記。懲罰：取消此次還原資格（DNF）。"
+    },
+    {
+      "id": "B3c",
+      "depth": 1,
+      "en": "The competitor must not apply moves or intentional changes in alignment (see [Regulation A3c2](regulations:regulation:A3c2)) to the puzzle during the memorization phase. Penalty: disqualification of the attempt (DNF). Exception: see [Regulation B3d](regulations:regulation:B3d).",
+      "zh": "在记忆阶段选手禁止转动魔方或有意改变魔方错位程度。惩罚：取消此次还原资格（DNF）。例外：见[规则B3d](regulations:regulation:B3d)。",
+      "zhHant": "在記憶階段選手禁止轉動魔方或有意改變魔方錯位程度。懲罰：取消此次還原資格（DNF）。例外：見[規則B3d](regulations:regulation:B3d)。"
+    },
+    {
+      "id": "B3d",
+      "depth": 1,
+      "en": "If the parts of the puzzle are not fully aligned, then the competitor may align the faces, as long as misalignments stay within the limits of [Regulation 10f](regulations:regulation:10f) (see [Regulation A3c2](regulations:regulation:A3c2)).",
+      "zh": "如果魔方的一些块没有对齐，选手可以将它们对齐，但仅限于[规则10f](regulations:regulation:10f)所描述的限度以内（见[规则A3c2](regulations:regulation:A3c2)）。",
+      "zhHant": "如果魔方的一些塊沒有對齊，選手可以將它們對齊，但僅限於[規則10f](regulations:regulation:10f)所描述的限度以內（見[規則A3c2](regulations:regulation:A3c2)）。"
+    },
+    {
+      "id": "B4",
+      "depth": 0,
+      "en": "Blindfolded phase:",
+      "zh": "盲拧阶段：",
+      "zhHant": "盲擰階段："
+    },
+    {
+      "id": "B4a",
+      "depth": 1,
+      "en": "The competitor dons the blindfold to start the blindfolded phase.",
+      "zh": "选手戴上眼罩以开始盲拧阶段。",
+      "zhHant": "選手戴上眼罩以開始盲擰階段。"
+    },
+    {
+      "id": "B4a1",
+      "depth": 2,
+      "en": "Until the competitor applies the first move to the puzzle, they may remove the blindfold to return to the memorization phase.",
+      "zh": "直到选手第一次转动魔方之前，他都可以取下眼罩以回到记忆阶段。",
+      "zhHant": "直到選手第一次轉動魔方之前，他都可以取下眼罩以回到記憶階段。"
+    },
+    {
+      "id": "B4b",
+      "depth": 1,
+      "en": "The competitor must not apply moves or intentional changes in alignment to the puzzle before they have fully donned the blindfold. Penalty: disqualification of the attempt (DNF).",
+      "zh": "在完全戴上眼罩前选手禁止转动魔方或有意改变魔方错位程度。惩罚：取消此次还原资格（DNF）。",
+      "zhHant": "在完全戴上眼罩前選手禁止轉動魔方或有意改變魔方錯位程度。懲罰：取消此次還原資格（DNF）。"
+    },
+    {
+      "id": "B4c",
+      "depth": 1,
+      "en": "As soon as the competitor applies the first move to the puzzle, the judge must ensure that there is a sight blocker (e.g. a sheet of paper or cardboard) between the competitor's face and the puzzle.",
+      "zh": "从选手开始转动的时候开始，裁判就必须确保有一个不透明的遮挡物（例如一张纸或硬纸板）挡在选手的脸和魔方之间。",
+      "zhHant": "從選手開始轉動的時候開始，裁判就必須確保有一個不透明的遮擋物（例如一張紙或硬紙板）擋在選手的臉和魔方之間。"
+    },
+    {
+      "id": "B4c++",
+      "depth": 1,
+      "en": "[ADDITION] If the judge forgot to put a sight blocker and the WCA Delegate does not suspect that the competitor intentionally violated any WCA Regulations, the original attempt may stand.",
+      "zh": "[附加] 如果裁判忘记使用遮挡物，并且WCA代表没有怀疑选手故意违反任何WCA规则，则原来那次尝试的结果可以保留。",
+      "zhHant": "[附加] 如果裁判忘記使用遮擋物，並且WCA代表沒有懷疑選手故意違反任何WCA規則，則原來那次嘗試的結果可以保留。"
+    },
+    {
+      "id": "B4c1",
+      "depth": 2,
+      "en": "In all cases, the competitor must wear the blindfold such that their view of the puzzle would still clearly be blocked if the sight blocker were not in the way.",
+      "zh": "无论什么情况，选手必须戴着眼罩，使得即便将遮挡物移去他仍然看不到魔方。",
+      "zhHant": "無論什麼情況，選手必須戴著眼罩，使得即便將遮擋物移去他仍然看不到魔方。"
+    },
+    {
+      "id": "B4c2",
+      "depth": 2,
+      "en": "A sight blocker must be positioned such that the competitor's view of the puzzle would still clearly be blocked if they were not wearing a blindfold.",
+      "zh": "遮挡物必须放置在能确保即使在选手没有佩戴眼罩时，它仍然能明确地遮挡住选手观察魔方的视线的位置上。",
+      "zhHant": "遮擋物必須放置在能確保即使在選手沒有佩戴眼罩時，它仍然能明確地遮擋住選手觀察魔方的視線的位置上。"
+    },
+    {
+      "id": "B4c3",
+      "depth": 2,
+      "en": "If the judge and competitor agree beforehand, or if required by the organization team, a suitable object (e.g. a music stand, the surface of the table) placed by the competitor may be used as the sight blocker. The competitor must make a reasonable attempt to place the sight blocker themselves. Penalty: disqualification of the attempt (DNF). If the sight blocker is not positioned such that the competitor's view of the puzzle would still clearly be blocked if they were not wearing a blindfold, an extra sight blocker should be placed by the judge.",
+      "zh": "如果裁判和选手事先达成一致，或者主办团队要求，选手可以使用一个合适的物品（例如：乐谱架或桌面）作为遮挡物。选手必须尽力自己放好遮挡物。惩罚：取消此次还原资格（DNF）。如果遮挡物未能正确放置，以至于不能明确地遮挡住选手观察魔方的视线（假设选手没有佩戴眼罩），裁判应当放置一个额外的遮挡物。",
+      "zhHant": "如果裁判和選手事先達成一致，或者主辦團隊要求，選手可以使用一個合適的物品（例如：樂譜架或桌面）作為遮擋物。選手必須盡力自己放好遮擋物。懲罰：取消此次還原資格（DNF）。如果遮擋物未能正確放置，以至於不能明確地遮擋住選手觀察魔方的視線（假設選手沒有佩戴眼罩），裁判應當放置一個額外的遮擋物。"
+    },
+    {
+      "id": "B4d",
+      "depth": 1,
+      "en": "The competitor must not look at the puzzle at any point during the blindfolded phase. Penalty: disqualification of the attempt (DNF).",
+      "zh": "在盲拧阶段选手禁止在任何时候看到魔方。惩罚：取消此次还原资格（DNF）。",
+      "zhHant": "在盲擰階段選手禁止在任何時候看到魔方。懲罰：取消此次還原資格（DNF）。"
+    },
+    {
+      "id": "B4d+",
+      "depth": 1,
+      "en": "[CLARIFICATION] For 3x3x3 Blindfolded, competitors are permitted to determine the location of a permitted logo (see [Regulation 3l](regulations:regulation:3l)) by touch during the blindfolded phase.",
+      "zh": "[澄清] 对于三阶盲拧，选手在盲拧阶段允许通过触摸来确定允许的logo的位置（见[规则3l](regulations:regulation:3l)）。",
+      "zhHant": "[澄清] 對於三階盲擰，選手在盲擰階段允許透過觸控來確定允許的logo的位置（見[規則3l](regulations:regulation:3l)）。"
+    },
+    {
+      "id": "B5",
+      "depth": 0,
+      "en": "Stopping the solve:",
+      "zh": "结束还原：",
+      "zhHant": "結束還原："
+    },
+    {
+      "id": "B5a",
+      "depth": 1,
+      "en": "When using the speedsolving timer, the competitor stops the solve by releasing the puzzle and then stopping the timer.",
+      "zh": "当使用计时器时，选手通过放下魔方并停止计时器以结束还原。",
+      "zhHant": "當使用計時器時，選手透過放下魔方並停止計時器以結束還原。"
+    },
+    {
+      "id": "B5a1",
+      "depth": 2,
+      "en": "If a stopwatch is in use in addition to the speedsolving timer, the judge stops the stopwatch as soon as the competitor stops the solve.",
+      "zh": "当秒表和计时器同时使用时，裁判在选手结束还原的时候立刻停止秒表。",
+      "zhHant": "當秒錶和計時器同時使用時，裁判在選手結束還原的時候立刻停止秒錶。"
+    },
+    {
+      "id": "B5b",
+      "depth": 1,
+      "en": "When using a stopwatch as the only timer, the competitor stops the solve by releasing the puzzle and notifying the judge that they have stopped the solve. The judge stops the stopwatch as soon as the competitor does this.",
+      "zh": "当使用秒表时，选手放下魔方并提示裁判还原结束，裁判此时立刻停止秒表。",
+      "zhHant": "當使用秒錶時，選手放下魔方並提示裁判還原結束，裁判此時立刻停止秒錶。"
+    },
+    {
+      "id": "B5b1",
+      "depth": 2,
+      "en": "The competitor's default notification signal consists of releasing the puzzle(s) from their hands and placing their hands on the surface, with palms down. The competitor and the judge may agree on another appropriate notification before the start of the attempt.",
+      "zh": "默认情况下，选手放下魔方并且把双手掌心向下放在桌面上表示结束还原。选手和裁判可以在开始还原之前协商别的合适的方式。",
+      "zhHant": "預設情況下，選手放下魔方並且把雙手掌心向下放在桌面上表示結束還原。選手和裁判可以在開始還原之前協商別的合適的方式。"
+    },
+    {
+      "id": "B5c",
+      "depth": 1,
+      "en": "If the competitor is not touching the puzzle, they may remove the blindfold before they stop the timer. They must not touch the puzzle until the end of the solve. Penalty for touching the puzzle: disqualification of the attempt (DNF).",
+      "zh": "如果已经放下魔方，选手可以在停止计时器前摘下眼罩，但直到计时器停止之前他不可以再触碰魔方。触碰魔方的惩罚：取消此次还原资格（DNF）。",
+      "zhHant": "如果已經放下魔方，選手可以在停止計時器前摘下眼罩，但直到計時器停止之前他不可以再觸碰魔方。觸碰魔方的懲罰：取消此次還原資格（DNF）。"
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+/* ─── /regulation/notation — Article 12 bespoke styles ───
+ * Builds on the shared .reg-page tokens (--blue / --ink / --rule / --card ...).
+ * The centrepiece is a responsive grid of looping 3D move tiles (.nt-grid).
+ * ──────────────────────────────────────────────────────── */
+
+/* ── Move-tile grid ─────────────────────────────────────── */
+.nt-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(146px, 1fr));
+  margin-top: 8px;
+}
+/* Slightly larger tiles for the puzzles whose moves are subtler. */
+.nt-grid.nt-grid-lg {
+  grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
+}
+
+.nt-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 16px 14px 18px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--card);
+  cursor: pointer;
+  transition: border-color .15s, transform .15s, box-shadow .15s;
+}
+.nt-tile:hover,
+.nt-tile:focus-visible {
+  border-color: var(--blue);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -18px color-mix(in srgb, var(--blue) 70%, transparent);
+  outline: none;
+}
+
+.nt-sym {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  color: var(--blue);
+  line-height: 1.1;
+  min-height: 1.1em;
+  text-align: center;
+}
+
+.nt-cube {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: block;
+}
+
+.nt-cap {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink-dim);
+  text-align: center;
+  max-width: 18ch;
+}
+
+/* ── Modifier legend (the ' / 2 / w universal table) ────── */
+.nt-mods {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-top: 2px;
+}
+.nt-mod {
+  border: 1px solid var(--rule);
+  border-radius: 13px;
+  padding: 16px 18px;
+  background: var(--card);
+}
+.nt-mod-key {
+  font-family: var(--font-mono);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--blue);
+  margin-bottom: 6px;
+}
+.nt-mod-desc {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink-dim);
+}
+
+/* ── Inline mono token used in prose ────────────────────── */
+.nt-k {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 9%, transparent);
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: .92em;
+  white-space: nowrap;
+}
+
+/* ── Square-1 (x, y) diagram ────────────────────────────── */
+.nt-sq1 {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 30px;
+  align-items: center;
+  margin-top: 8px;
+}
+.nt-sq1-fig {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  display: block;
+}
+.nt-sq1-face { fill: none; stroke: var(--rule-strong); stroke-width: 1.5; }
+.nt-sq1-spoke { stroke: var(--rule); stroke-width: 0.9; }
+.nt-sq1-hub { fill: var(--ink-faint); }
+.nt-sq1-hi { fill: color-mix(in srgb, var(--blue) 32%, transparent); stroke: var(--blue); stroke-width: 1; }
+.nt-sq1-hi.warm { fill: color-mix(in srgb, var(--warn) 32%, transparent); stroke: var(--warn); }
+.nt-sq1-arrow { stroke: var(--blue); stroke-width: 1.8; stroke-linecap: round; }
+.nt-sq1-arrow.warm { stroke: var(--warn); }
+.nt-sq1-arrowhead { fill: var(--blue); }
+.nt-sq1-arrowhead.warm { fill: var(--warn); }
+.nt-sq1-slice { stroke: color-mix(in srgb, var(--ink) 38%, transparent); stroke-width: 1.6; stroke-dasharray: 4 4; }
+.nt-sq1-lbl { fill: var(--ink-dim); font-family: var(--font-mono); font-size: 13px; }
+.nt-sq1-figs { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+/* / flip mini-diagram (front view: cut down the middle, right half turns 180°) */
+.nt-sl-fig { width: 100%; max-width: 188px; height: auto; display: block; }
+.nt-sl-body { fill: color-mix(in srgb, var(--ink) 3%, transparent); stroke: var(--rule-strong); stroke-width: 1.5; }
+.nt-sl-layer { stroke: var(--rule); stroke-width: 1; }
+.nt-sl-right { fill: color-mix(in srgb, var(--blue) 16%, transparent); }
+.nt-sl-arrow { stroke: var(--blue); stroke-width: 1.8; stroke-linecap: round; }
+.nt-sl-arrowhead { fill: var(--blue); }
+.nt-sl-deg { fill: var(--blue); font-family: var(--font-mono); font-size: 12px; }
+
+/* ── Clock diagram ──────────────────────────────────────── */
+.nt-clock {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 30px;
+  align-items: center;
+  margin-top: 8px;
+}
+.nt-clock-fig { width: 100%; max-width: 200px; height: auto; display: block; }
+.nt-clock-body { fill: var(--card); stroke: var(--rule-strong); stroke-width: 2; }
+.nt-clock-dial { fill: color-mix(in srgb, var(--blue) 8%, var(--card)); stroke: var(--rule); stroke-width: 1.2; }
+.nt-clock-pin { fill: var(--blue); }
+.nt-clock-pin-up { fill: var(--ok); }
+.nt-clock-lbl { fill: var(--ink-faint); font-family: var(--font-mono); font-size: 11px; text-anchor: middle; }
+
+/* ── Pin / dial reference table (Clock) ─────────────────── */
+.nt-dial-list {
+  list-style: none; padding: 0; margin: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px;
+}
+.nt-dial-list li {
+  display: flex; align-items: baseline; gap: 9px;
+  font-size: 14.5px; color: var(--ink-dim);
+}
+.nt-dial-list li b {
+  font-family: var(--font-mono); font-weight: 700; color: var(--blue);
+  font-size: 15px; min-width: 2.4em;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .nt-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .nt-grid.nt-grid-lg { grid-template-columns: repeat(2, 1fr); }
+  .nt-sym { font-size: 21px; }
+  .nt-sq1, .nt-clock { grid-template-columns: 1fr; gap: 18px; justify-items: center; }
+  .nt-sq1-fig, .nt-clock-fig { max-width: 240px; }
+}
+@media (max-width: 380px) {
+  .nt-grid, .nt-grid.nt-grid-lg { grid-template-columns: 1fr; }
+}

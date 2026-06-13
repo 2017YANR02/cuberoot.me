@@ -6,7 +6,7 @@
  * (复用 DonateModal)。admin 登录后行内 + 新增 / 编辑 / 删除,数据走 /v1/sponsors。
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Heart, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Heart, Plus, Pencil, Trash2, Crown } from 'lucide-react';
 import { tr, useLang } from '@/i18n/tr';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import AppLink from '@/components/AppLink';
@@ -58,6 +58,7 @@ function SponsorCard({ sponsor, isZh, admin, onEdit, onDelete }: {
         : <span className="sponsor-name">{name}</span>}
       {sponsor.wcaId && <span className="sponsor-wcaid">{sponsor.wcaId}</span>}
       <span className="sponsor-amount">{fmtAmount(sponsor.amount, sponsor.currency)}</span>
+      {sponsor.message && <span className="sponsor-message">{sponsor.message}</span>}
       {admin && (
         <div className="sponsor-admin">
           <button onClick={() => onEdit(sponsor)} aria-label="edit"><Pencil size={13} /></button>
@@ -137,12 +138,20 @@ export default function SupportPage() {
               zhHant: "所有贊助將全部用於伺服器購買與日常維護。感謝每一位支援 CubeRoot 的朋友。"
         })}
         </p>
-        <button className="support-cta" onClick={() => setDonateOpen(true)}>
-          <Heart size={15} className="support-cta-heart" />
-          {tr({ zh: '支持本站', en: 'Support this site',
-              zhHant: "支援本站"
-        })}
-        </button>
+        <div className="support-cta-row">
+          <button className="support-cta" onClick={() => setDonateOpen(true)}>
+            <Heart size={15} className="support-cta-heart" />
+            {tr({ zh: '支持本站', en: 'Support this site',
+                zhHant: "支援本站"
+          })}
+          </button>
+          <AppLink href="/membership" className="support-member-link">
+            <Crown size={14} />
+            {tr({ zh: '成为会员', en: 'Become a member',
+                zhHant: "成為會員"
+            })}
+          </AppLink>
+        </div>
       </header>
 
       {loadErr ? (

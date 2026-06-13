@@ -17,6 +17,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { pooledScramble, prewarmScramble } from '@/lib/cubing-scramble';
 import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import type { RustCrossPool, MovesTimed } from '@/lib/rust-cross-client';
+import SolveTabs, { type SolvePuzzle } from './SolveTabs';
 import './puzzle_optimal_solver.css';
 
 export interface OptimalSolverSpec {
@@ -113,9 +114,15 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
 
   const showResult = result && result.scramble === trimmed && !badToken;
 
+  const puzzle: SolvePuzzle | null =
+    spec.event === '222' ? '2x2x2'
+      : spec.event === 'pyram' ? 'pyraminx'
+        : spec.event === 'skewb' ? 'skewb'
+          : null;
+
   return (
     <div className="pos-page">
-      <h1>{tr(spec.title)}</h1>
+      <SolveTabs puzzle={puzzle} mode="solve" />
       <p className="pos-lead">{tr(spec.lead)}</p>
 
       <div className="pos-input-row">
