@@ -542,6 +542,14 @@
   color: var(--foreground);
   border-bottom-color: var(--accent);
 }
+/* 打乱 tab 是跳转件(AppLink <a>),不是页内视图:图标 + 文字,无下划线/无 is-active。 */
+.comp-view-tab--link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+}
+.comp-view-tab--link svg { opacity: 0.7; flex: none; }
 .comp-event-bar {
   margin-bottom: 12px;
 }
