@@ -1,0 +1,343 @@
+{
+  "articleId": "E",
+  "version": {
+    "en": "April 1, 2026",
+    "zh": "2026年4月1日"
+  },
+  "title": {
+    "en": "Fewest Moves Solving",
+    "zh": "最少步还原",
+    "zhHant": "最少步還原"
+  },
+  "clauses": [
+    {
+      "id": "E2",
+      "depth": 0,
+      "en": "Procedure for 3x3x3 Fewest Moves:",
+      "zh": "三阶最少步过程：",
+      "zhHant": "三階最少步過程："
+    },
+    {
+      "id": "E2a",
+      "depth": 1,
+      "en": "The judge distributes a scramble sequence and paper to all competitors. The judge then starts the stopwatch and calls \"GO\".",
+      "zh": "裁判将打乱公式以及纸张发给所有参赛选手。然后裁判启动秒表并说“开始”。",
+      "zhHant": "裁判將打亂公式以及紙張發給所有參賽選手。然後裁判啟動秒錶並說“開始”。"
+    },
+    {
+      "id": "E2a1",
+      "depth": 2,
+      "en": "Before the attempt has begun, the competitor must not write on any paper intended for the attempt. Exception: the competitor may write information to identify the attempt (see [Regulation E2c1](regulations:regulation:E2c1)). If they write this information on the paper that contains the scramble sequence, they must write only on the side without the scramble sequence before the attempt. Penalty for writing anything other than information to identify the attempt: disqualification of the attempt (DNF). Exception: if the competitor does not gain any advantage by writing additional information, the result may stand, at the discretion of the WCA Delegate.",
+      "zh": "尝试开始前，选手不能在尝试相关的任何纸张上书写。例外：选手可以写下识别这次尝试的信息（见[规则E2c1](regulations:regulation:E2c1)）。如果他在包含打乱的纸上写这个，他在尝试前只能写在不包含打乱的那一面。对书写任何非识别这次尝试信息的惩罚：取消此次还原资格（DNF）。例外：如果选手没有因为写下其它信息而获得优势，成绩可以保留，由WCA代表决定。",
+      "zhHant": "嘗試開始前，選手不能在嘗試相關的任何紙張上書寫。例外：選手可以寫下識別這次嘗試的資訊（見[規則E2c1](regulations:regulation:E2c1)）。如果他在包含打亂的紙上寫這個，他在嘗試前只能寫在不包含打亂的那一面。對書寫任何非識別這次嘗試資訊的懲罰：取消此次還原資格（DNF）。例外：如果選手沒有因為寫下其它資訊而獲得優勢，成績可以保留，由WCA代表決定。"
+    },
+    {
+      "id": "E2a1+",
+      "depth": 2,
+      "en": "[RECOMMENDATION] If a judge finds a submitted solution that does not appear to have information to identify the attempt, they should check both sides of the paper.",
+      "zh": "[建议] 如果裁判发现一个提交的解法似乎不包括标明尝试的信息，他应该检查一下这张纸的正反两面。",
+      "zhHant": "[建議] 如果裁判發現一個提交的解法似乎不包括標明嘗試的資訊，他應該檢查一下這張紙的正反兩面。"
+    },
+    {
+      "id": "E2a2",
+      "depth": 2,
+      "en": "Before the attempt has begun, the competitor must not reveal the scramble sequence. Penalty: disqualification of the attempt (DNF).",
+      "zh": "尝试开始前，选手禁止获知或展现打乱序列。惩罚：取消此次还原成绩（DNF）。",
+      "zhHant": "嘗試開始前，選手禁止獲知或展現打亂序列。懲罰：取消此次還原成績（DNF）。"
+    },
+    {
+      "id": "E2b",
+      "depth": 1,
+      "en": "All competitors have a total time limit of 60 minutes to find and write a solution.",
+      "zh": "选手有最多60分钟找到并写出一个解法。",
+      "zhHant": "選手有最多60分鐘找到並寫出一個解法。"
+    },
+    {
+      "id": "E2b+",
+      "depth": 1,
+      "en": "[CLARIFICATION] A competitor may choose to stop an attempt early by handing in a solution before the time limit.",
+      "zh": "[澄清] 选手可以选择在时限到达前提交他的解法并结束还原。",
+      "zhHant": "[澄清] 選手可以選擇在時限到達前提交他的解法並結束還原。"
+    },
+    {
+      "id": "E2b1",
+      "depth": 2,
+      "en": "The judge should call \"5 MINUTES REMAINING\" at 55 minutes, and must call \"STOP\" at 60 minutes.",
+      "zh": "裁判应该在时间过去55分钟时说“还剩5分钟”，并必须在60分钟时说“停”。",
+      "zhHant": "裁判應該在時間過去55分鐘時說“還剩5分鐘”，並必須在60分鐘時說“停”。"
+    },
+    {
+      "id": "E2b2",
+      "depth": 2,
+      "en": "If a competitor joins an attempt that is already in progress (see [Regulation E6](regulations:regulation:E6)), their time limit is the time remaining (i.e. they must finish when other competitors reach their 60 minute time limit).",
+      "zh": "如果有选手在一次尝试已经在进行的时候才开始（见[规则E6](regulations:regulation:E6)），则他们的时限是当前其他选手的剩余时间（也就是说他们必须在其他选手达到60分钟时限的时候完成）。",
+      "zhHant": "如果有選手在一次嘗試已經在進行的時候才開始（見[規則E6](regulations:regulation:E6)），則他們的時限是當前其他選手的剩餘時間（也就是說他們必須在其他選手達到60分鐘時限的時候完成）。"
+    },
+    {
+      "id": "E2c",
+      "depth": 1,
+      "en": "At 60 minutes, each competitor must submit to the judge a single piece of paper with a written solution and information to identify the attempt. The competitor's solution is considered correct if starting with a solved puzzle and applying the scramble sequence followed by the solution results in a solved puzzle. Penalty for an incorrect solution: disqualification of the attempt (DNF).",
+      "zh": "在60分钟时，每个选手必须向裁判提交一张包含解法和识别尝试的信息的纸张。选手的解法在以下情况时被认为是正确的：从一个已复原的魔方开始，操作一遍打乱步骤，然后操作一遍选手的解法，最后魔方状态是还原态。对不正确的解法的惩罚：取消此次还原成绩（DNF）。",
+      "zhHant": "在60分鐘時，每個選手必須向裁判提交一張包含解法和識別嘗試的資訊的紙張。選手的解法在以下情況時被認為是正確的：從一個已復原的魔方開始，操作一遍打亂步驟，然後操作一遍選手的解法，最後魔方狀態是還原態。對不正確的解法的懲罰：取消此次還原成績（DNF）。"
+    },
+    {
+      "id": "E2c+",
+      "depth": 1,
+      "en": "[CLARIFICATION] Although the judge may provide a standard sheet for competitors to submit solutions, a competitor may submit a solution on a different piece of paper. (Note that the piece of paper must come from the judge, according to [Regulation E3a](regulations:regulation:E3a).)",
+      "zh": "[澄清] 虽然裁判可以给选手提供一张标准答案纸用于提交解法，选手仍然可以在另一张纸上提交解法。（注意根据[规则E3a](regulations:regulation:E3a)，这张纸也必须由裁判提供。）",
+      "zhHant": "[澄清] 雖然裁判可以給選手提供一張標準答案紙用於提交解法，選手仍然可以在另一張紙上提交解法。（注意根據[規則E3a](regulations:regulation:E3a)，這張紙也必須由裁判提供。）"
+    },
+    {
+      "id": "E2c1",
+      "depth": 2,
+      "en": "Information to identify the attempt is: the competitor's name, WCA ID, or competition registrant ID (at least one, optionally multiple), and optionally the competition name, round, or attempt number. Penalty for a submitted solution without information to identify the attempt: disqualification of the attempt (DNF). Information to identify the attempt may be added by the competitor after the attempt has been submitted but before the end of the competition, at the discretion of the WCA Delegate and under the direct supervision of a judge. The competitor must not write anything after the time limit without the judge's supervision and must not make any changes to the solution. Penalty: disqualification of the attempt (DNF).",
+      "zh": "识别尝试的信息包括：选手姓名、WCA ID或者比赛报名ID（至少包括一项，可以写多项）；以及可选的：比赛的名称、轮次、尝试序号。对没有写明识别尝试的信息的惩罚：取消此次还原成绩（DNF）。选手可以在提交解法后但在比赛尚未结束之时，在裁判的直接监督下补充用于识别该尝试的信息，由WCA代表决定。选手在时间限制结束后不得在没有裁判监督的情况下书写任何内容，也不得对解法进行任何更改。处罚：取消此次还原资格（DNF）。",
+      "zhHant": "識別嘗試的資訊包括：選手姓名、WCA ID或者比賽報名ID（至少包括一項，可以寫多項）；以及可選的：比賽的名稱、輪次、嘗試序號。對沒有寫明識別嘗試的資訊的懲罰：取消此次還原成績（DNF）。選手可以在提交解法後但在比賽尚未結束之時，在裁判的直接監督下補充用於識別該嘗試的資訊，由WCA代表決定。選手在時間限制結束後不得在沒有裁判監督的情況下書寫任何內容，也不得對解法進行任何更改。處罰：取消此次還原資格（DNF）。"
+    },
+    {
+      "id": "E2c1+++",
+      "depth": 2,
+      "en": "[EXPLANATION] The competitor is not required to write the competition name, round, and/or attempt number on their submitted paper, but may wish to do so in order to help the organization team keep track of submitted solutions.",
+      "zh": "[解释] 选手不需要在提交的纸上写明比赛名称、轮次或者尝试序号，但可以这么做以帮助主办团队辨认提交的解法。",
+      "zhHant": "[解釋] 選手不需要在提交的紙上寫明比賽名稱、輪次或者嘗試序號，但可以這麼做以幫助主辦團隊辨認提交的解法。"
+    },
+    {
+      "id": "E2c2",
+      "depth": 2,
+      "en": "The solution must be an unambiguous sequence of moves with each move written out in sequential order. Penalty for an ambiguous solution: disqualification of the attempt (DNF).",
+      "zh": "解法必须是清晰无歧义的，每一步按照顺序写出的。对有歧义解法的惩罚：取消此次还原成绩（DNF）。",
+      "zhHant": "解法必須是清晰無歧義的，每一步按照順序寫出的。對有歧義解法的懲罰：取消此次還原成績（DNF）。"
+    },
+    {
+      "id": "E2c2+",
+      "depth": 2,
+      "en": "[EXAMPLE] Examples that are not considered a single unambiguous move sequence: multiple solution sequences without exactly one clearly indicated solution, a solution with ambiguous symbols (e.g. a letter that looks similar to \"B\" and \"R\" but is not clearly one or the other), a solution with stars or arrows indicating moves to be performed out of written order (e.g. \"insertions\" that are not written in-line with the rest of the move sequence, \"pre-moves\" that are not incorporated into the move sequence using valid notation), a move sequence that is not written out roughly as a series of lines in reading order, any arrangement of symbols that cannot be interpreted as an unambiguous move sequence. Exceptions to the examples above: small typographic corrections (e.g. blacking out moves and writing moves above that are clearly meant to replace them, moves written in subscript or superscript to fit between other moves).",
+      "zh": "[举例] 不被认为是唯一无歧义的解法的例子：没有一个清晰标明是指定解法的多个解法；里面有不清晰的符号（例如一个看起来又像B又像R的字母，但不是清晰的其中任何一个）的解法；一个有星号或者箭头的指明需要不按照书写顺序执行的步骤（例如，没有写在其他步骤里的“插入”，没有用合法写法加入到解法中的“预打乱”）的解法；一个不能按阅读顺序书写的一系列的行，导致符号的排列不能被无歧义地解释的解法。以上例子的例外：小的书写错误的修正（例如划掉一些步骤然后在其上写其他步骤，清晰的标明是要替换它们，以上标或下标形式书写以能在其他步骤之间写下的步骤）。",
+      "zhHant": "[舉例] 不被認為是唯一無歧義的解法的例子：沒有一個清晰標明是指定解法的多個解法；裡面有不清晰的符號（例如一個看起來又像B又像R的字母，但不是清晰的其中任何一個）的解法；一個有星號或者箭頭的指明需要不按照書寫順序執行的步驟（例如，沒有寫在其他步驟裡的“插入”，沒有用合法寫法加入到解法中的“預打亂”）的解法；一個不能按閱讀順序書寫的一系列的行，導致符號的排列不能被無歧義地解釋的解法。以上例子的例外：小的書寫錯誤的修正（例如劃掉一些步驟然後在其上寫其他步驟，清晰的標明是要替換它們，以上標或下標形式書寫以能在其他步驟之間寫下的步驟）。"
+    },
+    {
+      "id": "E2c2++",
+      "depth": 2,
+      "en": "[REMINDER] In the past, bracket notations (e.g. [r] or [u2]) were permitted for Fewest Moves. Only rotations based on x, y, or z are permitted now (see [Regulation 12a4a](regulations:regulation:12a4a)).",
+      "zh": "[提醒] 在过去，带方括号的表述方法（例如[r]或[u2]）曾经被允许在最少步中使用。现在只有使用x、y、z的转体表述被允许（见[规则12a4a](regulations:regulation:12a4a)）。",
+      "zhHant": "[提醒] 在過去，帶方括號的表述方法（例如[r]或[u2]）曾經被允許在最少步中使用。現在只有使用x、y、z的轉體表述被允許（見[規則12a4a](regulations:regulation:12a4a)）。"
+    },
+    {
+      "id": "E2c3",
+      "depth": 2,
+      "en": "The competitor should make it clear which moves are intended to be part of their solution, by clearly blacking out/scribbling out any moves to exclude, or by drawing a single outline around their solution.",
+      "zh": "选手应明确标示出哪些步骤是其解法的一部分，可以通过清晰地将不包括的步骤涂黑/划掉，或通过在解法步骤周围画一个单一的轮廓线来表示。",
+      "zhHant": "選手應明確標示出哪些步驟是其解法的一部分，可以透過清晰地將不包括的步驟塗黑/劃掉，或透過在解法步驟周圍畫一個單一的輪廓線來表示。"
+    },
+    {
+      "id": "E2c3+",
+      "depth": 2,
+      "en": "[CLARIFICATION] If a move is not clearly blacked out/scribbled out and it is not clear whether the move is part of the solution, the judge should consider it an ambiguous move sequence (see [Regulation E2c2](regulations:regulation:E2c2) and [Regulation E2c2+](regulations:regulation:E2c2+)).",
+      "zh": "[澄清] 如果一个步骤没有被清晰的涂掉而这个步骤是否是这个解法的一部分并不清晰，裁判应该认为这是一份有歧义的解法（见[规则E2c2](regulations:regulation:E2c2)及[规则E2c2+](regulations:regulation:E2c2+)）。",
+      "zhHant": "[澄清] 如果一個步驟沒有被清晰的塗掉而這個步驟是否是這個解法的一部分並不清晰，裁判應該認為這是一份有歧義的解法（見[規則E2c2](regulations:regulation:E2c2)及[規則E2c2+](regulations:regulation:E2c2+)）。"
+    },
+    {
+      "id": "E2c4",
+      "depth": 2,
+      "en": "Only numbers, letters, and apostrophes are considered as part of a competitor's solution. Other symbols are disregarded. The remaining solution must only use moves that are exactly defined as notation for the 3x3x3 Cube in [Regulation 12a](regulations:regulation:12a). Penalty: disqualification of the attempt (DNF).",
+      "zh": "只有数字、字母和撇号（'）被视为选手解法的一部分。其他符号将被忽略。余下的解法步骤必须仅使用[规则12a](regulations:regulation:12a)中明确定义的三阶魔方的转动符号。惩罚：取消此次还原成绩（DNF）。",
+      "zhHant": "只有數字、字母和撇號（'）被視為選手解法的一部分。其他符號將被忽略。餘下的解法步驟必須僅使用[規則12a](regulations:regulation:12a)中明確定義的三階魔方的轉動符號。懲罰：取消此次還原成績（DNF）。"
+    },
+    {
+      "id": "E2c4+",
+      "depth": 2,
+      "en": "[EXAMPLE] Examples of interpreting symbols or combinations of symbols that are not defined in [Regulation 12a](regulations:regulation:12a): [x] should be interpreted as x. (R * U', * = F2) should be interpreted as R U' F2. (R U)' should be interpreted as R U'. R++ should be interpreted as R. R3' is not permitted.",
+      "zh": "[举例] 在[规则12a](regulations:regulation:12a)中没有定义的符号或符号组合的解释示例：[x]应解释为x；(R * U', * = F2)应解释为R U' F2；(R U)'应解释为R U'；R++应解释为R；R3'不被允许。",
+      "zhHant": "[舉例] 在[規則12a](regulations:regulation:12a)中沒有定義的符號或符號組合的解釋示例：[x]應解釋為x；(R * U', * = F2)應解釋為R U' F2；(R U)'應解釋為R U'；R++應解釋為R；R3'不被允許。"
+    },
+    {
+      "id": "E2c4++",
+      "depth": 2,
+      "en": "[ADDITION] Moves with both an apostrophe and a 2 should be interpreted as if there were no apostrophe (e.g. R2' should be interpreted as R2).",
+      "zh": "[附加] 同时带有撇号和2的步骤应解释为没有撇号的步骤（例如，R2'应解释为R2）。",
+      "zhHant": "[附加] 同時帶有撇號和2的步驟應解釋為沒有撇號的步驟（例如，R2'應解釋為R2）。"
+    },
+    {
+      "id": "E2c6",
+      "depth": 2,
+      "en": "If a competitor used incorrect capitalization for a move defined in [Regulation 12a](regulations:regulation:12a), it should be interpreted as if it has the correct capitalization and accepted as valid notation.",
+      "zh": "如果选手在使用[规则12a](regulations:regulation:12a)中定义的转动符号时，大小写不正确，应将其解释为正确的大小写，并接受为有效的转动符号。",
+      "zhHant": "如果選手在使用[規則12a](regulations:regulation:12a)中定義的轉動符號時，大小寫不正確，應將其解釋為正確的大小寫，並接受為有效的轉動符號。"
+    },
+    {
+      "id": "E2c6+",
+      "depth": 2,
+      "en": "[EXAMPLE] Y should be interpreted as y. UW, uw, and uW should be interpreted as Uw. r should be interpreted as R, not Rw.",
+      "zh": "[举例] Y应解释为y；UW、uw和uW应解释为Uw；r应解释为R而不是Rw.",
+      "zhHant": "[舉例] Y應解釋為y；UW、uw和uW應解釋為Uw；r應解釋為R而不是Rw."
+    },
+    {
+      "id": "E2c7",
+      "depth": 2,
+      "en": "Any writing or other markings on the solution sheet which are clearly not a part of the competitor's intended solution may be disregarded, at the discretion of the judge.",
+      "zh": "裁判可以酌情忽略任何明显不是选手解法一部分的符号或标记。",
+      "zhHant": "裁判可以酌情忽略任何明顯不是選手解法一部分的符號或標記。"
+    },
+    {
+      "id": "E2c8",
+      "depth": 2,
+      "en": "Competitors must not intentionally make their solution harder to judge by using moves or symbols not defined as notation for the 3x3x3 Cube, incorrect capitalization, or by any other means. Penalty: disqualification of the attempt (DNF) at the discretion of the WCA Delegate.",
+      "zh": "选手不得故意通过使用未定义为三阶魔方转动的步骤或符号、错误的大小写或其他任何方式使其解法变得更难以辨识。惩罚：取消此次还原成绩（DNF），由WCA代表决定。",
+      "zhHant": "選手不得故意透過使用未定義為三階魔方轉動的步驟或符號、錯誤的大小寫或其他任何方式使其解法變得更難以辨識。懲罰：取消此次還原成績（DNF），由WCA代表決定。"
+    },
+    {
+      "id": "E2d",
+      "depth": 1,
+      "en": "The competitor's result is the number of moves in their solution, calculated using Outer Block Turn Metric (see [Regulation 12a5](regulations:regulation:12a5)).",
+      "zh": "选手的成绩是按照Outer Block Turn Metric（见[规则12a5](regulations:regulation:12a5)）计算得到的步数。",
+      "zhHant": "選手的成績是按照Outer Block Turn Metric（見[規則12a5](regulations:regulation:12a5)）計算得到的步數。"
+    },
+    {
+      "id": "E2d1",
+      "depth": 2,
+      "en": "The competitor's solution must not exceed 80 moves (including rotations) when calculated using Execution Turn Metric (see [Regulation 12a6](regulations:regulation:12a6)). Penalty: disqualification of the attempt (DNF).",
+      "zh": "选手只能提交按照Execution Turn Metric（见[规则 12a6](regulations:regulation:12a6)）计算长度不超过80步（包括整体转动）的解法。惩罚：取消此次成绩（DNF）。",
+      "zhHant": "選手只能提交按照Execution Turn Metric（見[規則 12a6](regulations:regulation:12a6)）計算長度不超過80步（包括整體轉動）的解法。懲罰：取消此次成績（DNF）。"
+    },
+    {
+      "id": "E2e",
+      "depth": 1,
+      "en": "The competitor's solution must not be directly derived from any part of the scramble sequence. Penalty: disqualification of the attempt (DNF), at the discretion of the WCA Delegate.",
+      "zh": "选手的解法禁止与打乱公式有任何关联。惩罚：取消此次还原资格（DNF），由WCA代表决定。",
+      "zhHant": "選手的解法禁止與打亂公式有任何關聯。懲罰：取消此次還原資格（DNF），由WCA代表決定。"
+    },
+    {
+      "id": "E2e+",
+      "depth": 1,
+      "en": "[CLARIFICATION] Competitors must not derive solutions from any part of the scramble sequence, and solutions should not share significant parts with the inverse scramble sequence.",
+      "zh": "[澄清] 选手不能根据打乱公式的任何一部分推导解法，且解法与逆序打乱公式不能有明显重合的部分。",
+      "zhHant": "[澄清] 選手不能根據打亂公式的任何一部分推導解法，且解法與逆序打亂公式不能有明顯重合的部分。"
+    },
+    {
+      "id": "E2e++",
+      "depth": 1,
+      "en": "[EXAMPLE] Example of solutions that should result in a disqualification of the attempt (DNF): solutions beginning with the same 4 or more moves as the inverse scramble sequence.",
+      "zh": "[举例] 以下情况将会被取消还原资格（DNF）：解法的前4步以上与逆序打乱公式完全一致。",
+      "zhHant": "[舉例] 以下情況將會被取消還原資格（DNF）：解法的前4步以上與逆序打亂公式完全一致。"
+    },
+    {
+      "id": "E2e1",
+      "depth": 2,
+      "en": "The WCA Delegate may ask the competitor to explain the purpose of each move in their solution, irrespective of the scramble sequence. If the competitor cannot give a valid explanation, the attempt is disqualified (DNF).",
+      "zh": "WCA代表可以要求选手解释他解法中每一步转动的目的，须与打乱公式无关。如果选手无法给出合理的解释，取消此次还原资格（DNF）。",
+      "zhHant": "WCA代表可以要求選手解釋他解法中每一步轉動的目的，須與打亂公式無關。如果選手無法給出合理的解釋，取消此次還原資格（DNF）。"
+    },
+    {
+      "id": "E3",
+      "depth": 0,
+      "en": "The competitor may use the following objects during the attempt. Penalty for using unauthorized objects: disqualification of the attempt (DNF). Exception: if the competitor does not gain any advantage by using unauthorized objects, the result may stand, at the discretion of the WCA Delegate.",
+      "zh": "在还原时，选手可以使用以下物品。使用其他未授权物品的惩罚：取消此次还原资格（DNF）。例外：如果选手没有因为使用未授权物品而获得优势，成绩可以保留，由WCA代表决定。",
+      "zhHant": "在還原時，選手可以使用以下物品。使用其他未授權物品的懲罰：取消此次還原資格（DNF）。例外：如果選手沒有因為使用未授權物品而獲得優勢，成績可以保留，由WCA代表決定。"
+    },
+    {
+      "id": "E3a",
+      "depth": 1,
+      "en": "Paper (supplied by the judge), the solution sheet (supplied by the judge), a picture of the scramble for that attempt (which may be included on the paper or solution sheet), and pens/pencils or similar (supplied by the judge, or optionally self-supplied).",
+      "zh": "白纸（由裁判提供）、答题纸（由裁判提供）、本次打乱状态的图片（可能在由裁判提供的白纸或答题纸上）以及笔/铅笔或者类似物品（由裁判提供，选手也可以自备）。",
+      "zhHant": "白紙（由裁判提供）、答題紙（由裁判提供）、本次打亂狀態的圖片（可能在由裁判提供的白紙或答題紙上）以及筆/鉛筆或者類似物品（由裁判提供，選手也可以自備）。"
+    },
+    {
+      "id": "E3b",
+      "depth": 1,
+      "en": "3x3x3 Cubes (at most 3, self-supplied), which must be as described in [Article 3](regulations:article:3) before starting the attempt.",
+      "zh": "魔方（至多3个，自备），必须在开始尝试前满足[第三章](regulations:article:3)所述要求。",
+      "zhHant": "魔方（至多3個，自備），必須在開始嘗試前滿足[第三章](regulations:article:3)所述要求。"
+    },
+    {
+      "id": "E3b+",
+      "depth": 1,
+      "en": "[CLARIFICATION] Puzzles do not need to be solved at the start of the attempt.",
+      "zh": "[澄清] 在开始的时候魔方可以不必处于还原状态。",
+      "zhHant": "[澄清] 在開始的時候魔方可以不必處於還原狀態。"
+    },
+    {
+      "id": "E3c",
+      "depth": 1,
+      "en": "Stickers (self-supplied).",
+      "zh": "贴纸（自备）。",
+      "zhHant": "貼紙（自備）。"
+    },
+    {
+      "id": "E3d",
+      "depth": 1,
+      "en": "Stopwatch or watch (self-supplied) for keeping track of the elapsed time, if it is approved by the WCA Delegate.",
+      "zh": "用于确认比赛剩余时间的秒表或手表（自备），需要由WCA代表认可。",
+      "zhHant": "用於確認比賽剩餘時間的秒錶或手錶（自備），需要由WCA代表認可。"
+    },
+    {
+      "id": "E3d+",
+      "depth": 1,
+      "en": "[CLARIFICATION] Any stopwatch or watch used by a competitor must not have any functions that would help the competitor find a solution.",
+      "zh": "[澄清] 任何秒表或时钟不能带有任何对寻找解法有帮助的功能。",
+      "zhHant": "[澄清] 任何秒錶或時鐘不能帶有任何對尋找解法有幫助的功能。"
+    },
+    {
+      "id": "E3d++",
+      "depth": 1,
+      "en": "[CLARIFICATION] Competitors should not consider a personal stopwatch or watch as the official time, and must submit their solution when the judge calls \"STOP\".",
+      "zh": "[澄清] 选手不应把个人秒表或手表上的时间作为正确时间，且必须在裁判说“停止”时马上提交他们的解法。",
+      "zhHant": "[澄清] 選手不應把個人秒錶或手錶上的時間作為正確時間，且必須在裁判說“停止”時馬上提交他們的解法。"
+    },
+    {
+      "id": "E3e",
+      "depth": 1,
+      "en": "Other objects that do not give an unfair advantage, at the discretion of the WCA Delegate (see [Regulation 2i](regulations:regulation:2i)).",
+      "zh": "其他不会使其不当获利的物品，由WCA代表决定(见 [规则2i](regulations:regulation:2i)).",
+      "zhHant": "其他不會使其不當獲利的物品，由WCA代表決定(見 [規則2i](regulations:regulation:2i))."
+    },
+    {
+      "id": "E3f",
+      "depth": 1,
+      "en": "Tools to remove markings (self-supplied), such as correction fluid, correction tape, or erasers.",
+      "zh": "去除笔迹的工具（自备），例如修正液、修正带或者橡皮。",
+      "zhHant": "去除筆跡的工具（自備），例如修正液、修正帶或者橡皮。"
+    },
+    {
+      "id": "E4",
+      "depth": 0,
+      "en": "The WCA Delegate may choose to publish the solutions (e.g. photo of the score sheets or transcriptions of solutions).",
+      "zh": "WCA代表可以选择公开解法（例如答题纸的照片或抄录的解法）。",
+      "zhHant": "WCA代表可以選擇公開解法（例如答題紙的照片或抄錄的解法）。"
+    },
+    {
+      "id": "E5",
+      "depth": 0,
+      "en": "The competitor must not communicate with anyone other than the WCA Delegate or the judge. This communication should be about the WCA Regulations and the competitor must not receive assistance deriving their solution. Penalty: disqualification of the attempt (DNF). Exception: if the competitor does not gain an advantage by communicating with anyone other than the WCA Delegate or the judge, the result may stand, at the discretion of the WCA Delegate.",
+      "zh": "选手不得和除WCA代表或裁判以外的任何人交流。交流的内容应该是有关于WCA规则，选手不得获得帮助以得到解法。惩罚：取消此次还原成绩（DNF）。例外：如果选手没有因为和裁判或WCA代表以外的任何人交流而获得优势，成绩可以保留，由WCA代表决定。",
+      "zhHant": "選手不得和除WCA代表或裁判以外的任何人交流。交流的內容應該是有關於WCA規則，選手不得獲得幫助以得到解法。懲罰：取消此次還原成績（DNF）。例外：如果選手沒有因為和裁判或WCA代表以外的任何人交流而獲得優勢，成績可以保留，由WCA代表決定。"
+    },
+    {
+      "id": "E6",
+      "depth": 0,
+      "en": "A competitor may join a 3x3x3 Fewest Moves attempt that is already in progress, at the discretion of the WCA Delegate. Exception: a competitor must not be permitted to join an ongoing attempt in the following cases:",
+      "zh": "选手可以中途加入已经在进行的三阶最少步比赛尝试，由WCA代表决定。例外：以下情形中，选手不得被允许加入正在进行的比赛：",
+      "zhHant": "選手可以中途加入已經在進行的三階最少步比賽嘗試，由WCA代表決定。例外：以下情形中，選手不得被允許加入正在進行的比賽："
+    },
+    {
+      "id": "E6a",
+      "depth": 1,
+      "en": "A competitor has finished their attempt already (see [Regulation E2b+](regulations:regulation:E2b+)).",
+      "zh": "已有选手完成比赛（见[规则E2b+](regulations:regulation:E2b+)）。",
+      "zhHant": "已有選手完成比賽（見[規則E2b+](regulations:regulation:E2b+)）。"
+    },
+    {
+      "id": "E6b",
+      "depth": 1,
+      "en": "The attempt takes place in a competition with multiple physical locations (i.e. \"3x3x3 Fewest Moves simultaneous competitions\").",
+      "zh": "这次比赛是一场在多个场地进行的比赛（即“三阶最少步同步赛”）。",
+      "zhHant": "這次比賽是一場在多個場地進行的比賽（即“三階最少步同步賽”）。"
+    },
+    {
+      "id": "E6c",
+      "depth": 1,
+      "en": "There is any risk that information about the scramble may have become known to the competitor who wishes to join.",
+      "zh": "存在任何可能导致选手在加入尝试前得知打乱信息的风险。",
+      "zhHant": "存在任何可能導致選手在加入嘗試前得知打亂資訊的風險。"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+# 月度检测 WCA 官方规则是否变化(thewca/wca-regulations official 分支)。
+# 我们的 /regulation 是图文转述版,不能自动替换文字;此 workflow 只负责"发现 + 报警":
+# 有漂移就开/更新一个带 diff 的 GitHub issue,人/AI 再用 update-regulation skill 重写受影响章节。
+# 注意:官方发布不按 1.1 走(近年有 2025-07-17 合并版、2026-04-01),故按月检查而非盯日期。
+name: WCA Regulation Drift
+
+on:
+  schedule:
+    # 每月 1 号 08:00 UTC
+    - cron: '0 8 1 * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # 检测脚本只用 node 内置 + 全局 fetch,无需 pnpm install。
+      - name: Check regulation drift
+        id: check
+        working-directory: core
+        run: |
+          set +e
+          node packages/client-next/scripts/reg-check.mjs --report reg-drift-report.md
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Fail on detector error
+        if: steps.check.outputs.code == '1' || steps.check.outputs.code == '2'
+        run: |
+          echo "::error::reg:check failed (exit ${{ steps.check.outputs.code }}) — 检测器或基线坏了"
+          exit 1
+
+      - name: Open / update drift issue
+        if: steps.check.outputs.code == '3'
+        working-directory: core
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create regulation-drift --color B60205 --description "WCA 规则官方源出现变化" --force || true
+          existing=$(gh issue list --label regulation-drift --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file reg-drift-report.md
+            echo "commented drift report on #$existing"
+          else
+            gh issue create \
+              --label regulation-drift \
+              --assignee RuiminYan \
+              --title "WCA 规则更新检测 ($(date -u +%Y-%m-%d))" \
+              --body-file reg-drift-report.md
+          fi

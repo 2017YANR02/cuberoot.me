@@ -1,0 +1,122 @@
+/* ─── /regulation/scrambling — Article 4 page-specific styles ───
+ * Reuses .reg-* tokens from ../regulation.css (loaded via RegArticleLayout).
+ * Only adds the bits this chapter needs: the generate→solve flow, the sub
+ * headings, the sample-scramble figure, and inline list icons / reg tags.
+ * ─────────────────────────────────────────────────────────────── */
+
+/* ── Random-state flow: pick a state → solve back ── */
+.scr-flow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: 18px;
+  margin: 4px 0 30px;
+}
+.scr-flow-step {
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 20px 22px;
+  background: var(--card);
+}
+.scr-flow-cap {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: .04em;
+  color: var(--blue);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.scr-flow-text {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.62;
+  color: var(--ink-dim);
+}
+.scr-flow-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: color-mix(in srgb, var(--blue) 60%, var(--ink-faint));
+}
+
+/* ── Sub-section inside a RegSection (random-move events) ── */
+.scr-sub {
+  font-size: clamp(18px, 2.4vw, 21px);
+  font-weight: 700;
+  letter-spacing: -.012em;
+  margin: 44px 0 12px;
+}
+.scr-sub-lede {
+  font-size: 16px;
+  color: var(--ink-dim);
+  line-height: 1.66;
+  margin: 0 0 20px;
+  max-width: 62ch;
+}
+
+/* ── Per-event table: keep it scrollable on narrow screens ── */
+.scr-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.scr-table-wrap .reg-table { min-width: 360px; }
+.scr-reg-cell {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+/* ── Concrete sample scramble figure ── */
+.scr-sample {
+  margin: 8px 0 0;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  padding: 26px;
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.scr-sample-img { max-width: 100%; }
+.scr-sample-cap { text-align: center; }
+.scr-sample-alg {
+  font-family: var(--font-mono);
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--ink-dim);
+  word-spacing: .12em;
+}
+
+/* ── Procedure list: inline lead icons + regulation tags ── */
+.reg-list .scr-li-icon {
+  display: inline-block;
+  vertical-align: -3px;
+  margin-right: 7px;
+  color: var(--blue);
+}
+.reg-list li strong { color: var(--ink); font-weight: 700; }
+.scr-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: .03em;
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 11%, transparent);
+  border-radius: 6px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+
+/* ── Narrow screens: stack the flow, single column ── */
+@media (max-width: 720px) {
+  .scr-flow {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .scr-flow-arrow { transform: rotate(90deg); font-size: 22px; }
+  .scr-sample { padding: 18px; }
+  .scr-sample-alg { font-size: 13px; }
+}

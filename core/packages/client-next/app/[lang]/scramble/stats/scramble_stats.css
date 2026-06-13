@@ -132,6 +132,11 @@
   font-size: 0.82rem;
   color: var(--text-sub);
 }
+/* 难度 tab:口径切换钮是 controls flex 行内一员,top margin 会把它顶到样本文字下方
+   (水平高度不齐),仅长度 tab 作独立块时才需要那段间距。 */
+.scramble-stats-controls .scramble-stats-puzzle-toggle {
+  margin-top: 0;
+}
 .scramble-stats-puzzle-toggle-hint {
   color: var(--text-faint, var(--text-sub));
   font-size: 0.78rem;
@@ -606,10 +611,9 @@
   gap: 0.6rem;
   flex-wrap: wrap;
 }
-.scramble-len-merge-hint {
-  font-size: 0.78rem;
-  color: var(--text-sub);
-  line-height: 1.4;
+/* 长度 tab:计步口径钮提到顶栏,紧挨合并左侧(覆盖 puzzle-toggle 的 top margin) */
+.scramble-len-metric-head {
+  margin-top: 0;
 }
 .scramble-stats-count {
   font-size: 0.82rem;

@@ -69,8 +69,9 @@ const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 // 变体 (key 与 /scramble/analyzer + /scramble/stats 对齐);标签 + 顺序走共享
 // lib/scramble-variants(单一真源,别再各写一份)。
 type VariantKey = ScrambleVariant;
+// 333(整解)在 VARIANT_ORDER 里(首页+stats 方法下拉),但 gen 无整解求解引擎,排除。
 const VARIANTS: { key: VariantKey; zh: string; en: string }[] =
-  VARIANT_ORDER.map((key) => ({ key, ...VARIANT_LABEL[key] }));
+  VARIANT_ORDER.filter((key) => key !== '333').map((key) => ({ key, ...VARIANT_LABEL[key] }));
 // 每变体:阶段集 + 实时引擎能力。std=现有 cross WASM(5 阶段);f2leo/pseudo_f2leo=
 // F2leoSolverWasm 浏览器当场算(4 阶段,无 xxxxc);其余暂仅靠预计算(comp_steps 未生成
 // → 无数据时显示提示)。后端 comp_steps_<variant> 出齐后这些会自动秒载。
@@ -102,6 +103,8 @@ const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2le
   htr2: { stages: [], engine: 'none' },
   // fr(Floppy 还原)同 htr 条件式,不进 VARIANT_ORDER 下拉;条目仅满足类型完备。
   fr: { stages: [], engine: 'none' },
+  // 333(整解)gen 无求解引擎,已从 VARIANTS 过滤掉;条目仅满足类型完备。
+  '333': { stages: [], engine: 'none' },
 };
 const EMPTY_STEP: StepMapState = { map: null, ready: true, done: 0, total: 0, error: null };
 const EMPTY_MAP_TN: Map<string, number[]> = new Map();
@@ -863,7 +866,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const crossA = useCrossMap(showCross && is333Family && variantEngine === 'std' ? analysisScrambles : NO_SCRAMBLES);
   // 预计算步数表:每个变体取自己的 comp_steps 目录(命中秒出)。404 → std/f2leo 退实时
   // 引擎;无 client 引擎的变体(eo/pair/pseudo/pseudo_pair)显示「暂无数据」而非永远转圈。
-  const compSteps = useCompSteps(showCross && is333Family ? loadedCompId : null, dataVariant as Exclude<VariantKey, 'block' | 'htr' | 'htr2' | 'fr'>);
+  const compSteps = useCompSteps(showCross && is333Family ? loadedCompId : null, dataVariant as Exclude<VariantKey, 'block' | 'htr' | 'htr2' | 'fr' | '333'>);
   const uncovered = useMemo(() => {
     if (!(showCross && is333Family) || !compSteps.ready) return NO_SCRAMBLES;
     if (!compSteps.map) return analysisScrambles;

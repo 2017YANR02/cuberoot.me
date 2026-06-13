@@ -1,0 +1,88 @@
+/* ─── /regulation/multi-blind — Appendix H (Multi-Blind Solving) ───
+ * Page-local visuals: the "score = solved − unsolved" worked-example
+ * formula, plus an overlapping stack-of-cubes motif. Reuses .reg-page
+ * tokens (var(--blue/--ok/--bad/--ink/--rule/...)) from ../regulation.css.
+ * ──────────────────────────────────────────────────────────────── */
+
+/* ── Stack-of-cubes motif ───────────────────────────────────────── */
+.mb-stack {
+  display: flex; align-items: center; margin: 4px 0 8px;
+  padding-left: 6px;
+}
+.mb-stack-cube {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 56px; height: 56px; border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--blue) 30%, var(--rule));
+  background: color-mix(in srgb, var(--blue) 7%, var(--card));
+  margin-left: -14px;
+  box-shadow: -6px 0 16px -10px color-mix(in srgb, var(--foreground) 50%, transparent);
+}
+.mb-stack-cube:first-child { margin-left: 0; }
+.mb-stack-cube .cubing-icon { font-size: 32px; color: var(--blue); }
+
+/* ── Score formula ──────────────────────────────────────────────── */
+.mb-formula {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 14px 16px; margin: 6px 0 0;
+  padding: 30px 24px;
+  border: 1px solid var(--rule); border-radius: 18px;
+  background: var(--card);
+}
+.mb-term {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  min-width: 96px; padding: 18px 16px; border-radius: 14px;
+  border: 1px solid var(--rule);
+}
+.mb-term-num { font-family: var(--font-mono); font-size: 40px; font-weight: 800; line-height: 1; }
+.mb-term-lab { font-size: 13px; font-weight: 600; letter-spacing: .02em; color: var(--ink-dim); }
+
+.mb-term-ok {
+  border-color: color-mix(in srgb, var(--ok) 38%, var(--rule));
+  background: color-mix(in srgb, var(--ok) 8%, transparent);
+}
+.mb-term-ok .mb-term-num { color: var(--ok); }
+.mb-term-bad {
+  border-color: color-mix(in srgb, var(--bad) 38%, var(--rule));
+  background: color-mix(in srgb, var(--bad) 8%, transparent);
+}
+.mb-term-bad .mb-term-num { color: var(--bad); }
+.mb-term-res {
+  border-color: color-mix(in srgb, var(--blue) 42%, var(--rule));
+  background: color-mix(in srgb, var(--blue) 10%, transparent);
+}
+.mb-term-res .mb-term-num { color: var(--blue); }
+
+.mb-op {
+  font-family: var(--font-mono); font-size: 30px; font-weight: 700;
+  color: var(--ink-faint);
+}
+.mb-formula-cap {
+  flex-basis: 100%; text-align: center;
+  margin: 10px 0 0; font-size: 14.5px; line-height: 1.6; color: var(--ink-faint);
+}
+
+/* ── Rule-list inline icons ─────────────────────────────────────── */
+.mb-li-icon {
+  display: inline-block; vertical-align: -3px; margin-right: 8px;
+  color: var(--blue);
+}
+.mb-tag {
+  display: inline-block; font-family: var(--font-mono);
+  font-size: 12px; font-weight: 600; color: var(--blue);
+  padding: 1px 8px; border-radius: 7px; white-space: nowrap;
+  background: color-mix(in srgb, var(--blue) 10%, transparent);
+}
+
+.mb-foot-note { margin: 22px 0 0; font-size: 14.5px; color: var(--ink-faint); }
+.mb-foot-note a { color: var(--blue); text-decoration: none; }
+.mb-foot-note a:hover { text-decoration: underline; }
+
+/* ── Mobile (<480px) — keep the formula readable, no overflow ────── */
+@media (max-width: 480px) {
+  .mb-stack-cube { width: 46px; height: 46px; margin-left: -12px; }
+  .mb-stack-cube .cubing-icon { font-size: 26px; }
+  .mb-formula { padding: 24px 16px; gap: 10px 12px; }
+  .mb-term { min-width: 76px; padding: 14px 12px; }
+  .mb-term-num { font-size: 32px; }
+  .mb-op { font-size: 24px; }
+}

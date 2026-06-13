@@ -57,6 +57,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Viewport-width detection (matchMedia), SSR-safe with a live listener.',
   },
   {
+    name: 'useMembership',
+    sig: 'useMembership(): { membership: Membership | null; isMember: boolean; loading: boolean; refresh: () => void }',
+    imp: "import { useMembership } from '@/hooks/useMembership';",
+    usage: 'const { isMember } = useMembership();',
+    category: 'hook',
+    zh: '读取当前登录用户的会员状态(/v1/membership/me),未登录返回 null。门控会员专属 UI 用。',
+    en: "Reads the signed-in user's membership status; null when logged out. Gate member-only UI.",
+  },
+  {
     name: 'useSpaceHoldTimer',
     sig: 'useSpaceHoldTimer(opts: SpaceHoldTimerOptions): SpaceHoldTimerHandlers',
     imp: "import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';",

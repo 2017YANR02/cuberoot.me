@@ -5,8 +5,9 @@ import { apiUrl } from '@/lib/api-base';
 
 interface Props {
   /** WCA notation alg. Treated as a SOLUTION — cube renders the case state that `algorithm`
-   *  solves (i.e. inverse(algorithm) applied to solved). Pass empty string for solved cube. */
-  algorithm: string;
+   *  solves (i.e. inverse(algorithm) applied to solved). Defaults to '' (solved); ignored when
+   *  `setup` is given. */
+  algorithm?: string;
   /** Forward scramble — applied DIRECTLY without inversion. When set, takes precedence over
    *  `algorithm`. */
   setup?: string;
@@ -16,11 +17,13 @@ interface Props {
   size?: number;
   puzzleSize?: number;
   alt?: string;
+  /** Native <img> loading hint. Defaults to browser eager; pass 'lazy' for below-the-fold. */
+  loading?: 'lazy' | 'eager';
 }
 
 // Ported from packages/client/src/components/VisualCube.tsx — minus the SW interception note
 // (Next.js bundles a fresh SW; for now this hits the api.cuberoot.me endpoint directly in prod).
-export function VisualCube({ algorithm, setup, view, mask, size = 88, puzzleSize = 3, alt = 'Cube state' }: Props) {
+export function VisualCube({ algorithm = '', setup, view, mask, size = 88, puzzleSize = 3, alt = 'Cube state', loading }: Props) {
   const src = useMemo(() => {
     const params = new URLSearchParams({ view, size: String(size) });
     if (setup) params.set('setup', setup);
@@ -30,5 +33,5 @@ export function VisualCube({ algorithm, setup, view, mask, size = 88, puzzleSize
     return apiUrl(`/v1/visualcube.svg?${params}`);
   }, [algorithm, setup, view, mask, size, puzzleSize]);
 
-  return <img src={src} width={size} height={size} alt={alt} />;
+  return <img src={src} width={size} height={size} alt={alt} loading={loading} />;
 }

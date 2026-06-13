@@ -21,6 +21,9 @@ interface Props {
   placeholder?: string;
   isZh?: boolean;
   className?: string;
+  /** Fires with the live query text as the user types (and '' on clear).
+   *  Lets callers treat the typed text as free-text input when no person is picked. */
+  onQueryChange?: (q: string) => void;
 }
 
 const DEBOUNCE_MS = 300;
@@ -42,7 +45,7 @@ function localScore(p: WcaPersonLite, ql: string): number {
 }
 
 export function WcaPersonPicker({
-  value, onChange, staticCubers = [], matchCount, placeholder, isZh, className,
+  value, onChange, staticCubers = [], matchCount, placeholder, isZh, className, onQueryChange,
 }: Props) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -168,7 +171,7 @@ export function WcaPersonPicker({
         type="text"
         className={`search-box${query ? ' cuber-search-input--with-clear' : ''}`}
         value={query}
-        onChange={e => { setQuery(e.target.value); setOpen(true); }}
+        onChange={e => { setQuery(e.target.value); setOpen(true); onQueryChange?.(e.target.value); }}
         onFocus={() => setOpen(true)}
         placeholder={placeholder}
         autoComplete="off"
@@ -176,7 +179,7 @@ export function WcaPersonPicker({
       />
       {query && (
         <ClearButton
-          onClick={() => { setQuery(''); setApiResults([]); inputRef.current?.focus(); }}
+          onClick={() => { setQuery(''); setApiResults([]); onQueryChange?.(''); inputRef.current?.focus(); }}
           isZh={isZh}
           preserveFocus
         />

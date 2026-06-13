@@ -1,0 +1,89 @@
+{
+  "source": "https://raw.githubusercontent.com/thewca/wca-regulations/official/wca-regulations.md",
+  "version": "April 1, 2026",
+  "fetchedAt": "2026-06-13T06:34:23.699Z",
+  "order": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "7",
+    "9",
+    "10",
+    "11",
+    "12",
+    "A",
+    "B",
+    "C",
+    "E",
+    "H",
+    "I"
+  ],
+  "articles": {
+    "1": {
+      "title": "Officials",
+      "sha": "29d1bbeb0a65ac3a"
+    },
+    "2": {
+      "title": "Competitors",
+      "sha": "ad91ad642b903a0f"
+    },
+    "3": {
+      "title": "Puzzles",
+      "sha": "e7db9391ba1a1f5a"
+    },
+    "4": {
+      "title": "Scrambling",
+      "sha": "a9cfbb7ba65f4930"
+    },
+    "5": {
+      "title": "Puzzle Defects",
+      "sha": "b17f116f4edaea01"
+    },
+    "7": {
+      "title": "Environment",
+      "sha": "0aeb895fa6c91c29"
+    },
+    "9": {
+      "title": "Events",
+      "sha": "7dade9787ba8a7d5"
+    },
+    "10": {
+      "title": "Solved State",
+      "sha": "3a004a18052e3b62"
+    },
+    "11": {
+      "title": "Incidents",
+      "sha": "3044895065d2503e"
+    },
+    "12": {
+      "title": "Notation",
+      "sha": "9cdb2dc455277b85"
+    },
+    "A": {
+      "title": "Speed Solving",
+      "sha": "ef35cf2bb20e3765"
+    },
+    "B": {
+      "title": "Blindfolded Solving",
+      "sha": "c3623e5afc8baecc"
+    },
+    "C": {
+      "title": "One-Handed Solving",
+      "sha": "30afdfe0ac0229ae"
+    },
+    "E": {
+      "title": "Fewest Moves Solving",
+      "sha": "88f97f899c282371"
+    },
+    "H": {
+      "title": "Multi-Blind Solving",
+      "sha": "edda481ce100ea20"
+    },
+    "I": {
+      "title": "Head to Head Solving",
+      "sha": "b31ebbdac9392a94"
+    }
+  }
+}

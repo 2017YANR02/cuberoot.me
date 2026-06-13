@@ -10,11 +10,14 @@
 // 方法下拉项,块的具体形状落到阶段下拉(122/123/222/223/F2B)。数据键不变。
 export type ScrambleVariant =
   | 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo'
-  | 'block' | '123' | '123x2' | '222' | '223' | 'eoline' | 'dr' | 'htr' | 'htr2' | 'fr';
+  | 'block' | '123' | '123x2' | '222' | '223' | 'eoline' | 'dr' | 'htr' | 'htr2' | 'fr'
+  | '333';
 
 export interface VariantLabel { zh: string; en: string }
 
 export const VARIANT_LABEL: Record<ScrambleVariant, VariantLabel> = {
+  // 整解:整个 3x3 最优解(stats 难度 tab 的一个方法,阶段只有 '333' 自身)。
+  '333': { zh: '333', en: '333' },
   std: { zh: '标准', en: 'Standard' },
   eo: { zh: 'EO', en: 'EO' },
   pair: { zh: '基态', en: 'Pair' },
@@ -41,6 +44,7 @@ export const VARIANT_LABEL: Record<ScrambleVariant, VariantLabel> = {
 // 规范展示顺序(RecentScrambles / gen 下拉用;stats 按 distribution.json 键枚举序,不用这个)。
 // 块族只出 'block' 一项。
 export const VARIANT_ORDER: ScrambleVariant[] = [
+  '333',
   'std', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo',
   'block', 'eoline', 'dr',
 ];
@@ -68,6 +72,8 @@ export const variantLabel = (key: string, isZh: boolean): string => {
 // 阶段下拉两页统一只显示 Cross / XCross / … / 块名。
 
 const STAGE_BASE: Record<string, VariantLabel> = {
+  // 整解:整个 3x3 的最优解步数(stats 页专属阶段,数据驱动;StageSolver/gen 不含)。
+  '333': { zh: '333', en: '333' },
   cross: { zh: '十字', en: 'Cross' },
   xcross: { zh: 'XCross', en: 'XCross' },
   xxcross: { zh: 'XXCross', en: 'XXCross' },
@@ -115,6 +121,8 @@ export const stageLabel = (key: string, isZh: boolean): string => {
 // 每个变体的规范阶段键序。StageSolver 的 WASM 阶段索引 i ↔ VARIANT_STAGES[v][i];
 // stats 页数据驱动(JSON 自带 stages 数组,是这里的子集),只共享 stageLabel。
 export const VARIANT_STAGES: Record<ScrambleVariant, string[]> = {
+  // 整解只有一个「阶段」= 整解本身;在 VARIANT_ORDER(首页+stats 方法下拉),但 gen 手动排除(无求解引擎)。
+  '333': ['333'],
   std: ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'],
   eo: ['eo_cross', 'eo_xcross', 'eo_xxcross', 'eo_xxxcross', 'eo_xxxxcross'],
   pair: ['cross_pair', 'xcross_pair', 'xxcross_pair', 'xxxcross_pair'],

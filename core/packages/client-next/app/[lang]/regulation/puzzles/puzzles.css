@@ -1,0 +1,103 @@
+/* ─── /regulation/puzzles — Article 3 page-specific styles ───
+ * Reuses .reg-* tokens from ../regulation.css (loaded via RegArticleLayout).
+ * Adds: the six-face colour-scheme swatch strip, and the allowed/not-allowed
+ * two-column comparison. All colours are theme tokens except the literal cube
+ * face colours rendered inline in the SVG swatches.
+ * ─────────────────────────────────────────────────────────────── */
+
+/* ── Colour-scheme figure: six face swatches ── */
+.pz-scheme {
+  margin: 4px 0 30px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  padding: 28px 26px 24px;
+  background: var(--card);
+}
+.pz-swatches {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+}
+.pz-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+.pz-swatch-svg {
+  width: 100%;
+  max-width: 96px;
+  height: auto;
+  display: block;
+}
+.pz-swatch-rect {
+  stroke: color-mix(in srgb, var(--ink) 14%, transparent);
+  stroke-width: 2;
+}
+.pz-swatch-letter {
+  font-family: var(--font-mono);
+  font-size: 38px;
+  font-weight: 700;
+}
+.pz-swatch-name {
+  font-size: 14px;
+  color: var(--ink-dim);
+}
+.pz-scheme-cap {
+  margin: 24px 0 0;
+  font-size: 14.5px;
+  line-height: 1.66;
+  color: var(--ink-faint);
+  text-align: center;
+  max-width: 60ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── Allowed vs not-allowed comparison ── */
+.pz-cmp {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 4px 0 4px;
+}
+.pz-cmp-col {
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 22px 24px 26px;
+}
+.pz-cmp-ok {
+  border-color: color-mix(in srgb, var(--ok) 34%, var(--rule));
+  background: color-mix(in srgb, var(--ok) 5%, var(--card));
+}
+.pz-cmp-bad {
+  border-color: color-mix(in srgb, var(--bad) 34%, var(--rule));
+  background: color-mix(in srgb, var(--bad) 5%, var(--card));
+}
+.pz-cmp-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 17px;
+  margin-bottom: 18px;
+}
+.pz-cmp-ok .pz-cmp-head { color: var(--ok); }
+.pz-cmp-bad .pz-cmp-head { color: var(--bad); }
+/* tint the list dots to match each column's verdict */
+.pz-cmp-ok .reg-list li::before { background: var(--ok); }
+.pz-cmp-bad .reg-list li::before { background: var(--bad); }
+.pz-cmp .reg-list { gap: 13px; }
+.pz-cmp .reg-list li { font-size: 15.5px; }
+
+/* ── Narrow screens: 3 swatches per row, single comparison column ── */
+@media (max-width: 720px) {
+  .pz-scheme { padding: 20px 18px 18px; }
+  .pz-swatches { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .pz-swatch-letter { font-size: 30px; }
+  .pz-cmp { grid-template-columns: 1fr; gap: 14px; }
+}
+@media (max-width: 380px) {
+  .pz-swatches { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .pz-swatch-name { font-size: 12.5px; }
+}
