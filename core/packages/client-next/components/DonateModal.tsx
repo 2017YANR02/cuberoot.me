@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { User, Mail, Copy, Check } from 'lucide-react';
+import { User, Mail, Copy, Check, Info } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import './donate-modal.css';
 
@@ -111,6 +111,12 @@ export default function DonateModal({ lang, onClose }: Props) {
               loading="eager" decoding="async" fetchPriority="high" />
             <figcaption>{t('微信支付', 'WeChat Pay')}</figcaption>
           </figure>
+        </div>
+
+        <div className="donate-qr-note">
+          <Info size={ICON_SIZE} strokeWidth={1.8} aria-hidden="true" />
+          <span>{t('支付时请在备注里写上你的名字,方便登记到致谢名单',
+            'When paying, please add your name in the note so we can list you on the acknowledgments page')}</span>
         </div>
 
         <dl className="donate-contact">
