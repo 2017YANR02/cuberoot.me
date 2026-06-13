@@ -438,6 +438,12 @@
     gap: 5px;
 }
 
+/* 致谢链接的爱心:站内统一爱心红(DeskPet .heart-icon 同款),hover 文字变 accent 时心仍红 */
+.landing-page .footer-credits svg {
+    color: #ff5a5f;
+    fill: #ff5a5f;
+}
+
 /* footer 内 ThemeToggle / WcaAuth 裸样式(去边框 / 圆框,与 LangToggle 文字风对齐) */
 .landing-page .footer .theme-toggle-inline {
     border: none;
