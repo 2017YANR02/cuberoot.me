@@ -1,0 +1,332 @@
+/* /support — 致谢 / 赞助墙。双主题(走 :root token,自动 light/dark)。极简无框。 */
+
+.support-page {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 2.5rem 1rem 4rem;
+}
+
+.support-head {
+  text-align: center;
+  margin-bottom: 2.25rem;
+}
+
+.support-title {
+  margin: 0 0 0.55rem;
+  font-size: 1.65rem;
+  font-weight: 650;
+  color: var(--foreground);
+}
+
+.support-sub {
+  margin: 0 auto 1.35rem;
+  max-width: 34rem;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+}
+
+.support-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-size: 0.9rem;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.support-cta:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
+.support-cta:active { transform: translateY(1px); }
+.support-cta-heart { fill: currentColor; }
+
+.support-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 1.75rem;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+
+.support-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.support-add:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  border-color: var(--border-strong);
+}
+
+.support-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+
+.support-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 1.75rem 0.75rem;
+}
+
+.sponsor-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 2px;
+  text-align: center;
+}
+
+.sponsor-avatar-link { display: block; line-height: 0; }
+
+.sponsor-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+.sponsor-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sponsor-avatar-fb {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+.sponsor-name {
+  max-width: 100%;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  font-weight: 550;
+  color: var(--foreground);
+}
+.sponsor-name-link { text-decoration: none; transition: color 0.15s; }
+.sponsor-name-link:hover { color: var(--accent); }
+
+.sponsor-wcaid {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  color: var(--faint-foreground);
+}
+
+.sponsor-amount {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.sponsor-admin {
+  position: absolute;
+  top: -2px;
+  right: 0;
+  display: flex;
+  gap: 3px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.sponsor-card:hover .sponsor-admin { opacity: 1; }
+.sponsor-admin button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.sponsor-admin button:hover { color: var(--foreground); border-color: var(--border-strong); }
+.sponsor-admin-del:hover { color: var(--destructive) !important; border-color: var(--destructive) !important; }
+
+.support-more {
+  display: block;
+  margin: 2rem auto 0;
+  padding: 7px 18px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.support-more:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+
+/* ── 编辑器弹窗 ── */
+.sponsor-editor-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--foreground) 45%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.sponsor-editor {
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: var(--popover);
+  color: var(--foreground);
+  box-shadow: 0 20px 60px color-mix(in srgb, var(--foreground) 22%, transparent);
+}
+
+.sponsor-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-default);
+}
+.sponsor-editor-head h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+.sponsor-editor-close {
+  display: inline-flex;
+  padding: 5px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.sponsor-editor-close:hover { color: var(--foreground); background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+
+.sponsor-editor-body {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.1rem 1.25rem;
+}
+
+.sponsor-editor-row { display: grid; gap: 5px; }
+.sponsor-editor-row > span { font-size: 0.78rem; color: var(--muted-foreground); }
+.sponsor-editor-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.sponsor-editor-row-2 label { display: grid; gap: 5px; }
+.sponsor-editor-row-2 span { font-size: 0.78rem; color: var(--muted-foreground); }
+
+.sponsor-editor input,
+.sponsor-editor select,
+.sponsor-editor textarea {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.sponsor-editor input:focus,
+.sponsor-editor select:focus,
+.sponsor-editor textarea:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 35%, transparent);
+}
+.sponsor-editor textarea { resize: vertical; }
+
+.sponsor-editor-wca { display: flex; gap: 6px; }
+.sponsor-editor-wca input { flex: 1; }
+.sponsor-editor-wca button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: var(--secondary, var(--muted));
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sponsor-editor-wca button:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.sponsor-editor-wca button:disabled { opacity: 0.5; cursor: default; }
+
+.sponsor-editor-preview { display: flex; justify-content: center; }
+.sponsor-editor-preview img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border-default);
+}
+
+.sponsor-editor-err {
+  font-size: 0.8rem;
+  color: var(--destructive);
+}
+
+.sponsor-editor-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0.9rem 1.25rem;
+  border-top: 1px solid var(--border-default);
+}
+.sponsor-editor-cancel,
+.sponsor-editor-save {
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.sponsor-editor-cancel {
+  border-color: var(--border-default);
+  background: transparent;
+  color: var(--foreground);
+}
+.sponsor-editor-cancel:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.sponsor-editor-save {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.sponsor-editor-save:hover { background: color-mix(in srgb, var(--primary) 88%, black); }
+.sponsor-editor-save:disabled,
+.sponsor-editor-cancel:disabled { opacity: 0.6; cursor: default; }
+
+@media (max-width: 480px) {
+  .support-page { padding: 1.75rem 0.75rem 3rem; }
+  .support-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 1.4rem 0.6rem; }
+  .sponsor-avatar { width: 52px; height: 52px; }
+}

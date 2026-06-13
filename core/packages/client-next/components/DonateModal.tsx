@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { User, Mail, Copy, Check } from 'lucide-react';
+import AppLink from '@/components/AppLink';
 import './donate-modal.css';
 
 interface Props {
@@ -202,6 +203,10 @@ export default function DonateModal({ lang, onClose }: Props) {
             </a>
           </div>
         </dl>
+
+        <div className="donate-credits">
+          <AppLink href="/support" onClick={onClose}>{t('查看致谢名单 →', 'See our supporters →')}</AppLink>
+        </div>
 
         <div className="donate-thanks">{t('谢谢你的支持 ♡', 'Thanks for your support ♡')}</div>
       </div>
