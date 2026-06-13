@@ -68,14 +68,29 @@
 .tac-events {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem 0.5rem;
+  gap: 0.35rem 0.55rem;
   margin-top: 0.1rem;
   color: var(--muted-foreground);
+}
+.tac-event-item {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  gap: 2px;
 }
 .tac-event {
   font-size: 1.1rem;
   line-height: 1;
 }
+.tac-event-rounds {
+  font-size: 0.65rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--muted-foreground);
+}
+.tac-event-rounds--placeholder { opacity: 0.3; }
 
 @media (max-width: 560px) {
   .tac-grid { grid-template-columns: 1fr; }
