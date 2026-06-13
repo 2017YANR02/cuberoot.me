@@ -90,8 +90,12 @@ export function AnnouncedCard({ comp, isZh, lang }: {
     .replace(/\s*20\d\d\s*$/, '');
   const city = comp.city ? (isZh ? localizeCity(comp.city, true) : comp.city) : '';
   const country = countryName(comp.country, isZh);
-  const dateStr = formatDateRangeIso(comp.start_date, comp.end_date);
-  const reg = formatRegStatus(comp.registration_open, comp.registration_close, isZh);
+  // 公示卡片同理去掉日期里的年份(48h 窗口必然当年/近年):剥掉 ISO 年份前缀 `2026-`,
+  // 比赛日期 + 报名时间共用。formatDateRangeIso/formatRegStatus 是全站共享件,故只在此剥。
+  const stripYear = (s: string) => s.replace(/20\d\d-/g, '');
+  const dateStr = stripYear(formatDateRangeIso(comp.start_date, comp.end_date));
+  const reg0 = formatRegStatus(comp.registration_open, comp.registration_close, isZh);
+  const reg = reg0 ? stripYear(reg0) : reg0;
   const events = useMemo(
     () => [...comp.events].sort((a, b) => (EVENT_RANK.get(a) ?? 99) - (EVENT_RANK.get(b) ?? 99)),
     [comp.events],
