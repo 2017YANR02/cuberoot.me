@@ -1626,7 +1626,11 @@ td.is-pr {
 .sched-fc .fc-bg-event .fc-event-title {
   font-style: normal;
   font-weight: 600;
+  /* FC 默认给 bg-event 标题 margin:0.5em(≈5.8px)把标签整体往下/右推,短时段带
+     (15min≈21px)里就显得"偏下"甚至溢出。清掉 margin、改用 padding 控内缩,行高收紧贴顶。 */
+  margin: 0;
   padding: 2px 6px;
+  line-height: 1.2;
   color: var(--muted-foreground);
 }
 /* 前景轮次默认在事件容器里左缩 2px、右缩 2.5% gutter,而背景带铺满整列 → 右边缘对不齐。
