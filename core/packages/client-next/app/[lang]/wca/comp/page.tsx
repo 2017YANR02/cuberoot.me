@@ -755,13 +755,24 @@ function eventCellContent(
     return { text: `≤${r}`, title: isZh ? `成绩 ≤ ${r} 晋级` : `Advance if ≤ ${r}` };
   }
   // qualification: q = "type:resultType:level"
+  //   ranking       → level 是排名位次(前 N 名),不是成绩值;禁过 formatWcaResult(会把"前 14 名"读成 0.14s)
+  //   attemptResult → level 是成绩值(按 single/average 格式化),报名需 ≤ 该值
+  //   anyResult     → 无有效 level,该项目完成过任一有效成绩即可
   if (!meta.q) return { text: '' };
   const [qType, qRes, qLevel] = meta.q.split(':');
-  const lv = qLevel ? compactResult(formatWcaResult(Number(qLevel), wcaEid, 'single')) : '';
-  const parts = [qType, qRes, lv].filter(Boolean).join(' ');
-  return { text: 'Q', title: tr({ zh: '参赛资格要求：', en: 'Qualification: ',
-      zhHant: "參賽資格要求："
-}) + parts };
+  const isAvg = qRes === 'average';
+  const rk = isAvg ? 'average' : 'single';
+  let detail: string;
+  if (qType === 'ranking') {
+    const n = Number(qLevel);
+    detail = isZh ? `${isAvg ? '平均' : '单次'}排名前 ${n}` : `top ${n} by ${rk}`;
+  } else if (qType === 'attemptResult' && qLevel) {
+    const r = compactResult(formatWcaResult(Number(qLevel), wcaEid, rk));
+    detail = isZh ? `${isAvg ? '平均' : '单次'} ≤ ${r}` : `${rk} ≤ ${r}`;
+  } else {
+    detail = isZh ? `需有${isAvg ? '平均' : '单次'}成绩` : `any ${rk} result`;
+  }
+  return { text: 'Q', title: tr({ zh: '参赛资格：', en: 'Qualification: ', zhHant: '參賽資格：' }) + detail };
 }
 
 // 列表视图整场列 metric：实际人数 / 上限(competitorLimit) / 满员率(实际÷上限) / 不显示。
