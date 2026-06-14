@@ -2,6 +2,11 @@
 # WCA 十字步数分布 手动增量刷新管道 (按需触发, 非定时; 仅本地: 需 solver 的 ~34GB 表 + ~16GB 内存余量)
 #
 # 一键:        pwsh update_cross_stats.ps1          (真人终端裸跑 -> 自动进交互向导; AI/非交互终端 -> 旧一键直跑)
+# 一条龙(默认):pwsh update_cross_stats.ps1          (= -Jobs all: stages 3x3阶段难度 + 333opt 整解最优 + puzzles 非3x3, 共享一次发布)
+# 只跑某作业:  pwsh update_cross_stats.ps1 -Jobs 333opt        (任选 stages/333opt/puzzles; 多个: -Jobs stages,puzzles)
+# 选 puzzle:   pwsh update_cross_stats.ps1 -Jobs puzzles -Puzzles sq1
+#   注: 333opt 只做 inject(折当前 solver/333opt/out.*.csv); 那条 ~3.5 天全量求解仍是独立后台 `node solve_loop.mjs`。
+#   注: stages 的 build 会覆写 distribution/examples 的 '333' 变体, 故 stages 一跑脚本会自动补 333 inject 还原(免手动)。
 # 强制向导:    pwsh update_cross_stats.ps1 -Interactive   (取数前问 TSV 来源, 取数后问: 跑哪些变体 / 每变体几块 / 是否发布)
 # 用本地缓存:  pwsh update_cross_stats.ps1 -UseCached     (取数不联网, 用 cache/ 最新 export zip)
 # 干跑(只读):  pwsh update_cross_stats.ps1 -DryRun -SourceCsv D:\cube\scramble\wca_scramble\input\wca_scrambles_info.csv
@@ -27,7 +32,10 @@ param(
   [int]$MaxChunks = 0,     # >0: 每个变体最多跑 N 块就停, 之后照常重算+发布(还差的下次 run 自动续)。0=补满。用于"只跑一两块"而无需人工盯/中途 kill
   [switch]$PublishOnly,    # 跳过取数/解算/变体, 直接用当前 CSV 状态重算 distribution+comp-steps 并发布(把已落盘但未发布的累积变更推上线)
   [switch]$Interactive,    # 强制走交互向导(取数后弹问题: 跑哪些变体 / 每变体几块 / 是否发布)。裸跑(无任何参数)且在交互终端时自动开; AI/带任意 flag/非交互终端(stdin 重定向)一律不弹, 行为同旧
-  [switch]$UseCached       # 取数用本地 cache/ 最新 export zip, 不联网下载/不查官方元数据(export_date 从文件名还原, stamp 仍稳定)。向导会先问这一步
+  [switch]$UseCached,      # 取数用本地 cache/ 最新 export zip, 不联网下载/不查官方元数据(export_date 从文件名还原, stamp 仍稳定)。向导会先问这一步
+  [ValidateSet('all','stages','333opt','puzzles')]
+  [string[]]$Jobs = @('all'),   # 一条龙作业选择: stages(3x3阶段难度) / 333opt(整解最优HTM) / puzzles(非3x3) / all。AI 按用户"跑X/不跑Y"映射; 默认全跑
+  [string[]]$Puzzles = @('pocket','pyraminx','skewb','sq1')   # puzzles 作业跑哪些非3x3 对象
 )
 $ErrorActionPreference = 'Stop'
 $ChunkExplicit = $PSBoundParameters.ContainsKey('ChunkSize')  # 显式 -ChunkSize 覆盖每变体默认
@@ -395,6 +403,26 @@ function Invoke-CrossWizard([int]$nNew){
   return @{ Variants=$chosen; MaxChunks=$maxc; NoPublish=(-not $pub) }
 }
 
+# ---- 作业选择 (一条龙: stages / 333opt / puzzles) ----
+$runStages  = ($Jobs -contains 'all') -or ($Jobs -contains 'stages')
+$run333opt  = ($Jobs -contains 'all') -or ($Jobs -contains '333opt')
+$runPuzzles = ($Jobs -contains 'all') -or ($Jobs -contains 'puzzles')
+if($Wizard){
+  $jItems = @(
+    @{ Name='stages  3x3 阶段难度 (十字/F2L/EO/DR…)'; Key='1'; Selected=$runStages },
+    @{ Name='333opt  整解最优 HTM'; Key='2'; Selected=$run333opt },
+    @{ Name='puzzles 非3x3 (二阶/金字塔/斜转/SQ1)'; Key='3'; Selected=$runPuzzles }
+  )
+  if(-not (Read-MultiSelect -Prompt '跑哪些作业?' -Items $jItems)){ Write-Host '已取消。' -ForegroundColor Yellow; return }
+  $runStages  = [bool]$jItems[0].Selected
+  $run333opt  = [bool]$jItems[1].Selected
+  $runPuzzles = [bool]$jItems[2].Selected
+}
+Write-Host ("作业: {0}" -f ((@(if($runStages){'stages'}; if($run333opt){'333opt'}; if($runPuzzles){'puzzles'})) -join ' + ')) -ForegroundColor Cyan
+
+# ===== JOB: stages (3x3 阶段难度: 取数 + std + 变体) =====
+$nNew = 0; $stdChanged = $false; $variantChanged = $false
+if($runStages){
 # ---- 1. 增量取数 ----
 if($PublishOnly){
   Write-Host "[PublishOnly] 跳过取数/解算/变体补缺, 直接重算+发布当前 CSV 状态。" -ForegroundColor Yellow
@@ -491,42 +519,72 @@ if($Variants.Count -gt 0){
   Write-Host '未指定变体补缺 (-Variants @())。' -ForegroundColor DarkGray
 }
 }
+} # /JOB stages
 
-if(-not $stdChanged -and -not $variantChanged){
+# ===== JOB: puzzles (非 3x3 整解: 二阶/金字塔/斜转/SQ1) =====
+$puzzleChanged = $false
+if($runPuzzles){
+  Step "P 非3x3 puzzles 整解: $($Puzzles -join ', ')"
+  pwsh (Join-Path $PSScriptRoot 'update_puzzle_stats.ps1') -Puzzles $Puzzles
+  if($LASTEXITCODE -ne 0){ throw 'update_puzzle_stats.ps1 失败' }
+  Push-Location (Join-Path $RepoRoot 'core\packages\scramble-stats-build')
+  try {
+    pnpm exec tsx src/build_puzzle_examples.ts
+    if($LASTEXITCODE -ne 0){ throw 'build_puzzle_examples 失败' }
+  } finally { Pop-Location }
+  $puzzleChanged = $true
+}
+
+# 333opt inject: stages 的 build 会覆写 distribution/examples 的 '333' 变体, 故 stages build 一跑就必须补 inject 还原;
+# 用户单点 333opt 也跑。实际跑在步骤 5 之后(必须在 build 之后)。
+$optChanged = $false
+$willInject = $run333opt -or ($runStages -and ($stdChanged -or $variantChanged))
+
+if(-not $stdChanged -and -not $variantChanged -and -not $willInject -and -not $puzzleChanged){
   Step '无任何数据变化, 结束。'
   return
 }
 
-# ---- 5. 重算 JSON (RNG 固定种子 + 稳定时间戳: 同一份数据重跑逐字节不变) ----
+# ---- 5. 重算 JSON (stages: RNG 固定种子 + 稳定时间戳, 同一份数据重跑逐字节不变) ----
 $stamp = if(Test-Path (Join-Path $IncrDir 'export_date.txt')){ (Get-Content (Join-Path $IncrDir 'export_date.txt') -Raw).Trim() } else { Get-Date -Format 'yyyy-MM-dd' }
 $env:SCRAMBLE_STATS_STAMP = $stamp
-$extra = ''
-if($stdChanged){ $extra += ' + wca_cross' }
-if($stdChanged -or $variantChanged){ $extra += ' + comp-steps' }
-Step "5 重算 distribution.json$extra (stamp=$stamp)"
-Push-Location (Join-Path $RepoRoot 'core')
-try {
-  pnpm --filter @cuberoot/scramble-stats-build build      # distribution.json 读全部变体, 任一变 -> 必重算
-  if($LASTEXITCODE -ne 0){ throw 'build (distribution) 失败' }
-  if($stdChanged){
-    # wca_cross 只依赖 std cross 步数 + 比赛元数据, 只在有新 std 时重算
-    pnpm --filter @cuberoot/scramble-stats-build build:wca-cross
-    if($LASTEXITCODE -ne 0){ throw 'build:wca-cross 失败' }
-  }
-  if($stdChanged -or $variantChanged){
-    # 每场预计算表(gen 页秒出), gitignore+只 scp。任一变体(含 std)CSV 变 -> 对应 comp_steps_<v> 需重算
-    # (build_comp_steps 内按 csv 存在与否逐个产);否则变体-only 补缺会发布陈旧的 comp_steps_<v>。
+if($stdChanged -or $variantChanged){
+  $extra = ''
+  if($stdChanged){ $extra += ' + wca_cross' }
+  $extra += ' + comp-steps'
+  Step "5 重算 distribution.json$extra (stamp=$stamp)"
+  Push-Location (Join-Path $RepoRoot 'core')
+  try {
+    pnpm --filter @cuberoot/scramble-stats-build build      # distribution.json 读全部变体, 任一变 -> 必重算
+    if($LASTEXITCODE -ne 0){ throw 'build (distribution) 失败' }
+    if($stdChanged){
+      # wca_cross 只依赖 std cross 步数 + 比赛元数据, 只在有新 std 时重算
+      pnpm --filter @cuberoot/scramble-stats-build build:wca-cross
+      if($LASTEXITCODE -ne 0){ throw 'build:wca-cross 失败' }
+    }
+    # 每场预计算表(gen 页秒出), gitignore+只 scp。任一变体(含 std)CSV 变 -> 对应 comp_steps_<v> 需重算。
     pnpm --filter @cuberoot/scramble-stats-build build:comp-steps
     if($LASTEXITCODE -ne 0){ throw 'build:comp-steps 失败' }
+    if($nNew -gt 0 -or $variantChanged){
+      # 近期打乱(recent_scrambles.json): 最近一批新增里各 (变体×类型×底色) 最简单的, 给首页 RecentScrambles。须在步骤4之后。
+      pnpm --filter @cuberoot/scramble-stats-build build:recent-scrambles
+      if($LASTEXITCODE -ne 0){ throw 'build:recent-scrambles 失败' }
+    }
+  } finally { Pop-Location }
+}
+
+# ---- 5b. 333opt inject (必须在 stages build 之后: build 会覆写 distribution/examples 的 '333' 变体, 这里还原/更新) ----
+if($willInject){
+  $has333 = @(Get-ChildItem (Join-Path $SolverDir '333opt') -Filter 'out.*.csv' -ErrorAction SilentlyContinue).Count -gt 0
+  if($has333){
+    Step '5b 注入 333 整解最优 (variant 333) — node solver/333opt/inject.mjs'
+    node (Join-Path $SolverDir '333opt\inject.mjs')
+    if($LASTEXITCODE -ne 0){ throw '333opt inject.mjs 失败' }
+    $optChanged = $true
+  } else {
+    Write-Host '[333opt] 无 out.*.csv (没跑过 solve_loop), 跳过 inject。' -ForegroundColor DarkGray
   }
-  if($nNew -gt 0 -or $variantChanged){
-    # 近期打乱(recent_scrambles.json): 最近一批新增打乱里各 (变体×类型×底色) 最简单的, 给首页 RecentScrambles 栏。
-    # build_recent_scrambles 优先用本次 new_split_mbf, 无新增则回退 incremental/recent_scrambles_batch.csv 快照 ->
-    # "只补某变体(如 f2leo/pseudo_f2leo)" 这种 nNew=0 的 run 也能把新变体纳入最近批次。须在步骤4之后。
-    pnpm --filter @cuberoot/scramble-stats-build build:recent-scrambles
-    if($LASTEXITCODE -ne 0){ throw 'build:recent-scrambles 失败' }
-  }
-} finally { Pop-Location }
+}
 
 # ---- 6. 发布 ----
 if($NoPublish){
@@ -540,6 +598,8 @@ if($NoPublish){
     $parts = @($stamp)
     if($stdChanged){ $parts += "+$nNew scrambles" }
     if($variantChanged){ $parts += "variants: $($Variants -join '/')" }
+    if($optChanged){ $parts += '333-optimal' }
+    if($puzzleChanged){ $parts += "puzzles: $($Puzzles -join '/')" }
     git -C $RepoRoot commit -m "chore(scramble-stats): incremental refresh ($($parts -join ', '))"
     if($LASTEXITCODE -ne 0){ throw 'git commit 失败' }
     git -C $RepoRoot push origin main
@@ -591,4 +651,4 @@ if($NoPublish){
   } else { Write-Host 'stats/scramble 无变化, 跳过 commit。' -ForegroundColor Yellow }
 }
 
-Step "完成 (std +$nNew; 变体: $(if($variantChanged){$Variants -join '/'}else{'无变化'}))"
+Step ("完成 (std +{0}; 变体 {1}; 333opt {2}; puzzles {3})" -f $nNew, $(if($variantChanged){$Variants -join '/'}else{'-'}), $(if($optChanged){'是'}else{'-'}), $(if($puzzleChanged){$Puzzles -join '/'}else{'-'}))
