@@ -21,7 +21,6 @@ export interface SkewbCategory {
   zh: string;
   group: SkewbGroup;
   cases: SkewbAlgCase[];
-    zhHant?: string;
 }
 
 const mk = (setup: string, id: string, solutions: string): SkewbAlgCase => ({

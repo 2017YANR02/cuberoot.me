@@ -355,7 +355,7 @@ const WHY_CARDS: WhyCard[] = [
 interface EngineCard {
   name: string;
   sub: ReactNode;
-  rows: { k: string; zh: ReactNode; en: ReactNode; zhHant?: ReactNode }[];
+  rows: { k: string; zh: ReactNode; en: ReactNode; }[];
   zhPick: ReactNode;
   enPick: ReactNode;
 }
@@ -365,10 +365,10 @@ const ENGINES: EngineCard[] = [
     name: 'pdflatex',
     sub: <>since 1995 · 8-bit · default</>,
     rows: [
-      { k: 'Speed',   zh: <>最快 (~2-5s/论文)</>, en: <>Fastest (~2-5 s per paper)</>, zhHant: <>最快 (~2-5s/論文)</> },
-      { k: 'Fonts',   zh: <>仅 8-bit Type 1 字体</>, en: <>8-bit Type 1 fonts only</>, zhHant: <>僅 8-bit Type 1 字型</> },
-      { k: 'Unicode', zh: <>需 <code>inputenc</code>; CJK 难</>, en: <>Needs <code>inputenc</code>; CJK painful</>, zhHant: <>需 <code>inputenc</code>; CJK 難</> },
-      { k: 'Output',  zh: <>直接 PDF</>, en: <>Direct to PDF</>, zhHant: <>直接 PDF</> },
+      { k: 'Speed',   zh: <>最快 (~2-5s/论文)</>, en: <>Fastest (~2-5 s per paper)</> },
+      { k: 'Fonts',   zh: <>仅 8-bit Type 1 字体</>, en: <>8-bit Type 1 fonts only</> },
+      { k: 'Unicode', zh: <>需 <code>inputenc</code>; CJK 难</>, en: <>Needs <code>inputenc</code>; CJK painful</> },
+      { k: 'Output',  zh: <>直接 PDF</>, en: <>Direct to PDF</> },
     ],
     zhPick: <>选用: <strong>纯英文 / 数学论文</strong>; arXiv 大部分模板默认它。</>,
     enPick: <>Pick when: <strong>English / math papers</strong>; most arXiv templates default to it.</>,
@@ -377,10 +377,10 @@ const ENGINES: EngineCard[] = [
     name: 'xelatex',
     sub: <>since 2004 · Unicode · system fonts</>,
     rows: [
-      { k: 'Speed',   zh: <>中 (~5-15s/论文)</>, en: <>Mid (~5-15 s per paper)</>, zhHant: <>中 (~5-15s/論文)</> },
-      { k: 'Fonts',   zh: <>fontspec + OpenType 系统字体</>, en: <>fontspec + OpenType system fonts</>, zhHant: <>fontspec + OpenType 系統字型</> },
-      { k: 'Unicode', zh: <>原生</>, en: <>Native</>, zhHant: <>原生</> },
-      { k: 'Output',  zh: <>PDF (走 xdv 中间格式)</>, en: <>PDF (via xdv intermediate)</>, zhHant: <>PDF (走 xdv 中間格式)</> },
+      { k: 'Speed',   zh: <>中 (~5-15s/论文)</>, en: <>Mid (~5-15 s per paper)</> },
+      { k: 'Fonts',   zh: <>fontspec + OpenType 系统字体</>, en: <>fontspec + OpenType system fonts</> },
+      { k: 'Unicode', zh: <>原生</>, en: <>Native</> },
+      { k: 'Output',  zh: <>PDF (走 xdv 中间格式)</>, en: <>PDF (via xdv intermediate)</> },
     ],
     zhPick: <>选用: <strong>中 / 日 / 韩 / 阿拉伯文</strong>, 任何要自定义字体的 design 文档。</>,
     enPick: <>Pick when: <strong>Chinese / Japanese / Korean / Arabic</strong>, or any design doc with custom fonts.</>,
@@ -389,10 +389,10 @@ const ENGINES: EngineCard[] = [
     name: 'lualatex',
     sub: <>since 2007 · Lua scripting · default</>,
     rows: [
-      { k: 'Speed',   zh: <>慢 (~10-30s/论文)</>, en: <>Slowest (~10-30 s per paper)</>, zhHant: <>慢 (~10-30s/論文)</> },
-      { k: 'Fonts',   zh: <>fontspec + OpenType</>, en: <>fontspec + OpenType</>, zhHant: <>fontspec + OpenType</> },
-      { k: 'Unicode', zh: <>原生</>, en: <>Native</>, zhHant: <>原生</> },
-      { k: 'Output',  zh: <>直接 PDF + 嵌入 Lua 钩子</>, en: <>Direct PDF + embedded Lua hooks</>, zhHant: <>直接 PDF + 嵌入 Lua 鉤子</> },
+      { k: 'Speed',   zh: <>慢 (~10-30s/论文)</>, en: <>Slowest (~10-30 s per paper)</> },
+      { k: 'Fonts',   zh: <>fontspec + OpenType</>, en: <>fontspec + OpenType</> },
+      { k: 'Unicode', zh: <>原生</>, en: <>Native</> },
+      { k: 'Output',  zh: <>直接 PDF + 嵌入 Lua 钩子</>, en: <>Direct PDF + embedded Lua hooks</> },
     ],
     zhPick: <>选用: <strong>2026 推荐的"未来引擎"</strong>; 复杂宏 / 包作者 / 需要程序化算字的工作。</>,
     enPick: <>Pick when: the <strong>"future engine" of 2026</strong>; complex macros / package authoring / programmatic glyph work.</>,
@@ -401,10 +401,10 @@ const ENGINES: EngineCard[] = [
     name: 'tectonic',
     sub: <>since 2015 · Rust · auto-fetch</>,
     rows: [
-      { k: 'Speed',   zh: <>快 (单 binary, cache)</>, en: <>Fast (single binary, cache)</>, zhHant: <>快 (單 binary, cache)</> },
-      { k: 'Fonts',   zh: <>fontspec + OpenType</>, en: <>fontspec + OpenType</>, zhHant: <>fontspec + OpenType</> },
-      { k: 'Unicode', zh: <>原生</>, en: <>Native</>, zhHant: <>原生</> },
-      { k: 'Output',  zh: <>PDF · 一次跑完所有 pass</>, en: <>PDF · one-shot, all passes</>, zhHant: <>PDF · 一次跑完所有 pass</> },
+      { k: 'Speed',   zh: <>快 (单 binary, cache)</>, en: <>Fast (single binary, cache)</> },
+      { k: 'Fonts',   zh: <>fontspec + OpenType</>, en: <>fontspec + OpenType</> },
+      { k: 'Unicode', zh: <>原生</>, en: <>Native</> },
+      { k: 'Output',  zh: <>PDF · 一次跑完所有 pass</>, en: <>PDF · one-shot, all passes</> },
     ],
     zhPick: <>选用: <strong>CI 流水线 / 不想装 7GB TeX Live</strong>; 自动下缺失包, 离线打不开。</>,
     enPick: <>Pick when: <strong>CI pipelines / don't want a 7 GB TeX Live</strong>; auto-fetches missing packages, needs network.</>,
@@ -660,7 +660,7 @@ export default function LatexIntroPage() {
 
   useDocumentTitle(
     'LaTeX : 数学排版的事实标准 — 1978→2026',
-    'LaTeX : the de-facto standard for typesetting math — 1978→2026', "LaTeX : 數學排版的事實標準 — 1978→2026"
+    'LaTeX : the de-facto standard for typesetting math — 1978→2026'
   );
 
   useEffect(() => {
@@ -880,8 +880,7 @@ export default function LatexIntroPage() {
                   <span className="cl-cmd">{'\\section'}</span>{'{Introduction}'}{'\n'}
                   Time, clocks and the ordering of events...{'\n'}
                   <span className="cl-cmd">{'\\end'}</span>{'{document}'}{'\n\n'}
-                  <span className="cl-c">{tr({ zh: '% 1985 写, 2026 仍能编译', en: '% written in 1985, still compiles in 2026',
-                      zhHant: "% 1985 寫, 2026 仍能編譯"
+                  <span className="cl-c">{tr({ zh: '% 1985 写, 2026 仍能编译', en: '% written in 1985, still compiles in 2026'
                 })}</span>
                 </code></pre>
               </div>
@@ -1034,7 +1033,7 @@ export default function LatexIntroPage() {
                   {e.rows.map((r, j) => (
                     <div className="engine-row" key={j}>
                       <b>{r.k}</b>
-                      <span>{i18n.language === 'zh-Hant' ? (r.zhHant ?? r.zh) : (i18n.language.startsWith('zh') ? r.zh : r.en)}</span>
+                      <span>{(i18n.language.startsWith('zh') ? r.zh : r.en)}</span>
                     </div>
                   ))}
                   <div className="engine-pick">{lang === 'zh' ? e.zhPick : e.enPick}</div>

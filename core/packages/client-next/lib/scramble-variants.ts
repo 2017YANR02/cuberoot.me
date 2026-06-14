@@ -4,7 +4,7 @@
 // 共用方:首页 RecentScrambles / /scramble/stats / /scramble/gen / /scramble/analyzer
 // (StageSolver + CFOP 枚举器)。新增变体/阶段只在这里加,别再各页写一份。
 //
-// 注:这些下拉按 `isZh ? 'zh' : 'en'` 取名(zh-Hant 也落简体,与历史一致),故不带 zhHant。
+// 注:这些下拉按 `isZh ? 'zh' : 'en'` 取名(简体 / 英文双语)。
 
 // 'block'(砖)是 UI 聚合方法:把数据层 4 个块变体(123/123x2/222/223)收进一个
 // 方法下拉项,块的具体形状落到阶段下拉(122/123/222/223/F2B)。数据键不变。

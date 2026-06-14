@@ -57,8 +57,7 @@ export default function ArticleReportsPage() {
         <p className="article-reports-denied-msg">{t('article.adminNotAuthorized')}</p>
         <HomeLink className="article-reports-back">
           <ChevronLeft size={16} />
-          <span>{tr({ zh: '首页', en: 'Home',
-              zhHant: "首頁"
+          <span>{tr({ zh: '首页', en: 'Home'
         })}</span>
         </HomeLink>
       </div>
@@ -85,8 +84,7 @@ export default function ArticleReportsPage() {
       <header className="article-reports-header">
         <HomeLink className="article-reports-back">
           <ChevronLeft size={16} />
-          <span>{tr({ zh: '首页', en: 'Home',
-              zhHant: "首頁"
+          <span>{tr({ zh: '首页', en: 'Home'
         })}</span>
         </HomeLink>
         <Link href={`/${langPrefix}/article`} className="article-reports-breadcrumb">

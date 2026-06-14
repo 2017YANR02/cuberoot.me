@@ -1,11 +1,9 @@
 'use client';
 
 // Centralised localized strings for the chapter registry, so every render site
-// (hub cards, chapter hero, prev/next nav) is consistent and generator-friendly:
-//   - badge uses template-literal t() → filled by `pnpm zh:gen-localt`
-//   - title / tagline go through tr() on the registry's { zh, en, zhHant } objects
-//     → zhHant filled by `pnpm zh:inject`
-// (Both Traditional channels are OpenCC-generated, never hand-authored.)
+// (hub cards, chapter hero, prev/next nav) stays consistent:
+//   - badge uses template-literal t()
+//   - title / tagline go through tr() on the registry's { zh, en } objects
 
 import { useT } from '../../../../hooks/useT';
 import { tr } from '@/i18n/tr';
@@ -17,7 +15,7 @@ export function useRegText() {
     badge: (a: RegArticle) =>
       a.group === 'core'
         ? t(`第 ${a.num} 章`, `Article ${a.num}`)
-        : t(`附则 ${a.num}`, `Article ${a.num}`, `附則 ${a.num}`),
+        : t(`附则 ${a.num}`, `Article ${a.num}`),
     title: (a: RegArticle) => tr(a.title),
     tagline: (a: RegArticle) => tr(a.tagline),
   };

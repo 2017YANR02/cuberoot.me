@@ -338,13 +338,11 @@ export default function AbelianClassification() {
                 onClick={() => setDisplayMode(m)}
               >
                 {m === 'both'
-                  ? (tr({ zh: '两种形式', en: 'Both',
-                      zhHant: "兩種形式"
+                  ? (tr({ zh: '两种形式', en: 'Both'
                 }))
                   : m === 'elem'
                   ? (tr({ zh: '初等因子', en: 'Elem. div.' }))
-                  : (tr({ zh: '不变因子', en: 'Inv. factor',
-                      zhHant: "不變因子"
+                  : (tr({ zh: '不变因子', en: 'Inv. factor'
                 }))}
               </button>
             ))}
@@ -483,8 +481,7 @@ export default function AbelianClassification() {
                 ))}
               {crtSplit.factors.length <= 1 && (
                 <span style={{ color: 'var(--ink-faint)', fontSize: 11 }}>
-                  ({tr({ zh: 'n 已是素幂，不可再拆', en: 'already a prime power, cannot split further',
-                      zhHant: "n 已是素冪，不可再拆"
+                  ({tr({ zh: 'n 已是素幂，不可再拆', en: 'already a prime power, cannot split further'
                 })})
                 </span>
               )}
@@ -618,8 +615,7 @@ export default function AbelianClassification() {
         <div className="gt-panel-input-row">
           <input
             className="gt-input"
-            placeholder={tr({ zh: '输入素幂，如 2^3 或 5', en: 'Enter prime power, e.g. 2^3 or 5',
-                zhHant: "輸入素冪，如 2^3 或 5"
+            placeholder={tr({ zh: '输入素幂，如 2^3 或 5', en: 'Enter prime power, e.g. 2^3 or 5'
             })}
             value={convInput}
             onChange={(e) => setConvInput(e.target.value)}
@@ -669,17 +665,13 @@ export default function AbelianClassification() {
           <L zh="参考文献" en="References" />
         </div>
         <ol>
-          <li><span className="gt-ref-cite">Dummit &amp; Foote, <em>Abstract Algebra</em>, 3rd ed., §5.2</span> — {tr({ zh: '初等因子与不变因子形式及转换算法', en: 'Elementary-divisor and invariant-factor forms with the conversion algorithm',
-              zhHant: "初等因子與不變因子形式及轉換演算法"
+          <li><span className="gt-ref-cite">Dummit &amp; Foote, <em>Abstract Algebra</em>, 3rd ed., §5.2</span> — {tr({ zh: '初等因子与不变因子形式及转换算法', en: 'Elementary-divisor and invariant-factor forms with the conversion algorithm'
         })}.</li>
-          <li><a href="https://oeis.org/A000688" target="_blank" rel="noreferrer">OEIS A000688</a> — {tr({ zh: '阶为 n 的阿贝尔群数 a(n) = ∏ p(eᵢ)', en: 'Number of abelian groups of order n; a(n) = ∏ p(eᵢ)',
-              zhHant: "階為 n 的阿貝爾群數 a(n) = ∏ p(eᵢ)"
+          <li><a href="https://oeis.org/A000688" target="_blank" rel="noreferrer">OEIS A000688</a> — {tr({ zh: '阶为 n 的阿贝尔群数 a(n) = ∏ p(eᵢ)', en: 'Number of abelian groups of order n; a(n) = ∏ p(eᵢ)'
         })}.</li>
-          <li><a href="https://oeis.org/A000041" target="_blank" rel="noreferrer">OEIS A000041</a> — {tr({ zh: '整数划分函数 p(n)', en: 'Integer partition function p(n)',
-              zhHant: "整數劃分函式 p(n)"
+          <li><a href="https://oeis.org/A000041" target="_blank" rel="noreferrer">OEIS A000041</a> — {tr({ zh: '整数划分函数 p(n)', en: 'Integer partition function p(n)'
         })}.</li>
-          <li><a href="https://en.wikipedia.org/wiki/Rubik%27s_Cube_group" target="_blank" rel="noreferrer">Wikipedia: Rubik&apos;s Cube group</a> — {tr({ zh: '朝向子群 (ℤ/3)⁷ × (ℤ/2)¹¹ 及完整半直积结构', en: 'Orientation subgroup (ℤ/3)⁷ × (ℤ/2)¹¹ and full semidirect-product structure',
-              zhHant: "朝向子群 (ℤ/3)⁷ × (ℤ/2)¹¹ 及完整半直積結構"
+          <li><a href="https://en.wikipedia.org/wiki/Rubik%27s_Cube_group" target="_blank" rel="noreferrer">Wikipedia: Rubik&apos;s Cube group</a> — {tr({ zh: '朝向子群 (ℤ/3)⁷ × (ℤ/2)¹¹ 及完整半直积结构', en: 'Orientation subgroup (ℤ/3)⁷ × (ℤ/2)¹¹ and full semidirect-product structure'
         })}.</li>
         </ol>
       </div>
@@ -734,8 +726,7 @@ function GroupRow({
       {(displayMode === 'both' || displayMode === 'inv') && (
         <span style={{ flex: 1, minWidth: 0 }}>
           <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--accent-2)', marginRight: 4 }}>
-            {tr({ zh: '不变', en: 'inv',
-                zhHant: "不變"
+            {tr({ zh: '不变', en: 'inv'
             })}
           </span>
           <TeX src={invTex} />
@@ -945,8 +936,7 @@ function AlignmentMatrixSVG({
               <line x1={leftPad} y1={invY} x2={leftPad + k * colW} y2={invY} stroke="var(--rule)" strokeWidth={1} />
               <text x={leftPad - 4} y={invY + rowH / 2 + 4} textAnchor="end"
                 fontSize={10} fontFamily="var(--mono)" fill="var(--accent)">
-                {tr({ zh: '不变', en: 'inv.',
-                    zhHant: "不變"
+                {tr({ zh: '不变', en: 'inv.'
                 })}
               </text>
               {fullInv.map((d, j) => (

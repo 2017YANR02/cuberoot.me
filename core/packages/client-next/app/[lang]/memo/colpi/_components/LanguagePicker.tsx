@@ -32,13 +32,11 @@ export function LangPopup({
     <div
       className={`colpi-langpicker-popup ${popupClassName ?? ''}`}
       role="dialog"
-      aria-label={tr({ zh: '选择语言', en: 'Select language',
-          zhHant: "選擇語言"
+      aria-label={tr({ zh: '选择语言', en: 'Select language'
     })}
     >
       <div className="colpi-langpicker-popup-head">
-        <span>{title ?? (tr({ zh: '选择语言', en: 'Select words language',
-            zhHant: "選擇語言"
+        <span>{title ?? (tr({ zh: '选择语言', en: 'Select words language'
         }))}</span>
         <button type="button" onClick={onClose} aria-label="Close">
           <X size={14} />
@@ -64,7 +62,7 @@ export function LangPopup({
             title={l.code}
           >
             <Flag iso2={l.iso2} className="colpi-langpicker-flag" />
-            <span>{(i18n.language === 'zh-Hant' ? (l.zhHant ?? l.zh) : (i18n.language.startsWith('zh') ? l.zh : l.en))}</span>
+            <span>{((i18n.language.startsWith('zh') ? l.zh : l.en))}</span>
           </button>
         ))}
       </div>
@@ -108,8 +106,7 @@ export default function LanguagePicker({
         type="button"
         className="colpi-langpicker-trigger"
         onClick={() => setOpen(o => !o)}
-        title={tr({ zh: '词条语言', en: 'Word language',
-            zhHant: "詞條語言"
+        title={tr({ zh: '词条语言', en: 'Word language'
         })}
       >
         {current ? (
@@ -119,8 +116,7 @@ export default function LanguagePicker({
         )}
         <span className="colpi-langpicker-label">
           {value === 'all'
-            ? (tr({ zh: '全部语言', en: 'All langs',
-                zhHant: "全部語言"
+            ? (tr({ zh: '全部语言', en: 'All langs'
             }))
             : langDisplay(value, isZh)}
         </span>

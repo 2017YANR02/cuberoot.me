@@ -44,17 +44,13 @@ export const WINDOWS: StackTool = {
     outlookDesc: <>25H2 is an enablement package; the real action is Copilot+ PC — NPU compute moves into the OS, with local small models powering Recall / Click to Do / live captions. WSL2 was open-sourced in May 2025, blurring the line between the Windows and Linux toolchains. Meanwhile Windows 10 reached end of support on 2025-10-14, forcing a wave of hardware (TPM 2.0 requirement) and system migrations.</>,
   },
   heroStats: [
-    { num: '11', unit: ' 25H2', zh: <>当前稳定版 <em>2025-09-30 · build 26200</em></>, en: <>current stable <em>2025-09-30 · build 26200</em></>,
-        zhHant: <>當前穩定版 <em>2025-09-30 · build 26200</em></>
+    { num: '11', unit: ' 25H2', zh: <>当前稳定版 <em>2025-09-30 · build 26200</em></>, en: <>current stable <em>2025-09-30 · build 26200</em></>
     },
-    { num: '40', unit: 'y', zh: <>从 1985 至今 <em>桌面统治力 30 年</em></>, en: <>since 1985 <em>30 years of desktop dominance</em></>,
-        zhHant: <>從 1985 至今 <em>桌面統治力 30 年</em></>
+    { num: '40', unit: 'y', zh: <>从 1985 至今 <em>桌面统治力 30 年</em></>, en: <>since 1985 <em>30 years of desktop dominance</em></>
     },
-    { num: '~30', unit: 'y', zh: <>Win32 向后兼容 <em>1995 的二进制大概率还能跑</em></>, en: <>of Win32 backward compat <em>a 1995 binary likely still runs</em></>,
-        zhHant: <>Win32 向後相容 <em>1995 的二進位制大機率還能跑</em></>
+    { num: '~30', unit: 'y', zh: <>Win32 向后兼容 <em>1995 的二进制大概率还能跑</em></>, en: <>of Win32 backward compat <em>a 1995 binary likely still runs</em></>
     },
-    { num: '70', unit: '%+', zh: <>桌面 / 笔记本份额 <em>长期第一</em></>, en: <>desktop / laptop share <em>top for years</em></>,
-        zhHant: <>桌面 / 筆記本份額 <em>長期第一</em></>
+    { num: '70', unit: '%+', zh: <>桌面 / 笔记本份额 <em>长期第一</em></>, en: <>desktop / laptop share <em>top for years</em></>
     },
   ],
   intro: {

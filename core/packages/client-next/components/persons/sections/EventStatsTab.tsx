@@ -28,7 +28,7 @@ interface Row {
 }
 
 export default function EventStatsTab({ results, comps, isZh }: Props) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const [sort, setSort] = useState<{ col: Col; dir: 'asc' | 'desc' }>({ col: 'event', dir: 'asc' });
 
   const rows = useMemo<Row[] | null>(() => {
@@ -74,8 +74,8 @@ export default function EventStatsTab({ results, comps, isZh }: Props) {
     return out;
   }, [results, comps]);
 
-  if (!rows) return <div className="wp-loading-inline">{t('加载中…', 'Loading…', "載入中…")}</div>;
-  if (rows.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet', "暫無成績")}</div>;
+  if (!rows) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
+  if (rows.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>;
 
   const sorted = rows.slice().sort((a, b) => {
     let cmp = 0;
@@ -107,14 +107,14 @@ export default function EventStatsTab({ results, comps, isZh }: Props) {
       <table className="wp-event-stats-table">
         <thead>
           <tr>
-            <th onClick={() => toggle('event')} className="wp-th-sortable">{t('项目', 'Event', "項目")} <Arrow col="event" /></th>
-            <th onClick={() => toggle('first')} className="wp-th-sortable">{t('首次参赛', 'First', "首次參賽")} <Arrow col="first" /></th>
-            <th onClick={() => toggle('last')} className="wp-th-sortable">{t('最后参赛', 'Last', "最後參賽")} <Arrow col="last" /></th>
-            <th onClick={() => toggle('comps')} className="wp-th-sortable">{t('比赛次数', 'Comps', "比賽次數")} <Arrow col="comps" /></th>
-            <th onClick={() => toggle('rounds')} className="wp-th-sortable">{t('轮次次数', 'Rounds', "輪次次數")} <Arrow col="rounds" /></th>
-            <th onClick={() => toggle('attempts')} className="wp-th-sortable">{t('尝试数', 'Attempts', "嘗試數")} <Arrow col="attempts" /></th>
-            <th onClick={() => toggle('solves')} className="wp-th-sortable">{t('成功数', 'Solves', "成功數")} <Arrow col="solves" /></th>
-            <th onClick={() => toggle('fails')} className="wp-th-sortable">{t('失败数', 'Fails', "失敗數")} <Arrow col="fails" /></th>
+            <th onClick={() => toggle('event')} className="wp-th-sortable">{t('项目', 'Event')} <Arrow col="event" /></th>
+            <th onClick={() => toggle('first')} className="wp-th-sortable">{t('首次参赛', 'First')} <Arrow col="first" /></th>
+            <th onClick={() => toggle('last')} className="wp-th-sortable">{t('最后参赛', 'Last')} <Arrow col="last" /></th>
+            <th onClick={() => toggle('comps')} className="wp-th-sortable">{t('比赛次数', 'Comps')} <Arrow col="comps" /></th>
+            <th onClick={() => toggle('rounds')} className="wp-th-sortable">{t('轮次次数', 'Rounds')} <Arrow col="rounds" /></th>
+            <th onClick={() => toggle('attempts')} className="wp-th-sortable">{t('尝试数', 'Attempts')} <Arrow col="attempts" /></th>
+            <th onClick={() => toggle('solves')} className="wp-th-sortable">{t('成功数', 'Solves')} <Arrow col="solves" /></th>
+            <th onClick={() => toggle('fails')} className="wp-th-sortable">{t('失败数', 'Fails')} <Arrow col="fails" /></th>
           </tr>
         </thead>
         <tbody>

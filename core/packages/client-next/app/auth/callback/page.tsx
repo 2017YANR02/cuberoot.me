@@ -44,20 +44,18 @@ export default function AuthCallbackPage() {
     const error = params.get('error');
 
     if (error) {
-      setErrorMsg(i18n.language === 'zh-Hant' ? (`授權被拒絕: ${error}`) : (isZh ? `授权被拒绝: ${error}` : `Authorization denied: ${error}`));
+      setErrorMsg((isZh ? `授权被拒绝: ${error}` : `Authorization denied: ${error}`));
       return;
     }
     if (!accessToken) {
-      setErrorMsg(tr({ zh: '未获取到 access_token', en: 'No access_token received',
-          zhHant: "未獲取到 access_token"
+      setErrorMsg(tr({ zh: '未获取到 access_token', en: 'No access_token received'
     }));
       return;
     }
 
     const savedState = sessionStorage.getItem('wca_oauth_state');
     if (!savedState || savedState !== state) {
-      setErrorMsg(tr({ zh: 'OAuth state 不匹配，请重试', en: 'OAuth state mismatch, please retry',
-          zhHant: "OAuth state 不匹配，請重試"
+      setErrorMsg(tr({ zh: 'OAuth state 不匹配，请重试', en: 'OAuth state mismatch, please retry'
     }));
       return;
     }
@@ -105,7 +103,7 @@ export default function AuthCallbackPage() {
         router.replace('/recon');
       }
     } catch (err) {
-      setErrorMsg(i18n.language === 'zh-Hant' ? (`登入失敗: ${(err as Error).message}`) : (isZh ? `登录失败: ${(err as Error).message}` : `Login failed: ${(err as Error).message}`));
+      setErrorMsg((isZh ? `登录失败: ${(err as Error).message}` : `Login failed: ${(err as Error).message}`));
     }
   }
 
@@ -134,8 +132,7 @@ export default function AuthCallbackPage() {
               borderTopColor: '#60a5fa', borderRadius: '50%',
               animation: 'spin 0.8s linear infinite', marginBottom: 12,
             }} />
-            <div>{tr({ zh: '正在登录 WCA...', en: 'Signing in to WCA...',
-                zhHant: "正在登入 WCA..."
+            <div>{tr({ zh: '正在登录 WCA...', en: 'Signing in to WCA...'
             })}</div>
           </div>
         )}

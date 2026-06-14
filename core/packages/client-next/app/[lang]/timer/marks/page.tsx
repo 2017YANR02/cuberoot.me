@@ -35,7 +35,7 @@ function fmtDate(epochSec: number): string {
 function MarksFeed() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('打乱足迹', 'Scramble Marks', '打亂足跡');
+  useDocumentTitle('打乱足迹', 'Scramble Marks');
   const user = useAuthStore((st) => st.user);
   // SSR/首帧统一为未登录,挂载后再放开,避免 hydration mismatch。
   const [mounted, setMounted] = useState(false);
@@ -101,7 +101,7 @@ function MarksFeed() {
   const onDelete = useCallback(async (m: RecentMark) => {
     const isOwn = !!user && m.wcaId === user.wcaId;
     const msg = isOwn
-      ? tr({ zh: '删除这条标记?', en: 'Delete this mark?', zhHant: '刪除這條標記?' })
+      ? tr({ zh: '删除这条标记?', en: 'Delete this mark?' })
       : tr({ zh: `以管理员身份删除 ${displayCuberName(m.name, isZh) || m.wcaId} 的这条标记?`,
              en: `Delete ${displayCuberName(m.name, isZh) || m.wcaId}'s mark as admin?` });
     if (!window.confirm(msg)) return;
@@ -110,25 +110,22 @@ function MarksFeed() {
       await deleteMarkById(m.id);
       setMarks((cur) => (cur ?? []).filter((x) => x.id !== m.id));
     } catch {
-      window.alert(tr({ zh: '删除失败,稍后再试。', en: 'Delete failed — try again.', zhHant: '刪除失敗,稍後再試。' }));
+      window.alert(tr({ zh: '删除失败,稍后再试。', en: 'Delete failed — try again.' }));
     }
     setDeleting(null);
   }, [user, isZh]);
 
   return (
     <div className="scrmarks-page">
-      <h1 className="scrmarks-title">{tr({ zh: '打乱足迹', en: 'Scramble Marks',
-          zhHant: "打亂足跡"
+      <h1 className="scrmarks-title">{tr({ zh: '打乱足迹', en: 'Scramble Marks'
     })}</h1>
       <p className="scrmarks-sub">
         {tr({
           zh: '在计时器里用 WCA 真实比赛打乱练习时,登录后可以给做过的打乱打卡。这里是全站最近的足迹。',
-          en: 'When practicing with real WCA competition scrambles in the timer, signed-in users can mark the scrambles they have done. This is the site-wide trail.',
-            zhHant: "在計時器裡用 WCA 真實比賽打亂練習時,登入後可以給做過的打亂打卡。這裡是全站最近的足跡。"
+          en: 'When practicing with real WCA competition scrambles in the timer, signed-in users can mark the scrambles they have done. This is the site-wide trail.'
         })}
         {' '}
-        <AppLink href="/timer">{tr({ zh: '去计时器', en: 'Open the timer',
-            zhHant: "去計時器"
+        <AppLink href="/timer">{tr({ zh: '去计时器', en: 'Open the timer'
         })}</AppLink>
       </p>
 
@@ -140,7 +137,7 @@ function MarksFeed() {
           onChange={(e) => setSearchInput(e.target.value)}
           onCompositionStart={() => setComposing(true)}
           onCompositionEnd={(e) => { setComposing(false); setSearchInput(e.currentTarget.value); }}
-          placeholder={tr({ zh: '搜索选手 / 比赛…', en: 'Search cuber / competition…', zhHant: '搜尋選手 / 比賽…' })}
+          placeholder={tr({ zh: '搜索选手 / 比赛…', en: 'Search cuber / competition…' })}
         />
         {searchInput && <ClearButton onClick={() => setSearchInput('')} isZh={isZh} variant="inline" />}
       </div>
@@ -163,16 +160,14 @@ function MarksFeed() {
         )}
       </div>
 
-      {loadErr && <p className="scrmarks-empty">{tr({ zh: '加载失败,稍后再试。', en: 'Failed to load — try again later.',
-          zhHant: "載入失敗,稍後再試。"
+      {loadErr && <p className="scrmarks-empty">{tr({ zh: '加载失败,稍后再试。', en: 'Failed to load — try again later.'
     })}</p>}
-      {!loadErr && marks === null && <p className="scrmarks-empty">{tr({ zh: '加载中…', en: 'Loading…',
-          zhHant: "載入中…"
+      {!loadErr && marks === null && <p className="scrmarks-empty">{tr({ zh: '加载中…', en: 'Loading…'
     })}</p>}
       {!loadErr && marks !== null && marks.length === 0 && (
         <p className="scrmarks-empty">{q
-          ? (tr({ zh: '没有匹配的标记。', en: 'No matching marks.', zhHant: '沒有匹配的標記。' }))
-          : (tr({ zh: '还没有任何标记。', en: 'No marks yet.', zhHant: '還沒有任何標記。' }))}</p>
+          ? (tr({ zh: '没有匹配的标记。', en: 'No matching marks.' }))
+          : (tr({ zh: '还没有任何标记。', en: 'No marks yet.' }))}</p>
       )}
 
       {marks !== null && marks.length > 0 && (
@@ -196,8 +191,8 @@ function MarksFeed() {
                       disabled={deleting === m.id}
                       onClick={() => void onDelete(m)}
                       title={m.wcaId === user?.wcaId
-                        ? (tr({ zh: '删除', en: 'Delete', zhHant: '刪除' }))
-                        : (tr({ zh: '管理员删除', en: 'Delete (admin)', zhHant: '管理員刪除' }))}
+                        ? (tr({ zh: '删除', en: 'Delete' }))
+                        : (tr({ zh: '管理员删除', en: 'Delete (admin)' }))}
                     >
                       <Trash2 size={13} />
                     </button>
@@ -220,10 +215,8 @@ function MarksFeed() {
 
       {marks !== null && marks.length > 0 && !done && (
         <button type="button" className="scrmarks-more" disabled={loadingMore} onClick={loadMore}>
-          {loadingMore ? (tr({ zh: '加载中…', en: 'Loading…',
-              zhHant: "載入中…"
-        })) : (tr({ zh: '加载更多', en: 'Load more',
-            zhHant: "載入更多"
+          {loadingMore ? (tr({ zh: '加载中…', en: 'Loading…'
+        })) : (tr({ zh: '加载更多', en: 'Load more'
         }))}
         </button>
       )}

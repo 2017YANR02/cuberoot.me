@@ -44,17 +44,13 @@ export const CUBING_JS: StackTool = {
     outlookDesc: <>cubing.js is still on a rapid-release cadence (0.63.3, monthly bumps); the main gap before 1.0 is stable-API commitments. Up next: a unified smart-cube Bluetooth protocol, a WebGPU render pipeline, and the stricter random-state rules the WCA is about to mandate.</>,
   },
   heroStats: [
-    { num: '17', zh: <>覆盖 WCA 项目 <em>含 4x4 reduction / sq1</em></>, en: <>WCA events covered <em>incl. 4x4 reduction / sq1</em></>,
-        zhHant: <>覆蓋 WCA 項目 <em>含 4x4 reduction / sq1</em></>
+    { num: '17', zh: <>覆盖 WCA 项目 <em>含 4x4 reduction / sq1</em></>, en: <>WCA events covered <em>incl. 4x4 reduction / sq1</em></>
     },
-    { num: '10', zh: <>子模块 <em>alg / kpuzzle / twisty / scramble / ...</em></>, en: <>sub-modules <em>alg / kpuzzle / twisty / scramble / ...</em></>,
-        zhHant: <>子模組 <em>alg / kpuzzle / twisty / scramble / ...</em></>
+    { num: '10', zh: <>子模块 <em>alg / kpuzzle / twisty / scramble / ...</em></>, en: <>sub-modules <em>alg / kpuzzle / twisty / scramble / ...</em></>
     },
-    { num: '0', unit: '.63', zh: <>当前版本 <em>2026-05 · npm cubing@0.63.3</em></>, en: <>current release <em>2026-05 · npm cubing@0.63.3</em></>,
-        zhHant: <>當前版本 <em>2026-05 · npm cubing@0.63.3</em></>
+    { num: '0', unit: '.63', zh: <>当前版本 <em>2026-05 · npm cubing@0.63.3</em></>, en: <>current release <em>2026-05 · npm cubing@0.63.3</em></>
     },
-    { num: '8', unit: 'y', zh: <>2018 年首个 commit 至今</>, en: <>since the first commit in 2018</>,
-        zhHant: <>2018 年首個 commit 至今</>
+    { num: '8', unit: 'y', zh: <>2018 年首个 commit 至今</>, en: <>since the first commit in 2018</>
     },
   ],
   intro: {

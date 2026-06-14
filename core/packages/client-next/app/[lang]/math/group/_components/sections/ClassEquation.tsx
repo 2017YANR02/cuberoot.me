@@ -971,11 +971,9 @@ function D4Q8ContrastPanel({ lang }: { lang: 'zh' | 'en' }) {
             onClick={() => setColorBy(c)}
           >
             {c === 'class'
-              ? (tr({ zh: '共轭类', en: 'conjugacy class',
-                  zhHant: "共軛類"
+              ? (tr({ zh: '共轭类', en: 'conjugacy class'
             }))
-              : (tr({ zh: '元素阶', en: 'element order',
-                  zhHant: "元素階"
+              : (tr({ zh: '元素阶', en: 'element order'
             }))}
           </button>
         ))}

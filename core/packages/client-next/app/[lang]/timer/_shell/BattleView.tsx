@@ -615,15 +615,13 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
         className={`scramble-text${player.isTiming ? ' hidden' : ''}`}
         data-no-timer
         onClick={copyScramble}
-        title={tr({ zh: '点击复制打乱', en: 'Click to copy',
-            zhHant: "點選複製打亂"
+        title={tr({ zh: '点击复制打乱', en: 'Click to copy'
         })}
         style={{ '--scramble-auto': getScrambleAutoScale(myScrambleDisplay || ''), cursor: 'pointer' } as React.CSSProperties}
         dangerouslySetInnerHTML={{ __html: scrambleContent }}
       />
       {scrambleCopied && (
-        <div className="battle-scramble-copied" data-no-timer>{tr({ zh: '已复制', en: 'Copied',
-            zhHant: "已複製"
+        <div className="battle-scramble-copied" data-no-timer>{tr({ zh: '已复制', en: 'Copied'
         })}</div>
       )}
 
@@ -823,13 +821,11 @@ function MiddleBar({
         {playersControl}
         <span className="key-hint">{keyHint}</span>
         <CubeRootLogo className="middle-logo" />
-        <button className="middle-btn" title={tr({ zh: '历史', en: 'History',
-            zhHant: "歷史"
+        <button className="middle-btn" title={tr({ zh: '历史', en: 'History'
         })} onClick={onHistoryClick}>
           <ClipboardList size={16} />
         </button>
-        <button className="middle-btn" title={tr({ zh: '设置', en: 'Settings',
-            zhHant: "設定"
+        <button className="middle-btn" title={tr({ zh: '设置', en: 'Settings'
         })} onClick={onSettingsClick}>
           <SettingsIcon size={16} />
         </button>
@@ -866,7 +862,7 @@ function PlayerBgRow({ playerId, isZh }: { playerId: number; isZh: boolean }) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > BG_MAX_BYTES) {
-      setError(i18n.language === 'zh-Hant' ? (`圖片太大(${(file.size / 1024 / 1024).toFixed(1)} MB),≤4MB`) : (isZh
+      setError((isZh
                   ? `图片太大(${(file.size / 1024 / 1024).toFixed(1)} MB),≤4MB`
                   : `Image too large (${(file.size / 1024 / 1024).toFixed(1)} MB), ≤4MB`));
       e.target.value = '';
@@ -902,11 +898,10 @@ function PlayerBgRow({ playerId, isZh }: { playerId: number; isZh: boolean }) {
           type="button"
           className={`bg-image-btn${hasImage ? ' has-image' : ''}`}
           onClick={() => fileInputRef.current?.click()}
-          title={tr({ zh: '上传背景图', en: 'Upload image',
-              zhHant: "上傳背景圖"
+          title={tr({ zh: '上传背景图', en: 'Upload image'
         })}
         >
-          {i18n.language === 'zh-Hant' ? ((hasImage ? '已上傳' : '圖片')) : (isZh ? (hasImage ? '已上传' : '图片') : (hasImage ? 'Set' : 'Image'))}
+          {(isZh ? (hasImage ? '已上传' : '图片') : (hasImage ? 'Set' : 'Image'))}
         </button>
         <input
           ref={fileInputRef}
@@ -970,8 +965,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         <div className="settings-header-bar">
           <span className="settings-title">
             <SettingsIcon size={16} />
-            {tr({ zh: '设置', en: 'Settings',
-                zhHant: "設定"
+            {tr({ zh: '设置', en: 'Settings'
             })}
           </span>
           <button className="settings-x-btn" onClick={onClose}>✕</button>
@@ -983,8 +977,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* 项目选择 — 仅 Solo;1v1 已移到 middle-bar 的项目按钮 */}
         {store.mode === 'solo' && (
           <div className="settings-group">
-            <div className="settings-label" data-i18n="puzzle">{tr({ zh: '项目', en: 'PUZZLE',
-                zhHant: "項目"
+            <div className="settings-label" data-i18n="puzzle">{tr({ zh: '项目', en: 'PUZZLE'
             })}</div>
             <div className="puzzle-grid">
               {PUZZLES.map(puz => (
@@ -1006,23 +999,19 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* 打乱来源 — 复用 Solo 的 WcaSourceConfig + 共享 timer 设置(随机 / WCA 真实比赛打乱)。
             Duo 同 puzzle 时双方拿同一条真实打乱(沿用共享 scramble 不变量)。 */}
         <div className="settings-group">
-          <div className="settings-label">{tr({ zh: '打乱来源', en: 'Scramble source',
-              zhHant: "打亂來源"
+          <div className="settings-label">{tr({ zh: '打乱来源', en: 'Scramble source'
           })}</div>
           <div className="setting-item">
-            <span>{tr({ zh: '来源', en: 'Source',
-                zhHant: "來源"
+            <span>{tr({ zh: '来源', en: 'Source'
             })}</span>
             <select
               className="settings-select"
               value={settings.scrambleSource}
               onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' })}
             >
-              <option value="wca">{tr({ zh: 'WCA 真题', en: 'WCA real',
-                  zhHant: "WCA 真題"
+              <option value="wca">{tr({ zh: 'WCA 真题', en: 'WCA real'
               })}</option>
-              <option value="random">{tr({ zh: '随机生成', en: 'Random',
-                  zhHant: "隨機生成"
+              <option value="random">{tr({ zh: '随机生成', en: 'Random'
               })}</option>
             </select>
           </div>
@@ -1056,16 +1045,14 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Inspection */}
         <div className="settings-group solo-setting">
           <div className="setting-item">
-            <span data-i18n="inspection">{tr({ zh: '观察', en: 'Inspection',
-                zhHant: "觀察"
+            <span data-i18n="inspection">{tr({ zh: '观察', en: 'Inspection'
             })}</span>
             <select
               className="settings-select"
               value={store.inspectionTime}
               onChange={e => store.setInspectionTime(parseInt(e.target.value))}
             >
-              <option value="0">{tr({ zh: '关闭', en: 'OFF',
-                  zhHant: "關閉"
+              <option value="0">{tr({ zh: '关闭', en: 'OFF'
             })}</option>
               <option value="8">8s</option>
               <option value="15">15s (WCA)</option>
@@ -1077,8 +1064,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Voice */}
         <div className="settings-group solo-setting">
           <div className="setting-item">
-            <span data-i18n="voice">{tr({ zh: '语音提示', en: 'Voice Alert',
-                zhHant: "語音提示"
+            <span data-i18n="voice">{tr({ zh: '语音提示', en: 'Voice Alert'
             })}</span>
             <label className="switch">
               <input
@@ -1094,8 +1080,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Show Image */}
         <div className="settings-group">
           <div className="setting-item">
-            <span data-i18n="show_image">{tr({ zh: '显示打乱图', en: 'Show Image',
-                zhHant: "顯示打亂圖"
+            <span data-i18n="show_image">{tr({ zh: '显示打乱图', en: 'Show Image'
             })}</span>
             <label className="switch">
               <input
@@ -1111,8 +1096,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Scramble Size */}
         <div className="settings-group">
           <div className="setting-item slider-row">
-            <span data-i18n="scramble_size">{tr({ zh: '打乱大小', en: 'Scramble Size',
-                zhHant: "打亂大小"
+            <span data-i18n="scramble_size">{tr({ zh: '打乱大小', en: 'Scramble Size'
             })}</span>
             <input
               type="range"
@@ -1147,8 +1131,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Start Delay */}
         <div className="settings-group">
           <div className="setting-item slider-row">
-            <span data-i18n="start_delay">{tr({ zh: '启动延迟', en: 'Start Delay',
-                zhHant: "啟動延遲"
+            <span data-i18n="start_delay">{tr({ zh: '启动延迟', en: 'Start Delay'
             })}</span>
             <span className="delay-value">{(store.startDelay / 1000).toFixed(2)}s</span>
             <input
@@ -1212,7 +1195,7 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
     useBattleStore.getState().setPlayerCount(playerCount);
   }, [playerCount]);
 
-  useDocumentTitle(playerCount > 2 ? '多人' : '双人', playerCount > 2 ? 'Multi' : 'Duo', playerCount > 2 ? "多人" : "雙人");
+  useDocumentTitle(playerCount > 2 ? '多人' : '双人', playerCount > 2 ? 'Multi' : 'Duo');
   // SSG/first-paint gate: battle_store 默认值从 localStorage 读 (mode/layout/...),
   // SSR shim 返 null → 默认 1v1/versus,client 端读到真实值就不同。SSG /timer 页
   // 出空占位,client 挂载后再 render(镜像 TimerShell 的 mounted 门控)。
@@ -1379,8 +1362,7 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
           >
             {/* lucide Timer 替代 icon_timer.png(no-emoji / no raster) */}
             <TimerIcon size={22} className="nav-tab-icon" />
-            <span>{tr({ zh: '计时', en: 'Timer',
-                zhHant: "計時"
+            <span>{tr({ zh: '计时', en: 'Timer'
             })}</span>
           </button>
           <button
@@ -1388,8 +1370,7 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
             onClick={() => store.switchTab('results')}
           >
             <ClipboardList size={22} />
-            <span>{tr({ zh: '成绩', en: 'Results',
-                zhHant: "成績"
+            <span>{tr({ zh: '成绩', en: 'Results'
             })}</span>
           </button>
           <button
@@ -1397,8 +1378,7 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
             onClick={() => store.switchTab('settings')}
           >
             <SettingsIcon size={22} />
-            <span>{tr({ zh: '设置', en: 'Settings',
-                zhHant: "設定"
+            <span>{tr({ zh: '设置', en: 'Settings'
             })}</span>
           </button>
         </nav>

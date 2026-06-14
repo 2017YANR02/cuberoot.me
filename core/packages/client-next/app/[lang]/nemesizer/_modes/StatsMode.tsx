@@ -13,22 +13,16 @@ type Tab = 'most' | 'few' | 'people' | 'biggest' | 'countries';
 const TAB_KEYS: Tab[] = ['most', 'few', 'people', 'biggest', 'countries'];
 
 const TABS: { id: Tab; en: string; zh: string
-    zhHant?: string;
  }[] = [
-  { id: 'most',      en: 'Most nemeses',         zh: '最多宿敌',
-      zhHant: "最多宿敵"
+  { id: 'most',      en: 'Most nemeses',         zh: '最多宿敌'
 },
-  { id: 'few',       en: 'Fewest nemeses',       zh: '最少宿敌',
-      zhHant: "最少宿敵"
+  { id: 'few',       en: 'Fewest nemeses',       zh: '最少宿敌'
 },
-  { id: 'people',    en: 'People',               zh: '选手',
-      zhHant: "選手"
+  { id: 'people',    en: 'People',               zh: '选手'
 },
-  { id: 'biggest',   en: 'Biggest nemesizers',   zh: '被视为宿敌最多者',
-      zhHant: "被視為宿敵最多者"
+  { id: 'biggest',   en: 'Biggest nemesizers',   zh: '被视为宿敌最多者'
 },
-  { id: 'countries', en: 'Top countries',        zh: '顶尖国家',
-      zhHant: "頂尖國家"
+  { id: 'countries', en: 'Top countries',        zh: '顶尖国家'
 },
 ];
 
@@ -59,31 +53,25 @@ export default function StatsMode({ isZh }: Props) {
             className={tab === t.id ? 'active' : ''}
             onClick={() => setTab(t.id)}
           >
-            {(i18n.language === 'zh-Hant' ? (t.zhHant ?? t.zh) : (i18n.language.startsWith('zh') ? t.zh : t.en))}
+            {((i18n.language.startsWith('zh') ? t.zh : t.en))}
           </button>
         ))}
       </div>
       <p className="nemesizer-small-muted" style={{ textAlign: 'center', marginTop: 0 }}>
-        {tr({ zh: '（世界范围）', en: '(world scope)',
-            zhHant: "（世界範圍）"
+        {tr({ zh: '（世界范围）', en: '(world scope)'
         })}
       </p>
-      {loading && !data && <div className="nemesizer-loading">{tr({ zh: '加载中…', en: 'Loading…',
-          zhHant: "載入中…"
+      {loading && !data && <div className="nemesizer-loading">{tr({ zh: '加载中…', en: 'Loading…'
     })}</div>}
-      {data && tab === 'most' && <PersonsCountTable persons={data.persons ?? []} valueLabel={tr({ zh: '宿敌数', en: 'Nemeses',
-          zhHant: "宿敵數"
+      {data && tab === 'most' && <PersonsCountTable persons={data.persons ?? []} valueLabel={tr({ zh: '宿敌数', en: 'Nemeses'
     })} valueKey="nemesisCount" isZh={isZh} />}
-      {data && tab === 'few' && <PersonsCountTable persons={data.persons ?? []} valueLabel={tr({ zh: '宿敌数', en: 'Nemeses',
-          zhHant: "宿敵數"
+      {data && tab === 'few' && <PersonsCountTable persons={data.persons ?? []} valueLabel={tr({ zh: '宿敌数', en: 'Nemeses'
     })} valueKey="nemesisCount" isZh={isZh} />}
       {data && tab === 'biggest' && (
         <>
-          <p className="nemesizer-results-summary">{tr({ zh: '克最多人的选手是？', en: 'Who nemesizes the most people?',
-              zhHant: "克最多人的選手是？"
+          <p className="nemesizer-results-summary">{tr({ zh: '克最多人的选手是？', en: 'Who nemesizes the most people?'
         })}</p>
-          <PersonsCountTable persons={data.persons ?? []} valueLabel={tr({ zh: '被视为宿敌数', en: 'Nemesized',
-              zhHant: "被視為宿敵數"
+          <PersonsCountTable persons={data.persons ?? []} valueLabel={tr({ zh: '被视为宿敌数', en: 'Nemesized'
         })} valueKey="nemesizedCount" isZh={isZh} />
         </>
       )}
@@ -92,7 +80,7 @@ export default function StatsMode({ isZh }: Props) {
           <PeopleTable persons={data.persons ?? []} isZh={isZh} />
           {data.truncated && (
             <p className="nemesizer-small-muted" style={{ textAlign: 'center', padding: 12 }}>
-              {i18n.language === 'zh-Hant' ? (`僅顯示前 500 行（共 ${data.totalCount}）。`) : (isZh ? `仅显示前 500 行（共 ${data.totalCount}）。` : `Showing first 500 of ${data.totalCount}.`)}
+              {(isZh ? `仅显示前 500 行（共 ${data.totalCount}）。` : `Showing first 500 of ${data.totalCount}.`)}
             </p>
           )}
         </>
@@ -137,10 +125,8 @@ function PeopleTable({ persons, isZh }: {
       <table className="nemesizer-table">
         <thead><tr>
           <th>WCA ID</th><th>{tr({ zh: '姓名', en: 'Name' })}</th>
-          <th>{tr({ zh: '宿敌数', en: 'Nemeses',
-              zhHant: "宿敵數"
-        })}</th><th>{tr({ zh: '被视为宿敌数', en: 'Nemesized',
-            zhHant: "被視為宿敵數"
+          <th>{tr({ zh: '宿敌数', en: 'Nemeses'
+        })}</th><th>{tr({ zh: '被视为宿敌数', en: 'Nemesized'
         })}</th>
         </tr></thead>
         <tbody>
@@ -166,17 +152,13 @@ function CountriesTable({ rows, isZh }: {
     <div className="nemesizer-table-wrap">
       <table className="nemesizer-table">
         <thead><tr>
-          <th>{tr({ zh: '国家', en: 'Country',
-              zhHant: "國家"
+          <th>{tr({ zh: '国家', en: 'Country'
         })}</th>
-          <th>{tr({ zh: '选手数', en: 'People',
-              zhHant: "選手數"
+          <th>{tr({ zh: '选手数', en: 'People'
         })}</th>
-          <th>{tr({ zh: '总宿敌数', en: 'Total nemeses',
-              zhHant: "總宿敵數"
+          <th>{tr({ zh: '总宿敌数', en: 'Total nemeses'
         })}</th>
-          <th>{tr({ zh: '总被视为宿敌数', en: 'Total nemesized',
-              zhHant: "總被視為宿敵數"
+          <th>{tr({ zh: '总被视为宿敌数', en: 'Total nemesized'
         })}</th>
         </tr></thead>
         <tbody>

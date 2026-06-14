@@ -33,8 +33,7 @@ export default function AlgPuzzleClient() {
   const router = useRouter();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const algFallback = tr({ zh: '公式库', en: 'Algorithms',
-      zhHant: "公式庫"
+  const algFallback = tr({ zh: '公式库', en: 'Algorithms'
 });
   const valid_ = isPuzzle(puzzle);
   const algPuzzleTitle = valid_ ? eventDisplayName(puzzle, isZh) || puzzle : (puzzle || algFallback);
@@ -72,16 +71,14 @@ export default function AlgPuzzleClient() {
   }, [puzzle, valid, sets]);
 
   if (legacyRedirect) {
-    return <div className="alg-root"><div className="alg-empty">{tr({ zh: '跳转中…', en: 'Redirecting…',
-        zhHant: "跳轉中…"
+    return <div className="alg-root"><div className="alg-empty">{tr({ zh: '跳转中…', en: 'Redirecting…'
     })}</div></div>;
   }
 
   if (!valid) {
     return (
       <div className="alg-root">
-        <div className="alg-empty">{tr({ zh: '未知魔方阶', en: 'Unknown puzzle',
-            zhHant: "未知魔方階"
+        <div className="alg-empty">{tr({ zh: '未知魔方阶', en: 'Unknown puzzle'
         })}: {puzzle}</div>
       </div>
     );
@@ -119,10 +116,9 @@ export default function AlgPuzzleClient() {
                   />
                 )}
               </div>
-              <div className="alg-bento-title">{(i18n.language === 'zh-Hant' ? ((s as { zhHant?: string }).zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
+              <div className="alg-bento-title">{((i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
               <div className="alg-bento-count">
-                {n == null ? '…' : n < 0 ? '!' : `${n} ${tr({ zh: '个', en: 'cases',
-                    zhHant: "個"
+                {n == null ? '…' : n < 0 ? '!' : `${n} ${tr({ zh: '个', en: 'cases'
                 })}`}
               </div>
             </Link>

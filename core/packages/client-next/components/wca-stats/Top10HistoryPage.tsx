@@ -105,7 +105,6 @@ export default function Top10HistoryPage({
   controlledMetric?: Metric;
   controlledMetricLabelZh?: string;
   controlledMetricLabelEn?: string;
-    controlledMetricLabelZhHant?: string;
 } = {}) {
   const embedded = !!controlledEventId;
   const { i18n } = useTranslation();
@@ -356,7 +355,7 @@ export default function Top10HistoryPage({
     : 0;
 
   // NOTE: 优先用父级 metric label(与左侧 metric 选择器一致),fallback 到本地 single/average 短词
-  const metricLabel = i18n.language === 'zh-Hant' ? ((controlledMetricLabelZh ?? (metric === 'single' ? '單次' : '平均'))) : (isZh
+  const metricLabel = (isZh
       ? (controlledMetricLabelZh ?? (metric === 'single' ? '单次' : '平均'))
       : (controlledMetricLabelEn ?? (metric === 'single' ? 'Singles' : 'Avgs')));
 
@@ -377,8 +376,7 @@ export default function Top10HistoryPage({
     setExporting(true);
     exportAbortRef.current = { aborted: false };
     setExportProg({
-      phase: tr({ zh: '准备...', en: 'Preparing...',
-          zhHant: "準備..."
+      phase: tr({ zh: '准备...', en: 'Preparing...'
     }),
       pct: 0, framesDone: 0, framesTotal: 0,
     });
@@ -400,8 +398,7 @@ export default function Top10HistoryPage({
       if (msg !== 'aborted') {
         console.error('[Top10 Export] failed:', e);
         // eslint-disable-next-line no-alert
-        alert((tr({ zh: '导出失败:', en: 'Export failed: ',
-            zhHant: "匯出失敗:"
+        alert((tr({ zh: '导出失败:', en: 'Export failed: '
         })) + msg);
       }
     } finally {
@@ -420,13 +417,11 @@ export default function Top10HistoryPage({
   );
 
   if (error) {
-    return <div className="t10h-status">{tr({ zh: '加载失败', en: 'Failed to load',
-        zhHant: "載入失敗"
+    return <div className="t10h-status">{tr({ zh: '加载失败', en: 'Failed to load'
     })}: {error}</div>;
   }
   if (!index) {
-    return <div className="t10h-status">{tr({ zh: '加载中...', en: 'Loading...',
-        zhHant: "載入中..."
+    return <div className="t10h-status">{tr({ zh: '加载中...', en: 'Loading...'
     })}</div>;
   }
 
@@ -440,8 +435,7 @@ export default function Top10HistoryPage({
       <div className="t10h-toolbar">
         {!embedded && (
           <div className="t10h-toolbar-title">
-            {tr({ zh: '全历史 TOP 10 演化', en: 'All-time top 10',
-                zhHant: "全歷史 TOP 10 演化"
+            {tr({ zh: '全历史 TOP 10 演化', en: 'All-time top 10'
             })}
           </div>
         )}
@@ -454,8 +448,7 @@ export default function Top10HistoryPage({
                 aria-selected={metric === 'single'}
                 className={metric === 'single' ? 'active' : ''}
                 onClick={() => setMetric('single')}
-              >{tr({ zh: '单次', en: 'Single',
-                  zhHant: "單次"
+              >{tr({ zh: '单次', en: 'Single'
             })}</button>
               <button
                 type="button"
@@ -464,8 +457,7 @@ export default function Top10HistoryPage({
                 className={metric === 'average' ? 'active' : ''}
                 onClick={() => hasAverage && setMetric('average')}
                 disabled={!hasAverage}
-                title={!hasAverage ? (tr({ zh: '该项目没有平均成绩', en: 'No average for this event',
-                    zhHant: "該項目沒有平均成績"
+                title={!hasAverage ? (tr({ zh: '该项目没有平均成绩', en: 'No average for this event'
                 })) : undefined}
               >{tr({ zh: '平均', en: 'Average' })}</button>
             </div>
@@ -490,8 +482,7 @@ export default function Top10HistoryPage({
           <div className="t10h-export-overlay">
             <div className="t10h-export-card">
               <div className="t10h-export-title">
-                {tr({ zh: '导出视频中', en: 'Exporting video',
-                    zhHant: "匯出影片中"
+                {tr({ zh: '导出视频中', en: 'Exporting video'
                 })}
               </div>
               <canvas ref={previewCanvasRef} className="t10h-export-preview" />
@@ -514,11 +505,10 @@ export default function Top10HistoryPage({
               <Flag iso2={top1Person.iso2} className="t10h-holder-flag" />
             )}
             <div className="t10h-holder-text">
-              <div className="t10h-holder-name">{top1Name || (eventLoading ? (tr({ zh: '加载中…', en: 'Loading…',
-                  zhHant: "載入中…"
+              <div className="t10h-holder-name">{top1Name || (eventLoading ? (tr({ zh: '加载中…', en: 'Loading…'
             })) : '')}</div>
               <div className="t10h-holder-sub">
-                {top1Person && (i18n.language === 'zh-Hant' ? (`保持紀錄 ${top1DurationDays} 天`) : (isZh
+                {top1Person && ((isZh
                                                 ? `保持纪录 ${top1DurationDays} 天`
                                                 : `World record holder for ${top1DurationDays} days`))}
               </div>
@@ -577,8 +567,7 @@ export default function Top10HistoryPage({
           type="button"
           className="t10h-play"
           onClick={togglePlay}
-          aria-label={playing ? (tr({ zh: '暂停', en: 'Pause',
-              zhHant: "暫停"
+          aria-label={playing ? (tr({ zh: '暂停', en: 'Pause'
         })) : (tr({ zh: '播放', en: 'Play' }))}
         >
           {playing ? <Pause size={18} /> : <Play size={18} />}
@@ -591,8 +580,7 @@ export default function Top10HistoryPage({
           step={DAY_MS}
           value={Math.floor(dateMs)}
           onChange={handleScrub}
-          aria-label={tr({ zh: '时间轴', en: 'Timeline',
-              zhHant: "時間軸"
+          aria-label={tr({ zh: '时间轴', en: 'Timeline'
         })}
         />
         <div className="t10h-speed" role="group" aria-label={tr({ zh: '播放模式', en: 'Play mode' })}>
@@ -600,16 +588,14 @@ export default function Top10HistoryPage({
             type="button"
             className={playMode === 'time' ? 'active' : ''}
             onClick={() => { setPlayMode('time'); setSpeed(DEFAULT_SPEED); }}
-            title={tr({ zh: '按时间均匀(每秒推进固定天数)', en: 'Uniform by time',
-                zhHant: "按時間均勻(每秒推進固定天數)"
+            title={tr({ zh: '按时间均匀(每秒推进固定天数)', en: 'Uniform by time'
             })}
           >{tr({ zh: '按天', en: 'Time' })}</button>
           <button
             type="button"
             className={playMode === 'pb' ? 'active' : ''}
             onClick={() => { setPlayMode('pb'); setSpeed(1); }}
-            title={tr({ zh: '按 PB 事件均匀(每秒推进 1 个 PB)', en: 'Uniform by PB (1/s)',
-                zhHant: "按 PB 事件均勻(每秒推進 1 個 PB)"
+            title={tr({ zh: '按 PB 事件均匀(每秒推进 1 个 PB)', en: 'Uniform by PB (1/s)'
             })}
           >{tr({ zh: '按 PB', en: 'PB' })}</button>
         </div>
@@ -633,10 +619,9 @@ export default function Top10HistoryPage({
           className="t10h-export-btn"
           onClick={handleExport}
           disabled={exporting || events.length === 0}
-          aria-label={tr({ zh: '导出视频', en: 'Export video',
-              zhHant: "匯出影片"
+          aria-label={tr({ zh: '导出视频', en: 'Export video'
         })}
-          title={i18n.language === 'zh-Hant' ? (`匯出 mp4(1080p / ${playMode === 'time' ? speed + '天/秒' : '1 PB/秒'})`) : (isZh ? `导出 mp4(1080p / ${playMode === 'time' ? speed + '天/秒' : '1 PB/秒'})` : `Export mp4 (1080p / ${playMode === 'time' ? speed + 'd/s' : '1 PB/s'})`)}
+          title={(isZh ? `导出 mp4(1080p / ${playMode === 'time' ? speed + '天/秒' : '1 PB/秒'})` : `Export mp4 (1080p / ${playMode === 'time' ? speed + 'd/s' : '1 PB/s'})`)}
         >
           <Download size={16} />
         </button>
@@ -644,16 +629,14 @@ export default function Top10HistoryPage({
 
       {events.length > 0 && (
         <div className="t10h-note">
-          {i18n.language === 'zh-Hant' ? (`資料自 ${events[0]?.d ?? '—'}。共 ${events.length} 次 PB 事件,涉及 ${replay ? new Set(events.map(e => e.p)).size : 0} 名曾進過歷史 TOP ${index.topK} 的選手。`) : (isZh
+          {(isZh
                               ? `数据自 ${events[0]?.d ?? '—'}。共 ${events.length} 次 PB 事件,涉及 ${replay ? new Set(events.map(e => e.p)).size : 0} 名曾进过历史 TOP ${index.topK} 的选手。`
                               : `Data since ${events[0]?.d ?? '—'}. ${events.length} PB events from ${new Set(events.map(e => e.p)).size} cubers who were ever in the historical top ${index.topK}.`)}
           <div className="t10h-legend">
             {([
-              ['Asia', tr({ zh: '亚洲', en: 'Asia',
-                  zhHant: "亞洲"
+              ['Asia', tr({ zh: '亚洲', en: 'Asia'
             })],
-              ['Europe', tr({ zh: '欧洲', en: 'Europe',
-                  zhHant: "歐洲"
+              ['Europe', tr({ zh: '欧洲', en: 'Europe'
             })],
               ['Africa', tr({ zh: '非洲', en: 'Africa' })],
               ['North America', tr({ zh: '北美', en: 'N. America' })],

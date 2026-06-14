@@ -86,8 +86,7 @@ export default function StatsPanel({ solves, isZh }: Props) {
     const rows: { key: string; label: string; cur: string; best: string; n?: number }[] = [
       {
         key: 'time',
-        label: tr({ zh: '单次', en: 'time',
-            zhHant: "單次"
+        label: tr({ zh: '单次', en: 'time'
         }),
         cur: last ? formatMs(effectiveMs(last)) : '-',
         best: formatMs(bestSingle(solves)),
@@ -136,8 +135,7 @@ export default function StatsPanel({ solves, isZh }: Props) {
       <div className="stats-table">
         <div className="stats-table-head">
           <span className="st-label" />
-          <span className="st-col">{tr({ zh: '当前', en: 'current',
-              zhHant: "當前"
+          <span className="st-col">{tr({ zh: '当前', en: 'current'
         })}</span>
           <span className="st-col">{tr({ zh: '最佳', en: 'best' })}</span>
         </div>
@@ -170,8 +168,7 @@ export default function StatsPanel({ solves, isZh }: Props) {
       {/* Inline "+ add window" picker */}
       <div className="stats-ao-add">
         <button type="button" className="stats-ao-add-btn" onClick={() => setAddOpen(o => !o)} aria-expanded={addOpen}>
-          <Plus size={13} /> {tr({ zh: '添加窗口', en: 'Add window',
-              zhHant: "新增視窗"
+          <Plus size={13} /> {tr({ zh: '添加窗口', en: 'Add window'
         })}
         </button>
         {addOpen && (
@@ -200,22 +197,20 @@ export default function StatsPanel({ solves, isZh }: Props) {
                   min={MIN_AO}
                   max={MAX_AO}
                   value={customDraft}
-                  placeholder={tr({ zh: '自定义 N', en: 'Custom N',
-                      zhHant: "自定義 N"
+                  placeholder={tr({ zh: '自定义 N', en: 'Custom N'
                 })}
                   onChange={(e) => setCustomDraft(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') addCustom(); }}
                   disabled={atMax}
                 />
                 <button type="button" className="stats-ao-custom-add" onClick={addCustom} disabled={atMax}>
-                  {tr({ zh: '添加', en: 'Add',
-                      zhHant: "新增"
+                  {tr({ zh: '添加', en: 'Add'
                 })}
                 </button>
               </div>
               {atMax && (
                 <div className="stats-ao-hint">
-                  {i18n.language === 'zh-Hant' ? (`最多 ${MAX_AO_WINDOWS} 個,先移除一個`) : (isZh ? `最多 ${MAX_AO_WINDOWS} 个,先移除一个` : `Max ${MAX_AO_WINDOWS} — remove one first`)}
+                  {(isZh ? `最多 ${MAX_AO_WINDOWS} 个,先移除一个` : `Max ${MAX_AO_WINDOWS} — remove one first`)}
                 </div>
               )}
             </div>
@@ -227,8 +222,7 @@ export default function StatsPanel({ solves, isZh }: Props) {
       <div className="stats-foot">
         <span>σ {sd === null ? '—' : formatMs(Math.round(sd))}</span>
         <span>CV {formatPct(cv)}</span>
-        <span>{tr({ zh: '总数', en: 'count',
-            zhHant: "總數"
+        <span>{tr({ zh: '总数', en: 'count'
         })} {count}</span>
       </div>
 
@@ -243,15 +237,13 @@ export default function StatsPanel({ solves, isZh }: Props) {
         </div>
       )}
       <button type="button" className="stats-expand-toggle" onClick={() => setExpanded(e => !e)}>
-        {expanded ? (tr({ zh: '收起', en: 'Hide extras' })) : (tr({ zh: '显示全部统计', en: 'Show all stats',
-            zhHant: "顯示全部統計"
+        {expanded ? (tr({ zh: '收起', en: 'Hide extras' })) : (tr({ zh: '显示全部统计', en: 'Show all stats'
         }))}
       </button>
 
       {subX.length > 0 && (
         <>
-          <h3 style={{ marginTop: 12 }}>{tr({ zh: '阈值占比', en: 'Sub-X',
-              zhHant: "閾值佔比"
+          <h3 style={{ marginTop: 12 }}>{tr({ zh: '阈值占比', en: 'Sub-X'
         })}</h3>
           <div className="subx-list">
             {subX.map(x => (

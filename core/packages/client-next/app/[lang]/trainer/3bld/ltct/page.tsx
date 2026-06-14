@@ -64,7 +64,7 @@ function stripBrackets(code: string): string {
 export default function LtctTrainerPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('奇偶带翻训练', 'LTCT Parity-Twist Trainer', "奇偶帶翻訓練");
+  useDocumentTitle('奇偶带翻训练', 'LTCT Parity-Twist Trainer');
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);
@@ -106,38 +106,29 @@ export default function LtctTrainerPage(): JSX.Element {
     for (let i = 0; i < codes.length; i++) {
       const c = codes[i];
       if (c.length !== 2) {
-        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code [',
-            zhHant: "行編碼【"
-        })}${c}${tr({ zh: '】长度不符要求。', en: '] length invalid.',
-            zhHant: "】長度不符要求。"
+        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code ['
+        })}${c}${tr({ zh: '】长度不符要求。', en: '] length invalid.'
         })}\n`;
         continue;
       }
       if (!isAlphabet(c[0]) || !isAlphabet(c[1])) {
-        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code [',
-            zhHant: "行編碼【"
+        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code ['
         })}${c}${tr({ zh: '】不是字母。', en: '] is not a letter.' })}\n`;
         continue;
       }
       if (posChichu(c[0]) === bufPos || posChichu(c[1]) === bufPos) {
-        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code [',
-            zhHant: "行編碼【"
-        })}${c}${tr({ zh: '】包含缓冲编码。', en: '] contains the buffer.',
-            zhHant: "】包含緩衝編碼。"
+        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code ['
+        })}${c}${tr({ zh: '】包含缓冲编码。', en: '] contains the buffer.'
         })}\n`;
       }
       if (posChichu(c[0]) === posChichu(c[1])) {
-        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code [',
-            zhHant: "行編碼【"
-        })}${c}${tr({ zh: '】存在位置冲突。', en: '] position conflict.',
-            zhHant: "】存在位置衝突。"
+        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code ['
+        })}${c}${tr({ zh: '】存在位置冲突。', en: '] position conflict.'
         })}\n`;
       }
     }
     if (codes.length < 5) {
-      err += tr({ zh: '请您至少输入5组编码。\n', en: 'Please enter at least 5 codes.\n',
-          zhHant: "請您至少輸入5組編碼。\n\
-"
+      err += tr({ zh: '请您至少输入5组编码。\n', en: 'Please enter at least 5 codes.\n'
     });
     }
 
@@ -155,7 +146,7 @@ export default function LtctTrainerPage(): JSX.Element {
     // Upstream uppercases the corner codes at generation time; keep the entered
     // text verbatim in the summary (matches ltctInputCheck's slice display).
     setInputSummary(
-      i18n.language === 'zh-Hant' ? (`已輸入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 組編碼。`) : (isZh
+      (isZh
                 ? `已输入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 组编码。`
                 : `Entered ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} (${codes.length} codes).`),
     );
@@ -163,8 +154,7 @@ export default function LtctTrainerPage(): JSX.Element {
 
   const generate = useCallback(async () => {
     if (newCodes.length < 5) {
-      setInfo(tr({ zh: '请先输入至少 5 组训练编码。', en: 'Please enter at least 5 training codes first.',
-          zhHant: "請先輸入至少 5 組訓練編碼。"
+      setInfo(tr({ zh: '请先输入至少 5 组训练编码。', en: 'Please enter at least 5 training codes first.'
     }));
       return;
     }
@@ -227,7 +217,7 @@ export default function LtctTrainerPage(): JSX.Element {
 
     setScrambles(out);
     setInfo(
-      i18n.language === 'zh-Hant' ? (`隨機生成 ${times} 條打亂。`) : (isZh
+      (isZh
                 ? `随机生成 ${times} 条打乱。`
                 : `Generated ${times} scrambles.`),
     );
@@ -235,8 +225,7 @@ export default function LtctTrainerPage(): JSX.Element {
   }, [newCodes, cBuffer, edgeScramble, cornerScramble, isZh]);
 
   const title = useMemo(
-    () => ({ zh: '奇偶带翻训练', en: 'LTCT Parity-Twist Trainer',
-        zhHant: "奇偶帶翻訓練"
+    () => ({ zh: '奇偶带翻训练', en: 'LTCT Parity-Twist Trainer'
     }),
     [],
   );
@@ -246,7 +235,7 @@ export default function LtctTrainerPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{(i18n.language === 'zh-Hant' ? (title.zhHant ?? title.zh) : (i18n.language.startsWith('zh') ? title.zh : title.en))}</h1>
+        <h1>{((i18n.language.startsWith('zh') ? title.zh : title.en))}</h1>
       </div>
 
       <div className="bld-section">
@@ -261,8 +250,7 @@ export default function LtctTrainerPage(): JSX.Element {
               checked={edgeScramble}
               onChange={(e) => setEdgeScramble(e.target.checked)}
             />
-            {tr({ zh: '打乱棱块', en: 'Scramble edges',
-                zhHant: "打亂稜塊"
+            {tr({ zh: '打乱棱块', en: 'Scramble edges'
             })}
           </label>
           <label className="bld-check">
@@ -271,8 +259,7 @@ export default function LtctTrainerPage(): JSX.Element {
               checked={cornerScramble}
               onChange={(e) => setCornerScramble(e.target.checked)}
             />
-            {tr({ zh: '打乱其他角块', en: 'Scramble other corners',
-                zhHant: "打亂其他角塊"
+            {tr({ zh: '打乱其他角块', en: 'Scramble other corners'
             })}
           </label>
         </div>
@@ -286,8 +273,7 @@ export default function LtctTrainerPage(): JSX.Element {
           }}
         >
           <FileText size={15} />
-          {tr({ zh: '输入训练编码', en: 'Enter training codes',
-              zhHant: "輸入訓練編碼"
+          {tr({ zh: '输入训练编码', en: 'Enter training codes'
         })}
         </button>
 
@@ -302,8 +288,7 @@ export default function LtctTrainerPage(): JSX.Element {
           disabled={busy}
         >
           <Play size={15} />
-          {tr({ zh: '生成训练打乱', en: 'Generate scrambles',
-              zhHant: "生成訓練打亂"
+          {tr({ zh: '生成训练打乱', en: 'Generate scrambles'
         })}
         </button>
       </div>
@@ -319,12 +304,10 @@ export default function LtctTrainerPage(): JSX.Element {
         onChange={setCodesText}
         onConfirm={confirmCodes}
         message={modalMsg}
-        title={tr({ zh: '输入训练编码', en: 'Enter training codes',
-            zhHant: "輸入訓練編碼"
+        title={tr({ zh: '输入训练编码', en: 'Enter training codes'
         })}
         placeholder={
-          tr({ zh: '编码以换行分隔。支持 BH 或 B[H]。可在 Excel 整理一列编码后粘贴。', en: 'One code per line. BH or B[H] bracket form supported. Paste a column from Excel.',
-              zhHant: "編碼以換行分隔。支援 BH 或 B[H]。可在 Excel 整理一列編碼後貼上。"
+          tr({ zh: '编码以换行分隔。支持 BH 或 B[H]。可在 Excel 整理一列编码后粘贴。', en: 'One code per line. BH or B[H] bracket form supported. Paste a column from Excel.'
         })
         }
       />

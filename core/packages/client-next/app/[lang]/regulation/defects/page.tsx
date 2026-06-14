@@ -103,42 +103,32 @@ export default function DefectsChapter() {
     <RegArticleLayout slug="defects">
       {/* ── A) Article 5 basics ─────────────────────────────────────── */}
       <RegSection
-        eyebrow={t('第 5 章 · 概览', 'Article 5 · Overview', "第 5 章 · 概覽")}
-        title={t('掉块、解体、错位:基本原则', 'Pops, breakage, misalignment: the basics', "掉塊、解體、錯位:基本原則")}
+        eyebrow={t('第 5 章 · 概览', 'Article 5 · Overview')}
+        title={t('掉块、解体、错位:基本原则', 'Pops, breakage, misalignment: the basics')}
         lede={t(
           '还原过程中魔方出了状况 —— 弹片、解体、某块卡住或翻转 —— 怎么办?第 5 章给出了一套连贯的处理办法,核心只有几条。',
-          'A puzzle misbehaves mid-solve — a piece pops, the puzzle comes apart, something jams or twists. Article 5 gives a coherent way to handle it; the core is just a few rules.', "還原過程中魔方出了狀況 —— 彈片、解體、某塊卡住或翻轉 —— 怎麼辦?第 5 章給出了一套連貫的處理辦法,核心只有幾條。"
+          'A puzzle misbehaves mid-solve — a piece pops, the puzzle comes apart, something jams or twists. Article 5 gives a coherent way to handle it; the core is just a few rules.'
         )}
       >
         <RegList
           items={[
-            i18n.language === 'zh-Hant'
-              ? (<>還原過程中,<strong>不得改裝或更換</strong>魔方,只能在規則允許的範圍內修復故障(例如把彈出的塊放回去)。</>)
-              : (isZh
+            (isZh
                 ? (<>还原过程中,<strong>不得改装或更换</strong>魔方,只能在规则允许的范围内修复故障(例如把弹出的块放回去)。</>)
                 : (<>During an attempt you may <strong>not modify or replace</strong> the puzzle — only repair a defect within what the regulations allow (for example, putting popped pieces back).</>)),
-            i18n.language === 'zh-Hant'
-              ? (<>發生<strong>彈片(pop)</strong>時,你可以選擇就地修復後繼續,也可以選擇停止本次還原。修復只能動出問題的部件,不能借助工具或別的魔方的零件。</>)
-              : (isZh
+            (isZh
                 ? (<>发生<strong>弹片(pop)</strong>时,你可以选择就地修复后继续,也可以选择停止本次还原。修复只能动出问题的部件,不能借助工具或别的魔方的零件。</>)
                 : (<>When a <strong>pop</strong> happens you may choose to repair and continue, or to stop the attempt. A repair may touch only the defective parts — never tools or parts from another puzzle.</>)),
-            i18n.language === 'zh-Hant'
-              ? (<>修復故障本身<strong>不算一步轉動</strong>:把塊裝回原位、歸位螺絲/中心蓋,都不會被計入步數,也不會因此罰時。但修復不得給你帶來還原上的便利。</>)
-              : (isZh
+            (isZh
                 ? (<>修复故障本身<strong>不算一步转动</strong>:把块装回原位、归位螺丝/中心盖,都不会被计入步数,也不会因此罚时。但修复不得给你带来还原上的便利。</>)
                 : (<>Fixing a defect <strong>does not count as a move</strong>: placing a piece back, reseating a screw or cap is not a turn and carries no penalty by itself. The repair must not give you a solving advantage.</>)),
-            i18n.language === 'zh-Hant'
-              ? (<>還原結束時,錯位或殘留缺陷會按程度判為<strong>成功 / +2 / DNF</strong> —— 這正是下面 5b5f 視覺指南要講透的部分。</>)
-              : (isZh
+            (isZh
                 ? (<>还原结束时,错位或残留缺陷会按程度判为<strong>成功 / +2 / DNF</strong> —— 这正是下面 5b5f 视觉指南要讲透的部分。</>)
                 : (<>At the end, a misalignment or leftover defect is judged <strong>solved / +2 / DNF</strong> by how severe it is — exactly what the 5b5f visual guide below makes concrete.</>)),
           ]}
         />
 
-        <Callout tone="warn" label={t('什么时候直接 DNF?', 'When is it a straight DNF?', "什麼時候直接 DNF?")} style={{ marginTop: 26 }}>
-          {i18n.language === 'zh-Hant'
-            ? (<>用工具或別的魔方零件修復、修復給了還原便利、盲擰階段睜眼修復、故意製造故障 —— 這些都直接判 DNF。另外要記住:魔方出故障<strong>不會</strong>因此給你額外的還原機會。</>)
-            : (isZh
+        <Callout tone="warn" label={t('什么时候直接 DNF?', 'When is it a straight DNF?')} style={{ marginTop: 26 }}>
+          {(isZh
               ? (<>用工具或别的魔方零件修复、修复给了还原便利、盲拧阶段睁眼修复、故意制造故障 —— 这些都直接判 DNF。另外要记住:魔方出故障<strong>不会</strong>因此给你额外的还原机会。</>)
               : (<>Using a tool or parts from another puzzle, a repair that gives a solving advantage, repairing with eyes open during a blindfolded phase, or deliberately causing a defect — each is an outright DNF. And note: a puzzle defect does <strong>not</strong> entitle you to an extra attempt.</>))}
         </Callout>
@@ -146,50 +136,50 @@ export default function DefectsChapter() {
 
       {/* ── B) Deep dive: Regulation 5b5f ───────────────────────────── */}
       <section className="reg-sec reg-sec-major">
-        <div className="reg-sec-eyebrow">{t('深度解读 · 5b5f 视觉指南', 'Deep dive · 5b5f Visual Guide', "深度解讀 · 5b5f 視覺指南")}</div>
+        <div className="reg-sec-eyebrow">{t('深度解读 · 5b5f 视觉指南', 'Deep dive · 5b5f Visual Guide')}</div>
         <h2 className="reg-sec-title">
-          {t('规则 5b5f:拼装缺陷怎么判', 'Regulation 5b5f: judging assembly defects', "規則 5b5f:拼裝缺陷怎麼判")}
+          {t('规则 5b5f:拼装缺陷怎么判', 'Regulation 5b5f: judging assembly defects')}
         </h2>
         <p className="reg-sec-lede">
           {t(
             '当一块没有完全脱落、却也没完全到位,它到底算在哪个位置?5b5f 给出了判定依据。',
-            'When a piece is neither fully detached nor fully placed, where does it actually count as being? Regulation 5b5f gives the rule.', "當一塊沒有完全脫落、卻也沒完全到位,它到底算在哪個位置?5b5f 給出了判定依據。"
+            'When a piece is neither fully detached nor fully placed, where does it actually count as being? Regulation 5b5f gives the rule.'
           )}
         </p>
 
         <RegQuote num="5b5">
           {t(
             '如果在还原结束时,魔方的某些部件物理脱离或未完全到位,则适用以下规定(……)',
-            'If some parts of the puzzle are physically detached or not fully placed at the end of the solve, the following regulations apply (…)', "如果在還原結束時,魔方的某些部件物理脫離或未完全到位,則適用以下規定(……)"
+            'If some parts of the puzzle are physically detached or not fully placed at the end of the solve, the following regulations apply (…)'
           )}
         </RegQuote>
         <RegQuote num="5b5f">
           {t(
             '如果某块部分脱出或未完全到位,它的最终位置是:在魔方当前状态下,该块能在结构中正常装入的最近位置。如果这个最终位置使该块处于还原状态,则该块不算受魔方缺陷影响。',
-            'If a piece is partially detached or not fully placed, its final position is the closest position in which the affected piece would normally fit within the puzzle mechanism, considering the current state of the puzzle. If the final position renders the piece solved, the piece is not considered to be affected by the puzzle defect.', "如果某塊部分脫出或未完全到位,它的最終位置是:在魔方當前狀態下,該塊能在結構中正常裝入的最近位置。如果這個最終位置使該塊處於還原狀態,則該塊不算受魔方缺陷影響。"
+            'If a piece is partially detached or not fully placed, its final position is the closest position in which the affected piece would normally fit within the puzzle mechanism, considering the current state of the puzzle. If the final position renders the piece solved, the piece is not considered to be affected by the puzzle defect.'
           )}
         </RegQuote>
 
-        <Callout tone="info" label={t('一句话原则', 'The principle, in one line', "一句話原則")} style={{ marginTop: 6, marginBottom: 36 }}>
+        <Callout tone="info" label={t('一句话原则', 'The principle, in one line')} style={{ marginTop: 6, marginBottom: 36 }}>
           {t(
             '块的最终位置,是在魔方当前状态下、它能在结构中正常装入的最近位置。换句话说:把一块放到某位置后,如果魔方仍能正常操作(不一定能还原)而没有问题,那这个位置就是「有效」的。',
-            'The final position of the piece is the closest position in which it would normally fit within the puzzle mechanism, considering the current state of the puzzle. In other words: a position is valid if it is possible to operate (not necessarily solve) the puzzle without issues, when the piece is placed in such position.', "塊的最終位置,是在魔方當前狀態下、它能在結構中正常裝入的最近位置。換句話說:把一塊放到某位置後,如果魔方仍能正常操作(不一定能還原)而沒有問題,那這個位置就是「有效」的。"
+            'The final position of the piece is the closest position in which it would normally fit within the puzzle mechanism, considering the current state of the puzzle. In other words: a position is valid if it is possible to operate (not necessarily solve) the puzzle without issues, when the piece is placed in such position.'
           )}
         </Callout>
 
-        <h3 className="reg-sub-title">{t('几个前提', 'Things to keep in mind', "幾個前提")}</h3>
+        <h3 className="reg-sub-title">{t('几个前提', 'Things to keep in mind')}</h3>
         <RegList
           items={[
-            t('完全脱落的块由 5b5a、5b5b、5b5c、5b5d 处理。', 'Pieces completely detached are covered by 5b5a, 5b5b, 5b5c and 5b5d.', "完全脫落的塊由 5b5a、5b5b、5b5c、5b5d 處理。"),
-            t('这套措辞旨在贴合通常的直觉:「块离它该在的地方足够近,就算还原」。', 'This wording aims to follow the usual intuition: "If the piece is near to where it should be, the piece is solved".', "這套措辭旨在貼合通常的直覺:「塊離它該在的地方足夠近,就算還原」。"),
-            t('块的最终状态,取决于魔方当前的整体状态。', 'The final state of the piece depends on the current state of the puzzle.', "塊的最終狀態,取決於魔方當前的整體狀態。"),
-            t('确定最终位置之后,需要据此位置与朝向来判断魔方是否还原。', 'Once the final position has been determined, that position and orientation needs to be judged in order to know if the puzzle is either solved or not.', "確定最終位置之後,需要據此位置與朝向來判斷魔方是否還原。"),
-            t('个别情况可能需要由代表(Delegate)裁定 —— 就像接近临界的 +2 错位一样。', 'Some particular cases may need to be judged by a Delegate (just like a close +2 misalignment).', "個別情況可能需要由代表(Delegate)裁定 —— 就像接近臨界的 +2 錯位一樣。"),
+            t('完全脱落的块由 5b5a、5b5b、5b5c、5b5d 处理。', 'Pieces completely detached are covered by 5b5a, 5b5b, 5b5c and 5b5d.'),
+            t('这套措辞旨在贴合通常的直觉:「块离它该在的地方足够近,就算还原」。', 'This wording aims to follow the usual intuition: "If the piece is near to where it should be, the piece is solved".'),
+            t('块的最终状态,取决于魔方当前的整体状态。', 'The final state of the piece depends on the current state of the puzzle.'),
+            t('确定最终位置之后,需要据此位置与朝向来判断魔方是否还原。', 'Once the final position has been determined, that position and orientation needs to be judged in order to know if the puzzle is either solved or not.'),
+            t('个别情况可能需要由代表(Delegate)裁定 —— 就像接近临界的 +2 错位一样。', 'Some particular cases may need to be judged by a Delegate (just like a close +2 misalignment).'),
           ]}
         />
 
         {/* The 11 cases */}
-        <h3 className="reg-sub-title">{t('11 个真实案例', '11 real cases', "11 個真實案例")}</h3>
+        <h3 className="reg-sub-title">{t('11 个真实案例', '11 real cases')}</h3>
         <div className="reg-examples">
           {EXAMPLES.map((ex, i) => {
             const label = VERDICT_LABEL[ex.verdict];
@@ -217,33 +207,33 @@ export default function DefectsChapter() {
 
         {/* The 4×4 vs 3×3 explanation */}
         <h3 className="reg-sub-title">
-          {t('为什么 4×4 算还原,3×3 不算?', 'Why is the 4×4 solved, but the 3×3 not?', "為什麼 4×4 算還原,3×3 不算?")}
+          {t('为什么 4×4 算还原,3×3 不算?', 'Why is the 4×4 solved, but the 3×3 not?')}
         </h3>
         <div className="reg-explain">
           <div className="reg-explain-text">
             <p>
               {t(
                 '如你所见,前面那块翻转的 4×4 wing 被判还原,而结构相似的 3×3 角块却不算。差别在哪?',
-                'As you have seen, the 4×4 is considered solved, but the 3×3 is not. But why?', "如你所見,前面那塊翻轉的 4×4 wing 被判還原,而結構相似的 3×3 角塊卻不算。差別在哪?"
+                'As you have seen, the 4×4 is considered solved, but the 3×3 is not. But why?'
               )}
             </p>
             <p>
               {t(
                 '原因很简单:从 4×4 上取下一块棱(比如橙蓝棱中的一块),再试着把它上下颠倒装回去。你会发现结构根本不允许 —— 这不是需要考虑的有效位置。',
-                'The reason is simple: remove one edge piece from a 4×4 puzzle (i.e. one of the orange-blue edge pieces). Now try to put it back in the puzzle, but upside down. As you can see, the mechanism does not allow that. It is not a valid position to consider.', "原因很簡單:從 4×4 上取下一塊稜(比如橙藍稜中的一塊),再試著把它上下顛倒裝回去。你會發現結構根本不允許 —— 這不是需要考慮的有效位置。"
+                'The reason is simple: remove one edge piece from a 4×4 puzzle (i.e. one of the orange-blue edge pieces). Now try to put it back in the puzzle, but upside down. As you can see, the mechanism does not allow that. It is not a valid position to consider.'
               )}
             </p>
             <p>
               {t(
                 '换成 3×3 的棱块做同样的实验:你会得到一个不可能的状态,但这块确实能装进那个位置。既然位置有效,它就可能是最终位置(而根据朝向,结果是一个未还原的魔方,DNF)。',
-                'Try the same experiment, but with a 3×3 edge piece. You will get an impossible state, but the piece fits in such position. As it is a valid position, it may be the final one (and the result, given the orientation, is an unsolved puzzle — DNF).', "換成 3×3 的稜塊做同樣的實驗:你會得到一個不可能的狀態,但這塊確實能裝進那個位置。既然位置有效,它就可能是最終位置(而根據朝向,結果是一個未還原的魔方,DNF)。"
+                'Try the same experiment, but with a 3×3 edge piece. You will get an impossible state, but the piece fits in such position. As it is a valid position, it may be the final one (and the result, given the orientation, is an unsolved puzzle — DNF).'
               )}
             </p>
           </div>
           <img
             className="reg-explain-img"
             src="/images/regulation/explanation.jpg"
-            alt={t('4×4 与 3×3 棱块装入对比', '4×4 vs 3×3 edge-piece fit comparison', "4×4 與 3×3 稜塊裝入對比")}
+            alt={t('4×4 与 3×3 棱块装入对比', '4×4 vs 3×3 edge-piece fit comparison')}
             width={1341}
             height={1500}
             loading="lazy"

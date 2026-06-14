@@ -26,14 +26,12 @@ export function ScrambleOutput({ scrambles, info, busy }: ScrambleOutputProps): 
       setTimeout(() => setCopied(false), 1500);
     } catch {
       // clipboard unavailable (insecure context / permission) — surface the text.
-      window.prompt(tr({ zh: '复制下面的打乱:', en: 'Copy the scrambles below:',
-          zhHant: "複製下面的打亂:"
+      window.prompt(tr({ zh: '复制下面的打乱:', en: 'Copy the scrambles below:'
     }), text);
     }
   };
 
-  const stat = info ?? `${scrambles.length} ${tr({ zh: '条', en: 'scrambles',
-      zhHant: "條"
+  const stat = info ?? `${scrambles.length} ${tr({ zh: '条', en: 'scrambles'
 })}`;
 
   return (
@@ -54,18 +52,15 @@ export function ScrambleOutput({ scrambles, info, busy }: ScrambleOutputProps): 
           disabled={busy || scrambles.length === 0}
         >
           {copied ? <Check size={15} /> : <Copy size={15} />}
-          {copied ? (tr({ zh: '已复制', en: 'Copied',
-              zhHant: "已複製"
-        })) : (tr({ zh: '复制全部', en: 'Copy all',
-            zhHant: "複製全部"
+          {copied ? (tr({ zh: '已复制', en: 'Copied'
+        })) : (tr({ zh: '复制全部', en: 'Copy all'
         }))}
         </button>
       </div>
 
       {scrambles.length === 0 ? (
         <div className="bld-scramble-empty">
-          {busy ? (tr({ zh: '生成中…', en: 'Generating…' })) : (tr({ zh: '暂无打乱', en: 'No scrambles yet',
-              zhHant: "暫無打亂"
+          {busy ? (tr({ zh: '生成中…', en: 'Generating…' })) : (tr({ zh: '暂无打乱', en: 'No scrambles yet'
         }))}
         </div>
       ) : (

@@ -104,8 +104,7 @@ export default function PlaybackPanel({ event, scramble, moves, totalMs, isZh }:
   };
 
   const playLabel = playing
-    ? (tr({ zh: '暂停', en: 'Pause',
-        zhHant: "暫停"
+    ? (tr({ zh: '暂停', en: 'Pause'
     }))
     : (idx >= total ? (tr({ zh: '重播', en: 'Replay' })) : (tr({ zh: '播放', en: 'Play' })));
 
@@ -157,8 +156,7 @@ export default function PlaybackPanel({ event, scramble, moves, totalMs, isZh }:
           value={idx}
           onChange={handleScrub}
           disabled={total === 0}
-          aria-label={tr({ zh: '进度', en: 'Scrub',
-              zhHant: "進度"
+          aria-label={tr({ zh: '进度', en: 'Scrub'
         })}
         />
 

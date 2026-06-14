@@ -146,12 +146,10 @@ export default function FavListView(props: { state: AppState; dispatch: React.Di
       }
     >
       <p className="roux-fav-add-help">
-        {tr({ zh: '在此输入情况（每行一条）', en: 'Input your cases here. (one per line)',
-            zhHant: "在此輸入情況（每行一條）"
+        {tr({ zh: '在此输入情况（每行一条）', en: 'Input your cases here. (one per line)'
         })}
         <br />
-        {tr({ zh: '格式：[类别], [打乱公式]。类别 := fb | fbdr | ss-front | ss-back', en: 'Format: [category], [setup algorithm]. category := fb | fbdr | ss-front | ss-back',
-            zhHant: "格式：[類別], [打亂公式]。類別 := fb | fbdr | ss-front | ss-back"
+        {tr({ zh: '格式：[类别], [打乱公式]。类别 := fb | fbdr | ss-front | ss-back', en: 'Format: [category], [setup algorithm]. category := fb | fbdr | ss-front | ss-back'
         })}
       </p>
       <textarea

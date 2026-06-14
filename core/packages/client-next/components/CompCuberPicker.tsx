@@ -176,7 +176,7 @@ export function CompCuberPicker({
           <span className="cuber-search-chip-id">{cuber.id}</span>
           {typeof cuberMatchCount === 'number' && (
             <span className="cuber-search-chip-count">
-              {i18n.language === 'zh-Hant' ? (`${cuberMatchCount} 場`) : (isZh ? `${cuberMatchCount} 场` : `${cuberMatchCount} ${cuberMatchCount === 1 ? 'comp' : 'comps'}`)}
+              {(isZh ? `${cuberMatchCount} 场` : `${cuberMatchCount} ${cuberMatchCount === 1 ? 'comp' : 'comps'}`)}
             </span>
           )}
           <ClearButton onClick={() => onCuberChange(null)} isZh={isZh} />
@@ -220,8 +220,7 @@ export function CompCuberPicker({
         <div className="comp-picker-popup">
           {cuberResults.length > 0 && (
             <div className="cuber-search-section">
-              <div className="cuber-search-section-label">{tr({ zh: '选手', en: 'Cubers',
-                  zhHant: "選手"
+              <div className="cuber-search-section-label">{tr({ zh: '选手', en: 'Cubers'
             })}</div>
               {cuberResults.map(c => (
                 <button key={`p-${c.id}`} type="button" className="cuber-search-item" onClick={() => pickCuber(c)}>
@@ -236,8 +235,7 @@ export function CompCuberPicker({
           )}
           {compResults.length > 0 && (
             <div className="cuber-search-section">
-              <div className="cuber-search-section-label">{tr({ zh: '比赛', en: 'Competitions',
-                  zhHant: "比賽"
+              <div className="cuber-search-section-label">{tr({ zh: '比赛', en: 'Competitions'
             })}</div>
               {compResults.map(c => {
                 const displayName = localizeCompName(c.id, c.name, !!isZh);
@@ -264,8 +262,7 @@ export function CompCuberPicker({
             </div>
           )}
           {loading && cuberResults.length === 0 && compResults.length === 0 && (
-            <div className="cuber-search-status">{tr({ zh: '搜索中…', en: 'Searching…',
-                zhHant: "搜尋中…"
+            <div className="cuber-search-status">{tr({ zh: '搜索中…', en: 'Searching…'
             })}</div>
           )}
         </div>

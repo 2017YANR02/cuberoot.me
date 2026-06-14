@@ -45,14 +45,12 @@ export default function MemberContact({ membership, onSaved }: Props) {
 
   return (
     <section className="mem-contact">
-      <h3 className="mem-contact-title">{tr({ zh: '续费提醒联系方式', en: 'Contact for renewal reminders',
-          zhHant: "續費提醒聯絡方式"
+      <h3 className="mem-contact-title">{tr({ zh: '续费提醒联系方式', en: 'Contact for renewal reminders'
     })}</h3>
       <p className="mem-contact-hint">
         {tr({
           zh: '选填。到期前用于提醒续费,或在 WCA 登录失效时帮你找回会员资格。',
-          en: 'Optional. Used to remind you before expiry, or to restore your membership if WCA sign-in breaks.',
-            zhHant: "選填。到期前用於提醒續費,或在 WCA 登入失效時幫你找回會員資格。"
+          en: 'Optional. Used to remind you before expiry, or to restore your membership if WCA sign-in breaks.'
         })}
       </p>
       <div className="mem-contact-row">
@@ -63,14 +61,12 @@ export default function MemberContact({ membership, onSaved }: Props) {
           className="mem-contact-input"
           value={contact}
           onChange={(e) => { setContact(e.target.value); setSaved(false); }}
-          placeholder={tr({ zh: '填写联系方式', en: 'Your contact',
-              zhHant: "填寫聯絡方式"
+          placeholder={tr({ zh: '填写联系方式', en: 'Your contact'
         })}
           maxLength={200}
         />
         <button className="mem-contact-save" onClick={() => void save()} disabled={saving}>
-          {saved ? <Check size={14} /> : saving ? '…' : tr({ zh: '保存', en: 'Save',
-              zhHant: "儲存"
+          {saved ? <Check size={14} /> : saving ? '…' : tr({ zh: '保存', en: 'Save'
         })}
         </button>
       </div>

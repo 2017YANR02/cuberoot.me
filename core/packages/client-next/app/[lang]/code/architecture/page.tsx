@@ -15,7 +15,7 @@ export default function ArchitecturePage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('站点架构', 'Site Architecture', "站點架構");
+  useDocumentTitle('站点架构', 'Site Architecture');
 
   return (
     <LangCtx.Provider value={lang}>
@@ -134,7 +134,7 @@ export default function ArchitecturePage() {
                   <span className="arch-mod-route">{m.route}</span>
                   <span className={`arch-tag arch-tag-${m.origin}`}>{m.origin}</span>
                 </div>
-                <div className="arch-mod-name">{(i18n.language === 'zh-Hant' ? (m.zhHant ?? m.zh) : (i18n.language.startsWith('zh') ? m.zh : m.en))}</div>
+                <div className="arch-mod-name">{((i18n.language.startsWith('zh') ? m.zh : m.en))}</div>
                 <div className="arch-mod-desc">{lang === 'zh' ? m.zhDesc : m.enDesc}</div>
               </Link>
             ))}

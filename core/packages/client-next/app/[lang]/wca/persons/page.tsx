@@ -39,18 +39,18 @@ export default function PersonSearchPage() {
       <main className="wp-main">
         <div className="wp-search-card">
           <div className="wp-search-icon"><UserSearch size={28} /></div>
-          <h1 className="wp-search-title">{t('选手搜索', 'Person Search', '選手搜尋')}</h1>
-          <p className="wp-search-hint">{t('输入选手名或 WCA ID', 'Search by name or WCA ID', '輸入選手名或 WCA ID')}</p>
+          <h1 className="wp-search-title">{t('选手搜索', 'Person Search')}</h1>
+          <p className="wp-search-hint">{t('输入选手名或 WCA ID', 'Search by name or WCA ID')}</p>
           <div className="wp-search-picker">
             <WcaPersonPicker
               value={picked}
               onChange={onPick}
               isZh={isZh}
-              placeholder={t('搜索选手名 / WCA ID', 'Search name / WCA ID', '搜尋選手名 / WCA ID')}
+              placeholder={t('搜索选手名 / WCA ID', 'Search name / WCA ID')}
             />
           </div>
           <div className="wp-search-examples">
-            <span className="wp-search-examples-label">{t('试试', 'Try', '試試')}</span>
+            <span className="wp-search-examples-label">{t('试试', 'Try')}</span>
             {EXAMPLES.map((id) => (
               <button key={id} type="button" className="wp-search-example" onClick={() => go(id)}>{id}</button>
             ))}

@@ -6,14 +6,11 @@ export type ContinentCode = 'AF' | 'AS' | 'EU' | 'NA' | 'OC' | 'SA';
 export const CONTINENT_CODES: readonly ContinentCode[] = ['AF', 'AS', 'EU', 'NA', 'OC', 'SA'];
 
 export const CONTINENT_NAMES: Record<ContinentCode, { en: string; zh: string
-        zhHant?: string;
  }> = {
   AF: { en: 'Africa',         zh: '非洲'   },
-  AS: { en: 'Asia',           zh: '亚洲',
-      zhHant: "亞洲"
+  AS: { en: 'Asia',           zh: '亚洲'
 },
-  EU: { en: 'Europe',         zh: '欧洲',
-      zhHant: "歐洲"
+  EU: { en: 'Europe',         zh: '欧洲'
 },
   NA: { en: 'North America',  zh: '北美洲' },
   OC: { en: 'Oceania',        zh: '大洋洲' },

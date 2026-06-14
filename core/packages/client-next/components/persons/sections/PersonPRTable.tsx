@@ -17,13 +17,13 @@ import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
 import { UnofficialMark } from '@/components/UnofficialMark';
 
 // WCA 大洲 id(continentId,带前缀 _)→ 本地化短名,供 SoCR 的 scope 标签用.
-const CONTINENT_NAME: Record<string, { zh: string; en: string; zhHant: string }> = {
-  '_Africa': { zh: '非洲', en: 'Africa', zhHant: '非洲' },
-  '_Asia': { zh: '亚洲', en: 'Asia', zhHant: '亞洲' },
-  '_Europe': { zh: '欧洲', en: 'Europe', zhHant: '歐洲' },
-  '_North America': { zh: '北美', en: 'N. America', zhHant: '北美' },
-  '_Oceania': { zh: '大洋洲', en: 'Oceania', zhHant: '大洋洲' },
-  '_South America': { zh: '南美', en: 'S. America', zhHant: '南美' },
+const CONTINENT_NAME: Record<string, { zh: string; en: string; }> = {
+  '_Africa': { zh: '非洲', en: 'Africa' },
+  '_Asia': { zh: '亚洲', en: 'Asia' },
+  '_Europe': { zh: '欧洲', en: 'Europe' },
+  '_North America': { zh: '北美', en: 'N. America' },
+  '_Oceania': { zh: '大洋洲', en: 'Oceania' },
+  '_South America': { zh: '南美', en: 'S. America' },
 };
 import i18n from "@/i18n/i18n-client";
 
@@ -52,7 +52,7 @@ function RankCell({ r }: { r: number | null | undefined }) {
 }
 
 export default function PersonPRTable({ profile, results, isZh, inclCancelled, onInclCancelledChange }: Props) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const [mode, setMode] = useState<Mode>('current');
   const [hist, setHist] = useState<PersonBestRanksResponse | null>(null);
   const [histLoading, setHistLoading] = useState(false);
@@ -126,7 +126,7 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
   if (eventIds.length === 0) {
     return (
       <section className="wp-card">
-        <div className="wp-empty">{t('暂无成绩', 'No results yet', "暫無成績")}</div>
+        <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>
       </section>
     );
   }
@@ -138,50 +138,50 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
           <button
             className={`wp-toggle-btn ${mode === 'current' ? 'is-active' : ''}`}
             onClick={() => setMode('current')}
-          >{t('当前', 'Current', "當前")}</button>
+          >{t('当前', 'Current')}</button>
           <button
             className={`wp-toggle-btn ${mode === 'historical' ? 'is-active' : ''}`}
             onClick={() => setMode('historical')}
-          >{t('历史最佳排名', 'Historical Best', "歷史最佳排名")}</button>
+          >{t('历史最佳排名', 'Historical Best')}</button>
         </div>
         {/* 「废止项」口径开关(全页唯一):控制底部 Σ 名次和行 + 下方「最优项目组合」卡.
             历史最佳无 21 口径数据,historical 模式下 Σ 行不受其影响,但开关保留给组合卡用 */}
         <PillToggle
           value={inclCancelled}
           onChange={onInclCancelledChange}
-          onLabel={t('废止项', 'Cancelled', "廢止項")}
-          offLabel={t('废止项', 'Cancelled', "廢止項")}
+          onLabel={t('废止项', 'Cancelled')}
+          offLabel={t('废止项', 'Cancelled')}
         />
       </div>
 
       {mode === 'historical' && histLoading && (
-        <div className="wp-loading-inline">{t('加载历史排名…', 'Loading historical ranks…', "載入歷史排名…")}</div>
+        <div className="wp-loading-inline">{t('加载历史排名…', 'Loading historical ranks…')}</div>
       )}
       {mode === 'historical' && histError && (
-        <div className="wp-error-inline">{t('历史排名加载失败', 'Failed to load historical ranks', "歷史排名載入失敗")}: {histError}</div>
+        <div className="wp-error-inline">{t('历史排名加载失败', 'Failed to load historical ranks')}: {histError}</div>
       )}
 
       <div className="wp-table-scroll">
         <table className="wp-pr-table">
           <thead>
             <tr>
-              <th rowSpan={2} className="wp-th-event">{t('项目', 'Event', "項目")}</th>
-              <th colSpan={4} className="wp-th-group">{t('单次', 'Single', "單次")}</th>
+              <th rowSpan={2} className="wp-th-event">{t('项目', 'Event')}</th>
+              <th colSpan={4} className="wp-th-group">{t('单次', 'Single')}</th>
               <th colSpan={4} className="wp-th-group">{t('平均', 'Average')}</th>
-              {showPodium && <th colSpan={3} className="wp-th-group wp-th-podium">{t('领奖台', 'Podium', "領獎臺")}</th>}
+              {showPodium && <th colSpan={3} className="wp-th-group wp-th-podium">{t('领奖台', 'Podium')}</th>}
             </tr>
             <tr>
               <th>{t('世界', 'World')}</th>
-              <th>{t('洲际', 'Continent', "洲際")}</th>
-              <th>{t('地区', 'Country', "地區")}</th>
-              <th>{t('成绩', 'Result', "成績")}</th>
-              <th>{t('成绩', 'Result', "成績")}</th>
+              <th>{t('洲际', 'Continent')}</th>
+              <th>{t('地区', 'Country')}</th>
+              <th>{t('成绩', 'Result')}</th>
+              <th>{t('成绩', 'Result')}</th>
               <th>{t('世界', 'World')}</th>
-              <th>{t('洲际', 'Continent', "洲際")}</th>
-              <th>{t('地区', 'Country', "地區")}</th>
+              <th>{t('洲际', 'Continent')}</th>
+              <th>{t('地区', 'Country')}</th>
               {showPodium && <th className="wp-th-medal" title={t('金牌', 'Gold')}>🥇</th>}
-              {showPodium && <th className="wp-th-medal" title={t('银牌', 'Silver', "銀牌")}>🥈</th>}
-              {showPodium && <th className="wp-th-medal" title={t('铜牌', 'Bronze', "銅牌")}>🥉</th>}
+              {showPodium && <th className="wp-th-medal" title={t('银牌', 'Silver')}>🥈</th>}
+              {showPodium && <th className="wp-th-medal" title={t('铜牌', 'Bronze')}>🥉</th>}
             </tr>
           </thead>
           <tbody>
@@ -218,7 +218,7 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
                   onClick={selectable ? () => toggleEvent(eid) : undefined}
                   aria-selected={selectable ? selected : undefined}
                 >
-                  <th scope="row" className="wp-cell-event" title={selectable ? t('点击多选项目,自选组合的名次和落在下方「自选」行', 'Click rows to multi-select events; the combined sum of ranks appears in the Custom row below', "點選多選項目,自選組合的名次和落在下方「自選」行") : undefined}>
+                  <th scope="row" className="wp-cell-event" title={selectable ? t('点击多选项目,自选组合的名次和落在下方「自选」行', 'Click rows to multi-select events; the combined sum of ranks appears in the Custom row below') : undefined}>
                     <span className="wp-event-inner">
                       <EventIcon event={eid} className="wp-event-icon" />
                     </span>
@@ -251,7 +251,7 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
 //   跟随表头「当前 / 历史最佳排名」toggle:historical=true 时整块显示历史最佳(名次 + 年份),否则显示当前.
 //   SoCR 数据未填充(socr=null)时该行显示占位 —,不误显.数据 lazy fetch;整块无数据时不渲染.
 function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, inclCancelled, selEvents, onClearSel }: { wcaId: string; isZh: boolean; showPodium: boolean; countryIso2: string; historical: boolean; inclCancelled: boolean; selEvents: ReadonlySet<string>; onClearSel: () => void }) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const [sor, setSor] = useState<PersonSorResponse | null>(null);
   // 历史最佳只有 17 口径(sor_historical_best 无废止维度)→ historical 模式忽略开关,免得三行全空
   const effCancelled = inclCancelled && !historical;
@@ -309,8 +309,8 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
   if (!sor.single && !sor.average && !sor.bestSingle && !sor.bestAverage && !effCancelled) return null;
 
   const cont = CONTINENT_NAME[sor.continentId];
-  const continentLabel = cont ? t(cont.zh, cont.en, cont.zhHant) : t('本洲', 'Continent');
-  const countryLabel = countryIso2 ? countryName(countryIso2, isZh) : t('本国', 'Country', '本國');
+  const continentLabel = cont ? t(cont.zh, cont.en) : t('本洲', 'Continent');
+  const countryLabel = countryIso2 ? countryName(countryIso2, isZh) : t('本国', 'Country');
   // 当前 / 历史最佳 按表头 toggle 二选一:historical → 取该指标历史最佳(含年份),否则取当前.
   // 子排名(continentRank/countryRank)只有当前模式有(历史最佳专表只存自身 scope).
   type Disp = { rank: number; total: number | null; year?: number; continentRank?: number; countryRank?: number };
@@ -322,8 +322,8 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
   // 指标行标签后缀挂该 scope 的具体地名(洲/国),让「在哪排名」一目了然;名次本身落对齐列.
   const METRICS: { key: 'sowr' | 'socr' | 'sonr'; abbr: string; label: string }[] = [
     { key: 'sowr', abbr: 'SoWR', label: t('世界名次和', 'Sum of World Ranks') },
-    { key: 'socr', abbr: 'SoCR', label: t('洲际名次和', 'Sum of Continent Ranks', '洲際名次和') + (cont ? ` · ${continentLabel}` : '') },
-    { key: 'sonr', abbr: 'SoNR', label: t('国家名次和', 'Sum of National Ranks', '國家名次和') + (countryIso2 ? ` · ${countryLabel}` : '') },
+    { key: 'socr', abbr: 'SoCR', label: t('洲际名次和', 'Sum of Continent Ranks') + (cont ? ` · ${continentLabel}` : '') },
+    { key: 'sonr', abbr: 'SoNR', label: t('国家名次和', 'Sum of National Ranks') + (countryIso2 ? ` · ${countryLabel}` : '') },
   ];
   const scopeCol = (key: 'sowr' | 'socr' | 'sonr') => key === 'sowr' ? 'world' : key === 'socr' ? 'continent' : 'country';
 
@@ -383,10 +383,10 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
           return (
             <tr key={`sel-${m.key}`} className="wp-sor-row wp-sor-custom">
               {mi === 0 && (
-                <th scope="row" rowSpan={3} className="wp-cell-event wp-sor-rowlabel wp-sor-custom-rowlabel" title={t(`自选组合(已选 ${selEvents.size} 项):按所选项目重算的 SoWR/SoCR/SoNR 三行,与上方同列对齐;点上方项目行增删`, `Custom combo (${selEvents.size} events): SoWR/SoCR/SoNR recomputed over the selected events, columns aligned with the rows above; click rows above to edit`, `自選組合(已選 ${selEvents.size} 項):按所選項目重算的 SoWR/SoCR/SoNR 三行,與上方同列對齊;點上方項目行增刪`)}>
+                <th scope="row" rowSpan={3} className="wp-cell-event wp-sor-rowlabel wp-sor-custom-rowlabel" title={t(`自选组合(已选 ${selEvents.size} 项):按所选项目重算的 SoWR/SoCR/SoNR 三行,与上方同列对齐;点上方项目行增删`, `Custom combo (${selEvents.size} events): SoWR/SoCR/SoNR recomputed over the selected events, columns aligned with the rows above; click rows above to edit`)}>
                   <span className="wp-sor-abbr wp-sor-custom-label">
-                    {t('自选', 'Custom', "自選")}
-                    <ClearButton variant="standalone" className="wp-sor-custom-clear" onClick={onClearSel} title={t('清除所选项目', 'Clear selection', "清除所選項目")} />
+                    {t('自选', 'Custom')}
+                    <ClearButton variant="standalone" className="wp-sor-custom-clear" onClick={onClearSel} title={t('清除所选项目', 'Clear selection')} />
                   </span>
                   {pending && calc && (
                     <span className="wp-sor-custom-progress" aria-hidden>

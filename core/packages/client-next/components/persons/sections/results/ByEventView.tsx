@@ -50,7 +50,7 @@ interface Props {
 type SubSub = 'best' | 'dist' | 'rank';
 
 export default function ByEventView({ profile, results, comps, reconLookup, eventId, isZh }: Props) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const [view, setView] = useState<SubSub>('best');
   const [hist, setHist] = useState<PersonRankHistoryResponse | null>(null);
   const [histLoading, setHistLoading] = useState(false);
@@ -64,7 +64,7 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
       .finally(() => setHistLoading(false));
   }, [profile.person.wca_id, eventId]);
 
-  if (!results || !comps) return <div className="wp-loading-inline">{t('加载中…', 'Loading…', "載入中…")}</div>;
+  if (!results || !comps) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
 
   const compById = new Map(comps.map((c) => [c.id, c]));
   const eventResults = results
@@ -82,15 +82,15 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
         <button
           className={`wp-subsubtab-btn ${view === 'best' ? 'is-active' : ''}`}
           onClick={() => setView('best')}
-        >{t('最佳成绩', 'Best Times', "最佳成績")}</button>
+        >{t('最佳成绩', 'Best Times')}</button>
         <button
           className={`wp-subsubtab-btn ${view === 'dist' ? 'is-active' : ''}`}
           onClick={() => setView('dist')}
-        >{t('单次成绩分布', 'Single Distribution', "單次成績分佈")}</button>
+        >{t('单次成绩分布', 'Single Distribution')}</button>
         <button
           className={`wp-subsubtab-btn wp-subsubtab-btn-end ${view === 'rank' ? 'is-active' : ''}`}
           onClick={() => setView('rank')}
-        >{t('历史成绩排名曲线', 'Rank History', "歷史成績排名曲線")}</button>
+        >{t('历史成绩排名曲线', 'Rank History')}</button>
       </div>
 
       {view === 'best' && (
@@ -106,20 +106,20 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
       )}
       {view === 'rank' && (
         <>
-          {histLoading && <div className="wp-loading-inline">{t('加载中…', 'Loading…', "載入中…")}</div>}
+          {histLoading && <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>}
           {!histLoading && hist && hist.rows.length > 0 && (
             <RankChart hist={hist} isZh={isZh} />
           )}
           {!histLoading && hist && hist.rows.length === 0 && (
-            <div className="wp-empty">{t('暂无年度排名数据', 'No yearly rank data', "暫無年度排名資料")}</div>
+            <div className="wp-empty">{t('暂无年度排名数据', 'No yearly rank data')}</div>
           )}
           {!histLoading && !hist && (
-            <div className="wp-empty wp-text-mute">{t('排名数据暂未生成(服务端 stats-build 数据未就绪)', 'Rank history not yet built on server', "排名資料暫未生成(服務端 stats-build 資料未就緒)")}</div>
+            <div className="wp-empty wp-text-mute">{t('排名数据暂未生成(服务端 stats-build 数据未就绪)', 'Rank history not yet built on server')}</div>
           )}
         </>
       )}
 
-      <h3 className="wp-section-h">{t('全部成绩', 'All Results', "全部成績")}</h3>
+      <h3 className="wp-section-h">{t('全部成绩', 'All Results')}</h3>
       <EventRoundsList
         wcaId={profile.person.wca_id}
         rows={eventResults}
@@ -204,7 +204,7 @@ function EventRoundsList({
   reconLookup: Map<string, number> | null;
   isZh: boolean;
 }) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const changeMap = useRowChangeMap(wcaId);
   const router = useRouter();
   const pathname = usePathname();
@@ -258,7 +258,7 @@ function EventRoundsList({
     });
   }, [rows, compById]);
 
-  if (sorted.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet', "暫無成績")}</div>;
+  if (sorted.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>;
 
   // 同一比赛只在首行展示比赛名 + 日期(stacked).
   let lastCompId = '';
@@ -268,17 +268,17 @@ function EventRoundsList({
       <table className="wp-bycomp-table">
         <thead>
           <tr>
-            <th>{t('比赛', 'Competition', "比賽")}</th>
+            <th>{t('比赛', 'Competition')}</th>
             <th>
               <span className="wp-th-info">
-                {t('轮次', 'Round', "輪次")}
+                {t('轮次', 'Round')}
                 <InfoTooltip content={t(ROUND_HINT_ZH, ROUND_HINT_EN)} />
               </span>
             </th>
             <th className="wp-th-narrow">{t('排名', 'Pos')}</th>
-            <th>{t('单次', 'Single', "單次")}</th>
+            <th>{t('单次', 'Single')}</th>
             <th>{t('平均', 'Avg')}{isMbldEvent(eventId) && <UnofficialMark />}</th>
-            <th>{t('详细成绩', 'Attempts', "詳細成績")}</th>
+            <th>{t('详细成绩', 'Attempts')}</th>
           </tr>
         </thead>
         <tbody>
@@ -319,7 +319,7 @@ function EventRoundsList({
                     scroll={false}
                     onClick={() => setHash(hashOf(r.competition_id, r.round_type_id))}
                     className={`wp-round-tag wp-round-tag-link ${roundClass(r.round_type_id)}`}
-                    title={t('复制到链接', 'Copy link to this row', "複製到連結")}
+                    title={t('复制到链接', 'Copy link to this row')}
                   >
                     {roundLabel(r.round_type_id)}
                   </Link>
@@ -378,7 +378,7 @@ function BestChart({
   compById: Map<string, WcaCompetition>;
   isZh: boolean;
 }) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const isMbld = eventId === '333mbf';
   const isFmc  = eventId === '333fm';
 
@@ -395,11 +395,11 @@ function BestChart({
     return { r, sAxis, aAxis, prS, prA };
   }).filter((p) => p.sAxis !== null || p.aAxis !== null);
 
-  if (points.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No data', "暫無成績")}</div>;
+  if (points.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No data')}</div>;
 
   const xData = points.map((_, i) => String(i + 1));
   const interval = points.length > 12 ? Math.ceil(points.length / 10) : 0;
-  const singleLabel = t('单次', 'Single', "單次");
+  const singleLabel = t('单次', 'Single');
   // MBLD 平均为非官方 Mo3,图例直接标明,省去图内额外标记
   const avgLabel    = isMbld ? t('平均(非官方 Mo3)', 'Avg (unofficial Mo3)') : t('平均', 'Avg');
 
@@ -526,7 +526,7 @@ function formatTime(sec: number): string {
 
 // ─── 单次成绩分布 直方图 ──────────────────────────────────────────────
 function DistChart({ eventId, rows, isZh }: { eventId: string; rows: WcaResultRow[]; isZh: boolean }) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const W = 760, H = 220, P = { l: 36, r: 12, t: 12, b: 28 };
 
   const samples: number[] = [];
@@ -535,7 +535,7 @@ function DistChart({ eventId, rows, isZh }: { eventId: string; rows: WcaResultRo
       if (a > 0) samples.push(toAxisValue(a, eventId, 'single'));
     }
   }
-  if (samples.length === 0) return <div className="wp-empty">{t('暂无样本', 'No samples', "暫無樣本")}</div>;
+  if (samples.length === 0) return <div className="wp-empty">{t('暂无样本', 'No samples')}</div>;
 
   const min = Math.min(...samples), max = Math.max(...samples);
   const nBins = Math.min(20, Math.max(6, Math.round(Math.sqrt(samples.length))));
@@ -584,7 +584,7 @@ function DistChart({ eventId, rows, isZh }: { eventId: string; rows: WcaResultRo
 // echarts 版,直接 fork 自 cubing.pro `ResultWIthEventRankingTimers.tsx` (GPL-3.0)
 // 6 条 series (NR/CR/WR × single/avg) + dataZoom slider + 触摸 + tooltip
 function RankChart({ hist, isZh }: { hist: PersonRankHistoryResponse; isZh: boolean }) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
 
   const rows = hist.rows.slice().sort(
     (a, b) => (a.year * 12 + (a.month ?? 0)) - (b.year * 12 + (b.month ?? 0))
@@ -596,9 +596,9 @@ function RankChart({ hist, isZh }: { hist: PersonRankHistoryResponse; isZh: bool
   );
 
   const series = [
-    { key: 'singleCountryRank',   label: t('单次-NR', 'Single-NR', "單次-NR"), color: '#1f3f78' },
-    { key: 'singleContinentRank', label: t('单次-CR', 'Single-CR', "單次-CR"), color: '#6ab15a' },
-    { key: 'singleWorldRank',     label: t('单次-WR', 'Single-WR', "單次-WR"), color: '#c39316' },
+    { key: 'singleCountryRank',   label: t('单次-NR', 'Single-NR'), color: '#1f3f78' },
+    { key: 'singleContinentRank', label: t('单次-CR', 'Single-CR'), color: '#6ab15a' },
+    { key: 'singleWorldRank',     label: t('单次-WR', 'Single-WR'), color: '#c39316' },
     { key: 'avgCountryRank',      label: t('平均-NR', 'Avg-NR'),    color: '#b71234' },
     { key: 'avgContinentRank',    label: t('平均-CR', 'Avg-CR'),    color: '#5fa3c7' },
     { key: 'avgWorldRank',        label: t('平均-WR', 'Avg-WR'),    color: '#2c7a4b' },

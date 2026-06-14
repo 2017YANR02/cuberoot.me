@@ -17,8 +17,7 @@ export function TutorialArticleView({ post, lang }: TutorialArticleViewProps) {
   if (!html) {
     return (
       <div className="tutorial-content">
-        <p style={{ color: 'var(--tutorial-text-muted)' }}>{tr({ zh: '(无内容)', en: '(no content)',
-            zhHant: "(無內容)"
+        <p style={{ color: 'var(--tutorial-text-muted)' }}>{tr({ zh: '(无内容)', en: '(no content)'
         })}</p>
       </div>
     );

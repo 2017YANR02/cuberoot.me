@@ -36,7 +36,7 @@ interface Row {
 function CohortRanksPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('届别排名', 'Cohort Ranks', "屆別排名");
+  useDocumentTitle('届别排名', 'Cohort Ranks');
   const [q, setQ] = useQueryStates(
     {
       cohort: parseAsString,
@@ -94,24 +94,20 @@ function CohortRanksPageInner() {
           <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}</Link>
         </div>
         <h1 className="wse-title-row">
-          {tr({ zh: '参赛届别排名', en: 'Cohort Ranks',
-              zhHant: "參賽屆別排名"
+          {tr({ zh: '参赛届别排名', en: 'Cohort Ranks'
         })}
           <Link
             href="/wca/about/cohort-ranks"
             className="wse-title-help"
-            title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
-                zhHant: "這頁是幹啥的?"
+            title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
             })}
-            aria-label={tr({ zh: '查看说明', en: 'About this page',
-                zhHant: "檢視說明"
+            aria-label={tr({ zh: '查看说明', en: 'About this page'
             })}
           >
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
         </h1>
-        <p className="wse-subtitle">{tr({ zh: '按选手首次参赛年份分组,组内 PB 排名', en: 'PB ranking among cubers whose first WCA competition was in the chosen year',
-            zhHant: "按選手首次參賽年份分組,組內 PB 排名"
+        <p className="wse-subtitle">{tr({ zh: '按选手首次参赛年份分组,组内 PB 排名', en: 'PB ranking among cubers whose first WCA competition was in the chosen year'
         })}</p>
       </header>
 
@@ -124,8 +120,7 @@ function CohortRanksPageInner() {
 
       <div className="wse-filters">
         <div className="wse-filter">
-          <label>{tr({ zh: '届别(首参赛年)', en: 'Cohort year',
-              zhHant: "屆別(首參賽年)"
+          <label>{tr({ zh: '届别(首参赛年)', en: 'Cohort year'
         })}</label>
           <select value={cohort} onChange={e => update('cohort', e.target.value)}>
             {years.map(y => <option key={y} value={y}>{y}</option>)}
@@ -133,12 +128,10 @@ function CohortRanksPageInner() {
         </div>
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
-          <label>{tr({ zh: '类型', en: 'Type',
-              zhHant: "型別"
+          <label>{tr({ zh: '类型', en: 'Type'
         })}</label>
           <select value={type} onChange={e => update('type', e.target.value)}>
-            <option value="single">{tr({ zh: '单次', en: 'Single',
-                zhHant: "單次"
+            <option value="single">{tr({ zh: '单次', en: 'Single'
             })}</option>
             {allowAvg && <option value="average">{tr({ zh: '平均', en: 'Average' })}</option>}
           </select>
@@ -146,8 +139,7 @@ function CohortRanksPageInner() {
       </div>
 
       <div className="wse-table-wrapper">
-        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...',
-            zhHant: "載入中..."
+        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...'
         })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {data && !loading && (
@@ -157,12 +149,10 @@ function CohortRanksPageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{tr({ zh: '选手', en: 'Person',
-                      zhHant: "選手"
+                  <th>{tr({ zh: '选手', en: 'Person'
                 })}</th>
-                  <th className="wse-value-col">{i18n.language === 'zh-Hant' ? ((type === 'single' ? '單次' : '平均')) : (isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average'))}</th>
-                  {!country && <th>{tr({ zh: '国家', en: 'Country',
-                      zhHant: "國家"
+                  <th className="wse-value-col">{(isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average'))}</th>
+                  {!country && <th>{tr({ zh: '国家', en: 'Country'
                 })}</th>}
                 </tr>
               </thead>

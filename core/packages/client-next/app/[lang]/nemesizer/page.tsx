@@ -20,7 +20,7 @@ const MODES: Mode[] = ['standard', 'h2h', 'whatif', 'stats'];
 function NemesizerInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('宿敌', 'Nemesizer', "宿敵");
+  useDocumentTitle('宿敌', 'Nemesizer');
 
   // mode 是导航态(在 4 个视图间切换)→ push 进历史,后退能返回上一视图
   const [mode, setMode] = useQueryState(
@@ -35,11 +35,9 @@ function NemesizerInner() {
         <Link
           href="/nemesizer-about"
           className="nemesizer-title-help"
-          title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
-              zhHant: "這頁是幹啥的?"
+          title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
         })}
-          aria-label={tr({ zh: '查看说明', en: 'About this page',
-              zhHant: "檢視說明"
+          aria-label={tr({ zh: '查看说明', en: 'About this page'
         })}
         >
           <HelpCircle size={18} strokeWidth={1.75} />
@@ -47,17 +45,13 @@ function NemesizerInner() {
       </div>
 
       <div className="nemesizer-tabs">
-        <TabBtn active={mode === 'standard'} onClick={() => setMode('standard')}>{tr({ zh: '宿敌', en: 'Nemeses',
-            zhHant: "宿敵"
+        <TabBtn active={mode === 'standard'} onClick={() => setMode('standard')}>{tr({ zh: '宿敌', en: 'Nemeses'
         })}</TabBtn>
-        <TabBtn active={mode === 'h2h'} onClick={() => setMode('h2h')}>{tr({ zh: '对决', en: 'Head to head',
-            zhHant: "對決"
+        <TabBtn active={mode === 'h2h'} onClick={() => setMode('h2h')}>{tr({ zh: '对决', en: 'Head to head'
         })}</TabBtn>
-        <TabBtn active={mode === 'whatif'} onClick={() => setMode('whatif')}>{tr({ zh: '假设', en: 'What if',
-            zhHant: "假設"
+        <TabBtn active={mode === 'whatif'} onClick={() => setMode('whatif')}>{tr({ zh: '假设', en: 'What if'
         })}</TabBtn>
-        <TabBtn active={mode === 'stats'} onClick={() => setMode('stats')}>{tr({ zh: '统计', en: 'Statistics',
-            zhHant: "統計"
+        <TabBtn active={mode === 'stats'} onClick={() => setMode('stats')}>{tr({ zh: '统计', en: 'Statistics'
         })}</TabBtn>
       </div>
 

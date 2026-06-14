@@ -6,65 +6,56 @@
   },
   "title": {
     "en": "One-Handed Solving",
-    "zh": "单手还原",
-    "zhHant": "單手還原"
+    "zh": "单手还原"
   },
   "clauses": [
     {
       "id": "C1",
       "depth": 0,
       "en": "Standard speed solving procedures are followed, as described in [Article A](regulations:article:A) (Speed Solving). Additional regulations that supersede the corresponding procedures in [Article A](regulations:article:A) are described below.",
-      "zh": "主要遵循速拧规则，见[规则A](regulations:article:A)（速拧）。与[规则A](regulations:article:A)中的速拧规则不同的附加规则见下文。",
-      "zhHant": "主要遵循速擰規則，見[規則A](regulations:article:A)（速擰）。與[規則A](regulations:article:A)中的速擰規則不同的附加規則見下文。"
+      "zh": "主要遵循速拧规则，见[规则A](regulations:article:A)（速拧）。与[规则A](regulations:article:A)中的速拧规则不同的附加规则见下文。"
     },
     {
       "id": "C1b",
       "depth": 1,
       "en": "During the solve, the competitor must use only one hand to operate the puzzle. Penalty: disqualification of the attempt (DNF).",
-      "zh": "在还原过程中，选手只可以使用一只手操作魔方。惩罚：取消此次还原资格（DNF）。",
-      "zhHant": "在還原過程中，選手只可以使用一隻手操作魔方。懲罰：取消此次還原資格（DNF）。"
+      "zh": "在还原过程中，选手只可以使用一只手操作魔方。惩罚：取消此次还原资格（DNF）。"
     },
     {
       "id": "C1b+",
       "depth": 1,
       "en": "[CLARIFICATION] The competitor may use both hands during inspection.",
-      "zh": "[澄清] 选手在观察时可以使用双手。",
-      "zhHant": "[澄清] 選手在觀察時可以使用雙手。"
+      "zh": "[澄清] 选手在观察时可以使用双手。"
     },
     {
       "id": "C1b++",
       "depth": 1,
       "en": "[CLARIFICATION] The competitor is not required to use the same solving hand for different attempts of the same round.",
-      "zh": "[澄清] 对于同一轮的不同还原，选手可以使用不同的手。",
-      "zhHant": "[澄清] 對於同一輪的不同還原，選手可以使用不同的手。"
+      "zh": "[澄清] 对于同一轮的不同还原，选手可以使用不同的手。"
     },
     {
       "id": "C1b2",
       "depth": 2,
       "en": "If a puzzle defect occurs, and the competitor chooses to repair it, they must repair it using only the solving hand. Penalty: disqualification of the attempt (DNF).",
-      "zh": "如果发生了魔方故障，并且选手选择修复故障，他必须使用他用于还原的那一只手修复。惩罚：取消此次还原资格（DNF）。",
-      "zhHant": "如果發生了魔方故障，並且選手選擇修復故障，他必須使用他用於還原的那一隻手修復。懲罰：取消此次還原資格（DNF）。"
+      "zh": "如果发生了魔方故障，并且选手选择修复故障，他必须使用他用于还原的那一只手修复。惩罚：取消此次还原资格（DNF）。"
     },
     {
       "id": "C1b3",
       "depth": 2,
       "en": "If other body parts of the competitor come in contact with the puzzle or parts of the puzzle without the competitor's intention and without applying moves, this is not considered operating the puzzle, at the discretion of the judge.",
-      "zh": "如果选手在无意中身体的其他部分和魔方或者魔方的一部分发生了触碰，并且没有发生转动，这并不认为是操作魔方，由裁判决定。",
-      "zhHant": "如果選手在無意中身體的其他部分和魔方或者魔方的一部分發生了觸碰，並且沒有發生轉動，這並不認為是操作魔方，由裁判決定。"
+      "zh": "如果选手在无意中身体的其他部分和魔方或者魔方的一部分发生了触碰，并且没有发生转动，这并不认为是操作魔方，由裁判决定。"
     },
     {
       "id": "C1b4",
       "depth": 2,
       "en": "During the solve, the competitor may hold the puzzle against the surface to help operate the puzzle (see [Regulation 7f1d](regulations:regulation:7f1d)).",
-      "zh": "复原过程中，选手可以把魔方放在桌面上以辅助操作魔方（见[规则7f1d](regulations:regulation:7f1d)）。",
-      "zhHant": "復原過程中，選手可以把魔方放在桌面上以輔助操作魔方（見[規則7f1d](regulations:regulation:7f1d)）。"
+      "zh": "复原过程中，选手可以把魔方放在桌面上以辅助操作魔方（见[规则7f1d](regulations:regulation:7f1d)）。"
     },
     {
       "id": "C1c",
       "depth": 1,
       "en": "During the solve, once a competitor operates the puzzle with one hand, they must not operate the puzzle with the other hand. Penalty: disqualification of the attempt (DNF).",
-      "zh": "在还原时，一旦选手的某只手操作了魔方，他不能使用另一只手操作魔方。惩罚：取消此次还原资格（DNF）。",
-      "zhHant": "在還原時，一旦選手的某隻手操作了魔方，他不能使用另一隻手操作魔方。懲罰：取消此次還原資格（DNF）。"
+      "zh": "在还原时，一旦选手的某只手操作了魔方，他不能使用另一只手操作魔方。惩罚：取消此次还原资格（DNF）。"
     }
   ]
 }

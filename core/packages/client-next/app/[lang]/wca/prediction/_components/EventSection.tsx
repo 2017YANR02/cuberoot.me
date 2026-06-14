@@ -85,8 +85,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
   const futureYears = Array.from({ length: 2050 - 2003 + 1 }, (_, i) => 2003 + i);
   const series: Series[] = [
     {
-      name: tr({ zh: 'WR 单次', en: 'WR Single',
-          zhHant: "WR 單次"
+      name: tr({ zh: 'WR 单次', en: 'WR Single'
     }),
       color: COLORS.single,
       data: wrYears.map((d) => ({ x: d.year, y: d.wr_single })),
@@ -101,8 +100,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
   }
   if (fitSingle) {
     series.push({
-      name: tr({ zh: '单次拟合', en: 'Single fit',
-          zhHant: "單次擬合"
+      name: tr({ zh: '单次拟合', en: 'Single fit'
     }),
       color: COLORS.single,
       dashed: true,
@@ -112,7 +110,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
   }
   if (fitAvg) {
     series.push({
-      name: i18n.language === 'zh-Hant' ? (`${event.avgFormat} 擬合`) : (isZh ? `${event.avgFormat} 拟合` : `${event.avgFormat} fit`),
+      name: (isZh ? `${event.avgFormat} 拟合` : `${event.avgFormat} fit`),
       color: COLORS.avg,
       dashed: true,
       width: 1.5,
@@ -174,13 +172,11 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
             <span className="pred-event-title-id">{event.id}</span>
           </h2>
           <div className="pred-event-summary-meta">
-            <span>{tr({ zh: 'WR 单次', en: 'WR Single',
-                zhHant: "WR 單次"
+            <span>{tr({ zh: 'WR 单次', en: 'WR Single'
             })} <strong>{dispVal(lastWR?.value ?? null)}</strong></span>
             {lastWR && <span>· {stripParen(lastWR.person_name)} ({lastWR.country_id})</span>}
             {fitSingle && <span>· L = <strong>{formatVal(fitSingle.L, event.scale)}</strong></span>}
-            <span className="pred-event-summary-hint">{tr({ zh: '展开详情', en: 'click to expand',
-                zhHant: "展開詳情"
+            <span className="pred-event-summary-hint">{tr({ zh: '展开详情', en: 'click to expand'
             })}</span>
           </div>
         </summary>
@@ -188,17 +184,14 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       {event.id === '333' && (
         <Link href="/wca/prediction/333" className="pred-333-inline-cta">
           <div className="pred-333-inline-cta-text">
-            <div className="pred-333-inline-cta-eyebrow">{tr({ zh: '深度阅读', en: 'Deep Dive',
-                zhHant: "深度閱讀"
+            <div className="pred-333-inline-cta-eyebrow">{tr({ zh: '深度阅读', en: 'Deep Dive'
             })}</div>
             <div className="pred-333-inline-cta-title">
-              {tr({ zh: '3x3 极限预测 — 25 章节, 24 万字英文长文', en: '3x3 Ultimate Limits — 25 sections, ~240k English words',
-                  zhHant: "3x3 極限預測 — 25 章節, 24 萬字英文長文"
+              {tr({ zh: '3x3 极限预测 — 25 章节, 24 万字英文长文', en: '3x3 Ultimate Limits — 25 sections, ~240k English words'
             })}
             </div>
             <div className="pred-333-inline-cta-desc">
-              {tr({ zh: '历史, 方法, 数学, 硬件, 生物力学, 训练, 顶级选手, 统计建模 — 独立路由阅读', en: 'History · methods · math · hardware · biomech · training · top cubers · stats — dedicated route',
-                  zhHant: "歷史, 方法, 數學, 硬體, 生物力學, 訓練, 頂級選手, 統計建模 — 獨立路由閱讀"
+              {tr({ zh: '历史, 方法, 数学, 硬件, 生物力学, 训练, 顶级选手, 统计建模 — 独立路由阅读', en: 'History · methods · math · hardware · biomech · training · top cubers · stats — dedicated route'
             })}
             </div>
           </div>
@@ -209,8 +202,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       {/* 基本盘 */}
       <div className="pred-event-cards">
         <div className="pred-card">
-          <div className="pred-card-label">{tr({ zh: '当前 WR 单次', en: 'Current WR single',
-              zhHant: "當前 WR 單次"
+          <div className="pred-card-label">{tr({ zh: '当前 WR 单次', en: 'Current WR single'
         })}</div>
           <div className="pred-card-value">{dispVal(lastWR?.value ?? null)}</div>
           <div className="pred-card-sub">
@@ -218,28 +210,23 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
           </div>
         </div>
         <div className="pred-card">
-          <div className="pred-card-label">{tr({ zh: '历史改写次数', en: 'WR drops',
-              zhHant: "歷史改寫次數"
+          <div className="pred-card-label">{tr({ zh: '历史改写次数', en: 'WR drops'
         })}</div>
           <div className="pred-card-value">{data.wr_single_progression.length}</div>
-          <div className="pred-card-sub">{tr({ zh: '次主纪录被刷新', en: 'distinct improvements',
-              zhHant: "次主紀錄被重新整理"
+          <div className="pred-card-sub">{tr({ zh: '次主纪录被刷新', en: 'distinct improvements'
         })}</div>
         </div>
         <div className="pred-card">
-          <div className="pred-card-label">{tr({ zh: '累计选手', en: 'Cumulative cubers',
-              zhHant: "累計選手"
+          <div className="pred-card-label">{tr({ zh: '累计选手', en: 'Cumulative cubers'
         })}</div>
           <div className="pred-card-value">{totalCubers}</div>
           <div className="pred-card-sub">{isZh ? `${peakYear} 年峰值 ${peakCubers.toLocaleString()}` : `peak ${peakCubers.toLocaleString()} (${peakYear})`}</div>
         </div>
         {fitSingle && (
           <div className="pred-card">
-            <div className="pred-card-label" title={tr({ zh: '历史轨迹曲线拟合的渐近线,不是物理极限。详见下方"方法 + 硬件演进 + 物理极限"', en: 'Curve-fit asymptote of historical trend, NOT a physical floor. See "Method + Hardware Evolution & Physical Floor" below',
-                zhHant: "歷史軌跡曲線擬合的漸近線,不是物理極限。詳見下方\"方法 + 硬體演進 + 物理極限\""
+            <div className="pred-card-label" title={tr({ zh: '历史轨迹曲线拟合的渐近线,不是物理极限。详见下方"方法 + 硬件演进 + 物理极限"', en: 'Curve-fit asymptote of historical trend, NOT a physical floor. See "Method + Hardware Evolution & Physical Floor" below'
             })}>
-              {tr({ zh: '拟合 L *', en: 'Fit L *',
-                  zhHant: "擬合 L *"
+              {tr({ zh: '拟合 L *', en: 'Fit L *'
             })}
             </div>
             <div className="pred-card-value">
@@ -255,11 +242,9 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
           const tPhys = lim.t_phys_single ?? (last.T ?? last.M / last.TPS + last.R);
           return (
             <div className="pred-card">
-              <div className="pred-card-label" title={tr({ zh: '步数法物理下界 = M / TPS + R, 详见下方分解', en: 'Step-count physical floor = M / TPS + R, see decomposition below',
-                  zhHant: "步數法物理下界 = M / TPS + R, 詳見下方分解"
+              <div className="pred-card-label" title={tr({ zh: '步数法物理下界 = M / TPS + R, 详见下方分解', en: 'Step-count physical floor = M / TPS + R, see decomposition below'
             })}>
-                {tr({ zh: '物理下界 T_phys (单)', en: 'T_phys (single)',
-                    zhHant: "物理下界 T_phys (單)"
+                {tr({ zh: '物理下界 T_phys (单)', en: 'T_phys (single)'
                 })}
               </div>
               <div className="pred-card-value pred-card-accent">
@@ -274,7 +259,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
           const curAvg = lim?.current_wr_avg_value ?? (wrYears.length > 0 ? wrYears[wrYears.length - 1].wr_avg : null);
           return (
             <div className="pred-card">
-              <div className="pred-card-label">{i18n.language === 'zh-Hant' ? (`當前 WR ${event.avgFormat}`) : (isZh ? `当前 WR ${event.avgFormat}` : `Current WR ${event.avgFormat}`)}</div>
+              <div className="pred-card-label">{(isZh ? `当前 WR ${event.avgFormat}` : `Current WR ${event.avgFormat}`)}</div>
               <div className="pred-card-value">{curAvg !== null ? formatVal(curAvg, event, 'average') : '–'}</div>
               <div className="pred-card-sub">{lim?.current_wr_avg_holder ?? ''}</div>
             </div>
@@ -287,8 +272,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
           const ratio = curAvg ? lim.t_phys_avg / curAvg : null;
           return (
             <div className="pred-card">
-              <div className="pred-card-label" title={tr({ zh: '步数法 + 执行噪声残差', en: 'Step-count + execution noise residual',
-                  zhHant: "步數法 + 執行噪聲殘差"
+              <div className="pred-card-label" title={tr({ zh: '步数法 + 执行噪声残差', en: 'Step-count + execution noise residual'
             })}>
                 {isZh ? `物理下界 T_phys (${event.avgFormat})` : `T_phys (${event.avgFormat})`}
               </div>
@@ -300,12 +284,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       </div>
 
       <p>
-        {i18n.language === 'zh-Hant' ? ((
-                            <>
-                              從 {data.wr_by_year[0]?.year} 到 {data.wr_by_year.at(-1)?.year},{event.name_zh} 的 WR 單次從 <strong>{dispVal(wrMin ?? null)}</strong> 演化到 <strong>{dispVal(wrLast ?? null)}</strong>{ratio ? `,共縮了 ${ratio.toFixed(1)} 倍` : ''}。
-                              資料覆蓋 {yearsCovered} 年,累計 {totalCubers} 選手-年。
-                            </>
-                          )) : (isZh ? (
+        {(isZh ? (
                             <>
                               从 {data.wr_by_year[0]?.year} 到 {data.wr_by_year.at(-1)?.year},{event.name_zh} 的 WR 单次从 <strong>{dispVal(wrMin ?? null)}</strong> 演化到 <strong>{dispVal(wrLast ?? null)}</strong>{ratio ? `,共缩了 ${ratio.toFixed(1)} 倍` : ''}。
                               数据覆盖 {yearsCovered} 年,累计 {totalCubers} 选手-年。
@@ -319,13 +298,10 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       </p>
 
       {/* 主图: WR */}
-      <h3>{tr({ zh: 'WR 走势 + 模型外推', en: 'WR Trend + Model Extrapolation',
-          zhHant: "WR 走勢 + 模型外推"
+      <h3>{tr({ zh: 'WR 走势 + 模型外推', en: 'WR Trend + Model Extrapolation'
     })}</h3>
-      <LineChart series={series} yLabel={event.scale === 'moves' ? (tr({ zh: '步数', en: 'Moves',
-          zhHant: "步數"
-    })) : (tr({ zh: '时间 (秒)', en: 'Time (s)',
-        zhHant: "時間 (秒)"
+      <LineChart series={series} yLabel={event.scale === 'moves' ? (tr({ zh: '步数', en: 'Moves'
+    })) : (tr({ zh: '时间 (秒)', en: 'Time (s)'
     }))} />
 
       {/* 方法 + 硬件演进 + 物理极限 */}
@@ -341,21 +317,17 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       {/* 最近 5 次 WR */}
       {last5WR.length > 0 && (
         <>
-          <h3>{tr({ zh: '最近 5 次 WR 单次', en: 'Last 5 WR Singles',
-              zhHant: "最近 5 次 WR 單次"
+          <h3>{tr({ zh: '最近 5 次 WR 单次', en: 'Last 5 WR Singles'
         })}</h3>
           <table className="pred-forecast">
             <thead>
               <tr>
                 <th>{tr({ zh: '日期', en: 'Date' })}</th>
-                <th>{tr({ zh: '成绩', en: 'Result',
-                    zhHant: "成績"
+                <th>{tr({ zh: '成绩', en: 'Result'
                 })}</th>
-                <th>{tr({ zh: '选手', en: 'Person',
-                    zhHant: "選手"
+                <th>{tr({ zh: '选手', en: 'Person'
                 })}</th>
-                <th>{tr({ zh: '国籍', en: 'Country',
-                    zhHant: "國籍"
+                <th>{tr({ zh: '国籍', en: 'Country'
                 })}</th>
               </tr>
             </thead>
@@ -376,8 +348,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       {/* 拟合表 */}
       {fitSingle && (
         <>
-          <h3>{tr({ zh: '模型拟合对比', en: 'Model Fit Comparison',
-              zhHant: "模型擬合對比"
+          <h3>{tr({ zh: '模型拟合对比', en: 'Model Fit Comparison'
         })}</h3>
           <table className="pred-fit-table">
             <thead>
@@ -393,8 +364,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
             </thead>
             <tbody>
               <tr>
-                <td>{tr({ zh: '指数+下限', en: 'Exp+floor',
-                    zhHant: "指數+下限"
+                <td>{tr({ zh: '指数+下限', en: 'Exp+floor'
                 })}</td>
                 <td>{formatVal(fitSingle.L, event.scale)}</td>
                 <td>{fitSingle.A.toFixed(2)}</td>
@@ -405,8 +375,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
               </tr>
               {fitSingleExp && (
                 <tr>
-                  <td>{tr({ zh: '纯指数', en: 'Pure exp',
-                      zhHant: "純指數"
+                  <td>{tr({ zh: '纯指数', en: 'Pure exp'
                 })}</td>
                   <td>0</td>
                   <td>{fitSingleExp.a.toFixed(2)}</td>
@@ -418,8 +387,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
               )}
               {fitSinglePower && (
                 <tr>
-                  <td>{tr({ zh: '幂律', en: 'Power law',
-                      zhHant: "冪律"
+                  <td>{tr({ zh: '幂律', en: 'Power law'
                 })}</td>
                   <td>—</td>
                   <td>{fitSinglePower.a.toFixed(2)}</td>
@@ -437,20 +405,16 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       {/* 预测里程碑 */}
       {fitSingle && (
         <>
-          <h3>{tr({ zh: 'Sub-X 里程碑预测 (基于指数+下限模型)', en: 'Sub-X Milestones (exp+floor model)',
-              zhHant: "Sub-X 里程碑預測 (基於指數+下限模型)"
+          <h3>{tr({ zh: 'Sub-X 里程碑预测 (基于指数+下限模型)', en: 'Sub-X Milestones (exp+floor model)'
         })}</h3>
           <table className="pred-forecast">
             <thead>
               <tr>
-                <th>{tr({ zh: '目标', en: 'Target',
-                    zhHant: "目標"
+                <th>{tr({ zh: '目标', en: 'Target'
                 })}</th>
-                <th>{tr({ zh: '预计达成年份', en: 'Predicted year',
-                    zhHant: "預計達成年份"
+                <th>{tr({ zh: '预计达成年份', en: 'Predicted year'
                 })}</th>
-                <th>{tr({ zh: '当前是否已达成', en: 'Already achieved?',
-                    zhHant: "當前是否已達成"
+                <th>{tr({ zh: '当前是否已达成', en: 'Already achieved?'
                 })}</th>
               </tr>
             </thead>
@@ -462,11 +426,9 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
                     <td>{event.subLabel(m.target)}</td>
                     <td>
                       {achieved
-                        ? <span className="pred-achieved">{tr({ zh: '已达成', en: 'achieved',
-                            zhHant: "已達成"
+                        ? <span className="pred-achieved">{tr({ zh: '已达成', en: 'achieved'
                         })}</span>
-                        : (m.year === null ? <span className="pred-never">{tr({ zh: '永不(L 大于此)', en: 'never (L exceeds)',
-                            zhHant: "永不(L 大於此)"
+                        : (m.year === null ? <span className="pred-never">{tr({ zh: '永不(L 大于此)', en: 'never (L exceeds)'
                         })}</span> : Math.round(m.year))}
                     </td>
                     <td>{achieved ? '✓' : '–'}</td>
@@ -479,21 +441,13 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       )}
 
       {/* Top-N */}
-      <h3>{tr({ zh: 'Top-N PB 走势', en: 'Top-N PB Trend',
-          zhHant: "Top-N PB 走勢"
+      <h3>{tr({ zh: 'Top-N PB 走势', en: 'Top-N PB Trend'
     })}</h3>
-      <LineChart series={topSeries} yLabel={event.scale === 'moves' ? (tr({ zh: '步数', en: 'Moves',
-          zhHant: "步數"
-    })) : (tr({ zh: '单次 (秒)', en: 'Single (s)',
-        zhHant: "單次 (秒)"
+      <LineChart series={topSeries} yLabel={event.scale === 'moves' ? (tr({ zh: '步数', en: 'Moves'
+    })) : (tr({ zh: '单次 (秒)', en: 'Single (s)'
     }))} />
       <p className="pred-note">
-        {i18n.language === 'zh-Hant' ? ((
-                            <>
-                              <strong>注:</strong> Top-N 是「<em>該年內</em>排名 N 的最好成績」,每年獨立取樣,<strong>不是單調下降的</strong>。
-                              2020-2021 抬頭是 COVID 比賽大量取消所致 — 排名越深 (Top 1000 / 10000) 抬得越明顯,因為這個位置是當年還在比的最末尾,由出賽次數少, 沒機會刷低 PB 的新人佔據;Top 1 / Top 10 抖動小,是因為頂尖選手基本沒受影響。
-                            </>
-                          )) : (isZh ? (
+        {(isZh ? (
                             <>
                               <strong>注:</strong> Top-N 是「<em>该年内</em>排名 N 的最好成绩」,每年独立采样,<strong>不是单调下降的</strong>。
                               2020-2021 抬头是 COVID 比赛大量取消所致 — 排名越深 (Top 1000 / 10000) 抬得越明显,因为这个位置是当年还在比的最末尾,由出赛次数少, 没机会刷低 PB 的新人占据;Top 1 / Top 10 抖动小,是因为顶尖选手基本没受影响。
@@ -507,14 +461,12 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       </p>
 
       {/* Sub-X 增长 */}
-      <h3>{tr({ zh: 'Sub-X 累计达成人数 (log)', en: 'Sub-X Cumulative Cubers (log)',
-          zhHant: "Sub-X 累計達成人數 (log)"
+      <h3>{tr({ zh: 'Sub-X 累计达成人数 (log)', en: 'Sub-X Cumulative Cubers (log)'
     })}</h3>
       <LineChart
         series={subSeries}
         yLog
-        yLabel={tr({ zh: '累计人数', en: 'Cumulative cubers',
-            zhHant: "累計人數"
+        yLabel={tr({ zh: '累计人数', en: 'Cumulative cubers'
         })}
         yFormat={(v) => v >= 1 ? Math.round(v).toLocaleString() : v.toFixed(0)}
       />

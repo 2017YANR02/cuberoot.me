@@ -559,8 +559,7 @@ function CayleyPanel({ lang }: { lang: 'zh' | 'en' }) {
                 ))}
                 <text x={centerX} y={centerY + R + 16} textAnchor="middle"
                   style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
-                  {tr({ zh: '循环规则 i→j→k→i', en: 'cyclic rule i→j→k→i',
-                      zhHant: "迴圈規則 i→j→k→i"
+                  {tr({ zh: '循环规则 i→j→k→i', en: 'cyclic rule i→j→k→i'
                 })}
                 </text>
               </g>
@@ -709,8 +708,7 @@ function LatticePanel({ lang }: { lang: 'zh' | 'en' }) {
 
             {/* Legend */}
             <text x={10} y={270} style={{ fontFamily: 'var(--mono)', fontSize: 8 }} fill="var(--green)">
-              {tr({ zh: '⊴ = 正规子群', en: '⊴ = normal subgroup',
-                  zhHant: "⊴ = 正規子群"
+              {tr({ zh: '⊴ = 正规子群', en: '⊴ = normal subgroup'
             })}
             </text>
           </svg>
@@ -815,8 +813,7 @@ function LatticePanel({ lang }: { lang: 'zh' | 'en' }) {
                 }}>
                   {isNormalVerified
                     ? (lang === 'zh' ? `gHg⁻¹ = H ✓ — ${sg.name} 是正规子群` : `gHg⁻¹ = H ✓ — ${sg.name} is normal`)
-                    : (tr({ zh: 'gHg⁻¹ ≠ H — 不正规（理论上不应出现）', en: 'gHg⁻¹ ≠ H — not normal (should not occur)',
-                        zhHant: "gHg⁻¹ ≠ H — 不正規（理論上不應出現）"
+                    : (tr({ zh: 'gHg⁻¹ ≠ H — 不正规（理论上不应出现）', en: 'gHg⁻¹ ≠ H — not normal (should not occur)'
                     }))}
                 </div>
               </div>
@@ -962,8 +959,7 @@ function CharTablePanel({ lang }: { lang: 'zh' | 'en' }) {
         {(['side', 'Q8', 'D4'] as const).map(m => (
           <button key={m} className={`gt-chip${mode === m ? ' gt-chip-active' : ''}`}
             onClick={() => setMode(m)}>
-            {m === 'side' ? (tr({ zh: '并排', en: 'side by side',
-                zhHant: "並排"
+            {m === 'side' ? (tr({ zh: '并排', en: 'side by side'
             }))
               : m === 'Q8' ? 'Q₈'
               : 'D₄'}
@@ -982,8 +978,7 @@ function CharTablePanel({ lang }: { lang: 'zh' | 'en' }) {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginBottom: 16 }}>
         {(mode === 'side' || mode === 'Q8') && (
           <CharTable
-            title={tr({ zh: 'Q₈ 的特征标表', en: 'Character table of Q₈',
-                zhHant: "Q₈ 的特徵標表"
+            title={tr({ zh: 'Q₈ 的特征标表', en: 'Character table of Q₈'
             })}
             classLabels={CLASS_LABELS_Q8}
             classSizes={CLASS_SIZES_Q8}
@@ -992,8 +987,7 @@ function CharTablePanel({ lang }: { lang: 'zh' | 'en' }) {
         )}
         {(mode === 'side' || mode === 'D4') && (
           <CharTable
-            title={tr({ zh: 'D₄ 的特征标表', en: 'Character table of D₄',
-                zhHant: "D₄ 的特徵標表"
+            title={tr({ zh: 'D₄ 的特征标表', en: 'Character table of D₄'
             })}
             classLabels={CLASS_LABELS_D4}
             classSizes={CLASS_SIZES_Q8}

@@ -266,8 +266,7 @@ export default function HourChart({
           viewBox={`0 0 ${width} ${height}`}
           preserveAspectRatio="xMidYMid meet"
           role="img"
-          aria-label={tr({ zh: '时段分布', en: 'When-fastest chart',
-              zhHant: "時段分佈"
+          aria-label={tr({ zh: '时段分布', en: 'When-fastest chart'
         })}
         >
           <text
@@ -277,8 +276,7 @@ export default function HourChart({
             textAnchor="middle"
             dominantBaseline="middle"
           >
-            {tr({ zh: '至少需 10 次有效成绩', en: 'Need 10+ solves',
-                zhHant: "至少需 10 次有效成績"
+            {tr({ zh: '至少需 10 次有效成绩', en: 'Need 10+ solves'
             })}
           </text>
         </svg>
@@ -291,8 +289,7 @@ export default function HourChart({
       <Panel
         buckets={hourBuckets}
         isZh={isZh}
-        title={tr({ zh: '按小时（0-23）', en: 'By hour (0-23)',
-            zhHant: "按小時（0-23）"
+        title={tr({ zh: '按小时（0-23）', en: 'By hour (0-23)'
         })}
         width={width}
         height={height}

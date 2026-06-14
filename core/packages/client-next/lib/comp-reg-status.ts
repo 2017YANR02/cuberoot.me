@@ -24,17 +24,15 @@ export function formatRegStatus(
   const openMs = open ? new Date(open).getTime() : null;
   const closeMs = close ? new Date(close).getTime() : null;
   if (openMs !== null && now < openMs) {
-    return i18n.language === 'zh-Hant' ? (`${fmt(open!)} 報名`) : (isZh ? `${fmt(open!)} 报名` : `Registration opens ${fmt(open!)}`);
+    return (isZh ? `${fmt(open!)} 报名` : `Registration opens ${fmt(open!)}`);
   }
   if (closeMs !== null && now >= closeMs) {
-    return tr({ zh: '报名已截止', en: 'Registration closed',
-        zhHant: "報名已截止"
+    return tr({ zh: '报名已截止', en: 'Registration closed'
     });
   }
   if (closeMs !== null) {
     return isZh ? `${fmt(close!)} 截止` : `Closes ${fmt(close!)}`;
   }
-  return tr({ zh: '报名中', en: 'Registration open',
-      zhHant: "報名中"
+  return tr({ zh: '报名中', en: 'Registration open'
   });
 }

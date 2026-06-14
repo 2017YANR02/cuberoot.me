@@ -312,9 +312,8 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
             <button
               className={`me-btn${avatarState?.[p]?.active ? ' me-active' : ''}`}
               title={avatarState?.[p]?.active
-                ? (i18n.language === 'zh-Hant' ? (`切換回世界第 ${p + 1} 名`) : (isZh ? `切换回世界第 ${p + 1} 名` : `Switch back to World #${p + 1}`))
-                : (tr({ zh: '搜索选手', en: 'Search for a player',
-                    zhHant: "搜尋選手"
+                ? ((isZh ? `切换回世界第 ${p + 1} 名` : `Switch back to World #${p + 1}`))
+                : (tr({ zh: '搜索选手', en: 'Search for a player'
                 }))}
               data-loading={avatarState?.[p]?.loading && !avatarState[p].active
                 ? avatarState[p].loading
@@ -342,8 +341,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                 type="text"
                 inputMode="none"
                 disabled={!enabled}
-                placeholder={tr({ zh: '目标', en: 'Target',
-                    zhHant: "目標"
+                placeholder={tr({ zh: '目标', en: 'Target'
                 })}
                 defaultValue={(() => {
                   const ta = state.getTargetAvg(state.seedOn + p);

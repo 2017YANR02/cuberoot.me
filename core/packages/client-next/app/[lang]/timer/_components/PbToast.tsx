@@ -27,11 +27,6 @@ const TITLE_ZH: Record<PbKind, string> = {
   ao5: '新 Ao5 最佳!',
   ao12: '新 Ao12 最佳!',
 };
-const TITLE_ZH__Hant: Record<PbKind, string> = {
-  single: '新單次最佳!',
-  ao5: '新 Ao5 最佳!',
-  ao12: '新 Ao12 最佳!',
-};
 const TITLE_EN: Record<PbKind, string> = {
   single: 'New PB single!',
   ao5: 'New PB Ao5!',
@@ -46,7 +41,7 @@ export default function PbToast({ kind, value, isZh, onClose }: Props) {
   }, [kind, value, onClose]);
 
   if (kind === null) return null;
-  const title = i18n.language === 'zh-Hant' ? TITLE_ZH__Hant[kind] : (isZh ? TITLE_ZH[kind] : TITLE_EN[kind]);
+  const title = (isZh ? TITLE_ZH[kind] : TITLE_EN[kind]);
   return (
     <div className="tmr-pb-card" role="status" aria-live="polite" onClick={onClose}>
       <Trophy size={18} className="tmr-pb-icon" />

@@ -44,15 +44,12 @@ export const CLAUDE: StackTool = {
     outlookDesc: <>The next year's keyword is <em>agent</em>: tool-use schemas converging, automated thinking budgets for long-horizon tasks, computer-use graduating from beta, and prompt cache reaching across sessions. Anthropic's cost curve will decide whether individual devs can keep affording it.</>,
   },
   heroStats: [
-    { num: '1', unit: 'M', zh: <>上下文窗口 <em>Opus 4.7 · 2026-04</em></>, en: <>context window <em>Opus 4.7 · 2026-04</em></>,
-        zhHant: <>上下文視窗 <em>Opus 4.7 · 2026-04</em></>
+    { num: '1', unit: 'M', zh: <>上下文窗口 <em>Opus 4.7 · 2026-04</em></>, en: <>context window <em>Opus 4.7 · 2026-04</em></>
     },
-    { num: 'Opus 4.7', zh: <>当前旗舰 <em>claude-opus-4-7</em></>, en: <>current flagship <em>claude-opus-4-7</em></>,
-        zhHant: <>當前旗艦 <em>claude-opus-4-7</em></>
+    { num: 'Opus 4.7', zh: <>当前旗舰 <em>claude-opus-4-7</em></>, en: <>current flagship <em>claude-opus-4-7</em></>
     },
     { num: '#1', zh: <>SWE-bench Verified <em>2026-05</em></>, en: <>SWE-bench Verified <em>2026-05</em></> },
-    { num: '95', unit: '%+', zh: <>本仓库 LoC 协作产出 <em>cuberoot.me</em></>, en: <>of LoC in this repo co-authored <em>cuberoot.me</em></>,
-        zhHant: <>本倉庫 LoC 協作產出 <em>cuberoot.me</em></>
+    { num: '95', unit: '%+', zh: <>本仓库 LoC 协作产出 <em>cuberoot.me</em></>, en: <>of LoC in this repo co-authored <em>cuberoot.me</em></>
     },
   ],
   intro: {

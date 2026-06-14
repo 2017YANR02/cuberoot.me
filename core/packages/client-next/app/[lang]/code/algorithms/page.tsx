@@ -100,7 +100,7 @@ export default function AlgorithmsLandingPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('算法导览', 'Algorithms', "演算法導覽");
+  useDocumentTitle('算法导览', 'Algorithms');
 
   return (
     <div className="algos-landing">
@@ -115,15 +115,13 @@ export default function AlgorithmsLandingPage() {
           <span className="algos-landing-cursor">_</span>
         </h1>
         <p className="algos-landing-sub">
-          {tr({ zh: '魔方求解类算法的长篇导览。一题一篇深度,含数学建模、数据结构、实现细节、性能曲线。', en: 'Long-form guides to the cube-solving algorithms running inside CubeRoot. One algorithm per page — math, data structures, implementation, performance.',
-              zhHant: "魔方求解類演算法的長篇導覽。一題一篇深度,含數學建模、資料結構、實現細節、效能曲線。"
+          {tr({ zh: '魔方求解类算法的长篇导览。一题一篇深度,含数学建模、数据结构、实现细节、性能曲线。', en: 'Long-form guides to the cube-solving algorithms running inside CubeRoot. One algorithm per page — math, data structures, implementation, performance.'
         })}
         </p>
         <div className="algos-landing-meta">
           <span>{tr({ zh: '4 篇深度', en: '4 deep dives' })}</span>
           <span className="algos-landing-meta-dot">·</span>
-          <span>{tr({ zh: '状态空间搜索 / 启发式剪枝', en: 'state-space search / admissible heuristics',
-              zhHant: "狀態空間搜尋 / 啟發式剪枝"
+          <span>{tr({ zh: '状态空间搜索 / 启发式剪枝', en: 'state-space search / admissible heuristics'
         })}</span>
         </div>
       </header>
@@ -156,8 +154,7 @@ export default function AlgorithmsLandingPage() {
 
       <footer className="algos-landing-foot">
         <div className="algos-landing-foot-line">
-          <span>{tr({ zh: '内容持续增补', en: 'Content always growing',
-              zhHant: "內容持續增補"
+          <span>{tr({ zh: '内容持续增补', en: 'Content always growing'
         })}</span>
           <span className="algos-landing-meta-dot">·</span>
           <Link href="/">CubeRoot</Link>

@@ -44,17 +44,13 @@ export const ESLINT: StackTool = {
     outlookDesc: <>v10 (2026-02) is the "flat config only" reckoning. The storyline ahead: a speed race against Oxlint / Biome, language plugins (native linting of JSON / Markdown / CSS), and ceding formatting to Prettier for good.</>,
   },
   heroStats: [
-    { num: '10', unit: '.4.0', zh: <>当前稳定版 <em>2026-05</em></>, en: <>current stable <em>2026-05</em></>,
-        zhHant: <>當前穩定版 <em>2026-05</em></>
+    { num: '10', unit: '.4.0', zh: <>当前稳定版 <em>2026-05</em></>, en: <>current stable <em>2026-05</em></>
     },
-    { num: '50', unit: 'M+', zh: <>npm 周下载 <em>事实标准</em></>, en: <>weekly npm downloads <em>the de-facto standard</em></>,
-        zhHant: <>npm 周下載 <em>事實標準</em></>
+    { num: '50', unit: 'M+', zh: <>npm 周下载 <em>事实标准</em></>, en: <>weekly npm downloads <em>the de-facto standard</em></>
     },
-    { num: '13', unit: 'y', zh: <>从 2013 至今 <em>JS linter 之王</em></>, en: <>since 2013 <em>king of JS linters</em></>,
-        zhHant: <>從 2013 至今 <em>JS linter 之王</em></>
+    { num: '13', unit: 'y', zh: <>从 2013 至今 <em>JS linter 之王</em></>, en: <>since 2013 <em>king of JS linters</em></>
     },
-    { num: '1', unit: '条', zh: <>本站立的规则数 <em>护栏不是风格警察</em></>, en: <>rules enabled here <em>guardrail, not style cop</em></>,
-        zhHant: <>本站立的規則數 <em>護欄不是風格警察</em></>
+    { num: '1', unit: '条', zh: <>本站立的规则数 <em>护栏不是风格警察</em></>, en: <>rules enabled here <em>guardrail, not style cop</em></>
     },
   ],
   intro: {

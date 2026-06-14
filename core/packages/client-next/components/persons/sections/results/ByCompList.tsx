@@ -53,7 +53,7 @@ interface Props {
 // 轮次显示元数据走 utils/wca_round_meta (ByEventView / 复盘页同场比赛表也用)
 
 export default function ByCompList({ wcaId, results, comps, reconLookup, isZh }: Props) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const changeMap = useRowChangeMap(wcaId);
   const router = useRouter();
   const pathname = usePathname();
@@ -123,8 +123,8 @@ export default function ByCompList({ wcaId, results, comps, reconLookup, isZh }:
     selectRow(compId, eventId, roundType);
   };
 
-  if (!grouped) return <div className="wp-loading-inline">{t('加载中…', 'Loading…', "載入中…")}</div>;
-  if (grouped.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet', "暫無成績")}</div>;
+  if (!grouped) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
+  if (grouped.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>;
 
   return (
     <div className="wp-bycomp">
@@ -145,17 +145,17 @@ export default function ByCompList({ wcaId, results, comps, reconLookup, isZh }:
               <table className="wp-bycomp-table">
                 <thead>
                   <tr>
-                    <th>{t('项目', 'Event', "項目")}</th>
+                    <th>{t('项目', 'Event')}</th>
                     <th>
                       <span className="wp-th-info">
-                        {t('轮次', 'Round', "輪次")}
+                        {t('轮次', 'Round')}
                         <InfoTooltip content={t(ROUND_HINT_ZH, ROUND_HINT_EN)} />
                       </span>
                     </th>
                     <th className="wp-th-narrow">{t('排名', 'Pos')}</th>
-                    <th>{t('单次', 'Single', "單次")}</th>
+                    <th>{t('单次', 'Single')}</th>
                     <th>{t('平均', 'Avg')}</th>
-                    <th>{t('详细成绩', 'Attempts', "詳細成績")}</th>
+                    <th>{t('详细成绩', 'Attempts')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -186,7 +186,7 @@ export default function ByCompList({ wcaId, results, comps, reconLookup, isZh }:
                             scroll={false}
                             onClick={() => setHash(hashOf(comp.id, r.event_id, r.round_type_id))}
                             className={`wp-round-tag wp-round-tag-link ${roundClass(r.round_type_id)}`}
-                            title={t('复制到链接', 'Copy link to this row', "複製到連結")}
+                            title={t('复制到链接', 'Copy link to this row')}
                           >
                             {roundLabel(r.round_type_id)}
                           </Link>

@@ -15,12 +15,6 @@ Fi — 决赛
 C- 前缀 (组合赛制) — 带 cutoff,前几把过线才能继续打完整 Ao5
 h — head-to-head 1v1 淘汰 (非 WCA 项目)`;
 
-export const ROUND_HINT_ZH_HANT = `輪次縮寫:
-R1 / R2 / R3 — 初賽 / 複賽 / 半決賽 (打滿 5 把)
-Fi — 決賽
-C- 字首 (組合賽制) — 帶 cutoff,前幾把過線才能繼續打完整 Ao5
-h — head-to-head 1v1 淘汰 (非 WCA 項目)`;
-
 export const ROUND_HINT_EN = `Round abbreviations:
 R1 / R2 / R3 — First / Second / Third Round (full attempts)
 Fi — Final

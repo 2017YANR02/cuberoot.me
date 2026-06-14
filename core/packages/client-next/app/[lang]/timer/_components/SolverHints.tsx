@@ -154,7 +154,7 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
                   onClick={() => setMethodId(m.id)}
                   style={methodId === m.id ? tabActiveStyle : tabStyle}
                 >
-                  {i18n.language === 'zh-Hant' ? (m.nameZhHant ?? m.nameZh) : (isZh ? m.nameZh : m.nameEn)}
+                  {(isZh ? m.nameZh : m.nameEn)}
                 </button>
               ))}
               <button
@@ -162,15 +162,13 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
                 onClick={() => setCompareOpen(true)}
                 style={compareBtnStyle}
               >
-                {tr({ zh: '对比全部', en: 'Compare all',
-                    zhHant: "對比全部"
+                {tr({ zh: '对比全部', en: 'Compare all'
                 })}
               </button>
             </div>
             {stepComputing && !stepResult && (
               <div style={{ opacity: 0.6, fontSize: 13 }}>
-                {tr({ zh: '计算中…', en: 'Computing…',
-                    zhHant: "計算中…"
+                {tr({ zh: '计算中…', en: 'Computing…'
                 })}
               </div>
             )}
@@ -185,15 +183,13 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
                     <span style={algStyle}>
                       {s.failed
                         ? (tr({ zh: '未找到', en: 'no solution' }))
-                        : (s.moves.length === 0 ? (tr({ zh: '(跳过)', en: '(skip)',
-                            zhHant: "(跳過)"
+                        : (s.moves.length === 0 ? (tr({ zh: '(跳过)', en: '(skip)'
                         })) : s.moves.join(' '))}
                     </span>
                   </div>
                 ))}
                 <div style={rowStyle}>
-                  <span style={labelBestStyle}>{tr({ zh: '总计', en: 'Total',
-                      zhHant: "總計"
+                  <span style={labelBestStyle}>{tr({ zh: '总计', en: 'Total'
                 })}</span>
                   <span style={countBestStyle}>{stepResult.totalMoves}</span>
                   <span style={algStyle} />
@@ -237,11 +233,6 @@ const SMALL_TITLE_ZH: Record<SmallEvent, string> = {
   'pyra': '金字塔解法提示',
   'skewb': '斜转解法提示',
 };
-const SMALL_TITLE_ZH__Hant: Record<SmallEvent, string> = {
-  '222': '二階解法提示',
-  'pyra': '金字塔解法提示',
-  'skewb': '斜轉解法提示',
-};
 const SMALL_TITLE_EN: Record<SmallEvent, string> = {
   '222': '2x2 solver hints',
   'pyra': 'Pyraminx solver hints',
@@ -252,11 +243,6 @@ const FACE_SECTION_ZH: Record<SmallEvent, string> = {
   '222': '六个面',
   'pyra': '四个面 (V)',
   'skewb': '六个面',
-};
-const FACE_SECTION_ZH__Hant: Record<SmallEvent, string> = {
-  '222': '六個面',
-  'pyra': '四個面 (V)',
-  'skewb': '六個面',
 };
 const FACE_SECTION_EN: Record<SmallEvent, string> = {
   '222': 'Per-face',
@@ -311,11 +297,10 @@ function SmallPuzzleHints({ scramble, isZh, event }: SmallProps) {
     };
   }, [open, cacheKey, event, scramble]);
 
-  const title = i18n.language === 'zh-Hant' ? SMALL_TITLE_ZH__Hant[event] : (isZh ? SMALL_TITLE_ZH[event] : SMALL_TITLE_EN[event]);
-  const fullLabel = tr({ zh: '完整还原', en: 'Full solve',
-      zhHant: "完整還原"
+  const title = (isZh ? SMALL_TITLE_ZH[event] : SMALL_TITLE_EN[event]);
+  const fullLabel = tr({ zh: '完整还原', en: 'Full solve'
 });
-  const sectionLabel = i18n.language === 'zh-Hant' ? FACE_SECTION_ZH__Hant[event] : (isZh ? FACE_SECTION_ZH[event] : FACE_SECTION_EN[event]);
+  const sectionLabel = (isZh ? FACE_SECTION_ZH[event] : FACE_SECTION_EN[event]);
 
   const minFaceLen = useMemo(() => {
     if (!computed) return -1;
@@ -342,8 +327,7 @@ function SmallPuzzleHints({ scramble, isZh, event }: SmallProps) {
           <div style={bodyStyle}>
             {computing && (
               <div style={{ opacity: 0.6, fontSize: 13 }}>
-                {tr({ zh: '计算中…', en: 'Computing…',
-                    zhHant: "計算中…"
+                {tr({ zh: '计算中…', en: 'Computing…'
                 })}
               </div>
             )}
@@ -449,8 +433,7 @@ function Sq1Hints({ scramble, isZh }: Sq1Props) {
           <div style={bodyStyle}>
             {computing && (
               <div style={{ opacity: 0.6, fontSize: 13 }}>
-                {tr({ zh: '计算中…', en: 'Computing…',
-                    zhHant: "計算中…"
+                {tr({ zh: '计算中…', en: 'Computing…'
                 })}
               </div>
             )}
@@ -472,8 +455,7 @@ function Sq1Hints({ scramble, isZh }: Sq1Props) {
                   </div>
                 ))}
                 <div style={rowStyle}>
-                  <span style={labelBestStyle}>{tr({ zh: '总计 (token)', en: 'Total (tokens)',
-                      zhHant: "總計 (token)"
+                  <span style={labelBestStyle}>{tr({ zh: '总计 (token)', en: 'Total (tokens)'
                 })}</span>
                   <span style={countBestStyle}>{computed.totalMoves}</span>
                   <span style={algStyle} />
@@ -529,14 +511,11 @@ function MegaHints({ scramble, isZh }: MegaProps) {
   }, [open, cacheKey, scramble]);
 
   const title = tr({ zh: '五魔解法提示', en: 'Megaminx solver hints' });
-  const stateLabel = tr({ zh: '当前状态', en: 'State',
-      zhHant: "當前狀態"
+  const stateLabel = tr({ zh: '当前状态', en: 'State'
 });
-  const misplacedLabel = tr({ zh: '错位贴纸', en: 'Misplaced stickers',
-      zhHant: "錯位貼紙"
+  const misplacedLabel = tr({ zh: '错位贴纸', en: 'Misplaced stickers'
 });
-  const noteLabel = tr({ zh: '完整解法器尚未移植 (见 cstimer/src/js/solver/megaminx.js)', en: 'Full solver not yet ported (see cstimer/src/js/solver/megaminx.js)',
-      zhHant: "完整解法器尚未移植 (見 cstimer/src/js/solver/megaminx.js)"
+  const noteLabel = tr({ zh: '完整解法器尚未移植 (见 cstimer/src/js/solver/megaminx.js)', en: 'Full solver not yet ported (see cstimer/src/js/solver/megaminx.js)'
 });
 
   return (
@@ -555,8 +534,7 @@ function MegaHints({ scramble, isZh }: MegaProps) {
           <div style={bodyStyle}>
             {computing && (
               <div style={{ opacity: 0.6, fontSize: 13 }}>
-                {tr({ zh: '计算中…', en: 'Computing…',
-                    zhHant: "計算中…"
+                {tr({ zh: '计算中…', en: 'Computing…'
                 })}
               </div>
             )}

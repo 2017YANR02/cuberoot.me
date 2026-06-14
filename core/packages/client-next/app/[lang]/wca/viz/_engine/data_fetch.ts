@@ -35,7 +35,6 @@ export interface PlayerData {
   ghostMean: number;
   colorIdx: number;
   meanTrail: MeanTrailPoint[];
-    nameZhHant?: string;
 }
 
 // NOTE: WCA 轮次类型 ID → 英文/中文名称，供 tooltip 和 CSV 导出共用

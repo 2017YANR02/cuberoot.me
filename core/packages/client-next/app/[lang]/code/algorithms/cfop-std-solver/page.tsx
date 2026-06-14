@@ -16,7 +16,7 @@ export default function CfopStdSolverPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('CFOP 多阶段求解器', 'CFOP multi-stage solver', "CFOP 多階段求解器");
+  useDocumentTitle('CFOP 多阶段求解器', 'CFOP multi-stage solver');
 
   return (
     <LangCtx.Provider value={lang}>

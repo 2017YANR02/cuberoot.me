@@ -40,7 +40,7 @@ function stageComponent(stage: Stage) {
 
 export default function MosaicPage() {
   const { t, i18n } = useTranslation();
-  useDocumentTitle('马赛克', 'Mosaic', "馬賽克");
+  useDocumentTitle('马赛克', 'Mosaic');
   const stage = useMosaicStore(s => s.stage);
   const resetAll = useMosaicStore(s => s.resetAll);
   const goToStage = useMosaicStore(s => s.goToStage);
@@ -71,11 +71,9 @@ export default function MosaicPage() {
               <Link
                 href="/mosaic-about"
                 className="mosaic-title-help"
-                title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
-                    zhHant: "這頁是幹啥的?"
+                title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
                 })}
-                aria-label={tr({ zh: '查看说明', en: 'About this page',
-                    zhHant: "檢視說明"
+                aria-label={tr({ zh: '查看说明', en: 'About this page'
                 })}
               >
                 <HelpCircle size={18} strokeWidth={1.75} />

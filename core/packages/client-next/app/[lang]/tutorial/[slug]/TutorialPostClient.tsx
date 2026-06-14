@@ -34,8 +34,7 @@ export default function TutorialPostClient() {
     return (
       <div className="tutorial-root">
         <div style={{ padding: 48, textAlign: 'center', color: 'var(--tutorial-text-muted)' }}>
-          {tr({ zh: '加载中…', en: 'Loading…',
-              zhHant: "載入中…"
+          {tr({ zh: '加载中…', en: 'Loading…'
         })}
         </div>
       </div>
@@ -72,8 +71,7 @@ export default function TutorialPostClient() {
             </>
           )}
           <span className="tutorial-breadcrumb-sep">/</span>
-          <strong>{isCfop ? tr({ zh: '三阶 CFOP 教程', en: '3×3 CFOP Tutorial',
-              zhHant: "三階 CFOP 教程"
+          <strong>{isCfop ? tr({ zh: '三阶 CFOP 教程', en: '3×3 CFOP Tutorial'
         }) : title}</strong>
         </div>
         {isCfop ? (
@@ -82,13 +80,13 @@ export default function TutorialPostClient() {
               className={'tutorial-lang-chip' + (view === 'pretty' ? ' is-active' : '')}
               onClick={() => setView('pretty')}
             >
-              {tr({ zh: '精美版', en: 'Polished', zhHant: '精美版' })}
+              {tr({ zh: '精美版', en: 'Polished' })}
             </button>
             <button
               className={'tutorial-lang-chip' + (view === 'raw' ? ' is-active' : '')}
               onClick={() => setView('raw')}
             >
-              {tr({ zh: '原始版', en: 'Original', zhHant: '原始版' })}
+              {tr({ zh: '原始版', en: 'Original' })}
             </button>
           </div>
         ) : (
@@ -97,8 +95,7 @@ export default function TutorialPostClient() {
               className={'tutorial-lang-chip' + (lang === 'zh' ? ' is-active' : '')}
               onClick={() => setLang('zh')}
               disabled={!hasZh}
-              title={!hasZh ? (tr({ zh: '无中文版', en: 'No Chinese version',
-                  zhHant: "無中文版"
+              title={!hasZh ? (tr({ zh: '无中文版', en: 'No Chinese version'
               })) : ''}
             >
               中
@@ -107,8 +104,7 @@ export default function TutorialPostClient() {
               className={'tutorial-lang-chip' + (lang === 'en' ? ' is-active' : '')}
               onClick={() => setLang('en')}
               disabled={!hasEn}
-              title={!hasEn ? (tr({ zh: '无英文版', en: 'No English version',
-                  zhHant: "無英文版"
+              title={!hasEn ? (tr({ zh: '无英文版', en: 'No English version'
               })) : ''}
             >
               EN

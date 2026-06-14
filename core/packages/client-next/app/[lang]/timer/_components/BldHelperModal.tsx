@@ -52,8 +52,7 @@ function cellClass(role: LetterCell['role']): string {
 // cycle start/end stickers. Falls back to a muted "无 / none" when empty.
 function Letters({ cells, isZh }: { cells: LetterCell[]; isZh: boolean }): JSX.Element {
   if (cells.length === 0) {
-    return <span className="bld-helper-empty">{tr({ zh: '无', en: 'none',
-        zhHant: "無"
+    return <span className="bld-helper-empty">{tr({ zh: '无', en: 'none'
     })}</span>;
   }
   const pairs: LetterCell[][] = [];
@@ -112,22 +111,19 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
         aria-labelledby={titleId}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id={titleId}>{tr({ zh: '盲拧助手', en: 'BLD helper',
-            zhHant: "盲擰助手"
+        <h2 id={titleId}>{tr({ zh: '盲拧助手', en: 'BLD helper'
         })}</h2>
 
         {!usable ? (
           <p className="bld-helper-hint">
-            {tr({ zh: '仅 3x3 打乱可用', en: '3x3 scrambles only',
-                zhHant: "僅 3x3 打亂可用"
+            {tr({ zh: '仅 3x3 打乱可用', en: '3x3 scrambles only'
             })}
           </p>
         ) : (
           <>
             <div className="bld-helper-config">
               <div className="bld-helper-cfg-field">
-                <label htmlFor="bldh-cbuf">{tr({ zh: '角缓冲', en: 'Corner buffer',
-                    zhHant: "角緩衝"
+                <label htmlFor="bldh-cbuf">{tr({ zh: '角缓冲', en: 'Corner buffer'
                 })}</label>
                 <select
                   id="bldh-cbuf"
@@ -138,8 +134,7 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
                 </select>
               </div>
               <div className="bld-helper-cfg-field">
-                <label htmlFor="bldh-ebuf">{tr({ zh: '棱缓冲', en: 'Edge buffer',
-                    zhHant: "稜緩衝"
+                <label htmlFor="bldh-ebuf">{tr({ zh: '棱缓冲', en: 'Edge buffer'
                 })}</label>
                 <select
                   id="bldh-ebuf"
@@ -155,8 +150,7 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
                 onClick={() => setAdvOpen((o) => !o)}
                 aria-expanded={advOpen}
               >
-                {tr({ zh: '高级', en: 'Advanced',
-                    zhHant: "高階"
+                {tr({ zh: '高级', en: 'Advanced'
                 })}
                 {advOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </button>
@@ -165,8 +159,7 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
             {advOpen && (
               <div className="bld-helper-adv">
                 <div className="bld-helper-cfg-field wide">
-                  <label htmlFor="bldh-corder">{tr({ zh: '角借位顺序', en: 'Corner order',
-                      zhHant: "角借位順序"
+                  <label htmlFor="bldh-corder">{tr({ zh: '角借位顺序', en: 'Corner order'
                 })}</label>
                   <div className="bld-helper-input-wrap">
                     <input
@@ -180,8 +173,7 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
                   </div>
                 </div>
                 <div className="bld-helper-cfg-field wide">
-                  <label htmlFor="bldh-eorder">{tr({ zh: '棱借位顺序', en: 'Edge order',
-                      zhHant: "稜借位順序"
+                  <label htmlFor="bldh-eorder">{tr({ zh: '棱借位顺序', en: 'Edge order'
                 })}</label>
                   <div className="bld-helper-input-wrap">
                     <input
@@ -200,20 +192,17 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
                 </label>
                 <label className="bld-helper-check">
                   <input type="checkbox" checked={config.keepHueE} onChange={(e) => setConfig({ keepHueE: e.target.checked })} />
-                  {tr({ zh: '棱保持色相', en: 'Edge keep hue',
-                      zhHant: "稜保持色相"
+                  {tr({ zh: '棱保持色相', en: 'Edge keep hue'
                 })}
                 </label>
                 <label className="bld-helper-check">
                   <input type="checkbox" checked={config.skipC === 1} onChange={(e) => setConfig({ skipC: e.target.checked ? 1 : 0 })} />
-                  {tr({ zh: '角跳编法', en: 'Corner fixed-buffer',
-                      zhHant: "角跳編法"
+                  {tr({ zh: '角跳编法', en: 'Corner fixed-buffer'
                 })}
                 </label>
                 <label className="bld-helper-check">
                   <input type="checkbox" checked={config.skipE === 1} onChange={(e) => setConfig({ skipE: e.target.checked ? 1 : 0 })} />
-                  {tr({ zh: '棱跳编法', en: 'Edge fixed-buffer',
-                      zhHant: "稜跳編法"
+                  {tr({ zh: '棱跳编法', en: 'Edge fixed-buffer'
                 })}
                 </label>
               </div>
@@ -221,15 +210,13 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
 
             <div className="bld-helper-sections">
               <div className="bld-helper-section">
-                <span className="bld-helper-section-label">{tr({ zh: '棱块', en: 'Edges',
-                    zhHant: "稜塊"
+                <span className="bld-helper-section-label">{tr({ zh: '棱块', en: 'Edges'
                 })}</span>
                 <Letters cells={read.edges} isZh={isZh} />
               </div>
 
               <div className="bld-helper-section">
-                <span className="bld-helper-section-label">{tr({ zh: '角块', en: 'Corners',
-                    zhHant: "角塊"
+                <span className="bld-helper-section-label">{tr({ zh: '角块', en: 'Corners'
                 })}</span>
                 <Letters cells={read.corners} isZh={isZh} />
               </div>
@@ -238,14 +225,12 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
             <div className="bld-helper-legend">
               <span className="bld-helper-legend-item">
                 <span className="bld-helper-cell-start">A</span>
-                {tr({ zh: '循环起点', en: 'cycle start',
-                    zhHant: "迴圈起點"
+                {tr({ zh: '循环起点', en: 'cycle start'
                 })}
               </span>
               <span className="bld-helper-legend-item">
                 <span className="bld-helper-cell-end">A</span>
-                {tr({ zh: '循环终点', en: 'cycle end',
-                    zhHant: "迴圈終點"
+                {tr({ zh: '循环终点', en: 'cycle end'
                 })}
               </span>
             </div>
@@ -254,19 +239,16 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
               <span className="bld-helper-meta-item">
                 <span className="bld-helper-meta-key">{tr({ zh: '奇偶', en: 'Parity' })}</span>
                 <span className={`bld-helper-meta-val ${parity ? 'is-on' : 'is-off'}`}>
-                  {parity ? (tr({ zh: '有', en: 'yes' })) : (tr({ zh: '无', en: 'no',
-                      zhHant: "無"
+                  {parity ? (tr({ zh: '有', en: 'yes' })) : (tr({ zh: '无', en: 'no'
                 }))}
                 </span>
               </span>
 
               <span className="bld-helper-meta-item">
-                <span className="bld-helper-meta-key">{tr({ zh: '翻棱', en: 'Edge flips',
-                    zhHant: "翻稜"
+                <span className="bld-helper-meta-key">{tr({ zh: '翻棱', en: 'Edge flips'
                 })}</span>
                 <span className={`bld-helper-meta-val ${read.flips ? 'is-on' : 'is-off'}`}>
-                  {read.flips || (tr({ zh: '无', en: 'none',
-                      zhHant: "無"
+                  {read.flips || (tr({ zh: '无', en: 'none'
                 }))}
                 </span>
               </span>
@@ -274,8 +256,7 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
               <span className="bld-helper-meta-item">
                 <span className="bld-helper-meta-key">{tr({ zh: '翻角', en: 'Corner twists' })}</span>
                 <span className={`bld-helper-meta-val ${read.twists ? 'is-on' : 'is-off'}`}>
-                  {read.twists || (tr({ zh: '无', en: 'none',
-                      zhHant: "無"
+                  {read.twists || (tr({ zh: '无', en: 'none'
                 }))}
                 </span>
               </span>
@@ -284,8 +265,7 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
         )}
 
         <div className="modal-actions">
-          <button className="primary" onClick={onClose}>{tr({ zh: '关闭', en: 'Close',
-              zhHant: "關閉"
+          <button className="primary" onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
         })}</button>
         </div>
       </div>

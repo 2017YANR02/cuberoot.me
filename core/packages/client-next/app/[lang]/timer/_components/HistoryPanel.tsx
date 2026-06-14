@@ -454,7 +454,7 @@ export default function HistoryPanel({
     if (!onBulkDelete) return;
     const ids = Array.from(bulkSelected);
     if (ids.length === 0) return;
-    const msg = i18n.language === 'zh-Hant' ? (`確認刪除選中的 ${ids.length} 條成績？此操作無法撤銷。`) : (isZh
+    const msg = (isZh
           ? `确认删除选中的 ${ids.length} 条成绩？此操作无法撤销。`
           : `Delete ${ids.length} selected solve${ids.length === 1 ? '' : 's'}? This cannot be undone.`);
     // eslint-disable-next-line no-alert
@@ -478,16 +478,14 @@ export default function HistoryPanel({
   const openCompareModal = () => {
     if (selectedIds.length !== 2) return;
     if (selectedIds[0] === selectedIds[1]) {
-      setCompareError(tr({ zh: '请选择两个不同的成绩', en: 'Pick two different solves',
-          zhHant: "請選擇兩個不同的成績"
+      setCompareError(tr({ zh: '请选择两个不同的成绩', en: 'Pick two different solves'
     }));
       return;
     }
     const a = solves.find(x => x.id === selectedIds[0]);
     const b = solves.find(x => x.id === selectedIds[1]);
     if (!a || !b) {
-      setCompareError(tr({ zh: '成绩未找到', en: 'Solve not found',
-          zhHant: "成績未找到"
+      setCompareError(tr({ zh: '成绩未找到', en: 'Solve not found'
     }));
       return;
     }
@@ -546,16 +544,14 @@ export default function HistoryPanel({
   return (
     <div className="history-panel">
       <div className="history-header">
-        <span>{tr({ zh: '历史', en: 'History',
-            zhHant: "歷史"
+        <span>{tr({ zh: '历史', en: 'History'
         })}</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {!isMobile && (
             <button
               type="button"
               onClick={toggleCompareMode}
-              title={tr({ zh: '对比两次成绩', en: 'Compare two solves',
-                  zhHant: "對比兩次成績"
+              title={tr({ zh: '对比两次成绩', en: 'Compare two solves'
             })}
               aria-pressed={compareMode}
               style={{
@@ -573,8 +569,7 @@ export default function HistoryPanel({
               }}
             >
               <GitCompare size={12} />
-              {tr({ zh: '对比', en: 'Compare',
-                  zhHant: "對比"
+              {tr({ zh: '对比', en: 'Compare'
             })}
             </button>
           )}
@@ -582,8 +577,7 @@ export default function HistoryPanel({
             <button
               type="button"
               onClick={toggleSelectMode}
-              title={tr({ zh: '多选删除', en: 'Select multiple to delete',
-                  zhHant: "多選刪除"
+              title={tr({ zh: '多选删除', en: 'Select multiple to delete'
             })}
               aria-pressed={selectMode}
               style={{
@@ -600,8 +594,7 @@ export default function HistoryPanel({
               }}
             >
               <CheckSquare size={12} />
-              {tr({ zh: '选择', en: 'Select',
-                  zhHant: "選擇"
+              {tr({ zh: '选择', en: 'Select'
             })}
             </button>
           )}
@@ -670,8 +663,7 @@ export default function HistoryPanel({
                     }}
                   >
                     <GitCompare size={14} />
-                    {tr({ zh: '对比', en: 'Compare',
-                        zhHant: "對比"
+                    {tr({ zh: '对比', en: 'Compare'
                     })}
                   </button>
                   {onBulkDelete && (
@@ -698,8 +690,7 @@ export default function HistoryPanel({
                       }}
                     >
                       <CheckSquare size={14} />
-                      {tr({ zh: '选择', en: 'Select',
-                          zhHant: "選擇"
+                      {tr({ zh: '选择', en: 'Select'
                     })}
                     </button>
                   )}
@@ -718,30 +709,26 @@ export default function HistoryPanel({
             onChange={(e) => setQuery(e.target.value)}
             placeholder={
               isMobile
-                ? (tr({ zh: '搜索…', en: 'Search…',
-                    zhHant: "搜尋…"
+                ? (tr({ zh: '搜索…', en: 'Search…'
                 }))
-                : (tr({ zh: '搜索注释或打乱…', en: 'Search comment or scramble…',
-                    zhHant: "搜尋註釋或打亂…"
+                : (tr({ zh: '搜索注释或打乱…', en: 'Search comment or scramble…'
                 }))
             }
-            aria-label={tr({ zh: '搜索注释或打乱', en: 'Search comment or scramble',
-                zhHant: "搜尋註釋或打亂"
+            aria-label={tr({ zh: '搜索注释或打乱', en: 'Search comment or scramble'
             })}
           />
           {query && (
             <ClearButton
               onClick={() => setQuery('')}
               isZh={isZh}
-              ariaLabel={tr({ zh: '清空搜索', en: 'Clear search',
-                  zhHant: "清空搜尋"
+              ariaLabel={tr({ zh: '清空搜索', en: 'Clear search'
             })}
             />
           )}
         </div>
         {hasAnyFilter && (
           <span className="history-search-count">
-            {i18n.language === 'zh-Hant' ? (`${matchCount} 條匹配`) : (isZh ? `${matchCount} 条匹配` : `${matchCount} matches`)}
+            {(isZh ? `${matchCount} 条匹配` : `${matchCount} matches`)}
           </span>
         )}
       </div>
@@ -772,13 +759,12 @@ export default function HistoryPanel({
             }}
           >
             {filtersExpanded ? <ChevronUp size={isMobile ? 16 : 12} /> : <ChevronDown size={isMobile ? 16 : 12} />}
-            {tr({ zh: '筛选', en: 'Filters',
-                zhHant: "篩選"
+            {tr({ zh: '筛选', en: 'Filters'
             })}
           </button>
           {activeFilterCount > 0 && (
             <span style={{ fontSize: 11, color: '#cde' }}>
-              {i18n.language === 'zh-Hant' ? (`${activeFilterCount} 個篩選生效`) : (isZh
+              {(isZh
                                           ? `${activeFilterCount} 个筛选生效`
                                           : `${activeFilterCount} filter${activeFilterCount === 1 ? '' : 's'} active`)}
             </span>
@@ -800,8 +786,7 @@ export default function HistoryPanel({
                 gap: 3,
                 fontSize: 10,
               }}
-              title={tr({ zh: '清空所有筛选', en: 'Clear all filters',
-                  zhHant: "清空所有篩選"
+              title={tr({ zh: '清空所有筛选', en: 'Clear all filters'
             })}
             >
               <X size={10} />
@@ -844,8 +829,7 @@ export default function HistoryPanel({
                 />
               </div>
               <div>
-                <label style={labelStyle}>{tr({ zh: '最长 (秒)', en: 'Max (s)',
-                    zhHant: "最長 (秒)"
+                <label style={labelStyle}>{tr({ zh: '最长 (秒)', en: 'Max (s)'
                 })}</label>
                 <input
                   type="text"
@@ -858,8 +842,7 @@ export default function HistoryPanel({
               </div>
             </div>
             <div>
-              <label style={labelStyle}>{tr({ zh: '罚时', en: 'Penalty',
-                  zhHant: "罰時"
+              <label style={labelStyle}>{tr({ zh: '罚时', en: 'Penalty'
             })}</label>
               <div style={{ display: 'flex', gap: 4 }}>
                 {ALL_PENALTIES.map(p => {
@@ -902,8 +885,7 @@ export default function HistoryPanel({
               </div>
             </div>
             <div>
-              <label style={labelStyle}>{tr({ zh: '标签', en: 'Tags',
-                  zhHant: "標籤"
+              <label style={labelStyle}>{tr({ zh: '标签', en: 'Tags'
             })}</label>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                 {ALL_TAG_IDS.map(tid => {
@@ -917,7 +899,7 @@ export default function HistoryPanel({
                       aria-pressed={active}
                       style={chipBtn(active)}
                     >
-                      {i18n.language === 'zh-Hant' ? (def.labelZhHant ?? def.labelZh) : (isZh ? def.labelZh : def.labelEn)}
+                      {(isZh ? def.labelZh : def.labelEn)}
                     </button>
                   );
                 })}
@@ -936,7 +918,7 @@ export default function HistoryPanel({
             background: '#15151a',
           }}
         >
-          {i18n.language === 'zh-Hant' ? (`選擇 2 個成績進行對比 (已選 ${selectedIds.length}/2)`) : (isZh
+          {(isZh
                               ? `选择 2 个成绩进行对比 (已选 ${selectedIds.length}/2)`
                               : `Pick 2 solves to compare (${selectedIds.length}/2 selected)`)}
           {compareError && (
@@ -959,7 +941,7 @@ export default function HistoryPanel({
           }}
         >
           <span>
-            {i18n.language === 'zh-Hant' ? (`已選 ${bulkSelected.size} 條`) : (isZh
+            {(isZh
                                     ? `已选 ${bulkSelected.size} 条`
                                     : `${bulkSelected.size} selected`)}
           </span>
@@ -976,7 +958,7 @@ export default function HistoryPanel({
               fontSize: 11,
             }}
           >
-            {i18n.language === 'zh-Hant' ? (`全選可見 (${matchCount})`) : (isZh ? `全选可见 (${matchCount})` : `Select all visible (${matchCount})`)}
+            {(isZh ? `全选可见 (${matchCount})` : `Select all visible (${matchCount})`)}
           </button>
           <button
             type="button"
@@ -992,8 +974,7 @@ export default function HistoryPanel({
               fontSize: 11,
             }}
           >
-            {tr({ zh: '清空选择', en: 'Select none',
-                zhHant: "清空選擇"
+            {tr({ zh: '清空选择', en: 'Select none'
             })}
           </button>
         </div>
@@ -1001,15 +982,13 @@ export default function HistoryPanel({
       <div className="history-list">
         {reversed.length === 0 && (
           <div className="history-empty">
-            {tr({ zh: '还没有成绩。按住空格开始计时。', en: 'No solves yet. Hold space to start.',
-                zhHant: "還沒有成績。按住空格開始計時。"
+            {tr({ zh: '还没有成绩。按住空格开始计时。', en: 'No solves yet. Hold space to start.'
             })}
           </div>
         )}
         {reversed.length > 0 && filteredReversed.length === 0 && (
           <div className="history-empty">
-            <div>{tr({ zh: '没有匹配的成绩。', en: 'No solves match these filters',
-                zhHant: "沒有匹配的成績。"
+            <div>{tr({ zh: '没有匹配的成绩。', en: 'No solves match these filters'
             })}</div>
             {hasAnyFilter && (
               <button
@@ -1026,8 +1005,7 @@ export default function HistoryPanel({
                   padding: 0,
                 }}
               >
-                {tr({ zh: '清空筛选', en: 'Clear filters',
-                    zhHant: "清空篩選"
+                {tr({ zh: '清空筛选', en: 'Clear filters'
                 })}
               </button>
             )}
@@ -1036,8 +1014,7 @@ export default function HistoryPanel({
         {filteredReversed.length > 0 && !compareMode && !selectMode && (
           <div className="history-cols-head" style={{ gridTemplateColumns: headTmpl }}>
             <span className="idx">#</span>
-            <span>{tr({ zh: '时间', en: 'Time',
-                zhHant: "時間"
+            <span>{tr({ zh: '时间', en: 'Time'
             })}</span>
             {visibleAoWindows.map(n => <span key={n} className="hao-head">ao{n}</span>)}
           </div>
@@ -1133,7 +1110,7 @@ export default function HistoryPanel({
                   const shown = ts.slice(0, cap);
                   const overflow = ts.length - shown.length;
                   const fullList = ts
-                    .map(tid => i18n.language === 'zh-Hant' ? (TAG_DEFS[tid].labelZhHant ?? TAG_DEFS[tid].labelZh) : (isZh ? TAG_DEFS[tid].labelZh : TAG_DEFS[tid].labelEn))
+                    .map(tid => (isZh ? TAG_DEFS[tid].labelZh : TAG_DEFS[tid].labelEn))
                     .join(' · ');
                   return (
                     <span
@@ -1149,7 +1126,7 @@ export default function HistoryPanel({
                         }
                         return (
                           <span key={tid} style={tagChipStyle(def.tone)}>
-                            {i18n.language === 'zh-Hant' ? (def.labelZhHant ?? def.labelZh) : (isZh ? def.labelZh : def.labelEn)}
+                            {(isZh ? def.labelZh : def.labelEn)}
                           </span>
                         );
                       })}
@@ -1218,8 +1195,7 @@ export default function HistoryPanel({
             }}
           >
             <GitCompare size={12} />
-            {tr({ zh: '对比这 2 个', en: 'Compare these 2',
-                zhHant: "對比這 2 個"
+            {tr({ zh: '对比这 2 个', en: 'Compare these 2'
             })}
           </button>
         </div>
@@ -1268,7 +1244,7 @@ export default function HistoryPanel({
             }}
           >
             <Trash2 size={12} />
-            {i18n.language === 'zh-Hant' ? (`刪除選中 ${bulkSelected.size}`) : (isZh
+            {(isZh
                                     ? `删除选中 ${bulkSelected.size}`
                                     : `Delete ${bulkSelected.size} selected`)}
           </button>
@@ -1293,8 +1269,7 @@ export default function HistoryPanel({
               onClick={() => setQuickPenalty(s, 'ok')}
             >
               <Check size={14} />
-              <span>{tr({ zh: '无罚时', en: 'OK',
-                  zhHant: "無罰時"
+              <span>{tr({ zh: '无罚时', en: 'OK'
             })}</span>
             </button>
             <button
@@ -1318,21 +1293,18 @@ export default function HistoryPanel({
             <div className="row-quick-sep" role="separator" />
             <button type="button" role="menuitem" className="row-quick-item" onClick={() => doQuickComment(s, quickMenu.index)}>
               <MessageSquare size={14} />
-              <span>{tr({ zh: '评论', en: 'Comment',
-                  zhHant: "評論"
+              <span>{tr({ zh: '评论', en: 'Comment'
             })}</span>
             </button>
             <button type="button" role="menuitem" className="row-quick-item" onClick={() => doCopyScramble(s)}>
               <Clipboard size={14} />
-              <span>{tr({ zh: '复制打乱', en: 'Copy scramble',
-                  zhHant: "複製打亂"
+              <span>{tr({ zh: '复制打乱', en: 'Copy scramble'
             })}</span>
             </button>
             <div className="row-quick-sep" role="separator" />
             <button type="button" role="menuitem" className="row-quick-item danger" onClick={() => doQuickDelete(s)}>
               <Trash2 size={14} />
-              <span>{tr({ zh: '删除', en: 'Delete',
-                  zhHant: "刪除"
+              <span>{tr({ zh: '删除', en: 'Delete'
             })}</span>
             </button>
           </>

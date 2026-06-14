@@ -144,8 +144,7 @@ export default function WikiPage() {
     await reload();
   };
   const onDeleteTerm = async (id: number) => {
-    if (!confirm(tr({ zh: '删除该词条? (admin 操作)', en: 'Delete this term? (admin)',
-        zhHant: "刪除該詞條? (admin 操作)"
+    if (!confirm(tr({ zh: '删除该词条? (admin 操作)', en: 'Delete this term? (admin)'
     }))) return;
     await deleteTerm(id);
     await reload();
@@ -156,8 +155,7 @@ export default function WikiPage() {
     await reload();
   };
   const onDeleteAddition = async (id: number) => {
-    if (!confirm(tr({ zh: '删除这条增补?', en: 'Delete this addition?',
-        zhHant: "刪除這條增補?"
+    if (!confirm(tr({ zh: '删除这条增补?', en: 'Delete this addition?'
     }))) return;
     await deleteAddition(id);
     await reload();
@@ -178,8 +176,7 @@ export default function WikiPage() {
       <header className="wiki-header">
         <HomeLink className="wiki-back">
           <ChevronLeft size={16} />
-          <span>{tr({ zh: '首页', en: 'Home',
-              zhHant: "首頁"
+          <span>{tr({ zh: '首页', en: 'Home'
         })}</span>
         </HomeLink>
       </header>
@@ -187,14 +184,13 @@ export default function WikiPage() {
       <main className="wiki-main">
         <h1 className="wiki-title">{tr({ zh: '魔方百科', en: 'Cubing Wiki' })}</h1>
         <p className="wiki-lead">
-          {i18n.language === 'zh-Hant' ? (`${totalEntries} 條術語,中英對照,登入可增補。資料彙編自 `) : (isZh
+          {(isZh
                               ? `${totalEntries} 条术语,中英对照,登录可增补。资料汇编自 `
                               : `${totalEntries} terms, EN/ZH, sign in to contribute. Compiled from `)}
           <a href="https://www.speedsolving.com/wiki" target="_blank" rel="noopener noreferrer">
             speedsolving.com/wiki
           </a>
-          {tr({ zh: ' 等公开资料。', en: ' and other public sources.',
-              zhHant: " 等公開資料。"
+          {tr({ zh: ' 等公开资料。', en: ' and other public sources.'
         })}
         </p>
 
@@ -203,8 +199,7 @@ export default function WikiPage() {
           <input
             type="search"
             className="wiki-search-input"
-            placeholder={tr({ zh: '搜索术语 (如 CFOP / 翻棱 / sune)', en: 'Search terms (e.g. CFOP / EO / sune)',
-                zhHant: "搜尋術語 (如 CFOP / 翻稜 / sune)"
+            placeholder={tr({ zh: '搜索术语 (如 CFOP / 翻棱 / sune)', en: 'Search terms (e.g. CFOP / EO / sune)'
             })}
             value={query}
             onChange={e => setQuery(e.target.value)}
@@ -216,13 +211,12 @@ export default function WikiPage() {
 
         {q && (
           <div className="wiki-search-meta">
-            {i18n.language === 'zh-Hant' ? (`匹配 ${matchedEntries} 條`) : (isZh ? `匹配 ${matchedEntries} 条` : `${matchedEntries} match${matchedEntries === 1 ? '' : 'es'}`)}
+            {(isZh ? `匹配 ${matchedEntries} 条` : `${matchedEntries} match${matchedEntries === 1 ? '' : 'es'}`)}
           </div>
         )}
 
         {!q && (
-          <nav className="wiki-alpha-bar" aria-label={tr({ zh: '按字母跳转', en: 'Jump by letter',
-              zhHant: "按字母跳轉"
+          <nav className="wiki-alpha-bar" aria-label={tr({ zh: '按字母跳转', en: 'Jump by letter'
         })}>
             {LETTERS.map(letter => (
               <button
@@ -239,27 +233,23 @@ export default function WikiPage() {
 
         {loadErr && (
           <div className="wiki-empty wiki-empty-error">
-            {tr({ zh: '加载失败: ', en: 'Failed to load: ',
-                zhHant: "載入失敗: "
+            {tr({ zh: '加载失败: ', en: 'Failed to load: '
             })}{loadErr}
             <button type="button" className="wiki-btn wiki-btn-mini" onClick={() => void reload()}>
-              {tr({ zh: '重试', en: 'Retry',
-                  zhHant: "重試"
+              {tr({ zh: '重试', en: 'Retry'
             })}
             </button>
           </div>
         )}
 
         {!data && !loadErr && (
-          <div className="wiki-empty">{tr({ zh: '加载中…', en: 'Loading…',
-              zhHant: "載入中…"
+          <div className="wiki-empty">{tr({ zh: '加载中…', en: 'Loading…'
         })}</div>
         )}
 
         <div className="wiki-sections">
           {data && filtered.length === 0 && (
-            <div className="wiki-empty">{tr({ zh: '没有匹配项。', en: 'No matches.',
-                zhHant: "沒有匹配項。"
+            <div className="wiki-empty">{tr({ zh: '没有匹配项。', en: 'No matches.'
             })}</div>
           )}
           {filtered.map(sec => (
@@ -291,8 +281,7 @@ export default function WikiPage() {
                               type="button"
                               className="wiki-action-btn"
                               onClick={() => setEditingTermId(e.id)}
-                              title={tr({ zh: '编辑', en: 'Edit',
-                                  zhHant: "編輯"
+                              title={tr({ zh: '编辑', en: 'Edit'
                             })}
                             >
                               <Pencil size={13} />
@@ -303,8 +292,7 @@ export default function WikiPage() {
                               type="button"
                               className="wiki-action-btn wiki-action-btn-danger"
                               onClick={() => void onDeleteTerm(e.id)}
-                              title={tr({ zh: '删除 (admin)', en: 'Delete (admin)',
-                                  zhHant: "刪除 (admin)"
+                              title={tr({ zh: '删除 (admin)', en: 'Delete (admin)'
                             })}
                             >
                               <Trash2 size={13} />
@@ -342,8 +330,7 @@ export default function WikiPage() {
                                         type="button"
                                         className="wiki-action-btn wiki-action-btn-inline"
                                         onClick={() => setEditingAdditionId(a.id)}
-                                        title={tr({ zh: '编辑', en: 'Edit',
-                                            zhHant: "編輯"
+                                        title={tr({ zh: '编辑', en: 'Edit'
                                         })}
                                       >
                                         <Pencil size={11} />
@@ -352,8 +339,7 @@ export default function WikiPage() {
                                         type="button"
                                         className="wiki-action-btn wiki-action-btn-inline wiki-action-btn-danger"
                                         onClick={() => void onDeleteAddition(a.id)}
-                                        title={tr({ zh: '删除', en: 'Delete',
-                                            zhHant: "刪除"
+                                        title={tr({ zh: '删除', en: 'Delete'
                                         })}
                                       >
                                         <Trash2 size={11} />
@@ -383,8 +369,7 @@ export default function WikiPage() {
                           onClick={() => setAddingNoteFor(e.id)}
                         >
                           <MessageSquarePlus size={13} />
-                          {tr({ zh: '增补', en: 'Add note',
-                              zhHant: "增補"
+                          {tr({ zh: '增补', en: 'Add note'
                         })}
                         </button>
                       )
@@ -402,11 +387,9 @@ export default function WikiPage() {
           type="button"
           className="wiki-fab"
           onClick={() => setNewTermOpen(true)}
-          title={tr({ zh: '新建术语', en: 'New term',
-              zhHant: "新建術語"
+          title={tr({ zh: '新建术语', en: 'New term'
         })}
-          aria-label={tr({ zh: '新建术语', en: 'New term',
-              zhHant: "新建術語"
+          aria-label={tr({ zh: '新建术语', en: 'New term'
         })}
         >
           <Plus size={20} />

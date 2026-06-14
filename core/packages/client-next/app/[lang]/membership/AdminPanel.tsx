@@ -66,8 +66,7 @@ export default function AdminPanel({ plans, isZh }: Props) {
   }
 
   async function revoke(wcaId: string) {
-    if (!window.confirm(tr({ zh: '撤销 {n} 的会员?', en: 'Revoke membership of {n}?',
-        zhHant: "撤銷 {n} 的會員?"
+    if (!window.confirm(tr({ zh: '撤销 {n} 的会员?', en: 'Revoke membership of {n}?'
     }).replace('{n}', wcaId))) return;
     try { await adminRevoke(wcaId); setMembers((m) => m.filter((x) => x.wcaId !== wcaId)); }
     catch (e) { window.alert(e instanceof Error ? e.message : String(e)); }
@@ -85,8 +84,7 @@ export default function AdminPanel({ plans, isZh }: Props) {
 
   return (
     <section className="mem-admin">
-      <h3 className="mem-admin-title">{tr({ zh: '会员管理', en: 'Membership admin',
-          zhHant: "會員管理"
+      <h3 className="mem-admin-title">{tr({ zh: '会员管理', en: 'Membership admin'
     })}</h3>
 
       {/* 手动开通 */}
@@ -97,16 +95,14 @@ export default function AdminPanel({ plans, isZh }: Props) {
             onChange={(c) => void handlePick(c)}
             isZh={isZh}
             className="mem-admin-picker"
-            placeholder={tr({ zh: '搜索 WCA 选手开通', en: 'Search a WCA cuber to grant',
-                zhHant: "搜尋 WCA 選手開通"
+            placeholder={tr({ zh: '搜索 WCA 选手开通', en: 'Search a WCA cuber to grant'
             })}
           />
           <select value={grantPlan} onChange={(e) => setGrantPlan(e.target.value)} className="mem-admin-plansel">
             {plans.map((p) => <option key={p.slug} value={p.slug}>{isZh ? p.nameZh : p.nameEn}</option>)}
           </select>
           <button className="mem-admin-grant-btn" onClick={() => void grant()} disabled={!picked?.id || granting}>
-            <Plus size={14} /> {granting ? '…' : tr({ zh: '开通', en: 'Grant',
-                zhHant: "開通"
+            <Plus size={14} /> {granting ? '…' : tr({ zh: '开通', en: 'Grant'
             })}
           </button>
         </div>
@@ -115,8 +111,7 @@ export default function AdminPanel({ plans, isZh }: Props) {
 
       {/* 套餐价格 */}
       <div className="mem-admin-block">
-        <div className="mem-admin-subtitle">{tr({ zh: '套餐价格(元)', en: 'Plan prices (yuan)',
-            zhHant: "套餐價格(元)"
+        <div className="mem-admin-subtitle">{tr({ zh: '套餐价格(元)', en: 'Plan prices (yuan)'
         })}</div>
         {plans.map((p) => (
           <div key={p.slug} className="mem-admin-planrow">
@@ -128,8 +123,7 @@ export default function AdminPanel({ plans, isZh }: Props) {
               onChange={(e) => setPriceDraft((d) => ({ ...d, [p.slug]: e.target.value }))}
             />
             <button className="mem-admin-plansave" onClick={() => void savePlan(p)}>
-              {planSaved === p.slug ? <Check size={13} /> : tr({ zh: '保存', en: 'Save',
-                  zhHant: "儲存"
+              {planSaved === p.slug ? <Check size={13} /> : tr({ zh: '保存', en: 'Save'
             })}
             </button>
           </div>
@@ -138,8 +132,7 @@ export default function AdminPanel({ plans, isZh }: Props) {
 
       {/* 会员列表 */}
       <div className="mem-admin-block">
-        <div className="mem-admin-subtitle">{tr({ zh: '会员 ({n})', en: 'Members ({n})',
-            zhHant: "會員 ({n})"
+        <div className="mem-admin-subtitle">{tr({ zh: '会员 ({n})', en: 'Members ({n})'
         }).replace('{n}', String(members.length))}</div>
         <div className="mem-admin-list">
           {members.map((m) => (
@@ -148,8 +141,7 @@ export default function AdminPanel({ plans, isZh }: Props) {
               <span className="mem-admin-mwca">{m.wcaId}</span>
               <span className="mem-admin-mexp">
                 {m.lifetime ? tr({ zh: '永久', en: 'Lifetime' }) : `→ ${fmtDate(m.expiresAt)}`}
-                {!m.active && ` (${tr({ zh: '已过期', en: 'expired',
-                    zhHant: "已過期"
+                {!m.active && ` (${tr({ zh: '已过期', en: 'expired'
                 })})`}
               </span>
               <button className="mem-admin-revoke" onClick={() => void revoke(m.wcaId)} aria-label="revoke">
@@ -157,8 +149,7 @@ export default function AdminPanel({ plans, isZh }: Props) {
               </button>
             </div>
           ))}
-          {members.length === 0 && <div className="mem-admin-empty">{tr({ zh: '暂无会员', en: 'No members yet',
-              zhHant: "暫無會員"
+          {members.length === 0 && <div className="mem-admin-empty">{tr({ zh: '暂无会员', en: 'No members yet'
         })}</div>}
         </div>
       </div>

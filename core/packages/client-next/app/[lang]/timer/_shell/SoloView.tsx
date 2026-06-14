@@ -188,7 +188,7 @@ interface SoloViewProps {
 export default function SoloView({ playersControl }: SoloViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('计时器', 'Timer', "計時器");
+  useDocumentTitle('计时器', 'Timer');
   const settings = useSettings();
   const rankCountry = useRankCountry();
   useApplyTheme();
@@ -831,8 +831,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     deleteSolve(last.id);
     setLastPenalty(null);
     setInfoToast({
-      msg: tr({ zh: '已删除最后一次成绩', en: 'Deleted last solve',
-          zhHant: "已刪除最後一次成績"
+      msg: tr({ zh: '已删除最后一次成绩', en: 'Deleted last solve'
     }),
       undo: () => {
         setByEvent(prev => ({ ...prev, [ev]: [...(prev[ev] ?? []), last] }));
@@ -844,7 +843,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const clearAll = useCallback(() => {
     if (!solves.length) return;
     const evName = EVENTS.find(e => e.id === event);
-    if (!confirm(i18n.language === 'zh-Hant' ? (`清空當前項目「${evName?.nameZh}」的所有 ${solves.length} 次成績？`) : (isZh
+    if (!confirm((isZh
               ? `清空当前项目「${evName?.nameZh}」的所有 ${solves.length} 次成绩？`
               : `Clear all ${solves.length} solves of "${evName?.nameEn}"?`),
     )) return;
@@ -930,17 +929,14 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   }, [replay, setReplay]);
 
   const handlePasteReplay = useCallback(() => {
-    const raw = window.prompt(tr({ zh: '粘贴 replay URL 或 token：', en: 'Paste a replay URL or token:',
-        zhHant: "貼上 replay URL 或 token："
+    const raw = window.prompt(tr({ zh: '粘贴 replay URL 或 token：', en: 'Paste a replay URL or token:'
     }), '');
     if (raw === null) return;
     const param = extractReplayParam(raw);
-    if (!param) { alert(tr({ zh: '未识别为 replay URL。', en: 'Not a recognizable replay URL.',
-        zhHant: "未識別為 replay URL。"
+    if (!param) { alert(tr({ zh: '未识别为 replay URL。', en: 'Not a recognizable replay URL.'
     })); return; }
     const decoded = decodeReplayParam(param);
-    if (!decoded) { alert(tr({ zh: 'replay 数据无法解码。', en: 'Failed to decode replay payload.',
-        zhHant: "replay 資料無法解碼。"
+    if (!decoded) { alert(tr({ zh: 'replay 数据无法解码。', en: 'Failed to decode replay payload.'
     })); return; }
     const ephemeral: Solve = {
       id: `replay-${Date.now()}`,
@@ -1100,11 +1096,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             }
             return merged;
           });
-          alert(i18n.language === 'zh-Hant' ? (`從 cstimer 匯入了 ${Object.values(cs).reduce((n, l) => n + l.length, 0)} 次成績。`) : (isZh ? `从 cstimer 导入了 ${Object.values(cs).reduce((n, l) => n + l.length, 0)} 次成绩。` : `Imported ${Object.values(cs).reduce((n, l) => n + l.length, 0)} solves from cstimer.`));
+          alert((isZh ? `从 cstimer 导入了 ${Object.values(cs).reduce((n, l) => n + l.length, 0)} 次成绩。` : `Imported ${Object.values(cs).reduce((n, l) => n + l.length, 0)} solves from cstimer.`));
           return;
         }
-        alert(tr({ zh: '导入失败：文件格式无效。', en: 'Import failed: invalid file.',
-            zhHant: "匯入失敗：檔案格式無效。"
+        alert(tr({ zh: '导入失败：文件格式无效。', en: 'Import failed: invalid file.'
         }));
       };
       reader.readAsText(file);
@@ -1118,74 +1113,57 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       {
         icon: <Mic size={14} />,
         label: stackmat.status.listening
-          ? (tr({ zh: 'Stackmat 监听中（点击停止）', en: 'Stackmat listening (stop)',
-              zhHant: "Stackmat 監聽中（點選停止）"
+          ? (tr({ zh: 'Stackmat 监听中（点击停止）', en: 'Stackmat listening (stop)'
         }))
-          : (tr({ zh: '启用 Stackmat（麦克风）', en: 'Enable Stackmat (mic)',
-              zhHant: "啟用 Stackmat（麥克風）"
+          : (tr({ zh: '启用 Stackmat（麦克风）', en: 'Enable Stackmat (mic)'
         })),
         onClick: async () => {
           if (stackmat.status.listening) stackmat.stop();
           else {
             try { await stackmat.start(); }
-            catch (err) { alert(i18n.language === 'zh-Hant' ? (`麥克風啟用失敗：${(err as Error).message}`) : (isZh ? `麦克风启用失败：${(err as Error).message}` : `Mic error: ${(err as Error).message}`)); }
+            catch (err) { alert((isZh ? `麦克风启用失败：${(err as Error).message}` : `Mic error: ${(err as Error).message}`)); }
           }
         },
       },
-      { icon: <BarChart3 size={14} />, label: tr({ zh: '统计', en: 'Stats',
-          zhHant: "統計"
+      { icon: <BarChart3 size={14} />, label: tr({ zh: '统计', en: 'Stats'
     }), onClick: () => setStatsModalOpen(true) },
       {
-        icon: <Globe size={14} />, label: tr({ zh: '语言：EN', en: 'Language: 中文',
-            zhHant: "語言：EN"
+        icon: <Globe size={14} />, label: tr({ zh: '语言：EN', en: 'Language: 中文'
         }),
         onClick: () => { const next = (i18n.language.startsWith('zh') ? 'en' : 'zh'); i18n.changeLanguage(next); syncLangToUrl(next); },
       },
     ] : []),
     ...(drillAllowed && !drillTarget ? [{
-      icon: <Crosshair size={14} />, label: tr({ zh: '专项练习', en: 'Drill mode',
-          zhHant: "專項練習"
+      icon: <Crosshair size={14} />, label: tr({ zh: '专项练习', en: 'Drill mode'
     }), onClick: () => setDrillModalOpen(true),
     }] : []),
     ...(event.startsWith('333') ? [{
-      icon: <Brain size={14} />, label: tr({ zh: '盲拧助手', en: 'BLD helper',
-          zhHant: "盲擰助手"
+      icon: <Brain size={14} />, label: tr({ zh: '盲拧助手', en: 'BLD helper'
     }), onClick: () => setBldHelperOpen(true),
     }] : []),
-    { icon: <Keyboard size={14} />, label: tr({ zh: '快捷键', en: 'Shortcuts',
-        zhHant: "快捷鍵"
+    { icon: <Keyboard size={14} />, label: tr({ zh: '快捷键', en: 'Shortcuts'
     }), onClick: () => setShortcutsOpen(true) },
     { icon: fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />, label: tr({ zh: '全屏', en: 'Fullscreen' }), onClick: toggleFullscreen },
-    { icon: <Bluetooth size={14} />, label: tr({ zh: '智能魔方', en: 'Smart cube',
-        zhHant: "智慧魔方"
+    { icon: <Bluetooth size={14} />, label: tr({ zh: '智能魔方', en: 'Smart cube'
     }), onClick: () => setBluetoothOpen(true) },
-    { icon: <Upload size={14} />, label: tr({ zh: '导入（自动识别 cstimer JSON）', en: 'Import (auto-detects cstimer JSON)',
-        zhHant: "匯入（自動識別 cstimer JSON）"
+    { icon: <Upload size={14} />, label: tr({ zh: '导入（自动识别 cstimer JSON）', en: 'Import (auto-detects cstimer JSON)'
     }), onClick: handleImport },
-    { icon: <Download size={14} />, label: tr({ zh: '导出 JSON', en: 'Export JSON',
-        zhHant: "匯出 JSON"
+    { icon: <Download size={14} />, label: tr({ zh: '导出 JSON', en: 'Export JSON'
     }), onClick: handleExport },
-    { icon: <FileSpreadsheet size={14} />, label: tr({ zh: '导出 CSV', en: 'Export CSV',
-        zhHant: "匯出 CSV"
+    { icon: <FileSpreadsheet size={14} />, label: tr({ zh: '导出 CSV', en: 'Export CSV'
     }), onClick: handleExportCsv },
-    { icon: <FileText size={14} />, label: tr({ zh: '导出 Speedstacks', en: 'Export Speedstacks',
-        zhHant: "匯出 Speedstacks"
+    { icon: <FileText size={14} />, label: tr({ zh: '导出 Speedstacks', en: 'Export Speedstacks'
     }), onClick: handleExportSs },
-    { icon: <Plus size={14} />, label: tr({ zh: '手动录入', en: 'Manual entry',
-        zhHant: "手動錄入"
+    { icon: <Plus size={14} />, label: tr({ zh: '手动录入', en: 'Manual entry'
     }), onClick: () => setManualEntryOpen(true) },
-    { icon: <Link2 size={14} />, label: tr({ zh: '粘贴 replay 链接', en: 'Paste replay URL',
-        zhHant: "貼上 replay 連結"
+    { icon: <Link2 size={14} />, label: tr({ zh: '粘贴 replay 链接', en: 'Paste replay URL'
     }), onClick: handlePasteReplay },
     { icon: <Wrench size={14} />, label: tr({ zh: '通用求解器', en: 'Solver' }), onClick: () => setSolverOpen(true) },
-    { icon: <ListPlus size={14} />, label: tr({ zh: '批量打乱', en: 'Bulk scrambles',
-        zhHant: "批次打亂"
+    { icon: <ListPlus size={14} />, label: tr({ zh: '批量打乱', en: 'Bulk scrambles'
     }), onClick: () => setBulkScrambleOpen(true) },
-    { icon: <Printer size={14} />, label: tr({ zh: '打印', en: 'Print',
-        zhHant: "列印"
+    { icon: <Printer size={14} />, label: tr({ zh: '打印', en: 'Print'
     }), onClick: () => window.print() },
-    { icon: <Trash2 size={14} />, label: tr({ zh: '清空当前项目', en: 'Clear current event',
-        zhHant: "清空當前項目"
+    { icon: <Trash2 size={14} />, label: tr({ zh: '清空当前项目', en: 'Clear current event'
     }), onClick: clearAll, danger: true, disabled: !solves.length },
   ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, i18n, event]);
 
@@ -1240,8 +1218,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   }, [timer.phase, timer.displayMs, lastPenalty]);
 
   const eventInfoCurrent = EVENTS.find(e => e.id === event);
-  const printEventName = eventInfoCurrent ? (i18n.language === 'zh-Hant' ? (eventInfoCurrent.nameZhHant ?? eventInfoCurrent.nameZh) : (isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn)) : event;
-  const eventLabel = eventInfoCurrent ? (i18n.language === 'zh-Hant' ? (eventInfoCurrent.nameZhHant ?? eventInfoCurrent.nameZh) : (isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn)) : event;
+  const printEventName = eventInfoCurrent ? ((isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn)) : event;
+  const eventLabel = eventInfoCurrent ? ((isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn)) : event;
 
   // Available set for the selector: every WCA id we map to + the append ids +
   // magic/mmagic (rendered in the main grid via ALL_EVENT_IDS, not appended).
@@ -1296,13 +1274,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           />
           <div className="shell-times-actions">
             <button type="button" className="stats-expand-toggle" onClick={() => setStatsModalOpen(true)}>
-              {tr({ zh: '完整统计', en: 'Full stats',
-                  zhHant: "完整統計"
+              {tr({ zh: '完整统计', en: 'Full stats'
             })}
             </button>
             <button type="button" className="stats-expand-toggle" onClick={() => setShowCrossSession(v => !v)}>
-              {tr({ zh: '跨分组统计', en: 'Cross-session',
-                  zhHant: "跨分組統計"
+              {tr({ zh: '跨分组统计', en: 'Cross-session'
             })} {showCrossSession ? '▴' : '▾'}
             </button>
           </div>
@@ -1315,20 +1291,15 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         <div className="shell-chart-tab">
           <div className="shell-chart-switch">
             {([
-              ['histogram', tr({ zh: '分布', en: 'Histogram',
-                  zhHant: "分佈"
+              ['histogram', tr({ zh: '分布', en: 'Histogram'
             })],
-              ['trend', tr({ zh: '趋势', en: 'Trend',
-                  zhHant: "趨勢"
+              ['trend', tr({ zh: '趋势', en: 'Trend'
             })],
-              ['scatter', tr({ zh: '散点', en: 'Scatter',
-                  zhHant: "散點"
+              ['scatter', tr({ zh: '散点', en: 'Scatter'
             })],
-              ['hour', tr({ zh: '时段', en: 'Hour',
-                  zhHant: "時段"
+              ['hour', tr({ zh: '时段', en: 'Hour'
             })],
-              ['heatmap', tr({ zh: '日历', en: 'Heatmap',
-                  zhHant: "日曆"
+              ['heatmap', tr({ zh: '日历', en: 'Heatmap'
             })],
             ] as const).map(([k, lbl]) => (
               <button
@@ -1366,8 +1337,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         ))}
         <button type="button" className="shell-tools-item" onClick={() => setSettingsOpen(true)}>
           <span className="shell-tools-icon"><SettingsIcon size={14} /></span>
-          <span>{tr({ zh: '设置', en: 'Settings',
-              zhHant: "設定"
+          <span>{tr({ zh: '设置', en: 'Settings'
         })}</span>
         </button>
       </div>
@@ -1380,8 +1350,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       data-solving={timer.phase === 'running' ? 'true' : undefined}
     >
       <div className="print-only-header">
-        <h1>{tr({ zh: '魔方计时器 — ', en: 'Cube Timer — ',
-            zhHant: "魔方計時器 — "
+        <h1>{tr({ zh: '魔方计时器 — ', en: 'Cube Timer — '
         })}{printEventName}</h1>
         <div className="print-meta"><span>{new Date().toLocaleString()}</span><span>{solves.length} {tr({ zh: '次', en: 'solves' })}</span></div>
       </div>
@@ -1426,11 +1395,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           <a
             className="tb-btn"
             href={`${isZh ? '/zh' : ''}/timer/marks`}
-            title={tr({ zh: '打乱足迹', en: 'Scramble marks',
-                zhHant: "打亂足跡"
+            title={tr({ zh: '打乱足迹', en: 'Scramble marks'
             })}
-            aria-label={tr({ zh: '打乱足迹', en: 'Scramble marks',
-                zhHant: "打亂足跡"
+            aria-label={tr({ zh: '打乱足迹', en: 'Scramble marks'
             })}
           >
             <Footprints size={14} />
@@ -1440,15 +1407,13 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             className={`tb-btn${bluetoothCube.status.connected ? ' connected' : ''}`}
             onClick={() => setBluetoothOpen(true)}
             title={bluetoothCube.status.connected
-              ? (i18n.language === 'zh-Hant' ? (`已連線 ${bluetoothCube.status.deviceName}`) : (isZh ? `已连接 ${bluetoothCube.status.deviceName}` : `Connected: ${bluetoothCube.status.deviceName}`))
-              : (tr({ zh: '智能魔方（iOS 用 Bluefy）', en: 'Smart cube (use Bluefy on iOS)',
-                  zhHant: "智慧魔方（iOS 用 Bluefy）"
+              ? ((isZh ? `已连接 ${bluetoothCube.status.deviceName}` : `Connected: ${bluetoothCube.status.deviceName}`))
+              : (tr({ zh: '智能魔方（iOS 用 Bluefy）', en: 'Smart cube (use Bluefy on iOS)'
             }))}
           >
             <Bluetooth size={14} />
           </button>
-          <button type="button" className="tb-btn" onClick={() => setSettingsOpen(true)} title={tr({ zh: '设置', en: 'Settings',
-              zhHant: "設定"
+          <button type="button" className="tb-btn" onClick={() => setSettingsOpen(true)} title={tr({ zh: '设置', en: 'Settings'
         })}>
             <SettingsIcon size={14} />
           </button>
@@ -1478,23 +1443,19 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                 nextScramble();
               }}
               title={settings.scrambleClickAction === 'copy'
-                ? (tr({ zh: '点击复制打乱', en: 'Click to copy',
-                    zhHant: "點選複製打亂"
+                ? (tr({ zh: '点击复制打乱', en: 'Click to copy'
                 }))
                 : settings.scrambleClickAction === 'none'
-                  ? (tr({ zh: '点击无操作', en: 'Click disabled',
-                      zhHant: "點選無操作"
+                  ? (tr({ zh: '点击无操作', en: 'Click disabled'
                 }))
-                  : (tr({ zh: '点击换一个打乱', en: 'Click to refresh',
-                      zhHant: "點選換一個打亂"
+                  : (tr({ zh: '点击换一个打乱', en: 'Click to refresh'
                 }))}
             >
               <span className="scramble-text">{scrambleLoading
-                ? <span className="scramble-loading">{tr({ zh: '加载真实打乱…', en: 'Loading real scramble…', zhHant: "載入真實打亂…" })}</span>
+                ? <span className="scramble-loading">{tr({ zh: '加载真实打乱…', en: 'Loading real scramble…' })}</span>
                 : (displayScramble || <span className="scramble-empty">—</span>)}</span>
               {scrambleCopied && (
-                <span className="scramble-copied-flash" data-no-timer>{tr({ zh: '已复制', en: 'Copied',
-                    zhHant: "已複製"
+                <span className="scramble-copied-flash" data-no-timer>{tr({ zh: '已复制', en: 'Copied'
                 })}</span>
               )}
               {wcaSrcDisplay && (
@@ -1503,7 +1464,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                   data-no-timer
                   href={`${isZh ? '/zh' : ''}/scramble/gen?comp=${encodeURIComponent(wcaSrcDisplay.ci)}`}
                   onClick={(e) => e.stopPropagation()}
-                  title={tr({ zh: '查看该比赛打乱', en: 'View this competition', zhHant: "檢視該比賽打亂" })}
+                  title={tr({ zh: '查看该比赛打乱', en: 'View this competition' })}
                 >
                   {wcaSrcDisplay.iso2 && <Flag iso2={wcaSrcDisplay.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                   <span className="scramble-src-name">{wcaSrcDisplay.name}</span>
@@ -1517,12 +1478,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                     type="button"
                     className={`scramble-marks-chip${myMark ? ' marked' : ''}`}
                     onClick={() => setMarksOpen((o) => !o)}
-                    title={tr({ zh: '谁做过这条打乱', en: 'Who did this scramble',
-                        zhHant: "誰做過這條打亂"
+                    title={tr({ zh: '谁做过这条打乱', en: 'Who did this scramble'
                     })}
                   >
                     <CheckCircle2 size={12} />
-                    {tr({ zh: `${curMarks.count} 人做过`, en: `${curMarks.count} did it`, zhHant: `${curMarks.count} 人做過` })}
+                    {tr({ zh: `${curMarks.count} 人做过`, en: `${curMarks.count} did it` })}
                   </button>
                   {marksOpen && (
                     <div className="scramble-marks-pop">
@@ -1539,8 +1499,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                         ))}
                       </ul>
                       <a href={`${isZh ? '/zh' : ''}/timer/marks`} className="scramble-marks-all">
-                        {tr({ zh: '全站足迹', en: 'All marks',
-                            zhHant: "全站足跡"
+                        {tr({ zh: '全站足迹', en: 'All marks'
                         })}
                       </a>
                     </div>
@@ -1557,8 +1516,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                   className="shell-corner-net-img"
                   data-no-timer
                   onClick={() => setPreviewEnlarged(true)}
-                  title={tr({ zh: '点击放大', en: 'Tap to enlarge',
-                      zhHant: "點選放大"
+                  title={tr({ zh: '点击放大', en: 'Tap to enlarge'
                   })}
                 >
                   <CubePreview event={event} scramble={scramble} height="var(--cube-h)" colors={settings.colors} visualization={settings.prefer3D ? '3D' : '2D'} />
@@ -1571,8 +1529,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           {timer.phase === 'running' && targetMs !== null && (
             <div className={`timer-target-indicator${isOvershot ? ' overshot' : ''}`}>
               <Target size={12} />
-              <span className="target-label">{tr({ zh: '目标', en: 'target',
-                  zhHant: "目標"
+              <span className="target-label">{tr({ zh: '目标', en: 'target'
             })} {formatTargetTime(targetMs)}</span>
               <span className="target-delta">
                 {(() => {
@@ -1585,15 +1542,13 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           )}
           {timer.phase === 'inspecting' && (
             <>
-              <div className="timer-hint">{tr({ zh: '观察中… 再按空格开始上手', en: 'Inspecting… press space again to grip',
-                  zhHant: "觀察中… 再按空格開始上手"
+              <div className="timer-hint">{tr({ zh: '观察中… 再按空格开始上手', en: 'Inspecting… press space again to grip'
             })}</div>
               {inspectionIllegalCount > 0 && (
-                <div className="inspection-illegal-warn" title={tr({ zh: 'WCA 4d: 观察期间只允许整体旋转 (x/y/z)，转面会判 DNF', en: 'WCA 4d: only rotations (x/y/z) are legal during inspection — face turns are DNF',
-                    zhHant: "WCA 4d: 觀察期間只允許整體旋轉 (x/y/z)，轉面會判 DNF"
+                <div className="inspection-illegal-warn" title={tr({ zh: 'WCA 4d: 观察期间只允许整体旋转 (x/y/z)，转面会判 DNF', en: 'WCA 4d: only rotations (x/y/z) are legal during inspection — face turns are DNF'
                 })}>
                   <AlertTriangle size={14} />
-                  <span>{i18n.language === 'zh-Hant' ? (`檢測到 ${inspectionIllegalCount} 次違規轉面（WCA 應判 DNF）`) : (isZh ? `检测到 ${inspectionIllegalCount} 次违规转面（WCA 应判 DNF）` : `${inspectionIllegalCount} illegal face turn${inspectionIllegalCount === 1 ? '' : 's'} detected (WCA: DNF)`)}</span>
+                  <span>{(isZh ? `检测到 ${inspectionIllegalCount} 次违规转面（WCA 应判 DNF）` : `${inspectionIllegalCount} illegal face turn${inspectionIllegalCount === 1 ? '' : 's'} detected (WCA: DNF)`)}</span>
                 </div>
               )}
             </>
@@ -1619,16 +1574,13 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                   className="stage-chip stage-chip-action"
                   data-no-timer
                   onClick={(e) => { e.stopPropagation(); bldMemoRef.current?.markMemo(); }}
-                >{tr({ zh: '记忆中… 按 Enter 或点这里', en: 'Memo… press Enter or tap',
-                    zhHant: "記憶中… 按 Enter 或點這裡"
+                >{tr({ zh: '记忆中… 按 Enter 或点这里', en: 'Memo… press Enter or tap'
                 })}</button>
               ) : (
                 <>
-                  <span className="stage-chip done">{tr({ zh: '记忆', en: 'Memo',
-                      zhHant: "記憶"
+                  <span className="stage-chip done">{tr({ zh: '记忆', en: 'Memo'
                 })} {formatMs(bldMemo.memoMs)}</span>
-                  <span className="stage-chip">{tr({ zh: '执行中…', en: 'Executing…',
-                      zhHant: "執行中…"
+                  <span className="stage-chip">{tr({ zh: '执行中…', en: 'Executing…'
                 })}</span>
                 </>
               )}
@@ -1652,8 +1604,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             const subset = event === 'oll' ? settings.ollSubset : settings.pllSubset;
             const sel = subset && subset.length > 0 ? subset.length : null;
             return (
-              <button type="button" className="trainer-subset-btn" onClick={() => setTrainerSubsetOpen(event === 'oll' ? 'oll' : 'pll')} title={tr({ zh: '选择训练子集', en: 'Pick training subset',
-                  zhHant: "選擇訓練子集"
+              <button type="button" className="trainer-subset-btn" onClick={() => setTrainerSubsetOpen(event === 'oll' ? 'oll' : 'pll')} title={tr({ zh: '选择训练子集', en: 'Pick training subset'
             })}>
                 {sel !== null ? (isZh ? `子集 (${sel}/${total})` : `Subset (${sel}/${total})`) : (isZh ? `全部 (${total})` : `All (${total})`)}
               </button>
@@ -1669,8 +1620,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             area. Only once there's data (no bare dashes at idle). */}
         {solves.length > 0 && (
           <div className="shell-stat-rail surface-chrome">
-            <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '次数', en: 'count',
-                zhHant: "次數"
+            <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '次数', en: 'count'
             })}</span> <span className="shell-stat-val">{stats.count}</span></span>
             <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '成功', en: 'solved' })}</span> <span className="shell-stat-val">{stats.solved}/{stats.count}</span></span>
             <span className="shell-stat"><span className="shell-stat-lbl">mean</span> <span className="shell-stat-val">{stats.mean}</span></span>
@@ -1686,13 +1636,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       {/* ── Side panel: desktop dock / phone bottom sheet ────── */}
       <nav className="shell-bottombar surface-chrome">
         <button type="button" className={`shell-bottombar-btn${panelTab === 'times' ? ' active' : ''}`} onClick={() => togglePanel('times')}>
-          <ListOrdered size={18} /><span>{tr({ zh: '成绩', en: 'Times',
-              zhHant: "成績"
+          <ListOrdered size={18} /><span>{tr({ zh: '成绩', en: 'Times'
         })}</span>
         </button>
         <button type="button" className={`shell-bottombar-btn${panelTab === 'chart' ? ' active' : ''}`} onClick={() => togglePanel('chart')}>
-          <LineChart size={18} /><span>{tr({ zh: '图表', en: 'Chart',
-              zhHant: "圖表"
+          <LineChart size={18} /><span>{tr({ zh: '图表', en: 'Chart'
         })}</span>
         </button>
         <button type="button" className={`shell-bottombar-btn${panelTab === 'tools' ? ' active' : ''}`} onClick={() => togglePanel('tools')}>
@@ -1705,15 +1653,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           {!isDesktop && <div className="shell-sheet-backdrop" onClick={() => setPanelTab(null)} />}
           <aside className={`shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
             <div className="shell-panel-tabs">
-              <button type="button" className={`shell-panel-tab${panelTab === 'times' ? ' active' : ''}`} onClick={() => setPanelTab('times')}>{tr({ zh: '成绩', en: 'Times',
-                  zhHant: "成績"
+              <button type="button" className={`shell-panel-tab${panelTab === 'times' ? ' active' : ''}`} onClick={() => setPanelTab('times')}>{tr({ zh: '成绩', en: 'Times'
             })}</button>
-              <button type="button" className={`shell-panel-tab${panelTab === 'chart' ? ' active' : ''}`} onClick={() => setPanelTab('chart')}>{tr({ zh: '图表', en: 'Chart',
-                  zhHant: "圖表"
+              <button type="button" className={`shell-panel-tab${panelTab === 'chart' ? ' active' : ''}`} onClick={() => setPanelTab('chart')}>{tr({ zh: '图表', en: 'Chart'
             })}</button>
               <button type="button" className={`shell-panel-tab${panelTab === 'tools' ? ' active' : ''}`} onClick={() => setPanelTab('tools')}>{tr({ zh: '工具', en: 'Tools' })}</button>
-              <button type="button" className="shell-panel-close" onClick={() => setPanelTab(null)} aria-label={tr({ zh: '关闭', en: 'Close',
-                  zhHant: "關閉"
+              <button type="button" className="shell-panel-close" onClick={() => setPanelTab(null)} aria-label={tr({ zh: '关闭', en: 'Close'
             })}><X size={16} /></button>
             </div>
             <div className="shell-panel-body">{renderPanelBody()}</div>
@@ -1778,8 +1723,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         <div className="shell-info-toast" role="status">
           <span>{infoToast.msg}</span>
           {infoToast.undo && (
-            <button type="button" onClick={() => { infoToast.undo?.(); setInfoToast(null); }}>{tr({ zh: '撤销', en: 'Undo',
-                zhHant: "撤銷"
+            <button type="button" onClick={() => { infoToast.undo?.(); setInfoToast(null); }}>{tr({ zh: '撤销', en: 'Undo'
             })}</button>
           )}
         </div>
@@ -1797,7 +1741,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             try { await bluetoothCube.connect(); }
             catch (err) {
               const msg = (err as Error).message ?? String(err);
-              if (msg !== 'NO_WEB_BLUETOOTH') alert(i18n.language === 'zh-Hant' ? (`連線失敗：${msg}`) : (isZh ? `连接失败：${msg}` : `Connection failed: ${msg}`));
+              if (msg !== 'NO_WEB_BLUETOOTH') alert((isZh ? `连接失败：${msg}` : `Connection failed: ${msg}`));
             }
           }}
         />
@@ -1835,8 +1779,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       )}
 
       {bluetoothCube.status.connected && (
-        <div className="timer-live-cube" title={tr({ zh: '智能魔方实时状态（每次拧动同步）', en: 'Live smart-cube state (updates per move)',
-            zhHant: "智慧魔方實時狀態（每次擰動同步）"
+        <div className="timer-live-cube" title={tr({ zh: '智能魔方实时状态（每次拧动同步）', en: 'Live smart-cube state (updates per move)'
         })}>
           <LiveCubeState event={event} scramble={scramble} moves={liveMoves} size={120} />
         </div>

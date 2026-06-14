@@ -154,7 +154,7 @@ export function WcaPersonPicker({
           <span className="cuber-search-chip-id">{value.id}</span>
           {typeof matchCount === 'number' && (
             <span className="cuber-search-chip-count">
-              {i18n.language === 'zh-Hant' ? (`${matchCount} 場`) : (isZh ? `${matchCount} 场` : `${matchCount} ${matchCount === 1 ? 'comp' : 'comps'}`)}
+              {(isZh ? `${matchCount} 场` : `${matchCount} ${matchCount === 1 ? 'comp' : 'comps'}`)}
             </span>
           )}
           <ClearButton onClick={handleClear} isZh={isZh} />
@@ -188,8 +188,7 @@ export function WcaPersonPicker({
         <div className="cuber-search-popup">
           {staticMatches.length > 0 && (
             <div className="cuber-search-section">
-              <div className="cuber-search-section-label">★ {tr({ zh: '顶尖选手', en: 'Top cubers',
-                  zhHant: "頂尖選手"
+              <div className="cuber-search-section-label">★ {tr({ zh: '顶尖选手', en: 'Top cubers'
             })}</div>
               {staticMatches.map(c => (
                 <CuberRow key={`s-${c.id}`} cuber={c} isZh={isZh} onPick={handlePick} />
@@ -204,13 +203,11 @@ export function WcaPersonPicker({
             </div>
           )}
           {loading && (
-            <div className="cuber-search-status">{tr({ zh: '搜索中…', en: 'Searching…',
-                zhHant: "搜尋中…"
+            <div className="cuber-search-status">{tr({ zh: '搜索中…', en: 'Searching…'
             })}</div>
           )}
           {!loading && staticMatches.length === 0 && apiFiltered.length === 0 && query.trim().length > 0 && (
-            <div className="cuber-search-status">{tr({ zh: '未找到选手', en: 'No matches',
-                zhHant: "未找到選手"
+            <div className="cuber-search-status">{tr({ zh: '未找到选手', en: 'No matches'
             })}</div>
           )}
         </div>

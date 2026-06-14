@@ -222,29 +222,25 @@ export default function HistoryPanel() {
     return (
       <div className="history-panel">
         <div className="history-header">
-          <span className="history-title">📋 {tr({ zh: '历史', en: 'History',
-              zhHant: "歷史"
+          <span className="history-title">📋 {tr({ zh: '历史', en: 'History'
         })}</span>
           <span className="history-stats"></span>
         </div>
         {/* 工具按钮（即使空列表也能手动输入/导入） */}
         <div className="history-tools">
           <button className="history-tool-btn" onClick={() => setPopup('manual')}>
-            ✏️ {tr({ zh: '手动', en: 'Manual',
-                zhHant: "手動"
+            ✏️ {tr({ zh: '手动', en: 'Manual'
             })}
           </button>
           <button className="history-tool-btn" onClick={() => triggerCsTimerImport(useBattleStore.getState(), (msg) => {
             setToastMsg(msg);
             setTimeout(() => setToastMsg(null), 3000);
           })}>
-            📂 {tr({ zh: '导入', en: 'Import',
-                zhHant: "匯入"
+            📂 {tr({ zh: '导入', en: 'Import'
             })}
           </button>
         </div>
-        <div className="history-empty">{tr({ zh: '暂无成绩', en: 'No solves yet',
-            zhHant: "暫無成績"
+        <div className="history-empty">{tr({ zh: '暂无成绩', en: 'No solves yet'
         })}</div>
         {popup === 'manual' && <ManualInputDialog onClose={() => setPopup(null)} />}
         {toastMsg && <div className="milestone-toast show">{toastMsg}</div>}
@@ -293,21 +289,18 @@ export default function HistoryPanel() {
           📦 JSON
         </button>
         <button className="history-tool-btn" onClick={() => setPopup('manual')}>
-          ✏️ {tr({ zh: '手动', en: 'Manual',
-              zhHant: "手動"
+          ✏️ {tr({ zh: '手动', en: 'Manual'
         })}
         </button>
         <button className="history-tool-btn" onClick={() => triggerCsTimerImport(useBattleStore.getState(), (msg) => {
           setToastMsg(msg);
           setTimeout(() => setToastMsg(null), 3000);
         })}>
-          📂 {tr({ zh: '导入', en: 'Import',
-              zhHant: "匯入"
+          📂 {tr({ zh: '导入', en: 'Import'
         })}
         </button>
         <button className="history-tool-btn" onClick={() => setPopup('simulation')}>
-          🎲 {tr({ zh: '模拟', en: 'Sim',
-              zhHant: "模擬"
+          🎲 {tr({ zh: '模拟', en: 'Sim'
         })}
         </button>
         <button className="history-tool-btn" onClick={() => shareResultCard(history, puzzleId, locale, precision)}>

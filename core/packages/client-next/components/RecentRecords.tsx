@@ -190,9 +190,8 @@ export function RecentRecordsList({ filled, isZh }: { filled: RecentRecord[]; is
               type="button"
               className="recent-records-copy"
               onClick={() => handleCopy(r)}
-              title={i18n.language === 'zh-Hant' ? ((copied ? '已複製' : '複製')) : (isZh ? (copied ? '已复制' : '复制') : (copied ? 'Copied' : 'Copy'))}
-              aria-label={tr({ zh: '复制', en: 'Copy',
-                  zhHant: "複製"
+              title={(isZh ? (copied ? '已复制' : '复制') : (copied ? 'Copied' : 'Copy'))}
+              aria-label={tr({ zh: '复制', en: 'Copy'
             })}
             >
               {copied ? <Check size={13} strokeWidth={1.75} /> : <Copy size={13} strokeWidth={1.75} />}

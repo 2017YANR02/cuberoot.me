@@ -56,10 +56,8 @@ function TokenCard({ t, lang }: { t: Token; lang: 'zh' | 'en' }) {
       </div>
       <div className="tk-card-name">
         <span>{t.name}</span>
-        <span className="tk-copy">{copied ? tr({ zh: '已复制', en: 'copied',
-            zhHant: "已複製"
-        }) : tr({ zh: '复制 var()', en: 'copy var()',
-            zhHant: "複製 var()"
+        <span className="tk-copy">{copied ? tr({ zh: '已复制', en: 'copied'
+        }) : tr({ zh: '复制 var()', en: 'copy var()'
         })}</span>
       </div>
       <div className="tk-card-desc">{lang === 'zh' ? t.zh : t.en}</div>
@@ -71,7 +69,7 @@ export default function CodeTokensPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('设计令牌', 'Design Tokens', '設計令牌');
+  useDocumentTitle('设计令牌', 'Design Tokens');
 
   return (
     <div className="tk">
@@ -86,8 +84,7 @@ export default function CodeTokensPage() {
         <p className="tk-sub">
           {tr({
             zh: '全站配色的单一来源。背景 / 文字 / 品牌 / 状态 / 边框五组令牌,每个都把亮、暗两套真值并排给你看;需要中间色一律 color-mix 从令牌推,绝不硬码灰阶。写 CSS 取色照这页来。',
-            en: 'The single source for every color on the site. Five groups — surface, text, brand, signal, border — each showing its real light and dark value side by side. Need an in-between shade? Derive it from a token with color-mix; never hardcode greys. Pick from here when writing CSS.',
-              zhHant: "全站配色的單一來源。背景 / 文字 / 品牌 / 狀態 / 邊框五組令牌,每個都把亮、暗兩套真值並排給你看;需要中間色一律 color-mix 從令牌推,絕不硬碼灰階。寫 CSS 取色照這頁來。"
+            en: 'The single source for every color on the site. Five groups — surface, text, brand, signal, border — each showing its real light and dark value side by side. Need an in-between shade? Derive it from a token with color-mix; never hardcode greys. Pick from here when writing CSS.'
         })}
         </p>
       </header>
@@ -107,8 +104,7 @@ export default function CodeTokensPage() {
       <p className="tk-pair">
         {tr({
           zh: '另有配对前景色随上面成套使用:',
-          en: 'Paired foreground tokens travel with the set above: ',
-            zhHant: "另有配對前景色隨上面成套使用:"
+          en: 'Paired foreground tokens travel with the set above: '
         })}
         <code>--card-foreground</code> · <code>--popover-foreground</code> · <code>--primary</code> / <code>--primary-foreground</code> · <code>--secondary</code> / <code>--secondary-foreground</code> · <code>--accent-foreground</code> · <code>--destructive-foreground</code>
       </p>
@@ -121,8 +117,7 @@ export default function CodeTokensPage() {
         <p className="tk-cat-note">
           {tr({
             zh: '需要半透明 / hover / 弱化色时,别手算 rgba,从令牌用 color-mix 推。下面的预览块会跟着你当前主题实时算出来。',
-            en: 'Need a translucent, hover, or softened shade? Don’t hand-roll rgba — derive it from a token with color-mix. The preview blocks below resolve live against your current theme.',
-              zhHant: "需要半透明 / hover / 弱化色時,別手算 rgba,從令牌用 color-mix 推。下面的預覽塊會跟著你當前主題實時算出來。"
+            en: 'Need a translucent, hover, or softened shade? Don’t hand-roll rgba — derive it from a token with color-mix. The preview blocks below resolve live against your current theme.'
         })}
         </p>
         <div className="tk-recipes">
@@ -141,15 +136,13 @@ export default function CodeTokensPage() {
       <section className="tk-cat">
         <div className="tk-cat-head">
           <span className="tk-cat-tag">// strategy</span>
-          <h2 className="tk-cat-title">{tr({ zh: '主题策略', en: 'Theme strategy',
-              zhHant: "主題策略"
+          <h2 className="tk-cat-title">{tr({ zh: '主题策略', en: 'Theme strategy'
         })}</h2>
         </div>
         <p className="tk-cat-note">
           {tr({
             zh: '写 CSS 前先确认页面属于哪一类:大多数页双主题跟随令牌,WCA 统计家族永远暗,/calc 永远亮。',
-            en: 'Before writing CSS, know which bucket a page is in: most are dual-theme via tokens, the WCA-stats family is always dark, /calc is always light.',
-              zhHant: "寫 CSS 前先確認頁面屬於哪一類:大多數頁雙主題跟隨令牌,WCA 統計家族永遠暗,/calc 永遠亮。"
+            en: 'Before writing CSS, know which bucket a page is in: most are dual-theme via tokens, the WCA-stats family is always dark, /calc is always light.'
         })}
         </p>
         <div className="tk-strat">
@@ -164,8 +157,7 @@ export default function CodeTokensPage() {
         <p className="tk-cat-note" style={{ marginTop: 16 }}>
           {tr({
             zh: '另有「配色主题」叠加层:用户在右上「外观」菜单可选 6 套整套皮肤(克劳德 + 5 套中国传统色),经 data-palette 覆盖上面全部令牌——基础令牌不动,只被皮肤盖住。整套并排见 ',
-            en: 'There’s also a palette overlay: from the top-right Appearance menu users pick one of 6 full skins (Claude + 5 Chinese-traditional palettes) that override every token above via data-palette — the base tokens stay put, a skin just sits on top. Compare them side by side at ',
-              zhHant: "另有「配色主題」疊加層:使用者在右上「外觀」選單可選 6 套整套皮膚(克勞德 + 5 套中國傳統色),經 data-palette 覆蓋上面全部令牌——基礎令牌不動,只被皮膚蓋住。整套並排見 "
+            en: 'There’s also a palette overlay: from the top-right Appearance menu users pick one of 6 full skins (Claude + 5 Chinese-traditional palettes) that override every token above via data-palette — the base tokens stay put, a skin just sits on top. Compare them side by side at '
         })}
           <Link href="/appearance">/appearance</Link>
         </p>

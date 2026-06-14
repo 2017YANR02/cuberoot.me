@@ -14,22 +14,19 @@ function BldSplits({ bld, isZh, totalMs }: { bld: NonNullable<Solve['bld']>; isZ
   return (
     <div className="stage-splits-table">
       <div className="stage-row">
-        <span className="stage-name">{tr({ zh: '记忆', en: 'Memo',
-            zhHant: "記憶"
+        <span className="stage-name">{tr({ zh: '记忆', en: 'Memo'
         })}</span>
         <span className="stage-dur">{formatMs(memo)}</span>
         <span className="stage-cum">{formatMs(memo)}</span>
       </div>
       <div className="stage-row">
-        <span className="stage-name">{tr({ zh: '执行', en: 'Execution',
-            zhHant: "執行"
+        <span className="stage-name">{tr({ zh: '执行', en: 'Execution'
         })}</span>
         <span className="stage-dur">{formatMs(exec)}</span>
         <span className="stage-cum">{formatMs(totalMs)}</span>
       </div>
       <div className="stage-row stage-total">
-        <span className="stage-name">{tr({ zh: '总计', en: 'Total',
-            zhHant: "總計"
+        <span className="stage-name">{tr({ zh: '总计', en: 'Total'
         })}</span>
         <span className="stage-dur"></span>
         <span className="stage-cum">{formatMs(totalMs)}</span>
@@ -64,8 +61,7 @@ function StageSplits({ stages, isZh, totalMs }: { stages: NonNullable<Solve['sta
         </div>
       ))}
       <div className="stage-row stage-total">
-        <span className="stage-name">{tr({ zh: '总计', en: 'Total',
-            zhHant: "總計"
+        <span className="stage-name">{tr({ zh: '总计', en: 'Total'
         })}</span>
         <span className="stage-dur"></span>
         <span className="stage-cum">{formatMs(totalMs)}</span>
@@ -143,14 +139,12 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
           {solve.penalty === 'DNF' && ' DNF'}
         </h2>
         <div className="modal-section">
-          <div>{tr({ zh: '原始时间', en: 'Raw time',
-              zhHant: "原始時間"
+          <div>{tr({ zh: '原始时间', en: 'Raw time'
         })}: {formatMs(solve.timeMs)}</div>
           <div>{tr({ zh: '日期', en: 'Date' })}: {dt.toLocaleString()}</div>
         </div>
         <div className="modal-section">
-          <div>{tr({ zh: '打乱', en: 'Scramble',
-              zhHant: "打亂"
+          <div>{tr({ zh: '打乱', en: 'Scramble'
         })}:</div>
           <div className="scramble-text">{solve.scramble}</div>
         </div>
@@ -159,24 +153,21 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
         </div>
         {solve.stages && (
           <div className="modal-section">
-            <h3 className="settings-h3">{tr({ zh: '分阶段成绩', en: 'Stage splits',
-                zhHant: "分階段成績"
+            <h3 className="settings-h3">{tr({ zh: '分阶段成绩', en: 'Stage splits'
             })}</h3>
             <StageSplits stages={solve.stages} isZh={isZh} totalMs={solve.timeMs} />
           </div>
         )}
         {solve.bld && (
           <div className="modal-section">
-            <h3 className="settings-h3">{tr({ zh: '记忆 / 执行', en: 'Memo / Execution',
-                zhHant: "記憶 / 執行"
+            <h3 className="settings-h3">{tr({ zh: '记忆 / 执行', en: 'Memo / Execution'
             })}</h3>
             <BldSplits bld={solve.bld} isZh={isZh} totalMs={solve.timeMs} />
           </div>
         )}
         <div className="modal-section">
           <label>
-            {tr({ zh: '注释', en: 'Comment',
-                zhHant: "註釋"
+            {tr({ zh: '注释', en: 'Comment'
             })}
             <textarea
               className="comment-textarea"
@@ -189,8 +180,7 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
                 setEditing(false);
                 if (comment !== (solve.comment ?? '')) onChangeComment(comment);
               }}
-              placeholder={tr({ zh: '记录此次成绩的备注…', en: 'Notes for this solve…',
-                  zhHant: "記錄此次成績的備註…"
+              placeholder={tr({ zh: '记录此次成绩的备注…', en: 'Notes for this solve…'
             })}
             />
           </label>
@@ -198,16 +188,14 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
         {moveTargets && moveTargets.length > 0 && onMoveToSession && (
           <div className="modal-section">
             <div className="solve-move-row">
-              <span className="solve-move-label">{tr({ zh: '移到分组', en: 'Move to session',
-                  zhHant: "移到分組"
+              <span className="solve-move-label">{tr({ zh: '移到分组', en: 'Move to session'
             })}</span>
               <select
                 className="solve-move-select"
                 value=""
                 onChange={(e) => { const id = e.target.value; if (id) onMoveToSession(id); }}
               >
-                <option value="">{tr({ zh: '选择分组…', en: 'Choose…',
-                    zhHant: "選擇分組…"
+                <option value="">{tr({ zh: '选择分组…', en: 'Choose…'
                 })}</option>
                 {moveTargets.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
@@ -239,18 +227,15 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
           </button>
           {solve.moves && solve.moves.length > 0 && onOpenReconstruct && (
             <button style={actionBtnStyle} onClick={onOpenReconstruct}>
-              {tr({ zh: '查看复盘', en: 'View reconstruct',
-                  zhHant: "檢視覆盤"
+              {tr({ zh: '查看复盘', en: 'View reconstruct'
             })}
             </button>
           )}
           <button className="danger" style={actionBtnStyle} onClick={onDelete}>
-            {tr({ zh: '删除', en: 'Delete',
-                zhHant: "刪除"
+            {tr({ zh: '删除', en: 'Delete'
             })}
           </button>
-          <button style={actionBtnStyle} onClick={onClose}>{tr({ zh: '关闭', en: 'Close',
-              zhHant: "關閉"
+          <button style={actionBtnStyle} onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
         })}</button>
         </div>
       </div>

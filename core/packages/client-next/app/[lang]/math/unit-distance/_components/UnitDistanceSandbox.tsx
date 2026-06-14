@@ -161,7 +161,7 @@ export default function UnitDistanceSandbox() {
       <div className="ud-sandbox-controls">
         <div className="ud-sandbox-presets">
           <button className={preset === 'random' ? 'is-on' : ''} onClick={() => setPreset('random')}>
-            <Shuffle size={14} /> {t('随机', 'Random', "隨機")}
+            <Shuffle size={14} /> {t('随机', 'Random')}
           </button>
           <button className={preset === 'square' ? 'is-on' : ''} onClick={() => setPreset('square')}>
             <Grid3x3 size={14} /> {t('方格', 'Square')}
@@ -186,7 +186,7 @@ export default function UnitDistanceSandbox() {
             type="checkbox" checked={showCircles}
             onChange={e => setShowCircles(e.target.checked)}
           />
-          <span>{t('单位圆提示', 'Unit-circle hints', "單位圓提示")}</span>
+          <span>{t('单位圆提示', 'Unit-circle hints')}</span>
         </label>
       </div>
 
@@ -273,9 +273,7 @@ export default function UnitDistanceSandbox() {
       </div>
 
       <p className="ud-sandbox-hint">
-        {i18n.language === 'zh-Hant' ? ((
-                        <>拖動任意點 — 距離恰好為 1(單位 = {UNIT_PX} px,容差 ±{TOL} px)的對子會立刻畫上一條線。<strong>等邊三角形</strong> 給出最高的區域性 ν/n;切到方格立刻能看出"水平+垂直"兩族,但少了 √2 那一族。</>
-                      )) : (isZh ? (
+        {(isZh ? (
                         <>拖动任意点 — 距离恰好为 1(单位 = {UNIT_PX} px,容差 ±{TOL} px)的对子会立刻画上一条线。<strong>等边三角形</strong> 给出最高的局部 ν/n;切到方格立刻能看出"水平+垂直"两族,但少了 √2 那一族。</>
                       ) : (
                         <>Drag any point. Pairs at distance exactly 1 (unit = {UNIT_PX} px, tol ±{TOL} px) light up. The <strong>triangular</strong> lattice maximises local ν/n; switching to the square lattice loses the diagonal family and drops the count.</>

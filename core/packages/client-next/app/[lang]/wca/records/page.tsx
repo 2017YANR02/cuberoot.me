@@ -49,7 +49,7 @@ type Show = 'history' | 'mixed';
 function RecordsPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('纪录', 'Records', "紀錄");
+  useDocumentTitle('纪录', 'Records');
   const [q, setQ] = useQueryStates(
     {
       show: parseAsString,
@@ -144,12 +144,10 @@ function RecordsPageInner() {
             <ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}
           </Link>
         </div>
-        <h1>{tr({ zh: '纪录', en: 'Records',
-            zhHant: "紀錄"
+        <h1>{tr({ zh: '纪录', en: 'Records'
         })}</h1>
         <p className="wse-subtitle">
-          {tr({ zh: '历史上所有曾被打破的世界 / 大洲 / 国家纪录', en: 'Every world / continental / national record ever set',
-              zhHant: "歷史上所有曾被打破的世界 / 大洲 / 國家紀錄"
+          {tr({ zh: '历史上所有曾被打破的世界 / 大洲 / 国家纪录', en: 'Every world / continental / national record ever set'
         })}
         </p>
       </header>
@@ -161,8 +159,7 @@ function RecordsPageInner() {
               type="button"
               className={show === 'history' ? 'active' : ''}
               onClick={() => update('show', 'history')}
-            >{tr({ zh: '历史', en: 'History',
-                zhHant: "歷史"
+            >{tr({ zh: '历史', en: 'History'
             })}</button>
             <button
               type="button"
@@ -189,15 +186,13 @@ function RecordsPageInner() {
       </div>
 
       <div className="wse-table-wrapper">
-        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...',
-            zhHant: "載入中..."
+        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...'
         })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {bundle && !loading && (
           <>
             {visibleRows.length === 0 && (
-              <div className="wse-state">{tr({ zh: '该区域 / 项目暂无历史纪录', en: 'No historical records for this region / event',
-                  zhHant: "該區域 / 項目暫無歷史紀錄"
+              <div className="wse-state">{tr({ zh: '该区域 / 项目暂无历史纪录', en: 'No historical records for this region / event'
             })}</div>
             )}
 
@@ -251,25 +246,19 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
     <table className="wse-table records-table">
       <thead>
         <tr>
-          <th>{tr({ zh: '类型', en: 'Type',
-              zhHant: "型別"
+          <th>{tr({ zh: '类型', en: 'Type'
         })}</th>
-          {showEvent && <th>{tr({ zh: '项目', en: 'Event',
-              zhHant: "項目"
+          {showEvent && <th>{tr({ zh: '项目', en: 'Event'
         })}</th>}
-          <th className="wse-value-col">{tr({ zh: '单次', en: 'Single',
-              zhHant: "單次"
+          <th className="wse-value-col">{tr({ zh: '单次', en: 'Single'
         })}</th>
           <th className="wse-value-col">{tr({ zh: '平均', en: 'Average' })}</th>
-          <th>{tr({ zh: '选手', en: 'Person',
-              zhHant: "選手"
+          <th>{tr({ zh: '选手', en: 'Person'
         })}</th>
-          <th>{tr({ zh: '比赛', en: 'Competition',
-              zhHant: "比賽"
+          <th>{tr({ zh: '比赛', en: 'Competition'
         })}</th>
           <th>{tr({ zh: '日期', en: 'Date' })}</th>
-          <th className="wse-attempts-col">{tr({ zh: '详细成绩', en: 'Solves',
-              zhHant: "詳細成績"
+          <th className="wse-attempts-col">{tr({ zh: '详细成绩', en: 'Solves'
         })}</th>
         </tr>
       </thead>

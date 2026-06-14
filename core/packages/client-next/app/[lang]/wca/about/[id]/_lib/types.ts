@@ -12,8 +12,6 @@ export interface AboutStep {
   bodyEn: string;
   /** 标红的"最后一步" — 通常是把前面的产物落地 */
   highlight?: boolean;
-    titleZhHant?: string;
-    bodyZhHant?: string;
 }
 
 export interface AboutStat {
@@ -22,8 +20,6 @@ export interface AboutStat {
   labelEn: string;
   hintZh?: string;
   hintEn?: string;
-    labelZhHant?: string;
-    hintZhHant?: string;
 }
 
 export interface AboutFormula {
@@ -35,8 +31,6 @@ export interface AboutFormula {
   /** 公式下方解释 */
   bodyZh?: string;
   bodyEn?: string;
-    labelZhHant?: string;
-    bodyZhHant?: string;
 }
 
 export interface AboutCode {
@@ -47,7 +41,6 @@ export interface AboutCode {
   /** 代码块上方一行中文说明,可选 */
   captionZh?: string;
   captionEn?: string;
-    captionZhHant?: string;
 }
 
 export interface AboutRelated {
@@ -65,8 +58,6 @@ export interface AboutRelated {
   statHref?: string;
   /** 完全外部链接(覆盖前两者) */
   href?: string;
-    titleZhHant?: string;
-    hintZhHant?: string;
 }
 
 export interface AboutSection {
@@ -76,7 +67,6 @@ export interface AboutSection {
   /** 段落主体 — 多段时换数组 */
   bodyZh?: string | string[];
   bodyEn?: string | string[];
-    titleZhHant?: string;
 }
 
 export interface AboutEntry {
@@ -107,7 +97,4 @@ export interface AboutEntry {
   extraSections?: AboutSection[];
   /** 相关统计 / 链接 */
   related?: AboutRelated[];
-    titleZhHant?: string;
-    badgeZhHant?: string;
-    edgesZhHant?: string[];
 }

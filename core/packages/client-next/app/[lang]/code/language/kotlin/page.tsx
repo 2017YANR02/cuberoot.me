@@ -449,7 +449,7 @@ export default function KotlinIntroPage() {
 
   useDocumentTitle(
     'Kotlin : Better Java — 从 Android 一等公民到 Multiplatform 时代',
-    'Kotlin : Better Java — from Android first-class to the Multiplatform era', "Kotlin : Better Java — 從 Android 一等公民到 Multiplatform 時代"
+    'Kotlin : Better Java — from Android first-class to the Multiplatform era'
   );
 
   useEffect(() => {

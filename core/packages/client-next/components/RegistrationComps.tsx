@@ -43,18 +43,18 @@ function weekdayOf(at: number, isZh: boolean): string {
 
 function bucketLabel(key: RegBucketKey): string {
   switch (key) {
-    case 'today': return tr({ zh: '今天', en: 'Today', zhHant: '今天' });
-    case 'tomorrow': return tr({ zh: '明天', en: 'Tomorrow', zhHant: '明天' });
-    case 'dayAfter': return tr({ zh: '后天', en: 'In 2 days', zhHant: '後天' });
-    case 'soon': return tr({ zh: '本周内', en: 'This week', zhHant: '本週內' });
-    case 'later': return tr({ zh: '更晚', en: 'Later', zhHant: '更晚' });
+    case 'today': return tr({ zh: '今天', en: 'Today' });
+    case 'tomorrow': return tr({ zh: '明天', en: 'Tomorrow' });
+    case 'dayAfter': return tr({ zh: '后天', en: 'In 2 days' });
+    case 'soon': return tr({ zh: '本周内', en: 'This week' });
+    case 'later': return tr({ zh: '更晚', en: 'Later' });
   }
 }
 
 function actionWord(kind: RegItem['kind']): string {
-  if (kind === 'closed') return tr({ zh: '报名已截止', en: 'Closed', zhHant: '報名已截止' });
-  if (kind === 'open') return tr({ zh: '开放', en: 'Opens', zhHant: '開放' });
-  return tr({ zh: '截止', en: 'Closes', zhHant: '截止' });
+  if (kind === 'closed') return tr({ zh: '报名已截止', en: 'Closed' });
+  if (kind === 'open') return tr({ zh: '开放', en: 'Opens' });
+  return tr({ zh: '截止', en: 'Closes' });
 }
 
 /** 里程碑的「何时」标签。day 模式:日分组里靠组标题,只补时间细节;followed 模式:无组标题,带相对日。 */
@@ -66,9 +66,9 @@ function whenLabel(item: RegItem, now: number, isZh: boolean, mode: 'day' | 'fol
     if (diff <= 6) return weekdayOf(item.at, isZh);
     return mdOf(item.at);
   }
-  if (diff <= 0) return `${tr({ zh: '今天', en: 'Today', zhHant: '今天' })} ${clockOf(item.at)}`;
-  if (diff === 1) return tr({ zh: '明天', en: 'Tomorrow', zhHant: '明天' });
-  if (diff === 2) return tr({ zh: '后天', en: 'In 2 days', zhHant: '後天' });
+  if (diff <= 0) return `${tr({ zh: '今天', en: 'Today' })} ${clockOf(item.at)}`;
+  if (diff === 1) return tr({ zh: '明天', en: 'Tomorrow' });
+  if (diff === 2) return tr({ zh: '后天', en: 'In 2 days' });
   if (diff <= 6) return weekdayOf(item.at, isZh);
   return mdOf(item.at);
 }
@@ -152,7 +152,7 @@ export function RegistrationView({ comps, isZh, lang, loggedIn, follows, toggle 
         <section className="reg-group">
           <h3 className="reg-group-head reg-group-head--fav">
             <Star size={13} fill="currentColor" aria-hidden="true" />
-            {tr({ zh: '已关注', en: 'Following', zhHant: '已關注' })}
+            {tr({ zh: '已关注', en: 'Following' })}
           </h3>
           <div className="reg-cards">
             {view.followed.map((it) => (
@@ -182,7 +182,7 @@ export function RegistrationView({ comps, isZh, lang, loggedIn, follows, toggle 
       {!loggedIn && view.buckets.length > 0 && (
         <button type="button" className="reg-login-hint" onClick={login}>
           <LogIn size={13} aria-hidden="true" />
-          {tr({ zh: '登录后可盯住想报的比赛', en: 'Sign in to follow competitions', zhHant: '登入後可盯住想報的比賽' })}
+          {tr({ zh: '登录后可盯住想报的比赛', en: 'Sign in to follow competitions' })}
         </button>
       )}
     </div>

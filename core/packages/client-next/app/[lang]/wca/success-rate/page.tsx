@@ -83,24 +83,20 @@ function SuccessRatePageInner() {
           <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}</Link>
         </div>
         <h1 className="wse-title-row">
-          {tr({ zh: '项目成功率', en: 'Event Success Rate',
-              zhHant: "項目成功率"
+          {tr({ zh: '项目成功率', en: 'Event Success Rate'
         })}
           <Link
             href="/wca/about/success-rate"
             className="wse-title-help"
-            title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
-                zhHant: "這頁是幹啥的?"
+            title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
             })}
-            aria-label={tr({ zh: '查看说明', en: 'About this page',
-                zhHant: "檢視說明"
+            aria-label={tr({ zh: '查看说明', en: 'About this page'
             })}
           >
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
         </h1>
-        <p className="wse-subtitle">{tr({ zh: '每位选手在该项目中成功完成的轮次占比(主要看盲拧 / FMC 等失败率高的项目)', en: 'Per-cuber success rate per event (most relevant for BLD / FMC)',
-            zhHant: "每位選手在該項目中成功完成的輪次佔比(主要看盲擰 / FMC 等失敗率高的項目)"
+        <p className="wse-subtitle">{tr({ zh: '每位选手在该项目中成功完成的轮次占比(主要看盲拧 / FMC 等失败率高的项目)', en: 'Per-cuber success rate per event (most relevant for BLD / FMC)'
         })}</p>
       </header>
 
@@ -114,8 +110,7 @@ function SuccessRatePageInner() {
       <div className="wse-filters">
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
-          <label>{tr({ zh: '最小尝试数', en: 'Min attempts',
-              zhHant: "最小嚐試數"
+          <label>{tr({ zh: '最小尝试数', en: 'Min attempts'
         })}</label>
           <select value={minAttempted} onChange={e => update('minAttempted', e.target.value)}>
             {MIN_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
@@ -124,8 +119,7 @@ function SuccessRatePageInner() {
       </div>
 
       <div className="wse-table-wrapper">
-        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...',
-            zhHant: "載入中..."
+        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...'
         })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {data && !loading && (
@@ -135,18 +129,14 @@ function SuccessRatePageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{tr({ zh: '选手', en: 'Person',
-                      zhHant: "選手"
+                  <th>{tr({ zh: '选手', en: 'Person'
                 })}</th>
                   <th className="wse-value-col">{tr({ zh: '成功率', en: 'Rate' })}</th>
-                  <th className="wse-value-col">{tr({ zh: '复原', en: 'Solved',
-                      zhHant: "復原"
+                  <th className="wse-value-col">{tr({ zh: '复原', en: 'Solved'
                 })}</th>
-                  <th className="wse-value-col">{tr({ zh: '尝试', en: 'Attempts',
-                      zhHant: "嘗試"
+                  <th className="wse-value-col">{tr({ zh: '尝试', en: 'Attempts'
                 })}</th>
-                  <th>{tr({ zh: '国家', en: 'Country',
-                      zhHant: "國家"
+                  <th>{tr({ zh: '国家', en: 'Country'
                 })}</th>
                 </tr>
               </thead>

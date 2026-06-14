@@ -67,31 +67,19 @@ interface RowDef {
   en: string;
   hintZh: string;
   hintEn: string;
-    zhHant?: string;
-    hintZhHant?: string;
 }
 
 // Upstream li1..li5 order (edge / corner / parity / flip / twist).
 const ROW_DEFS: RowDef[] = [
-  { id: 'edge', zh: '棱块还原', en: 'Edges', hintZh: '例:XY 为缓冲块-X-Y 的三棱换', hintEn: 'e.g. XY = buffer-X-Y edge 3-cycle',
-      zhHant: "稜塊還原",
-      hintZhHant: "例:XY 為緩衝塊-X-Y 的三稜換"
+  { id: 'edge', zh: '棱块还原', en: 'Edges', hintZh: '例:XY 为缓冲块-X-Y 的三棱换', hintEn: 'e.g. XY = buffer-X-Y edge 3-cycle'
 },
-  { id: 'corner', zh: '角块还原', en: 'Corners', hintZh: '例:ZY 为缓冲块-Z-Y 的三角换', hintEn: 'e.g. ZY = buffer-Z-Y corner 3-cycle',
-      zhHant: "角塊還原",
-      hintZhHant: "例:ZY 為緩衝塊-Z-Y 的三角換"
+  { id: 'corner', zh: '角块还原', en: 'Corners', hintZh: '例:ZY 为缓冲块-Z-Y 的三角换', hintEn: 'e.g. ZY = buffer-Z-Y corner 3-cycle'
 },
-  { id: 'parity', zh: '奇偶还原', en: 'Parity', hintZh: '先棱后角,例:MX 为棱缓冲与 M 交换、角缓冲与 X 交换', hintEn: 'edge then corner, e.g. MX swaps edge-buffer↔M, corner-buffer↔X',
-      zhHant: "奇偶還原",
-      hintZhHant: "先稜后角,例:MX 為稜緩衝與 M 交換、角緩衝與 X 交換"
+  { id: 'parity', zh: '奇偶还原', en: 'Parity', hintZh: '先棱后角,例:MX 为棱缓冲与 M 交换、角缓冲与 X 交换', hintEn: 'edge then corner, e.g. MX swaps edge-buffer↔M, corner-buffer↔X'
 },
-  { id: 'flip', zh: '翻棱编码', en: 'Edge flips', hintZh: '例:NM 为缓冲块与 MN 块翻棱', hintEn: 'e.g. NM = flip buffer with the MN edge',
-      zhHant: "翻稜編碼",
-      hintZhHant: "例:NM 為緩衝塊與 MN 塊翻稜"
+  { id: 'flip', zh: '翻棱编码', en: 'Edge flips', hintZh: '例:NM 为缓冲块与 MN 块翻棱', hintEn: 'e.g. NM = flip buffer with the MN edge'
 },
-  { id: 'twist', zh: '翻角编码', en: 'Corner twists', hintZh: '例:ZX 为缓冲块逆翻与 XYZ 块顺翻', hintEn: 'e.g. ZX = CCW-twist buffer, CW-twist the XYZ corner',
-      zhHant: "翻角編碼",
-      hintZhHant: "例:ZX 為緩衝塊逆翻與 XYZ 塊順翻"
+  { id: 'twist', zh: '翻角编码', en: 'Corner twists', hintZh: '例:ZX 为缓冲块逆翻与 XYZ 块顺翻', hintEn: 'e.g. ZX = CCW-twist buffer, CW-twist the XYZ corner'
 },
 ];
 
@@ -269,7 +257,7 @@ const EMPTY_READ: CodeReadResult = { edges: [], corners: [], flips: '', twists: 
 export default function HelperPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('读码还原助手', 'Read & Restore Helper', "讀碼還原助手");
+  useDocumentTitle('读码还原助手', 'Read & Restore Helper');
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);
@@ -374,8 +362,7 @@ export default function HelperPage(): JSX.Element {
       const out = await mover2scr(moveSeq);
       setGenScramble(out.trim());
     } catch {
-      setGenScramble(tr({ zh: '(生成失败)', en: '(failed)',
-          zhHant: "(生成失敗)"
+      setGenScramble(tr({ zh: '(生成失败)', en: '(failed)'
     }));
     } finally {
       setGenBusy(false);
@@ -389,8 +376,7 @@ export default function HelperPage(): JSX.Element {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      window.prompt(tr({ zh: '复制下面的打乱:', en: 'Copy the scramble below:',
-          zhHant: "複製下面的打亂:"
+      window.prompt(tr({ zh: '复制下面的打乱:', en: 'Copy the scramble below:'
     }), genScramble);
     }
   }, [genScramble, isZh]);
@@ -436,8 +422,7 @@ export default function HelperPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '读码还原助手', en: 'Read & Restore Helper',
-            zhHant: "讀碼還原助手"
+        <h1>{tr({ zh: '读码还原助手', en: 'Read & Restore Helper'
         })}</h1>
       </div>
 
@@ -449,8 +434,7 @@ export default function HelperPage(): JSX.Element {
         {/* ── column 1: scramble input ── */}
         <section className="bld-helper-col">
           <div className="bld-helper-row-head">
-            <span className="bld-section-title">{tr({ zh: '打乱公式', en: 'Scramble',
-                zhHant: "打亂公式"
+            <span className="bld-section-title">{tr({ zh: '打乱公式', en: 'Scramble'
             })}</span>
             <button
               type="button"
@@ -458,8 +442,7 @@ export default function HelperPage(): JSX.Element {
               onClick={randomScramble}
             >
               <Shuffle size={14} />
-              {tr({ zh: '随机打乱', en: 'Random',
-                  zhHant: "隨機打亂"
+              {tr({ zh: '随机打乱', en: 'Random'
             })}
             </button>
           </div>
@@ -483,8 +466,7 @@ export default function HelperPage(): JSX.Element {
           </div>
           {scramble.length === 0 && rawScramble.length > 0 && (
             <p className="bld-modal-msg is-error">
-              {tr({ zh: '无法识别打乱(检查空格或转动记号)', en: 'Unrecognized scramble (check spaces / move tokens)',
-                  zhHant: "無法識別打亂(檢查空格或轉動記號)"
+              {tr({ zh: '无法识别打乱(检查空格或转动记号)', en: 'Unrecognized scramble (check spaces / move tokens)'
             })}
             </p>
           )}
@@ -492,33 +474,26 @@ export default function HelperPage(): JSX.Element {
 
         {/* ── column 2: readouts + restore rows ── */}
         <section className="bld-helper-col">
-          <span className="bld-section-title">{tr({ zh: '读码结果', en: 'Read-code',
-              zhHant: "讀碼結果"
+          <span className="bld-section-title">{tr({ zh: '读码结果', en: 'Read-code'
         })}</span>
           <div className="bld-helper-reads">
-            <LetterReadout label={tr({ zh: '棱块读码', en: 'Edges',
-                zhHant: "稜塊讀碼"
+            <LetterReadout label={tr({ zh: '棱块读码', en: 'Edges'
             })} cells={read.edges} />
             <div className="bld-readout">
-              <span className="bld-readout-label">{tr({ zh: '棱块翻色', en: 'Edge flips',
-                  zhHant: "稜塊翻色"
+              <span className="bld-readout-label">{tr({ zh: '棱块翻色', en: 'Edge flips'
             })}</span>
               <span className={read.flips ? 'bld-readout-cells' : 'bld-readout-empty'}>
-                {read.flips || (tr({ zh: '无', en: 'none',
-                    zhHant: "無"
+                {read.flips || (tr({ zh: '无', en: 'none'
                 }))}
               </span>
             </div>
-            <LetterReadout label={tr({ zh: '角块读码', en: 'Corners',
-                zhHant: "角塊讀碼"
+            <LetterReadout label={tr({ zh: '角块读码', en: 'Corners'
             })} cells={read.corners} />
             <div className="bld-readout">
-              <span className="bld-readout-label">{tr({ zh: '角块翻色', en: 'Corner twists',
-                  zhHant: "角塊翻色"
+              <span className="bld-readout-label">{tr({ zh: '角块翻色', en: 'Corner twists'
             })}</span>
               <span className={read.twists ? 'bld-readout-cells' : 'bld-readout-empty'}>
-                {read.twists || (tr({ zh: '无', en: 'none',
-                    zhHant: "無"
+                {read.twists || (tr({ zh: '无', en: 'none'
                 }))}
               </span>
             </div>
@@ -526,13 +501,11 @@ export default function HelperPage(): JSX.Element {
 
           <div className="bld-helper-restore-head">
             <span className="bld-section-title">
-              {tr({ zh: '请输入还原编码', en: 'Restore codes',
-                  zhHant: "請輸入還原編碼"
+              {tr({ zh: '请输入还原编码', en: 'Restore codes'
             })}
             </span>
             <span className="bld-helper-restore-hint">
-              {tr({ zh: '(拖拽可交换执行顺序)', en: '(drag to reorder execution)',
-                  zhHant: "(拖拽可交換執行順序)"
+              {tr({ zh: '(拖拽可交换执行顺序)', en: '(drag to reorder execution)'
             })}
             </span>
           </div>
@@ -553,16 +526,15 @@ export default function HelperPage(): JSX.Element {
                     <GripVertical size={14} />
                   </span>
                   <div className="bld-restore-main">
-                    <label className="bld-restore-label" title={i18n.language === 'zh-Hant' ? (row.hintZhHant ?? row.hintZh) : (isZh ? row.hintZh : row.hintEn)}>
-                      {(i18n.language === 'zh-Hant' ? (row.zhHant ?? row.zh) : (i18n.language.startsWith('zh') ? row.zh : row.en))}
+                    <label className="bld-restore-label" title={(isZh ? row.hintZh : row.hintEn)}>
+                      {((i18n.language.startsWith('zh') ? row.zh : row.en))}
                     </label>
                     <div className="bld-input-wrap">
                       <input
                         className="bld-input bld-restore-input"
                         value={codes[row.id]}
                         onChange={(e) => setCode(row.id, e.target.value)}
-                        placeholder={tr({ zh: '编码', en: 'codes',
-                            zhHant: "編碼"
+                        placeholder={tr({ zh: '编码', en: 'codes'
                         })}
                         spellCheck={false}
                         autoCapitalize="characters"
@@ -588,8 +560,7 @@ export default function HelperPage(): JSX.Element {
           {solving && (
             <span className="bld-spinner">
               <Loader2 size={15} />
-              {tr({ zh: '推导还原…', en: 'Solving…',
-                  zhHant: "推導還原…"
+              {tr({ zh: '推导还原…', en: 'Solving…'
             })}
             </span>
           )}
@@ -600,8 +571,7 @@ export default function HelperPage(): JSX.Element {
 
         {/* ── column 3: 3D cube + generate scramble ── */}
         <section className="bld-helper-col">
-          <span className="bld-section-title">{tr({ zh: '3D 预览', en: '3D preview',
-              zhHant: "3D 預覽"
+          <span className="bld-section-title">{tr({ zh: '3D 预览', en: '3D preview'
         })}</span>
           <div className="bld-cube-wrap">
             <TwistySection puzzle="3x3x3" scramble={setupAlg} alg={comms} />
@@ -616,17 +586,14 @@ export default function HelperPage(): JSX.Element {
                 disabled={genBusy || scramble.length === 0}
               >
                 {genBusy ? <Loader2 size={15} className="bld-inline-spin" /> : <Wand2 size={15} />}
-                {tr({ zh: '生成当前状态打乱', en: 'Generate scramble from state',
-                    zhHant: "生成當前狀態打亂"
+                {tr({ zh: '生成当前状态打乱', en: 'Generate scramble from state'
                 })}
               </button>
               {genScramble && (
                 <button type="button" className="bld-copy-btn" onClick={copyGen}>
                   {copied ? <Check size={15} /> : <Copy size={15} />}
-                  {copied ? (tr({ zh: '已复制', en: 'Copied',
-                      zhHant: "已複製"
-                })) : (tr({ zh: '复制', en: 'Copy',
-                    zhHant: "複製"
+                  {copied ? (tr({ zh: '已复制', en: 'Copied'
+                })) : (tr({ zh: '复制', en: 'Copy'
                 }))}
                 </button>
               )}

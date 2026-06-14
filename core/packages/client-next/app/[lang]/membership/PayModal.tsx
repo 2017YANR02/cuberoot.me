@@ -84,23 +84,20 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
   return (
     <div className="mem-pay-backdrop" onClick={onClose}>
       <div className="mem-pay" onClick={(e) => e.stopPropagation()}>
-        <button className="mem-pay-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close',
-            zhHant: "關閉"
+        <button className="mem-pay-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close'
         })}><X size={18} /></button>
         <h2 className="mem-pay-title">{isZh ? plan.nameZh : plan.nameEn}</h2>
         <div className="mem-pay-price">{price(plan)}</div>
 
         {!order ? (
           <>
-            <p className="mem-pay-hint">{tr({ zh: '选择支付方式', en: 'Choose a payment method',
-                zhHant: "選擇支付方式"
+            <p className="mem-pay-hint">{tr({ zh: '选择支付方式', en: 'Choose a payment method'
             })}</p>
             <div className="mem-pay-channels">
               {showAlipay && (
                 <button className="mem-pay-ch mem-pay-ch-alipay" disabled={creating} onClick={() => start('alipay')}>
                   {creating && channel === 'alipay' ? <Loader2 size={16} className="mem-spin" /> : null}
-                  {tr({ zh: '支付宝', en: 'Alipay',
-                      zhHant: "支付寶"
+                  {tr({ zh: '支付宝', en: 'Alipay'
                   })}
                 </button>
               )}
@@ -120,11 +117,9 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
                 <img src={order.qrcode} alt="payment QR" width={220} height={220} />
                 <figcaption>
                   {channel === 'wechat'
-                    ? tr({ zh: '请用微信扫码支付', en: 'Scan with WeChat to pay',
-                        zhHant: "請用微信掃碼支付"
+                    ? tr({ zh: '请用微信扫码支付', en: 'Scan with WeChat to pay'
                     })
-                    : tr({ zh: '请用支付宝扫码支付', en: 'Scan with Alipay to pay',
-                        zhHant: "請用支付寶掃碼支付"
+                    : tr({ zh: '请用支付宝扫码支付', en: 'Scan with Alipay to pay'
                     })}
                 </figcaption>
               </figure>
@@ -133,25 +128,21 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
                 <Smartphone size={16} /> {tr({ zh: '前往支付', en: 'Go to checkout' })}
               </a>
             ) : (
-              <div className="mem-pay-err">{tr({ zh: '未获取到支付链接', en: 'No payment link returned',
-                  zhHant: "未獲取到支付連結"
+              <div className="mem-pay-err">{tr({ zh: '未获取到支付链接', en: 'No payment link returned'
             })}</div>
             )}
             {order.url && order.qrcode && (
               <a className="mem-pay-go-link" href={order.url} target="_blank" rel="noopener noreferrer">
-                <Smartphone size={13} /> {tr({ zh: '在手机上打开', en: 'Open on phone',
-                    zhHant: "在手機上開啟"
+                <Smartphone size={13} /> {tr({ zh: '在手机上打开', en: 'Open on phone'
                 })}
               </a>
             )}
             <div className="mem-pay-waiting">
-              <Loader2 size={14} className="mem-spin" /> {tr({ zh: '等待支付结果…', en: 'Waiting for payment…',
-                  zhHant: "等待支付結果…"
+              <Loader2 size={14} className="mem-spin" /> {tr({ zh: '等待支付结果…', en: 'Waiting for payment…'
             })}
             </div>
             <p className="mem-pay-tip">
-              <Check size={12} /> {tr({ zh: '支付完成后本页会自动开通,可稍候片刻', en: 'Membership activates automatically once paid — give it a moment',
-                  zhHant: "支付完成後本頁會自動開通,可稍候片刻"
+              <Check size={12} /> {tr({ zh: '支付完成后本页会自动开通,可稍候片刻', en: 'Membership activates automatically once paid — give it a moment'
             })}
             </p>
           </>

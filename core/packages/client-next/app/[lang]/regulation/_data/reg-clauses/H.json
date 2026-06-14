@@ -6,114 +6,98 @@
   },
   "title": {
     "en": "Multi-Blind Solving",
-    "zh": "多盲",
-    "zhHant": "多盲"
+    "zh": "多盲"
   },
   "clauses": [
     {
       "id": "H1",
       "depth": 0,
       "en": "Standard blindfolded solving procedures are followed, as described in [Article B](regulations:article:B) (Blindfolded Solving). Additional regulations that supersede the corresponding procedures in [Article B](regulations:article:B) are described below.",
-      "zh": "主要遵循盲拧规则，见[规则B](regulations:article:B)（盲拧）。与[规则B](regulations:article:B)中的盲拧规则不同的附加规则见下文。",
-      "zhHant": "主要遵循盲擰規則，見[規則B](regulations:article:B)（盲擰）。與[規則B](regulations:article:B)中的盲擰規則不同的附加規則見下文。"
+      "zh": "主要遵循盲拧规则，见[规则B](regulations:article:B)（盲拧）。与[规则B](regulations:article:B)中的盲拧规则不同的附加规则见下文。"
     },
     {
       "id": "H1+",
       "depth": 0,
       "en": "[ADDITION] If a puzzle with a duplicate scramble is found during an attempt, the puzzle may be re-scrambled using a different scramble sequence, at the discretion of the WCA Delegate.",
-      "zh": "[附加] 如果在尝试中发现一个重复打乱的魔方，这个魔方可以被使用另一个打乱重新打乱，由WCA代表决定。",
-      "zhHant": "[附加] 如果在嘗試中發現一個重複打亂的魔方，這個魔方可以被使用另一個打亂重新打亂，由WCA代表決定。"
+      "zh": "[附加] 如果在尝试中发现一个重复打乱的魔方，这个魔方可以被使用另一个打乱重新打乱，由WCA代表决定。"
     },
     {
       "id": "H1a",
       "depth": 1,
       "en": "Before an attempt, the competitor must submit to the organization team the number of puzzles (at least 2) they wish to attempt.",
-      "zh": "在开始还原前，选手必须向主办团队提交他希望尝试还原魔方的个数（至少两个）。",
-      "zhHant": "在開始還原前，選手必須向主辦團隊提交他希望嘗試還原魔方的個數（至少兩個）。"
+      "zh": "在开始还原前，选手必须向主办团队提交他希望尝试还原魔方的个数（至少两个）。"
     },
     {
       "id": "H1a1",
       "depth": 2,
       "en": "A competitor is not permitted to change the number of puzzles after submitting their number to the organization team.",
-      "zh": "在提交以后，选手不允许改变还原个数。",
-      "zhHant": "在提交以後，選手不允許改變還原個數。"
+      "zh": "在提交以后，选手不允许改变还原个数。"
     },
     {
       "id": "H1a2",
       "depth": 2,
       "en": "A competitor may request to keep their submission private until all competitors have submitted their numbers. Once all competitors have reported their numbers, the information becomes public (e.g. a competitor may ask for the numbers of any other competitors before starting their attempt).",
-      "zh": "选手可以要求将提交的还原个数保密，直到所有选手都提交了还原个数。一旦所有选手都完成提交，信息将被公开（例如某个选手可以在他开始还原前询问任何其他选手的个数）。",
-      "zhHant": "選手可以要求將提交的還原個數保密，直到所有選手都提交了還原個數。一旦所有選手都完成提交，資訊將被公開（例如某個選手可以在他開始還原前詢問任何其他選手的個數）。"
+      "zh": "选手可以要求将提交的还原个数保密，直到所有选手都提交了还原个数。一旦所有选手都完成提交，信息将被公开（例如某个选手可以在他开始还原前询问任何其他选手的个数）。"
     },
     {
       "id": "H1a3",
       "depth": 2,
       "en": "Before the attempt, the scrambled puzzles must be placed on the table in an arbitrary orientation while ensuring they remain completely covered. The puzzles should be arranged in a shape as square as possible and should not be stacked (e.g. 8 puzzles should be arranged in 2 rows with 3 puzzles and 1 row with 2 puzzles and in 1 layer only).",
-      "zh": "开始还原前，打乱好的魔方必须朝向随机地被放在桌上，并保证被遮挡住。魔方应该被摆放成尽量方形并且不应该堆叠起来（例如：8个魔方应该被摆放成2行3个魔方以及一行两个魔方，并被放置成一层）。",
-      "zhHant": "開始還原前，打亂好的魔方必須朝向隨機地被放在桌上，並保證被遮擋住。魔方應該被擺放成儘量方形並且不應該堆疊起來（例如：8個魔方應該被擺放成2行3個魔方以及一行兩個魔方，並被放置成一層）。"
+      "zh": "开始还原前，打乱好的魔方必须朝向随机地被放在桌上，并保证被遮挡住。魔方应该被摆放成尽量方形并且不应该堆叠起来（例如：8个魔方应该被摆放成2行3个魔方以及一行两个魔方，并被放置成一层）。"
     },
     {
       "id": "H1b",
       "depth": 1,
       "en": "If a competitor is attempting fewer than 6 puzzles, they are allotted a time limit of 10 minutes times the number of puzzles in the attempt, else the time limit is 60 minutes. Exception: a competitor who arrives late may compete with a reduced time limit, at the discretion of the WCA Delegate. This competitor's attempt must not be scrambled using the same scramble sequences as competitors who have already completed their attempt (see [Regulation H1f](regulations:regulation:H1f)).",
-      "zh": "如果某个选手尝试还原小于6个魔方，则他的还原时限是10分钟乘以还原个数，否则时限为60分钟。例外：迟到的裁判可以在更短的时限内参与比赛，由WCA代表决定。此选手的尝试禁止使用和已完成尝试的选手相同的打乱（见[规则H1f](regulations:regulation:H1f)）。",
-      "zhHant": "如果某個選手嘗試還原小於6個魔方，則他的還原時限是10分鐘乘以還原個數，否則時限為60分鐘。例外：遲到的裁判可以在更短的時限內參與比賽，由WCA代表決定。此選手的嘗試禁止使用和已完成嘗試的選手相同的打亂（見[規則H1f](regulations:regulation:H1f)）。"
+      "zh": "如果某个选手尝试还原小于6个魔方，则他的还原时限是10分钟乘以还原个数，否则时限为60分钟。例外：迟到的裁判可以在更短的时限内参与比赛，由WCA代表决定。此选手的尝试禁止使用和已完成尝试的选手相同的打乱（见[规则H1f](regulations:regulation:H1f)）。"
     },
     {
       "id": "H1b1",
       "depth": 2,
       "en": "The competitor may signal the end of the solve at any time. If and when the time limit is reached, the judge stops the attempt and the attempt is then scored; the time limit for the attempt counts as the original recorded time.",
-      "zh": "选手可以在还原的任何时候示意结束还原。如果达到时限，裁判停止选手的还原并记录成绩，还原时间记为时限。",
-      "zhHant": "選手可以在還原的任何時候示意結束還原。如果達到時限，裁判停止選手的還原並記錄成績，還原時間記為時限。"
+      "zh": "选手可以在还原的任何时候示意结束还原。如果达到时限，裁判停止选手的还原并记录成绩，还原时间记为时限。"
     },
     {
       "id": "H1b1+",
       "depth": 2,
       "en": "[REMINDER] The attempt is not disqualified for reaching the time limit, due to exceptions for 3x3x3 Multi-Blind (see [Regulation A1a4](regulations:regulation:A1a4) and [Regulation A1a5](regulations:regulation:A1a5)).",
-      "zh": "[提醒] 到达时限后，整个尝试不会被取消成绩（DNF），由三阶多盲规则的例外限定（见[规则A1a4](regulations:regulation:A1a4)和[规则A1a5](regulations:regulation:A1a5)）。",
-      "zhHant": "[提醒] 到達時限後，整個嘗試不會被取消成績（DNF），由三階多盲規則的例外限定（見[規則A1a4](regulations:regulation:A1a4)和[規則A1a5](regulations:regulation:A1a5)）。"
+      "zh": "[提醒] 到达时限后，整个尝试不会被取消成绩（DNF），由三阶多盲规则的例外限定（见[规则A1a4](regulations:regulation:A1a4)和[规则A1a5](regulations:regulation:A1a5)）。"
     },
     {
       "id": "H1d",
       "depth": 1,
       "en": "Time penalties for the puzzles of the attempt are cumulative.",
-      "zh": "所有魔方的加罚时间累加。",
-      "zhHant": "所有魔方的加罰時間累加。"
+      "zh": "所有魔方的加罚时间累加。"
     },
     {
       "id": "H1d+",
       "depth": 1,
       "en": "[EXAMPLE] Example: Suppose a competitor attempts 10 cubes, stops the solve with a time of 59:57, and has two time penalties. The time of the final result is 59:57 + 2*2 = 60:01 (also see [Regulation A1a5](regulations:regulation:A1a5)).",
-      "zh": "[举例] 举例：如果选手尝试10个魔方，在59：57秒结束还原，并且有两次加罚时间，那么最终成绩的时间是59：57 + 2*2 = 60:01（或见[规则A1a5](regulations:regulation:A1a5)）",
-      "zhHant": "[舉例] 舉例：如果選手嘗試10個魔方，在59：57秒結束還原，並且有兩次加罰時間，那麼最終成績的時間是59：57 + 2*2 = 60:01（或見[規則A1a5](regulations:regulation:A1a5)）"
+      "zh": "[举例] 举例：如果选手尝试10个魔方，在59：57秒结束还原，并且有两次加罚时间，那么最终成绩的时间是59：57 + 2*2 = 60:01（或见[规则A1a5](regulations:regulation:A1a5)）"
     },
     {
       "id": "H1d++",
       "depth": 1,
       "en": "[EXAMPLE] Example: Suppose a competitor attempts 10 cubes, the judge stops the competitor at 60 minutes, and the attempt has two time penalties. The time of the final result is 60:00 + 2*2 = 60:04.",
-      "zh": "[举例] 举例：如果选手尝试10个魔方，在60分的时候裁判由于超时结束该选手的还原，并且这些还原中有两次加罚时间，那么最终的时间是60:00 + 2*2 = 60:04。",
-      "zhHant": "[舉例] 舉例：如果選手嘗試10個魔方，在60分的時候裁判由於超時結束該選手的還原，並且這些還原中有兩次加罰時間，那麼最終的時間是60:00 + 2*2 = 60:04。"
+      "zh": "[举例] 举例：如果选手尝试10个魔方，在60分的时候裁判由于超时结束该选手的还原，并且这些还原中有两次加罚时间，那么最终的时间是60:00 + 2*2 = 60:04。"
     },
     {
       "id": "H1e",
       "depth": 1,
       "en": "Any disqualification penalty during an attempt applies to the entire attempt (DNF). Exception: for penalties relating to individual puzzles (e.g. making a move during memorization, using an illegal puzzle), those puzzles may be considered unsolved at the end of the attempt instead of disqualifying the entire attempt, at the discretion of the WCA Delegate.",
-      "zh": "在尝试中任何导致取消成绩的判罚都将导致整个尝试被取消成绩（DNF）。例外：对于仅和单个魔方相关的惩罚（例如在记忆过程转动魔方、使用不合规的魔方等），这些魔方可以在尝试结束时被算作未还原，而不是取消整个尝试的成绩，由WCA代表决定。",
-      "zhHant": "在嘗試中任何導致取消成績的判罰都將導致整個嘗試被取消成績（DNF）。例外：對於僅和單個魔方相關的懲罰（例如在記憶過程轉動魔方、使用不合規的魔方等），這些魔方可以在嘗試結束時被算作未還原，而不是取消整個嘗試的成績，由WCA代表決定。"
+      "zh": "在尝试中任何导致取消成绩的判罚都将导致整个尝试被取消成绩（DNF）。例外：对于仅和单个魔方相关的惩罚（例如在记忆过程转动魔方、使用不合规的魔方等），这些魔方可以在尝试结束时被算作未还原，而不是取消整个尝试的成绩，由WCA代表决定。"
     },
     {
       "id": "H1f",
       "depth": 1,
       "en": "If it is planned for competitors to start at significantly different times such that there is a risk that information about the scrambles may have become known to competitors, attempts starting later must use different scramble sequences.",
-      "zh": "如果计划让选手在明显不同的时间开始比赛，且存在选手获知打乱序列的风险，则后开始的尝试必须使用不同的打乱序列。",
-      "zhHant": "如果計劃讓選手在明顯不同的時間開始比賽，且存在選手獲知打亂序列的風險，則後開始的嘗試必須使用不同的打亂序列。"
+      "zh": "如果计划让选手在明显不同的时间开始比赛，且存在选手获知打乱序列的风险，则后开始的尝试必须使用不同的打乱序列。"
     },
     {
       "id": "H2",
       "depth": 0,
       "en": "The competitor may self supply a flat covering (e.g. a mat or a cloth) for the surface, at the discretion of the WCA Delegate. If the competitor wishes to do so, the request must be made at the same time as submitting the number of puzzles (see [Regulation H1a](regulations:regulation:H1a)).",
-      "zh": "选手可以选择自备一个平整的遮盖物（例如一张垫子或者布料）来遮盖魔方，由WCA代表决定。如果选手想这么做，则他必须在提交魔方数量的时候提出（见[规则H1a](regulations:regulation:H1a)）",
-      "zhHant": "選手可以選擇自備一個平整的遮蓋物（例如一張墊子或者布料）來遮蓋魔方，由WCA代表決定。如果選手想這麼做，則他必須在提交魔方數量的時候提出（見[規則H1a](regulations:regulation:H1a)）"
+      "zh": "选手可以选择自备一个平整的遮盖物（例如一张垫子或者布料）来遮盖魔方，由WCA代表决定。如果选手想这么做，则他必须在提交魔方数量的时候提出（见[规则H1a](regulations:regulation:H1a)）"
     }
   ]
 }

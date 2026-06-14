@@ -12,7 +12,7 @@ import i18n from "@/i18n/i18n-client";
 interface Props { isZh: boolean }
 
 export default function VertexTransitiveProof({ isZh }: Props) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const [n, setN] = useState(8); // cycle has 2n vertices
   const [xIdx, setXIdx] = useState(3); // 0..2n-1; u=0, v=n
 
@@ -91,7 +91,7 @@ export default function VertexTransitiveProof({ isZh }: Props) {
       <div className="dg-controls">
         <div className="dg-ctrl">
           <div className="dg-ctrl-label">
-            <span>{t('环上节点数 ', 'Cycle size ', "環上節點數 ")}<TeX src="|V| = 2n" /></span>
+            <span>{t('环上节点数 ', 'Cycle size ')}<TeX src="|V| = 2n" /></span>
             <span className="dg-ctrl-value">{V}</span>
           </div>
           <input type="range" min={3} max={20} value={n} onChange={(e) => {
@@ -102,7 +102,7 @@ export default function VertexTransitiveProof({ isZh }: Props) {
         </div>
         <div className="dg-ctrl">
           <div className="dg-ctrl-label">
-            <span>{t('第三个顶点 ', 'Third vertex ', "第三個頂點 ")}<TeX src="x" /></span>
+            <span>{t('第三个顶点 ', 'Third vertex ')}<TeX src="x" /></span>
             <span className="dg-ctrl-value">x = {x}</span>
           </div>
           <input type="range" min={1} max={V - 1} value={x === 0 ? 1 : x}
@@ -153,18 +153,16 @@ export default function VertexTransitiveProof({ isZh }: Props) {
           <div><TeX src={`d(u, x) + d(v, x) \\;=\\; ${sum} \\;\\ge\\; ${D} \\;=\\; D`} /></div>
           <hr style={{ border: 0, borderTop: '1px solid var(--dg-border)', margin: '8px 0' }} />
           <div style={{ fontSize: '0.86rem' }}>
-            <span className="is-key">{t('精确均值', 'Exact mean', "精確均值")}</span> <TeX src={`\\mu \\;=\\; \\frac{1}{2n-1}\\sum_{k=1}^{2n-1} \\min(k, 2n-k) \\;=\\; ${mu.toFixed(4)}`} />
+            <span className="is-key">{t('精确均值', 'Exact mean')}</span> <TeX src={`\\mu \\;=\\; \\frac{1}{2n-1}\\sum_{k=1}^{2n-1} \\min(k, 2n-k) \\;=\\; ${mu.toFixed(4)}`} />
           </div>
           <div style={{ fontSize: '0.86rem' }}>
-            <span className="is-key">{t('对比', 'Compare', "對比")}</span> <TeX src={`2\\mu \\;=\\; ${(2 * mu).toFixed(4)} \\;>\\; ${D} \\;=\\; D`} /> &nbsp; <span style={{ color: 'var(--dg-ok)' }}>✓</span>
+            <span className="is-key">{t('对比', 'Compare')}</span> <TeX src={`2\\mu \\;=\\; ${(2 * mu).toFixed(4)} \\;>\\; ${D} \\;=\\; D`} /> &nbsp; <span style={{ color: 'var(--dg-ok)' }}>✓</span>
           </div>
         </div>
       </div>
 
       <p className="dg-sampler-note">
-        {i18n.language === 'zh-Hant' ? ((
-                        <>把 <TeX src="x" /> 拖一圈,每個位置都滿足 <TeX src="d(u,x) + d(v,x) \ge D" />(三角不等式)。把所有 <TeX src="x" /> 求和除以 <TeX src="|V|-1" /> 就得 <TeX src="2\mu \ge |V|\,D/(|V|-1) > D" />,Theorem 2 在 <TeX src="C_{2n}" /> 上就這麼幹淨。</>
-                      )) : (isZh ? (
+        {(isZh ? (
                         <>把 <TeX src="x" /> 拖一圈,每个位置都满足 <TeX src="d(u,x) + d(v,x) \ge D" />(三角不等式)。把所有 <TeX src="x" /> 求和除以 <TeX src="|V|-1" /> 就得 <TeX src="2\mu \ge |V|\,D/(|V|-1) > D" />,Theorem 2 在 <TeX src="C_{2n}" /> 上就这么干净。</>
                       ) : (
                         <>Drag <TeX src="x" /> around the cycle: every position satisfies <TeX src="d(u,x) + d(v,x) \ge D" /> (triangle inequality). Summing over all <TeX src="x" /> and dividing by <TeX src="|V|-1" /> gives <TeX src="2\mu \ge |V|\,D/(|V|-1) > D" /> — that's Theorem 2 on <TeX src="C_{2n}" />, on a single page.</>

@@ -362,8 +362,7 @@ function NPolygonPanel({ lang }: { lang: 'zh' | 'en' }) {
             style={{ fontFamily: 'var(--mono)', fontSize: 9 }}
             fill="var(--ink-faint)">
             {f === 0
-              ? (tr({ zh: '旋转', en: 'rotation',
-                  zhHant: "旋轉"
+              ? (tr({ zh: '旋转', en: 'rotation'
             }))
               : (tr({ zh: '反射', en: 'reflection' }))}
           </text>
@@ -401,11 +400,9 @@ function NPolygonPanel({ lang }: { lang: 'zh' | 'en' }) {
             </div>
             <div style={{ color: f === 1 ? 'var(--accent-2)' : 'var(--ink-faint)', fontSize: 11, marginTop: 4 }}>
               {f === 1
-                ? (tr({ zh: '蓝色=反射，手性已翻转', en: 'blue = reflection, orientation flipped',
-                    zhHant: "藍色=反射，手性已翻轉"
+                ? (tr({ zh: '蓝色=反射，手性已翻转', en: 'blue = reflection, orientation flipped'
                 }))
-                : (tr({ zh: '红色=旋转，手性保持', en: 'red = rotation, orientation preserved',
-                    zhHant: "紅色=旋轉，手性保持"
+                : (tr({ zh: '红色=旋转，手性保持', en: 'red = rotation, orientation preserved'
                 }))}
             </div>
           </div>
@@ -419,8 +416,7 @@ function NPolygonPanel({ lang }: { lang: 'zh' | 'en' }) {
         </div>
         <div className="gt-result-row">
           <span className="gt-result-label"><L zh="类型" en="Type" /></span>
-          <span className="gt-result-val">{f === 0 ? (tr({ zh: '旋转', en: 'rotation',
-              zhHant: "旋轉"
+          <span className="gt-result-val">{f === 0 ? (tr({ zh: '旋转', en: 'rotation'
         })) : (tr({ zh: '反射', en: 'reflection' }))}</span>
         </div>
         <div className="gt-result-row">
@@ -528,8 +524,7 @@ function CayleyTablePanel({ lang }: { lang: 'zh' | 'en' }) {
           <button key={h} className={`gt-chip${highlight === h ? ' gt-chip-active' : ''}`}
             onClick={() => setHighlight(h)}>
             {h === 'none'
-              ? (tr({ zh: '无', en: 'none',
-                  zhHant: "無"
+              ? (tr({ zh: '无', en: 'none'
             }))
               : h === 'rotations'
               ? (lang === 'zh' ? `C_${n} 旋转` : `C_${n} rotations`)
@@ -649,11 +644,9 @@ function CayleyTablePanel({ lang }: { lang: 'zh' | 'en' }) {
             <span className="gt-result-label"><L zh="g·h = h·g?" en="g·h = h·g?" /></span>
             <span className="gt-result-val" style={{ color: table[hoveredCell.i][hoveredCell.j] === table[hoveredCell.j][hoveredCell.i] ? 'var(--green)' : 'var(--warn)' }}>
               {table[hoveredCell.i][hoveredCell.j] === table[hoveredCell.j][hoveredCell.i]
-                ? (tr({ zh: '相等 (交换)', en: 'yes (commute)',
-                    zhHant: "相等 (交換)"
+                ? (tr({ zh: '相等 (交换)', en: 'yes (commute)'
                 }))
-                : (tr({ zh: '不等 (非交换)', en: 'no (non-commute)',
-                    zhHant: "不等 (非交換)"
+                : (tr({ zh: '不等 (非交换)', en: 'no (non-commute)'
                 }))}
             </span>
           </div>
@@ -804,10 +797,8 @@ function AxisAndConjugationPanel({ lang }: { lang: 'zh' | 'en' }) {
           onChange={e => { setN(+e.target.value); setSelectedAxis(null); setConjK(1); setVerified(false); }}
           style={{ flex: 1 }} />
         <span className="gt-result-val" style={{ minWidth: 60 }}>
-          n={n} ({isEven ? (tr({ zh: '偶数', en: 'even',
-              zhHant: "偶數"
-        })) : (tr({ zh: '奇数', en: 'odd',
-            zhHant: "奇數"
+          n={n} ({isEven ? (tr({ zh: '偶数', en: 'even'
+        })) : (tr({ zh: '奇数', en: 'odd'
         }))})
         </span>
       </div>
@@ -928,14 +919,11 @@ function AxisAndConjugationPanel({ lang }: { lang: 'zh' | 'en' }) {
             <div>
               <div><L zh="选中轴" en="Selected axis" /> {selectedAxis}</div>
               <div><L zh="类型" en="Type" />: {axisIsVertexType(selectedAxis)
-                ? (tr({ zh: '顶点-边中点轴', en: 'vertex-to-edge-midpoint',
-                    zhHant: "頂點-邊中點軸"
+                ? (tr({ zh: '顶点-边中点轴', en: 'vertex-to-edge-midpoint'
                 }))
-                : (tr({ zh: '边中点-边中点轴', en: 'edge-midpoint to edge-midpoint',
-                    zhHant: "邊中點-邊中點軸"
+                : (tr({ zh: '边中点-边中点轴', en: 'edge-midpoint to edge-midpoint'
                 }))}</div>
-              <div><L zh="固定顶点" en="Fixed vertices" />: {selAxisFixed.length > 0 ? selAxisFixed.join(', ') : (tr({ zh: '无（固定边中点）', en: 'none (fixes edge midpoints)',
-                  zhHant: "無（固定邊中點）"
+              <div><L zh="固定顶点" en="Fixed vertices" />: {selAxisFixed.length > 0 ? selAxisFixed.join(', ') : (tr({ zh: '无（固定边中点）', en: 'none (fixes edge midpoints)'
             }))}</div>
               <div><L zh="反射置换" en="Reflection perm" />: j ↦ ({`2×${selectedAxis} − j`}) mod {n}</div>
             </div>
@@ -946,10 +934,8 @@ function AxisAndConjugationPanel({ lang }: { lang: 'zh' | 'en' }) {
           )}
 
           <div style={{ marginTop: 16, fontSize: 12 }}>
-            <div><L zh="n 奇偶" en="n parity" />: {isEven ? (tr({ zh: '偶数', en: 'even',
-                zhHant: "偶數"
-            })) : (tr({ zh: '奇数', en: 'odd',
-                zhHant: "奇數"
+            <div><L zh="n 奇偶" en="n parity" />: {isEven ? (tr({ zh: '偶数', en: 'even'
+            })) : (tr({ zh: '奇数', en: 'odd'
             }))}</div>
             <div><L zh="反射共轭类数" en="Reflection conjugacy classes" />: {isEven ? 2 : 1}</div>
             <div><L zh="共轭类总数" en="Total conjugacy classes" />: {isEven ? (n + 6) / 2 : (n + 3) / 2}</div>
@@ -1014,30 +1000,22 @@ function FactsTable({ lang }: { lang: 'zh' | 'en' }) {
   const subgroupCount = divisors(n).length + sigma(n);
 
   const rows = [
-    { label: tr({ zh: '群阶', en: 'Group order',
-        zhHant: "群階"
+    { label: tr({ zh: '群阶', en: 'Group order'
     }), val: `|D_n| = ${2 * n}`, formula: '2n' },
-    { label: tr({ zh: '旋转子群', en: 'Rotation subgroup',
-        zhHant: "旋轉子群"
+    { label: tr({ zh: '旋转子群', en: 'Rotation subgroup'
     }), val: `C_${n}`, formula: 'C_n ◁ D_n' },
     { label: tr({ zh: '中心 |Z(D_n)|', en: 'Center |Z(D_n)|' }), val: String(centerOrder), formula: isEven ? '{e, r^{n/2}}' : '{e}' },
-    { label: tr({ zh: '阶为 2 的元素数', en: 'Elements of order 2',
-        zhHant: "階為 2 的元素數"
+    { label: tr({ zh: '阶为 2 的元素数', en: 'Elements of order 2'
     }), val: String(order2Count), formula: isEven ? 'n+1 (n reflections + r^{n/2})' : 'n (all reflections)' },
-    { label: tr({ zh: '共轭类数', en: 'Conjugacy classes',
-        zhHant: "共軛類數"
+    { label: tr({ zh: '共轭类数', en: 'Conjugacy classes'
     }), val: String(conjClasses), formula: isEven ? '(n+6)/2' : '(n+3)/2' },
-    { label: tr({ zh: '反射共轭类数', en: 'Reflection conj. classes',
-        zhHant: "反射共軛類數"
+    { label: tr({ zh: '反射共轭类数', en: 'Reflection conj. classes'
     }), val: isEven ? '2' : '1', formula: isEven ? '2 (vertex + edge-midpoint)' : '1' },
-    { label: tr({ zh: '换位子群 |[D_n,D_n]|', en: 'Commutator subgroup order',
-        zhHant: "換位子群 |[D_n,D_n]|"
+    { label: tr({ zh: '换位子群 |[D_n,D_n]|', en: 'Commutator subgroup order'
     }), val: String(commutatorOrder), formula: isEven ? 'n/2 (⟨r²⟩, NOT ⟨r⟩!)' : 'n (⟨r²⟩=⟨r⟩)' },
-    { label: tr({ zh: '阿贝尔化阶', en: 'Abelianization order',
-        zhHant: "阿貝爾化階"
+    { label: tr({ zh: '阿贝尔化阶', en: 'Abelianization order'
     }), val: String(abelianizationOrder), formula: isEven ? 'C₂×C₂' : 'C₂' },
-    { label: tr({ zh: '子群总数 d(n)+σ(n)', en: 'Total subgroups d(n)+σ(n)',
-        zhHant: "子群總數 d(n)+σ(n)"
+    { label: tr({ zh: '子群总数 d(n)+σ(n)', en: 'Total subgroups d(n)+σ(n)'
     }), val: String(subgroupCount), formula: `d(${n})=${divisors(n).length} + σ(${n})=${sigma(n)}` },
   ];
 

@@ -51,15 +51,13 @@ export default function SolverModal({ isZh, onClose }: Props) {
     setSolution(null);
     setCopied(false);
     if (mode === 'facelet') {
-      setErr(tr({ zh: '暂不支持 Facelet 模式，请用 Scramble 模式。', en: 'Facelet mode not supported. Use Scramble mode.',
-          zhHant: "暫不支援 Facelet 模式，請用 Scramble 模式。"
+      setErr(tr({ zh: '暂不支持 Facelet 模式，请用 Scramble 模式。', en: 'Facelet mode not supported. Use Scramble mode.'
     }));
       return;
     }
     const txt = input.trim();
     if (!txt) {
-      setErr(tr({ zh: '请输入打乱', en: 'Enter a scramble',
-          zhHant: "請輸入打亂"
+      setErr(tr({ zh: '请输入打乱', en: 'Enter a scramble'
     }));
       return;
     }
@@ -67,7 +65,7 @@ export default function SolverModal({ isZh, onClose }: Props) {
     try {
       moves = parseMoves(txt);
     } catch (e) {
-      setErr(i18n.language === 'zh-Hant' ? (`打亂解析失敗：${(e as Error).message}`) : (isZh ? `打乱解析失败：${(e as Error).message}` : `Parse error: ${(e as Error).message}`));
+      setErr((isZh ? `打乱解析失败：${(e as Error).message}` : `Parse error: ${(e as Error).message}`));
       return;
     }
     setSolving(true);
@@ -77,7 +75,7 @@ export default function SolverModal({ isZh, onClose }: Props) {
       const sol = await solve333(state);
       setSolution(sol.trim());
     } catch (e) {
-      setErr(i18n.language === 'zh-Hant' ? (`求解失敗：${(e as Error).message}`) : (isZh ? `求解失败：${(e as Error).message}` : `Solve failed: ${(e as Error).message}`));
+      setErr((isZh ? `求解失败：${(e as Error).message}` : `Solve failed: ${(e as Error).message}`));
     } finally {
       setSolving(false);
     }
@@ -121,8 +119,7 @@ export default function SolverModal({ isZh, onClose }: Props) {
                 checked={mode === 'scramble'}
                 onChange={() => setMode('scramble')}
               />
-              {tr({ zh: '打乱', en: 'Scramble',
-                  zhHant: "打亂"
+              {tr({ zh: '打乱', en: 'Scramble'
             })}
             </label>
             <label className="manual-radio disabled">
@@ -134,8 +131,7 @@ export default function SolverModal({ isZh, onClose }: Props) {
                 disabled
                 onChange={() => setMode('facelet')}
               />
-              {tr({ zh: 'Facelet（54 字符，暂不支持）', en: 'Facelet (54 chars, not supported)',
-                  zhHant: "Facelet（54 字元，暫不支援）"
+              {tr({ zh: 'Facelet（54 字符，暂不支持）', en: 'Facelet (54 chars, not supported)'
             })}
             </label>
           </div>
@@ -143,8 +139,7 @@ export default function SolverModal({ isZh, onClose }: Props) {
 
         <div className="modal-section">
           <label className="manual-label">
-            {tr({ zh: '输入', en: 'Input',
-                zhHant: "輸入"
+            {tr({ zh: '输入', en: 'Input'
             })}
             <textarea
               ref={firstInputRef}
@@ -163,8 +158,7 @@ export default function SolverModal({ isZh, onClose }: Props) {
 
         {!ready && (
           <div className="modal-section solver-loading">
-            {tr({ zh: '正在加载求解器…', en: 'Loading solver…',
-                zhHant: "正在載入求解器…"
+            {tr({ zh: '正在加载求解器…', en: 'Loading solver…'
             })}
           </div>
         )}
@@ -175,8 +169,7 @@ export default function SolverModal({ isZh, onClose }: Props) {
             <div className="scramble-text">{solution}</div>
             {reverseStr && (
               <div className="solver-rev">
-                <div className="solver-rev-lbl">{tr({ zh: '逆序（作为打乱）：', en: 'Inverse (as scramble):',
-                    zhHant: "逆序（作為打亂）："
+                <div className="solver-rev-lbl">{tr({ zh: '逆序（作为打乱）：', en: 'Inverse (as scramble):'
                 })}</div>
                 <div className="scramble-text">{reverseStr}</div>
               </div>
@@ -193,14 +186,11 @@ export default function SolverModal({ isZh, onClose }: Props) {
             {solving ? (tr({ zh: '求解中…', en: 'Solving…' })) : (tr({ zh: '求解', en: 'Solve' }))}
           </button>
           {solution && (
-            <button onClick={onCopy}>{copied ? (tr({ zh: '已复制', en: 'Copied',
-                zhHant: "已複製"
-            })) : (tr({ zh: '复制', en: 'Copy',
-                zhHant: "複製"
+            <button onClick={onCopy}>{copied ? (tr({ zh: '已复制', en: 'Copied'
+            })) : (tr({ zh: '复制', en: 'Copy'
             }))}</button>
           )}
-          <button onClick={onClose}>{tr({ zh: '关闭', en: 'Close',
-              zhHant: "關閉"
+          <button onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
         })}</button>
         </div>
       </div>

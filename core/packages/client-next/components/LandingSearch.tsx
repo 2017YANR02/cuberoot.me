@@ -72,20 +72,6 @@ const PLACEHOLDERS_ZH = [
   '哪个赛事即将开始?',
   '想学什么新方法?',
 ];
-const PLACEHOLDERS_ZH__Hant = [
-  '今天從哪裡開始?',
-  '最近在參加什麼比賽?',
-  '想查誰的成績?',
-  '哪個項目的世界紀錄?',
-  '想看哪一年的統計?',
-  '哪個公式還沒背會?',
-  '今天練 PLL 還是 OLL?',
-  '上週末誰拿了冠軍?',
-  '想覆盤哪場比賽?',
-  '中國選手誰最快?',
-  '哪個賽事即將開始?',
-  '想學什麼新方法?',
-];
 const PLACEHOLDERS_EN = [
   'Where to start today?',
   'Which comp are you at?',
@@ -107,7 +93,7 @@ function dayOfYear(d: Date): number {
 }
 
 function rotatingPlaceholder(isZh: boolean): string {
-  const list = i18n.language === 'zh-Hant' ? PLACEHOLDERS_ZH__Hant : (isZh ? PLACEHOLDERS_ZH : PLACEHOLDERS_EN);
+  const list = (isZh ? PLACEHOLDERS_ZH : PLACEHOLDERS_EN);
   return list[dayOfYear(new Date()) % list.length];
 }
 
@@ -274,13 +260,12 @@ export default function LandingSearch({ cards, lang }: Props) {
     <section className="landing-search-section">
       <div className="landing-search-section-header">
         <UserRound size={14} strokeWidth={1.75} />
-        <h3>{tr({ zh: '选手', en: 'Persons',
-            zhHant: "選手"
+        <h3>{tr({ zh: '选手', en: 'Persons'
         })}</h3>
         {!expandedPersons && personMatches.length > INITIAL_RENDER_CAP && (
           <HeaderMore
             overflow={personMatches.length - INITIAL_RENDER_CAP}
-            title={i18n.language === 'zh-Hant' ? (`展開全部 ${personMatches.length} 位`) : (isZh ? `展开全部 ${personMatches.length} 位` : `Expand all ${personMatches.length}`)}
+            title={(isZh ? `展开全部 ${personMatches.length} 位` : `Expand all ${personMatches.length}`)}
             onClick={() => setExpandedPersons(true)}
           />
         )}
@@ -321,11 +306,9 @@ export default function LandingSearch({ cards, lang }: Props) {
           type="button"
           className="landing-search-plus"
           onClick={() => setPlusMenuOpen(v => !v)}
-          title={tr({ zh: '智能粘贴', en: 'Smart paste',
-              zhHant: "智慧貼上"
+          title={tr({ zh: '智能粘贴', en: 'Smart paste'
         })}
-          aria-label={tr({ zh: '添加', en: 'Add',
-              zhHant: "新增"
+          aria-label={tr({ zh: '添加', en: 'Add'
         })}
           aria-expanded={plusMenuOpen}
         >
@@ -349,8 +332,7 @@ export default function LandingSearch({ cards, lang }: Props) {
               goFirstResult();
             }
           }}
-          placeholder={listening ? (tr({ zh: '请说…', en: 'Listening…',
-              zhHant: "請說…"
+          placeholder={listening ? (tr({ zh: '请说…', en: 'Listening…'
         })) : rotatingPlaceholder(isZh)}
         />
         {query !== '' && (
@@ -367,11 +349,9 @@ export default function LandingSearch({ cards, lang }: Props) {
             <button type="button" role="menuitem" onClick={onSmartPaste}>
               <Clipboard size={14} strokeWidth={1.75} />
               <div className="landing-search-plus-menu-text">
-                <span className="landing-search-plus-menu-title">{tr({ zh: '智能粘贴', en: 'Smart paste',
-                    zhHant: "智慧貼上"
+                <span className="landing-search-plus-menu-title">{tr({ zh: '智能粘贴', en: 'Smart paste'
                 })}</span>
-                <span className="landing-search-plus-menu-sub">{tr({ zh: 'WCA URL / 打乱 / 公式', en: 'WCA URL / scramble / alg',
-                    zhHant: "WCA URL / 打亂 / 公式"
+                <span className="landing-search-plus-menu-sub">{tr({ zh: 'WCA URL / 打乱 / 公式', en: 'WCA URL / scramble / alg'
                 })}</span>
               </div>
             </button>
@@ -383,18 +363,14 @@ export default function LandingSearch({ cards, lang }: Props) {
             className={`landing-search-mic${listening ? ' is-listening' : ''}`}
             onClick={() => { if (listening) micStop(); else { setOpen(true); micStart(); } }}
             title={listening
-              ? (tr({ zh: '停止录音', en: 'Stop',
-                  zhHant: "停止錄音"
+              ? (tr({ zh: '停止录音', en: 'Stop'
             }))
-              : (tr({ zh: '语音输入', en: 'Voice input',
-                  zhHant: "語音輸入"
+              : (tr({ zh: '语音输入', en: 'Voice input'
             }))}
             aria-label={listening
-              ? (tr({ zh: '停止录音', en: 'Stop',
-                  zhHant: "停止錄音"
+              ? (tr({ zh: '停止录音', en: 'Stop'
             }))
-              : (tr({ zh: '语音输入', en: 'Voice input',
-                  zhHant: "語音輸入"
+              : (tr({ zh: '语音输入', en: 'Voice input'
             }))}
           >
             <Mic size={16} strokeWidth={1.75} />
@@ -416,9 +392,8 @@ export default function LandingSearch({ cards, lang }: Props) {
                   className="landing-search-item"
                   onClick={closeAfter}
                 >
-                  <span className="landing-search-item-name">{i18n.language === 'zh-Hant' ? (`${yearMatch} 年比賽日曆`) : (isZh ? `${yearMatch} 年比赛日历` : `${yearMatch} competitions`)}</span>
-                  <span className="landing-search-item-meta">{tr({ zh: '查看该年所有比赛', en: 'All competitions that year',
-                      zhHant: "檢視該年所有比賽"
+                  <span className="landing-search-item-name">{(isZh ? `${yearMatch} 年比赛日历` : `${yearMatch} competitions`)}</span>
+                  <span className="landing-search-item-meta">{tr({ zh: '查看该年所有比赛', en: 'All competitions that year'
                 })}</span>
                 </Link>
               </div>
@@ -428,8 +403,7 @@ export default function LandingSearch({ cards, lang }: Props) {
             <section className="landing-search-section">
               <div className="landing-search-section-header">
                 <Sparkles size={14} strokeWidth={1.75} />
-                <h3>{tr({ zh: '智能识别', en: 'Smart',
-                    zhHant: "智慧識別"
+                <h3>{tr({ zh: '智能识别', en: 'Smart'
                 })}</h3>
               </div>
               <div className="landing-search-grid">
@@ -438,7 +412,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                   className="landing-search-item"
                   onClick={() => goPasteIntent(pasteIntent)}
                 >
-                  <span className="landing-search-item-name">{i18n.language === 'zh-Hant' ? (pasteIntent.labelZhHant ?? pasteIntent.labelZh) : (isZh ? pasteIntent.labelZh : pasteIntent.labelEn)}</span>
+                  <span className="landing-search-item-name">{(isZh ? pasteIntent.labelZh : pasteIntent.labelEn)}</span>
                   <span className="landing-search-item-meta">
                     {query.trim().slice(0, 60)}{query.trim().length > 60 ? '…' : ''}
                   </span>
@@ -455,8 +429,7 @@ export default function LandingSearch({ cards, lang }: Props) {
             <section className="landing-search-section">
               <div className="landing-search-section-header">
                 <LayoutGrid size={14} strokeWidth={1.75} />
-                <h3>{tr({ zh: '页面', en: 'Pages',
-                    zhHant: "頁面"
+                <h3>{tr({ zh: '页面', en: 'Pages'
                 })}</h3>
               </div>
               <div className="landing-search-grid">
@@ -467,8 +440,8 @@ export default function LandingSearch({ cards, lang }: Props) {
                     className="landing-search-item"
                     onClick={() => goCard(c)}
                   >
-                    <span className="landing-search-item-name">{i18n.language === 'zh-Hant' ? (c.nameZhHant ?? c.nameZh) : (isZh ? c.nameZh : c.nameEn)}</span>
-                    <span className="landing-search-item-meta">{i18n.language === 'zh-Hant' ? (c.sectionTitleZhHant ?? c.sectionTitleZh) : (isZh ? c.sectionTitleZh : c.sectionTitleEn)}</span>
+                    <span className="landing-search-item-name">{(isZh ? c.nameZh : c.nameEn)}</span>
+                    <span className="landing-search-item-meta">{(isZh ? c.sectionTitleZh : c.sectionTitleEn)}</span>
                   </button>
                 ))}
               </div>
@@ -489,7 +462,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
-                    <span className="landing-search-item-name">{(i18n.language === 'zh-Hant' ? (it.zhHant ?? it.zh) : (i18n.language.startsWith('zh') ? it.zh : it.en))}</span>
+                    <span className="landing-search-item-name">{((i18n.language.startsWith('zh') ? it.zh : it.en))}</span>
                   </Link>
                 ))}
               </div>
@@ -500,8 +473,7 @@ export default function LandingSearch({ cards, lang }: Props) {
             <section className="landing-search-section">
               <div className="landing-search-section-header">
                 <Search size={14} strokeWidth={1.75} />
-                <h3>{tr({ zh: '查询', en: 'Lookup',
-                    zhHant: "查詢"
+                <h3>{tr({ zh: '查询', en: 'Lookup'
                 })}</h3>
               </div>
               <div className="landing-search-grid">
@@ -512,7 +484,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
-                    <span className="landing-search-item-name">{(i18n.language === 'zh-Hant' ? (it.zhHant ?? it.zh) : (i18n.language.startsWith('zh') ? it.zh : it.en))}</span>
+                    <span className="landing-search-item-name">{((i18n.language.startsWith('zh') ? it.zh : it.en))}</span>
                   </Link>
                 ))}
               </div>
@@ -525,7 +497,7 @@ export default function LandingSearch({ cards, lang }: Props) {
               <section key={cat.nameEn} className="landing-search-section">
                 <div className="landing-search-section-header">
                   {Icon && <Icon size={14} strokeWidth={1.75} />}
-                  <h3>{i18n.language === 'zh-Hant' ? (cat.nameZhHant ?? cat.nameZh) : (isZh ? cat.nameZh : cat.nameEn)}</h3>
+                  <h3>{(isZh ? cat.nameZh : cat.nameEn)}</h3>
                 </div>
                 <div className="landing-search-grid">
                   {items.map(it => {
@@ -539,13 +511,13 @@ export default function LandingSearch({ cards, lang }: Props) {
                           className="landing-search-item"
                           onClick={closeAfter}
                         >
-                          <span className="landing-search-item-name">{i18n.language === 'zh-Hant' ? (s.titleZhHant ?? s.titleZh) : (isZh ? s.titleZh : s.titleEn)}</span>
+                          <span className="landing-search-item-name">{(isZh ? s.titleZh : s.titleEn)}</span>
                         </Link>
                       );
                     }
                     const { parent, metric } = it;
-                    const parentTitle = i18n.language === 'zh-Hant' ? (parent.titleZhHant ?? parent.titleZh) : (isZh ? parent.titleZh : parent.titleEn);
-                    const metricLabel = METRIC_LABEL_OVERRIDE[metric.labelEn] ?? (i18n.language === 'zh-Hant' ? (metric.labelZhHant ?? metric.labelZh) : (isZh ? metric.labelZh : metric.labelEn));
+                    const parentTitle = (isZh ? parent.titleZh : parent.titleEn);
+                    const metricLabel = METRIC_LABEL_OVERRIDE[metric.labelEn] ?? ((isZh ? metric.labelZh : metric.labelEn));
                     return (
                       <Link
                         key={`m:${parent.id}:${metric.id}`}
@@ -567,8 +539,7 @@ export default function LandingSearch({ cards, lang }: Props) {
             <section className="landing-search-section">
               <div className="landing-search-section-header">
                 <BookOpen size={14} strokeWidth={1.75} />
-                <h3>{tr({ zh: '算法说明', en: 'About',
-                    zhHant: "演算法說明"
+                <h3>{tr({ zh: '算法说明', en: 'About'
                 })}</h3>
               </div>
               <div className="landing-search-grid">
@@ -580,7 +551,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
-                    <span className="landing-search-item-name">{i18n.language === 'zh-Hant' ? (a.titleZhHant ?? a.titleZh) : (isZh ? a.titleZh : a.titleEn)}</span>
+                    <span className="landing-search-item-name">{(isZh ? a.titleZh : a.titleEn)}</span>
                   </Link>
                 ))}
               </div>
@@ -591,8 +562,7 @@ export default function LandingSearch({ cards, lang }: Props) {
             <section className="landing-search-section">
               <div className="landing-search-section-header">
                 <CodeIcon size={14} strokeWidth={1.75} />
-                <h3>{tr({ zh: '技术栈', en: 'Stack',
-                    zhHant: "技術棧"
+                <h3>{tr({ zh: '技术栈', en: 'Stack'
                 })}</h3>
               </div>
               <div className="landing-search-grid">
@@ -616,13 +586,12 @@ export default function LandingSearch({ cards, lang }: Props) {
             <section className="landing-search-section">
               <div className="landing-search-section-header">
                 <BookA size={14} strokeWidth={1.75} />
-                <h3>{tr({ zh: '术语', en: 'Glossary',
-                    zhHant: "術語"
+                <h3>{tr({ zh: '术语', en: 'Glossary'
                 })}</h3>
                 {!expandedGlossary && glossaryMatches.length > INITIAL_RENDER_CAP && (
                   <HeaderMore
                     overflow={glossaryMatches.length - INITIAL_RENDER_CAP}
-                    title={i18n.language === 'zh-Hant' ? (`展開全部 ${glossaryMatches.length} 條`) : (isZh ? `展开全部 ${glossaryMatches.length} 条` : `Expand all ${glossaryMatches.length}`)}
+                    title={(isZh ? `展开全部 ${glossaryMatches.length} 条` : `Expand all ${glossaryMatches.length}`)}
                     onClick={() => setExpandedGlossary(true)}
                   />
                 )}
@@ -647,8 +616,7 @@ export default function LandingSearch({ cards, lang }: Props) {
             <section className="landing-search-section">
               <div className="landing-search-section-header">
                 <Library size={14} strokeWidth={1.75} />
-                <h3>{tr({ zh: '公式库', en: 'Algorithms',
-                    zhHant: "公式庫"
+                <h3>{tr({ zh: '公式库', en: 'Algorithms'
                 })}</h3>
               </div>
               <div className="landing-search-grid">
@@ -675,13 +643,12 @@ export default function LandingSearch({ cards, lang }: Props) {
             <section className="landing-search-section">
               <div className="landing-search-section-header">
                 <CalendarDays size={14} strokeWidth={1.75} />
-                <h3>{tr({ zh: '比赛', en: 'Competitions',
-                    zhHant: "比賽"
+                <h3>{tr({ zh: '比赛', en: 'Competitions'
                 })}</h3>
                 {compMatches.length > COMP_INITIAL_CAP && (
                   <HeaderMore
                     overflow={compMatches.length - COMP_INITIAL_CAP}
-                    title={i18n.language === 'zh-Hant' ? (`檢視全部 ${compMatches.length} 場`) : (isZh ? `查看全部 ${compMatches.length} 场` : `View all ${compMatches.length}`)}
+                    title={(isZh ? `查看全部 ${compMatches.length} 场` : `View all ${compMatches.length}`)}
                     href={langHref(`/wca/comp`, `view=list&q=${encodeURIComponent(q)}`)}
                     onClick={closeAfter}
                   />
@@ -717,13 +684,12 @@ export default function LandingSearch({ cards, lang }: Props) {
             <section className="landing-search-section">
               <div className="landing-search-section-header">
                 <ScanSearch size={14} strokeWidth={1.75} />
-                <h3>{tr({ zh: '复盘', en: 'Recons',
-                    zhHant: "覆盤"
+                <h3>{tr({ zh: '复盘', en: 'Recons'
                 })}</h3>
                 {!expandedRecons && reconMatches.length > RECON_INITIAL_CAP && (
                   <HeaderMore
                     overflow={reconMatches.length - RECON_INITIAL_CAP}
-                    title={i18n.language === 'zh-Hant' ? (`展開全部 ${reconMatches.length} 條`) : (isZh ? `展开全部 ${reconMatches.length} 条` : `Expand all ${reconMatches.length}`)}
+                    title={(isZh ? `展开全部 ${reconMatches.length} 条` : `Expand all ${reconMatches.length}`)}
                     onClick={() => setExpandedRecons(true)}
                   />
                 )}
@@ -761,15 +727,13 @@ export default function LandingSearch({ cards, lang }: Props) {
 
           {totalCount === 0 && !pasteIntent && !yearMatch && (xLoaded || !xSearchEnabled) && (
             <div className="landing-search-empty">
-              {tr({ zh: '未找到匹配项', en: 'No matches found.',
-                  zhHant: "未找到匹配項"
+              {tr({ zh: '未找到匹配项', en: 'No matches found.'
             })}
             </div>
           )}
           {totalCount === 0 && !pasteIntent && !yearMatch && xSearchEnabled && !xLoaded && (
             <div className="landing-search-empty">
-              {tr({ zh: '搜索中…', en: 'Searching…',
-                  zhHant: "搜尋中…"
+              {tr({ zh: '搜索中…', en: 'Searching…'
             })}
             </div>
           )}

@@ -31,10 +31,8 @@ const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 interface StatItem { id: string; titleEn: string; titleZh: string
-    titleZhHant?: string;
  }
 interface StatCategory { nameEn: string; nameZh: string; iconName?: string; stats: StatItem[]
-    nameZhHant?: string;
  }
 interface IndexData { categories: StatCategory[] }
 
@@ -42,54 +40,41 @@ const TOOLS = '__tools__';
 const LOOKUP = '__lookup__';
 
 const WCA_TOOLS: { path: string; zh: string; en: string; Icon: LucideIcon
-    zhHant?: string;
  }[] = [
-  { path: '/wca/comp',       zh: '比赛',     en: 'Comp',         Icon: Radio,
-      zhHant: "比賽"
+  { path: '/wca/comp',       zh: '比赛',     en: 'Comp',         Icon: Radio
 },
-  { path: '/wca/viz',        zh: '分布',     en: 'Distribution', Icon: LineChart,
-      zhHant: "分佈"
+  { path: '/wca/viz',        zh: '分布',     en: 'Distribution', Icon: LineChart
 },
-  { path: '/wca/prediction', zh: '预测',     en: 'Prediction',   Icon: TrendingDown,
-      zhHant: "預測"
+  { path: '/wca/prediction', zh: '预测',     en: 'Prediction',   Icon: TrendingDown
 },
-  { path: '/nemesizer',      zh: '宿敌',     en: 'Nemesizer',    Icon: Target,
-      zhHant: "宿敵"
+  { path: '/nemesizer',      zh: '宿敌',     en: 'Nemesizer',    Icon: Target
 },
-  { path: '/calc',           zh: '计算器',   en: 'Calculator',   Icon: Calculator,
-      zhHant: "計算器"
+  { path: '/calc',           zh: '计算器',   en: 'Calculator',   Icon: Calculator
 },
 ];
 
 const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; extraQuery?: string
-    zhHant?: string;
  }[] = [
-  { path: '/wca/records',         zh: '纪录',         en: 'Records',         Icon: Trophy,
-      zhHant: "紀錄"
+  { path: '/wca/records',         zh: '纪录',         en: 'Records',         Icon: Trophy
 },
   { path: '/wca/all-results',     zh: '排名',         en: 'Rankings',        Icon: ListOrdered },
-  { path: '/wca/cohort-ranks',    zh: '届别排名',     en: 'Cohort Ranks',    Icon: Users,
-      zhHant: "屆別排名"
+  { path: '/wca/cohort-ranks',    zh: '届别排名',     en: 'Cohort Ranks',    Icon: Users
 },
   { path: '/wca/success-rate',    zh: '完成率',       en: 'Success Rate',    Icon: Percent },
-  { path: '/wca/all-events-done', zh: '全项目达成',   en: 'All Events Done', Icon: LayoutGrid,
-      zhHant: "全項目達成"
+  { path: '/wca/all-events-done', zh: '全项目达成',   en: 'All Events Done', Icon: LayoutGrid
 },
-  { path: '/wca/grand-slam',      zh: '大满贯',       en: 'Grand Slam',      Icon: Crown,
-      zhHant: "大滿貫"
+  { path: '/wca/grand-slam',      zh: '大满贯',       en: 'Grand Slam',      Icon: Crown
 },
-  { path: '/wca/historical',      zh: '历史排名',     en: 'Historical Ranks', Icon: History,
-      zhHant: "歷史排名"
+  { path: '/wca/historical',      zh: '历史排名',     en: 'Historical Ranks', Icon: History
 },
-  { path: '/wca/fun-stats',       zh: '趣味统计',     en: 'Fun Stats',       Icon: Sparkles,
-      zhHant: "趣味統計"
+  { path: '/wca/fun-stats',       zh: '趣味统计',     en: 'Fun Stats',       Icon: Sparkles
 },
-  { path: '/wca/result-watch',    zh: '成绩变更',     en: 'Result Changes',  Icon: BellRing, zhHant: '成績變更' },
+  { path: '/wca/result-watch',    zh: '成绩变更',     en: 'Result Changes',  Icon: BellRing },
 ];
 
 export default function WcaStatsIndex() {
   const { i18n } = useTranslation();
-  useDocumentTitle('WCA 统计', 'WCA Statistics', "WCA 統計");
+  useDocumentTitle('WCA 统计', 'WCA Statistics');
   const [data, setData] = useState<IndexData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -175,8 +160,7 @@ export default function WcaStatsIndex() {
   if (loading) {
     return (
       <div className="wca-stats-index">
-        <div className="wca-stats-index-status">{tr({ zh: '加载中...', en: 'Loading...',
-            zhHant: "載入中..."
+        <div className="wca-stats-index-status">{tr({ zh: '加载中...', en: 'Loading...'
         })}</div>
       </div>
     );
@@ -186,8 +170,7 @@ export default function WcaStatsIndex() {
     return (
       <div className="wca-stats-index">
         <div className="wca-stats-index-status wca-stats-index-status-error">
-          <h2>{tr({ zh: '加载失败', en: 'Failed to load',
-              zhHant: "載入失敗"
+          <h2>{tr({ zh: '加载失败', en: 'Failed to load'
         })}</h2>
           <p>{error || 'Unknown error'}</p>
         </div>
@@ -196,12 +179,10 @@ export default function WcaStatsIndex() {
   }
 
   type Section ={ key: string; zh: string; en: string; Icon?: LucideIcon; cat?: StatCategory
-      zhHant?: string;
  };
   const sections: Section[] = [
     { key: TOOLS, zh: '工具', en: 'Tools', Icon: Wrench },
-    { key: LOOKUP, zh: '查询', en: 'Lookup', Icon: Search,
-        zhHant: "查詢"
+    { key: LOOKUP, zh: '查询', en: 'Lookup', Icon: Search
     },
     ...data.categories.map(cat => ({
       key: cat.nameEn, zh: cat.nameZh, en: cat.nameEn, Icon: ICON_MAP[cat.iconName || ''], cat,
@@ -219,8 +200,7 @@ export default function WcaStatsIndex() {
         <div>
           <div className="wca-stats-index-eyebrow">WCA Statistics</div>
           <h1 className="wca-stats-index-title">
-            {tr({ zh: 'WCA 统计', en: 'WCA Statistics',
-                zhHant: "WCA 統計"
+            {tr({ zh: 'WCA 统计', en: 'WCA Statistics'
             })}
           </h1>
         </div>
@@ -233,10 +213,10 @@ export default function WcaStatsIndex() {
               key={sec.key}
               className={`wca-stats-index-tab ${activeKey === sec.key ? 'active' : ''}`}
               onClick={() => jumpTo(sec.key)}
-              title={(i18n.language === 'zh-Hant' ? (sec.zhHant ?? sec.zh) : (i18n.language.startsWith('zh') ? sec.zh : sec.en))}
+              title={((i18n.language.startsWith('zh') ? sec.zh : sec.en))}
             >
               {sec.Icon && <sec.Icon size={14} strokeWidth={1.75} />}
-              <span>{(i18n.language === 'zh-Hant' ? (sec.zhHant ?? sec.zh) : (i18n.language.startsWith('zh') ? sec.zh : sec.en))}</span>
+              <span>{((i18n.language.startsWith('zh') ? sec.zh : sec.en))}</span>
             </button>
           ))}
         </div>
@@ -253,7 +233,7 @@ export default function WcaStatsIndex() {
           >
             <div className="wca-stats-index-section-header">
               {sec.Icon && <sec.Icon size={18} strokeWidth={1.75} />}
-              <h2>{(i18n.language === 'zh-Hant' ? (sec.zhHant ?? sec.zh) : (i18n.language.startsWith('zh') ? sec.zh : sec.en))}</h2>
+              <h2>{((i18n.language.startsWith('zh') ? sec.zh : sec.en))}</h2>
             </div>
 
             {sec.key === TOOLS && (
@@ -261,7 +241,7 @@ export default function WcaStatsIndex() {
                 {WCA_TOOLS.map(it => (
                   <Link key={it.path} href={it.path} className="wca-tool-card">
                     <it.Icon size={28} strokeWidth={1.5} />
-                    <span>{(i18n.language === 'zh-Hant' ? (it.zhHant ?? it.zh) : (i18n.language.startsWith('zh') ? it.zh : it.en))}</span>
+                    <span>{((i18n.language.startsWith('zh') ? it.zh : it.en))}</span>
                   </Link>
                 ))}
               </div>
@@ -274,7 +254,7 @@ export default function WcaStatsIndex() {
                   return (
                     <Link key={`${it.path}|${it.extraQuery ?? ''}`} href={to} className="wca-tool-card">
                       <it.Icon size={28} strokeWidth={1.5} />
-                      <span>{(i18n.language === 'zh-Hant' ? (it.zhHant ?? it.zh) : (i18n.language.startsWith('zh') ? it.zh : it.en))}</span>
+                      <span>{((i18n.language.startsWith('zh') ? it.zh : it.en))}</span>
                     </Link>
                   );
                 })}
@@ -292,7 +272,7 @@ export default function WcaStatsIndex() {
                       className="wca-stat-card"
                     >
                       {StatIcon && <StatIcon size={18} strokeWidth={1.5} />}
-                      <span>{i18n.language === 'zh-Hant' ? (s.titleZhHant ?? s.titleZh) : (isZh ? s.titleZh : s.titleEn)}</span>
+                      <span>{(isZh ? s.titleZh : s.titleEn)}</span>
                     </Link>
                   );
                 })}
@@ -302,13 +282,11 @@ export default function WcaStatsIndex() {
         ))}
         <footer className="wca-stats-index-footer">
           <span>
-            {tr({ zh: '数据来源 ', en: 'Data from ',
-                zhHant: "資料來源 "
+            {tr({ zh: '数据来源 ', en: 'Data from '
             })}
             <a href="https://www.worldcubeassociation.org/" target="_blank" rel="noopener noreferrer">WCA</a>
           </span>
-          <Link href="/about" prefetch={false}>{tr({ zh: '关于', en: 'About',
-              zhHant: "關於"
+          <Link href="/about" prefetch={false}>{tr({ zh: '关于', en: 'About'
         })}</Link>
           <a href="https://github.com/RuiminYan/cuberoot.me" target="_blank" rel="noopener noreferrer">GitHub</a>
         </footer>

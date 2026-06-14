@@ -128,8 +128,7 @@ export function SimButtons() {
     <>
       <div className="controls">
         {/* NOTE: 隐藏 rand-fill 按钮 — numpad Rand 和此处都触发 */}
-        <button id="rand-fill" style={{ display: 'none' }} onClick={handleRandFill}>{tr({ zh: '随机', en: 'Rand',
-            zhHant: "隨機"
+        <button id="rand-fill" style={{ display: 'none' }} onClick={handleRandFill}>{tr({ zh: '随机', en: 'Rand'
         })}</button>
         {/* NOTE: 隐藏 clear-all 按钮 — Numpad 长按 ⌫ 联动触发 */}
         <button id="clear-all" style={{ display: 'none' }} onClick={clearAll}>{tr({ zh: '清空', en: 'Clear' })}</button>
@@ -180,36 +179,7 @@ export function SimButtons() {
           <div className="info-modal">
             <button className="info-modal-close" onClick={() => setShowInfo(false)}>&times;</button>
             <div className="info-modal-body">
-              {i18n.language === 'zh-Hant' ? ((
-                                          <>
-                                            <p><strong>📊 PA 豎條（右側）</strong> — 右側豎條顯示從最好可能平均（BPA，底部）到最差可能平均（WPA，頂部）的範圍。拖動頂端或底端可反推缺失把數需要達到什麼成績。</p>
-
-                                            <p><strong>🎲 隨機</strong> — 使用<em>核密度估計 (KDE)</em>隨機填充空格。對每位選手，從其官方 Ao100 中隨機取樣一把真實成績，然後疊加高斯擾動（頻寬來自 Silverman 法則：h = 0.9·min(σ, IQR/1.34)·n<sup>−0.2</sup>）。這會在其真實水平附近產生平滑、真實的波動。沒有 Ao100 資料的項目（333fm、444bf、555bf）退回到對數正態分佈。若所有格子已填滿，隨機會覆蓋全部值。</p>
-
-                                            <p><strong>🎯 A / 🎯 B</strong> — "選手平均擊敗目標平均需要多少輪 Ao5？"</p>
-                                            <p style={{ marginLeft: 12, marginTop: -8 }}>
-                                              <strong>第 1 步 — 估計 p：</strong> 使用相同的 KDE 分佈取樣 10 萬組獨立 Ao5。每組 Ao5 與目標平均比較，擊中目標的比例為 <em>p̂</em> = P(Ao5 ≤ Target)。<br />
-                                              <strong>第 2 步 — 幾何分佈中位數：</strong> 每次嘗試是成功機率為 p 的伯努利試驗。直到成功所需的嘗試次數服從<em>幾何分佈</em> Geo(p)。其中位數為：<br />
-                                              <span style={{ fontFamily: 'serif', fontSize: 15, marginLeft: 12 }}>median = ⌈−ln2 / ln(1−p)⌉</span><br />
-                                              <strong>第 3 步 — 展示資料：</strong> 額外進行一輪直到擊敗目標，將該輪的成績寫入格子。<br />
-                                              <strong>×N</strong> = 理論中位數次數。<strong>(p=X%)</strong> = 單輪 Ao5 擊敗目標的估計機率。p 越大目標越容易；越小越難。
-                                            </p>
-
-                                            <p><strong>⚔️ Race</strong> — 模擬 A 與 B 之間的 10 萬輪 Ao5 對決。每一輪兩位選手從各自的 KDE 分佈獨立生成 Ao5；較低的 Ao5 贏得該輪。全部輪次後顯示兩位的勝率（平局除外）。勝率較高的一方顯示為綠色。<br />
-                                              <strong>需要兩位選手都已載入</strong> — 請先點選頭像按鈕搜尋 WCA 選手。KDE 使用該選手最近 100 把官方單次成績。</p>
-
-                                            <p><strong>📈 進步滑桿（A / B）</strong> — 模擬假設的狀態變化。範圍：−20% 到 +100%。<br />
-                                              • <strong>0%</strong> = 當前基線（Ao100 修剪均值）<br />
-                                              • <strong>+N%</strong> = 朝目標進步 N% — 期望平均按比例縮小<br />
-                                              • <strong>−N%</strong> = 較基線差 N% — 期望平均按比例增大</p>
-
-                                            <p><strong>👤 頭像按鈕（checkbox 右側）</strong> — 搜尋任何 WCA 選手以載入其個人資料。<br />
-                                              點選任一行的頭像開啟搜尋彈窗。輸入名字或 WCA ID 查詢選手。載入其最近的官方單次成績（最多 100 把）用於 KDE 取樣，目標平均會被設為該選手的官方平均 PR。<br />
-                                              啟用後（橙色光暈）該行使用所選選手的資料。再次點選可切換回世界紀錄資料。</p>
-
-                                            <p><strong>⌫ 長按</strong> = 清空全部（重置所有格子和目標平均）。</p>
-                                          </>
-                                        )) : (isZh ? (
+              {(isZh ? (
                                           <>
                                             <p><strong>📊 PA 竖条（右侧）</strong> — 右侧竖条显示从最好可能平均（BPA，底部）到最差可能平均（WPA，顶部）的范围。拖动顶端或底端可反推缺失把数需要达到什么成绩。</p>
 

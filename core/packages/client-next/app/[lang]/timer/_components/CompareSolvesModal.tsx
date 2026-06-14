@@ -41,7 +41,6 @@ interface StageRow {
   htmB: number | null;
   caseA: string | null;
   caseB: string | null;
-    labelZhHant?: string;
 }
 
 function getOrCompute(s: Solve): StageSegments | null {
@@ -232,30 +231,27 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
         className="timer-modal"
         role="dialog"
         aria-modal="true"
-        aria-label={tr({ zh: '对比成绩', en: 'Compare solves',
-            zhHant: "對比成績"
+        aria-label={tr({ zh: '对比成绩', en: 'Compare solves'
         })}
         style={isMobile ? { maxWidth: '100%', width: '100%' } : { maxWidth: 640 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2>{tr({ zh: '对比成绩', en: 'Compare solves',
-            zhHant: "對比成績"
+        <h2>{tr({ zh: '对比成绩', en: 'Compare solves'
         })}</h2>
 
         <div style={headerStyle}>
           <div>
-            <div style={{ color: '#aaa', fontSize: 11 }}>A · {i18n.language === 'zh-Hant' ? (evA.nameZhHant ?? evA.nameZh) : (isZh ? evA.nameZh : evA.nameEn)}</div>
+            <div style={{ color: '#aaa', fontSize: 11 }}>A · {(isZh ? evA.nameZh : evA.nameEn)}</div>
             <div style={{ color: '#fff', fontWeight: 600, fontSize: isMobile ? 14 : 16 }}>{formatMs(totalA)}</div>
             <div style={subStyle}>{dtA.toLocaleString()}</div>
           </div>
           <div>
-            <div style={{ color: '#aaa', fontSize: 11 }}>B · {i18n.language === 'zh-Hant' ? (evB.nameZhHant ?? evB.nameZh) : (isZh ? evB.nameZh : evB.nameEn)}</div>
+            <div style={{ color: '#aaa', fontSize: 11 }}>B · {(isZh ? evB.nameZh : evB.nameEn)}</div>
             <div style={{ color: '#fff', fontWeight: 600, fontSize: isMobile ? 14 : 16 }}>{formatMs(totalB)}</div>
             <div style={subStyle}>{dtB.toLocaleString()}</div>
           </div>
           <div>
-            <div style={{ color: '#aaa', fontSize: 11 }}>{tr({ zh: '差异 (B − A)', en: 'Delta (B − A)',
-                zhHant: "差異 (B − A)"
+            <div style={{ color: '#aaa', fontSize: 11 }}>{tr({ zh: '差异 (B − A)', en: 'Delta (B − A)'
             })}</div>
             <div style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>
               {Number.isFinite(totalA) && Number.isFinite(totalB)
@@ -271,15 +267,12 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
             style={{ marginBottom: 12, fontSize: 12, color: '#d4885a' }}
           >
             {!segA && !segB
-              ? (tr({ zh: '两次成绩都没有阶段数据 — 在设置中点击"重新分析"试试', en: 'No stage data on either solve — try Reanalyze in settings',
-                  zhHant: "兩次成績都沒有階段資料 — 在設定中點選\"重新分析\"試試"
+              ? (tr({ zh: '两次成绩都没有阶段数据 — 在设置中点击"重新分析"试试', en: 'No stage data on either solve — try Reanalyze in settings'
             }))
               : !segA
-                ? (tr({ zh: 'A 没有阶段数据 — 在设置中点击"重新分析"试试', en: 'A has no stage data — try Reanalyze in settings',
-                    zhHant: "A 沒有階段資料 — 在設定中點選\"重新分析\"試試"
+                ? (tr({ zh: 'A 没有阶段数据 — 在设置中点击"重新分析"试试', en: 'A has no stage data — try Reanalyze in settings'
                 }))
-                : (tr({ zh: 'B 没有阶段数据 — 在设置中点击"重新分析"试试', en: 'B has no stage data — try Reanalyze in settings',
-                    zhHant: "B 沒有階段資料 — 在設定中點選\"重新分析\"試試"
+                : (tr({ zh: 'B 没有阶段数据 — 在设置中点击"重新分析"试试', en: 'B has no stage data — try Reanalyze in settings'
                 }))}
           </div>
         )}
@@ -292,7 +285,7 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
                 <div key={s.key} style={rowStyle}>
                   <div style={{ ...labelCellStyle, marginBottom: 4 }}>
                     <span className={`reconstruct-stage-dot stage-${s.key}`} style={{ marginRight: 4 }} />
-                    {i18n.language === 'zh-Hant' ? (s.labelZhHant ?? s.labelZh) : (isZh ? s.labelZh : s.labelEn)}
+                    {(isZh ? s.labelZh : s.labelEn)}
                   </div>
                   <div style={mobileLineStyle}>
                     <span style={mobileTagStyle}>A</span>
@@ -318,8 +311,7 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
                     <span style={mobileTagStyle}>Δ</span>
                     {renderMsDelta(s.msA, s.msB, isZh)}
                     <span style={{ color: '#888' }}>·</span>
-                    <span style={{ color: '#888' }}>{tr({ zh: '步数 ', en: 'htm ',
-                        zhHant: "步數 "
+                    <span style={{ color: '#888' }}>{tr({ zh: '步数 ', en: 'htm '
                     })}</span>
                     {renderHtmDelta(s.htmA, s.htmB)}
                     <span style={{ color: '#888' }}>· tps</span>
@@ -333,7 +325,7 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
                 <div style={colStyle}>
                   <div style={labelCellStyle}>
                     <span className={`reconstruct-stage-dot stage-${s.key}`} style={{ marginRight: 4 }} />
-                    {i18n.language === 'zh-Hant' ? (s.labelZhHant ?? s.labelZh) : (isZh ? s.labelZh : s.labelEn)}
+                    {(isZh ? s.labelZh : s.labelEn)}
                   </div>
                   <div>{fmtStage(s.msA)}</div>
                   <div style={subStyle}>
@@ -358,13 +350,11 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
                   )}
                 </div>
                 <div style={colStyle}>
-                  <div style={labelCellStyle}>{tr({ zh: '差异', en: 'Δ',
-                      zhHant: "差異"
+                  <div style={labelCellStyle}>{tr({ zh: '差异', en: 'Δ'
                 })}</div>
                   <div>{renderMsDelta(s.msA, s.msB, isZh)}</div>
                   <div style={subStyle}>
-                    {tr({ zh: '步数 ', en: 'htm ',
-                        zhHant: "步數 "
+                    {tr({ zh: '步数 ', en: 'htm '
                     })}{renderHtmDelta(s.htmA, s.htmB)}
                     {' · '}
                     tps {renderTpsDelta(fmtTpsValue(s.msA, s.htmA), fmtTpsValue(s.msB, s.htmB))}
@@ -376,8 +366,7 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
 
           {isMobile ? (
             <div style={{ ...rowStyle, borderBottom: 'none', marginTop: 4 }}>
-              <div style={{ ...labelCellStyle, marginBottom: 4 }}>{tr({ zh: '合计', en: 'Total',
-                  zhHant: "合計"
+              <div style={{ ...labelCellStyle, marginBottom: 4 }}>{tr({ zh: '合计', en: 'Total'
             })}</div>
               <div style={mobileLineStyle}>
                 <span style={mobileTagStyle}>A</span>
@@ -391,8 +380,7 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
               </div>
               <div style={mobileLineStyle}>
                 <span style={mobileTagStyle}>Δ</span>
-                <span style={{ color: '#888' }}>{tr({ zh: '步数 ', en: 'htm ',
-                    zhHant: "步數 "
+                <span style={{ color: '#888' }}>{tr({ zh: '步数 ', en: 'htm '
                 })}</span>
                 {renderHtmDelta(totalHtmA, totalHtmB)}
                 <span style={{ color: '#888' }}>· tps</span>
@@ -402,8 +390,7 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
           ) : (
             <div style={{ ...rowStyle, borderBottom: 'none', marginTop: 4 }}>
               <div style={colStyle}>
-                <div style={labelCellStyle}>{tr({ zh: '合计', en: 'Total',
-                    zhHant: "合計"
+                <div style={labelCellStyle}>{tr({ zh: '合计', en: 'Total'
                 })}</div>
                 <div>{totalHtmA !== null ? `${totalHtmA} htm` : '—'}</div>
                 <div style={subStyle}>
@@ -418,8 +405,7 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
                 </div>
               </div>
               <div style={colStyle}>
-                <div style={labelCellStyle}>{tr({ zh: '差异', en: 'Δ',
-                    zhHant: "差異"
+                <div style={labelCellStyle}>{tr({ zh: '差异', en: 'Δ'
                 })}</div>
                 <div>{renderHtmDelta(totalHtmA, totalHtmB)}</div>
                 <div style={subStyle}>tps {renderTpsDelta(tpsA, tpsB)}</div>
@@ -438,16 +424,14 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
           <ArrowRight size={12} />
           <span>B</span>
           <span style={{ marginLeft: 6 }}>
-            {tr({ zh: '(绿色 = B 更快)', en: '(green = B faster)',
-                zhHant: "(綠色 = B 更快)"
+            {tr({ zh: '(绿色 = B 更快)', en: '(green = B faster)'
             })}
           </span>
         </div>
 
         <div className="modal-actions">
           <button ref={closeBtnRef} onClick={onClose}>
-            {tr({ zh: '关闭', en: 'Close',
-                zhHant: "關閉"
+            {tr({ zh: '关闭', en: 'Close'
             })}
           </button>
         </div>

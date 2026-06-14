@@ -174,8 +174,7 @@ export default function CodeToolIntroClient({ section = 'stack' }: { section?: T
         <main id="top">
           {/* Hero — META alone is enough for instant render */}
           <section className="hero">
-            <div className="hero-tag">// {meta.group} · {tr({ zh: '诞生', en: 'born',
-                zhHant: "誕生"
+            <div className="hero-tag">// {meta.group} · {tr({ zh: '诞生', en: 'born'
             })} {meta.since} · v{meta.version}</div>
             <h1 className="hero-title">
               <span className="hero-name">{meta.name}</span>
@@ -189,7 +188,7 @@ export default function CodeToolIntroClient({ section = 'stack' }: { section?: T
                   {detail.heroStats.map((stat, i) => (
                     <div className="stat" key={i}>
                       <span className="stat-num">{stat.num}<small>{stat.unit ?? ''}</small></span>
-                      <span className="stat-label">{(i18n.language === 'zh-Hant' ? (stat.zhHant ?? stat.zh) : (i18n.language.startsWith('zh') ? stat.zh : stat.en))}</span>
+                      <span className="stat-label">{((i18n.language.startsWith('zh') ? stat.zh : stat.en))}</span>
                     </div>
                   ))}
                 </div>
@@ -223,7 +222,7 @@ export default function CodeToolIntroClient({ section = 'stack' }: { section?: T
                   <p className="sec-desc">{t.whatDesc}</p>
                 </header>
                 <div className="stack-intro-prose stack-prose-wide">
-                  {i18n.language === 'zh-Hant' ? (detail.intro.zhHant ?? detail.intro.zh) : (i18n.language.startsWith('zh') ? detail.intro.zh : detail.intro.en)}
+                  {(i18n.language.startsWith('zh') ? detail.intro.zh : detail.intro.en)}
                 </div>
               </section>
 
@@ -319,7 +318,7 @@ export default function CodeToolIntroClient({ section = 'stack' }: { section?: T
                   <p className="sec-desc">{t.role}</p>
                 </header>
                 <div className="stack-intro-prose stack-prose-wide stack-prose-quote">
-                  {i18n.language === 'zh-Hant' ? (detail.cuberoot.zhHant ?? detail.cuberoot.zh) : (i18n.language.startsWith('zh') ? detail.cuberoot.zh : detail.cuberoot.en)}
+                  {(i18n.language.startsWith('zh') ? detail.cuberoot.zh : detail.cuberoot.en)}
                 </div>
               </section>
 

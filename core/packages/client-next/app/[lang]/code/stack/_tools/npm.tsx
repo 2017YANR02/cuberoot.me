@@ -44,17 +44,13 @@ export const NPM: StackTool = {
     outlookDesc: <>By 2026 npm doesn't really need to defend its position: provenance + sigstore add provable supply-chain, JSR (Deno's new registry) is trying but is ~1000x smaller, and the AI-tool generation emits <code>npm install</code> by default. The registry stays still; the clients keep iterating.</>,
   },
   heroStats: [
-    { num: '4M', unit: '+', zh: <>注册包总数 <em>npmjs.com 2026-05</em></>, en: <>packages on the registry <em>npmjs.com 2026-05</em></>,
-        zhHant: <>註冊包總數 <em>npmjs.com 2026-05</em></>
+    { num: '4M', unit: '+', zh: <>注册包总数 <em>npmjs.com 2026-05</em></>, en: <>packages on the registry <em>npmjs.com 2026-05</em></>
     },
-    { num: '300B', unit: '+', zh: <>周下载量量级 <em>2026 估算</em></>, en: <>weekly downloads order <em>2026 estimate</em></>,
-        zhHant: <>周下載量量級 <em>2026 估算</em></>
+    { num: '300B', unit: '+', zh: <>周下载量量级 <em>2026 估算</em></>, en: <>weekly downloads order <em>2026 estimate</em></>
     },
-    { num: '11', unit: '.14', zh: <>当前 CLI 版本 <em>2026-05-08 · v11.14.1</em></>, en: <>current CLI version <em>2026-05-08 · v11.14.1</em></>,
-        zhHant: <>當前 CLI 版本 <em>2026-05-08 · v11.14.1</em></>
+    { num: '11', unit: '.14', zh: <>当前 CLI 版本 <em>2026-05-08 · v11.14.1</em></>, en: <>current CLI version <em>2026-05-08 · v11.14.1</em></>
     },
-    { num: '16', unit: 'y', zh: <>从 2010 至今 <em>JS 包源不变</em></>, en: <>since 2010 <em>still the JS package source</em></>,
-        zhHant: <>從 2010 至今 <em>JS 包源不變</em></>
+    { num: '16', unit: 'y', zh: <>从 2010 至今 <em>JS 包源不变</em></>, en: <>since 2010 <em>still the JS package source</em></>
     },
   ],
   intro: {

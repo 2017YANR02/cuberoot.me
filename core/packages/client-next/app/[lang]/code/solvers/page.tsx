@@ -85,7 +85,6 @@ const BROWSER: BrowserSolver[] = [
 // cnt>1 = 同规格一组; cond = 对角剪枝表, 仅全模式载, 设 *_NO_DIAG 可跳过 (各省 ~10GB).
 interface Tbl { n: string; b: number; cnt?: number; cond?: boolean }
 interface SolverTbls { move: Tbl[]; prune: Tbl[]; builtZh?: string; builtEn?: string
-    builtZhHant?: string;
  }
 
 const TABLES: Record<string, SolverTbls> = {
@@ -128,8 +127,7 @@ const TABLES: Record<string, SolverTbls> = {
     move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }],
     prune: [{ n: 'pt_cross', b: 139408 }, { n: 'pt_cross_C4E0', b: 54743056 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856 }],
     builtZh: 'cross 阶段用 pt_cross;xcross 用 pt_cross_C4E0;xxcross/xxxcross 复用 std 的 pair huge 表 + 叶子门控自由 F2L 棱 EO',
-    builtEn: 'cross via pt_cross; xcross via pt_cross_C4E0; xxcross/xxxcross reuse std pair huge tables + leaf EO gating on free F2L edges',
-      builtZhHant: "cross 階段用 pt_cross;xcross 用 pt_cross_C4E0;xxcross/xxxcross 複用 std 的 pair huge 表 + 葉子門控自由 F2L 稜 EO"
+    builtEn: 'cross via pt_cross; xcross via pt_cross_C4E0; xxcross/xxxcross reuse std pair huge tables + leaf EO gating on free F2L edges'
 },
   pseudo_f2leo: {
     move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_corn3', b: 653196 }],
@@ -138,36 +136,31 @@ const TABLES: Record<string, SolverTbls> = {
       { n: 'pt_pscross_C4C5', b: 47900176 }, { n: 'pt_pscross_C4C6', b: 47900176 },
       { n: 'pt_pscross_E0E1E2', b: 1003622416 }, { n: 'pt_pscross_C4C5C6', b: 862202896 }],
     builtZh: 'combo 启发式 = max(每对 C4E, 角组 corner2/3, 棱组 edge2/3) + 叶子门控自由棱 EO;另现场建 pscross 剪枝 (~272KB, 内存) 供 cross 阶段',
-    builtEn: 'combo heuristic = max(per-pair C4E, corner2/3 group, edge2/3 group) + leaf EO gating on free edges; plus pscross prune (~272KB) built in-RAM for the cross stage',
-      builtZhHant: "combo 啟發式 = max(每對 C4E, 角組 corner2/3, 稜組 edge2/3) + 葉子門控自由稜 EO;另現場建 pscross 剪枝 (~272KB, 記憶體) 供 cross 階段"
+    builtEn: 'combo heuristic = max(per-pair C4E, corner2/3 group, edge2/3 group) + leaf EO gating on free edges; plus pscross prune (~272KB) built in-RAM for the cross stage'
 },
   '333': {
     move: [],
     prune: [{ n: 'h48prun31h9', b: 15565455360 }],
     builtZh: 'Tronto cube48opt 最优解器 (h48 坐标, God 数 HTM 整解): 15G 剪枝表分 64MB 块拷入 emscripten 堆 (非 Rust mmap), in-proc 起 12 解线程; 同一 cube48opt[1-9] 引擎也服 /scramble/solver 在线最优 (浏览器选 30M~972M 小表)',
-    builtEn: 'Tronto cube48opt optimal solver (h48 coordinate, God\'s-number HTM whole solve): the 15G prune table is copied into the emscripten heap in 64MB chunks (not a Rust mmap), starting 12 solve threads in-proc; the same cube48opt[1-9] engine also powers /scramble/solver online optimal (browser picks 30M–972M smaller tables)',
-    builtZhHant: 'Tronto cube48opt 最優解器 (h48 座標, God 數 HTM 整解): 15G 剪枝表分 64MB 塊拷入 emscripten 堆 (非 Rust mmap), in-proc 起 12 解執行緒; 同一 cube48opt[1-9] 引擎也服 /scramble/solver 線上最優 (瀏覽器選 30M~972M 小表)',
+    builtEn: 'Tronto cube48opt optimal solver (h48 coordinate, God\'s-number HTM whole solve): the 15G prune table is copied into the emscripten heap in 64MB chunks (not a Rust mmap), starting 12 solve threads in-proc; the same cube48opt[1-9] engine also powers /scramble/solver online optimal (browser picks 30M–972M smaller tables)'
   },
   '222': {
     move: [{ n: 'mt_edge3', b: 760332 }, { n: 'mt_corn', b: 1740 }],
     prune: [],
     builtZh: '不落盘剪枝:全空间精确距离表 (253,440 态, ~248KB) 构造时内存现场 BFS;查长度 O(1) 直查无搜索',
-    builtEn: 'no on-disk prune: exact full-space distance table (253,440 states, ~248KB) BFS-built in RAM at startup; length queries are O(1) lookups, zero search',
-    builtZhHant: '不落盤剪枝:全空間精確距離表 (253,440 態, ~248KB) 構造時記憶體現場 BFS;查長度 O(1) 直查無搜尋',
+    builtEn: 'no on-disk prune: exact full-space distance table (253,440 states, ~248KB) BFS-built in RAM at startup; length queries are O(1) lookups, zero search'
   },
   '123': {
     move: [{ n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge2', b: 38028 }],
     prune: [],
     builtZh: '不落盘剪枝:1x2x3 全空间精确距离表 (5,322,240 态, ~5MB) 与 FB 方块前/后双微表 (各 12,672 态) 构造时内存现场 BFS;查长度 O(1) 直查无搜索',
-    builtEn: 'no on-disk prune: exact full-space 1x2x3 distance table (5,322,240 states, ~5MB) + front/back FB-square micro-tables (12,672 states each) BFS-built in RAM at startup; length queries are O(1) lookups, zero search',
-    builtZhHant: '不落盤剪枝:1x2x3 全空間精確距離表 (5,322,240 態, ~5MB) 與 FB 方塊前/後雙微表 (各 12,672 態) 構造時記憶體現場 BFS;查長度 O(1) 直查無搜尋',
+    builtEn: 'no on-disk prune: exact full-space 1x2x3 distance table (5,322,240 states, ~5MB) + front/back FB-square micro-tables (12,672 states each) BFS-built in RAM at startup; length queries are O(1) lookups, zero search'
   },
   '223': {
     move: [{ n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }, { n: 'mt_edge2', b: 38028 }],
     prune: [],
     builtZh: '不落盘剪枝:内存现场 BFS 出 1x2x3 全表 (5,322,240 态) 与角2+DB/DF 表 (266,112 态) 作可采纳下界, IDA* 取两者 max;h=0 即块成',
-    builtEn: 'no on-disk prune: 1x2x3 full table (5,322,240 states) + corners+DB/DF table (266,112 states) BFS-built in RAM as admissible bounds; IDA* prunes on their max; h=0 means the block is done',
-    builtZhHant: '不落盤剪枝:記憶體現場 BFS 出 1x2x3 全表 (5,322,240 態) 與角2+DB/DF 表 (266,112 態) 作可採納下界, IDA* 取兩者 max;h=0 即塊成',
+    builtEn: 'no on-disk prune: 1x2x3 full table (5,322,240 states) + corners+DB/DF table (266,112 states) BFS-built in RAM as admissible bounds; IDA* prunes on their max; h=0 means the block is done'
   },
   eoline: {
     move: [],

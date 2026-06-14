@@ -44,17 +44,13 @@ export const VITE: StackTool = {
     outlookDesc: <>VoidZero (a.k.a. Vite+) was incorporated in 2025, folding Vite / Rolldown / Oxc / Oxlint under one roof. Vite 8 is the first GA waypoint on that roadmap; Oxlint replacing ESLint, Rolldown replacing Rollup, Oxc replacing Babel are the next 2026–2027 steps.</>,
   },
   heroStats: [
-    { num: '8', unit: '.0', zh: <>当前稳定版 <em>2026-05 · 8.0.13</em></>, en: <>current stable <em>2026-05 · 8.0.13</em></>,
-        zhHant: <>當前穩定版 <em>2026-05 · 8.0.13</em></>
+    { num: '8', unit: '.0', zh: <>当前稳定版 <em>2026-05 · 8.0.13</em></>, en: <>current stable <em>2026-05 · 8.0.13</em></>
     },
-    { num: '0.3', unit: 's', zh: <>冷启动到能交互 <em>本站 SPA 实测</em></>, en: <>cold start to interactive <em>this SPA, measured</em></>,
-        zhHant: <>冷啟動到能互動 <em>本站 SPA 實測</em></>
+    { num: '0.3', unit: 's', zh: <>冷启动到能交互 <em>本站 SPA 实测</em></>, en: <>cold start to interactive <em>this SPA, measured</em></>
     },
-    { num: '10', unit: '×', zh: <>生产 build 提速 (vs Vite 7) <em>Linear 报告</em></>, en: <>faster production builds vs Vite 7 <em>Linear report</em></>,
-        zhHant: <>生產 build 提速 (vs Vite 7) <em>Linear 報告</em></>
+    { num: '10', unit: '×', zh: <>生产 build 提速 (vs Vite 7) <em>Linear 报告</em></>, en: <>faster production builds vs Vite 7 <em>Linear report</em></>
     },
-    { num: '6', unit: 'y', zh: <>从 2020 至今 <em>已成默认选择</em></>, en: <>since 2020 <em>now the default</em></>,
-        zhHant: <>從 2020 至今 <em>已成預設選擇</em></>
+    { num: '6', unit: 'y', zh: <>从 2020 至今 <em>已成默认选择</em></>, en: <>since 2020 <em>now the default</em></>
     },
   ],
   intro: {

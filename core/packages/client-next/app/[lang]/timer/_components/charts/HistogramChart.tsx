@@ -91,8 +91,7 @@ export default function HistogramChart({
   if (finiteCount < 5) {
     return (
       <div className={`chart-empty-hint ${className ?? ''}`.trim()}>
-        {tr({ zh: '至少 5 次成绩才显示分布', en: 'Need 5+ solves to chart distribution',
-            zhHant: "至少 5 次成績才顯示分佈"
+        {tr({ zh: '至少 5 次成绩才显示分布', en: 'Need 5+ solves to chart distribution'
         })}
       </div>
     );
@@ -119,8 +118,7 @@ export default function HistogramChart({
       width={width}
       height={height}
       role="img"
-      aria-label={tr({ zh: '成绩分布直方图', en: 'Solve time histogram',
-          zhHant: "成績分佈直方圖"
+      aria-label={tr({ zh: '成绩分布直方图', en: 'Solve time histogram'
     })}
     >
       {/* Bars */}

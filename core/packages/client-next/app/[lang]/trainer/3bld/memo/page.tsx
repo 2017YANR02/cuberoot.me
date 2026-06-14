@@ -100,7 +100,7 @@ function formatSeconds(ms: number): string {
 export default function MemoRecallPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('盲拧记忆回想训练', '3BLD Memo Recall Trainer', "盲擰記憶回想訓練");
+  useDocumentTitle('盲拧记忆回想训练', '3BLD Memo Recall Trainer');
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);
@@ -323,10 +323,8 @@ export default function MemoRecallPage(): JSX.Element {
 
   // ── derived labels ──
   const groupLabel = (kind: 'corner' | 'edge'): string =>
-    kind === 'corner' ? (tr({ zh: '角块', en: 'Corners',
-        zhHant: "角塊"
-    })) : (tr({ zh: '棱块', en: 'Edges',
-        zhHant: "稜塊"
+    kind === 'corner' ? (tr({ zh: '角块', en: 'Corners'
+    })) : (tr({ zh: '棱块', en: 'Edges'
     }));
 
   const opSymbol = (op: MathProblem['op']) => op; // already display-ready
@@ -334,27 +332,21 @@ export default function MemoRecallPage(): JSX.Element {
   if (!hydrated) return <div className="bld-trainer-root" />;
 
   const stepOrder: { id: Phase; zh: string; en: string
-      zhHant?: string;
  }[] = useDistractor
     ? [
-        { id: 'memorize', zh: '记忆', en: 'Memorize',
-            zhHant: "記憶"
+        { id: 'memorize', zh: '记忆', en: 'Memorize'
         },
-        { id: 'delay', zh: '延迟', en: 'Delay',
-            zhHant: "延遲"
+        { id: 'delay', zh: '延迟', en: 'Delay'
         },
         { id: 'recall', zh: '回想', en: 'Recall' },
-        { id: 'score', zh: '评分', en: 'Score',
-            zhHant: "評分"
+        { id: 'score', zh: '评分', en: 'Score'
         },
       ]
     : [
-        { id: 'memorize', zh: '记忆', en: 'Memorize',
-            zhHant: "記憶"
+        { id: 'memorize', zh: '记忆', en: 'Memorize'
         },
         { id: 'recall', zh: '回想', en: 'Recall' },
-        { id: 'score', zh: '评分', en: 'Score',
-            zhHant: "評分"
+        { id: 'score', zh: '评分', en: 'Score'
         },
       ];
   const stepIndex = stepOrder.findIndex((s) => s.id === phase);
@@ -362,8 +354,7 @@ export default function MemoRecallPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '盲拧记忆回想训练', en: '3BLD Memo Recall',
-            zhHant: "盲擰記憶回想訓練"
+        <h1>{tr({ zh: '盲拧记忆回想训练', en: '3BLD Memo Recall'
         })}</h1>
       </div>
 
@@ -390,7 +381,7 @@ export default function MemoRecallPage(): JSX.Element {
                 }
               >
                 {i < stepIndex && <Check size={13} />}
-                {(i18n.language === 'zh-Hant' ? (s.zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en))}
+                {((i18n.language.startsWith('zh') ? s.zh : s.en))}
               </span>
               {i < stepOrder.length - 1 && <span className="bld-memo-step-sep">›</span>}
             </span>
@@ -405,8 +396,7 @@ export default function MemoRecallPage(): JSX.Element {
             <div className="bld-memo-options">
               <div className="bld-field" style={{ maxWidth: 220 }}>
                 <label className="bld-field-label" htmlFor="bld-memo-pieceset">
-                  {tr({ zh: '练习对象', en: 'Practice set',
-                      zhHant: "練習物件"
+                  {tr({ zh: '练习对象', en: 'Practice set'
                 })}
                 </label>
                 <select
@@ -415,14 +405,11 @@ export default function MemoRecallPage(): JSX.Element {
                   value={pieceSet}
                   onChange={(e) => setPieceSet(e.target.value as PieceSet)}
                 >
-                  <option value="corner">{tr({ zh: '仅角块', en: 'Corners only',
-                      zhHant: "僅角塊"
+                  <option value="corner">{tr({ zh: '仅角块', en: 'Corners only'
                 })}</option>
-                  <option value="edge">{tr({ zh: '仅棱块', en: 'Edges only',
-                      zhHant: "僅稜塊"
+                  <option value="edge">{tr({ zh: '仅棱块', en: 'Edges only'
                 })}</option>
-                  <option value="both">{tr({ zh: '角块 + 棱块', en: 'Corners + edges',
-                      zhHant: "角塊 + 稜塊"
+                  <option value="both">{tr({ zh: '角块 + 棱块', en: 'Corners + edges'
                 })}</option>
                 </select>
               </div>
@@ -434,8 +421,7 @@ export default function MemoRecallPage(): JSX.Element {
                   onChange={(e) => setShowAssoc(e.target.checked)}
                 />
                 <Lightbulb size={15} />
-                {tr({ zh: '显示联想词', en: 'Association words',
-                    zhHant: "顯示聯想詞"
+                {tr({ zh: '显示联想词', en: 'Association words'
                 })}
               </label>
 
@@ -446,8 +432,7 @@ export default function MemoRecallPage(): JSX.Element {
                   onChange={(e) => setUseDistractor(e.target.checked)}
                 />
                 <Calculator size={15} />
-                {tr({ zh: '记忆后做算术（延迟干扰）', en: 'Math distractor (delay)',
-                    zhHant: "記憶後做算術（延遲干擾）"
+                {tr({ zh: '记忆后做算术（延迟干扰）', en: 'Math distractor (delay)'
                 })}
               </label>
             </div>
@@ -462,16 +447,14 @@ export default function MemoRecallPage(): JSX.Element {
           <div className="bld-section">
             <button type="button" className="bld-btn bld-btn-primary" onClick={startRound}>
               <Play size={15} />
-              {tr({ zh: '开始一轮', en: 'Start round',
-                  zhHant: "開始一輪"
+              {tr({ zh: '开始一轮', en: 'Start round'
             })}
             </button>
           </div>
 
           <div className="bld-section">
             <p className="bld-input-summary">
-              {tr({ zh: '随机生成一条打乱，按当前编码方案读出字母对，记住后隐藏并回想填写。', en: 'Generates a random scramble, reads the letter pairs in the current scheme, hides them, and asks you to recall.',
-                  zhHant: "隨機生成一條打亂，按當前編碼方案讀出字母對，記住後隱藏並回想填寫。"
+              {tr({ zh: '随机生成一条打乱，按当前编码方案读出字母对，记住后隐藏并回想填写。', en: 'Generates a random scramble, reads the letter pairs in the current scheme, hides them, and asks you to recall.'
             })}
             </p>
           </div>
@@ -484,8 +467,7 @@ export default function MemoRecallPage(): JSX.Element {
           <div className="bld-memo-stage-head">
             <h2 className="bld-memo-stage-title">
               <Eye size={18} style={{ verticalAlign: '-3px', marginRight: 6 }} />
-              {tr({ zh: '记忆', en: 'Memorize',
-                  zhHant: "記憶"
+              {tr({ zh: '记忆', en: 'Memorize'
             })}
             </h2>
             <span className="bld-memo-timerpill">
@@ -506,8 +488,7 @@ export default function MemoRecallPage(): JSX.Element {
             <div className="bld-memo-group" key={g.kind}>
               <span className="bld-memo-group-label">{groupLabel(g.kind)}</span>
               {g.pairs.length === 0 ? (
-                <span className="bld-readout-empty">{tr({ zh: '无（已还原）', en: 'none (solved)',
-                    zhHant: "無（已還原）"
+                <span className="bld-readout-empty">{tr({ zh: '无（已还原）', en: 'none (solved)'
                 })}</span>
               ) : (
                 <div className="bld-memo-pairs">
@@ -532,8 +513,7 @@ export default function MemoRecallPage(): JSX.Element {
           <div className="bld-memo-actions">
             <button type="button" className="bld-btn bld-btn-primary" onClick={finishMemorize}>
               <EyeOff size={15} />
-              {tr({ zh: '记好了，隐藏并回想', en: 'Hide & recall',
-                  zhHant: "記好了，隱藏並回想"
+              {tr({ zh: '记好了，隐藏并回想', en: 'Hide & recall'
             })}
             </button>
             <button type="button" className="bld-btn bld-btn-ghost" onClick={() => setPhase('idle')}>
@@ -549,14 +529,12 @@ export default function MemoRecallPage(): JSX.Element {
           <div className="bld-memo-stage-head">
             <h2 className="bld-memo-stage-title">
               <Calculator size={18} style={{ verticalAlign: '-3px', marginRight: 6 }} />
-              {tr({ zh: '延迟干扰', en: 'Delay',
-                  zhHant: "延遲干擾"
+              {tr({ zh: '延迟干扰', en: 'Delay'
             })}
             </h2>
           </div>
           <p className="bld-memo-recall-hint">
-            {tr({ zh: '先解出下面 3 道算术题，再回想字母对（模拟盲拧记忆延迟）。', en: 'Answer these 3 problems before recalling (simulating BLD memo delay).',
-                zhHant: "先解出下面 3 道算術題，再回想字母對（模擬盲擰記憶延遲）。"
+            {tr({ zh: '先解出下面 3 道算术题，再回想字母对（模拟盲拧记忆延迟）。', en: 'Answer these 3 problems before recalling (simulating BLD memo delay).'
             })}
           </p>
 
@@ -598,14 +576,12 @@ export default function MemoRecallPage(): JSX.Element {
               disabled={!allMathCorrect}
             >
               <ArrowRight size={15} />
-              {tr({ zh: '继续回想', en: 'Continue to recall',
-                  zhHant: "繼續回想"
+              {tr({ zh: '继续回想', en: 'Continue to recall'
             })}
             </button>
             {!allMathCorrect && (
               <span className="bld-memo-recall-hint">
-                {tr({ zh: '答对全部 3 题后解锁。', en: 'Solve all 3 to unlock.',
-                    zhHant: "答對全部 3 題後解鎖。"
+                {tr({ zh: '答对全部 3 题后解锁。', en: 'Solve all 3 to unlock.'
                 })}
               </span>
             )}
@@ -629,11 +605,9 @@ export default function MemoRecallPage(): JSX.Element {
 
           <p className="bld-memo-recall-hint">
             {groups.length > 1
-              ? tr({ zh: '每个部位一行（角块一行、棱块一行），字母对可空格分隔。', en: 'One line per piece type (corners, then edges); pairs may be space-separated.',
-                  zhHant: "每個部位一行（角塊一行、稜塊一行），字母對可空格分隔。"
+              ? tr({ zh: '每个部位一行（角块一行、棱块一行），字母对可空格分隔。', en: 'One line per piece type (corners, then edges); pairs may be space-separated.'
             })
-              : tr({ zh: '依次输入字母对，可用空格分隔。', en: 'Type the pairs in order; spaces optional.',
-                  zhHant: "依次輸入字母對，可用空格分隔。"
+              : tr({ zh: '依次输入字母对，可用空格分隔。', en: 'Type the pairs in order; spaces optional.'
             })}
           </p>
 
@@ -644,9 +618,7 @@ export default function MemoRecallPage(): JSX.Element {
             onChange={(e) => setRecallText(e.target.value)}
             placeholder={
               groups.length > 1
-                ? (tr({ zh: '角块: DE GA …\n棱块: ge ki …', en: 'Corners: DE GA …\nEdges: ge ki …',
-                    zhHant: "角塊: DE GA …\n\
-稜塊: ge ki …"
+                ? (tr({ zh: '角块: DE GA …\n棱块: ge ki …', en: 'Corners: DE GA …\nEdges: ge ki …'
                 }))
                 : ((i18n.language.startsWith('zh') ? 'DE GA WX …' : 'DE GA WX …'))
             }
@@ -658,8 +630,7 @@ export default function MemoRecallPage(): JSX.Element {
           <div className="bld-memo-actions">
             <button type="button" className="bld-btn bld-btn-primary" onClick={finishRecall}>
               <Check size={15} />
-              {tr({ zh: '提交评分', en: 'Submit',
-                  zhHant: "提交評分"
+              {tr({ zh: '提交评分', en: 'Submit'
             })}
             </button>
           </div>
@@ -670,8 +641,7 @@ export default function MemoRecallPage(): JSX.Element {
       {phase === 'score' && scored && (
         <div className="bld-memo-stage">
           <div className="bld-memo-stage-head">
-            <h2 className="bld-memo-stage-title">{tr({ zh: '评分', en: 'Score',
-                zhHant: "評分"
+            <h2 className="bld-memo-stage-title">{tr({ zh: '评分', en: 'Score'
             })}</h2>
           </div>
 
@@ -684,21 +654,18 @@ export default function MemoRecallPage(): JSX.Element {
               {scored.accuracy.toFixed(0)}%
             </span>
             <span className="bld-memo-score-metric">
-              {tr({ zh: '正确', en: 'Correct',
-                  zhHant: "正確"
+              {tr({ zh: '正确', en: 'Correct'
             })} <b>{scored.correct}</b> / {scored.totalExpected}
             </span>
             <span className="bld-memo-score-metric">
-              {tr({ zh: '记忆', en: 'Memo',
-                  zhHant: "記憶"
+              {tr({ zh: '记忆', en: 'Memo'
             })} <b>{formatSeconds(memoMs)}</b>
             </span>
             <span className="bld-memo-score-metric">
               {tr({ zh: '回想', en: 'Recall' })} <b>{formatSeconds(recallMs)}</b>
             </span>
             <span className="bld-memo-score-metric">
-              {tr({ zh: '合计', en: 'Total',
-                  zhHant: "合計"
+              {tr({ zh: '合计', en: 'Total'
             })} <b>{formatSeconds(memoMs + recallMs)}</b>
             </span>
           </div>
@@ -717,14 +684,12 @@ export default function MemoRecallPage(): JSX.Element {
                       <span className="bld-memo-diff-exp">
                         {c.expected ? (
                           <>
-                            {tr({ zh: '应为 ', en: 'want ',
-                                zhHant: "應為 "
+                            {tr({ zh: '应为 ', en: 'want '
                             })}
                             {c.expected}
                           </>
                         ) : (
-                          <s>{tr({ zh: '多余', en: 'extra',
-                              zhHant: "多餘"
+                          <s>{tr({ zh: '多余', en: 'extra'
                         })}</s>
                         )}
                       </span>
@@ -737,8 +702,7 @@ export default function MemoRecallPage(): JSX.Element {
 
           <div className="bld-section" style={{ margin: 0 }}>
             <span className="bld-memo-group-label" style={{ marginBottom: 6 }}>
-              {tr({ zh: '打乱', en: 'Scramble',
-                  zhHant: "打亂"
+              {tr({ zh: '打乱', en: 'Scramble'
             })}
             </span>
             <div className="bld-scramble-text">{scramble}</div>
@@ -751,14 +715,12 @@ export default function MemoRecallPage(): JSX.Element {
           <div className="bld-memo-actions">
             <button type="button" className="bld-btn bld-btn-primary" onClick={startRound}>
               <ArrowRight size={15} />
-              {tr({ zh: '下一轮', en: 'Next round',
-                  zhHant: "下一輪"
+              {tr({ zh: '下一轮', en: 'Next round'
             })}
             </button>
             <button type="button" className="bld-btn" onClick={() => setPhase('idle')}>
               <RotateCcw size={15} />
-              {tr({ zh: '回到设置', en: 'Back to setup',
-                  zhHant: "回到設定"
+              {tr({ zh: '回到设置', en: 'Back to setup'
             })}
             </button>
           </div>

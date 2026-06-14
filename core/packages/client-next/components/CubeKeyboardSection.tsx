@@ -23,11 +23,9 @@ export default function CubeKeyboardSection({ target, onInput, enableMarks }: Pr
   const [showKeyboard, setShowKeyboard] = useState(false);
 
   const visible = isMobile || showKeyboard;
-  const labelOn = tr({ zh: '隐藏虚拟键盘', en: 'Hide keyboard',
-      zhHant: "隱藏虛擬鍵盤"
+  const labelOn = tr({ zh: '隐藏虚拟键盘', en: 'Hide keyboard'
 });
-  const labelOff = tr({ zh: '显示虚拟键盘', en: 'Show keyboard',
-      zhHant: "顯示虛擬鍵盤"
+  const labelOff = tr({ zh: '显示虚拟键盘', en: 'Show keyboard'
 });
 
   return (

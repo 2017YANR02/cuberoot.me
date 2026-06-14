@@ -37,7 +37,7 @@ export default function SkewbTrainerPage() {
   const isZh = i18n.language.startsWith('zh');
   const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const router = useRouter();
-  useDocumentTitle('Skewb 技巧训练', 'Skewb Skills', "Skewb 技巧訓練");
+  useDocumentTitle('Skewb 技巧训练', 'Skewb Skills');
 
   const t = useSkewbTrainer();
 
@@ -64,10 +64,8 @@ export default function SkewbTrainerPage() {
   }, [t]);
 
   const modes: { key: SkewbMode; en: string; zh: string; icon: React.ReactNode
-      zhHant?: string;
  }[] = [
-    { key: 'flt', en: 'First Layer', zh: '第一层', icon: <Layers size={15} />,
-        zhHant: "第一層"
+    { key: 'flt', en: 'First Layer', zh: '第一层', icon: <Layers size={15} />
     },
     { key: 'alg', en: 'L2L Alg', zh: 'L2L 公式', icon: <RotateCcw size={15} /> },
     { key: 'ol', en: 'One-Looking', zh: '一步看穿', icon: <Eye size={15} /> },
@@ -85,18 +83,15 @@ export default function SkewbTrainerPage() {
         />
       </div>
       <div className="sk-root">
-        <h1 className="sk-title">{tr({ zh: 'Skewb 技巧训练', en: 'Skewb Skills',
-            zhHant: "Skewb 技巧訓練"
+        <h1 className="sk-title">{tr({ zh: 'Skewb 技巧训练', en: 'Skewb Skills'
         })}</h1>
         <p className="sk-subtitle">
-          {tr({ zh: '三种训练模式:第一层、L2L 公式、一步看穿。', en: 'Three training modes: First Layer, L2L Algs, and One-Looking.',
-              zhHant: "三種訓練模式:第一層、L2L 公式、一步看穿。"
+          {tr({ zh: '三种训练模式:第一层、L2L 公式、一步看穿。', en: 'Three training modes: First Layer, L2L Algs, and One-Looking.'
         })}
         </p>
 
         <Link href={`/${lang}/trainer/skewb/sarahs-advanced`} className="sk-altlink">
-          {tr({ zh: '经典公式集训练器:Sarah’s Advanced', en: "Classic alg-set trainer: Sarah’s Advanced",
-              zhHant: "經典公式集訓練器:Sarah’s Advanced"
+          {tr({ zh: '经典公式集训练器:Sarah’s Advanced', en: "Classic alg-set trainer: Sarah’s Advanced"
         })}
           <ArrowRight size={14} />
         </Link>
@@ -111,7 +106,7 @@ export default function SkewbTrainerPage() {
               onClick={() => t.setMode(m.key)}
             >
               {m.icon}
-              {(i18n.language === 'zh-Hant' ? (m.zhHant ?? m.zh) : (i18n.language.startsWith('zh') ? m.zh : m.en))}
+              {((i18n.language.startsWith('zh') ? m.zh : m.en))}
             </button>
           ))}
         </div>
@@ -170,8 +165,7 @@ export default function SkewbTrainerPage() {
             <button type="button" className="sk-timer-btn" onClick={t.toggleTimer}>
               {t.timerState === 'running'
                 ? tr({ zh: '停止', en: 'Stop' })
-                : tr({ zh: '开始', en: 'Start',
-                    zhHant: "開始"
+                : tr({ zh: '开始', en: 'Start'
                 })}
             </button>
             <button type="button" className="sk-timer-btn" onClick={t.resetTimer}>
@@ -183,9 +177,7 @@ export default function SkewbTrainerPage() {
           {t.mode === 'alg' && t.pbText ? (
             <div className={t.isPB ? 'sk-timer-pb is-new' : 'sk-timer-pb'}>
               {t.isPB ? (
-                i18n.language === 'zh-Hant' ? ((
-                                                '本案例新紀錄!'
-                                              )) : (isZh ? (
+                (isZh ? (
                                                 '本案例新纪录!'
                                               ) : (
                                                 "That's a PB!"
@@ -200,12 +192,10 @@ export default function SkewbTrainerPage() {
           ) : null}
 
           <div className="sk-kbd-hint">
-            <span className="sk-kbd">Enter</span> {tr({ zh: '新打乱', en: 'new scramble',
-                zhHant: "新打亂"
+            <span className="sk-kbd">Enter</span> {tr({ zh: '新打乱', en: 'new scramble'
             })}
             {'  '}
-            <span className="sk-kbd">Space</span> {tr({ zh: '开始/停止', en: 'start/stop',
-                zhHant: "開始/停止"
+            <span className="sk-kbd">Space</span> {tr({ zh: '开始/停止', en: 'start/stop'
             })}
             {'  '}
             <span className="sk-kbd">R</span> {tr({ zh: '重置', en: 'reset' })}

@@ -24,28 +24,20 @@ export function TheoryDeepDive({ isZh }: Props) {
   ];
 
   const fitStmSeries: Series[] = [
-    { name: tr({ zh: 'STM 实测', en: 'STM observed',
-        zhHant: "STM 實測"
+    { name: tr({ zh: 'STM 实测', en: 'STM observed'
     }), color: '#0a8a6b', data: stmPts },
-    { name: tr({ zh: '时间实测 (秒)', en: 'Time observed (s)',
-        zhHant: "時間實測 (秒)"
+    { name: tr({ zh: '时间实测 (秒)', en: 'Time observed (s)'
     }), color: '#c2410c', data: timePts },
   ];
 
   return (
     <section className="pred-section" id="theory-deep">
-      <h2>{tr({ zh: '数学, 信息论, 生物力学下的硬墙', en: 'Hard Walls from Math, Information, Biomech',
-          zhHant: "數學, 資訊理論, 生物力學下的硬牆"
+      <h2>{tr({ zh: '数学, 信息论, 生物力学下的硬墙', en: 'Hard Walls from Math, Information, Biomech'
     })}</h2>
 
       <h3>{tr({ zh: "God's number 的演化 (3x3, HTM)", en: "God's Number Progression (3x3, HTM)" })}</h3>
       <p>
-        {i18n.language === 'zh-Hant' ? ((
-                        <>
-                          最早一版上界是 Thistlethwaite 1981 年給的 52 HTM,用四階段群約簡法。29 年後 Rokicki / Kociemba / Davidson / Dethridge (2010)
-                          藉助 ~35 CPU-年的 Google 算力,把 20 HTM 證成最終值: <strong>所有 4.3×10¹⁹ 個 3x3 狀態都能在 ≤ 20 HTM 內還原,而且至少存在一個 (superflip composite) 需要正好 20 HTM</strong>。
-                        </>
-                      )) : (isZh ? (
+        {(isZh ? (
                         <>
                           最早一版上界是 Thistlethwaite 1981 年给的 52 HTM,用四阶段群约简法。29 年后 Rokicki / Kociemba / Davidson / Dethridge (2010)
                           借助 ~35 CPU-年的 Google 算力,把 20 HTM 证成最终值: <strong>所有 4.3×10¹⁹ 个 3x3 状态都能在 ≤ 20 HTM 内还原,而且至少存在一个 (superflip composite) 需要正好 20 HTM</strong>。
@@ -63,8 +55,7 @@ export function TheoryDeepDive({ isZh }: Props) {
             <tr>
               <th>{tr({ zh: '年份', en: 'Year' })}</th>
               <th>{tr({ zh: '上界 (HTM)', en: 'Bound (HTM)' })}</th>
-              <th>{tr({ zh: '证明者', en: 'By',
-                  zhHant: "證明者"
+              <th>{tr({ zh: '证明者', en: 'By'
             })}</th>
               <th>{tr({ zh: '方法', en: 'Method' })}</th>
             </tr>
@@ -82,13 +73,7 @@ export function TheoryDeepDive({ isZh }: Props) {
         </table>
       </div>
       <p className="pred-note">
-        {i18n.language === 'zh-Hant' ? ((
-                        <>
-                          <strong>跨度量約束:</strong> HTM = {GODS_NUMBER_FACTS.htm.value} (Rokicki 2010)  /  QTM = {GODS_NUMBER_FACTS.qtm.value} (Rokicki & Davidson 2014,只有 superflip × 4-spot 一個等價類需要 26)  /  STM 至今未證 (16 ≤ ? ≤ 20,superflip 在 STM 中可 16 步內解)。
-                          NxN 漸近: <strong>{GODS_NUMBER_FACTS.bigCube.value}</strong> (Demaine et al. 2011, arXiv:1106.5736);
-                          最優解 NxN <strong>NP-complete</strong> (Demaine, Eisenstat, Rudoy 2017, STACS)。
-                        </>
-                      )) : (isZh ? (
+        {(isZh ? (
                         <>
                           <strong>跨度量约束:</strong> HTM = {GODS_NUMBER_FACTS.htm.value} (Rokicki 2010)  /  QTM = {GODS_NUMBER_FACTS.qtm.value} (Rokicki & Davidson 2014,只有 superflip × 4-spot 一个等价类需要 26)  /  STM 至今未证 (16 ≤ ? ≤ 20,superflip 在 STM 中可 16 步内解)。
                           NxN 渐近: <strong>{GODS_NUMBER_FACTS.bigCube.value}</strong> (Demaine et al. 2011, arXiv:1106.5736);
@@ -103,17 +88,10 @@ export function TheoryDeepDive({ isZh }: Props) {
                       ))}
       </p>
 
-      <h3>{tr({ zh: '最优 HTM 步数的分布', en: 'Distribution of Optimal HTM Depth',
-          zhHant: "最優 HTM 步數的分佈"
+      <h3>{tr({ zh: '最优 HTM 步数的分布', en: 'Distribution of Optimal HTM Depth'
     })}</h3>
       <p>
-        {i18n.language === 'zh-Hant' ? ((
-                        <>
-                          隨機均勻打亂的最優 HTM 步數分佈 <em>極度集中在 18</em>: 約 67% 的打亂需要正好 18 HTM,26.6% 是 17,2.6% 是 16,
-                          而 20 步深度的位置只有約 <strong>490 萬個 (3.4×10⁶ / 4.3×10¹⁹ ≈ 10⁻¹³)</strong>。這是 cube20.org 全狀態列舉得出的。
-                          FMC 16 步 WR (Tronto 2019) 其實就是<strong>抽到 2.6% 機率的 16 步可達打亂後把它解掉</strong> — sub-15 需要 0.05% 量級的稀有打亂,沒法常態化。
-                        </>
-                      )) : (isZh ? (
+        {(isZh ? (
                         <>
                           随机均匀打乱的最优 HTM 步数分布 <em>极度集中在 18</em>: 约 67% 的打乱需要正好 18 HTM,26.6% 是 17,2.6% 是 16,
                           而 20 步深度的位置只有约 <strong>490 万个 (3.4×10⁶ / 4.3×10¹⁹ ≈ 10⁻¹³)</strong>。这是 cube20.org 全状态枚举得出的。
@@ -138,14 +116,7 @@ export function TheoryDeepDive({ isZh }: Props) {
 
       <h3>{tr({ zh: 'NxN 立方尺度律', en: 'NxN Cube-Size Scaling' })}</h3>
       <p>
-        {i18n.language === 'zh-Hant' ? ((
-                        <>
-                          「時間隨 N 多快增長」和「步數隨 N 多快增長」是兩個不同的問題,容易混淆。
-                          <strong>步數: STM ∝ N^{slope.toFixed(2)}</strong> (經驗),漸近上界 <em>Θ(N² / log N)</em> (Demaine et al. 2011)。222 用 ~9 步,777 ~250 步。
-                          <strong>時間: t ∝ N^{slopeTime.toFixed(2)}</strong>,因為大魔方 TPS 顯著下降 (222 持續 11,777 持續 5.5),時間增長比步數快。
-                          過去常說的「時間 ∝ N^4.4」其實是把這兩件事混在一起的產物,本節把它們拆開。
-                        </>
-                      )) : (isZh ? (
+        {(isZh ? (
                         <>
                           「时间随 N 多快增长」和「步数随 N 多快增长」是两个不同的问题,容易混淆。
                           <strong>步数: STM ∝ N^{slope.toFixed(2)}</strong> (经验),渐近上界 <em>Θ(N² / log N)</em> (Demaine et al. 2011)。222 用 ~9 步,777 ~250 步。
@@ -169,8 +140,7 @@ export function TheoryDeepDive({ isZh }: Props) {
         xFormat={(v) => v.toString()}
       />
       <p className="pred-note">
-        {tr({ zh: '左轴对数刻度。两条曲线斜率差就是「TPS 随 N 下降」的视觉化 — 大魔方花时间,不只是因为步数多,更因为每步更慢。', en: 'Log y-axis. The slope gap visualizes TPS decay with N — big cubes are slow not just because of more moves, but because every move is slower.',
-            zhHant: "左軸對數刻度。兩條曲線斜率差就是「TPS 隨 N 下降」的視覺化 — 大魔方花時間,不只是因為步數多,更因為每步更慢。"
+        {tr({ zh: '左轴对数刻度。两条曲线斜率差就是「TPS 随 N 下降」的视觉化 — 大魔方花时间,不只是因为步数多,更因为每步更慢。', en: 'Log y-axis. The slope gap visualizes TPS decay with N — big cubes are slow not just because of more moves, but because every move is slower.'
         })}
       </p>
     </section>

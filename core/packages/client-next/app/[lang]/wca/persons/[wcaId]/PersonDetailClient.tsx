@@ -77,7 +77,7 @@ export default function PersonDetailClient() {
       <div className="wp-page">
         <PageHeader t={t} />
         <main className="wp-main">
-          <div className="wp-error">{t('加载失败', 'Failed to load', "載入失敗")}: {error}</div>
+          <div className="wp-error">{t('加载失败', 'Failed to load')}: {error}</div>
         </main>
       </div>
     );
@@ -87,7 +87,7 @@ export default function PersonDetailClient() {
       <div className="wp-page">
         <PageHeader t={t} />
         <main className="wp-main">
-          <div className="wp-loading">{t('加载中…', 'Loading…', "載入中…")}</div>
+          <div className="wp-loading">{t('加载中…', 'Loading…')}</div>
         </main>
       </div>
     );
@@ -107,12 +107,12 @@ export default function PersonDetailClient() {
   );
 }
 
-function PageHeader({ t, wcaId }: { t: (zh: string, en: string, zhHant?: string) => string; wcaId?: string }) {
+function PageHeader({ t, wcaId }: { t: (zh: string, en: string) => string; wcaId?: string }) {
   return (
     <header className="wp-header">
       <Link href="/wca/persons" className="wp-back">
         <ChevronLeft size={16} />
-        <span>{t('选手搜索', 'Search', "選手搜尋")}</span>
+        <span>{t('选手搜索', 'Search')}</span>
       </Link>
       <div className="wp-header-right">
         {wcaId && (

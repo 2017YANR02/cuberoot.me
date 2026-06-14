@@ -33,7 +33,7 @@ interface Row {
 function AllEventsDonePageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('全项目达成', 'All Events Done', "全項目達成");
+  useDocumentTitle('全项目达成', 'All Events Done');
   const [q, setQ] = useQueryStates(
     {
       country: parseAsString,
@@ -81,36 +81,30 @@ function AllEventsDonePageInner() {
           <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}</Link>
         </div>
         <h1 className="wse-title-row">
-          {tr({ zh: '全项目达成排名', en: 'All Events Achievement',
-              zhHant: "全項目達成排名"
+          {tr({ zh: '全项目达成排名', en: 'All Events Achievement'
         })}
           <Link
             href="/wca/about/all-events-done"
             className="wse-title-help"
-            title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
-                zhHant: "這頁是幹啥的?"
+            title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
             })}
-            aria-label={tr({ zh: '查看说明', en: 'About this page',
-                zhHant: "檢視說明"
+            aria-label={tr({ zh: '查看说明', en: 'About this page'
             })}
           >
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
         </h1>
-        <p className="wse-subtitle">{tr({ zh: '完成全 17 项 WCA 官方项目所用天数(从首次参赛到最后一项达成),即「全项目大满贯」', en: 'Days from first WCA comp to completing all 17 events — the all-events grand slam',
-            zhHant: "完成全 17 項 WCA 官方項目所用天數(從首次參賽到最後一項達成),即「全項目大滿貫」"
+        <p className="wse-subtitle">{tr({ zh: '完成全 17 项 WCA 官方项目所用天数(从首次参赛到最后一项达成),即「全项目大满贯」', en: 'Days from first WCA comp to completing all 17 events — the all-events grand slam'
         })}</p>
       </header>
 
       <div className="wse-filters">
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
-          <label>{tr({ zh: '视图', en: 'View',
-              zhHant: "檢視"
+          <label>{tr({ zh: '视图', en: 'View'
         })}</label>
           <select value={onlyDone ? '1' : '0'} onChange={e => update('onlyDone', e.target.value)}>
-            <option value="1">{tr({ zh: '全达成', en: 'Completed',
-                zhHant: "全達成"
+            <option value="1">{tr({ zh: '全达成', en: 'Completed'
             })}</option>
             <option value="0">{tr({ zh: '全部', en: 'All' })}</option>
           </select>
@@ -118,8 +112,7 @@ function AllEventsDonePageInner() {
       </div>
 
       <div className="wse-table-wrapper">
-        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...',
-            zhHant: "載入中..."
+        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...'
         })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {data && !loading && (
@@ -129,23 +122,17 @@ function AllEventsDonePageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{tr({ zh: '选手', en: 'Person',
-                      zhHant: "選手"
+                  <th>{tr({ zh: '选手', en: 'Person'
                 })}</th>
-                  <th className="wse-value-col">{tr({ zh: '达成天数', en: 'Days',
-                      zhHant: "達成天數"
+                  <th className="wse-value-col">{tr({ zh: '达成天数', en: 'Days'
                 })}</th>
-                  <th>{tr({ zh: '达成比赛', en: 'At competition',
-                      zhHant: "達成比賽"
+                  <th>{tr({ zh: '达成比赛', en: 'At competition'
                 })}</th>
-                  <th className="wse-value-col">{tr({ zh: '比赛场次', en: 'Comps',
-                      zhHant: "比賽場次"
+                  <th className="wse-value-col">{tr({ zh: '比赛场次', en: 'Comps'
                 })}</th>
-                  {!onlyDone && <th className="wse-value-col">{tr({ zh: '完成项目', en: 'Done',
-                      zhHant: "完成項目"
+                  {!onlyDone && <th className="wse-value-col">{tr({ zh: '完成项目', en: 'Done'
                 })}</th>}
-                  <th>{tr({ zh: '国家', en: 'Country',
-                      zhHant: "國家"
+                  <th>{tr({ zh: '国家', en: 'Country'
                 })}</th>
                 </tr>
               </thead>

@@ -8,13 +8,10 @@ interface Props { isZh: boolean }
 export function MethodCompareSection({ isZh }: Props) {
   return (
     <section className="pred-section" id="methods-compare">
-      <h2>{tr({ zh: '方法演进: STM 步数与极限', en: 'Method Evolution: STM Cost & Ceilings',
-          zhHant: "方法演進: STM 步數與極限"
+      <h2>{tr({ zh: '方法演进: STM 步数与极限', en: 'Method Evolution: STM Cost & Ceilings'
     })}</h2>
       <p>
-        {i18n.language === 'zh-Hant' ? ((
-                        <>速擰 3x3 不止 CFOP 一種。每個方法都把「打亂 → 還原」拆成不同階段,階段數 × 階段長度一起決定 STM。後設資料來自 cubeskills (Zemdegs), speedsolving.com wiki, ZBLL 統計頁 (Chris Hardwick), Devagio 的 Mehta 模擬。經驗值取現役頂級選手的覆盤均值,不是新手或中階水平。</>
-                      )) : (isZh ? (
+        {(isZh ? (
                         <>速拧 3x3 不止 CFOP 一种。每个方法都把「打乱 → 还原」拆成不同阶段,阶段数 × 阶段长度一起决定 STM。元数据来自 cubeskills (Zemdegs), speedsolving.com wiki, ZBLL 统计页 (Chris Hardwick), Devagio 的 Mehta 模拟。经验值取现役顶级选手的复盘均值,不是新手或中阶水平。</>
                       ) : (
                         <>3x3 isn't just CFOP. Each method partitions "scramble→solved" into stages; stage-count × stage-length give STM. Numbers below are elite-execution averages (not beginner/intermediate) — sourced from cubeskills (Zemdegs), speedsolving.com wiki, Chris Hardwick's ZBLL stats, and Devagio's Mehta simulator.</>
@@ -25,23 +22,17 @@ export function MethodCompareSection({ isZh }: Props) {
           <thead>
             <tr>
               <th>{tr({ zh: '方法', en: 'Method' })}</th>
-              <th>{tr({ zh: '现役顶级 STM', en: 'Elite STM',
-                  zhHant: "現役頂級 STM"
+              <th>{tr({ zh: '现役顶级 STM', en: 'Elite STM'
             })}</th>
-              <th>{tr({ zh: '理论下界', en: 'Floor STM',
-                  zhHant: "理論下界"
+              <th>{tr({ zh: '理论下界', en: 'Floor STM'
             })}</th>
-              <th>{tr({ zh: 'Alg 数', en: 'Algs',
-                  zhHant: "Alg 數"
+              <th>{tr({ zh: 'Alg 数', en: 'Algs'
             })}</th>
-              <th>{tr({ zh: '优势', en: 'Pros',
-                  zhHant: "優勢"
+              <th>{tr({ zh: '优势', en: 'Pros'
             })}</th>
-              <th>{tr({ zh: '代价', en: 'Cons',
-                  zhHant: "代價"
+              <th>{tr({ zh: '代价', en: 'Cons'
             })}</th>
-              <th>{tr({ zh: '代表选手', en: 'Top user',
-                  zhHant: "代表選手"
+              <th>{tr({ zh: '代表选手', en: 'Top user'
             })}</th>
             </tr>
           </thead>
@@ -65,13 +56,7 @@ export function MethodCompareSection({ isZh }: Props) {
         </table>
       </div>
       <p className="pred-note">
-        {i18n.language === 'zh-Hant' ? ((
-                        <><strong>解讀。</strong> CFOP 的現役頂級 55-58 STM 跟理論下界 45 STM 之間還有約 13 步空間;
-                        ZB, Roux, Petrus 的理論下界都在 40-43 之間,但步數越短對識別和 lookahead 的要求越高,
-                        所以實際 WR 多數還是 CFOP 走出來的 (Zajder 2.76 / Wang 3.08 均 CFOP)。Roux 至今沒破 4 秒單次 (Tsvetkov 3.95 是 Roux 唯一一次)。
-                        1LLL 全 3915 個演算法只有 Damasceno 一個人學完,幾乎不可能在 sub-3 速度下識別。
-                        <strong>歷史規律: TPS 連續演化,方法階躍式演化</strong> — 大跳幾年才出一次 (CFOP 2007, 磁鐵 2017, ZB 2026)。</>
-                      )) : (isZh ? (
+        {(isZh ? (
                         <><strong>解读。</strong> CFOP 的现役顶级 55-58 STM 跟理论下界 45 STM 之间还有约 13 步空间;
                         ZB, Roux, Petrus 的理论下界都在 40-43 之间,但步数越短对识别和 lookahead 的要求越高,
                         所以实际 WR 多数还是 CFOP 走出来的 (Zajder 2.76 / Wang 3.08 均 CFOP)。Roux 至今没破 4 秒单次 (Tsvetkov 3.95 是 Roux 唯一一次)。

@@ -53,7 +53,7 @@ interface RanksResponse {
 function HistoricalRanksPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('历史排名', 'Historical Ranks', "歷史排名");
+  useDocumentTitle('历史排名', 'Historical Ranks');
   const [q, setQ] = useQueryStates(
     {
       event: parseAsString,
@@ -122,12 +122,10 @@ function HistoricalRanksPageInner() {
             <ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}
           </Link>
         </div>
-        <h1>{tr({ zh: '历史排名', en: 'Historical Ranks',
-            zhHant: "歷史排名"
+        <h1>{tr({ zh: '历史排名', en: 'Historical Ranks'
         })}</h1>
         <p className="wse-subtitle">
-          {tr({ zh: '查询任意年末截止时全世界 / 单国家累积最佳排名', en: 'Query end-of-year cumulative best rankings, worldwide or by country',
-              zhHant: "查詢任意年末截止時全世界 / 單國家累積最佳排名"
+          {tr({ zh: '查询任意年末截止时全世界 / 单国家累积最佳排名', en: 'Query end-of-year cumulative best rankings, worldwide or by country'
         })}
         </p>
       </header>
@@ -150,16 +148,14 @@ function HistoricalRanksPageInner() {
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={(v) => updateParam('country', v)} />
 
         <div className="wse-filter">
-          <label>{tr({ zh: '类型', en: 'Type',
-              zhHant: "型別"
+          <label>{tr({ zh: '类型', en: 'Type'
         })}</label>
           <select
             value={type}
             onChange={(e) => updateParam('type', e.target.value)}
             disabled={!allowAverage && type === 'average'}
           >
-            <option value="single">{tr({ zh: '单次', en: 'Single',
-                zhHant: "單次"
+            <option value="single">{tr({ zh: '单次', en: 'Single'
             })}</option>
             {allowAverage && <option value="average">{tr({ zh: '平均', en: 'Average' })}</option>}
           </select>
@@ -167,14 +163,13 @@ function HistoricalRanksPageInner() {
       </div>
 
       <div className="wse-table-wrapper">
-        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...',
-            zhHant: "載入中..."
+        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...'
         })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {data && !loading && (
           <>
             <div className="wse-result-meta">
-              {i18n.language === 'zh-Hant' ? (`共 ${data.total.toLocaleString()} 人,${data.rows.length} 條`) : (isZh
+              {(isZh
                                           ? `共 ${data.total.toLocaleString()} 人,${data.rows.length} 条`
                                           : `${data.total.toLocaleString()} cubers, showing ${data.rows.length}`)}
             </div>
@@ -182,12 +177,10 @@ function HistoricalRanksPageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{tr({ zh: '选手', en: 'Person',
-                      zhHant: "選手"
+                  <th>{tr({ zh: '选手', en: 'Person'
                 })}</th>
-                  <th className="wse-value-col">{i18n.language === 'zh-Hant' ? ((type === 'single' ? '單次' : '平均')) : (isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average'))}</th>
-                  {!country && <th>{tr({ zh: '国家', en: 'Country',
-                      zhHant: "國家"
+                  <th className="wse-value-col">{(isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average'))}</th>
+                  {!country && <th>{tr({ zh: '国家', en: 'Country'
                 })}</th>}
                 </tr>
               </thead>

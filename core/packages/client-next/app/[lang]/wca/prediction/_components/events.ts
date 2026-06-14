@@ -18,7 +18,6 @@ export interface EventMeta {
   subThresholds: number[];
   /** 给关键阈值起昵称(如 sub10 → "Sub 10") */
   subLabel: (t: number) => string;
-    name_zhHant?: string;
 }
 
 function csLabel(t: number): string {
@@ -36,47 +35,34 @@ function csLabel(t: number): string {
 function movesLabel(t: number): string { return `Sub ${t} moves`; }
 
 export const EVENTS: EventMeta[] = [
-  { id: '333',   name_en: '3x3x3',         name_zh: '三阶',     short: '3x3',   scale: 'cs', avgFormat: 'Ao5', rank: 10, subThresholds: [1500, 1200, 1000, 800, 700, 600, 500, 400, 300], subLabel: csLabel,
-      name_zhHant: "三階"
+  { id: '333',   name_en: '3x3x3',         name_zh: '三阶',     short: '3x3',   scale: 'cs', avgFormat: 'Ao5', rank: 10, subThresholds: [1500, 1200, 1000, 800, 700, 600, 500, 400, 300], subLabel: csLabel
 },
-  { id: '222',   name_en: '2x2x2',         name_zh: '二阶',     short: '2x2',   scale: 'cs', avgFormat: 'Ao5', rank: 20, subThresholds: [1000, 500, 300, 200, 150, 100, 80], subLabel: csLabel,
-      name_zhHant: "二階"
+  { id: '222',   name_en: '2x2x2',         name_zh: '二阶',     short: '2x2',   scale: 'cs', avgFormat: 'Ao5', rank: 20, subThresholds: [1000, 500, 300, 200, 150, 100, 80], subLabel: csLabel
 },
-  { id: '444',   name_en: '4x4x4',         name_zh: '四阶',     short: '4x4',   scale: 'cs', avgFormat: 'Ao5', rank: 30, subThresholds: [6000, 4500, 3500, 3000, 2500, 2000, 1700, 1500], subLabel: csLabel,
-      name_zhHant: "四階"
+  { id: '444',   name_en: '4x4x4',         name_zh: '四阶',     short: '4x4',   scale: 'cs', avgFormat: 'Ao5', rank: 30, subThresholds: [6000, 4500, 3500, 3000, 2500, 2000, 1700, 1500], subLabel: csLabel
 },
-  { id: '555',   name_en: '5x5x5',         name_zh: '五阶',     short: '5x5',   scale: 'cs', avgFormat: 'Ao5', rank: 40, subThresholds: [12000, 9000, 7000, 6000, 5000, 4000, 3500, 3000], subLabel: csLabel,
-      name_zhHant: "五階"
+  { id: '555',   name_en: '5x5x5',         name_zh: '五阶',     short: '5x5',   scale: 'cs', avgFormat: 'Ao5', rank: 40, subThresholds: [12000, 9000, 7000, 6000, 5000, 4000, 3500, 3000], subLabel: csLabel
 },
-  { id: '666',   name_en: '6x6x6',         name_zh: '六阶',     short: '6x6',   scale: 'cs', avgFormat: 'Mo3', rank: 50, subThresholds: [25000, 18000, 12000, 10000, 8000, 7000, 6000], subLabel: csLabel,
-      name_zhHant: "六階"
+  { id: '666',   name_en: '6x6x6',         name_zh: '六阶',     short: '6x6',   scale: 'cs', avgFormat: 'Mo3', rank: 50, subThresholds: [25000, 18000, 12000, 10000, 8000, 7000, 6000], subLabel: csLabel
 },
-  { id: '777',   name_en: '7x7x7',         name_zh: '七阶',     short: '7x7',   scale: 'cs', avgFormat: 'Mo3', rank: 60, subThresholds: [40000, 30000, 20000, 15000, 12000, 10000, 9000], subLabel: csLabel,
-      name_zhHant: "七階"
+  { id: '777',   name_en: '7x7x7',         name_zh: '七阶',     short: '7x7',   scale: 'cs', avgFormat: 'Mo3', rank: 60, subThresholds: [40000, 30000, 20000, 15000, 12000, 10000, 9000], subLabel: csLabel
 },
-  { id: '333bf', name_en: '3x3 Blindfolded', name_zh: '三阶盲拧', short: '3BLD', scale: 'cs', avgFormat: 'Mo3', rank: 70, subThresholds: [12000, 6000, 3000, 2000, 1500, 1200, 1000, 800], subLabel: csLabel,
-      name_zhHant: "三階盲擰"
+  { id: '333bf', name_en: '3x3 Blindfolded', name_zh: '三阶盲拧', short: '3BLD', scale: 'cs', avgFormat: 'Mo3', rank: 70, subThresholds: [12000, 6000, 3000, 2000, 1500, 1200, 1000, 800], subLabel: csLabel
 },
-  { id: '333fm', name_en: '3x3 Fewest Moves', name_zh: '三阶最少步', short: 'FMC', scale: 'moves', avgFormat: 'Mo3', rank: 80, subThresholds: [40, 30, 25, 22, 20, 19, 18], subLabel: movesLabel,
-      name_zhHant: "三階最少步"
+  { id: '333fm', name_en: '3x3 Fewest Moves', name_zh: '三阶最少步', short: 'FMC', scale: 'moves', avgFormat: 'Mo3', rank: 80, subThresholds: [40, 30, 25, 22, 20, 19, 18], subLabel: movesLabel
 },
-  { id: '333oh', name_en: '3x3 One-Handed', name_zh: '三阶单手', short: 'OH',   scale: 'cs', avgFormat: 'Ao5', rank: 90, subThresholds: [3000, 2000, 1500, 1200, 1000, 800, 700, 600], subLabel: csLabel,
-      name_zhHant: "三階單手"
+  { id: '333oh', name_en: '3x3 One-Handed', name_zh: '三阶单手', short: 'OH',   scale: 'cs', avgFormat: 'Ao5', rank: 90, subThresholds: [3000, 2000, 1500, 1200, 1000, 800, 700, 600], subLabel: csLabel
 },
-  { id: 'clock', name_en: 'Clock',         name_zh: '魔表',     short: 'Clock', scale: 'cs', avgFormat: 'Ao5', rank: 110, subThresholds: [1500, 1000, 700, 500, 400, 300, 250, 200], subLabel: csLabel,
-      name_zhHant: "魔錶"
+  { id: 'clock', name_en: 'Clock',         name_zh: '魔表',     short: 'Clock', scale: 'cs', avgFormat: 'Ao5', rank: 110, subThresholds: [1500, 1000, 700, 500, 400, 300, 250, 200], subLabel: csLabel
 },
   { id: 'minx',  name_en: 'Megaminx',      name_zh: '五魔方',   short: 'Mega',  scale: 'cs', avgFormat: 'Ao5', rank: 120, subThresholds: [10000, 6000, 4500, 3500, 3000, 2700, 2500, 2300], subLabel: csLabel },
   { id: 'pyram', name_en: 'Pyraminx',      name_zh: '金字塔',   short: 'Pyram', scale: 'cs', avgFormat: 'Ao5', rank: 130, subThresholds: [500, 300, 250, 200, 150, 120, 100, 80], subLabel: csLabel },
-  { id: 'skewb', name_en: 'Skewb',         name_zh: '斜转',     short: 'Skewb', scale: 'cs', avgFormat: 'Ao5', rank: 140, subThresholds: [800, 500, 300, 200, 150, 120, 100, 80], subLabel: csLabel,
-      name_zhHant: "斜轉"
+  { id: 'skewb', name_en: 'Skewb',         name_zh: '斜转',     short: 'Skewb', scale: 'cs', avgFormat: 'Ao5', rank: 140, subThresholds: [800, 500, 300, 200, 150, 120, 100, 80], subLabel: csLabel
 },
   { id: 'sq1',   name_en: 'Square-1',      name_zh: 'SQ1',      short: 'SQ1',   scale: 'cs', avgFormat: 'Ao5', rank: 150, subThresholds: [3000, 1500, 1000, 800, 600, 500, 400, 300], subLabel: csLabel },
-  { id: '444bf', name_en: '4x4 Blindfolded', name_zh: '四阶盲拧', short: '4BLD', scale: 'cs', avgFormat: 'Mo3', rank: 160, subThresholds: [60000, 30000, 15000, 12000, 9000, 7000, 6000], subLabel: csLabel,
-      name_zhHant: "四階盲擰"
+  { id: '444bf', name_en: '4x4 Blindfolded', name_zh: '四阶盲拧', short: '4BLD', scale: 'cs', avgFormat: 'Mo3', rank: 160, subThresholds: [60000, 30000, 15000, 12000, 9000, 7000, 6000], subLabel: csLabel
 },
-  { id: '555bf', name_en: '5x5 Blindfolded', name_zh: '五阶盲拧', short: '5BLD', scale: 'cs', avgFormat: 'Mo3', rank: 170, subThresholds: [200000, 100000, 50000, 30000, 20000, 15000, 12000], subLabel: csLabel,
-      name_zhHant: "五階盲擰"
+  { id: '555bf', name_en: '5x5 Blindfolded', name_zh: '五阶盲拧', short: '5BLD', scale: 'cs', avgFormat: 'Mo3', rank: 170, subThresholds: [200000, 100000, 50000, 30000, 20000, 15000, 12000], subLabel: csLabel
 },
 ];
 

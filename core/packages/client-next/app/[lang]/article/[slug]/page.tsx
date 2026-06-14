@@ -23,12 +23,10 @@ import ArticleActions from '@/components/article/ArticleActions';
 import type { Article, ArticleListItem } from '@/lib/article-api';
 import '../article.css';
 
-// 服务端三态文案 resolver。本页是 RSC,不能调客户端的 i18n/tr(tr 走 'use client' 的
-// i18n singleton)。按路由 lang 参数直接 resolve en / zh / zh-Hant。
-function trServer(lang: string, m: { en: string; zh: string; zhHant?: string }): string {
-  if (lang === 'en') return m.en;
-  if (lang === 'zh-Hant') return m.zhHant ?? m.zh;
-  return m.zh;
+// 服务端双语文案 resolver。本页是 RSC,不能调客户端的 i18n/tr(tr 走 'use client' 的
+// i18n singleton)。按路由 lang 参数直接 resolve en / zh。
+function trServer(lang: string, m: { en: string; zh: string; }): string {
+  return lang === 'en' ? m.en : m.zh;
 }
 
 export const dynamicParams = true;
@@ -108,14 +106,14 @@ export default async function ArticleReaderPage({
     <main className="article-page">
       <Link href={`/${langPrefix}/article`} className="article-breadcrumb">
         <ChevronLeft size={15} />
-        <span>{trServer(lang, { zh: '全部文章', en: 'All articles', zhHant: '全部文章' })}</span>
+        <span>{trServer(lang, { zh: '全部文章', en: 'All articles' })}</span>
       </Link>
 
       <h1>{article.title}</h1>
       {article.subtitle && <p className="article-subtitle">{article.subtitle}</p>}
       {(author || date) && (
         <p className="article-byline">
-          {trServer(lang, { zh: '作者 ', en: 'by ', zhHant: '作者 ' })}
+          {trServer(lang, { zh: '作者 ', en: 'by ' })}
           {author && (
             <Link
               href={`/${langPrefix}/article/author/${article.authorWcaId}`}
@@ -135,7 +133,7 @@ export default async function ArticleReaderPage({
       {more.length > 0 && (
         <section className="article-more-by">
           <h2 className="article-more-by-title">
-            {trServer(lang, { zh: '该作者的更多文章', en: 'More by this author', zhHant: '該作者的更多文章' })}
+            {trServer(lang, { zh: '该作者的更多文章', en: 'More by this author' })}
           </h2>
           <ul className="article-more-by-list">
             {more.map((a) => (

@@ -77,11 +77,9 @@ export default function SponsorEditor({ initial, onClose, onSaved }: Props) {
   async function handleSave() {
     setErr(null);
     const amount = Number(draft.amount);
-    if (!draft.name.trim()) { setErr(tr({ zh: '请填写名字', en: 'Name is required',
-        zhHant: "請填寫名字"
+    if (!draft.name.trim()) { setErr(tr({ zh: '请填写名字', en: 'Name is required'
     })); return; }
-    if (!Number.isFinite(amount) || amount < 0) { setErr(tr({ zh: '金额无效', en: 'Invalid amount',
-        zhHant: "金額無效"
+    if (!Number.isFinite(amount) || amount < 0) { setErr(tr({ zh: '金额无效', en: 'Invalid amount'
     })); return; }
     const body: SponsorInput = {
       name: draft.name.trim(),
@@ -106,18 +104,15 @@ export default function SponsorEditor({ initial, onClose, onSaved }: Props) {
     <div className="sponsor-editor-backdrop" onClick={onClose}>
       <div className="sponsor-editor" onClick={e => e.stopPropagation()}>
         <div className="sponsor-editor-head">
-          <h2>{initial ? tr({ zh: '编辑赞助者', en: 'Edit supporter',
-              zhHant: "編輯贊助者"
-        }) : tr({ zh: '新增赞助者', en: 'Add supporter',
-            zhHant: "新增贊助者"
+          <h2>{initial ? tr({ zh: '编辑赞助者', en: 'Edit supporter'
+        }) : tr({ zh: '新增赞助者', en: 'Add supporter'
         })}</h2>
           <button className="sponsor-editor-close" onClick={onClose} aria-label="close"><X size={18} /></button>
         </div>
 
         <div className="sponsor-editor-body">
           <label className="sponsor-editor-row">
-            <span>{tr({ zh: '搜索选手', en: 'Search cuber',
-                zhHant: "搜尋選手"
+            <span>{tr({ zh: '搜索选手', en: 'Search cuber'
             })}</span>
             <WcaPersonPicker
               value={picked}
@@ -125,14 +120,12 @@ export default function SponsorEditor({ initial, onClose, onSaved }: Props) {
               onQueryChange={q => { if (!picked) setDraft(d => ({ ...d, name: q })); }}
               isZh={isZh}
               className="sponsor-editor-picker"
-              placeholder={tr({ zh: '输入名字或 WCA ID', en: 'Name or WCA ID',
-                  zhHant: "輸入名字或 WCA ID"
+              placeholder={tr({ zh: '输入名字或 WCA ID', en: 'Name or WCA ID'
             })}
             />
             <span className="sponsor-editor-hint">{tr({
               zh: '搜不到(没参加过比赛的人)也没关系,按输入的名字记录',
-              en: "Not in WCA? No problem — the typed name is used as-is",
-                zhHant: "搜不到(沒參加過比賽的人)也沒關係,按輸入的名字記錄"
+              en: "Not in WCA? No problem — the typed name is used as-is"
             })}</span>
           </label>
 
@@ -143,22 +136,19 @@ export default function SponsorEditor({ initial, onClose, onSaved }: Props) {
           )}
 
           <label className="sponsor-editor-row">
-            <span>{tr({ zh: '头像链接', en: 'Avatar URL',
-                zhHant: "頭像連結"
+            <span>{tr({ zh: '头像链接', en: 'Avatar URL'
             })}</span>
             <input value={draft.avatarUrl} onChange={e => set('avatarUrl', e.target.value)} placeholder="https://…" />
           </label>
 
           <div className="sponsor-editor-row-2">
             <label>
-              <span>{tr({ zh: '金额', en: 'Amount',
-                  zhHant: "金額"
+              <span>{tr({ zh: '金额', en: 'Amount'
             })} *</span>
               <input type="number" min="0" step="0.01" value={draft.amount} onChange={e => set('amount', e.target.value)} />
             </label>
             <label>
-              <span>{tr({ zh: '货币', en: 'Currency',
-                  zhHant: "貨幣"
+              <span>{tr({ zh: '货币', en: 'Currency'
             })}</span>
               <select value={draft.currency} onChange={e => set('currency', e.target.value)}>
                 <option value="CNY">CNY ¥</option>
@@ -179,8 +169,7 @@ export default function SponsorEditor({ initial, onClose, onSaved }: Props) {
         <div className="sponsor-editor-foot">
           <button className="sponsor-editor-cancel" onClick={onClose} disabled={saving}>{tr({ zh: '取消', en: 'Cancel' })}</button>
           <button className="sponsor-editor-save" onClick={() => void handleSave()} disabled={saving}>
-            {saving ? '…' : tr({ zh: '保存', en: 'Save',
-                zhHant: "儲存"
+            {saving ? '…' : tr({ zh: '保存', en: 'Save'
             })}
           </button>
         </div>

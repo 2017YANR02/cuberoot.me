@@ -31,14 +31,12 @@ export default function PersonResultChanges({ wcaId, isZh }: { wcaId: string; is
   return (
     <section className="wp-card wp-rc-card">
       <div className="wp-rc-head">
-        <h2 className="wp-rc-title">{tr({ zh: '成绩变更', en: 'Result changes',
-            zhHant: "成績變更"
+        <h2 className="wp-rc-title">{tr({ zh: '成绩变更', en: 'Result changes'
         })}</h2>
       </div>
       <p className="wp-rc-sub">{tr({
         zh: '该选手的往期成绩曾被取消或修正;新成绩已在页面其余处更新,旧成绩在此保留。',
-        en: 'Past results that were later cancelled or corrected; new marks are reflected elsewhere on the page, the old marks are kept here.',
-          zhHant: "該選手的往期成績曾被取消或修正;新成績已在頁面其餘處更新,舊成績在此保留。"
+        en: 'Past results that were later cancelled or corrected; new marks are reflected elsewhere on the page, the old marks are kept here.'
     })}</p>
       <ul className="wp-rc-list">
         {changes.map((c) => <ChangeRow key={c.id} c={c} isZh={isZh} />)}
@@ -49,17 +47,13 @@ export default function PersonResultChanges({ wcaId, isZh }: { wcaId: string; is
 
 function roundLabel(roundTypeId: string | null): string {
   switch (canonicalRound(roundTypeId)) {
-    case 'f': return tr({ zh: '决赛', en: 'Final',
-        zhHant: "決賽"
+    case 'f': return tr({ zh: '决赛', en: 'Final'
     });
-    case '1': return tr({ zh: '一轮', en: 'Round 1',
-        zhHant: "一輪"
+    case '1': return tr({ zh: '一轮', en: 'Round 1'
     });
-    case '2': return tr({ zh: '二轮', en: 'Round 2',
-        zhHant: "二輪"
+    case '2': return tr({ zh: '二轮', en: 'Round 2'
     });
-    case '3': return tr({ zh: '三轮', en: 'Round 3',
-        zhHant: "三輪"
+    case '3': return tr({ zh: '三轮', en: 'Round 3'
     });
     default: return roundTypeId || '';
   }
@@ -94,15 +88,13 @@ function ChangeRow({ c, isZh }: { c: ResultChange; isZh: boolean }) {
             <span className="wp-rc-gone">{tr({ zh: '已移除', en: 'removed' })}</span>
           </>
         ) : onlyMeta ? (
-          <span className="wp-rc-meta">{tr({ zh: '名次 / 纪录标记变动', en: 'place / record marker changed',
-              zhHant: "名次 / 紀錄標記變動"
+          <span className="wp-rc-meta">{tr({ zh: '名次 / 纪录标记变动', en: 'place / record marker changed'
         })}</span>
         ) : (
           valueFields.map((f, i) => (
             <span key={i} className="wp-rc-pair">
               <span className="wp-rc-flabel">
-                {f.field === 'best' ? tr({ zh: '单次', en: 'Single',
-                    zhHant: "單次"
+                {f.field === 'best' ? tr({ zh: '单次', en: 'Single'
                 }) : tr({ zh: '平均', en: 'Average' })}
               </span>
               <span className="wp-rc-old">{formatChangeFieldValue(f.field, f.old, eventId)}</span>

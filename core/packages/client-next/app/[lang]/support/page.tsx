@@ -114,8 +114,7 @@ export default function SupportPage() {
   }
 
   async function handleDelete(s: Sponsor) {
-    if (!window.confirm(tr({ zh: '删除「{n}」?', en: 'Delete "{n}"?',
-        zhHant: "刪除「{n}」?"
+    if (!window.confirm(tr({ zh: '删除「{n}」?', en: 'Delete "{n}"?'
     }).replace('{n}', s.name))) return;
     try {
       await deleteSponsor(s.id);
@@ -128,50 +127,42 @@ export default function SupportPage() {
   return (
     <div className="support-page">
       <header className="support-head">
-        <h1 className="support-title">{tr({ zh: '致谢', en: 'Acknowledgments',
-            zhHant: "致謝"
+        <h1 className="support-title">{tr({ zh: '致谢', en: 'Acknowledgments'
         })}</h1>
         <p className="support-sub">
           {tr({
             zh: '所有赞助将全部用于服务器购买与日常维护。感谢每一位支持 CubeRoot 的朋友。',
-            en: 'Every donation goes entirely toward server costs and upkeep. Thank you to everyone who supports CubeRoot.',
-              zhHant: "所有贊助將全部用於伺服器購買與日常維護。感謝每一位支援 CubeRoot 的朋友。"
+            en: 'Every donation goes entirely toward server costs and upkeep. Thank you to everyone who supports CubeRoot.'
         })}
         </p>
         <div className="support-cta-row">
           <button className="support-cta" onClick={() => setDonateOpen(true)}>
             <Heart size={15} className="support-cta-heart" />
-            {tr({ zh: '支持本站', en: 'Support this site',
-                zhHant: "支援本站"
+            {tr({ zh: '支持本站', en: 'Support this site'
           })}
           </button>
           <AppLink href="/membership" className="support-member-link">
             <Crown size={14} />
-            {tr({ zh: '成为会员', en: 'Become a member',
-                zhHant: "成為會員"
+            {tr({ zh: '成为会员', en: 'Become a member'
             })}
           </AppLink>
         </div>
       </header>
 
       {loadErr ? (
-        <div className="support-empty">{tr({ zh: '加载失败', en: 'Failed to load',
-            zhHant: "載入失敗"
+        <div className="support-empty">{tr({ zh: '加载失败', en: 'Failed to load'
         })}: {loadErr}</div>
       ) : !sponsors ? (
-        <div className="support-empty">{tr({ zh: '加载中…', en: 'Loading…',
-            zhHant: "載入中…"
+        <div className="support-empty">{tr({ zh: '加载中…', en: 'Loading…'
         })}</div>
       ) : (
         <>
           <div className="support-count">
             <span>
               {total > 0
-                ? tr({ zh: '已有 {n} 位朋友赞助', en: '{n} supporters so far',
-                    zhHant: "已有 {n} 位朋友贊助"
+                ? tr({ zh: '已有 {n} 位朋友赞助', en: '{n} supporters so far'
                 }).replace('{n}', String(total))
-                : tr({ zh: '成为第一位赞助者', en: 'Be the first supporter',
-                    zhHant: "成為第一位贊助者"
+                : tr({ zh: '成为第一位赞助者', en: 'Be the first supporter'
                 })}
             </span>
             {admin && (
@@ -198,8 +189,7 @@ export default function SupportPage() {
 
           {remaining > 0 && (
             <button className="support-more" onClick={() => setExpanded(true)}>
-              {tr({ zh: '展开剩余 {n} 人', en: 'Show {n} more',
-                  zhHant: "展開剩餘 {n} 人"
+              {tr({ zh: '展开剩余 {n} 人', en: 'Show {n} more'
             }).replace('{n}', String(remaining))}
             </button>
           )}

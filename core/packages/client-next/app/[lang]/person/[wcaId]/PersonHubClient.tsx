@@ -54,22 +54,22 @@ export default function PersonHubClient() {
       key: 'recon',
       href: `/recon/person/${wcaId}`,
       Icon: Rewind,
-      title: tr({ zh: '成绩复盘', en: 'Reconstructions', zhHant: "成績覆盤" }),
-      desc: tr({ zh: '逐步还原该选手的解法', en: 'Step-by-step solve reconstructions', zhHant: '逐步還原該選手的解法' }),
+      title: tr({ zh: '成绩复盘', en: 'Reconstructions' }),
+      desc: tr({ zh: '逐步还原该选手的解法', en: 'Step-by-step solve reconstructions' }),
     },
     {
       key: 'wca',
       href: `/wca/persons/${wcaId}`,
       Icon: IdCard,
-      title: tr({ zh: 'WCA 档案', en: 'WCA Profile', zhHant: 'WCA 檔案' }),
-      desc: tr({ zh: '个人纪录 / 比赛历史 / 奖牌', en: 'Records, competition history, medals', zhHant: '個人紀錄 / 比賽歷史 / 獎牌' }),
+      title: tr({ zh: 'WCA 档案', en: 'WCA Profile' }),
+      desc: tr({ zh: '个人纪录 / 比赛历史 / 奖牌', en: 'Records, competition history, medals' }),
     },
     {
       key: 'article',
       href: `/article/person/${wcaId}`,
       Icon: FileText,
-      title: tr({ zh: '社区文章', en: 'Articles', zhHant: "社羣文章" }),
-      desc: tr({ zh: '该选手发表的长文', en: 'Long-form posts by this person', zhHant: '該選手發表的長文' }),
+      title: tr({ zh: '社区文章', en: 'Articles' }),
+      desc: tr({ zh: '该选手发表的长文', en: 'Long-form posts by this person' }),
     },
   ];
 
@@ -78,12 +78,12 @@ export default function PersonHubClient() {
       <header className="phub-header">
         <HomeLink className="phub-back">
           <ChevronLeft size={16} />
-          <span>{tr({ zh: '首页', en: 'Home', zhHant: '首頁' })}</span>
+          <span>{tr({ zh: '首页', en: 'Home' })}</span>
         </HomeLink>
         {isSelf && (
           <button type="button" className="phub-logout" onClick={() => logout()}>
             <LogOut size={14} />
-            <span>{tr({ zh: '退出登录', en: 'Log out', zhHant: '退出登入' })}</span>
+            <span>{tr({ zh: '退出登录', en: 'Log out' })}</span>
           </button>
         )}
       </header>

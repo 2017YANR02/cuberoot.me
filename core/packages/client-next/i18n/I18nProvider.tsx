@@ -10,14 +10,14 @@ import i18n, { detectLanguage, ensureLangInUrl, changeAppLanguage } from './i18n
 // When omitted (root layout, pre-Phase-3 backward-compat pages), fall back to
 // URL ?lang= / cookie / navigator detection in useEffect.
 //
-// All three catalogs (en/zh/zh-Hant) are static, so there's no runtime
-// conversion and no hydration gating to do here.
+// Both catalogs (en/zh) are static, so there's no runtime conversion and no
+// hydration gating to do here.
 export default function I18nProvider({
   children,
   initialLang,
 }: {
   children: ReactNode;
-  initialLang?: 'zh' | 'en' | 'zh-Hant';
+  initialLang?: 'zh' | 'en';
 }) {
   const [instance] = useState(() => i18n);
 

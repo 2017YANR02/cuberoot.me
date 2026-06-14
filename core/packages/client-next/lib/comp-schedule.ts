@@ -115,40 +115,28 @@ export function getRoundTypeId(
 }
 
 const ROUND_TYPE_NAME: Record<string, { zh: string; en: string
-        zhHant?: string;
  }> = {
-  '0': { zh: '资格赛', en: 'Qualification round',
-      zhHant: "資格賽"
+  '0': { zh: '资格赛', en: 'Qualification round'
 },
-  '1': { zh: '初赛', en: 'First round',
-      zhHant: "初賽"
+  '1': { zh: '初赛', en: 'First round'
 },
-  '2': { zh: '复赛', en: 'Second round',
-      zhHant: "複賽"
+  '2': { zh: '复赛', en: 'Second round'
 },
-  '3': { zh: '半决赛', en: 'Semi Final',
-      zhHant: "半決賽"
+  '3': { zh: '半决赛', en: 'Semi Final'
 },
-  'b': { zh: 'B组决赛', en: 'B Final',
-      zhHant: "B組決賽"
+  'b': { zh: 'B组决赛', en: 'B Final'
 },
-  'c': { zh: '组合制决赛', en: 'Final',
-      zhHant: "組合制決賽"
+  'c': { zh: '组合制决赛', en: 'Final'
 },
-  'd': { zh: '组合制初赛', en: 'First round',
-      zhHant: "組合制初賽"
+  'd': { zh: '组合制初赛', en: 'First round'
 },
-  'e': { zh: '组合制复赛', en: 'Second round',
-      zhHant: "組合制複賽"
+  'e': { zh: '组合制复赛', en: 'Second round'
 },
-  'f': { zh: '决赛', en: 'Final',
-      zhHant: "決賽"
+  'f': { zh: '决赛', en: 'Final'
 },
-  'g': { zh: '组合制半决赛', en: 'Semi Final',
-      zhHant: "組合制半決賽"
+  'g': { zh: '组合制半决赛', en: 'Semi Final'
 },
-  'h': { zh: '组合制资格赛', en: 'Qualification round',
-      zhHant: "組合制資格賽"
+  'h': { zh: '组合制资格赛', en: 'Qualification round'
 },
 };
 export function roundTypeName(id: string, isZh: boolean): string {
@@ -174,7 +162,7 @@ export function roundTypeShort(id: string, isZh: boolean): string {
 // 备用打乱(extra)用 E1/E2 标识,而非 #1/#2（WCA 备打有独立序号,从 1 起）。
 export function compSourceLine(round: string, group: string, num: number, isZh: boolean, isExtra = false): string {
   const r = roundTypeShort(round, isZh);
-  const grp = group ? (i18n.language === 'zh-Hant' ? (`${group}組`) : (isZh ? `${group}组` : ` ${group}`)) : '';
+  const grp = group ? ((isZh ? `${group}组` : ` ${group}`)) : '';
   const tag = isExtra ? `E${num}` : `#${num}`;
   return isZh ? `${r}${grp}${tag}` : `${r}${grp} ${tag}`;
 }
@@ -193,34 +181,27 @@ export function formatName(fmt: string, isZh: boolean): string {
 }
 
 const ACTIVITY_NAMES: Record<string, { zh: string; en: string
-        zhHant?: string;
  }> = {
-  registration: { zh: '现场报名', en: 'On-site registration',
-      zhHant: "現場報名"
+  registration: { zh: '现场报名', en: 'On-site registration'
 },
-  checkin: { zh: '签到', en: 'Check-in',
-      zhHant: "簽到"
+  checkin: { zh: '签到', en: 'Check-in'
 },
-  tutorial: { zh: '新手教学', en: 'Tutorial for new competitors',
-      zhHant: "新手教學"
+  tutorial: { zh: '新手教学', en: 'Tutorial for new competitors'
 },
   multi: { zh: '多盲魔方提交', en: 'Cube submission for 3x3x3 Multi-Blind' },
   breakfast: { zh: '早餐', en: 'Breakfast' },
   lunch: { zh: '午餐', en: 'Lunch' },
   dinner: { zh: '晚餐', en: 'Dinner' },
-  awards: { zh: '颁奖', en: 'Awards',
-      zhHant: "頒獎"
+  awards: { zh: '颁奖', en: 'Awards'
 },
-  setup: { zh: '布置', en: 'Setup',
-      zhHant: "佈置"
+  setup: { zh: '布置', en: 'Setup'
 },
   teardown: { zh: '收尾', en: 'Teardown' },
   misc: { zh: '其他', en: 'Other' },
 };
 
 // 常见 misc / 杂项活动名(组织者自由填的英文)→ 中文。WCA 站只显示原名,我们额外补中译;
-// 键统一小写去空白比对,表外的名字(已是中文或太特殊)原样显示。简体字面量由 3-way
-// 构建就地转繁体(同 FORMAT_NAME,无需 zhHant)。
+// 键统一小写去空白比对,表外的名字(已是中文或太特殊)原样显示。
 const MISC_NAME_ZH: Record<string, string> = {
   'opening': '开幕式',
   'opening ceremony': '开幕式',
@@ -307,7 +288,7 @@ export function localizeActivityName(
   const rt = roundTypeName(rtId, isZh);
   const base = `${ev} ${rt}`;
   if (attempt !== undefined) {
-    return i18n.language === 'zh-Hant' ? (`${base} (第${attempt}次還原)`) : (isZh ? `${base} (第${attempt}次还原)` : `${base} (Attempt ${attempt})`);
+    return (isZh ? `${base} (第${attempt}次还原)` : `${base} (Attempt ${attempt})`);
   }
   return base;
 }
@@ -337,16 +318,16 @@ export function timeLimitText(
   round: RoundInfo, allRounds: Record<string, RoundInfo>, isZh: boolean,
 ): string {
   if (round.timeLimit === null) {
-    if (round.eventId === '333fm') return i18n.language === 'zh-Hant' ? ('一小時') : (isZh ? '一小时' : '1 hour');
+    if (round.eventId === '333fm') return (isZh ? '一小时' : '1 hour');
     if (round.eventId === '333mbf') {
-      return i18n.language === 'zh-Hant' ? ('每魔方十分鐘') : (isZh ? '每魔方十分钟' : '10:00.00 per cube, up to 60:00.00');
+      return (isZh ? '每魔方十分钟' : '10:00.00 per cube, up to 60:00.00');
     }
     return '';
   }
   const timeStr = centisecondsToClock(round.timeLimit.centiseconds);
   const ids = round.timeLimit.cumulativeRoundIds;
   if (ids.length === 0) return timeStr;
-  if (ids.length === 1) return i18n.language === 'zh-Hant' ? (`累計${timeStr}`) : (isZh ? `累计${timeStr}` : `${timeStr} cumulative`);
+  if (ids.length === 1) return (isZh ? `累计${timeStr}` : `${timeStr} cumulative`);
   const roundLabel = (id: string): string => {
     const r = allRounds[id];
     if (!r) return id;
@@ -354,7 +335,7 @@ export function timeLimitText(
     return `${eventDisplayName(r.eventId, isZh)} ${roundTypeName(rtId, isZh)}`;
   };
   const roundStr = ids.map(roundLabel).join(', ');
-  return i18n.language === 'zh-Hant' ? (`${roundStr}輪總計${timeStr}`) : (isZh ? `${roundStr}轮总计${timeStr}` : `${timeStr} total for ${roundStr}`);
+  return (isZh ? `${roundStr}轮总计${timeStr}` : `${timeStr} total for ${roundStr}`);
 }
 
 // Cutoff text. '' if no cutoff.
@@ -364,18 +345,18 @@ export function cutoffText(round: RoundInfo, isZh: boolean): string {
   const attemptResult = round.cutoff.attemptResult;
   if (round.eventId === '333fm') {
     const moves = attemptResult;
-    return i18n.language === 'zh-Hant' ? (`${n}次嘗試 < ${moves}步`) : (isZh
+    return (isZh
           ? `${n}次尝试 < ${moves}步`
           : `${n} attempt${n > 1 ? 's' : ''} to get < ${moves} moves`);
   }
   if (round.eventId === '333mbf') {
     const points = mbPoints(attemptResult);
-    return i18n.language === 'zh-Hant' ? (`${n}次嘗試 > ${points}分`) : (isZh
+    return (isZh
           ? `${n}次尝试 > ${points}分`
           : `${n} attempt${n > 1 ? 's' : ''} to get > ${points} points`);
   }
   const time = centisecondsToClock(attemptResult);
-  return i18n.language === 'zh-Hant' ? (`${n}次嘗試 < ${time}`) : (isZh
+  return (isZh
       ? `${n}次尝试 < ${time}`
       : `${n} attempt${n > 1 ? 's' : ''} to get < ${time}`);
 }
@@ -385,26 +366,26 @@ export function advancementText(round: RoundInfo, isZh: boolean): string {
   const ac = round.advancementCondition;
   if (!ac) return '';
   if (ac.type === 'ranking') {
-    return i18n.language === 'zh-Hant' ? (`排名前${ac.level}晉級下一輪`) : (isZh ? `排名前${ac.level}晋级下一轮` : `Top ${ac.level} advance to next round`);
+    return (isZh ? `排名前${ac.level}晋级下一轮` : `Top ${ac.level} advance to next round`);
   }
   if (ac.type === 'percent') {
-    return i18n.language === 'zh-Hant' ? (`前${ac.level}%晉級下一輪`) : (isZh ? `前${ac.level}%晋级下一轮` : `Top ${ac.level}% advance to next round`);
+    return (isZh ? `前${ac.level}%晋级下一轮` : `Top ${ac.level}% advance to next round`);
   }
   // attemptResult
   const rf = formatName(round.format, isZh);
   if (round.eventId === '333fm') {
-    return i18n.language === 'zh-Hant' ? (`${rf} < ${ac.level}步晉級下一輪`) : (isZh
+    return (isZh
           ? `${rf} < ${ac.level}步晋级下一轮`
           : `${rf} < ${ac.level} moves advances to next round`);
   }
   if (round.eventId === '333mbf') {
     const pts = mbPoints(ac.level);
-    return i18n.language === 'zh-Hant' ? (`${rf} > ${pts}點晉級下一輪`) : (isZh
+    return (isZh
           ? `${rf} > ${pts}点晋级下一轮`
           : `${rf} > ${pts} points advances to next round`);
   }
   const time = centisecondsToClock(ac.level);
-  return i18n.language === 'zh-Hant' ? (`${rf} < ${time}晉級下一輪`) : (isZh
+  return (isZh
       ? `${rf} < ${time}晋级下一轮`
       : `${rf} < ${time} advances to next round`);
 }

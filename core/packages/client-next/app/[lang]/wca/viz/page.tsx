@@ -51,7 +51,7 @@ const EVENTS = [
 export default function VizPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('成绩分布', 'Distribution', "成績分佈");
+  useDocumentTitle('成绩分布', 'Distribution');
   const players = useVizStore(s => s.players);
   const currentEventId = useVizStore(s => s.currentEventId);
   const addPlayer = useVizStore(s => s.addPlayer);
@@ -143,12 +143,11 @@ export default function VizPage() {
 
   // NOTE: 标题文本（JSX 形式以便嵌国旗）
   const evLabel = currentEventId === '333' ? '3×3' : currentEventId;
-  const noPlayerTitle = tr({ zh: '分布演变', en: 'Distribution Evolution',
-      zhHant: "分佈演變"
+  const noPlayerTitle = tr({ zh: '分布演变', en: 'Distribution Evolution'
 });
   const renderName = (p: typeof players[number]) => {
     const iso2 = personFlagIso2(p.wcaId);
-    const name = i18n.language === 'zh-Hant' ? (p.nameZhHant ?? p.nameZh) : (isZh ? p.nameZh : p.name);
+    const name = (isZh ? p.nameZh : p.name);
     return (
       <>
         {iso2 && <Flag iso2={iso2} className="viz-title-flag" />}
@@ -162,8 +161,7 @@ export default function VizPage() {
     const p = players[0];
     titleNode = (
       <>
-        {renderName(p)} {evLabel} {tr({ zh: '分布演变', en: 'Distribution Evolution',
-            zhHant: "分佈演變"
+        {renderName(p)} {evLabel} {tr({ zh: '分布演变', en: 'Distribution Evolution'
         })}
       </>
     );
@@ -177,8 +175,7 @@ export default function VizPage() {
             {renderName(p)}
           </span>
         ))}
-        {' '}{evLabel} {tr({ zh: '分布对比', en: 'Distribution Comparison',
-            zhHant: "分佈對比"
+        {' '}{evLabel} {tr({ zh: '分布对比', en: 'Distribution Comparison'
         })}
       </>
     );
@@ -198,11 +195,9 @@ export default function VizPage() {
             <Link
               href="/wca/viz-about"
               className="viz-title-help"
-              title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
-                  zhHant: "這頁是幹啥的?"
+              title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
             })}
-              aria-label={tr({ zh: '查看说明', en: 'About this page',
-                  zhHant: "檢視說明"
+              aria-label={tr({ zh: '查看说明', en: 'About this page'
             })}
             >
               <HelpCircle size={16} strokeWidth={1.75} />
@@ -218,8 +213,7 @@ export default function VizPage() {
         <div className="toolbar-search">
           <WcaPersonPicker
             mode="inline"
-            placeholder={tr({ zh: '搜索选手...', en: 'Search cuber...',
-                zhHant: "搜尋選手..."
+            placeholder={tr({ zh: '搜索选手...', en: 'Search cuber...'
             })}
             onSelect={handlePersonSelect}
           />
@@ -235,8 +229,7 @@ export default function VizPage() {
           ))}
         </select>
         <div style={{ position: 'relative' }}>
-          <button className="toolbar-btn" title={tr({ zh: '下载 CSV', en: 'Download CSV',
-              zhHant: "下載 CSV"
+          <button className="toolbar-btn" title={tr({ zh: '下载 CSV', en: 'Download CSV'
         })} onClick={handleCsvDownload}>
             📥 CSV
           </button>
@@ -264,14 +257,11 @@ export default function VizPage() {
         <PlayControls />
 
         <div className="shortcuts-hint">
-          <kbd>Space</kbd> {tr({ zh: '播放/暂停', en: 'Play/Pause',
-              zhHant: "播放/暫停"
+          <kbd>Space</kbd> {tr({ zh: '播放/暂停', en: 'Play/Pause'
         })}&nbsp;
-          <kbd>←</kbd><kbd>→</kbd> {tr({ zh: '步进', en: 'Step',
-              zhHant: "步進"
+          <kbd>←</kbd><kbd>→</kbd> {tr({ zh: '步进', en: 'Step'
         })}&nbsp;
-          <kbd>Shift</kbd>+<kbd>←</kbd><kbd>→</kbd> {tr({ zh: '快进', en: 'Fast-forward',
-              zhHant: "快進"
+          <kbd>Shift</kbd>+<kbd>←</kbd><kbd>→</kbd> {tr({ zh: '快进', en: 'Fast-forward'
         })}
         </div>
 

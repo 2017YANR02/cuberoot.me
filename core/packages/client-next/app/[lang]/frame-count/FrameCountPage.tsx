@@ -305,7 +305,7 @@ function ThumbnailCanvas({ bitmap }: { bitmap: ImageBitmap }) {
 
 export default function FrameCountPage() {
   const { t, i18n } = useTranslation();
-  useDocumentTitle('数帧', 'Frame Count', "數幀");
+  useDocumentTitle('数帧', 'Frame Count');
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -2155,11 +2155,9 @@ export default function FrameCountPage() {
           <Link
             href="/frame-count-about"
             className="fc-title-help"
-            title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
-                zhHant: "這頁是幹啥的?"
+            title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
             })}
-            aria-label={tr({ zh: '查看说明', en: 'About this page',
-                zhHant: "檢視說明"
+            aria-label={tr({ zh: '查看说明', en: 'About this page'
             })}
           >
             <HelpCircle size={18} strokeWidth={1.75} />

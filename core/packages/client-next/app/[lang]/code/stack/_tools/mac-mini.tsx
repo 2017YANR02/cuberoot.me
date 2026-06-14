@@ -44,17 +44,13 @@ export const MAC_MINI: StackTool = {
     outlookDesc: <>The current model on sale is still the M4 / M4 Pro from November 2024. Through the first half of 2026 the industry broadly expects an M5 / M5 Pro version to take over (most likely keeping the 5-inch body), but as of June 2026 the model Apple ships is still M4. The bigger trend is Neural Engine compute climbing, making local small-to-mid model inference a new selling point for the mini.</>,
   },
   heroStats: [
-    { num: '5', unit: 'in', zh: <>机身边长 (2024 重设计) <em>13 厘米见方</em></>, en: <>body edge (2024 redesign) <em>5-inch square</em></>,
-        zhHant: <>機身邊長 (2024 重設計) <em>13 釐米見方</em></>
+    { num: '5', unit: 'in', zh: <>机身边长 (2024 重设计) <em>13 厘米见方</em></>, en: <>body edge (2024 redesign) <em>5-inch square</em></>
     },
-    { num: '21', unit: 'y', zh: <>从 2005 至今 <em>跨 PowerPC / Intel / Apple Silicon</em></>, en: <>since 2005 <em>across PowerPC / Intel / Apple Silicon</em></>,
-        zhHant: <>從 2005 至今 <em>跨 PowerPC / Intel / Apple Silicon</em></>
+    { num: '21', unit: 'y', zh: <>从 2005 至今 <em>跨 PowerPC / Intel / Apple Silicon</em></>, en: <>since 2005 <em>across PowerPC / Intel / Apple Silicon</em></>
     },
-    { num: '48', unit: 'GB', zh: <>M4 Pro 统一内存上限 <em>CPU / GPU / NPU 共享</em></>, en: <>M4 Pro unified memory ceiling <em>shared by CPU / GPU / NPU</em></>,
-        zhHant: <>M4 Pro 統一記憶體上限 <em>CPU / GPU / NPU 共享</em></>
+    { num: '48', unit: 'GB', zh: <>M4 Pro 统一内存上限 <em>CPU / GPU / NPU 共享</em></>, en: <>M4 Pro unified memory ceiling <em>shared by CPU / GPU / NPU</em></>
     },
-    { num: '499', unit: '$', zh: <>初代起价 (2005-01) <em>第一台"自带显示器"的 Mac</em></>, en: <>original starting price (2005-01) <em>first bring-your-own-display Mac</em></>,
-        zhHant: <>初代起價 (2005-01) <em>第一臺"自帶顯示器"的 Mac</em></>
+    { num: '499', unit: '$', zh: <>初代起价 (2005-01) <em>第一台"自带显示器"的 Mac</em></>, en: <>original starting price (2005-01) <em>first bring-your-own-display Mac</em></>
     },
   ],
   intro: {

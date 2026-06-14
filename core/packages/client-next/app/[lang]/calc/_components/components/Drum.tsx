@@ -87,8 +87,7 @@ export function Drum({ activeCell, onCellValueChange }: DrumProps) {
       renderSlot={renderSlot}
       onChange={handleChange}
       width={72}
-      ariaLabel={tr({ zh: '成绩滚筒', en: 'Time wheel',
-          zhHant: "成績滾筒"
+      ariaLabel={tr({ zh: '成绩滚筒', en: 'Time wheel'
     })}
     />
   );

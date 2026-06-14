@@ -7,7 +7,6 @@ export interface HeroStat {
   unit?: string;
   zh: ReactNode;
   en: ReactNode;
-    zhHant?: ReactNode;
 }
 
 export interface StackHistoryItem {
@@ -88,13 +87,13 @@ export interface StackTool {
     outlookDesc: ReactNode;
   };
   heroStats: HeroStat[];
-  intro: { zh: ReactNode; en: ReactNode; zhHant?: ReactNode };
+  intro: { zh: ReactNode; en: ReactNode; };
   history: StackHistoryItem[];
   concepts: ConceptCard[];
   whyCards: WhyCard[];
   adopters: Adopter[];
   outlook: OutlookCard[];
-  cuberoot: { zh: ReactNode; en: ReactNode; zhHant?: ReactNode };
+  cuberoot: { zh: ReactNode; en: ReactNode; };
   links: { label: string; href: string }[];
 }
 

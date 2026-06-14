@@ -53,8 +53,7 @@ export function CodeInputModal({
 
   if (!open) return null;
 
-  const heading = title ?? (tr({ zh: '输入编码', en: 'Enter codes',
-      zhHant: "輸入編碼"
+  const heading = title ?? (tr({ zh: '输入编码', en: 'Enter codes'
 }));
 
   return (
@@ -71,8 +70,7 @@ export function CodeInputModal({
             type="button"
             className="bld-modal-close"
             onClick={onClose}
-            aria-label={tr({ zh: '关闭', en: 'Close',
-                zhHant: "關閉"
+            aria-label={tr({ zh: '关闭', en: 'Close'
             })}
           >
             <X size={18} />
@@ -84,8 +82,7 @@ export function CodeInputModal({
           className="bld-modal-textarea"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder ?? (tr({ zh: '每行一个编码,例如 AB', en: 'One code per line, e.g. AB',
-              zhHant: "每行一個編碼,例如 AB"
+          placeholder={placeholder ?? (tr({ zh: '每行一个编码,例如 AB', en: 'One code per line, e.g. AB'
         }))}
           spellCheck={false}
         />
@@ -115,8 +112,7 @@ export function CodeInputModal({
             {tr({ zh: '取消', en: 'Cancel' })}
           </button>
           <button type="button" className="bld-btn bld-btn-primary" onClick={onConfirm}>
-            {tr({ zh: '确认', en: 'Confirm',
-                zhHant: "確認"
+            {tr({ zh: '确认', en: 'Confirm'
             })}
           </button>
         </div>

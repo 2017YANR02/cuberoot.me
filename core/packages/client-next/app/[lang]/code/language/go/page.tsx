@@ -508,7 +508,7 @@ export default function GoIntroPage() {
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useDocumentTitle('Go — 简洁与并发', 'Go — Simplicity Meets Concurrency', "Go — 簡潔與併發");
+  useDocumentTitle('Go — 简洁与并发', 'Go — Simplicity Meets Concurrency');
 
   useEffect(() => {
     const root = rootRef.current;

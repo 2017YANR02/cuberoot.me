@@ -44,13 +44,11 @@ export const ZUSTAND: StackTool = {
     outlookDesc: <>5.0 (2024-11) drops React 17, requires 18+, and trims the bundle further. React Compiler + <code>useShallow</code> tighten selectors; the RSC era sharpens the client-side store boundary. There's no "next big rewrite" looming — that absence is itself the stability promise.</>,
   },
   heroStats: [
-    { num: '5', unit: '.0', zh: <>当前稳定 <em>2024-11 起,2026-05 仍 5.0.x</em></>, en: <>current stable <em>5.0.x since 2024-11</em></>,
-        zhHant: <>當前穩定 <em>2024-11 起,2026-05 仍 5.0.x</em></>
+    { num: '5', unit: '.0', zh: <>当前稳定 <em>2024-11 起,2026-05 仍 5.0.x</em></>, en: <>current stable <em>5.0.x since 2024-11</em></>
     },
     { num: '~1', unit: '.16 KB', zh: <>min+gzip 包大小 <em>bundlephobia</em></>, en: <>min+gzip bundle size <em>bundlephobia</em></> },
     { num: '~50', unit: 'k+', zh: <>GitHub stars <em>pmndrs/zustand</em></>, en: <>GitHub stars <em>pmndrs/zustand</em></> },
-    { num: '11', zh: <>本站 store 数量 <em>6 全局 + 5 页面级</em></>, en: <>stores on this site <em>6 global + 5 page-local</em></>,
-        zhHant: <>本站 store 數量 <em>6 全域性 + 5 頁面級</em></>
+    { num: '11', zh: <>本站 store 数量 <em>6 全局 + 5 页面级</em></>, en: <>stores on this site <em>6 global + 5 page-local</em></>
     },
   ],
   intro: {

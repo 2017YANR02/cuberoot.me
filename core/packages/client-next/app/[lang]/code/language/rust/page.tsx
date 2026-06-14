@@ -490,7 +490,7 @@ export default function RustIntroPage() {
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useDocumentTitle('Rust — 系统编程的现代答卷', 'Rust — A Modern Answer to Systems Programming', "Rust — 系統程式設計的現代答卷");
+  useDocumentTitle('Rust — 系统编程的现代答卷', 'Rust — A Modern Answer to Systems Programming');
 
   useEffect(() => {
     const root = rootRef.current;

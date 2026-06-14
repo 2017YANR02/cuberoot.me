@@ -201,8 +201,7 @@ function ModularClock({ n, step, animStep, lang }: { n: number; step: number; an
       {/* subgroup size at bottom */}
       <text x={CX} y={270} textAnchor="middle" fontSize={10} fill={isGenerator ? 'var(--green)' : 'var(--ink-dim)'} style={{ fontFamily: 'var(--mono)' }}>
         {step === 0
-          ? (tr({ zh: `⟨0⟩ = {0}, 阶 1`, en: `⟨0⟩ = {0}, order 1`,
-              zhHant: "⟨0⟩ = {0}, 階 1"
+          ? (tr({ zh: `⟨0⟩ = {0}, 阶 1`, en: `⟨0⟩ = {0}, order 1`
         }))
           : isGenerator
             ? (lang === 'zh' ? `⟨${step}⟩ = ℤ/${n}ℤ (生成元)` : `⟨${step}⟩ = ℤ/${n}ℤ (generator)`)
@@ -862,8 +861,7 @@ export default function CyclicModular() {
           <div className="gt-result-row">
             <span className="gt-result-label"><TeX src={`k \\bmod ${cubeN}`} /></span>
             <span className="gt-result-val" style={{ color: cubePos === 0 ? 'var(--green)' : 'var(--ink)' }}>
-              {cubePos} {cubePos === 0 ? (tr({ zh: '— 复原!', en: '— solved!',
-                  zhHant: "— 復原!"
+              {cubePos} {cubePos === 0 ? (tr({ zh: '— 复原!', en: '— solved!'
             })) : ''}
             </span>
           </div>

@@ -189,11 +189,11 @@ const nextConfig: NextConfig = {
         // Route every real id to that shell so the page never SSRs per request;
         // the client reads the real id from window.location. URL bar is unchanged
         // (rewrite, not redirect). See persons/[wcaId]/page.tsx.
-        { source: "/:lang(en|zh-Hant|zh)/wca/persons/:wcaId", destination: "/:lang/wca/persons/_" },
+        { source: "/:lang(en|zh)/wca/persons/:wcaId", destination: "/:lang/wca/persons/_" },
         // Colpi letter-pair detail: same sentinel-shell trick as persons above.
         // Crawlers enumerate the pair space; without this each pair URL burns a
         // function render after every deploy (per-deployment ISR cache reset).
-        { source: "/:lang(en|zh-Hant|zh)/memo/colpi/:pair", destination: "/:lang/memo/colpi/_" },
+        { source: "/:lang(en|zh)/memo/colpi/:pair", destination: "/:lang/memo/colpi/_" },
       ],
       afterFiles: [
         // Dev only: FMC chain solver (vendored cubelib) runs as a local native

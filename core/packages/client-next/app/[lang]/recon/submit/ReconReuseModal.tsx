@@ -106,11 +106,9 @@ export default function ReconReuseModal({ wcaId, isZh, onClose, onPick }: Props)
     >
       <div className="rr-modal">
         <div className="rr-head">
-          <h2 className="rr-title">{tr({ zh: '复用以前的填写', en: 'Reuse a previous entry',
-              zhHant: "複用以前的填寫"
+          <h2 className="rr-title">{tr({ zh: '复用以前的填写', en: 'Reuse a previous entry'
         })}</h2>
-          <button type="button" className="rr-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close',
-              zhHant: "關閉"
+          <button type="button" className="rr-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close'
         })}>
             <X size={18} />
           </button>
@@ -121,8 +119,7 @@ export default function ReconReuseModal({ wcaId, isZh, onClose, onPick }: Props)
           <input
             value={q}
             onChange={e => setQ(e.target.value)}
-            placeholder={tr({ zh: '搜索你的复盘', en: 'Search your reconstructions',
-                zhHant: "搜尋你的覆盤"
+            placeholder={tr({ zh: '搜索你的复盘', en: 'Search your reconstructions'
             })}
             autoFocus
           />
@@ -130,17 +127,14 @@ export default function ReconReuseModal({ wcaId, isZh, onClose, onPick }: Props)
 
         <div className="rr-body">
           {all == null ? (
-            <div className="rr-state"><Loader2 size={18} className="rr-spin" /> {tr({ zh: '加载中…', en: 'Loading…',
-                zhHant: "載入中…"
+            <div className="rr-state"><Loader2 size={18} className="rr-spin" /> {tr({ zh: '加载中…', en: 'Loading…'
             })}</div>
           ) : filtered.length === 0 ? (
             <div className="rr-state">
               {q.trim()
-                ? tr({ zh: '没有匹配的复盘', en: 'No matching reconstructions',
-                    zhHant: "沒有匹配的覆盤"
+                ? tr({ zh: '没有匹配的复盘', en: 'No matching reconstructions'
                 })
-                : tr({ zh: '还没有可复用的复盘', en: 'No previous reconstructions yet',
-                    zhHant: "還沒有可複用的覆盤"
+                : tr({ zh: '还没有可复用的复盘', en: 'No previous reconstructions yet'
                 })}
             </div>
           ) : (
@@ -152,8 +146,7 @@ export default function ReconReuseModal({ wcaId, isZh, onClose, onPick }: Props)
                 const compName = r.comp ? localizeCompName(r.compWcaId ?? '', r.comp, isZh) : '';
                 const title = r.caption?.trim()
                   || compName
-                  || (r.event ? eventDisplayName(r.event, isZh) : tr({ zh: '复盘', en: 'Reconstruction',
-                      zhHant: "覆盤"
+                  || (r.event ? eventDisplayName(r.event, isZh) : tr({ zh: '复盘', en: 'Reconstruction'
                 }));
                 const picking = pickingId === (r.id ?? -1);
                 return (

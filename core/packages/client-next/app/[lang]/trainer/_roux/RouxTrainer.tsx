@@ -155,44 +155,6 @@ const introTextZh = `# Onionhoney 的桥式（Roux）训练器
 https://github.com/onionhoney/roux-trainers
 `;
 
-const introTextZhHant = `# Onionhoney 的橋式（Roux）訓練器
-- 一套覆蓋橋式（Roux）各類訓練需求的工具集 ❤️
-- 靈感來自 http://cubegrass.appspot.com/，並補齊了它缺失的功能。
-
-## 支援的模式
-- 左橋分析器（FB analyzer）
-    - 求解全部 x2y 左橋，並推薦最佳起手的左橋！
-    - 也會推薦最佳起手的 FS / 偽 FS / Line！
-    - 可作為“找到 x 步解”的小測驗，答案藏在摺疊裡。
-    - 支援更多朝向（CN、藍/綠 x2y、紅/橙 x2y）。
-- 左橋末槽（+ DR）訓練
-    - 學左橋或左橋 + DR 時 \`非常實用\`。拿一個隨機打亂，先自己想，再對照解法！
-    - **注意**：求解器已盡力，但仍可能錯過整體最優解。拿不準時請諮詢身邊的高手，挑要學的解法務必謹慎。
-- 左橋方塊 / 左橋 / 右橋方塊 訓練
-    - 可按塊的位置指定。這些模式在拼塊（blockbuilding）上能帶來不少新思路。
-- CMLL 訓練
-    - 真隨機 L10P 打亂，看不出情況。可指定不同 OCLL，甚至可從隨機的 SB 最後一對起手（模擬真實識別過程）。
-    - 只顯示識別所需的貼紙！
-- LSE 訓練（EOLR、4c）
-    - 適合複習 EOLR、練習 4c 識別。也可按 MC / 非 MC 情況篩選。
-
-## 快捷鍵
-- 空格：下一個打亂。
-- 回車：把虛擬魔方重置回當前打亂。
-- 用 cstimer 鍵位控制魔方。
-
-## 功能
-- 打亂全部為隨機態。求解器針對橋式最佳化，M、r 轉為一等公民，最多提供 25 種解法。
-- 可用鍵盤控制虛擬魔方（cstimer 鍵位），也可拖動魔方改變視角。
-- 可收藏喜歡的情況，儲存在你的瀏覽器裡。
-- 可貼上一組自己的打亂，訓練器會逐個發給你！
-
----
-
-這是為 React 19 / Next.js 重寫（去 MUI）的忠實移植。原作者 Onionhoney：
-https://github.com/onionhoney/roux-trainers
-`;
-
 function RouxTrainer(props: { embedded?: boolean }) {
   const { embedded } = props;
   const { i18n } = useTranslation();
@@ -249,13 +211,13 @@ function RouxTrainer(props: { embedded?: boolean }) {
       <div className="roux-topbar">
         {/* When embedded under the 333 hub's 桥式 section heading, the section title
             already names it — drop the internal title to avoid a double label. */}
-        {!embedded && <div className="roux-topbar-title">{tt('桥式训练器', 'Roux Trainer', "橋式訓練器")}</div>}
+        {!embedded && <div className="roux-topbar-title">{tt('桥式训练器', 'Roux Trainer')}</div>}
 
         <select
           className="roux-mode-select"
           value={mode}
           onChange={(e) => handleModeChange(e.target.value as Mode)}
-          aria-label={tt('选择模式', 'Select mode', "選擇模式")}
+          aria-label={tt('选择模式', 'Select mode')}
         >
           {tab_modes.map(([m, long, short]) => (
             <option key={m} value={m} title={rt(long, !!isZh)}>
@@ -280,8 +242,8 @@ function RouxTrainer(props: { embedded?: boolean }) {
             type="button"
             className="roux-icon-btn"
             onClick={() => setInfoOpen(true)}
-            aria-label={tt('说明', 'Info', "說明")}
-            title={tt('说明', 'Info', "說明")}
+            aria-label={tt('说明', 'Info')}
+            title={tt('说明', 'Info')}
           >
             <Info size={20} />
           </button>
@@ -302,7 +264,7 @@ function RouxTrainer(props: { embedded?: boolean }) {
       <Modal
         open={infoOpen}
         onClose={() => setInfoOpen(false)}
-        title={tt('关于', 'About', "關於")}
+        title={tt('关于', 'About')}
         actions={
           <button
             type="button"
@@ -314,7 +276,7 @@ function RouxTrainer(props: { embedded?: boolean }) {
         }
       >
         <div className="roux-markdown">
-          <ReactMarkdown>{i18n.language === 'zh-Hant' ? introTextZhHant : (isZh ? introTextZh : introText)}</ReactMarkdown>
+          <ReactMarkdown>{(isZh ? introTextZh : introText)}</ReactMarkdown>
         </div>
       </Modal>
     </div>

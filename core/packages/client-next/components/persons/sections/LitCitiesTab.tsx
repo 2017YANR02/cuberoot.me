@@ -18,13 +18,13 @@ interface Props {
 }
 
 export default function LitCitiesTab({ profile, comps, isZh }: Props) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
 
   const lit = useMemo(() => comps ? buildLitFromComps(comps, null) : null, [comps]);
 
-  if (!comps) return <div className="wp-loading-inline">{t('加载中…', 'Loading…', "載入中…")}</div>;
+  if (!comps) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
   if (lit && lit.cities.length === 0) {
-    return <div className="wp-empty">{t('暂无比赛足迹', 'No competition footprint', "暫無比賽足跡")}</div>;
+    return <div className="wp-empty">{t('暂无比赛足迹', 'No competition footprint')}</div>;
   }
 
   return (
@@ -34,24 +34,24 @@ export default function LitCitiesTab({ profile, comps, isZh }: Props) {
         <span className="wp-lit-banner-text">
           {t(
             '想看 3D 地球 + 时间轴轨迹?',
-            'Want a 3D globe with time-axis trail?', "想看 3D 地球 + 時間軸軌跡?"
+            'Want a 3D globe with time-axis trail?'
           )}
         </span>
         <Link
           href={`/wca/comp?view=globe&wcaId=${encodeURIComponent(profile.person.wca_id)}${isZh ? '&lang=zh' : ''}`}
           className="wp-lit-banner-cta"
         >
-          {t('在地球上查看', 'Open on Globe', "在地球上檢視")}
+          {t('在地球上查看', 'Open on Globe')}
         </Link>
       </div>
 
       {lit && (
         <div className="wp-lit-stats">
-          <span><strong>{lit.countries.length}</strong> {t('个国家 / 地区', 'countries', "個國家 / 地區")}</span>
+          <span><strong>{lit.countries.length}</strong> {t('个国家 / 地区', 'countries')}</span>
           <span className="wp-text-mute">·</span>
           <span><strong>{lit.cities.length}</strong> {t('座城市', 'cities')}</span>
           <span className="wp-text-mute">·</span>
-          <span><strong>{comps.length}</strong> {t('场比赛', 'competitions', "場比賽")}</span>
+          <span><strong>{comps.length}</strong> {t('场比赛', 'competitions')}</span>
         </div>
       )}
 
@@ -60,9 +60,9 @@ export default function LitCitiesTab({ profile, comps, isZh }: Props) {
           <table className="wp-lit-table">
             <thead>
               <tr>
-                <th>{t('国家 / 地区', 'Country', "國家 / 地區")}</th>
+                <th>{t('国家 / 地区', 'Country')}</th>
                 <th>{t('城市', 'City')}</th>
-                <th className="wp-cell-num">{t('参赛次数', 'Comps', "參賽次數")}</th>
+                <th className="wp-cell-num">{t('参赛次数', 'Comps')}</th>
               </tr>
             </thead>
             <tbody>

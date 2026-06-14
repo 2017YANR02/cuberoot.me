@@ -219,7 +219,6 @@ interface BenchRow {
   zh: ReactNode;
   en: ReactNode;
   segs: { cls: string; pct: number; label: string }[];
-    zhHant?: ReactNode;
 }
 
 const BENCH_TIME: BenchRow[] = [
@@ -580,7 +579,7 @@ export default function KatexIntroPage() {
 
   useDocumentTitle(
     'KaTeX : 浏览器里 100× 速度的 LaTeX 数学渲染 — 2013→2026',
-    'KaTeX : LaTeX math in the browser at 100× MathJax speed — 2013→2026', "KaTeX : 瀏覽器裡 100× 速度的 LaTeX 數學渲染 — 2013→2026"
+    'KaTeX : LaTeX math in the browser at 100× MathJax speed — 2013→2026'
   );
 
   useEffect(() => {
@@ -1024,7 +1023,7 @@ export default function KatexIntroPage() {
               <p className="bwars-sub"><L zh="横轴对齐到最大值 ~50ms · 数据综合公开 benchmark" en="x-axis normalised against ~50ms max · sourced from public benchmarks" /></p>
               {BENCH_TIME.map((row, i) => (
                 <div className="bwars-row" key={i}>
-                  <div className="bwars-yr">{(i18n.language === 'zh-Hant' ? (row.zhHant ?? row.zh) : (i18n.language.startsWith('zh') ? row.zh : row.en))}</div>
+                  <div className="bwars-yr">{((i18n.language.startsWith('zh') ? row.zh : row.en))}</div>
                   <div className="bwars-bar">
                     {row.segs.map((s, j) => (
                       <div
@@ -1053,7 +1052,7 @@ export default function KatexIntroPage() {
               <p className="bwars-sub"><L zh="gzip 后总大小 · 横轴 100% = ~1.6MB MathJax 默认包" en="gzipped total · x-axis 100% = ~1.6MB MathJax default bundle" /></p>
               {BENCH_BYTES.map((row, i) => (
                 <div className="bwars-row" key={i}>
-                  <div className="bwars-yr">{(i18n.language === 'zh-Hant' ? (row.zhHant ?? row.zh) : (i18n.language.startsWith('zh') ? row.zh : row.en))}</div>
+                  <div className="bwars-yr">{((i18n.language.startsWith('zh') ? row.zh : row.en))}</div>
                   <div className="bwars-bar">
                     {row.segs.map((s, j) => (
                       <div

@@ -68,8 +68,7 @@ export default function PlayControls() {
   return (
     <div className="controls">
       {/* 播放/暂停按钮 */}
-      <button className="ctrl-btn" id="playBtn" title={tr({ zh: '播放/暂停 (Space)', en: 'Play/Pause (Space)',
-          zhHant: "播放/暫停 (Space)"
+      <button className="ctrl-btn" id="playBtn" title={tr({ zh: '播放/暂停 (Space)', en: 'Play/Pause (Space)'
     })} onClick={togglePlay}>
         {isPlaying ? (
           <svg className="icon-pause" viewBox="0 0 24 24">
@@ -112,8 +111,7 @@ export default function PlayControls() {
 
       {/* 同步模式（多选手时显示） */}
       {players.length > 1 && (
-        <div className="sync-group" title={tr({ zh: '多选手同步模式', en: 'Multi-cuber sync mode',
-            zhHant: "多選手同步模式"
+        <div className="sync-group" title={tr({ zh: '多选手同步模式', en: 'Multi-cuber sync mode'
         })}>
           {(['solve', 'date'] as const).map(mode => (
             <button
@@ -122,8 +120,7 @@ export default function PlayControls() {
               onClick={() => setSyncMode(mode)}
             >
               {mode === 'solve'
-                ? (tr({ zh: '把数', en: 'Solves',
-                    zhHant: "把數"
+                ? (tr({ zh: '把数', en: 'Solves'
                 }))
                 : (tr({ zh: '日期', en: 'Date' }))}
             </button>

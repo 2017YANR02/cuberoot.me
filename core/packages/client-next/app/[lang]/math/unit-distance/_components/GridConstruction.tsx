@@ -82,7 +82,7 @@ export default function GridConstruction() {
     <div className="ud-grid-demo">
       <div className="ud-grid-controls">
         <div className="ud-sandbox-slider">
-          <label>{t('网格边长', 'grid side', "網格邊長")} s = {s} &nbsp;<span className="ud-mono">(n = {n})</span></label>
+          <label>{t('网格边长', 'grid side')} s = {s} &nbsp;<span className="ud-mono">(n = {n})</span></label>
           <input
             type="range" min={3} max={12} step={1}
             value={s}
@@ -90,7 +90,7 @@ export default function GridConstruction() {
           />
         </div>
         <div className="ud-grid-k-row">
-          <span className="ud-grid-k-label">{t('单位长度² = ', 'unit length² = ', "單位長度² = ")}<span className="ud-mono">k</span></span>
+          <span className="ud-grid-k-label">{t('单位长度² = ', 'unit length² = ')}<span className="ud-mono">k</span></span>
           <div className="ud-grid-k-buttons">
             {K_OPTIONS.map(kv => (
               <button key={kv}
@@ -159,7 +159,7 @@ export default function GridConstruction() {
             <span className="ud-stat-value">{n}</span>
           </div>
           <div className="ud-stat is-primary">
-            <span className="ud-stat-label">{t('单位距离对', 'unit pairs', "單位距離對")}</span>
+            <span className="ud-stat-label">{t('单位距离对', 'unit pairs')}</span>
             <span className="ud-stat-value">{edges.length}</span>
           </div>
           <div className="ud-stat">
@@ -174,9 +174,7 @@ export default function GridConstruction() {
       </div>
 
       <p className="ud-sandbox-hint">
-        {i18n.language === 'zh-Hant' ? ((
-                        <>把"單位"重定義成 √k。k = 1 給出 <span className="ud-mono">2s(s−1)</span> ≈ 2n,只有 r₂(1) = 4 個方向能貢獻。但 k = 5 有 <span className="ud-mono">r₂(5) = 8</span> 個方向 ((±1,±2),(±2,±1)),邊數立刻變多。k = 25 還多了 (0, ±5)、(±3, ±4) 等。Erdős 1946 的下界正是來自:在 √n × √n 網格里挑使 r₂(k) 最大的 k,得到 ν(n) ≥ n · n<sup>c/log log n</sup>。</>
-                      )) : (isZh ? (
+        {(isZh ? (
                         <>把"单位"重定义成 √k。k = 1 给出 <span className="ud-mono">2s(s−1)</span> ≈ 2n,只有 r₂(1) = 4 个方向能贡献。但 k = 5 有 <span className="ud-mono">r₂(5) = 8</span> 个方向 ((±1,±2),(±2,±1)),边数立刻变多。k = 25 还多了 (0, ±5)、(±3, ±4) 等。Erdős 1946 的下界正是来自:在 √n × √n 网格里挑使 r₂(k) 最大的 k,得到 ν(n) ≥ n · n<sup>c/log log n</sup>。</>
                       ) : (
                         <>Rescale "unit" to √k. k = 1 yields only <span className="ud-mono">2s(s−1)</span> ≈ 2n pairs — just r₂(1) = 4 directions. But k = 5 with <span className="ud-mono">r₂(5) = 8</span> directions ((±1,±2), (±2,±1)) jumps higher; k = 25 adds (0, ±5) and (±3, ±4). Erdős 1946 picks the k with maximum r₂(k) ≤ n, giving the classical lower bound ν(n) ≥ n · n<sup>c/log log n</sup>.</>

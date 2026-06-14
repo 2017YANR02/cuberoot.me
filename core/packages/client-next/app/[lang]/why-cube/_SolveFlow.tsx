@@ -60,7 +60,7 @@ export default function SolveFlow() {
       <div className="wc-solveflow-side">
         <div className="wc-solveflow-note">
           <Rotate3d size={22} />
-          <span>{t('全程在脑中预演每一块的去向', 'Mentally rotating where every piece lands', "全程在腦中預演每一塊的去向")}</span>
+          <span>{t('全程在脑中预演每一块的去向', 'Mentally rotating where every piece lands')}</span>
         </div>
         <div className="wc-solveflow-stat">
           <span className="wc-solveflow-num">{moves}</span>
@@ -69,7 +69,7 @@ export default function SolveFlow() {
         <p className="wc-solveflow-cap">
           {t(
             '这条解法只有 20 步,是这个打乱的最优解 —— 几秒钟就能拧完。按播放再看一遍。',
-            'This solution is just 20 moves — optimal for this scramble — done in seconds. Hit play to watch again.', "這條解法只有 20 步,是這個打亂的最優解 —— 幾秒鐘就能擰完。按播放再看一遍。"
+            'This solution is just 20 moves — optimal for this scramble — done in seconds. Hit play to watch again.'
           )}
         </p>
       </div>
