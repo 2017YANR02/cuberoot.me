@@ -144,6 +144,7 @@ html:root:has(.wp-page),
 html:root:has(.records-page),
 html:root:has(.nemesizer-page),
 html:root:has(.fun-stats),
+html:root:has(.result-watch-page),
 html:root:has(.tr-page) {
   color-scheme: dark;
   --background: #171717;
