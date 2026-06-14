@@ -90,7 +90,7 @@ const EVENT_LABEL: Record<string, { zh: string; en: string
   '333mbf': { zh: '3x3 多盲', en: '3x3 MBLD' },
   '333fm': { zh: '3x3 最少步', en: '3x3 FMC' },
 };
-function eventLabel(e: string, isZh: boolean): string {
+function eventLabel(e: string): string {
   const m = EVENT_LABEL[e];
   return m ? ((i18n.language === 'zh-Hant' ? (m.zhHant ?? m.zh) : (i18n.language.startsWith('zh') ? m.zh : m.en))) : e;
 }
@@ -619,8 +619,8 @@ export default function ScrambleStatsPage() {
   const sampleN = is333
     ? Object.values(activeCounts).reduce((a, b) => a + b, 0)
     : currentSet.sample_count;
-  const sampleCount = tr({ zh: '{n} 条样本', en: '{n} samples',
-      zhHant: "{n} 條樣本"
+  const sampleCount = tr({ zh: '{n} 条', en: '{n} scrambles',
+      zhHant: "{n} 條"
 }).replace('{n}', sampleN.toLocaleString());
 
   // 方法下拉:数据层块变体(123/123x2/222/223)聚合显示为「砖」;阶段下拉列块形状,
@@ -707,9 +707,6 @@ export default function ScrambleStatsPage() {
             })}
           >
             <DownloadIcon />
-            {tr({ zh: '下载全部', en: 'Download all',
-                zhHant: "下載全部"
-            })}
           </a>
         )}
       </div>
@@ -979,7 +976,7 @@ function ExamplesPanel({
                         {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                         <span className="scramble-stats-examples-comp-name">{localizeCompName(m[0], comp[0], isZh)}</span>
                         <span className="scramble-stats-examples-comp-meta">
-                          <EventIcon event={m[1]} className="scramble-stats-examples-evt" title={eventLabel(m[1], isZh)} />
+                          <EventIcon event={m[1]} className="scramble-stats-examples-evt" title={eventLabel(m[1])} />
                           <span>{compSourceLine(m[3], m[4], m[2], isZh, !!m[5])}</span>
                         </span>
                       </Link>
