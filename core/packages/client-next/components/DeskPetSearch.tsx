@@ -7,11 +7,12 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Maximize2, Coffee, EyeOff, Heart, Home, Sparkles, Shuffle, Boxes } from 'lucide-react';
+import { Maximize2, Coffee, EyeOff, Heart, Home, Sparkles, Shuffle, Boxes, MessageSquarePlus } from 'lucide-react';
 import LandingSearch from '@/components/LandingSearch';
 import HeaderToggles from '@/components/HeaderToggles';
 import WcaAuth from '@/components/WcaAuth';
 import DonateModal from '@/components/DonateModal';
+import FeedbackModal from '@/components/FeedbackModal';
 import DeskPetGallery from '@/components/DeskPetGallery';
 import { SEARCH_CARDS } from '@/lib/landing-sections';
 import { isAdmin } from '@/lib/auth-store';
@@ -113,6 +114,7 @@ export default function DeskPetSearch({
   const backdropRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const [donateOpen, setDonateOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const router = useRouter();
   const zh = lang === 'zh';
@@ -212,6 +214,10 @@ export default function DeskPetSearch({
           title={t('赞助', 'Donate')}>
           <Heart size={16} className="heart-icon" />
         </button>
+        <button type="button" className="icon-only" onClick={() => setFeedbackOpen(true)}
+          title={t('反馈', 'Feedback')}>
+          <MessageSquarePlus size={16} />
+        </button>
         <span className="sep" />
         <button type="button" className="icon-only char-btn" onClick={onCycleChar}
           title={`${t('形象', 'Character')}: ${charLabel}`}>
@@ -249,6 +255,7 @@ export default function DeskPetSearch({
         </button>
       </div>
       {donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}
+      {feedbackOpen && <FeedbackModal lang={lang} onClose={() => setFeedbackOpen(false)} />}
       {galleryOpen && <DeskPetGallery lang={lang} onClose={() => setGalleryOpen(false)} />}
     </div>
   );

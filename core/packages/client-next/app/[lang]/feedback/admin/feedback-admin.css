@@ -1,0 +1,106 @@
+/* /feedback/admin — 反馈审核。双主题走 :root token。 */
+.fba-page { max-width: 820px; margin: 0 auto; padding: 24px 16px 64px; }
+
+.fba-header { margin-bottom: 8px; }
+.fba-back {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 13px; color: var(--muted-foreground); text-decoration: none;
+}
+.fba-back:hover { color: var(--foreground); }
+
+.fba-title { margin: 0 0 16px; font-size: 22px; font-weight: 650; color: var(--foreground); }
+
+.fba-denied { text-align: center; padding-top: 80px; color: var(--muted-foreground); }
+.fba-denied p { margin: 0 0 14px; }
+
+.fba-filters { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+.fba-filter {
+  padding: 6px 13px; border-radius: 8px; cursor: pointer; font-size: 13px;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  border: 1px solid transparent; color: var(--muted-foreground);
+  transition: background .15s, color .15s, border-color .15s;
+}
+.fba-filter:hover { color: var(--foreground); }
+.fba-filter.is-active {
+  background: var(--accent-soft); color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.fba-error { margin-bottom: 14px; padding: 10px 12px; border-radius: 9px;
+  font-size: 13px; color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 10%, transparent); }
+.fba-empty { padding: 40px 0; text-align: center; color: var(--muted-foreground); }
+
+.fba-list { display: flex; flex-direction: column; gap: 14px; }
+
+.fba-card {
+  padding: 16px; border-radius: 13px;
+  background: var(--card); border: 1px solid var(--border-default);
+  border-left: 3px solid var(--border-strong);
+}
+.fba-card.fba-status-new { border-left-color: var(--accent); }
+.fba-card.fba-status-triaged { border-left-color: var(--signal-warning); }
+.fba-card.fba-status-done { border-left-color: var(--signal-success); }
+
+.fba-card-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.fba-kind {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 7px; font-size: 12px; font-weight: 600;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent); color: var(--foreground);
+}
+.fba-kind-bug { background: color-mix(in srgb, var(--destructive) 14%, transparent); color: var(--destructive); }
+.fba-kind-need { background: var(--accent-soft); color: var(--accent); }
+.fba-when { font-size: 12px; color: var(--faint-foreground); }
+.fba-badge { margin-left: auto; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+.fba-badge-new { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+.fba-badge-triaged { background: color-mix(in srgb, var(--signal-warning) 18%, transparent); color: var(--signal-warning); }
+.fba-badge-done { background: color-mix(in srgb, var(--signal-success) 18%, transparent); color: var(--signal-success); }
+
+.fba-body { margin: 0 0 12px; font-size: 14px; line-height: 1.6; color: var(--foreground); white-space: pre-wrap; word-break: break-word; }
+
+.fba-media-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.fba-media {
+  position: relative; display: block; width: 132px; height: 132px;
+  border-radius: 9px; overflow: hidden;
+  border: 1px solid var(--border-default); background: var(--muted);
+}
+.fba-media img, .fba-media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fba-media-load { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
+.fba-media-err { display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--faint-foreground); }
+.fba-media-dur {
+  position: absolute; left: 5px; bottom: 5px; padding: 1px 6px; border-radius: 5px;
+  font-size: 11px; color: #fff; background: color-mix(in srgb, #000 55%, transparent);
+}
+
+.fba-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-bottom: 6px; font-size: 12px; }
+.fba-who { font-weight: 600; color: var(--foreground); }
+.fba-contact { color: var(--accent); }
+.fba-pageurl { display: inline-flex; align-items: center; gap: 3px; color: var(--muted-foreground); text-decoration: none; }
+.fba-pageurl:hover { color: var(--foreground); text-decoration: underline; }
+.fba-env {
+  padding: 1px 7px; border-radius: 5px; color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+}
+.fba-ua { margin: 0 0 12px; font-size: 11px; color: var(--faint-foreground);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.fba-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.fba-act {
+  padding: 5px 11px; border-radius: 7px; cursor: pointer; font-size: 12px;
+  background: transparent; border: 1px solid var(--border-default); color: var(--muted-foreground);
+  transition: background .15s, color .15s, border-color .15s;
+}
+.fba-act:hover:not(:disabled) { color: var(--foreground); border-color: var(--accent); }
+.fba-act.is-cur { background: var(--accent-soft); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.fba-act:disabled { cursor: default; }
+.fba-del {
+  margin-left: auto; display: flex; padding: 6px; border-radius: 7px; cursor: pointer;
+  background: transparent; border: 1px solid var(--border-default); color: var(--muted-foreground);
+  transition: background .15s, color .15s, border-color .15s;
+}
+.fba-del:hover:not(:disabled) { color: var(--destructive); border-color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 10%, transparent); }
+
+@media (max-width: 480px) {
+  .fba-media { width: calc(50% - 4px); height: 110px; }
+}

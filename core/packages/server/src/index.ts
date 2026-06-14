@@ -33,6 +33,7 @@ import { membershipRoutes } from './routes/membership.js';
 import { compFollowsRoutes } from './routes/comp_follows.js';
 import { wcaProxyRoutes } from './routes/wca_proxy.js';
 import { wcaResultWatchRoutes } from './routes/wca_result_watch.js';
+import { feedbackRoutes } from './routes/feedback.js';
 import { startWcaPastResultsMonitor } from './monitors/wca_past_results.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
 import { ensureDaemon as ensureCube555Daemon } from './cube555/daemon.js';
@@ -116,6 +117,7 @@ app.route('/v1', membershipRoutes);
 app.route('/v1', compFollowsRoutes);
 app.route('/v1', wcaProxyRoutes);
 app.route('/v1', wcaResultWatchRoutes);
+app.route('/v1', feedbackRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).
