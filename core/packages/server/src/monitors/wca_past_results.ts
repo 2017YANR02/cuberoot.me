@@ -28,7 +28,10 @@ const FETCH_TIMEOUT_MS = 20_000;
 // 故串行 + 请求间隔 + 退避重试;一次只打 1 个 /results(name/iso2 从 results 行直接取,不再单独拉 profile)。
 const CONCURRENCY = 1;
 const REQUEST_GAP_MS = 1500;          // 每人之间的礼貌间隔
-const RETRY_BACKOFF_MS = [3000, 8000, 20000]; // 500/429/网络错的退避(共 3 次重试)
+const RETRY_BACKOFF_MS = [4000, 12000]; // 单条 500/429/网络错的退避(共 2 次重试)
+// 熔断:连续 N 人失败 = WCA 在惩罚本机 IP(突发后的冷却窗),立即中止本轮,
+// 别在惩罚期继续打(只会延长冷却);下个 6h 周期再试,届时 IP 已恢复。
+const MAX_CONSECUTIVE_FAILURES = 6;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
@@ -356,6 +359,8 @@ async function runOnce(): Promise<void> {
   const queue = [...persons];
   let totalChanges = 0;
   let failures = 0;
+  let consecutiveFailures = 0;
+  let aborted = false;
 
   async function worker(): Promise<void> {
     for (;;) {
@@ -363,17 +368,25 @@ async function runOnce(): Promise<void> {
       if (!p) return;
       try {
         totalChanges += await processPerson(p.wcaId, p.matchKey);
+        consecutiveFailures = 0;
       } catch (e) {
         failures++;
+        consecutiveFailures++;
         console.warn(`[wca-past-results] ${p.wcaId} failed: ${(e as Error).message}`);
+        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+          aborted = true;
+          console.warn(`[wca-past-results] ${consecutiveFailures} consecutive failures — WCA likely rate-limiting this IP; aborting cycle, retry next interval`);
+          return;
+        }
       }
       if (queue.length > 0) await sleep(REQUEST_GAP_MS); // 礼貌间隔,避开 WCA burst 保护
     }
   }
 
+  // CONCURRENCY=1 → 单 worker 串行;熔断标志由它设置
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => worker()));
   console.log(
-    `[wca-past-results] cycle done: ${persons.length} watched, ${totalChanges} change(s), ${failures} fetch failure(s)`,
+    `[wca-past-results] cycle ${aborted ? 'ABORTED' : 'done'}: ${persons.length} watched, ${totalChanges} change(s), ${failures} fetch failure(s)`,
   );
 }
 
