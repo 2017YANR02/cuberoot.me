@@ -103,7 +103,9 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
     rows = (all ?? [])
       .filter((r) => r.event_id === w
         && (!spec.round || r.round_type_id === spec.round)
-        && (!spec.group || r.group_id === spec.group))
+        && (!spec.group || r.group_id === spec.group)
+        // 最优模式:只留有最优等态的真题,不再静默回退原打乱(无则该比赛队列空 -> 回退随机生成)。
+        && (!spec.optimal || !!r.optimal_scramble))
       .sort((a, b) => {
         const ra = ROUND_SEQ[a.round_type_id] ?? 9, rb = ROUND_SEQ[b.round_type_id] ?? 9;
         if (ra !== rb) return ra - rb;
@@ -130,6 +132,7 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
   const qs = new URLSearchParams({ event: w, count: String(FETCH_COUNT) });
   if (spec.from) qs.set('from', spec.from);
   if (spec.to) qs.set('to', spec.to);
+  if (spec.optimal) qs.set('optimal', '1'); // 服务端只回有最优等态的真题,池内每条都可切最优
   const res = await fetch(apiUrl(`/v1/wca/scrambles/random?${qs.toString()}`));
   if (!res.ok) return;
   const data = (await res.json()) as { scrambles?: RandomItem[] };
