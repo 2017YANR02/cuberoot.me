@@ -602,6 +602,16 @@ if($runStages -or $runPuzzles){
   } finally { Pop-Location }
 }
 
+# ---- 5d. 难度 tab「下载全部」全量语料 gz (bundles/;依赖 std.csv,故跟 stages) ----
+if($runStages){
+  Step '5d 全量语料下载包 — node build_scramble_bundle.mjs (~30MB/阶段, gitignored 只 scp)'
+  Push-Location (Join-Path $RepoRoot 'core\packages\scramble-stats-build')
+  try {
+    node --max-old-space-size=3072 build_scramble_bundle.mjs
+    if($LASTEXITCODE -ne 0){ Write-Host '[bundle] 失败(非致命, 跳过)' -ForegroundColor Yellow }
+  } finally { Pop-Location }
+}
+
 # ---- 6. 发布 ----
 if($NoPublish){
   Step '6 发布 (跳过)'

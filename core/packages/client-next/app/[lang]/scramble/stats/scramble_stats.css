@@ -622,6 +622,24 @@
   margin-left: auto;
   white-space: nowrap;
 }
+/* 「下载全部」全量语料下载 — 紧跟样本数右侧 */
+.scramble-stats-download-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: 0.82rem;
+  color: var(--text-sub);
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.scramble-stats-download-all:hover {
+  color: var(--accent);
+}
+.scramble-stats-download-all svg {
+  width: 0.95em;
+  height: 0.95em;
+}
 .scramble-len-footnote {
   font-size: 0.78rem;
   color: var(--text-sub);
