@@ -21,6 +21,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
 import { Flag } from '@/components/Flag';
 import { localizeCompName } from '@/lib/comp-localize';
+import { reconPathSeg } from '@/lib/recon-seo';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { RecordBadge } from '@/components/RecordBadge';
 import WcaAuth from '@/components/WcaAuth';
@@ -325,11 +326,14 @@ export default function ReconListPage() {
 
   // ── 行点击（支持 Ctrl/Meta + 中键） ──
 
-  const getDetailUrl = useCallback((id: number) => `/recon/${id}`, []);
+  // Keyword-rich slugged path (`/recon/<id>-<slug>`); falls back to bare id when
+  // no slug is derivable. AppLink adds the lang prefix for <Link>; the imperative
+  // router.push / window.open paths below keep the existing (unprefixed) behavior.
+  const getDetailUrl = useCallback((solve: ReconSolve) => `/recon/${reconPathSeg(solve)}`, []);
 
   const handleRowClick = useCallback((e: React.MouseEvent, solve: ReconSolve) => {
     if ((e.target as HTMLElement).closest('a')) return;
-    const url = getDetailUrl(solve.id);
+    const url = getDetailUrl(solve);
     if (e.ctrlKey || e.metaKey) {
       window.open(url, '_blank');
     } else {
@@ -348,7 +352,7 @@ export default function ReconListPage() {
     if (e.button === 1) {
       if ((e.target as HTMLElement).closest('a')) return;
       e.preventDefault();
-      window.open(getDetailUrl(solve.id), '_blank');
+      window.open(getDetailUrl(solve), '_blank');
     }
   }, [getDetailUrl]);
 
@@ -720,7 +724,7 @@ export default function ReconListPage() {
         return solve.method || '';
       case 'id':
         return (
-          <Link href={getDetailUrl(solve.id)} onClick={(e) => e.stopPropagation()}>
+          <Link href={getDetailUrl(solve)} onClick={(e) => e.stopPropagation()}>
             {solve.id}
           </Link>
         );

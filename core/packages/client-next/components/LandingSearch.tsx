@@ -28,6 +28,7 @@ import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compLinkProps } from '@/lib/comp-link';
+import { reconPathSeg } from '@/lib/recon-seo';
 import { localizeCity } from '@/lib/city-localize';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import {
@@ -236,7 +237,7 @@ export default function LandingSearch({ cards, lang }: Props) {
       pushInternal(compLinkProps(compMatches[0].id, undefined, lang).href);
       return;
     }
-    if (reconMatches.length > 0) { pushInternal(langHref(`/recon/${reconMatches[0].id}`)); return; }
+    if (reconMatches.length > 0) { pushInternal(langHref(`/recon/${reconPathSeg(reconMatches[0])}`)); return; }
   };
 
   // Smart paste — 读剪贴板,识别 WCA URL / 打乱 / cubing.com 等并跳转;识别不出就当搜索词。
@@ -731,7 +732,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {visibleRecons.map(r => (
                   <Link
                     key={r.id}
-                    href={langHref(`/recon/${r.id}`)}
+                    href={langHref(`/recon/${reconPathSeg(r)}`)}
                     prefetch={false}
                     className="landing-search-item landing-search-item--rich"
                     onClick={closeAfter}

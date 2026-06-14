@@ -296,6 +296,222 @@
   border-color: color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
+/* —— 复用以前的填写:选择器弹窗(YouTube「重用以前视频的详细信息」式)—— */
+.rr-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100030;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--foreground) 38%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.rr-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(760px, 100%);
+  max-height: min(80vh, 720px);
+  background: var(--popover);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px color-mix(in srgb, #000 45%, transparent);
+}
+.rr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px 12px;
+}
+.rr-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.rr-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.rr-close:hover {
+  background: color-mix(in srgb, var(--foreground) 9%, transparent);
+  color: var(--foreground);
+}
+.rr-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 18px 12px;
+  padding: 9px 12px;
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  color: var(--faint-foreground);
+}
+.rr-search:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.rr-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--foreground);
+  font-size: 0.95rem;
+  font-family: 'Inter', Arial, sans-serif;
+}
+.rr-search input::placeholder { color: var(--faint-foreground); }
+.rr-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 18px 18px;
+}
+.rr-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px 12px;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+.rr-spin { animation: submit-hint-spin 0.7s linear infinite; }
+.rr-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+}
+.rr-sentinel {
+  grid-column: 1 / -1;
+  height: 1px;
+}
+.rr-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 10px;
+}
+.rr-card:disabled { cursor: default; }
+.rr-card:not(:disabled):hover .rr-thumb { border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+.rr-card:not(:disabled):hover .rr-card-title { color: var(--accent); }
+.rr-thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  border-radius: 10px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  transition: border-color 0.15s;
+}
+.rr-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rr-thumb-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+  font-size: 2.2rem;
+}
+.rr-thumb-fallback .cubing-icon { font-size: 2.4rem; }
+/* 单次时间徽标(YouTube 时长 pill 式,缩略图右下) */
+.rr-thumb-time {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: color-mix(in srgb, #000 78%, transparent);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: 'Roboto Mono', monospace;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+.rr-thumb-busy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, #000 45%, transparent);
+  color: #fff;
+}
+.rr-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 2px 0;
+}
+.rr-card-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--foreground);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.15s;
+}
+.rr-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.76rem;
+  color: var(--muted-foreground);
+}
+.rr-card-meta .cubing-icon { font-size: 1rem; }
+.rr-card-comp {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.rr-card-person {
+  font-size: 0.76rem;
+  color: var(--faint-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .rr-overlay { padding: 0; }
+  .rr-modal { width: 100%; max-height: 100dvh; height: 100dvh; border-radius: 0; border: none; }
+  .rr-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+}
+
 /* 被「复用」带入、尚未编辑的字段:accent 左条 + label 染色,编辑该字段后自动消失 */
 .submit-field--reused > .submit-label { color: var(--accent); }
 .submit-field--reused > :not(.submit-label):not(datalist):not(.submit-hint) {

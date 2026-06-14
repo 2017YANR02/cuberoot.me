@@ -26,6 +26,10 @@ try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 if (-not $env:RAYON_NUM_THREADS) { $env:RAYON_NUM_THREADS = '14' }
 try { (Get-Process -Id $PID).PriorityClass = 'BelowNormal' } catch {}
 
+# analyzer 追加第 3 列「一条最优解」(pocket/skewb/pyraminx 支持;逆之即「最优等价打乱」,
+# 供 build_puzzle_examples 产「原始/最优」切换数据)。sq1 analyzer 不认此开关(无解列,前端自动只显原始)。
+$env:PUZZLE_EMIT_SOLN = '1'
+
 # ---- 本机布局 ----
 $ScrambleDir = 'D:\cube\scramble\wca_scramble'
 $TsvDir      = Join-Path $ScrambleDir 'incremental\tsv'
@@ -37,6 +41,13 @@ $PkgDir      = $PSScriptRoot
 
 # puzzle 注册表: key -> WCA event_id + analyzer exe (suffix 恒 _<key>)。
 # 新 puzzle = 此处加一行 + build_puzzle_dist.ts 的 PUZZLES 加一行。
+#
+# 「最优等价打乱」(PUZZLE_EMIT_SOLN 第 3 列)支持现状:
+#   pocket / pyraminx / skewb = 精确最优解, 已产 soln 列 → 前端「原始/最优」切换可用。
+#   sq1   = 近最优(twophase 上界), analyzer 暂不产 soln 列 → 前端自动只显原始。
+#          TODO: 待 sq1 改产解序列(sq1_analyzer 已有 solve_with_solution, 需序列化 (x,y)/ 记号),
+#                此处 sq1 自然带上, build_puzzle_examples 无需改。
+#   clock = 暂无 solver, 未注册; 接入时一并加 soln 列。
 $PUZZLE = @{
   pocket   = @{ event = '222';   exe = 'pocket_analyzer.exe' }
   pyraminx = @{ event = 'pyram'; exe = 'pyraminx_analyzer.exe' }

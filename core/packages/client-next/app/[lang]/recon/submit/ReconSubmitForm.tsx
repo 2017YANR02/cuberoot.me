@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import type { ReconSolve } from '@cuberoot/shared';
 import {
   getRecon, addRecon, updateRecon, deleteRecon,
-  checkDuplicate, listRecons, listPersonRecons, resolveShortUrl,
+  checkDuplicate, listRecons, resolveShortUrl,
 } from '@/lib/recon-api';
 import { Flag } from '@/components/Flag';
 import { ClearButton } from '@/components/ClearButton';
@@ -24,8 +24,6 @@ import { CompPicker } from '@/components/CompPicker';
 import { CountryInput } from '@/components/CountryInput/CountryInput';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { EventSelect } from '@/components/EventSelect';
-import { EventIcon } from '@/components/EventIcon/EventIcon';
-import { RecordBadge } from '@/components/RecordBadge';
 import { RecordSelect } from '@/components/RecordSelect';
 import TwistySection from '@/components/TwistySection';
 import Sq1ReconPlayer from '@/components/Sq1ReconPlayer';
@@ -33,6 +31,7 @@ import CubeKeyboardSection from '@/components/CubeKeyboardSection';
 import AlgInput from '@/components/AlgInput';
 import SolutionView from '@/components/SolutionView';
 import ReconAutofill from '@/components/ReconAutofill';
+import ReconReuseModal from './ReconReuseModal';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -40,7 +39,7 @@ import { displayCuberName } from '@/lib/name-utils';
 import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 import { fetchCompRounds, type RoundFormat } from '@/lib/comp-wcif';
-import { toWcaEventId, eventDisplayName } from '@/lib/wca-events';
+import { toWcaEventId } from '@/lib/wca-events';
 import {
   parseTimeInput, formatTimeInput, computeWcaAverage,
   attemptsPerRound, localizeRound, isBldEvent,
@@ -72,10 +71,9 @@ const SOLVE_NUM_CAP_BY_FORMAT: Record<RoundFormat, number> = {
   '1': 1, '2': 2, '3': 3, '5': 5, 'a': 5, 'm': 3, 'h': 30,
 };
 
-// 复用上次填写:存到 localStorage 的元数据字段。刻意排除每把都变的
+// 复用以前的填写:从一条已有复盘里抽出的元数据字段。刻意排除每把都变的
 // 成绩(rawTime)/单次(value)/单次纪录/WCA 打乱/最优打乱/解法,以及「第几把」
-// —— 带上 # 会触发表单的自动获取,用上一把数据回填那几项,违背保持空白的本意。
-const LAST_META_KEY = 'recon.lastMeta.v1';
+// —— 带上 # 会触发表单的自动获取,用那条数据回填那几项,违背保持空白的本意。
 const REUSE_KEYS: (keyof ReconSolve)[] = [
   'official', 'event', 'method',
   'person', 'personId', 'personCountry', 'coPersons',
@@ -92,6 +90,9 @@ const REUSE_MARK_KEYS = [
   'videoUrl', 'method', 'cube', 'note',
   'reconer', 'reconDate',
 ];
+// 选择器回填时不覆盖的字段:复盘者 / 复盘日期归属当前用户(表单已自动带入),
+// 不应被挑中的那条(可能是别人复盘的)冒名顶替。
+const REUSE_SKIP_ON_PICK = new Set<string>(['reconer', 'reconerId', 'reconDate']);
 const hasMetaVal = (v: unknown) =>
   v != null && v !== '' && !(Array.isArray(v) && v.length === 0);
 // 从一条已有复盘里抽出可复用的元数据(日期字段归一化为 yyyy-mm-dd)
@@ -156,7 +157,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const fromSolveNum = !isEditing ? searchParams?.get('solveNum') : null;
   const suggestTime = !isEditing ? searchParams?.get('suggestTime') : null;
   const suggestScramble = !isEditing ? searchParams?.get('suggestScramble') : null;
-  const lockIdentity = isEditing || !!fromId;
 
   const authUser = useAuthStore(s => s.user);
   const login = useAuthStore(s => s.login);
@@ -240,9 +240,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [compRounds, setCompRounds] = useState<Record<string, RoundFormat[]> | null>(null);
   const isMobile = useIsMobile();
 
-  // 复用上次填写:lastMeta = 上次提交的元数据快照(localStorage);
+  // 复用以前的填写:reuseOpen = 选择器弹窗开关;
   // reusedFields = 当前被「复用」带入、尚未编辑的字段 key(用于高亮标记)。
-  const [lastMeta, setLastMeta] = useState<Partial<ReconSolve> | null>(null);
+  const [reuseOpen, setReuseOpen] = useState(false);
   const [reusedFields, setReusedFields] = useState<Set<string>>(() => new Set());
 
   const pruneReused = useCallback((keys: string | string[]) => {
@@ -431,41 +431,24 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     pruneReused(['comp', 'date']);
   }, [pruneReused]);
 
-  // ── 复用上次填写 ──
-  // 进入新建表单时确定「上次」的来源:优先本浏览器的 localStorage 快照(上次提交即写),
-  // 没有则从服务端拉本人最近一条复盘当兜底 —— 这样首次使用也能有「复用上次」按钮。
-  useEffect(() => {
-    if (isEditing || fromId) return;
-    try {
-      const raw = localStorage.getItem(LAST_META_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === 'object') { setLastMeta(parsed as Partial<ReconSolve>); return; }
-      }
-    } catch { /* ignore corrupt cache */ }
-    const wcaId = authUser?.wcaId;
-    if (!wcaId) return;
-    let cancelled = false;
-    listPersonRecons(wcaId).then(list => {
-      if (cancelled || !Array.isArray(list) || list.length === 0) return;
-      const sorted = [...list].sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
-      // 本人作为「复盘者」提交的最近一条;没有则退而取最近一条(作为选手参与)
-      const mine = sorted.find(s => s.reconerId === wcaId) ?? sorted[0];
-      if (mine) setLastMeta(buildReuseMeta(mine));
-    }).catch(() => { /* 端点缺失 / 网络错误:静默无按钮 */ });
-    return () => { cancelled = true; };
-  }, [isEditing, fromId, authUser]);
-
-  const applyLastMeta = useCallback(() => {
-    if (!lastMeta) return;
-    setForm(prev => ({ ...prev, ...lastMeta }));
-    if (lastMeta.average != null) setAvgInput(formatTimeInput(lastMeta.average));
+  // ── 复用以前的填写 ──
+  // 从选择器挑中的一条复盘回填元数据:抽出可复用字段,跳过复盘者 / 复盘日期
+  // (归当前用户,表单已带入),设平均输入并高亮带入字段。
+  const applyReuse = useCallback((solve: Partial<ReconSolve>) => {
+    const meta = buildReuseMeta(solve) as Record<string, unknown>;
+    const applied: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(meta)) {
+      if (!REUSE_SKIP_ON_PICK.has(k)) applied[k] = v;
+    }
+    setForm(prev => ({ ...prev, ...applied }));
+    if (applied.average != null) setAvgInput(formatTimeInput(applied.average as number));
     const marks = new Set<string>();
     for (const k of REUSE_MARK_KEYS) {
-      if (hasMetaVal((lastMeta as Record<string, unknown>)[k])) marks.add(k);
+      if (!REUSE_SKIP_ON_PICK.has(k) && hasMetaVal(applied[k])) marks.add(k);
     }
     setReusedFields(marks);
-  }, [lastMeta]);
+    setReuseOpen(false);
+  }, []);
 
   // ── Live solution stats ──
   const stats = useMemo(() => {
@@ -1055,15 +1038,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         router.push(`${langPrefix}/recon/${editId}`);
       } else {
         const created = await addRecon(data);
-        // 存元数据快照供下次「复用上次」(只在新建时更新)
-        try {
-          const meta: Record<string, unknown> = {};
-          for (const k of REUSE_KEYS) {
-            const v = (data as Record<string, unknown>)[k];
-            if (v !== undefined) meta[k] = v;
-          }
-          localStorage.setItem(LAST_META_KEY, JSON.stringify(meta));
-        } catch { /* quota / serialization */ }
         router.push(`${langPrefix}/recon/${created.id}`);
       }
     } catch (err) {
@@ -1136,9 +1110,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     ? { id: form.personId, name: form.person ?? form.personId, country_iso2: form.personCountry ?? '' }
     : null;
 
-  // 非 WCA 比赛的轮次 / 成绩 / 单次 / 纪录都是手填,没有 WCA 自动获取与重建之说,
-  // 编辑时仍应可改;身份锁只对 WCA 官方比赛的这些值字段生效(选手 / 项目 / 比赛仍按 lockIdentity 锁)。
-  const lockValues = lockIdentity && !!form.official;
+  // Strava 模型:身份(选手/项目/WCA/比赛)与值(轮次/成绩/单次/纪录)在所有模式
+  // (新建/编辑/克隆)都可自由编辑,不再读改读重建。安全性由既有机制兜底:重复检测
+  // 带 excludeId;自动获取的 loaded*KeySnapshot 仅在「当前 key == 挂载时的快照」时
+  // 抑制刷新——一旦用户改了 比赛/项目/轮次/第几把,key 与快照不同 → 自动获取重新触发;
+  // 各字段的 *UserTouched 标记保证手动编辑优先于自动填充。
 
   return (
     <div className="recon-page submit-page">
@@ -1188,11 +1164,21 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
         <div className="submit-form-pane">
           <div className="submit-form">
-            {lastMeta && (
-              <button type="button" className="submit-reuse-btn" onClick={applyLastMeta}>
+            {!isEditing && !fromId && authUser && (
+              <button type="button" className="submit-reuse-btn" onClick={() => setReuseOpen(true)}>
                 <History size={14} />
-                {tr({ zh: '复用上次填写', en: 'Reuse last entry', zhHant: '複用上次填寫' })}
+                {tr({ zh: '复用以前的填写', en: 'Reuse a previous entry',
+                    zhHant: "複用以前的填寫"
+                })}
               </button>
+            )}
+            {reuseOpen && authUser && (
+              <ReconReuseModal
+                wcaId={authUser.wcaId}
+                isZh={isZh}
+                onClose={() => setReuseOpen(false)}
+                onPick={applyReuse}
+              />
             )}
             {/* === Competition info — default open === */}
             <CollapsibleSection
@@ -1206,10 +1192,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <div className={`submit-field ${form.personId ? 'submit-field-shrink' : ''}${reusedCls('person')}`}>
                   <span className="submit-label">{t('recon.solver')} *</span>
                   {solverLite ? (
-                    <div className={`submit-solver-pill${lockIdentity ? ' submit-solver-pill--locked' : ''}`}>
+                    <div className="submit-solver-pill">
                       <Flag iso2={solverLite.country_iso2} />
                       <span className="submit-solver-name">{displayCuberName(solverLite.name, isZh)}</span>
-                      {!lockIdentity && <ClearButton onClick={clearSolver} isZh={isZh} variant="standalone" preserveFocus />}
+                      <ClearButton onClick={clearSolver} isZh={isZh} variant="standalone" preserveFocus />
                     </div>
                   ) : (
                     <WcaPersonPicker
@@ -1224,13 +1210,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </div>
                 <label className={`submit-field${reusedCls('event')}`}>
                   <span className="submit-label">{t('recon.event')} *</span>
-                  {lockIdentity ? (
-                    <div className="submit-readonly-text">
-                      {form.event ? <><EventIcon event={form.event} /> {eventDisplayName(form.event, isZh)}</> : ''}
-                    </div>
-                  ) : (
-                    <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
-                  )}
+                  <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
                 </label>
                 <label className="submit-field">
                   <span className="submit-label">{t('recon.time')}</span>
@@ -1313,25 +1293,19 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               <div className="submit-row">
                 <label className={`submit-field submit-field-narrow${reusedCls('official')}`}>
                   <span className="submit-label">WCA</span>
-                  {lockIdentity ? (
-                    <div className="submit-readonly-text">{form.official ? 'WCA' : t('recon.badge.nonWca')}</div>
-                  ) : (
-                    <select value={form.official ? '1' : '0'} onChange={e => setField('official', e.target.value === '1')}>
-                      <option value="1">WCA</option>
-                      <option value="0">{t('recon.badge.nonWca')}</option>
-                    </select>
-                  )}
+                  <select value={form.official ? '1' : '0'} onChange={e => setField('official', e.target.value === '1')}>
+                    <option value="1">WCA</option>
+                    <option value="0">{t('recon.badge.nonWca')}</option>
+                  </select>
                 </label>
                 <div className={`submit-field ${form.compWcaId ? 'submit-field-shrink' : ''}${reusedCls('comp')}`}>
                   <span className="submit-label">{t('recon.competition')}</span>
                   {form.compWcaId ? (
-                    <div className={`submit-comp-pill${lockIdentity ? ' submit-comp-pill--locked' : ''}`}>
+                    <div className="submit-comp-pill">
                       <Flag iso2={form.country || ''} />
                       <span className="submit-comp-name">{localizeCompName(form.compWcaId || '', form.comp || '', isZh)}</span>
-                      {!lockIdentity && <ClearButton onClick={clearPickedComp} isZh={isZh} variant="standalone" preserveFocus />}
+                      <ClearButton onClick={clearPickedComp} isZh={isZh} variant="standalone" preserveFocus />
                     </div>
-                  ) : lockIdentity ? (
-                    <div className="submit-readonly-text">{form.comp || ''}</div>
                   ) : (
                     <CompPicker
                       value={form.comp || ''}
@@ -1377,32 +1351,24 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               <div className="submit-row">
                 <label className={`submit-field${reusedCls('round')}`}>
                   <span className="submit-label">{t('recon.round')}</span>
-                  {lockValues ? (
-                    <div className="submit-readonly-text">{form.round ? localizeRound(form.round, t) : ''}</div>
-                  ) : (
-                    <select value={form.round || ''} onChange={e => setField('round', e.target.value)}>
+                  <select value={form.round || ''} onChange={e => setField('round', e.target.value)}>
                       <option value="">{tr({ zh: '请选择', en: 'Select…',
                           zhHant: "請選擇"
                     })}</option>
                       {roundOptions.map(r => <option key={r} value={r}>{localizeRound(r, t)}</option>)}
-                    </select>
-                  )}
+                  </select>
                 </label>
                 <label className="submit-field">
                   <span className="submit-label">#</span>
-                  {lockValues ? (
-                    <div className="submit-readonly-text">{form.solveNum ?? ''}</div>
-                  ) : (
-                    <select
-                      value={form.solveNum ?? ''}
-                      onChange={e => setField('solveNum', e.target.value === '' ? undefined : Number(e.target.value))}
-                    >
+                  <select
+                    value={form.solveNum ?? ''}
+                    onChange={e => setField('solveNum', e.target.value === '' ? undefined : Number(e.target.value))}
+                  >
                       <option value="">{tr({ zh: '请选择', en: 'Select…',
                           zhHant: "請選擇"
                     })}</option>
                       {solveNumOptions.map(n => <option key={n} value={n}>{n}</option>)}
-                    </select>
-                  )}
+                  </select>
                 </label>
                 <label className={`submit-field${reusedCls('groupId')}`}>
                   <span className="submit-label">{t('recon.group')}</span>
@@ -1428,12 +1394,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       setAvgAutoSource(null);
                       avgAutoFilledRef.current = false;
                     }}
-                    readOnly={lockValues || !!avgAutoSource}
-                    className={(lockValues || avgAutoSource) ? 'submit-input-locked' : undefined}
-                    title={lockValues ? (tr({ zh: '身份字段不可改;如需修改请重建', en: 'identity field, locked',
-                        zhHant: "身份欄位不可改;如需修改請重建"
-                    }))
-                      : avgAutoSource ? (tr({ zh: '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取', en: 'auto-filled, read-only; change person/comp/event/round to refetch',
+                    readOnly={!!avgAutoSource}
+                    className={avgAutoSource ? 'submit-input-locked' : undefined}
+                    title={avgAutoSource ? (tr({ zh: '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取', en: 'auto-filled, read-only; change person/comp/event/round to refetch',
                           zhHant: "自動填充值不可編輯;改選手/比賽/項目/輪次以重新獲取"
                     }))
                       : undefined}
@@ -1455,12 +1418,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       setSingleAutoSource(null);
                       singleAutoFilledRef.current = false;
                     }}
-                    readOnly={lockValues || !!singleAutoSource}
-                    className={(lockValues || singleAutoSource) ? 'submit-input-locked' : undefined}
-                    title={lockValues ? (tr({ zh: '身份字段不可改;如需修改请重建', en: 'identity field, locked',
-                        zhHant: "身份欄位不可改;如需修改請重建"
-                    }))
-                      : singleAutoSource ? (tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch',
+                    readOnly={!!singleAutoSource}
+                    className={singleAutoSource ? 'submit-input-locked' : undefined}
+                    title={singleAutoSource ? (tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch',
                           zhHant: "自動填充值不可編輯;改 選手/比賽/項目/輪次/第幾把 以重新獲取"
                     })) : undefined}
                   />
@@ -1472,19 +1432,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </label>
                 <label className="submit-field">
                   <span className="submit-label">{t('recon.badge.singleRecord')}</span>
-                  {lockValues ? (
-                    <div className="submit-readonly-text">
-                      {form.regionalSingleRecord
-                        ? <RecordBadge record={form.regionalSingleRecord} variant="inline" iso2={form.personCountry} />
-                        : '—'}
-                    </div>
-                  ) : (
-                    <RecordSelect
-                      value={form.regionalSingleRecord || ''}
-                      onChange={(v) => { setField('regionalSingleRecord', v); setSingleRecordUserTouched(true); }}
-                      personIso2={form.personCountry}
-                    />
-                  )}
+                  <RecordSelect
+                    value={form.regionalSingleRecord || ''}
+                    onChange={(v) => { setField('regionalSingleRecord', v); setSingleRecordUserTouched(true); }}
+                    personIso2={form.personCountry}
+                  />
                   {recordLoading
                     ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…',
                         zhHant: "自動獲取中…"
@@ -1493,19 +1445,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </label>
                 <label className="submit-field">
                   <span className="submit-label">{t('recon.badge.averageRecord')}</span>
-                  {lockValues ? (
-                    <div className="submit-readonly-text">
-                      {form.regionalAverageRecord
-                        ? <RecordBadge record={form.regionalAverageRecord} variant="inline" iso2={form.personCountry} />
-                        : '—'}
-                    </div>
-                  ) : (
-                    <RecordSelect
-                      value={form.regionalAverageRecord || ''}
-                      onChange={(v) => { setField('regionalAverageRecord', v); setAverageRecordUserTouched(true); }}
-                      personIso2={form.personCountry}
-                    />
-                  )}
+                  <RecordSelect
+                    value={form.regionalAverageRecord || ''}
+                    onChange={(v) => { setField('regionalAverageRecord', v); setAverageRecordUserTouched(true); }}
+                    personIso2={form.personCountry}
+                  />
                   {recordLoading
                     ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…',
                         zhHant: "自動獲取中…"

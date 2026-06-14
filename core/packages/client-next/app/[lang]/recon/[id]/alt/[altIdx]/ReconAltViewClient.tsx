@@ -20,13 +20,15 @@ import SolutionView from '@/components/SolutionView';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
 import { computeAllStats } from '@/lib/recon-stats';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { parseReconId } from '@/lib/recon-seo';
 import '../../../recon.css';
 import '../../../submit/recon_submit.css';
 import '../../recon_detail.css';
 
 export default function ReconAltViewClient() {
   const params = useParams<{ id: string; altIdx: string }>();
-  const parentId = (Array.isArray(params?.id) ? params.id[0] : params?.id) ?? '';
+  const rawSeg = (Array.isArray(params?.id) ? params.id[0] : params?.id) ?? '';
+  const parentId = parseReconId(rawSeg); // strip cosmetic slug suffix → numeric id
   const altIdxStr = (Array.isArray(params?.altIdx) ? params.altIdx[0] : params?.altIdx) ?? '';
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';

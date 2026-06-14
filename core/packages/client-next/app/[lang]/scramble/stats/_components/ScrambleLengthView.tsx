@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import { compSourceLine } from '@/lib/comp-schedule';
@@ -170,6 +171,9 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric }
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
   const [examples, setExamples] = useState<ExamplesJson | null>(null);
   const [examplesLoading, setExamplesLoading] = useState(false);
+  // 「最优等价打乱」overlay(text → 最优打乱);本地管线产,缺失/旧数据时自动只显原始。
+  const [optMap, setOptMap] = useState<Record<string, string> | null>(null);
+  const [exView, setExView] = useState<'orig' | 'opt'>('orig');
 
   // Flag index for example comp cards (bump version to re-render once loaded).
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
@@ -184,6 +188,13 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric }
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((j) => { setExamples(j); setExamplesLoading(false); })
       .catch(() => setExamplesLoading(false));
+    // 最优 overlay 并行拉(best-effort;缺失不影响原始示例)。
+    if (optMap === null) {
+      fetch(statsUrl('/stats/scramble/event_length_examples_opt.json') + '?v=20260614opt')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => setOptMap(j?.byText ?? {}))
+        .catch(() => setOptMap({}));
+    }
   };
   const handleBarClick = (bin: number) => { setSelectedBin(bin); ensureExamples(); };
 
@@ -239,6 +250,8 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric }
         if (out.length >= cap) break;
       }
     }
+    // 按比赛时间倒序(最新在前);comps 日期串 ISO 前缀,字典序即时间序。无日期排末尾。
+    out.sort((a, b) => (examples.comps[b.ex[0]]?.[1] ?? '').localeCompare(examples.comps[a.ex[0]]?.[1] ?? ''));
     return out.length ? out : null;
   }, [selectedBin, examples, activeGroup, event, useQtm]);
 
@@ -349,12 +362,27 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric }
           )}
 
           <div className="scramble-stats-panel scramble-stats-examples-panel">
+            <div className="scramble-stats-examples-header">
             <div className="scramble-stats-panel-title">
               {selectedBin !== null
                 ? (i18n.language === 'zh-Hant' ? (`${selectedBin} ${curUnit}打亂樣例`) : (isZh ? `${selectedBin} ${curUnit}打乱样例` : `${selectedBin}-${curUnit} examples`))
                 : (tr({ zh: '极端打乱样例', en: 'Extreme scrambles',
                     zhHant: "極端打亂樣例"
                 }))}
+            </div>
+              {selectedBin !== null && curExamples?.some(({ ex }) => !!optMap?.[ex[4]]) && (
+                <PillToggle
+                  value={exView === 'opt'}
+                  onChange={(v) => setExView(v ? 'opt' : 'orig')}
+                  offLabel={tr({ zh: '原始', en: 'Original' })}
+                  onLabel={tr({ zh: '最优', en: 'Optimal',
+                      zhHant: "最優"
+                })}
+                  ariaLabel={tr({ zh: '原始打乱或最优等价打乱', en: 'Original scramble or optimal equivalent',
+                      zhHant: "原始打亂或最優等價打亂"
+                })}
+                />
+              )}
             </div>
             {selectedBin === null && (
               <div className="scramble-stats-examples-hint">
@@ -375,8 +403,11 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric }
                   const comp = examples?.comps[compId];
                   const iso2 = compFlagIso2(compId);
                   const linkable = ANALYZER_EVENTS.has(ev);
+                  // 最优视图:有最优等价打乱(同状态)则用它,否则回退原始。
+                  const opt = optMap?.[text];
+                  const shownText = exView === 'opt' && opt ? opt : text;
                   // SQ1 shows compact notation site-wide (4/-36/...); other events unchanged.
-                  const displayText = formatScrambleForEvent(ev, text);
+                  const displayText = formatScrambleForEvent(ev, shownText);
                   return (
                     <li key={i}>
                       <div className="scramble-stats-examples-body">

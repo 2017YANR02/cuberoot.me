@@ -16,6 +16,7 @@ import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { localizeCompName } from '@/lib/comp-localize';
+import { reconPathSeg } from '@/lib/recon-seo';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
 import './today_recon.css';
 import { tr } from '@/i18n/tr';
@@ -31,7 +32,7 @@ function ReconCard({ solve, isZh }: { solve: ReconSolve; isZh: boolean }) {
   const roundText = formatRound(solve.round, solve.solveNum);
 
   return (
-    <Link href={`/recon/${solve.id}`} prefetch={false} className="tr-card">
+    <Link href={`/recon/${reconPathSeg(solve)}`} prefetch={false} className="tr-card">
       <div className="tr-cube">
         {showNet
           ? <ScramblePreview2D event={wcaEvent} scramble={scramble} size={56} />

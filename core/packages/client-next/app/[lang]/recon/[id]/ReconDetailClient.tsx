@@ -60,6 +60,7 @@ import {
   DiscussionComposer, DiscussionEditBox, UserHeadline, ItemMenu, UserAvatarFallback,
 } from '@/components/Discussion';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { parseReconId, reconPathSeg } from '@/lib/recon-seo';
 import '../recon.css';
 import './recon_detail.css';
 import { tr } from '@/i18n/tr';
@@ -83,14 +84,18 @@ function personHref(wcaId: string, isZh: boolean): string {
   return `/wca/persons/${wcaId}${isZh ? '?lang=zh' : ''}`;
 }
 
-export default function ReconDetailClient() {
+export default function ReconDetailClient({ initialSolve }: { initialSolve?: ReconSolve } = {}) {
   const params = useParams<{ id: string }>();
-  const id = (Array.isArray(params?.id) ? params.id[0] : params?.id) ?? '';
+  const rawSeg = (Array.isArray(params?.id) ? params.id[0] : params?.id) ?? '';
+  const id = parseReconId(rawSeg); // strip cosmetic slug suffix → numeric id
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  const [solve, setSolve] = useState<ReconSolve | null>(null);
+  // Seeded from the server-fetched recon (page.tsx) so the first paint has data
+  // (no flash of loading) and we skip the duplicate client fetch. Comments are
+  // still fetched client-side. Falls back to a client fetch if absent.
+  const [solve, setSolve] = useState<ReconSolve | null>(initialSolve ?? null);
   const [comments, setComments] = useState<ReconComment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialSolve);
   const [error, setError] = useState<string | null>(null);
 
   const reconTitle = (() => {
@@ -127,7 +132,16 @@ export default function ReconDetailClient() {
     }
   }, [id]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  // When the server already handed us the recon, skip the solve refetch and just
+  // load comments. onUpdate (mutations) still calls loadData for a full refresh.
+  useEffect(() => {
+    if (initialSolve) {
+      if (id) listComments(Number(id)).then(setComments).catch(() => {});
+      return;
+    }
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadData, id]);
 
   if (loading) return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
   if (error) return <div className="recon-page"><div className="recon-error"><TriangleAlert size={16} /> {error}</div></div>;
@@ -713,7 +727,7 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
           }
           if (s) {
             return (
-              <Link key={n} href={`/recon/${s.id}`} className="same-round-item">
+              <Link key={n} href={`/recon/${reconPathSeg(s)}`} className="same-round-item">
                 {formatTime(s.rawTime)}
               </Link>
             );

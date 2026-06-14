@@ -531,6 +531,10 @@ if($runPuzzles){
   try {
     pnpm exec tsx src/build_puzzle_examples.ts
     if($LASTEXITCODE -ne 0){ throw 'build_puzzle_examples 失败' }
+    # /timer「原始/最优打乱」用:产 wca_optimal_puzzle.csv(自然键 + 最优等态打乱)。
+    # 灌库是手动一步(同 3x3 export_optimal):\copy 到 prod wca_scramble_optimal(见末尾提示)。
+    node export_puzzle_optimal.mjs
+    if($LASTEXITCODE -ne 0){ throw 'export_puzzle_optimal 失败' }
   } finally { Pop-Location }
   $puzzleChanged = $true
 }
@@ -584,6 +588,18 @@ if($willInject){
   } else {
     Write-Host '[333opt] 无 out.*.csv (没跑过 solve_loop), 跳过 inject。' -ForegroundColor DarkGray
   }
+}
+
+# ---- 5c. 长度 tab「原始/最优」overlay (event_length_examples_opt.json) ----
+# 给长度 tab 样例打乱算最优等态打乱(3x3 面转族走 cube48opt5,222/pyram/skewb 走 analyzer)。
+# 增量(跳过已解),依赖本地 opt 表 + analyzer;缺则脚本内部自动跳过对应类。
+if($runStages -or $runPuzzles){
+  Step '5c 长度 tab 最优 overlay — node build_length_opt.mjs (增量)'
+  Push-Location (Join-Path $RepoRoot 'core\packages\scramble-stats-build')
+  try {
+    node build_length_opt.mjs
+    if($LASTEXITCODE -ne 0){ Write-Host '[length-opt] 失败(非致命, 跳过)' -ForegroundColor Yellow }
+  } finally { Pop-Location }
 }
 
 # ---- 6. 发布 ----
@@ -652,3 +668,12 @@ if($NoPublish){
 }
 
 Step ("完成 (std +{0}; 变体 {1}; 333opt {2}; puzzles {3})" -f $nNew, $(if($variantChanged){$Variants -join '/'}else{'-'}), $(if($optChanged){'是'}else{'-'}), $(if($puzzleChanged){$Puzzles -join '/'}else{'-'}))
+
+# /timer「原始/最优打乱」的最优数据走 PG(非 static),不随上面的发布自动上线;手动灌库:
+if($puzzleChanged){
+  Write-Host ''
+  Write-Host '[timer 最优打乱] 如需更新 /timer 真题最优(222/pyram/skewb),把 CSV \copy 进 prod:' -ForegroundColor Yellow
+  Write-Host '  scp packages/scramble-stats-build/wca_optimal_puzzle.csv root@cuberoot:/root/' -ForegroundColor DarkGray
+  Write-Host "  ssh root@cuberoot \"PGPASSWORD=... psql -U recon_user -d cuberoot_db -c \\\"\\copy wca_scramble_optimal FROM '/root/wca_optimal_puzzle.csv' WITH (FORMAT csv, HEADER true)\\\"\"" -ForegroundColor DarkGray
+  Write-Host '  (3x3 同理:solver/333opt/export_optimal.mjs 产 wca_optimal.csv)' -ForegroundColor DarkGray
+}
