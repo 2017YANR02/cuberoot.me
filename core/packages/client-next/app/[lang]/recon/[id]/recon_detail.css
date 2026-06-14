@@ -2,22 +2,6 @@
    Recon 详情页专用样式
    ============================================================ */
 
-/* Server-rendered SEO block: present in the DOM/markup for crawlers, kept
-   visually offscreen so the interactive client UI is what users see. Not
-   display:none — that would hide it from some indexers; offscreen keeps the
-   text crawlable. */
-.recon-seo-content {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 .detail-header {
   display: flex;
   flex-direction: column;
