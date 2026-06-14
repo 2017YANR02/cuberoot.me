@@ -136,9 +136,9 @@ pnpm --filter @cuberoot/client dev                 # http://127.0.0.1:5173/
 
 写任何 CSS 色值 (背景 / 文字 / 边框 / hover) 前调 `theme-tokens` skill —— token 表 + dark-locked 页清单 + color-mix 衍生规则在那里。禁 `#888 #aaa` 等硬码灰阶。
 
-## 繁体字(zh-Hant)
+## 繁体字(zh-Hant)已移除
 
-繁体一律 OpenCC 生成,禁手敲(人/AI 同):`tr({zh,en})` 只写简体+英文,写完跑 `pnpm -F @cuberoot/client-next zh:inject`;三路分支用 `node scripts/conv.mjs "简体"` 取值粘贴。守卫:PreToolUse hook 写入即拦 + CI `tests/zh-hant-drift.test.ts`(跑 `zh:check`)。**禁全仓盲跑 inject 当"归一"**——它只管 tr() 参数和已有 zhHant 的对象,typed 数据对象走 3-way(见 `scripts/ZHHANT_RECIPE.md`)。
+2026-06-14 起全站只服 **en + zh-Hans(简体)**,繁体彻底移除(生成器 / `zh-Hant.json` / `zhHant` 字段 / `i18n.language==='zh-Hant'` 分支全删)。**源码禁写任何繁体字**,双层守卫:写入即拦 PreToolUse hook `.claude/hooks/block-handwritten-trad.ps1`(→ `scripts/hook-detect-traditional.mjs`)+ CI `tests/i18n-removal-guard.test.ts`(无繁体字形 / 无 `zhHant` 标识符 / en.json↔zh.json key 对齐)。文案走 `tr({en,zh})` / `useT()` / `isZh ? zh : en` 二元;长文 / 复用走 `t()` + `en.json`/`zh.json`。HTML lang 用 `en` / `zh-Hans`。
 
 ## Skill 路由
 
