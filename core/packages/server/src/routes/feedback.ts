@@ -256,9 +256,9 @@ feedbackRoutes.post('/feedback/:id/video', videoBodyLimit, async (c) => {
   return c.json({ id: mediaId });
 });
 
-// ── GET /v1/feedback/media/:id — admin-gated 取媒体(image bytea / video disk) ────
+// ── GET /v1/feedback/media/:id — 公开取媒体(image bytea / video disk)。
+// 媒体一旦上传即不可变 → 长缓存 immutable;nosniff 防容器被当脚本渲染。
 feedbackRoutes.get('/feedback/media/:id', async (c) => {
-  await requireAdmin(c);
   const id = Number(c.req.param('id'));
   if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
 
@@ -268,7 +268,7 @@ feedbackRoutes.get('/feedback/media/:id', async (c) => {
   const r = rows[0];
 
   c.header('Content-Type', r.mime);
-  c.header('Cache-Control', 'no-store');
+  c.header('Cache-Control', 'public, max-age=31536000, immutable');
   c.header('X-Content-Type-Options', 'nosniff');
 
   if (r.kind === 'image' && r.data) {

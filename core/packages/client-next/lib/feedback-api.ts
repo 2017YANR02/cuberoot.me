@@ -106,12 +106,7 @@ export async function deleteFeedback(id: number): Promise<void> {
   await handle<{ ok: boolean }>(r);
 }
 
-/** admin 拉私有媒体字节(<img>/<video> 不能带 Bearer,故 fetch → objectURL)。 */
-export async function fetchFeedbackMediaBlob(id: number): Promise<string> {
-  const r = await fetch(apiUrl(`/v1/feedback/media/${id}`), {
-    headers: authHeaders(false),
-    cache: 'no-store',
-  });
-  if (!r.ok) throw new Error(`media ${id} failed: ${r.status}`);
-  return URL.createObjectURL(await r.blob());
+/** 媒体公开可取,直接做 <img>/<video> 的 src。 */
+export function feedbackMediaUrl(id: number): string {
+  return apiUrl(`/v1/feedback/media/${id}`);
 }
