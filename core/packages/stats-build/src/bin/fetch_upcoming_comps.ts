@@ -1110,19 +1110,25 @@ async function main(): Promise<void> {
     }
   }
 
-  // 6. 写出 Top 模式 JSON
-  const outputObj = {
-    updated_at: utcIsoSeconds(new Date()),
-    total_cubers_tracked: !DEBUG_LIMIT ? Object.keys(cubers).length : DEBUG_LIMIT,
-    competitions: compsData as CompOut[],
-  };
-  mkdirSync(dirname(OUTPUT_JSON_PATH), { recursive: true });
-  writeFileSync(OUTPUT_JSON_PATH, JSON.stringify(outputObj), 'utf-8');
-  console.log(`\n[INFO] 成功！共找到 ${compsData.length} 场即将举行的比赛。`);
-  console.log(`[INFO] 数据已写入: ${relToRoot(OUTPUT_JSON_PATH)}`);
+  // 6 + 7. 写出 Top 模式 / All 模式 JSON
+  // GUARD: allComps 为 null/空 = WCA /competitions 列表拉不到(CI 的 Azure IP 被 WCA/Cloudflare
+  // 403,本机/服务器 IP 不受影响)。此时 compsData 也为空 —— 绝不能用空结果覆盖线上已有的好数据,
+  // 否则 upcoming_comps.json 被清空,Top 模式 + 选手筛选的 top_cubers 全没(2026-06-13 真实事故)。
+  // 与 comp_names_zh "拉失败保留已有,跳过本次更新" 同策略:跳过写入,git add 自然无 diff,线上保持
+  // 上一份好数据。CN 注册名单(下方 step 8)走 cubing.com 不受影响,照常更新。
+  if (!allComps || allComps.length === 0) {
+    console.log('[GUARD] WCA all_comps 不可用(很可能 CI IP 被 403),保留已有 upcoming_comps.json / all_upcoming_comps.json,跳过写入');
+  } else {
+    const outputObj = {
+      updated_at: utcIsoSeconds(new Date()),
+      total_cubers_tracked: !DEBUG_LIMIT ? Object.keys(cubers).length : DEBUG_LIMIT,
+      competitions: compsData as CompOut[],
+    };
+    mkdirSync(dirname(OUTPUT_JSON_PATH), { recursive: true });
+    writeFileSync(OUTPUT_JSON_PATH, JSON.stringify(outputObj), 'utf-8');
+    console.log(`\n[INFO] 成功！共找到 ${compsData.length} 场即将举行的比赛。`);
+    console.log(`[INFO] 数据已写入: ${relToRoot(OUTPUT_JSON_PATH)}`);
 
-  // 7. 写出 All 模式 JSON
-  if (allComps !== null) {
     mkdirSync(dirname(ALL_OUTPUT_JSON_PATH), { recursive: true });
     writeFileSync(ALL_OUTPUT_JSON_PATH, JSON.stringify(allComps), 'utf-8');
     console.log(`[ALL] 共 ${allComps.length} 场 → ${relToRoot(ALL_OUTPUT_JSON_PATH)}`);
