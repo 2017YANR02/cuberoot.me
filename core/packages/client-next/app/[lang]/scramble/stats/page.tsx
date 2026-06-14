@@ -198,8 +198,8 @@ export default function ScrambleStatsPage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    // v= bump:2026-06-13 333 整解作独立 method variant(shape 变更,防缓存旧 JSON)
-    fetch(statsUrl('/stats/scramble/distribution.json') + '?v=20260613opt')
+    // v= bump:2026-06-14 333 整解最优注入真实产出(240 雏形 → 226,965 样本),防缓存旧 JSON
+    fetch(statsUrl('/stats/scramble/distribution.json') + '?v=20260614opt')
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
