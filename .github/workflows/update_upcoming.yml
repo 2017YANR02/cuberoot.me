@@ -29,12 +29,20 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
+      # WCA 对 GH runner IP 段返 403;经自有服务器代理出网(IP 未被封)。
+      # 见 packages/server/src/routes/wca_proxy.ts;secret 存 repo secret WCA_PROXY_SECRET。
       - name: Fetch upcoming comps (WCA + CN)
         working-directory: core/packages/stats-build
+        env:
+          WCA_API_BASE: https://api.cuberoot.me/v1/wca-proxy/api/v0
+          WCA_PROXY_SECRET: ${{ secrets.WCA_PROXY_SECRET }}
         run: npx tsx src/bin/fetch_upcoming_comps.ts --refresh
 
       - name: Update comp names zh
         working-directory: core/packages/stats-build
+        env:
+          WCA_API_BASE: https://api.cuberoot.me/v1/wca-proxy/api/v0
+          WCA_PROXY_SECRET: ${{ secrets.WCA_PROXY_SECRET }}
         run: npx tsx src/bin/fetch_comp_names_zh.ts --refresh
 
       - name: Commit and push

@@ -29,7 +29,10 @@ const OUTPUT_PATH = resolve(ROOT_DIR, 'stats/comp_names_zh.json');
 const CACHE_DIR = resolve(ROOT_DIR, '.comp_names_zh_cache');
 
 const CUBING_CHINA_URL = 'https://cubing.com/competition';
-const WCA_API_BASE = 'https://www.worldcubeassociation.org/api/v0';
+// 默认直连 WCA;CI 上被 WCA 403(GH runner IP 段),改经服务器代理:
+// WCA_API_BASE=https://api.cuberoot.me/v1/wca-proxy/api/v0 + WCA_PROXY_SECRET(密钥头)。
+const WCA_API_BASE = process.env.WCA_API_BASE || 'https://www.worldcubeassociation.org/api/v0';
+const WCA_PROXY_SECRET = process.env.WCA_PROXY_SECRET;
 const USER_AGENT = 'WCA-Stats-Bot/1.0 (cuberoot.me)';
 const API_DELAY_SEC = 0.3;
 
@@ -63,8 +66,11 @@ async function fetchUrl(url: string, raw = false): Promise<string | unknown> {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 15 * 1000);
       try {
+        const headers: Record<string, string> = { 'User-Agent': USER_AGENT };
+        // 仅对经代理的 WCA 请求带密钥头;cubing.com 等其它 host 直连,不泄露 secret。
+        if (WCA_PROXY_SECRET && url.startsWith(WCA_API_BASE)) headers['X-Proxy-Secret'] = WCA_PROXY_SECRET;
         const resp = await fetch(url, {
-          headers: { 'User-Agent': USER_AGENT },
+          headers,
           signal: ctrl.signal,
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
