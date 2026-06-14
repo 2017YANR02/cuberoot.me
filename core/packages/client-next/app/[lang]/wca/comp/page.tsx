@@ -1367,20 +1367,22 @@ function CalendarPageInner() {
     return Array.from(seen.values());
   }, [data, recordsVer]);
 
-  // selectedCuber 变化 → 解析出他的未来比赛 ID 集合 (静态优先,miss 走 API)
+  // selectedCuber 变化 → 解析出他的未来比赛 ID 集合.
+  // 静态索引(top_cubers + cn 报名)对单个选手往往不全:它只覆盖每场的头部选手 + 中国报名,
+  // 一个中国选手报名的国际比赛可能不在里面(且 prod 的静态 JSON 还会滞后).所以静态命中先即时
+  // 显示(无 spinner),再永远用 WCA API 兜底 union 补全他报名的其余比赛.
   useEffect(() => {
     if (!selectedCuber) { setSelectedCuberCompIds(null); return; }
     const staticHit = personCompIndex.get(selectedCuber.id);
-    if (staticHit && staticHit.size > 0) {
-      setSelectedCuberCompIds(staticHit);
-      return;
-    }
-    // miss → API
+    setSelectedCuberCompIds(staticHit && staticHit.size > 0 ? new Set(staticHit) : new Set());
     let cancelled = false;
-    setSelectedCuberCompIds(new Set());  // 暂时空集合 = 没命中,过滤掉所有
     fetchUserUpcoming(selectedCuber.id).then((ids) => {
-      if (cancelled) return;
-      setSelectedCuberCompIds(new Set(ids));
+      if (cancelled || ids.length === 0) return;
+      setSelectedCuberCompIds((prev) => {
+        const next = new Set(prev ?? []);
+        for (const id of ids) next.add(id);
+        return next;
+      });
     });
     return () => { cancelled = true; };
   }, [selectedCuber, personCompIndex]);

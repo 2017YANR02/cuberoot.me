@@ -466,6 +466,15 @@ const WCA_API_BASE = 'https://www.worldcubeassociation.org/api/v0';
 interface WcifPublic {
   name: string;
   events?: { id: string; rounds?: { id: string; format: string }[] }[];
+  // WCA 注册系统的报名(国际比赛)在 WCIF persons[].registration 公开;
+  // cubing.com 报名的中国比赛此处无 registration(eventIds 空)→ 落回 /competitors 抓取.
+  persons?: {
+    registrantId?: number | null;
+    wcaId?: string | null;
+    name?: string;
+    countryIso2?: string | null;
+    registration?: { eventIds?: string[]; status?: string; isCompeting?: boolean } | null;
+  }[];
 }
 interface WcaResultRow {
   id: number; round_id: number; pos: number;
@@ -674,6 +683,27 @@ async function loadFromWca(wcaId: string, onProgress?: ProgressFn): Promise<Comp
       wcaid: r.wca_id,
       region: r.country_iso2 ? r.country_iso2.toLowerCase() : '',
     };
+  }
+
+  // 未来 / announce-only 比赛(WCA REST results 还空)→ 用 WCIF public 的 persons 报名表填 users,
+  // 否则 Psych Sheet / 报名名单全空.国际比赛走 WCA 注册系统,registration 在 WCIF 公开;
+  // cubing.com 报名的中国比赛 WCIF 无 registration(eventIds 空,0 命中)→ 不动,落回 /competitors 抓取.
+  // registrantId(1..N,WCIF 自带且唯一)直接当 competitor number;name 已是"English (母语)"形态.
+  if (results.length === 0) {
+    for (const p of wcif.persons ?? []) {
+      const reg = p.registration;
+      if (!reg || reg.status !== 'accepted' || !(reg.eventIds?.length)) continue;
+      const n = (typeof p.registrantId === 'number' && p.registrantId > 0)
+        ? p.registrantId : numByWcaId.size + 1;
+      users[String(n)] = {
+        number: n,
+        name: p.name ?? p.wcaId ?? '',
+        wcaid: p.wcaId ?? '',
+        region: p.countryIso2 ? p.countryIso2.toLowerCase() : '',
+        eventIds: reg.eventIds,
+      };
+      if (p.wcaId) numByWcaId.set(p.wcaId, n);
+    }
   }
 
   // 1) Events 骨架来自 WCIF(announce-only 也有完整轮次结构,UI selector 立刻可显示)
