@@ -355,6 +355,18 @@ html[data-theme=dark] .wp-page {
     font-weight: 600;
     color: var(--wp-text);
 }
+/* 成绩变更:全部成绩表里某行被后来取消 / 修正时,在当前值前补一个划掉的旧值。
+   信号尽量轻 —— 主要靠就地划掉的旧值,加一条左侧细条做行级指引,不铺整行底色避免拥挤。 */
+.wp-old-result {
+    margin-right: 6px;
+    font-weight: 500;
+    color: var(--wp-text-mute);
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, var(--wp-pink) 70%, transparent);
+}
+.wp-bycomp-table tbody tr.wp-row-changed td:first-child {
+    box-shadow: inset 2px 0 0 color-mix(in srgb, var(--wp-pink) 65%, transparent);
+}
 
 /* rank tier color (1-3 pink / 4-10 green / 11-100 blue / 100+ gray) — plain colored number, no box */
 .wp-rank {
@@ -497,12 +509,15 @@ html[data-theme=dark] .wp-page {
     padding: 6px 4px; margin-bottom: -1px;
     color: var(--wp-text-sub); font-size: 0.82rem;
     cursor: pointer; border-bottom: 2px solid transparent;
+    white-space: nowrap;
 }
 .wp-subsubtab-btn:hover { color: var(--wp-text); }
 .wp-subsubtab-btn.is-active {
     color: var(--wp-blue); border-bottom-color: var(--wp-blue);
     font-weight: 600;
 }
+/* 历史成绩排名曲线 标签靠右,与左侧两个「成绩视图」标签分组 */
+.wp-subsubtab-btn-end { margin-left: auto; }
 
 /* ── 按比赛 (ByCompList) ─────────────────────────────────────────── */
 .wp-bycomp { display: flex; flex-direction: column; gap: 16px; }

@@ -17,7 +17,7 @@ import DonateModal from '@/components/DonateModal';
 import MembershipBadge from '@/components/MembershipBadge';
 import {
   listPlans, getMyMembership, getOrderStatus,
-  type MembershipPlan, type Membership,
+  type MembershipPlan, type Membership, type PayChannels,
 } from '@/lib/membership-api';
 import PayModal from './PayModal';
 import AdminPanel from './AdminPanel';
@@ -68,6 +68,7 @@ export default function MembershipPage() {
 
   const [plans, setPlans] = useState<MembershipPlan[] | null>(null);
   const [payEnabled, setPayEnabled] = useState(false);
+  const [channels, setChannels] = useState<PayChannels | undefined>(undefined);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
   const [buyPlan, setBuyPlan] = useState<MembershipPlan | null>(null);
@@ -87,7 +88,7 @@ export default function MembershipPage() {
   useEffect(() => {
     let cancel = false;
     listPlans()
-      .then((r) => { if (!cancel) { setPlans(r.plans); setPayEnabled(r.payEnabled); } })
+      .then((r) => { if (!cancel) { setPlans(r.plans); setPayEnabled(r.payEnabled); setChannels(r.channels); } })
       .catch((e) => { if (!cancel) setLoadErr(e instanceof Error ? e.message : String(e)); });
     return () => { cancel = true; };
   }, []);
@@ -270,6 +271,7 @@ export default function MembershipPage() {
       {buyPlan && (
         <PayModal
           plan={buyPlan}
+          channels={channels}
           isZh={isZh}
           onClose={() => setBuyPlan(null)}
           onPaid={() => { setBuyPlan(null); setJustPaid(true); refreshMembership(); }}

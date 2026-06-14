@@ -26,6 +26,9 @@ import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
 import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
 import { UnofficialMark } from '@/components/UnofficialMark';
+import { rowChangeKey, changeOldValue } from '@/lib/result-watch-api';
+import { useRowChangeMap } from '../../logic/use-row-change-map';
+import { ChangedResultValue } from './ChangedResultValue';
 import i18n from "@/i18n/i18n-client";
 
 // MBLD 无官方平均 → 用非官方 Mo3(从该轮 attempts 现算);其它项目用官方 average。
@@ -44,7 +47,7 @@ interface Props {
   isZh: boolean;
 }
 
-type SubSub = 'best' | 'dist';
+type SubSub = 'best' | 'dist' | 'rank';
 
 export default function ByEventView({ profile, results, comps, reconLookup, eventId, isZh }: Props) {
   const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
@@ -84,6 +87,10 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
           className={`wp-subsubtab-btn ${view === 'dist' ? 'is-active' : ''}`}
           onClick={() => setView('dist')}
         >{t('单次成绩分布', 'Single Distribution', "單次成績分佈")}</button>
+        <button
+          className={`wp-subsubtab-btn wp-subsubtab-btn-end ${view === 'rank' ? 'is-active' : ''}`}
+          onClick={() => setView('rank')}
+        >{t('历史成绩排名曲线', 'Rank History', "歷史成績排名曲線")}</button>
       </div>
 
       {view === 'best' && (
@@ -97,21 +104,24 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
       {view === 'dist' && (
         <DistChart eventId={eventId} rows={eventResults} isZh={isZh} />
       )}
-
-      <h3 className="wp-section-h">{t('历史成绩排名曲线', 'Historical Rank History', "歷史成績排名曲線")}</h3>
-      {histLoading && <div className="wp-loading-inline">{t('加载中…', 'Loading…', "載入中…")}</div>}
-      {!histLoading && hist && hist.rows.length > 0 && (
-        <RankChart hist={hist} isZh={isZh} />
-      )}
-      {!histLoading && hist && hist.rows.length === 0 && (
-        <div className="wp-empty">{t('暂无年度排名数据', 'No yearly rank data', "暫無年度排名資料")}</div>
-      )}
-      {!histLoading && !hist && (
-        <div className="wp-empty wp-text-mute">{t('排名数据暂未生成(服务端 stats-build 数据未就绪)', 'Rank history not yet built on server', "排名資料暫未生成(服務端 stats-build 資料未就緒)")}</div>
+      {view === 'rank' && (
+        <>
+          {histLoading && <div className="wp-loading-inline">{t('加载中…', 'Loading…', "載入中…")}</div>}
+          {!histLoading && hist && hist.rows.length > 0 && (
+            <RankChart hist={hist} isZh={isZh} />
+          )}
+          {!histLoading && hist && hist.rows.length === 0 && (
+            <div className="wp-empty">{t('暂无年度排名数据', 'No yearly rank data', "暫無年度排名資料")}</div>
+          )}
+          {!histLoading && !hist && (
+            <div className="wp-empty wp-text-mute">{t('排名数据暂未生成(服务端 stats-build 数据未就绪)', 'Rank history not yet built on server', "排名資料暫未生成(服務端 stats-build 資料未就緒)")}</div>
+          )}
+        </>
       )}
 
       <h3 className="wp-section-h">{t('全部成绩', 'All Results', "全部成績")}</h3>
       <EventRoundsList
+        wcaId={profile.person.wca_id}
         rows={eventResults}
         compById={compById}
         results={results}
@@ -183,8 +193,9 @@ function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLooku
 }
 
 function EventRoundsList({
-  rows, compById, results, comps, eventId, reconLookup, isZh,
+  wcaId, rows, compById, results, comps, eventId, reconLookup, isZh,
 }: {
+  wcaId: string;
   rows: WcaResultRow[];
   compById: Map<string, WcaCompetition>;
   results: WcaResultRow[];
@@ -194,6 +205,7 @@ function EventRoundsList({
   isZh: boolean;
 }) {
   const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const changeMap = useRowChangeMap(wcaId);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -277,11 +289,15 @@ function EventRoundsList({
             const averageRank = rank?.averageRank ?? null;
             const showComp = r.competition_id !== lastCompId;
             lastCompId = r.competition_id;
+            const chg = changeMap.get(rowChangeKey(r.competition_id, eventId, r.round_type_id));
+            const modified = chg?.changeType === 'modified';
+            const oldBest = modified ? changeOldValue(chg, 'best') : null;
+            const oldAvg = modified ? changeOldValue(chg, 'average') : null;
             return (
               <tr
                 key={r.id}
                 id={`r-${r.competition_id}-${eventId}-${r.round_type_id}`}
-                className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''}`}
+                className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${chg ? 'wp-row-changed' : ''}`}
                 onClick={(e) => handleRowClick(e, r.competition_id, r.round_type_id)}
               >
                 <td className="wp-cell-comp">
@@ -311,8 +327,9 @@ function EventRoundsList({
                 <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
                   {r.pos > 0 ? r.pos : '—'}
                 </td>
-                <td className="wp-cell-result">
+                <td className={`wp-cell-result ${oldBest != null ? 'wp-cell-changed' : ''}`}>
                   <span className="record-num-cell">
+                    <ChangedResultValue oldValue={oldBest} eventId={eventId} kind="single" />
                     {formatWcaResult(r.best, eventId, 'single')}
                     {r.regional_single_record
                       ? <RecordBadge record={r.regional_single_record} variant="inline" />
@@ -321,8 +338,9 @@ function EventRoundsList({
                         : null}
                   </span>
                 </td>
-                <td className="wp-cell-result">
+                <td className={`wp-cell-result ${oldAvg != null ? 'wp-cell-changed' : ''}`}>
                   <span className="record-num-cell">
+                    <ChangedResultValue oldValue={oldAvg} eventId={eventId} kind="average" />
                     {formatWcaResult(effectiveAverage(r, eventId), eventId, 'average')}
                     {r.regional_average_record
                       ? <RecordBadge record={r.regional_average_record} variant="inline" />
@@ -424,6 +442,7 @@ function BestChart({
     },
     yAxis: {
       type: 'value',
+      splitLine: { show: false }, // 去掉横向网格白线
       axisLabel: {
         formatter: (val: number) => {
           if (isFmc || isMbld) return String(val.toFixed(0));
@@ -640,6 +659,7 @@ function RankChart({ hist, isZh }: { hist: PersonRankHistoryResponse; isZh: bool
       inverse: false, // 0 在底,大数在顶 — 同 cubing.pro
       min: 0,
       max: (val: { max: number }) => Math.ceil(val.max * 1.1),
+      splitLine: { show: false }, // 去掉横向网格白线
     },
     dataZoom: [
       { type: 'inside', xAxisIndex: 0, start: 0, end: 100 },

@@ -8,12 +8,13 @@ import { useEffect, useRef, useState } from 'react';
 import { X, Loader2, Smartphone, Check } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { createOrder, getOrderStatus, type MembershipPlan, type OrderInfo } from '@/lib/membership-api';
+import { createOrder, getOrderStatus, type MembershipPlan, type OrderInfo, type PayChannels } from '@/lib/membership-api';
 
 type Channel = 'alipay' | 'wechat';
 
 interface Props {
   plan: MembershipPlan;
+  channels?: PayChannels;
   isZh: boolean;
   onClose: () => void;
   onPaid: () => void;
@@ -25,8 +26,10 @@ function price(plan: MembershipPlan): string {
   return sym + (Number.isInteger(n) ? String(n) : n.toFixed(2));
 }
 
-export default function PayModal({ plan, isZh, onClose, onPaid }: Props) {
+export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Props) {
   const isMobile = useIsMobile();
+  const showAlipay = channels?.alipay !== false;
+  const showWechat = channels?.wechat !== false;
   const [channel, setChannel] = useState<Channel | null>(null);
   const [order, setOrder] = useState<OrderInfo | null>(null);
   const [creating, setCreating] = useState(false);
@@ -50,9 +53,9 @@ export default function PayModal({ plan, isZh, onClose, onPaid }: Props) {
     setErr(null);
     setCreating(true);
     try {
-      const info = await createOrder(plan.slug, ch);
+      const info = await createOrder(plan.slug, ch, isMobile ? 'wap' : 'pc');
       setOrder(info);
-      // 移动端直接跳收银台;桌面端展示二维码并轮询。
+      // 移动端直接跳收银台;桌面端展示二维码(微信)或前往收银台链接(支付宝)并轮询。
       if (isMobile && info.url) {
         window.location.href = info.url;
         return;
@@ -93,16 +96,20 @@ export default function PayModal({ plan, isZh, onClose, onPaid }: Props) {
                 zhHant: "選擇支付方式"
             })}</p>
             <div className="mem-pay-channels">
-              <button className="mem-pay-ch mem-pay-ch-alipay" disabled={creating} onClick={() => start('alipay')}>
-                {creating && channel === 'alipay' ? <Loader2 size={16} className="mem-spin" /> : null}
-                {tr({ zh: '支付宝', en: 'Alipay',
-                    zhHant: "支付寶"
-                })}
-              </button>
-              <button className="mem-pay-ch mem-pay-ch-wechat" disabled={creating} onClick={() => start('wechat')}>
-                {creating && channel === 'wechat' ? <Loader2 size={16} className="mem-spin" /> : null}
-                {tr({ zh: '微信支付', en: 'WeChat Pay' })}
-              </button>
+              {showAlipay && (
+                <button className="mem-pay-ch mem-pay-ch-alipay" disabled={creating} onClick={() => start('alipay')}>
+                  {creating && channel === 'alipay' ? <Loader2 size={16} className="mem-spin" /> : null}
+                  {tr({ zh: '支付宝', en: 'Alipay',
+                      zhHant: "支付寶"
+                  })}
+                </button>
+              )}
+              {showWechat && (
+                <button className="mem-pay-ch mem-pay-ch-wechat" disabled={creating} onClick={() => start('wechat')}>
+                  {creating && channel === 'wechat' ? <Loader2 size={16} className="mem-spin" /> : null}
+                  {tr({ zh: '微信支付', en: 'WeChat Pay' })}
+                </button>
+              )}
             </div>
             {err && <div className="mem-pay-err">{err}</div>}
           </>

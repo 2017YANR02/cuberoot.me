@@ -12,12 +12,18 @@
    支付宝「周期扣款」也要企业过审 —— **个人拿不到自动代扣**。所以模型是:一次性买 月/年/永久,
    存 `expires_at`,到期提醒,手动再买。永久会员 `expires_at = NULL`。
 
-3. **支付走聚合支付「虎皮椒 xunhupay」。** 个人(无营业执照)拿不到官方微信商户号 / 支付宝网站支付 API。
-   虎皮椒等聚合支付允许个人用身份证 + 银行卡开通,给统一下单 + 异步 notify。
-   代码做了 **provider 适配层**:将来若注册个体工商户拿到官方 API,只需加一个 provider,业务逻辑不动。
-   Stripe / Paddle / Lago 对中国大陆个人都不可用,不考虑。
+3. **支付:官方支付宝 / 官方微信支付 优先,虎皮椒聚合支付兜底(multi-provider 适配层)。**
+   站长持有营业执照(上海魔方根教育科技工作室,个人独资企业)+ 网站已 ICP 备案,
+   因此可申请 **官方支付宝「电脑/手机网站支付」** 与 **官方微信支付商户号(APIv3)** —— 费率更低(支付宝约 0.6%)、
+   可开发票、资金直连、无聚合中间商,是首选。代码按渠道择优:支付宝渠道用官方支付宝,微信渠道用官方微信支付,
+   任一未配置则回落 **虎皮椒 xunhupay**(个人凭身份证 + 银行卡即可开,作快速兜底 / 申请官方期间过渡)。
+   三个 provider 共用同一套下单 / 入账 / 查单 / 幂等开通逻辑,只在「下单产物」「验签/解密」处分叉。
+   Stripe / Paddle / Lago 对中国大陆主体都不可用,不考虑。
 
-4. **薄自研计费层,不上 Lago/Kill Bill。** 三张表(plans / orders / memberships)+ 适配器,几百行,贴合现有 Hono + PG 栈。
+4. **薄自研计费层,不上 Lago/Kill Bill。** 三张表(plans / orders / memberships)+ provider 适配层,贴合现有 Hono + PG 栈。
+   provider 文件:`packages/server/src/payment/alipay.ts`(官方支付宝,公钥模式 RSA2)、
+   `packages/server/src/payment/wechat.ts`(官方微信 APIv3,SHA256-RSA2048 + AEAD_AES_256_GCM 回调解密);
+   虎皮椒签名仍在 `routes/membership.ts` + `@cuberoot/shared/payment`。
 
 ## 数据模型
 
@@ -30,22 +36,27 @@
 
 | 端点 | 鉴权 | 说明 |
 |---|---|---|
-| `GET /plans` | 公开 | 在售套餐 + `payEnabled` |
+| `GET /plans` | 公开 | 在售套餐 + `payEnabled` + `channels`(各渠道是否可下单) |
 | `GET /me` | 登录 | 本人会员状态 |
 | `PUT /me/contact` | 登录 | 设置续费/找回联系方式 |
-| `POST /orders` | 登录 | 下单,返回 xunhupay 收银台 url + 二维码 |
-| `GET /orders/:no` | 登录(本人) | 查单(前端轮询;仍 pending 时主动向 xunhupay 查单补偿) |
-| `POST /notify/xunhupay` | 公开 webhook | xunhupay 异步回调,**验签**后入账,回字面量 `success` |
+| `POST /orders` | 登录 | 下单(传 `channel` + `clientType` pc/wap),按渠道择优 provider,返回收银台 url 或二维码 |
+| `GET /orders/:no` | 登录(本人) | 查单(前端轮询;仍 pending 时按 provider 主动查单补偿) |
+| `POST /notify/alipay` | 公开 webhook | 官方支付宝异步回调,RSA2 **验签**后入账,回字面量 `success` |
+| `POST /notify/wechat` | 公开 webhook | 官方微信 APIv3 回调,**GCM 解密**(+选配验签)后入账,回 `{code:'SUCCESS'}` |
+| `POST /notify/xunhupay` | 公开 webhook | 虎皮椒异步回调,MD5 **验签**后入账,回字面量 `success` |
 | `POST /admin/grant` | admin | 手动开通/续期(给已打赏用户,或商户未配置时) |
 | `GET /admin/list` | admin | 会员 + 最近订单 |
 | `DELETE /admin/member/:wcaId` | admin | 撤销会员 |
 | `PUT /admin/plans/:slug` | admin | 改套餐(价格/启用/文案/perks) |
 
 **安全要点:**
-- 签名算法 `@cuberoot/shared/payment`(排序非空参数 → `k=v&...` → 末尾追加 APPSECRET → MD5 小写),
-  有单测 `tests/xunhupay_sign.test.ts`。
-- 入账幂等:订单 `pending→paid` 用条件 UPDATE `WHERE status='pending' RETURNING` 锁定,只开通一次。
-- **未配置商户密钥时 notify 一律拒绝**(返回 `fail`,绝不开通)—— 防空 secret 下被伪造请求白嫖会员。
+- 待签/待验串构造全在 `@cuberoot/shared/payment`(纯函数,浏览器安全,有单测);RSA / GCM 走 server `node:crypto`。
+  - 官方支付宝:RSA2(SHA256withRSA),公钥模式。请求用商户应用私钥签(排除 `sign`);notify 用支付宝公钥验(排除 `sign`+`sign_type`)。
+  - 官方微信 APIv3:请求 Authorization 签名 SHA256-RSA2048;回调 AEAD_AES_256_GCM 解密 —— **解密成功本身即鉴权**(APIv3 密钥仅商户与微信持有,无法伪造);另配 `WECHAT_PLATFORM_PUBKEY` 则再验应答签名(纵深防御)。
+  - 虎皮椒:排序非空参数 → `k=v&...` → 末尾追加 APPSECRET → MD5 小写。
+- 单测:`tests/official_pay_sign.test.ts`(支付宝 RSA2 / 微信 v3 签名 / GCM 解密 round-trip)、`tests/xunhupay_sign.test.ts`。
+- 入账幂等:订单 `pending→paid` 用条件 UPDATE `WHERE status='pending' RETURNING` 锁定,只开通一次(三 provider 共用)。
+- **对应商户未配置时该渠道 notify 一律拒绝**(`fail` / `FAIL`,绝不开通)—— 防空密钥下被伪造请求白嫖会员。
 
 ## 前端
 
@@ -53,38 +64,53 @@
 - 入口:打赏弹窗 `DonateModal` 顶部链接、`/support` 头部链接。
 - `hooks/useMembership.ts`、`components/MembershipBadge.tsx`(已登记 /code 组件库)。
 
-## 渠道(支付宝 vs 微信)
+## 渠道择优 + 下单产物
 
-虎皮椒的渠道是**账号(APPID)级**,不是下单参数。两种部署:
-- **单账号**:只填 `XUNHUPAY_APPID/APPSECRET`,两个按钮都走它(收银台 `url` 会自动判微信端/手机端)。
-- **分账号**:若分别申请了微信、支付宝两个账号,额外填 `XUNHUPAY_WECHAT_*` / `XUNHUPAY_ALIPAY_*`,
-  下单按 channel 选对应 creds,notify 按回调 `appid` 选对应 secret 验签。
+下单按 `channel`(用户选支付宝/微信)× 是否配置官方 决定 provider;`clientType`(pc/wap,前端按 `useIsMobile` 传)决定产物:
+
+| 渠道 | provider 优先级 | PC(pc) | 移动(wap) |
+|---|---|---|---|
+| 支付宝 | 官方支付宝 → 虎皮椒 | 电脑网站支付,返回收银台 `url`(新窗口打开 + 轮询) | 手机网站支付,返回 `url`(直接跳转) |
+| 微信 | 官方微信 → 虎皮椒 | Native,`code_url` 服务端转 PNG 二维码 `qrcode`(扫码 + 轮询) | H5,返回 `h5_url`(直接跳转) |
+
+`/plans` 的 `channels:{alipay,wechat}` 表示该渠道官方或虎皮椒任一已配置,前端据此显隐按钮。
+虎皮椒渠道是**账号(APPID)级**:单账号两个按钮都走它;分账号可填 `XUNHUPAY_WECHAT_*` / `XUNHUPAY_ALIPAY_*` 覆盖。
 
 ---
 
 ## ✅ 已验证 / ⚠️ 未验证
 
-- ✅ migration、签名单测、整套后端(下单/开通/续期叠加/永久/409 守卫/改价/notify 拒绝)已对 **本地 pg13 端到端跑通**。
+- ✅ migration、整套后端(下单/开通/续期叠加/永久/409 守卫/改价/notify 拒绝)已对 **本地 pg13 端到端跑通**(xunhupay 阶段)。
 - ✅ 前端 EN/ZH 渲染、登录门控、支付弹窗(选渠道→二维码→轮询)Playwright 验过。
-- ⚠️ **xunhupay 真实网关从未联调**(无商户号)。请求/响应字段按官方文档(`xunhupay.com/doc/api/pay.html` / `search.html`)实现,
-  但 **签名串末尾是否带 `&`** 官方与部分 SDK 有歧义:本实现按官方文本(无尾 `&`)。
-  接入真商户后若验签失败,试 `buildSignBase` 末尾保留 `&` 的变体。先用小额(¥0.01 测试套餐)真扫一笔验证 notify 入账。
+- ✅ **官方 provider 用自造密钥对跑通真实模块 round-trip**:支付宝请求签名可被公钥验、notify 验签接受合法/拒绝篡改/拒绝缺签;
+  微信 Authorization 签名对称、回调 GCM 解密出订单、篡改密文被拒。签名/解密单测 `tests/official_pay_sign.test.ts` 全绿。
+- ⚠️ **三个真实网关都未联调**(无商户号):
+  - 官方支付宝按公钥模式实现;务必在开放平台用**公钥模式**(非证书模式)创建应用,否则验签字段对不上。
+  - 官方微信按 APIv3 Native + H5 实现;`WECHAT_APPID` 必须与商户号绑定,APIv3 密钥须 32 字节。
+  - 虎皮椒签名串末尾 `&` 官方与 SDK 有歧义,本实现无尾 `&`;失败则试带尾变体。
+  - 上线后先用 ¥0.01 套餐真扫一笔验证各渠道 notify 入账。
 
 ## 🔧 上线前你要做的事
 
-1. **决定法务姿态**:
-   - (a) 维持个人 + 聚合支付(最快,灰色地带);或
-   - (b) 注册**个体工商户**(便宜,几天),解锁官方支付宝网站支付 + 微信商户号 + 开发票/正规报税。
-   - 注意:对个人收费严格说需 **ICP 经营许可证**(要公司 + ≥¥100万注册资本,个人办不了),小站普遍靠聚合支付绕过 —— 真实但常被忽略的合规缺口。订阅收入是应税个人所得。
-2. **注册虎皮椒** `https://www.xunhupay.com`:网站地址(已备案)+ 身份证 + 手机 + 银行卡(微信渠道)/ 实名支付宝(支付宝渠道)→ 拿 **APPID + APPSECRET**。
-3. **填服务器 `.env`**(见 `.env.example` 末尾):`XUNHUPAY_APPID`、`XUNHUPAY_APPSECRET`、`PUBLIC_API_ORIGIN=https://api.cuberoot.me`、`PUBLIC_SITE_ORIGIN=https://www.cuberoot.me`,然后 `pm2 reload core-api --update-env`。
-4. **改套餐价格**:admin 登录 `/membership` 底部面板直接改,或改 DB。
-5. **部署**:push `core/**` → `deploy_core.yml` 自动跑 migration(创建三张表)+ 部署 server;前端走 Vercel / `deploy_next.yml`。
-   notify 地址 `https://api.cuberoot.me/v1/membership/notify/xunhupay` 已被现有 nginx 反代覆盖,无需额外配置。
-6. **真机验证**:配好后用 ¥0.01 临时套餐真扫一笔,确认 notify 入账(admin/list 看到 paid 订单 + 会员开通)。
+> 站长已有营业执照(个人独资企业)+ 网站已 ICP 备案 → 直接走官方支付,虎皮椒可选作过渡。
+
+1. **(可选,几天)申请官方商户**:
+   - **支付宝**:[open.alipay.com](https://open.alipay.com) 创建「网页&移动应用」自研应用 → 开通「电脑网站支付」+「手机网站支付」→ **公钥模式** 上传应用公钥、保存支付宝公钥。拿 `ALIPAY_APP_ID` + 应用私钥 + 支付宝公钥。
+   - **微信支付**:[pay.weixin.qq.com](https://pay.weixin.qq.com) 用营业执照开商户号(个人独资无对公账户可用法人本人银行卡走认证)→ 拿 `WECHAT_MCHID`、APIv3 密钥、商户证书序列号 + `apiclient_key.pem`;`WECHAT_APPID` 用与商户号绑定的公众号/应用 appid。
+2. **(可选,当天)注册虎皮椒** [xunhupay.com](https://www.xunhupay.com) 作快速兜底:网站地址(已备案)+ 身份证 + 银行卡 → `XUNHUPAY_APPID/APPSECRET`。
+3. **合规备忘**:对收费网站严格说还需 **ICP 经营许可证(增值电信)**,而它要求公司主体 + 注册资本 ≥ 100 万;
+   个人独资企业(本主体出资额 10 万)办不下来,但**该证与支付开通无关**(支付只认 ICP 备案,已有),
+   实践中小站普遍未办。属真实但常被跳过的合规缺口,知情即可。订阅收入按经营所得依法申报。
+4. **填服务器 `.env`**(见 `.env.example`):配齐你申请到的那套(官方支付宝 / 官方微信 / 虎皮椒任一即可启用对应渠道)+
+   `PUBLIC_API_ORIGIN` / `PUBLIC_SITE_ORIGIN`,然后 `pm2 reload core-api --update-env`。
+5. **改套餐价格**:admin 登录 `/membership` 底部面板直接改(seed 占位 ¥10/¥99/¥299)。
+6. **部署**:push `core/**` → `deploy_core.yml` 部署 server(migration 0046 已随上一笔 commit 部署,三表已建);前端走 Vercel / `deploy_next.yml`。
+   notify 地址 `https://api.cuberoot.me/v1/membership/notify/{alipay,wechat,xunhupay}` 走现有 nginx 反代,无需额外配置;
+   各平台后台的「异步通知 URL」填对应那条。
+7. **真机验证**:用 ¥0.01 临时套餐每个已配渠道各真扫一笔,确认 notify 入账(admin/list 看到 paid 订单 + 会员开通)。
 
 ## 本地测试
 
-docker pg13(5433)已应用本 migration。只测后端可起一个只挂 membership 路由的临时 harness:
-`DB_PORT=5433 DB_USER=postgres DB_PASS=dev DB_NAME=cuberoot_db JWT_SECRET=... tsx`(完整 server 因 sr-puzzlegen ESM 在 tsx 下起不来,要么用 esbuild bundle,要么只挂这一个路由)。
-admin 端点用 `wcaId='2017YANR02'` 的 JWT(HS256,JWT_SECRET 签)即管理员。
+- 签名 / 解密:`pnpm --filter @cuberoot/client-next exec vitest run tests/official_pay_sign.test.ts tests/xunhupay_sign.test.ts`。
+- 官方 provider 真实模块 round-trip:用自造 RSA 密钥对设 `ALIPAY_*` / `WECHAT_*` env 后 dynamic-import `payment/{alipay,wechat}.js`(完整 server 因 sr-puzzlegen ESM 在 tsx 下起不来,只 import 这两个模块即可,它们不碰 sr-puzzlegen / db)。
+- 业务流(下单/开通/续期/查单):docker pg13(5433)已应用 migration;admin 端点用 `wcaId='2017YANR02'` 的 HS256 JWT(JWT_SECRET 签)。

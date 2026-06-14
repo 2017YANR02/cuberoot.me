@@ -766,6 +766,10 @@
     margin: 0 2rem 0.5rem 0;
     color: var(--text);
     line-height: 1.25;
+    /* flex 居中:让标题里的关注星与比赛名垂直居中(替代脆弱的 vertical-align) */
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
 }
 .calendar-page .modal-title a {
     color: inherit;
@@ -779,6 +783,27 @@
 .calendar-page .modal-title .flag-img {
     width: 24px;
     height: 18px;
+}
+/* 模态标题里的关注星(inline)— flex 容器已垂直居中,只补左间距 */
+.calendar-page .modal-title .follow-star--inline {
+    margin-left: 0.35rem;
+}
+
+/* 已关注比赛标记 — 只读状态指示(日历条 / 列表行 / day-list);切换关注在 CompModal / 详情页 */
+.calendar-page .comp-follow-mark {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    color: var(--accent);
+}
+/* 列表行 name-cell 走 baseline 对齐,标记需垂直居中 */
+.calendar-page .comp-list-name-cell .comp-follow-mark {
+    align-self: center;
+}
+/* 日历条子元素 vertical-align: top,标记跟旗/名顶对齐 */
+.calendar-page .event-bar .comp-follow-mark {
+    vertical-align: top;
+    margin: 0 1px;
 }
 .calendar-page .day-list-panel .modal-title {
     display: inline-flex;

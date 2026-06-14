@@ -18,6 +18,9 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { findReconForAttempt } from '@/lib/recon-attempt-lookup';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
+import { rowChangeKey, changeOldValue } from '@/lib/result-watch-api';
+import { useRowChangeMap } from '../../logic/use-row-change-map';
+import { ChangedResultValue } from './ChangedResultValue';
 import i18n from "@/i18n/i18n-client";
 
 // hash 形如 #r-{compId}-{eventId}-{round}.按 ROUND_VARIANTS 反查 cutoff 子型 ('d'/'g'/'b' etc).
@@ -40,6 +43,7 @@ function resolveHashRow(hash: string): HTMLElement | null {
 }
 
 interface Props {
+  wcaId: string;
   results: WcaResultRow[] | null;
   comps: WcaCompetition[] | null;
   reconLookup: Map<string, number> | null;
@@ -48,8 +52,9 @@ interface Props {
 
 // 轮次显示元数据走 utils/wca_round_meta (ByEventView / 复盘页同场比赛表也用)
 
-export default function ByCompList({ results, comps, reconLookup, isZh }: Props) {
+export default function ByCompList({ wcaId, results, comps, reconLookup, isZh }: Props) {
   const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const changeMap = useRowChangeMap(wcaId);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -160,11 +165,15 @@ export default function ByCompList({ results, comps, reconLookup, isZh }: Props)
                     const averageRank = rank?.averageRank ?? null;
                     const showEvent = r.event_id !== lastEvent;
                     lastEvent = r.event_id;
+                    const chg = changeMap.get(rowChangeKey(comp.id, r.event_id, r.round_type_id));
+                    const modified = chg?.changeType === 'modified';
+                    const oldBest = modified ? changeOldValue(chg, 'best') : null;
+                    const oldAvg = modified ? changeOldValue(chg, 'average') : null;
                     return (
                       <tr
                         key={r.id}
                         id={`r-${comp.id}-${r.event_id}-${r.round_type_id}`}
-                        className="wp-row-anchorable"
+                        className={`wp-row-anchorable ${chg ? 'wp-row-changed' : ''}`}
                         onClick={(e) => handleRowClick(e, comp.id, r.event_id, r.round_type_id)}
                       >
                         <td className="wp-cell-event">
@@ -185,8 +194,9 @@ export default function ByCompList({ results, comps, reconLookup, isZh }: Props)
                         <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
                           {r.pos > 0 ? r.pos : '—'}
                         </td>
-                        <td className="wp-cell-result">
+                        <td className={`wp-cell-result ${oldBest != null ? 'wp-cell-changed' : ''}`}>
                           <span className="record-num-cell">
+                            <ChangedResultValue oldValue={oldBest} eventId={r.event_id} kind="single" />
                             {formatWcaResult(r.best, r.event_id, 'single')}
                             {r.regional_single_record
                               ? <RecordBadge record={r.regional_single_record} variant="inline" />
@@ -195,8 +205,9 @@ export default function ByCompList({ results, comps, reconLookup, isZh }: Props)
                                 : null}
                           </span>
                         </td>
-                        <td className="wp-cell-result">
+                        <td className={`wp-cell-result ${oldAvg != null ? 'wp-cell-changed' : ''}`}>
                           <span className="record-num-cell">
+                            <ChangedResultValue oldValue={oldAvg} eventId={r.event_id} kind="average" />
                             {formatWcaResult(r.average, r.event_id, 'average')}
                             {r.regional_average_record
                               ? <RecordBadge record={r.regional_average_record} variant="inline" />

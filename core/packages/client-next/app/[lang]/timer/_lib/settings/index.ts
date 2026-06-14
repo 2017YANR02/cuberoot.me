@@ -98,6 +98,10 @@ export interface TimerSettings {
   wcaDateFrom: string;   // 'YYYY-MM-DD', '' = no lower bound (date mode)
   wcaDateTo: string;     // 'YYYY-MM-DD', '' = no upper bound (date mode)
 
+  /** Use the God's-number shortest equivalent scramble (same cube state, fewer moves) instead of the
+   *  original WCA scramble. Only same-state events (333/333oh/333ft/333fm) have one; others ignore it. */
+  wcaUseOptimal: boolean;
+
   /** Auto-mark each WCA real scramble as done (public) after a non-DNF solve,
    *  when signed in. Default on — saves a manual click per solve. */
   autoMarkWcaScramble: boolean;
@@ -205,6 +209,7 @@ export const DEFAULTS: TimerSettings = {
   wcaGroup: '',
   wcaDateFrom: '',
   wcaDateTo: '',
+  wcaUseOptimal: false,
   autoMarkWcaScramble: true,
   scrambleClickAction: 'copy',
   scrambleClickMigrated: false,

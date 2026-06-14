@@ -1,0 +1,98 @@
+/* 「我关注的比赛」— 个人主页区块。无外框,行式列表,hover 出淡背景。双主题走 :root token。 */
+.fc-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+
+.fc-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.fc-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+
+.fc-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.fc-group + .fc-group { margin-top: 0.5rem; }
+
+.fc-group-head {
+  margin: 0 0 0.1rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+
+.fc-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.fc-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.fc-row {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--foreground);
+  transition: background 0.12s;
+}
+.fc-row:hover {
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+
+.fc-flag {
+  width: 1.3em !important;
+  flex: none;
+}
+
+.fc-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.fc-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.1rem 0.6rem;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+.fc-date { font-variant-numeric: tabular-nums; }
+.fc-reg { color: var(--accent); }

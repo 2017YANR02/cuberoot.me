@@ -59,6 +59,8 @@ import { useRouter } from 'next/navigation';
 import { CompCuberPicker } from '@/components/CompCuberPicker';
 import OnThisDayModal from './_components/OnThisDayModal';
 import MonthGrid from '@/components/MonthGrid';
+import { useCompFollows, FollowStar } from '@/components/CompFollow';
+import { useAuthStore } from '@/lib/auth-store';
 import './calendar_page.css';
 import './comp.css';
 import { tr } from '@/i18n/tr';
@@ -79,6 +81,11 @@ const RECENT_MAX = 12;
 interface RecentEntry {
   slug: string;
   name: string;
+  // 详情页查看时实时解析的中文名(cubing.com 原始全名,含 WCA/魔方),localizeCompName 会 stripWcaPrefix。
+  // 持久化它,使最近浏览不必等 comp_names_zh.json 日更也能显示新比赛中文名。
+  nameZh?: string;
+  // 同理持久化国家 iso2(新比赛尚未进 comp_countries.json 时 compFlagIso2 查不到,用它兜底渲染国旗)。
+  iso2?: string;
   viewedAt: number;
 }
 
@@ -101,7 +108,9 @@ function loadRecent(): RecentEntry[] {
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return [];
     const valid = arr.filter((e): e is RecentEntry =>
-      e && typeof e.slug === 'string' && typeof e.name === 'string' && typeof e.viewedAt === 'number',
+      e && typeof e.slug === 'string' && typeof e.name === 'string' && typeof e.viewedAt === 'number'
+      && (e.nameZh == null || typeof e.nameZh === 'string')
+      && (e.iso2 == null || typeof e.iso2 === 'string'),
     );
     const dedup = new Map<string, RecentEntry>();
     for (const e of valid) {
@@ -113,11 +122,16 @@ function loadRecent(): RecentEntry[] {
   } catch { return []; }
 }
 
-export function rememberRecent(slug: string, name: string) {
+export function rememberRecent(slug: string, name: string, nameZh?: string, iso2?: string) {
   if (typeof window === 'undefined') return;
   try {
-    const cur = loadRecent().filter(r => r.slug !== slug);
-    const next: RecentEntry[] = [{ slug, name, viewedAt: Date.now() }, ...cur].slice(0, RECENT_MAX);
+    const norm = slug.replace(/-/g, '');
+    const all = loadRecent();
+    // nameZh / iso2 缺省时保留旧记录里已有的(例如 EN 模式再次访问不该抹掉之前解析到的中文 / 国旗)
+    const prev = all.find(r => r.slug === norm);
+    const cur = all.filter(r => r.slug !== norm);
+    const entry: RecentEntry = { slug: norm, name, nameZh: nameZh ?? prev?.nameZh, iso2: iso2 ?? prev?.iso2, viewedAt: Date.now() };
+    const next: RecentEntry[] = [entry, ...cur].slice(0, RECENT_MAX);
     localStorage.setItem(RECENT_KEY, JSON.stringify(next));
   } catch { /* quota */ }
 }
@@ -225,6 +239,16 @@ function localizeName(c: { id?: string; name: string; name_zh?: string }, isZh: 
 
 function Flag({ iso2 }: { iso2: string }) {
   return <SharedFlag iso2={iso2} spanClassName="flag-span" imgClassName="flag-img" />;
+}
+
+// 已关注比赛的视觉标记(日历条 / 列表行 / day-list)。这些都是整行/整条 <button>,不能再嵌
+// 可点按钮,故只作状态指示;切换关注在 CompModal / 详情页里完成。仅在 follows 命中时渲染。
+function FollowMark() {
+  return (
+    <span className="comp-follow-mark" aria-hidden="true">
+      <Star size={12} fill="currentColor" />
+    </span>
+  );
 }
 
 // ── 日历计算 ──────────────────────────────────────────────────────────────
@@ -484,12 +508,16 @@ function computeCompactWeeks(
 
 // ── 详情模态框 ────────────────────────────────────────────────────────────
 
-function CompModal({ comp, isZh, onClose, t, cancelled }: {
+function CompModal({ comp, isZh, onClose, t, cancelled, loggedIn, followed, onToggleFollow, onRequireLogin }: {
   comp: Competition;
   isZh: boolean;
   onClose: () => void;
   t: (k: string, o?: Record<string, unknown>) => string;
   cancelled: boolean;
+  loggedIn: boolean;
+  followed: boolean;
+  onToggleFollow: (id: string) => void;
+  onRequireLogin: () => void;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -542,6 +570,14 @@ function CompModal({ comp, isZh, onClose, t, cancelled }: {
             <span className={cancelled ? 'modal-title-name is-cancelled' : 'modal-title-name'}>{displayName}</span>
           </Link>
           {cancelled && <span className="modal-cancelled-tag">{tr({ zh: '已取消', en: 'Cancelled' })}</span>}
+          <FollowStar
+            variant="inline"
+            compId={comp.id}
+            followed={followed}
+            onToggle={onToggleFollow}
+            loggedIn={loggedIn}
+            onRequireLogin={onRequireLogin}
+          />
         </h2>
         <div className="modal-meta">
           {dateStr} · {displayCity}{(i18n.language.startsWith('zh') ? '，' : ', ')}{displayCountry}
@@ -856,10 +892,12 @@ function measureMaxNameCityPx(comps: Competition[], isZh: boolean, containerPx?:
 
 interface RowItem { comp: Competition; key: string }
 
-function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso, pageRef, compMetric, compSortDir, eventMetric, pastMeta }: {
+function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso, pageRef, compMetric, compSortDir, eventMetric, pastMeta, followedIds }: {
   comps: Competition[];
   isZh: boolean;
   onSelect: (c: Competition) => void;
+  /** 已关注比赛 id 集合 — 命中则在行内比赛名前显示关注标记(切换关注在 CompModal 里) */
+  followedIds: Set<string>;
   /** 每个项目格子显示：'rounds'=轮次数 / 'regs'=报名人数 / WCIF round-1 配置 */
   eventMetric: EventMetric;
   /** 过去比赛 round-1 meta 懒加载表（comp id → short → RoundMeta）；未加载 / 未来比赛为 null */
@@ -1071,6 +1109,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
               </span>
               <Flag iso2={c.country} />
               <span className="comp-list-name-cell">
+                {followedIds.has(c.id) && <FollowMark />}
                 <span className="comp-list-name">{displayName}</span>
                 <span className="comp-list-city">{displayCity}</span>
               </span>
@@ -1115,6 +1154,10 @@ function CalendarPageInner() {
   const isZh = i18n.language.startsWith('zh');
   useDocumentTitle('比赛', 'Competitions', "比賽");
   const router = useRouter();
+  // 比赛关注「盯一下」:登录用户跨设备同步的关注集合(server PG)。在页顶调用一次,把状态下发给
+  // 模态 / 列表 / 日历条 / day-list,与首页 OngoingComps 共用同一份 server 数据。
+  const { loggedIn: followLoggedIn, follows, toggle: toggleFollow } = useCompFollows();
+  const login = useAuthStore((s) => s.login);
   const [recent, setRecent] = useState<RecentEntry[]>([]);
   useEffect(() => { setRecent(loadRecent()); }, []);
   const removeRecent = (slug: string) => {
@@ -1985,6 +2028,7 @@ function CalendarPageInner() {
           outerRef={listScrollRef}
           cancelledCutoffIso={cancelledCutoffIso}
           pageRef={pageRef}
+          followedIds={follows}
         />
       )}
 
@@ -2058,6 +2102,7 @@ function CalendarPageInner() {
                         return top ? <RecordBadge record={top} /> : null;
                       })()}
                       <Flag iso2={bar.comp.country} />
+                      {follows.has(bar.comp.id) && <FollowMark />}
                       <span className="event-bar-name">{displayName}</span>
                     </button>
                   );
@@ -2168,6 +2213,10 @@ function CalendarPageInner() {
           onClose={() => setSelectedComp(null)}
           t={t}
           cancelled={isCancelledComp(selectedComp, cancelledCutoffIso)}
+          loggedIn={followLoggedIn}
+          followed={follows.has(selectedComp.id)}
+          onToggleFollow={toggleFollow}
+          onRequireLogin={login}
         />
       )}
 
@@ -2247,6 +2296,7 @@ function CalendarPageInner() {
                     >
                       {top && <RecordBadge record={top} />}
                       <Flag iso2={c.country} />
+                      {follows.has(c.id) && <FollowMark />}
                       <span className="day-list-item-name">{displayName}</span>
                       <span className="day-list-count">{c.top_cubers.length}</span>
                     </button>
@@ -2301,8 +2351,8 @@ function CalendarPageInner() {
         })}</h2>
           <ul className="comp-recent-list">
             {recent.map(r => {
-              const iso2 = compFlagIso2(r.slug);
-              const display = localizeCompName(r.slug, decodeEntities(r.name), isZh);
+              const iso2 = compFlagIso2(r.slug) || r.iso2 || '';
+              const display = localizeCompName(r.slug, decodeEntities(r.name), isZh, { explicitNameZh: r.nameZh });
               return (
                 <li key={r.slug} className="comp-recent-item">
                   <Link

@@ -10,6 +10,15 @@
   padding-top: 2px;
 }
 
+/* 关注星标(.follow-star--corner)绝对定位的上下文;卡片本身仍是整块 Link */
+.tac-card-wrap {
+  position: relative;
+  display: flex;
+}
+.tac-card-wrap .tac-card { flex: 1; min-width: 0; }
+/* 登录时给标题右侧留白,长名不钻到角标下面 */
+.tac-card-wrap.is-followable .tac-title { padding-right: 1.7rem; }
+
 .tac-card {
   display: flex;
   flex-direction: column;

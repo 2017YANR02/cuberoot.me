@@ -82,7 +82,7 @@ export default function ResultsTab({ profile, results, comps, reconLookup, isZh 
           />
         )}
         {sub === 'comp' && (
-          <ByCompList results={results} comps={comps} reconLookup={reconLookup} isZh={isZh} />
+          <ByCompList wcaId={profile.person.wca_id} results={results} comps={comps} reconLookup={reconLookup} isZh={isZh} />
         )}
       </Suspense>
     </div>

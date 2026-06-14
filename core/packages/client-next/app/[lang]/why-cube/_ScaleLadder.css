@@ -1,0 +1,148 @@
+/* ─── /why-cube · B1 数量阶梯 / scale ladder ────────────────── */
+
+.wc-ladder {
+  width: 100%;
+}
+
+.wc-ladder-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wc-ladder-row {
+  padding: 14px 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+/* the exact, highlighted cube rung */
+.wc-ladder-row.is-cube {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border-default));
+  background: color-mix(in srgb, var(--accent) 7%, var(--card));
+}
+
+/* label + value line */
+.wc-ladder-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.wc-ladder-label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--foreground);
+}
+.wc-ladder-row.is-cube .wc-ladder-label {
+  color: var(--accent);
+}
+
+.wc-ladder-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.wc-ladder-approx {
+  font-size: 13px;
+  color: var(--faint-foreground);
+}
+.wc-ladder-num {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.wc-ladder-row.is-cube .wc-ladder-num {
+  color: var(--accent);
+  font-weight: 700;
+}
+.wc-ladder-num sup {
+  font-size: 0.72em;
+}
+
+/* log-scale bar */
+.wc-ladder-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 7%, var(--card));
+  overflow: hidden;
+}
+.wc-ladder-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 38%, var(--border-strong));
+  transition: width .35s ease-out;
+  will-change: width;
+}
+.wc-ladder-row.is-cube .wc-ladder-track {
+  background: color-mix(in srgb, var(--accent) 14%, var(--card));
+}
+.wc-ladder-row.is-cube .wc-ladder-bar {
+  background: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+/* exact digits (cube) + source note */
+.wc-ladder-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.wc-ladder-exact {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--accent);
+  word-break: break-all;
+}
+.wc-ladder-source {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--faint-foreground);
+  margin-left: auto;
+}
+
+/* caption */
+.wc-ladder-caption {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--faint-foreground);
+  max-width: 56ch;
+}
+
+/* respect reduced motion: kill the width transition (component jumps to final) */
+@media (prefers-reduced-motion: reduce) {
+  .wc-ladder-bar { transition: none; }
+}
+
+/* narrow screens: stack label above the value so neither truncates */
+@media (max-width: 480px) {
+  .wc-ladder-row { padding: 12px 13px; gap: 8px; }
+  .wc-ladder-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .wc-ladder-value { white-space: normal; }
+  .wc-ladder-label { font-size: 13.5px; }
+  .wc-ladder-foot { flex-direction: column; gap: 3px; }
+  .wc-ladder-source { margin-left: 0; }
+}

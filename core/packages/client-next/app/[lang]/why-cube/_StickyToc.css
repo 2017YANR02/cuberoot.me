@@ -1,0 +1,56 @@
+/* ─── /why-cube sticky mini-TOC + scroll-reveal ─────────────── */
+
+/* Fixed left rail, offset to sit just left of the 920px content column.
+   Hidden when there isn't room (the page reads fine top-to-bottom). */
+.wc-toc {
+  position: fixed;
+  top: 96px;
+  left: max(16px, calc((100vw - 920px) / 2 - 212px));
+  width: 188px;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  z-index: 20;
+  scrollbar-width: thin;
+}
+.wc-toc ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.wc-toc-link {
+  display: block;
+  padding: 5px 12px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--faint-foreground);
+  text-decoration: none;
+  border-left: 2px solid var(--border-default);
+  border-radius: 0 6px 6px 0;
+  transition: color .14s, border-color .14s, background .14s;
+}
+.wc-toc-link:hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+.wc-toc-link.is-active {
+  color: var(--accent);
+  font-weight: 600;
+  border-left-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+@media (max-width: 1280px) {
+  .wc-toc { display: none; }
+}
+
+/* Scroll-reveal — only armed by JS (no-JS keeps sections fully visible), and
+   never under reduced motion. */
+.wc-reveal-armed .wc-sec {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity .55s ease, transform .55s ease;
+  will-change: opacity, transform;
+}
+.wc-reveal-armed .wc-sec.wc-reveal-in {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wc-reveal-armed .wc-sec { opacity: 1; transform: none; transition: none; }
+}

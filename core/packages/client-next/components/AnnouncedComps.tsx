@@ -14,6 +14,7 @@ import { countryName } from '@/lib/country-name';
 import { loadFlagData } from '@/lib/country-flags';
 import { formatRegStatus } from '@/lib/comp-reg-status';
 import { Flag } from '@/components/Flag';
+import { FollowStar } from '@/components/CompFollow';
 import { CubingIcon } from '@/components/EventIcon';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { fetchCompRounds } from '@/lib/comp-wcif';
@@ -77,10 +78,13 @@ export function useAnnouncedComps(): AnnouncedComp[] | null {
   }, [comps]);
 }
 
-export function AnnouncedCard({ comp, isZh, lang }: {
+export function AnnouncedCard({ comp, isZh, lang, loggedIn = false, followed = false, onToggle }: {
   comp: AnnouncedComp;
   isZh: boolean;
   lang: 'zh' | 'en';
+  loggedIn?: boolean;
+  followed?: boolean;
+  onToggle?: (id: string) => void;
 }) {
   const { t } = useTranslation();
   // 服务端实时解析的 cubing.com 中文名优先(公示后 ~20min 即有);否则回退每天一刷的 comp_names_zh.json
@@ -116,7 +120,11 @@ export function AnnouncedCard({ comp, isZh, lang }: {
   }, [comp.id]);
 
   return (
-    <Link {...compLinkProps(comp.id, undefined, lang)} className="tac-card">
+    <div className={`tac-card-wrap${loggedIn ? ' is-followable' : ''}`}>
+      {loggedIn && onToggle && (
+        <FollowStar variant="corner" compId={comp.id} followed={followed} onToggle={onToggle} />
+      )}
+      <Link {...compLinkProps(comp.id, undefined, lang)} className="tac-card">
       <div className="tac-title">
         <Flag iso2={comp.country} spanClassName="country-flag" imgClassName="country-flag-ct" />
         <span className="tac-name">{name}</span>
@@ -145,6 +153,7 @@ export function AnnouncedCard({ comp, isZh, lang }: {
           })}
         </div>
       )}
-    </Link>
+      </Link>
+    </div>
   );
 }

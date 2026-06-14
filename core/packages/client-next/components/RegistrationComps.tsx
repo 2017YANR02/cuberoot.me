@@ -4,7 +4,7 @@
 // (开放/截止)的本地日分组:今天/明天/后天/本周内/更晚。登录用户可「盯一下」关注的
 // 比赛,置顶为「已关注」组,跨设备同步(server PG comp_follows)。
 // 取数 + 分组纯逻辑在 lib/comp-registration.ts;关注 API 在 lib/comp-follows.ts。
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { Star, LogIn } from 'lucide-react';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
@@ -15,7 +15,7 @@ import {
   type RegItem,
   type RegBucketKey,
 } from '@/lib/comp-registration';
-import { fetchFollows, addFollow, removeFollow } from '@/lib/comp-follows';
+import { FollowStar, type CompFollowState } from '@/components/CompFollow';
 import { useAuthStore } from '@/lib/auth-store';
 import { compLinkProps } from '@/lib/comp-link';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -29,30 +29,6 @@ import { tr } from '@/i18n/tr';
 import './registration_comps.css';
 
 const EVENT_RANK = new Map<string, number>(WCA_EVENT_ORDER.map((e, i) => [e, i]));
-
-// ── 登录用户的关注集合(乐观更新 + server 同步)──────────────────────────────
-function useCompFollows() {
-  const user = useAuthStore((s) => s.user);
-  const [follows, setFollows] = useState<Set<string>>(() => new Set());
-
-  useEffect(() => {
-    if (!user) { setFollows(new Set()); return; }
-    let on = true;
-    fetchFollows().then((ids) => { if (on) setFollows(new Set(ids)); }).catch(() => { /* best-effort */ });
-    return () => { on = false; };
-  }, [user]);
-
-  const toggle = useCallback((id: string) => {
-    setFollows((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) { next.delete(id); removeFollow(id).catch(() => {}); }
-      else { next.add(id); addFollow(id).catch(() => {}); }
-      return next;
-    });
-  }, []);
-
-  return { loggedIn: !!user, follows, toggle };
-}
 
 // ── 文案 ────────────────────────────────────────────────────────────────────
 function pad2(n: number): string { return n < 10 ? `0${n}` : `${n}`; }
@@ -132,17 +108,7 @@ function RegistrationCard({ item, isZh, lang, now, mode, followed, onToggle, sho
   return (
     <div className={`rc-card${item.kind === 'closed' ? ' is-closed' : ''}`}>
       {showFollow && (
-        <button
-          type="button"
-          className={`rc-fav${followed ? ' is-on' : ''}`}
-          aria-pressed={followed}
-          title={followed
-            ? tr({ zh: '取消关注', en: 'Unfollow', zhHant: '取消關注' })
-            : tr({ zh: '盯一下', en: 'Follow', zhHant: '盯一下' })}
-          onClick={() => onToggle(c.id)}
-        >
-          <Star size={15} fill={followed ? 'currentColor' : 'none'} aria-hidden="true" />
-        </button>
+        <FollowStar variant="corner" compId={c.id} followed={followed} onToggle={onToggle} />
       )}
       <Link {...compLinkProps(c.id, undefined, lang)} className="rc-main">
         <div className="rc-title">
@@ -170,12 +136,11 @@ function RegistrationCard({ item, isZh, lang, now, mode, followed, onToggle, sho
 }
 
 // ── 视图 ────────────────────────────────────────────────────────────────────
-export function RegistrationView({ comps, isZh, lang }: {
+export function RegistrationView({ comps, isZh, lang, loggedIn, follows, toggle }: {
   comps: Comp[];
   isZh: boolean;
   lang: 'zh' | 'en';
-}) {
-  const { loggedIn, follows, toggle } = useCompFollows();
+} & Pick<CompFollowState, 'loggedIn' | 'follows' | 'toggle'>) {
   const login = useAuthStore((s) => s.login);
   // now 在组件生命周期内固定,避免 useMemo 依赖每帧抖动(首页不会开几小时)。
   const [now] = useState(() => Date.now());

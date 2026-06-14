@@ -2,6 +2,12 @@
 scrambles.txt
 out.*.csv
 counts.json
+wca_optimal.csv
+solve_full.log
+solve_full.err
+solve_full.pid
+solve_loop.log
+solve_loop.err
 
 # throwaway test scripts (kept locally, never committed)
 _*.mjs
