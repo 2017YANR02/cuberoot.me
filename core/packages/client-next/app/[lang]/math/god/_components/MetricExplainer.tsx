@@ -46,7 +46,7 @@ const GOD: Record<Metric, { puzzle: string; v: number }[]> = {
 interface Props { isZh: boolean; }
 
 export default function MetricExplainer({ isZh }: Props) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const [metric, setMetric] = useState<Metric>('HTM');
 
   return (
@@ -65,19 +65,19 @@ export default function MetricExplainer({ isZh }: Props) {
         {metric === 'HTM' && (
           <MathText>{t(
             'Half-Turn Metric:每个 90° 或 180° 面转都算 1 步。U2 = 1。WCA 文献最常用,也是 cube20.org 给出的 "20" 这个数字所用的度量。',
-            'Half-Turn Metric: each 90° or 180° face turn counts as 1. U2 = 1. The default in WCA literature and the metric behind the famous "20".', "Half-Turn Metric:每個 90° 或 180° 面轉都算 1 步。U2 = 1。WCA 文獻最常用,也是 cube20.org 給出的 \"20\" 這個數字所用的度量。"
+            'Half-Turn Metric: each 90° or 180° face turn counts as 1. U2 = 1. The default in WCA literature and the metric behind the famous "20".'
           )}</MathText>
         )}
         {metric === 'QTM' && (
           <MathText>{t(
             'Quarter-Turn Metric:只有 90° 转算 1 步,180° 必须拆成两步 90°。U2 = 2。Rokicki & Davidson 2014 在这个度量下证出三阶直径 = 26。',
-            'Quarter-Turn Metric: only 90° counts as 1 step; a 180° turn is two 90°s. U2 = 2. Rokicki & Davidson 2014 proved the 3×3 diameter = 26 in this metric.', "Quarter-Turn Metric:只有 90° 轉算 1 步,180° 必須拆成兩步 90°。U2 = 2。Rokicki & Davidson 2014 在這個度量下證出三階直徑 = 26。"
+            'Quarter-Turn Metric: only 90° counts as 1 step; a 180° turn is two 90°s. U2 = 2. Rokicki & Davidson 2014 proved the 3×3 diameter = 26 in this metric.'
           )}</MathText>
         )}
         {metric === 'STM' && (
           <MathText>{t(
             'Slice-Turn Metric:允许内层切片 M E S 作为单独一步。Rokicki 2014 证 3×3 STM 直径 = 18(同时是上下界)。多面 NxN 的 STM 上帝之数无人证过。',
-            'Slice-Turn Metric: inner slices M E S each count as a single move. Rokicki (2014) proved the 3×3 STM diameter = 18. No NxN STM bounds exist for N ≥ 4.', "Slice-Turn Metric:允許內層切片 M E S 作為單獨一步。Rokicki 2014 證 3×3 STM 直徑 = 18(同時是上下界)。多面 NxN 的 STM 上帝之數無人證過。"
+            'Slice-Turn Metric: inner slices M E S each count as a single move. Rokicki (2014) proved the 3×3 STM diameter = 18. No NxN STM bounds exist for N ≥ 4.'
           )}</MathText>
         )}
       </div>
@@ -88,7 +88,7 @@ export default function MetricExplainer({ isZh }: Props) {
             const heavy = metric === 'QTM' && /2$/.test(m);
             return (
               <span key={i} className={`god-metric-move ${heavy ? 'is-heavy' : ''}`}
-                    title={heavy ? t('这一步在 QTM 里算 2 步', 'counts as 2 in QTM', "這一步在 QTM 裡算 2 步") : undefined}>
+                    title={heavy ? t('这一步在 QTM 里算 2 步', 'counts as 2 in QTM') : undefined}>
                 {m}
                 {heavy && <sup>×2</sup>}
               </span>
@@ -105,8 +105,8 @@ export default function MetricExplainer({ isZh }: Props) {
       <table className="god-metric-table">
         <thead>
           <tr>
-            <th>{t('项目', 'Puzzle', "項目")}</th>
-            <th>{t('上帝之数', "God's number", "上帝之數")} ({metric})</th>
+            <th>{t('项目', 'Puzzle')}</th>
+            <th>{t('上帝之数', "God's number")} ({metric})</th>
           </tr>
         </thead>
         <tbody>

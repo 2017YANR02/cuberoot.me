@@ -280,8 +280,7 @@ function PairMultiplierPanel({ lang }: { lang: 'zh' | 'en' }) {
           {(['trivial', 'inversion', 'coord-perm'] as PhiMode[]).map(m => (
             <button key={m} className={`gt-chip${phiMode === m ? ' gt-chip-active' : ''}`} onClick={() => setPhiMode(m)}>
               {m === 'trivial'
-                ? (tr({ zh: '平凡 (直积)', en: 'trivial (direct)',
-                    zhHant: "平凡 (直積)"
+                ? (tr({ zh: '平凡 (直积)', en: 'trivial (direct)'
                 }))
                 : m === 'inversion'
                 ? (lang === 'zh' ? `C_${n} 求逆` : `C_${n} inversion`)
@@ -365,8 +364,7 @@ function PairMultiplierPanel({ lang }: { lang: 'zh' | 'en' }) {
           <span className={result.isAbelianHere ? 'gt-result-val' : 'gt-result-val-strong'} style={{ color: result.isAbelianHere ? 'var(--green)' : 'var(--warn)' }}>
             {result.isAbelianHere
               ? (tr({ zh: '相等 (φ 在此未起作用)', en: 'equal (φ inactive here)' }))
-              : (tr({ zh: '不等 — 非交换！', en: 'different — non-abelian!',
-                  zhHant: "不等 — 非交換！"
+              : (tr({ zh: '不等 — 非交换！', en: 'different — non-abelian!'
             }))}
           </span>
         </div>
@@ -453,8 +451,7 @@ function MultiplicationSVG({
 
       {/* Row 2: direct product */}
       <text x={4} y={row2y + 24} style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill={inkDim}>
-        {tr({ zh: '直积', en: 'direct',
-            zhHant: "直積"
+        {tr({ zh: '直积', en: 'direct'
         })}
       </text>
 
@@ -595,13 +592,11 @@ function DihedralWheelPanel({ lang }: { lang: 'zh' | 'en' }) {
         {(['r', 's', 'conj'] as const).map(a => (
           <button key={a} className={`gt-chip${action === a ? ' gt-chip-active' : ''}`} onClick={() => setAction(a)}>
             {a === 'r'
-              ? (tr({ zh: '×r (旋转)', en: '×r (rotate)',
-                  zhHant: "×r (旋轉)"
+              ? (tr({ zh: '×r (旋转)', en: '×r (rotate)'
             }))
               : a === 's'
               ? (tr({ zh: '×s (反射)', en: '×s (reflect)' }))
-              : (tr({ zh: 's·g·s⁻¹ (共轭)', en: 's·g·s⁻¹ (conjugate)',
-                  zhHant: "s·g·s⁻¹ (共軛)"
+              : (tr({ zh: 's·g·s⁻¹ (共轭)', en: 's·g·s⁻¹ (conjugate)'
             }))}
           </button>
         ))}
@@ -635,8 +630,7 @@ function DihedralWheelPanel({ lang }: { lang: 'zh' | 'en' }) {
 
           {/* Labels */}
           <text x={cx} y={16} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--accent)">
-            {tr({ zh: '旋转', en: 'rotations',
-                zhHant: "旋轉"
+            {tr({ zh: '旋转', en: 'rotations'
             })}
           </text>
           <text x={cx} y={cy + R_inner - 4} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--accent-2)">
@@ -949,8 +943,7 @@ function ExtensionDiagramSVG({
 
       {/* Legend */}
       <text x={W / 2} y={H - 6} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-faint)">
-        {tr({ zh: '实线=闭合(分裂), 虚线=不封闭', en: 'solid=closed(splits), dashed=fails closure',
-            zhHant: "實線=閉合(分裂), 虛線=不封閉"
+        {tr({ zh: '实线=闭合(分裂), 虚线=不封闭', en: 'solid=closed(splits), dashed=fails closure'
         })}
       </text>
     </svg>

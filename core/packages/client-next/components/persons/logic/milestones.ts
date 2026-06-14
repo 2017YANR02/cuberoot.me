@@ -31,9 +31,7 @@ export interface Milestone {
   tags: { kind: 'event' | 'comp' | 'time' | 'medal' | 'record'; label: string; iso2?: string; eventId?: string }[];
   /** 可选副信息(老→新成绩 等),给详情页或 hover 用 */
   note?: { zh: string; en: string
-    zhHant?: string;
  };
-    zhHant?: string;
 }
 
 const FINAL_ROUND_TYPES = new Set(['f', 'c', 'b']);
@@ -48,31 +46,22 @@ const ACTIVE_EVENTS = new Set([
 const BLIND_EVENTS = new Set(['333bf', '444bf', '555bf', '333mbf']);
 
 const REGIONAL_LABELS: Record<string, { zh: string; en: string
-        zhHant?: string;
  }> = {
-  WR: { zh: 'WR 世界纪录', en: 'World Record',
-      zhHant: "WR 世界紀錄"
+  WR: { zh: 'WR 世界纪录', en: 'World Record'
 },
-  AfR: { zh: 'AfR 非洲纪录', en: 'African Record',
-      zhHant: "AfR 非洲紀錄"
+  AfR: { zh: 'AfR 非洲纪录', en: 'African Record'
 },
-  AsR: { zh: 'AsR 亚洲纪录', en: 'Asian Record',
-      zhHant: "AsR 亞洲紀錄"
+  AsR: { zh: 'AsR 亚洲纪录', en: 'Asian Record'
 },
-  ER: { zh: 'ER 欧洲纪录', en: 'European Record',
-      zhHant: "ER 歐洲紀錄"
+  ER: { zh: 'ER 欧洲纪录', en: 'European Record'
 },
-  NAR: { zh: 'NAR 北美纪录', en: 'N. American Record',
-      zhHant: "NAR 北美紀錄"
+  NAR: { zh: 'NAR 北美纪录', en: 'N. American Record'
 },
-  OcR: { zh: 'OcR 大洋洲纪录', en: 'Oceanic Record',
-      zhHant: "OcR 大洋洲紀錄"
+  OcR: { zh: 'OcR 大洋洲纪录', en: 'Oceanic Record'
 },
-  SAR: { zh: 'SAR 南美纪录', en: 'S. American Record',
-      zhHant: "SAR 南美紀錄"
+  SAR: { zh: 'SAR 南美纪录', en: 'S. American Record'
 },
-  NR: { zh: 'NR 国家纪录', en: 'National Record',
-      zhHant: "NR 國家紀錄"
+  NR: { zh: 'NR 国家纪录', en: 'National Record'
 },
 };
 
@@ -110,8 +99,7 @@ export function buildMilestones(
       date: first.start_date,
       zh: '首次参赛',
       en: 'First competition',
-      tags: [{ kind: 'comp', label: compName(first.id) }],
-        zhHant: "首次參賽"
+      tags: [{ kind: 'comp', label: compName(first.id) }]
     });
   }
 
@@ -284,8 +272,7 @@ export function buildMilestones(
         date: latest.date,
         zh: '大满贯 — 完成全部 17 个现役项目',
         en: 'Grand Slam — completed all 17 active events',
-        tags: [{ kind: 'comp', label: compName(latest.compId) }],
-          zhHant: "大滿貫 — 完成全部 17 個現役項目"
+        tags: [{ kind: 'comp', label: compName(latest.compId) }]
     });
     }
   }

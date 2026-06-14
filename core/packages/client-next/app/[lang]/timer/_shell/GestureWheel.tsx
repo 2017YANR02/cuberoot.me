@@ -32,7 +32,6 @@ export interface GestureWheelHandle {
 const R = 5.2;
 
 const LABELS_ZH = ['下一个', 'OK', '+2', 'DNF', '上一个', '注释', '删除', '复制'];
-const LABELS_ZH__Hant = ['下一個', 'OK', '+2', 'DNF', '上一個', '註釋', '刪除', '複製'];
 const LABELS_EN = ['Next', 'OK', '+2', 'DNF', 'Prev', 'Note', 'Del', 'Copy'];
 
 const GestureWheel = forwardRef<GestureWheelHandle, { isZh: boolean }>(function GestureWheel({ isZh }, ref) {
@@ -72,7 +71,7 @@ const GestureWheel = forwardRef<GestureWheelHandle, { isZh: boolean }>(function 
     },
   }), []);
 
-  const labels = i18n.language === 'zh-Hant' ? LABELS_ZH__Hant : (isZh ? LABELS_ZH : LABELS_EN);
+  const labels = (isZh ? LABELS_ZH : LABELS_EN);
 
   return (
     <div ref={rootRef} className="gesture-wheel" aria-hidden="true">

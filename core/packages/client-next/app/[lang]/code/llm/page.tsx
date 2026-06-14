@@ -75,7 +75,7 @@ export default function CodeLlmPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('大模型', 'Large Language Models', '大模型');
+  useDocumentTitle('大模型', 'Large Language Models');
 
   return (
     <div className="code-index">
@@ -94,8 +94,7 @@ export default function CodeLlmPage() {
         <p className="code-index-sub">
           {tr({
             zh: '驱动 cuberoot.me 日常开发的大语言模型。从对话模型 Claude,到官方 CLI agent Claude Code,再到 Anthropic 最强的 Claude Fable 5 —— 这套站点几乎每一行新代码都由它们合写。',
-            en: 'The large language models behind cuberoot.me’s day-to-day development. From the Claude chat model, to the official CLI agent Claude Code, to Anthropic’s most capable Claude Fable 5 — nearly every new line of code on this site is co-written by them.',
-            zhHant: '驅動 cuberoot.me 日常開發的大語言模型。從對話模型 Claude,到官方 CLI agent Claude Code,再到 Anthropic 最強的 Claude Fable 5 —— 這套站點幾乎每一行新程式碼都由它們合寫。',
+            en: 'The large language models behind cuberoot.me’s day-to-day development. From the Claude chat model, to the official CLI agent Claude Code, to Anthropic’s most capable Claude Fable 5 — nearly every new line of code on this site is co-written by them.'
           })}
         </p>
       </header>

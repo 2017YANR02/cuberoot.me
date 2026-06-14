@@ -26,19 +26,15 @@ interface TreeNode {
   symbol?: string;
   orderFormula?: (n: number) => number;
   familyDesc?: { zh: string; en: string
-    zhHant?: string;
  };
-    labelZhHant?: string;
 }
 
 // ── Static Data ───────────────────────────────────────────────────────────────
 
 const CRYSTAL_SYSTEMS: { key: CrystalSystem; zh: string; en: string; color: string; bravais: number; centerings: string[]
-    zhHant?: string;
  }[] = [
   { key: 'triclinic',     zh: '三斜',   en: 'Triclinic',     color: '#8B2E3C', bravais: 1, centerings: ['P'] },
-  { key: 'monoclinic',    zh: '单斜',   en: 'Monoclinic',    color: '#2A4D69', bravais: 2, centerings: ['P', 'C'],
-      zhHant: "單斜"
+  { key: 'monoclinic',    zh: '单斜',   en: 'Monoclinic',    color: '#2A4D69', bravais: 2, centerings: ['P', 'C']
 },
   { key: 'orthorhombic',  zh: '正交',   en: 'Orthorhombic',  color: '#3F7050', bravais: 4, centerings: ['P', 'C', 'I', 'F'] },
   { key: 'tetragonal',    zh: '四方',   en: 'Tetragonal',    color: '#B8860B', bravais: 2, centerings: ['P', 'I'] },
@@ -93,110 +89,89 @@ const POINT_GROUPS: PointGroupEntry[] = [
 // Decision tree nodes for Schoenflies classification
 const TREE_NODES: TreeNode[] = [
   { id: 'linear',    labelZh: '是线形分子？(如 CO₂)', labelEn: 'Linear molecule? (e.g. CO₂)',
-    yes: 'linearSigH', no: 'highsym',
-      labelZhHant: "是線形分子？(如 CO₂)"
+    yes: 'linearSigH', no: 'highsym'
 },
   { id: 'linearSigH', labelZh: '有 σₕ？', labelEn: 'Has σₕ?',
     yes: 'dinfh', no: 'cinfv' },
   { id: 'dinfh', labelZh: '', labelEn: '', isLeaf: true, symbol: 'D∞h',
-    familyDesc: { zh: '线形+反演中心，如 CO₂, H₂', en: 'Linear + inversion centre, e.g. CO₂, H₂',
-        zhHant: "線形+反演中心，如 CO₂, H₂"
+    familyDesc: { zh: '线形+反演中心，如 CO₂, H₂', en: 'Linear + inversion centre, e.g. CO₂, H₂'
     } },
   { id: 'cinfv', labelZh: '', labelEn: '', isLeaf: true, symbol: 'C∞v',
-    familyDesc: { zh: '线形无反演，如 HCl, CO', en: 'Linear, no inversion, e.g. HCl, CO',
-        zhHant: "線形無反演，如 HCl, CO"
+    familyDesc: { zh: '线形无反演，如 HCl, CO', en: 'Linear, no inversion, e.g. HCl, CO'
     } },
   { id: 'highsym', labelZh: '高对称（多面体：T/O/I族）？', labelEn: 'High symmetry (polyhedral: T/O/I family)?',
-    yes: 'whichpoly', no: 'cn',
-      labelZhHant: "高對稱（多面體：T/O/I族）？"
+    yes: 'whichpoly', no: 'cn'
 },
   { id: 'whichpoly', labelZh: '有 C₅ 轴？', labelEn: 'Has a C₅ axis?',
-    yes: 'iclass', no: 'octtet',
-      labelZhHant: "有 C₅ 軸？"
+    yes: 'iclass', no: 'octtet'
 },
   { id: 'iclass', labelZh: '有反演中心 i？', labelEn: 'Has inversion centre i?',
     yes: 'ih', no: 'iche' },
   { id: 'ih',   labelZh: '', labelEn: '', isLeaf: true, symbol: 'Iₕ',
     familyDesc: { zh: 'C₅+i，如 C₆₀ (巴克球)，|G|=120', en: 'C₅ + i, e.g. C₆₀ (buckminsterfullerene), |G|=120' } },
   { id: 'iche', labelZh: '', labelEn: '', isLeaf: true, symbol: 'I',
-    familyDesc: { zh: 'C₅，无反演，|G|=60', en: 'C₅, no inversion, |G|=60',
-        zhHant: "C₅，無反演，|G|=60"
+    familyDesc: { zh: 'C₅，无反演，|G|=60', en: 'C₅, no inversion, |G|=60'
     } },
   { id: 'octtet', labelZh: '有 C₄ 轴？', labelEn: 'Has a C₄ axis?',
-    yes: 'oclass', no: 'tclass',
-      labelZhHant: "有 C₄ 軸？"
+    yes: 'oclass', no: 'tclass'
 },
   { id: 'oclass', labelZh: '有反演中心 i？', labelEn: 'Has inversion centre i?',
     yes: 'oh', no: 'o' },
   { id: 'oh',   labelZh: '', labelEn: '', isLeaf: true, symbol: 'Oₕ',
-    familyDesc: { zh: 'C₄+i，如 SF₆，|G|=48；晶学最高对称', en: 'C₄ + i, e.g. SF₆, |G|=48; highest-symmetry crystal class',
-        zhHant: "C₄+i，如 SF₆，|G|=48；晶學最高對稱"
+    familyDesc: { zh: 'C₄+i，如 SF₆，|G|=48；晶学最高对称', en: 'C₄ + i, e.g. SF₆, |G|=48; highest-symmetry crystal class'
     } },
   { id: 'o',    labelZh: '', labelEn: '', isLeaf: true, symbol: 'O',
-    familyDesc: { zh: '纯八面体旋转，O≅S₄，|G|=24', en: 'Pure octahedral rotations, O≅S₄, |G|=24',
-        zhHant: "純八面體旋轉，O≅S₄，|G|=24"
+    familyDesc: { zh: '纯八面体旋转，O≅S₄，|G|=24', en: 'Pure octahedral rotations, O≅S₄, |G|=24'
     } },
   { id: 'tclass', labelZh: '有 S₄ 轴（无 σₕ/σᵥ）？', labelEn: 'Has S₄ axis (no σₕ/σᵥ)?',
-    yes: 'td', no: 'tcheck',
-      labelZhHant: "有 S₄ 軸（無 σₕ/σᵥ）？"
+    yes: 'td', no: 'tcheck'
 },
   { id: 'td',   labelZh: '', labelEn: '', isLeaf: true, symbol: 'Td',
-    familyDesc: { zh: 'Td≅S₄（抽象），如 CH₄，|G|=24；无 i', en: 'Td≅S₄ (abstract), e.g. CH₄, |G|=24; no inversion',
-        zhHant: "Td≅S₄（抽象），如 CH₄，|G|=24；無 i"
+    familyDesc: { zh: 'Td≅S₄（抽象），如 CH₄，|G|=24；无 i', en: 'Td≅S₄ (abstract), e.g. CH₄, |G|=24; no inversion'
     } },
   { id: 'tcheck', labelZh: '有反演中心 i？', labelEn: 'Has inversion centre i?',
     yes: 'th', no: 'te' },
   { id: 'th',   labelZh: '', labelEn: '', isLeaf: true, symbol: 'Tₕ',
     familyDesc: { zh: 'T+i，T≅A₄，|G|=24', en: 'T + i, T≅A₄, |G|=24' } },
   { id: 'te',   labelZh: '', labelEn: '', isLeaf: true, symbol: 'T',
-    familyDesc: { zh: '纯四面体旋转，T≅A₄，|G|=12', en: 'Pure tetrahedral rotations, T≅A₄, |G|=12',
-        zhHant: "純四面體旋轉，T≅A₄，|G|=12"
+    familyDesc: { zh: '纯四面体旋转，T≅A₄，|G|=12', en: 'Pure tetrahedral rotations, T≅A₄, |G|=12'
     } },
   { id: 'cn',   labelZh: '主轴 Cₙ（找最高旋转阶）', labelEn: 'Principal axis Cₙ (find highest rotation order)',
-    yes: 'perpc2', no: 'cn',
-      labelZhHant: "主軸 Cₙ（找最高旋轉階）"
+    yes: 'perpc2', no: 'cn'
 },
   { id: 'perpc2', labelZh: '有 n 个垂直 C₂ 轴？', labelEn: 'Are there n perpendicular C₂ axes?',
-    yes: 'dclass', no: 'cclass',
-      labelZhHant: "有 n 個垂直 C₂ 軸？"
+    yes: 'dclass', no: 'cclass'
 },
   { id: 'dclass', labelZh: '有 σₕ？', labelEn: 'Has σₕ (horizontal mirror)?',
     yes: 'dnh', no: 'dndcheck' },
   { id: 'dnh',  labelZh: '', labelEn: '', isLeaf: true, symbol: 'Dₙₕ',
     familyDesc: { zh: 'C₆H₆=D₆ₕ；|G|=4n', en: 'e.g. C₆H₆=D₆h; |G|=4n' } },
   { id: 'dndcheck', labelZh: '有 n 个 σ_d（二面镜）？', labelEn: 'Has n dihedral mirrors σ_d?',
-    yes: 'dnd', no: 'dn',
-      labelZhHant: "有 n 個 σ_d（二面鏡）？"
+    yes: 'dnd', no: 'dn'
 },
   { id: 'dnd',  labelZh: '', labelEn: '', isLeaf: true, symbol: 'Dₙd',
     familyDesc: { zh: '如 allene (D₂d)；|G|=4n', en: 'e.g. allene (D₂d); |G|=4n' } },
   { id: 'dn',   labelZh: '', labelEn: '', isLeaf: true, symbol: 'Dₙ',
-    familyDesc: { zh: '纯旋转轴，无镜面；|G|=2n', en: 'Pure rotation axes, no mirrors; |G|=2n',
-        zhHant: "純旋轉軸，無鏡面；|G|=2n"
+    familyDesc: { zh: '纯旋转轴，无镜面；|G|=2n', en: 'Pure rotation axes, no mirrors; |G|=2n'
     } },
   { id: 'cclass', labelZh: '有 σₕ？', labelEn: 'Has σₕ (horizontal mirror)?',
     yes: 'cnh', no: 'cvcheck' },
   { id: 'cnh',  labelZh: '', labelEn: '', isLeaf: true, symbol: 'Cₙₕ',
-    familyDesc: { zh: '旋转轴 + 水平镜；|G|=2n', en: 'Rotation axis + horizontal mirror; |G|=2n',
-        zhHant: "旋轉軸 + 水平鏡；|G|=2n"
+    familyDesc: { zh: '旋转轴 + 水平镜；|G|=2n', en: 'Rotation axis + horizontal mirror; |G|=2n'
     } },
   { id: 'cvcheck', labelZh: '有 n 个 σᵥ？', labelEn: 'Has n vertical mirrors σᵥ?',
-    yes: 'cnv', no: 's2ncheck',
-      labelZhHant: "有 n 個 σᵥ？"
+    yes: 'cnv', no: 's2ncheck'
 },
   { id: 'cnv',  labelZh: '', labelEn: '', isLeaf: true, symbol: 'Cₙᵥ',
     familyDesc: { zh: 'NH₃=C₃ᵥ, H₂O=C₂ᵥ；|G|=2n', en: 'NH₃=C₃v, H₂O=C₂v; |G|=2n' } },
   { id: 's2ncheck', labelZh: '有 S₂ₙ 轴？', labelEn: 'Has S₂ₙ improper rotation axis?',
-    yes: 's2n', no: 'cn_leaf',
-      labelZhHant: "有 S₂ₙ 軸？"
+    yes: 's2n', no: 'cn_leaf'
 },
   { id: 's2n', labelZh: '', labelEn: '', isLeaf: true, symbol: 'S₂ₙ',
-    familyDesc: { zh: '纯转反轴（偶数 n），如 S₄；|G|=2n', en: 'Pure rotoreflection (even n), e.g. S₄; |G|=2n',
-        zhHant: "純轉反軸（偶數 n），如 S₄；|G|=2n"
+    familyDesc: { zh: '纯转反轴（偶数 n），如 S₄；|G|=2n', en: 'Pure rotoreflection (even n), e.g. S₄; |G|=2n'
     } },
   { id: 'cn_leaf', labelZh: '', labelEn: '', isLeaf: true, symbol: 'Cₙ',
-    familyDesc: { zh: '纯旋转；|G|=n；n=1: C₁', en: 'Pure rotation; |G|=n; n=1 gives C₁',
-        zhHant: "純旋轉；|G|=n；n=1: C₁"
+    familyDesc: { zh: '纯旋转；|G|=n；n=1: C₁', en: 'Pure rotation; |G|=n; n=1 gives C₁'
     } },
 ];
 
@@ -296,16 +271,14 @@ function RestrictionVisualizer() {
           {(n === 5 || n === 7) && (
             <text x={cx} y={H - 4} textAnchor="middle"
               style={{ fontFamily: 'var(--mono)', fontSize: 10, fill: 'var(--accent)' }}>
-              {tr({ zh: '顶点无法覆盖格点，产生间隙', en: 'Vertices leave lattice gaps',
-                  zhHant: "頂點無法覆蓋格點，產生間隙"
+              {tr({ zh: '顶点无法覆盖格点，产生间隙', en: 'Vertices leave lattice gaps'
             })}
             </text>
           )}
           {(n === 1 || n === 2 || n === 3 || n === 4 || n === 6) && (
             <text x={cx} y={H - 4} textAnchor="middle"
               style={{ fontFamily: 'var(--mono)', fontSize: 10, fill: 'var(--green)' }}>
-              {tr({ zh: '顶点与格点相容，无间隙', en: 'Vertices compatible with lattice',
-                  zhHant: "頂點與格點相容，無間隙"
+              {tr({ zh: '顶点与格点相容，无间隙', en: 'Vertices compatible with lattice'
             })}
             </text>
           )}
@@ -326,14 +299,12 @@ function RestrictionVisualizer() {
             <div style={{ marginTop: 8 }}>
               {isAllowed ? (
                 <span style={{ color: 'var(--green)', fontSize: 12 }}>
-                  {tr({ zh: '✓ 整数，晶学允许', en: '✓ Integer — crystallographically allowed',
-                      zhHant: "✓ 整數，晶學允許"
+                  {tr({ zh: '✓ 整数，晶学允许', en: '✓ Integer — crystallographically allowed'
                 })}
                 </span>
               ) : (
                 <span style={{ color: 'var(--accent)', fontSize: 12 }}>
-                  {tr({ zh: '✗ 非整数，晶学禁止', en: '✗ Not integer — forbidden by lattice',
-                      zhHant: "✗ 非整數，晶學禁止"
+                  {tr({ zh: '✗ 非整数，晶学禁止', en: '✗ Not integer — forbidden by lattice'
                 })}
                 </span>
               )}
@@ -342,8 +313,7 @@ function RestrictionVisualizer() {
 
           <div style={{ marginTop: 16 }}>
             <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-faint)', marginBottom: 6, letterSpacing: '0.08em' }}>
-              {tr({ zh: '允许的阶：', en: 'Allowed orders:',
-                  zhHant: "允許的階："
+              {tr({ zh: '允许的阶：', en: 'Allowed orders:'
             })}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
@@ -506,7 +476,7 @@ function DecisionTreeWalker() {
           )}
           {current.familyDesc && (
             <div style={{ fontFamily: 'var(--serif)', fontSize: 14, fontStyle: 'italic', color: 'var(--ink-dim)' }}>
-              {(i18n.language === 'zh-Hant' ? (current.familyDesc.zhHant ?? current.familyDesc.zh) : (i18n.language.startsWith('zh') ? current.familyDesc.zh : current.familyDesc.en))}
+              {((i18n.language.startsWith('zh') ? current.familyDesc.zh : current.familyDesc.en))}
             </div>
           )}
           <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'center' }}>
@@ -620,7 +590,7 @@ function CrystalClassesCensus() {
             onMouseLeave={() => setHoveredSystem(null)}
             style={activeSystem === sys.key ? { background: sys.color, borderColor: sys.color } : undefined}
           >
-            {(i18n.language === 'zh-Hant' ? (sys.zhHant ?? sys.zh) : (i18n.language.startsWith('zh') ? sys.zh : sys.en))}
+            {((i18n.language.startsWith('zh') ? sys.zh : sys.en))}
           </button>
         ))}
       </div>
@@ -673,7 +643,7 @@ function CrystalClassesCensus() {
                         borderBottom: '1px solid var(--rule)',
                       }}
                     >
-                      {(i18n.language === 'zh-Hant' ? (sys.zhHant ?? sys.zh) : (i18n.language.startsWith('zh') ? sys.zh : sys.en))}
+                      {((i18n.language.startsWith('zh') ? sys.zh : sys.en))}
                       <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-faint)', marginTop: 3, fontWeight: 400 }}>
                         {groups.length} <L zh="群" en="groups" />
                       </div>
@@ -833,30 +803,23 @@ export default function PointGroupsCrystal() {
           </thead>
           <tbody>
             {[
-              { sym: 'Cₙ',   gen: tr({ zh: '一个 Cₙ 轴', en: 'One Cₙ axis',
-                  zhHant: "一個 Cₙ 軸"
+              { sym: 'Cₙ',   gen: tr({ zh: '一个 Cₙ 轴', en: 'One Cₙ axis'
             }),              order: 'n',   ex: '—' },
-              { sym: 'Cₙᵥ',  gen: tr({ zh: 'Cₙ + n 个 σᵥ', en: 'Cₙ + n vertical mirrors σᵥ',
-                  zhHant: "Cₙ + n 個 σᵥ"
+              { sym: 'Cₙᵥ',  gen: tr({ zh: 'Cₙ + n 个 σᵥ', en: 'Cₙ + n vertical mirrors σᵥ'
             }), order: '2n',  ex: 'H₂O (C₂ᵥ), NH₃ (C₃ᵥ)' },
               { sym: 'Cₙₕ',  gen: lang === 'zh' ? 'Cₙ + σₕ' : 'Cₙ + horizontal mirror σₕ', order: '2n',  ex: 'trans-N₂F₂ (C₂ₕ)' },
-              { sym: 'Dₙ',   gen: tr({ zh: 'Cₙ + n 个 ⊥C₂', en: 'Cₙ + n perpendicular C₂',
-                  zhHant: "Cₙ + n 個 ⊥C₂"
+              { sym: 'Dₙ',   gen: tr({ zh: 'Cₙ + n 个 ⊥C₂', en: 'Cₙ + n perpendicular C₂'
             }), order: '2n',  ex: '—' },
               { sym: 'Dₙₕ',  gen: lang === 'zh' ? 'Dₙ + σₕ' : 'Dₙ + σₕ',                  order: '4n',  ex: 'C₆H₆ (D₆ₕ)' },
-              { sym: 'Dₙd',  gen: tr({ zh: 'Dₙ + n 个 σ_d', en: 'Dₙ + n dihedral mirrors σ_d',
-                  zhHant: "Dₙ + n 個 σ_d"
+              { sym: 'Dₙd',  gen: tr({ zh: 'Dₙ + n 个 σ_d', en: 'Dₙ + n dihedral mirrors σ_d'
             }), order: '4n', ex: 'allene (D₂d)' },
-              { sym: 'S₂ₙ',  gen: tr({ zh: '一个 S₂ₙ 轴（偶数 n）', en: 'One S₂ₙ axis (even n)',
-                  zhHant: "一個 S₂ₙ 軸（偶數 n）"
-            }), order: '2n', ex: tr({ zh: '具 S₄ 对称的分子', en: 'molecules with S₄ symmetry',
-                zhHant: "具 S₄ 對稱的分子"
+              { sym: 'S₂ₙ',  gen: tr({ zh: '一个 S₂ₙ 轴（偶数 n）', en: 'One S₂ₙ axis (even n)'
+            }), order: '2n', ex: tr({ zh: '具 S₄ 对称的分子', en: 'molecules with S₄ symmetry'
             }) },
               { sym: 'T',    gen: lang === 'zh' ? '4C₃ + 3C₂（A₄）' : '4C₃ + 3C₂ (≅A₄)',   order: '12',  ex: '—' },
               { sym: 'Td',   gen: lang === 'zh' ? 'T + 6σ_d + 6S₄（≅S₄）' : 'T + 6σ_d + 6S₄ (≅S₄)', order: '24', ex: 'CH₄' },
               { sym: 'Tₕ',   gen: lang === 'zh' ? 'T + i' : 'T + i',                        order: '24',  ex: '—' },
-              { sym: 'O',    gen: lang === 'zh' ? '6C₄ + 4C₃（≅S₄）' : '6C₄ + 4C₃ (≅S₄)', order: '24',  ex: tr({ zh: '正八面体骨架', en: 'Octahedral skeleton',
-                  zhHant: "正八面體骨架"
+              { sym: 'O',    gen: lang === 'zh' ? '6C₄ + 4C₃（≅S₄）' : '6C₄ + 4C₃ (≅S₄)', order: '24',  ex: tr({ zh: '正八面体骨架', en: 'Octahedral skeleton'
             }) },
               { sym: 'Oₕ',   gen: lang === 'zh' ? 'O + i' : 'O + i',                        order: '48',  ex: 'SF₆' },
               { sym: 'I',    gen: lang === 'zh' ? '6C₅ + 10C₃（≅A₅）' : '6C₅ + 10C₃ (≅A₅)', order: '60', ex: '—' },
@@ -938,17 +901,13 @@ export default function PointGroupsCrystal() {
       {/* ── Summary numbers ── */}
       <div className="gt-sgc" style={{ gridTemplateColumns: 'repeat(4,1fr)', marginTop: 32 }}>
         {[
-          { val: '∞', label: tr({ zh: '分子点群族（Cn/Cnv/…）', en: 'Molecular PG families (Cn/Cnv/…)',
-              zhHant: "分子點群族（Cn/Cnv/…）"
+          { val: '∞', label: tr({ zh: '分子点群族（Cn/Cnv/…）', en: 'Molecular PG families (Cn/Cnv/…)'
         }), dim: true },
-          { val: '32', label: tr({ zh: '晶体点群（晶类）', en: 'Crystallographic point groups',
-              zhHant: "晶體點群（晶類）"
+          { val: '32', label: tr({ zh: '晶体点群（晶类）', en: 'Crystallographic point groups'
         }), dim: false },
-          { val: '14', label: tr({ zh: '布拉维格子（3D）', en: 'Bravais lattices (3D)',
-              zhHant: "布拉維格子（3D）"
+          { val: '14', label: tr({ zh: '布拉维格子（3D）', en: 'Bravais lattices (3D)'
         }), dim: false },
-          { val: '230', label: tr({ zh: '空间群（3D）', en: 'Space groups (3D)',
-              zhHant: "空間群（3D）"
+          { val: '230', label: tr({ zh: '空间群（3D）', en: 'Space groups (3D)'
         }), dim: false },
         ].map(item => (
           <div key={item.val} className="gt-sgc-cell" style={{ textAlign: 'center' }}>

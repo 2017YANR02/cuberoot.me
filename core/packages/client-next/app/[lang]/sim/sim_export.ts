@@ -65,14 +65,14 @@ function estimateTotalFrames(alg: string): number {
 export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
   const { world, renderer, setup, alg, isZh, abortRef, onProgress, previewCanvas } = opts;
   if (typeof VideoEncoder === 'undefined') {
-    throw new Error(i18n.language === 'zh-Hant' ? ('瀏覽器不支援 WebCodecs (需 Chrome / Edge / Safari 16.4+)') : (isZh
+    throw new Error((isZh
               ? '浏览器不支持 WebCodecs (需 Chrome / Edge / Safari 16.4+)'
               : 'Browser does not support WebCodecs'));
   }
 
   const expanded = expandAlg(alg);
   if (!expanded) {
-    throw new Error(i18n.language === 'zh-Hant' ? ('解法為空, 沒有可匯出的動畫') : (isZh ? '解法为空, 没有可导出的动画' : 'Alg is empty — nothing to record'));
+    throw new Error((isZh ? '解法为空, 没有可导出的动画' : 'Alg is empty — nothing to record'));
   }
 
   // 1. snapshot 原始 renderer / world 状态, finally 里恢复
@@ -103,7 +103,7 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
   world.resize();
 
   onProgress?.({
-    phase: i18n.language === 'zh-Hant' ? ('準備...') : (isZh ? '准备...' : 'Preparing...'),
+    phase: (isZh ? '准备...' : 'Preparing...'),
     pct: 0, framesDone: 0, framesTotal: estimateTotalFrames(alg),
   });
 
@@ -228,7 +228,7 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
     }
 
     onProgress?.({
-      phase: i18n.language === 'zh-Hant' ? ('正在封裝 mp4...') : (isZh ? '正在封装 mp4...' : 'Finalizing mp4...'),
+      phase: (isZh ? '正在封装 mp4...' : 'Finalizing mp4...'),
       pct: 1, framesDone: frameIndex, framesTotal: frameIndex,
     });
     await encoder.flush();

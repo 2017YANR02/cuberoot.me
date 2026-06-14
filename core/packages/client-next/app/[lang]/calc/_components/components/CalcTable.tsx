@@ -31,14 +31,11 @@ export function CalcTable() {
       { key: 'mo4', label: tr({ zh: '最好 Mo4', en: 'Best Mo4' }) },
       { key: 'mo3', label: tr({ zh: '最好 Mo3', en: 'Best Mo3' }) },
       { key: 'mo2', label: tr({ zh: '最好 Mo2', en: 'Best Mo2' }) },
-      { key: 'bestC', label: tr({ zh: '最好计入成绩', en: 'Best Counting',
-          zhHant: "最好計入成績"
+      { key: 'bestC', label: tr({ zh: '最好计入成绩', en: 'Best Counting'
     }) },
-      { key: 'median', label: tr({ zh: '中位数', en: 'Median',
-          zhHant: "中位數"
+      { key: 'median', label: tr({ zh: '中位数', en: 'Median'
     }) },
-      { key: 'worstC', label: tr({ zh: '最差计入成绩', en: 'Worst Counting',
-          zhHant: "最差計入成績"
+      { key: 'worstC', label: tr({ zh: '最差计入成绩', en: 'Worst Counting'
     }) },
       { key: 'variance', label: tr({ zh: '方差 (s²)', en: 'Variance (s²)' }) },
       { key: 'bestAvgRatio', label: tr({ zh: '最好/平均', en: 'Best/Avg' }) },
@@ -87,15 +84,13 @@ export function CalcTable() {
   return (
     <details id="calc-section">
       <summary className="stats-toggle">
-        {tr({ zh: '📊 统计', en: '📊 Statistics',
-            zhHant: "📊 統計"
+        {tr({ zh: '📊 统计', en: '📊 Statistics'
         })}
       </summary>
       <table id="calc-table">
         <thead>
           <tr>
-            <th>{tr({ zh: '指标', en: 'Metric',
-                zhHant: "指標"
+            <th>{tr({ zh: '指标', en: 'Metric'
             })}</th>
             <th>{state.names[state.seedOn] || 'A'}</th>
             {state.playerEnabled[1] && (

@@ -49,8 +49,7 @@ function ToolCard({ tool, lang }: { tool: StackToolMeta; lang: 'zh' | 'en' }) {
         <p className="stack-card-role">{t.role}</p>
       </div>
       <div className="stack-card-foot">
-        <span className="stack-card-since">{tr({ zh: '诞生', en: 'born',
-            zhHant: "誕生"
+        <span className="stack-card-since">{tr({ zh: '诞生', en: 'born'
         })} {tool.since}</span>
         <span className="stack-card-arrow">→</span>
       </div>
@@ -62,7 +61,7 @@ export default function StackLandingPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('技术栈', 'Stack', "技術棧");
+  useDocumentTitle('技术栈', 'Stack');
 
   return (
     <div className="stack-landing">
@@ -79,8 +78,7 @@ export default function StackLandingPage() {
           <span className="stack-landing-cursor">_</span>
         </h1>
         <p className="stack-landing-sub">
-          {tr({ zh: '不是"流行清单",是 cuberoot.me 真正用过的 (加上即将用上的、以及认真评估后没选的) 41 件软件 —— 在生产 VM 上跑的、写它的工具链、以及个人接下来要接入的工具。一件一篇,讲来历、讲长处、讲它在这套架构里干什么活。', en: 'Not a "trending list" — 41 pieces of software cuberoot.me actually leans on (plus the ones I am about to adopt, and a few I evaluated and passed on): what runs on the production VM, the authoring chain that writes it, and personal tooling about to enter the loop. One page each: history, strengths, and the exact job it does in this architecture.',
-              zhHant: "不是\"流行清單\",是 cuberoot.me 真正用過的 (加上即將用上的、以及認真評估後沒選的) 41 件軟體 —— 在生產 VM 上跑的、寫它的工具鏈、以及個人接下來要接入的工具。一件一篇,講來歷、講長處、講它在這套架構裡幹什麼活。"
+          {tr({ zh: '不是"流行清单",是 cuberoot.me 真正用过的 (加上即将用上的、以及认真评估后没选的) 41 件软件 —— 在生产 VM 上跑的、写它的工具链、以及个人接下来要接入的工具。一件一篇,讲来历、讲长处、讲它在这套架构里干什么活。', en: 'Not a "trending list" — 41 pieces of software cuberoot.me actually leans on (plus the ones I am about to adopt, and a few I evaluated and passed on): what runs on the production VM, the authoring chain that writes it, and personal tooling about to enter the loop. One page each: history, strengths, and the exact job it does in this architecture.'
         })}
         </p>
         <div className="stack-landing-meta">
@@ -89,8 +87,7 @@ export default function StackLandingPage() {
           <span>2026-05</span>
           <span className="stack-landing-meta-dot">·</span>
           <Link href="/code/architecture" className="stack-landing-meta-link">
-            {tr({ zh: '系统全景在这里 →', en: 'Full system topology →',
-                zhHant: "系統全景在這裡 →"
+            {tr({ zh: '系统全景在这里 →', en: 'Full system topology →'
             })}
           </Link>
         </div>

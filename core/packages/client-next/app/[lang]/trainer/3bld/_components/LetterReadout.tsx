@@ -33,8 +33,7 @@ export function LetterReadout({ cells, label }: LetterReadoutProps): JSX.Element
     <div className="bld-readout">
       {label !== undefined && <span className="bld-readout-label">{label}</span>}
       {cells.length === 0 ? (
-        <span className="bld-readout-empty">{tr({ zh: '无', en: 'none',
-            zhHant: "無"
+        <span className="bld-readout-empty">{tr({ zh: '无', en: 'none'
         })}</span>
       ) : (
         <span className="bld-readout-cells">

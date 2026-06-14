@@ -41,13 +41,6 @@ const CURVE_LABEL_ZH: Record<CurveKind, string> = {
   ao12: 'Ao12',
   ao100: 'Ao100',
 };
-const CURVE_LABEL_ZH__Hant: Record<CurveKind, string> = {
-  single: '單次',
-  ao5: 'Ao5',
-  ao12: 'Ao12',
-  ao100: 'Ao100',
-};
-
 const CURVE_N: Record<CurveKind, number> = {
   single: 1,
   ao5: 5,
@@ -128,8 +121,7 @@ export default function TrendChart({
   if (solves.length < 5 || !hasAny) {
     return (
       <div className={`chart-empty-hint ${className ?? ''}`.trim()}>
-        {tr({ zh: '至少 5 次成绩才显示趋势', en: 'Need 5+ solves to chart trend',
-            zhHant: "至少 5 次成績才顯示趨勢"
+        {tr({ zh: '至少 5 次成绩才显示趋势', en: 'Need 5+ solves to chart trend'
         })}
       </div>
     );
@@ -164,7 +156,7 @@ export default function TrendChart({
 
   const yMid = (lo + hi) / 2;
 
-  const labelMap = i18n.language === 'zh-Hant' ? CURVE_LABEL_ZH__Hant : (isZh ? CURVE_LABEL_ZH : CURVE_LABEL);
+  const labelMap = (isZh ? CURVE_LABEL_ZH : CURVE_LABEL);
 
   return (
     <svg
@@ -172,8 +164,7 @@ export default function TrendChart({
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="xMidYMid meet"
       role="img"
-      aria-label={tr({ zh: '成绩趋势图', en: 'Solve time trend',
-          zhHant: "成績趨勢圖"
+      aria-label={tr({ zh: '成绩趋势图', en: 'Solve time trend'
     })}
     >
       {/* Grid: top, mid, bottom */}

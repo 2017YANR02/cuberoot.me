@@ -44,17 +44,13 @@ export const GITHUB_ACTIONS: StackTool = {
     outlookDesc: <>arm64 runners reached private-repo GA in January 2026 with a steep price cut, lowering the cost of native ARM builds (containers, Rust crates, Apple-Silicon alignment); Copilot agentic workflows wire CI runners into LLM context for "auto-fix-the-red-PR" loops; reusable workflows + composite actions + Marketplace let enterprise platform teams reuse boilerplate at meaningful scale.</>,
   },
   heroStats: [
-    { num: '9', zh: <>本仓库 workflow 数 <em>test / deploy / stats / 健康检查</em></>, en: <>workflows in this repo <em>test / deploy / stats / healthcheck</em></>,
-        zhHant: <>本倉庫 workflow 數 <em>test / deploy / stats / 健康檢查</em></>
+    { num: '9', zh: <>本仓库 workflow 数 <em>test / deploy / stats / 健康检查</em></>, en: <>workflows in this repo <em>test / deploy / stats / healthcheck</em></>
     },
-    { num: '7', unit: 'y', zh: <>2018-10 Universe 首发以来 <em>OSS 默认 CI</em></>, en: <>since Universe 2018 <em>now the OSS default CI</em></>,
-        zhHant: <>2018-10 Universe 首發以來 <em>OSS 預設 CI</em></>
+    { num: '7', unit: 'y', zh: <>2018-10 Universe 首发以来 <em>OSS 默认 CI</em></>, en: <>since Universe 2018 <em>now the OSS default CI</em></>
     },
-    { num: '25', unit: 'k+', zh: <>Marketplace 公开 action 数 <em>生态护城河</em></>, en: <>public actions on Marketplace <em>the ecosystem moat</em></>,
-        zhHant: <>Marketplace 公開 action 數 <em>生態護城河</em></>
+    { num: '25', unit: 'k+', zh: <>Marketplace 公开 action 数 <em>生态护城河</em></>, en: <>public actions on Marketplace <em>the ecosystem moat</em></>
     },
-    { num: '2000', unit: 'min', zh: <>免费私库月配额 <em>公开仓库无限</em></>, en: <>free monthly minutes for private repos <em>unlimited on public</em></>,
-        zhHant: <>免費私庫月配額 <em>公開倉庫無限</em></>
+    { num: '2000', unit: 'min', zh: <>免费私库月配额 <em>公开仓库无限</em></>, en: <>free monthly minutes for private repos <em>unlimited on public</em></>
     },
   ],
   intro: {

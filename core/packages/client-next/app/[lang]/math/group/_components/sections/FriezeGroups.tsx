@@ -31,28 +31,20 @@ const FRIEZE_TABLE: FriezeInfo[] = [
 
 // Map IUC id to Conway nickname + zh description
 const FRIEZE_NAMES: Record<FriezeId, { en: string; zh: string; conway: string
-        zhHant?: string;
  }> = {
-  p1:   { en: 'Translation only',                    zh: '仅平移',                conway: 'hop',
-      zhHant: "僅平移"
+  p1:   { en: 'Translation only',                    zh: '仅平移',                conway: 'hop'
 },
-  p11g: { en: 'Glide reflection',                    zh: '滑动反射',              conway: 'step',
-      zhHant: "滑動反射"
+  p11g: { en: 'Glide reflection',                    zh: '滑动反射',              conway: 'step'
 },
-  p1m1: { en: 'Vertical mirrors',                    zh: '竖直镜面',              conway: 'sidle',
-      zhHant: "豎直鏡面"
+  p1m1: { en: 'Vertical mirrors',                    zh: '竖直镜面',              conway: 'sidle'
 },
-  p2:   { en: '180° rotations',                      zh: '半转旋转',              conway: 'spinning hop',
-      zhHant: "半轉旋轉"
+  p2:   { en: '180° rotations',                      zh: '半转旋转',              conway: 'spinning hop'
 },
-  p2mg: { en: 'Vertical mirrors + glide + rotation', zh: '竖直镜面 + 滑动 + 半转', conway: 'spinning sidle',
-      zhHant: "豎直鏡面 + 滑動 + 半轉"
+  p2mg: { en: 'Vertical mirrors + glide + rotation', zh: '竖直镜面 + 滑动 + 半转', conway: 'spinning sidle'
 },
-  p11m: { en: 'Horizontal mirror',                   zh: '水平镜面',              conway: 'jump',
-      zhHant: "水平鏡面"
+  p11m: { en: 'Horizontal mirror',                   zh: '水平镜面',              conway: 'jump'
 },
-  p2mm: { en: 'All symmetries',                      zh: '全部对称',              conway: 'spinning jump',
-      zhHant: "全部對稱"
+  p2mm: { en: 'All symmetries',                      zh: '全部对称',              conway: 'spinning jump'
 },
 };
 
@@ -195,8 +187,7 @@ function SevenTypeFriezeExplorer({ lang }: { lang: 'zh' | 'en' }) {
       {/* Group selector */}
       <div className="gt-panel-input-row" style={{ flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         <span style={{ color: 'var(--ink-dim)', fontSize: 13 }}>
-          {tr({ zh: '选择带饰群', en: 'Choose frieze group',
-              zhHant: "選擇帶飾群"
+          {tr({ zh: '选择带饰群', en: 'Choose frieze group'
         })}
         </span>
         <select
@@ -207,7 +198,7 @@ function SevenTypeFriezeExplorer({ lang }: { lang: 'zh' | 'en' }) {
         >
           {FRIEZE_TABLE.map(f => (
             <option key={f.id} value={f.id}>
-              {f.id} — {(i18n.language === 'zh-Hant' ? (FRIEZE_NAMES[f.id].zhHant ?? FRIEZE_NAMES[f.id].zh) : (i18n.language.startsWith('zh') ? FRIEZE_NAMES[f.id].zh : FRIEZE_NAMES[f.id].en))}
+              {f.id} — {((i18n.language.startsWith('zh') ? FRIEZE_NAMES[f.id].zh : FRIEZE_NAMES[f.id].en))}
             </option>
           ))}
         </select>
@@ -219,8 +210,7 @@ function SevenTypeFriezeExplorer({ lang }: { lang: 'zh' | 'en' }) {
           viewBox={`${-vbW / 2} ${-vbH / 2} ${vbW} ${vbH}`}
           width="100%"
           style={{ display: 'block', maxWidth: vbW }}
-          aria-label={tr({ zh: '带饰图案', en: 'Frieze pattern',
-              zhHant: "帶飾圖案"
+          aria-label={tr({ zh: '带饰图案', en: 'Frieze pattern'
         })}
         >
           <defs>
@@ -314,23 +304,19 @@ function SevenTypeFriezeExplorer({ lang }: { lang: 'zh' | 'en' }) {
         <ToggleBtn active={showTrans} onClick={() => setShowTrans(v => !v)} color={COL_TRANS}
           label={tr({ zh: '平移向量 T', en: 'Translation T' })} />
         <ToggleBtn active={showV} onClick={() => setShowV(v => !v)} color={COL_VMIRR}
-          label={tr({ zh: '竖直镜面 v', en: 'Vertical mirrors v',
-              zhHant: "豎直鏡面 v"
+          label={tr({ zh: '竖直镜面 v', en: 'Vertical mirrors v'
         })}
           disabled={!info.hasV} />
         <ToggleBtn active={showH} onClick={() => setShowH(v => !v)} color={COL_HMIRR}
-          label={tr({ zh: '水平镜面 h', en: 'Horizontal mirror h',
-              zhHant: "水平鏡面 h"
+          label={tr({ zh: '水平镜面 h', en: 'Horizontal mirror h'
         })}
           disabled={!info.hasH} />
         <ToggleBtn active={showR} onClick={() => setShowR(v => !v)} color={COL_ROT}
-          label={tr({ zh: '旋转中心 r', en: 'Rotation centers r',
-              zhHant: "旋轉中心 r"
+          label={tr({ zh: '旋转中心 r', en: 'Rotation centers r'
         })}
           disabled={!info.hasR} />
         <ToggleBtn active={showG} onClick={() => setShowG(v => !v)} color={COL_GLIDE}
-          label={tr({ zh: '滑动轴 g', en: 'Glide axis g',
-              zhHant: "滑動軸 g"
+          label={tr({ zh: '滑动轴 g', en: 'Glide axis g'
         })}
           disabled={!info.hasEG} />
       </div>
@@ -351,8 +337,7 @@ function SevenTypeFriezeExplorer({ lang }: { lang: 'zh' | 'en' }) {
 
       {/* Group info row */}
       <div className="gt-result-row">
-        <span className="gt-result-label">{tr({ zh: '抽象同构类', en: 'Abstract class',
-            zhHant: "抽象同構類"
+        <span className="gt-result-label">{tr({ zh: '抽象同构类', en: 'Abstract class'
         })}</span>
         <span className="gt-result-val-strong" style={{ fontFamily: 'var(--mono)' }}>
           {info.absClass}
@@ -458,17 +443,13 @@ function BuildYourOwnFrieze({ lang }: { lang: 'zh' | 'en' }) {
   const nRange = [-2, -1, 0, 1, 2];
 
   const forcedParts: string[] = [];
-  if (forcedV)  forcedParts.push(tr({ zh: '竖直镜面 v', en: 'vertical mirror v',
-      zhHant: "豎直鏡面 v"
+  if (forcedV)  forcedParts.push(tr({ zh: '竖直镜面 v', en: 'vertical mirror v'
 }));
-  if (forcedH)  forcedParts.push(tr({ zh: '水平镜面 h', en: 'horizontal mirror h',
-      zhHant: "水平鏡面 h"
+  if (forcedH)  forcedParts.push(tr({ zh: '水平镜面 h', en: 'horizontal mirror h'
 }));
-  if (forcedR)  forcedParts.push(tr({ zh: '半转 r', en: 'half-turn r',
-      zhHant: "半轉 r"
+  if (forcedR)  forcedParts.push(tr({ zh: '半转 r', en: 'half-turn r'
 }));
-  if (forcedEG) forcedParts.push(tr({ zh: '滑动 g', en: 'glide g',
-      zhHant: "滑動 g"
+  if (forcedEG) forcedParts.push(tr({ zh: '滑动 g', en: 'glide g'
 }));
 
   return (
@@ -476,17 +457,13 @@ function BuildYourOwnFrieze({ lang }: { lang: 'zh' | 'en' }) {
       {/* Checkboxes */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
         {([
-          { key: 'v', label: tr({ zh: '竖直镜面 v', en: 'Vertical mirror v',
-              zhHant: "豎直鏡面 v"
+          { key: 'v', label: tr({ zh: '竖直镜面 v', en: 'Vertical mirror v'
         }), val: wantV, set: setWantV },
-          { key: 'h', label: tr({ zh: '水平镜面 h', en: 'Horizontal mirror h',
-              zhHant: "水平鏡面 h"
+          { key: 'h', label: tr({ zh: '水平镜面 h', en: 'Horizontal mirror h'
         }), val: wantH, set: setWantH },
-          { key: 'r', label: tr({ zh: '半转 r', en: 'Half-turn r',
-              zhHant: "半轉 r"
+          { key: 'r', label: tr({ zh: '半转 r', en: 'Half-turn r'
         }),         val: wantR, set: setWantR },
-          { key: 'g', label: tr({ zh: '滑动反射 g', en: 'Glide reflection g',
-              zhHant: "滑動反射 g"
+          { key: 'g', label: tr({ zh: '滑动反射 g', en: 'Glide reflection g'
         }),  val: wantEG, set: setWantEG },
         ] as const).map(item => (
           <label key={item.key}
@@ -534,7 +511,7 @@ function BuildYourOwnFrieze({ lang }: { lang: 'zh' | 'en' }) {
           {info.id}
         </span>
         <span style={{ fontSize: 14, color: 'var(--ink-dim)' }}>
-          {(i18n.language === 'zh-Hant' ? (FRIEZE_NAMES[info.id].zhHant ?? FRIEZE_NAMES[info.id].zh) : (i18n.language.startsWith('zh') ? FRIEZE_NAMES[info.id].zh : FRIEZE_NAMES[info.id].en))}
+          {((i18n.language.startsWith('zh') ? FRIEZE_NAMES[info.id].zh : FRIEZE_NAMES[info.id].en))}
         </span>
         <span style={{ fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--ink-dim)',
           background: 'var(--bg-deep)', padding: '2px 8px', borderRadius: 4 }}>
@@ -575,8 +552,7 @@ function GlideVsMirrorAnimator({ lang }: { lang: 'zh' | 'en' }) {
       {/* Slider */}
       <div className="gt-panel-input-row" style={{ flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
         <label style={{ fontSize: 13, color: 'var(--ink-dim)', minWidth: 80 }}>
-          {tr({ zh: '动画进度', en: 'Scrub',
-              zhHant: "動畫進度"
+          {tr({ zh: '动画进度', en: 'Scrub'
         })}
         </label>
         <input type="range" min={0} max={100} value={Math.round(scrub * 100)}
@@ -593,16 +569,14 @@ function GlideVsMirrorAnimator({ lang }: { lang: 'zh' | 'en' }) {
           fontSize: 12, color: 'var(--ink-dim)' }}>
           <input type="checkbox" checked={showMirrorGhost}
             onChange={e => setShowMirrorGhost(e.target.checked)} />
-          {tr({ zh: '显示纯镜像（p11m 对比）', en: 'Show mirror ghost (p11m)',
-              zhHant: "顯示純映象（p11m 對比）"
+          {tr({ zh: '显示纯镜像（p11m 对比）', en: 'Show mirror ghost (p11m)'
         })}
         </label>
         <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
           fontSize: 12, color: 'var(--ink-dim)' }}>
           <input type="checkbox" checked={showSquared}
             onChange={e => setShowSquared(e.target.checked)} />
-          {tr({ zh: '显示 g² = T（第二步）', en: 'Show g² = T (second step)',
-              zhHant: "顯示 g² = T（第二步）"
+          {tr({ zh: '显示 g² = T（第二步）', en: 'Show g² = T (second step)'
         })}
         </label>
       </div>
@@ -617,8 +591,7 @@ function GlideVsMirrorAnimator({ lang }: { lang: 'zh' | 'en' }) {
 
           {/* Top label: p11g */}
           <text x={-vbW / 2 + 6} y={-vbH / 2 + 12} fontSize={9} fill="var(--ink-dim)" fontFamily="var(--mono)">
-            p11g {tr({ zh: '（滑动反射）', en: '(glide reflection)',
-                zhHant: "（滑動反射）"
+            p11g {tr({ zh: '（滑动反射）', en: '(glide reflection)'
             })}
           </text>
 
@@ -805,8 +778,7 @@ export default function FriezeGroups() {
           />
           <div className="gt-proof">
             <div className="gt-proof-title">
-              {tr({ zh: '证明思路', en: 'Proof sketch',
-                  zhHant: "證明思路"
+              {tr({ zh: '证明思路', en: 'Proof sketch'
             })}
             </div>
             <p style={{ margin: '6px 0' }}>

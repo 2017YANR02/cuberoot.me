@@ -106,41 +106,41 @@ export default function CompetitorsChapter() {
     <RegArticleLayout slug="competitors">
       {/* ── 1. Who may compete ──────────────────────────────────── */}
       <RegSection
-        eyebrow={t('门槛很低', 'The bar is low', "門檻很低")}
-        title={t('谁可以参赛', 'Who may compete', "誰可以參賽")}
+        eyebrow={t('门槛很低', 'The bar is low')}
+        title={t('谁可以参赛', 'Who may compete')}
         lede={t(
           'WCA 比赛对所有人开放,没有年龄、国籍或水平门槛 —— 只要满足几条基本条件即可。',
-          'WCA competitions are open to everyone, with no limit on age, nationality or skill — as long as a few basic conditions are met.', "WCA 比賽對所有人開放,沒有年齡、國籍或水平門檻 —— 只要滿足幾條基本條件即可。"
+          'WCA competitions are open to everyone, with no limit on age, nationality or skill — as long as a few basic conditions are met.'
         )}
       >
         <RegList
           items={[
             <span key="rules">
-              <strong>{t('同意遵守规则。', 'Agree to the Regulations.', "同意遵守規則。")}</strong>{' '}
+              <strong>{t('同意遵守规则。', 'Agree to the Regulations.')}</strong>{' '}
               {t(
                 '愿意按 WCA 规则参赛(规则 2a1)。',
-                'You agree to compete under the WCA Regulations (Regulation 2a1).', "願意按 WCA 規則參賽(規則 2a1)。"
+                'You agree to compete under the WCA Regulations (Regulation 2a1).'
               )}
             </span>,
             <span key="reqs">
-              <strong>{t('满足参赛要求。', 'Meet the entry requirements.', "滿足參賽要求。")}</strong>{' '}
+              <strong>{t('满足参赛要求。', 'Meet the entry requirements.')}</strong>{' '}
               {t(
                 '符合该场比赛设定的报名要求(规则 2a2)。',
-                'You satisfy the requirements set for that competition (Regulation 2a2).', "符合該場比賽設定的報名要求(規則 2a2)。"
+                'You satisfy the requirements set for that competition (Regulation 2a2).'
               )}
             </span>,
             <span key="susp">
-              <strong>{t('未被禁赛。', 'Not suspended.', "未被禁賽。")}</strong>{' '}
+              <strong>{t('未被禁赛。', 'Not suspended.')}</strong>{' '}
               {t(
                 '没有正处于 WCA 的禁赛状态(规则 2a3)。',
-                'You are not currently under a WCA suspension (Regulation 2a3).', "沒有正處於 WCA 的禁賽狀態(規則 2a3)。"
+                'You are not currently under a WCA suspension (Regulation 2a3).'
               )}
             </span>,
             <span key="safe">
-              <strong>{t('遵守安全规定。', 'Respect the safety measures.', "遵守安全規定。")}</strong>{' '}
+              <strong>{t('遵守安全规定。', 'Respect the safety measures.')}</strong>{' '}
               {t(
                 '遵守比赛现场的安全与防护规定(规则 2a4)。18 岁以下选手报名参赛须经家长/监护人同意(规则 2b)。',
-                'You comply with the venue’s safety measures (Regulation 2a4). Competitors under 18 must have a parent/guardian’s consent to register and compete (Regulation 2b).', "遵守比賽現場的安全與防護規定(規則 2a4)。18 歲以下選手報名參賽須經家長/監護人同意(規則 2b)。"
+                'You comply with the venue’s safety measures (Regulation 2a4). Competitors under 18 must have a parent/guardian’s consent to register and compete (Regulation 2b).'
               )}
             </span>,
           ]}
@@ -149,11 +149,11 @@ export default function CompetitorsChapter() {
 
       {/* ── 2. Registration → the stage ─────────────────────────── */}
       <RegSection
-        eyebrow={t('从报名到上场', 'From registration to the stage', "從報名到上場")}
-        title={t('参赛的四步', 'Four steps to the mat', "參賽的四步")}
+        eyebrow={t('从报名到上场', 'From registration to the stage')}
+        title={t('参赛的四步', 'Four steps to the mat')}
         lede={t(
           '从在网上点下报名,到坐到桌前完成第一次还原,中间经过这几步。WCA ID 只在你第一次参赛时发一次,之后伴随终身。',
-          'From clicking “register” online to sitting down for your first solve, this is the path. The WCA ID is issued just once — at your very first competition — and stays with you for life.', "從在網上點下報名,到坐到桌前完成第一次還原,中間經過這幾步。WCA ID 只在你第一次參賽時發一次,之後伴隨終身。"
+          'From clicking “register” online to sitting down for your first solve, this is the path. The WCA ID is issued just once — at your very first competition — and stays with you for life.'
         )}
       >
         <ol className="comp-flow">
@@ -175,21 +175,21 @@ export default function CompetitorsChapter() {
           })}
         </ol>
 
-        <Callout tone="info" label={t('WCA ID 长这样', 'What a WCA ID looks like', "WCA ID 長這樣")} icon={<BadgeCheck size={17} />}>
+        <Callout tone="info" label={t('WCA ID 长这样', 'What a WCA ID looks like')} icon={<BadgeCheck size={17} />}>
           {t(
             'WCA ID 形如 2008ABCD01:前四位是你首次参赛的年份,中间是名字字母,末两位区分同名。它终身唯一,一人只有一个账号 —— 别注册第二个。',
-            'A WCA ID looks like 2008ABCD01: the first four digits are the year of your first competition, the letters come from your name, and the last two distinguish people who would otherwise collide. It is unique for life, and one person has only one account — never register a second.', "WCA ID 形如 2008ABCD01:前四位是你首次參賽的年份,中間是名字字母,末兩位區分同名。它終身唯一,一人只有一個賬號 —— 別註冊第二個。"
+            'A WCA ID looks like 2008ABCD01: the first four digits are the year of your first competition, the letters come from your name, and the last two distinguish people who would otherwise collide. It is unique for life, and one person has only one account — never register a second.'
           )}
         </Callout>
       </RegSection>
 
       {/* ── 3. Your responsibilities ────────────────────────────── */}
       <RegSection
-        eyebrow={t('你的责任', 'Your responsibilities', "你的責任")}
-        title={t('身为选手该做到的', 'What is expected of you', "身為選手該做到的")}
+        eyebrow={t('你的责任', 'Your responsibilities')}
+        title={t('身为选手该做到的', 'What is expected of you')}
         lede={t(
           '参赛不只是坐下来拧魔方。下面这些是每个选手都要做到的基本义务。',
-          'Competing is more than sitting down and turning a cube. These are the basic duties every competitor is expected to keep.', "參賽不只是坐下來擰魔方。下面這些是每個選手都要做到的基本義務。"
+          'Competing is more than sitting down and turning a cube. These are the basic duties every competitor is expected to keep.'
         )}
       >
         <div className="comp-duties">
@@ -207,21 +207,21 @@ export default function CompetitorsChapter() {
           })}
         </div>
 
-        <Callout tone="success" label={t('两条压舱石:公平 + 听代表', 'Two anchors: fair play + follow the Delegate', "兩條壓艙石:公平 + 聽代表")}>
+        <Callout tone="success" label={t('两条压舱石:公平 + 听代表', 'Two anchors: fair play + follow the Delegate')}>
           {t(
             '整章规则归根结底是两件事:本着公平竞赛的精神参赛,以及听从 WCA 代表的指示。遇到规则没写明的情况,代表怎么裁定就怎么办 —— 这正是上一章「工作人员」里代表那份特殊权力的另一面。',
-            'The whole article boils down to two things: compete in the spirit of fair play, and follow the WCA Delegate’s instructions. When a situation isn’t spelled out, whatever the Delegate rules is what goes — the flip side of the Delegate’s special authority from the previous chapter, Officials.', "整章規則歸根結底是兩件事:本著公平競賽的精神參賽,以及聽從 WCA 代表的指示。遇到規則沒寫明的情況,代表怎麼裁定就怎麼辦 —— 這正是上一章「工作人員」裡代表那份特殊權力的另一面。"
+            'The whole article boils down to two things: compete in the spirit of fair play, and follow the WCA Delegate’s instructions. When a situation isn’t spelled out, whatever the Delegate rules is what goes — the flip side of the Delegate’s special authority from the previous chapter, Officials.'
           )}
         </Callout>
 
         <p className="reg-foot-note">
           {t(
             '别忘了:选手也可能被叫去当裁判或打乱员 —— 详见',
-            'Remember: a competitor may also be asked to judge or scramble — see ', "別忘了:選手也可能被叫去當裁判或打亂員 —— 詳見"
+            'Remember: a competitor may also be asked to judge or scramble — see '
           )}
-          <Link href="/regulation/officials">{t('第 1 章「工作人员」', 'Article 1, Officials', "第 1 章「工作人員」")}</Link>
-          {t('。具体的还原流程、检查与罚时,见', '. For the solve procedure itself — inspection and penalties — see ', "。具體的還原流程、檢查與罰時,見")}
-          <Link href="/regulation/speed-solving">{t('附则 A「速拧」', 'Article A, Speed Solving', "附則 A「速擰」")}</Link>
+          <Link href="/regulation/officials">{t('第 1 章「工作人员」', 'Article 1, Officials')}</Link>
+          {t('。具体的还原流程、检查与罚时,见', '. For the solve procedure itself — inspection and penalties — see ')}
+          <Link href="/regulation/speed-solving">{t('附则 A「速拧」', 'Article A, Speed Solving')}</Link>
           {t('。', '.')}
         </p>
       </RegSection>

@@ -75,17 +75,17 @@ export default function SpeedFeel() {
   const maxVal = Math.max(mine, AVERAGE_WR, SINGLE_WR, BLINK) * 1.08;
 
   const rows = [
-    { key: 'mine', label: t('你的时间', 'Your time', "你的時間"), value: mine, note: '', mine: true },
+    { key: 'mine', label: t('你的时间', 'Your time'), value: mine, note: '', mine: true },
     {
       key: 'single',
-      label: t('三阶单次世界纪录', '3×3 single WR', "三階單次世界紀錄"),
+      label: t('三阶单次世界纪录', '3×3 single WR'),
       value: SINGLE_WR,
-      note: t('Teodor Zajder,2026,首个 sub-3', 'Teodor Zajder, 2026 — first sub-3', "Teodor Zajder,2026,首個 sub-3"),
+      note: t('Teodor Zajder,2026,首个 sub-3', 'Teodor Zajder, 2026 — first sub-3'),
       mine: false,
     },
     {
       key: 'average',
-      label: t('三阶平均世界纪录', '3×3 average WR', "三階平均世界紀錄"),
+      label: t('三阶平均世界纪录', '3×3 average WR'),
       value: AVERAGE_WR,
       note: t('耿暄一', 'Xuanyi Geng'),
       mine: false,
@@ -94,7 +94,7 @@ export default function SpeedFeel() {
       key: 'blink',
       label: t('一次眨眼', 'A blink'),
       value: BLINK,
-      note: t('约 0.1–0.4 秒,仅供感受', 'approx. 0.1–0.4 s, just for fun', "約 0.1–0.4 秒,僅供感受"),
+      note: t('约 0.1–0.4 秒,仅供感受', 'approx. 0.1–0.4 s, just for fun'),
       mine: false,
     },
   ];
@@ -113,12 +113,12 @@ export default function SpeedFeel() {
           {phase === 'idle' && (
             <>
               <Timer size={20} aria-hidden />
-              {t('点一下开始计时', 'Tap to start the timer', "點一下開始計時")}
-              <span className="speedfeel__kbd">{t('或按空格键', 'or press Space', "或按空格鍵")}</span>
+              {t('点一下开始计时', 'Tap to start the timer')}
+              <span className="speedfeel__kbd">{t('或按空格键', 'or press Space')}</span>
             </>
           )}
-          {phase === 'running' && t('再点一下停止', 'Tap again to stop', "再點一下停止")}
-          {phase === 'done' && t('点一下重新计时', 'Tap to time again', "點一下重新計時")}
+          {phase === 'running' && t('再点一下停止', 'Tap again to stop')}
+          {phase === 'done' && t('点一下重新计时', 'Tap to time again')}
         </span>
         <span className="speedfeel__time">{mine.toFixed(2)}</span>
         <span className="speedfeel__unit">{t('秒', 'seconds')}</span>
@@ -148,17 +148,17 @@ export default function SpeedFeel() {
             {solves >= 1
               ? t(
                   `在你用掉的 ${mine.toFixed(2)} 秒里,世界纪录选手能还原 ${solves} 次魔方。`,
-                  `In the ${mine.toFixed(2)} seconds you took, a world-record solver could finish a cube ${solves} time${solves === 1 ? '' : 's'}.`, `在你用掉的 ${mine.toFixed(2)} 秒裡,世界紀錄選手能還原 ${solves} 次魔方。`
+                  `In the ${mine.toFixed(2)} seconds you took, a world-record solver could finish a cube ${solves} time${solves === 1 ? '' : 's'}.`
                 )
               : t(
                   `世界纪录是 ${SINGLE_WR} 秒还原一次,再试试看你能多快!`,
-                  `The world record is one solve in ${SINGLE_WR} seconds — see how fast you can go!`, `世界紀錄是 ${SINGLE_WR} 秒還原一次,再試試看你能多快!`
+                  `The world record is one solve in ${SINGLE_WR} seconds — see how fast you can go!`
                 )}
           </p>
 
           <button type="button" className="speedfeel__again" onClick={reset}>
             <RotateCcw size={16} aria-hidden />
-            {t('再来一次', 'Try again', "再來一次")}
+            {t('再来一次', 'Try again')}
           </button>
         </div>
       )}

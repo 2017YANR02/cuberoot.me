@@ -25,7 +25,6 @@ interface Layer {
   maxMoves?: number;
   /** 中文 / 英文短描述 */
   zh: string; en: string;
-    zhHant?: string;
 }
 
 const THISTLETHWAITE: Layer[] = [
@@ -34,8 +33,7 @@ const THISTLETHWAITE: Layer[] = [
     gens: '⟨U, D, L, R, F, B⟩',
     order: '4.32 × 10¹⁹',
     zh: '全群:所有 90° / 180° 面转',
-    en: 'Full group: all 90° / 180° face turns',
-      zhHant: "全群:所有 90° / 180° 面轉"
+    en: 'Full group: all 90° / 180° face turns'
 },
   {
     label: 'G₁',
@@ -44,8 +42,7 @@ const THISTLETHWAITE: Layer[] = [
     cosetsToParent: '2,048 = 2¹¹',
     maxMoves: 7,
     zh: '阶段 1:消除棱块朝向(F/B 只允许 180°)',
-    en: 'Phase 1: kill edge orientation (F/B restricted to 180°)',
-      zhHant: "階段 1:消除稜塊朝向(F/B 只允許 180°)"
+    en: 'Phase 1: kill edge orientation (F/B restricted to 180°)'
 },
   {
     label: 'G₂',
@@ -54,8 +51,7 @@ const THISTLETHWAITE: Layer[] = [
     cosetsToParent: '1,082,565',
     maxMoves: 13,
     zh: '阶段 2:消除角块朝向 + 把 M-slice 棱块归位 (L/R 也限 180°)',
-    en: 'Phase 2: kill corner orientation + M-slice edges to M-slice (L/R also 180°)',
-      zhHant: "階段 2:消除角塊朝向 + 把 M-slice 稜塊歸位 (L/R 也限 180°)"
+    en: 'Phase 2: kill corner orientation + M-slice edges to M-slice (L/R also 180°)'
 },
   {
     label: 'G₃',
@@ -64,8 +60,7 @@ const THISTLETHWAITE: Layer[] = [
     cosetsToParent: '29,400',
     maxMoves: 15,
     zh: '阶段 3:全部限为 180° 转;残余只是块块对换',
-    en: 'Phase 3: only 180° turns; remaining state is just pair swaps',
-      zhHant: "階段 3:全部限為 180° 轉;殘餘只是塊塊對換"
+    en: 'Phase 3: only 180° turns; remaining state is just pair swaps'
 },
   {
     label: '{e}',
@@ -74,8 +69,7 @@ const THISTLETHWAITE: Layer[] = [
     cosetsToParent: '663,552',
     maxMoves: 17,
     zh: '阶段 4:还原',
-    en: 'Phase 4: identity',
-      zhHant: "階段 4:還原"
+    en: 'Phase 4: identity'
 },
 ];
 
@@ -94,8 +88,7 @@ const KOCIEMBA: Layer[] = [
     cosetsToParent: '2,217,093,120',
     maxMoves: 12,
     zh: '阶段 1:消除角朝向 + 棱朝向 + 把 M-slice 棱归位',
-    en: 'Phase 1: kill corner orientation + edge orientation + place M-slice edges',
-      zhHant: "階段 1:消除角朝向 + 稜朝向 + 把 M-slice 稜歸位"
+    en: 'Phase 1: kill corner orientation + edge orientation + place M-slice edges'
 },
   {
     label: '{e}',
@@ -104,8 +97,7 @@ const KOCIEMBA: Layer[] = [
     cosetsToParent: '19,508,428,800',
     maxMoves: 18,
     zh: '阶段 2:在限制群里求解',
-    en: 'Phase 2: solve within the restricted group',
-      zhHant: "階段 2:在限制群裡求解"
+    en: 'Phase 2: solve within the restricted group'
 },
 ];
 
@@ -131,7 +123,7 @@ const ALGOS: Record<AlgoKey, { name: string; chain: Layer[]; max: number; status
 interface Props { isZh: boolean; }
 
 export default function SubgroupChain({ isZh }: Props) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const [algo, setAlgo] = useState<AlgoKey>('kociemba');
   const [active, setActive] = useState<number | null>(null);
 
@@ -151,9 +143,9 @@ export default function SubgroupChain({ isZh }: Props) {
       </div>
 
       <div className="god-chain-meta">
-        <span>{t('总步数上界', 'Total upper bound', "總步數上界")}: <b>{A.max}</b> HTM</span>
-        <span>{t('阶段数', 'Phases', "階段數")}: <b>{chain.length - 1}</b></span>
-        <span>{t('实践范围', 'Typical', "實踐範圍")}: <b>{A.status}</b></span>
+        <span>{t('总步数上界', 'Total upper bound')}: <b>{A.max}</b> HTM</span>
+        <span>{t('阶段数', 'Phases')}: <b>{chain.length - 1}</b></span>
+        <span>{t('实践范围', 'Typical')}: <b>{A.status}</b></span>
       </div>
 
       <div className="god-chain-flow">
@@ -168,13 +160,13 @@ export default function SubgroupChain({ isZh }: Props) {
                 <span className="god-chain-layer-order"><MathText>{`|${l.label}| = ${l.order}`}</MathText></span>
               </div>
               <div className="god-chain-layer-gens"><MathText>{l.gens}</MathText></div>
-              <div className="god-chain-layer-desc"><MathText>{(i18n.language === 'zh-Hant' ? (l.zhHant ?? l.zh) : (i18n.language.startsWith('zh') ? l.zh : l.en))}</MathText></div>
+              <div className="god-chain-layer-desc"><MathText>{((i18n.language.startsWith('zh') ? l.zh : l.en))}</MathText></div>
               {l.cosetsToParent && (
                 <div className="god-chain-layer-cosets">
-                  {t('陪集数', 'Coset count', "陪集數")} <TeX src={`\\bigl|G_{${parentIdx}}/G_{${selfIdx}}\\bigr| = ${l.cosetsToParent.replace(/,/g, '{,}')}`} />
+                  {t('陪集数', 'Coset count')} <TeX src={`\\bigl|G_{${parentIdx}}/G_{${selfIdx}}\\bigr| = ${l.cosetsToParent.replace(/,/g, '{,}')}`} />
                   {l.maxMoves != null && (
                     <span className="god-chain-layer-mv">
-                      · {t('阶段最大', 'phase max', "階段最大")}: <b>{l.maxMoves}</b> HTM
+                      · {t('阶段最大', 'phase max')}: <b>{l.maxMoves}</b> HTM
                     </span>
                   )}
                 </div>
@@ -188,12 +180,12 @@ export default function SubgroupChain({ isZh }: Props) {
         {algo === 'kociemba' ? (
           <MathText>{t(
             'Kociemba 两阶段:用 G₁ = ⟨U,D,L²,R²,F²,B²⟩ 把 4.3×10¹⁹ 状态切成 2.2 × 10⁹ 个陪集。阶段 1 把"在哪个陪集"解决(最多 12 步),阶段 2 在那个陪集里求解(最多 18 步)。Rokicki 2008 把上界压到 22;2010 引入对称 + 集合覆盖压到 20 —— 上界与下界(superflip 已知 20)相遇,直径 = 20 证毕。',
-            'Kociemba two-phase: G₁ = ⟨U,D,L²,R²,F²,B²⟩ partitions the 4.3×10¹⁹ states into 2.2 × 10⁹ cosets. Phase 1 finds the coset (≤ 12 moves); Phase 2 solves inside it (≤ 18 moves). Rokicki 2008 tightened to 22; 2010 added symmetry + set cover to reach 20 — meeting the lower bound (superflip needs 20), proving diameter = 20.', "Kociemba 兩階段:用 G₁ = ⟨U,D,L²,R²,F²,B²⟩ 把 4.3×10¹⁹ 狀態切成 2.2 × 10⁹ 個陪集。階段 1 把\"在哪個陪集\"解決(最多 12 步),階段 2 在那個陪集裡求解(最多 18 步)。Rokicki 2008 把上界壓到 22;2010 引入對稱 + 集合覆蓋壓到 20 —— 上界與下界(superflip 已知 20)相遇,直徑 = 20 證畢。"
+            'Kociemba two-phase: G₁ = ⟨U,D,L²,R²,F²,B²⟩ partitions the 4.3×10¹⁹ states into 2.2 × 10⁹ cosets. Phase 1 finds the coset (≤ 12 moves); Phase 2 solves inside it (≤ 18 moves). Rokicki 2008 tightened to 22; 2010 added symmetry + set cover to reach 20 — meeting the lower bound (superflip needs 20), proving diameter = 20.'
           )}</MathText>
         ) : (
           <MathText>{t(
             'Thistlethwaite 四阶段:每个阶段把一个对称性"冻结"(先棱朝向、再角朝向 + M-slice、再 180°-only、最后还原)。每个阶段的子问题足够小可以预计算查表。给出 ≤ 52 HTM 上界,1981 年第一个 < 100 步的可计算解法。',
-            'Thistlethwaite four-phase: each phase freezes one symmetry (first edge orientation, then corner orientation + M-slice, then 180°-only, then identity). Each sub-problem is small enough to tabulate. Gives ≤ 52 HTM, the first sub-100 algorithmic bound (1981).', "Thistlethwaite 四階段:每個階段把一個對稱性\"凍結\"(先稜朝向、再角朝向 + M-slice、再 180°-only、最後還原)。每個階段的子問題足夠小可以預計算查表。給出 ≤ 52 HTM 上界,1981 年第一個 < 100 步的可計算解法。"
+            'Thistlethwaite four-phase: each phase freezes one symmetry (first edge orientation, then corner orientation + M-slice, then 180°-only, then identity). Each sub-problem is small enough to tabulate. Gives ≤ 52 HTM, the first sub-100 algorithmic bound (1981).'
           )}</MathText>
         )}
       </p>

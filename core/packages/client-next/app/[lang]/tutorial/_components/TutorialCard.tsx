@@ -32,17 +32,14 @@ export function TutorialCard({ entry, lang }: TutorialCardProps) {
           <span className="tutorial-category-badge">{entry.category}</span>
           {entry.algCount > 0 && (
             <span className="tutorial-tutorial-count">
-              {entry.algCount} {entry.view === 'algset' ? (tr({ zh: '个情况', en: 'cases',
-                  zhHant: "個情況"
-            })) : (tr({ zh: '个公式', en: 'algs',
-                zhHant: "個公式"
+              {entry.algCount} {entry.view === 'algset' ? (tr({ zh: '个情况', en: 'cases'
+            })) : (tr({ zh: '个公式', en: 'algs'
             }))}
             </span>
           )}
         </div>
       </div>
-      {entry.view === 'algset' && <span className="tutorial-corner-badge">{tr({ zh: '公共库', en: 'PUBLIC LIB',
-          zhHant: "公共庫"
+      {entry.view === 'algset' && <span className="tutorial-corner-badge">{tr({ zh: '公共库', en: 'PUBLIC LIB'
     })}</span>}
     </Link>
   );

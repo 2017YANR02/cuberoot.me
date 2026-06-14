@@ -61,7 +61,7 @@ const isSolverHref = (href: string) => href === '/scramble/solver' || href.start
 export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
   const params = useParams();
   const lang = params?.lang;
-  const prefix = lang === 'zh' || lang === 'zh-Hant' ? `/${lang}` : '';
+  const prefix = lang === 'zh' ? '/zh' : '';
   const t = useT();
   const { i18n } = useTranslation();
   void i18n;
@@ -90,11 +90,11 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
   const puzzleLabel = (p: SolvePuzzle) =>
     p === '3x3' ? '3×3'
       : p === '2x2x2' ? '2×2×2'
-        : p === 'pyraminx' ? t('金字塔', 'Pyraminx', '金字塔')
-          : t('斜转', 'Skewb', '斜轉');
+        : p === 'pyraminx' ? t('金字塔', 'Pyraminx')
+          : t('斜转', 'Skewb');
 
   return (
-    <nav className="solve-tabs" aria-label={t('求解中心导航', 'Solve center navigation', '求解中心導航')}>
+    <nav className="solve-tabs" aria-label={t('求解中心导航', 'Solve center navigation')}>
       {/* 第一行:项目 */}
       <div className="solve-tab-row solve-tab-puzzles">
         {PUZZLES.map((p) =>
@@ -117,14 +117,14 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
           'solve',
           puzzle ? SOLVE_ROUTE[puzzle] : '/scramble/solver',
           mode === 'solve',
-          <><Sparkles size={15} /><span>{t('求解', 'Solve', '求解')}</span></>,
+          <><Sparkles size={15} /><span>{t('求解', 'Solve')}</span></>,
           'solve-tab-mode',
         )}
         {tab(
           'dist',
           distHref(puzzle),
           mode === 'dist',
-          <><BarChart3 size={15} /><span>{t('分布', 'Distribution', '分佈')}</span></>,
+          <><BarChart3 size={15} /><span>{t('分布', 'Distribution')}</span></>,
           'solve-tab-mode',
         )}
       </div>
@@ -132,8 +132,8 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
       {/* 第三行:3×3 求解的子标签(最优解 / 阶段 / CFOP / DR) */}
       {puzzle === '3x3' && mode === 'solve' && (
         <div className="solve-tab-row solve-tab-subs">
-          {tab('optimal', SUB_ROUTE.optimal, sub === 'optimal', t('最优解', 'Optimal', '最優解'), 'solve-tab-sub')}
-          {tab('stage', SUB_ROUTE.stage, sub === 'stage', t('阶段', 'Stage', '階段'), 'solve-tab-sub')}
+          {tab('optimal', SUB_ROUTE.optimal, sub === 'optimal', t('最优解', 'Optimal'), 'solve-tab-sub')}
+          {tab('stage', SUB_ROUTE.stage, sub === 'stage', t('阶段', 'Stage'), 'solve-tab-sub')}
           {tab('cfop', SUB_ROUTE.cfop, sub === 'cfop', 'CFOP', 'solve-tab-sub')}
           {tab('fmc', SUB_ROUTE.fmc, sub === 'fmc', 'DR', 'solve-tab-sub')}
         </div>

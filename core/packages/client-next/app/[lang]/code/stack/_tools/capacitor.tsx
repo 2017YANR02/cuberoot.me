@@ -44,17 +44,13 @@ export const CAPACITOR: StackTool = {
     outlookDesc: <>8.x is the current mainline (8.3.4 / 2026-05), with 9.0 in alpha. The trend is more modern native minimums, WebView capabilities rising as the OS evolves, and a smoother dev experience spanning PWA / native shell / live reload. For a web-first toolkit, "the WebView is the ceiling" is both its advantage and its boundary.</>,
   },
   heroStats: [
-    { num: '8', unit: '.3.4', zh: <>当前稳定版 <em>2026-05</em></>, en: <>current stable <em>2026-05</em></>,
-        zhHant: <>當前穩定版 <em>2026-05</em></>
+    { num: '8', unit: '.3.4', zh: <>当前稳定版 <em>2026-05</em></>, en: <>current stable <em>2026-05</em></>
     },
-    { num: '2', unit: '端', zh: <>一套 Web 代码出 iOS + Android <em>外加 PWA</em></>, en: <>platforms from one web codebase <em>plus PWA</em></>,
-        zhHant: <>一套 Web 程式碼出 iOS + Android <em>外加 PWA</em></>
+    { num: '2', unit: '端', zh: <>一套 Web 代码出 iOS + Android <em>外加 PWA</em></>, en: <>platforms from one web codebase <em>plus PWA</em></>
     },
-    { num: '7', unit: 'y', zh: <>从 2019 至今 <em>Cordova 的现代继任者</em></>, en: <>since 2019 <em>Cordova's modern successor</em></>,
-        zhHant: <>從 2019 至今 <em>Cordova 的現代繼任者</em></>
+    { num: '7', unit: 'y', zh: <>从 2019 至今 <em>Cordova 的现代继任者</em></>, en: <>since 2019 <em>Cordova's modern successor</em></>
     },
-    { num: '0', unit: 'rewrite', zh: <>UI 重写量 <em>跑你那份 Web 代码</em></>, en: <>UI rewrite required <em>runs your web code as-is</em></>,
-        zhHant: <>UI 重寫量 <em>跑你那份 Web 程式碼</em></>
+    { num: '0', unit: 'rewrite', zh: <>UI 重写量 <em>跑你那份 Web 代码</em></>, en: <>UI rewrite required <em>runs your web code as-is</em></>
     },
   ],
   intro: {

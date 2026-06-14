@@ -27,8 +27,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// zh-Hant before zh so prefix-stripping matches the longer one first.
-const SUPPORTED_LOCALES = ['en', 'zh-Hant', 'zh'] as const;
+const SUPPORTED_LOCALES = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED_LOCALES[number];
 
 // App-root routes that are NOT under app/[lang]/* — route handlers, OAuth, the
@@ -46,13 +45,11 @@ function stripLocalePrefix(pathname: string): { locale: Locale | null; rest: str
 }
 
 // Environment language for a BARE request. Explicit cookie wins; else
-// Accept-Language. 'en' stays bare; 'zh'/'zh-Hant' divert to their prefix.
-// Traditional signals (zh-TW/HK/MO/Hant) → zh-Hant; any other zh → Simplified.
+// Accept-Language. 'en' stays bare; 'zh' diverts to its prefix.
 function preferredLocale(req: NextRequest): Locale {
   const cookie = req.cookies.get('lang')?.value;
-  if (cookie === 'en' || cookie === 'zh' || cookie === 'zh-Hant') return cookie;
+  if (cookie === 'en' || cookie === 'zh') return cookie;
   const al = (req.headers.get('accept-language') ?? '').toLowerCase();
-  if (/zh-(hant|tw|hk|mo)/.test(al)) return 'zh-Hant';
   if (al.includes('zh')) return 'zh';
   return 'en';
 }
@@ -74,8 +71,7 @@ function setSeoLinkHeaders(res: NextResponse, rest: string, locale: Locale) {
   const sub = rest === '/' ? '' : rest;
   const en = `${CANONICAL_HOST}${sub || '/'}`; // bare
   const zh = `${CANONICAL_HOST}/zh${sub}`;
-  const zhHant = `${CANONICAL_HOST}/zh-Hant${sub}`;
-  const self = locale === 'zh-Hant' ? zhHant : locale === 'zh' ? zh : en;
+  const self = locale === 'zh' ? zh : en;
   // append (not set) so we never clobber Next's own preload Link headers.
   res.headers.append(
     'Link',
@@ -83,7 +79,6 @@ function setSeoLinkHeaders(res: NextResponse, rest: string, locale: Locale) {
       `<${self}>; rel="canonical"`,
       `<${en}>; rel="alternate"; hreflang="en"`,
       `<${zh}>; rel="alternate"; hreflang="zh-Hans"`,
-      `<${zhHant}>; rel="alternate"; hreflang="zh-Hant"`,
       `<${en}>; rel="alternate"; hreflang="x-default"`,
     ].join(', '),
   );
@@ -102,7 +97,7 @@ export function proxy(req: NextRequest) {
   //    canonical shape (en = bare, zh = /zh/…), dropping the query. Keeps old
   //    ?lang= links (Vite era) working.
   const queryLang = searchParams.get('lang');
-  if (queryLang === 'zh' || queryLang === 'en' || queryLang === 'zh-Hant') {
+  if (queryLang === 'zh' || queryLang === 'en') {
     const target = url.clone();
     target.searchParams.delete('lang');
     const sub = rest === '/' ? '' : rest;
@@ -132,7 +127,7 @@ export function proxy(req: NextRequest) {
   }
 
   // 3. Bare path → English by default. Chinese-preferring visitors get
-  //    307 → /zh/… or /zh-Hant/…; everyone else is served English in place by
+  //    307 → /zh/…; everyone else is served English in place by
   //    rewriting to the /en tree (the URL bar stays bare).
   const pref = preferredLocale(req);
   if (pref !== 'en') {

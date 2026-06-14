@@ -92,7 +92,7 @@ export default function BoundsChart() {
     <div className="ud-chart">
       <div className="ud-chart-controls">
         <div className="ud-sandbox-slider">
-          <label>{t('新下界指数', 'new lower exponent', "新下界指數")} 1 + δ = {(1 + delta).toFixed(3)}, &nbsp;δ = {delta.toFixed(3)}</label>
+          <label>{t('新下界指数', 'new lower exponent')} 1 + δ = {(1 + delta).toFixed(3)}, &nbsp;δ = {delta.toFixed(3)}</label>
           <input
             type="range" min={0.01} max={0.30} step={0.005}
             value={delta}
@@ -133,13 +133,13 @@ export default function BoundsChart() {
         <text x={M.left + PW / 2} y={H - 8}
           fontSize="12" fill="var(--ud-text)" textAnchor="middle"
           fontFamily="var(--ud-mono)">
-          {t('点数 n (对数刻度)', 'n  (log scale)', "點數 n (對數刻度)")}
+          {t('点数 n (对数刻度)', 'n  (log scale)')}
         </text>
         <text x={14} y={M.top + PH / 2}
           fontSize="12" fill="var(--ud-text)" textAnchor="middle"
           fontFamily="var(--ud-mono)"
           transform={`rotate(-90 14 ${M.top + PH / 2})`}>
-          {t('指数 α = log ν / log n', 'exponent α = log ν / log n', "指數 α = log ν / log n")}
+          {t('指数 α = log ν / log n', 'exponent α = log ν / log n')}
         </text>
 
         {/* SST upper: α = 4/3 */}
@@ -222,13 +222,7 @@ export default function BoundsChart() {
       </svg>
 
       <p className="ud-sandbox-hint">
-        {i18n.language === 'zh-Hant' ? ((
-                        <>
-                          <strong className="ud-disproved-text">為什麼是反駁:</strong>
-                          {' '}Erdős 1946 猜想上界 <span className="ud-mono">1 + C/log log n</span> 隨 n 增長是<em>下降</em>到 1 的曲線;OpenAI 2026 的新下界 <span className="ud-mono">1 + δ</span> 是一條<em>水平直線</em>。任何水平直線最終會穿過任何下降到 1 的曲線 — 穿越之後,猜想就破了。改 δ 滑塊看穿越點 <span className="ud-mono">n ≈ exp(exp(C/δ))</span>。<br/>
-                          <span className="ud-text-mute">(圖中 C、δ 取誇張值以讓穿越在 n ≈ 10^{Math.min(crossLogN, X_MAX).toFixed(0)} 處可見;論文中真實 δ 可能極小,穿越點是天文數字 — 但只要 δ &gt; 0,定理依然成立。)</span>
-                        </>
-                      )) : (isZh ? (
+        {(isZh ? (
                         <>
                           <strong className="ud-disproved-text">为什么是反驳:</strong>
                           {' '}Erdős 1946 猜想上界 <span className="ud-mono">1 + C/log log n</span> 随 n 增长是<em>下降</em>到 1 的曲线;OpenAI 2026 的新下界 <span className="ud-mono">1 + δ</span> 是一条<em>水平直线</em>。任何水平直线最终会穿过任何下降到 1 的曲线 — 穿越之后,猜想就破了。改 δ 滑块看穿越点 <span className="ud-mono">n ≈ exp(exp(C/δ))</span>。<br/>

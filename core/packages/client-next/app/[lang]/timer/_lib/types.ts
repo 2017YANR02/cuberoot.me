@@ -94,31 +94,23 @@ export interface EventInfo {
   nameZh: string;
   /** Group for picker UI; events of same group are listed together */
   group: 'wca' | 'bld' | 'relay' | 'puzzle' | 'cfop' | 'll' | 'misc';
-    nameZhHant?: string;
 }
 
 export const EVENTS: EventInfo[] = [
   // WCA standard
-  { id: '333',    nameEn: '3x3',         nameZh: '三阶',       group: 'wca',
-      nameZhHant: "三階"
+  { id: '333',    nameEn: '3x3',         nameZh: '三阶',       group: 'wca'
 },
-  { id: '222',    nameEn: '2x2',         nameZh: '二阶',       group: 'wca',
-      nameZhHant: "二階"
+  { id: '222',    nameEn: '2x2',         nameZh: '二阶',       group: 'wca'
 },
-  { id: '444',    nameEn: '4x4',         nameZh: '四阶',       group: 'wca',
-      nameZhHant: "四階"
+  { id: '444',    nameEn: '4x4',         nameZh: '四阶',       group: 'wca'
 },
-  { id: '555',    nameEn: '5x5',         nameZh: '五阶',       group: 'wca',
-      nameZhHant: "五階"
+  { id: '555',    nameEn: '5x5',         nameZh: '五阶',       group: 'wca'
 },
-  { id: '666',    nameEn: '6x6',         nameZh: '六阶',       group: 'wca',
-      nameZhHant: "六階"
+  { id: '666',    nameEn: '6x6',         nameZh: '六阶',       group: 'wca'
 },
-  { id: '777',    nameEn: '7x7',         nameZh: '七阶',       group: 'wca',
-      nameZhHant: "七階"
+  { id: '777',    nameEn: '7x7',         nameZh: '七阶',       group: 'wca'
 },
-  { id: '333oh',  nameEn: '3x3 OH',      nameZh: '三阶单手',   group: 'wca',
-      nameZhHant: "三階單手"
+  { id: '333oh',  nameEn: '3x3 OH',      nameZh: '三阶单手',   group: 'wca'
 },
   { id: '333fm',  nameEn: 'FMC',         nameZh: '最少步',     group: 'wca' },
 
@@ -138,31 +130,24 @@ export const EVENTS: EventInfo[] = [
 
   // Other puzzles
   { id: 'pyra',   nameEn: 'Pyraminx',    nameZh: '金字塔',     group: 'puzzle' },
-  { id: 'skewb',  nameEn: 'Skewb',       nameZh: '斜转',       group: 'puzzle',
-      nameZhHant: "斜轉"
+  { id: 'skewb',  nameEn: 'Skewb',       nameZh: '斜转',       group: 'puzzle'
 },
   { id: 'sq1',    nameEn: 'Square-1',    nameZh: 'SQ-1',       group: 'puzzle' },
   { id: 'mega',   nameEn: 'Megaminx',    nameZh: '五魔',       group: 'puzzle' },
-  { id: 'clock',  nameEn: 'Clock',       nameZh: '魔表',       group: 'puzzle',
-      nameZhHant: "魔錶"
+  { id: 'clock',  nameEn: 'Clock',       nameZh: '魔表',       group: 'puzzle'
 },
-  { id: '333mr',  nameEn: 'Mirror Blocks', nameZh: '镜面',     group: 'puzzle',
-      nameZhHant: "鏡面"
+  { id: '333mr',  nameEn: 'Mirror Blocks', nameZh: '镜面',     group: 'puzzle'
 },
   { id: 'magic',  nameEn: 'Magic',       nameZh: '魔板',       group: 'puzzle' },
-  { id: 'mmagic', nameEn: 'Master Magic',nameZh: '六块魔板',   group: 'puzzle',
-      nameZhHant: "六塊魔板"
+  { id: 'mmagic', nameEn: 'Master Magic',nameZh: '六块魔板',   group: 'puzzle'
 },
 
   // CFOP step training
-  { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字训练',   group: 'cfop',
-      nameZhHant: "十字訓練"
+  { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字训练',   group: 'cfop'
 },
-  { id: 'f2l',    nameEn: 'F2L',         nameZh: 'F2L 训练',   group: 'cfop',
-      nameZhHant: "F2L 訓練"
+  { id: 'f2l',    nameEn: 'F2L',         nameZh: 'F2L 训练',   group: 'cfop'
 },
-  { id: 'll',     nameEn: 'LL',          nameZh: 'LL 训练',    group: 'cfop',
-      nameZhHant: "LL 訓練"
+  { id: 'll',     nameEn: 'LL',          nameZh: 'LL 训练',    group: 'cfop'
 },
 
   // Last-layer training
@@ -175,8 +160,7 @@ export const EVENTS: EventInfo[] = [
   { id: 'eg2',    nameEn: 'EG-2',        nameZh: 'EG-2',       group: 'll' },
 
   // Misc
-  { id: 'custom', nameEn: 'Custom',      nameZh: '自定义',     group: 'misc',
-      nameZhHant: "自定義"
+  { id: 'custom', nameEn: 'Custom',      nameZh: '自定义',     group: 'misc'
 },
 ];
 

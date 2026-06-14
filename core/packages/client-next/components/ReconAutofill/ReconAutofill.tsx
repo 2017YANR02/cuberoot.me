@@ -512,8 +512,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
             onMouseEnter={() => setSelected(i)}
           >
             {popup.kind === 'comment' ? (
-              <span className="recon-autofill-badge">{tr({ zh: '注释', en: 'COMMENT',
-                  zhHant: "註釋"
+              <span className="recon-autofill-badge">{tr({ zh: '注释', en: 'COMMENT'
             })}</span>
             ) : cat === 'zbls' ? (
               <>
@@ -531,11 +530,9 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
                 tabIndex={-1}
                 className="recon-autofill-close"
                 onMouseDown={e => { e.preventDefault(); e.stopPropagation(); dismiss(); }}
-                aria-label={tr({ zh: '关闭自动补全', en: 'Close suggestions',
-                    zhHant: "關閉自動補全"
+                aria-label={tr({ zh: '关闭自动补全', en: 'Close suggestions'
                 })}
-                title={tr({ zh: '关闭(本行不再自动弹)', en: 'Close (won\'t reopen on this line)',
-                    zhHant: "關閉(本行不再自動彈)"
+                title={tr({ zh: '关闭(本行不再自动弹)', en: 'Close (won\'t reopen on this line)'
                 })}
               >
                 <X size={12} />

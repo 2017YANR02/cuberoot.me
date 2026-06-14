@@ -8,6 +8,6 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { CodeTrainer } from '../_components/CodeTrainer';
 
 export default function EdgeTrainerPage(): JSX.Element {
-  useDocumentTitle('棱块公式训练', 'Edge Algorithm Trainer', "稜塊公式訓練");
+  useDocumentTitle('棱块公式训练', 'Edge Algorithm Trainer');
   return <CodeTrainer pieceType="edge" />;
 }

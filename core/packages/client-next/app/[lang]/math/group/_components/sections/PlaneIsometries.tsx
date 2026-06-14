@@ -377,8 +377,7 @@ function TwoMirrorComposer() {
           <span className="gt-result-label"><L zh="复合类型" en="composite type" /></span>
           <span className="gt-result-val-strong" style={{ color: result.type === 'rotation' ? 'var(--green)' : 'var(--gold)' }}>
             {result.type === 'rotation'
-              ? (tr({ zh: '旋转', en: 'Rotation',
-                  zhHant: "旋轉"
+              ? (tr({ zh: '旋转', en: 'Rotation'
             }))
               : (tr({ zh: '平移', en: 'Translation' }))}
           </span>
@@ -444,8 +443,7 @@ function IsometryClassifier() {
       } else {
         // A = I, translation
         if (Math.hypot(b[0], b[1]) < 1e-6) {
-          classResult = tr({ zh: '恒等变换（零平移）', en: 'Identity (zero translation)',
-              zhHant: "恆等變換（零平移）"
+          classResult = tr({ zh: '恒等变换（零平移）', en: 'Identity (zero translation)'
         });
         } else {
           classResult = lang === 'zh'
@@ -631,11 +629,9 @@ function IsometryClassifier() {
           <span className="gt-result-label"><L zh="决策依据" en="Decision basis" /></span>
           <span className="gt-result-val" style={{ fontSize: 12, color: 'var(--ink-dim)', fontFamily: 'var(--mono)' }}>
             {Math.abs(detA-1) < 1e-6
-              ? (tr({ zh: 'det=+1 → 直接等距 → 检查不动点', en: 'det=+1 → direct → check fixed point',
-                  zhHant: "det=+1 → 直接等距 → 檢查不動點"
+              ? (tr({ zh: 'det=+1 → 直接等距 → 检查不动点', en: 'det=+1 → direct → check fixed point'
             }))
-              : (tr({ zh: 'det=−1 → 反向等距 → 检查 f∘f', en: 'det=−1 → opposite → check f∘f',
-                  zhHant: "det=−1 → 反向等距 → 檢查 f∘f"
+              : (tr({ zh: 'det=−1 → 反向等距 → 检查 f∘f', en: 'det=−1 → opposite → check f∘f'
             }))}
           </span>
         </div>
@@ -779,8 +775,7 @@ function RotationTwoReflections() {
         <div className="gt-result-row">
           <span className="gt-result-label"><L zh="数值验证（误差 < 1e-9）" en="numeric verify (err < 1e-9)" /></span>
           <span className="gt-result-val-strong" style={{ color: verified ? 'var(--green)' : 'var(--warn)' }}>
-            {verified ? (tr({ zh: '通过', en: 'pass',
-                zhHant: "透過"
+            {verified ? (tr({ zh: '通过', en: 'pass'
             })) : `err ${maxErr.toExponential(2)}`}
           </span>
         </div>
@@ -964,33 +959,27 @@ export default function PlaneIsometries() {
           {[
             {
               type: tr({ zh: '平移', en: 'Translation' }),
-              det: '+1', fixed: tr({ zh: '无（b≠0）', en: 'none (b≠0)',
-                  zhHant: "無（b≠0）"
+              det: '+1', fixed: tr({ zh: '无（b≠0）', en: 'none (b≠0)'
             }),
               square: tr({ zh: '平移 2b', en: 'translation 2b' }), minRef: '2'
             },
             {
-              type: tr({ zh: '旋转', en: 'Rotation',
-                  zhHant: "旋轉"
+              type: tr({ zh: '旋转', en: 'Rotation'
             }),
               det: '+1', fixed: tr({ zh: '唯一（中心 c）', en: 'unique (center c)' }),
-              square: tr({ zh: '旋转 2α', en: 'rotation 2α',
-                  zhHant: "旋轉 2α"
+              square: tr({ zh: '旋转 2α', en: 'rotation 2α'
             }), minRef: '2'
             },
             {
               type: tr({ zh: '反射', en: 'Reflection' }),
-              det: '−1', fixed: tr({ zh: '整条镜像线', en: 'entire mirror line',
-                  zhHant: "整條映象線"
+              det: '−1', fixed: tr({ zh: '整条镜像线', en: 'entire mirror line'
             }),
-              square: tr({ zh: '恒等 id', en: 'identity',
-                  zhHant: "恆等 id"
+              square: tr({ zh: '恒等 id', en: 'identity'
             }), minRef: '1'
             },
             {
               type: tr({ zh: '滑移反射', en: 'Glide reflection' }),
-              det: '−1', fixed: tr({ zh: '无', en: 'none',
-                  zhHant: "無"
+              det: '−1', fixed: tr({ zh: '无', en: 'none'
             }),
               square: tr({ zh: '非零平移 T_{2v}', en: 'nonzero translation T_{2v}' }), minRef: '3'
             },

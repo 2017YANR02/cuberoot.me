@@ -92,8 +92,8 @@ export default function RecognizeGame() {
   return (
     <div className="wc-rg">
       <div className="wc-rg-head">
-        <span className="wc-rg-step">{t('练习', 'Try it', "練習")} {idx + 1}/{CASES.length}</span>
-        <span className="wc-rg-q">{t('认出这是哪种情形,该用哪个公式?', 'Spot the case — which algorithm solves it?', "認出這是哪種情形,該用哪個公式?")}</span>
+        <span className="wc-rg-step">{t('练习', 'Try it')} {idx + 1}/{CASES.length}</span>
+        <span className="wc-rg-q">{t('认出这是哪种情形,该用哪个公式?', 'Spot the case — which algorithm solves it?')}</span>
       </div>
 
       <div className="wc-rg-body">
@@ -137,19 +137,19 @@ export default function RecognizeGame() {
         {solved ? (
           <>
             <span className="wc-rg-msg is-right">
-              <Check size={15} />{t('对了!认出图案 → 套用公式 → 还原。', 'Right! Recognize the pattern → apply the algorithm → solved.', "對了!認出圖案 → 套用公式 → 還原。")}
+              <Check size={15} />{t('对了!认出图案 → 套用公式 → 还原。', 'Right! Recognize the pattern → apply the algorithm → solved.')}
             </span>
             <button type="button" className="wc-rg-next" onClick={next}>
-              <RotateCcw size={14} />{t('下一个', 'Next', "下一個")}
+              <RotateCcw size={14} />{t('下一个', 'Next')}
             </button>
           </>
         ) : wrong ? (
           <span className="wc-rg-msg is-wrong">
-            <X size={15} />{t('不是这个,再看看图案,换一个试试。', 'Not that one — look at the pattern again and try another.', "不是這個,再看看圖案,換一個試試。")}
+            <X size={15} />{t('不是这个,再看看图案,换一个试试。', 'Not that one — look at the pattern again and try another.')}
           </span>
         ) : (
           <span className="wc-rg-msg">
-            {t('这就是计算思维:先识别,再执行对应的步骤。', 'That’s computational thinking: recognize first, then run the matching steps.', "這就是計算思維:先識別,再執行對應的步驟。")}
+            {t('这就是计算思维:先识别,再执行对应的步骤。', 'That’s computational thinking: recognize first, then run the matching steps.')}
           </span>
         )}
       </div>

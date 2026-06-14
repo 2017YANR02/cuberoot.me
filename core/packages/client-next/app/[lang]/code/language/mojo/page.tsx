@@ -416,7 +416,7 @@ export default function MojoIntroPage() {
 
   useDocumentTitle(
     'Mojo : Python 语法 · C 速度 · MLIR IR — Lattner 的第三门语言',
-    'Mojo : Python syntax, C-class speed, MLIR IR — Lattner\'s third language', "Mojo : Python 語法 · C 速度 · MLIR IR — Lattner 的第三門語言"
+    'Mojo : Python syntax, C-class speed, MLIR IR — Lattner\'s third language'
   );
 
   useEffect(() => {

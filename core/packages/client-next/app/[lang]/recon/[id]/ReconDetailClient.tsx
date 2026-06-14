@@ -42,7 +42,7 @@ import {
   type WcaResultRow as WcaResultsRow, type WcaCompetition,
 } from '@/lib/wca-person-api';
 import { computePrRank } from '@/components/persons/logic/progress';
-import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_ZH_HANT, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
+import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
@@ -99,8 +99,7 @@ export default function ReconDetailClient({ initialSolve }: { initialSolve?: Rec
   const [error, setError] = useState<string | null>(null);
 
   const reconTitle = (() => {
-    const fallback = tr({ zh: '复盘', en: 'Reconstruction',
-        zhHant: "覆盤"
+    const fallback = tr({ zh: '复盘', en: 'Reconstruction'
     });
     if (!solve) return fallback;
     const parts: string[] = [];
@@ -842,19 +841,16 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
               <tr>
                 <th>
                   <span className="wp-th-info">
-                    {tr({ zh: '轮次', en: 'Round',
-                        zhHant: "輪次"
+                    {tr({ zh: '轮次', en: 'Round'
                     })}
-                    <InfoTooltip content={i18n.language === 'zh-Hant' ? ROUND_HINT_ZH_HANT : (isZh ? ROUND_HINT_ZH : ROUND_HINT_EN)} />
+                    <InfoTooltip content={(isZh ? ROUND_HINT_ZH : ROUND_HINT_EN)} />
                   </span>
                 </th>
                 <th className="wp-th-narrow">{tr({ zh: '排名', en: 'Pos' })}</th>
-                <th>{tr({ zh: '单次', en: 'Single',
-                    zhHant: "單次"
+                <th>{tr({ zh: '单次', en: 'Single'
                 })}</th>
                 <th>{tr({ zh: '平均', en: 'Avg' })}</th>
-                <th>{tr({ zh: '详细成绩', en: 'Attempts',
-                    zhHant: "詳細成績"
+                <th>{tr({ zh: '详细成绩', en: 'Attempts'
                 })}</th>
               </tr>
             </thead>

@@ -7,8 +7,7 @@ export function UnofficialMark() {
   return (
     <sup
       className="unofficial-mark"
-      title={tr({ zh: '多盲平均(Mo3)为非官方统计,WCA 不追踪', en: 'Multi-Blind average (Mo3) is unofficial — not tracked by WCA',
-          zhHant: "多盲平均(Mo3)為非官方統計,WCA 不追蹤"
+      title={tr({ zh: '多盲平均(Mo3)为非官方统计,WCA 不追踪', en: 'Multi-Blind average (Mo3) is unofficial — not tracked by WCA'
     })}
     >
       {tr({ zh: '非官方', en: 'unofficial' })}

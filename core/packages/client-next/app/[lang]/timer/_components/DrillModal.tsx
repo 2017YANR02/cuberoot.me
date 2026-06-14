@@ -103,7 +103,7 @@ export default function DrillModal({
     marginBottom: 10,
   };
 
-  const searchPlaceholder = i18n.language === 'zh-Hant' ? (type === 'oll' ? '搜尋 (例如 21)' : '搜尋 (例如 T)') : (isZh
+  const searchPlaceholder = (isZh
       ? type === 'oll' ? '搜索 (例如 21)' : '搜索 (例如 T)'
       : type === 'oll' ? 'Search (e.g. 21)' : 'Search (e.g. T)');
 
@@ -117,8 +117,7 @@ export default function DrillModal({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id={titleId}>
-          {tr({ zh: '专项练习', en: 'Drill mode',
-              zhHant: "專項練習"
+          {tr({ zh: '专项练习', en: 'Drill mode'
         })}
           <span className="trainer-subset-count"> ({total})</span>
         </h2>
@@ -141,7 +140,7 @@ export default function DrillModal({
           </button>
           {activeCase && (
             <button type="button" onClick={() => { onExit(); onClose(); }}>
-              {i18n.language === 'zh-Hant' ? (`退出專項 (${activeCase.id})`) : (isZh ? `退出专项 (${activeCase.id})` : `Exit drill (${activeCase.id})`)}
+              {(isZh ? `退出专项 (${activeCase.id})` : `Exit drill (${activeCase.id})`)}
             </button>
           )}
         </div>
@@ -151,8 +150,7 @@ export default function DrillModal({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={searchPlaceholder}
-          aria-label={tr({ zh: '搜索 case', en: 'Search cases',
-              zhHant: "搜尋 case"
+          aria-label={tr({ zh: '搜索 case', en: 'Search cases'
         })}
           style={searchStyle}
         />
@@ -160,8 +158,7 @@ export default function DrillModal({
         <div className="trainer-subset-body" style={bodyStyle}>
           {matchedCount === 0 ? (
             <div style={{ color: '#888', fontSize: 13, padding: '12px 4px' }}>
-              {tr({ zh: '无匹配结果', en: 'No matches',
-                  zhHant: "無匹配結果"
+              {tr({ zh: '无匹配结果', en: 'No matches'
             })}
             </div>
           ) : (
@@ -195,8 +192,7 @@ export default function DrillModal({
         </div>
 
         <div className="modal-actions">
-          <button type="button" onClick={onClose}>{tr({ zh: '关闭', en: 'Close',
-              zhHant: "關閉"
+          <button type="button" onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
         })}</button>
         </div>
       </div>

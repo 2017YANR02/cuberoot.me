@@ -110,8 +110,7 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
         <div className="history-header">
           <span className="history-title">
             <Swords size={16} />
-            {n === 2 ? '1v1' : `${n}P`} {tr({ zh: '历史', en: 'History',
-                zhHant: "歷史"
+            {n === 2 ? '1v1' : `${n}P`} {tr({ zh: '历史', en: 'History'
             })}
             {puzzlesDiffer && (
               <span className="vs-puzzle-tag">
@@ -119,8 +118,7 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
               </span>
             )}
           </span>
-          <span className="history-stats">{roundCount} {tr({ zh: '轮', en: 'rounds',
-              zhHant: "輪"
+          <span className="history-stats">{roundCount} {tr({ zh: '轮', en: 'rounds'
         })}</span>
           <button className="settings-x-btn" onClick={onClose}>✕</button>
         </div>
@@ -135,8 +133,7 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
         {/* 轮次列表 */}
         <div className="history-list">
           {roundCount === 0 && (
-            <div className="history-empty">{tr({ zh: '暂无对战记录', en: 'No rounds yet',
-                zhHant: "暫無對戰記錄"
+            <div className="history-empty">{tr({ zh: '暂无对战记录', en: 'No rounds yet'
             })}</div>
           )}
           {Array.from({ length: roundCount }, (_, i) => roundCount - 1 - i).map(i => {
@@ -167,8 +164,7 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
                 <button
                   type="button"
                   className="h-delete"
-                  title={tr({ zh: '删除此轮', en: 'Delete round',
-                      zhHant: "刪除此輪"
+                  title={tr({ zh: '删除此轮', en: 'Delete round'
                 })}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -242,7 +238,7 @@ function RoundDetailModal({
       <div className="round-modal">
         <div className="round-modal-header">
           <span className="round-modal-title">
-            {i18n.language === 'zh-Hant' ? (`第 ${roundIndex + 1} 輪`) : (isZh ? `第 ${roundIndex + 1} 轮` : `Round ${roundIndex + 1}`)}
+            {(isZh ? `第 ${roundIndex + 1} 轮` : `Round ${roundIndex + 1}`)}
             {dateStr && <span className="round-modal-date"> · {dateStr}</span>}
           </span>
           <button className="settings-x-btn" onClick={onClose}>✕</button>
@@ -269,8 +265,7 @@ function RoundDetailModal({
             <div className="round-modal-scramble-block" key={sc}>
               <div className="round-modal-scramble-label">
                 {scrambleGroups.length > 1 ? `${idxs.map(i => `P${i + 1}`).join(' / ')} ` : ''}
-                {tr({ zh: '打乱', en: 'Scramble',
-                    zhHant: "打亂"
+                {tr({ zh: '打乱', en: 'Scramble'
                 })}
               </div>
               <div className="round-modal-scramble-text">{sc}</div>
@@ -283,11 +278,9 @@ function RoundDetailModal({
             type="button"
             className="round-modal-delete"
             onClick={onDelete}
-            title={tr({ zh: '删除此轮', en: 'Delete round',
-                zhHant: "刪除此輪"
+            title={tr({ zh: '删除此轮', en: 'Delete round'
             })}
-            aria-label={tr({ zh: '删除此轮', en: 'Delete round',
-                zhHant: "刪除此輪"
+            aria-label={tr({ zh: '删除此轮', en: 'Delete round'
             })}
           >
             <Trash2 size={16} />

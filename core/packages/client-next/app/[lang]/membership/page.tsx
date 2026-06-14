@@ -136,15 +136,13 @@ export default function MembershipPage() {
       <header className="mem-head">
         <h1 className="mem-title">
           <Crown size={22} strokeWidth={2} className="mem-title-icon" />
-          {tr({ zh: '成为 CubeRoot 会员', en: 'Become a CubeRoot member',
-              zhHant: "成為 CubeRoot 會員"
+          {tr({ zh: '成为 CubeRoot 会员', en: 'Become a CubeRoot member'
         })}
         </h1>
         <p className="mem-sub">
           {tr({
             zh: '所有工具始终免费。开通会员是为了支持本站的服务器与日常维护,并解锁一些专属权益。',
-            en: 'All tools stay free. Membership supports the servers and upkeep, and unlocks a few member-only perks.',
-              zhHant: "所有工具始終免費。開通會員是為了支援本站的伺服器與日常維護,並解鎖一些專屬權益。"
+            en: 'All tools stay free. Membership supports the servers and upkeep, and unlocks a few member-only perks.'
         })}
         </p>
       </header>
@@ -155,15 +153,12 @@ export default function MembershipPage() {
           <MembershipBadge lifetime={membership.lifetime} size={15} />
           <span className="mem-status-text">
             {membership.lifetime
-              ? tr({ zh: '你是永久会员,感谢长期的支持 ♡', en: "You're a lifetime member — thank you for the support ♡",
-                  zhHant: "你是永久會員,感謝長期的支援 ♡"
+              ? tr({ zh: '你是永久会员,感谢长期的支持 ♡', en: "You're a lifetime member — thank you for the support ♡"
             })
-              : tr({ zh: '会员有效期至 {d}', en: 'Member until {d}',
-                  zhHant: "會員有效期至 {d}"
+              : tr({ zh: '会员有效期至 {d}', en: 'Member until {d}'
             }).replace('{d}', fmtDate(membership.expiresAt))}
           </span>
-          <button className="mem-status-refresh" onClick={refreshMembership} aria-label={tr({ zh: '刷新', en: 'Refresh',
-              zhHant: "重新整理"
+          <button className="mem-status-refresh" onClick={refreshMembership} aria-label={tr({ zh: '刷新', en: 'Refresh'
         })}>
             <RefreshCw size={13} />
           </button>
@@ -172,24 +167,20 @@ export default function MembershipPage() {
 
       {justPaid && (
         <div className="mem-paid-banner">
-          <Check size={15} /> {tr({ zh: '支付成功,会员已开通!', en: 'Payment received — your membership is active!',
-              zhHant: "支付成功,會員已開通!"
+          <Check size={15} /> {tr({ zh: '支付成功,会员已开通!', en: 'Payment received — your membership is active!'
         })}
         </div>
       )}
 
       {/* 套餐 */}
       {loadErr ? (
-        <div className="mem-empty">{tr({ zh: '加载失败', en: 'Failed to load',
-            zhHant: "載入失敗"
+        <div className="mem-empty">{tr({ zh: '加载失败', en: 'Failed to load'
         })}: {loadErr}</div>
       ) : !plans ? (
-        <div className="mem-empty"><Loader2 size={16} className="mem-spin" /> {tr({ zh: '加载中…', en: 'Loading…',
-            zhHant: "載入中…"
+        <div className="mem-empty"><Loader2 size={16} className="mem-spin" /> {tr({ zh: '加载中…', en: 'Loading…'
         })}</div>
       ) : isLifetime ? (
-        <div className="mem-empty">{tr({ zh: '你已经是永久会员,无需再次购买。', en: 'You already have lifetime membership — nothing to buy.',
-            zhHant: "你已經是永久會員,無需再次購買。"
+        <div className="mem-empty">{tr({ zh: '你已经是永久会员,无需再次购买。', en: 'You already have lifetime membership — nothing to buy.'
         })}</div>
       ) : (
         <div className="mem-plans">
@@ -212,15 +203,12 @@ export default function MembershipPage() {
                 </ul>
                 <button className="mem-plan-cta" onClick={() => handleChoose(plan)}>
                   {!loggedIn
-                    ? tr({ zh: '登录后开通', en: 'Sign in to join',
-                        zhHant: "登入後開通"
+                    ? tr({ zh: '登录后开通', en: 'Sign in to join'
                     })
                     : current
-                      ? tr({ zh: '续费', en: 'Renew',
-                          zhHant: "續費"
+                      ? tr({ zh: '续费', en: 'Renew'
                     })
-                      : tr({ zh: '开通', en: 'Subscribe',
-                          zhHant: "開通"
+                      : tr({ zh: '开通', en: 'Subscribe'
                     })}
                 </button>
               </div>
@@ -234,16 +222,13 @@ export default function MembershipPage() {
         <p className="mem-note">
           {tr({
             zh: '在线支付正在接入中。你可以先通过',
-            en: 'Online payment is being set up. For now you can ',
-              zhHant: "線上支付正在接入中。你可以先透過"
+            en: 'Online payment is being set up. For now you can '
         })}
-          <button className="mem-link-btn" onClick={() => setDonateOpen(true)}>{tr({ zh: '打赏', en: 'donate',
-              zhHant: "打賞"
+          <button className="mem-link-btn" onClick={() => setDonateOpen(true)}>{tr({ zh: '打赏', en: 'donate'
         })}</button>
           {tr({
             zh: '支持本站,并备注 WCA ID,站长会为你手动开通会员。',
-            en: ' to support the site (note your WCA ID) and membership will be granted manually.',
-              zhHant: "支援本站,並備註 WCA ID,站長會為你手動開通會員。"
+            en: ' to support the site (note your WCA ID) and membership will be granted manually.'
         })}
         </p>
       )}
@@ -251,12 +236,10 @@ export default function MembershipPage() {
       <p className="mem-foot-note">
         {tr({
           zh: '会员为一次性按周期付款,不会自动续费、不会自动扣款,到期后需手动续费。',
-          en: 'Membership is a one-time payment per period — no auto-renewal, no auto-charge. Renew manually when it expires.',
-            zhHant: "會員為一次性按週期付款,不會自動續費、不會自動扣款,到期後需手動續費。"
+          en: 'Membership is a one-time payment per period — no auto-renewal, no auto-charge. Renew manually when it expires.'
         })}
         {' '}
-        <AppLink href="/support">{tr({ zh: '查看致谢名单 →', en: 'See supporters →',
-            zhHant: "檢視致謝名單 →"
+        <AppLink href="/support">{tr({ zh: '查看致谢名单 →', en: 'See supporters →'
         })}</AppLink>
       </p>
 

@@ -21,22 +21,17 @@ interface CategoryDef {
   zh: string;
   en: string;
   Icon: typeof Database;
-    zhHant?: string;
 }
 
 const CATEGORIES: CategoryDef[] = [
-  { id: 'db', zh: '数据库', en: 'Database', Icon: Database,
-      zhHant: "資料庫"
+  { id: 'db', zh: '数据库', en: 'Database', Icon: Database
 },
-  { id: 'build', zh: '构建', en: 'Build', Icon: Hammer,
-      zhHant: "構建"
+  { id: 'build', zh: '构建', en: 'Build', Icon: Hammer
 },
   { id: 'deploy', zh: '部署', en: 'Deploy', Icon: UploadCloud },
-  { id: 'backup', zh: '备份', en: 'Backup', Icon: Archive,
-      zhHant: "備份"
+  { id: 'backup', zh: '备份', en: 'Backup', Icon: Archive
 },
-  { id: 'prompt', zh: 'AI 提示词', en: 'AI Prompt', Icon: Sparkles,
-      zhHant: "AI 提示詞"
+  { id: 'prompt', zh: 'AI 提示词', en: 'AI Prompt', Icon: Sparkles
 },
 ];
 
@@ -53,7 +48,6 @@ interface OpCommand {
   cwd?: string;
   position: number;
   chips: { zh: string; en: string
-    zhHant?: string;
  }[];
   title_zh: string;
   title_en: string;
@@ -134,13 +128,11 @@ function OpCard({ op, lang, isAdmin, onEdit, onDelete }: { op: OpCommand; lang: 
           )}
           {isAdmin && (
             <>
-              <button type="button" className="ops-admin-btn" onClick={onEdit} title={tr({ zh: '编辑', en: 'Edit',
-                  zhHant: "編輯"
+              <button type="button" className="ops-admin-btn" onClick={onEdit} title={tr({ zh: '编辑', en: 'Edit'
             })}>
                 <Pencil size={13} />
               </button>
-              <button type="button" className="ops-admin-btn ops-admin-btn-danger" onClick={onDelete} title={tr({ zh: '删除', en: 'Delete',
-                  zhHant: "刪除"
+              <button type="button" className="ops-admin-btn ops-admin-btn-danger" onClick={onDelete} title={tr({ zh: '删除', en: 'Delete'
             })}>
                 <Trash2 size={13} />
               </button>
@@ -192,7 +184,7 @@ export default function OpsPage() {
   const [err, setErr] = useState<string | null>(null);
   const [editor, setEditor] = useState<{ mode: 'add' | 'edit'; op?: OpCommand } | null>(null);
 
-  useDocumentTitle('运维', 'Ops', "運維");
+  useDocumentTitle('运维', 'Ops');
 
   const refresh = () => {
     setErr(null);
@@ -234,8 +226,7 @@ export default function OpsPage() {
             ops<span className="ops-hero-cursor">_</span>
           </h1>
           <p className="ops-hero-sub">
-            {tr({ zh: '日常维护命令的实战手册。每条带前置条件、耗时、踩坑、复制即跑。', en: "Hands-on runbook of routine commands. Prereqs, runtime, gotchas — copy-and-go.",
-                zhHant: "日常維護命令的實戰手冊。每條帶前置條件、耗時、踩坑、複製即跑。"
+            {tr({ zh: '日常维护命令的实战手册。每条带前置条件、耗时、踩坑、复制即跑。', en: "Hands-on runbook of routine commands. Prereqs, runtime, gotchas — copy-and-go."
             })}
           </p>
         </header>
@@ -247,15 +238,13 @@ export default function OpsPage() {
               <span>{tr({ zh: '新建命令', en: 'New command' })}</span>
             </button>
             <span className="ops-admin-hint">
-              {tr({ zh: 'admin 模式 · 改动即生效 (5min 公共缓存)', en: 'admin mode · changes are live (5min public cache)',
-                  zhHant: "admin 模式 · 改動即生效 (5min 公共快取)"
+              {tr({ zh: 'admin 模式 · 改动即生效 (5min 公共缓存)', en: 'admin mode · changes are live (5min public cache)'
             })}
             </span>
           </div>
         )}
 
-        <nav className="ops-filters" aria-label={tr({ zh: '分类过滤', en: 'category filter',
-            zhHant: "分類過濾"
+        <nav className="ops-filters" aria-label={tr({ zh: '分类过滤', en: 'category filter'
         })}>
           <button
             type="button"
@@ -293,8 +282,7 @@ export default function OpsPage() {
             </div>
           )}
           {!err && commands === null && (
-            <div className="ops-empty">{tr({ zh: '加载中...', en: 'Loading...',
-                zhHant: "載入中..."
+            <div className="ops-empty">{tr({ zh: '加载中...', en: 'Loading...'
             })}</div>
           )}
           {visible.map((op) => (
@@ -314,8 +302,7 @@ export default function OpsPage() {
           ))}
           {!err && commands !== null && visible.length === 0 && (
             <div className="ops-empty">
-              {tr({ zh: '这个分类还没有命令', en: 'No commands in this category yet',
-                  zhHant: "這個分類還沒有命令"
+              {tr({ zh: '这个分类还没有命令', en: 'No commands in this category yet'
             })}
             </div>
           )}
@@ -323,8 +310,7 @@ export default function OpsPage() {
 
         <footer className="ops-foot">
           <span className="ops-foot-text">
-            {tr({ zh: '命令会持续增补 · 一处一个原则', en: 'Always growing · one-place principle',
-                zhHant: "命令會持續增補 · 一處一個原則"
+            {tr({ zh: '命令会持续增补 · 一处一个原则', en: 'Always growing · one-place principle'
             })}
           </span>
           <Link href="/" className="ops-foot-link">CubeRoot</Link>
@@ -418,8 +404,7 @@ function OpsEditor({ mode, initial, lang, onClose, onSaved }: {
     const body: OpsCommandInput = { ...form, variants, chips: form.chips.filter((c) => c.zh || c.en), cwd: form.cwd?.trim() || null };
     if (!isEdit) {
       if (!body.id?.trim()) { setError(tr({ zh: 'id 必填', en: 'id required' })); return; }
-      if (!/^[a-z0-9][a-z0-9-]*$/.test(body.id)) { setError(tr({ zh: 'id 必须小写 kebab', en: 'id must be lowercase kebab',
-          zhHant: "id 必須小寫 kebab"
+      if (!/^[a-z0-9][a-z0-9-]*$/.test(body.id)) { setError(tr({ zh: 'id 必须小写 kebab', en: 'id must be lowercase kebab'
     })); return; }
     }
     setSaving(true);
@@ -438,24 +423,21 @@ function OpsEditor({ mode, initial, lang, onClose, onSaved }: {
     <div className="ops-modal-backdrop" onClick={onClose}>
       <div className="ops-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <header className="ops-modal-head">
-          <h2>{isEdit ? (tr({ zh: '编辑命令', en: 'Edit command',
-              zhHant: "編輯命令"
+          <h2>{isEdit ? (tr({ zh: '编辑命令', en: 'Edit command'
         })) : (tr({ zh: '新建命令', en: 'New command' }))}</h2>
           <button type="button" className="ops-modal-close" onClick={onClose} aria-label="Close"><X size={16} /></button>
         </header>
         <div className="ops-modal-body">
           {!isEdit && (
             <label className="ops-field">
-              <span>id <em>{tr({ zh: '(小写 kebab,创建后不可改)', en: '(lowercase kebab, immutable after create)',
-                  zhHant: "(小寫 kebab,建立後不可改)"
+              <span>id <em>{tr({ zh: '(小写 kebab,创建后不可改)', en: '(lowercase kebab, immutable after create)'
             })}</em></span>
               <input value={form.id ?? ''} onChange={(e) => set('id', e.target.value)} placeholder="my-new-command" />
             </label>
           )}
           <div className="ops-field-row">
             <label className="ops-field">
-              <span>category {isEdit && <em>{tr({ zh: '(改分类要删后重建)', en: '(to change, delete + re-create)',
-                  zhHant: "(改分類要刪後重建)"
+              <span>category {isEdit && <em>{tr({ zh: '(改分类要删后重建)', en: '(to change, delete + re-create)'
             })}</em>}</span>
               <select value={form.category} onChange={(e) => set('category', e.target.value)} disabled={isEdit}>
                 {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.en} ({c.zh})</option>)}
@@ -500,14 +482,12 @@ function OpsEditor({ mode, initial, lang, onClose, onSaved }: {
             </div>
           </label>
           <label className="ops-field">
-            <span>cmd <em>{form.category === 'prompt' ? (tr({ zh: '(提示词正文)', en: '(prompt body)',
-                zhHant: "(提示詞正文)"
+            <span>cmd <em>{form.category === 'prompt' ? (tr({ zh: '(提示词正文)', en: '(prompt body)'
             })) : (tr({ zh: '(shell 命令,多行 \\n)', en: '(shell command, multi-line ok)' }))}</em></span>
             <textarea className="ops-field-mono" value={form.cmd} onChange={(e) => set('cmd', e.target.value)} rows={6} />
           </label>
           <label className="ops-field">
-            <span>variants <em>{tr({ zh: '(JSON 数组,留空即无)', en: '(JSON array, leave empty for none)',
-                zhHant: "(JSON 陣列,留空即無)"
+            <span>variants <em>{tr({ zh: '(JSON 数组,留空即无)', en: '(JSON array, leave empty for none)'
             })}</em></span>
             <textarea className="ops-field-mono" value={variantsJson} onChange={(e) => setVariantsJson(e.target.value)} rows={5} spellCheck={false} />
           </label>
@@ -516,10 +496,8 @@ function OpsEditor({ mode, initial, lang, onClose, onSaved }: {
         <footer className="ops-modal-foot">
           <button type="button" className="ops-modal-cancel" onClick={onClose} disabled={saving}>{tr({ zh: '取消', en: 'Cancel' })}</button>
           <button type="button" className="ops-modal-save" onClick={onSave} disabled={saving}>
-            {saving ? (tr({ zh: '保存中...', en: 'Saving...',
-                zhHant: "儲存中..."
-            })) : (tr({ zh: '保存', en: 'Save',
-                zhHant: "儲存"
+            {saving ? (tr({ zh: '保存中...', en: 'Saving...'
+            })) : (tr({ zh: '保存', en: 'Save'
             }))}
           </button>
         </footer>

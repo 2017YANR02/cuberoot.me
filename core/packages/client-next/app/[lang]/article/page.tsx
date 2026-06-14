@@ -89,8 +89,7 @@ export default function ArticleListPage() {
       <header className="article-list-header">
         <HomeLink className="article-list-back">
           <ChevronLeft size={16} />
-          <span>{tr({ zh: '首页', en: 'Home',
-              zhHant: "首頁"
+          <span>{tr({ zh: '首页', en: 'Home'
         })}</span>
         </HomeLink>
       </header>
@@ -152,8 +151,7 @@ export default function ArticleListPage() {
 
       {loadErr && (
         <div className="article-list-empty article-list-error">
-          {(tr({ zh: '加载失败: ', en: 'Failed to load: ',
-              zhHant: "載入失敗: "
+          {(tr({ zh: '加载失败: ', en: 'Failed to load: '
         })) + loadErr}
         </div>
       )}

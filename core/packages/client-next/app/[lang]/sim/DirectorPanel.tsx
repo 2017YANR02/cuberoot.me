@@ -62,8 +62,7 @@ export default function DirectorPanel({ getCanvas, getWorld, getRenderer, setup,
     if (!world || !renderer || exporting) return;
     setExporting(true);
     abortRef.current = { aborted: false };
-    setProgress({ phase: tr({ zh: '准备...', en: 'Preparing...',
-        zhHant: "準備..."
+    setProgress({ phase: tr({ zh: '准备...', en: 'Preparing...'
     }), pct: 0, framesDone: 0, framesTotal: 0 });
     // 等 overlay 挂载后 previewRef 就位
     await new Promise<void>(r => requestAnimationFrame(() => r()));
@@ -79,8 +78,7 @@ export default function DirectorPanel({ getCanvas, getWorld, getRenderer, setup,
       if (msg !== 'aborted') {
         console.error('[Sim Export] failed:', e);
         // eslint-disable-next-line no-alert
-        alert((tr({ zh: '导出失败:', en: 'Export failed: ',
-            zhHant: "匯出失敗:"
+        alert((tr({ zh: '导出失败:', en: 'Export failed: '
         })) + msg);
       }
     } finally {
@@ -99,25 +97,25 @@ export default function DirectorPanel({ getCanvas, getWorld, getRenderer, setup,
     <div className="sim-director">
       <button className="sim-director-btn" onClick={snapshot}>
         <Camera size={14} />
-        {t('截图 PNG', 'Snapshot PNG', "截圖 PNG")}
+        {t('截图 PNG', 'Snapshot PNG')}
       </button>
       <button
         className="sim-director-btn"
         onClick={startExport}
         disabled={!canExport || exporting}
-        title={!canExport ? t('解法为空, 无可导出动画', 'Alg is empty — nothing to record', "解法為空, 無可匯出動畫") : ''}
+        title={!canExport ? t('解法为空, 无可导出动画', 'Alg is empty — nothing to record') : ''}
       >
         <Film size={14} />
-        {t('导出 mp4 1080p', 'Export mp4 1080p', "匯出 mp4 1080p")}
+        {t('导出 mp4 1080p', 'Export mp4 1080p')}
       </button>
       <span className="sim-director-hint">
-        {t('1080p 离线渲染当前打乱+解法的动画', 'Offline 1080p render of current scramble+solution', "1080p 離線渲染當前打亂+解法的動畫")}
+        {t('1080p 离线渲染当前打乱+解法的动画', 'Offline 1080p render of current scramble+solution')}
       </span>
 
       {exporting && progress && (
         <div className="sim-export-overlay">
           <div className="sim-export-card">
-            <div className="sim-export-title">{t('导出视频中', 'Exporting video', "匯出影片中")}</div>
+            <div className="sim-export-title">{t('导出视频中', 'Exporting video')}</div>
             <canvas ref={previewRef} className="sim-export-preview" />
             <div className="sim-export-bar">
               <div className="sim-export-bar-fill" style={{ width: `${(progress.pct * 100).toFixed(1)}%` }} />

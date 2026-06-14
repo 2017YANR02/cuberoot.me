@@ -28,8 +28,6 @@ interface GroupData {
   // Why not nilpotent (short note)
   notNilpotentReasonEn?: string;
   notNilpotentReasonZh?: string;
-    labelZhHant?: string;
-    notNilpotentReasonZhHant?: string;
 }
 
 const E_TERM: SeriesTerm = { name: '{e}', nameTex: '\\{e\\}', order: 1 };
@@ -53,9 +51,7 @@ const GROUP_DATA: Record<GroupId, GroupData> = {
     derivedLength: 2,
     nilpClass: null,
     notNilpotentReasonEn: 'γ₃ = [S₃, A₃] = A₃ ≠ {e} — series stabilizes; Sylow-2 subgroups (three of them) not normal.',
-    notNilpotentReasonZh: 'γ₃ = [S₃, A₃] = A₃ ≠ {e}，下中心级数稳定；Sylow-2 子群（共三个）不正规。',
-      labelZhHant: "S₃ (3元置換群)",
-      notNilpotentReasonZhHant: "γ₃ = [S₃, A₃] = A₃ ≠ {e}，下中心級數穩定；Sylow-2 子群（共三個）不正規。"
+    notNilpotentReasonZh: 'γ₃ = [S₃, A₃] = A₃ ≠ {e}，下中心级数稳定；Sylow-2 子群（共三个）不正规。'
 },
   S4: {
     labelEn: 'S₄ (sym. on 4)', labelZh: 'S₄ (4元置换群)',
@@ -76,9 +72,7 @@ const GROUP_DATA: Record<GroupId, GroupData> = {
     derivedLength: 3,
     nilpClass: null,
     notNilpotentReasonEn: 'γ₃ = [S₄, A₄] = A₄ ≠ {e} — lower central stabilizes at A₄; Sylow-3 subgroups not normal.',
-    notNilpotentReasonZh: 'γ₃ = [S₄, A₄] = A₄ ≠ {e}，下中心级数稳定在 A₄；Sylow-3 子群不正规。',
-      labelZhHant: "S₄ (4元置換群)",
-      notNilpotentReasonZhHant: "γ₃ = [S₄, A₄] = A₄ ≠ {e}，下中心級數穩定在 A₄；Sylow-3 子群不正規。"
+    notNilpotentReasonZh: 'γ₃ = [S₄, A₄] = A₄ ≠ {e}，下中心级数稳定在 A₄；Sylow-3 子群不正规。'
 },
   A4: {
     labelEn: 'A₄ (alt. on 4)', labelZh: 'A₄ (4元交替群)',
@@ -98,8 +92,7 @@ const GROUP_DATA: Record<GroupId, GroupData> = {
     derivedLength: 2,
     nilpClass: null,
     notNilpotentReasonEn: 'γ₃ = [A₄, V₄] = V₄ ≠ {e} — series stabilizes; four Sylow-3 subgroups (not normal).',
-    notNilpotentReasonZh: 'γ₃ = [A₄, V₄] = V₄ ≠ {e}，级数稳定；有四个 Sylow-3 子群（不正规）。',
-      notNilpotentReasonZhHant: "γ₃ = [A₄, V₄] = V₄ ≠ {e}，級數穩定；有四個 Sylow-3 子群（不正規）。"
+    notNilpotentReasonZh: 'γ₃ = [A₄, V₄] = V₄ ≠ {e}，级数稳定；有四个 Sylow-3 子群（不正规）。'
 },
   A5: {
     labelEn: 'A₅ (alt. on 5)', labelZh: 'A₅ (5元交替群)',
@@ -117,8 +110,7 @@ const GROUP_DATA: Record<GroupId, GroupData> = {
     derivedLength: null,
     nilpClass: null,
     notNilpotentReasonEn: 'A₅ is simple nonabelian — derived series stabilizes at A₅ itself; not solvable and not nilpotent.',
-    notNilpotentReasonZh: 'A₅ 是非交换单群，导出列稳定在 A₅ 本身；既不可解也不幂零。',
-      notNilpotentReasonZhHant: "A₅ 是非交換單群，匯出列穩定在 A₅ 本身；既不可解也不冪零。"
+    notNilpotentReasonZh: 'A₅ 是非交换单群，导出列稳定在 A₅ 本身；既不可解也不幂零。'
 },
   D4: {
     labelEn: 'D₄ (dihedral, order 8)', labelZh: 'D₄ (二面体群，阶 8)',
@@ -136,8 +128,7 @@ const GROUP_DATA: Record<GroupId, GroupData> = {
     solvable: true,
     nilpotent: true,
     derivedLength: 2,
-    nilpClass: 2,
-      labelZhHant: "D₄ (二面體群，階 8)"
+    nilpClass: 2
 },
   Q8: {
     labelEn: 'Q₈ (quaternion)', labelZh: 'Q₈ (四元数群)',
@@ -155,8 +146,7 @@ const GROUP_DATA: Record<GroupId, GroupData> = {
     solvable: true,
     nilpotent: true,
     derivedLength: 2,
-    nilpClass: 2,
-      labelZhHant: "Q₈ (四元數群)"
+    nilpClass: 2
 },
 };
 
@@ -515,8 +505,7 @@ function DerivedSeriesPanel({ lang }: { lang: Lang }) {
           <span className="gt-result-val-strong" style={{ color: data.solvable ? 'var(--green)' : 'var(--warn)' }}>
             {data.solvable
               ? (lang === 'zh' ? `是 (导出长度 ${data.derivedLength})` : `Yes (derived length ${data.derivedLength})`)
-              : (tr({ zh: '否 (导出列稳定在非平凡处)', en: 'No (series stabilizes above {e})',
-                  zhHant: "否 (匯出列穩定在非平凡處)"
+              : (tr({ zh: '否 (导出列稳定在非平凡处)', en: 'No (series stabilizes above {e})'
             }))}
           </span>
         </div>
@@ -602,8 +591,7 @@ function DerivedSeriesSVG({
         <>
           <text x={leftX + nodeW / 2} y={6} textAnchor="middle"
             style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--accent)">
-            {tr({ zh: '导出列 G^(i)', en: 'Derived series G^(i)',
-                zhHant: "匯出列 G^(i)"
+            {tr({ zh: '导出列 G^(i)', en: 'Derived series G^(i)'
             })}
           </text>
           <text x={rightX + nodeW / 2} y={6} textAnchor="middle"
@@ -670,8 +658,7 @@ function DerivedSeriesSVG({
                   markerEnd="url(#snArrowRed)" />
                 <text x={leftX + nodeW + 32} y={y + nodeH / 2 + 12}
                   style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--warn)">
-                  {tr({ zh: '稳定', en: 'stable',
-                      zhHant: "穩定"
+                  {tr({ zh: '稳定', en: 'stable'
                 })}
                 </text>
               </g>
@@ -734,8 +721,7 @@ function DerivedSeriesSVG({
                   markerEnd="url(#snArrowLC)" />
                 <text x={rightX + nodeW + 32} y={y + nodeH / 2 + 12}
                   style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--accent-2)">
-                  {tr({ zh: '不幂零', en: 'not nilpotent',
-                      zhHant: "不冪零"
+                  {tr({ zh: '不幂零', en: 'not nilpotent'
                 })}
                 </text>
               </g>
@@ -905,19 +891,16 @@ function SylowCardsSVG({
             {/* Normal badge */}
             <text x={x + 10} y={58} style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600 }} fill={normalColor}>
               {s.normal
-                ? (tr({ zh: '正规 ✓', en: 'normal ✓',
-                    zhHant: "正規 ✓"
+                ? (tr({ zh: '正规 ✓', en: 'normal ✓'
                 }))
-                : (tr({ zh: '不正规 ✗', en: 'not normal ✗',
-                    zhHant: "不正規 ✗"
+                : (tr({ zh: '不正规 ✗', en: 'not normal ✗'
                 }))}
             </text>
 
             {showWhy && (
               <text x={x + 10} y={74} style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
                 {s.normal
-                  ? (tr({ zh: `n_p=1 => 正规`, en: `n_p=1 => unique => normal`,
-                      zhHant: "n_p=1 => 正規"
+                  ? (tr({ zh: `n_p=1 => 正规`, en: `n_p=1 => unique => normal`
                 }))
                   : (lang === 'zh' ? `n_p=${s.nP}>1 => 不正规` : `n_p=${s.nP}>1 => not unique => non-normal`)}
               </text>
@@ -949,8 +932,6 @@ const SN_INFO: Record<Degree, {
   formulaZh: string;
   derivedChainEn: string;
   derivedChainZh: string;
-        formulaZhHant?: string;
-        derivedChainZhHant?: string;
 }> = {
   2: {
     order: 2,
@@ -959,8 +940,7 @@ const SN_INFO: Record<Degree, {
     formulaEn: 'Quadratic formula: x = (−b ± √(b²−4ac)) / 2a',
     formulaZh: '二次公式: x = (−b ± √(b²−4ac)) / 2a',
     derivedChainEn: 'S₂ → {e} (abelian, derived length 1)',
-    derivedChainZh: 'S₂ → {e}（交换群，导出长度 1）',
-      derivedChainZhHant: "S₂ → {e}（交換群，匯出長度 1）"
+    derivedChainZh: 'S₂ → {e}（交换群，导出长度 1）'
 },
   3: {
     order: 6,
@@ -969,8 +949,7 @@ const SN_INFO: Record<Degree, {
     formulaEn: 'Cubic formula exists (Cardano, 1545)',
     formulaZh: '三次根式公式存在（Cardano，1545）',
     derivedChainEn: 'S₃ → A₃ → {e} (derived length 2)',
-    derivedChainZh: 'S₃ → A₃ → {e}（导出长度 2）',
-      derivedChainZhHant: "S₃ → A₃ → {e}（匯出長度 2）"
+    derivedChainZh: 'S₃ → A₃ → {e}（导出长度 2）'
 },
   4: {
     order: 24,
@@ -979,8 +958,7 @@ const SN_INFO: Record<Degree, {
     formulaEn: 'Quartic formula exists (Ferrari, 1545)',
     formulaZh: '四次根式公式存在（Ferrari，1545）',
     derivedChainEn: 'S₄ → A₄ → V₄ → {e} (derived length 3)',
-    derivedChainZh: 'S₄ → A₄ → V₄ → {e}（导出长度 3）',
-      derivedChainZhHant: "S₄ → A₄ → V₄ → {e}（匯出長度 3）"
+    derivedChainZh: 'S₄ → A₄ → V₄ → {e}（导出长度 3）'
 },
   5: {
     order: 120,
@@ -989,9 +967,7 @@ const SN_INFO: Record<Degree, {
     formulaEn: 'No general radical formula (Abel-Ruffini, ~1824)',
     formulaZh: '不存在通用根式公式（Abel-Ruffini，约 1824）',
     derivedChainEn: 'S₅ → A₅ → A₅ → ··· (stabilizes; A₅ simple nonabelian)',
-    derivedChainZh: 'S₅ → A₅ → A₅ → ···（稳定；A₅ 为非交换单群）',
-      formulaZhHant: "不存在通用根式公式（Abel-Ruffini，約 1824）",
-      derivedChainZhHant: "S₅ → A₅ → A₅ → ···（穩定；A₅ 為非交換單群）"
+    derivedChainZh: 'S₅ → A₅ → A₅ → ···（稳定；A₅ 为非交换单群）'
 },
   6: {
     order: 720,
@@ -1000,9 +976,7 @@ const SN_INFO: Record<Degree, {
     formulaEn: 'No general radical formula (A₆ simple nonabelian)',
     formulaZh: '不存在通用根式公式（A₆ 为非交换单群）',
     derivedChainEn: 'S₆ → A₆ → A₆ → ··· (stabilizes)',
-    derivedChainZh: 'S₆ → A₆ → A₆ → ···（稳定）',
-      formulaZhHant: "不存在通用根式公式（A₆ 為非交換單群）",
-      derivedChainZhHant: "S₆ → A₆ → A₆ → ···（穩定）"
+    derivedChainZh: 'S₆ → A₆ → A₆ → ···（稳定）'
 },
 };
 
@@ -1055,8 +1029,7 @@ function GaloisTimelinePanel({ lang }: { lang: Lang }) {
           stroke="var(--gold)" strokeWidth={1.5} strokeDasharray="4 3" />
         <text x={10 + 3 * spacing + 4} y={14}
           style={{ fontFamily: 'var(--mono)', fontSize: 8 }} fill="var(--gold)">
-          {tr({ zh: 'n=5 断崖', en: 'n=5 wall',
-              zhHant: "n=5 斷崖"
+          {tr({ zh: 'n=5 断崖', en: 'n=5 wall'
         })}
         </text>
 

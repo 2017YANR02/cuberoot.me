@@ -12,13 +12,6 @@ const TABS = [
   { path: '/code/architecture/history',   zh: '历程',    en: 'History' },
 ] as const;
 
-const TAB_HANT: Record<string, string | undefined> = {
-  '/code/architecture': '概覽',
-  '/code/architecture/flow': '請求流程',
-  '/code/architecture/decisions': '技術決策',
-  '/code/architecture/history': '歷程',
-};
-
 export default function ArchNav() {
   const lang = useLang();
   const pathname = usePathname();
@@ -46,7 +39,7 @@ export default function ArchNav() {
             aria-selected={isActive(tab.path)}
             className={`arch-nav-tab${isActive(tab.path) ? ' active' : ''}`}
           >
-            {i18n.language === 'zh-Hant' ? (TAB_HANT[tab.path] ?? tab.zh) : (i18n.language.startsWith('zh') ? tab.zh : tab.en)}
+            {(i18n.language.startsWith('zh') ? tab.zh : tab.en)}
           </Link>
         ))}
       </div>

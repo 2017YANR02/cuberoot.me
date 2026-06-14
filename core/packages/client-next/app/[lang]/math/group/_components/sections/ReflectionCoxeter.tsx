@@ -306,8 +306,7 @@ function TypeAWidget() {
 
   const verifyBraid = useCallback(() => {
     // Verify s_i s_{i+1} s_i = s_{i+1} s_i s_{i+1} for the first valid i
-    if (n < 2) { setVerifyResult(tr({ zh: 'n≥2 才有辫关系', en: 'Need n≥2 for braid relation',
-        zhHant: "n≥2 才有辮關係"
+    if (n < 2) { setVerifyResult(tr({ zh: 'n≥2 才有辫关系', en: 'Need n≥2 for braid relation'
     })); return; }
     const i = 1;
     // Apply s_i s_{i+1} s_i to identity
@@ -318,8 +317,7 @@ function TypeAWidget() {
     for (const idx of [i + 1, i, i + 1]) { [p2[idx - 1], p2[idx]] = [p2[idx], p2[idx - 1]]; }
     const same = p1.every((v, k) => v === p2[k]);
     setVerifyResult(same
-      ? (tr({ zh: `s₁s₂s₁ = s₂s₁s₂ ✓  (辫关系成立, m(1,2)=3)`, en: `s₁s₂s₁ = s₂s₁s₂ ✓  (braid relation holds, m(1,2)=3)`,
-          zhHant: "s₁s₂s₁ = s₂s₁s₂ ✓  (辮關係成立, m(1,2)=3)"
+      ? (tr({ zh: `s₁s₂s₁ = s₂s₁s₂ ✓  (辫关系成立, m(1,2)=3)`, en: `s₁s₂s₁ = s₂s₁s₂ ✓  (braid relation holds, m(1,2)=3)`
     }))
       : `mismatch`
     );
@@ -417,8 +415,7 @@ function TypeAWidget() {
         <div className="gt-result-row">
           <span className="gt-result-label"><L zh="字 (应用的生成元)" en="word (gens applied)" /></span>
           <span className="gt-result-val" style={{ wordBreak: 'break-all' }}>
-            {word.length === 0 ? (tr({ zh: 'e (单位元)', en: 'e (identity)',
-                zhHant: "e (單位元)"
+            {word.length === 0 ? (tr({ zh: 'e (单位元)', en: 'e (identity)'
             })) : word.map(i => `s${i}`).join(' ')}
           </span>
         </div>
@@ -802,22 +799,16 @@ export default function ReflectionCoxeter() {
         </thead>
         <tbody>
           {[
-            { type: 'A_n', diag: tr({ zh: '路径图（全无标号）', en: 'path graph (all unlabelled)',
-                zhHant: "路徑圖（全無標號）"
+            { type: 'A_n', diag: tr({ zh: '路径图（全无标号）', en: 'path graph (all unlabelled)'
             }), iso: 'S_{n+1}', order: '(n+1)!', cryst: true },
-            { type: 'B_n', diag: tr({ zh: '路径图，一端边标 4', en: 'path, one end-edge labelled 4',
-                zhHant: "路徑圖，一端邊標 4"
+            { type: 'B_n', diag: tr({ zh: '路径图，一端边标 4', en: 'path, one end-edge labelled 4'
             }), iso: '\\mathbb{Z}_2\\wr S_n', order: '2^n\\cdot n!', cryst: true },
-            { type: 'I_2(m)', diag: tr({ zh: '两顶点，边标 m', en: 'two vertices, edge labelled m',
-                zhHant: "兩頂點，邊標 m"
+            { type: 'I_2(m)', diag: tr({ zh: '两顶点，边标 m', en: 'two vertices, edge labelled m'
             }), iso: 'D_m', order: '2m', cryst: false },
-            { type: 'G_2', diag: tr({ zh: '两顶点，边标 6', en: 'two vertices, edge labelled 6',
-                zhHant: "兩頂點，邊標 6"
+            { type: 'G_2', diag: tr({ zh: '两顶点，边标 6', en: 'two vertices, edge labelled 6'
             }), iso: 'I_2(6)', order: '12', cryst: true },
-            { type: 'H_3', diag: tr({ zh: '路径图，一端边标 5', en: 'path, one end-edge labelled 5',
-                zhHant: "路徑圖，一端邊標 5"
-            }), iso: tr({ zh: '正二十面体群', en: 'icosahedral group',
-                zhHant: "正二十面體群"
+            { type: 'H_3', diag: tr({ zh: '路径图，一端边标 5', en: 'path, one end-edge labelled 5'
+            }), iso: tr({ zh: '正二十面体群', en: 'icosahedral group'
             }), order: '120', cryst: false },
           ].map(row => (
             <tr key={row.type}>
@@ -864,16 +855,12 @@ export default function ReflectionCoxeter() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 10, margin: '24px 0' }}>
         {[
           { label: lang === 'zh' ? '|W(B₃)|' : '|W(B₃)|', val: '48', sub: lang === 'zh' ? '= 2³·3!' : '= 2³·3!' },
-          { label: tr({ zh: '旋转子群', en: 'rotation subgroup',
-              zhHant: "旋轉子群"
+          { label: tr({ zh: '旋转子群', en: 'rotation subgroup'
         }), val: '24', sub: 'S₄' },
-          { label: tr({ zh: '镜像对称数', en: 'mirror symmetries',
-              zhHant: "映象對稱數"
-        }), val: '24', sub: tr({ zh: '= 9 个镜面', en: '= 9 planes',
-            zhHant: "= 9 個鏡面"
+          { label: tr({ zh: '镜像对称数', en: 'mirror symmetries'
+        }), val: '24', sub: tr({ zh: '= 9 个镜面', en: '= 9 planes'
         }) },
-          { label: tr({ zh: '根数', en: 'root count',
-              zhHant: "根數"
+          { label: tr({ zh: '根数', en: 'root count'
         }), val: '18', sub: tr({ zh: 'B₃ 根系', en: 'B₃ root system' }) },
         ].map(item => (
           <div key={item.label} style={{ border: '1px solid var(--rule)', borderRadius: 6, padding: '14px 12px', textAlign: 'center', background: 'var(--bg-elev)' }}>

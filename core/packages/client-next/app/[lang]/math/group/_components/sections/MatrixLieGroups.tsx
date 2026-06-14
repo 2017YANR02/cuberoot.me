@@ -321,11 +321,9 @@ function RotationComposerPanel({ lang }: { lang: 'zh' | 'en' }) {
           <button key={o} className={`gt-chip${order === o ? ' gt-chip-active' : ''}`}
             onClick={() => setOrder(o)}>
             {o === 'AB'
-              ? (tr({ zh: '先 A 后 B (AB)', en: 'A then B (AB)',
-                  zhHant: "先 A 後 B (AB)"
+              ? (tr({ zh: '先 A 后 B (AB)', en: 'A then B (AB)'
             }))
-              : (tr({ zh: '先 B 后 A (BA)', en: 'B then A (BA)',
-                  zhHant: "先 B 後 A (BA)"
+              : (tr({ zh: '先 B 后 A (BA)', en: 'B then A (BA)'
             }))}
           </button>
         ))}
@@ -343,11 +341,9 @@ function RotationComposerPanel({ lang }: { lang: 'zh' | 'en' }) {
         color: areEqual ? 'var(--green)' : 'var(--accent)',
       }}>
         {areEqual
-          ? (tr({ zh: 'AB = BA（此时可交换，例如同轴或零角）', en: 'AB = BA (commute here — e.g. same axis or zero angle)',
-              zhHant: "AB = BA（此時可交換，例如同軸或零角）"
+          ? (tr({ zh: 'AB = BA（此时可交换，例如同轴或零角）', en: 'AB = BA (commute here — e.g. same axis or zero angle)'
         }))
-          : (tr({ zh: 'AB ≠ BA — SO(3) 非交换！高亮格 = 差异项', en: 'AB ≠ BA — SO(3) is non-abelian! Highlighted cells differ',
-              zhHant: "AB ≠ BA — SO(3) 非交換！高亮格 = 差異項"
+          : (tr({ zh: 'AB ≠ BA — SO(3) 非交换！高亮格 = 差异项', en: 'AB ≠ BA — SO(3) is non-abelian! Highlighted cells differ'
         }))}
       </div>
 
@@ -576,8 +572,7 @@ function DoubleCoverPanel({ lang }: { lang: 'zh' | 'en' }) {
           {/* −q label */}
           <text x={60} y={165} textAnchor="middle"
             style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
-            {tr({ zh: '−q 给出同一矩阵', en: '−q gives same matrix',
-                zhHant: "−q 給出同一矩陣"
+            {tr({ zh: '−q 给出同一矩阵', en: '−q gives same matrix'
             })}
           </text>
         </g>
@@ -594,16 +589,14 @@ function DoubleCoverPanel({ lang }: { lang: 'zh' | 'en' }) {
         {(phiDeg >= 355 && phiDeg <= 365) && (
           <text x={390} y={185} textAnchor="middle"
             style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--gold)">
-            {tr({ zh: 'q → −q，旋转不变！', en: 'q → −q, rotation unchanged!',
-                zhHant: "q → −q，旋轉不變！"
+            {tr({ zh: 'q → −q，旋转不变！', en: 'q → −q, rotation unchanged!'
             })}
           </text>
         )}
         {atHalf && (
           <text x={390} y={190} textAnchor="middle"
             style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--gold)">
-            {tr({ zh: 'q → −q，旋转不变！', en: 'q → −q, rotation unchanged!',
-                zhHant: "q → −q，旋轉不變！"
+            {tr({ zh: 'q → −q，旋转不变！', en: 'q → −q, rotation unchanged!'
             })}
           </text>
         )}
@@ -620,11 +613,9 @@ function DoubleCoverPanel({ lang }: { lang: 'zh' | 'en' }) {
           <span className="gt-result-label"><L zh="R(q) = R(−q)?" en="R(q) = R(−q)?" /></span>
           <span className="gt-result-val-strong" style={{ color: sameRotation ? 'var(--green)' : 'var(--warn)' }}>
             {sameRotation
-              ? (tr({ zh: '总是相等（数值验证通过）', en: 'always equal (numerically verified)',
-                  zhHant: "總是相等（數值驗證透過）"
+              ? (tr({ zh: '总是相等（数值验证通过）', en: 'always equal (numerically verified)'
             }))
-              : (tr({ zh: '计算误差 > 1e-4（不应发生）', en: 'numerical error > 1e-4 (should not happen)',
-                  zhHant: "計算誤差 > 1e-4（不應發生）"
+              : (tr({ zh: '计算误差 > 1e-4（不应发生）', en: 'numerical error > 1e-4 (should not happen)'
             }))}
           </span>
         </div>
@@ -660,9 +651,7 @@ interface SubgroupInfo {
   order: (n: number) => number;
   iso: string;
   desc: { zh: string; en: string
-    zhHant?: string;
  };
-    labelZhHant?: string;
 }
 
 const SUBGROUPS: SubgroupInfo[] = [
@@ -670,46 +659,36 @@ const SUBGROUPS: SubgroupInfo[] = [
     key: 'Cn', labelZh: 'C_n (循环)', labelEn: 'C_n (cyclic)', order: n => n,
     iso: 'ℤ/n', desc: {
       zh: '绕固定轴旋转 2πk/n，阶为 n',
-      en: 'Rotations by 2πk/n about a fixed axis, order n',
-        zhHant: "繞固定軸旋轉 2πk/n，階為 n"
-    },
-      labelZhHant: "C_n (迴圈)"
+      en: 'Rotations by 2πk/n about a fixed axis, order n'
+    }
 },
   {
     key: 'Dn', labelZh: 'D_n (二面体旋转)', labelEn: 'D_n (dihedral rotation)', order: n => 2 * n,
     iso: 'Dih(n)', desc: {
       zh: '正 n 边形嵌入 ℝ³ 的旋转群，阶 2n（含 n 条平面内旋转轴）',
-      en: 'Rotational symmetry of n-gon in ℝ³, order 2n (n in-plane flip axes)',
-        zhHant: "正 n 邊形嵌入 ℝ³ 的旋轉群，階 2n（含 n 條平面內旋轉軸）"
-    },
-      labelZhHant: "D_n (二面體旋轉)"
+      en: 'Rotational symmetry of n-gon in ℝ³, order 2n (n in-plane flip axes)'
+    }
 },
   {
     key: 'T', labelZh: '四面体 T ≅ A₄', labelEn: 'Tetrahedral T ≅ A₄', order: () => 12,
     iso: 'A₄', desc: {
       zh: '正四面体旋转群，阶 12 = 4!/2，由 4 个三重轴和 3 个二重轴生成',
-      en: 'Rotation group of tetrahedron, order 12 = 4!/2; 4 threefold axes, 3 twofold axes',
-        zhHant: "正四面體旋轉群，階 12 = 4!/2，由 4 個三重軸和 3 個二重軸生成"
-    },
-      labelZhHant: "四面體 T ≅ A₄"
+      en: 'Rotation group of tetrahedron, order 12 = 4!/2; 4 threefold axes, 3 twofold axes'
+    }
 },
   {
     key: 'O', labelZh: '正方体/八面体 O ≅ S₄', labelEn: 'Cube/octahedron O ≅ S₄', order: () => 24,
     iso: 'S₄', desc: {
       zh: '正方体（及正八面体）旋转群，阶 24 = 4!，置换 4 条体对角线。这正是魔方形状的刚体旋转群！',
-      en: 'Rotation group of cube (and octahedron), order 24 = 4!, permuting 4 body diagonals. This is the rigid symmetry group of the Rubik\'s cube shape!',
-        zhHant: "正方體（及正八面體）旋轉群，階 24 = 4!，置換 4 條體對角線。這正是魔方形狀的剛體旋轉群！"
-    },
-      labelZhHant: "正方體/八面體 O ≅ S₄"
+      en: 'Rotation group of cube (and octahedron), order 24 = 4!, permuting 4 body diagonals. This is the rigid symmetry group of the Rubik\'s cube shape!'
+    }
 },
   {
     key: 'I', labelZh: '正十二/二十面体 I ≅ A₅', labelEn: 'Dodecahedron/icosahedron I ≅ A₅', order: () => 60,
     iso: 'A₅', desc: {
       zh: '正十二面体（及正二十面体）旋转群，阶 60 = 5!/2，单群（非可解）',
-      en: 'Rotation group of dodecahedron (and icosahedron), order 60 = 5!/2; a simple group (non-solvable)',
-        zhHant: "正十二面體（及正二十面體）旋轉群，階 60 = 5!/2，單群（非可解）"
-    },
-      labelZhHant: "正十二/二十面體 I ≅ A₅"
+      en: 'Rotation group of dodecahedron (and icosahedron), order 60 = 5!/2; a simple group (non-solvable)'
+    }
 },
 ];
 
@@ -880,17 +859,13 @@ function FiniteSubgroupPanel({ lang }: { lang: 'zh' | 'en' }) {
       //   diagonal); tr=-1 → 180° (face or edge axis, indistinguishable by trace).
       const m = octGroup[clampedIdx];
       const trace = m[0] + m[4] + m[8];
-      if (Math.abs(trace - 3) < 0.01) return tr({ zh: '单位元', en: 'identity',
-          zhHant: "單位元"
+      if (Math.abs(trace - 3) < 0.01) return tr({ zh: '单位元', en: 'identity'
     });
-      if (Math.abs(trace - 1) < 0.05) return tr({ zh: '面轴 (90°/270°)', en: 'face axis (90°/270°)',
-          zhHant: "面軸 (90°/270°)"
+      if (Math.abs(trace - 1) < 0.05) return tr({ zh: '面轴 (90°/270°)', en: 'face axis (90°/270°)'
     });
-      if (Math.abs(trace - 0) < 0.05) return tr({ zh: '体对角线轴 (120°/240°)', en: 'body-diagonal axis (120°/240°)',
-          zhHant: "體對角線軸 (120°/240°)"
+      if (Math.abs(trace - 0) < 0.05) return tr({ zh: '体对角线轴 (120°/240°)', en: 'body-diagonal axis (120°/240°)'
     });
-      if (Math.abs(trace - (-1)) < 0.05) return tr({ zh: '180° 旋转 (面轴或棱轴)', en: '180° rotation (face or edge axis)',
-          zhHant: "180° 旋轉 (面軸或稜軸)"
+      if (Math.abs(trace - (-1)) < 0.05) return tr({ zh: '180° 旋转 (面轴或棱轴)', en: '180° rotation (face or edge axis)'
     });
     }
     return `#${clampedIdx}`;
@@ -960,13 +935,12 @@ function FiniteSubgroupPanel({ lang }: { lang: 'zh' | 'en' }) {
             |G| = {info.order(nVal)}
           </text>
           <text x={0} y={52} style={{ fontFamily: 'var(--mono)', fontSize: 11 }} fill="var(--ink-dim)">
-            {tr({ zh: '同构型', en: 'Isomorphism',
-                zhHant: "同構型"
+            {tr({ zh: '同构型', en: 'Isomorphism'
             })}: {info.iso}
           </text>
           <foreignObject x={0} y={60} width={280} height={80}>
             <div style={{ fontFamily: 'var(--serif)', fontSize: 13, color: 'var(--ink-dim)', lineHeight: 1.5 }}>
-              {(i18n.language === 'zh-Hant' ? (info.desc.zhHant ?? info.desc.zh) : (i18n.language.startsWith('zh') ? info.desc.zh : info.desc.en))}
+              {((i18n.language.startsWith('zh') ? info.desc.zh : info.desc.en))}
             </div>
           </foreignObject>
           <text x={0} y={155} style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-faint)">

@@ -75,8 +75,7 @@ export function CfopTutorialView({ post }: { post: ArticlePostContent }) {
 
   const activeLabel = useMemo(() => {
     const t = toc.find(x => x.id === active);
-    return t ? (isZh ? t.zh : t.en) : tr({ zh: '目录', en: 'Contents',
-        zhHant: "目錄"
+    return t ? (isZh ? t.zh : t.en) : tr({ zh: '目录', en: 'Contents'
     });
   }, [active, toc, isZh]);
 
@@ -154,8 +153,7 @@ export function CfopTutorialView({ post }: { post: ArticlePostContent }) {
             </div>
 
             <aside className={'cfop-toc' + (tocOpen ? ' is-open' : '')}>
-              <div className="cfop-toc-title">{tr({ zh: '目录', en: 'Contents',
-                  zhHant: "目錄"
+              <div className="cfop-toc-title">{tr({ zh: '目录', en: 'Contents'
             })}</div>
               <nav>
                 {toc.map(t => (

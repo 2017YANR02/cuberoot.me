@@ -68,8 +68,7 @@ export default function EditArticlePage() {
       <header className="article-list-header">
         <HomeLink className="article-list-back">
           <ChevronLeft size={16} />
-          <span>{tr({ zh: '首页', en: 'Home',
-              zhHant: "首頁"
+          <span>{tr({ zh: '首页', en: 'Home'
         })}</span>
         </HomeLink>
       </header>

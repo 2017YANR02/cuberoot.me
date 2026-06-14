@@ -44,17 +44,13 @@ export const NGINX: StackTool = {
     outlookDesc: <>Mainline 1.31 + stable 1.30 shipped on the same day with HTTP/3 polish, ngx_http_tunnel_module, and a least_time upstream strategy. freenginx is walking a more community-oriented path in parallel. The web-edge landscape is not going to swing in the short term.</>,
   },
   heroStats: [
-    { num: '34', unit: '%', zh: <>公网 top 1M 站点 <em>Netcraft 2026-04</em></>, en: <>of the public top-1M sites <em>Netcraft 2026-04</em></>,
-        zhHant: <>公網 top 1M 站點 <em>Netcraft 2026-04</em></>
+    { num: '34', unit: '%', zh: <>公网 top 1M 站点 <em>Netcraft 2026-04</em></>, en: <>of the public top-1M sites <em>Netcraft 2026-04</em></>
     },
-    { num: '22', unit: 'y', zh: <>从 2004 至今 <em>边缘第一选择</em></>, en: <>since 2004 <em>still the edge default</em></>,
-        zhHant: <>從 2004 至今 <em>邊緣第一選擇</em></>
+    { num: '22', unit: 'y', zh: <>从 2004 至今 <em>边缘第一选择</em></>, en: <>since 2004 <em>still the edge default</em></>
     },
-    { num: '1.31', zh: <>当前 mainline <em>2026-05-13 ships</em></>, en: <>current mainline <em>2026-05-13 release</em></>,
-        zhHant: <>當前 mainline <em>2026-05-13 ships</em></>
+    { num: '1.31', zh: <>当前 mainline <em>2026-05-13 ships</em></>, en: <>current mainline <em>2026-05-13 release</em></>
     },
-    { num: '670', unit: 'M$', zh: <>F5 收购金额 <em>2019-03</em></>, en: <>F5 acquisition <em>2019-03</em></>,
-        zhHant: <>F5 收購金額 <em>2019-03</em></>
+    { num: '670', unit: 'M$', zh: <>F5 收购金额 <em>2019-03</em></>, en: <>F5 acquisition <em>2019-03</em></>
     },
   ],
   intro: {

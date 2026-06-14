@@ -134,19 +134,16 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
         <div className="recon-page-header">
           <div>
             <Link href={`/recon/${parentId}`} className="recon-back-link">
-              <ArrowLeft size={14} /> {tr({ zh: '返回详情', en: 'Back',
-                  zhHant: "返回詳情"
+              <ArrowLeft size={14} /> {tr({ zh: '返回详情', en: 'Back'
             })}
             </Link>
           </div>
         </div>
         <div style={{ padding: 24, textAlign: 'center' }}>
-          <p style={{ marginBottom: 16 }}>{tr({ zh: '需要登录才能提交另解。', en: 'Login required to submit an alternative.',
-              zhHant: "需要登入才能提交另解。"
+          <p style={{ marginBottom: 16 }}>{tr({ zh: '需要登录才能提交另解。', en: 'Login required to submit an alternative.'
         })}</p>
           <button type="button" className="recon-btn" onClick={() => login()}>
-            <LogIn size={14} /> {tr({ zh: '登录 WCA', en: 'Sign in with WCA',
-                zhHant: "登入 WCA"
+            <LogIn size={14} /> {tr({ zh: '登录 WCA', en: 'Sign in with WCA'
             })}
           </button>
         </div>
@@ -191,8 +188,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
                 value={scramble}
                 readOnly
                 className="submit-input-locked alt-submit-scramble"
-                title={tr({ zh: '继承自原 solve,不可编辑', en: 'Inherited from original, read-only',
-                    zhHant: "繼承自原 solve,不可編輯"
+                title={tr({ zh: '继承自原 solve,不可编辑', en: 'Inherited from original, read-only'
                 })}
               />
             </label>

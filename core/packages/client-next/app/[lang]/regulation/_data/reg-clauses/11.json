@@ -6,436 +6,374 @@
   },
   "title": {
     "en": "Incidents",
-    "zh": "意外事件",
-    "zhHant": "意外事件"
+    "zh": "意外事件"
   },
   "clauses": [
     {
       "id": "11a",
       "depth": 0,
       "en": "Incidents include:",
-      "zh": "意外事件包括：",
-      "zhHant": "意外事件包括："
+      "zh": "意外事件包括："
     },
     {
       "id": "11a1",
       "depth": 1,
       "en": "Incorrect execution of event procedures, by officials or competitors.",
-      "zh": "工作人员或选手不正确地执行赛程。",
-      "zhHant": "工作人員或選手不正確地執行賽程。"
+      "zh": "工作人员或选手不正确地执行赛程。"
     },
     {
       "id": "11a2",
       "depth": 1,
       "en": "Interference or facility interruptions (e.g. power failure, emergency alarm activation).",
-      "zh": "干扰或设备中断（例如停电、紧急警报等）。",
-      "zhHant": "干擾或裝置中斷（例如停電、緊急警報等）。"
+      "zh": "干扰或设备中断（例如停电、紧急警报等）。"
     },
     {
       "id": "11a3",
       "depth": 1,
       "en": "Equipment malfunction.",
-      "zh": "设备故障。",
-      "zhHant": "裝置故障。"
+      "zh": "设备故障。"
     },
     {
       "id": "11b",
       "depth": 0,
       "en": "If an incident occurs, the WCA Delegate determines an impartial and appropriate course of action.",
-      "zh": "如果意外事件发生了，由WCA代表决定一个公平合理的措施。",
-      "zhHant": "如果意外事件發生了，由WCA代表決定一個公平合理的措施。"
+      "zh": "如果意外事件发生了，由WCA代表决定一个公平合理的措施。"
     },
     {
       "id": "11d",
       "depth": 0,
       "en": "If the WCA Regulations are not fully clear or if the incident is not covered by the WCA Regulations, then the WCA Delegate must make a decision based on fair sportsmanship (also see [Regulation 11e3](regulations:regulation:11e3)).",
-      "zh": "对于意外事件，如果WCA规则不够清晰或没有涉及到，由WCA代表根据公平竞赛原则作出判决（同时参考[规则11e3](regulations:regulation:11e3)）。",
-      "zhHant": "對於意外事件，如果WCA規則不夠清晰或沒有涉及到，由WCA代表根據公平競賽原則作出判決（同時參考[規則11e3](regulations:regulation:11e3)）。"
+      "zh": "对于意外事件，如果WCA规则不够清晰或没有涉及到，由WCA代表根据公平竞赛原则作出判决（同时参考[规则11e3](regulations:regulation:11e3)）。"
     },
     {
       "id": "11e",
       "depth": 0,
       "en": "The WCA Delegate may grant a competitor an extra attempt to replace an attempt affected by an incident. The competitor should appeal verbally or in writing to the judge and WCA Delegate at the time of the incident, before finishing the original attempt, to be eligible for an extra attempt. An appeal does not guarantee the competitor an extra attempt.",
-      "zh": "WCA代表可以给予选手额外的一次还原机会以代替被意外事件影响的一次还原。如果希望获得额外的还原机会，选手应该在意外发生后、此次还原完成前以口头或书面的形式向裁判和WCA代表申请。这个申请并不保证选手会获得额外的还原机会。",
-      "zhHant": "WCA代表可以給予選手額外的一次還原機會以代替被意外事件影響的一次還原。如果希望獲得額外的還原機會，選手應該在意外發生後、此次還原完成前以口頭或書面的形式向裁判和WCA代表申請。這個申請並不保證選手會獲得額外的還原機會。"
+      "zh": "WCA代表可以给予选手额外的一次还原机会以代替被意外事件影响的一次还原。如果希望获得额外的还原机会，选手应该在意外发生后、此次还原完成前以口头或书面的形式向裁判和WCA代表申请。这个申请并不保证选手会获得额外的还原机会。"
     },
     {
       "id": "11e+",
       "depth": 0,
       "en": "[CLARIFICATION] Since an appeal is not guaranteed to be successful, the competitor may choose to keep the timer running while appealing it, and resume the solve when appropriate.",
-      "zh": "[澄清] 由于申请不保证被接受，选手可以在申请时保持计时器的运行，并在条件适当的情况下继续复原。",
-      "zhHant": "[澄清] 由於申請不保證被接受，選手可以在申請時保持計時器的執行，並在條件適當的情況下繼續復原。"
+      "zh": "[澄清] 由于申请不保证被接受，选手可以在申请时保持计时器的运行，并在条件适当的情况下继续复原。"
     },
     {
       "id": "11e++",
       "depth": 0,
       "en": "[RECOMMENDATION] The WCA Delegate should record the reason(s) for the extra attempt (e.g. on the back of the score sheet).",
-      "zh": "[建议] WCA代表应该记录使用备用打乱的原因（例如写在成绩单的背面）。",
-      "zhHant": "[建議] WCA代表應該記錄使用備用打亂的原因（例如寫在成績單的背面）。"
+      "zh": "[建议] WCA代表应该记录使用备用打乱的原因（例如写在成绩单的背面）。"
     },
     {
       "id": "11e+++",
       "depth": 0,
       "en": "[RECOMMENDATION] The WCA Delegate should use stronger discretion when granting an extra attempt after the solve is finished. The extra attempt should be granted only in exceptional circumstances.",
-      "zh": "[建议] 还原结束后，WCA代表应该更加谨慎的给出额外尝试。额外尝试应该只有在特殊情况下才能被给出。",
-      "zhHant": "[建議] 還原結束後，WCA代表應該更加謹慎的給出額外嘗試。額外嘗試應該只有在特殊情況下才能被給出。"
+      "zh": "[建议] 还原结束后，WCA代表应该更加谨慎的给出额外尝试。额外尝试应该只有在特殊情况下才能被给出。"
     },
     {
       "id": "11e++++",
       "depth": 0,
       "en": "[REMINDER] The attempt is finished after the competitor checks the recorded result and signs on the score sheet (see [Regulation A7c](regulations:regulation:A7c)).",
-      "zh": "[提醒] 选手检查记录的结果并签名后，尝试结束（见[规则A7c](regulations:regulation:A7c)）。",
-      "zhHant": "[提醒] 選手檢查記錄的結果並簽名後，嘗試結束（見[規則A7c](regulations:regulation:A7c)）。"
+      "zh": "[提醒] 选手检查记录的结果并签名后，尝试结束（见[规则A7c](regulations:regulation:A7c)）。"
     },
     {
       "id": "11e+++++",
       "depth": 0,
       "en": "[ADDITION] If the WCA Delegate does not have time to investigate this claim during the competition, they should grant the competitor a provisional extra.",
-      "zh": "[附加] 如果WCA代表在比赛中没有时间调查申请，则他应当给出一次临时的额外尝试机会。",
-      "zhHant": "[附加] 如果WCA代表在比賽中沒有時間調查申請，則他應當給出一次臨時的額外嘗試機會。"
+      "zh": "[附加] 如果WCA代表在比赛中没有时间调查申请，则他应当给出一次临时的额外尝试机会。"
     },
     {
       "id": "11e++++++",
       "depth": 0,
       "en": "[ADDITION] An extra attempt is considered to be done at the time that the original solve happened. For example, if a round was originally scheduled for January 21st, and a competitor receives an extra on January 22nd, the extra solve is considered to be done on January 21st.",
-      "zh": "[附加] 额外尝试应当被认为在原来那次复原发生的时间发生。例如：如果一轮比赛原计划在1月21日进行，而一位选手在1月22日获得一次额外尝试机会，这次额外的复原将被认为是在1月21日完成的。",
-      "zhHant": "[附加] 額外嘗試應當被認為在原來那次復原發生的時間發生。例如：如果一輪比賽原計劃在1月21日進行，而一位選手在1月22日獲得一次額外嘗試機會，這次額外的復原將被認為是在1月21日完成的。"
+      "zh": "[附加] 额外尝试应当被认为在原来那次复原发生的时间发生。例如：如果一轮比赛原计划在1月21日进行，而一位选手在1月22日获得一次额外尝试机会，这次额外的复原将被认为是在1月21日完成的。"
     },
     {
       "id": "11e+++++++",
       "depth": 0,
       "en": "[RECOMMENDATION] If an extra attempt is given for a round after a subsequent round has finished, and the extra attempt causes the competitor to advance to the next round, the competitor should not compete in the subsequent round, at the discretion of the WCA Delegate.",
-      "zh": "[建议] 如果额外尝试是在下一轮比赛结束之后被给出的，并且这次尝试使得选手能够进入下一轮比赛，那么这个选手将不能参加下一轮的比赛，由WCA代表决定。",
-      "zhHant": "[建議] 如果額外嘗試是在下一輪比賽結束之後被給出的，並且這次嘗試使得選手能夠進入下一輪比賽，那麼這個選手將不能參加下一輪的比賽，由WCA代表決定。"
+      "zh": "[建议] 如果额外尝试是在下一轮比赛结束之后被给出的，并且这次尝试使得选手能够进入下一轮比赛，那么这个选手将不能参加下一轮的比赛，由WCA代表决定。"
     },
     {
       "id": "11e1",
       "depth": 1,
       "en": "If a competitor is granted an extra attempt, the extra attempt must be scrambled using a different scramble sequence. This scramble sequence must be generated using a current official version of an official WCA scramble program (see [Regulation 4b](regulations:regulation:4b)).",
-      "zh": "如果选手获得了额外的还原机会，这次还原必须使用不同的打乱，该打乱必须由当前官方版本的官方WCA打乱程序（见[规则4b](regulations:regulation:4b)）生成。",
-      "zhHant": "如果選手獲得了額外的還原機會，這次還原必須使用不同的打亂，該打亂必須由當前官方版本的官方WCA打亂程式（見[規則4b](regulations:regulation:4b)）生成。"
+      "zh": "如果选手获得了额外的还原机会，这次还原必须使用不同的打乱，该打乱必须由当前官方版本的官方WCA打乱程序（见[规则4b](regulations:regulation:4b)）生成。"
     },
     {
       "id": "11e1+",
       "depth": 1,
       "en": "[REMINDER] The extra attempt must be scrambled using an unmodified scramble sequence generated by an official scramble program (see [Regulation 4b](regulations:regulation:4b), [Regulation 4b+](regulations:regulation:4b+)).",
-      "zh": "[提醒] 额外的还原必须用官方打乱软件（见[规则4b](regulations:regulation:4b)，[规则4b+](regulations:regulation:4b+)）生成的未经修改的打乱公式。",
-      "zhHant": "[提醒] 額外的還原必須用官方打亂軟體（見[規則4b](regulations:regulation:4b)，[規則4b+](regulations:regulation:4b+)）生成的未經修改的打亂公式。"
+      "zh": "[提醒] 额外的还原必须用官方打乱软件（见[规则4b](regulations:regulation:4b)，[规则4b+](regulations:regulation:4b+)）生成的未经修改的打乱公式。"
     },
     {
       "id": "11e2",
       "depth": 1,
       "en": "If a competitor is granted an extra attempt, the extra attempt should be done right after the attempt that caused it, and must replace the original regularly numbered attempt.",
-      "zh": "如果选手获得了额外的还原机会，选手需要直接进行额外的还原，且其结果必须代替导致额外还原的那次还原。",
-      "zhHant": "如果選手獲得了額外的還原機會，選手需要直接進行額外的還原，且其結果必須代替導致額外還原的那次還原。"
+      "zh": "如果选手获得了额外的还原机会，选手需要直接进行额外的还原，且其结果必须代替导致额外还原的那次还原。"
     },
     {
       "id": "11e2+",
       "depth": 1,
       "en": "[ADDITION] If an extra attempt itself leads to an additional extra attempt, the competitor should keep doing extra attempts until there is a valid extra attempt to replace the original regularly numbered attempt.",
-      "zh": "[附加] 对于某次额外的尝试又导致额外的尝试的情况，选手应该持续进行额外的尝试，直到产生了可以代替原来常规还原的有效还原。",
-      "zhHant": "[附加] 對於某次額外的嘗試又導致額外的嘗試的情況，選手應該持續進行額外的嘗試，直到產生了可以代替原來常規還原的有效還原。"
+      "zh": "[附加] 对于某次额外的尝试又导致额外的尝试的情况，选手应该持续进行额外的尝试，直到产生了可以代替原来常规还原的有效还原。"
     },
     {
       "id": "11e2++",
       "depth": 1,
       "en": "[EXAMPLE] Suppose a competitor has 5 regularly numbered attempts, and #2 leads to extra attempts. The competitor should do extra attempts until there is a valid extra attempt to replace #2. Suppose later another attempt leads to extra attempts, the competitor should proceed in a similar way as for #2.",
-      "zh": "[举例] 假设在正常的5次尝试中，第2次尝试导致了额外的尝试。此时，选手应该直接进行额外的尝试，直到产生一个可以代替第2次尝试的有效尝试。如果之后的其他尝试又导致了额外的尝试，则与上述第2次尝试类似的进行处理。",
-      "zhHant": "[舉例] 假設在正常的5次嘗試中，第2次嘗試導致了額外的嘗試。此時，選手應該直接進行額外的嘗試，直到產生一個可以代替第2次嘗試的有效嘗試。如果之後的其他嘗試又導致了額外的嘗試，則與上述第2次嘗試類似的進行處理。"
+      "zh": "[举例] 假设在正常的5次尝试中，第2次尝试导致了额外的尝试。此时，选手应该直接进行额外的尝试，直到产生一个可以代替第2次尝试的有效尝试。如果之后的其他尝试又导致了额外的尝试，则与上述第2次尝试类似的进行处理。"
     },
     {
       "id": "11e2a",
       "depth": 2,
       "en": "If attempts are completed out of order, results must be recorded based on the order of scramble sequences, not the order in which attempts were performed.",
-      "zh": "如果尝试完成的顺序和原本顺序不一致，成绩必须按照打乱序列的顺序记录，而不是尝试执行的顺序。",
-      "zhHant": "如果嘗試完成的順序和原本順序不一致，成績必須按照打亂序列的順序記錄，而不是嘗試執行的順序。"
+      "zh": "如果尝试完成的顺序和原本顺序不一致，成绩必须按照打乱序列的顺序记录，而不是尝试执行的顺序。"
     },
     {
       "id": "11e3",
       "depth": 1,
       "en": "If it is unclear whether an incident should result in an extra attempt, the competitor may be granted a provisional extra attempt that will be used only if it is later found that an extra attempt was appropriate (e.g. by a decision of the WRC).",
-      "zh": "如果还不确定某个意外事件是否应给予额外的还原机会，选手可以先获得一个临时的额外还原机会。等最终判罚（例如由WRC作出）出来后再确定是否采用这次额外还原的结果。",
-      "zhHant": "如果還不確定某個意外事件是否應給予額外的還原機會，選手可以先獲得一個臨時的額外還原機會。等最終判罰（例如由WRC作出）出來後再確定是否採用這次額外還原的結果。"
+      "zh": "如果还不确定某个意外事件是否应给予额外的还原机会，选手可以先获得一个临时的额外还原机会。等最终判罚（例如由WRC作出）出来后再确定是否采用这次额外还原的结果。"
     },
     {
       "id": "11f",
       "depth": 0,
       "en": "Decisions about an incident may be supported with video, photographic, or audio evidence, at the discretion of the WCA Delegate.",
-      "zh": "关于意外的判罚可以参考视频、照片或音频证据，由WCA代表决定。",
-      "zhHant": "關於意外的判罰可以參考影片、照片或音訊證據，由WCA代表決定。"
+      "zh": "关于意外的判罚可以参考视频、照片或音频证据，由WCA代表决定。"
     },
     {
       "id": "11f1",
       "depth": 1,
       "en": "Video, and similar forms of recorded evidence, should be reviewed in real time. Exception: slow-motion or frame-by-frame analysis may be used in the following circumstances:",
-      "zh": "视频以及类似形式的录制证据应当按正常速度播放以被检查。例外：在以下情况下，可以使用慢速或者逐帧分析：",
-      "zhHant": "影片以及類似形式的錄製證據應當按正常速度播放以被檢查。例外：在以下情況下，可以使用慢速或者逐幀分析："
+      "zh": "视频以及类似形式的录制证据应当按正常速度播放以被检查。例外：在以下情况下，可以使用慢速或者逐帧分析："
     },
     {
       "id": "11f1+",
       "depth": 1,
       "en": "[RECOMMENDATION] The WCA Regulations Committee should be consulted if slow-motion or frame-by-frame analysis are required.",
-      "zh": "[建议] 如果需要使用慢速或逐帧分析，应咨询WCA规则委员会。",
-      "zhHant": "[建議] 如果需要使用慢速或逐幀分析，應諮詢WCA規則委員會。"
+      "zh": "[建议] 如果需要使用慢速或逐帧分析，应咨询WCA规则委员会。"
     },
     {
       "id": "11f1a",
       "depth": 2,
       "en": "The individual result is a regional record or a personal record in the top 50 results of the world rankings.",
-      "zh": "这个单次成绩是地区纪录或者世界排名前50名的选手的个人纪录。",
-      "zhHant": "這個單次成績是地區紀錄或者世界排名前50名的選手的個人紀錄。"
+      "zh": "这个单次成绩是地区纪录或者世界排名前50名的选手的个人纪录。"
     },
     {
       "id": "11f1b",
       "depth": 2,
       "en": "The average or mean the result is a part of is a regional record or a personal record in the top 50 results of the world rankings.",
-      "zh": "这个单次成绩构成的平均成绩是地区纪录或者世界排名前50名的选手的个人纪录。",
-      "zhHant": "這個單次成績構成的平均成績是地區紀錄或者世界排名前50名的選手的個人紀錄。"
+      "zh": "这个单次成绩构成的平均成绩是地区纪录或者世界排名前50名的选手的个人纪录。"
     },
     {
       "id": "11f1c",
       "depth": 2,
       "en": "The result is achieved in a final round of a National Championship, Continental Championship or World Championship.",
-      "zh": "这个成绩是在国家锦标赛、大洲锦标赛或者世界锦标赛的决赛中获得的。",
-      "zhHant": "這個成績是在國家錦標賽、大洲錦標賽或者世界錦標賽的決賽中獲得的。"
+      "zh": "这个成绩是在国家锦标赛、大洲锦标赛或者世界锦标赛的决赛中获得的。"
     },
     {
       "id": "11f1d",
       "depth": 2,
       "en": "To support the removal of any penalty originally assessed by the judge or WCA Delegate (see [Regulation 11f2a](regulations:regulation:11f2a)).",
-      "zh": "用以支持取消由裁判或WCA代表最初判罚的任何惩罚（见[规则11f2a](regulations:regulation:11f2a)）。",
-      "zhHant": "用以支援取消由裁判或WCA代表最初判罰的任何懲罰（見[規則11f2a](regulations:regulation:11f2a)）。"
+      "zh": "用以支持取消由裁判或WCA代表最初判罚的任何惩罚（见[规则11f2a](regulations:regulation:11f2a)）。"
     },
     {
       "id": "11f2",
       "depth": 1,
       "en": "Evidence obtained from slow-motion or frame-by-frame analysis may only be used to support the following decisions:",
-      "zh": "由慢速或者逐帧分析获得的证据只能被用于支持以下决定：",
-      "zhHant": "由慢速或者逐幀分析獲得的證據只能被用於支援以下決定："
+      "zh": "由慢速或者逐帧分析获得的证据只能被用于支持以下决定："
     },
     {
       "id": "11f2a",
       "depth": 2,
       "en": "The removal of any penalty originally assessed by the judge or WCA Delegate.",
-      "zh": "取消由裁判或WCA代表最初判罚的任何惩罚。",
-      "zhHant": "取消由裁判或WCA代表最初判罰的任何懲罰。"
+      "zh": "取消由裁判或WCA代表最初判罚的任何惩罚。"
     },
     {
       "id": "11f2b",
       "depth": 2,
       "en": "The application of a penalty according to [Regulation A3c1](regulations:regulation:A3c1), [Regulation A4b](regulations:regulation:A4b), or [Regulation A4b1](regulations:regulation:A4b1).",
-      "zh": "依据[规则A3c1](regulations:regulation:A3c1)、[规则A4b](regulations:regulation:A4b)或[规则A4b1](regulations:regulation:A4b1)作出的惩罚。",
-      "zhHant": "依據[規則A3c1](regulations:regulation:A3c1)、[規則A4b](regulations:regulation:A4b)或[規則A4b1](regulations:regulation:A4b1)作出的懲罰。"
+      "zh": "依据[规则A3c1](regulations:regulation:A3c1)、[规则A4b](regulations:regulation:A4b)或[规则A4b1](regulations:regulation:A4b1)作出的惩罚。"
     },
     {
       "id": "11f2c",
       "depth": 2,
       "en": "To investigate cheating (see [Regulation 2k](regulations:regulation:2k)).",
-      "zh": "用于对作弊的调查（见[规则2k](regulations:regulation:2k)）。",
-      "zhHant": "用於對作弊的調查（見[規則2k](regulations:regulation:2k)）。"
+      "zh": "用于对作弊的调查（见[规则2k](regulations:regulation:2k)）。"
     },
     {
       "id": "11g",
       "depth": 0,
       "en": "The WCA Delegate must ensure that the Regulations are available (e.g. printed, digital, or accessible via internet) to officials and competitors for consultation on any incidents.",
-      "zh": "WCA代表必须保证工作人员和选手能够查阅规则（如打印版本，电子版本，或可以通过互联网访问到），以便于处理意外事件。",
-      "zhHant": "WCA代表必須保證工作人員和選手能夠查閱規則（如列印版本，電子版本，或可以透過網際網路訪問到），以便於處理意外事件。"
+      "zh": "WCA代表必须保证工作人员和选手能够查阅规则（如打印版本，电子版本，或可以通过互联网访问到），以便于处理意外事件。"
     },
     {
       "id": "11h",
       "depth": 0,
       "en": "A WCA Delegate may require competitors in serious violation of [Regulation 2k3](regulations:regulation:2k3) to leave the competition venue, taking into account the seriousness of the situation and the best possible course of action. If the competitor refuses to do so, they may face disciplinary action in the WCA.",
-      "zh": "在考虑了情况的严重性和可能采取的最佳措施的情况下，WCA代表可以要求严重违反[规则2k3](regulations:regulation:2k3)的选手离开比赛场地。如果选手拒绝这样做，他们可能会面临WCA的纪律处分。",
-      "zhHant": "在考慮了情況的嚴重性和可能採取的最佳措施的情況下，WCA代表可以要求嚴重違反[規則2k3](regulations:regulation:2k3)的選手離開比賽場地。如果選手拒絕這樣做，他們可能會面臨WCA的紀律處分。"
+      "zh": "在考虑了情况的严重性和可能采取的最佳措施的情况下，WCA代表可以要求严重违反[规则2k3](regulations:regulation:2k3)的选手离开比赛场地。如果选手拒绝这样做，他们可能会面临WCA的纪律处分。"
     },
     {
       "id": "11i",
       "depth": 0,
       "en": "If it is found that a competitor's puzzle was not scrambled correctly after they have completed their solve, the following regulations apply:",
-      "zh": "如果在选手完成复原之后发现其魔方没有被正确打乱，以下规则适用：",
-      "zhHant": "如果在選手完成復原之後發現其魔方沒有被正確打亂，以下規則適用："
+      "zh": "如果在选手完成复原之后发现其魔方没有被正确打乱，以下规则适用："
     },
     {
       "id": "11i1",
       "depth": 1,
       "en": "In the following cases, an extra attempt must be granted to replace the affected attempt. If no extra attempt is granted, the result will be considered DNS:",
-      "zh": "在下列情形中，必须使用额外的尝试结果来替代原受影响的尝试结果。如果没有给予额外的尝试，则相应的结果将被记录为DNS：",
-      "zhHant": "在下列情形中，必須使用額外的嘗試結果來替代原受影響的嘗試結果。如果沒有給予額外的嘗試，則相應的結果將被記錄為DNS："
+      "zh": "在下列情形中，必须使用额外的尝试结果来替代原受影响的尝试结果。如果没有给予额外的尝试，则相应的结果将被记录为DNS："
     },
     {
       "id": "11i1+",
       "depth": 1,
       "en": "[RECOMMENDATION] Competitors expected to meet these criteria should have their scrambles checked by a second scrambler before being sent out (see [Regulation 4g3](regulations:regulation:4g3)).",
-      "zh": "[建议] 预期符合这些标准的选手，在送出其打乱魔方之前应由第二名打乱员检查其打乱情况（见[规则4g3](regulations:regulation:4g3)）。",
-      "zhHant": "[建議] 預期符合這些標準的選手，在送出其打亂魔方之前應由第二名打亂員檢查其打亂情況（見[規則4g3](regulations:regulation:4g3)）。"
+      "zh": "[建议] 预期符合这些标准的选手，在送出其打乱魔方之前应由第二名打乱员检查其打乱情况（见[规则4g3](regulations:regulation:4g3)）。"
     },
     {
       "id": "11i1++",
       "depth": 1,
       "en": "[RECOMMENDATION] For results meeting these criteria, the WCA Delegate should attempt to further verify, e.g. with available video evidence, that the puzzle was scrambled correctly, before the end of the competition.",
-      "zh": "[建议] 对于符合这些条件的成绩，WCA代表应该在比赛结束前尝试进一步验证，例如使用可用的视频证据，确认魔方被正确打乱。",
-      "zhHant": "[建議] 對於符合這些條件的成績，WCA代表應該在比賽結束前嘗試進一步驗證，例如使用可用的影片證據，確認魔方被正確打亂。"
+      "zh": "[建议] 对于符合这些条件的成绩，WCA代表应该在比赛结束前尝试进一步验证，例如使用可用的视频证据，确认魔方被正确打乱。"
     },
     {
       "id": "11i1+++",
       "depth": 1,
       "en": "[ADDITION] If requested by competitors with results meeting these criteria, the WCA Delegate must provide access to the relevant scramble sequences before the end of the competition.",
-      "zh": "[附加] 如果有符合这些条件的成绩的选手提出要求，WCA代表必须在比赛结束前提供相关的打乱公式。",
-      "zhHant": "[附加] 如果有符合這些條件的成績的選手提出要求，WCA代表必須在比賽結束前提供相關的打亂公式。"
+      "zh": "[附加] 如果有符合这些条件的成绩的选手提出要求，WCA代表必须在比赛结束前提供相关的打乱公式。"
     },
     {
       "id": "11i1a",
       "depth": 2,
       "en": "The individual result is a regional record, or is a personal record in the top 50 competitors of the world rankings.",
-      "zh": "这个单次成绩是地区纪录或者世界排名前50名的选手的个人纪录。",
-      "zhHant": "這個單次成績是地區紀錄或者世界排名前50名的選手的個人紀錄。"
+      "zh": "这个单次成绩是地区纪录或者世界排名前50名的选手的个人纪录。"
     },
     {
       "id": "11i1b",
       "depth": 2,
       "en": "The average or mean the result is a part of is a regional record, or part of a personal record in the top 50 competitors of the world rankings.",
-      "zh": "这个单次成绩构成的平均成绩是地区纪录或者世界排名前50名的选手的个人纪录。",
-      "zhHant": "這個單次成績構成的平均成績是地區紀錄或者世界排名前50名的選手的個人紀錄。"
+      "zh": "这个单次成绩构成的平均成绩是地区纪录或者世界排名前50名的选手的个人纪录。"
     },
     {
       "id": "11i1d",
       "depth": 2,
       "en": "The result was achieved by solving the puzzle in fewer moves than the limits defined in [Regulation 4b3](regulations:regulation:4b3).",
-      "zh": "这个成绩是通过使用少于[规则4b3](regulations:regulation:4b3)中所规定的限制的步数复原魔方获得的。",
-      "zhHant": "這個成績是透過使用少於[規則4b3](regulations:regulation:4b3)中所規定的限制的步數復原魔方獲得的。"
+      "zh": "这个成绩是通过使用少于[规则4b3](regulations:regulation:4b3)中所规定的限制的步数复原魔方获得的。"
     },
     {
       "id": "11i1e",
       "depth": 2,
       "en": "Exception to [11i1a](regulations:regulation:11i1a) and [11i1b](regulations:regulation:11i1b): for 5x5x5 Cube, 6x6x6 Cube, 7x7x7 Cube, Megaminx, and 3x3x3 Multi-Blind, [Regulation 11i2](regulations:regulation:11i2) applies instead.",
-      "zh": "[11i1a](regulations:regulation:11i1a)和[11i1b](regulations:regulation:11i1b)的例外：对于五阶魔方、六阶魔方、七阶魔方、五魔方以及三阶多盲项目，适用[规则11i2](regulations:regulation:11i2)。",
-      "zhHant": "[11i1a](regulations:regulation:11i1a)和[11i1b](regulations:regulation:11i1b)的例外：對於五階魔方、六階魔方、七階魔方、五魔方以及三階多盲項目，適用[規則11i2](regulations:regulation:11i2)。"
+      "zh": "[11i1a](regulations:regulation:11i1a)和[11i1b](regulations:regulation:11i1b)的例外：对于五阶魔方、六阶魔方、七阶魔方、五魔方以及三阶多盲项目，适用[规则11i2](regulations:regulation:11i2)。"
     },
     {
       "id": "11i1f",
       "depth": 2,
       "en": "Exception to [11i1a](regulations:regulation:11i1a) and [11i1b](regulations:regulation:11i1b): for results achieved in the final round of a National Championship, Continental Championship or World Championship, [Regulation 11i2](regulations:regulation:11i2) applies instead if two scramblers verified that the puzzle was scrambled correctly and signed the scorecard (see [Regulation 4g3](regulations:regulation:4g3)).",
-      "zh": "[11i1a](regulations:regulation:11i1a)和[11i1b](regulations:regulation:11i1b)的例外：对于在国家锦标赛、大洲锦标赛或者世界锦标赛的决赛中取得的成绩，如果两名打乱员检查认为魔方已被正确打乱并且已在成绩单上签名（见[规则4g3](regulations:regulation:4g3)），则[规则11i2](regulations:regulation:11i2)适用。",
-      "zhHant": "[11i1a](regulations:regulation:11i1a)和[11i1b](regulations:regulation:11i1b)的例外：對於在國家錦標賽、大洲錦標賽或者世界錦標賽的決賽中取得的成績，如果兩名打亂員檢查認為魔方已被正確打亂並且已在成績單上簽名（見[規則4g3](regulations:regulation:4g3)），則[規則11i2](regulations:regulation:11i2)適用。"
+      "zh": "[11i1a](regulations:regulation:11i1a)和[11i1b](regulations:regulation:11i1b)的例外：对于在国家锦标赛、大洲锦标赛或者世界锦标赛的决赛中取得的成绩，如果两名打乱员检查认为魔方已被正确打乱并且已在成绩单上签名（见[规则4g3](regulations:regulation:4g3)），则[规则11i2](regulations:regulation:11i2)适用。"
     },
     {
       "id": "11i2",
       "depth": 1,
       "en": "For all other cases, the result may stand. Exception: the WCA Delegate may grant an extra attempt at their discretion if they believe this provides a significantly fairer outcome (e.g. the incorrect scramble received was extremely easy and the competitor achieved a new personal record, the incorrect scramble impacted the podium for an event, or the puzzle was deliberately scrambled incorrectly).",
-      "zh": "对于所有其他情况，结果可以保持有效。 例外：如果WCA代表认为这能提供明显更公平的结果（例如：选手得到的错误打乱非常简单并因此创造了新的个人纪录、错误打乱影响了项目的领奖台结果，或魔方被故意错误打乱），可以酌情给予额外尝试。",
-      "zhHant": "對於所有其他情況，結果可以保持有效。 例外：如果WCA代表認為這能提供明顯更公平的結果（例如：選手得到的錯誤打亂非常簡單並因此創造了新的個人紀錄、錯誤打亂影響了項目的領獎臺結果，或魔方被故意錯誤打亂），可以酌情給予額外嘗試。"
+      "zh": "对于所有其他情况，结果可以保持有效。 例外：如果WCA代表认为这能提供明显更公平的结果（例如：选手得到的错误打乱非常简单并因此创造了新的个人纪录、错误打乱影响了项目的领奖台结果，或魔方被故意错误打乱），可以酌情给予额外尝试。"
     },
     {
       "id": "11i2+",
       "depth": 1,
       "en": "[RECOMMENDATION] If the WCA Delegate is unsure whether or not the incorrect scramble provided a significantly less fair outcome than the original scramble, a provisional extra attempt should be granted.",
-      "zh": "[建议] 如果WCA代表不确定错误的打乱是否导致了比原始打乱显著更不公平的结果，则应给予临时的额外尝试。",
-      "zhHant": "[建議] 如果WCA代表不確定錯誤的打亂是否導致了比原始打亂顯著更不公平的結果，則應給予臨時的額外嘗試。"
+      "zh": "[建议] 如果WCA代表不确定错误的打乱是否导致了比原始打乱显著更不公平的结果，则应给予临时的额外尝试。"
     },
     {
       "id": "11i2++",
       "depth": 1,
       "en": "[REMINDER] Although individual results achieved on incorrectly scrambled puzzles may be allowed to stand, the WCA Delegate must ensure that incorrect scrambles do not become common.",
-      "zh": "[提醒] 尽管在打乱错误的情况下取得的成绩可能会被允许有效，但WCA代表必须确保打乱错误不成为常态。",
-      "zhHant": "[提醒] 儘管在打亂錯誤的情況下取得的成績可能會被允許有效，但WCA代表必須確保打亂錯誤不成為常態。"
+      "zh": "[提醒] 尽管在打乱错误的情况下取得的成绩可能会被允许有效，但WCA代表必须确保打乱错误不成为常态。"
     },
     {
       "id": "11i2a",
       "depth": 2,
       "en": "If an extra attempt would produce a significantly fairer outcome, the original attempt is considered invalid (see [Regulation 9l](regulations:regulation:9l)).",
-      "zh": "如果额外的尝试能够带来明显更公平的结果，则原尝试被视为无效（见[规则9l](regulations:regulation:9l)）。",
-      "zhHant": "如果額外的嘗試能夠帶來明顯更公平的結果，則原嘗試被視為無效（見[規則9l](regulations:regulation:9l)）。"
+      "zh": "如果额外的尝试能够带来明显更公平的结果，则原尝试被视为无效（见[规则9l](regulations:regulation:9l)）。"
     },
     {
       "id": "11i2b",
       "depth": 2,
       "en": "If an extra attempt cannot be awarded for an incorrect scramble leading to a significantly unfair outcome (for example, because the incorrect scramble is discovered after the competition) the result will be considered DNS.",
-      "zh": "如果由于错误打乱导致明显不公平的结果，但无法给予额外尝试（例如：因为错误打乱在比赛结束后才被发现），则该结果将被记为DNS。",
-      "zhHant": "如果由於錯誤打亂導致明顯不公平的結果，但無法給予額外嘗試（例如：因為錯誤打亂在比賽結束後才被發現），則該結果將被記為DNS。"
+      "zh": "如果由于错误打乱导致明显不公平的结果，但无法给予额外尝试（例如：因为错误打乱在比赛结束后才被发现），则该结果将被记为DNS。"
     },
     {
       "id": "11j",
       "depth": 0,
       "en": "If a competitor incorrectly receives a scramble that they have already received (i.e. a duplicate scramble), the following regulations apply:",
-      "zh": "如果选手错误地收到一个他们已经见过的打乱（即重复打乱），则以下规则适用：",
-      "zhHant": "如果選手錯誤地收到一個他們已經見過的打亂（即重複打亂），則以下規則適用："
+      "zh": "如果选手错误地收到一个他们已经见过的打乱（即重复打乱），则以下规则适用："
     },
     {
       "id": "11j1",
       "depth": 1,
       "en": "If the competitor believes they received a duplicate scramble in inspection, they should stop their attempt and call over a WCA Delegate without applying any moves to the puzzle. A competitor should not be penalized for incorrectly reporting a duplicate scramble genuinely, at the discretion of the WCA Delegate.",
-      "zh": "如果选手在观察阶段认为收到了重复打乱，他们应停止尝试并在未对魔方进行任何操作的情况下通知WCA代表。如果选手错误但真诚地指出重复打乱，则其不应受到处罚，由WCA代表决定。",
-      "zhHant": "如果選手在觀察階段認為收到了重複打亂，他們應停止嘗試並在未對魔方進行任何操作的情況下通知WCA代表。如果選手錯誤但真誠地指出重複打亂，則其不應受到處罰，由WCA代表決定。"
+      "zh": "如果选手在观察阶段认为收到了重复打乱，他们应停止尝试并在未对魔方进行任何操作的情况下通知WCA代表。如果选手错误但真诚地指出重复打乱，则其不应受到处罚，由WCA代表决定。"
     },
     {
       "id": "11j2",
       "depth": 1,
       "en": "If the error is noticed during the group, the WCA Delegate should make an effort to give the competitor the correct scramble. An extra attempt may be given if the WCA Delegate is not certain what the correct scramble should be.",
-      "zh": "如果错误在一个组别的比赛过程中被发现，WCA代表应尽可能向选手提供正确的打乱。如果WCA代表无法明确正确的打乱应该是怎样，则可以给予额外的尝试机会。",
-      "zhHant": "如果錯誤在一個組別的比賽過程中被發現，WCA代表應儘可能向選手提供正確的打亂。如果WCA代表無法明確正確的打亂應該是怎樣，則可以給予額外的嘗試機會。"
+      "zh": "如果错误在一个组别的比赛过程中被发现，WCA代表应尽可能向选手提供正确的打乱。如果WCA代表无法明确正确的打乱应该是怎样，则可以给予额外的尝试机会。"
     },
     {
       "id": "11j3",
       "depth": 1,
       "en": "If the error is noticed during the competition but after the group, the missing attempt must be replaced with an extra attempt.",
-      "zh": "如果错误在比赛过程中被发现，但发生在当组结束之后，则缺失的尝试必须使用额外的尝试进行替换。",
-      "zhHant": "如果錯誤在比賽過程中被發現，但發生在當組結束之後，則缺失的嘗試必須使用額外的嘗試進行替換。"
+      "zh": "如果错误在比赛过程中被发现，但发生在当组结束之后，则缺失的尝试必须使用额外的尝试进行替换。"
     },
     {
       "id": "11j3+",
       "depth": 1,
       "en": "[REMINDER] The scramble sequence used for the extra attempt must not be obtained from a previous group.",
-      "zh": "[提醒] 用于额外尝试的打乱公式不得来自之前的组别。",
-      "zhHant": "[提醒] 用於額外嘗試的打亂公式不得來自之前的組別。"
+      "zh": "[提醒] 用于额外尝试的打乱公式不得来自之前的组别。"
     },
     {
       "id": "11j4",
       "depth": 1,
       "en": "If the error is only noticed after the competition, the result will be considered DNS.",
-      "zh": "如果错误在比赛结束后才被发现，则该结果将被视为DNS。",
-      "zhHant": "如果錯誤在比賽結束後才被發現，則該結果將被視為DNS。"
+      "zh": "如果错误在比赛结束后才被发现，则该结果将被视为DNS。"
     },
     {
       "id": "11k",
       "depth": 0,
       "en": "For Head to Head rounds (see [Article I](regulations:article:I)), the WCA Delegate should consider the nature of the format when determining the course of action for any incident.",
-      "zh": "在“一对一”轮次（见[附则I](regulations:article:I)）中，WCA代表在处理任何事件时应该考虑到该赛制的性质。",
-      "zhHant": "在“一對一”輪次（見[附則I](regulations:article:I)）中，WCA代表在處理任何事件時應該考慮到該賽制的性質。"
+      "zh": "在“一对一”轮次（见[附则I](regulations:article:I)）中，WCA代表在处理任何事件时应该考虑到该赛制的性质。"
     },
     {
       "id": "11k1",
       "depth": 1,
       "en": "If the WCA Delegate grants an extra attempt to either competitor for a point, both competitors must receive an extra attempt.",
-      "zh": "如果WCA代表在某一分的比赛中给予了任意一名选手额外的尝试机会，则两名选手都必须获得这次额外尝试机会。",
-      "zhHant": "如果WCA代表在某一分的比賽中給予了任意一名選手額外的嘗試機會，則兩名選手都必須獲得這次額外嘗試機會。"
+      "zh": "如果WCA代表在某一分的比赛中给予了任意一名选手额外的尝试机会，则两名选手都必须获得这次额外尝试机会。"
     },
     {
       "id": "11k2",
       "depth": 1,
       "en": "The WCA Delegate should not grant an extra attempt if an incident does not affect which competitor would win a point.",
-      "zh": "如果意外事件不影响得分结果，则WCA代表不应该给予额外尝试的机会。",
-      "zhHant": "如果意外事件不影響得分結果，則WCA代表不應該給予額外嘗試的機會。"
+      "zh": "如果意外事件不影响得分结果，则WCA代表不应该给予额外尝试的机会。"
     },
     {
       "id": "11k2+",
       "depth": 1,
       "en": "[EXAMPLE] If Competitor A completes their attempt, then a distracting noise affects Competitor B, the WCA Delegate should not grant an extra attempt, as Competitor A had already won the point.",
-      "zh": "[举例] 如果选手A完成了尝试，然后出现噪音影响了选手B，此时WCA代表不应该给予额外尝试的机会，因为选手A已经得到了这一分。",
-      "zhHant": "[舉例] 如果選手A完成了嘗試，然後出現噪音影響了選手B，此時WCA代表不應該給予額外嘗試的機會，因為選手A已經得到了這一分。"
+      "zh": "[举例] 如果选手A完成了尝试，然后出现噪音影响了选手B，此时WCA代表不应该给予额外尝试的机会，因为选手A已经得到了这一分。"
     },
     {
       "id": "11l",
       "depth": 0,
       "en": "For Head to Head rounds, the resolution of any incident is considered final when the match is completed, for the purposes of determining who wins the point. Exception: cheating or defrauding.",
-      "zh": "对于“一对一”轮次，在对决结束时，任何有关谁得分的事件的决定都是最终决定。",
-      "zhHant": "對於“一對一”輪次，在對決結束時，任何有關誰得分的事件的決定都是最終決定。"
+      "zh": "对于“一对一”轮次，在对决结束时，任何有关谁得分的事件的决定都是最终决定。"
     },
     {
       "id": "11l1",
       "depth": 1,
       "en": "The result of an attempt may be subsequently amended, but this does not change the winner of the point.",
-      "zh": "一次尝试的结果可以事后被修改，但这并不改变谁获得这一分。",
-      "zhHant": "一次嘗試的結果可以事後被修改，但這並不改變誰獲得這一分。"
+      "zh": "一次尝试的结果可以事后被修改，但这并不改变谁获得这一分。"
     }
   ]
 }

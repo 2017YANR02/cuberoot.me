@@ -44,8 +44,8 @@ export default function TimerShell() {
       className="shell-players-select"
       value={playerCount}
       onChange={(e) => { void setPlayersParam(parseInt(e.target.value)); }}
-      title={tr({ zh: '人数', en: 'Players', zhHant: '人數' })}
-      aria-label={tr({ zh: '人数', en: 'Players', zhHant: '人數' })}
+      title={tr({ zh: '人数', en: 'Players' })}
+      aria-label={tr({ zh: '人数', en: 'Players' })}
     >
       {[1, 2, 3, 4].map(n => (
         <option key={n} value={n}>{isZh ? `${n}人` : `${n}P`}</option>

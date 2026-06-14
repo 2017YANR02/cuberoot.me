@@ -108,7 +108,7 @@ export default function RankBadge({
   }
 
   const eventName = eventDisplayName(wcaEvent, isZh);
-  const typeWord = i18n.language === 'zh-Hant' ? (type === 'average' ? '平均' : '單次') : (isZh
+  const typeWord = (isZh
       ? type === 'average' ? '平均' : '单次'
       : type === 'average' ? 'average' : 'single');
 
@@ -136,7 +136,7 @@ export default function RankBadge({
     const n = data.rank.toLocaleString('en-US');
     return isZh ? `${SCOPE_ZH[scope]} #${n}` : `${SCOPE_EN[scope]} #${n}`;
   });
-  const detail = i18n.language === 'zh-Hant' ? (`${parts.join(' / ')}（WCA ${eventName}${typeWord},對比歷史比賽成績,非實時官方排名）`) : (isZh
+  const detail = (isZh
       ? `${parts.join(' / ')}（WCA ${eventName}${typeWord},对比历史比赛成绩,非实时官方排名）`
       : `${parts.join(' / ')} (WCA ${eventName} ${typeWord}, vs historical competition results — not a live official rank)`);
 
@@ -168,13 +168,11 @@ export default function RankBadge({
             className="rank-login-btn"
             data-no-timer
             onClick={() => login()}
-            title={tr({ zh: '登录 WCA 显示全国 / 大洲排名', en: 'Sign in with WCA for national / continental ranks',
-                zhHant: "登入 WCA 顯示全國 / 大洲排名"
+            title={tr({ zh: '登录 WCA 显示全国 / 大洲排名', en: 'Sign in with WCA for national / continental ranks'
             })}
           >
             <LogIn size="1em" aria-hidden />
-            {tr({ zh: '登录', en: 'Sign in',
-                zhHant: "登入"
+            {tr({ zh: '登录', en: 'Sign in'
             })}
           </button>
         )}

@@ -11,17 +11,12 @@ export const BADGE_LETTERS: readonly ColorLetter[] = ['W', 'Y', 'R', 'O', 'B', '
 const IDX: Record<ColorLetter, number> = { W: 0, Y: 1, R: 2, O: 3, B: 4, G: 5 };
 
 export const COLOR_NAME: Record<ColorLetter, { zh: string; en: string
-        zhHant?: string;
  }> = {
-  W: { zh: '白', en: 'White' }, Y: { zh: '黄', en: 'Yellow',
-      zhHant: "黃"
-}, R: { zh: '红', en: 'Red',
-    zhHant: "紅"
+  W: { zh: '白', en: 'White' }, Y: { zh: '黄', en: 'Yellow'
+}, R: { zh: '红', en: 'Red'
 },
-  O: { zh: '橙', en: 'Orange' }, B: { zh: '蓝', en: 'Blue',
-      zhHant: "藍"
-}, G: { zh: '绿', en: 'Green',
-    zhHant: "綠"
+  O: { zh: '橙', en: 'Orange' }, B: { zh: '蓝', en: 'Blue'
+}, G: { zh: '绿', en: 'Green'
 },
 };
 // 对应 gen.css 的 --gen-cx-{w,y,r,o,b,g}(主题感知)
@@ -36,15 +31,12 @@ export const OPPOSITE_PAIRS: readonly (readonly [ColorLetter, ColorLetter])[] = 
 
 export const COLOR_MODES: readonly ColorMode[] = ['dual', 'single', 'cn', 'quad'];
 export const MODE_LABEL: Record<ColorMode, { zh: string; en: string
-        zhHant?: string;
  }> = {
   cn: { zh: '六色', en: '6-color' },
   quad: { zh: '四色', en: '4-color' },
-  dual: { zh: '双色', en: '2-color',
-      zhHant: "雙色"
+  dual: { zh: '双色', en: '2-color'
 },
-  single: { zh: '单色', en: '1-color',
-      zhHant: "單色"
+  single: { zh: '单色', en: '1-color'
 },
 };
 

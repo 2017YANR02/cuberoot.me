@@ -48,17 +48,14 @@ export function detectBluetoothEnv(): BluetoothEnv {
 export interface EnvAdvice {
   /** Short user-facing reason why bluetooth isn't usable. */
   title: { en: string; zh: string
-    zhHant?: string;
  };
   /** Detailed advice. */
   body: { en: string; zh: string
-    zhHant?: string;
  };
   /** Optional URL to install / configure the recommended browser. */
   url?: string;
   /** Label for the URL button. */
   urlLabel?: { en: string; zh: string
-    zhHant?: string;
  };
 }
 
@@ -71,68 +68,56 @@ export function envAdvice(env: BluetoothEnv): EnvAdvice | null {
       return {
         title: {
           en: 'iOS needs Bluefy',
-          zh: 'iOS 需要 Bluefy 浏览器',
-            zhHant: "iOS 需要 Bluefy 瀏覽器"
+          zh: 'iOS 需要 Bluefy 浏览器'
         },
         body: {
           en: 'Apple does not allow Safari (or any other iOS browser) to access Bluetooth. Install Bluefy from the App Store, then open this page inside Bluefy.',
-          zh: '苹果不允许 Safari（以及任何 iOS 浏览器）访问蓝牙。请从 App Store 安装 Bluefy 浏览器，然后在 Bluefy 里打开本页面。',
-            zhHant: "蘋果不允許 Safari（以及任何 iOS 瀏覽器）訪問藍芽。請從 App Store 安裝 Bluefy 瀏覽器，然後在 Bluefy 裡開啟本頁面。"
+          zh: '苹果不允许 Safari（以及任何 iOS 浏览器）访问蓝牙。请从 App Store 安装 Bluefy 浏览器，然后在 Bluefy 里打开本页面。'
         },
         url: BLUEFY_APP_URL,
-        urlLabel: { en: 'Install Bluefy', zh: '安装 Bluefy',
-            zhHant: "安裝 Bluefy"
+        urlLabel: { en: 'Install Bluefy', zh: '安装 Bluefy'
         },
       };
     case 'safari-mac':
       return {
         title: {
           en: 'Safari has no Web Bluetooth',
-          zh: 'Safari 不支持 Web Bluetooth',
-            zhHant: "Safari 不支援 Web Bluetooth"
+          zh: 'Safari 不支持 Web Bluetooth'
         },
         body: {
           en: 'macOS Safari does not implement Web Bluetooth. Use Chrome, Edge, or Opera on macOS instead.',
-          zh: 'macOS Safari 不支持 Web Bluetooth。请改用 Chrome / Edge / Opera。',
-            zhHant: "macOS Safari 不支援 Web Bluetooth。請改用 Chrome / Edge / Opera。"
+          zh: 'macOS Safari 不支持 Web Bluetooth。请改用 Chrome / Edge / Opera。'
         },
       };
     case 'firefox':
       return {
-        title: { en: 'Firefox needs a flag', zh: 'Firefox 需要开启实验功能',
-            zhHant: "Firefox 需要開啟實驗功能"
+        title: { en: 'Firefox needs a flag', zh: 'Firefox 需要开启实验功能'
         },
         body: {
           en: 'Firefox hides Web Bluetooth behind dom.webbluetooth.enabled in about:config, and stable Firefox does not ship the API even with the flag. Use Chrome / Edge / Opera, or Bluefy on iOS.',
-          zh: 'Firefox 把 Web Bluetooth 放在 about:config 里 dom.webbluetooth.enabled 后面，且稳定版即使开启也不可用。请改用 Chrome / Edge / Opera，或在 iOS 用 Bluefy。',
-            zhHant: "Firefox 把 Web Bluetooth 放在 about:config 裡 dom.webbluetooth.enabled 後面，且穩定版即使開啟也不可用。請改用 Chrome / Edge / Opera，或在 iOS 用 Bluefy。"
+          zh: 'Firefox 把 Web Bluetooth 放在 about:config 里 dom.webbluetooth.enabled 后面，且稳定版即使开启也不可用。请改用 Chrome / Edge / Opera，或在 iOS 用 Bluefy。'
         },
       };
     case 'no-bluetooth-hw':
       return {
-        title: { en: 'No Bluetooth hardware', zh: '本机无蓝牙',
-            zhHant: "本機無藍芽"
+        title: { en: 'No Bluetooth hardware', zh: '本机无蓝牙'
         },
         body: {
           en: 'This device does not have a Bluetooth adapter, or it is disabled in the OS.',
-          zh: '当前设备未检测到蓝牙适配器，或系统已关闭蓝牙。',
-            zhHant: "當前裝置未檢測到藍芽介面卡，或系統已關閉藍芽。"
+          zh: '当前设备未检测到蓝牙适配器，或系统已关闭蓝牙。'
         },
       };
     case 'unknown':
     default:
       return {
-        title: { en: 'Web Bluetooth unavailable', zh: '当前浏览器不支持 Web Bluetooth',
-            zhHant: "當前瀏覽器不支援 Web Bluetooth"
+        title: { en: 'Web Bluetooth unavailable', zh: '当前浏览器不支持 Web Bluetooth'
         },
         body: {
           en: 'Use Chrome / Edge / Opera on desktop or Android, or Bluefy on iOS.',
-          zh: '请改用桌面或 Android 上的 Chrome / Edge / Opera，或 iOS 上的 Bluefy 浏览器。',
-            zhHant: "請改用桌面或 Android 上的 Chrome / Edge / Opera，或 iOS 上的 Bluefy 瀏覽器。"
+          zh: '请改用桌面或 Android 上的 Chrome / Edge / Opera，或 iOS 上的 Bluefy 浏览器。'
         },
         url: BLUEFY_APP_URL,
-        urlLabel: { en: 'Install Bluefy (iOS)', zh: '安装 Bluefy（iOS）',
-            zhHant: "安裝 Bluefy（iOS）"
+        urlLabel: { en: 'Install Bluefy (iOS)', zh: '安装 Bluefy（iOS）'
         },
       };
   }

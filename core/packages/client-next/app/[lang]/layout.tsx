@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import I18nProvider from '@/i18n/I18nProvider';
 
-const SUPPORTED = ['en', 'zh', 'zh-Hant'] as const;
+const SUPPORTED = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED[number];
 
 // Prerender both locales at build → pages under here become static (root layout
@@ -10,7 +10,7 @@ type Locale = typeof SUPPORTED[number];
 // root) and driven by the URL param. The single <Suspense> gives the pages that
 // call useSearchParams an ancestor boundary so static generation doesn't bail.
 export function generateStaticParams() {
-  return [{ lang: 'en' }, { lang: 'zh' }, { lang: 'zh-Hant' }];
+  return [{ lang: 'en' }, { lang: 'zh' }];
 }
 
 export default async function LangLayout({

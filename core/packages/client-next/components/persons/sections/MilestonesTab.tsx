@@ -22,36 +22,27 @@ interface Props {
 }
 
 const TYPE_META: Record<MilestoneType, { zh: string; en: string; cls: string
-        zhHant?: string;
  }> = {
-  first_competition:        { zh: '首次参赛',     en: 'First competition',     cls: 'mt-first',
-      zhHant: "首次參賽"
+  first_competition:        { zh: '首次参赛',     en: 'First competition',     cls: 'mt-first'
 },
-  nth_competition:          { zh: '里程数比赛',   en: 'Nth competition',       cls: 'mt-nth',
-      zhHant: "里程數比賽"
+  nth_competition:          { zh: '里程数比赛',   en: 'Nth competition',       cls: 'mt-nth'
 },
-  significant_improvement:  { zh: '显著进步',     en: 'Improvement',           cls: 'mt-imp',
-      zhHant: "顯著進步"
+  significant_improvement:  { zh: '显著进步',     en: 'Improvement',           cls: 'mt-imp'
 },
-  first_podium:             { zh: '首次领奖台',   en: 'First podium',          cls: 'mt-pod',
-      zhHant: "首次領獎臺"
+  first_podium:             { zh: '首次领奖台',   en: 'First podium',          cls: 'mt-pod'
 },
-  first_blind_success:      { zh: '盲拧首成',     en: 'Blind first success',   cls: 'mt-bf',
-      zhHant: "盲擰首成"
+  first_blind_success:      { zh: '盲拧首成',     en: 'Blind first success',   cls: 'mt-bf'
 },
-  record_breaker:           { zh: '破纪录',       en: 'Record breaker',        cls: 'mt-rec',
-      zhHant: "破紀錄"
+  record_breaker:           { zh: '破纪录',       en: 'Record breaker',        cls: 'mt-rec'
 },
-  grand_slam:               { zh: '大满贯',       en: 'Grand slam',            cls: 'mt-gs',
-      zhHant: "大滿貫"
+  grand_slam:               { zh: '大满贯',       en: 'Grand slam',            cls: 'mt-gs'
 },
-  comeback:                 { zh: '回归',         en: 'Comeback',              cls: 'mt-cb',
-      zhHant: "迴歸"
+  comeback:                 { zh: '回归',         en: 'Comeback',              cls: 'mt-cb'
 },
 };
 
 export default function MilestonesTab({ profile, results, comps, isZh }: Props) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const [excluded, setExcluded] = useState<Set<MilestoneType>>(new Set());
   const [threshold, setThreshold] = useState(33);
   const [asc, setAsc] = useState(false);
@@ -72,7 +63,7 @@ export default function MilestonesTab({ profile, results, comps, isZh }: Props) 
     });
   }, [profile, results, comps, threshold, isZh, compNameById]);
 
-  if (!milestones) return <div className="wp-loading-inline">{t('加载中…', 'Loading…', "載入中…")}</div>;
+  if (!milestones) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
 
   const presentTypes = new Set(milestones.map((m) => m.type));
   const filtered = milestones
@@ -89,7 +80,7 @@ export default function MilestonesTab({ profile, results, comps, isZh }: Props) 
     <div className="wp-milestones">
       <div className="wp-ms-toolbar">
         <span className="wp-ms-count">
-          {t(`选手里程碑 共 ${filtered.length} 条`, `${filtered.length} milestones`, `選手裡程碑 共 ${filtered.length} 條`)}
+          {t(`选手里程碑 共 ${filtered.length} 条`, `${filtered.length} milestones`)}
         </span>
         <button className="wp-ms-order" onClick={() => setAsc((v) => !v)}>
           {asc ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
@@ -105,11 +96,11 @@ export default function MilestonesTab({ profile, results, comps, isZh }: Props) 
               key={ty}
               className={`wp-ms-chip ${TYPE_META[ty].cls} ${excluded.has(ty) ? 'is-off' : ''}`}
               onClick={() => toggleExclude(ty)}
-            >{(i18n.language === 'zh-Hant' ? (TYPE_META[ty].zhHant ?? TYPE_META[ty].zh) : (i18n.language.startsWith('zh') ? TYPE_META[ty].zh : TYPE_META[ty].en))}</button>
+            >{((i18n.language.startsWith('zh') ? TYPE_META[ty].zh : TYPE_META[ty].en))}</button>
           ))}
         </div>
         <div className="wp-ms-filter-row">
-          <span className="wp-ms-filter-label">{t('进步阈值', 'Improvement ≥', "進步閾值")}:</span>
+          <span className="wp-ms-filter-label">{t('进步阈值', 'Improvement ≥')}:</span>
           <input
             type="range" min={10} max={100}
             value={threshold}
@@ -134,7 +125,7 @@ export default function MilestonesTab({ profile, results, comps, isZh }: Props) 
           <li key={`${m.type}-${i}`} className={`wp-ms-item ${TYPE_META[m.type].cls}`}>
             <span className="wp-ms-date">{m.date}</span>
             <div className="wp-ms-body">
-              <div className="wp-ms-text">{(i18n.language === 'zh-Hant' ? (m.zhHant ?? m.zh) : (i18n.language.startsWith('zh') ? m.zh : m.en))}</div>
+              <div className="wp-ms-text">{((i18n.language.startsWith('zh') ? m.zh : m.en))}</div>
               {m.tags.length > 0 && (
                 <div className="wp-ms-tags">
                   {m.tags.map((tag, j) => (

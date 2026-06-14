@@ -59,9 +59,6 @@ interface PolyData {
   discriminantTex: string;
   noteEn: string;
   noteZh: string;
-    labelZhHant?: string;
-    galoisGroupZhHant?: string;
-    noteZhHant?: string;
 }
 
 // ── Root data (hand-computed closed-form numerics) ────────────────────────────
@@ -123,9 +120,7 @@ const POLY_DATA: Record<PolyId, PolyData> = {
     },
     discriminantTex: String.raw`\Delta = 8,\quad \sqrt{\Delta}=2\sqrt{2}\in\mathbb{Q}`,
     noteEn: 'The unique non-trivial automorphism swaps √2 ↔ −√2; C₂ is abelian, hence solvable.',
-    noteZh: '唯一非平凡自同构交换 √2 ↔ −√2；C₂ 是阿贝尔群，故可解。',
-      galoisGroupZhHant: "C₂（迴圈群，階 2）",
-      noteZhHant: "唯一非平凡自同構交換 √2 ↔ −√2；C₂ 是阿貝爾群，故可解。"
+    noteZh: '唯一非平凡自同构交换 √2 ↔ −√2；C₂ 是阿贝尔群，故可解。'
 },
 
   x3_minus_2: {
@@ -174,9 +169,7 @@ const POLY_DATA: Record<PolyId, PolyData> = {
     },
     discriminantTex: String.raw`\Delta = -108 = -4\cdot 27,\quad \sqrt{\Delta}\notin\mathbb{Q}`,
     noteEn: 'Δ = −108 is not a square in Q, so Gal ⊄ A₃; the group is S₃. Solvable: {e} ◁ A₃ ◁ S₃ with quotients C₃, C₂.',
-    noteZh: 'Δ = −108 不是 Q 中的平方，故 Gal ⊄ A₃，从而群为 S₃。可解：{e} ◁ A₃ ◁ S₃，商群依次为 C₃、C₂。',
-      galoisGroupZhHant: "S₃（三根的對稱群，階 6）",
-      noteZhHant: "Δ = −108 不是 Q 中的平方，故 Gal ⊄ A₃，從而群為 S₃。可解：{e} ◁ A₃ ◁ S₃，商群依次為 C₃、C₂。"
+    noteZh: 'Δ = −108 不是 Q 中的平方，故 Gal ⊄ A₃，从而群为 S₃。可解：{e} ◁ A₃ ◁ S₃，商群依次为 C₃、C₂。'
 },
 
   cyclotomic_5: {
@@ -215,10 +208,7 @@ const POLY_DATA: Record<PolyId, PolyData> = {
     },
     discriminantTex: String.raw`\text{Gal}(\mathbb{Q}(\zeta_5)/\mathbb{Q})\cong(\mathbb{Z}/5\mathbb{Z})^*\cong C_4`,
     noteEn: 'All cyclotomic extensions have abelian Galois group; C₄ is abelian (cyclic) hence solvable. The intermediate field Q(√5) corresponds to the unique subgroup of order 2.',
-    noteZh: '所有分圆扩张的 Galois 群均为阿贝尔群；C₄ 是阿贝尔（循环）群，故可解。中间域 Q(√5) 对应唯一的阶 2 子群。',
-      labelZhHant: "Φ₅ = x⁴+x³+x²+x+1（分圓多項式）",
-      galoisGroupZhHant: "C₄（迴圈群，階 4；(Z/5Z)* ≅ C₄）",
-      noteZhHant: "所有分圓擴張的 Galois 群均為阿貝爾群；C₄ 是阿貝爾（迴圈）群，故可解。中間域 Q(√5) 對應唯一的階 2 子群。"
+    noteZh: '所有分圆扩张的 Galois 群均为阿贝尔群；C₄ 是阿贝尔（循环）群，故可解。中间域 Q(√5) 对应唯一的阶 2 子群。'
 },
 
   cyclotomic_7: {
@@ -264,10 +254,7 @@ const POLY_DATA: Record<PolyId, PolyData> = {
     },
     discriminantTex: String.raw`\text{Gal}(\mathbb{Q}(\zeta_7)/\mathbb{Q})\cong(\mathbb{Z}/7\mathbb{Z})^*\cong C_6`,
     noteEn: 'For prime p=7, (Z/7Z)* is cyclic of order p−1 = 6. All subgroups of C₆ are normal (it is abelian). Three intermediate fields: Q ⊂ Q(√−7) ⊂ Q(ζ₇+ζ₇⁻¹) ⊂ Q(ζ₇).',
-    noteZh: '对素数 p=7，(Z/7Z)* 是阶为 p−1=6 的循环群。C₆ 的所有子群均正规（因为是阿贝尔群）。三个中间域：Q ⊂ Q(√−7) ⊂ Q(ζ₇+ζ₇⁻¹) ⊂ Q(ζ₇)。',
-      labelZhHant: "Φ₇ = x⁶+x⁵+…+1（分圓，p=7）",
-      galoisGroupZhHant: "C₆（迴圈群，階 6；(Z/7Z)* ≅ C₆）",
-      noteZhHant: "對素數 p=7，(Z/7Z)* 是階為 p−1=6 的迴圈群。C₆ 的所有子群均正規（因為是阿貝爾群）。三個中間域：Q ⊂ Q(√−7) ⊂ Q(ζ₇+ζ₇⁻¹) ⊂ Q(ζ₇)。"
+    noteZh: '对素数 p=7，(Z/7Z)* 是阶为 p−1=6 的循环群。C₆ 的所有子群均正规（因为是阿贝尔群）。三个中间域：Q ⊂ Q(√−7) ⊂ Q(ζ₇+ζ₇⁻¹) ⊂ Q(ζ₇)。'
 },
 
   quintic: {
@@ -300,9 +287,7 @@ const POLY_DATA: Record<PolyId, PolyData> = {
     },
     discriminantTex: String.raw`\text{Gal}(f/\mathbb{Q}) \cong S_5,\quad [S_5,S_5]=A_5,\quad [A_5,A_5]=A_5`,
     noteEn: "Irreducible by Eisenstein (p=3); exactly 3 real roots -> complex conjugation is a transposition; a 5-cycle exists by Cauchy's theorem (5 | |Gal|). Together they generate S₅.",
-    noteZh: '由 Eisenstein（p=3）不可约；恰有 3 个实根，故复共轭是对换；5 整除 |Gal|，由 Cauchy 定理存在 5-轮换。两者共同生成 S₅。',
-      galoisGroupZhHant: "S₅（不可解，階 120）",
-      noteZhHant: "由 Eisenstein（p=3）不可約；恰有 3 個實根，故複共軛是對換；5 整除 |Gal|，由 Cauchy 定理存在 5-輪換。兩者共同生成 S₅。"
+    noteZh: '由 Eisenstein（p=3）不可约；恰有 3 个实根，故复共轭是对换；5 整除 |Gal|，由 Cauchy 定理存在 5-轮换。两者共同生成 S₅。'
 },
 };
 
@@ -722,8 +707,7 @@ function ComplexPlaneSVG({ roots, perm, lang }: { roots: RootDef[]; perm: number
       {isIdentity && (
         <text x={W / 2} y={H - 8} textAnchor="middle"
           style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-faint)">
-          {tr({ zh: '恒等置换：每根不动', en: 'Identity: every root is fixed',
-              zhHant: "恆等置換：每根不動"
+          {tr({ zh: '恒等置换：每根不动', en: 'Identity: every root is fixed'
         })}
         </text>
       )}
@@ -898,8 +882,7 @@ function LatticeSVG({
       </text>
       <text x={RIGHT_X + NODE_W / 2} y={14} textAnchor="middle"
         style={{ fontFamily: 'var(--mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '.1em' }} fill="var(--ink-faint)">
-        {tr({ zh: '不动域 (小→大)', en: 'Fixed fields (small→large)',
-            zhHant: "不動域 (小→大)"
+        {tr({ zh: '不动域 (小→大)', en: 'Fixed fields (small→large)'
         })}
       </text>
 
@@ -1012,8 +995,7 @@ function LatticeSVG({
       {/* Reversal label */}
       <text x={W / 2} y={H - 2} textAnchor="middle"
         style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
-        {tr({ zh: '← 包含反向 ↔ 子群越大 = 不动域越小 →', en: '← inclusion-reversing: bigger subgroup = smaller fixed field →',
-            zhHant: "← 包含反向 ↔ 子群越大 = 不動域越小 →"
+        {tr({ zh: '← 包含反向 ↔ 子群越大 = 不动域越小 →', en: '← inclusion-reversing: bigger subgroup = smaller fixed field →'
         })}
       </text>
     </svg>
@@ -1090,8 +1072,7 @@ function SolvabilityChainSVG({ solv, step, lang }: { solv: SolvabilitySeries; st
           fill={solv.solvable ? 'var(--green)' : 'var(--warn)'}>
           {solv.solvable
             ? (tr({ zh: '✓ 可用根式求解', en: '✓ Solvable by radicals' }))
-            : (tr({ zh: '✗ 不可用根式求解 (A₅ 是单群)', en: '✗ NOT solvable by radicals (A₅ is simple)',
-                zhHant: "✗ 不可用根式求解 (A₅ 是單群)"
+            : (tr({ zh: '✗ 不可用根式求解 (A₅ 是单群)', en: '✗ NOT solvable by radicals (A₅ is simple)'
             }))}
         </text>
       )}
@@ -1111,21 +1092,16 @@ interface CompositionFactor {
   isSimpleNonAbelian: boolean;
   noteEn: string;
   noteZh: string;
-    noteZhHant?: string;
 }
 
 const CUBE_FACTORS: CompositionFactor[] = [
-  { label: 'Z/2', order: '2', isSimpleNonAbelian: false, noteEn: 'cyclic (abelian) — from edge-flip orientations', noteZh: '循环群（阿贝尔）——棱翻转朝向',
-      noteZhHant: "迴圈群（阿貝爾）——稜翻轉朝向"
+  { label: 'Z/2', order: '2', isSimpleNonAbelian: false, noteEn: 'cyclic (abelian) — from edge-flip orientations', noteZh: '循环群（阿贝尔）——棱翻转朝向'
 },
-  { label: 'Z/3', order: '3', isSimpleNonAbelian: false, noteEn: 'cyclic (abelian) — from corner-twist orientations', noteZh: '循环群（阿贝尔）——角朝向',
-      noteZhHant: "迴圈群（阿貝爾）——角朝向"
+  { label: 'Z/3', order: '3', isSimpleNonAbelian: false, noteEn: 'cyclic (abelian) — from corner-twist orientations', noteZh: '循环群（阿贝尔）——角朝向'
 },
-  { label: 'A₈',  order: '8!/2 = 20160', isSimpleNonAbelian: true,  noteEn: 'simple non-abelian! (even permutations of 8 corners)', noteZh: '非交换单群！（8 个角块的偶置换）',
-      noteZhHant: "非交換單群！（8 個角塊的偶置換）"
+  { label: 'A₈',  order: '8!/2 = 20160', isSimpleNonAbelian: true,  noteEn: 'simple non-abelian! (even permutations of 8 corners)', noteZh: '非交换单群！（8 个角块的偶置换）'
 },
-  { label: 'A₁₂', order: '12!/2 ≈ 2.4×10⁸', isSimpleNonAbelian: true, noteEn: 'simple non-abelian! (even permutations of 12 edges)', noteZh: '非交换单群！（12 个棱块的偶置换）',
-      noteZhHant: "非交換單群！（12 個稜塊的偶置換）"
+  { label: 'A₁₂', order: '12!/2 ≈ 2.4×10⁸', isSimpleNonAbelian: true, noteEn: 'simple non-abelian! (even permutations of 12 edges)', noteZh: '非交换单群！（12 个棱块的偶置换）'
 },
 ];
 
@@ -1178,13 +1154,11 @@ function PuzzleSolvableView({ lang }: { lang: Lang }) {
         {/* Box: "scrambled cube" */}
         <rect x={10} y={20} width={140} height={90} rx={8} fill="color-mix(in srgb, var(--accent-2) 10%, var(--bg-elev))" stroke="var(--accent-2)" strokeWidth={1.5} />
         <text x={80} y={44} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600 }} fill="var(--accent-2)">
-          {tr({ zh: '打乱状态', en: 'Scrambled state',
-              zhHant: "打亂狀態"
+          {tr({ zh: '打乱状态', en: 'Scrambled state'
         })}
         </text>
         <text x={80} y={62} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
-          {tr({ zh: '任意置换 ∈ G_cube', en: 'any permutation ∈ G_cube',
-              zhHant: "任意置換 ∈ G_cube"
+          {tr({ zh: '任意置换 ∈ G_cube', en: 'any permutation ∈ G_cube'
         })}
         </text>
         <text x={80} y={98} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
@@ -1202,26 +1176,22 @@ function PuzzleSolvableView({ lang }: { lang: Lang }) {
           {tr({ zh: '≤ 20 步', en: '≤ 20 moves' })}
         </text>
         <text x={169} y={78} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 8 }} fill="var(--ink-faint)">
-          {tr({ zh: '（上帝之数）', en: "(God's number)",
-              zhHant: "（上帝之數）"
+          {tr({ zh: '（上帝之数）', en: "(God's number)"
         })}
         </text>
 
         {/* Box: solved */}
         <rect x={190} y={20} width={140} height={90} rx={8} fill="color-mix(in srgb, var(--green) 10%, var(--bg-elev))" stroke="var(--green)" strokeWidth={1.5} />
         <text x={260} y={44} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600 }} fill="var(--green)">
-          {tr({ zh: '还原状态', en: 'Solved state',
-              zhHant: "還原狀態"
+          {tr({ zh: '还原状态', en: 'Solved state'
         })}
         </text>
         <text x={260} y={62} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
-          {tr({ zh: '单位元 e ∈ G_cube', en: 'identity e ∈ G_cube',
-              zhHant: "單位元 e ∈ G_cube"
+          {tr({ zh: '单位元 e ∈ G_cube', en: 'identity e ∈ G_cube'
         })}
         </text>
         <text x={260} y={80} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--green)">
-          {tr({ zh: '可达！(puzzle-solved)', en: 'Reachable! (puzzle-solved)',
-              zhHant: "可達！(puzzle-solved)"
+          {tr({ zh: '可达！(puzzle-solved)', en: 'Reachable! (puzzle-solved)'
         })}
         </text>
       </svg>

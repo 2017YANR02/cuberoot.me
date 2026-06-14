@@ -55,8 +55,7 @@ export default function StageSolverModal({ scramble, isZh, onClose }: Props) {
             type="button"
             className="solver-modal-x"
             onClick={onClose}
-            aria-label={tr({ zh: '关闭', en: 'Close',
-                zhHant: "關閉"
+            aria-label={tr({ zh: '关闭', en: 'Close'
             })}
           >
             <X size={18} />

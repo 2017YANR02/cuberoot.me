@@ -123,8 +123,7 @@ export default function RecentScrambles({ lang }: Props) {
   return (
     <div className="recent-scrambles">
       <div className="rs-head">
-        <span className="rs-title">{tr({ zh: '近期打乱', en: 'Recent Scrambles',
-            zhHant: "近期打亂"
+        <span className="rs-title">{tr({ zh: '近期打乱', en: 'Recent Scrambles'
         })}</span>
         <SubsetColorPicker sel={sel} isZh={isZh} />
         <VariantSelect
@@ -133,8 +132,7 @@ export default function RecentScrambles({ lang }: Props) {
           options={variants}
           onChange={setVariant}
           isZh={isZh}
-          ariaLabel={tr({ zh: '变体', en: 'Variant',
-              zhHant: "變體"
+          ariaLabel={tr({ zh: '变体', en: 'Variant'
         })}
         />
         {metrics.length > 0 && (
@@ -145,8 +143,7 @@ export default function RecentScrambles({ lang }: Props) {
             onChange={setMetric}
             isZh={isZh}
             label={stageLabel}
-            ariaLabel={tr({ zh: '类型', en: 'Type',
-                zhHant: "型別"
+            ariaLabel={tr({ zh: '类型', en: 'Type'
           })}
           />
         )}
@@ -155,8 +152,7 @@ export default function RecentScrambles({ lang }: Props) {
             className="rs-select"
             value={curStep ?? ''}
             onChange={(e) => setStep(Number(e.target.value))}
-            aria-label={tr({ zh: '步数', en: 'Moves',
-                zhHant: "步數"
+            aria-label={tr({ zh: '步数', en: 'Moves'
           })}
           >
             {steps.map((s) => (
@@ -173,8 +169,7 @@ export default function RecentScrambles({ lang }: Props) {
         return (
           <div className="rs-hero">
             <div className="rs-hero-cube">
-              <ScramblePreview2D event="333" scramble={scramble} size={78} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size',
-                  zhHant: "檢視大圖"
+              <ScramblePreview2D event="333" scramble={scramble} size={78} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size'
             })} />
             </div>
             <div className="rs-hero-body">
@@ -199,8 +194,7 @@ export default function RecentScrambles({ lang }: Props) {
           </div>
         );
       })() : (
-        <div className="rs-empty">{tr({ zh: '该组合本批暂无数据', en: 'No data for this combination',
-            zhHant: "該組合本批暫無資料"
+        <div className="rs-empty">{tr({ zh: '该组合本批暂无数据', en: 'No data for this combination'
         })}</div>
       )}
 

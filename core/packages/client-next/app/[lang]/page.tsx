@@ -51,10 +51,7 @@ export default function LandingPage() {
 
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  const t = useCallback((key: keyof typeof TEXTS) => {
-    if (i18n.language === 'zh-Hant') return TEXTS[key].zhHant ?? TEXTS[key].zh;
-    return TEXTS[key][lang];
-  }, [lang, i18n.language]);
+  const t = useCallback((key: keyof typeof TEXTS) => TEXTS[key][lang], [lang]);
 
   return (
     <div className="landing-page">
@@ -73,11 +70,9 @@ export default function LandingPage() {
       <Link href="/wca" className="wca-hero" prefetch={false}>
         <img src="/icons/wca.svg" alt="WCA" className="wca-hero-logo" />
         <div className="wca-hero-meta">
-          <div className="wca-hero-title">{tr({ zh: 'WCA 统计', en: 'WCA Statistics',
-              zhHant: "WCA 統計"
+          <div className="wca-hero-title">{tr({ zh: 'WCA 统计', en: 'WCA Statistics'
         })}</div>
-          <div className="wca-hero-sub">{tr({ zh: '魔方世界所有数据切片', en: 'Every slice of the cubing world',
-              zhHant: "魔方世界所有資料切片"
+          <div className="wca-hero-sub">{tr({ zh: '魔方世界所有数据切片', en: 'Every slice of the cubing world'
         })}</div>
         </div>
       </Link>
@@ -86,9 +81,9 @@ export default function LandingPage() {
         {SECTIONS.map((sec) => (
           <section key={sec.id} id={`section-${sec.id}`} className="cards-section">
             <div className="section-header">
-              <div className="section-eyebrow">{(i18n.language === 'zh-Hant' ? (sec.eyebrow.zhHant ?? sec.eyebrow.zh) : (i18n.language.startsWith('zh') ? sec.eyebrow.zh : sec.eyebrow.en))}</div>
-              <h2 className="section-title-serif">{(i18n.language === 'zh-Hant' ? (sec.title.zhHant ?? sec.title.zh) : (i18n.language.startsWith('zh') ? sec.title.zh : sec.title.en))}</h2>
-              <div className="section-sub">{(i18n.language === 'zh-Hant' ? (sec.sub.zhHant ?? sec.sub.zh) : (i18n.language.startsWith('zh') ? sec.sub.zh : sec.sub.en))}</div>
+              <div className="section-eyebrow">{((i18n.language.startsWith('zh') ? sec.eyebrow.zh : sec.eyebrow.en))}</div>
+              <h2 className="section-title-serif">{((i18n.language.startsWith('zh') ? sec.title.zh : sec.title.en))}</h2>
+              <div className="section-sub">{((i18n.language.startsWith('zh') ? sec.sub.zh : sec.sub.en))}</div>
             </div>
             <div className="cards-container">
               {sec.cards.map((card) => {
@@ -140,13 +135,11 @@ export default function LandingPage() {
       </div>
 
       <div className="footer">
-        <Link href="/about" className="footer-about" prefetch={false}>{tr({ zh: '关于', en: 'About',
-            zhHant: "關於"
+        <Link href="/about" className="footer-about" prefetch={false}>{tr({ zh: '关于', en: 'About'
         })}</Link>
         <Link href="/support" className="footer-credits" prefetch={false}>
           <Heart size={12} aria-hidden="true" />
-          <span>{tr({ zh: '致谢', en: 'Acknowledgments',
-              zhHant: "致謝"
+          <span>{tr({ zh: '致谢', en: 'Acknowledgments'
         })}</span>
         </Link>
         <a

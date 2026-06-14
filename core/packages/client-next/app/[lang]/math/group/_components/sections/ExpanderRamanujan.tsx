@@ -287,7 +287,6 @@ function CycleSpectrumPanel() {
 // ── Panel 2: Abelian Cayley spectrum explorer ─────────────────────────────────
 
 const GEN_CONFIGS: { id: GeneratorConfig; zh: string; en: string
-    zhHant?: string;
  }[] = [
   { id: '±1', zh: '生成元 {±1}，d=2', en: 'Generators {±1}, d=2' },
   { id: '±1,±2', zh: '生成元 {±1,±2}，d=4', en: 'Generators {±1,±2}, d=4' },
@@ -637,8 +636,7 @@ function MixingRacePanel() {
         {/* x-axis label */}
         <text x={padL + iW / 2} y={H - 2} textAnchor="middle" fontSize={9}
           fill="var(--ink-dim)" style={{ fontFamily: 'var(--mono)' }}>
-          {tr({ zh: '步数 t', en: 'Steps t',
-              zhHant: "步數 t"
+          {tr({ zh: '步数 t', en: 'Steps t'
         })}
         </text>
 

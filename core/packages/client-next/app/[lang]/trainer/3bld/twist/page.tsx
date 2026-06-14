@@ -55,7 +55,7 @@ const DEFAULT_OPTIONS: TwistOptions = {
 export default function TwistTrainerPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('翻角公式训练', 'Corner Twist Trainer', "翻角公式訓練");
+  useDocumentTitle('翻角公式训练', 'Corner Twist Trainer');
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);
@@ -79,14 +79,12 @@ export default function TwistTrainerPage(): JSX.Element {
     const { edgescramble, twotwist, threetwist, allup, alldown, updown } = opts;
 
     if (!twotwist && !threetwist) {
-      setError(tr({ zh: '请至少勾选一类方向状态', en: 'Select at least one orientation class',
-          zhHant: "請至少勾選一類方向狀態"
+      setError(tr({ zh: '请至少勾选一类方向状态', en: 'Select at least one orientation class'
     }));
       return;
     }
     if (!allup && !alldown && !updown) {
-      setError(tr({ zh: '请至少勾选一类位置状态', en: 'Select at least one position class',
-          zhHant: "請至少勾選一類位置狀態"
+      setError(tr({ zh: '请至少勾选一类位置状态', en: 'Select at least one position class'
     }));
       return;
     }
@@ -155,7 +153,7 @@ export default function TwistTrainerPage(): JSX.Element {
 
     setScrambles(out);
     setInfo(
-      i18n.language === 'zh-Hant' ? (`隨機生成 ${out.length} 條打亂，遍歷緩衝外存在兩個翻角的情況。`) : (isZh
+      (isZh
                 ? `随机生成 ${out.length} 条打乱，遍历缓冲外存在两个翻角的情况。`
                 : `Generated ${out.length} scrambles, enumerating two-corner-twist cases outside the buffer.`),
     );
@@ -168,8 +166,7 @@ export default function TwistTrainerPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '翻角公式训练', en: 'Corner Twist Trainer',
-            zhHant: "翻角公式訓練"
+        <h1>{tr({ zh: '翻角公式训练', en: 'Corner Twist Trainer'
         })}</h1>
       </div>
 
@@ -177,8 +174,7 @@ export default function TwistTrainerPage(): JSX.Element {
 
       <section className="bld-section">
         <div className="bld-config-group">
-          <span className="bld-config-group-title">{tr({ zh: '方向分类', en: 'Orientation class',
-              zhHant: "方向分類"
+          <span className="bld-config-group-title">{tr({ zh: '方向分类', en: 'Orientation class'
         })}</span>
           <div className="bld-check-row">
             <label className="bld-check">
@@ -187,8 +183,7 @@ export default function TwistTrainerPage(): JSX.Element {
                 checked={opts.twotwist}
                 onChange={(e) => setOpt('twotwist', e.target.checked)}
               />
-              {tr({ zh: '缓冲外二角翻', en: '2 corners twisted (no buffer)',
-                  zhHant: "緩衝外二角翻"
+              {tr({ zh: '缓冲外二角翻', en: '2 corners twisted (no buffer)'
             })}
             </label>
             <label className="bld-check">
@@ -197,16 +192,14 @@ export default function TwistTrainerPage(): JSX.Element {
                 checked={opts.threetwist}
                 onChange={(e) => setOpt('threetwist', e.target.checked)}
               />
-              {tr({ zh: '带缓冲三角翻', en: '3 corners twisted (with buffer)',
-                  zhHant: "帶緩衝三角翻"
+              {tr({ zh: '带缓冲三角翻', en: '3 corners twisted (with buffer)'
             })}
             </label>
           </div>
         </div>
 
         <div className="bld-config-group">
-          <span className="bld-config-group-title">{tr({ zh: '位置分类', en: 'Position class',
-              zhHant: "位置分類"
+          <span className="bld-config-group-title">{tr({ zh: '位置分类', en: 'Position class'
         })}</span>
           <div className="bld-check-row">
             <label className="bld-check">
@@ -215,8 +208,7 @@ export default function TwistTrainerPage(): JSX.Element {
                 checked={opts.allup}
                 onChange={(e) => setOpt('allup', e.target.checked)}
               />
-              {tr({ zh: '纯顶层', en: 'Top layer only',
-                  zhHant: "純頂層"
+              {tr({ zh: '纯顶层', en: 'Top layer only'
             })}
             </label>
             <label className="bld-check">
@@ -225,8 +217,7 @@ export default function TwistTrainerPage(): JSX.Element {
                 checked={opts.alldown}
                 onChange={(e) => setOpt('alldown', e.target.checked)}
               />
-              {tr({ zh: '纯底层', en: 'Bottom layer only',
-                  zhHant: "純底層"
+              {tr({ zh: '纯底层', en: 'Bottom layer only'
             })}
             </label>
             <label className="bld-check">
@@ -235,8 +226,7 @@ export default function TwistTrainerPage(): JSX.Element {
                 checked={opts.updown}
                 onChange={(e) => setOpt('updown', e.target.checked)}
               />
-              {tr({ zh: '顶层 + 底层', en: 'Top + bottom',
-                  zhHant: "頂層 + 底層"
+              {tr({ zh: '顶层 + 底层', en: 'Top + bottom'
             })}
             </label>
           </div>
@@ -251,8 +241,7 @@ export default function TwistTrainerPage(): JSX.Element {
                 checked={opts.edgescramble}
                 onChange={(e) => setOpt('edgescramble', e.target.checked)}
               />
-              {tr({ zh: '打乱棱块', en: 'Scramble edges',
-                  zhHant: "打亂稜塊"
+              {tr({ zh: '打乱棱块', en: 'Scramble edges'
             })}
             </label>
           </div>
@@ -266,8 +255,7 @@ export default function TwistTrainerPage(): JSX.Element {
           style={{ marginTop: 6 }}
         >
           <Wand2 size={15} />
-          {tr({ zh: '生成翻角训练', en: 'Generate twist scrambles',
-              zhHant: "生成翻角訓練"
+          {tr({ zh: '生成翻角训练', en: 'Generate twist scrambles'
         })}
         </button>
 

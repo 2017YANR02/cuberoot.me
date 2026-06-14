@@ -85,7 +85,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
   }, [rawSolves, range]);
 
   const evInfo = EVENTS.find(e => e.id === event);
-  const evName = evInfo ? (i18n.language === 'zh-Hant' ? (evInfo.nameZhHant ?? evInfo.nameZh) : (isZh ? evInfo.nameZh : evInfo.nameEn)) : event;
+  const evName = evInfo ? ((isZh ? evInfo.nameZh : evInfo.nameEn)) : event;
   const fmt = eventDefaultFormat(event);
 
   const summary = useMemo(() => summarize(solves), [solves]);
@@ -129,14 +129,11 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
 
   // Build the lines for both display and copy. Order mimics cstimer's BUTTON_OPTIONS.
   const lines: Array<[string, string]> = [];
-  lines.push([tr({ zh: '项目', en: 'Event',
-      zhHant: "項目"
+  lines.push([tr({ zh: '项目', en: 'Event'
 }), evName]);
-  lines.push([tr({ zh: '次数', en: 'Count',
-      zhHant: "次數"
+  lines.push([tr({ zh: '次数', en: 'Count'
 }), String(summary.count)]);
-  if (best !== null) lines.push([tr({ zh: '最佳单次', en: 'Best single',
-      zhHant: "最佳單次"
+  if (best !== null) lines.push([tr({ zh: '最佳单次', en: 'Best single'
 }), formatMs(best)]);
   if (pbDate) lines.push([tr({ zh: 'PB 日期', en: 'PB date' }), pbDate.toLocaleDateString()]);
   lines.push([tr({ zh: '平均', en: 'Mean' }), summary.mean]);
@@ -165,8 +162,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
   lines.push([tr({ zh: '最佳 ao50', en: 'Best ao50' }), summary.bestAo50 + bestSd(50)]);
   lines.push([tr({ zh: '最佳 ao100', en: 'Best ao100' }), summary.bestAo100 + bestSd(100)]);
   lines.push([tr({ zh: '最佳 ao1000', en: 'Best ao1000' }), summary.bestAo1000 + bestSd(1000)]);
-  if (streak > 0) lines.push([tr({ zh: '最长连续天数', en: 'Longest streak',
-      zhHant: "最長連續天數"
+  if (streak > 0) lines.push([tr({ zh: '最长连续天数', en: 'Longest streak'
 }), `${streak} ${tr({ zh: '天', en: 'days' })}`]);
 
   // Format helper for a single row of period stats (used by JSX + copy text).
@@ -176,28 +172,23 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
   // Period rows in the order shown in the UI.
   const periodRows: Array<{ key: 'today' | 'week' | 'month' | 'year'; label: string; vsLabel: string; cur: BucketStats; prev: BucketStats }> = [
     { key: 'today', label: tr({ zh: '今日', en: 'Today' }),  vsLabel: tr({ zh: '昨日', en: 'yesterday' }), cur: periods.today, prev: periods.yesterday },
-    { key: 'week',  label: tr({ zh: '本周', en: 'Week',
-        zhHant: "本週"
-    }),   vsLabel: tr({ zh: '上周', en: 'last week',
-        zhHant: "上週"
+    { key: 'week',  label: tr({ zh: '本周', en: 'Week'
+    }),   vsLabel: tr({ zh: '上周', en: 'last week'
     }), cur: periods.week,  prev: periods.prevWeek },
     { key: 'month', label: tr({ zh: '本月', en: 'Month' }),  vsLabel: tr({ zh: '上月', en: 'last month' }), cur: periods.month, prev: periods.prevMonth },
     { key: 'year',  label: tr({ zh: '今年', en: 'Year' }),   vsLabel: tr({ zh: '去年', en: 'last year' }), cur: periods.year,  prev: periods.prevYear },
   ];
 
   const textVersion = useMemo(() => {
-    const header = `${evName} — ${tr({ zh: '统计', en: 'Stats',
-        zhHant: "統計"
+    const header = `${evName} — ${tr({ zh: '统计', en: 'Stats'
     })} (n=${summary.count})`;
     const body = lines.map(([k, v]) => `${k}: ${v}`).join('\n');
     const subxBody = subX.length
-      ? '\n\n' + (tr({ zh: 'sub-X 分布：', en: 'Sub-X breakdown:',
-          zhHant: "sub-X 分佈："
+      ? '\n\n' + (tr({ zh: 'sub-X 分布：', en: 'Sub-X breakdown:'
     })) + '\n' +
           subX.map(s => `  ${s.label}: ${s.pct.toFixed(1)}%`).join('\n')
       : '';
-    const periodsBody = '\n\n' + (tr({ zh: '时间段：', en: 'Time periods:',
-        zhHant: "時間段："
+    const periodsBody = '\n\n' + (tr({ zh: '时间段：', en: 'Time periods:'
     })) + '\n' +
       periodRows.map(r => `  ${r.label}: ${fmtBucketRow(r.cur)}`).join('\n');
     return header + '\n' + body + subxBody + periodsBody;
@@ -253,19 +244,16 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
         aria-modal="true"
         aria-labelledby="stats-modal-title"
       >
-        <h2 id="stats-modal-title">{tr({ zh: '完整统计', en: 'Full stats',
-            zhHant: "完整統計"
+        <h2 id="stats-modal-title">{tr({ zh: '完整统计', en: 'Full stats'
         })} — {evName}</h2>
 
         <div className={`stats-modal-body stats-tab-${tab}`}>
 
         <div className="stats-tab-bar" role="tablist">
           {([
-            { id: 'overview' as const, labelZh: '概览', labelEn: 'Overview', Icon: LayoutDashboard,
-                labelZhHant: "概覽"
+            { id: 'overview' as const, labelZh: '概览', labelEn: 'Overview', Icon: LayoutDashboard
             },
-            { id: 'charts'   as const, labelZh: '图表', labelEn: 'Charts',   Icon: BarChart3,
-                labelZhHant: "圖表"
+            { id: 'charts'   as const, labelZh: '图表', labelEn: 'Charts',   Icon: BarChart3
             },
             { id: 'cases'    as const, labelZh: '案例', labelEn: 'Cases',    Icon: Layers },
           ]).map(({ id, labelZh, labelEn, Icon }) => {
@@ -322,8 +310,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
 
         {pbIdx >= 0 && (
           <div className="modal-section" data-tab="overview">
-            <h3 className="settings-h3">{tr({ zh: 'PB 单次', en: 'PB single',
-                zhHant: "PB 單次"
+            <h3 className="settings-h3">{tr({ zh: 'PB 单次', en: 'PB single'
             })}</h3>
             <div className="stats-modal-pb">
               <div>{pbStr}</div>
@@ -333,8 +320,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
         )}
 
         <div className="modal-section" data-tab="overview">
-          <h3 className="settings-h3">{tr({ zh: '时间段', en: 'Time periods',
-              zhHant: "時間段"
+          <h3 className="settings-h3">{tr({ zh: '时间段', en: 'Time periods'
         })}</h3>
           <table style={{ borderCollapse: 'collapse', fontSize: '0.9em', width: '100%' }}>
             <thead>
@@ -345,8 +331,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
                 <th style={cellStyle}>ao5</th>
                 <th style={cellStyle}>ao12</th>
                 <th style={cellStyle}>mean</th>
-                <th style={cellStyle}>{tr({ zh: '对比', en: 'vs prev',
-                    zhHant: "對比"
+                <th style={cellStyle}>{tr({ zh: '对比', en: 'vs prev'
                 })}</th>
               </tr>
             </thead>
@@ -392,13 +377,12 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
         )}
 
         <div className="modal-section" data-tab="charts">
-          <h3 className="settings-h3">{tr({ zh: '图表', en: 'Charts',
-              zhHant: "圖表"
+          <h3 className="settings-h3">{tr({ zh: '图表', en: 'Charts'
         })}</h3>
           <div className="stats-charts">
             <div className="stats-chart-card">
               <p className="stats-chart-title">
-                {i18n.language === 'zh-Hant' ? (`單次散點（最近 ${Math.min(solves.length, 200)} 次）`) : (isZh
+                {(isZh
                                                     ? `单次散点（最近 ${Math.min(solves.length, 200)} 次）`
                                                     : `Per-solve scatter (last ${Math.min(solves.length, 200)})`)}
               </p>
@@ -412,8 +396,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
             </div>
             <div className="stats-chart-card">
               <p className="stats-chart-title">
-                {tr({ zh: '成绩分布', en: 'Time distribution',
-                    zhHant: "成績分佈"
+                {tr({ zh: '成绩分布', en: 'Time distribution'
                 })}
               </p>
               <HistogramChart
@@ -430,8 +413,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
         {solves.filter(s => Number.isFinite(effectiveMs(s))).length >= 10 && (
           <div className="modal-section" data-tab="charts">
             <h3 className="settings-h3">
-              {tr({ zh: '什么时候手感最好？', en: 'When are you fastest?',
-                  zhHant: "什麼時候手感最好？"
+              {tr({ zh: '什么时候手感最好？', en: 'When are you fastest?'
             })}
             </h3>
             <div className="stats-charts">
@@ -449,8 +431,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
 
         {subX.length > 0 && (
           <div className="modal-section" data-tab="cases">
-            <h3 className="settings-h3">{tr({ zh: 'sub-X 分布', en: 'Sub-X breakdown',
-                zhHant: "sub-X 分佈"
+            <h3 className="settings-h3">{tr({ zh: 'sub-X 分布', en: 'Sub-X breakdown'
             })}</h3>
             <div className="subx-list">
               {subX.map(s => (
@@ -468,14 +449,11 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
 
         <div className="modal-actions">
           <button onClick={onCopy} className="primary">
-            {copied ? (tr({ zh: '已复制', en: 'Copied',
-                zhHant: "已複製"
-            })) : (tr({ zh: '复制文本', en: 'Copy text',
-                zhHant: "複製文字"
+            {copied ? (tr({ zh: '已复制', en: 'Copied'
+            })) : (tr({ zh: '复制文本', en: 'Copy text'
             }))}
           </button>
-          <button onClick={onClose}>{tr({ zh: '关闭', en: 'Close',
-              zhHant: "關閉"
+          <button onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
         })}</button>
         </div>
       </div>

@@ -20,14 +20,13 @@ import i18n from '@/i18n/i18n-client';
 export default function AlgIndexPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('公式库', 'Algorithms', "公式庫");
+  useDocumentTitle('公式库', 'Algorithms');
 
   return (
     <div className="alg-root">
       <div className="alg-index-header">
         <div className="alg-index-header-row">
-          <h1 className="alg-index-title">{tr({ zh: '公式库', en: 'Algorithm DB',
-              zhHant: "公式庫"
+          <h1 className="alg-index-title">{tr({ zh: '公式库', en: 'Algorithm DB'
         })}</h1>
         </div>
         <p className="alg-index-subtitle">
@@ -35,8 +34,7 @@ export default function AlgIndexPage() {
             ALG_PUZZLES.map((p) => eventDisplayName(p, isZh)).join(' / ')}
         </p>
         <p className="alg-index-credit">
-          {tr({ zh: '数据来源: ', en: 'Source: ',
-              zhHant: "資料來源: "
+          {tr({ zh: '数据来源: ', en: 'Source: '
         })}
           <a href="https://speedcubedb.com" target="_blank" rel="noopener noreferrer">
             speedcubedb.com
@@ -59,7 +57,7 @@ export default function AlgIndexPage() {
               <div className="alg-puzzle-preview">
                 {sets.slice(0, 6).map((s) => (
                   <span key={s.slug} className="alg-puzzle-chip">
-                    {(i18n.language === 'zh-Hant' ? ((s as { zhHant?: string }).zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en))}
+                    {((i18n.language.startsWith('zh') ? s.zh : s.en))}
                   </span>
                 ))}
                 {sets.length > 6 && (
@@ -74,19 +72,16 @@ export default function AlgIndexPage() {
             <span className="alg-puzzle-icon alg-bracket-icon" aria-hidden="true">
               [,]
             </span>
-            <span>{tr({ zh: '换位子', en: 'Commutator',
-                zhHant: "換位子"
+            <span>{tr({ zh: '换位子', en: 'Commutator'
             })}</span>
           </div>
           <div className="alg-puzzle-count">
-            {tr({ zh: '换位子分解工具', en: 'Commutator decomposer',
-                zhHant: "換位子分解工具"
+            {tr({ zh: '换位子分解工具', en: 'Commutator decomposer'
             })}
           </div>
           <div className="alg-puzzle-preview">
             <span className="alg-puzzle-chip">{tr({ zh: '分解', en: 'Decompose' })}</span>
-            <span className="alg-puzzle-chip">{tr({ zh: '展开', en: 'Expand',
-                zhHant: "展開"
+            <span className="alg-puzzle-chip">{tr({ zh: '展开', en: 'Expand'
             })}</span>
             <span className="alg-puzzle-chip">Excel</span>
           </div>

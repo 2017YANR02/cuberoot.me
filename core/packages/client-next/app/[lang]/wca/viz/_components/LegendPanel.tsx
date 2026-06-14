@@ -21,32 +21,25 @@ export default function LegendPanel() {
 
   // NOTE: 图层配置 (标签随语言变化, 所以依赖 isZh)
   const LAYER_ITEMS = useMemo<LayerItem[]>(() => [
-    { key: 'currentVal', icon: '◆', label: tr({ zh: '当前值', en: 'Current value',
-        zhHant: "當前值"
+    { key: 'currentVal', icon: '◆', label: tr({ zh: '当前值', en: 'Current value'
     }) },
-    { key: 'meanLine', icon: '●', label: tr({ zh: '窗口均值', en: 'Window mean',
-        zhHant: "視窗均值"
+    { key: 'meanLine', icon: '●', label: tr({ zh: '窗口均值', en: 'Window mean'
     }) },
-    { key: 'ghost', icon: '━', label: tr({ zh: '初始残影', en: 'Baseline trail',
-        zhHant: "初始殘影"
+    { key: 'ghost', icon: '━', label: tr({ zh: '初始残影', en: 'Baseline trail'
     }) },
-    { key: 'trail', icon: '✦', label: tr({ zh: '均值轨迹', en: 'Mean track',
-        zhHant: "均值軌跡"
+    { key: 'trail', icon: '✦', label: tr({ zh: '均值轨迹', en: 'Mean track'
     }) },
-    { key: 'bimodal', icon: '⚡', label: tr({ zh: '双峰检测', en: 'Bimodality',
-        zhHant: "雙峰檢測"
+    { key: 'bimodal', icon: '⚡', label: tr({ zh: '双峰检测', en: 'Bimodality'
     }) },
     { key: 'followMean', icon: '⊙', label: tr({ zh: '均值居中', en: 'Mean-centered' }) },
     { key: 'histBars', icon: '▮', iconStyle: { color: '#5cf' }, label: tr({ zh: '直方柱', en: 'Histogram bars' }) },
   ], [isZh]);
 
   const VIEW_MODES = useMemo(() => [
-    { key: 'line' as const, label: tr({ zh: '折线', en: 'Line',
-        zhHant: "折線"
+    { key: 'line' as const, label: tr({ zh: '折线', en: 'Line'
     }) },
     { key: 'histogram' as const, label: tr({ zh: '滑窗', en: 'Window' }) },
-    { key: 'cumHist' as const, label: tr({ zh: '累积', en: 'Cumulative',
-        zhHant: "累積"
+    { key: 'cumHist' as const, label: tr({ zh: '累积', en: 'Cumulative'
     }) },
   ], [isZh]);
 
@@ -65,8 +58,7 @@ export default function LegendPanel() {
         ))}
         <button
           className="view-btn"
-          title={tr({ zh: '重置缩放范围 (双击画布也可重置)', en: 'Reset zoom (double-click canvas also resets)',
-              zhHant: "重置縮放範圍 (雙擊畫布也可重置)"
+          title={tr({ zh: '重置缩放范围 (双击画布也可重置)', en: 'Reset zoom (double-click canvas also resets)'
         })}
           onClick={resetZoom}
         >
@@ -77,8 +69,7 @@ export default function LegendPanel() {
       {/* ⓘ 按钮 */}
       <button
         className="legend-info-btn"
-        title={tr({ zh: '图例说明', en: 'Legend',
-            zhHant: "圖例說明"
+        title={tr({ zh: '图例说明', en: 'Legend'
         })}
         onClick={(e) => { e.stopPropagation(); setVisible(v => !v); }}
       >

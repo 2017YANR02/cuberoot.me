@@ -25,7 +25,7 @@ export default function CodeUtilsPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('速查', 'Hooks & Utils', '速查');
+  useDocumentTitle('速查', 'Hooks & Utils');
 
   return (
     <div className="ur">
@@ -40,8 +40,7 @@ export default function CodeUtilsPage() {
         <p className="ur-sub">
           {tr({
             zh: 'cuberoot.me 自己的 6 个 React Hook,与一批 canonical 工具函数,集中速查:i18n 文案、API 地址、WCA 成绩格式化、项目归一、配色常量。写新代码前先翻一遍,别重复造轮子。',
-            en: 'A quick-reference for cuberoot.me’s own 6 React hooks and the canonical utility functions: i18n text, API URLs, WCA result formatting, event normalization, color constants. Skim before writing new code — don’t reinvent the wheel.',
-              zhHant: "cuberoot.me 自己的 6 個 React Hook,與一批 canonical 工具函式,集中速查:i18n 文案、API 地址、WCA 成績格式化、項目歸一、配色常量。寫新程式碼前先翻一遍,別重複造輪子。"
+            en: 'A quick-reference for cuberoot.me’s own 6 React hooks and the canonical utility functions: i18n text, API URLs, WCA result formatting, event normalization, color constants. Skim before writing new code — don’t reinvent the wheel.'
         })}
         </p>
       </header>
@@ -51,14 +50,12 @@ export default function CodeUtilsPage() {
         <span>
           {tr({
             zh: '约定:新增一个可复用 hook / 工具函数后,在 ',
-            en: 'Convention: after adding a reusable hook / util, register an entry in ',
-              zhHant: "約定:新增一個可複用 hook / 工具函式後,在 "
+            en: 'Convention: after adding a reusable hook / util, register an entry in '
         })}
           <code>app/[lang]/code/utils/_catalog.tsx</code>
           {tr({
             zh: ' 里登记一条,下一个人 / 下一个 AI 打开本页就能查到它。',
-            en: ' — the next person, or the next AI, then finds it right here.',
-              zhHant: " 裡登記一條,下一個人 / 下一個 AI 開啟本頁就能查到它。"
+            en: ' — the next person, or the next AI, then finds it right here.'
         })}
         </span>
       </div>

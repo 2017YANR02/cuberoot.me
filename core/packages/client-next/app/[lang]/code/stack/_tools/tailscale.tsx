@@ -44,17 +44,13 @@ export const TAILSCALE: StackTool = {
     outlookDesc: <>The 2026 direction is set: tsnet gives any Go / Rust program a "mesh NIC" of its own; Funnel turns a LAN service into a public HTTPS URL; Tailscale SSH removes the cert / bastion layer entirely. The company is moving from "VPN replacement" to "private application fabric."</>,
   },
   heroStats: [
-    { num: '100', unit: 'free', zh: <>免费版每 tailnet 节点上限 <em>个人 / 小团队基本够</em></>, en: <>nodes per tailnet on the free plan <em>plenty for solo / small teams</em></>,
-        zhHant: <>免費版每 tailnet 節點上限 <em>個人 / 小團隊基本夠</em></>
+    { num: '100', unit: 'free', zh: <>免费版每 tailnet 节点上限 <em>个人 / 小团队基本够</em></>, en: <>nodes per tailnet on the free plan <em>plenty for solo / small teams</em></>
     },
-    { num: '$1.5', unit: 'B', zh: <>2024-11 Series C 估值 <em>Insight $160M 领投</em></>, en: <>valuation at 2024-11 Series C <em>Insight led $160M</em></>,
-        zhHant: <>2024-11 Series C 估值 <em>Insight $160M 領投</em></>
+    { num: '$1.5', unit: 'B', zh: <>2024-11 Series C 估值 <em>Insight $160M 领投</em></>, en: <>valuation at 2024-11 Series C <em>Insight led $160M</em></>
     },
-    { num: '7', unit: 'y', zh: <>从 2019 至今 <em>WireGuard 落地内核同年起步</em></>, en: <>since 2019 <em>started the year WireGuard hit kernel</em></>,
-        zhHant: <>從 2019 至今 <em>WireGuard 落地核心同年起步</em></>
+    { num: '7', unit: 'y', zh: <>从 2019 至今 <em>WireGuard 落地内核同年起步</em></>, en: <>since 2019 <em>started the year WireGuard hit kernel</em></>
     },
-    { num: '1', unit: '.96', zh: <>当前稳定版 <em>2026-04 · 1.96.5</em></>, en: <>current stable <em>2026-04 · 1.96.5</em></>,
-        zhHant: <>當前穩定版 <em>2026-04 · 1.96.5</em></>
+    { num: '1', unit: '.96', zh: <>当前稳定版 <em>2026-04 · 1.96.5</em></>, en: <>current stable <em>2026-04 · 1.96.5</em></>
     },
   ],
   intro: {

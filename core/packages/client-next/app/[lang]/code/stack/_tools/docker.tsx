@@ -44,15 +44,12 @@ export const DOCKER: StackTool = {
     outlookDesc: <>v29 makes containerd the default image store and bumps the minimum API to 1.44. The image-layer future is essentially OCI + zstd + nydus. Daemon-less alternatives (Podman, nerdctl) gain ground in dev, but nobody is trying to reinvent the image format.</>,
   },
   heroStats: [
-    { num: '29', unit: '.4', zh: <>当前稳定 Engine <em>2026-05 · 29.4.3</em></>, en: <>current stable Engine <em>2026-05 · 29.4.3</em></>,
-        zhHant: <>當前穩定 Engine <em>2026-05 · 29.4.3</em></>
+    { num: '29', unit: '.4', zh: <>当前稳定 Engine <em>2026-05 · 29.4.3</em></>, en: <>current stable Engine <em>2026-05 · 29.4.3</em></>
     },
     { num: '4', unit: '.73', zh: <>Docker Desktop <em>2026-05-11</em></>, en: <>Docker Desktop <em>2026-05-11</em></> },
-    { num: '13', unit: 'y', zh: <>从 PyCon 2013 至今 <em>容器事实标准</em></>, en: <>since PyCon 2013 <em>the de-facto standard</em></>,
-        zhHant: <>從 PyCon 2013 至今 <em>容器事實標準</em></>
+    { num: '13', unit: 'y', zh: <>从 PyCon 2013 至今 <em>容器事实标准</em></>, en: <>since PyCon 2013 <em>the de-facto standard</em></>
     },
-    { num: '17', unit: 'B+', zh: <>Docker Hub 镜像月拉取量 <em>行业基建级</em></>, en: <>monthly image pulls on Docker Hub <em>industry-scale infra</em></>,
-        zhHant: <>Docker Hub 映象月拉取量 <em>行業基建級</em></>
+    { num: '17', unit: 'B+', zh: <>Docker Hub 镜像月拉取量 <em>行业基建级</em></>, en: <>monthly image pulls on Docker Hub <em>industry-scale infra</em></>
     },
   ],
   intro: {

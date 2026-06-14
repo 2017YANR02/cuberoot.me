@@ -52,7 +52,6 @@ interface StatPanel {
   labelZh: string;
   header: StatHeader[];
   sections: StatSection[];
-    labelZhHant?: string;
 }
 
 interface SourcePanel {
@@ -60,7 +59,6 @@ interface SourcePanel {
   labelEn: string;
   labelZh: string;
   panels: StatPanel[];
-    labelZhHant?: string;
 }
 
 interface MetricPanel {
@@ -69,7 +67,6 @@ interface MetricPanel {
   labelZh: string;
   panels?: StatPanel[];
   sourcePanels?: SourcePanel[];
-    labelZhHant?: string;
 }
 
 interface MetricGroup {
@@ -84,7 +81,6 @@ interface StatData {
   titleZh: string;
   note?: string;
   noteZh?: string;
-  noteZhHant?: string;
   header: StatHeader[];
   rows?: unknown[][];
   sections?: StatSection[];
@@ -93,7 +89,6 @@ interface StatData {
   metricGroups?: MetricGroup[];
   years?: number[];
   cumulative?: Record<string, number[]>;
-    titleZhHant?: string;
 }
 
 function getAllPanelsFromMetric(mp: MetricPanel): StatPanel[] {
@@ -322,11 +317,10 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
       {remaining > 0 && (
         <div className="wca-stats-more">
           <button type="button" className="wca-stats-more-btn" onClick={() => setVisible(v => v + PAGE_SIZE * 3)}>
-            {i18n.language === 'zh-Hant' ? (`顯示更多（還有 ${remaining} 行）`) : (isZh ? `显示更多（还有 ${remaining} 行）` : `Show more (${remaining} left)`)}
+            {(isZh ? `显示更多（还有 ${remaining} 行）` : `Show more (${remaining} left)`)}
           </button>
           <button type="button" className="wca-stats-more-btn" onClick={() => setVisible(filtered.length)}>
-            {tr({ zh: '全部显示', en: 'Show all',
-                zhHant: "全部顯示"
+            {tr({ zh: '全部显示', en: 'Show all'
             })}
           </button>
         </div>
@@ -381,8 +375,7 @@ function WrByCountryYearView({ header, years, cumulative, searchTerm, isZh }: {
             setPlaying(true);
           }}
           className="wr-year-play-btn"
-          title={playing ? (tr({ zh: '暂停', en: 'Pause',
-              zhHant: "暫停"
+          title={playing ? (tr({ zh: '暂停', en: 'Pause'
         })) : (tr({ zh: '播放', en: 'Play' }))}
           aria-label={playing ? 'Pause' : 'Play'}
         >
@@ -474,7 +467,7 @@ function SectionsView({ header, sections, searchTerm, isZh, selectedEvent }: {
               className={`wca-stats-tab ${selectedMetric === metric ? 'active' : ''}`}
               onClick={() => setSelectedMetric(selectedMetric === metric ? null : metric)}
             >
-              {i18n.language === 'zh-Hant' ? ((metric === 'Single' ? '單次' : metric === 'Average' ? '平均' : metric)) : (isZh ? (metric === 'Single' ? '单次' : metric === 'Average' ? '平均' : metric) : metric)}
+              {(isZh ? (metric === 'Single' ? '单次' : metric === 'Average' ? '平均' : metric) : metric)}
             </button>
           ))}
         </div>
@@ -583,8 +576,7 @@ function AoxRankingSection({ header, rows, isZh }: {
             <tr>
               {hasSolves && (
                 <th style={{ textAlign: 'center', cursor: 'pointer', width: 34 }}
-                  title={tr({ zh: '全选/取消', en: 'Select all',
-                      zhHant: "全選/取消"
+                  title={tr({ zh: '全选/取消', en: 'Select all'
                 })}
                   onClick={toggleAll}>
                   <BarChart3 size={14} strokeWidth={1.75} style={{ verticalAlign: 'middle' }} />
@@ -729,7 +721,7 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSe
               className={`wca-stats-tab ${m === activeMetric ? 'active' : ''}`}
               onClick={() => setMetric(m)}
             >
-              {i18n.language === 'zh-Hant' ? ((m === 'Single' ? '單次' : m === 'Average' ? '平均' : m)) : (isZh ? (m === 'Single' ? '单次' : m === 'Average' ? '平均' : m) : m)}
+              {(isZh ? (m === 'Single' ? '单次' : m === 'Average' ? '平均' : m) : m)}
             </button>
           ))}
         </div>
@@ -741,7 +733,7 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSe
             className={`wca-stats-tab wca-stats-panel-tab ${i === activePanel ? 'active' : ''}`}
             onClick={() => onSetActivePanel(i)}
           >
-            {i18n.language === 'zh-Hant' ? (p.labelZhHant ?? p.labelZh) : (isZh ? p.labelZh : p.labelEn)}
+            {(isZh ? p.labelZh : p.labelEn)}
           </button>
         ))}
         {showDedup && (
@@ -836,7 +828,7 @@ function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent, activ
             className={`wca-stats-tab ${i === activeSource ? 'active' : ''}`}
             onClick={() => setActiveSource(i)}
           >
-            {i18n.language === 'zh-Hant' ? (sp.labelZhHant ?? sp.labelZh) : (isZh ? sp.labelZh : sp.labelEn)}
+            {(isZh ? sp.labelZh : sp.labelEn)}
           </button>
         ))}
       </div>
@@ -912,7 +904,7 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
       'Ao25': 'Ao25', 'Ao50': 'Ao50', 'Ao100': 'Ao100', 'Ao1000': 'Ao1000',
     };
     const resolveLabel = (mp: MetricPanel) =>
-      LABEL_OVERRIDE[mp.labelEn] ?? (i18n.language === 'zh-Hant' ? (mp.labelZhHant ?? mp.labelZh) : (isZh ? mp.labelZh : mp.labelEn));
+      LABEL_OVERRIDE[mp.labelEn] ?? ((isZh ? mp.labelZh : mp.labelEn));
 
     if (metricGroups) {
       return metricGroups.flatMap(g => g.items).map(itemId => {
@@ -1111,8 +1103,7 @@ export default function WcaStatClient() {
   if (loading) {
     return (
       <div className="wca-stats-page">
-        <div className="wca-stats-loading">{tr({ zh: '加载中...', en: 'Loading...',
-            zhHant: "載入中..."
+        <div className="wca-stats-loading">{tr({ zh: '加载中...', en: 'Loading...'
         })}</div>
       </div>
     );
@@ -1122,11 +1113,9 @@ export default function WcaStatClient() {
     return (
       <div className="wca-stats-page">
         <div className="wca-stats-error">
-          <h2>{tr({ zh: '加载失败', en: 'Failed to load',
-              zhHant: "載入失敗"
+          <h2>{tr({ zh: '加载失败', en: 'Failed to load'
         })}</h2>
-          <p>{error || (tr({ zh: '未知错误', en: 'Unknown error',
-              zhHant: "未知錯誤"
+          <p>{error || (tr({ zh: '未知错误', en: 'Unknown error'
         }))}</p>
         </div>
       </div>
@@ -1138,9 +1127,9 @@ export default function WcaStatClient() {
     return (
       <div className="wca-stats-page">
         <div className="wca-stats-header">
-          <h1>{i18n.language === 'zh-Hant' ? (data.titleZhHant ?? data.titleZh) : (isZh ? data.titleZh : data.title)}</h1>
+          <h1>{(isZh ? data.titleZh : data.title)}</h1>
           {data.note && (
-            <p className="wca-stats-note">{i18n.language === 'zh-Hant' ? (data.noteZhHant ?? data.noteZh ?? data.note) : (isZh ? (data.noteZh ?? data.note) : data.note)}</p>
+            <p className="wca-stats-note">{(isZh ? (data.noteZh ?? data.note) : data.note)}</p>
           )}
         </div>
         <NameStatsView data={data as unknown as NameStatsData} isZh={isZh} />
@@ -1151,9 +1140,9 @@ export default function WcaStatClient() {
   return (
     <div className="wca-stats-page">
       <div className="wca-stats-header">
-        <h1>{i18n.language === 'zh-Hant' ? (data.titleZhHant ?? data.titleZh) : (isZh ? data.titleZh : data.title)}</h1>
+        <h1>{(isZh ? data.titleZh : data.title)}</h1>
         {data.note && (
-          <p className="wca-stats-note">{i18n.language === 'zh-Hant' ? (data.noteZhHant ?? data.noteZh ?? data.note) : (isZh ? (data.noteZh ?? data.note) : data.note)}</p>
+          <p className="wca-stats-note">{(isZh ? (data.noteZh ?? data.note) : data.note)}</p>
         )}
       </div>
 
@@ -1239,13 +1228,11 @@ export default function WcaStatClient() {
       {renderMode === 'empty' && (
         <div className="wca-stats-empty-state">
           <div className="wca-stats-empty-title">
-            {tr({ zh: '暂无数据', en: 'No data yet',
-                zhHant: "暫無資料"
+            {tr({ zh: '暂无数据', en: 'No data yet'
             })}
           </div>
           <div className="wca-stats-empty-hint">
-            {tr({ zh: '此统计项当前为空 —— 可能是下一次 stats-build 会补全,或该口径下无人达成。', en: 'This stat is currently empty — either no one meets the criteria, or it has yet to be computed.',
-                zhHant: "此統計項當前為空 —— 可能是下一次 stats-build 會補全,或該口徑下無人達成。"
+            {tr({ zh: '此统计项当前为空 —— 可能是下一次 stats-build 会补全,或该口径下无人达成。', en: 'This stat is currently empty — either no one meets the criteria, or it has yet to be computed.'
             })}
           </div>
         </div>

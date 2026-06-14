@@ -44,17 +44,13 @@ export const UV: StackTool = {
     outlookDesc: <>Mid-2026 uv is still on 0.11.x with no 1.0 in sight, yet PyPI traffic, official-doc examples, and new tutorials lean overwhelmingly toward it. With OpenAI keeping it open source while adding investment and pushing pyx, pip is on track to become the "legacy compatibility" option within a year or two.</>,
   },
   heroStats: [
-    { num: '10-100', unit: '×', zh: <>装包速度 vs pip <em>10-100 倍</em></>, en: <>install speed vs pip <em>10-100x</em></>,
-        zhHant: <>裝包速度 vs pip <em>10-100 倍</em></>
+    { num: '10-100', unit: '×', zh: <>装包速度 vs pip <em>10-100 倍</em></>, en: <>install speed vs pip <em>10-100x</em></>
     },
-    { num: '10', unit: '%', zh: <>PyPI 流量占比 <em>2025-08 Astral 数据</em></>, en: <>of PyPI traffic <em>2025-08 Astral figures</em></>,
-        zhHant: <>PyPI 流量佔比 <em>2025-08 Astral 資料</em></>
+    { num: '10', unit: '%', zh: <>PyPI 流量占比 <em>2025-08 Astral 数据</em></>, en: <>of PyPI traffic <em>2025-08 Astral figures</em></>
     },
-    { num: '2.3', unit: 'y', zh: <>从 2024-02 至今 <em>已替代 5 个工具</em></>, en: <>since 2024-02 <em>replaced 5 tools</em></>,
-        zhHant: <>從 2024-02 至今 <em>已替代 5 個工具</em></>
+    { num: '2.3', unit: 'y', zh: <>从 2024-02 至今 <em>已替代 5 个工具</em></>, en: <>since 2024-02 <em>replaced 5 tools</em></>
     },
-    { num: '0', unit: '.11.14', zh: <>当前稳定版 <em>2026-05-12</em></>, en: <>current stable <em>2026-05-12</em></>,
-        zhHant: <>當前穩定版 <em>2026-05-12</em></>
+    { num: '0', unit: '.11.14', zh: <>当前稳定版 <em>2026-05-12</em></>, en: <>current stable <em>2026-05-12</em></>
     },
   ],
   intro: {

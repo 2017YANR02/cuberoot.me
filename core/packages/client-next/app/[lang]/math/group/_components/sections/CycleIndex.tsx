@@ -83,7 +83,6 @@ function evaluateCycleIndex(poly: CycleIndexPoly, k: number): number {
 interface CycleClass {
   /** label for display */
   label: { zh: string; en: string
-    zhHant?: string;
  };
   /** number of elements in this class */
   size: number;
@@ -187,36 +186,31 @@ function cycleIndexDn(n: number): { classes: CycleClass[]; poly: CycleIndexPoly 
 function cycleIndexCubeFace(): { classes: CycleClass[]; poly: CycleIndexPoly } {
   const classes: CycleClass[] = [
     {
-      label: { zh: '恒等 (×1)', en: 'identity (×1)',
-          zhHant: "恆等 (×1)"
+      label: { zh: '恒等 (×1)', en: 'identity (×1)'
     },
       size: 1,
       exponents: [6,0,0,0,0,0], // x_1^6
     },
     {
-      label: { zh: '面轴 ±90° (×6)', en: 'face ±90° rotations (×6)',
-          zhHant: "面軸 ±90° (×6)"
+      label: { zh: '面轴 ±90° (×6)', en: 'face ±90° rotations (×6)'
     },
       size: 6,
       exponents: [2,0,0,1,0,0], // x_1^2 x_4
     },
     {
-      label: { zh: '面轴 180° (×3)', en: 'face 180° rotations (×3)',
-          zhHant: "面軸 180° (×3)"
+      label: { zh: '面轴 180° (×3)', en: 'face 180° rotations (×3)'
     },
       size: 3,
       exponents: [2,2,0,0,0,0], // x_1^2 x_2^2
     },
     {
-      label: { zh: '顶点轴 ±120° (×8)', en: 'vertex ±120° rotations (×8)',
-          zhHant: "頂點軸 ±120° (×8)"
+      label: { zh: '顶点轴 ±120° (×8)', en: 'vertex ±120° rotations (×8)'
     },
       size: 8,
       exponents: [0,0,2,0,0,0], // x_3^2
     },
     {
-      label: { zh: '棱轴 180° (×6)', en: 'edge 180° rotations (×6)',
-          zhHant: "稜軸 180° (×6)"
+      label: { zh: '棱轴 180° (×6)', en: 'edge 180° rotations (×6)'
     },
       size: 6,
       exponents: [0,3,0,0,0,0], // x_2^3
@@ -691,8 +685,7 @@ function CycleIndexBuilder({ lang }: { lang: Lang }) {
             className={`gt-chip${groupType === g ? ' gt-chip-active' : ''}`}
             onClick={() => handleGroupChange(g)}
           >
-            {g === 'cube' ? (tr({ zh: '正方体面', en: 'Cube faces',
-                zhHant: "正方體面"
+            {g === 'cube' ? (tr({ zh: '正方体面', en: 'Cube faces'
             })) : g}
           </button>
         ))}
@@ -752,8 +745,7 @@ function CycleIndexBuilder({ lang }: { lang: Lang }) {
       {/* Symbolic Z display */}
       <div style={{ marginTop: 18, padding: '12px 16px', background: 'var(--bg-elev)', borderRadius: 8, overflowX: 'auto' }}>
         <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-faint)', marginBottom: 6 }}>
-          {tr({ zh: '符号轮换指标', en: 'Symbolic cycle index',
-              zhHant: "符號輪換指標"
+          {tr({ zh: '符号轮换指标', en: 'Symbolic cycle index'
         })}
         </div>
         <TeXBlock src={
@@ -978,8 +970,7 @@ function NecklaceVisualiser({ lang }: { lang: Lang }) {
           <div className="gt-result-row">
             <span className="gt-result-label"><L zh="经典值" en="Classic" /></span>
             <span className="gt-result-val" style={{ color: formulaCount === 14 ? 'var(--green)' : 'var(--warn)' }}>
-              {tr({ zh: '14 种项链 ✓', en: '14 necklaces ✓',
-                  zhHant: "14 種項鍊 ✓"
+              {tr({ zh: '14 种项链 ✓', en: '14 necklaces ✓'
             })}
             </span>
           </div>
@@ -988,8 +979,7 @@ function NecklaceVisualiser({ lang }: { lang: Lang }) {
           <div className="gt-result-row">
             <span className="gt-result-label"><L zh="经典值" en="Classic" /></span>
             <span className="gt-result-val" style={{ color: formulaCount === 13 ? 'var(--green)' : 'var(--warn)' }}>
-              {tr({ zh: '13 种手环 ✓（比项链少1，手性对消）', en: '13 bracelets ✓ (1 fewer than necklaces: one chiral pair merges)',
-                  zhHant: "13 種手環 ✓（比項鍊少1，手性對消）"
+              {tr({ zh: '13 种手环 ✓（比项链少1，手性对消）', en: '13 bracelets ✓ (1 fewer than necklaces: one chiral pair merges)'
             })}
             </span>
           </div>
@@ -1000,8 +990,7 @@ function NecklaceVisualiser({ lang }: { lang: Lang }) {
       {byBlack.length > 0 && (
         <div style={{ marginTop: 10, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={{ fontSize: 12, color: 'var(--ink-faint)', fontFamily: 'var(--mono)' }}>
-            {tr({ zh: '按黑珠数：', en: 'by #black:',
-                zhHant: "按黑珠數："
+            {tr({ zh: '按黑珠数：', en: 'by #black:'
             })}
           </span>
           {byBlack.map((cnt, j) => cnt > 0 && (
@@ -1123,8 +1112,7 @@ function SubstitutionStepper({ lang }: { lang: Lang }) {
             className={`gt-chip${groupType === g ? ' gt-chip-active' : ''}`}
             onClick={() => setGroupType(g)}
           >
-            {g === 'cube' ? (tr({ zh: '正方体面', en: 'Cube faces',
-                zhHant: "正方體面"
+            {g === 'cube' ? (tr({ zh: '正方体面', en: 'Cube faces'
             })) : g}
           </button>
         ))}
@@ -1178,8 +1166,7 @@ function SubstitutionStepper({ lang }: { lang: Lang }) {
       {tab === 'symbolic' && (
         <div style={{ marginTop: 16 }}>
           <div style={{ fontSize: 12, color: 'var(--ink-faint)', fontFamily: 'var(--mono)', marginBottom: 8 }}>
-            {tr({ zh: '保留形式变量 x_i：', en: 'Keep formal variables x_i:',
-                zhHant: "保留形式變數 x_i："
+            {tr({ zh: '保留形式变量 x_i：', en: 'Keep formal variables x_i:'
             })}
           </div>
           <div style={{ padding: '12px 16px', background: 'var(--bg-elev)', borderRadius: 8, overflowX: 'auto' }}>
@@ -1204,7 +1191,7 @@ function SubstitutionStepper({ lang }: { lang: Lang }) {
                 {data.classes.map((cls, ci) => (
                   <tr key={ci}>
                     <td style={{ fontSize: 12, color: 'var(--ink-dim)' }}>
-                      {(i18n.language === 'zh-Hant' ? (cls.label.zhHant ?? cls.label.zh) : (i18n.language.startsWith('zh') ? cls.label.zh : cls.label.en))}
+                      {((i18n.language.startsWith('zh') ? cls.label.zh : cls.label.en))}
                     </td>
                     <td style={{ textAlign: 'center', fontFamily: 'var(--mono)' }}>{cls.size}</td>
                     <td style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>
@@ -1286,8 +1273,7 @@ function SubstitutionStepper({ lang }: { lang: Lang }) {
       {tab === 'bicolour' && inventory && (
         <div style={{ marginTop: 16 }}>
           <div style={{ fontSize: 12, color: 'var(--ink-faint)', fontFamily: 'var(--mono)', marginBottom: 8 }}>
-            {tr({ zh: `代入 x_i ↦ 1 + t^i（黑色权 t，白色权 1）：`, en: `Substitute x_i ↦ 1 + t^i (weight t for black, 1 for white):`,
-                zhHant: "代入 x_i ↦ 1 + t^i（黑色權 t，白色權 1）："
+            {tr({ zh: `代入 x_i ↦ 1 + t^i（黑色权 t，白色权 1）：`, en: `Substitute x_i ↦ 1 + t^i (weight t for black, 1 for white):`
             })}
           </div>
           <div style={{ padding: '12px 16px', background: 'var(--bg-elev)', borderRadius: 8, overflowX: 'auto', marginBottom: 12 }}>

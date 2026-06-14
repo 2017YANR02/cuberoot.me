@@ -44,17 +44,13 @@ export const ZED: StackTool = {
     outlookDesc: <>After 1.0, Zed keeps the weekly cadence and bets on AI-native: DeltaDB (humans and agents sharing one consistent codebase view), an expanding ACP ecosystem, and the Zeta2 open-weight edit-prediction model. GPUI, as a standalone Apache framework, is also drawing people who want to write high-performance Rust desktop apps.</>,
   },
   heroStats: [
-    { num: '1', unit: '.4', zh: <>当前稳定版 <em>2026-05-28 · v1.4.4</em></>, en: <>current stable <em>2026-05-28 · v1.4.4</em></>,
-        zhHant: <>當前穩定版 <em>2026-05-28 · v1.4.4</em></>
+    { num: '1', unit: '.4', zh: <>当前稳定版 <em>2026-05-28 · v1.4.4</em></>, en: <>current stable <em>2026-05-28 · v1.4.4</em></>
     },
-    { num: '1', unit: '.0', zh: <>2026-04-29 发布 <em>此前 1000+ 版本全是 0 开头</em></>, en: <>shipped 2026-04-29 <em>1000+ prior versions all began with zero</em></>,
-        zhHant: <>2026-04-29 釋出 <em>此前 1000+ 版本全是 0 開頭</em></>
+    { num: '1', unit: '.0', zh: <>2026-04-29 发布 <em>此前 1000+ 版本全是 0 开头</em></>, en: <>shipped 2026-04-29 <em>1000+ prior versions all began with zero</em></>
     },
-    { num: '0', unit: 'ms', zh: <>追求亚毫秒输入延迟 <em>GPUI 直打 GPU</em></>, en: <>sub-millisecond input latency target <em>GPUI straight to GPU</em></>,
-        zhHant: <>追求亞毫秒輸入延遲 <em>GPUI 直打 GPU</em></>
+    { num: '0', unit: 'ms', zh: <>追求亚毫秒输入延迟 <em>GPUI 直打 GPU</em></>, en: <>sub-millisecond input latency target <em>GPUI straight to GPU</em></>
     },
-    { num: '3', zh: <>个平台齐全 <em>macOS / Linux / Windows</em></>, en: <>platforms supported <em>macOS / Linux / Windows</em></>,
-        zhHant: <>個平臺齊全 <em>macOS / Linux / Windows</em></>
+    { num: '3', zh: <>个平台齐全 <em>macOS / Linux / Windows</em></>, en: <>platforms supported <em>macOS / Linux / Windows</em></>
     },
   ],
   intro: {

@@ -72,8 +72,7 @@ const PUZZLE_TYPE_OPTIONS = [
   { value: 'nxn',      iconClass: 'event-333', labelZh: 'NxN',    labelEn: 'NxN' },
   { value: 'sq1',      iconClass: 'event-sq1', labelZh: 'Square-1', labelEn: 'Square-1' },
   { value: 'pyraminx', iconClass: 'event-pyram', labelZh: '金字塔', labelEn: 'Pyraminx' },
-  { value: 'skewb',    iconClass: 'event-skewb', labelZh: '斜转',  labelEn: 'Skewb',
-      labelZhHant: "斜轉"
+  { value: 'skewb',    iconClass: 'event-skewb', labelZh: '斜转',  labelEn: 'Skewb'
 },
   { value: 'megaminx', iconClass: 'event-minx',  labelZh: '五魔',  labelEn: 'Megaminx' },
 ] as const;
@@ -238,7 +237,7 @@ export default function PlayerControls({
   const is3x3 = !isSq1 && !isTwistyMode && order === 3;
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
 
   const router = useRouter();
   const params = useParams<{ lang?: string }>();
@@ -677,7 +676,7 @@ export default function PlayerControls({
           rows={1}
           spellCheck={false}
           className="sim-player-input"
-          placeholder={t('打乱', 'Scramble', "打亂")}
+          placeholder={t('打乱', 'Scramble')}
           onInput={(e) => {
             const el = e.currentTarget;
             autosize(el);
@@ -691,8 +690,8 @@ export default function PlayerControls({
             className="sim-player-scramble"
             onClick={handleDeriveScramble}
             disabled={derivingScramble || !algDraft.trim()}
-            title={t('从下方解法反推打乱', 'Derive scramble from the solution below', "從下方解法反推打亂")}
-            aria-label={t('反推打乱', 'Derive scramble', "反推打亂")}
+            title={t('从下方解法反推打乱', 'Derive scramble from the solution below')}
+            aria-label={t('反推打乱', 'Derive scramble')}
           >
             {derivingScramble ? <Loader2 size={14} className="sim-spin" /> : <Search size={14} />}
           </button>
@@ -701,8 +700,8 @@ export default function PlayerControls({
           type="button"
           className="sim-player-scramble"
           onClick={handleScramble}
-          title={t('随机打乱', 'Random scramble', "隨機打亂")}
-          aria-label={t('随机打乱', 'Random scramble', "隨機打亂")}
+          title={t('随机打乱', 'Random scramble')}
+          aria-label={t('随机打乱', 'Random scramble')}
         >
           <Shuffle size={14} />
         </button>
@@ -737,7 +736,7 @@ export default function PlayerControls({
             className="sim-player-mode"
             value={skewbNotation}
             onChange={(e) => onSkewbNotationChange(e.target.value as SkewbNotation)}
-            title={t('斜转记号:WCA (R/U/L/B) 或 Sarah (R/L/B/F 含 S H 宏)', 'Skewb notation: WCA (R/U/L/B) or Sarah (R/L/B/F with S/H macros)', "斜轉記號:WCA (R/U/L/B) 或 Sarah (R/L/B/F 含 S H 宏)")}
+            title={t('斜转记号:WCA (R/U/L/B) 或 Sarah (R/L/B/F 含 S H 宏)', 'Skewb notation: WCA (R/U/L/B) or Sarah (R/L/B/F with S/H macros)')}
           >
             <option value="wca">WCA</option>
             <option value="sarah">Sarah</option>
@@ -760,7 +759,7 @@ export default function PlayerControls({
             }}
             title={t('SQ1 格式', 'SQ1 format')}
           >
-            <option value="compact">{t('简化', 'Compact', "簡化")}</option>
+            <option value="compact">{t('简化', 'Compact')}</option>
             <option value="wca">WCA</option>
           </select>
         )}
@@ -768,12 +767,12 @@ export default function PlayerControls({
 
       {!isTwistyMode && (
       <div className="sim-player-row">
-        <button onClick={() => jumpToStep(0)} title={t('回到起点', 'Reset', "回到起點")}><RotateCcw size={14} /></button>
+        <button onClick={() => jumpToStep(0)} title={t('回到起点', 'Reset')}><RotateCcw size={14} /></button>
         <button onClick={stepBack} disabled={step === 0} title={t('上一步', 'Step back')}><SkipBack size={14} /></button>
         <button
           onClick={() => setPlaying((p) => !p)}
           disabled={totalSteps === 0}
-          title={playing ? t('暂停', 'Pause', "暫停") : t('播放', 'Play')}
+          title={playing ? t('暂停', 'Pause') : t('播放', 'Play')}
         >
           {playing ? <Pause size={14} /> : <Play size={14} />}
         </button>
@@ -786,7 +785,7 @@ export default function PlayerControls({
           title={t('回放模式', 'Playback mode')}
         >
           <option value="moves">{t('正向', 'Moves')}</option>
-          <option value="algorithm">{t('解还原', 'Algorithm', "解還原")}</option>
+          <option value="algorithm">{t('解还原', 'Algorithm')}</option>
         </select>
         <label className="sim-player-speed">
           <span>{speed.toFixed(2)}×</span>
@@ -807,7 +806,7 @@ export default function PlayerControls({
         <button
           onClick={tool(simplifyForPuzzle)}
           disabled={!canSimplify}
-          title={t('消步:合并 / 抵消重复转动', 'Reduce: cancel redundant moves', "消步:合併 / 抵消重複轉動")}
+          title={t('消步:合并 / 抵消重复转动', 'Reduce: cancel redundant moves')}
         ><Sparkles size={13} />{t('消步', 'Reduce')}</button>
         {!isSq1 && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
         {!isSq1 && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
@@ -815,17 +814,17 @@ export default function PlayerControls({
         <button
           onClick={handleCopyLink}
           className={linkCopied ? 'sim-link-copied' : undefined}
-          title={t('复制本页链接(含打乱 / 解法)', 'Copy this page link (with scramble / solution)', "複製本頁連結(含打亂 / 解法)")}
+          title={t('复制本页链接(含打乱 / 解法)', 'Copy this page link (with scramble / solution)')}
         >
           {linkCopied ? <Check size={13} /> : <Link2 size={13} />}
-          {linkCopied ? t('已复制', 'Copied', "已複製") : t('复制链接', 'Copy link', "複製連結")}
+          {linkCopied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}
         </button>
         {reconEvent && (
           <button
             onClick={handlePublishRecon}
-            title={t('用当前打乱 / 解法去发布复盘', 'Take this scramble / solution to publish a reconstruction', "用當前打亂 / 解法去釋出覆盤")}
+            title={t('用当前打乱 / 解法去发布复盘', 'Take this scramble / solution to publish a reconstruction')}
           >
-            <Upload size={13} />{t('发布复盘', 'Publish recon', "釋出覆盤")}
+            <Upload size={13} />{t('发布复盘', 'Publish recon')}
           </button>
         )}
       </div>
@@ -912,17 +911,13 @@ function ColorRow({
 }
 
 const STYLE_PRESETS: { id: string; zh: string; en: string; s: Pick<SimSettings, 'thickness' | 'hollow' | 'arrow' | 'hint'>
-    zhHant?: string;
  }[] = [
-  { id: 'std', zh: '标准', en: 'Standard', s: { thickness: true, hollow: false, arrow: false, hint: false },
-      zhHant: "標準"
+  { id: 'std', zh: '标准', en: 'Standard', s: { thickness: true, hollow: false, arrow: false, hint: false }
 },
-  { id: 'hollow', zh: '镂空', en: 'Hollow', s: { thickness: true, hollow: true, arrow: false, hint: false },
-      zhHant: "鏤空"
+  { id: 'hollow', zh: '镂空', en: 'Hollow', s: { thickness: true, hollow: true, arrow: false, hint: false }
 },
   { id: 'hint', zh: '提示', en: 'Hint', s: { thickness: true, hollow: false, arrow: false, hint: true } },
-  { id: 'arrow', zh: '箭头', en: 'Arrows', s: { thickness: true, hollow: false, arrow: true, hint: false },
-      zhHant: "箭頭"
+  { id: 'arrow', zh: '箭头', en: 'Arrows', s: { thickness: true, hollow: false, arrow: true, hint: false }
 },
   { id: 'flat', zh: '平面', en: 'Flat', s: { thickness: false, hollow: false, arrow: false, hint: false } },
 ];
@@ -938,7 +933,7 @@ function PuzzleSettings({
   onPuzzleChange: (kind: SimPuzzle) => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
-  t: (zh: string, en: string, zhHant?: string) => string;
+  t: (zh: string, en: string) => string;
   applyMove: (m: KeyMove) => void;
   keymap: Record<string, KeyMove>;
   onKeymapChange: (km: Record<string, KeyMove>) => void;
@@ -1015,8 +1010,8 @@ function PuzzleSettings({
         className="sim-puzzle-head"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        aria-label={t('魔方设置', 'Puzzle Settings', "魔方設定")}
-        title={t('魔方设置', 'Puzzle Settings', "魔方設定")}
+        aria-label={t('魔方设置', 'Puzzle Settings')}
+        title={t('魔方设置', 'Puzzle Settings')}
       >
         <ChevronRight size={14} className={'sim-puzzle-caret' + (open ? ' open' : '')} />
         <Settings size={14} />
@@ -1025,7 +1020,7 @@ function PuzzleSettings({
         <div className="sim-puzzle-body">
           <div className="sim-puzzle-row">
             <div className="sim-puzzle-section">
-              <div className="sim-puzzle-section-title">{t('类型', 'Puzzle', "型別")}</div>
+              <div className="sim-puzzle-section-title">{t('类型', 'Puzzle')}</div>
               <PuzzleTypeSelect
                 value={isTwistyLocal ? puzzleKind : (isSq1Local ? 'sq1' : 'nxn')}
                 isZh={isZh}
@@ -1037,7 +1032,7 @@ function PuzzleSettings({
             </div>
             {isNxNLocal && (
               <div className="sim-puzzle-section">
-                <div className="sim-puzzle-section-title">{t('阶数', 'Order', "階數")}</div>
+                <div className="sim-puzzle-section-title">{t('阶数', 'Order')}</div>
                 <div className="sim-puzzle-order-control" ref={wheelRootRef}>
                   <WheelPicker
                     value={order}
@@ -1049,7 +1044,7 @@ function PuzzleSettings({
                     width={72}
                     itemHeight={22}
                     slots={3}
-                    ariaLabel={t('阶数', 'Order', "階數")}
+                    ariaLabel={t('阶数', 'Order')}
                     className="sim-puzzle-order-wheel"
                   />
                   <input
@@ -1072,7 +1067,7 @@ function PuzzleSettings({
             )}
             {isNxNLocal && (
               <div className="sim-puzzle-section">
-                <div className="sim-puzzle-section-title">{t('视觉风格', 'Style', "視覺風格")}</div>
+                <div className="sim-puzzle-section-title">{t('视觉风格', 'Style')}</div>
                 <select
                   className="sim-puzzle-select"
                   value={activePreset}
@@ -1081,7 +1076,7 @@ function PuzzleSettings({
                     if (p) onSettingsChange({ ...settings, ...p.s });
                   }}
                 >
-                  {activePreset === '' && <option value="">{t('自定义', 'Custom', "自定義")}</option>}
+                  {activePreset === '' && <option value="">{t('自定义', 'Custom')}</option>}
                   {STYLE_PRESETS.map((p) => (
                     <option key={p.id} value={p.id}>{t(p.zh, p.en)}</option>
                   ))}
@@ -1093,24 +1088,24 @@ function PuzzleSettings({
               className="sim-keymap-open-btn"
               onClick={() => setKeymapOpen(true)}
             >
-              {t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts', "鍵盤 / 滑鼠快捷鍵")}
+              {t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}
             </button>
             <button
               type="button"
               className="sim-drawer-reset"
               onClick={() => onSettingsChange(DEFAULT_SETTINGS)}
             >
-              {t('恢复默认', 'Reset to defaults', "恢復預設")}
+              {t('恢复默认', 'Reset to defaults')}
             </button>
           </div>
 
           <div className="sim-puzzle-sliders">
-            <Slider label={t('灵敏度', 'Sensitivity', "靈敏度")} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} />
-            <Slider label={t('缩放', 'Scale', "縮放")} value={settings.scale} onChange={(v) => set('scale', v)} />
-            <Slider label={t('透视', 'Perspective', "透視")} value={settings.perspective} onChange={(v) => set('perspective', v)} />
+            <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} />
+            <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} />
+            <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} />
             <Slider label={t('左右', 'Yaw')} value={settings.viewAngle} onChange={(v) => set('viewAngle', v)} />
             <Slider label={t('上下', 'Pitch')} value={settings.viewGradient} onChange={(v) => set('viewGradient', v)} />
-            <Slider label={t('转动速度', 'Turn speed', "轉動速度")} value={settings.speed} onChange={(v) => set('speed', v)} />
+            <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} />
           </div>
           <div className="sim-puzzle-toggles">
             <label className="sim-toggle">
@@ -1119,23 +1114,23 @@ function PuzzleSettings({
                 value={settings.dragEmpty}
                 onChange={(e) => set('dragEmpty', e.target.value as 'orbit' | 'rotate' | 'view')}
               >
-                <option value="orbit">{t('自动转体', 'Auto rotate', "自動轉體")}</option>
-                <option value="rotate">{t('整步转体', 'Snap rotate', "整步轉體")}</option>
-                <option value="view">{t('视角', 'View', "視角")}</option>
+                <option value="orbit">{t('自动转体', 'Auto rotate')}</option>
+                <option value="rotate">{t('整步转体', 'Snap rotate')}</option>
+                <option value="view">{t('视角', 'View')}</option>
               </select>
             </label>
-            <Toggle label={t('动画展示打乱', 'Animate scramble', "動畫展示打亂")} value={settings.animateScramble} onChange={(v) => set('animateScramble', v)} />
-            <Toggle label={t('棋盘格背景', 'Checkered background', "棋盤格背景")} value={settings.checkeredBg} onChange={(v) => set('checkeredBg', v)} />
-            <Toggle label={t('锁定大小位置', 'Lock size & position', "鎖定大小位置")} value={settings.lockView} onChange={(v) => set('lockView', v)} />
-            <Toggle label={t('立体贴片', 'Sticker thickness', "立體貼片")} value={settings.thickness} onChange={(v) => set('thickness', v)} />
-            <Toggle label={t('镂空', 'Hollow', "鏤空")} value={settings.hollow} onChange={(v) => set('hollow', v)} />
-            <Toggle label={t('箭头', 'Arrows', "箭頭")} value={settings.arrow} onChange={(v) => set('arrow', v)} />
-            <Toggle label={t('提示贴片 (背面)', 'Hint facelets (back faces)', "提示貼片 (背面)")} value={settings.hint} onChange={(v) => set('hint', v)} />
+            <Toggle label={t('动画展示打乱', 'Animate scramble')} value={settings.animateScramble} onChange={(v) => set('animateScramble', v)} />
+            <Toggle label={t('棋盘格背景', 'Checkered background')} value={settings.checkeredBg} onChange={(v) => set('checkeredBg', v)} />
+            <Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} />
+            <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
+            <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
+            <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
+            <Toggle label={t('提示贴片 (背面)', 'Hint facelets (back faces)')} value={settings.hint} onChange={(v) => set('hint', v)} />
           </div>
-          <ColorRow label={t('内核色', 'Core color', "核心色")}>
+          <ColorRow label={t('内核色', 'Core color')}>
             <SwatchCell
               color={settings.coreColor}
-              title={t('自定义', 'Custom', "自定義")}
+              title={t('自定义', 'Custom')}
               onPick={(c) => set('coreColor', c)}
             />
             {CORE_COLOR_PRESETS.map((c) => (
@@ -1152,7 +1147,7 @@ function PuzzleSettings({
             label={t('面色', 'Face colors')}
             action={{
               label: 'WCA',
-              title: t('恢复 WCA 默认', 'Reset to WCA defaults', "恢復 WCA 預設"),
+              title: t('恢复 WCA 默认', 'Reset to WCA defaults'),
               onClick: () => set('faceColors', { ...DEFAULT_FACE_COLORS }),
             }}
           >

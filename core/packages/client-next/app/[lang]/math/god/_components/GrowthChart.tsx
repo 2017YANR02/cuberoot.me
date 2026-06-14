@@ -40,7 +40,7 @@ const ROWS: Row[] = [
 interface Props { isZh: boolean; }
 
 export default function GrowthChart({ isZh }: Props) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const [hover, setHover] = useState<number | null>(null);
 
   const { stateMax, dMax } = useMemo(() => {
@@ -68,7 +68,7 @@ export default function GrowthChart({ isZh }: Props) {
   return (
     <div className="god-growth-wrap">
       <svg viewBox={`0 0 ${W} ${H}`} className="god-growth-svg" preserveAspectRatio="xMidYMid meet" role="img"
-           aria-label={t('NxN 魔方状态空间与上帝之数增长', 'NxN cube state space and God\'s number growth', "NxN 魔方狀態空間與上帝之數增長")}>
+           aria-label={t('NxN 魔方状态空间与上帝之数增长', 'NxN cube state space and God\'s number growth')}>
         {/* gridlines */}
         {[0, 0.25, 0.5, 0.75, 1].map((p) => (
           <line key={p} x1={PAD_L} x2={W - PAD_R}
@@ -145,26 +145,26 @@ export default function GrowthChart({ isZh }: Props) {
       </svg>
 
       <div className="god-growth-legend">
-        <span><i style={{ background: 'var(--god-wca)' }} /> <TeX src="\log_{10} |G(N)|" /> {t('(状态空间)', '(state space)', "(狀態空間)")}</span>
-        <span><i style={{ background: 'var(--god-accent)' }} /> {t('已证直径', 'proven diameter', "已證直徑")}</span>
+        <span><i style={{ background: 'var(--god-wca)' }} /> <TeX src="\log_{10} |G(N)|" /> {t('(状态空间)', '(state space)')}</span>
+        <span><i style={{ background: 'var(--god-accent)' }} /> {t('已证直径', 'proven diameter')}</span>
         <span><i style={{ background: 'var(--god-warn)' }} /> {t('已知下界', 'known lower bound')}</span>
-        <span className="dashed"><i /> <TeX src="\Theta(N^{2}/\log N)" /> {t('渐近带 (Demaine 2011)', 'band (Demaine 2011)', "漸近帶 (Demaine 2011)")}</span>
+        <span className="dashed"><i /> <TeX src="\Theta(N^{2}/\log N)" /> {t('渐近带 (Demaine 2011)', 'band (Demaine 2011)')}</span>
       </div>
 
       <div className="god-growth-readout">
         {hovered ? (
           <>
             <strong>{hovered.n}×{hovered.n}:</strong>{' '}
-            {t('状态 ≈', '|G| ≈', "狀態 ≈")} <TeX src={`10^{${hovered.states.toFixed(1)}}`} />
+            {t('状态 ≈', '|G| ≈')} <TeX src={`10^{${hovered.states.toFixed(1)}}`} />
             {' · '}
             {hovered.knownD != null
-              ? <>{t('上帝之数', 'God\'s number', "上帝之數")} = <span style={{ color: 'var(--god-accent)' }}>{hovered.knownD}</span> HTM</>
+              ? <>{t('上帝之数', 'God\'s number')} = <span style={{ color: 'var(--god-accent)' }}>{hovered.knownD}</span> HTM</>
               : <><TeX src={`D \\in [${hovered.lowerD},\\, ${hovered.upperD}]`} /></>}
-            {' · '}{t('Demaine 渐近', 'Demaine asymptotic', "Demaine 漸近")} ≈ {hovered.demaineLow.toFixed(0)}~{hovered.demaineHigh.toFixed(0)}
+            {' · '}{t('Demaine 渐近', 'Demaine asymptotic')} ≈ {hovered.demaineLow.toFixed(0)}~{hovered.demaineHigh.toFixed(0)}
           </>
         ) : (
           <span className="god-growth-hint">
-            {t('指向某个 N 查精确值。8~10 阶为渐近外推,无实物。', 'Hover an N for exact values. 8–10 are asymptotic extrapolation only.', "指向某個 N 查精確值。8~10 階為漸近外推,無實物。")}
+            {t('指向某个 N 查精确值。8~10 阶为渐近外推,无实物。', 'Hover an N for exact values. 8–10 are asymptotic extrapolation only.')}
           </span>
         )}
       </div>

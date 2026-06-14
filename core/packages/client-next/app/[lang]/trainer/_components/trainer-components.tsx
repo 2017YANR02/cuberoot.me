@@ -58,8 +58,7 @@ export function SolveCard({
         <span>{header}</span>
         {onDelete && solve && (
           <button className="trainer-icon-btn" onClick={onDelete}
-            title={tr({ zh: '删除', en: 'Remove',
-                zhHant: "刪除"
+            title={tr({ zh: '删除', en: 'Remove'
             })}>
             <Trash2 size={14} />
           </button>
@@ -67,8 +66,7 @@ export function SolveCard({
       </div>
       <hr className="trainer-card-divider" />
       {!solve || !c ? (
-        <div className="trainer-stats-empty">{tr({ zh: '暂无成绩', en: 'No solves yet',
-            zhHant: "暫無成績"
+        <div className="trainer-stats-empty">{tr({ zh: '暂无成绩', en: 'No solves yet'
         })}</div>
       ) : (
         <>
@@ -83,18 +81,15 @@ export function SolveCard({
             />
           </div>
           <div className="trainer-solve-row">
-            <span>{tr({ zh: '情况:', en: 'Case:',
-                zhHant: "情況:"
+            <span>{tr({ zh: '情况:', en: 'Case:'
             })}</span>{c.name}
           </div>
           <div className="trainer-solve-row">
-            <span>{tr({ zh: '成绩:', en: 'Result:',
-                zhHant: "成績:"
+            <span>{tr({ zh: '成绩:', en: 'Result:'
             })}</span>{formatMs(solve.ms)}
           </div>
           <div className="trainer-solve-row">
-            <span>{tr({ zh: '打乱:', en: 'Scramble:',
-                zhHant: "打亂:"
+            <span>{tr({ zh: '打乱:', en: 'Scramble:'
             })}</span>
             <div className="trainer-solve-scramble">{solve.scramble}</div>
           </div>
@@ -116,8 +111,7 @@ export function StatsList({
   return (
     <div className="trainer-stats-card">
       <div className="trainer-card-header">
-        <span>{tr({ zh: '统计', en: 'Statistics',
-            zhHant: "統計"
+        <span>{tr({ zh: '统计', en: 'Statistics'
         })}</span>
         {solves.length > 0 && (
           <button className="trainer-icon-btn" onClick={onClear}
@@ -129,8 +123,7 @@ export function StatsList({
       <hr className="trainer-card-divider" />
       {solves.length === 0 ? (
         <div className="trainer-stats-empty">
-          {tr({ zh: '空格开始计时', en: 'Space to start',
-              zhHant: "空格開始計時"
+          {tr({ zh: '空格开始计时', en: 'Space to start'
         })}
         </div>
       ) : (
@@ -263,8 +256,7 @@ export function CaseTreePicker({
     <div className="trainer-set-block">
       <div className="trainer-set-header" onClick={toggleAll}>
         <TriCheckbox checked={allSelected} indeterminate={!allSelected && !noneSelected} />
-        <span>{tr({ zh: '全选', en: 'Select all',
-            zhHant: "全選"
+        <span>{tr({ zh: '全选', en: 'Select all'
         })}</span>
         <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
           ({totalSelected}/{cases.length})
@@ -284,10 +276,8 @@ export function CaseTreePicker({
                   type="button"
                   className="trainer-chevron-btn"
                   onClick={(e) => { e.stopPropagation(); toggleTop(top.label); }}
-                  title={isExpanded ? (tr({ zh: '折叠', en: 'Collapse',
-                      zhHant: "摺疊"
-                })) : (tr({ zh: '展开', en: 'Expand',
-                    zhHant: "展開"
+                  title={isExpanded ? (tr({ zh: '折叠', en: 'Collapse'
+                })) : (tr({ zh: '展开', en: 'Expand'
                 }))}
                 >
                   {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -328,10 +318,8 @@ export function CaseTreePicker({
                               type="button"
                               className="trainer-chevron-btn"
                               onClick={(e) => { e.stopPropagation(); toggleSub(subKey); }}
-                              title={subExpanded ? (tr({ zh: '折叠', en: 'Collapse',
-                                  zhHant: "摺疊"
-                            })) : (tr({ zh: '展开', en: 'Expand',
-                                zhHant: "展開"
+                              title={subExpanded ? (tr({ zh: '折叠', en: 'Collapse'
+                            })) : (tr({ zh: '展开', en: 'Expand'
                             }))}
                             >
                               {subExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}

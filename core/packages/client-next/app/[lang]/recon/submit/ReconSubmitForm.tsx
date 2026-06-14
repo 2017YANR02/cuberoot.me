@@ -148,7 +148,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const searchParams = useSearchParams();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('提交复盘', 'Submit Reconstruction', "提交覆盤");
+  useDocumentTitle('提交复盘', 'Submit Reconstruction');
 
   const langPrefix = params?.lang === 'zh' || params?.lang === 'en' ? `/${params.lang}` : ((i18n.language.startsWith('zh') ? '/zh' : '/en'));
 
@@ -575,7 +575,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             );
             if (sibling && sibling.average != null) {
               foundAvg = sibling.average;
-              foundSource = i18n.language === 'zh-Hant' ? (`自動:同輪 #${sibling.solveNum ?? '?'}`) : (isZh ? `自动:同轮 #${sibling.solveNum ?? '?'}` : `auto: same round #${sibling.solveNum ?? '?'}`);
+              foundSource = (isZh ? `自动:同轮 #${sibling.solveNum ?? '?'}` : `auto: same round #${sibling.solveNum ?? '?'}`);
             }
           } catch { /* fall through */ }
         }
@@ -587,8 +587,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               const a = computeWcaAverage(att, form.event!);
               if (a != null) {
                 foundAvg = a;
-                foundSource = tr({ zh: '自动:WCA', en: 'auto: WCA',
-                    zhHant: "自動:WCA"
+                foundSource = tr({ zh: '自动:WCA', en: 'auto: WCA'
                 });
               }
             }
@@ -602,8 +601,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               const a = computeWcaAverage(att, form.event!);
               if (a != null) {
                 foundAvg = a;
-                foundSource = tr({ zh: '自动:cubing.com', en: 'auto: cubing.com',
-                    zhHant: "自動:cubing.com"
+                foundSource = tr({ zh: '自动:cubing.com', en: 'auto: cubing.com'
                 });
               }
             }
@@ -657,8 +655,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             );
             if (sibling && sibling.rawTime != null) {
               foundTime = sibling.rawTime;
-              foundSource = tr({ zh: '自动:已录', en: 'auto: existing',
-                  zhHant: "自動:已錄"
+              foundSource = tr({ zh: '自动:已录', en: 'auto: existing'
             });
             }
           } catch { /* fall through */ }
@@ -676,7 +673,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               const v = attempts[idx];
               if (v != null && v >= 0) {
                 foundTime = v;
-                foundSource = i18n.language === 'zh-Hant' ? (`自動:${label}`) : (isZh ? `自动:${label}` : `auto: ${label}`);
+                foundSource = (isZh ? `自动:${label}` : `auto: ${label}`);
               }
             }
           } catch { /* fall through */ }
@@ -738,8 +735,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         const scr = raw ? formatScrambleForEvent(form.event!, raw) : null;
         if (scr) {
           setField('wcaScramble', scr);
-          setScrambleAutoSource(tr({ zh: '自动:WCA', en: 'auto: WCA',
-              zhHant: "自動:WCA"
+          setScrambleAutoSource(tr({ zh: '自动:WCA', en: 'auto: WCA'
         }));
           scrambleAutoFilledRef.current = true;
         } else {
@@ -828,8 +824,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
           setField('regionalSingleRecord', v);
           if (v) singleFilled = v;
         }
-        setRecordAutoSource((avgFilled || singleFilled) ? (tr({ zh: '自动:WCA', en: 'auto: WCA',
-            zhHant: "自動:WCA"
+        setRecordAutoSource((avgFilled || singleFilled) ? (tr({ zh: '自动:WCA', en: 'auto: WCA'
         })) : null);
       } finally {
         if (!cancelled) setRecordLoading(false);
@@ -1069,33 +1064,28 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             <Link href={`${langPrefix}/recon`} className="recon-back-link">
               <ArrowLeft size={14} /> {tr({ zh: '返回列表', en: 'Back to list' })}
             </Link>
-            <h1>{tr({ zh: '提交复盘', en: 'Submit Reconstruction',
-                zhHant: "提交覆盤"
+            <h1>{tr({ zh: '提交复盘', en: 'Submit Reconstruction'
             })}</h1>
           </div>
           {simHref && (
             <Link
               href={simHref}
               className="submit-open-sim"
-              title={tr({ zh: '把当前打乱 / 解法带到模拟器里玩', en: 'Play this scramble / solution in the simulator',
-                  zhHant: "把當前打亂 / 解法帶到模擬器裡玩"
+              title={tr({ zh: '把当前打乱 / 解法带到模拟器里玩', en: 'Play this scramble / solution in the simulator'
             })}
             >
-              <Box size={14} /> {tr({ zh: '去模拟器', en: 'Open in Sim',
-                  zhHant: "去模擬器"
+              <Box size={14} /> {tr({ zh: '去模拟器', en: 'Open in Sim'
             })}
             </Link>
           )}
         </div>
         <div style={{ padding: 24, textAlign: 'center' }}>
           <p style={{ marginBottom: 16 }}>
-            {tr({ zh: '提交复盘需要登录 WCA 账号。', en: 'Submitting reconstructions requires a WCA account.',
-                zhHant: "提交覆盤需要登入 WCA 賬號。"
+            {tr({ zh: '提交复盘需要登录 WCA 账号。', en: 'Submitting reconstructions requires a WCA account.'
             })}
           </p>
           <button type="button" className="recon-btn" onClick={() => login()}>
-            <LogIn size={14} /> {tr({ zh: '登录 WCA', en: 'Sign in with WCA',
-                zhHant: "登入 WCA"
+            <LogIn size={14} /> {tr({ zh: '登录 WCA', en: 'Sign in with WCA'
             })}
           </button>
         </div>
@@ -1127,12 +1117,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             <Link
               href={simHref}
               className="submit-open-sim"
-              title={tr({ zh: '把当前打乱 / 解法带到模拟器里玩', en: 'Play this scramble / solution in the simulator',
-                  zhHant: "把當前打亂 / 解法帶到模擬器裡玩"
+              title={tr({ zh: '把当前打乱 / 解法带到模拟器里玩', en: 'Play this scramble / solution in the simulator'
             })}
             >
-              <Box size={14} /> {tr({ zh: '去模拟器', en: 'Open in Sim',
-                  zhHant: "去模擬器"
+              <Box size={14} /> {tr({ zh: '去模拟器', en: 'Open in Sim'
             })}
             </Link>
           )}
@@ -1167,8 +1155,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             {!isEditing && !fromId && authUser && (
               <button type="button" className="submit-reuse-btn" onClick={() => setReuseOpen(true)}>
                 <History size={14} />
-                {tr({ zh: '复用以前的填写', en: 'Reuse a previous entry',
-                    zhHant: "複用以前的填寫"
+                {tr({ zh: '复用以前的填写', en: 'Reuse a previous entry'
                 })}
               </button>
             )}
@@ -1182,8 +1169,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             )}
             {/* === Competition info — default open === */}
             <CollapsibleSection
-              title={tr({ zh: '比赛信息', en: 'Competition',
-                  zhHant: "比賽資訊"
+              title={tr({ zh: '比赛信息', en: 'Competition'
             })}
               defaultOpen
             >
@@ -1202,8 +1188,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       value={null}
                       onChange={handleSolverPick}
                       isZh={isZh}
-                      placeholder={tr({ zh: '搜选手名 / WCA ID', en: 'Search name / WCA ID',
-                          zhHant: "搜選手名 / WCA ID"
+                      placeholder={tr({ zh: '搜选手名 / WCA ID', en: 'Search name / WCA ID'
                     })}
                     />
                   )}
@@ -1225,8 +1210,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     }}
                     readOnly={!!timeAutoSource}
                     className={timeAutoSource ? 'submit-input-locked' : undefined}
-                    title={timeAutoSource ? (tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch',
-                        zhHant: "自動填充值不可編輯;改 選手/比賽/項目/輪次/第幾把 以重新獲取"
+                    title={timeAutoSource ? (tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch'
                     })) : undefined}
                   />
                 </label>
@@ -1239,8 +1223,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                         value={form.memoTime != null ? formatTimeInput(form.memoTime) : ''}
                         readOnly
                         className="submit-input-locked"
-                        title={tr({ zh: '自动派生 = 成绩 − 操作', en: 'auto-derived = result − exec',
-                            zhHant: "自動派生 = 成績 − 操作"
+                        title={tr({ zh: '自动派生 = 成绩 − 操作', en: 'auto-derived = result − exec'
                         })}
                       />
                     </label>
@@ -1273,15 +1256,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                           value={null}
                           onChange={addCoPerson}
                           isZh={isZh}
-                          placeholder={tr({ zh: '搜选手名 / WCA ID', en: 'Search name / WCA ID',
-                              zhHant: "搜選手名 / WCA ID"
+                          placeholder={tr({ zh: '搜选手名 / WCA ID', en: 'Search name / WCA ID'
                         })}
                           className="submit-cosolver-picker"
                         />
                       ) : (
                         <button type="button" className="submit-add-cosolver" onClick={() => setAddingCo(true)}>
-                          <UserPlus size={14} /> {tr({ zh: '添加选手', en: 'Add solver',
-                              zhHant: "新增選手"
+                          <UserPlus size={14} /> {tr({ zh: '添加选手', en: 'Add solver'
                         })}
                         </button>
                       )}
@@ -1327,8 +1308,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               {!form.official && (
                 <div className="submit-row">
                   <label className="submit-field">
-                    <span className="submit-label">{tr({ zh: '国家 / 地区', en: 'Country',
-                        zhHant: "國家 / 地區"
+                    <span className="submit-label">{tr({ zh: '国家 / 地区', en: 'Country'
                     })}</span>
                     <CountryInput
                       value={form.country || ''}
@@ -1352,8 +1332,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <label className={`submit-field${reusedCls('round')}`}>
                   <span className="submit-label">{t('recon.round')}</span>
                   <select value={form.round || ''} onChange={e => setField('round', e.target.value)}>
-                      <option value="">{tr({ zh: '请选择', en: 'Select…',
-                          zhHant: "請選擇"
+                      <option value="">{tr({ zh: '请选择', en: 'Select…'
                     })}</option>
                       {roundOptions.map(r => <option key={r} value={r}>{localizeRound(r, t)}</option>)}
                   </select>
@@ -1364,8 +1343,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     value={form.solveNum ?? ''}
                     onChange={e => setField('solveNum', e.target.value === '' ? undefined : Number(e.target.value))}
                   >
-                      <option value="">{tr({ zh: '请选择', en: 'Select…',
-                          zhHant: "請選擇"
+                      <option value="">{tr({ zh: '请选择', en: 'Select…'
                     })}</option>
                       {solveNumOptions.map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
@@ -1396,14 +1374,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     }}
                     readOnly={!!avgAutoSource}
                     className={avgAutoSource ? 'submit-input-locked' : undefined}
-                    title={avgAutoSource ? (tr({ zh: '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取', en: 'auto-filled, read-only; change person/comp/event/round to refetch',
-                          zhHant: "自動填充值不可編輯;改選手/比賽/項目/輪次以重新獲取"
+                    title={avgAutoSource ? (tr({ zh: '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取', en: 'auto-filled, read-only; change person/comp/event/round to refetch'
                     }))
                       : undefined}
                   />
                   {avgLoading
-                    ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…',
-                        zhHant: "自動獲取中…"
+                    ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
                     })}</span>
                     : avgAutoSource ? <span className="submit-hint">{avgAutoSource}</span> : null}
                 </label>
@@ -1420,13 +1396,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     }}
                     readOnly={!!singleAutoSource}
                     className={singleAutoSource ? 'submit-input-locked' : undefined}
-                    title={singleAutoSource ? (tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch',
-                          zhHant: "自動填充值不可編輯;改 選手/比賽/項目/輪次/第幾把 以重新獲取"
+                    title={singleAutoSource ? (tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch'
                     })) : undefined}
                   />
                   {timeLoading
-                    ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…',
-                        zhHant: "自動獲取中…"
+                    ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
                     })}</span>
                     : singleAutoSource ? <span className="submit-hint">{singleAutoSource}</span> : null}
                 </label>
@@ -1438,8 +1412,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     personIso2={form.personCountry}
                   />
                   {recordLoading
-                    ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…',
-                        zhHant: "自動獲取中…"
+                    ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
                     })}</span>
                     : (!singleRecordUserTouched && form.regionalSingleRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
                 </label>
@@ -1451,8 +1424,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     personIso2={form.personCountry}
                   />
                   {recordLoading
-                    ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…',
-                        zhHant: "自動獲取中…"
+                    ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
                     })}</span>
                     : (!averageRecordUserTouched && form.regionalAverageRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
                 </label>
@@ -1469,8 +1441,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 readOnly={!!scrambleAutoSource}
                 className={scrambleAutoSource ? 'submit-input-locked' : undefined}
                 title={scrambleAutoSource
-                  ? (tr({ zh: '自动填充值不可编辑;改 比赛/项目/轮次/分组/第几把 以重新获取', en: 'auto-filled, read-only; change comp/event/round/group/# to refetch',
-                      zhHant: "自動填充值不可編輯;改 比賽/項目/輪次/分組/第幾把 以重新獲取"
+                  ? (tr({ zh: '自动填充值不可编辑;改 比赛/项目/轮次/分组/第几把 以重新获取', en: 'auto-filled, read-only; change comp/event/round/group/# to refetch'
                 }))
                   : undefined}
                 onChange={e => {
@@ -1484,8 +1455,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 style={{ overflow: 'hidden', resize: 'none' }}
               />
               {scrambleLoading
-                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…',
-                    zhHant: "自動獲取中…"
+                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
                 })}</span>
                 : scrambleAutoSource ? <span className="submit-hint">{scrambleAutoSource}</span> : null}
             </label>
@@ -1592,8 +1562,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       autoResize(el);
                     }
                   }}
-                  placeholder={tr({ zh: 'cross / F2L / OLL / PLL 每段一行,// 后面写注释', en: 'cross / F2L / OLL / PLL one stage per line; // for comments',
-                      zhHant: "cross / F2L / OLL / PLL 每段一行,// 後面寫註釋"
+                  placeholder={tr({ zh: 'cross / F2L / OLL / PLL 每段一行,// 后面写注释', en: 'cross / F2L / OLL / PLL one stage per line; // for comments'
                 })}
                 />
               )}
@@ -1630,8 +1599,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             )}
 
             {/* === Metadata — default collapsed === */}
-            <CollapsibleSection title={tr({ zh: '元数据', en: 'Metadata',
-                zhHant: "後設資料"
+            <CollapsibleSection title={tr({ zh: '元数据', en: 'Metadata'
             })}>
               <div className="submit-row">
                 <label className={`submit-field submit-field-wide${reusedCls('videoUrl')}`}>
@@ -1708,8 +1676,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       value={null}
                       onChange={handleReconerPick}
                       isZh={isZh}
-                      placeholder={tr({ zh: '搜选手名 / WCA ID', en: 'Search name / WCA ID',
-                          zhHant: "搜選手名 / WCA ID"
+                      placeholder={tr({ zh: '搜选手名 / WCA ID', en: 'Search name / WCA ID'
                     })}
                     />
                   )}

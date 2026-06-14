@@ -92,7 +92,7 @@ export default function GodsNumberDist() {
       <p className="gnd-lede">
         {t(
           '把全部约 4322 亿亿种状态按「最优还原步数」摊开:绝大多数打乱只需 17–18 步就能解,真正逼到上帝之数 20 步的状态只有约 4.9 亿个,在 43,252,003,274,489,856,000 这个天文数字面前几近于零。',
-          'Spread all ~43 quintillion states by their optimal solving distance: the vast majority need only 17–18 moves, and only about 490 million states truly require the full God’s Number of 20 — essentially nothing next to the 43,252,003,274,489,856,000 total.', "把全部約 4322 億億種狀態按「最優還原步數」攤開:絕大多數打亂只需 17–18 步就能解,真正逼到上帝之數 20 步的狀態只有約 4.9 億個,在 43,252,003,274,489,856,000 這個天文數字面前幾近於零。"
+          'Spread all ~43 quintillion states by their optimal solving distance: the vast majority need only 17–18 moves, and only about 490 million states truly require the full God’s Number of 20 — essentially nothing next to the 43,252,003,274,489,856,000 total.'
         )}
       </p>
 
@@ -100,20 +100,20 @@ export default function GodsNumberDist() {
         {sel ? (
           <>
             <span className="gnd-readout-d">
-              {t('距离', 'Distance', "距離")}&nbsp;<span className="gnd-num">{sel.d}</span>
+              {t('距离', 'Distance')}&nbsp;<span className="gnd-num">{sel.d}</span>
             </span>
             <span className="gnd-readout-count">
               {!sel.exact && <span className="gnd-approx" aria-hidden>≈</span>}
               <span className="gnd-num">{groupDigits(sel.count)}</span>
-              <span className="gnd-readout-unit">{t('种状态', 'states', "種狀態")}</span>
+              <span className="gnd-readout-unit">{t('种状态', 'states')}</span>
             </span>
             <span className={`gnd-readout-tag${sel.exact ? '' : ' is-est'}`}>
-              {sel.exact ? t('精确值', 'exact count', "精確值") : t('估计值', 'estimate', "估計值")}
+              {sel.exact ? t('精确值', 'exact count') : t('估计值', 'estimate')}
             </span>
           </>
         ) : (
           <span className="gnd-readout-hint">
-            {t('悬停或点选某根柱子,查看该步数下的状态数。', 'Hover or tap a bar to see how many states sit at that distance.', "懸停或點選某根柱子,檢視該步數下的狀態數。")}
+            {t('悬停或点选某根柱子,查看该步数下的状态数。', 'Hover or tap a bar to see how many states sit at that distance.')}
           </span>
         )}
       </div>
@@ -124,7 +124,7 @@ export default function GodsNumberDist() {
         onMouseLeave={() => setActive(null)}
         aria-label={t(
           '3x3 魔方各最优还原步数(0 到 20,半转计步)对应的状态数对数刻度直方图',
-          'Log-scale histogram of how many 3×3 cube states sit at each optimal solving distance from 0 to 20 in the half-turn metric', "3x3 魔方各最優還原步數(0 到 20,半轉計步)對應的狀態數對數刻度直方圖"
+          'Log-scale histogram of how many 3×3 cube states sit at each optimal solving distance from 0 to 20 in the half-turn metric'
         )}
       >
         {BINS.map((b, i) => {
@@ -146,7 +146,7 @@ export default function GodsNumberDist() {
               onBlur={() => setActive((cur) => (cur === i ? null : cur))}
               onClick={() => setActive((cur) => (cur === i ? null : i))}
               aria-pressed={isActive}
-              aria-label={`${t('距离', 'distance', "距離")} ${b.d}: ${b.exact ? '' : '≈'}${groupDigits(b.count)} ${t('种状态', 'states', "種狀態")}${b.exact ? '' : ` (${t('估计值', 'estimate', "估計值")})`}`}
+              aria-label={`${t('距离', 'distance')} ${b.d}: ${b.exact ? '' : '≈'}${groupDigits(b.count)} ${t('种状态', 'states')}${b.exact ? '' : ` (${t('估计值', 'estimate')})`}`}
             >
               <span className="gnd-bar-track">
                 <span
@@ -164,17 +164,17 @@ export default function GodsNumberDist() {
       </div>
 
       <div className="gnd-axis-label">
-        {t('最优还原步数（半转计步 HTM）', 'Optimal solving distance (half-turn metric, HTM)', "最優還原步數（半轉計步 HTM）")}
+        {t('最优还原步数（半转计步 HTM）', 'Optimal solving distance (half-turn metric, HTM)')}
       </div>
 
       <div className="gnd-godline">
         <span className="gnd-godline-dot" aria-hidden />
         <span>
-          {t('上帝之数 = 20', 'God’s Number = 20', "上帝之數 = 20")}
+          {t('上帝之数 = 20', 'God’s Number = 20')}
           <span className="gnd-godline-sub">
             {t(
               ',任何打乱都能在 20 步内还原。2010 年由 Rokicki、Kociemba、Davidson、Dethridge 借约 35 CPU-年算力证明。',
-              ' — every scramble is solvable in 20 moves or fewer, proved in 2010 by Rokicki, Kociemba, Davidson & Dethridge using ~35 CPU-years of donated compute.', ",任何打亂都能在 20 步內還原。2010 年由 Rokicki、Kociemba、Davidson、Dethridge 借約 35 CPU-年算力證明。"
+              ' — every scramble is solvable in 20 moves or fewer, proved in 2010 by Rokicki, Kociemba, Davidson & Dethridge using ~35 CPU-years of donated compute.'
             )}
           </span>
         </span>
@@ -183,20 +183,20 @@ export default function GodsNumberDist() {
       <div className="gnd-legend">
         <span className="gnd-legend-item">
           <span className="gnd-legend-swatch" aria-hidden />
-          {t('精确值（距离 0–15）', 'Exact counts (distance 0–15)', "精確值（距離 0–15）")}
+          {t('精确值（距离 0–15）', 'Exact counts (distance 0–15)')}
         </span>
         <span className="gnd-legend-item">
           <span className="gnd-legend-swatch is-est" aria-hidden />
-          {t('估计值（距离 16–20，带 ≈）', 'Estimates (distance 16–20, marked ≈)', "估計值（距離 16–20，帶 ≈）")}
+          {t('估计值（距离 16–20，带 ≈）', 'Estimates (distance 16–20, marked ≈)')}
         </span>
       </div>
 
       <p className="gnd-foot">
-        <span>{t('数据来源', 'Data', "資料來源")}: cube20.org</span>
-        <span>{t('对数刻度', 'log scale', "對數刻度")}</span>
+        <span>{t('数据来源', 'Data')}: cube20.org</span>
+        <span>{t('对数刻度', 'log scale')}</span>
         <span>{t(
           `状态总数 ${groupDigits(TOTAL)}（约 ${scientific(TOTAL)}）`,
-          `${groupDigits(TOTAL)} total states (≈ ${scientific(TOTAL)})`, `狀態總數 ${groupDigits(TOTAL)}（約 ${scientific(TOTAL)}）`
+          `${groupDigits(TOTAL)} total states (≈ ${scientific(TOTAL)})`
         )}</span>
       </p>
     </div>

@@ -31,21 +31,21 @@ export const CATALOG: UtilEntry[] = [
   // ── hooks ─────────────────────────────────
   {
     name: 'useDocumentTitle',
-    sig: 'useDocumentTitle(zh: string, en: string, zhHant?: string): void',
+    sig: 'useDocumentTitle(zh: string, en: string): void',
     imp: "import { useDocumentTitle } from '@/hooks/useDocumentTitle';",
-    usage: "useDocumentTitle('组件库', 'Components', '元件庫');",
+    usage: "useDocumentTitle('组件库', 'Components');",
     category: 'hook',
     zh: '设置浏览器标签标题(带 CubeRoot 后缀,卸载时复位),SSR 安全。',
     en: 'Sets the document title (CubeRoot suffix, resets on unmount), SSR-safe.',
   },
   {
     name: 'useT',
-    sig: 'useT(): (zh: string, en: string, zhHant?: string) => string',
+    sig: 'useT(): (zh: string, en: string) => string',
     imp: "import { useT } from '@/hooks/useT';",
     usage: "const t = useT(); t('图案集', 'Patterns');",
     category: 'hook',
-    zh: '共享三路翻译器:zh-Hant 取第三参(缺则回退简体),其余按 isZh 二选一。第三参繁体一律 OpenCC 生成(pnpm zh:gen-localt),禁手写。',
-    en: 'Shared 3-way translator: zh-Hant uses the 3rd arg (falls back to zh), else isZh picks. The Traditional 3rd arg is OpenCC-generated, never hand-typed.',
+    zh: '共享双语翻译器:isZh ? zh : en。取代各组件手抄的私有 t(zh, en)。',
+    en: 'Shared bilingual translator: isZh ? zh : en. Replaces per-component private t(zh, en).',
   },
   {
     name: 'useIsMobile',
@@ -101,7 +101,7 @@ export const CATALOG: UtilEntry[] = [
   // ── i18n ──────────────────────────────────
   {
     name: 'tr',
-    sig: "tr(m: { en: string; zh: string; zhHant?: string }): string",
+    sig: "tr(m: { en: string; zh: string }): string",
     imp: "import { tr } from '@/i18n/tr';",
     usage: "tr({ zh: '复原', en: 'Solve' })",
     category: 'i18n',
@@ -110,7 +110,7 @@ export const CATALOG: UtilEntry[] = [
   },
   {
     name: 'T',
-    sig: '<T en="Save" zh="保存" zhHant="儲存" />',
+    sig: '<T en="Save" zh="保存" />',
     imp: "import { T } from '@/i18n/tr';",
     category: 'i18n',
     zh: 'JSX 双语文本节点,切换语言自动重渲染。',
@@ -118,7 +118,7 @@ export const CATALOG: UtilEntry[] = [
   },
   {
     name: 'useLang',
-    sig: "useLang(): 'en' | 'zh' | 'zh-Hant'",
+    sig: "useLang(): 'en' | 'zh'",
     imp: "import { useLang } from '@/i18n/tr';",
     usage: 'const lang = useLang();',
     category: 'i18n',

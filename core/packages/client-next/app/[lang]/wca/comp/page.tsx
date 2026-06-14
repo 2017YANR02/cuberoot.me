@@ -204,8 +204,6 @@ const EVENT_ORDER = WCA_EVENT_ORDER;
 
 const WEEKDAY_EN = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const WEEKDAY_ZH = ['一','二','三','四','五','六','日'];
-const WEEKDAY_ZH_HANT = ['一','二','三','四','五','六','日'];
-
 // ── 工具函数 ──────────────────────────────────────────────────────────────
 
 /** 把 YYYY-MM-DD 字符串解析为本地 Date（00:00 本地时间，避免 UTC 偏移） */
@@ -815,7 +813,7 @@ function eventCellContent(
   } else {
     detail = isZh ? `需有${isAvg ? '平均' : '单次'}成绩` : `any ${rk} result`;
   }
-  return { text: 'Q', title: tr({ zh: '参赛资格：', en: 'Qualification: ', zhHant: '參賽資格：' }) + detail };
+  return { text: 'Q', title: tr({ zh: '参赛资格：', en: 'Qualification: ' }) + detail };
 }
 
 // 列表视图整场列 metric：实际人数 / 上限(competitorLimit) / 满员率(实际÷上限) / 不显示。
@@ -833,20 +831,15 @@ type SortCol = 'comp' | 'name' | 'city';
 type ListSort = { col: SortCol; coord?: CoordKey; dir: 'asc' | 'desc' } | null;
 
 function compColTitle(m: CompMetric): string {
-  if (m === 'competitors') return tr({ zh: '实际参赛人数', en: 'Competitors',
-      zhHant: "實際參賽人數"
+  if (m === 'competitors') return tr({ zh: '实际参赛人数', en: 'Competitors'
 });
-  if (m === 'limit') return tr({ zh: '人数上限', en: 'Competitor limit',
-      zhHant: "人數上限"
+  if (m === 'limit') return tr({ zh: '人数上限', en: 'Competitor limit'
 });
-  if (m === 'ratio') return tr({ zh: '满员率(实际/上限)', en: 'Fill rate (competitors/limit)',
-      zhHant: "滿員率(實際/上限)"
+  if (m === 'ratio') return tr({ zh: '满员率(实际/上限)', en: 'Fill rate (competitors/limit)'
 });
-  if (m === 'nameLength') return tr({ zh: '比赛名称长度(字符数)', en: 'Name length (characters)',
-      zhHant: "比賽名稱長度(字元數)"
+  if (m === 'nameLength') return tr({ zh: '比赛名称长度(字符数)', en: 'Name length (characters)'
 });
-  if (m === 'cityLength') return tr({ zh: '比赛城市名长度(字符数)', en: 'City name length (characters)',
-      zhHant: "比賽城市名長度(字元數)"
+  if (m === 'cityLength') return tr({ zh: '比赛城市名长度(字符数)', en: 'City name length (characters)'
 });
   return '';
 }
@@ -854,11 +847,9 @@ function compColTitle(m: CompMetric): string {
 /** 经纬度子列标题（latlng 模式下两列各自的 title / aria） */
 function coordColTitle(kind: CoordKey): string {
   return kind === 'lat'
-    ? tr({ zh: '纬度(北纬正 / 南纬负)', en: 'Latitude (N+ / S-)',
-        zhHant: "緯度(北緯正 / 南緯負)"
+    ? tr({ zh: '纬度(北纬正 / 南纬负)', en: 'Latitude (N+ / S-)'
     })
-    : tr({ zh: '经度(东经正 / 西经负)', en: 'Longitude (E+ / W-)',
-        zhHant: "經度(東經正 / 西經負)"
+    : tr({ zh: '经度(东经正 / 西经负)', en: 'Longitude (E+ / W-)'
     });
 }
 
@@ -1144,8 +1135,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   }, [pageRef]);
 
   if (items.length === 0) {
-    return <div className="comp-list-empty">{tr({ zh: '没有匹配的比赛', en: 'No competitions match',
-        zhHant: "沒有匹配的比賽"
+    return <div className="comp-list-empty">{tr({ zh: '没有匹配的比赛', en: 'No competitions match'
     })}</div>;
   }
 
@@ -1191,8 +1181,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
                 <span className="comp-list-name">{displayName}</span>
               </span>
               <span className="comp-list-city">{displayCity}</span>
-              <span className="cl-days-cell" title={tr({ zh: '天数', en: 'Days',
-                  zhHant: "天數"
+              <span className="cl-days-cell" title={tr({ zh: '天数', en: 'Days'
             })}>
                 {daysBetween(parseLocalDate(c.start_date), parseLocalDate(endDate)) + 1}
               </span>
@@ -1243,7 +1232,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
 function CalendarPageInner() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('比赛', 'Competitions', "比賽");
+  useDocumentTitle('比赛', 'Competitions');
   const router = useRouter();
   // 比赛关注「盯一下」:登录用户跨设备同步的关注集合(server PG)。在页顶调用一次,把状态下发给
   // 模态 / 列表 / 日历条 / day-list,与首页 OngoingComps 共用同一份 server 数据。
@@ -1758,7 +1747,7 @@ function CalendarPageInner() {
   const today = new Date();
   const monthYear = String(viewDate.getFullYear());
   const monthMm = String(viewDate.getMonth() + 1).padStart(2, '0');
-  const weekdays = i18n.language === 'zh-Hant' ? WEEKDAY_ZH_HANT : (isZh ? WEEKDAY_ZH : WEEKDAY_EN);
+  const weekdays = (isZh ? WEEKDAY_ZH : WEEKDAY_EN);
 
   return (
     <div
@@ -1770,17 +1759,14 @@ function CalendarPageInner() {
     >
       <header className="upcoming-header">
         <h1 className="upcoming-title">
-          {tr({ zh: 'WCA 比赛', en: 'WCA Competitions',
-              zhHant: "WCA 比賽"
+          {tr({ zh: 'WCA 比赛', en: 'WCA Competitions'
         })}
           <Link
             href="/wca/comp-about"
             className="calendar-title-help"
-            title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
-                zhHant: "這頁是幹啥的?"
+            title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
             })}
-            aria-label={tr({ zh: '查看说明', en: 'About this page',
-                zhHant: "檢視說明"
+            aria-label={tr({ zh: '查看说明', en: 'About this page'
             })}
           >
             <HelpCircle size={18} strokeWidth={1.75} />
@@ -1788,8 +1774,7 @@ function CalendarPageInner() {
         </h1>
         <div className="upcoming-meta">
           <Link href="/wca/comp/stats" className="globe-link">
-            <BarChart3 size={12} strokeWidth={1.75} /> {tr({ zh: '统计', en: 'Stats',
-                zhHant: "統計"
+            <BarChart3 size={12} strokeWidth={1.75} /> {tr({ zh: '统计', en: 'Stats'
             })}
           </Link>
         </div>
@@ -1807,8 +1792,7 @@ function CalendarPageInner() {
           staticCubers={staticCubers}
           cuberMatchCount={selectedCuber ? (selectedCuberCompIds?.size ?? null) : null}
           isZh={isZh}
-          placeholder={tr({ zh: '搜比赛或选手', en: 'Search comps or cubers',
-              zhHant: "搜比賽或選手"
+          placeholder={tr({ zh: '搜比赛或选手', en: 'Search comps or cubers'
         })}
         />
         <RegionPicker
@@ -1825,8 +1809,7 @@ function CalendarPageInner() {
           className={`cancelled-toggle${cancelledFilter === 'only' ? ' is-active' : ''}`}
           onClick={() => setCancelledFilter((v) => (v === 'only' ? 'all' : 'only'))}
           aria-pressed={cancelledFilter === 'only'}
-          title={tr({ zh: '只看已取消的比赛', en: 'Show only cancelled competitions',
-              zhHant: "只看已取消的比賽"
+          title={tr({ zh: '只看已取消的比赛', en: 'Show only cancelled competitions'
         })}
         >
           <Ban size={14} strokeWidth={1.75} />
@@ -1857,19 +1840,16 @@ function CalendarPageInner() {
       </div>
 
       <div className="month-bar">
-        <div className="view-toggle" role="tablist" aria-label={tr({ zh: '视图切换', en: 'View toggle',
-            zhHant: "檢視切換"
+        <div className="view-toggle" role="tablist" aria-label={tr({ zh: '视图切换', en: 'View toggle'
         })}>
           <button
             role="tab"
             aria-selected={viewMode === 'calendar'}
             className={`view-btn ${viewMode === 'calendar' ? 'is-active' : ''}`}
             onClick={() => setViewMode('calendar')}
-            aria-label={tr({ zh: '日历', en: 'Calendar',
-                zhHant: "日曆"
+            aria-label={tr({ zh: '日历', en: 'Calendar'
             })}
-            title={tr({ zh: '日历', en: 'Calendar',
-                zhHant: "日曆"
+            title={tr({ zh: '日历', en: 'Calendar'
             })}
           >
             <CalendarDays size={16} strokeWidth={1.75} />
@@ -1879,11 +1859,9 @@ function CalendarPageInner() {
             aria-selected={viewMode === 'compact'}
             className={`view-btn ${viewMode === 'compact' ? 'is-active' : ''}`}
             onClick={() => setViewMode('compact')}
-            aria-label={tr({ zh: '紧凑日历(国旗)', en: 'Compact (flags)',
-                zhHant: "緊湊日曆(國旗)"
+            aria-label={tr({ zh: '紧凑日历(国旗)', en: 'Compact (flags)'
             })}
-            title={tr({ zh: '紧凑日历(国旗)', en: 'Compact (flags)',
-                zhHant: "緊湊日曆(國旗)"
+            title={tr({ zh: '紧凑日历(国旗)', en: 'Compact (flags)'
             })}
           >
             <LayoutGrid size={16} strokeWidth={1.75} />
@@ -1922,8 +1900,7 @@ function CalendarPageInner() {
               ref={monthBtnRef}
               className="month-label month-label-btn"
               onClick={() => setPickerOpen((o) => o === 'month' ? null : 'month')}
-              aria-label={tr({ zh: '选择年月', en: 'Select year / month',
-                  zhHant: "選擇年月"
+              aria-label={tr({ zh: '选择年月', en: 'Select year / month'
             })}
               aria-expanded={pickerOpen === 'month'}
             >
@@ -1951,12 +1928,10 @@ function CalendarPageInner() {
               className={`date-range-pick${dateTo ? '' : ' is-empty'}`}
               onClick={() => setPickerOpen((o) => o === 'to' ? null : 'to')}
               aria-expanded={pickerOpen === 'to'}
-              aria-label={tr({ zh: '结束年月', en: 'To',
-                  zhHant: "結束年月"
+              aria-label={tr({ zh: '结束年月', en: 'To'
             })}
             >
-              {dateTo || (tr({ zh: '结束', en: 'To',
-                  zhHant: "結束"
+              {dateTo || (tr({ zh: '结束', en: 'To'
             }))}
             </button>
             {(dateFrom || dateTo) && (
@@ -1967,7 +1942,7 @@ function CalendarPageInner() {
               />
             )}
             <span className="date-range-summary">
-              {i18n.language === 'zh-Hant' ? (`共 ${displayedComps.length.toLocaleString()} 場`) : (isZh
+              {(isZh
                                           ? `共 ${displayedComps.length.toLocaleString()} 场`
                                           : `${displayedComps.length.toLocaleString()} comps`)}
             </span>
@@ -1975,48 +1950,39 @@ function CalendarPageInner() {
               className="list-metric-select"
               value={compMetric}
               onChange={(e) => setCompMetric(e.target.value as CompMetric)}
-              aria-label={tr({ zh: '整场列显示', en: 'Whole-comp column',
-                  zhHant: "整場列顯示"
+              aria-label={tr({ zh: '整场列显示', en: 'Whole-comp column'
             })}
-              title={tr({ zh: '整场一列显示什么（实际人数 / 上限 / 满员率 / 名称长度 / 城市名长度 / 纬度 / 经度），点列头可排序', en: 'What the whole-comp column shows (competitors / limit / fill rate / name length / city length / latitude / longitude); click header to sort',
-                  zhHant: "整場一列顯示什麼（實際人數 / 上限 / 滿員率 / 名稱長度 / 城市名長度 / 緯度 / 經度），點列頭可排序"
+              title={tr({ zh: '整场一列显示什么（实际人数 / 上限 / 满员率 / 名称长度 / 城市名长度 / 纬度 / 经度），点列头可排序', en: 'What the whole-comp column shows (competitors / limit / fill rate / name length / city length / latitude / longitude); click header to sort'
             })}
             >
-              <option value="competitors">{tr({ zh: '实际人数', en: 'Competitors',
-                  zhHant: "實際人數"
+              <option value="competitors">{tr({ zh: '实际人数', en: 'Competitors'
             })}</option>
-              <option value="limit">{tr({ zh: '人数上限', en: 'Limit',
-                  zhHant: "人數上限"
+              <option value="limit">{tr({ zh: '人数上限', en: 'Limit'
             })}</option>
-              <option value="ratio">{tr({ zh: '满员率', en: 'Fill rate',
-                  zhHant: "滿員率"
+              <option value="ratio">{tr({ zh: '满员率', en: 'Fill rate'
             })}</option>
-              <option value="nameLength">{tr({ zh: '名称长度', en: 'Name length',
-                  zhHant: "名稱長度"
+              <option value="nameLength">{tr({ zh: '名称长度', en: 'Name length'
             })}</option>
-              <option value="cityLength">{tr({ zh: '城市名长度', en: 'City name length',
-                  zhHant: "城市名長度"
+              <option value="cityLength">{tr({ zh: '城市名长度', en: 'City name length'
             })}</option>
-              <option value="latlng">{tr({ zh: '经纬度', en: 'Coordinates',
-                  zhHant: "經緯度"
+              <option value="latlng">{tr({ zh: '经纬度', en: 'Coordinates'
             })}</option>
-              <option value="none">{tr({ zh: '整场不显示', en: 'Hide whole-comp',
-                  zhHant: "整場不顯示"
+              <option value="none">{tr({ zh: '整场不显示', en: 'Hide whole-comp'
             })}</option>
             </select>
             <select
               className="list-metric-select"
               value={eventMetric}
               onChange={(e) => setEventMetric(e.target.value as EventMetric)}
-              aria-label={tr({ zh: '项目格子显示', en: 'Per-event cell', zhHant: '項目格子顯示' })}
-              title={tr({ zh: '每个项目格子显示什么（限时 / 及格 / 晋级 / 资格仅未来比赛有）', en: 'What each event cell shows (time limit / cutoff / advancement / qualification: upcoming only)', zhHant: '每個項目格子顯示什麼（限時 / 及格 / 晉級 / 資格僅未來比賽有）' })}
+              aria-label={tr({ zh: '项目格子显示', en: 'Per-event cell' })}
+              title={tr({ zh: '每个项目格子显示什么（限时 / 及格 / 晋级 / 资格仅未来比赛有）', en: 'What each event cell shows (time limit / cutoff / advancement / qualification: upcoming only)' })}
             >
-              <option value="rounds">{tr({ zh: '轮次', en: 'Rounds', zhHant: '輪次' })}</option>
-              <option value="regs">{tr({ zh: '人数', en: 'Entries', zhHant: '人數' })}</option>
-              <option value="timeLimit">{tr({ zh: '限时', en: 'Time limit', zhHant: '限時' })}</option>
-              <option value="cutoff">{tr({ zh: '及格线', en: 'Cutoff', zhHant: '及格線' })}</option>
-              <option value="advancement">{tr({ zh: '晋级', en: 'Advance', zhHant: '晉級' })}</option>
-              <option value="qualification">{tr({ zh: '参赛资格', en: 'Qualify', zhHant: '參賽資格' })}</option>
+              <option value="rounds">{tr({ zh: '轮次', en: 'Rounds' })}</option>
+              <option value="regs">{tr({ zh: '人数', en: 'Entries' })}</option>
+              <option value="timeLimit">{tr({ zh: '限时', en: 'Time limit' })}</option>
+              <option value="cutoff">{tr({ zh: '及格线', en: 'Cutoff' })}</option>
+              <option value="advancement">{tr({ zh: '晋级', en: 'Advance' })}</option>
+              <option value="qualification">{tr({ zh: '参赛资格', en: 'Qualify' })}</option>
             </select>
           </div>
         )}
@@ -2038,8 +2004,7 @@ function CalendarPageInner() {
                 return cur + 1 <= maxDays ? cur + 1 : null;
               })}
               aria-pressed={daysActive}
-              title={tr({ zh: '比赛天数(单击按天数筛选)', en: 'Competition days (click to filter)',
-                  zhHant: "比賽天數(單擊按天數篩選)"
+              title={tr({ zh: '比赛天数(单击按天数筛选)', en: 'Competition days (click to filter)'
               })}
             >
               <CalendarRange size={18} strokeWidth={1.75} />
@@ -2069,9 +2034,8 @@ function CalendarPageInner() {
               return next;
             });
             const cycleHint = max >= 1
-              ? (i18n.language === 'zh-Hant' ? (`點選切換：關 → max → 1 → ... → ${max} → 關`) : (isZh ? `点击切换：关 → max → 1 → ... → ${max} → 关` : `Click to cycle: off → max → 1 → ... → ${max} → off`))
-              : (tr({ zh: '点击切换：关 → max → 关', en: 'Click to cycle: off → max → off',
-                  zhHant: "點選切換：關 → max → 關"
+              ? ((isZh ? `点击切换：关 → max → 1 → ... → ${max} → 关` : `Click to cycle: off → max → 1 → ... → ${max} → off`))
+              : (tr({ zh: '点击切换：关 → max → 关', en: 'Click to cycle: off → max → off'
             }));
             return (
               <button
@@ -2109,8 +2073,7 @@ function CalendarPageInner() {
                   <button
                     type="button"
                     className={`cl-col-icon cl-col-sort cl-text-sort${active ? ' is-active' : ''}`}
-                    title={tr({ zh: '按比赛名首字母排序', en: 'Sort by competition name',
-                        zhHant: "按比賽名首字母排序"
+                    title={tr({ zh: '按比赛名首字母排序', en: 'Sort by competition name'
                     })}
                     aria-pressed={active}
                     onClick={() => cycleSort('name')}
@@ -2147,8 +2110,7 @@ function CalendarPageInner() {
                       key={k}
                       type="button"
                       className={`cl-col-icon cl-col-sort${on ? ' is-active' : ''}`}
-                      title={coordColTitle(k) + tr({ zh: '(点击排序)', en: ' (click to sort)',
-                          zhHant: "(點選排序)"
+                      title={coordColTitle(k) + tr({ zh: '(点击排序)', en: ' (click to sort)'
                     })}
                       aria-pressed={on}
                       onClick={() => cycleSort('comp', k)}
@@ -2167,8 +2129,7 @@ function CalendarPageInner() {
                   <button
                     type="button"
                     className={`cl-col-icon cl-col-sort${on ? ' is-active' : ''}`}
-                    title={compColTitle(compMetric) + tr({ zh: '(点击排序)', en: ' (click to sort)',
-                        zhHant: "(點選排序)"
+                    title={compColTitle(compMetric) + tr({ zh: '(点击排序)', en: ' (click to sort)'
                     })}
                     aria-pressed={on}
                     onClick={() => cycleSort('comp')}
@@ -2236,8 +2197,7 @@ function CalendarPageInner() {
                 type="button"
                 className="day-number"
                 onClick={() => setOnThisDayDate(day)}
-                title={tr({ zh: '历年此日的比赛', en: 'On this day across all years',
-                    zhHant: "歷年此日的比賽"
+                title={tr({ zh: '历年此日的比赛', en: 'On this day across all years'
                 })}
               >
                 {day.getDate()}
@@ -2323,8 +2283,7 @@ function CalendarPageInner() {
             role: 'button',
             tabIndex: 0,
             onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOnThisDayDate(day); } },
-            title: tr({ zh: '历年此日的比赛', en: 'On this day across all years',
-                zhHant: "歷年此日的比賽"
+            title: tr({ zh: '历年此日的比赛', en: 'On this day across all years'
             }),
           } : undefined}
           renderDay={(day, { inView, weekIdx, dayIdx }) => {
@@ -2343,8 +2302,7 @@ function CalendarPageInner() {
                       ].filter(Boolean).join(' ');
                       const prefetchRounds = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
                       const titleText = tile.count > 1
-                        ? `${countryName(c.country, isZh)} — ${tile.count}${tr({ zh: ' 场', en: ' comps',
-                            zhHant: " 場"
+                        ? `${countryName(c.country, isZh)} — ${tile.count}${tr({ zh: ' 场', en: ' comps'
                         })}`
                         : `${localizeName(c, isZh)} — ${c.top_cubers.length} cubers`;
                       return (
@@ -2497,14 +2455,12 @@ function CalendarPageInner() {
       {(viewMode === 'calendar' || viewMode === 'compact') && (
         <div className="legend">
           {viewMode === 'calendar' && mode === 'all' && (
-            <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {tr({ zh: '一般比赛', en: 'No top cubers',
-                zhHant: "一般比賽"
+            <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {tr({ zh: '一般比赛', en: 'No top cubers'
             })}</span>
           )}
           {viewMode === 'calendar' && (
             <>
-              <span className="legend-item"><span className="legend-swatch swatch-default" /> {tr({ zh: '有顶尖选手', en: 'Has top cubers',
-                  zhHant: "有頂尖選手"
+              <span className="legend-item"><span className="legend-swatch swatch-default" /> {tr({ zh: '有顶尖选手', en: 'Has top cubers'
             })}</span>
               <span className="legend-item"><span className="legend-swatch swatch-clash" /> {tr({ zh: '扎堆 (3+)', en: 'Clash (3+)' })}</span>
             </>
@@ -2525,8 +2481,7 @@ function CalendarPageInner() {
 
       {recent.length > 0 && (
         <div className="comp-recent comp-recent-calendar">
-          <h2 className="comp-recent-title">{tr({ zh: '最近浏览', en: 'Recent',
-              zhHant: "最近瀏覽"
+          <h2 className="comp-recent-title">{tr({ zh: '最近浏览', en: 'Recent'
         })}</h2>
           <ul className="comp-recent-list">
             {recent.map(r => {

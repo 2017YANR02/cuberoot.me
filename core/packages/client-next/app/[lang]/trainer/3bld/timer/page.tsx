@@ -45,7 +45,7 @@ interface Solve {
 export default function BldTimerPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('盲拧练习计时', 'BLD Practice Timer', "盲擰練習計時");
+  useDocumentTitle('盲拧练习计时', 'BLD Practice Timer');
 
   const [scrambles, setScrambles] = useState<string[]>([]);
   const [idx, setIdx] = useState(0);
@@ -166,8 +166,7 @@ export default function BldTimerPage(): JSX.Element {
   };
 
   const clearSolves = () => {
-    if (typeof window !== 'undefined' && !window.confirm(tr({ zh: '清空所有成绩?', en: 'Clear all solves?',
-        zhHant: "清空所有成績?"
+    if (typeof window !== 'undefined' && !window.confirm(tr({ zh: '清空所有成绩?', en: 'Clear all solves?'
     }))) return;
     setSolves([]);
     setLastMs(0);
@@ -176,13 +175,11 @@ export default function BldTimerPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '盲拧练习计时', en: 'BLD Practice Timer',
-            zhHant: "盲擰練習計時"
+        <h1>{tr({ zh: '盲拧练习计时', en: 'BLD Practice Timer'
         })}</h1>
         <span className="bld-spacer" />
         <Link href="/trainer/3bld/edge-float" className="bld-btn">
-          {tr({ zh: '返回浮动训练', en: 'Back to float trainer',
-              zhHant: "返回浮動訓練"
+          {tr({ zh: '返回浮动训练', en: 'Back to float trainer'
         })}
         </Link>
       </div>
@@ -190,8 +187,7 @@ export default function BldTimerPage(): JSX.Element {
       {scrambles.length === 0 ? (
         <div className="bld-section">
           <div className="bld-scramble-empty">
-            {tr({ zh: '暂无打乱。请先在「棱块浮动训练」生成打乱并点击「练习计时」。', en: 'No scrambles loaded. Generate scrambles in the Edge Float trainer and click "Practice timer".',
-                zhHant: "暫無打亂。請先在「稜塊浮動訓練」生成打亂並點選「練習計時」。"
+            {tr({ zh: '暂无打乱。请先在「棱块浮动训练」生成打乱并点击「练习计时」。', en: 'No scrambles loaded. Generate scrambles in the Edge Float trainer and click "Practice timer".'
             })}
           </div>
         </div>
@@ -208,8 +204,7 @@ export default function BldTimerPage(): JSX.Element {
                 className="bld-timer-nav"
                 onClick={goPrev}
                 disabled={!idle}
-                aria-label={tr({ zh: '上一条', en: 'Previous',
-                    zhHant: "上一條"
+                aria-label={tr({ zh: '上一条', en: 'Previous'
                 })}
               >
                 <ChevronLeft size={18} />
@@ -222,8 +217,7 @@ export default function BldTimerPage(): JSX.Element {
                 className="bld-timer-nav"
                 onClick={goNext}
                 disabled={!idle}
-                aria-label={tr({ zh: '下一条', en: 'Next',
-                    zhHant: "下一條"
+                aria-label={tr({ zh: '下一条', en: 'Next'
                 })}
               >
                 <ChevronRight size={18} />
@@ -237,8 +231,7 @@ export default function BldTimerPage(): JSX.Element {
             </div>
 
             <div className="bld-timer-help">
-              {tr({ zh: '按住空格 / 长按屏幕预备，松开开始,再按停止。', en: 'Hold Space / touch to ready, release to start, press to stop.',
-                  zhHant: "按住空格 / 長按螢幕預備，鬆開開始,再按停止。"
+              {tr({ zh: '按住空格 / 长按屏幕预备，松开开始,再按停止。', en: 'Hold Space / touch to ready, release to start, press to stop.'
             })}
             </div>
           </div>
@@ -246,8 +239,7 @@ export default function BldTimerPage(): JSX.Element {
           <div className="bld-section bld-timer-results">
             <div className="bld-helper-row-head">
               <span className="bld-section-title">
-                {tr({ zh: '成绩', en: 'Results',
-                    zhHant: "成績"
+                {tr({ zh: '成绩', en: 'Results'
                 })} ({solves.length})
               </span>
               {solves.length > 0 && (
@@ -259,8 +251,7 @@ export default function BldTimerPage(): JSX.Element {
             </div>
 
             {solves.length === 0 ? (
-              <div className="bld-scramble-empty">{tr({ zh: '暂无成绩', en: 'No solves yet',
-                  zhHant: "暫無成績"
+              <div className="bld-scramble-empty">{tr({ zh: '暂无成绩', en: 'No solves yet'
             })}</div>
             ) : (
               <ol className="bld-scramble-list">
@@ -291,8 +282,7 @@ export default function BldTimerPage(): JSX.Element {
               disabled={!idle}
             >
               <RotateCcw size={15} />
-              {tr({ zh: '回到第一条', en: 'Back to first',
-                  zhHant: "回到第一條"
+              {tr({ zh: '回到第一条', en: 'Back to first'
             })}
             </button>
           </div>

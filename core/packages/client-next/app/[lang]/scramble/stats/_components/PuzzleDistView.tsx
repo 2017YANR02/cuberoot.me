@@ -35,14 +35,14 @@ const PUZZLE_COLOR: Record<string, string> = {
 };
 
 // 度量说明(顶点等口径)。sq1 按当前选中口径(wca / slash)给不同说明。
-function metricNote(key: string, metric: string): { zh: string; en: string; zhHant?: string } {
+function metricNote(key: string, metric: string): { zh: string; en: string; } {
   if (key === 'pyraminx') {
-    return { zh: 'HTM,含顶点(tips)', en: 'HTM, tips included', zhHant: "HTM,含頂點(tips)" };
+    return { zh: 'HTM,含顶点(tips)', en: 'HTM, tips included' };
   }
   if (key === 'sq1') {
     return metric === 'slash'
-      ? { zh: 'slash 计步(层转计 0,God’s number 13)', en: 'slash count (turns = 0, God’s number 13)', zhHant: 'slash 計步(層轉計 0,God’s number 13)' }
-      : { zh: 'WCA 12c4 计步((X,Y) 计 1、/ 计 1)', en: 'WCA 12c4 ((X,Y) = 1, / = 1)', zhHant: 'WCA 12c4 計步((X,Y) 計 1、/ 計 1)' };
+      ? { zh: 'slash 计步(层转计 0,God’s number 13)', en: 'slash count (turns = 0, God’s number 13)' }
+      : { zh: 'WCA 12c4 计步((X,Y) 计 1、/ 计 1)', en: 'WCA 12c4 ((X,Y) = 1, / = 1)' };
   }
   return { zh: 'HTM', en: 'HTM' };
 }
@@ -133,21 +133,21 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   }, [exampleBins, st]);
 
   if (error) {
-    return <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed', zhHant: '載入失敗' })}: {error}</div>;
+    return <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed' })}: {error}</div>;
   }
   if (!json) {
-    return <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…', zhHant: '載入中…' })}</div>;
+    return <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…' })}</div>;
   }
   if (!entry) {
     return (
       <div className="scramble-stats-loading">
-        {tr({ zh: '该项目难度数据生成中,稍后再来', en: 'Difficulty data for this puzzle is being generated, check back soon', zhHant: '該項目難度資料生成中,稍後再來' })}
+        {tr({ zh: '该项目难度数据生成中,稍后再来', en: 'Difficulty data for this puzzle is being generated, check back soon' })}
       </div>
     );
   }
 
   const note = metricNote(puzzleKey, activeMetricKey);
-  const sampleLine = tr({ zh: '{n} 条样本', en: '{n} samples', zhHant: '{n} 條樣本' })
+  const sampleLine = tr({ zh: '{n} 条样本', en: '{n} samples' })
     .replace('{n}', entry.sample_count.toLocaleString());
 
   return (
@@ -159,13 +159,13 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
         </div>
         {hasAlt && (
           <div className="scramble-stats-puzzle-toggle">
-            <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '计步', en: 'Metric', zhHant: '計步' })}</span>
+            <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '计步', en: 'Metric' })}</span>
             <PillToggle
               value={sq1Metric === 'slash'}
               onChange={(v) => setSq1Metric(v ? 'slash' : 'wca')}
               offLabel="WCA"
               onLabel="slash"
-              ariaLabel={tr({ zh: 'SQ1 计步口径:WCA 12c4 或 slash', en: 'SQ1 move metric: WCA 12c4 or slash', zhHant: 'SQ1 計步口徑:WCA 12c4 或 slash' })}
+              ariaLabel={tr({ zh: 'SQ1 计步口径:WCA 12c4 或 slash', en: 'SQ1 move metric: WCA 12c4 or slash' })}
             />
           </div>
         )}
@@ -183,7 +183,7 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           onBarClick={(b) => setSelectedBin(b)}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
-          yModeLabel={yMode === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count', zhHant: '數量' })}
+          yModeLabel={yMode === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count' })}
         />
       </div>
 
@@ -202,27 +202,27 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
 
       {st && (
         <div className="scramble-stats-panel">
-          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计', en: 'Summary stats', zhHant: '摘要統計' })}</div>
+          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计', en: 'Summary stats' })}</div>
           <div className="scramble-stats-stat-grid">
             <Cell label={tr({ zh: '均值', en: 'mean' })} value={st.mean.toFixed(2)} />
-            <Cell label={tr({ zh: '中位数', en: 'median', zhHant: '中位數' })} value={String(st.median)} />
-            <Cell label={tr({ zh: '众数', en: 'mode', zhHant: '眾數' })} value={String(st.mode)} />
-            <Cell label={tr({ zh: '最优', en: 'min', zhHant: '最優' })} value={String(st.min)} />
-            <Cell label={tr({ zh: '最难', en: 'max', zhHant: '最難' })} value={String(st.max)} />
+            <Cell label={tr({ zh: '中位数', en: 'median' })} value={String(st.median)} />
+            <Cell label={tr({ zh: '众数', en: 'mode' })} value={String(st.mode)} />
+            <Cell label={tr({ zh: '最优', en: 'min' })} value={String(st.min)} />
+            <Cell label={tr({ zh: '最难', en: 'max' })} value={String(st.max)} />
           </div>
         </div>
       )}
 
       <div className="scramble-stats-meta">
         <span>
-          {tr({ zh: '生成时间', en: 'Generated', zhHant: '生成時間' })}: {json.meta.generated_at}
+          {tr({ zh: '生成时间', en: 'Generated' })}: {json.meta.generated_at}
         </span>
         <span>
           {puzzleKey === 'sq1'
             ? (activeMetricKey === 'slash'
-              ? tr({ zh: '口径:整个打乱的近最优解步数,只数 slash(jaapsch twist;双阶段上界,非可证最优)', en: 'Metric: near-optimal solution length, slash count only (jaapsch twist; two-phase upper bound, not provably optimal)', zhHant: '口徑:整個打亂的近最優解步數,只數 slash(jaapsch twist;雙階段上界,非可證最優)' })
-              : tr({ zh: '口径:整个打乱的近最优解步数,WCA 12c4 计步(双阶段上界,非可证最优)', en: 'Metric: near-optimal solution length in WCA 12c4 moves (two-phase upper bound, not provably optimal)', zhHant: '口徑:整個打亂的近最優解步數,WCA 12c4 計步(雙階段上界,非可證最優)' }))
-            : tr({ zh: '口径:整个打乱的最优解步数', en: 'Metric: optimal solution length per scramble', zhHant: '口徑:整個打亂的最優解步數' })}
+              ? tr({ zh: '口径:整个打乱的近最优解步数,只数 slash(jaapsch twist;双阶段上界,非可证最优)', en: 'Metric: near-optimal solution length, slash count only (jaapsch twist; two-phase upper bound, not provably optimal)' })
+              : tr({ zh: '口径:整个打乱的近最优解步数,WCA 12c4 计步(双阶段上界,非可证最优)', en: 'Metric: near-optimal solution length in WCA 12c4 moves (two-phase upper bound, not provably optimal)' }))
+            : tr({ zh: '口径:整个打乱的最优解步数', en: 'Metric: optimal solution length per scramble' })}
         </span>
       </div>
     </>
@@ -278,18 +278,16 @@ function PuzzleExamplesPanel({
     <div className="scramble-stats-panel scramble-stats-examples-panel">
       <div className="scramble-stats-examples-header">
         <div className="scramble-stats-panel-title">
-          {tr({ zh: '{n} 步示例', en: '{n}-move examples', zhHant: '{n} 步示例' }).replace('{n}', String(selectedBin))}
+          {tr({ zh: '{n} 步示例', en: '{n}-move examples' }).replace('{n}', String(selectedBin))}
         </div>
         {hasOpt && (
           <PillToggle
             value={exView === 'opt'}
             onChange={(v) => onExView(v ? 'opt' : 'orig')}
             offLabel={tr({ zh: '原始', en: 'Original' })}
-            onLabel={tr({ zh: '最优', en: 'Optimal',
-                zhHant: "最優"
+            onLabel={tr({ zh: '最优', en: 'Optimal'
             })}
-            ariaLabel={tr({ zh: '原始打乱或最优等价打乱', en: 'Original scramble or optimal equivalent',
-                zhHant: "原始打亂或最優等價打亂"
+            ariaLabel={tr({ zh: '原始打乱或最优等价打乱', en: 'Original scramble or optimal equivalent'
             })}
           />
         )}
@@ -311,7 +309,7 @@ function PuzzleExamplesPanel({
                     className="scramble-stats-examples-cube"
                     href={solverHref(shown)}
                     prefetch={false}
-                    aria-label={tr({ zh: '打乱图', en: 'Scramble image', zhHant: '打亂圖' })}
+                    aria-label={tr({ zh: '打乱图', en: 'Scramble image' })}
                   >
                     {preview}
                   </Link>
@@ -354,7 +352,7 @@ function PuzzleExamplesPanel({
         </ul>
       ) : (
         <div className="scramble-stats-examples-hint">
-          {tr({ zh: '此步数无示例', en: 'No examples for this length', zhHant: '此步數無示例' })}
+          {tr({ zh: '此步数无示例', en: 'No examples for this length' })}
         </div>
       )}
     </div>

@@ -116,7 +116,7 @@ interface SimCubeMin {
 export default function SimPage() {
   const { i18n } = useTranslation();
   const t = useT();
-  useDocumentTitle('模拟器', 'Sim', "模擬器");
+  useDocumentTitle('模拟器', 'Sim');
 
   // Sim editor state in the URL (replace semantics — not navigation).
   // puzzle defaults to '3' (absent reads as 3, and '3' is auto-omitted from
@@ -840,7 +840,7 @@ export default function SimPage() {
         <HomeLink className="sim-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
         </HomeLink>
-        <h1 className="sim-title">{t('模拟', 'Sim', "模擬")}</h1>
+        <h1 className="sim-title">{t('模拟', 'Sim')}</h1>
         <div className="sim-spacer" />
       </header>
 
@@ -913,7 +913,7 @@ export default function SimPage() {
               open={directorOpen}
               onToggle={() => setDirectorOpen((o) => !o)}
               icon={Film}
-              label={t('录制', 'Record', "錄製")}
+              label={t('录制', 'Record')}
             >
               <DirectorPanel
                 getCanvas={getCanvas}

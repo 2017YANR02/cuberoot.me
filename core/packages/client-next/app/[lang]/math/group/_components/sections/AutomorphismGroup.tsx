@@ -661,8 +661,7 @@ export default function AutomorphismGroup() {
             <span className="gt-result-val" style={{ color: cyclic ? 'var(--green)' : 'var(--warn)', fontWeight: 600 }}>
               {cyclic
                 ? (isZh ? `是 — 最小原根 g = ${primitiveRoot}` : `Yes — smallest primitive root g = ${primitiveRoot}`)
-                : (tr({ zh: '否（无原根）', en: 'No (no primitive root)',
-                    zhHant: "否（無原根）"
+                : (tr({ zh: '否（无原根）', en: 'No (no primitive root)'
                 }))}
             </span>
           </div>
@@ -699,7 +698,7 @@ export default function AutomorphismGroup() {
 
         {/* SVG dial */}
         <div style={{ marginTop: 20, maxWidth: 340, width: '100%', margin: '20px auto 0' }}>
-          <svg viewBox="0 0 240 240" width="100%" aria-label={i18n.language === 'zh-Hant' ? (`C_${n} 撥盤`) : (isZh ? `C_${n} 拨盘` : `C_${n} dial`)}>
+          <svg viewBox="0 0 240 240" width="100%" aria-label={(isZh ? `C_${n} 拨盘` : `C_${n} dial`)}>
             {/* Tick circle */}
             <circle cx={CX} cy={CY} r={R} fill="none" stroke="var(--rule)" strokeWidth={1} />
 
@@ -868,8 +867,7 @@ export default function AutomorphismGroup() {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginTop: 20, alignItems: 'flex-start', justifyContent: 'center' }}>
           {/* Triangle SVG */}
           <div style={{ maxWidth: 220, width: '100%' }}>
-            <svg viewBox="0 0 200 200" width="100%" aria-label={tr({ zh: 'V4 三角形自同构图', en: 'V4 automorphism triangle',
-                zhHant: "V4 三角形自同構圖"
+            <svg viewBox="0 0 200 200" width="100%" aria-label={tr({ zh: 'V4 三角形自同构图', en: 'V4 automorphism triangle'
             })}>
               <defs>
                 <marker id="arrowV4" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
@@ -943,8 +941,7 @@ export default function AutomorphismGroup() {
             </div>
             <div style={{ fontFamily: 'var(--mono)', fontSize: 15, marginBottom: 10 }}>
               {v4AutLabel(selAut) === 'id'
-                ? (tr({ zh: '恒等映射 id', en: 'Identity id',
-                    zhHant: "恆等對映 id"
+                ? (tr({ zh: '恒等映射 id', en: 'Identity id'
                 }))
                 : v4AutLabel(selAut)}
             </div>

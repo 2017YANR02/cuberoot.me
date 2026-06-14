@@ -88,8 +88,7 @@ function recordRow(opts: {
           </>
         ) : (
           <span style={{ opacity: 0.55, fontSize: '0.9em' }}>
-            ({tr({ zh: '暂无 PB', en: 'no PB yet',
-                zhHant: "暫無 PB"
+            ({tr({ zh: '暂无 PB', en: 'no PB yet'
             })})
           </span>
         )}
@@ -108,8 +107,7 @@ export default function RecordsOverlay({
   if (!rec) return null;
 
   const singleRow = recordRow({
-    label: tr({ zh: 'WR 单次', en: 'WR single',
-        zhHant: "WR 單次"
+    label: tr({ zh: 'WR 单次', en: 'WR single'
     }),
     yourLabel: tr({ zh: '你的 PB', en: 'your PB' }),
     wrMs: rec.wrSingleMs,
@@ -138,8 +136,7 @@ export default function RecordsOverlay({
   return (
     <div className="modal-section">
       <h3 className="settings-h3">
-        {tr({ zh: 'WCA 记录', en: 'WCA records',
-            zhHant: "WCA 記錄"
+        {tr({ zh: 'WCA 记录', en: 'WCA records'
         })}
         <span style={{ marginLeft: 8, opacity: 0.55, fontSize: '0.8em', fontWeight: 'normal' }}>
           ({tr({ zh: '截至', en: 'as of' })} {WR_AS_OF})

@@ -54,8 +54,7 @@ export default function CountrySelect({ countries, value, isZh, onChange }: Prop
 
   return (
     <div className="wse-filter wse-country" ref={ref}>
-      <label>{tr({ zh: '国家', en: 'Country',
-          zhHant: "國家"
+      <label>{tr({ zh: '国家', en: 'Country'
     })}</label>
       <div className="wse-country-trigger">
         <button type="button" onClick={() => setOpen(o => !o)}>
@@ -78,8 +77,7 @@ export default function CountrySelect({ countries, value, isZh, onChange }: Prop
               autoFocus
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder={tr({ zh: '搜索国家...', en: 'Search country...',
-                  zhHant: "搜尋國家..."
+              placeholder={tr({ zh: '搜索国家...', en: 'Search country...'
             })}
             />
           </div>

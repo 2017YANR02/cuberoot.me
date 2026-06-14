@@ -6,373 +6,320 @@
   },
   "title": {
     "en": "Head to Head Solving",
-    "zh": "“一对一”复原",
-    "zhHant": "“一對一”復原"
+    "zh": "“一对一”复原"
   },
   "clauses": [
     {
       "id": "I1",
       "depth": 0,
       "en": "Qualification and seeding:",
-      "zh": "资格和种子顺位：",
-      "zhHant": "資格和種子順位："
+      "zh": "资格和种子顺位："
     },
     {
       "id": "I1a",
       "depth": 1,
       "en": "The number of available places in a Head to Head round must be one of the following: 4, 8, 12, or 16.",
-      "zh": "“一对一”轮次的人数必须是这几个之一：4、8、12或16。",
-      "zhHant": "“一對一”輪次的人數必須是這幾個之一：4、8、12或16。"
+      "zh": "“一对一”轮次的人数必须是这几个之一：4、8、12或16。"
     },
     {
       "id": "I1b",
       "depth": 1,
       "en": "For Head to Head rounds with a prior round, seeding is based on the competitor's rank in the prior round.",
-      "zh": "在有前序轮次的“一对一”轮次中，种子顺位依据选手在前一轮中的排名决定。",
-      "zhHant": "在有前序輪次的“一對一”輪次中，種子順位依據選手在前一輪中的排名決定。"
+      "zh": "在有前序轮次的“一对一”轮次中，种子顺位依据选手在前一轮中的排名决定。"
     },
     {
       "id": "I1c",
       "depth": 1,
       "en": "For Head to Head round without a prior round, seeding is based on the qualification requirements for the competition.",
-      "zh": "在没有前序轮次的“一对一”轮次中，种子顺位依据比赛的参赛资格要求决定。",
-      "zhHant": "在沒有前序輪次的“一對一”輪次中，種子順位依據比賽的參賽資格要求決定。"
+      "zh": "在没有前序轮次的“一对一”轮次中，种子顺位依据比赛的参赛资格要求决定。"
     },
     {
       "id": "I1d",
       "depth": 1,
       "en": "If competitors would otherwise have identical seeds, seeding between these competitors is randomized.",
-      "zh": "如果多位选手会获得相同的种子顺位，则这些选手之间的种子顺位以随机排序决定。",
-      "zhHant": "如果多位選手會獲得相同的種子順位，則這些選手之間的種子順位以隨機排序決定。"
+      "zh": "如果多位选手会获得相同的种子顺位，则这些选手之间的种子顺位以随机排序决定。"
     },
     {
       "id": "I2",
       "depth": 0,
       "en": "Round structure:",
-      "zh": "轮次结构：",
-      "zhHant": "輪次結構："
+      "zh": "轮次结构："
     },
     {
       "id": "I2a",
       "depth": 1,
       "en": "A Head to Head round is structured as a single-elimination tournament, comprising a number of stages:",
-      "zh": "“一对一”轮次由几个阶段的单败淘汰赛制组成：",
-      "zhHant": "“一對一”輪次由幾個階段的單敗淘汰賽制組成："
+      "zh": "“一对一”轮次由几个阶段的单败淘汰赛制组成："
     },
     {
       "id": "I2a1",
       "depth": 2,
       "en": "For rounds with 4 places: Semifinal Stage and Final Stage.",
-      "zh": "对于有4名选手的情况：半决赛阶段和决赛阶段。",
-      "zhHant": "對於有4名選手的情況：半決賽階段和決賽階段。"
+      "zh": "对于有4名选手的情况：半决赛阶段和决赛阶段。"
     },
     {
       "id": "I2a2",
       "depth": 2,
       "en": "For rounds with 8 places: Quarterfinal Stage, Semifinal Stage, and Final Stage.",
-      "zh": "对于有8名选手的情况：四分之一决赛阶段、半决赛阶段以及决赛阶段。",
-      "zhHant": "對於有8名選手的情況：四分之一決賽階段、半決賽階段以及決賽階段。"
+      "zh": "对于有8名选手的情况：四分之一决赛阶段、半决赛阶段以及决赛阶段。"
     },
     {
       "id": "I2a3",
       "depth": 2,
       "en": "For rounds with 12 places: Stage of 12, Quarterfinal Stage, Semifinal Stage, and Final Stage.",
-      "zh": "对于有12名选手的情况：前十二阶段、四分之一决赛阶段、半决赛阶段以及决赛阶段。",
-      "zhHant": "對於有12名選手的情況：前十二階段、四分之一決賽階段、半決賽階段以及決賽階段。"
+      "zh": "对于有12名选手的情况：前十二阶段、四分之一决赛阶段、半决赛阶段以及决赛阶段。"
     },
     {
       "id": "I2a4",
       "depth": 2,
       "en": "For rounds with 16 places: Stage of 16, Quarterfinal Stage, Semifinal Stage, and Final Stage.",
-      "zh": "对于有16名选手的情况：前十六阶段、四分之一决赛阶段、半决赛阶段以及决赛阶段。",
-      "zhHant": "對於有16名選手的情況：前十六階段、四分之一決賽階段、半決賽階段以及決賽階段。"
+      "zh": "对于有16名选手的情况：前十六阶段、四分之一决赛阶段、半决赛阶段以及决赛阶段。"
     },
     {
       "id": "I2b",
       "depth": 1,
       "en": "Each stage comprises a number of matches between 2 competitors:",
-      "zh": "每个阶段由若干在2名选手之间进行的对决构成：",
-      "zhHant": "每個階段由若干在2名選手之間進行的對決構成："
+      "zh": "每个阶段由若干在2名选手之间进行的对决构成："
     },
     {
       "id": "I2b1",
       "depth": 2,
       "en": "Final Stage: 2 Matches: the Final Match and the Third Place Match.",
-      "zh": "决赛阶段：2场对决：决赛和三四名决赛。",
-      "zhHant": "決賽階段：2場對決：決賽和三四名決賽。"
+      "zh": "决赛阶段：2场对决：决赛和三四名决赛。"
     },
     {
       "id": "I2b2",
       "depth": 2,
       "en": "Semifinal Stage: 2 matches.",
-      "zh": "半决赛阶段：2场对决。",
-      "zhHant": "半決賽階段：2場對決。"
+      "zh": "半决赛阶段：2场对决。"
     },
     {
       "id": "I2b3",
       "depth": 2,
       "en": "Quarterfinal Stage: 4 matches.",
-      "zh": "四分之一决赛阶段：4场对决。",
-      "zhHant": "四分之一決賽階段：4場對決。"
+      "zh": "四分之一决赛阶段：4场对决。"
     },
     {
       "id": "I2b4",
       "depth": 2,
       "en": "Stage of 12: 4 matches.",
-      "zh": "前十二阶段：4场对决。",
-      "zhHant": "前十二階段：4場對決。"
+      "zh": "前十二阶段：4场对决。"
     },
     {
       "id": "I2b5",
       "depth": 2,
       "en": "Stage of 16: 8 matches.",
-      "zh": "前十六阶段：8场对决。",
-      "zhHant": "前十六階段：8場對決。"
+      "zh": "前十六阶段：8场对决。"
     },
     {
       "id": "I2c",
       "depth": 1,
       "en": "Matchups in the first stage of a round are based on a competitor's seed. The competitor with the highest seed is matched against the competitor with the lowest seed. The competitor with the second highest seed is matched against the competitor with the second lowest seed. This process is repeated until all competitors have been matched.",
-      "zh": "第一阶段的对阵由选手的种子顺位决定。最高种子对阵最低种子。第二高种子对阵第二低种子。这样一直到所有选手的对阵安排结束。",
-      "zhHant": "第一階段的對陣由選手的種子順位決定。最高種子對陣最低種子。第二高種子對陣第二低種子。這樣一直到所有選手的對陣安排結束。"
+      "zh": "第一阶段的对阵由选手的种子顺位决定。最高种子对阵最低种子。第二高种子对阵第二低种子。这样一直到所有选手的对阵安排结束。"
     },
     {
       "id": "I2c1",
       "depth": 2,
       "en": "Exception: for rounds with 12 places the top 4 seeded competitors do not take part in the Stage of 12, but are matched against the winners of the Stage of 12 during the Quarterfinal Stage.",
-      "zh": "例外：对于有12名选手的阶段，前4的种子选手不参与前十二阶段，而是和前十二阶段的胜者在四分之一决赛阶段对阵。",
-      "zhHant": "例外：對於有12名選手的階段，前4的種子選手不參與前十二階段，而是和前十二階段的勝者在四分之一決賽階段對陣。"
+      "zh": "例外：对于有12名选手的阶段，前4的种子选手不参与前十二阶段，而是和前十二阶段的胜者在四分之一决赛阶段对阵。"
     },
     {
       "id": "I2d",
       "depth": 1,
       "en": "The winner of each match during the Stage of 16, Stage of 12 and Quarterfinal Stage proceeds to the following stage. The loser is eliminated.",
-      "zh": "前十六阶段、前十二阶段、和四分之一决赛阶段的每场对决的胜者晋级到下一阶段。败者出局。",
-      "zhHant": "前十六階段、前十二階段、和四分之一決賽階段的每場對決的勝者晉級到下一階段。敗者出局。"
+      "zh": "前十六阶段、前十二阶段、和四分之一决赛阶段的每场对决的胜者晋级到下一阶段。败者出局。"
     },
     {
       "id": "I2e",
       "depth": 1,
       "en": "The winner of each match during the Semifinal Stage takes part in the Final Match during the Final Stage. The loser of each match during the Semifinal Stage takes part in the Third Place Match during the Final Stage.",
-      "zh": "半决赛阶段的每场对决的胜者参与决赛阶段的决赛。半决赛阶段的每场对决的败者参与决赛阶段的三四名决赛。",
-      "zhHant": "半決賽階段的每場對決的勝者參與決賽階段的決賽。半決賽階段的每場對決的敗者參與決賽階段的三四名決賽。"
+      "zh": "半决赛阶段的每场对决的胜者参与决赛阶段的决赛。半决赛阶段的每场对决的败者参与决赛阶段的三四名决赛。"
     },
     {
       "id": "I2f",
       "depth": 1,
       "en": "For subsequent stages competitors are matched so that, assuming the higher seed won every previous match, the seeds add up to the number of remaining competitors plus 1.",
-      "zh": "后续阶段的对阵按如下规则确定：假设每场对决都由更高顺位的种子胜出，则由种子顺位之和等于剩余人数加1的两位选手互相对阵。",
-      "zhHant": "後續階段的對陣按如下規則確定：假設每場對決都由更高順位的種子勝出，則由種子順位之和等於剩餘人數加1的兩位選手互相對陣。"
+      "zh": "后续阶段的对阵按如下规则确定：假设每场对决都由更高顺位的种子胜出，则由种子顺位之和等于剩余人数加1的两位选手互相对阵。"
     },
     {
       "id": "I2g",
       "depth": 1,
       "en": "A [Visual Guide](https://drive.google.com/file/d/1dGy7DZZqPNuf8dDHJIJUw5vzwgoRjz1G/view) illustrates the full structure for rounds with 4, 8, 12, and 16 competitors.",
-      "zh": "这里有一个[可视化指南](https://drive.google.com/file/d/1dGy7DZZqPNuf8dDHJIJUw5vzwgoRjz1G/view)展示了包含4、8、12以及16人轮次的完整对阵表。",
-      "zhHant": "這裡有一個[視覺化指南](https://drive.google.com/file/d/1dGy7DZZqPNuf8dDHJIJUw5vzwgoRjz1G/view)展示了包含4、8、12以及16人輪次的完整對陣表。"
+      "zh": "这里有一个[可视化指南](https://drive.google.com/file/d/1dGy7DZZqPNuf8dDHJIJUw5vzwgoRjz1G/view)展示了包含4、8、12以及16人轮次的完整对阵表。"
     },
     {
       "id": "I2h",
       "depth": 1,
       "en": "If a competitor withdraws from a match before it begins, their opponent is treated as winning the match for the purpose of progression (Stage of 16, Stage of 12, Quarterfinal Stage, Semifinal Stage) or overall ranking within the round (Final Stage), but no results are recorded for the match (see [Regulation 9f5b](regulations:regulation:9f5b)).",
-      "zh": "如果一名选手在某场对决开始前退出，则他的对手被认为是获得了这场对决的胜利，并晋级到下一个阶段（对于前十六阶段、前十二阶段、四分之一决赛阶段以及半决赛的情况）或者获得相应的排名（对于决赛阶段的情况），但这场比赛没有成绩记录（见[规则9f5b](regulations:regulation:9f5b)）。",
-      "zhHant": "如果一名選手在某場對決開始前退出，則他的對手被認為是獲得了這場對決的勝利，並晉級到下一個階段（對於前十六階段、前十二階段、四分之一決賽階段以及半決賽的情況）或者獲得相應的排名（對於決賽階段的情況），但這場比賽沒有成績記錄（見[規則9f5b](regulations:regulation:9f5b)）。"
+      "zh": "如果一名选手在某场对决开始前退出，则他的对手被认为是获得了这场对决的胜利，并晋级到下一个阶段（对于前十六阶段、前十二阶段、四分之一决赛阶段以及半决赛的情况）或者获得相应的排名（对于决赛阶段的情况），但这场比赛没有成绩记录（见[规则9f5b](regulations:regulation:9f5b)）。"
     },
     {
       "id": "I3",
       "depth": 0,
       "en": "Match structure:",
-      "zh": "对决结构:",
-      "zhHant": "對決結構:"
+      "zh": "对决结构:"
     },
     {
       "id": "I3a",
       "depth": 1,
       "en": "Each match comprises a number of sets. The winner of the match is the first competitor to win X sets (where X is 1, 2, or 3).",
-      "zh": "每场对决由若干盘构成。先赢得X盘（X是1、2或3）的选手赢得对决的胜利。",
-      "zhHant": "每場對決由若干盤構成。先贏得X盤（X是1、2或3）的選手贏得對決的勝利。"
+      "zh": "每场对决由若干盘构成。先赢得X盘（X是1、2或3）的选手赢得对决的胜利。"
     },
     {
       "id": "I3a1",
       "depth": 2,
       "en": "X must be the same for all matches within a stage. Exception: for the Final Match, X may be greater than for the Third Place Match.",
-      "zh": "在同一个阶段，所有的对决必须使用一样的X值。例外：对于决赛，X可以比三四名决赛的值更大。",
-      "zhHant": "在同一個階段，所有的對決必須使用一樣的X值。例外：對於決賽，X可以比三四名決賽的值更大。"
+      "zh": "在同一个阶段，所有的对决必须使用一样的X值。例外：对于决赛，X可以比三四名决赛的值更大。"
     },
     {
       "id": "I3a2",
       "depth": 2,
       "en": "For subsequent stages, X must be the same or higher than the previous stage.",
-      "zh": "后续阶段的X值必须大于或等于前序阶段。",
-      "zhHant": "後續階段的X值必須大於或等於前序階段。"
+      "zh": "后续阶段的X值必须大于或等于前序阶段。"
     },
     {
       "id": "I3b",
       "depth": 1,
       "en": "Each set comprises a number of points. The winner of a set is the first competitor to win 3 points.",
-      "zh": "每一盘由若干分组成。先得到3分的选手赢得该盘。",
-      "zhHant": "每一盤由若干分組成。先得到3分的選手贏得該盤。"
+      "zh": "每一盘由若干分组成。先得到3分的选手赢得该盘。"
     },
     {
       "id": "I3c",
       "depth": 1,
       "en": "The winner of a point is the competitor with the better result, where \"better\" is defined as the shorter time. A DNF or DNS is the worst possible result.",
-      "zh": "每一分成绩更好的选手得到这一分，这里的“好”指的是更短的时间。DNF或DNS是最差的可能成绩。",
-      "zhHant": "每一分成績更好的選手得到這一分，這裡的“好”指的是更短的時間。DNF或DNS是最差的可能成績。"
+      "zh": "每一分成绩更好的选手得到这一分，这里的“好”指的是更短的时间。DNF或DNS是最差的可能成绩。"
     },
     {
       "id": "I3d",
       "depth": 1,
       "en": "If neither competitor has a better result, neither wins the point.",
-      "zh": "如果双方都没有获得更好的成绩，双方均不得分。",
-      "zhHant": "如果雙方都沒有獲得更好的成績，雙方均不得分。"
+      "zh": "如果双方都没有获得更好的成绩，双方均不得分。"
     },
     {
       "id": "I3e",
       "depth": 1,
       "en": "If neither competitor wins a set after 7 points, the competitor with the most points wins the set. If both competitors have the same number of points, the competitor with the best single result in the set wins the set. If neither competitor has a best single result in the set, the best single results in the match and then single results in the round are considered. If necessary, the competitors' seeds act as a final tiebreaker, with the higher-seeded competitor winning the set.",
-      "zh": "7分之后，如果还没有人赢得这一盘，则当前更高分的选手赢得这盘。如果分数相同，则在这盘中获得最好单次成绩的选手赢得这盘。如果还不能区分，则依序比较在当前对决中的最好单次成绩以及在整轮当中的单次最好成绩。如还有必要，种子顺位将作为最后的区分手段，高种子选手赢得该盘。",
-      "zhHant": "7分之後，如果還沒有人贏得這一盤，則當前更高分的選手贏得這盤。如果分數相同，則在這盤中獲得最好單次成績的選手贏得這盤。如果還不能區分，則依序比較在當前對決中的最好單次成績以及在整輪當中的單次最好成績。如還有必要，種子順位將作為最後的區分手段，高種子選手贏得該盤。"
+      "zh": "7分之后，如果还没有人赢得这一盘，则当前更高分的选手赢得这盘。如果分数相同，则在这盘中获得最好单次成绩的选手赢得这盘。如果还不能区分，则依序比较在当前对决中的最好单次成绩以及在整轮当中的单次最好成绩。如还有必要，种子顺位将作为最后的区分手段，高种子选手赢得该盘。"
     },
     {
       "id": "I4",
       "depth": 0,
       "en": "Head to Head speed solving procedures:",
-      "zh": "“一对一”速拧流程：",
-      "zhHant": "“一對一”速擰流程："
+      "zh": "“一对一”速拧流程："
     },
     {
       "id": "I4a",
       "depth": 1,
       "en": "Standard speed solving procedures are followed, as described in [Article A](regulations:article:A). Additional regulations that supersede the corresponding procedures in Article A are described below.",
-      "zh": "主要遵循标准速拧流程，如[附则A](regulations:article:A)中所述。覆盖附则A中相应流程的附加规则如下所述。",
-      "zhHant": "主要遵循標準速擰流程，如[附則A](regulations:article:A)中所述。覆蓋附則A中相應流程的附加規則如下所述。"
+      "zh": "主要遵循标准速拧流程，如[附则A](regulations:article:A)中所述。覆盖附则A中相应流程的附加规则如下所述。"
     },
     {
       "id": "I4b",
       "depth": 1,
       "en": "Scrambling:",
-      "zh": "打乱：",
-      "zhHant": "打亂："
+      "zh": "打乱："
     },
     {
       "id": "I4b1",
       "depth": 2,
       "en": "Competitors in a match must use the same scramble sequences as each other for a point. Each point must use different scramble sequences and each match must use different scramble sequences.",
-      "zh": "一场对决中的选手必须在每一分的比赛中都使用相同的打乱序列。不同分必须使用不同的打乱序列，不同对决也必须使用不同的打乱序列。",
-      "zhHant": "一場對決中的選手必須在每一分的比賽中都使用相同的打亂序列。不同分必須使用不同的打亂序列，不同對決也必須使用不同的打亂序列。"
+      "zh": "一场对决中的选手必须在每一分的比赛中都使用相同的打乱序列。不同分必须使用不同的打乱序列，不同对决也必须使用不同的打乱序列。"
     },
     {
       "id": "I4c",
       "depth": 1,
       "en": "Inspection:",
-      "zh": "观察：",
-      "zhHant": "觀察："
+      "zh": "观察："
     },
     {
       "id": "I4c1",
       "depth": 2,
       "en": "When both competitors are present at the solving station and when each judge is ready, the announcer asks \"READY?\".",
-      "zh": "当两名选手均已经到达比赛位并且各裁判已经做好准备，发令员问“准备好了吗？”。",
-      "zhHant": "當兩名選手均已經到達比賽位並且各裁判已經做好準備，發令員問“準備好了嗎？”。"
+      "zh": "当两名选手均已经到达比赛位并且各裁判已经做好准备，发令员问“准备好了吗？”。"
     },
     {
       "id": "I4c2",
       "depth": 2,
       "en": "When both competitors have confirmed they are ready, or once at least 15 seconds have passed, the announcer calls \"START\" and starts timing the inspection, beginning the point.",
-      "zh": "当两名选手均已确认准备好或者至少已经过了15秒，发令员报“开始观察”并开始对观察进行计时，开始这一分的对决。",
-      "zhHant": "當兩名選手均已確認準備好或者至少已經過了15秒，發令員報“開始觀察”並開始對觀察進行計時，開始這一分的對決。"
+      "zh": "当两名选手均已确认准备好或者至少已经过了15秒，发令员报“开始观察”并开始对观察进行计时，开始这一分的对决。"
     },
     {
       "id": "I4c3",
       "depth": 2,
       "en": "When 8 seconds of inspection have elapsed, the announcer calls \"8 SECONDS\".",
-      "zh": "当观察时间达到8秒时，发令员报出“8秒”。",
-      "zhHant": "當觀察時間達到8秒時，發令員報出“8秒”。"
+      "zh": "当观察时间达到8秒时，发令员报出“8秒”。"
     },
     {
       "id": "I4c4",
       "depth": 2,
       "en": "When 11 seconds, 12 seconds, and 13 seconds of inspection have elapsed, the announcer calls \"3\", \"2\", and \"1\" respectively.",
-      "zh": "当观察时间达到11秒、12秒、13秒时，发令员依序报出“3”、“2”、“1”。",
-      "zhHant": "當觀察時間達到11秒、12秒、13秒時，發令員依序報出“3”、“2”、“1”。"
+      "zh": "当观察时间达到11秒、12秒、13秒时，发令员依序报出“3”、“2”、“1”。"
     },
     {
       "id": "I4c5",
       "depth": 2,
       "en": "When 14 seconds of inspection have elapsed, the announcer calls \"GO\". The competitor must start the solve (see [Regulation A4d](regulations:regulation:A4d)) at this point. Penalty for intentionally delaying the start of the solve: disqualification of the attempt (DNF) at the discretion of the judge.",
-      "zh": "当观察时间达到14秒时，发令员报出“开始”。选手此时必须开始复原（见[规则A4d](regulations:regulation:A4d)）。对故意延迟开始复原的处罚：取消此次尝试成绩（DNF），由裁判决定。",
-      "zhHant": "當觀察時間達到14秒時，發令員報出“開始”。選手此時必須開始復原（見[規則A4d](regulations:regulation:A4d)）。對故意延遲開始復原的處罰：取消此次嘗試成績（DNF），由裁判決定。"
+      "zh": "当观察时间达到14秒时，发令员报出“开始”。选手此时必须开始复原（见[规则A4d](regulations:regulation:A4d)）。对故意延迟开始复原的处罚：取消此次尝试成绩（DNF），由裁判决定。"
     },
     {
       "id": "I4c6",
       "depth": 2,
       "en": "Due to modified inspection procedures, the usual penalties for not starting within 15 seconds (see [Regulation A4d1](regulations:regulation:A4d1) and [Regulation A4d2](regulations:regulation:A4d2)) do not apply in Head to Head rounds.",
-      "zh": "因为观察流程的修改，通常对于没有在15秒内开始的处罚（见[规则A4d1](regulations:regulation:A4d1)和[规则A4d2](regulations:regulation:A4d2)）在“一对一”轮次中不适用。",
-      "zhHant": "因為觀察流程的修改，通常對於沒有在15秒內開始的處罰（見[規則A4d1](regulations:regulation:A4d1)和[規則A4d2](regulations:regulation:A4d2)）在“一對一”輪次中不適用。"
+      "zh": "因为观察流程的修改，通常对于没有在15秒内开始的处罚（见[规则A4d1](regulations:regulation:A4d1)和[规则A4d2](regulations:regulation:A4d2)）在“一对一”轮次中不适用。"
     },
     {
       "id": "I4c7",
       "depth": 2,
       "en": "The competitor must not start the solve before the announcer calls \"GO\". Penalty: disqualification of the attempt (DNF) at the discretion of the judge.",
-      "zh": "选手禁止在发令员报出“开始”之前开始复原。惩罚：取消此次尝试成绩（DNF），由裁判决定。",
-      "zhHant": "選手禁止在發令員報出“開始”之前開始復原。懲罰：取消此次嘗試成績（DNF），由裁判決定。"
+      "zh": "选手禁止在发令员报出“开始”之前开始复原。惩罚：取消此次尝试成绩（DNF），由裁判决定。"
     },
     {
       "id": "I4d",
       "depth": 1,
       "en": "Recording results:",
-      "zh": "记录成绩:",
-      "zhHant": "記錄成績:"
+      "zh": "记录成绩:"
     },
     {
       "id": "I4d1",
       "depth": 2,
       "en": "When recording the result, the judge also notes whether a competitor won or lost a point, or there was no winner, on the score sheet.",
-      "zh": "在记录成绩时，裁判同样也在成绩单上备注这名选手在这一分上是获胜还是落败，或者是没有人获胜。",
-      "zhHant": "在記錄成績時，裁判同樣也在成績單上備註這名選手在這一分上是獲勝還是落敗，或者是沒有人獲勝。"
+      "zh": "在记录成绩时，裁判同样也在成绩单上备注这名选手在这一分上是获胜还是落败，或者是没有人获胜。"
     },
     {
       "id": "I5",
       "depth": 0,
       "en": "Head to Head blindfolded solving procedures:",
-      "zh": "“一对一”盲拧流程：",
-      "zhHant": "“一對一”盲擰流程："
+      "zh": "“一对一”盲拧流程："
     },
     {
       "id": "I5a",
       "depth": 1,
       "en": "Standard speed solving procedures (as described in [Article A](regulations:article:A)), blindfolded solving procedures (as described in [Article B](regulations:article:B)) and Head to Head speed solving procedures (as described in [Regulation I4](regulations:regulation:I4)) are followed. Additional regulations that supersede the corresponding procedures are described below.",
-      "zh": "主要遵循标准速拧流程（如[附则A](regulations:article:A)中所述）、标准盲拧流程（如[附则B](regulations:article:B)中所述）以及“一对一”速拧流程（如[规则I4](regulations:regulation:I4)中所述）。覆盖其中相应流程的附加规则如下所述。",
-      "zhHant": "主要遵循標準速擰流程（如[附則A](regulations:article:A)中所述）、標準盲擰流程（如[附則B](regulations:article:B)中所述）以及“一對一”速擰流程（如[規則I4](regulations:regulation:I4)中所述）。覆蓋其中相應流程的附加規則如下所述。"
+      "zh": "主要遵循标准速拧流程（如[附则A](regulations:article:A)中所述）、标准盲拧流程（如[附则B](regulations:article:B)中所述）以及“一对一”速拧流程（如[规则I4](regulations:regulation:I4)中所述）。覆盖其中相应流程的附加规则如下所述。"
     },
     {
       "id": "I5b",
       "depth": 1,
       "en": "Starting the attempt:",
-      "zh": "开始尝试：",
-      "zhHant": "開始嘗試："
+      "zh": "开始尝试："
     },
     {
       "id": "I5b1",
       "depth": 2,
       "en": "When both competitors are present at the solving station and when each judge is ready, the announcer asks \"READY?\".",
-      "zh": "当两名选手均已经到达比赛位并且各裁判已经做好准备，发令员问“准备好了吗？”。",
-      "zhHant": "當兩名選手均已經到達比賽位並且各裁判已經做好準備，發令員問“準備好了嗎？”。"
+      "zh": "当两名选手均已经到达比赛位并且各裁判已经做好准备，发令员问“准备好了吗？”。"
     },
     {
       "id": "I5b2",
       "depth": 2,
       "en": "When both competitors have confirmed they are ready, or once at least 15 seconds have passed, the announcer calls “3, 2, 1, GO\". The competitor must start the solve (see [Regulation B2d](regulations:regulation:B2d)) at this point. Penalty for intentionally delaying the start of the solve: disqualification of the attempt (DNF) at the discretion of the judge.",
-      "zh": "当两名选手均已确认准备好或者至少已经过了15秒，发令员报“3、2、1，开始”。选手此时必须开始复原（见[规则B2d](regulations:regulation:B2d)）。对故意延迟开始复原的处罚：取消此次尝试成绩（DNF），由裁判决定。",
-      "zhHant": "當兩名選手均已確認準備好或者至少已經過了15秒，發令員報“3、2、1，開始”。選手此時必須開始復原（見[規則B2d](regulations:regulation:B2d)）。對故意延遲開始復原的處罰：取消此次嘗試成績（DNF），由裁判決定。"
+      "zh": "当两名选手均已确认准备好或者至少已经过了15秒，发令员报“3、2、1，开始”。选手此时必须开始复原（见[规则B2d](regulations:regulation:B2d)）。对故意延迟开始复原的处罚：取消此次尝试成绩（DNF），由裁判决定。"
     },
     {
       "id": "I5b3",
       "depth": 2,
       "en": "The competitor must not start the solve before the announcer calls \"GO\". Penalty: disqualification of the attempt (DNF) at the discretion of the judge.",
-      "zh": "选手禁止在发令员报出“开始”之前开始复原。惩罚：取消此次尝试成绩（DNF），由裁判决定。",
-      "zhHant": "選手禁止在發令員報出“開始”之前開始復原。懲罰：取消此次嘗試成績（DNF），由裁判決定。"
+      "zh": "选手禁止在发令员报出“开始”之前开始复原。惩罚：取消此次尝试成绩（DNF），由裁判决定。"
     }
   ]
 }

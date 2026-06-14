@@ -32,7 +32,7 @@ const INPUT_CODE_STR = 'bdfhjlnprtxz';
 export default function FlipTrainerPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('翻棱公式训练', 'Edge Flip Trainer', "翻稜公式訓練");
+  useDocumentTitle('翻棱公式训练', 'Edge Flip Trainer');
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);
@@ -102,7 +102,7 @@ export default function FlipTrainerPage(): JSX.Element {
 
     setScrambles(out);
     setInfo(
-      i18n.language === 'zh-Hant' ? (`隨機生成 ${out.length} 條打亂，遍歷緩衝外存在兩個翻稜的情況。`) : (isZh
+      (isZh
                 ? `随机生成 ${out.length} 条打乱，遍历缓冲外存在两个翻棱的情况。`
                 : `Generated ${out.length} scrambles, covering every pair of flipped edges outside the buffer.`),
     );
@@ -114,8 +114,7 @@ export default function FlipTrainerPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '翻棱公式训练', en: 'Edge Flip Trainer',
-            zhHant: "翻稜公式訓練"
+        <h1>{tr({ zh: '翻棱公式训练', en: 'Edge Flip Trainer'
         })}</h1>
       </div>
 
@@ -131,8 +130,7 @@ export default function FlipTrainerPage(): JSX.Element {
               checked={cornerScramble}
               onChange={(e) => setCornerScramble(e.target.checked)}
             />
-            {tr({ zh: '打乱角块', en: 'Scramble corners',
-                zhHant: "打亂角塊"
+            {tr({ zh: '打乱角块', en: 'Scramble corners'
             })}
           </label>
         </div>
@@ -146,8 +144,7 @@ export default function FlipTrainerPage(): JSX.Element {
           disabled={busy}
         >
           <Play size={15} />
-          {tr({ zh: '生成翻棱训练', en: 'Generate flip training',
-              zhHant: "生成翻稜訓練"
+          {tr({ zh: '生成翻棱训练', en: 'Generate flip training'
         })}
         </button>
       </div>

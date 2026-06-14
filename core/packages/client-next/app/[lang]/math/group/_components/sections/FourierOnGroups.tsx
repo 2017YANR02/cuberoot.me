@@ -579,16 +579,12 @@ function ConvolutionDemo() {
 type WalkPreset = 'nearest' | 'lazy' | 'bigjump';
 
 const WALK_PRESETS: { id: WalkPreset; zh: string; en: string
-    zhHant?: string;
  }[] = [
-  { id: 'nearest', zh: '±1 游走', en: '±1 walk',
-      zhHant: "±1 遊走"
+  { id: 'nearest', zh: '±1 游走', en: '±1 walk'
 },
-  { id: 'lazy', zh: '懒惰游走', en: 'Lazy walk',
-      zhHant: "懶惰遊走"
+  { id: 'lazy', zh: '懒惰游走', en: 'Lazy walk'
 },
-  { id: 'bigjump', zh: '大跳跃', en: 'Big jump',
-      zhHant: "大跳躍"
+  { id: 'bigjump', zh: '大跳跃', en: 'Big jump'
 },
 ];
 
@@ -1030,18 +1026,14 @@ export default function FourierOnGroups() {
         </thead>
         <tbody>
           {[
-            { t: 5, tv: '≈ 0.924', note: tr({ zh: '几乎未混合', en: 'Almost unmixed',
-                zhHant: "幾乎未混合"
+            { t: 5, tv: '≈ 0.924', note: tr({ zh: '几乎未混合', en: 'Almost unmixed'
             }) },
-            { t: 6, tv: '≈ 0.614', note: tr({ zh: '明显有序', en: 'Visibly ordered',
-                zhHant: "明顯有序"
+            { t: 6, tv: '≈ 0.614', note: tr({ zh: '明显有序', en: 'Visibly ordered'
             }) },
-            { t: 7, tv: '≈ 0.334', note: tr({ zh: '首次 < 0.5 ("七次足够")', en: 'First < 0.5 ("seven shuffles")',
-                zhHant: "首次 < 0.5 (\"七次足夠\")"
+            { t: 7, tv: '≈ 0.334', note: tr({ zh: '首次 < 0.5 ("七次足够")', en: 'First < 0.5 ("seven shuffles")'
             }) },
             { t: 8, tv: '≈ 0.167', note: tr({ zh: '基本混合', en: 'Mostly mixed' }) },
-            { t: 9, tv: '≈ 0.085', note: tr({ zh: '充分随机', en: 'Sufficiently random',
-                zhHant: "充分隨機"
+            { t: 9, tv: '≈ 0.085', note: tr({ zh: '充分随机', en: 'Sufficiently random'
             }) },
           ].map(({ t, tv, note }) => (
             <tr key={t}>
