@@ -15,6 +15,7 @@ import { countryName } from '@/lib/country-name';
 import { useRecentRecords, RecentRecordsList } from '@/components/RecentRecords';
 import { useAnnouncedComps, AnnouncedCard } from '@/components/AnnouncedComps';
 import { RegistrationView } from '@/components/RegistrationComps';
+import { useCompFollows, FollowStar } from '@/components/CompFollow';
 import { countActionableReg } from '@/lib/comp-registration';
 import './ongoing_comps.css';
 import i18n from '@/i18n/i18n-client';
@@ -104,6 +105,36 @@ function groupByDate(comps: Comp[], keyField: 'start_date' | 'end_date', asc: bo
   return list;
 }
 
+// 当前 / 未来 / 往期 的比赛 chip(国家分组无内联旗、日期分组带旗)。登录用户在尾部加一颗
+// 轻量关注星(在 Link 之外,避免锚点嵌按钮);未登录则保持原样,零新增杂物。
+function CompChip({ comp, lang, isZh, showFlag, loggedIn, followed, onToggle }: {
+  comp: Comp;
+  lang: 'zh' | 'en';
+  isZh: boolean;
+  showFlag: boolean;
+  loggedIn: boolean;
+  followed: boolean;
+  onToggle: (id: string) => void;
+}) {
+  const link = (
+    <Link
+      {...compLinkProps(comp.id, undefined, lang)}
+      className="ongoing-comps-chip"
+      title={`${comp.name}  ${formatDateRangeIso(comp.start_date, comp.end_date)}`}
+    >
+      {showFlag && <Flag iso2={(comp.country || '').toLowerCase()} className="ongoing-comps-chip-flag" />}
+      <span>{stripTrailingYear(localizeCompName(comp.id, comp.name, isZh))}</span>
+    </Link>
+  );
+  if (!loggedIn) return link;
+  return (
+    <span className="ongoing-comps-chip-wrap">
+      {link}
+      <FollowStar variant="chip" compId={comp.id} followed={followed} onToggle={onToggle} />
+    </span>
+  );
+}
+
 export default function OngoingComps({ lang }: Props) {
   const isZh = lang === 'zh';
   const [comps, setComps] = useState<Comp[] | null>(null);
@@ -111,6 +142,8 @@ export default function OngoingComps({ lang }: Props) {
   const { filled: records } = useRecentRecords(isZh);
   const announced = useAnnouncedComps();
   const announcedList = announced ?? [];
+  // 全 5 个比赛标签共用一份关注状态(单次 fetch,统一乐观态),下发给卡片 / chip。
+  const { loggedIn, follows, toggle } = useCompFollows();
 
   useEffect(() => {
     let mounted = true;
@@ -249,11 +282,14 @@ export default function OngoingComps({ lang }: Props) {
         {active === 'announced' ? (
           <div className="tac-grid">
             {announcedList.map((c) => (
-              <AnnouncedCard key={c.id} comp={c} isZh={isZh} lang={lang} />
+              <AnnouncedCard
+                key={c.id} comp={c} isZh={isZh} lang={lang}
+                loggedIn={loggedIn} followed={follows.has(c.id)} onToggle={toggle}
+              />
             ))}
           </div>
         ) : active === 'registration' ? (
-          <RegistrationView comps={comps ?? []} isZh={isZh} lang={lang} />
+          <RegistrationView comps={comps ?? []} isZh={isZh} lang={lang} loggedIn={loggedIn} follows={follows} toggle={toggle} />
         ) : active === 'records' ? (
           <RecentRecordsList filled={records} isZh={isZh} />
         ) : groups.map(g => g.kind === 'country' ? (
@@ -261,14 +297,10 @@ export default function OngoingComps({ lang }: Props) {
             <Flag iso2={g.iso2} className="ongoing-comps-flag" />
             <div className="ongoing-comps-list">
               {g.comps.map(c => (
-                <Link
-                  key={c.id}
-                  {...compLinkProps(c.id, undefined, lang)}
-                  className="ongoing-comps-chip"
-                  title={`${c.name}  ${formatDateRangeIso(c.start_date, c.end_date)}`}
-                >
-                  {stripTrailingYear(localizeCompName(c.id, c.name, isZh))}
-                </Link>
+                <CompChip
+                  key={c.id} comp={c} lang={lang} isZh={isZh} showFlag={false}
+                  loggedIn={loggedIn} followed={follows.has(c.id)} onToggle={toggle}
+                />
               ))}
             </div>
           </div>
@@ -277,15 +309,10 @@ export default function OngoingComps({ lang }: Props) {
             <span className="ongoing-comps-date">{g.date.slice(5)}</span>
             <div className="ongoing-comps-list">
               {g.comps.map(c => (
-                <Link
-                  key={c.id}
-                  {...compLinkProps(c.id, undefined, lang)}
-                  className="ongoing-comps-chip"
-                  title={`${c.name}  ${formatDateRangeIso(c.start_date, c.end_date)}`}
-                >
-                  <Flag iso2={(c.country || '').toLowerCase()} className="ongoing-comps-chip-flag" />
-                  <span>{stripTrailingYear(localizeCompName(c.id, c.name, isZh))}</span>
-                </Link>
+                <CompChip
+                  key={c.id} comp={c} lang={lang} isZh={isZh} showFlag
+                  loggedIn={loggedIn} followed={follows.has(c.id)} onToggle={toggle}
+                />
               ))}
             </div>
           </div>

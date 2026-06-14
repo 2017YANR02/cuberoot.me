@@ -1,0 +1,128 @@
+/* ─── /why-cube recognize → apply mini-game ─────────────────── */
+
+.wc-rg {
+  margin-top: 20px;
+  padding: 22px 22px;
+  border: 1px solid var(--border-default);
+  border-radius: 18px;
+  background: var(--card);
+}
+
+.wc-rg-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.wc-rg-step {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.wc-rg-q { font-size: 16px; font-weight: 700; line-height: 1.4; }
+
+.wc-rg-body {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 22px;
+  align-items: center;
+}
+.wc-rg-cube {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 132px;
+  filter: drop-shadow(0 10px 24px color-mix(in srgb, var(--accent) 15%, transparent));
+}
+.wc-rg-cube .twisty-section { width: 100%; max-width: 150px; }
+.wc-rg-cube img { display: block; border-radius: 10px; height: auto; max-width: 100%; }
+
+.wc-rg-choices { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.wc-rg-choice {
+  appearance: none;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: var(--background);
+  color: var(--foreground);
+  transition: border-color .14s, background .14s;
+}
+.wc-rg-choice code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  flex: 1;
+}
+.wc-rg-choice:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border-default));
+  background: color-mix(in srgb, var(--accent) 6%, var(--background));
+}
+.wc-rg-choice:disabled { cursor: default; }
+.wc-rg-choice.is-right {
+  border-color: color-mix(in srgb, var(--signal-success) 55%, var(--border-default));
+  background: color-mix(in srgb, var(--signal-success) 12%, var(--card));
+}
+.wc-rg-choice.is-wrong {
+  border-color: color-mix(in srgb, var(--destructive) 55%, var(--border-default));
+  background: color-mix(in srgb, var(--destructive) 12%, var(--card));
+}
+.wc-rg-choice .wc-rg-mark { flex-shrink: 0; }
+.wc-rg-choice.is-right .wc-rg-mark { color: var(--signal-success); }
+.wc-rg-choice.is-wrong .wc-rg-mark { color: var(--destructive); }
+
+.wc-rg-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-default);
+}
+.wc-rg-msg {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+.wc-rg-msg.is-right { color: var(--signal-success); font-weight: 600; }
+.wc-rg-msg.is-wrong { color: var(--destructive); font-weight: 600; }
+.wc-rg-msg svg { flex-shrink: 0; }
+
+.wc-rg-next {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 7px 15px;
+  border-radius: 999px;
+  border: 1px solid var(--border-default);
+  background: var(--card);
+  color: var(--accent);
+  transition: border-color .14s, background .14s;
+}
+.wc-rg-next:hover {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border-default));
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}
+
+@media (max-width: 560px) {
+  .wc-rg-body { grid-template-columns: 1fr; gap: 16px; justify-items: center; }
+  .wc-rg-choices { width: 100%; }
+  .wc-rg-cube { min-height: 120px; }
+}

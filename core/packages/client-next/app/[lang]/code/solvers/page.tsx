@@ -40,6 +40,7 @@ const NATIVE: NativeSolver[] = [
   { key: 'pair', stages: 4, fbRows: 1_293_570, rate: 200, tier: 'huge', zhWhy: '不在默认补缺 (opt-in), 暖表后 ~200/s 已全量回填', enWhy: 'opt-in (off the default run), ~200/s once tables warm — fully backfilled' },
   { key: 'f2leo', stages: 4, fbRows: 252, rate: 31, tier: 'huge', zhWhy: '联合大表剪枝 (同 std huge 表) + 自由棱 EO 门控, 4 阶段无 xxxxcross', enWhy: 'joint big-table pruning (same huge tables as std) + free-edge EO gating, 4 stages no xxxxcross' },
   { key: 'pseudo_f2leo', stages: 4, fbRows: 252, rate: 81, tier: 'huge', zhWhy: 'pseudo 大表电池 (C4E + corner2/3 + edge2/3) max + 自由棱 EO, 4 阶段无 xxxxcross', enWhy: 'pseudo big-table battery (C4E + corner2/3 + edge2/3) max + free-edge EO, 4 stages no xxxxcross' },
+  { key: '333', stages: 1, fbRows: 240, rate: 4.5, tier: 'huge', zhWhy: '整魔方最优解 (Tronto h48, God 数 HTM, 单一整解非分阶段): emscripten WASM 在 Node 批量解 (非 Rust 分析器), 15G 剪枝表驻留 RAM, in-proc 12 线程 ~4.5/s; 喂 distribution.json 的 333 整解方法 (分布峰 18 / 均值 17.7)', enWhy: 'whole-cube optimal (Tronto h48, God\'s-number HTM, one whole solve not staged): emscripten WASM batch-solved in Node (not a Rust analyzer), 15G prune table resident in RAM, in-proc 12 threads ~4.5/s; feeds the 333 whole-solve method in distribution.json (distribution peaks at 18 / mean 17.7)' },
   { key: '222', stages: 1, fbRows: 1_297_444, rate: 1_250_000, tier: 'small', zhWhy: '2x2x2 块 (1 角 + 3 棱) 全空间仅 253,440 态, 精确距离表直查零搜索', enWhy: '2x2x2 block (corner + 3 edges) — 253,440 states total, exact distance table lookup, zero search' },
   { key: '123', stages: 2, fbRows: 1_297_444, rate: 600_000, tier: 'small', zhWhy: 'Roux 第一块: 1x2x2 方块 (1角+2棱, 前/后双微表) + 1x2x3 (2角+3棱, 5,322,240 态全表), 精确距离表直查零搜索', enWhy: 'Roux first block: 1x2x2 square (corner + 2 edges, front/back micro-tables) + 1x2x3 (2 corners + 3 edges, 5,322,240-state full table) — exact lookups, zero search' },
   { key: '223', stages: 1, fbRows: 1_297_444, rate: 19_000, tier: 'small', zhWhy: 'Petrus 2x2x3 (2角+5棱) 全空间 ~1.5G 态放不下全表, IDA* + max(1x2x3 全表, 角2+DB/DF 表) 可采纳下界', enWhy: 'Petrus 2x2x3 (2 corners + 5 edges) — 1.5G states, too big for a full table; IDA* with admissible h = max(1x2x3 full table, corners+DB/DF table)' },
@@ -64,6 +65,7 @@ const BROWSER: BrowserSolver[] = [
   { key: 'pseudo', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '~5s', enLatency: '~5s' },
   { key: 'pseudo_pair', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '深阶段 数十秒', enLatency: 'deep stages tens of seconds' },
   { key: 'f2leo / pseudo_f2leo', zhEngine: '小表 ~40MB/worker', enEngine: 'small tables ~40MB/worker', zhLatency: 'cross ~2.8s', enLatency: 'cross ~2.8s' },
+  { key: '333 整解最优 (h48)', zhEngine: 'cube48opt[1-9] WASM (/scramble/solver, .dat 表用户自备)', enEngine: 'cube48opt[1-9] WASM (/scramble/solver, user-supplied .dat)', zhLatency: '默认桌面 opt3 243M / 手机 opt1 30M; 表越大搜得越快; 整解 God 数最优', enLatency: 'default desktop opt3 243M / mobile opt1 30M; bigger table = faster search; whole-cube God\'s-number optimal' },
   { key: '2x2x2 block', zhEngine: 'Block222SolverWasm (~0.7MB/worker)', enEngine: 'Block222SolverWasm (~0.7MB/worker)', zhLatency: '全 6 视角即时', enLatency: 'all 6 views instant' },
   { key: '1x2x3 / 2x2x3', zhEngine: 'Roux223SolverWasm (~0.8MB/worker)', enEngine: 'Roux223SolverWasm (~0.8MB/worker)', zhLatency: '方块/2x2x2 即时; 1x2x3 与 2x2x3 首算建表 ~秒级', enLatency: 'square/2x2x2 instant; 1x2x3 & 2x2x3 build tables on first solve (~seconds)' },
   { key: '1x2x3 ×2', zhEngine: 'Roux223SolverWasm 轻档 (免 2.68G 大表)', enEngine: 'Roux223SolverWasm light tier (no 2.68G table)', zhLatency: '单格 毫秒~秒级; 解法枚举 数秒~数十秒', enLatency: 'per-cell ms–seconds; solution enumeration seconds to tens of seconds' },
@@ -139,6 +141,13 @@ const TABLES: Record<string, SolverTbls> = {
     builtEn: 'combo heuristic = max(per-pair C4E, corner2/3 group, edge2/3 group) + leaf EO gating on free edges; plus pscross prune (~272KB) built in-RAM for the cross stage',
       builtZhHant: "combo 啟發式 = max(每對 C4E, 角組 corner2/3, 稜組 edge2/3) + 葉子門控自由稜 EO;另現場建 pscross 剪枝 (~272KB, 記憶體) 供 cross 階段"
 },
+  '333': {
+    move: [],
+    prune: [{ n: 'h48prun31h9', b: 15565455360 }],
+    builtZh: 'Tronto cube48opt 最优解器 (h48 坐标, God 数 HTM 整解): 15G 剪枝表分 64MB 块拷入 emscripten 堆 (非 Rust mmap), in-proc 起 12 解线程; 同一 cube48opt[1-9] 引擎也服 /scramble/solver 在线最优 (浏览器选 30M~972M 小表)',
+    builtEn: 'Tronto cube48opt optimal solver (h48 coordinate, God\'s-number HTM whole solve): the 15G prune table is copied into the emscripten heap in 64MB chunks (not a Rust mmap), starting 12 solve threads in-proc; the same cube48opt[1-9] engine also powers /scramble/solver online optimal (browser picks 30M–972M smaller tables)',
+    builtZhHant: 'Tronto cube48opt 最優解器 (h48 座標, God 數 HTM 整解): 15G 剪枝表分 64MB 塊拷入 emscripten 堆 (非 Rust mmap), in-proc 起 12 解執行緒; 同一 cube48opt[1-9] 引擎也服 /scramble/solver 線上最優 (瀏覽器選 30M~972M 小表)',
+  },
   '222': {
     move: [{ n: 'mt_edge3', b: 760332 }, { n: 'mt_corn', b: 1740 }],
     prune: [],
@@ -309,7 +318,7 @@ export default function SolversPage() {
           </p>
           <div className="solv-herostats">
             <div className="solv-stat"><span className="solv-stat-num">{NATIVE.length}</span><span className="solv-stat-label">{zh ? '原生分析器' : 'native analyzers'}</span></div>
-            <div className="solv-stat"><span className="solv-stat-num">~34<small>GB</small></span><span className="solv-stat-label">{zh ? '剪枝表' : 'pruning tables'}</span></div>
+            <div className="solv-stat"><span className="solv-stat-num">~51<small>GB</small></span><span className="solv-stat-label">{zh ? '剪枝表' : 'pruning tables'}</span></div>
             <div className="solv-stat"><span className="solv-stat-num">{completeN}<small>/{NATIVE.length}</small></span><span className="solv-stat-label">{zh ? '已补齐' : 'fully covered'}</span></div>
             <div className="solv-stat"><span className="solv-stat-num">0.9–1.25M<small>/s</small></span><span className="solv-stat-label">{zh ? '吞吐跨度' : 'throughput span'}</span></div>
           </div>
@@ -409,10 +418,10 @@ export default function SolversPage() {
           <div className="solv-mem">
             <article className="solv-mem-card">
               <div className="solv-mem-tier"><Cpu size={13} strokeWidth={2} /> huge</div>
-              <div className="solv-mem-list">std / eo / pseudo / pseudo_pair / pair / f2leo / pseudo_f2leo</div>
+              <div className="solv-mem-list">std / eo / pseudo / pseudo_pair / pair / f2leo / pseudo_f2leo / 333</div>
               <p>{zh
-                ? 'mmap GB 级联合/电池剪枝表 (CEE/CCE/C4C5C6 / pair huge / E0E1E2 等)。eo 工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap。f2leo 复用 std 的 pair huge 表 (各 ~10GB);pseudo_f2leo 用 pseudo 电池 (corner3 862MB + edge3 1GB 等), 各仅多叶子自由棱 EO 门控。'
-                : 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. eo peaks ~24GB working set but only ~0.1GB private — read-only shared mmap. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating.'}</p>
+                ? 'mmap GB 级联合/电池剪枝表 (CEE/CCE/C4C5C6 / pair huge / E0E1E2 等)。eo 工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap。f2leo 复用 std 的 pair huge 表 (各 ~10GB);pseudo_f2leo 用 pseudo 电池 (corner3 862MB + edge3 1GB 等), 各仅多叶子自由棱 EO 门控。333 整解最优是例外:Tronto h48 15G 表分块拷入 emscripten 堆 (非 mmap 共享), 与 Rust 表互不相干。'
+                : 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. eo peaks ~24GB working set but only ~0.1GB private — read-only shared mmap. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating. 333 whole-cube optimal is the exception: its Tronto h48 15G table is copied into the emscripten heap in chunks (not a shared mmap), independent of the Rust tables.'}</p>
             </article>
             <article className="solv-mem-card">
               <div className="solv-mem-tier"><Cpu size={13} strokeWidth={2} /> small</div>

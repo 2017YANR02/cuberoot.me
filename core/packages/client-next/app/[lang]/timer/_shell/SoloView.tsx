@@ -280,7 +280,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     group: settings.wcaGroup,
     from: settings.wcaDateFrom,
     to: settings.wcaDateTo,
-  }), [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo]);
+    optimal: settings.wcaUseOptimal,
+  }), [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, settings.wcaUseOptimal]);
   const wcaSpecRef = useRef(wcaSpec);
   wcaSpecRef.current = wcaSpec;
   const wcaSourceSig = settings.scrambleSource === 'wca'

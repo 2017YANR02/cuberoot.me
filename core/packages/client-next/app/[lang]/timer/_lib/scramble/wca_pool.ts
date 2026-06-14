@@ -48,13 +48,14 @@ export interface WcaSourceSpec {
   group: string;       // group_id filter, '' = all (comp mode)
   from: string;        // 'YYYY-MM-DD', '' = no lower bound (date mode)
   to: string;          // 'YYYY-MM-DD', '' = no upper bound (date mode)
+  optimal: boolean;    // 用 God's-number 最短等态打乱(同态项目 333/oh/ft/fm 才有,无则回退原打乱)
 }
 
 /** 一条真实打乱的来源元数据(键名对齐首页 RecentScrambles 的 ScrMeta)。 */
 export interface WcaScrambleMeta {
   ci: string; cn: string; e: string; r: string; g: string; n: number; x: 0 | 1;
 }
-interface RandomItem extends WcaScrambleMeta { scramble: string }
+interface RandomItem extends WcaScrambleMeta { scramble: string; o?: string } // o = 最优打乱(server 带,见 wca_scramble_optimal)
 
 const pools: Record<string, string[]> = {};
 const inflight: Record<string, Promise<void> | undefined> = {};
@@ -77,8 +78,9 @@ function wev(spec: WcaSourceSpec): string | undefined {
 function specKey(spec: WcaSourceSpec): string | null {
   const w = wev(spec);
   if (!w) return null;
-  if (spec.mode === 'comp') return spec.comp ? `c|${spec.comp}|${w}|${spec.round}|${spec.group}` : null;
-  return `d|${w}|${spec.from}|${spec.to}`;
+  const opt = spec.optimal ? '|opt' : ''; // 原始/最优打乱用不同池,切换即重灌
+  if (spec.mode === 'comp') return spec.comp ? `c|${spec.comp}|${w}|${spec.round}|${spec.group}${opt}` : null;
+  return `d|${w}|${spec.from}|${spec.to}${opt}`;
 }
 
 function rememberMeta(s: string, m: WcaScrambleMeta): void {
@@ -110,7 +112,8 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
         return a.scramble_num - b.scramble_num;
       })
       .map((r) => ({
-        scramble: normalize(r.scramble),
+        // 最优模式且该打乱有最优等态(同态项目)→ 用最优打乱,否则原打乱。
+        scramble: normalize(spec.optimal && r.optimal_scramble ? r.optimal_scramble : r.scramble),
         meta: { ci: spec.comp, cn: spec.compName || spec.comp, e: w, r: r.round_type_id, g: r.group_id, n: r.scramble_num, x: (r.is_extra ? 1 : 0) as 0 | 1 },
       }));
     compRows[key] = rows;
@@ -134,7 +137,8 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
   const q = (pools[key] ??= []);
   for (const it of data.scrambles) {
     if (!it?.scramble) continue;
-    const s = normalize(it.scramble);
+    // 最优模式且该条带最优等态 → 用最优打乱(同态,更短),否则原打乱。
+    const s = normalize(spec.optimal && it.o ? it.o : it.scramble);
     q.push(s);
     rememberMeta(s, { ci: it.ci, cn: it.cn, e: it.e, r: it.r, g: it.g, n: it.n, x: it.x });
   }

@@ -1,0 +1,165 @@
+/* ─── /why-cube living hero ─────────────────────────────────── */
+
+.wc-livehero {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* warm radial glow behind the cube (self-made, no external image) */
+.wc-livehero-glow {
+  position: absolute;
+  top: -6%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 116%;
+  aspect-ratio: 1 / 1;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 50% 42%,
+      color-mix(in srgb, var(--accent) 34%, transparent) 0%,
+      color-mix(in srgb, var(--accent) 12%, transparent) 38%,
+      transparent 68%);
+  filter: blur(2px);
+}
+
+.wc-livehero-stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.wc-livehero-stage .twisty-section { width: 100%; }
+
+/* mode toggle (≤2 options, side-by-side compare → chips ok) */
+.wc-livehero-modes {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 4px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--card);
+}
+.wc-livehero-mode {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  background: transparent;
+  transition: color .15s, background .15s;
+}
+.wc-livehero-mode:hover { color: var(--foreground); }
+.wc-livehero-mode.is-active {
+  color: var(--accent-foreground, #fff);
+  background: var(--accent);
+}
+
+/* play-mode keypad */
+.wc-livehero-pad {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.wc-livehero-keys {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+.wc-livehero-key {
+  appearance: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 9px 0;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--foreground);
+  transition: border-color .12s, background .12s, transform .08s;
+}
+.wc-livehero-key:hover {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border-default));
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}
+.wc-livehero-key:active { transform: translateY(1px); }
+
+.wc-livehero-pad-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 13px;
+}
+.wc-livehero-dir {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-default);
+  background: var(--card);
+  color: var(--muted-foreground);
+  transition: color .12s, border-color .12s, background .12s;
+}
+.wc-livehero-dir.is-active {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-default));
+  background: color-mix(in srgb, var(--accent) 9%, var(--card));
+}
+.wc-livehero-count { font-family: var(--font-mono); color: var(--muted-foreground); }
+.wc-livehero-reset {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-default);
+  background: var(--card);
+  color: var(--muted-foreground);
+  transition: color .12s, border-color .12s;
+}
+.wc-livehero-reset:hover {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-default));
+}
+.wc-livehero-hint {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--faint-foreground);
+  text-align: center;
+  max-width: 30ch;
+}
+
+@media (max-width: 600px) {
+  .wc-livehero { max-width: 300px; }
+  .wc-livehero-key { font-size: 14px; padding: 11px 0; }
+}

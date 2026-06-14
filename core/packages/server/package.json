@@ -21,12 +21,14 @@
     "linkedom": "^0.18.12",
     "maxmind": "^5.0.6",
     "postgres": "^3.4.9",
+    "qrcode": "^1.5.4",
     "sr-puzzlegen": "^1.0.4",
     "ws": "^8.20.0"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.0",
     "@types/node": "^22.0.0",
+    "@types/qrcode": "^1.5.6",
     "esbuild": "^0.27.4",
     "tsx": "^4.0.0",
     "typescript": "~5.7.0"

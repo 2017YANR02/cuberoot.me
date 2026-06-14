@@ -79,6 +79,29 @@ export async function fetchResultChanges(
   return j.changes ?? [];
 }
 
+/** 单行成绩 → 变更记录的匹配键(comp | event | 归一轮次)。用于把变更内联到全部成绩表。 */
+export function rowChangeKey(competitionId: string, eventId: string, roundTypeId: string | null): string {
+  return `${competitionId}|${eventId}|${canonicalRound(roundTypeId) ?? roundTypeId ?? ''}`;
+}
+
+/** 把变更列表按行键索引,供成绩表逐行查命中。 */
+export function buildRowChangeMap(changes: ResultChange[]): Map<string, ResultChange> {
+  const m = new Map<string, ResultChange>();
+  for (const c of changes) {
+    if (!c.competitionId || !c.eventId) continue;
+    // 同一行可能有多条历史变更:保留最新一条(端点已按 detected_at 倒序返回 → 首条即最新)。
+    const k = rowChangeKey(c.competitionId, c.eventId, c.roundTypeId);
+    if (!m.has(k)) m.set(k, c);
+  }
+  return m;
+}
+
+/** 取某变更里指定字段的旧值(用于表格内划掉旧成绩);无该字段返回 null。 */
+export function changeOldValue(change: ResultChange, field: 'best' | 'average'): number | null {
+  const f = (change.fields ?? []).find((x) => x.field === field);
+  return f ? Number(f.old) : null;
+}
+
 /** WCA round_type_id 归一到 4 个轮次桶('1'/'2'/'3'/'f'),含 combined / cutoff 变体。 */
 export function canonicalRound(id: string | null | undefined): '1' | '2' | '3' | 'f' | null {
   switch (id) {

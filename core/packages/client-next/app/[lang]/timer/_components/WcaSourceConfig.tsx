@@ -26,6 +26,10 @@ import './wca-source.css';
 // WCA history floor (WC1982) — see CLAUDE.md. No scrambles exist before it.
 const WCA_MIN_DATE = '1982-06-05';
 
+// 同态项目:打乱是纯面转,God's-number 最优等态打乱可作真题的等价替身(同一魔方态,更短)。
+// 盲拧/多盲打乱带宽块定向(本地求解的是剥定向后的态,非同态)、非 3x3 项目都没有最优打乱数据。
+const OPTIMAL_EVENTS = new Set(['333', '333oh', '333ft', '333fm']);
+
 interface Props {
   isZh: boolean;
   event: EventId;
@@ -35,6 +39,7 @@ interface Props {
 
 export default function WcaSourceConfig({ isZh, event, settings, updateSettings }: Props) {
   const wev = wcaEventId(event);
+  const hasOptimal = !!wev && OPTIMAL_EVENTS.has(wev); // 同态项目才显示「最优打乱」开关
   const mode = settings.wcaScrambleMode;
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -197,6 +202,27 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings 
               </div>
             </>
           )}
+        </>
+      )}
+
+      {hasOptimal && (
+        <>
+          <div className="settings-row">
+            <span className="settings-row-label">{tr({ zh: '最优打乱', en: 'Optimal scramble',
+                zhHant: "最優打亂"
+            })}</span>
+            <span className="settings-row-control">
+              <PillToggle
+                value={settings.wcaUseOptimal}
+                onChange={(v) => updateSettings({ wcaUseOptimal: v })}
+              />
+            </span>
+          </div>
+          <p className="wca-src-hint">
+            {tr({ zh: '用到达同一状态的最短打乱(最优解步数,通常比原始真题短)替代:同一个魔方态,步数更少。仅三阶/单手/脚拧/最少步有。', en: 'Use the shortest sequence reaching the same state (optimal length, usually shorter than the original) — same cube, fewer moves. Only 3×3 / OH / feet / FMC have one.',
+                zhHant: "用到達同一狀態的最短打亂(最優解步數,通常比原始真題短)替代:同一個魔方態,步數更少。僅三階/單手/腳擰/最少步有。"
+            })}
+          </p>
         </>
       )}
 
