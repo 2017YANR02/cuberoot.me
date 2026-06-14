@@ -65,8 +65,6 @@
   border: 1px solid var(--border-default); background: var(--muted);
 }
 .fba-media img, .fba-media video { width: 100%; height: 100%; object-fit: cover; display: block; }
-.fba-media-load { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
-.fba-media-err { display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--faint-foreground); }
 .fba-media-dur {
   position: absolute; left: 5px; bottom: 5px; padding: 1px 6px; border-radius: 5px;
   font-size: 11px; color: #fff; background: color-mix(in srgb, #000 55%, transparent);

@@ -3,8 +3,8 @@
 /**
  * /feedback/admin — admin 审核反馈(需求 / Bug / 其他)。
  * 仅 admin 可见(isAdminWcaId 门控,登录态读自 auth-store);非 admin / 未登录早返。
- * 媒体(截图/短视频)经 admin-gated GET /v1/feedback/media/:id 取字节 → objectURL 渲染,
- * 不公开(可能含用户私密屏幕内容)。双主题走 globals.css token。文案本地 t(简,en)。
+ * 媒体(截图/短视频)经公开 GET /v1/feedback/media/:id 直接做 <img>/<video> 的 src
+ * (immutable 长缓存)。双主题走 globals.css token。文案本地 t(简,en)。
  */
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +15,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import {
-  fetchFeedbackList, updateFeedbackStatus, deleteFeedback, fetchFeedbackMediaBlob,
+  fetchFeedbackList, updateFeedbackStatus, deleteFeedback, feedbackMediaUrl,
   type AdminFeedbackItem, type FeedbackMedia, type FeedbackStatus, type FeedbackKind,
 } from '@/lib/feedback-api';
 import './feedback-admin.css';
@@ -24,19 +24,7 @@ const KIND_ICON: Record<FeedbackKind, typeof Bug> = { need: Lightbulb, bug: Bug,
 const STATUSES: FeedbackStatus[] = ['new', 'triaged', 'done'];
 
 function MediaView({ m, t }: { m: FeedbackMedia; t: (zh: string, en: string) => string }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [err, setErr] = useState(false);
-  useEffect(() => {
-    let dead = false;
-    let made: string | null = null;
-    fetchFeedbackMediaBlob(m.id)
-      .then((u) => { if (dead) { URL.revokeObjectURL(u); } else { made = u; setUrl(u); } })
-      .catch(() => { if (!dead) setErr(true); });
-    return () => { dead = true; if (made) URL.revokeObjectURL(made); };
-  }, [m.id]);
-
-  if (err) return <div className="fba-media fba-media-err">{t('加载失败', 'failed')}</div>;
-  if (!url) return <div className="fba-media fba-media-load" />;
+  const url = feedbackMediaUrl(m.id);
   if (m.kind === 'video') {
     return (
       <div className="fba-media">
@@ -47,7 +35,7 @@ function MediaView({ m, t }: { m: FeedbackMedia; t: (zh: string, en: string) => 
   }
   return (
     <a className="fba-media" href={url} target="_blank" rel="noreferrer" title={t('原图', 'full size')}>
-      <img src={url} alt="" />
+      <img src={url} alt="" loading="lazy" />
     </a>
   );
 }
