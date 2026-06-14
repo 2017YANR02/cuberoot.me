@@ -33,17 +33,14 @@ export default function FirstLayerPanel({
       <div className="sk-stage">
         <button type="button" className="sk-generate-btn" onClick={onGenerate}>
           <RefreshCw size={16} />
-          {tr({ zh: '生成打乱 + 颜色', en: 'Generate Scramble + Colour',
-              zhHant: "生成打亂 + 顏色"
+          {tr({ zh: '生成打乱 + 颜色', en: 'Generate Scramble + Colour'
         })}
         </button>
 
-        <div className="sk-scramble-label">{tr({ zh: '打乱', en: 'Scramble',
-            zhHant: "打亂"
+        <div className="sk-scramble-label">{tr({ zh: '打乱', en: 'Scramble'
         })}</div>
         <div className={scramble ? 'sk-scramble-text' : 'sk-scramble-text is-empty'}>
-          {scramble || (tr({ zh: '点击上方生成', en: 'Press generate above',
-              zhHant: "點選上方生成"
+          {scramble || (tr({ zh: '点击上方生成', en: 'Press generate above'
         }))}
         </div>
 
@@ -57,8 +54,7 @@ export default function FirstLayerPanel({
           <div className="sk-swatch-row">
             <div className="sk-swatch" style={{ backgroundColor: colour }} />
             <div className="sk-swatch-caption">
-              {tr({ zh: '以此颜色作为起手', en: 'Use this as your starting colour',
-                  zhHant: "以此顏色作為起手"
+              {tr({ zh: '以此颜色作为起手', en: 'Use this as your starting colour'
             })}
             </div>
           </div>
@@ -66,8 +62,7 @@ export default function FirstLayerPanel({
       </div>
 
       <div className="sk-settings">
-        <h2 className="sk-settings-title">{tr({ zh: '设置', en: 'Settings',
-            zhHant: "設定"
+        <h2 className="sk-settings-title">{tr({ zh: '设置', en: 'Settings'
         })}</h2>
 
         <label className="sk-check">
@@ -76,8 +71,7 @@ export default function FirstLayerPanel({
             checked={flt.shuffle}
             onChange={(e) => onShuffle(e.target.checked)}
           />
-          {tr({ zh: '打乱顺序', en: 'Shuffle scrambles',
-              zhHant: "打亂順序"
+          {tr({ zh: '打乱顺序', en: 'Shuffle scrambles'
         })}
         </label>
 
@@ -87,16 +81,14 @@ export default function FirstLayerPanel({
             checked={flt.anyColour}
             onChange={(e) => onAnyColour(e.target.checked)}
           />
-          {tr({ zh: '使用全部颜色', en: 'Use all colours',
-              zhHant: "使用全部顏色"
+          {tr({ zh: '使用全部颜色', en: 'Use all colours'
         })}
         </label>
 
         <hr className="sk-settings-hr" />
 
         <div>
-          <div className="sk-field-label">{tr({ zh: '打乱步数', en: 'Scramble length',
-              zhHant: "打亂步數"
+          <div className="sk-field-label">{tr({ zh: '打乱步数', en: 'Scramble length'
         })}</div>
           <div className="sk-stepper">
             <button
@@ -104,8 +96,7 @@ export default function FirstLayerPanel({
               className="sk-stepper-btn"
               onClick={() => onLength(flt.length - 1)}
               disabled={flt.length <= 1}
-              aria-label={tr({ zh: '减少', en: 'Decrease',
-                  zhHant: "減少"
+              aria-label={tr({ zh: '减少', en: 'Decrease'
             })}
             >
               <Minus size={16} />
@@ -131,8 +122,7 @@ export default function FirstLayerPanel({
             checked={flt.showImg}
             onChange={(e) => onShowImg(e.target.checked)}
           />
-          {tr({ zh: '显示打乱图', en: 'Show scramble image',
-              zhHant: "顯示打亂圖"
+          {tr({ zh: '显示打乱图', en: 'Show scramble image'
         })}
         </label>
       </div>

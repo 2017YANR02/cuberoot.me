@@ -23,10 +23,10 @@ import './puzzle_optimal_solver.css';
 export interface OptimalSolverSpec {
   /** WCA event id(打乱生成 + 2D 平面展开图都用它) */
   event: string;
-  /** 页面标题(h1 + 浏览器 tab),只写简体+英文,zhHant 走 zh:inject */
-  title: { zh: string; en: string; zhHant?: string };
+  /** 页面标题(h1 + 浏览器 tab),简体 + 英文 */
+  title: { zh: string; en: string; };
   /** 说明文案(度量 / God's number 等) */
-  lead: { zh: string; en: string; zhHant?: string };
+  lead: { zh: string; en: string; };
   /** 度量名(HTM 等,结果行展示) */
   metric: string;
   /** worker 池 need 键(零表下载,距离表 wasm 内现场 BFS) */
@@ -36,7 +36,7 @@ export interface OptimalSolverSpec {
   /** 合法记号(token 级校验,如 /^[URFDLB][2']?$/) */
   tokenRe: RegExp;
   /** 输入框占位示例(可选;默认 3x3 系示例,记号集不同的 puzzle 应自带以免教错记号) */
-  placeholder?: { zh: string; en: string; zhHant?: string };
+  placeholder?: { zh: string; en: string; };
 }
 
 interface SolveOutcome {
@@ -49,7 +49,7 @@ interface SolveOutcome {
 export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
   const { i18n } = useTranslation();
   void i18n;
-  useDocumentTitle(spec.title.zh, spec.title.en, spec.title.zhHant);
+  useDocumentTitle(spec.title.zh, spec.title.en);
 
   const [scramble, setScramble] = useQueryState(
     'scramble',
@@ -132,8 +132,7 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
             type="text"
             value={scramble}
             onChange={(e) => void setScramble(e.target.value)}
-            placeholder={tr(spec.placeholder ?? { zh: '输入打乱,如 R U R\' F2 U\'', en: "Enter a scramble, e.g. R U R' F2 U'",
-                zhHant: "輸入打亂,如 R U R' F2 U'"
+            placeholder={tr(spec.placeholder ?? { zh: '输入打乱,如 R U R\' F2 U\'', en: "Enter a scramble, e.g. R U R' F2 U'"
             })}
             spellCheck={false}
             autoComplete="off"
@@ -152,16 +151,14 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
           {generating
             ? <LoaderCircle size={16} className="pos-spin" aria-hidden />
             : <Dices size={16} aria-hidden />}
-          {tr({ zh: '随机打乱', en: 'Random',
-              zhHant: "隨機打亂"
+          {tr({ zh: '随机打乱', en: 'Random'
         })}
         </button>
       </div>
 
       {badToken && (
         <p className="pos-error">
-          {tr({ zh: '无法识别的记号', en: 'Unrecognized token',
-              zhHant: "無法識別的記號"
+          {tr({ zh: '无法识别的记号', en: 'Unrecognized token'
         })}: <code>{badToken}</code>
         </p>
       )}
@@ -173,8 +170,7 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
       )}
 
       {error && (
-        <p className="pos-error">{tr({ zh: '求解失败', en: 'Solve failed',
-            zhHant: "求解失敗"
+        <p className="pos-error">{tr({ zh: '求解失败', en: 'Solve failed'
         })}: {error}</p>
       )}
 
@@ -183,8 +179,7 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
           {solving && !showResult && (
             <p className="pos-solving">
               <LoaderCircle size={14} className="pos-spin" aria-hidden />
-              {tr({ zh: '求解中(首次需建表,约 1 秒)…', en: 'Solving (first run builds the table, ~1s)…',
-                  zhHant: "求解中(首次需建表,約 1 秒)…"
+              {tr({ zh: '求解中(首次需建表,约 1 秒)…', en: 'Solving (first run builds the table, ~1s)…'
             })}
             </p>
           )}
@@ -198,8 +193,7 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
                 <span className="pos-result-ms">{result.ms < 1 ? '<1' : Math.round(result.ms)} ms</span>
               </div>
               {result.len === 0
-                ? <p className="pos-result-solved">{tr({ zh: '已是还原态', en: 'Already solved',
-                    zhHant: "已是還原態"
+                ? <p className="pos-result-solved">{tr({ zh: '已是还原态', en: 'Already solved'
                 })}</p>
                 : <p className="pos-result-sol">{result.solution}</p>}
             </>

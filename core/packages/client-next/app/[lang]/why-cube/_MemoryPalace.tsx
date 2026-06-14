@@ -79,9 +79,9 @@ export default function MemoryPalace() {
 
   const stepLabels = [
     t('看一眼', 'Glance'),
-    t('编码', 'Encode', "編碼"),
-    t('记路线', 'Walk it', "記路線"),
-    t('蒙眼还原', 'Recall', "矇眼還原"),
+    t('编码', 'Encode'),
+    t('记路线', 'Walk it'),
+    t('蒙眼还原', 'Recall'),
   ];
 
   // letter -> vivid word "image" pairs (the building blocks of the journey)
@@ -97,33 +97,33 @@ export default function MemoryPalace() {
     { placeZh: '厨房', placeEn: 'Kitchen', wordZh: '蛋糕', wordEn: 'Gateau' },
   ];
 
-  const eyebrow = `${t('步骤', 'Step', "步驟")} ${step + 1} / ${STEP_COUNT}`;
+  const eyebrow = `${t('步骤', 'Step')} ${step + 1} / ${STEP_COUNT}`;
 
   const titles = [
     t('先看一眼', 'Take one good look'),
-    t('把贴纸变成字母', 'Turn stickers into letters', "把貼紙變成字母"),
-    t('沿熟悉的路线安放', 'Hang them along a route', "沿熟悉的路線安放"),
-    t('蒙眼,凭记忆还原', 'Blindfold on, recall it', "矇眼,憑記憶還原"),
+    t('把贴纸变成字母', 'Turn stickers into letters'),
+    t('沿熟悉的路线安放', 'Hang them along a route'),
+    t('蒙眼,凭记忆还原', 'Blindfold on, recall it'),
   ];
 
   const descs = [
     <>
-      {t('盲拧选手在戴眼罩前,只有几十秒观察打乱。', 'Before the blindfold goes on, a solver has only seconds to study the scramble. ', "盲擰選手在戴眼罩前,只有幾十秒觀察打亂。")}
-      <b>{t('不需要过目不忘的超强记忆力——靠的是一套可以学的编码方法。', 'No photographic memory — just a learnable encoding system.', "不需要過目不忘的超強記憶力——靠的是一套可以學的編碼方法。")}</b>
+      {t('盲拧选手在戴眼罩前,只有几十秒观察打乱。', 'Before the blindfold goes on, a solver has only seconds to study the scramble. ')}
+      <b>{t('不需要过目不忘的超强记忆力——靠的是一套可以学的编码方法。', 'No photographic memory — just a learnable encoding system.')}</b>
     </>,
     <>
-      {t('每个贴纸位置都有一个固定字母(Speffz 记号)。字母', 'Each sticker position carries a fixed letter (Speffz lettering). Letters pair up — ', "每個貼紙位置都有一個固定字母(Speffz 記號)。字母")}
-      <b>{t('两两成对', 'two at a time', "兩兩成對")}</b>
-      {t(',再把每对变成一个鲜明的词或画面。', ' — and every pair becomes a vivid word or picture.', ",再把每對變成一個鮮明的詞或畫面。")}
+      {t('每个贴纸位置都有一个固定字母(Speffz 记号)。字母', 'Each sticker position carries a fixed letter (Speffz lettering). Letters pair up — ')}
+      <b>{t('两两成对', 'two at a time')}</b>
+      {t(',再把每对变成一个鲜明的词或画面。', ' — and every pair becomes a vivid word or picture.')}
     </>,
     <>
-      {t('把这些画面挂到一条熟悉的路线上——这就是', 'Place those pictures along a familiar route — this is the ', "把這些畫面掛到一條熟悉的路線上——這就是")}
-      <b>{t('记忆宫殿', 'memory palace', "記憶宮殿")}</b>
-      {t('。走一遍门口、沙发、厨房,顺序就记住了。', '. Walk the doorway, couch, kitchen, and the order sticks.', "。走一遍門口、沙發、廚房,順序就記住了。")}
+      {t('把这些画面挂到一条熟悉的路线上——这就是', 'Place those pictures along a familiar route — this is the ')}
+      <b>{t('记忆宫殿', 'memory palace')}</b>
+      {t('。走一遍门口、沙发、厨房,顺序就记住了。', '. Walk the doorway, couch, kitchen, and the order sticks.')}
     </>,
     <>
-      {t('戴上眼罩,沿着同一条路线把画面取回来,逐对还原。', 'With the blindfold on, retrace the same route, recall each image, and solve pair by pair. ', "戴上眼罩,沿著同一條路線把畫面取回來,逐對還原。")}
-      <b>{t('这是技巧,不是天赋。', "It's a technique, not innate talent.", "這是技巧,不是天賦。")}</b>
+      {t('戴上眼罩,沿着同一条路线把画面取回来,逐对还原。', 'With the blindfold on, retrace the same route, recall each image, and solve pair by pair. ')}
+      <b>{t('这是技巧,不是天赋。', "It's a technique, not innate talent.")}</b>
     </>,
   ];
 
@@ -145,7 +145,7 @@ export default function MemoryPalace() {
                   setPlaying(false);
                   setStep(i);
                 }}
-                aria-label={`${t('步骤', 'Step', "步驟")} ${i + 1}: ${label}`}
+                aria-label={`${t('步骤', 'Step')} ${i + 1}: ${label}`}
                 aria-current={i === step}
               >
                 <span className="mp-dot-mark">{i + 1}</span>
@@ -159,10 +159,10 @@ export default function MemoryPalace() {
             type="button"
             className="mp-play"
             onClick={() => setPlaying((p) => !p)}
-            aria-label={playing ? t('暂停', 'Pause', "暫停") : t('自动播放', 'Auto-play', "自動播放")}
+            aria-label={playing ? t('暂停', 'Pause') : t('自动播放', 'Auto-play')}
           >
             {playing ? <Pause size={15} /> : <Play size={15} />}
-            <span>{playing ? t('暂停', 'Pause', "暫停") : t('自动播放', 'Play', "自動播放")}</span>
+            <span>{playing ? t('暂停', 'Pause') : t('自动播放', 'Play')}</span>
           </button>
         )}
       </div>
@@ -236,7 +236,7 @@ export default function MemoryPalace() {
               </div>
               <div className="mp-solved-tag">
                 <Eye size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} aria-hidden />
-                {t('眼罩之下,已经还原', 'Solved, sight unseen', "眼罩之下,已經還原")}
+                {t('眼罩之下,已经还原', 'Solved, sight unseen')}
               </div>
             </div>
           )}

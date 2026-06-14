@@ -191,8 +191,7 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id={titleId}>
-          {tr({ zh: '复盘', en: 'Reconstruct',
-              zhHant: "覆盤"
+          {tr({ zh: '复盘', en: 'Reconstruct'
         })} · {formatMs(eff)}
           <span className="reconstruct-date"> · {dt.toLocaleString()}</span>
         </h2>
@@ -213,8 +212,7 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
             }}
           >
             <span>
-              {tr({ zh: '自动检测记忆时长', en: 'auto-detected memo',
-                  zhHant: "自動檢測記憶時長"
+              {tr({ zh: '自动检测记忆时长', en: 'auto-detected memo'
             })}: {(autoMemoMs / 1000).toFixed(2)}s
             </span>
             {onMemoApply && (
@@ -223,8 +221,7 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
                 onClick={() => onMemoApply(autoMemoMs)}
                 style={{ padding: '2px 8px', fontSize: '0.9em' }}
               >
-                {tr({ zh: '应用', en: 'Apply',
-                    zhHant: "應用"
+                {tr({ zh: '应用', en: 'Apply'
                 })}
               </button>
             )}
@@ -245,32 +242,26 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
               <span style={{ fontWeight: 600 }}>
-                {tr({ zh: '盲拧记忆 (Speffz)', en: 'BLD memo (Speffz)',
-                    zhHant: "盲擰記憶 (Speffz)"
+                {tr({ zh: '盲拧记忆 (Speffz)', en: 'BLD memo (Speffz)'
                 })}
               </span>
               <span style={{ opacity: 0.6, fontSize: '0.9em' }}>
-                {tr({ zh: `缓冲块: 角 UFR / 棱 UF`, en: 'buffers: corner UFR / edge UF',
-                    zhHant: "緩衝塊: 角 UFR / 稜 UF"
+                {tr({ zh: `缓冲块: 角 UFR / 棱 UF`, en: 'buffers: corner UFR / edge UF'
                 })}
                 {bldMemo.parity ? (tr({ zh: ' · 奇偶', en: ' · parity' })) : ''}
               </span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '2px 10px' }}>
-              <span style={{ opacity: 0.7 }}>{tr({ zh: '角块', en: 'Corners',
-                  zhHant: "角塊"
+              <span style={{ opacity: 0.7 }}>{tr({ zh: '角块', en: 'Corners'
             })}:</span>
               <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>
-                {bldMemo.cornerPairs || (tr({ zh: '(无)', en: '(none)',
-                    zhHant: "(無)"
+                {bldMemo.cornerPairs || (tr({ zh: '(无)', en: '(none)'
                 }))}
               </span>
-              <span style={{ opacity: 0.7 }}>{tr({ zh: '棱块', en: 'Edges',
-                  zhHant: "稜塊"
+              <span style={{ opacity: 0.7 }}>{tr({ zh: '棱块', en: 'Edges'
             })}:</span>
               <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>
-                {bldMemo.edgePairs || (tr({ zh: '(无)', en: '(none)',
-                    zhHant: "(無)"
+                {bldMemo.edgePairs || (tr({ zh: '(无)', en: '(none)'
                 }))}
               </span>
               {bldMemo.twistedCorners.length > 0 && (
@@ -283,8 +274,7 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
               )}
               {bldMemo.flippedEdges.length > 0 && (
                 <>
-                  <span style={{ opacity: 0.7 }}>{tr({ zh: '棱翻', en: 'Flipped',
-                      zhHant: "稜翻"
+                  <span style={{ opacity: 0.7 }}>{tr({ zh: '棱翻', en: 'Flipped'
                 })}:</span>
                   <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>
                     {bldMemo.flippedEdges.join(' ')}
@@ -298,13 +288,11 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
         {memoMs !== undefined && (
           <div className="reconstruct-bld-bar">
             <span className="reconstruct-bld-seg memo">
-              {tr({ zh: '记忆', en: 'Memo',
-                  zhHant: "記憶"
+              {tr({ zh: '记忆', en: 'Memo'
             })} {formatMs(memoMs)}
             </span>
             <span className="reconstruct-bld-seg exec">
-              {tr({ zh: '执行', en: 'Execution',
-                  zhHant: "執行"
+              {tr({ zh: '执行', en: 'Execution'
             })} {formatMs(slices.executionMs)}
             </span>
           </div>
@@ -323,21 +311,17 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
           </div>
           <div className="reconstruct-stat">
             <div className="reconstruct-stat-num">{formatSec(slices.firstMoveLatencyMs)}</div>
-            <div className="reconstruct-stat-label">{tr({ zh: '首动延迟', en: 'First move',
-                zhHant: "首動延遲"
+            <div className="reconstruct-stat-label">{tr({ zh: '首动延迟', en: 'First move'
             })}</div>
             <div className="reconstruct-stat-sub">
-              {memoMs !== undefined ? (tr({ zh: '记忆后', en: 'after memo',
-                  zhHant: "記憶後"
-            })) : (tr({ zh: '从计时开始', en: 'from start',
-                zhHant: "從計時開始"
+              {memoMs !== undefined ? (tr({ zh: '记忆后', en: 'after memo'
+            })) : (tr({ zh: '从计时开始', en: 'from start'
             }))}
             </div>
           </div>
           <div className="reconstruct-stat">
             <div className="reconstruct-stat-num">{formatSec(slices.longestPauseMs)}</div>
-            <div className="reconstruct-stat-label">{tr({ zh: '最长停顿', en: 'Longest pause',
-                zhHant: "最長停頓"
+            <div className="reconstruct-stat-label">{tr({ zh: '最长停顿', en: 'Longest pause'
             })}</div>
             <div className="reconstruct-stat-sub">{slices.pauseCount} × &gt;0.5s</div>
           </div>
@@ -370,8 +354,7 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
               <span>
                 {playbackExpanded
                   ? (tr({ zh: '3D 回放', en: '3D playback' }))
-                  : (tr({ zh: '显示 3D 回放', en: 'Show 3D playback',
-                      zhHant: "顯示 3D 回放"
+                  : (tr({ zh: '显示 3D 回放', en: 'Show 3D playback'
                 }))}
               </span>
             </button>
@@ -388,15 +371,14 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
         )}
 
         <AccordionSection
-          title={i18n.language === 'zh-Hant' ? (`動作序列 (${moves.length})`) : (isZh ? `动作序列 (${moves.length})` : `Move stream (${moves.length})`)}
+          title={(isZh ? `动作序列 (${moves.length})` : `Move stream (${moves.length})`)}
           collapsible={isMobile}
           expanded={moveListExpanded}
           onToggle={() => setMoveListExpanded(v => !v)}
         >
           {moves.length === 0 ? (
             <div className="reconstruct-empty">
-              {tr({ zh: '此次成绩未记录蓝牙动作。', en: 'No bluetooth moves recorded for this solve.',
-                  zhHant: "此次成績未記錄藍芽動作。"
+              {tr({ zh: '此次成绩未记录蓝牙动作。', en: 'No bluetooth moves recorded for this solve.'
             })}
             </div>
           ) : (
@@ -426,25 +408,20 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
             onClick={handleCopyShare}
             disabled={!canShare}
             title={!canShare
-              ? (tr({ zh: '没有动作记录，无法分享回放', en: 'No move log — share unavailable',
-                  zhHant: "沒有動作記錄，無法分享回放"
+              ? (tr({ zh: '没有动作记录，无法分享回放', en: 'No move log — share unavailable'
             }))
-              : (tr({ zh: '复制分享链接', en: 'Copy share link',
-                  zhHant: "複製分享連結"
+              : (tr({ zh: '复制分享链接', en: 'Copy share link'
             }))}
           >
             <Link2 size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
             {copied
-              ? (tr({ zh: '已复制', en: 'Copied',
-                  zhHant: "已複製"
+              ? (tr({ zh: '已复制', en: 'Copied'
             }))
-              : (tr({ zh: '复制分享链接', en: 'Copy share link',
-                  zhHant: "複製分享連結"
+              : (tr({ zh: '复制分享链接', en: 'Copy share link'
             }))}
           </button>
           <button ref={closeBtnRef} onClick={onClose}>
-            {tr({ zh: '关闭', en: 'Close',
-                zhHant: "關閉"
+            {tr({ zh: '关闭', en: 'Close'
             })}
           </button>
         </div>
@@ -488,7 +465,6 @@ function StageSegmentsPanel({
     ms: number | null;
     htm: number | null;
     caseLabel: string | null;
-          labelZhHant?: string;
   }> = [
     { key: 'cross', labelEn: 'Cross', labelZh: '十字', ms: segs.crossMs, htm: segs.crossHtm, caseLabel: segs.crossSide },
     { key: 'f2l',   labelEn: 'F2L',   labelZh: 'F2L',  ms: segs.f2lMs,   htm: segs.f2lHtm,   caseLabel: null },
@@ -517,8 +493,7 @@ function StageSegmentsPanel({
       title={
         <>
           <Layers size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-          {tr({ zh: 'CFOP 分阶段', en: 'CFOP stage breakdown',
-              zhHant: "CFOP 分階段"
+          {tr({ zh: 'CFOP 分阶段', en: 'CFOP stage breakdown'
         })}
         </>
       }
@@ -526,8 +501,7 @@ function StageSegmentsPanel({
       expanded={expanded}
       onToggle={onToggle}
     >
-      <div className="reconstruct-stage-bar" role="img" aria-label={tr({ zh: '阶段时间分布', en: 'stage time distribution',
-          zhHant: "階段時間分佈"
+      <div className="reconstruct-stage-bar" role="img" aria-label={tr({ zh: '阶段时间分布', en: 'stage time distribution'
     })}>
         {stages.map(s => {
           const pct = denom > 0 ? ((s.ms ?? 0) / denom) * 100 : 0;
@@ -537,7 +511,7 @@ function StageSegmentsPanel({
               key={s.key}
               className={`reconstruct-stage-seg stage-${s.key}`}
               style={{ width: `${pct}%` }}
-              title={`${i18n.language === 'zh-Hant' ? (s.labelZhHant ?? s.labelZh) : (isZh ? s.labelZh : s.labelEn)}: ${formatStageTime(s.ms)}`}
+              title={`${(isZh ? s.labelZh : s.labelEn)}: ${formatStageTime(s.ms)}`}
             />
           );
         })}
@@ -568,7 +542,7 @@ function StageSegmentsPanel({
           return (
             <div key={s.key} className="reconstruct-stage-cell">
               <div className={`reconstruct-stage-dot stage-${s.key}`} />
-              <div className="reconstruct-stage-label">{i18n.language === 'zh-Hant' ? (s.labelZhHant ?? s.labelZh) : (isZh ? s.labelZh : s.labelEn)}</div>
+              <div className="reconstruct-stage-label">{(isZh ? s.labelZh : s.labelEn)}</div>
               <div className="reconstruct-stage-time">{formatStageTime(s.ms)}</div>
               {s.caseLabel ? (
                 <div className="reconstruct-stage-case">{s.caseLabel}</div>

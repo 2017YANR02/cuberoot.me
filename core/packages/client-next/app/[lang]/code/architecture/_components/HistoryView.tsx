@@ -12,7 +12,6 @@ import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
 
 interface DayEntry { date: string; zh: string; en: string;
-    zhHant?: string;
  }
 const DAYS = COMMITS_DATA as DayEntry[];
 const CAL_MONTHS = ['2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
@@ -23,7 +22,7 @@ function Timeline() {
   return (
     <ol className="timeline">
       {TIMELINE.map((e, i) => {
-        const t = (i18n.language === 'zh-Hant' ? (e.zhHant ?? e.zh) : (i18n.language.startsWith('zh') ? e.zh : e.en));
+        const t = ((i18n.language.startsWith('zh') ? e.zh : e.en));
         const isOpen = open === i;
         return (
           <li key={i} className={`tl-entry tl-${e.tag}${isOpen ? ' open' : ''}`}>
@@ -90,7 +89,7 @@ function CalMonth({ ym, byDate, lang, expanded, onToggle }: {
           return (
             <>
               <div className="cal-day">{day.getDate()}</div>
-              {entry && <div className="cal-note">{(i18n.language === 'zh-Hant' ? (entry.zhHant ?? entry.zh) : (i18n.language.startsWith('zh') ? entry.zh : entry.en))}</div>}
+              {entry && <div className="cal-note">{((i18n.language.startsWith('zh') ? entry.zh : entry.en))}</div>}
             </>
           );
         }}
@@ -135,8 +134,7 @@ function CommitsCalendar() {
 
   return (
     <div className="cal-stack">
-      <div className="cal-month-nav" role="navigation" aria-label={tr({ zh: '月份切换', en: 'Month nav',
-          zhHant: "月份切換"
+      <div className="cal-month-nav" role="navigation" aria-label={tr({ zh: '月份切换', en: 'Month nav'
     })}>
         <button type="button" className="cal-nav-btn" onClick={() => gotoIdx(-1)} disabled={idx === 0} aria-label={tr({ zh: '上一月', en: 'Previous month' })}>
           <ChevronLeft size={16} strokeWidth={1.75} />
@@ -149,8 +147,7 @@ function CommitsCalendar() {
         </button>
         <span className="cal-nav-label">{monthLabel}</span>
         <span className="cal-nav-stat">{lang === 'zh' ? `${activeDays} 天有动静` : `${activeDays} active days`}</span>
-        <span className="cal-nav-hint">{tr({ zh: '键盘 ← → 切换  ·  点格子展开', en: '← → keys  ·  click to expand',
-            zhHant: "鍵盤 ← → 切換  ·  點格子展開"
+        <span className="cal-nav-hint">{tr({ zh: '键盘 ← → 切换  ·  点格子展开', en: '← → keys  ·  click to expand'
         })}</span>
       </div>
       <CalMonth key={ym} ym={ym} byDate={byDate} lang={lang} expanded={expanded} onToggle={(d) => setExpanded((cur) => cur === d ? null : d)} />

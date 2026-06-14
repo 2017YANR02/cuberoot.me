@@ -24,7 +24,7 @@ type SortBy = 'date' | 'name';
 type SortDir = 'asc' | 'desc';
 
 export default function CompsTab({ profile, results, comps, isZh }: Props) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const [sortBy, setSortBy] = useState<SortBy>('date');
   const [dir, setDir] = useState<SortDir>('desc');
 
@@ -50,8 +50,8 @@ export default function CompsTab({ profile, results, comps, isZh }: Props) {
     return arr;
   }, [comps, sortBy, dir]);
 
-  if (!comps) return <div className="wp-loading-inline">{t('加载比赛历史…', 'Loading competitions…', "載入比賽歷史…")}</div>;
-  if (comps.length === 0) return <div className="wp-empty">{t('暂无比赛记录', 'No competitions', "暫無比賽記錄")}</div>;
+  if (!comps) return <div className="wp-loading-inline">{t('加载比赛历史…', 'Loading competitions…')}</div>;
+  if (comps.length === 0) return <div className="wp-empty">{t('暂无比赛记录', 'No competitions')}</div>;
 
   const total = comps.length;
   const toggleSort = (col: SortBy) => {
@@ -66,14 +66,14 @@ export default function CompsTab({ profile, results, comps, isZh }: Props) {
       <table className="wp-comps-table">
         <thead>
           <tr>
-            <th className="wp-th-narrow">{t('序号', '#', "序號")}</th>
+            <th className="wp-th-narrow">{t('序号', '#')}</th>
             <th className="wp-th-sortable" onClick={() => toggleSort('date')}>
-              {t('时间', 'Date', "時間")} <SortArrow col="date" />
+              {t('时间', 'Date')} <SortArrow col="date" />
             </th>
             <th className="wp-th-sortable" onClick={() => toggleSort('name')}>
-              {t('比赛名称', 'Competition', "比賽名稱")} <SortArrow col="name" />
+              {t('比赛名称', 'Competition')} <SortArrow col="name" />
             </th>
-            <th>{t('项目', 'Events', "項目")}</th>
+            <th>{t('项目', 'Events')}</th>
           </tr>
         </thead>
         <tbody>
@@ -105,7 +105,7 @@ export default function CompsTab({ profile, results, comps, isZh }: Props) {
         </tbody>
       </table>
       <div className="wp-table-footer">
-        {t(`共 ${total} 场`, `${total} competitions total`, `共 ${total} 場`)} · {t('选手 WCA ID', 'WCA ID', "選手 WCA ID")} {profile.person.wca_id}
+        {t(`共 ${total} 场`, `${total} competitions total`)} · {t('选手 WCA ID', 'WCA ID')} {profile.person.wca_id}
       </div>
     </div>
   );

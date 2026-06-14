@@ -10,7 +10,6 @@ export interface OpsCommandInput {
   category: string;
   cwd?: string | null;
   chips: { zh: string; en: string
-    zhHant?: string;
  }[];
   title_zh: string;
   title_en: string;

@@ -21,8 +21,7 @@ export default function ShowToggle({ value, onChange, isZh }: Props) {
         className={value === 'persons' ? 'active' : ''}
         onClick={() => onChange('persons')}
       >
-        {tr({ zh: '选手', en: 'Persons',
-            zhHant: "選手"
+        {tr({ zh: '选手', en: 'Persons'
         })}
       </button>
       <button
@@ -30,8 +29,7 @@ export default function ShowToggle({ value, onChange, isZh }: Props) {
         className={value === 'results' ? 'active' : ''}
         onClick={() => onChange('results')}
       >
-        {tr({ zh: '成绩', en: 'Results',
-            zhHant: "成績"
+        {tr({ zh: '成绩', en: 'Results'
         })}
       </button>
     </div>

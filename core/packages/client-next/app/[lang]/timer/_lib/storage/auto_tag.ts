@@ -33,7 +33,6 @@ export interface TagDef {
   tone: 'gold' | 'green' | 'red' | 'muted';
   labelEn: string;
   labelZh: string;
-    labelZhHant?: string;
 }
 
 export const TAG_DEFS: Record<TagId, TagDef> = {

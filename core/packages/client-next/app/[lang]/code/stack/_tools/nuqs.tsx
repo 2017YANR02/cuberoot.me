@@ -44,13 +44,11 @@ export const NUQS: StackTool = {
     outlookDesc: <>2.x keeps adding adapters (React Router v7 / TanStack Router) and the RSC-side <code>createSearchParamsCache</code>. The direction is clear: make "URL as state" read the same across every React router while keeping up with the server-component type-safety boundary.</>,
   },
   heroStats: [
-    { num: '2', unit: '.8.9', zh: <>当前稳定 <em>2026-02 发布</em></>, en: <>current stable <em>shipped 2026-02</em></>,
-        zhHant: <>當前穩定 <em>2026-02 發佈</em></>
+    { num: '2', unit: '.8.9', zh: <>当前稳定 <em>2026-02 发布</em></>, en: <>current stable <em>shipped 2026-02</em></>
     },
     { num: '~6', unit: ' kB', zh: <>gzip 包大小 <em>nuqs.dev</em></>, en: <>gzipped bundle <em>nuqs.dev</em></> },
     { num: '10.5', unit: 'k', zh: <>GitHub stars <em>47ng/nuqs</em></>, en: <>GitHub stars <em>47ng/nuqs</em></> },
-    { num: '33', zh: <>本站用它的页面 <em>useQueryState</em></>, en: <>pages on this site <em>useQueryState</em></>,
-        zhHant: <>本站用它的頁面 <em>useQueryState</em></>
+    { num: '33', zh: <>本站用它的页面 <em>useQueryState</em></>, en: <>pages on this site <em>useQueryState</em></>
     },
   ],
   intro: {

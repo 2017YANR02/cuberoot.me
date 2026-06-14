@@ -9,13 +9,10 @@ export function CrossSportSection({ isZh }: Props) {
   const sorted = [...CROSS_SPORT_TABLE].sort((a, b) => b.ratio_pct - a.ratio_pct);
   return (
     <section className="pred-section" id="cross-sport">
-      <h2>{tr({ zh: '跨运动锚定: WR 离物理墙多远', en: 'Cross-Sport Anchoring: How Close Is the WR to the Wall',
-          zhHant: "跨運動錨定: WR 離物理牆多遠"
+      <h2>{tr({ zh: '跨运动锚定: WR 离物理墙多远', en: 'Cross-Sport Anchoring: How Close Is the WR to the Wall'
     })}</h2>
       <p>
-        {i18n.language === 'zh-Hant' ? ((
-                        <>「WR 佔理論極限的百分比」是判斷「一項運動成不成熟, 還剩多少空間」的最直接指標。速擰兩項放到一起看: 2x2 已經接近反應時間牆,3x3 還有近一半空間。跟傳統競技項目對比一下,3x3 現在的位置更接近 1990 年代的馬拉松,而不是今天的馬拉松。</>
-                      )) : (isZh ? (
+        {(isZh ? (
                         <>「WR 占理论极限的百分比」是判断「一项运动成不成熟, 还剩多少空间」的最直接指标。速拧两项放到一起看: 2x2 已经接近反应时间墙,3x3 还有近一半空间。跟传统竞技项目对比一下,3x3 现在的位置更接近 1990 年代的马拉松,而不是今天的马拉松。</>
                       ) : (
                         <>"WR / theoretical-floor %" is the cleanest measure of "has this sport matured, and how much room remains." Putting 2x2 and 3x3 alongside running and other skill sports: 2x2 is already up against the reaction-time wall; 3x3 still has nearly half its headroom. 3x3 today is closer to where the marathon stood in the 1990s than where it stands now.</>
@@ -25,15 +22,12 @@ export function CrossSportSection({ isZh }: Props) {
         <table className="pred-fit-table pred-method-table">
           <thead>
             <tr>
-              <th>{tr({ zh: '项目', en: 'Sport',
-                  zhHant: "項目"
+              <th>{tr({ zh: '项目', en: 'Sport'
             })}</th>
-              <th>{tr({ zh: '现 WR', en: 'WR',
-                  zhHant: "現 WR"
+              <th>{tr({ zh: '现 WR', en: 'WR'
             })}</th>
               <th>{tr({ zh: '持有 / 年份', en: 'Holder / year' })}</th>
-              <th>{tr({ zh: '理论极限', en: 'Theoretical limit',
-                  zhHant: "理論極限"
+              <th>{tr({ zh: '理论极限', en: 'Theoretical limit'
             })}</th>
               <th>WR / Limit</th>
             </tr>
@@ -56,8 +50,7 @@ export function CrossSportSection({ isZh }: Props) {
                         {r.ratio_pct}%
                       </span>
                     </>
-                  ) : (tr({ zh: '墙已被推翻', en: 'wall moved',
-                      zhHant: "牆已被推翻"
+                  ) : (tr({ zh: '墙已被推翻', en: 'wall moved'
                 }))}
                 </td>
               </tr>
@@ -66,14 +59,7 @@ export function CrossSportSection({ isZh }: Props) {
         </table>
       </div>
       <p className="pred-note">
-        {i18n.language === 'zh-Hant' ? ((
-                        <>
-                          <strong>反例 (NES Tetris)。</strong> 2020 之前社羣普遍認為 999,999 maxout 即「硬牆」,直到 CheeZ「rolling」技法 (2020) +
-                          Blue Scuti 撞穿 kill screen (2023) + rebirth wraparound (2024) 把上限完全打掉。
-                          這是一個典型的「以為是天花板的牆被技術革命推翻」的例子 — 給速擰 sub-2 / sub-1 留了想象空間 (智慧魔方 + AI 教練 + 新方法並非完全沒戲)。
-                          <strong>但跑步, 打字這種「撞到解剖學硬牆」的項目,25-30 年零進展是常態。</strong> 速擰 3x3 目前位置 (54%) 夾在兩種軌跡之間,沒有定論。
-                        </>
-                      )) : (isZh ? (
+        {(isZh ? (
                         <>
                           <strong>反例 (NES Tetris)。</strong> 2020 之前社区普遍认为 999,999 maxout 即「硬墙」,直到 CheeZ「rolling」技法 (2020) +
                           Blue Scuti 撞穿 kill screen (2023) + rebirth wraparound (2024) 把上限完全打掉。

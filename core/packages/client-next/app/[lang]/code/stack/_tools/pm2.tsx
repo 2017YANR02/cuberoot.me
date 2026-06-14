@@ -44,11 +44,9 @@ export const PM2: StackTool = {
     outlookDesc: <>v7.0 added Bun support, inlined pm2-axon / pm2-io-agent for a smaller supply chain, and shipped CVE fixes. The next phase is deeper systemd / OpenRC integration and auto-metrics for the Hono / Fastify generation of frameworks.</>,
   },
   heroStats: [
-    { num: '7', unit: '.0.1', zh: <>当前稳定版 <em>2025-05-02 · v7.0.1</em></>, en: <>current stable <em>2025-05-02 · v7.0.1</em></>,
-        zhHant: <>當前穩定版 <em>2025-05-02 · v7.0.1</em></>
+    { num: '7', unit: '.0.1', zh: <>当前稳定版 <em>2025-05-02 · v7.0.1</em></>, en: <>current stable <em>2025-05-02 · v7.0.1</em></>
     },
-    { num: '13', unit: 'y', zh: <>从 2013 至今 <em>Node 守护事实标准</em></>, en: <>since 2013 <em>de facto Node supervisor</em></>,
-        zhHant: <>從 2013 至今 <em>Node 守護事實標準</em></>
+    { num: '13', unit: 'y', zh: <>从 2013 至今 <em>Node 守护事实标准</em></>, en: <>since 2013 <em>de facto Node supervisor</em></>
     },
     { num: '0', unit: 's', zh: <>graceful reload downtime <em>cluster mode</em></>, en: <>graceful reload downtime <em>cluster mode</em></> },
     { num: '40', unit: 'k★', zh: <>GitHub Unitech/pm2 <em>2026-05</em></>, en: <>GitHub Unitech/pm2 <em>2026-05</em></> },

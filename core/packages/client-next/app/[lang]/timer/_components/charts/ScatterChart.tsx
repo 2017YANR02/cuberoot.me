@@ -108,8 +108,7 @@ export default function ScatterChart({
         viewBox={`0 0 ${width} ${height}`}
         preserveAspectRatio="xMidYMid meet"
         role="img"
-        aria-label={tr({ zh: '单次成绩散点图', en: 'Per-solve scatter',
-            zhHant: "單次成績散點圖"
+        aria-label={tr({ zh: '单次成绩散点图', en: 'Per-solve scatter'
         })}
       >
         <text
@@ -119,8 +118,7 @@ export default function ScatterChart({
           textAnchor="middle"
           dominantBaseline="middle"
         >
-          {tr({ zh: '至少 2 次成绩', en: 'Need 2+ solves',
-              zhHant: "至少 2 次成績"
+          {tr({ zh: '至少 2 次成绩', en: 'Need 2+ solves'
         })}
         </text>
       </svg>
@@ -180,8 +178,7 @@ export default function ScatterChart({
       width={width}
       height={height}
       role="img"
-      aria-label={tr({ zh: '单次成绩散点图', en: 'Per-solve scatter',
-          zhHant: "單次成績散點圖"
+      aria-label={tr({ zh: '单次成绩散点图', en: 'Per-solve scatter'
     })}
     >
       {/* Grid: top, mid, bottom */}

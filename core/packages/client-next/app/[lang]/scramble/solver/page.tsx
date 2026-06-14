@@ -192,7 +192,7 @@ function ScrambleSolverPageInner() {
     const stateParam = searchParams.get('state');
     if (stateParam) {
       runKociembaForState(stateParam).catch((e: Error) => {
-        setStateInfo(t(`从状态求解失败:${e.message}`, `Solve from state failed: ${e.message}`, `從狀態求解失敗:${e.message}`));
+        setStateInfo(t(`从状态求解失败:${e.message}`, `Solve from state failed: ${e.message}`));
       });
     }
     return () => { kociembaRef.current?.terminate(); kociembaRef.current = null; };
@@ -202,16 +202,16 @@ function ScrambleSolverPageInner() {
   async function runKociembaForState(facelet: string) {
     const errMsg = validateFacelet(facelet);
     if (errMsg) {
-      setStateInfo(t(`非法状态:${errMsg}`, `Invalid state: ${errMsg}`, `非法狀態:${errMsg}`));
+      setStateInfo(t(`非法状态:${errMsg}`, `Invalid state: ${errMsg}`));
       return;
     }
     const state = faceletToCubie(facelet);
     if (isSolvedCubie(state)) {
-      setStateInfo(t('状态已是还原态,无需打乱。', 'State is already solved.', "狀態已是還原態,無需打亂。"));
+      setStateInfo(t('状态已是还原态,无需打乱。', 'State is already solved.'));
       setScrambles('');
       return;
     }
-    setStateInfo(t('状态合法,Kociemba 求解中(首次需 ~3s 建表)…', 'State valid, solving with Kociemba (first call needs ~3s to build tables)…', "狀態合法,Kociemba 求解中(首次需 ~3s 建表)…"));
+    setStateInfo(t('状态合法,Kociemba 求解中(首次需 ~3s 建表)…', 'State valid, solving with Kociemba (first call needs ~3s to build tables)…'));
     setKociembaBusy(true);
     if (!kociembaRef.current) kociembaRef.current = spawnKociembaWorker();
     const w = kociembaRef.current;
@@ -249,7 +249,7 @@ function ScrambleSolverPageInner() {
       setScrambles(sol);
       setStateInfo(t(
         `Kociemba 求出 ${sol.split(/\s+/).length} 步打乱(非最优)。点击 Solve 求最优解。`,
-        `Kociemba scramble: ${sol.split(/\s+/).length} moves (non-optimal). Click Solve for optimal.`, `Kociemba 求出 ${sol.split(/\s+/).length} 步打亂(非最優)。點選 Solve 求最優解。`
+        `Kociemba scramble: ${sol.split(/\s+/).length} moves (non-optimal). Click Solve for optimal.`
       ));
     } finally {
       setKociembaBusy(false);
@@ -271,7 +271,7 @@ function ScrambleSolverPageInner() {
     w.onerror = () => {
       setWorkerError(t(
         'Solver worker 加载失败(多线程 wasm 起不来)。请刷新页面重试;若反复出现请反馈。',
-        'Solver worker failed to load (multithreaded wasm could not start). Reload the page; report if it persists.', "Solver worker 載入失敗(多執行緒 wasm 起不來)。請重新整理頁面重試;若反覆出現請反饋。"
+        'Solver worker failed to load (multithreaded wasm could not start). Reload the page; report if it persists.'
       ));
       setReadyState('no-solver');
       setProgress(-1);
@@ -327,7 +327,7 @@ function ScrambleSolverPageInner() {
         setProgress(-1);
       } else if (d.cmd === 'upload table') {
         if (d.code !== 0) {
-          alert(t('文件大小不匹配,请用对应 .dat', 'Wrong file size — use the matching .dat', "檔案大小不匹配,請用對應 .dat"));
+          alert(t('文件大小不匹配,请用对应 .dat', 'Wrong file size — use the matching .dat'));
           setReadyState('need-init');
         } else {
           setReadyState('ready');
@@ -341,7 +341,7 @@ function ScrambleSolverPageInner() {
         setReadyState('ready');
       } else if (d.cmd === 'download table fileapi') {
         if (d.code !== 0) {
-          alert(t('写入文件失败,请重试或换默认下载', 'Failed to write file — retry or use default download', "寫入檔案失敗,請重試或改用預設下載"));
+          alert(t('写入文件失败,请重试或换默认下载', 'Failed to write file — retry or use default download'));
         }
         setReadyState('ready');
         setProgress(-1);
@@ -460,7 +460,7 @@ function ScrambleSolverPageInner() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.name !== solverInfo?.table_name) {
-      alert(t(`文件名应为 ${solverInfo?.table_name}`, `Expected ${solverInfo?.table_name}`, `檔名應為 ${solverInfo?.table_name}`));
+      alert(t(`文件名应为 ${solverInfo?.table_name}`, `Expected ${solverInfo?.table_name}`));
       e.target.value = '';
       return;
     }
@@ -473,7 +473,7 @@ function ScrambleSolverPageInner() {
   const doSolveNow = () => {
     const cleaned = scrambles
       .split('\n').map(s => s.trim()).filter(s => s.length > 0).join('\n');
-    if (!cleaned) { alert(t('打乱不能为空', 'No scrambles', "打亂不能為空")); return; }
+    if (!cleaned) { alert(t('打乱不能为空', 'No scrambles')); return; }
     setScrambles(cleaned);
     setReadyState('busy');
     setLogs('');
@@ -496,7 +496,7 @@ function ScrambleSolverPageInner() {
     }
     if (readyState === 'need-init') {
       const cleaned = scrambles.split('\n').map(s => s.trim()).filter(Boolean).join('\n');
-      if (!cleaned) { alert(t('打乱不能为空', 'No scrambles', "打亂不能為空")); return; }
+      if (!cleaned) { alert(t('打乱不能为空', 'No scrambles')); return; }
       pendingSolveRef.current = true;
       generateTable();
     }
@@ -571,7 +571,7 @@ function ScrambleSolverPageInner() {
         <div className="cubeopt-warn">
           {t(
             '当前页面没有 SharedArrayBuffer/COI,wasm 多线程跑不起来。请刷新页面后再试。',
-            'SharedArrayBuffer / cross-origin isolation not active — multithreaded wasm will not run. Reload the page.', "當前頁面沒有 SharedArrayBuffer/COI,wasm 多執行緒跑不起來。請重新整理頁面後再試。"
+            'SharedArrayBuffer / cross-origin isolation not active — multithreaded wasm will not run. Reload the page.'
           )}
         </div>
       )}
@@ -585,7 +585,7 @@ function ScrambleSolverPageInner() {
           <span>
             {t(
               '检测到手机端 — 已默认 cube48opt1 (30M)。手机 wasm 内存有限,opt2/3 视机型可能 OK,opt4 起容易 OOM 崩页;生成时长是桌面的 3-5 倍,期间不要切到后台。',
-              'Mobile detected — defaulted to cube48opt1 (30M). Mobile wasm memory is tight; opt2/3 may work on flagship phones, opt4+ likely OOM. Gen takes 3-5× longer than desktop; don\'t background the tab during gen.', "檢測到手機端 — 已預設 cube48opt1 (30M)。手機 wasm 記憶體有限,opt2/3 視機型可能 OK,opt4 起容易 OOM 崩頁;生成時長是桌面的 3-5 倍,期間不要切到後臺。"
+              'Mobile detected — defaulted to cube48opt1 (30M). Mobile wasm memory is tight; opt2/3 may work on flagship phones, opt4+ likely OOM. Gen takes 3-5× longer than desktop; don\'t background the tab during gen.'
             )}
           </span>
         </div>
@@ -593,13 +593,13 @@ function ScrambleSolverPageInner() {
 
       <div className="cubeopt-tabs" role="tablist">
         <button role="tab" aria-selected={inputMode === 'paint'} className={`tab${inputMode === 'paint' ? ' is-active' : ''}`} onClick={() => setInputMode('paint')}>
-          {t('从状态画', 'Paint state', "從狀態畫")}
+          {t('从状态画', 'Paint state')}
         </button>
         <button role="tab" aria-selected={inputMode === 'random'} className={`tab${inputMode === 'random' ? ' is-active' : ''}`} onClick={() => setInputMode('random')}>
-          {t('随机生成', 'Random', "隨機生成")}
+          {t('随机生成', 'Random')}
         </button>
         <button role="tab" aria-selected={inputMode === 'paste'} className={`tab${inputMode === 'paste' ? ' is-active' : ''}`} onClick={() => setInputMode('paste')}>
-          {t('直接粘贴', 'Paste', "直接貼上")}
+          {t('直接粘贴', 'Paste')}
         </button>
       </div>
 
@@ -612,13 +612,12 @@ function ScrambleSolverPageInner() {
               activeColor={paintColor}
               onActiveColorChange={setPaintColor}
               pixelSize={paintCanvasSize}
-              solveLabel={{ zh: '求打乱', en: 'Derive scramble',
-                  zhHant: "求打亂"
+              solveLabel={{ zh: '求打乱', en: 'Derive scramble'
             }}
               onSolve={(fc) => {
                 if (kociembaBusy) return;
                 runKociembaForState(fc).catch((e: Error) => {
-                  setStateInfo(t(`从状态求解失败:${e.message}`, `Solve from state failed: ${e.message}`, `從狀態求解失敗:${e.message}`));
+                  setStateInfo(t(`从状态求解失败:${e.message}`, `Solve from state failed: ${e.message}`));
                 });
               }}
             />
@@ -633,9 +632,9 @@ function ScrambleSolverPageInner() {
               {SCR_LEN_OPTS.map(n => <option key={n} value={n}>{n} {t('步', 'moves')}</option>)}
             </select>
             <select className="ctl-sm" value={scrNum} onChange={(e) => setScrNum(parseInt(e.target.value, 10))}>
-              {SCR_NUM_OPTS.map(n => <option key={n} value={n}>{n} {t('个', 'cubes', "個")}</option>)}
+              {SCR_NUM_OPTS.map(n => <option key={n} value={n}>{n} {t('个', 'cubes')}</option>)}
             </select>
-            <button className="btn-primary" onClick={genRandom}>{t('生成到打乱框', 'Generate', "生成到打亂框")}</button>
+            <button className="btn-primary" onClick={genRandom}>{t('生成到打乱框', 'Generate')}</button>
           </div>
         </section>
       )}
@@ -654,14 +653,14 @@ function ScrambleSolverPageInner() {
 
       <section className="cubeopt-card">
         <div className="row">
-          <span className="lbl">{t('打乱', 'Scramble', "打亂")}</span>
+          <span className="lbl">{t('打乱', 'Scramble')}</span>
           <button className="btn-icon" onClick={inverseScrambles} title={t('每行反向', 'Invert each line')}>
             <Sparkles size={14} />
           </button>
           <button
             className={`btn-icon${showScramblePreview ? ' is-active' : ''}`}
             onClick={() => setShowScramblePreview(v => !v)}
-            title={t('显示第一行打乱产生的状态', 'Show state after the first scramble', "顯示第一行打亂產生的狀態")}
+            title={t('显示第一行打乱产生的状态', 'Show state after the first scramble')}
           >
             {showScramblePreview ? <Eye size={14} /> : <EyeOff size={14} />}
           </button>
@@ -672,7 +671,7 @@ function ScrambleSolverPageInner() {
           {readyState === 'busy' ? (
             <button className="btn-cancel" onClick={cancelCubeopt} title={t(
               '终止当前任务。会重建 wasm,prun 表会丢失需重新生成或上传。',
-              'Abort current task. Wasm will be reset; prun table is lost and must be re-generated or uploaded.', "終止當前任務。會重建 wasm,prun 表會丟失需重新生成或上傳。"
+              'Abort current task. Wasm will be reset; prun table is lost and must be re-generated or uploaded.'
             )}>
               <X size={14} /> {t('取消', 'Cancel')}
             </button>
@@ -683,11 +682,11 @@ function ScrambleSolverPageInner() {
               onClick={startSolve}
               title={readyState === 'need-init' ? t(
                 '会先自动生成 prun 表(几十秒)再求最优解',
-                'Will auto-generate the prun table (tens of seconds) then solve', "會先自動生成 prun 表(幾十秒)再求最優解"
+                'Will auto-generate the prun table (tens of seconds) then solve'
               ) : t('用 cubeopt 求 HTM 最少步解', 'Solve optimally with cubeopt')}
             >
               {readyState === 'need-init'
-                ? <><Sparkles size={14} /> {t('生成表+求最优', 'Gen Table + Solve', "生成表+求最優")}</>
+                ? <><Sparkles size={14} /> {t('生成表+求最优', 'Gen Table + Solve')}</>
                 : <>Solve</>}
             </button>
           )}
@@ -697,7 +696,7 @@ function ScrambleSolverPageInner() {
           rows={inputMode === 'paste' ? 6 : 4}
           placeholder={inputMode === 'paste'
             ? t('把 cubedb / cstimer / WCA scramble 粘到这里,每行一个,然后 Solve。',
-                'Paste scrambles here (one per line), then Solve.', "把 cubedb / cstimer / WCA scramble 粘到這裡,每行一個,然後 Solve。")
+                'Paste scrambles here (one per line), then Solve.')
             : "R U R' U' R' F R2 U' R' U' R U R' F'"}
           value={scrambles}
           onChange={(e) => setScrambles(e.target.value)}
@@ -712,18 +711,18 @@ function ScrambleSolverPageInner() {
       {solveResults.size > 0 && (
         <section className="cubeopt-card">
           <div className="row">
-            <span className="lbl">{t('解 (按输入顺序)', 'Solutions (input order)', "解 (按輸入順序)")}</span>
+            <span className="lbl">{t('解 (按输入顺序)', 'Solutions (input order)')}</span>
             <span className="paint-hint">
               {t(
                 'cubeopt 是按完成顺序输出的;此处按输入序号 1..N 排好,并标注步数。',
-                'cubeopt outputs in finish order; this panel re-sorts by input index 1..N with move counts.', "cubeopt 是按完成順序輸出的;此處按輸入序號 1..N 排好,並標註步數。"
+                'cubeopt outputs in finish order; this panel re-sorts by input index 1..N with move counts.'
               )}
             </span>
             <button className="btn-icon" onClick={() => {
               const txt = Array.from(solveResults.entries()).sort((a, b) => a[0] - b[0])
                 .map(([n, alg]) => `${n}. ${alg}`).join('\n');
               navigator.clipboard?.writeText(txt);
-            }} title={t('复制全部', 'Copy all', "複製全部")}>
+            }} title={t('复制全部', 'Copy all')}>
               <Sparkles size={14} />
             </button>
           </div>
@@ -745,10 +744,10 @@ function ScrambleSolverPageInner() {
       <section className="cubeopt-card cubeopt-advanced">
         <button className="advanced-toggle" onClick={() => setShowAdvanced(v => !v)}>
           {showAdvanced ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          <span>{t('高级设置', 'Advanced', "高階設定")}</span>
+          <span>{t('高级设置', 'Advanced')}</span>
           <span className="advanced-summary">
-            {solverName} · {nThreads}{t('线程', 'threads', "執行緒")}
-            {readyState === 'ready' && <> · {t('就绪', 'ready', "就緒")}</>}
+            {solverName} · {nThreads}{t('线程', 'threads')}
+            {readyState === 'ready' && <> · {t('就绪', 'ready')}</>}
             {readyState === 'need-init' && <> · {t('表未生成', 'table not built')}</>}
             {readyState === 'busy' && <> · <Loader2 size={12} className="spinning" /> {t('忙', 'busy')}</>}
           </span>
@@ -767,24 +766,24 @@ function ScrambleSolverPageInner() {
             </div>
             <div className="row">
               <span className="lbl">{t('Prun 表', 'Prun Table')}</span>
-              <span className="table-name">{solverInfo?.table_name ?? t('未就绪', 'Not Ready', "未就緒")}</span>
+              <span className="table-name">{solverInfo?.table_name ?? t('未就绪', 'Not Ready')}</span>
               <label className="auto-dl">
                 <input type="checkbox" checked={autoDownloadTable} onChange={(e) => setAutoDownloadTable(e.target.checked)} />
-                <span>{t('生成后自动下载', 'Auto-download after gen', "生成後自動下載")}</span>
+                <span>{t('生成后自动下载', 'Auto-download after gen')}</span>
               </label>
               {saveDirName && (
                 <span className="save-dir">
-                  {t('保存到', 'Save to', "儲存到")}: <code>{saveDirName}</code>
+                  {t('保存到', 'Save to')}: <code>{saveDirName}</code>
                 </span>
               )}
               {readyState === 'need-init' && (
                 <>
                   <button className="btn" onClick={generateTable}>{t('生成表', 'Generate Table')}</button>
-                  <button className="btn" onClick={onUploadClick}><Upload size={14} /> {t('上传表', 'Upload Table', "上傳表")}</button>
+                  <button className="btn" onClick={onUploadClick}><Upload size={14} /> {t('上传表', 'Upload Table')}</button>
                 </>
               )}
               {readyState === 'ready' && (
-                <button className="btn" onClick={downloadTable}><Download size={14} /> {t('下载表', 'Download Table', "下載表")}</button>
+                <button className="btn" onClick={downloadTable}><Download size={14} /> {t('下载表', 'Download Table')}</button>
               )}
               <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={onUploadFile} />
             </div>
@@ -794,13 +793,13 @@ function ScrambleSolverPageInner() {
               </div>
             )}
             <div className="row">
-              <span className="lbl">{t('线程', 'Threads', "執行緒")}</span>
+              <span className="lbl">{t('线程', 'Threads')}</span>
               <select className="ctl-sm" value={nThreads} onChange={(e) => setNThreads(parseInt(e.target.value, 10))}>
                 {Array.from({ length: typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency || 4) : 4 }, (_, i) => i + 1).map(n => (
                   <option key={n} value={n}>{n}</option>
                 ))}
               </select>
-              <span className="lbl">{t('并发块', 'Concurrent', "併發塊")}</span>
+              <span className="lbl">{t('并发块', 'Concurrent')}</span>
               <select className="ctl-sm" value={nGroup} onChange={(e) => setNGroup(parseInt(e.target.value, 10))}>
                 {nGroupOptions.map(n => <option key={n} value={n}>{n}</option>)}
               </select>
@@ -813,7 +812,7 @@ function ScrambleSolverPageInner() {
         <div className="row">
           <span className="lbl">Logs</span>
           <button className="btn" onClick={() => setShowLogs(v => !v)}>
-            {showLogs ? t('收起', 'Hide') : t('展开 raw 输出', 'Show raw output', "展開 raw 輸出")}
+            {showLogs ? t('收起', 'Hide') : t('展开 raw 输出', 'Show raw output')}
             {logs ? ` (${logs.split('\n').length - 1})` : ''}
           </button>
           {showLogs && (

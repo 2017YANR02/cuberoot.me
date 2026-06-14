@@ -14,7 +14,7 @@ export default function KociembaPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
 
-  useDocumentTitle('Kociemba 二阶段', 'Kociemba two-phase', "Kociemba 二階段");
+  useDocumentTitle('Kociemba 二阶段', 'Kociemba two-phase');
 
   return (
     <LangCtx.Provider value={lang}>
@@ -26,13 +26,11 @@ export default function KociembaPage() {
           </div>
 
           <header className="algo-page-head">
-            <div className="algo-page-tag">{tr({ zh: '经典分治', en: 'Classic D&C',
-                zhHant: "經典分治"
+            <div className="algo-page-tag">{tr({ zh: '经典分治', en: 'Classic D&C'
             })}</div>
             <h1 className="algo-page-title">Kociemba 二阶段</h1>
             <p className="algo-page-sub">
-              {tr({ zh: '1992 年 Herbert Kociemba 提出的二阶段算法:先把任意状态降到 G1 = ⟨U, D, L², R², F², B²⟩ 子群,再在 G1 内完成归位。两阶段各自跑 IDA*,共用三种坐标 (CO / EO / UD slice) 的剪枝表。平均 22 步、几乎不会超过 25 步,几十毫秒就能给出一条解 — 直到今天,所有打乱生成器和大多数计时器底下跑的都是它的变体。', en: 'The 1992 two-phase algorithm by Herbert Kociemba: drop any state into the subgroup G1 = ⟨U, D, L², R², F², B²⟩ first, then solve inside G1. Each phase runs its own IDA*, sharing three coordinate prune tables (CO / EO / UD-slice). Average 22 moves, almost never above 25, tens of milliseconds per solve — to this day every scramble generator and most timers ship a descendant of this algorithm under the hood.',
-                  zhHant: "1992 年 Herbert Kociemba 提出的二階段演算法:先把任意狀態降到 G1 = ⟨U, D, L², R², F², B²⟩ 子群,再在 G1 內完成歸位。兩階段各自跑 IDA*,共用三種座標 (CO / EO / UD slice) 的剪枝表。平均 22 步、幾乎不會超過 25 步,幾十毫秒就能給出一條解 — 直到今天,所有打亂生成器和大多數計時器底下跑的都是它的變體。"
+              {tr({ zh: '1992 年 Herbert Kociemba 提出的二阶段算法:先把任意状态降到 G1 = ⟨U, D, L², R², F², B²⟩ 子群,再在 G1 内完成归位。两阶段各自跑 IDA*,共用三种坐标 (CO / EO / UD slice) 的剪枝表。平均 22 步、几乎不会超过 25 步,几十毫秒就能给出一条解 — 直到今天,所有打乱生成器和大多数计时器底下跑的都是它的变体。', en: 'The 1992 two-phase algorithm by Herbert Kociemba: drop any state into the subgroup G1 = ⟨U, D, L², R², F², B²⟩ first, then solve inside G1. Each phase runs its own IDA*, sharing three coordinate prune tables (CO / EO / UD-slice). Average 22 moves, almost never above 25, tens of milliseconds per solve — to this day every scramble generator and most timers ship a descendant of this algorithm under the hood.'
             })}
             </p>
           </header>

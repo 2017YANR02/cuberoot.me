@@ -45,14 +45,11 @@ export const TAILWIND: StackTool = {
   },
   heroStats: [
     { num: '#1', zh: <>CSS 框架 <em>State of CSS 2025</em></>, en: <>CSS framework <em>State of CSS 2025</em></> },
-    { num: '97', unit: 'M/wk', zh: <>npm 周下载 <em>2026-05, 是 Bootstrap 的 17 倍</em></>, en: <>weekly npm downloads <em>2026-05, 17x Bootstrap</em></>,
-        zhHant: <>npm 周下載 <em>2026-05, 是 Bootstrap 的 17 倍</em></>
+    { num: '97', unit: 'M/wk', zh: <>npm 周下载 <em>2026-05, 是 Bootstrap 的 17 倍</em></>, en: <>weekly npm downloads <em>2026-05, 17x Bootstrap</em></>
     },
-    { num: '8', unit: 'y', zh: <>2017 v0.1 至今 <em>从副产品到行业默认</em></>, en: <>since v0.1 in 2017 <em>from side-project to industry default</em></>,
-        zhHant: <>2017 v0.1 至今 <em>從副產品到行業預設</em></>
+    { num: '8', unit: 'y', zh: <>2017 v0.1 至今 <em>从副产品到行业默认</em></>, en: <>since v0.1 in 2017 <em>from side-project to industry default</em></>
     },
-    { num: '4', unit: '.3', zh: <>当前稳定版 <em>2026-05 · Oxide 引擎</em></>, en: <>current stable <em>2026-05 · Oxide engine</em></>,
-        zhHant: <>當前穩定版 <em>2026-05 · Oxide 引擎</em></>
+    { num: '4', unit: '.3', zh: <>当前稳定版 <em>2026-05 · Oxide 引擎</em></>, en: <>current stable <em>2026-05 · Oxide engine</em></>
     },
   ],
   intro: {

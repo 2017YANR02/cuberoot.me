@@ -25,7 +25,6 @@ interface Card {
   Icon: typeof Dices;
   zh: { title: string; desc: string };
   en: { title: string; desc: string };
-    zhHant?: { title: string; desc: string };
 }
 
 const CARDS: Card[] = [
@@ -33,42 +32,39 @@ const CARDS: Card[] = [
     to: '/scramble/gen',
     Icon: Dices,
     zh: { title: '生成', desc: '17 个 WCA 项目的随机状态打乱,tnoodle 风格 PDF' },
-    en: { title: 'Generate', desc: 'Random-state scrambles for 17 WCA events, tnoodle-style PDF' },
-      zhHant: { title: '生成', desc: '17 個 WCA 項目的隨機狀態打亂,tnoodle 風格 PDF' }
+    en: { title: 'Generate', desc: 'Random-state scrambles for 17 WCA events, tnoodle-style PDF' }
 },
   {
     to: '/scramble/solver',
     Icon: Sparkles,
     zh: { title: '求解', desc: '3×3 最优解 / 逐阶段 / CFOP / DR,2×2×2 / 金字塔 / 斜转最优解,打乱步数分布' },
-    en: { title: 'Solve', desc: 'Optimal 3×3 / stage / CFOP / DR, plus 2×2×2 / Pyraminx / Skewb optimal solvers and step distributions' },
-      zhHant: { title: '求解', desc: '3×3 最優解 / 逐階段 / CFOP / DR,2×2×2 / 金字塔 / 斜轉最優解,打亂步數分佈' }
+    en: { title: 'Solve', desc: 'Optimal 3×3 / stage / CFOP / DR, plus 2×2×2 / Pyraminx / Skewb optimal solvers and step distributions' }
 },
   {
     to: '/scramble/pattern',
     Icon: Wand2,
     zh: { title: '图案', desc: '著名 3x3 / 4x4 / 5x5 / 6x6 / 7x7 图案集 (棋盘 / 十字 / 立方体中立方等)' },
-    en: { title: 'Pattern', desc: 'Famous pretty patterns for 3×3 / 4×4 / 5×5 / 6×6 / 7×7 (checkerboard, cross, cube-in-cube, …)' },
-      zhHant: { title: '圖案', desc: '著名 3x3 / 4x4 / 5x5 / 6x6 / 7x7 圖案集 (棋盤 / 十字 / 立方體中立方等)' }
+    en: { title: 'Pattern', desc: 'Famous pretty patterns for 3×3 / 4×4 / 5×5 / 6×6 / 7×7 (checkerboard, cross, cube-in-cube, …)' }
 },
 ];
 
 export default function ScrambleHubPage() {
   const { i18n } = useTranslation();
   const t = useT();
-  useDocumentTitle('打乱', 'Scramble', "打亂");
+  useDocumentTitle('打乱', 'Scramble');
 
   return (
     <div className="scramble-hub-page">
       <style>{INLINE_CSS}</style>
       <header className="hub-header">
-        <h1>{t('打乱', 'Scramble', "打亂")}</h1>
+        <h1>{t('打乱', 'Scramble')}</h1>
       </header>
       <div className="hub-grid">
         {CARDS.map((c) => (
           <Link key={c.to} href={c.to} className="hub-card">
             <c.Icon size={28} />
-            <div className="hub-card-title">{((i18n.language === 'zh-Hant' ? (c.zhHant ?? c.zh) : (i18n.language.startsWith('zh') ? c.zh : c.en))).title}</div>
-            <div className="hub-card-desc">{((i18n.language === 'zh-Hant' ? (c.zhHant ?? c.zh) : (i18n.language.startsWith('zh') ? c.zh : c.en))).desc}</div>
+            <div className="hub-card-title">{(((i18n.language.startsWith('zh') ? c.zh : c.en))).title}</div>
+            <div className="hub-card-desc">{(((i18n.language.startsWith('zh') ? c.zh : c.en))).desc}</div>
           </Link>
         ))}
       </div>

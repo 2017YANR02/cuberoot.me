@@ -104,15 +104,12 @@ export default function TrainerSubsetModal({ kind, isZh, onClose }: Props) {
         </h2>
 
         <div className="trainer-subset-toolbar">
-          <button ref={firstButtonRef} type="button" onClick={selectAll}>{tr({ zh: '全选', en: 'Select all',
-              zhHant: "全選"
+          <button ref={firstButtonRef} type="button" onClick={selectAll}>{tr({ zh: '全选', en: 'Select all'
         })}</button>
-          <button type="button" onClick={selectNone}>{tr({ zh: '全不选', en: 'Clear',
-              zhHant: "全不選"
+          <button type="button" onClick={selectNone}>{tr({ zh: '全不选', en: 'Clear'
         })}</button>
           <button type="button" onClick={disableSubset}>
-            {tr({ zh: '关闭子集（随机所有）', en: 'Disable subset (random all)',
-                zhHant: "關閉子集（隨機所有）"
+            {tr({ zh: '关闭子集（随机所有）', en: 'Disable subset (random all)'
             })}
           </button>
         </div>
@@ -147,8 +144,7 @@ export default function TrainerSubsetModal({ kind, isZh, onClose }: Props) {
 
         <div className="modal-actions">
           <button type="button" onClick={onClose}>{tr({ zh: '取消', en: 'Cancel' })}</button>
-          <button type="button" className="primary" onClick={save}>{tr({ zh: '保存', en: 'Save',
-              zhHant: "儲存"
+          <button type="button" className="primary" onClick={save}>{tr({ zh: '保存', en: 'Save'
         })}</button>
         </div>
       </div>

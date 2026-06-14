@@ -44,17 +44,13 @@ export const OPENSSH: StackTool = {
     outlookDesc: <>Two arcs after 10.3: post-quantum KEX as default (mlkem768x25519) and a sshd split into smaller binaries (sshd-session / sshd-auth) to shrink the attack surface. Password auth is off-by-default in mainstream distros — everyone is on keys or certificates.</>,
   },
   heroStats: [
-    { num: '22', zh: <>默认监听端口 <em>26 年没换</em></>, en: <>default listening port <em>unchanged for 26 years</em></>,
-        zhHant: <>預設監聽埠 <em>26 年沒換</em></>
+    { num: '22', zh: <>默认监听端口 <em>26 年没换</em></>, en: <>default listening port <em>unchanged for 26 years</em></>
     },
-    { num: '~20', unit: 'M', zh: <>公网可达 sshd 端口 <em>Shodan 2026</em></>, en: <>publicly reachable sshd ports <em>Shodan 2026</em></>,
-        zhHant: <>公網可達 sshd 埠 <em>Shodan 2026</em></>
+    { num: '~20', unit: 'M', zh: <>公网可达 sshd 端口 <em>Shodan 2026</em></>, en: <>publicly reachable sshd ports <em>Shodan 2026</em></>
     },
-    { num: '26', unit: 'y', zh: <>从 1999 至今 <em>仍是唯一默认</em></>, en: <>since 1999 <em>still the only default</em></>,
-        zhHant: <>從 1999 至今 <em>仍是唯一預設</em></>
+    { num: '26', unit: 'y', zh: <>从 1999 至今 <em>仍是唯一默认</em></>, en: <>since 1999 <em>still the only default</em></>
     },
-    { num: '10', unit: '.3p1', zh: <>当前稳定版 <em>2026-04 portable</em></>, en: <>current stable <em>2026-04 portable</em></>,
-        zhHant: <>當前穩定版 <em>2026-04 portable</em></>
+    { num: '10', unit: '.3p1', zh: <>当前稳定版 <em>2026-04 portable</em></>, en: <>current stable <em>2026-04 portable</em></>
     },
   ],
   intro: {

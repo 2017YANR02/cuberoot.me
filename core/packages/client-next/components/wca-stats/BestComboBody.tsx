@@ -65,16 +65,14 @@ export function BestComboBody({
     const hasOther = mentionOtherType && !!pb.best[other];
     return (
       <div className="sor-tool-hint">
-        {i18n.language === 'zh-Hant'
-          ? `該選手在全部 21 個項目裡都沒有有效${type === 'average' ? '平均' : '單次'}成績(${type === 'average' ? '比如只打過多盲等無平均的項目,或平均全 DNF' : '單次記錄缺失'})${hasOther ? `;但有${other === 'average' ? '平均' : '單次'}最優組合,切上方“型別”檢視` : ''}`
-          : isZh
+        {isZh
             ? `该选手在全部 21 个项目里都没有有效${type === 'average' ? '平均' : '单次'}成绩(${type === 'average' ? '比如只打过多盲等无平均的项目,或平均全 DNF' : '单次记录缺失'})${hasOther ? `;但有${other === 'average' ? '平均' : '单次'}最优组合,切上方“类型”查看` : ''}`
             : `No valid ${type} result in any of the 21 events${hasOther ? ` — but a ${other} combo exists, switch "Type" above` : ''}`}
       </div>
     );
   }
 
-  const typeLabel = type === 'single' ? tr({ zh: '单次', en: 'Single', zhHant: '單次' }) : tr({ zh: '平均', en: 'Average' });
+  const typeLabel = type === 'single' ? tr({ zh: '单次', en: 'Single' }) : tr({ zh: '平均', en: 'Average' });
   const combos = b.combos ?? (b.events ? [b.events] : []);
   const comboCount = b.comboCount ?? combos.length;
 
@@ -83,7 +81,7 @@ export function BestComboBody({
       <div className="sor-pb-rank-line">
         <span className="sor-pb-type">{typeLabel}</span>
         <span className="sor-pb-rank">{isZh ? `世界第 ${b.rank}` : `World #${b.rank}`}</span>
-        {comboCount > 1 && <span className="sor-pb-count">{i18n.language === 'zh-Hant' ? `${comboCount} 種組合並列` : isZh ? `${comboCount} 种组合并列` : `${comboCount} tied combos`}</span>}
+        {comboCount > 1 && <span className="sor-pb-count">{isZh ? `${comboCount} 种组合并列` : `${comboCount} tied combos`}</span>}
       </div>
       {comboCount > 1 && b.eventCounts && (() => {
         // 组合剖析:支柱(在所有并列组合里,必选)/ 毒药(不在任何组合里,必避)/ 自由项(出现比例).
@@ -102,18 +100,15 @@ export function BestComboBody({
           <div className="sor-pb-anatomy">
             {pillars.length > 0 && (
               <div className="sor-pb-anat-row">
-                <span className="sor-pb-anat-label sor-pb-anat-pillar" title={tr({ zh: `支柱:出现在全部 ${denom.toLocaleString()} 个最优组合里,少了就到不了这个名次`, en: `Pillars: in all ${denom.toLocaleString()} optimal combos — required for this rank` })}>{tr({ zh: '必选', en: 'Always',
-                    zhHant: "必選"
+                <span className="sor-pb-anat-label sor-pb-anat-pillar" title={tr({ zh: `支柱:出现在全部 ${denom.toLocaleString()} 个最优组合里,少了就到不了这个名次`, en: `Pillars: in all ${denom.toLocaleString()} optimal combos — required for this rank` })}>{tr({ zh: '必选', en: 'Always'
                 })}</span>
                 <span className="sor-pb-anat-items">{pillars.map(ev => <EventIcon key={ev} event={ev} />)}</span>
               </div>
             )}
             {free.length > 0 && (
               <div className="sor-pb-anat-row">
-                <span className="sor-pb-anat-label" title={tr({ zh: '自由项:只出现在部分最优组合里,怎么搭都行;数字 = 出现比例', en: 'Flexible: in some optimal combos; number = share of combos containing it',
-                    zhHant: "自由項:只出現在部分最優組合裡,怎麼搭都行;數字 = 出現比例"
-                })}>{tr({ zh: '随意', en: 'Optional',
-                    zhHant: "隨意"
+                <span className="sor-pb-anat-label" title={tr({ zh: '自由项:只出现在部分最优组合里,怎么搭都行;数字 = 出现比例', en: 'Flexible: in some optimal combos; number = share of combos containing it'
+                })}>{tr({ zh: '随意', en: 'Optional'
                 })}</span>
                 <span className="sor-pb-anat-items">
                   {free.map(f => {
@@ -130,8 +125,7 @@ export function BestComboBody({
             )}
             {poison.length > 0 && (
               <div className="sor-pb-anat-row">
-                <span className="sor-pb-anat-label sor-pb-anat-poison" title={tr({ zh: '毒药:不在任何最优组合里,加进来名次只会更差', en: 'Poison: in none of the optimal combos — adding it always hurts',
-                    zhHant: "毒藥:不在任何最優組合裡,加進來名次只會更差"
+                <span className="sor-pb-anat-label sor-pb-anat-poison" title={tr({ zh: '毒药:不在任何最优组合里,加进来名次只会更差', en: 'Poison: in none of the optimal combos — adding it always hurts'
                 })}>{tr({ zh: '必避', en: 'Never' })}</span>
                 <span className="sor-pb-anat-items sor-pb-anat-dim">{poison.map(ev => <EventIcon key={ev} event={ev} />)}</span>
               </div>
@@ -142,14 +136,14 @@ export function BestComboBody({
       <ul className="sor-pb-combos">
         {combos.map((evs, i) => (
           <li key={i} className="sor-pb-combo">
-            <AppLink prefetch={false} href={hrefFor(evs)} className="sor-pb-combo-link" title={tr({ zh: '在排名页查看该组合', en: 'View this combo in rankings', zhHant: '在排名頁檢視該組合' })}>
+            <AppLink prefetch={false} href={hrefFor(evs)} className="sor-pb-combo-link" title={tr({ zh: '在排名页查看该组合', en: 'View this combo in rankings' })}>
               <span className="sor-pb-events">{evs.map(ev => <EventIcon key={ev} event={ev} />)}</span>
             </AppLink>
           </li>
         ))}
         {expanded && more.map((evs, i) => (
           <li key={`m${i}`} className="sor-pb-combo">
-            <AppLink prefetch={false} href={hrefFor(evs)} className="sor-pb-combo-link" title={tr({ zh: '在排名页查看该组合', en: 'View this combo in rankings', zhHant: '在排名頁檢視該組合' })}>
+            <AppLink prefetch={false} href={hrefFor(evs)} className="sor-pb-combo-link" title={tr({ zh: '在排名页查看该组合', en: 'View this combo in rankings' })}>
               <span className="sor-pb-events">{evs.map((ev, k) => <EventIcon key={`${ev}${k}`} event={ev} />)}</span>
             </AppLink>
           </li>
@@ -160,7 +154,7 @@ export function BestComboBody({
         if (!expanded) {
           return (
             <button type="button" className="sor-pb-expand" onClick={() => { setExpanded(true); loadMore(); }}>
-              {i18n.language === 'zh-Hant' ? `展開全部 ${comboCount.toLocaleString()} 種` : isZh ? `展开全部 ${comboCount.toLocaleString()} 种` : `Show all ${comboCount.toLocaleString()}`}
+              {isZh ? `展开全部 ${comboCount.toLocaleString()} 种` : `Show all ${comboCount.toLocaleString()}`}
             </button>
           );
         }
@@ -168,16 +162,16 @@ export function BestComboBody({
           <div className="sor-pb-expand-row">
             {loaded < comboCount ? (
               <button type="button" className="sor-pb-expand" disabled={loadingMore} onClick={loadMore}>
-                {loadingMore ? tr({ zh: '加载中…', en: 'Loading…', zhHant: '載入中…' }) : (i18n.language === 'zh-Hant' ? `載入更多 (${loaded.toLocaleString()}/${comboCount.toLocaleString()})` : isZh ? `加载更多 (${loaded.toLocaleString()}/${comboCount.toLocaleString()})` : `Load more (${loaded.toLocaleString()}/${comboCount.toLocaleString()})`)}
+                {loadingMore ? tr({ zh: '加载中…', en: 'Loading…' }) : (isZh ? `加载更多 (${loaded.toLocaleString()}/${comboCount.toLocaleString()})` : `Load more (${loaded.toLocaleString()}/${comboCount.toLocaleString()})`)}
               </button>
             ) : (
-              <span className="sor-pb-note">{i18n.language === 'zh-Hant' ? `已全部展開 ${comboCount.toLocaleString()} 種` : isZh ? `已全部展开 ${comboCount.toLocaleString()} 种` : `All ${comboCount.toLocaleString()} shown`}</span>
+              <span className="sor-pb-note">{isZh ? `已全部展开 ${comboCount.toLocaleString()} 种` : `All ${comboCount.toLocaleString()} shown`}</span>
             )}
-            <button type="button" className="sor-pb-collapse" onClick={() => { setExpanded(false); setMore([]); }}>{tr({ zh: '收起', en: 'Collapse', zhHant: '收起' })}</button>
+            <button type="button" className="sor-pb-collapse" onClick={() => { setExpanded(false); setMore([]); }}>{tr({ zh: '收起', en: 'Collapse' })}</button>
           </div>
         );
       })()}
-      <div className="sor-pb-note">{i18n.language === 'zh-Hant' ? `上面每個組合都能讓 TA 的名次和排到該名次(世界口徑,${includeCancelled ? '含廢止項' : '僅活躍項'})` : isZh ? `上面每个组合都能让 TA 的名次和排到该名次(世界口径,${includeCancelled ? '含废止项' : '仅活跃项'})` : `Each combination ties them at that sum-of-ranks position (world, ${includeCancelled ? 'incl. cancelled' : 'active only'})`}</div>
+      <div className="sor-pb-note">{isZh ? `上面每个组合都能让 TA 的名次和排到该名次(世界口径,${includeCancelled ? '含废止项' : '仅活跃项'})` : `Each combination ties them at that sum-of-ranks position (world, ${includeCancelled ? 'incl. cancelled' : 'active only'})`}</div>
     </>
   );
 }

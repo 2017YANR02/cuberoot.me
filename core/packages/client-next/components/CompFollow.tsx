@@ -60,9 +60,9 @@ export function FollowStar({ compId, followed, onToggle, variant = 'corner', log
 }) {
   const iconSize = variant === 'chip' ? 13 : variant === 'inline' ? 16 : 15;
   const title = !loggedIn
-    ? tr({ zh: '登录后关注', en: 'Sign in to follow', zhHant: '登入後關注' })
+    ? tr({ zh: '登录后关注', en: 'Sign in to follow' })
     : followed
-      ? tr({ zh: '取消关注', en: 'Unfollow', zhHant: '取消關注' })
+      ? tr({ zh: '取消关注', en: 'Unfollow' })
       : tr({ zh: '盯一下', en: 'Follow' });
   return (
     <button

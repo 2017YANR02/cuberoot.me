@@ -29,8 +29,7 @@ export default function HighOrderNxNInput({ isZh, onAdd, children }: Props) {
   };
   return (
     <div className="gen-tn-config-group">
-      <label className="gen-tn-config-label">{tr({ zh: '高阶 NxN', en: 'High-order NxN',
-          zhHant: "高階 NxN"
+      <label className="gen-tn-config-label">{tr({ zh: '高阶 NxN', en: 'High-order NxN'
     })}</label>
       <input
         type="number"

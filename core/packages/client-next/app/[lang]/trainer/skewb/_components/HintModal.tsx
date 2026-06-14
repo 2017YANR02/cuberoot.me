@@ -50,8 +50,7 @@ export default function HintModal({ open, onClose, id, setup, solutions, isZh }:
             type="button"
             className="sk-modal-close"
             onClick={onClose}
-            aria-label={tr({ zh: '关闭', en: 'Close',
-                zhHant: "關閉"
+            aria-label={tr({ zh: '关闭', en: 'Close'
             })}
           >
             <X size={18} />

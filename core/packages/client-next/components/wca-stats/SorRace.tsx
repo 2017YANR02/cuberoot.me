@@ -48,9 +48,9 @@ type Metric = 'single' | 'average';
 const SHOW_N = 10;
 const DEFAULT_SPEED = 850;
 const SPEEDS = [
-  { ms: 1400, zh: '慢', en: 'Slow', zhHant: '慢' },
-  { ms: 850, zh: '标准', en: 'Normal', zhHant: '標準' },
-  { ms: 450, zh: '快', en: 'Fast', zhHant: '快' },
+  { ms: 1400, zh: '慢', en: 'Slow' },
+  { ms: 850, zh: '标准', en: 'Normal' },
+  { ms: 450, zh: '快', en: 'Fast' },
 ] as const;
 
 // RegionPicker 的大洲 value 是 slug;SOR 数据/文件按大洲全名。
@@ -58,13 +58,13 @@ const CONT_SLUG_TO_NAME: Record<string, string> = {
   africa: 'Africa', asia: 'Asia', europe: 'Europe',
   northAmerica: 'North America', oceania: 'Oceania', southAmerica: 'South America',
 };
-const CONTINENT_LABEL: Record<string, { zh: string; en: string; zhHant: string }> = {
-  'Asia': { zh: '亚洲', en: 'Asia', zhHant: '亞洲' },
-  'Europe': { zh: '欧洲', en: 'Europe', zhHant: '歐洲' },
-  'Africa': { zh: '非洲', en: 'Africa', zhHant: '非洲' },
-  'North America': { zh: '北美洲', en: 'N. America', zhHant: '北美洲' },
-  'South America': { zh: '南美洲', en: 'S. America', zhHant: '南美洲' },
-  'Oceania': { zh: '大洋洲', en: 'Oceania', zhHant: '大洋洲' },
+const CONTINENT_LABEL: Record<string, { zh: string; en: string; }> = {
+  'Asia': { zh: '亚洲', en: 'Asia' },
+  'Europe': { zh: '欧洲', en: 'Europe' },
+  'Africa': { zh: '非洲', en: 'Africa' },
+  'North America': { zh: '北美洲', en: 'N. America' },
+  'South America': { zh: '南美洲', en: 'S. America' },
+  'Oceania': { zh: '大洋洲', en: 'Oceania' },
 };
 
 function rowHeightPx(): number {
@@ -185,7 +185,7 @@ export default function SorRace() {
   }, [yearIdx, frames.length]);
 
   const scopeLabel = useMemo(() => {
-    if (region === 'world') return tr({ zh: '世界', en: 'World', zhHant: '世界' });
+    if (region === 'world') return tr({ zh: '世界', en: 'World' });
     const cn = CONT_SLUG_TO_NAME[region];
     if (cn) return CONTINENT_LABEL[cn] ? tr(CONTINENT_LABEL[cn]!) : cn;
     return countryName(region, isZh);
@@ -193,16 +193,16 @@ export default function SorRace() {
   }, [region, isZh]);
 
   if (error) {
-    return <div className="t10h-status">{tr({ zh: '加载失败', en: 'Failed to load', zhHant: '載入失敗' })}: {error}</div>;
+    return <div className="t10h-status">{tr({ zh: '加载失败', en: 'Failed to load' })}: {error}</div>;
   }
   if (!index) {
-    return <div className="t10h-status">{tr({ zh: '加载中...', en: 'Loading...', zhHant: '載入中...' })}</div>;
+    return <div className="t10h-status">{tr({ zh: '加载中...', en: 'Loading...' })}</div>;
   }
 
   const curYear = curFrame?.y ?? index.years[0];
   const metricLabel = metric === 'single'
-    ? tr({ zh: '单次', en: 'Single', zhHant: '單次' })
-    : tr({ zh: '平均', en: 'Average', zhHant: '平均' });
+    ? tr({ zh: '单次', en: 'Single' })
+    : tr({ zh: '平均', en: 'Average' });
   const countriesIso2 = index.scopes.countries.map(c => c.iso2);
 
   return (
@@ -214,18 +214,18 @@ export default function SorRace() {
           value={region}
           onChange={setRegion}
           restrictTo={countriesIso2}
-          allLabel={tr({ zh: '世界', en: 'World', zhHant: '世界' })}
-          searchPlaceholder={tr({ zh: '搜索地区...', en: 'Search region...', zhHant: '搜尋地區...' })}
+          allLabel={tr({ zh: '世界', en: 'World' })}
+          searchPlaceholder={tr({ zh: '搜索地区...', en: 'Search region...' })}
           className="sor-race-region"
         />
         <div className="t10h-metric-toggle" role="tablist" style={{ marginLeft: 'auto' }}>
           <button type="button" role="tab" aria-selected={metric === 'single'}
             className={metric === 'single' ? 'active' : ''} onClick={() => setMetric('single')}>
-            {tr({ zh: '单次', en: 'Single', zhHant: '單次' })}
+            {tr({ zh: '单次', en: 'Single' })}
           </button>
           <button type="button" role="tab" aria-selected={metric === 'average'}
             className={metric === 'average' ? 'active' : ''} onClick={() => setMetric('average')}>
-            {tr({ zh: '平均', en: 'Average', zhHant: '平均' })}
+            {tr({ zh: '平均', en: 'Average' })}
           </button>
         </div>
       </div>
@@ -237,7 +237,7 @@ export default function SorRace() {
             {leaderInfo?.iso2 && <Flag iso2={leaderInfo.iso2} className="t10h-holder-flag" />}
             <div className="t10h-holder-text">
               <div className="t10h-holder-name">
-                {leaderInfo ? displayCuberName(leaderInfo.name, isZh) : (loading ? tr({ zh: '加载中…', en: 'Loading…', zhHant: '載入中…' }) : '')}
+                {leaderInfo ? displayCuberName(leaderInfo.name, isZh) : (loading ? tr({ zh: '加载中…', en: 'Loading…' }) : '')}
               </div>
               <div className="t10h-holder-sub">
                 {leader && (isZh
@@ -283,25 +283,25 @@ export default function SorRace() {
           rowH={rowH}
           showN={SHOW_N}
           emptyText={loading
-            ? tr({ zh: '加载中...', en: 'Loading...', zhHant: '載入中...' })
-            : tr({ zh: '该范围暂无数据', en: 'No data for this scope', zhHant: '該範圍暫無資料' })}
+            ? tr({ zh: '加载中...', en: 'Loading...' })
+            : tr({ zh: '该范围暂无数据', en: 'No data for this scope' })}
         />
       </div>
 
       {/* ── 控制条 ── */}
       <footer className="t10h-controls">
         <button type="button" className="t10h-play" onClick={togglePlay}
-          aria-label={playing ? tr({ zh: '暂停', en: 'Pause', zhHant: '暫停' }) : tr({ zh: '播放', en: 'Play', zhHant: '播放' })}>
+          aria-label={playing ? tr({ zh: '暂停', en: 'Pause' }) : tr({ zh: '播放', en: 'Play' })}>
           {playing ? <Pause size={18} /> : <Play size={18} />}
         </button>
         <input className="t10h-scrub" type="range" min={0} max={Math.max(0, frames.length - 1)} step={1}
           value={Math.min(yearIdx, Math.max(0, frames.length - 1))}
           onChange={e => { setPlaying(false); setYearIdx(Number(e.target.value)); }}
-          aria-label={tr({ zh: '年份', en: 'Year', zhHant: '年份' })} />
-        <div className="t10h-speed" role="group" aria-label={tr({ zh: '速度', en: 'Speed', zhHant: '速度' })}>
+          aria-label={tr({ zh: '年份', en: 'Year' })} />
+        <div className="t10h-speed" role="group" aria-label={tr({ zh: '速度', en: 'Speed' })}>
           {SPEEDS.map(s => (
             <button key={s.ms} type="button" className={s.ms === speed ? 'active' : ''} onClick={() => setSpeed(s.ms)}>
-              {tr({ zh: s.zh, en: s.en, zhHant: s.zhHant })}
+              {tr({ zh: s.zh, en: s.en })}
             </button>
           ))}
         </div>
@@ -310,8 +310,7 @@ export default function SorRace() {
       <div className="t10h-note">
         {tr({
           zh: 'SOR(名次和)= 一个人在 17 个现役项目上世界排名之和,越小越强;缺项按该项参与人数 + 1 计罚分。条形长度为真实 SOR 值(0 起),越短越强。',
-          en: "SOR (Sum of Ranks) = a cuber's world ranks across the 17 active events summed; lower is stronger. Missing events count as participants + 1. Bar length is the actual SOR from 0; shorter is stronger.",
-          zhHant: 'SOR(名次和)= 一個人在 17 個現役項目上世界排名之和,越小越強;缺項按該項參與人數 + 1 計罰分。條形長度為真實 SOR 值(0 起),越短越強。',
+          en: "SOR (Sum of Ranks) = a cuber's world ranks across the 17 active events summed; lower is stronger. Missing events count as participants + 1. Bar length is the actual SOR from 0; shorter is stronger."
         })}
         <div className="t10h-legend">
           {(Object.keys(CONTINENT_LABEL) as Continent[]).map(c => (

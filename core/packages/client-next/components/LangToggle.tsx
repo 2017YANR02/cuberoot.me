@@ -1,7 +1,7 @@
 'use client';
 
-// Three-locale picker: English (bare URL) / 简体中文 (/zh) / 繁體中文 (/zh-Hant).
-// Pattern B path swap: strip any /en, /zh, /zh-Hant prefix, then re-apply the
+// Two-locale picker: English (bare URL) / 简体中文 (/zh).
+// Pattern B path swap: strip any /en, /zh prefix, then re-apply the
 // target locale's prefix (English stays bare). Reads the query lazily (not via
 // useSearchParams at render) so this globally mounted control doesn't force
 // pages to bail to CSR during prerender.
@@ -24,7 +24,6 @@ interface LangToggleProps {
 const OPTIONS: { code: AppLang; label: string }[] = [
   { code: 'en', label: 'English' },
   { code: 'zh', label: '简体中文' },
-  { code: 'zh-Hant', label: '繁體中文' },
 ];
 
 function TranslateIcon({ size = 14 }: { size?: number }) {
@@ -72,7 +71,7 @@ export default function LangToggle({ variant = 'inline', className, soft = false
     if (soft) return; // stay on the current route so the host (e.g. an open modal) keeps its state
 
     if (!pathname) return;
-    const bare = pathname.replace(/^\/(en|zh-Hant|zh)(?=\/|$)/, '') || '/';
+    const bare = pathname.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
     // Drop the ?lang= syncLangToUrl just injected — Pattern B URLs are clean.
     let query = '';
     if (typeof window !== 'undefined') {

@@ -57,8 +57,7 @@ export function MatrixSelect({ pieceType, value, onChange }: MatrixSelectProps):
       <div className="bld-matrix-actions">
         <button type="button" className="bld-btn bld-btn-ghost" onClick={selectAll}>
           <CheckCheck size={15} />
-          {tr({ zh: '全选', en: 'Select all',
-              zhHant: "全選"
+          {tr({ zh: '全选', en: 'Select all'
         })}
         </button>
         <button type="button" className="bld-btn bld-btn-ghost" onClick={clearAll}>

@@ -54,7 +54,7 @@ function fmtInt(n: number): string {
 export default function DistanceHistogram({
   isZh, liveData, liveMean, liveTotal,
 }: Props) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const [yScale, setYScale] = useState<YScale>('linear');
   const [hovered, setHovered] = useState<number | null>(null);
 
@@ -128,16 +128,16 @@ export default function DistanceHistogram({
     <div className="dg-interactive">
       <div className="dg-controls" style={{ gridTemplateColumns: 'auto auto 1fr' }}>
         <div className="dg-ctrl">
-          <div className="dg-ctrl-label"><span>{t('Y 轴', 'Y axis', "Y 軸")}</span></div>
+          <div className="dg-ctrl-label"><span>{t('Y 轴', 'Y axis')}</span></div>
           <div className="dg-radio-row">
             <button type="button" className={yScale === 'linear' ? 'is-active' : ''}
-                    onClick={() => setYScale('linear')}>{t('线性', 'Linear', "線性")}</button>
+                    onClick={() => setYScale('linear')}>{t('线性', 'Linear')}</button>
             <button type="button" className={yScale === 'log' ? 'is-active' : ''}
                     onClick={() => setYScale('log')}>Log</button>
           </div>
         </div>
         <div className="dg-ctrl">
-          <div className="dg-ctrl-label"><span>{t('论文数据', 'Paper', "論文資料")}</span></div>
+          <div className="dg-ctrl-label"><span>{t('论文数据', 'Paper')}</span></div>
           <div className="dg-ctrl-value" style={{ fontSize: '0.82rem', fontWeight: 500 }}>
             <TeX src={`|S| = ${PAPER_TOTAL.toLocaleString('en-US')}`} />,&nbsp;
             <TeX src={`\\hat\\mu \\approx ${PAPER_MEAN.toFixed(4)}`} />
@@ -145,7 +145,7 @@ export default function DistanceHistogram({
         </div>
         {hasLive && (
           <div className="dg-ctrl">
-            <div className="dg-ctrl-label"><span>{t('你的数据', 'Your samples', "你的資料")}</span></div>
+            <div className="dg-ctrl-label"><span>{t('你的数据', 'Your samples')}</span></div>
             <div className="dg-ctrl-value" style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--dg-ok)' }}>
               <TeX src={`|S| = ${liveTotalSafe.toLocaleString('en-US')}`} />,&nbsp;
               <TeX src={`\\hat\\mu \\approx ${(liveMean ?? 0).toFixed(4)}`} />
@@ -155,7 +155,7 @@ export default function DistanceHistogram({
       </div>
 
       <svg className="dg-chart" viewBox={`0 0 ${W} ${H}`} role="img"
-           aria-label={t('Kociemba 解长度分布', 'Kociemba solution length histogram', "Kociemba 解長度分佈")}>
+           aria-label={t('Kociemba 解长度分布', 'Kociemba solution length histogram')}>
         {/* axes */}
         <line className="dg-chart-axis" x1={PADL} y1={PADT} x2={PADL} y2={H - PADB} />
         <line className="dg-chart-axis" x1={PADL} y1={H - PADB} x2={W - PADR} y2={H - PADB} />
@@ -179,7 +179,7 @@ export default function DistanceHistogram({
                 x={xCenter(d)} y={H - PADB + 16} textAnchor="middle">{d}</text>
         ))}
         <text className="dg-chart-label" x={(PADL + W - PADR) / 2} y={H - 4} textAnchor="middle">
-          {t('Kociemba 解长度 d (HTM)', 'Kociemba solution length d (HTM)', "Kociemba 解長度 d (HTM)")}
+          {t('Kociemba 解长度 d (HTM)', 'Kociemba solution length d (HTM)')}
         </text>
 
         {/* bars: paper */}
@@ -287,15 +287,13 @@ export default function DistanceHistogram({
         {hasLive && (
           <span className="dg-chart-legend-item">
             <span className="dg-chart-legend-swatch is-live" />
-            {t('你刚跑的样本', 'Your live samples', "你剛跑的樣本")}
+            {t('你刚跑的样本', 'Your live samples')}
           </span>
         )}
       </div>
 
       <p className="dg-sampler-note">
-        {i18n.language === 'zh-Hant' ? ((
-                        <>500,000 個隨機狀態中,Kociemba 給出的最長解只到 20 HTM —— 跟 Rokicki 證的精確直徑相同。注意分佈的"刀切"形狀:18 和 19 步幾乎佔了 86%,而 11 步只見到 1 個。論文用這個事實 + Hoeffding 把 <TeX src="\mu \le 18.4804" /> 鎖死。</>
-                      )) : (isZh ? (
+        {(isZh ? (
                         <>500,000 个随机状态中,Kociemba 给出的最长解只到 20 HTM —— 跟 Rokicki 证的精确直径相同。注意分布的"刀切"形状:18 和 19 步几乎占了 86%,而 11 步只见到 1 个。论文用这个事实 + Hoeffding 把 <TeX src="\mu \le 18.4804" /> 锁死。</>
                       ) : (
                         <>Of 500,000 random states, the longest Kociemba solution is exactly 20 HTM — matching Rokicki's proven diameter. Note the knife-edge: depths 18 and 19 alone account for ≈ 86%, while depth 11 appears just once. The paper combines this with Hoeffding to lock in <TeX src="\mu \le 18.4804" />.</>

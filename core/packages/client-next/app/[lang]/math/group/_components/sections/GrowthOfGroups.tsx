@@ -578,14 +578,11 @@ function GrowthComparisonPanel({ lang }: { lang: Lang }) {
 
         {/* Legend */}
         {[
-          { show: showZ2, color: COLOR_Z2, labelZh: 'Z² (多项式, 次数2)', labelEn: 'Z² (poly, degree 2)',
-              labelZhHant: "Z² (多項式, 次數2)"
+          { show: showZ2, color: COLOR_Z2, labelZh: 'Z² (多项式, 次数2)', labelEn: 'Z² (poly, degree 2)'
         },
-          { show: showF2, color: COLOR_F2, labelZh: 'F₂ (指数, 速率3)', labelEn: 'F₂ (exp, rate 3)',
-              labelZhHant: "F₂ (指數, 速率3)"
+          { show: showF2, color: COLOR_F2, labelZh: 'F₂ (指数, 速率3)', labelEn: 'F₂ (exp, rate 3)'
         },
-          { show: showCube, color: COLOR_CUBE, labelZh: '魔方群 (饱和)', labelEn: 'Cube (saturating)',
-              labelZhHant: "魔方群 (飽和)"
+          { show: showCube, color: COLOR_CUBE, labelZh: '魔方群 (饱和)', labelEn: 'Cube (saturating)'
         },
         ].filter(it => it.show).map((it, i) => (
           <g key={i} transform={`translate(${PAD.left + 8}, ${PAD.top + 10 + i * 16})`}>
@@ -623,8 +620,7 @@ function GrowthComparisonPanel({ lang }: { lang: Lang }) {
         {showCube && (
           <div className="gt-result-row">
             <span className="gt-result-label" style={{ color: COLOR_CUBE }}>
-              β_cube({r}) {r >= 16 ? (tr({ zh: '(估计)', en: '(est.)',
-                  zhHant: "(估計)"
+              β_cube({r}) {r >= 16 ? (tr({ zh: '(估计)', en: '(est.)'
             })) : ''}
             </span>
             <span className="gt-result-val-strong" style={{ color: COLOR_CUBE }}>
@@ -833,8 +829,7 @@ function CubeDistributionPanel({ lang }: { lang: Lang }) {
             <span className="gt-result-val-strong" style={{ color: hovered <= 15 ? COLOR_CUBE : 'var(--ink-faint)' }}>
               {hovered <= 15
                 ? CUBE_SIGMA_EXACT[hovered].toLocaleString()
-                : `~${(CUBE_SIGMA_EST[hovered] ?? 0).toExponential(1)} (${tr({ zh: '估计', en: 'est.',
-                    zhHant: "估計"
+                : `~${(CUBE_SIGMA_EST[hovered] ?? 0).toExponential(1)} (${tr({ zh: '估计', en: 'est.'
                 })})`}
             </span>
           </div>
@@ -962,11 +957,9 @@ function GeometricExplorerPanel({ lang }: { lang: Lang }) {
           </span>
           <span className="gt-result-val">
             {view === 'grid'
-              ? (tr({ zh: '多项式，次数 2 (β ~ r²)', en: 'polynomial, degree 2 (β ~ r²)',
-                  zhHant: "多項式，次數 2 (β ~ r²)"
+              ? (tr({ zh: '多项式，次数 2 (β ~ r²)', en: 'polynomial, degree 2 (β ~ r²)'
             }))
-              : (tr({ zh: '指数，速率 3 (β ~ 3ʳ)', en: 'exponential, rate 3 (β ~ 3ʳ)',
-                  zhHant: "指數，速率 3 (β ~ 3ʳ)"
+              : (tr({ zh: '指数，速率 3 (β ~ 3ʳ)', en: 'exponential, rate 3 (β ~ 3ʳ)'
             }))}
           </span>
         </div>
@@ -1038,8 +1031,7 @@ function Z2DiamondSVG({ r, lang }: { r: number; lang: Lang }) {
       {/* Label */}
       <text x={W / 2} y={H - 4} textAnchor="middle"
         style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
-        |x|+|y| ≤ {r}, {dots.length} {r === 0 ? '' : (tr({ zh: '个点', en: 'pts',
-            zhHant: "個點"
+        |x|+|y| ≤ {r}, {dots.length} {r === 0 ? '' : (tr({ zh: '个点', en: 'pts'
         }))}
       </text>
     </svg>

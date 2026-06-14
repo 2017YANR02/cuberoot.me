@@ -89,17 +89,17 @@ export default function LiveHero() {
         />
       </div>
 
-      <div className="wc-livehero-modes" role="tablist" aria-label={t('魔方互动', 'Cube interaction', '魔方互動')}>
+      <div className="wc-livehero-modes" role="tablist" aria-label={t('魔方互动', 'Cube interaction')}>
         <button
           type="button" role="tab" aria-selected={mode === 'watch'}
           className={`wc-livehero-mode${mode === 'watch' ? ' is-active' : ''}`}
           onClick={() => switchMode('watch')}
-        >{t('看它还原', 'Watch it solve', '看它還原')}</button>
+        >{t('看它还原', 'Watch it solve')}</button>
         <button
           type="button" role="tab" aria-selected={mode === 'play'}
           className={`wc-livehero-mode${mode === 'play' ? ' is-active' : ''}`}
           onClick={() => switchMode('play')}
-        >{t('你来拧', 'You try', '你來擰')}</button>
+        >{t('你来拧', 'You try')}</button>
       </div>
 
       {mode === 'play' && (
@@ -117,14 +117,14 @@ export default function LiveHero() {
               className={`wc-livehero-dir${prime ? ' is-active' : ''}`}
               onClick={() => setPrime((v) => !v)}
               aria-pressed={prime}
-            >{prime ? t('逆时针', 'Counter-CW', '逆時針') : t('顺时针', 'Clockwise', '順時針')}</button>
-            <span className="wc-livehero-count">{t('已转', 'Turns', '已轉')} {moveCount}</span>
+            >{prime ? t('逆时针', 'Counter-CW') : t('顺时针', 'Clockwise')}</button>
+            <span className="wc-livehero-count">{t('已转', 'Turns')} {moveCount}</span>
             <button type="button" className="wc-livehero-reset" onClick={reset}>
               <RotateCcw size={14} />{t('重置', 'Reset')}
             </button>
           </div>
           <p className="wc-livehero-hint">
-            {t('点方块上的面也能拧,拖动转视角。', 'Tap the cube faces too, and drag to rotate the view.', '點方塊上的面也能擰,拖動轉視角。')}
+            {t('点方块上的面也能拧,拖动转视角。', 'Tap the cube faces too, and drag to rotate the view.')}
           </p>
         </div>
       )}

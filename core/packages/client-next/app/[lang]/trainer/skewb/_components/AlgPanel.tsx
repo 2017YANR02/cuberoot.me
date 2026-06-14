@@ -63,17 +63,14 @@ export default function AlgPanel({
           {tr({ zh: '生成 L2L 案例', en: 'Generate L2L Case' })}
         </button>
 
-        <div className="sk-scramble-label">{tr({ zh: '打乱', en: 'Scramble',
-            zhHant: "打亂"
+        <div className="sk-scramble-label">{tr({ zh: '打乱', en: 'Scramble'
         })}</div>
         <div className={scramble ? 'sk-scramble-text' : 'sk-scramble-text is-empty'}>
           {scramble ||
             (hasSelection
-              ? tr({ zh: '点击上方生成', en: 'Press generate above',
-                  zhHant: "點選上方生成"
+              ? tr({ zh: '点击上方生成', en: 'Press generate above'
             })
-              : tr({ zh: '请至少选择一个类别或案例', en: 'Select at least one category or case',
-                  zhHant: "請至少選擇一個類別或案例"
+              : tr({ zh: '请至少选择一个类别或案例', en: 'Select at least one category or case'
             }))}
         </div>
 
@@ -91,8 +88,7 @@ export default function AlgPanel({
               onClick={() => setHintOpen(true)}
             >
               <HelpCircle size={15} />
-              {tr({ zh: '忘记解法了?', en: 'Help! I forgot the solution.',
-                  zhHant: "忘記解法了?"
+              {tr({ zh: '忘记解法了?', en: 'Help! I forgot the solution.'
             })}
             </button>
           </div>
@@ -100,8 +96,7 @@ export default function AlgPanel({
       </div>
 
       <div className="sk-settings">
-        <h2 className="sk-settings-title">{tr({ zh: '选择案例', en: 'Select cases',
-            zhHant: "選擇案例"
+        <h2 className="sk-settings-title">{tr({ zh: '选择案例', en: 'Select cases'
         })}</h2>
 
         {/* category vs case-id view switch */}
@@ -111,8 +106,7 @@ export default function AlgPanel({
             className={view === 'category' ? 'sk-select-mode-btn is-active' : 'sk-select-mode-btn'}
             onClick={() => onView('category')}
           >
-            {tr({ zh: '按类别', en: 'By Category',
-                zhHant: "按類別"
+            {tr({ zh: '按类别', en: 'By Category'
             })}
           </button>
           <button
@@ -120,8 +114,7 @@ export default function AlgPanel({
             className={view === 'id' ? 'sk-select-mode-btn is-active' : 'sk-select-mode-btn'}
             onClick={() => onView('id')}
           >
-            {tr({ zh: '按案例编号', en: 'By Case ID',
-                zhHant: "按案例編號"
+            {tr({ zh: '按案例编号', en: 'By Case ID'
             })}
           </button>
         </div>
@@ -159,7 +152,7 @@ export default function AlgPanel({
                       checked={on}
                       onChange={() => onToggleCategory(cat.key)}
                     />
-                    {(i18n.language === 'zh-Hant' ? (cat.zhHant ?? cat.zh) : (i18n.language.startsWith('zh') ? cat.zh : cat.en))}
+                    {((i18n.language.startsWith('zh') ? cat.zh : cat.en))}
                   </label>
                 );
               })}
@@ -193,8 +186,7 @@ export default function AlgPanel({
             checked={showImg}
             onChange={(e) => onShowImg(e.target.checked)}
           />
-          {tr({ zh: '显示打乱图', en: 'Show scramble image',
-              zhHant: "顯示打亂圖"
+          {tr({ zh: '显示打乱图', en: 'Show scramble image'
         })}
         </label>
       </div>

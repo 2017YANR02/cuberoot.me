@@ -16,7 +16,6 @@ interface SmallGroup {
   elements: GroupEl[];
   /** op(i,j) = index of E[i]*E[j] in the element list */
   op: (i: number, j: number) => number;
-    labelZhHant?: string;
 }
 
 // C4 = Z/4Z under addition mod 4
@@ -26,8 +25,7 @@ const C4: SmallGroup = {
   labelEn: 'C₄ (cyclic order 4)',
   order: 4,
   elements: [{ label: 'e' }, { label: 'g' }, { label: 'g²' }, { label: 'g³' }],
-  op: (i, j) => (i + j) % 4,
-    labelZhHant: "C₄ (4階迴圈群)"
+  op: (i, j) => (i + j) % 4
 };
 
 // V4 = C2 x C2, elements (0,0),(0,1),(1,0),(1,1) bitwise XOR
@@ -64,8 +62,7 @@ const S3: SmallGroup = {
   labelEn: 'S₃ (symmetric group on 3, order 6)',
   order: 6,
   elements: S3_LABELS.map(l => ({ label: l })),
-  op: (i, j) => s3Idx(s3Compose(S3_PERMS[i], S3_PERMS[j])),
-    labelZhHant: "S₃ (3階對稱群, 6階)"
+  op: (i, j) => s3Idx(s3Compose(S3_PERMS[i], S3_PERMS[j]))
 };
 
 // Q8: quaternion group {±1,±i,±j,±k}
@@ -89,8 +86,7 @@ const Q8: SmallGroup = {
   labelEn: 'Q₈ (quaternion group, order 8)',
   order: 8,
   elements: Q8_LABELS.map(l => ({ label: l })),
-  op: (i, j) => Q8_TABLE[i][j],
-    labelZhHant: "Q₈ (四元數群, 8階)"
+  op: (i, j) => Q8_TABLE[i][j]
 };
 
 const GROUPS: SmallGroup[] = [C4, V4, S3, Q8];
@@ -561,8 +557,7 @@ function CycleVisualizer({ group }: { group: SmallGroup }) {
           <text x={SVG_W / 2} y={SVG_H - 12}
             textAnchor="middle" fontSize={12}
             fill="var(--green)" style={{ fontFamily: 'var(--mono)' }}>
-            {tr({ zh: '恒等元 — 每个元素均为不动点', en: 'Identity — every element is a fixed point',
-                zhHant: "恆等元 — 每個元素均為不動點"
+            {tr({ zh: '恒等元 — 每个元素均为不动点', en: 'Identity — every element is a fixed point'
             })}
           </text>
         )}
@@ -596,8 +591,7 @@ function CycleVisualizer({ group }: { group: SmallGroup }) {
           </span>
           <span className="gt-result-val" style={{ color: 'var(--green)', fontSize: 12 }}>
             {gIdx === 0
-              ? (tr({ zh: '恒等元 — n 个不动点 (唯一例外)', en: 'Identity — n fixed points (only exception)',
-                  zhHant: "恆等元 — n 個不動點 (唯一例外)"
+              ? (tr({ zh: '恒等元 — n 个不动点 (唯一例外)', en: 'Identity — n fixed points (only exception)'
             }))
               : (lang === 'zh'
                 ? `无不动点 — 每个轮换长度均为 ${ord} ✓`
@@ -659,8 +653,7 @@ function EmbeddingComparator({ group }: { group: SmallGroup }) {
       <svg viewBox={`0 0 ${W} ${H}`} width="100%"
         style={{ display: 'block', maxWidth: W }}
         role="img"
-        aria-label={tr({ zh: 'Cayley 嵌入度对比', en: 'Embedding degree comparison',
-            zhHant: "Cayley 嵌入度對比"
+        aria-label={tr({ zh: 'Cayley 嵌入度对比', en: 'Embedding degree comparison'
         })}>
 
         {showCube ? (
@@ -682,8 +675,7 @@ function EmbeddingComparator({ group }: { group: SmallGroup }) {
             <text x={LABEL_X - 4} y={BAR_Y2 + BAR_H / 2 + 1}
               textAnchor="end" dominantBaseline="middle" fontSize={10} fill="var(--ink-dim)"
               style={{ fontFamily: 'var(--mono)' }}>
-              {tr({ zh: '面块嵌入', en: 'Facelet',
-                  zhHant: "面塊嵌入"
+              {tr({ zh: '面块嵌入', en: 'Facelet'
             })}
             </text>
             <rect x={BAR_START} y={BAR_Y2} width={barWidth(cubeNatLog)} height={BAR_H}
@@ -695,8 +687,7 @@ function EmbeddingComparator({ group }: { group: SmallGroup }) {
 
             <text x={W / 2} y={H - 8} textAnchor="middle" fontSize={9} fill="var(--ink-faint)"
               style={{ fontFamily: 'var(--sans)', fontStyle: 'italic' }}>
-              {tr({ zh: '对数坐标轴', en: 'Log scale',
-                  zhHant: "對數座標軸"
+              {tr({ zh: '对数坐标轴', en: 'Log scale'
             })}
             </text>
           </>
@@ -719,8 +710,7 @@ function EmbeddingComparator({ group }: { group: SmallGroup }) {
             <text x={LABEL_X - 4} y={BAR_Y2 + BAR_H / 2 + 1}
               textAnchor="end" dominantBaseline="middle" fontSize={10} fill="var(--ink-dim)"
               style={{ fontFamily: 'var(--mono)' }}>
-              {tr({ zh: '最小忠实度 μ', en: 'Min faithful μ',
-                  zhHant: "最小忠實度 μ"
+              {tr({ zh: '最小忠实度 μ', en: 'Min faithful μ'
             })}
             </text>
             <rect x={BAR_START} y={BAR_Y2} width={barWidth(muLog)} height={BAR_H}
@@ -733,8 +723,7 @@ function EmbeddingComparator({ group }: { group: SmallGroup }) {
             <text x={W / 2} y={H - 8} textAnchor="middle" fontSize={9} fill="var(--ink-faint)"
               style={{ fontFamily: 'var(--sans)', fontStyle: 'italic' }}>
               {n === mu
-                ? (tr({ zh: `μ = |G| — Cayley 度已是最优`, en: `μ = |G| — Cayley degree is already optimal`,
-                    zhHant: "μ = |G| — Cayley 度已是最優"
+                ? (tr({ zh: `μ = |G| — Cayley 度已是最优`, en: `μ = |G| — Cayley degree is already optimal`
                 }))
                 : (lang === 'zh' ? `μ = ${mu} < ${n} = |G| — Cayley 给出上界, 非最优` : `μ = ${mu} < ${n} = |G| — Cayley gives upper bound, not optimal`)}
             </text>

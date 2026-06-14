@@ -35,14 +35,12 @@ interface ModuleDoc {
   titleEn: string;
   bodyZh: JSX.Element;
   bodyEn: JSX.Element;
-    titleZhHant?: string;
-    bodyZhHant?: JSX.Element;
 }
 
 export default function BldGuidePage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('盲拧训练说明', '3BLD Guide', "盲擰訓練說明");
+  useDocumentTitle('盲拧训练说明', '3BLD Guide');
 
   const modules: ModuleDoc[] = [
     {
@@ -76,8 +74,7 @@ export default function BldGuidePage(): JSX.Element {
             Default buffers are edge A (UF) and corner J (UFR). When you change buffers, adjust the borrow/setup position accordingly — it must not coincide with the buffer position. Pick the color-preserving borrow method to match your tutorial (fixed-borrow / jump-coding); beginners can leave it off.
           </p>
         </>
-      ),
-        titleZhHant: "讀碼還原助手"
+      )
     },
     {
       n: 2,
@@ -114,8 +111,7 @@ export default function BldGuidePage(): JSX.Element {
             </li>
           </ul>
         </>
-      ),
-        titleZhHant: "稜塊公式訓練"
+      )
     },
     {
       n: 3,
@@ -124,8 +120,7 @@ export default function BldGuidePage(): JSX.Element {
       titleZh: '角块公式训练',
       titleEn: 'Corner Algorithm Trainer',
       bodyZh: <p>功能与棱块公式训练相同,针对角块公式。</p>,
-      bodyEn: <p>Same as the edge algorithm trainer, for corner algs.</p>,
-        titleZhHant: "角塊公式訓練"
+      bodyEn: <p>Same as the edge algorithm trainer, for corner algs.</p>
     },
     {
       n: 4,
@@ -146,8 +141,7 @@ export default function BldGuidePage(): JSX.Element {
             You can choose between a two-corner twist (excluding the buffer) and a three-corner twist (including the buffer), and customize which two positions the twists land on.
           </p>
         </>
-      ),
-        titleZhHant: "翻角公式訓練"
+      )
     },
     {
       n: 5,
@@ -156,8 +150,7 @@ export default function BldGuidePage(): JSX.Element {
       titleZh: '翻棱公式训练',
       titleEn: 'Edge Flip Trainer',
       bodyZh: <p>功能与翻角公式训练相同,针对翻棱。</p>,
-      bodyEn: <p>Same as the corner twist trainer, for flipped edges.</p>,
-        titleZhHant: "翻稜公式訓練"
+      bodyEn: <p>Same as the corner twist trainer, for flipped edges.</p>
     },
     {
       n: 6,
@@ -190,8 +183,7 @@ export default function BldGuidePage(): JSX.Element {
             If Float order is left empty, scrambles solve the pieces at the Eject positions and randomize everything else fully, without controlling how often any alg appears (eject mode).
           </p>
         </>
-      ),
-        titleZhHant: "稜塊浮動訓練"
+      )
     },
     {
       n: 7,
@@ -200,8 +192,7 @@ export default function BldGuidePage(): JSX.Element {
       titleZh: '角块浮动训练',
       titleEn: 'Corner Float Trainer',
       bodyZh: <p>功能与棱块浮动训练相同,针对角块。</p>,
-      bodyEn: <p>Same as the edge float trainer, for corners.</p>,
-        titleZhHant: "角塊浮動訓練"
+      bodyEn: <p>Same as the edge float trainer, for corners.</p>
     },
     {
       n: 8,
@@ -230,8 +221,7 @@ export default function BldGuidePage(): JSX.Element {
           </p>
           <p>Checking &ldquo;exclude top layer&rdquo; forces both swapped corners to land on the bottom layer.</p>
         </>
-      ),
-        titleZhHant: "2C2C 訓練"
+      )
     },
     {
       n: 9,
@@ -258,8 +248,7 @@ export default function BldGuidePage(): JSX.Element {
             &ldquo;Scramble edges&rdquo; controls whether edges get scrambled — off leaves edges in a UF-UR swap. &ldquo;Scramble other corners&rdquo; controls corner state — off puts corners directly into a usable parity-twist state.
           </p>
         </>
-      ),
-        titleZhHant: "奇偶帶翻訓練"
+      )
     },
     {
       n: 10,
@@ -286,16 +275,14 @@ export default function BldGuidePage(): JSX.Element {
             &ldquo;Scramble other edges&rdquo; controls edge state — off leaves a buffer-and-input-code swap. &ldquo;Scramble other corners&rdquo; controls corner state — off leaves a buffer-and-input-code swap.
           </p>
         </>
-      ),
-        titleZhHant: "奇偶訓練"
+      )
     },
   ];
 
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '盲拧训练说明', en: '3BLD Guide',
-            zhHant: "盲擰訓練說明"
+        <h1>{tr({ zh: '盲拧训练说明', en: '3BLD Guide'
         })}</h1>
       </div>
 
@@ -303,31 +290,26 @@ export default function BldGuidePage(): JSX.Element {
       <p className="bld-input-summary" style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
         <Info size={16} style={{ flex: '0 0 auto', marginTop: 2 }} />
         <span>
-          {tr({ zh: '盲拧训练器的目标是生成贴近实战的打乱,并尽快遍历指定的训练内容,从而更高效地针对特定情况练习。目前主要功能为棱块 / 角块公式训练、读码还原助手,其余页面持续优化新增中。', en: 'The 3BLD trainer aims to produce realistic scrambles and traverse a chosen set of cases as fast as possible, so you can drill specific situations more efficiently. The main features today are edge / corner algorithm training and the read & restore helper; other pages are being added and refined.',
-              zhHant: "盲擰訓練器的目標是生成貼近實戰的打亂,並儘快遍歷指定的訓練內容,從而更高效地針對特定情況練習。目前主要功能為稜塊 / 角塊公式訓練、讀碼還原助手,其餘頁面持續最佳化新增中。"
+          {tr({ zh: '盲拧训练器的目标是生成贴近实战的打乱,并尽快遍历指定的训练内容,从而更高效地针对特定情况练习。目前主要功能为棱块 / 角块公式训练、读码还原助手,其余页面持续优化新增中。', en: 'The 3BLD trainer aims to produce realistic scrambles and traverse a chosen set of cases as fast as possible, so you can drill specific situations more efficiently. The main features today are edge / corner algorithm training and the read & restore helper; other pages are being added and refined.'
         })}
         </span>
       </p>
 
       <ul className="bld-guide-notes">
         <li>
-          {tr({ zh: '所有页面的打乱坐标均为还原坐标。', en: 'On every page, scramble coordinates are given in the solved-state frame.',
-              zhHant: "所有頁面的打亂座標均為還原座標。"
+          {tr({ zh: '所有页面的打乱坐标均为还原坐标。', en: 'On every page, scramble coordinates are given in the solved-state frame.'
         })}
         </li>
         <li>
-          {tr({ zh: '编码采用彳亍编码(后续会支持自定义编码)。', en: 'Lettering uses the Chìchù scheme (custom schemes are planned).',
-              zhHant: "編碼採用彳亍編碼(後續會支援自定義編碼)。"
+          {tr({ zh: '编码采用彳亍编码(后续会支持自定义编码)。', en: 'Lettering uses the Chìchù scheme (custom schemes are planned).'
         })}
         </li>
         <li>
-          {tr({ zh: '暂不写入 cookie,输入的内容请自行保存。', en: 'No cookies are set yet — save your inputs yourself.',
-              zhHant: "暫不寫入 cookie,輸入的內容請自行儲存。"
+          {tr({ zh: '暂不写入 cookie,输入的内容请自行保存。', en: 'No cookies are set yet — save your inputs yourself.'
         })}
         </li>
         <li>
-          {tr({ zh: '目前为公测第一版,功能与文案仍在调整中。', en: 'This is the first public-beta release; features and wording are still evolving.',
-              zhHant: "目前為公測第一版,功能與文案仍在調整中。"
+          {tr({ zh: '目前为公测第一版,功能与文案仍在调整中。', en: 'This is the first public-beta release; features and wording are still evolving.'
         })}
         </li>
       </ul>
@@ -340,13 +322,13 @@ export default function BldGuidePage(): JSX.Element {
             <span className="bld-guide-icon">{m.icon}</span>
             {m.href ? (
               <Link href={m.href} className="bld-guide-title-link">
-                {i18n.language === 'zh-Hant' ? (m.titleZhHant ?? m.titleZh) : (isZh ? m.titleZh : m.titleEn)}
+                {(isZh ? m.titleZh : m.titleEn)}
               </Link>
             ) : (
-              <span>{i18n.language === 'zh-Hant' ? (m.titleZhHant ?? m.titleZh) : (isZh ? m.titleZh : m.titleEn)}</span>
+              <span>{(isZh ? m.titleZh : m.titleEn)}</span>
             )}
           </h2>
-          <div className="bld-guide-body">{i18n.language === 'zh-Hant' ? (m.bodyZhHant ?? m.bodyZh) : (isZh ? m.bodyZh : m.bodyEn)}</div>
+          <div className="bld-guide-body">{(isZh ? m.bodyZh : m.bodyEn)}</div>
         </section>
       ))}
 
@@ -356,14 +338,12 @@ export default function BldGuidePage(): JSX.Element {
           <span className="bld-guide-icon">
             <Gauge size={16} />
           </span>
-          <span>{tr({ zh: '计算性能', en: 'Performance',
-              zhHant: "計算效能"
+          <span>{tr({ zh: '计算性能', en: 'Performance'
         })}</span>
         </h2>
         <div className="bld-guide-body">
           <p>
-            {tr({ zh: '所有计算都在你的设备本地完成,速度因此取决于设备性能。在一台桌面级 CPU 上各项操作基本可在 2 秒内完成(目前最慢的是带奇偶的棱块浮动生成)。如遇页面异常卡顿,可向作者反馈。', en: 'All computation runs locally on your device, so speed depends on your hardware. On a desktop-class CPU each operation finishes within about 2 seconds (the slowest today is float-edge generation with parity). If a page hangs abnormally, let the author know.',
-                zhHant: "所有計算都在你的裝置本地完成,速度因此取決於裝置效能。在一臺桌面級 CPU 上各項操作基本可在 2 秒內完成(目前最慢的是帶奇偶的稜塊浮動生成)。如遇頁面異常卡頓,可向作者反饋。"
+            {tr({ zh: '所有计算都在你的设备本地完成,速度因此取决于设备性能。在一台桌面级 CPU 上各项操作基本可在 2 秒内完成(目前最慢的是带奇偶的棱块浮动生成)。如遇页面异常卡顿,可向作者反馈。', en: 'All computation runs locally on your device, so speed depends on your hardware. On a desktop-class CPU each operation finishes within about 2 seconds (the slowest today is float-edge generation with parity). If a page hangs abnormally, let the author know.'
             })}
           </p>
         </div>
@@ -372,17 +352,12 @@ export default function BldGuidePage(): JSX.Element {
       {/* ── credits / acknowledgements ── */}
       <section className="bld-guide-section bld-guide-credits">
         <h2 className="bld-guide-heading">
-          <span>{tr({ zh: '致谢', en: 'Acknowledgements',
-              zhHant: "致謝"
+          <span>{tr({ zh: '致谢', en: 'Acknowledgements'
         })}</span>
         </h2>
         <div className="bld-guide-body">
           <p>
-            {i18n.language === 'zh-Hant' ? ((
-                                    <>
-                                      盲擰訓練器由 <b>勺子(喬智 / Zhi Qiao)</b> 開發,以 GPL-3.0 協議開源。本站為移植整合版本,引擎與玩法忠實於原作。
-                                    </>
-                                  )) : (isZh ? (
+            {(isZh ? (
                                     <>
                                       盲拧训练器由 <b>勺子(乔智 / Zhi Qiao)</b> 开发,以 GPL-3.0 协议开源。本站为移植整合版本,引擎与玩法忠实于原作。
                                     </>

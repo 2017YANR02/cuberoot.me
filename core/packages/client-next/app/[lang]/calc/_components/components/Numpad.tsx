@@ -515,8 +515,7 @@ export function Numpad({ onEnsureWrTop2Loaded }: NumpadProps = {}) {
     { content: '4', action: () => pressDigit('4'), cls: 'np-digit' },
     { content: '5', action: () => pressDigit('5'), cls: 'np-digit' },
     { content: '6', action: () => pressDigit('6'), cls: 'np-digit' },
-    { content: tr({ zh: '随机', en: 'Rand',
-        zhHant: "隨機"
+    { content: tr({ zh: '随机', en: 'Rand'
     }), action: pressRand, cls: 'np-op' },
     { content: '7', action: () => pressDigit('7'), cls: 'np-digit' },
     { content: '8', action: () => pressDigit('8'), cls: 'np-digit' },

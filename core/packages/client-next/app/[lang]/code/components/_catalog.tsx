@@ -66,10 +66,8 @@ function PillToggleDemo() {
   return (
     <div className="cg-row">
       <PillToggle value={a} onChange={setA} ariaLabel="switch" />
-      <PillToggle value={b} onChange={setB} onLabel={tr({ zh: '开', en: 'On',
-          zhHant: "開"
-    })} offLabel={tr({ zh: '关', en: 'Off',
-        zhHant: "關"
+      <PillToggle value={b} onChange={setB} onLabel={tr({ zh: '开', en: 'On'
+    })} offLabel={tr({ zh: '关', en: 'Off'
     })} />
     </div>
   );
@@ -96,12 +94,10 @@ function ListSelectDemo() {
   const [v, setV] = useState('');
   const items = [
     { value: '333', label: '3x3x3' },
-    { value: 'us', label: tr({ zh: '美国', en: 'United States',
-        zhHant: "美國"
+    { value: 'us', label: tr({ zh: '美国', en: 'United States'
     }), country: 'us' },
     { value: 'jp', label: tr({ zh: '日本', en: 'Japan' }), country: 'jp' },
-    { value: 'tw', label: tr({ zh: '中华台北', en: 'Chinese Taipei',
-        zhHant: "中華臺北"
+    { value: 'tw', label: tr({ zh: '中华台北', en: 'Chinese Taipei'
     }), country: 'tw' },
   ];
   return <ListSelect items={items} value={v} onChange={setV} allLabel={isZh ? '全部' : 'All'} searchable />;

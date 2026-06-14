@@ -48,7 +48,6 @@ interface GroupDef {
   // char values: charVals[i][k] = chi_i(g_k)
   charVals: C[][];
   charLabels: string[];
-    labelZhHant?: string;
 }
 
 // S3: 3 classes {e size1, (12) size3, (123) size2}; 3 irreps dims 1,1,2
@@ -93,8 +92,7 @@ const S4: GroupDef = {
     [{ re: 2, im: 0 }, czero(), { re: 2, im: 0 }, { re: -1, im: 0 }, czero()],
     [{ re: 3, im: 0 }, ONE,  { re: -1, im: 0 }, czero(), { re: -1, im: 0 }],
     [{ re: 3, im: 0 }, NEG, { re: -1, im: 0 }, czero(), ONE],
-  ],
-    labelZhHant: "S₄ (魔方立方體旋轉群)"
+  ]
 };
 
 // D4 and Q8 have identical character tables
@@ -112,8 +110,7 @@ const D4: GroupDef = {
   classLabels: ['e', 'r²', '{r,r³}', '{s,r²s}', '{rs,r³s}'],
   classSizes: [1, 1, 2, 2, 2],
   charLabels: ['χ₁', 'χ₂', 'χ₃', 'χ₄', 'χ₅ (dim 2)'],
-  charVals: D4Q8_CHAR,
-    labelZhHant: "D₄ (二面體群，階 8)"
+  charVals: D4Q8_CHAR
 };
 
 const Q8: GroupDef = {
@@ -122,8 +119,7 @@ const Q8: GroupDef = {
   classLabels: ['{1}', '{-1}', '{±i}', '{±j}', '{±k}'],
   classSizes: [1, 1, 2, 2, 2],
   charLabels: ['χ₁', 'χ₂', 'χ₃', 'χ₄', 'χ₅ (dim 2)'],
-  charVals: D4Q8_CHAR,
-    labelZhHant: "Q₈ (四元數群)"
+  charVals: D4Q8_CHAR
 };
 
 // Build C_n dynamically for n=2..8
@@ -599,11 +595,9 @@ function CharTablePanel({
                   </span>
                   <span className="gt-result-val">
                     {res.isRow
-                      ? (tr({ zh: '行正交（第一正交关系）', en: 'Row orthogonality (1st relation)',
-                          zhHant: "行正交（第一正交關係）"
+                      ? (tr({ zh: '行正交（第一正交关系）', en: 'Row orthogonality (1st relation)'
                     }))
-                      : (tr({ zh: '列正交（第二正交关系）', en: 'Column orthogonality (2nd relation)',
-                          zhHant: "列正交（第二正交關係）"
+                      : (tr({ zh: '列正交（第二正交关系）', en: 'Column orthogonality (2nd relation)'
                     }))}
                   </span>
                 </div>
@@ -780,8 +774,7 @@ function CharTableSVG({
         fill="var(--bg-elev)" stroke="var(--rule)" strokeWidth={1} rx={3} />
       <text x={padLeft + ROW_LABEL_W / 2} y={18} textAnchor="middle"
         style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-faint)">
-        {tr({ zh: 'χᵢ \\ 类', en: 'χᵢ \\ class',
-            zhHant: "χᵢ \\ 類"
+        {tr({ zh: 'χᵢ \\ 类', en: 'χᵢ \\ class'
         })}
       </text>
       <text x={padLeft + ROW_LABEL_W / 2} y={32} textAnchor="middle"
@@ -893,8 +886,7 @@ function SumOfSquaresPanel({ group, lang }: { group: GroupDef; lang: Lang }) {
         {hovered !== null && (
           <text x={20 + BAR_W / 2} y={BAR_H + 48} textAnchor="middle"
             style={{ fontFamily: 'var(--mono)', fontSize: 11 }} fill={CAT[hovered % CAT.length]}>
-            {group.charLabels[hovered]}: deg={degrees[hovered]}, d²={segments[hovered].sq}, {tr({ zh: '占比', en: 'share',
-                zhHant: "佔比"
+            {group.charLabels[hovered]}: deg={degrees[hovered]}, d²={segments[hovered].sq}, {tr({ zh: '占比', en: 'share'
             })}={segments[hovered].sq}/{G}
           </text>
         )}
@@ -1047,8 +1039,7 @@ function ConjugationPanel({ lang }: { lang: Lang }) {
         })()}
 
         <text x={120} y={168} textAnchor="middle" style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-faint)">
-          {tr({ zh: 'Argand 图 — 各项首尾相连', en: 'Argand diagram — vectors head-to-tail',
-              zhHant: "Argand 圖 — 各項首尾相連"
+          {tr({ zh: 'Argand 图 — 各项首尾相连', en: 'Argand diagram — vectors head-to-tail'
         })}
         </text>
       </svg>
@@ -1060,8 +1051,7 @@ function ConjugationPanel({ lang }: { lang: Lang }) {
             <L zh="内积结果" en="Inner product" />
           </span>
           <span className="gt-result-val-strong" style={{ color: conjOn ? 'var(--green)' : 'var(--warn)' }}>
-            {fmtC(displayVal)} {conjOn ? (Math.abs(displayVal.re - (pairI === pairJ ? 1 : 0)) < 0.01 ? '= δ ✓' : '') : (tr({ zh: '(错误)', en: '(wrong)',
-                zhHant: "(錯誤)"
+            {fmtC(displayVal)} {conjOn ? (Math.abs(displayVal.re - (pairI === pairJ ? 1 : 0)) < 0.01 ? '= δ ✓' : '') : (tr({ zh: '(错误)', en: '(wrong)'
             }))}
           </span>
         </div>
@@ -1095,24 +1085,18 @@ interface CubeClass {
   cycleType: string;
   size: number;
   axisDesc: string;
-    nameZhHant?: string;
 }
 
 const CUBE_CLASSES: CubeClass[] = [
-  { colIdx: 0, nameEn: 'Identity', nameZh: '恒等', cycleType: '1⁴', size: 1, axisDesc: 'none',
-      nameZhHant: "恆等"
+  { colIdx: 0, nameEn: 'Identity', nameZh: '恒等', cycleType: '1⁴', size: 1, axisDesc: 'none'
 },
-  { colIdx: 1, nameEn: 'Edge 180° rotations', nameZh: '棱 180° 旋转', cycleType: '(12)', size: 6, axisDesc: 'edge',
-      nameZhHant: "稜 180° 旋轉"
+  { colIdx: 1, nameEn: 'Edge 180° rotations', nameZh: '棱 180° 旋转', cycleType: '(12)', size: 6, axisDesc: 'edge'
 },
-  { colIdx: 2, nameEn: 'Face 180° rotations', nameZh: '面 180° 旋转', cycleType: '(12)(34)', size: 3, axisDesc: 'face',
-      nameZhHant: "面 180° 旋轉"
+  { colIdx: 2, nameEn: 'Face 180° rotations', nameZh: '面 180° 旋转', cycleType: '(12)(34)', size: 3, axisDesc: 'face'
 },
-  { colIdx: 3, nameEn: 'Vertex 120°/240° rotations', nameZh: '顶点 120°/240° 旋转', cycleType: '(123)', size: 8, axisDesc: 'vertex',
-      nameZhHant: "頂點 120°/240° 旋轉"
+  { colIdx: 3, nameEn: 'Vertex 120°/240° rotations', nameZh: '顶点 120°/240° 旋转', cycleType: '(123)', size: 8, axisDesc: 'vertex'
 },
-  { colIdx: 4, nameEn: 'Face 90°/270° rotations', nameZh: '面 90°/270° 旋转', cycleType: '(1234)', size: 6, axisDesc: 'face90',
-      nameZhHant: "面 90°/270° 旋轉"
+  { colIdx: 4, nameEn: 'Face 90°/270° rotations', nameZh: '面 90°/270° 旋转', cycleType: '(1234)', size: 6, axisDesc: 'face90'
 },
 ];
 

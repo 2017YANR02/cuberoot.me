@@ -138,23 +138,20 @@ export default function FollowedComps({ wcaId, isZh, lang }: {
     <section className="fc-section">
       <h2 className="fc-head">
         <Star size={16} fill="currentColor" aria-hidden="true" />
-        {tr({ zh: '我关注的比赛', en: 'Competitions I follow',
-            zhHant: "我關注的比賽"
+        {tr({ zh: '我关注的比赛', en: 'Competitions I follow'
         })}
       </h2>
 
       {follows.size === 0 ? (
         <p className="fc-empty">
-          {tr({ zh: '还没有关注的比赛。去首页的比赛列表点 ☆ 盯一下。', en: 'No followed competitions yet. Tap ☆ on a competition on the home page to follow it.',
-              zhHant: "還沒有關注的比賽。去首頁的比賽列表點 ☆ 盯一下。"
+          {tr({ zh: '还没有关注的比赛。去首页的比赛列表点 ☆ 盯一下。', en: 'No followed competitions yet. Tap ☆ on a competition on the home page to follow it.'
         })}
         </p>
       ) : (
         <>
           {upcoming.length > 0 && (
             <div className="fc-group">
-              <h3 className="fc-group-head">{tr({ zh: '即将与进行中', en: 'Upcoming & ongoing',
-                  zhHant: "即將與進行中"
+              <h3 className="fc-group-head">{tr({ zh: '即将与进行中', en: 'Upcoming & ongoing'
             })}</h3>
               <div className="fc-list">
                 {upcoming.map((c) => (
@@ -166,8 +163,7 @@ export default function FollowedComps({ wcaId, isZh, lang }: {
 
           {past.length > 0 && (
             <div className="fc-group">
-              <h3 className="fc-group-head">{tr({ zh: '已结束', en: 'Finished',
-                  zhHant: "已結束"
+              <h3 className="fc-group-head">{tr({ zh: '已结束', en: 'Finished'
             })}</h3>
               <div className="fc-list">
                 {past.map((c) => (

@@ -20,8 +20,7 @@ export default function CubeRootLogo({
   const isZh = i18n.language === 'zh';
   const src = eff === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png';
   return (
-    <HomeLink className={className} aria-label={tr({ zh: '主页', en: 'Home',
-        zhHant: "主頁"
+    <HomeLink className={className} aria-label={tr({ zh: '主页', en: 'Home'
     })}>
       <img src={src} alt="CubeRoot" height={height} />
     </HomeLink>

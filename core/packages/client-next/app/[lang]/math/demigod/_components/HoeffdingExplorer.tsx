@@ -39,8 +39,7 @@ function fmtInt(n: number): string {
 function fmtTime(sec: number, isZh: boolean): string {
   if (sec < 60) return `${sec.toFixed(1)} ${tr({ zh: '秒', en: 's' })}`;
   if (sec < 3600) return `${(sec / 60).toFixed(1)} ${tr({ zh: '分', en: 'min' })}`;
-  if (sec < 86400) return `${(sec / 3600).toFixed(1)} ${tr({ zh: '小时', en: 'h',
-      zhHant: "小時"
+  if (sec < 86400) return `${(sec / 3600).toFixed(1)} ${tr({ zh: '小时', en: 'h'
 })}`;
   if (sec < 86400 * 365) return `${(sec / 86400).toFixed(1)} ${tr({ zh: '天', en: 'd' })}`;
   return `${(sec / 86400 / 365).toFixed(2)} ${tr({ zh: '年', en: 'yr' })}`;
@@ -51,7 +50,7 @@ export default function HoeffdingExplorer({
   sampleSize, tolerance, cMode,
   onSampleSize, onTolerance, onCMode,
 }: Props) {
-  const t = (zh: string, en: string, zhHant?: string) => i18n.language === 'zh-Hant' ? (zhHant ?? zh) : (isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
 
   // 样本量在 log 空间滑(1e3 .. 1e9)
   const sLog = Math.log10(sampleSize);
@@ -116,7 +115,7 @@ export default function HoeffdingExplorer({
       <div className="dg-controls">
         <div className="dg-ctrl">
           <div className="dg-ctrl-label">
-            <span>{t('样本量 ', 'Sample size ', "樣本量 ")}<TeX src="|S|" /></span>
+            <span>{t('样本量 ', 'Sample size ')}<TeX src="|S|" /></span>
             <span className="dg-ctrl-value">{fmtInt(sampleSize)}</span>
           </div>
           <input
@@ -148,7 +147,7 @@ export default function HoeffdingExplorer({
 
         <div className="dg-ctrl">
           <div className="dg-ctrl-label">
-            <span>{t('上界常数 ', 'Bound constant ', "上界常數 ")}<TeX src="C" /></span>
+            <span>{t('上界常数 ', 'Bound constant ')}<TeX src="C" /></span>
           </div>
           <div className="dg-radio-row" role="tablist">
             <button
@@ -164,8 +163,8 @@ export default function HoeffdingExplorer({
           </div>
           <div className="dg-ctrl-label" style={{ fontSize: '0.72rem', marginTop: 4, fontWeight: 400 }}>
             {cMode === 'human'
-              ? t('朴素:Human\'s Number 给出 d(s) ∈ [0,205]', "Naive: Human's Number gives d(s) ∈ [0,205]", "樸素:Human's Number 給出 d(s) ∈ [0,205]")
-              : t('精细:在「close pair」上 d(s) ∈ [0,20]', 'Refined: on "close pairs" d(s) ∈ [0,20]', "精細:在「close pair」上 d(s) ∈ [0,20]")}
+              ? t('朴素:Human\'s Number 给出 d(s) ∈ [0,205]', "Naive: Human's Number gives d(s) ∈ [0,205]")
+              : t('精细:在「close pair」上 d(s) ∈ [0,20]', 'Refined: on "close pairs" d(s) ∈ [0,20]')}
           </div>
         </div>
       </div>
@@ -195,7 +194,7 @@ export default function HoeffdingExplorer({
           </g>
         ))}
         <text className="dg-chart-label" x={chart.W / 2} y={chart.H - 4} textAnchor="middle">|S|</text>
-        <text className="dg-chart-label" x={10} y={chart.PADT + 6}>{t('失败概率', 'Pr[fail]', "失敗機率")}</text>
+        <text className="dg-chart-label" x={10} y={chart.PADT + 6}>{t('失败概率', 'Pr[fail]')}</text>
 
         {/* paths */}
         <path className="dg-chart-line is-naive" d={chart.pathNaive} />
@@ -220,36 +219,36 @@ export default function HoeffdingExplorer({
       <div className="dg-chart-legend">
         <span className="dg-chart-legend-item">
           <span className="dg-chart-legend-swatch is-naive" />
-          {t('Naive (C=205, 朴素 Hoeffding)', 'Naive (C=205, plain Hoeffding)', "Naive (C=205, 樸素 Hoeffding)")}
+          {t('Naive (C=205, 朴素 Hoeffding)', 'Naive (C=205, plain Hoeffding)')}
         </span>
         <span className="dg-chart-legend-item">
           <span className="dg-chart-legend-swatch is-improved" />
-          {t('Refined (C=20, close-pair 论证后)', 'Refined (C=20, after close-pair argument)', "Refined (C=20, close-pair 論證後)")}
+          {t('Refined (C=20, close-pair 论证后)', 'Refined (C=20, after close-pair argument)')}
         </span>
       </div>
 
       {/* readout */}
       <div className="dg-readout">
         <div className="dg-readout-item">
-          <div className="dg-readout-label">{t('当前失败概率', 'Pr[fail] now', "當前失敗機率")}</div>
+          <div className="dg-readout-label">{t('当前失败概率', 'Pr[fail] now')}</div>
           <div className={`dg-readout-val ${prob < 1e-4 ? 'is-good' : prob > 0.1 ? 'is-bad' : ''}`}>
             {fmtSci(prob)}
           </div>
         </div>
         <div className="dg-readout-item">
-          <div className="dg-readout-label">{t('要 1% 失败需 |S|', 'Need |S| for 1% err', "要 1% 失敗需 |S|")}</div>
+          <div className="dg-readout-label">{t('要 1% 失败需 |S|', 'Need |S| for 1% err')}</div>
           <div className="dg-readout-val">{fmtInt(sampleFor01)}</div>
         </div>
         <div className="dg-readout-item">
-          <div className="dg-readout-label">{t('要 10⁻⁷ 失败需 |S|', 'Need |S| for 10⁻⁷ err', "要 10⁻⁷ 失敗需 |S|")}</div>
+          <div className="dg-readout-label">{t('要 10⁻⁷ 失败需 |S|', 'Need |S| for 10⁻⁷ err')}</div>
           <div className="dg-readout-val">{fmtInt(sampleFor1e7)}</div>
         </div>
         <div className="dg-readout-item">
-          <div className="dg-readout-label">{t('单核耗时 (0.2 s/sample)', 'Single-core (0.2 s/sample)', "單核耗時 (0.2 s/sample)")}</div>
+          <div className="dg-readout-label">{t('单核耗时 (0.2 s/sample)', 'Single-core (0.2 s/sample)')}</div>
           <div className="dg-readout-val">{fmtTime(secs1, isZh)}</div>
         </div>
         <div className="dg-readout-item">
-          <div className="dg-readout-label">{t('8 核耗时', '8-core wall', "8 核耗時")}</div>
+          <div className="dg-readout-label">{t('8 核耗时', '8-core wall')}</div>
           <div className="dg-readout-val">{fmtTime(secs8, isZh)}</div>
         </div>
         <div className="dg-readout-item">
@@ -259,9 +258,7 @@ export default function HoeffdingExplorer({
       </div>
 
       <p className="dg-sampler-note">
-        {i18n.language === 'zh-Hant' ? ((
-                        <>讀法:取 <TeX src={`|S| = ${fmtInt(sampleSize)}`} />、容差 <TeX src={`t = ${tolerance.toFixed(2)}`} /> 時,Hoeffding 給出 Pr[<TeX src="|\hat\mu - \mu|" /> ≥ <TeX src={`${tolerance.toFixed(2)}`} />] ≤ <span style={{ fontFamily: 'var(--dg-mono)' }}>{fmtSci(prob)}</span>。把 <TeX src="C" /> 從 205 換到 20 後,達到同精度只需 <TeX src="(205/20)^2 \approx 105" /> 倍更少的樣本。</>
-                      )) : (isZh ? (
+        {(isZh ? (
                         <>读法:取 <TeX src={`|S| = ${fmtInt(sampleSize)}`} />、容差 <TeX src={`t = ${tolerance.toFixed(2)}`} /> 时,Hoeffding 给出 Pr[<TeX src="|\hat\mu - \mu|" /> ≥ <TeX src={`${tolerance.toFixed(2)}`} />] ≤ <span style={{ fontFamily: 'var(--dg-mono)' }}>{fmtSci(prob)}</span>。把 <TeX src="C" /> 从 205 换到 20 后,达到同精度只需 <TeX src="(205/20)^2 \approx 105" /> 倍更少的样本。</>
                       ) : (
                         <>How to read: at <TeX src={`|S| = ${fmtInt(sampleSize)}`} />, <TeX src={`t = ${tolerance.toFixed(2)}`} />, Hoeffding gives Pr[<TeX src="|\hat\mu - \mu|" /> ≥ <TeX src={`${tolerance.toFixed(2)}`} />] ≤ <span style={{ fontFamily: 'var(--dg-mono)' }}>{fmtSci(prob)}</span>. Dropping <TeX src="C" /> from 205 to 20 cuts the required samples by <TeX src="(205/20)^2 \approx 105" /> × for the same accuracy.</>

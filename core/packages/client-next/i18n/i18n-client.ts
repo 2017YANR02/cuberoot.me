@@ -8,20 +8,16 @@
 // paint identical, avoiding hydration mismatches; Chinese-preference users see
 // a single en→zh flash on first page load (acceptable).
 //
-// THREE locales: 'en', 'zh' (Simplified), 'zh-Hant' (Traditional). Both Chinese
-// catalogs are STATIC. zh-Hant.json is generated at BUILD time (scripts/gen-zh-
-// hant, plain Node + OpenCC) and tr()/<T> inline strings carry a build-injected
-// `zhHant` field (scripts/inject-zhhant). Nothing converts at runtime, so SSR
-// and client render identical Traditional text — no hydration mismatch, no
-// flash, SEO-clean. Regenerate both via `pnpm build` (or run the two scripts).
+// TWO locales: 'en' and 'zh' (Simplified). Both catalogs are static JSON; there
+// is no runtime conversion, so SSR and client render identical text — no
+// hydration mismatch, no flash.
 
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import zh from './zh.json';
 import en from './en.json';
-import zhHant from './zh-Hant.json';
 
-export const LANGS = ['en', 'zh', 'zh-Hant'] as const;
+export const LANGS = ['en', 'zh'] as const;
 export type AppLang = (typeof LANGS)[number];
 const isAppLang = (s: string | null | undefined): s is AppLang =>
   !!s && (LANGS as readonly string[]).includes(s);
@@ -31,11 +27,9 @@ if (!i18n.isInitialized) {
     resources: {
       zh: { translation: zh },
       en: { translation: en },
-      'zh-Hant': { translation: zhHant }, // static, build-generated (Traditional)
     },
     lng: 'en',
-    // zh-Hant falls back to Simplified then English for any missing key.
-    fallbackLng: { 'zh-Hant': ['zh', 'en'], default: ['en'] },
+    fallbackLng: 'en',
     interpolation: { escapeValue: false },
     // Resources are bundled inline, so init synchronously: with the default
     // (async) init + useSuspense, useTranslation suspends during SSG prerender
@@ -53,7 +47,6 @@ export function changeAppLanguage(lang: string): void {
 }
 
 export function normalizeAppLang(l: string | null | undefined): AppLang {
-  if (l === 'zh-Hant' || l === 'zh-TW' || l === 'zh-HK' || l === 'zh-MO') return 'zh-Hant';
   if (l && l.startsWith('zh')) return 'zh';
   return 'en';
 }
@@ -66,7 +59,6 @@ export function detectLanguage(): string {
   const stored = localStorage.getItem('trainer-lang');
   if (isAppLang(stored)) return stored;
   const nav = navigator.language;
-  if (/^zh-(Hant|TW|HK|MO)/i.test(nav)) return 'zh-Hant';
   return nav.startsWith('zh') ? 'zh' : 'en';
 }
 

@@ -27,17 +27,14 @@ export default function OneLookPanel({
       <div className="sk-stage">
         <button type="button" className="sk-generate-btn" onClick={onGenerate}>
           <RefreshCw size={16} />
-          {tr({ zh: '生成打乱', en: 'Generate Scramble',
-              zhHant: "生成打亂"
+          {tr({ zh: '生成打乱', en: 'Generate Scramble'
         })}
         </button>
 
-        <div className="sk-scramble-label">{tr({ zh: '打乱', en: 'Scramble',
-            zhHant: "打亂"
+        <div className="sk-scramble-label">{tr({ zh: '打乱', en: 'Scramble'
         })}</div>
         <div className={scramble ? 'sk-scramble-text' : 'sk-scramble-text is-empty'}>
-          {scramble || (tr({ zh: '点击上方生成', en: 'Press generate above',
-              zhHant: "點選上方生成"
+          {scramble || (tr({ zh: '点击上方生成', en: 'Press generate above'
         }))}
         </div>
 
@@ -49,13 +46,11 @@ export default function OneLookPanel({
       </div>
 
       <div className="sk-settings">
-        <h2 className="sk-settings-title">{tr({ zh: '设置', en: 'Settings',
-            zhHant: "設定"
+        <h2 className="sk-settings-title">{tr({ zh: '设置', en: 'Settings'
         })}</h2>
 
         <div>
-          <div className="sk-field-label">{tr({ zh: '附加步数', en: 'Extra moves',
-              zhHant: "附加步數"
+          <div className="sk-field-label">{tr({ zh: '附加步数', en: 'Extra moves'
         })}</div>
           <div className="sk-stepper">
             <button
@@ -63,8 +58,7 @@ export default function OneLookPanel({
               className="sk-stepper-btn"
               onClick={() => onExtra(ol.extra - 1)}
               disabled={ol.extra <= 1}
-              aria-label={tr({ zh: '减少', en: 'Decrease',
-                  zhHant: "減少"
+              aria-label={tr({ zh: '减少', en: 'Decrease'
             })}
             >
               <Minus size={16} />
@@ -90,8 +84,7 @@ export default function OneLookPanel({
             checked={ol.showImg}
             onChange={(e) => onShowImg(e.target.checked)}
           />
-          {tr({ zh: '显示打乱图', en: 'Show scramble image',
-              zhHant: "顯示打亂圖"
+          {tr({ zh: '显示打乱图', en: 'Show scramble image'
         })}
         </label>
       </div>

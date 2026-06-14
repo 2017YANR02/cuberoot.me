@@ -458,7 +458,7 @@ export default function SqlIntroPage() {
 
   useDocumentTitle(
     'SQL : 56 年的声明式查询语言 — 数据层的默认语',
-    'SQL : 56 years of declarative query — the data layer\'s default', "SQL : 56 年的宣告式查詢語言 — 資料層的預設語"
+    'SQL : 56 years of declarative query — the data layer\'s default'
   );
 
   useEffect(() => {
@@ -829,43 +829,37 @@ export default function SqlIntroPage() {
                 {
                   h: <><code>SELECT *</code></>,
                   zh: <><strong>不在临时 ad-hoc 里用</strong>就 OK; 在生产代码 / view / 报表里用 = bug 源。新增列改变行宽、传到下游格式飞掉; 优化器拿不到列裁剪机会, 索引覆盖也用不上。<em>显式列名是底线</em>。</>,
-                  en: <><strong>Fine for ad-hoc</strong>; fatal in production code, views, or reports. A new column breaks downstream consumers; the optimiser loses column pruning; covering indexes go to waste. <em>Listing columns is the floor</em>.</>,
-                  zhHant: <><strong>不在臨時 ad-hoc 裡用</strong>就 OK; 在生產程式碼 / view / 報表裡用 = bug 源。新增列改變行寬、傳到下游格式飛掉; 最佳化器拿不到列裁剪機會, 索引覆蓋也用不上。<em>顯式列名是底線</em>。</>,
+                  en: <><strong>Fine for ad-hoc</strong>; fatal in production code, views, or reports. A new column breaks downstream consumers; the optimiser loses column pruning; covering indexes go to waste. <em>Listing columns is the floor</em>.</>
                 },
                 {
                   h: <>N+1 <L zh="查询" en="queries" /></>,
                   zh: <>"<em>循环里每行再查一次表</em>"。<strong>1 + N</strong> 次 round-trip, N=10000 时网络 RTT 就要你命。ORM 默认行为下最常见——一个 <code>JOIN</code> 解决, 或换 <code>WHERE id IN (...)</code> 批查。</>,
-                  en: <>"<em>For each row, run another query</em>". <strong>1 + N</strong> round-trips; at N=10000, latency alone kills you. The single most common ORM-induced bug — fix with one <code>JOIN</code> or a batched <code>WHERE id IN (...)</code>.</>,
-                  zhHant: <>"<em>迴圈裡每行再查一次表</em>"。<strong>1 + N</strong> 次 round-trip, N=10000 時網路 RTT 就要你命。ORM 預設行為下最常見——一個 <code>JOIN</code> 解決, 或換 <code>WHERE id IN (...)</code> 批查。</>,
+                  en: <>"<em>For each row, run another query</em>". <strong>1 + N</strong> round-trips; at N=10000, latency alone kills you. The single most common ORM-induced bug — fix with one <code>JOIN</code> or a batched <code>WHERE id IN (...)</code>.</>
                 },
                 {
                   h: <><code>OR</code> <L zh="在 WHERE 里" en="in WHERE" /></>,
                   zh: <><code>WHERE a = 1 OR b = 2</code>——很多优化器<strong>没法两个索引都用</strong>, 只能 fallback 到全表扫。改写为 <code>UNION ALL</code> 两段查询, 或加 <code>(a, b)</code> 复合索引常有奇效。</>,
-                  en: <><code>WHERE a = 1 OR b = 2</code> — many optimisers <strong>can't use two indexes at once</strong> and fall back to a full scan. Rewriting as <code>UNION ALL</code> of two halves, or adding a composite <code>(a, b)</code> index, often unlocks speedup.</>,
-                  zhHant: <><code>WHERE a = 1 OR b = 2</code>——很多最佳化器<strong>沒法兩個索引都用</strong>, 只能 fallback 到全表掃。改寫為 <code>UNION ALL</code> 兩段查詢, 或加 <code>(a, b)</code> 複合索引常有奇效。</>,
+                  en: <><code>WHERE a = 1 OR b = 2</code> — many optimisers <strong>can't use two indexes at once</strong> and fall back to a full scan. Rewriting as <code>UNION ALL</code> of two halves, or adding a composite <code>(a, b)</code> index, often unlocks speedup.</>
                 },
                 {
                   h: <><L zh="隐式类型转换" en="Implicit cast" /></>,
                   zh: <><code>WHERE id = '123'</code> 当 id 是 <code>INT</code>: 引擎按列做 <strong>cast(id AS TEXT)</strong>, <strong>索引失效</strong>。日期 / 字符集 / collation 都有类似坑。<em>类型严格写, 别赌引擎</em>。</>,
-                  en: <><code>WHERE id = '123'</code> when id is <code>INT</code>: the engine often casts the column (<strong>cast(id AS TEXT)</strong>) and <strong>the index dies</strong>. Same trap with dates, charsets, collations. <em>Match types literally — don't gamble on the optimiser</em>.</>,
-                  zhHant: <><code>WHERE id = '123'</code> 當 id 是 <code>INT</code>: 引擎按列做 <strong>cast(id AS TEXT)</strong>, <strong>索引失效</strong>。日期 / 字符集 / collation 都有類似坑。<em>型別嚴格寫, 別賭引擎</em>。</>,
+                  en: <><code>WHERE id = '123'</code> when id is <code>INT</code>: the engine often casts the column (<strong>cast(id AS TEXT)</strong>) and <strong>the index dies</strong>. Same trap with dates, charsets, collations. <em>Match types literally — don't gamble on the optimiser</em>.</>
                 },
                 {
                   h: <><code>GROUP BY 1, 2, 3</code></>,
                   zh: <>用<strong>序号</strong>而不是列名——<em>查询改了列顺序, 分组就静默错位</em>。审查时痛苦。ad-hoc 临时算个数还行, 生产 / 报表 / view 一律写列名。</>,
-                  en: <>Using <strong>positional ordinals</strong> instead of column names — <em>change the column order and the grouping silently shifts</em>. Painful to review. Fine for one-off ad-hoc; never in production code, reports, or views.</>,
-                  zhHant: <>用<strong>序號</strong>而不是列名——<em>查詢改了列順序, 分組就靜默錯位</em>。審查時痛苦。ad-hoc 臨時算個數還行, 生產 / 報表 / view 一律寫列名。</>,
+                  en: <>Using <strong>positional ordinals</strong> instead of column names — <em>change the column order and the grouping silently shifts</em>. Painful to review. Fine for one-off ad-hoc; never in production code, reports, or views.</>
                 },
                 {
                   h: <><code>NULL</code> <L zh="当空处理" en="treated as empty" /></>,
                   zh: <><code>COUNT(col)</code> 不数 NULL 但 <code>COUNT(*)</code> 数。<code>SUM</code> 把 NULL 当 0 跳过, 但 <code>col + 1</code> 当 col 是 NULL 时结果是 NULL。<em>三值逻辑是 SQL 最隐蔽的 bug 来源</em>; 显式 <code>COALESCE(col, 0)</code> 救命。</>,
-                  en: <><code>COUNT(col)</code> ignores NULL but <code>COUNT(*)</code> doesn't. <code>SUM</code> silently skips NULLs, but <code>col + 1</code> on a NULL gives NULL. <em>Three-valued logic is the most invisible bug source in SQL</em>; explicit <code>COALESCE(col, 0)</code> is the antidote.</>,
-                  zhHant: <><code>COUNT(col)</code> 不數 NULL 但 <code>COUNT(*)</code> 數。<code>SUM</code> 把 NULL 當 0 跳過, 但 <code>col + 1</code> 當 col 是 NULL 時結果是 NULL。<em>三值邏輯是 SQL 最隱蔽的 bug 來源</em>; 顯式 <code>COALESCE(col, 0)</code> 救命。</>,
+                  en: <><code>COUNT(col)</code> ignores NULL but <code>COUNT(*)</code> doesn't. <code>SUM</code> silently skips NULLs, but <code>col + 1</code> on a NULL gives NULL. <em>Three-valued logic is the most invisible bug source in SQL</em>; explicit <code>COALESCE(col, 0)</code> is the antidote.</>
                 },
               ].map((a, i) => (
                 <div className="anti-card" key={i}>
                   <div className="anti-h">{a.h}</div>
-                  <p>{i18n.language === 'zh-Hant' ? (a.zhHant ?? a.zh) : (i18n.language.startsWith('zh') ? a.zh : a.en)}</p>
+                  <p>{(i18n.language.startsWith('zh') ? a.zh : a.en)}</p>
                 </div>
               ))}
             </div>

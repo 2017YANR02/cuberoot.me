@@ -44,17 +44,13 @@ export const TURBO: StackTool = {
     outlookDesc: <>2.5 is stable; 2.9 (2026-03) cut Time to First Task by up to 96% and graduated turbo query to stable. 3.0 is staging future flags and deprecations. Direction: OpenTelemetry exporters, structured JSON logs, and a shared dep-graph backend with Turbopack.</>,
   },
   heroStats: [
-    { num: '96', unit: '%', zh: <>2.9 把 Time to First Task 削到这个比例 <em>turborepo.dev 2026-03</em></>, en: <>Time to First Task reduction in 2.9 <em>turborepo.dev 2026-03</em></>,
-        zhHant: <>2.9 把 Time to First Task 削到這個比例 <em>turborepo.dev 2026-03</em></>
+    { num: '96', unit: '%', zh: <>2.9 把 Time to First Task 削到这个比例 <em>turborepo.dev 2026-03</em></>, en: <>Time to First Task reduction in 2.9 <em>turborepo.dev 2026-03</em></>
     },
-    { num: '180', unit: '→45MB', zh: <>2.0 把平均 cache 体积从 180MB 压到 45MB <em>2024-06</em></>, en: <>2.0 dropped avg cache from 180MB to 45MB <em>2024-06</em></>,
-        zhHant: <>2.0 把平均 cache 體積從 180MB 壓到 45MB <em>2024-06</em></>
+    { num: '180', unit: '→45MB', zh: <>2.0 把平均 cache 体积从 180MB 压到 45MB <em>2024-06</em></>, en: <>2.0 dropped avg cache from 180MB to 45MB <em>2024-06</em></>
     },
-    { num: '2.5', zh: <>本仓库当前依赖版本 <em>core/package.json</em></>, en: <>version pinned in this repo <em>core/package.json</em></>,
-        zhHant: <>本倉庫當前依賴版本 <em>core/package.json</em></>
+    { num: '2.5', zh: <>本仓库当前依赖版本 <em>core/package.json</em></>, en: <>version pinned in this repo <em>core/package.json</em></>
     },
-    { num: '6', unit: 'y', zh: <>从 2020 至今 <em>已是 JS monorepo 事实标准</em></>, en: <>since 2020 <em>now a JS monorepo default</em></>,
-        zhHant: <>從 2020 至今 <em>已是 JS monorepo 事實標準</em></>
+    { num: '6', unit: 'y', zh: <>从 2020 至今 <em>已是 JS monorepo 事实标准</em></>, en: <>since 2020 <em>now a JS monorepo default</em></>
     },
   ],
   intro: {

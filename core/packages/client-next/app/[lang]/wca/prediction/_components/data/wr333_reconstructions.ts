@@ -13,7 +13,6 @@ export interface Reconstruction {
   source?: string;
   significance_en: string;
   significance_zh: string;
-    significance_zhHant?: string;
 }
 
 export const FAMOUS_RECONSTRUCTIONS: Reconstruction[] = [
@@ -29,8 +28,7 @@ export const FAMOUS_RECONSTRUCTIONS: Reconstruction[] = [
     source: 'https://www.speedsolving.com/wiki/index.php/Erik_Akkersdijk',
     hardware: 'modified Type-A Rubik\'s',
     significance_en: '极幸运 scramble + X-cross + OLL skip + 1-look PLL. 49 STM × 6.92 TPS 这把单次站住 WR 854 天, 到 2010-11 Zemdegs 才超过.',
-    significance_zh: '极幸运打乱 + X-cross + OLL 跳过 + 1-look PLL。49 STM × 6.92 TPS, WR 站了 854 天, 到 2010-11 才被 Zemdegs 打破。',
-      significance_zhHant: "極幸運打亂 + X-cross + OLL 跳過 + 1-look PLL。49 STM × 6.92 TPS, WR 站了 854 天, 到 2010-11 才被 Zemdegs 打破。"
+    significance_zh: '极幸运打乱 + X-cross + OLL 跳过 + 1-look PLL。49 STM × 6.92 TPS, WR 站了 854 天, 到 2010-11 才被 Zemdegs 打破。'
 },
   {
     name: 'Mats Valk 4.74',
@@ -41,8 +39,7 @@ export const FAMOUS_RECONSTRUCTIONS: Reconstruction[] = [
     method: 'CFOP + VLS',
     hardware: 'magnetic Valk 3 (TheCubicle retrofit)',
     significance_en: 'First WR with factory-style magnets (Chris Tran 手装的 Valk 3 磁铁版).',
-    significance_zh: '首个用工厂级磁铁的 WR — Valk 3 磁铁版由 TheCubicle 的 Chris Tran 手装。',
-      significance_zhHant: "首個用工廠級磁鐵的 WR — Valk 3 磁鐵版由 TheCubicle 的 Chris Tran 手裝。"
+    significance_zh: '首个用工厂级磁铁的 WR — Valk 3 磁铁版由 TheCubicle 的 Chris Tran 手装。'
 },
   {
     name: 'Yusheng Du 3.47',
@@ -56,8 +53,7 @@ export const FAMOUS_RECONSTRUCTIONS: Reconstruction[] = [
     source: 'https://www.facebook.com/moyumagiccube/posts/1922639067817044',
     hardware: 'GAN 356 X',
     significance_en: '社区公认最幸运的 WR — 27 STM 极低. 站了 4 年 7 个月, 到 2023-06 Park 3.13 才被打破.',
-    significance_zh: '社区公认最幸运的 WR — 27 STM 极低。WR 站了 4 年 7 个月, 直到 2023-06 Park 用 3.13 打破。',
-      significance_zhHant: "社羣公認最幸運的 WR — 27 STM 極低。WR 站了 4 年 7 個月, 直到 2023-06 Park 用 3.13 打破。"
+    significance_zh: '社区公认最幸运的 WR — 27 STM 极低。WR 站了 4 年 7 个月, 直到 2023-06 Park 用 3.13 打破。'
 },
   {
     name: 'Max Park 3.13',
@@ -70,8 +66,7 @@ export const FAMOUS_RECONSTRUCTIONS: Reconstruction[] = [
     solution: "z2 y' R' U' F2 D' L2 // double X-cross\nU R U R' U' R U' R' // 3rd pair\nU2 R U' R' U R U' R' // 4th pair\nF R U R' U' F' // OLL (PLL skip)\nU // AUF",
     hardware: 'QiYi X-Man Tornado V3 Pioneer',
     significance_en: 'TPS 从 Du 7.78 跳到 Park 10.54 — 磁铁 + 智能魔方训练时代的交汇.',
-    significance_zh: 'TPS 从 Du 的 7.78 跳到 Park 的 10.54 — 磁铁加智能魔方训练这两个时代的交汇。',
-      significance_zhHant: "TPS 從 Du 的 7.78 跳到 Park 的 10.54 — 磁鐵加智慧魔方訓練這兩個時代的交匯。"
+    significance_zh: 'TPS 从 Du 的 7.78 跳到 Park 的 10.54 — 磁铁加智能魔方训练这两个时代的交汇。'
 },
   {
     name: 'Yiheng Wang 3.08',
@@ -82,8 +77,7 @@ export const FAMOUS_RECONSTRUCTIONS: Reconstruction[] = [
     method: 'CFOP, 2-look LL (OLL skip)',
     hardware: 'MoYu Super WeiLong V2',
     significance_en: 'WR 级最高持续 TPS. 全程 CFOP, 说明 CFOP 还有空间.',
-    significance_zh: 'WR 级最高持续 TPS。全程 CFOP, 说明 CFOP 还有空间。',
-      significance_zhHant: "WR 級最高持續 TPS。全程 CFOP, 說明 CFOP 還有空間。"
+    significance_zh: 'WR 级最高持续 TPS。全程 CFOP, 说明 CFOP 还有空间。'
 },
   {
     name: 'Teodor Zajder 2.76',
@@ -94,7 +88,6 @@ export const FAMOUS_RECONSTRUCTIONS: Reconstruction[] = [
     method: 'CFOP + ZBLL, XXX-cross',
     hardware: 'GAN 12 MagLev (Signature)',
     significance_en: '人类首次单次 sub-3. XXX-cross = cross 阶段顺手出 3 个 F2L 对. ZBLL 一个算法替代 OLL+PLL.',
-    significance_zh: '人类首次单次 sub-3。XXX-cross = cross 阶段顺手做出 3 个 F2L 对, ZBLL 一个算法替代 OLL + PLL。',
-      significance_zhHant: "人類首次單次 sub-3。XXX-cross = cross 階段順手做出 3 個 F2L 對, ZBLL 一個演算法替代 OLL + PLL。"
+    significance_zh: '人类首次单次 sub-3。XXX-cross = cross 阶段顺手做出 3 个 F2L 对, ZBLL 一个算法替代 OLL + PLL。'
 },
 ];

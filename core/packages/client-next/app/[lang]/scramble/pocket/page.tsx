@@ -12,11 +12,10 @@ import {
 
 const SPEC: OptimalSolverSpec = {
   event: '222',
-  title: { zh: '2x2x2 最优求解', en: '2x2x2 Optimal Solver', zhHant: '2x2x2 最優求解' },
+  title: { zh: '2x2x2 最优求解', en: '2x2x2 Optimal Solver' },
   lead: {
     zh: '任意 2x2x2 打乱的整解最优 HTM 解(全空间 3,674,160 态精确表,最优解至多 11 步)。支持 D / L / B 记号,解可带整体旋转前缀。',
-    en: 'Optimal HTM solution for any 2x2x2 scramble (exact full-space table over 3,674,160 states; God\'s number is 11). D / L / B tokens are supported; solutions may start with a whole-cube rotation.',
-    zhHant: '任意 2x2x2 打亂的整解最優 HTM 解(全空間 3,674,160 態精確表,最優解至多 11 步)。支援 D / L / B 記號,解可帶整體旋轉字首。',
+    en: 'Optimal HTM solution for any 2x2x2 scramble (exact full-space table over 3,674,160 states; God\'s number is 11). D / L / B tokens are supported; solutions may start with a whole-cube rotation.'
   },
   metric: 'HTM',
   need: 'pocket',

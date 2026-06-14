@@ -12,8 +12,7 @@ export function ChangedResultValue({ oldValue, eventId, kind }: {
 }) {
   if (oldValue == null) return null;
   return (
-    <s className="wp-old-result" title={tr({ zh: '此前成绩(已变更)', en: 'previous mark (changed)',
-        zhHant: "此前成績(已變更)"
+    <s className="wp-old-result" title={tr({ zh: '此前成绩(已变更)', en: 'previous mark (changed)'
     })}>
       {formatWcaResult(oldValue, eventId, kind)}
     </s>

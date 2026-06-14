@@ -83,7 +83,7 @@ function TutorialCategoryPageInner() {
         <div>
           <h1 className="tutorial-index-title">{category}</h1>
           <p className="tutorial-index-subtitle">
-            {i18n.language === 'zh-Hant' ? (`${inCategory.length} 個教程與公式庫`) : (isZh
+            {(isZh
                                     ? `${inCategory.length} 个教程与公式库`
                                     : `${inCategory.length} tutorials & algorithm sets`)}
           </p>
@@ -93,8 +93,7 @@ function TutorialCategoryPageInner() {
           <input
             className="tutorial-search-input"
             type="search"
-            placeholder={tr({ zh: '搜索…', en: 'Search…',
-                zhHant: "搜尋…"
+            placeholder={tr({ zh: '搜索…', en: 'Search…'
             })}
             value={query}
             onChange={e => setQuery(e.target.value)}
@@ -117,8 +116,7 @@ function TutorialCategoryPageInner() {
               className={'tutorial-category-chip' + (activeSub === sc ? ' is-active' : '')}
               onClick={() => setActiveSub(sc)}
             >
-              {sc || (tr({ zh: '未分类', en: 'Uncategorized',
-                  zhHant: "未分類"
+              {sc || (tr({ zh: '未分类', en: 'Uncategorized'
             }))}
               <span className="tutorial-category-chip-count">{count}</span>
             </button>
@@ -127,21 +125,18 @@ function TutorialCategoryPageInner() {
       )}
 
       <div className="tutorial-card-grid">
-        {loading && <div className="tutorial-empty-state">{tr({ zh: '加载中…', en: 'Loading…',
-            zhHant: "載入中…"
+        {loading && <div className="tutorial-empty-state">{tr({ zh: '加载中…', en: 'Loading…'
         })}</div>}
         {error && (
           <div className="tutorial-empty-state">
-            {tr({ zh: '加载失败: ', en: 'Load failed: ',
-                zhHant: "載入失敗: "
+            {tr({ zh: '加载失败: ', en: 'Load failed: '
             })}
             {error}
           </div>
         )}
         {!loading && !error && results.length === 0 && (
           <div className="tutorial-empty-state">
-            {tr({ zh: '没有匹配的教程', en: 'No matching tutorials',
-                zhHant: "沒有匹配的教程"
+            {tr({ zh: '没有匹配的教程', en: 'No matching tutorials'
             })}
           </div>
         )}

@@ -53,7 +53,7 @@ function NamesBlock({ people, isZh }: { people: People; isZh: boolean }) {
     </div>
   );
   if (total <= 12) return inner;
-  const label = i18n.language === 'zh-Hant' ? `${total} 位選手` : isZh ? `${total} 位选手` : `${total} competitors`;
+  const label = isZh ? `${total} 位选手` : `${total} competitors`;
   return (
     <details className="ns-names-details">
       <summary>{label}</summary>
@@ -110,8 +110,7 @@ export default function NameStatsView({ data, isZh }: { data: NameStatsData; isZ
   const max = useMemo(() => rows.reduce((m, r) => Math.max(m, r[1]), 0), [rows]);
 
   if (!active) return null;
-  const unit = active.id === 'length' ? tr({ zh: '字', en: '' }) : tr({ zh: '词', en: '',
-      zhHant: "詞"
+  const unit = active.id === 'length' ? tr({ zh: '字', en: '' }) : tr({ zh: '词', en: ''
 });
 
   return (

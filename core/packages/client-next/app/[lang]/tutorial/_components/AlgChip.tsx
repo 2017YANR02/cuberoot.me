@@ -63,10 +63,8 @@ export function AlgChip({ alg, algHtml, title }: AlgChipProps) {
       className={'tutorial-chip' + (copied ? ' is-copied' : '')}
       role="button"
       tabIndex={0}
-      title={title ?? (copied ? (tr({ zh: '已复制', en: 'Copied',
-          zhHant: "已複製"
-    })) : (tr({ zh: '点击复制', en: 'Click to copy',
-        zhHant: "點選複製"
+      title={title ?? (copied ? (tr({ zh: '已复制', en: 'Copied'
+    })) : (tr({ zh: '点击复制', en: 'Click to copy'
     })))}
       onClick={handleClick}
       onKeyDown={handleKey}

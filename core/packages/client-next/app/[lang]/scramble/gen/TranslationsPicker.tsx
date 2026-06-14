@@ -77,17 +77,14 @@ export default function TranslationsPicker({ selected, onChange, isZh }: Props) 
   const [open, setOpen] = useState(false);
   const selectedSet = new Set(selected);
   const summary = selected.length === 0
-    ? (tr({ zh: '未选择语言', en: 'No languages',
-        zhHant: "未選擇語言"
+    ? (tr({ zh: '未选择语言', en: 'No languages'
     }))
     : selected.length === TNOODLE_LOCALES.length
-      ? (tr({ zh: '全部语言', en: 'All languages',
-          zhHant: "全部語言"
+      ? (tr({ zh: '全部语言', en: 'All languages'
     }))
       : selected.length <= 3
         ? selected.map((l) => (isZh ? LOCALE_DISPLAY_NAME[l] : LOCALE_DISPLAY_NAME_EN[l])).join(', ')
-        : `${selected.length} ${tr({ zh: '种语言', en: 'languages',
-            zhHant: "種語言"
+        : `${selected.length} ${tr({ zh: '种语言', en: 'languages'
         })}`;
 
   const toggle = (locale: TnoodleLocale) => {
@@ -104,13 +101,11 @@ export default function TranslationsPicker({ selected, onChange, isZh }: Props) 
         type="button"
         className="gen-tn-translations-summary"
         onClick={() => setOpen((o) => !o)}
-        title={tr({ zh: '为 FMC 解题纸选择翻译语言', en: 'Choose translations for FMC solution sheet',
-            zhHant: "為 FMC 解題紙選擇翻譯語言"
+        title={tr({ zh: '为 FMC 解题纸选择翻译语言', en: 'Choose translations for FMC solution sheet'
         })}
       >
         <Languages size={14} />
-        <span className="gen-tn-translations-label">{tr({ zh: '翻译', en: 'Translations',
-            zhHant: "翻譯"
+        <span className="gen-tn-translations-label">{tr({ zh: '翻译', en: 'Translations'
         })}</span>
         <span className="gen-tn-translations-count">{summary}</span>
         {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -123,8 +118,7 @@ export default function TranslationsPicker({ selected, onChange, isZh }: Props) 
               className="gen-tn-translations-btn"
               onClick={() => onChange([...TNOODLE_LOCALES])}
             >
-              {tr({ zh: '全选', en: 'Select All',
-                  zhHant: "全選"
+              {tr({ zh: '全选', en: 'Select All'
             })}
             </button>
             <button

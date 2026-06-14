@@ -44,17 +44,13 @@ export const MYSQL: StackTool = {
     outlookDesc: <>MySQL's 2026 position is complicated: Oracle is pushing enterprise features down into community (9.7 LTS), but Postgres keeps gaining share among new OLTP projects, and MariaDB has taken over much of the European / government MySQL base. It isn't going away, but the growth isn't here.</>,
   },
   heroStats: [
-    { num: '#2', zh: <>关系型数据库流行度 <em>DB-Engines 2026</em></>, en: <>relational DB by popularity <em>DB-Engines 2026</em></>,
-        zhHant: <>關係型資料庫流行度 <em>DB-Engines 2026</em></>
+    { num: '#2', zh: <>关系型数据库流行度 <em>DB-Engines 2026</em></>, en: <>relational DB by popularity <em>DB-Engines 2026</em></>
     },
-    { num: '31', unit: 'y', zh: <>从 1995 至今 <em>三个主人, 同一个名字</em></>, en: <>since 1995 <em>three owners, one name</em></>,
-        zhHant: <>從 1995 至今 <em>三個主人, 同一個名字</em></>
+    { num: '31', unit: 'y', zh: <>从 1995 至今 <em>三个主人, 同一个名字</em></>, en: <>since 1995 <em>three owners, one name</em></>
     },
-    { num: '40', unit: '%', zh: <>WordPress 撑起的网络份额 <em>W3Techs 2026</em></>, en: <>of the internet via WordPress <em>W3Techs 2026</em></>,
-        zhHant: <>WordPress 撐起的網路份額 <em>W3Techs 2026</em></>
+    { num: '40', unit: '%', zh: <>WordPress 撑起的网络份额 <em>W3Techs 2026</em></>, en: <>of the internet via WordPress <em>W3Techs 2026</em></>
     },
-    { num: '9', unit: '.7 LTS', zh: <>当前稳定版 <em>2026-04-07 · 9.7.0</em></>, en: <>current stable <em>2026-04-07 · 9.7.0</em></>,
-        zhHant: <>當前穩定版 <em>2026-04-07 · 9.7.0</em></>
+    { num: '9', unit: '.7 LTS', zh: <>当前稳定版 <em>2026-04-07 · 9.7.0</em></>, en: <>current stable <em>2026-04-07 · 9.7.0</em></>
     },
   ],
   intro: {

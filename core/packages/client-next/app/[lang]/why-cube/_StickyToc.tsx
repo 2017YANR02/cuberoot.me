@@ -64,8 +64,7 @@ export default function StickyToc() {
   if (items.length < 3) return null;
 
   return (
-    <nav className="wc-toc" aria-label={tr({ en: 'Contents', zh: '目录',
-        zhHant: "目錄"
+    <nav className="wc-toc" aria-label={tr({ en: 'Contents', zh: '目录'
     })}>
       <ul>
         {items.map((it) => (

@@ -141,42 +141,32 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
     for (let i = 0; i < codes.length; i++) {
       const c = codes[i];
       if (c.length !== 2) {
-        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code [',
-            zhHant: "行編碼【"
-        })}${c}${tr({ zh: '】长度不符要求。', en: '] length invalid.',
-            zhHant: "】長度不符要求。"
+        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code ['
+        })}${c}${tr({ zh: '】长度不符要求。', en: '] length invalid.'
         })}\n`;
         continue;
       }
       if (!isAlphabet(c[0]) || !isAlphabet(c[1])) {
-        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code [',
-            zhHant: "行編碼【"
-        })}${c}${tr({ zh: '】不是合法编码。', en: '] not a valid code.',
-            zhHant: "】不是合法編碼。"
+        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code ['
+        })}${c}${tr({ zh: '】不是合法编码。', en: '] not a valid code.'
         })}\n`;
         continue;
       }
       const p0 = posChichu(isEdge ? c[0].toLowerCase() : c[0]);
       const p1 = posChichu(isEdge ? c[1].toLowerCase() : c[1]);
       if (p0 === bufPos || p1 === bufPos) {
-        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code [',
-            zhHant: "行編碼【"
-        })}${c}${tr({ zh: '】包含缓冲编码。', en: '] contains the buffer.',
-            zhHant: "】包含緩衝編碼。"
+        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code ['
+        })}${c}${tr({ zh: '】包含缓冲编码。', en: '] contains the buffer.'
         })}\n`;
       }
       if (p0 === p1) {
-        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code [',
-            zhHant: "行編碼【"
-        })}${c}${tr({ zh: '】存在位置冲突。', en: '] position conflict.',
-            zhHant: "】存在位置衝突。"
+        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code ['
+        })}${c}${tr({ zh: '】存在位置冲突。', en: '] position conflict.'
         })}\n`;
       }
     }
     if (codes.length < 5) {
-      err += tr({ zh: '请您至少输入5组编码。\n', en: 'Please enter at least 5 codes.\n',
-          zhHant: "請您至少輸入5組編碼。\n\
-"
+      err += tr({ zh: '请您至少输入5组编码。\n', en: 'Please enter at least 5 codes.\n'
     });
     }
 
@@ -192,7 +182,7 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
     setModalOpen(false);
     setModalMsg(undefined);
     setInputSummary(
-      i18n.language === 'zh-Hant' ? (`已輸入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 組編碼。`) : (isZh
+      (isZh
                 ? `已输入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 组编码。`
                 : `Entered ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} (${codes.length} codes).`),
     );
@@ -204,8 +194,7 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
     const bufKey = isEdge ? buffer.toLowerCase() : buffer;
     if (primary.indexOf(bufKey) === -1) {
       setModalMsg({
-        text: tr({ zh: '非顶面缓冲暂不支持 U8 类样例输入。', en: 'U8-class sample is only available for top-layer buffers.',
-            zhHant: "非頂面緩衝暫不支援 U8 類樣例輸入。"
+        text: tr({ zh: '非顶面缓冲暂不支持 U8 类样例输入。', en: 'U8-class sample is only available for top-layer buffers.'
         }),
         kind: 'error',
       });
@@ -297,7 +286,7 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
 
     setScrambles(out);
     setInfo(
-      i18n.language === 'zh-Hant' ? (`已生成遍歷訓練集編碼的 ${srcNum} 條打亂。出現 ${inputCodeNum} 次訓練集編碼，${otherCodeNum} 次其他編碼。`) : (isZh
+      (isZh
                 ? `已生成遍历训练集编码的 ${srcNum} 条打乱。出现 ${inputCodeNum} 次训练集编码，${otherCodeNum} 次其他编码。`
                 : `Generated ${srcNum} scrambles covering the training set. ${inputCodeNum} training-code occurrences, ${otherCodeNum} other-code occurrences.`),
     );
@@ -350,7 +339,7 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
     const pieceZh = isEdge ? '棱块' : '角块';
     const pieceEn = isEdge ? 'edge' : 'corner';
     setInfo(
-      i18n.language === 'zh-Hant' ? (`共生成 100 條打亂，共出現${pieceZh}公式 ${allAlgNum} 條，其中訓練集公式共 ${allHitNum} 條，訓練集公式比例為 ${perc.toFixed(3)}。`) : (isZh
+      (isZh
                 ? `共生成 100 条打乱，共出现${pieceZh}公式 ${allAlgNum} 条，其中训练集公式共 ${allHitNum} 条，训练集公式比例为 ${perc.toFixed(3)}。`
                 : `Generated 100 scrambles with ${allAlgNum} ${pieceEn} algs total; ${allHitNum} are training-set algs (ratio ${perc.toFixed(3)}).`),
     );
@@ -360,8 +349,7 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
   const generate = useCallback(() => {
     if (mode === 0) {
       if (newCodes.length < 5) {
-        setInfo(tr({ zh: '请先输入至少 5 组训练编码。', en: 'Please enter at least 5 training codes first.',
-            zhHant: "請先輸入至少 5 組訓練編碼。"
+        setInfo(tr({ zh: '请先输入至少 5 组训练编码。', en: 'Please enter at least 5 training codes first.'
         }));
         return;
       }
@@ -374,11 +362,9 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
   const title = useMemo(
     () =>
       isEdge
-        ? { zh: '棱块公式训练', en: 'Edge Algorithm Trainer',
-            zhHant: "稜塊公式訓練"
+        ? { zh: '棱块公式训练', en: 'Edge Algorithm Trainer'
         }
-        : { zh: '角块公式训练', en: 'Corner Algorithm Trainer',
-            zhHant: "角塊公式訓練"
+        : { zh: '角块公式训练', en: 'Corner Algorithm Trainer'
         },
     [isEdge],
   );
@@ -388,7 +374,7 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{(i18n.language === 'zh-Hant' ? (title.zhHant ?? title.zh) : (i18n.language.startsWith('zh') ? title.zh : title.en))}</h1>
+        <h1>{((i18n.language.startsWith('zh') ? title.zh : title.en))}</h1>
       </div>
 
       <div className="bld-section">
@@ -407,11 +393,9 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
             value={mode}
             onChange={(e) => setMode(Number(e.target.value) as 0 | 1)}
           >
-            <option value={0}>{tr({ zh: '精准生成模式', en: 'Accurate',
-                zhHant: "精準生成模式"
+            <option value={0}>{tr({ zh: '精准生成模式', en: 'Accurate'
             })}</option>
-            <option value={1}>{tr({ zh: '随机生成模式', en: 'Random',
-                zhHant: "隨機生成模式"
+            <option value={1}>{tr({ zh: '随机生成模式', en: 'Random'
             })}</option>
           </select>
         </div>
@@ -427,8 +411,7 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
                   checked={otherCodeMode}
                   onChange={(e) => setOtherCodeMode(e.target.checked)}
                 />
-                {tr({ zh: '允许出现其他编码', en: 'Allow other codes',
-                    zhHant: "允許出現其他編碼"
+                {tr({ zh: '允许出现其他编码', en: 'Allow other codes'
                 })}
               </label>
               <label className="bld-check">
@@ -438,11 +421,9 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
                   onChange={(e) => setOppScramble(e.target.checked)}
                 />
                 {isEdge
-                  ? tr({ zh: '打乱角块', en: 'Scramble corners',
-                      zhHant: "打亂角塊"
+                  ? tr({ zh: '打乱角块', en: 'Scramble corners'
                 })
-                  : tr({ zh: '打乱棱块', en: 'Scramble edges',
-                      zhHant: "打亂稜塊"
+                  : tr({ zh: '打乱棱块', en: 'Scramble edges'
                 })}
               </label>
             </div>
@@ -456,8 +437,7 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
               }}
             >
               <FileText size={15} />
-              {tr({ zh: '输入训练编码', en: 'Enter training codes',
-                  zhHant: "輸入訓練編碼"
+              {tr({ zh: '输入训练编码', en: 'Enter training codes'
             })}
             </button>
 
@@ -474,11 +454,9 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
                 onChange={(e) => setRandKeepHue(e.target.checked)}
               />
               {isEdge
-                ? tr({ zh: '棱块保持色相借位', en: 'Edge keep hue',
-                    zhHant: "稜塊保持色相借位"
+                ? tr({ zh: '棱块保持色相借位', en: 'Edge keep hue'
                 })
-                : tr({ zh: '角块保持色相借位', en: 'Corner keep hue',
-                    zhHant: "角塊保持色相借位"
+                : tr({ zh: '角块保持色相借位', en: 'Corner keep hue'
                 })}
             </label>
             <label className="bld-check">
@@ -488,18 +466,15 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
                 onChange={(e) => setRandSkipCycle(e.target.checked)}
               />
               {isEdge
-                ? tr({ zh: '棱块跳编法', en: 'Edge fixed-buffer',
-                    zhHant: "稜塊跳編法"
+                ? tr({ zh: '棱块跳编法', en: 'Edge fixed-buffer'
                 })
-                : tr({ zh: '角块跳编法', en: 'Corner fixed-buffer',
-                    zhHant: "角塊跳編法"
+                : tr({ zh: '角块跳编法', en: 'Corner fixed-buffer'
                 })}
             </label>
           </div>
           {mode === 1 && newCodes.length < 5 && (
             <p className="bld-input-summary">
-              {tr({ zh: '随机模式按训练编码命中数排序：可先用「精准模式」输入框录入一组编码。', en: 'Random mode ranks scrambles by training-code hits — enter a code set via the accurate-mode input first.',
-                  zhHant: "隨機模式按訓練編碼命中數排序：可先用「精準模式」輸入框錄入一組編碼。"
+              {tr({ zh: '随机模式按训练编码命中数排序：可先用「精准模式」输入框录入一组编码。', en: 'Random mode ranks scrambles by training-code hits — enter a code set via the accurate-mode input first.'
             })}
             </p>
           )}
@@ -513,8 +488,7 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
               }}
             >
               <FileText size={15} />
-              {tr({ zh: '输入训练编码', en: 'Enter training codes',
-                  zhHant: "輸入訓練編碼"
+              {tr({ zh: '输入训练编码', en: 'Enter training codes'
             })}
             </button>
           )}
@@ -530,8 +504,7 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
           disabled={busy}
         >
           <Play size={15} />
-          {tr({ zh: '生成训练打乱', en: 'Generate scrambles',
-              zhHant: "生成訓練打亂"
+          {tr({ zh: '生成训练打乱', en: 'Generate scrambles'
         })}
         </button>
       </div>
@@ -547,17 +520,14 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
         onChange={setCodesText}
         onConfirm={confirmCodes}
         message={modalMsg}
-        title={tr({ zh: '输入训练编码', en: 'Enter training codes',
-            zhHant: "輸入訓練編碼"
+        title={tr({ zh: '输入训练编码', en: 'Enter training codes'
         })}
         placeholder={
-          tr({ zh: '每行一个 2 字母编码（编码不会被保存），建议输入 50 组以上。', en: 'One 2-letter code per line (codes are not saved); 50+ recommended.',
-              zhHant: "每行一個 2 字母編碼（編碼不會被儲存），建議輸入 50 組以上。"
+          tr({ zh: '每行一个 2 字母编码（编码不会被保存），建议输入 50 组以上。', en: 'One 2-letter code per line (codes are not saved); 50+ recommended.'
         })
         }
         sampleButton={{
-          label: tr({ zh: '添加输入样例（U8 类）', en: 'Add U8-class sample',
-              zhHant: "新增輸入樣例（U8 類）"
+          label: tr({ zh: '添加输入样例（U8 类）', en: 'Add U8-class sample'
         }),
           onClick: addSample,
         }}

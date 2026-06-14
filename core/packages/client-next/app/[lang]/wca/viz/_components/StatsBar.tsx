@@ -33,7 +33,7 @@ export default function StatsBar(props: StatsBarProps) {
     : 'stat-value mono';
 
   // NOTE: syncLabel 值来自 VizCanvas，中文为 '把数' 或 '日期'
-  const syncLabelDisplay = i18n.language === 'zh-Hant' ? ((props.syncLabel || '把數')) : (isZh
+  const syncLabelDisplay = (isZh
       ? (props.syncLabel || '把数')
       : (props.syncLabel === '日期' ? 'Date' : 'Solves'));
 
@@ -44,8 +44,7 @@ export default function StatsBar(props: StatsBarProps) {
         <span className="stat-value mono">{props.mean || '--'}</span>
       </div>
       <div className="stat-item">
-        <span className="stat-label">{tr({ zh: '标准差', en: 'Stddev',
-            zhHant: "標準差"
+        <span className="stat-label">{tr({ zh: '标准差', en: 'Stddev'
         })}</span>
         <span className="stat-value mono">{props.std || '--'}</span>
       </div>
@@ -54,14 +53,13 @@ export default function StatsBar(props: StatsBarProps) {
         <span className="stat-value mono">{props.syncValue || '--'}</span>
       </div>
       <div className="stat-item stat-comp">
-        <span className="stat-label">{tr({ zh: '比赛', en: 'Comp',
-            zhHant: "比賽"
+        <span className="stat-label">{tr({ zh: '比赛', en: 'Comp'
         })}</span>
         <span className="stat-value">{props.compName || '--'}</span>
       </div>
       <div className="stat-item">
         <span className="stat-label">
-          {i18n.language === 'zh-Hant' ? ((props.improved ? '進步' : props.regressed ? '退步' : '進步')) : (isZh
+          {(isZh
                               ? (props.improved ? '进步' : props.regressed ? '退步' : '进步')
                               : (props.improved ? 'Progress' : props.regressed ? 'Regress' : 'Progress'))}
         </span>

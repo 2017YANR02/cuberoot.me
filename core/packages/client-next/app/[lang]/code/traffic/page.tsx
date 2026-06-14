@@ -82,9 +82,9 @@ export default function TrafficPage() {
 
   const viewItems = useMemo(() => [
     { value: 'series', label: T('每日 PV / UV', 'Daily PV / UV') },
-    { value: 'paths', label: T('热门路径', 'Top paths', "熱門路徑") },
-    { value: 'refs', label: T('来源', 'Top referrers', "來源") },
-    { value: 'countries', label: T('国家分布', 'Top countries', "國家分佈") },
+    { value: 'paths', label: T('热门路径', 'Top paths') },
+    { value: 'refs', label: T('来源', 'Top referrers') },
+    { value: 'countries', label: T('国家分布', 'Top countries') },
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [isZh]);
 
@@ -106,13 +106,13 @@ export default function TrafficPage() {
             <Link href="/code" className="tr-back" aria-label={T('返回 /code', 'Back to /code')}>
               <ArrowLeft size={18} />
             </Link>
-            <h1 className="tr-title">{T('流量统计', 'Traffic', "流量統計")}</h1>
+            <h1 className="tr-title">{T('流量统计', 'Traffic')}</h1>
           </div>
         </header>
         <div className="tr-gate">
-          <p>{T('登录后查看站内流量统计.', 'Sign in to view site traffic analytics.', "登入後檢視站內流量統計.")}</p>
+          <p>{T('登录后查看站内流量统计.', 'Sign in to view site traffic analytics.')}</p>
           <button className="tr-login-btn" onClick={login}>
-            {T('用 WCA 账号登录', 'Sign in with WCA', "用 WCA 賬號登入")}
+            {T('用 WCA 账号登录', 'Sign in with WCA')}
           </button>
         </div>
       </div>
@@ -126,7 +126,7 @@ export default function TrafficPage() {
           <Link href="/code" className="tr-back" aria-label={T('返回 /code', 'Back to /code')}>
             <ArrowLeft size={18} />
           </Link>
-          <h1 className="tr-title">{T('流量统计', 'Traffic', "流量統計")}</h1>
+          <h1 className="tr-title">{T('流量统计', 'Traffic')}</h1>
         </div>
       </header>
 
@@ -154,13 +154,13 @@ export default function TrafficPage() {
         />
         {data && (
           <div className="tr-totals">
-            {T('共', '')} <b>{data.totals.pv.toLocaleString()}</b> {T('次访问', 'pageviews', "次訪問")}
+            {T('共', '')} <b>{data.totals.pv.toLocaleString()}</b> {T('次访问', 'pageviews')}
             {data.totals.days > 0 && ` · ${data.totals.days} ${T('天', 'days')}`}
           </div>
         )}
       </div>
 
-      {loading && <div className="tr-loading">{T('加载中…', 'Loading…', "載入中…")}</div>}
+      {loading && <div className="tr-loading">{T('加载中…', 'Loading…')}</div>}
       {err && <div className="tr-error">{err}</div>}
 
       {data && !loading && !err && (
@@ -176,7 +176,7 @@ export default function TrafficPage() {
         <p>
           {T(
             '隐私: 每次访问只记 URL 路径 + 来源域名 + 国家(粗粒度) + UA 类型. 不存 IP, 不存 UA 字符串. visitor_id = sha256(IP || UA || 今天 || 站内 salt) 截前 16 字节, 每天换一份 → 跨日不可追踪. 原始数据 90 天滚动清理, 仅留日聚合.',
-            'Privacy: each visit records only URL path, referrer domain, country (coarse), and UA class. No IP or UA string is stored. visitor_id = sha256(IP || UA || today || site salt) truncated to 16 bytes — rotated daily, not cross-day-trackable. Raw rows are pruned after 90 days; only daily aggregates persist.', "隱私: 每次訪問只記 URL 路徑 + 來源域名 + 國家(粗粒度) + UA 型別. 不存 IP, 不存 UA 字串. visitor_id = sha256(IP || UA || 今天 || 站內 salt) 截前 16 位元組, 每天換一份 → 跨日不可追蹤. 原始資料 90 天滾動清理, 僅留日聚合."
+            'Privacy: each visit records only URL path, referrer domain, country (coarse), and UA class. No IP or UA string is stored. visitor_id = sha256(IP || UA || today || site salt) truncated to 16 bytes — rotated daily, not cross-day-trackable. Raw rows are pruned after 90 days; only daily aggregates persist.'
           )}
         </p>
       </footer>
@@ -237,12 +237,12 @@ function TrafficTimeSeries({ data, isZh }: { data: DailyRow[]; isZh: boolean }) 
         <p className="tr-section-hint">
           {T(
             'PV = 浏览量(每开一次页记 1);UV = 独立访客(同人同天只算 1)',
-            'PV = pageviews (every visit counts); UV = unique visitors (same person same day counts once)', "PV = 瀏覽量(每開一次頁記 1);UV = 獨立訪客(同人同天只算 1)"
+            'PV = pageviews (every visit counts); UV = unique visitors (same person same day counts once)'
           )}
         </p>
       </div>
       {data.length === 0 ? (
-        <div className="tr-empty">{T('暂无数据', 'No data', "暫無資料")}</div>
+        <div className="tr-empty">{T('暂无数据', 'No data')}</div>
       ) : (
         <div className="tr-chart-wrap">
           <ReactECharts option={option} style={{ height: '100%', width: '100%' }} opts={{ renderer: 'canvas' }} />
@@ -257,15 +257,15 @@ function TopPaths({ rows, isZh }: { rows: PathRow[]; isZh: boolean }) {
   if (rows.length === 0) {
     return (
       <section className="tr-section">
-        <h2 className="tr-section-title">{T('热门路径', 'Top paths', "熱門路徑")}</h2>
-        <div className="tr-empty">{T('暂无数据', 'No data', "暫無資料")}</div>
+        <h2 className="tr-section-title">{T('热门路径', 'Top paths')}</h2>
+        <div className="tr-empty">{T('暂无数据', 'No data')}</div>
       </section>
     );
   }
   const maxPv = rows[0]?.pv ?? 1;
   return (
     <section className="tr-section">
-      <h2 className="tr-section-title">{T('热门路径', 'Top paths', "熱門路徑")}</h2>
+      <h2 className="tr-section-title">{T('热门路径', 'Top paths')}</h2>
       <ul className="tr-rank-list">
         {rows.map(r => (
           <li key={r.path} className="tr-rank-row">
@@ -288,20 +288,20 @@ function TopRefs({ rows, isZh }: { rows: RefRow[]; isZh: boolean }) {
   if (rows.length === 0) {
     return (
       <section className="tr-section">
-        <h2 className="tr-section-title">{T('来源', 'Top referrers', "來源")}</h2>
-        <div className="tr-empty">{T('暂无数据', 'No data', "暫無資料")}</div>
+        <h2 className="tr-section-title">{T('来源', 'Top referrers')}</h2>
+        <div className="tr-empty">{T('暂无数据', 'No data')}</div>
       </section>
     );
   }
   const maxPv = rows[0]?.pv ?? 1;
   return (
     <section className="tr-section">
-      <h2 className="tr-section-title">{T('来源', 'Top referrers', "來源")}</h2>
+      <h2 className="tr-section-title">{T('来源', 'Top referrers')}</h2>
       <ul className="tr-rank-list">
         {rows.map(r => (
           <li key={r.ref_domain} className="tr-rank-row">
             <span className="tr-rank-label">
-              {r.ref_domain === '(direct)' ? T('直接访问', 'Direct', "直接訪問") : r.ref_domain}
+              {r.ref_domain === '(direct)' ? T('直接访问', 'Direct') : r.ref_domain}
             </span>
             <div className="tr-rank-bar-wrap">
               <div className="tr-rank-bar" style={{ width: `${(r.pv / maxPv) * 100}%` }} />
@@ -320,15 +320,15 @@ function TopCountries({ rows, isZh }: { rows: CountryRow[]; isZh: boolean }) {
   if (rows.length === 0) {
     return (
       <section className="tr-section">
-        <h2 className="tr-section-title">{T('国家分布', 'Top countries', "國家分佈")}</h2>
-        <div className="tr-empty">{T('暂无数据', 'No data', "暫無資料")}</div>
+        <h2 className="tr-section-title">{T('国家分布', 'Top countries')}</h2>
+        <div className="tr-empty">{T('暂无数据', 'No data')}</div>
       </section>
     );
   }
   const maxPv = rows[0]?.pv ?? 1;
   return (
     <section className="tr-section">
-      <h2 className="tr-section-title">{T('国家分布', 'Top countries', "國家分佈")}</h2>
+      <h2 className="tr-section-title">{T('国家分布', 'Top countries')}</h2>
       <ul className="tr-rank-list">
         {rows.map(r => {
           const isUnknown = r.country === 'XX' || !r.country;

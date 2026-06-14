@@ -50,7 +50,7 @@ export default function TrainerHubClient() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('训练器', 'Trainer', "訓練器");
+  useDocumentTitle('训练器', 'Trainer');
   const router = useRouter();
   const params = useParams<{ puzzle: string }>();
   const seg = (Array.isArray(params?.puzzle) ? params.puzzle[0] : params?.puzzle) ?? '333';
@@ -99,16 +99,14 @@ export default function TrainerHubClient() {
       {isBld && <Bld3Hub embedded />}
 
       {!isBld && trainableSets.length === 0 && (
-        <div className="trainer-landing-empty">{tr({ zh: '此项目暂无可训练公式集', en: 'No trainable sets for this puzzle',
-            zhHant: "此項目暫無可訓練公式集"
+        <div className="trainer-landing-empty">{tr({ zh: '此项目暂无可训练公式集', en: 'No trainable sets for this puzzle'
         })}</div>
       )}
 
       {!isBld && trainableSets.length > 0 && (
         <>
           <h2 className="trainer-section-title">
-            <Flag size={16} /> {tr({ zh: '公式训练', en: 'Alg Training',
-                zhHant: "公式訓練"
+            <Flag size={16} /> {tr({ zh: '公式训练', en: 'Alg Training'
             })}
           </h2>
           <div className="trainer-set-grid">
@@ -133,7 +131,7 @@ export default function TrainerHubClient() {
                       />
                     )}
                   </div>
-                  <div className="trainer-set-card-title">{(i18n.language === 'zh-Hant' ? ((s as { zhHant?: string }).zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
+                  <div className="trainer-set-card-title">{((i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
                 </Link>
               );
             })}
@@ -144,8 +142,7 @@ export default function TrainerHubClient() {
       {is333 && (
         <>
           <h2 className="trainer-section-title">
-            <Blocks size={16} /> {tr({ zh: '桥式', en: 'Roux',
-                zhHant: "橋式"
+            <Blocks size={16} /> {tr({ zh: '桥式', en: 'Roux'
             })}
           </h2>
           <div className="trainer-set-grid">
@@ -153,8 +150,7 @@ export default function TrainerHubClient() {
               <div className="trainer-set-card-thumb trainer-roux-thumb">
                 <Blocks size={44} strokeWidth={1.5} />
               </div>
-              <div className="trainer-set-card-title">{tr({ zh: '桥式训练器', en: 'Roux Trainer',
-                  zhHant: "橋式訓練器"
+              <div className="trainer-set-card-title">{tr({ zh: '桥式训练器', en: 'Roux Trainer'
             })}</div>
             </Link>
           </div>
@@ -164,8 +160,7 @@ export default function TrainerHubClient() {
       {!isBld && recognizeSets.length > 0 && (
         <>
           <h2 className="trainer-section-title">
-            <Eye size={16} /> {tr({ zh: '识别训练', en: 'Recognition Training',
-                zhHant: "識別訓練"
+            <Eye size={16} /> {tr({ zh: '识别训练', en: 'Recognition Training'
             })}
           </h2>
           <div className="trainer-set-grid">
@@ -190,7 +185,7 @@ export default function TrainerHubClient() {
                       />
                     )}
                   </div>
-                  <div className="trainer-set-card-title">{(i18n.language === 'zh-Hant' ? ((s as { zhHant?: string }).zhHant ?? s.zh) : (i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
+                  <div className="trainer-set-card-title">{((i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
                 </Link>
               );
             })}

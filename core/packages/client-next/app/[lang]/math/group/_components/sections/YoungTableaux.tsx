@@ -807,8 +807,7 @@ function SumOfSquaresPanel({
               <td style={{ textAlign: 'right', fontFamily: 'var(--mono)', fontSize: 12, padding: '6px 8px', color: matches ? 'var(--green)' : 'var(--warn)' }}>
                 {matches ? `= ${n}! ` : `≠ ${n}!`}
                 {matches
-                  ? (tr({ zh: '✓ 验证', en: '✓ verified',
-                      zhHant: "✓ 驗證"
+                  ? (tr({ zh: '✓ 验证', en: '✓ verified'
                 }))
                   : (lang === 'zh' ? '!' : '!')}
               </td>
@@ -940,8 +939,7 @@ function ConjugateParityPanel({ lambda, lang }: { lambda: number[]; lang: 'zh' |
             style={{ fontFamily: 'var(--mono)', fontSize: 9 }}
             fill="var(--ink-faint)"
           >
-            {tr({ zh: '转置', en: 'transpose',
-                zhHant: "轉置"
+            {tr({ zh: '转置', en: 'transpose'
             })}
           </text>
 
@@ -963,8 +961,7 @@ function ConjugateParityPanel({ lambda, lang }: { lambda: number[]; lang: 'zh' |
           <div style={{ color: f === fConj ? 'var(--green)' : 'var(--warn)', fontSize: 12, marginTop: 4 }}>
             {f === fConj
               ? (tr({ zh: '✓ 相等 (S^{λ\'} ≅ S^λ ⊗ sgn)', en: '✓ equal (S^{λ\'} ≅ S^λ ⊗ sgn)' }))
-              : (tr({ zh: '不等 (计算有误)', en: 'unequal (computation error)',
-                  zhHant: "不等 (計算有誤)"
+              : (tr({ zh: '不等 (计算有误)', en: 'unequal (computation error)'
             }))}
           </div>
         </div>

@@ -43,7 +43,7 @@ const SAMPLE_CORNER = 'ADGJ';
 export default function ParityTrainerPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('奇偶训练', 'Parity Trainer', "奇偶訓練");
+  useDocumentTitle('奇偶训练', 'Parity Trainer');
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);
@@ -87,33 +87,25 @@ export default function ParityTrainerPage(): JSX.Element {
     for (let i = 0; i < codes.length; i++) {
       const c = codes[i];
       if (c.length !== 2) {
-        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code [',
-            zhHant: "行編碼【"
-        })}${c}${tr({ zh: '】长度不符要求。', en: '] length invalid.',
-            zhHant: "】長度不符要求。"
+        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code ['
+        })}${c}${tr({ zh: '】长度不符要求。', en: '] length invalid.'
         })}\n`;
         continue;
       }
       if (!isAlphabet(c[0]) || !isAlphabet(c[1])) {
-        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code [',
-            zhHant: "行編碼【"
-        })}${c}${tr({ zh: '】不是合法编码。', en: '] not a valid code.',
-            zhHant: "】不是合法編碼。"
+        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code ['
+        })}${c}${tr({ zh: '】不是合法编码。', en: '] not a valid code.'
         })}\n`;
         continue;
       }
       if (posChichu(c[0].toLowerCase()) === eBufPos || posChichu(c[1].toUpperCase()) === cBufPos) {
-        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code [',
-            zhHant: "行編碼【"
-        })}${c}${tr({ zh: '】包含缓冲编码。', en: '] contains the buffer.',
-            zhHant: "】包含緩衝編碼。"
+        err += `${tr({ zh: '第', en: 'Line ' })}${i + 1}${tr({ zh: '行编码【', en: ' code ['
+        })}${c}${tr({ zh: '】包含缓冲编码。', en: '] contains the buffer.'
         })}\n`;
       }
     }
     if (codes.length < 5) {
-      err += tr({ zh: '请您至少输入5组编码。\n', en: 'Please enter at least 5 codes.\n',
-          zhHant: "請您至少輸入5組編碼。\n\
-"
+      err += tr({ zh: '请您至少输入5组编码。\n', en: 'Please enter at least 5 codes.\n'
     });
     }
 
@@ -129,7 +121,7 @@ export default function ParityTrainerPage(): JSX.Element {
     setModalOpen(false);
     setModalMsg(undefined);
     setInputSummary(
-      i18n.language === 'zh-Hant' ? (`已輸入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 組編碼。`) : (isZh
+      (isZh
                 ? `已输入 ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} 共 ${codes.length} 组编码。`
                 : `Entered ${codes[0]}, ${codes[1]}, … , ${codes[codes.length - 2]}, ${codes[codes.length - 1]} (${codes.length} codes).`),
     );
@@ -140,8 +132,7 @@ export default function ParityTrainerPage(): JSX.Element {
   const addSample = useCallback(() => {
     if (SAMPLE_EDGE.indexOf(edgeBuffer) === -1 || SAMPLE_CORNER.indexOf(cornerBuffer) === -1) {
       setModalMsg({
-        text: tr({ zh: '非顶面缓冲暂不支持样例输入。', en: 'Sample input is only available for top-face buffers.',
-            zhHant: "非頂面緩衝暫不支援樣例輸入。"
+        text: tr({ zh: '非顶面缓冲暂不支持样例输入。', en: 'Sample input is only available for top-face buffers.'
         }),
         kind: 'error',
       });
@@ -245,7 +236,7 @@ export default function ParityTrainerPage(): JSX.Element {
 
     setScrambles(out);
     setInfo(
-      i18n.language === 'zh-Hant' ? (`已生成遍歷訓練集編碼的 ${shuffled.length} 條打亂。`) : (isZh
+      (isZh
                 ? `已生成遍历训练集编码的 ${shuffled.length} 条打乱。`
                 : `Generated ${shuffled.length} scrambles covering the training set.`),
     );
@@ -258,8 +249,7 @@ export default function ParityTrainerPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '奇偶训练', en: 'Parity Trainer',
-            zhHant: "奇偶訓練"
+        <h1>{tr({ zh: '奇偶训练', en: 'Parity Trainer'
         })}</h1>
       </div>
 
@@ -275,8 +265,7 @@ export default function ParityTrainerPage(): JSX.Element {
               checked={edgeScramble}
               onChange={(e) => setEdgeScramble(e.target.checked)}
             />
-            {tr({ zh: '打乱其他棱块', en: 'Scramble other edges',
-                zhHant: "打亂其他稜塊"
+            {tr({ zh: '打乱其他棱块', en: 'Scramble other edges'
             })}
           </label>
           <label className="bld-check">
@@ -285,8 +274,7 @@ export default function ParityTrainerPage(): JSX.Element {
               checked={cornerScramble}
               onChange={(e) => setCornerScramble(e.target.checked)}
             />
-            {tr({ zh: '打乱其他角块', en: 'Scramble other corners',
-                zhHant: "打亂其他角塊"
+            {tr({ zh: '打乱其他角块', en: 'Scramble other corners'
             })}
           </label>
         </div>
@@ -300,8 +288,7 @@ export default function ParityTrainerPage(): JSX.Element {
           }}
         >
           <FileText size={15} />
-          {tr({ zh: '输入训练编码', en: 'Enter training codes',
-              zhHant: "輸入訓練編碼"
+          {tr({ zh: '输入训练编码', en: 'Enter training codes'
         })}
         </button>
 
@@ -316,8 +303,7 @@ export default function ParityTrainerPage(): JSX.Element {
           disabled={busy}
         >
           <Play size={15} />
-          {tr({ zh: '生成训练打乱', en: 'Generate scrambles',
-              zhHant: "生成訓練打亂"
+          {tr({ zh: '生成训练打乱', en: 'Generate scrambles'
         })}
         </button>
       </div>
@@ -333,17 +319,14 @@ export default function ParityTrainerPage(): JSX.Element {
         onChange={setCodesText}
         onConfirm={confirmCodes}
         message={modalMsg}
-        title={tr({ zh: '请输入训练编码（先棱后角）', en: 'Enter training codes (edge then corner)',
-            zhHant: "請輸入訓練編碼（先稜后角）"
+        title={tr({ zh: '请输入训练编码（先棱后角）', en: 'Enter training codes (edge then corner)'
         })}
         placeholder={
-          tr({ zh: '页面不会保存输入编码，请自行保存！输入编码以换行分隔，先棱后角。可以在 Excel 或 txt 中整理一列编码后粘贴。', en: 'Codes are not saved — keep your own copy. One 2-letter code per line, edge letter then corner letter. Paste a column from Excel or a text file.',
-              zhHant: "頁面不會儲存輸入編碼，請自行儲存！輸入編碼以換行分隔，先稜后角。可以在 Excel 或 txt 中整理一列編碼後貼上。"
+          tr({ zh: '页面不会保存输入编码，请自行保存！输入编码以换行分隔，先棱后角。可以在 Excel 或 txt 中整理一列编码后粘贴。', en: 'Codes are not saved — keep your own copy. One 2-letter code per line, edge letter then corner letter. Paste a column from Excel or a text file.'
         })
         }
         sampleButton={{
-          label: tr({ zh: '添加输入样例', en: 'Add sample',
-              zhHant: "新增輸入樣例"
+          label: tr({ zh: '添加输入样例', en: 'Add sample'
         }),
           onClick: addSample,
         }}

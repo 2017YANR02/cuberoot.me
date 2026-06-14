@@ -23,7 +23,6 @@ const CELL = (VIEW - 2 * PAD) / (S - 1);
 
 // Preset k values, each with its r₂(k) and a brief shape description.
 const K_PRESETS: ReadonlyArray<{ k: number; reps: number; zh: string; en: string
-        zhHant?: string;
  }> = [
   { k: 1,   reps: 4,  zh: '只有水平/垂直',  en: 'horizontal/vertical only' },
   { k: 5,   reps: 8,  zh: '加入 (1,2) 族', en: 'adds the (1,2) family' },
@@ -97,7 +96,7 @@ export default function ErdosGridHero() {
 
       <div className="ud-hero-figure-controls">
         <span className="ud-hero-figure-caption">
-          {i18n.language === 'zh-Hant' ? (<>20 × 20 整數網格,所有距離恰好 <span className="ud-mono">√{k} ≈ {Math.sqrt(k).toFixed(2)}</span> 的對子。</>) : (isZh
+          {(isZh
                               ? <>20 × 20 整数网格,所有距离恰好 <span className="ud-mono">√{k} ≈ {Math.sqrt(k).toFixed(2)}</span> 的对子。</>
                               : <>20 × 20 integer grid, every pair at distance <span className="ud-mono">√{k} ≈ {Math.sqrt(k).toFixed(2)}</span>.</>)
           }
@@ -111,7 +110,7 @@ export default function ErdosGridHero() {
             <button key={p.k}
               className={`ud-hero-k-btn ${p.k === k ? 'is-on' : ''}`}
               onClick={() => setK(p.k)}
-              title={(i18n.language === 'zh-Hant' ? (p.zhHant ?? p.zh) : (i18n.language.startsWith('zh') ? p.zh : p.en))}
+              title={((i18n.language.startsWith('zh') ? p.zh : p.en))}
             >
               k = {p.k}
               <span className="ud-hero-k-reps">r₂={p.reps}</span>

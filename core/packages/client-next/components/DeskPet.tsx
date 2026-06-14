@@ -39,7 +39,6 @@ interface PetTheme {
   thumb: string;
   thumbScale?: number; // zoom the toolbar thumb to crop dead viewBox margin
   label: { zh: string; en: string
-    zhHant?: string;
  };
   files: Record<string, string>;
   mini: MiniTheme;
@@ -77,8 +76,7 @@ const THEMES: Record<ThemeId, PetTheme> = {
   },
   calico: {
     base: '/deskpet/calico/', inlineIdle: false,
-    thumb: '/deskpet/calico/calico-idle.png', label: { zh: '三花猫', en: 'Calico',
-        zhHant: "三花貓"
+    thumb: '/deskpet/calico/calico-idle.png', label: { zh: '三花猫', en: 'Calico'
     },
     files: {
       idle: 'calico-idle.png',
@@ -106,8 +104,7 @@ const THEMES: Record<ThemeId, PetTheme> = {
   },
   cloudling: {
     base: '/deskpet/cloudling/', inlineIdle: false,
-    thumb: '/deskpet/cloudling/cloudling-idle.svg', thumbScale: 3, label: { zh: '云宝', en: 'Cloud',
-        zhHant: "雲寶"
+    thumb: '/deskpet/cloudling/cloudling-idle.svg', thumbScale: 3, label: { zh: '云宝', en: 'Cloud'
     },
     files: {
       idle: 'cloudling-idle.svg',

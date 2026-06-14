@@ -42,12 +42,11 @@ export default function PersonBestCombos({ wcaId, isZh, inclCancelled }: {
   return (
     <section className="wp-card wp-combos-card">
       <div className="wp-combos-head">
-        <h2 className="wp-combos-title">{tr({ zh: '最优项目组合', en: 'Best event combination', zhHant: '最優項目組合' })}</h2>
+        <h2 className="wp-combos-title">{tr({ zh: '最优项目组合', en: 'Best event combination' })}</h2>
       </div>
       <p className="wp-combos-sub">{tr({
         zh: '在所有项目子集里,使 TA 名次和最低(世界排名最高)的组合;缺项以该项目「参赛人数+1」计入。',
-        en: 'The event subset that minimizes their sum of ranks (best world placement); missing events count as "participants+1".',
-        zhHant: '在所有項目子集裡,使 TA 名次和最低(世界排名最高)的組合;缺項以該項目「參賽人數+1」計入。',
+        en: 'The event subset that minimizes their sum of ranks (best world placement); missing events count as "participants+1".'
       })}</p>
       <div className="wp-combos-bodies">
         <div className="sor-pb">

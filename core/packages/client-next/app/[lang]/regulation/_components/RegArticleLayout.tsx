@@ -59,7 +59,7 @@ export default function RegArticleLayout({ slug, children }: { slug: string; chi
         <div className="reg-crumb">
           <Link href="/regulation" className="reg-crumb-link">
             <ArrowLeft size={15} />
-            {t('全部规则', 'All regulations', "全部規則")}
+            {t('全部规则', 'All regulations')}
           </Link>
         </div>
 
@@ -75,7 +75,7 @@ export default function RegArticleLayout({ slug, children }: { slug: string; chi
         {children}
 
         {/* Prev / next chapter */}
-        <nav className="reg-prevnext" aria-label={t('章节导航', 'Chapter navigation', "章節導航")}>
+        <nav className="reg-prevnext" aria-label={t('章节导航', 'Chapter navigation')}>
           {prev ? <PrevNextCard a={prev} dir="prev" /> : <span className="reg-pn reg-pn-empty" />}
           {next ? <PrevNextCard a={next} dir="next" /> : <span className="reg-pn reg-pn-empty" />}
         </nav>
@@ -85,20 +85,20 @@ export default function RegArticleLayout({ slug, children }: { slug: string; chi
           <p>
             {t(
               '本页是对 WCA 官方《竞赛规则与指南》对应章节的图文介绍与翻译,内容为本站整理,仅供学习参考;一切判定以官方现行版本为准。',
-              'This page is an illustrated guide to and translation of the corresponding chapter of the official WCA Regulations & Guidelines, compiled by this site for educational reference only. Judging always follows the current official version.', "本頁是對 WCA 官方《競賽規則與指南》對應章節的圖文介紹與翻譯,內容為本站整理,僅供學習參考;一切判定以官方現行版本為準。"
+              'This page is an illustrated guide to and translation of the corresponding chapter of the official WCA Regulations & Guidelines, compiled by this site for educational reference only. Judging always follows the current official version.'
             )}
           </p>
           <p style={{ marginTop: 12 }}>
-            <Link href="/regulation">{t('← 返回规则总览', '← Back to overview', "← 返回規則總覽")}</Link>
+            <Link href="/regulation">{t('← 返回规则总览', '← Back to overview')}</Link>
             {' · '}
-            <a href={WCA_REG_FULL} target="_blank" rel="noopener noreferrer">{t('官方规则全文', 'Official Regulations (full)', "官方規則全文")}</a>
+            <a href={WCA_REG_FULL} target="_blank" rel="noopener noreferrer">{t('官方规则全文', 'Official Regulations (full)')}</a>
             {' · '}
-            <a href={WCA_REG_ZH} target="_blank" rel="noopener noreferrer">{t('官方中文翻译', 'Official Chinese translation', "官方中文翻譯")}</a>
+            <a href={WCA_REG_ZH} target="_blank" rel="noopener noreferrer">{t('官方中文翻译', 'Official Chinese translation')}</a>
           </p>
         </footer>
 
         {/* Floating jump-to-overview on long chapters */}
-        <Link href="/regulation" className="reg-fab" aria-label={t('返回规则总览', 'Back to overview', "返回規則總覽")}>
+        <Link href="/regulation" className="reg-fab" aria-label={t('返回规则总览', 'Back to overview')}>
           <LibraryBig size={20} />
         </Link>
       </div>

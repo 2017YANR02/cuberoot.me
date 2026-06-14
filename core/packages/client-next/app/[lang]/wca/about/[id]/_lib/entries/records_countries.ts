@@ -17,16 +17,11 @@ const best_medal_collection_from_abroad_by_country: AboutEntry = {
     'It measures away-game depth: home medals are easy for established regions; medals abroad require a real talent pool willing and able to travel.',
   ],
   stats: [
-    { value: '金 > 银 > 铜', labelZh: '排序口径', labelEn: 'Sort key', hintZh: '先金牌降序,平了看银 / 铜', hintEn: 'Golds desc, silver / bronze tiebreaker',
-        labelZhHant: "排序口徑",
-        hintZhHant: "先金牌降序,平了看銀 / 銅"
+    { value: '金 > 银 > 铜', labelZh: '排序口径', labelEn: 'Sort key', hintZh: '先金牌降序,平了看银 / 铜', hintEn: 'Golds desc, silver / bronze tiebreaker'
     },
-    { value: '`pos ∈ {1,2,3}`', labelZh: '领奖台判定', labelEn: 'Podium check', hintZh: '直接读 `results.pos`(WCA 已算好)', hintEn: 'Reads `results.pos` (WCA-precomputed)',
-        labelZhHant: "領獎臺判定",
-        hintZhHant: "直接讀 `results.pos`(WCA 已算好)"
+    { value: '`pos ∈ {1,2,3}`', labelZh: '领奖台判定', labelEn: 'Podium check', hintZh: '直接读 `results.pos`(WCA 已算好)', hintEn: 'Reads `results.pos` (WCA-precomputed)'
     },
-    { value: '`c / f` 轮次', labelZh: '只看决赛', labelEn: 'Final rounds only', hintZh: 'Final + Combined Final', hintEn: 'Final + Combined Final',
-        labelZhHant: "只看決賽"
+    { value: '`c / f` 轮次', labelZh: '只看决赛', labelEn: 'Final rounds only', hintZh: 'Final + Combined Final', hintEn: 'Final + Combined Final'
     },
     { value: '`best > 0`', labelZh: '排 DNF', labelEn: 'DNF filter', hintZh: 'best ≤ 0 = DNF / DNS / 未提交', hintEn: 'best ≤ 0 = DNF / DNS / unattempted' },
   ],
@@ -54,34 +49,26 @@ GROUP BY result.country_id`,
       titleZh: '过滤海外决赛行',
       titleEn: 'Filter abroad final rows',
       bodyZh: '保留 `country_id` 不一致 + `round_type_id IN (c, f)` + `best > 0` 的 `results` 行 —— 即"决赛 + 完赛 + 客场"。',
-      bodyEn: 'Keep `results` rows where the two `country_id` differ, the round is `c` or `f`, and `best > 0` — final, completed, away.',
-        titleZhHant: "過濾海外決賽行",
-        bodyZhHant: "保留 `country_id` 不一致 + `round_type_id IN (c, f)` + `best > 0` 的 `results` 行 —— 即\"決賽 + 完賽 + 客場\"。"
+      bodyEn: 'Keep `results` rows where the two `country_id` differ, the round is `c` or `f`, and `best > 0` — final, completed, away.'
     },
     {
       titleZh: '按选手国家分组',
       titleEn: 'Group by competitor country',
       bodyZh: '注意分组键是 `results.country_id` (选手国籍),不是比赛举办国。',
-      bodyEn: 'Group by `results.country_id` (competitor nationality), not the host country.',
-        titleZhHant: "按選手國家分組",
-        bodyZhHant: "注意分組鍵是 `results.country_id` (選手國籍),不是比賽舉辦國。"
+      bodyEn: 'Group by `results.country_id` (competitor nationality), not the host country.'
     },
     {
       titleZh: '三种奖牌分别 SUM',
       titleEn: 'Sum each medal tier',
       bodyZh: '`SUM(IF(pos = 1, 1, 0))` 数金牌,同理银 / 铜。一个领奖台 = 3 行 (3 个项目分别拿牌)。',
-      bodyEn: '`SUM(IF(pos = 1, 1, 0))` for gold, similarly silver / bronze. One podium across an event = one row per medalist.',
-        titleZhHant: "三種獎牌分別 SUM",
-        bodyZhHant: "`SUM(IF(pos = 1, 1, 0))` 數金牌,同理銀 / 銅。一個領獎臺 = 3 行 (3 個項目分別拿牌)。"
+      bodyEn: '`SUM(IF(pos = 1, 1, 0))` for gold, similarly silver / bronze. One podium across an event = one row per medalist.'
     },
     {
       titleZh: 'join `countries` 取国名',
       titleEn: 'Join `countries` for display name',
       bodyZh: '把 `country_id` 换成可读国名;按 `gold DESC, silver DESC, bronze DESC, name` 排序 —— 经典奖牌榜规则。',
       bodyEn: 'Resolve `country_id` to a display name; sort by `gold DESC, silver DESC, bronze DESC, name` — classic medal-table rule.',
-      highlight: true,
-        titleZhHant: "join `countries` 取國名",
-        bodyZhHant: "把 `country_id` 換成可讀國名;按 `gold DESC, silver DESC, bronze DESC, name` 排序 —— 經典獎牌榜規則。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -97,26 +84,15 @@ GROUP BY result.country_id`,
     'Standard WCA medal definition — top 3 in final is a podium even if fewer than 8 competitors entered.',
   ],
   related: [
-    { id: 'best_medal_collection_from_abroad_by_person', titleZh: '个人版', titleEn: 'Per-person version', hintZh: '同口径,按选手汇总', hintEn: 'Same metric, aggregated by person',
-        titleZhHant: "個人版",
-        hintZhHant: "同口徑,按選手彙總"
+    { id: 'best_medal_collection_from_abroad_by_person', titleZh: '个人版', titleEn: 'Per-person version', hintZh: '同口径,按选手汇总', hintEn: 'Same metric, aggregated by person'
     },
-    { id: 'world_championship_podiums_by_country', titleZh: '世锦赛奖牌(国家)', titleEn: 'Worlds podiums by country', hintZh: '只看世锦赛的版本', hintEn: 'Worlds-only counterpart',
-        titleZhHant: "世錦賽獎牌(國家)",
-        hintZhHant: "只看世錦賽的版本"
+    { id: 'world_championship_podiums_by_country', titleZh: '世锦赛奖牌(国家)', titleEn: 'Worlds podiums by country', hintZh: '只看世锦赛的版本', hintEn: 'Worlds-only counterpart'
     },
-    { id: 'world_records_by_country', titleZh: '各国 WR 总数', titleEn: 'WRs by country', hintZh: '另一个国家维度指标', hintEn: 'Sibling country-level metric',
-        titleZhHant: "各國 WR 總數",
-        hintZhHant: "另一個國家維度指標"
+    { id: 'world_records_by_country', titleZh: '各国 WR 总数', titleEn: 'WRs by country', hintZh: '另一个国家维度指标', hintEn: 'Sibling country-level metric'
     },
-    { id: 'best_medal_collection_from_abroad_by_country', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '完整国家列表', hintEn: 'Full country leaderboard',
-        titleZhHant: "開啟實時榜單",
-        hintZhHant: "完整國家列表"
+    { id: 'best_medal_collection_from_abroad_by_country', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '完整国家列表', hintEn: 'Full country leaderboard'
     },
-  ],
-    titleZhHant: "各國海外最佳獎牌收藏",
-    badgeZhHant: "國家",
-    edgesZhHant: ["\"海外\"按舉辦國判定,不是地理遠近 —— 大陸內鄰國 (中日韓互訪) 也算海外。", "只看 Final + Combined Final 兩類決賽輪 —— 預賽 / 半決名次不計入獎牌。", "WCA 的 `pos` 在 DNF 也會賦值 (按 best 排),所以再加 `best > 0` 排掉 \"DNF 拿第一\"。", "\"獎牌\"沿用 WCA 標準 —— 決賽前 3 即領獎臺,即使決賽 < 8 人也算 (規則未要求最低人數)。"]
+  ]
 };
 
 // ──── best_medal_collection_from_abroad_by_person ───────────────────────────
@@ -135,18 +111,13 @@ const best_medal_collection_from_abroad_by_person: AboutEntry = {
     'The leaderboard is dominated by frequent-flyer travelers — home-country medals don\'t count, only cross-border podiums.',
   ],
   stats: [
-    { value: '100', labelZh: '榜单长度', labelEn: 'Leaderboard size', hintZh: '`LIMIT 100`', hintEn: '`LIMIT 100`',
-        labelZhHant: "榜單長度"
+    { value: '100', labelZh: '榜单长度', labelEn: 'Leaderboard size', hintZh: '`LIMIT 100`', hintEn: '`LIMIT 100`'
     },
-    { value: '`sub_id = 1`', labelZh: '只取主身份', labelEn: 'Primary identity only', hintZh: '改名 / 改国籍走副 row,忽略', hintEn: 'Renames / nationality changes go to alt rows, ignored',
-        hintZhHant: "改名 / 改國籍走副 row,忽略"
+    { value: '`sub_id = 1`', labelZh: '只取主身份', labelEn: 'Primary identity only', hintZh: '改名 / 改国籍走副 row,忽略', hintEn: 'Renames / nationality changes go to alt rows, ignored'
     },
-    { value: '金 → 银 → 铜', labelZh: '排序优先级', labelEn: 'Tiebreaker order', hintZh: '同国家榜', hintEn: 'Same as country leaderboard',
-        labelZhHant: "排序優先順序",
-        hintZhHant: "同國家榜"
+    { value: '金 → 银 → 铜', labelZh: '排序优先级', labelEn: 'Tiebreaker order', hintZh: '同国家榜', hintEn: 'Same as country leaderboard'
     },
-    { value: '决赛 + 完赛', labelZh: '入榜门槛', labelEn: 'Inclusion filter', hintZh: '`round_type_id IN (c, f)` + `best > 0`', hintEn: '`round_type_id IN (c, f)` + `best > 0`',
-        labelZhHant: "入榜門檻"
+    { value: '决赛 + 完赛', labelZh: '入榜门槛', labelEn: 'Inclusion filter', hintZh: '`round_type_id IN (c, f)` + `best > 0`', hintEn: '`round_type_id IN (c, f)` + `best > 0`'
     },
   ],
   sourceZh: [
@@ -173,30 +144,26 @@ ORDER BY gold DESC, silver DESC, bronze DESC LIMIT 100`,
       titleZh: '同 by_country 的 WHERE',
       titleEn: 'Same WHERE as by_country',
       bodyZh: '`round_type_id IN (c, f)` + `best > 0` + 跨国比赛过滤,沿用国家榜过滤逻辑。',
-      bodyEn: 'Same `round_type_id IN (c, f)` + `best > 0` + cross-border filter as the country leaderboard.',
-        bodyZhHant: "`round_type_id IN (c, f)` + `best > 0` + 跨國比賽過濾,沿用國家榜過濾邏輯。"
+      bodyEn: 'Same `round_type_id IN (c, f)` + `best > 0` + cross-border filter as the country leaderboard.'
     },
     {
       titleZh: '`GROUP BY person_id`',
       titleEn: 'Aggregate by person',
       bodyZh: '每个选手一行;同一场比赛多个项目奖牌都计入。',
-      bodyEn: 'One row per cuber; multiple medals from one comp (different events) all stack.',
-        bodyZhHant: "每個選手一行;同一場比賽多個項目獎牌都計入。"
+      bodyEn: 'One row per cuber; multiple medals from one comp (different events) all stack.'
     },
     {
       titleZh: 'join `persons` 取主身份',
       titleEn: 'Join `persons` for primary identity',
       bodyZh: 'WCA dump 里改名 / 国籍变化会有多行 `persons`,`sub_id = 1` 是当前展示行。',
-      bodyEn: 'WCA dump stores rename / nationality changes as alt rows; `sub_id = 1` is the currently-displayed identity.',
-        bodyZhHant: "WCA dump 裡改名 / 國籍變化會有多行 `persons`,`sub_id = 1` 是當前展示行。"
+      bodyEn: 'WCA dump stores rename / nationality changes as alt rows; `sub_id = 1` is the currently-displayed identity.'
     },
     {
       titleZh: '排序 + LIMIT 100',
       titleEn: 'Sort + LIMIT 100',
       bodyZh: '同 by_country 排序;只输出前 100 控制 JSON 体积。',
       bodyEn: 'Same sort order as the country leaderboard; capped at 100 rows to keep the JSON small.',
-      highlight: true,
-        bodyZhHant: "同 by_country 排序;只輸出前 100 控制 JSON 體積。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -210,25 +177,15 @@ ORDER BY gold DESC, silver DESC, bronze DESC LIMIT 100`,
     'The hard limit of 100 hides the long tail; the country aggregate is complete.',
   ],
   related: [
-    { id: 'best_medal_collection_from_abroad_by_country', titleZh: '国家版', titleEn: 'Per-country version', hintZh: '把人 → 国家的汇总', hintEn: 'Person → country aggregation',
-        titleZhHant: "國家版",
-        hintZhHant: "把人 → 國家的彙總"
+    { id: 'best_medal_collection_from_abroad_by_country', titleZh: '国家版', titleEn: 'Per-country version', hintZh: '把人 → 国家的汇总', hintEn: 'Person → country aggregation'
     },
-    { id: 'world_championship_podiums_by_person', titleZh: '世锦赛奖牌(选手)', titleEn: 'Worlds podiums by person', hintZh: '只在世锦赛上的领奖台', hintEn: 'Worlds-only podiums per cuber',
-        titleZhHant: "世錦賽獎牌(選手)",
-        hintZhHant: "只在世錦賽上的領獎臺"
+    { id: 'world_championship_podiums_by_person', titleZh: '世锦赛奖牌(选手)', titleEn: 'Worlds podiums by person', hintZh: '只在世锦赛上的领奖台', hintEn: 'Worlds-only podiums per cuber'
     },
-    { id: 'world_records_by_person', titleZh: '个人 WR 数', titleEn: 'WRs by person', hintZh: '另一个个人维度指标', hintEn: 'Sibling per-person metric',
-        titleZhHant: "個人 WR 數",
-        hintZhHant: "另一個個人維度指標"
+    { id: 'world_records_by_person', titleZh: '个人 WR 数', titleEn: 'WRs by person', hintZh: '另一个个人维度指标', hintEn: 'Sibling per-person metric'
     },
-    { id: 'best_medal_collection_from_abroad_by_person', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: 'Top 100', hintEn: 'Top 100',
-        titleZhHant: "開啟實時榜單"
+    { id: 'best_medal_collection_from_abroad_by_person', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: 'Top 100', hintEn: 'Top 100'
     },
-  ],
-    titleZhHant: "個人海外最佳獎牌收藏",
-    badgeZhHant: "選手",
-    edgesZhHant: ["選手改國籍後,舊比賽的 `result.country_id` **不會回填** —— 歷史獎牌按當時國籍判定海外/主場,符合直覺。", "同一選手在同一比賽拿多個項目金牌會累計 (e.g. 3x3 + 2x2 + OH 都金牌 = +3 金)。", "Limit 100 截斷意味著尾部選手在這裡看不到,但完整 by_country 加總能反推。"]
+  ]
 };
 
 // ──── current_world_records_by_country ──────────────────────────────────────
@@ -247,20 +204,13 @@ const current_world_records_by_country: AboutEntry = {
     'A cuber holding both single + average WR contributes 2; multiple holders in one country roll up under that country.',
   ],
   stats: [
-    { value: 'single + average', labelZh: '两类纪录', labelEn: 'Two record types', hintZh: '每个项目最多 2 个当前 WR', hintEn: 'Up to 2 active WRs per event',
-        labelZhHant: "兩類紀錄",
-        hintZhHant: "每個項目最多 2 個當前 WR"
+    { value: 'single + average', labelZh: '两类纪录', labelEn: 'Two record types', hintZh: '每个项目最多 2 个当前 WR', hintEn: 'Up to 2 active WRs per event'
     },
-    { value: '`e.rank < 900`', labelZh: '只看现役项目', labelEn: 'Active events only', hintZh: '排除已停办项目', hintEn: 'Discontinued events excluded',
-        labelZhHant: "只看現役項目",
-        hintZhHant: "排除已停辦項目"
+    { value: '`e.rank < 900`', labelZh: '只看现役项目', labelEn: 'Active events only', hintZh: '排除已停办项目', hintEn: 'Discontinued events excluded'
     },
-    { value: '`MIN(best/average)`', labelZh: 'WR 判定', labelEn: 'WR check', hintZh: '该项目全局最小 = 当前 WR', hintEn: 'Global min per event = current WR',
-        hintZhHant: "該項目全域性最小 = 當前 WR"
+    { value: '`MIN(best/average)`', labelZh: 'WR 判定', labelEn: 'WR check', hintZh: '该项目全局最小 = 当前 WR', hintEn: 'Global min per event = current WR'
     },
-    { value: 'GROUP_CONCAT', labelZh: '同国合并', labelEn: 'Per-country join', hintZh: '该国 WR 持有者列表', hintEn: 'Country\'s WR holders rendered as list',
-        labelZhHant: "同國合併",
-        hintZhHant: "該國 WR 持有者列表"
+    { value: 'GROUP_CONCAT', labelZh: '同国合并', labelEn: 'Per-country join', hintZh: '该国 WR 持有者列表', hintEn: 'Country\'s WR holders rendered as list'
     },
   ],
   sourceZh: [
@@ -289,40 +239,32 @@ JOIN events e ON e.id = ps.event_id AND e.rank < 900;`,
       titleZh: '算每人每项 PB',
       titleEn: 'Compute per-person PB',
       bodyZh: '`GROUP BY person_id, event_id` + `MIN(best)`,过 `best > 0` 排 DNF。average 用 `MIN(average)` 同理。',
-      bodyEn: '`GROUP BY person_id, event_id` with `MIN(best)`, filter `best > 0` to drop DNFs. Average mirrors via `MIN(average)`.',
-        titleZhHant: "算每人每項 PB",
-        bodyZhHant: "`GROUP BY person_id, event_id` + `MIN(best)`,過 `best > 0` 排 DNF。average 用 `MIN(average)` 同理。"
+      bodyEn: '`GROUP BY person_id, event_id` with `MIN(best)`, filter `best > 0` to drop DNFs. Average mirrors via `MIN(average)`.'
     },
     {
       titleZh: '算全局 WR',
       titleEn: 'Compute global WR',
       bodyZh: '同 `results` 表 `GROUP BY event_id` + `MIN(best)` —— 每项目一个 WR 值。',
-      bodyEn: 'Same `results` table, `GROUP BY event_id` + `MIN(best)` — one WR value per event.',
-        titleZhHant: "算全域性 WR",
-        bodyZhHant: "同 `results` 表 `GROUP BY event_id` + `MIN(best)` —— 每項目一個 WR 值。"
+      bodyEn: 'Same `results` table, `GROUP BY event_id` + `MIN(best)` — one WR value per event.'
     },
     {
       titleZh: '找等值持有者',
       titleEn: 'Match holders',
       bodyZh: '内连接 `PB = WR` 拿到当前持有人;并列 WR (多人同值) 都算进去。',
-      bodyEn: 'Inner join `PB = WR` extracts current holders; ties (multiple cubers at the same time) all qualify.',
-        bodyZhHant: "內連線 `PB = WR` 拿到當前持有人;並列 WR (多人同值) 都算進去。"
+      bodyEn: 'Inner join `PB = WR` extracts current holders; ties (multiple cubers at the same time) all qualify.'
     },
     {
       titleZh: 'UNION ALL single + average',
       titleEn: 'UNION single + average',
       bodyZh: '两个子查询合并 —— 同时持有 single + average WR 的选手出现 2 行,自然 +2。',
-      bodyEn: 'Merge both subqueries — a cuber holding single + average WRs appears twice, contributing 2.',
-        bodyZhHant: "兩個子查詢合併 —— 同時持有 single + average WR 的選手出現 2 行,自然 +2。"
+      bodyEn: 'Merge both subqueries — a cuber holding single + average WRs appears twice, contributing 2.'
     },
     {
       titleZh: '按国家汇总',
       titleEn: 'Roll up by country',
       bodyZh: '`COUNT(*)` 算该国 WR 数,`GROUP_CONCAT(DISTINCT person.name ...)` 拼持有者名单。',
       bodyEn: '`COUNT(*)` for the country\'s WR tally; `GROUP_CONCAT(DISTINCT person.name ...)` for the holder list.',
-      highlight: true,
-        titleZhHant: "按國家彙總",
-        bodyZhHant: "`COUNT(*)` 算該國 WR 數,`GROUP_CONCAT(DISTINCT person.name ...)` 拼持有者名單。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -338,26 +280,15 @@ JOIN events e ON e.id = ps.event_id AND e.rank < 900;`,
     'Different from `world_records_by_country` — that counts all-time WR history; this counts only what\'s currently held.',
   ],
   related: [
-    { id: 'world_records_by_country', titleZh: '历史 WR 累计(国家)', titleEn: 'All-time WR count (country)', hintZh: '同一维度的累计版', hintEn: 'Cumulative all-time counterpart',
-        titleZhHant: "歷史 WR 累計(國家)",
-        hintZhHant: "同一維度的累計版"
+    { id: 'world_records_by_country', titleZh: '历史 WR 累计(国家)', titleEn: 'All-time WR count (country)', hintZh: '同一维度的累计版', hintEn: 'Cumulative all-time counterpart'
     },
-    { id: 'world_records_by_person', titleZh: '历史 WR 累计(选手)', titleEn: 'All-time WR count (person)', hintZh: '换个体维度', hintEn: 'Per-person version',
-        titleZhHant: "歷史 WR 累計(選手)",
-        hintZhHant: "換個體維度"
+    { id: 'world_records_by_person', titleZh: '历史 WR 累计(选手)', titleEn: 'All-time WR count (person)', hintZh: '换个体维度', hintEn: 'Per-person version'
     },
-    { id: 'wr_current', titleZh: '当前 WR 一览', titleEn: 'Current WR snapshot', hintZh: '逐项目列出当前 WR 值', hintEn: 'Per-event WR value listing',
-        titleZhHant: "當前 WR 一覽",
-        hintZhHant: "逐項目列出當前 WR 值"
+    { id: 'wr_current', titleZh: '当前 WR 一览', titleEn: 'Current WR snapshot', hintZh: '逐项目列出当前 WR 值', hintEn: 'Per-event WR value listing'
     },
-    { id: 'current_world_records_by_country', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '国家 + 持有人', hintEn: 'Country + holders',
-        titleZhHant: "開啟實時榜單",
-        hintZhHant: "國家 + 持有人"
+    { id: 'current_world_records_by_country', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '国家 + 持有人', hintEn: 'Country + holders'
     },
-  ],
-    titleZhHant: "各國當前世界紀錄數量",
-    badgeZhHant: "國家",
-    edgesZhHant: ["\"當前\"= dump 時間點 (每月更新);新 WR 打破後下一次 dump 才會反映。", "並列 WR (同值多人) 都算,所以個別項目可能 2-3 個國家同時各 +1。", "停辦項目 (`e.rank ≥ 900`) 整個被排除 —— 那些 \"永久 WR\" 不參與現役榜。", "與 `world_records_by_country` 區別:那個是歷史累計,這個只數當前持有。"]
+  ]
 };
 
 // ──── delegated_competition_per_year ────────────────────────────────────────
@@ -376,20 +307,13 @@ const delegated_competition_per_year: AboutEntry = {
     'Service span = first delegated comp → last (DATEDIFF days ÷ 365.25), not the formal Delegate appointment window. Floor: at least 5 delegated comps to qualify (filters out new appointees).',
   ],
   stats: [
-    { value: '≥ 5', labelZh: '入榜门槛', labelEn: 'Inclusion floor', hintZh: '少于 5 场不上榜', hintEn: 'Under 5 — excluded',
-        labelZhHant: "入榜門檻",
-        hintZhHant: "少於 5 場不上榜"
+    { value: '≥ 5', labelZh: '入榜门槛', labelEn: 'Inclusion floor', hintZh: '少于 5 场不上榜', hintEn: 'Under 5 — excluded'
     },
-    { value: '365.25', labelZh: '年长度', labelEn: 'Days per year', hintZh: '含闰年的平均年长', hintEn: 'Leap-aware average year',
-        labelZhHant: "年長度",
-        hintZhHant: "含閏年的平均年長"
+    { value: '365.25', labelZh: '年长度', labelEn: 'Days per year', hintZh: '含闰年的平均年长', hintEn: 'Leap-aware average year'
     },
-    { value: '`show_at_all = 1`', labelZh: '可见比赛', labelEn: 'Visible comps', hintZh: '排掉草稿 / 隐藏', hintEn: 'Excludes draft / hidden',
-        labelZhHant: "可見比賽",
-        hintZhHant: "排掉草稿 / 隱藏"
+    { value: '`show_at_all = 1`', labelZh: '可见比赛', labelEn: 'Visible comps', hintZh: '排掉草稿 / 隐藏', hintEn: 'Excludes draft / hidden'
     },
-    { value: '`cancelled_at IS NULL`', labelZh: '排已取消', labelEn: 'Drop cancelled', hintZh: '签了又取消的不算', hintEn: 'Signed but cancelled excluded',
-        hintZhHant: "簽了又取消的不算"
+    { value: '`cancelled_at IS NULL`', labelZh: '排已取消', labelEn: 'Drop cancelled', hintZh: '签了又取消的不算', hintEn: 'Signed but cancelled excluded'
     },
   ],
   sourceZh: [
@@ -418,38 +342,32 @@ HAVING delegated >= 5`,
       titleZh: '过滤可见 + 未取消 + 已开始',
       titleEn: 'Filter visible + not cancelled + started',
       bodyZh: '草稿比赛 / 取消比赛 / 未来比赛全排掉 —— 只算"真正办过"的。',
-      bodyEn: 'Drafts / cancelled / future comps all excluded — only "actually happened" counts.',
-        titleZhHant: "過濾可見 + 未取消 + 已開始",
-        bodyZhHant: "草稿比賽 / 取消比賽 / 未來比賽全排掉 —— 只算\"真正辦過\"的。"
+      bodyEn: 'Drafts / cancelled / future comps all excluded — only "actually happened" counts.'
     },
     {
       titleZh: 'COUNT(DISTINCT competition_id)',
       titleEn: 'Count distinct comps',
       bodyZh: 'Distinct 防一场比赛多角色 (e.g. Delegate + Organizer) 在 join 后产生重复行。',
-      bodyEn: 'Distinct guards against double-counting when a delegate also held other roles at the same comp.',
-        bodyZhHant: "Distinct 防一場比賽多角色 (e.g. Delegate + Organizer) 在 join 後產生重複行。"
+      bodyEn: 'Distinct guards against double-counting when a delegate also held other roles at the same comp.'
     },
     {
       titleZh: '服役跨度 = MAX(end) − MIN(start)',
       titleEn: 'Span = MAX(end) − MIN(start)',
       bodyZh: '`DATEDIFF` 拿天数 / 365.25 = 年。注意 `MIN(start_date)` 配 `MAX(end_date)` —— 首场起算到末场结束。',
-      bodyEn: '`DATEDIFF` days ÷ 365.25 = years. Pair `MIN(start_date)` with `MAX(end_date)` — from first comp\'s start to last comp\'s end.',
-        bodyZhHant: "`DATEDIFF` 拿天數 / 365.25 = 年。注意 `MIN(start_date)` 配 `MAX(end_date)` —— 首場起算到末場結束。"
+      bodyEn: '`DATEDIFF` days ÷ 365.25 = years. Pair `MIN(start_date)` with `MAX(end_date)` — from first comp\'s start to last comp\'s end.'
     },
     {
       titleZh: '`HAVING delegated >= 5`',
       titleEn: 'Threshold ≥ 5',
       bodyZh: '少于 5 场的"刚上任 + 跨度极短"会算出离谱年均值,直接砍掉。',
-      bodyEn: 'New appointees with very short spans would compute absurd yearly rates — cut at 5 minimum.',
-        bodyZhHant: "少於 5 場的\"剛上任 + 跨度極短\"會算出離譜年均值,直接砍掉。"
+      bodyEn: 'New appointees with very short spans would compute absurd yearly rates — cut at 5 minimum.'
     },
     {
       titleZh: '`delegated / years` 降序',
       titleEn: 'Sort by delegated / years',
       bodyZh: '最终排序键 = 单位年代表场数,Top 即"最高效"代表。',
       bodyEn: 'Final sort key is comps-per-year; the top is the most productive Delegate.',
-      highlight: true,
-        bodyZhHant: "最終排序鍵 = 單位年代表場數,Top 即\"最高效\"代表。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -463,16 +381,11 @@ HAVING delegated >= 5`,
     'Trainee delegates also appear in `competition_delegates`, so trainee shifts count toward the total.',
   ],
   related: [
-    { id: 'most_delegated_competitions', titleZh: '代表总场次榜', titleEn: 'Total delegated comps', hintZh: '不除年数,纯累计', hintEn: 'No yearly rate, pure cumulative',
-        titleZhHant: "代表總場次榜",
-        hintZhHant: "不除年數,純累計"
+    { id: 'most_delegated_competitions', titleZh: '代表总场次榜', titleEn: 'Total delegated comps', hintZh: '不除年数,纯累计', hintEn: 'No yearly rate, pure cumulative'
     },
-    { id: 'delegated_competition_per_year', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '年均效率排名', hintEn: 'Comps-per-year ranking',
-        titleZhHant: "開啟實時榜單"
+    { id: 'delegated_competition_per_year', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '年均效率排名', hintEn: 'Comps-per-year ranking'
     },
-  ],
-    titleZhHant: "每年代表比賽數",
-    edgesZhHant: ["服役跨度按\"代表過的比賽\"算,不是 WCA 內部任命期 —— 間斷不計入分母 (但通常 Delegate 不會真正斷籤)。", "若代表只簽過 1 場,DATEDIFF 是 0,會除零;`HAVING ≥ 5` 順帶防了。", "副代表 (Trainee) 在 `competition_delegates` 裡也是一行,會算進總數 —— 包含見習經歷。"]
+  ]
 };
 
 // ──── first_r_is_wr ─────────────────────────────────────────────────────────
@@ -492,17 +405,11 @@ const first_r_is_wr: AboutEntry = {
   ],
   stats: [
     { value: 'ROW_NUMBER()', labelZh: '取首次', labelEn: 'First-only pick', hintZh: '按 start_date 分窗排序', hintEn: 'Window-rank by start_date' },
-    { value: 'rn = 1', labelZh: '过滤条件', labelEn: 'Filter', hintZh: '只看每人首条纪录', hintEn: 'Keep first-record-per-person only',
-        labelZhHant: "過濾條件",
-        hintZhHant: "只看每人首條紀錄"
+    { value: 'rn = 1', labelZh: '过滤条件', labelEn: 'Filter', hintZh: '只看每人首条纪录', hintEn: 'Keep first-record-per-person only'
     },
-    { value: 'single ∪ average', labelZh: '两类合并', labelEn: 'Both metric types', hintZh: 'UNION ALL 后一起排', hintEn: 'UNION ALL, then window-rank together',
-        labelZhHant: "兩類合併",
-        hintZhHant: "UNION ALL 後一起排"
+    { value: 'single ∪ average', labelZh: '两类合并', labelEn: 'Both metric types', hintZh: 'UNION ALL 后一起排', hintEn: 'UNION ALL, then window-rank together'
     },
-    { value: '`record = WR`', labelZh: '入榜条件', labelEn: 'Inclusion', hintZh: '首条恰好是 WR', hintEn: 'First record is a WR',
-        labelZhHant: "入榜條件",
-        hintZhHant: "首條恰好是 WR"
+    { value: '`record = WR`', labelZh: '入榜条件', labelEn: 'Inclusion', hintZh: '首条恰好是 WR', hintEn: 'First record is a WR'
     },
   ],
   sourceZh: [
@@ -533,32 +440,26 @@ WHERE rn = 1 AND record = 'WR'`,
       titleZh: '聚合所有 regional record',
       titleEn: 'Pool all regional records',
       bodyZh: '`regional_single_record` 和 `regional_average_record` 两列(NR / CR / WR / 空)联合,每条非空都成一行。',
-      bodyEn: 'Both `regional_single_record` and `regional_average_record` columns (NR / CR / WR / null) become rows when non-null.',
-        bodyZhHant: "`regional_single_record` 和 `regional_average_record` 兩列(NR / CR / WR / 空)聯合,每條非空都成一行。"
+      bodyEn: 'Both `regional_single_record` and `regional_average_record` columns (NR / CR / WR / null) become rows when non-null.'
     },
     {
       titleZh: '按人按时间编号',
       titleEn: 'Window-rank per person by date',
       bodyZh: '`ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY start_date)` 给每个选手的所有 record 按时间编号 (1, 2, 3, ...)。',
-      bodyEn: '`ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY start_date)` numbers each cuber\'s record events 1, 2, 3, ... chronologically.',
-        titleZhHant: "按人按時間編號",
-        bodyZhHant: "`ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY start_date)` 給每個選手的所有 record 按時間編號 (1, 2, 3, ...)。"
+      bodyEn: '`ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY start_date)` numbers each cuber\'s record events 1, 2, 3, ... chronologically.'
     },
     {
       titleZh: '取 `rn = 1`',
       titleEn: 'Keep `rn = 1`',
       bodyZh: '只留下每人**最早**那一条 regional record;同日多条都算"首次"。',
-      bodyEn: 'Keep only each person\'s **earliest** regional record; multiple records on the same date all qualify as "first".',
-        bodyZhHant: "只留下每人**最早**那一條 regional record;同日多條都算\"首次\"。"
+      bodyEn: 'Keep only each person\'s **earliest** regional record; multiple records on the same date all qualify as "first".'
     },
     {
       titleZh: '过滤 `record = WR`',
       titleEn: 'Filter `record = WR`',
       bodyZh: '在首条 record 里只挑级别 = WR 的 —— 上榜的就是这群人。',
       bodyEn: 'From the first-record set, keep only those tagged WR — that\'s the leaderboard.',
-      highlight: true,
-        titleZhHant: "過濾 `record = WR`",
-        bodyZhHant: "在首條 record 裡只挑級別 = WR 的 —— 上榜的就是這群人。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -572,25 +473,15 @@ WHERE rn = 1 AND record = 'WR'`,
     'WCA\'s `regional_*_record` markers are stamped at time-of-record and stay there even after the WR is broken — historical WRs are never "demoted".',
   ],
   related: [
-    { id: 'world_records_by_person', titleZh: '个人 WR 总数', titleEn: 'WRs by person', hintZh: '一个 WR 不稀奇,首条就是才稀奇', hintEn: 'One WR is common; debut WR is rare',
-        titleZhHant: "個人 WR 總數",
-        hintZhHant: "一個 WR 不稀奇,首條就是才稀奇"
+    { id: 'world_records_by_person', titleZh: '个人 WR 总数', titleEn: 'WRs by person', hintZh: '一个 WR 不稀奇,首条就是才稀奇', hintEn: 'One WR is common; debut WR is rare'
     },
-    { id: 'records_in_most_events', titleZh: '在最多项目破纪录', titleEn: 'Records in most events', hintZh: '广度对比', hintEn: 'Breadth counterpart',
-        titleZhHant: "在最多項目破紀錄",
-        hintZhHant: "廣度對比"
+    { id: 'records_in_most_events', titleZh: '在最多项目破纪录', titleEn: 'Records in most events', hintZh: '广度对比', hintEn: 'Breadth counterpart'
     },
-    { id: 'longest_standing_records', titleZh: '最长保持纪录', titleEn: 'Longest-standing records', hintZh: '纪录之后的生命周期', hintEn: 'What happens to a record afterwards',
-        titleZhHant: "最長保持紀錄",
-        hintZhHant: "紀錄之後的生命週期"
+    { id: 'longest_standing_records', titleZh: '最长保持纪录', titleEn: 'Longest-standing records', hintZh: '纪录之后的生命周期', hintEn: 'What happens to a record afterwards'
     },
-    { id: 'first_r_is_wr', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '完整名单 + 日期 + 比赛', hintEn: 'Full list with dates and comps',
-        titleZhHant: "開啟實時榜單",
-        hintZhHant: "完整名單 + 日期 + 比賽"
+    { id: 'first_r_is_wr', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '完整名单 + 日期 + 比赛', hintEn: 'Full list with dates and comps'
     },
-  ],
-    titleZhHant: "首次破紀錄即世界紀錄",
-    edgesZhHant: ["\"首次\"按 `start_date` 排,同日多場比賽 / 同場多項目的並列首條都會進 `rn = 1` (單條記錄裡 single + average 同時算 NR/CR/WR 也會拆 2 行)。", "只要 record **不是空字串 / NULL** 就算 regional record;NR / CR / WR 三級都收進 UNION,再過濾。", "WCA 的 `regional_*_record` 是當時打破時的標記,不會因後續被超越而清除 —— 歷史 WR 不會\"降級\"。"]
+  ]
 };
 
 // ──── longest_standing_records ──────────────────────────────────────────────
@@ -609,19 +500,13 @@ const longest_standing_records: AboutEntry = {
     'Split across 7 regions (World + 6 continents), Top 10 each. WRs appear in every continent block — a WR is automatically that continent\'s continental record too.',
   ],
   stats: [
-    { value: '7', labelZh: '区域分组', labelEn: 'Region blocks', hintZh: 'World + 6 大洲', hintEn: 'World + 6 continents',
-        labelZhHant: "區域分組"
+    { value: '7', labelZh: '区域分组', labelEn: 'Region blocks', hintZh: 'World + 6 大洲', hintEn: 'World + 6 continents'
     },
-    { value: '10', labelZh: '每区域条数', labelEn: 'Rows per region', hintZh: '降序天数前 10', hintEn: 'Top 10 by days standing',
-        labelZhHant: "每區域條數",
-        hintZhHant: "降序天數前 10"
+    { value: '10', labelZh: '每区域条数', labelEn: 'Rows per region', hintZh: '降序天数前 10', hintEn: 'Top 10 by days standing'
     },
-    { value: 'OFFICIAL_EVENTS', labelZh: '只看现役项目', labelEn: 'Active events only', hintZh: '排除已停办', hintEn: 'Discontinued excluded',
-        labelZhHant: "只看現役項目",
-        hintZhHant: "排除已停辦"
+    { value: 'OFFICIAL_EVENTS', labelZh: '只看现役项目', labelEn: 'Active events only', hintZh: '排除已停办', hintEn: 'Discontinued excluded'
     },
-    { value: 'today / 打破日', labelZh: '截止时间', labelEn: 'End boundary', hintZh: '尚未被破 = 今天', hintEn: 'Still active → today',
-        labelZhHant: "截止時間"
+    { value: 'today / 打破日', labelZh: '截止时间', labelEn: 'End boundary', hintZh: '尚未被破 = 今天', hintEn: 'Still active → today'
     },
   ],
   sourceZh: [
@@ -651,42 +536,32 @@ WHERE regional_single_record IN ('AfR','AsR','ER','NAR','OcR','SAR','WR')
       titleZh: '拉历史 record 行',
       titleEn: 'Pull every record-flagged row',
       bodyZh: 'WHERE 子句包含 7 个 regional record code;一行可能同时 single + average 都标 (拆 2 条处理)。',
-      bodyEn: 'WHERE clause includes all 7 regional record codes; a single row can carry both single + average markers (handled as 2 entries).',
-        titleZhHant: "拉歷史 record 行",
-        bodyZhHant: "WHERE 子句包含 7 個 regional record code;一行可能同時 single + average 都標 (拆 2 條處理)。"
+      bodyEn: 'WHERE clause includes all 7 regional record codes; a single row can carry both single + average markers (handled as 2 entries).'
     },
     {
       titleZh: '按 (区域, 项目, 类型) 分桶',
       titleEn: 'Bucket by (region, event, type)',
       bodyZh: '`regionRecords` 表:每个区域看哪些 code (e.g. Asia 看 `AsR + WR`,因为 WR 持有者必然在亚洲打出来才同时进 AsR)。',
-      bodyEn: 'A `regionRecords` map: each region accepts which codes (e.g. Asia includes `AsR + WR`, since a WR set in Asia also counts as AsR).',
-        titleZhHant: "按 (區域, 項目, 型別) 分桶",
-        bodyZhHant: "`regionRecords` 表:每個區域看哪些 code (e.g. Asia 看 `AsR + WR`,因為 WR 持有者必然在亞洲打出來才同時進 AsR)。"
+      bodyEn: 'A `regionRecords` map: each region accepts which codes (e.g. Asia includes `AsR + WR`, since a WR set in Asia also counts as AsR).'
     },
     {
       titleZh: '找"下一条更好"',
       titleEn: 'Find next-better record',
       bodyZh: '组内时间正序,对每条 r,`find(r2 => r2.value < r.value)` 拿到打破它的下一条;返回那条的 `start_date`。',
-      bodyEn: 'Sorted by date within group; for each row r, `find(r2 => r2.value < r.value)` returns the row that broke it; that row\'s `start_date` is the end boundary.',
-        titleZhHant: "找\"下一條更好\"",
-        bodyZhHant: "組內時間正序,對每條 r,`find(r2 => r2.value < r.value)` 拿到打破它的下一條;返回那條的 `start_date`。"
+      bodyEn: 'Sorted by date within group; for each row r, `find(r2 => r2.value < r.value)` returns the row that broke it; that row\'s `start_date` is the end boundary.'
     },
     {
       titleZh: '没有更好 = 仍活着',
       titleEn: 'No-better → still active',
       bodyZh: '当前活着的纪录用今天截止;在 UI 里通常会标"仍在保持"。',
-      bodyEn: 'Still-active records use today as the end boundary; UI typically annotates "still active".',
-        titleZhHant: "沒有更好 = 仍活著",
-        bodyZhHant: "當前活著的紀錄用今天截止;在 UI 裡通常會標\"仍在保持\"。"
+      bodyEn: 'Still-active records use today as the end boundary; UI typically annotates "still active".'
     },
     {
       titleZh: '天数降序 + Top 10',
       titleEn: 'Sort by days, Top 10',
       bodyZh: '`days = ⌊(end − start) / 1d⌋`,按 days 降序;每区域只输出前 10 条 (加粗显示 days)。',
       bodyEn: '`days = ⌊(end − start) / 1d⌋`, sorted desc; emit only the Top 10 per region (with days bolded).',
-      highlight: true,
-        titleZhHant: "天數降序 + Top 10",
-        bodyZhHant: "`days = ⌊(end − start) / 1d⌋`,按 days 降序;每區域只輸出前 10 條 (加粗顯示 days)。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -702,26 +577,15 @@ WHERE regional_single_record IN ('AfR','AsR','ER','NAR','OcR','SAR','WR')
     'A WR holder also typically owns the matching CR, so the same WR row appears twice — once under World, once under its continent.',
   ],
   related: [
-    { id: 'longest_streak_of_world_records', titleZh: '连续 WR 时长', titleEn: 'WR streak duration', hintZh: '同一人连续持有,不同口径', hintEn: 'Same person consecutive holds, different angle',
-        titleZhHant: "連續 WR 時長",
-        hintZhHant: "同一人連續持有,不同口徑"
+    { id: 'longest_streak_of_world_records', titleZh: '连续 WR 时长', titleEn: 'WR streak duration', hintZh: '同一人连续持有,不同口径', hintEn: 'Same person consecutive holds, different angle'
     },
-    { id: 'first_r_is_wr', titleZh: '首条即 WR', titleEn: 'First record is WR', hintZh: '纪录的开端 vs 终点', hintEn: 'Birth of a record vs longevity',
-        titleZhHant: "首條即 WR",
-        hintZhHant: "紀錄的開端 vs 終點"
+    { id: 'first_r_is_wr', titleZh: '首条即 WR', titleEn: 'First record is WR', hintZh: '纪录的开端 vs 终点', hintEn: 'Birth of a record vs longevity'
     },
-    { id: 'world_records_by_person', titleZh: '个人 WR 总数', titleEn: 'WRs by person', hintZh: '广度 vs 深度', hintEn: 'Breadth vs depth',
-        titleZhHant: "個人 WR 總數",
-        hintZhHant: "廣度 vs 深度"
+    { id: 'world_records_by_person', titleZh: '个人 WR 总数', titleEn: 'WRs by person', hintZh: '广度 vs 深度', hintEn: 'Breadth vs depth'
     },
-    { id: 'longest_standing_records', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '7 区域 Top 10', hintEn: '7 regions Top 10',
-        titleZhHant: "開啟實時榜單",
-        hintZhHant: "7 區域 Top 10"
+    { id: 'longest_standing_records', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '7 区域 Top 10', hintEn: '7 regions Top 10'
     },
-  ],
-    titleZhHant: "最長保持紀錄",
-    badgeZhHant: "壽命",
-    edgesZhHant: ["\"被打破\"判定基於值嚴格更小 (`Number(r2[type]) < Number(r[type])`),平了不算打破。", "同人多次破自己的紀錄,每條都算獨立條目,壽命算到下次他自己又破。", "`OFFICIAL_EVENTS` 過濾:`333mbo` / `magic` 等停辦項目不進榜 —— 它們的\"永久紀錄\"不公平。", "WR 持有人通常在自己洲也持有 CR,所以同一條 WR 會在 World + 其洲 2 個區塊各出現一次。"]
+  ]
 };
 
 // ──── longest_streak_of_world_records ───────────────────────────────────────
@@ -740,20 +604,13 @@ const longest_streak_of_world_records: AboutEntry = {
     'Example: a cuber improves their own 3x3 single WR 5 times in a row with nobody else WR-ing in between — a length-5 streak.',
   ],
   stats: [
-    { value: '> 1', labelZh: '入榜门槛', labelEn: 'Inclusion floor', hintZh: '至少 2 条连续才算 streak', hintEn: 'At least 2 consecutive to qualify',
-        labelZhHant: "入榜門檻",
-        hintZhHant: "至少 2 條連續才算 streak"
+    { value: '> 1', labelZh: '入榜门槛', labelEn: 'Inclusion floor', hintZh: '至少 2 条连续才算 streak', hintEn: 'At least 2 consecutive to qualify'
     },
-    { value: '日期 + 成绩', labelZh: '同日 tiebreak', labelEn: 'Same-day tiebreak', hintZh: '同日多 WR 按成绩降序', hintEn: 'Same date sorted by result desc',
-        hintZhHant: "同日多 WR 按成績降序"
+    { value: '日期 + 成绩', labelZh: '同日 tiebreak', labelEn: 'Same-day tiebreak', hintZh: '同日多 WR 按成绩降序', hintEn: 'Same date sorted by result desc'
     },
-    { value: 'Years', labelZh: '排序主键', labelEn: 'Sort key', hintZh: '末次 − 首次 WR 时长', hintEn: 'End - start span',
-        labelZhHant: "排序主鍵",
-        hintZhHant: "末次 − 首次 WR 時長"
+    { value: 'Years', labelZh: '排序主键', labelEn: 'Sort key', hintZh: '末次 − 首次 WR 时长', hintEn: 'End - start span'
     },
-    { value: '停办项目', labelZh: '特殊处理', labelEn: 'Special case', hintZh: '末次 WR 截至项目最后一场', hintEn: 'Endpoint = event\'s final comp',
-        labelZhHant: "特殊處理",
-        hintZhHant: "末次 WR 截至項目最後一場"
+    { value: '停办项目', labelZh: '特殊处理', labelEn: 'Special case', hintZh: '末次 WR 截至项目最后一场', hintEn: 'Endpoint = event\'s final comp'
     },
   ],
   sourceZh: [
@@ -781,41 +638,32 @@ WHERE regional_single_record = 'WR'
       titleZh: '拉所有 WR 行',
       titleEn: 'Pull every WR row',
       bodyZh: 'single + average WR 都包括,行里同时带项目 + 选手 + 日期 + 比赛。',
-      bodyEn: 'Includes both single + average WRs, each row carrying event + person + date + comp.',
-        bodyZhHant: "single + average WR 都包括,行裡同時帶項目 + 選手 + 日期 + 比賽。"
+      bodyEn: 'Includes both single + average WRs, each row carrying event + person + date + comp.'
     },
     {
       titleZh: '按 (项目, 类型) 拆桶',
       titleEn: 'Split by (event, type)',
       bodyZh: 'streak 不跨项目也不跨 single↔average:3x3 single 和 3x3 average 各自独立 streak。',
-      bodyEn: 'Streaks don\'t cross events or cross single↔average: 3x3 single and 3x3 average track independently.',
-        titleZhHant: "按 (項目, 型別) 拆桶",
-        bodyZhHant: "streak 不跨項目也不跨 single↔average:3x3 single 和 3x3 average 各自獨立 streak。"
+      bodyEn: 'Streaks don\'t cross events or cross single↔average: 3x3 single and 3x3 average track independently.'
     },
     {
       titleZh: '排序 + 顺序扫',
       titleEn: 'Sort + sequential scan',
       bodyZh: '同日 tiebreak 按 `result desc` (成绩差的在前 / 成绩好的在后) —— 因为同日多条 WR 必然是渐进刷新。',
-      bodyEn: 'Same-day tiebreak sorts result desc (worse first, better last) — same-day multiple WRs are by definition stepwise improvements.',
-        titleZhHant: "排序 + 順序掃",
-        bodyZhHant: "同日 tiebreak 按 `result desc` (成績差的在前 / 成績好的在後) —— 因為同日多條 WR 必然是漸進重新整理。"
+      bodyEn: 'Same-day tiebreak sorts result desc (worse first, better last) — same-day multiple WRs are by definition stepwise improvements.'
     },
     {
       titleZh: '换人 = 断 streak',
       titleEn: 'Different cuber = streak break',
       bodyZh: '`current.person === prev.person` 则 `count += 1`,否则封档,记录 `endDate` + `lastCompetition`。',
-      bodyEn: 'If `current.person === prev.person`, `count += 1`; otherwise close out, recording `endDate` + `lastCompetition`.',
-        titleZhHant: "換人 = 斷 streak",
-        bodyZhHant: "`current.person === prev.person` 則 `count += 1`,否則封檔,記錄 `endDate` + `lastCompetition`。"
+      bodyEn: 'If `current.person === prev.person`, `count += 1`; otherwise close out, recording `endDate` + `lastCompetition`.'
     },
     {
       titleZh: '按 years 降序输出',
       titleEn: 'Sort by years, output',
       bodyZh: 'years = (end − start) / 365.25。`count > 1` 才入榜,降序排,加上停办项目的特殊截止。',
       bodyEn: 'years = (end − start) / 365.25. Only `count > 1` qualifies; sorted desc; discontinued events apply the special endpoint.',
-      highlight: true,
-        titleZhHant: "按 years 降序輸出",
-        bodyZhHant: "years = (end − start) / 365.25。`count > 1` 才入榜,降序排,加上停辦項目的特殊截止。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -831,26 +679,15 @@ WHERE regional_single_record = 'WR'
     'Discontinued events follow the `DISCONTINUED_EVENTS = [333ft, magic, mmagic, 333mbo]` path — final WR holders\' streaks close at the event\'s last competition.',
   ],
   related: [
-    { id: 'longest_standing_records', titleZh: '单条纪录寿命', titleEn: 'Single-record lifespan', hintZh: '单条 vs 连续多条', hintEn: 'One record vs consecutive chain',
-        titleZhHant: "單條紀錄壽命",
-        hintZhHant: "單條 vs 連續多條"
+    { id: 'longest_standing_records', titleZh: '单条纪录寿命', titleEn: 'Single-record lifespan', hintZh: '单条 vs 连续多条', hintEn: 'One record vs consecutive chain'
     },
-    { id: 'world_records_by_person', titleZh: '个人 WR 总数', titleEn: 'WRs by person', hintZh: '总数 vs 连击', hintEn: 'Total count vs streak',
-        titleZhHant: "個人 WR 總數",
-        hintZhHant: "總數 vs 連擊"
+    { id: 'world_records_by_person', titleZh: '个人 WR 总数', titleEn: 'WRs by person', hintZh: '总数 vs 连击', hintEn: 'Total count vs streak'
     },
-    { id: 'first_r_is_wr', titleZh: '首条即 WR', titleEn: 'First record is WR', hintZh: '另一种戏剧化指标', hintEn: 'Another cinematic metric',
-        titleZhHant: "首條即 WR",
-        hintZhHant: "另一種戲劇化指標"
+    { id: 'first_r_is_wr', titleZh: '首条即 WR', titleEn: 'First record is WR', hintZh: '另一种戏剧化指标', hintEn: 'Another cinematic metric'
     },
-    { id: 'longest_streak_of_world_records', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '项目 × 类型完整列表', hintEn: 'Full event × type table',
-        titleZhHant: "開啟實時榜單",
-        hintZhHant: "項目 × 型別完整列表"
+    { id: 'longest_streak_of_world_records', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '项目 × 类型完整列表', hintEn: 'Full event × type table'
     },
-  ],
-    titleZhHant: "同一項目同一型別最長連續世界紀錄",
-    badgeZhHant: "連擊",
-    edgesZhHant: ["streak 不要求\"嚴格重新整理\":WCA `regional_*_record = WR` 本身就是當時貼的標 (能貼說明改進了),所以掃到的每條都已經是 WR。", "同一人在不同項目同時連擊 → 拆成 2 個 streak (每項目獨立)。", "\"仍在保持\"的活 streak 用 today 算 years;實際可能下個月就被破,數字會變。", "停辦項目走 `DISCONTINUED_EVENTS = [333ft, magic, mmagic, 333mbo]` 的特殊路徑 —— 這些項目最後的 WR 持有人會用項目\"死亡日\"截止。"]
+  ]
 };
 
 // ──── most_delegated_competitions ───────────────────────────────────────────
@@ -869,19 +706,13 @@ const most_delegated_competitions: AboutEntry = {
     'Same filter: started, visible, not-cancelled comps. Delegate roles read from `competition_delegates` (one comp with multiple delegates = multiple rows).',
   ],
   stats: [
-    { value: '`COUNT(DISTINCT)`', labelZh: '去重统计', labelEn: 'Distinct count', hintZh: '防同人多角色重复', hintEn: 'Guards against multi-role rows',
-        labelZhHant: "去重統計",
-        hintZhHant: "防同人多角色重複"
+    { value: '`COUNT(DISTINCT)`', labelZh: '去重统计', labelEn: 'Distinct count', hintZh: '防同人多角色重复', hintEn: 'Guards against multi-role rows'
     },
-    { value: 'show_at_all = 1', labelZh: '只看公开比赛', labelEn: 'Public comps only', hintZh: '排掉草稿', hintEn: 'Drafts excluded',
-        labelZhHant: "只看公開比賽"
+    { value: 'show_at_all = 1', labelZh: '只看公开比赛', labelEn: 'Public comps only', hintZh: '排掉草稿', hintEn: 'Drafts excluded'
     },
-    { value: 'cancelled_at IS NULL', labelZh: '排已取消', labelEn: 'Drop cancelled', hintZh: '签了又取消不算', hintEn: 'Signed-then-cancelled excluded',
-        hintZhHant: "簽了又取消不算"
+    { value: 'cancelled_at IS NULL', labelZh: '排已取消', labelEn: 'Drop cancelled', hintZh: '签了又取消不算', hintEn: 'Signed-then-cancelled excluded'
     },
-    { value: 'start_date < CURDATE()', labelZh: '排未来场', labelEn: 'Past only', hintZh: '未开始不计入', hintEn: 'Future comps excluded',
-        labelZhHant: "排未來場",
-        hintZhHant: "未開始不計入"
+    { value: 'start_date < CURDATE()', labelZh: '排未来场', labelEn: 'Past only', hintZh: '未开始不计入', hintEn: 'Future comps excluded'
     },
   ],
   sourceZh: [
@@ -909,32 +740,26 @@ ORDER BY delegated_count DESC`,
       titleZh: '同 per_year 的过滤',
       titleEn: 'Same filter as per_year',
       bodyZh: '`show_at_all = 1 AND cancelled_at IS NULL AND start_date < CURDATE()`。',
-      bodyEn: '`show_at_all = 1 AND cancelled_at IS NULL AND start_date < CURDATE()`.',
-        titleZhHant: "同 per_year 的過濾"
+      bodyEn: '`show_at_all = 1 AND cancelled_at IS NULL AND start_date < CURDATE()`.'
     },
     {
       titleZh: 'COUNT(DISTINCT competition_id)',
       titleEn: 'Distinct comp count',
       bodyZh: '同人在同场多角色 (Delegate + Organizer + Trainee Delegate ...) 只算 1 次。',
-      bodyEn: 'Same person at one comp with multiple roles (Delegate + Organizer + Trainee Delegate ...) counts only once.',
-        bodyZhHant: "同人在同場多角色 (Delegate + Organizer + Trainee Delegate ...) 只算 1 次。"
+      bodyEn: 'Same person at one comp with multiple roles (Delegate + Organizer + Trainee Delegate ...) counts only once.'
     },
     {
       titleZh: '不加 HAVING 阈值',
       titleEn: 'No HAVING threshold',
       bodyZh: '`per_year` 要 `>= 5` 防分母过小;这里看累计,1 场也是 1 场。',
-      bodyEn: '`per_year` requires `>= 5` to guard against tiny denominators; here we count totals, so even 1 comp counts.',
-        titleZhHant: "不加 HAVING 閾值",
-        bodyZhHant: "`per_year` 要 `>= 5` 防分母過小;這裡看累計,1 場也是 1 場。"
+      bodyEn: '`per_year` requires `>= 5` to guard against tiny denominators; here we count totals, so even 1 comp counts.'
     },
     {
       titleZh: '降序输出 + WCA list 链接',
       titleEn: 'Sort desc + WCA list link',
       bodyZh: '附上 `https://www.worldcubeassociation.org/competitions?delegate=<id>` 让用户能跳过去看完整列表。',
       bodyEn: 'Each row links to `https://www.worldcubeassociation.org/competitions?delegate=<id>` for the full WCA list view.',
-      highlight: true,
-        titleZhHant: "降序輸出 + WCA list 連結",
-        bodyZhHant: "附上 `https://www.worldcubeassociation.org/competitions?delegate=<id>` 讓使用者能跳過去看完整列表。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -948,18 +773,11 @@ ORDER BY delegated_count DESC`,
     'Delegates who never delegated don\'t appear — this is "delegated ≥ 1 comp", not "all delegates list".',
   ],
   related: [
-    { id: 'delegated_competition_per_year', titleZh: '年均代表场数', titleEn: 'Yearly delegated rate', hintZh: '同源数据,换排序键', hintEn: 'Same source, different sort key',
-        titleZhHant: "年均代表場數",
-        hintZhHant: "同源資料,換排序鍵"
+    { id: 'delegated_competition_per_year', titleZh: '年均代表场数', titleEn: 'Yearly delegated rate', hintZh: '同源数据,换排序键', hintEn: 'Same source, different sort key'
     },
-    { id: 'most_delegated_competitions', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: 'Top 代表累计场数', hintEn: 'Top delegates by cumulative comps',
-        titleZhHant: "開啟實時榜單",
-        hintZhHant: "Top 代表累計場數"
+    { id: 'most_delegated_competitions', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: 'Top 代表累计场数', hintEn: 'Top delegates by cumulative comps'
     },
-  ],
-    titleZhHant: "代表比賽最多",
-    badgeZhHant: "累計",
-    edgesZhHant: ["Trainee Delegate (見習代表) 也是 `competition_delegates` 的一行,會被計入 —— 累計數包含見習經歷。", "Senior Delegate / 區域代表角色不影響計數 —— 只要在那場比賽掛名 Delegate 就 +1。", "從未代表過的人不上榜 —— 不是\"所有 Delegate 列表\",而是\"代表過至少 1 場\"。"]
+  ]
 };
 
 // ──── potentially_seen_world_records ────────────────────────────────────────
@@ -978,20 +796,13 @@ const potentially_seen_world_records: AboutEntry = {
     'A "participation × era" hybrid — early adopters who travel a lot top the list, with little correlation to skill.',
   ],
   stats: [
-    { value: '100', labelZh: '榜单长度', labelEn: 'Leaderboard size', hintZh: '`LIMIT 100`', hintEn: '`LIMIT 100`',
-        labelZhHant: "榜單長度"
+    { value: '100', labelZh: '榜单长度', labelEn: 'Leaderboard size', hintZh: '`LIMIT 100`', hintEn: '`LIMIT 100`'
     },
-    { value: '`HAVING wrs_count > 0`', labelZh: '只看有 WR 的比赛', labelEn: 'WR-containing comps only', hintZh: '没出 WR 的比赛跳过', hintEn: 'Comps with no WR skipped',
-        labelZhHant: "只看有 WR 的比賽",
-        hintZhHant: "沒出 WR 的比賽跳過"
+    { value: '`HAVING wrs_count > 0`', labelZh: '只看有 WR 的比赛', labelEn: 'WR-containing comps only', hintZh: '没出 WR 的比赛跳过', hintEn: 'Comps with no WR skipped'
     },
-    { value: 'DISTINCT', labelZh: '人 × 比赛去重', labelEn: 'Person × comp distinct', hintZh: '同场多项目不重复', hintEn: 'Multi-event registration deduped',
-        labelZhHant: "人 × 比賽去重",
-        hintZhHant: "同場多項目不重複"
+    { value: 'DISTINCT', labelZh: '人 × 比赛去重', labelEn: 'Person × comp distinct', hintZh: '同场多项目不重复', hintEn: 'Multi-event registration deduped'
     },
-    { value: 'WR/比赛 求和', labelZh: '汇总方式', labelEn: 'Aggregation', hintZh: '到场 WR 数对人累加', hintEn: 'WRs-per-comp summed per person',
-        labelZhHant: "彙總方式",
-        hintZhHant: "到場 WR 數對人累加"
+    { value: 'WR/比赛 求和', labelZh: '汇总方式', labelEn: 'Aggregation', hintZh: '到场 WR 数对人累加', hintEn: 'WRs-per-comp summed per person'
     },
   ],
   sourceZh: [
@@ -1021,33 +832,26 @@ GROUP BY person_id LIMIT 100`,
       titleZh: '算每场比赛的 WR 数',
       titleEn: 'Count WRs per comp',
       bodyZh: '内层 `GROUP BY competition_id`,数 `regional_single_record = WR` + `regional_average_record = WR` —— 一行可能 2 个 WR (single + average 同时刷)。',
-      bodyEn: 'Inner `GROUP BY competition_id`, count `regional_single_record = WR` + `regional_average_record = WR` — one result row can contribute 2 (single + average broken together).',
-        titleZhHant: "算每場比賽的 WR 數",
-        bodyZhHant: "內層 `GROUP BY competition_id`,數 `regional_single_record = WR` + `regional_average_record = WR` —— 一行可能 2 個 WR (single + average 同時刷)。"
+      bodyEn: 'Inner `GROUP BY competition_id`, count `regional_single_record = WR` + `regional_average_record = WR` — one result row can contribute 2 (single + average broken together).'
     },
     {
       titleZh: '过滤有 WR 的比赛',
       titleEn: 'Keep only WR-containing comps',
       bodyZh: '`HAVING wrs_count > 0` —— 没出 WR 的比赛直接丢,不参与 join,加速 + 减小输出。',
-      bodyEn: '`HAVING wrs_count > 0` — comps with no WR are dropped before the join, speeding things up and shrinking output.',
-        titleZhHant: "過濾有 WR 的比賽",
-        bodyZhHant: "`HAVING wrs_count > 0` —— 沒出 WR 的比賽直接丟,不參與 join,加速 + 減小輸出。"
+      bodyEn: '`HAVING wrs_count > 0` — comps with no WR are dropped before the join, speeding things up and shrinking output.'
     },
     {
       titleZh: '取每人参加比赛集合',
       titleEn: 'Collect each person\'s comps',
       bodyZh: '`SELECT DISTINCT person_id, competition_id FROM results` —— 一人在一场算 1 次,不管打几个项目。',
-      bodyEn: '`SELECT DISTINCT person_id, competition_id FROM results` — one cuber per comp = 1, regardless of how many events they entered.',
-        titleZhHant: "取每人參加比賽集合",
-        bodyZhHant: "`SELECT DISTINCT person_id, competition_id FROM results` —— 一人在一場算 1 次,不管打幾個項目。"
+      bodyEn: '`SELECT DISTINCT person_id, competition_id FROM results` — one cuber per comp = 1, regardless of how many events they entered.'
     },
     {
       titleZh: 'join + SUM 累加',
       titleEn: 'Join + SUM',
       bodyZh: '每个 (person, comp) 行附带该比赛的 wrs_count;`GROUP BY person_id SUM(...)` 就是"理论目击 WR 总数"。',
       bodyEn: 'Each (person, comp) row carries that comp\'s wrs_count; `GROUP BY person_id SUM(...)` gives "potentially seen WR count".',
-      highlight: true,
-        bodyZhHant: "每個 (person, comp) 行附帶該比賽的 wrs_count;`GROUP BY person_id SUM(...)` 就是\"理論目擊 WR 總數\"。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -1063,26 +867,15 @@ GROUP BY person_id LIMIT 100`,
     'LIMIT 100 truncation: many thousands of cubers with ≥ 1 sit invisible below.',
   ],
   related: [
-    { id: 'world_records_by_person', titleZh: '个人 WR 数', titleEn: 'WRs by person', hintZh: '自己创造 vs 现场目击', hintEn: 'Set vs witnessed',
-        titleZhHant: "個人 WR 數",
-        hintZhHant: "自己創造 vs 現場目擊"
+    { id: 'world_records_by_person', titleZh: '个人 WR 数', titleEn: 'WRs by person', hintZh: '自己创造 vs 现场目击', hintEn: 'Set vs witnessed'
     },
-    { id: 'world_championship_records', titleZh: '世锦赛纪录', titleEn: 'Worlds records', hintZh: '世锦赛上的 WR 子集', hintEn: 'Worlds-only WR subset',
-        titleZhHant: "世錦賽紀錄",
-        hintZhHant: "世錦賽上的 WR 子集"
+    { id: 'world_championship_records', titleZh: '世锦赛纪录', titleEn: 'Worlds records', hintZh: '世锦赛上的 WR 子集', hintEn: 'Worlds-only WR subset'
     },
-    { id: 'longest_streak_of_world_records', titleZh: '连续 WR 持有', titleEn: 'WR streak', hintZh: '另一类 WR 视角', hintEn: 'Another WR-centric lens',
-        titleZhHant: "連續 WR 持有",
-        hintZhHant: "另一類 WR 視角"
+    { id: 'longest_streak_of_world_records', titleZh: '连续 WR 持有', titleEn: 'WR streak', hintZh: '另一类 WR 视角', hintEn: 'Another WR-centric lens'
     },
-    { id: 'potentially_seen_world_records', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: 'Top 100 现场参与者', hintEn: 'Top 100 on-site attendees',
-        titleZhHant: "開啟實時榜單",
-        hintZhHant: "Top 100 現場參與者"
+    { id: 'potentially_seen_world_records', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: 'Top 100 现场参与者', hintEn: 'Top 100 on-site attendees'
     },
-  ],
-    titleZhHant: "可能目擊過的世界紀錄",
-    badgeZhHant: "現場",
-    edgesZhHant: ["\"目擊\"是理論值 —— 選手實際不一定在該輪在場,可能在午餐 / 沒看螢幕。", "同場 single + average 雙 WR 算 2 次 —— 即使是同一個選手同一輪,也都貢獻。", "只統計 WR;NR / CR 不算 —— 想拓寬換 records_in_most_events 思路。", "Top 100 截斷:尾部幾千名選手 ≥ 1 的有很多,看不見。"]
+  ]
 };
 
 // ──── records_in_most_events ────────────────────────────────────────────────
@@ -1101,19 +894,13 @@ const records_in_most_events: AboutEntry = {
     'Higher tiers cascade into lower: a `WR` is automatically also that continent\'s CR and that country\'s NR, so the World leaderboard cuber appears in Continental / National with event count ≥.',
   ],
   stats: [
-    { value: '3', labelZh: '级别', labelEn: 'Tiers', hintZh: 'World / Continental / National', hintEn: 'World / Continental / National',
-        labelZhHant: "級別"
+    { value: '3', labelZh: '级别', labelEn: 'Tiers', hintZh: 'World / Continental / National', hintEn: 'World / Continental / National'
     },
-    { value: '20', labelZh: '每级条数', labelEn: 'Rows per tier', hintZh: 'Top 20', hintEn: 'Top 20',
-        labelZhHant: "每級條數"
+    { value: '20', labelZh: '每级条数', labelEn: 'Rows per tier', hintZh: 'Top 20', hintEn: 'Top 20'
     },
-    { value: '历史全口径', labelZh: '不限当前', labelEn: 'All-time', hintZh: '过去 WR 即使现已超越也算', hintEn: 'Old WRs count even if since broken',
-        labelZhHant: "不限當前",
-        hintZhHant: "過去 WR 即使現已超越也算"
+    { value: '历史全口径', labelZh: '不限当前', labelEn: 'All-time', hintZh: '过去 WR 即使现已超越也算', hintEn: 'Old WRs count even if since broken'
     },
-    { value: '`event.rank` 排序', labelZh: '项目列展示', labelEn: 'Events list order', hintZh: 'WCA 官方项目顺序', hintEn: 'Official WCA event order',
-        labelZhHant: "項目列展示",
-        hintZhHant: "WCA 官方項目順序"
+    { value: '`event.rank` 排序', labelZh: '项目列展示', labelEn: 'Events list order', hintZh: 'WCA 官方项目顺序', hintEn: 'Official WCA event order'
     },
   ],
   sourceZh: [
@@ -1140,33 +927,26 @@ ORDER BY event.rank`,
       titleZh: '拉所有带 record 标记的行',
       titleEn: 'Pull every record-flagged row',
       bodyZh: 'WCA `regional_*_record` 列在打破时贴标,空字符串 / NULL 表示没破;两个非空条件 OR 拉全集。',
-      bodyEn: 'WCA stamps `regional_*_record` at break-time; empty/NULL = no break. Two non-empty conditions OR\'d pull the full set.',
-        titleZhHant: "拉所有帶 record 標記的行",
-        bodyZhHant: "WCA `regional_*_record` 列在打破時貼標,空字串 / NULL 表示沒破;兩個非空條件 OR 拉全集。"
+      bodyEn: 'WCA stamps `regional_*_record` at break-time; empty/NULL = no break. Two non-empty conditions OR\'d pull the full set.'
     },
     {
       titleZh: '按级别过滤 code',
       titleEn: 'Filter codes per tier',
       bodyZh: 'World tier 只接 `WR`;Continental 接 `WR + 6 个 CR code`;National 再加 `NR`。',
-      bodyEn: 'World tier accepts `WR` only; Continental adds the 6 continental codes; National adds `NR` too.',
-        titleZhHant: "按級別過濾 code",
-        bodyZhHant: "World tier 只接 `WR`;Continental 接 `WR + 6 個 CR code`;National 再加 `NR`。"
+      bodyEn: 'World tier accepts `WR` only; Continental adds the 6 continental codes; National adds `NR` too.'
     },
     {
       titleZh: '按选手 Set<event> 去重',
       titleEn: 'Per-cuber dedupe via Set<event>',
       bodyZh: '`byPerson: Map<person, Set<event>>`;一个项目无论破多少次只算 1。',
-      bodyEn: '`byPerson: Map<person, Set<event>>`; an event counted once no matter how many times broken.',
-        titleZhHant: "按選手 Set<event> 去重",
-        bodyZhHant: "`byPerson: Map<person, Set<event>>`;一個項目無論破多少次只算 1。"
+      bodyEn: '`byPerson: Map<person, Set<event>>`; an event counted once no matter how many times broken.'
     },
     {
       titleZh: '按 events.size 降序,Top 20',
       titleEn: 'Sort by events.size, Top 20',
       bodyZh: '`results.size` 即"破纪录涉及项目数",降序取 Top 20。',
       bodyEn: '`results.size` = "number of events with records"; sort desc and take Top 20.',
-      highlight: true,
-        bodyZhHant: "`results.size` 即\"破紀錄涉及項目數\",降序取 Top 20。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -1180,26 +960,15 @@ ORDER BY event.rank`,
     '`sub_id = 1` filter drops alt-identity rows from renames / nationality changes to prevent double-counting.',
   ],
   related: [
-    { id: 'world_records_by_person', titleZh: '个人 WR 总数', titleEn: 'WRs by person', hintZh: '广度 vs 深度', hintEn: 'Breadth vs depth',
-        titleZhHant: "個人 WR 總數",
-        hintZhHant: "廣度 vs 深度"
+    { id: 'world_records_by_person', titleZh: '个人 WR 总数', titleEn: 'WRs by person', hintZh: '广度 vs 深度', hintEn: 'Breadth vs depth'
     },
-    { id: 'first_r_is_wr', titleZh: '首条即 WR', titleEn: 'First record is WR', hintZh: '入门即 WR vs 多项目均刷', hintEn: 'Debut WR vs many-event sweep',
-        titleZhHant: "首條即 WR",
-        hintZhHant: "入門即 WR vs 多項目均刷"
+    { id: 'first_r_is_wr', titleZh: '首条即 WR', titleEn: 'First record is WR', hintZh: '入门即 WR vs 多项目均刷', hintEn: 'Debut WR vs many-event sweep'
     },
-    { id: 'longest_standing_records', titleZh: '最长保持纪录', titleEn: 'Longest-standing records', hintZh: '广度 vs 单条寿命', hintEn: 'Breadth vs single-record longevity',
-        titleZhHant: "最長保持紀錄",
-        hintZhHant: "廣度 vs 單條壽命"
+    { id: 'longest_standing_records', titleZh: '最长保持纪录', titleEn: 'Longest-standing records', hintZh: '广度 vs 单条寿命', hintEn: 'Breadth vs single-record longevity'
     },
-    { id: 'records_in_most_events', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '3 级别 Top 20', hintEn: '3 tiers Top 20',
-        titleZhHant: "開啟實時榜單",
-        hintZhHant: "3 級別 Top 20"
+    { id: 'records_in_most_events', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '3 级别 Top 20', hintEn: '3 tiers Top 20'
     },
-  ],
-    titleZhHant: "在最多項目中打破紀錄",
-    badgeZhHant: "廣度",
-    edgesZhHant: ["\"項目\"按 `event.name` 字串去重 —— 已停辦項目 (magic / 333mbo) 都計入,因為是歷史口徑。", "NR 在小國家相對容易拿,所以 National tier 榜單偏向\"項目多 × 國家小\"的選手;3 個級別一起看更公平。", "`sub_id = 1` 過濾改名 / 國籍變化的副行,避免同人多算。"]
+  ]
 };
 
 // ──── winned_week_count ─────────────────────────────────────────────────────
@@ -1218,15 +987,11 @@ const winned_week_count: AboutEntry = {
     '"Week king" — measures week-by-week dominance, not all-time totals. A long-standing WR holder might only have a few winned weeks (anyone else beating it for one week ends the streak), while a frequent flyer accumulates many.',
   ],
   stats: [
-    { value: 'ISO 周', labelZh: '时间粒度', labelEn: 'Time bucket', hintZh: '周一 00:00 ~ 周日 23:59', hintEn: 'Mon 00:00 - Sun 23:59',
-        labelZhHant: "時間粒度",
-        hintZhHant: "週一 00:00 ~ 週日 23:59"
+    { value: 'ISO 周', labelZh: '时间粒度', labelEn: 'Time bucket', hintZh: '周一 00:00 ~ 周日 23:59', hintEn: 'Mon 00:00 - Sun 23:59'
     },
-    { value: '只看 single', labelZh: '指标', labelEn: 'Metric', hintZh: '`best` 列,不看 average', hintEn: '`best` only, no average',
-        labelZhHant: "指標"
+    { value: '只看 single', labelZh: '指标', labelEn: 'Metric', hintZh: '`best` 列,不看 average', hintEn: '`best` only, no average'
     },
-    { value: '20', labelZh: '每项目条数', labelEn: 'Per-event rows', hintZh: 'Top 20', hintEn: 'Top 20',
-        labelZhHant: "每項目條數"
+    { value: '20', labelZh: '每项目条数', labelEn: 'Per-event rows', hintZh: 'Top 20', hintEn: 'Top 20'
     },
     { value: '并列计数', labelZh: '同周多人', labelEn: 'Co-winners', hintZh: '`DISTINCT (event,best,week)`', hintEn: '`DISTINCT (event,best,week)`' },
   ],
@@ -1258,41 +1023,32 @@ FROM ... GROUP BY event_id, person_id`,
       titleZh: '推 ISO 周边界',
       titleEn: 'Derive ISO week bounds',
       bodyZh: '`week_start = start_date - WEEKDAY(start_date)` (周一), `week_end = start_date + (6 - WEEKDAY)` (周日)。',
-      bodyEn: '`week_start = start_date - WEEKDAY(start_date)` (Monday), `week_end = start_date + (6 - WEEKDAY)` (Sunday).',
-        titleZhHant: "推 ISO 周邊界",
-        bodyZhHant: "`week_start = start_date - WEEKDAY(start_date)` (週一), `week_end = start_date + (6 - WEEKDAY)` (週日)。"
+      bodyEn: '`week_start = start_date - WEEKDAY(start_date)` (Monday), `week_end = start_date + (6 - WEEKDAY)` (Sunday).'
     },
     {
       titleZh: '算每周每项目 MIN(best)',
       titleEn: 'Compute per-week per-event MIN(best)',
       bodyZh: '`GROUP BY event_id, week_start_date`,得"该周该项目最快单次"。',
-      bodyEn: '`GROUP BY event_id, week_start_date`, yielding "fastest single per event per week".',
-        titleZhHant: "算每週每項目 MIN(best)",
-        bodyZhHant: "`GROUP BY event_id, week_start_date`,得\"該周該項目最快單次\"。"
+      bodyEn: '`GROUP BY event_id, week_start_date`, yielding "fastest single per event per week".'
     },
     {
       titleZh: 'join 回 results 找持有者',
       titleEn: 'Join back to find holder(s)',
       bodyZh: '匹配 `best = week_best` + 比赛日期落在周窗内 —— 不只一人时,大家都算"周王" (并列)。',
-      bodyEn: 'Match `best = week_best` + comp date in the week window — multiple matches all win the week (tied co-kings).',
-        bodyZhHant: "匹配 `best = week_best` + 比賽日期落在周窗內 —— 不只一人時,大家都算\"周王\" (並列)。"
+      bodyEn: 'Match `best = week_best` + comp date in the week window — multiple matches all win the week (tied co-kings).'
     },
     {
       titleZh: 'COUNT DISTINCT 防同周多场',
       titleEn: 'COUNT DISTINCT for multi-comp weeks',
       bodyZh: '`COUNT(DISTINCT event_id, best, week_start)` —— 同周该选手在多场比赛都跑到 week_best,也算 1 周。',
-      bodyEn: '`COUNT(DISTINCT event_id, best, week_start)` — if a cuber matched week_best at multiple comps in the same week, still 1 week.',
-        titleZhHant: "COUNT DISTINCT 防同周多場",
-        bodyZhHant: "`COUNT(DISTINCT event_id, best, week_start)` —— 同周該選手在多場比賽都跑到 week_best,也算 1 周。"
+      bodyEn: '`COUNT(DISTINCT event_id, best, week_start)` — if a cuber matched week_best at multiple comps in the same week, still 1 week.'
     },
     {
       titleZh: '按项目降序 Top 20',
       titleEn: 'Sort desc, Top 20 per event',
       bodyZh: 'JS 里按 `event_id` 桶分,每桶 winned_weeks 降序前 20。',
       bodyEn: 'JS buckets by `event_id`, each bucket sorted desc by winned_weeks, Top 20.',
-      highlight: true,
-        titleZhHant: "按項目降序 Top 20",
-        bodyZhHant: "JS 裡按 `event_id` 桶分,每桶 winned_weeks 降序前 20。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -1308,23 +1064,15 @@ FROM ... GROUP BY event_id, person_id`,
     'Single only, not average — average\'s 5-solve trim rules complicate the metric.',
   ],
   related: [
-    { id: 'world_records_by_person', titleZh: '个人 WR 数', titleEn: 'WRs by person', hintZh: 'WR vs 周王', hintEn: 'WR vs week king',
-        titleZhHant: "個人 WR 數"
+    { id: 'world_records_by_person', titleZh: '个人 WR 数', titleEn: 'WRs by person', hintZh: 'WR vs 周王', hintEn: 'WR vs week king'
     },
-    { id: 'wr_dominance', titleZh: 'WR 支配度', titleEn: 'WR dominance', hintZh: '长期统治力', hintEn: 'Long-term dominance',
-        hintZhHant: "長期統治力"
+    { id: 'wr_dominance', titleZh: 'WR 支配度', titleEn: 'WR dominance', hintZh: '长期统治力', hintEn: 'Long-term dominance'
     },
-    { id: 'longest_streak_of_world_records', titleZh: '连续 WR 链', titleEn: 'WR streak', hintZh: '连续刷新 vs 周冠数', hintEn: 'Consecutive holds vs week counts',
-        titleZhHant: "連續 WR 鏈",
-        hintZhHant: "連續重新整理 vs 周冠數"
+    { id: 'longest_streak_of_world_records', titleZh: '连续 WR 链', titleEn: 'WR streak', hintZh: '连续刷新 vs 周冠数', hintEn: 'Consecutive holds vs week counts'
     },
-    { id: 'winned_week_count', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '项目切换 + Top 20', hintEn: 'Event picker + Top 20',
-        titleZhHant: "開啟實時榜單",
-        hintZhHant: "項目切換 + Top 20"
+    { id: 'winned_week_count', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '项目切换 + Top 20', hintEn: 'Event picker + Top 20'
     },
-  ],
-    titleZhHant: "獲勝週數",
-    edgesZhHant: ["ISO 周以週一為起點(用 `WEEKDAY()`,週一 = 0,週日 = 6) —— 跨年 W52/W01 都按數學推,不走 ISO `YEARWEEK()` 複雜規則。", "沒有比賽的周不計入 (沒人跑出 week_best) —— 比如聖誕 / 疫情期間會有\"空周\"。", "同周並列 (多人同值) 全部算贏家,不分先後日期 —— 這是 WCA \"regional records 同分並列\"的延伸。", "只看 single,不算 average —— 類似指標用 average 會受 5 次/掐尾規則影響,口徑複雜。"]
+  ]
 };
 
 // ──── world_championship_podiums_by_country ─────────────────────────────────
@@ -1343,19 +1091,13 @@ const world_championship_podiums_by_country: AboutEntry = {
     'A comp is "Worlds" if `championships.championship_type = world`. WCA\'s dump uses this table to tag each comp with its championship status.',
   ],
   stats: [
-    { value: '`championship_type = world`', labelZh: '世锦赛过滤', labelEn: 'Worlds filter', hintZh: '排掉 nationals / continentals', hintEn: 'Excludes nationals / continentals',
-        labelZhHant: "世錦賽過濾"
+    { value: '`championship_type = world`', labelZh: '世锦赛过滤', labelEn: 'Worlds filter', hintZh: '排掉 nationals / continentals', hintEn: 'Excludes nationals / continentals'
     },
-    { value: '决赛轮', labelZh: '只看金银铜', labelEn: 'Final-round only', hintZh: '`round_type_id IN (c, f)`', hintEn: '`round_type_id IN (c, f)`',
-        labelZhHant: "只看金銀銅"
+    { value: '决赛轮', labelZh: '只看金银铜', labelEn: 'Final-round only', hintZh: '`round_type_id IN (c, f)`', hintEn: '`round_type_id IN (c, f)`'
     },
-    { value: '`pos ∈ {1,2,3}`', labelZh: '领奖台', labelEn: 'Podium', hintZh: 'WCA 预算 pos', hintEn: 'WCA-precomputed pos',
-        labelZhHant: "領獎臺",
-        hintZhHant: "WCA 預算 pos"
+    { value: '`pos ∈ {1,2,3}`', labelZh: '领奖台', labelEn: 'Podium', hintZh: 'WCA 预算 pos', hintEn: 'WCA-precomputed pos'
     },
-    { value: '金 → 银 → 铜', labelZh: '排序键', labelEn: 'Sort key', hintZh: '奥运奖牌榜风格', hintEn: 'Olympic medal-table style',
-        labelZhHant: "排序鍵",
-        hintZhHant: "奧運獎牌榜風格"
+    { value: '金 → 银 → 铜', labelZh: '排序键', labelEn: 'Sort key', hintZh: '奥运奖牌榜风格', hintEn: 'Olympic medal-table style'
     },
   ],
   sourceZh: [
@@ -1383,33 +1125,26 @@ GROUP BY result.country_id`,
       titleZh: 'join `championships` 锁 Worlds',
       titleEn: 'Join `championships`, filter Worlds',
       bodyZh: '内连接自动过滤掉非世锦赛比赛;再 `championship_type = world` 排掉洲锦赛 / 国锦赛。',
-      bodyEn: 'Inner join automatically drops non-championship comps; `championship_type = world` further excludes continentals / nationals.',
-        titleZhHant: "join `championships` 鎖 Worlds",
-        bodyZhHant: "內連線自動過濾掉非世錦賽比賽;再 `championship_type = world` 排掉洲錦賽 / 國錦賽。"
+      bodyEn: 'Inner join automatically drops non-championship comps; `championship_type = world` further excludes continentals / nationals.'
     },
     {
       titleZh: '保留决赛轮 + 完赛',
       titleEn: 'Keep finals + completed',
       bodyZh: '`round_type_id IN (c, f)` + `best > 0`,同 by_abroad。',
-      bodyEn: '`round_type_id IN (c, f)` + `best > 0`, same as by_abroad.',
-        titleZhHant: "保留決賽輪 + 完賽"
+      bodyEn: '`round_type_id IN (c, f)` + `best > 0`, same as by_abroad.'
     },
     {
       titleZh: '三档分别 SUM',
       titleEn: 'Sum each medal tier',
       bodyZh: '`SUM(IF(pos = 1, 1, 0))` 金,同理银 / 铜。',
-      bodyEn: '`SUM(IF(pos = 1, 1, 0))` for gold, similarly silver / bronze.',
-        titleZhHant: "三檔分別 SUM",
-        bodyZhHant: "`SUM(IF(pos = 1, 1, 0))` 金,同理銀 / 銅。"
+      bodyEn: '`SUM(IF(pos = 1, 1, 0))` for gold, similarly silver / bronze.'
     },
     {
       titleZh: '按选手国籍汇总',
       titleEn: 'Roll up by competitor country',
       bodyZh: '`GROUP BY result.country_id` —— 即使该届世锦赛在美国办,中国选手拿金牌算 CN gold。',
       bodyEn: '`GROUP BY result.country_id` — if Worlds is in the US but a CN cuber wins gold, it counts as CN gold.',
-      highlight: true,
-        titleZhHant: "按選手國籍彙總",
-        bodyZhHant: "`GROUP BY result.country_id` —— 即使該屆世錦賽在美國辦,中國選手拿金牌算 CN gold。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -1423,26 +1158,15 @@ GROUP BY result.country_id`,
     'Same as medal_from_abroad, `best > 0` strips DNF-as-1st cases.',
   ],
   related: [
-    { id: 'world_championship_podiums_by_person', titleZh: '世锦赛奖牌(选手)', titleEn: 'Worlds podiums by person', hintZh: '换个体维度', hintEn: 'Per-person version',
-        titleZhHant: "世錦賽獎牌(選手)",
-        hintZhHant: "換個體維度"
+    { id: 'world_championship_podiums_by_person', titleZh: '世锦赛奖牌(选手)', titleEn: 'Worlds podiums by person', hintZh: '换个体维度', hintEn: 'Per-person version'
     },
-    { id: 'world_championship_records', titleZh: '世锦赛纪录', titleEn: 'Worlds records', hintZh: '世锦赛 WR 子集', hintEn: 'Worlds-WR subset',
-        titleZhHant: "世錦賽紀錄",
-        hintZhHant: "世錦賽 WR 子集"
+    { id: 'world_championship_records', titleZh: '世锦赛纪录', titleEn: 'Worlds records', hintZh: '世锦赛 WR 子集', hintEn: 'Worlds-WR subset'
     },
-    { id: 'best_medal_collection_from_abroad_by_country', titleZh: '海外奖牌(国家)', titleEn: 'Abroad medals (country)', hintZh: '所有海外赛 vs 仅世锦赛', hintEn: 'All abroad vs Worlds only',
-        titleZhHant: "海外獎牌(國家)",
-        hintZhHant: "所有海外賽 vs 僅世錦賽"
+    { id: 'best_medal_collection_from_abroad_by_country', titleZh: '海外奖牌(国家)', titleEn: 'Abroad medals (country)', hintZh: '所有海外赛 vs 仅世锦赛', hintEn: 'All abroad vs Worlds only'
     },
-    { id: 'world_championship_podiums_by_country', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '国家奖牌榜', hintEn: 'Country medal table',
-        titleZhHant: "開啟實時榜單",
-        hintZhHant: "國家獎牌榜"
+    { id: 'world_championship_podiums_by_country', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '国家奖牌榜', hintEn: 'Country medal table'
     },
-  ],
-    titleZhHant: "各國世錦賽領獎臺次數",
-    badgeZhHant: "世錦賽",
-    edgesZhHant: ["世錦賽辦過的屆數有限 (1982 第一屆,2003 復辦後每 2 年一屆),所以總樣本遠小於\"海外獎牌\";頂部國家以少勝多。", "`championships` 表對每場比賽只掛 1 個 championship_type;WC + CC 雙掛的情況 (一個比賽同時是世錦賽和洲錦賽) 極少。", "同 medal_from_abroad,`best > 0` 防 DNF \"登頂\"。"]
+  ]
 };
 
 // ──── world_championship_podiums_by_person ──────────────────────────────────
@@ -1461,17 +1185,13 @@ const world_championship_podiums_by_person: AboutEntry = {
     'Same filter chain as medal_from_abroad: final round + completed + `championship_type = world`.',
   ],
   stats: [
-    { value: 'sub_id = 1', labelZh: '主身份', labelEn: 'Primary identity', hintZh: '过滤改名 / 国籍变化副行', hintEn: 'Filters alt rows from renames / nationality',
-        hintZhHant: "過濾改名 / 國籍變化副行"
+    { value: 'sub_id = 1', labelZh: '主身份', labelEn: 'Primary identity', hintZh: '过滤改名 / 国籍变化副行', hintEn: 'Filters alt rows from renames / nationality'
     },
-    { value: '`championship_type = world`', labelZh: '世锦赛过滤', labelEn: 'Worlds filter', hintZh: '同 by_country', hintEn: 'Same as by_country',
-        labelZhHant: "世錦賽過濾"
+    { value: '`championship_type = world`', labelZh: '世锦赛过滤', labelEn: 'Worlds filter', hintZh: '同 by_country', hintEn: 'Same as by_country'
     },
-    { value: '金 → 银 → 铜', labelZh: '排序', labelEn: 'Sort', hintZh: '奥运奖牌榜风格', hintEn: 'Olympic medal-table style',
-        hintZhHant: "奧運獎牌榜風格"
+    { value: '金 → 银 → 铜', labelZh: '排序', labelEn: 'Sort', hintZh: '奥运奖牌榜风格', hintEn: 'Olympic medal-table style'
     },
-    { value: '决赛 + 完赛', labelZh: '入榜条件', labelEn: 'Inclusion', hintZh: '`round_type_id IN (c, f)` + `best > 0`', hintEn: '`round_type_id IN (c, f)` + `best > 0`',
-        labelZhHant: "入榜條件"
+    { value: '决赛 + 完赛', labelZh: '入榜条件', labelEn: 'Inclusion', hintZh: '`round_type_id IN (c, f)` + `best > 0`', hintEn: '`round_type_id IN (c, f)` + `best > 0`'
     },
   ],
   sourceZh: [
@@ -1499,9 +1219,7 @@ GROUP BY person_id`,
       titleZh: '同 by_country 的过滤',
       titleEn: 'Same filter as by_country',
       bodyZh: '`championship_type = world` + 决赛 + 完赛。',
-      bodyEn: '`championship_type = world` + final-round + completed.',
-        titleZhHant: "同 by_country 的過濾",
-        bodyZhHant: "`championship_type = world` + 決賽 + 完賽。"
+      bodyEn: '`championship_type = world` + final-round + completed.'
     },
     {
       titleZh: '`GROUP BY person_id`',
@@ -1513,17 +1231,14 @@ GROUP BY person_id`,
       titleZh: 'join `persons` 主身份',
       titleEn: 'Join `persons` primary',
       bodyZh: '`sub_id = 1` 防同人多行重复;改国籍的选手保留当前国名展示。',
-      bodyEn: '`sub_id = 1` prevents duplicate rows from identity changes; cubers who changed nationality show current country.',
-        bodyZhHant: "`sub_id = 1` 防同人多行重複;改國籍的選手保留當前國名展示。"
+      bodyEn: '`sub_id = 1` prevents duplicate rows from identity changes; cubers who changed nationality show current country.'
     },
     {
       titleZh: '排序输出',
       titleEn: 'Sort + emit',
       bodyZh: '`gold DESC, silver DESC, bronze DESC, name`;Worlds 样本小,Top 10 就能看到主要面孔。',
       bodyEn: '`gold DESC, silver DESC, bronze DESC, name`; Worlds sample is small, the Top 10 already covers most familiar names.',
-      highlight: true,
-        titleZhHant: "排序輸出",
-        bodyZhHant: "`gold DESC, silver DESC, bronze DESC, name`;Worlds 樣本小,Top 10 就能看到主要面孔。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -1537,25 +1252,15 @@ GROUP BY person_id`,
     'Worlds sample is small; the top 5 cover about half the total — heavy long tail.',
   ],
   related: [
-    { id: 'world_championship_podiums_by_country', titleZh: '世锦赛奖牌(国家)', titleEn: 'Worlds podiums by country', hintZh: '聚合到国家维度', hintEn: 'Country-level aggregation',
-        titleZhHant: "世錦賽獎牌(國家)",
-        hintZhHant: "聚合到國家維度"
+    { id: 'world_championship_podiums_by_country', titleZh: '世锦赛奖牌(国家)', titleEn: 'Worlds podiums by country', hintZh: '聚合到国家维度', hintEn: 'Country-level aggregation'
     },
-    { id: 'world_championship_records', titleZh: '世锦赛纪录', titleEn: 'Worlds records', hintZh: 'Worlds 的 WR 子集', hintEn: 'Worlds-only WR subset',
-        titleZhHant: "世錦賽紀錄"
+    { id: 'world_championship_records', titleZh: '世锦赛纪录', titleEn: 'Worlds records', hintZh: 'Worlds 的 WR 子集', hintEn: 'Worlds-only WR subset'
     },
-    { id: 'best_medal_collection_from_abroad_by_person', titleZh: '海外奖牌(选手)', titleEn: 'Abroad medals (person)', hintZh: '更广口径', hintEn: 'Broader-scope counterpart',
-        titleZhHant: "海外獎牌(選手)",
-        hintZhHant: "更廣口徑"
+    { id: 'best_medal_collection_from_abroad_by_person', titleZh: '海外奖牌(选手)', titleEn: 'Abroad medals (person)', hintZh: '更广口径', hintEn: 'Broader-scope counterpart'
     },
-    { id: 'world_championship_podiums_by_person', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '选手奖牌榜', hintEn: 'Person medal table',
-        titleZhHant: "開啟實時榜單",
-        hintZhHant: "選手獎牌榜"
+    { id: 'world_championship_podiums_by_person', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '选手奖牌榜', hintEn: 'Person medal table'
     },
-  ],
-    titleZhHant: "世錦賽領獎臺次數(選手)",
-    badgeZhHant: "世錦賽",
-    edgesZhHant: ["選手國籍變化:dump 裡 `result.country_id` 是當時國籍,不會回填;但 `persons.country_id` (sub_id = 1) 顯示當前國籍。\"國家\"列可能跟歷史身份不符。", "同屆世錦賽多項目多領獎臺 → 多次累計 (無去重)。", "Worlds 樣本量小,前 5 大概覆蓋一半 —— 頭部效應明顯。"]
+  ]
 };
 
 // ──── world_championship_records ────────────────────────────────────────────
@@ -1574,17 +1279,13 @@ const world_championship_records: AboutEntry = {
     'In effect: shrink all Worlds results to a (event, type) 2D grid, keeping the fastest each.',
   ],
   stats: [
-    { value: '2', labelZh: '类型', labelEn: 'Types', hintZh: 'Single + Average', hintEn: 'Single + Average',
-        labelZhHant: "型別"
+    { value: '2', labelZh: '类型', labelEn: 'Types', hintZh: 'Single + Average', hintEn: 'Single + Average'
     },
-    { value: '`SolveTime` 比较', labelZh: 'DNF 安全', labelEn: 'DNF-safe', hintZh: '不简单 MIN,要 isComplete()', hintEn: 'Not naive MIN — uses isComplete()',
-        hintZhHant: "不簡單 MIN,要 isComplete()"
+    { value: '`SolveTime` 比较', labelZh: 'DNF 安全', labelEn: 'DNF-safe', hintZh: '不简单 MIN,要 isComplete()', hintEn: 'Not naive MIN — uses isComplete()'
     },
-    { value: 'EVENTS_ENTRIES', labelZh: '官方项目顺序', labelEn: 'Official event order', hintZh: 'WCA event sort', hintEn: 'WCA event sort',
-        labelZhHant: "官方項目順序"
+    { value: 'EVENTS_ENTRIES', labelZh: '官方项目顺序', labelEn: 'Official event order', hintZh: 'WCA event sort', hintEn: 'WCA event sort'
     },
-    { value: '`championship_type = world`', labelZh: '世锦赛过滤', labelEn: 'Worlds filter', hintZh: '同 podium 系列', hintEn: 'Same as podium siblings',
-        labelZhHant: "世錦賽過濾"
+    { value: '`championship_type = world`', labelZh: '世锦赛过滤', labelEn: 'Worlds filter', hintZh: '同 podium 系列', hintEn: 'Same as podium siblings'
     },
   ],
   sourceZh: [
@@ -1611,42 +1312,32 @@ WHERE championship_type = 'world'`,
       titleZh: '拉所有 Worlds 成绩',
       titleEn: 'Pull all Worlds results',
       bodyZh: 'inner join `championships` + `WHERE championship_type = world`;不限决赛 (预赛 / 半决也算 —— 那一轮若打出最快,也是世锦赛纪录)。',
-      bodyEn: 'Inner join `championships` + `WHERE championship_type = world`. Doesn\'t restrict to finals — semi-finals / first rounds qualify if they happened to be the fastest.',
-        titleZhHant: "拉所有 Worlds 成績",
-        bodyZhHant: "inner join `championships` + `WHERE championship_type = world`;不限決賽 (預賽 / 半決也算 —— 那一輪若打出最快,也是世錦賽紀錄)。"
+      bodyEn: 'Inner join `championships` + `WHERE championship_type = world`. Doesn\'t restrict to finals — semi-finals / first rounds qualify if they happened to be the fastest.'
     },
     {
       titleZh: '按 (项目, 类型) 桶分',
       titleEn: 'Bucket by (event, type)',
       bodyZh: '外层循环 `[Single, Average]`,内层 `Map<event, {result, row}>` 追踪当前最佳。',
-      bodyEn: 'Outer loop on `[Single, Average]`, inner `Map<event, {result, row}>` tracks current best.',
-        titleZhHant: "按 (項目, 型別) 桶分",
-        bodyZhHant: "外層迴圈 `[Single, Average]`,內層 `Map<event, {result, row}>` 追蹤當前最佳。"
+      bodyEn: 'Outer loop on `[Single, Average]`, inner `Map<event, {result, row}>` tracks current best.'
     },
     {
       titleZh: '`SolveTime.compareTo()` 比较',
       titleEn: '`SolveTime.compareTo()` comparison',
       bodyZh: '不直接比 `Number(best)` —— `SolveTime` 帮你处理 DNF 编码 (-1) / 未提交 (0) / FMC / MBLD 等特殊指标。',
-      bodyEn: 'Doesn\'t directly compare `Number(best)` — `SolveTime` handles DNF encoding (-1) / unattempted (0) / FMC / MBLD special metrics.',
-        titleZhHant: "`SolveTime.compareTo()` 比較",
-        bodyZhHant: "不直接比 `Number(best)` —— `SolveTime` 幫你處理 DNF 編碼 (-1) / 未提交 (0) / FMC / MBLD 等特殊指標。"
+      bodyEn: 'Doesn\'t directly compare `Number(best)` — `SolveTime` handles DNF encoding (-1) / unattempted (0) / FMC / MBLD special metrics.'
     },
     {
       titleZh: '按 EVENTS_ENTRIES 顺序输出',
       titleEn: 'Emit per EVENTS_ENTRIES order',
       bodyZh: '按 WCA 官方项目顺序 (3x3 → 2x2 → 4x4 → ...) 排序输出 —— 每项目 1 行。',
-      bodyEn: 'Output in WCA official event order (3x3 → 2x2 → 4x4 → ...) — one row per event.',
-        titleZhHant: "按 EVENTS_ENTRIES 順序輸出",
-        bodyZhHant: "按 WCA 官方項目順序 (3x3 → 2x2 → 4x4 → ...) 排序輸出 —— 每項目 1 行。"
+      bodyEn: 'Output in WCA official event order (3x3 → 2x2 → 4x4 → ...) — one row per event.'
     },
     {
       titleZh: '过滤 `isComplete()`',
       titleEn: 'Filter via `isComplete()`',
       bodyZh: '`!entry.result.isComplete()` (即 DNF) 的项目不输出 —— 譬如某项目所有 Worlds 历史 average 都 DNF (罕见),那个项目不上表。',
       bodyEn: '`!entry.result.isComplete()` (i.e. DNF) — events where all Worlds-history averages are DNF (rare) get skipped.',
-      highlight: true,
-        titleZhHant: "過濾 `isComplete()`",
-        bodyZhHant: "`!entry.result.isComplete()` (即 DNF) 的項目不輸出 —— 譬如某項目所有 Worlds 歷史 average 都 DNF (罕見),那個項目不上表。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -1660,25 +1351,15 @@ WHERE championship_type = 'world'`,
     'FMC / MBLD averages use `SolveTime` internal rules; MBLD `best` encodes score (attempted / solved / time), don\'t read raw number.',
   ],
   related: [
-    { id: 'world_championship_podiums_by_country', titleZh: '世锦赛奖牌(国家)', titleEn: 'Worlds medals (country)', hintZh: '同源,看奖牌而非纪录', hintEn: 'Same source, medals not records',
-        titleZhHant: "世錦賽獎牌(國家)",
-        hintZhHant: "同源,看獎牌而非紀錄"
+    { id: 'world_championship_podiums_by_country', titleZh: '世锦赛奖牌(国家)', titleEn: 'Worlds medals (country)', hintZh: '同源,看奖牌而非纪录', hintEn: 'Same source, medals not records'
     },
-    { id: 'world_championship_podiums_by_person', titleZh: '世锦赛奖牌(选手)', titleEn: 'Worlds medals (person)', hintZh: '同源,选手维度', hintEn: 'Same source, per-person',
-        titleZhHant: "世錦賽獎牌(選手)",
-        hintZhHant: "同源,選手維度"
+    { id: 'world_championship_podiums_by_person', titleZh: '世锦赛奖牌(选手)', titleEn: 'Worlds medals (person)', hintZh: '同源,选手维度', hintEn: 'Same source, per-person'
     },
-    { id: 'world_records_by_person', titleZh: '个人 WR 总数', titleEn: 'WRs by person', hintZh: 'WCR vs WR', hintEn: 'WCR vs WR',
-        titleZhHant: "個人 WR 總數"
+    { id: 'world_records_by_person', titleZh: '个人 WR 总数', titleEn: 'WRs by person', hintZh: 'WCR vs WR', hintEn: 'WCR vs WR'
     },
-    { id: 'world_championship_records', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: 'Single + Average 双表', hintEn: 'Single + Average dual table',
-        titleZhHant: "開啟實時榜單",
-        hintZhHant: "Single + Average 雙表"
+    { id: 'world_championship_records', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: 'Single + Average 双表', hintEn: 'Single + Average dual table'
     },
-  ],
-    titleZhHant: "世錦賽紀錄",
-    badgeZhHant: "世錦賽",
-    edgesZhHant: ["\"世錦賽紀錄\"≠ WR;比 WR 慢的成績照樣可以是 WCR (e.g. 某項目 WR 在某屆非 Worlds 比賽打出,Worlds 上的最佳 < WR)。", "不限決賽 —— 預賽打出超快單次也算 (雖然實際罕見,因為決賽通常是表現高點)。", "FMC / MBLD 的 average 計算用 `SolveTime` 內部規則;MBLD `best` 用 score 編碼 (嘗試 / 完成 / 時間),不要直接看數值。"]
+  ]
 };
 
 // ──── world_records_by_country ──────────────────────────────────────────────
@@ -1697,20 +1378,13 @@ const world_records_by_country: AboutEntry = {
     'Ships with a per-year cumulative timeline — used by `/globe` WR choropleth + year slider, and the year slider on the `/wca/world_records_by_country` page itself.',
   ],
   stats: [
-    { value: 'YEAR(start_date)', labelZh: '年份切片', labelEn: 'Year bucketing', hintZh: 'WCA 比赛起始日为准', hintEn: 'Based on comp start date',
-        hintZhHant: "WCA 比賽起始日為準"
+    { value: 'YEAR(start_date)', labelZh: '年份切片', labelEn: 'Year bucketing', hintZh: 'WCA 比赛起始日为准', hintEn: 'Based on comp start date'
     },
-    { value: 'single + average', labelZh: 'WR 计数', labelEn: 'WR counting', hintZh: '每行至多 2 个 WR', hintEn: 'Up to 2 WRs per row',
-        labelZhHant: "WR 計數",
-        hintZhHant: "每行至多 2 個 WR"
+    { value: 'single + average', labelZh: 'WR 计数', labelEn: 'WR counting', hintZh: '每行至多 2 个 WR', hintEn: 'Up to 2 WRs per row'
     },
-    { value: 'years[]', labelZh: '稠密年份轴', labelEn: 'Dense year axis', hintZh: '空年也占位', hintEn: 'Empty years held as placeholders',
-        labelZhHant: "稠密年份軸",
-        hintZhHant: "空年也佔位"
+    { value: 'years[]', labelZh: '稠密年份轴', labelEn: 'Dense year axis', hintZh: '空年也占位', hintEn: 'Empty years held as placeholders'
     },
-    { value: 'cumulative{}', labelZh: '累计稠密数组', labelEn: 'Cumulative dense array', hintZh: '每国一个 years.length 数组', hintEn: 'One years.length array per country',
-        labelZhHant: "累計稠密陣列",
-        hintZhHant: "每國一個 years.length 陣列"
+    { value: 'cumulative{}', labelZh: '累计稠密数组', labelEn: 'Cumulative dense array', hintZh: '每国一个 years.length 数组', hintEn: 'One years.length array per country'
     },
   ],
   sourceZh: [
@@ -1739,40 +1413,32 @@ ORDER BY year, country.name`,
       titleZh: '过滤 WR 行',
       titleEn: 'Filter WR-only rows',
       bodyZh: '`WHERE regional_single_record = WR OR regional_average_record = WR` —— 排掉 NR / CR / 空。',
-      bodyEn: '`WHERE regional_single_record = WR OR regional_average_record = WR` — drops NR / CR / blank.',
-        titleZhHant: "過濾 WR 行"
+      bodyEn: '`WHERE regional_single_record = WR OR regional_average_record = WR` — drops NR / CR / blank.'
     },
     {
       titleZh: '按 (国家, 年) 分组',
       titleEn: 'Bucket by (country, year)',
       bodyZh: '`YEAR(comp.start_date)` 切年;SUM 两列 IF 加起来 —— 同行 single + average WR 双开算 2。',
-      bodyEn: '`YEAR(comp.start_date)` for year; SUM both `IF` columns — single + average on same row contribute 2.',
-        titleZhHant: "按 (國家, 年) 分組",
-        bodyZhHant: "`YEAR(comp.start_date)` 切年;SUM 兩列 IF 加起來 —— 同行 single + average WR 雙開算 2。"
+      bodyEn: '`YEAR(comp.start_date)` for year; SUM both `IF` columns — single + average on same row contribute 2.'
     },
     {
       titleZh: '推稠密 years[]',
       titleEn: 'Derive dense years[]',
       bodyZh: 'JS 算 `minYear`,从 minYear 到当前年逐年 push;空年保留为 0。',
-      bodyEn: 'JS computes `minYear` and pushes year by year up to current; empty years stay 0.',
-        bodyZhHant: "JS 算 `minYear`,從 minYear 到當前年逐年 push;空年保留為 0。"
+      bodyEn: 'JS computes `minYear` and pushes year by year up to current; empty years stay 0.'
     },
     {
       titleZh: '累计扫描',
       titleEn: 'Cumulative scan',
       bodyZh: '每国一个数组,`cum += byYear.get(y) ?? 0`,产生 N 年长度的累计序列。',
-      bodyEn: 'Per country, `cum += byYear.get(y) ?? 0`, yielding N-year cumulative sequence.',
-        titleZhHant: "累計掃描",
-        bodyZhHant: "每國一個陣列,`cum += byYear.get(y) ?? 0`,產生 N 年長度的累計序列。"
+      bodyEn: 'Per country, `cum += byYear.get(y) ?? 0`, yielding N-year cumulative sequence.'
     },
     {
       titleZh: '主 rows = 截至最后一年',
       titleEn: 'Main rows = final-year total',
       bodyZh: '`rows = cumulative.map(arr => arr[last])`,按总数降序 + 国名字母序 (tiebreak);0 国家过滤。',
       bodyEn: '`rows = cumulative.map(arr => arr[last])`, sorted desc + country name tiebreak; countries with 0 filtered out.',
-      highlight: true,
-        titleZhHant: "主 rows = 截至最後一年",
-        bodyZhHant: "`rows = cumulative.map(arr => arr[last])`,按總數降序 + 國名字母序 (tiebreak);0 國家過濾。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -1788,25 +1454,15 @@ ORDER BY year, country.name`,
     '`/globe` maps `cumulative` frame-by-frame onto a choropleth — time slider replays 1982 → today WR concentration.',
   ],
   related: [
-    { id: 'current_world_records_by_country', titleZh: '当前 WR(国家)', titleEn: 'Current WRs (country)', hintZh: '累计 vs 当前', hintEn: 'All-time vs current',
-        titleZhHant: "當前 WR(國家)",
-        hintZhHant: "累計 vs 當前"
+    { id: 'current_world_records_by_country', titleZh: '当前 WR(国家)', titleEn: 'Current WRs (country)', hintZh: '累计 vs 当前', hintEn: 'All-time vs current'
     },
-    { id: 'world_records_by_person', titleZh: '个人 WR 总数', titleEn: 'WRs by person', hintZh: '同口径,选手维度', hintEn: 'Same metric, per-person',
-        titleZhHant: "個人 WR 總數",
-        hintZhHant: "同口徑,選手維度"
+    { id: 'world_records_by_person', titleZh: '个人 WR 总数', titleEn: 'WRs by person', hintZh: '同口径,选手维度', hintEn: 'Same metric, per-person'
     },
-    { id: 'first_r_is_wr', titleZh: '首条即 WR', titleEn: 'First record is WR', hintZh: '稀有事件子集', hintEn: 'Rare-event subset',
-        titleZhHant: "首條即 WR"
+    { id: 'first_r_is_wr', titleZh: '首条即 WR', titleEn: 'First record is WR', hintZh: '稀有事件子集', hintEn: 'Rare-event subset'
     },
-    { id: 'world_records_by_country', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '国家榜 + 年份 slider', hintEn: 'Country leaderboard + year slider',
-        titleZhHant: "開啟實時榜單",
-        hintZhHant: "國家榜 + 年份 slider"
+    { id: 'world_records_by_country', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '国家榜 + 年份 slider', hintEn: 'Country leaderboard + year slider'
     },
-  ],
-    titleZhHant: "各國世界紀錄數量",
-    badgeZhHant: "國家",
-    edgesZhHant: ["歷史 WR 不會因後續超越而清除標記 —— 算的就是\"曾經的 WR\",所以同一項目 WR 進化史裡每條都進總數。", "\"國家\"按打破 WR 時的選手國籍 (`result.country_id` 當時值);改國籍後舊 WR 仍歸原國。", "WCA dump 是歷史口徑,WR 標記跟\"破紀錄順序\"綁死 (並列 WR 都打標);所以同值並列時 2 個國家各 +1。", "`/globe` 把 `cumulative` 一幀幀對映成 choropleth,時間軸回放 1982 → 今天的 WR 集中度演化。"]
+  ]
 };
 
 // ──── world_records_by_person ───────────────────────────────────────────────
@@ -1825,17 +1481,12 @@ const world_records_by_person: AboutEntry = {
     'Top values usually in single / double digits — WRs are scarce (the entire WCA produces only a few dozen new WRs per year).',
   ],
   stats: [
-    { value: 'single + average', labelZh: '两列各算 1', labelEn: 'Each column = 1', hintZh: '同行可计 2', hintEn: 'Same row can be 2',
-        labelZhHant: "兩列各算 1",
-        hintZhHant: "同行可計 2"
+    { value: 'single + average', labelZh: '两列各算 1', labelEn: 'Each column = 1', hintZh: '同行可计 2', hintEn: 'Same row can be 2'
     },
-    { value: '`HAVING > 0`', labelZh: '过滤 0', labelEn: 'Drop zeros', hintZh: '没破过 WR 的人不上榜', hintEn: 'Cubers with 0 WRs excluded',
-        labelZhHant: "過濾 0",
-        hintZhHant: "沒破過 WR 的人不上榜"
+    { value: '`HAVING > 0`', labelZh: '过滤 0', labelEn: 'Drop zeros', hintZh: '没破过 WR 的人不上榜', hintEn: 'Cubers with 0 WRs excluded'
     },
     { value: 'sub_id = 1', labelZh: '主身份', labelEn: 'Primary identity', hintZh: '同其他 person 榜', hintEn: 'Same as other person leaderboards' },
-    { value: 'name 字母序 tiebreak', labelZh: '同分排序', labelEn: 'Tied-name sort', hintZh: '相同 WR 数按字母', hintEn: 'Same count → alphabetical',
-        hintZhHant: "相同 WR 數按字母"
+    { value: 'name 字母序 tiebreak', labelZh: '同分排序', labelEn: 'Tied-name sort', hintZh: '相同 WR 数按字母', hintEn: 'Same count → alphabetical'
     },
   ],
   sourceZh: [
@@ -1859,31 +1510,26 @@ ORDER BY wrs_count DESC, person.name`,
       titleZh: '`SUM IF` 数 WR',
       titleEn: '`SUM IF` to count WRs',
       bodyZh: '单行 single + average 都标 WR 时贡献 2;只标一个贡献 1;都没标 0。',
-      bodyEn: 'Same row with both single + average WR contributes 2; one tag = 1; neither = 0.',
-        titleZhHant: "`SUM IF` 數 WR",
-        bodyZhHant: "單行 single + average 都標 WR 時貢獻 2;只標一個貢獻 1;都沒標 0。"
+      bodyEn: 'Same row with both single + average WR contributes 2; one tag = 1; neither = 0.'
     },
     {
       titleZh: '`GROUP BY person_id`',
       titleEn: 'Aggregate per person',
       bodyZh: '每人一行,累计所有项目所有时间。',
-      bodyEn: 'One row per cuber, accumulating across all events and all time.',
-        bodyZhHant: "每人一行,累計所有項目所有時間。"
+      bodyEn: 'One row per cuber, accumulating across all events and all time.'
     },
     {
       titleZh: '`HAVING wrs_count > 0`',
       titleEn: '`HAVING wrs_count > 0`',
       bodyZh: '没破过 WR 的人 (绝大多数 WCA 选手) 排掉;否则榜单几十万人。',
-      bodyEn: 'Cubers who never broke a WR (the vast majority of WCA) excluded; otherwise the leaderboard would be hundreds of thousands long.',
-        bodyZhHant: "沒破過 WR 的人 (絕大多數 WCA 選手) 排掉;否則榜單幾十萬人。"
+      bodyEn: 'Cubers who never broke a WR (the vast majority of WCA) excluded; otherwise the leaderboard would be hundreds of thousands long.'
     },
     {
       titleZh: '降序 + name 字母 tiebreak',
       titleEn: 'Sort desc + name tiebreak',
       bodyZh: '同 WR 数 → 按姓名字母排;join `persons` 拿主身份名。',
       bodyEn: 'Same WR count → alphabetical by name; `persons` join brings primary identity.',
-      highlight: true,
-        bodyZhHant: "同 WR 數 → 按姓名字母排;join `persons` 拿主身份名。"
+      highlight: true
     },
   ],
   edgesZh: [
@@ -1899,29 +1545,17 @@ ORDER BY wrs_count DESC, person.name`,
     'No separate "current" version for persons; current-WR breakdown goes through `current_world_records_by_country` (country-level only).',
   ],
   related: [
-    { id: 'world_records_by_country', titleZh: '各国 WR 数', titleEn: 'WRs by country', hintZh: '聚合到国家', hintEn: 'Aggregated to country',
-        titleZhHant: "各國 WR 數",
-        hintZhHant: "聚合到國家"
+    { id: 'world_records_by_country', titleZh: '各国 WR 数', titleEn: 'WRs by country', hintZh: '聚合到国家', hintEn: 'Aggregated to country'
     },
-    { id: 'records_in_most_events', titleZh: '项目广度', titleEn: 'Records breadth', hintZh: '次数 vs 项目数', hintEn: 'Count vs distinct events',
-        titleZhHant: "項目廣度",
-        hintZhHant: "次數 vs 項目數"
+    { id: 'records_in_most_events', titleZh: '项目广度', titleEn: 'Records breadth', hintZh: '次数 vs 项目数', hintEn: 'Count vs distinct events'
     },
-    { id: 'longest_streak_of_world_records', titleZh: '连续 WR 链', titleEn: 'WR streak', hintZh: 'WR 是否连续', hintEn: 'Whether WRs are consecutive',
-        titleZhHant: "連續 WR 鏈",
-        hintZhHant: "WR 是否連續"
+    { id: 'longest_streak_of_world_records', titleZh: '连续 WR 链', titleEn: 'WR streak', hintZh: 'WR 是否连续', hintEn: 'Whether WRs are consecutive'
     },
-    { id: 'first_r_is_wr', titleZh: '首条即 WR', titleEn: 'First record is WR', hintZh: 'WR 入门姿势', hintEn: 'How they entered the WR club',
-        titleZhHant: "首條即 WR",
-        hintZhHant: "WR 入門姿勢"
+    { id: 'first_r_is_wr', titleZh: '首条即 WR', titleEn: 'First record is WR', hintZh: 'WR 入门姿势', hintEn: 'How they entered the WR club'
     },
-    { id: 'world_records_by_person', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: 'Top WR 大佬', hintEn: 'Top WR holders',
-        titleZhHant: "開啟實時榜單"
+    { id: 'world_records_by_person', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: 'Top WR 大佬', hintEn: 'Top WR holders'
     },
-  ],
-    titleZhHant: "個人世界紀錄數量",
-    badgeZhHant: "選手",
-    edgesZhHant: ["同人同場刷自己 = 累計;e.g. 同場預賽 + 半決 + 決賽 single 都破 WR = 3 個 WR。", "WR 持有人改國籍不影響 WR 計數,隻影響 by_country 歸屬。", "與 `records_in_most_events` (項目廣度) 不同 —— 這裡數次數,那邊數不同項目數。", "沒單獨\"當前\"版,要看當前 WR 數走 `current_world_records_by_country` (但那是國家維度,WCA 沒出當前 WR by person 的官方榜)。"]
+  ]
 };
 
 export const RECORDS_COUNTRIES_ABOUT: Record<string, AboutEntry> = {

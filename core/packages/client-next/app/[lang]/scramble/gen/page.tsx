@@ -56,16 +56,12 @@ const VALID_MODES: ReadonlySet<Mode> = new Set(['comp', 'batch', 'paste']);
 
 const MODE_ORDER: Mode[] = ['comp', 'batch', 'paste'];
 const MODE_LABELS: Record<Mode, { zh: string; en: string
-        zhHant?: string;
  }> = {
-  comp:  { zh: '比赛', en: 'Comp',
-      zhHant: "比賽"
+  comp:  { zh: '比赛', en: 'Comp'
 },
-  batch: { zh: '批量', en: 'Batch',
-      zhHant: "批次"
+  batch: { zh: '批量', en: 'Batch'
 },
-  paste: { zh: '输入', en: 'Paste',
-      zhHant: "輸入"
+  paste: { zh: '输入', en: 'Paste'
 },
 };
 
@@ -86,7 +82,7 @@ function GenPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = useT();
-  useDocumentTitle('打乱生成器', 'Scramble Generator', "打亂生成器");
+  useDocumentTitle('打乱生成器', 'Scramble Generator');
 
   // Prewarm the heaviest random-state scramblers while the user is reading the
   // event selector. 444/555 each pay a ~3s pruning-table build on first call;
@@ -149,12 +145,12 @@ function GenPageInner() {
         <div className="gen-title">
           <Shuffle size={20} className="gen-title-icon" />
           <h1>
-            {t('打乱生成器', 'Scramble Generator', '打亂生成器')}
+            {t('打乱生成器', 'Scramble Generator')}
             <Link
               href="/scramble/gen-about"
               className="gen-title-help"
-              title={t('生成器是怎么工作的?', 'How does the generator work?', '生成器是怎麼工作的?')}
-              aria-label={t('查看打乱生成器说明', 'About the scramble generator', '檢視打亂生成器說明')}
+              title={t('生成器是怎么工作的?', 'How does the generator work?')}
+              aria-label={t('查看打乱生成器说明', 'About the scramble generator')}
             >
               <HelpCircle size={18} strokeWidth={1.75} />
             </Link>
@@ -168,7 +164,7 @@ function GenPageInner() {
           items={MODE_ORDER}
           value={mode}
           onChange={setMode}
-          getLabel={(m) => t(MODE_LABELS[m].zh, MODE_LABELS[m].en, MODE_LABELS[m].zhHant)}
+          getLabel={(m) => t(MODE_LABELS[m].zh, MODE_LABELS[m].en)}
         />
       </header>
 

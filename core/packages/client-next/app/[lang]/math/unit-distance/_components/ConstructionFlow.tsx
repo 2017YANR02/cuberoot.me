@@ -20,12 +20,10 @@ interface Stage {
   id: StageId;
   num: number;
   title: { zh: string; en: string
-    zhHant?: string;
  };
   oneLine: { zh: string; en: string
-    zhHant?: string;
  };
-  detail: { zh: React.ReactNode; en: React.ReactNode; zhHant?: React.ReactNode };
+  detail: { zh: React.ReactNode; en: React.ReactNode; };
   Schematic: () => React.ReactElement;
 }
 
@@ -113,13 +111,11 @@ const STAGES: Stage[] = [
   {
     id: 'F',
     num: 1,
-    title: { zh: '基场 F', en: 'Base field F',
-        zhHant: "基場 F"
+    title: { zh: '基场 F', en: 'Base field F'
     },
     oneLine: {
       zh: '三次循环、全实数域,起点',
-      en: 'cyclic cubic, totally real',
-        zhHant: "三次迴圈、全實數域,起點"
+      en: 'cyclic cubic, totally real'
     },
     Schematic: SchF,
     detail: {
@@ -136,26 +132,17 @@ const STAGES: Stage[] = [
           <TeXBlock src="\mathrm{Gal}(F/\mathbb{Q}) \cong \mathbb{Z}/3\mathbb{Z}, \quad |D_F| = D^2,\ D = \prod_i r_i." />
           <p>F is totally real (cyclic cubic and <TeX src="\zeta_3 \notin F" />) with mild root discriminant <TeX src="\log \mathrm{rd}(F) = O(\ell \log \ell)" />. This is the launchpad.</p>
         </>
-      ),
-      zhHant: (
-        <>
-          <p>取 ℓ 個素數 <TeX src="r_1, \ldots, r_\ell \equiv 1 \pmod 3" />,每個 <TeX src="r_i" /> 對應 <TeX src="\mathbb{Q}(\zeta_{r_i})" /> 中唯一的三次迴圈子域 <TeX src="L_i" />。讓 <TeX src="\chi_i" /> 是其三次特徵,把 <TeX src="\chi_1 \cdots \chi_\ell" /> 切出來的子域記為 <TeX src="F" />。</p>
-          <TeXBlock src="\mathrm{Gal}(F/\mathbb{Q}) \cong \mathbb{Z}/3\mathbb{Z}, \quad |D_F| = D^2,\ D = \prod_i r_i." />
-          <p>F 是全實的(三次迴圈 + 不含 <TeX src="\zeta_3" />),根判別式 <TeX src="\log \mathrm{rd}(F) = O(\ell \log \ell)" /> 是溫和的。這是後面所有事的"基地"。</p>
-        </>
-      ),
+      )
     },
   },
   {
     id: 'tower',
     num: 2,
-    title: { zh: '无支 pro-3 塔', en: 'Unramified pro-3 tower',
-        zhHant: "無支 pro-3 塔"
+    title: { zh: '无支 pro-3 塔', en: 'Unramified pro-3 tower'
     },
     oneLine: {
       zh: '让度数 [Fⱼ : ℚ] → ∞,根判别式保持常数',
-      en: 'degrees [Fⱼ : ℚ] → ∞, root discriminant stays constant',
-        zhHant: "讓度數 [Fⱼ : ℚ] → ∞,根判別式保持常數"
+      en: 'degrees [Fⱼ : ℚ] → ∞, root discriminant stays constant'
     },
     Schematic: SchTower,
     detail: {
@@ -176,28 +163,17 @@ const STAGES: Stage[] = [
           <TeXBlock src="F = F_0 \subset F_1 \subset F_2 \subset \cdots,\quad f_j = [F_j : \mathbb{Q}] \to \infty." />
           <p>Every layer is unramified ⇒ <TeX src="\mathrm{rd}(F_j) = \mathrm{rd}(F)" /> stays constant. 3-group + totally real ⇒ every layer is totally real.</p>
         </>
-      ),
-      zhHant: (
-        <>
-          <p>關鍵技術:用 <strong>Golod–Shafarevich 不等式</strong> + Shafarevich 關係秩估計,證明 <TeX src="G = \mathrm{Gal}(F^{\mathrm{ur},3}/F)" /> 這個無支 pro-3 群<em>無窮</em>。</p>
-          <TeXBlock src="r(G) \le d(G) + C_0, \quad d(G) \ge \ell - 1." />
-          <p>用 Chebotarev 挑出 t ≈ ℓ²/100 個分裂素數,把它們的 Frobenius 殺掉(在 Frattini 子群裡,所以不降生成元秩);只增加 3t ≈ d²/100 個關係。仍然 <TeX src="r < d^2/4" />,Golod–Shafarevich 保證商群 <TeX src="\bar G" /> <em>仍然無窮</em>。從中取下降鏈,得到無窮塔</p>
-          <TeXBlock src="F = F_0 \subset F_1 \subset F_2 \subset \cdots,\quad f_j = [F_j : \mathbb{Q}] \to \infty." />
-          <p>因為每層無支,根判別式 <TeX src="\mathrm{rd}(F_j) = \mathrm{rd}(F)" /> 恆定;3-群 + 全實 ⇒ 每層仍全實。</p>
-        </>
-      ),
+      )
     },
   },
   {
     id: 'K',
     num: 3,
-    title: { zh: 'CM 扩张 Kⱼ = Fⱼ(i)', en: 'CM extension Kⱼ = Fⱼ(i)',
-        zhHant: "CM 擴張 Kⱼ = Fⱼ(i)"
+    title: { zh: 'CM 扩张 Kⱼ = Fⱼ(i)', en: 'CM extension Kⱼ = Fⱼ(i)'
     },
     oneLine: {
       zh: '加入 i,得到复共轭非平凡的 CM 域',
-      en: 'adjoin i — get a CM field where complex conjugation is non-trivial',
-        zhHant: "加入 i,得到複共軛非平凡的 CM 域"
+      en: 'adjoin i — get a CM field where complex conjugation is non-trivial'
     },
     Schematic: SchK,
     detail: {
@@ -216,15 +192,7 @@ const STAGES: Stage[] = [
           <TeXBlock src="|\sigma(u)| = \left|\frac{\sigma(\alpha)}{\overline{\sigma(\alpha)}}\right| = 1." />
           <p>Elements with "modulus 1 under every complex embedding" are exactly the unit translations we need.</p>
         </>
-      ),
-      zhHant: (
-        <>
-          <p>每層 Fⱼ 上加 i,得到 <TeX src="K_j = F_j(i)" />,稱為 CM 域:全實子域 + 全虛 2-擴張。非平凡自同構 c 在每個復嵌入下都變成<em>普通複共軛</em>。</p>
-          <p>核心好處:若 <TeX src="u \in K_j" /> 滿足 <TeX src="u \cdot c(u) = 1" />(範數 1),則在每個復嵌入 σ 下:</p>
-          <TeXBlock src="|\sigma(u)| = \left|\frac{\sigma(\alpha)}{\overline{\sigma(\alpha)}}\right| = 1." />
-          <p>"在所有復嵌入下模長 = 1" 的元素正是我們需要的"單位平移"。</p>
-        </>
-      ),
+      )
     },
   },
   {
@@ -233,8 +201,7 @@ const STAGES: Stage[] = [
     title: { zh: 'Minkowski 格 Λⱼ', en: 'Minkowski lattice Λⱼ' },
     oneLine: {
       zh: '把 Kⱼ 嵌入 ℂ^fⱼ,得到高维格',
-      en: 'embed Kⱼ ↪ ℂ^fⱼ as a high-dim lattice',
-        zhHant: "把 Kⱼ 嵌入 ℂ^fⱼ,得到高維格"
+      en: 'embed Kⱼ ↪ ℂ^fⱼ as a high-dim lattice'
     },
     Schematic: SchLattice,
     detail: {
@@ -255,28 +222,17 @@ const STAGES: Stage[] = [
           <TeXBlock src="|U_j| \ge \exp(\gamma f_j), \quad \gamma = t \log 2 - \log H_\ell > 0" />
           <p>norm-one elements whose Minkowski images have <em>every</em> coordinate of modulus exactly 1.</p>
         </>
-      ),
-      zhHant: (
-        <>
-          <p>取每對共軛嵌入中的一個 σ₁, ..., σ_{'fⱼ'},把 Kⱼ 嵌入 ℂ^fⱼ:</p>
-          <TeXBlock src="\Phi: K_j \hookrightarrow \mathbb{C}^{f_j}, \quad \Phi(x) = (\sigma_1(x), \ldots, \sigma_{f_j}(x))." />
-          <p>Φ 把分式理想 <TeX src="Q^{-2}\mathcal{O}_{K_j}" /> 映成一個完整的格 <TeX src="\Lambda_j \subset \mathbb{C}^{f_j}" />。利用分裂素數(每個 qb 在 Fⱼ 完全分裂 + qb ≡ 1 mod 4 在 K 也完全分裂)+ 類數 pigeonhole,構造出</p>
-          <TeXBlock src="|U_j| \ge \exp(\gamma f_j), \quad \gamma = t \log 2 - \log H_\ell > 0" />
-          <p>個滿足 <TeX src="u \cdot c(u) = 1" /> 的元素,它們 (Minkowski 像後)每個座標模長都恰好 1。</p>
-        </>
-      ),
+      )
     },
   },
   {
     id: 'project',
     num: 5,
-    title: { zh: '多圆盘切 + 投影 → Pⱼ', en: 'Polydisc cut + project → Pⱼ',
-        zhHant: "多圓盤切 + 投影 → Pⱼ"
+    title: { zh: '多圆盘切 + 投影 → Pⱼ', en: 'Polydisc cut + project → Pⱼ'
     },
     oneLine: {
       zh: '切出有限子集,投影到第一坐标得 ℝ² 点集',
-      en: 'restrict to finite subset, project to first coord → ℝ² point set',
-        zhHant: "切出有限子集,投影到第一座標得 ℝ² 點集"
+      en: 'restrict to finite subset, project to first coord → ℝ² point set'
     },
     Schematic: SchProject,
     detail: {
@@ -301,18 +257,7 @@ const STAGES: Stage[] = [
           <TeXBlock src="\boxed{\nu(P_j) \ge n_j^{1+\delta}, \quad \delta = \frac{\gamma}{4 \mathcal{B}} > 0.}" />
           <p>As j → ∞, nⱼ → ∞ — Theorem 1.1 is proved.</p>
         </>
-      ),
-      zhHant: (
-        <>
-          <p>取多圓盤 <TeX src="W = \{|z_r| \le R\}^{f_j} \subset \mathbb{C}^{f_j}" />,對隨機平移取 <TeX src="X = (a + \Lambda_j) \cap W" />。平均化論證給出某個餘集滿足</p>
-          <TeXBlock src="E_a \ge e^{\gamma f_j / 2} \cdot |X|." />
-          <p>這裡 E_a 是 X 中差為 Uⱼ 元素的有序對數。再用 π₁ 投到第一復座標 (其餘座標的代數限制保證 π₁ 在餘集上單射):</p>
-          <TeXBlock src="\nu(P_j) \ge \tfrac{1}{2} e^{\gamma f_j / 2} \cdot |P_j|." />
-          <p>最後 X 的填充估計給 <TeX src="|P_j| \le e^{\mathcal{B} f_j}" />,代入指數比值得</p>
-          <TeXBlock src="\boxed{\nu(P_j) \ge n_j^{1+\delta}, \quad \delta = \frac{\gamma}{4 \mathcal{B}} > 0.}" />
-          <p>當 j → ∞ 時 nⱼ → ∞,定理 1.1 得證。</p>
-        </>
-      ),
+      )
     },
   },
 ];
@@ -346,11 +291,11 @@ export default function ConstructionFlow() {
               >
                 <div className="ud-flow-card-head">
                   <span className="ud-flow-num">{s.num}</span>
-                  <span className="ud-flow-title">{(i18n.language === 'zh-Hant' ? (s.title.zhHant ?? s.title.zh) : (i18n.language.startsWith('zh') ? s.title.zh : s.title.en))}</span>
+                  <span className="ud-flow-title">{((i18n.language.startsWith('zh') ? s.title.zh : s.title.en))}</span>
                   {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </div>
                 <div className="ud-flow-card-schem"><s.Schematic /></div>
-                <div className="ud-flow-card-oneline">{(i18n.language === 'zh-Hant' ? (s.oneLine.zhHant ?? s.oneLine.zh) : (i18n.language.startsWith('zh') ? s.oneLine.zh : s.oneLine.en))}</div>
+                <div className="ud-flow-card-oneline">{((i18n.language.startsWith('zh') ? s.oneLine.zh : s.oneLine.en))}</div>
               </button>
               {i < STAGES.length - 1 && <div className="ud-flow-arrow" aria-hidden>→</div>}
             </div>
@@ -364,10 +309,10 @@ export default function ConstructionFlow() {
           <div className="ud-flow-detail">
             <div className="ud-flow-detail-head">
               <span className="ud-flow-detail-num">Stage {s.num}</span>
-              <span className="ud-flow-detail-title">{(i18n.language === 'zh-Hant' ? (s.title.zhHant ?? s.title.zh) : (i18n.language.startsWith('zh') ? s.title.zh : s.title.en))}</span>
+              <span className="ud-flow-detail-title">{((i18n.language.startsWith('zh') ? s.title.zh : s.title.en))}</span>
             </div>
             <div className="ud-flow-detail-body">
-              {(i18n.language === 'zh-Hant' ? (s.detail.zhHant ?? s.detail.zh) : (i18n.language.startsWith('zh') ? s.detail.zh : s.detail.en))}
+              {((i18n.language.startsWith('zh') ? s.detail.zh : s.detail.en))}
             </div>
           </div>
         );

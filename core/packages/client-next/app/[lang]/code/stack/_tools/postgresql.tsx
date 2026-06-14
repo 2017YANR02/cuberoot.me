@@ -44,17 +44,13 @@ export const POSTGRES: StackTool = {
     outlookDesc: <>PG 18 (2025-09) lands async I/O, OAuth, and virtual generated columns; PG 17's incremental backup + JSON_TABLE only just stabilised. pgvector lets PG absorb AI workloads without a separate vector DB. The PG 13 line went EOL 2025-11; cuberoot.me hasn't moved yet because the schema only uses features stable since 13.</>,
   },
   heroStats: [
-    { num: '40', unit: 'y', zh: <>自 1986 伯克利至今 <em>Stonebraker 项目</em></>, en: <>since Berkeley 1986 <em>Stonebraker project</em></>,
-        zhHant: <>自 1986 伯克利至今 <em>Stonebraker 項目</em></>
+    { num: '40', unit: 'y', zh: <>自 1986 伯克利至今 <em>Stonebraker 项目</em></>, en: <>since Berkeley 1986 <em>Stonebraker project</em></>
     },
-    { num: '13', zh: <>本站运行版本 <em>2026-05 · cuberoot.me</em></>, en: <>version running on this site <em>2026-05 · cuberoot.me</em></>,
-        zhHant: <>本站執行版本 <em>2026-05 · cuberoot.me</em></>
+    { num: '13', zh: <>本站运行版本 <em>2026-05 · cuberoot.me</em></>, en: <>version running on this site <em>2026-05 · cuberoot.me</em></>
     },
-    { num: '18', unit: '.1', zh: <>家族最新稳定 <em>2025-11-13 release</em></>, en: <>latest stable in family <em>2025-11-13 release</em></>,
-        zhHant: <>家族最新穩定 <em>2025-11-13 release</em></>
+    { num: '18', unit: '.1', zh: <>家族最新稳定 <em>2025-11-13 release</em></>, en: <>latest stable in family <em>2025-11-13 release</em></>
     },
-    { num: '13', unit: '.23', zh: <>13 线最终版 + EOL <em>2025-11-13</em></>, en: <>final 13.x + EOL <em>2025-11-13</em></>,
-        zhHant: <>13 線最終版 + EOL <em>2025-11-13</em></>
+    { num: '13', unit: '.23', zh: <>13 线最终版 + EOL <em>2025-11-13</em></>, en: <>final 13.x + EOL <em>2025-11-13</em></>
     },
   ],
   intro: {

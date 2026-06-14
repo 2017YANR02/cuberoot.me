@@ -2,7 +2,6 @@
 export type WbTabId = 'standard' | 'oh' | 'wf' | 'bld' | 'fm' | 'virtual' | 'team' | 'other';
 
 export interface WbBilingual { en: string; zh: string;
-    zhHant?: string;
  }
 
 export interface WbRecord {

@@ -17,25 +17,18 @@ import i18n from '@/i18n/i18n-client';
 interface Props { isZh: boolean; }
 
 const VIEWS: { id: RelationView; en: string; zh: string
-    zhHant?: string;
  }[] = [
-  { id: 'myNem',      en: 'Show my nemeses',              zh: '显示我的宿敌',
-      zhHant: "顯示我的宿敵"
+  { id: 'myNem',      en: 'Show my nemeses',              zh: '显示我的宿敌'
 },
-  { id: 'iNem',       en: 'Show who I nemesize',          zh: '显示谁把我视为宿敌',
-      zhHant: "顯示誰把我視為宿敵"
+  { id: 'iNem',       en: 'Show who I nemesize',          zh: '显示谁把我视为宿敌'
 },
-  { id: 'nearlyMe',   en: 'Show who nearly nemesizes me', zh: '显示差一步就成我宿敌的人',
-      zhHant: "顯示差一步就成我宿敵的人"
+  { id: 'nearlyMe',   en: 'Show who nearly nemesizes me', zh: '显示差一步就成我宿敌的人'
 },
-  { id: 'iNearly',    en: 'Show who I nearly nemesize',   zh: '显示差一步就把我视为宿敌的人',
-      zhHant: "顯示差一步就把我視為宿敵的人"
+  { id: 'iNearly',    en: 'Show who I nearly nemesize',   zh: '显示差一步就把我视为宿敌的人'
 },
-  { id: 'onlyJustMe', en: 'Show who only just nemesizes me', zh: '显示刚好成为我宿敌的人',
-      zhHant: "顯示剛好成為我宿敵的人"
+  { id: 'onlyJustMe', en: 'Show who only just nemesizes me', zh: '显示刚好成为我宿敌的人'
 },
-  { id: 'iOnlyJust',  en: 'Show who I only just nemesize',   zh: '显示刚好把我视为宿敌的人',
-      zhHant: "顯示剛好把我視為宿敵的人"
+  { id: 'iOnlyJust',  en: 'Show who I only just nemesize',   zh: '显示刚好把我视为宿敌的人'
 },
 ];
 
@@ -96,8 +89,7 @@ export default function StandardMode({ isZh }: Props) {
       <NemesizerPersonPicker
         isZh={isZh}
         onPick={pick}
-        placeholder={tr({ zh: '输入 WCA ID、姓名、国家或年份开始', en: 'Enter WCA ID, name, country or year',
-            zhHant: "輸入 WCA ID、姓名、國家或年份開始"
+        placeholder={tr({ zh: '输入 WCA ID、姓名、国家或年份开始', en: 'Enter WCA ID, name, country or year'
         })}
       />
     );
@@ -110,8 +102,7 @@ export default function StandardMode({ isZh }: Props) {
           isZh={isZh}
           initialQuery={person}
           onPick={pick}
-          placeholder={tr({ zh: '没找到该选手,重试', en: 'Person not found, try again',
-              zhHant: "沒找到該選手,重試"
+          placeholder={tr({ zh: '没找到该选手,重试', en: 'Person not found, try again'
         })}
         />
       );
@@ -134,8 +125,7 @@ export default function StandardMode({ isZh }: Props) {
           isZh={isZh}
         />
       )}
-      {loading && !data && <div className="nemesizer-loading">{tr({ zh: '计算中…', en: 'Computing…',
-          zhHant: "計算中…"
+      {loading && !data && <div className="nemesizer-loading">{tr({ zh: '计算中…', en: 'Computing…'
     })}</div>}
       {data && (
         <>
@@ -143,8 +133,7 @@ export default function StandardMode({ isZh }: Props) {
           {data.persons.length > 0 && (
             <div style={{ textAlign: 'center', margin: '12px 0' }}>
               <button className="nemesizer-btn-blue" onClick={() => exportCsv(data, showMode)}>
-                {tr({ zh: '⬇ 导出 CSV', en: '⬇ Export CSV',
-                    zhHant: "⬇ 匯出 CSV"
+                {tr({ zh: '⬇ 导出 CSV', en: '⬇ Export CSV'
                 })}
               </button>
             </div>
@@ -165,7 +154,7 @@ function ViewPicker({ view, onChange, isZh }: { view: RelationView; onChange: (v
       {VIEWS.map(v => (
         <label key={v.id}>
           <input type="radio" checked={view === v.id} onChange={() => onChange(v.id)} />
-          {(i18n.language === 'zh-Hant' ? (v.zhHant ?? v.zh) : (i18n.language.startsWith('zh') ? v.zh : v.en))}
+          {((i18n.language.startsWith('zh') ? v.zh : v.en))}
         </label>
       ))}
     </div>
@@ -178,7 +167,7 @@ function ScopePicker({ scope, onChange, isZh }: { scope: Scope; onChange: (s: Sc
       {(['world', 'continent', 'country'] as const).map(s => (
         <label key={s}>
           <input type="radio" checked={scope === s} onChange={() => onChange(s)} />
-          {i18n.language === 'zh-Hant' ? (({ world: '世界', continent: '大洲', country: '國家' })[s]) : (isZh ? ({ world: '世界', continent: '大洲', country: '国家' })[s] : s[0].toUpperCase() + s.slice(1))}
+          {(isZh ? ({ world: '世界', continent: '大洲', country: '国家' })[s] : s[0].toUpperCase() + s.slice(1))}
         </label>
       ))}
     </div>
@@ -195,11 +184,9 @@ function SortPicker({ order, direction, onOrder, onDirection, isZh }: {
       <select value={order} onChange={e => onOrder(e.target.value as Order)}>
         <option value="id">WCA ID</option>
         <option value="name">{tr({ zh: '姓名', en: 'Name' })}</option>
-        <option value="nemeses">{tr({ zh: '宿敌数', en: 'Nemeses',
-            zhHant: "宿敵數"
+        <option value="nemeses">{tr({ zh: '宿敌数', en: 'Nemeses'
         })}</option>
-        <option value="nemesized">{tr({ zh: '被视为宿敌数', en: 'Nemesized',
-            zhHant: "被視為宿敵數"
+        <option value="nemesized">{tr({ zh: '被视为宿敌数', en: 'Nemesized'
         })}</option>
       </select>
       <label><input type="radio" checked={direction === 'up'} onChange={() => onDirection('up')} />{tr({ zh: '升序', en: 'Up' })}</label>
@@ -211,14 +198,11 @@ function SortPicker({ order, direction, onOrder, onDirection, isZh }: {
 function ShowPicker({ mode, onChange, isZh }: { mode: ShowMode; onChange: (m: ShowMode) => void; isZh: boolean }) {
   return (
     <div className="nemesizer-show-section">
-      <strong>{tr({ zh: '显示：', en: 'Show:',
-          zhHant: "顯示："
+      <strong>{tr({ zh: '显示：', en: 'Show:'
     })}</strong>
-      <label><input type="radio" checked={mode === 'people'} onChange={() => onChange('people')} />{tr({ zh: '选手', en: 'People',
-          zhHant: "選手"
+      <label><input type="radio" checked={mode === 'people'} onChange={() => onChange('people')} />{tr({ zh: '选手', en: 'People'
     })}</label>
-      <label><input type="radio" checked={mode === 'countries'} onChange={() => onChange('countries')} />{tr({ zh: '国家', en: 'Countries',
-          zhHant: "國家"
+      <label><input type="radio" checked={mode === 'countries'} onChange={() => onChange('countries')} />{tr({ zh: '国家', en: 'Countries'
     })}</label>
     </div>
   );
@@ -275,14 +259,11 @@ function PeopleTable({ data, isZh, order, direction }: {
           <tr>
             <th>WCA ID</th>
             <th>{tr({ zh: '姓名', en: 'Name' })}</th>
-            <th>{tr({ zh: '共同项目', en: 'Shared events',
-                zhHant: "共同項目"
+            <th>{tr({ zh: '共同项目', en: 'Shared events'
             })}</th>
-            <th>{tr({ zh: '我的宿敌数', en: 'Nemeses',
-                zhHant: "我的宿敵數"
+            <th>{tr({ zh: '我的宿敌数', en: 'Nemeses'
             })}</th>
-            <th>{tr({ zh: '被视为宿敌数', en: 'Nemesized',
-                zhHant: "被視為宿敵數"
+            <th>{tr({ zh: '被视为宿敌数', en: 'Nemesized'
             })}</th>
           </tr>
         </thead>
@@ -300,7 +281,7 @@ function PeopleTable({ data, isZh, order, direction }: {
       </table>
       {data.truncated && (
         <p className="nemesizer-small-muted" style={{ textAlign: 'center', padding: '12px' }}>
-          {i18n.language === 'zh-Hant' ? (`僅顯示前 ${sorted.length} 行（共 ${data.totalCount}）。`) : (isZh ? `仅显示前 ${sorted.length} 行（共 ${data.totalCount}）。` : `Showing first ${sorted.length} of ${data.totalCount}.`)}
+          {(isZh ? `仅显示前 ${sorted.length} 行（共 ${data.totalCount}）。` : `Showing first ${sorted.length} of ${data.totalCount}.`)}
         </p>
       )}
     </div>
@@ -312,10 +293,8 @@ function CountriesTable({ data, isZh }: { data: NemesesResponse; isZh: boolean }
   return (
     <div className="nemesizer-table-wrap">
       <table className="nemesizer-table">
-        <thead><tr><th>{tr({ zh: '国家', en: 'Country',
-            zhHant: "國家"
-        })}</th><th>{tr({ zh: '数量', en: 'Count',
-            zhHant: "數量"
+        <thead><tr><th>{tr({ zh: '国家', en: 'Country'
+        })}</th><th>{tr({ zh: '数量', en: 'Count'
         })}</th></tr></thead>
         <tbody>
           {sorted.map(([iso, n]) => (

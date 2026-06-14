@@ -28,17 +28,14 @@ function Swatch({ colors }: { colors: [string, string, string] }) {
 export default function PaletteToggle({ className }: { className?: string }) {
   const { i18n } = useTranslation();
   const lang = i18n.language || 'en';
-  const isHant = lang.startsWith('zh-Hant');
   const isZh = lang.startsWith('zh');
   const label = {
-    classic: tr({ zh: '经典', en: 'Classic',
-        zhHant: "經典"
+    classic: tr({ zh: '经典', en: 'Classic'
     }),
-    title: tr({ zh: '配色主题', en: 'Color theme',
-        zhHant: "配色主題"
+    title: tr({ zh: '配色主题', en: 'Color theme'
     }),
   };
-  const nameOf = (p: (typeof PALETTES)[number]) => (isHant ? p.zhHant : isZh ? p.zh : p.en);
+  const nameOf = (p: (typeof PALETTES)[number]) => (isZh ? p.zh : p.en);
   const [mounted, setMounted] = useState(false);
   const [current, setCurrent] = useState<PaletteId | null>(null);
   const [open, setOpen] = useState(false);
@@ -133,8 +130,7 @@ export default function PaletteToggle({ className }: { className?: string }) {
             className="palette-menu-more"
             onClick={() => setOpen(false)}
           >
-            {tr({ zh: '比较全部 →', en: 'Compare all →',
-                zhHant: "比較全部 →"
+            {tr({ zh: '比较全部 →', en: 'Compare all →'
             })}
           </AppLink>
         </div>

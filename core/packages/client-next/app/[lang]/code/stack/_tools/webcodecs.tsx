@@ -44,14 +44,11 @@ export const WEBCODECS: StackTool = {
     outlookDesc: <>HEVC / AV1 on Safari / Firefox will be filled in within a year or two; WebGPU + WebCodecs together unlock real-time shader filters; ffmpeg.wasm 7.x flipped on SIMD + multithread, so the fallback path is faster too.</>,
   },
   heroStats: [
-    { num: '94', unit: '+', zh: <>Chrome 起原生支持 <em>2021-09</em></>, en: <>Chrome stable since <em>2021-09</em></>,
-        zhHant: <>Chrome 起原生支援 <em>2021-09</em></>
+    { num: '94', unit: '+', zh: <>Chrome 起原生支持 <em>2021-09</em></>, en: <>Chrome stable since <em>2021-09</em></>
     },
-    { num: '~10', unit: 'x', zh: <>硬件解码 vs WASM 软解</>, en: <>hardware decode vs WASM software</>,
-        zhHant: <>硬體解碼 vs WASM 軟解</>
+    { num: '~10', unit: 'x', zh: <>硬件解码 vs WASM 软解</>, en: <>hardware decode vs WASM software</>
     },
-    { num: '0', zh: <>丢帧 <em>零拷贝 GPU 管线</em></>, en: <>drops <em>zero-copy GPU pipeline</em></>,
-        zhHant: <>丟幀 <em>零複製 GPU 管線</em></>
+    { num: '0', zh: <>丢帧 <em>零拷贝 GPU 管线</em></>, en: <>drops <em>zero-copy GPU pipeline</em></>
     },
     { num: '4', zh: <>件套 <em>WebCodecs · mp4box · mp4-muxer · ffmpeg.wasm</em></>, en: <>packages <em>WebCodecs · mp4box · mp4-muxer · ffmpeg.wasm</em></> },
   ],

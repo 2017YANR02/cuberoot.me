@@ -478,8 +478,7 @@ function renderTopicCard(t: Topic, lang: 'zh' | 'en') {
         <div className="topic-title-row">
           <h2 className="topic-title">{text.title}</h2>
           {!t.available && (
-            <span className="topic-soon">{tr({ zh: '即将上线', en: 'Soon',
-                zhHant: "即將上線"
+            <span className="topic-soon">{tr({ zh: '即将上线', en: 'Soon'
             })}</span>
           )}
         </div>
@@ -509,7 +508,7 @@ function renderTopicCard(t: Topic, lang: 'zh' | 'en') {
 export default function CodeLandingPage() {
   const { i18n } = useTranslation();
   const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('编程', 'Code', "程式設計");
+  useDocumentTitle('编程', 'Code');
 
   return (
     <div className="code-landing">
@@ -526,8 +525,7 @@ export default function CodeLandingPage() {
           <span className="code-landing-cursor">_</span>
         </h1>
         <p className="code-landing-sub">
-          {tr({ zh: '编程语言 · 长篇导览。一门语言一篇深度，含历史、特性、生态、当下处境。', en: 'Programming languages · long-form guides. One language per page — history, features, ecosystem, current state.',
-              zhHant: "程式語言 · 長篇導覽。一門語言一篇深度，含歷史、特性、生態、當下處境。"
+          {tr({ zh: '编程语言 · 长篇导览。一门语言一篇深度，含历史、特性、生态、当下处境。', en: 'Programming languages · long-form guides. One language per page — history, features, ecosystem, current state.'
         })}
         </p>
         <div className="code-landing-meta">
@@ -536,8 +534,7 @@ export default function CodeLandingPage() {
           <span>2026.05 · TypeScript</span>
           <span className="code-landing-meta-dot">•</span>
           <Link href="/code/architecture" className="code-landing-meta-link">
-            {tr({ zh: '看站点架构 →', en: 'Site architecture →',
-                zhHant: "看站點架構 →"
+            {tr({ zh: '看站点架构 →', en: 'Site architecture →'
             })}
           </Link>
         </div>
@@ -547,18 +544,15 @@ export default function CodeLandingPage() {
         <div className="code-landing-banner-glyph">∑</div>
         <div className="code-landing-banner-body">
           <div className="code-landing-banner-tag">
-            // {tr({ zh: '横向对比', en: 'Side-by-side',
-                zhHant: "橫向對比"
+            // {tr({ zh: '横向对比', en: 'Side-by-side'
             })}
           </div>
           <h2 className="code-landing-banner-title">
-            {tr({ zh: '17 种语言, 一个 Ao5 算法', en: 'One Ao5, seventeen languages',
-                zhHant: "17 種語言, 一個 Ao5 演算法"
+            {tr({ zh: '17 种语言, 一个 Ao5 算法', en: 'One Ao5, seventeen languages'
             })}
           </h2>
           <p className="code-landing-banner-sub">
-            {tr({ zh: '同一个 WCA Average-of-5 写 17 遍, 看每门语言的 DNF / Optional / 排序 / 类型系统怎么不一样', en: 'The same WCA Average-of-5, written seventeen times — watch how each language handles DNF / Optional / sorting / type systems',
-                zhHant: "同一個 WCA Average-of-5 寫 17 遍, 看每門語言的 DNF / Optional / 排序 / 型別系統怎麼不一樣"
+            {tr({ zh: '同一个 WCA Average-of-5 写 17 遍, 看每门语言的 DNF / Optional / 排序 / 类型系统怎么不一样', en: 'The same WCA Average-of-5, written seventeen times — watch how each language handles DNF / Optional / sorting / type systems'
             })}
           </p>
         </div>
@@ -569,18 +563,15 @@ export default function CodeLandingPage() {
         <div className="code-landing-banner-glyph">⟲</div>
         <div className="code-landing-banner-body">
           <div className="code-landing-banner-tag">
-            // {tr({ zh: '横向对比', en: 'Side-by-side',
-                zhHant: "橫向對比"
+            // {tr({ zh: '横向对比', en: 'Side-by-side'
             })}
           </div>
           <h2 className="code-landing-banner-title">
-            {tr({ zh: '17 种语言, 一个打乱解析器', en: 'One scramble parser, seventeen languages',
-                zhHant: "17 種語言, 一個打亂解析器"
+            {tr({ zh: '17 种语言, 一个打乱解析器', en: 'One scramble parser, seventeen languages'
             })}
           </h2>
           <p className="code-landing-banner-sub">
-            {tr({ zh: '同一个 3x3 WCA 打乱串解析, 17 种语言写一遍, 看 sum types / Result / Optional / 异常 谁更顺手', en: 'The same 3x3 WCA scramble parser, written seventeen times — sum types vs Result vs Optional vs exceptions, head to head',
-                zhHant: "同一個 3x3 WCA 打亂串解析, 17 種語言寫一遍, 看 sum types / Result / Optional / 異常 誰更順手"
+            {tr({ zh: '同一个 3x3 WCA 打乱串解析, 17 种语言写一遍, 看 sum types / Result / Optional / 异常 谁更顺手', en: 'The same 3x3 WCA scramble parser, written seventeen times — sum types vs Result vs Optional vs exceptions, head to head'
             })}
           </p>
         </div>
@@ -594,18 +585,15 @@ export default function CodeLandingPage() {
       <section className="code-landing-section">
         <div className="code-landing-section-head">
           <div className="code-landing-section-tag">
-            // {tr({ zh: '标记 / 排版 / 脚本 / 查询', en: 'Markup / typesetting / script / query',
-                zhHant: "標記 / 排版 / 指令碼 / 查詢"
+            // {tr({ zh: '标记 / 排版 / 脚本 / 查询', en: 'Markup / typesetting / script / query'
             })}
           </div>
           <h2 className="code-landing-section-title">
-            {tr({ zh: '不是编程语言,但绕不开', en: 'Not programming languages — but unavoidable',
-                zhHant: "不是程式語言,但繞不開"
+            {tr({ zh: '不是编程语言,但绕不开', en: 'Not programming languages — but unavoidable'
             })}
           </h2>
           <p className="code-landing-section-sub">
-            {tr({ zh: 'HTML / CSS 是声明式标记与样式;LaTeX / KaTeX 是数学与文档排版;Bash / SQL 是脚本与查询。每天都写,但通常不在"编程语言"的清单里', en: 'HTML / CSS are declarative markup and styling; LaTeX / KaTeX are typesetting; Bash and SQL are scripting and query. Daily tools, rarely on the "programming language" list',
-                zhHant: "HTML / CSS 是宣告式標記與樣式;LaTeX / KaTeX 是數學與文件排版;Bash / SQL 是指令碼與查詢。每天都寫,但通常不在\"程式語言\"的清單裡"
+            {tr({ zh: 'HTML / CSS 是声明式标记与样式;LaTeX / KaTeX 是数学与文档排版;Bash / SQL 是脚本与查询。每天都写,但通常不在"编程语言"的清单里', en: 'HTML / CSS are declarative markup and styling; LaTeX / KaTeX are typesetting; Bash and SQL are scripting and query. Daily tools, rarely on the "programming language" list'
             })}
           </p>
         </div>
@@ -616,8 +604,7 @@ export default function CodeLandingPage() {
 
       <footer className="code-landing-foot">
         <div className="code-landing-foot-line">
-          <span>{tr({ zh: '更多语言陆续添加', en: 'More languages coming',
-              zhHant: "更多語言陸續新增"
+          <span>{tr({ zh: '更多语言陆续添加', en: 'More languages coming'
         })}</span>
           <span className="code-landing-meta-dot">·</span>
           <Link href="/">CubeRoot</Link>

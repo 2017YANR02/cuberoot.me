@@ -80,14 +80,12 @@ export default function GoalProgress({ solves, goal, isZh }: Props) {
     fontVariantNumeric: 'tabular-nums',
   };
 
-  const label = tr({ zh: '今日目标', en: 'today',
-      zhHant: "今日目標"
+  const label = tr({ zh: '今日目标', en: 'today'
 });
-  const streakLabel = i18n.language === 'zh-Hant' ? (`${streak} 天連續達標`) : (isZh
+  const streakLabel = (isZh
       ? `${streak} 天连续达标`
       : `${streak} day${streak === 1 ? '' : 's'} streak`);
-  const streakTitle = tr({ zh: '连续每日达成日目标', en: 'Consecutive days hitting the daily goal',
-      zhHant: "連續每日達成日目標"
+  const streakTitle = tr({ zh: '连续每日达成日目标', en: 'Consecutive days hitting the daily goal'
 });
 
   return (

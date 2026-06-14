@@ -103,8 +103,7 @@ function CaseTable({
           <thead>
             <tr>
               <th>{isZh ? 'Case' : 'Case'}</th>
-              <th>{tr({ zh: '次数', en: 'N',
-                  zhHant: "次數"
+              <th>{tr({ zh: '次数', en: 'N'
             })}</th>
               <th>{tr({ zh: '平均', en: 'Avg' })}</th>
               <th>{tr({ zh: '最佳', en: 'Best' })}</th>
@@ -131,7 +130,7 @@ function CaseTable({
           onClick={onToggle}
           style={{ marginTop: 6 }}
         >
-          {i18n.language === 'zh-Hant' ? (`展開剩餘 ${hidden} 項`) : (isZh
+          {(isZh
                               ? `展开剩余 ${hidden} 项`
                               : `Show ${hidden} more`)}
         </button>
@@ -149,8 +148,7 @@ function CaseTable({
       {drillCandidates.length > 0 && (
         <div style={{ marginTop: 6, fontSize: '0.9em', opacity: 0.8 }}>
           <span style={{ marginRight: 6 }}>
-            {tr({ zh: '最慢 Top 3（建议刷）：', en: 'Top 3 slowest (drill candidates):',
-                zhHant: "最慢 Top 3（建議刷）："
+            {tr({ zh: '最慢 Top 3（建议刷）：', en: 'Top 3 slowest (drill candidates):'
             })}
           </span>
           {drillCandidates.map((r, i) => (
@@ -187,12 +185,10 @@ export default function CfopCaseStatsPanel({ event, solves, isZh }: Props) {
   if (ollRows.length === 0 && pllRows.length === 0) {
     return (
       <div className="case-stats-panel">
-        <h3>{tr({ zh: 'OLL / PLL Case 统计', en: 'OLL / PLL case stats',
-            zhHant: "OLL / PLL Case 統計"
+        <h3>{tr({ zh: 'OLL / PLL Case 统计', en: 'OLL / PLL case stats'
         })}</h3>
         <div className="case-stats-empty">
-          {tr({ zh: '尚无重新分析的成绩。请在设置中点击 "重新分析阶段数据"。', en: "No reanalyzed solves yet. Click 'Reanalyze stage data' in settings.",
-              zhHant: "尚無重新分析的成績。請在設定中點選 \"重新分析階段資料\"。"
+          {tr({ zh: '尚无重新分析的成绩。请在设置中点击 "重新分析阶段数据"。', en: "No reanalyzed solves yet. Click 'Reanalyze stage data' in settings."
         })}
         </div>
       </div>
@@ -202,8 +198,7 @@ export default function CfopCaseStatsPanel({ event, solves, isZh }: Props) {
   return (
     <div>
       <CaseTable
-        title={tr({ zh: 'OLL Case 统计', en: 'OLL case stats',
-            zhHant: "OLL Case 統計"
+        title={tr({ zh: 'OLL Case 统计', en: 'OLL case stats'
         })}
         rows={ollRows}
         showAll={showAllOll}
@@ -212,8 +207,7 @@ export default function CfopCaseStatsPanel({ event, solves, isZh }: Props) {
         cap={DEFAULT_CAP}
       />
       <CaseTable
-        title={tr({ zh: 'PLL Case 统计', en: 'PLL case stats',
-            zhHant: "PLL Case 統計"
+        title={tr({ zh: 'PLL Case 统计', en: 'PLL case stats'
         })}
         rows={pllRows}
         showAll={showAllPll}

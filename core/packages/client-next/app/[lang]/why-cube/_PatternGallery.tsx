@@ -65,18 +65,18 @@ export default function PatternGallery() {
       </div>
 
       <div className="wc-gallery-names">
-        <Name i={0}>{t('棋盘', 'Checkerboard', "棋盤")}</Name>
-        <Name i={1}>{t('六个圆点', 'Six Spots', "六個圓點")}</Name>
+        <Name i={0}>{t('棋盘', 'Checkerboard')}</Name>
+        <Name i={1}>{t('六个圆点', 'Six Spots')}</Name>
         <Name i={2}>{t('立方中立方', 'Cube in a Cube')}</Name>
-        <Name i={3}>{t('驴桥', 'Pons Asinorum', "驢橋")}</Name>
-        <Name i={4}>{t('礼物盒', 'Gift Box', "禮物盒")}</Name>
-        <Name i={5}>{t('超级翻转', 'Superflip', "超級翻轉")}</Name>
+        <Name i={3}>{t('驴桥', 'Pons Asinorum')}</Name>
+        <Name i={4}>{t('礼物盒', 'Gift Box')}</Name>
+        <Name i={5}>{t('超级翻转', 'Superflip')}</Name>
       </div>
 
       <p className="wc-gallery-hint">
         {t(
           '点一个名字,看还原好的方块拧成这个图案 —— 拖动可以转着看。每个都只是那 4300 亿亿种状态里的一种。',
-          'Tap a name and watch the solved cube turn into that pattern — drag to look around. Each is just one of those 43 quintillion states.', "點一個名字,看還原好的方塊擰成這個圖案 —— 拖動可以轉著看。每個都只是那 4300 億億種狀態裡的一種。"
+          'Tap a name and watch the solved cube turn into that pattern — drag to look around. Each is just one of those 43 quintillion states.'
         )}
       </p>
     </div>

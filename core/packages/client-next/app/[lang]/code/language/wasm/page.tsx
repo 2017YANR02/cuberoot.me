@@ -501,7 +501,7 @@ export default function WasmIntroPage() {
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useDocumentTitle('WebAssembly — Web 的通用字节码', 'WebAssembly — A Universal Bytecode for the Web', "WebAssembly — Web 的通用位元組碼");
+  useDocumentTitle('WebAssembly — Web 的通用字节码', 'WebAssembly — A Universal Bytecode for the Web');
 
   useEffect(() => {
     const root = rootRef.current;

@@ -40,18 +40,17 @@ function Swatch({ colors }: { colors: [string, string, string] }) {
 export default function AppearanceToggle({ className }: { className?: string }) {
   const { i18n } = useTranslation();
   const lang = i18n.language || 'en';
-  const isHant = lang.startsWith('zh-Hant');
   const isZh = lang.startsWith('zh');
-  const t = (zh: string, zhHant: string, en: string) => (isHant ? zhHant : isZh ? zh : en);
+  const t = (zh: string, en: string) => (isZh ? zh : en);
   const L = {
-    title: t('外观', '外觀', 'Appearance'),
-    scheme: t('明暗', '明暗', 'Light / Dark'),
-    palette: t('配色', '配色', 'Color'),
-    light: t('浅色', '淺色', 'Light'),
-    dark: t('深色', '深色', 'Dark'),
-    more: t('比较全部', '比較全部', 'Compare all'),
+    title: t('外观', 'Appearance'),
+    scheme: t('明暗', 'Light / Dark'),
+    palette: t('配色', 'Color'),
+    light: t('浅色', 'Light'),
+    dark: t('深色', 'Dark'),
+    more: t('比较全部', 'Compare all'),
   };
-  const nameOf = (p: (typeof PALETTES)[number]) => (isHant ? p.zhHant : isZh ? p.zh : p.en);
+  const nameOf = (p: (typeof PALETTES)[number]) => (isZh ? p.zh : p.en);
 
   const [mounted, setMounted] = useState(false);
   const [palette, setPalette] = useState<PaletteId | null>(null);

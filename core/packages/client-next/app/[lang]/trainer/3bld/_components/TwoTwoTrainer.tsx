@@ -63,18 +63,6 @@ const SPEC = {
 } as const;
 
 // recipe B: sibling lookup tables (key = piece) for zh-Hant, value | undefined.
-const TITLE_HANT: Record<Piece, string | undefined> = {
-  corner: '2C2C 訓練',
-  edge: '2E2E 訓練',
-};
-const TWISTSTATE_HANT: Record<Piece, string | undefined> = {
-  corner: '是否帶翻',
-  edge: '是否帶翻',
-};
-const OTHER_SCRAMBLE_HANT: Record<Piece, string | undefined> = {
-  corner: '打亂稜塊',
-  edge: '打亂角塊',
-};
 
 export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null {
   const { i18n } = useTranslation();
@@ -137,8 +125,7 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
     if (busy) return;
     const codes = usableCodes;
     if (codes.length === 0) {
-      setInfo(tr({ zh: '请至少选择 1 个编码', en: 'Select at least one code',
-          zhHant: "請至少選擇 1 個編碼"
+      setInfo(tr({ zh: '请至少选择 1 个编码', en: 'Select at least one code'
     }));
       return;
     }
@@ -216,7 +203,7 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
       const shuffled = shuffle(Array.from(solved));
       setScrambles(shuffled);
       setInfo(
-        i18n.language === 'zh-Hant' ? (`隨機生成 ${times} 條打亂，遍歷輸入編碼的所有 ${spec.caseLabel} 情況。`) : (isZh
+        (isZh
                     ? `随机生成 ${times} 条打乱，遍历输入编码的所有 ${spec.caseLabel} 情况。`
                     : `Generated ${times} scrambles, covering all ${spec.caseLabel} cases for the chosen codes.`),
       );
@@ -230,17 +217,16 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
   const displayCodes = usableCodes.map((c) => c.toUpperCase()).join('');
   const inputSummary =
     usableCodes.length > 0
-      ? i18n.language === 'zh-Hant' ? (`已選擇 ${displayCodes} 共 ${usableCodes.length} 個編碼`) : (isZh
+      ? (isZh
                   ? `已选择 ${displayCodes} 共 ${usableCodes.length} 个编码`
                   : `Selected ${displayCodes} (${usableCodes.length} codes)`)
-      : tr({ zh: '尚未选择训练编码', en: 'No training codes selected yet',
-          zhHant: "尚未選擇訓練編碼"
+      : tr({ zh: '尚未选择训练编码', en: 'No training codes selected yet'
     });
 
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{i18n.language === 'zh-Hant' ? (TITLE_HANT[piece] ?? spec.titleZh) : (isZh ? spec.titleZh : spec.titleEn)}</h1>
+        <h1>{(isZh ? spec.titleZh : spec.titleEn)}</h1>
       </div>
 
       <BldConfigBar
@@ -256,8 +242,7 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
       <div className="bld-section">
         <button type="button" className="bld-btn" onClick={openModal}>
           <Plus size={15} />
-          {tr({ zh: '选择训练编码', en: 'Pick training codes',
-              zhHant: "選擇訓練編碼"
+          {tr({ zh: '选择训练编码', en: 'Pick training codes'
         })}
         </button>
         <p className="bld-input-summary" style={{ marginTop: 12 }}>{inputSummary}</p>
@@ -265,16 +250,15 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
         <div className="bld-options">
           <label className="bld-check">
             <input type="checkbox" checked={otherScramble} onChange={(e) => setOtherScramble(e.target.checked)} />
-            {i18n.language === 'zh-Hant' ? (OTHER_SCRAMBLE_HANT[piece] ?? spec.otherScrambleZh) : (isZh ? spec.otherScrambleZh : spec.otherScrambleEn)}
+            {(isZh ? spec.otherScrambleZh : spec.otherScrambleEn)}
           </label>
           <label className="bld-check">
             <input type="checkbox" checked={twist} onChange={(e) => setTwist(e.target.checked)} />
-            {i18n.language === 'zh-Hant' ? (TWISTSTATE_HANT[piece] ?? spec.twiststateZh) : (isZh ? spec.twiststateZh : spec.twiststateEn)}
+            {(isZh ? spec.twiststateZh : spec.twiststateEn)}
           </label>
           <label className="bld-check">
             <input type="checkbox" checked={excludeTop} onChange={(e) => setExcludeTop(e.target.checked)} />
-            {tr({ zh: '是否排除顶层', en: 'Exclude top layer',
-                zhHant: "是否排除頂層"
+            {tr({ zh: '是否排除顶层', en: 'Exclude top layer'
             })}
           </label>
         </div>
@@ -287,16 +271,14 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
             disabled={busy || usableCodes.length === 0}
           >
             <Play size={15} />
-            {tr({ zh: '生成训练打乱', en: 'Generate scrambles',
-                zhHant: "生成訓練打亂"
+            {tr({ zh: '生成训练打乱', en: 'Generate scrambles'
             })}
           </button>
         </div>
       </div>
 
       <div className="bld-section">
-        <h2 className="bld-section-title">{tr({ zh: '输出训练打乱', en: 'Output scrambles',
-            zhHant: "輸出訓練打亂"
+        <h2 className="bld-section-title">{tr({ zh: '输出训练打乱', en: 'Output scrambles'
         })}</h2>
         <ScrambleOutput scrambles={scrambles} info={info || undefined} busy={busy} />
       </div>
@@ -310,15 +292,13 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
         >
           <div className="bld-modal" role="dialog" aria-modal="true">
             <div className="bld-modal-header">
-              <h3 className="bld-modal-title">{tr({ zh: '请选择训练编码', en: 'Pick training codes',
-                  zhHant: "請選擇訓練編碼"
+              <h3 className="bld-modal-title">{tr({ zh: '请选择训练编码', en: 'Pick training codes'
             })}</h3>
               <button
                 type="button"
                 className="bld-modal-close"
                 onClick={() => setModalOpen(false)}
-                aria-label={tr({ zh: '关闭', en: 'Close',
-                    zhHant: "關閉"
+                aria-label={tr({ zh: '关闭', en: 'Close'
                 })}
               >
                 <X size={18} />
@@ -332,8 +312,7 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
                 {tr({ zh: '取消', en: 'Cancel' })}
               </button>
               <button type="button" className="bld-btn bld-btn-primary" onClick={confirmModal}>
-                {tr({ zh: '确认', en: 'Confirm',
-                    zhHant: "確認"
+                {tr({ zh: '确认', en: 'Confirm'
                 })}
               </button>
             </div>

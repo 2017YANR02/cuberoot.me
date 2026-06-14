@@ -92,11 +92,8 @@ function PatternThumb({ pattern, size = 120 }: { pattern: Pattern; size?: number
 export default function PatternsPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  const langKey: 'zh' | 'en' | 'zhHant' =
-    i18n.language === 'zh-Hant' ? 'zhHant' : i18n.language.startsWith('zh') ? 'zh' : 'en';
-  const pick = (o: { en: string; zh: string; zhHant?: string }) =>
-    langKey === 'zhHant' ? (o.zhHant ?? o.zh) : langKey === 'zh' ? o.zh : o.en;
-  useDocumentTitle('图案', 'Patterns', "圖案");
+  const pick = (o: { en: string; zh: string; }) => (lang === 'zh' ? o.zh : o.en);
+  useDocumentTitle('图案', 'Patterns');
   const t = useT();
 
   const [puzzle, setPuzzle] = useState<PuzzleSize>('3x3x3');
@@ -145,7 +142,7 @@ export default function PatternsPage() {
       <header className="pat-header">
         <div className="pat-title">
           <Sparkles size={20} className="pat-title-icon" />
-          <h1>{t('图案集', 'Cube Patterns', "圖案集")}</h1>
+          <h1>{t('图案集', 'Cube Patterns')}</h1>
         </div>
       </header>
 
@@ -186,7 +183,7 @@ export default function PatternsPage() {
         </nav>
 
         {visiblePatterns.length === 0 ? (
-          <div className="pat-empty">{t('暂无图案', 'No patterns yet', "暫無圖案")}</div>
+          <div className="pat-empty">{t('暂无图案', 'No patterns yet')}</div>
         ) : (
           <ul className="pat-grid">
             {visiblePatterns.map((p) => (
@@ -224,8 +221,8 @@ function PatternModal({
   pattern, pick, t, onClose,
 }: {
   pattern: Pattern;
-  pick: (o: { en: string; zh: string; zhHant?: string }) => string;
-  t: (zh: string, en: string, zhHant?: string) => string;
+  pick: (o: { en: string; zh: string; }) => string;
+  t: (zh: string, en: string) => string;
   onClose: () => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -261,7 +258,7 @@ function PatternModal({
           <code className="pat-modal-alg">{pattern.alg}</code>
           <button type="button" className="pat-modal-copy" onClick={copy} aria-label="copy">
             {copied ? <Check size={14} /> : <Copy size={14} />}
-            <span>{copied ? t('已复制', 'Copied', "已複製") : t('复制', 'Copy', "複製")}</span>
+            <span>{copied ? t('已复制', 'Copied') : t('复制', 'Copy')}</span>
           </button>
         </div>
       </div>

@@ -65,12 +65,10 @@ export default function CaseStatsPanel({ event, solves, isZh }: Props) {
   const rows = aggregate(solves);
   return (
     <div className="case-stats-panel">
-      <h3>{tr({ zh: '每 Case 统计', en: 'Per-case stats',
-          zhHant: "每 Case 統計"
+      <h3>{tr({ zh: '每 Case 统计', en: 'Per-case stats'
     })}</h3>
       {rows.length === 0 ? (
-        <div className="case-stats-empty">{tr({ zh: '尚无记录', en: 'No solves yet',
-            zhHant: "尚無記錄"
+        <div className="case-stats-empty">{tr({ zh: '尚无记录', en: 'No solves yet'
         })}</div>
       ) : (
         <div className="case-stats-scroll">
@@ -78,8 +76,7 @@ export default function CaseStatsPanel({ event, solves, isZh }: Props) {
             <thead>
               <tr>
                 <th>{isZh ? 'Case' : 'Case'}</th>
-                <th>{tr({ zh: '次数', en: 'N',
-                    zhHant: "次數"
+                <th>{tr({ zh: '次数', en: 'N'
                 })}</th>
                 <th>{tr({ zh: '最佳', en: 'Best' })}</th>
                 <th>{tr({ zh: '平均', en: 'Mean' })}</th>

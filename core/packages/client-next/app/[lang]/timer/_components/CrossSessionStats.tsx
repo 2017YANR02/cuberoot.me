@@ -72,8 +72,7 @@ export default function CrossSessionStats({ event, isZh }: Props) {
   if (rows.length === 0) {
     return (
       <div className="xsess-empty">
-        {tr({ zh: '暂无数据', en: 'No data yet',
-            zhHant: "暫無資料"
+        {tr({ zh: '暂无数据', en: 'No data yet'
         })}
       </div>
     );
@@ -84,8 +83,7 @@ export default function CrossSessionStats({ event, isZh }: Props) {
       <table className="xsess-table">
         <thead>
           <tr>
-            <th className="xsess-name-col">{tr({ zh: '分组', en: 'Session',
-                zhHant: "分組"
+            <th className="xsess-name-col">{tr({ zh: '分组', en: 'Session'
             })}</th>
             <th className="xsess-num">n</th>
             <th className="xsess-num">best</th>
@@ -108,8 +106,7 @@ export default function CrossSessionStats({ event, isZh }: Props) {
         </tbody>
         <tfoot>
           <tr className="xsess-all">
-            <td className="xsess-name-col">{tr({ zh: '合计', en: 'All',
-                zhHant: "合計"
+            <td className="xsess-name-col">{tr({ zh: '合计', en: 'All'
             })}</td>
             <td className="xsess-num">{all.count}</td>
             <td className={`xsess-num${isEmptyVal(all.best) ? ' muted' : ''}`}>{all.best}</td>

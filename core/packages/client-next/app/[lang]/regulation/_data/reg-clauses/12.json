@@ -6,338 +6,290 @@
   },
   "title": {
     "en": "Notation",
-    "zh": "转动表示方法",
-    "zhHant": "轉動表示方法"
+    "zh": "转动表示方法"
   },
   "clauses": [
     {
       "id": "12a",
       "depth": 0,
       "en": "Notation for NxNxN Cubes:",
-      "zh": "所有N阶魔方的转动表示方法：",
-      "zhHant": "所有N階魔方的轉動表示方法："
+      "zh": "所有N阶魔方的转动表示方法："
     },
     {
       "id": "12a1",
       "depth": 1,
       "en": "Face Moves (outer slice):",
-      "zh": "面转动（外层）：",
-      "zhHant": "面轉動（外層）："
+      "zh": "面转动（外层）："
     },
     {
       "id": "12a1a",
       "depth": 2,
       "en": "Clockwise, 90 degrees: F (front face), B (back face), R (right face), L (left face), U (upper face), D (bottom face).",
-      "zh": "顺时针90度：F（前面），B（后面），R（右面），L（左面），U（上面），D（下面）。",
-      "zhHant": "順時針90度：F（前面），B（後面），R（右面），L（左面），U（上面），D（下面）。"
+      "zh": "顺时针90度：F（前面），B（后面），R（右面），L（左面），U（上面），D（下面）。"
     },
     {
       "id": "12a1b",
       "depth": 2,
       "en": "Counter-clockwise, 90 degrees: F', B', R', L', U', D'.",
-      "zh": "逆时针90度：F'，B'，R'，L'，U'，D'。",
-      "zhHant": "逆時針90度：F'，B'，R'，L'，U'，D'。"
+      "zh": "逆时针90度：F'，B'，R'，L'，U'，D'。"
     },
     {
       "id": "12a1c",
       "depth": 2,
       "en": "180 degrees: F2, B2, R2, L2, U2, D2.",
-      "zh": "180度：F2，B2，R2，L2，U2，D2。",
-      "zhHant": "180度：F2，B2，R2，L2，U2，D2。"
+      "zh": "180度：F2，B2，R2，L2，U2，D2。"
     },
     {
       "id": "12a2",
       "depth": 1,
       "en": "Outer Block Moves (outer slice with adjacent inner slices). For each of the moves defined below, n is the total number of slices to move, which must be in the range 1 < n < N (where N is the number of layers in the puzzle). n may also be omitted, for an implicit value of n = 2 slices. Outer Block Moves are:",
-      "zh": "外部转动（表层及相邻的内层）。对下面定义的每一类转动，n是总共转动的层数，必须满足1 < n < N（N是魔方总共的层数）。n也可以省略，用于表示隐含的n = 2层。外部转动有：",
-      "zhHant": "外部轉動（表層及相鄰的內層）。對下面定義的每一類轉動，n是總共轉動的層數，必須滿足1 < n < N（N是魔方總共的層數）。n也可以省略，用於表示隱含的n = 2層。外部轉動有："
+      "zh": "外部转动（表层及相邻的内层）。对下面定义的每一类转动，n是总共转动的层数，必须满足1 < n < N（N是魔方总共的层数）。n也可以省略，用于表示隐含的n = 2层。外部转动有："
     },
     {
       "id": "12a2+",
       "depth": 1,
       "en": "[CLARIFICATION] For example, both Rw and 2Rw are valid notation for the same physical move for the 3x3x3 Cube. 1Rw is not valid notation for any NxNxN Cube, and 3Rw is not valid notation for the 2x2x2 Cube or the 3x3x3 Cube (but 3Rw is valid notation for the 4x4x4 Cube and larger NxNxN Cubes).",
-      "zh": "[澄清] 例如，Rw和2Rw都是三阶魔方上合法的表示相同转动的表示。在任意N阶魔方上，1Rw都不合法。3Rw在二阶或者三阶魔方上都不合法（但是3Rw在四阶或更高阶的魔方上是合法的）。",
-      "zhHant": "[澄清] 例如，Rw和2Rw都是三階魔方上合法的表示相同轉動的表示。在任意N階魔方上，1Rw都不合法。3Rw在二階或者三階魔方上都不合法（但是3Rw在四階或更高階的魔方上是合法的）。"
+      "zh": "[澄清] 例如，Rw和2Rw都是三阶魔方上合法的表示相同转动的表示。在任意N阶魔方上，1Rw都不合法。3Rw在二阶或者三阶魔方上都不合法（但是3Rw在四阶或更高阶的魔方上是合法的）。"
     },
     {
       "id": "12a2a",
       "depth": 2,
       "en": "Clockwise, 90 degrees: nFw, nBw, nRw, nLw, nUw, nDw.",
-      "zh": "顺时针90度：nFw，nBw，nRw，nLw，nUw，nDw。",
-      "zhHant": "順時針90度：nFw，nBw，nRw，nLw，nUw，nDw。"
+      "zh": "顺时针90度：nFw，nBw，nRw，nLw，nUw，nDw。"
     },
     {
       "id": "12a2b",
       "depth": 2,
       "en": "Counter-clockwise, 90 degrees: nFw', nBw', nRw', nLw', nUw', nDw'.",
-      "zh": "逆时针90度：nFw'，nBw'，nRw'，nLw'，nUw'，nDw'。",
-      "zhHant": "逆時針90度：nFw'，nBw'，nRw'，nLw'，nUw'，nDw'。"
+      "zh": "逆时针90度：nFw'，nBw'，nRw'，nLw'，nUw'，nDw'。"
     },
     {
       "id": "12a2c",
       "depth": 2,
       "en": "180 degrees: nFw2, nBw2, nRw2, nLw2, nUw2, nDw2.",
-      "zh": "180度：nFw2，nBw2，nRw2，nLw2，nUw2，nDw2。",
-      "zhHant": "180度：nFw2，nBw2，nRw2，nLw2，nUw2，nDw2。"
+      "zh": "180度：nFw2，nBw2，nRw2，nLw2，nUw2，nDw2。"
     },
     {
       "id": "12a4",
       "depth": 1,
       "en": "Rotations (entire puzzle):",
-      "zh": "整体转动（整个魔方）：",
-      "zhHant": "整體轉動（整個魔方）："
+      "zh": "整体转动（整个魔方）："
     },
     {
       "id": "12a4a",
       "depth": 2,
       "en": "Clockwise, 90 degrees: x (same direction as R or L'), y (same direction as U or D'), z (same direction as F or B').",
-      "zh": "顺时针90度：x（和R或L'同方向），y（和U或D'同方向），z（和F或B'同方向）。",
-      "zhHant": "順時針90度：x（和R或L'同方向），y（和U或D'同方向），z（和F或B'同方向）。"
+      "zh": "顺时针90度：x（和R或L'同方向），y（和U或D'同方向），z（和F或B'同方向）。"
     },
     {
       "id": "12a4b",
       "depth": 2,
       "en": "Counter-clockwise, 90 degrees: x' (same direction as R' or L), y' (same direction as U' or D), z' (same direction as F' or B).",
-      "zh": "逆时针90度：x'（和R'或L同方向），y'（和U'或D同方向），z'（和F'或B同方向）。",
-      "zhHant": "逆時針90度：x'（和R'或L同方向），y'（和U'或D同方向），z'（和F'或B同方向）。"
+      "zh": "逆时针90度：x'（和R'或L同方向），y'（和U'或D同方向），z'（和F'或B同方向）。"
     },
     {
       "id": "12a4c",
       "depth": 2,
       "en": "180 degrees: x2, y2, z2.",
-      "zh": "180度：x2，y2，z2。",
-      "zhHant": "180度：x2，y2，z2。"
+      "zh": "180度：x2，y2，z2。"
     },
     {
       "id": "12a5",
       "depth": 1,
       "en": "Outer Block Turn Metric (OBTM) is defined as:",
-      "zh": "Outer Block Turn Metric (OBTM)定义为：",
-      "zhHant": "Outer Block Turn Metric (OBTM)定義為："
+      "zh": "Outer Block Turn Metric (OBTM)定义为："
     },
     {
       "id": "12a5a",
       "depth": 2,
       "en": "Each move of the categories Face Moves and Outer Block Moves is counted as 1 move.",
-      "zh": "每个面转动或外部转动计1步。",
-      "zhHant": "每個面轉動或外部轉動計1步。"
+      "zh": "每个面转动或外部转动计1步。"
     },
     {
       "id": "12a5b",
       "depth": 2,
       "en": "Each move of the Rotations category is counted as 0 moves.",
-      "zh": "每个整体转动计0步。",
-      "zhHant": "每個整體轉動計0步。"
+      "zh": "每个整体转动计0步。"
     },
     {
       "id": "12a6",
       "depth": 1,
       "en": "Execution Turn Metric (ETM) is defined as: Each move of the categories Face Moves, Outer Block Moves, and Rotations is counted as 1 move.",
-      "zh": "Execution Turn Metric (ETM)定义为：每个面转动、外部转动以及整体转动计1步。",
-      "zhHant": "Execution Turn Metric (ETM)定義為：每個面轉動、外部轉動以及整體轉動計1步。"
+      "zh": "Execution Turn Metric (ETM)定义为：每个面转动、外部转动以及整体转动计1步。"
     },
     {
       "id": "12c",
       "depth": 0,
       "en": "Notation for Square-1:",
-      "zh": "Square-1的转动表示方法：",
-      "zhHant": "Square-1的轉動表示方法："
+      "zh": "Square-1的转动表示方法："
     },
     {
       "id": "12c1",
       "depth": 1,
       "en": "Moves are applied with one of the two smallest surfaces of the equatorial slice on the left side of the front face.",
-      "zh": "转动时将中层两个块中较小的那块放置于前面的左侧。",
-      "zhHant": "轉動時將中層兩個塊中較小的那塊放置於前面的左側。"
+      "zh": "转动时将中层两个块中较小的那块放置于前面的左侧。"
     },
     {
       "id": "12c2",
       "depth": 1,
       "en": "(X, Y) means: turn upper layer X times 30 degrees clockwise, turn bottom layer Y times 30 degrees clockwise. X and Y must be integers from -5 to 6, and cannot be both equal to 0.",
-      "zh": "(X,Y) 表示：顺时针转动上面X乘以30度，顺时针转动下面Y乘以30度。X和Y必须是-5到6之间的整数，不能同时为0。",
-      "zhHant": "(X,Y) 表示：順時針轉動上面X乘以30度，順時針轉動下面Y乘以30度。X和Y必須是-5到6之間的整數，不能同時為0。"
+      "zh": "(X,Y) 表示：顺时针转动上面X乘以30度，顺时针转动下面Y乘以30度。X和Y必须是-5到6之间的整数，不能同时为0。"
     },
     {
       "id": "12c3",
       "depth": 1,
       "en": "\"/\" means: turn the right half of the puzzle 180 degrees.",
-      "zh": "\"/\" 表示：魔方的右半部分转动180度。",
-      "zhHant": "\"/\" 表示：魔方的右半部分轉動180度。"
+      "zh": "\"/\" 表示：魔方的右半部分转动180度。"
     },
     {
       "id": "12c4",
       "depth": 1,
       "en": "Metric for Square-1: (X, Y) counts as one move, \"/\" counts as one move.",
-      "zh": "Square-1转动计数：(X, Y)计为一步, “/”计为一步。",
-      "zhHant": "Square-1轉動計數：(X, Y)計為一步, “/”計為一步。"
+      "zh": "Square-1转动计数：(X, Y)计为一步, “/”计为一步。"
     },
     {
       "id": "12d",
       "depth": 0,
       "en": "Notation for Megaminx (scrambling notation only):",
-      "zh": "五魔方的转动表示方法（仅用于打乱）：",
-      "zhHant": "五魔方的轉動表示方法（僅用於打亂）："
+      "zh": "五魔方的转动表示方法（仅用于打乱）："
     },
     {
       "id": "12d1",
       "depth": 1,
       "en": "Face Moves:",
-      "zh": "上面的转动：",
-      "zhHant": "上面的轉動："
+      "zh": "上面的转动："
     },
     {
       "id": "12d1a",
       "depth": 2,
       "en": "Clockwise, 72 degrees: U (upper face).",
-      "zh": "顺时针72度：U（上面）。",
-      "zhHant": "順時針72度：U（上面）。"
+      "zh": "顺时针72度：U（上面）。"
     },
     {
       "id": "12d1b",
       "depth": 2,
       "en": "Counter-clockwise, 72 degrees: U' (upper face).",
-      "zh": "逆时针72度：U'（上面）。",
-      "zhHant": "逆時針72度：U'（上面）。"
+      "zh": "逆时针72度：U'（上面）。"
     },
     {
       "id": "12d2",
       "depth": 1,
       "en": "Other moves are applied while keeping 3 pieces fixed at the top left of the puzzle:",
-      "zh": "其他转动保持位于魔方顶面和左面相交处的三个块不变：",
-      "zhHant": "其他轉動保持位於魔方頂面和左面相交處的三個塊不變："
+      "zh": "其他转动保持位于魔方顶面和左面相交处的三个块不变："
     },
     {
       "id": "12d2c",
       "depth": 2,
       "en": "Clockwise 144 degrees move of the whole puzzle except for the slice of top left three pieces: R++ (vertical slices), D++ (horizontal slices).",
-      "zh": "整个魔方除了顶面和左面相交处的三个块顺时针144度：R++（纵向），D++（横向）。",
-      "zhHant": "整個魔方除了頂面和左面相交處的三個塊順時針144度：R++（縱向），D++（橫向）。"
+      "zh": "整个魔方除了顶面和左面相交处的三个块顺时针144度：R++（纵向），D++（横向）。"
     },
     {
       "id": "12d2d",
       "depth": 2,
       "en": "Counter-clockwise 144 degrees move of the whole puzzle except for the slice of top left three pieces: R-- (vertical slices), D-- (horizontal slices).",
-      "zh": "整个魔方除了顶面和左面相交处的三个块逆时针144度：R--（纵向），D--（横向）。",
-      "zhHant": "整個魔方除了頂面和左面相交處的三個塊逆時針144度：R--（縱向），D--（橫向）。"
+      "zh": "整个魔方除了顶面和左面相交处的三个块逆时针144度：R--（纵向），D--（横向）。"
     },
     {
       "id": "12e",
       "depth": 0,
       "en": "Notation for Pyraminx:",
-      "zh": "金字塔的转动表示方法：",
-      "zhHant": "金字塔的轉動表示方法："
+      "zh": "金字塔的转动表示方法："
     },
     {
       "id": "12e1",
       "depth": 1,
       "en": "The puzzle is oriented with the bottom face completely horizontal and the front face facing the person who is holding the Pyraminx.",
-      "zh": "魔方的朝向为：底面完全水平，前面朝向拿着魔方的人。",
-      "zhHant": "魔方的朝向為：底面完全水平，前面朝向拿著魔方的人。"
+      "zh": "魔方的朝向为：底面完全水平，前面朝向拿着魔方的人。"
     },
     {
       "id": "12e2",
       "depth": 1,
       "en": "Clockwise, 120 degrees: U (upper 2 layers), L (left 2 layers), R (right 2 layers), B (back 2 layers), u (upper vertex), l (left vertex), r (right vertex), b (back vertex).",
-      "zh": "顺时针120度：U（上面两层），L（左边两层），R（右边两层），B（后边两层），u（上边的角），l（左边的角），r（右边的角），b（后边的角）。",
-      "zhHant": "順時針120度：U（上面兩層），L（左邊兩層），R（右邊兩層），B（後邊兩層），u（上邊的角），l（左邊的角），r（右邊的角），b（後邊的角）。"
+      "zh": "顺时针120度：U（上面两层），L（左边两层），R（右边两层），B（后边两层），u（上边的角），l（左边的角），r（右边的角），b（后边的角）。"
     },
     {
       "id": "12e3",
       "depth": 1,
       "en": "Counter-clockwise, 120 degrees: U' (upper 2 layers), L' (left 2 layers), R' (right 2 layers), B' (back 2 layers), u' (upper vertex), l' (left vertex), r' (right vertex), b' (back vertex).",
-      "zh": "逆时针120度：U'（上面两层），L'（左边两层），R'（右边两层），B'（后边两层），u'（上边的角），l'（左边的角），r'（右边的角），b'（后边的角）。",
-      "zhHant": "逆時針120度：U'（上面兩層），L'（左邊兩層），R'（右邊兩層），B'（後邊兩層），u'（上邊的角），l'（左邊的角），r'（右邊的角），b'（後邊的角）。"
+      "zh": "逆时针120度：U'（上面两层），L'（左边两层），R'（右边两层），B'（后边两层），u'（上边的角），l'（左边的角），r'（右边的角），b'（后边的角）。"
     },
     {
       "id": "12g",
       "depth": 0,
       "en": "Notation for Clock:",
-      "zh": "魔表的转动表示方法：",
-      "zhHant": "魔錶的轉動表示方法："
+      "zh": "魔表的转动表示方法："
     },
     {
       "id": "12g1",
       "depth": 1,
       "en": "The puzzle is oriented with 12 o'clock on top, and either side in front.",
-      "zh": "魔表的朝向为：12点向上，任意面朝前。",
-      "zhHant": "魔錶的朝向為：12點向上，任意麵朝前。"
+      "zh": "魔表的朝向为：12点向上，任意面朝前。"
     },
     {
       "id": "12g2",
       "depth": 1,
       "en": "Move pins up: UR (top-right), DR (bottom-right), DL (bottom-left), UL (top-left), U (both top), R (both right), D (both bottom), L (both left), ALL (all).",
-      "zh": "按钮按上：UR（上右），DR（下右），DL（下左），UL（上左），U（上面两个），R（右面两个），D（下面两个），L（左面两个），ALL（所有）。",
-      "zhHant": "按鈕按上：UR（上右），DR（下右），DL（下左），UL（上左），U（上面兩個），R（右面兩個），D（下面兩個），L（左面兩個），ALL（所有）。"
+      "zh": "按钮按上：UR（上右），DR（下右），DL（下左），UL（上左），U（上面两个），R（右面两个），D（下面两个），L（左面两个），ALL（所有）。"
     },
     {
       "id": "12g3",
       "depth": 1,
       "en": "Turn a wheel next to an up-position pin and move all pins down afterwards: X+ (X clockwise turns), X- (X counter-clockwise turns).",
-      "zh": "紧跟着按钮按上后转动上层，转动完成后将按钮按下：X+（顺时针X小时），Y-（逆时针Y小时）。",
-      "zhHant": "緊跟著按鈕按上後轉動上層，轉動完成後將按鈕按下：X+（順時針X小時），Y-（逆時針Y小時）。"
+      "zh": "紧跟着按钮按上后转动上层，转动完成后将按钮按下：X+（顺时针X小时），Y-（逆时针Y小时）。"
     },
     {
       "id": "12g3+",
       "depth": 1,
       "en": "[REMINDER] As clock scramble sequences end with an X+ or X- move, all pins are pushed down once the scramble sequence has been fully applied.",
-      "zh": "[提醒] 由于魔表打乱公式以X+或X-步骤结束，因此在打乱公式完全做完后，所有立柱都需要被按下。",
-      "zhHant": "[提醒] 由於魔錶打亂公式以X+或X-步驟結束，因此在打亂公式完全做完後，所有立柱都需要被按下。"
+      "zh": "[提醒] 由于魔表打乱公式以X+或X-步骤结束，因此在打乱公式完全做完后，所有立柱都需要被按下。"
     },
     {
       "id": "12g4",
       "depth": 1,
       "en": "Turn around the puzzle so that 12 o'clock stays on top, and then move all pins down: y2.",
-      "zh": "翻转魔表并保持12点向上，然后将所有按钮按下：y2。",
-      "zhHant": "翻轉魔錶並保持12點向上，然後將所有按鈕按下：y2。"
+      "zh": "翻转魔表并保持12点向上，然后将所有按钮按下：y2。"
     },
     {
       "id": "12h",
       "depth": 0,
       "en": "Notation for Skewb:",
-      "zh": "斜转魔方的转动表示方法：",
-      "zhHant": "斜轉魔方的轉動表示方法："
+      "zh": "斜转魔方的转动表示方法："
     },
     {
       "id": "12h1",
       "depth": 1,
       "en": "The puzzle is oriented with three faces fully visible, where the upper face is on top.",
-      "zh": "魔方的朝向使得有3个面完全可见，且有一个面朝向正上方。",
-      "zhHant": "魔方的朝向使得有3個面完全可見，且有一個面朝向正上方。"
+      "zh": "魔方的朝向使得有3个面完全可见，且有一个面朝向正上方。"
     },
     {
       "id": "12h2",
       "depth": 1,
       "en": "Clockwise, 120 degrees: R (the layer around the farthest visible bottom-right vertex), U (the layer around the farthest visible upper vertex), L (the layer around the farthest visible bottom-left vertex), B (the layer around the farthest non-visible back vertex).",
-      "zh": "顺时针120度：R（可见部分右下方最远的角），U（可见部分上方最远的角），L（可见部分左下方最远的角），B（在背后不可见的最远的角）。",
-      "zhHant": "順時針120度：R（可見部分右下方最遠的角），U（可見部分上方最遠的角），L（可見部分左下方最遠的角），B（在背後不可見的最遠的角）。"
+      "zh": "顺时针120度：R（可见部分右下方最远的角），U（可见部分上方最远的角），L（可见部分左下方最远的角），B（在背后不可见的最远的角）。"
     },
     {
       "id": "12h3",
       "depth": 1,
       "en": "Counter-clockwise, 120 degrees: R' (the layer around the farthest visible bottom-right vertex), U' (the layer around the farthest visible upper vertex), L' (the layer around the farthest visible bottom-left vertex), B' (the layer around the farthest non-visible back vertex).",
-      "zh": "逆时针120度：R'（可见部分右下方最远的角），U'（可见部分上方最远的角），L'（可见部分左下方最远的角），B'（在背后不可见的最远的角）。",
-      "zhHant": "逆時針120度：R'（可見部分右下方最遠的角），U'（可見部分上方最遠的角），L'（可見部分左下方最遠的角），B'（在背後不可見的最遠的角）。"
+      "zh": "逆时针120度：R'（可见部分右下方最远的角），U'（可见部分上方最远的角），L'（可见部分左下方最远的角），B'（在背后不可见的最远的角）。"
     },
     {
       "id": "12i",
       "depth": 0,
       "en": "Definition: A move is considered to be any change to the puzzle state in terms of the notation defined above, including misalignments beyond the limits described in [Regulation 10f](regulations:regulation:10f).",
-      "zh": "定义：“转动”被认为是在上述定义下任意对魔方的状态产生的变化，包括超过[规则10f](regulations:regulation:10f)中规定的限制的错位。",
-      "zhHant": "定義：“轉動”被認為是在上述定義下任意對魔方的狀態產生的變化，包括超過[規則10f](regulations:regulation:10f)中規定的限制的錯位。"
+      "zh": "定义：“转动”被认为是在上述定义下任意对魔方的状态产生的变化，包括超过[规则10f](regulations:regulation:10f)中规定的限制的错位。"
     },
     {
       "id": "12i+",
       "depth": 0,
       "en": "[CLARIFICATION] Rotations do not change the puzzle state.",
-      "zh": "[澄清] 整体转动不改变魔方状态。",
-      "zhHant": "[澄清] 整體轉動不改變魔方狀態。"
+      "zh": "[澄清] 整体转动不改变魔方状态。"
     },
     {
       "id": "12i1",
       "depth": 1,
       "en": "Exception: for Clock, only changes in the position of the inner clock faces are considered to be moves. Changes to the state of the pins are not considered to be moves.",
-      "zh": "例外：对于魔表，只有内表盘上的指针变化才被视为转动。立柱状态的变化不算作转动。",
-      "zhHant": "例外：對於魔錶，只有內錶盤上的指標變化才被視為轉動。立柱狀態的變化不算作轉動。"
+      "zh": "例外：对于魔表，只有内表盘上的指针变化才被视为转动。立柱状态的变化不算作转动。"
     }
   ]
 }

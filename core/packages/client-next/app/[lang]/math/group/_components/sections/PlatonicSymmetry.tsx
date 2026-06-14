@@ -461,8 +461,7 @@ function CubeS4Widget() {
           viewBox={`0 0 ${W} ${H}`}
           width="100%"
           style={{ maxWidth: W, flex: '0 0 auto' }}
-          aria-label={tr({ zh: '旋转中的正方体与体对角线', en: 'Rotating cube with body diagonals',
-              zhHant: "旋轉中的正方體與體對角線"
+          aria-label={tr({ zh: '旋转中的正方体与体对角线', en: 'Rotating cube with body diagonals'
         })}
         >
           {/* cube faces */}
@@ -523,8 +522,7 @@ function CubeS4Widget() {
 
           {appliedLabels.length > 0 && (
             <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-dim)', marginBottom: 12 }}>
-              {tr({ zh: '已应用', en: 'Applied',
-                  zhHant: "已應用"
+              {tr({ zh: '已应用', en: 'Applied'
             })}: {appliedLabels.join(' → ')}
             </div>
           )}
@@ -555,11 +553,9 @@ function CubeS4Widget() {
               <span className="gt-result-label"><L zh="奇偶性" en="Parity" /></span>
               <span className="gt-result-val" style={{ color: sign === 1 ? 'var(--green)' : 'var(--accent)' }}>
                 {sign === 1
-                  ? (tr({ zh: '偶置换', en: 'even',
-                      zhHant: "偶置換"
+                  ? (tr({ zh: '偶置换', en: 'even'
                 }))
-                  : (tr({ zh: '奇置换', en: 'odd',
-                      zhHant: "奇置換"
+                  : (tr({ zh: '奇置换', en: 'odd'
                 }))}
               </span>
             </div>
@@ -628,14 +624,11 @@ function TetraWidget() {
   }), [rotMat]);
 
   const genRotBtns = [
-    { label: tr({ zh: '顶点旋转 120°', en: 'Vertex 120°',
-        zhHant: "頂點旋轉 120°"
+    { label: tr({ zh: '顶点旋转 120°', en: 'Vertex 120°'
     }), R: axisAngle(vecNorm(TETRA_VERTS[0]), (2 * Math.PI) / 3) },
-    { label: tr({ zh: '顶点旋转 240°', en: 'Vertex 240°',
-        zhHant: "頂點旋轉 240°"
+    { label: tr({ zh: '顶点旋转 240°', en: 'Vertex 240°'
     }), R: axisAngle(vecNorm(TETRA_VERTS[0]), (4 * Math.PI) / 3) },
-    { label: tr({ zh: '棱轴旋转 180°', en: 'Edge 180°',
-        zhHant: "稜軸旋轉 180°"
+    { label: tr({ zh: '棱轴旋转 180°', en: 'Edge 180°'
     }), R: axisAngle(vecNorm([TETRA_VERTS[0][0] + TETRA_VERTS[1][0], TETRA_VERTS[0][1] + TETRA_VERTS[1][1], TETRA_VERTS[0][2] + TETRA_VERTS[1][2]]), Math.PI) },
   ];
 
@@ -659,8 +652,7 @@ function TetraWidget() {
           className={`gt-chip ${allowReflections ? 'gt-chip-active' : ''}`}
           onClick={() => setAllowReflections(r => !r)}
         >
-          {allowReflections ? (tr({ zh: '是（共 24 = S₄）', en: 'Yes (24 = S₄)' })) : (tr({ zh: '否（仅旋转，12 = A₄）', en: 'No (rotations only, 12 = A₄)',
-              zhHant: "否（僅旋轉，12 = A₄）"
+          {allowReflections ? (tr({ zh: '是（共 24 = S₄）', en: 'Yes (24 = S₄)' })) : (tr({ zh: '否（仅旋转，12 = A₄）', en: 'No (rotations only, 12 = A₄)'
         }))}
         </button>
       </div>
@@ -668,8 +660,7 @@ function TetraWidget() {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
         {/* SVG tetrahedron */}
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, flex: '0 0 auto' }}
-          aria-label={tr({ zh: '带编号顶点的正四面体', en: 'Labelled tetrahedron',
-              zhHant: "帶編號頂點的正四面體"
+          aria-label={tr({ zh: '带编号顶点的正四面体', en: 'Labelled tetrahedron'
         })}>
           {allPaths.map((p, i) => (
             <path key={i} d={p.path} fill={p.fill} fillOpacity={0.78} stroke="var(--bg)" strokeWidth={1.5} />
@@ -714,8 +705,7 @@ function TetraWidget() {
               <span className="gt-result-label"><L zh="奇偶性" en="Parity" /></span>
               <span className="gt-result-val" style={{ color: isProper ? 'var(--green)' : 'var(--warn)' }}>
                 {isProper
-                  ? (tr({ zh: '偶（旋转）', en: 'even (rotation)',
-                      zhHant: "偶（旋轉）"
+                  ? (tr({ zh: '偶（旋转）', en: 'even (rotation)'
                 }))
                   : (tr({ zh: '奇（反射）', en: 'odd (reflection)' }))}
               </span>
@@ -766,16 +756,12 @@ const SOLID_COLORS_ICOSA = [
 
 type SolidName = 'tetrahedron' | 'cube' | 'icosahedron';
 const SOLID_META: Record<SolidName, { label: { zh: string; en: string
-        zhHant?: string;
  }; order: number; group: string }> = {
-  tetrahedron: { label: { zh: '正四面体', en: 'Tetrahedron',
-      zhHant: "正四面體"
+  tetrahedron: { label: { zh: '正四面体', en: 'Tetrahedron'
 }, order: 12, group: 'A₄' },
-  cube:        { label: { zh: '正方体',   en: 'Cube',
-      zhHant: "正方體"
+  cube:        { label: { zh: '正方体',   en: 'Cube'
 }, order: 24, group: 'S₄' },
-  icosahedron: { label: { zh: '正二十面体', en: 'Icosahedron',
-      zhHant: "正二十面體"
+  icosahedron: { label: { zh: '正二十面体', en: 'Icosahedron'
 }, order: 60, group: 'A₅' },
 };
 
@@ -856,15 +842,14 @@ function OrbitCountWidget() {
             className={`gt-chip ${solid === s ? 'gt-chip-active' : ''}`}
             onClick={() => changeSolid(s)}
           >
-            {(i18n.language === 'zh-Hant' ? (SOLID_META[s].label.zhHant ?? SOLID_META[s].label.zh) : (i18n.language.startsWith('zh') ? SOLID_META[s].label.zh : SOLID_META[s].label.en))}
+            {((i18n.language.startsWith('zh') ? SOLID_META[s].label.zh : SOLID_META[s].label.en))}
           </button>
         ))}
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, flex: '0 0 auto' }}
-          aria-label={tr({ zh: '当前方向的立体', en: 'Solid in current orientation',
-              zhHant: "當前方向的立體"
+          aria-label={tr({ zh: '当前方向的立体', en: 'Solid in current orientation'
         })}>
           {paths.map((p, i) => (
             <path key={i} d={p.path} fill={p.fill} fillOpacity={0.8} stroke="var(--bg)" strokeWidth={1.5} />
@@ -928,7 +913,7 @@ function OrbitCountWidget() {
               ] as const).map(([s, rot, ord, full, ford]) => (
                 <tr key={s} style={{ fontWeight: solid === s ? 700 : undefined }}>
                   <td style={{ fontFamily: 'var(--serif)', color: solid === s ? 'var(--accent)' : 'var(--ink-dim)' }}>
-                    {(i18n.language === 'zh-Hant' ? (SOLID_META[s].label.zhHant ?? SOLID_META[s].label.zh) : (i18n.language.startsWith('zh') ? SOLID_META[s].label.zh : SOLID_META[s].label.en))}
+                    {((i18n.language.startsWith('zh') ? SOLID_META[s].label.zh : SOLID_META[s].label.en))}
                   </td>
                   <td className="num">{rot}</td>
                   <td className="num">{ord}</td>

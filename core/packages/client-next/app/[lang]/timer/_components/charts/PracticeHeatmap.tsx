@@ -289,11 +289,10 @@ export default function PracticeHeatmap({
   const dowLabelsZh = ['周一', '', '周三', '', '周五', '', ''];
   const dowLabels = isZh ? dowLabelsZh : dowLabelsEn;
 
-  const totalLabel = i18n.language === 'zh-Hant' ? (`${total} 次於 ${targetYear}`) : (isZh
+  const totalLabel = (isZh
       ? `${total} 次于 ${targetYear}`
       : `${total} ${total === 1 ? 'solve' : 'solves'} in ${targetYear}`);
-  const emptyLabel = tr({ zh: '还没有成绩。', en: 'No solves yet.',
-      zhHant: "還沒有成績。"
+  const emptyLabel = tr({ zh: '还没有成绩。', en: 'No solves yet.'
 });
 
   const prevLabel = tr({ zh: '上一年', en: 'Previous year' });
@@ -303,30 +302,27 @@ export default function PracticeHeatmap({
   let streakText: string;
   const streakActive = streak > 0;
   if (streak > 0) {
-    streakText = i18n.language === 'zh-Hant' ? (`${streak} 天連續`) : (isZh
+    streakText = (isZh
           ? `${streak} 天连续`
           : `${streak} day${streak === 1 ? '' : 's'} streak`);
   } else {
-    streakText = tr({ zh: '今日未练', en: 'no streak today',
-        zhHant: "今日未練"
+    streakText = tr({ zh: '今日未练', en: 'no streak today'
     });
   }
-  const streakTitle = tr({ zh: '连续每日至少完成一次还原', en: 'Consecutive days with at least one solve',
-      zhHant: "連續每日至少完成一次還原"
+  const streakTitle = tr({ zh: '连续每日至少完成一次还原', en: 'Consecutive days with at least one solve'
 });
 
   // ---- Per-cell tooltip -------------------------------------------------
   const cellTooltip = (date: Date, agg: DayAgg): string => {
     const dateStr = fmtDate(date);
     if (agg.count === 0) {
-      return i18n.language === 'zh-Hant' ? (`${dateStr} — 無`) : (isZh ? `${dateStr} — 无` : `${dateStr} — none`);
+      return (isZh ? `${dateStr} — 无` : `${dateStr} — none`);
     }
     const solvesPart = isZh
       ? `${agg.count} 次`
       : `${agg.count} ${agg.count === 1 ? 'solve' : 'solves'}`;
     if (agg.best === null) {
-      const noBest = tr({ zh: '无有效成绩', en: 'all DNF',
-          zhHant: "無有效成績"
+      const noBest = tr({ zh: '无有效成绩', en: 'all DNF'
     });
       return `${dateStr} · ${solvesPart} · ${noBest}`;
     }
@@ -340,7 +336,7 @@ export default function PracticeHeatmap({
     agg: DayAgg,
   ): string => {
     if (agg.count === 0) {
-      return i18n.language === 'zh-Hant' ? (`${label} — 無`) : (isZh ? `${label} — 无` : `${label} — none`);
+      return (isZh ? `${label} — 无` : `${label} — none`);
     }
     const solvesPart = isZh
       ? `${agg.count} 次`
@@ -377,11 +373,9 @@ export default function PracticeHeatmap({
               onClick={() => setCalendarExpanded(v => !v)}
             >
               {calendarExpanded
-                ? (tr({ zh: '收起日历', en: 'Hide calendar',
-                    zhHant: "收起日曆"
+                ? (tr({ zh: '收起日历', en: 'Hide calendar'
                 }))
-                : (tr({ zh: '展开日历', en: 'Show calendar',
-                    zhHant: "展開日曆"
+                : (tr({ zh: '展开日历', en: 'Show calendar'
                 }))}
             </button>
           )}

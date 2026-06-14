@@ -60,18 +60,14 @@ const CATEGORY_DOT: Record<Category, string> = {
 };
 
 const CATEGORY_LABEL: Record<Category, { en: string; zh: string
-        zhHant?: string;
  }> = {
-  unspecified: { en: 'unspecified', zh: '未分类',
-      zhHant: "未分類"
+  unspecified: { en: 'unspecified', zh: '未分类'
 },
   object:      { en: 'object',      zh: '物品' },
   person:      { en: 'person',      zh: '人物' },
-  action:      { en: 'action',      zh: '动作',
-      zhHant: "動作"
+  action:      { en: 'action',      zh: '动作'
 },
-  place:       { en: 'place',       zh: '地点',
-      zhHant: "地點"
+  place:       { en: 'place',       zh: '地点'
 },
   other:       { en: 'other',       zh: '其它' },
 };
@@ -94,14 +90,11 @@ function normalizeWord(raw: string, alphabet: readonly string[]): string {
 }
 
 function validateWordInput(word: string, isZh: boolean): string | null {
-  if (!word) return tr({ zh: '请输入一个词', en: 'Enter a word',
-      zhHant: "請輸入一個詞"
+  if (!word) return tr({ zh: '请输入一个词', en: 'Enter a word'
 });
-  if (word.length > 40) return tr({ zh: '词太长了', en: 'Word too long',
-      zhHant: "詞太長了"
+  if (word.length > 40) return tr({ zh: '词太长了', en: 'Word too long'
 });
-  if (!VALID_WORD_RE.test(word)) return tr({ zh: '请输入正常文字', en: 'Invalid characters',
-      zhHant: "請輸入正常文字"
+  if (!VALID_WORD_RE.test(word)) return tr({ zh: '请输入正常文字', en: 'Invalid characters'
 });
   return null;
 }
@@ -109,7 +102,7 @@ function validateWordInput(word: string, isZh: boolean): string | null {
 export default function ColpiClient() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('Colpi 训练', 'Colpi', "Colpi 訓練");
+  useDocumentTitle('Colpi 训练', 'Colpi');
   const user = useAuthStore(s => s.user);
   const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
   const router = useRouter();
@@ -267,8 +260,7 @@ export default function ColpiClient() {
   const onSearch = () => {
     const q = shouldUppercase(ALPHABET) ? search.trim().toUpperCase() : search.trim();
     if (isValidPair(q, ALPHABET)) setActivePair(q);
-    else showToast(tr({ zh: '不在当前语言字母表里', en: 'Not in current alphabet',
-        zhHant: "不在當前語言字母表裡"
+    else showToast(tr({ zh: '不在当前语言字母表里', en: 'Not in current alphabet'
     }));
   };
 
@@ -335,8 +327,7 @@ export default function ColpiClient() {
 
   // ── submit (new word) ──
   const handleAddClick = () => {
-    if (!user) { showToast(tr({ zh: '请先登录后再提交', en: 'Please log in to submit',
-        zhHant: "請先登入後再提交"
+    if (!user) { showToast(tr({ zh: '请先登录后再提交', en: 'Please log in to submit'
     })); return; }
     setEditingId(null);
     setFormWord('');
@@ -350,8 +341,7 @@ export default function ColpiClient() {
     const err = validateWordInput(word, isZh);
     if (err) { showToast(err); return; }
     if (activeWords.some(w => w.word === word)) {
-      showToast(tr({ zh: '这个词已存在', en: 'Word already exists',
-          zhHant: "這個詞已存在"
+      showToast(tr({ zh: '这个词已存在', en: 'Word already exists'
     })); return;
     }
     try {
@@ -396,8 +386,7 @@ export default function ColpiClient() {
       setFormWord('');
       setFormNote('');
       setFormCategory('unspecified');
-      showToast(tr({ zh: '已保存', en: 'Saved',
-          zhHant: "已儲存"
+      showToast(tr({ zh: '已保存', en: 'Saved'
     }));
     } catch (e) {
       showToast(e instanceof Error ? e.message : String(e));
@@ -407,15 +396,14 @@ export default function ColpiClient() {
   // ── delete ──
   const handleDelete = async (w: ColpiWord) => {
     if (!canEdit(w)) return;
-    const confirmMsg = i18n.language === 'zh-Hant' ? (`確認刪除"${w.word}"?`) : (isZh
+    const confirmMsg = (isZh
           ? `确认删除"${w.word}"?`
           : `Delete "${w.word}"?`);
     if (!window.confirm(confirmMsg)) return;
     try {
       await deleteWord(w.id);
       removeWordLocal(w.pair, w.id);
-      showToast(tr({ zh: '已删除', en: 'Deleted',
-          zhHant: "已刪除"
+      showToast(tr({ zh: '已删除', en: 'Deleted'
     }));
     } catch (e) {
       showToast(e instanceof Error ? e.message : String(e));
@@ -424,8 +412,7 @@ export default function ColpiClient() {
 
   // ── vote ──
   const handleVote = async (w: ColpiWord, dir: 1 | -1) => {
-    if (!user) { showToast(tr({ zh: '请先登录', en: 'Please log in first',
-        zhHant: "請先登入"
+    if (!user) { showToast(tr({ zh: '请先登录', en: 'Please log in first'
     })); return; }
     try {
       if (w.myVote === dir) {
@@ -454,8 +441,7 @@ export default function ColpiClient() {
           <div className="colpi-brand-text">
             <span className="colpi-brand-title">coLPI</span>
             <span className="colpi-brand-sub">
-              {tr({ zh: '盲拧字母对图像协作数据库', en: 'collective letter-pair images database for BLD.',
-                  zhHant: "盲擰字母對影象協作資料庫"
+              {tr({ zh: '盲拧字母对图像协作数据库', en: 'collective letter-pair images database for BLD.'
             })}
             </span>
           </div>
@@ -469,18 +455,15 @@ export default function ColpiClient() {
             onKeyDown={(e) => { if (e.key === 'Enter') onSearch(); }}
             placeholder="LP"
             maxLength={2}
-            aria-label={tr({ zh: '搜索字母对', en: 'Search letter pair',
-                zhHant: "搜尋字母對"
+            aria-label={tr({ zh: '搜索字母对', en: 'Search letter pair'
             })}
           />
-          <button onClick={onSearch} title={tr({ zh: '搜索', en: 'Search',
-              zhHant: "搜尋"
+          <button onClick={onSearch} title={tr({ zh: '搜索', en: 'Search'
         })}><Search size={14} /></button>
         </div>
 
         <div className="colpi-actions">
-          <div className="colpi-pill-group" role="tablist" aria-label={tr({ zh: '视图', en: 'View',
-              zhHant: "檢視"
+          <div className="colpi-pill-group" role="tablist" aria-label={tr({ zh: '视图', en: 'View'
         })}>
             <button
               type="button"
@@ -496,21 +479,18 @@ export default function ColpiClient() {
               className={viewMode === 'mine' ? 'on' : ''}
               disabled={!user}
               onClick={() => setViewMode('mine')}
-              title={user ? '' : (tr({ zh: '需要登录', en: 'Login required',
-                  zhHant: "需要登入"
+              title={user ? '' : (tr({ zh: '需要登录', en: 'Login required'
             }))}
             >{tr({ zh: '我的', en: 'Mine' })}</button>
           </div>
           <button
             className={`colpi-toggle-btn ${hideOffensive ? 'on' : ''}`}
             onClick={() => setHideOffensive(v => !v)}
-            title={tr({ zh: '隐藏被标记为不雅的词', en: 'Hide community-flagged offensive words',
-                zhHant: "隱藏被標記為不雅的詞"
+            title={tr({ zh: '隐藏被标记为不雅的词', en: 'Hide community-flagged offensive words'
             })}
           >
             {hideOffensive ? <EyeOff size={14} /> : <Eye size={14} />}
-            <span>{tr({ zh: '过滤', en: 'Filter',
-                zhHant: "過濾"
+            <span>{tr({ zh: '过滤', en: 'Filter'
             })}</span>
           </button>
           <WcaAuth />
@@ -521,17 +501,14 @@ export default function ColpiClient() {
       {welcomeOpen && (
         <section className="colpi-welcome">
           <div className="colpi-welcome-body">
-            <h1>{tr({ zh: '欢迎!', en: 'Welcome!',
-                zhHant: "歡迎!"
+            <h1>{tr({ zh: '欢迎!', en: 'Welcome!'
             })}</h1>
             <p>
-              {tr({ zh: 'CoLPI 是一个盲拧字母对图像的公共数据库。你可以浏览、投票或提交自己的关联词。注意,部分词汇可能令人不适。', en: 'CoLPI is a public collection of letter-pair images for blindfolded cubing. Browse, vote, and submit your own associations. Some words may be considered offensive.',
-                  zhHant: "CoLPI 是一個盲擰字母對影象的公共資料庫。你可以瀏覽、投票或提交自己的關聯詞。注意,部分詞彙可能令人不適。"
+              {tr({ zh: 'CoLPI 是一个盲拧字母对图像的公共数据库。你可以浏览、投票或提交自己的关联词。注意,部分词汇可能令人不适。', en: 'CoLPI is a public collection of letter-pair images for blindfolded cubing. Browse, vote, and submit your own associations. Some words may be considered offensive.'
             })}
             </p>
             <p className="colpi-welcome-disclaimer">
-              {tr({ zh: '初始词条镜像自原站 (bestsiteever.net/colpi,Roman Strakhov 维护);本站为 UI 复刻,登录后可提交、编辑自己的词,管理员可改任何词。', en: 'Initial entries mirrored from bestsiteever.net/colpi (Roman Strakhov). UI clone — logged-in users can submit/edit their own words; admins can edit any.',
-                  zhHant: "初始詞條映象自原站 (bestsiteever.net/colpi,Roman Strakhov 維護);本站為 UI 復刻,登入後可提交、編輯自己的詞,管理員可改任何詞。"
+              {tr({ zh: '初始词条镜像自原站 (bestsiteever.net/colpi,Roman Strakhov 维护);本站为 UI 复刻,登录后可提交、编辑自己的词,管理员可改任何词。', en: 'Initial entries mirrored from bestsiteever.net/colpi (Roman Strakhov). UI clone — logged-in users can submit/edit their own words; admins can edit any.'
             })}
             </p>
           </div>
@@ -545,7 +522,7 @@ export default function ColpiClient() {
       {/* === Letter-pair grid === */}
       <section className="colpi-grid-wrap">
         <div className="colpi-section-h">
-          {i18n.language === 'zh-Hant' ? (`字母對網格 (${langDisplay(langFilter, true)})`) : (isZh
+          {(isZh
                                   ? `字母对网格 (${langDisplay(langFilter, true)})`
                                   : `Language table (${langDisplay(langFilter, false).toLowerCase()} scheme)`)}
         </div>
@@ -557,8 +534,7 @@ export default function ColpiClient() {
                   className="colpi-grid-corner clickable"
                   ref={cornerRef}
                   onClick={() => setLangPickerOpen(o => !o)}
-                  title={tr({ zh: '切换语言', en: 'Switch language',
-                      zhHant: "切換語言"
+                  title={tr({ zh: '切换语言', en: 'Switch language'
                 })}
                 >
                   {(LANG_MAP[langFilter]?.code ?? langFilter).toUpperCase()}
@@ -601,18 +577,16 @@ export default function ColpiClient() {
           />
         )}
         <div className="colpi-grid-legend">
-          <span className="colpi-legend-swatch filled" /> {tr({ zh: '已有词', en: 'Has words',
-              zhHant: "已有詞"
+          <span className="colpi-legend-swatch filled" /> {tr({ zh: '已有词', en: 'Has words'
         })}
           <span className="colpi-legend-swatch empty" /> {tr({ zh: '空缺', en: 'Empty' })}
           <span className="colpi-legend-meta">
             {loading
-              ? (tr({ zh: '加载中…', en: 'Loading…',
-                  zhHant: "載入中…"
+              ? (tr({ zh: '加载中…', en: 'Loading…'
             }))
               : loadError
-                ? (i18n.language === 'zh-Hant' ? (`載入失敗: ${loadError}`) : (isZh ? `加载失败: ${loadError}` : `Load failed: ${loadError}`))
-                : i18n.language === 'zh-Hant' ? (`共 ${filledPairs} 對 / ${totalWordCount} 個詞`) : (isZh
+                ? ((isZh ? `加载失败: ${loadError}` : `Load failed: ${loadError}`))
+                : (isZh
                                                     ? `共 ${filledPairs} 对 / ${totalWordCount} 个词`
                                                     : `${filledPairs} pairs / ${totalWordCount} words`)}
           </span>
@@ -627,8 +601,7 @@ export default function ColpiClient() {
           </div>
           {activeWords.length === 0 ? (
             <p className="colpi-detail-empty">
-              {tr({ zh: '这个字母对暂无词。提交一个吧!', en: 'No words for this pair yet. Be the first to add one!',
-                  zhHant: "這個字母對暫無詞。提交一個吧!"
+              {tr({ zh: '这个字母对暂无词。提交一个吧!', en: 'No words for this pair yet. Be the first to add one!'
             })}
             </p>
           ) : (
@@ -643,8 +616,7 @@ export default function ColpiClient() {
                     lang={formLang} setLang={setFormLang}
                     onConfirm={handleEditConfirm}
                     onCancel={() => { setEditingId(null); setFormWord(''); setFormNote(''); }}
-                    confirmLabel={tr({ zh: '保存', en: 'Save',
-                        zhHant: "儲存"
+                    confirmLabel={tr({ zh: '保存', en: 'Save'
                     })}
                   />
                 </li>
@@ -653,7 +625,7 @@ export default function ColpiClient() {
                   <span
                     className="colpi-pao-dot"
                     style={{ background: CATEGORY_DOT[w.category] }}
-                    title={(i18n.language === 'zh-Hant' ? (CATEGORY_LABEL[w.category].zhHant ?? CATEGORY_LABEL[w.category].zh) : (i18n.language.startsWith('zh') ? CATEGORY_LABEL[w.category].zh : CATEGORY_LABEL[w.category].en))}
+                    title={((i18n.language.startsWith('zh') ? CATEGORY_LABEL[w.category].zh : CATEGORY_LABEL[w.category].en))}
                   />
                   <span className="colpi-detail-word">{w.word}</span>
                   {w.note && <span className="colpi-detail-note">{w.note}</span>}
@@ -682,20 +654,17 @@ export default function ColpiClient() {
                     <button
                       className={w.myVote === -1 ? 'is-voted-down' : ''}
                       onClick={() => handleVote(w, -1)}
-                      title={tr({ zh: '不合适', en: 'Misused',
-                          zhHant: "不合適"
+                      title={tr({ zh: '不合适', en: 'Misused'
                     })}
                     ><ThumbsDown size={12} /></button>
                   </span>
                   {canEdit(w) && (
                     <span className="colpi-owner-actions">
-                      <button onClick={() => handleEditClick(w)} title={tr({ zh: '编辑', en: 'Edit',
-                          zhHant: "編輯"
+                      <button onClick={() => handleEditClick(w)} title={tr({ zh: '编辑', en: 'Edit'
                     })}>
                         <Pencil size={12} />
                       </button>
-                      <button onClick={() => handleDelete(w)} title={tr({ zh: '删除', en: 'Delete',
-                          zhHant: "刪除"
+                      <button onClick={() => handleDelete(w)} title={tr({ zh: '删除', en: 'Delete'
                     })}>
                         <Trash2 size={12} />
                       </button>
@@ -709,12 +678,10 @@ export default function ColpiClient() {
             <button
               className="colpi-detail-add"
               onClick={handleAddClick}
-              title={user ? '' : (tr({ zh: '需要登录', en: 'Login required',
-                  zhHant: "需要登入"
+              title={user ? '' : (tr({ zh: '需要登录', en: 'Login required'
             }))}
             >
-              + {tr({ zh: '提交一个新词', en: 'Submit a new word',
-                  zhHant: "提交一個新詞"
+              + {tr({ zh: '提交一个新词', en: 'Submit a new word'
             })}
             </button>
           ) : (
@@ -742,8 +709,7 @@ export default function ColpiClient() {
         </div>
         {recent.length === 0 ? (
           <p className="colpi-detail-empty">
-            {tr({ zh: '还没有用户提交。来提交第一个吧!', en: 'No user submissions yet. Be the first!',
-                zhHant: "還沒有使用者提交。來提交第一個吧!"
+            {tr({ zh: '还没有用户提交。来提交第一个吧!', en: 'No user submissions yet. Be the first!'
             })}
           </p>
         ) : (
@@ -758,7 +724,7 @@ export default function ColpiClient() {
                     <span
                       className="colpi-pao-dot"
                       style={{ background: CATEGORY_DOT[w.category] }}
-                      title={(i18n.language === 'zh-Hant' ? (CATEGORY_LABEL[w.category].zhHant ?? CATEGORY_LABEL[w.category].zh) : (i18n.language.startsWith('zh') ? CATEGORY_LABEL[w.category].zh : CATEGORY_LABEL[w.category].en))}
+                      title={((i18n.language.startsWith('zh') ? CATEGORY_LABEL[w.category].zh : CATEGORY_LABEL[w.category].en))}
                     />
                   </td>
                   <td className="colpi-recent-word">
@@ -773,8 +739,7 @@ export default function ColpiClient() {
                     {w.offensive && (
                       <button
                         className="colpi-flag-btn"
-                        title={tr({ zh: '已被标记为不雅', en: 'Flagged offensive',
-                            zhHant: "已被標記為不雅"
+                        title={tr({ zh: '已被标记为不雅', en: 'Flagged offensive'
                         })}
                       >
                         <FlagIcon size={11} />
@@ -792,8 +757,7 @@ export default function ColpiClient() {
                     <button
                       className={w.myVote === -1 ? 'is-voted-down' : ''}
                       onClick={() => handleVote(w, -1)}
-                      title={tr({ zh: '不合适', en: 'Misused',
-                          zhHant: "不合適"
+                      title={tr({ zh: '不合适', en: 'Misused'
                     })}
                     >
                       <ThumbsDown size={12} />
@@ -809,8 +773,7 @@ export default function ColpiClient() {
       {/* === Footer === */}
       <footer className="colpi-footer">
         <p>
-          {tr({ zh: 'UI 复刻自 ', en: 'UI cloned from ',
-              zhHant: "UI 復刻自 "
+          {tr({ zh: 'UI 复刻自 ', en: 'UI cloned from '
         })}
           <a href="https://bestsiteever.net/colpi/" target="_blank" rel="noopener noreferrer">
             bestsiteever.net/colpi
@@ -857,8 +820,7 @@ function FormFields({
           if (e.key === 'Enter') onConfirm();
           if (e.key === 'Escape') onCancel();
         }}
-        placeholder={tr({ zh: '输入一个词 (例如 ROCKET / 苹果)', en: 'Enter a word (e.g. ROCKET, 苹果)',
-            zhHant: "輸入一個詞 (例如 ROCKET / 蘋果)"
+        placeholder={tr({ zh: '输入一个词 (例如 ROCKET / 苹果)', en: 'Enter a word (e.g. ROCKET, 苹果)'
         })}
         maxLength={40}
         autoFocus
@@ -871,8 +833,7 @@ function FormFields({
           if (e.key === 'Enter') onConfirm();
           if (e.key === 'Escape') onCancel();
         }}
-        placeholder={tr({ zh: '备注 (可选,例如 APPLE)', en: 'Note (optional, e.g. APPLE)',
-            zhHant: "備註 (可選,例如 APPLE)"
+        placeholder={tr({ zh: '备注 (可选,例如 APPLE)', en: 'Note (optional, e.g. APPLE)'
         })}
         maxLength={500}
         className="colpi-form-note"
@@ -880,8 +841,7 @@ function FormFields({
       <select
         value={category}
         onChange={(e) => setCategory(e.target.value as Category)}
-        aria-label={tr({ zh: '类别', en: 'Category',
-            zhHant: "類別"
+        aria-label={tr({ zh: '类别', en: 'Category'
         })}
       >
         <option value="unspecified">{CATEGORY_LABEL.unspecified[(i18n.language.startsWith('zh') ? 'zh' : 'en')]}</option>

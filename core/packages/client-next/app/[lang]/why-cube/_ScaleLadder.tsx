@@ -42,26 +42,26 @@ export default function ScaleLadder() {
   const rungs: Rung[] = [
     {
       key: 'humans',
-      label: t('人类历史上活过的总人数', 'Humans who have ever lived', "人類歷史上活過的總人數"),
-      source: t('据 PRB 估算', 'PRB estimate', "據 PRB 估算"),
+      label: t('人类历史上活过的总人数', 'Humans who have ever lived'),
+      source: t('据 PRB 估算', 'PRB estimate'),
       mantissa: 1.17, mantDecimals: 2, exp: 11, value: 1.17e11,
     },
     {
       key: 'bigbang',
-      label: t('宇宙诞生至今的秒数', 'Seconds since the Big Bang', "宇宙誕生至今的秒數"),
-      source: t('约 138 亿年', '≈ 13.8 billion years', "約 138 億年"),
+      label: t('宇宙诞生至今的秒数', 'Seconds since the Big Bang'),
+      source: t('约 138 亿年', '≈ 13.8 billion years'),
       mantissa: 4.35, mantDecimals: 2, exp: 17, value: 4.35e17,
     },
     {
       key: 'sand',
-      label: t('地球所有沙滩的沙粒数', "Grains of sand on all Earth's beaches", "地球所有沙灘的沙粒數"),
-      source: t('常见估算', 'common estimate', "常見估算"),
+      label: t('地球所有沙滩的沙粒数', "Grains of sand on all Earth's beaches"),
+      source: t('常见估算', 'common estimate'),
       mantissa: 7.5, mantDecimals: 1, exp: 18, value: 7.5e18,
     },
     {
       key: 'cube',
-      label: t('三阶魔方的状态数', "Rubik's-Cube states", "三階魔方的狀態數"),
-      source: t('精确值', 'exact value', "精確值"),
+      label: t('三阶魔方的状态数', "Rubik's-Cube states"),
+      source: t('精确值', 'exact value'),
       mantissa: 4.33, mantDecimals: 2, exp: 19, value: 4.3252003274489856e19,
       exact: '43,252,003,274,489,856,000',
       accent: true,
@@ -89,7 +89,7 @@ export default function ScaleLadder() {
       <p className="wc-ladder-caption">
         {t(
           '这是对数刻度 — 每往上一格,数量大约 ×10。所以最后一格不是「大一点」,而是又乘了一次又一次又一次的 10。',
-          "This is a log scale — each rung up is roughly ×10. So the last rung isn't 'a bit bigger': it's ten, times ten, times ten, again and again.", "這是對數刻度 — 每往上一格,數量大約 ×10。所以最後一格不是「大一點」,而是又乘了一次又一次又一次的 10。"
+          "This is a log scale — each rung up is roughly ×10. So the last rung isn't 'a bit bigger': it's ten, times ten, times ten, again and again."
         )}
       </p>
     </div>

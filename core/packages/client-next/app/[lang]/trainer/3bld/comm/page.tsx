@@ -64,7 +64,7 @@ function normalizeAlg(s: string): string {
 export default function CommLibraryPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('3BLD 公式库', '3BLD Commutator Library', "3BLD 公式庫");
+  useDocumentTitle('3BLD 公式库', '3BLD Commutator Library');
 
   const [kind, setKind] = useState<Kind>('corner');
   const [query, setQuery] = useState('');
@@ -123,10 +123,8 @@ export default function CommLibraryPage(): JSX.Element {
   const selNormalized = selAlg ? normalizeAlg(selAlg) : '';
 
   const kindLabel = (k: Kind) =>
-    k === 'corner' ? (tr({ zh: '角块', en: 'Corner',
-        zhHant: "角塊"
-    })) : (tr({ zh: '棱块', en: 'Edge',
-        zhHant: "稜塊"
+    k === 'corner' ? (tr({ zh: '角块', en: 'Corner'
+    })) : (tr({ zh: '棱块', en: 'Edge'
     }));
 
   const loading = activeMap === null;
@@ -134,21 +132,18 @@ export default function CommLibraryPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '3BLD 公式库', en: '3BLD Commutator Library',
-            zhHant: "3BLD 公式庫"
+        <h1>{tr({ zh: '3BLD 公式库', en: '3BLD Commutator Library'
         })}</h1>
       </div>
 
       <p className="bld-input-summary">
-        {tr({ zh: '角块 / 棱块换法公式库,每条公式在还原态魔方上即一组三循环。点选可交互播放,带中文联想词作记忆提示。', en: 'Corner / edge commutator dictionary — each alg is a 3-cycle on a solved cube. Tap a pair to scrub it interactively; Chinese association words shown as a memory hint where available.',
-            zhHant: "角塊 / 稜塊換法公式庫,每條公式在還原態魔方上即一組三迴圈。點選可互動播放,帶中文聯想詞作記憶提示。"
+        {tr({ zh: '角块 / 棱块换法公式库,每条公式在还原态魔方上即一组三循环。点选可交互播放,带中文联想词作记忆提示。', en: 'Corner / edge commutator dictionary — each alg is a 3-cycle on a solved cube. Tap a pair to scrub it interactively; Chinese association words shown as a memory hint where available.'
         })}
       </p>
 
       {/* ── toolbar: kind toggle + search ── */}
       <div className="bld-comm-toolbar">
-        <div className="bld-seg" role="tablist" aria-label={tr({ zh: '块类型', en: 'Piece type',
-            zhHant: "塊型別"
+        <div className="bld-seg" role="tablist" aria-label={tr({ zh: '块类型', en: 'Piece type'
         })}>
           <button
             type="button"
@@ -180,13 +175,11 @@ export default function CommLibraryPage(): JSX.Element {
             className="bld-comm-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={tr({ zh: '搜索编码 / 公式 / 联想词', en: 'Search pair / alg / word',
-                zhHant: "搜尋編碼 / 公式 / 聯想詞"
+            placeholder={tr({ zh: '搜索编码 / 公式 / 联想词', en: 'Search pair / alg / word'
             })}
             spellCheck={false}
             autoComplete="off"
-            aria-label={tr({ zh: '搜索', en: 'Search',
-                zhHant: "搜尋"
+            aria-label={tr({ zh: '搜索', en: 'Search'
             })}
           />
           {query && (
@@ -196,10 +189,9 @@ export default function CommLibraryPage(): JSX.Element {
 
         <span className="bld-comm-count">
           {loading
-            ? (tr({ zh: '加载中…', en: 'Loading…',
-                zhHant: "載入中…"
+            ? (tr({ zh: '加载中…', en: 'Loading…'
             }))
-            : i18n.language === 'zh-Hant' ? (`${pairs.length} 組`) : (isZh
+            : (isZh
                                     ? `${pairs.length} 组`
                                     : `${pairs.length}`)}
         </span>
@@ -251,8 +243,7 @@ export default function CommLibraryPage(): JSX.Element {
           </div>
         ) : pairs.length === 0 ? (
           <div className="bld-comm-empty">
-            {tr({ zh: '无匹配公式', en: 'No matching algs',
-                zhHant: "無匹配公式"
+            {tr({ zh: '无匹配公式', en: 'No matching algs'
             })}
           </div>
         ) : (

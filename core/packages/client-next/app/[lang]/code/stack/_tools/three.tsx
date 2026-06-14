@@ -44,15 +44,12 @@ export const THREE: StackTool = {
     outlookDesc: <>WebGPU is finally on-by-default in Chrome / Safari 26 / Firefox. TSL (Three Shading Language) makes node materials first-class — one material compiles to both WebGL2 GLSL and WebGPU WGSL. The r183 RenderPipeline redoes postprocessing as a node graph; r184 further tightens per-frame allocations.</>,
   },
   heroStats: [
-    { num: '#1', zh: <>web 3D 库使用率 <em>State of JS 2025</em></>, en: <>web 3D library by usage <em>State of JS 2025</em></>,
-        zhHant: <>web 3D 庫使用率 <em>State of JS 2025</em></>
+    { num: '#1', zh: <>web 3D 库使用率 <em>State of JS 2025</em></>, en: <>web 3D library by usage <em>State of JS 2025</em></>
     },
     { num: '110', unit: 'k★', zh: <>GitHub star <em>2026-05 · 全球前 25</em></>, en: <>GitHub stars <em>2026-05 · global top 25</em></> },
-    { num: '16', unit: 'y', zh: <>从 2010 至今 <em>月度发布从未断</em></>, en: <>since 2010 <em>monthly cadence unbroken</em></>,
-        zhHant: <>從 2010 至今 <em>月度釋出從未斷</em></>
+    { num: '16', unit: 'y', zh: <>从 2010 至今 <em>月度发布从未断</em></>, en: <>since 2010 <em>monthly cadence unbroken</em></>
     },
-    { num: 'r', unit: '184', zh: <>当前稳定 revision <em>2026-03 · 0.184.0</em></>, en: <>current stable revision <em>2026-03 · 0.184.0</em></>,
-        zhHant: <>當前穩定 revision <em>2026-03 · 0.184.0</em></>
+    { num: 'r', unit: '184', zh: <>当前稳定 revision <em>2026-03 · 0.184.0</em></>, en: <>current stable revision <em>2026-03 · 0.184.0</em></>
     },
   ],
   intro: {

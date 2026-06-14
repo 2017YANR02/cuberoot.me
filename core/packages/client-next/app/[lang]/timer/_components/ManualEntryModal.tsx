@@ -78,12 +78,10 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
   if (isFmc) {
     const n = Number(stepCount.trim());
     if (stepCount.trim() === '') {
-      parseErr = tr({ zh: '请输入步数', en: 'Enter move count',
-          zhHant: "請輸入步數"
+      parseErr = tr({ zh: '请输入步数', en: 'Enter move count'
     });
     } else if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
-      parseErr = tr({ zh: '步数必须是非负整数', en: 'Move count must be a non-negative integer',
-          zhHant: "步數必須是非負整數"
+      parseErr = tr({ zh: '步数必须是非负整数', en: 'Move count must be a non-negative integer'
     });
     } else {
       parsed = { ms: n * 1000, penalty: 'ok' };
@@ -91,17 +89,14 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
   } else {
     const r = parseTimeStr(timeStr);
     if (timeStr.trim() === '') {
-      parseErr = tr({ zh: '请输入时间', en: 'Enter time',
-          zhHant: "請輸入時間"
+      parseErr = tr({ zh: '请输入时间', en: 'Enter time'
     });
     } else if (!r) {
       if (/^\+2\s+/i.test(timeStr.trim())) {
-        parseErr = tr({ zh: '+2 时间须 ≥ 2 秒', en: '+2 time must be ≥ 2 seconds',
-            zhHant: "+2 時間須 ≥ 2 秒"
+        parseErr = tr({ zh: '+2 时间须 ≥ 2 秒', en: '+2 time must be ≥ 2 seconds'
         });
       } else {
-        parseErr = tr({ zh: '时间格式无效', en: 'Invalid time',
-            zhHant: "時間格式無效"
+        parseErr = tr({ zh: '时间格式无效', en: 'Invalid time'
         });
       }
     } else {
@@ -159,16 +154,13 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
         onClick={(e) => e.stopPropagation()}
         style={modalStyle}
       >
-        <h2 id={titleId}>{tr({ zh: '手动录入成绩', en: 'Manual entry',
-            zhHant: "手動錄入成績"
+        <h2 id={titleId}>{tr({ zh: '手动录入成绩', en: 'Manual entry'
         })}</h2>
 
         <div className="modal-section">
           <label className="manual-label">
-            {isFmc ? (tr({ zh: '步数', en: 'Move count',
-                zhHant: "步數"
-            })) : (tr({ zh: '时间', en: 'Time',
-                zhHant: "時間"
+            {isFmc ? (tr({ zh: '步数', en: 'Move count'
+            })) : (tr({ zh: '时间', en: 'Time'
             }))}
             {isFmc ? (
               <input
@@ -200,8 +192,7 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
 
         {!isFmc && (
           <div className="modal-section">
-            <div className="manual-label">{tr({ zh: '罚时', en: 'Penalty',
-                zhHant: "罰時"
+            <div className="manual-label">{tr({ zh: '罚时', en: 'Penalty'
             })}</div>
             <div className="manual-radios" style={radiosStyle}>
               {(['ok', '+2', 'DNF'] as Penalty[]).map(p => (
@@ -222,8 +213,7 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
 
         <div className="modal-section">
           <label className="manual-label">
-            {tr({ zh: '打乱（留空则用当前打乱）', en: 'Scramble (optional, defaults to current)',
-                zhHant: "打亂（留空則用當前打亂）"
+            {tr({ zh: '打乱（留空则用当前打乱）', en: 'Scramble (optional, defaults to current)'
             })}
             <textarea
               className="manual-textarea"
@@ -238,16 +228,14 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
 
         <div className="modal-section">
           <label className="manual-label">
-            {tr({ zh: '注释', en: 'Comment',
-                zhHant: "註釋"
+            {tr({ zh: '注释', en: 'Comment'
             })}
             <textarea
               className="manual-textarea"
               rows={isMobile ? 3 : 2}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder={tr({ zh: '可选备注…', en: 'Optional notes…',
-                  zhHant: "可選備註…"
+              placeholder={tr({ zh: '可选备注…', en: 'Optional notes…'
             })}
               style={textareaStyle}
             />
@@ -261,8 +249,7 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
             onClick={handleSave}
             style={actionBtnStyle}
           >
-            {tr({ zh: '保存', en: 'Save',
-                zhHant: "儲存"
+            {tr({ zh: '保存', en: 'Save'
             })}
           </button>
           <button onClick={onClose} style={actionBtnStyle}>{tr({ zh: '取消', en: 'Cancel' })}</button>

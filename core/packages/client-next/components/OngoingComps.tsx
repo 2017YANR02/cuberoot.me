@@ -30,17 +30,17 @@ type Group =
 
 // 各 tab 覆盖的时效窗口 — 跟随当前 tab 的一行 muted 说明 + 每个 tab 的 hover title,
 // 让用户知道每个标签看的是多久内的数据。
-const TAB_SCOPE: Record<TabKey, { zh: string; en: string; zhHant?: string }> = {
-  records:    { zh: '近 10 天',   en: 'last 10 days', zhHant: '近 10 天' },
-  inProgress: { zh: '进行中',     en: 'ongoing',      zhHant: '進行中' },
-  announced:  { zh: '近 48 小时', en: 'last 48h',     zhHant: '近 48 小時' },
-  registration: { zh: '报名窗口', en: 'registration', zhHant: "報名視窗" },
-  upcoming:   { zh: '未来 30 天', en: 'next 30 days', zhHant: '未來 30 天' },
-  past:       { zh: '过去 30 天', en: 'past 30 days', zhHant: '過去 30 天' },
+const TAB_SCOPE: Record<TabKey, { zh: string; en: string; }> = {
+  records:    { zh: '近 10 天',   en: 'last 10 days' },
+  inProgress: { zh: '进行中',     en: 'ongoing' },
+  announced:  { zh: '近 48 小时', en: 'last 48h' },
+  registration: { zh: '报名窗口', en: 'registration' },
+  upcoming:   { zh: '未来 30 天', en: 'next 30 days' },
+  past:       { zh: '过去 30 天', en: 'past 30 days' },
 };
 function pickScope(key: TabKey): string {
   const o = TAB_SCOPE[key];
-  return i18n.language === 'zh-Hant' ? (o.zhHant ?? o.zh) : (i18n.language.startsWith('zh') ? o.zh : o.en);
+  return (i18n.language.startsWith('zh') ? o.zh : o.en);
 }
 
 function stripTrailingYear(s: string): string {
@@ -234,22 +234,16 @@ export default function OngoingComps({ lang }: Props) {
 
   // 只显示有数据的 tab(某分类为空 → 直接隐藏该 tab,不留灰态)
   const allTabs: { key: TabKey; zh: string; en: string; count: number
-      zhHant?: string;
  }[] = [
-    { key: 'records',    zh: '纪录', en: 'Records',  count: records.length,
-        zhHant: "紀錄"
+    { key: 'records',    zh: '纪录', en: 'Records',  count: records.length
     },
-    { key: 'inProgress', zh: '当前', en: 'Now',      count: buckets.inProgress.length,
-        zhHant: "當前"
+    { key: 'inProgress', zh: '当前', en: 'Now',      count: buckets.inProgress.length
     },
-    { key: 'announced',  zh: '公示', en: 'Announced', count: announcedList.length,
-        zhHant: "公示"
+    { key: 'announced',  zh: '公示', en: 'Announced', count: announcedList.length
     },
-    { key: 'registration', zh: '报名', en: 'Register', count: regCount,
-        zhHant: "報名"
+    { key: 'registration', zh: '报名', en: 'Register', count: regCount
     },
-    { key: 'upcoming',   zh: '未来', en: 'Upcoming', count: buckets.upcoming.length,
-        zhHant: "未來"
+    { key: 'upcoming',   zh: '未来', en: 'Upcoming', count: buckets.upcoming.length
     },
     { key: 'past',       zh: '往期', en: 'Past',     count: buckets.past.length },
   ];
@@ -271,7 +265,7 @@ export default function OngoingComps({ lang }: Props) {
                 onClick={() => setTab(t.key)}
                 title={pickScope(t.key)}
               >
-                <span>{(i18n.language === 'zh-Hant' ? (t.zhHant ?? t.zh) : (i18n.language.startsWith('zh') ? t.zh : t.en))}</span>
+                <span>{((i18n.language.startsWith('zh') ? t.zh : t.en))}</span>
               </button>
             );
           })}

@@ -296,8 +296,7 @@ function WordReducerWidget({ lang, onWordChange }: { lang: Lang; onWordChange: (
       >
         {raw.length === 0 ? (
           <text x={80} y={36} fill="var(--ink-faint)" fontSize={12} style={{ fontFamily: 'var(--sans)', fontStyle: 'italic' }}>
-            {tr({ zh: '输入字母…', en: 'Start typing…',
-                zhHant: "輸入字母…"
+            {tr({ zh: '输入字母…', en: 'Start typing…'
             })}
           </text>
         ) : (
@@ -356,8 +355,7 @@ function WordReducerWidget({ lang, onWordChange }: { lang: Lang; onWordChange: (
 
             {/* Row 2: reduced word */}
             <text x={4} y={20 + ROW_H + 2} fill="var(--ink-dim)" fontSize={10} style={{ fontFamily: 'var(--mono)' }}>
-              {tr({ zh: '约简 |w̄| = ', en: 'reduced |w̄| = ',
-                  zhHant: "約簡 |w̄| = "
+              {tr({ zh: '约简 |w̄| = ', en: 'reduced |w̄| = '
             })}{reduced.length}
             </text>
             {showReduced.map((l, i) => {
@@ -379,8 +377,7 @@ function WordReducerWidget({ lang, onWordChange }: { lang: Lang; onWordChange: (
             {reduced.length === 0 && raw.length > 0 && (
               <text x={4} y={20 + ROW_H + 10 + TILE_H / 2 + 4} fill="var(--green)" fontSize={12}
                 style={{ fontFamily: 'var(--mono)', fontWeight: 700 }}>
-                ε {tr({ zh: '(空字, 即单位元)', en: '(empty word = identity)',
-                    zhHant: "(空字, 即單位元)"
+                ε {tr({ zh: '(空字, 即单位元)', en: '(empty word = identity)'
                 })}
               </text>
             )}
@@ -690,11 +687,9 @@ function SphereSizePanel({ lang }: { lang: Lang }) {
 
   const series = useMemo(() => {
     const arr: { id: string; data: readonly number[]; color: string; labelZh: string; labelEn: string
-        labelZhHant?: string;
  }[] = [];
     if (showF2)   arr.push({ id: 'f2',        data: F2_SPHERE,        color: COLOR_F2,        labelZh: 'F₂ (自由群)', labelEn: 'F₂ (free group)' });
-    if (showFP)   arr.push({ id: 'fp',        data: FREE_PROD_SPHERE, color: COLOR_FREE_PROD, labelZh: 'Z/4*Z/4 (自由积)', labelEn: 'Z/4*Z/4 (free product)',
-        labelZhHant: "Z/4*Z/4 (自由積)"
+    if (showFP)   arr.push({ id: 'fp',        data: FREE_PROD_SPHERE, color: COLOR_FREE_PROD, labelZh: 'Z/4*Z/4 (自由积)', labelEn: 'Z/4*Z/4 (free product)'
     });
     if (showCube) arr.push({ id: 'cube',      data: CUBE_RU_SPHERE,   color: COLOR_CUBE_RU,   labelZh: '⟨R,U⟩ 魔方子群', labelEn: '⟨R,U⟩ cube subgroup' });
     return arr;
@@ -856,8 +851,7 @@ function SphereSizePanel({ lang }: { lang: Lang }) {
           <text x={groupX(10) + barGroupW / 2} y={PAD.top - 4}
             textAnchor="middle" fontSize={8} fill="var(--warn)"
             style={{ fontFamily: 'var(--mono)' }}>
-            {tr({ zh: '首次分离 ▼', en: '1st split ▼',
-                zhHant: "首次分離 ▼"
+            {tr({ zh: '首次分离 ▼', en: '1st split ▼'
             })}
           </text>
         )}

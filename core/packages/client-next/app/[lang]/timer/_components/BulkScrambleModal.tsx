@@ -117,14 +117,12 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
         onClick={(e) => e.stopPropagation()}
         style={modalStyle}
       >
-        <h2 id={titleId}>{tr({ zh: '批量打乱', en: 'Bulk scrambles',
-            zhHant: "批次打亂"
+        <h2 id={titleId}>{tr({ zh: '批量打乱', en: 'Bulk scrambles'
         })}</h2>
 
         <div className="modal-section bulk-controls" style={controlsStyle}>
           <label className="manual-label inline" style={fieldStyle}>
-            {tr({ zh: '项目', en: 'Event',
-                zhHant: "項目"
+            {tr({ zh: '项目', en: 'Event'
             })}
             <select
               ref={firstSelectRef}
@@ -133,13 +131,12 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
               style={selectStyle}
             >
               {EVENTS.filter(e => e.group !== 'll' && e.group !== 'cfop' && e.id !== 'custom').map(ev => (
-                <option key={ev.id} value={ev.id}>{i18n.language === 'zh-Hant' ? (ev.nameZhHant ?? ev.nameZh) : (isZh ? ev.nameZh : ev.nameEn)}</option>
+                <option key={ev.id} value={ev.id}>{(isZh ? ev.nameZh : ev.nameEn)}</option>
               ))}
             </select>
           </label>
           <label className="manual-label inline" style={fieldStyle}>
-            {tr({ zh: '数量', en: 'Count',
-                zhHant: "數量"
+            {tr({ zh: '数量', en: 'Count'
             })}
             <input
               type="number"
@@ -181,21 +178,17 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
           {scrambles.length > 0 && (
             <>
               <button onClick={onCopy} style={actionBtnStyle}>
-                {copied ? (tr({ zh: '已复制', en: 'Copied',
-                    zhHant: "已複製"
-                })) : (tr({ zh: '全部复制', en: 'Copy all',
-                    zhHant: "全部複製"
+                {copied ? (tr({ zh: '已复制', en: 'Copied'
+                })) : (tr({ zh: '全部复制', en: 'Copy all'
                 }))}
               </button>
               <button onClick={onDownload} style={actionBtnStyle}>
-                {tr({ zh: '下载 .txt', en: 'Download .txt',
-                    zhHant: "下載 .txt"
+                {tr({ zh: '下载 .txt', en: 'Download .txt'
                 })}
               </button>
             </>
           )}
-          <button onClick={onClose} style={actionBtnStyle}>{tr({ zh: '关闭', en: 'Close',
-              zhHant: "關閉"
+          <button onClick={onClose} style={actionBtnStyle}>{tr({ zh: '关闭', en: 'Close'
         })}</button>
         </div>
       </div>

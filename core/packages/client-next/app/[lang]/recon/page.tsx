@@ -180,7 +180,7 @@ export default function ReconListPage() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('复盘', 'Reconstructions', "覆盤");
+  useDocumentTitle('复盘', 'Reconstructions');
   const {
     loading, error, filters,
     sortKey, sortDir,
@@ -742,11 +742,9 @@ export default function ReconListPage() {
             <Link
               href="/recon-about"
               className="recon-title-help"
-              title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
-                  zhHant: "這頁是幹啥的?"
+              title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
             })}
-              aria-label={tr({ zh: '查看说明', en: 'About this page',
-                  zhHant: "檢視說明"
+              aria-label={tr({ zh: '查看说明', en: 'About this page'
             })}
             >
               <HelpCircle size={18} strokeWidth={1.75} />

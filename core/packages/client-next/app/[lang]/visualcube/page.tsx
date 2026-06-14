@@ -722,7 +722,7 @@ function CopyButton({ getValue, label }: { getValue: () => string; label: string
 
 function VisualCubeEditorPageInner() {
   const { i18n } = useTranslation();
-  useDocumentTitle('魔方可视化', 'VisualCube', "魔方視覺化");
+  useDocumentTitle('魔方可视化', 'VisualCube');
   const t = useT();
 
   // nuqs owns every URL key this page reads/writes (history: 'replace').
@@ -981,7 +981,7 @@ function VisualCubeEditorPageInner() {
       <style>{INLINE_CSS}</style>
 
       <header className="vc-header">
-        <h1>{t('VisualCube 编辑器', 'VisualCube Editor', "VisualCube 編輯器")}</h1>
+        <h1>{t('VisualCube 编辑器', 'VisualCube Editor')}</h1>
         <div className="vc-header-right">
           <Link className="vc-header-link" href="/visualcube/stages">
             {t('Stage 速查', 'Stages')}
@@ -1084,8 +1084,8 @@ function VisualCubeEditorPageInner() {
       </section>
 
       <section className="vc-exports">
-        <CopyButton label={t('分享链接', 'Share URL', "分享連結")} getValue={() => shareUrl} />
-        <CopyButton label={t('API 链接', 'API URL', "API 連結")} getValue={() => apiUrl} />
+        <CopyButton label={t('分享链接', 'Share URL')} getValue={() => shareUrl} />
+        <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiUrl} />
         <button type="button" className="vc-btn" onClick={downloadSvg}>
           <Download size={14} /> SVG
         </button>
@@ -1093,7 +1093,7 @@ function VisualCubeEditorPageInner() {
           <Download size={14} /> PNG
         </button>
         <CopyButton
-          label={t('<img> 标签', '<img> tag', "<img> 標籤")}
+          label={t('<img> 标签', '<img> tag')}
           getValue={() => `<img src="${apiUrl}" alt="cube" width="${state.imageSize}" height="${state.imageSize}" />`}
         />
         <CopyButton
@@ -1126,7 +1126,7 @@ function VisualCubeEditorPageInner() {
         </div>
 
         <div className="vc-row">
-          <label className="vc-label">{t('视图', 'View', "檢視")}</label>
+          <label className="vc-label">{t('视图', 'View')}</label>
           <div className="vc-row-controls">
             {state.puzzleType === 'cube' ? (
               (['normal', 'plan', 'trans', 'net', 'wca'] as SpecialView[]).map((v) => (
@@ -1152,15 +1152,12 @@ function VisualCubeEditorPageInner() {
                   className={`vc-btn vc-btn-sm${state.puzzleVariant === pv ? ' vc-btn-active' : ''}`}
                   onClick={() => setState((s) => snapRotationOnVariantBoundary(s, { puzzleVariant: pv }))}
                 >
-                  {pv === 'iso' ? (tr({ zh: '立体', en: 'iso',
-                      zhHant: "立體"
+                  {pv === 'iso' ? (tr({ zh: '立体', en: 'iso'
                 }))
-                    : pv === 'top' ? (tr({ zh: '顶视', en: 'top',
-                        zhHant: "頂視"
+                    : pv === 'top' ? (tr({ zh: '顶视', en: 'top'
                     }))
                     : pv === 'wca' ? 'wca'
-                    : (tr({ zh: '展开', en: 'net',
-                        zhHant: "展開"
+                    : (tr({ zh: '展开', en: 'net'
                     }))}
                 </button>
               ))
@@ -1171,7 +1168,7 @@ function VisualCubeEditorPageInner() {
         <div className="vc-row">
           {state.puzzleType === 'cube' && (
             <>
-              <label className="vc-label">{t('阶数', 'NxN Size', "階數")}</label>
+              <label className="vc-label">{t('阶数', 'NxN Size')}</label>
               <input
                 type="number"
                 className="vc-num"
@@ -1183,7 +1180,7 @@ function VisualCubeEditorPageInner() {
               />
             </>
           )}
-          <label className={`vc-label${state.puzzleType === 'cube' ? ' vc-label-secondary' : ''}`}>{t('图片尺寸 (px)', 'Image Size (px)', "圖片尺寸 (px)")}</label>
+          <label className={`vc-label${state.puzzleType === 'cube' ? ' vc-label-secondary' : ''}`}>{t('图片尺寸 (px)', 'Image Size (px)')}</label>
           <select
             className="vc-select"
             value={state.imageSize}
@@ -1201,7 +1198,7 @@ function VisualCubeEditorPageInner() {
             <div className="vc-radio-group">
               <label>
                 <input type="radio" checked={state.algType === 'alg'} onChange={() => set('algType', 'alg')} />
-                {t('应用公式', 'Apply alg', "應用公式")}
+                {t('应用公式', 'Apply alg')}
               </label>
               <label>
                 <input type="radio" checked={state.algType === 'case'} onChange={() => set('algType', 'case')} />
@@ -1233,20 +1230,20 @@ function VisualCubeEditorPageInner() {
 
         {state.puzzleType === 'cube' && state.cubeView !== 'net' && state.cubeView !== 'wca' && (
         <div className="vc-row vc-row-block">
-          <label className="vc-label">{t('箭头', 'Arrow Definition', "箭頭")}</label>
+          <label className="vc-label">{t('箭头', 'Arrow Definition')}</label>
           <div className="vc-row-controls vc-col">
             <div className="vc-arrow-builder">
               <span>{t('面', 'Face')}</span>
               <select value={state.arrowFace} onChange={(e) => set('arrowFace', e.target.value as FaceKey)}>
                 {FACE_LIST.map((f) => <option key={f} value={f}>{f}</option>)}
               </select>
-              <span>{t('从', 'From', "從")}</span>
+              <span>{t('从', 'From')}</span>
               <input type="number" className="vc-num-sm" value={state.arrowFrom} min={0} max={arrowMaxIdx}
                 onChange={(e) => set('arrowFrom', parseInt(e.target.value, 10) || 0)} />
               <span>{t('到', 'To')}</span>
               <input type="number" className="vc-num-sm" value={state.arrowTo} min={0} max={arrowMaxIdx}
                 onChange={(e) => set('arrowTo', parseInt(e.target.value, 10) || 0)} />
-              <span>{t('过', 'Pass', "過")}</span>
+              <span>{t('过', 'Pass')}</span>
               <input
                 type="number" className="vc-num-sm"
                 value={state.arrowPass ?? ''}
@@ -1256,7 +1253,7 @@ function VisualCubeEditorPageInner() {
                   set('arrowPass', isNaN(v as number) ? null : v);
                 }}
               />
-              <span>{t('缩放', 'Scale', "縮放")}</span>
+              <span>{t('缩放', 'Scale')}</span>
               <input
                 type="number" className="vc-num-sm"
                 value={state.arrowScale ?? ''}
@@ -1266,7 +1263,7 @@ function VisualCubeEditorPageInner() {
                   set('arrowScale', isNaN(v as number) ? null : v);
                 }}
               />
-              <span>{t('影响', 'Influence', "影響")}</span>
+              <span>{t('影响', 'Influence')}</span>
               <input
                 type="number" className="vc-num-sm"
                 value={state.arrowInfluence ?? ''}
@@ -1276,11 +1273,11 @@ function VisualCubeEditorPageInner() {
                   set('arrowInfluence', isNaN(v as number) ? null : v);
                 }}
               />
-              <span>{t('颜色', 'Color', "顏色")}</span>
+              <span>{t('颜色', 'Color')}</span>
               <input type="color" className="vc-color-sm" value={state.arrowColor}
                 onChange={(e) => set('arrowColor', e.target.value)} />
               <button type="button" className="vc-btn vc-btn-sm" onClick={addArrow}>
-                <Plus size={14} /> {t('添加', 'Add', "新增")}
+                <Plus size={14} /> {t('添加', 'Add')}
               </button>
             </div>
             <div className="vc-row-controls">
@@ -1296,7 +1293,7 @@ function VisualCubeEditorPageInner() {
               </button>
             </div>
             <ColorRow
-              label={t('默认箭头色', 'Default Arrow Color', "預設箭頭色")}
+              label={t('默认箭头色', 'Default Arrow Color')}
               value={state.defaultArrowColor}
               onChange={(v) => set('defaultArrowColor', v)}
               onReset={() => set('defaultArrowColor', '')}
@@ -1407,7 +1404,7 @@ function VisualCubeEditorPageInner() {
           (state.puzzleType !== 'cube' && state.puzzleVariant !== 'net' && state.puzzleVariant !== 'wca')
         ) && (
         <div className="vc-row vc-row-block">
-          <label className="vc-label">{t('视角旋转', 'Rotation Sequence', "視角旋轉")}</label>
+          <label className="vc-label">{t('视角旋转', 'Rotation Sequence')}</label>
           <div className="vc-row-controls vc-col">
             {([1, 2] as const).map((i) => {
               const axisKey = `rotateAxis${i}` as 'rotateAxis1' | 'rotateAxis2';
@@ -1459,25 +1456,25 @@ function VisualCubeEditorPageInner() {
         {state.puzzleType === 'cube' && state.cubeView !== 'net' && state.cubeView !== 'wca' && (
           <>
             <ColorRow
-              label={t('壳体色', 'Cube Color', "殼體色")}
+              label={t('壳体色', 'Cube Color')}
               value={state.cubeColor}
               onChange={(v) => set('cubeColor', v)}
               onReset={() => set('cubeColor', DEFAULTS.cubeColor)}
             />
             <NumberRow
-              label={t('壳体不透明度', 'Cube Opacity', "殼體不透明度")}
+              label={t('壳体不透明度', 'Cube Opacity')}
               value={state.cubeOpacity} min={0} max={100}
               onChange={(v) => set('cubeOpacity', v)}
               onReset={() => set('cubeOpacity', DEFAULTS.cubeOpacity)}
             />
             <NumberRow
-              label={t('贴纸不透明度', 'Sticker Opacity', "貼紙不透明度")}
+              label={t('贴纸不透明度', 'Sticker Opacity')}
               value={state.stickerOpacity} min={0} max={100}
               onChange={(v) => set('stickerOpacity', v)}
               onReset={() => set('stickerOpacity', DEFAULTS.stickerOpacity)}
             />
             <NumberRow
-              label={t('投影距离', 'Projection Distance', "投影距離")}
+              label={t('投影距离', 'Projection Distance')}
               value={state.dist} min={1} max={100}
               onChange={(v) => set('dist', v)}
               onReset={() => set('dist', DEFAULTS.dist)}
@@ -1491,34 +1488,34 @@ function VisualCubeEditorPageInner() {
         <p>
           {t(
             '直接通过 GET /v1/visualcube.svg 拿到 SVG 字节流，可放进 <img>、curl、博客 Markdown 等。这是简化端点（7 个参数），完整参数请用本页生成后复制分享链接。',
-            'GET /v1/visualcube.svg returns image/svg+xml directly. Use it in an <img>, curl, blog Markdown, etc. This is a simplified endpoint (7 params); for the full set, use this page and copy the share URL.', "直接透過 GET /v1/visualcube.svg 拿到 SVG 位元組流，可放進 <img>、curl、部落格 Markdown 等。這是簡化端點（7 個引數），完整引數請用本頁生成後複製分享連結。"
+            'GET /v1/visualcube.svg returns image/svg+xml directly. Use it in an <img>, curl, blog Markdown, etc. This is a simplified endpoint (7 params); for the full set, use this page and copy the share URL.'
           )}
         </p>
         <pre className="vc-api-example">{`https://api.cuberoot.me/v1/visualcube.svg?alg=R+U+R'+U'+R+U2+R'&view=oll&size=128`}</pre>
         <table className="vc-api-table">
           <thead>
             <tr>
-              <th>{t('参数', 'Param', "引數")}</th>
+              <th>{t('参数', 'Param')}</th>
               <th>{t('取值', 'Values')}</th>
-              <th>{t('默认', 'Default', "預設")}</th>
+              <th>{t('默认', 'Default')}</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td><code>alg</code></td><td>{t('WCA notation；alg 直接作用到 solved（forward）。和 case 互斥，case 优先', 'WCA notation; applied DIRECTLY to solved (forward). Mutually exclusive with case (case wins)', "WCA notation；alg 直接作用到 solved（forward）。和 case 互斥，case 優先")}</td><td>Sune</td></tr>
-            <tr><td><code>case</code></td><td>{t('WCA notation；alg 的逆作用到 solved，即"该 alg 能还原的 case"。覆盖 alg', 'WCA notation; alg INVERTED on solved — "the case this alg solves". Overrides alg', "WCA notation；alg 的逆作用到 solved，即\"該 alg 能還原的 case\"。覆蓋 alg")}</td><td>—</td></tr>
-            <tr><td><code>setup</code></td><td>{t('alg 的别名（forward）；语义上是 case 的预置打乱', 'Alias of alg (forward); semantic hint that the string is a case-setup scramble', "alg 的別名（forward）；語義上是 case 的預置打亂")}</td><td>—</td></tr>
+            <tr><td><code>alg</code></td><td>{t('WCA notation；alg 直接作用到 solved（forward）。和 case 互斥，case 优先', 'WCA notation; applied DIRECTLY to solved (forward). Mutually exclusive with case (case wins)')}</td><td>Sune</td></tr>
+            <tr><td><code>case</code></td><td>{t('WCA notation；alg 的逆作用到 solved，即"该 alg 能还原的 case"。覆盖 alg', 'WCA notation; alg INVERTED on solved — "the case this alg solves". Overrides alg')}</td><td>—</td></tr>
+            <tr><td><code>setup</code></td><td>{t('alg 的别名（forward）；语义上是 case 的预置打乱', 'Alias of alg (forward); semantic hint that the string is a case-setup scramble')}</td><td>—</td></tr>
             <tr><td><code>view</code></td><td><code>iso / plan / f2l / oll / pll / pll-iso / trans</code></td><td><code>iso</code></td></tr>
-            <tr><td><code>mask</code></td><td>{t('显式 Masking 枚举值（覆盖 view 推断）', 'Explicit Masking enum, overrides view-derived', "顯式 Masking 列舉值（覆蓋 view 推斷）")}</td><td>—</td></tr>
-            <tr><td><code>size</code></td><td>{t('像素，clamped [32, 1000]', 'Pixels, clamped [32, 1000]', "畫素，clamped [32, 1000]")}</td><td>256</td></tr>
-            <tr><td><code>bg</code></td><td>{t('hex（带不带 #）或 CSS 颜色名', 'Hex (with/without #) or CSS colour name', "hex（帶不帶 #）或 CSS 顏色名")}</td><td>{t('透明', 'transparent')}</td></tr>
-            <tr><td><code>cc</code></td><td>{t('壳体色（PHP cc）', 'Cube shell colour (PHP cc)', "殼體色（PHP cc）")}</td><td>{t('黑（trans 时银）', 'black (silver when trans)', "黑（trans 時銀）")}</td></tr>
-            <tr><td><code>co</code></td><td>{t('壳体不透明度 0-100（PHP co）', 'Cube opacity 0-100 (PHP co)', "殼體不透明度 0-100（PHP co）")}</td><td>{t('100（trans 时 50）', '100 (50 when trans)', "100（trans 時 50）")}</td></tr>
+            <tr><td><code>mask</code></td><td>{t('显式 Masking 枚举值（覆盖 view 推断）', 'Explicit Masking enum, overrides view-derived')}</td><td>—</td></tr>
+            <tr><td><code>size</code></td><td>{t('像素，clamped [32, 1000]', 'Pixels, clamped [32, 1000]')}</td><td>256</td></tr>
+            <tr><td><code>bg</code></td><td>{t('hex（带不带 #）或 CSS 颜色名', 'Hex (with/without #) or CSS colour name')}</td><td>{t('透明', 'transparent')}</td></tr>
+            <tr><td><code>cc</code></td><td>{t('壳体色（PHP cc）', 'Cube shell colour (PHP cc)')}</td><td>{t('黑（trans 时银）', 'black (silver when trans)')}</td></tr>
+            <tr><td><code>co</code></td><td>{t('壳体不透明度 0-100（PHP co）', 'Cube opacity 0-100 (PHP co)')}</td><td>{t('100（trans 时 50）', '100 (50 when trans)')}</td></tr>
           </tbody>
         </table>
         <p className="vc-api-note">
           {t(
             '该端点不支持完整 PHP query API（无 arw / ac / sch / fc / fd 等）。需要这些参数请用本页生成 SVG 后下载或复制 <img> 标签。',
-            'Endpoint does not accept the full PHP query API (no arw / ac / sch / fc / fd). For those, generate via this page and download/copy.', "該端點不支援完整 PHP query API（無 arw / ac / sch / fc / fd 等）。需要這些引數請用本頁生成 SVG 後下載或複製 <img> 標籤。"
+            'Endpoint does not accept the full PHP query API (no arw / ac / sch / fc / fd). For those, generate via this page and download/copy.'
           )}
         </p>
       </details>

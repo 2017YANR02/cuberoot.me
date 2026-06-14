@@ -125,8 +125,7 @@ export default function TodayRecon({ lang }: Props) {
   return (
     <div className="today-recon">
       <div className="tr-head">
-        <span className="tr-title">{tr({ zh: '今日复盘', en: 'Recon of the Day',
-            zhHant: "今日覆盤"
+        <span className="tr-title">{tr({ zh: '今日复盘', en: 'Recon of the Day'
         })}</span>
         <Link href="/recon" prefetch={false} className="tr-all">{tr({ zh: '全部', en: 'All recons' })}</Link>
       </div>
@@ -144,7 +143,7 @@ export default function TodayRecon({ lang }: Props) {
           >
             {expanded
               ? (tr({ zh: '收起', en: 'Show less' }))
-              : (tr({ zh: '更多', en: 'More', zhHant: '更多' }))}
+              : (tr({ zh: '更多', en: 'More' }))}
             <ChevronDown size={15} className="tr-more-chevron" aria-hidden="true" />
           </button>
         </>

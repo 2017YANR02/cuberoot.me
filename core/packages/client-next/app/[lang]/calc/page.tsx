@@ -50,7 +50,7 @@ async function requestWakeLock(): Promise<void> {
 export function CalcPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('成绩计算器', 'Score Calculator', "成績計算器");
+  useDocumentTitle('成绩计算器', 'Score Calculator');
   const event = useCalcStore(s => s.event);
   const loadFromUrl = useCalcStore(s => s.loadFromUrl);
   const initDone = useRef(false);
@@ -326,7 +326,7 @@ export function CalcPage() {
         next[p] = { active: false };
         return next;
       });
-      alert(i18n.language === 'zh-Hant' ? (`未找到 ${person.wcaId} 該項目的資料。`) : (isZh
+      alert((isZh
                   ? `未找到 ${person.wcaId} 该项目的数据。`
                   : 'No data found for ' + person.wcaId + ' in this event.'));
       return;
@@ -380,13 +380,11 @@ export function CalcPage() {
               type="button"
               className="calc-mode-toggle calc-mode-toggle-active"
               onClick={() => setTab('compare')}
-              title={tr({ zh: '切到对比版', en: 'Switch to Compare',
-                  zhHant: "切到對比版"
+              title={tr({ zh: '切到对比版', en: 'Switch to Compare'
             })}
             >
               <Sigma size={14} />
-              <span>{tr({ zh: '简易版', en: 'Simple',
-                  zhHant: "簡易版"
+              <span>{tr({ zh: '简易版', en: 'Simple'
             })}</span>
             </button>
           </div>
@@ -427,23 +425,19 @@ export function CalcPage() {
               type="button"
               className="calc-mode-toggle"
               onClick={() => setTab('average')}
-              title={tr({ zh: '切到简易版', en: 'Switch to Simple',
-                  zhHant: "切到簡易版"
+              title={tr({ zh: '切到简易版', en: 'Switch to Simple'
             })}
             >
               <Sigma size={14} />
-              <span>{tr({ zh: '简易版', en: 'Simple',
-                  zhHant: "簡易版"
+              <span>{tr({ zh: '简易版', en: 'Simple'
             })}</span>
             </button>
             <Link
               href="/calc-about"
               className="calc-title-help"
-              title={tr({ zh: '这页是干啥的?', en: 'What is this page?',
-                  zhHant: "這頁是幹啥的?"
+              title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
             })}
-              aria-label={tr({ zh: '查看说明', en: 'About this page',
-                  zhHant: "檢視說明"
+              aria-label={tr({ zh: '查看说明', en: 'About this page'
             })}
             >
               <HelpCircle size={16} strokeWidth={1.75} />

@@ -53,8 +53,7 @@ export const LANG_BOOTSTRAP = `(() => {
   try {
     var p = location.pathname;
     var lang = 'en';
-    if (p === '/zh-Hant' || p.indexOf('/zh-Hant/') === 0) lang = 'zh-Hant';
-    else if (p === '/zh' || p.indexOf('/zh/') === 0) lang = 'zh';
+    if (p === '/zh' || p.indexOf('/zh/') === 0) lang = 'zh';
     document.documentElement.lang = lang;
   } catch (_) {}
 })();`;

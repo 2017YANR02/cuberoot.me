@@ -45,14 +45,11 @@ export const CLOUDFLARE_DNS: StackTool = {
   },
   heroStats: [
     { num: '330', unit: '+', zh: <>全球 anycast PoP <em>2026-05 公告</em></>, en: <>anycast PoPs worldwide <em>2026-05 disclosure</em></> },
-    { num: '4.3', unit: 'T', zh: <>1.1.1.1 日查询 <em>2025 reports</em></>, en: <>1.1.1.1 daily queries <em>2025 reports</em></>,
-        zhHant: <>1.1.1.1 日查詢 <em>2025 reports</em></>
+    { num: '4.3', unit: 'T', zh: <>1.1.1.1 日查询 <em>2025 reports</em></>, en: <>1.1.1.1 daily queries <em>2025 reports</em></>
     },
-    { num: '20', unit: '%+', zh: <>公网站点接触 CF <em>DNS / proxy</em></>, en: <>of public sites touch CF <em>DNS / proxy</em></>,
-        zhHant: <>公網站點接觸 CF <em>DNS / proxy</em></>
+    { num: '20', unit: '%+', zh: <>公网站点接触 CF <em>DNS / proxy</em></>, en: <>of public sites touch CF <em>DNS / proxy</em></>
     },
-    { num: '17', unit: 'y', zh: <>权威 DNS 自 2009 <em>核心产品</em></>, en: <>auth DNS since 2009 <em>core product</em></>,
-        zhHant: <>權威 DNS 自 2009 <em>核心產品</em></>
+    { num: '17', unit: 'y', zh: <>权威 DNS 自 2009 <em>核心产品</em></>, en: <>auth DNS since 2009 <em>core product</em></>
     },
   ],
   intro: {
