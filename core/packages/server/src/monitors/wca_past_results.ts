@@ -24,7 +24,15 @@ import { isChineseRegion } from './config.js';
 const WCA_API = 'https://www.worldcubeassociation.org/api/v0';
 const SITE_BASE = 'https://www.cuberoot.me';
 const FETCH_TIMEOUT_MS = 20_000;
-const CONCURRENCY = 3;
+// WCA(Cloudflare 后)对突发并发返 500/429:单请求 200,48 人并发 burst 大面积 500。
+// 故串行 + 请求间隔 + 退避重试;一次只打 1 个 /results(name/iso2 从 results 行直接取,不再单独拉 profile)。
+const CONCURRENCY = 1;
+const REQUEST_GAP_MS = 1500;          // 每人之间的礼貌间隔
+const RETRY_BACKOFF_MS = [3000, 8000, 20000]; // 500/429/网络错的退避(共 3 次重试)
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 /** 默认 6h;可经 env 调。最短 30min 兜底,防误配狂打 WCA。 */
 const INTERVAL_MS = Math.max(
@@ -50,6 +58,8 @@ type FpMap = Record<string, Fp>;
 
 interface RawResult {
   id: number;
+  name?: string;
+  country_iso2?: string;
   competition_id: string;
   event_id: string;
   round_type_id: string;
@@ -77,27 +87,47 @@ interface DetectedChange {
 
 // ── WCA fetch ────────────────────────────────────────────────────────────────
 
+/** 带退避重试的 WCA GET:500 / 429 / 503 / 网络错 → 退避后重试(RETRY_BACKOFF_MS 次)。 */
 async function wcaJson<T>(url: string): Promise<T> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      headers: { Accept: 'application/json', 'User-Agent': 'cuberoot-result-watch/1.0' },
-      signal: ctrl.signal,
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return (await res.json()) as T;
-  } finally {
-    clearTimeout(t);
+  let lastErr: Error | null = null;
+  for (let attempt = 0; attempt <= RETRY_BACKOFF_MS.length; attempt++) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, {
+        headers: { Accept: 'application/json', 'User-Agent': 'cuberoot-result-watch/1.0' },
+        signal: ctrl.signal,
+      });
+      if (res.status === 500 || res.status === 429 || res.status === 503) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`); // 4xx(非 429)= 永久错,但仍走重试上限后抛
+      return (await res.json()) as T;
+    } catch (e) {
+      lastErr = e as Error;
+      const backoff = RETRY_BACKOFF_MS[attempt];
+      if (backoff === undefined) break; // 重试用尽
+      await sleep(backoff);
+    } finally {
+      clearTimeout(t);
+    }
   }
+  throw lastErr ?? new Error('fetch failed');
 }
 
-/** 拉某选手全生涯成绩 → fingerprint 映射(key = result.id)。 */
-async function fetchResultsFp(wcaId: string): Promise<FpMap> {
+/**
+ * 拉某选手全生涯成绩 → fingerprint 映射(key = result.id) + 选手名/国家(从 results 行直接取)。
+ * WCA /persons/:id/results 每行已含 name + country_iso2,无需再单独拉 profile(减半请求,降 burst)。
+ */
+async function fetchResultsFp(wcaId: string): Promise<{ map: FpMap; name: string | null; iso2: string | null }> {
   const arr = await wcaJson<RawResult[]>(`${WCA_API}/persons/${encodeURIComponent(wcaId)}/results`);
   const map: FpMap = {};
+  let name: string | null = null;
+  let iso2: string | null = null;
   for (const r of arr) {
     if (r?.id == null) continue;
+    if (name === null && r.name) name = r.name;
+    if (iso2 === null && r.country_iso2) iso2 = r.country_iso2;
     map[String(r.id)] = {
       c: r.competition_id ?? '',
       e: r.event_id ?? '',
@@ -111,19 +141,7 @@ async function fetchResultsFp(wcaId: string): Promise<FpMap> {
       ra: r.regional_average_record ?? null,
     };
   }
-  return map;
-}
-
-/** 选手档案名(含括号本地名)+ 国家 iso2;失败返 null 不阻塞。 */
-async function fetchProfile(wcaId: string): Promise<{ name: string | null; iso2: string | null }> {
-  try {
-    const j = await wcaJson<{ person?: { name?: string; country_iso2?: string } }>(
-      `${WCA_API}/persons/${encodeURIComponent(wcaId)}`,
-    );
-    return { name: j.person?.name ?? null, iso2: j.person?.country_iso2 ?? null };
-  } catch {
-    return { name: null, iso2: null };
-  }
+  return { map, name, iso2 };
 }
 
 // ── diff ─────────────────────────────────────────────────────────────────────
@@ -290,9 +308,8 @@ async function pushSummary(
 // ── 单人处理 ──────────────────────────────────────────────────────────────────
 
 async function processPerson(wcaId: string, fallbackName: string | null): Promise<number> {
-  const [newMap, profile] = await Promise.all([fetchResultsFp(wcaId), fetchProfile(wcaId)]);
-  const name = profile.name ?? fallbackName;
-  const iso2 = profile.iso2;
+  const { map: newMap, name: fetchedName, iso2 } = await fetchResultsFp(wcaId);
+  const name = fetchedName ?? fallbackName;
   const newHash = snapshotHash(newMap);
 
   const prev = await loadSnapshot(wcaId);
@@ -320,7 +337,7 @@ async function processPerson(wcaId: string, fallbackName: string | null): Promis
   await insertChanges(wcaId, changes);
   await saveSnapshot(wcaId, name, iso2, newMap, newHash, true);
 
-  const displayName = (name ?? wcaId).replace(/\s*\([^)]*\)\s*$/, (m) => m).trim() || wcaId;
+  const displayName = (name ?? wcaId).trim() || wcaId;
   console.log(`[wca-past-results] ${wcaId} ${displayName}: ${changes.length} change(s)`);
   try {
     await pushSummary(wcaId, displayName, iso2, changes);
@@ -350,6 +367,7 @@ async function runOnce(): Promise<void> {
         failures++;
         console.warn(`[wca-past-results] ${p.wcaId} failed: ${(e as Error).message}`);
       }
+      if (queue.length > 0) await sleep(REQUEST_GAP_MS); // 礼貌间隔,避开 WCA burst 保护
     }
   }
 
