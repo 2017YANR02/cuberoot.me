@@ -32,22 +32,6 @@
   margin: 0 0 14px; font-size: 18px; font-weight: 650; color: var(--foreground);
 }
 
-/* 类型 chips(≤4 项,左右对比) */
-.fb-kinds { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-.fb-kind {
-  display: flex; align-items: center; gap: 6px;
-  padding: 7px 12px; border-radius: 9px; cursor: pointer;
-  font-size: 13px; font-weight: 500;
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-  border: 1px solid transparent; color: var(--muted-foreground);
-  transition: background .15s, color .15s, border-color .15s;
-}
-.fb-kind:hover { background: color-mix(in srgb, var(--foreground) 10%, transparent); color: var(--foreground); }
-.fb-kind.is-active {
-  background: var(--accent-soft); color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-}
-
 .fb-textarea {
   width: 100%; box-sizing: border-box;
   min-height: 108px; resize: vertical;
@@ -62,20 +46,6 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 22%, transparent);
 }
 .fb-textarea::placeholder { color: var(--faint-foreground); }
-
-.fb-contact {
-  width: 100%; box-sizing: border-box; margin-top: 10px;
-  padding: 9px 12px; border-radius: 10px;
-  font: inherit; font-size: 13px;
-  background: var(--background); color: var(--foreground);
-  border: 1px solid var(--input);
-  transition: border-color .15s, box-shadow .15s;
-}
-.fb-contact:focus {
-  outline: none; border-color: var(--ring);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 22%, transparent);
-}
-.fb-contact::placeholder { color: var(--faint-foreground); }
 
 /* 附件缩略图 */
 .fb-attachments { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
@@ -127,6 +97,15 @@
 }
 .fb-submit:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 90%, black); }
 .fb-submit:disabled { opacity: .5; cursor: default; }
+
+/* admin 审核入口(仅 admin 可见) */
+.fb-admin-link {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  margin-top: 10px; padding: 6px; border-radius: 8px;
+  font-size: 12.5px; color: var(--muted-foreground); text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.fb-admin-link:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); color: var(--foreground); }
 
 /* 登录门 */
 .fb-login { text-align: center; padding: 8px 4px 4px; }
