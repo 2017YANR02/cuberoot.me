@@ -21,6 +21,7 @@ const BROWSER_MAX_AGE_LIMIT = 3600;
 // 文件级豁免:数据天然不可变,浏览器长缓存是刻意设计
 const IMMUTABLE_ALLOWLIST = new Set([
   'article.ts',       // 文章图片 bytea immutable + 阅读页 5min
+  'feedback.ts',      // 反馈媒体(/feedback/media/:id)上传即不可变,同 article 图片 bytea
   'wca_scrambles.ts', // 已结束比赛的官方打乱,永不变
   'wca_schedule.ts',  // 已结束比赛的赛程,永不变(进行中已是 3600)
   'recon.ts',         // cubing.com 整轮完整成绩(complete = 全填,不再变)
