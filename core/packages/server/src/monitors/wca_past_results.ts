@@ -27,11 +27,14 @@ const FETCH_TIMEOUT_MS = 20_000;
 // WCA(Cloudflare 后)对突发并发返 500/429:单请求 200,48 人并发 burst 大面积 500。
 // 故串行 + 请求间隔 + 退避重试;一次只打 1 个 /results(name/iso2 从 results 行直接取,不再单独拉 profile)。
 const CONCURRENCY = 1;
-const REQUEST_GAP_MS = 1500;          // 每人之间的礼貌间隔
-const RETRY_BACKOFF_MS = [4000, 12000]; // 单条 500/429/网络错的退避(共 2 次重试)
+const REQUEST_GAP_MS = 3000;          // 每人之间的礼貌间隔(放宽,降低触发 WCA 限流概率)
+const RETRY_BACKOFF_MS = [5000];      // 单条 500/429/超时/网络错的退避(1 次重试;被限时别多打)
 // 熔断:连续 N 人失败 = WCA 在惩罚本机 IP(突发后的冷却窗),立即中止本轮,
 // 别在惩罚期继续打(只会延长冷却);下个 6h 周期再试,届时 IP 已恢复。
-const MAX_CONSECUTIVE_FAILURES = 6;
+const MAX_CONSECUTIVE_FAILURES = 4;
+// 首扫延迟:别在 pm2 reload 瞬间扫(部署/重启常伴随其他 WCA 流量,易撞限流窗);
+// 延迟几分钟让出口 IP 处于安静窗口再首扫。
+const STARTUP_DELAY_MS = 150_000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
@@ -400,6 +403,7 @@ export function startWcaPastResultsMonitor(): void {
     console.log('[wca-past-results] disabled (set RESULT_WATCH_ENABLED=1 to start)');
     return;
   }
-  console.log(`[wca-past-results] starting, interval ${Math.round(INTERVAL_MS / 60000)}min`);
-  startPoller('wca-past-results', runOnce, INTERVAL_MS);
+  console.log(`[wca-past-results] arming, first scan in ${Math.round(STARTUP_DELAY_MS / 1000)}s, then every ${Math.round(INTERVAL_MS / 60000)}min`);
+  // 延迟首扫:避免在 pm2 reload 瞬间(常伴随其他 WCA 流量 / 限流窗)打 WCA。
+  setTimeout(() => startPoller('wca-past-results', runOnce, INTERVAL_MS), STARTUP_DELAY_MS);
 }
