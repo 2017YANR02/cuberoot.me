@@ -167,6 +167,16 @@
   color: var(--accent);
 }
 
+/* 登录时:chip + 尾部关注星作为一个 flex 流项,星在 pill 之外、轻量小巧 */
+.ongoing-comps-chip-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  min-width: 0;
+  max-width: 100%;
+}
+.ongoing-comps-chip-wrap .ongoing-comps-chip { min-width: 0; }
+
 @media (max-width: 640px) {
   .ongoing-comps {
     margin-top: -1rem;

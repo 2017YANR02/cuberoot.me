@@ -40,6 +40,7 @@ function wcaSpecFor(puzzleId: string): WcaSourceSpec {
     group: st.wcaGroup,
     from: st.wcaDateFrom,
     to: st.wcaDateTo,
+    optimal: st.wcaUseOptimal,
   };
 }
 

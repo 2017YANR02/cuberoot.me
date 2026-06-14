@@ -49,32 +49,8 @@
   opacity: 0.6;
 }
 
-/* 关注星标 — 浮在卡片右上角,在 Link 之外(避免锚点里嵌按钮的非法结构) */
-.rc-fav {
-  position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.7rem;
-  height: 1.7rem;
-  padding: 0;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--faint-foreground);
-  cursor: pointer;
-  transition: color 0.12s, background 0.12s;
-}
-.rc-fav:hover {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-}
-.rc-fav.is-on {
-  color: var(--accent);
-}
+/* 关注星标走共享 .follow-star--corner(components/comp_follow.css);卡片 position:relative
+   提供定位上下文,.rc-main 右侧留白给角标。 */
 
 .rc-main {
   display: flex;

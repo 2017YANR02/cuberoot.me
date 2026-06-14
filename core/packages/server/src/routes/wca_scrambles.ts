@@ -24,16 +24,24 @@ interface ScrambleRow {
   is_extra: boolean;
   scramble_num: number;
   scramble: string;
+  optimal_scramble?: string | null; // God's-number 最优打乱(同态项目 333/oh/ft/fm 才有,见 wca_scramble_optimal)
 }
+
+// 自然键关联 wca_scramble_optimal(wca_scrambles.id 是本地自增 IDENTITY,非 WCA id,只能按 6 列自然键 join)。
+const OPT_JOIN = `LEFT JOIN wca_scramble_optimal o
+    ON o.competition_id = ws.competition_id AND o.event_id = ws.event_id
+   AND o.round_type_id = ws.round_type_id AND o.group_id = ws.group_id
+   AND o.is_extra = ws.is_extra AND o.scramble_num = ws.scramble_num`;
 
 /** 全量镜像表命中则组装成 WcaScrambleRow[];未收录该比赛返回 null。 */
 async function fromMirror(compId: string): Promise<ScrambleRow[] | null> {
   const rows = await query<ScrambleRow>(
-    `SELECT competition_id, event_id, round_type_id, group_id,
-            (is_extra = 1) AS is_extra, scramble_num, scramble
-       FROM wca_scrambles
-      WHERE competition_id = ?
-      ORDER BY event_id, round_type_id, group_id, is_extra, scramble_num`,
+    `SELECT ws.competition_id, ws.event_id, ws.round_type_id, ws.group_id,
+            (ws.is_extra = 1) AS is_extra, ws.scramble_num, ws.scramble, o.optimal_scramble
+       FROM wca_scrambles ws
+       ${OPT_JOIN}
+      WHERE ws.competition_id = ?
+      ORDER BY ws.event_id, ws.round_type_id, ws.group_id, ws.is_extra, ws.scramble_num`,
     [compId],
   );
   return rows.length > 0 ? rows : null;
@@ -122,9 +130,10 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const COMP_SAMPLE = 30;
 type RandomRow = ScrambleRow & { comp_name: string | null };
 const RANDOM_COLS = `ws.competition_id, ws.event_id, ws.round_type_id, ws.group_id,
-        (ws.is_extra = 1) AS is_extra, ws.scramble_num, ws.scramble, c.name AS comp_name`;
+        (ws.is_extra = 1) AS is_extra, ws.scramble_num, ws.scramble, c.name AS comp_name, o.optimal_scramble`;
 
 // wca_scrambles 行 → 首页 RecentScrambles 的短键 meta(ci/cn/e/r/g/n/x),payload 也更小。
+// o = God's-number 最优打乱(仅同态项目 333/oh/ft/fm 且已求解才有;无则省略,payload 不膨胀)。
 function toScrambleMeta(r: RandomRow) {
   return {
     scramble: r.scramble,
@@ -135,6 +144,7 @@ function toScrambleMeta(r: RandomRow) {
     g: r.group_id,
     n: r.scramble_num,
     x: r.is_extra ? 1 : 0,
+    ...(r.optimal_scramble ? { o: r.optimal_scramble } : {}),
   };
 }
 
@@ -156,6 +166,7 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
         `SELECT ${RANDOM_COLS}
            FROM wca_scrambles ws
            LEFT JOIN wca_competitions c ON c.id = ws.competition_id
+           ${OPT_JOIN}
           WHERE ws.event_id = ? AND ws.rnd >= ?
           ORDER BY ws.rnd, ws.id
           LIMIT ?`,
@@ -167,6 +178,7 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
           `SELECT ${RANDOM_COLS}
              FROM wca_scrambles ws
              LEFT JOIN wca_competitions c ON c.id = ws.competition_id
+             ${OPT_JOIN}
             WHERE ws.event_id = ? AND ws.rnd < ?
             ORDER BY ws.rnd, ws.id
             LIMIT ?`,
@@ -185,6 +197,7 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
            FROM wca_scrambles ws
            JOIN (SELECT id, name FROM wca_competitions WHERE ${dateWhere.join(' AND ')}
                   ORDER BY random() LIMIT ${COMP_SAMPLE}) c ON c.id = ws.competition_id
+           ${OPT_JOIN}
           WHERE ws.event_id = ?
           ORDER BY random()
           LIMIT ?`,

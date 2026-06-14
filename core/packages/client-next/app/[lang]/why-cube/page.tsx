@@ -24,19 +24,23 @@ import {
   Lightbulb, Quote, ArrowRight, BookMarked, Box, Shuffle, Scale, Timer as TimerIcon,
   Brain, FlaskConical, MonitorOff, HelpCircle,
   Layers, Search, ListChecks, TriangleAlert,
-  Sparkles, Boxes, Rotate3d, MoveRight,
+  Sparkles, Boxes, GraduationCap, MapPin,
 } from 'lucide-react';
 import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { EventIcon } from '@/components/EventIcon';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '../../../hooks/useT';
+import LiveHero from './_LiveHero';
+import SolveFlow from './_SolveFlow';
+import PatternGallery from './_PatternGallery';
+import RecognizeGame from './_RecognizeGame';
+import ScaleLadder from './_ScaleLadder';
+import GodsNumberDist from './_GodsNumberDist';
+import MemoryPalace from './_MemoryPalace';
+import SpeedFeel from './_SpeedFeel';
+import StickyToc from './_StickyToc';
 import './why_cube.css';
-
-const CubingPreview = dynamic(() => import('@/components/CubingPreview'), {
-  loading: () => <div className="wc-hero-cube-ph" aria-hidden="true" />,
-  ssr: false,
-});
 
 // Server-rendered cube SVG (api.cuberoot.me). Client-only to dodge a dev
 // hydration mismatch (server picks absolute API origin, client-dev picks a
@@ -45,18 +49,6 @@ const VisualCube = dynamic(() => import('@/components/VisualCube').then(m => m.V
   loading: () => <span className="wc-cube-ph" aria-hidden="true" />,
   ssr: false,
 });
-
-const HERO_SCRAMBLE = "L2 U2 R2 F2 D' B2 D2 R2 U' F2 U L' B' D2 R' F U L D2 F2";
-
-/* Famous patterns — setup algs from the /scramble/pattern gallery, rendered
- * forward via VisualCube `setup`. Names live inline as literal t() calls so
- * `zh:gen-localt` can fill the Traditional arg. */
-const PAT_CHECKER = 'M2 E2 S2';
-const PAT_SPOTS = "U D' R L' F B' U D'";
-const PAT_CIC = "F L F U' R U F2 L2 U' L' B D' B' L2 U";
-const PAT_PONS = 'F2 B2 U2 D2 L2 R2';
-const PAT_GIFT = "U B2 R2 B2 L2 F2 R2 D' F2 L2 B U2 F' U F' R2 U";
-const PAT_SUPERFLIP = "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2";
 
 /* NxN family for the size line-up. */
 const SIZES = [
@@ -73,7 +65,7 @@ const REF = {
   maguire2003: 'https://www.nature.com/articles/nn988',
   dresler2017: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC5439266/',
   meinz2023:   'https://pmc.ncbi.nlm.nih.gov/articles/PMC9866889/',
-  youCanDo:    'https://www.rubiks.com/en-us/blog/you-can-do-the-rubiks-cube',
+  youCanDo:    'https://www.youcandothecube.com/',
   edutopia:    'https://www.edutopia.org/article/using-rubiks-cubes-teach-math/',
   who2019:     'https://www.who.int/publications/i/item/9789241550536',
   aap:         'https://publications.aap.org/pediatrics/article/138/5/e20162591/60503/Media-and-Young-Minds',
@@ -173,6 +165,7 @@ export default function WhyCubePage() {
 
   return (
     <div className="wc-page">
+      <StickyToc />
       <div className="wc-wrap">
         {/* ── Hero ──────────────────────────────────────────── */}
         <header className="wc-hero">
@@ -196,7 +189,7 @@ export default function WhyCubePage() {
             </p>
           </div>
           <div className="wc-hero-cube">
-            <CubingPreview event="333" scramble={HERO_SCRAMBLE} visualization="3D" height="min(64vw, 300px)" />
+            <LiveHero />
           </div>
         </header>
 
@@ -216,7 +209,7 @@ export default function WhyCubePage() {
             'A lot of parents worry their kid “isn’t smart enough.” They are.', "很多家長擔心“我家孩子沒那麼聰明，學得會嗎”。會的。"
           )}
         >
-          <Callout tone="success" icon={<Lightbulb size={17} />} label={t('入门法 = 一套可记忆的步骤', 'The beginner method is a set of memorizable steps', "入門法 = 一套可記憶的步驟")}>
+          <Callout tone="success" icon={<Lightbulb size={17} />} label={t('入门法：一套能背下来的步骤', 'The beginner method is a set of memorizable steps', "入門法：一套能背下來的步驟")}>
             {t(
               '还原魔方靠的是方法，不是天赋。入门法把它拆成几个固定的、可以背下来的小公式，一层一层拼出来。任何愿意跟着做、有点耐心的孩子，都能亲手把魔方还原。那一刻“我做到了！”，才是最大的收获。',
               'Solving a cube is about method, not talent. The beginner method breaks it into a handful of fixed, memorizable little algorithms, applied layer by layer. Any child willing to follow along with a bit of patience can solve it themselves — and that first “I did it!” is the real prize.', "還原魔方靠的是方法，不是天賦。入門法把它拆成幾個固定的、可以背下來的小公式，一層一層拼出來。任何願意跟著做、有點耐心的孩子，都能親手把魔方還原。那一刻“我做到了！”，才是最大的收穫。"
@@ -241,19 +234,7 @@ export default function WhyCubePage() {
           eyebrow={t('核心能力', 'Core abilities')}
           title={t('一块方块，练六种能力', 'One puzzle, six abilities', "一塊方塊，練六種能力")}
         >
-          <div className="wc-flow">
-            <Fig cap={t('打乱后：一团乱', 'Scrambled', "打亂後：一團亂")}>
-              <VisualCube setup={HERO_SCRAMBLE} view="iso" size={150} alt="scrambled cube" loading="lazy" />
-            </Fig>
-            <div className="wc-flow-mid">
-              <Rotate3d size={26} />
-              <MoveRight size={30} className="wc-flow-arrow" />
-              <span className="wc-flow-note">{t('全程在脑中预演每一块的去向', 'mentally rotating every piece', "全程在腦中預演每一塊的去向")}</span>
-            </div>
-            <Fig cap={t('还原后：六面归位', 'Solved', "還原後：六面歸位")}>
-              <VisualCube algorithm="" view="iso" size={150} alt="solved cube" loading="lazy" />
-            </Fig>
-          </div>
+          <SolveFlow />
           <div className="wc-benefits">
             <Benefit icon={<Shapes size={26} />} title={t('空间想象能力', 'Spatial imagination', "空間想象能力")}>
               {t(
@@ -363,6 +344,7 @@ export default function WhyCubePage() {
               'A blindfolded solver encodes each piece into letters or images and hangs them on a familiar “memory journey” — exactly the “memory palace” (method of loci) that memory champions use. A landmark study found top memorizers had no higher IQ and no special brain structure; nine of ten simply used this method. In another, 51 ordinary people trained for six weeks and gained lasting memory improvements. Memory, in other words, is a trainable technique — not an innate gift — and blindfolded cubing teaches it.', "盲擰選手把每塊的位置編成字母或畫面，再掛到一條熟悉的“記憶路線”上 —— 這正是記憶大師用的“記憶宮殿”(位置記憶法)。一項經典研究發現：頂尖記憶者的智商並不比常人高，大腦結構也沒有特別之處，十人裡有九人用的就是這套方法。另一項研究讓 51 名普通人訓練六週，記憶力就有了可維持數月的明顯提升。換句話說，記憶力是練出來的技術，不是天生的天賦 —— 而盲擰，正好在教這門技術。"
             )}
           </Callout>
+          <MemoryPalace />
         </Sec>
 
         {/* ── Math ──────────────────────────────────────────── */}
@@ -385,12 +367,16 @@ export default function WhyCubePage() {
               'Just six face turns “generate” all 43 quintillion states. Hidden inside are permutations, combinations and parity: you can’t flip a single edge, twist a single corner, or swap just one pair — those “impossible” moves are exactly the parity constraints of group theory. And each solving “algorithm” is really what mathematicians call a commutator or conjugate: move a few pieces precisely while leaving the rest intact — the core idea behind every efficient method.', "六個面的轉動，就能“生成”全部 4300 億億種狀態。這裡藏著排列組合、奇偶性這些數學概念：你沒法只翻動一個稜塊、只擰一個角塊，或只交換一對塊 —— 這些“做不到的事”正是群論裡的奇偶約束。而解法裡一段段“公式”，本質上是數學家說的“換位子”(commutator / conjugate)：只精準地移動幾塊、不破壞其餘，這正是高效解法的核心思想。"
             )}
           </p>
+          <h3 className="wc-subhead">{t('这个数字到底有多大?', 'Just how big is that number?', "這個數字到底有多大?")}</h3>
+          <ScaleLadder />
           <p className="wc-prose">
             {t(
               '“上帝之数”是 20：任何打乱都能在 20 步以内还原，这在 2010 年被证明。但绝大多数状态远用不到 20 步 —— 在那 4300 亿亿种里，真正需要满 20 步的只有大约 4.9 亿种，凤毛麟角。',
               'God’s Number is 20: any scramble can be solved in at most 20 moves, proven in 2010. But the vast majority of states need far fewer — of those 43 quintillion, only about 490 million actually require the full 20, a vanishingly small fraction.', "“上帝之數”是 20：任何打亂都能在 20 步以內還原，這在 2010 年被證明。但絕大多數狀態遠用不到 20 步 —— 在那 4300 億億種裡，真正需要滿 20 步的只有大約 4.9 億種，鳳毛麟角。"
             )}
           </p>
+          <h3 className="wc-subhead">{t('把全部状态按步数摊开', 'Every state, sorted by move count', "把全部狀態按步數攤開")}</h3>
+          <GodsNumberDist />
           <Callout
             tone="accent"
             icon={<Sigma size={17} />}
@@ -410,26 +396,7 @@ export default function WhyCubePage() {
               'The same six turns that solve the cube can also build symmetric, rule-based patterns — each a visual taste of combinatorics. Every one below is just a single state out of those 43 quintillion.', "同樣的六種轉動，既能把魔方還原，也能拼出對稱、規律的圖案。這些圖案本身就是排列組合的直觀展示 —— 下面每一個，都只是那 4300 億億種狀態裡的一種。"
             )}
           </p>
-          <div className="wc-patterns">
-            <Fig cap={t('棋盘', 'Checkerboard', "棋盤")}>
-              <VisualCube setup={PAT_CHECKER} view="iso" size={132} alt="Checkerboard pattern" loading="lazy" />
-            </Fig>
-            <Fig cap={t('六个圆点', 'Six Spots', "六個圓點")}>
-              <VisualCube setup={PAT_SPOTS} view="iso" size={132} alt="Six Spots pattern" loading="lazy" />
-            </Fig>
-            <Fig cap={t('立方中立方', 'Cube in a Cube')}>
-              <VisualCube setup={PAT_CIC} view="iso" size={132} alt="Cube in a Cube pattern" loading="lazy" />
-            </Fig>
-            <Fig cap={t('驴桥', 'Pons Asinorum', "驢橋")}>
-              <VisualCube setup={PAT_PONS} view="iso" size={132} alt="Pons Asinorum pattern" loading="lazy" />
-            </Fig>
-            <Fig cap={t('礼物盒', 'Gift Box', "禮物盒")}>
-              <VisualCube setup={PAT_GIFT} view="iso" size={132} alt="Gift Box pattern" loading="lazy" />
-            </Fig>
-            <Fig cap={t('超级翻转', 'Superflip', "超級翻轉")}>
-              <VisualCube setup={PAT_SUPERFLIP} view="iso" size={132} alt="Superflip pattern" loading="lazy" />
-            </Fig>
-          </div>
+          <PatternGallery />
         </Sec>
 
         {/* ── Computational thinking ────────────────────────── */}
@@ -461,24 +428,7 @@ export default function WhyCubePage() {
               'That’s exactly how experts finish the last layer: first recognize which case you’re in, then run the matching algorithm — just like an “if … then …” in code.', "高手的最後一層就是這樣解的：先“認出”是哪種情形，再“執行”對應的那段公式 —— 跟程式裡的“如果…就…”一模一樣。"
             )}
           </p>
-          <div className="wc-cases">
-            <div className="wc-case">
-              <VisualCube algorithm="R U R' U R U2 R'" view="oll" size={132} alt="OLL Sune case" loading="lazy" />
-              <div className="wc-case-body">
-                <span className="wc-case-name">{t('认出：这种顶面朝向', 'Recognize: this top pattern', "認出：這種頂面朝向")}</span>
-                <code className="wc-case-alg">R U R&#39; U R U2 R&#39;</code>
-                <span className="wc-case-note">{t('套用“Sune”公式 → 顶面归位', 'Apply the “Sune” algorithm → top oriented', "套用“Sune”公式 → 頂面歸位")}</span>
-              </div>
-            </div>
-            <div className="wc-case">
-              <VisualCube algorithm="R U R' U' R' F R2 U' R' U' R U R' F'" view="pll" size={132} alt="PLL T-perm case" loading="lazy" />
-              <div className="wc-case-body">
-                <span className="wc-case-name">{t('认出：这种顶层排列', 'Recognize: this top arrangement', "認出：這種頂層排列")}</span>
-                <code className="wc-case-alg">R U R&#39; U&#39; R&#39; F R2 U&#39; R&#39; U&#39; R U R&#39; F&#39;</code>
-                <span className="wc-case-note">{t('套用“T 型”公式 → 完全还原', 'Apply the “T-perm” → fully solved', "套用“T 型”公式 → 完全還原")}</span>
-              </div>
-            </div>
-          </div>
+          <RecognizeGame />
           <p className="wc-prose">
             {t(
               '这也是为什么很多孩子从魔方一路走向编程：让程序或机器人自动解魔方，本身就是一道经典的算法练习。',
@@ -490,10 +440,10 @@ export default function WhyCubePage() {
         {/* ── Screen-free ───────────────────────────────────── */}
         <Sec
           eyebrow={t('不用屏幕', 'Screen-free', "不用螢幕")}
-          title={t('一台装进口袋的“离线大脑健身房”', 'A pocket-sized, offline brain gym', "一臺裝進口袋的“離線大腦健身房”")}
+          title={t('一间装进口袋的“离线大脑健身房”', 'A pocket-sized, offline brain gym', "一間裝進口袋的“離線大腦健身房”")}
           lede={t(
-            '在屏幕越来越多的童年里，魔方难得地把动手、动脑和专注重新放回了线下。',
-            'In an increasingly screen-filled childhood, the cube is a rare way to put hands, mind and focus back offline.', "在螢幕越來越多的童年裡，魔方難得地把動手、動腦和專注重新放回了線下。"
+            '在屏幕越来越多的童年里，魔方难得地把动手、动脑和专注重新拉回到屏幕之外。',
+            'In an increasingly screen-filled childhood, the cube is a rare way to put hands, mind and focus back offline.', "在螢幕越來越多的童年裡，魔方難得地把動手、動腦和專注重新拉回到螢幕之外。"
           )}
         >
           <p className="wc-prose">
@@ -631,7 +581,7 @@ export default function WhyCubePage() {
           <Callout tone="accent" icon={<Users size={17} />} label={t('WCA 的宗旨', 'The spirit of the WCA')}>
             {t(
               '“来自世界各地的人，在友好的氛围里一起享受乐趣，互相帮助，展现体育精神。” 任何人都能报名参赛，18 岁以下需家长同意，所有年龄、所有水平都受欢迎。第一次比赛通常轻松友好，慢一点完全没关系 —— 很多人会告诉你，比赛本身才是玩魔方最开心的部分。',
-              '“People from all over the world have fun together in a friendly atmosphere, help each other and behave sportsmanlike.” Anyone can enter (under-18s with a guardian’s consent), and all ages and skill levels are welcome. A first competition is usually relaxed and friendly, and being slow is perfectly fine — many cubers say the competitions are the best part of the hobby.', "“來自世界各地的人，在友好的氛圍裡一起享受樂趣，互相幫助，展現體育精神。” 任何人都能報名參賽，18 歲以下需家長同意，所有年齡、所有水平都受歡迎。第一次比賽通常輕鬆友好，慢一點完全沒關係 —— 很多人會告訴你，比賽本身才是玩魔方最開心的部分。"
+              '“People from all over the world have fun together in a friendly atmosphere, help each other and show good sportsmanship.” Anyone can enter (under-18s with a guardian’s consent), and all ages and skill levels are welcome. A first competition is usually relaxed and friendly, and being slow is perfectly fine — many cubers say the competitions are the best part of the hobby.', "“來自世界各地的人，在友好的氛圍裡一起享受樂趣，互相幫助，展現體育精神。” 任何人都能報名參賽，18 歲以下需家長同意，所有年齡、所有水平都受歡迎。第一次比賽通常輕鬆友好，慢一點完全沒關係 —— 很多人會告訴你，比賽本身才是玩魔方最開心的部分。"
             )}
           </Callout>
           <h3 className="wc-subhead">{t('一些让人热血的纪录', 'A few records to get excited about', "一些讓人熱血的紀錄")}</h3>
@@ -647,6 +597,8 @@ export default function WhyCubePage() {
               'Many of today’s top records are held by eight- and nine-year-olds, while people in their nineties compete in the same federation. Age has never been a barrier — the cube only rewards those willing to keep trying.', "當今頂尖的紀錄，有不少是由八九歲的孩子保持的，而九十多歲的長者也在同一個聯盟裡比賽。魔方面前，年齡從來不是門檻 —— 它只獎勵願意一次次嘗試的人。"
             )}
           </p>
+          <h3 className="wc-subhead">{t('2.76 秒到底有多快?', 'Just how fast is 2.76 seconds?')}</h3>
+          <SpeedFeel />
         </Sec>
 
         {/* ── China context ─────────────────────────────────── */}
@@ -659,8 +611,8 @@ export default function WhyCubePage() {
           )}
         >
           <ul className="wc-list">
-            <li>{t('2018 年，一位中国选手在国内公开赛上拧出 3.47 秒，成为人类首个在正式比赛中突破 4 秒的单次成绩 —— 这个世界纪录保持了约五年半。', 'In 2018, a Chinese competitor set 3.47 seconds at a domestic open — the first-ever sub-4 single in official competition — a world record that stood for about five and a half years.', "2018 年，一位中國選手在國內公開賽上擰出 3.47 秒，成為人類首個在正式比賽中突破 4 秒的單次成績 —— 這個世界紀錄保持了約五年半。")}</li>
-            <li>{t('史上最年轻的三阶世界纪录保持者也来自中国 —— 创造单次纪录时年仅 8 岁；如今的三阶平均世界纪录(3.71 秒)同样由中国选手保持。', 'The youngest-ever 3×3 world-record holder is also from China — just 8 years old at the time; the current 3×3 average world record (3.71s) is held by a Chinese competitor too.', "史上最年輕的三階世界紀錄保持者也來自中國 —— 創造單次紀錄時年僅 8 歲；如今的三階平均世界紀錄(3.71 秒)同樣由中國選手保持。")}</li>
+            <li>{t('2018 年，一位中国选手在国内公开赛上拧出 3.47 秒，成为人类首个在正式比赛中突破 4 秒的单次成绩 —— 这个世界纪录保持了约四年半。', 'In 2018, a Chinese competitor set 3.47 seconds at a domestic open — the first-ever sub-4 single in official competition — a world record that stood for about four and a half years.', "2018 年，一位中國選手在國內公開賽上擰出 3.47 秒，成為人類首個在正式比賽中突破 4 秒的單次成績 —— 這個世界紀錄保持了約四年半。")}</li>
+            <li>{t('史上最年轻的三阶世界纪录保持者之一也来自中国 —— 创造单次纪录时年仅 8 岁；如今的三阶平均世界纪录(3.71 秒)同样由中国选手保持。', 'One of the youngest-ever 3×3 world-record holders is also from China — just 8 years old at the time; the current 3×3 average world record (3.71s) is held by a Chinese competitor too.', "史上最年輕的三階世界紀錄保持者之一也來自中國 —— 創造單次紀錄時年僅 8 歲；如今的三階平均世界紀錄(3.71 秒)同樣由中國選手保持。")}</li>
             <li>{t('正式比赛中第一个把三阶平均成绩拧进 4 秒以内(3.91 秒)的，同样是一位中国选手，也是现任 WCA 三阶世界冠军。', 'The first person to average under 4 seconds in official competition (3.91s) is a Chinese competitor as well — the reigning WCA 3×3 world champion.', "正式比賽中第一個把三階平均成績擰進 4 秒以內(3.91 秒)的，同樣是一位中國選手，也是現任 WCA 三階世界冠軍。")}</li>
             <li>{t('二阶单次世界纪录(0.39 秒)同样出自中国选手之手。', 'The 2×2 single world record (0.39s) is held by a Chinese competitor too.', "二階單次世界紀錄(0.39 秒)同樣出自中國選手之手。")}</li>
             <li>{t('中国队还拿下了 2025 年 WCA 世界锦标赛的国家杯。国内有成熟的赛事与统计组织，比赛遍地开花。', 'China also won the Nations Cup at the 2025 WCA World Championship. The domestic scene has mature event and ranking organizations, with competitions held all over the country.', "中國隊還拿下了 2025 年 WCA 世界錦標賽的國家杯。國內有成熟的賽事與統計組織，比賽遍地開花。")}</li>
@@ -723,10 +675,12 @@ export default function WhyCubePage() {
           title={t('准备好了，就动手试试', 'Ready? Give it a try', "準備好了，就動手試試")}
         >
           <div className="wc-cta-grid">
+            <Link href="/tutorial/cfop-tutorial" className="wc-cta"><GraduationCap size={22} /><span>{t('入门教程', 'Beginner tutorial', "入門教程")}</span><ArrowRight size={16} className="wc-cta-arrow" /></Link>
             <Link href="/alg" className="wc-cta"><BookMarked size={22} /><span>{t('公式库', 'Algorithms', "公式庫")}</span><ArrowRight size={16} className="wc-cta-arrow" /></Link>
             <Link href="/sim" className="wc-cta"><Box size={22} /><span>{t('模拟魔方', 'Cube simulator', "模擬魔方")}</span><ArrowRight size={16} className="wc-cta-arrow" /></Link>
             <Link href="/timer" className="wc-cta"><TimerIcon size={22} /><span>{t('计时器', 'Timer', "計時器")}</span><ArrowRight size={16} className="wc-cta-arrow" /></Link>
             <Link href="/scramble" className="wc-cta"><Shuffle size={22} /><span>{t('打乱', 'Scrambles', "打亂")}</span><ArrowRight size={16} className="wc-cta-arrow" /></Link>
+            <Link href="/wca/comp" className="wc-cta"><MapPin size={22} /><span>{t('找比赛', 'Find a competition', "找比賽")}</span><ArrowRight size={16} className="wc-cta-arrow" /></Link>
             <Link href="/regulation" className="wc-cta"><Scale size={22} /><span>{t('规则图解', 'Regulations', "規則圖解")}</span><ArrowRight size={16} className="wc-cta-arrow" /></Link>
             <Link href="/math" className="wc-cta"><Sigma size={22} /><span>{t('魔方与数学', 'The math', "魔方與數學")}</span><ArrowRight size={16} className="wc-cta-arrow" /></Link>
           </div>
@@ -742,41 +696,23 @@ export default function WhyCubePage() {
           </p>
           <p className="wc-sources">
             <a href="https://www.worldcubeassociation.org/regulations/" target="_blank" rel="noopener noreferrer">WCA Regulations</a>
-            {' · '}
             <a href="https://en.wikipedia.org/wiki/World_Cube_Association" target="_blank" rel="noopener noreferrer">WCA (overview)</a>
-            {' · '}
             <a href="https://en.wikipedia.org/wiki/List_of_world_records_in_speedcubing" target="_blank" rel="noopener noreferrer">Speedcubing world records</a>
-            {' · '}
             <a href="https://www.cube20.org/" target="_blank" rel="noopener noreferrer">God’s Number (cube20.org)</a>
-            {' · '}
             <a href="https://en.wikipedia.org/wiki/Rubik%27s_Cube_group" target="_blank" rel="noopener noreferrer">Rubik’s Cube group</a>
-            {' · '}
             <a href="https://cdn.vanderbilt.edu/t2-my/my-prd/wp-content/uploads/sites/826/2013/02/Wai2009SpatialAbility.pdf" target="_blank" rel="noopener noreferrer">Wai, Lubinski & Benbow 2009</a>
-            {' · '}
             <a href="https://pubmed.ncbi.nlm.nih.gov/23846718/" target="_blank" rel="noopener noreferrer">Kell et al. 2013</a>
-            {' · '}
             <a href="https://groups.psych.northwestern.edu/uttal/vittae/documents/ContentServer.pdf" target="_blank" rel="noopener noreferrer">Uttal et al. 2013 (meta-analysis)</a>
-            {' · '}
             <a href="https://repository.isls.org/handle/1/6719" target="_blank" rel="noopener noreferrer">Valerie et al. (Rubik’s & mental rotation)</a>
-            {' · '}
             <a href="https://www.nature.com/articles/nn988" target="_blank" rel="noopener noreferrer">Maguire et al. 2003</a>
-            {' · '}
             <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5439266/" target="_blank" rel="noopener noreferrer">Dresler et al. 2017</a>
-            {' · '}
             <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9866889/" target="_blank" rel="noopener noreferrer">Meinz et al. 2023</a>
-            {' · '}
             <a href="https://www.who.int/publications/i/item/9789241550536" target="_blank" rel="noopener noreferrer">WHO screen-time guidance (2019)</a>
-            {' · '}
             <a href="https://publications.aap.org/pediatrics/article/138/5/e20162591/60503/Media-and-Young-Minds" target="_blank" rel="noopener noreferrer">AAP: Media and Young Minds</a>
-            {' · '}
-            <a href="https://www.rubiks.com/en-us/blog/you-can-do-the-rubiks-cube" target="_blank" rel="noopener noreferrer">You CAN Do the Rubik’s Cube</a>
-            {' · '}
+            <a href="https://www.youcandothecube.com/" target="_blank" rel="noopener noreferrer">You CAN Do the Rubik’s Cube</a>
             <a href="https://www.edutopia.org/article/using-rubiks-cubes-teach-math/" target="_blank" rel="noopener noreferrer">Edutopia</a>
-            {' · '}
             <a href="https://en.wikipedia.org/wiki/CFOP_method" target="_blank" rel="noopener noreferrer">CFOP method</a>
-            {' · '}
             <a href="https://jperm.net/" target="_blank" rel="noopener noreferrer">J Perm</a>
-            {' · '}
             <a href="https://www.smithsonianmag.com/innovation/brief-history-rubiks-cube-180975911/" target="_blank" rel="noopener noreferrer">Smithsonian (history)</a>
           </p>
         </footer>

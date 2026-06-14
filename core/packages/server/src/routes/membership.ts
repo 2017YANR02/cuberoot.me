@@ -3,14 +3,17 @@
  *
  * 身份沿用 WCA OAuth(wca_id),不建本站账号。按周期一次性付款(月/年/永久)+ 手动续费;
  * 国内个人/聚合支付拿不到自动代扣,故无 auto-renew(见 docs/MEMBERSHIP.md)。
- * 支付走聚合支付「虎皮椒 xunhupay」异步 notify 入账;未配置商户时 admin 仍可手动开通。
+ * 支付多 provider:官方支付宝 / 官方微信支付(有营业执照 + 备案)优先,虎皮椒聚合支付兜底;
+ * 异步 notify 验签后入账;都未配置时 admin 仍可手动开通。渠道可用性由 /plans 的 channels 暴露。
  *
- *   GET    /v1/membership/plans                 — 公开:在售套餐 + payEnabled
+ *   GET    /v1/membership/plans                 — 公开:在售套餐 + payEnabled + channels
  *   GET    /v1/membership/me                    — 登录:本人会员状态
  *   PUT    /v1/membership/me/contact            — 登录:设置续费/找回联系方式
  *   POST   /v1/membership/orders                — 登录:对某套餐下单,返回支付链接/二维码
  *   GET    /v1/membership/orders/:no            — 登录(本人):查单(供前端轮询)
- *   POST   /v1/membership/notify/xunhupay       — 公开 webhook:xunhupay 异步回调入账
+ *   POST   /v1/membership/notify/alipay         — 公开 webhook:官方支付宝异步回调入账
+ *   POST   /v1/membership/notify/wechat         — 公开 webhook:官方微信支付 APIv3 回调入账
+ *   POST   /v1/membership/notify/xunhupay       — 公开 webhook:虎皮椒异步回调入账
  *   POST   /v1/membership/admin/grant           — admin:手动开通/续期
  *   GET    /v1/membership/admin/list            — admin:会员 + 最近订单
  *   DELETE /v1/membership/admin/member/:wcaId   — admin:撤销会员
@@ -21,9 +24,12 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { createHash, randomUUID } from 'node:crypto';
+import QRCode from 'qrcode';
 import { query } from '../db/connection.js';
 import { requireAuth, requireAdmin, checkRateLimit } from '../utils/recon_helpers.js';
 import { signXunhupay, verifyXunhupaySign, type SignParams } from '@cuberoot/shared/payment';
+import * as alipay from '../payment/alipay.js';
+import * as wechat from '../payment/wechat.js';
 
 export const membershipRoutes = new Hono();
 
@@ -46,7 +52,22 @@ const XHP_WECHAT: XhpCreds | null = process.env.XUNHUPAY_WECHAT_APPID
 const XHP_ALIPAY: XhpCreds | null = process.env.XUNHUPAY_ALIPAY_APPID
   ? { appid: process.env.XUNHUPAY_ALIPAY_APPID, secret: process.env.XUNHUPAY_ALIPAY_APPSECRET || '' } : null;
 
-const paymentConfigured = () => Boolean(XHP_PRIMARY.appid && XHP_PRIMARY.secret);
+const xunhupayConfigured = () => Boolean(XHP_PRIMARY.appid && XHP_PRIMARY.secret);
+
+// 一个渠道下单走哪个 provider:官方优先(支付宝 → alipay,微信 → wechat),否则虎皮椒兜底,都没配则 null。
+type Provider = 'alipay' | 'wechat' | 'xunhupay';
+function providerForChannel(channel: 'alipay' | 'wechat'): Provider | null {
+  if (channel === 'alipay' && alipay.alipayConfigured()) return 'alipay';
+  if (channel === 'wechat' && wechat.wechatConfigured()) return 'wechat';
+  if (xunhupayConfigured()) return 'xunhupay';
+  return null;
+}
+// 前端据此只显示可用渠道按钮。
+function channelAvailability() {
+  return { alipay: providerForChannel('alipay') != null, wechat: providerForChannel('wechat') != null };
+}
+const paymentConfigured = () =>
+  alipay.alipayConfigured() || wechat.wechatConfigured() || xunhupayConfigured();
 
 function credsFor(channel: string): XhpCreds {
   if (channel === 'wechat' && XHP_WECHAT?.appid) return XHP_WECHAT;
@@ -211,7 +232,7 @@ membershipRoutes.get('/membership/plans', async (c) => {
     `SELECT slug, name_zh, name_en, period, period_count, price_cents, currency, perks, sort
        FROM membership_plans WHERE active = TRUE ORDER BY sort, price_cents`,
   );
-  return c.json({ plans: rows.map(planToJson), payEnabled: paymentConfigured() });
+  return c.json({ plans: rows.map(planToJson), payEnabled: paymentConfigured(), channels: channelAvailability() });
 });
 
 // ─────────────────────────── 登录:本人状态 ───────────────────────────
@@ -250,7 +271,7 @@ membershipRoutes.post('/membership/orders', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   const user = await requireAuth(c);
-  const b = await c.req.json<{ plan?: string; channel?: string }>();
+  const b = await c.req.json<{ plan?: string; channel?: string; clientType?: string }>();
 
   const planSlug = String(b.plan || '');
   if (!PLAN_SLUG_RE.test(planSlug)) return c.json({ error: 'invalid plan' }, 400);
@@ -264,33 +285,78 @@ membershipRoutes.post('/membership/orders', async (c) => {
     return c.json({ error: 'already lifetime member' }, 409);
   }
 
-  if (!paymentConfigured()) {
-    // 商户未配置:不下单,提示走打赏 + 联系站长手动开通。
+  const channel: 'alipay' | 'wechat' = b.channel === 'wechat' ? 'wechat' : 'alipay';
+  const clientType: 'pc' | 'wap' = b.clientType === 'wap' ? 'wap' : 'pc';
+  const provider = providerForChannel(channel);
+  if (!provider) {
+    // 该渠道未配置(官方/虎皮椒都没开):不下单,提示走打赏 + 联系站长手动开通。
     return c.json({ error: 'payment not configured', payEnabled: false }, 503);
   }
 
-  const channel = b.channel === 'wechat' ? 'wechat' : 'alipay';
   const outTradeNo = genOutTradeNo();
   await query(
     `INSERT INTO membership_orders (out_trade_no, wca_id, name, plan_slug, amount_cents, currency, provider, pay_channel, status)
-     VALUES (?, ?, ?, ?, ?, ?, 'xunhupay', ?, 'pending')`,
-    [outTradeNo, user.wcaId, user.name, plan.slug, plan.price_cents, plan.currency, channel],
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+    [outTradeNo, user.wcaId, user.name, plan.slug, plan.price_cents, plan.currency, provider, channel],
   );
 
   try {
-    const pay = await createXunhupayOrder({
-      outTradeNo,
-      amountCents: plan.price_cents,
-      title: `CubeRoot ${plan.name_zh}`,
-      channel,
-    });
-    return c.json({ outTradeNo, channel, ...pay });
+    const pay = await createPaymentOrder({ provider, channel, clientType, outTradeNo, plan, ip: getIp(c) });
+    return c.json({ outTradeNo, channel, provider, ...pay });
   } catch (e) {
     await query(`UPDATE membership_orders SET status = 'failed' WHERE out_trade_no = ?`, [outTradeNo]);
-    console.error('[membership] createXunhupayOrder failed:', e);
+    console.error(`[membership] create order (${provider}/${channel}) failed:`, e);
     return c.json({ error: 'failed to create payment order' }, 502);
   }
 });
+
+// 按 provider 派发下单。返回 { url?, qrcode? }:
+//   - 支付宝官方:收银台 GET url(PC 新窗口打开 + 轮询,移动端直接跳转);
+//   - 微信官方:PC 走 Native(code_url → 服务端生成二维码 PNG data-url),移动端走 H5(h5_url);
+//   - 虎皮椒:收银台 url + 二维码图 url。
+async function createPaymentOrder(opts: {
+  provider: Provider;
+  channel: 'alipay' | 'wechat';
+  clientType: 'pc' | 'wap';
+  outTradeNo: string;
+  plan: PlanRow;
+  ip: string;
+}): Promise<{ url?: string; qrcode?: string }> {
+  const title = `CubeRoot ${opts.plan.name_zh}`;
+  const notifyBase = `${PUBLIC_API_ORIGIN}/v1/membership/notify`;
+  const returnUrl = `${SITE_ORIGIN}/membership?paid=${opts.outTradeNo}`;
+
+  if (opts.provider === 'alipay') {
+    const url = alipay.createAlipayCheckoutUrl({
+      outTradeNo: opts.outTradeNo,
+      amountCents: opts.plan.price_cents,
+      subject: title,
+      clientType: opts.clientType,
+      notifyUrl: `${notifyBase}/alipay`,
+      returnUrl,
+    });
+    return { url };
+  }
+
+  if (opts.provider === 'wechat') {
+    if (opts.clientType === 'wap') {
+      const url = await wechat.createWechatH5({
+        outTradeNo: opts.outTradeNo, amountCents: opts.plan.price_cents,
+        description: title, notifyUrl: `${notifyBase}/wechat`, payerClientIp: opts.ip,
+      });
+      return { url };
+    }
+    const codeUrl = await wechat.createWechatNative({
+      outTradeNo: opts.outTradeNo, amountCents: opts.plan.price_cents,
+      description: title, notifyUrl: `${notifyBase}/wechat`,
+    });
+    const qrcode = await QRCode.toDataURL(codeUrl, { margin: 1, width: 240 });
+    return { qrcode };
+  }
+
+  // xunhupay
+  return createXunhupayOrder({ outTradeNo: opts.outTradeNo, amountCents: opts.plan.price_cents, title, channel: opts.channel });
+}
 
 // 查单(本人):前端轮询;仍 pending 且商户已配置时主动向 xunhupay 查一次补偿。
 membershipRoutes.get('/membership/orders/:no', async (c) => {
@@ -303,7 +369,10 @@ membershipRoutes.get('/membership/orders/:no', async (c) => {
 
   if (order.status === 'pending' && paymentConfigured()) {
     try {
-      const remote = await queryXunhupayOrder(no, order.pay_channel || 'alipay');
+      const remote =
+        order.provider === 'alipay' ? await alipay.queryAlipayTrade(no)
+        : order.provider === 'wechat' ? await wechat.queryWechatOrder(no)
+        : await queryXunhupayOrder(no, order.pay_channel || 'alipay');
       if (remote?.paid) {
         await settlePaidOrder(no, { provider_txn: remote.txn, raw: remote.raw });
         const fresh = await query<OrderRow>('SELECT * FROM membership_orders WHERE out_trade_no = ?', [no]);
@@ -322,12 +391,12 @@ membershipRoutes.post('/membership/notify/xunhupay', async (c) => {
   const params = await readNotifyParams(c);
 
   // 未配置商户 → 一律拒绝入账(防止空 secret 下被伪造请求白嫖会员)。
-  if (!paymentConfigured()) {
-    console.error('[membership] notify received but payment not configured — rejecting');
+  if (!xunhupayConfigured()) {
+    console.error('[membership] xunhupay notify received but not configured — rejecting');
     return c.text('fail');
   }
   if (!verifyXunhupaySign(params, secretForAppid(params.appid ? String(params.appid) : undefined), md5)) {
-    console.error('[membership] notify bad signature');
+    console.error('[membership] xunhupay notify bad signature');
     return c.text('fail');
   }
 
@@ -343,6 +412,57 @@ membershipRoutes.post('/membership/notify/xunhupay', async (c) => {
   }
   // xunhupay 要求回 success 字面量,否则最多重试 6 次。
   return c.text('success');
+});
+
+// ─────────────── 公开 webhook:官方支付宝异步通知(form-encoded;RSA2 验签)───────────────
+membershipRoutes.post('/membership/notify/alipay', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const params = await readNotifyParams(c);
+
+  if (!alipay.alipayConfigured()) {
+    console.error('[membership] alipay notify received but not configured — rejecting');
+    return c.text('fail');
+  }
+  if (!alipay.verifyAlipayNotify(params)) {
+    console.error('[membership] alipay notify bad signature');
+    return c.text('fail');
+  }
+
+  const outTradeNo = String(params.out_trade_no || '');
+  const status = String(params.trade_status || '').toUpperCase();
+  const paid = status === 'TRADE_SUCCESS' || status === 'TRADE_FINISHED';
+  if (!outTradeNo) return c.text('fail');
+
+  if (paid) {
+    await settlePaidOrder(outTradeNo, { provider_txn: String(params.trade_no || ''), raw: params });
+  }
+  // 支付宝要求回字面量 success,否则按策略重试。
+  return c.text('success');
+});
+
+// ─────────────── 公开 webhook:官方微信支付 APIv3 回调(JSON;GCM 解密入账)───────────────
+membershipRoutes.post('/membership/notify/wechat', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const rawBody = await c.req.text();
+
+  if (!wechat.wechatConfigured()) {
+    console.error('[membership] wechat notify received but not configured — rejecting');
+    return c.json({ code: 'FAIL', message: 'not configured' }, 500);
+  }
+  const result = wechat.handleWechatCallback(rawBody, {
+    timestamp: c.req.header('Wechatpay-Timestamp'),
+    nonce: c.req.header('Wechatpay-Nonce'),
+    signature: c.req.header('Wechatpay-Signature'),
+  });
+  if (!result.ok) {
+    console.error('[membership] wechat callback verify/decrypt failed');
+    return c.json({ code: 'FAIL', message: 'verify failed' }, 401);
+  }
+  if (result.paid && result.outTradeNo) {
+    await settlePaidOrder(result.outTradeNo, { provider_txn: result.txn, raw: result.raw });
+  }
+  // 微信要求 2xx + {code:'SUCCESS'},否则会重试。
+  return c.json({ code: 'SUCCESS' });
 });
 
 /**

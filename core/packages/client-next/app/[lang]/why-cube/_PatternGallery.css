@@ -1,0 +1,62 @@
+/* ─── /why-cube animated pattern gallery ────────────────────── */
+
+.wc-gallery {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.wc-gallery-stage {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 14px 34px color-mix(in srgb, var(--accent) 16%, transparent));
+}
+.wc-gallery-stage .twisty-section { width: 100%; }
+
+.wc-gallery-names {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.wc-gallery-name {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 7px 15px;
+  border-radius: 999px;
+  border: 1px solid var(--border-default);
+  background: var(--card);
+  color: var(--muted-foreground);
+  transition: color .14s, border-color .14s, background .14s;
+}
+.wc-gallery-name:hover {
+  color: var(--foreground);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-default));
+}
+.wc-gallery-name.is-active {
+  color: var(--accent-foreground);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.wc-gallery-hint {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--faint-foreground);
+  text-align: center;
+  max-width: 52ch;
+}
+
+@media (max-width: 600px) {
+  .wc-gallery-stage { max-width: 270px; }
+  .wc-gallery-name { font-size: 13px; padding: 7px 13px; }
+}

@@ -1,0 +1,49 @@
+/* 共享比赛关注星标 — 登录用户在比赛卡片 / chip 上「盯一下」。双主题走 :root token。 */
+.follow-star {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--faint-foreground);
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.follow-star:hover { color: var(--accent); }
+.follow-star.is-on { color: var(--accent); }
+
+/* 卡片角标(公示 / 报名)— 浮在卡片右上角,在 Link 之外(避免锚点里嵌按钮) */
+.follow-star--corner {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  z-index: 1;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 8px;
+}
+.follow-star--corner:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+/* chip 行内尾星(当前 / 未来 / 往期)— 做小做淡,已关注才高亮,不抢密集列表的视线 */
+.follow-star--chip {
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 6px;
+}
+
+/* 随文流的中号星(比赛模态标题 / 详情页标题)— 跟在比赛名后,直接点击关注/取消 */
+.follow-star--inline {
+  flex: none;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 8px;
+  vertical-align: middle;
+}
+.follow-star--inline:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}

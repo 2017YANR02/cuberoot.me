@@ -38,8 +38,15 @@ export interface Membership {
 export interface OrderInfo {
   outTradeNo: string;
   channel: string;
-  url?: string;     // 手机端跳转收银台(自动判微信/H5)
-  qrcode?: string;  // PC 扫码图(5 分钟有效)
+  provider?: string; // 'alipay' | 'wechat' | 'xunhupay'
+  url?: string;      // 收银台跳转链接(支付宝 / 微信 H5 / 虎皮椒手机端)
+  qrcode?: string;   // 扫码图(微信 Native code_url 转 PNG / 虎皮椒二维码图)
+}
+
+// 渠道可用性:某渠道官方或虎皮椒任一配置了即 true,前端据此显隐按钮。
+export interface PayChannels {
+  alipay: boolean;
+  wechat: boolean;
 }
 
 export interface AdminOrder {
@@ -55,7 +62,7 @@ export interface AdminOrder {
   paidAt: string | null;
 }
 
-export async function listPlans(): Promise<{ plans: MembershipPlan[]; payEnabled: boolean }> {
+export async function listPlans(): Promise<{ plans: MembershipPlan[]; payEnabled: boolean; channels?: PayChannels }> {
   return handleApi(await fetch(`${BASE}/plans`));
 }
 
@@ -67,8 +74,8 @@ export async function setMyContact(body: { contact: string | null; contactKind: 
   return handleApi(await fetch(`${BASE}/me/contact`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }));
 }
 
-export async function createOrder(plan: string, channel: 'alipay' | 'wechat'): Promise<OrderInfo> {
-  return handleApi(await fetch(`${BASE}/orders`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ plan, channel }) }));
+export async function createOrder(plan: string, channel: 'alipay' | 'wechat', clientType: 'pc' | 'wap'): Promise<OrderInfo> {
+  return handleApi(await fetch(`${BASE}/orders`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ plan, channel, clientType }) }));
 }
 
 export async function getOrderStatus(outTradeNo: string): Promise<{ status: string; planSlug: string; payChannel: string | null }> {

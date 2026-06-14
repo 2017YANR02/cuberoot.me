@@ -1,0 +1,206 @@
+.speedfeel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* big touch target */
+.speedfeel__pad {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 200px;
+  padding: 28px 20px;
+  border-radius: 20px;
+  border: 2px solid var(--border-default);
+  background: var(--card);
+  color: var(--foreground);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.speedfeel__pad:hover {
+  border-color: var(--border-strong);
+}
+
+.speedfeel__pad:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.speedfeel__pad[data-phase='running'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.speedfeel__pad[data-phase='done'] {
+  border-color: var(--accent);
+}
+
+.speedfeel__padlabel {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 8px;
+  font-size: 0.95rem;
+  color: var(--muted-foreground);
+}
+.speedfeel__kbd {
+  font-size: 0.72rem;
+  color: var(--faint-foreground);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 1px 7px;
+}
+
+.speedfeel__time {
+  font-family: var(--font-mono);
+  font-size: clamp(3.4rem, 16vw, 5.5rem);
+  line-height: 1.05;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+
+.speedfeel__pad[data-phase='running'] .speedfeel__time,
+.speedfeel__pad[data-phase='done'] .speedfeel__time {
+  color: var(--accent);
+}
+
+.speedfeel__unit {
+  font-size: 0.85rem;
+  color: var(--faint-foreground);
+}
+
+/* result */
+.speedfeel__result {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.speedfeel__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.speedfeel__row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.speedfeel__rowhead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.speedfeel__rowlabel {
+  font-size: 0.9rem;
+  color: var(--foreground);
+}
+
+.speedfeel__row[data-mine] .speedfeel__rowlabel {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.speedfeel__rowval {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+.speedfeel__track {
+  width: 100%;
+  height: 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  overflow: hidden;
+}
+
+.speedfeel__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 28%, transparent);
+  transition: width 0.35s ease;
+}
+
+.speedfeel__row[data-mine] .speedfeel__fill {
+  background: var(--accent);
+}
+
+.speedfeel__note {
+  font-size: 0.78rem;
+  color: var(--faint-foreground);
+}
+
+.speedfeel__takeaway {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--foreground);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.speedfeel__again {
+  appearance: none;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border-default);
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.12s ease;
+}
+
+.speedfeel__again:hover {
+  border-color: var(--border-strong);
+}
+
+.speedfeel__again:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .speedfeel__pad,
+  .speedfeel__fill,
+  .speedfeel__again {
+    transition: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .speedfeel__pad {
+    min-height: 168px;
+    padding: 22px 14px;
+    border-radius: 16px;
+  }
+  .speedfeel__rowhead {
+    flex-wrap: wrap;
+  }
+}

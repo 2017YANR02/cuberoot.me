@@ -11,6 +11,7 @@ import { useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Mars, Venus, Rewind, IdCard, FileText, LogOut } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
+import FollowedComps from '@/components/FollowedComps';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/name-utils';
 import { countryName } from '@/lib/country-name';
@@ -112,6 +113,8 @@ export default function PersonHubClient() {
           </AppLink>
         ))}
       </nav>
+
+      <FollowedComps wcaId={wcaId} isZh={isZh} lang={isZh ? 'zh' : 'en'} />
     </div>
   );
 }

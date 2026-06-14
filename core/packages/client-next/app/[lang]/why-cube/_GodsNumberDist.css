@@ -1,0 +1,293 @@
+/* B2 — 上帝之数步数分布直方图 / God's Number distance distribution.
+   Log-scale histogram, theme tokens only, accent = warm orange highlight. */
+
+.gnd {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 872px;
+}
+
+.gnd-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- lede ---- */
+.gnd-lede {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+}
+
+/* ---- live readout ---- */
+.gnd-readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  /* Reserve more than the tallest content (the selected readout's 1.15rem
+     number runs ~57px) so min-height is ALWAYS the binding constraint — the
+     box height then never tracks content, killing the 1px hint↔selected jitter
+     that rippled into the chart below. */
+  min-height: 4em;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border: 1px solid var(--border-default);
+}
+
+.gnd-readout-hint {
+  color: var(--faint-foreground);
+  font-size: 0.9rem;
+}
+
+.gnd-readout-d {
+  font-size: 0.92rem;
+  color: var(--muted-foreground);
+}
+.gnd-readout-d .gnd-num {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.gnd-readout-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 1.05rem;
+  color: var(--foreground);
+  word-break: break-word;
+}
+.gnd-readout-count .gnd-num {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.gnd-approx {
+  color: var(--accent);
+  font-weight: 700;
+}
+.gnd-readout-unit {
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+}
+
+.gnd-readout-tag {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+.gnd-readout-tag.is-est {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ---- chart ---- */
+.gnd-chart {
+  display: grid;
+  grid-template-columns: repeat(21, 1fr);
+  align-items: end;
+  gap: 3px;
+  height: 240px;
+  padding: 0;
+}
+
+.gnd-bar-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.gnd-bar-cell:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.gnd-bar-track {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: flex-end;
+  min-height: 0;
+}
+
+.gnd-bar-fill {
+  display: block;
+  width: 100%;
+  min-height: 3px; /* keep even the d=0 bar (log10(1)=0) visible & tappable */
+  border-radius: 4px 4px 0 0;
+  background: color-mix(in srgb, var(--accent) 32%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border-default));
+  transition: height 720ms cubic-bezier(0.22, 1, 0.36, 1), background 160ms ease, border-color 160ms ease;
+}
+
+/* estimates: lighter / dashed-edge treatment */
+.gnd-bar-cell.is-est .gnd-bar-fill {
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--accent) 22%, var(--card)),
+    color-mix(in srgb, var(--accent) 22%, var(--card)) 4px,
+    color-mix(in srgb, var(--accent) 10%, var(--card)) 4px,
+    color-mix(in srgb, var(--accent) 10%, var(--card)) 8px
+  );
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border-default));
+}
+
+/* God's Number bar — full accent emphasis */
+.gnd-bar-cell.is-god .gnd-bar-fill {
+  background: var(--accent);
+  border-color: var(--accent);
+  border-style: solid;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent),
+    0 4px 16px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.gnd-bar-cell:hover .gnd-bar-fill,
+.gnd-bar-cell.is-active .gnd-bar-fill {
+  background: color-mix(in srgb, var(--accent) 62%, var(--card));
+  border-color: var(--accent);
+}
+.gnd-bar-cell.is-god:hover .gnd-bar-fill,
+.gnd-bar-cell.is-god.is-active .gnd-bar-fill {
+  background: color-mix(in srgb, var(--accent) 88%, white);
+}
+
+.gnd-bar-x {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 0.66rem;
+  line-height: 1;
+  color: var(--muted-foreground);
+}
+.gnd-bar-cell.is-god .gnd-bar-x {
+  color: var(--accent);
+  font-weight: 700;
+}
+.gnd-bar-cell:hover .gnd-bar-x,
+.gnd-bar-cell.is-active .gnd-bar-x {
+  color: var(--foreground);
+}
+
+/* ---- axis label ---- */
+.gnd-axis-label {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--faint-foreground);
+  margin-top: -8px;
+}
+
+/* ---- god line callout ---- */
+.gnd-godline {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border-default));
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--foreground);
+}
+.gnd-godline-dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  margin-top: 0.45em;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.gnd-godline-sub {
+  color: var(--muted-foreground);
+}
+
+/* ---- legend ---- */
+.gnd-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+}
+.gnd-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.gnd-legend-swatch {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 32%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border-default));
+}
+.gnd-legend-swatch.is-est {
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--accent) 22%, var(--card)),
+    color-mix(in srgb, var(--accent) 22%, var(--card)) 3px,
+    color-mix(in srgb, var(--accent) 10%, var(--card)) 3px,
+    color-mix(in srgb, var(--accent) 10%, var(--card)) 6px
+  );
+  border-style: dashed;
+}
+
+/* ---- footnote ---- */
+.gnd-foot {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--faint-foreground);
+}
+
+/* ---- narrow screens ---- */
+@media (max-width: 480px) {
+  .gnd {
+    gap: 14px;
+  }
+  .gnd-chart {
+    height: 180px;
+    gap: 2px;
+  }
+  .gnd-bar-x {
+    font-size: 0.56rem;
+  }
+  .gnd-bar-fill {
+    border-radius: 3px 3px 0 0;
+  }
+  .gnd-readout {
+    padding: 10px 12px;
+  }
+  .gnd-readout-count {
+    font-size: 0.95rem;
+  }
+  .gnd-lede {
+    font-size: 0.92rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gnd-bar-fill {
+    transition: background 160ms ease, border-color 160ms ease;
+  }
+}

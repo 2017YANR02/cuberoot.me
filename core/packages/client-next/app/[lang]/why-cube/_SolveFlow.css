@@ -1,0 +1,74 @@
+/* ─── /why-cube animated solve-flow band ────────────────────── */
+
+.wc-solveflow {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) 1fr;
+  gap: 24px;
+  align-items: center;
+  margin: 8px 0 30px;
+  padding: 24px 22px;
+  border: 1px solid var(--border-default);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--accent) 4%, var(--card));
+}
+
+.wc-solveflow-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+.wc-solveflow-stage .twisty-section { width: 100%; }
+
+.wc-solveflow-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.wc-solveflow-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.wc-solveflow-note svg { flex-shrink: 0; }
+
+.wc-solveflow-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.wc-solveflow-num {
+  font-family: var(--font-mono);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.wc-solveflow-unit {
+  font-size: 16px;
+  color: var(--muted-foreground);
+}
+.wc-solveflow-cap {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+  max-width: 46ch;
+}
+
+@media (max-width: 700px) {
+  .wc-solveflow {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px 16px;
+  }
+  .wc-solveflow-side { align-items: center; text-align: center; }
+  .wc-solveflow-note { justify-content: center; }
+  .wc-solveflow-cap { max-width: none; }
+}

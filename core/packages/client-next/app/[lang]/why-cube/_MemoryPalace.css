@@ -1,0 +1,445 @@
+/* C1 — 盲拧记忆宫殿演示. Self-contained widget styles. Chrome uses theme tokens;
+   only the cube stickers may use the canonical WCA face colors (set inline). */
+
+.mp-root {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 56rem;
+  margin-inline: auto;
+}
+
+/* ---- stepper header ---- */
+.mp-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.mp-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mp-dot {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.mp-dot-mark {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  border: 1.5px solid var(--border-default);
+  color: var(--muted-foreground);
+  background: var(--card);
+  transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.mp-dot[data-state='active'] .mp-dot-mark {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--card);
+}
+
+.mp-dot[data-state='done'] .mp-dot-mark {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.mp-dot-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mp-dot[data-state='active'] .mp-dot-label {
+  color: var(--foreground);
+}
+
+.mp-dot-line {
+  flex: 1 1 12px;
+  min-width: 8px;
+  height: 1.5px;
+  background: var(--border-default);
+  border-radius: 999px;
+}
+
+.mp-dot-line[data-done='true'] {
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+/* hide intermediate labels on narrow screens, keep marks */
+@media (max-width: 560px) {
+  .mp-dot-label {
+    display: none;
+  }
+  .mp-dot[data-state='active'] .mp-dot-label {
+    display: inline;
+  }
+}
+
+.mp-play {
+  flex: none;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--border-default);
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.mp-play:hover {
+  border-color: var(--border-strong);
+  color: var(--foreground);
+}
+
+/* ---- stage card ---- */
+.mp-stage {
+  border-radius: 1.1rem;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  padding: clamp(1.25rem, 4vw, 2.25rem);
+  min-height: 19rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: clamp(1.25rem, 4vw, 2.5rem);
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .mp-stage {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+}
+
+.mp-stage-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.mp-eyebrow {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.mp-title {
+  font-size: clamp(1.15rem, 3vw, 1.5rem);
+  font-weight: 650;
+  color: var(--foreground);
+  line-height: 1.25;
+}
+
+.mp-desc {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+
+.mp-desc b {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.mp-stage-visual {
+  display: grid;
+  place-items: center;
+  min-height: 12rem;
+  min-width: 0;
+}
+
+/* gentle enter animation, replayed per step via key */
+.mp-anim {
+  animation: mp-rise 0.5s ease both;
+}
+
+@keyframes mp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.mp-reduced .mp-anim,
+.mp-reduced .mp-fade,
+.mp-reduced .mp-stop {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* ---- schematic cube grid ---- */
+.mp-cube {
+  position: relative;
+  width: min(13.5rem, 70vw);
+  aspect-ratio: 1;
+}
+
+.mp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 0.45rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.55rem;
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--foreground) 9%, transparent);
+}
+
+.mp-cell {
+  position: relative;
+  border-radius: 0.4rem;
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 14%, transparent);
+}
+
+.mp-letter {
+  font-size: clamp(0.85rem, 4vw, 1.15rem);
+  font-weight: 700;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  opacity: 0;
+}
+
+.mp-cube[data-lettered='true'] .mp-letter {
+  animation: mp-pop 0.45s ease both;
+}
+
+.mp-cube[data-lettered='true'] .mp-letter:nth-child(1) { animation-delay: 0.05s; }
+
+@keyframes mp-pop {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+
+/* blindfold overlay */
+.mp-blindfold {
+  position: absolute;
+  inset: -0.35rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--foreground) 88%, #000);
+  display: grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--card) 85%, transparent);
+  animation: mp-veil 0.55s ease both;
+}
+
+@keyframes mp-veil {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mp-blindfold-icon {
+  opacity: 0.8;
+}
+
+/* solved flash */
+.mp-solved-tag {
+  position: absolute;
+  bottom: -0.4rem;
+  left: 50%;
+  transform: translate(-50%, 100%);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* ---- encode pairs ---- */
+.mp-pairs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  width: 100%;
+}
+
+.mp-pair {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border: 1px solid var(--border-default);
+}
+
+.mp-pair-letters {
+  display: flex;
+  gap: 0.3rem;
+  flex: none;
+}
+
+.mp-chip {
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 0.45rem;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 700;
+  font-size: 0.85rem;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 14%, transparent);
+}
+
+.mp-pair-arrow {
+  flex: none;
+  color: var(--faint-foreground);
+}
+
+.mp-pair-word {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--foreground);
+  min-width: 0;
+}
+
+.mp-pair-word small {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+
+/* ---- journey stops ---- */
+.mp-journey {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.mp-stop {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.mp-stop-node {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mp-stop-bead {
+  width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 999px;
+  border: 2px solid var(--accent);
+  background: var(--card);
+}
+
+.mp-stop-rail {
+  width: 2px;
+  height: 1.4rem;
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.mp-stop-body {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding-bottom: 0.35rem;
+  min-width: 0;
+}
+
+.mp-stop-place {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  flex: none;
+}
+
+.mp-stop-word {
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--foreground);
+}
+
+.mp-stagger {
+  opacity: 0;
+  animation: mp-rise 0.45s ease both;
+}
+
+/* ---- footer nav ---- */
+.mp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mp-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.15rem;
+  border-radius: 0.8rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 2.9rem;
+  border: 1px solid var(--border-default);
+  background: var(--card);
+  color: var(--foreground);
+  transition: border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+}
+
+.mp-btn:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+
+.mp-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.mp-btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--card);
+}
+
+.mp-btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 88%, var(--foreground));
+  border-color: color-mix(in srgb, var(--accent) 88%, var(--foreground));
+}

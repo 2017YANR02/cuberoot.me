@@ -129,6 +129,7 @@ export interface WcaScrambleRow {
   is_extra: boolean;
   scramble_num: number;
   scramble: string;
+  optimal_scramble?: string | null; // God's-number 最短等态打乱(同态项目 333/oh/ft/fm 才有,见 wca_scramble_optimal)
 }
 
 const scrambleCache = new Map<string, Promise<WcaScrambleRow[] | null>>();

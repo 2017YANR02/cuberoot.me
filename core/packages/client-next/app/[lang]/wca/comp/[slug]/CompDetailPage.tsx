@@ -39,6 +39,7 @@ import { useWcaLiveStream, type WcaLiveRoundUpdate } from '@/hooks/useWcaLiveStr
 import ScheduleView, { ScheduleControls } from './ScheduleView';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import LangToggle from '@/components/LangToggle';
+import { useCompFollows, FollowStar } from '@/components/CompFollow';
 import '../comp.css';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
@@ -514,6 +515,9 @@ export default function CompDetailPage() {
   const isZh = i18n.language.startsWith('zh');
   const user = useAuthStore(s => s.user);
   const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
+  const login = useAuthStore(s => s.login);
+  // 比赛关注「盯一下」— 与首页 / 比赛列表共用同一份 server 关注集合
+  const { loggedIn: followLoggedIn, follows, toggle: toggleFollow } = useCompFollows();
 
   // URL 状态走 nuqs。导航型(项目 / 轮次 / 视图 / 预排名多选)默认 push,后退可逐步返回;
   // 筛选 / 赛程布局 / 数据源覆盖是过滤/子开关,走 replace 不堆历史。多键联动(项目+轮次)
@@ -599,6 +603,14 @@ export default function CompDetailPage() {
     return () => { cancel = true; };
   }, [slug, isZh, compInfo]);
 
+  // 记入"最近浏览":带上实时解析的中文名(cubingZh.nameZh)和国家 iso2(compInfo),这样比赛页的
+  // 最近浏览不依赖日更的 comp_names_zh.json / comp_countries.json 也能显示新比赛中文名 + 国旗。
+  // cubingZh / compInfo 异步到达时再补写(rememberRecent 缺省值会保留旧记录)。
+  useEffect(() => {
+    if (!data) return;
+    rememberRecent(data.slug, data.name, cubingZh?.nameZh ?? undefined, compInfo?.country_iso2 ?? undefined);
+  }, [data, cubingZh, compInfo]);
+
   // URL 用数字轮号(1,2,3,4),内部仍以 round_type_id 当 key。读时数字→round_type_id,
   // 并兼容老的字母 round_type_id 直链(?round=d 等)。
   const roundParam = useMemo(() => {
@@ -671,7 +683,6 @@ export default function CompDetailPage() {
     const finishWith = (j: CompData, partial = false) => {
       if (done) return;
       setData(j);
-      rememberRecent(j.slug, j.name);
       setProgress(null);
       resolveOnce();
       if (partial) return;
@@ -1257,6 +1268,14 @@ export default function CompDetailPage() {
                   >
                     {nameCopied ? <Check size={16} /> : <Copy size={15} />}
                   </button>
+                  <FollowStar
+                    variant="inline"
+                    compId={slug}
+                    followed={follows.has(slug)}
+                    onToggle={toggleFollow}
+                    loggedIn={followLoggedIn}
+                    onRequireLogin={login}
+                  />
                 </>
               );
             })()}
