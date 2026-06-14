@@ -1,0 +1,159 @@
+/* 桌宠反馈弹窗。全局浮层 → 走 :root token,自动 light/dark。 */
+.fb-overlay {
+  position: fixed; inset: 0; z-index: 100030; /* 高于桌宠搜索浮层 (100010) */
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--foreground) 38%, transparent);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+
+.fb-modal {
+  position: relative;
+  width: min(560px, 94vw);
+  max-height: 88dvh; overflow-y: auto;
+  background: var(--popover);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  padding: 22px 22px 20px;
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--foreground) 22%, transparent);
+}
+
+.fb-close {
+  position: absolute; top: 12px; right: 12px;
+  display: flex; border: 0; cursor: pointer;
+  padding: 6px; border-radius: 8px;
+  background: transparent; color: var(--muted-foreground);
+  transition: background .15s, color .15s;
+}
+.fb-close:hover { background: color-mix(in srgb, var(--foreground) 9%, transparent); color: var(--foreground); }
+.fb-close:disabled { opacity: .4; cursor: default; }
+
+.fb-title {
+  margin: 0 0 14px; font-size: 18px; font-weight: 650; color: var(--foreground);
+}
+
+/* 类型 chips(≤4 项,左右对比) */
+.fb-kinds { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.fb-kind {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border-radius: 9px; cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  border: 1px solid transparent; color: var(--muted-foreground);
+  transition: background .15s, color .15s, border-color .15s;
+}
+.fb-kind:hover { background: color-mix(in srgb, var(--foreground) 10%, transparent); color: var(--foreground); }
+.fb-kind.is-active {
+  background: var(--accent-soft); color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.fb-textarea {
+  width: 100%; box-sizing: border-box;
+  min-height: 108px; resize: vertical;
+  padding: 11px 12px; border-radius: 10px;
+  font: inherit; font-size: 14px; line-height: 1.5;
+  background: var(--background); color: var(--foreground);
+  border: 1px solid var(--input);
+  transition: border-color .15s, box-shadow .15s;
+}
+.fb-textarea:focus {
+  outline: none; border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 22%, transparent);
+}
+.fb-textarea::placeholder { color: var(--faint-foreground); }
+
+.fb-contact {
+  width: 100%; box-sizing: border-box; margin-top: 10px;
+  padding: 9px 12px; border-radius: 10px;
+  font: inherit; font-size: 13px;
+  background: var(--background); color: var(--foreground);
+  border: 1px solid var(--input);
+  transition: border-color .15s, box-shadow .15s;
+}
+.fb-contact:focus {
+  outline: none; border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 22%, transparent);
+}
+.fb-contact::placeholder { color: var(--faint-foreground); }
+
+/* 附件缩略图 */
+.fb-attachments { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.fb-thumb {
+  position: relative; width: 76px; height: 76px;
+  border-radius: 9px; overflow: hidden;
+  border: 1px solid var(--border-default);
+  background: var(--muted);
+}
+.fb-thumb img, .fb-thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fb-thumb-x {
+  position: absolute; top: 3px; right: 3px;
+  display: flex; padding: 3px; border: 0; cursor: pointer;
+  border-radius: 6px; color: #fff;
+  background: color-mix(in srgb, #000 55%, transparent);
+}
+.fb-thumb-x:hover { background: var(--destructive); }
+.fb-thumb-dur {
+  position: absolute; left: 4px; bottom: 4px;
+  padding: 1px 5px; border-radius: 5px;
+  font-size: 11px; color: #fff;
+  background: color-mix(in srgb, #000 55%, transparent);
+}
+
+/* 添加附件 + 提示 */
+.fb-add-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.fb-add {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  padding: 7px 12px; border-radius: 9px;
+  font-size: 13px; color: var(--muted-foreground);
+  border: 1px dashed var(--border-strong);
+  background: transparent; transition: background .15s, color .15s, border-color .15s;
+}
+.fb-add:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); color: var(--foreground); border-color: var(--accent); }
+.fb-add.is-disabled { opacity: .45; cursor: default; pointer-events: none; }
+.fb-add-note { font-size: 12px; color: var(--faint-foreground); }
+
+.fb-error {
+  margin: 12px 0 0; font-size: 13px; color: var(--destructive);
+}
+
+.fb-submit {
+  width: 100%; margin-top: 16px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px; border: 0; border-radius: 10px; cursor: pointer;
+  font-size: 14px; font-weight: 600;
+  background: var(--primary); color: var(--primary-foreground);
+  transition: opacity .15s, background .15s;
+}
+.fb-submit:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 90%, black); }
+.fb-submit:disabled { opacity: .5; cursor: default; }
+
+/* 登录门 */
+.fb-login { text-align: center; padding: 8px 4px 4px; }
+.fb-login-hint { margin: 8px 0 18px; font-size: 14px; line-height: 1.55; color: var(--muted-foreground); }
+.fb-login-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border: 0; border-radius: 10px; cursor: pointer;
+  font-size: 14px; font-weight: 600;
+  background: var(--primary); color: var(--primary-foreground);
+  transition: background .15s;
+}
+.fb-login-btn:hover { background: color-mix(in srgb, var(--primary) 90%, black); }
+
+/* 完成态 */
+.fb-done { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 28px 8px; text-align: center; }
+.fb-done-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: color-mix(in srgb, var(--signal-success) 18%, transparent);
+  color: var(--signal-success);
+}
+.fb-done p { margin: 0; font-size: 15px; color: var(--foreground); }
+
+.fb-spin { animation: fb-spin 1s linear infinite; }
+@keyframes fb-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 480px) {
+  .fb-modal { padding: 18px 16px 16px; border-radius: 14px; }
+  .fb-title { font-size: 17px; }
+}
