@@ -63,6 +63,11 @@ stats/comp/
 # 每场预计算十字步数表 (~100MB 上万文件,scramble 周更生成,只 scp 到 static 不进 git)
 # comp_steps/ = std;comp_steps_<variant>/ = eo/pseudo/pseudo_pair/pair/f2leo/pseudo_f2leo
 stats/scramble/comp_steps*/
+# 难度 tab「下载全部」全量语料 gz (~30MB/阶段,build_scramble_bundle.mjs 生成,只 scp 到 static)
+stats/scramble/bundles/
+# /timer 最优打乱导出 CSV (export_puzzle_optimal.mjs 产 ~55MB,\copy 灌 PG,不进 git) + 跑批日志
+core/packages/scramble-stats-build/wca_optimal_puzzle.csv
+core/packages/scramble-stats-build/.lenopt.log
 
 # git-bash (MSYS2) 崩溃栈转储,纯本机噪音
 *.stackdump

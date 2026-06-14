@@ -192,6 +192,8 @@ export default function ScrambleStatsPage() {
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
   // 整解(333)示例:原始 WCA 打乱 vs 最优(最短)等价打乱(同状态)。
   const [exView, setExView] = useState<'orig' | 'opt'>('orig');
+  // 「下载全部」可用阶段(std 变体全量语料 gz);manifest 缺失则不显示按钮。
+  const [bundleStages, setBundleStages] = useState<string[] | null>(null);
 
   // 异步加载 comp→country 索引,完成后 bump version 触发重渲染拿示例卡片的比赛国旗 + 中文名
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
@@ -215,6 +217,14 @@ export default function ScrambleStatsPage() {
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(setLengthsData)
       .catch((e) => setLengthsError(String(e)));
+  }, []);
+
+  // 「下载全部」manifest(std 变体哪些阶段有全量语料 gz);缺失静默不显示按钮。
+  useEffect(() => {
+    fetch(statsUrl('/stats/scramble/bundles/manifest.json') + '?v=20260614')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => setBundleStages(j?.sets?.wca?.std ?? []))
+      .catch(() => setBundleStages([]));
   }, []);
 
   // 长度 tab 切项目:sq1 默认 slash,其余默认 HTM。
@@ -686,6 +696,22 @@ export default function ScrambleStatsPage() {
           </div>
         )}
         <span className="scramble-stats-count">{sampleCount}</span>
+        {/* 下载全部:该阶段全量语料(每条打乱 + 比赛信息 + 各底色十字步数)gz CSV;仅 std 变体有。 */}
+        {dataset === 'wca' && variant === 'std' && bundleStages?.includes(stage) && (
+          <a
+            className="scramble-stats-download-all"
+            href={statsUrl(`/stats/scramble/bundles/wca/std/all_${stage}.csv.gz`)}
+            download={`all_${stage}.csv.gz`}
+            title={tr({ zh: '下载该阶段全部打乱(含比赛信息与各底色步数,gzip CSV)', en: 'Download every scramble for this stage (with competition info & per-color move counts, gzip CSV)',
+                zhHant: "下載該階段全部打亂(含比賽資訊與各底色步數,gzip CSV)"
+            })}
+          >
+            <DownloadIcon />
+            {tr({ zh: '下载全部', en: 'Download all',
+                zhHant: "下載全部"
+            })}
+          </a>
+        )}
       </div>
 
       <div className="scramble-stats-chart-wrapper">
