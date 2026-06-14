@@ -1132,8 +1132,10 @@ async function main(): Promise<void> {
   // 否则 upcoming_comps.json 被清空,Top 模式 + 选手筛选的 top_cubers 全没(2026-06-13 真实事故)。
   // 与 comp_names_zh "拉失败保留已有,跳过本次更新" 同策略:跳过写入,git add 自然无 diff,线上保持
   // 上一份好数据。CN 注册名单(下方 step 8)走 cubing.com 不受影响,照常更新。
+  let wcaListUnavailable = false;
   if (!allComps || allComps.length === 0) {
-    console.log('[GUARD] WCA all_comps 不可用(很可能 CI IP 被 403),保留已有 upcoming_comps.json / all_upcoming_comps.json,跳过写入');
+    wcaListUnavailable = true;
+    console.log('[GUARD] WCA all_comps 不可用,保留已有 upcoming_comps.json / all_upcoming_comps.json,跳过写入(绝不写空);本次将以非零码退出标红 CI');
   } else {
     const outputObj = {
       updated_at: utcIsoSeconds(new Date()),
@@ -1160,6 +1162,14 @@ async function main(): Promise<void> {
   }
 
   console.log(`[INFO] 总耗时: ${((Date.now() - startTime) / 1000).toFixed(2)} 秒`);
+
+  // 拉不到 WCA 列表时:旧数据已保留(上面 guard 不写空),但这里主动非零退出让本次 CI 标红,
+  // 这样会收到 GitHub Actions 失败通知 —— 数据默默变旧不可接受,要让人知道。
+  // 常见原因:WCA 把服务器出口 IP 从限速升级成 403、代理挂了、或 WCA 临时故障。
+  if (wcaListUnavailable) {
+    console.error('[FAIL] WCA upcoming 列表本次拉取失败:已保留上一份好数据(未写空),但主动失败本次 CI 以触发通知。请查代理 / WCA 是否封了服务器 IP。');
+    process.exit(1);
+  }
 }
 
 main().catch((e) => {
