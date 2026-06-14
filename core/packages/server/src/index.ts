@@ -32,6 +32,8 @@ import { sponsorsRoutes } from './routes/sponsors.js';
 import { membershipRoutes } from './routes/membership.js';
 import { compFollowsRoutes } from './routes/comp_follows.js';
 import { wcaProxyRoutes } from './routes/wca_proxy.js';
+import { wcaResultWatchRoutes } from './routes/wca_result_watch.js';
+import { startWcaPastResultsMonitor } from './monitors/wca_past_results.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
 import { ensureDaemon as ensureCube555Daemon } from './cube555/daemon.js';
 import { getCurrentRecords } from './utils/current_records.js';
@@ -113,6 +115,7 @@ app.route('/v1', sponsorsRoutes);
 app.route('/v1', membershipRoutes);
 app.route('/v1', compFollowsRoutes);
 app.route('/v1', wcaProxyRoutes);
+app.route('/v1', wcaResultWatchRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).
@@ -156,6 +159,10 @@ startMonitors();
 
 // 首页「今日公示」数据源:后台轮询 WCA announced_at(独立于监控门控).启动 90s 后首拉,之后每 20min.
 startAnnouncedCompsPoller();
+
+// 关注选手「往期成绩变更」监控(成绩取消 / 修正 / 纪录标记变动).独立门控 RESULT_WATCH_ENABLED,
+// 慢周期(默认 6h)diff WCA /persons/:id/results 写入 wca_result_changes 供 /wca/result-watch 页只读.
+startWcaPastResultsMonitor();
 
 const PORT = Number(process.env.PORT) || 3001;
 

@@ -12,7 +12,8 @@ export type MonitorId =
   | 'cubing_record'
   | 'cubing_comp'
   | 'wca_comp'
-  | 'wca_live_pr';
+  | 'wca_live_pr'
+  | 'wca_past_results';
 
 /** 某监控历史推送总数。0 = 首跑,调用方据此 silent-absorb 当前快照不推送。 */
 export async function countPushed(monitor: MonitorId): Promise<number> {

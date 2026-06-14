@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Wrench,
   LineChart, TrendingDown, Radio, Target, Calculator, Search,
-  ListOrdered, Users, Percent, LayoutGrid, Crown, History, Sparkles,
+  ListOrdered, Users, Percent, LayoutGrid, Crown, History, Sparkles, BellRing,
   type LucideIcon,
 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -84,6 +84,7 @@ const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; ex
   { path: '/wca/fun-stats',       zh: '趣味统计',     en: 'Fun Stats',       Icon: Sparkles,
       zhHant: "趣味統計"
 },
+  { path: '/wca/result-watch',    zh: '成绩变更',     en: 'Result Changes',  Icon: BellRing, zhHant: '成績變更' },
 ];
 
 export default function WcaStatsIndex() {

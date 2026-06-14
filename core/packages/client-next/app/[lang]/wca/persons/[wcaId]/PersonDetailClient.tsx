@@ -22,6 +22,7 @@ import { buildReconAttemptMap } from '@/lib/recon-attempt-lookup';
 import PersonHero from '@/components/persons/sections/PersonHero';
 import PersonPRTable from '@/components/persons/sections/PersonPRTable';
 import PersonBestCombos from '@/components/persons/sections/PersonBestCombos';
+import PersonResultChanges from '@/components/persons/sections/PersonResultChanges';
 import PersonTabs from '@/components/persons/sections/PersonTabs';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '@/components/persons/persons.css';
@@ -99,6 +100,7 @@ export default function PersonDetailClient() {
         <PersonHero profile={profile} results={results} isZh={isZh} />
         <PersonPRTable profile={profile} results={results} isZh={isZh} inclCancelled={inclCancelled} onInclCancelledChange={setInclCancelled} />
         <PersonBestCombos wcaId={profile.person.wca_id} isZh={isZh} inclCancelled={inclCancelled} />
+        <PersonResultChanges wcaId={profile.person.wca_id} isZh={isZh} />
         <PersonTabs profile={profile} results={results} comps={comps} reconLookup={reconLookup} isZh={isZh} />
       </main>
     </div>
