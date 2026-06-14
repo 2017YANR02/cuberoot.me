@@ -897,9 +897,8 @@ async function fetchWcif(compId: string): Promise<WcifEntry | Record<string, nev
 
 async function fetchWcifBatch(compIds: Iterable<string>): Promise<Record<string, WcifEntry>> {
   /*
-   * 拉一批比赛的 WCIF（轮次 + 报名名单）。已缓存的直接读，未缓存的串行拉取。
-   * Python 用 ThreadPoolExecutor(max_workers=1) 即串行；这里 await for-loop 等价，
-   * 保持 0.5s/req 节奏让自适应 429 退避成立。
+   * 拉一批比赛的 WCIF（轮次 + 报名名单）。已缓存的直接读，未缓存的用有界并发池拉取
+   * (WCIF_CONCURRENCY 默认 8)——WCA 对服务器出口按每连接限带宽,并发近似线性提速。
    * 返回 { comp_id: {rounds: {...}, competitors: [...]} }。
    */
   const out: Record<string, WcifEntry> = {};
@@ -926,22 +925,31 @@ async function fetchWcifBatch(compIds: Iterable<string>): Promise<Record<string,
   }
 
   console.log(`[WCIF] 缓存命中 ${Object.keys(out).length} 场，待拉取 ${pending.length} 场...`);
-  // NOTE: 1 worker × 0.5s/req ≈ 2 req/s。串行严格遵守上一个 429 的 Retry-After，
-  //       自适应到 WCA 允许的最快合法速率。
+  // NOTE: WCA 对经代理的服务器出口按「每连接」限带宽(实测 ~18KB/s,4 并发 ≈ 单个耗时),
+  //       串行会把 ~440 场拖到 2+ 小时。改有界并发池(WCIF_CONCURRENCY,默认 8)近似线性提速;
+  //       429 仍由 fetchWithRetry 内的自适应退避兜底(每连接独立遵守 Retry-After)。
+  //       直连 WCA(本地)单请求本就 1-2s,并发同样适用,无副作用。
+  const CONCURRENCY = Math.max(1, Number(process.env.WCIF_CONCURRENCY) || 8);
   let done = 0;
-  for (const cid of pending) {
-    try {
-      const r = await fetchWcif(cid);
-      out[cid] = wcifCacheOk(r) ? r : { rounds: {}, competitors: [], eventRegs: {}, roundMeta: {} };
-    } catch (e) {
-      console.log(`[WCIF][WARN] ${cid}: ${(e as Error).message ?? e}`);
-      out[cid] = { rounds: {}, competitors: [], eventRegs: {}, roundMeta: {} };
+  let next = 0;
+  const worker = async (): Promise<void> => {
+    // next++ 在单线程事件循环里取号无竞态;out[cid] 各 worker 写不同键。
+    for (let i = next++; i < pending.length; i = next++) {
+      const cid = pending[i]!;
+      try {
+        const r = await fetchWcif(cid);
+        out[cid] = wcifCacheOk(r) ? r : { rounds: {}, competitors: [], eventRegs: {}, roundMeta: {} };
+      } catch (e) {
+        console.log(`[WCIF][WARN] ${cid}: ${(e as Error).message ?? e}`);
+        out[cid] = { rounds: {}, competitors: [], eventRegs: {}, roundMeta: {} };
+      }
+      done += 1;
+      if (done % 50 === 0 || done === pending.length) {
+        console.log(`[WCIF] ${done}/${pending.length} 已拉取`);
+      }
     }
-    done += 1;
-    if (done % 50 === 0 || done === pending.length) {
-      console.log(`[WCIF] ${done}/${pending.length} 已拉取`);
-    }
-  }
+  };
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, pending.length) }, worker));
   return out;
 }
 
