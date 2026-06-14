@@ -5,11 +5,10 @@
 // 页面/语言/主题/视口/UA 供 admin 复现。结构镜像 DonateModal(lang prop + 本地 t)。
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Lightbulb, Bug, MessageSquare, ImagePlus, Film, X, Loader2, Check, LogIn } from 'lucide-react';
-import { useAuthStore } from '@/lib/auth-store';
-import {
-  submitFeedback, uploadFeedbackImage, uploadFeedbackVideo, type FeedbackKind,
-} from '@/lib/feedback-api';
+import { ImagePlus, Film, X, Loader2, Check, LogIn, Inbox } from 'lucide-react';
+import { useAuthStore, isAdmin } from '@/lib/auth-store';
+import AppLink from '@/components/AppLink';
+import { submitFeedback, uploadFeedbackImage, uploadFeedbackVideo } from '@/lib/feedback-api';
 import './feedback-modal.css';
 
 interface Props {
@@ -67,9 +66,7 @@ export default function FeedbackModal({ lang, onClose }: Props) {
   const login = useAuthStore((s) => s.login);
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
-  const [kind, setKind] = useState<FeedbackKind>('need');
   const [text, setText] = useState('');
-  const [contact, setContact] = useState('');
   const [images, setImages] = useState<PendingImage[]>([]);
   const [video, setVideo] = useState<PendingVideo | null>(null);
   const [imgBusy, setImgBusy] = useState(false);
@@ -156,9 +153,8 @@ export default function FeedbackModal({ lang, onClose }: Props) {
       const theme = document.documentElement.getAttribute('data-theme')
         || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       const { id } = await submitFeedback({
-        kind,
+        kind: 'other',
         body: text.trim().slice(0, BODY_MAX),
-        contact: contact.trim() || undefined,
         pageUrl: location.href,
         lang,
         theme,
@@ -179,12 +175,6 @@ export default function FeedbackModal({ lang, onClose }: Props) {
       setSubmitting(false);
     }
   };
-
-  const KINDS: { id: FeedbackKind; icon: typeof Bug; label: string }[] = [
-    { id: 'need', icon: Lightbulb, label: t('需求', 'Idea') },
-    { id: 'bug', icon: Bug, label: t('Bug', 'Bug') },
-    { id: 'other', icon: MessageSquare, label: t('其他', 'Other') },
-  ];
 
   return (
     <div className="fb-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !submitting) onClose(); }}
@@ -212,34 +202,14 @@ export default function FeedbackModal({ lang, onClose }: Props) {
           <>
             <h2 className="fb-title">{t('反馈', 'Feedback')}</h2>
 
-            <div className="fb-kinds" role="tablist">
-              {KINDS.map(({ id, icon: Icon, label }) => (
-                <button key={id} type="button" role="tab" aria-selected={kind === id}
-                  className={`fb-kind${kind === id ? ' is-active' : ''}`} onClick={() => setKind(id)}>
-                  <Icon size={ICON} /> {label}
-                </button>
-              ))}
-            </div>
-
             <textarea
               className="fb-textarea"
               value={text}
               maxLength={BODY_MAX}
+              autoFocus
               onChange={(e) => setText(e.target.value)}
-              placeholder={kind === 'bug'
-                ? t('遇到什么问题?在哪个页面、怎么复现?(可直接 Ctrl+V 粘贴截图)',
-                  'What went wrong? Which page, how to reproduce? (paste a screenshot with Ctrl+V)')
-                : t('想要什么功能 / 有什么建议?(可直接 Ctrl+V 粘贴截图)',
-                  'What would you like to see? (paste a screenshot with Ctrl+V)')}
-            />
-
-            <input
-              className="fb-contact"
-              type="text"
-              value={contact}
-              maxLength={200}
-              onChange={(e) => setContact(e.target.value)}
-              placeholder={t('回信邮箱(选填)', 'Email for a reply (optional)')}
+              placeholder={t('需求 / Bug / 建议,想说什么都行(可 Ctrl+V 粘贴截图)',
+                'Ideas, bugs, anything — paste a screenshot with Ctrl+V')}
             />
 
             {(images.length > 0 || video) && (
@@ -284,6 +254,12 @@ export default function FeedbackModal({ lang, onClose }: Props) {
             <button className="fb-submit" onClick={handleSubmit} disabled={!canSubmit}>
               {submitting ? <><Loader2 size={ICON} className="fb-spin" /> {t('提交中…', 'Sending…')}</> : t('提交', 'Send')}
             </button>
+
+            {isAdmin() && (
+              <AppLink href="/feedback/admin" className="fb-admin-link" onClick={onClose}>
+                <Inbox size={14} /> {t('管理', 'Manage')}
+              </AppLink>
+            )}
           </>
         )}
       </div>
