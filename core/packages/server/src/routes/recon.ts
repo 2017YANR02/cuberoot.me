@@ -43,7 +43,8 @@ const LIST_COLUMNS = [
 const TODAY_COLUMNS = LIST_COLUMNS + ', wca_scramble, created_at';
 
 // 个人主页用:列表字段 + 添加者(added_by/added_by_id 不在 LIST_COLUMNS,个人页要按添加者角色筛)。
-const PERSON_COLUMNS = LIST_COLUMNS + ', added_by, added_by_id';
+// + video_url/caption 给「复用以前的填写」选择器做视频缩略图 + 标题(个人页忽略多余列)。
+const PERSON_COLUMNS = LIST_COLUMNS + ', added_by, added_by_id, video_url, caption';
 
 reconRoutes.get('/recon/list', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');

@@ -11,10 +11,12 @@ import { dateDisplay } from './comp_date';
 // 数据契约(stats/scramble/puzzle_examples.json):
 //   { meta: { generated_at },
 //     puzzles: { <key>: {
-//       bins:   { "<len>": [[id, scramble], ...] },   // 每步数 bin K=20 条(确定性均匀步长采样)
+//       bins:   { "<len>": [[id, scramble, optScramble?], ...] }, // 每步数 bin K=20 条(确定性均匀步长采样)
 //       comps:  { "<ci>": [name, dateDisplay] },        // 被采样 id 引用到的比赛
 //       idMeta: { "<id>": [ci, event, num, round, group, extra(0|1)] }
 //     } } }
+// optScramble = invert(analyzer 的最优解列 soln);= 最短的等价打乱(同状态),驱动「原始/最优」切换。
+// 仅当 <key>.csv 带 soln 列(analyzer 开 PUZZLE_EMIT_SOLN)时有;无则该元省略,前端只显原始。
 // 客户端类型在 client-next/lib/puzzle-examples.ts(改 shape 必须两处同步 + bump fetch v=)。
 //
 // 只对 puzzle_distribution.json meta.puzzles 出现的 key 产(pocket / pyraminx / skewb;
@@ -37,7 +39,41 @@ const PUZZLES: PuzzleSpec[] = [
   { key: 'sq1', event: 'sq1', valueCol: 'wca', altCol: 'slash' }, // 双口径:bins=wca、binsAlt=slash
 ];
 
-type Sample = [string, string]; // [id, scramble]
+type Sample = [string, string, string?]; // [id, scramble, optScramble?]
+
+// 反演解法 → 最优(最短)等价打乱:复现同一状态所需的最少步数序列(前端「原始/最优」切换用)。
+// 通用记号规则:X2 自逆;X' ↔ X;pyraminx 小写 tip(u/l/r/b)同理。
+function invertAlg(s: string): string {
+  return s.trim().split(/\s+/).filter(Boolean).reverse()
+    .map((m) => (m.endsWith('2') ? m : m.endsWith("'") ? m.slice(0, -1) : `${m}'`))
+    .join(' ');
+}
+
+// 流式读 <key>.csv 的 soln 列(analyzer 开 PUZZLE_EMIT_SOLN 时产),仅取被采样 id,
+// 反演为「最优等价打乱」。无 soln 列(如 sq1 近最优口径)→ 返回空表,前端自动只显原始。
+async function loadOptScrambles(csvPath: string, wantedIds: Set<string>): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (wantedIds.size === 0) return out;
+  const rl = readline.createInterface({ input: fs.createReadStream(csvPath, 'utf-8'), crlfDelay: Infinity });
+  let idIdx = -1, solnIdx = -1, headerDone = false;
+  for await (const line of rl) {
+    if (!line) continue;
+    if (!headerDone) {
+      const h = line.split(',');
+      idIdx = h.indexOf('id');
+      solnIdx = h.indexOf('soln');
+      headerDone = true;
+      if (solnIdx === -1) break; // 该 puzzle 未产解列,整文件无 soln,提前退出
+      continue;
+    }
+    const c = line.split(','); // soln 无逗号(空格分隔),c[solnIdx] 即整条解
+    const id = c[idIdx];
+    if (!wantedIds.has(id)) continue;
+    const soln = c[solnIdx];
+    if (soln && soln !== '-') out.set(id, invertAlg(soln));
+  }
+  return out;
+}
 
 // Pass 1: 流式读 <key>.csv,按 len 分桶收集全部 id(短字符串,百万级亦 ~数十 MB)。
 async function bucketIdsByLen(csvPath: string, valueCol: string): Promise<Map<number, string[]>> {
@@ -200,6 +236,9 @@ async function main() {
       }
     }
 
+    // 2b. 读 soln 列 → 反演为最优等价打乱(仅采样 id;无解列的 puzzle 得空表)。
+    const optOf = await loadOptScrambles(csvPath, wantedIds);
+
     // 3. 组装 bins(丢弃 txt 里缺失打乱的 id,正常不应发生)。
     const assemble = (sampled: Map<number, string[]>): { bins: Record<string, Sample[]>; binCount: number; sampleCount: number } => {
       const bins: Record<string, Sample[]> = {};
@@ -209,7 +248,8 @@ async function main() {
         for (const id of sampled.get(len)!) {
           const scr = scrambleOf.get(id);
           if (scr === undefined) continue;
-          arr.push([id, scr]);
+          const opt = optOf.get(id);
+          arr.push(opt ? [id, scr, opt] : [id, scr]);
         }
         if (arr.length === 0) continue;
         bins[String(len)] = arr;

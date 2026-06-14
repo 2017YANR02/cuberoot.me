@@ -15,7 +15,7 @@ import type { CSSProperties } from 'react';
 import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parseAsString, parseAsArrayOf } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, CalendarRange, Ban, LayoutGrid, HelpCircle, Users, Gauge, Percent, X as XIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, CalendarRange, Ban, LayoutGrid, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon } from 'lucide-react';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import {
   fetchAllUpcomingCompsJson,
@@ -168,6 +168,9 @@ interface Competition {
   competitor_limit: number;
   /** 实际参赛人数（过去比赛 all_past_comps.json 提供；未来比赛无此数据） */
   competitors?: number;
+  /** 经纬度（来自比赛 JSON，Globe 视图同源）；多地代码无真实坐标为 null/缺省 */
+  latitude_degrees?: number | null;
+  longitude_degrees?: number | null;
   registration_open?: string | null;   // ISO 8601 UTC
   registration_close?: string | null;
   cubing_china_url?: string;
@@ -681,6 +684,8 @@ function adaptAllComp(w: UpcomingCompRecord, topCuberMap: Map<string, TopCuber[]
     competitor_limit: w.competitor_limit,
     registration_open: w.registration_open ?? undefined,
     registration_close: w.registration_close ?? undefined,
+    latitude_degrees: w.latitude_degrees,
+    longitude_degrees: w.longitude_degrees,
     top_cubers: topCuberMap.get(w.id) ?? [],
   };
 }
@@ -700,6 +705,8 @@ function adaptPastComp(w: PastCompRecord): Competition {
     event_regs: w.event_regs,
     competitor_limit: w.competitor_limit ?? 0,
     competitors: w.competitors,
+    latitude_degrees: w.latitude_degrees,
+    longitude_degrees: w.longitude_degrees,
     top_cubers: [],
   };
 }
@@ -813,9 +820,17 @@ function eventCellContent(
 
 // 列表视图整场列 metric：实际人数 / 上限(competitorLimit) / 满员率(实际÷上限) / 不显示。
 // 三列合并成一列，由左下拉选当前显示哪个；点列头按它升/降排序。
-type CompMetric = 'competitors' | 'limit' | 'ratio' | 'none';
-const COMP_METRICS: CompMetric[] = ['competitors', 'limit', 'ratio', 'none'];
-type SortDir = 'asc' | 'desc' | null;
+// latlng = 经纬度,下拉里是一个选项,但表头/行渲染成「纬度 + 经度」两列(各自可排序)
+type CompMetric = 'competitors' | 'limit' | 'ratio' | 'nameLength' | 'cityLength' | 'latlng' | 'none';
+const COMP_METRICS: CompMetric[] = ['competitors', 'limit', 'ratio', 'nameLength', 'cityLength', 'latlng', 'none'];
+// 经纬度可正可负、可为 0（赤道/本初子午线），不能套用 "<=0 视为缺失" 的计数列规则
+const SIGNED_METRICS = new Set<CompMetric>(['latlng']);
+// 经纬度子列排序键：latlng 模式下点哪一列就按哪个坐标排
+type CoordKey = 'lat' | 'lng';
+// 列表统一排序状态：null = 默认按日期倒序。
+// col='comp' 按整场列数值（latlng 看 coord 子列）；col='name'/'city' 按比赛名/城市名首字母（locale 排序）。
+type SortCol = 'comp' | 'name' | 'city';
+type ListSort = { col: SortCol; coord?: CoordKey; dir: 'asc' | 'desc' } | null;
 
 function compColTitle(m: CompMetric): string {
   if (m === 'competitors') return tr({ zh: '实际参赛人数', en: 'Competitors',
@@ -827,7 +842,37 @@ function compColTitle(m: CompMetric): string {
   if (m === 'ratio') return tr({ zh: '满员率(实际/上限)', en: 'Fill rate (competitors/limit)',
       zhHant: "滿員率(實際/上限)"
 });
+  if (m === 'nameLength') return tr({ zh: '比赛名称长度(字符数)', en: 'Name length (characters)',
+      zhHant: "比賽名稱長度(字元數)"
+});
+  if (m === 'cityLength') return tr({ zh: '比赛城市名长度(字符数)', en: 'City name length (characters)',
+      zhHant: "比賽城市名長度(字元數)"
+});
   return '';
+}
+
+/** 经纬度子列标题（latlng 模式下两列各自的 title / aria） */
+function coordColTitle(kind: CoordKey): string {
+  return kind === 'lat'
+    ? tr({ zh: '纬度(北纬正 / 南纬负)', en: 'Latitude (N+ / S-)',
+        zhHant: "緯度(北緯正 / 南緯負)"
+    })
+    : tr({ zh: '经度(东经正 / 西经负)', en: 'Longitude (E+ / W-)',
+        zhHant: "經度(東經正 / 西經負)"
+    });
+}
+
+/** 当前语言下比赛城市的显示串（中文走 city_zh / 本地化，英文走原 city） */
+function displayCityOf(c: Competition, isZh: boolean): string {
+  return isZh ? (c.city_zh || localizeCity(c.city, true)) : c.city;
+}
+
+/** 比赛经纬度，缺坐标 / 多地代码 / (0,0) 哨兵均按缺失返回 null（与 Globe 端口径一致） */
+function compCoord(c: Competition, kind: 'lat' | 'lng'): number | null {
+  const lat = c.latitude_degrees, lng = c.longitude_degrees;
+  if (lat == null || lng == null) return null;
+  if (lat === 0 && lng === 0) return null;
+  return kind === 'lat' ? lat : lng;
 }
 
 /** 满员率 = min(实际人数 / 人数上限, 100%)；缺人数 / 无上限(0) → null。
@@ -845,54 +890,65 @@ function fillRate(c: { competitors?: number; competitor_limit: number }): number
 const LIST_ROW_H = 44;
 const LIST_BUFFER = 8; // 视口外多渲染几行做缓冲，避免快速滚动时露白
 
-// 列表 name+city 列宽 cap (px)：上限防极端长名撑爆行；下限保证短名筛选时不至于挤成一团
-const LIST_NAME_CELL_MIN_PX = 10 * 16;
-const LIST_NAME_CELL_MAX_PX = 40 * 16;
-const LIST_NAME_CELL_PAD_PX = 8; // 测得最长后再加一点缓冲，防 ellipsis 误切
+// 列表 name / city 两列各自宽度 cap (px)：上限防极端长名撑爆行；下限保证短名筛选时不至于挤成一团
+const LIST_NAME_MIN_PX = 10 * 16;
+const LIST_NAME_MAX_PX = 34 * 16;
+const LIST_CITY_MIN_PX = 5 * 16;
+const LIST_CITY_MAX_PX = 16 * 16;
+const LIST_CELL_PAD_PX = 8; // 测得最长后再加一点缓冲，防 ellipsis 误切
 
-/** 用 canvas.measureText 测当前可视行 name+city 最长那行的实际像素宽,
- *  这样 grid 列宽既能贴最长一行,又让短名筛选场景下空白几乎消失。
- *  另用 containerPx 算视口可用宽度上限——避免 cell 撑爆容器引起 chips header 横向溢出。
- *  O(n)，~30 行可视 ≈ 1ms。 */
-function measureMaxNameCityPx(comps: Competition[], isZh: boolean, containerPx?: number): number {
-  if (typeof document === 'undefined' || comps.length === 0) return 28 * 16;
+/** 用 canvas.measureText 分别测当前可视行 name / city 最长那行的实际像素宽,
+ *  让两列各自贴最长一行、短名筛选场景下空白几乎消失,且 city 起点对齐成独立一列。
+ *  另用 containerPx 算视口可用宽度上限——name+city 超出时优先保城市显示全,先压 name 再压 city
+ *  (城市短、易看全;比赛名长且全称在弹窗里有)。O(n)，~30 行可视 ≈ 1ms。 */
+function measureNameCityCols(comps: Competition[], isZh: boolean, compMetric: CompMetric, containerPx?: number): { namePx: number; cityPx: number } {
+  const fallback = { namePx: 18 * 16, cityPx: 11 * 16 };
+  if (typeof document === 'undefined' || comps.length === 0) return fallback;
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  if (!ctx) return 28 * 16;
+  if (!ctx) return fallback;
   const rootFontPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
   const bodyFont = getComputedStyle(document.body).fontFamily || 'sans-serif';
-  const namePx = 0.85 * rootFontPx;
-  const cityPx = 0.78 * rootFontPx;
-  const gapPx = 0.5 * rootFontPx;
-  ctx.font = `500 ${namePx}px ${bodyFont}`;
-  const nameWs: number[] = new Array(comps.length);
+  const nameFontPx = 0.85 * rootFontPx;
+  const cityFontPx = 0.78 * rootFontPx;
+  ctx.font = `500 ${nameFontPx}px ${bodyFont}`;
+  let maxName = 0;
   for (let i = 0; i < comps.length; i++) {
-    nameWs[i] = ctx.measureText(localizeName(comps[i], isZh)).width;
+    const w = ctx.measureText(localizeName(comps[i], isZh)).width;
+    if (w > maxName) maxName = w;
   }
-  ctx.font = `400 ${cityPx}px ${bodyFont}`;
-  let maxTotal = 0;
+  ctx.font = `400 ${cityFontPx}px ${bodyFont}`;
+  let maxCity = 0;
   for (let i = 0; i < comps.length; i++) {
-    const c = comps[i];
-    const cityStr = isZh ? (c.city_zh || localizeCity(c.city, true)) : c.city;
-    const total = nameWs[i] + gapPx + ctx.measureText(cityStr).width;
-    if (total > maxTotal) maxTotal = total;
+    const w = ctx.measureText(displayCityOf(comps[i], isZh)).width;
+    if (w > maxCity) maxCity = w;
   }
-  // 视口上限: container 减掉其他列总宽（date + flag + days + 整场单列 + 21 events + gaps + padding）
-  // 其他列在 768px 以上 = 7.2 + 1.4 + 1.6 + 2.8 + 21*1.3 ≈ 40.3rem（窄值 metric），加 25 列 gap + padding
-  let cap = LIST_NAME_CELL_MAX_PX;
+  let nameW = Math.max(LIST_NAME_MIN_PX, Math.min(LIST_NAME_MAX_PX, maxName + LIST_CELL_PAD_PX));
+  let cityW = Math.max(LIST_CITY_MIN_PX, Math.min(LIST_CITY_MAX_PX, maxCity + LIST_CELL_PAD_PX));
+  // 视口上限: container 减掉其他列总宽（date + flag + days + 整场列 + 21 events + gaps + padding）
+  // 整场列宽随 metric 变：none=0，经纬度=两列，其它=单列；列数变了 gap 数也跟着 +1。
   if (containerPx != null && containerPx > 0) {
     const isNarrow = window.innerWidth <= 768;
-    const otherColsRem = isNarrow ? (5.5 + 1.2 + 1.4 + 2.4 + 21 * 1.1) : (7.2 + 1.4 + 1.6 + 2.8 + 21 * 1.3);
-    const gapPaddingPx = isNarrow ? (4 * 25 + 8 * 2) : (6 * 25 + 12 * 2);
+    const oneCompRem = isNarrow ? 2.4 : 2.8;
+    const compRem = compMetric === 'none' ? 0 : compMetric === 'latlng' ? (isNarrow ? 3.4 : 3.8) * 2 : oneCompRem;
+    const gapCount = 26 + (compMetric === 'latlng' ? 1 : 0);
+    const otherColsRem = isNarrow ? (5.5 + 1.2 + 1.4 + compRem + 21 * 1.1) : (7.2 + 1.4 + 1.6 + compRem + 21 * 1.3);
+    const gapPaddingPx = isNarrow ? (4 * gapCount + 8 * 2) : (6 * gapCount + 12 * 2);
     const avail = containerPx - otherColsRem * rootFontPx - gapPaddingPx;
-    cap = Math.min(cap, Math.max(LIST_NAME_CELL_MIN_PX, avail));
+    if (avail > 0 && nameW + cityW > avail) {
+      const over = nameW + cityW - avail;
+      const nameShrink = Math.min(over, nameW - LIST_NAME_MIN_PX);
+      nameW -= nameShrink;
+      const rest = over - nameShrink;
+      if (rest > 0) cityW = Math.max(LIST_CITY_MIN_PX, cityW - rest);
+    }
   }
-  return Math.max(LIST_NAME_CELL_MIN_PX, Math.min(cap, maxTotal + LIST_NAME_CELL_PAD_PX));
+  return { namePx: nameW, cityPx: cityW };
 }
 
 interface RowItem { comp: Competition; key: string }
 
-function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso, pageRef, compMetric, compSortDir, eventMetric, pastMeta, followedIds }: {
+function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso, pageRef, compMetric, listSort, eventMetric, pastMeta, followedIds }: {
   comps: Competition[];
   isZh: boolean;
   onSelect: (c: Competition) => void;
@@ -904,43 +960,61 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   pastMeta: CompRoundMetaMap | null;
   /** 整场列显示哪个 metric：实际人数 / 上限 / 满员率 / 不显示 */
   compMetric: CompMetric;
-  /** 整场列排序方向；null = 按日期倒序 */
-  compSortDir: SortDir;
+  /** 列表统一排序状态；null = 按日期倒序 */
+  listSort: ListSort;
   /** 当前可见区域所在年份（用于在 chip 行 sticky 显示）；可见为空时传 null */
   onYearChange: (info: { year: string; count: number } | null) => void;
   /** 横向滚动容器 — 父组件用它和 chip 表头同步 scrollLeft */
   outerRef?: React.Ref<HTMLDivElement>;
   /** 已取消比赛的 end_date 阈值（ISO 字符串） */
   cancelledCutoffIso: string;
-  /** .calendar-page 根元素 ref —— 用来按当前可视行最长 name+city 写 --cl-name-width */
+  /** .calendar-page 根元素 ref —— 用来按当前可视行最长 name / city 写 --cl-name-width / --cl-city-width */
   pageRef: React.RefObject<HTMLDivElement | null>;
 }) {
-  // 整场列单值取值：实际人数 / 上限 / 满员率
+  // 整场列单值取值（仅计数/比例/长度类，用于 col='comp' 数值排序）：经纬度走 compCoord、none 返回 null
   const compVal = useCallback((c: Competition): number | null | undefined =>
     compMetric === 'competitors' ? c.competitors
       : compMetric === 'limit' ? c.competitor_limit
         : compMetric === 'ratio' ? fillRate(c)
-          : null, [compMetric]);
-  // 默认按日期倒序；排序激活且整场 metric 非 none 时按整场值排，缺值(0/缺省)恒沉底，同值再按日期倒序
+          : compMetric === 'nameLength' ? localizeName(c, isZh).length
+            : compMetric === 'cityLength' ? displayCityOf(c, isZh).length
+              : null, [compMetric, isZh]);
+  // 默认按日期倒序。col='name'/'city' 按 locale 首字母排；col='comp' 按整场值排(latlng 看 coord 子列)，
+  // 缺值恒沉底、同值再按日期倒序。计数列 <=0 视为缺失；经纬度可正可负可为 0，仅 null 视为缺失。
   const items = useMemo<RowItem[]>(() => {
     const sorted = [...comps];
-    if (compSortDir && compMetric !== 'none') {
-      const mul = compSortDir === 'asc' ? 1 : -1;
+    const byDateDesc = (a: Competition, b: Competition) => b.start_date.localeCompare(a.start_date);
+    if (listSort && (listSort.col === 'name' || listSort.col === 'city')) {
+      const mul = listSort.dir === 'asc' ? 1 : -1;
+      const keyOf = listSort.col === 'name'
+        ? (c: Competition) => localizeName(c, isZh).trim()
+        : (c: Competition) => displayCityOf(c, isZh).trim();
+      const collator = new Intl.Collator(isZh ? 'zh' : 'en', { sensitivity: 'base', numeric: true });
       sorted.sort((a, b) => {
-        const av = compVal(a), bv = compVal(b);
-        const aM = av == null || av <= 0;
-        const bM = bv == null || bv <= 0;
-        if (aM && bM) return b.start_date.localeCompare(a.start_date);
+        const cmp = collator.compare(keyOf(a), keyOf(b));
+        return cmp !== 0 ? cmp * mul : byDateDesc(a, b);
+      });
+    } else if (listSort && listSort.col === 'comp' && compMetric !== 'none') {
+      const signed = SIGNED_METRICS.has(compMetric);
+      const valOf = compMetric === 'latlng'
+        ? (c: Competition) => (listSort.coord ? compCoord(c, listSort.coord) : null)
+        : compVal;
+      const mul = listSort.dir === 'asc' ? 1 : -1;
+      sorted.sort((a, b) => {
+        const av = valOf(a), bv = valOf(b);
+        const aM = av == null || (!signed && av <= 0);
+        const bM = bv == null || (!signed && bv <= 0);
+        if (aM && bM) return byDateDesc(a, b);
         if (aM) return 1;
         if (bM) return -1;
         if (av !== bv) return (av! - bv!) * mul;
-        return b.start_date.localeCompare(a.start_date);
+        return byDateDesc(a, b);
       });
     } else {
-      sorted.sort((a, b) => b.start_date.localeCompare(a.start_date));
+      sorted.sort(byDateDesc);
     }
     return sorted.map((c) => ({ comp: c, key: c.id }));
-  }, [comps, compSortDir, compMetric, compVal]);
+  }, [comps, listSort, compMetric, isZh, compVal]);
   const yearCounts = useMemo(() => {
     const m = new Map<string, number>();
     for (const c of comps) {
@@ -990,9 +1064,9 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
 
   // 通知父组件当前 sticky 年份（真正可见的最顶行的年份 — 用 range.top 而不是 range.start，
   // 后者带 LIST_BUFFER 上缓冲会指向视口外往上 8 行的位置，导致跨年时年份显示滞后）
-  const sorted = !!compSortDir && compMetric !== 'none';
+  // 非日期序（任何列排序）时列表不再按年分组，sticky 年份无意义
+  const sorted = !!listSort && !(listSort.col === 'comp' && compMetric === 'none');
   useEffect(() => {
-    // 整场排序时列表非时间序，sticky 年份无意义 → 置空
     if (items.length === 0 || sorted) { onYearChange(null); return; }
     const idx = Math.min(range.top, items.length - 1);
     const year = items[idx].comp.start_date.slice(0, 4);
@@ -1037,8 +1111,8 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
     return () => { cancelled = true; };
   }, [range.start, range.end, items, eventMetric]);
 
-  // 视口自适应 name+city 列宽：测当前渲染窗口（含 LIST_BUFFER 缓冲）max name+city，写到
-  // .calendar-page 的 --cl-name-width。滚动到长名行时 cell 扩、滚出再收，
+  // 视口自适应 name / city 两列宽：测当前渲染窗口（含 LIST_BUFFER 缓冲）各自 max，写到
+  // .calendar-page 的 --cl-name-width / --cl-city-width。滚动到长名行时 cell 扩、滚出再收，
   // chips 表头跟着同步。LIST_BUFFER=8 让长名进视口前几行就提前测到，平滑视觉抖动。
   // 视口可用宽度作为 cap，避免 cell 撑爆 .calendar-page 引起 chips header 横向溢出。
   useEffect(() => {
@@ -1046,8 +1120,9 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
     if (!el) return;
     const apply = () => {
       const visibleComps = items.slice(range.start, range.end).map((it) => it.comp);
-      const px = measureMaxNameCityPx(visibleComps, isZh, el.clientWidth);
-      el.style.setProperty('--cl-name-width', `${px}px`);
+      const { namePx, cityPx } = measureNameCityCols(visibleComps, isZh, compMetric, el.clientWidth);
+      el.style.setProperty('--cl-name-width', `${namePx}px`);
+      el.style.setProperty('--cl-city-width', `${cityPx}px`);
     };
     apply();
     let raf = 0;
@@ -1060,10 +1135,13 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
     };
-  }, [range.start, range.end, items, isZh, pageRef]);
+  }, [range.start, range.end, items, isZh, compMetric, pageRef]);
 
-  // 卸载时清理 — 切回日历模式不留 stale --cl-name-width
-  useEffect(() => () => { pageRef.current?.style.removeProperty('--cl-name-width'); }, [pageRef]);
+  // 卸载时清理 — 切回日历模式不留 stale --cl-name-width / --cl-city-width
+  useEffect(() => () => {
+    pageRef.current?.style.removeProperty('--cl-name-width');
+    pageRef.current?.style.removeProperty('--cl-city-width');
+  }, [pageRef]);
 
   if (items.length === 0) {
     return <div className="comp-list-empty">{tr({ zh: '没有匹配的比赛', en: 'No competitions match',
@@ -1084,7 +1162,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
           const dateStr = formatDateRangeIso(c.start_date, endDate);
           const crossYear = c.start_date.slice(0, 4) !== endDate.slice(0, 4);
           const displayName = localizeName(c, isZh);
-          const displayCity = isZh ? (c.city_zh || localizeCity(c.city, true)) : c.city;
+          const displayCity = displayCityOf(c, isZh);
           const prefetch = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
           const events = c.events ?? [];
           const cancelled = isCancelledComp(c, cancelledCutoffIso);
@@ -1111,24 +1189,37 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
               <span className="comp-list-name-cell">
                 {followedIds.has(c.id) && <FollowMark />}
                 <span className="comp-list-name">{displayName}</span>
-                <span className="comp-list-city">{displayCity}</span>
               </span>
+              <span className="comp-list-city">{displayCity}</span>
               <span className="cl-days-cell" title={tr({ zh: '天数', en: 'Days',
                   zhHant: "天數"
             })}>
                 {daysBetween(parseLocalDate(c.start_date), parseLocalDate(endDate)) + 1}
               </span>
-              <span
-                className={`cl-people-cell${compMetric === 'ratio' || compMetric === 'limit' ? ' cl-limit-cell' : ''}`}
-                title={compMetric === 'none' ? undefined : compColTitle(compMetric)}
-              >
-                {(() => {
-                  if (compMetric === 'competitors') return c.competitors != null ? c.competitors : '';
-                  if (compMetric === 'limit') return c.competitor_limit > 0 ? c.competitor_limit : '';
-                  if (compMetric === 'ratio') { const r = fillRate(c); return r == null ? '' : `${Math.round(r * 100)}%`; }
-                  return '';
-                })()}
-              </span>
+              {compMetric === 'latlng' ? (
+                (['lat', 'lng'] as CoordKey[]).map((k) => {
+                  const v = compCoord(c, k);
+                  return (
+                    <span key={k} className="cl-people-cell" title={coordColTitle(k)}>
+                      {v == null ? '' : v.toFixed(2)}
+                    </span>
+                  );
+                })
+              ) : (
+                <span
+                  className={`cl-people-cell${compMetric === 'ratio' || compMetric === 'limit' ? ' cl-limit-cell' : ''}`}
+                  title={compMetric === 'none' ? undefined : compColTitle(compMetric)}
+                >
+                  {(() => {
+                    if (compMetric === 'competitors') return c.competitors != null ? c.competitors : '';
+                    if (compMetric === 'limit') return c.competitor_limit > 0 ? c.competitor_limit : '';
+                    if (compMetric === 'ratio') { const r = fillRate(c); return r == null ? '' : `${Math.round(r * 100)}%`; }
+                    if (compMetric === 'nameLength') return localizeName(c, isZh).length;
+                    if (compMetric === 'cityLength') return displayCityOf(c, isZh).length;
+                    return '';
+                  })()}
+                </span>
+              )}
               {EVENT_ORDER.map((eid) => {
                 const shortEid = WCA_EVENT_ID_TO_SHORT[eid] ?? eid;
                 const has = events.includes(shortEid);
@@ -1226,8 +1317,19 @@ function CalendarPageInner() {
     'cmetric',
     parseAsStringEnum<CompMetric>(COMP_METRICS).withDefault('competitors').withOptions({ history: 'replace', scroll: false }),
   );
-  // 整场列排序方向（列头单击循环 降→升→默认日期序）；切换 metric 不重置
-  const [compSortDir, setCompSortDir] = useState<SortDir>(null);
+  // 列表统一排序（点列头循环 降→升→默认日期序）：整场列 / 比赛名 / 城市名。null = 日期倒序。
+  const [listSort, setListSort] = useState<ListSort>(null);
+  // 切 metric 时,若当前正按整场列排,清掉(列含义变了);按名字/城市排的与 metric 无关,保留
+  useEffect(() => { setListSort((s) => s?.col === 'comp' ? null : s); }, [compMetric]);
+  // 点某列头：未排该列 → 降序；已降序 → 升序；已升序 → 取消(回日期序)。coord 用于 latlng 子列
+  const cycleSort = useCallback((col: SortCol, coord?: CoordKey) => {
+    setListSort((s) => {
+      if (s && s.col === col && s.coord === coord) {
+        return s.dir === 'desc' ? { col, coord, dir: 'asc' } : null;
+      }
+      return { col, coord, dir: 'desc' };
+    });
+  }, []);
   // 过去比赛 round-1 meta（~4MB）懒加载：仅列表视图选中 限时/及格/晋级/资格 时才拉
   const [pastMeta, setPastMeta] = useState<CompRoundMetaMap | null>(null);
   const pastMetaTriedRef = useRef(false);
@@ -1473,7 +1575,7 @@ function CalendarPageInner() {
     [activeComps, isMatch],
   );
 
-  // .calendar-page 根 ref — 用来由 CompList 按视口可视行实时设 --cl-name-width
+  // .calendar-page 根 ref — 用来由 CompList 按视口可视行实时设 --cl-name-width / --cl-city-width
   const pageRef = useRef<HTMLDivElement>(null);
 
   const weeks = useMemo(() => {
@@ -1664,6 +1766,7 @@ function CalendarPageInner() {
       className={`calendar-page${viewMode === 'list' ? ' calendar-page--list' : ''}${viewMode === 'compact' ? ' calendar-page--compact' : ''}${viewMode === 'globe' ? ' calendar-page--globe' : ''}`}
       data-wide-metric={viewMode === 'list' && WIDE_METRICS.has(eventMetric) ? '' : undefined}
       data-comp-none={viewMode === 'list' && compMetric === 'none' ? '' : undefined}
+      data-comp-latlng={viewMode === 'list' && compMetric === 'latlng' ? '' : undefined}
     >
       <header className="upcoming-header">
         <h1 className="upcoming-title">
@@ -1872,13 +1975,34 @@ function CalendarPageInner() {
               className="list-metric-select"
               value={compMetric}
               onChange={(e) => setCompMetric(e.target.value as CompMetric)}
-              aria-label={tr({ zh: '整场列显示', en: 'Whole-comp column', zhHant: '整場列顯示' })}
-              title={tr({ zh: '整场一列显示什么（实际人数 / 上限 / 满员率），点列头可排序', en: 'What the whole-comp column shows (competitors / limit / fill rate); click header to sort', zhHant: '整場一列顯示什麼（實際人數 / 上限 / 滿員率），點列頭可排序' })}
+              aria-label={tr({ zh: '整场列显示', en: 'Whole-comp column',
+                  zhHant: "整場列顯示"
+            })}
+              title={tr({ zh: '整场一列显示什么（实际人数 / 上限 / 满员率 / 名称长度 / 城市名长度 / 纬度 / 经度），点列头可排序', en: 'What the whole-comp column shows (competitors / limit / fill rate / name length / city length / latitude / longitude); click header to sort',
+                  zhHant: "整場一列顯示什麼（實際人數 / 上限 / 滿員率 / 名稱長度 / 城市名長度 / 緯度 / 經度），點列頭可排序"
+            })}
             >
-              <option value="competitors">{tr({ zh: '实际人数', en: 'Competitors', zhHant: '實際人數' })}</option>
-              <option value="limit">{tr({ zh: '人数上限', en: 'Limit', zhHant: '人數上限' })}</option>
-              <option value="ratio">{tr({ zh: '满员率', en: 'Fill rate', zhHant: '滿員率' })}</option>
-              <option value="none">{tr({ zh: '整场不显示', en: 'Hide whole-comp', zhHant: '整場不顯示' })}</option>
+              <option value="competitors">{tr({ zh: '实际人数', en: 'Competitors',
+                  zhHant: "實際人數"
+            })}</option>
+              <option value="limit">{tr({ zh: '人数上限', en: 'Limit',
+                  zhHant: "人數上限"
+            })}</option>
+              <option value="ratio">{tr({ zh: '满员率', en: 'Fill rate',
+                  zhHant: "滿員率"
+            })}</option>
+              <option value="nameLength">{tr({ zh: '名称长度', en: 'Name length',
+                  zhHant: "名稱長度"
+            })}</option>
+              <option value="cityLength">{tr({ zh: '城市名长度', en: 'City name length',
+                  zhHant: "城市名長度"
+            })}</option>
+              <option value="latlng">{tr({ zh: '经纬度', en: 'Coordinates',
+                  zhHant: "經緯度"
+            })}</option>
+              <option value="none">{tr({ zh: '整场不显示', en: 'Hide whole-comp',
+                  zhHant: "整場不顯示"
+            })}</option>
             </select>
             <select
               className="list-metric-select"
@@ -1977,13 +2101,68 @@ function CalendarPageInner() {
                 )}
               </span>
               <span className="cl-h-spacer" aria-hidden="true" />
-              <span className="cl-h-spacer" aria-hidden="true" />
+              {/* 比赛名列头：点击按名字首字母 locale 排序 */}
+              {(() => {
+                const active = listSort?.col === 'name';
+                const AZ = active && listSort?.dir === 'desc' ? ArrowDownZA : ArrowDownAZ;
+                return (
+                  <button
+                    type="button"
+                    className={`cl-col-icon cl-col-sort cl-text-sort${active ? ' is-active' : ''}`}
+                    title={tr({ zh: '按比赛名首字母排序', en: 'Sort by competition name',
+                        zhHant: "按比賽名首字母排序"
+                    })}
+                    aria-pressed={active}
+                    onClick={() => cycleSort('name')}
+                  >
+                    <AZ size={15} strokeWidth={1.75} />
+                  </button>
+                );
+              })()}
+              {/* 城市名列头：点击按城市名首字母 locale 排序 */}
+              {(() => {
+                const active = listSort?.col === 'city';
+                const AZ = active && listSort?.dir === 'desc' ? ArrowDownZA : ArrowDownAZ;
+                return (
+                  <button
+                    type="button"
+                    className={`cl-col-icon cl-col-sort cl-text-sort${active ? ' is-active' : ''}`}
+                    title={tr({ zh: '按城市名首字母排序', en: 'Sort by city name' })}
+                    aria-pressed={active}
+                    onClick={() => cycleSort('city')}
+                  >
+                    <AZ size={15} strokeWidth={1.75} />
+                  </button>
+                );
+              })()}
               {daysChip}
               {compMetric === 'none' ? (
                 <span className="cl-h-spacer" aria-hidden="true" />
+              ) : compMetric === 'latlng' ? (
+                (['lat', 'lng'] as CoordKey[]).map((k) => {
+                  const Icon = k === 'lat' ? MoveVertical : MoveHorizontal;
+                  const on = !!listSort && listSort.col === 'comp' && listSort.coord === k;
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      className={`cl-col-icon cl-col-sort${on ? ' is-active' : ''}`}
+                      title={coordColTitle(k) + tr({ zh: '(点击排序)', en: ' (click to sort)',
+                          zhHant: "(點選排序)"
+                    })}
+                      aria-pressed={on}
+                      onClick={() => cycleSort('comp', k)}
+                    >
+                      {on && (listSort?.dir === 'desc'
+                        ? <ChevronDown size={11} strokeWidth={2.25} />
+                        : <ChevronUp size={11} strokeWidth={2.25} />)}
+                      <Icon size={15} strokeWidth={1.75} />
+                    </button>
+                  );
+                })
               ) : (() => {
-                const CompIcon = compMetric === 'competitors' ? Users : compMetric === 'limit' ? Gauge : Percent;
-                const on = !!compSortDir;
+                const CompIcon = compMetric === 'competitors' ? Users : compMetric === 'limit' ? Gauge : compMetric === 'nameLength' ? CaseSensitive : compMetric === 'cityLength' ? MapPin : Percent;
+                const on = listSort?.col === 'comp';
                 return (
                   <button
                     type="button"
@@ -1992,9 +2171,9 @@ function CalendarPageInner() {
                         zhHant: "(點選排序)"
                     })}
                     aria-pressed={on}
-                    onClick={() => setCompSortDir((cur) => cur === 'desc' ? 'asc' : cur === 'asc' ? null : 'desc')}
+                    onClick={() => cycleSort('comp')}
                   >
-                    {on && (compSortDir === 'desc'
+                    {on && (listSort?.dir === 'desc'
                       ? <ChevronDown size={11} strokeWidth={2.25} />
                       : <ChevronUp size={11} strokeWidth={2.25} />)}
                     <CompIcon size={15} strokeWidth={1.75} />
@@ -2022,7 +2201,7 @@ function CalendarPageInner() {
           onSelect={setSelectedComp}
           onYearChange={setCurrentYear}
           compMetric={compMetric}
-          compSortDir={compSortDir}
+          listSort={listSort}
           eventMetric={eventMetric}
           pastMeta={pastMeta}
           outerRef={listScrollRef}

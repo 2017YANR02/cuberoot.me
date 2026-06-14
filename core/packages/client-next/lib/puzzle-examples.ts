@@ -2,7 +2,7 @@
 // 生产端:scramble-stats-build/src/build_puzzle_examples.ts(改 shape 必须两处同步 + bump V)。
 import { statsUrl } from '@/lib/stats-base';
 
-export type PuzzleExampleSample = [string, string]; // [id, scramble]
+export type PuzzleExampleSample = [string, string, string?]; // [id, scramble, optScramble?]
 // [compId, eventId, scrambleNum, roundType, group, isExtra(0|1)] — 与 3x3 ExampleCompMeta 对齐
 export type PuzzleExampleCompMeta = [string, string, number, string, string, (0 | 1)];
 
@@ -19,7 +19,7 @@ export interface PuzzleExamplesJson {
 }
 
 // shape 变更或数据全量重灌时 bump(防缓存旧 JSON)
-const V = '20260612c';
+const V = '20260614opt';
 
 export async function fetchPuzzleExamples(): Promise<PuzzleExamplesJson> {
   const r = await fetch(statsUrl('/stats/scramble/puzzle_examples.json') + `?v=${V}`);

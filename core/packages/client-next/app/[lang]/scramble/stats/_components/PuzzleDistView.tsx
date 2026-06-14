@@ -83,6 +83,8 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
   // sq1 双口径:'wca'(WCA 12c4,主)/ 'slash'(jaapsch twist)。仅 sq1 有 alt。
   const [sq1Metric, setSq1Metric] = useState<'wca' | 'slash'>('wca');
+  // 示例:原始比赛打乱 vs 最优(最短)等价打乱(同状态)。仅当样例带最优数据时露切换。
+  const [exView, setExView] = useState<'orig' | 'opt'>('orig');
 
   useEffect(() => {
     let alive = true;
@@ -193,6 +195,8 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           bins={activeBins}
           comps={exEntry.comps}
           idMeta={exEntry.idMeta}
+          exView={exView}
+          onExView={setExView}
         />
       )}
 
@@ -243,6 +247,8 @@ function PuzzleExamplesPanel({
   bins,
   comps,
   idMeta,
+  exView,
+  onExView,
 }: {
   isZh: boolean;
   puzzleKey: string;
@@ -250,11 +256,21 @@ function PuzzleExamplesPanel({
   bins: PuzzleExamplesEntry['bins'];
   comps: PuzzleExamplesEntry['comps'];
   idMeta: PuzzleExamplesEntry['idMeta'];
+  exView: 'orig' | 'opt';
+  onExView: (v: 'orig' | 'opt') => void;
 }) {
   const route = PUZZLE_ROUTE[puzzleKey];
   const hasSolver = !!route; // sq1 无在线求解器页 → 示例卡不可点,纯展示
   const previewEvent = PUZZLE_EVENT[puzzleKey] ?? '333';
-  const samples = bins[String(selectedBin)] ?? [];
+  const rawSamples = bins[String(selectedBin)] ?? [];
+  // 该 bin 样例确有最优等价打乱时才露切换(sq1 等无解列的 puzzle 自动隐藏)。
+  const hasOpt = rawSamples.some((s) => !!s[2]);
+  // 按比赛时间倒序(最新在前):有 comp 日期串按它,无则退回打乱 id(≈ 入库时间序),都取倒序。
+  const dateOf = (id: string) => comps[idMeta[id]?.[0] ?? '']?.[1] ?? '';
+  const samples = [...rawSamples].sort((a, b) => {
+    const d = dateOf(b[0]).localeCompare(dateOf(a[0]));
+    return d !== 0 ? d : (Number(b[0]) - Number(a[0]));
+  });
   const solverHref = (scr: string) =>
     `/scramble/${route}?${new URLSearchParams({ scramble: scr.trim() })}`;
 
@@ -264,21 +280,36 @@ function PuzzleExamplesPanel({
         <div className="scramble-stats-panel-title">
           {tr({ zh: '{n} 步示例', en: '{n}-move examples', zhHant: '{n} 步示例' }).replace('{n}', String(selectedBin))}
         </div>
+        {hasOpt && (
+          <PillToggle
+            value={exView === 'opt'}
+            onChange={(v) => onExView(v ? 'opt' : 'orig')}
+            offLabel={tr({ zh: '原始', en: 'Original' })}
+            onLabel={tr({ zh: '最优', en: 'Optimal',
+                zhHant: "最優"
+            })}
+            ariaLabel={tr({ zh: '原始打乱或最优等价打乱', en: 'Original scramble or optimal equivalent',
+                zhHant: "原始打亂或最優等價打亂"
+            })}
+          />
+        )}
       </div>
       {samples.length > 0 ? (
         <ul className="scramble-stats-examples-list">
-          {samples.map(([id, scr], i) => {
+          {samples.map(([id, scr, opt], i) => {
             const m = idMeta[id];
             const comp = m ? comps[m[0]] : undefined;
-            const preview = <ScramblePreview2D event={previewEvent} scramble={scr.trim()} size={26} />;
+            // 最优视图:用最短等价打乱(同状态),无数据回退原始。预览/跳转都跟当前视图。
+            const shown = (exView === 'opt' && opt ? opt : scr).trim();
+            const preview = <ScramblePreview2D event={previewEvent} scramble={shown} size={26} />;
             // sq1 显示用简写记号(0 2/4 -5/...),其它 event 原样;SVG 预览仍喂原始串。
-            const display = formatScrambleForEvent(previewEvent, scr.trim());
+            const display = formatScrambleForEvent(previewEvent, shown);
             return (
               <li key={i}>
                 {hasSolver ? (
                   <Link
                     className="scramble-stats-examples-cube"
-                    href={solverHref(scr)}
+                    href={solverHref(shown)}
                     prefetch={false}
                     aria-label={tr({ zh: '打乱图', en: 'Scramble image', zhHant: '打亂圖' })}
                   >
@@ -291,7 +322,7 @@ function PuzzleExamplesPanel({
                   {hasSolver ? (
                     <Link
                       className="scramble-stats-examples-scramble"
-                      href={solverHref(scr)}
+                      href={solverHref(shown)}
                       prefetch={false}
                     >
                       {display}
@@ -302,13 +333,18 @@ function PuzzleExamplesPanel({
                   {comp && m && (() => {
                     const iso2 = compFlagIso2(m[0]);
                     return (
-                      <span className="scramble-stats-examples-comp" title={comp[0]}>
+                      <Link
+                        className="scramble-stats-examples-comp"
+                        href={`/scramble/gen?comp=${encodeURIComponent(m[0])}`}
+                        prefetch={false}
+                        title={comp[0]}
+                      >
                         {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                         <span className="scramble-stats-examples-comp-name">{localizeCompName(m[0], comp[0], isZh)}</span>
                         <span className="scramble-stats-examples-comp-meta">
                           <span>{compSourceLine(m[3], m[4], m[2], isZh, !!m[5])}</span>
                         </span>
-                      </span>
+                      </Link>
                     );
                   })()}
                 </div>
