@@ -141,6 +141,42 @@ html[data-theme=dark] .wp-page {
     .wp-combos-bodies { grid-template-columns: 1fr; }
 }
 
+/* ── 成绩变更面板(PersonResultChanges)── 仅在该选手有往期成绩变更时渲染 */
+.wp-rc-card {
+    padding: 16px 20px;
+    display: flex; flex-direction: column; gap: 8px;
+}
+.wp-rc-head { display: flex; align-items: center; gap: 10px; }
+.wp-rc-title { margin: 0; font-size: 1rem; font-weight: 600; color: var(--wp-text); }
+.wp-rc-sub { margin: 0; font-size: 0.8rem; color: var(--wp-text-sub); line-height: 1.5; max-width: 640px; }
+.wp-rc-list { list-style: none; margin: 4px 0 0; padding: 0; }
+.wp-rc-row {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    padding: 9px 0; font-size: 0.85rem; font-variant-numeric: tabular-nums;
+}
+.wp-rc-row + .wp-rc-row { border-top: 1px solid var(--wp-border); }
+.wp-rc-badge {
+    flex: none; font-size: 0.72rem; font-weight: 650; padding: 1px 7px; border-radius: 999px;
+}
+.wp-rc-badge-removed { color: var(--wp-pink); background: var(--wp-pink-soft); }
+.wp-rc-badge-modified { color: var(--wp-accent); background: var(--wp-accent-soft); }
+.wp-rc-evt { font-size: 1.05em; color: var(--wp-text-sub); flex: none; }
+.wp-rc-ctx { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 7px; min-width: 0; }
+.wp-rc-event { color: var(--wp-text); font-weight: 550; }
+.wp-rc-round { color: var(--wp-text-sub); }
+.wp-rc-comp { color: var(--wp-text-sub); }
+.wp-rc-vals { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin-left: auto; }
+.wp-rc-pair { display: inline-flex; align-items: center; gap: 6px; }
+.wp-rc-flabel { color: var(--wp-text-mute); font-size: 0.78rem; }
+.wp-rc-old { color: var(--wp-text-mute); text-decoration: line-through; }
+.wp-rc-arrow { color: var(--wp-text-mute); }
+.wp-rc-new { color: var(--wp-text); font-weight: 650; }
+.wp-rc-gone { color: var(--wp-pink); font-size: 0.76rem; }
+.wp-rc-meta { color: var(--wp-text-sub); }
+@media (max-width: 560px) {
+    .wp-rc-vals { margin-left: 0; width: 100%; }
+}
+
 /* ── Hero ──────────────────────────────────────────────────────────── */
 /* 紧凑横排:头像 | 国旗+姓名+ID | (右侧)统计;窄屏统计换行落第二行 */
 .wp-hero-card {
