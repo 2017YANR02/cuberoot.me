@@ -20,6 +20,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
 import { Flag } from '@/components/Flag';
 import { localizeCompName } from '@/lib/comp-localize';
+import { reconPathSeg } from '@/lib/recon-seo';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { RecordBadge } from '@/components/RecordBadge';
 import { EventIcon } from '@/components/EventIcon';
@@ -304,7 +305,7 @@ export default function ReconPersonClient() {
                         <td className="col-date">{s.date ? s.date.slice(0, 10) : ''}</td>
                         <td className="col-method">{s.method || ''}</td>
                         <td className="col-role">
-                          <Link href={`/recon/${s.id}`} className="recon-role-tags">
+                          <Link href={`/recon/${reconPathSeg(s)}`} className="recon-role-tags">
                             {roleBadges(r).map(b => (
                               <span key={b.key} className={`recon-role-tag recon-role-${b.key}`}>{b.label}</span>
                             ))}

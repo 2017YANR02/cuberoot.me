@@ -28,6 +28,12 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1 -NoPublish      #
 - **stages 的 build 会覆写 distribution/examples 的 '333' 变体 → 脚本在 stages build 之后自动补 333 inject 还原**(不用再记得手跑;`willInject = run333opt 或 stages有变`)。
 - 三类作业**共享发布**;`-NoPublish` 一起跳过。
 
+**「原始 / 最优打乱」开关数据**(/scramble/stats 难度+长度 tab、/timer 真题):每条打乱可切「最优等价打乱」=invert(最优解),同状态最少步。
+- **难度 tab puzzle**(222/pyram/skewb):analyzer 开 `PUZZLE_EMIT_SOLN=1` 多产 soln 列(`update_puzzle_stats.ps1` 已固定开);`build_puzzle_examples.ts` 反推存第 3 元 `[id,scr,opt]`。改 analyzer 要 `cargo build --release --bin {pocket,skewb,pyraminx}_analyzer`。
+- **难度 tab 三阶**:333opt inject 已带(examples 第 4 元)。
+- **长度 tab**(3x3 面转族 + 222/pyram/skewb):`build_length_opt.mjs`(一条龙 step 5c,增量)产 `event_length_examples_opt.json`(text→opt overlay);CI 日更的 base 不被覆盖。3x3 走 cube48opt5(972M 表),puzzle 走 analyzer。**首跑慢(~1284 个 3x3 解,opt5 ~40min);增量再跑很快**。
+- **/timer 真题最优**:走 PG `wca_scramble_optimal`(非 static)。`export_puzzle_optimal.mjs`(puzzles job 内)产 `wca_optimal_puzzle.csv`,3x3 走 `solver/333opt/export_optimal.mjs`;**灌库手动 `\copy`**(脚本末尾打提示)。前端 `OPTIMAL_EVENTS`(WcaSourceConfig)gate 开关显示。sq1/魔表无(占位注明)。
+
 下面 A/B/C 是各 job 的内部细节。
 
 ---

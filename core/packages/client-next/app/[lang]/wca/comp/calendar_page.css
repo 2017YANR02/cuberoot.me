@@ -1050,15 +1050,15 @@
 }
 
 /* ── 列表视图（虚拟滚动 + 17 项目对齐网格） ── */
-/* 共享网格列模板：date | flag | name+city | event*21
- * name+city 列宽由 JS 测当前过滤集 max name+city 实际宽度后注入 --cl-name-width；
- * 默认 fallback 28rem。这样筛选短名（如"北京"）时 city 紧贴 events，不留多余空白；
- * 全集时按真实最长宽度撑开，长名完整显示，所有行 events 列与 chips 表头对齐。
+/* 共享网格列模板：date | flag | name | city | event*21
+ * name / city 各占一列，列宽由 JS 测当前过滤集各自 max 实际宽度后注入 --cl-name-width / --cl-city-width；
+ * 默认 fallback 18rem / 11rem。这样筛选短名（如"北京"）时不留多余空白；
+ * 全集时按真实最长宽度撑开，长名完整显示，所有行 city 起点对齐成独立一列，events 列与 chips 表头对齐。
  * comp-list-row（行）与 event-chips-grid（表头）共用 */
 .calendar-page {
     --cl-ev-w: 1.3rem;
     --cl-comp-w: 2.8rem;  /* 整场单列（实际人数 / 上限 / 满员率）；选「不显示」时收为 0 */
-    --cl-cols: 7.2rem 1.4rem var(--cl-name-width, 28rem) 1.6rem var(--cl-comp-w) repeat(21, var(--cl-ev-w));
+    --cl-cols: 7.2rem 1.4rem var(--cl-name-width, 18rem) var(--cl-city-width, 11rem) 1.6rem var(--cl-comp-w) repeat(21, var(--cl-ev-w));
     --cl-min-width: 73rem;
 }
 /* 宽值 metric（限时 / 及格线 / 晋级）：事件列加宽到能塞下 "10:00" / "≤6:00"，整体网格更宽，横向滚动 */
@@ -1067,6 +1067,11 @@
     --cl-min-width: 108rem;
 }
 .calendar-page[data-comp-none] { --cl-comp-w: 0rem; }
+/* 经纬度：整场列拆成「纬度 + 经度」两列，各带正负号 + 两位小数（如 -122.42），比计数列宽 */
+.calendar-page[data-comp-latlng] {
+    --cl-comp-w: 3.8rem;
+    --cl-cols: 7.2rem 1.4rem var(--cl-name-width, 18rem) var(--cl-city-width, 11rem) 1.6rem var(--cl-comp-w) var(--cl-comp-w) repeat(21, var(--cl-ev-w));
+}
 .calendar-page .comp-list {
     display: flex;
     flex-direction: column;
@@ -1147,12 +1152,12 @@
     display: block;
     white-space: nowrap;
 }
-/* name + city 合并成一个 grid 列；内部用 flex 让 city 紧跟 name，多余空间留给 event chips。
- * name 优先伸缩占空间，过长截断；city 在 name 之后短间距渲染。 */
+/* name 列：仅含关注标记 + 比赛名；city 独立成下一列。
+ * 内部用 flex 让关注标记紧跟在名字前；名字过长截断。 */
 .calendar-page .comp-list-name-cell {
     display: flex;
     align-items: baseline;
-    gap: 0.5rem;
+    gap: 0.35rem;
     min-width: 0;
     overflow: hidden;
     /* 紧贴国旗 — 抵消 grid 列间 gap（桌面 6px / 移动 4px） */
@@ -1166,13 +1171,13 @@
     font-weight: 500;
     flex: 0 1 auto;
 }
+/* city 独立一列：所有行起点对齐 */
 .calendar-page .comp-list-city {
     color: var(--text-sub);
     font-size: 0.78rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    flex: 0 1 auto;
     min-width: 0;
 }
 .calendar-page .cl-event-cell {
@@ -1218,6 +1223,8 @@
     padding: 0;
     font: inherit;
 }
+/* 比赛名 / 城市名列头排序按钮：在左对齐文本列上方,贴左 */
+.calendar-page .cl-text-sort { justify-self: start; justify-content: flex-start; }
 .calendar-page .cl-col-sort { cursor: pointer; transition: color 0.15s; }
 .calendar-page .cl-col-sort:hover { color: var(--text); }
 .calendar-page .cl-col-sort.is-active { color: #4ade80; }
@@ -1510,11 +1517,15 @@
     .calendar-page {
         --cl-ev-w: 1.1rem;
         --cl-comp-w: 2.4rem;
-        --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 22rem) 1.4rem var(--cl-comp-w) repeat(21, var(--cl-ev-w));
+        --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 14rem) var(--cl-city-width, 8rem) 1.4rem var(--cl-comp-w) repeat(21, var(--cl-ev-w));
         --cl-min-width: 56rem;
     }
     .calendar-page[data-wide-metric] { --cl-ev-w: 2.7rem; --cl-min-width: 90rem; }
     .calendar-page[data-comp-none] { --cl-comp-w: 0rem; }
+    .calendar-page[data-comp-latlng] {
+        --cl-comp-w: 3.4rem;
+        --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 14rem) var(--cl-city-width, 8rem) 1.4rem var(--cl-comp-w) var(--cl-comp-w) repeat(21, var(--cl-ev-w));
+    }
     .calendar-page .comp-list { overflow-x: auto; }
     .calendar-page .event-chips-grid { padding: 4px 8px; gap: 4px; }
     .calendar-page .event-chips--list-header .event-chip { width: 20px; height: 20px; }

@@ -18,6 +18,12 @@ use cube_solver::pocket_solver::{PocketSolver, POCKET_MOVES};
 
 static S: OnceLock<PocketSolver> = OnceLock::new();
 
+/// 是否追加第 3 列「一条最优解」(逆之即最优等价打乱)。默认关(保持 2 列、旧消费者与
+/// 单测不变);打乱统计管道设 `PUZZLE_EMIT_SOLN=1` 时打开。
+fn emit_soln() -> bool {
+    std::env::var("PUZZLE_EMIT_SOLN").is_ok()
+}
+
 /// 固定 DBL 角 = U/R/F 都不动(位置 + 朝向)的唯一角(与 pocket_solver 同式独立推导)。
 fn fixed_corner() -> usize {
     static V: OnceLock<usize> = OnceLock::new();
@@ -65,9 +71,10 @@ fn rot24() -> &'static Vec<Vec<Move>> {
     })
 }
 
-/// 任意 18-move 打乱的 2x2x2 最优 HTM 步数:先归一到固定 DBL 帧再查表。
-/// 整体旋转不改最优解长(解经共轭等长),归一后 DBL 在家,坐标投影合法。
-fn pocket_len(s: &PocketSolver, alg: &[Move]) -> u32 {
+/// 把任意 18-move 打乱归一到固定 DBL 帧:返回 (打乱 + 整体旋转词),DBL 在该词后归位归向。
+/// 整体旋转不改最优解长(解经共轭等长),归一后 DBL 在家,坐标投影合法。WCA 222 打乱只用
+/// U/R/F → DBL 本就不动 → 旋转词为空 → 归一结果 = 原打乱(解/逆解与原打乱同朝向)。
+fn normalized(alg: &[Move]) -> Vec<Move> {
     let mut st = State::SOLVED;
     for &m in alg {
         st.apply(m);
@@ -82,10 +89,15 @@ fn pocket_len(s: &PocketSolver, alg: &[Move]) -> u32 {
         if cp[fixed] as usize == fixed && co[fixed] == 0 {
             let mut full = alg.to_vec();
             full.extend_from_slice(w);
-            return s.solve_one(&full);
+            return full;
         }
     }
     unreachable!("no whole-cube rotation fixes the DBL corner");
+}
+
+/// 任意 18-move 打乱的 2x2x2 最优 HTM 步数:先归一到固定 DBL 帧再查表。
+fn pocket_len(s: &PocketSolver, alg: &[Move]) -> u32 {
+    s.solve_one(&normalized(alg))
 }
 
 struct PocketWrapper;
@@ -97,12 +109,24 @@ impl SolverWrapper for PocketWrapper {
     }
 
     fn get_csv_header() -> String {
-        "id,pocket".into()
+        if emit_soln() { "id,pocket,soln".into() } else { "id,pocket".into() }
     }
 
     fn solve(alg: &[Move], id: &str) -> String {
         let s = S.get().unwrap();
-        format!("{},{}", id, pocket_len(s, alg))
+        let len = pocket_len(s, alg);
+        if !emit_soln() {
+            return format!("{},{}", id, len);
+        }
+        // 第 3 列:一条最优解(归一帧下 URF 记号串);逆之即「最优等价打乱」。
+        let soln = s
+            .enumerate(&normalized(alg))
+            .moves
+            .iter()
+            .map(|&m| Move::from_index(m as usize).name())
+            .collect::<Vec<_>>()
+            .join(" ");
+        format!("{},{},{}", id, len, soln)
     }
 }
 

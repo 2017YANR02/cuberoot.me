@@ -62,7 +62,7 @@ interface DistributionJson {
   sets: Record<string, SetData>;
 }
 
-type ExampleSample = [string, string, string];        // [id, scramble, bottomColor]
+type ExampleSample = [string, string, string, string?]; // [id, scramble, bottomColor, optScramble?]
 type ExampleCompMeta = [string, string, number, string, string, (0 | 1)?]; // [compId, eventId, scrambleNum, roundType, group, isExtra?]
 interface ExamplesSet {
   variants: Record<string, Record<string, Record<string, Record<string, ExampleSample[]>>>>;
@@ -190,6 +190,8 @@ export default function ScrambleStatsPage() {
   const [examplesLoading, setExamplesLoading] = useState(false);
   const [examplesError, setExamplesError] = useState<string | null>(null);
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
+  // 整解(333)示例:原始 WCA 打乱 vs 最优(最短)等价打乱(同状态)。
+  const [exView, setExView] = useState<'orig' | 'opt'>('orig');
 
   // 异步加载 comp→country 索引,完成后 bump version 触发重渲染拿示例卡片的比赛国旗 + 中文名
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
@@ -735,6 +737,9 @@ export default function ScrambleStatsPage() {
         samples={currentSamples}
         comps={exSet?.comps}
         idMeta={exSet?.idMeta}
+        is333={is333}
+        exView={exView}
+        onExView={setExView}
       />
 
       {cnBenefit && (
@@ -828,6 +833,9 @@ function ExamplesPanel({
   samples,
   comps,
   idMeta,
+  is333,
+  exView,
+  onExView,
 }: {
   isZh: boolean;
   lang: 'zh' | 'en';
@@ -842,8 +850,20 @@ function ExamplesPanel({
   samples: ExampleSample[] | null;
   comps?: Record<string, [string, string]>;
   idMeta?: Record<string, ExampleCompMeta>;
+  is333: boolean;
+  exView: 'orig' | 'opt';
+  onExView: (v: 'orig' | 'opt') => void;
 }) {
   const selectedDownloadable = selectedBin !== null && downloadBins.includes(selectedBin);
+  // 整解 + 该 bin 示例确有最优打乱数据时才露切换(线上旧 JSON 无第 4 元 → 自动隐藏)。
+  const hasOpt = is333 && !!samples?.some((s) => !!s[3]);
+  // 示例按比赛时间倒序(最新在前):有 comp 日期串(ISO 前缀)按它,无则退回打乱 id
+  //(WCA scramble id ≈ 入库时间序),都取倒序。
+  const dateOf = (id: string) => comps?.[idMeta?.[id]?.[0] ?? '']?.[1] ?? '';
+  const sortedSamples = samples ? [...samples].sort((a, b) => {
+    const d = dateOf(b[0]).localeCompare(dateOf(a[0]));
+    return d !== 0 ? d : (Number(b[0]) - Number(a[0]));
+  }) : samples;
   return (
     <div className="scramble-stats-panel scramble-stats-examples-panel">
       <div className="scramble-stats-examples-header">
@@ -852,6 +872,19 @@ function ExamplesPanel({
             ? (isZh ? `${selectedBin} 步示例` : `${selectedBin}-move examples`)
             : (tr({ zh: '示例', en: 'Examples' }))}
         </div>
+        {hasOpt && (
+          <PillToggle
+            value={exView === 'opt'}
+            onChange={(v) => onExView(v ? 'opt' : 'orig')}
+            offLabel={tr({ zh: '原始', en: 'Original' })}
+            onLabel={tr({ zh: '最优', en: 'Optimal',
+                zhHant: "最優"
+            })}
+            ariaLabel={tr({ zh: '原始打乱或最优等价打乱', en: 'Original scramble or optimal equivalent',
+                zhHant: "原始打亂或最優等價打亂"
+            })}
+          />
+        )}
         {selectedDownloadable && (
           <a
             className="scramble-stats-download-btn"
@@ -874,11 +907,13 @@ function ExamplesPanel({
             zhHant: "載入失敗"
         })}: {errorText}</div>
       )}
-      {selectedBin !== null && !loading && !errorText && samples && samples.length > 0 && (
+      {selectedBin !== null && !loading && !errorText && sortedSamples && sortedSamples.length > 0 && (
         <ul className="scramble-stats-examples-list">
-          {samples.map(([id, scr, color], i) => {
+          {sortedSamples.map(([id, scr, color, opt], i) => {
             const m = idMeta?.[id];
             const comp = m ? comps?.[m[0]] : undefined;
+            // 最优视图:用最短等价打乱(同状态),无数据则回退原始。预览与跳转都跟当前视图。
+            const disp = (exView === 'opt' && opt ? opt : scr).trim();
             return (
               <li key={i}>
                 {color && (
@@ -890,21 +925,21 @@ function ExamplesPanel({
                 )}
                 <Link
                   className="scramble-stats-examples-cube"
-                  href={`/${lang}/scramble/analyzer?${new URLSearchParams({ scramble: scr.trim().replace(/ /g, '_') })}`}
+                  href={`/${lang}/scramble/analyzer?${new URLSearchParams({ scramble: disp.replace(/ /g, '_') })}`}
                   prefetch={false}
                   aria-label={tr({ zh: '打乱图', en: 'Scramble image',
                       zhHant: "打亂圖"
                 })}
                 >
-                  <ScramblePreview2D event="333" scramble={scr.trim()} size={26} />
+                  <ScramblePreview2D event="333" scramble={disp} size={26} />
                 </Link>
                 <div className="scramble-stats-examples-body">
                   <Link
                     className="scramble-stats-examples-scramble"
-                    href={`/${lang}/scramble/analyzer?${new URLSearchParams({ scramble: scr.trim().replace(/ /g, '_') })}`}
+                    href={`/${lang}/scramble/analyzer?${new URLSearchParams({ scramble: disp.replace(/ /g, '_') })}`}
                     prefetch={false}
                   >
-                    {scr}
+                    {disp}
                   </Link>
                   {comp && m && (() => {
                     const iso2 = compFlagIso2(m[0]);

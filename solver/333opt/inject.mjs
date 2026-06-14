@@ -8,9 +8,10 @@
 // comp_date.ts (both tiny, deliberately kept in-line so this stays a self-contained .mjs step).
 //
 // Front-end contract (page.tsx): bars come from distribution counts (all clickable); clicking a bin
-// reads examples.json sets.wca.variants['333']['333'].ALL[bin] = [[id,scramble,color]] and resolves
-// the comp card via sets.wca.idMeta[id] → sets.wca.comps[ci]. example_bins only gates the ⬇ download
-// link (333 has none) → [].
+// reads examples.json sets.wca.variants['333']['333'].ALL[bin] = [[id,scramble,color,optScramble]] and
+// resolves the comp card via sets.wca.idMeta[id] → sets.wca.comps[ci]. optScramble = invert(solution)
+// = the shortest equivalent scramble (same state), drives the 原始/最优 toggle. example_bins only gates
+// the ⬇ download link (333 has none) → [].
 //
 // Local write only; publishing to the CDN is a separate manual scp (see README).
 import { readFileSync, writeFileSync, readdirSync, existsSync, createReadStream } from 'node:fs';
@@ -38,12 +39,23 @@ function dateDisplay(start, end) {
   return `${start}~${end}`;
 }
 
-// ---- 1. id -> htm 从 out.*.csv(行 = id,htm,solution)----
+// 反演解法 → 最优(最短)等价打乱:复现同一状态所需的最少步数序列(前端「最优」视图用)
+function invertAlg(s) {
+  return s.trim().split(/\s+/).filter(Boolean).reverse()
+    .map((m) => (m.endsWith('2') ? m : m.endsWith("'") ? m.slice(0, -1) : `${m}'`))
+    .join(' ');
+}
+
+// ---- 1. id -> htm + 最优解 从 out.*.csv(行 = id,htm,solution)----
 const lens = {};
+const soln = {};
 for (const f of readdirSync(__dirname).filter((f) => /^out\.\d+\.csv$/.test(f))) {
   for (const l of readFileSync(resolve(__dirname, f), 'utf8').split('\n')) {
     const p = l.split(',');           // [id, htm, solution]
-    if (p.length >= 2) { const v = Number(p[1]); if (Number.isFinite(v)) lens[p[0]] = v; }
+    if (p.length >= 2) {
+      const v = Number(p[1]);
+      if (Number.isFinite(v)) { lens[p[0]] = v; if (p[2]) soln[p[0]] = p[2].trim(); }
+    }
   }
 }
 const ids = Object.keys(lens);
@@ -123,7 +135,8 @@ ex.sets.wca.idMeta ??= {};
 delete ex.sets.wca.variants.std?.['333'];
 const bins = {};
 for (const [L, arr] of Object.entries(byBin)) {
-  const cards = arr.filter((id) => scrambleOf[id] !== undefined).map((id) => [id, scrambleOf[id], '']);
+  const cards = arr.filter((id) => scrambleOf[id] !== undefined)
+    .map((id) => [id, scrambleOf[id], '', soln[id] ? invertAlg(soln[id]) : '']);
   if (cards.length) bins[L] = cards;
 }
 ex.sets.wca.variants['333'] = { '333': { ALL: bins } };

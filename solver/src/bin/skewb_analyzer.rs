@@ -18,13 +18,33 @@ use cube_solver::skewb_solver::{parse_skewb, SkewbSolver};
 
 static S: OnceLock<SkewbSolver> = OnceLock::new();
 
+/// 是否追加第 3 列「一条最优解」(逆之即最优等价打乱)。默认关(保持 2 列、旧消费者与
+/// 单测不变);打乱统计管道设 `PUZZLE_EMIT_SOLN=1` 时打开。
+fn emit_soln() -> bool {
+    std::env::var("PUZZLE_EMIT_SOLN").is_ok()
+}
+
 /// 一条 (id, alg 字符串) → CSV 行。解析失败 → `id,-`(stderr 报错,不中断 batch)。
+/// 开 `PUZZLE_EMIT_SOLN` 时追加第 3 列:一条最优解(WCA skewb 记号);逆之即最优等价打乱。
 fn skewb_line(s: &SkewbSolver, alg: &str, id: &str) -> String {
     match parse_skewb(alg) {
-        Ok(moves) => format!("{},{}", id, s.solve_one(&moves)),
+        Ok(moves) => {
+            let len = s.solve_one(&moves);
+            if !emit_soln() {
+                return format!("{},{}", id, len);
+            }
+            let soln = s
+                .enumerate(&moves)
+                .moves
+                .iter()
+                .map(|m| m.name())
+                .collect::<Vec<_>>()
+                .join(" ");
+            format!("{},{},{}", id, len, soln)
+        }
         Err(e) => {
             eprintln!("[ERROR] id={}: {}", id, e);
-            format!("{},-", id)
+            if emit_soln() { format!("{},-,", id) } else { format!("{},-", id) }
         }
     }
 }
@@ -38,7 +58,7 @@ impl RawSolverWrapper for SkewbWrapper {
     }
 
     fn get_csv_header() -> String {
-        "id,skewb".into()
+        if emit_soln() { "id,skewb,soln".into() } else { "id,skewb".into() }
     }
 
     fn solve_raw(alg: &str, id: &str) -> String {
