@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { tr } from '@/i18n/tr';
 import './_StickyToc.css';
 
 type Item = { id: string; label: string };
@@ -63,7 +64,9 @@ export default function StickyToc() {
   if (items.length < 3) return null;
 
   return (
-    <nav className="wc-toc" aria-label={i18n.language.startsWith('zh') ? '目录' : 'Contents'}>
+    <nav className="wc-toc" aria-label={tr({ en: 'Contents', zh: '目录',
+        zhHant: "目錄"
+    })}>
       <ul>
         {items.map((it) => (
           <li key={it.id}>
