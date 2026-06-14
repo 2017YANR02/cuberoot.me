@@ -834,7 +834,7 @@ async function fetchWcif(compId: string): Promise<WcifEntry | Record<string, nev
 
   const url = `${WCA_API_BASE}/competitions/${compId}/wcif/public`;
   // WCIF persons 数组大型赛可达数 MB，给 60s 硬总超时上限（默认 10s 会下到一半 abort，丢整场报名）。
-  const data = await fetchWithRetry(url, false, 60_000);
+  const data = await fetchWithRetry(url, false, 120_000);
   // NOTE: fetchWithRetry 网络失败 / 429 重试耗尽 / 404 都返回 {}（无 events 键）。
   //       区分"真无 events"和"fetch 失败"很重要：失败不写缓存，让下次重试；
   //       成功（哪怕 events 列表为空）才缓存。否则一次 429 → 缓存 24h 内永远空。
@@ -971,7 +971,9 @@ async function buildAllUpcomingComps(): Promise<AllComp[] | null> {
     const url =
       `${WCA_API_BASE}/competitions` +
       `?ongoing_and_future=${cutoff}&per_page=${perPage}&page=${page}`;
-    const batch = await fetchWithRetry(url);
+    // per_page=100 的 list 响应可达 ~725KB;经代理走服务器出口(被 WCA 限带宽 ~18KB/s)时
+    // 单页可能要 ~40s,默认 10s 必 abort → 给 90s。直连(本地)仍 1-2s,不受影响。
+    const batch = await fetchWithRetry(url, false, 90_000);
     // NOTE: fetchWithRetry 404/失败时返回 {}；list 端点正常返回 list
     if (!Array.isArray(batch)) {
       if (page === 1) {
