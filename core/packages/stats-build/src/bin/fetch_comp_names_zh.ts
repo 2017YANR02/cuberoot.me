@@ -64,7 +64,8 @@ async function fetchUrl(url: string, raw = false): Promise<string | unknown> {
     try {
       await sleep(API_DELAY_SEC);
       const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 15 * 1000);
+      // 经代理走服务器出口(被 WCA 限带宽)时 CN list 可能慢,15s 偏紧 → 90s。
+      const t = setTimeout(() => ctrl.abort(), 90 * 1000);
       try {
         const headers: Record<string, string> = { 'User-Agent': USER_AGENT };
         // 仅对经代理的 WCA 请求带密钥头;cubing.com 等其它 host 直连,不泄露 secret。

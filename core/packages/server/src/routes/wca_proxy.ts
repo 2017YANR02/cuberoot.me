@@ -50,7 +50,8 @@ wcaProxyRoutes.get('/wca-proxy/*', async (c) => {
   if (hits.length >= RATE_MAX) return c.json({ error: 'rate limited' }, 429);
   hits.push(now);
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 60_000);
+  // 服务器出口被 WCA 限带宽 ~18KB/s,大 WCIF(锦标赛可达 MB)需更长预算;须 ≥ 脚本侧超时(WCIF 120s)。
+  const timer = setTimeout(() => ctrl.abort(), 150_000);
   try {
     const upstream = await fetch(target, {
       // 转发 runner 的 UA(与本地直连一致);secret 头不外传给 WCA。
