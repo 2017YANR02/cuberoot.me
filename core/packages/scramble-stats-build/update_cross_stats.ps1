@@ -116,6 +116,39 @@ $VARIANT_RATE = @{
 
 function Step($m){ Write-Host "`n=== $m ===" -ForegroundColor Cyan }
 function Lc($p){ $n=0; foreach($l in [IO.File]::ReadLines($p)){ $n++ }; $n }
+
+# /timer「原始/最优打乱」最优数据 -> prod PG wca_scramble_optimal(自动灌库, 取代手动 \copy)。
+# 每份 export 都是该批项目的"全量"最优集, 故按 event_id 整批替换(DELETE+COPY in tx), 幂等可重跑。
+# 服务器端密码从自身 /root/core-api/.env 读, 不把任何凭据写进(进 git 的)本脚本。
+function Load-OptimalToPg {
+  param([string]$LocalCsv, [string]$Tag, [string]$EventsInList)
+  if(-not (Test-Path $LocalCsv)){ Write-Host "  [timer-optimal] ${Tag}: 缺 $LocalCsv, 跳过" -ForegroundColor DarkGray; return }
+  $rows = (Lc $LocalCsv) - 1
+  if($rows -le 0){ Write-Host "  [timer-optimal] ${Tag}: CSV 0 行, 跳过" -ForegroundColor DarkGray; return }
+  $remoteCsv = "/root/_timer_optimal_$Tag.csv"
+  $remoteSql = "/root/_timer_optimal_$Tag.sql"
+  $sql = @"
+\set ON_ERROR_STOP on
+BEGIN;
+DELETE FROM wca_scramble_optimal WHERE event_id IN ($EventsInList);
+\copy wca_scramble_optimal (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,htm,optimal_scramble) FROM '$remoteCsv' WITH (FORMAT csv, HEADER true)
+COMMIT;
+SELECT count(*) AS wca_scramble_optimal_total FROM wca_scramble_optimal;
+"@
+  $localSql = Join-Path $env:TEMP "_timer_optimal_$Tag.sql"
+  [IO.File]::WriteAllText($localSql, ($sql -replace "`r`n","`n"), [Text.UTF8Encoding]::new($false))
+  Write-Host "  [timer-optimal] ${Tag}: scp $rows 行 + 整批替换 wca_scramble_optimal ($EventsInList) ..." -ForegroundColor DarkCyan
+  scp $LocalCsv "${StaticHost}:$remoteCsv"
+  if($LASTEXITCODE -ne 0){ throw "[timer-optimal] $Tag CSV scp 失败" }
+  scp $localSql "${StaticHost}:$remoteSql"
+  if($LASTEXITCODE -ne 0){ throw "[timer-optimal] $Tag SQL scp 失败" }
+  $pwExpr = '$(grep -oP ''DB_PASS=\K.*'' /root/core-api/.env | tr -d ''[:space:]'')'
+  $remoteCmd = "PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteCsv $remoteSql; exit `$rc"
+  ssh $StaticHost $remoteCmd
+  if($LASTEXITCODE -ne 0){ throw "[timer-optimal] $Tag psql 灌库失败" }
+  Remove-Item $localSql -Force -ErrorAction SilentlyContinue
+  Write-Host "  [timer-optimal] ${Tag}: 完成 ($rows 行已上线)。" -ForegroundColor Green
+}
 function AppendData($master,$src,$skipHeader){
   # LF 安全追加: 先确保 master 末尾有换行, 再逐行 append (跳过源 header)
   $needNL=$false
@@ -585,6 +618,10 @@ if($willInject){
     node (Join-Path $SolverDir '333opt\inject.mjs')
     if($LASTEXITCODE -ne 0){ throw '333opt inject.mjs 失败' }
     $optChanged = $true
+    # 同步产 /timer 最优打乱 CSV(invert(最优解), 同态 333/oh/ft/fm), 供步骤 6b 自动灌库
+    Step '5b+ 导出 /timer 333 最优打乱 — node solver/333opt/export_optimal.mjs'
+    node (Join-Path $SolverDir '333opt\export_optimal.mjs')
+    if($LASTEXITCODE -ne 0){ throw '333opt export_optimal.mjs 失败' }
   } else {
     Write-Host '[333opt] 无 out.*.csv (没跑过 solve_loop), 跳过 inject。' -ForegroundColor DarkGray
   }
@@ -677,13 +714,22 @@ if($NoPublish){
   } else { Write-Host 'stats/scramble 无变化, 跳过 commit。' -ForegroundColor Yellow }
 }
 
-Step ("完成 (std +{0}; 变体 {1}; 333opt {2}; puzzles {3})" -f $nNew, $(if($variantChanged){$Variants -join '/'}else{'-'}), $(if($optChanged){'是'}else{'-'}), $(if($puzzleChanged){$Puzzles -join '/'}else{'-'}))
-
-# /timer「原始/最优打乱」的最优数据走 PG(非 static),不随上面的发布自动上线;手动灌库:
-if($puzzleChanged){
-  Write-Host ''
-  Write-Host '[timer 最优打乱] 如需更新 /timer 真题最优(222/pyram/skewb),把 CSV \copy 进 prod:' -ForegroundColor Yellow
-  Write-Host '  scp packages/scramble-stats-build/wca_optimal_puzzle.csv root@cuberoot:/root/' -ForegroundColor DarkGray
-  Write-Host "  ssh root@cuberoot \"PGPASSWORD=... psql -U recon_user -d cuberoot_db -c \\\"\\copy wca_scramble_optimal FROM '/root/wca_optimal_puzzle.csv' WITH (FORMAT csv, HEADER true)\\\"\"" -ForegroundColor DarkGray
-  Write-Host '  (3x3 同理:solver/333opt/export_optimal.mjs 产 wca_optimal.csv)' -ForegroundColor DarkGray
+# ---- 6b. /timer 最优打乱 -> prod PG (自动灌库, 同发布步, 不再手动 \copy) ----
+# 数据走 PG wca_scramble_optimal(非 static), 故跟 static 发布并列;-NoPublish 一并跳过。
+# 333 export 在 5b+ 已产 wca_optimal.csv;puzzle export 在 puzzles 作业内产 wca_optimal_puzzle.csv。
+if($NoPublish){
+  if($optChanged -or $puzzleChanged){
+    Write-Host ''
+    Write-Host '[timer 最优打乱] -NoPublish: 已产 CSV 但未灌库 (wca_optimal.csv / wca_optimal_puzzle.csv)。去掉 -NoPublish 即自动上线。' -ForegroundColor Yellow
+  }
+} elseif($optChanged -or $puzzleChanged){
+  Step '6b /timer 最优打乱灌库 -> prod PG wca_scramble_optimal (按项目整批替换)'
+  if($optChanged){
+    Load-OptimalToPg (Join-Path $SolverDir '333opt\wca_optimal.csv') '333' "'333','333oh','333ft','333fm'"
+  }
+  if($puzzleChanged){
+    Load-OptimalToPg (Join-Path $RepoRoot 'core\packages\scramble-stats-build\wca_optimal_puzzle.csv') 'puzzle' "'222','pyram','skewb'"
+  }
 }
+
+Step ("完成 (std +{0}; 变体 {1}; 333opt {2}; puzzles {3})" -f $nNew, $(if($variantChanged){$Variants -join '/'}else{'-'}), $(if($optChanged){'是'}else{'-'}), $(if($puzzleChanged){$Puzzles -join '/'}else{'-'}))

@@ -156,6 +156,9 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
   const to = c.req.query('to') ?? '';
   const hasFrom = DATE_RE.test(from);
   const hasTo = DATE_RE.test(to);
+  // optimal=1: 只回有 God's-number 最优等态打乱的真题(避免「开了最优却拿到原始打乱」的静默回退)。
+  // 仅同态项目(333/oh/ft/fm + 222/pyram/skewb)入 wca_scramble_optimal,前端只对这些项目传 optimal=1。
+  const optFilter = c.req.query('optimal') === '1' ? 'AND o.optimal_scramble IS NOT NULL' : '';
 
   try {
     let rows: RandomRow[];
@@ -167,7 +170,7 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
            FROM wca_scrambles ws
            LEFT JOIN wca_competitions c ON c.id = ws.competition_id
            ${OPT_JOIN}
-          WHERE ws.event_id = ? AND ws.rnd >= ?
+          WHERE ws.event_id = ? AND ws.rnd >= ? ${optFilter}
           ORDER BY ws.rnd, ws.id
           LIMIT ?`,
         [event, dart, count],
@@ -179,7 +182,7 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
              FROM wca_scrambles ws
              LEFT JOIN wca_competitions c ON c.id = ws.competition_id
              ${OPT_JOIN}
-            WHERE ws.event_id = ? AND ws.rnd < ?
+            WHERE ws.event_id = ? AND ws.rnd < ? ${optFilter}
             ORDER BY ws.rnd, ws.id
             LIMIT ?`,
           [event, dart, count - rows.length],
@@ -198,7 +201,7 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
            JOIN (SELECT id, name FROM wca_competitions WHERE ${dateWhere.join(' AND ')}
                   ORDER BY random() LIMIT ${COMP_SAMPLE}) c ON c.id = ws.competition_id
            ${OPT_JOIN}
-          WHERE ws.event_id = ?
+          WHERE ws.event_id = ? ${optFilter}
           ORDER BY random()
           LIMIT ?`,
         [...dateParams, event, count],
