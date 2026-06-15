@@ -217,7 +217,8 @@ function EventRoundsList({
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
-  const prRank = useMemo(() => computePrRank(results, comps), [results, comps]);
+  // PR / 名次染色只算官方成绩:直播(非官方)行不参与
+  const prRank = useMemo(() => computePrRank(results.filter((r) => !r.live), comps), [results, comps]);
 
   // /wca/regulations 风格的 hash 锚点:#r-{comp}-{event}-{round}
   useEffect(() => {
@@ -297,7 +298,7 @@ function EventRoundsList({
               <tr
                 key={r.id}
                 id={`r-${r.competition_id}-${eventId}-${r.round_type_id}`}
-                className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${chg ? 'wp-row-changed' : ''}`}
+                className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${chg ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''}`}
                 onClick={(e) => handleRowClick(e, r.competition_id, r.round_type_id)}
               >
                 <td className="wp-cell-comp">
@@ -323,6 +324,11 @@ function EventRoundsList({
                   >
                     {roundLabel(r.round_type_id)}
                   </Link>
+                  {r.live && (
+                    <span className="wp-live-chip" title={t('直播成绩,非官方,待 WCA 官方确认', 'Live result — unofficial, pending WCA')}>
+                      {t('直播', 'LIVE')}
+                    </span>
+                  )}
                 </td>
                 <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
                   {r.pos > 0 ? r.pos : '—'}

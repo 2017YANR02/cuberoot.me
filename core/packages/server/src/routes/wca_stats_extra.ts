@@ -1506,3 +1506,54 @@ wcaStatsExtraRoutes.get('/wca/person-rank-history', async (c) => {
     })),
   });
 });
+
+// ── 10. /v1/wca/person-live-results ──
+// 选手页「直播·非官方成绩」:官方 API 尚未收录的近期比赛成绩(cubing.com / WCA Live 源),
+// 由 cubing_live.ts 的 prewarm 写穿 wca_live_person_results。客户端按比赛粒度与官方成绩去重后
+// 内联进「全部成绩」,标「直播·非官方」。数据可变且短命 → 浏览器 60s,不进 nginx 长缓存。
+wcaStatsExtraRoutes.get('/wca/person-live-results', async (c) => {
+  const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
+  if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) {
+    return c.json({ error: 'Invalid wcaId' }, 400);
+  }
+  try {
+    const rows = await query<{
+      comp_id: string; comp_name: string; comp_date: string | null;
+      event_id: string; round_type_id: string; format_id: string;
+      pos: number; best: number; average: number; attempts: number[] | null; source: string;
+    }>(
+      `SELECT comp_id, comp_name, comp_date, event_id, round_type_id, format_id,
+              pos, best, average, attempts, source
+         FROM wca_live_person_results
+        WHERE wca_id = ?
+          AND (comp_date IS NULL OR comp_date >= CURRENT_DATE - INTERVAL '60 days')
+        ORDER BY comp_date DESC NULLS LAST, comp_id, event_id, round_type_id`,
+      [wcaId],
+    );
+
+    const compsMap = new Map<string, { id: string; name: string; city: string; country_iso2: string; start_date: string; end_date: string }>();
+    const results = rows.map((r, i) => {
+      if (!compsMap.has(r.comp_id)) {
+        compsMap.set(r.comp_id, {
+          id: r.comp_id, name: r.comp_name, city: '', country_iso2: '',
+          start_date: r.comp_date ?? '', end_date: r.comp_date ?? '',
+        });
+      }
+      return {
+        id: -(i + 1), // 合成负 id:避免与官方正 id 撞,且 React key 唯一
+        competition_id: r.comp_id,
+        event_id: r.event_id, round_type_id: r.round_type_id, format_id: r.format_id,
+        best: r.best, average: r.average, pos: r.pos,
+        attempts: Array.isArray(r.attempts) ? r.attempts : [],
+        source: r.source,
+      };
+    });
+
+    c.header('Cache-Control', 'public, max-age=60');
+    return c.json({ wcaId, comps: [...compsMap.values()], results });
+  } catch (e) {
+    // 表缺失 / 查询异常 → 空响应,选手页只丢直播补充,官方成绩不受影响
+    console.warn(`[person-live-results] ${wcaId}:`, (e as Error).message);
+    return c.json({ wcaId, comps: [], results: [] });
+  }
+});
