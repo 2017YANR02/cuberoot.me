@@ -62,11 +62,15 @@ export interface SolveResult {
   solution: string;
 }
 
+/** Progress callback: 'queued' (ahead = jobs in front) → 'active' (solve started). */
+export type SolveState = { phase: 'queued'; ahead: number } | { phase: 'active' };
+
 interface Job {
   id: string;
   scramble: string;
   resolve: (r: SolveResult) => void;
   reject: (e: Error) => void;
+  onState?: (s: SolveState) => void;
   queueTimer: NodeJS.Timeout | null; // queue-wait timeout (rejects, no daemon kill)
   solveTimer: NodeJS.Timeout | null; // active-solve timeout (kills the daemon)
 }
@@ -113,6 +117,7 @@ function pump(): void {
   if (!job) return;
   if (job.queueTimer) { clearTimeout(job.queueTimer); job.queueTimer = null; }
   active = job;
+  try { job.onState?.({ phase: 'active' }); } catch { /* callback must not break the pump */ }
   job.solveTimer = setTimeout(() => {
     // The active solve genuinely hung past the budget — the only way to reclaim
     // a blocking wasm call is to kill the process (exit handler rejects it).
@@ -304,7 +309,7 @@ function recycleChild(): void {
  * waits too long or the queue is full. Only a genuinely-hung ACTIVE solve recycles
  * the daemon. Resolves with the optimal {htm, solution}.
  */
-export async function solveOptimal(scramble: string): Promise<SolveResult> {
+export async function solveOptimal(scramble: string, onState?: (s: SolveState) => void): Promise<SolveResult> {
   lastActivity = Date.now();
   await ensureDaemon();
   if (!child?.stdin) throw new Error('solver stdin unavailable');
@@ -314,11 +319,14 @@ export async function solveOptimal(scramble: string): Promise<SolveResult> {
   lastActivity = Date.now();
 
   return new Promise<SolveResult>((resolveSolve, rejectSolve) => {
+    const ahead = (active ? 1 : 0) + queue.length; // jobs that must finish before this one
+    if (ahead > 0) { try { onState?.({ phase: 'queued', ahead }); } catch { /* ignore */ } }
     const job: Job = {
       id: `${nextId++}`,
       scramble,
       resolve: resolveSolve,
       reject: rejectSolve,
+      onState,
       queueTimer: null,
       solveTimer: null,
     };
