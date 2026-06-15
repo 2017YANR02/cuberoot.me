@@ -33,10 +33,15 @@ const DAEMON_SCRIPT = process.env.CUBEOPT_DAEMON_SCRIPT
 
 // A single optimal solve on a 2-vCPU box can take tens of seconds and, for the
 // hardest scrambles, a couple of minutes. Past this we treat the child as hung
-// and recycle it.
+// and recycle it. This timer starts when the solve ACTUALLY begins (becomes
+// active), not when it's enqueued — so time spent waiting behind another solve
+// never counts against it, and never triggers a daemon kill.
 const SOLVE_TIMEOUT_MS = Number(process.env.CUBEOPT_TIMEOUT_MS) || 180_000;
-// Max requests allowed to sit in the (serial) queue before we shed load.
-const MAX_QUEUE = Number(process.env.CUBEOPT_MAX_QUEUE) || 8;
+// How long a request may WAIT in the queue (behind other solves) before we give
+// up on it — rejected cleanly with a "busy" error, WITHOUT killing the daemon.
+const QUEUE_WAIT_MS = Number(process.env.CUBEOPT_QUEUE_WAIT_MS) || 120_000;
+// Max in-flight requests (active + queued) before we shed load immediately.
+const MAX_QUEUE = Number(process.env.CUBEOPT_MAX_QUEUE) || 6;
 
 // ── Memory safety (the table is up to ~2GB resident on a 3.5GB box) ───────────
 // Three layers, weakest→strongest:
@@ -57,17 +62,24 @@ export interface SolveResult {
   solution: string;
 }
 
-interface Pending {
+interface Job {
+  id: string;
+  scramble: string;
   resolve: (r: SolveResult) => void;
   reject: (e: Error) => void;
-  timer: NodeJS.Timeout;
+  queueTimer: NodeJS.Timeout | null; // queue-wait timeout (rejects, no daemon kill)
+  solveTimer: NodeJS.Timeout | null; // active-solve timeout (kills the daemon)
 }
 
 let child: ChildProcess | null = null;
 let ready = false;
 let bootPromise: Promise<void> | null = null;
 let nextId = 1;
-const pending = new Map<string, Pending>();
+// Strict serialization: at most ONE job is sent to the daemon at a time (active);
+// the rest wait in `queue`. The daemon's solve_scramble is blocking, so feeding
+// it one-at-a-time lets each solve's timeout start when it truly begins.
+const queue: Job[] = [];
+let active: Job | null = null;
 
 let lastActivity = 0;       // updated on each solve; drives idle-unload
 let cooldownUntil = 0;      // refuse reload until this time after a low-mem drop
@@ -75,12 +87,39 @@ let lowMemReads = 0;        // consecutive sub-floor MemAvailable reads (debounc
 let monitorsStarted = false;
 let lastLoadMs = 0;         // wall time of the most recent table load (spawn→READY)
 
-function rejectAllPending(reason: string): void {
-  for (const [, p] of pending) {
-    clearTimeout(p.timer);
-    p.reject(new Error(reason));
+/** True while a solve is running or waiting — gates idle-unload. */
+function inFlight(): boolean {
+  return active !== null || queue.length > 0;
+}
+
+/** Reject the active job + everything queued (daemon died / restarted). */
+function rejectAll(reason: string): void {
+  if (active) {
+    if (active.solveTimer) clearTimeout(active.solveTimer);
+    active.reject(new Error(reason));
+    active = null;
   }
-  pending.clear();
+  for (const job of queue) {
+    if (job.queueTimer) clearTimeout(job.queueTimer);
+    job.reject(new Error(reason));
+  }
+  queue.length = 0;
+}
+
+/** Send the next queued job to the daemon, if idle + ready. */
+function pump(): void {
+  if (active || !ready || !child?.stdin) return;
+  const job = queue.shift();
+  if (!job) return;
+  if (job.queueTimer) { clearTimeout(job.queueTimer); job.queueTimer = null; }
+  active = job;
+  job.solveTimer = setTimeout(() => {
+    // The active solve genuinely hung past the budget — the only way to reclaim
+    // a blocking wasm call is to kill the process (exit handler rejects it).
+    console.error(`[cubeopt] active solve exceeded ${SOLVE_TIMEOUT_MS}ms — recycling daemon`);
+    recycleChild();
+  }, SOLVE_TIMEOUT_MS);
+  child.stdin.write(`${job.id}\t${job.scramble}\n`);
 }
 
 function spawnDaemon(): Promise<void> {
@@ -130,29 +169,27 @@ function spawnDaemon(): Promise<void> {
         }
         return;
       }
-      // "<id>\t<htm>\t<solution>"  |  "<id>\tERROR\t<message>"
+      // "<id>\t<htm>\t<solution>"  |  "<id>\tERROR\t<message>" — only the active job.
       const tab1 = line.indexOf('\t');
       if (tab1 < 0) return;
       const id = line.slice(0, tab1);
-      const p = pending.get(id);
-      if (!p) return;
-      pending.delete(id);
-      clearTimeout(p.timer);
+      if (!active || active.id !== id) return; // stale line from a recycled solve
+      const job = active;
+      active = null;
+      if (job.solveTimer) clearTimeout(job.solveTimer);
 
       const rest = line.slice(tab1 + 1);
       const tab2 = rest.indexOf('\t');
       const field = tab2 < 0 ? rest : rest.slice(0, tab2);
       const tail = tab2 < 0 ? '' : rest.slice(tab2 + 1);
       if (field === 'ERROR') {
-        p.reject(new Error(`solver: ${tail}`));
-        return;
+        job.reject(new Error(`solver: ${tail}`));
+      } else {
+        const htm = Number(field);
+        if (!Number.isFinite(htm) || !tail) job.reject(new Error('solver: malformed result'));
+        else job.resolve({ htm, solution: tail });
       }
-      const htm = Number(field);
-      if (!Number.isFinite(htm) || !tail) {
-        p.reject(new Error('solver: malformed result'));
-        return;
-      }
-      p.resolve({ htm, solution: tail });
+      pump(); // start the next queued solve
     });
 
     proc.on('exit', (code, signal) => {
@@ -160,7 +197,7 @@ function spawnDaemon(): Promise<void> {
       ready = false;
       child = null;
       bootPromise = null;
-      rejectAllPending(`solver restarted (code=${code}, signal=${signal})`);
+      rejectAll(`solver restarted (code=${code}, signal=${signal})`);
       // If it died before READY, unblock the awaiting ensureDaemon().
       finishErr(new Error(`solver exited before ready (code=${code}, signal=${signal})`));
     });
@@ -208,7 +245,7 @@ function startMonitors(): void {
   // Layer 1: idle-unload — drop the resident table once nobody has solved for a
   // while, returning ~2GB to the box for the 95% of the time it's not in use.
   setInterval(() => {
-    if (!child || !ready || pending.size > 0) return;
+    if (!child || !ready || inFlight()) return;
     if (Date.now() - lastActivity > IDLE_MS) {
       console.log('[cubeopt] idle — dropping table to free memory');
       recycleChild();
@@ -262,29 +299,38 @@ function recycleChild(): void {
 }
 
 /**
- * Solve one scramble to optimal. Spawns the daemon on first call. Rejects on
- * invalid scramble, queue overflow, solver error, or timeout (which also
- * recycles the hung child).
+ * Solve one scramble to optimal. Spawns the daemon on first call. The job waits
+ * its turn in the serial queue; it's rejected (without killing the daemon) if it
+ * waits too long or the queue is full. Only a genuinely-hung ACTIVE solve recycles
+ * the daemon. Resolves with the optimal {htm, solution}.
  */
 export async function solveOptimal(scramble: string): Promise<SolveResult> {
   lastActivity = Date.now();
   await ensureDaemon();
   if (!child?.stdin) throw new Error('solver stdin unavailable');
-  if (pending.size >= MAX_QUEUE) throw new Error('Rate limit: solver queue full, try again shortly');
+  if (active !== null && queue.length + 1 >= MAX_QUEUE) {
+    throw new Error('Rate limit: solver busy, try again shortly');
+  }
   lastActivity = Date.now();
 
   return new Promise<SolveResult>((resolveSolve, rejectSolve) => {
-    const id = `${nextId++}`;
-    const timer = setTimeout(() => {
-      if (pending.has(id)) {
-        pending.delete(id);
-        // The child is still blocking inside solve_scramble on this scramble —
-        // there is no way to interrupt it but to kill the process.
-        recycleChild();
-        rejectSolve(new Error(`solve timeout (${SOLVE_TIMEOUT_MS}ms)`));
+    const job: Job = {
+      id: `${nextId++}`,
+      scramble,
+      resolve: resolveSolve,
+      reject: rejectSolve,
+      queueTimer: null,
+      solveTimer: null,
+    };
+    // Waited too long behind other solves → give up cleanly, don't touch the daemon.
+    job.queueTimer = setTimeout(() => {
+      const idx = queue.indexOf(job);
+      if (idx >= 0) {
+        queue.splice(idx, 1);
+        rejectSolve(new Error('Rate limit: solver busy (queue wait exceeded), try again shortly'));
       }
-    }, SOLVE_TIMEOUT_MS);
-    pending.set(id, { resolve: resolveSolve, reject: rejectSolve, timer });
-    child!.stdin!.write(`${id}\t${scramble}\n`);
+    }, QUEUE_WAIT_MS);
+    queue.push(job);
+    pump();
   });
 }

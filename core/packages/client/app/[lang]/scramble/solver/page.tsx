@@ -152,7 +152,7 @@ function ScrambleSolverPageInner() {
 
   // Solve source: 'local' = download/generate the prun table in-browser (current
   // behaviour), 'cloud' = POST scrambles to api.cuberoot.me which solves with the
-  // server-side opt5 table (no download, login-gated). Same optimal solution.
+  // server-side opt6 table (no download, login-gated). Same optimal solution.
   const [solveSource, setSolveSource] = useState<'local' | 'cloud'>('local');
   const [cloudBusy, setCloudBusy] = useState(false);
   const [cloudStatus, setCloudStatus] = useState<string | null>(null);
@@ -547,6 +547,12 @@ function ScrambleSolverPageInner() {
     let done = 0;
     let warm = true;           // was the table already in server memory
     let loadMs = 0;            // server-reported table load time (cold start)
+    let gotEvent = false;      // any SSE event received yet?
+    // Safety timeouts so a dead/hung stream never spins forever. A healthy
+    // request emits loading/ready within ~20s; the server's own solve timeout is
+    // 180s, so 230s total is a safe outer bound.
+    const noRespTimer = setTimeout(() => { if (!gotEvent) ac.abort('no-response'); }, 45_000);
+    const overallTimer = setTimeout(() => ac.abort('overall'), 230_000);
     // (Re)start the live phase timer — ticks the current phase's elapsed at 0.1s.
     const startPhaseTimer = () => {
       cloudPhaseStartRef.current = Date.now();
@@ -584,6 +590,7 @@ function ScrambleSolverPageInner() {
             else if (ln.startsWith('data:')) data += ln.slice(5).trim();
           }
           if (!data) continue;
+          gotEvent = true;
           const obj = JSON.parse(data) as { i?: number; htm?: number; solution?: string; error?: string; ok?: number; fail?: number; warm?: boolean; loadMs?: number; phase?: string };
           if (ev === 'loading') {
             setCloudStatus(t('正在把求解表载入服务器内存(首次约 20 秒)…', 'Loading the solver table into server memory (first time ~20s)…'));
@@ -619,8 +626,14 @@ function ScrambleSolverPageInner() {
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      setCloudStatus(ac.signal.aborted ? t('已取消。', 'Cancelled.') : t(`云端求解失败:${msg}`, `Cloud solve failed: ${msg}`));
+      const reason = ac.signal.reason;
+      if (reason === 'no-response') setCloudStatus(t('服务器无响应,请重试。', 'No response from the server — please retry.'));
+      else if (reason === 'overall') setCloudStatus(t('求解超时(可能是特别难的打乱或服务器繁忙),请重试。', 'Solve timed out (very hard scramble or server busy) — please retry.'));
+      else if (ac.signal.aborted) setCloudStatus(t('已取消。', 'Cancelled.'));
+      else setCloudStatus(t(`云端求解失败:${msg}`, `Cloud solve failed: ${msg}`));
     } finally {
+      clearTimeout(noRespTimer);
+      clearTimeout(overallTimer);
       if (cloudTimerRef.current) { clearInterval(cloudTimerRef.current); cloudTimerRef.current = null; }
       setCloudBusy(false);
       cloudAbortRef.current = null;
@@ -831,7 +844,7 @@ function ScrambleSolverPageInner() {
               className="btn-primary"
               disabled={solveDisabled}
               onClick={cloudSolve}
-              title={t('用云服务器求 HTM 最少步解(opt5,免下载表)', 'Solve optimally on the server (opt5, no download)')}
+              title={t('用云服务器求 HTM 最少步解(opt6,免下载表)', 'Solve optimally on the server (opt6, no download)')}
             >
               {t('云端求解', 'Solve on server')}
             </button>
@@ -907,7 +920,7 @@ function ScrambleSolverPageInner() {
           <span>{t('高级设置', 'Advanced')}</span>
           <span className="advanced-summary">
             {cloudMode
-              ? <>{t('云端 opt5', 'Cloud opt5')}{cloudBusy && <> · <Loader2 size={12} className="spinning" /> {t('忙', 'busy')}</>}</>
+              ? <>{t('云端 opt6', 'Cloud opt6')}{cloudBusy && <> · <Loader2 size={12} className="spinning" /> {t('忙', 'busy')}</>}</>
               : <>
                   {solverName} · {nThreads}{t('线程', 'threads')}
                   {readyState === 'ready' && <> · {t('就绪', 'ready')}</>}
@@ -923,14 +936,14 @@ function ScrambleSolverPageInner() {
               <select className="ctl" value={solveSource} disabled={busy}
                 onChange={(e) => setSolveSource(e.target.value as 'local' | 'cloud')}>
                 <option value="local">{t('本地(下载表,无限制)', 'Local (download table, unlimited)')}</option>
-                <option value="cloud">{t('云端(opt5,免下载,需登录)', 'Cloud (opt5, no download, login)')}</option>
+                <option value="cloud">{t('云端(opt6,免下载,需登录)', 'Cloud (opt6, no download, login)')}</option>
               </select>
             </div>
             {cloudMode && (
               <p className="cloud-note">
                 {t(
-                  '云端用服务器的 opt5 表(972M)求最优解,解和本地各档完全一样,只是免你下载多 GB 的表。一次最多 5 条;复杂打乱(18 步)可能要几十秒,排队串行处理。',
-                  'The server solves with its opt5 table (972M). The solution is identical to every local table — this just saves you the multi-GB download. Up to 5 scrambles at once; hard (18-move) scrambles can take tens of seconds, processed in a serial queue.'
+                  '云端用服务器的 opt6 表(1.9G)求最优解,解和本地各档完全一样,只是免你下载多 GB 的表。一次最多 5 条;多数几秒出解,最难的打乱(19-20 步最优)在 2 核服务器上可能要 1 分钟左右,串行排队。',
+                  'The server solves with its opt6 table (1.9G). The solution is identical to every local table — this just saves you the multi-GB download. Up to 5 scrambles at once; most finish in seconds, but the hardest scrambles (19-20 move optimal) can take ~1 min on the 2-core server, processed in a serial queue.'
                 )}
               </p>
             )}
