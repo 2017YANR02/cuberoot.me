@@ -8,6 +8,7 @@ import { useMemo, useState } from 'react';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthStore } from '@/lib/auth-store';
 import { formatWcaResult } from '@/lib/wca-format-result';
+import { computeWcaBestAverage, canRecompute } from '@/lib/wca-compute';
 import { tr } from '@/i18n/tr';
 import {
   createResultChange,
@@ -27,6 +28,7 @@ export interface ResultChangeTarget {
   eventId: string;
   roundTypeId: string;
   resultId?: number | null;
+  currentAttempts?: number[] | null;
   currentBest?: number | null;
   currentAverage?: number | null;
   currentSingleRecord?: string | null;
@@ -45,6 +47,7 @@ interface Props {
 interface FormState {
   effectiveAt: string;
   note: string;
+  oldAttempts: string;
   oldBest: string; newBest: string;
   oldAverage: string; newAverage: string;
   oldSingleRec: string; newSingleRec: string;
@@ -57,10 +60,17 @@ function valueToInput(v: number | null | undefined, eventId: string, kind: 'sing
   return formatWcaResult(v, eventId, kind);
 }
 
+/** 厘秒数组 → 空格分隔的人类字符串(0/缺失留空位跳过)。 */
+function attemptsToInput(arr: number[] | null | undefined, eventId: string): string {
+  if (!arr || arr.length === 0) return '';
+  return arr.filter((v) => v !== 0).map((v) => formatWcaResult(v, eventId, 'single')).join(' ');
+}
+
 function emptyForm(t: ResultChangeTarget): FormState {
   return {
     effectiveAt: '',
     note: '',
+    oldAttempts: '',
     oldBest: '', newBest: valueToInput(t.currentBest, t.eventId, 'single'),
     oldAverage: '', newAverage: valueToInput(t.currentAverage, t.eventId, 'average'),
     oldSingleRec: '', newSingleRec: t.currentSingleRecord ?? '',
@@ -75,7 +85,9 @@ function formFromChange(c: ResultChange, t: ResultChangeTarget): FormState {
   for (const fld of c.fields ?? []) {
     const oldS = fld.old == null ? '' : String(fld.old);
     const newS = fld.new == null ? '' : String(fld.new);
-    if (fld.field === 'best') {
+    if (fld.field === 'attempts') {
+      f.oldAttempts = Array.isArray(fld.old) ? attemptsToInput((fld.old as number[]).map(Number), t.eventId) : '';
+    } else if (fld.field === 'best') {
       f.oldBest = valueToInput(Number(fld.old), t.eventId, 'single');
       f.newBest = valueToInput(Number(fld.new), t.eventId, 'single');
     } else if (fld.field === 'average') {
@@ -90,13 +102,42 @@ function formFromChange(c: ResultChange, t: ResultChangeTarget): FormState {
   return f;
 }
 
-function buildFields(f: FormState, eventId: string): ResultChangeField[] {
+/** 解析原始各次成绩输入(空格/逗号分隔)→ 厘秒数组。 */
+function parseAttemptsInput(s: string, eventId: string): number[] {
+  return s.trim().split(/[\s,]+/).filter(Boolean).map((x) => parseHumanResult(x, eventId) ?? 0);
+}
+
+/** 原始各次成绩是否驱动自动重算(填了 + 该项目可算 + 当前有 live 各次)。 */
+function attemptsDriven(f: FormState, eventId: string, currentAttempts?: number[] | null): boolean {
+  return !!f.oldAttempts.trim() && canRecompute(eventId) && !!currentAttempts && currentAttempts.length > 0;
+}
+
+function buildFields(f: FormState, t: ResultChangeTarget): ResultChangeField[] {
+  const eventId = t.eventId;
+  const currentAttempts = t.currentAttempts;
   const out: ResultChangeField[] = [];
-  if (f.oldBest || f.newBest) {
-    out.push({ field: 'best', old: parseHumanResult(f.oldBest, eventId), new: parseHumanResult(f.newBest, eventId) });
-  }
-  if (f.oldAverage || f.newAverage) {
-    out.push({ field: 'average', old: parseHumanResult(f.oldAverage, eventId), new: parseHumanResult(f.newAverage, eventId) });
+  const origStr = f.oldAttempts.trim();
+  // 填了「原始各次成绩」→ 旧=原始数组、新=当前 live 数组,并自动算出原始单次/平均一并划线。
+  // 新值单次/平均取权威 live(target.currentBest/Average),只有旧值靠原始数组重算。
+  if (origStr && currentAttempts && currentAttempts.length > 0) {
+    const orig = parseAttemptsInput(origStr, eventId);
+    out.push({ field: 'attempts', old: orig, new: currentAttempts });
+    if (canRecompute(eventId)) {
+      const o = computeWcaBestAverage(orig, eventId);
+      const newBest = t.currentBest ?? null;
+      const newAvg = t.currentAverage ?? null;
+      if (newBest != null && o.best !== newBest) out.push({ field: 'best', old: o.best, new: newBest });
+      if (o.average != null && newAvg != null && newAvg > 0 && o.average !== newAvg) {
+        out.push({ field: 'average', old: o.average, new: newAvg });
+      }
+    }
+  } else {
+    if (f.oldBest || f.newBest) {
+      out.push({ field: 'best', old: parseHumanResult(f.oldBest, eventId), new: parseHumanResult(f.newBest, eventId) });
+    }
+    if (f.oldAverage || f.newAverage) {
+      out.push({ field: 'average', old: parseHumanResult(f.oldAverage, eventId), new: parseHumanResult(f.newAverage, eventId) });
+    }
   }
   if (f.oldSingleRec || f.newSingleRec) {
     out.push({ field: 'regional_single_record', old: f.oldSingleRec || null, new: f.newSingleRec || null });
@@ -143,8 +184,10 @@ export function ResultChangeEditor({ target, existingChanges, onClose, onSaved }
   const openAdd = () => { setEditingId(null); setForm(emptyForm(target)); setShowForm(true); setErr(null); };
   const openEdit = (c: ResultChange) => { setEditingId(c.id); setForm(formFromChange(c, target)); setShowForm(true); setErr(null); };
 
+  const drivenByAttempts = attemptsDriven(form, target.eventId, target.currentAttempts);
+
   const submit = async () => {
-    const fields = buildFields(form, target.eventId);
+    const fields = buildFields(form, target);
     if (fields.length === 0) { setErr(tr({ zh: '至少填一个变更字段', en: 'Fill at least one changed field' })); return; }
     const input: ResultChangeInput = {
       wcaId: target.wcaId,
@@ -218,22 +261,40 @@ export function ResultChangeEditor({ target, existingChanges, onClose, onSaved }
               {editingId != null ? tr({ zh: '编辑事件', en: 'Edit event' }) : tr({ zh: '新增变更事件', en: 'Add change event' })}
             </div>
             <div className="wp-rce-grid">
-              <label className="wp-rce-field">
-                <span>{tr({ zh: '单次', en: 'Single' })}</span>
-                <div className="wp-rce-pair">
-                  <input value={form.oldBest} onChange={(e) => set({ oldBest: e.target.value })} placeholder={tr({ zh: '旧', en: 'old' })} />
-                  <span>→</span>
-                  <input value={form.newBest} onChange={(e) => set({ newBest: e.target.value })} placeholder={tr({ zh: '新', en: 'new' })} />
+              {target.currentAttempts && target.currentAttempts.length > 0 && (
+                <label className="wp-rce-field wp-rce-field-wide">
+                  <span>{tr({ zh: '原始各次成绩', en: 'Original attempts' })}</span>
+                  <input
+                    value={form.oldAttempts}
+                    onChange={(e) => set({ oldAttempts: e.target.value })}
+                    placeholder={attemptsToInput(target.currentAttempts, target.eventId)}
+                  />
+                </label>
+              )}
+              {drivenByAttempts ? (
+                <div className="wp-rce-field wp-rce-field-wide wp-rce-derived">
+                  {tr({ zh: '单次 / 平均按 WCA 规则自动重算并划线;当前值见上方占位。', en: 'Single / average auto-recomputed (WCA rules) and struck through; current values are the placeholder above.' })}
                 </div>
-              </label>
-              <label className="wp-rce-field">
-                <span>{tr({ zh: '平均', en: 'Average' })}</span>
-                <div className="wp-rce-pair">
-                  <input value={form.oldAverage} onChange={(e) => set({ oldAverage: e.target.value })} placeholder={tr({ zh: '旧', en: 'old' })} />
-                  <span>→</span>
-                  <input value={form.newAverage} onChange={(e) => set({ newAverage: e.target.value })} placeholder={tr({ zh: '新', en: 'new' })} />
-                </div>
-              </label>
+              ) : (
+                <>
+                  <label className="wp-rce-field">
+                    <span>{tr({ zh: '单次', en: 'Single' })}</span>
+                    <div className="wp-rce-pair">
+                      <input value={form.oldBest} onChange={(e) => set({ oldBest: e.target.value })} placeholder={tr({ zh: '旧', en: 'old' })} />
+                      <span>→</span>
+                      <input value={form.newBest} onChange={(e) => set({ newBest: e.target.value })} placeholder={tr({ zh: '新', en: 'new' })} />
+                    </div>
+                  </label>
+                  <label className="wp-rce-field">
+                    <span>{tr({ zh: '平均', en: 'Average' })}</span>
+                    <div className="wp-rce-pair">
+                      <input value={form.oldAverage} onChange={(e) => set({ oldAverage: e.target.value })} placeholder={tr({ zh: '旧', en: 'old' })} />
+                      <span>→</span>
+                      <input value={form.newAverage} onChange={(e) => set({ newAverage: e.target.value })} placeholder={tr({ zh: '新', en: 'new' })} />
+                    </div>
+                  </label>
+                </>
+              )}
               <label className="wp-rce-field">
                 <span>{tr({ zh: '单次纪录', en: 'Single record' })}</span>
                 <div className="wp-rce-pair">
@@ -259,7 +320,7 @@ export function ResultChangeEditor({ target, existingChanges, onClose, onSaved }
                 <input value={form.note} onChange={(e) => set({ note: e.target.value })} />
               </label>
             </div>
-            <div className="wp-rce-hint">{tr({ zh: '时间输入支持 2.83 / 1:23.45 / DNF / DNS;留空表示该字段未变。', en: 'Times accept 2.83 / 1:23.45 / DNF / DNS; leave blank if unchanged.' })}</div>
+            <div className="wp-rce-hint">{tr({ zh: '时间输入支持 2.83 / 1:23.45 / DNF / DNS;留空表示该字段未变。原始各次成绩按空格分隔填 5 次(或 3 次),如「0.74 0.70 0.97 0.78 0.81」,自动算出原始单次/平均并在详细成绩里逐次划线。', en: 'Times accept 2.83 / 1:23.45 / DNF / DNS; blank means unchanged. Original attempts: space-separated 5 (or 3) solves, e.g. "0.74 0.70 0.97 0.78 0.81" — single/average auto-derived and each solve struck through.' })}</div>
             {err && <div className="wp-rce-err">{err}</div>}
             <div className="wp-rce-form-actions">
               <button className="wp-rce-btn" onClick={submit} disabled={busy}>{busy ? '…' : tr({ zh: '保存', en: 'Save' })}</button>
