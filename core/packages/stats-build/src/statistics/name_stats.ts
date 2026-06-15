@@ -1,5 +1,7 @@
-// NOTE: 姓名统计——双面板:① 词数(按空格 part 数) ② 字符长度(去括号本地名后的字符数)
-// 两面板共用同一份 persons 查询,各自分桶 + top5 国家 + 选手名单。
+// NOTE: 姓名统计——四面板 = {词数, 字符长度} × {去本地名, 含本地名}
+//   去本地名:去掉 "Latin (本地名)" 末尾括号后统计(默认);含本地名:按完整 WCA 名统计。
+//   前端用 parens toggle 在两套之间切换(id 后缀 _full = 含本地名)。
+// 四面板共用同一份 persons 查询,各自分桶 + top 国家 + 选手名单。
 import { Statistic } from '../core/statistic.js';
 import { headerZh } from '../core/events.js';
 import type { StatJson, StatPanel, StatSection, TableHeader } from '../core/statistic.js';
@@ -16,8 +18,8 @@ export class NameStats extends Statistic {
     super();
     this.title = 'Name statistics';
     this.titleZh = '姓名统计';
-    this.note = 'Local names within parentheses are ignored. For large groups only a sample of competitors is shown.';
-    this.noteZh = '括号内的本地名称被忽略。人数较多的分组仅列出部分选手。';
+    this.note = 'Toggle whether to include the parenthesized local name. For large groups only a sample of competitors is shown.';
+    this.noteZh = '可切换是否计入括号内的本地名。人数较多的分组仅列出部分选手。';
   }
 
   query(): string {
@@ -42,11 +44,11 @@ export class NameStats extends Statistic {
   }
 
   // NOTE: 按 keyOf 分桶 → 每桶人数 + top5 国家 + 选手名单({_type:'people'})
-  private buildRows(people: Person[], keyOf: (deparen: string) => number, desc: boolean): unknown[][] {
+  //   nameOf 决定按哪种名统计:去本地名(deparen)或完整名(identity)。
+  private buildRows(people: Person[], nameOf: (raw: string) => string, keyOf: (s: string) => number, desc: boolean): unknown[][] {
     const groups = new Map<number, Person[]>();
     for (const p of people) {
-      const deparen = p.name.replace(/ \(.*\)/, '');
-      const k = keyOf(deparen);
+      const k = keyOf(nameOf(p.name));
       if (!groups.has(k)) groups.set(k, []);
       groups.get(k)!.push(p);
     }
@@ -83,10 +85,14 @@ export class NameStats extends Statistic {
     rawRows = null;
     if (global.gc) global.gc();
 
-    // ① 词数:按空格拆,降序(多名 → 单名,长名俱乐部在前)
-    const partsRows = this.buildRows(people, d => d.split(' ').length, true);
-    // ② 字符长度:去括号本地名后的字符数(含空格),降序(最长名在前)
-    const lengthRows = this.buildRows(people, d => [...d].length, true);
+    const deparen = (s: string) => s.replace(/ \(.*\)/, '');
+    const full = (s: string) => s;
+    // ① 词数:按空格拆,降序(多名 → 单名,长名俱乐部在前)。去本地名 + 含本地名两套。
+    const partsRows = this.buildRows(people, deparen, d => d.split(' ').length, true);
+    const partsFullRows = this.buildRows(people, full, d => d.split(' ').length, true);
+    // ② 字符长度:字符数(含空格),降序(最长名在前)。去本地名 + 含本地名两套。
+    const lengthRows = this.buildRows(people, deparen, d => [...d].length, true);
+    const lengthFullRows = this.buildRows(people, full, d => [...d].length, true);
 
     const partsHeader: TableHeader = {
       'Parts': 'center', 'People': 'right', 'Countries of origin': 'left', 'Names': 'left',
@@ -97,9 +103,12 @@ export class NameStats extends Statistic {
 
     const section = (rows: unknown[][]): StatSection[] => [{ title: '', titleZh: '', rows }];
 
+    // 去本地名(默认)+ 含本地名(_full),前端 parens toggle 切换
     const panels: StatPanel[] = [
       { id: 'parts', labelEn: 'Word count', labelZh: '词数', header: this.buildHeader(partsHeader), sections: section(partsRows) },
       { id: 'length', labelEn: 'Name length', labelZh: '字符长度', header: this.buildHeader(lengthHeader), sections: section(lengthRows) },
+      { id: 'parts_full', labelEn: 'Word count', labelZh: '词数', header: this.buildHeader(partsHeader), sections: section(partsFullRows) },
+      { id: 'length_full', labelEn: 'Name length', labelZh: '字符长度', header: this.buildHeader(lengthHeader), sections: section(lengthFullRows) },
     ];
 
     return {

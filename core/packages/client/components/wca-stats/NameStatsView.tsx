@@ -4,11 +4,10 @@
 // + 带国旗的选手名(站内链接,人多折叠)。替代通用表格渲染。
 import React, { useMemo, useState, useEffect } from 'react';
 import Link from '@/components/AppLink';
-import { parseAsStringEnum, useQueryState } from 'nuqs';
+import { parseAsStringEnum, parseAsBoolean, useQueryState } from 'nuqs';
 import { Flag } from '@/components/Flag';
 import { countryToIso2, personFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { translatePersonLink, stripChineseParens } from '@/lib/wca-translations';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 import './name-stats.css';
 
@@ -94,37 +93,56 @@ function GroupRow({ row, max, unit, isZh }: { row: Row; max: number; unit: strin
   );
 }
 
-export default function NameStatsView({ data, isZh }: { data: NameStatsData; isZh: boolean }) {
+export default function NameStatsView({ data, isZh, queryKey = 'type' }: { data: NameStatsData; isZh: boolean; queryKey?: string }) {
   const panels = useMemo(() => data.panels ?? [], [data]);
+  // 指标 tab(词数 / 字符长度);parens toggle 控是否计入括号内本地名(对应 _full 后缀面板)
   const [tab, setTab] = useQueryState(
-    'type',
+    queryKey,
     parseAsStringEnum(['parts', 'length']).withDefault('parts').withOptions({ history: 'push' }),
+  );
+  const [incl, setIncl] = useQueryState(
+    `${queryKey}_full`,
+    parseAsBoolean.withDefault(false).withOptions({ history: 'push' }),
   );
 
   // 国旗数据加载(模块级缓存,加载完触发重渲染)
   const [, setFlagVer] = useState(() => flagDataVersion());
   useEffect(() => { loadFlagData().then(v => setFlagVer(v)); }, []);
 
-  const active = panels.find(p => p.id === tab) ?? panels[0];
+  // 基础指标 = 去掉 _full 后缀的面板(词数 / 字符长度);_full 变体由 parens toggle 取用
+  const baseMetrics = useMemo(() => panels.filter(p => !p.id.endsWith('_full')), [panels]);
+  const hasFull = useMemo(() => panels.some(p => p.id.endsWith('_full')), [panels]);
+  const wantId = incl && hasFull ? `${tab}_full` : tab;
+  const active = panels.find(p => p.id === wantId) ?? panels.find(p => p.id === tab) ?? panels[0];
   const rows = useMemo(() => (active?.sections[0]?.rows ?? []) as Row[], [active]);
   const max = useMemo(() => rows.reduce((m, r) => Math.max(m, r[1]), 0), [rows]);
 
   if (!active) return null;
-  const unit = active.id === 'length' ? tr({ zh: '字', en: '' }) : tr({ zh: '词', en: ''
+  const unit = tab === 'length' ? tr({ zh: '字', en: '' }) : tr({ zh: '词', en: ''
 });
 
   return (
     <div className="ns-view">
       <div className="ns-tabs">
-        {panels.map(p => (
+        {baseMetrics.map(p => (
           <button
             key={p.id}
-            className={`ns-tab${p.id === active.id ? ' active' : ''}`}
+            className={`ns-tab${p.id === tab ? ' active' : ''}`}
             onClick={() => setTab(p.id as 'parts' | 'length')}
           >
             {isZh ? p.labelZh : p.labelEn}
           </button>
         ))}
+        {hasFull && (
+          <button
+            type="button"
+            className={`ns-tab ns-tab-toggle${incl ? ' active' : ''}`}
+            onClick={() => setIncl(!incl)}
+            title={tr({ zh: '是否把括号内的本地名计入词数 / 长度', en: 'Whether to count the parenthesized local name' })}
+          >
+            {tr({ zh: '含本地名', en: 'Incl. local name' })}
+          </button>
+        )}
       </div>
       <div className="ns-list">
         {rows.map((r, i) => <GroupRow key={i} row={r} max={max} unit={unit} isZh={isZh} />)}

@@ -1342,7 +1342,7 @@ WHERE sub_id = 1`,
   related: [
     { id: 'most_visited_countries', titleZh: '去过最多国家', titleEn: 'Most countries visited', hintZh: '另一个跨国维度', hintEn: 'Another cross-country angle'
     },
-    { id: 'name_stats', toStat: true, titleZh: '查看实时分布', titleEn: 'Jump to live distribution', hintZh: '各 part 数 + top 国家', hintEn: 'Each part-count + top countries'
+    { id: 'name_stats', toStat: true, statHref: '/wca/all-results?events=__none__', titleZh: '查看实时分布', titleEn: 'Jump to live distribution', hintZh: '各 part 数 + top 国家', hintEn: 'Each part-count + top countries'
     },
   ]
 };

@@ -14,8 +14,10 @@ import { UnofficialMark } from '@/components/UnofficialMark';
 import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight, ArrowUp, ArrowDown } from 'lucide-react';
 import Paginator from '@/components/wca-stats/Paginator';
+import NameStatsView, { type NameStatsData } from '@/components/wca-stats/NameStatsView';
+import { statsUrl } from '@/lib/stats-base';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { Flag } from '@/components/Flag';
 import { loadFlagData } from '@/lib/country-flags';
@@ -81,6 +83,11 @@ type SingleData =
   | { mode: 'results'; rows: ResultRow[]; total: number }
   | { mode: 'persons'; rows: PersonRow[]; total: number };
 
+// ---- 空态「分布」:姓名统计(复用 /wca/name_stats 的可视化) ----
+type NameStatsPayload = NameStatsData & { note?: string; noteZh?: string };
+// ---- 空态「名录」:全选手 A-Z 行 ----
+interface DirRow { wcaId: string; name: string; countryId: string; iso2: string | null; }
+
 // ---- 名次和视图行 ----
 interface SorRow {
   wcaId: string; name: string;
@@ -115,6 +122,9 @@ function AllResultsPageInner() {
       q: parseAsString,
       basis: parseAsString,
       hidePodium: parseAsString, // 名次和:未登领奖台
+      eview: parseAsString,      // 空态视图:'dist'(姓名分布) | 'list'(名录 A-Z)
+      psort: parseAsString,      // 名录排序:'name'(首字母) | 'len'(名字长度)
+      pdir: parseAsString,       // 'asc' | 'desc'
       page: parseAsString,
       size: parseAsString,
     },
@@ -149,6 +159,14 @@ function AllResultsPageInner() {
   const page = parseInt(query.page ?? '1', 10);
   const size = parseInt(query.size ?? '100', 10);
   const hidePodium = query.hidePodium === '1';
+  // 空态:姓名分布(name_stats viz)/ 名录(A-Z 平铺列表)
+  const eview: 'dist' | 'list' = query.eview === 'list' ? 'list' : 'dist';
+  const psort: 'name' | 'len' = query.psort === 'len' ? 'len' : 'name';
+  const pdir: 'asc' | 'desc' = query.pdir === 'desc' ? 'desc' : 'asc';
+  const setSort = (key: 'name' | 'len') => {
+    if (psort === key) setQuery({ pdir: pdir === 'asc' ? 'desc' : 'asc', page: null });
+    else setQuery({ psort: key, pdir: 'asc', page: null });
+  };
   const basisRaw = query.basis;
   const basis: 'period' | 'cumulative' =
     basisRaw === 'cumulative' || basisRaw === 'period'
@@ -216,6 +234,8 @@ function AllResultsPageInner() {
   }, [currentYear]);
 
   const [data, setData] = useState<SingleData | null>(null);
+  const [nameStats, setNameStats] = useState<NameStatsPayload | null>(null);
+  const [dirData, setDirData] = useState<{ rows: DirRow[]; total: number } | null>(null);
   const [sorData, setSorData] = useState<{ rows: SorRow[]; total: number; events: string[] } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -257,6 +277,30 @@ function AllResultsPageInner() {
         .catch(e => setError(e.message)).finally(() => setLoading(false));
     }
   }, [mode, show, basis, singleEvent, effType, country, year, month, qFromUrl, page, size]);
+
+  // 空态「分布」:姓名统计(静态 JSON,缓存一次)
+  useEffect(() => {
+    if (mode !== 'empty' || eview !== 'dist' || nameStats) return;
+    setLoading(true); setError(null);
+    fetch(statsUrl('/stats/name_stats.json'))
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then((j: NameStatsPayload) => setNameStats(j))
+      .catch(e => setError(e.message)).finally(() => setLoading(false));
+  }, [mode, eview, nameStats]);
+
+  // 空态「名录」:全选手 A-Z(按 首字母 / 名字长度 排序,可叠加国家)
+  useEffect(() => {
+    if (mode !== 'empty' || eview !== 'list') return;
+    setLoading(true); setError(null);
+    const qs = new URLSearchParams();
+    qs.set('sort', psort); qs.set('dir', pdir);
+    qs.set('page', String(page)); qs.set('size', String(size));
+    if (country) qs.set('country', country);
+    fetch(apiUrl(`/v1/wca/persons-directory?${qs.toString()}`))
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then((j: { rows: DirRow[]; total: number }) => setDirData({ rows: j.rows, total: j.total }))
+      .catch(e => setError(e.message)).finally(() => setLoading(false));
+  }, [mode, eview, psort, pdir, country, page, size]);
 
   // 名次和数据
   useEffect(() => {
@@ -349,7 +393,7 @@ function AllResultsPageInner() {
   }), [timeline]);
 
   const subtitle = mode === 'empty'
-    ? tr({ zh: '请至少选择一个项目', en: 'Select at least one event' })
+    ? tr({ zh: '未选择项目:全体选手 — 姓名分布(词数 / 字符长度)或按首字母 / 名字长度浏览名录', en: 'No event selected: all competitors — name distribution (word count / length), or browse the A–Z directory by name / length' })
     : mode === 'sor'
       ? tr({ zh: '把所选项目的(世界 / 国家)排名相加;缺项以该项目「参赛人数+1」(比倒数第一再差一名)计入。「未登领奖台」按比赛决赛(final round)实际名次过滤', en: 'Sum of (world / country) ranks across selected events; missing events default to "participants+1" (one worse than last). "No podium" filters by actual final-round position' })
       : (show === 'persons'
@@ -440,10 +484,95 @@ function AllResultsPageInner() {
         </div>
       )}
 
+      {/* ============ 空态:姓名分布(name_stats viz) + 名录(A-Z 平铺) ============ */}
       {mode === 'empty' && (
-        <div className="wse-table-wrapper">
-          <div className="wse-state">{tr({ zh: '请至少选择一个项目', en: 'Select at least one event' })}</div>
-        </div>
+        <>
+          <div className="wse-filters">
+            <div className="wse-filter wse-filter-show">
+              <label>{tr({ zh: '视图', en: 'View' })}</label>
+              <div className="wse-show-toggle">
+                <button type="button" className={eview === 'dist' ? 'active' : ''} onClick={() => setQuery({ eview: 'dist', page: null })}>{tr({ zh: '姓名分布', en: 'Distribution' })}</button>
+                <button type="button" className={eview === 'list' ? 'active' : ''} onClick={() => setQuery({ eview: 'list', page: null })}>{tr({ zh: '名录 A–Z', en: 'Directory A–Z' })}</button>
+              </div>
+            </div>
+            {eview === 'list' && (
+              <>
+                <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+                <div className="wse-filter wse-filter-show">
+                  <label>{tr({ zh: '排序', en: 'Sort' })}</label>
+                  <div className="wse-show-toggle">
+                    <button type="button" className={psort === 'name' ? 'active' : ''} onClick={() => setSort('name')}>
+                      {tr({ zh: '首字母', en: 'A–Z' })}{psort === 'name' && (pdir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                    </button>
+                    <button type="button" className={psort === 'len' ? 'active' : ''} onClick={() => setSort('len')}>
+                      {tr({ zh: '名字长度', en: 'Name length' })}{psort === 'len' && (pdir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="wse-table-wrapper">
+            {/* 分布视图 */}
+            {eview === 'dist' && (
+              <>
+                {loading && !nameStats && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...' })}</div>}
+                {error && !nameStats && <div className="wse-state wse-state-error">Error: {error}</div>}
+                {nameStats && (
+                  <>
+                    {(nameStats.note || nameStats.noteZh) && (
+                      <p className="wse-subtitle" style={{ marginTop: 0 }}>
+                        {tr({ zh: nameStats.noteZh ?? nameStats.note ?? '', en: nameStats.note ?? '' })}
+                      </p>
+                    )}
+                    <NameStatsView data={nameStats} isZh={isZh} queryKey="nstab" />
+                  </>
+                )}
+              </>
+            )}
+
+            {/* 名录视图 */}
+            {eview === 'list' && (
+              <>
+                {loading && !dirData && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...' })}</div>}
+                {error && !dirData && <div className="wse-state wse-state-error">Error: {error}</div>}
+                {dirData && (
+                  <>
+                    <div className="wse-result-meta">{tr({ zh: `共 ${dirData.total.toLocaleString()} 人`, en: `${dirData.total.toLocaleString()} cubers` })}</div>
+                    <table className="wse-table">
+                      <thead>
+                        <tr>
+                          <th className="wse-rank-col">#</th>
+                          <th>
+                            <button type="button" className="wse-th-sort" onClick={() => setSort('name')}>
+                              {tr({ zh: '选手', en: 'Person' })}
+                              {psort === 'name' && (pdir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                            </button>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dirData.rows.map((r, i) => (
+                          <tr key={r.wcaId}>
+                            <td className="wse-rank-col">{(page - 1) * size + i + 1}</td>
+                            <td>
+                              {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
+                              <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {dirData.total > size && (
+                      <Paginator page={page} totalPages={totalPages(dirData)} size={size} pageSizeOptions={PAGE_SIZE_OPTIONS} isZh={isZh} onPageChange={(p) => update('page', String(p), false)} onSizeChange={(s) => update('size', String(s))} />
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </>
       )}
 
       {/* ============ 单项 ============ */}
