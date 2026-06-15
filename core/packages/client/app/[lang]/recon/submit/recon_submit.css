@@ -63,6 +63,7 @@
 /* 左栏：动画区(grow 吃掉超宽屏余量,让表单贴右沿不留死白;600px 为下限) */
 .submit-player-pane {
   flex: 1 1 600px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -138,11 +139,43 @@
 /* 内联动画(手机端用) — 复用 fillPane 链路 */
 .submit-inline-player {
   height: 260px;
+  position: relative;
   margin-bottom: 12px;
   background: rgba(0, 0, 0, 0.15);
   border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
   border-radius: 6px;
   overflow: hidden;
+}
+
+/* 渲染引擎切换 — 浮在动画区左上(背面小窗在右上,不撞)。NxN 才出现。 */
+.submit-engine-toggle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 5;
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  background: color-mix(in srgb, var(--background) 72%, transparent);
+  backdrop-filter: blur(4px);
+}
+.submit-engine-opt {
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.submit-engine-opt:hover:not(.active) {
+  color: var(--foreground);
+}
+.submit-engine-opt.active {
+  background: var(--accent);
+  color: var(--accent-foreground);
 }
 .submit-inline-player .twisty-section--fill {
   width: 100%;

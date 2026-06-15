@@ -1,8 +1,8 @@
-/* Sq1ReconPlayer — cuber-engine SQ1 preview. Sizing chains off the parent pane
-   (submit-player-pane / submit-inline-player / detail-player-pane) just like
-   TwistySection's fill mode. */
+/* CuberReconPlayer — cuber-engine NxN preview with an always-on back-view mini
+   window. Sizing chains off the parent pane (submit-player-pane /
+   submit-inline-player) like TwistySection's fill mode. */
 
-.sq1-recon-player {
+.cuber-recon-player {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -10,16 +10,17 @@
   min-height: 0;
 }
 
-.sq1-recon-canvas {
+.cuber-recon-canvas {
   flex: 1;
   min-height: 0;
   position: relative;
   touch-action: none;
 }
 
-/* Optional back-view window — pinned top-right, transparent canvas over a
-   var(--card) backdrop. pointer-events none so drags pass to the main view. */
-.sq1-recon-backview {
+/* Back-view window — pinned top-right of the canvas. Transparent canvas inside
+   shows this var(--card) backdrop where the cube doesn't cover. pointer-events
+   none so dragging passes through to the main view. */
+.cuber-recon-backview {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -31,13 +32,13 @@
   pointer-events: none;
   z-index: 2;
 }
-.sq1-recon-backview canvas {
+.cuber-recon-backview canvas {
   display: block;
   width: 100% !important;
   height: 100% !important;
 }
 
-.sq1-recon-controls {
+.cuber-recon-controls {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -45,7 +46,7 @@
   flex-wrap: nowrap;
 }
 
-.sq1-recon-controls button {
+.cuber-recon-controls button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -60,16 +61,16 @@
   transition: background 0.15s;
 }
 
-.sq1-recon-controls button:hover:not(:disabled) {
+.cuber-recon-controls button:hover:not(:disabled) {
   background: color-mix(in srgb, var(--foreground) 16%, transparent);
 }
 
-.sq1-recon-controls button:disabled {
+.cuber-recon-controls button:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
-.sq1-recon-scrubber {
+.cuber-recon-scrubber {
   flex: 1;
   min-width: 60px;
   height: 4px;
@@ -77,12 +78,12 @@
   cursor: pointer;
 }
 
-.sq1-recon-scrubber:disabled {
+.cuber-recon-scrubber:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
-.sq1-recon-progress {
+.cuber-recon-progress {
   flex: 0 0 auto;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
