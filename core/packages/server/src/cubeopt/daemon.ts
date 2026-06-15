@@ -22,6 +22,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { writeFileSync, readFileSync } from 'node:fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -30,12 +31,26 @@ const DAEMON_SCRIPT = process.env.CUBEOPT_DAEMON_SCRIPT
   ? resolve(process.env.CUBEOPT_DAEMON_SCRIPT)
   : resolve(__dirname, 'solve-daemon.mjs');
 
-// A single optimal solve with opt5 on a 2-vCPU box can take tens of seconds and,
-// for the hardest scrambles, a couple of minutes. Past this we treat the child
-// as hung and recycle it.
+// A single optimal solve on a 2-vCPU box can take tens of seconds and, for the
+// hardest scrambles, a couple of minutes. Past this we treat the child as hung
+// and recycle it.
 const SOLVE_TIMEOUT_MS = Number(process.env.CUBEOPT_TIMEOUT_MS) || 180_000;
 // Max requests allowed to sit in the (serial) queue before we shed load.
 const MAX_QUEUE = Number(process.env.CUBEOPT_MAX_QUEUE) || 8;
+
+// ── Memory safety (the table is up to ~2GB resident on a 3.5GB box) ───────────
+// Three layers, weakest→strongest:
+//   1. idle-unload — drop the table after IDLE_MS of no solves (steady-state win).
+//   2. memory watchdog — poll /proc/meminfo; if MemAvailable falls below the
+//      floor for 2 reads, drop the table BEFORE the kernel has to OOM anything.
+//   3. oom_score_adj=1000 on the child — if a spike beats the poll, the kernel
+//      kills THIS process first, never core-api/postgres (set at spawn below).
+const IDLE_MS = Number(process.env.CUBEOPT_IDLE_MS) || 10 * 60_000;
+const MEM_FLOOR_MB = Number(process.env.CUBEOPT_MEM_FLOOR_MB) || 200;
+const MEM_POLL_MS = Number(process.env.CUBEOPT_MEM_POLL_MS) || 1000;
+// After a low-memory drop, refuse to reload for this long so we don't thrash
+// (drop → reload 2GB → drop) while the pressure that triggered it is still there.
+const COOLDOWN_MS = Number(process.env.CUBEOPT_COOLDOWN_MS) || 15_000;
 
 export interface SolveResult {
   htm: number;
@@ -53,6 +68,11 @@ let ready = false;
 let bootPromise: Promise<void> | null = null;
 let nextId = 1;
 const pending = new Map<string, Pending>();
+
+let lastActivity = 0;       // updated on each solve; drives idle-unload
+let cooldownUntil = 0;      // refuse reload until this time after a low-mem drop
+let lowMemReads = 0;        // consecutive sub-floor MemAvailable reads (debounce)
+let monitorsStarted = false;
 
 function rejectAllPending(reason: string): void {
   for (const [, p] of pending) {
@@ -76,6 +96,13 @@ function spawnDaemon(): Promise<void> {
       return;
     }
     child = proc;
+
+    // Layer 3: make THIS process the OOM killer's first victim, so a memory
+    // spike that beats the watchdog poll sacrifices the (respawnable) table
+    // process instead of core-api / postgres. Linux-only, best effort.
+    if (process.platform === 'linux' && proc.pid) {
+      try { writeFileSync(`/proc/${proc.pid}/oom_score_adj`, '1000'); } catch { /* /proc unavailable */ }
+    }
 
     proc.stderr?.on('data', (chunk: Buffer) => {
       for (const line of chunk.toString().split('\n')) {
@@ -140,9 +167,56 @@ function spawnDaemon(): Promise<void> {
 export function ensureDaemon(): Promise<void> {
   if (!ENABLED) return Promise.reject(new Error('cloud optimal solve is disabled'));
   if (ready) return Promise.resolve();
+  if (Date.now() < cooldownUntil) {
+    return Promise.reject(new Error('Rate limit: solver cooling down after memory pressure, try again shortly'));
+  }
   if (bootPromise) return bootPromise;
+  startMonitors();
   bootPromise = spawnDaemon();
   return bootPromise;
+}
+
+// ── Memory monitors (idle-unload + watchdog) ─────────────────────────────────
+function readMemAvailableMB(): number {
+  if (process.platform !== 'linux') return -1;
+  try {
+    const m = readFileSync('/proc/meminfo', 'utf8').match(/^MemAvailable:\s+(\d+)\s+kB/m);
+    return m ? Math.floor(Number(m[1]) / 1024) : -1;
+  } catch { return -1; }
+}
+
+function startMonitors(): void {
+  if (monitorsStarted) return;
+  monitorsStarted = true;
+
+  // Layer 1: idle-unload — drop the resident table once nobody has solved for a
+  // while, returning ~2GB to the box for the 95% of the time it's not in use.
+  setInterval(() => {
+    if (!child || !ready || pending.size > 0) return;
+    if (Date.now() - lastActivity > IDLE_MS) {
+      console.log('[cubeopt] idle — dropping table to free memory');
+      recycleChild();
+    }
+  }, 30_000).unref();
+
+  // Layer 2: memory watchdog — if MemAvailable dips below the floor for two
+  // consecutive reads while the table is loaded, drop it pre-emptively (and
+  // cool down) before the kernel is forced to OOM-kill something.
+  setInterval(() => {
+    if (!child) { lowMemReads = 0; return; }
+    const avail = readMemAvailableMB();
+    if (avail < 0) return; // not Linux / unreadable
+    if (avail < MEM_FLOOR_MB) {
+      if (++lowMemReads >= 2) {
+        console.error(`[cubeopt] low memory (${avail}MB < ${MEM_FLOOR_MB}MB) — dropping table to avert OOM`);
+        cooldownUntil = Date.now() + COOLDOWN_MS;
+        lowMemReads = 0;
+        recycleChild();
+      }
+    } else {
+      lowMemReads = 0;
+    }
+  }, MEM_POLL_MS).unref();
 }
 
 export function isEnabled(): boolean {
@@ -166,9 +240,11 @@ function recycleChild(): void {
  * recycles the hung child).
  */
 export async function solveOptimal(scramble: string): Promise<SolveResult> {
+  lastActivity = Date.now();
   await ensureDaemon();
   if (!child?.stdin) throw new Error('solver stdin unavailable');
   if (pending.size >= MAX_QUEUE) throw new Error('Rate limit: solver queue full, try again shortly');
+  lastActivity = Date.now();
 
   return new Promise<SolveResult>((resolveSolve, rejectSolve) => {
     const id = `${nextId++}`;
