@@ -1,4 +1,4 @@
-// Ported from packages/client/src/pages/wca_stats/wca_translations.ts.
+// Ported from packages/client-vite/src/pages/wca_stats/wca_translations.ts.
 // 表格单元格 / 选手链接 中英文翻译。
 
 import { extractChineseName } from './cuber-name-display';

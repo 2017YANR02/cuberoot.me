@@ -1,7 +1,7 @@
 'use client';
 
 // 浏览器原生语音识别封装 (Web Speech API)
-// Ported from packages/client/src/utils/useSpeechToText.ts.
+// Ported from packages/client-vite/src/utils/useSpeechToText.ts.
 // Chrome/Edge/Safari 都支持 (webkit 前缀);Firefox 不支持 → supported=false
 // 不引入任何依赖,不上后端 ASR。
 // Next 适配:supported 初值 false + useEffect 探测,避免 SSR/client hydration mismatch。

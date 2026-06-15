@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/utils/flag.tsx.
+// Ported from packages/client-vite/src/utils/flag.tsx.
 // 国旗渲染 — flag-icons CSS 类 + TW 特判自定义 SVG。
 
 import type { JSX } from 'react';

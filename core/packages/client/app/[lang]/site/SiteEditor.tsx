@@ -4,7 +4,7 @@
  * 弹窗编辑/新增一个网址条目。create 时 site=null;edit 时传入现有 site。
  * 保存调用 nav_sites_api,成功后调 onSaved(updated) 由父组件刷新本地列表。
  *
- * 1:1 port from packages/client/src/pages/sites/SiteEditor.tsx.
+ * 1:1 port from packages/client-vite/src/pages/sites/SiteEditor.tsx.
  */
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';

@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/components/MonthGrid.tsx — no external deps.
+// Ported from packages/client-vite/src/components/MonthGrid.tsx — no external deps.
 
 import type { CSSProperties, HTMLAttributes, ReactNode } from 'react';
 

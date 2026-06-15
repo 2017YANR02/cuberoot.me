@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/utils/theme.ts.
+// Ported from packages/client-vite/src/utils/theme.ts.
 // Differences from Vite original:
 //   - Bootstrap is inlined into <head> as a beforeInteractive script (lib/theme-bootstrap-script.ts)
 //     so no FOUC between SSR document arrival and React hydration.

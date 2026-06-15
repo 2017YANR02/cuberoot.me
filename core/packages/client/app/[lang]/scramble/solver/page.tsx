@@ -3,7 +3,7 @@
 /**
  * /scramble/solver — cubeopt-wasm 最优解 (Next.js 16 port).
  *
- * Ported from packages/client/src/pages/scramble/solver/ScrambleSolverPage.tsx.
+ * Ported from packages/client-vite/src/pages/scramble/solver/ScrambleSolverPage.tsx.
  *
  * Changes vs the Vite original:
  *   - react-router useSearchParams → next/navigation useSearchParams (wrapped in <Suspense>).

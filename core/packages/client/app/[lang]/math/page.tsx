@@ -5,7 +5,7 @@
  *   /math/group  —— Rubik's Cube & group theory (long-form, 26 sections)
  *   /math/god    —— God's Number across all 17 WCA puzzles
  *
- * 1:1 port from packages/client/src/pages/math/MathLandingPage.tsx (Vite SPA).
+ * 1:1 port from packages/client-vite/src/pages/math/MathLandingPage.tsx (Vite SPA).
  */
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';

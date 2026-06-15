@@ -2,7 +2,7 @@
 
 /**
  * 历年此日 — 点 CalendarPage 日历格子的日期数字打开。
- * Ported from packages/client/src/pages/calendar/OnThisDayModal.tsx.
+ * Ported from packages/client-vite/src/pages/calendar/OnThisDayModal.tsx.
  */
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';

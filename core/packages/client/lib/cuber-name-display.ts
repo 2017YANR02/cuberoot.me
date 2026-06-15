@@ -1,4 +1,4 @@
-// Ported from packages/client/src/utils/name_utils.ts.
+// Ported from packages/client-vite/src/utils/name_utils.ts.
 // 选手名处理工具 — 跨页面共享。WCA API 返回 "Name (中文)" 形式,
 // 我们渲染时不留括号:中文模式抽中文,英文模式去掉括号。
 

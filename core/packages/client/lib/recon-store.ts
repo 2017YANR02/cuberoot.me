@@ -1,6 +1,6 @@
 /**
  * Recon 模块 Zustand Store
- * NOTE: 管理复盘列表、筛选状态、排序、搜索 (port of client/src/stores/recon_store.ts)
+ * NOTE: 管理复盘列表、筛选状态、排序、搜索 (port of client-vite/src/stores/recon_store.ts)
  */
 import { create } from 'zustand';
 import type { ReconSolve } from '@cuberoot/shared';

@@ -10,7 +10,7 @@
  *   - admin 全权
  *   - 没有真删,仅软删
  *
- * 1:1 port from packages/client/src/pages/wiki/WikiPage.tsx (Vite SPA).
+ * 1:1 port from packages/client-vite/src/pages/wiki/WikiPage.tsx (Vite SPA).
  */
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';

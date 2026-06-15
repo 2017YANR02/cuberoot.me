@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /recon/[id] — full detail page, ported from packages/client/src/pages/recon/ReconDetailPage.tsx.
+ * /recon/[id] — full detail page, ported from packages/client-vite/src/pages/recon/ReconDetailPage.tsx.
  * Restored features: SameRound nav, SameCompEvent table, normalized-cross block, full StatsGrid,
  * comment reply tree, pin/edit/delete, alternatives section.
  */

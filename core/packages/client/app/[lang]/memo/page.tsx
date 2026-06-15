@@ -3,7 +3,7 @@
 /**
  * /memo — Memo (记忆) sub-hub.
  *
- * 1:1 port from packages/client/src/pages/memo/MemoLandingPage.tsx (Vite SPA).
+ * 1:1 port from packages/client-vite/src/pages/memo/MemoLandingPage.tsx (Vite SPA).
  */
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';

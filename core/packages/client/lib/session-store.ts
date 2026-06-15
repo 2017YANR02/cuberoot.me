@@ -1,4 +1,4 @@
-// Ported from packages/client/src/stores/sessionStore.ts
+// Ported from packages/client-vite/src/stores/sessionStore.ts
 'use client';
 
 import { useEffect, useState } from 'react';

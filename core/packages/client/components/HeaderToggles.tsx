@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/components/HeaderToggles.tsx.
+// Ported from packages/client-vite/src/components/HeaderToggles.tsx.
 // 语言 + 外观(明暗 / 配色合一)两连。外观入口走 AppearanceToggle 单菜单。
 
 import LangToggle from './LangToggle';

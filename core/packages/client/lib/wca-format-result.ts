@@ -1,4 +1,4 @@
-// Ported from packages/client/src/utils/wca_format_result.ts.
+// Ported from packages/client-vite/src/utils/wca_format_result.ts.
 // WCA result-value → display string. Single source of truth.
 
 export type ResultKind = 'single' | 'average';

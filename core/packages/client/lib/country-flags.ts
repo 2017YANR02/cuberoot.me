@@ -1,4 +1,4 @@
-// Ported from packages/client/src/utils/country_flags.ts.
+// Ported from packages/client-vite/src/utils/country_flags.ts.
 // WCA country_id / country.name → ISO 3166-1 alpha-2 + async-loaded person/comp country maps.
 
 import { apiUrl } from './api-base';

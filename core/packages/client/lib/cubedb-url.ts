@@ -1,6 +1,6 @@
 /**
  * cubedb-style URL encoding for sharing recon scramble + solution.
- * Ported from packages/client/src/utils/cubedb_url.ts.
+ * Ported from packages/client-vite/src/utils/cubedb_url.ts.
  *
  * URL params (independent, all optional):
  *   ?scramble=<wcaScramble>&optimal=<optimalScramble>&alg=<solution>

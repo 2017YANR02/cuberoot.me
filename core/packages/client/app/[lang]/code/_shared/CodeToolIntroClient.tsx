@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/pages/code/StackToolPage.tsx
+// Ported from packages/client-vite/src/pages/code/StackToolPage.tsx
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Link from '@/components/AppLink';

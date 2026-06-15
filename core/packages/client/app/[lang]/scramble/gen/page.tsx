@@ -8,7 +8,7 @@
  *
  * Comp + Practice share `cubing/scramble` (Lucas Garron, WCA-spec output).
  *
- * Next.js port of packages/client/src/pages/gen/GenPage.tsx (1:1 shell).
+ * Next.js port of packages/client-vite/src/pages/gen/GenPage.tsx (1:1 shell).
  */
 import { Suspense, useEffect, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';

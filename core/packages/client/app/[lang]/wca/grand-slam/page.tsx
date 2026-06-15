@@ -3,7 +3,7 @@
 /**
  * 大满贯 - WC + Continental + National 领奖台 + WR(任一类型)的人.
  * /wca/grand-slam
- * Ported from packages/client/src/pages/wca_stats/GrandSlamPage.tsx.
+ * Ported from packages/client-vite/src/pages/wca_stats/GrandSlamPage.tsx.
  */
 import { Suspense, useEffect, useState } from 'react';
 import Link from '@/components/AppLink';

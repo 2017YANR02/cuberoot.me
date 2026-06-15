@@ -1,6 +1,6 @@
 'use client';
 
-// WCA OAuth Implicit Grant callback — ported from packages/client/src/pages/AuthCallbackPage.tsx.
+// WCA OAuth Implicit Grant callback — ported from packages/client-vite/src/pages/AuthCallbackPage.tsx.
 // Reads access_token from URL hash, calls WCA /me, exchanges for long-lived JWT, then returns to wca_return_url.
 
 import { useEffect, useState } from 'react';

@@ -2,7 +2,7 @@
 
 /**
  * /alg/[puzzle] — list every alg set for one puzzle (2x2 / 3x3 / 4x4 / 5x5 etc.).
- * Ported from packages/client/src/pages/alg/AlgPuzzlePage.tsx.
+ * Ported from packages/client-vite/src/pages/alg/AlgPuzzlePage.tsx.
  *
  * Loads each set's case count lazily so the page renders before all imports finish.
  */

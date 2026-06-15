@@ -1,4 +1,4 @@
-// Shared admin-API helper — mirrors packages/client/src/utils/admin_api.ts.
+// Shared admin-API helper — mirrors packages/client-vite/src/utils/admin_api.ts.
 // JWT (long-lived) preferred over raw WCA access token (2h).
 // Server route requireAdminOrApiKey accepts both Bearer WCA tokens (when wcaId in ADMIN_WCA_IDS) or X-Admin-Key.
 

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /recon — list page. Full port of packages/client/src/pages/recon/ReconListPage.tsx
+ * /recon — list page. Full port of packages/client-vite/src/pages/recon/ReconListPage.tsx
  * (per-column filters, record badges, WCA auth, comp localize/links).
  */
 import {

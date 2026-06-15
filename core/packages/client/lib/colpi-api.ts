@@ -1,6 +1,6 @@
 /**
  * /memo/colpi backend API client. All word data lives in PG (colpi_words / colpi_votes).
- * Ported from packages/client/src/utils/colpi_api.ts.
+ * Ported from packages/client-vite/src/utils/colpi_api.ts.
  */
 import { API_ORIGIN } from './api-base';
 import { authHeaders, handleApi } from './admin-api';

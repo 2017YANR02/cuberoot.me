@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/pages/wca_stats/SuccessRatePage.tsx.
+// Ported from packages/client-vite/src/pages/wca_stats/SuccessRatePage.tsx.
 import { Suspense, useEffect, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useQueryStates, parseAsString } from 'nuqs';

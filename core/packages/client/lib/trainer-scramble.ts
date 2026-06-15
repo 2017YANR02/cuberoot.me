@@ -1,4 +1,4 @@
-// Ported from packages/client/src/utils/trainerScramble.ts
+// Ported from packages/client-vite/src/utils/trainerScramble.ts
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 
 const AUF = ['', 'U', 'U2', "U'"];

@@ -1,6 +1,6 @@
 'use client';
 
-// `/code/*` 介绍页通用 LangCtx + L 组件 (ported from packages/client/src/pages/code/_intro/Lang.tsx).
+// `/code/*` 介绍页通用 LangCtx + L 组件 (ported from packages/client-vite/src/pages/code/_intro/Lang.tsx).
 
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';

@@ -1,7 +1,7 @@
 'use client';
 /**
  * 公式输入框 — 统一封装 textarea 与 contenteditable 两种底层。
- * Ported from packages/client/src/components/AlgInput/AlgInput.tsx
+ * Ported from packages/client-vite/src/components/AlgInput/AlgInput.tsx
  *
  * - markable=false (默认):textarea,纯文本
  * - markable=true:contenteditable div,支持 finger-trick 标签

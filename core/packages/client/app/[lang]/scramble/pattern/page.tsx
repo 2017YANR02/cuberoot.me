@@ -3,7 +3,7 @@
 /**
  * /scramble/pattern — gallery of famous pretty patterns for every WCA event.
  *
- * 1:1 port of packages/client/src/pages/patterns/PatternsPage.tsx to Next 16
+ * 1:1 port of packages/client-vite/src/pages/patterns/PatternsPage.tsx to Next 16
  * client component. Reuses shared client components/hooks (WcaEventSelector,
  * VisualCube, PuzzleSVG, TwistySection, LangToggle, ThemeToggle, useDocumentTitle)
  * and the clock SVG helper from sibling /scramble/gen.

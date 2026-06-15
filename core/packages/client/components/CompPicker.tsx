@@ -1,5 +1,5 @@
 'use client';
-// Competition search input — ported from packages/client/src/components/CompPicker.tsx.
+// Competition search input — ported from packages/client-vite/src/components/CompPicker.tsx.
 
 import { useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
 import { Flag } from './Flag';

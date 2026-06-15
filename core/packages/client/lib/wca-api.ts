@@ -1,5 +1,5 @@
 /**
- * WCA public persons / users API (no auth) — ported from packages/client/src/utils/wca_api.ts.
+ * WCA public persons / users API (no auth) — ported from packages/client-vite/src/utils/wca_api.ts.
  * Module-level promise cache for searches / lookups.
  */
 

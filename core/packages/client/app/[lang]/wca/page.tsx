@@ -2,7 +2,7 @@
 
 /**
  * /wca — WCA Stats index. Simplified port of
- * packages/client/src/pages/wca_stats/WcaStatsIndex.tsx.
+ * packages/client-vite/src/pages/wca_stats/WcaStatsIndex.tsx.
  *
  * NOTE: The full Vite version uses utils/site_search.ts for cross-cutting
  * search (persons / comps / recons / glossary / alg sets / etc.) — those

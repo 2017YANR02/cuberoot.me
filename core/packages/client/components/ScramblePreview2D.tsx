@@ -5,7 +5,7 @@
  * from tnoodle-lib (clock/sq1/mega/pyra/skewb/unfolded-cube) plus a cstimer
  * port for Mirror Blocks.
  *
- * Ported from packages/client/src/components/ScramblePreview2D.tsx, but with
+ * Ported from packages/client-vite/src/components/ScramblePreview2D.tsx, but with
  * the TwistyPlayer fallback removed — all currently supported events have a
  * synchronous custom SVG renderer, so no need to pull in cubing/twisty (which
  * triggers the search worker code path that conflicts with Turbopack prerender).

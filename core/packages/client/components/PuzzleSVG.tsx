@@ -3,7 +3,7 @@
 /**
  * PuzzleSVG — React wrapper around `sr-puzzlegen` for sq1 / megaminx / pyraminx / skewb.
  *
- * Ported from packages/client/src/components/PuzzleSVG.tsx.
+ * Ported from packages/client-vite/src/components/PuzzleSVG.tsx.
  */
 import { useEffect, useMemo, useRef } from 'react';
 import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-svg';

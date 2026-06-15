@@ -1,6 +1,6 @@
 // 比赛纪录数据加载
 // 数据源: stats/comp_records_summary.json + stats/comp_records_detail.json
-// Ported from packages/client/src/utils/comp_records.ts.
+// Ported from packages/client-vite/src/utils/comp_records.ts.
 import { statsUrl } from './stats-base';
 
 export type RecordTop = 'WR' | 'CR' | 'NR';
