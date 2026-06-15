@@ -4,7 +4,7 @@ import { qrTargetUrl } from "@/lib/site";
 import { qrSvg } from "@/lib/qr/svg";
 import { QrCardUnit } from "@/components/QrCard";
 import { PageHeader, GhostLink } from "../../../_components/Shell";
-import { PrintButton } from "./_PrintButton";
+import { PrintButton, BrowserPrintButton } from "./_PrintButton";
 import { loadQrCardsParams } from "@/lib/search-params";
 import type { SearchParams } from "nuqs/server";
 
@@ -49,6 +49,7 @@ export default async function QrCardsPage({
             <div className="flex gap-2">
               <GhostLink href="/admin/qr">返回列表</GhostLink>
               <GhostLink href="/admin/qr/stats">数据看板</GhostLink>
+              <BrowserPrintButton />
               <PrintButton codes={rows.map((r) => r.code)} />
             </div>
           }
@@ -59,7 +60,7 @@ export default async function QrCardsPage({
           </div>
         ) : (
           <p className="mb-6 text-[12px] text-ink-3">
-            下方为放大预览。点「下载 SVG」逐张导出印刷厂母版(全矢量,含出血 + 裁切线,自包含单文件),直接交印厂,不走网页打印。
+            下方为放大预览。「打印」走浏览器打印(A4 多卡平铺,自留 / 应急用)；「下载 SVG」逐张导出印刷厂母版(全矢量,含出血 + 裁切线,自包含单文件),交印厂用这个。
           </p>
         )}
       </div>

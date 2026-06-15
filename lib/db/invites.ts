@@ -45,6 +45,41 @@ export async function findByOwner(ownerId: string): Promise<InviteCode | undefin
   return rows[0];
 }
 
+export async function listByOwner(ownerId: string): Promise<InviteCode[]> {
+  return db
+    .select()
+    .from(schema.inviteCodes)
+    .where(eq(schema.inviteCodes.ownerId, ownerId))
+    .orderBy(desc(schema.inviteCodes.createdAt))
+    .all();
+}
+
+export type InviteStats = {
+  codes: { code: string; uses: number; rewardCoupon: string | null }[];
+  totalCodes: number;
+  totalUses: number;
+  uniqueInvitees: number;
+};
+
+// 只读统计:不改写任何邀请逻辑。
+// 现有 applyInviteOnSignup 仅 incrementUses,没有被邀请人关联表,
+// 故 uniqueInvitees 用各码 uses 之和估算(每次成功使用 = 一名新被邀请用户)。
+export async function inviteStats(ownerId: string): Promise<InviteStats> {
+  const rows = await listByOwner(ownerId);
+  const codes = rows.map((r) => ({
+    code: r.code,
+    uses: r.uses,
+    rewardCoupon: r.rewardCoupon,
+  }));
+  const totalUses = codes.reduce((sum, c) => sum + c.uses, 0);
+  return {
+    codes,
+    totalCodes: codes.length,
+    totalUses,
+    uniqueInvitees: totalUses,
+  };
+}
+
 export async function incrementUses(code: string): Promise<void> {
   const c = normalize(code);
   await db

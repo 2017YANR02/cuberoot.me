@@ -1,7 +1,21 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import { useState } from "react";
+
+// 浏览器原生打印当前网页:由页面的 @media print CSS 把 --s 设回 1(精确 mm)、
+// 隐藏 .no-print 控件,只留卡片网格,A4 多卡平铺。走系统打印对话框。
+export function BrowserPrintButton() {
+  return (
+    <button
+      type="button"
+      onClick={() => window.print()}
+      className="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3 py-1.5 text-[13px] text-ink-2 hover:text-ink hover:border-brand/40 transition"
+    >
+      <Printer size={14} /> 打印
+    </button>
+  );
+}
 
 // 下载折叠卡的矢量印刷母版 SVG(含出血 + 裁切线),而非打印当前网页。
 // 多张时逐个抓 blob 触发下载;idx 透传给接口控制正面艺术图轮换。
