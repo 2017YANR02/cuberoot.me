@@ -37,6 +37,8 @@ const LIST_COLUMNS = [
   'regional_single_record', 'regional_average_record', 'regional_aoxr_record',
   'stm', 'tps',
   'optimal_scramble', 'oll', 'pll', 'note',
+  // 卡片视图缩略图用：有视频 → 取 B 站/YouTube 封面（多为空串，几乎不增 gzip）。
+  'video_url',
 ].join(', ');
 
 // 首页「今日复盘」卡片用:列表字段 + wca_scramble(打乱图回退) + created_at(分组用)。
