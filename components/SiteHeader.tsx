@@ -12,6 +12,7 @@ const NAV = [
   { href: "/shop", label: "商城" },
   { href: "/events", label: "赛事" },
   { href: "/community", label: "社群" },
+  { href: "/timer", label: "计时器" },
   { href: "/news", label: "资讯" },
   { href: "/instructors", label: "讲师" },
   { href: "/about", label: "关于" },
@@ -190,11 +191,25 @@ function UserMenu({ user }: { user: HeaderUser }) {
       {open ? (
         <div className="absolute right-0 mt-1 w-44 rounded-md border border-line bg-white shadow-card overflow-hidden z-40">
           <Link
+            href="/me"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
+          >
+            个人中心
+          </Link>
+          <Link
             href="/me/courses"
             onClick={() => setOpen(false)}
             className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
           >
             我的课程
+          </Link>
+          <Link
+            href="/me/favorites"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
+          >
+            我的收藏
           </Link>
           <Link
             href="/orders"

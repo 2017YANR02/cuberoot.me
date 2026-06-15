@@ -8,7 +8,10 @@ import {
   listRelated,
 } from "@/lib/db/news";
 import type { NewsItem } from "@/lib/db/news";
+import { getCurrentUser } from "@/lib/auth-user";
+import { isFavorited } from "@/lib/db/favorites";
 import { Badge } from "@/components/Badge";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import { Markdown } from "@/components/Markdown";
 import { ogImageUrl } from "@/lib/site";
 
@@ -71,10 +74,12 @@ export default async function NewsDetail({
   const item = await findNews(id);
   if (!item) notFound();
 
-  const [{ prev, next }, related] = await Promise.all([
+  const [{ prev, next }, related, user] = await Promise.all([
     findAdjacent(item),
     listRelated(item, 3),
+    getCurrentUser(),
   ]);
+  const favorited = user ? await isFavorited(user.id, "news", item.id) : false;
 
   return (
     <article className="container-page py-12 md:py-16 max-w-3xl">
@@ -94,9 +99,18 @@ export default async function NewsDetail({
             {formatDate(item.date)}
           </span>
         </div>
-        <h1 className="text-[26px] md:text-[32px] font-semibold text-ink leading-tight">
-          {item.title}
-        </h1>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h1 className="text-[26px] md:text-[32px] font-semibold text-ink leading-tight">
+            {item.title}
+          </h1>
+          <FavoriteButton
+            targetType="news"
+            targetId={item.id}
+            initial={favorited}
+            loggedIn={!!user}
+            next={`/news/${item.id}`}
+          />
+        </div>
         <p className="mt-3 text-[15px] leading-7 text-ink-3">{item.excerpt}</p>
       </header>
 
