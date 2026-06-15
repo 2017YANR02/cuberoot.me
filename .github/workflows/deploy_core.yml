@@ -1,7 +1,6 @@
-# 前端部署（GitHub Pages）+ 后端部署（云服务器 Hono API）
+# 后端部署（云服务器 Hono API）
 # 仅当 core/ 源码有变更时触发
-# 前端：构建 Vite 产物 → 提交到根目录 → GitHub Pages + deploy_mirror 自动 serve
-# 后端：构建 server dist → rsync 到 云服务器 → pm2 restart
+# 构建 server bundle → rsync 到 云服务器 → apply_migrations + pm2 reload
 name: Deploy Core
 
 on:
@@ -20,28 +19,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # checkout 只取构建 + GH Pages 镜像 commit 实际碰的目录,跳过仓库根 stats/ 707MB + tools/ 等
-      # ~1GB 静态残留(blob:none partial clone)。cone 必须含:
-      #   - "Sync dist to root + Commit" 步要 add 的全部根目录(_assets/fonts/ffmpeg/...),否则镜像更新被跳过;
-      #   - stats/prediction(1.1MB)—— 退役 Vite client 唯一的 build-time 静态 import
-      #     (packages/client/src/pages/prediction/data/wr333_history.ts),少了它 tsc -b 直接 TS2307 炸。
-      # 根级散文件(index.html/sw.js 等)cone 模式自动带上;stats/ 其余 out-of-cone 子树 commit 时按父树 SHA 原样保留.
+      # 只取 core/(server bundle + migrations + cube555 daemon glue),跳过仓库根 ~1GB 静态残留(blob:none partial clone)。
       - uses: actions/checkout@v4
         with:
           sparse-checkout: |
             core
-            ops
-            stats/prediction
-            _assets
-            fonts
-            ffmpeg
-            icons
-            textures
-            donate
-            analyze-worker
-            cubeopt
-            images
-            app
           filter: blob:none
 
       - uses: pnpm/action-setup@v4
@@ -59,20 +41,14 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
-      # @cuberoot/shared + @cuberoot/visualcube 必须在 client / server bundle 之前 build:
-      # - server.bundle.js (esbuild --bundle): @cuberoot/shared subpath + visualcube 走 node→dist/*.js 条件
-      # - client sw.ts (esbuild via build_sw.mjs): visualcube exports.default 已是 ./dist/index.js
-      #   (commit de021a36a 为让 Turbopack 认得改的);esbuild 浏览器 bundle 也走 default → 需 dist 存在
+      # @cuberoot/shared + @cuberoot/visualcube 必须在 server bundle 之前 build:
+      # server.bundle.js (esbuild --bundle) 走 @cuberoot/shared subpath + visualcube 的 node→dist/*.js 条件,
+      # 需要 dist/ 已存在。
       - name: Build shared deps
         working-directory: core
         run: |
           pnpm --filter @cuberoot/shared build
           pnpm --filter @cuberoot/visualcube build
-
-      # 构建前端
-      - name: Build client
-        working-directory: core
-        run: pnpm --filter @cuberoot/client build
 
       # esbuild --bundle 把 server src + 全部 deps (含写得烂的 sr-puzzlegen,
       # 无扩展名 ESM)打成单个 dist/server.bundle.js,Node 严格模式直接跑。
@@ -80,47 +56,6 @@ jobs:
       - name: Build server bundle
         working-directory: core
         run: pnpm --filter @cuberoot/server build:bundle
-
-      # 将 client dist 产物同步到仓库根目录
-      # NOTE: Vite 产出 index.html + _assets/ + public/ 静态文件
-      # 不能 rm -rf 根目录，只清理 Vite 管理的文件
-      - name: Sync dist to root
-        run: |
-          # 清理旧的 Vite chunks（_assets/ 由 Vite assetsDir 配置）
-          rm -rf _assets
-          # 清理旧的 app/ 目录（迁移过渡期）
-          rm -rf app
-          # 复制 Vite 产物到根目录（merge，不覆盖 tools/ stats/ 等）
-          cp -r core/packages/client/dist/* .
-          # NOTE: GitHub Pages SPA fallback — 404.html = index.html 副本
-          # GitHub Pages 对未知路径返回 404.html，SPA 直接加载无需跳转
-          cp index.html 404.html
-
-      # 提交并推送（deploy_mirror.yml 会自动同步到国内镜像）
-      - name: Commit and push
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A _assets/ index.html 404.html favicon.svg CubeRoot-dark.png sw.js
-          git add -A fonts/ ffmpeg/ icons/ textures/ donate/ analyze-worker/ cubeopt/ images/
-          git add -A scramble_module.js icons.svg icon_timer.png cstimer_logo.png
-          git add -A MediaInfoModule.wasm manifest.json countries-110m.geojson cn_disputed_patches.geojson beian-badge.png blog-slugs.json
-          # 清理已删除的 app/ 目录（首次迁移后不存在则忽略）
-          git add -A app/ 2>/dev/null || true
-          # 仅在有变化时才提交
-          git diff --cached --quiet || git commit -m "ci: rebuild SPA from core/"
-          # NOTE: race-safe push — main 可能被 README/手动 commit 等 in-flight push 挤走，
-          # 失败就 fetch + rebase + 重试，最多 5 次。
-          for attempt in 1 2 3 4 5; do
-            git fetch origin main
-            git rebase origin/main || { git rebase --abort; exit 1; }
-            if git push origin main; then
-              echo "push succeeded on attempt $attempt"
-              break
-            fi
-            echo "push attempt $attempt rejected, retrying..."
-            sleep $((attempt * 3))
-          done
 
       # ── 后端部署到 云服务器 ──
 
