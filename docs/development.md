@@ -46,11 +46,11 @@ sudo net stop MySQL80   # ⚠️ 绝对不要强杀 mysqld.exe，否则损坏 In
 
 ```powershell
 cd D:\cube\cuberoot.me\core
-pnpm --filter @cuberoot/client dev
-# → http://localhost:5173/
+pnpm --filter @cuberoot/client-next dev
+# → http://127.0.0.1:3000/
 ```
 
-> Vite `serveRepoRoot` 插件直接从仓库根目录 serve `/tools/` 和 `/stats/` 静态文件，无需额外服务器。
+> `app/{tools,stats}/[...slug]/route.ts` catch-all 直接从仓库根目录 serve `/tools/` 和 `/stats/` 静态文件，无需额外服务器。
 
 ## 上游同步脚本
 

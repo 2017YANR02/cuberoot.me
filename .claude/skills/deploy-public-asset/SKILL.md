@@ -1,55 +1,30 @@
 ---
 name: deploy-public-asset
-description: "Use when adding new public/static files to the site — images, fonts, geojson, textures, WASM modules, or any file served from repo root. Two separate deploy workflows have independent whitelists that BOTH need updating, or production 404s. Triggers: \"new public asset\", \"404\", \"deploy_core\", \"deploy_mirror\", \"textures/\", \"白名单\", 加静态资源."
+description: "Use when adding new public/static files to the site — images, fonts, geojson, textures, WASM modules. Live site is Next.js: assets go in client-next/public/ (no repo-root copy, no whitelist). Shared fork/stats static lives in tools/ + stats/ served by static.cuberoot.me. Triggers: \"new public asset\", \"404\", \"public/\", \"textures/\", \"加静态资源\", \"static asset\", \"public 资源\"."
 ---
 
-# 部署机制 + 新增 public 资源
+# 新增 public / 静态资源
 
-## Deploy Core 流程
+线上前端是 **Next.js (`packages/client-next`)**;Vite + 根目录 commit + GH Pages 镜像(deploy_mirror)已于 2026-06-14 全部移除。旧的"两处白名单 + 仓库根再放一份"机制已作废。
 
-`Deploy Core` workflow 在 push `main` 且 `core/**` 变更时触发：
+## 常规 public 资源(图片 / 字体 / geojson / wasm 等)
 
-1. `pnpm --filter @cuberoot/client build` 产出 `core/packages/client/dist/`
-2. CI 把 `dist/*` **复制回仓库根目录**（`index.html`、`_assets/` 等），commit 成 `ci: rebuild SPA from core/`
-3. GitHub Pages serve 根目录；`404.html = index.html` 做 SPA fallback
-4. 同一 workflow 顺带 rsync `packages/server/dist/` 到 云服务器 并 `pm2 restart core-api`
+直接放进 **`core/packages/client-next/public/<file>`** —— 完事。
 
-**不要手动改根目录的 `_assets/`、`index.html`、`404.html`** —— CI 会覆写。
-源码改 `core/`，构建产物由 CI 管理。
-`ci: rebuild SPA from core/` 提交就是这个流程产生的。
+- Next 在 `/<file>` 路径直接 serve(绝对路径如 `/fonts/x.woff2`、`/cubeopt/...`)。
+- 部署自动带上:`deploy_next.yml`(systemd standalone,public/ 打进 tar)+ Vercel(push 自动 build)。
+- **不要**在仓库根再放一份,**不要**改 workflow 白名单。
+- 本地 dev `http://127.0.0.1:3000/<file>` 验证 200。
 
-## ⚠️ 新增 public 资源时必须同时改两处白名单
+## 共享 fork / stats 静态(`tools/` + `stats/`)
 
-1. **`.github/workflows/deploy_core.yml`**：`git add -A <dir>/` 行（新目录）或 `git add -A <file>`（新文件）
-2. **`.github/workflows/deploy_mirror.yml`**：`for d in ...`（目录）或 `for f in ...`（文件）
+仓库根的 `tools/`(forks: Solver / AlgTrainer / csTimer)和 `stats/`(WCA stats JSON)由 **static.cuberoot.me** 服(服务器 `/www/wwwroot/toolkit/{tools,stats}/`);Vercel/Next 上 `app/{tools,stats}/[...slug]/route.ts` fallback 反代过去。
 
-**漏一处则 GH Pages (cuberoot.me) 和 `www.cuberoot.me` 镜像有一个 404**。
-
-## ⚠️ 本地 dev server 也要能访问 —— 根目录静态资源要**同时放 public/**
-
-本地 `pnpm dev` 时，Vite 默认从 `core/packages/client/public/` serve 根路径文件。`serveRepoRoot` 插件只处理 `/tools/` 和 `/stats/` 前缀。所以根目录静态资源（如 `countries-110m.geojson`）要**两份**：
-
-1. **仓库根**：`/countries-110m.geojson`（生产 GH Pages 直接 serve）
-2. **Vite publicDir**：`core/packages/client/public/countries-110m.geojson`（本地 dev 通过 Vite 默认 publicDir 机制 serve，也会被 build 复制进 dist/）
-
-**更新流程**：修改任一文件后，同步另一份。CI build 会把 public/ 的文件打进 dist/，然后 CI 再把 dist 复制回仓库根，最终两边的线上版本一致。
-
-## 历史教训
-
-- `textures/stars_milky_way_2k.jpg` 加了之后只改 deploy_core 忘了 deploy_mirror → 镜像站 404
-- `countries-110m.geojson` 同样两处白名单 + 两处文件副本
-- `cn_disputed_patches.geojson` 漏掉 public/ 副本 → 线上 OK、本地 dev 404
-- workflow 自身 edit 不会重触发部署，除非把 `.github/workflows/deploy_core.yml` 加进 `paths:` 过滤
-- 一次 push >300 文件（批量 rename / asset / media）时，GitHub Actions 路径过滤只看前 300，`core/**` 可能被挤出导致 Deploy Core 不触发；push 完立刻补 `gh workflow run deploy_core.yml --ref main`
+- 加到这两个目录要确保上线到 static.cuberoot.me(见 memory `reference_static_toolkit_deploy`)。
+- 本地 dev 由 `app/{tools,stats}/[...slug]/route.ts` catch-all 从仓库根 serve。
+- `stats/**` 走 CI 日更管道(stats.yml),一般不手动加。
 
 ## 验证
 
-1. 本地 dev：打开 `http://127.0.0.1:5173/<new-file>` 应 200（没放 public/ 就 404）
-2. push 之前：2 个 workflow 都已加新路径
-3. push 之后：GH Actions 看 Deploy Core 是否成功
-4. 线上：两个域名都打开新资源 URL 确认 200
-
-## 不相关
-
-- `stats/**` 目录已整目录 `git add -A stats/`，新 JSON 自动包含，**不用**加白名单
-- `core/packages/client/src/**` 源码不需要白名单（CI build 后自动进 dist/）
+1. 本地:`http://127.0.0.1:3000/<path>` → 200
+2. 线上:push 后 `https://cuberoot.me/<path>` → 200(public 资源走 Next;tools/stats 走 static.cuberoot.me fallback)

@@ -30,10 +30,10 @@ core/packages/
 
 ```bash
 pnpm install
-pnpm --filter @cuberoot/client dev          # 前端 dev,127.0.0.1:5173
-pnpm --filter @cuberoot/client typecheck    # tsc -b
-pnpm --filter @cuberoot/client build
+pnpm --filter @cuberoot/client-next dev          # 前端 dev,127.0.0.1:3000
+pnpm --filter @cuberoot/client-next typecheck     # tsgo
+pnpm --filter @cuberoot/client-next build
 pnpm --filter @cuberoot/server typecheck
 ```
 
-> Recon API 通过 Vite proxy 转到 `www.cuberoot.me`,**本地不需要起 Hono 后端**。
+> Recon API 通过 Next rewrites 转到 `api.cuberoot.me`,**本地不需要起 Hono 后端**。

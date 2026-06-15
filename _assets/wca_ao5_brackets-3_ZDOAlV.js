@@ -1,1 +1,0 @@
-function e(e,t){if(e.length!==5)return!1;let n=e.map((e,t)=>({v:e,i:t})).filter(({v:e})=>e>0);if(n.length===0)return!1;let r=e.findIndex(e=>e===-1||e===-2),i=r>=0?r:e.indexOf(Math.max(...n.map(e=>e.v))),a=e.indexOf(Math.min(...n.map(e=>e.v)));return t===i||t===a}export{e as t};
