@@ -1033,7 +1033,7 @@ export default function LatexIntroPage() {
                   {e.rows.map((r, j) => (
                     <div className="engine-row" key={j}>
                       <b>{r.k}</b>
-                      <span>{(i18n.language.startsWith('zh') ? r.zh : r.en)}</span>
+                      <span>{tr(r)}</span>
                     </div>
                   ))}
                   <div className="engine-pick">{lang === 'zh' ? e.zhPick : e.enPick}</div>

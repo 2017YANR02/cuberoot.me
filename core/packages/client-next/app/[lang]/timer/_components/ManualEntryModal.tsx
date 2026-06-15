@@ -159,9 +159,9 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
 
         <div className="modal-section">
           <label className="manual-label">
-            {isFmc ? (tr({ zh: '步数', en: 'Move count'
-            })) : (tr({ zh: '时间', en: 'Time'
-            }))}
+            {isFmc ? tr({ zh: '步数', en: 'Move count'
+                                  }) : tr({ zh: '时间', en: 'Time'
+                                      })}
             {isFmc ? (
               <input
                 ref={firstInputRef}

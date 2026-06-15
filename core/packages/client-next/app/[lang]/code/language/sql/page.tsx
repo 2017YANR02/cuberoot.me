@@ -7,6 +7,8 @@ import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './sql_intro.css';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
+
 // Stylized cylinder DB logo — three stacked ellipses with a SELECT wordmark
 const SQL_LOGO_SVG = (
   <svg viewBox="0 0 256 256">
@@ -859,7 +861,7 @@ export default function SqlIntroPage() {
               ].map((a, i) => (
                 <div className="anti-card" key={i}>
                   <div className="anti-h">{a.h}</div>
-                  <p>{(i18n.language.startsWith('zh') ? a.zh : a.en)}</p>
+                  <p>{tr(a)}</p>
                 </div>
               ))}
             </div>

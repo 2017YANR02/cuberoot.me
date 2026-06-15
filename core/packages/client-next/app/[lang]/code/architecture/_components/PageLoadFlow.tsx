@@ -45,7 +45,7 @@ const SHARED_BOT: ForkStep[] = [
 
 function ForkStep({ step }: { step: ForkStep }) {
   const lang = useLang();
-  const label = ((i18n.language.startsWith('zh') ? step.zh : step.en));
+  const label = tr(step);
   return (
     <div className={`plf-step${step.color ? ` plf-step-${step.color}` : ''}`}>
       <span className="plf-step-label">{label}</span>
@@ -205,14 +205,14 @@ function SwimlaneDiagram() {
         <div className="plf-sw-header">
           {SWIMLANE_COLS.map((col, i) => (
             <div key={i} className={`plf-sw-col-head${i === 0 ? ' plf-sw-time' : ''}`}>
-              {((i18n.language.startsWith('zh') ? col.zh : col.en))}
+              {tr(col)}
             </div>
           ))}
         </div>
         {/* Rows */}
         {SWIMLANE_ROWS.map((row, ri) => (
           <div key={ri} className="plf-sw-row">
-            <div className="plf-sw-time-cell">{((i18n.language.startsWith('zh') ? row.label.zh : row.label.en))}</div>
+            <div className="plf-sw-time-cell">{tr(row.label)}</div>
             {[1, 2, 3, 4].map(col => {
               const cell = row.cells.find(c => c.col === col);
               if (!cell) return <div key={col} className="plf-sw-empty" />;

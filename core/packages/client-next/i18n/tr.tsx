@@ -32,7 +32,11 @@ export interface Msg {
 // Pure resolver. Reads the i18n singleton's current language — set synchronously
 // per render by I18nProvider (the same model the old `i18n.language` ternaries
 // relied on). Use in string contexts (props, aria-label, computed values).
-export function tr(m: Msg): string {
+//
+// Generic: defaults to string (`tr({ en, zh })`), but also selects a localized
+// value of any type — `tr(obj)` where obj is `{ en, zh }` returns the picked
+// branch, so `tr(card).title` / ReactNode branches work too.
+export function tr<T = string>(m: { en: T; zh: T }): T {
   return normalizeLang(i18n.language) === 'en' ? m.en : m.zh;
 }
 

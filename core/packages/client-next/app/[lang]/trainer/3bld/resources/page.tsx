@@ -328,7 +328,7 @@ export default function ResourcesPage(): JSX.Element {
           <section className="bld-res-section" key={sec.id}>
             <div className="bld-res-section-head">
               {sec.icon}
-              <h2>{((i18n.language.startsWith('zh') ? sec.zh : sec.en))}</h2>
+              <h2>{tr(sec)}</h2>
             </div>
             {((isZh ? sec.noteZh : sec.noteEn)) && (
               <p className="bld-res-section-note">{(isZh ? sec.noteZh : sec.noteEn)}</p>
@@ -345,7 +345,7 @@ export default function ResourcesPage(): JSX.Element {
                     rel="noopener noreferrer"
                   >
                     <span className="bld-res-link-title">
-                      {((i18n.language.startsWith('zh') ? l.zh : l.en))}
+                      {tr(l)}
                       {l.by && <span className="bld-res-link-by">{l.by}</span>}
                       {desc && <span className="bld-res-link-desc">{desc}</span>}
                     </span>

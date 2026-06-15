@@ -317,8 +317,8 @@ function TypeAWidget() {
     for (const idx of [i + 1, i, i + 1]) { [p2[idx - 1], p2[idx]] = [p2[idx], p2[idx - 1]]; }
     const same = p1.every((v, k) => v === p2[k]);
     setVerifyResult(same
-      ? (tr({ zh: `s₁s₂s₁ = s₂s₁s₂ ✓  (辫关系成立, m(1,2)=3)`, en: `s₁s₂s₁ = s₂s₁s₂ ✓  (braid relation holds, m(1,2)=3)`
-    }))
+      ? tr({ zh: `s₁s₂s₁ = s₂s₁s₂ ✓  (辫关系成立, m(1,2)=3)`, en: `s₁s₂s₁ = s₂s₁s₂ ✓  (braid relation holds, m(1,2)=3)`
+            })
       : `mismatch`
     );
   }, [lang, n, size]);
@@ -415,8 +415,8 @@ function TypeAWidget() {
         <div className="gt-result-row">
           <span className="gt-result-label"><L zh="字 (应用的生成元)" en="word (gens applied)" /></span>
           <span className="gt-result-val" style={{ wordBreak: 'break-all' }}>
-            {word.length === 0 ? (tr({ zh: 'e (单位元)', en: 'e (identity)'
-            })) : word.map(i => `s${i}`).join(' ')}
+            {word.length === 0 ? tr({ zh: 'e (单位元)', en: 'e (identity)'
+                                  }) : word.map(i => `s${i}`).join(' ')}
           </span>
         </div>
         <div className="gt-result-row">
@@ -434,7 +434,7 @@ function TypeAWidget() {
         <div className="gt-result-row">
           <span className="gt-result-label"><L zh="是否为单位元" en="is identity" /></span>
           <span className="gt-result-val" style={{ color: isId ? 'var(--green)' : 'var(--accent)' }}>
-            {isId ? (tr({ zh: '是', en: 'yes' })) : (tr({ zh: '否', en: 'no' }))}
+            {isId ? tr({ zh: '是', en: 'yes' }) : tr({ zh: '否', en: 'no' })}
           </span>
         </div>
       </div>
@@ -630,7 +630,7 @@ function RootSystemWidget() {
         <div className="gt-result-row">
           <span className="gt-result-label"><L zh="是晶格类型？(m∈{2,3,4,6})" en="crystallographic? (m∈{2,3,4,6})" /></span>
           <span className="gt-result-val" style={{ color: [2,3,4,6].includes(rs.m) ? 'var(--green)' : 'var(--warn)' }}>
-            {[2,3,4,6].includes(rs.m) ? (tr({ zh: '是（Weyl 群）', en: 'yes (Weyl group)' })) : (tr({ zh: '否（非晶格）', en: 'no (non-crystallographic)' }))}
+            {[2,3,4,6].includes(rs.m) ? tr({ zh: '是（Weyl 群）', en: 'yes (Weyl group)' }) : tr({ zh: '否（非晶格）', en: 'no (non-crystallographic)' })}
           </span>
         </div>
       </div>
@@ -817,7 +817,7 @@ export default function ReflectionCoxeter() {
               <td><TeX src={String.raw`${row.iso}`} /></td>
               <td className="num"><TeX src={String.raw`${row.order}`} /></td>
               <td style={{ fontFamily: 'var(--mono)', fontSize: 12, color: row.cryst ? 'var(--green)' : 'var(--ink-faint)' }}>
-                {row.cryst ? (tr({ zh: '是', en: 'yes' })) : (tr({ zh: '否', en: 'no' }))}
+                {row.cryst ? tr({ zh: '是', en: 'yes' }) : tr({ zh: '否', en: 'no' })}
               </td>
             </tr>
           ))}

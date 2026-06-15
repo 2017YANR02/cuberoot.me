@@ -591,8 +591,8 @@ function CycleVisualizer({ group }: { group: SmallGroup }) {
           </span>
           <span className="gt-result-val" style={{ color: 'var(--green)', fontSize: 12 }}>
             {gIdx === 0
-              ? (tr({ zh: '恒等元 — n 个不动点 (唯一例外)', en: 'Identity — n fixed points (only exception)'
-            }))
+              ? tr({ zh: '恒等元 — n 个不动点 (唯一例外)', en: 'Identity — n fixed points (only exception)'
+                                      })
               : (lang === 'zh'
                 ? `无不动点 — 每个轮换长度均为 ${ord} ✓`
                 : `Fixed-point-free — every cycle has length ${ord} ✓`)}
@@ -723,8 +723,8 @@ function EmbeddingComparator({ group }: { group: SmallGroup }) {
             <text x={W / 2} y={H - 8} textAnchor="middle" fontSize={9} fill="var(--ink-faint)"
               style={{ fontFamily: 'var(--sans)', fontStyle: 'italic' }}>
               {n === mu
-                ? (tr({ zh: `μ = |G| — Cayley 度已是最优`, en: `μ = |G| — Cayley degree is already optimal`
-                }))
+                ? tr({ zh: `μ = |G| — Cayley 度已是最优`, en: `μ = |G| — Cayley degree is already optimal`
+                                                  })
                 : (lang === 'zh' ? `μ = ${mu} < ${n} = |G| — Cayley 给出上界, 非最优` : `μ = ${mu} < ${n} = |G| — Cayley gives upper bound, not optimal`)}
             </text>
           </>

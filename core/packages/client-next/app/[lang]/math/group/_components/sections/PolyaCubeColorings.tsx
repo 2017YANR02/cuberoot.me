@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import type { Lang } from '../primitives';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 // ── Mathematical constants ────────────────────────────────────────────────────
 
@@ -453,7 +454,7 @@ function BurnsideBreakdownPanel({ lang }: { lang: Lang }) {
               className={`gt-chip${mode === m.id ? ' gt-chip-active' : ''}`}
               onClick={() => setMode(m.id)}
             >
-              {((i18n.language.startsWith('zh') ? m.zh : m.en))}
+              {tr(m)}
             </button>
           ))}
         </div>

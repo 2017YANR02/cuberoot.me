@@ -416,11 +416,11 @@ export default function DistributionChart({ datasets, isZh }: Props) {
             style={{ margin: '0 2px', padding: '4px 14px', fontSize: 13 }}
             onClick={() => setMode(m)}
           >
-            {m === 'histogram' ? (tr({ zh: '直方图', en: 'Histogram'
-            }))
+            {m === 'histogram' ? tr({ zh: '直方图', en: 'Histogram'
+                            })
               : m === 'kde' ? 'KDE'
-              : (tr({ zh: '箱线图', en: 'Box Plot'
-            }))}
+              : tr({ zh: '箱线图', en: 'Box Plot'
+                                    })}
           </button>
         ))}
       </div>

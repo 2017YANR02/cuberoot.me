@@ -4,15 +4,12 @@
  * Ported from packages/client/src/pages/comp/CompSourcesPage.tsx.
  */
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Database, Globe, Radio, FileText } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../comp.css';
 import { tr } from '@/i18n/tr';
 
 export default function CompSourcesPage() {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   useDocumentTitle('数据源', 'Sources');
 
   return (

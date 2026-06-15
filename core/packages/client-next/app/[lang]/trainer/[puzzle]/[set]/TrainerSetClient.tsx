@@ -63,7 +63,7 @@ export default function TrainerSetClient() {
           <ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}
         </Link>
         <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>
-          {puzzle} · {((i18n.language.startsWith('zh') ? meta.zh : meta.en))}
+          {puzzle} · {tr(meta)}
         </span>
         <button
           className={`trainer-start-btn${!canStart ? ' is-disabled' : ''}`}

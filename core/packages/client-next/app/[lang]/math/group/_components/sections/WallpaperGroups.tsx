@@ -613,13 +613,13 @@ function GroupTiler() {
         <div className="gt-result-row">
           <div className="gt-result-label"><L zh="有镜像线" en="has mirrors" /></div>
           <div className="gt-result-val" style={{ color: group.hasMirror ? 'var(--green)' : 'var(--ink-faint)' }}>
-            {group.hasMirror ? (tr({ zh: '是', en: 'yes' })) : (tr({ zh: '否', en: 'no' }))}
+            {group.hasMirror ? tr({ zh: '是', en: 'yes' }) : tr({ zh: '否', en: 'no' })}
           </div>
         </div>
         <div className="gt-result-row">
           <div className="gt-result-label"><L zh="有滑移反射" en="has glide refl" /></div>
           <div className="gt-result-val" style={{ color: group.hasGlide ? 'var(--green)' : 'var(--ink-faint)' }}>
-            {group.hasGlide ? (tr({ zh: '是', en: 'yes' })) : (tr({ zh: '否', en: 'no' }))}
+            {group.hasGlide ? tr({ zh: '是', en: 'yes' }) : tr({ zh: '否', en: 'no' })}
           </div>
         </div>
       </div>
@@ -741,9 +741,9 @@ function RestrictionDial() {
         {/* on/off lattice label */}
         <text x={rex + 8} y={rey + 4} fontSize={10} fontFamily="var(--mono)"
           fill={onLattice ? cols[2] : cols[3]}>
-          {onLattice ? (tr({ zh: '在格点', en: 'on lattice'
-        })) : (tr({ zh: '不在格点', en: 'off lattice'
-        }))}
+          {onLattice ? tr({ zh: '在格点', en: 'on lattice'
+                          }) : tr({ zh: '不在格点', en: 'off lattice'
+                              })}
         </text>
       </svg>
 
@@ -925,12 +925,12 @@ function OrbifoldCalculator() {
         </span>
         <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-dim)', marginLeft: 12 }}>
           {lang === 'zh' ? verdictZh : verdict}
-          {verdict === 'wallpaper' ? (tr({ zh: ' — 是墙纸群', en: ' — valid wallpaper group'
-        })) :
-           verdict === 'spherical' ? (tr({ zh: ' — 球面 / 多面体群', en: ' — spherical / polyhedral'
-        })) :
-           (tr({ zh: ' — 双曲平面群', en: ' — hyperbolic plane group'
-        }))}
+          {verdict === 'wallpaper' ? tr({ zh: ' — 是墙纸群', en: ' — valid wallpaper group'
+                          }) :
+           verdict === 'spherical' ? tr({ zh: ' — 球面 / 多面体群', en: ' — spherical / polyhedral'
+                              }) :
+           tr({ zh: ' — 双曲平面群', en: ' — hyperbolic plane group'
+                                  })}
         </span>
         <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-faint)', marginTop: 4 }}>
           χ = 2 − cost = {chi.toFixed(6)}
@@ -1089,10 +1089,10 @@ export default function WallpaperGroups() {
                 <td style={{ color: 'var(--ink-dim)', fontSize: 12 }}>{g.lattice}</td>
                 <td style={{ textAlign: 'center', fontFamily: 'var(--mono)' }}>{g.maxRot}</td>
                 <td style={{ textAlign: 'center', color: g.hasMirror ? 'var(--green)' : 'var(--ink-faint)' }}>
-                  {g.hasMirror ? (tr({ zh: '是', en: 'y' })) : '—'}
+                  {g.hasMirror ? tr({ zh: '是', en: 'y' }) : '—'}
                 </td>
                 <td style={{ textAlign: 'center', color: g.hasGlide ? 'var(--green)' : 'var(--ink-faint)' }}>
-                  {g.hasGlide ? (tr({ zh: '是', en: 'y' })) : '—'}
+                  {g.hasGlide ? tr({ zh: '是', en: 'y' }) : '—'}
                 </td>
               </tr>
             ))}

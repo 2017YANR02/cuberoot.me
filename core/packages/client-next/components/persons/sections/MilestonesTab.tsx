@@ -13,6 +13,7 @@ import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -96,7 +97,7 @@ export default function MilestonesTab({ profile, results, comps, isZh }: Props) 
               key={ty}
               className={`wp-ms-chip ${TYPE_META[ty].cls} ${excluded.has(ty) ? 'is-off' : ''}`}
               onClick={() => toggleExclude(ty)}
-            >{((i18n.language.startsWith('zh') ? TYPE_META[ty].zh : TYPE_META[ty].en))}</button>
+            >{tr(TYPE_META[ty])}</button>
           ))}
         </div>
         <div className="wp-ms-filter-row">
@@ -125,7 +126,7 @@ export default function MilestonesTab({ profile, results, comps, isZh }: Props) 
           <li key={`${m.type}-${i}`} className={`wp-ms-item ${TYPE_META[m.type].cls}`}>
             <span className="wp-ms-date">{m.date}</span>
             <div className="wp-ms-body">
-              <div className="wp-ms-text">{((i18n.language.startsWith('zh') ? m.zh : m.en))}</div>
+              <div className="wp-ms-text">{tr(m)}</div>
               {m.tags.length > 0 && (
                 <div className="wp-ms-tags">
                   {m.tags.map((tag, j) => (

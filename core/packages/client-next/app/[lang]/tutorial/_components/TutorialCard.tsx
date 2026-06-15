@@ -1,5 +1,4 @@
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
 import { FileText } from 'lucide-react';
 import { tutorialMediaUrl, type CatalogEntry, type Lang } from '../_lib/useTutorialCatalog';
 import { tr } from '@/i18n/tr';
@@ -10,8 +9,6 @@ interface TutorialCardProps {
 }
 
 export function TutorialCard({ entry, lang }: TutorialCardProps) {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const title =
     entry.title[lang] ??
     entry.title[lang === 'zh' ? 'en' : 'zh'] ??
@@ -32,9 +29,9 @@ export function TutorialCard({ entry, lang }: TutorialCardProps) {
           <span className="tutorial-category-badge">{entry.category}</span>
           {entry.algCount > 0 && (
             <span className="tutorial-tutorial-count">
-              {entry.algCount} {entry.view === 'algset' ? (tr({ zh: '个情况', en: 'cases'
-            })) : (tr({ zh: '个公式', en: 'algs'
-            }))}
+              {entry.algCount} {entry.view === 'algset' ? tr({ zh: '个情况', en: 'cases'
+                                      }) : tr({ zh: '个公式', en: 'algs'
+                                          })}
             </span>
           )}
         </div>

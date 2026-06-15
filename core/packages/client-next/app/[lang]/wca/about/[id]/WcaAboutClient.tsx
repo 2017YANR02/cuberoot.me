@@ -153,8 +153,8 @@ export default function WcaAboutClient() {
     return ABOUT_REGISTRY[id] ?? null;
   }, [id]);
 
-  const aboutTitle = entry ? ((isZh ? entry.titleZh : entry.titleEn)) : (tr({ zh: '统计说明', en: 'About Stat'
-}));
+  const aboutTitle = entry ? ((isZh ? entry.titleZh : entry.titleEn)) : tr({ zh: '统计说明', en: 'About Stat'
+  });
   useDocumentTitle(aboutTitle, aboutTitle);
 
   if (!entry) {

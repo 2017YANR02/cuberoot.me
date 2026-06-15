@@ -245,20 +245,20 @@ function FunStatsInner() {
         <nav className="fun-stats-nav">
           {FAMILIES.map(fam => (
             <div key={fam.key} className="fun-stats-nav-group">
-              <div className="fun-stats-nav-head">{((i18n.language.startsWith('zh') ? fam.zh : fam.en))}</div>
+              <div className="fun-stats-nav-head">{tr(fam)}</div>
               {FUN_STATS.filter(s => s.family === fam.key).map(s => (
                 <button
                   key={s.id}
                   className={`fun-stats-nav-item${s.id === statId ? ' active' : ''}`}
                   onClick={() => selectStat(s.id)}
-                >{((i18n.language.startsWith('zh') ? s.zh : s.en))}</button>
+                >{tr(s)}</button>
               ))}
             </div>
           ))}
         </nav>
 
         <div className="fun-stats-main">
-          <h2 className="fun-stats-stat-title">{((i18n.language.startsWith('zh') ? stat.zh : stat.en))}</h2>
+          <h2 className="fun-stats-stat-title">{tr(stat)}</h2>
 
           {/* 控件 */}
           <div className="fun-stats-controls">

@@ -166,8 +166,8 @@ function MarksFeed() {
     })}</p>}
       {!loadErr && marks !== null && marks.length === 0 && (
         <p className="scrmarks-empty">{q
-          ? (tr({ zh: '没有匹配的标记。', en: 'No matching marks.' }))
-          : (tr({ zh: '还没有任何标记。', en: 'No marks yet.' }))}</p>
+          ? tr({ zh: '没有匹配的标记。', en: 'No matching marks.' })
+          : tr({ zh: '还没有任何标记。', en: 'No marks yet.' })}</p>
       )}
 
       {marks !== null && marks.length > 0 && (
@@ -191,8 +191,8 @@ function MarksFeed() {
                       disabled={deleting === m.id}
                       onClick={() => void onDelete(m)}
                       title={m.wcaId === user?.wcaId
-                        ? (tr({ zh: '删除', en: 'Delete' }))
-                        : (tr({ zh: '管理员删除', en: 'Delete (admin)' }))}
+                        ? tr({ zh: '删除', en: 'Delete' })
+                        : tr({ zh: '管理员删除', en: 'Delete (admin)' })}
                     >
                       <Trash2 size={13} />
                     </button>
@@ -215,9 +215,9 @@ function MarksFeed() {
 
       {marks !== null && marks.length > 0 && !done && (
         <button type="button" className="scrmarks-more" disabled={loadingMore} onClick={loadMore}>
-          {loadingMore ? (tr({ zh: '加载中…', en: 'Loading…'
-        })) : (tr({ zh: '加载更多', en: 'Load more'
-        }))}
+          {loadingMore ? tr({ zh: '加载中…', en: 'Loading…'
+                          }) : tr({ zh: '加载更多', en: 'Load more'
+                              })}
         </button>
       )}
     </div>

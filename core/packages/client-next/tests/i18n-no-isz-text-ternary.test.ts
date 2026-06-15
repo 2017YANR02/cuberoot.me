@@ -111,8 +111,9 @@ function isTextTernary(ce: import('ts-morph').ConditionalExpression, sense: 'zh'
 
 describe('i18n: no new inline UI-language text ternaries (use tr / <T> / useT / t)', () => {
   it('count of global-language text ternaries does not exceed the frozen baseline', () => {
-    // Ratchet: lower this number whenever you migrate sites to tr()/<T>. Never raise it.
-    const BASELINE = 419;
+    // Fully migrated 2026-06-14 (codemod-isz-burndown.mjs, 419 → 0). Keep at 0:
+    // any new inline UI-language text ternary fails CI — use tr()/<T>/useT()/t().
+    const BASELINE = 0;
 
     const project = new Project({ skipAddingFilesFromTsConfig: true });
     for (const d of ['app', 'components', 'lib', 'hooks']) {

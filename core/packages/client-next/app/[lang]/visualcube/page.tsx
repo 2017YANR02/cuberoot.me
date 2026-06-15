@@ -1152,13 +1152,13 @@ function VisualCubeEditorPageInner() {
                   className={`vc-btn vc-btn-sm${state.puzzleVariant === pv ? ' vc-btn-active' : ''}`}
                   onClick={() => setState((s) => snapRotationOnVariantBoundary(s, { puzzleVariant: pv }))}
                 >
-                  {pv === 'iso' ? (tr({ zh: '立体', en: 'iso'
-                }))
-                    : pv === 'top' ? (tr({ zh: '顶视', en: 'top'
-                    }))
+                  {pv === 'iso' ? tr({ zh: '立体', en: 'iso'
+                                      })
+                    : pv === 'top' ? tr({ zh: '顶视', en: 'top'
+                                              })
                     : pv === 'wca' ? 'wca'
-                    : (tr({ zh: '展开', en: 'net'
-                    }))}
+                    : tr({ zh: '展开', en: 'net'
+                                                      })}
                 </button>
               ))
             )}

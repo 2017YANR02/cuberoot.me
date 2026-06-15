@@ -22,7 +22,7 @@ function Timeline() {
   return (
     <ol className="timeline">
       {TIMELINE.map((e, i) => {
-        const t = ((i18n.language.startsWith('zh') ? e.zh : e.en));
+        const t = tr(e);
         const isOpen = open === i;
         return (
           <li key={i} className={`tl-entry tl-${e.tag}${isOpen ? ' open' : ''}`}>
@@ -89,7 +89,7 @@ function CalMonth({ ym, byDate, lang, expanded, onToggle }: {
           return (
             <>
               <div className="cal-day">{day.getDate()}</div>
-              {entry && <div className="cal-note">{((i18n.language.startsWith('zh') ? entry.zh : entry.en))}</div>}
+              {entry && <div className="cal-note">{tr(entry)}</div>}
             </>
           );
         }}

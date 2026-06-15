@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { VisualCube } from '@/components/VisualCube';
 import { MathText } from './Tex';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 const SUPERFLIP_REID_16 = "M' U M' U M' U2 M U M U M U2";
 const SUPERFLIP_HTM_20 = "R L U2 F U' D F2 R2 B2 L U2 F' B' U R2 D F2 U R2 U";
@@ -153,8 +154,8 @@ export default function SuperflipShowcase({ isZh }: Props) {
             {FAMOUS_ANTIPODES.map((a, i) => (
               <div key={i} className="god-sf-anti-card">
                 <VisualCube algorithm="" setup={a.alg} view="iso" puzzleSize={3} size={120} alt={a.name.en} />
-                <div className="god-sf-anti-name">{((i18n.language.startsWith('zh') ? a.name.zh : a.name.en))}</div>
-                {a.note && <div className="god-sf-anti-note">{((i18n.language.startsWith('zh') ? a.note.zh : a.note.en))}</div>}
+                <div className="god-sf-anti-name">{tr(a.name)}</div>
+                {a.note && <div className="god-sf-anti-note">{tr(a.note)}</div>}
                 <code className="god-sf-anti-alg">{a.alg}</code>
               </div>
             ))}

@@ -4,7 +4,6 @@
 // Used by edge/corner/ltct/parity trainers. Esc closes; backdrop click closes.
 
 import { useEffect, useRef, type JSX } from 'react';
-import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 
@@ -37,8 +36,6 @@ export function CodeInputModal({
   title,
   sampleButton,
 }: CodeInputModalProps): JSX.Element | null {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -53,8 +50,8 @@ export function CodeInputModal({
 
   if (!open) return null;
 
-  const heading = title ?? (tr({ zh: '输入编码', en: 'Enter codes'
-}));
+  const heading = title ?? tr({ zh: '输入编码', en: 'Enter codes'
+  });
 
   return (
     <div
@@ -82,8 +79,8 @@ export function CodeInputModal({
           className="bld-modal-textarea"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder ?? (tr({ zh: '每行一个编码,例如 AB', en: 'One code per line, e.g. AB'
-        }))}
+          placeholder={placeholder ?? tr({ zh: '每行一个编码,例如 AB', en: 'One code per line, e.g. AB'
+                  })}
           spellCheck={false}
         />
 

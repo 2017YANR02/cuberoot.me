@@ -142,8 +142,8 @@ export default function TodayRecon({ lang }: Props) {
             aria-expanded={expanded}
           >
             {expanded
-              ? (tr({ zh: '收起', en: 'Show less' }))
-              : (tr({ zh: '更多', en: 'More' }))}
+              ? tr({ zh: '收起', en: 'Show less' })
+              : tr({ zh: '更多', en: 'More' })}
             <ChevronDown size={15} className="tr-more-chevron" aria-hidden="true" />
           </button>
         </>

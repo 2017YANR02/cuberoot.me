@@ -11,6 +11,7 @@ import { ALG_CATALOG, loadAlg, type AlgPuzzle, type AlgFile, type AlgCase } from
 import './algs-panel.css';
 import i18n from '@/i18n/i18n-client';
 import { useT } from "@/hooks/useT";
+import { tr } from '@/i18n/tr';
 
 interface Props {
   onSelect: (setup: string, alg: string, caseName: string) => void;
@@ -111,7 +112,7 @@ export default function AlgsPanel({ onSelect, onOrderChange, disabled = false }:
         >
           {sets.map((s) => (
             <option key={s.slug} value={s.slug}>
-              {((i18n.language.startsWith('zh') ? s.zh : s.en))}
+              {tr(s)}
             </option>
           ))}
         </select>

@@ -458,7 +458,7 @@ export default function OrbitStabilizer() {
                 <td style={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{info.orbitSize}</td>
                 <td style={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{info.stabSize}</td>
                 <td style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-dim)' }}>
-                  {((i18n.language.startsWith('zh') ? info.structuralDesc.zh : info.structuralDesc.en))}
+                  {tr(info.structuralDesc)}
                 </td>
                 <td style={{ textAlign: 'center', color: 'var(--green)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
                   {info.orbitSize * info.stabSize}
@@ -670,7 +670,7 @@ function CubeExplorerPanel({ lang }: { lang: Lang }) {
             <div className="gt-result-row">
               <span className="gt-result-label"><L zh="稳定子结构" en="Stabiliser structure" /></span>
               <span className="gt-result-val" style={{ fontSize: 12 }}>
-                {((i18n.language.startsWith('zh') ? OBJECT_INFO[type].structuralDesc.zh : OBJECT_INFO[type].structuralDesc.en))}
+                {tr(OBJECT_INFO[type].structuralDesc)}
               </span>
             </div>
           </div>
@@ -947,7 +947,7 @@ function BurnsidePanel({ lang }: { lang: Lang }) {
                   strokeWidth={1.5}
                 />
                 <text x={colX[0]+4} y={y+CELL_H/2+4} style={{ fontSize: 10, fontFamily: 'var(--mono)' }} fill={isHL ? rowColor : 'var(--ink-dim)'}>
-                  {((i18n.language.startsWith('zh') ? cls.name.zh : cls.name.en))}
+                  {tr(cls.name)}
                 </text>
                 <text x={colX[1]+4} y={y+CELL_H/2+4} style={{ fontSize: 12, fontFamily: 'var(--mono)' }} fill={isHL ? rowColor : 'var(--ink)'}>
                   {cls.count}
@@ -1003,8 +1003,8 @@ function BurnsidePanel({ lang }: { lang: Lang }) {
           <div className="gt-result-row">
             <span className="gt-result-label"><L zh="验证 (k=2)" en="Check (k=2)" /></span>
             <span className="gt-result-val" style={{ color: orbits === 10 ? 'var(--green)' : 'var(--warn)' }}>
-              {orbits === 10 ? (tr({ zh: '= 10 ✓ (经典结果)', en: '= 10 ✓ (classic result)'
-            })) : `≠ 10`}
+              {orbits === 10 ? tr({ zh: '= 10 ✓ (经典结果)', en: '= 10 ✓ (classic result)'
+                                      }) : `≠ 10`}
             </span>
           </div>
         )}

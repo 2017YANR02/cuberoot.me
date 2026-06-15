@@ -6,6 +6,7 @@
  */
 import { MathText } from './Tex';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 interface Problem {
   id: string;
@@ -94,7 +95,7 @@ export default function OpenProblems({ isZh }: Props) {
       {PROBLEMS.map((p) => (
         <article key={p.id} className="god-open-card">
           <header className="god-open-head">
-            <h3>{((i18n.language.startsWith('zh') ? p.name.zh : p.name.en))}</h3>
+            <h3>{tr(p.name)}</h3>
             <div className="god-open-bounds">
               <span className="god-open-lower">{p.lower}</span>
               <span className="god-open-sep">…</span>
@@ -106,16 +107,16 @@ export default function OpenProblems({ isZh }: Props) {
 
           <div className="god-open-row">
             <div className="god-open-row-label">{t('为何难', 'Why it\'s hard')}</div>
-            <div className="god-open-row-body"><MathText>{((i18n.language.startsWith('zh') ? p.whyHard.zh : p.whyHard.en))}</MathText></div>
+            <div className="god-open-row-body"><MathText>{tr(p.whyHard)}</MathText></div>
           </div>
           <div className="god-open-row">
             <div className="god-open-row-label">{t('合拢方向', 'Path to close')}</div>
-            <div className="god-open-row-body"><MathText>{((i18n.language.startsWith('zh') ? p.toClose.zh : p.toClose.en))}</MathText></div>
+            <div className="god-open-row-body"><MathText>{tr(p.toClose)}</MathText></div>
           </div>
           {p.estimate && (
             <div className="god-open-row">
               <div className="god-open-row-label">{t('粗略估算', 'Estimate')}</div>
-              <div className="god-open-row-body"><MathText>{((i18n.language.startsWith('zh') ? p.estimate.zh : p.estimate.en))}</MathText></div>
+              <div className="god-open-row-body"><MathText>{tr(p.estimate)}</MathText></div>
             </div>
           )}
         </article>

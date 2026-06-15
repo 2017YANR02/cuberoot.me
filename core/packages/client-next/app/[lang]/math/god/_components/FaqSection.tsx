@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { MathText } from './Tex';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 interface QA { q: { zh: string; en: string
  }; a: { zh: string; en: string
@@ -157,11 +158,11 @@ export default function FaqSection({ isZh }: Props) {
           return (
             <div key={i} className={`god-faq-item ${open ? 'is-open' : ''}`}>
               <button className="god-faq-q" onClick={() => toggle(i)}>
-                <span>{((i18n.language.startsWith('zh') ? qa.q.zh : qa.q.en))}</span>
+                <span>{tr(qa.q)}</span>
                 <ChevronDown size={16} className={`god-faq-chev ${open ? 'is-open' : ''}`} />
               </button>
               {open && (
-                <div className="god-faq-a"><MathText>{((i18n.language.startsWith('zh') ? qa.a.zh : qa.a.en))}</MathText></div>
+                <div className="god-faq-a"><MathText>{tr(qa.a)}</MathText></div>
               )}
             </div>
           );
@@ -173,7 +174,7 @@ export default function FaqSection({ isZh }: Props) {
         {GLOSSARY.map((g, i) => (
           <div key={i} className="god-glossary-row">
             <dt>{g.term}</dt>
-            <dd><MathText>{((i18n.language.startsWith('zh') ? g.def.zh : g.def.en))}</MathText></dd>
+            <dd><MathText>{tr(g.def)}</MathText></dd>
           </div>
         ))}
       </dl>

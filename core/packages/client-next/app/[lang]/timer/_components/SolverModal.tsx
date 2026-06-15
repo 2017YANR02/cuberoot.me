@@ -183,12 +183,12 @@ export default function SolverModal({ isZh, onClose }: Props) {
             disabled={solving || !ready}
             onClick={handleSolve}
           >
-            {solving ? (tr({ zh: '求解中…', en: 'Solving…' })) : (tr({ zh: '求解', en: 'Solve' }))}
+            {solving ? tr({ zh: '求解中…', en: 'Solving…' }) : tr({ zh: '求解', en: 'Solve' })}
           </button>
           {solution && (
-            <button onClick={onCopy}>{copied ? (tr({ zh: '已复制', en: 'Copied'
-            })) : (tr({ zh: '复制', en: 'Copy'
-            }))}</button>
+            <button onClick={onCopy}>{copied ? tr({ zh: '已复制', en: 'Copied'
+                                  }) : tr({ zh: '复制', en: 'Copy'
+                                      })}</button>
           )}
           <button onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
         })}</button>

@@ -27,7 +27,7 @@ function TutorialCategoryPageInner() {
   );
   const showHidden = show === 'hidden';
 
-  const tutorialTitle = category || (tr({ zh: '教程', en: 'Tutorial' }));
+  const tutorialTitle = category || tr({ zh: '教程', en: 'Tutorial' });
   useDocumentTitle(tutorialTitle, tutorialTitle);
 
   const [query, setQuery] = useState('');
@@ -116,8 +116,8 @@ function TutorialCategoryPageInner() {
               className={'tutorial-category-chip' + (activeSub === sc ? ' is-active' : '')}
               onClick={() => setActiveSub(sc)}
             >
-              {sc || (tr({ zh: '未分类', en: 'Uncategorized'
-            }))}
+              {sc || tr({ zh: '未分类', en: 'Uncategorized'
+                              })}
               <span className="tutorial-category-chip-count">{count}</span>
             </button>
           ))}

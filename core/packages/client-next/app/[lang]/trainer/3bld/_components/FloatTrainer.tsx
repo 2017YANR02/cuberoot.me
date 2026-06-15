@@ -342,7 +342,7 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{((i18n.language.startsWith('zh') ? title.zh : title.en))}</h1>
+        <h1>{tr(title)}</h1>
       </div>
 
       <div className="bld-section">
@@ -421,10 +421,10 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
         </div>
         <p className="bld-input-summary" style={{ marginTop: 8, marginBottom: 0 }}>
           {floatOrder.trim() === ''
-            ? (tr({ zh: '浮动顺序留空 = 排除模式（生成 500 条打乱）。', en: 'Empty float order = eject mode (500 scrambles).'
-            }))
-            : (tr({ zh: '浮动顺序非空 = 正常浮动（遍历副缓冲全部公式）。', en: 'Non-empty float order = normal float (covers every sub-buffer alg).'
-            }))}
+            ? tr({ zh: '浮动顺序留空 = 排除模式（生成 500 条打乱）。', en: 'Empty float order = eject mode (500 scrambles).'
+                                  })
+            : tr({ zh: '浮动顺序非空 = 正常浮动（遍历副缓冲全部公式）。', en: 'Non-empty float order = normal float (covers every sub-buffer alg).'
+                                  })}
         </p>
       </div>
 

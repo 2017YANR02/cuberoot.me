@@ -78,8 +78,8 @@ export default function DirectorPanel({ getCanvas, getWorld, getRenderer, setup,
       if (msg !== 'aborted') {
         console.error('[Sim Export] failed:', e);
         // eslint-disable-next-line no-alert
-        alert((tr({ zh: '导出失败:', en: 'Export failed: '
-        })) + msg);
+        alert(tr({ zh: '导出失败:', en: 'Export failed: '
+                    }) + msg);
       }
     } finally {
       setExporting(false);

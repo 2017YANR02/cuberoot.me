@@ -480,10 +480,10 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               : `Restore backup from ${new Date(target.ts).toLocaleString()} (overwrites current data)?`))) return;
     const ok = restoreBackup(target.key);
     alert(ok
-      ? (tr({ zh: '已恢复。请刷新页面。', en: 'Restored. Please reload the page.'
-    }))
-      : (tr({ zh: '恢复失败。', en: 'Restore failed.'
-    })));
+      ? tr({ zh: '已恢复。请刷新页面。', en: 'Restored. Please reload the page.'
+            })
+      : tr({ zh: '恢复失败。', en: 'Restore failed.'
+            }));
   }
 
   return (
@@ -545,8 +545,8 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               value={s.inspection}
               onChange={(e) => updateSettings({ inspection: Math.max(0, Math.min(60, Number(e.target.value) || 0)) })}
             />
-            <span className="hint">{s.inspection === 0 ? (tr({ zh: '关闭', en: 'off'
-            })) : (isZh ? `${s.inspection} 秒（>${s.inspection}s = +2，>${s.inspection + 2}s = DNF）` : `${s.inspection}s (>${s.inspection}s = +2, >${s.inspection + 2}s = DNF)`)}</span>
+            <span className="hint">{s.inspection === 0 ? tr({ zh: '关闭', en: 'off'
+                                  }) : (isZh ? `${s.inspection} 秒（>${s.inspection}s = +2，>${s.inspection + 2}s = DNF）` : `${s.inspection}s (>${s.inspection}s = +2, >${s.inspection + 2}s = DNF)`)}</span>
           </Row>
           <Row label={tr({ zh: '按住阈值（毫秒）', en: 'Hold threshold (ms)'
         })}>
@@ -634,8 +634,8 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               onKeyDown={(e) => { if (e.key === 'Enter') commitGoalInput((e.target as HTMLInputElement).value); }}
             />
             <span className="hint">{currentDailyGoal === null
-              ? (tr({ zh: '关闭', en: 'off'
-            }))
+              ? tr({ zh: '关闭', en: 'off'
+                                      })
               : ((isZh ? `每天 ${currentDailyGoal} 次（全部项目合计）` : `${currentDailyGoal} solves/day (all events)`))}</span>
           </Row>
           <Row label={tr({ zh: '计时途中', en: 'Live'
@@ -727,10 +727,10 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             })}</option>
             </select>
             <span className="hint">{isVoiceAvailable()
-              ? (tr({ zh: '念 8 秒 / 12 秒 / 开始（依系统可用音色）', en: 'reads 8s / 12s / go (depends on system voices)'
-            }))
-              : (tr({ zh: '浏览器不支持', en: 'unsupported by browser'
-            }))}</span>
+              ? tr({ zh: '念 8 秒 / 12 秒 / 开始（依系统可用音色）', en: 'reads 8s / 12s / go (depends on system voices)'
+                                      })
+              : tr({ zh: '浏览器不支持', en: 'unsupported by browser'
+                                      })}</span>
           </Row>
         </AccordionSection>
 
@@ -848,8 +848,8 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
         })}>
             <span className="hint" title={String(seedTick)}>
               {s.syncSeed === null
-                ? (tr({ zh: '未启用', en: 'off'
-                }))
+                ? tr({ zh: '未启用', en: 'off'
+                                              })
                 : ((isZh
                                                   ? `seed=${s.syncSeed}，第 ${getSeedCounter()} 个打乱`
                                                   : `seed=${s.syncSeed}, scramble #${getSeedCounter()}`))}
@@ -886,8 +886,8 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               onChange={(e) => updateSettings({ autoBackupEvery: Math.max(0, Math.min(30, Number(e.target.value) | 0)) })}
             />
             <span className="hint">{s.autoBackupEvery === 0
-              ? (tr({ zh: '已禁用', en: 'disabled' }))
-              : (tr({ zh: '保留最近 10 份', en: 'keeps last 10' }))}</span>
+              ? tr({ zh: '已禁用', en: 'disabled' })
+              : tr({ zh: '保留最近 10 份', en: 'keeps last 10' })}</span>
           </Row>
           <Row label={tr({ zh: '操作', en: 'Actions' })}>
             <button className="hint-btn" onClick={() => { pushBackup(); alert(tr({ zh: '已写入备份。', en: 'Backup written.'
@@ -953,14 +953,14 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                   cloudMsg !== null
                     ? cloudMsg
                     : cloudMeta === null
-                      ? (tr({ zh: '正在读取云端状态…', en: 'Checking cloud…'
-                    }))
+                      ? tr({ zh: '正在读取云端状态…', en: 'Checking cloud…'
+                                                                  })
                       : cloudMeta.exists
                         ? ((isZh
                                                                               ? `云端 ${cloudMeta.solveCount ?? 0} 条,上次同步 ${formatSyncTime(cloudMeta.updatedAt ?? 0, true)}`
                                                                               : `Cloud: ${cloudMeta.solveCount ?? 0} solves, synced ${formatSyncTime(cloudMeta.updatedAt ?? 0, false)}`))
-                        : (tr({ zh: '云端暂无备份', en: 'No cloud backup yet'
-                        }))
+                        : tr({ zh: '云端暂无备份', en: 'No cloud backup yet'
+                                                                          })
                 }</span>
               </Row>
               <Row label="">
@@ -1051,7 +1051,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                         title={tr({ zh: '追加到现有成绩', en: 'Append to existing solves'
                         })}
                       >
-                        {done === 'append' ? (tr({ zh: '已追加', en: 'Appended' })) : (tr({ zh: '追加', en: 'Append' }))}
+                        {done === 'append' ? tr({ zh: '已追加', en: 'Appended' }) : tr({ zh: '追加', en: 'Append' })}
                       </button>
                       <button
                         className="hint-btn"
@@ -1060,9 +1060,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                         title={tr({ zh: '清空该项目并以此覆盖', en: 'Clear this event and replace'
                         })}
                       >
-                        {done === 'replace' ? (tr({ zh: '已替换', en: 'Replaced'
-                        })) : (tr({ zh: '替换', en: 'Replace'
-                        }))}
+                        {done === 'replace' ? tr({ zh: '已替换', en: 'Replaced'
+                                                        }) : tr({ zh: '替换', en: 'Replace'
+                                                            })}
                       </button>
                     </div>
                   </div>
@@ -1085,9 +1085,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                     ? ((isZh
                                                           ? `处理中… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`
                                                           : `Working… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`))
-                    : (tr({ zh: '处理中…', en: 'Working…'
-                    })))
-                : (tr({ zh: '重新分析', en: 'Reanalyze' }))}
+                    : tr({ zh: '处理中…', en: 'Working…'
+                                                      }))
+                : tr({ zh: '重新分析', en: 'Reanalyze' })}
             </button>
             {reanalyzeMsg !== null && (
               <span className="hint">{reanalyzeMsg}</span>

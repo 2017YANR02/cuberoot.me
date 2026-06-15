@@ -15,6 +15,7 @@
 import { useState } from 'react';
 import { TeX, MathText } from './Tex';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 type StageId = 0 | 1 | 2 | 3 | 4;
 
@@ -143,7 +144,7 @@ export default function CosetCompression({ isZh }: Props) {
                   className={`god-coset-tab ${stage === s.id ? 'is-on' : ''}`}
                   onClick={() => setStage(s.id)}>
             <span className="god-coset-tab-n">{s.id}</span>
-            <span className="god-coset-tab-l">{((i18n.language.startsWith('zh') ? s.zh : s.en))}</span>
+            <span className="god-coset-tab-l">{tr(s)}</span>
           </button>
         ))}
       </div>

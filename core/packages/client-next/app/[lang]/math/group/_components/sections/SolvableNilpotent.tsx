@@ -505,8 +505,8 @@ function DerivedSeriesPanel({ lang }: { lang: Lang }) {
           <span className="gt-result-val-strong" style={{ color: data.solvable ? 'var(--green)' : 'var(--warn)' }}>
             {data.solvable
               ? (lang === 'zh' ? `是 (导出长度 ${data.derivedLength})` : `Yes (derived length ${data.derivedLength})`)
-              : (tr({ zh: '否 (导出列稳定在非平凡处)', en: 'No (series stabilizes above {e})'
-            }))}
+              : tr({ zh: '否 (导出列稳定在非平凡处)', en: 'No (series stabilizes above {e})'
+                                      })}
           </span>
         </div>
         <div className="gt-result-row">
@@ -516,7 +516,7 @@ function DerivedSeriesPanel({ lang }: { lang: Lang }) {
           <span className="gt-result-val-strong" style={{ color: data.nilpotent ? 'var(--green)' : 'var(--warn)' }}>
             {data.nilpotent
               ? (lang === 'zh' ? `是 (幂零类 ${data.nilpClass})` : `Yes (nilpotency class ${data.nilpClass})`)
-              : (tr({ zh: '否', en: 'No' }))}
+              : tr({ zh: '否', en: 'No' })}
           </span>
         </div>
         {!data.nilpotent && (
@@ -891,17 +891,17 @@ function SylowCardsSVG({
             {/* Normal badge */}
             <text x={x + 10} y={58} style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600 }} fill={normalColor}>
               {s.normal
-                ? (tr({ zh: '正规 ✓', en: 'normal ✓'
-                }))
-                : (tr({ zh: '不正规 ✗', en: 'not normal ✗'
-                }))}
+                ? tr({ zh: '正规 ✓', en: 'normal ✓'
+                                        })
+                : tr({ zh: '不正规 ✗', en: 'not normal ✗'
+                                        })}
             </text>
 
             {showWhy && (
               <text x={x + 10} y={74} style={{ fontFamily: 'var(--mono)', fontSize: 9 }} fill="var(--ink-faint)">
                 {s.normal
-                  ? (tr({ zh: `n_p=1 => 正规`, en: `n_p=1 => unique => normal`
-                }))
+                  ? tr({ zh: `n_p=1 => 正规`, en: `n_p=1 => unique => normal`
+                                            })
                   : (lang === 'zh' ? `n_p=${s.nP}>1 => 不正规` : `n_p=${s.nP}>1 => not unique => non-normal`)}
               </text>
             )}
@@ -1087,7 +1087,7 @@ function GaloisTimelinePanel({ lang }: { lang: Lang }) {
           {lang === 'zh' ? `阶 ${info.order}` : `order ${info.order}`}  &nbsp;|&nbsp;
           {info.solvable
             ? (lang === 'zh' ? `可解，导出长度 ${info.derivedLength}` : `solvable, derived length ${info.derivedLength}`)
-            : (tr({ zh: '不可解', en: 'unsolvable' }))}
+            : tr({ zh: '不可解', en: 'unsolvable' })}
         </div>
         <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-dim)', marginBottom: 6 }}>
           {lang === 'zh' ? info.derivedChainZh : info.derivedChainEn}

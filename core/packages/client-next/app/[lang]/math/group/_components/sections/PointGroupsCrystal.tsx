@@ -446,7 +446,7 @@ function DecisionTreeWalker() {
                 {i > 0 && <span style={{ margin: '0 3px', color: 'var(--rule)' }}>›</span>}
                 <span style={{ color: step.answer ? 'var(--green)' : 'var(--accent)' }}>
                   {lang === 'zh' ? node.labelZh.slice(0, 10) || '…' : node.labelEn.slice(0, 16) || '…'}
-                  <span style={{ opacity: 0.7 }}>:{step.answer ? (tr({ zh: '是', en: 'Y' })) : (tr({ zh: '否', en: 'N' }))}</span>
+                  <span style={{ opacity: 0.7 }}>:{step.answer ? tr({ zh: '是', en: 'Y' }) : tr({ zh: '否', en: 'N' })}</span>
                 </span>
               </span>
             );
@@ -476,7 +476,7 @@ function DecisionTreeWalker() {
           )}
           {current.familyDesc && (
             <div style={{ fontFamily: 'var(--serif)', fontSize: 14, fontStyle: 'italic', color: 'var(--ink-dim)' }}>
-              {((i18n.language.startsWith('zh') ? current.familyDesc.zh : current.familyDesc.en))}
+              {tr(current.familyDesc)}
             </div>
           )}
           <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'center' }}>
@@ -590,7 +590,7 @@ function CrystalClassesCensus() {
             onMouseLeave={() => setHoveredSystem(null)}
             style={activeSystem === sys.key ? { background: sys.color, borderColor: sys.color } : undefined}
           >
-            {((i18n.language.startsWith('zh') ? sys.zh : sys.en))}
+            {tr(sys)}
           </button>
         ))}
       </div>
@@ -643,7 +643,7 @@ function CrystalClassesCensus() {
                         borderBottom: '1px solid var(--rule)',
                       }}
                     >
-                      {((i18n.language.startsWith('zh') ? sys.zh : sys.en))}
+                      {tr(sys)}
                       <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-faint)', marginTop: 3, fontWeight: 400 }}>
                         {groups.length} <L zh="群" en="groups" />
                       </div>
@@ -789,7 +789,7 @@ export default function PointGroupsCrystal() {
               {['族', 'Family', '生成元 / Generators', '|G|', '典型分子'].map((h, i) => {
                 if (i === 0 && lang !== 'zh') return null;
                 if (i === 1 && lang !== 'en') return null;
-                const label = i < 2 ? (tr({ zh: '族', en: 'Family' })) : i === 2 ? (tr({ zh: '生成元', en: 'Generators' })) : i === 3 ? '|G|' : (tr({ zh: '典型分子', en: 'Example molecule' }));
+                const label = i < 2 ? tr({ zh: '族', en: 'Family' }) : i === 2 ? tr({ zh: '生成元', en: 'Generators' }) : i === 3 ? '|G|' : tr({ zh: '典型分子', en: 'Example molecule' });
                 if (i > 1 || (i === 0 && lang === 'zh') || (i === 1 && lang === 'en')) {
                   return (
                     <th key={h} style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--ink-faint)', padding: '7px 10px', textAlign: i === 3 ? 'right' : 'left', borderBottom: '2px solid var(--rule)', letterSpacing: '0.08em' }}>

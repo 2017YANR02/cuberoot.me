@@ -3,7 +3,6 @@
 'use client';
 
 import { useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useCalcStore, isMbfForEvent } from '../stores/calc_store';
 import { DNF_VALUE, formatTime, clampValue } from '../engine/calc_engine';
 import { WheelPicker } from '@/components/WheelPicker';
@@ -45,8 +44,6 @@ function resolveTarget(
 }
 
 export function Drum({ activeCell, onCellValueChange }: DrumProps) {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
   // NOTE: 订阅 store 必要片段；任何相关变化都会 re-render
   const focusedCell = useCalcStore((s) => s.focusedCell);
   const event = useCalcStore((s) => s.event);

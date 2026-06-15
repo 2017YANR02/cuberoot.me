@@ -182,9 +182,9 @@ export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
                     </span>
                     <span style={algStyle}>
                       {s.failed
-                        ? (tr({ zh: '未找到', en: 'no solution' }))
-                        : (s.moves.length === 0 ? (tr({ zh: '(跳过)', en: '(skip)'
-                        })) : s.moves.join(' '))}
+                        ? tr({ zh: '未找到', en: 'no solution' })
+                        : (s.moves.length === 0 ? tr({ zh: '(跳过)', en: '(skip)'
+                                                        }) : s.moves.join(' '))}
                     </span>
                   </div>
                 ))}
@@ -356,7 +356,7 @@ function SmallPuzzleHints({ scramble, isZh, event }: SmallProps) {
                         {f.moves.length === 0 ? '—' : f.moves.length}
                       </span>
                       <span style={isBest ? algBestStyle : algStyle}>
-                        {f.moves.length === 0 ? (tr({ zh: '未找到', en: 'no solution' })) : f.moves.join(' ')}
+                        {f.moves.length === 0 ? tr({ zh: '未找到', en: 'no solution' }) : f.moves.join(' ')}
                       </span>
                     </div>
                   );
@@ -449,7 +449,7 @@ function Sq1Hints({ scramble, isZh }: Sq1Props) {
                     </span>
                     <span style={algStyle}>
                       {s.failed
-                        ? (tr({ zh: '未找到', en: 'no solution' }))
+                        ? tr({ zh: '未找到', en: 'no solution' })
                         : s.moves.join(' ')}
                     </span>
                   </div>

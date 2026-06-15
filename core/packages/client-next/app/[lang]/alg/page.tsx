@@ -30,7 +30,7 @@ export default function AlgIndexPage() {
         })}</h1>
         </div>
         <p className="alg-index-subtitle">
-          {(tr({ zh: '魔方公式速查 — ', en: 'Cube algorithm reference — ' })) +
+          {tr({ zh: '魔方公式速查 — ', en: 'Cube algorithm reference — ' }) +
             ALG_PUZZLES.map((p) => eventDisplayName(p, isZh)).join(' / ')}
         </p>
         <p className="alg-index-credit">
@@ -57,7 +57,7 @@ export default function AlgIndexPage() {
               <div className="alg-puzzle-preview">
                 {sets.slice(0, 6).map((s) => (
                   <span key={s.slug} className="alg-puzzle-chip">
-                    {((i18n.language.startsWith('zh') ? s.zh : s.en))}
+                    {tr(s)}
                   </span>
                 ))}
                 {sets.length > 6 && (

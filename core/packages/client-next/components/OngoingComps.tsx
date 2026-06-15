@@ -19,6 +19,7 @@ import { useCompFollows, FollowStar } from '@/components/CompFollow';
 import { countActionableReg } from '@/lib/comp-registration';
 import './ongoing_comps.css';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 interface Props { lang: 'zh' | 'en' }
 
@@ -40,7 +41,7 @@ const TAB_SCOPE: Record<TabKey, { zh: string; en: string; }> = {
 };
 function pickScope(key: TabKey): string {
   const o = TAB_SCOPE[key];
-  return (i18n.language.startsWith('zh') ? o.zh : o.en);
+  return tr(o);
 }
 
 function stripTrailingYear(s: string): string {
@@ -265,7 +266,7 @@ export default function OngoingComps({ lang }: Props) {
                 onClick={() => setTab(t.key)}
                 title={pickScope(t.key)}
               >
-                <span>{((i18n.language.startsWith('zh') ? t.zh : t.en))}</span>
+                <span>{tr(t)}</span>
               </button>
             );
           })}

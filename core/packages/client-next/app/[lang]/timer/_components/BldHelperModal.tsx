@@ -239,8 +239,8 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
               <span className="bld-helper-meta-item">
                 <span className="bld-helper-meta-key">{tr({ zh: '奇偶', en: 'Parity' })}</span>
                 <span className={`bld-helper-meta-val ${parity ? 'is-on' : 'is-off'}`}>
-                  {parity ? (tr({ zh: '有', en: 'yes' })) : (tr({ zh: '无', en: 'no'
-                }))}
+                  {parity ? tr({ zh: '有', en: 'yes' }) : tr({ zh: '无', en: 'no'
+                                                      })}
                 </span>
               </span>
 
@@ -248,16 +248,16 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
                 <span className="bld-helper-meta-key">{tr({ zh: '翻棱', en: 'Edge flips'
                 })}</span>
                 <span className={`bld-helper-meta-val ${read.flips ? 'is-on' : 'is-off'}`}>
-                  {read.flips || (tr({ zh: '无', en: 'none'
-                }))}
+                  {read.flips || tr({ zh: '无', en: 'none'
+                                                      })}
                 </span>
               </span>
 
               <span className="bld-helper-meta-item">
                 <span className="bld-helper-meta-key">{tr({ zh: '翻角', en: 'Corner twists' })}</span>
                 <span className={`bld-helper-meta-val ${read.twists ? 'is-on' : 'is-off'}`}>
-                  {read.twists || (tr({ zh: '无', en: 'none'
-                }))}
+                  {read.twists || tr({ zh: '无', en: 'none'
+                                                      })}
                 </span>
               </span>
             </div>

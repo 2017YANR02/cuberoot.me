@@ -36,8 +36,8 @@ export function LangPopup({
     })}
     >
       <div className="colpi-langpicker-popup-head">
-        <span>{title ?? (tr({ zh: '选择语言', en: 'Select words language'
-        }))}</span>
+        <span>{title ?? tr({ zh: '选择语言', en: 'Select words language'
+                      })}</span>
         <button type="button" onClick={onClose} aria-label="Close">
           <X size={14} />
         </button>
@@ -62,7 +62,7 @@ export function LangPopup({
             title={l.code}
           >
             <Flag iso2={l.iso2} className="colpi-langpicker-flag" />
-            <span>{((i18n.language.startsWith('zh') ? l.zh : l.en))}</span>
+            <span>{tr(l)}</span>
           </button>
         ))}
       </div>
@@ -116,8 +116,8 @@ export default function LanguagePicker({
         )}
         <span className="colpi-langpicker-label">
           {value === 'all'
-            ? (tr({ zh: '全部语言', en: 'All langs'
-            }))
+            ? tr({ zh: '全部语言', en: 'All langs'
+                                  })
             : langDisplay(value, isZh)}
         </span>
         <ChevronDown size={14} />

@@ -65,10 +65,10 @@ export function RegionPicker(props: RegionPickerProps) {
     return () => document.removeEventListener('click', handler);
   }, [open]);
 
-  const allText = allLabel ?? (tr({ zh: '全部区域', en: 'All regions'
-}));
-  const searchText = searchPlaceholder ?? (tr({ zh: '搜索...', en: 'Search...'
-}));
+  const allText = allLabel ?? tr({ zh: '全部区域', en: 'All regions'
+  });
+  const searchText = searchPlaceholder ?? tr({ zh: '搜索...', en: 'Search...'
+  });
 
   const countries = useMemo(
     () => (restrictTo ? restrictTo.map(c => c.toLowerCase()) : []),
@@ -97,14 +97,14 @@ export function RegionPicker(props: RegionPickerProps) {
         const t = multiTokens[0];
         if (isContinentCode(t)) {
           const c = CONTINENTS.find(c => c.code === t);
-          return c ? (((i18n.language.startsWith('zh') ? c.zh : c.en))) : allText;
+          return c ? tr(c) : allText;
         }
         return countryName(t, isZh);
       }
       return (isZh ? `已选 ${multiTokens.length} 项` : `${multiTokens.length} selected`);
     }
     if (!singleVal || singleVal === 'world') return allText;
-    if (singleSelectedContinent) return ((i18n.language.startsWith('zh') ? singleSelectedContinent.zh : singleSelectedContinent.en));
+    if (singleSelectedContinent) return tr(singleSelectedContinent);
     return countryName(singleVal, isZh);
   })();
 
@@ -227,7 +227,7 @@ export function RegionPicker(props: RegionPickerProps) {
                       {cont
                         ? <ContinentIcon slug={cont.slug} className="region-picker-continent-icon" />
                         : <Flag iso2={t} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                      <span>{cont ? (((i18n.language.startsWith('zh') ? cont.zh : cont.en))) : countryName(t, isZh)}</span>
+                      <span>{cont ? tr(cont) : countryName(t, isZh)}</span>
                       <X size={13} className="region-picker-remove" />
                     </button>
                   );
@@ -250,7 +250,7 @@ export function RegionPicker(props: RegionPickerProps) {
                 onClick={isMulti ? () => toggleMultiContinent(c.code) : () => selectSingle(c.slug)}
               >
                 <ContinentIcon slug={c.slug} className="region-picker-continent-icon" />
-                <span>{((i18n.language.startsWith('zh') ? c.zh : c.en))}</span>
+                <span>{tr(c)}</span>
               </button>
             ))}
             {countriesFiltered.length > 0 && (

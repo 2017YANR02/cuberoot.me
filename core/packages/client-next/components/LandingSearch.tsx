@@ -332,8 +332,8 @@ export default function LandingSearch({ cards, lang }: Props) {
               goFirstResult();
             }
           }}
-          placeholder={listening ? (tr({ zh: '请说…', en: 'Listening…'
-        })) : rotatingPlaceholder(isZh)}
+          placeholder={listening ? tr({ zh: '请说…', en: 'Listening…'
+                  }) : rotatingPlaceholder(isZh)}
         />
         {query !== '' && (
           <ClearButton
@@ -363,15 +363,15 @@ export default function LandingSearch({ cards, lang }: Props) {
             className={`landing-search-mic${listening ? ' is-listening' : ''}`}
             onClick={() => { if (listening) micStop(); else { setOpen(true); micStart(); } }}
             title={listening
-              ? (tr({ zh: '停止录音', en: 'Stop'
-            }))
-              : (tr({ zh: '语音输入', en: 'Voice input'
-            }))}
+              ? tr({ zh: '停止录音', en: 'Stop'
+                            })
+              : tr({ zh: '语音输入', en: 'Voice input'
+                            })}
             aria-label={listening
-              ? (tr({ zh: '停止录音', en: 'Stop'
-            }))
-              : (tr({ zh: '语音输入', en: 'Voice input'
-            }))}
+              ? tr({ zh: '停止录音', en: 'Stop'
+                            })
+              : tr({ zh: '语音输入', en: 'Voice input'
+                            })}
           >
             <Mic size={16} strokeWidth={1.75} />
           </button>
@@ -462,7 +462,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
-                    <span className="landing-search-item-name">{((i18n.language.startsWith('zh') ? it.zh : it.en))}</span>
+                    <span className="landing-search-item-name">{tr(it)}</span>
                   </Link>
                 ))}
               </div>
@@ -484,7 +484,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                     className="landing-search-item"
                     onClick={closeAfter}
                   >
-                    <span className="landing-search-item-name">{((i18n.language.startsWith('zh') ? it.zh : it.en))}</span>
+                    <span className="landing-search-item-name">{tr(it)}</span>
                   </Link>
                 ))}
               </div>

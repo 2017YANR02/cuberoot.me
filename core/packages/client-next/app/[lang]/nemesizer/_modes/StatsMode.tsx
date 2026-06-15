@@ -53,7 +53,7 @@ export default function StatsMode({ isZh }: Props) {
             className={tab === t.id ? 'active' : ''}
             onClick={() => setTab(t.id)}
           >
-            {((i18n.language.startsWith('zh') ? t.zh : t.en))}
+            {tr(t)}
           </button>
         ))}
       </div>

@@ -807,8 +807,8 @@ function SumOfSquaresPanel({
               <td style={{ textAlign: 'right', fontFamily: 'var(--mono)', fontSize: 12, padding: '6px 8px', color: matches ? 'var(--green)' : 'var(--warn)' }}>
                 {matches ? `= ${n}! ` : `≠ ${n}!`}
                 {matches
-                  ? (tr({ zh: '✓ 验证', en: '✓ verified'
-                }))
+                  ? tr({ zh: '✓ 验证', en: '✓ verified'
+                                                  })
                   : (lang === 'zh' ? '!' : '!')}
               </td>
             </tr>
@@ -960,9 +960,9 @@ function ConjugateParityPanel({ lambda, lang }: { lambda: number[]; lang: 'zh' |
           </div>
           <div style={{ color: f === fConj ? 'var(--green)' : 'var(--warn)', fontSize: 12, marginTop: 4 }}>
             {f === fConj
-              ? (tr({ zh: '✓ 相等 (S^{λ\'} ≅ S^λ ⊗ sgn)', en: '✓ equal (S^{λ\'} ≅ S^λ ⊗ sgn)' }))
-              : (tr({ zh: '不等 (计算有误)', en: 'unequal (computation error)'
-            }))}
+              ? tr({ zh: '✓ 相等 (S^{λ\'} ≅ S^λ ⊗ sgn)', en: '✓ equal (S^{λ\'} ≅ S^λ ⊗ sgn)' })
+              : tr({ zh: '不等 (计算有误)', en: 'unequal (computation error)'
+                                      })}
           </div>
         </div>
       </div>

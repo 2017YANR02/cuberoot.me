@@ -9,7 +9,6 @@
 // (regulations C1, C1b, C1b+, C1b++, C1b2, C1b3, C1b4, C1c).
 
 import type { ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Hand, Eye, Wrench, Timer } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
@@ -18,6 +17,7 @@ import FullClauses from '../_components/FullClauses';
 import clauses from '../_data/reg-clauses/C.json';
 import { RegSection, Callout, RegQuote, RegList } from '../_components/primitives';
 import './one-handed.css';
+import { T } from '@/i18n/tr';
 
 /** A do / don't hand panel: tone ok (one hand) / bad (two hands). */
 function HandPanel({
@@ -38,8 +38,6 @@ function HandPanel({
 }
 
 export default function OneHandedChapter() {
-  const { i18n } = useTranslation(); // subscribe to language toggle
-  const isZh = i18n.language.startsWith('zh');
   const t = useT();
 
   return (
@@ -76,9 +74,7 @@ export default function OneHandedChapter() {
         </RegQuote>
 
         <Callout tone="danger" label={t('另一只手不得操作魔方', 'The other hand may not operate the puzzle')}>
-          {(isZh
-              ? (<>关键限制在 <b>C1c</b>:还原一旦开始、某只手操作了魔方,<b>另一只手在整个这一次还原中都不能再操作魔方</b>。这意味着选手必须在开始前就选定用哪只手 —— 中途换手操作就是 DNF。注意限制的是“操作”,不是“碰到”:另一只手无意蹭到、又没造成转动,由裁判裁量,不算操作(<b>C1b3</b>)。</>)
-              : (<>The key limit is <b>C1c</b>: once a hand operates the puzzle during the solve, <b>the other hand may not operate it for the rest of that attempt</b>. You commit to a hand before you start — switching hands to operate mid-solve is a DNF. Note the rule is about <i>operating</i>, not merely touching: if the other hand makes accidental contact and applies no move, the judge may rule it is not operating (<b>C1b3</b>).</>))}
+          {<T zh={<>关键限制在 <b>C1c</b>:还原一旦开始、某只手操作了魔方,<b>另一只手在整个这一次还原中都不能再操作魔方</b>。这意味着选手必须在开始前就选定用哪只手 —— 中途换手操作就是 DNF。注意限制的是“操作”,不是“碰到”:另一只手无意蹭到、又没造成转动,由裁判裁量,不算操作(<b>C1b3</b>)。</>} en={<>The key limit is <b>C1c</b>: once a hand operates the puzzle during the solve, <b>the other hand may not operate it for the rest of that attempt</b>. You commit to a hand before you start — switching hands to operate mid-solve is a DNF. Note the rule is about <i>operating</i>, not merely touching: if the other hand makes accidental contact and applies no move, the judge may rule it is not operating (<b>C1b3</b>).</>} />}
         </Callout>
       </RegSection>
 
@@ -152,19 +148,13 @@ export default function OneHandedChapter() {
         )}
       >
         <Callout tone="info" label={t('和速拧共用的部分', 'Shared with the speed solve')} icon={<Timer size={17} />}>
-          {(isZh
-              ? (
-                <>
-                  15 秒观察、双手放计时器两侧启动、停表、还原态判定(对齐误差与 +2 / DNF)、罚时 —— 这些全部照 <Link href="/regulation/speed-solving">附则 A(速拧)</Link> 执行(C1)。<br />
-                  赛制是 <b>五次取平均(去掉最好和最差,取中间三次)</b>,和三阶速拧一样。
-                </>
-              )
-              : (
-                <>
-                  The 15-second inspection, hands on the timer to start and stop, the solved-state judging (misalignment, +2 / DNF) and the penalties all follow <Link href="/regulation/speed-solving">Article A (Speed Solving)</Link> (C1).<br />
-                  The format is the <b>Average of 5 (drop best and worst, average the middle three)</b>, exactly as in the 3×3×3 speed event.
-                </>
-              ))}
+          {<T zh={<>
+                                                                        15 秒观察、双手放计时器两侧启动、停表、还原态判定(对齐误差与 +2 / DNF)、罚时 —— 这些全部照 <Link href="/regulation/speed-solving">附则 A(速拧)</Link> 执行(C1)。<br />
+                                                                        赛制是 <b>五次取平均(去掉最好和最差,取中间三次)</b>,和三阶速拧一样。
+                                                                      </>} en={<>
+                                                                                      The 15-second inspection, hands on the timer to start and stop, the solved-state judging (misalignment, +2 / DNF) and the penalties all follow <Link href="/regulation/speed-solving">Article A (Speed Solving)</Link> (C1).<br />
+                                                                                      The format is the <b>Average of 5 (drop best and worst, average the middle three)</b>, exactly as in the 3×3×3 speed event.
+                                                                                    </>} />}
         </Callout>
       </RegSection>
       <FullClauses data={clauses} />

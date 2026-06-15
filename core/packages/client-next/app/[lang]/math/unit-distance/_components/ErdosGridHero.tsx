@@ -15,6 +15,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n/i18n-client';
+import { tr, T } from '@/i18n/tr';
 
 const S = 20;                 // 20 × 20 grid → 400 points
 const PAD = 18;
@@ -52,8 +53,6 @@ function buildEdges(k: number): Edge[] {
 
 export default function ErdosGridHero() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
-
   const [k, setK] = useState(65);
 
   const pts = useMemo(() => {
@@ -96,9 +95,7 @@ export default function ErdosGridHero() {
 
       <div className="ud-hero-figure-controls">
         <span className="ud-hero-figure-caption">
-          {(isZh
-                              ? <>20 × 20 整数网格,所有距离恰好 <span className="ud-mono">√{k} ≈ {Math.sqrt(k).toFixed(2)}</span> 的对子。</>
-                              : <>20 × 20 integer grid, every pair at distance <span className="ud-mono">√{k} ≈ {Math.sqrt(k).toFixed(2)}</span>.</>)
+          {<T zh={<>20 × 20 整数网格,所有距离恰好 <span className="ud-mono">√{k} ≈ {Math.sqrt(k).toFixed(2)}</span> 的对子。</>} en={<>20 × 20 integer grid, every pair at distance <span className="ud-mono">√{k} ≈ {Math.sqrt(k).toFixed(2)}</span>.</>} />
           }
           {' '}
           <span className="ud-mono">ν = {edges.length}</span>,{' '}
@@ -110,7 +107,7 @@ export default function ErdosGridHero() {
             <button key={p.k}
               className={`ud-hero-k-btn ${p.k === k ? 'is-on' : ''}`}
               onClick={() => setK(p.k)}
-              title={((i18n.language.startsWith('zh') ? p.zh : p.en))}
+              title={tr(p)}
             >
               k = {p.k}
               <span className="ud-hero-k-reps">r₂={p.reps}</span>

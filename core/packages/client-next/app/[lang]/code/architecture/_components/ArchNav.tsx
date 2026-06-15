@@ -4,6 +4,7 @@ import Link from '@/components/AppLink';
 import { usePathname } from 'next/navigation';
 import { useLang } from '../../_lib/Lang';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 const TABS = [
   { path: '/code/architecture',           zh: '概览',    en: 'Overview' },
@@ -39,7 +40,7 @@ export default function ArchNav() {
             aria-selected={isActive(tab.path)}
             className={`arch-nav-tab${isActive(tab.path) ? ' active' : ''}`}
           >
-            {(i18n.language.startsWith('zh') ? tab.zh : tab.en)}
+            {tr(tab)}
           </Link>
         ))}
       </div>

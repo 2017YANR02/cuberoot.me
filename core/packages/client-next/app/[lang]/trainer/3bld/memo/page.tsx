@@ -323,9 +323,9 @@ export default function MemoRecallPage(): JSX.Element {
 
   // ── derived labels ──
   const groupLabel = (kind: 'corner' | 'edge'): string =>
-    kind === 'corner' ? (tr({ zh: '角块', en: 'Corners'
-    })) : (tr({ zh: '棱块', en: 'Edges'
-    }));
+    kind === 'corner' ? tr({ zh: '角块', en: 'Corners'
+          }) : tr({ zh: '棱块', en: 'Edges'
+              });
 
   const opSymbol = (op: MathProblem['op']) => op; // already display-ready
 
@@ -381,7 +381,7 @@ export default function MemoRecallPage(): JSX.Element {
                 }
               >
                 {i < stepIndex && <Check size={13} />}
-                {((i18n.language.startsWith('zh') ? s.zh : s.en))}
+                {tr(s)}
               </span>
               {i < stepOrder.length - 1 && <span className="bld-memo-step-sep">›</span>}
             </span>
@@ -618,8 +618,8 @@ export default function MemoRecallPage(): JSX.Element {
             onChange={(e) => setRecallText(e.target.value)}
             placeholder={
               groups.length > 1
-                ? (tr({ zh: '角块: DE GA …\n棱块: ge ki …', en: 'Corners: DE GA …\nEdges: ge ki …'
-                }))
+                ? tr({ zh: '角块: DE GA …\n棱块: ge ki …', en: 'Corners: DE GA …\nEdges: ge ki …'
+                                    })
                 : ((i18n.language.startsWith('zh') ? 'DE GA WX …' : 'DE GA WX …'))
             }
             spellCheck={false}

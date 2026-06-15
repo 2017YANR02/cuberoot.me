@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Shuffle, Grid3x3, Hexagon, Triangle } from 'lucide-react';
 import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
+import { T } from '@/i18n/tr';
 
 type Preset = 'random' | 'square' | 'triangular' | 'hexagonal';
 interface Pt { x: number; y: number }
@@ -102,7 +103,6 @@ function findUnitPairs(pts: Pt[]): Pair[] {
 
 export default function UnitDistanceSandbox() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const t = useT();
 
   const [n, setN] = useState(13);
@@ -273,11 +273,7 @@ export default function UnitDistanceSandbox() {
       </div>
 
       <p className="ud-sandbox-hint">
-        {(isZh ? (
-                        <>拖动任意点 — 距离恰好为 1(单位 = {UNIT_PX} px,容差 ±{TOL} px)的对子会立刻画上一条线。<strong>等边三角形</strong> 给出最高的局部 ν/n;切到方格立刻能看出"水平+垂直"两族,但少了 √2 那一族。</>
-                      ) : (
-                        <>Drag any point. Pairs at distance exactly 1 (unit = {UNIT_PX} px, tol ±{TOL} px) light up. The <strong>triangular</strong> lattice maximises local ν/n; switching to the square lattice loses the diagonal family and drops the count.</>
-                      ))}
+        {<T zh={<>拖动任意点 — 距离恰好为 1(单位 = {UNIT_PX} px,容差 ±{TOL} px)的对子会立刻画上一条线。<strong>等边三角形</strong> 给出最高的局部 ν/n;切到方格立刻能看出"水平+垂直"两族,但少了 √2 那一族。</>} en={<>Drag any point. Pairs at distance exactly 1 (unit = {UNIT_PX} px, tol ±{TOL} px) light up. The <strong>triangular</strong> lattice maximises local ν/n; switching to the square lattice loses the diagonal family and drops the count.</>} />}
       </p>
     </div>
   );

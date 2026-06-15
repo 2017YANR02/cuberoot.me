@@ -300,9 +300,9 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       {/* 主图: WR */}
       <h3>{tr({ zh: 'WR 走势 + 模型外推', en: 'WR Trend + Model Extrapolation'
     })}</h3>
-      <LineChart series={series} yLabel={event.scale === 'moves' ? (tr({ zh: '步数', en: 'Moves'
-    })) : (tr({ zh: '时间 (秒)', en: 'Time (s)'
-    }))} />
+      <LineChart series={series} yLabel={event.scale === 'moves' ? tr({ zh: '步数', en: 'Moves'
+                  }) : tr({ zh: '时间 (秒)', en: 'Time (s)'
+                      })} />
 
       {/* 方法 + 硬件演进 + 物理极限 */}
       {THEORETICAL_LIMITS[event.id] && (
@@ -443,9 +443,9 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       {/* Top-N */}
       <h3>{tr({ zh: 'Top-N PB 走势', en: 'Top-N PB Trend'
     })}</h3>
-      <LineChart series={topSeries} yLabel={event.scale === 'moves' ? (tr({ zh: '步数', en: 'Moves'
-    })) : (tr({ zh: '单次 (秒)', en: 'Single (s)'
-    }))} />
+      <LineChart series={topSeries} yLabel={event.scale === 'moves' ? tr({ zh: '步数', en: 'Moves'
+                  }) : tr({ zh: '单次 (秒)', en: 'Single (s)'
+                      })} />
       <p className="pred-note">
         {(isZh ? (
                             <>

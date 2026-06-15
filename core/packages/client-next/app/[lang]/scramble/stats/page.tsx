@@ -88,7 +88,7 @@ const EVENT_LABEL: Record<string, { zh: string; en: string
 };
 function eventLabel(e: string): string {
   const m = EVENT_LABEL[e];
-  return m ? (((i18n.language.startsWith('zh') ? m.zh : m.en))) : e;
+  return m ? tr(m) : e;
 }
 
 // 难度 tab 目前只有三阶有数据 —— 这 6 个 WCA 项目全是三阶魔方、全用 TNoodle 三阶随机态打乱,
@@ -490,10 +490,10 @@ export default function ScrambleStatsPage() {
             <InfoTooltip
               icon={HelpCircle}
               content={tab === 'difficulty'
-                ? (tr({ zh: '三阶速拧 / 单手 / 盲拧 / 多盲 / 最少步 / 脚拧打乱相同,合并为一个池', en: 'All six 3×3 events share scrambles; merged into one pool'
-                }))
-                : (tr({ zh: '三阶速拧与单手、三盲与多盲打乱相同', en: '3×3 speed + OH, and 3BLD + MBLD share scrambles'
-                }))}
+                ? tr({ zh: '三阶速拧 / 单手 / 盲拧 / 多盲 / 最少步 / 脚拧打乱相同,合并为一个池', en: 'All six 3×3 events share scrambles; merged into one pool'
+                                  })
+                : tr({ zh: '三阶速拧与单手、三盲与多盲打乱相同', en: '3×3 speed + OH, and 3BLD + MBLD share scrambles'
+                                  })}
             />
           </div>
         )}
@@ -701,8 +701,8 @@ export default function ScrambleStatsPage() {
           hideLegendColors
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
-          yModeLabel={yMode === 'percent' ? (tr({ zh: '百分比', en: '%' })) : (tr({ zh: '数量', en: 'count'
-        }))}
+          yModeLabel={yMode === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count'
+                  })}
         />
       </div>
 
@@ -863,7 +863,7 @@ function ExamplesPanel({
         <div className="scramble-stats-panel-title">
           {selectedBin !== null
             ? (isZh ? `${selectedBin} 步示例` : `${selectedBin}-move examples`)
-            : (tr({ zh: '示例', en: 'Examples' }))}
+            : tr({ zh: '示例', en: 'Examples' })}
         </div>
         {hasOpt && (
           <PillToggle

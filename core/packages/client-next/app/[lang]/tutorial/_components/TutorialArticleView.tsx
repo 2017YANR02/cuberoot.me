@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import type { ArticlePostContent, Lang } from '../_lib/useTutorialCatalog';
 import { TutorialContent } from './TutorialContent';
 import { tr } from '@/i18n/tr';
@@ -9,8 +8,6 @@ interface TutorialArticleViewProps {
 }
 
 export function TutorialArticleView({ post, lang }: TutorialArticleViewProps) {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   // 优先当前语言；缺则 fallback 另一语言
   const html =
     post.content[lang] ?? post.content[lang === 'zh' ? 'en' : 'zh'] ?? '';

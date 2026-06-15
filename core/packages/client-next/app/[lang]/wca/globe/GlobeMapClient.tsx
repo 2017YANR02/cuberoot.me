@@ -3130,8 +3130,8 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                   <button key={c.id} className="globe-search-item" onClick={() => goToCompResult(c)}>
                     <span className="globe-search-item-main">
                       {localizeCompName(c.id, c.name)}
-                      <span className={`globe-search-item-tag globe-search-item-tag-${c.tag}`}>{c.tag === 'upcoming' ? (tr({ zh: '近期', en: 'upcoming' })) : (tr({ zh: '历史', en: 'past'
-                    }))}</span>
+                      <span className={`globe-search-item-tag globe-search-item-tag-${c.tag}`}>{c.tag === 'upcoming' ? tr({ zh: '近期', en: 'upcoming' }) : tr({ zh: '历史', en: 'past'
+                                                })}</span>
                     </span>
                     <span className="globe-search-item-sub">{c.city}, {countryName(c.country, isZh)} · {c.date}</span>
                   </button>
@@ -3247,7 +3247,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
               aria-expanded={monthPickerOpen === 'from'}
               aria-label={tr({ zh: '起始年月', en: 'From month' })}
             >
-              {monthRange ? monthRange[0] : (tr({ zh: '起始', en: 'From' }))}
+              {monthRange ? monthRange[0] : tr({ zh: '起始', en: 'From' })}
             </button>
             <span className="date-range-sep">~</span>
             <button
@@ -3259,8 +3259,8 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
               aria-label={tr({ zh: '结束年月', en: 'To month'
             })}
             >
-              {monthRange ? monthRange[1] : (tr({ zh: '结束', en: 'To'
-            }))}
+              {monthRange ? monthRange[1] : tr({ zh: '结束', en: 'To'
+                                              })}
             </button>
             {monthRange && (
               <ClearButton onClick={() => setMonthRange(null)} isZh={isZh} variant="standalone" />
@@ -3326,22 +3326,22 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           : (drawing && (kind === 'path' || kind === 'polygon') && points.length >= 3 ? polygonAreaKm2(points) : null);
 
         const title = isMeasure
-          ? (tr({ zh: '测距', en: 'Measure distance'
-        }))
-          : (tr({ zh: '路径或多边形', en: 'Path or polygon'
-        }));
+          ? tr({ zh: '测距', en: 'Measure distance'
+                    })
+          : tr({ zh: '路径或多边形', en: 'Path or polygon'
+                    });
         const subtitle = drawing
           ? (isMeasure
-              ? (tr({ zh: '点击地图依次添加测量点', en: 'Click points on the map to measure distance'
-            }))
-              : (tr({ zh: '点击地图依次添加点来绘制路径或多边形', en: 'Click points on the map to draw a path or polygon'
-            })))
+              ? tr({ zh: '点击地图依次添加测量点', en: 'Click points on the map to measure distance'
+                            })
+              : tr({ zh: '点击地图依次添加点来绘制路径或多边形', en: 'Click points on the map to draw a path or polygon'
+                            }))
           : (isMeasure
-              ? (tr({ zh: '已保存的测量', en: 'Saved measurement'
-            }))
-              : (isPolygon ? (tr({ zh: '已保存的多边形', en: 'Saved polygon'
-            })) : (tr({ zh: '已保存的路径', en: 'Saved path'
-            }))));
+              ? tr({ zh: '已保存的测量', en: 'Saved measurement'
+                            })
+              : (isPolygon ? tr({ zh: '已保存的多边形', en: 'Saved polygon'
+                            }) : tr({ zh: '已保存的路径', en: 'Saved path'
+                                })));
 
         const closeAction = drawing ? cancelDrawing : () => setSavedShapes([]);
 
@@ -3394,9 +3394,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
             <div className="draw-card-subtitle">{subtitle}</div>
 
             <div className="draw-card-section">
-              <div className="draw-card-section-label">{isMeasure ? (tr({ zh: '总距离', en: 'Total distance'
-            })) : (tr({ zh: '周长', en: 'Perimeter'
-            }))}</div>
+              <div className="draw-card-section-label">{isMeasure ? tr({ zh: '总距离', en: 'Total distance'
+                                }) : tr({ zh: '周长', en: 'Perimeter'
+                                    })}</div>
               <div className="draw-card-section-value">{fmtDistance(total, isZh)}</div>
             </div>
             {!isMeasure && (
@@ -3495,11 +3495,11 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         className="theme-toggle-floating"
         onClick={() => setTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'satellite' : 'dark')}
         title={
-          theme === 'dark' ? (tr({ zh: '切到浅色', en: 'Switch to light'
-        }))
-          : theme === 'light' ? (tr({ zh: '切到卫星', en: 'Switch to satellite'
-        }))
-          : (tr({ zh: '切到深色', en: 'Switch to dark' }))
+          theme === 'dark' ? tr({ zh: '切到浅色', en: 'Switch to light'
+                    })
+          : theme === 'light' ? tr({ zh: '切到卫星', en: 'Switch to satellite'
+                        })
+          : tr({ zh: '切到深色', en: 'Switch to dark' })
         }
         aria-label="Toggle theme"
       >
@@ -3554,13 +3554,13 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
             onClick={() => setProjection(p => p === 'globe' ? 'mercator' : 'globe')}
             title={
               !hasWebGL2 && projection === 'mercator'
-                ? (tr({ zh: '当前浏览器不支持 3D 地球（需要 WebGL2）', en: '3D globe requires WebGL2 (unsupported)'
-                }))
+                ? tr({ zh: '当前浏览器不支持 3D 地球（需要 WebGL2）', en: '3D globe requires WebGL2 (unsupported)'
+                                    })
                 : projection === 'globe'
-                  ? (tr({ zh: '切换到 2D', en: 'Switch to 2D'
-                }))
-                  : (tr({ zh: '切换到 3D', en: 'Switch to 3D'
-                }))
+                  ? tr({ zh: '切换到 2D', en: 'Switch to 2D'
+                                        })
+                  : tr({ zh: '切换到 3D', en: 'Switch to 3D'
+                                        })
             }
             aria-label={projection === 'globe' ? 'Switch to 2D' : 'Switch to 3D'}
           >{projection === 'globe'

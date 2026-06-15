@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../3bld.css';
-import { tr } from '@/i18n/tr';
+import { tr, T } from '@/i18n/tr';
 import i18n from "@/i18n/i18n-client";
 
 interface ModuleDoc {
@@ -357,15 +357,11 @@ export default function BldGuidePage(): JSX.Element {
         </h2>
         <div className="bld-guide-body">
           <p>
-            {(isZh ? (
-                                    <>
-                                      盲拧训练器由 <b>勺子(乔智 / Zhi Qiao)</b> 开发,以 GPL-3.0 协议开源。本站为移植整合版本,引擎与玩法忠实于原作。
-                                    </>
-                                  ) : (
-                                    <>
-                                      The 3BLD trainer was created by <b>Spoon (Zhi Qiao)</b> and open-sourced under GPL-3.0. This site is a ported / integrated build that stays faithful to the original engine and behaviour.
-                                    </>
-                                  ))}
+            {<T zh={<>
+                                                                                                        盲拧训练器由 <b>勺子(乔智 / Zhi Qiao)</b> 开发,以 GPL-3.0 协议开源。本站为移植整合版本,引擎与玩法忠实于原作。
+                                                                                                      </>} en={<>
+                                                                                                                                          The 3BLD trainer was created by <b>Spoon (Zhi Qiao)</b> and open-sourced under GPL-3.0. This site is a ported / integrated build that stays faithful to the original engine and behaviour.
+                                                                                                                                        </>} />}
           </p>
         </div>
       </section>

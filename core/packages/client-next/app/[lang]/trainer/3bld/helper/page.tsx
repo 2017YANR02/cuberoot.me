@@ -483,8 +483,8 @@ export default function HelperPage(): JSX.Element {
               <span className="bld-readout-label">{tr({ zh: '棱块翻色', en: 'Edge flips'
             })}</span>
               <span className={read.flips ? 'bld-readout-cells' : 'bld-readout-empty'}>
-                {read.flips || (tr({ zh: '无', en: 'none'
-                }))}
+                {read.flips || tr({ zh: '无', en: 'none'
+                                              })}
               </span>
             </div>
             <LetterReadout label={tr({ zh: '角块读码', en: 'Corners'
@@ -493,8 +493,8 @@ export default function HelperPage(): JSX.Element {
               <span className="bld-readout-label">{tr({ zh: '角块翻色', en: 'Corner twists'
             })}</span>
               <span className={read.twists ? 'bld-readout-cells' : 'bld-readout-empty'}>
-                {read.twists || (tr({ zh: '无', en: 'none'
-                }))}
+                {read.twists || tr({ zh: '无', en: 'none'
+                                              })}
               </span>
             </div>
           </div>
@@ -527,7 +527,7 @@ export default function HelperPage(): JSX.Element {
                   </span>
                   <div className="bld-restore-main">
                     <label className="bld-restore-label" title={(isZh ? row.hintZh : row.hintEn)}>
-                      {((i18n.language.startsWith('zh') ? row.zh : row.en))}
+                      {tr(row)}
                     </label>
                     <div className="bld-input-wrap">
                       <input
@@ -592,9 +592,9 @@ export default function HelperPage(): JSX.Element {
               {genScramble && (
                 <button type="button" className="bld-copy-btn" onClick={copyGen}>
                   {copied ? <Check size={15} /> : <Copy size={15} />}
-                  {copied ? (tr({ zh: '已复制', en: 'Copied'
-                })) : (tr({ zh: '复制', en: 'Copy'
-                }))}
+                  {copied ? tr({ zh: '已复制', en: 'Copied'
+                                                  }) : tr({ zh: '复制', en: 'Copy'
+                                                      })}
                 </button>
               )}
             </div>

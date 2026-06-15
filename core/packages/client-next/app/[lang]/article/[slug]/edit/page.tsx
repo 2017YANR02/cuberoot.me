@@ -28,7 +28,6 @@ const ArticleEditor = dynamic(() => import('@/components/article/ArticleEditor')
 
 export default function EditArticlePage() {
   const { t, i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const params = useParams<{ lang: string; slug: string }>();
   const lang = params?.lang ?? ((i18n.language.startsWith('zh') ? 'zh' : 'en'));
   const slug = params?.slug ?? '';

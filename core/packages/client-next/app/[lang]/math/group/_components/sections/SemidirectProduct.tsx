@@ -280,8 +280,8 @@ function PairMultiplierPanel({ lang }: { lang: 'zh' | 'en' }) {
           {(['trivial', 'inversion', 'coord-perm'] as PhiMode[]).map(m => (
             <button key={m} className={`gt-chip${phiMode === m ? ' gt-chip-active' : ''}`} onClick={() => setPhiMode(m)}>
               {m === 'trivial'
-                ? (tr({ zh: '平凡 (直积)', en: 'trivial (direct)'
-                }))
+                ? tr({ zh: '平凡 (直积)', en: 'trivial (direct)'
+                                      })
                 : m === 'inversion'
                 ? (lang === 'zh' ? `C_${n} 求逆` : `C_${n} inversion`)
                 : (lang === 'zh' ? `坐标置换 (Z/${k <= 4 ? 2 : 3})^${k}` : `coord-perm (Z/${k <= 4 ? 2 : 3})^${k}`)}
@@ -363,9 +363,9 @@ function PairMultiplierPanel({ lang }: { lang: 'zh' | 'en' }) {
           <span className="gt-result-label"><L zh="两种乘法相等？" en="Equal (abelian here)?" /></span>
           <span className={result.isAbelianHere ? 'gt-result-val' : 'gt-result-val-strong'} style={{ color: result.isAbelianHere ? 'var(--green)' : 'var(--warn)' }}>
             {result.isAbelianHere
-              ? (tr({ zh: '相等 (φ 在此未起作用)', en: 'equal (φ inactive here)' }))
-              : (tr({ zh: '不等 — 非交换！', en: 'different — non-abelian!'
-            }))}
+              ? tr({ zh: '相等 (φ 在此未起作用)', en: 'equal (φ inactive here)' })
+              : tr({ zh: '不等 — 非交换！', en: 'different — non-abelian!'
+                                      })}
           </span>
         </div>
       </div>
@@ -592,12 +592,12 @@ function DihedralWheelPanel({ lang }: { lang: 'zh' | 'en' }) {
         {(['r', 's', 'conj'] as const).map(a => (
           <button key={a} className={`gt-chip${action === a ? ' gt-chip-active' : ''}`} onClick={() => setAction(a)}>
             {a === 'r'
-              ? (tr({ zh: '×r (旋转)', en: '×r (rotate)'
-            }))
+              ? tr({ zh: '×r (旋转)', en: '×r (rotate)'
+                                })
               : a === 's'
-              ? (tr({ zh: '×s (反射)', en: '×s (reflect)' }))
-              : (tr({ zh: 's·g·s⁻¹ (共轭)', en: 's·g·s⁻¹ (conjugate)'
-            }))}
+              ? tr({ zh: '×s (反射)', en: '×s (reflect)' })
+              : tr({ zh: 's·g·s⁻¹ (共轭)', en: 's·g·s⁻¹ (conjugate)'
+                                    })}
           </button>
         ))}
       </div>
@@ -790,8 +790,8 @@ function SplitExtensionPanel({ lang }: { lang: 'zh' | 'en' }) {
           <button key={ex} className={`gt-chip${example === ex ? ' gt-chip-active' : ''}`}
             onClick={() => { setExample(ex); setSelectedH(null); setChecked(false); }}>
             {ex === 'D3'
-              ? (tr({ zh: 'D₃ = C₃ ⋊ C₂ (分裂)', en: 'D₃ = C₃ ⋊ C₂ (splits)' }))
-              : (tr({ zh: 'ℤ/4 over ℤ/2 (不分裂)', en: 'ℤ/4 over ℤ/2 (non-split)' }))}
+              ? tr({ zh: 'D₃ = C₃ ⋊ C₂ (分裂)', en: 'D₃ = C₃ ⋊ C₂ (splits)' })
+              : tr({ zh: 'ℤ/4 over ℤ/2 (不分裂)', en: 'ℤ/4 over ℤ/2 (non-split)' })}
           </button>
         ))}
       </div>

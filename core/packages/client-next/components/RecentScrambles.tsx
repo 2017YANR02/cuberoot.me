@@ -228,7 +228,7 @@ export default function RecentScrambles({ lang }: Props) {
           </ol>
           {rest.length > 4 && (
             <button type="button" className="rs-more" onClick={() => setExpanded(!expanded)}>
-              {expanded ? (tr({ zh: '收起', en: 'Show less' })) : (tr({ zh: '更多', en: 'More' }))}
+              {expanded ? tr({ zh: '收起', en: 'Show less' }) : tr({ zh: '更多', en: 'More' })}
             </button>
           )}
         </>

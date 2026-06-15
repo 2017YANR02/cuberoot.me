@@ -92,8 +92,7 @@ type Popup = CommentPopup | AlgPopup | null;
  * constrained by the textarea's containing layout.
  */
 export default function ReconAutofill({ textareaRef, value, setValue, scramble, enabled = true, isMobile = false }: Props) {
-  const { t, i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
+  const { t } = useTranslation();
   const [popup, setPopup] = useState<Popup>(null);
   const [selected, setSelected] = useState(0);
   const lastBuildKeyRef = useRef<string>('');

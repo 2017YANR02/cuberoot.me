@@ -123,9 +123,9 @@ export default function CommLibraryPage(): JSX.Element {
   const selNormalized = selAlg ? normalizeAlg(selAlg) : '';
 
   const kindLabel = (k: Kind) =>
-    k === 'corner' ? (tr({ zh: '角块', en: 'Corner'
-    })) : (tr({ zh: '棱块', en: 'Edge'
-    }));
+    k === 'corner' ? tr({ zh: '角块', en: 'Corner'
+          }) : tr({ zh: '棱块', en: 'Edge'
+              });
 
   const loading = activeMap === null;
 
@@ -189,8 +189,8 @@ export default function CommLibraryPage(): JSX.Element {
 
         <span className="bld-comm-count">
           {loading
-            ? (tr({ zh: '加载中…', en: 'Loading…'
-            }))
+            ? tr({ zh: '加载中…', en: 'Loading…'
+                                  })
             : (isZh
                                     ? `${pairs.length} 组`
                                     : `${pairs.length}`)}

@@ -11,8 +11,6 @@
 //
 // Shell (breadcrumb, hero, prev/next, general credit footer) comes from
 // RegArticleLayout. Visual-guide example classes live in ../regulation.css.
-
-import { useTranslation } from 'react-i18next';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';
 import FullClauses from '../_components/FullClauses';
@@ -20,6 +18,7 @@ import clauses from '../_data/reg-clauses/5.json';
 import {
   RegSection, Callout, RegQuote, RegList, VerdictBadge, type Verdict,
 } from '../_components/primitives';
+import { T } from '@/i18n/tr';
 
 interface ExampleCase {
   img: string;
@@ -95,8 +94,6 @@ const VERDICT_LABEL: Record<Verdict, { zh: string; en: string }> = {
 };
 
 export default function DefectsChapter() {
-  const { i18n } = useTranslation(); // re-render on language toggle
-  const isZh = i18n.language.startsWith('zh');
   const t = useT();
 
   return (
@@ -112,25 +109,15 @@ export default function DefectsChapter() {
       >
         <RegList
           items={[
-            (isZh
-                ? (<>还原过程中,<strong>不得改装或更换</strong>魔方,只能在规则允许的范围内修复故障(例如把弹出的块放回去)。</>)
-                : (<>During an attempt you may <strong>not modify or replace</strong> the puzzle — only repair a defect within what the regulations allow (for example, putting popped pieces back).</>)),
-            (isZh
-                ? (<>发生<strong>弹片(pop)</strong>时,你可以选择就地修复后继续,也可以选择停止本次还原。修复只能动出问题的部件,不能借助工具或别的魔方的零件。</>)
-                : (<>When a <strong>pop</strong> happens you may choose to repair and continue, or to stop the attempt. A repair may touch only the defective parts — never tools or parts from another puzzle.</>)),
-            (isZh
-                ? (<>修复故障本身<strong>不算一步转动</strong>:把块装回原位、归位螺丝/中心盖,都不会被计入步数,也不会因此罚时。但修复不得给你带来还原上的便利。</>)
-                : (<>Fixing a defect <strong>does not count as a move</strong>: placing a piece back, reseating a screw or cap is not a turn and carries no penalty by itself. The repair must not give you a solving advantage.</>)),
-            (isZh
-                ? (<>还原结束时,错位或残留缺陷会按程度判为<strong>成功 / +2 / DNF</strong> —— 这正是下面 5b5f 视觉指南要讲透的部分。</>)
-                : (<>At the end, a misalignment or leftover defect is judged <strong>solved / +2 / DNF</strong> by how severe it is — exactly what the 5b5f visual guide below makes concrete.</>)),
+            (<T zh={<>还原过程中,<strong>不得改装或更换</strong>魔方,只能在规则允许的范围内修复故障(例如把弹出的块放回去)。</>} en={<>During an attempt you may <strong>not modify or replace</strong> the puzzle — only repair a defect within what the regulations allow (for example, putting popped pieces back).</>} />),
+            (<T zh={<>发生<strong>弹片(pop)</strong>时,你可以选择就地修复后继续,也可以选择停止本次还原。修复只能动出问题的部件,不能借助工具或别的魔方的零件。</>} en={<>When a <strong>pop</strong> happens you may choose to repair and continue, or to stop the attempt. A repair may touch only the defective parts — never tools or parts from another puzzle.</>} />),
+            (<T zh={<>修复故障本身<strong>不算一步转动</strong>:把块装回原位、归位螺丝/中心盖,都不会被计入步数,也不会因此罚时。但修复不得给你带来还原上的便利。</>} en={<>Fixing a defect <strong>does not count as a move</strong>: placing a piece back, reseating a screw or cap is not a turn and carries no penalty by itself. The repair must not give you a solving advantage.</>} />),
+            (<T zh={<>还原结束时,错位或残留缺陷会按程度判为<strong>成功 / +2 / DNF</strong> —— 这正是下面 5b5f 视觉指南要讲透的部分。</>} en={<>At the end, a misalignment or leftover defect is judged <strong>solved / +2 / DNF</strong> by how severe it is — exactly what the 5b5f visual guide below makes concrete.</>} />),
           ]}
         />
 
         <Callout tone="warn" label={t('什么时候直接 DNF?', 'When is it a straight DNF?')} style={{ marginTop: 26 }}>
-          {(isZh
-              ? (<>用工具或别的魔方零件修复、修复给了还原便利、盲拧阶段睁眼修复、故意制造故障 —— 这些都直接判 DNF。另外要记住:魔方出故障<strong>不会</strong>因此给你额外的还原机会。</>)
-              : (<>Using a tool or parts from another puzzle, a repair that gives a solving advantage, repairing with eyes open during a blindfolded phase, or deliberately causing a defect — each is an outright DNF. And note: a puzzle defect does <strong>not</strong> entitle you to an extra attempt.</>))}
+          {<T zh={<>用工具或别的魔方零件修复、修复给了还原便利、盲拧阶段睁眼修复、故意制造故障 —— 这些都直接判 DNF。另外要记住:魔方出故障<strong>不会</strong>因此给你额外的还原机会。</>} en={<>Using a tool or parts from another puzzle, a repair that gives a solving advantage, repairing with eyes open during a blindfolded phase, or deliberately causing a defect — each is an outright DNF. And note: a puzzle defect does <strong>not</strong> entitle you to an extra attempt.</>} />}
         </Callout>
       </RegSection>
 

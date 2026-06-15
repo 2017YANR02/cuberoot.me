@@ -131,7 +131,7 @@ export default function TrainerHubClient() {
                       />
                     )}
                   </div>
-                  <div className="trainer-set-card-title">{((i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
+                  <div className="trainer-set-card-title">{tr(s)}</div>
                 </Link>
               );
             })}
@@ -185,7 +185,7 @@ export default function TrainerHubClient() {
                       />
                     )}
                   </div>
-                  <div className="trainer-set-card-title">{((i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
+                  <div className="trainer-set-card-title">{tr(s)}</div>
                 </Link>
               );
             })}

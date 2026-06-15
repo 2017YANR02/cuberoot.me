@@ -304,7 +304,7 @@ function ThumbnailCanvas({ bitmap }: { bitmap: ImageBitmap }) {
 // ── 组件 ──────────────────────────────────────────────────────────────────
 
 export default function FrameCountPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   useDocumentTitle('数帧', 'Frame Count');
 
   const videoRef = useRef<HTMLVideoElement>(null);

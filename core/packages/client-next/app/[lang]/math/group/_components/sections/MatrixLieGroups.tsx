@@ -321,10 +321,10 @@ function RotationComposerPanel({ lang }: { lang: 'zh' | 'en' }) {
           <button key={o} className={`gt-chip${order === o ? ' gt-chip-active' : ''}`}
             onClick={() => setOrder(o)}>
             {o === 'AB'
-              ? (tr({ zh: '先 A 后 B (AB)', en: 'A then B (AB)'
-            }))
-              : (tr({ zh: '先 B 后 A (BA)', en: 'B then A (BA)'
-            }))}
+              ? tr({ zh: '先 A 后 B (AB)', en: 'A then B (AB)'
+                                })
+              : tr({ zh: '先 B 后 A (BA)', en: 'B then A (BA)'
+                                })}
           </button>
         ))}
       </div>
@@ -341,10 +341,10 @@ function RotationComposerPanel({ lang }: { lang: 'zh' | 'en' }) {
         color: areEqual ? 'var(--green)' : 'var(--accent)',
       }}>
         {areEqual
-          ? (tr({ zh: 'AB = BA（此时可交换，例如同轴或零角）', en: 'AB = BA (commute here — e.g. same axis or zero angle)'
-        }))
-          : (tr({ zh: 'AB ≠ BA — SO(3) 非交换！高亮格 = 差异项', en: 'AB ≠ BA — SO(3) is non-abelian! Highlighted cells differ'
-        }))}
+          ? tr({ zh: 'AB = BA（此时可交换，例如同轴或零角）', en: 'AB = BA (commute here — e.g. same axis or zero angle)'
+                          })
+          : tr({ zh: 'AB ≠ BA — SO(3) 非交换！高亮格 = 差异项', en: 'AB ≠ BA — SO(3) is non-abelian! Highlighted cells differ'
+                          })}
       </div>
 
       {/* SVG: cube visualization + matrices */}
@@ -613,10 +613,10 @@ function DoubleCoverPanel({ lang }: { lang: 'zh' | 'en' }) {
           <span className="gt-result-label"><L zh="R(q) = R(−q)?" en="R(q) = R(−q)?" /></span>
           <span className="gt-result-val-strong" style={{ color: sameRotation ? 'var(--green)' : 'var(--warn)' }}>
             {sameRotation
-              ? (tr({ zh: '总是相等（数值验证通过）', en: 'always equal (numerically verified)'
-            }))
-              : (tr({ zh: '计算误差 > 1e-4（不应发生）', en: 'numerical error > 1e-4 (should not happen)'
-            }))}
+              ? tr({ zh: '总是相等（数值验证通过）', en: 'always equal (numerically verified)'
+                                      })
+              : tr({ zh: '计算误差 > 1e-4（不应发生）', en: 'numerical error > 1e-4 (should not happen)'
+                                      })}
           </span>
         </div>
         <div className="gt-result-row">
@@ -940,7 +940,7 @@ function FiniteSubgroupPanel({ lang }: { lang: 'zh' | 'en' }) {
           </text>
           <foreignObject x={0} y={60} width={280} height={80}>
             <div style={{ fontFamily: 'var(--serif)', fontSize: 13, color: 'var(--ink-dim)', lineHeight: 1.5 }}>
-              {((i18n.language.startsWith('zh') ? info.desc.zh : info.desc.en))}
+              {tr(info.desc)}
             </div>
           </foreignObject>
           <text x={0} y={155} style={{ fontFamily: 'var(--mono)', fontSize: 10 }} fill="var(--ink-faint)">

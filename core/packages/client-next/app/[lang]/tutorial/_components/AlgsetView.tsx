@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import type { AlgsetPostContent } from '../_lib/useTutorialCatalog';
 import { CaseCard } from './CaseCard';
 import { CaseModal } from './CaseModal';
@@ -10,8 +9,6 @@ interface AlgsetViewProps {
 }
 
 export function AlgsetView({ post }: AlgsetViewProps) {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const [activeGroup, setActiveGroupState] = useState<string>('all');
   const [modalIdx, setModalIdx] = useState<number | null>(null);
 

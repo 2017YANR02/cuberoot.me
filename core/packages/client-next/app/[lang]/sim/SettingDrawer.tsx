@@ -15,6 +15,7 @@ import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } fro
 import './setting-drawer.css';
 import i18n from '@/i18n/i18n-client';
 import { useT } from "@/hooks/useT";
+import { tr } from '@/i18n/tr';
 
 export interface SimSettings {
   sensitivity: number;
@@ -285,7 +286,7 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
             <div className="sim-keymap-picker">
               {KEYMAP_GROUPS.map((g) => (
                 <div key={g.zh} className="sim-keymap-picker-group">
-                  <div className="sim-keymap-title">{((i18n.language.startsWith('zh') ? g.zh : g.en))}</div>
+                  <div className="sim-keymap-title">{tr(g)}</div>
                   <div className="sim-keymap-picker-row">
                     {g.moves.map((m) => (
                       <button

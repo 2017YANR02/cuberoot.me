@@ -23,6 +23,7 @@ import { VisualCube } from '@/components/VisualCube';
 import { Play, Pause, RotateCcw, SkipBack, SkipForward, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { MathText } from './Tex';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 interface Preset {
   id: string;
@@ -168,7 +169,7 @@ export default function TwoPhaseDemo({ isZh }: Props) {
           <button key={p.id}
                   className={`god-metric-tab ${presetId === p.id ? 'is-on' : ''}`}
                   onClick={() => setPresetId(p.id)}>
-            {((i18n.language.startsWith('zh') ? p.zh : p.en))}
+            {tr(p)}
           </button>
         ))}
       </div>
@@ -275,7 +276,7 @@ export default function TwoPhaseDemo({ isZh }: Props) {
       {/* Bottom: notes */}
       <div className="god-tp-notes">
         <strong>{t('这条 scramble:', 'This scramble:')}</strong>{' '}
-        <MathText>{((i18n.language.startsWith('zh') ? preset.notes.zh : preset.notes.en))}</MathText>
+        <MathText>{tr(preset.notes)}</MathText>
       </div>
       <p className="god-tp-caption">
         <MathText>{t(

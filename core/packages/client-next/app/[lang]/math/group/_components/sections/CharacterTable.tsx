@@ -595,10 +595,10 @@ function CharTablePanel({
                   </span>
                   <span className="gt-result-val">
                     {res.isRow
-                      ? (tr({ zh: '行正交（第一正交关系）', en: 'Row orthogonality (1st relation)'
-                    }))
-                      : (tr({ zh: '列正交（第二正交关系）', en: 'Column orthogonality (2nd relation)'
-                    }))}
+                      ? tr({ zh: '行正交（第一正交关系）', en: 'Row orthogonality (1st relation)'
+                                                    })
+                      : tr({ zh: '列正交（第二正交关系）', en: 'Column orthogonality (2nd relation)'
+                                                    })}
                   </span>
                 </div>
                 <div className="gt-result-row">
@@ -1051,8 +1051,8 @@ function ConjugationPanel({ lang }: { lang: Lang }) {
             <L zh="内积结果" en="Inner product" />
           </span>
           <span className="gt-result-val-strong" style={{ color: conjOn ? 'var(--green)' : 'var(--warn)' }}>
-            {fmtC(displayVal)} {conjOn ? (Math.abs(displayVal.re - (pairI === pairJ ? 1 : 0)) < 0.01 ? '= δ ✓' : '') : (tr({ zh: '(错误)', en: '(wrong)'
-            }))}
+            {fmtC(displayVal)} {conjOn ? (Math.abs(displayVal.re - (pairI === pairJ ? 1 : 0)) < 0.01 ? '= δ ✓' : '') : tr({ zh: '(错误)', en: '(wrong)'
+                                  })}
           </span>
         </div>
         <div className="gt-result-row">

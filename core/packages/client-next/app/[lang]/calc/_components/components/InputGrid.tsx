@@ -313,8 +313,8 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
               className={`me-btn${avatarState?.[p]?.active ? ' me-active' : ''}`}
               title={avatarState?.[p]?.active
                 ? ((isZh ? `切换回世界第 ${p + 1} 名` : `Switch back to World #${p + 1}`))
-                : (tr({ zh: '搜索选手', en: 'Search for a player'
-                }))}
+                : tr({ zh: '搜索选手', en: 'Search for a player'
+                                  })}
               data-loading={avatarState?.[p]?.loading && !avatarState[p].active
                 ? avatarState[p].loading
                 : undefined}
