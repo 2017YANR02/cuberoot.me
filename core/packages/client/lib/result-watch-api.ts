@@ -356,6 +356,80 @@ export async function recordAttemptEdit(p: {
   });
 }
 
+/**
+ * 组装「补录原始值」变更的 fields(纯函数,便于测试)。
+ * baseOld = 已有 backfill 记录累积的 old 数组(逐次补录会更新同一条记录);无则从当前数组起。
+ * 旧 = 当前数组里把第 index 位换成原始值;新 = 当前 live 数组(当前值不变)。
+ * 原始单次/平均按 WCA 规则从拼好的旧数组重算,新单次/平均取权威 live。
+ */
+export function buildOriginalBackfillFields(p: {
+  currentAttempts: number[];
+  currentBest: number;
+  currentAverage: number;
+  eventId: string;
+  index: number;
+  originalValue: number;
+  baseOld?: number[];
+}): ResultChangeField[] {
+  const { currentAttempts, currentBest, currentAverage, eventId, index, originalValue } = p;
+  const oldArr = (p.baseOld ?? currentAttempts).slice();
+  oldArr[index] = originalValue;
+  const fields: ResultChangeField[] = [{ field: 'attempts', old: oldArr, new: currentAttempts.slice() }];
+  if (canRecompute(eventId)) {
+    const o = computeWcaBestAverage(oldArr, eventId);
+    if (o.best !== currentBest) fields.push({ field: 'best', old: o.best, new: currentBest });
+    if (o.average != null && o.average !== currentAverage) {
+      fields.push({ field: 'average', old: o.average, new: currentAverage });
+    }
+  }
+  return fields;
+}
+
+/**
+ * 行内补录某一次成绩的「更正前原始值」→ 当前值不变,旧值划线留在前面。
+ * 逐次补录折进同一条 backfill 变更(以 attempts.new===当前数组 识别),保持单条事件 + 单次/平均一致。
+ */
+export async function recordAttemptOriginal(p: {
+  target: AttemptEditTarget;
+  currentAttempts: number[];
+  currentBest: number;
+  currentAverage: number;
+  index: number;
+  originalValue: number;
+  existingChain?: ResultChange[];
+}): Promise<void> {
+  const { target, currentAttempts, index, originalValue, existingChain } = p;
+  if (currentAttempts[index] === originalValue) return;
+  const eq = (a: unknown, b: number[]) =>
+    Array.isArray(a) && a.length === b.length && a.every((v, k) => Number(v) === b[k]);
+  const existing = (existingChain ?? []).find(
+    (c) => c.changeType === 'modified' && (c.fields ?? []).some((f) => f.field === 'attempts' && eq(f.new, currentAttempts)),
+  );
+  const baseOld = existing
+    ? ((existing.fields ?? []).find((f) => f.field === 'attempts')?.old as unknown[] | undefined)?.map(Number)
+    : undefined;
+  const fields = buildOriginalBackfillFields({
+    currentAttempts: p.currentAttempts,
+    currentBest: p.currentBest,
+    currentAverage: p.currentAverage,
+    eventId: target.eventId,
+    index,
+    originalValue,
+    baseOld,
+  });
+  const input: ResultChangeInput = {
+    wcaId: target.wcaId,
+    competitionId: target.competitionId,
+    eventId: target.eventId,
+    roundTypeId: target.roundTypeId,
+    resultId: target.resultId ?? null,
+    changeType: 'modified',
+    fields,
+  };
+  if (existing) await updateResultChange(existing.id, input);
+  else await createResultChange(input);
+}
+
 /** WCA round_type_id 归一到 4 个轮次桶('1'/'2'/'3'/'f'),含 combined / cutoff 变体。 */
 export function canonicalRound(id: string | null | undefined): '1' | '2' | '3' | 'f' | null {
   switch (id) {

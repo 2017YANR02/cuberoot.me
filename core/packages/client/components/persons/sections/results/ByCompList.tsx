@@ -18,7 +18,8 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { findReconForAttempt } from '@/lib/recon-attempt-lookup';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
-import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, recordAttemptEdit, parseHumanResult } from '@/lib/result-watch-api';
+import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, recordAttemptEdit, recordAttemptOriginal } from '@/lib/result-watch-api';
+import { AttemptEditPopover } from './AttemptEditPopover';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
 import { ResultChangeChain } from './ChangedResultValue';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
@@ -271,7 +272,14 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
                                 target: { wcaId, competitionId: comp.id, eventId: r.event_id, roundTypeId: r.round_type_id, resultId: r.id ?? null },
                                 currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
                                 index, newValue,
-                              }).then(refreshChanges).catch((e) => window.alert((e as Error).message))
+                              }).then(refreshChanges)
+                            }
+                            onSetOriginal={(index, originalValue) =>
+                              recordAttemptOriginal({
+                                target: { wcaId, competitionId: comp.id, eventId: r.event_id, roundTypeId: r.round_type_id, resultId: r.id ?? null },
+                                currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
+                                index, originalValue, existingChain: chain,
+                              }).then(refreshChanges)
                             }
                           />
                         </td>
@@ -298,7 +306,7 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
 
 // 把 attempts 渲染为可折行 inline 列表(支持 H2H 等 5+ 次的格式).
 // 命中 reconLookup 的把数渲染为 Link 跳到对应复盘;管理员可点改某一次(自动重算单次/平均).
-function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, attemptOlds, onEdit }: {
+function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, attemptOlds, onEdit, onSetOriginal }: {
   attempts: number[];
   best: number;
   eventId: string;
@@ -308,19 +316,13 @@ function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLooku
   isZh: boolean;
   admin?: boolean;
   attemptOlds?: number[][];
-  onEdit?: (index: number, newValue: number) => void;
+  onEdit?: (index: number, newValue: number) => Promise<void> | void;
+  onSetOriginal?: (index: number, originalValue: number) => Promise<void> | void;
 }) {
-  const [editIdx, setEditIdx] = useState<number | null>(null);
-  const [draft, setDraft] = useState('');
   if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
   const validNums = attempts.filter((x) => x > 0);
   const minValid = validNums.length > 0 ? Math.min(...validNums) : 0;
   const langQuery = isZh ? '?lang=zh' : '';
-  const commit = (i: number) => {
-    const parsed = parseHumanResult(draft, eventId);
-    setEditIdx(null);
-    if (parsed != null && parsed !== attempts[i]) onEdit?.(i, parsed);
-  };
   return (
     <span className="wp-attempts-flow">
       {attempts.map((a, i) => {
@@ -340,27 +342,18 @@ function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLooku
             </Link>
           );
         }
-        if (admin && editIdx === i) {
-          return (
-            <input
-              key={i}
-              autoFocus
-              className="wp-att-input"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onBlur={() => commit(i)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commit(i); else if (e.key === 'Escape') setEditIdx(null); }}
-            />
-          );
-        }
         if (admin) {
           return (
-            <span
+            <AttemptEditPopover
               key={i}
-              className={`${cls} wp-att-editable`}
-              title={tr({ zh: '点击改这一次', en: 'Click to edit this solve' })}
-              onClick={() => { setEditIdx(i); setDraft(formatted); }}
-            >{olds}{formatted}</span>
+              value={a}
+              eventId={eventId}
+              oldValues={attemptOlds?.[i] ?? []}
+              cls={cls}
+              format={(v) => formatWcaResult(v, eventId, 'single')}
+              onSetOriginal={(v) => onSetOriginal?.(i, v)}
+              onCorrect={(v) => onEdit?.(i, v)}
+            />
           );
         }
         return <span key={i} className={cls}>{olds}{formatted}</span>;
