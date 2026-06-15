@@ -73,6 +73,7 @@ let lastActivity = 0;       // updated on each solve; drives idle-unload
 let cooldownUntil = 0;      // refuse reload until this time after a low-mem drop
 let lowMemReads = 0;        // consecutive sub-floor MemAvailable reads (debounce)
 let monitorsStarted = false;
+let lastLoadMs = 0;         // wall time of the most recent table load (spawn→READY)
 
 function rejectAllPending(reason: string): void {
   for (const [, p] of pending) {
@@ -89,7 +90,8 @@ function spawnDaemon(): Promise<void> {
     // memory pressure, an OOM, a bad table — the 'exit' handler below must
     // reject this promise, or the awaiting solve hangs forever.
     let settled = false;
-    const finishOk = () => { if (!settled) { settled = true; resolveBoot(); } };
+    const spawnStartedAt = Date.now();
+    const finishOk = () => { if (!settled) { settled = true; lastLoadMs = Date.now() - spawnStartedAt; resolveBoot(); } };
     const finishErr = (e: Error) => { if (!settled) { settled = true; rejectBoot(e); } };
     console.log(`[cubeopt] spawn: node ${DAEMON_SCRIPT}`);
     let proc: ChildProcess;
@@ -245,6 +247,11 @@ export function isEnabled(): boolean {
 
 export function isReady(): boolean {
   return ready;
+}
+
+/** Wall time (ms) of the most recent table load (spawn→READY). 0 if never loaded. */
+export function getLastLoadMs(): number {
+  return lastLoadMs;
 }
 
 /** Kill the child; the 'exit' handler rejects pending + clears state, next call respawns. */

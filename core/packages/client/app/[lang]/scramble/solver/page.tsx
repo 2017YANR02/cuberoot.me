@@ -533,13 +533,15 @@ function ScrambleSolverPageInner() {
     if (!user) { setCloudStatus(t('云端求解需登录(用右上角 WCA 登录)。', 'Cloud solve requires login (WCA, top-right).')); return; }
 
     setCloudBusy(true);
-    setCloudStatus(t(`云端求解中 0/${lines.length}…(复杂打乱可能要几十秒)`, `Solving on server 0/${lines.length}… (hard scrambles can take tens of seconds)`));
+    setCloudStatus(t('连接云端求解…', 'Connecting…'));
     solveResultsRef.current = new Map();
     setSolveResults(new Map());
     const ac = new AbortController();
     cloudAbortRef.current = ac;
-    const startedAt = Date.now();
     let done = 0;
+    let warm = true;           // was the table already in server memory
+    let loadMs = 0;            // server-reported table load time (cold start)
+    let solveStartedAt = Date.now(); // when actual solving began (after any load)
     try {
       const res = await fetch(apiUrl('/v1/scramble/optimal-solve'), {
         method: 'POST',
@@ -569,16 +571,34 @@ function ScrambleSolverPageInner() {
             else if (ln.startsWith('data:')) data += ln.slice(5).trim();
           }
           if (!data) continue;
-          const obj = JSON.parse(data) as { i?: number; htm?: number; solution?: string; error?: string; ok?: number; fail?: number };
-          if (ev === 'error') {
-            done++;
-            setCloudStatus(t(`第 ${(obj.i ?? 0) + 1} 条失败:${obj.error ?? ''}`, `#${(obj.i ?? 0) + 1} failed: ${obj.error ?? ''}`));
+          const obj = JSON.parse(data) as { i?: number; htm?: number; solution?: string; error?: string; ok?: number; fail?: number; warm?: boolean; loadMs?: number; phase?: string };
+          if (ev === 'loading') {
+            setCloudStatus(t('正在把求解表载入服务器内存(首次约 20 秒)…', 'Loading the solver table into server memory (first time ~20s)…'));
+          } else if (ev === 'ready') {
+            warm = obj.warm !== false;
+            loadMs = typeof obj.loadMs === 'number' ? obj.loadMs : 0;
+            solveStartedAt = Date.now();
+            setCloudStatus(warm
+              ? t(`表已在内存,求解中 0/${lines.length}…`, `Table already in memory, solving 0/${lines.length}…`)
+              : t(`表已载入(载表 ${(loadMs / 1000).toFixed(1)}s),求解中 0/${lines.length}…`, `Table loaded (${(loadMs / 1000).toFixed(1)}s), solving 0/${lines.length}…`));
+          } else if (ev === 'error') {
+            if (obj.i === -1 || obj.phase === 'load') {
+              setCloudStatus(t(`求解表加载失败:${obj.error ?? ''}`, `Table load failed: ${obj.error ?? ''}`));
+            } else {
+              done++;
+              setCloudStatus(t(`第 ${(obj.i ?? 0) + 1} 条失败:${obj.error ?? ''}`, `#${(obj.i ?? 0) + 1} failed: ${obj.error ?? ''}`));
+            }
           } else if (ev === 'done') {
-            const secs = ((Date.now() - startedAt) / 1000).toFixed(1);
-            setCloudStatus(t(`云端求解完成(成功 ${obj.ok ?? 0}${obj.fail ? `,失败 ${obj.fail}` : ''},耗时 ${secs}s)`, `Done (ok ${obj.ok ?? 0}${obj.fail ? `, failed ${obj.fail}` : ''}, ${secs}s)`));
+            const solveSecs = ((Date.now() - solveStartedAt) / 1000).toFixed(1);
+            const okN = obj.ok ?? 0;
+            const failN = obj.fail ?? 0;
+            const loadSecs = (loadMs / 1000).toFixed(1);
+            const zh = `云端求解完成(成功 ${okN}${failN ? `,失败 ${failN}` : ''}${warm ? `,耗时 ${solveSecs}s` : `,载表 ${loadSecs}s + 求解 ${solveSecs}s`})`;
+            const en = `Done (ok ${okN}${failN ? `, failed ${failN}` : ''}${warm ? `, ${solveSecs}s` : `, load ${loadSecs}s + solve ${solveSecs}s`})`;
+            setCloudStatus(t(zh, en));
           } else if (typeof obj.i === 'number' && typeof obj.solution === 'string') {
             done++;
-            const secs = ((Date.now() - startedAt) / 1000).toFixed(1);
+            const secs = ((Date.now() - solveStartedAt) / 1000).toFixed(1);
             solveResultsRef.current.set(obj.i + 1, obj.solution);
             setSolveResults(new Map(solveResultsRef.current));
             setCloudStatus(t(`云端求解中 ${done}/${lines.length}…(已 ${secs}s)`, `Solving on server ${done}/${lines.length}… (${secs}s)`));
