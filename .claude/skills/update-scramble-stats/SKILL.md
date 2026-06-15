@@ -5,7 +5,9 @@ description: "用户要更新 /scramble/stats(打乱难度 / 步数分布)的数
 
 # 更新打乱统计
 
-**一条龙:一个命令 `update_cross_stats.ps1`,`-Jobs` 选作业,跑完共享一次发布**(commit+push + tar 整个 `stats/scramble/` → scp 原子换 static,覆盖三类产物)。三类作业都只能本地(stages 需 solver 34GB 表 / 333opt 需 cubeopt 表):
+**一条龙:一个命令 `update_cross_stats.ps1`,`-Jobs` 选作业,跑完共享一次发布**(commit+push + scp 换 static,覆盖三类产物)。三类作业都只能本地(stages 需 solver 34GB 表 / 333opt 需 cubeopt 表):
+
+> **发布是增量的(2026-06-15)**:不跑 stages 的小作业(`333opt`/`puzzles` 只重写几个 tracked JSON)只 scp 变化的文件(`.tmp` + 远端原子 `mv`),**秒级**;只有 `stages`(comp_steps/下载包等 gitignored 文件会增删)才走整目录打包 `tar -czf` ~467MB → 原子换(~35min)。判据是 `-not $runStages` 时 `git status stats/scramble` 即完整变更集。
 
 | job | 对象 | 内部 | 产物 |
 |-----|------|------|------|

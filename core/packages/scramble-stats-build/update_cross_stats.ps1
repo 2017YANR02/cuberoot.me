@@ -653,7 +653,7 @@ if($runStages){
 if($NoPublish){
   Step '6 发布 (跳过)'
 } else {
-  Step '6 commit & push + tar 发布 static'
+  Step '6 commit & push + 发布 static'
   git -C $RepoRoot pull --rebase --autostash origin main
   if($LASTEXITCODE -ne 0){ throw 'git pull --rebase 失败 (可能冲突, 仓库可能停在 rebase 中, 别继续 push)' }
   git -C $RepoRoot add stats/scramble
@@ -667,6 +667,31 @@ if($NoPublish){
     if($LASTEXITCODE -ne 0){ throw 'git commit 失败' }
     git -C $RepoRoot push origin main
     if($LASTEXITCODE -ne 0){ throw 'git push 失败' }
+    # ---- static 发布 ----
+    # 无 stages 的小作业(333opt/puzzles 只重写几个 tracked JSON)增量发布:只 scp 变化的文件,
+    # 跳过整包 ~467MB tar(31min)。gitignored 的下载包/comp_steps 仅 stages 会变,故非 stages 跑里
+    # `git status` 即完整变更集。stages 仍走整目录原子替换(文件可能新增/消失,整包最稳)。
+    if(-not $runStages){
+      $deltaRel = @(git -C $RepoRoot status --porcelain stats/scramble |
+        ForEach-Object { if($_.Length -gt 3){ $_.Substring(3).Trim().Trim('"') } } |
+        Where-Object { $_ -like 'stats/scramble/*' } |
+        ForEach-Object { $_ -replace '^stats/scramble/','' } |
+        Select-Object -Unique)
+      Write-Host "  [delta] 无 stages,增量发布 $($deltaRel.Count) 个文件 -> static(跳过整包 tar)" -ForegroundColor DarkCyan
+      foreach($f in $deltaRel){
+        $lp = Join-Path $RepoRoot "stats/scramble/$f"
+        if(-not (Test-Path $lp)){ continue }
+        $kb = [math]::Round((Get-Item $lp).Length/1KB,1)
+        Write-Host "        scp $f (${kb} KB) -> .tmp + 远端原子 mv ..." -ForegroundColor DarkGray
+        $rdir = (Split-Path "scramble/$f" -Parent) -replace '\\','/'
+        ssh $StaticHost "mkdir -p '${StaticDest}/$rdir'"
+        scp $lp "${StaticHost}:${StaticDest}/scramble/${f}.tmp"
+        if($LASTEXITCODE -ne 0){ throw "[delta] scp $f 失败" }
+        ssh $StaticHost "mv -f '${StaticDest}/scramble/${f}.tmp' '${StaticDest}/scramble/$f'"
+        if($LASTEXITCODE -ne 0){ throw "[delta] 远端 mv $f 失败" }
+      }
+      Write-Host "  [delta] 增量发布完成 ($($deltaRel -join ', '))。" -ForegroundColor DarkCyan
+    } else {
     # 发布 stats/scramble 到 static: 打成单个 .tgz -> scp 一个文件(二进制安全, 不走 pwsh 管道)
     # -> 远端原子替换。比 scp -r 逐个传 ~1.5w 小文件快一个量级。
     $tgz = Join-Path $env:TEMP 'cuberoot_scramble_publish.tgz'
@@ -711,6 +736,7 @@ if($NoPublish){
     if($LASTEXITCODE -ne 0){ throw '远端原子替换失败' }
     Write-Host "  [3/3] 远端替换完成。" -ForegroundColor DarkCyan
     Remove-Item $tgz -Force -ErrorAction SilentlyContinue
+    }
   } else { Write-Host 'stats/scramble 无变化, 跳过 commit。' -ForegroundColor Yellow }
 }
 
