@@ -101,21 +101,34 @@ cubeoptSolveRoutes.post('/scramble/optimal-solve', async (c) => {
     // warm: loadMs absent; cold: the real spawn→READY time of the load just done.
     await stream.writeSSE({ event: 'ready', data: JSON.stringify(wasReady ? { warm: true } : { warm: false, loadMs: getLastLoadMs() }) });
 
+    // Serialize SSE writes — the onState callback fires asynchronously (queued →
+    // solving) while we await the solve, and hono's stream isn't parallel-safe.
+    let chain: Promise<void> = Promise.resolve();
+    const safeWrite = (msg: Parameters<typeof stream.writeSSE>[0]): Promise<void> => {
+      chain = chain.then(() => stream.writeSSE(msg)).catch(() => {});
+      return chain;
+    };
+
     let ok = 0;
     let fail = 0;
     // Solve sequentially — the daemon is serial anyway, and sequential keeps the
     // queue shallow + results ordered by completion (client re-sorts by index).
     for (let i = 0; i < scrambles.length; i++) {
       try {
-        const { htm, solution } = await solveOptimal(scrambles[i]!);
+        const { htm, solution } = await solveOptimal(scrambles[i]!, (state) => {
+          // Tell the client whether it's WAITING in the queue (behind others) or
+          // its solve has actually STARTED — so "排队中" vs "求解中" is honest.
+          if (state.phase === 'queued') void safeWrite({ event: 'queued', data: JSON.stringify({ i, ahead: state.ahead }) });
+          else void safeWrite({ event: 'solving', data: JSON.stringify({ i }) });
+        });
         ok++;
-        await stream.writeSSE({ data: JSON.stringify({ i, htm, solution }) });
+        await safeWrite({ data: JSON.stringify({ i, htm, solution }) });
       } catch (e) {
         fail++;
         const msg = e instanceof Error ? e.message : String(e);
-        await stream.writeSSE({ event: 'error', data: JSON.stringify({ i, error: msg }) });
+        await safeWrite({ event: 'error', data: JSON.stringify({ i, error: msg }) });
       }
     }
-    await stream.writeSSE({ event: 'done', data: JSON.stringify({ ok, fail }) });
+    await safeWrite({ event: 'done', data: JSON.stringify({ ok, fail }) });
   });
 });
