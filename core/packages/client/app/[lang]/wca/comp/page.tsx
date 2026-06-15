@@ -4,7 +4,7 @@
  * 顶尖选手近期比赛追踪页 — 日历视图
  * 数据源: stats/upcoming_comps.json（Top 模式） + stats/all_upcoming_comps.json（All 模式）
  *
- * 1:1 port from packages/client/src/pages/CalendarPage.tsx (Vite SPA).
+ * 1:1 port from packages/client-vite/src/pages/CalendarPage.tsx (Vite SPA).
  * Adapted for Next.js App Router: react-router-dom Link → next/link Link (href),
  * '../i18n' → '@/i18n/i18n-client', '../components/X' → '@/components/X',
  * '../utils/X' → '@/lib/<kebab>', './calendar/OnThisDayModal' → './_components/OnThisDayModal'.

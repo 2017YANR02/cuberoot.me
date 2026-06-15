@@ -2,7 +2,7 @@
 
 /**
  * CaseThumb — single source for any (puzzle, set, case) preview thumbnail.
- * Ported from packages/client/src/pages/alg/CaseThumb.tsx.
+ * Ported from packages/client-vite/src/pages/alg/CaseThumb.tsx.
  */
 import type { AlgPuzzle, AlgSticker } from '@cuberoot/shared';
 import { toWca as toWcaSkewb } from '@cuberoot/shared/skewb-notation';

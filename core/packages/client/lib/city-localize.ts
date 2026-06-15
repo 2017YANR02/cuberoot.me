@@ -1,4 +1,4 @@
-// Ported from packages/client/src/utils/city_localize.ts.
+// Ported from packages/client-vite/src/utils/city_localize.ts.
 
 const CITY_ZH: Record<string, string> = {
   'Beijing': '北京', 'Shanghai': '上海', 'Tianjin': '天津', 'Chongqing': '重庆',

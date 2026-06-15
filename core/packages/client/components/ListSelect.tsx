@@ -2,7 +2,7 @@
 
 /**
  * 通用列表筛选下拉——button + popup,支持国旗 + 搜索 + × 清除 + (空) 桶
- * Ported from packages/client/src/components/ListSelect/ListSelect.tsx.
+ * Ported from packages/client-vite/src/components/ListSelect/ListSelect.tsx.
  * caller 预格式化 label / hint / country / searchTerms,组件不做本地化。
  */
 import { useEffect, useMemo, useRef, useState } from 'react';

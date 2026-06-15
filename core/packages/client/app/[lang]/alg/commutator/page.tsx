@@ -2,7 +2,7 @@
 
 /**
  * /alg/commutator — port of nbwzx/commutator.
- * Ported from packages/client/src/pages/alg/commutator/CommutatorPage.tsx.
+ * Ported from packages/client-vite/src/pages/alg/commutator/CommutatorPage.tsx.
  *
  * Engine + CSS copied verbatim. UI: 5 sub-tabs (Decompose / Excel / Introduction /
  * Source / About) inside one React page. Persistence via localStorage replaces

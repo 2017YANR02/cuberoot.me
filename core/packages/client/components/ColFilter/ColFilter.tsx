@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/components/ColFilter/ColFilter.tsx.
+// Ported from packages/client-vite/src/components/ColFilter/ColFilter.tsx.
 import { useEffect, useLayoutEffect, useRef, useState, useCallback, createContext, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';

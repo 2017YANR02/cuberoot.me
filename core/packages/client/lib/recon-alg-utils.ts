@@ -1,6 +1,6 @@
 /**
  * Alg text utilities — strip comments / zero-width chars, count expanded moves,
- * extract alg from recon-prefixed text. Ported from packages/client/src/utils/recon_alg_utils.ts.
+ * extract alg from recon-prefixed text. Ported from packages/client-vite/src/utils/recon_alg_utils.ts.
  */
 
 const STRIP_TOKENS = new Set([

@@ -7,7 +7,7 @@
  *   - 任何登录用户可在任意 term 下增补 (wiki_additions)
  *   - 增补的 owner / admin 可改可软删
  *
- * 1:1 port from packages/client/src/utils/wiki_api.ts.
+ * 1:1 port from packages/client-vite/src/utils/wiki_api.ts.
  */
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi as handle } from './admin-api';

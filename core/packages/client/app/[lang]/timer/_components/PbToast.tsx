@@ -2,7 +2,7 @@
 
 /**
  * Small celebratory toast shown when a freshly-recorded solve produces a new
- * personal best. 1:1 with packages/client/src/pages/timer/components/PbToast.tsx.
+ * personal best. 1:1 with packages/client-vite/src/pages/timer/components/PbToast.tsx.
  *
  * (The existing components/PbToast.tsx in this dir uses a slim variant tied
  * to the prior phase's TimerPage. This _components/ copy mirrors the Vite

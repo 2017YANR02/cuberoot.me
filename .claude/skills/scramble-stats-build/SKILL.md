@@ -1,6 +1,6 @@
 ---
 name: scramble-stats-build
-description: "Use when regenerating `stats/scramble/*.json` or touching `core/packages/scramble-stats-build/` / `core/packages/client/src/pages/scramble_stats/`. Covers CSV 列名、pair rotation 记号、WCA 配色、UI 朝向→底色。Triggers: \"scramble-stats-build\", \"distribution.json\", \"打乱分布\", \"scramble_stats\"."
+description: "Use when regenerating `stats/scramble/*.json` or touching `core/packages/scramble-stats-build/` / `core/packages/client/app/[lang]/scramble/stats/`. Covers CSV 列名、pair rotation 记号、WCA 配色、UI 朝向→底色。Triggers: \"scramble-stats-build\", \"distribution.json\", \"打乱分布\", \"scramble_stats\"."
 ---
 
 # Scramble Stats Build

@@ -1,7 +1,7 @@
 'use client';
 /**
  * 纪录选择器 — 自定义下拉,选项渲染为彩色 RecordBadge。
- * Ported from packages/client/src/components/RecordSelect/RecordSelect.tsx.
+ * Ported from packages/client-vite/src/components/RecordSelect/RecordSelect.tsx.
  */
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, X } from 'lucide-react';

@@ -1,4 +1,4 @@
-// Ported from packages/client/src/stores/trainerStore.ts
+// Ported from packages/client-vite/src/stores/trainerStore.ts
 'use client';
 
 import { create } from 'zustand';

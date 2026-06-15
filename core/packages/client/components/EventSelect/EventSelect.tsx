@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/components/EventSelect/EventSelect.tsx.
+// Ported from packages/client-vite/src/components/EventSelect/EventSelect.tsx.
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';

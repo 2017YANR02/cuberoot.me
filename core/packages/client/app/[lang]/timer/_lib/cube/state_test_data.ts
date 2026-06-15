@@ -2,7 +2,7 @@
  * Self-tests for the NxN cube state model.
  *
  * Run from `core/`:
- *   pnpm exec tsx packages/client/src/pages/timer/cube/state_test_data.ts
+ *   pnpm exec tsx packages/client-vite/src/pages/timer/cube/state_test_data.ts
  *
  * Each test asserts a known cubing identity:
  *   - sune × 6 = identity   (R U R' U R U2 R' applied 6 times solves)

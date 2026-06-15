@@ -11,7 +11,7 @@
  *   /scramble/skewb     —— 斜转整解最优求解(Rust WASM 全空间精确表)
  *   /scramble/pattern   —— 著名 NxN 图案集
  *
- * 1:1 port from packages/client/src/pages/scramble/ScrambleHubPage.tsx (Vite SPA).
+ * 1:1 port from packages/client-vite/src/pages/scramble/ScrambleHubPage.tsx (Vite SPA).
  */
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';

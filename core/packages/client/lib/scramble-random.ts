@@ -2,7 +2,7 @@
  * Plain WCA-style scramble generation for callers that just want a random
  * scramble for a given recon event id ('3x3' / '3bld' / 'oh' / 'fmc' / ...).
  *
- * Ported from packages/client/src/utils/scramble.ts but routed through
+ * Ported from packages/client-vite/src/utils/scramble.ts but routed through
  * client's own scramble registry under app/[lang]/timer/_lib/scramble.
  */
 

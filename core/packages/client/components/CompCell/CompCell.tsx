@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/components/CompCell/CompCell.tsx.
+// Ported from packages/client-vite/src/components/CompCell/CompCell.tsx.
 import { Flag } from '@/components/Flag';
 import { compFlagIso2 } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';

@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/pages/wca_stats/CountrySelect.tsx.
+// Ported from packages/client-vite/src/pages/wca_stats/CountrySelect.tsx.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Flag } from '@/components/Flag';

@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/components/WcaEventSelector.tsx.
+// Ported from packages/client-vite/src/components/WcaEventSelector.tsx.
 
 import { useMemo, useState } from 'react';
 import { X } from 'lucide-react';

@@ -1,5 +1,5 @@
 /**
- * WCA public competition results / scrambles API — ported from packages/client/src/utils/wca_results_api.ts.
+ * WCA public competition results / scrambles API — ported from packages/client-vite/src/utils/wca_results_api.ts.
  * Module-level promise cache; proxy via cuberoot server with direct WCA fallback.
  */
 

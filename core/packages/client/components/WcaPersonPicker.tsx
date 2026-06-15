@@ -1,5 +1,5 @@
 'use client';
-// Person search input — ported from packages/client/src/components/CuberSearchInput.tsx.
+// Person search input — ported from packages/client-vite/src/components/CuberSearchInput.tsx.
 // 3-tier query: static index (top cubers) → WCA /persons?q= → WCA ID regex direct lookup.
 
 import { useEffect, useMemo, useRef, useState } from 'react';

@@ -2,7 +2,7 @@
 /**
  * /recon/submit — submit/edit a reconstruction.
  *
- * Full port of packages/client/src/pages/recon/ReconSubmitPage.tsx to Next.js.
+ * Full port of packages/client-vite/src/pages/recon/ReconSubmitPage.tsx to Next.js.
  * Auto-fill (avg / single / record), duplicate check, WCIF round options,
  * BLD exec/memo derivation, scramble↔URL roundtrip, danger-zone delete,
  * collapsible sections, virtual keyboard, TwistyPlayer live preview,

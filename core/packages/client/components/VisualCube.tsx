@@ -21,7 +21,7 @@ interface Props {
   loading?: 'lazy' | 'eager';
 }
 
-// Ported from packages/client/src/components/VisualCube.tsx — minus the SW interception note
+// Ported from packages/client-vite/src/components/VisualCube.tsx — minus the SW interception note
 // (Next.js bundles a fresh SW; for now this hits the api.cuberoot.me endpoint directly in prod).
 export function VisualCube({ algorithm = '', setup, view, mask, size = 88, puzzleSize = 3, alt = 'Cube state', loading }: Props) {
   const src = useMemo(() => {

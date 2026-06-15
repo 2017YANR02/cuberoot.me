@@ -1,4 +1,4 @@
-// Ported from packages/client/src/pages/wca_stats/event_constants.ts.
+// Ported from packages/client-vite/src/pages/wca_stats/event_constants.ts.
 
 export const EVENT_NAME_TO_ID: Record<string, string> = {
   "Rubik's Cube": "333",

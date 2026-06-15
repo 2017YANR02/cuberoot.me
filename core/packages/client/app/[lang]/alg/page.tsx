@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /alg landing — port of packages/client/src/pages/alg/AlgIndexPage.tsx.
+ * /alg landing — port of packages/client-vite/src/pages/alg/AlgIndexPage.tsx.
  *
  * Admin "Validate all" button stubbed for now — auth_store + ADMIN_WCA_IDS
  * not yet ported into client. The validate-all flow re-enables once

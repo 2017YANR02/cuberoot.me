@@ -3,7 +3,7 @@
 /**
  * /sim — 虚拟魔方 Playground / Player / Algs / Director (Next.js port).
  *
- * Vite source: packages/client/src/pages/sim/SimPage.tsx.
+ * Vite source: packages/client-vite/src/pages/sim/SimPage.tsx.
  *
  * Twisty puzzles (pyraminx / skewb / megaminx) render via cubing.js
  * TwistyPlayer (see components/TwistySection). NxN + SQ1 use the local

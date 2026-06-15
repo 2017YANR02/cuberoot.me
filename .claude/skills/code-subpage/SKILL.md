@@ -5,7 +5,7 @@ description: "Use when adding a long-form intro page under /code/* — 一件软
 
 # /code/* 加新介绍页
 
-**全部在 client**(`core/packages/client/app/[lang]/code/`,Next 16 App Router,文件即路由)。退役的 Vite `packages/client/src/pages/code/` **不要碰**。
+**全部在 client**(`core/packages/client/app/[lang]/code/`,Next 16 App Router,文件即路由)。退役的 Vite `packages/client-vite/src/pages/code/` **不要碰**。
 
 `/code/*` 下长篇介绍页结构同构(语言 / stack 工具 / 算法都一样):hero 飘字 + heroStats + intro 段 + history 时间线 + concepts 卡 + why 卡 + adopters + outlook + 在 cuberoot.me 怎么用 + links。页面都是 `'use client'` + `useTranslation()` 取 lang + `useDocumentTitle`。
 

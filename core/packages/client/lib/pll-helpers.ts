@@ -1,4 +1,4 @@
-// Ported from packages/client/src/utils/pllHelpers.ts
+// Ported from packages/client-vite/src/utils/pllHelpers.ts
 import type { PllCaseInstance } from './scramble-generator';
 
 export const PLL_LETTERS = ['A', 'E', 'F', 'G', 'H', 'J', 'N', 'R', 'T', 'U', 'V', 'Y', 'Z'] as const;

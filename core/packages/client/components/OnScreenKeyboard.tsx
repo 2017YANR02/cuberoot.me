@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/components/OnScreenKeyboard.tsx
+// Ported from packages/client-vite/src/components/OnScreenKeyboard.tsx
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSessionStore } from '@/lib/session-store';
 import { PLL_LETTERS } from '@/lib/pll-helpers';

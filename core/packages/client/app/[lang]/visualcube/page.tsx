@@ -3,7 +3,7 @@
 /**
  * /visualcube — full-feature interactive cube image generator (Next 16 port).
  *
- * Ported 1:1 from packages/client/src/pages/visualcube/VisualCubeEditorPage.tsx.
+ * Ported 1:1 from packages/client-vite/src/pages/visualcube/VisualCubeEditorPage.tsx.
  *
  * Changes vs Vite:
  *   - react-router useSearchParams/setSearchParams → nuqs useQueryStates
@@ -283,7 +283,7 @@ function SkewbNetPreview({ scramble, pixelSize }: { scramble: string; pixelSize:
     };
   }, [scramble]);
   // Match scramble-display skewb facelet aspect (12 wide × 9 tall units). Mirror
-  // the dimensions used in client/src/components/CubingPreview.tsx.
+  // the dimensions used in client-vite/src/components/CubingPreview.tsx.
   const size = Math.max(8, Math.round(pixelSize / 12));
   return (
     <div

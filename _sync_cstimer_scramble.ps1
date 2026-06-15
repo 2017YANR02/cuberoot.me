@@ -34,7 +34,7 @@ Files in lib/ and scramble/ are copied verbatim from upstream
 src/js/lib/ and src/js/scramble/. Do not edit; resync via
 _sync_cstimer_scramble.ps1 at repo root.
 
-Used by:  core/packages/client/src/utils/cstimerScramble.ts
+Used by:  core/packages/client/lib/cstimer-scramble.ts
           (worker bridge at tools/cstimer-scramble/scrambler.worker.js)
 "@
 Set-Content -Path "$dst\UPSTREAM.txt" -Value $txt -Encoding UTF8

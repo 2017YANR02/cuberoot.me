@@ -1,4 +1,4 @@
-// Ported from packages/client/src/utils/comp_search.ts.
+// Ported from packages/client-vite/src/utils/comp_search.ts.
 import { compNameZh, countryToIso2, loadFlagData } from './country-flags';
 import { localizeCity } from './city-localize';
 import { statsUrl } from './stats-base';

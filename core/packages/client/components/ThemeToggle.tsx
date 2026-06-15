@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/components/ThemeToggle.tsx.
+// Ported from packages/client-vite/src/components/ThemeToggle.tsx.
 // Two-state toggle: Light ⇄ Dark. No explicit "system" option — an unvisited
 // user still follows the OS (data-theme stays unset), but the button only ever
 // flips between the two concrete themes.

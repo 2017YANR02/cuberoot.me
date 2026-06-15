@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/pages/trainer/TrainerRunPage.tsx
+// Ported from packages/client-vite/src/pages/trainer/TrainerRunPage.tsx
 import { useEffect, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';

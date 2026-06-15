@@ -1,5 +1,5 @@
 // Fetch public WCIF for a WCA comp + competition metadata. 24h localStorage cache.
-// Ported from packages/client/src/utils/comp_wcif.ts.
+// Ported from packages/client-vite/src/utils/comp_wcif.ts.
 
 import { apiUrl } from './api-base';
 

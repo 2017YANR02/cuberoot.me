@@ -1,4 +1,4 @@
-// Ported from packages/client/src/utils/name_utils.ts.
+// Ported from packages/client-vite/src/utils/name_utils.ts.
 // 选手名处理工具 — 跨页面共享。
 
 const CJK_REGEX = /[一-鿿]/;

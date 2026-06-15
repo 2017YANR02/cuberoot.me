@@ -1,7 +1,7 @@
 'use client';
 /**
  * 虚拟键盘 + toggle 按钮 — 桌面默认收起、提供按钮展开;移动端强制打开,无按钮。
- * Ported from packages/client/src/components/CubeKeyboardSection/CubeKeyboardSection.tsx.
+ * Ported from packages/client-vite/src/components/CubeKeyboardSection/CubeKeyboardSection.tsx.
  */
 import { useState, type RefObject } from 'react';
 import { Keyboard } from 'lucide-react';

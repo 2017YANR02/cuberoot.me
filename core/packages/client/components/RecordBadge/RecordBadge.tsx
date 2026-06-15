@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/components/RecordBadge/RecordBadge.tsx.
+// Ported from packages/client-vite/src/components/RecordBadge/RecordBadge.tsx.
 import { formatRecord, expandContinentRecord } from '@/lib/recon-utils';
 import './record_badge.css';
 

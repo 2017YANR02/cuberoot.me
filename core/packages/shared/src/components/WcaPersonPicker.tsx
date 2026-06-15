@@ -37,7 +37,7 @@ function hasChinese(s: string): boolean {
   return /[\u4e00-\u9fff]/.test(s);
 }
 
-// NOTE: 国旗渲染 — 用本地 flag-icons CSS 类（见 client/src/index.css 的 import）
+// NOTE: 国旗渲染 — 用本地 flag-icons CSS 类（见 client-vite/src/index.css 的 import）
 // Chinese Taipei (iso2=tw) 用 WCA 专用梅花旗 SVG，与 WcaStatsPage / tools/i18n 一致
 
 export function WcaPersonPicker({

@@ -1,4 +1,4 @@
-// Ported from packages/client/src/utils/trainerCaseKey.ts
+// Ported from packages/client-vite/src/utils/trainerCaseKey.ts
 import type { AlgCase } from '@cuberoot/shared';
 
 export function caseKey(c: { subgroup: string; name: string }): string {

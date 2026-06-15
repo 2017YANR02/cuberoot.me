@@ -1,4 +1,4 @@
-// Ported from packages/client/src/utils/date_range.ts.
+// Ported from packages/client-vite/src/utils/date_range.ts.
 
 export function formatDateRangeIso(startISO: string, endISO?: string | null): string {
   const end = endISO || startISO;

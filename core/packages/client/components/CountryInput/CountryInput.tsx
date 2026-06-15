@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/components/CountryInput/CountryInput.tsx.
+// Ported from packages/client-vite/src/components/CountryInput/CountryInput.tsx.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';

@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/pages/wca_stats/Paginator.tsx.
+// Ported from packages/client-vite/src/pages/wca_stats/Paginator.tsx.
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { tr } from '@/i18n/tr';

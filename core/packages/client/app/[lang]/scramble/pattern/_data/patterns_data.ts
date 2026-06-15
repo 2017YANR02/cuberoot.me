@@ -5,7 +5,7 @@
  * cubingcheatsheet.com (4x4-7x7 + megaminx), jrcuber.recursionists.org (sq1 / pyraminx),
  * jaapsch.net (clock). All algs verified to render under cubing.js TwistyPlayer.
  *
- * Ported from packages/client/src/pages/patterns/patterns_data.ts.
+ * Ported from packages/client-vite/src/pages/patterns/patterns_data.ts.
  */
 
 export type Category = 'symmetry' | 'cube-in-cube' | 'dots' | 'stripes' | 'crosses' | 'twists' | 'other';

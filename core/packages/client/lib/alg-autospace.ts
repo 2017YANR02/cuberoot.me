@@ -1,6 +1,6 @@
 /**
  * 公式输入自动加空格 — textarea 与 contenteditable 共用规则。
- * Ported from packages/client/src/utils/alg_autospace.ts
+ * Ported from packages/client-vite/src/utils/alg_autospace.ts
  */
 
 export const MOVE_START_RE = /[RLUDFBMESxyzrludfbmes]/;

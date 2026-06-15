@@ -5,7 +5,7 @@
  * sidebar 分组 + 右侧单行密集列表;搜索用 Fuse.js;数据源 /v1/nav/sites。
  * admin 看到行内 ✏️/🗑/⬆⬇ 按钮 + 每个 group 顶端 + Add。
  *
- * 1:1 port from packages/client/src/pages/sites/SitesPage.tsx (Vite SPA).
+ * 1:1 port from packages/client-vite/src/pages/sites/SitesPage.tsx (Vite SPA).
  * URL state (?g group, ?q query) is managed via nuqs (history: 'replace').
  */
 import { Suspense, useMemo, useCallback, useState, useEffect } from 'react';

@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/components/ClearButton.tsx.
+// Ported from packages/client-vite/src/components/ClearButton.tsx.
 import type { JSX } from 'react';
 import { tr } from '@/i18n/tr';
 

@@ -1,4 +1,4 @@
-// /code/ops 数据 CRUD. Ported from packages/client/src/pages/code/ops_api.ts.
+// /code/ops 数据 CRUD. Ported from packages/client-vite/src/pages/code/ops_api.ts.
 // 公共 GET 无认证;admin 写端点走 WCA OAuth Bearer (ADMIN_WCA_IDS) 或 X-Admin-Key.
 import { API_ORIGIN } from './api-base';
 import { authHeaders, handleApi } from './admin-api';

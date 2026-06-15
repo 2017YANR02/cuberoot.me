@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Landing-page site search — full port of packages/client/src/components/LandingSearch.tsx.
+ * Landing-page site search — full port of packages/client-vite/src/components/LandingSearch.tsx.
  *
  * Data layer lives in lib/site-search.ts (cards/tools/lookups/stats/persons/comps/
  * recons/glossary/about/stack/algSets — 11 categories total). This component is
