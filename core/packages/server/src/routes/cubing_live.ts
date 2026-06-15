@@ -495,7 +495,9 @@ async function syncPersonLiveResults(data: CompData): Promise<void> {
     const compName = decodeHtmlEntities(data.name || compId);
 
     type Row = { wcaid: string; eventId: string; roundId: string; format: string; pos: number; best: number; average: number; attempts: number[] };
-    const rows: Row[] = [];
+    // 按 PK (wcaid|event|round) 去重:combined/双轮 或源数据同人同轮多条会产生重复 PK,
+    // 一条 INSERT...ON CONFLICT 不能对同一行 UPDATE 两次(PG 报 "cannot affect row a second time")。
+    const rowMap = new Map<string, Row>();
     for (const arr of Object.values(data.resultsByRound)) {
       if (!arr.length) continue;
       for (const r of arr) {
@@ -505,12 +507,13 @@ async function syncPersonLiveResults(data: CompData): Promise<void> {
         for (const o of arr) {
           if (o !== r && liveResultBetter(o, r, o.f || r.f) < 0) pos++;
         }
-        rows.push({
+        rowMap.set(`${wcaid}|${r.e}|${r.r}`, {
           wcaid, eventId: r.e, roundId: r.r, format: r.f,
           pos, best: r.b, average: r.a, attempts: Array.isArray(r.v) ? r.v : [],
         });
       }
     }
+    const rows = [...rowMap.values()];
 
     // 整场重写:先删后插,避免改判/退赛留下陈行。
     await query(`DELETE FROM wca_live_person_results WHERE comp_id = ?`, [compId]);
