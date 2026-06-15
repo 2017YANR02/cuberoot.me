@@ -38,7 +38,6 @@ import { cubeoptSolveRoutes } from './routes/cubeopt_solve.js';
 import { ensureDaemon as ensureCubeoptDaemon, isEnabled as cubeoptEnabled } from './cubeopt/daemon.js';
 import { startWcaPastResultsMonitor } from './monitors/wca_past_results.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
-import { ensureDaemon as ensureCube555Daemon } from './cube555/daemon.js';
 import { getCurrentRecords } from './utils/current_records.js';
 import { warmCnCompZh } from './utils/cn_comp_zh_cache.js';
 import { startPrewarmCron } from './routes/cubing_live.js';
@@ -127,12 +126,11 @@ loadNemesizerDataset().catch(err => {
   console.error('[nemesizer] startup load failed, routes will keep returning 503:', err);
 });
 
-// Kick off cube555 JVM daemon spawn in background — first-time cold table
-// build is ~5 min, warm reload from disk ~3s; /v1/scramble/555-rs returns
-// 503 until daemon emits READY. CUBE555_DISABLED=1 skips spawn entirely.
-ensureCube555Daemon().catch(err => {
-  console.error('[cube555] startup failed, /v1/scramble/555-rs will return 503:', err);
-});
+// cube555 5x5 daemon is now LAZY (was boot-spawned). It and the cube48 opt6 table
+// are the two heavy in-process tenants on the small box; the memory arbiter
+// (mem-arbiter.ts) keeps only one resident, so we spawn cube555 on the first
+// /v1/scramble/555-rs request and let it idle-unload. First request pays the JVM
+// cold start (~3s); CUBE555_DISABLED=1 still skips it entirely.
 
 // cube48opt optimal-solve daemon: lazy by default — it holds a multi-GB table
 // resident, and boot is the peak-memory window (current-records full scan +
