@@ -538,6 +538,7 @@ function ScrambleSolverPageInner() {
     setSolveResults(new Map());
     const ac = new AbortController();
     cloudAbortRef.current = ac;
+    const startedAt = Date.now();
     let done = 0;
     try {
       const res = await fetch(apiUrl('/v1/scramble/optimal-solve'), {
@@ -573,12 +574,14 @@ function ScrambleSolverPageInner() {
             done++;
             setCloudStatus(t(`第 ${(obj.i ?? 0) + 1} 条失败:${obj.error ?? ''}`, `#${(obj.i ?? 0) + 1} failed: ${obj.error ?? ''}`));
           } else if (ev === 'done') {
-            setCloudStatus(t(`云端求解完成(成功 ${obj.ok ?? 0}${obj.fail ? `,失败 ${obj.fail}` : ''})`, `Done (ok ${obj.ok ?? 0}${obj.fail ? `, failed ${obj.fail}` : ''})`));
+            const secs = ((Date.now() - startedAt) / 1000).toFixed(1);
+            setCloudStatus(t(`云端求解完成(成功 ${obj.ok ?? 0}${obj.fail ? `,失败 ${obj.fail}` : ''},耗时 ${secs}s)`, `Done (ok ${obj.ok ?? 0}${obj.fail ? `, failed ${obj.fail}` : ''}, ${secs}s)`));
           } else if (typeof obj.i === 'number' && typeof obj.solution === 'string') {
             done++;
+            const secs = ((Date.now() - startedAt) / 1000).toFixed(1);
             solveResultsRef.current.set(obj.i + 1, obj.solution);
             setSolveResults(new Map(solveResultsRef.current));
-            setCloudStatus(t(`云端求解中 ${done}/${lines.length}…`, `Solving on server ${done}/${lines.length}…`));
+            setCloudStatus(t(`云端求解中 ${done}/${lines.length}…(已 ${secs}s)`, `Solving on server ${done}/${lines.length}… (${secs}s)`));
           }
         }
       }
