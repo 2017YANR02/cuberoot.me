@@ -27,7 +27,6 @@ import { statsUrl } from '@/lib/stats-base';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import Top10HistoryPage from '@/components/wca-stats/Top10HistoryPage';
-import NameStatsView, { type NameStatsData } from '@/components/wca-stats/NameStatsView';
 import type { Metric as Top10Metric } from '@/lib/top10-axis';
 import '../_wca_stats.css';
 import { tr } from '@/i18n/tr';
@@ -1118,21 +1117,6 @@ export default function WcaStatClient() {
           <p>{error || tr({ zh: '未知错误', en: 'Unknown error'
                         })}</p>
         </div>
-      </div>
-    );
-  }
-
-  // name_stats 走专属可视化(条形分布 + 国旗),不走通用表格
-  if (statId === 'name_stats') {
-    return (
-      <div className="wca-stats-page">
-        <div className="wca-stats-header">
-          <h1>{(isZh ? data.titleZh : data.title)}</h1>
-          {data.note && (
-            <p className="wca-stats-note">{(isZh ? (data.noteZh ?? data.note) : data.note)}</p>
-          )}
-        </div>
-        <NameStatsView data={data as unknown as NameStatsData} isZh={isZh} />
       </div>
     );
   }

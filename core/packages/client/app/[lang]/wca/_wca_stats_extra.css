@@ -249,6 +249,22 @@
   color: var(--muted-foreground);
 }
 .wse-table tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+/* 可排序表头(空态名录):按钮形态但继承 th 字体外观 */
+.wse-th-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+}
+.wse-th-sort:hover { color: var(--foreground); }
+.wse-th-sort svg { opacity: 0.8; }
 .wse-table a { color: #d77757; text-decoration: none; }
 .wse-table a:hover { text-decoration: underline; }
 
