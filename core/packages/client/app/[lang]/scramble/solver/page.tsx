@@ -547,11 +547,13 @@ function ScrambleSolverPageInner() {
     let done = 0;
     let warm = true;           // was the table already in server memory
     let loadMs = 0;            // server-reported table load time (cold start)
-    let gotEvent = false;      // any SSE event received yet?
-    // Safety timeouts so a dead/hung stream never spins forever. A healthy
-    // request emits loading/ready within ~20s; the server's own solve timeout is
-    // 180s, so 230s total is a safe outer bound.
-    const noRespTimer = setTimeout(() => { if (!gotEvent) ac.abort('no-response'); }, 45_000);
+    // Safety timeouts so a dead/hung stream never spins forever. Sliding
+    // inactivity check: the server sends a 15s heartbeat ping while loading /
+    // queued / mid-solve, so any healthy request keeps resetting lastActivity —
+    // only a genuinely silent stream (>45s no bytes at all) trips no-response.
+    // The server's own solve timeout is 180s, so 230s total is a safe outer bound.
+    let lastActivity = Date.now();
+    const noRespTimer = setInterval(() => { if (Date.now() - lastActivity > 45_000) ac.abort('no-response'); }, 5_000);
     const overallTimer = setTimeout(() => ac.abort('overall'), 230_000);
     // (Re)start the live phase timer — ticks the current phase's elapsed at 0.1s.
     const startPhaseTimer = () => {
@@ -583,6 +585,7 @@ function ScrambleSolverPageInner() {
         while ((sep = buf.indexOf('\n\n')) >= 0) {
           const block = buf.slice(0, sep);
           buf = buf.slice(sep + 2);
+          lastActivity = Date.now(); // any block (incl. heartbeat ping) = alive
           let ev = 'message';
           let data = '';
           for (const ln of block.split('\n')) {
@@ -590,7 +593,6 @@ function ScrambleSolverPageInner() {
             else if (ln.startsWith('data:')) data += ln.slice(5).trim();
           }
           if (!data) continue;
-          gotEvent = true;
           const obj = JSON.parse(data) as { i?: number; htm?: number; solution?: string; error?: string; ok?: number; fail?: number; warm?: boolean; loadMs?: number; ahead?: number; phase?: string };
           if (ev === 'loading') {
             setCloudStatus(t('正在把求解表载入服务器内存(首次约 20 秒)…', 'Loading the solver table into server memory (first time ~20s)…'));
@@ -600,7 +602,7 @@ function ScrambleSolverPageInner() {
             // Transitional — the next 'queued'/'solving' event sets the real state.
             setCloudStatus(warm
               ? t('表已就绪…', 'Table ready…')
-              : t(`表已载入(载表 ${(loadMs / 1000).toFixed(1)}s)…`, `Table loaded (${(loadMs / 1000).toFixed(1)}s)…`));
+              : t(`表已载入(载表 ${Math.round(loadMs / 1000)}s)…`, `Table loaded (${Math.round(loadMs / 1000)}s)…`));
           } else if (ev === 'queued') {
             startPhaseTimer(); // ticker now shows queue-wait time
             const ahead = typeof obj.ahead === 'number' ? obj.ahead : 0;
@@ -616,10 +618,10 @@ function ScrambleSolverPageInner() {
               setCloudStatus(t(`第 ${(obj.i ?? 0) + 1} 条失败:${obj.error ?? ''}`, `#${(obj.i ?? 0) + 1} failed: ${obj.error ?? ''}`));
             }
           } else if (ev === 'done') {
-            const solveSecs = ((Date.now() - cloudPhaseStartRef.current) / 1000).toFixed(1);
+            const solveSecs = Math.round((Date.now() - cloudPhaseStartRef.current) / 1000);
             const okN = obj.ok ?? 0;
             const failN = obj.fail ?? 0;
-            const loadSecs = (loadMs / 1000).toFixed(1);
+            const loadSecs = Math.round(loadMs / 1000);
             const zh = `云端求解完成(成功 ${okN}${failN ? `,失败 ${failN}` : ''}${warm ? `,耗时 ${solveSecs}s` : `,载表 ${loadSecs}s + 求解 ${solveSecs}s`})`;
             const en = `Done (ok ${okN}${failN ? `, failed ${failN}` : ''}${warm ? `, ${solveSecs}s` : `, load ${loadSecs}s + solve ${solveSecs}s`})`;
             setCloudStatus(t(zh, en));
@@ -639,7 +641,7 @@ function ScrambleSolverPageInner() {
       else if (ac.signal.aborted) setCloudStatus(t('已取消。', 'Cancelled.'));
       else setCloudStatus(t(`云端求解失败:${msg}`, `Cloud solve failed: ${msg}`));
     } finally {
-      clearTimeout(noRespTimer);
+      clearInterval(noRespTimer);
       clearTimeout(overallTimer);
       if (cloudTimerRef.current) { clearInterval(cloudTimerRef.current); cloudTimerRef.current = null; }
       setCloudBusy(false);
@@ -753,7 +755,7 @@ function ScrambleSolverPageInner() {
         <div className="cubeopt-info">
           {cloudBusy && <Loader2 size={14} className="spinning" />}
           <span>{cloudStatus}</span>
-          {cloudBusy && <span className="cloud-timer">{(cloudLiveMs / 1000).toFixed(1)}s</span>}
+          {cloudBusy && <span className="cloud-timer">{Math.floor(cloudLiveMs / 1000)}s</span>}
           {cloudBusy && (
             <button className="btn-cancel-sm" onClick={cancelCloud}>
               <X size={12} /> {t('取消', 'Cancel')}
