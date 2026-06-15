@@ -84,6 +84,11 @@
     border: 1px solid var(--border-strong); border-radius: 7px;
 }
 .wp-rce-field input:focus { outline: none; border-color: var(--accent); }
+.wp-rce-derived {
+    font-size: 0.78rem; color: var(--muted-foreground); line-height: 1.5;
+    padding: 8px 10px; border: 1px dashed var(--border-default); border-radius: 9px;
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
 .wp-rce-hint { margin-top: 8px; font-size: 0.72rem; color: var(--faint-foreground); }
 .wp-rce-err { margin-top: 8px; font-size: 0.78rem; color: var(--destructive); }
 .wp-rce-form-actions { margin-top: 12px; display: flex; align-items: center; gap: 8px; }
