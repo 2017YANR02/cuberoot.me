@@ -190,6 +190,13 @@
       "when": 1781548543783,
       "tag": "0026_slimy_nomad",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "6",
+      "when": 1781549763221,
+      "tag": "0027_stormy_quicksilver",
+      "breakpoints": true
     }
   ]
 }

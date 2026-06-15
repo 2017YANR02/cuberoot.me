@@ -616,3 +616,94 @@ export type PointLedgerRow = typeof pointLedger.$inferSelect;
 export type PointLedgerInsert = typeof pointLedger.$inferInsert;
 export type CourseReview = typeof courseReviews.$inferSelect;
 export type CourseReviewInsert = typeof courseReviews.$inferInsert;
+
+// ───────────────────────── Round 3: 游戏化闭环 + 社群 + 学习 ─────────────────────────
+
+// 成就解锁记录:成就目录(规则)在代码里定义(lib/db/achievements.ts),这里只存"某用户已解锁某成就"
+export const userAchievements = sqliteTable(
+  "user_achievements",
+  {
+    userId: text("user_id").notNull(),
+    achievementKey: text("achievement_key").notNull(),
+    unlockedAt: integer("unlocked_at").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.achievementKey] }),
+    index("user_achievements_user_idx").on(t.userId),
+  ],
+);
+
+// 圈子成员:加入圈子持久化(一个用户一个圈子至多一条)
+export const circleMembers = sqliteTable(
+  "circle_members",
+  {
+    userId: text("user_id").notNull(),
+    circleId: text("circle_id").$type<CircleId>().notNull(),
+    joinedAt: integer("joined_at").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.circleId] }),
+    index("circle_members_circle_idx").on(t.circleId),
+  ],
+);
+
+// 站内通知:收件人 userId,type 区分被赞/被评/被回复/@提及/成就/系统,href 点击跳转
+export type NotificationType =
+  | "comment"
+  | "reply"
+  | "like"
+  | "mention"
+  | "achievement"
+  | "system";
+export const notifications = sqliteTable(
+  "notifications",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(), // 收件人
+    type: text("type").$type<NotificationType>().notNull(),
+    actorId: text("actor_id"), // 触发者(系统通知为空)
+    title: text("title").notNull(),
+    body: text("body"),
+    href: text("href"), // 点击跳转目标
+    refType: text("ref_type"),
+    refId: text("ref_id"),
+    readAt: integer("read_at"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("notifications_user_created_idx").on(t.userId, t.createdAt),
+    index("notifications_user_read_idx").on(t.userId, t.readAt),
+  ],
+);
+
+// 课程时间戳笔记:在某 lesson 的 positionSec 处记一笔(markdown body)
+export const lessonNotes = sqliteTable(
+  "lesson_notes",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    lessonId: text("lesson_id").notNull(),
+    courseId: text("course_id").notNull(),
+    positionSec: integer("position_sec").notNull().default(0),
+    body: text("body").notNull(),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [
+    index("lesson_notes_user_lesson_idx").on(
+      t.userId,
+      t.lessonId,
+      t.positionSec,
+    ),
+    index("lesson_notes_user_created_idx").on(t.userId, t.createdAt),
+  ],
+);
+
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type UserAchievementInsert = typeof userAchievements.$inferInsert;
+export type CircleMember = typeof circleMembers.$inferSelect;
+export type CircleMemberInsert = typeof circleMembers.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type NotificationInsert = typeof notifications.$inferInsert;
+export type LessonNote = typeof lessonNotes.$inferSelect;
+export type LessonNoteInsert = typeof lessonNotes.$inferInsert;
