@@ -18,8 +18,9 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { findReconForAttempt } from '@/lib/recon-attempt-lookup';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
-import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, recordAttemptEdit, recordAttemptOriginal } from '@/lib/result-watch-api';
+import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty } from '@/lib/result-watch-api';
 import { AttemptEditPopover } from './AttemptEditPopover';
+import { SolveValue } from './SolveValue';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
 import { ResultChangeChain } from './ChangedResultValue';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
@@ -267,6 +268,7 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
                             isZh={isZh}
                             admin={admin}
                             attemptOlds={effAttempts.map((_, i) => attemptOldValues(chain, i))}
+                            penalties={effectiveAttemptPenalties(chain)}
                             onEdit={(index, newValue, note) =>
                               recordAttemptEdit({
                                 target: { wcaId, competitionId: comp.id, eventId: r.event_id, roundTypeId: r.round_type_id, resultId: r.id ?? null },
@@ -279,6 +281,13 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
                                 target: { wcaId, competitionId: comp.id, eventId: r.event_id, roundTypeId: r.round_type_id, resultId: r.id ?? null },
                                 currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
                                 index, originalValue, note, existingChain: chain,
+                              }).then(refreshChanges)
+                            }
+                            onSetPenalty={(index, penaltyCs, note) =>
+                              recordAttemptPenalty({
+                                target: { wcaId, competitionId: comp.id, eventId: r.event_id, roundTypeId: r.round_type_id, resultId: r.id ?? null },
+                                currentAttempts: effAttempts,
+                                index, penaltyCs, note, existingChain: chain,
                               }).then(refreshChanges)
                             }
                           />
@@ -306,7 +315,7 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
 
 // 把 attempts 渲染为可折行 inline 列表(支持 H2H 等 5+ 次的格式).
 // 命中 reconLookup 的把数渲染为 Link 跳到对应复盘;管理员可点改某一次(自动重算单次/平均).
-function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, attemptOlds, onEdit, onSetOriginal }: {
+function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, attemptOlds, penalties, onEdit, onSetOriginal, onSetPenalty }: {
   attempts: number[];
   best: number;
   eventId: string;
@@ -316,18 +325,21 @@ function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLooku
   isZh: boolean;
   admin?: boolean;
   attemptOlds?: number[][];
+  penalties?: number[];
   onEdit?: (index: number, newValue: number, note?: string) => Promise<void> | void;
   onSetOriginal?: (index: number, originalValue: number, note?: string) => Promise<void> | void;
+  onSetPenalty?: (index: number, penaltyCs: number, note?: string) => Promise<void> | void;
 }) {
   if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
   const validNums = attempts.filter((x) => x > 0);
   const minValid = validNums.length > 0 ? Math.min(...validNums) : 0;
   const langQuery = isZh ? '?lang=zh' : '';
+  const fmt = (v: number) => formatWcaResult(v, eventId, 'single');
   return (
     <span className="wp-attempts-flow">
       {attempts.map((a, i) => {
         if (a === undefined) return null;
-        const formatted = formatWcaResult(a, eventId, 'single');
+        const pen = penalties?.[i] ?? 0;
         const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
         const cls = `wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(attempts, i) ? 'wp-att-trimmed' : ''}`;
         const olds = (attemptOlds?.[i] ?? []).map((ov, k) => (
@@ -338,7 +350,7 @@ function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLooku
         if (reconId) {
           return (
             <Link key={i} href={`/recon/${reconId}${langQuery}`} className={`${cls} wp-att-recon`}>
-              {olds}{formatted}
+              {olds}<SolveValue value={a} penalty={pen} format={fmt} />
             </Link>
           );
         }
@@ -350,13 +362,15 @@ function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLooku
               eventId={eventId}
               oldValues={attemptOlds?.[i] ?? []}
               cls={cls}
-              format={(v) => formatWcaResult(v, eventId, 'single')}
+              format={fmt}
+              penalty={pen}
               onSetOriginal={(v, note) => onSetOriginal?.(i, v, note)}
               onCorrect={(v, note) => onEdit?.(i, v, note)}
+              onSetPenalty={(cs, note) => onSetPenalty?.(i, cs, note)}
             />
           );
         }
-        return <span key={i} className={cls}>{olds}{formatted}</span>;
+        return <span key={i} className={cls}>{olds}<SolveValue value={a} penalty={pen} format={fmt} /></span>;
       })}
     </span>
   );

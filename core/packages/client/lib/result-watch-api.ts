@@ -433,6 +433,55 @@ export async function recordAttemptOriginal(p: {
   else await createResultChange(input);
 }
 
+// ── 罚时标注:成绩值本身正确(已含 +2),仅展开为 base + 罚时(纯展示,不重算单次/平均) ──
+
+/** 各次成绩的有效罚时数组(厘秒,index 对齐 attempts)= 变更链最新 attempt_penalties。 */
+export function effectiveAttemptPenalties(changes: ResultChange[] | undefined): number[] {
+  if (changes) {
+    for (let i = changes.length - 1; i >= 0; i--) {
+      const f = (changes[i].fields ?? []).find((x) => x.field === 'attempt_penalties');
+      if (f && Array.isArray(f.new)) return (f.new as unknown[]).map(Number);
+    }
+  }
+  return [];
+}
+
+/**
+ * 行内标注某一次成绩的罚时(+2 等)→ 成绩值不变,展示拆成 base + 罚时。
+ * penaltyCs=0 清除该次罚时。逐次折进同一条 penalty 记录(以含 attempt_penalties 字段识别)。
+ */
+export async function recordAttemptPenalty(p: {
+  target: AttemptEditTarget;
+  currentAttempts: number[];
+  index: number;
+  penaltyCs: number;
+  existingChain?: ResultChange[];
+  note?: string | null;
+}): Promise<void> {
+  const { target, currentAttempts, index, penaltyCs, existingChain, note } = p;
+  const existing = (existingChain ?? []).find(
+    (c) => c.changeType === 'modified' && (c.fields ?? []).some((f) => f.field === 'attempt_penalties'),
+  );
+  const basePen = existing
+    ? ((existing.fields ?? []).find((f) => f.field === 'attempt_penalties')?.new as unknown[] | undefined)?.map(Number)
+    : undefined;
+  const arr = (basePen ?? currentAttempts.map(() => 0)).slice();
+  while (arr.length < currentAttempts.length) arr.push(0);
+  arr[index] = penaltyCs;
+  const input: ResultChangeInput = {
+    wcaId: target.wcaId,
+    competitionId: target.competitionId,
+    eventId: target.eventId,
+    roundTypeId: target.roundTypeId,
+    resultId: target.resultId ?? null,
+    changeType: 'modified',
+    fields: [{ field: 'attempt_penalties', old: null, new: arr }],
+    note: note ?? (existing?.note ?? null),
+  };
+  if (existing) await updateResultChange(existing.id, input);
+  else await createResultChange(input);
+}
+
 /** WCA round_type_id 归一到 4 个轮次桶('1'/'2'/'3'/'f'),含 combined / cutoff 变体。 */
 export function canonicalRound(id: string | null | undefined): '1' | '2' | '3' | 'f' | null {
   switch (id) {
