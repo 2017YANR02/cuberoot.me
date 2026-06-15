@@ -518,7 +518,10 @@ async function syncPersonLiveResults(data: CompData): Promise<void> {
 
     for (let i = 0; i < rows.length; i += PERSON_LIVE_INSERT_CHUNK) {
       const chunk = rows.slice(i, i + PERSON_LIVE_INSERT_CHUNK);
-      const tuples = chunk.map(() => `(?,?,?,?,?,?,?,?,?,?::jsonb,?)`).join(',');
+      // 12 列:wca_id, comp_id, comp_name, comp_date, event_id, round_type_id,
+      // format_id, pos, best, average, attempts(::jsonb,第 11), source。
+      // attempts 传裸数组 —— porsager 对 ::jsonb 参数自动 JSON 编码(再 JSON.stringify = 双重编码成标量)。
+      const tuples = chunk.map(() => `(?,?,?,?,?,?,?,?,?,?,?::jsonb,?)`).join(',');
       const params: unknown[] = [];
       for (const r of chunk) {
         params.push(
