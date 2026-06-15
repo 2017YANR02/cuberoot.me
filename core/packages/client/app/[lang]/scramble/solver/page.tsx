@@ -22,6 +22,9 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Trash2, Upload, Download, Sparkles, X, Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { apiUrl } from '@/lib/api-base';
+import { authHeaders } from '@/lib/admin-api';
+import { useAuthStore } from '@/lib/auth-store';
 import CubingPreview2D from './_CubingPreview2D';
 import { faceletToCubie, validateFacelet } from './facelet';
 import {
@@ -147,6 +150,16 @@ function ScrambleSolverPageInner() {
   const [inputMode, setInputMode] = useState<InputMode>('paint');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  // Solve source: 'local' = download/generate the prun table in-browser (current
+  // behaviour), 'cloud' = POST scrambles to api.cuberoot.me which solves with the
+  // server-side opt5 table (no download, login-gated). Same optimal solution.
+  const [solveSource, setSolveSource] = useState<'local' | 'cloud'>('local');
+  const [cloudBusy, setCloudBusy] = useState(false);
+  const [cloudStatus, setCloudStatus] = useState<string | null>(null);
+  const cloudAbortRef = useRef<AbortController | null>(null);
+  const user = useAuthStore((s) => s.user);
+  const login = useAuthStore((s) => s.login);
+
   // Read all localStorage-backed prefs post-mount; persist on change.
   useEffect(() => {
     try {
@@ -160,6 +173,8 @@ function ScrambleSolverPageInner() {
       if (im === 'random' || im === 'paste') setInputMode(im);
       const sa = localStorage.getItem('cubeopt.showAdvanced');
       if (sa !== null) setShowAdvanced(sa === '1');
+      const src = localStorage.getItem('cubeopt.solveSource');
+      if (src === 'cloud' || src === 'local') setSolveSource(src);
     } catch { /* corrupt entries */ }
   }, []);
   useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.showPreview', showScramblePreview ? '1' : '0'); } catch { /* */ } }, [mounted, showScramblePreview]);
@@ -167,6 +182,7 @@ function ScrambleSolverPageInner() {
   useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.showLogs', showLogs ? '1' : '0'); } catch { /* */ } }, [mounted, showLogs]);
   useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.inputMode', inputMode); } catch { /* */ } }, [mounted, inputMode]);
   useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.showAdvanced', showAdvanced ? '1' : '0'); } catch { /* */ } }, [mounted, showAdvanced]);
+  useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.solveSource', solveSource); } catch { /* */ } }, [mounted, solveSource]);
 
   const workerRef = useRef<Worker | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -502,6 +518,81 @@ function ScrambleSolverPageInner() {
     }
   };
 
+  const CLOUD_MAX = 5;
+  const HTM_TOKEN = /^[URFDLB][2']?$/;
+
+  // Cloud solve: stream optimal solutions from api.cuberoot.me (server opt5 table).
+  // Results fill the same solveResults Map the local worker writes (1-based index),
+  // so the existing "Solutions" panel renders both paths identically.
+  const cloudSolve = async () => {
+    const lines = scrambles.split('\n').map(s => s.trim()).filter(Boolean);
+    if (!lines.length) { alert(t('打乱不能为空', 'No scrambles')); return; }
+    const bad = lines.find(l => l.split(/\s+/).some(tok => !HTM_TOKEN.test(tok)));
+    if (bad) { alert(t('云端只支持纯面转打乱(U R F D L B,带 2 或 \'),不支持宽块/转体/中层。', 'Cloud solve only takes plain face-turn scrambles (U R F D L B with 2 or \').')); return; }
+    if (lines.length > CLOUD_MAX) { alert(t(`云端一次最多 ${CLOUD_MAX} 条(本地下载表则不限)。`, `Cloud solve takes at most ${CLOUD_MAX} scrambles at once (local mode is unlimited).`)); return; }
+    if (!user) { setCloudStatus(t('云端求解需登录(用右上角 WCA 登录)。', 'Cloud solve requires login (WCA, top-right).')); return; }
+
+    setCloudBusy(true);
+    setCloudStatus(t(`云端求解中 0/${lines.length}…(复杂打乱可能要几十秒)`, `Solving on server 0/${lines.length}… (hard scrambles can take tens of seconds)`));
+    solveResultsRef.current = new Map();
+    setSolveResults(new Map());
+    const ac = new AbortController();
+    cloudAbortRef.current = ac;
+    let done = 0;
+    try {
+      const res = await fetch(apiUrl('/v1/scramble/optimal-solve'), {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ scrambles: lines }),
+        signal: ac.signal,
+      });
+      if (!res.ok || !res.body) {
+        const e = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(e.error || `HTTP ${res.status}`);
+      }
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      for (;;) {
+        const { value, done: rdone } = await reader.read();
+        if (rdone) break;
+        buf += dec.decode(value, { stream: true });
+        let sep: number;
+        while ((sep = buf.indexOf('\n\n')) >= 0) {
+          const block = buf.slice(0, sep);
+          buf = buf.slice(sep + 2);
+          let ev = 'message';
+          let data = '';
+          for (const ln of block.split('\n')) {
+            if (ln.startsWith('event:')) ev = ln.slice(6).trim();
+            else if (ln.startsWith('data:')) data += ln.slice(5).trim();
+          }
+          if (!data) continue;
+          const obj = JSON.parse(data) as { i?: number; htm?: number; solution?: string; error?: string; ok?: number; fail?: number };
+          if (ev === 'error') {
+            done++;
+            setCloudStatus(t(`第 ${(obj.i ?? 0) + 1} 条失败:${obj.error ?? ''}`, `#${(obj.i ?? 0) + 1} failed: ${obj.error ?? ''}`));
+          } else if (ev === 'done') {
+            setCloudStatus(t(`云端求解完成(成功 ${obj.ok ?? 0}${obj.fail ? `,失败 ${obj.fail}` : ''})`, `Done (ok ${obj.ok ?? 0}${obj.fail ? `, failed ${obj.fail}` : ''})`));
+          } else if (typeof obj.i === 'number' && typeof obj.solution === 'string') {
+            done++;
+            solveResultsRef.current.set(obj.i + 1, obj.solution);
+            setSolveResults(new Map(solveResultsRef.current));
+            setCloudStatus(t(`云端求解中 ${done}/${lines.length}…`, `Solving on server ${done}/${lines.length}…`));
+          }
+        }
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setCloudStatus(ac.signal.aborted ? t('已取消。', 'Cancelled.') : t(`云端求解失败:${msg}`, `Cloud solve failed: ${msg}`));
+    } finally {
+      setCloudBusy(false);
+      cloudAbortRef.current = null;
+    }
+  };
+
+  const cancelCloud = () => { cloudAbortRef.current?.abort(); };
+
   useEffect(() => {
     if (readyState !== 'ready') return;
     if (justGeneratedRef.current && autoDownloadTable) {
@@ -562,32 +653,55 @@ function ScrambleSolverPageInner() {
     } catch { return null; }
   }, [scrambles]);
 
+  const cloudMode = solveSource === 'cloud';
+  const busy = cloudMode ? cloudBusy : readyState === 'busy';
+  const solveDisabled = cloudMode ? (!stateOk || !user) : (readyState === 'no-solver' || !stateOk);
+
   return (
     <div className="cubeopt-page">
       <style>{INLINE_CSS}</style>
       <SolveTabs puzzle="3x3" mode="solve" sub="optimal" />
 
-      {mounted && !sabAvailable && (
+      {!cloudMode && mounted && !sabAvailable && (
         <div className="cubeopt-warn">
           {t(
-            '当前页面没有 SharedArrayBuffer/COI,wasm 多线程跑不起来。请刷新页面后再试。',
-            'SharedArrayBuffer / cross-origin isolation not active — multithreaded wasm will not run. Reload the page.'
+            '当前页面没有 SharedArrayBuffer/COI,wasm 多线程跑不起来。请刷新页面后再试,或改用云端求解(免下载表)。',
+            'SharedArrayBuffer / cross-origin isolation not active — multithreaded wasm will not run. Reload the page, or switch to cloud solve (no download).'
           )}
         </div>
       )}
 
-      {workerError && (
+      {!cloudMode && workerError && (
         <div className="cubeopt-warn">{workerError}</div>
       )}
 
-      {isMobile && (
+      {!cloudMode && isMobile && (
         <div className="cubeopt-info">
           <span>
             {t(
-              '检测到手机端 — 已默认 cube48opt1 (30M)。手机 wasm 内存有限,opt2/3 视机型可能 OK,opt4 起容易 OOM 崩页;生成时长是桌面的 3-5 倍,期间不要切到后台。',
-              'Mobile detected — defaulted to cube48opt1 (30M). Mobile wasm memory is tight; opt2/3 may work on flagship phones, opt4+ likely OOM. Gen takes 3-5× longer than desktop; don\'t background the tab during gen.'
+              '检测到手机端 — 已默认 cube48opt1 (30M)。手机 wasm 内存有限,opt2/3 视机型可能 OK,opt4 起容易 OOM 崩页;生成时长是桌面的 3-5 倍,期间不要切到后台。或改用云端求解(免下载表)。',
+              'Mobile detected — defaulted to cube48opt1 (30M). Mobile wasm memory is tight; opt2/3 may work on flagship phones, opt4+ likely OOM. Gen takes 3-5× longer than desktop; don\'t background the tab during gen. Or switch to cloud solve (no download).'
             )}
           </span>
+        </div>
+      )}
+
+      {cloudMode && mounted && !user && (
+        <div className="cubeopt-info">
+          <span>{t('云端求解需登录(用你的 WCA 账号)。', 'Cloud solve requires login (your WCA account).')}</span>
+          <button className="btn" onClick={login}>{t('登录', 'Log in')}</button>
+        </div>
+      )}
+
+      {cloudMode && cloudStatus && (
+        <div className="cubeopt-info">
+          {cloudBusy && <Loader2 size={14} className="spinning" />}
+          <span>{cloudStatus}</span>
+          {cloudBusy && (
+            <button className="btn-cancel-sm" onClick={cancelCloud}>
+              <X size={12} /> {t('取消', 'Cancel')}
+            </button>
+          )}
         </div>
       )}
 
@@ -668,17 +782,26 @@ function ScrambleSolverPageInner() {
             <Trash2 size={14} />
           </button>
           <span className="row-spacer" />
-          {readyState === 'busy' ? (
-            <button className="btn-cancel" onClick={cancelCubeopt} title={t(
-              '终止当前任务。会重建 wasm,prun 表会丢失需重新生成或上传。',
-              'Abort current task. Wasm will be reset; prun table is lost and must be re-generated or uploaded.'
-            )}>
+          {busy ? (
+            <button className="btn-cancel" onClick={cloudMode ? cancelCloud : cancelCubeopt} title={cloudMode
+              ? t('中止云端请求。', 'Abort the cloud request.')
+              : t('终止当前任务。会重建 wasm,prun 表会丢失需重新生成或上传。',
+                  'Abort current task. Wasm will be reset; prun table is lost and must be re-generated or uploaded.')}>
               <X size={14} /> {t('取消', 'Cancel')}
+            </button>
+          ) : cloudMode ? (
+            <button
+              className="btn-primary"
+              disabled={solveDisabled}
+              onClick={cloudSolve}
+              title={t('用云服务器求 HTM 最少步解(opt5,免下载表)', 'Solve optimally on the server (opt5, no download)')}
+            >
+              {t('云端求解', 'Solve on server')}
             </button>
           ) : (
             <button
               className="btn-primary"
-              disabled={readyState === 'no-solver' || !stateOk}
+              disabled={solveDisabled}
               onClick={startSolve}
               title={readyState === 'need-init' ? t(
                 '会先自动生成 prun 表(几十秒)再求最优解',
@@ -746,14 +869,35 @@ function ScrambleSolverPageInner() {
           {showAdvanced ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           <span>{t('高级设置', 'Advanced')}</span>
           <span className="advanced-summary">
-            {solverName} · {nThreads}{t('线程', 'threads')}
-            {readyState === 'ready' && <> · {t('就绪', 'ready')}</>}
-            {readyState === 'need-init' && <> · {t('表未生成', 'table not built')}</>}
-            {readyState === 'busy' && <> · <Loader2 size={12} className="spinning" /> {t('忙', 'busy')}</>}
+            {cloudMode
+              ? <>{t('云端 opt5', 'Cloud opt5')}{cloudBusy && <> · <Loader2 size={12} className="spinning" /> {t('忙', 'busy')}</>}</>
+              : <>
+                  {solverName} · {nThreads}{t('线程', 'threads')}
+                  {readyState === 'ready' && <> · {t('就绪', 'ready')}</>}
+                  {readyState === 'need-init' && <> · {t('表未生成', 'table not built')}</>}
+                  {readyState === 'busy' && <> · <Loader2 size={12} className="spinning" /> {t('忙', 'busy')}</>}
+                </>}
           </span>
         </button>
         {showAdvanced && (
           <>
+            <div className="row">
+              <span className="lbl">{t('求解来源', 'Solve via')}</span>
+              <select className="ctl" value={solveSource} disabled={busy}
+                onChange={(e) => setSolveSource(e.target.value as 'local' | 'cloud')}>
+                <option value="local">{t('本地(下载表,无限制)', 'Local (download table, unlimited)')}</option>
+                <option value="cloud">{t('云端(opt5,免下载,需登录)', 'Cloud (opt5, no download, login)')}</option>
+              </select>
+            </div>
+            {cloudMode && (
+              <p className="cloud-note">
+                {t(
+                  '云端用服务器的 opt5 表(972M)求最优解,解和本地各档完全一样,只是免你下载多 GB 的表。一次最多 5 条;复杂打乱(18 步)可能要几十秒,排队串行处理。',
+                  'The server solves with its opt5 table (972M). The solution is identical to every local table — this just saves you the multi-GB download. Up to 5 scrambles at once; hard (18-move) scrambles can take tens of seconds, processed in a serial queue.'
+                )}
+              </p>
+            )}
+            {!cloudMode && (
             <div className="row">
               <span className="lbl">Solver</span>
               <select className="ctl" value={solverName} disabled={readyState === 'busy'}
@@ -764,6 +908,8 @@ function ScrambleSolverPageInner() {
               </select>
               <span className="size-badge">{SOLVER_OPTIONS.find(o => o.value === solverName)?.size}</span>
             </div>
+            )}
+            {!cloudMode && (<>
             <div className="row">
               <span className="lbl">{t('Prun 表', 'Prun Table')}</span>
               <span className="table-name">{solverInfo?.table_name ?? t('未就绪', 'Not Ready')}</span>
@@ -804,6 +950,7 @@ function ScrambleSolverPageInner() {
                 {nGroupOptions.map(n => <option key={n} value={n}>{n}</option>)}
               </select>
             </div>
+            </>)}
           </>
         )}
       </section>
@@ -1010,6 +1157,12 @@ const INLINE_CSS = `
   font-size: 0.85rem; resize: vertical;
 }
 .logs-area { white-space: pre; overflow-x: auto; }
+.cloud-note {
+  margin: 0 0 0.5rem; padding: 0.5rem 0.6rem;
+  background: var(--panel-sub, #181818); border: 1px dashed var(--border, #333);
+  border-radius: 5px; color: var(--text-muted, #aaa);
+  font-size: 0.8rem; line-height: 1.5;
+}
 .cubeopt-foot {
   margin-top: 1rem; color: var(--text-muted, #888); font-size: 0.8rem;
 }
