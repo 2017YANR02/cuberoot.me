@@ -49,14 +49,15 @@ export function AttemptEditPopover({
   oldValues: number[];
   cls?: string;
   format: (v: number) => string;
-  onSetOriginal: (v: number) => Promise<void> | void;
-  onCorrect: (v: number) => Promise<void> | void;
+  onSetOriginal: (v: number, note?: string) => Promise<void> | void;
+  onCorrect: (v: number, note?: string) => Promise<void> | void;
 }) {
   const anchorRef = useRef<HTMLSpanElement>(null);
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [orig, setOrig] = useState('');
   const [next, setNext] = useState('');
+  const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
 
   const formatted = format(value);
@@ -73,7 +74,7 @@ export function AttemptEditPopover({
     setPos({ top: r.bottom + 6, left });
   }, []);
 
-  const close = useCallback(() => { setOpen(false); setOrig(''); setNext(''); }, []);
+  const close = useCallback(() => { setOpen(false); setOrig(''); setNext(''); setNote(''); }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -96,10 +97,11 @@ export function AttemptEditPopover({
     const po = parseHumanResult(orig, eventId);
     const pn = parseHumanResult(next, eventId);
     if ((po == null || po === value) && (pn == null || pn === value)) { close(); return; }
+    const n = note.trim() || undefined;
     setBusy(true);
     try {
-      if (po != null && po !== value) await onSetOriginal(po);
-      if (pn != null && pn !== value) await onCorrect(pn);
+      if (po != null && po !== value) await onSetOriginal(po, n);
+      if (pn != null && pn !== value) await onCorrect(pn, n);
       close();
     } catch (e) {
       window.alert((e as Error).message);
@@ -137,6 +139,15 @@ export function AttemptEditPopover({
                 style={inputStyle}
                 value={next}
                 onChange={(e) => setNext(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }}
+              />
+            </label>
+            <label style={rowStyle}>
+              <span style={rowLabelStyle}>{tr({ zh: '原因', en: 'Reason' })}</span>
+              <input
+                style={inputStyle}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }}
               />
             </label>

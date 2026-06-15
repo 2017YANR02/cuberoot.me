@@ -397,8 +397,9 @@ export async function recordAttemptOriginal(p: {
   index: number;
   originalValue: number;
   existingChain?: ResultChange[];
+  note?: string | null;
 }): Promise<void> {
-  const { target, currentAttempts, index, originalValue, existingChain } = p;
+  const { target, currentAttempts, index, originalValue, existingChain, note } = p;
   if (currentAttempts[index] === originalValue) return;
   const eq = (a: unknown, b: number[]) =>
     Array.isArray(a) && a.length === b.length && a.every((v, k) => Number(v) === b[k]);
@@ -417,6 +418,7 @@ export async function recordAttemptOriginal(p: {
     originalValue,
     baseOld,
   });
+  // 补录时若给了原因就更新;逐次折进同一条记录,空原因不抹掉已有的。
   const input: ResultChangeInput = {
     wcaId: target.wcaId,
     competitionId: target.competitionId,
@@ -425,6 +427,7 @@ export async function recordAttemptOriginal(p: {
     resultId: target.resultId ?? null,
     changeType: 'modified',
     fields,
+    note: note ?? (existing?.note ?? null),
   };
   if (existing) await updateResultChange(existing.id, input);
   else await createResultChange(input);

@@ -267,18 +267,18 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
                             isZh={isZh}
                             admin={admin}
                             attemptOlds={effAttempts.map((_, i) => attemptOldValues(chain, i))}
-                            onEdit={(index, newValue) =>
+                            onEdit={(index, newValue, note) =>
                               recordAttemptEdit({
                                 target: { wcaId, competitionId: comp.id, eventId: r.event_id, roundTypeId: r.round_type_id, resultId: r.id ?? null },
                                 currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
-                                index, newValue,
+                                index, newValue, note,
                               }).then(refreshChanges)
                             }
-                            onSetOriginal={(index, originalValue) =>
+                            onSetOriginal={(index, originalValue, note) =>
                               recordAttemptOriginal({
                                 target: { wcaId, competitionId: comp.id, eventId: r.event_id, roundTypeId: r.round_type_id, resultId: r.id ?? null },
                                 currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
-                                index, originalValue, existingChain: chain,
+                                index, originalValue, note, existingChain: chain,
                               }).then(refreshChanges)
                             }
                           />
@@ -316,8 +316,8 @@ function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLooku
   isZh: boolean;
   admin?: boolean;
   attemptOlds?: number[][];
-  onEdit?: (index: number, newValue: number) => Promise<void> | void;
-  onSetOriginal?: (index: number, originalValue: number) => Promise<void> | void;
+  onEdit?: (index: number, newValue: number, note?: string) => Promise<void> | void;
+  onSetOriginal?: (index: number, originalValue: number, note?: string) => Promise<void> | void;
 }) {
   if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
   const validNums = attempts.filter((x) => x > 0);
@@ -351,8 +351,8 @@ function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLooku
               oldValues={attemptOlds?.[i] ?? []}
               cls={cls}
               format={(v) => formatWcaResult(v, eventId, 'single')}
-              onSetOriginal={(v) => onSetOriginal?.(i, v)}
-              onCorrect={(v) => onEdit?.(i, v)}
+              onSetOriginal={(v, note) => onSetOriginal?.(i, v, note)}
+              onCorrect={(v, note) => onEdit?.(i, v, note)}
             />
           );
         }
