@@ -226,9 +226,9 @@ html[data-theme=dark] .wp-page {
 .wp-hero-name-flag { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .wp-hero-name-flag .wp-flag { width: 30px; height: 22px; }
 .wp-hero-name-line { display: inline-flex; align-items: center; gap: 8px; }
-/* 历史身份(曾经是 X - 国家):名字下方小字,跨满两列、左缘对齐 */
+/* 历史身份(曾经是 X - 国家):放第 2 列、名字正下方,左缘对齐名字首字母(非国旗) */
 .wp-hero-former {
-    grid-column: 1 / -1; justify-self: start;
+    grid-column: 2; justify-self: start;
     display: flex; flex-direction: column; gap: 2px;
     margin-top: 2px;
 }
