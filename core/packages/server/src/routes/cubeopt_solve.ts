@@ -22,7 +22,7 @@
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { requireAuth } from '../utils/recon_helpers.js';
-import { solveOptimal, isEnabled, isReady, ensureDaemon } from '../cubeopt/daemon.js';
+import { solveOptimal, isEnabled, isReady, ensureDaemon, getLastLoadMs } from '../cubeopt/daemon.js';
 
 export const cubeoptSolveRoutes = new Hono();
 
@@ -81,16 +81,26 @@ cubeoptSolveRoutes.post('/scramble/optimal-solve', async (c) => {
   const scrambles = rawList.map(cleanScramble);
   if (scrambles.some((s) => s === null)) throw new Error('Validation: each scramble must be plain HTM face turns (e.g. R U R\' ...)');
 
-  // Warm the table before opening the stream so a cold start surfaces as a clean
-  // 503 instead of a stream that hangs ~15s.
-  try {
-    await ensureDaemon();
-  } catch (e) {
-    return c.json({ error: e instanceof Error ? e.message : String(e) }, 503, NO_CACHE);
-  }
-
   c.header('X-Accel-Buffering', 'no'); // nginx: don't buffer the SSE stream
   return streamSSE(c, async (stream) => {
+    // Tell the client whether the table is already in memory (warm) or has to be
+    // loaded first (cold, ~20s). Loading happens INSIDE the stream so the client
+    // can show "loading the table…" live instead of staring at a frozen request.
+    const wasReady = isReady();
+    if (!wasReady) {
+      await stream.writeSSE({ event: 'loading', data: JSON.stringify({}) });
+    }
+    try {
+      await ensureDaemon();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      await stream.writeSSE({ event: 'error', data: JSON.stringify({ i: -1, phase: 'load', error: msg }) });
+      await stream.writeSSE({ event: 'done', data: JSON.stringify({ ok: 0, fail: scrambles.length }) });
+      return;
+    }
+    // warm: loadMs absent; cold: the real spawn→READY time of the load just done.
+    await stream.writeSSE({ event: 'ready', data: JSON.stringify(wasReady ? { warm: true } : { warm: false, loadMs: getLastLoadMs() }) });
+
     let ok = 0;
     let fail = 0;
     // Solve sequentially — the daemon is serial anyway, and sequential keeps the
