@@ -36,7 +36,10 @@ const LIST_COLUMNS = [
   'value', 'raw_time', 'average', 'ao_type',
   'regional_single_record', 'regional_average_record', 'regional_aoxr_record',
   'stm', 'tps',
-  'optimal_scramble', 'oll', 'pll', 'note',
+  // 多数解的打乱在 optimal_scramble；缺的（社区 Home 解等 ~234 条）落在 wca_scramble。
+  // COALESCE 回退到 wca_scramble（仍以 optimal_scramble 列名出，客户端 optimalScramble||wcaScramble 无感），
+  // 让卡片视图打乱图 + 搜索都拿得到打乱；只给缺 optimal 的行加数据，不对全表多带一列。
+  "COALESCE(NULLIF(optimal_scramble, ''), wca_scramble) AS optimal_scramble", 'oll', 'pll', 'note',
   // 卡片视图缩略图用：有视频 → 取 B 站/YouTube 封面（多为空串，几乎不增 gzip）。
   'video_url',
 ].join(', ');
