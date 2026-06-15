@@ -22,7 +22,7 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Trash2, Upload, Download, Sparkles, X, Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { apiUrl } from '@/lib/api-base';
+import { streamApiUrl } from '@/lib/api-base';
 import { authHeaders } from '@/lib/admin-api';
 import { useAuthStore } from '@/lib/auth-store';
 import CubingPreview2D from './_CubingPreview2D';
@@ -567,7 +567,9 @@ function ScrambleSolverPageInner() {
     };
     startPhaseTimer();
     try {
-      const res = await fetch(apiUrl('/v1/scramble/optimal-solve'), {
+      // streamApiUrl (not apiUrl): SSE must bypass the Next dev proxy, which
+      // buffers the whole stream and would trip the no-response timeout in dev.
+      const res = await fetch(streamApiUrl('/v1/scramble/optimal-solve'), {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ scrambles: lines }),

@@ -54,6 +54,7 @@ app.use('*', cors({
   origin: (origin) => {
     const allowed = new Set([
       'http://localhost:3000',              // Next dev server
+      'http://127.0.0.1:3000',              // Next dev server (binds 127.0.0.1; SSE bypasses the dev proxy → direct CORS call)
       'https://www.cuberoot.me',            // 主域
       'https://cuberoot.me',                // 裸域
       'https://next.cuberoot.me',           // Next 子域并行验证
