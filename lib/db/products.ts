@@ -64,6 +64,26 @@ export async function findById(id: string): Promise<Product | undefined> {
   return rows[0];
 }
 
+// 会员专享价:会员且配置了 memberPrice(且不高于原价)走会员价,否则常规价。
+// 计价单一来源 —— 详情页展示、下单实付、admin 都从这里取,别各自重算。
+export function effectivePrice(product: Product, isMember: boolean): number {
+  if (
+    isMember &&
+    product.memberPrice != null &&
+    product.memberPrice >= 0 &&
+    product.memberPrice < product.price
+  ) {
+    return product.memberPrice;
+  }
+  return product.price;
+}
+
+// 开通会员后单件可省多少(元)。无 memberPrice 或不便宜则 0。
+export function memberSavings(product: Product): number {
+  if (product.memberPrice == null) return 0;
+  return Math.max(0, product.price - product.memberPrice);
+}
+
 export async function upsert(values: ProductInsert): Promise<void> {
   await db
     .insert(schema.products)
@@ -81,6 +101,8 @@ export async function upsert(values: ProductInsert): Promise<void> {
         description: values.description,
         features: values.features,
         inStock: values.inStock,
+        memberOnly: values.memberOnly ?? false,
+        memberPrice: values.memberPrice ?? null,
       },
     });
 }

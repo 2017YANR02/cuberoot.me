@@ -1,7 +1,8 @@
-import type { Lesson } from "@/db/schema";
+import type { Lesson, Quiz } from "@/db/schema";
 import { UploadField } from "@/components/UploadField";
 import { Card } from "../../_components/Shell";
 import { LessonDeleteForm } from "./_DeleteLessonForm";
+import { QuizPanel } from "./_QuizPanel";
 import {
   createLessonAction,
   updateLessonAction,
@@ -18,9 +19,12 @@ function formatDuration(sec: number | null): string {
 export function LessonsPanel({
   courseId,
   lessons,
+  quizzesByLesson = {},
 }: {
   courseId: string;
   lessons: Lesson[];
+  // lessonId -> 该节题目;由 [id]/page.tsx 预取传入(无则空,QuizPanel 仍可新增)
+  quizzesByLesson?: Record<string, Quiz[]>;
 }) {
   return (
     <div id="lessons" className="mt-10 max-w-3xl">
@@ -122,6 +126,13 @@ export function LessonsPanel({
                 </div>
               </div>
             </form>
+
+            {/* 出题面板独立于上面的 lesson 表单(避免嵌套 form);自带增删改 form */}
+            <QuizPanel
+              courseId={courseId}
+              lessonId={l.id}
+              quizzes={quizzesByLesson[l.id] ?? []}
+            />
           </Card>
         ))}
       </div>

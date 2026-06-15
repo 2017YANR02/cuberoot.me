@@ -12,9 +12,9 @@ function isNextControlFlow(e: unknown): boolean {
   return digest.startsWith("NEXT_REDIRECT") || digest.startsWith("NEXT_NOT_FOUND");
 }
 import { findById as findCourse } from "@/lib/db/courses";
-import { findById as findProduct } from "@/lib/db/products";
+import { findById as findProduct, effectivePrice as productPrice } from "@/lib/db/products";
 import { findById as findEvent, checkEventOrderable } from "@/lib/db/events";
-import { getPlan as getMembershipPlan } from "@/lib/db/membership";
+import { getPlan as getMembershipPlan, isMember } from "@/lib/db/membership";
 import {
   cancel as cancelOrder,
   create as createOrder,
@@ -40,17 +40,27 @@ type PlaceInput = {
   couponCode?: string | null;
 };
 
+type ResolvedRef = {
+  title: string;
+  price: number; // 实际计价(商品已按 isMember 折算会员价)
+  memberOnly?: boolean; // 仅商品:true 且非会员则禁止下单
+};
+
+// isMember:仅商品分支用于折算会员价 / 判定会员专享;其余类型忽略。
 async function resolveRef(
   type: OrderType,
   refId: string,
-): Promise<{ title: string; price: number } | null> {
+  isMemberFlag = false,
+): Promise<ResolvedRef | null> {
   if (type === "course") {
     const c = await findCourse(refId);
     return c ? { title: c.title, price: c.price } : null;
   }
   if (type === "product") {
     const p = await findProduct(refId);
-    return p ? { title: p.name, price: p.price } : null;
+    return p
+      ? { title: p.name, price: productPrice(p, isMemberFlag), memberOnly: p.memberOnly }
+      : null;
   }
   if (type === "event") {
     const e = await findEvent(refId);
@@ -83,9 +93,15 @@ async function placeOrderImpl(input: PlaceInput): Promise<void> {
     const next = orderEntryPath(input.type, input.refId);
     redirect(`/login?next=${encodeURIComponent(next)}`);
   }
-  const ref = await resolveRef(input.type, input.refId);
+  // 会员状态:商品分支据此折算会员价 + 校验会员专享。其余类型不查。
+  const memberFlag = input.type === "product" ? await isMember(user.id) : false;
+  const ref = await resolveRef(input.type, input.refId, memberFlag);
   if (!ref) {
     redirect(orderEntryPath(input.type, input.refId) + "?error=not_found");
+  }
+  // 会员专享商品:非会员服务端拦截下单(前端按钮已禁,这里兜底)
+  if (input.type === "product" && ref.memberOnly && !memberFlag) {
+    redirect(orderEntryPath(input.type, input.refId) + "?error=member_only");
   }
   const qty = Math.max(1, Math.floor(input.qty ?? 1));
 
@@ -160,7 +176,11 @@ export async function previewCoupon(args: {
   qty?: number;
   code: string;
 }): Promise<CouponPreview> {
-  const ref = await resolveRef(args.type, args.refId);
+  // 优惠码预览也按会员价算 gross,确保折扣叠在会员价之上与下单一致。
+  const user = await getCurrentUser();
+  const memberFlag =
+    args.type === "product" && user ? await isMember(user.id) : false;
+  const ref = await resolveRef(args.type, args.refId, memberFlag);
   if (!ref) return { ok: false, reason: "ref_not_found", message: "商品不存在" };
   const qty = Math.max(1, Math.floor(args.qty ?? 1));
   const gross = ref.price * qty;

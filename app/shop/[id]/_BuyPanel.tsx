@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Minus, Plus, ShoppingCart, Tag, LogIn } from "lucide-react";
+import { Minus, Plus, ShoppingCart, Tag, LogIn, Crown, Lock } from "lucide-react";
 import { previewCoupon, placeOrderFromForm, type CouponPreview } from "@/app/actions/order";
 import { track } from "@/lib/track";
 
@@ -14,9 +14,23 @@ type Props = {
   originalPrice: number | null;
   inStock: boolean;
   loggedIn: boolean;
+  // 会员专享价:memberPrice 为会员单价(元,null 表示无会员折扣);
+  // isMember 当前用户是否会员;memberOnly 仅会员可购。
+  memberPrice?: number | null;
+  isMember?: boolean;
+  memberOnly?: boolean;
 };
 
-export function BuyPanel({ refId, price, originalPrice, inStock, loggedIn }: Props) {
+export function BuyPanel({
+  refId,
+  price,
+  originalPrice,
+  inStock,
+  loggedIn,
+  memberPrice = null,
+  isMember = false,
+  memberOnly = false,
+}: Props) {
   const [qty, setQty] = useState(1);
   const [code, setCode] = useState("");
   const [applied, setApplied] = useState<CouponPreview | null>(null);
@@ -50,12 +64,55 @@ export function BuyPanel({ refId, price, originalPrice, inStock, loggedIn }: Pro
     setCode("");
   }
 
-  const gross = price * qty;
+  // 会员价是否生效:配置了 memberPrice 且低于常规价。
+  const hasMemberDeal = memberPrice != null && memberPrice >= 0 && memberPrice < price;
+  // 当前用户单价:会员 + 有会员价则用会员价,否则常规价。
+  const unitPrice = isMember && hasMemberDeal ? memberPrice : price;
+  const memberSaveEach = hasMemberDeal ? price - memberPrice : 0;
+  // 会员专享商品对非会员:禁止下单。
+  const lockedForGuest = memberOnly && !isMember;
+
+  const gross = unitPrice * qty;
   const payable = applied?.ok ? applied.payable : gross;
-  const saved = (originalPrice ? (originalPrice - price) * qty : 0) + (applied?.ok ? applied.discount : 0);
+  const saved =
+    (originalPrice ? (originalPrice - unitPrice) * qty : 0) +
+    (applied?.ok ? applied.discount : 0);
+  // 下单按钮可用条件:有货、未锁(会员专享对非会员锁)。
+  const canBuy = inStock && !lockedForGuest;
 
   return (
     <div className="space-y-4">
+      {/* 会员价 / 会员引导 */}
+      {hasMemberDeal ? (
+        isMember ? (
+          <div className="flex items-center gap-2 rounded-md bg-brand-soft px-3 py-2 text-[13px] text-brand">
+            <Crown size={14} className="shrink-0" />
+            <span>
+              会员价 ¥{memberPrice}
+              <span className="ml-2 text-ink-3 line-through">¥{price}</span>
+            </span>
+          </div>
+        ) : (
+          <Link
+            href="/membership"
+            className="flex items-center justify-between gap-2 rounded-md border border-brand/30 bg-brand-soft px-3 py-2 text-[13px] text-brand transition hover:border-brand/60"
+          >
+            <span className="inline-flex items-center gap-2">
+              <Crown size={14} className="shrink-0" />
+              会员立省 ¥{memberSaveEach}/件,开通会员
+            </span>
+            <span className="text-[12px] text-ink-3">去开通 →</span>
+          </Link>
+        )
+      ) : null}
+
+      {/* 会员专享锁:非会员不可购 */}
+      {lockedForGuest ? (
+        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-700">
+          <Lock size={14} className="mt-0.5 shrink-0" />
+          <span>会员专享商品,开通会员后可购买。</span>
+        </div>
+      ) : null}
       {/* 数量 */}
       <div>
         <label className="text-[12px] text-ink-3">数量</label>
@@ -104,7 +161,7 @@ export function BuyPanel({ refId, price, originalPrice, inStock, loggedIn }: Pro
             type="text"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase().replace(/\s/g, ""))}
-            disabled={!!applied?.ok || !inStock}
+            disabled={!!applied?.ok || !canBuy}
             placeholder="可选,输入优惠码"
             className="flex-1 rounded-md border border-line bg-white px-3 py-2 text-[13px] outline-none focus:border-brand transition disabled:bg-bg-soft disabled:text-ink-3"
           />
@@ -120,7 +177,7 @@ export function BuyPanel({ refId, price, originalPrice, inStock, loggedIn }: Pro
             <button
               type="button"
               onClick={applyCoupon}
-              disabled={busy || !code.trim() || !inStock}
+              disabled={busy || !code.trim() || !canBuy}
               className="shrink-0 rounded-md border border-line bg-white px-3 py-2 text-[12px] text-ink-2 hover:border-brand hover:text-brand transition disabled:opacity-50"
             >
               {busy ? "校验中" : "应用"}
@@ -148,8 +205,17 @@ export function BuyPanel({ refId, price, originalPrice, inStock, loggedIn }: Pro
         ) : null}
       </div>
 
-      {/* 下单 / 登录引导 */}
-      {loggedIn ? (
+      {/* 下单 / 登录引导 / 会员专享引导 */}
+      {loggedIn && lockedForGuest ? (
+        // 已登录非会员遇会员专享:引导开通会员(真 a 链可中键新开)
+        <Link
+          href="/membership"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand py-2.5 text-[14px] font-medium text-white transition hover:bg-brand-dark"
+        >
+          <Crown size={16} />
+          开通会员后购买
+        </Link>
+      ) : loggedIn ? (
         <form
           action={(fd) => {
             startTransition(() => {
@@ -170,7 +236,7 @@ export function BuyPanel({ refId, price, originalPrice, inStock, loggedIn }: Pro
           {applied?.ok ? <input type="hidden" name="couponCode" value={applied.code} /> : null}
           <button
             type="submit"
-            disabled={!inStock || pending}
+            disabled={!canBuy || pending}
             className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand py-2.5 text-[14px] font-medium text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-brand"
           >
             <ShoppingCart size={16} />

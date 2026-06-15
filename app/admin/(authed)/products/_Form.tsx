@@ -97,15 +97,42 @@ export function ProductForm({ initial }: { initial?: Product }) {
           />
         </Field>
 
-        <label className="inline-flex items-center gap-2 text-[14px] text-ink-2">
-          <input
-            type="checkbox"
-            name="inStock"
-            defaultChecked={initial?.inStock ?? true}
-            className="h-4 w-4 accent-brand"
-          />
-          有货
-        </label>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Field
+            label="会员价 (元,可空)"
+            htmlFor="memberPrice"
+            hint="低于常规价才生效,会员下单按此实付"
+          >
+            <Input
+              id="memberPrice"
+              name="memberPrice"
+              type="number"
+              min={0}
+              defaultValue={initial?.memberPrice ?? ""}
+            />
+          </Field>
+        </div>
+
+        <div className="space-y-2.5">
+          <label className="inline-flex items-center gap-2 text-[14px] text-ink-2">
+            <input
+              type="checkbox"
+              name="inStock"
+              defaultChecked={initial?.inStock ?? true}
+              className="h-4 w-4 accent-brand"
+            />
+            有货
+          </label>
+          <label className="flex items-center gap-2 text-[14px] text-ink-2">
+            <input
+              type="checkbox"
+              name="memberOnly"
+              defaultChecked={initial?.memberOnly ?? false}
+              className="h-4 w-4 accent-brand"
+            />
+            会员专享(仅会员可购买,非会员下单被拦)
+          </label>
+        </div>
 
         <FormActions>
           <Submit>{isNew ? "创建" : "保存"}</Submit>

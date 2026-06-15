@@ -8,8 +8,13 @@ import {
 import { findById as findLesson, listByCourse } from "@/lib/db/lessons";
 import { findByUserLesson, listByUserCourse } from "@/lib/db/progress";
 import { listByLesson as listNotesByLesson } from "@/lib/db/notes";
+import {
+  listByLesson as listQuizzesByLesson,
+  lessonQuizResult,
+} from "@/lib/db/quizzes";
 import { getCurrentUser } from "@/lib/auth-user";
 import { LessonPlayer } from "@/components/LessonPlayer";
+import { LessonQuiz } from "@/components/LessonQuiz";
 
 export const dynamic = "force-dynamic";
 
@@ -63,13 +68,22 @@ export default async function LearnPage({
     redirect(`/courses/${course.id}?toast=need_purchase`);
   }
 
-  const [lessons, progressList, notes] = await Promise.all([
+  const [lessons, progressList, notes, quizzes] = await Promise.all([
     listByCourse(course.id),
     user ? listByUserCourse(user.id, course.id) : Promise.resolve([]),
     user ? listNotesByLesson(user.id, lesson.id) : Promise.resolve([]),
+    listQuizzesByLesson(lesson.id),
   ]);
   const progressMap = new Map(progressList.map((p) => [p.lessonId, p]));
   const myProgress = user ? await findByUserLesson(user.id, lesson.id) : undefined;
+
+  // 测验:正确答案(answerIdx)不下发到客户端,提交后由 server action 回传判分。
+  const quizForClient = quizzes.map((q) => ({
+    id: q.id,
+    question: q.question,
+    options: q.options,
+  }));
+  const quizResult = user ? await lessonQuizResult(user.id, lesson.id) : null;
 
   const hasVideo = Boolean(lesson.videoUrl || lesson.videoKey);
   const videoSrc = `/api/lessons/${lesson.id}/video`;
@@ -122,6 +136,14 @@ export default async function LearnPage({
               </div>
             )}
           </div>
+
+          {quizForClient.length > 0 ? (
+            <LessonQuiz
+              lessonId={lesson.id}
+              quizzes={quizForClient}
+              initial={quizResult}
+            />
+          ) : null}
         </div>
 
         <aside className="lg:sticky lg:top-20">
