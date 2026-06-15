@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PlayCircle, BookOpen } from "lucide-react";
+import { PlayCircle, BookOpen, Award } from "lucide-react";
 import { requireUser } from "@/lib/auth-user";
 import { list as listOrders } from "@/lib/db/orders";
 import { findById as findCourse } from "@/lib/db/courses";
@@ -8,6 +8,8 @@ import {
   courseProgressPercent,
   listByUserCourse,
 } from "@/lib/db/progress";
+import { findByUserCourse as findCert } from "@/lib/db/certificates";
+import { issueCertificateAction } from "@/app/actions/cert";
 
 export const metadata = {
   title: "我的课程 — 魔方开放社群",
@@ -31,10 +33,11 @@ export default async function MyCoursesPage() {
     paidCourseIds.map(async (cid) => {
       const course = await findCourse(cid);
       if (!course) return null;
-      const [lessons, progress, progressList] = await Promise.all([
+      const [lessons, progress, progressList, cert] = await Promise.all([
         listLessons(cid),
         courseProgressPercent(user.id, cid),
         listByUserCourse(user.id, cid),
+        findCert(user.id, cid),
       ]);
       const progressMap = new Map(progressList.map((p) => [p.lessonId, p]));
       const firstUnfinished =
@@ -44,7 +47,16 @@ export default async function MyCoursesPage() {
         .sort((a, b) => b.updatedAt - a.updatedAt)[0];
       const continueLesson =
         lessons.find((l) => l.id === lastPlayed?.lessonId) ?? firstUnfinished;
-      return { course, progress, continueLesson, totalLessons: lessons.length };
+      // 全部课时学完(有课时且完成数=总数)才算可领证。
+      const finished = lessons.length > 0 && progress.completed >= lessons.length;
+      return {
+        course,
+        progress,
+        continueLesson,
+        totalLessons: lessons.length,
+        finished,
+        cert: cert ?? null,
+      };
     }),
   );
 
@@ -66,7 +78,7 @@ export default async function MyCoursesPage() {
         </div>
       ) : (
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {list.map(({ course, progress, continueLesson, totalLessons }) => (
+          {list.map(({ course, progress, continueLesson, totalLessons, finished, cert }) => (
             <article
               key={course.id}
               className="rounded-[14px] border border-line bg-white overflow-hidden flex flex-col"
@@ -118,6 +130,28 @@ export default async function MyCoursesPage() {
                     查看详情
                   </Link>
                 )}
+
+                {finished &&
+                  (cert ? (
+                    <Link
+                      href={`/cert/${cert.code}`}
+                      className="mt-2 inline-flex items-center justify-center gap-1.5 rounded-md border border-brand/40 bg-brand-soft py-2 text-[13px] font-medium text-brand hover:bg-brand-soft/70 transition"
+                    >
+                      <Award size={14} />
+                      查看结课证书
+                    </Link>
+                  ) : (
+                    <form action={issueCertificateAction} className="mt-2">
+                      <input type="hidden" name="courseId" value={course.id} />
+                      <button
+                        type="submit"
+                        className="w-full inline-flex items-center justify-center gap-1.5 rounded-md border border-brand/40 py-2 text-[13px] font-medium text-brand hover:bg-brand-soft transition"
+                      >
+                        <Award size={14} />
+                        领取结课证书
+                      </button>
+                    </form>
+                  ))}
               </div>
             </article>
           ))}

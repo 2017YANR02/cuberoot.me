@@ -16,10 +16,16 @@ const NAV: NavItem[] = [
   { href: "/events", label: "赛事" },
   { href: "/community", label: "社群" },
   { href: "/timer", label: "计时器" },
-  { href: "/leaderboard", label: "排行榜" },
   { href: "/news", label: "资讯", lg: true },
   { href: "/instructors", label: "讲师", lg: true },
   { href: "/about", label: "关于", lg: true },
+];
+
+// 魔方工具/玩法收进「工具」下拉,避免主导航过长
+const TOOLS: { href: string; label: string }[] = [
+  { href: "/algorithms", label: "算法库" },
+  { href: "/paths", label: "学习路径" },
+  { href: "/leaderboard", label: "排行榜" },
 ];
 
 export type HeaderUser = {
@@ -65,6 +71,7 @@ export function SiteHeader({
               </Link>
             );
           })}
+          <ToolsMenu pathname={pathname} />
         </nav>
 
         <div className="ml-auto hidden md:flex items-center gap-2">
@@ -126,6 +133,23 @@ export function SiteHeader({
                 </Link>
               );
             })}
+            <div className="mt-1 px-3 pt-2 text-[12px] text-ink-3">工具</div>
+            {TOOLS.map((t) => {
+              const active = pathname === t.href || pathname.startsWith(t.href + "/");
+              return (
+                <Link
+                  key={t.href}
+                  href={t.href}
+                  onClick={() => setOpen(false)}
+                  className={
+                    "rounded-md px-3 py-2 text-[15px] " +
+                    (active ? "text-brand-dark" : "text-ink-2")
+                  }
+                >
+                  {t.label}
+                </Link>
+              );
+            })}
             <div className="mt-2 flex gap-2">
               <Link
                 href="/instructors/apply"
@@ -177,6 +201,56 @@ export function SiteHeader({
         </div>
       )}
     </header>
+  );
+}
+
+function ToolsMenu({ pathname }: { pathname: string }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const active = TOOLS.some(
+    (t) => pathname === t.href || pathname.startsWith(t.href + "/"),
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (!wrapRef.current) return;
+      if (!wrapRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={
+          "inline-flex items-center gap-1 rounded-md px-3 py-1.5 transition " +
+          (active
+            ? "bg-brand-soft text-brand-dark"
+            : "text-ink-2 hover:text-ink hover:bg-bg-soft")
+        }
+      >
+        工具
+        <ChevronDown size={14} className="text-ink-3" />
+      </button>
+      {open ? (
+        <div className="absolute left-0 mt-1 w-40 rounded-md border border-line bg-white shadow-card overflow-hidden z-40">
+          {TOOLS.map((t) => (
+            <Link
+              key={t.href}
+              href={t.href}
+              onClick={() => setOpen(false)}
+              className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
+            >
+              {t.label}
+            </Link>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

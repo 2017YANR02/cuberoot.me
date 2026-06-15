@@ -16,6 +16,8 @@ function parseLines(v: FormDataEntryValue | null): string[] {
 function valuesFromForm(f: FormData): ProductInsert {
   const originalRaw = f.get("originalPrice");
   const originalStr = typeof originalRaw === "string" ? originalRaw.trim() : "";
+  const memberRaw = f.get("memberPrice");
+  const memberStr = typeof memberRaw === "string" ? memberRaw.trim() : "";
   return {
     id: String(f.get("id") ?? "").trim(),
     name: String(f.get("name") ?? "").trim(),
@@ -28,6 +30,8 @@ function valuesFromForm(f: FormData): ProductInsert {
     description: String(f.get("description") ?? "").trim(),
     features: parseLines(f.get("features")),
     inStock: f.get("inStock") === "on",
+    memberOnly: f.get("memberOnly") === "on",
+    memberPrice: memberStr === "" ? null : Number(memberStr),
   };
 }
 

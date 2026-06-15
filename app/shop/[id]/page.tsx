@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Star, CheckCircle2, ArrowRight, PackageCheck, PackageX } from "lucide-react";
-import { list as listProducts, findById as findProduct } from "@/lib/db/products";
+import {
+  list as listProducts,
+  findById as findProduct,
+  effectivePrice,
+  memberSavings,
+} from "@/lib/db/products";
 import type { Product } from "@/lib/db/products";
 import { getCurrentUser } from "@/lib/auth-user";
+import { isMember } from "@/lib/db/membership";
 import { isFavorited } from "@/lib/db/favorites";
 import { Badge } from "@/components/Badge";
 import { FavoriteButton } from "@/components/FavoriteButton";
@@ -43,7 +49,12 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
   const [p, user, all] = await Promise.all([findProduct(id), getCurrentUser(), listProducts()]);
   if (!p) notFound();
 
-  const favorited = user ? await isFavorited(user.id, "product", p.id) : false;
+  const [favorited, member] = await Promise.all([
+    user ? isFavorited(user.id, "product", p.id) : Promise.resolve(false),
+    user ? isMember(user.id) : Promise.resolve(false),
+  ]);
+  const shownPrice = effectivePrice(p, member); // 会员看会员价,其余看常规价
+  const saveEach = memberSavings(p); // 开通会员单件可省(元)
 
   const discountPercent =
     p.originalPrice && p.originalPrice > p.price
@@ -108,15 +119,25 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
           ) : null}
 
           <div className="mt-8 rounded-[14px] border border-line bg-white p-5">
-            <div className="flex items-center gap-3">
-              <span className="text-[32px] font-semibold text-brand leading-none">¥{p.price}</span>
-              {p.originalPrice && p.originalPrice > p.price ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-[32px] font-semibold text-brand leading-none">¥{shownPrice}</span>
+              {member && shownPrice < p.price ? (
+                // 会员实际享会员价:划掉常规价并标会员价
+                <>
+                  <span className="text-[14px] text-ink-3 line-through">¥{p.price}</span>
+                  <Badge tone="brand">会员价</Badge>
+                </>
+              ) : p.originalPrice && p.originalPrice > p.price ? (
                 <>
                   <span className="text-[14px] text-ink-3 line-through">¥{p.originalPrice}</span>
                   {discountPercent > 0 ? <Badge tone="danger">省 {discountPercent}%</Badge> : null}
                 </>
               ) : null}
+              {p.memberOnly ? <Badge tone="brand">会员专享</Badge> : null}
             </div>
+            {!member && saveEach > 0 ? (
+              <p className="mt-1.5 text-[12px] text-ink-3">会员价 ¥{p.memberPrice},立省 ¥{saveEach}/件</p>
+            ) : null}
 
             <div className="mt-5 border-t border-line pt-5">
               <BuyPanel
@@ -125,6 +146,9 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
                 originalPrice={p.originalPrice ?? null}
                 inStock={p.inStock}
                 loggedIn={!!user}
+                memberPrice={p.memberPrice ?? null}
+                isMember={member}
+                memberOnly={p.memberOnly}
               />
             </div>
           </div>
