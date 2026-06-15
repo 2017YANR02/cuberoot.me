@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/components/PillToggle/PillToggle.tsx.
+// Ported from packages/client-vite/src/components/PillToggle/PillToggle.tsx.
 // 既能点击切换,也能拖动滑钮(圆形)横向滑过中点切换 —— 指针落点 > 容器中线 = on。
 import { useRef } from 'react';
 import './PillToggle.css';

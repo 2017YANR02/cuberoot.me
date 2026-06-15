@@ -2,7 +2,7 @@
 
 /**
  * /code/traffic — WCA-gated 站内流量统计.
- * Ported from packages/client/src/pages/traffic/TrafficPage.tsx.
+ * Ported from packages/client-vite/src/pages/traffic/TrafficPage.tsx.
  * 数据来源: GET /v1/analytics/summary?range=7d|30d|90d|all (Bearer auth).
  * 4 块: PV/UV 折线 + Top 路径 + Top 来源 + 国家分布.
  */

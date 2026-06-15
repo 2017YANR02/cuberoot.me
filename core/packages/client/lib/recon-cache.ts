@@ -1,6 +1,6 @@
 /**
  * Recon 列表 localStorage 缓存——stale-while-revalidate.
- * Ported 1:1 from packages/client/src/utils/recon_cache.ts.
+ * Ported 1:1 from packages/client-vite/src/utils/recon_cache.ts.
  */
 import type { ReconSolve } from '@cuberoot/shared';
 

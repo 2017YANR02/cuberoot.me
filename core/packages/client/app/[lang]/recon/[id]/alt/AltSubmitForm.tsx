@@ -1,5 +1,5 @@
 'use client';
-// Alternative submit/edit form — ported from packages/client/src/pages/recon/AltSubmitPage.tsx.
+// Alternative submit/edit form — ported from packages/client-vite/src/pages/recon/AltSubmitPage.tsx.
 // TwistySection live preview + solution textarea + caret sync + ReconAutofill Tab suggestions
 // + real-time STM stats label.
 

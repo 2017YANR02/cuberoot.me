@@ -3,7 +3,7 @@
 /**
  * /visualcube/stages — visual cheat sheet of all available stage masks.
  *
- * Ported from packages/client/src/pages/visualcube/VisualCubeStagesPage.tsx
+ * Ported from packages/client-vite/src/pages/visualcube/VisualCubeStagesPage.tsx
  * (next/link replaces react-router Link; useDocumentTitle is the local hook).
  */
 import Link from '@/components/AppLink';

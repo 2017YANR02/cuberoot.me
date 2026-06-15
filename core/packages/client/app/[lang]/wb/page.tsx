@@ -3,7 +3,7 @@
 /**
  * /wb — non-WCA "World Bests" / Unofficial World Records.
  *
- * 1:1 port from packages/client/src/pages/wb/WbPage.tsx (Vite SPA).
+ * 1:1 port from packages/client-vite/src/pages/wb/WbPage.tsx (Vite SPA).
  */
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

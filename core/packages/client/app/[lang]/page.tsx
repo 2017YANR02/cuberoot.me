@@ -2,7 +2,7 @@
 
 /**
  * Site entrypoint — Landing page.
- * Ported from packages/client/src/pages/LandingPage.tsx.
+ * Ported from packages/client-vite/src/pages/LandingPage.tsx.
  * NOTE: particle-canvas code dropped — SHOW_PARTICLES was already false upstream.
  */
 import { useCallback, useEffect, useState } from 'react';

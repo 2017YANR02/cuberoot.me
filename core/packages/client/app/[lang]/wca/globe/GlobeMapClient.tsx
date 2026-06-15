@@ -6,7 +6,7 @@
  *   - upcoming: 近期全球比赛聚合点
  *   - cuber:    选手生涯足迹（按时间顺序画大圆弧，支持 play/scrub）
  *
- * 1:1 port from packages/client/src/pages/GlobePage.tsx (Vite SPA).
+ * 1:1 port from packages/client-vite/src/pages/GlobePage.tsx (Vite SPA).
  * Adapted for Next.js App Router: react-router-dom Link → next/link Link (href),
  * useNavigate → useRouter().push, '../utils/X' → '@/lib/<kebab>',
  * '../components/X' → '@/components/X', Flag from utils/flag → '@/components/Flag'.

@@ -1,7 +1,7 @@
 'use client';
 /**
  * /wca/comp/sources — data flow diagram.
- * Ported from packages/client/src/pages/comp/CompSourcesPage.tsx.
+ * Ported from packages/client-vite/src/pages/comp/CompSourcesPage.tsx.
  */
 import Link from '@/components/AppLink';
 import { ArrowLeft, Database, Globe, Radio, FileText } from 'lucide-react';

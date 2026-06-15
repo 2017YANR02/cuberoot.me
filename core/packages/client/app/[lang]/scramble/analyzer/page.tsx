@@ -3,7 +3,7 @@
 /**
  * /scramble/analyzer — 3x3 scramble CFOP analyzer.
  *
- * Ported from packages/client/src/pages/analyze/AnalyzePage.tsx.
+ * Ported from packages/client-vite/src/pages/analyze/AnalyzePage.tsx.
  * The classic-worker assets (analyzer.js + boohoo/hs/zbh/xcross/eocross/pair/
  * pseudo-cross/pseudo-pair) are copied verbatim under
  * client/public/analyze-worker/ and loaded via `new Worker('/analyze-worker/analyzer.js')`.

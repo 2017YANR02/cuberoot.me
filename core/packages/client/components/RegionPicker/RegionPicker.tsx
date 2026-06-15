@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/components/RegionPicker/RegionPicker.tsx.
+// Ported from packages/client-vite/src/components/RegionPicker/RegionPicker.tsx.
 import { useEffect, useMemo, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { Flag } from '@/components/Flag';

@@ -1,6 +1,6 @@
 'use client';
 
-// /about — port of packages/client/src/pages/AboutPage.tsx.
+// /about — port of packages/client-vite/src/pages/AboutPage.tsx.
 
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';

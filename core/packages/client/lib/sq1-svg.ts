@@ -1,6 +1,6 @@
 /**
  * Square-1 puzzle — TS port of tnoodle-lib `SquareOnePuzzle.java`.
- * Ported from packages/client/src/pages/gen/sq1_svg.ts.
+ * Ported from packages/client-vite/src/pages/gen/sq1_svg.ts.
  *
  * The `formatScrambleForEvent` + `canonicalSq1Alg` exports are what the
  * alg subpages (CaseThumb / PuzzleSVG / AlgCategoryPage) consume.

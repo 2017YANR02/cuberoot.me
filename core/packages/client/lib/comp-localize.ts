@@ -1,4 +1,4 @@
-// Ported from packages/client/src/utils/comp_localize.ts.
+// Ported from packages/client-vite/src/utils/comp_localize.ts.
 // 比赛名本地化 — display-only stripWcaPrefix + 3-level zh fallback.
 import { compNameZh } from './country-flags';
 

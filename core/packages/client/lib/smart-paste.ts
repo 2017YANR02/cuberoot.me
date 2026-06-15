@@ -1,5 +1,5 @@
 // 智能粘贴 — 检测剪贴板内容并路由到对应工具
-// Ported from packages/client/src/utils/smart_paste.ts.
+// Ported from packages/client-vite/src/utils/smart_paste.ts.
 // 返回的 route 为裸路径,调用方 (LandingSearch) 自行加 /[lang] 前缀。
 import { rewriteWcaCompUrl } from './comp-link';
 

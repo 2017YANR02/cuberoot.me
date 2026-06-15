@@ -1,6 +1,6 @@
 'use client';
 
-// Ported verbatim from packages/client/src/hooks/useIsMobile.ts.
+// Ported verbatim from packages/client-vite/src/hooks/useIsMobile.ts.
 // SSR guard already in place via typeof window check.
 
 import { useEffect, useState } from 'react';

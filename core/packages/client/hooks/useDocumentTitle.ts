@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/utils/useDocumentTitle.ts.
+// Ported from packages/client-vite/src/utils/useDocumentTitle.ts.
 // Same brand + em-dash separator. Resets on unmount so unsetting pages tab to "CubeRoot".
 
 import { useEffect } from 'react';

@@ -2,7 +2,7 @@
 /**
  * /recon/submit — submit a new reconstruction.
  *
- * Full Vite-parity port of packages/client/src/pages/recon/ReconSubmitPage.tsx.
+ * Full Vite-parity port of packages/client-vite/src/pages/recon/ReconSubmitPage.tsx.
  * See ReconSubmitForm.tsx for the deferred-feature notes (autofill popup +
  * autoSpace contenteditable input remain out of scope for this port).
  *

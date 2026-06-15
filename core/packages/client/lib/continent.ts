@@ -1,4 +1,4 @@
-// Ported from packages/client/src/utils/continent.ts.
+// Ported from packages/client-vite/src/utils/continent.ts.
 // ISO 3166-1 alpha-2 → 大洲 code (AF/AS/EU/NA/OC/SA).
 
 export type ContinentCode = 'AF' | 'AS' | 'EU' | 'NA' | 'OC' | 'SA';

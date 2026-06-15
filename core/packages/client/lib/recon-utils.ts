@@ -1,4 +1,4 @@
-// Port from packages/client/src/utils/recon_utils.ts.
+// Port from packages/client-vite/src/utils/recon_utils.ts.
 import { ISO2_TO_CONTINENT } from './continent';
 
 // ── Time formatting ──
@@ -117,7 +117,7 @@ export function wcaPersonUrl(personId: string): string {
   return `https://www.worldcubeassociation.org/persons/${personId}`;
 }
 
-// ── helpers ported from packages/client/src/utils/recon_utils.ts ──
+// ── helpers ported from packages/client-vite/src/utils/recon_utils.ts ──
 
 export function formatTimeInput(seconds: number | undefined | null): string {
   if (seconds == null || isNaN(seconds) || seconds < 0) return '';

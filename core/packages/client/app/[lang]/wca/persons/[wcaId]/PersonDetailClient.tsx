@@ -1,7 +1,7 @@
 'use client';
 // /wca/persons/[wcaId] — WCA person detail page (client shell).
 // Hero + PR table + 5 tabs (results / comps / events / milestones / cities).
-// Ported from packages/client/src/pages/wca_stats/persons/PersonDetailPage.tsx.
+// Ported from packages/client-vite/src/pages/wca_stats/persons/PersonDetailPage.tsx.
 //
 // The wcaId space is unbounded so this route ships as ONE prerendered static
 // shell (see page.tsx) reused for every id via a next.config rewrite. The real

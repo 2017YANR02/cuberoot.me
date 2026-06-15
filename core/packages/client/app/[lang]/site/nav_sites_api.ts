@@ -2,7 +2,7 @@
  * /v1/nav/sites — 网址导航 (admin 编辑) API。
  * server 实现 routes/nav_sites.ts;鉴权走 ADMIN_WCA_IDS WCA OAuth Bearer。
  *
- * 1:1 port from packages/client/src/pages/sites/nav_sites_api.ts.
+ * 1:1 port from packages/client-vite/src/pages/sites/nav_sites_api.ts.
  */
 import { API_ORIGIN } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';

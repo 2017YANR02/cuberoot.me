@@ -8,7 +8,7 @@
  * and React.
  *
  * To eyeball-test imports under tsx without a browser:
- *     pnpm exec tsx core/packages/client/src/pages/timer/bluetooth/__smoke__.ts
+ *     pnpm exec tsx core/packages/client-vite/src/pages/timer/bluetooth/__smoke__.ts
  *
  * We don't try to actually call `useBluetoothCube` here — that requires a
  * React renderer. The `_assertHook` line below proves the function's type

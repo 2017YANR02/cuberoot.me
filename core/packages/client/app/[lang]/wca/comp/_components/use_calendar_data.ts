@@ -1,4 +1,4 @@
-// Ported from packages/client/src/pages/calendar/use_calendar_data.ts.
+// Ported from packages/client-vite/src/pages/calendar/use_calendar_data.ts.
 import { useEffect, useState } from 'react';
 import { statsUrl } from '@/lib/stats-base';
 

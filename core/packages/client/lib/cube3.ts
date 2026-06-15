@@ -1,6 +1,6 @@
 /**
  * Thin wrappers around cubing.js for alg manipulation (invert / simplify / mirror).
- * Ported from packages/client/src/utils/cube3.ts.
+ * Ported from packages/client-vite/src/utils/cube3.ts.
  */
 import { Alg, Move } from 'cubing/alg';
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';

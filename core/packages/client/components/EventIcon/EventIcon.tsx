@@ -1,5 +1,5 @@
 /**
- * WCA / cubing 项目图标 — 内联 SVG. Ported from packages/client/src/components/EventIcon.
+ * WCA / cubing 项目图标 — 内联 SVG. Ported from packages/client-vite/src/components/EventIcon.
  * SVGs sources still in ./svg/{event,unofficial,penalty}/ (cubing/icons LICENSE
  * preserved). Vite's `import.meta.glob('./svg/...*.svg', { eager, ?raw })` is
  * replaced by the explicit map in ./svg-map.ts produced by gen-svg-map.mjs.

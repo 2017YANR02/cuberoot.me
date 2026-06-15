@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Ported verbatim from packages/client/src/pages/analyze/analyze_worker_client.ts.
+ * Ported verbatim from packages/client-vite/src/pages/analyze/analyze_worker_client.ts.
  * Spawns a classic worker out of /analyze-worker/analyzer.js so importScripts
  * can pull in the legacy data files (boohoo.js / hs.js / zbh.js).
  */

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * AlgCategoryView — read-only port of packages/client/src/pages/alg/AlgCategoryPage.tsx.
+ * AlgCategoryView — read-only port of packages/client-vite/src/pages/alg/AlgCategoryPage.tsx.
  *
  * Drops from the Vite version (deferred to later phases):
  *   - Admin features (AdminCaseEditor / ValidationReportModal / dnd-kit reorder)

@@ -3,7 +3,7 @@
 /**
  * 另解只读查看页 —— /recon/[id]/alt/[altIdx]
  * 左栏 TwistyPlayer 动画 + 右栏只读打乱 + SolutionView(点解法跟随动画)。
- * Ported from packages/client/src/pages/recon/AltViewPage.tsx.
+ * Ported from packages/client-vite/src/pages/recon/AltViewPage.tsx.
  */
 import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from '@/components/AppLink';

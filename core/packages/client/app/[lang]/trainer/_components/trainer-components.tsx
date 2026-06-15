@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/pages/trainer/components.tsx
+// Ported from packages/client-vite/src/pages/trainer/components.tsx
 import { useMemo, useState, type ReactNode } from 'react';
 import { Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';

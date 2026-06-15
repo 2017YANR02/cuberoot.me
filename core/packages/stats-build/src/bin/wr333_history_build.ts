@@ -7,7 +7,7 @@
 //   - subMilestonesAo5:     首破 sub-X Ao5 的节点(15/12/10/8/7/6/5/4)
 //
 // 手写注释(method/hardware/STM/TPS/feature)在
-// `client/src/pages/prediction/data/wr333_history_annotations.ts`,运行时按 date 合并。
+// `client-vite/src/pages/prediction/data/wr333_history_annotations.ts`,运行时按 date 合并。
 //
 // 用法: pnpm --filter @cuberoot/stats-build exec tsx src/bin/wr333_history_build.ts
 

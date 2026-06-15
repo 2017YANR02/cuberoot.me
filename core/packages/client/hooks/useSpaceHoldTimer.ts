@@ -1,4 +1,4 @@
-// Ported from packages/client/src/hooks/useSpaceHoldTimer.ts
+// Ported from packages/client-vite/src/hooks/useSpaceHoldTimer.ts
 'use client';
 
 import { useCallback, useEffect } from 'react';

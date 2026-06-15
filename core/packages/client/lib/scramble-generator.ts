@@ -1,4 +1,4 @@
-// Ported from packages/client/src/utils/scrambleGenerator.ts
+// Ported from packages/client-vite/src/utils/scrambleGenerator.ts
 
 export const crossColorToCubeRotation = (c: string): string => {
   switch (c) {

@@ -1,7 +1,7 @@
 'use client';
 
 // POC: verify @ffmpeg/ffmpeg multi-threaded WASM loads in Next.js 16 App Router.
-// Mirrors packages/client/src/pages/frame-count/FrameCountPage.tsx:1965-1971.
+// Mirrors packages/client-vite/src/pages/frame-count/FrameCountPage.tsx:1965-1971.
 // COOP/COEP set globally in next.config.ts so SharedArrayBuffer is available.
 
 import { useCallback, useRef, useState } from 'react';

@@ -2,9 +2,6 @@
 # 以 / 结尾 = 目录(路径含即豁免);否则按文件后缀匹配。
 # client 部分与 tests/url-state-no-raw-history.test.ts 的 ALLOWLIST 保持一致。
 
-# 退役 Vite client(冻结,nuqs 化前的裸 history 不再清理;新功能只在 client)
-packages/client/src/
-
 # client 确属特殊的文件(zustand data-blob / maplibre / 自定义编码 / 全局 infra / 文档示例)
 i18n/i18n-client.ts
 app/[lang]/wca/globe/GlobeMapClient.tsx

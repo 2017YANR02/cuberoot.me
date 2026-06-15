@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /wca/comp/[slug] — full port of packages/client/src/pages/comp/CompDetailPage.tsx.
+ * /wca/comp/[slug] — full port of packages/client-vite/src/pages/comp/CompDetailPage.tsx.
  * Live WS (cubing.com + WCA Live) + Psych Sheet + record badges + round/cuber modals.
  */
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';

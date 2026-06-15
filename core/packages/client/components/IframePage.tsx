@@ -5,7 +5,7 @@
  * NOTE: 用于嵌入未迁移到 React 的外部模块（Solver/Alg Trainer/csTimer）
  * 零改动上游代码，通过 iframe 在 SPA 内展示原版页面
  *
- * Ported 1:1 from packages/client/src/pages/IframePage.tsx
+ * Ported 1:1 from packages/client-vite/src/pages/IframePage.tsx
  */
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 

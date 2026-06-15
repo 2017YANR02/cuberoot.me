@@ -211,7 +211,7 @@ const nextConfig: NextConfig = {
     };
   },
 
-  // 1:1 with packages/client/src/App.tsx <Navigate> redirects. Query strings
+  // 1:1 with packages/client-vite/src/App.tsx <Navigate> redirects. Query strings
   // auto-pass through (e.g. /analyze?lang=zh → /scramble/analyzer?lang=zh).
   // /average → /calc?tab=average merges with any incoming ?lang=zh.
   // permanent: true = 308 (cached forever); these URL renames are stable.

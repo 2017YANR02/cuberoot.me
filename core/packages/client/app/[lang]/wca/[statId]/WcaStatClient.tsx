@@ -1,6 +1,6 @@
 'use client';
 
-// Catch-all WCA stat renderer. Ported from packages/client/src/pages/wca_stats/WcaStatsPage.tsx.
+// Catch-all WCA stat renderer. Ported from packages/client-vite/src/pages/wca_stats/WcaStatsPage.tsx.
 // Supports 4 render modes: rows / sections / panels / metricPanels.
 // NOTE: deferred — hasAbout 链接 (wca_about/registry) 暂未迁移,about 链接不显示。
 //   Top10HistoryPage 嵌入(wr_metric ranking 面板 bar chart race)已迁移。

@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/pages/code/OpsPage.tsx.
+// Ported from packages/client-vite/src/pages/code/OpsPage.tsx.
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';

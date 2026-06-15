@@ -3,7 +3,7 @@
 import { tr } from '@/i18n/tr';
 
 
-// Ported from packages/client/src/pages/wca_stats/ShowToggle.tsx.
+// Ported from packages/client-vite/src/pages/wca_stats/ShowToggle.tsx.
 
 export type ShowMode = 'persons' | 'results';
 

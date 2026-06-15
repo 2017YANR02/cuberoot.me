@@ -9,7 +9,7 @@
  * mirrored). Logged-in WCA users can submit / edit / delete their own words
  * and vote; admins can edit / delete any word, including upstream entries.
  *
- * Ported from packages/client/src/pages/memo/colpi/ColpiPage.tsx.
+ * Ported from packages/client-vite/src/pages/memo/colpi/ColpiPage.tsx.
  */
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, useParams, usePathname } from 'next/navigation';

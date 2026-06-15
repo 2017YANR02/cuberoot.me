@@ -1,6 +1,6 @@
 'use client';
 
-// Ported from packages/client/src/pages/TrainingPage.tsx
+// Ported from packages/client-vite/src/pages/TrainingPage.tsx
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';

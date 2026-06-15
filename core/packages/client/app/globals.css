@@ -4,7 +4,7 @@
 @source "../components/**/*.{tsx,ts,jsx,js}";
 @import "flag-icons/css/flag-icons.min.css";
 
-/* Ported from packages/client/src/index.css (tokens + base only — page-specific
+/* Ported from packages/client-vite/src/index.css (tokens + base only — page-specific
    styles will land beside their pages during migration). */
 
 /* iOS Safari focus zoom guard */
@@ -406,7 +406,7 @@ a {
   animation-duration: 0.42s;
 }
 
-/* === Shared toggle / clear-button styles (from packages/client/src/index.css + */
+/* === Shared toggle / clear-button styles (from packages/client-vite/src/index.css + */
 /*     components/header_toggles.css / lang_toggle.css / theme_toggle.css) === */
 
 .header-toggles {
@@ -556,7 +556,7 @@ a {
   color: var(--foreground);
 }
 
-/* === Shared button utilities (ported from packages/client/src/index.css) ===
+/* === Shared button utilities (ported from packages/client-vite/src/index.css) ===
    Used across 13+ pages (training / solver / mosaic / recon / commutator ...).
    Without these, "btn-primary" buttons render as unstyled text. */
 

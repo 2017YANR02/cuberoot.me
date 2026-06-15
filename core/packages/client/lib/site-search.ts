@@ -1,7 +1,7 @@
 'use client';
 
 // 全站搜索匹配 — 落地页 LandingSearch 共用。
-// Ported from packages/client/src/utils/site_search.ts (1:1 data layer,
+// Ported from packages/client-vite/src/utils/site_search.ts (1:1 data layer,
 // 调整路径到 client 别名 + 不依赖 react-router)。
 import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
 import { loadPersonsIndex, searchLocalPersons, type WcaPerson, type ReconSolve } from '@cuberoot/shared';

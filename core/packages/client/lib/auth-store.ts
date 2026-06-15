@@ -1,5 +1,5 @@
 /**
- * WCA OAuth (Implicit Grant) auth state — ported from packages/client/src/stores/auth_store.ts.
+ * WCA OAuth (Implicit Grant) auth state — ported from packages/client-vite/src/stores/auth_store.ts.
  * No Capacitor branch here; web only. Redirect URI is window.location.origin + '/auth/callback'.
  */
 'use client';

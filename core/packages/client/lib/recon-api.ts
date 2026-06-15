@@ -1,4 +1,4 @@
-// Full port of packages/client/src/utils/recon_api.ts to client.
+// Full port of packages/client-vite/src/utils/recon_api.ts to client.
 // Auth + write endpoints included.
 
 import type {

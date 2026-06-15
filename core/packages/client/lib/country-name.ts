@@ -1,4 +1,4 @@
-// Ported from packages/client/src/utils/country_name.ts.
+// Ported from packages/client-vite/src/utils/country_name.ts.
 // ISO alpha-2 → 国家名（英 / 中）. Curated overrides + Intl.DisplayNames fallback.
 
 export const COUNTRY_EN: Record<string, string> = {

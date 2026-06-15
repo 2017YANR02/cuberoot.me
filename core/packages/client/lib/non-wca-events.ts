@@ -1,4 +1,4 @@
-// Subset of packages/client/src/utils/cubingScramble.ts — the (id → cubing-icons
+// Subset of packages/client-vite/src/utils/cubingScramble.ts — the (id → cubing-icons
 // class) table only. EventIcon uses this to look up non-WCA event glyphs.
 // The full cubingScramble.ts pulls cubing/scramble + worker bridges; we only
 // need this static table for icon rendering.

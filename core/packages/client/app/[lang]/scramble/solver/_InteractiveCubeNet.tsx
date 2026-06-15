@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Ported from packages/client/src/pages/visualcube/InteractiveCubeNet.tsx.
+ * Ported from packages/client-vite/src/pages/visualcube/InteractiveCubeNet.tsx.
  * Adapted to client: react-router useNavigate → next/navigation useRouter.
  * Imports kociemba helpers from the local _kociemba/ copy.
  */
