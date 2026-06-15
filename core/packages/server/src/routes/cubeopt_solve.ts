@@ -83,52 +83,58 @@ cubeoptSolveRoutes.post('/scramble/optimal-solve', async (c) => {
 
   c.header('X-Accel-Buffering', 'no'); // nginx: don't buffer the SSE stream
   return streamSSE(c, async (stream) => {
-    // Tell the client whether the table is already in memory (warm) or has to be
-    // loaded first (cold, ~20s). Loading happens INSIDE the stream so the client
-    // can show "loading the table…" live instead of staring at a frozen request.
-    const wasReady = isReady();
-    if (!wasReady) {
-      await stream.writeSSE({ event: 'loading', data: JSON.stringify({}) });
-    }
-    try {
-      await ensureDaemon();
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      await stream.writeSSE({ event: 'error', data: JSON.stringify({ i: -1, phase: 'load', error: msg }) });
-      await stream.writeSSE({ event: 'done', data: JSON.stringify({ ok: 0, fail: scrambles.length }) });
-      return;
-    }
-    // warm: loadMs absent; cold: the real spawn→READY time of the load just done.
-    await stream.writeSSE({ event: 'ready', data: JSON.stringify(wasReady ? { warm: true } : { warm: false, loadMs: getLastLoadMs() }) });
-
-    // Serialize SSE writes — the onState callback fires asynchronously (queued →
-    // solving) while we await the solve, and hono's stream isn't parallel-safe.
+    // Serialize SSE writes — the onState callback + heartbeat fire asynchronously
+    // while we await a solve, and hono's stream isn't parallel-safe.
     let chain: Promise<void> = Promise.resolve();
     const safeWrite = (msg: Parameters<typeof stream.writeSSE>[0]): Promise<void> => {
       chain = chain.then(() => stream.writeSSE(msg)).catch(() => {});
       return chain;
     };
+    // Heartbeat: a request can sit silent for ~1min (queued behind another solve,
+    // or mid-solve with no progress events). Without bytes flowing the reverse
+    // proxy closes the idle connection, killing the request just as it'd finish.
+    // A 15s ping keeps it alive; the client ignores 'ping' (empty data).
+    const heartbeat = setInterval(() => { void safeWrite({ event: 'ping', data: '' }); }, 15_000);
 
-    let ok = 0;
-    let fail = 0;
-    // Solve sequentially — the daemon is serial anyway, and sequential keeps the
-    // queue shallow + results ordered by completion (client re-sorts by index).
-    for (let i = 0; i < scrambles.length; i++) {
+    try {
+      // Tell the client whether the table is already in memory (warm) or has to
+      // be loaded first (cold, ~20s) — shown live instead of a frozen request.
+      const wasReady = isReady();
+      if (!wasReady) await safeWrite({ event: 'loading', data: JSON.stringify({}) });
       try {
-        const { htm, solution } = await solveOptimal(scrambles[i]!, (state) => {
-          // Tell the client whether it's WAITING in the queue (behind others) or
-          // its solve has actually STARTED — so "排队中" vs "求解中" is honest.
-          if (state.phase === 'queued') void safeWrite({ event: 'queued', data: JSON.stringify({ i, ahead: state.ahead }) });
-          else void safeWrite({ event: 'solving', data: JSON.stringify({ i }) });
-        });
-        ok++;
-        await safeWrite({ data: JSON.stringify({ i, htm, solution }) });
+        await ensureDaemon();
       } catch (e) {
-        fail++;
         const msg = e instanceof Error ? e.message : String(e);
-        await safeWrite({ event: 'error', data: JSON.stringify({ i, error: msg }) });
+        await safeWrite({ event: 'error', data: JSON.stringify({ i: -1, phase: 'load', error: msg }) });
+        await safeWrite({ event: 'done', data: JSON.stringify({ ok: 0, fail: scrambles.length }) });
+        return;
       }
+      // warm: loadMs absent; cold: the real spawn→READY time of the load just done.
+      await safeWrite({ event: 'ready', data: JSON.stringify(wasReady ? { warm: true } : { warm: false, loadMs: getLastLoadMs() }) });
+
+      let ok = 0;
+      let fail = 0;
+      // Solve sequentially — the daemon is serial anyway, and sequential keeps the
+      // queue shallow + results ordered by completion (client re-sorts by index).
+      for (let i = 0; i < scrambles.length; i++) {
+        try {
+          const { htm, solution } = await solveOptimal(scrambles[i]!, (state) => {
+            // Tell the client whether it's WAITING in the queue (behind others) or
+            // its solve has actually STARTED — so "排队中" vs "求解中" is honest.
+            if (state.phase === 'queued') void safeWrite({ event: 'queued', data: JSON.stringify({ i, ahead: state.ahead }) });
+            else void safeWrite({ event: 'solving', data: JSON.stringify({ i }) });
+          });
+          ok++;
+          await safeWrite({ data: JSON.stringify({ i, htm, solution }) });
+        } catch (e) {
+          fail++;
+          const msg = e instanceof Error ? e.message : String(e);
+          await safeWrite({ event: 'error', data: JSON.stringify({ i, error: msg }) });
+        }
+      }
+      await safeWrite({ event: 'done', data: JSON.stringify({ ok, fail }) });
+    } finally {
+      clearInterval(heartbeat);
     }
-    await safeWrite({ event: 'done', data: JSON.stringify({ ok, fail }) });
   });
 });
