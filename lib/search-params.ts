@@ -99,6 +99,14 @@ export const circleParams = {
 export const loadCircleParams = createLoader(circleParams);
 export const serializeCircleParams = createSerializer(circleParams);
 
+/* ---------- 算法字典:类目筛选 + 关键词 ---------- */
+export const algorithmListParams = {
+  category: parseAsString, // 「全部」= 无参数
+  q: parseAsString.withDefault(""),
+};
+export const loadAlgorithmListParams = createLoader(algorithmListParams);
+export const serializeAlgorithmListParams = createSerializer(algorithmListParams);
+
 /* ---------- 订单支付流(去掉 `as ProviderId` 强转)---------- */
 export const PROVIDER_IDS = [
   "mock_wechat",

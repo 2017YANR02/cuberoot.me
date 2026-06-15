@@ -66,6 +66,9 @@ export const products = sqliteTable("products", {
   description: text("description").notNull(),
   features: text("features", { mode: "json" }).$type<string[]>().notNull(),
   inStock: integer("in_stock", { mode: "boolean" }).notNull(),
+  // 会员专享:memberOnly=仅会员可购;memberPrice=会员价(元,空则会员无折扣)
+  memberOnly: integer("member_only", { mode: "boolean" }).notNull().default(false),
+  memberPrice: integer("member_price"),
 });
 
 export const events = sqliteTable("events", {
@@ -707,3 +710,114 @@ export type Notification = typeof notifications.$inferSelect;
 export type NotificationInsert = typeof notifications.$inferInsert;
 export type LessonNote = typeof lessonNotes.$inferSelect;
 export type LessonNoteInsert = typeof lessonNotes.$inferInsert;
+
+// ───────────────────────── Round 5: 算法字典 / 测验 / 证书 / 学习路径 ─────────────────────────
+
+// 还原算法字典:category(OLL/PLL/F2L/CMLL/盲拧...) + 公式记法 + 自绘棋盘(前端按 notation/case 渲染)
+export const algorithms = sqliteTable(
+  "algorithms",
+  {
+    id: text("id").primaryKey(),
+    category: text("category").notNull(), // OLL / PLL / F2L / CMLL / 盲拧 ...
+    name: text("name").notNull(), // 如 "OLL 33" / "T Perm"
+    notation: text("notation").notNull(), // 公式记法 R U R' U' ...
+    puzzle: text("puzzle").notNull().default("333"), // 适用魔方
+    caseGroup: text("case_group"), // 形态大类(如 OLL 十字 / 小 L)
+    description: text("description"),
+    hint: text("hint"), // 记忆提示 / 手法
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("algorithms_category_idx").on(t.category, t.sortOrder),
+    index("algorithms_puzzle_idx").on(t.puzzle),
+  ],
+);
+
+// 章节小测验:options 为选项数组,answerIdx 为正确项下标
+export const quizzes = sqliteTable(
+  "quizzes",
+  {
+    id: text("id").primaryKey(),
+    lessonId: text("lesson_id").notNull(),
+    courseId: text("course_id").notNull(),
+    question: text("question").notNull(),
+    options: text("options", { mode: "json" }).$type<string[]>().notNull(),
+    answerIdx: integer("answer_idx").notNull(),
+    explain: text("explain"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("quizzes_lesson_idx").on(t.lessonId, t.sortOrder)],
+);
+
+// 测验作答记录
+export const quizAttempts = sqliteTable(
+  "quiz_attempts",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    quizId: text("quiz_id").notNull(),
+    lessonId: text("lesson_id").notNull(),
+    selectedIdx: integer("selected_idx").notNull(),
+    correct: integer("correct", { mode: "boolean" }).notNull().default(false),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("quiz_attempts_user_lesson_idx").on(t.userId, t.lessonId)],
+);
+
+// 结课证书:code 唯一(用于 /cert/[code] 验证),颁发时快照姓名/课程标题
+export const certificates = sqliteTable(
+  "certificates",
+  {
+    id: text("id").primaryKey(),
+    code: text("code").notNull().unique(),
+    userId: text("user_id").notNull(),
+    courseId: text("course_id").notNull(),
+    userName: text("user_name").notNull(), // 颁发时快照
+    courseTitle: text("course_title").notNull(),
+    issuedAt: integer("issued_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("certificates_user_course_unique").on(t.userId, t.courseId),
+    index("certificates_code_idx").on(t.code),
+  ],
+);
+
+// 系列合集 / 学习路径:把零散课打包成进阶路线
+export const collections = sqliteTable("collections", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  description: text("description"),
+  coverUrl: text("cover_url"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: integer("created_at").notNull(),
+});
+
+export const collectionItems = sqliteTable(
+  "collection_items",
+  {
+    id: text("id").primaryKey(),
+    collectionId: text("collection_id").notNull(),
+    courseId: text("course_id").notNull(),
+    idx: integer("idx").notNull().default(0),
+  },
+  (t) => [
+    index("collection_items_collection_idx").on(t.collectionId, t.idx),
+    uniqueIndex("collection_items_unique").on(t.collectionId, t.courseId),
+  ],
+);
+
+export type Algorithm = typeof algorithms.$inferSelect;
+export type AlgorithmInsert = typeof algorithms.$inferInsert;
+export type Quiz = typeof quizzes.$inferSelect;
+export type QuizInsert = typeof quizzes.$inferInsert;
+export type QuizAttempt = typeof quizAttempts.$inferSelect;
+export type QuizAttemptInsert = typeof quizAttempts.$inferInsert;
+export type Certificate = typeof certificates.$inferSelect;
+export type CertificateInsert = typeof certificates.$inferInsert;
+export type Collection = typeof collections.$inferSelect;
+export type CollectionInsert = typeof collections.$inferInsert;
+export type CollectionItem = typeof collectionItems.$inferSelect;
+export type CollectionItemInsert = typeof collectionItems.$inferInsert;
