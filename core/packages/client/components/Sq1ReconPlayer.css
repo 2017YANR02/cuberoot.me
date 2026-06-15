@@ -17,6 +17,26 @@
   touch-action: none;
 }
 
+/* Optional back-view window — pinned top-right, transparent canvas over a
+   var(--card) backdrop. pointer-events none so drags pass to the main view. */
+.sq1-recon-backview {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--card);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--foreground) 14%, transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+.sq1-recon-backview canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 .sq1-recon-controls {
   display: flex;
   align-items: center;

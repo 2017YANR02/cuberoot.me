@@ -25,21 +25,26 @@ import { parseSq1Tokens } from '@/lib/sq1-svg';
 import type World from '@/app/[lang]/sim/cuber/world';
 import type Sq1Cube from '@/app/[lang]/sim/cuber/sq1/Sq1Cube';
 import type { Sq1Move } from '@/app/[lang]/sim/cuber/sq1/sq1State';
+import type { BackView } from '@/app/[lang]/sim/cuber/backView';
 import './Sq1ReconPlayer.css';
 
 const PLAY_INTERVAL_MS = 520;
 
 export default function Sq1ReconPlayer({
-  scramble, alg, fillPane = false, playerRef,
+  scramble, alg, fillPane = false, playerRef, backView = false,
 }: {
   scramble: string;
   alg: string;
   fillPane?: boolean;
+  /** Show an always-on back-view mini window (recon submit forces it). */
+  backView?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: RefObject<any>;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const backFrameRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<World | null>(null);
+  const backViewRef = useRef<BackView | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rendererRef = useRef<any>(null);
   const scrambleRef = useRef(scramble);
@@ -88,9 +93,20 @@ export default function Sq1ReconPlayer({
       const host = hostRef.current;
       if (!host) return;
 
+      // Optional always-on back-view window (recon submit forces it).
+      let mkBackView: ((px: number) => BackView) | null = null;
+      if (backView) {
+        const { default: Cubelet } = await import('@/app/[lang]/sim/cuber/cubelet');
+        const { createBackView } = await import('@/app/[lang]/sim/cuber/backView');
+        if (cancelled) return;
+        mkBackView = (px: number) => createBackView(THREE, Cubelet.SIZE, px);
+      }
+
       const world = new World();
       world.setPuzzle('sq1');
-      world.faceHints.hide();
+      // Orientation letters (U/D/L/R/F/B) — shown when the back view is forced
+      // (recon submit), hidden elsewhere (detail / SolutionView) as before.
+      if (backView) world.faceHints.show(); else world.faceHints.hide();
       worldRef.current = world;
 
       const renderer = new THREE.WebGLRenderer({
@@ -105,6 +121,12 @@ export default function Sq1ReconPlayer({
       host.appendChild(renderer.domElement);
       rendererRef.current = renderer;
 
+      if (mkBackView) {
+        const bv = mkBackView(120);
+        backViewRef.current = bv;
+        if (backFrameRef.current) backFrameRef.current.appendChild(bv.domElement);
+      }
+
       const resize = () => {
         const w = host.clientWidth;
         const h = host.clientHeight;
@@ -113,6 +135,13 @@ export default function Sq1ReconPlayer({
         world.height = h;
         world.resize();
         renderer.setSize(w, h, true);
+        const frame = backFrameRef.current;
+        if (backViewRef.current && frame) {
+          const bs = Math.round(Math.min(132, Math.max(72, Math.min(w, h) * 0.3)));
+          frame.style.width = `${bs}px`;
+          frame.style.height = `${bs}px`;
+          backViewRef.current.setSize(bs);
+        }
         world.dirty = true;
       };
       resize();
@@ -153,10 +182,16 @@ export default function Sq1ReconPlayer({
       renderer.domElement.addEventListener('pointercancel', onUp);
 
       let raf = 0;
+      let lastFrameAt = performance.now();
       const loop = () => {
+        const now = performance.now();
+        const dt = now - lastFrameAt;
+        lastFrameAt = now;
+        if (world.faceHints.tick(dt)) world.dirty = true;
         if (world.dirty || world.cube.dirty) {
           renderer.clear();
           renderer.render(world.scene, world.camera);
+          backViewRef.current?.render(world);
           world.dirty = false;
           world.cube.dirty = false;
         }
@@ -242,7 +277,9 @@ export default function Sq1ReconPlayer({
 
   return (
     <div className={`sq1-recon-player${fillPane ? ' sq1-recon-player--fill' : ''}`}>
-      <div ref={hostRef} className="sq1-recon-canvas" />
+      <div ref={hostRef} className="sq1-recon-canvas">
+        {backView && <div ref={backFrameRef} className="sq1-recon-backview" aria-hidden />}
+      </div>
       <div className="sq1-recon-controls">
         <button type="button" onClick={() => jumpToStep(0)} disabled={step === 0} aria-label="Reset">
           <RotateCcw size={14} />

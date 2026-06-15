@@ -199,6 +199,28 @@
   background: rgba(0, 0, 0, 0.75);
 }
 
+/* 背面视图小窗 — 右上角浮一个第二渲染器画布,从背后看魔方。
+   尺寸 + fullscreen 按钮的让位偏移由 JS (layoutBackView) 写 inline style。
+   pointer-events:none 让它纯展示,拖动穿透到主画布。canvas 自身透明,
+   未覆盖处透出本窗 var(--card) 背景。 */
+.sim-backview {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--card);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--foreground) 14%, transparent);
+  pointer-events: none;
+  z-index: 9;
+}
+.sim-backview canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 @media (max-width: 480px) {
   .sim-header {
     padding: 6px 8px;

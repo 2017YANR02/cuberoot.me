@@ -85,19 +85,24 @@ export interface TwistySettings {
   hint: boolean;
   /** 'orbit' = 自由 orbit (默认 cubing.js 行为);'rotate' = pointerup 后 snap cameraLat/Long 到 90° 整数倍 */
   dragEmpty?: 'orbit' | 'rotate' | 'view';
+  /** 背面视图小窗 → cubing.js 原生 backView 'top-right' / 'none' */
+  backView?: boolean;
   /** 'moves' (默认) = cubing.js setupAnchor 'start';'algorithm' = 'end' (从 setup·alg⁻¹ 播到 setup) */
   playbackMode?: 'moves' | 'algorithm';
 }
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
 export default function TwistySection({
-  puzzle, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, settings,
+  puzzle, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, settings, backView,
 }: {
   puzzle: string;
   scramble: string;
   alg: string;
   /** 撑满父容器（左栏分栏模式），否则走原 inline 固定宽模式 */
   fillPane?: boolean;
+  /** 强制 cubing.js 原生 backView ('top-right' / 'none')，独立于 settings。
+   *  undefined = 不接管(走 settings.backView,如 /sim);true/false = 强制开关(recon)。 */
+  backView?: boolean;
   /** 启用 tap-to-twist:cubing.js 默认 movePressInput="auto" 实际关闭点击转面;
    *  传 true 改成 "basic",DragTracker → raycastMove → experimentalAddMove 链路接通。
    *  对齐 alpha.twizzle.net/explore 行为。 */
@@ -258,6 +263,15 @@ export default function TwistySection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [Ctor, puzzle, fillPane, twistOnClick]);
 
+  // backView prop 强制接管 cubing.js 原生背面视图(recon 用)。undefined 时不碰,
+  // 让 settings.backView 那条路径(/sim)负责。
+  useEffect(() => {
+    if (backView === undefined) return;
+    const player = playerInstRef.current;
+    if (!player) return;
+    try { player.backView = backView ? 'top-right' : 'none'; } catch { /* */ }
+  }, [backView, playerNonce]);
+
   // alg 同步 — player.alg 是 attribute setter,内部 model.alg.set 对相同输入
   // 做对比 (Alg.toString === current.toString) 不会重 trigger,所以这里直接赋值即可。
   // user tap → wrap → 父级 onAlgChange → prop alg 回流后这里 set,parser 等价
@@ -313,13 +327,14 @@ export default function TwistySection({
     try { player.cameraDistance = dist; } catch { /* */ }
     try { player.tempoScale = tempo; } catch { /* */ }
     try { player.hintFacelets = settings.hint ? 'floating' : 'none'; } catch { /* */ }
+    try { player.backView = settings.backView ? 'top-right' : 'none'; } catch { /* */ }
     // playbackMode → cubing.js setupAnchor (start = 'moves' / end = 'algorithm')。
     // end 模式下 cube 终点 = setup,起点 = setup·alg⁻¹。
     try { player.experimentalSetupAnchor = settings.playbackMode === 'algorithm' ? 'end' : 'start'; } catch { /* */ }
     prevYawRef.current = settings.viewAngle;
     prevPitchRef.current = settings.viewGradient;
     prevNonceRef.current = playerNonce;
-  }, [settings?.viewAngle, settings?.viewGradient, settings?.scale, settings?.speed, settings?.hint, settings?.playbackMode, settings, playerNonce]);
+  }, [settings?.viewAngle, settings?.viewGradient, settings?.scale, settings?.speed, settings?.hint, settings?.backView, settings?.playbackMode, settings, playerNonce]);
 
   // 实时整体转 commit:user 拖动 cube,累积旋转 ≥ 对称阈值时自动 commit alg + camera reset。
   // 视觉无缝要求:commit 瞬间 cube state + camera 同步切换,绕过 cubing.js 的
