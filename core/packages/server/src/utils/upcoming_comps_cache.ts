@@ -6,10 +6,13 @@
  * - /v1/cubing-zh/:wcaId: 新公示比赛还没进 wca_competitions 表 (WCA dump 周更),
  *   走这里兜底拿 name 去 scrape cubing.com 的中文地点
  *
- * Server 跑在跟 nginx 同机,fetch 自己域名走本地 loopback,不走公网。
+ * 取 static.cuberoot.me(同机 nginx 独立 vhost,直接 serve /www/wwwroot/toolkit/stats/)。
+ * 不要走 cuberoot.me/stats/*:那条会被反代到 Next standalone,而 standalone 没打包
+ * 仓库根 stats/ 且非 Vercel 环境,route handler 直接 404(与 lib/stats-base.ts 的
+ * statsUrl() 服务端口径一致)。
  */
 
-const SOURCE_URL = 'https://cuberoot.me/stats/all_upcoming_comps.json';
+const SOURCE_URL = 'https://static.cuberoot.me/stats/all_upcoming_comps.json';
 const TTL_MS = 60 * 60 * 1000; // 1h
 const FETCH_TIMEOUT_MS = 10_000;
 
