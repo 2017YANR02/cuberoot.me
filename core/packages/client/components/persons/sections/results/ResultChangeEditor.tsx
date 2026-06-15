@@ -219,7 +219,7 @@ export function ResultChangeEditor({ target, existingChanges, onClose, onSaved }
             </div>
             <div className="wp-rce-grid">
               <label className="wp-rce-field">
-                <span>{tr({ zh: '单次 旧 → 新', en: 'Single old → new' })}</span>
+                <span>{tr({ zh: '单次', en: 'Single' })}</span>
                 <div className="wp-rce-pair">
                   <input value={form.oldBest} onChange={(e) => set({ oldBest: e.target.value })} placeholder={tr({ zh: '旧', en: 'old' })} />
                   <span>→</span>
@@ -227,7 +227,7 @@ export function ResultChangeEditor({ target, existingChanges, onClose, onSaved }
                 </div>
               </label>
               <label className="wp-rce-field">
-                <span>{tr({ zh: '平均 旧 → 新', en: 'Average old → new' })}</span>
+                <span>{tr({ zh: '平均', en: 'Average' })}</span>
                 <div className="wp-rce-pair">
                   <input value={form.oldAverage} onChange={(e) => set({ oldAverage: e.target.value })} placeholder={tr({ zh: '旧', en: 'old' })} />
                   <span>→</span>
@@ -235,7 +235,7 @@ export function ResultChangeEditor({ target, existingChanges, onClose, onSaved }
                 </div>
               </label>
               <label className="wp-rce-field">
-                <span>{tr({ zh: '单次纪录 旧 → 新', en: 'Single record old → new' })}</span>
+                <span>{tr({ zh: '单次纪录', en: 'Single record' })}</span>
                 <div className="wp-rce-pair">
                   <input value={form.oldSingleRec} onChange={(e) => set({ oldSingleRec: e.target.value })} placeholder="WR / —" />
                   <span>→</span>
@@ -243,7 +243,7 @@ export function ResultChangeEditor({ target, existingChanges, onClose, onSaved }
                 </div>
               </label>
               <label className="wp-rce-field">
-                <span>{tr({ zh: '平均纪录 旧 → 新', en: 'Average record old → new' })}</span>
+                <span>{tr({ zh: '平均纪录', en: 'Average record' })}</span>
                 <div className="wp-rce-pair">
                   <input value={form.oldAvgRec} onChange={(e) => set({ oldAvgRec: e.target.value })} placeholder="WR / —" />
                   <span>→</span>
@@ -255,9 +255,8 @@ export function ResultChangeEditor({ target, existingChanges, onClose, onSaved }
                 <input type="date" value={form.effectiveAt} onChange={(e) => set({ effectiveAt: e.target.value })} />
               </label>
               <label className="wp-rce-field wp-rce-field-wide">
-                <span>{tr({ zh: '原因(展示给用户)', en: 'Reason (shown to users)' })}</span>
-                <input value={form.note} onChange={(e) => set({ note: e.target.value })}
-                  placeholder={tr({ zh: '例:WCA 因滑表撤销 0.78 WR,改判 2.83', en: 'e.g. WCA revoked the 0.78 WR (sliding), corrected to 2.83' })} />
+                <span>{tr({ zh: '原因', en: 'Reason' })}</span>
+                <input value={form.note} onChange={(e) => set({ note: e.target.value })} />
               </label>
             </div>
             <div className="wp-rce-hint">{tr({ zh: '时间输入支持 2.83 / 1:23.45 / DNF / DNS;留空表示该字段未变。', en: 'Times accept 2.83 / 1:23.45 / DNF / DNS; leave blank if unchanged.' })}</div>

@@ -5,6 +5,7 @@
 import { apiUrl } from './api-base';
 import { authHeaders } from './admin-api';
 import { formatWcaResult } from './wca-format-result';
+import { computeWcaBestAverage, canRecompute } from './wca-compute';
 
 export interface ResultWatchPerson {
   wcaId: string;
@@ -246,7 +247,7 @@ export function buildPersonRoundChangeListMap(changes: ResultChange[]): Map<stri
 
 /**
  * 一条变更链里某数值字段被历次更正前的旧值序列(oldest→newest),
- * 用于行内依次划线:[78, 283] → ~~0.78~~ ~~2.83~~,当前值(API)加粗在后。
+ * 用于行内依次划线:[78, 283] → ~~0.78~~ ~~2.83~~,当前值加粗在后。
  */
 export function changeChainOldValues(
   changes: ResultChange[] | undefined,
@@ -260,6 +261,99 @@ export function changeChainOldValues(
     if (f && f.old != null) out.push(Number(f.old));
   }
   return out;
+}
+
+// ── 行内改成绩:当前有效值(WCA 值叠加变更链最新值)+ 自动重算录入 ───────────────
+
+/** 数值字段的当前有效值 = 变更链最新一条的 new(若有),否则 WCA 原值。 */
+export function effectiveFieldValue(
+  changes: ResultChange[] | undefined,
+  field: 'best' | 'average',
+  fallback: number,
+): number {
+  if (changes) {
+    for (let i = changes.length - 1; i >= 0; i--) {
+      const f = (changes[i].fields ?? []).find((x) => x.field === field);
+      if (f && f.new != null && !Array.isArray(f.new)) return Number(f.new);
+    }
+  }
+  return fallback;
+}
+
+/** 各次成绩的当前有效数组 = 变更链最新 attempts 的 new(若有),否则 WCA 原数组。 */
+export function effectiveAttempts(
+  changes: ResultChange[] | undefined,
+  fallback: number[],
+): number[] {
+  if (changes) {
+    for (let i = changes.length - 1; i >= 0; i--) {
+      const f = (changes[i].fields ?? []).find((x) => x.field === 'attempts');
+      if (f && Array.isArray(f.new)) return (f.new as unknown[]).map(Number);
+    }
+  }
+  return fallback;
+}
+
+/** 某一次成绩(index)历次被改前的旧值序列,用于该次行内划线。 */
+export function attemptOldValues(changes: ResultChange[] | undefined, index: number): number[] {
+  const out: number[] = [];
+  if (changes) {
+    for (const c of changes) {
+      const f = (c.fields ?? []).find((x) => x.field === 'attempts');
+      if (f && Array.isArray(f.old) && Array.isArray(f.new)) {
+        const o = Number((f.old as unknown[])[index]);
+        const n = Number((f.new as unknown[])[index]);
+        if (Number.isFinite(o) && o !== n) out.push(o);
+      }
+    }
+  }
+  return out;
+}
+
+export interface AttemptEditTarget {
+  wcaId: string;
+  competitionId: string;
+  eventId: string;
+  roundTypeId: string;
+  resultId?: number | null;
+}
+
+/**
+ * 行内改某一次成绩 → 自动按 WCA 规则重算单次/平均 → 录入一条变更
+ * (fields 含 attempts,以及实际变动的 best/average)。MBLD 等不重算,只记 attempts。
+ */
+export async function recordAttemptEdit(p: {
+  target: AttemptEditTarget;
+  currentAttempts: number[];
+  currentBest: number;
+  currentAverage: number;
+  index: number;
+  newValue: number;
+  note?: string | null;
+}): Promise<void> {
+  const { target, currentAttempts, currentBest, currentAverage, index, newValue, note } = p;
+  if (currentAttempts[index] === newValue) return;
+  const newAttempts = currentAttempts.slice();
+  newAttempts[index] = newValue;
+
+  const fields: ResultChangeField[] = [{ field: 'attempts', old: currentAttempts, new: newAttempts }];
+  if (canRecompute(target.eventId)) {
+    const { best, average } = computeWcaBestAverage(newAttempts, target.eventId);
+    if (best !== currentBest) fields.push({ field: 'best', old: currentBest, new: best });
+    if (average != null && average !== currentAverage) {
+      fields.push({ field: 'average', old: currentAverage, new: average });
+    }
+  }
+  await createResultChange({
+    wcaId: target.wcaId,
+    competitionId: target.competitionId,
+    eventId: target.eventId,
+    roundTypeId: target.roundTypeId,
+    resultId: target.resultId ?? null,
+    changeType: 'modified',
+    fields,
+    note: note ?? null,
+  });
 }
 
 /** WCA round_type_id 归一到 4 个轮次桶('1'/'2'/'3'/'f'),含 combined / cutoff 变体。 */

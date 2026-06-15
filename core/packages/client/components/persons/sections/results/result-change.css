@@ -1,24 +1,39 @@
 /* 成绩变更 — 跨页共享样式(选手页 + comp 直播页)。
-   随 ChangedResultValue / ResultChangeEditor 组件 import 一起加载,
-   故在不加载 persons.css 的 comp 页也生效。用 wp-* token(dark-locked 页)。 */
+   关键:用全局设计 token(--card/--foreground/--border-default…),不要用 --wp-*
+   (--wp-* 只在 .wp-page 下定义,comp 页没有 → 会变透明/失色)。
+   选手页 /wca/persons 已把全局 token 压 dark,comp 页跟随主题,两边都正确。 */
 
-/* 行内划掉的旧值(变更链依次划掉历次旧值,当前值由调用方在其后渲染) */
+/* 行内旧值(被改的)— 红色填充底 + 划线,像 diff 的「删除」,比细红线显眼得多。
+   当前值由调用方在其后渲染。 */
 .wp-old-result {
-    margin-right: 6px;
+    margin-right: 5px;
+    padding: 0 4px;
+    border-radius: 4px;
     font-weight: 500;
-    color: var(--wp-text-mute);
+    background: color-mix(in srgb, var(--destructive) 18%, transparent);
+    color: color-mix(in srgb, var(--destructive) 75%, var(--foreground));
     text-decoration: line-through;
-    text-decoration-color: color-mix(in srgb, var(--wp-pink) 70%, transparent);
+    text-decoration-color: color-mix(in srgb, var(--destructive) 60%, transparent);
 }
 
 /* 管理员行内「编辑变更」铅笔(仅管理员渲染) */
 .wp-change-edit {
     display: inline-flex; align-items: center; justify-content: center;
     margin-left: 6px; padding: 2px; border: none; background: transparent;
-    color: var(--wp-text-mute); cursor: pointer; border-radius: 4px; vertical-align: middle;
+    color: var(--muted-foreground); cursor: pointer; border-radius: 4px; vertical-align: middle;
     opacity: 0.55; transition: opacity 0.12s, color 0.12s, background 0.12s;
 }
-.wp-change-edit:hover { opacity: 1; color: var(--wp-accent); background: var(--wp-accent-soft); }
+.wp-change-edit:hover { opacity: 1; color: var(--accent); background: var(--accent-soft); }
+
+/* 行内可点编辑的某一次成绩(管理员):点击就地变输入框,自动重算单次/平均 */
+.wp-att-editable { cursor: pointer; border-radius: 4px; transition: background 0.12s, box-shadow 0.12s; }
+.wp-att-editable:hover { background: var(--accent-soft); box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+.wp-att-input {
+    width: 4.5em; padding: 1px 4px; font-size: inherit; font-variant-numeric: tabular-nums;
+    background: var(--background); color: var(--foreground);
+    border: 1px solid var(--accent); border-radius: 5px;
+}
+.wp-att-input:focus { outline: none; }
 
 /* ── 成绩变更编辑器 modal(wp-rce-*,与 PersonResultChanges 面板 wp-rc-* 区分) ── */
 .wp-rce-overlay {
@@ -29,55 +44,55 @@
 }
 .wp-rce-modal {
     width: 100%; max-width: 560px;
-    background: var(--wp-surface); border: 1px solid var(--wp-border);
-    border-radius: 14px; box-shadow: var(--wp-shadow); padding: 18px 18px 16px;
+    background: var(--popover); border: 1px solid var(--border-default);
+    border-radius: 14px; box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35); padding: 18px 18px 16px;
 }
 .wp-rce-head { display: flex; align-items: center; gap: 10px; }
-.wp-rce-title { flex: 1; font-size: 1.02rem; font-weight: 650; color: var(--wp-text); }
+.wp-rce-title { flex: 1; font-size: 1.02rem; font-weight: 650; color: var(--foreground); }
 .wp-rce-x {
-    border: none; background: transparent; color: var(--wp-text-sub);
+    border: none; background: transparent; color: var(--muted-foreground);
     font-size: 1.4rem; line-height: 1; cursor: pointer; padding: 0 4px;
 }
-.wp-rce-x:hover { color: var(--wp-text); }
-.wp-rce-sub { margin-top: 4px; font-size: 0.8rem; color: var(--wp-text-sub); }
+.wp-rce-x:hover { color: var(--foreground); }
+.wp-rce-sub { margin-top: 4px; font-size: 0.8rem; color: var(--muted-foreground); }
 
 .wp-rce-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
 .wp-rce-item {
     display: flex; align-items: flex-start; gap: 10px;
-    padding: 8px 10px; border: 1px solid var(--wp-border); border-radius: 9px;
+    padding: 8px 10px; border: 1px solid var(--border-default); border-radius: 9px;
 }
 .wp-rce-item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.wp-rce-item-summary { font-size: 0.86rem; color: var(--wp-text); font-variant-numeric: tabular-nums; }
-.wp-rce-item-note { font-size: 0.78rem; color: var(--wp-text-sub); }
-.wp-rce-item-meta { font-size: 0.72rem; color: var(--wp-text-mute); }
+.wp-rce-item-summary { font-size: 0.86rem; color: var(--foreground); font-variant-numeric: tabular-nums; }
+.wp-rce-item-note { font-size: 0.78rem; color: var(--muted-foreground); }
+.wp-rce-item-meta { font-size: 0.72rem; color: var(--faint-foreground); }
 .wp-rce-item-actions { display: flex; gap: 8px; flex: none; }
-.wp-rce-link { border: none; background: transparent; color: var(--wp-blue); cursor: pointer; font-size: 0.8rem; padding: 2px; }
+.wp-rce-link { border: none; background: transparent; color: var(--signal-info); cursor: pointer; font-size: 0.8rem; padding: 2px; }
 .wp-rce-link:hover { text-decoration: underline; }
-.wp-rce-danger { color: var(--wp-pink); }
+.wp-rce-danger { color: var(--destructive); }
 
-.wp-rce-form { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--wp-border); }
-.wp-rce-form-title { font-size: 0.82rem; font-weight: 600; color: var(--wp-text); margin-bottom: 8px; }
+.wp-rce-form { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-default); }
+.wp-rce-form-title { font-size: 0.82rem; font-weight: 600; color: var(--foreground); margin-bottom: 8px; }
 .wp-rce-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .wp-rce-field { display: flex; flex-direction: column; gap: 4px; }
-.wp-rce-field > span { font-size: 0.74rem; color: var(--wp-text-sub); }
+.wp-rce-field > span { font-size: 0.74rem; color: var(--muted-foreground); }
 .wp-rce-field-wide { grid-column: 1 / -1; }
 .wp-rce-pair { display: flex; align-items: center; gap: 6px; }
-.wp-rce-pair > span { color: var(--wp-text-mute); }
+.wp-rce-pair > span { color: var(--faint-foreground); }
 .wp-rce-field input {
     width: 100%; min-width: 0; padding: 6px 8px; font-size: 0.84rem;
-    background: var(--wp-bg); color: var(--wp-text);
-    border: 1px solid var(--wp-border-strong); border-radius: 7px;
+    background: var(--background); color: var(--foreground);
+    border: 1px solid var(--border-strong); border-radius: 7px;
 }
-.wp-rce-field input:focus { outline: none; border-color: var(--wp-accent); }
-.wp-rce-hint { margin-top: 8px; font-size: 0.72rem; color: var(--wp-text-mute); }
-.wp-rce-err { margin-top: 8px; font-size: 0.78rem; color: var(--wp-pink); }
+.wp-rce-field input:focus { outline: none; border-color: var(--accent); }
+.wp-rce-hint { margin-top: 8px; font-size: 0.72rem; color: var(--faint-foreground); }
+.wp-rce-err { margin-top: 8px; font-size: 0.78rem; color: var(--destructive); }
 .wp-rce-form-actions { margin-top: 12px; display: flex; align-items: center; gap: 8px; }
 .wp-rce-btn {
     padding: 7px 16px; font-size: 0.84rem; font-weight: 600; cursor: pointer;
-    background: var(--wp-accent); color: #fff; border: none; border-radius: 8px;
+    background: var(--accent); color: var(--accent-foreground, #fff); border: none; border-radius: 8px;
 }
 .wp-rce-btn:disabled { opacity: 0.5; cursor: default; }
-.wp-rce-btn-ghost { background: transparent; color: var(--wp-text-sub); border: 1px solid var(--wp-border-strong); }
+.wp-rce-btn-ghost { background: transparent; color: var(--muted-foreground); border: 1px solid var(--border-strong); }
 @media (max-width: 480px) {
     .wp-rce-grid { grid-template-columns: 1fr; }
 }

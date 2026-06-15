@@ -7,8 +7,12 @@ import {
   rowChangeKey,
   personRoundChangeKey,
   canonicalRound,
+  effectiveFieldValue,
+  effectiveAttempts,
+  attemptOldValues,
   type ResultChange,
 } from '@/lib/result-watch-api';
+import { computeWcaBestAverage } from '@/lib/wca-compute';
 
 // 最小 ResultChange 工厂(只填测试关心的字段)
 function mk(p: Partial<ResultChange>): ResultChange {
@@ -129,5 +133,44 @@ describe('buildPersonRoundChangeListMap', () => {
     const map = buildPersonRoundChangeListMap(changes);
     expect(map.has(personRoundChangeKey('2019WANY36', '222', '1'))).toBe(true);
     expect(map.has(personRoundChangeKey('2017OTHER01', '222', '1'))).toBe(true);
+  });
+});
+
+describe('computeWcaBestAverage', () => {
+  it('Ao5 drops best+worst (Johor R1: avg 2.83)', () => {
+    // attempts 4.74 2.70 2.97 0.78 2.81 → drop 0.78 + 4.74, mid three 2.70/2.81/2.97 → 2.83
+    expect(computeWcaBestAverage([474, 270, 297, 78, 281], '222')).toEqual({ best: 78, average: 283 });
+  });
+  it('Ao5 recomputes after one solve changes', () => {
+    expect(computeWcaBestAverage([474, 500, 297, 78, 281], '222')).toEqual({ best: 78, average: 351 });
+  });
+  it('Ao5 one DNF counts as worst', () => {
+    expect(computeWcaBestAverage([500, -1, 300, 400, 350], '222')).toEqual({ best: 300, average: 417 });
+  });
+  it('Ao5 two DNF → average DNF', () => {
+    expect(computeWcaBestAverage([500, -1, -1, 400, 350], '222')).toEqual({ best: 350, average: -1 });
+  });
+  it('FMC Mo3 mean*100', () => {
+    expect(computeWcaBestAverage([25, 24, 26], '333fm')).toEqual({ best: 24, average: 2500 });
+  });
+  it('FMC Mo3 any DNF → average DNF', () => {
+    expect(computeWcaBestAverage([25, -1, 26], '333fm')).toEqual({ best: 25, average: -1 });
+  });
+});
+
+describe('effective value overlays', () => {
+  const chain = [
+    mk({ id: 1, fields: [{ field: 'attempts', old: [474, 270, 297, 78, 281], new: [474, 500, 297, 78, 281] }, { field: 'average', old: 283, new: 351 }] }),
+  ];
+  it('effectiveFieldValue returns latest new, else fallback', () => {
+    expect(effectiveFieldValue(chain, 'average', 283)).toBe(351);
+    expect(effectiveFieldValue(undefined, 'average', 283)).toBe(283);
+  });
+  it('effectiveAttempts returns latest new array', () => {
+    expect(effectiveAttempts(chain, [474, 270, 297, 78, 281])).toEqual([474, 500, 297, 78, 281]);
+  });
+  it('attemptOldValues returns superseded value for the changed index only', () => {
+    expect(attemptOldValues(chain, 1)).toEqual([270]);
+    expect(attemptOldValues(chain, 0)).toEqual([]);
   });
 });

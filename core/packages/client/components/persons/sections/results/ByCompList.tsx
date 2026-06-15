@@ -18,7 +18,7 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { findReconForAttempt } from '@/lib/recon-attempt-lookup';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
-import { rowChangeKey, changeChainOldValues } from '@/lib/result-watch-api';
+import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, recordAttemptEdit, parseHumanResult } from '@/lib/result-watch-api';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
 import { ResultChangeChain } from './ChangedResultValue';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
@@ -178,6 +178,10 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
                     const oldBest = changeChainOldValues(chain, 'best');
                     const oldAvg = changeChainOldValues(chain, 'average');
                     const hasChange = !!chain && chain.length > 0;
+                    // 当前有效值 = WCA 值叠加变更链最新(行内改某次后即时反映)
+                    const effBest = effectiveFieldValue(chain, 'best', r.best);
+                    const effAvg = effectiveFieldValue(chain, 'average', r.average);
+                    const effAttempts = effectiveAttempts(chain, r.attempts);
                     return (
                       <tr
                         key={r.id}
@@ -231,7 +235,7 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
                         <td className={`wp-cell-result ${oldBest.length > 0 ? 'wp-cell-changed' : ''}`}>
                           <span className="record-num-cell">
                             <ResultChangeChain oldValues={oldBest} eventId={r.event_id} kind="single" note={chain?.[chain.length - 1]?.note} />
-                            {formatWcaResult(r.best, r.event_id, 'single')}
+                            {formatWcaResult(effBest, r.event_id, 'single')}
                             {r.regional_single_record
                               ? <RecordBadge record={r.regional_single_record} variant="inline" />
                               : singleRank
@@ -242,7 +246,7 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
                         <td className={`wp-cell-result ${oldAvg.length > 0 ? 'wp-cell-changed' : ''}`}>
                           <span className="record-num-cell">
                             <ResultChangeChain oldValues={oldAvg} eventId={r.event_id} kind="average" note={chain?.[chain.length - 1]?.note} />
-                            {formatWcaResult(r.average, r.event_id, 'average')}
+                            {formatWcaResult(effAvg, r.event_id, 'average')}
                             {r.regional_average_record
                               ? <RecordBadge record={r.regional_average_record} variant="inline" />
                               : averageRank
@@ -252,13 +256,22 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
                         </td>
                         <td className="wp-cell-attempts">
                           <AttemptsList
-                            attempts={r.attempts}
-                            best={r.best}
+                            attempts={effAttempts}
+                            best={effBest}
                             eventId={r.event_id}
                             compId={r.competition_id}
                             roundTypeId={r.round_type_id}
                             reconLookup={reconLookup}
                             isZh={isZh}
+                            admin={admin}
+                            attemptOlds={effAttempts.map((_, i) => attemptOldValues(chain, i))}
+                            onEdit={(index, newValue) =>
+                              recordAttemptEdit({
+                                target: { wcaId, competitionId: comp.id, eventId: r.event_id, roundTypeId: r.round_type_id, resultId: r.id ?? null },
+                                currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
+                                index, newValue,
+                              }).then(refreshChanges).catch((e) => window.alert((e as Error).message))
+                            }
                           />
                         </td>
                       </tr>
@@ -283,7 +296,8 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
 }
 
 // 把 attempts 渲染为可折行 inline 列表(支持 H2H 等 5+ 次的格式).
-function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLookup, isZh }: {
+// 命中 reconLookup 的把数渲染为 Link 跳到对应复盘;管理员可点改某一次(自动重算单次/平均).
+function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, attemptOlds, onEdit }: {
   attempts: number[];
   best: number;
   eventId: string;
@@ -291,11 +305,21 @@ function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLooku
   roundTypeId: string;
   reconLookup: Map<string, number> | null;
   isZh: boolean;
+  admin?: boolean;
+  attemptOlds?: number[][];
+  onEdit?: (index: number, newValue: number) => void;
 }) {
+  const [editIdx, setEditIdx] = useState<number | null>(null);
+  const [draft, setDraft] = useState('');
   if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
   const validNums = attempts.filter((x) => x > 0);
   const minValid = validNums.length > 0 ? Math.min(...validNums) : 0;
   const langQuery = isZh ? '?lang=zh' : '';
+  const commit = (i: number) => {
+    const parsed = parseHumanResult(draft, eventId);
+    setEditIdx(null);
+    if (parsed != null && parsed !== attempts[i]) onEdit?.(i, parsed);
+  };
   return (
     <span className="wp-attempts-flow">
       {attempts.map((a, i) => {
@@ -303,15 +327,42 @@ function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLooku
         const formatted = formatWcaResult(a, eventId, 'single');
         const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
         const cls = `wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(attempts, i) ? 'wp-att-trimmed' : ''}`;
+        const olds = (attemptOlds?.[i] ?? []).map((ov, k) => (
+          <s key={k} className="wp-old-result">{formatWcaResult(ov, eventId, 'single')}</s>
+        ));
+        // 复盘链接所有人(含管理员)都可点 → 优先;只有没复盘的 solve 才给管理员行内改
         const reconId = findReconForAttempt(reconLookup, compId, eventId, roundTypeId, i + 1);
         if (reconId) {
           return (
             <Link key={i} href={`/recon/${reconId}${langQuery}`} className={`${cls} wp-att-recon`}>
-              {formatted}
+              {olds}{formatted}
             </Link>
           );
         }
-        return <span key={i} className={cls}>{formatted}</span>;
+        if (admin && editIdx === i) {
+          return (
+            <input
+              key={i}
+              autoFocus
+              className="wp-att-input"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={() => commit(i)}
+              onKeyDown={(e) => { if (e.key === 'Enter') commit(i); else if (e.key === 'Escape') setEditIdx(null); }}
+            />
+          );
+        }
+        if (admin) {
+          return (
+            <span
+              key={i}
+              className={`${cls} wp-att-editable`}
+              title={tr({ zh: '点击改这一次', en: 'Click to edit this solve' })}
+              onClick={() => { setEditIdx(i); setDraft(formatted); }}
+            >{olds}{formatted}</span>
+          );
+        }
+        return <span key={i} className={cls}>{olds}{formatted}</span>;
       })}
     </span>
   );

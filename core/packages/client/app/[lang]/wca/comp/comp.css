@@ -697,6 +697,18 @@ td.is-pr {
   white-space: nowrap;
 }
 
+/* 管理员编辑铅笔:绝对定位 + 仅悬停显示,不挤占固定 110px 选手列(否则名字被压成「耿…」)。
+   触屏没有 hover 且本就能直接点详细成绩改 → 隐藏铅笔。 */
+.comp-table .td-person { position: relative; }
+.comp-table .td-person .wp-change-edit {
+  position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
+  margin: 0; opacity: 0;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  border-radius: 4px;
+}
+.comp-table tbody tr:hover .td-person .wp-change-edit { opacity: 1; }
+@media (hover: none) { .comp-table .td-person .wp-change-edit { display: none; } }
+
 /* ── 双轮合并榜 (WCA Reg 9v) ─────────────────────────────────────────────── */
 /* 每位选手两行 (round 1 / round 2);名次 + 选手列竖向合并 (rowSpan),竖向居中。
    更好那轮正常显示,另一轮淡灰。两行共用同一条纹底色 (按选手 idx),自然成组。 */
