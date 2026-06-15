@@ -2,9 +2,10 @@
  * /v1/scramble/optimal-solve — 3x3 god's-number optimal solve, server-side.
  *
  * Backs the "云端求解" option on /scramble/solver for users who don't want to
- * download the multi-GB cubeopt prune table. The server holds opt5 (972M) — the
- * largest table that fits the box with RAM headroom; every opt level returns the
- * SAME optimal solution, only slower with a smaller table.
+ * download the multi-GB cubeopt prune table. The server holds opt6 (1.9G) for
+ * speed (median ~4s vs opt5's ~21s); every opt level returns the SAME optimal
+ * solution, only faster with a bigger table. opt6 on the small box runs under
+ * memory guards (idle-unload + watchdog + oom_score_adj) in cubeopt/daemon.ts.
  *
  * Guards (all three the user asked for):
  *   • login gate     — requireAuth; anonymous users keep the local-download path.
@@ -91,10 +92,14 @@ cubeoptSolveRoutes.post('/scramble/optimal-solve', async (c) => {
       return chain;
     };
     // Heartbeat: a request can sit silent for ~1min (queued behind another solve,
-    // or mid-solve with no progress events). Without bytes flowing the reverse
-    // proxy closes the idle connection, killing the request just as it'd finish.
-    // A 15s ping keeps it alive; the client ignores 'ping' (empty data).
-    const heartbeat = setInterval(() => { void safeWrite({ event: 'ping', data: '' }); }, 15_000);
+    // or mid-solve with no progress events). Without bytes flowing nginx's
+    // proxy_read_timeout closes the connection, killing the request just as it'd
+    // finish. A 10s ping keeps it alive; the client ignores 'ping' (empty data).
+    // 10s (not 15s) leaves margin: this interval runs on the main event loop,
+    // which other in-process warm builds can block ~20s at a time, stretching the
+    // effective gap — at 10s nominal that stays well under the client's 60s and
+    // nginx's 200s thresholds even when a tick is delayed.
+    const heartbeat = setInterval(() => { void safeWrite({ event: 'ping', data: '' }); }, 10_000);
 
     try {
       // Tell the client whether the table is already in memory (warm) or has to
