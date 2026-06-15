@@ -48,6 +48,16 @@ export const pageParams = {
 export const loadPageParams = createLoader(pageParams);
 export const serializePageParams = createSerializer(pageParams);
 
+/* ---------- 讲师列表:按专长标签筛选(「全部」= 无 specialty 参数)---------- */
+// 专长是讲师自填的自由文案,不是固定枚举,用普通字符串 parser。
+export const instructorListParams = {
+  specialty: parseAsString,
+};
+export const loadInstructorListParams = createLoader(instructorListParams);
+export const serializeInstructorListParams = createSerializer(
+  instructorListParams,
+);
+
 /* ---------- admin 日志:Tab + 页码 ---------- */
 export const LOG_TABS = ["errors", "slow"] as const;
 export type LogTab = (typeof LOG_TABS)[number];
