@@ -591,16 +591,23 @@ function ScrambleSolverPageInner() {
           }
           if (!data) continue;
           gotEvent = true;
-          const obj = JSON.parse(data) as { i?: number; htm?: number; solution?: string; error?: string; ok?: number; fail?: number; warm?: boolean; loadMs?: number; phase?: string };
+          const obj = JSON.parse(data) as { i?: number; htm?: number; solution?: string; error?: string; ok?: number; fail?: number; warm?: boolean; loadMs?: number; ahead?: number; phase?: string };
           if (ev === 'loading') {
             setCloudStatus(t('正在把求解表载入服务器内存(首次约 20 秒)…', 'Loading the solver table into server memory (first time ~20s)…'));
           } else if (ev === 'ready') {
             warm = obj.warm !== false;
             loadMs = typeof obj.loadMs === 'number' ? obj.loadMs : 0;
-            startPhaseTimer(); // restart the live ticker for the solve phase
+            // Transitional — the next 'queued'/'solving' event sets the real state.
             setCloudStatus(warm
-              ? t(`表已在内存,求解中 0/${lines.length}…`, `Table already in memory, solving 0/${lines.length}…`)
-              : t(`表已载入(载表 ${(loadMs / 1000).toFixed(1)}s),求解中 0/${lines.length}…`, `Table loaded (${(loadMs / 1000).toFixed(1)}s), solving 0/${lines.length}…`));
+              ? t('表已就绪…', 'Table ready…')
+              : t(`表已载入(载表 ${(loadMs / 1000).toFixed(1)}s)…`, `Table loaded (${(loadMs / 1000).toFixed(1)}s)…`));
+          } else if (ev === 'queued') {
+            startPhaseTimer(); // ticker now shows queue-wait time
+            const ahead = typeof obj.ahead === 'number' ? obj.ahead : 0;
+            setCloudStatus(t(`排队中(前面 ${ahead} 个在算)…`, `Queued (${ahead} ahead)…`));
+          } else if (ev === 'solving') {
+            startPhaseTimer(); // ticker now shows actual solve time
+            setCloudStatus(t(`求解中 ${done}/${lines.length}…`, `Solving ${done}/${lines.length}…`));
           } else if (ev === 'error') {
             if (obj.i === -1 || obj.phase === 'load') {
               setCloudStatus(t(`求解表加载失败:${obj.error ?? ''}`, `Table load failed: ${obj.error ?? ''}`));
@@ -620,7 +627,7 @@ function ScrambleSolverPageInner() {
             done++;
             solveResultsRef.current.set(obj.i + 1, obj.solution);
             setSolveResults(new Map(solveResultsRef.current));
-            setCloudStatus(t(`云端求解中 ${done}/${lines.length}…`, `Solving on server ${done}/${lines.length}…`));
+            setCloudStatus(t(`求解中 ${done}/${lines.length}…`, `Solving ${done}/${lines.length}…`));
           }
         }
       }
