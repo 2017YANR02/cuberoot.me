@@ -20,3 +20,14 @@ export const API_ORIGIN = (() => {
 export function apiUrl(path: string): string {
   return API_ORIGIN + path;
 }
+
+// For STREAMING (SSE) endpoints, always hit the API origin directly — even in
+// dev. The Next dev rewrite proxy BUFFERS SSE (it holds every byte until the
+// upstream stream closes), so live progress events + the keep-alive heartbeat
+// never reach the browser and a long solve trips the no-response timeout. Going
+// straight to the API streams unbuffered; CORS allows http://localhost:3000 to
+// call api.cuberoot.me directly, so this is safe in dev. In prod it's identical
+// to apiUrl() (already absolute). Use this for any fetch that reads an SSE body.
+export function streamApiUrl(path: string): string {
+  return (process.env.NEXT_PUBLIC_API_ORIGIN || 'https://api.cuberoot.me') + path;
+}
