@@ -84,6 +84,13 @@ function rejectAllPending(reason: string): void {
 
 function spawnDaemon(): Promise<void> {
   return new Promise((resolveBoot, rejectBoot) => {
+    // The boot promise must settle exactly once. In particular, if the child
+    // dies DURING the (multi-second) table load — the watchdog dropping it under
+    // memory pressure, an OOM, a bad table — the 'exit' handler below must
+    // reject this promise, or the awaiting solve hangs forever.
+    let settled = false;
+    const finishOk = () => { if (!settled) { settled = true; resolveBoot(); } };
+    const finishErr = (e: Error) => { if (!settled) { settled = true; rejectBoot(e); } };
     console.log(`[cubeopt] spawn: node ${DAEMON_SCRIPT}`);
     let proc: ChildProcess;
     try {
@@ -92,7 +99,7 @@ function spawnDaemon(): Promise<void> {
         stdio: ['pipe', 'pipe', 'pipe'],
       });
     } catch (err) {
-      rejectBoot(err as Error);
+      finishErr(err as Error);
       return;
     }
     child = proc;
@@ -117,7 +124,7 @@ function spawnDaemon(): Promise<void> {
         if (line.startsWith('READY')) {
           ready = true;
           console.log(`[cubeopt] daemon ready (${line.replace('\t', ' threads=')})`);
-          resolveBoot();
+          finishOk();
         }
         return;
       }
@@ -152,6 +159,8 @@ function spawnDaemon(): Promise<void> {
       child = null;
       bootPromise = null;
       rejectAllPending(`solver restarted (code=${code}, signal=${signal})`);
+      // If it died before READY, unblock the awaiting ensureDaemon().
+      finishErr(new Error(`solver exited before ready (code=${code}, signal=${signal})`));
     });
 
     proc.on('error', (err) => {
@@ -159,7 +168,7 @@ function spawnDaemon(): Promise<void> {
       ready = false;
       child = null;
       bootPromise = null;
-      rejectBoot(err);
+      finishErr(err);
     });
   });
 }
