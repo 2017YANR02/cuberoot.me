@@ -635,10 +635,14 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 .wp-cell-attempts { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
 .wp-attempts-flow {
     display: grid;
-    grid-template-columns: repeat(5, 7ch);
+    /* 默认 7ch 等宽(小数点行间对齐);某次被改后内含划掉的旧值会更宽 → 该列长到 max-content,
+       表格随之变宽并可在 .wp-table-scroll 内横向滚动,不再被裁掉。 */
+    grid-template-columns: repeat(5, minmax(7ch, max-content));
     gap: 4px 12px;
     justify-content: start;
 }
+/* 详细成绩里的旧值(被改的那一次)压缩,尽量少撑宽 */
+.wp-cell-attempts .wp-old-result { font-size: 0.72em; margin-right: 3px; }
 /* 每个 .wp-att 都用 ::before/::after 预留括号宽度,opacity:0 不显示;
    .wp-att-trimmed 时翻 1 显出来。这样所有格子有等宽的括号占位,
    小数点跨行对齐;复制时伪元素内容不进剪贴板,粘出来是干净数字。
