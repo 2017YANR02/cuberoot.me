@@ -60,7 +60,7 @@ const STAT_CATEGORIES = [
           'most_attended_competitions_in_single_week',
           'most_competitions_abroad', 'most_completed_solves',
           'most_distinct_dates_competed_on', 'most_solves_before_bld_success',
-          'most_visited_continents', 'most_visited_countries', 'name_stats',
+          'most_visited_continents', 'most_visited_countries',
           'shortest_time_to_get_all_singles',
           'shortest_time_to_get_all_singles_and_averages',
           'shortest_time_to_reach_milestone_in_comps_count'],

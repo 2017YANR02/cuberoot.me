@@ -328,6 +328,58 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   });
 });
 
+// ── 2a. /v1/wca/persons-directory ──
+//   GET /v1/wca/persons-directory?country=&sort=name|len&dir=asc|desc&page=&size=
+// 排名页空态(未选任何项目)的「名录」视图:全选手 A-Z,可叠加国家,按 名字首字母 / 名字长度 分页排序.
+// wca_persons ~25 万行小表;ORDER BY 走 wca_persons_name / wca_persons_name_len 索引,分页 + count 均毫秒级.
+// 名字长度 = 剥掉 "Latin (本地名)" 末尾注释后的拉丁名长度(与 displayCuberName 口径一致、语言无关);
+// 表达式须与 migration 0052 索引逐字一致才能命中.
+wcaStatsExtraRoutes.get('/wca/persons-directory', async (c) => {
+  const country = c.req.query('country') ?? '';
+  const sort = (c.req.query('sort') ?? 'name').toLowerCase();   // 'name'(首字母) | 'len'(名字长度)
+  const dir = (c.req.query('dir') ?? 'asc').toLowerCase();      // 'asc' | 'desc'
+  const page = Math.max(1, intParam(c.req.query('page'), 1));
+  const size = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('size'), DEFAULT_SIZE)));
+
+  if (sort !== 'name' && sort !== 'len') return c.json({ error: 'Invalid sort' }, 400);
+  if (dir !== 'asc' && dir !== 'desc') return c.json({ error: 'Invalid dir' }, 400);
+  const cn = await resolveCountry(country);
+  if (!cn.ok) return c.json({ error: cn.err }, 400);
+
+  const where: string[] = [];
+  const params: unknown[] = [];
+  if (cn.id) { where.push(`p.country_id = ?`); params.push(cn.id); }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+  const dirSql = dir === 'desc' ? 'DESC' : 'ASC';
+  const orderSql = sort === 'len'
+    ? `char_length(regexp_replace(p.name, '\\s*\\([^)]*\\)\\s*$', '')) ${dirSql}, p.name ASC, p.wca_id ASC`
+    : `p.name ${dirSql}, p.wca_id ASC`;
+
+  const offset = (page - 1) * size;
+  const [rows, totalRow] = await Promise.all([
+    query<{ wca_id: string; name: string; country_id: string; iso2: string | null }>(
+      `SELECT p.wca_id, p.name, p.country_id, co.iso2
+       FROM wca_persons p
+       LEFT JOIN wca_countries co ON co.id = p.country_id
+       ${whereSql}
+       ORDER BY ${orderSql}
+       LIMIT ? OFFSET ?`,
+      [...params, size, offset],
+    ),
+    query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM wca_persons p ${whereSql}`,
+      params,
+    ),
+  ]);
+  const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
+  c.header('Cache-Control', CACHE_HEADER);
+  return c.json({
+    country: cn.id, sort, dir, page, size, total,
+    rows: rows.map(r => ({ wcaId: r.wca_id, name: r.name, countryId: r.country_id, iso2: r.iso2 })),
+  });
+});
+
 // ── 2b. /v1/wca/rank-for ──
 // "我这个成绩放进 WCA 历史能排第几" —— 给 /timer 速拧计时器的世界排名徽章用.
 //   GET /v1/wca/rank-for?event=333&type=single&centis=984

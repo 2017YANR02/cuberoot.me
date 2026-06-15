@@ -7,8 +7,15 @@
 /* tabs */
 .ns-tabs {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   margin-bottom: 24px;
+}
+
+/* parens toggle:推到右侧,与指标 tab 分开 */
+.ns-tab-toggle {
+  margin-left: auto;
 }
 
 .ns-tab {
