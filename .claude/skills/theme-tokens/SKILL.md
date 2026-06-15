@@ -5,7 +5,7 @@ description: "Use when writing/editing CSS color values, backgrounds, borders, t
 
 # Theme tokens — Claude 风 hex + color-mix
 
-token 定义在 `core/packages/client-next/app/globals.css :root`。完整色值表 + 决策树见下方表格 + 决策树小节(原 `client/DESIGN.md` / `client/src/pages/THEMING.md` 未随 Vite 退役迁过来)。
+token 定义在 `core/packages/client/app/globals.css :root`。完整色值表 + 决策树见下方表格 + 决策树小节(原 `client/DESIGN.md` / `client/src/pages/THEMING.md` 未随 Vite 退役迁过来)。
 
 ## 写新 CSS 必查 token 表
 

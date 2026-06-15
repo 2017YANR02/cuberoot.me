@@ -72,6 +72,6 @@ z3/z'   橙 #FFA100      x1/x    蓝 #0000F2      x3/x'   绿 #00D800
 ## 关键文件
 
 - 聚合：`core/packages/scramble-stats-build/src/build.ts`（`VARIANTS` + `angleToColor` 映射；`SUBSET_KEYS` = sizes 1/2/4/6）
-- 页：`core/packages/client-next/app/[lang]/scramble/stats/page.tsx`（`COLOR_LETTERS` / `COLOR_HEX` / `DUAL_PAIRS` 在这里）
-- 图：`core/packages/client-next/app/[lang]/scramble/stats/_components/DiscreteHistogram.tsx`（自写的离散整数 SVG，**不要**改用 `components/wca-stats/DistributionChart.tsx`）
+- 页：`core/packages/client/app/[lang]/scramble/stats/page.tsx`（`COLOR_LETTERS` / `COLOR_HEX` / `DUAL_PAIRS` 在这里）
+- 图：`core/packages/client/app/[lang]/scramble/stats/_components/DiscreteHistogram.tsx`（自写的离散整数 SVG，**不要**改用 `components/wca-stats/DistributionChart.tsx`）
 - 样式：对齐 `landing.css` 的 Claude 浅色系；`wca_stats.css` 的暗棕**不要污染**

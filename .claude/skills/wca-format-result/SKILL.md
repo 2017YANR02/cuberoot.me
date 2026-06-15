@@ -5,7 +5,7 @@ description: "Use when raw WCA result value (centiseconds/FMC/MBLD encoding) →
 
 # WCA 成绩值格式化
 
-唯一入口：`core/packages/client-next/lib/wca-format-result.ts`。任何把 raw WCA 数值变字符串的地方都走它,**不要再手写 `(v/100).toFixed(2)` 或对 MBLD 数字做 slice**。
+唯一入口：`core/packages/client/lib/wca-format-result.ts`。任何把 raw WCA 数值变字符串的地方都走它,**不要再手写 `(v/100).toFixed(2)` 或对 MBLD 数字做 slice**。
 
 ```ts
 formatWcaResult(value, eventId, 'single' | 'average', opts?)

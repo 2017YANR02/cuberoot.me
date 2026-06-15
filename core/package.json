@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@11.1.2",
   "scripts": {
-    "dev:next": "turbo dev --filter=@cuberoot/client-next",
+    "dev:next": "turbo dev --filter=@cuberoot/client",
     "dev:server": "turbo dev --filter=@cuberoot/server",
     "build": "turbo build",
     "typecheck": "turbo typecheck",

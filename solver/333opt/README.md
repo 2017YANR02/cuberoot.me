@@ -1,7 +1,7 @@
 # 333 整解最优步数统计管道(管道 C)
 
 为 `/scramble/stats` 难度 tab 的 **「333」方法**生成「整个三阶魔方最优解 HTM 步数分布」+ 示例。
-方法/阶段/数据形态见前端 `core/packages/client-next/app/[lang]/scramble/stats/` + memory `project_333_optimal_difficulty`。
+方法/阶段/数据形态见前端 `core/packages/client/app/[lang]/scramble/stats/` + memory `project_333_optimal_difficulty`。
 
 > 手动本地管道(非 CI):依赖本机的合并池 master + cubeopt WASM + 15G 剪枝表。
 
@@ -18,7 +18,7 @@
 
 ## 依赖(本机)
 
-1. **cubeopt WASM** —— `core/packages/client-next/public/cubeopt/cube48opt9.mjs` + `.wasm`(Tronto h48 最优解,前端 `/scramble/solver` 同款,memory64 build)。
+1. **cubeopt WASM** —— `core/packages/client/public/cubeopt/cube48opt9.mjs` + `.wasm`(Tronto h48 最优解,前端 `/scramble/solver` 同款,memory64 build)。
 2. **15G 剪枝表** —— `solver/tables/h48/h48prun31h9.dat`(gitignored,15,565,455,360 字节)。生成走 `node gen-table.mjs`(`THREADS=12`,~数小时,内存峰 ~16G)。
 3. **合并池 master**(上一节),由 `update_cross_stats.ps1` 的 incremental.py 维护并增量更新。
 

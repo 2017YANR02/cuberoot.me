@@ -1,0 +1,91 @@
+// /stats/* handler:
+// - Local dev (next dev): serves from repo's stats/ directory.
+// - Self-hosted prod (nginx): never hit here, nginx ^~ /stats/ location returns first.
+// - Vercel prod: stats/ NOT bundled (only core/packages/client is deployed)
+//   → fall back to fetching from static.cuberoot.me which serves stats from
+//   /www/wwwroot/toolkit/stats/ via nginx (CORS: *).
+// (Without this, /stats/all_upcoming_comps.json etc. 404 on Vercel.)
+
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const VERCEL_STATS_FALLBACK = 'https://static.cuberoot.me/stats/';
+
+// app/stats/[...slug]/route.ts → 6 levels up = repo root, then 'stats'
+// (cuberoot.me/core/packages/client/app/stats/[...slug] → cuberoot.me/stats)
+// process.cwd() is unreliable across dev/build; anchor on this file's URL.
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const STATS_DIR = path.resolve(HERE, '..', '..', '..', '..', '..', '..', 'stats');
+
+const CONTENT_TYPE: Record<string, string> = {
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.csv': 'text/csv; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
+  '.gz': 'application/gzip',
+};
+
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ slug: string[] }> },
+) {
+  const { slug } = await params;
+  const rel = slug.join('/');
+  if (rel.includes('..') || path.isAbsolute(rel)) {
+    return new Response('forbidden', { status: 403 });
+  }
+  const filePath = path.join(STATS_DIR, rel);
+  const ext = path.extname(rel).toLowerCase();
+  const contentType = CONTENT_TYPE[ext] ?? 'application/octet-stream';
+  const headers: Record<string, string> = {
+    'content-type': contentType,
+    // Dev: never cache — stats JSON is regenerated locally and SWR would keep
+    // serving stale data (e.g. an old scramble-length histogram). Prod/Vercel
+    // keep the CDN-friendly SWR policy (self-hosted prod serves via nginx, not here).
+    'cache-control': process.env.NODE_ENV === 'development'
+      ? 'no-store'
+      : 'public, s-maxage=3600, stale-while-revalidate=86400',
+  };
+  // 强制下载:逐 bin 采样 txt(downloads/)+「下载全部」全量 gz(bundles/)。
+  const isForcedDownload = rel.startsWith('scramble/downloads/') || rel.startsWith('scramble/bundles/');
+  if (isForcedDownload) {
+    const base = path.basename(rel);
+    headers['content-disposition'] = `attachment; filename="${base}"`;
+  }
+
+  try {
+    const data = await fs.readFile(filePath);
+    return new Response(new Uint8Array(data), { headers });
+  } catch {
+    const upstreamUrl = VERCEL_STATS_FALLBACK + rel;
+    // Per-bin sample txt (downloads/*): small — proxy from static on miss in BOTH dev
+    // (no local copy) and Vercel (stats/ not bundled), preserving content-disposition
+    // (static nginx doesn't set it). Both live ONLY on static (not committed).
+    if (rel.startsWith('scramble/downloads/')) {
+      try {
+        const upstream = await fetch(upstreamUrl);
+        if (!upstream.ok) return new Response('not found', { status: upstream.status });
+        const buf = await upstream.arrayBuffer();
+        return new Response(buf, { headers });
+      } catch {
+        return new Response('upstream error', { status: 502 });
+      }
+    }
+    // Full bundles (~30MB gz) + all other stats on miss: redirect to static so the
+    // bytes never traverse Compute (the dominant Fast Origin Transfer cost / 502
+    // timeouts). A .gz downloads regardless of content-disposition. Bundles redirect
+    // even in dev (no local copy unless the stages build ran). Other non-download
+    // stats only fall back on Vercel; dev 404s for genuinely-missing data.
+    if (process.env.VERCEL === '1' || rel.startsWith('scramble/bundles/')) {
+      return new Response(null, {
+        status: 307,
+        headers: { location: upstreamUrl, 'cache-control': 'public, s-maxage=86400' },
+      });
+    }
+    return new Response('not found', { status: 404 });
+  }
+}

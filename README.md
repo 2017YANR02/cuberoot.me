@@ -19,7 +19,7 @@
 cuberoot.me/
 ├── core/                          # pnpm + Turbo monorepo (all new work lives here)
 │   └── packages/
-│       ├── client-next/           # React 19 + Next.js 16 (App Router) ← primary workspace
+│       ├── client/           # React 19 + Next.js 16 (App Router) ← primary workspace
 │       ├── client/                # React 19 + Vite 8 SPA (retired, local fallback only)
 │       ├── server/                # Hono + PostgreSQL 13 (WCA OAuth + user data + alg DB)
 │       ├── shared/                # Shared types
@@ -46,16 +46,16 @@ Requires **pnpm 11** and **Node 20+**.
 pnpm install
 
 # Dev server at http://127.0.0.1:3000/
-pnpm --filter @cuberoot/client-next dev
+pnpm --filter @cuberoot/client dev
 
 # Type check (fast, daily — tsgo native)
-pnpm --filter @cuberoot/client-next typecheck
+pnpm --filter @cuberoot/client typecheck
 
 # Type check (tsc -b incremental, when in doubt)
-pnpm --filter @cuberoot/client-next typecheck:tsc
+pnpm --filter @cuberoot/client typecheck:tsc
 
 # Production build
-pnpm --filter @cuberoot/client-next build
+pnpm --filter @cuberoot/client build
 ```
 
 The backend API is proxied to production via Next.js rewrites, so you can develop the full app without running the backend locally.

@@ -1,6 +1,6 @@
 // 虎皮椒(xunhupay)聚合支付签名 —— 纯函数,md5 由调用方注入。
 //
-// WHY 注入 md5:本模块同时被 server(node:crypto)和 client-next vitest 引用;
+// WHY 注入 md5:本模块同时被 server(node:crypto)和 client vitest 引用;
 //   不在此 import 'crypto',避免任何浏览器 bundle 误打进 node 内置模块。
 //
 // 签名算法(xunhupay 官方文档):

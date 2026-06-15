@@ -1,9 +1,9 @@
 ---
 name: i18n
-description: "Use when adding/editing user-visible text in the React client (core/packages/client-next). 站点只服 en + zh-Hans(简体);繁体已移除。文案统一走 tr({en,zh}) / <T en zh /> / useT() 的 t(zh,en) / t('ns.key')+en.json/zh.json。禁内联 isZh/i18n.language 文案三元(CI ratchet + PreToolUse hook 双守)。右上角 lang+theme 用 <HeaderToggles />。Triggers: \"中英双语\", \"双语\", \"i18n\", \"translate\", \"翻译\", \"add Chinese/English\", \"isZh\", \"tr(\", \"useT\", \"LangToggle\", \"HeaderToggles\", \"主题切换\", \"右上角\", \"en.json\", \"zh.json\", \"useTranslation\", new page, new user-facing string."
+description: "Use when adding/editing user-visible text in the React client (core/packages/client). 站点只服 en + zh-Hans(简体);繁体已移除。文案统一走 tr({en,zh}) / <T en zh /> / useT() 的 t(zh,en) / t('ns.key')+en.json/zh.json。禁内联 isZh/i18n.language 文案三元(CI ratchet + PreToolUse hook 双守)。右上角 lang+theme 用 <HeaderToggles />。Triggers: \"中英双语\", \"双语\", \"i18n\", \"translate\", \"翻译\", \"add Chinese/English\", \"isZh\", \"tr(\", \"useT\", \"LangToggle\", \"HeaderToggles\", \"主题切换\", \"右上角\", \"en.json\", \"zh.json\", \"useTranslation\", new page, new user-facing string."
 ---
 
-# i18n（core/packages/client-next，主工作区）
+# i18n（core/packages/client，主工作区）
 
 站点只服 **en + zh-Hans(简体)**。繁体(zh-Hant)2026-06-14 已彻底移除,源码禁写任何繁体字。
 
@@ -18,7 +18,7 @@ description: "Use when adding/editing user-visible text in the React client (cor
 ## 禁区(以后的 AI 强制遵守)
 
 - **禁内联 UI 语言文案三元**:`isZh ? '中文' : 'English'`、`i18n.language.startsWith('zh') ? x.zh : x.en`、`i18n.language === 'zh' ? <>…</> : <>…</>` 一律改走上面四种。
-  双层守卫:写入即拦 PreToolUse hook(`.claude/hooks/block-handwritten-trad.ps1` → `core/packages/client-next/scripts/hook-detect-traditional.mjs`)+ CI ratchet `tests/i18n-no-isz-text-ternary.test.ts`(全局语言文案三元计数只降不升;迁移后把 BASELINE 调低)。
+  双层守卫:写入即拦 PreToolUse hook(`.claude/hooks/block-handwritten-trad.ps1` → `core/packages/client/scripts/hook-detect-traditional.mjs`)+ CI ratchet `tests/i18n-no-isz-text-ternary.test.ts`(全局语言文案三元计数只降不升;迁移后把 BASELINE 调低)。
 - **禁单语裸字**(切语言会断)、**禁繁体字**(hook + `tests/i18n-removal-guard.test.ts`)。
 
 ## 唯一允许的 isZh:函数参数(util 契约)

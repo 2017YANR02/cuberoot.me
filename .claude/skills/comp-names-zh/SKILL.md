@@ -5,7 +5,7 @@ description: "Use when regenerating `stats/comp_names_zh.json`, debugging Chines
 
 # 中国比赛名中文化
 
-前端显示规则全在 `core/packages/client-next/lib/comp-localize.ts` 的 JSDoc（`localizeCompName` / `stripWcaPrefix`）。新代码渲染比赛名一律走它，禁止裸 `c.name`。`compNameZh()` 命中前先 `await loadFlagData()`。
+前端显示规则全在 `core/packages/client/lib/comp-localize.ts` 的 JSDoc（`localizeCompName` / `stripWcaPrefix`）。新代码渲染比赛名一律走它，禁止裸 `c.name`。`compNameZh()` 命中前先 `await loadFlagData()`。
 
 ## 数据：`stats/comp_names_zh.json`
 

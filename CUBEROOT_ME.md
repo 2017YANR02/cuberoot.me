@@ -47,7 +47,7 @@ https://www.cuberoot.me/stats/       → WCA 统计页面
 ```
 push 到 main 分支
       │
-      ├── 改 client-next         → deploy_next.yml   → Next standalone → systemd :3002
+      ├── 改 client         → deploy_next.yml   → Next standalone → systemd :3002
       ├── 改 Hono server         → deploy_core.yml   → rsync /root/core-api/ + pm2 restart
       └── 改 ops/nginx/*.conf    → deploy_nginx.yml  → scp + nginx -t + reload
 ```
@@ -56,7 +56,7 @@ push 到 main 分支
 
 | Workflow | 触发 |
 |------|------|
-| `deploy_next.yml` | push main 且 `core/packages/{client-next,shared,visualcube}/**` 有变更 |
+| `deploy_next.yml` | push main 且 `core/packages/{client,shared,visualcube}/**` 有变更 |
 | `deploy_core.yml` | push main 且 `core/**` 有变更(>300 文件 path filter 失效需手动 `gh workflow run`) |
 | `deploy_nginx.yml` | push main 且 `ops/nginx/**` 有变更 |
 

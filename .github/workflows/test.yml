@@ -40,7 +40,7 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
-      # client-next typecheck 走 tsgo --noEmit,不像旧 tsc -b 会自建 project references,
+      # client typecheck 走 tsgo --noEmit,不像旧 tsc -b 会自建 project references,
       # 它 import @cuberoot/shared + visualcube 的产物;server tsconfig references 这两个,
       # tsc 启动校验它们的 dist/.d.ts 必须存在(TS6305)。所以先 build 再 typecheck。
       # skewb-notation 测试也走 shared 的 node 导出(dist),同样要先 build。
@@ -50,9 +50,9 @@ jobs:
           pnpm --filter @cuberoot/shared build
           pnpm --filter @cuberoot/visualcube build
 
-      - name: Typecheck client-next
+      - name: Typecheck client
         working-directory: core
-        run: pnpm --filter @cuberoot/client-next typecheck
+        run: pnpm --filter @cuberoot/client typecheck
 
       # esbuild bundle 只剥类型不检查,server 类型坏了 deploy_core build 仍能过
       # → 必须 CI 真跑 tsc --noEmit 兜底。
@@ -62,4 +62,4 @@ jobs:
 
       - name: Test
         working-directory: core
-        run: pnpm --filter @cuberoot/client-next test
+        run: pnpm --filter @cuberoot/client test

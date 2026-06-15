@@ -6,7 +6,7 @@ description: "Use when user wants to fill in /code/architecture 第 11 节的日
 # /timeline-update — 补 /code/architecture 日历 + 列表
 
 两个视图:
-- 日历 → `core/packages/client-next/app/[lang]/code/architecture/timeline_commits.json` (升序, 每天 1 行 `{date, zh, en}`)
+- 日历 → `core/packages/client/app/[lang]/code/architecture/timeline_commits.json` (升序, 每天 1 行 `{date, zh, en}`)
 - 列表 → `app/[lang]/code/architecture/_lib/arch-data.tsx` 里 `TIMELINE` (降序 newest-first, 产品级 changelog)
 
 ## 三条铁律
@@ -40,7 +40,7 @@ interface TLEntry {
 
 tag: `migration` 换栈/迁数据 · `dx` 开发流程 · `feature` 新页/新模块 · `infra` 部署/CI/SSL
 
-新条目插数组**最前**, 改完跑 `pnpm --filter @cuberoot/client-next typecheck`
+新条目插数组**最前**, 改完跑 `pnpm --filter @cuberoot/client typecheck`
 
 ## Calibration
 
