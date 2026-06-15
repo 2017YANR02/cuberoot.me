@@ -956,3 +956,26 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
     .wp-bycomp-table thead th, .wp-bycomp-table tbody td { padding: 6px 6px; }
     .wp-ms-date { flex-basis: 78px; }
 }
+
+/* ── 直播·非官方成绩(成绩 tab 内联;官方收录后自动消失)──────────────────── */
+.wp-live-chip {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 5px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    line-height: 1.55;
+    border-radius: 4px;
+    color: var(--wp-orange);
+    background: var(--wp-orange-soft);
+    border: 1px solid color-mix(in srgb, var(--wp-orange) 35%, transparent);
+    vertical-align: middle;
+    white-space: nowrap;
+}
+/* 整行轻微弱化,传达「暂态、非权威」 */
+.wp-row-live .wp-cell-result,
+.wp-row-live .wp-cell-pos,
+.wp-row-live .wp-cell-attempts {
+    color: var(--wp-text-sub);
+}

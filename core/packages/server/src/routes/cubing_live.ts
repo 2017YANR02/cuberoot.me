@@ -446,6 +446,99 @@ function writeSnapshotL2(data: CompData): void {
 function setL1AndL2(key: string, data: CompData): void {
   cache.set(key, data);
   writeSnapshotL2(data);
+  void syncPersonLiveResults(data);
+}
+
+// ─── 选手页直播成绩写穿(per-person 索引)─────────────────────────────────────
+// 把非官方源(cubing / wca_live)、官方尚未收录的近期 WCA 比赛成绩炸成 per-person 行写进
+// wca_live_person_results,供 /v1/wca/person-live-results 秒查。比赛转官方源(wca/wca_db)
+// 或非 WCA 比赛 → 删除该 comp 的行(官方权威 / 不该出现在 WCA 选手页)。fire-and-forget。
+
+/** 轮内成绩比较:<0 = a 严格更好(只比时间,忽略号码;DNF/0 垫底)。移植自 useLiveStream 的 compareResult。 */
+function liveResultBetter(a: LiveResult, b: LiveResult, fmt: string): number {
+  if (fmt === 'a' || fmt === 'm') {
+    if (a.a > 0 && b.a <= 0) return -1;
+    if (b.a > 0 && a.a <= 0) return 1;
+    if (a.a !== b.a) return a.a - b.a;
+  }
+  if (a.b > 0 && b.b <= 0) return -1;
+  if (b.b > 0 && a.b <= 0) return 1;
+  return a.b - b.b;
+}
+
+const PERSON_LIVE_RECENT_DAYS = 45;        // 比赛开始日距今超过这个就不再写入(官方早该到了)
+const PERSON_LIVE_INSERT_CHUNK = 400;      // 单条 INSERT 行数上限(12 列/行,远低于 PG 参数上限)
+
+async function syncPersonLiveResults(data: CompData): Promise<void> {
+  const compId = data.slug;
+  try {
+    // 近期判断提到最前(getCompStartDate 有缓存,极廉价):prewarm 每 10min 扫的大量老的
+    // 官方比赛在这里直接早退,不发无谓的 no-op DELETE。窗外比赛永远不该有直播行,
+    // 漏网的交给 prewarm 末尾的 60 天清理。
+    const sd = await getCompStartDate(compId);
+    if (sd) {
+      const days = (Date.now() - Date.parse(sd)) / 86400_000;
+      if (days > PERSON_LIVE_RECENT_DAYS || days < -2) return; // 太旧 / 太远期都不碰
+    }
+
+    // 官方源(或非 WCA 比赛)= 该场不该出现在 WCA 选手页的直播补充 → 清掉本场直播行。
+    if (data.source === 'wca' || data.source === 'wca_db' || (data.type && data.type !== 'WCA')) {
+      await query(`DELETE FROM wca_live_person_results WHERE comp_id = ?`, [compId]);
+      return;
+    }
+    // 仅两条非官方实时源进入写入路径。
+    if (data.source !== 'cubing' && data.source !== 'wca_live') return;
+
+    const compName = decodeHtmlEntities(data.name || compId);
+
+    type Row = { wcaid: string; eventId: string; roundId: string; format: string; pos: number; best: number; average: number; attempts: number[] };
+    const rows: Row[] = [];
+    for (const arr of Object.values(data.resultsByRound)) {
+      if (!arr.length) continue;
+      for (const r of arr) {
+        const wcaid = data.users[String(r.n)]?.wcaid;
+        if (!wcaid) continue; // newcomer 无 wcaid → 没有选手页,跳过
+        let pos = 1;
+        for (const o of arr) {
+          if (o !== r && liveResultBetter(o, r, o.f || r.f) < 0) pos++;
+        }
+        rows.push({
+          wcaid, eventId: r.e, roundId: r.r, format: r.f,
+          pos, best: r.b, average: r.a, attempts: Array.isArray(r.v) ? r.v : [],
+        });
+      }
+    }
+
+    // 整场重写:先删后插,避免改判/退赛留下陈行。
+    await query(`DELETE FROM wca_live_person_results WHERE comp_id = ?`, [compId]);
+    if (rows.length === 0) return;
+
+    for (let i = 0; i < rows.length; i += PERSON_LIVE_INSERT_CHUNK) {
+      const chunk = rows.slice(i, i + PERSON_LIVE_INSERT_CHUNK);
+      const tuples = chunk.map(() => `(?,?,?,?,?,?,?,?,?,?::jsonb,?)`).join(',');
+      const params: unknown[] = [];
+      for (const r of chunk) {
+        params.push(
+          r.wcaid, compId, compName, sd,
+          r.eventId, r.roundId, r.format,
+          r.pos, r.best, r.average, r.attempts, data.source,
+        );
+      }
+      await query(
+        `INSERT INTO wca_live_person_results
+           (wca_id, comp_id, comp_name, comp_date, event_id, round_type_id, format_id, pos, best, average, attempts, source)
+         VALUES ${tuples}
+         ON CONFLICT (wca_id, comp_id, event_id, round_type_id) DO UPDATE SET
+           comp_name = EXCLUDED.comp_name, comp_date = EXCLUDED.comp_date,
+           format_id = EXCLUDED.format_id, pos = EXCLUDED.pos,
+           best = EXCLUDED.best, average = EXCLUDED.average,
+           attempts = EXCLUDED.attempts, source = EXCLUDED.source, updated_at = NOW()`,
+        params,
+      );
+    }
+  } catch (e) {
+    console.warn(`[person-live] sync failed for ${compId}:`, (e as Error).message);
+  }
 }
 
 /** WCA ID (e.g. XuzhouZenith2026) → cubing.com slug (Xuzhou-Zenith-2026)。
@@ -1672,6 +1765,15 @@ export async function prewarmHotComps(): Promise<void> {
       await new Promise(r => setTimeout(r, PREWARM_DELAY_MS));
     }
     console.log(`[prewarm] done ok=${ok} fail=${fail}`);
+    // 顺手清掉 60 天前的直播成绩行(永不公示的 / 漏删的兜底;选手页查询也只取近 60 天)。
+    try {
+      await query(
+        `DELETE FROM wca_live_person_results
+          WHERE comp_date IS NOT NULL AND comp_date < CURRENT_DATE - INTERVAL '60 days'`,
+      );
+    } catch (e) {
+      console.warn('[prewarm] person-live prune failed:', (e as Error).message);
+    }
   } catch (e) {
     console.warn('[prewarm] sweep failed:', (e as Error).message);
   } finally {

@@ -70,6 +70,9 @@ export interface WcaResultRow {
   regional_single_record?: string | null;
   regional_average_record?: string | null;
   date?: string;            // not in raw API; we backfill from comp lookup if needed
+  /** 直播·非官方成绩(cubing.com / WCA Live,官方尚未收录)— 仅成绩 tab 展示,不进 PR/纪录/名次和 */
+  live?: boolean;
+  source?: string;          // 'cubing' | 'wca_live'(仅 live 行)
 }
 
 export async function fetchWcaPersonResults(wcaId: string): Promise<WcaResultRow[]> {
@@ -224,6 +227,29 @@ export async function fetchPersonRankHistory(wcaId: string, eventId: string): Pr
   const json = (await res.json()) as PersonRankHistoryResponse;
   cacheSet(key, json);
   return json;
+}
+
+// 直播·非官方成绩(官方 API 尚未收录的近期比赛 — cubing.com 中国比赛 / WCA Live 国外比赛)。
+// 由 server /v1/wca/person-live-results 提供(cubing_live.ts prewarm 写穿)。短命可变数据,
+// 不入 localStorage(server 已 60s 浏览器缓存),每次开页拉最新。
+export interface PersonLiveResultsResponse {
+  wcaId: string;
+  comps: WcaCompetition[];
+  results: WcaResultRow[];   // 已打上 live:true
+}
+
+export async function fetchWcaPersonLiveResults(wcaId: string): Promise<PersonLiveResultsResponse> {
+  const res = await fetch(apiUrl(`/v1/wca/person-live-results?wcaId=${encodeURIComponent(wcaId)}&v=1`));
+  if (!res.ok) throw new Error(`person-live-results ${res.status}`);
+  const json = (await res.json()) as { wcaId?: string; comps?: WcaCompetition[]; results?: (WcaResultRow & { source?: string })[] };
+  const results: WcaResultRow[] = (json.results ?? []).map((r) => ({
+    ...r,
+    live: true,
+    // 非官方成绩不声称区域纪录(cubing 源的 tag 是推断的,可能不准)
+    regional_single_record: null,
+    regional_average_record: null,
+  }));
+  return { wcaId, comps: json.comps ?? [], results };
 }
 
 export async function fetchWcaPersonCompetitions(wcaId: string): Promise<WcaCompetition[]> {
