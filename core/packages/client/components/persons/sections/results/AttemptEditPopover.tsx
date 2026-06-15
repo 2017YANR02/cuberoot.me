@@ -1,7 +1,8 @@
 'use client';
-// 管理员点单次成绩 → 小浮层,两个方向二选一(或都填):
+// 管理员点单次成绩 → 小浮层,先用「操作」下拉选一种,再填对应输入:
 //  - 更正前(原始):补录该次被 WCA 更正前的旧值 → 旧值划线留在当前值前,当前值不变。
 //  - 更正后(改判):把该次正向改判为新值 → 当前值划线,新值成为当前(自动重算单次/平均)。
+//  - 罚时(每档 +2):该次实为 base+2N,展开成 base⁺ᴺ(纯展示,不改值)。
 // 浮层用 portal 渲染到 body + position:fixed,逃出成绩表的 overflow 裁切容器。
 // 结构样式全部内联(不依赖外部 CSS):dev 下 CSS HMR 偶发滞后会让浮层失样塌成行内/落页脚,
 // 内联保证「定位+盒子」始终成立(配色仍走主题 token var())。
@@ -24,6 +25,7 @@ const boxStyle: CSSProperties = {
   width: POP_W, padding: 11, display: 'flex', flexDirection: 'column', gap: 7,
   background: 'var(--popover)', border: '1px solid var(--border-default)', borderRadius: 11,
   boxShadow: '0 10px 28px rgba(0, 0, 0, 0.32)', textAlign: 'left', whiteSpace: 'normal', cursor: 'default',
+  maxHeight: 'calc(100vh - 16px)', overflowY: 'auto',
 };
 const rowStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 3 };
 const rowLabelStyle: CSSProperties = { fontSize: '0.7rem', color: 'var(--muted-foreground)' };
@@ -59,12 +61,14 @@ export function AttemptEditPopover({
   onSetPenalty?: (penaltyCs: number, note?: string) => Promise<void> | void;
 }) {
   const anchorRef = useRef<HTMLSpanElement>(null);
+  const popRef = useRef<HTMLSpanElement>(null);
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [orig, setOrig] = useState('');
   const [next, setNext] = useState('');
   const [pen, setPen] = useState('');        // 罚时档位 = +2 的次数('' = 无,'1'..'8')
   const [note, setNote] = useState('');
+  const [mode, setMode] = useState<'orig' | 'next' | 'penalty'>('orig'); // 先选操作再填
   const [busy, setBusy] = useState(false);
 
   const olds = oldValues.map((ov, k) => (
@@ -78,15 +82,24 @@ export function AttemptEditPopover({
     const el = anchorRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const half = POP_W / 2;
-    const left = Math.min(Math.max(r.left + r.width / 2, half + 8), window.innerWidth - half - 8);
-    setPos({ top: r.bottom + 6, left });
+    const margin = 8;
+    const halfW = POP_W / 2;
+    const h = popRef.current?.offsetHeight ?? 260; // 首帧用估值,挂载后用实测高度
+    const left = Math.min(Math.max(r.left + r.width / 2, halfW + margin), window.innerWidth - halfW - margin);
+    // 默认放在 solve 下方;下方放不下就翻到上方;都放不下就夹进视口。
+    let top = r.bottom + 6;
+    if (top + h > window.innerHeight - margin) {
+      const above = r.top - 6 - h;
+      top = above >= margin ? above : Math.max(margin, window.innerHeight - h - margin);
+    }
+    setPos({ top, left });
   }, []);
 
-  const close = useCallback(() => { setOpen(false); setOrig(''); setNext(''); setPen(''); setNote(''); }, []);
+  const close = useCallback(() => { setOpen(false); setMode('orig'); setOrig(''); setNext(''); setPen(''); setNote(''); }, []);
 
   useEffect(() => {
     if (!open) return;
+    reposition(); // 挂载后按实测高度再定位一次(翻转/夹取生效)
     const onMove = () => reposition();
     window.addEventListener('scroll', onMove, true);
     window.addEventListener('resize', onMove);
@@ -98,27 +111,29 @@ export function AttemptEditPopover({
 
   const toggle = () => {
     if (open) { close(); return; }
+    setMode('orig');
     setPen(penalty && penalty > 0 ? String(Math.round(penalty / 200)) : '');  // 厘秒 → 档位(/200)
     reposition();
     setOpen(true);
   };
 
   const save = async () => {
-    const po = parseHumanResult(orig, eventId);
-    const pn = parseHumanResult(next, eventId);
-    // 罚时档位 → 厘秒(每档 +2 秒 = 200cs);下拉只给合法档,无需再校验。
-    const penCs = pen === '' ? 0 : Number(pen) * 200;
-    const curPen = penalty ?? 0;
-    const origChanged = po != null && po !== value;
-    const nextChanged = pn != null && pn !== value;
-    const penChanged = penCs !== curPen;
-    if (!origChanged && !nextChanged && !penChanged) { close(); return; }
     const n = note.trim() || undefined;
+    let action: (() => Promise<void> | void) | null = null;
+    if (mode === 'orig') {
+      const po = parseHumanResult(orig, eventId);
+      if (po != null && po !== value) action = () => onSetOriginal(po, n);
+    } else if (mode === 'next') {
+      const pn = parseHumanResult(next, eventId);
+      if (pn != null && pn !== value) action = () => onCorrect(pn, n);
+    } else {
+      const penCs = pen === '' ? 0 : Number(pen) * 200; // 每档 +2 秒 = 200cs;下拉只给合法档
+      if (penCs !== (penalty ?? 0)) action = () => onSetPenalty?.(penCs, n);
+    }
+    if (!action) { close(); return; }
     setBusy(true);
     try {
-      if (origChanged) await onSetOriginal(po as number, n);
-      if (nextChanged) await onCorrect(pn as number, n);
-      if (penChanged) await onSetPenalty?.(penCs, n);
+      await action();
       close();
     } catch (e) {
       window.alert((e as Error).message);
@@ -138,28 +153,41 @@ export function AttemptEditPopover({
       {open && pos && createPortal(
         <>
           <div style={backdropStyle} onClick={close} />
-          <span style={{ ...boxStyle, top: pos.top, left: pos.left }} role="dialog" onClick={(e) => e.stopPropagation()}>
+          <span ref={popRef} style={{ ...boxStyle, top: pos.top, left: pos.left }} role="dialog" onClick={(e) => e.stopPropagation()}>
             <label style={rowStyle}>
-              <span style={rowLabelStyle}>{tr({ zh: '更正前(原始)', en: 'Original (before)' })}</span>
-              <input
-                style={inputStyle}
-                autoFocus
-                value={orig}
-                onChange={(e) => setOrig(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }}
-              />
+              <span style={rowLabelStyle}>{tr({ zh: '操作', en: 'Action' })}</span>
+              <select style={inputStyle} value={mode} onChange={(e) => setMode(e.target.value as 'orig' | 'next' | 'penalty')}>
+                <option value="orig">{tr({ zh: '更正前(原始)', en: 'Original (before)' })}</option>
+                <option value="next">{tr({ zh: '更正后(改判)', en: 'Corrected (after)' })}</option>
+                {allowPenalty && <option value="penalty">{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</option>}
+              </select>
             </label>
             <span style={curStyle}>{tr({ zh: '当前', en: 'now' })} <SolveValue value={value} penalty={penalty} format={format} /></span>
-            <label style={rowStyle}>
-              <span style={rowLabelStyle}>{tr({ zh: '更正后(改判)', en: 'Corrected (after)' })}</span>
-              <input
-                style={inputStyle}
-                value={next}
-                onChange={(e) => setNext(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }}
-              />
-            </label>
-            {allowPenalty && (
+            {mode === 'orig' && (
+              <label style={rowStyle}>
+                <span style={rowLabelStyle}>{tr({ zh: '原始值(更正前)', en: 'Original value' })}</span>
+                <input
+                  style={inputStyle}
+                  autoFocus
+                  value={orig}
+                  onChange={(e) => setOrig(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }}
+                />
+              </label>
+            )}
+            {mode === 'next' && (
+              <label style={rowStyle}>
+                <span style={rowLabelStyle}>{tr({ zh: '改判为(更正后)', en: 'Corrected to' })}</span>
+                <input
+                  style={inputStyle}
+                  autoFocus
+                  value={next}
+                  onChange={(e) => setNext(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }}
+                />
+              </label>
+            )}
+            {mode === 'penalty' && allowPenalty && (
               <label style={rowStyle}>
                 <span style={rowLabelStyle}>{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</span>
                 <select style={inputStyle} value={pen} onChange={(e) => setPen(e.target.value)}>
