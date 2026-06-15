@@ -1,0 +1,22 @@
+/* 姓名口径(英文名/全名/本地名/含曾用名)共享样式:含曾用名时现名后跟弱化的「曾用名」标签。
+   姓名分布(NameStatsView)+ 排名页名录(all-results 名录视图)共用。 */
+.ns-person-wrap {
+  display: inline;
+}
+
+.ns-former {
+  color: var(--muted-foreground);
+  margin-left: 6px;
+}
+
+.ns-former-tag {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--foreground) 9%, transparent);
+  color: var(--muted-foreground);
+  font-size: .78em;
+  white-space: nowrap;
+  vertical-align: 1px;
+}

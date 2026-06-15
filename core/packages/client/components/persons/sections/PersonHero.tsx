@@ -3,7 +3,6 @@
 
 import { Mars, Venus } from 'lucide-react';
 import { Flag } from '@/components/Flag';
-import { displayCuberName } from '@/lib/name-utils';
 import { countryName } from '@/lib/country-name';
 import type { WcaPersonProfile, WcaResultRow } from '@/lib/wca-person-api';
 import i18n from "@/i18n/i18n-client";
@@ -16,7 +15,8 @@ interface Props {
 
 export default function PersonHero({ profile, results, isZh }: Props) {
   const p = profile.person;
-  const displayName = displayCuberName(p.name, isZh);
+  // 选手主页展示完整 WCA 名(拉丁名 + 括号内本地名),中英文一致;与 WCA 官网对齐。
+  const displayName = p.name;
   const wcaUrl = `https://www.worldcubeassociation.org/persons/${p.wca_id}`;
   const avatarUrl = p.avatar?.thumb_url || p.avatar?.url;
   const t = (zh: string, en: string) => (isZh ? zh : en);

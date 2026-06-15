@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight, ArrowUp, ArrowDown } from 'lucide-react';
 import Paginator from '@/components/wca-stats/Paginator';
 import NameStatsView, { type NameStatsData } from '@/components/wca-stats/NameStatsView';
+import { type NameMode, NAME_MODES, nameByMode, nameModeOptions, FormerNames } from '@/components/wca-stats/nameMode';
 import { statsUrl } from '@/lib/stats-base';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { Flag } from '@/components/Flag';
@@ -86,7 +87,7 @@ type SingleData =
 // ---- 空态「分布」:姓名统计(复用 /wca/name_stats 的可视化) ----
 type NameStatsPayload = NameStatsData & { note?: string; noteZh?: string };
 // ---- 空态「名录」:全选手 A-Z 行 ----
-interface DirRow { wcaId: string; name: string; countryId: string; iso2: string | null; }
+interface DirRow { wcaId: string; name: string; countryId: string; iso2: string | null; former?: string[]; }
 
 // ---- 名次和视图行 ----
 interface SorRow {
@@ -125,6 +126,7 @@ function AllResultsPageInner() {
       eview: parseAsString,      // 空态视图:'dist'(姓名分布) | 'list'(名录 A-Z)
       psort: parseAsString,      // 名录排序:'name'(首字母) | 'len'(名字长度)
       pdir: parseAsString,       // 'asc' | 'desc'
+      pname: parseAsString,      // 名录名字口径:latin | full | local | aka
       page: parseAsString,
       size: parseAsString,
     },
@@ -163,6 +165,7 @@ function AllResultsPageInner() {
   const eview: 'dist' | 'list' = query.eview === 'list' ? 'list' : 'dist';
   const psort: 'name' | 'len' = query.psort === 'len' ? 'len' : 'name';
   const pdir: 'asc' | 'desc' = query.pdir === 'desc' ? 'desc' : 'asc';
+  const pname: NameMode = (NAME_MODES as string[]).includes(query.pname ?? '') ? (query.pname as NameMode) : 'latin';
   const setSort = (key: 'name' | 'len') => {
     if (psort === key) setQuery({ pdir: pdir === 'asc' ? 'desc' : 'asc', page: null });
     else setQuery({ psort: key, pdir: 'asc', page: null });
@@ -282,7 +285,8 @@ function AllResultsPageInner() {
   useEffect(() => {
     if (mode !== 'empty' || eview !== 'dist' || nameStats) return;
     setLoading(true); setError(null);
-    fetch(statsUrl('/stats/name_stats.json'))
+    // v=2:name_stats 加了 全名/本地名/含曾用名 面板(shape 变),bump 破浏览器 + CDN 缓存
+    fetch(statsUrl('/stats/name_stats.json?v=2'))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((j: NameStatsPayload) => setNameStats(j))
       .catch(e => setError(e.message)).finally(() => setLoading(false));
@@ -293,14 +297,14 @@ function AllResultsPageInner() {
     if (mode !== 'empty' || eview !== 'list') return;
     setLoading(true); setError(null);
     const qs = new URLSearchParams();
-    qs.set('sort', psort); qs.set('dir', pdir);
+    qs.set('sort', psort); qs.set('dir', pdir); qs.set('name', pname);
     qs.set('page', String(page)); qs.set('size', String(size));
     if (country) qs.set('country', country);
     fetch(apiUrl(`/v1/wca/persons-directory?${qs.toString()}`))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((j: { rows: DirRow[]; total: number }) => setDirData({ rows: j.rows, total: j.total }))
       .catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [mode, eview, psort, pdir, country, page, size]);
+  }, [mode, eview, psort, pdir, pname, country, page, size]);
 
   // 名次和数据
   useEffect(() => {
@@ -502,11 +506,23 @@ function AllResultsPageInner() {
                   <label>{tr({ zh: '排序', en: 'Sort' })}</label>
                   <div className="wse-show-toggle">
                     <button type="button" className={psort === 'name' ? 'active' : ''} onClick={() => setSort('name')}>
-                      {tr({ zh: '首字母', en: 'A–Z' })}{psort === 'name' && (pdir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                      {tr({ zh: '首字母', en: 'A–Z' })}
                     </button>
                     <button type="button" className={psort === 'len' ? 'active' : ''} onClick={() => setSort('len')}>
-                      {tr({ zh: '名字长度', en: 'Name length' })}{psort === 'len' && (pdir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                      {tr({ zh: '名字长度', en: 'Name length' })}
                     </button>
+                  </div>
+                </div>
+                <div className="wse-filter wse-filter-show">
+                  <label>{tr({ zh: '名字', en: 'Name' })}</label>
+                  <div className="wse-show-toggle">
+                    {nameModeOptions().map(m => (
+                      <button key={m.id} type="button" title={m.title}
+                        className={pname === m.id ? 'active' : ''}
+                        onClick={() => update('pname', m.id === 'latin' ? '' : m.id)}>
+                        {m.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </>
@@ -545,9 +561,10 @@ function AllResultsPageInner() {
                         <tr>
                           <th className="wse-rank-col">#</th>
                           <th>
-                            <button type="button" className="wse-th-sort" onClick={() => setSort('name')}>
+                            {/* 列头箭头 = 当前排序方向(首字母 / 名字长度都排这一列),点一下翻方向;排序键由上方切换器选 */}
+                            <button type="button" className="wse-th-sort" onClick={() => setQuery({ pdir: pdir === 'asc' ? 'desc' : 'asc', page: null })}>
                               {tr({ zh: '选手', en: 'Person' })}
-                              {psort === 'name' && (pdir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                              {pdir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
                             </button>
                           </th>
                         </tr>
@@ -558,7 +575,10 @@ function AllResultsPageInner() {
                             <td className="wse-rank-col">{(page - 1) * size + i + 1}</td>
                             <td>
                               {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                              <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
+                              <span className="ns-person-wrap">
+                                <Link prefetch={false} href={personHref(r.wcaId)}>{nameByMode(r.name, pname)}</Link>
+                                {pname === 'aka' && <FormerNames former={r.former} />}
+                              </span>
                             </td>
                           </tr>
                         ))}
