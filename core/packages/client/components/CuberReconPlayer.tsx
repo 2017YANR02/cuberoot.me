@@ -1,59 +1,63 @@
 'use client';
 
 /**
- * Sq1ReconPlayer — read-only Square-1 preview for the recon submit/detail flow.
+ * CuberReconPlayer — read-only NxN preview for the recon submit flow, driven by
+ * the local cuber WebGL engine (the same one /sim uses for NxN). It's the NxN
+ * counterpart to Sq1ReconPlayer, offered as an alternative to the cubing.js
+ * TwistySection so recon previews can match /sim exactly.
  *
- * cubing.js TwistyPlayer renders SQ1 poorly, so the recon pages previously
- * skipped the player entirely for sq1. This component reuses the local cuber
- * WebGL engine (the same one /sim?puzzle=sq1 drives) to show the scramble +
- * solution with play / step / scrub controls.
+ * A back-view mini window (createBackView) is ALWAYS shown here — the recon flow
+ * forces it on, no toggle.
  *
  * three + the cuber World are lazy-imported inside the mount effect so the
- * ~1.2MB three bundle stays out of pages that never select sq1 (mirrors
- * TwistySection's lazy cubing.js import).
+ * ~1.2MB three bundle stays out of pages that never select this engine.
  *
  * Cursor sync: when `playerRef` is given, the instance exposes
- * `{ __kind: 'sq1', jumpToMoveCount(n) }` so the form's caret handler can scrub
- * the cube as the user clicks through the solution text.
+ * `{ __kind: 'nxn-cuber', jumpToMoveCount(n) }` so the form's caret handler can
+ * scrub the cube as the user clicks through the solution text.
  */
 
 import {
   useCallback, useEffect, useRef, useState, type RefObject,
 } from 'react';
 import { Play, Pause, SkipBack, SkipForward, RotateCcw } from 'lucide-react';
-import { parseSq1Tokens } from '@/lib/sq1-svg';
 import type World from '@/app/[lang]/sim/cuber/world';
-import type Sq1Cube from '@/app/[lang]/sim/cuber/sq1/Sq1Cube';
-import type { Sq1Move } from '@/app/[lang]/sim/cuber/sq1/sq1State';
 import type { BackView } from '@/app/[lang]/sim/cuber/backView';
-import './Sq1ReconPlayer.css';
+import './CuberReconPlayer.css';
 
 const PLAY_INTERVAL_MS = 520;
 
-export default function Sq1ReconPlayer({
-  scramble, alg, fillPane = false, playerRef, backView = false,
+/** Whitespace-tokenize an alg into individual moves (matches the form's caret
+ *  move-count which splits on /\s+/). */
+function tokenize(alg: string): string[] {
+  return alg.trim().split(/\s+/).filter(Boolean);
+}
+
+export default function CuberReconPlayer({
+  scramble, alg, order, fillPane = false, playerRef,
 }: {
   scramble: string;
   alg: string;
+  /** NxN order (2..7). */
+  order: number;
   fillPane?: boolean;
-  /** Show an always-on back-view mini window (recon submit forces it). */
-  backView?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: RefObject<any>;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const backFrameRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<World | null>(null);
-  const backViewRef = useRef<BackView | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rendererRef = useRef<any>(null);
+  const backViewRef = useRef<BackView | null>(null);
   const scrambleRef = useRef(scramble);
-  const actionsRef = useRef<Sq1Move[]>(parseSq1Tokens(alg) as Sq1Move[]);
+  const tokensRef = useRef<string[]>(tokenize(alg));
+  const orderRef = useRef(order);
   const stepRef = useRef(0);
 
   const [ready, setReady] = useState(false);
   const [step, setStepState] = useState(0);
-  const [total, setTotal] = useState(actionsRef.current.length);
+  const [total, setTotal] = useState(tokensRef.current.length);
   const [playing, setPlaying] = useState(false);
 
   const setStep = useCallback((n: number) => {
@@ -61,16 +65,16 @@ export default function Sq1ReconPlayer({
     setStepState(n);
   }, []);
 
-  /** Reset to the scramble, then snap the first `n` solution moves on top. */
+  /** Reset to the scramble, then snap the first `n` solution moves on top — all
+   *  instant (twister.setup re-applies from solved). */
   const applyStep = useCallback((n: number) => {
     const world = worldRef.current;
-    if (!world || world.puzzleKind !== 'sq1') return;
-    const cube = world.cube as Sq1Cube;
-    cube.twister.finish();
-    cube.twister.setup(scrambleRef.current);
-    const acts = actionsRef.current;
-    const target = Math.max(0, Math.min(n, acts.length));
-    for (let i = 0; i < target; i++) cube.applyMoveInstant(acts[i]);
+    if (!world || world.puzzleKind === 'sq1') return;
+    const cube = world.cube as import('@/app/[lang]/sim/cuber/cube').default;
+    const toks = tokensRef.current;
+    const target = Math.max(0, Math.min(n, toks.length));
+    const prefix = toks.slice(0, target).join(' ');
+    cube.twister.setup((scrambleRef.current + ' ' + prefix).trim());
     world.dirty = true;
     return target;
   }, []);
@@ -81,7 +85,8 @@ export default function Sq1ReconPlayer({
     if (target != null) setStep(target);
   }, [applyStep, setStep]);
 
-  // ── Mount: lazy-load three + cuber World, build sq1, render loop, orbit drag ──
+  // ── Mount: lazy-load three + cuber World, build NxN cube, render loop +
+  //    always-on back view, orbit drag ──
   useEffect(() => {
     let cancelled = false;
     let cleanup: (() => void) | null = null;
@@ -89,24 +94,17 @@ export default function Sq1ReconPlayer({
     void (async () => {
       const THREE = await import('three');
       const { default: World } = await import('@/app/[lang]/sim/cuber/world');
+      const { default: Cubelet } = await import('@/app/[lang]/sim/cuber/cubelet');
+      const { createBackView } = await import('@/app/[lang]/sim/cuber/backView');
       if (cancelled) return;
       const host = hostRef.current;
       if (!host) return;
 
-      // Optional always-on back-view window (recon submit forces it).
-      let mkBackView: ((px: number) => BackView) | null = null;
-      if (backView) {
-        const { default: Cubelet } = await import('@/app/[lang]/sim/cuber/cubelet');
-        const { createBackView } = await import('@/app/[lang]/sim/cuber/backView');
-        if (cancelled) return;
-        mkBackView = (px: number) => createBackView(THREE, Cubelet.SIZE, px);
-      }
-
       const world = new World();
-      world.setPuzzle('sq1');
-      // Orientation letters (U/D/L/R/F/B) — shown when the back view is forced
-      // (recon submit), hidden elsewhere (detail / SolutionView) as before.
-      if (backView) world.faceHints.show(); else world.faceHints.hide();
+      world.setPuzzle(orderRef.current);
+      // Always-on face-orientation letters (U/D/L/R/F/B), same as /sim — they
+      // render in both the main view and the back-view window.
+      world.faceHints.show();
       worldRef.current = world;
 
       const renderer = new THREE.WebGLRenderer({
@@ -121,11 +119,10 @@ export default function Sq1ReconPlayer({
       host.appendChild(renderer.domElement);
       rendererRef.current = renderer;
 
-      if (mkBackView) {
-        const bv = mkBackView(120);
-        backViewRef.current = bv;
-        if (backFrameRef.current) backFrameRef.current.appendChild(bv.domElement);
-      }
+      // Always-on back-view mini window (recon forces it).
+      const backView = createBackView(THREE, Cubelet.SIZE, 120);
+      backViewRef.current = backView;
+      if (backFrameRef.current) backFrameRef.current.appendChild(backView.domElement);
 
       const resize = () => {
         const w = host.clientWidth;
@@ -135,13 +132,13 @@ export default function Sq1ReconPlayer({
         world.height = h;
         world.resize();
         renderer.setSize(w, h, true);
+        const bs = Math.round(Math.min(132, Math.max(72, Math.min(w, h) * 0.3)));
         const frame = backFrameRef.current;
-        if (backViewRef.current && frame) {
-          const bs = Math.round(Math.min(132, Math.max(72, Math.min(w, h) * 0.3)));
+        if (frame) {
           frame.style.width = `${bs}px`;
           frame.style.height = `${bs}px`;
-          backViewRef.current.setSize(bs);
         }
+        backView.setSize(bs);
         world.dirty = true;
       };
       resize();
@@ -187,6 +184,7 @@ export default function Sq1ReconPlayer({
         const now = performance.now();
         const dt = now - lastFrameAt;
         lastFrameAt = now;
+        // Fade the orientation letters in (and keep them rendered).
         if (world.faceHints.tick(dt)) world.dirty = true;
         if (world.dirty || world.cube.dirty) {
           renderer.clear();
@@ -213,8 +211,11 @@ export default function Sq1ReconPlayer({
         if (renderer.domElement.parentNode) {
           renderer.domElement.parentNode.removeChild(renderer.domElement);
         }
-        (world.cube as Sq1Cube).dispose?.();
+        backViewRef.current?.dispose();
+        backViewRef.current = null;
+        (world.cube as import('@/app/[lang]/sim/cuber/cube').default).dispose?.();
         renderer.dispose();
+        renderer.forceContextLoss?.();
         worldRef.current = null;
         rendererRef.current = null;
       };
@@ -228,6 +229,16 @@ export default function Sq1ReconPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Order change → rebuild the puzzle, re-apply baseline ──
+  useEffect(() => {
+    orderRef.current = order;
+    const world = worldRef.current;
+    if (!ready || !world) return;
+    if (world.puzzleKind !== order) world.setPuzzle(order);
+    const target = applyStep(stepRef.current);
+    if (target != null) setStep(target);
+  }, [order, ready, applyStep, setStep]);
+
   // ── Scramble change → re-apply baseline, clamp step ──
   useEffect(() => {
     scrambleRef.current = scramble;
@@ -238,26 +249,27 @@ export default function Sq1ReconPlayer({
 
   // ── Solution change → reparse moves, clamp step ──
   useEffect(() => {
-    const acts = parseSq1Tokens(alg) as Sq1Move[];
-    actionsRef.current = acts;
-    setTotal(acts.length);
+    const toks = tokenize(alg);
+    tokensRef.current = toks;
+    setTotal(toks.length);
     if (!ready) return;
-    const target = applyStep(Math.min(stepRef.current, acts.length));
+    const target = applyStep(Math.min(stepRef.current, toks.length));
     if (target != null) setStep(target);
   }, [alg, ready, applyStep, setStep]);
 
-  // ── Animated playback ──
+  // ── Animated playback (push one move at a time) ──
   useEffect(() => {
     if (!playing) return;
     const timer = window.setInterval(() => {
       const world = worldRef.current;
-      const acts = actionsRef.current;
+      const toks = tokensRef.current;
       const s = stepRef.current;
-      if (!world || world.puzzleKind !== 'sq1' || s >= acts.length) {
+      if (!world || world.puzzleKind === 'sq1' || s >= toks.length) {
         setPlaying(false);
         return;
       }
-      (world.cube as Sq1Cube).twister.twist(acts[s], false, true);
+      const cube = world.cube as import('@/app/[lang]/sim/cuber/cube').default;
+      cube.twister.push(toks[s]);
       setStep(s + 1);
     }, PLAY_INTERVAL_MS);
     return () => window.clearInterval(timer);
@@ -267,20 +279,20 @@ export default function Sq1ReconPlayer({
   useEffect(() => {
     if (!playerRef) return;
     playerRef.current = {
-      __kind: 'sq1' as const,
+      __kind: 'nxn-cuber' as const,
       jumpToMoveCount: (n: number) => jumpToStep(n),
     };
-    return () => { if (playerRef.current?.__kind === 'sq1') playerRef.current = null; };
+    return () => { if (playerRef.current?.__kind === 'nxn-cuber') playerRef.current = null; };
   }, [playerRef, jumpToStep]);
 
   const atEnd = step >= total;
 
   return (
-    <div className={`sq1-recon-player${fillPane ? ' sq1-recon-player--fill' : ''}`}>
-      <div ref={hostRef} className="sq1-recon-canvas">
-        {backView && <div ref={backFrameRef} className="sq1-recon-backview" aria-hidden />}
+    <div className={`cuber-recon-player${fillPane ? ' cuber-recon-player--fill' : ''}`}>
+      <div ref={hostRef} className="cuber-recon-canvas">
+        <div ref={backFrameRef} className="cuber-recon-backview" aria-hidden />
       </div>
-      <div className="sq1-recon-controls">
+      <div className="cuber-recon-controls">
         <button type="button" onClick={() => jumpToStep(0)} disabled={step === 0} aria-label="Reset">
           <RotateCcw size={14} />
         </button>
@@ -300,7 +312,7 @@ export default function Sq1ReconPlayer({
         </button>
         <input
           type="range"
-          className="sq1-recon-scrubber"
+          className="cuber-recon-scrubber"
           min={0}
           max={Math.max(total, 1)}
           value={step}
@@ -308,7 +320,7 @@ export default function Sq1ReconPlayer({
           onChange={e => jumpToStep(Number(e.target.value))}
           aria-label="Scrub solution"
         />
-        <span className="sq1-recon-progress">{step} / {total}</span>
+        <span className="cuber-recon-progress">{step} / {total}</span>
       </div>
     </div>
   );

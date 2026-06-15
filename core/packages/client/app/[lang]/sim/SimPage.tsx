@@ -28,6 +28,7 @@ import {
 import World from './cuber/world';
 import type Cube from './cuber/cube';
 import Cubelet from './cuber/cubelet';
+import { createBackView, type BackView } from './cuber/backView';
 import Toucher from './Toucher';
 import { TwistAction } from './cuber/twister';
 import CubeGroup from './cuber/group';
@@ -55,6 +56,11 @@ import {
 import './sim.css';
 import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
+
+/** Gap (px) between the back-view window / fullscreen button and the canvas
+ *  top-right corner. Must match the `top`/`right` in `.sim-backview` +
+ *  `.sim-fullscreen-exit` (sim.css). */
+const BACKVIEW_MARGIN = 8;
 
 /** Twisty puzzles rendered by cubing.js (not the local cuber engine). */
 export const TWISTY_PUZZLES = ['pyraminx', 'skewb', 'megaminx'] as const;
@@ -148,6 +154,13 @@ export default function SimPage() {
   const worldRef = useRef<World | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const toucherRef = useRef<Toucher | null>(null);
+  // Back-view mini window (NxN / SQ1 only — twisty puzzles use cubing.js native
+  // backView). Second renderer shares world.scene with a camera mirrored 180°
+  // about Y, rendered into an overlay canvas so snapshots/exports stay clean.
+  const fsButtonRef = useRef<HTMLButtonElement>(null);
+  const backFrameRef = useRef<HTMLDivElement>(null);
+  const backViewRef = useRef<BackView | null>(null);
+  const backSizeRef = useRef<number>(140);
   const wasCompleteRef = useRef(false);
   const userMoveRef = useRef<((action: TwistAction | string) => void) | null>(null);
   // pyraminx / skewb / megaminx TwistyPlayer instance — used by PlayerControls
@@ -201,6 +214,28 @@ export default function SimPage() {
 
   const settingsRef = useRef(settings);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+  // Lay out the back-view mini window: size it ~30% of the smaller container
+  // dimension (clamped), and shift the fullscreen button left of it so they
+  // don't overlap in the top-right corner. Single source of truth for the
+  // square pixel size consumed by the back renderer's setSize.
+  const layoutBackView = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const on = settingsRef.current.backView;
+    const W = container.clientWidth;
+    const H = container.clientHeight;
+    const size = Math.round(Math.min(184, Math.max(104, Math.min(W, H) * 0.3)));
+    backSizeRef.current = size;
+    const frame = backFrameRef.current;
+    if (frame) {
+      frame.style.width = `${size}px`;
+      frame.style.height = `${size}px`;
+    }
+    backViewRef.current?.setSize(size);
+    const btn = fsButtonRef.current;
+    if (btn) btn.style.right = on ? `${size + BACKVIEW_MARGIN * 2}px` : '';
+  }, []);
 
   const ensureCubeCallback = useCallback(() => {
     const w = worldRef.current;
@@ -366,6 +401,7 @@ export default function SimPage() {
       world.height = h;
       world.resize();
       renderer.setSize(w, h, true);
+      layoutBackView();
       world.dirty = true;
     };
     resize();
@@ -657,6 +693,21 @@ export default function SimPage() {
     renderer.domElement.addEventListener('pointerup', onPointerUp);
     renderer.domElement.addEventListener('pointercancel', onPointerUp);
 
+    // Back-view mini window. Lazily spins up a second WebGL renderer (shared
+    // createBackView helper) the first time the user enables it. Rendered in
+    // lockstep with the main view (only inside the dirty block) so they never
+    // drift.
+    const renderBackView = (w: World) => {
+      if (!settingsRef.current.backView) return;
+      const host = backFrameRef.current;
+      if (!host) return;
+      if (!backViewRef.current) {
+        backViewRef.current = createBackView(THREE, Cubelet.SIZE, backSizeRef.current);
+        host.appendChild(backViewRef.current.domElement);
+      }
+      backViewRef.current.render(w);
+    };
+
     let raf = 0;
     let lastFrameAt = performance.now();
     const loop = () => {
@@ -672,6 +723,7 @@ export default function SimPage() {
       if (world.dirty || world.cube.dirty) {
         renderer.clear();
         renderer.render(world.scene, world.camera);
+        renderBackView(world);
         world.dirty = false;
         world.cube.dirty = false;
       }
@@ -695,6 +747,11 @@ export default function SimPage() {
           renderer.domElement.parentNode.removeChild(renderer.domElement);
         }
         renderer.dispose();
+        // Tear down the back-view renderer too (helper disposes only its own GL
+        // context — the shared scene geometries belong to the main renderer and
+        // stay intact). Frees the second WebGL context when leaving the cuber engine.
+        backViewRef.current?.dispose();
+        backViewRef.current = null;
         worldRef.current = null;
         rendererRef.current = null;
         toucherRef.current = null;
@@ -752,6 +809,16 @@ export default function SimPage() {
     if (world) applySettings(world, settings, prevSettingsRef.current ?? undefined);
     prevSettingsRef.current = settings;
   }, [settings]);
+
+  // Re-layout the back-view window (size + fullscreen-button offset) and force a
+  // repaint when the toggle flips, the puzzle engine changes, or the world is
+  // (re)created. applySettings already marks world.dirty, but layout depends on
+  // the DOM frame which only the component owns.
+  useEffect(() => {
+    layoutBackView();
+    const world = worldRef.current;
+    if (world) world.dirty = true;
+  }, [settings.backView, twisty, worldTick, layoutBackView]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -865,7 +932,20 @@ export default function SimPage() {
               }}
             />
           ) : null}
+          {/* Back-view window for the cuber engine (NxN / SQ1). Always mounted
+              while the cuber engine is active so the second renderer's canvas
+              stays attached across toggles; visibility flips with the setting.
+              Twisty puzzles use cubing.js native backView instead. */}
+          {!twisty && (
+            <div
+              ref={backFrameRef}
+              className="sim-backview"
+              style={{ display: settings.backView ? 'block' : 'none' }}
+              aria-hidden
+            />
+          )}
           <button
+            ref={fsButtonRef}
             className="sim-fullscreen-exit"
             onClick={() => setFullscreen(!fullscreen)}
             title={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}

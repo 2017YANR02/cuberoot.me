@@ -36,6 +36,9 @@ export interface SimSettings {
   checkeredBg: boolean;
   /** 锁定大小+位置:禁滚轮/捏合缩放 + 中右键/双指平移;旋转视角和转动仍可用 */
   lockView: boolean;
+  /** 背面视图小窗:右上角第二个相机从背后看魔方。NxN/SQ1 走自有第二渲染器,
+   *  twisty (金字塔/斜转/五魔) 走 cubing.js 原生 backView。 */
+  backView: boolean;
   /** 解法回放模式:
    *  - 'moves'     = 默认。cube 起点 = setup,alg 向前播,看 alg 把魔方拧成什么。
    *  - 'algorithm' = cube 终点 = setup(setup 为空 → 还原态),起点 = setup·alg⁻¹,
@@ -76,6 +79,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   animateScramble: false,
   checkeredBg: false,
   lockView: false,
+  backView: false,
   playbackMode: 'moves',
   dragEmpty: 'orbit',
   coreColor: '#202020',

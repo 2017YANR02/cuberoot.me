@@ -27,6 +27,7 @@ import { EventSelect } from '@/components/EventSelect';
 import { RecordSelect } from '@/components/RecordSelect';
 import TwistySection from '@/components/TwistySection';
 import Sq1ReconPlayer from '@/components/Sq1ReconPlayer';
+import CuberReconPlayer from '@/components/CuberReconPlayer';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
 import AlgInput from '@/components/AlgInput';
 import SolutionView from '@/components/SolutionView';
@@ -947,6 +948,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return '3x3x3';
   }, [form.event]);
 
+  // NxN puzzles can render with either engine (cuber / cubing.js); everything
+  // else is fixed (SQ1 → cuber-only Sq1ReconPlayer, twisty/clock → cubing.js).
+  const isNxnPuzzle = /^[2-7]x[2-7]x[2-7]$/.test(puzzle);
+  const nxnOrder = isNxnPuzzle ? parseInt(puzzle, 10) : 3;
+
   // ── Normalized cross toggle ──
   const [normalized, setNormalized] = useState(false);
   const canNormalize = useMemo(
@@ -976,6 +982,18 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
 
+  // Render engine for NxN previews — cuber (the /sim look, back view forced) vs
+  // cubing.js. User-selectable; persisted. Other puzzles ignore it.
+  const [reconEngine, setReconEngine] = useState<'cuber' | 'cubing'>(() => {
+    if (typeof window === 'undefined') return 'cuber';
+    try { return localStorage.getItem('recon.player.engine') === 'cubing' ? 'cubing' : 'cuber'; }
+    catch { return 'cuber'; }
+  });
+  const pickEngine = useCallback((e: 'cuber' | 'cubing') => {
+    setReconEngine(e);
+    try { localStorage.setItem('recon.player.engine', e); } catch { /* private */ }
+  }, []);
+
   const handleCursorSync = useCallback((el: HTMLTextAreaElement) => {
     const player = playerRef.current;
     if (!player) return;
@@ -990,8 +1008,62 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     }
     const algBefore = extractAlgFromText(textBefore);
     const moves = algBefore.trim().split(/\s+/).filter(s => s.length > 0);
+    // The cuber NxN player scrubs by whitespace move count (same as below);
+    // cubing.js goes through its own timeline mapping.
+    if (player.__kind === 'nxn-cuber') {
+      player.jumpToMoveCount?.(moves.length);
+      return;
+    }
     syncPlayerToMoveCount(player, moves.length);
   }, [playerRef]);
+
+  // Shared player render — used in both the desktop pane and the mobile inline
+  // slot. Picks the engine per puzzle and forces the back view on everywhere.
+  const renderReconPlayer = () => {
+    if (!form.event) return null;
+    const engineToggle = isNxnPuzzle ? (
+      <div className="submit-engine-toggle" role="radiogroup" aria-label={tr({ zh: '渲染引擎', en: 'Render engine' })}>
+        <button
+          type="button" role="radio" aria-checked={reconEngine === 'cuber'}
+          className={`submit-engine-opt${reconEngine === 'cuber' ? ' active' : ''}`}
+          onClick={() => pickEngine('cuber')}
+        >{tr({ zh: '立体', en: 'Solid' })}</button>
+        <button
+          type="button" role="radio" aria-checked={reconEngine === 'cubing'}
+          className={`submit-engine-opt${reconEngine === 'cubing' ? ' active' : ''}`}
+          onClick={() => pickEngine('cubing')}
+        >cubing.js</button>
+      </div>
+    ) : null;
+    let player: React.ReactNode;
+    if (form.event === 'sq1') {
+      player = (
+        <Sq1ReconPlayer scramble={debouncedScramble} alg={debouncedSolution} playerRef={playerRef} fillPane backView />
+      );
+    } else if (isNxnPuzzle && reconEngine === 'cuber') {
+      player = (
+        <CuberReconPlayer
+          scramble={debouncedScramble}
+          alg={cleanForPlayer(debouncedSolution)}
+          order={nxnOrder}
+          playerRef={playerRef}
+          fillPane
+        />
+      );
+    } else {
+      player = (
+        <TwistySection
+          puzzle={puzzle}
+          scramble={debouncedScramble}
+          alg={cleanForPlayer(debouncedSolution)}
+          playerRef={playerRef}
+          fillPane
+          backView
+        />
+      );
+    }
+    return <>{engineToggle}{player}</>;
+  };
 
   useEffect(() => {
     if (solutionRef.current) handleCursorSync(solutionRef.current);
@@ -1131,22 +1203,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       <div className="submit-layout">
         {!isMobile && (
           <div className="submit-player-pane">
-            {form.event === 'sq1' ? (
-              <Sq1ReconPlayer
-                scramble={debouncedScramble}
-                alg={debouncedSolution}
-                playerRef={playerRef}
-                fillPane
-              />
-            ) : form.event ? (
-              <TwistySection
-                puzzle={puzzle}
-                scramble={debouncedScramble}
-                alg={cleanForPlayer(debouncedSolution)}
-                playerRef={playerRef}
-                fillPane
-              />
-            ) : null}
+            {renderReconPlayer()}
           </div>
         )}
 
@@ -1477,25 +1534,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             </label>
 
             {/* Mobile: inline player between scramble and solution */}
-            {isMobile && form.event === 'sq1' && (
+            {isMobile && form.event && (
               <div className="submit-inline-player">
-                <Sq1ReconPlayer
-                  scramble={debouncedScramble}
-                  alg={debouncedSolution}
-                  playerRef={playerRef}
-                  fillPane
-                />
-              </div>
-            )}
-            {isMobile && form.event && form.event !== 'sq1' && (
-              <div className="submit-inline-player">
-                <TwistySection
-                  puzzle={puzzle}
-                  scramble={debouncedScramble}
-                  alg={cleanForPlayer(debouncedSolution)}
-                  playerRef={playerRef}
-                  fillPane
-                />
+                {renderReconPlayer()}
               </div>
             )}
 
