@@ -15,6 +15,9 @@ import { SolveValue } from './SolveValue';
 
 const POP_W = 216;
 
+// 罚时(+2 秒)只对按时间计的项目有意义;FMC(步数)/ MBLD(打包编码)不适用。
+const NO_PENALTY_EVENTS = new Set(['333fm', '333mbf', '333mbo']);
+
 const backdropStyle: CSSProperties = { position: 'fixed', inset: 0, zIndex: 199, background: 'transparent' };
 const boxStyle: CSSProperties = {
   position: 'fixed', transform: 'translateX(-50%)', zIndex: 200,
@@ -69,6 +72,8 @@ export function AttemptEditPopover({
   const olds = oldValues.map((ov, k) => (
     <s key={k} className="wp-old-result">{format(ov)}</s>
   ));
+  // 罚时仅对时间计项目 + 有效成绩开放(FMC/MBLD/DNF 不适用)
+  const allowPenalty = !NO_PENALTY_EVENTS.has(eventId) && value > 0;
 
   const reposition = useCallback(() => {
     const el = anchorRef.current;
@@ -172,17 +177,19 @@ export function AttemptEditPopover({
                 onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }}
               />
             </label>
-            <label style={rowStyle}>
-              <span style={rowLabelStyle}>{tr({ zh: '罚时(+N 秒,清空=无)', en: 'Penalty (+N s, blank = none)' })}</span>
-              <input
-                style={inputStyle}
-                value={pen}
-                inputMode="numeric"
-                placeholder="2"
-                onChange={(e) => { setPen(e.target.value); setErr(null); }}
-                onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }}
-              />
-            </label>
+            {allowPenalty && (
+              <label style={rowStyle}>
+                <span style={rowLabelStyle}>{tr({ zh: '罚时(+N 秒,清空=无)', en: 'Penalty (+N s, blank = none)' })}</span>
+                <input
+                  style={inputStyle}
+                  value={pen}
+                  inputMode="numeric"
+                  placeholder="2"
+                  onChange={(e) => { setPen(e.target.value); setErr(null); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }}
+                />
+              </label>
+            )}
             <label style={rowStyle}>
               <span style={rowLabelStyle}>{tr({ zh: '原因', en: 'Reason' })}</span>
               <input
