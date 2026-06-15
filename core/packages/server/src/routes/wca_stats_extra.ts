@@ -329,39 +329,60 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
 });
 
 // ── 2a. /v1/wca/persons-directory ──
-//   GET /v1/wca/persons-directory?country=&sort=name|len&dir=asc|desc&page=&size=
+//   GET /v1/wca/persons-directory?country=&sort=name|len&dir=asc|desc&name=latin|full|local|aka&page=&size=
 // 排名页空态(未选任何项目)的「名录」视图:全选手 A-Z,可叠加国家,按 名字首字母 / 名字长度 分页排序.
-// wca_persons ~25 万行小表;ORDER BY 走 wca_persons_name / wca_persons_name_len 索引,分页 + count 均毫秒级.
-// 名字长度 = 剥掉 "Latin (本地名)" 末尾注释后的拉丁名长度(与 displayCuberName 口径一致、语言无关);
-// 表达式须与 migration 0052 索引逐字一致才能命中.
+// 名字口径 name(与姓名分布 name_stats 四档对齐):
+//   latin(默认)= 剥本地名注释后的拉丁名;full = 完整 WCA 名(含括号);
+//   local = 仅括号内本地名(只列有本地名的选手);aka = 全名 + 曾用名(LEFT JOIN wca_person_aka).
+// wca_persons ~25 万行小表;latin/full 长度排序走 wca_persons_name_len / wca_persons_full_len 索引;
+//   首字母走 wca_persons_name;local/aka 走全表扫(子集小 / 有 nginx 缓存兜底).
+// 长度表达式须与 migration 0052/0053 索引逐字一致才能命中.
 wcaStatsExtraRoutes.get('/wca/persons-directory', async (c) => {
   const country = c.req.query('country') ?? '';
   const sort = (c.req.query('sort') ?? 'name').toLowerCase();   // 'name'(首字母) | 'len'(名字长度)
   const dir = (c.req.query('dir') ?? 'asc').toLowerCase();      // 'asc' | 'desc'
+  const nameMode = (c.req.query('name') ?? 'latin').toLowerCase(); // latin | full | local | aka
   const page = Math.max(1, intParam(c.req.query('page'), 1));
   const size = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('size'), DEFAULT_SIZE)));
 
   if (sort !== 'name' && sort !== 'len') return c.json({ error: 'Invalid sort' }, 400);
   if (dir !== 'asc' && dir !== 'desc') return c.json({ error: 'Invalid dir' }, 400);
+  if (!['latin', 'full', 'local', 'aka'].includes(nameMode)) return c.json({ error: 'Invalid name' }, 400);
   const cn = await resolveCountry(country);
   if (!cn.ok) return c.json({ error: cn.err }, 400);
+
+  // 本地名 = 末尾括号内的内容(与 name_stats / 客户端口径一致)
+  const LOCAL_EXTRACT = `substring(p.name from '\\(([^)]+)\\)\\s*$')`;
 
   const where: string[] = [];
   const params: unknown[] = [];
   if (cn.id) { where.push(`p.country_id = ?`); params.push(cn.id); }
+  // 本地名口径只列真有本地名的选手
+  if (nameMode === 'local') where.push(`p.name ~ '\\([^)]+\\)\\s*$'`);
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
   const dirSql = dir === 'desc' ? 'DESC' : 'ASC';
+  const lenExpr =
+    nameMode === 'full'  ? `char_length(p.name)` :
+    nameMode === 'local' ? `char_length(${LOCAL_EXTRACT})` :
+    nameMode === 'aka'   ? `COALESCE(a.aka_len, char_length(p.name))` :
+                           `char_length(regexp_replace(p.name, '\\s*\\([^)]*\\)\\s*$', ''))`;
+  const alphaExpr = nameMode === 'local' ? LOCAL_EXTRACT : `p.name`;
   const orderSql = sort === 'len'
-    ? `char_length(regexp_replace(p.name, '\\s*\\([^)]*\\)\\s*$', '')) ${dirSql}, p.name ASC, p.wca_id ASC`
-    : `p.name ${dirSql}, p.wca_id ASC`;
+    ? `${lenExpr} ${dirSql}, p.name ASC, p.wca_id ASC`
+    : `${alphaExpr} ${dirSql}, p.wca_id ASC`;
+
+  // 含曾用名:LEFT JOIN 小表取曾用名数组 + 合并长度(其他口径不 join)
+  const akaJoin = nameMode === 'aka' ? `LEFT JOIN wca_person_aka a ON a.wca_id = p.wca_id` : '';
+  const akaSelect = nameMode === 'aka' ? `, a.former_names` : '';
 
   const offset = (page - 1) * size;
   const [rows, totalRow] = await Promise.all([
-    query<{ wca_id: string; name: string; country_id: string; iso2: string | null }>(
-      `SELECT p.wca_id, p.name, p.country_id, co.iso2
+    query<{ wca_id: string; name: string; country_id: string; iso2: string | null; former_names?: string[] | null }>(
+      `SELECT p.wca_id, p.name, p.country_id, co.iso2${akaSelect}
        FROM wca_persons p
        LEFT JOIN wca_countries co ON co.id = p.country_id
+       ${akaJoin}
        ${whereSql}
        ORDER BY ${orderSql}
        LIMIT ? OFFSET ?`,
@@ -375,8 +396,11 @@ wcaStatsExtraRoutes.get('/wca/persons-directory', async (c) => {
   const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    country: cn.id, sort, dir, page, size, total,
-    rows: rows.map(r => ({ wcaId: r.wca_id, name: r.name, countryId: r.country_id, iso2: r.iso2 })),
+    country: cn.id, sort, dir, name: nameMode, page, size, total,
+    rows: rows.map(r => ({
+      wcaId: r.wca_id, name: r.name, countryId: r.country_id, iso2: r.iso2,
+      ...(r.former_names && r.former_names.length ? { former: r.former_names } : {}),
+    })),
   });
 });
 

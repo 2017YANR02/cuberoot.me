@@ -13,9 +13,12 @@
   margin-bottom: 24px;
 }
 
-/* parens toggle:推到右侧,与指标 tab 分开 */
-.ns-tab-toggle {
+/* 名字口径切换(英文名 / 全名 / 本地名):推到右侧,与指标 tab 分开 */
+.ns-name-modes {
   margin-left: auto;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .ns-tab {
