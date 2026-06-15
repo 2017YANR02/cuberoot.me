@@ -13,7 +13,7 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import {
-  fetchWcaPerson, fetchWcaPersonResults, fetchWcaPersonCompetitions,
+  fetchWcaPerson, fetchWcaPersonResults, fetchWcaPersonCompetitions, fetchWcaPersonLiveResults,
   type WcaPersonProfile, type WcaResultRow, type WcaCompetition,
 } from '@/lib/wca-person-api';
 import { loadFlagData } from '@/lib/country-flags';
@@ -44,6 +44,9 @@ export default function PersonDetailClient() {
   const [profile, setProfile] = useState<WcaPersonProfile | null>(null);
   const [results, setResults] = useState<WcaResultRow[] | null>(null);
   const [comps, setComps] = useState<WcaCompetition[] | null>(null);
+  // 直播·非官方成绩(官方尚未收录的近期比赛)— 单独持有,只下发给成绩 tab
+  const [liveResults, setLiveResults] = useState<WcaResultRow[] | null>(null);
+  const [liveComps, setLiveComps] = useState<WcaCompetition[] | null>(null);
   const [reconLookup, setReconLookup] = useState<Map<string, number> | null>(null);
   const [error, setError] = useState<string | null>(null);
   // 「废止项」口径开关:Σ 名次和行(PR 表底部)与「最优项目组合」共用一份状态
@@ -52,6 +55,7 @@ export default function PersonDetailClient() {
   useEffect(() => {
     if (!wcaId) return; // wait until the id is resolved from the URL
     setProfile(null); setResults(null); setComps(null); setError(null);
+    setLiveResults(null); setLiveComps(null);
     let cancelled = false;
     loadFlagData().catch(() => { /* fallback to en */ });
     fetchWcaPerson(wcaId)
@@ -63,6 +67,9 @@ export default function PersonDetailClient() {
     fetchWcaPersonCompetitions(wcaId)
       .then((c) => { if (!cancelled) setComps(c); })
       .catch(() => { /* keep degraded UI */ });
+    fetchWcaPersonLiveResults(wcaId)
+      .then((j) => { if (!cancelled) { setLiveResults(j.results); setLiveComps(j.comps); } })
+      .catch(() => { /* 直播补充缺失不影响官方成绩 */ });
     listRecons(wcaId)
       .then((all) => { if (!cancelled) setReconLookup(buildReconAttemptMap(all)); })
       .catch(() => { /* keep degraded UI */ });
@@ -101,7 +108,7 @@ export default function PersonDetailClient() {
         <PersonPRTable profile={profile} results={results} isZh={isZh} inclCancelled={inclCancelled} onInclCancelledChange={setInclCancelled} />
         <PersonBestCombos wcaId={profile.person.wca_id} isZh={isZh} inclCancelled={inclCancelled} />
         <PersonResultChanges wcaId={profile.person.wca_id} isZh={isZh} />
-        <PersonTabs profile={profile} results={results} comps={comps} reconLookup={reconLookup} isZh={isZh} />
+        <PersonTabs profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} />
       </main>
     </div>
   );

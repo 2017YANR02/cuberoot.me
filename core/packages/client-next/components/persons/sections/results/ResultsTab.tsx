@@ -6,6 +6,7 @@ import { Suspense, lazy, useCallback, useMemo } from 'react';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
+import { mergePersonLive } from '@/lib/person-live-merge';
 import i18n from "@/i18n/i18n-client";
 
 const ByCompList = lazy(() => import('./ByCompList'));
@@ -15,13 +16,15 @@ interface Props {
   profile: WcaPersonProfile;
   results: WcaResultRow[] | null;
   comps: WcaCompetition[] | null;
+  liveResults?: WcaResultRow[] | null;
+  liveComps?: WcaCompetition[] | null;
   reconLookup: Map<string, number> | null;
   isZh: boolean;
 }
 
 type Sub = 'event' | 'comp';
 
-export default function ResultsTab({ profile, results, comps, reconLookup, isZh }: Props) {
+export default function ResultsTab({ profile, results, comps, liveResults, liveComps, reconLookup, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   // 子 tab(按项目 / 按比赛)+ 选中项目均为页内瞬时态 → replace,不堆历史
   const [q, setQ] = useQueryStates(
@@ -32,11 +35,21 @@ export default function ResultsTab({ profile, results, comps, reconLookup, isZh 
   const sub: Sub = rawSub === 'comp' ? 'comp' : 'event';
   const setSub = useCallback((s: Sub) => setQ({ sub: s }), [setQ]);
 
+  // 官方 + 直播(非官方)合并,按比赛粒度去重(官方已收录的比赛丢弃直播行)。
+  // 仅成绩 tab 用;PR 表 / Hero 等仍只见官方 results。
+  const merged = useMemo(() => {
+    if (!results || !comps) return { results, comps };
+    if (!liveResults || liveResults.length === 0) return { results, comps };
+    return mergePersonLive(results, comps, liveResults, liveComps ?? []);
+  }, [results, comps, liveResults, liveComps]);
+  const mResults = merged.results;
+  const mComps = merged.comps;
+
   const eventIds = useMemo(() => {
     const set = new Set<string>();
-    if (results) for (const r of results) set.add(r.event_id);
+    if (mResults) for (const r of mResults) set.add(r.event_id);
     return ALL_EVENT_IDS.filter((eid) => set.has(eid));
-  }, [results]);
+  }, [mResults]);
 
   const rawEv = (q.event ?? '').toLowerCase();
   const activeEvent = eventIds.includes(rawEv) ? rawEv : (eventIds[0] ?? '333');
@@ -74,15 +87,15 @@ export default function ResultsTab({ profile, results, comps, reconLookup, isZh 
         {sub === 'event' && (
           <ByEventView
             profile={profile}
-            results={results}
-            comps={comps}
+            results={mResults}
+            comps={mComps}
             reconLookup={reconLookup}
             eventId={activeEvent}
             isZh={isZh}
           />
         )}
         {sub === 'comp' && (
-          <ByCompList wcaId={profile.person.wca_id} results={results} comps={comps} reconLookup={reconLookup} isZh={isZh} />
+          <ByCompList wcaId={profile.person.wca_id} results={mResults} comps={mComps} reconLookup={reconLookup} isZh={isZh} />
         )}
       </Suspense>
     </div>

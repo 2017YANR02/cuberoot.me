@@ -68,8 +68,9 @@ export default function ByCompList({ wcaId, results, comps, reconLookup, isZh }:
   }, []);
   const search = searchParams ? `?${searchParams.toString()}` : '';
 
+  // PR / 名次染色只算官方成绩:直播(非官方)行不参与,也不挤掉官方 PR 标记
   const prRank = useMemo(() =>
-    results && comps ? computePrRank(results, comps) : new Map(),
+    results && comps ? computePrRank(results.filter((r) => !r.live), comps) : new Map(),
     [results, comps],
   );
 
@@ -173,7 +174,7 @@ export default function ByCompList({ wcaId, results, comps, reconLookup, isZh }:
                       <tr
                         key={r.id}
                         id={`r-${comp.id}-${r.event_id}-${r.round_type_id}`}
-                        className={`wp-row-anchorable ${chg ? 'wp-row-changed' : ''}`}
+                        className={`wp-row-anchorable ${chg ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''}`}
                         onClick={(e) => handleRowClick(e, comp.id, r.event_id, r.round_type_id)}
                       >
                         <td className="wp-cell-event">
@@ -190,6 +191,11 @@ export default function ByCompList({ wcaId, results, comps, reconLookup, isZh }:
                           >
                             {roundLabel(r.round_type_id)}
                           </Link>
+                          {r.live && (
+                            <span className="wp-live-chip" title={t('直播成绩,非官方,待 WCA 官方确认', 'Live result — unofficial, pending WCA')}>
+                              {t('直播', 'LIVE')}
+                            </span>
+                          )}
                         </td>
                         <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
                           {r.pos > 0 ? r.pos : '—'}
