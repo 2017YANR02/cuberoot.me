@@ -35,19 +35,19 @@ https://www.cuberoot.me/stats/       → WCA 统计页面
 | 项目 | 值 |
 |------|-----|
 | **地址** | [www.cuberoot.me](https://www.cuberoot.me) |
-| **SPA 根目录** | `/www/wwwroot/cuberoot-spa/`(入口 `index.html` + `_assets/`) |
-| **镜像根目录** | `/www/wwwroot/toolkit/`(deploy_mirror rsync 同步产物) |
+| **Next 部署目录** | `/www/wwwroot/toolkit-next/`(systemd `cuberoot-next` standalone,nginx 反代 :3002) |
+| **静态根目录** | `/www/wwwroot/toolkit/`(static.cuberoot.me 服 `tools/` + `stats/`) |
 | **Blog 静态根** | `/www/wwwroot/blog-static/`(2026-05-06 wget 镜像,内容冻结) |
 | **Nginx 站点配置** | `/etc/nginx/vhost.d/www.cuberoot.me.conf`(source 在 `ops/nginx/`,Phase F 从 panel 迁出) |
 | **SSL 证书** | `/etc/letsencrypt/live/cuberoot.me/`(certbot 标准位置) |
-| **CI 部署** | `.github/workflows/deploy_mirror.yml`(SPA/static)、`deploy_core.yml`(Hono)、`deploy_nginx.yml`(vhost) |
+| **CI 部署** | `.github/workflows/deploy_next.yml`(Next standalone→systemd)、`deploy_core.yml`(Hono)、`deploy_nginx.yml`(vhost) |
 
 ### 同步机制
 
 ```
 push 到 main 分支
       │
-      ├── 改 SPA / 静态(client) → deploy_mirror.yml → rsync /www/wwwroot/toolkit/
+      ├── 改 client-next         → deploy_next.yml   → Next standalone → systemd :3002
       ├── 改 Hono server         → deploy_core.yml   → rsync /root/core-api/ + pm2 restart
       └── 改 ops/nginx/*.conf    → deploy_nginx.yml  → scp + nginx -t + reload
 ```
@@ -56,7 +56,7 @@ push 到 main 分支
 
 | Workflow | 触发 |
 |------|------|
-| `deploy_mirror.yml` | push main(任何前端/static 改动)、Update Stats CI 完成、Update Upcoming Comps CI 完成 |
+| `deploy_next.yml` | push main 且 `core/packages/{client-next,shared,visualcube}/**` 有变更 |
 | `deploy_core.yml` | push main 且 `core/**` 有变更(>300 文件 path filter 失效需手动 `gh workflow run`) |
 | `deploy_nginx.yml` | push main 且 `ops/nginx/**` 有变更 |
 

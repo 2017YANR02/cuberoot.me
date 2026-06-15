@@ -5,7 +5,7 @@ description: "Use when regenerating `stats/comp_names_zh.json`, debugging Chines
 
 # 中国比赛名中文化
 
-前端显示规则全在 `core/packages/client/src/utils/comp_localize.ts` 的 JSDoc（`localizeCompName` / `stripWcaPrefix`）。新代码渲染比赛名一律走它，禁止裸 `c.name`。`compNameZh()` 命中前先 `await loadFlagData()`。
+前端显示规则全在 `core/packages/client-next/lib/comp-localize.ts` 的 JSDoc（`localizeCompName` / `stripWcaPrefix`）。新代码渲染比赛名一律走它，禁止裸 `c.name`。`compNameZh()` 命中前先 `await loadFlagData()`。
 
 ## 数据：`stats/comp_names_zh.json`
 
@@ -29,4 +29,4 @@ npx tsx src/bin/fetch_comp_names_zh.ts --refresh # 增量（清第 1 页 + WCA A
 
 ## 城市名（兄弟模块）
 
-`utils/city_localize.ts::localizeCity(city, isZh)`，新增城市直接往 `CITY_ZH` 加键。
+`lib/city-localize.ts::localizeCity(city, isZh)`，新增城市直接往 `CITY_ZH` 加键。

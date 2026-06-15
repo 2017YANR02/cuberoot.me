@@ -5,7 +5,7 @@ description: "Use when raw WCA result value (centiseconds/FMC/MBLD encoding) →
 
 # WCA 成绩值格式化
 
-唯一入口：`core/packages/client/src/utils/wca_format_result.ts`。任何把 raw WCA 数值变字符串的地方都走它,**不要再手写 `(v/100).toFixed(2)` 或对 MBLD 数字做 slice**。
+唯一入口：`core/packages/client-next/lib/wca-format-result.ts`。任何把 raw WCA 数值变字符串的地方都走它,**不要再手写 `(v/100).toFixed(2)` 或对 MBLD 数字做 slice**。
 
 ```ts
 formatWcaResult(value, eventId, 'single' | 'average', opts?)
@@ -24,7 +24,7 @@ formatWcaResultK(value, eventId, 0 | 1, opts?)   // kind 是 0/1 的 caller (ran
 
 ## Top10 图表轴刻度走另一个
 
-`pages/wca_stats/top10_axis.ts` 的 `tickLabel` / `axisFor` —— 简洁版(整秒、FMC avg 不带小数),专供 Top10 历史图。其他场景一律 `formatWcaResult`。
+`lib/top10-axis.ts` 的 `tickLabel` / `axisFor` —— 简洁版(整秒、FMC avg 不带小数),专供 Top10 历史图。其他场景一律 `formatWcaResult`。
 
 ## 不要做的事
 

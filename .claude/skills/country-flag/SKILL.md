@@ -5,7 +5,7 @@ description: "Use when rendering country flags anywhere in UI (JSX or popup inne
 
 # 国旗渲染
 
-唯一入口：`core/packages/client/src/utils/flag.tsx`。TW 特判只在这里。
+唯一入口：`core/packages/client-next/components/Flag.tsx`。TW 特判只在这里。
 
 ```tsx
 <Flag iso2="us" className="cuber-flag" />                              // JSX
@@ -19,7 +19,7 @@ flagHtml(iso2, { spanClassName: 'flag-span', imgClassName: 'flag-img' }) // inne
 ## 禁止
 
 - 手写 `iso2 === 'tw' ? <img .../> : <span .../>` —— 就是要消灭这个
-- 直接写 `/tools/assets/images/ChineseTaipei.svg` —— 路径只应出现在 `flag.tsx`
+- 直接写 `/tools/assets/images/ChineseTaipei.svg` —— 路径只应出现在 `Flag.tsx`
 - **裸 Flag 不带 className**：TW 走 SVG `<img>`,会撑爆布局。
 - **标准 className**：`spanClassName="country-flag" imgClassName="country-flag-ct"`。尺寸/圆角规则唯一来源 = 全局 `app/globals.css`(client-next)/`src/index.css`(Vite)。**禁止任何 per-page CSS 重新定义 `.country-flag` / `.country-flag-ct`** —— 裸类名(无页面前缀)重复定义会静默全局覆盖,导致改全局一处不生效(曾在 `_wca_stats.css` 踩过,已清)。
 - **国旗无圆角**：统一直角矩形(flag-icons 标准),禁给 `.country-flag` 加 `border-radius`。
