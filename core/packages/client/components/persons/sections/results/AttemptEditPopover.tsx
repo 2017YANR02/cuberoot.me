@@ -2,17 +2,44 @@
 // 管理员点单次成绩 → 小浮层,两个方向二选一(或都填):
 //  - 更正前(原始):补录该次被 WCA 更正前的旧值 → 旧值划线留在当前值前,当前值不变。
 //  - 更正后(改判):把该次正向改判为新值 → 当前值划线,新值成为当前(自动重算单次/平均)。
-// 浮层用 portal 渲染到 body + position:fixed,逃出成绩表的 overflow 裁切容器
-// (wp-table-scroll / wp-tabs-card),否则会被切掉或挤成行内。
+// 浮层用 portal 渲染到 body + position:fixed,逃出成绩表的 overflow 裁切容器。
+// 结构样式全部内联(不依赖外部 CSS):dev 下 CSS HMR 偶发滞后会让浮层失样塌成行内/落页脚,
+// 内联保证「定位+盒子」始终成立(配色仍走主题 token var())。
 // 渲染逻辑与具体页面解耦:format 由调用方传(选手页 formatWcaResult / comp 页 formatLive)。
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { tr } from '@/i18n/tr';
 import { parseHumanResult } from '@/lib/result-watch-api';
-import './result-change.css';
 
 const POP_W = 216;
+
+const backdropStyle: CSSProperties = { position: 'fixed', inset: 0, zIndex: 199, background: 'transparent' };
+const boxStyle: CSSProperties = {
+  position: 'fixed', transform: 'translateX(-50%)', zIndex: 200,
+  width: POP_W, padding: 11, display: 'flex', flexDirection: 'column', gap: 7,
+  background: 'var(--popover)', border: '1px solid var(--border-default)', borderRadius: 11,
+  boxShadow: '0 10px 28px rgba(0, 0, 0, 0.32)', textAlign: 'left', whiteSpace: 'normal', cursor: 'default',
+};
+const rowStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 3 };
+const rowLabelStyle: CSSProperties = { fontSize: '0.7rem', color: 'var(--muted-foreground)' };
+const inputStyle: CSSProperties = {
+  width: '100%', padding: '5px 7px', fontSize: '0.86rem', fontVariantNumeric: 'tabular-nums',
+  background: 'var(--background)', color: 'var(--foreground)',
+  border: '1px solid var(--border-strong)', borderRadius: 6,
+};
+const curStyle: CSSProperties = {
+  fontSize: '0.72rem', color: 'var(--faint-foreground)', textAlign: 'center', fontVariantNumeric: 'tabular-nums',
+};
+const actionsStyle: CSSProperties = { display: 'flex', gap: 6, marginTop: 1 };
+const saveStyle: CSSProperties = {
+  flex: 1, padding: '5px 10px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+  background: 'var(--accent)', color: 'var(--accent-foreground, #fff)', border: 'none', borderRadius: 6,
+};
+const cancelStyle: CSSProperties = {
+  padding: '5px 10px', fontSize: '0.8rem', cursor: 'pointer',
+  background: 'transparent', color: 'var(--muted-foreground)', border: '1px solid var(--border-strong)', borderRadius: 6,
+};
 
 export function AttemptEditPopover({
   value, eventId, oldValues, cls, format, onSetOriginal, onCorrect,
@@ -91,31 +118,33 @@ export function AttemptEditPopover({
       >{olds}{formatted}</span>
       {open && pos && createPortal(
         <>
-          <div className="wp-att-pop-backdrop" onClick={close} />
-          <span className="wp-att-pop" style={{ top: pos.top, left: pos.left }} role="dialog" onClick={(e) => e.stopPropagation()}>
-            <label className="wp-att-pop-row">
-              <span>{tr({ zh: '更正前(原始)', en: 'Original (before)' })}</span>
+          <div style={backdropStyle} onClick={close} />
+          <span style={{ ...boxStyle, top: pos.top, left: pos.left }} role="dialog" onClick={(e) => e.stopPropagation()}>
+            <label style={rowStyle}>
+              <span style={rowLabelStyle}>{tr({ zh: '更正前(原始)', en: 'Original (before)' })}</span>
               <input
+                style={inputStyle}
                 autoFocus
                 value={orig}
                 onChange={(e) => setOrig(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }}
               />
             </label>
-            <span className="wp-att-pop-cur">{tr({ zh: '当前', en: 'now' })} {formatted}</span>
-            <label className="wp-att-pop-row">
-              <span>{tr({ zh: '更正后(改判)', en: 'Corrected (after)' })}</span>
+            <span style={curStyle}>{tr({ zh: '当前', en: 'now' })} {formatted}</span>
+            <label style={rowStyle}>
+              <span style={rowLabelStyle}>{tr({ zh: '更正后(改判)', en: 'Corrected (after)' })}</span>
               <input
+                style={inputStyle}
                 value={next}
                 onChange={(e) => setNext(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }}
               />
             </label>
-            <span className="wp-att-pop-actions">
-              <button type="button" className="wp-att-pop-save" onClick={save} disabled={busy}>
+            <span style={actionsStyle}>
+              <button type="button" style={saveStyle} onClick={save} disabled={busy}>
                 {busy ? '…' : tr({ zh: '保存', en: 'Save' })}
               </button>
-              <button type="button" className="wp-att-pop-cancel" onClick={close} disabled={busy}>
+              <button type="button" style={cancelStyle} onClick={close} disabled={busy}>
                 {tr({ zh: '取消', en: 'Cancel' })}
               </button>
             </span>
