@@ -30,9 +30,19 @@ CREATE TABLE IF NOT EXISTS wca_persons (
 
 CREATE INDEX IF NOT EXISTS wca_persons_country ON wca_persons (country_id);
 -- 选手名录(排名页空态 A-Z 视图)排序:名字首字母 + 名字长度(剥本地名注释后的拉丁名长度,见 migration 0052)
+-- + 全名长度(含括号本地名,migration 0053)
 CREATE INDEX IF NOT EXISTS wca_persons_name ON wca_persons (name);
 CREATE INDEX IF NOT EXISTS wca_persons_name_len
   ON wca_persons ((char_length(regexp_replace(name, '\s*\([^)]*\)\s*$', ''))));
+CREATE INDEX IF NOT EXISTS wca_persons_full_len ON wca_persons ((char_length(name)));
+
+-- 名录「含曾用名」口径用:曾用名(sub_id>1)+ 现名拼成整体后的长度(migration 0053)。
+-- ~400 行小表,由 stats-build/gen_person_aka.ts 生成、psql 灌。详见该 migration。
+CREATE TABLE IF NOT EXISTS wca_person_aka (
+  wca_id       VARCHAR(20) PRIMARY KEY,
+  former_names JSONB   NOT NULL,
+  aka_len      INTEGER NOT NULL
+);
 
 -- ── 4. historical_ranks_snapshot: 每年末的累积最佳快照(~7.5M 行 ~470MB TSV / ~1GB 含索引) ──
 -- 一行 = (event, year, person) 在 [WCA 开始 .. year-12-31] 区间的累积最佳 + 那一刻的世界/国家/洲排名。
