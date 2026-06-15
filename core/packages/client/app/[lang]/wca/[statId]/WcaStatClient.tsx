@@ -27,7 +27,7 @@ import { statsUrl } from '@/lib/stats-base';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import Top10HistoryPage from '@/components/wca-stats/Top10HistoryPage';
-import NameStatsView, { type NameStatsData } from './NameStatsView';
+import NameStatsView, { type NameStatsData } from '@/components/wca-stats/NameStatsView';
 import type { Metric as Top10Metric } from '@/lib/top10-axis';
 import '../_wca_stats.css';
 import { tr } from '@/i18n/tr';
