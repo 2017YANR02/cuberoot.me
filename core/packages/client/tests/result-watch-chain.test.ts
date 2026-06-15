@@ -10,6 +10,7 @@ import {
   effectiveFieldValue,
   effectiveAttempts,
   attemptOldValues,
+  buildOriginalBackfillFields,
   type ResultChange,
 } from '@/lib/result-watch-api';
 import { computeWcaBestAverage } from '@/lib/wca-compute';
@@ -210,5 +211,43 @@ describe('backfill original attempts (Johor 0.78 WR → corrected 2.83)', () => 
   it('single/average chains expose the original as struck-through', () => {
     expect(changeChainOldValues(chain, 'best')).toEqual([70]);
     expect(changeChainOldValues(chain, 'average')).toEqual([78]);
+  });
+});
+
+// 行内逐次补录原始值:buildOriginalBackfillFields 把第 index 位换成原始值,
+// new=当前 live 数组(当前值不变),原始单次/平均从拼好的旧数组重算。
+describe('buildOriginalBackfillFields (inline per-solve original)', () => {
+  const live = [474, 270, 297, 78, 281]; // 当前(更正后)
+  it('first backfill from current array marks that solve (intermediate single/avg are transient)', () => {
+    const fields = buildOriginalBackfillFields({
+      currentAttempts: live, currentBest: 78, currentAverage: 283,
+      eventId: '222', index: 0, originalValue: 74,
+    });
+    const att = fields.find((f) => f.field === 'attempts');
+    expect(att?.old).toEqual([74, 270, 297, 78, 281]);
+    expect(att?.new).toEqual(live);
+    // 部分原始 [74,270,297,78,281]:best 0.74,avg 丢 74/297 留 78/270/281 → 2.10(过渡值,后续补录会覆盖)
+    expect(fields.find((f) => f.field === 'best')).toEqual({ field: 'best', old: 74, new: 78 });
+    expect(fields.find((f) => f.field === 'average')).toEqual({ field: 'average', old: 210, new: 283 });
+  });
+  it('final backfill step (baseOld accumulated) yields original single+average', () => {
+    // 已补 0/1/2 次,第 3 次 0.78 不变,这步补第 4 次 0.81 → 全原始 [74,70,97,78,81]
+    const fields = buildOriginalBackfillFields({
+      currentAttempts: live, currentBest: 78, currentAverage: 283,
+      eventId: '222', index: 4, originalValue: 81,
+      baseOld: [74, 70, 97, 78, 281],
+    });
+    expect(fields.find((f) => f.field === 'attempts')?.old).toEqual([74, 70, 97, 78, 81]);
+    expect(fields.find((f) => f.field === 'best')).toEqual({ field: 'best', old: 70, new: 78 });
+    expect(fields.find((f) => f.field === 'average')).toEqual({ field: 'average', old: 78, new: 283 });
+  });
+  it('no-average event (333bf) records attempts + recomputed single, never average', () => {
+    const fields = buildOriginalBackfillFields({
+      currentAttempts: [1200, 1500, -1], currentBest: 1200, currentAverage: -1,
+      eventId: '333bf', index: 0, originalValue: 1000,
+    });
+    expect(fields.map((f) => f.field)).toEqual(['attempts', 'best']);
+    expect(fields[0]?.old).toEqual([1000, 1500, -1]);
+    expect(fields.find((f) => f.field === 'best')).toEqual({ field: 'best', old: 1000, new: 1200 });
   });
 });

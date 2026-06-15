@@ -40,7 +40,8 @@ import ScheduleView, { ScheduleControls } from './ScheduleView';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import LangToggle from '@/components/LangToggle';
 import { useCompFollows, FollowStar } from '@/components/CompFollow';
-import { personRoundChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, recordAttemptEdit, parseHumanResult } from '@/lib/result-watch-api';
+import { personRoundChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, recordAttemptEdit, recordAttemptOriginal } from '@/lib/result-watch-api';
+import { AttemptEditPopover } from '@/components/persons/sections/results/AttemptEditPopover';
 import { useCompRowChangeMap } from '@/components/persons/logic/use-row-change-map';
 import { ResultChangeChain } from '@/components/persons/sections/results/ChangedResultValue';
 import { ResultChangeEditor, type ResultChangeTarget } from '@/components/persons/sections/results/ResultChangeEditor';
@@ -1696,47 +1697,6 @@ function PastRowsPopover({
   );
 }
 
-// 管理员可点击的单次成绩格(live 表):点击切到 input,Enter/失焦提交(自动重算单次/平均)。
-// 提交前在当前值前划掉历次旧值。
-function EditableLiveAttempt({ value, eventId, oldValues, onCommit }: {
-  value: number;
-  eventId: string;
-  oldValues: number[];
-  onCommit: (newValue: number) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState('');
-  const formatted = formatLive(value, eventId, false);
-  const commit = () => {
-    const parsed = parseHumanResult(draft, eventId);
-    setEditing(false);
-    if (parsed != null && parsed !== value) onCommit(parsed);
-  };
-  const olds = oldValues.map((ov, k) => (
-    <s key={k} className="wp-old-result">{formatLive(ov, eventId, false)}</s>
-  ));
-  if (editing) {
-    return (
-      <input
-        autoFocus
-        className="wp-att-input"
-        value={draft}
-        onClick={(e) => e.stopPropagation()}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => { if (e.key === 'Enter') commit(); else if (e.key === 'Escape') setEditing(false); }}
-      />
-    );
-  }
-  return (
-    <span
-      className="wp-att-editable"
-      title={tr({ zh: '点击改这一次', en: 'Click to edit this solve' })}
-      onClick={(e) => { e.stopPropagation(); setDraft(formatted); setEditing(true); }}
-    >{olds}{formatted}</span>
-  );
-}
-
 interface ResultsTableProps {
   results: LiveResult[];
   users: Record<string, User>;
@@ -1878,16 +1838,24 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                 {Array.from({ length: attemptCount }).map((_, i) => (
                   <td key={i} className={`td-attempt ${isAo5Bracketed(effAttempts, i) ? 'td-attempt-trimmed' : ''}`}>
                     {admin && wcaid && i < effAttempts.length ? (
-                      <EditableLiveAttempt
+                      <AttemptEditPopover
                         value={effAttempts[i] ?? 0}
                         eventId={r.e}
                         oldValues={attemptOldValues(chain, i)}
-                        onCommit={(newValue) =>
+                        format={(v) => formatLive(v, r.e, false)}
+                        onCorrect={(newValue) =>
                           recordAttemptEdit({
                             target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
                             currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
                             index: i, newValue,
-                          }).then(() => onRefresh?.()).catch((e) => window.alert((e as Error).message))
+                          }).then(() => onRefresh?.())
+                        }
+                        onSetOriginal={(originalValue) =>
+                          recordAttemptOriginal({
+                            target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
+                            currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
+                            index: i, originalValue, existingChain: chain,
+                          }).then(() => onRefresh?.())
                         }
                       />
                     ) : (
