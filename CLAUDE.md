@@ -138,7 +138,7 @@ pnpm --filter @cuberoot/client dev                 # http://127.0.0.1:5173/
 
 ## 繁体字(zh-Hant)已移除
 
-2026-06-14 起全站只服 **en + zh-Hans(简体)**,繁体彻底移除(生成器 / `zh-Hant.json` / `zhHant` 字段 / `i18n.language==='zh-Hant'` 分支全删)。**源码禁写任何繁体字**,双层守卫:写入即拦 PreToolUse hook `.claude/hooks/block-handwritten-trad.ps1`(→ `scripts/hook-detect-traditional.mjs`)+ CI `tests/i18n-removal-guard.test.ts`(无繁体字形 / 无 `zhHant` 标识符 / en.json↔zh.json key 对齐)。文案走 `tr({en,zh})` / `useT()` / `isZh ? zh : en` 二元;长文 / 复用走 `t()` + `en.json`/`zh.json`。HTML lang 用 `en` / `zh-Hans`。
+2026-06-14 起全站只服 **en + zh-Hans(简体)**,繁体彻底移除(生成器 / `zh-Hant.json` / `zhHant` 字段 / `i18n.language==='zh-Hant'` 分支全删)。**源码禁写任何繁体字**,双层守卫:写入即拦 PreToolUse hook `.claude/hooks/block-handwritten-trad.ps1`(→ `scripts/hook-detect-traditional.mjs`)+ CI `tests/i18n-removal-guard.test.ts`(无繁体字形 / 无 `zhHant` 标识符 / en.json↔zh.json key 对齐)。文案走 `tr({en,zh})` / `<T en zh/>` / `useT()` 的 `t(zh,en)`;长文 / 复用走 `t()` + `en.json`/`zh.json`。HTML lang 用 `en` / `zh-Hans`。**禁内联 `isZh`/`i18n.language` 文案三元**(`isZh ? '中' : 'EN'` 一类):双守卫 hook `hook-detect-traditional.mjs` + CI ratchet `tests/i18n-no-isz-text-ternary.test.ts`(计数只降不升);`isZh` 仅可作 util 函数参数。细则调 skill `i18n`。
 
 ## Skill 路由
 
