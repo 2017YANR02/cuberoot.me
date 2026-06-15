@@ -174,3 +174,41 @@ describe('effective value overlays', () => {
     expect(attemptOldValues(chain, 0)).toEqual([]);
   });
 });
+
+// 管理员补录「原始各次成绩」:old=原始数组、new=当前 live 数组,旧单次/平均靠原始重算。
+// 复刻 ResultChangeEditor.buildFields 在填了原始各次成绩时构造的那条变更。
+describe('backfill original attempts (Johor 0.78 WR → corrected 2.83)', () => {
+  const orig = [74, 70, 97, 78, 81];        // 原始(0.74 0.70 0.97 0.78 0.81)
+  const live = [474, 270, 297, 78, 281];    // WCA 更正后(4.74 2.70 2.97 0.78 2.81)
+  const chain = [
+    mk({
+      id: 1,
+      effectiveAt: '2024-07-01',
+      fields: [
+        { field: 'attempts', old: orig, new: live },
+        { field: 'best', old: 70, new: 78 },
+        { field: 'average', old: 78, new: 283 },
+      ],
+    }),
+  ];
+  it('original single/average derive from the typed attempts', () => {
+    expect(computeWcaBestAverage(orig, '222')).toEqual({ best: 70, average: 78 });
+    expect(computeWcaBestAverage(live, '222')).toEqual({ best: 78, average: 283 });
+  });
+  it('current displayed values stay = live (corrected)', () => {
+    expect(effectiveAttempts(chain, live)).toEqual(live);
+    expect(effectiveFieldValue(chain, 'best', 78)).toBe(78);
+    expect(effectiveFieldValue(chain, 'average', 283)).toBe(283);
+  });
+  it('each changed solve gets its original struck through; unchanged 0.78 does not', () => {
+    expect(attemptOldValues(chain, 0)).toEqual([74]);
+    expect(attemptOldValues(chain, 1)).toEqual([70]);
+    expect(attemptOldValues(chain, 2)).toEqual([97]);
+    expect(attemptOldValues(chain, 3)).toEqual([]); // 0.78 不变
+    expect(attemptOldValues(chain, 4)).toEqual([81]);
+  });
+  it('single/average chains expose the original as struck-through', () => {
+    expect(changeChainOldValues(chain, 'best')).toEqual([70]);
+    expect(changeChainOldValues(chain, 'average')).toEqual([78]);
+  });
+});
