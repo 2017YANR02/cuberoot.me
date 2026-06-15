@@ -183,6 +183,13 @@
       "when": 1781169107693,
       "tag": "0025_seed_prompt_blocks",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1781548543783,
+      "tag": "0026_slimy_nomad",
+      "breakpoints": true
     }
   ]
 }
