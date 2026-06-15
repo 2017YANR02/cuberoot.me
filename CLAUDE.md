@@ -136,6 +136,35 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 - 矢量印刷母版:`/api/qr/[code]/card`(`lib/qr/cardSvg.ts`)出整张折叠卡的 100% 矢量 SVG(无位图/CSS/外链,含出血+裁切线),印刷厂直接收;卡片文案逻辑抽到 `lib/qr/cardText.ts`(DOM 卡 + 矢量卡共用),魔方 logo `cubeLogo()` 与 `qrSvgBody()` 在 `lib/qr/svg.ts`。送印前文字建议「创建轮廓」防缺字
 - 正面图生图提示词:`prompt_templates` 表 + `lib/db/prompt-templates.ts`(软删走 `deleted_at`,`listPromptTemplates` 只返在用);通用头 + 默认模板单一源 `lib/qr/prompt.ts` `DEFAULT_PROMPT_TEMPLATES`(改它后跑生成器出回填迁移)。admin `/admin/qr/prompts` 增删改 + 调序 + 回收站;编辑器正面图面板「提示词工坊」选模板/自写→拼通用头→复制去外部 AI 生图,`qr_codes.front_art_prompt` 记出处。只复制不接图像 API
 - 不接 GA / Plausible / Sentry / Posthog,埋点全自建
+- 埋点看板 `/admin/events-track`:`lib/db/analytics.ts` 聚合趋势/转化漏斗/GMV/Top 事件,纯 SVG `components/SvgLineChart.tsx`(无图表库),range 7/30/90 走页面 searchParams 钳制
+- 后台首页 `/admin` 是运营仪表盘:`lib/db/admin-stats.ts` 单查聚合 KPI(用户/订单/GMV/会员等)+ 7天趋势 + 最近活动
+
+## 游戏化 / 积分 / 成就
+
+- 积分 `point_ledger` 流水账,统一 `lib/db/points.ts` `awardPoints(userId,delta,reason,{refId,note})`(同 reason+refId 幂等去重),余额 = SUM(delta)。发分点:购物(order-fulfillment onOrderPaid)/完课/发帖/评价/签到/测验满分。`components/PointsBadge.tsx` 展示
+- 成就 `lib/db/achievements.ts`:目录 `ACHIEVEMENTS` 在【代码】定义(不是表),`user_achievements` 只存解锁记录。`recomputeAchievements(userId)` 查状态判定解锁,挂在 awardPoints 末尾 + timer saveSolve。**禁 import points.ts(循环)**,奖励积分直插 `pointLedger`。`/me/badges` 徽章墙
+- 签到 `study_checkins`(userId+date 唯一),`lib/db/checkins.ts` `getStreakInfo` 连续天数。`/me` 个人中心 GitHub 风热力图 `StreakCalendar`;计时/学习自动打卡
+- 排行榜 `/leaderboard`:`lib/db/leaderboard.ts` 聚合 timer_solves(速拧 best, ≥5次防刷)/learning_progress(学习)/point_ledger(积分),周/月/总,nuqs `leaderboardParams`
+
+## 魔方工具
+
+- 计时器 `/timer`:`lib/cube/scramble.ts` 纯前端 WCA 打乱(333/222/444/oh/pyram...),`timer_solves` 存成绩(timeMs+penalty none/plus2/dnf),`lib/db/timer.ts` ao5/ao12/best 统计;`CubeTimer` 空格按住/移动端长按起停,未登录 localStorage 暂存
+- 算法字典 `/algorithms`:`algorithms` 表 + `lib/db/algorithms.ts`(空表 `ensureAlgorithmsSeeded` 自动播种 39 条:21 PLL+OLL+F2L),LIKE 搜索(非 FTS5),`lib/cube/face-svg.tsx` `AlgBoard` 自绘 2D 棋盘示意,admin `/admin/algorithms`
+
+## 收藏 / 学习增强 / 社群
+
+- 通用收藏 `favorites`(userId+targetType+targetId 唯一,横跨 course/product/event/news/post),`lib/db/favorites.ts` + `FavoriteButton` 接进各详情页,`/me/favorites`;愿望单 `/me/wishlist` 复用 product 类型
+- 课程评价 `course_reviews`(每人每课一条,已购校验走 canAccessCourse),`upsertReview` 回写 `courses.rating` 聚合,`CourseReviews`+`StarRating` 挂课程详情底部
+- 章节测验 `quizzes`+`quiz_attempts`,`app/actions/quiz.ts` server 判分(答案不下发客户端),`LessonQuiz` 挂学习页,admin `_QuizPanel` 出题
+- 时间戳笔记 `lesson_notes`,`LessonNotes` 在播放器旁记一笔/点时间戳 seek,`/me/notes` 汇总
+- 结课证书 `certificates`(code 唯一),100% 完课 `issueCertificate` 发证,`/cert/[code]` 验证页 + `/cert/[code]/image` next/og 1200x630 可分享图
+- 圈子 `/community/circle/[id]`:`circle_members` 加入持久化,`lib/db/posts.ts` `listPagedByCircle`(最新/热门排序)分页,nuqs `circleParams`
+- 通知 `notifications`:`lib/db/notifications.ts` `notify()` 收口(被评/被赞/@提及),`unreadCount` 在 layout 注入 SiteHeader 铃铛 `NotificationBell`,`/notifications` 中心
+
+## 学习路径 / 会员专享
+
+- 学习路径 `collections`+`collection_items`(空表自动播种),`/paths` 列表 + `/paths/[id]` 路线图(跨课完成度),admin `/admin/paths`
+- 会员专享:`products.memberOnly`(仅会员可购)+ `memberPrice`(会员价,元)。`lib/db/products.ts` `effectivePrice(product,isMember)`,商品页 `_BuyPanel` 展示会员价/引导开会员,下单 `app/actions/order.ts` 服务端按会员价计 + 拦 memberOnly 非会员
 
 ## PWA
 
