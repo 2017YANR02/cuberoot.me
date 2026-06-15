@@ -431,7 +431,7 @@ function IndexSieve() {
       <div style={{ marginTop: 6, fontSize: 12 }}>
         <L zh="奇偶性匹配" en="Parity match" />:
         <strong style={{ marginLeft: 6, color: ok2 ? 'var(--green)' : 'var(--warn)' }}>
-          {ok2 ? (tr({ zh: '是', en: 'Yes' })) : (tr({ zh: '否', en: 'No' }))}
+          {ok2 ? tr({ zh: '是', en: 'Yes' }) : tr({ zh: '否', en: 'No' })}
         </strong>
         <span style={{ color: 'var(--ink-dim)', marginLeft: 6 }}>{ok2 ? '✓' : '✗'}</span>
       </div>
@@ -449,7 +449,7 @@ function IndexSieve() {
             <input type="checkbox" checked={enforceAll[i]}
               onChange={() => setEnforceAll(prev => { const n = [...prev]; n[i] = !n[i]; return n; })}
             />
-            {((i18n.language.startsWith('zh') ? c.zh : c.en))}
+            {tr(c)}
           </label>
         ))}
       </div>
@@ -513,10 +513,10 @@ function IndexSieve() {
           </span>
           <span style={{ fontWeight: 700, color: legal ? 'var(--green)' : 'var(--warn)' }}>
             {legal
-              ? (tr({ zh: '合法魔方状态', en: 'Legal cube state'
-            }))
-              : (tr({ zh: '不可达（非法）', en: 'Unreachable (illegal)'
-            }))}
+              ? tr({ zh: '合法魔方状态', en: 'Legal cube state'
+                                      })
+              : tr({ zh: '不可达（非法）', en: 'Unreachable (illegal)'
+                                      })}
           </span>
         </div>
       </div>
@@ -532,7 +532,7 @@ function IndexSieve() {
         ].map((c, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
             {lamp(c.ok, true)}
-            <span style={{ color: 'var(--ink-dim)' }}>{((i18n.language.startsWith('zh') ? c.zh : c.en))}</span>
+            <span style={{ color: 'var(--ink-dim)' }}>{tr(c)}</span>
           </div>
         ))}
       </div>

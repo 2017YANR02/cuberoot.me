@@ -10,6 +10,7 @@ import { SystemTopoSVG, PackageDepsSVG } from './_components/ArchSvgs';
 import { LAYERS, PACKAGES, MODULES } from './_lib/arch-data';
 import './architecture.css';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 export default function ArchitecturePage() {
   const { i18n } = useTranslation();
@@ -134,7 +135,7 @@ export default function ArchitecturePage() {
                   <span className="arch-mod-route">{m.route}</span>
                   <span className={`arch-tag arch-tag-${m.origin}`}>{m.origin}</span>
                 </div>
-                <div className="arch-mod-name">{((i18n.language.startsWith('zh') ? m.zh : m.en))}</div>
+                <div className="arch-mod-name">{tr(m)}</div>
                 <div className="arch-mod-desc">{lang === 'zh' ? m.zhDesc : m.enDesc}</div>
               </Link>
             ))}

@@ -4,7 +4,6 @@
 // 由调用方决定外层包裹.自带「加载更多组合」懒分页状态(player-combos 端点,offset=16).
 
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import AppLink from '@/components/AppLink';
 import { EventIcon } from '@/components/EventIcon';
 import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
@@ -38,7 +37,6 @@ export function BestComboBody({
   /** 单 type 视图(排名页):无成绩时提示「另一 type 有组合,切换查看」;两 type 同时展示(选手页)时关掉 */
   mentionOtherType?: boolean;
 }) {
-  const { i18n } = useTranslation();
   const [more, setMore] = useState<string[][]>([]);
   const [expanded, setExpanded] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);

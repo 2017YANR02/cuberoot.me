@@ -13,6 +13,7 @@ import { Infinity as InfinityIcon, Sigma, Dices, Ruler } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import i18n from '@/i18n/i18n-client';
 import { useT } from "@/hooks/useT";
+import { tr } from '@/i18n/tr';
 
 interface Card {
   to: string;
@@ -63,8 +64,8 @@ export default function MathLandingPage() {
         {CARDS.map((c) => (
           <Link key={c.to} href={c.to} className="hub-card">
             <c.Icon size={28} />
-            <div className="hub-card-title">{(((i18n.language.startsWith('zh') ? c.zh : c.en))).title}</div>
-            <div className="hub-card-desc">{(((i18n.language.startsWith('zh') ? c.zh : c.en))).desc}</div>
+            <div className="hub-card-title">{tr(c).title}</div>
+            <div className="hub-card-desc">{tr(c).desc}</div>
           </Link>
         ))}
       </div>

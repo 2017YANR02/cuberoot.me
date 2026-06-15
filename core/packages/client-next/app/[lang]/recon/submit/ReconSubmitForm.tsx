@@ -824,8 +824,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
           setField('regionalSingleRecord', v);
           if (v) singleFilled = v;
         }
-        setRecordAutoSource((avgFilled || singleFilled) ? (tr({ zh: '自动:WCA', en: 'auto: WCA'
-        })) : null);
+        setRecordAutoSource((avgFilled || singleFilled) ? tr({ zh: '自动:WCA', en: 'auto: WCA'
+                }) : null);
       } finally {
         if (!cancelled) setRecordLoading(false);
       }
@@ -1210,8 +1210,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     }}
                     readOnly={!!timeAutoSource}
                     className={timeAutoSource ? 'submit-input-locked' : undefined}
-                    title={timeAutoSource ? (tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch'
-                    })) : undefined}
+                    title={timeAutoSource ? tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch'
+                                        }) : undefined}
                   />
                 </label>
                 {isBldEvent(form.event ?? '') && (
@@ -1374,8 +1374,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     }}
                     readOnly={!!avgAutoSource}
                     className={avgAutoSource ? 'submit-input-locked' : undefined}
-                    title={avgAutoSource ? (tr({ zh: '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取', en: 'auto-filled, read-only; change person/comp/event/round to refetch'
-                    }))
+                    title={avgAutoSource ? tr({ zh: '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取', en: 'auto-filled, read-only; change person/comp/event/round to refetch'
+                                        })
                       : undefined}
                   />
                   {avgLoading
@@ -1396,8 +1396,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     }}
                     readOnly={!!singleAutoSource}
                     className={singleAutoSource ? 'submit-input-locked' : undefined}
-                    title={singleAutoSource ? (tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch'
-                    })) : undefined}
+                    title={singleAutoSource ? tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch'
+                                        }) : undefined}
                   />
                   {timeLoading
                     ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
@@ -1441,8 +1441,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 readOnly={!!scrambleAutoSource}
                 className={scrambleAutoSource ? 'submit-input-locked' : undefined}
                 title={scrambleAutoSource
-                  ? (tr({ zh: '自动填充值不可编辑;改 比赛/项目/轮次/分组/第几把 以重新获取', en: 'auto-filled, read-only; change comp/event/round/group/# to refetch'
-                }))
+                  ? tr({ zh: '自动填充值不可编辑;改 比赛/项目/轮次/分组/第几把 以重新获取', en: 'auto-filled, read-only; change comp/event/round/group/# to refetch'
+                                    })
                   : undefined}
                 onChange={e => {
                   setScrambleUserTouched(true);

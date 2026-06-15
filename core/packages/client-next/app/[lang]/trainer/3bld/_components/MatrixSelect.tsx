@@ -6,7 +6,6 @@
 // has W after L, edge order is alphabetical A..T then W..Z).
 
 import { useEffect, useMemo, type JSX } from 'react';
-import { useTranslation } from 'react-i18next';
 import { CheckCheck, Eraser } from 'lucide-react';
 import { globalState } from '../_lib/lettering';
 import { tr } from '@/i18n/tr';
@@ -25,9 +24,6 @@ function lettersFor(pieceType: 'corner' | 'edge'): string[] {
 }
 
 export function MatrixSelect({ pieceType, value, onChange }: MatrixSelectProps): JSX.Element {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
-
   const letters = useMemo(() => lettersFor(pieceType), [pieceType]);
   const selected = useMemo(() => new Set(value), [value]);
 

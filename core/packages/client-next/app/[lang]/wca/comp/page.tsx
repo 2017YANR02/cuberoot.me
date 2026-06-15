@@ -1919,7 +1919,7 @@ function CalendarPageInner() {
               aria-expanded={pickerOpen === 'from'}
               aria-label={tr({ zh: '起始年月', en: 'From' })}
             >
-              {dateFrom || (tr({ zh: '起始', en: 'From' }))}
+              {dateFrom || tr({ zh: '起始', en: 'From' })}
             </button>
             <span className="date-range-sep">~</span>
             <button
@@ -1931,8 +1931,8 @@ function CalendarPageInner() {
               aria-label={tr({ zh: '结束年月', en: 'To'
             })}
             >
-              {dateTo || (tr({ zh: '结束', en: 'To'
-            }))}
+              {dateTo || tr({ zh: '结束', en: 'To'
+                                      })}
             </button>
             {(dateFrom || dateTo) && (
               <ClearButton
@@ -2035,8 +2035,8 @@ function CalendarPageInner() {
             });
             const cycleHint = max >= 1
               ? ((isZh ? `点击切换：关 → max → 1 → ... → ${max} → 关` : `Click to cycle: off → max → 1 → ... → ${max} → off`))
-              : (tr({ zh: '点击切换：关 → max → 关', en: 'Click to cycle: off → max → off'
-            }));
+              : tr({ zh: '点击切换：关 → max → 关', en: 'Click to cycle: off → max → off'
+                            });
             return (
               <button
                 key={eid}

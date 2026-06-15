@@ -709,10 +709,10 @@ export default function HistoryPanel({
             onChange={(e) => setQuery(e.target.value)}
             placeholder={
               isMobile
-                ? (tr({ zh: '搜索…', en: 'Search…'
-                }))
-                : (tr({ zh: '搜索注释或打乱…', en: 'Search comment or scramble…'
-                }))
+                ? tr({ zh: '搜索…', en: 'Search…'
+                                    })
+                : tr({ zh: '搜索注释或打乱…', en: 'Search comment or scramble…'
+                                    })
             }
             aria-label={tr({ zh: '搜索注释或打乱', en: 'Search comment or scramble'
             })}

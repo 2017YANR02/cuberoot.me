@@ -148,7 +148,7 @@ function HubBody({ isZh, embedded }: { isZh: boolean; embedded: boolean }) {
 
       {GROUPS.map((group) => (
         <section key={group.en} className="bld-hub-group">
-          <h2 className="bld-hub-group-title">{((i18n.language.startsWith('zh') ? group.zh : group.en))}</h2>
+          <h2 className="bld-hub-group-title">{tr(group)}</h2>
           <div className="bld-hub-grid">
             {group.modules.map((m) => (
               <Link key={m.href} href={m.href} className="bld-hub-card">
@@ -160,7 +160,7 @@ function HubBody({ isZh, embedded }: { isZh: boolean; embedded: boolean }) {
                     <span className="bld-hub-card-lucide">{m.icon}</span>
                   )}
                 </div>
-                <div className="bld-hub-card-title">{((i18n.language.startsWith('zh') ? m.zh : m.en))}</div>
+                <div className="bld-hub-card-title">{tr(m)}</div>
               </Link>
             ))}
           </div>

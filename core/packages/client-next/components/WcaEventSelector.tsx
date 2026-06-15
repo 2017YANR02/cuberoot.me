@@ -64,13 +64,13 @@ export default function WcaEventSelector({
   const showToggle = hasHiddenContent && !hasSelectedHidden;
 
   const toggleTip = (cancelledIds.length > 0 && appendCollapsible)
-    ? (tr({ zh: '其他项目', en: 'Other events'
-    }))
+    ? tr({ zh: '其他项目', en: 'Other events'
+          })
     : appendCollapsible
-      ? (tr({ zh: '其他 (非 WCA 项目)', en: 'Other (non-WCA puzzles)'
-    }))
-      : (tr({ zh: '已废止项目', en: 'Former events'
-    }));
+      ? tr({ zh: '其他 (非 WCA 项目)', en: 'Other (non-WCA puzzles)'
+              })
+      : tr({ zh: '已废止项目', en: 'Former events'
+              });
 
   const removeBtn = (id: string, isActive: boolean) => (isMulti && isActive && onRemove ? (
     <span

@@ -5,7 +5,6 @@
 // 点卡片即用 View Transitions 淡出应用到全站。让用户一眼横向比、敲定喜好。
 
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Check, Play, RotateCcw } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { applyPalette, readPalette } from '@/lib/theme';
@@ -27,8 +26,6 @@ const CARDS: Card[] = [
 ];
 
 export default function AppearancePage() {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   useDocumentTitle('配色主题', 'Color Themes');
 
   const [current, setCurrent] = useState<string | null>(null);
@@ -43,7 +40,7 @@ export default function AppearancePage() {
     };
   }, []);
 
-  const name = (c: Card) => (isZh ? c.zh : c.en);
+  const name = (c: Card) => tr(c);
 
   return (
     <div className="ac-page">

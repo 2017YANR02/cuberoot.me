@@ -2,7 +2,6 @@
  * AlgChip — 可点击复制的公式 chip
  */
 import { useState, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Copy, Check } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 
@@ -18,8 +17,6 @@ interface AlgChipProps {
 }
 
 export function AlgChip({ alg, algHtml, title }: AlgChipProps) {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const [copied, setCopied] = useState(false);
 
   const handleClick = useCallback(
@@ -63,9 +60,9 @@ export function AlgChip({ alg, algHtml, title }: AlgChipProps) {
       className={'tutorial-chip' + (copied ? ' is-copied' : '')}
       role="button"
       tabIndex={0}
-      title={title ?? (copied ? (tr({ zh: '已复制', en: 'Copied'
-    })) : (tr({ zh: '点击复制', en: 'Click to copy'
-    })))}
+      title={title ?? (copied ? tr({ zh: '已复制', en: 'Copied'
+          }) : tr({ zh: '点击复制', en: 'Click to copy'
+              }))}
       onClick={handleClick}
       onKeyDown={handleKey}
     >

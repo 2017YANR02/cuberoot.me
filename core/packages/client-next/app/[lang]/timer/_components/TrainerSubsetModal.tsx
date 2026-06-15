@@ -98,8 +98,8 @@ export default function TrainerSubsetModal({ kind, isZh, onClose }: Props) {
       >
         <h2 id={titleId}>
           {kind === 'oll'
-            ? (tr({ zh: 'OLL 子集', en: 'OLL subset' }))
-            : (tr({ zh: 'PLL 子集', en: 'PLL subset' }))}
+            ? tr({ zh: 'OLL 子集', en: 'OLL subset' })
+            : tr({ zh: 'PLL 子集', en: 'PLL subset' })}
           <span className="trainer-subset-count"> ({count}/{total})</span>
         </h2>
 

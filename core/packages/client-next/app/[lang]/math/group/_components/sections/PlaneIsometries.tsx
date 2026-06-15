@@ -377,9 +377,9 @@ function TwoMirrorComposer() {
           <span className="gt-result-label"><L zh="复合类型" en="composite type" /></span>
           <span className="gt-result-val-strong" style={{ color: result.type === 'rotation' ? 'var(--green)' : 'var(--gold)' }}>
             {result.type === 'rotation'
-              ? (tr({ zh: '旋转', en: 'Rotation'
-            }))
-              : (tr({ zh: '平移', en: 'Translation' }))}
+              ? tr({ zh: '旋转', en: 'Rotation'
+                                      })
+              : tr({ zh: '平移', en: 'Translation' })}
           </span>
         </div>
         <div className="gt-result-row">
@@ -493,8 +493,8 @@ function IsometryClassifier() {
   const toSvgY = (y: number) => (-y + VB) / (2*VB) * svgSize;
 
   const directionLabel = Math.abs(detA - 1) < 1e-6
-    ? (tr({ zh: '正向（保向）', en: 'Direct (orientation-preserving)' }))
-    : (tr({ zh: '反向（反向等距）', en: 'Opposite (orientation-reversing)' }));
+    ? tr({ zh: '正向（保向）', en: 'Direct (orientation-preserving)' })
+    : tr({ zh: '反向（反向等距）', en: 'Opposite (orientation-reversing)' });
 
   return (
     <div className="gt-panel">
@@ -629,10 +629,10 @@ function IsometryClassifier() {
           <span className="gt-result-label"><L zh="决策依据" en="Decision basis" /></span>
           <span className="gt-result-val" style={{ fontSize: 12, color: 'var(--ink-dim)', fontFamily: 'var(--mono)' }}>
             {Math.abs(detA-1) < 1e-6
-              ? (tr({ zh: 'det=+1 → 直接等距 → 检查不动点', en: 'det=+1 → direct → check fixed point'
-            }))
-              : (tr({ zh: 'det=−1 → 反向等距 → 检查 f∘f', en: 'det=−1 → opposite → check f∘f'
-            }))}
+              ? tr({ zh: 'det=+1 → 直接等距 → 检查不动点', en: 'det=+1 → direct → check fixed point'
+                                      })
+              : tr({ zh: 'det=−1 → 反向等距 → 检查 f∘f', en: 'det=−1 → opposite → check f∘f'
+                                      })}
           </span>
         </div>
       </div>
@@ -775,8 +775,8 @@ function RotationTwoReflections() {
         <div className="gt-result-row">
           <span className="gt-result-label"><L zh="数值验证（误差 < 1e-9）" en="numeric verify (err < 1e-9)" /></span>
           <span className="gt-result-val-strong" style={{ color: verified ? 'var(--green)' : 'var(--warn)' }}>
-            {verified ? (tr({ zh: '通过', en: 'pass'
-            })) : `err ${maxErr.toExponential(2)}`}
+            {verified ? tr({ zh: '通过', en: 'pass'
+                                  }) : `err ${maxErr.toExponential(2)}`}
           </span>
         </div>
         <div className="gt-result-row">

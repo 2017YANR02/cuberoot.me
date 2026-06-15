@@ -10,8 +10,6 @@
 //      advancing toward the final.
 // Shell (breadcrumb/hero/prev-next/footer) comes from RegArticleLayout; visual
 // classes live in ./head-to-head.css.
-
-import { useTranslation } from 'react-i18next';
 import {
   Swords, Trophy, Layers, Clock, Megaphone, Scale, ListOrdered, Medal,
 } from 'lucide-react';
@@ -22,6 +20,7 @@ import FullClauses from '../_components/FullClauses';
 import clauses from '../_data/reg-clauses/I.json';
 import { RegSection, Callout, RegQuote, RegList } from '../_components/primitives';
 import './head-to-head.css';
+import { T } from '@/i18n/tr';
 
 // Single-elimination ladder: point → set → match → stage → advance.
 const LADDER = [
@@ -89,8 +88,6 @@ function Bracket8({ seedLabel, finalLabel }: { seedLabel: string; finalLabel: st
 }
 
 export default function HeadToHeadChapter() {
-  const { i18n } = useTranslation(); // re-render on language toggle
-  const isZh = i18n.language.startsWith('zh');
   const t = useT();
 
   return (
@@ -193,10 +190,10 @@ export default function HeadToHeadChapter() {
 
         <RegList
           items={[
-            ((isZh ? (<><strong>种子与对阵。</strong> 有前一轮时,按前一轮排名定种子;没有则按报名资格。首阶段最高种子对最低种子,次高对次低,依此类推。<span className="h2h-tag">I1 · I2c</span></>) : (<><strong>Seeding and matchups.</strong> With a prior round, seeds follow that round’s ranking; otherwise the competition’s qualification. In the first stage the top seed faces the bottom seed, second vs second-last, and so on. <span className="h2h-tag">I1 · I2c</span></>))),
-            ((isZh ? (<><strong>阶段随名额变化。</strong> 4 人:半决赛 + 决赛;8 人:加四分之一决赛;12、16 人再往前加一个阶段(12 人时前 4 号种子轮空,直接进四分之一决赛)。<span className="h2h-tag">I2a · I2c1</span></>) : (<><strong>Stages scale with places.</strong> 4: Semifinal + Final; 8 adds a Quarterfinal; 12 and 16 add another stage (for 12, the top 4 seeds get a bye straight into the Quarterfinal). <span className="h2h-tag">I2a · I2c1</span></>))),
-            ((isZh ? (<><strong>季军赛。</strong> 决赛阶段有两场:决赛和季军赛 —— 两场半决赛的负者争夺铜牌。<span className="h2h-tag">I2b1 · I2e</span></>) : (<><strong>Third Place Match.</strong> The Final Stage has two matches: the Final and the Third Place Match, where the two semifinal losers play for bronze. <span className="h2h-tag">I2b1 · I2e</span></>))),
-            ((isZh ? (<><strong>弃赛与平种子。</strong> 对决开始前一方退赛,另一方视为获胜晋级,但不记录该场成绩;种子完全相同则随机定序。<span className="h2h-tag">I2h · I1d</span></>) : (<><strong>Withdrawals and tied seeds.</strong> If one withdraws before a match begins, the opponent is treated as winning for progression, but no results are recorded; identical seeds are randomized. <span className="h2h-tag">I2h · I1d</span></>))),
+            ((<T zh={<><strong>种子与对阵。</strong> 有前一轮时,按前一轮排名定种子;没有则按报名资格。首阶段最高种子对最低种子,次高对次低,依此类推。<span className="h2h-tag">I1 · I2c</span></>} en={<><strong>Seeding and matchups.</strong> With a prior round, seeds follow that round’s ranking; otherwise the competition’s qualification. In the first stage the top seed faces the bottom seed, second vs second-last, and so on. <span className="h2h-tag">I1 · I2c</span></>} />)),
+            ((<T zh={<><strong>阶段随名额变化。</strong> 4 人:半决赛 + 决赛;8 人:加四分之一决赛;12、16 人再往前加一个阶段(12 人时前 4 号种子轮空,直接进四分之一决赛)。<span className="h2h-tag">I2a · I2c1</span></>} en={<><strong>Stages scale with places.</strong> 4: Semifinal + Final; 8 adds a Quarterfinal; 12 and 16 add another stage (for 12, the top 4 seeds get a bye straight into the Quarterfinal). <span className="h2h-tag">I2a · I2c1</span></>} />)),
+            ((<T zh={<><strong>季军赛。</strong> 决赛阶段有两场:决赛和季军赛 —— 两场半决赛的负者争夺铜牌。<span className="h2h-tag">I2b1 · I2e</span></>} en={<><strong>Third Place Match.</strong> The Final Stage has two matches: the Final and the Third Place Match, where the two semifinal losers play for bronze. <span className="h2h-tag">I2b1 · I2e</span></>} />)),
+            ((<T zh={<><strong>弃赛与平种子。</strong> 对决开始前一方退赛,另一方视为获胜晋级,但不记录该场成绩;种子完全相同则随机定序。<span className="h2h-tag">I2h · I1d</span></>} en={<><strong>Withdrawals and tied seeds.</strong> If one withdraws before a match begins, the opponent is treated as winning for progression, but no results are recorded; identical seeds are randomized. <span className="h2h-tag">I2h · I1d</span></>} />)),
           ]}
         />
       </RegSection>
@@ -212,16 +209,16 @@ export default function HeadToHeadChapter() {
       >
         <RegList
           items={[
-            ((isZh ? (<><Megaphone size={16} className="h2h-li-icon" /><strong>播报员主持检查。</strong> 双方就位、裁判就绪后,播报员问「READY?」;两人确认或至少 15 秒后喊「START」开始计检查时,这一分开始。<span className="h2h-tag">I4c1 · I4c2</span></>) : (<><Megaphone size={16} className="h2h-li-icon" /><strong>The announcer runs inspection.</strong> Once both are at the station and judges ready, the announcer asks “READY?”; on confirmation or after 15 s, calls “START” to begin inspection and the point. <span className="h2h-tag">I4c1 · I4c2</span></>))),
-            ((isZh ? (<><Clock size={16} className="h2h-li-icon" /><strong>统一倒计时。</strong> 检查到 8 秒喊「8 SECONDS」,11/12/13 秒喊「3、2、1」,14 秒喊「GO」—— 选手须在此时开始还原。<span className="h2h-tag">I4c3–I4c5</span></>) : (<><Clock size={16} className="h2h-li-icon" /><strong>A shared countdown.</strong> At 8 s the announcer calls “8 SECONDS”, at 11/12/13 s “3, 2, 1”, and at 14 s “GO” — when the competitor must start the solve. <span className="h2h-tag">I4c3–I4c5</span></>))),
-            ((isZh ? (<><Scale size={16} className="h2h-li-icon" /><strong>没有「超 15 秒」罚则。</strong> 因为检查流程改了,普通的「15 秒内未开始」罚则在一对一赛制中不适用;但故意拖延开始或在「GO」之前抢跑,裁判可酌情判 DNF。<span className="h2h-tag">I4c6 · I4c7</span></>) : (<><Scale size={16} className="h2h-li-icon" /><strong>No “over 15 s” penalty.</strong> Because inspection is modified, the usual not-started-in-15-s penalties do not apply; but intentionally delaying, or starting before “GO”, may be a DNF at the judge’s discretion. <span className="h2h-tag">I4c6 · I4c7</span></>))),
-            ((isZh ? (<><ListOrdered size={16} className="h2h-li-icon" /><strong>记下胜负。</strong> 裁判记录成绩时,还要在记分表上标明这一分由谁赢、谁输,或本分无人取得。<span className="h2h-tag">I4d1</span></>) : (<><ListOrdered size={16} className="h2h-li-icon" /><strong>Note who won the point.</strong> When recording the result, the judge also marks on the score sheet whether each competitor won or lost the point, or there was no winner. <span className="h2h-tag">I4d1</span></>))),
-            ((isZh ? (<><Medal size={16} className="h2h-li-icon" /><strong>盲拧版起手不同。</strong> 三盲一对一同样由播报员主持:就绪或 15 秒后喊「3、2、1、GO」,选手须在此开始;抢跑或故意拖延同样可判 DNF。<span className="h2h-tag">I5b</span></>) : (<><Medal size={16} className="h2h-li-icon" /><strong>Blindfolded starts differ.</strong> 3×3 BLD Head to Head is also announcer-run: on readiness or after 15 s, “3, 2, 1, GO”, when the competitor must start; a false start or stalling may be a DNF. <span className="h2h-tag">I5b</span></>))),
+            ((<T zh={<><Megaphone size={16} className="h2h-li-icon" /><strong>播报员主持检查。</strong> 双方就位、裁判就绪后,播报员问「READY?」;两人确认或至少 15 秒后喊「START」开始计检查时,这一分开始。<span className="h2h-tag">I4c1 · I4c2</span></>} en={<><Megaphone size={16} className="h2h-li-icon" /><strong>The announcer runs inspection.</strong> Once both are at the station and judges ready, the announcer asks “READY?”; on confirmation or after 15 s, calls “START” to begin inspection and the point. <span className="h2h-tag">I4c1 · I4c2</span></>} />)),
+            ((<T zh={<><Clock size={16} className="h2h-li-icon" /><strong>统一倒计时。</strong> 检查到 8 秒喊「8 SECONDS」,11/12/13 秒喊「3、2、1」,14 秒喊「GO」—— 选手须在此时开始还原。<span className="h2h-tag">I4c3–I4c5</span></>} en={<><Clock size={16} className="h2h-li-icon" /><strong>A shared countdown.</strong> At 8 s the announcer calls “8 SECONDS”, at 11/12/13 s “3, 2, 1”, and at 14 s “GO” — when the competitor must start the solve. <span className="h2h-tag">I4c3–I4c5</span></>} />)),
+            ((<T zh={<><Scale size={16} className="h2h-li-icon" /><strong>没有「超 15 秒」罚则。</strong> 因为检查流程改了,普通的「15 秒内未开始」罚则在一对一赛制中不适用;但故意拖延开始或在「GO」之前抢跑,裁判可酌情判 DNF。<span className="h2h-tag">I4c6 · I4c7</span></>} en={<><Scale size={16} className="h2h-li-icon" /><strong>No “over 15 s” penalty.</strong> Because inspection is modified, the usual not-started-in-15-s penalties do not apply; but intentionally delaying, or starting before “GO”, may be a DNF at the judge’s discretion. <span className="h2h-tag">I4c6 · I4c7</span></>} />)),
+            ((<T zh={<><ListOrdered size={16} className="h2h-li-icon" /><strong>记下胜负。</strong> 裁判记录成绩时,还要在记分表上标明这一分由谁赢、谁输,或本分无人取得。<span className="h2h-tag">I4d1</span></>} en={<><ListOrdered size={16} className="h2h-li-icon" /><strong>Note who won the point.</strong> When recording the result, the judge also marks on the score sheet whether each competitor won or lost the point, or there was no winner. <span className="h2h-tag">I4d1</span></>} />)),
+            ((<T zh={<><Medal size={16} className="h2h-li-icon" /><strong>盲拧版起手不同。</strong> 三盲一对一同样由播报员主持:就绪或 15 秒后喊「3、2、1、GO」,选手须在此开始;抢跑或故意拖延同样可判 DNF。<span className="h2h-tag">I5b</span></>} en={<><Medal size={16} className="h2h-li-icon" /><strong>Blindfolded starts differ.</strong> 3×3 BLD Head to Head is also announcer-run: on readiness or after 15 s, “3, 2, 1, GO”, when the competitor must start; a false start or stalling may be a DNF. <span className="h2h-tag">I5b</span></>} />)),
           ]}
         />
 
         <Callout tone="success" label={t('意外了怎么算', 'And if something goes wrong')} icon={<Swords size={17} />} style={{ marginTop: 30 }}>
-          {(isZh ? (<>对决中出现意外时,代表给一方额外机会,则两人都要给;若意外不影响「谁赢这一分」,则不给。比赛一旦结束,意外的处理即为最终结果(作弊除外)。完整说明见 <Link href="/regulation/incidents" className="h2h-link">第 11 章(意外事件)</Link>。</>) : (<>If an incident occurs in a match and the Delegate grants one competitor an extra, both must receive one; if it does not affect who wins the point, none is given. Once the match is completed the resolution is final (cheating excepted). See <Link href="/regulation/incidents" className="h2h-link">Article 11 (Incidents)</Link>.</>))}
+          {<T zh={<>对决中出现意外时,代表给一方额外机会,则两人都要给;若意外不影响「谁赢这一分」,则不给。比赛一旦结束,意外的处理即为最终结果(作弊除外)。完整说明见 <Link href="/regulation/incidents" className="h2h-link">第 11 章(意外事件)</Link>。</>} en={<>If an incident occurs in a match and the Delegate grants one competitor an extra, both must receive one; if it does not affect who wins the point, none is given. Once the match is completed the resolution is final (cheating excepted). See <Link href="/regulation/incidents" className="h2h-link">Article 11 (Incidents)</Link>.</>} />}
         </Callout>
       </RegSection>
       <FullClauses data={clauses} />

@@ -5,7 +5,6 @@
 // 1:1 翻译自 viz.js setupModeSwitcher()
 
 import { useState, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useVizStore } from '../_stores/viz_store';
 import type { DataMode } from '../_engine/data_fetch';
 import { tr } from '@/i18n/tr';
@@ -36,8 +35,6 @@ const ROW2_MODES: { key: DataMode; label: string }[] = [
 ];
 
 export default function ModeSelector() {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
   const dataMode = useVizStore(s => s.dataMode);
   const setDataMode = useVizStore(s => s.setDataMode);
   const [expanded, setExpanded] = useState(false);
@@ -85,8 +82,8 @@ export default function ModeSelector() {
         onClick={() => setExpanded(v => !v)}
       >
         {expanded || isRoundActive
-          ? (tr({ zh: '▴ 收起', en: '▴ Collapse' }))
-          : (tr({ zh: '▾ 更多', en: '▾ More' }))}
+          ? tr({ zh: '▴ 收起', en: '▴ Collapse' })
+          : tr({ zh: '▾ 更多', en: '▾ More' })}
       </button>
     </div>
   );

@@ -482,7 +482,7 @@ function SylowConstraintExplorer({ lang }: { lang: Lang }) {
             onClick={() => setRaw(ps.value)}
           >
             {i === PRESETS.length - 1
-              ? (tr({ zh: '魔方群', en: 'Cube group' }))
+              ? tr({ zh: '魔方群', en: 'Cube group' })
               : ps.label}
           </button>
         ))}
@@ -1092,10 +1092,10 @@ function SylowGauges({ passCongruence, passDivides, np, p, m, lang }: {
           style={{ fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 700 }}
           fill={passCongruence && passDivides ? 'var(--green)' : 'var(--warn)'}>
           {passCongruence && passDivides
-            ? (tr({ zh: 'Sylow III 通过（必要条件满足）', en: 'Sylow III: OK (necessary conditions met)'
-            }))
-            : (tr({ zh: 'Sylow III 未通过', en: 'Sylow III: FAIL'
-            }))}
+            ? tr({ zh: 'Sylow III 通过（必要条件满足）', en: 'Sylow III: OK (necessary conditions met)'
+                                  })
+            : tr({ zh: 'Sylow III 未通过', en: 'Sylow III: FAIL'
+                                  })}
         </text>
       </svg>
     </div>

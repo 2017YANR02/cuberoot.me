@@ -77,11 +77,11 @@ export default function TranslationsPicker({ selected, onChange, isZh }: Props) 
   const [open, setOpen] = useState(false);
   const selectedSet = new Set(selected);
   const summary = selected.length === 0
-    ? (tr({ zh: '未选择语言', en: 'No languages'
-    }))
+    ? tr({ zh: '未选择语言', en: 'No languages'
+          })
     : selected.length === TNOODLE_LOCALES.length
-      ? (tr({ zh: '全部语言', en: 'All languages'
-    }))
+      ? tr({ zh: '全部语言', en: 'All languages'
+              })
       : selected.length <= 3
         ? selected.map((l) => (isZh ? LOCALE_DISPLAY_NAME[l] : LOCALE_DISPLAY_NAME_EN[l])).join(', ')
         : `${selected.length} ${tr({ zh: '种语言', en: 'languages'

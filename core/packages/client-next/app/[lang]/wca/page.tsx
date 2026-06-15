@@ -213,10 +213,10 @@ export default function WcaStatsIndex() {
               key={sec.key}
               className={`wca-stats-index-tab ${activeKey === sec.key ? 'active' : ''}`}
               onClick={() => jumpTo(sec.key)}
-              title={((i18n.language.startsWith('zh') ? sec.zh : sec.en))}
+              title={tr(sec)}
             >
               {sec.Icon && <sec.Icon size={14} strokeWidth={1.75} />}
-              <span>{((i18n.language.startsWith('zh') ? sec.zh : sec.en))}</span>
+              <span>{tr(sec)}</span>
             </button>
           ))}
         </div>
@@ -233,7 +233,7 @@ export default function WcaStatsIndex() {
           >
             <div className="wca-stats-index-section-header">
               {sec.Icon && <sec.Icon size={18} strokeWidth={1.75} />}
-              <h2>{((i18n.language.startsWith('zh') ? sec.zh : sec.en))}</h2>
+              <h2>{tr(sec)}</h2>
             </div>
 
             {sec.key === TOOLS && (
@@ -241,7 +241,7 @@ export default function WcaStatsIndex() {
                 {WCA_TOOLS.map(it => (
                   <Link key={it.path} href={it.path} className="wca-tool-card">
                     <it.Icon size={28} strokeWidth={1.5} />
-                    <span>{((i18n.language.startsWith('zh') ? it.zh : it.en))}</span>
+                    <span>{tr(it)}</span>
                   </Link>
                 ))}
               </div>
@@ -254,7 +254,7 @@ export default function WcaStatsIndex() {
                   return (
                     <Link key={`${it.path}|${it.extraQuery ?? ''}`} href={to} className="wca-tool-card">
                       <it.Icon size={28} strokeWidth={1.5} />
-                      <span>{((i18n.language.startsWith('zh') ? it.zh : it.en))}</span>
+                      <span>{tr(it)}</span>
                     </Link>
                   );
                 })}

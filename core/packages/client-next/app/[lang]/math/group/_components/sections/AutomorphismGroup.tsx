@@ -661,8 +661,8 @@ export default function AutomorphismGroup() {
             <span className="gt-result-val" style={{ color: cyclic ? 'var(--green)' : 'var(--warn)', fontWeight: 600 }}>
               {cyclic
                 ? (isZh ? `是 — 最小原根 g = ${primitiveRoot}` : `Yes — smallest primitive root g = ${primitiveRoot}`)
-                : (tr({ zh: '否（无原根）', en: 'No (no primitive root)'
-                }))}
+                : tr({ zh: '否（无原根）', en: 'No (no primitive root)'
+                                              })}
             </span>
           </div>
           {cyclic && primitiveRoot != null && (
@@ -941,8 +941,8 @@ export default function AutomorphismGroup() {
             </div>
             <div style={{ fontFamily: 'var(--mono)', fontSize: 15, marginBottom: 10 }}>
               {v4AutLabel(selAut) === 'id'
-                ? (tr({ zh: '恒等映射 id', en: 'Identity id'
-                }))
+                ? tr({ zh: '恒等映射 id', en: 'Identity id'
+                                              })
                 : v4AutLabel(selAut)}
             </div>
             <div style={{ fontSize: 13, lineHeight: 1.8 }}>
@@ -1125,8 +1125,8 @@ export default function AutomorphismGroup() {
               fontWeight: 600
             }}>
               {innSize === grp.n / centerActual.length
-                ? (tr({ zh: '✓ 一致', en: '✓ Consistent' }))
-                : (tr({ zh: '✗ 不一致', en: '✗ Mismatch' }))}
+                ? tr({ zh: '✓ 一致', en: '✓ Consistent' })
+                : tr({ zh: '✗ 不一致', en: '✗ Mismatch' })}
             </span>
           </div>
         </div>

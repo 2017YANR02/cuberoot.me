@@ -553,10 +553,10 @@ function CubeS4Widget() {
               <span className="gt-result-label"><L zh="奇偶性" en="Parity" /></span>
               <span className="gt-result-val" style={{ color: sign === 1 ? 'var(--green)' : 'var(--accent)' }}>
                 {sign === 1
-                  ? (tr({ zh: '偶置换', en: 'even'
-                }))
-                  : (tr({ zh: '奇置换', en: 'odd'
-                }))}
+                  ? tr({ zh: '偶置换', en: 'even'
+                                                  })
+                  : tr({ zh: '奇置换', en: 'odd'
+                                                  })}
               </span>
             </div>
             <div className="gt-result-row">
@@ -652,8 +652,8 @@ function TetraWidget() {
           className={`gt-chip ${allowReflections ? 'gt-chip-active' : ''}`}
           onClick={() => setAllowReflections(r => !r)}
         >
-          {allowReflections ? (tr({ zh: '是（共 24 = S₄）', en: 'Yes (24 = S₄)' })) : (tr({ zh: '否（仅旋转，12 = A₄）', en: 'No (rotations only, 12 = A₄)'
-        }))}
+          {allowReflections ? tr({ zh: '是（共 24 = S₄）', en: 'Yes (24 = S₄)' }) : tr({ zh: '否（仅旋转，12 = A₄）', en: 'No (rotations only, 12 = A₄)'
+                          })}
         </button>
       </div>
 
@@ -705,9 +705,9 @@ function TetraWidget() {
               <span className="gt-result-label"><L zh="奇偶性" en="Parity" /></span>
               <span className="gt-result-val" style={{ color: isProper ? 'var(--green)' : 'var(--warn)' }}>
                 {isProper
-                  ? (tr({ zh: '偶（旋转）', en: 'even (rotation)'
-                }))
-                  : (tr({ zh: '奇（反射）', en: 'odd (reflection)' }))}
+                  ? tr({ zh: '偶（旋转）', en: 'even (rotation)'
+                                                  })
+                  : tr({ zh: '奇（反射）', en: 'odd (reflection)' })}
               </span>
             </div>
             <div className="gt-result-row">
@@ -842,7 +842,7 @@ function OrbitCountWidget() {
             className={`gt-chip ${solid === s ? 'gt-chip-active' : ''}`}
             onClick={() => changeSolid(s)}
           >
-            {((i18n.language.startsWith('zh') ? SOLID_META[s].label.zh : SOLID_META[s].label.en))}
+            {tr(SOLID_META[s].label)}
           </button>
         ))}
       </div>
@@ -913,7 +913,7 @@ function OrbitCountWidget() {
               ] as const).map(([s, rot, ord, full, ford]) => (
                 <tr key={s} style={{ fontWeight: solid === s ? 700 : undefined }}>
                   <td style={{ fontFamily: 'var(--serif)', color: solid === s ? 'var(--accent)' : 'var(--ink-dim)' }}>
-                    {((i18n.language.startsWith('zh') ? SOLID_META[s].label.zh : SOLID_META[s].label.en))}
+                    {tr(SOLID_META[s].label)}
                   </td>
                   <td className="num">{rot}</td>
                   <td className="num">{ord}</td>

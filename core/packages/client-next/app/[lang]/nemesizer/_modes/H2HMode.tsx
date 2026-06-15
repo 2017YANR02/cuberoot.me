@@ -158,7 +158,7 @@ function cellClass(mine: number | undefined, other: number | undefined): string 
 }
 
 function labelEk(ev: string, kind: number, isZh: boolean): string {
-  const suffix = kind === 0 ? (tr({ zh: '单次', en: 'single'
-})) : (tr({ zh: '平均', en: 'average' }));
+  const suffix = kind === 0 ? tr({ zh: '单次', en: 'single'
+  }) : tr({ zh: '平均', en: 'average' });
   return `${eventDisplayName(ev, isZh)} ${suffix}`;
 }

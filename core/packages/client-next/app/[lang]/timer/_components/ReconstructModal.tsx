@@ -248,21 +248,21 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
               <span style={{ opacity: 0.6, fontSize: '0.9em' }}>
                 {tr({ zh: `缓冲块: 角 UFR / 棱 UF`, en: 'buffers: corner UFR / edge UF'
                 })}
-                {bldMemo.parity ? (tr({ zh: ' · 奇偶', en: ' · parity' })) : ''}
+                {bldMemo.parity ? tr({ zh: ' · 奇偶', en: ' · parity' }) : ''}
               </span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '2px 10px' }}>
               <span style={{ opacity: 0.7 }}>{tr({ zh: '角块', en: 'Corners'
             })}:</span>
               <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>
-                {bldMemo.cornerPairs || (tr({ zh: '(无)', en: '(none)'
-                }))}
+                {bldMemo.cornerPairs || tr({ zh: '(无)', en: '(none)'
+                                              })}
               </span>
               <span style={{ opacity: 0.7 }}>{tr({ zh: '棱块', en: 'Edges'
             })}:</span>
               <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>
-                {bldMemo.edgePairs || (tr({ zh: '(无)', en: '(none)'
-                }))}
+                {bldMemo.edgePairs || tr({ zh: '(无)', en: '(none)'
+                                              })}
               </span>
               {bldMemo.twistedCorners.length > 0 && (
                 <>
@@ -314,9 +314,9 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
             <div className="reconstruct-stat-label">{tr({ zh: '首动延迟', en: 'First move'
             })}</div>
             <div className="reconstruct-stat-sub">
-              {memoMs !== undefined ? (tr({ zh: '记忆后', en: 'after memo'
-            })) : (tr({ zh: '从计时开始', en: 'from start'
-            }))}
+              {memoMs !== undefined ? tr({ zh: '记忆后', en: 'after memo'
+                                      }) : tr({ zh: '从计时开始', en: 'from start'
+                                          })}
             </div>
           </div>
           <div className="reconstruct-stat">
@@ -353,9 +353,9 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
                 : <ChevronRight size={14} />}
               <span>
                 {playbackExpanded
-                  ? (tr({ zh: '3D 回放', en: '3D playback' }))
-                  : (tr({ zh: '显示 3D 回放', en: 'Show 3D playback'
-                }))}
+                  ? tr({ zh: '3D 回放', en: '3D playback' })
+                  : tr({ zh: '显示 3D 回放', en: 'Show 3D playback'
+                                                  })}
               </span>
             </button>
             {playbackExpanded && (
@@ -408,17 +408,17 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
             onClick={handleCopyShare}
             disabled={!canShare}
             title={!canShare
-              ? (tr({ zh: '没有动作记录，无法分享回放', en: 'No move log — share unavailable'
-            }))
-              : (tr({ zh: '复制分享链接', en: 'Copy share link'
-            }))}
+              ? tr({ zh: '没有动作记录，无法分享回放', en: 'No move log — share unavailable'
+                            })
+              : tr({ zh: '复制分享链接', en: 'Copy share link'
+                            })}
           >
             <Link2 size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
             {copied
-              ? (tr({ zh: '已复制', en: 'Copied'
-            }))
-              : (tr({ zh: '复制分享链接', en: 'Copy share link'
-            }))}
+              ? tr({ zh: '已复制', en: 'Copied'
+                                      })
+              : tr({ zh: '复制分享链接', en: 'Copy share link'
+                                      })}
           </button>
           <button ref={closeBtnRef} onClick={onClose}>
             {tr({ zh: '关闭', en: 'Close'

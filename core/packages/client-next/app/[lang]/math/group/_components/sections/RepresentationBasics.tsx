@@ -1113,10 +1113,10 @@ function MaschkeAveragingPanel({ lang }: { lang: Lang }) {
             style={{ fontFamily: 'var(--mono)', fontSize: 10 }}
             fill={averaged ? 'var(--green)' : 'var(--accent-2)'}>
             {stepCount === 0
-              ? (tr({ zh: '(初始)', en: '(start)' }))
+              ? tr({ zh: '(初始)', en: '(start)' })
               : averaged
-              ? (tr({ zh: '平均后 (G-不变)', en: 'averaged (G-invariant)'
-            }))
+              ? tr({ zh: '平均后 (G-不变)', en: 'averaged (G-invariant)'
+                                          })
               : (lang === 'zh' ? `累计 ${stepCount}/${groupOrder}` : `sum ${stepCount}/${groupOrder}`)}
           </text>
           <circle cx={svgCx + 160} cy={svgCy} r={sc} fill="none" stroke="var(--rule)" strokeWidth={1} />

@@ -685,8 +685,8 @@ function CycleIndexBuilder({ lang }: { lang: Lang }) {
             className={`gt-chip${groupType === g ? ' gt-chip-active' : ''}`}
             onClick={() => handleGroupChange(g)}
           >
-            {g === 'cube' ? (tr({ zh: '正方体面', en: 'Cube faces'
-            })) : g}
+            {g === 'cube' ? tr({ zh: '正方体面', en: 'Cube faces'
+                            }) : g}
           </button>
         ))}
       </div>
@@ -824,7 +824,7 @@ function CycleIndexBuilder({ lang }: { lang: Lang }) {
             <L zh={<>整除校验 (÷{data.order})</>} en={<>Integrality (÷{data.order})</>} />
           </span>
           <span className="gt-result-val-strong" style={{ color: isInteger ? 'var(--green)' : 'var(--warn)' }}>
-            {isInteger ? (tr({ zh: '整除 ✓', en: 'divisible ✓' })) : (tr({ zh: '不整除 ✗', en: 'not integer ✗' }))}
+            {isInteger ? tr({ zh: '整除 ✓', en: 'divisible ✓' }) : tr({ zh: '不整除 ✗', en: 'not integer ✗' })}
           </span>
         </div>
         <div className="gt-result-row">
@@ -1112,8 +1112,8 @@ function SubstitutionStepper({ lang }: { lang: Lang }) {
             className={`gt-chip${groupType === g ? ' gt-chip-active' : ''}`}
             onClick={() => setGroupType(g)}
           >
-            {g === 'cube' ? (tr({ zh: '正方体面', en: 'Cube faces'
-            })) : g}
+            {g === 'cube' ? tr({ zh: '正方体面', en: 'Cube faces'
+                            }) : g}
           </button>
         ))}
       </div>
@@ -1191,7 +1191,7 @@ function SubstitutionStepper({ lang }: { lang: Lang }) {
                 {data.classes.map((cls, ci) => (
                   <tr key={ci}>
                     <td style={{ fontSize: 12, color: 'var(--ink-dim)' }}>
-                      {((i18n.language.startsWith('zh') ? cls.label.zh : cls.label.en))}
+                      {tr(cls.label)}
                     </td>
                     <td style={{ textAlign: 'center', fontFamily: 'var(--mono)' }}>{cls.size}</td>
                     <td style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>

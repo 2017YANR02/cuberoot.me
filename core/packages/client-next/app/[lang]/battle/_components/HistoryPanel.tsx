@@ -129,7 +129,7 @@ function formatRelativeDate(isoDate: string, locale: string): string {
   const timeStr = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
 
   if (diff === 0) return timeStr;
-  if (diff === 1) return (tr({ zh: '昨天 ', en: 'Yesterday ' })) + timeStr;
+  if (diff === 1) return tr({ zh: '昨天 ', en: 'Yesterday ' }) + timeStr;
   return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + timeStr;
 }
 

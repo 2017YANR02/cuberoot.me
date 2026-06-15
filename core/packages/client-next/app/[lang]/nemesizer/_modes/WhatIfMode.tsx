@@ -153,8 +153,8 @@ export default function WhatIfMode({ isZh }: Props) {
             const real = rankByEk.get(ek);
             return (
               <div className="nemesizer-whatif-row" key={`${ev}-${kind}`}>
-                <div>{ev} {kind === 0 ? (tr({ zh: '单次', en: 'single'
-                })) : (tr({ zh: '平均', en: 'average' }))}</div>
+                <div>{ev} {kind === 0 ? tr({ zh: '单次', en: 'single'
+                                    }) : tr({ zh: '平均', en: 'average' })}</div>
                 <div>{real ?? '—'}</div>
                 <div>
                   <input

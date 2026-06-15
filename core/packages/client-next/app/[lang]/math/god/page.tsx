@@ -23,7 +23,7 @@ import { PUZZLES, primaryDiameter, WCA_EVENT_ORDER, type PuzzleEntry } from './_
 import { DEEP } from './_components/god_deep_data';
 import { TeX, TeXBlock, MathText } from './_components/Tex';
 import './god.css';
-import { tr } from '@/i18n/tr';
+import { tr, T } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
 
 const GrowthChart = lazy(() => import('./_components/GrowthChart'));
@@ -99,10 +99,10 @@ function PuzzleCard({ p, isZh, expanded, onToggle }: {
         <div className="god-card-titleblock">
           <div className="god-card-title">
             <EventIcon event={p.id} className="god-card-eventicon" />
-            <span>{((i18n.language.startsWith('zh') ? p.name.zh : p.name.en))}</span>
+            <span>{tr(p.name)}</span>
           </div>
           <div className="god-card-states"><TeX src={`|G| = ${sciToTex(p.states.sci)}`} />{p.states.pretty && (
-            <span className="god-card-states-extra"> · {((i18n.language.startsWith('zh') ? p.states.pretty.zh : p.states.pretty.en))}</span>
+            <span className="god-card-states-extra"> · {tr(p.states.pretty)}</span>
           )}</div>
         </div>
         <div className="god-card-d-block">
@@ -119,15 +119,15 @@ function PuzzleCard({ p, isZh, expanded, onToggle }: {
 
       {expanded && (
         <div className="god-card-body">
-          <p className="god-card-blurb"><MathText>{((i18n.language.startsWith('zh') ? p.blurb.zh : p.blurb.en))}</MathText></p>
+          <p className="god-card-blurb"><MathText>{tr(p.blurb)}</MathText></p>
 
           {DEEP[p.id] && (
             <div className="god-card-deep">
               {DEEP[p.id].heading && (
-                <h4 className="god-card-deep-h">{((i18n.language.startsWith('zh') ? DEEP[p.id].heading!.zh : DEEP[p.id].heading!.en))}</h4>
+                <h4 className="god-card-deep-h">{tr(DEEP[p.id].heading!)}</h4>
               )}
               {DEEP[p.id].paragraphs.map((para, i) => (
-                <p key={i} className="god-card-deep-p"><MathText>{((i18n.language.startsWith('zh') ? para.zh : para.en))}</MathText></p>
+                <p key={i} className="god-card-deep-p"><MathText>{tr(para)}</MathText></p>
               ))}
             </div>
           )}
@@ -144,7 +144,7 @@ function PuzzleCard({ p, isZh, expanded, onToggle }: {
                         ? m.upper
                         : (m.lower != null ? `${m.lower}–${m.upper}` : <TeX src={`\\le ${m.upper}`} />)}
                     </span>
-                    {m.note && <span className="god-card-metric-note">— {((i18n.language.startsWith('zh') ? m.note.zh : m.note.en))}</span>}
+                    {m.note && <span className="god-card-metric-note">— {tr(m.note)}</span>}
                   </li>
                 ))}
               </ul>
@@ -262,22 +262,14 @@ export default function GodNumberPage() {
             <span className="god-title-zh">{t('— 全 WCA 项目', '— across every WCA puzzle')}</span>
           </h1>
           <p className="god-lead">
-            {(isZh ? (
-                                    <>"上帝之数"是一个魔方解魔方所需的最少步数中最大的那个 —— 也就是这个魔方"最难的状态"。形式化讲,它就是 Cayley 图的直径:在群 <TeX src="G" /> 与生成元集 <TeX src="S" /> 下,起点 <TeX src="e" /> 到任意点 <TeX src="g" /> 的最短路径长度的最大值。下面把 17 个 WCA 项目的直径(精确或上下界)一一列出。</>
-                                  ) : (
-                                    <>God's number is the maximum, over all states, of the minimum moves to solve. Formally it is the diameter of the Cayley graph of the puzzle group <TeX src="G" /> with generator set <TeX src="S" />. Below, every WCA puzzle is listed with its exact diameter or current bounds.</>
-                                  ))}
+            {<T zh={<>"上帝之数"是一个魔方解魔方所需的最少步数中最大的那个 —— 也就是这个魔方"最难的状态"。形式化讲,它就是 Cayley 图的直径:在群 <TeX src="G" /> 与生成元集 <TeX src="S" /> 下,起点 <TeX src="e" /> 到任意点 <TeX src="g" /> 的最短路径长度的最大值。下面把 17 个 WCA 项目的直径(精确或上下界)一一列出。</>} en={<>God's number is the maximum, over all states, of the minimum moves to solve. Formally it is the diameter of the Cayley graph of the puzzle group <TeX src="G" /> with generator set <TeX src="S" />. Below, every WCA puzzle is listed with its exact diameter or current bounds.</>} />}
           </p>
 
           {/* 关键公式 */}
           <div className="god-formula-block">
             <TeXBlock src={`D(G,\\, S) \\;=\\; \\max_{g \\in G}\\; \\min_{\\substack{w \\in S^{*} \\\\ w \\cdot e \\,=\\, g}}\\, |w|`} />
             <div className="god-formula-cap">
-              {(isZh ? (
-                                          <><TeX src="G" /> = 魔方群,<TeX src="S" /> = 合法转动生成元,<TeX src="|w|" /> = 步数(按所选度量)</>
-                                        ) : (
-                                          <><TeX src="G" /> = puzzle group, <TeX src="S" /> = legal generating moves, <TeX src="|w|" /> = word length (under the chosen metric)</>
-                                        ))}
+              {<T zh={<><TeX src="G" /> = 魔方群,<TeX src="S" /> = 合法转动生成元,<TeX src="|w|" /> = 步数(按所选度量)</>} en={<><TeX src="G" /> = puzzle group, <TeX src="S" /> = legal generating moves, <TeX src="|w|" /> = word length (under the chosen metric)</>} />}
             </div>
           </div>
         </section>
@@ -301,7 +293,7 @@ export default function GodNumberPage() {
           </div>
           <div className="god-hl-card">
             <div className="god-hl-num"><TeX src="\Theta(N^{2}/\log N)" /></div>
-            <div className="god-hl-cap">{(isZh ? <><TeX src="N \times N" /> 上帝之数渐近 (Demaine 2011)</> : <><TeX src="N \times N" /> God's number asymptotic (Demaine 2011)</>)}</div>
+            <div className="god-hl-cap">{<T zh={<><TeX src="N \times N" /> 上帝之数渐近 (Demaine 2011)</>} en={<><TeX src="N \times N" /> God's number asymptotic (Demaine 2011)</>} />}</div>
             <div className="god-hl-sub">arXiv:1106.5736</div>
           </div>
         </section>
@@ -347,51 +339,27 @@ export default function GodNumberPage() {
           <div className="god-primer-grid">
             <div className="god-primer-cell">
               <h3>{t('1. 魔方是一个群', '1. A cube is a group')}</h3>
-              <p>{(isZh ? (
-                                          <>每个合法状态对应一个置换:把 8 个角块的位置 + 朝向、12 个棱块的位置 + 朝向打散重排。乘法 = 把两个操作依次施加。单位元 = "还原态"。逆元 = "反演"。三阶魔方的所有状态构成群 <TeX src="G" />,阶 <TeX src="|G| = 4.3 \times 10^{19}" />。</>
-                                        ) : (
-                                          <>Every legal state is a permutation: 8 corners (pos + orientation) and 12 edges (pos + orientation) reshuffled. Multiplication = compose two operations. Identity = solved state. Inverse = invert the sequence. All 3×3 states form a group <TeX src="G" /> with <TeX src="|G| = 4.3 \times 10^{19}" />.</>
-                                        ))}</p>
+              <p>{<T zh={<>每个合法状态对应一个置换:把 8 个角块的位置 + 朝向、12 个棱块的位置 + 朝向打散重排。乘法 = 把两个操作依次施加。单位元 = "还原态"。逆元 = "反演"。三阶魔方的所有状态构成群 <TeX src="G" />,阶 <TeX src="|G| = 4.3 \times 10^{19}" />。</>} en={<>Every legal state is a permutation: 8 corners (pos + orientation) and 12 edges (pos + orientation) reshuffled. Multiplication = compose two operations. Identity = solved state. Inverse = invert the sequence. All 3×3 states form a group <TeX src="G" /> with <TeX src="|G| = 4.3 \times 10^{19}" />.</>} />}</p>
             </div>
             <div className="god-primer-cell">
               <h3>{t('2. 生成元 = "你能转的"', '2. Generators = "what you can turn"')}</h3>
-              <p>{(isZh ? (
-                                          <>六个 90° 面转 <TeX src="\{U, D, L, R, F, B\}" /> 与它们的 180° / 反转构成生成元集 <TeX src="S" />。任何状态都能写成 <TeX src="S" /> 中元素的有限乘积 —— 这就是 <TeX src="G" /> 由 <TeX src="S" /> 生成。</>
-                                        ) : (
-                                          <>The six 90° face turns <TeX src="\{U, D, L, R, F, B\}" /> plus their inverses / doubles form generator set <TeX src="S" />. Every state is a finite product of elements of <TeX src="S" /> — that's "<TeX src="G" /> is generated by <TeX src="S" />".</>
-                                        ))}</p>
+              <p>{<T zh={<>六个 90° 面转 <TeX src="\{U, D, L, R, F, B\}" /> 与它们的 180° / 反转构成生成元集 <TeX src="S" />。任何状态都能写成 <TeX src="S" /> 中元素的有限乘积 —— 这就是 <TeX src="G" /> 由 <TeX src="S" /> 生成。</>} en={<>The six 90° face turns <TeX src="\{U, D, L, R, F, B\}" /> plus their inverses / doubles form generator set <TeX src="S" />. Every state is a finite product of elements of <TeX src="S" /> — that's "<TeX src="G" /> is generated by <TeX src="S" />".</>} />}</p>
             </div>
             <div className="god-primer-cell">
               <h3>{t('3. Cayley 图', '3. The Cayley graph')}</h3>
-              <p>{(isZh ? (
-                                          <>把每个状态当一个顶点,两个状态相差一个生成元就连一条边。这张图叫 Cayley 图 <TeX src="\Gamma(G, S)" />。"解魔方" = 找一条从打乱状态到单位元的路径。</>
-                                        ) : (
-                                          <>Make a vertex for each state; draw an edge between two states differing by one generator. This is the Cayley graph <TeX src="\Gamma(G, S)" />. "Solving" = finding a path from your state to the identity.</>
-                                        ))}</p>
+              <p>{<T zh={<>把每个状态当一个顶点,两个状态相差一个生成元就连一条边。这张图叫 Cayley 图 <TeX src="\Gamma(G, S)" />。"解魔方" = 找一条从打乱状态到单位元的路径。</>} en={<>Make a vertex for each state; draw an edge between two states differing by one generator. This is the Cayley graph <TeX src="\Gamma(G, S)" />. "Solving" = finding a path from your state to the identity.</>} />}</p>
             </div>
             <div className="god-primer-cell">
               <h3>{t('4. 直径 = 上帝之数', '4. Diameter = God\'s number')}</h3>
-              <p>{(isZh ? (
-                                          <>Cayley 图里"最短路径的最大值"就是直径 <TeX src="D(G, S)" />。也就是 —— 最坏情况下,最少要几步才能还原。这就是上帝之数。</>
-                                        ) : (
-                                          <>The maximum, over all pairs of vertices, of the shortest-path length: that's the diameter <TeX src="D(G, S)" />. In other words, worst-case minimum-move count. That's God's number.</>
-                                        ))}</p>
+              <p>{<T zh={<>Cayley 图里"最短路径的最大值"就是直径 <TeX src="D(G, S)" />。也就是 —— 最坏情况下,最少要几步才能还原。这就是上帝之数。</>} en={<>The maximum, over all pairs of vertices, of the shortest-path length: that's the diameter <TeX src="D(G, S)" />. In other words, worst-case minimum-move count. That's God's number.</>} />}</p>
             </div>
             <div className="god-primer-cell">
-              <h3>{(isZh ? <>5. Lagrange 定理 ⇒ 陪集分解</> : <>5. Lagrange ⇒ coset decomposition</>)}</h3>
-              <p>{(isZh ? (
-                                          <>任何子群 <TeX src="H \subset G" /> 都把 <TeX src="G" /> 切成 <TeX src="|G|/|H|" /> 个互不相交的等价类(陪集)。Kociemba 算法用 <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" />(<TeX src="|H| \approx 1.95 \times 10^{10}" />)把 <TeX src="4.3 \times 10^{19}" /> 状态划成 2,217,093,120 个陪集——每个陪集只需求一次解,数量减少 10 个数量级。</>
-                                        ) : (
-                                          <>Any subgroup <TeX src="H \subset G" /> partitions <TeX src="G" /> into <TeX src="|G|/|H|" /> disjoint cosets. Kociemba's <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" /> (<TeX src="|H| \approx 1.95 \times 10^{10}" />) splits <TeX src="4.3 \times 10^{19}" /> states into 2,217,093,120 cosets — solve each once, 10 orders of magnitude saved.</>
-                                        ))}</p>
+              <h3>{<T zh={<>5. Lagrange 定理 ⇒ 陪集分解</>} en={<>5. Lagrange ⇒ coset decomposition</>} />}</h3>
+              <p>{<T zh={<>任何子群 <TeX src="H \subset G" /> 都把 <TeX src="G" /> 切成 <TeX src="|G|/|H|" /> 个互不相交的等价类(陪集)。Kociemba 算法用 <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" />(<TeX src="|H| \approx 1.95 \times 10^{10}" />)把 <TeX src="4.3 \times 10^{19}" /> 状态划成 2,217,093,120 个陪集——每个陪集只需求一次解,数量减少 10 个数量级。</>} en={<>Any subgroup <TeX src="H \subset G" /> partitions <TeX src="G" /> into <TeX src="|G|/|H|" /> disjoint cosets. Kociemba's <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" /> (<TeX src="|H| \approx 1.95 \times 10^{10}" />) splits <TeX src="4.3 \times 10^{19}" /> states into 2,217,093,120 cosets — solve each once, 10 orders of magnitude saved.</>} />}</p>
             </div>
             <div className="god-primer-cell">
-              <h3>{(isZh ? <>6. 对称群 <TeX src="S_{48}" /> ⇒ 进一步压缩</> : <>6. Symmetry group <TeX src="S_{48}" /> ⇒ further squeeze</>)}</h3>
-              <p>{(isZh ? (
-                                          <>立方体本身有 48 个对称(24 个旋转 × 2 镜像)。两个状态若在对称下等价,其上帝之数相同。三阶 22 亿陪集模掉 <TeX src="S_{48}" /> 剩 ~5588 万——这是 2010 证明的可行规模。</>
-                                        ) : (
-                                          <>The cube itself has 48 symmetries (24 rotations × 2 mirror). Two states equivalent under symmetry share a diameter. Quotienting the 2.2B cosets by <TeX src="S_{48}" /> leaves ~55.88M — the feasibility threshold that made the 2010 proof possible.</>
-                                        ))}</p>
+              <h3>{<T zh={<>6. 对称群 <TeX src="S_{48}" /> ⇒ 进一步压缩</>} en={<>6. Symmetry group <TeX src="S_{48}" /> ⇒ further squeeze</>} />}</h3>
+              <p>{<T zh={<>立方体本身有 48 个对称(24 个旋转 × 2 镜像)。两个状态若在对称下等价,其上帝之数相同。三阶 22 亿陪集模掉 <TeX src="S_{48}" /> 剩 ~5588 万——这是 2010 证明的可行规模。</>} en={<>The cube itself has 48 symmetries (24 rotations × 2 mirror). Two states equivalent under symmetry share a diameter. Quotienting the 2.2B cosets by <TeX src="S_{48}" /> leaves ~55.88M — the feasibility threshold that made the 2010 proof possible.</>} />}</p>
             </div>
           </div>
         </section>
@@ -399,11 +367,7 @@ export default function GodNumberPage() {
         {/* ────────────── SUBGROUP CHAIN ────────────── */}
         <section className="god-section">
           <h2>{t('阶段算法 — 互动:Kociemba vs Thistlethwaite', 'Phase algorithms — interactive: Kociemba vs Thistlethwaite')}</h2>
-          <p className="god-sec-lead">{(isZh ? (
-                              <>陪集分解的实现方式有两套主流。Thistlethwaite (1981) 把求解切成 4 个阶段,每个阶段冻结一个对称性;Kociemba (1992) 简化为 2 个阶段。下面是两套子群链的对比:每一层显示 <TeX src="|G_{i}|" /> + 到下一层的陪集数 + 该阶段的最坏步数。</>
-                            ) : (
-                              <>Two main flavours of coset decomposition. Thistlethwaite (1981) splits solving into 4 phases, each freezing one symmetry. Kociemba (1992) simplifies to 2. Below: the subgroup chains side by side, each layer showing <TeX src="|G_{i}|" /> + coset count to next + phase worst-case moves.</>
-                            ))}</p>
+          <p className="god-sec-lead">{<T zh={<>陪集分解的实现方式有两套主流。Thistlethwaite (1981) 把求解切成 4 个阶段,每个阶段冻结一个对称性;Kociemba (1992) 简化为 2 个阶段。下面是两套子群链的对比:每一层显示 <TeX src="|G_{i}|" /> + 到下一层的陪集数 + 该阶段的最坏步数。</>} en={<>Two main flavours of coset decomposition. Thistlethwaite (1981) splits solving into 4 phases, each freezing one symmetry. Kociemba (1992) simplifies to 2. Below: the subgroup chains side by side, each layer showing <TeX src="|G_{i}|" /> + coset count to next + phase worst-case moves.</>} />}</p>
           <Suspense fallback={<div className="god-loading">…</div>}>
             <SubgroupChain isZh={isZh} />
           </Suspense>
@@ -412,11 +376,7 @@ export default function GodNumberPage() {
         {/* ────────────── COSET COMPRESSION (2010 proof structure) ────────────── */}
         <section className="god-section">
           <h2>{t('2010 证明的压缩链 — 互动:从 4.3×10¹⁹ 走到 80 个 super-coset', 'The 2010 proof\'s compression chain — interactive: 4.3×10¹⁹ down to ~80 super-cosets')}</h2>
-          <p className="god-sec-lead">{(isZh ? (
-                              <>2010 年的证明不是"逐状态扫一遍"。它把 <TeX src="4.3 \times 10^{19}" /> 状态用 4 层数学结构层层折叠:Lagrange 陪集 → 立方体对称商 → 集合覆盖 → 逐 super-coset IDA* 验证。每一层用不同的数学工具,合起来让 35 CPU-年成为可行。</>
-                            ) : (
-                              <>The 2010 proof isn't "scan every state". It folds <TeX src="4.3 \times 10^{19}" /> states through 4 mathematical layers: Lagrange cosets → cube-symmetry quotient → set-cover compression → per-super-coset IDA* verification. Each layer pulls in a different tool; together they make 35 CPU-years feasible.</>
-                            ))}</p>
+          <p className="god-sec-lead">{<T zh={<>2010 年的证明不是"逐状态扫一遍"。它把 <TeX src="4.3 \times 10^{19}" /> 状态用 4 层数学结构层层折叠:Lagrange 陪集 → 立方体对称商 → 集合覆盖 → 逐 super-coset IDA* 验证。每一层用不同的数学工具,合起来让 35 CPU-年成为可行。</>} en={<>The 2010 proof isn't "scan every state". It folds <TeX src="4.3 \times 10^{19}" /> states through 4 mathematical layers: Lagrange cosets → cube-symmetry quotient → set-cover compression → per-super-coset IDA* verification. Each layer pulls in a different tool; together they make 35 CPU-years feasible.</>} />}</p>
           <Suspense fallback={<div className="god-loading">…</div>}>
             <CosetCompression isZh={isZh} />
           </Suspense>
@@ -425,11 +385,7 @@ export default function GodNumberPage() {
         {/* ────────────── TWO-PHASE INTERACTIVE ────────────── */}
         <section className="god-section">
           <h2>{t('两阶段求解器 — 互动:把一次解拆成 Phase 1 + Phase 2', 'Two-phase solver — interactive: split a solve into Phase 1 + Phase 2')}</h2>
-          <p className="god-sec-lead">{(isZh ? (
-                              <>选一个 scramble,看 Kociemba 算法怎么先用几步把状态推进子群 <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2}\rangle" />,再在 <TeX src="H" /> 里把它解掉。播放过程中"4 个不变量条形"会同步走零——这就是"进入 H"的几何含义。</>
-                            ) : (
-                              <>Pick a scramble and watch how Kociemba's algorithm first pushes the state into the subgroup <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2}\rangle" />, then solves inside <TeX src="H" />. The "4 invariant bars" drain to zero exactly when Phase 1 ends — that's the geometric meaning of "entering H".</>
-                            ))}</p>
+          <p className="god-sec-lead">{<T zh={<>选一个 scramble,看 Kociemba 算法怎么先用几步把状态推进子群 <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2}\rangle" />,再在 <TeX src="H" /> 里把它解掉。播放过程中"4 个不变量条形"会同步走零——这就是"进入 H"的几何含义。</>} en={<>Pick a scramble and watch how Kociemba's algorithm first pushes the state into the subgroup <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2}\rangle" />, then solves inside <TeX src="H" />. The "4 invariant bars" drain to zero exactly when Phase 1 ends — that's the geometric meaning of "entering H".</>} />}</p>
           <Suspense fallback={<div className="god-loading">…</div>}>
             <TwoPhaseDemo isZh={isZh} />
           </Suspense>
@@ -473,11 +429,7 @@ export default function GodNumberPage() {
         {/* ────────────── 3×3 DISTANCE DISTRIBUTION ────────────── */}
         <section className="god-section">
           <h2>{t('三阶最少步分布 — 互动:FMC 的天花板', '3×3 minimum-solution distribution — interactive: the FMC ceiling')}</h2>
-          <p className="god-sec-lead">{(isZh ? (
-                              <>把"距离 <TeX src="d" /> (HTM) 处有多少个三阶状态"画出来,就是 FMC 选手实质要面对的"最少步分布"。Rokicki 团队公布了 <TeX src="d = 0, \ldots, 15" /> 的精确值;<TeX src="d = 16, \ldots, 20" /> 因总和被 <TeX src="4.3 \times 10^{19}" /> 约束,只有估算。</>
-                            ) : (
-                              <>Plot "how many 3×3 states are at distance <TeX src="d" /> (HTM)" and you get the distribution every FMC solver implicitly faces. Rokicki has published exact counts for <TeX src="d = 0, \ldots, 15" />; <TeX src="d = 16, \ldots, 20" /> are estimates constrained by the total sum <TeX src="4.3 \times 10^{19}" />.</>
-                            ))}</p>
+          <p className="god-sec-lead">{<T zh={<>把"距离 <TeX src="d" /> (HTM) 处有多少个三阶状态"画出来,就是 FMC 选手实质要面对的"最少步分布"。Rokicki 团队公布了 <TeX src="d = 0, \ldots, 15" /> 的精确值;<TeX src="d = 16, \ldots, 20" /> 因总和被 <TeX src="4.3 \times 10^{19}" /> 约束,只有估算。</>} en={<>Plot "how many 3×3 states are at distance <TeX src="d" /> (HTM)" and you get the distribution every FMC solver implicitly faces. Rokicki has published exact counts for <TeX src="d = 0, \ldots, 15" />; <TeX src="d = 16, \ldots, 20" /> are estimates constrained by the total sum <TeX src="4.3 \times 10^{19}" />.</>} />}</p>
           <Suspense fallback={<div className="god-loading">…</div>}>
             <DistanceDistribution isZh={isZh} />
           </Suspense>
@@ -498,11 +450,7 @@ export default function GodNumberPage() {
         {/* ────────────── GROWTH ────────────── */}
         <section className="god-section">
           <h2>{t('NxN 增长 — 互动:状态空间 vs 上帝之数', 'N×N growth — interactive: state space vs diameter')}</h2>
-          <p className="god-sec-lead">{(isZh ? (
-                              <>左轴 <TeX src="|G(N)|" /> 走双指数级 (<TeX src="\sim 10^{N^{2}}" />),右轴上帝之数走多项式 / 多项式·对数。两者的比就是"难度密度"。鼠标悬停某个 <TeX src="N" /> 看具体值。</>
-                            ) : (
-                              <>Left axis grows double-exponentially (<TeX src="\sim 10^{N^{2}}" />); right axis grows polynomially with a log shave. Their ratio is the "difficulty density". Hover an <TeX src="N" /> for exact values.</>
-                            ))}</p>
+          <p className="god-sec-lead">{<T zh={<>左轴 <TeX src="|G(N)|" /> 走双指数级 (<TeX src="\sim 10^{N^{2}}" />),右轴上帝之数走多项式 / 多项式·对数。两者的比就是"难度密度"。鼠标悬停某个 <TeX src="N" /> 看具体值。</>} en={<>Left axis grows double-exponentially (<TeX src="\sim 10^{N^{2}}" />); right axis grows polynomially with a log shave. Their ratio is the "difficulty density". Hover an <TeX src="N" /> for exact values.</>} />}</p>
           <Suspense fallback={<div className="god-loading">…</div>}>
             <GrowthChart isZh={isZh} />
           </Suspense>
@@ -511,11 +459,7 @@ export default function GodNumberPage() {
         {/* ────────────── BFS ────────────── */}
         <section className="god-section">
           <h2>{t('2×2 现场 BFS — 你来证一遍 "直径 = 11"', '2×2 live BFS — re-prove "diameter = 11" yourself')}</h2>
-          <p className="god-sec-lead">{(isZh ? (
-                              <>2×2 群只有 367 万状态,一台笔记本几秒内 BFS 完整张图,无需对称压缩 / 陪集 / GPU。下面这个按钮在你浏览器里 spawn 一个 worker 跑完所有 9 个 HTM 生成元 (<span className="god-mono">U U2 U' R R2 R' F F2 F'</span>) 的广搜,并实时画距离分布。</>
-                            ) : (
-                              <>The 2×2 group has only 3.67M states — a laptop BFSes the whole graph in seconds without symmetry / cosets / GPU. The button below spawns a worker that runs full BFS over the 9 HTM generators (<span className="god-mono">U U2 U' R R2 R' F F2 F'</span>) and streams the distance distribution to the chart.</>
-                            ))}</p>
+          <p className="god-sec-lead">{<T zh={<>2×2 群只有 367 万状态,一台笔记本几秒内 BFS 完整张图,无需对称压缩 / 陪集 / GPU。下面这个按钮在你浏览器里 spawn 一个 worker 跑完所有 9 个 HTM 生成元 (<span className="god-mono">U U2 U' R R2 R' F F2 F'</span>) 的广搜,并实时画距离分布。</>} en={<>The 2×2 group has only 3.67M states — a laptop BFSes the whole graph in seconds without symmetry / cosets / GPU. The button below spawns a worker that runs full BFS over the 9 HTM generators (<span className="god-mono">U U2 U' R R2 R' F F2 F'</span>) and streams the distance distribution to the chart.</>} />}</p>
           <Suspense fallback={<div className="god-loading">…</div>}>
             <Bfs2x2Demo isZh={isZh} />
           </Suspense>
@@ -531,78 +475,42 @@ export default function GodNumberPage() {
           <div className="god-algo-grid">
             <div className="god-algo-cell">
               <div className="god-algo-name">BFS</div>
-              <div className="god-algo-desc">{(isZh ? (
-                                          <>小群 (<TeX src="\le 10^{8}" />) 直接广搜整张图,1 字节/state 存距离,几秒-几分钟内得到完整分布 + 直径。本页 "2×2 现场 BFS" 就是浏览器跑这个,Pyraminx / Skewb / Sq-1 (twist) 也都这么算。</>
-                                        ) : (
-                                          <>Tiny groups (<TeX src="\le 10^{8}" />): plain BFS over the whole graph, 1 byte/state for distance, full distribution + diameter in seconds-to-minutes. The "2×2 live BFS" above is exactly this. Pyraminx, Skewb, Sq-1 (twist) too.</>
-                                        ))}</div>
+              <div className="god-algo-desc">{<T zh={<>小群 (<TeX src="\le 10^{8}" />) 直接广搜整张图,1 字节/state 存距离,几秒-几分钟内得到完整分布 + 直径。本页 "2×2 现场 BFS" 就是浏览器跑这个,Pyraminx / Skewb / Sq-1 (twist) 也都这么算。</>} en={<>Tiny groups (<TeX src="\le 10^{8}" />): plain BFS over the whole graph, 1 byte/state for distance, full distribution + diameter in seconds-to-minutes. The "2×2 live BFS" above is exactly this. Pyraminx, Skewb, Sq-1 (twist) too.</>} />}</div>
             </div>
             <div className="god-algo-cell">
               <div className="god-algo-name">{t('双向 BFS', 'Bidirectional BFS')}</div>
-              <div className="god-algo-desc">{(isZh ? (
-                                          <>从起点和终点同时 BFS,在中点会合 ⇒ 总搜索空间从 <TeX src="b^{d}" /> 降到 <TeX src="2 \cdot b^{d/2}" />。Sq-1 twist 用过;通用 IDA* 求解器也用类似思路。</>
-                                        ) : (
-                                          <>BFS from both ends, meet in the middle ⇒ search space drops from <TeX src="b^{d}" /> to <TeX src="2 \cdot b^{d/2}" />. Used for Sq-1 twist; the same trick powers many general IDA* solvers.</>
-                                        ))}</div>
+              <div className="god-algo-desc">{<T zh={<>从起点和终点同时 BFS,在中点会合 ⇒ 总搜索空间从 <TeX src="b^{d}" /> 降到 <TeX src="2 \cdot b^{d/2}" />。Sq-1 twist 用过;通用 IDA* 求解器也用类似思路。</>} en={<>BFS from both ends, meet in the middle ⇒ search space drops from <TeX src="b^{d}" /> to <TeX src="2 \cdot b^{d/2}" />. Used for Sq-1 twist; the same trick powers many general IDA* solvers.</>} />}</div>
             </div>
             <div className="god-algo-cell">
               <div className="god-algo-name">IDA* + Pattern Database</div>
-              <div className="god-algo-desc">{(isZh ? (
-                                          <>中型群 (<TeX src="10^{9}\text{--}10^{12}" />):预计算某一组 cubie (e.g. "所有 corner") 的最短解距离表(占几百 MB),作为整体解的 admissible 下界 (heuristic <TeX src="h(s) \le d^{*}(s)" />)。主搜索用 Iterative Deepening A* + 这个 <TeX src="h" />,效果碾压纯 BFS。Kociemba's P1/P2 表就是 PDB 的经典例子。</>
-                                        ) : (
-                                          <>Mid-sized groups (<TeX src="10^{9}\text{--}10^{12}" />): precompute the shortest-solution table for a subset of cubies (e.g. all corners) — a few hundred MB — and use it as an admissible heuristic <TeX src="h(s) \le d^{*}(s)" /> for the full problem. Iterative Deepening A* + this <TeX src="h" /> crushes plain BFS. Kociemba's P1/P2 tables are the canonical example.</>
-                                        ))}</div>
+              <div className="god-algo-desc">{<T zh={<>中型群 (<TeX src="10^{9}\text{--}10^{12}" />):预计算某一组 cubie (e.g. "所有 corner") 的最短解距离表(占几百 MB),作为整体解的 admissible 下界 (heuristic <TeX src="h(s) \le d^{*}(s)" />)。主搜索用 Iterative Deepening A* + 这个 <TeX src="h" />,效果碾压纯 BFS。Kociemba's P1/P2 表就是 PDB 的经典例子。</>} en={<>Mid-sized groups (<TeX src="10^{9}\text{--}10^{12}" />): precompute the shortest-solution table for a subset of cubies (e.g. all corners) — a few hundred MB — and use it as an admissible heuristic <TeX src="h(s) \le d^{*}(s)" /> for the full problem. Iterative Deepening A* + this <TeX src="h" /> crushes plain BFS. Kociemba's P1/P2 tables are the canonical example.</>} />}</div>
             </div>
             <div className="god-algo-cell">
               <div className="god-algo-name">{t('陪集分解 + 集合覆盖', 'Coset partition + set cover')}</div>
-              <div className="god-algo-desc">{(isZh ? (
-                                          <>大群 (<TeX src="10^{19}+" />):按子群 <TeX src="H" /> 把 <TeX src="G" /> 划成 <TeX src="|G|/|H|" /> 个陪集,每个陪集独立求解。三阶用 <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" />,<TeX src="|G|/|H| = 2.2 \times 10^{9}" />。再用 set cover 贪心选 ~80 个 super-cosets(每个含若干相邻陪集),实际只对 super-coset 求解。</>
-                                        ) : (
-                                          <>Huge groups (<TeX src="10^{19}+" />): split <TeX src="G" /> into <TeX src="|G|/|H|" /> cosets of a subgroup <TeX src="H" />, solve each independently. 3×3 uses <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" />, <TeX src="|G|/|H| = 2.2 \times 10^{9}" />. Then a greedy set-cover packs neighbouring cosets into ~80 super-cosets and you actually solve only those.</>
-                                        ))}</div>
+              <div className="god-algo-desc">{<T zh={<>大群 (<TeX src="10^{19}+" />):按子群 <TeX src="H" /> 把 <TeX src="G" /> 划成 <TeX src="|G|/|H|" /> 个陪集,每个陪集独立求解。三阶用 <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" />,<TeX src="|G|/|H| = 2.2 \times 10^{9}" />。再用 set cover 贪心选 ~80 个 super-cosets(每个含若干相邻陪集),实际只对 super-coset 求解。</>} en={<>Huge groups (<TeX src="10^{19}+" />): split <TeX src="G" /> into <TeX src="|G|/|H|" /> cosets of a subgroup <TeX src="H" />, solve each independently. 3×3 uses <TeX src="H = \langle U, D, L^{2}, R^{2}, F^{2}, B^{2} \rangle" />, <TeX src="|G|/|H| = 2.2 \times 10^{9}" />. Then a greedy set-cover packs neighbouring cosets into ~80 super-cosets and you actually solve only those.</>} />}</div>
             </div>
             <div className="god-algo-cell">
               <div className="god-algo-name">{t('对称 / 反对称压缩', 'Symmetry / antisymmetry reduction')}</div>
-              <div className="god-algo-desc">{(isZh ? (
-                                          <>立方体 48 个对称(24 旋转 × 2 镜像)+ 反对称(逆元等价)总 96 个等价。两个等价状态的最优解长度必相等 ⇒ 一次解全。三阶 22 亿陪集模掉对称剩 5588 万 —— 这 40 倍压缩是 2010 证明的 enabler。</>
-                                        ) : (
-                                          <>The cube has 48 symmetries (24 rotations × 2 mirrors) plus antisymmetry (inverses are equivalent), 96 total. Equivalent states share their optimal solution length ⇒ solve once, propagate. The 3×3's 2.2B cosets shrink to 55.88M under symmetry — that 40× squeeze is the 2010 proof's enabler.</>
-                                        ))}</div>
+              <div className="god-algo-desc">{<T zh={<>立方体 48 个对称(24 旋转 × 2 镜像)+ 反对称(逆元等价)总 96 个等价。两个等价状态的最优解长度必相等 ⇒ 一次解全。三阶 22 亿陪集模掉对称剩 5588 万 —— 这 40 倍压缩是 2010 证明的 enabler。</>} en={<>The cube has 48 symmetries (24 rotations × 2 mirrors) plus antisymmetry (inverses are equivalent), 96 total. Equivalent states share their optimal solution length ⇒ solve once, propagate. The 3×3's 2.2B cosets shrink to 55.88M under symmetry — that 40× squeeze is the 2010 proof's enabler.</>} />}</div>
             </div>
             <div className="god-algo-cell">
               <div className="god-algo-name">{t('磁盘 BFS', 'Disk-based BFS')}</div>
-              <div className="god-algo-desc">{(isZh ? (
-                                          <>当 <TeX src="|G|" /> 超过内存时,把"前沿"按层批量写到 SSD,用外存 sort + uniq 跨层去重。Sq-1 face-turn (Shuang Chen 2017) 用了 722 GB——每个状态压到 2 bits 才装得下 <TeX src="1.2 \times 10^{13}" /> 个 twistable states。</>
-                                        ) : (
-                                          <>When <TeX src="|G|" /> outgrows RAM, batch-write each frontier layer to SSD; cross-layer dedup via external sort + uniq. Sq-1 face-turn (Shuang Chen 2017) used 722 GB — 2 bits/state to fit <TeX src="1.2 \times 10^{13}" /> twistable states.</>
-                                        ))}</div>
+              <div className="god-algo-desc">{<T zh={<>当 <TeX src="|G|" /> 超过内存时,把"前沿"按层批量写到 SSD,用外存 sort + uniq 跨层去重。Sq-1 face-turn (Shuang Chen 2017) 用了 722 GB——每个状态压到 2 bits 才装得下 <TeX src="1.2 \times 10^{13}" /> 个 twistable states。</>} en={<>When <TeX src="|G|" /> outgrows RAM, batch-write each frontier layer to SSD; cross-layer dedup via external sort + uniq. Sq-1 face-turn (Shuang Chen 2017) used 722 GB — 2 bits/state to fit <TeX src="1.2 \times 10^{13}" /> twistable states.</>} />}</div>
             </div>
             <div className="god-algo-cell">
               <div className="god-algo-name">{t('Canonical-sequence 计数 (下界)', 'Canonical-sequence counting (lower bound)')}</div>
-              <div className="god-algo-desc">{(isZh ? (
-                                          <>不求解,只数 canonical 序列:深度 <TeX src="d" /> 的合法序列数 <TeX src="\le N \cdot M^{d-1}" />(同轴排除后)。Megaminx 用对易面递推 <TeX src="t(n+1) = 36\, t(n) - 240\, t(n-1) - 320\, t(n-2)" />;让 <TeX src="t(d) \ge |G|" /> 反推 <TeX src="d" /> 下界。Megaminx 48 / 4×4 35 都是这么来的。</>
-                                        ) : (
-                                          <>Don't solve, just count: legal canonical sequences at depth <TeX src="d" /> are <TeX src="\le N \cdot M^{d-1}" /> (after rejecting same-axis-as-previous). Megaminx uses a commuting-faces recurrence <TeX src="t(n+1) = 36\, t(n) - 240\, t(n-1) - 320\, t(n-2)" />; set <TeX src="t(d) \ge |G|" /> ⇒ lower bound on <TeX src="d" />. Megaminx 48, 4×4 35 came from here.</>
-                                        ))}</div>
+              <div className="god-algo-desc">{<T zh={<>不求解,只数 canonical 序列:深度 <TeX src="d" /> 的合法序列数 <TeX src="\le N \cdot M^{d-1}" />(同轴排除后)。Megaminx 用对易面递推 <TeX src="t(n+1) = 36\, t(n) - 240\, t(n-1) - 320\, t(n-2)" />;让 <TeX src="t(d) \ge |G|" /> 反推 <TeX src="d" /> 下界。Megaminx 48 / 4×4 35 都是这么来的。</>} en={<>Don't solve, just count: legal canonical sequences at depth <TeX src="d" /> are <TeX src="\le N \cdot M^{d-1}" /> (after rejecting same-axis-as-previous). Megaminx uses a commuting-faces recurrence <TeX src="t(n+1) = 36\, t(n) - 240\, t(n-1) - 320\, t(n-2)" />; set <TeX src="t(d) \ge |G|" /> ⇒ lower bound on <TeX src="d" />. Megaminx 48, 4×4 35 came from here.</>} />}</div>
             </div>
             <div className="god-algo-cell">
               <div className="god-algo-name">{t('渐近构造 (Demaine)', 'Asymptotic construction (Demaine)')}</div>
-              <div className="god-algo-desc">{(isZh ? (
-                                          <>Demaine 等 2011:把 <TeX src="N \times N" /> 上的所有 cubie 分成 <TeX src="O(N^{2}/\log N)" /> 个 commuting class,每个用并行子算法 <TeX src="O(\log N)" /> 步内解决。配合 canonical-sequence <TeX src="\Omega(N^{2}/\log N)" /> 下界,得到 <TeX src="\Theta(N^{2}/\log N)" /> 的严证。常数很大,只是渐近正确。</>
-                                        ) : (
-                                          <>Demaine et al. 2011: partition <TeX src="N \times N" /> cubies into <TeX src="O(N^{2}/\log N)" /> commuting classes; solve each in <TeX src="O(\log N)" /> parallel moves. Match with the canonical-sequence <TeX src="\Omega(N^{2}/\log N)" /> lower bound ⇒ <TeX src="\Theta(N^{2}/\log N)" />, rigorous. Constants are big; only asymptotic.</>
-                                        ))}</div>
+              <div className="god-algo-desc">{<T zh={<>Demaine 等 2011:把 <TeX src="N \times N" /> 上的所有 cubie 分成 <TeX src="O(N^{2}/\log N)" /> 个 commuting class,每个用并行子算法 <TeX src="O(\log N)" /> 步内解决。配合 canonical-sequence <TeX src="\Omega(N^{2}/\log N)" /> 下界,得到 <TeX src="\Theta(N^{2}/\log N)" /> 的严证。常数很大,只是渐近正确。</>} en={<>Demaine et al. 2011: partition <TeX src="N \times N" /> cubies into <TeX src="O(N^{2}/\log N)" /> commuting classes; solve each in <TeX src="O(\log N)" /> parallel moves. Match with the canonical-sequence <TeX src="\Omega(N^{2}/\log N)" /> lower bound ⇒ <TeX src="\Theta(N^{2}/\log N)" />, rigorous. Constants are big; only asymptotic.</>} />}</div>
             </div>
           </div>
 
           {/* Interactive IDA* tree */}
           <div className="god-algo-ida-block">
             <h3>{t('IDA* + Pattern Database — 互动:启发函数怎么剪枝', 'IDA* + Pattern Database — interactive: how heuristics prune')}</h3>
-            <p className="god-sec-lead" style={{ marginBottom: 12 }}>{(isZh ? (
-                                    <>下面是一棵教学版搜索树。换"启发函数 h(s)"或拖 f-阈值,看子树怎么被消掉。识别绿色叶子 = 找到 distance-8 解 (本树深度上限)。剪枝率上去 ⇒ Korf 启发更紧 ⇒ 搜索更快。</>
-                                  ) : (
-                                    <>A teaching-scale search tree. Switch the "heuristic h(s)" or drag the f-limit and watch subtrees collapse. Green leaf = a distance-8 solution (tree depth cap). Higher prune-rate ⇒ tighter heuristic ⇒ faster search.</>
-                                  ))}</p>
+            <p className="god-sec-lead" style={{ marginBottom: 12 }}>{<T zh={<>下面是一棵教学版搜索树。换"启发函数 h(s)"或拖 f-阈值,看子树怎么被消掉。识别绿色叶子 = 找到 distance-8 解 (本树深度上限)。剪枝率上去 ⇒ Korf 启发更紧 ⇒ 搜索更快。</>} en={<>A teaching-scale search tree. Switch the "heuristic h(s)" or drag the f-limit and watch subtrees collapse. Green leaf = a distance-8 solution (tree depth cap). Higher prune-rate ⇒ tighter heuristic ⇒ faster search.</>} />}</p>
             <Suspense fallback={<div className="god-loading">…</div>}>
               <IdaStarTree isZh={isZh} />
             </Suspense>
@@ -625,11 +533,7 @@ function dfs(state, max_depth, g):
     sub = dfs(apply(state, move), max_depth, g + 1)
     if sub is not None: return [move] + sub
   return None`}</pre>
-            <p className="god-algo-pseudo-cap">{(isZh ? (
-                                    <>一次 IDA* 求解一个状态 (毫秒级)。如果对所有 ~5588 万 super-cosets 都跑一次 IDA* 并保证 <TeX src="\le 20" /> 步,直径就被压实 = 20。</>
-                                  ) : (
-                                    <>One IDA* call solves one state (milliseconds). Run it on all ~55.88M super-cosets with the assertion <TeX src="\le 20" /> holds — and the diameter is nailed at 20.</>
-                                  ))}</p>
+            <p className="god-algo-pseudo-cap">{<T zh={<>一次 IDA* 求解一个状态 (毫秒级)。如果对所有 ~5588 万 super-cosets 都跑一次 IDA* 并保证 <TeX src="\le 20" /> 步,直径就被压实 = 20。</>} en={<>One IDA* call solves one state (milliseconds). Run it on all ~55.88M super-cosets with the assertion <TeX src="\le 20" /> holds — and the diameter is nailed at 20.</>} />}</p>
           </div>
         </section>
 
@@ -648,11 +552,7 @@ function dfs(state, max_depth, g):
         {/* ────────────── PROOF ANIMATOR ────────────── */}
         <section className="god-section">
           <h2>{t('两个里程碑证明 — 互动:逐帧讲', 'Two milestone proofs — interactive frame-by-frame')}</h2>
-          <p className="god-sec-lead">{(isZh ? (
-                              <>把"上帝之数 = 20"的两个关键证明各拆成几帧:Reid 1995 (下界 20,用 SGI Indigo 跑 90 小时) + Rokicki 2008→2010 (上界 20,Google 35 CPU-年)。每帧一句话 + 一个 SVG 图 + 一行公式。</>
-                            ) : (
-                              <>The two key "God's number = 20" proofs split into frames: Reid 1995 (lower bound 20, SGI Indigo 90 hours) + Rokicki 2008→2010 (upper bound 20, Google 35 CPU-years). One sentence + one SVG + one formula per frame.</>
-                            ))}</p>
+          <p className="god-sec-lead">{<T zh={<>把"上帝之数 = 20"的两个关键证明各拆成几帧:Reid 1995 (下界 20,用 SGI Indigo 跑 90 小时) + Rokicki 2008→2010 (上界 20,Google 35 CPU-年)。每帧一句话 + 一个 SVG 图 + 一行公式。</>} en={<>The two key "God's number = 20" proofs split into frames: Reid 1995 (lower bound 20, SGI Indigo 90 hours) + Rokicki 2008→2010 (upper bound 20, Google 35 CPU-years). One sentence + one SVG + one formula per frame.</>} />}</p>
           <Suspense fallback={<div className="god-loading">…</div>}>
             <ProofAnimator isZh={isZh} />
           </Suspense>
@@ -666,7 +566,7 @@ function dfs(state, max_depth, g):
               <li key={i} className={`god-tl-item ${m.cls || ''}`}>
                 <div className="god-tl-year">{m.year}</div>
                 <div className="god-tl-dot" />
-                <div className="god-tl-body">{((i18n.language.startsWith('zh') ? m.zh : m.en))}</div>
+                <div className="god-tl-body">{tr(m)}</div>
               </li>
             ))}
           </ol>

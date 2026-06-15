@@ -116,7 +116,7 @@ export default function AlgPuzzleClient() {
                   />
                 )}
               </div>
-              <div className="alg-bento-title">{((i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
+              <div className="alg-bento-title">{tr(s)}</div>
               <div className="alg-bento-count">
                 {n == null ? '…' : n < 0 ? '!' : `${n} ${tr({ zh: '个', en: 'cases'
                 })}`}

@@ -4,7 +4,6 @@
 // 1:1 翻译自 ridgeline.js initRidgeline + onRidgeClick + resize 逻辑
 
 import { useRef, useEffect, useCallback, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useVizStore } from '../_stores/viz_store';
 import {
   buildGroups, computeAllKDEs, drawRidgeline,
@@ -19,8 +18,6 @@ interface RidgelineCanvasProps {
 }
 
 export default function RidgelineCanvas({ highlightSolveIdx }: RidgelineCanvasProps) {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 

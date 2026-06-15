@@ -1071,9 +1071,9 @@ function SolvabilityChainSVG({ solv, step, lang }: { solv: SolvabilitySeries; st
           style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700 }}
           fill={solv.solvable ? 'var(--green)' : 'var(--warn)'}>
           {solv.solvable
-            ? (tr({ zh: '✓ 可用根式求解', en: '✓ Solvable by radicals' }))
-            : (tr({ zh: '✗ 不可用根式求解 (A₅ 是单群)', en: '✗ NOT solvable by radicals (A₅ is simple)'
-            }))}
+            ? tr({ zh: '✓ 可用根式求解', en: '✓ Solvable by radicals' })
+            : tr({ zh: '✗ 不可用根式求解 (A₅ 是单群)', en: '✗ NOT solvable by radicals (A₅ is simple)'
+                                  })}
         </text>
       )}
     </svg>

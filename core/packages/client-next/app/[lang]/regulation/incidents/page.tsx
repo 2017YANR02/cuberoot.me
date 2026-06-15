@@ -9,8 +9,6 @@
 //   the incorrect-scramble / duplicate-scramble branches, and the
 //   Head-to-Head note. Shell (breadcrumb/hero/prev-next/footer) comes
 //   from RegArticleLayout; visual classes live in ./incidents.css.
-
-import { useTranslation } from 'react-i18next';
 import {
   Power, Wrench, Users, AlertTriangle, Hand, ShieldQuestion,
   CircleCheckBig, RotateCcw, Video, Repeat, Swords,
@@ -22,6 +20,7 @@ import FullClauses from '../_components/FullClauses';
 import clauses from '../_data/reg-clauses/11.json';
 import { RegSection, Callout, RegQuote, RegList } from '../_components/primitives';
 import './incidents.css';
+import { T } from '@/i18n/tr';
 
 // The three kinds of incident the regulation enumerates (11a1–11a3).
 const KINDS = [
@@ -46,8 +45,6 @@ const KINDS = [
 ];
 
 export default function IncidentsChapter() {
-  const { i18n } = useTranslation(); // re-render on language toggle
-  const isZh = i18n.language.startsWith('zh');
   const t = useT();
 
   return (
@@ -79,7 +76,7 @@ export default function IncidentsChapter() {
           label={t('谁来定夺:WCA 代表', 'Who decides: the WCA Delegate')}
           style={{ marginTop: 30 }}
         >
-          {(isZh ? (<>出了意外,由 <strong>WCA 代表</strong>采取「公正且恰当」的处理方式(规则 11b)。规则没写到或不够清楚的情况,代表本着<strong>公平竞技精神</strong>裁决(11d)。代表的核心工具是:<strong>额外机会(extra attempt)</strong> —— 用一条新打乱重做一次,替换掉受影响的那次。</>) : (<>When an incident happens, the <strong>WCA Delegate</strong> decides an “impartial and appropriate course of action” (11b). Where the Regulations are silent or unclear, the Delegate rules on <strong>fair sportsmanship</strong> (11d). The Delegate’s main tool is the <strong>extra attempt</strong> — a redo on a fresh scramble that replaces the affected one.</>))}
+          {<T zh={<>出了意外,由 <strong>WCA 代表</strong>采取「公正且恰当」的处理方式(规则 11b)。规则没写到或不够清楚的情况,代表本着<strong>公平竞技精神</strong>裁决(11d)。代表的核心工具是:<strong>额外机会(extra attempt)</strong> —— 用一条新打乱重做一次,替换掉受影响的那次。</>} en={<>When an incident happens, the <strong>WCA Delegate</strong> decides an “impartial and appropriate course of action” (11b). Where the Regulations are silent or unclear, the Delegate rules on <strong>fair sportsmanship</strong> (11d). The Delegate’s main tool is the <strong>extra attempt</strong> — a redo on a fresh scramble that replaces the affected one.</>} />}
         </Callout>
       </RegSection>
 
@@ -167,11 +164,11 @@ export default function IncidentsChapter() {
       >
         <RegList
           items={[
-            ((isZh ? (<><strong>必须用新打乱。</strong> 额外机会要用当前官方打乱程序生成的、<strong>另一条</strong>打乱序列,不能重复用原来那条。<span className="inc-tag">11e1</span></>) : (<><strong>A fresh scramble.</strong> The extra must use a <strong>different</strong> scramble sequence from a current official scramble program — never the original one. <span className="inc-tag">11e1</span></>))),
-            ((isZh ? (<><strong>紧接着做,替换原位。</strong> 额外机会应在引发它的那次之后立即进行,并替换掉原来那个编号的尝试。若顺序乱了,成绩按<strong>打乱序列的顺序</strong>记录,而非完成的先后。<span className="inc-tag">11e2 · 11e2a</span></>) : (<><strong>Right after, in place.</strong> An extra should be done immediately after the attempt that caused it, replacing that numbered attempt. If done out of order, results are recorded by <strong>scramble-sequence order</strong>, not the order solved. <span className="inc-tag">11e2 · 11e2a</span></>))),
-            ((isZh ? (<><strong>可以边申诉边计时。</strong> 因为申诉不保证成功,选手可以选择让计时继续、合适时恢复还原 —— 这样万一申诉被驳回,这次成绩仍然有效。<span className="inc-tag">11e+</span></>) : (<><strong>You may keep the timer running.</strong> Since an appeal may fail, you can choose to let the timer run and resume when appropriate — so the result still counts if the appeal is denied. <span className="inc-tag">11e+</span></>))),
-            ((isZh ? (<><strong>不确定就先给临时机会。</strong> 是否该给额外机会一时拿不准时,可先安排一次「临时额外机会」,只有事后(例如经规则委员会判定)确认该给时才采用。<span className="inc-tag">11e3</span></>) : (<><strong>Provisional when unsure.</strong> If it is unclear whether an extra is warranted, a provisional extra may be done, and only used if it is later confirmed (e.g. by the Regulations Committee) that one was appropriate. <span className="inc-tag">11e3</span></>))),
-            ((isZh ? (<><strong>记下理由、按原日期算。</strong> 代表应把给额外机会的原因记在成绩单上;额外机会的成绩视为发生在<strong>原尝试当天</strong>(用于排名归属)。<span className="inc-tag">11e++ · 11e++++++</span></>) : (<><strong>Note the reason, dated to the original.</strong> The Delegate should record why an extra was granted on the scorecard; the extra is treated as done on the <strong>original solve’s date</strong> for ranking. <span className="inc-tag">11e++ · 11e++++++</span></>))),
+            ((<T zh={<><strong>必须用新打乱。</strong> 额外机会要用当前官方打乱程序生成的、<strong>另一条</strong>打乱序列,不能重复用原来那条。<span className="inc-tag">11e1</span></>} en={<><strong>A fresh scramble.</strong> The extra must use a <strong>different</strong> scramble sequence from a current official scramble program — never the original one. <span className="inc-tag">11e1</span></>} />)),
+            ((<T zh={<><strong>紧接着做,替换原位。</strong> 额外机会应在引发它的那次之后立即进行,并替换掉原来那个编号的尝试。若顺序乱了,成绩按<strong>打乱序列的顺序</strong>记录,而非完成的先后。<span className="inc-tag">11e2 · 11e2a</span></>} en={<><strong>Right after, in place.</strong> An extra should be done immediately after the attempt that caused it, replacing that numbered attempt. If done out of order, results are recorded by <strong>scramble-sequence order</strong>, not the order solved. <span className="inc-tag">11e2 · 11e2a</span></>} />)),
+            ((<T zh={<><strong>可以边申诉边计时。</strong> 因为申诉不保证成功,选手可以选择让计时继续、合适时恢复还原 —— 这样万一申诉被驳回,这次成绩仍然有效。<span className="inc-tag">11e+</span></>} en={<><strong>You may keep the timer running.</strong> Since an appeal may fail, you can choose to let the timer run and resume when appropriate — so the result still counts if the appeal is denied. <span className="inc-tag">11e+</span></>} />)),
+            ((<T zh={<><strong>不确定就先给临时机会。</strong> 是否该给额外机会一时拿不准时,可先安排一次「临时额外机会」,只有事后(例如经规则委员会判定)确认该给时才采用。<span className="inc-tag">11e3</span></>} en={<><strong>Provisional when unsure.</strong> If it is unclear whether an extra is warranted, a provisional extra may be done, and only used if it is later confirmed (e.g. by the Regulations Committee) that one was appropriate. <span className="inc-tag">11e3</span></>} />)),
+            ((<T zh={<><strong>记下理由、按原日期算。</strong> 代表应把给额外机会的原因记在成绩单上;额外机会的成绩视为发生在<strong>原尝试当天</strong>(用于排名归属)。<span className="inc-tag">11e++ · 11e++++++</span></>} en={<><strong>Note the reason, dated to the original.</strong> The Delegate should record why an extra was granted on the scorecard; the extra is treated as done on the <strong>original solve’s date</strong> for ranking. <span className="inc-tag">11e++ · 11e++++++</span></>} />)),
           ]}
         />
 
@@ -237,7 +234,7 @@ export default function IncidentsChapter() {
         </RegQuote>
 
         <Callout tone="warn" label={t('魔方故障 ≠ 意外', 'A puzzle defect is not an incident')} style={{ marginTop: 22 }}>
-          {(isZh ? (<>要分清:<strong>魔方本身</strong>掉块、解体、错位的处理在 <Link href="/regulation/defects" className="inc-link">第 5 章(魔方故障)</Link>,而且<strong>不会</strong>因此给额外机会。第 11 章管的是魔方<em>之外</em>的意外 —— 干扰、设备、程序、打乱错误。</>) : (<>Keep them apart: a defect of the <strong>puzzle itself</strong> — pops, breakage, misalignment — is handled by <Link href="/regulation/defects" className="inc-link">Article 5 (Puzzle Defects)</Link>, and does <strong>not</strong> grant an extra attempt. Article 11 covers incidents <em>around</em> the puzzle — interference, equipment, procedure, scramble errors.</>))}
+          {<T zh={<>要分清:<strong>魔方本身</strong>掉块、解体、错位的处理在 <Link href="/regulation/defects" className="inc-link">第 5 章(魔方故障)</Link>,而且<strong>不会</strong>因此给额外机会。第 11 章管的是魔方<em>之外</em>的意外 —— 干扰、设备、程序、打乱错误。</>} en={<>Keep them apart: a defect of the <strong>puzzle itself</strong> — pops, breakage, misalignment — is handled by <Link href="/regulation/defects" className="inc-link">Article 5 (Puzzle Defects)</Link>, and does <strong>not</strong> grant an extra attempt. Article 11 covers incidents <em>around</em> the puzzle — interference, equipment, procedure, scramble errors.</>} />}
         </Callout>
       </RegSection>
 

@@ -492,7 +492,7 @@ function SeriesBuilderPanel({ lang }: { lang: 'zh' | 'en' }) {
         <div className="gt-result-row">
           <span className="gt-result-label"><L zh="|G|" en="|G|" /></span>
           <span className="gt-result-val-strong" style={{ color: correct ? 'var(--green)' : 'var(--warn)' }}>
-            {gdef.order} {correct ? (tr({ zh: '✓ 吻合', en: '✓ matches' })) : (tr({ zh: '✗ 不符', en: '✗ mismatch' }))}
+            {gdef.order} {correct ? tr({ zh: '✓ 吻合', en: '✓ matches' }) : tr({ zh: '✗ 不符', en: '✗ mismatch' })}
           </span>
         </div>
         <div className="gt-result-row">
@@ -1135,8 +1135,8 @@ function CubeFactorPanel({ lang }: { lang: 'zh' | 'en' }) {
               <span className="gt-result-label"><L zh="|G| = 43,252,003,274,489,856,000" en="|G| = 43,252,003,274,489,856,000" /></span>
               <span className="gt-result-val-strong" style={{ color: runningProducts[animStep] === CUBE_ORDER_BIGINT ? 'var(--green)' : 'var(--warn)' }}>
                 {runningProducts[animStep] === CUBE_ORDER_BIGINT
-                  ? (tr({ zh: '✓ 完全吻合', en: '✓ exact match' }))
-                  : (tr({ zh: '✗ 不符 (bug)', en: '✗ mismatch (bug)' }))}
+                  ? tr({ zh: '✓ 完全吻合', en: '✓ exact match' })
+                  : tr({ zh: '✗ 不符 (bug)', en: '✗ mismatch (bug)' })}
               </span>
             </div>
           )}
@@ -1366,10 +1366,10 @@ function A4RefinementPanel({ lang }: { lang: 'zh' | 'en' }) {
                 fill={f.simple ? 'var(--ink-faint)' : 'var(--warn)'}
               >
                 {f.simple
-                  ? (tr({ zh: '单群 ✓', en: 'simple ✓'
-                }))
-                  : (tr({ zh: '非单群 ✗', en: 'not simple ✗'
-                }))}
+                  ? tr({ zh: '单群 ✓', en: 'simple ✓'
+                                          })
+                  : tr({ zh: '非单群 ✗', en: 'not simple ✗'
+                                          })}
               </text>
             </g>
           );
@@ -1381,10 +1381,10 @@ function A4RefinementPanel({ lang }: { lang: 'zh' | 'en' }) {
           <span className="gt-result-label"><L zh="是合成列？" en="Is this a composition series?" /></span>
           <span className="gt-result-val-strong" style={{ color: step === 1 ? 'var(--green)' : 'var(--warn)' }}>
             {step === 0
-              ? (tr({ zh: '否 — V₄/1 = C₂×C₂ 不是单群', en: 'No — V₄/1 = C₂×C₂ is not simple'
-            }))
-              : (tr({ zh: '是 — 每个因子都是单群', en: 'Yes — every factor is a simple group'
-            }))}
+              ? tr({ zh: '否 — V₄/1 = C₂×C₂ 不是单群', en: 'No — V₄/1 = C₂×C₂ is not simple'
+                                      })
+              : tr({ zh: '是 — 每个因子都是单群', en: 'Yes — every factor is a simple group'
+                                      })}
           </span>
         </div>
         {step === 1 && (

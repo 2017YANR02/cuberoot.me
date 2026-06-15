@@ -157,7 +157,7 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
             disabled={generating}
             style={generateBtnStyle}
           >
-            {generating ? (tr({ zh: '生成中…', en: 'Generating…' })) : (tr({ zh: '生成', en: 'Generate' }))}
+            {generating ? tr({ zh: '生成中…', en: 'Generating…' }) : tr({ zh: '生成', en: 'Generate' })}
           </button>
         </div>
 
@@ -178,9 +178,9 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
           {scrambles.length > 0 && (
             <>
               <button onClick={onCopy} style={actionBtnStyle}>
-                {copied ? (tr({ zh: '已复制', en: 'Copied'
-                })) : (tr({ zh: '全部复制', en: 'Copy all'
-                }))}
+                {copied ? tr({ zh: '已复制', en: 'Copied'
+                                              }) : tr({ zh: '全部复制', en: 'Copy all'
+                                                  })}
               </button>
               <button onClick={onDownload} style={actionBtnStyle}>
                 {tr({ zh: '下载 .txt', en: 'Download .txt'

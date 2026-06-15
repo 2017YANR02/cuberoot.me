@@ -16,6 +16,7 @@ import { useState, type ReactElement } from 'react';
 import { TeX, MathText } from './Tex';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 type ProofId = 'reid' | 'rokicki';
 
@@ -271,8 +272,8 @@ export default function ProofAnimator({ isZh }: Props) {
           <button key={p}
                   className={`god-pa-tab ${proof === p ? 'is-on' : ''}`}
                   onClick={() => { setProof(p); setFrame(0); }}>
-            <div className="god-pa-tab-name">{((i18n.language.startsWith('zh') ? PROOFS[p].name.zh : PROOFS[p].name.en))}</div>
-            <div className="god-pa-tab-meta">{((i18n.language.startsWith('zh') ? PROOFS[p].meta.zh : PROOFS[p].meta.en))}</div>
+            <div className="god-pa-tab-name">{tr(PROOFS[p].name)}</div>
+            <div className="god-pa-tab-meta">{tr(PROOFS[p].meta)}</div>
           </button>
         ))}
       </div>
@@ -285,7 +286,7 @@ export default function ProofAnimator({ isZh }: Props) {
         <div className="god-pa-frame-r">
           <div className="god-pa-frame-h">
             <span className="god-pa-frame-i">{frame + 1} / {total}</span>
-            <h3 className="god-pa-frame-title">{((i18n.language.startsWith('zh') ? F.zh : F.en))}</h3>
+            <h3 className="god-pa-frame-title">{tr(F)}</h3>
           </div>
           {F.formula && (
             <div className="god-pa-frame-formula">

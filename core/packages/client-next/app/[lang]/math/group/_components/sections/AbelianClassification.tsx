@@ -338,12 +338,12 @@ export default function AbelianClassification() {
                 onClick={() => setDisplayMode(m)}
               >
                 {m === 'both'
-                  ? (tr({ zh: '两种形式', en: 'Both'
-                }))
+                  ? tr({ zh: '两种形式', en: 'Both'
+                                        })
                   : m === 'elem'
-                  ? (tr({ zh: '初等因子', en: 'Elem. div.' }))
-                  : (tr({ zh: '不变因子', en: 'Inv. factor'
-                }))}
+                  ? tr({ zh: '初等因子', en: 'Elem. div.' })
+                  : tr({ zh: '不变因子', en: 'Inv. factor'
+                                            })}
               </button>
             ))}
           </span>
@@ -360,7 +360,7 @@ export default function AbelianClassification() {
             {/* Factorisation header */}
             <div style={{ marginBottom: 12, fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--ink-dim)' }}>
               {enumN === 1
-                ? (tr({ zh: 'n = 1（平凡群）', en: 'n = 1 (trivial group)' }))
+                ? tr({ zh: 'n = 1（平凡群）', en: 'n = 1 (trivial group)' })
                 : (
                   <>
                     <span style={{ color: 'var(--ink)' }}>{enumN}</span>
@@ -514,7 +514,7 @@ export default function AbelianClassification() {
               fontSize: 13,
             }}>
               <span style={{ color: crtPairResult.cyclic ? 'var(--green)' : 'var(--warn)', fontWeight: 700 }}>
-                {crtPairResult.cyclic ? (tr({ zh: '✓ 成立', en: '✓ Yes' })) : (tr({ zh: '✗ 不成立', en: '✗ No' }))}
+                {crtPairResult.cyclic ? tr({ zh: '✓ 成立', en: '✓ Yes' }) : tr({ zh: '✗ 不成立', en: '✗ No' })}
               </span>
               {'  '}
               <TeX src={String.raw`C_{${crtPairResult.m}} \times C_{${crtPairResult.k}}`} />
@@ -525,8 +525,8 @@ export default function AbelianClassification() {
               <span style={{ color: 'var(--ink-faint)' }}>
                 (gcd({crtPairResult.m},{crtPairResult.k}) = {crtPairResult.g}
                 {crtPairResult.cyclic
-                  ? (tr({ zh: '，互素', en: ', coprime' }))
-                  : (tr({ zh: '，非互素', en: ', not coprime' }))})
+                  ? tr({ zh: '，互素', en: ', coprime' })
+                  : tr({ zh: '，非互素', en: ', not coprime' })})
               </span>
             </div>
           )}

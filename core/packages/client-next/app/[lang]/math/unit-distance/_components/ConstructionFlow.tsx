@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 type StageId = 'F' | 'tower' | 'K' | 'lattice' | 'project';
 
@@ -264,7 +265,6 @@ const STAGES: Stage[] = [
 
 export default function ConstructionFlow() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const [open, setOpen] = useState<StageId | null>('F');
 
   return (
@@ -291,11 +291,11 @@ export default function ConstructionFlow() {
               >
                 <div className="ud-flow-card-head">
                   <span className="ud-flow-num">{s.num}</span>
-                  <span className="ud-flow-title">{((i18n.language.startsWith('zh') ? s.title.zh : s.title.en))}</span>
+                  <span className="ud-flow-title">{tr(s.title)}</span>
                   {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </div>
                 <div className="ud-flow-card-schem"><s.Schematic /></div>
-                <div className="ud-flow-card-oneline">{((i18n.language.startsWith('zh') ? s.oneLine.zh : s.oneLine.en))}</div>
+                <div className="ud-flow-card-oneline">{tr(s.oneLine)}</div>
               </button>
               {i < STAGES.length - 1 && <div className="ud-flow-arrow" aria-hidden>→</div>}
             </div>
@@ -309,10 +309,10 @@ export default function ConstructionFlow() {
           <div className="ud-flow-detail">
             <div className="ud-flow-detail-head">
               <span className="ud-flow-detail-num">Stage {s.num}</span>
-              <span className="ud-flow-detail-title">{((i18n.language.startsWith('zh') ? s.title.zh : s.title.en))}</span>
+              <span className="ud-flow-detail-title">{tr(s.title)}</span>
             </div>
             <div className="ud-flow-detail-body">
-              {((i18n.language.startsWith('zh') ? s.detail.zh : s.detail.en))}
+              {tr(s.detail)}
             </div>
           </div>
         );

@@ -5,7 +5,6 @@
  */
 import { useState, type RefObject } from 'react';
 import { Keyboard } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import CubeVirtualKeyboard from './CubeVirtualKeyboard';
 import { tr } from '@/i18n/tr';
@@ -17,8 +16,6 @@ interface Props {
 }
 
 export default function CubeKeyboardSection({ target, onInput, enableMarks }: Props) {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const isMobile = useIsMobile();
   const [showKeyboard, setShowKeyboard] = useState(false);
 

@@ -235,7 +235,7 @@ export default function LtctTrainerPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{((i18n.language.startsWith('zh') ? title.zh : title.en))}</h1>
+        <h1>{tr(title)}</h1>
       </div>
 
       <div className="bld-section">

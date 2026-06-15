@@ -4,7 +4,6 @@
 // role 'start' -> blue, 'end' -> green (css classes; theme-friendly tokens).
 
 import type { JSX } from 'react';
-import { useTranslation } from 'react-i18next';
 import type { LetterCell } from '../_lib/types';
 import { tr } from '@/i18n/tr';
 
@@ -20,9 +19,6 @@ function cellClass(role: LetterCell['role']): string {
 }
 
 export function LetterReadout({ cells, label }: LetterReadoutProps): JSX.Element {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
-
   // Group letters in pairs so each <span> can stay together (white-space:nowrap).
   const pairs: LetterCell[][] = [];
   for (let i = 0; i < cells.length; i += 2) {

@@ -19,7 +19,6 @@ import {
   type JSX,
 } from 'react';
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
 import { RotateCcw, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
@@ -43,8 +42,6 @@ interface Solve {
 }
 
 export default function BldTimerPage(): JSX.Element {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   useDocumentTitle('盲拧练习计时', 'BLD Practice Timer');
 
   const [scrambles, setScrambles] = useState<string[]>([]);

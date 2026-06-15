@@ -8,7 +8,6 @@
  */
 import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
-import { useTranslation } from 'react-i18next';
 import { VisualCube } from '@/components/VisualCube';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
@@ -247,10 +246,8 @@ function StageCard({ lang, cubeSize, label, mask }: { lang: string; cubeSize: nu
 }
 
 export default function VisualCubeStagesPage() {
-  const { i18n } = useTranslation();
   const params = useParams();
   const lang = typeof params?.lang === 'string' ? params.lang : 'en';
-  const isZh = i18n.language === 'zh';
   useDocumentTitle('阶段可视化', 'Visualcube Stages');
 
   return (

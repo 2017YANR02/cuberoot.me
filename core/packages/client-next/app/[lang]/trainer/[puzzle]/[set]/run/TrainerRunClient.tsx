@@ -137,7 +137,7 @@ export default function TrainerRunClient() {
         })}
         </Link>
         <span style={{ fontSize: '1rem', color: 'var(--muted-foreground)' }}>
-          {puzzle} · {((i18n.language.startsWith('zh') ? meta.zh : meta.en))}
+          {puzzle} · {tr(meta)}
         </span>
       </div>
 
@@ -181,8 +181,8 @@ export default function TrainerRunClient() {
             } : undefined}
             header={observingSolve
               ? (isZh ? `第 ${observingSolve.i + 1} 次` : `Solve #${observingSolve.i + 1}`)
-              : (tr({ zh: '当前', en: 'Current'
-            }))}
+              : tr({ zh: '当前', en: 'Current'
+                            })}
           />
           <StatsList
             solves={solves}
