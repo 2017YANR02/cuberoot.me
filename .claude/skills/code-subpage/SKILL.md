@@ -1,11 +1,11 @@
 ---
 name: code-subpage
-description: "Use when adding a long-form intro page under /code/* — 一件软件/语言/算法/概念“一页一篇”。全在 client-next (Next App Router, app/[lang]/code/*),不是退役的 Vite client。覆盖 /code/stack/* (数据驱动,3 文件)、/code/language/* + /code/algorithms/* (各自 <slug>/page.tsx 路由),结构同构 (hero / history / concepts / why / adopters / outlook / cuberoot 用法 / links)。Triggers: \"/code\", \"/code/stack\", \"/code/language\", \"/code/algorithms\", \"stack_tools\", \"STACK_TOOLS\", \"加 stack 工具\", \"add code subpage\", \"新建语言介绍\", \"介绍 github\", \"介绍 curl\", \"介绍 vscode\", \"复刻 git.tsx\", \"复刻 ts/page.tsx\"."
+description: "Use when adding a long-form intro page under /code/* — 一件软件/语言/算法/概念“一页一篇”。全在 client (Next App Router, app/[lang]/code/*),不是退役的 Vite client。覆盖 /code/stack/* (数据驱动,3 文件)、/code/language/* + /code/algorithms/* (各自 <slug>/page.tsx 路由),结构同构 (hero / history / concepts / why / adopters / outlook / cuberoot 用法 / links)。Triggers: \"/code\", \"/code/stack\", \"/code/language\", \"/code/algorithms\", \"stack_tools\", \"STACK_TOOLS\", \"加 stack 工具\", \"add code subpage\", \"新建语言介绍\", \"介绍 github\", \"介绍 curl\", \"介绍 vscode\", \"复刻 git.tsx\", \"复刻 ts/page.tsx\"."
 ---
 
 # /code/* 加新介绍页
 
-**全部在 client-next**(`core/packages/client-next/app/[lang]/code/`,Next 16 App Router,文件即路由)。退役的 Vite `packages/client/src/pages/code/` **不要碰**。
+**全部在 client**(`core/packages/client/app/[lang]/code/`,Next 16 App Router,文件即路由)。退役的 Vite `packages/client/src/pages/code/` **不要碰**。
 
 `/code/*` 下长篇介绍页结构同构(语言 / stack 工具 / 算法都一样):hero 飘字 + heroStats + intro 段 + history 时间线 + concepts 卡 + why 卡 + adopters + outlook + 在 cuberoot.me 怎么用 + links。页面都是 `'use client'` + `useTranslation()` 取 lang + `useDocumentTitle`。
 
@@ -69,11 +69,11 @@ slug = 文件名 = kebab-case。schema 在 `stack/_lib/stack_tool_types.tsx` TS 
 - **内容必须真实**:历史日期 / 人名 / 版本号 / adopter / outlook 时间点。不确定就 WebFetch 官网或 GitHub releases,**禁** 凭记忆造版本号。
 - `version` 写当前 stable,`since` 用 `YYYY-MM`。
 - `accent` 选官方品牌色,`bright` 选 lighten 15-20%。
-- 引用 cuberoot.me 自己时用真实拓扑(`RuiminYan/cuberoot.me`、`core/packages/client-next` 是主工作区、Next 16 App Router、`api.cuberoot.me` 走 Hono、PG 13、systemd `cuberoot-next` standalone、`ops/nginx/`)。
+- 引用 cuberoot.me 自己时用真实拓扑(`RuiminYan/cuberoot.me`、`core/packages/client` 是主工作区、Next 16 App Router、`api.cuberoot.me` 走 Hono、PG 13、systemd `cuberoot-next` standalone、`ops/nginx/`)。
 - 公开文案禁出现:云厂商品牌 / 机房地名 / 服务器公网 IP([[feedback_no_identity_in_replies]] + [[feedback_no_proxy_words]])。
 - 中英两套必须 parallel,所有 user-facing 字段 zh / en 同时写。
 
 ## 写完检查
 
-- `pnpm --filter @cuberoot/client-next typecheck`(tsgo;Pattern A 字段缺失会红;Pattern B/C 多写少写都过编译,自己看 landing 卡有没有出 + stack 详情页有没有 404)。
+- `pnpm --filter @cuberoot/client typecheck`(tsgo;Pattern A 字段缺失会红;Pattern B/C 多写少写都过编译,自己看 landing 卡有没有出 + stack 详情页有没有 404)。
 - dev 已在 `http://127.0.0.1:3000/`(**别** `pnpm dev`),验证用 playwright 直接开;不主动开浏览器,让用户自己看(全局规则)。

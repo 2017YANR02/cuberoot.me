@@ -115,7 +115,7 @@ Data flow: Rust crate → `wasm.rs` export → `build_wasm.ps1` (pkg-web) → **
    `solvers-tables`). CI guards: `tests/code-tokens-drift`, `tests/zh-hant-drift`.
 9. **Verify**: playwright `127.0.0.1:3000/zh/scramble/analyzer`, switch method, desktop + 390px,
    0 console errors; native↔WASM 6 values bit-exact (node harness vs analyzer.exe). typecheck
-   `pnpm --filter @cuberoot/client-next typecheck` **from core/** (repo root → ERR_PNPM_NO_PKG_MANIFEST).
+   `pnpm --filter @cuberoot/client typecheck` **from core/** (repo root → ERR_PNPM_NO_PKG_MANIFEST).
    COEP: analyzer uses a classic worker WITHOUT COOP/COEP — do NOT add to next.config SAB list.
 
 ---
@@ -206,7 +206,7 @@ Co-Authored-By trailer). No wasm, no UI this phase.
   onmessage `fr_moves`; submit wrappers.
 - Pool: `'fr'` in PoolNeed.
 - scramble-variants: register `fr` (label zh『Floppy 还原』/en 'Floppy Reduction'); keep OUT of
-  VARIANT_ORDER. Run `pnpm -F @cuberoot/client-next zh:inject` after tr() labels.
+  VARIANT_ORDER. Run `pnpm -F @cuberoot/client zh:inject` after tr() labels.
 - StageSolver: register `fr` as a single conditional stage (like htr2): Method, METHOD_KEYS,
   EAGER_MAX fr:0, kindOf, needOf, computeAll→solveFrStage, fetchMoves→solveFrMoves, isSentinel reuse,
   FR branch for faceDesc/hint/empty-state ('-' for non-HTR viewpoints).

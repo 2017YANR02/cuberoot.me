@@ -21,7 +21,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '../..');
 const MJS = process.env.MODULE
   ? resolve(process.env.MODULE)
-  : resolve(repoRoot, 'core/packages/client-next/public/cubeopt/cube48opt9.mjs');
+  : resolve(repoRoot, 'core/packages/client/public/cubeopt/cube48opt9.mjs');
 const OUTDIR = process.env.OUT ? resolve(process.env.OUT) : resolve(repoRoot, 'solver/tables/h48');
 const THREADS = Number(process.env.THREADS || 12);
 

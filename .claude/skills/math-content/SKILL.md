@@ -1,11 +1,11 @@
 ---
 name: math-content
-description: "Use when adding content under /math/* — 给数学板块补内容。两种模式:(A) 给已有长篇\"书\"页(如 /math/group 魔方与群论,62 节;/math/god)加新一节;(B) 加一个全新 /math 顶层主题页。全在 client-next (Next 16 App Router, app/[lang]/math/*)。覆盖自包含 section 文件 + dynamic 懒加载 + slug 路由 + 双语 + 手写交互 SVG。Triggers: \"/math\", \"math/group\", \"math/god\", \"群论\", \"加群论章节\", \"加一节\", \"math subpage\", \"加数学页\", \"数学长文\", \"扩充 /math\", \"add math section\", \"new math page\", \"math hub\", \"对称群\", \"群论可视化\"."
+description: "Use when adding content under /math/* — 给数学板块补内容。两种模式:(A) 给已有长篇\"书\"页(如 /math/group 魔方与群论,62 节;/math/god)加新一节;(B) 加一个全新 /math 顶层主题页。全在 client (Next 16 App Router, app/[lang]/math/*)。覆盖自包含 section 文件 + dynamic 懒加载 + slug 路由 + 双语 + 手写交互 SVG。Triggers: \"/math\", \"math/group\", \"math/god\", \"群论\", \"加群论章节\", \"加一节\", \"math subpage\", \"加数学页\", \"数学长文\", \"扩充 /math\", \"add math section\", \"new math page\", \"math hub\", \"对称群\", \"群论可视化\"."
 ---
 
 # /math/* 加内容
 
-**全在 client-next**(`core/packages/client-next/app/[lang]/math/`,Next 16 App Router,文件即路由)。退役的 Vite client 不碰。Hub 在 `math/page.tsx`(`CARDS` 数组 → /math 上的卡)。已有子页:`group`(魔方与群论,62 节 slug 路由长文)、`god`、`demigod`、`unit-distance`,各自 `<topic>/page.tsx`('use client') + co-located `<topic>.css` + `_components/`。
+**全在 client**(`core/packages/client/app/[lang]/math/`,Next 16 App Router,文件即路由)。退役的 Vite client 不碰。Hub 在 `math/page.tsx`(`CARDS` 数组 → /math 上的卡)。已有子页:`group`(魔方与群论,62 节 slug 路由长文)、`god`、`demigod`、`unit-distance`,各自 `<topic>/page.tsx`('use client') + co-located `<topic>.css` + `_components/`。
 
 两种加法,先判断走哪条:
 
@@ -50,6 +50,6 @@ description: "Use when adding content under /math/* — 给数学板块补内容
 
 ## 写完检查(必做,green typecheck ≠ 做好)
 
-- `pnpm --filter @cuberoot/client-next typecheck`(tsgo,EXIT 0)。注意 ESLint **不扫 .tsx**、tsconfig **没开 noUnusedLocals** —— 想抓死代码得 `pnpm exec tsgo --noEmit --noUnusedLocals --noUnusedParameters`。
+- `pnpm --filter @cuberoot/client typecheck`(tsgo,EXIT 0)。注意 ESLint **不扫 .tsx**、tsconfig **没开 noUnusedLocals** —— 想抓死代码得 `pnpm exec tsgo --noEmit --noUnusedLocals --noUnusedParameters`。
 - **playwright 实开**每个新 slug(zh + en):0 console error、有 `.gt-sec-title`、有 SVG、≥2 控件;量 SVG `getBoundingClientRect` 高度别超 ~440px(超了八成是漏 maxWidth);390px 无横向溢出;EN 模式无中文残留。dev 已在 `http://127.0.0.1:3000/`(**别** `pnpm dev`)。
 - 关键数值人工核对一遍。

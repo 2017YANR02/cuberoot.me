@@ -5,7 +5,7 @@ description: "Use when the user wants to add, rewrite, or refresh a chapter of t
 
 # 更新 /regulation(WCA 竞赛规则图解)
 
-`/regulation` 是 WCA《竞赛规则》的逐章图文版:**总览页 + 每章一页**。全在主工作区 `core/packages/client-next/app/[lang]/regulation/`(Next 16 App Router,文件即路由)。
+`/regulation` 是 WCA《竞赛规则》的逐章图文版:**总览页 + 每章一页**。全在主工作区 `core/packages/client/app/[lang]/regulation/`(Next 16 App Router,文件即路由)。
 
 用户说「更新规则」后会指定章节。把章节名映射到 slug,然后**新建或重写** `<slug>/page.tsx`。内容是对官方规则的**图文介绍与翻译(自己的话转述,禁逐字照抄正文,版权)**,重点是**可视化**:动画、图示、表格、实例,不是一堵文字墙。
 
@@ -15,10 +15,10 @@ WCA 官方规则会改版(近年不按 1.1 走:有 2025-07-17 合并版、2026-0
 
 - **官方机器可读源**:`https://raw.githubusercontent.com/thewca/wca-regulations/official/wca-regulations.md`。顶部 `<version>Version: …`,每章是 `## <article-ID>...` 标题(附则也在同文件,标成 `Article A/B/...`),ID 正好对应我们注册表的 `num`。
 - **快照基线**:`_data/reg-source.snapshot.md`(官方全文)+ `_data/reg-source.hashes.json`(版本 + 每章 sha)。= 我们「照着哪一版做的」。
-- **检测**:`pnpm -F @cuberoot/client-next reg:check` —— 拉线上比基线,报告版本/哪些章改了(带 diff)+ 映射到具体 `page.tsx`;exit 0 同步 / 3 漂移 / 2 无基线 / 1 出错。
+- **检测**:`pnpm -F @cuberoot/client reg:check` —— 拉线上比基线,报告版本/哪些章改了(带 diff)+ 映射到具体 `page.tsx`;exit 0 同步 / 3 漂移 / 2 无基线 / 1 出错。
 - **自动报警**:CI `.github/workflows/regulation_drift.yml` 每月 1 号跑检测,有漂移就开/更新一个 `regulation-drift` 标签的 GitHub issue,正文带 diff。**用户收到这个 issue(或主动说「更新规则」)= 本 skill 的入口。**
 
-**收到漂移 issue / 「更新规则」时的流程**:① 先 `reg:check`(或读 issue)拿到改动清单 → ② 对每个改动章 WebFetch 官方对应 article 重新转述、重写该 `<slug>/page.tsx`(可视化照旧)→ ③ 跑下面的繁体生成 + typecheck + 浏览器验 → ④ **重新基线 + 刷新完整条款**:`pnpm -F @cuberoot/client-next reg:check --write` 再 `pnpm -F @cuberoot/client-next reg:clauses`,把更新后的 `reg-source.snapshot.md` / `reg-source.hashes.json` / `_data/reg-clauses/*.json` 一起 commit(否则下次还报同样的漂移)。新增/删除整章见末节。
+**收到漂移 issue / 「更新规则」时的流程**:① 先 `reg:check`(或读 issue)拿到改动清单 → ② 对每个改动章 WebFetch 官方对应 article 重新转述、重写该 `<slug>/page.tsx`(可视化照旧)→ ③ 跑下面的繁体生成 + typecheck + 浏览器验 → ④ **重新基线 + 刷新完整条款**:`pnpm -F @cuberoot/client reg:check --write` 再 `pnpm -F @cuberoot/client reg:clauses`,把更新后的 `reg-source.snapshot.md` / `reg-source.hashes.json` / `_data/reg-clauses/*.json` 一起 commit(否则下次还报同样的漂移)。新增/删除整章见末节。
 
 ## 完整条款数据层(每章可折叠全文)
 
@@ -97,10 +97,10 @@ export default function XPage() {
 
 **改完依次跑(在 `core/`,缺一不可)**:
 ```
-pnpm -F @cuberoot/client-next zh:gen-localt   # 填 t() 第三参
-pnpm -F @cuberoot/client-next zh:gen-ternary  # 填三目繁支
-pnpm -F @cuberoot/client-next zh:inject       # 填 tr()/数据对象 zhHant
-pnpm -F @cuberoot/client-next zh:check        # 守卫:必须全绿(CI 跑这个)
+pnpm -F @cuberoot/client zh:gen-localt   # 填 t() 第三参
+pnpm -F @cuberoot/client zh:gen-ternary  # 填三目繁支
+pnpm -F @cuberoot/client zh:inject       # 填 tr()/数据对象 zhHant
+pnpm -F @cuberoot/client zh:check        # 守卫:必须全绿(CI 跑这个)
 ```
 
 ## 新增一个全新章节(注册表里还没有)
@@ -119,7 +119,7 @@ pnpm -F @cuberoot/client-next zh:check        # 守卫:必须全绿(CI 跑这个
 
 ## 写完检查
 
-- `pnpm -F @cuberoot/client-next typecheck`(tsgo)+ 上面的 `zh:check` 必须全绿。
-- 内容随官方改版而改的话,收尾 `pnpm -F @cuberoot/client-next reg:check --write` + `pnpm -F @cuberoot/client-next reg:clauses` 重新基线 + 刷完整条款,连快照/条款 JSON 一起 commit。
+- `pnpm -F @cuberoot/client typecheck`(tsgo)+ 上面的 `zh:check` 必须全绿。
+- 内容随官方改版而改的话,收尾 `pnpm -F @cuberoot/client reg:check --write` + `pnpm -F @cuberoot/client reg:clauses` 重新基线 + 刷完整条款,连快照/条款 JSON 一起 commit。
 - dev 常驻 `http://127.0.0.1:3000/`(**别** `pnpm dev`)。用 Playwright 开 `/zh/regulation/<slug>`、`/en/...`、`/zh-Hant/...` 各验一遍:零 console error、繁体确实是繁体、窄屏无横向溢出、动画/SVG 正常。
 - 多 AI 并行时每章一个文件域,别和别的 agent 同改一个文件([[feedback_no_agent_collision]])。

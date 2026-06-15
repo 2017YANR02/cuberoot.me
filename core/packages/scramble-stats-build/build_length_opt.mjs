@@ -27,7 +27,7 @@ const repoRoot = resolve(__dirname, '../../..');
 const EX = resolve(repoRoot, 'stats/scramble/event_length_examples.json');
 const OUT = resolve(repoRoot, 'stats/scramble/event_length_examples_opt.json');
 
-const OPT_MJS = resolve(repoRoot, 'core/packages/client-next/public/cubeopt/cube48opt5.mjs');
+const OPT_MJS = resolve(repoRoot, 'core/packages/client/public/cubeopt/cube48opt5.mjs');
 const OPT_DAT = resolve(repoRoot, 'solver/tables/h48/h48prun31h5.dat');
 const ANALYZER_DIR = resolve(repoRoot, 'solver/target/release');
 

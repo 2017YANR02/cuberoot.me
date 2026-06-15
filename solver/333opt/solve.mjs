@@ -32,7 +32,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '../..');
 const MJS = process.env.MODULE
   ? resolve(process.env.MODULE)
-  : resolve(repoRoot, 'core/packages/client-next/public/cubeopt/cube48opt9.mjs');
+  : resolve(repoRoot, 'core/packages/client/public/cubeopt/cube48opt9.mjs');
 const DAT = process.env.TABLE
   ? resolve(process.env.TABLE)
   : resolve(repoRoot, 'solver/tables/h48/h48prun31h9.dat');

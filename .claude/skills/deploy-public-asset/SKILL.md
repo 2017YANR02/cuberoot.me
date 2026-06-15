@@ -1,15 +1,15 @@
 ---
 name: deploy-public-asset
-description: "Use when adding new public/static files to the site — images, fonts, geojson, textures, WASM modules. Live site is Next.js: assets go in client-next/public/ (no repo-root copy, no whitelist). Shared fork/stats static lives in tools/ + stats/ served by static.cuberoot.me. Triggers: \"new public asset\", \"404\", \"public/\", \"textures/\", \"加静态资源\", \"static asset\", \"public 资源\"."
+description: "Use when adding new public/static files to the site — images, fonts, geojson, textures, WASM modules. Live site is Next.js: assets go in client/public/ (no repo-root copy, no whitelist). Shared fork/stats static lives in tools/ + stats/ served by static.cuberoot.me. Triggers: \"new public asset\", \"404\", \"public/\", \"textures/\", \"加静态资源\", \"static asset\", \"public 资源\"."
 ---
 
 # 新增 public / 静态资源
 
-线上前端是 **Next.js (`packages/client-next`)**;Vite + 根目录 commit + GH Pages 镜像(deploy_mirror)已于 2026-06-14 全部移除。旧的"两处白名单 + 仓库根再放一份"机制已作废。
+线上前端是 **Next.js (`packages/client`)**;Vite + 根目录 commit + GH Pages 镜像(deploy_mirror)已于 2026-06-14 全部移除。旧的"两处白名单 + 仓库根再放一份"机制已作废。
 
 ## 常规 public 资源(图片 / 字体 / geojson / wasm 等)
 
-直接放进 **`core/packages/client-next/public/<file>`** —— 完事。
+直接放进 **`core/packages/client/public/<file>`** —— 完事。
 
 - Next 在 `/<file>` 路径直接 serve(绝对路径如 `/fonts/x.woff2`、`/cubeopt/...`)。
 - 部署自动带上:`deploy_next.yml`(systemd standalone,public/ 打进 tar)+ Vercel(push 自动 build)。
