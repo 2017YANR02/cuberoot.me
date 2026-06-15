@@ -1,10 +1,15 @@
 import Link from "next/link";
-import { MapPin, Users, Trophy, Award } from "lucide-react";
-import { list as listInstructors } from "@/lib/db/instructors";
+import { MapPin, Users, Trophy, Award, BookOpen, ArrowRight } from "lucide-react";
+import { listWithStats } from "@/lib/db/instructors-public";
 import { Section } from "@/components/Section";
 import { Badge } from "@/components/Badge";
+import { InstructorAvatar } from "@/components/InstructorAvatar";
+import { InstructorSpecialties } from "@/components/InstructorSpecialties";
+import { loadInstructorListParams } from "@/lib/search-params";
+import type { SearchParams } from "nuqs/server";
 
 export const metadata = { title: "讲师 — 魔方开放社群" };
+export const dynamic = "force-dynamic";
 
 const TIERS = [
   { type: "录播系统课 / 社群训练营", platform: "40%", inst: "60%" },
@@ -13,8 +18,23 @@ const TIERS = [
   { type: "线下同城家教派单", platform: "20–25%", inst: "75–80%" },
 ];
 
-export default async function InstructorsPage() {
-  const instructors = await listInstructors();
+export default async function InstructorsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const { specialty } = await loadInstructorListParams(searchParams);
+  const all = await listWithStats();
+
+  // 全部讲师里出现过的专长去重作为筛选项(自由文案,稳定按出现顺序)
+  const specialtyOptions = Array.from(
+    new Set(all.flatMap((i) => i.specialty)),
+  );
+
+  const instructors = specialty
+    ? all.filter((i) => i.specialty.includes(specialty))
+    : all;
+
   return (
     <>
       <Section
@@ -22,28 +42,46 @@ export default async function InstructorsPage() {
         title="入驻平台的专业魔方教练"
         subtitle="经过认证的全国教练池,涵盖入门启蒙、CFOP、盲拧、ZBLL、竞速等专项方向。"
       >
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {instructors.map((i) => (
-            <div key={i.id} className="rounded-[14px] border border-line bg-white p-6">
-              <div className="flex items-start gap-4">
-                <Avatar name={i.name} />
-                <div className="min-w-0">
-                  <div className="text-[16px] font-semibold text-ink">{i.name}</div>
-                  <div className="text-[12px] text-ink-3 mt-0.5">{i.title}</div>
+        <InstructorSpecialties options={specialtyOptions} />
+
+        {instructors.length === 0 ? (
+          <div className="rounded-[14px] border border-line bg-white p-10 text-center text-[14px] text-ink-3">
+            {specialty ? `暂无“${specialty}”方向的讲师` : "暂无讲师"}
+          </div>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {instructors.map((i) => (
+              <Link
+                key={i.id}
+                href={`/instructors/${i.id}`}
+                className="group block rounded-[14px] border border-line bg-white p-6 transition hover:border-brand/40 hover:shadow-[0_8px_28px_-12px_rgba(42,93,244,0.18)]"
+              >
+                <div className="flex items-start gap-4">
+                  <InstructorAvatar name={i.name} />
+                  <div className="min-w-0">
+                    <div className="text-[16px] font-semibold text-ink group-hover:text-brand transition">
+                      {i.name}
+                    </div>
+                    <div className="text-[12px] text-ink-3 mt-0.5">{i.title}</div>
+                  </div>
                 </div>
-              </div>
-              <p className="mt-4 text-[13px] leading-6 text-ink-3 line-clamp-3">{i.bio}</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {i.specialty.map((s) => <Badge key={s} tone="brand">{s}</Badge>)}
-              </div>
-              <div className="mt-5 pt-4 border-t border-line grid grid-cols-3 gap-2 text-[12px] text-ink-3">
-                <span className="inline-flex items-center gap-1"><MapPin size={12} />{i.city}</span>
-                <span className="inline-flex items-center gap-1"><Users size={12} />{i.studentsTaught}</span>
-                <span className="inline-flex items-center gap-1"><Trophy size={12} />{i.bestRecord}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+                <p className="mt-4 text-[13px] leading-6 text-ink-3 line-clamp-3">{i.bio}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {i.specialty.map((s) => <Badge key={s} tone="brand">{s}</Badge>)}
+                </div>
+                <div className="mt-5 pt-4 border-t border-line flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] text-ink-3">
+                  <span className="inline-flex items-center gap-1"><MapPin size={12} />{i.city}</span>
+                  <span className="inline-flex items-center gap-1"><BookOpen size={12} />{i.courseCount} 门课</span>
+                  <span className="inline-flex items-center gap-1"><Users size={12} />{i.studentsTaught}</span>
+                  <span className="inline-flex items-center gap-1"><Trophy size={12} />{i.bestRecord}</span>
+                </div>
+                <div className="mt-4 text-[13px] text-brand inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                  查看主页 <ArrowRight size={14} />
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </Section>
 
       <Section
@@ -90,20 +128,6 @@ export default async function InstructorsPage() {
         </div>
       </Section>
     </>
-  );
-}
-
-function Avatar({ name }: { name: string }) {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-  const hue = h % 360;
-  return (
-    <div
-      className="h-12 w-12 shrink-0 rounded-full grid place-items-center text-white text-[15px] font-semibold"
-      style={{ background: `linear-gradient(135deg, hsl(${hue} 65% 55%), hsl(${(hue + 30) % 360} 70% 45%))` }}
-    >
-      {name.slice(-1)}
-    </div>
   );
 }
 

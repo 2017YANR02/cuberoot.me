@@ -139,7 +139,18 @@ export default async function OrderDetailPage({
               label="支付方式"
               value={order.paymentMethod ? PAY_LABEL[order.paymentMethod] : "—"}
             />
+            {order.status === "refunded" ? (
+              <Row
+                label="退款金额"
+                value={<span className="text-red-700">-¥{order.refundAmount ?? order.amount}</span>}
+              />
+            ) : null}
           </dl>
+
+          <div className="mt-7 border-t border-line pt-6">
+            <div className="text-[13px] font-medium text-ink">订单进度</div>
+            <Timeline order={order} />
+          </div>
         </div>
 
         <aside className="rounded-[14px] border border-line bg-white p-6">
@@ -229,5 +240,87 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
       <dt className="text-ink-3">{label}</dt>
       <dd className="mt-0.5 text-ink">{value}</dd>
     </div>
+  );
+}
+
+type Step = {
+  label: string;
+  at: number | null;
+  state: "done" | "current" | "pending" | "cancelled" | "danger";
+  hint?: string;
+};
+
+function buildSteps(order: {
+  status: OrderStatus;
+  createdAt: number;
+  paidAt: number | null;
+  refundedAt: number | null;
+}): Step[] {
+  const steps: Step[] = [
+    { label: "创建订单", at: order.createdAt, state: "done" },
+  ];
+
+  if (order.status === "cancelled") {
+    steps.push({ label: "已取消", at: null, state: "cancelled", hint: "订单未支付即取消" });
+    return steps;
+  }
+
+  steps.push({
+    label: order.status === "pending" ? "等待支付" : "完成支付",
+    at: order.paidAt,
+    state: order.status === "pending" ? "current" : "done",
+    hint: order.status === "pending" ? "选择支付方式完成订单" : undefined,
+  });
+
+  if (order.status === "refunded") {
+    steps.push({ label: "已退款", at: order.refundedAt, state: "danger" });
+  }
+
+  return steps;
+}
+
+const DOT_CLASS: Record<Step["state"], string> = {
+  done: "bg-emerald-500 border-emerald-500",
+  current: "bg-white border-brand",
+  pending: "bg-white border-line",
+  cancelled: "bg-ink-3 border-ink-3",
+  danger: "bg-red-500 border-red-500",
+};
+
+const STEP_TEXT_CLASS: Record<Step["state"], string> = {
+  done: "text-ink",
+  current: "text-brand",
+  pending: "text-ink-3",
+  cancelled: "text-ink-3",
+  danger: "text-red-700",
+};
+
+function Timeline({
+  order,
+}: {
+  order: { status: OrderStatus; createdAt: number; paidAt: number | null; refundedAt: number | null };
+}) {
+  const steps = buildSteps(order);
+  return (
+    <ol className="mt-4 space-y-0">
+      {steps.map((s, i) => {
+        const last = i === steps.length - 1;
+        return (
+          <li key={s.label} className="relative flex gap-3 pb-5 last:pb-0">
+            {!last ? (
+              <span className="absolute left-[5px] top-3.5 bottom-0 w-px bg-line" aria-hidden />
+            ) : null}
+            <span
+              className={`relative z-10 mt-1 h-[11px] w-[11px] shrink-0 rounded-full border-2 ${DOT_CLASS[s.state]}`}
+              aria-hidden
+            />
+            <div className="min-w-0">
+              <div className={`text-[13px] font-medium ${STEP_TEXT_CLASS[s.state]}`}>{s.label}</div>
+              <div className="mt-0.5 text-[12px] text-ink-3">{s.at ? fmtDate(s.at) : s.hint ?? "—"}</div>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
