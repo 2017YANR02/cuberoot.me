@@ -23,6 +23,7 @@ import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { writeFileSync, readFileSync } from 'node:fs';
+import { registerTenant, claimMemory } from '../mem-arbiter.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -225,6 +226,10 @@ export function ensureDaemon(): Promise<void> {
   }
   if (bootPromise) return bootPromise;
   startMonitors();
+  // Free the other heavy solver (cube555 JVM) before loading our ~2GB table.
+  // 3x3 optimal takes priority: evict cube555 even if it's mid-scramble (cheap,
+  // retryable, and has a client fallback).
+  claimMemory('cubeopt', { evictBusy: true });
   bootPromise = spawnDaemon();
   return bootPromise;
 }
@@ -302,6 +307,16 @@ function recycleChild(): void {
     try { child.kill('SIGKILL'); } catch { /* already gone */ }
   }
 }
+
+// Memory arbiter: dropping our table (recycleChild) frees ~2GB for cube555. We
+// count as "busy" while solving/queued AND during the multi-second cold load
+// (bootPromise pending, not yet ready) — otherwise a 5x5 request racing our load
+// would see inFlight()===false and evict the table we're still loading.
+registerTenant({
+  id: 'cubeopt',
+  evict: recycleChild,
+  isBusy: () => inFlight() || (bootPromise !== null && !ready),
+});
 
 /**
  * Solve one scramble to optimal. Spawns the daemon on first call. The job waits

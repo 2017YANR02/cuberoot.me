@@ -27,6 +27,7 @@
  */
 import { spawn, type ChildProcess } from 'node:child_process';
 import { createInterface } from 'node:readline';
+import { registerTenant, claimMemory } from '../mem-arbiter.js';
 
 interface Pending {
   resolve: (s: string) => void;
@@ -40,6 +41,9 @@ const DISABLED = process.env.CUBE555_DISABLED === '1';
 const NATIVE_BIN = process.env.CUBE555_NATIVE_BIN;
 const JAVA = process.env.JAVA_BIN ?? 'java';
 const REQUEST_TIMEOUT_MS = 30_000;
+// Idle-unload: free the JVM (~540MB) once nobody has asked for a 5x5 scramble for
+// a while, so the cube48 opt6 table can use the box (see mem-arbiter.ts).
+const IDLE_MS = Number(process.env.CUBE555_IDLE_MS) || 10 * 60_000;
 
 // Windows uses ';' as classpath separator; everything else uses ':'.
 // We build the path once at module load since the platform is fixed.
@@ -50,6 +54,8 @@ let ready = false;
 let bootPromise: Promise<void> | null = null;
 let nextId = 1;
 const pending = new Map<string, Pending>();
+let lastUsed = 0;          // updated on each request; drives idle-unload
+let idleStarted = false;
 
 function rejectAllPending(reason: string): void {
   for (const [, p] of pending) {
@@ -58,6 +64,34 @@ function rejectAllPending(reason: string): void {
   }
   pending.clear();
 }
+
+/** Kill the JVM child to free its ~540MB; the 'exit' handler clears state, next
+ * call respawns. Idempotent. */
+function stopDaemon(): void {
+  if (child) {
+    try { child.kill('SIGKILL'); } catch { /* already gone */ }
+  }
+}
+
+/** Idle-unload: once no scramble has been requested for IDLE_MS, free the JVM. */
+function startIdleMonitor(): void {
+  if (idleStarted) return;
+  idleStarted = true;
+  // Don't leave the JVM orphaned if core-api exits cleanly.
+  process.once('exit', () => { if (child) { try { child.kill('SIGKILL'); } catch { /* gone */ } } });
+  setInterval(() => {
+    if (!child || !ready || pending.size > 0) return;
+    if (Date.now() - lastUsed > IDLE_MS) {
+      console.log('[cube555] idle — stopping daemon to free memory');
+      stopDaemon();
+    }
+  }, 30_000).unref();
+}
+
+// Memory arbiter: stopping the JVM frees ~540MB for the opt6 table; pending.size
+// guards an in-flight 5x5 from being evicted (cubeopt only evicts us with
+// evictBusy, which it sets because a 3x3 solve outranks a 5x5 scramble).
+registerTenant({ id: 'cube555', evict: stopDaemon, isBusy: () => pending.size > 0 });
 
 function spawnDaemon(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -159,6 +193,12 @@ export function ensureDaemon(): Promise<void> {
   if (DISABLED) return Promise.reject(new Error('CUBE555_DISABLED=1'));
   if (ready) return Promise.resolve();
   if (bootPromise) return bootPromise;
+  // Free the opt6 table before spawning the JVM — but YIELD to an in-progress 3x3
+  // optimal solve (it's long + user-awaited; 5x5 has a client-side fallback).
+  if (!claimMemory('cube555')) {
+    return Promise.reject(new Error('cube555 busy: a 3x3 optimal solve holds memory, try again shortly'));
+  }
+  startIdleMonitor();
   bootPromise = spawnDaemon();
   return bootPromise;
 }
@@ -169,8 +209,10 @@ export function isReady(): boolean {
 
 /** Single random-state 5x5 scramble. Spawns the daemon on first call. */
 export async function getScramble(): Promise<string> {
+  lastUsed = Date.now();
   await ensureDaemon();
   if (!child?.stdin) throw new Error('cube555 daemon stdin unavailable');
+  lastUsed = Date.now(); // the load could have taken seconds; re-stamp
 
   return new Promise<string>((resolve, reject) => {
     const id = `${nextId++}`;
