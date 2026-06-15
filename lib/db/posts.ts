@@ -9,6 +9,7 @@ import type {
   PostInsert,
 } from "@/db/schema";
 import { randomBytes } from "node:crypto";
+import { awardPoints } from "@/lib/db/points";
 
 export type { Post, Comment, CircleId };
 
@@ -171,6 +172,8 @@ export async function createPost(values: {
     createdAt: now,
   };
   await db.insert(schema.posts).values(v);
+  // 发帖发分,按新帖 id 去重(同一帖不重复发)。
+  await awardPoints(values.authorId, 3, "post", { refId: v.id });
   return { ...v, likes: 0 } as Post;
 }
 

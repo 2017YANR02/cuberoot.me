@@ -19,10 +19,13 @@ import {
 import { listByCourse as listLessons } from "@/lib/db/lessons";
 import { courseProgressPercent } from "@/lib/db/progress";
 import { isMember } from "@/lib/db/membership";
+import { isFavorited } from "@/lib/db/favorites";
 import { getCurrentUser } from "@/lib/auth-user";
 import { Badge } from "@/components/Badge";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import { CourseVideo } from "@/components/CourseVideo";
 import { CouponBox } from "@/components/CouponBox";
+import { CourseReviews } from "@/components/CourseReviews";
 import { ogImageUrl } from "@/lib/site";
 import { placeOrderFromForm } from "@/app/actions/order";
 
@@ -77,6 +80,7 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
   const purchased = user ? await hasUserPaidForCourse(user.id, id) : false;
   // 会员在有效期内畅看全部付费课程,视同已解锁
   const memberUnlock = user && !purchased && !isFreeCourse ? await isMember(user.id) : false;
+  const fav = user ? await isFavorited(user.id, "course", course.id) : false;
   const unlocked = purchased || memberUnlock;
   const progress =
     user && unlocked
@@ -95,7 +99,16 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
                 <Badge tone="muted">{course.format}</Badge>
                 {course.tags.map((t) => <Badge key={t} tone="neutral">{t}</Badge>)}
               </div>
-              <h1 className="text-[28px] md:text-[36px] font-semibold text-ink leading-tight">{course.title}</h1>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <h1 className="text-[28px] md:text-[36px] font-semibold text-ink leading-tight">{course.title}</h1>
+                <FavoriteButton
+                  targetType="course"
+                  targetId={course.id}
+                  initial={fav}
+                  loggedIn={!!user}
+                  next={`/courses/${id}`}
+                />
+              </div>
               <p className="mt-3 text-[15px] leading-7 text-ink-2">{course.subtitle}</p>
 
               <div className="mt-8 flex flex-wrap gap-6 text-[14px] text-ink-2">
@@ -277,6 +290,8 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
               </ol>
             </>
           ) : null}
+
+          <CourseReviews courseId={course.id} />
         </div>
 
         <aside>

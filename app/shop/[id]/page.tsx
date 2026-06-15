@@ -4,7 +4,9 @@ import { Star, CheckCircle2, ArrowRight, PackageCheck, PackageX } from "lucide-r
 import { list as listProducts, findById as findProduct } from "@/lib/db/products";
 import type { Product } from "@/lib/db/products";
 import { getCurrentUser } from "@/lib/auth-user";
+import { isFavorited } from "@/lib/db/favorites";
 import { Badge } from "@/components/Badge";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import { ogImageUrl } from "@/lib/site";
 import { BuyPanel } from "./_BuyPanel";
 
@@ -41,6 +43,8 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
   const [p, user, all] = await Promise.all([findProduct(id), getCurrentUser(), listProducts()]);
   if (!p) notFound();
 
+  const favorited = user ? await isFavorited(user.id, "product", p.id) : false;
+
   const discountPercent =
     p.originalPrice && p.originalPrice > p.price
       ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)
@@ -61,7 +65,16 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
             <Badge tone="brand">{p.category}</Badge>
             <span className="text-[13px] text-ink-3">{p.brand}</span>
           </div>
-          <h1 className="text-[26px] md:text-[32px] font-semibold text-ink leading-tight">{p.name}</h1>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h1 className="text-[26px] md:text-[32px] font-semibold text-ink leading-tight">{p.name}</h1>
+            <FavoriteButton
+              targetType="product"
+              targetId={p.id}
+              initial={favorited}
+              loggedIn={!!user}
+              next={`/shop/${p.id}`}
+            />
+          </div>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-ink-3">
             <span className="inline-flex items-center gap-1">
               <Star size={14} className="text-amber-500" />

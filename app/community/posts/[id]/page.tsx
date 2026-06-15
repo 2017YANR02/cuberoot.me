@@ -8,7 +8,9 @@ import {
   listComments,
 } from "@/lib/db/posts";
 import { getCurrentUser } from "@/lib/auth-user";
+import { isFavorited } from "@/lib/db/favorites";
 import { Badge } from "@/components/Badge";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import { Markdown } from "@/components/Markdown";
 import { TrackOnce } from "@/components/TrackOnce";
 import { ogImageUrl } from "@/lib/site";
@@ -66,6 +68,9 @@ export default async function PostDetail({
   const liked = currentUser
     ? await isLikedByUser(id, currentUser.id)
     : false;
+  const favorited = currentUser
+    ? await isFavorited(currentUser.id, "post", post.id)
+    : false;
 
   const justCreated = currentUser && currentUser.id === post.authorId
     ? Math.floor(Date.now() / 1000) - post.createdAt < 30
@@ -93,9 +98,18 @@ export default async function PostDetail({
           <Badge tone="brand">{CIRCLE_META[post.circleId].name}</Badge>
           <span className="text-[12px] text-ink-3">{formatTime(post.createdAt)}</span>
         </div>
-        <h1 className="text-[24px] md:text-[30px] font-semibold text-ink leading-tight">
-          {post.title}
-        </h1>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h1 className="text-[24px] md:text-[30px] font-semibold text-ink leading-tight">
+            {post.title}
+          </h1>
+          <FavoriteButton
+            targetType="post"
+            targetId={post.id}
+            initial={favorited}
+            loggedIn={!!currentUser}
+            next={`/community/posts/${post.id}`}
+          />
+        </div>
         <div className="mt-4 flex items-center gap-3">
           <div className="grid h-9 w-9 place-items-center rounded-full bg-brand-soft text-[13px] font-medium text-brand-dark">
             {post.authorNickname.slice(0, 1)}

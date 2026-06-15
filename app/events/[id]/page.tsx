@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { CalendarDays, MapPin, Users, Trophy, Wallet } from "lucide-react";
 import { list as listEvents, findById as findEvent, type EventStatus } from "@/lib/db/events";
 import { getCurrentUser } from "@/lib/auth-user";
+import { isFavorited } from "@/lib/db/favorites";
 import { Badge } from "@/components/Badge";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import { ogImageUrl } from "@/lib/site";
 import { loadErrorNotice } from "@/lib/search-params";
 import type { SearchParams } from "nuqs/server";
@@ -64,6 +66,8 @@ export default async function EventDetail({
   ]);
   if (!e) notFound();
 
+  const favorited = user ? await isFavorited(user.id, "event", e.id) : false;
+
   // 日期用字符串展示,禁 new Date("YYYY-MM-DD")(SSR 时区偏一天)
   const dateText = e.endDate ? `${e.startDate} ~ ${e.endDate}` : e.startDate;
   const soldOut = e.registered >= e.capacity;
@@ -87,7 +91,16 @@ export default async function EventDetail({
             <Badge tone="brand">{e.type}</Badge>
             <Badge tone={STATUS_TONE[e.status]}>{e.status}</Badge>
           </div>
-          <h1 className="text-[28px] font-semibold leading-tight text-ink md:text-[36px]">{e.title}</h1>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h1 className="text-[28px] font-semibold leading-tight text-ink md:text-[36px]">{e.title}</h1>
+            <FavoriteButton
+              targetType="event"
+              targetId={e.id}
+              initial={favorited}
+              loggedIn={!!user}
+              next={`/events/${e.id}`}
+            />
+          </div>
           <p className="mt-4 text-[15px] leading-7 text-ink-2">{e.description}</p>
 
           <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
