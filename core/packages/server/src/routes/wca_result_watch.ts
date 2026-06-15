@@ -1,21 +1,37 @@
 /**
- * /v1/wca/result-watch — 关注选手「往期成绩变更」只读端点。
- * 数据由 monitors/wca_past_results.ts 后台慢周期(默认 6h)diff 写入,这里纯读 PG。
+ * /v1/wca/result-watch — 选手「成绩变更」端点。
+ * 自动数据由 monitors/wca_past_results.ts 后台 diff 写入(source='auto');
+ * 管理员可经下面的写端点手动录入/编辑变更链(source='manual')。
  *
- *   GET /wca/result-watch/status            监控概览(关注选手列表 + 各自变更计数 + 最近检查时间)
- *   GET /wca/result-watch/changes?wcaId=&limit=  变更日志(按检出时间倒序)
+ *   GET    /wca/result-watch/status                 监控概览
+ *   GET    /wca/result-watch/changes?wcaId=&compId=&limit=  变更日志(可按选手或比赛过滤)
+ *   POST   /wca/result-watch/changes                管理员新增一条变更(手动)
+ *   PUT    /wca/result-watch/changes/:id            管理员编辑
+ *   DELETE /wca/result-watch/changes/:id            管理员删除
  *
- * 变更属可变数据:浏览器层短缓存(<600s,过 server-cache-headers 守卫),nginx 共享层稍长。
+ * 读端点属可变数据:浏览器短缓存;写端点 no-store + requireAdminOrApiKey。
  */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
+import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 
 export const wcaResultWatchRoutes = new Hono();
 
 const MAX_LIMIT = 500;
 const DEFAULT_LIMIT = 200;
+const WCA_ID_RE = /^[0-9]{4}[A-Z]{4}[0-9]{2}$/;
+const COMP_ID_RE = /^[A-Za-z0-9]{2,40}$/;
+const NOTE_MAX = 1000;
+const ALLOWED_FIELDS = new Set([
+  'best', 'average', 'pos', 'attempts',
+  'regional_single_record', 'regional_average_record',
+]);
 
 interface ChangeField { field: string; old: unknown; new: unknown }
+
+function getIp(c: { req: { header: (n: string) => string | undefined } }): string {
+  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
+}
 
 interface PersonRow {
   wca_id: string;
@@ -73,6 +89,11 @@ interface ChangeRow {
   before_json: Record<string, unknown> | null;
   after_json: Record<string, unknown> | null;
   detected_at: string;
+  note: string | null;
+  effective_at: string | null;
+  source: string | null;
+  created_by: string | null;
+  edited_at: string | null;
   person_name: string | null;
   person_iso2: string | null;
 }
@@ -80,15 +101,16 @@ interface ChangeRow {
 wcaResultWatchRoutes.get('/wca/result-watch/changes', async (c) => {
   c.header('Cache-Control', 'public, max-age=120, s-maxage=300, stale-while-revalidate=300');
   const wcaIdRaw = (c.req.query('wcaId') ?? '').trim();
-  const wcaId = /^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaIdRaw) ? wcaIdRaw : null;
+  const wcaId = WCA_ID_RE.test(wcaIdRaw) ? wcaIdRaw : null;
+  const compIdRaw = (c.req.query('compId') ?? '').trim();
+  const compId = COMP_ID_RE.test(compIdRaw) ? compIdRaw : null;
   const limit = Math.min(MAX_LIMIT, Math.max(1, Number(c.req.query('limit')) || DEFAULT_LIMIT));
 
   const params: unknown[] = [];
-  let whereSql = '';
-  if (wcaId) {
-    whereSql = 'WHERE ch.wca_id = ?';
-    params.push(wcaId);
-  }
+  const conds: string[] = [];
+  if (wcaId) { conds.push('ch.wca_id = ?'); params.push(wcaId); }
+  if (compId) { conds.push('ch.competition_id = ?'); params.push(compId); }
+  const whereSql = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
   params.push(limit);
 
   const rows = await query<ChangeRow>(
@@ -98,6 +120,7 @@ wcaResultWatchRoutes.get('/wca/result-watch/changes', async (c) => {
             cc.iso2         AS comp_iso2,
             ch.event_id, ch.round_type_id, ch.change_type,
             ch.fields, ch.before_json, ch.after_json, ch.detected_at,
+            ch.note, ch.effective_at, ch.source, ch.created_by, ch.edited_at,
             COALESCE(s.person_name, wp.match_key) AS person_name,
             s.country_iso2 AS person_iso2
        FROM wca_result_changes ch
@@ -129,6 +152,163 @@ wcaResultWatchRoutes.get('/wca/result-watch/changes', async (c) => {
       before: r.before_json ?? null,
       after: r.after_json ?? null,
       detectedAt: r.detected_at,
+      note: r.note ?? null,
+      effectiveAt: r.effective_at ?? null,
+      source: r.source ?? 'auto',
+      createdBy: r.created_by ?? null,
+      editedAt: r.edited_at ?? null,
     })),
   });
+});
+
+// ── 管理员写端点(手动录入/编辑变更链) ─────────────────────────────────────────
+
+interface ChangeInput {
+  wcaId?: string;
+  resultId?: number | null;
+  competitionId?: string;
+  eventId?: string;
+  roundTypeId?: string;
+  changeType?: string;
+  fields?: unknown;
+  note?: string | null;
+  effectiveAt?: string | null;
+}
+
+interface NormalizedChange {
+  wca_id: string;
+  result_id: number | null;
+  competition_id: string;
+  event_id: string;
+  round_type_id: string;
+  change_type: string;
+  fields: ChangeField[] | null;
+  note: string | null;
+  effective_at: string | null;
+}
+
+function validateChange(b: ChangeInput): { error: string } | { value: NormalizedChange } {
+  const wca_id = String(b.wcaId ?? '').trim().toUpperCase();
+  if (!WCA_ID_RE.test(wca_id)) return { error: 'invalid wcaId' };
+
+  const competition_id = String(b.competitionId ?? '').trim();
+  if (!COMP_ID_RE.test(competition_id)) return { error: 'invalid competitionId' };
+
+  const event_id = String(b.eventId ?? '').trim();
+  if (!event_id || event_id.length > 8) return { error: 'invalid eventId' };
+
+  const round_type_id = String(b.roundTypeId ?? '').trim();
+  if (!round_type_id || round_type_id.length > 4) return { error: 'invalid roundTypeId' };
+
+  const change_type = b.changeType === 'removed' ? 'removed' : 'modified';
+
+  let fields: ChangeField[] | null = null;
+  if (change_type === 'modified') {
+    if (!Array.isArray(b.fields) || b.fields.length === 0) {
+      return { error: 'fields must be a non-empty array for modified' };
+    }
+    const out: ChangeField[] = [];
+    for (const it of b.fields as unknown[]) {
+      if (!it || typeof it !== 'object') return { error: 'invalid field entry' };
+      const f = it as { field?: unknown; old?: unknown; new?: unknown };
+      const name = String(f.field ?? '');
+      if (!ALLOWED_FIELDS.has(name)) return { error: `unsupported field: ${name}` };
+      out.push({ field: name, old: f.old ?? null, new: f.new ?? null });
+    }
+    fields = out;
+  }
+
+  let result_id: number | null = null;
+  if (b.resultId != null && b.resultId !== ('' as unknown)) {
+    const n = Number(b.resultId);
+    if (!Number.isFinite(n)) return { error: 'invalid resultId' };
+    result_id = n;
+  }
+
+  let note: string | null = null;
+  if (b.note != null && b.note !== '') {
+    if (typeof b.note !== 'string') return { error: 'note must be a string' };
+    note = b.note.trim().slice(0, NOTE_MAX);
+  }
+
+  let effective_at: string | null = null;
+  if (b.effectiveAt != null && b.effectiveAt !== '') {
+    if (typeof b.effectiveAt !== 'string') return { error: 'effectiveAt must be a string' };
+    const t = Date.parse(b.effectiveAt);
+    if (Number.isNaN(t)) return { error: 'invalid effectiveAt' };
+    effective_at = b.effectiveAt;
+  }
+
+  return {
+    value: { wca_id, result_id, competition_id, event_id, round_type_id, change_type, fields, note, effective_at },
+  };
+}
+
+// POST /wca/result-watch/changes — 新增
+wcaResultWatchRoutes.post('/wca/result-watch/changes', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  const user = await requireAdminOrApiKey(c);
+
+  const res = validateChange(await c.req.json<ChangeInput>());
+  if ('error' in res) return c.json({ error: res.error }, 400);
+  const f = res.value;
+
+  const inserted = await query<{ id: number | string }>(
+    `INSERT INTO wca_result_changes
+       (wca_id, result_id, competition_id, event_id, round_type_id, change_type,
+        fields, note, effective_at, source, created_by, detected_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, 'manual', ?, NOW())
+     RETURNING id`,
+    [
+      f.wca_id, f.result_id, f.competition_id, f.event_id, f.round_type_id, f.change_type,
+      f.fields, f.note, f.effective_at, user.wcaId,
+    ],
+  );
+  return c.json({ ok: true, id: Number(inserted[0].id) });
+});
+
+// PUT /wca/result-watch/changes/:id — 编辑
+wcaResultWatchRoutes.put('/wca/result-watch/changes/:id', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+
+  const id = Number(c.req.param('id'));
+  if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
+
+  const res = validateChange(await c.req.json<ChangeInput>());
+  if ('error' in res) return c.json({ error: res.error }, 400);
+  const f = res.value;
+
+  const updated = await query<{ id: number | string }>(
+    `UPDATE wca_result_changes SET
+       wca_id = ?, result_id = ?, competition_id = ?, event_id = ?, round_type_id = ?,
+       change_type = ?, fields = ?::jsonb, note = ?, effective_at = ?, edited_at = NOW()
+     WHERE id = ?
+     RETURNING id`,
+    [
+      f.wca_id, f.result_id, f.competition_id, f.event_id, f.round_type_id,
+      f.change_type, f.fields, f.note, f.effective_at, id,
+    ],
+  );
+  if (updated.length === 0) return c.json({ error: 'Not found' }, 404);
+  return c.json({ ok: true, id });
+});
+
+// DELETE /wca/result-watch/changes/:id
+wcaResultWatchRoutes.delete('/wca/result-watch/changes/:id', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+
+  const id = Number(c.req.param('id'));
+  if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
+
+  const deleted = await query<{ id: number | string }>(
+    'DELETE FROM wca_result_changes WHERE id = ? RETURNING id',
+    [id],
+  );
+  if (deleted.length === 0) return c.json({ error: 'Not found' }, 404);
+  return c.json({ ok: true });
 });
