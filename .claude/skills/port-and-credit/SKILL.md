@@ -5,7 +5,7 @@ description: "Use when porting / forking / integrating an open-source project in
 
 # 复刻 / 致谢
 
-- credits 唯一 source: `core/packages/client/src/pages/credits_data.json` (字段: name/url/zh/en/long_en?),`/about` 页直接渲染,改 JSON 即生效
+- credits 唯一 source: `core/packages/client-next/app/[lang]/about/credits_data.json` (字段: name/url/zh/en/long_en?),`/about` 页直接渲染,改 JSON 即生效
 - 禁 AboutPage 硬编码 credit;README 只链到 `/about`,不再同步列表
 - 新 npm dep 在 `core/` 内 `pnpm add`,不在仓库根
 - upstream fork (`/solver` `/alg-trainers` `/cstimer`) 不动源码;ported (`/calc` `/battle` `/mosaic` `/analyze`) 不动 legacy worker

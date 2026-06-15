@@ -5,7 +5,7 @@ import { query } from '../db/connection.js';
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 const WCA_CLIENT_ID = process.env.WCA_CLIENT_ID || '';
 const WCA_CLIENT_SECRET = process.env.WCA_CLIENT_SECRET || '';
-const WCA_REDIRECT_URI = process.env.WCA_REDIRECT_URI || 'http://localhost:5173/trainer/auth/callback';
+const WCA_REDIRECT_URI = process.env.WCA_REDIRECT_URI || 'http://localhost:3000/auth/callback';
 
 /**
  * WCA OAuth + JWT 认证路由
