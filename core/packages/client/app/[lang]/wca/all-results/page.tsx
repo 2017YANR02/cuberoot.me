@@ -127,6 +127,8 @@ function AllResultsPageInner() {
       psort: parseAsString,      // 名录排序:'name'(首字母) | 'len'(名字长度)
       pdir: parseAsString,       // 'asc' | 'desc'
       pname: parseAsString,      // 名录名字口径:latin | full | local | aka
+      plmin: parseAsString,      // 名录长度筛选:最小字符数
+      plmax: parseAsString,      // 名录长度筛选:最大字符数
       page: parseAsString,
       size: parseAsString,
     },
@@ -166,6 +168,8 @@ function AllResultsPageInner() {
   const psort: 'name' | 'len' = query.psort === 'len' ? 'len' : 'name';
   const pdir: 'asc' | 'desc' = query.pdir === 'desc' ? 'desc' : 'asc';
   const pname: NameMode = (NAME_MODES as string[]).includes(query.pname ?? '') ? (query.pname as NameMode) : 'latin';
+  const plmin = query.plmin ?? '';
+  const plmax = query.plmax ?? '';
   const setSort = (key: 'name' | 'len') => {
     if (psort === key) setQuery({ pdir: pdir === 'asc' ? 'desc' : 'asc', page: null });
     else setQuery({ psort: key, pdir: 'asc', page: null });
@@ -298,13 +302,15 @@ function AllResultsPageInner() {
     setLoading(true); setError(null);
     const qs = new URLSearchParams();
     qs.set('sort', psort); qs.set('dir', pdir); qs.set('name', pname);
+    if (plmin) qs.set('lmin', plmin);
+    if (plmax) qs.set('lmax', plmax);
     qs.set('page', String(page)); qs.set('size', String(size));
     if (country) qs.set('country', country);
     fetch(apiUrl(`/v1/wca/persons-directory?${qs.toString()}`))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((j: { rows: DirRow[]; total: number }) => setDirData({ rows: j.rows, total: j.total }))
       .catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [mode, eview, psort, pdir, pname, country, page, size]);
+  }, [mode, eview, psort, pdir, pname, plmin, plmax, country, page, size]);
 
   // 名次和数据
   useEffect(() => {
@@ -523,6 +529,24 @@ function AllResultsPageInner() {
                         {m.label}
                       </button>
                     ))}
+                  </div>
+                </div>
+                <div className="wse-filter wse-filter-show">
+                  <label title={tr({ zh: '按当前名字口径的字符数筛选', en: 'Filter by character count of the current name form' })}>
+                    {tr({ zh: '长度', en: 'Length' })}
+                  </label>
+                  <div className="wse-len-range">
+                    <input type="number" min={0} inputMode="numeric" className="wse-len-input"
+                      placeholder={tr({ zh: '最小', en: 'min' })} value={plmin}
+                      onChange={e => update('plmin', e.target.value)} />
+                    <span className="wse-len-dash">–</span>
+                    <input type="number" min={0} inputMode="numeric" className="wse-len-input"
+                      placeholder={tr({ zh: '最大', en: 'max' })} value={plmax}
+                      onChange={e => update('plmax', e.target.value)} />
+                    {(plmin || plmax) && (
+                      <ClearButton variant="standalone"
+                        onClick={() => setQuery({ plmin: null, plmax: null, page: null })} />
+                    )}
                   </div>
                 </div>
               </>

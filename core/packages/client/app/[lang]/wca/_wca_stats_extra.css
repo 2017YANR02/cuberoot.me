@@ -83,6 +83,31 @@
 .wse-filter select:hover,
 .wse-filter > input:hover { border-color: rgba(255, 255, 255, 0.25); }
 
+/* 名录长度区间筛选(最小–最大,按当前名字口径的字符数) */
+.wse-len-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;  /* 不被 column flex 的 .wse-filter 拉满整列宽 */
+}
+.wse-len-input {
+  width: 60px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  border-radius: 6px;
+  font-size: 14px;
+  height: 34px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+.wse-len-input:hover { border-color: rgba(255, 255, 255, 0.25); }
+.wse-len-input::-webkit-outer-spin-button,
+.wse-len-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.wse-len-dash { color: var(--muted-foreground); }
+
 /* CountrySelect */
 .wse-country { position: relative; }
 .wse-country-trigger {
