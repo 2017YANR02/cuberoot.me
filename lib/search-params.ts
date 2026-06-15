@@ -76,6 +76,29 @@ export const newPostParams = {
 };
 export const loadNewPostParams = createLoader(newPostParams);
 
+/* ---------- 排行榜:榜单类型 + 时间范围 + 魔方项目 ---------- */
+export const LEADERBOARD_BOARDS = ["speed", "study", "points"] as const;
+export type LeaderboardBoard = (typeof LEADERBOARD_BOARDS)[number];
+export const LEADERBOARD_PERIODS = ["week", "month", "all"] as const;
+export type LeaderboardPeriod = (typeof LEADERBOARD_PERIODS)[number];
+export const leaderboardParams = {
+  board: parseAsStringLiteral(LEADERBOARD_BOARDS).withDefault("speed"),
+  period: parseAsStringLiteral(LEADERBOARD_PERIODS).withDefault("week"),
+  event: parseAsString.withDefault("333"), // 速拧榜按魔方项目
+};
+export const loadLeaderboardParams = createLoader(leaderboardParams);
+export const serializeLeaderboardParams = createSerializer(leaderboardParams);
+
+/* ---------- 圈子详情:排序(最新 / 热门)+ 页码 ---------- */
+export const CIRCLE_SORTS = ["latest", "hot"] as const;
+export type CircleSort = (typeof CIRCLE_SORTS)[number];
+export const circleParams = {
+  sort: parseAsStringLiteral(CIRCLE_SORTS).withDefault("latest"),
+  page: parseAsInteger.withDefault(1),
+};
+export const loadCircleParams = createLoader(circleParams);
+export const serializeCircleParams = createSerializer(circleParams);
+
 /* ---------- 订单支付流(去掉 `as ProviderId` 强转)---------- */
 export const PROVIDER_IDS = [
   "mock_wechat",
