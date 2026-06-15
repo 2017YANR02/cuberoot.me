@@ -548,12 +548,15 @@ function ScrambleSolverPageInner() {
     let warm = true;           // was the table already in server memory
     let loadMs = 0;            // server-reported table load time (cold start)
     // Safety timeouts so a dead/hung stream never spins forever. Sliding
-    // inactivity check: the server sends a 15s heartbeat ping while loading /
-    // queued / mid-solve, so any healthy request keeps resetting lastActivity —
-    // only a genuinely silent stream (>45s no bytes at all) trips no-response.
-    // The server's own solve timeout is 180s, so 230s total is a safe outer bound.
+    // inactivity check: the server sends a 10s heartbeat ping while loading /
+    // queued / mid-solve, so any healthy request keeps resetting lastActivity.
+    // Threshold is 60s (not 45s): the heartbeat runs on the server's main event
+    // loop, which can be blocked ~20s at a time by in-process warm builds, so a
+    // healthy stream can still show a ~30-50s gap. nginx's read timeout for this
+    // endpoint is 200s (> server's 180s solve cap), so 60s here is the binding,
+    // intentional "is it actually dead" detector; 230s total is the outer bound.
     let lastActivity = Date.now();
-    const noRespTimer = setInterval(() => { if (Date.now() - lastActivity > 45_000) ac.abort('no-response'); }, 5_000);
+    const noRespTimer = setInterval(() => { if (Date.now() - lastActivity > 60_000) ac.abort('no-response'); }, 5_000);
     const overallTimer = setTimeout(() => ac.abort('overall'), 230_000);
     // (Re)start the live phase timer — ticks the current phase's elapsed at 0.1s.
     const startPhaseTimer = () => {
