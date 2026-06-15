@@ -8,6 +8,7 @@ import type {
   Post,
   PostInsert,
 } from "@/db/schema";
+import type { CircleSort } from "@/lib/search-params";
 import { randomBytes } from "node:crypto";
 import { awardPoints } from "@/lib/db/points";
 
@@ -108,6 +109,98 @@ export async function listPosts(opts?: {
     authorAvatar: r.authorAvatar ?? null,
     commentCount: Number(r.commentCount ?? 0),
   }));
+}
+
+export async function countCommentsByPost(postId: string): Promise<number> {
+  const rows = db
+    .select({ n: sql<number>`COUNT(*)` })
+    .from(schema.comments)
+    .where(eq(schema.comments.postId, postId))
+    .all();
+  return Number(rows[0]?.n ?? 0);
+}
+
+export type PagedPosts = {
+  items: PostWithAuthor[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+/**
+ * 单个圈子的分页帖子列表。
+ * sort='latest':按 createdAt 倒序。
+ * sort='hot':热度排序 = likes*2 + 评论数*3,近 7 天的帖子整体加权(× 时间衰减),
+ *   让新热帖压过陈年高赞帖;同分回落到 createdAt 倒序。
+ */
+export async function listPagedByCircle({
+  circleId,
+  sort,
+  page = 1,
+  pageSize = 20,
+}: {
+  circleId: CircleId;
+  sort: CircleSort;
+  page?: number;
+  pageSize?: number;
+}): Promise<PagedPosts> {
+  const safePage = Math.max(1, Math.floor(page));
+  const offset = (safePage - 1) * pageSize;
+
+  const where = eq(schema.posts.circleId, circleId);
+
+  const totalRow = db
+    .select({ n: sql<number>`COUNT(*)` })
+    .from(schema.posts)
+    .where(where)
+    .all();
+  const total = Number(totalRow[0]?.n ?? 0);
+
+  const commentCountSql = sql<number>`(
+    SELECT COUNT(*) FROM ${schema.comments}
+    WHERE ${schema.comments.postId} = ${schema.posts.id}
+  )`;
+
+  // 热度分:基础分 likes*2 + 评论*3;近 7 天加 1.6 倍权重(线性衰减:今天 ×1.6 → 第 7 天 ×1.0)。
+  // 用 strftime('%s','now') 取当前秒,避免把 Date.now() 拼进 SQL 影响缓存语义。
+  const hotScoreSql = sql<number>`(
+    (${schema.posts.likes} * 2 + ${commentCountSql} * 3 + 1)
+    * (1 + 0.6 * MAX(0, 7 - (CAST(strftime('%s','now') AS INTEGER) - ${schema.posts.createdAt}) / 86400.0) / 7.0)
+  )`;
+
+  const base = db
+    .select({
+      post: schema.posts,
+      authorNickname: schema.users.nickname,
+      authorAvatar: schema.users.avatar,
+      commentCount: commentCountSql,
+    })
+    .from(schema.posts)
+    .leftJoin(schema.users, eq(schema.posts.authorId, schema.users.id))
+    .where(where);
+
+  const ordered =
+    sort === "hot"
+      ? base.orderBy(desc(hotScoreSql), desc(schema.posts.createdAt))
+      : base.orderBy(desc(schema.posts.createdAt));
+
+  const rows = ordered.limit(pageSize).offset(offset).all();
+
+  const items: PostWithAuthor[] = rows.map((r) => ({
+    ...r.post,
+    authorNickname: r.authorNickname ?? "未知用户",
+    authorAvatar: r.authorAvatar ?? null,
+    commentCount: Number(r.commentCount ?? 0),
+  }));
+
+  return {
+    items,
+    total,
+    page: safePage,
+    pageSize,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+  };
 }
 
 export async function findPostById(id: string): Promise<PostWithAuthor | undefined> {

@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { updateProgress } from "@/app/actions/progress";
+import { LessonNotes } from "@/components/LessonNotes";
+import type { LessonNote } from "@/lib/db/notes";
 
 type Props = {
   lessonId: string;
@@ -9,6 +11,7 @@ type Props = {
   poster?: string | null;
   initialPositionSec?: number;
   initialCompleted?: boolean;
+  initialNotes?: LessonNote[];
 };
 
 const THROTTLE_MS = 10_000;
@@ -19,6 +22,7 @@ export function LessonPlayer({
   poster,
   initialPositionSec = 0,
   initialCompleted = false,
+  initialNotes = [],
 }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lastSentRef = useRef(0);
@@ -74,24 +78,52 @@ export function LessonPlayer({
     void send(el.currentTime, completed);
   };
 
+  // 给笔记面板暴露当前播放位置 / 跳转能力(共享同一个 video ref,不另起播放器)。
+  const getCurrentTime = useCallback(() => {
+    const el = videoRef.current;
+    return el && Number.isFinite(el.currentTime) ? el.currentTime : 0;
+  }, []);
+
+  const seek = useCallback((sec: number) => {
+    const el = videoRef.current;
+    if (!el) return;
+    const target = Math.max(0, sec);
+    el.currentTime =
+      !Number.isNaN(el.duration) && el.duration > 0
+        ? Math.min(target, el.duration)
+        : target;
+    void el.play().catch(() => {
+      // Autoplay may be blocked; user can resume manually. Position is set regardless.
+    });
+  }, []);
+
   return (
-    <div className="overflow-hidden rounded-[14px] border border-line bg-black">
-      <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
-        <video
-          ref={videoRef}
-          src={src}
-          controls
-          playsInline
-          preload="metadata"
-          poster={poster ?? undefined}
-          onTimeUpdate={onTimeUpdate}
-          onEnded={onEnded}
-          onPause={onPause}
-          className="absolute inset-0 h-full w-full bg-black"
-        >
-          <track kind="captions" />
-        </video>
+    <div>
+      <div className="overflow-hidden rounded-[14px] border border-line bg-black">
+        <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
+          <video
+            ref={videoRef}
+            src={src}
+            controls
+            playsInline
+            preload="metadata"
+            poster={poster ?? undefined}
+            onTimeUpdate={onTimeUpdate}
+            onEnded={onEnded}
+            onPause={onPause}
+            className="absolute inset-0 h-full w-full bg-black"
+          >
+            <track kind="captions" />
+          </video>
+        </div>
       </div>
+
+      <LessonNotes
+        lessonId={lessonId}
+        initialNotes={initialNotes}
+        getCurrentTime={getCurrentTime}
+        onSeek={seek}
+      />
     </div>
   );
 }

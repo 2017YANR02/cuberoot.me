@@ -9,6 +9,9 @@ import {
   CalendarCheck,
   Trophy,
   ChevronRight,
+  Award,
+  NotebookPen,
+  BarChart3,
 } from "lucide-react";
 import { requireUser } from "@/lib/auth-user";
 import { getStreakInfo } from "@/lib/db/checkins";
@@ -31,10 +34,13 @@ const QUICK_LINKS: {
   icon: typeof BookOpen;
 }[] = [
   { href: "/me/courses", label: "我的课程", desc: "已购课程与学习进度", icon: BookOpen },
+  { href: "/me/badges", label: "我的徽章", desc: "解锁的成就徽章", icon: Award },
+  { href: "/me/notes", label: "我的笔记", desc: "课程时间戳笔记", icon: NotebookPen },
   { href: "/me/favorites", label: "我的收藏", desc: "收藏的课程 / 商品 / 帖子", icon: Heart },
   { href: "/me/membership", label: "我的会员", desc: "会员状态与续费", icon: Crown },
   { href: "/me/invite", label: "我的邀请", desc: "邀请码与好友奖励", icon: Gift },
   { href: "/timer", label: "计时器", desc: "记录还原成绩", icon: Timer },
+  { href: "/leaderboard", label: "排行榜", desc: "速拧 / 学习 / 积分榜", icon: BarChart3 },
 ];
 
 export default async function MePage() {

@@ -9,6 +9,7 @@ import { TrackPageView } from "@/components/TrackPageView";
 import { SwRegister } from "@/components/SwRegister";
 import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { getCurrentUser } from "@/lib/auth-user";
+import { unreadCount } from "@/lib/db/notifications";
 import { getSiteUrl, ogImageUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 
 const TITLE = "魔方开放社群 — 一站式魔方垂直综合服务平台";
@@ -56,11 +57,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const headerUser: HeaderUser | null = u
     ? { id: u.id, nickname: u.nickname, role: u.role }
     : null;
+  const notifCount = u ? await unreadCount(u.id) : 0;
   return (
     <html lang="zh-CN">
       <body>
         <NuqsAdapter>
-          <SiteHeader user={headerUser} />
+          <SiteHeader user={headerUser} notifCount={notifCount} />
           <main>{children}</main>
           <SiteFooter />
           <Suspense fallback={null}>

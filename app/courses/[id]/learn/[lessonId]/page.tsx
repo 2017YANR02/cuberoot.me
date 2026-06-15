@@ -7,6 +7,7 @@ import {
 } from "@/lib/db/courses";
 import { findById as findLesson, listByCourse } from "@/lib/db/lessons";
 import { findByUserLesson, listByUserCourse } from "@/lib/db/progress";
+import { listByLesson as listNotesByLesson } from "@/lib/db/notes";
 import { getCurrentUser } from "@/lib/auth-user";
 import { LessonPlayer } from "@/components/LessonPlayer";
 
@@ -35,10 +36,19 @@ export async function generateMetadata({
 
 export default async function LearnPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; lessonId: string }>;
+  searchParams: Promise<{ t?: string }>;
 }) {
   const { id, lessonId } = await params;
+  const { t } = await searchParams;
+  // ?t=<sec> 深链(来自「我的笔记」),手动钳制为非负整数;非纯 nuqs 状态。
+  const seekParam = (() => {
+    if (typeof t !== "string") return null;
+    const n = Number.parseInt(t, 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  })();
   const course = await findCourse(id);
   if (!course) notFound();
   const lesson = await findLesson(lessonId);
@@ -53,9 +63,10 @@ export default async function LearnPage({
     redirect(`/courses/${course.id}?toast=need_purchase`);
   }
 
-  const [lessons, progressList] = await Promise.all([
+  const [lessons, progressList, notes] = await Promise.all([
     listByCourse(course.id),
     user ? listByUserCourse(user.id, course.id) : Promise.resolve([]),
+    user ? listNotesByLesson(user.id, lesson.id) : Promise.resolve([]),
   ]);
   const progressMap = new Map(progressList.map((p) => [p.lessonId, p]));
   const myProgress = user ? await findByUserLesson(user.id, lesson.id) : undefined;
@@ -101,8 +112,9 @@ export default async function LearnPage({
                 lessonId={lesson.id}
                 src={videoSrc}
                 poster={course.coverUrl ?? null}
-                initialPositionSec={myProgress?.positionSec ?? 0}
+                initialPositionSec={seekParam ?? myProgress?.positionSec ?? 0}
                 initialCompleted={myProgress?.completed ?? false}
+                initialNotes={notes}
               />
             ) : (
               <div className="rounded-[14px] border border-dashed border-line bg-bg-soft px-6 py-10 text-center text-[14px] text-ink-3">
