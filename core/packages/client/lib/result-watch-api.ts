@@ -1,7 +1,9 @@
-// 关注选手「往期成绩变更」监控 — 只读 /v1/wca/result-watch/* 客户端。
-// 数据由 server monitors/wca_past_results.ts 后台 diff WCA 全生涯成绩写入。
+// 选手「成绩变更」客户端 — 读 + 管理员写 /v1/wca/result-watch/*。
+// 自动数据由 server monitors/wca_past_results.ts diff 写入(source='auto');
+// 管理员可手动录入/编辑变更链(source='manual')。
 
 import { apiUrl } from './api-base';
+import { authHeaders } from './admin-api';
 import { formatWcaResult } from './wca-format-result';
 
 export interface ResultWatchPerson {
@@ -57,6 +59,11 @@ export interface ResultChange {
   before: ResultFingerprint | null;
   after: ResultFingerprint | null;
   detectedAt: string;
+  note: string | null;
+  effectiveAt: string | null;
+  source: 'auto' | 'manual';
+  createdBy: string | null;
+  editedAt: string | null;
 }
 
 export async function fetchResultWatchStatus(signal?: AbortSignal): Promise<ResultWatchStatus> {
@@ -69,19 +76,117 @@ export async function fetchResultChanges(
   wcaId: string | null,
   limit = 300,
   signal?: AbortSignal,
+  noStore = false,
 ): Promise<ResultChange[]> {
   const qs = new URLSearchParams();
   if (wcaId) qs.set('wcaId', wcaId);
   qs.set('limit', String(limit));
-  const res = await fetch(apiUrl(`/v1/wca/result-watch/changes?${qs.toString()}`), { signal });
+  if (noStore) qs.set('_t', String(Date.now()));
+  const res = await fetch(apiUrl(`/v1/wca/result-watch/changes?${qs.toString()}`), {
+    signal,
+    ...(noStore ? { cache: 'no-store' as RequestCache } : {}),
+  });
   if (!res.ok) throw new Error(`result-watch/changes ${res.status}`);
   const j = (await res.json()) as { changes?: ResultChange[] };
   return j.changes ?? [];
 }
 
-/** 单行成绩 → 变更记录的匹配键(comp | event | 归一轮次)。用于把变更内联到全部成绩表。 */
+/** 按比赛拉全场变更(comp 直播页用,一次取一个比赛所有选手)。 */
+export async function fetchResultChangesByComp(
+  compId: string,
+  limit = 500,
+  signal?: AbortSignal,
+  noStore = false,
+): Promise<ResultChange[]> {
+  const qs = new URLSearchParams({ compId, limit: String(limit) });
+  if (noStore) qs.set('_t', String(Date.now()));
+  const res = await fetch(apiUrl(`/v1/wca/result-watch/changes?${qs.toString()}`), {
+    signal,
+    ...(noStore ? { cache: 'no-store' as RequestCache } : {}),
+  });
+  if (!res.ok) throw new Error(`result-watch/changes ${res.status}`);
+  const j = (await res.json()) as { changes?: ResultChange[] };
+  return j.changes ?? [];
+}
+
+// ── 管理员写(手动录入/编辑变更链) ─────────────────────────────────────────────
+
+export interface ResultChangeInput {
+  wcaId: string;
+  resultId?: number | null;
+  competitionId: string;
+  eventId: string;
+  roundTypeId: string;
+  changeType?: 'modified' | 'removed';
+  fields?: ResultChangeField[];
+  note?: string | null;
+  effectiveAt?: string | null;
+}
+
+async function writeChange(method: 'POST' | 'PUT', path: string, input: ResultChangeInput): Promise<unknown> {
+  const res = await fetch(apiUrl(path), {
+    method,
+    headers: authHeaders(),
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const j = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(j.error ?? `${method} ${path} ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function createResultChange(input: ResultChangeInput): Promise<number> {
+  const j = (await writeChange('POST', '/v1/wca/result-watch/changes', input)) as { id?: number };
+  return Number(j.id ?? 0);
+}
+
+export async function updateResultChange(id: number, input: ResultChangeInput): Promise<void> {
+  await writeChange('PUT', `/v1/wca/result-watch/changes/${id}`, input);
+}
+
+export async function deleteResultChange(id: number): Promise<void> {
+  const res = await fetch(apiUrl(`/v1/wca/result-watch/changes/${id}`), {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`delete change ${res.status}`);
+}
+
+/**
+ * 人类输入 → 厘秒(WCA 内部编码)。支持 DNF/DNS、[mm:]ss[.cc]、333fm 步数。
+ * MBLD 等特殊编码不在此精确处理(回退按数值*100,录入时罕见)。
+ */
+export function parseHumanResult(input: string, eventId: string): number | null {
+  const s = input.trim();
+  if (!s) return null;
+  const up = s.toUpperCase();
+  if (up === 'DNF') return -1;
+  if (up === 'DNS') return -2;
+  if (eventId === '333fm') {
+    if (/^\d+$/.test(s)) return parseInt(s, 10);             // single = 步数
+    const fm = Number(s);
+    return Number.isFinite(fm) ? Math.round(fm * 100) : null; // average = 步数*100
+  }
+  const m = s.match(/^(?:(\d+):)?(\d+)(?:\.(\d{1,2}))?$/);
+  if (!m) {
+    const n = Number(s);
+    return Number.isFinite(n) ? Math.round(n * 100) : null;
+  }
+  const min = m[1] ? parseInt(m[1], 10) : 0;
+  const sec = parseInt(m[2], 10);
+  const cs = m[3] ? parseInt(m[3].padEnd(2, '0'), 10) : 0;
+  return (min * 60 + sec) * 100 + cs;
+}
+
+/** 单行成绩 → 变更记录的匹配键(comp | event | 归一轮次)。选手页按人拉取,故无需带人。 */
 export function rowChangeKey(competitionId: string, eventId: string, roundTypeId: string | null): string {
   return `${competitionId}|${eventId}|${canonicalRound(roundTypeId) ?? roundTypeId ?? ''}`;
+}
+
+/** comp 直播页匹配键(wcaId | event | 归一轮次):一个轮次多名选手,必须带人区分。 */
+export function personRoundChangeKey(wcaId: string, eventId: string, roundTypeId: string | null): string {
+  return `${wcaId}|${eventId}|${canonicalRound(roundTypeId) ?? roundTypeId ?? ''}`;
 }
 
 /** 把变更列表按行键索引,供成绩表逐行查命中。 */
@@ -100,6 +205,61 @@ export function buildRowChangeMap(changes: ResultChange[]): Map<string, ResultCh
 export function changeOldValue(change: ResultChange, field: 'best' | 'average'): number | null {
   const f = (change.fields ?? []).find((x) => x.field === field);
   return f ? Number(f.old) : null;
+}
+
+/** 变更链排序键:真实发生时间优先(effectiveAt),缺失退化 detectedAt。 */
+function changeOrderTs(c: ResultChange): number {
+  const t = Date.parse(c.effectiveAt ?? c.detectedAt);
+  return Number.isNaN(t) ? 0 : t;
+}
+
+/**
+ * 把变更列表按行键索引为「变更链」:同一行(comp|event|轮次)的多条变更,
+ * 按发生时间升序排成数组(支持同一成绩多次更改)。
+ */
+export function buildRowChangeListMap(changes: ResultChange[]): Map<string, ResultChange[]> {
+  const m = new Map<string, ResultChange[]>();
+  for (const c of changes) {
+    if (!c.competitionId || !c.eventId) continue;
+    const k = rowChangeKey(c.competitionId, c.eventId, c.roundTypeId);
+    const arr = m.get(k);
+    if (arr) arr.push(c);
+    else m.set(k, [c]);
+  }
+  for (const arr of m.values()) arr.sort((a, b) => changeOrderTs(a) - changeOrderTs(b));
+  return m;
+}
+
+/** comp 直播页用:按 (wcaId | event | 轮次) 索引变更链(区分同轮多名选手)。 */
+export function buildPersonRoundChangeListMap(changes: ResultChange[]): Map<string, ResultChange[]> {
+  const m = new Map<string, ResultChange[]>();
+  for (const c of changes) {
+    if (!c.eventId) continue;
+    const k = personRoundChangeKey(c.wcaId, c.eventId, c.roundTypeId);
+    const arr = m.get(k);
+    if (arr) arr.push(c);
+    else m.set(k, [c]);
+  }
+  for (const arr of m.values()) arr.sort((a, b) => changeOrderTs(a) - changeOrderTs(b));
+  return m;
+}
+
+/**
+ * 一条变更链里某数值字段被历次更正前的旧值序列(oldest→newest),
+ * 用于行内依次划线:[78, 283] → ~~0.78~~ ~~2.83~~,当前值(API)加粗在后。
+ */
+export function changeChainOldValues(
+  changes: ResultChange[] | undefined,
+  field: 'best' | 'average',
+): number[] {
+  if (!changes) return [];
+  const out: number[] = [];
+  for (const c of changes) {
+    if (c.changeType !== 'modified') continue;
+    const f = (c.fields ?? []).find((x) => x.field === field);
+    if (f && f.old != null) out.push(Number(f.old));
+  }
+  return out;
 }
 
 /** WCA round_type_id 归一到 4 个轮次桶('1'/'2'/'3'/'f'),含 combined / cutoff 变体。 */

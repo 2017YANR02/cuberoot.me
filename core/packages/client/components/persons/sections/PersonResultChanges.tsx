@@ -72,6 +72,9 @@ function ChangeRow({ c, isZh }: { c: ResultChange; isZh: boolean }) {
       <span className={`wp-rc-badge wp-rc-badge-${c.changeType}`}>
         {removed ? tr({ zh: '取消', en: 'Cancelled' }) : tr({ zh: '修正', en: 'Fixed' })}
       </span>
+      {c.source === 'manual' && (
+        <span className="wp-rc-source">{tr({ zh: '手动', en: 'manual' })}</span>
+      )}
       <EventIcon event={eventId} className="wp-rc-evt" />
       <span className="wp-rc-ctx">
         <span className="wp-rc-event">{eventDisplayName(eventId, isZh)}</span>
@@ -104,6 +107,7 @@ function ChangeRow({ c, isZh }: { c: ResultChange; isZh: boolean }) {
           ))
         )}
       </span>
+      {c.note && <span className="wp-rc-note">{c.note}</span>}
     </li>
   );
 }

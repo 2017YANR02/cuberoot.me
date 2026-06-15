@@ -18,10 +18,15 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { findReconForAttempt } from '@/lib/recon-attempt-lookup';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
-import { rowChangeKey, changeOldValue } from '@/lib/result-watch-api';
+import { rowChangeKey, changeChainOldValues } from '@/lib/result-watch-api';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
-import { ChangedResultValue } from './ChangedResultValue';
+import { ResultChangeChain } from './ChangedResultValue';
+import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
+import { isAdminWcaId } from '@cuberoot/shared/admin';
+import { useAuthStore } from '@/lib/auth-store';
+import { Pencil } from 'lucide-react';
 import i18n from "@/i18n/i18n-client";
+import { tr } from '@/i18n/tr';
 
 // hash 形如 #r-{compId}-{eventId}-{round}.按 ROUND_VARIANTS 反查 cutoff 子型 ('d'/'g'/'b' etc).
 function resolveHashRow(hash: string): HTMLElement | null {
@@ -44,6 +49,7 @@ function resolveHashRow(hash: string): HTMLElement | null {
 
 interface Props {
   wcaId: string;
+  personName?: string | null;
   results: WcaResultRow[] | null;
   comps: WcaCompetition[] | null;
   reconLookup: Map<string, number> | null;
@@ -52,9 +58,11 @@ interface Props {
 
 // 轮次显示元数据走 utils/wca_round_meta (ByEventView / 复盘页同场比赛表也用)
 
-export default function ByCompList({ wcaId, results, comps, reconLookup, isZh }: Props) {
+export default function ByCompList({ wcaId, personName, results, comps, reconLookup, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
-  const changeMap = useRowChangeMap(wcaId);
+  const { map: changeMap, refresh: refreshChanges } = useRowChangeMap(wcaId);
+  const admin = useAuthStore((s) => isAdminWcaId(s.user?.wcaId));
+  const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -166,19 +174,39 @@ export default function ByCompList({ wcaId, results, comps, reconLookup, isZh }:
                     const averageRank = rank?.averageRank ?? null;
                     const showEvent = r.event_id !== lastEvent;
                     lastEvent = r.event_id;
-                    const chg = changeMap.get(rowChangeKey(comp.id, r.event_id, r.round_type_id));
-                    const modified = chg?.changeType === 'modified';
-                    const oldBest = modified ? changeOldValue(chg, 'best') : null;
-                    const oldAvg = modified ? changeOldValue(chg, 'average') : null;
+                    const chain = changeMap.get(rowChangeKey(comp.id, r.event_id, r.round_type_id));
+                    const oldBest = changeChainOldValues(chain, 'best');
+                    const oldAvg = changeChainOldValues(chain, 'average');
+                    const hasChange = !!chain && chain.length > 0;
                     return (
                       <tr
                         key={r.id}
                         id={`r-${comp.id}-${r.event_id}-${r.round_type_id}`}
-                        className={`wp-row-anchorable ${chg ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''}`}
+                        className={`wp-row-anchorable ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''}`}
                         onClick={(e) => handleRowClick(e, comp.id, r.event_id, r.round_type_id)}
                       >
                         <td className="wp-cell-event">
                           {showEvent && <EventIcon event={r.event_id} className="wp-event-icon-sm" />}
+                          {admin && (
+                            <button
+                              type="button"
+                              className="wp-change-edit"
+                              title={tr({ zh: '编辑成绩变更', en: 'Edit result changes' })}
+                              onClick={() => setEditTarget({
+                                wcaId,
+                                competitionId: comp.id,
+                                eventId: r.event_id,
+                                roundTypeId: r.round_type_id,
+                                resultId: r.id ?? null,
+                                currentBest: r.best,
+                                currentAverage: r.average,
+                                currentSingleRecord: r.regional_single_record ?? null,
+                                currentAverageRecord: r.regional_average_record ?? null,
+                                personName: personName ?? null,
+                                compName: comp.name ?? null,
+                              })}
+                            ><Pencil size={13} /></button>
+                          )}
                         </td>
                         <td>
                           <Link
@@ -200,9 +228,9 @@ export default function ByCompList({ wcaId, results, comps, reconLookup, isZh }:
                         <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
                           {r.pos > 0 ? r.pos : '—'}
                         </td>
-                        <td className={`wp-cell-result ${oldBest != null ? 'wp-cell-changed' : ''}`}>
+                        <td className={`wp-cell-result ${oldBest.length > 0 ? 'wp-cell-changed' : ''}`}>
                           <span className="record-num-cell">
-                            <ChangedResultValue oldValue={oldBest} eventId={r.event_id} kind="single" />
+                            <ResultChangeChain oldValues={oldBest} eventId={r.event_id} kind="single" note={chain?.[chain.length - 1]?.note} />
                             {formatWcaResult(r.best, r.event_id, 'single')}
                             {r.regional_single_record
                               ? <RecordBadge record={r.regional_single_record} variant="inline" />
@@ -211,9 +239,9 @@ export default function ByCompList({ wcaId, results, comps, reconLookup, isZh }:
                                 : null}
                           </span>
                         </td>
-                        <td className={`wp-cell-result ${oldAvg != null ? 'wp-cell-changed' : ''}`}>
+                        <td className={`wp-cell-result ${oldAvg.length > 0 ? 'wp-cell-changed' : ''}`}>
                           <span className="record-num-cell">
-                            <ChangedResultValue oldValue={oldAvg} eventId={r.event_id} kind="average" />
+                            <ResultChangeChain oldValues={oldAvg} eventId={r.event_id} kind="average" note={chain?.[chain.length - 1]?.note} />
                             {formatWcaResult(r.average, r.event_id, 'average')}
                             {r.regional_average_record
                               ? <RecordBadge record={r.regional_average_record} variant="inline" />
@@ -242,6 +270,14 @@ export default function ByCompList({ wcaId, results, comps, reconLookup, isZh }:
           </div>
         );
       })}
+      {editTarget && (
+        <ResultChangeEditor
+          target={editTarget}
+          existingChanges={changeMap.get(rowChangeKey(editTarget.competitionId, editTarget.eventId, editTarget.roundTypeId)) ?? []}
+          onClose={() => setEditTarget(null)}
+          onSaved={() => refreshChanges()}
+        />
+      )}
     </div>
   );
 }

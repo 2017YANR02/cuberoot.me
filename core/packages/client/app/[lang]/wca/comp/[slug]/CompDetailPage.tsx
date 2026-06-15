@@ -9,7 +9,7 @@ import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check } from 'lucide-react';
+import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check, Pencil } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
@@ -40,6 +40,11 @@ import ScheduleView, { ScheduleControls } from './ScheduleView';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import LangToggle from '@/components/LangToggle';
 import { useCompFollows, FollowStar } from '@/components/CompFollow';
+import { personRoundChangeKey, changeChainOldValues } from '@/lib/result-watch-api';
+import { useCompRowChangeMap } from '@/components/persons/logic/use-row-change-map';
+import { ResultChangeChain } from '@/components/persons/sections/results/ChangedResultValue';
+import { ResultChangeEditor, type ResultChangeTarget } from '@/components/persons/sections/results/ResultChangeEditor';
+import type { ResultChange } from '@/lib/result-watch-api';
 import '../comp.css';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
@@ -516,6 +521,10 @@ export default function CompDetailPage() {
   const user = useAuthStore(s => s.user);
   const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
   const login = useAuthStore(s => s.login);
+  // 成绩变更(取消 / 修正,可多次):整场比赛一次拉取,按 (wcaId|event|轮) 索引;
+  // 行内在当前值前划掉历次旧值,管理员可经铅笔编辑变更链。compId 即 WCA 比赛 id(规整后 slug)。
+  const { map: changeMap, refresh: refreshChanges } = useCompRowChangeMap(slug);
+  const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
   // 比赛关注「盯一下」— 与首页 / 比赛列表共用同一份 server 关注集合
   const { loggedIn: followLoggedIn, follows, toggle: toggleFollow } = useCompFollows();
 
@@ -1423,6 +1432,11 @@ export default function CompDetailPage() {
               isZh={isZh}
               pbMap={pbMap}
               compIso2={compFlagIso2(slug)}
+              changeMap={changeMap}
+              compId={slug}
+              compName={compNameTitle}
+              admin={isAdmin}
+              onEdit={setEditTarget}
               onClickCuber={n => setModal({ kind: 'all', number: n })}
             />
           </>
@@ -1475,6 +1489,11 @@ export default function CompDetailPage() {
                 pbMap={pbMap}
                 advancers={advancers}
                 compIso2={compFlagIso2(slug)}
+                changeMap={changeMap}
+                compId={slug}
+                compName={compNameTitle}
+                admin={isAdmin}
+                onEdit={setEditTarget}
                 onClickCuber={n => {
                   if (currentRound) {
                     setModal({ kind: 'round', number: n, eventId: currentRound.ev.i, roundId: currentRound.rd.i });
@@ -1520,6 +1539,14 @@ export default function CompDetailPage() {
             setModal({ kind: 'round', number: modal.number, eventId, roundId });
           }}
           onClose={() => setModal(null)}
+        />
+      )}
+      {editTarget && (
+        <ResultChangeEditor
+          target={editTarget}
+          existingChanges={changeMap.get(personRoundChangeKey(editTarget.wcaId, editTarget.eventId, editTarget.roundTypeId)) ?? []}
+          onClose={() => setEditTarget(null)}
+          onSaved={() => refreshChanges()}
         />
       )}
     </div>
@@ -1676,9 +1703,15 @@ interface ResultsTableProps {
   advancers?: Set<number>;
   onClickCuber: (number: number) => void;
   compIso2?: string;
+  // 成绩变更:整场比赛变更链(按 personRoundChangeKey 索引)+ 比赛 id / 名 + 管理员门控 + 编辑回调。
+  changeMap?: Map<string, ResultChange[]>;
+  compId?: string;
+  compName?: string;
+  admin?: boolean;
+  onEdit?: (t: ResultChangeTarget) => void;
 }
 
-function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber, compIso2 }: ResultsTableProps) {
+function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber, compIso2, changeMap, compId, compName, admin, onEdit }: ResultsTableProps) {
   if (!round) return null;
   const isAverageFormat = isAvgRankedFormat(round.f);
   // 多盲 Bo3 显示非官方 Mo3 平均(WCA 不追踪);Bo1/Bo2 无平均不显示
@@ -1722,6 +1755,8 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
             const { singleRank, averageRank } = classifyPr(r, pb);
             const singleBadge = prBadgeFor(singleRank);
             const averageBadge = prBadgeFor(averageRank);
+            const wcaid = u.wcaid;
+            const chain = wcaid ? changeMap?.get(personRoundChangeKey(wcaid, r.e, r.r)) : undefined;
             const isOdd = idx % 2 === 1;
             const advanced = advancers?.has(r.n);
             const cls = [advanced ? 'row-advanced' : '', isOdd ? 'row-odd' : ''].filter(Boolean).join(' ');
@@ -1740,11 +1775,37 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                   >
                     {displayCuberName(u.name, isZh)}
                   </span>
+                  {admin && wcaid && (
+                    <button
+                      type="button"
+                      className="wp-change-edit"
+                      title={tr({ zh: '编辑成绩变更', en: 'Edit result changes' })}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit?.({
+                          wcaId: wcaid,
+                          competitionId: compId ?? '',
+                          eventId: r.e,
+                          roundTypeId: r.r,
+                          resultId: r.i,
+                          currentBest: r.b,
+                          currentAverage: r.a,
+                          currentSingleRecord: typeof r.sr === 'string' ? r.sr : null,
+                          currentAverageRecord: typeof r.ar === 'string' ? r.ar : null,
+                          personName: u.name ?? null,
+                          compName: compName ?? null,
+                        });
+                      }}
+                    >
+                      <Pencil size={13} />
+                    </button>
+                  )}
                 </td>
                 {(() => {
                   const avgCell = showAvg ? (
                     <td key="avg" className={`td-avg${!singleFirst ? ' is-rank-col' : ''}`}>
                       <span className="record-num-cell">
+                        <ResultChangeChain oldValues={changeChainOldValues(chain, 'average')} eventId={r.e} kind="average" note={chain?.[chain.length - 1]?.note} />
                         {formatLive(effectiveAvg(r), r.e, true)}
                         {r.ar
                           ? <RecordBadge record={String(r.ar)} variant="inline" iso2={regionToIso2(u.region)} />
@@ -1755,6 +1816,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                   const bestCell = (
                     <td key="best" className={`td-best${singleFirst ? ' is-rank-col' : ''}`}>
                       <span className="record-num-cell">
+                        <ResultChangeChain oldValues={changeChainOldValues(chain, 'best')} eventId={r.e} kind="single" note={chain?.[chain.length - 1]?.note} />
                         {formatLive(r.b, r.e, false)}
                         {r.sr
                           ? <RecordBadge record={r.sr} variant="inline" iso2={regionToIso2(u.region)} />
@@ -1789,10 +1851,15 @@ interface PodiumViewProps {
   pbMap: Record<string, PbByEvent | null>;
   compIso2?: string;
   onClickCuber: (number: number) => void;
+  changeMap?: Map<string, ResultChange[]>;
+  compId?: string;
+  compName?: string;
+  admin?: boolean;
+  onEdit?: (t: ResultChangeTarget) => void;
 }
 
 // 领奖台:逐项目列出决赛前三,复用 ResultsTable 的列结构/记录标志/成绩格式化。
-function PodiumView({ groups, users, isZh, pbMap, compIso2, onClickCuber }: PodiumViewProps) {
+function PodiumView({ groups, users, isZh, pbMap, compIso2, onClickCuber, changeMap, compId, compName, admin, onEdit }: PodiumViewProps) {
   if (groups.length === 0) {
     return <div className="comp-empty">{tr({ zh: '暂无领奖台', en: 'No podiums yet'
     })}</div>;
@@ -1812,6 +1879,11 @@ function PodiumView({ groups, users, isZh, pbMap, compIso2, onClickCuber }: Podi
             isZh={isZh}
             pbMap={pbMap}
             compIso2={compIso2}
+            changeMap={changeMap}
+            compId={compId}
+            compName={compName}
+            admin={admin}
+            onEdit={onEdit}
             onClickCuber={onClickCuber}
           />
         </section>

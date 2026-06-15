@@ -26,10 +26,15 @@ import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
 import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
 import { UnofficialMark } from '@/components/UnofficialMark';
-import { rowChangeKey, changeOldValue } from '@/lib/result-watch-api';
+import { rowChangeKey, changeChainOldValues } from '@/lib/result-watch-api';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
-import { ChangedResultValue } from './ChangedResultValue';
+import { ResultChangeChain } from './ChangedResultValue';
+import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
+import { isAdminWcaId } from '@cuberoot/shared/admin';
+import { useAuthStore } from '@/lib/auth-store';
+import { Pencil } from 'lucide-react';
 import i18n from "@/i18n/i18n-client";
+import { tr } from '@/i18n/tr';
 
 // MBLD 无官方平均 → 用非官方 Mo3(从该轮 attempts 现算);其它项目用官方 average。
 function effectiveAverage(r: WcaResultRow, eventId: string): number {
@@ -122,6 +127,7 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
       <h3 className="wp-section-h">{t('全部成绩', 'All Results')}</h3>
       <EventRoundsList
         wcaId={profile.person.wca_id}
+        personName={profile.person.name}
         rows={eventResults}
         compById={compById}
         results={results}
@@ -193,9 +199,10 @@ function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLooku
 }
 
 function EventRoundsList({
-  wcaId, rows, compById, results, comps, eventId, reconLookup, isZh,
+  wcaId, personName, rows, compById, results, comps, eventId, reconLookup, isZh,
 }: {
   wcaId: string;
+  personName?: string | null;
   rows: WcaResultRow[];
   compById: Map<string, WcaCompetition>;
   results: WcaResultRow[];
@@ -205,7 +212,9 @@ function EventRoundsList({
   isZh: boolean;
 }) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
-  const changeMap = useRowChangeMap(wcaId);
+  const { map: changeMap, refresh: refreshChanges } = useRowChangeMap(wcaId);
+  const admin = useAuthStore((s) => isAdminWcaId(s.user?.wcaId));
+  const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -290,15 +299,15 @@ function EventRoundsList({
             const averageRank = rank?.averageRank ?? null;
             const showComp = r.competition_id !== lastCompId;
             lastCompId = r.competition_id;
-            const chg = changeMap.get(rowChangeKey(r.competition_id, eventId, r.round_type_id));
-            const modified = chg?.changeType === 'modified';
-            const oldBest = modified ? changeOldValue(chg, 'best') : null;
-            const oldAvg = modified ? changeOldValue(chg, 'average') : null;
+            const chain = changeMap.get(rowChangeKey(r.competition_id, eventId, r.round_type_id));
+            const oldBest = changeChainOldValues(chain, 'best');
+            const oldAvg = changeChainOldValues(chain, 'average');
+            const hasChange = !!chain && chain.length > 0;
             return (
               <tr
                 key={r.id}
                 id={`r-${r.competition_id}-${eventId}-${r.round_type_id}`}
-                className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${chg ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''}`}
+                className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''}`}
                 onClick={(e) => handleRowClick(e, r.competition_id, r.round_type_id)}
               >
                 <td className="wp-cell-comp">
@@ -312,6 +321,26 @@ function EventRoundsList({
                     </>
                   )}
                   {showComp && !cmp && r.competition_id}
+                  {admin && (
+                    <button
+                      type="button"
+                      className="wp-change-edit"
+                      title={tr({ zh: '编辑成绩变更', en: 'Edit result changes' })}
+                      onClick={() => setEditTarget({
+                        wcaId,
+                        competitionId: r.competition_id,
+                        eventId,
+                        roundTypeId: r.round_type_id,
+                        resultId: r.id ?? null,
+                        currentBest: r.best,
+                        currentAverage: r.average,
+                        currentSingleRecord: r.regional_single_record ?? null,
+                        currentAverageRecord: r.regional_average_record ?? null,
+                        personName: personName ?? null,
+                        compName: cmp?.name ?? null,
+                      })}
+                    ><Pencil size={13} /></button>
+                  )}
                 </td>
                 <td>
                   <Link
@@ -333,9 +362,9 @@ function EventRoundsList({
                 <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
                   {r.pos > 0 ? r.pos : '—'}
                 </td>
-                <td className={`wp-cell-result ${oldBest != null ? 'wp-cell-changed' : ''}`}>
+                <td className={`wp-cell-result ${oldBest.length > 0 ? 'wp-cell-changed' : ''}`}>
                   <span className="record-num-cell">
-                    <ChangedResultValue oldValue={oldBest} eventId={eventId} kind="single" />
+                    <ResultChangeChain oldValues={oldBest} eventId={eventId} kind="single" note={chain?.[chain.length - 1]?.note} />
                     {formatWcaResult(r.best, eventId, 'single')}
                     {r.regional_single_record
                       ? <RecordBadge record={r.regional_single_record} variant="inline" />
@@ -344,9 +373,9 @@ function EventRoundsList({
                         : null}
                   </span>
                 </td>
-                <td className={`wp-cell-result ${oldAvg != null ? 'wp-cell-changed' : ''}`}>
+                <td className={`wp-cell-result ${oldAvg.length > 0 ? 'wp-cell-changed' : ''}`}>
                   <span className="record-num-cell">
-                    <ChangedResultValue oldValue={oldAvg} eventId={eventId} kind="average" />
+                    <ResultChangeChain oldValues={oldAvg} eventId={eventId} kind="average" note={chain?.[chain.length - 1]?.note} />
                     {formatWcaResult(effectiveAverage(r, eventId), eventId, 'average')}
                     {r.regional_average_record
                       ? <RecordBadge record={r.regional_average_record} variant="inline" />
@@ -371,6 +400,14 @@ function EventRoundsList({
           })}
         </tbody>
       </table>
+      {editTarget && (
+        <ResultChangeEditor
+          target={editTarget}
+          existingChanges={changeMap.get(rowChangeKey(editTarget.competitionId, editTarget.eventId, editTarget.roundTypeId)) ?? []}
+          onClose={() => setEditTarget(null)}
+          onSaved={() => refreshChanges()}
+        />
+      )}
     </div>
   );
 }
