@@ -157,8 +157,14 @@ function ScrambleSolverPageInner() {
   const [cloudBusy, setCloudBusy] = useState(false);
   const [cloudStatus, setCloudStatus] = useState<string | null>(null);
   const cloudAbortRef = useRef<AbortController | null>(null);
+  // Live ticking elapsed of the current cloud phase (load / solve), 0.1s cadence.
+  const [cloudLiveMs, setCloudLiveMs] = useState(0);
+  const cloudPhaseStartRef = useRef(0);
+  const cloudTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const user = useAuthStore((s) => s.user);
   const login = useAuthStore((s) => s.login);
+  // Tidy the live timer if we unmount mid-solve.
+  useEffect(() => () => { if (cloudTimerRef.current) clearInterval(cloudTimerRef.current); }, []);
 
   // Read all localStorage-backed prefs post-mount; persist on change.
   useEffect(() => {
@@ -541,7 +547,14 @@ function ScrambleSolverPageInner() {
     let done = 0;
     let warm = true;           // was the table already in server memory
     let loadMs = 0;            // server-reported table load time (cold start)
-    let solveStartedAt = Date.now(); // when actual solving began (after any load)
+    // (Re)start the live phase timer — ticks the current phase's elapsed at 0.1s.
+    const startPhaseTimer = () => {
+      cloudPhaseStartRef.current = Date.now();
+      setCloudLiveMs(0);
+      if (cloudTimerRef.current) clearInterval(cloudTimerRef.current);
+      cloudTimerRef.current = setInterval(() => setCloudLiveMs(Date.now() - cloudPhaseStartRef.current), 100);
+    };
+    startPhaseTimer();
     try {
       const res = await fetch(apiUrl('/v1/scramble/optimal-solve'), {
         method: 'POST',
@@ -577,7 +590,7 @@ function ScrambleSolverPageInner() {
           } else if (ev === 'ready') {
             warm = obj.warm !== false;
             loadMs = typeof obj.loadMs === 'number' ? obj.loadMs : 0;
-            solveStartedAt = Date.now();
+            startPhaseTimer(); // restart the live ticker for the solve phase
             setCloudStatus(warm
               ? t(`表已在内存,求解中 0/${lines.length}…`, `Table already in memory, solving 0/${lines.length}…`)
               : t(`表已载入(载表 ${(loadMs / 1000).toFixed(1)}s),求解中 0/${lines.length}…`, `Table loaded (${(loadMs / 1000).toFixed(1)}s), solving 0/${lines.length}…`));
@@ -589,7 +602,7 @@ function ScrambleSolverPageInner() {
               setCloudStatus(t(`第 ${(obj.i ?? 0) + 1} 条失败:${obj.error ?? ''}`, `#${(obj.i ?? 0) + 1} failed: ${obj.error ?? ''}`));
             }
           } else if (ev === 'done') {
-            const solveSecs = ((Date.now() - solveStartedAt) / 1000).toFixed(1);
+            const solveSecs = ((Date.now() - cloudPhaseStartRef.current) / 1000).toFixed(1);
             const okN = obj.ok ?? 0;
             const failN = obj.fail ?? 0;
             const loadSecs = (loadMs / 1000).toFixed(1);
@@ -598,10 +611,9 @@ function ScrambleSolverPageInner() {
             setCloudStatus(t(zh, en));
           } else if (typeof obj.i === 'number' && typeof obj.solution === 'string') {
             done++;
-            const secs = ((Date.now() - solveStartedAt) / 1000).toFixed(1);
             solveResultsRef.current.set(obj.i + 1, obj.solution);
             setSolveResults(new Map(solveResultsRef.current));
-            setCloudStatus(t(`云端求解中 ${done}/${lines.length}…(已 ${secs}s)`, `Solving on server ${done}/${lines.length}… (${secs}s)`));
+            setCloudStatus(t(`云端求解中 ${done}/${lines.length}…`, `Solving on server ${done}/${lines.length}…`));
           }
         }
       }
@@ -609,6 +621,7 @@ function ScrambleSolverPageInner() {
       const msg = e instanceof Error ? e.message : String(e);
       setCloudStatus(ac.signal.aborted ? t('已取消。', 'Cancelled.') : t(`云端求解失败:${msg}`, `Cloud solve failed: ${msg}`));
     } finally {
+      if (cloudTimerRef.current) { clearInterval(cloudTimerRef.current); cloudTimerRef.current = null; }
       setCloudBusy(false);
       cloudAbortRef.current = null;
     }
@@ -720,6 +733,7 @@ function ScrambleSolverPageInner() {
         <div className="cubeopt-info">
           {cloudBusy && <Loader2 size={14} className="spinning" />}
           <span>{cloudStatus}</span>
+          {cloudBusy && <span className="cloud-timer">{(cloudLiveMs / 1000).toFixed(1)}s</span>}
           {cloudBusy && (
             <button className="btn-cancel-sm" onClick={cancelCloud}>
               <X size={12} /> {t('取消', 'Cancel')}
@@ -1185,6 +1199,13 @@ const INLINE_CSS = `
   background: var(--panel-sub, #181818); border: 1px dashed var(--border, #333);
   border-radius: 5px; color: var(--text-muted, #aaa);
   font-size: 0.8rem; line-height: 1.5;
+}
+.cloud-timer {
+  flex: 0 0 auto;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem; font-weight: 600;
+  color: var(--accent, #ff8800);
 }
 .cubeopt-foot {
   margin-top: 1rem; color: var(--text-muted, #888); font-size: 0.8rem;
