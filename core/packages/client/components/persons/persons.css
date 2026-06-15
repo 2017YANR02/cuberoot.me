@@ -173,6 +173,14 @@ html[data-theme=dark] .wp-page {
 .wp-rc-new { color: var(--wp-text); font-weight: 650; }
 .wp-rc-gone { color: var(--wp-pink); font-size: 0.76rem; }
 .wp-rc-meta { color: var(--wp-text-sub); }
+.wp-rc-source {
+    flex: none; font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 999px;
+    color: var(--wp-text-sub); background: var(--wp-border);
+}
+.wp-rc-note {
+    flex-basis: 100%; width: 100%; margin: 2px 0 0;
+    color: var(--wp-text-mute); font-size: 0.78rem; line-height: 1.45;
+}
 @media (max-width: 560px) {
     .wp-rc-vals { margin-left: 0; width: 100%; }
 }
@@ -355,15 +363,8 @@ html[data-theme=dark] .wp-page {
     font-weight: 600;
     color: var(--wp-text);
 }
-/* 成绩变更:全部成绩表里某行被后来取消 / 修正时,在当前值前补一个划掉的旧值。
-   信号尽量轻 —— 主要靠就地划掉的旧值,加一条左侧细条做行级指引,不铺整行底色避免拥挤。 */
-.wp-old-result {
-    margin-right: 6px;
-    font-weight: 500;
-    color: var(--wp-text-mute);
-    text-decoration: line-through;
-    text-decoration-color: color-mix(in srgb, var(--wp-pink) 70%, transparent);
-}
+/* 成绩变更:全部成绩表里某行被后来取消 / 修正时,在当前值前补划掉的旧值。
+   行内划值 + 编辑器样式见 sections/results/result-change.css(跨页共享);此处只留选手表专属的行级指引细条。 */
 .wp-bycomp-table tbody tr.wp-row-changed td:first-child {
     box-shadow: inset 2px 0 0 color-mix(in srgb, var(--wp-pink) 65%, transparent);
 }

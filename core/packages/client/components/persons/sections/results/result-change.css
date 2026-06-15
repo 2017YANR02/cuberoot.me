@@ -1,0 +1,83 @@
+/* 成绩变更 — 跨页共享样式(选手页 + comp 直播页)。
+   随 ChangedResultValue / ResultChangeEditor 组件 import 一起加载,
+   故在不加载 persons.css 的 comp 页也生效。用 wp-* token(dark-locked 页)。 */
+
+/* 行内划掉的旧值(变更链依次划掉历次旧值,当前值由调用方在其后渲染) */
+.wp-old-result {
+    margin-right: 6px;
+    font-weight: 500;
+    color: var(--wp-text-mute);
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, var(--wp-pink) 70%, transparent);
+}
+
+/* 管理员行内「编辑变更」铅笔(仅管理员渲染) */
+.wp-change-edit {
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-left: 6px; padding: 2px; border: none; background: transparent;
+    color: var(--wp-text-mute); cursor: pointer; border-radius: 4px; vertical-align: middle;
+    opacity: 0.55; transition: opacity 0.12s, color 0.12s, background 0.12s;
+}
+.wp-change-edit:hover { opacity: 1; color: var(--wp-accent); background: var(--wp-accent-soft); }
+
+/* ── 成绩变更编辑器 modal(wp-rce-*,与 PersonResultChanges 面板 wp-rc-* 区分) ── */
+.wp-rce-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: color-mix(in srgb, #000 55%, transparent);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: max(24px, 6vh) 16px; overflow-y: auto;
+}
+.wp-rce-modal {
+    width: 100%; max-width: 560px;
+    background: var(--wp-surface); border: 1px solid var(--wp-border);
+    border-radius: 14px; box-shadow: var(--wp-shadow); padding: 18px 18px 16px;
+}
+.wp-rce-head { display: flex; align-items: center; gap: 10px; }
+.wp-rce-title { flex: 1; font-size: 1.02rem; font-weight: 650; color: var(--wp-text); }
+.wp-rce-x {
+    border: none; background: transparent; color: var(--wp-text-sub);
+    font-size: 1.4rem; line-height: 1; cursor: pointer; padding: 0 4px;
+}
+.wp-rce-x:hover { color: var(--wp-text); }
+.wp-rce-sub { margin-top: 4px; font-size: 0.8rem; color: var(--wp-text-sub); }
+
+.wp-rce-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.wp-rce-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 10px; border: 1px solid var(--wp-border); border-radius: 9px;
+}
+.wp-rce-item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.wp-rce-item-summary { font-size: 0.86rem; color: var(--wp-text); font-variant-numeric: tabular-nums; }
+.wp-rce-item-note { font-size: 0.78rem; color: var(--wp-text-sub); }
+.wp-rce-item-meta { font-size: 0.72rem; color: var(--wp-text-mute); }
+.wp-rce-item-actions { display: flex; gap: 8px; flex: none; }
+.wp-rce-link { border: none; background: transparent; color: var(--wp-blue); cursor: pointer; font-size: 0.8rem; padding: 2px; }
+.wp-rce-link:hover { text-decoration: underline; }
+.wp-rce-danger { color: var(--wp-pink); }
+
+.wp-rce-form { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--wp-border); }
+.wp-rce-form-title { font-size: 0.82rem; font-weight: 600; color: var(--wp-text); margin-bottom: 8px; }
+.wp-rce-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.wp-rce-field { display: flex; flex-direction: column; gap: 4px; }
+.wp-rce-field > span { font-size: 0.74rem; color: var(--wp-text-sub); }
+.wp-rce-field-wide { grid-column: 1 / -1; }
+.wp-rce-pair { display: flex; align-items: center; gap: 6px; }
+.wp-rce-pair > span { color: var(--wp-text-mute); }
+.wp-rce-field input {
+    width: 100%; min-width: 0; padding: 6px 8px; font-size: 0.84rem;
+    background: var(--wp-bg); color: var(--wp-text);
+    border: 1px solid var(--wp-border-strong); border-radius: 7px;
+}
+.wp-rce-field input:focus { outline: none; border-color: var(--wp-accent); }
+.wp-rce-hint { margin-top: 8px; font-size: 0.72rem; color: var(--wp-text-mute); }
+.wp-rce-err { margin-top: 8px; font-size: 0.78rem; color: var(--wp-pink); }
+.wp-rce-form-actions { margin-top: 12px; display: flex; align-items: center; gap: 8px; }
+.wp-rce-btn {
+    padding: 7px 16px; font-size: 0.84rem; font-weight: 600; cursor: pointer;
+    background: var(--wp-accent); color: #fff; border: none; border-radius: 8px;
+}
+.wp-rce-btn:disabled { opacity: 0.5; cursor: default; }
+.wp-rce-btn-ghost { background: transparent; color: var(--wp-text-sub); border: 1px solid var(--wp-border-strong); }
+@media (max-width: 480px) {
+    .wp-rce-grid { grid-template-columns: 1fr; }
+}
