@@ -32,6 +32,7 @@ const inputStyle: CSSProperties = {
 const curStyle: CSSProperties = {
   fontSize: '0.72rem', color: 'var(--faint-foreground)', textAlign: 'center', fontVariantNumeric: 'tabular-nums',
 };
+const errStyle: CSSProperties = { fontSize: '0.72rem', color: 'var(--destructive)', lineHeight: 1.35 };
 const actionsStyle: CSSProperties = { display: 'flex', gap: 6, marginTop: 1 };
 const saveStyle: CSSProperties = {
   flex: 1, padding: '5px 10px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
@@ -63,6 +64,7 @@ export function AttemptEditPopover({
   const [pen, setPen] = useState('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   const olds = oldValues.map((ov, k) => (
     <s key={k} className="wp-old-result">{format(ov)}</s>
@@ -77,7 +79,7 @@ export function AttemptEditPopover({
     setPos({ top: r.bottom + 6, left });
   }, []);
 
-  const close = useCallback(() => { setOpen(false); setOrig(''); setNext(''); setPen(''); setNote(''); }, []);
+  const close = useCallback(() => { setOpen(false); setOrig(''); setNext(''); setPen(''); setNote(''); setErr(null); }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -100,12 +102,30 @@ export function AttemptEditPopover({
   const save = async () => {
     const po = parseHumanResult(orig, eventId);
     const pn = parseHumanResult(next, eventId);
-    const penCs = pen.trim() === '' ? 0 : Math.round(Number(pen) * 100);
+
+    // 罚时:必须正偶数秒(+2/+4/…),且 base=值−罚时 须 > 0;空=清除。
+    const penTrim = pen.trim();
+    let penCs = 0;
+    if (penTrim !== '') {
+      const secs = Number(penTrim);
+      if (!Number.isFinite(secs) || !Number.isInteger(secs) || secs < 0) {
+        setErr(tr({ zh: '罚时填整数秒', en: 'Penalty must be whole seconds' })); return;
+      }
+      if (secs > 0 && secs % 2 !== 0) {
+        setErr(tr({ zh: '罚时必须是正偶数(+2 / +4 / …)', en: 'Penalty must be a positive even number (+2 / +4 / …)' })); return;
+      }
+      penCs = secs * 100;
+      if (penCs > 0 && (value <= 0 || value - penCs <= 0)) {
+        setErr(tr({ zh: `罚时过大:基础时间会 ≤ 0(当前 ${format(value)})`, en: `Penalty too large: base time would be ≤ 0 (now ${format(value)})` })); return;
+      }
+    }
+
     const curPen = penalty ?? 0;
     const origChanged = po != null && po !== value;
     const nextChanged = pn != null && pn !== value;
-    const penChanged = Number.isFinite(penCs) && penCs >= 0 && penCs !== curPen;
+    const penChanged = penCs !== curPen;
     if (!origChanged && !nextChanged && !penChanged) { close(); return; }
+    setErr(null);
     const n = note.trim() || undefined;
     setBusy(true);
     try {
@@ -159,7 +179,7 @@ export function AttemptEditPopover({
                 value={pen}
                 inputMode="numeric"
                 placeholder="2"
-                onChange={(e) => setPen(e.target.value)}
+                onChange={(e) => { setPen(e.target.value); setErr(null); }}
                 onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }}
               />
             </label>
@@ -172,6 +192,7 @@ export function AttemptEditPopover({
                 onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }}
               />
             </label>
+            {err && <span style={errStyle}>{err}</span>}
             <span style={actionsStyle}>
               <button type="button" style={saveStyle} onClick={save} disabled={busy}>
                 {busy ? '…' : tr({ zh: '保存', en: 'Save' })}
