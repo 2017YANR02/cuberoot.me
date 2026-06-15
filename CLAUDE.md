@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 仓库 `RuiminYan/cuberoot.me`(自定义域名 `cuberoot.me`),同时托管：
 
-1. **根目录的静态 HTML/JS**（来自多个 fork + Phase 4 前 deploy_mirror.yml 同步的 Vite build 残留）—— 只读，不改;deploy_mirror 已停,残留长期会清。
+1. **根目录** —— static.cuberoot.me 服的共享静态(`tools/` forks + `stats/` WCA JSON)+ 顶层 `solver/`/`fmc/`(Rust)+ 仓库基建(`ops/` `docs/` workflows)。早期 Vite build 残留 + GH Pages 镜像已于 2026-06-14 全部清除(GH Pages 站已禁用,DNS 本就不走它)。
 2. **`core/`** — pnpm + Turbo monorepo，所有新开发都在这里：
    - `packages/client-next` — **React 19 + Next.js 16 (App Router, Turbopack)** ← **唯一前端工作区** (Phase 4 2026-05-27 切完;退役的 Vite `packages/client` + Capacitor 移动壳已于 2026-06-14 整包移除)
    - `packages/server` — Hono + **PostgreSQL 13**（WCA OAuth + recon + alg 公式库 + 训练数据，部署到云服务器;2026-05-06 从 MariaDB 迁过来,MariaDB 服务 + 数据已完整卸载)
@@ -59,8 +59,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 切 dev/prod API base 永远用 `import.meta.env.DEV`,**禁** `hostname === 'localhost'` 检查 — LAN IP / Tailscale `*.ts.net` / 隧道域名都不匹配,会错走 prod 跨域被 CORS 拦死。`shared/` 包不能 import client utils,直接 `(import.meta as { env?: { DEV?: boolean } }).env?.DEV`。
 - **COOP/COEP (cubeopt-wasm SAB)**:仅 `/scramble/solver` 在 Next config `headers()` 发(Phase 4 缩到只 solver — analyzer 用 classic worker COEP 会拦死)。nginx vhost 顶 `map $request_uri` 同样匹配 `/scramble/(solver|analyzer)`(历史保留,实际 Next 自己也发)。新增 SAB 页面同步改两处。
 - **client-next 页面默认 SSG**(2026-05-28 起,~128 组静态走 CDN):根 `app/layout.tsx` 禁动态 API(cookies/headers),全局组件禁在 render 调 `useSearchParams`,否则整站退回动态 / CSR 空壳;语言归属在 `[lang]/layout`,i18n 走 `initImmediate:false` + `useSuspense:false`。
-- **deploy_mirror.yml** 已禁(Phase 4 前 GH Pages 镜像用),保留 workflow_dispatch 短期回滚兜底。
-
 ## 开发命令
 
 包管理用 **pnpm 11**（不是 npm）。Windows 下按全局规则用 `pwsh`。
