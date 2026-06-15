@@ -35,10 +35,11 @@
 }
 .wp-att-input:focus { outline: none; }
 
-/* ── 行内单次成绩编辑浮层(点 solve 弹出,二方向:更正前原始 / 更正后改判) ── */
-.wp-att-pop-wrap { position: relative; display: inline-flex; }
+/* ── 行内单次成绩编辑浮层(点 solve 弹出,二方向:更正前原始 / 更正后改判) ──
+   portal 到 body + position:fixed,逃出成绩表 overflow 裁切容器;坐标由 JS 算后内联。 */
+.wp-att-pop-backdrop { position: fixed; inset: 0; z-index: 199; background: transparent; }
 .wp-att-pop {
-    position: absolute; z-index: 60; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    position: fixed; z-index: 200; transform: translateX(-50%);
     display: flex; flex-direction: column; gap: 7px; width: 216px; padding: 11px;
     background: var(--popover); border: 1px solid var(--border-default); border-radius: 11px;
     box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
