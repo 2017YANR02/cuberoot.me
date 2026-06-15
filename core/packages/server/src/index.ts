@@ -34,6 +34,8 @@ import { compFollowsRoutes } from './routes/comp_follows.js';
 import { wcaProxyRoutes } from './routes/wca_proxy.js';
 import { wcaResultWatchRoutes } from './routes/wca_result_watch.js';
 import { feedbackRoutes } from './routes/feedback.js';
+import { cubeoptSolveRoutes } from './routes/cubeopt_solve.js';
+import { ensureDaemon as ensureCubeoptDaemon, isEnabled as cubeoptEnabled } from './cubeopt/daemon.js';
 import { startWcaPastResultsMonitor } from './monitors/wca_past_results.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
 import { ensureDaemon as ensureCube555Daemon } from './cube555/daemon.js';
@@ -117,6 +119,7 @@ app.route('/v1', compFollowsRoutes);
 app.route('/v1', wcaProxyRoutes);
 app.route('/v1', wcaResultWatchRoutes);
 app.route('/v1', feedbackRoutes);
+app.route('/v1', cubeoptSolveRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).
@@ -130,6 +133,15 @@ loadNemesizerDataset().catch(err => {
 ensureCube555Daemon().catch(err => {
   console.error('[cube555] startup failed, /v1/scramble/555-rs will return 503:', err);
 });
+
+// Warm the cube48opt optimal-solve daemon (opt5 / 972M table) so the first
+// /v1/scramble/optimal-solve request doesn't eat the ~15s table load. Only when
+// CUBEOPT_SOLVE_ENABLED=1 — otherwise the route just returns 503.
+if (cubeoptEnabled()) {
+  ensureCubeoptDaemon().catch(err => {
+    console.error('[cubeopt] startup warm failed, /v1/scramble/optimal-solve will return 503:', err);
+  });
+}
 
 // WCA Live recentRecords 后台 60s 轮询 — 落地页右下角列表的同步源.
 // 启动立即拉一次,失败不影响 listener.

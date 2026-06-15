@@ -1,0 +1,111 @@
+/**
+ * /v1/scramble/optimal-solve — 3x3 god's-number optimal solve, server-side.
+ *
+ * Backs the "云端求解" option on /scramble/solver for users who don't want to
+ * download the multi-GB cubeopt prune table. The server holds opt5 (972M) — the
+ * largest table that fits the box with RAM headroom; every opt level returns the
+ * SAME optimal solution, only slower with a smaller table.
+ *
+ * Guards (all three the user asked for):
+ *   • login gate     — requireAuth; anonymous users keep the local-download path.
+ *   • IP rate limit   — dedicated sliding window (expensive op; the global 30/min
+ *                       writer limit is far too loose here).
+ *   • serial queue    — intrinsic to the daemon (synchronous solve) + per-request
+ *                       timeout + queue-depth cap in cubeopt/daemon.ts.
+ *
+ * POST /v1/scramble/optimal-solve   body { scrambles: string[] (<=5) }
+ *   → SSE: data {"i":idx,"htm":N,"solution":"..."}      one per solved scramble
+ *          event:error data {"i":idx,"error":"..."}     one per failed scramble
+ *          event:done  data {"ok":N,"fail":N}           terminal
+ * GET  /v1/scramble/optimal-solve/ready → { enabled, ready }
+ */
+import { Hono } from 'hono';
+import { streamSSE } from 'hono/streaming';
+import { requireAuth } from '../utils/recon_helpers.js';
+import { solveOptimal, isEnabled, isReady, ensureDaemon } from '../cubeopt/daemon.js';
+
+export const cubeoptSolveRoutes = new Hono();
+
+const NO_CACHE = { 'Cache-Control': 'no-store' };
+const MAX_SCRAMBLES = 5;
+const MAX_MOVES = 50;
+const TOKEN = /^[URFDLB][2']?$/;
+
+// Dedicated per-IP sliding window: at most 6 POSTs / 5 min (each <=5 scrambles).
+// Solve work is bounded mostly by the global serial daemon queue; this just stops
+// one client monopolising it.
+const POST_WINDOW_MS = 5 * 60_000;
+const POST_MAX = 6;
+const ipHits = new Map<string, number[]>();
+function checkSolveRateLimit(ip: string): void {
+  const now = Date.now();
+  const hits = (ipHits.get(ip) ?? []).filter((t) => t > now - POST_WINDOW_MS);
+  if (hits.length >= POST_MAX) throw new Error('Rate limit exceeded for cloud solve');
+  hits.push(now);
+  ipHits.set(ip, hits);
+}
+
+function getIp(c: { req: { header: (n: string) => string | undefined } }): string {
+  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
+}
+
+/** Normalise a scramble to plain HTM face turns, or null if it isn't one. */
+function cleanScramble(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const toks = raw.trim().split(/\s+/).filter(Boolean);
+  if (toks.length === 0 || toks.length > MAX_MOVES) return null;
+  for (const t of toks) if (!TOKEN.test(t)) return null;
+  return toks.join(' ');
+}
+
+cubeoptSolveRoutes.get('/scramble/optimal-solve/ready', (c) => {
+  return c.json({ enabled: isEnabled(), ready: isReady() }, 200, NO_CACHE);
+});
+
+cubeoptSolveRoutes.post('/scramble/optimal-solve', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  if (!isEnabled()) return c.json({ error: 'Cloud optimal solve is not available' }, 503, NO_CACHE);
+
+  checkSolveRateLimit(getIp(c));
+  await requireAuth(c); // login gate — throws → 401
+
+  let body: { scrambles?: unknown };
+  try {
+    body = await c.req.json<{ scrambles?: unknown }>();
+  } catch {
+    throw new Error('Validation: invalid json');
+  }
+  const rawList = Array.isArray(body.scrambles) ? body.scrambles : [];
+  if (rawList.length === 0) throw new Error('Validation: scrambles is required');
+  if (rawList.length > MAX_SCRAMBLES) throw new Error(`Validation: at most ${MAX_SCRAMBLES} scrambles`);
+  const scrambles = rawList.map(cleanScramble);
+  if (scrambles.some((s) => s === null)) throw new Error('Validation: each scramble must be plain HTM face turns (e.g. R U R\' ...)');
+
+  // Warm the table before opening the stream so a cold start surfaces as a clean
+  // 503 instead of a stream that hangs ~15s.
+  try {
+    await ensureDaemon();
+  } catch (e) {
+    return c.json({ error: e instanceof Error ? e.message : String(e) }, 503, NO_CACHE);
+  }
+
+  c.header('X-Accel-Buffering', 'no'); // nginx: don't buffer the SSE stream
+  return streamSSE(c, async (stream) => {
+    let ok = 0;
+    let fail = 0;
+    // Solve sequentially — the daemon is serial anyway, and sequential keeps the
+    // queue shallow + results ordered by completion (client re-sorts by index).
+    for (let i = 0; i < scrambles.length; i++) {
+      try {
+        const { htm, solution } = await solveOptimal(scrambles[i]!);
+        ok++;
+        await stream.writeSSE({ data: JSON.stringify({ i, htm, solution }) });
+      } catch (e) {
+        fail++;
+        const msg = e instanceof Error ? e.message : String(e);
+        await stream.writeSSE({ event: 'error', data: JSON.stringify({ i, error: msg }) });
+      }
+    }
+    await stream.writeSSE({ event: 'done', data: JSON.stringify({ ok, fail }) });
+  });
+});
