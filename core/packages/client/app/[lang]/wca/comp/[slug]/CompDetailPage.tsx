@@ -1843,18 +1843,18 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                         eventId={r.e}
                         oldValues={attemptOldValues(chain, i)}
                         format={(v) => formatLive(v, r.e, false)}
-                        onCorrect={(newValue) =>
+                        onCorrect={(newValue, note) =>
                           recordAttemptEdit({
                             target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
                             currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
-                            index: i, newValue,
+                            index: i, newValue, note,
                           }).then(() => onRefresh?.())
                         }
-                        onSetOriginal={(originalValue) =>
+                        onSetOriginal={(originalValue, note) =>
                           recordAttemptOriginal({
                             target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
                             currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
-                            index: i, originalValue, existingChain: chain,
+                            index: i, originalValue, note, existingChain: chain,
                           }).then(() => onRefresh?.())
                         }
                       />
