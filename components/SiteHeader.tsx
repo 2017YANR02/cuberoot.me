@@ -5,17 +5,21 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { HeaderSearch } from "./HeaderSearch";
+import { NotificationBell } from "./NotificationBell";
 
-const NAV = [
+// lg = 仅大屏(lg+)显示,中屏(md)收起,避免导航项过多在窄桌面挤压
+type NavItem = { href: string; label: string; lg?: boolean };
+const NAV: NavItem[] = [
   { href: "/courses", label: "课程" },
   { href: "/membership", label: "会员" },
   { href: "/shop", label: "商城" },
   { href: "/events", label: "赛事" },
   { href: "/community", label: "社群" },
   { href: "/timer", label: "计时器" },
-  { href: "/news", label: "资讯" },
-  { href: "/instructors", label: "讲师" },
-  { href: "/about", label: "关于" },
+  { href: "/leaderboard", label: "排行榜" },
+  { href: "/news", label: "资讯", lg: true },
+  { href: "/instructors", label: "讲师", lg: true },
+  { href: "/about", label: "关于", lg: true },
 ];
 
 export type HeaderUser = {
@@ -24,7 +28,13 @@ export type HeaderUser = {
   role: "user" | "instructor" | "admin";
 };
 
-export function SiteHeader({ user }: { user: HeaderUser | null }) {
+export function SiteHeader({
+  user,
+  notifCount = 0,
+}: {
+  user: HeaderUser | null;
+  notifCount?: number;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -45,6 +55,7 @@ export function SiteHeader({ user }: { user: HeaderUser | null }) {
                 href={n.href}
                 className={
                   "rounded-md px-3 py-1.5 transition " +
+                  (n.lg ? "hidden lg:inline-flex " : "") +
                   (active
                     ? "bg-brand-soft text-brand-dark"
                     : "text-ink-2 hover:text-ink hover:bg-bg-soft")
@@ -65,7 +76,10 @@ export function SiteHeader({ user }: { user: HeaderUser | null }) {
             讲师入驻
           </Link>
           {user ? (
-            <UserMenu user={user} />
+            <>
+              <NotificationBell count={notifCount} />
+              <UserMenu user={user} />
+            </>
           ) : (
             <>
               <Link
@@ -139,6 +153,20 @@ export function SiteHeader({ user }: { user: HeaderUser | null }) {
               )}
             </div>
             {user ? (
+              <Link
+                href="/notifications"
+                onClick={() => setOpen(false)}
+                className="mt-2 flex items-center justify-between rounded-md border border-line px-3 py-2 text-[14px] text-ink-2"
+              >
+                <span>通知</span>
+                {notifCount > 0 ? (
+                  <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[11px] font-semibold leading-[18px] text-white">
+                    {notifCount > 99 ? "99+" : notifCount}
+                  </span>
+                ) : null}
+              </Link>
+            ) : null}
+            {user ? (
               <div className="mt-2 flex items-center justify-between rounded-md border border-line px-3 py-2 text-[13px] text-ink-2">
                 <span>{user.nickname}</span>
                 <MobileLogout onDone={() => setOpen(false)} />
@@ -198,11 +226,32 @@ function UserMenu({ user }: { user: HeaderUser }) {
             个人中心
           </Link>
           <Link
+            href="/notifications"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
+          >
+            通知
+          </Link>
+          <Link
             href="/me/courses"
             onClick={() => setOpen(false)}
             className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
           >
             我的课程
+          </Link>
+          <Link
+            href="/me/badges"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
+          >
+            我的徽章
+          </Link>
+          <Link
+            href="/me/notes"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-[13px] text-ink-2 hover:bg-bg-soft hover:text-ink"
+          >
+            我的笔记
           </Link>
           <Link
             href="/me/favorites"

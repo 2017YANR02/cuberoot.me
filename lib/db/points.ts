@@ -3,6 +3,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { db, schema } from "@/db";
 import type { PointLedgerRow } from "@/db/schema";
+import { recomputeAchievements } from "@/lib/db/achievements";
 
 export type { PointLedgerRow };
 
@@ -86,6 +87,8 @@ export async function awardPoints(
     createdAt: now,
   };
   db.insert(schema.pointLedger).values(row).run();
+  // 流水写完后重算成就(可能解锁积分类成就;achievements.ts 直接写流水不回调本函数,无循环)。
+  await recomputeAchievements(userId);
   return row;
 }
 

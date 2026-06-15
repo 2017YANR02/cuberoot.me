@@ -8,6 +8,7 @@ import {
   updatePenalty,
 } from "@/lib/db/timer";
 import { checkInToday } from "@/lib/db/checkins";
+import { recomputeAchievements } from "@/lib/db/achievements";
 import { scramble } from "@/lib/cube/scramble";
 import type { CubeEventId, SolvePenalty } from "@/db/schema";
 
@@ -63,6 +64,8 @@ export async function saveSolveAction(input: {
   });
   // 存了一条成绩即算当日打卡(幂等,不重复占当天)。
   await checkInToday(user.id, "timer");
+  // 计时不发积分,单独触发破纪录 / 计时次数类成就。
+  await recomputeAchievements(user.id);
   revalidatePath("/timer");
   return { ok: true, id: row.id };
 }
