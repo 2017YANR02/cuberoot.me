@@ -23,7 +23,7 @@ const WCA_ID_RE = /^[0-9]{4}[A-Z]{4}[0-9]{2}$/;
 const COMP_ID_RE = /^[A-Za-z0-9]{2,40}$/;
 const NOTE_MAX = 1000;
 const ALLOWED_FIELDS = new Set([
-  'best', 'average', 'pos', 'attempts',
+  'best', 'average', 'pos', 'attempts', 'attempt_penalties',
   'regional_single_record', 'regional_average_record',
 ]);
 

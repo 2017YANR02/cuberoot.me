@@ -35,6 +35,12 @@
 }
 .wp-att-input:focus { outline: none; }
 
+/* 罚时角标(1.00⁺²):成绩值正确,展开为 base + 罚时。 */
+.wp-att-pen {
+    margin-left: 1px; font-size: 0.62em; font-weight: 600; vertical-align: super;
+    color: color-mix(in srgb, var(--signal-warning) 80%, var(--foreground));
+}
+
 /* 行内单次成绩编辑浮层(点 solve 弹出,二方向)的结构样式已内联到 AttemptEditPopover.tsx
    (portal 到 body + position:fixed),避免 dev CSS HMR 滞后导致浮层失样塌成行内/落页脚。 */
 
