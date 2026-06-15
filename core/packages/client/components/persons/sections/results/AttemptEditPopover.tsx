@@ -165,7 +165,7 @@ export function AttemptEditPopover({
                 <select style={inputStyle} value={pen} onChange={(e) => setPen(e.target.value)}>
                   <option value="">{tr({ zh: '无', en: 'none' })}</option>
                   {Array.from({ length: maxPenaltyCount }, (_, i) => i + 1).map((n) => (
-                    <option key={n} value={n}>+{n * 2}{n > 1 ? `(${n}×+2)` : ''}</option>
+                    <option key={n} value={n}>+{n * 2}</option>
                   ))}
                 </select>
               </label>
