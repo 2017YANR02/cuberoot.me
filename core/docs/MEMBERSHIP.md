@@ -111,6 +111,6 @@
 
 ## 本地测试
 
-- 签名 / 解密:`pnpm --filter @cuberoot/client-next exec vitest run tests/official_pay_sign.test.ts tests/xunhupay_sign.test.ts`。
+- 签名 / 解密:`pnpm --filter @cuberoot/client exec vitest run tests/official_pay_sign.test.ts tests/xunhupay_sign.test.ts`。
 - 官方 provider 真实模块 round-trip:用自造 RSA 密钥对设 `ALIPAY_*` / `WECHAT_*` env 后 dynamic-import `payment/{alipay,wechat}.js`(完整 server 因 sr-puzzlegen ESM 在 tsx 下起不来,只 import 这两个模块即可,它们不碰 sr-puzzlegen / db)。
 - 业务流(下单/开通/续期/查单):docker pg13(5433)已应用 migration;admin 端点用 `wcaId='2017YANR02'` 的 HS256 JWT(JWT_SECRET 签)。

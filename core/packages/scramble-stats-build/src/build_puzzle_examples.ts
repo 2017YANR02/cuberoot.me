@@ -17,7 +17,7 @@ import { dateDisplay } from './comp_date';
 //     } } }
 // optScramble = invert(analyzer 的最优解列 soln);= 最短的等价打乱(同状态),驱动「原始/最优」切换。
 // 仅当 <key>.csv 带 soln 列(analyzer 开 PUZZLE_EMIT_SOLN)时有;无则该元省略,前端只显原始。
-// 客户端类型在 client-next/lib/puzzle-examples.ts(改 shape 必须两处同步 + bump fetch v=)。
+// 客户端类型在 client/lib/puzzle-examples.ts(改 shape 必须两处同步 + bump fetch v=)。
 //
 // 只对 puzzle_distribution.json meta.puzzles 出现的 key 产(pocket / pyraminx / skewb;
 // sq1 是小样本占位,dist 文件里若没有就跳过)。

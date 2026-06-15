@@ -10,7 +10,7 @@
 // Next/Webpack replaces process.env.NODE_ENV (literal token); guarded for the
 // browser bundles where `process` is undefined. `shared/` can't import the
 // client `lib/` helpers, so this is the shared-local equivalent of
-// client-next's lib/stats-base.ts.
+// client's lib/stats-base.ts.
 declare const process: { env: { NODE_ENV?: string } };
 function nodeProcessEnv(): string | undefined {
   return process.env.NODE_ENV;

@@ -1,2 +1,2 @@
 cd D:\cube\cuberoot.me\core
-pnpm --filter @cuberoot/client-next dev
+pnpm --filter @cuberoot/client dev

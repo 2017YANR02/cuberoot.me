@@ -46,7 +46,7 @@ sudo net stop MySQL80   # ⚠️ 绝对不要强杀 mysqld.exe，否则损坏 In
 
 ```powershell
 cd D:\cube\cuberoot.me\core
-pnpm --filter @cuberoot/client-next dev
+pnpm --filter @cuberoot/client dev
 # → http://127.0.0.1:3000/
 ```
 

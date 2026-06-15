@@ -85,7 +85,7 @@ exit $LASTEXITCODE                                       # wrapper 原样透传 
 ## 现成范例
 
 - 纯 pwsh,Edit/Write:`~/.claude/hooks/block-raw-history-url-state.ps1`、`block-button-navigation.ps1`
-- pwsh→node 委托(两规则):`<repo>/.claude/hooks/block-handwritten-trad.ps1` → `core/packages/client-next/scripts/hook-detect-handwritten-trad.mjs`(裸 isZh 三目 + 手写繁体)
+- pwsh→node 委托(两规则):`<repo>/.claude/hooks/block-handwritten-trad.ps1` → `core/packages/client/scripts/hook-detect-handwritten-trad.mjs`(裸 isZh 三目 + 手写繁体)
 - 纯 node,Bash/PowerShell:`~/.claude/hooks/guard-browser-launch.mjs`
 
 背景见 memory `reference_pretooluse_hook_auto_mode_deny`。

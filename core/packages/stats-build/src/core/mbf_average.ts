@@ -1,5 +1,5 @@
 // 333mbf 非官方 Mo3 平均(WCA 不追踪)。WCA 编码 0DDTTTTTMM:DD/TTTTT/MM 三段
-// 各取 3 次均值(四舍五入)再拼回同一编码。与 client-next/lib/mbf-average.ts 保持一致。
+// 各取 3 次均值(四舍五入)再拼回同一编码。与 client/lib/mbf-average.ts 保持一致。
 
 export function mbfMo3(v1: number, v2: number, v3: number): number {
   const vals = [v1, v2, v3];

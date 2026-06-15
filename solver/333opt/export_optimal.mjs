@@ -76,7 +76,7 @@ console.log(`wrote ${DEST}: ${emitted} rows (${JSON.stringify(byEvent)}), skippe
 // ---- 3. optional: verify a sample with cubing.js (scramble + solution == solved) ----
 if (verify && sample.length) {
   // cubing is ESM-only; its "exports" map isn't visible to CJS require.resolve, so import the real file.
-  const puzzlesUrl = pathToFileURL(resolve(repoRoot, 'core/packages/client-next/node_modules/cubing/dist/lib/cubing/puzzles/index.js')).href;
+  const puzzlesUrl = pathToFileURL(resolve(repoRoot, 'core/packages/client/node_modules/cubing/dist/lib/cubing/puzzles/index.js')).href;
   const { cube3x3x3 } = await import(puzzlesUrl);
   const kpuzzle = await cube3x3x3.kpuzzle();
   const solved = kpuzzle.defaultPattern();

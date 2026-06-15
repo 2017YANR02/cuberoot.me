@@ -1,4 +1,4 @@
-# PreToolUse hook: guard client-next i18n on write (.ts/.tsx). Blocks (1) Traditional
+# PreToolUse hook: guard client i18n on write (.ts/.tsx). Blocks (1) Traditional
 # Chinese (Simplified-only site; Traditional removed 2026-06-14) and (2) inline UI-language
 # text ternaries (isZh ? '中' : 'EN' / i18n.language ? : ) — those must use tr()/<T>/useT()/t().
 # Registered by global ~/.claude/settings.json PreToolUse(Edit|Write|MultiEdit); stdin = {tool_name, tool_input}.
@@ -17,7 +17,7 @@ if (($payload -notmatch '[㐀-䶿一-鿿豈-﫿]') -and ($payload -notmatch 'i18
 
 # Resolve detector by script location (<repo>/.claude/hooks -> <repo>/core/...),
 # not CLAUDE_PROJECT_DIR (sessions may root at repo or core/; that fails open).
-$detector = Join-Path $PSScriptRoot '../../core/packages/client-next/scripts/hook-detect-traditional.mjs'
+$detector = Join-Path $PSScriptRoot '../../core/packages/client/scripts/hook-detect-traditional.mjs'
 if (-not (Test-Path $detector)) { exit 0 }  # fail open
 
 # node prints deny JSON to stdout on a hit (passed through) and exit 0; else no output.

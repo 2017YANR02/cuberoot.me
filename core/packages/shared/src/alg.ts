@@ -161,7 +161,7 @@ export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: b
   // 等其它 dev host 时,hostname 检查会错判成 prod 直接打 api.cuberoot.me 跨域,
   // 而 api 的 CORS allowlist 没那些 host → 浏览器拦截。vite 在 client build 时
   // 替换 import.meta.env.DEV;server 端 loadAlg 不被调,?.DEV undefined 走 prod 分支也无害。
-  // Next.js (client-next) 用 process.env.NODE_ENV — 同样在 client build 时被替换。
+  // Next.js (client) 用 process.env.NODE_ENV — 同样在 client build 时被替换。
   const viteDev = Boolean((import.meta as { env?: { DEV?: boolean } }).env?.DEV);
   // Webpack/Turbopack replace `process.env.NODE_ENV` as a string literal at build time,
   // but only when accessed by that literal token sequence. Vite browsers don't replace

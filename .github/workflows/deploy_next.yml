@@ -1,4 +1,4 @@
-# 部署 @cuberoot/client-next 到 next.cuberoot.me (云服务器 systemd cuberoot-next)。
+# 部署 @cuberoot/client 到 next.cuberoot.me (云服务器 systemd cuberoot-next)。
 # CI build → tar 标准 standalone 输出 → scp → 服务器原子替换 → systemctl restart。
 # 服务器拉不到 GitHub,所以 build 必须在 CI 跑。
 name: Deploy Next
@@ -8,7 +8,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'core/packages/client-next/**'
+      - 'core/packages/client/**'
       - 'core/packages/shared/**'
       - 'core/packages/visualcube/**'
       - 'core/pnpm-lock.yaml'
@@ -48,16 +48,16 @@ jobs:
         working-directory: core
         env:
           NODE_ENV: production
-        run: pnpm --filter @cuberoot/client-next build
+        run: pnpm --filter @cuberoot/client build
 
       # standalone output layout (with outputFileTracingRoot=monorepo root):
-      #   .next/standalone/core/packages/client-next/server.js  ← entry
-      #   .next/standalone/core/packages/client-next/.next/server/...
+      #   .next/standalone/core/packages/client/server.js  ← entry
+      #   .next/standalone/core/packages/client/.next/server/...
       #   .next/standalone/node_modules/... (hoisted shared deps)
       # static/ + public/ must be copied INTO the standalone tree manually
       # (Next docs https://nextjs.org/docs/app/api-reference/config/next-config-js/output#automatically-copying-traced-files).
       - name: Assemble deploy bundle
-        working-directory: core/packages/client-next
+        working-directory: core/packages/client
         run: |
           # Inspect actual layout — Next standalone path varies by config
           echo "--- .next/standalone layout ---"

@@ -33,4 +33,4 @@ description: "Use when rendering NxN cube state image. Single entry: `<VisualCub
 
 新加 `.ts` 文件 / 新 import 必须带 `.js` 扩展名（`from './foo.js'`），Node ESM 严格要求；漏写会导致 CI 上加载 visualcube 时 `ERR_MODULE_NOT_FOUND`。
 
-client-next 里 `<VisualCube>`（`components/VisualCube.tsx`）渲染成 `<img>`，src 直接打 `api.cuberoot.me/v1/visualcube.svg` 端点 —— **没有** service-worker 拦截、**没有** `build-sw` 步骤（那是退役 Vite 包的旧机制；client-next 的 `public/sw.js` 已是空 kill-switch）。改了 visualcube 包只需重 build 包 + 重启后端，前端硬刷即可。
+client 里 `<VisualCube>`（`components/VisualCube.tsx`）渲染成 `<img>`，src 直接打 `api.cuberoot.me/v1/visualcube.svg` 端点 —— **没有** service-worker 拦截、**没有** `build-sw` 步骤（那是退役 Vite 包的旧机制；client 的 `public/sw.js` 已是空 kill-switch）。改了 visualcube 包只需重 build 包 + 重启后端，前端硬刷即可。

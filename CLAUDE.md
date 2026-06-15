@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 1. **根目录** —— static.cuberoot.me 服的共享静态(`tools/` forks + `stats/` WCA JSON)+ 顶层 `solver/`/`fmc/`(Rust)+ 仓库基建(`ops/` `docs/` workflows)。早期 Vite build 残留 + GH Pages 镜像已于 2026-06-14 全部清除(GH Pages 站已禁用,DNS 本就不走它)。
 2. **`core/`** — pnpm + Turbo monorepo，所有新开发都在这里：
-   - `packages/client-next` — **React 19 + Next.js 16 (App Router, Turbopack)** ← **唯一前端工作区** (Phase 4 2026-05-27 切完;退役的 Vite `packages/client` + Capacitor 移动壳已于 2026-06-14 整包移除)
+   - `packages/client` — **React 19 + Next.js 16 (App Router, Turbopack)** ← **唯一前端工作区** (Phase 4 2026-05-27 切完;退役的 Vite `packages/client` + Capacitor 移动壳已于 2026-06-14 整包移除)
    - `packages/server` — Hono + **PostgreSQL 13**（WCA OAuth + recon + alg 公式库 + 训练数据，部署到云服务器;2026-05-06 从 MariaDB 迁过来,MariaDB 服务 + 数据已完整卸载)
    - `packages/shared` — 共享类型(`shared/src/alg.ts` 等);**公式数据全部在 PG `alg_sets/alg_cases` 两张表** (2026-05-06 从 JSON 迁过来),`loadAlg(puzzle, set)` 走 `/api/alg/sets/:p/:s` fetch
    - `packages/visualcube` — 自有 visualcube 封装;CI/server bundle 前必须先 build (`pnpm -F @cuberoot/visualcube build`,产 `dist/index.js`),否则 esbuild/Vercel build 找不到 export
@@ -25,19 +25,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Alg Trainer | `/alg-trainers` | 根目录静态 HTML(同上) | fork of [mihlefeld/Alg-Trainers](https://github.com/mihlefeld/Alg-Trainers) | ❌ upstream |
 | csTimer | `/cstimer` | iframe → `/tools/cstimer/`(同上 fallback) | integrated from [cs0x7f/cstimer](https://github.com/cs0x7f/cstimer) | ❌ upstream |
 | WCA Stats（数据管道） | `/wca` | `core/packages/stats-build` | 基于 [jonatanklosko/wca_statistics](https://github.com/jonatanklosko/wca_statistics) 的 TS 重写 | ⚠️ 管道已重写，UI 自有 |
-| Score Calculator (HTH) | `/calc` | `core/packages/client-next/app/[lang]/calc/` | ported from [carykh/hthgrapher](https://github.com/carykh/hthgrapher) | ✅ |
-| 1v1 Battle | `/battle` | `core/packages/client-next/app/[lang]/battle/` | ported from [MatteoColombo/cube_challenge_timer](https://github.com/MatteoColombo/cube_challenge_timer) | ✅ |
-| Recon | `/recon` | `core/packages/client-next/app/[lang]/recon/` | 自有 | ✅ |
-| Trainer（公式计时训练，全 41 套） | `/trainer` | `core/packages/client-next/app/[lang]/trainer/` | 自有 | ✅ |
-| Recognize（PLL 识别训练，看图答字母） | `/recognize/pll` | `core/packages/client-next/app/[lang]/recognize/[algSetId]/` | 自有 | ✅ |
-| Frame Count | `/frame-count` | `core/packages/client-next/app/[lang]/frame-count/` | 自有（WebCodecs + mp4box.js） | ✅ |
-| Distribution | `/wca/viz` | `core/packages/client-next/app/[lang]/wca/viz/` | 自有 | ✅ |
-| Comp (比赛中心:搜索/日历/地球/实时成绩) | `/wca/comp` | `core/packages/client-next/app/[lang]/wca/comp/` | 自有 | ✅ |
-| Scramble（打乱难度 / 长度分布） | `/scramble/stats` | `core/packages/client-next/app/[lang]/scramble/stats/` + 数据 `stats/scramble/*.json`（长度走 CI 日更 `build_scramble_lengths.ts`） | 自有 | ✅ |
-| Mosaic（魔方马赛克生成） | `/mosaic` | `core/packages/client-next/app/[lang]/mosaic/` | ported from [Roman-/mosaic](https://github.com/Roman-/mosaic) | ✅ |
+| Score Calculator (HTH) | `/calc` | `core/packages/client/app/[lang]/calc/` | ported from [carykh/hthgrapher](https://github.com/carykh/hthgrapher) | ✅ |
+| 1v1 Battle | `/battle` | `core/packages/client/app/[lang]/battle/` | ported from [MatteoColombo/cube_challenge_timer](https://github.com/MatteoColombo/cube_challenge_timer) | ✅ |
+| Recon | `/recon` | `core/packages/client/app/[lang]/recon/` | 自有 | ✅ |
+| Trainer（公式计时训练，全 41 套） | `/trainer` | `core/packages/client/app/[lang]/trainer/` | 自有 | ✅ |
+| Recognize（PLL 识别训练，看图答字母） | `/recognize/pll` | `core/packages/client/app/[lang]/recognize/[algSetId]/` | 自有 | ✅ |
+| Frame Count | `/frame-count` | `core/packages/client/app/[lang]/frame-count/` | 自有（WebCodecs + mp4box.js） | ✅ |
+| Distribution | `/wca/viz` | `core/packages/client/app/[lang]/wca/viz/` | 自有 | ✅ |
+| Comp (比赛中心:搜索/日历/地球/实时成绩) | `/wca/comp` | `core/packages/client/app/[lang]/wca/comp/` | 自有 | ✅ |
+| Scramble（打乱难度 / 长度分布） | `/scramble/stats` | `core/packages/client/app/[lang]/scramble/stats/` + 数据 `stats/scramble/*.json`（长度走 CI 日更 `build_scramble_lengths.ts`） | 自有 | ✅ |
+| Mosaic（魔方马赛克生成） | `/mosaic` | `core/packages/client/app/[lang]/mosaic/` | ported from [Roman-/mosaic](https://github.com/Roman-/mosaic) | ✅ |
 | Blog | `blog.cuberoot.me`(`/blog` redirect 过去) | 独立 repo `RuiminYan/cuberoot-blog` | 外部托管 | — |
 
-改 upstream 模块前先问用户；要改就只改 fork 后新增/包装的部分。**前端只有 client-next 一个工作区**。
+改 upstream 模块前先问用户；要改就只改 fork 后新增/包装的部分。**前端只有 client 一个工作区**。
 
 ## 部署拓扑 (Phase 4 后 — 2026-05-27)
 
@@ -46,19 +46,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 另一条线路 → Vercel Hobby `cuberoot-me` project → 同一份 Next 代码 + Vercel edge。Vercel 自动从 GitHub main 跑 build,部署是 push-triggered。
 - **`static.cuberoot.me`** — 自有服务器 nginx 独立 vhost,只服 `/www/wwwroot/toolkit/{tools,stats}/`(forks 静态资源 + WCA stats JSON),CORS:* 给 Vercel function fallback。2026-05-27 替代退役的 `vite.cuberoot.me`。
 - **`next.cuberoot.me`** — 同一套 systemd `cuberoot-next` 反代 :3002,作 staging 子域 / 别名。
-- **systemd Next standalone 部署**:`deploy_next.yml`(push `core/packages/{client-next,shared,visualcube}/**` 触发) CI build → tar `.next/standalone/`(自带 node_modules) → scp → 服务器原子换 `/www/wwwroot/toolkit-next/` + 健康检查 :3002,挂了自动回滚 .bak。`start.sh` 包装定位 standalone entry,systemd unit 在 `ops/systemd/cuberoot-next.service`。
+- **systemd Next standalone 部署**:`deploy_next.yml`(push `core/packages/{client,shared,visualcube}/**` 触发) CI build → tar `.next/standalone/`(自带 node_modules) → scp → 服务器原子换 `/www/wwwroot/toolkit-next/` + 健康检查 :3002,挂了自动回滚 .bak。`start.sh` 包装定位 standalone entry,systemd unit 在 `ops/systemd/cuberoot-next.service`。
 - **Vercel build 特殊处理**:`next.config.ts` 用 `VERCEL=1` env gate,Vercel 上跳过 `output: standalone` + `outputFileTracingRoot`(否则 vercel/next.js#88579 撞 manifest ENOENT)。`app/stats/[...slug]/route.ts` 和 `app/tools/[...slug]/route.ts` 在 Vercel 上 fallback 拉 `static.cuberoot.me/{stats,tools}/*`(stats 数据 + forks 没打进 Vercel bundle,CORS 已开)。
 - **Vercel CLI 已装本机**(`ruiminyan` 登录态):`vercel logs https://www.cuberoot.me` 拉最近 100 条 function log,`| grep ' 5[0-9]{2} '` 过 5xx。用户报"vercel 报错"直接 CLI 自查,免截图。详见 memory `project_vercel_deployment`。
 - **CORS allowlist** 在 `core/packages/server/src/index.ts`,函数形式放行 `*.vercel.app`(Vercel preview 每 PR 一个 URL)+ 主域 + `next.cuberoot.me`。
 - **后端 API**:Hono 服 `api.cuberoot.me`(同一台自有服务器,nginx 反代到 127.0.0.1:3001)。
 - **Blog (`/blog/` + `blog.cuberoot.me`)**:独立 `cuberoot-blog` repo 静态归档,blog.cuberoot.me 双轨(自有 nginx alias / GH Pages)按 DNS 分线路。主域 `/blog` 走 next.config.ts redirect → blog.cuberoot.me。详 memory `reference_blog_subdomain`。
-- 前端调 API **必须**用 `utils/api_base.ts` 的 `apiUrl()`(client-next 在 `lib/api-base.ts`),不要硬编码 origin。
+- 前端调 API **必须**用 `utils/api_base.ts` 的 `apiUrl()`(client 在 `lib/api-base.ts`),不要硬编码 origin。
 - **API 缓存头分层**:可变数据端点浏览器层 `max-age≤3600`,长缓存只给 nginx 用 `s-maxage`;空/暂态 payload 发 `no-store`;改响应 shape 必须 bump fetch URL 的 `v=` 参数。仅天然不可变数据(已结束比赛/确定性计算)可浏览器长缓存。CI 守卫 `tests/server-cache-headers.test.ts`。
 - `/stats/*.json` fetch 走 `statsUrl()`(`lib/stats-base.ts` / `shared/src/api/stats-base.ts`),别写相对路径(Vercel 上相对 `/stats/*` 多一跳 307,白吃 edge request)。
 - **Pattern B 英文落裸地址**(2026-06-08):英文走裸 URL,中文走 `/zh`;裸路径 proxy rewrite 到 `/en`(零跳转),中文环境裸→307→`/zh`;无 MIGRATED_PATHS 白名单,新路由免登记。内部 `<Link>` 用 `components/AppLink`(en 出裸、zh 补 `/zh`),别裸 `next/link`;非 Link 导航(`router.push`/服务端 `redirect`/raw `<a>`)手动 `${lang==='zh'?'/zh':''}` 前缀,别硬编码 `/${lang}`。
 - 切 dev/prod API base 永远用 `import.meta.env.DEV`,**禁** `hostname === 'localhost'` 检查 — LAN IP / Tailscale `*.ts.net` / 隧道域名都不匹配,会错走 prod 跨域被 CORS 拦死。`shared/` 包不能 import client utils,直接 `(import.meta as { env?: { DEV?: boolean } }).env?.DEV`。
 - **COOP/COEP (cubeopt-wasm SAB)**:仅 `/scramble/solver` 在 Next config `headers()` 发(Phase 4 缩到只 solver — analyzer 用 classic worker COEP 会拦死)。nginx vhost 顶 `map $request_uri` 同样匹配 `/scramble/(solver|analyzer)`(历史保留,实际 Next 自己也发)。新增 SAB 页面同步改两处。
-- **client-next 页面默认 SSG**(2026-05-28 起,~128 组静态走 CDN):根 `app/layout.tsx` 禁动态 API(cookies/headers),全局组件禁在 render 调 `useSearchParams`,否则整站退回动态 / CSR 空壳;语言归属在 `[lang]/layout`,i18n 走 `initImmediate:false` + `useSuspense:false`。
+- **client 页面默认 SSG**(2026-05-28 起,~128 组静态走 CDN):根 `app/layout.tsx` 禁动态 API(cookies/headers),全局组件禁在 render 调 `useSearchParams`,否则整站退回动态 / CSR 空壳;语言归属在 `[lang]/layout`,i18n 走 `initImmediate:false` + `useSuspense:false`。
 ## 开发命令
 
 包管理用 **pnpm 11**（不是 npm）。Windows 下按全局规则用 `pwsh`。
@@ -67,11 +67,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 pnpm install
-pnpm --filter @cuberoot/client-next dev            # http://127.0.0.1:3000/
-pnpm --filter @cuberoot/client-next typecheck      # tsgo (native Go port，~3s 冷 / ~1.2s 暖)
-pnpm --filter @cuberoot/client-next typecheck:tsc  # tsc -b incremental
-pnpm --filter @cuberoot/client-next build          # 会自动 prebuild @cuberoot/shared + visualcube
-pnpm --filter @cuberoot/client-next lint
+pnpm --filter @cuberoot/client dev            # http://127.0.0.1:3000/
+pnpm --filter @cuberoot/client typecheck      # tsgo (native Go port，~3s 冷 / ~1.2s 暖)
+pnpm --filter @cuberoot/client typecheck:tsc  # tsc -b incremental
+pnpm --filter @cuberoot/client build          # 会自动 prebuild @cuberoot/shared + visualcube
+pnpm --filter @cuberoot/client lint
 ```
 
 > **重要:**
@@ -89,9 +89,9 @@ pnpm --filter @cuberoot/client-next lint
 
 ## 测试
 
-- vitest 在 `@cuberoot/client-next`(CI 跑这个),跑 `pnpm --filter @cuberoot/client-next test`(全集)或 `test:watch`。测试全在 `packages/client-next/tests/`,源文件走 `@/` alias import(`vitest.config.ts` 配的)
-- **`tests/analyzer_worker.test.ts` 跑 ~225s**(占全集 99%,CFOP 分析器全空间枚举 53×7457×42664×21380)。只改它以外的东西用 `pnpm --filter @cuberoot/client-next exec vitest run <path>` 单跑;**禁** `pnpm --filter X test -- <path>`(pnpm 透传 `--` 会被 vitest 吞掉、跑全集)
-- 测试统一放 `packages/client-next/tests/*.test.ts`(不与源码并排,避开 Next App Router 的 `app/` 路由目录),纯函数 / 算法回归同一套
+- vitest 在 `@cuberoot/client`(CI 跑这个),跑 `pnpm --filter @cuberoot/client test`(全集)或 `test:watch`。测试全在 `packages/client/tests/`,源文件走 `@/` alias import(`vitest.config.ts` 配的)
+- **`tests/analyzer_worker.test.ts` 跑 ~225s**(占全集 99%,CFOP 分析器全空间枚举 53×7457×42664×21380)。只改它以外的东西用 `pnpm --filter @cuberoot/client exec vitest run <path>` 单跑;**禁** `pnpm --filter X test -- <path>`(pnpm 透传 `--` 会被 vitest 吞掉、跑全集)
+- 测试统一放 `packages/client/tests/*.test.ts`(不与源码并排,避开 Next App Router 的 `app/` 路由目录),纯函数 / 算法回归同一套
 - worker / 算法回归走 `tests/*.test.ts` + 一个 `_*_runner.cjs`(node:worker_threads + classic-worker globals shim),典型例子见 `tests/analyzer_worker.test.ts`
 - 改 worker / kociemba / scramble 生成器 / utils 必须配一组 fixture 测试,改前先看现有 `tests/` 里同类怎么写
 - CI 在 `.github/workflows/test.yml`,PR + push main 触发 typecheck + test
@@ -101,7 +101,7 @@ pnpm --filter @cuberoot/client-next lint
 
 - 响应简洁，不加多余注释，不做超出需求的抽象
 - 不新建文件除非必要，优先编辑已有文件
-- 改完跑 `pnpm --filter @cuberoot/client-next typecheck`
+- 改完跑 `pnpm --filter @cuberoot/client typecheck`
 - UI 不用 emoji，用 lucide-react 图标
 - 不放页面级"返回"按钮，浏览器自带 back 即可（wizard 步骤间 / 模式切换不算）
 - 选择型 / 搜索型输入框非空时必须显示 `×` 清除按钮：统一用 `components/ClearButton.tsx`（`variant='inline'` 浮在 input 内，`'standalone'` 流式独立圆），别再写一份局部 `.xxx-clear` CSS

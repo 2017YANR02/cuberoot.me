@@ -9,7 +9,7 @@
  *
  * 渲染纯函数化:`formatCombinedRecords(events, getRank)` 全同步,世界排名通过同步
  * `getRank(eventId, recType, attemptResult) => number|null` 注入(调用方先异步预解析)。
- * golden 回归在 client-next/tests/record_format.test.ts(fixtures 抓自上线前的 Python 输出)。
+ * golden 回归在 client/tests/record_format.test.ts(fixtures 抓自上线前的 Python 输出)。
  *
  * ⚠️ 移植不变量:Python 字符串切片按 code point;本文件所有 `slice(0, len - label.length)`
  * 去掉的都是真实后缀(label/flag 是字符串末尾真子串),边界与计数方式无关,UTF-16 .length

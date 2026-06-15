@@ -15,7 +15,7 @@ import YAML from 'yaml';
 //   }
 // dist 形状与 distribution.json 的 HistEntry 一致({min,max,counts}),
 // 前端 DiscreteHistogram / computeStats 可直接复用;客户端类型在
-// client-next/lib/puzzle-distribution.ts(改 shape 必须两处同步 + bump fetch v= 参数)。
+// client/lib/puzzle-distribution.ts(改 shape 必须两处同步 + bump fetch v= 参数)。
 //
 // 输入:update_puzzle_stats.ps1 产出的 <puzzle_data_dir>/<key>/<key>.csv(两列 id,<key>,
 // 值 = 该打乱整解最优步数)。缺 CSV 的 puzzle 跳过并打警告(对齐 build.ts 变体语义)。
