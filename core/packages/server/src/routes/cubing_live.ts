@@ -446,13 +446,16 @@ function writeSnapshotL2(data: CompData): void {
 function setL1AndL2(key: string, data: CompData): void {
   cache.set(key, data);
   writeSnapshotL2(data);
-  void syncPersonLiveResults(data);
 }
 
 // ─── 选手页直播成绩写穿(per-person 索引)─────────────────────────────────────
 // 把非官方源(cubing / wca_live)、官方尚未收录的近期 WCA 比赛成绩炸成 per-person 行写进
 // wca_live_person_results,供 /v1/wca/person-live-results 秒查。比赛转官方源(wca/wca_db)
-// 或非 WCA 比赛 → 删除该 comp 的行(官方权威 / 不该出现在 WCA 选手页)。fire-and-forget。
+// 或非 WCA 比赛 → 删除该 comp 的行(官方权威 / 不该出现在 WCA 选手页)。
+//
+// 由 prewarm 对 loadComp 的返回值直接驱动(见 prewarmHotComps / fastPrewarmOngoing),
+// 不挂在 setL1AndL2:近期比赛绝大多数 prewarm 周期命中 L1/L2 缓存、走 cache.set 直返,
+// 根本不经过 setL1AndL2,挂那里会几乎永不触发(2026-06-15 踩到:部署后表恒 0 行)。
 
 /** 轮内成绩比较:<0 = a 严格更好(只比时间,忽略号码;DNF/0 垫底)。移植自 useLiveStream 的 compareResult。 */
 function liveResultBetter(a: LiveResult, b: LiveResult, fmt: string): number {
@@ -1757,7 +1760,8 @@ export async function prewarmHotComps(): Promise<void> {
     let ok = 0, fail = 0;
     for (const wcaId of ids) {
       try {
-        await loadComp(wcaId, 'auto');
+        const data = await loadComp(wcaId, 'auto');
+        await syncPersonLiveResults(data); // 选手页直播成绩写穿:基于返回的 CompData(缓存命中也覆盖)
         ok++;
       } catch {
         fail++;
@@ -1808,7 +1812,10 @@ export async function fastPrewarmOngoing(): Promise<void> {
   try {
     const ids = await listOngoingComps();
     for (const wcaId of ids) {
-      try { await loadComp(wcaId, 'auto'); } catch { /* ignore */ }
+      try {
+        const data = await loadComp(wcaId, 'auto');
+        await syncPersonLiveResults(data); // 进行中比赛高频(65s)刷新选手页直播成绩
+      } catch { /* ignore */ }
       await new Promise(r => setTimeout(r, FAST_PREWARM_DELAY_MS));
     }
   } finally {
