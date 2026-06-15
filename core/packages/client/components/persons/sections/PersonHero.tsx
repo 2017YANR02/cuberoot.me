@@ -4,16 +4,16 @@
 import { Mars, Venus } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { countryName } from '@/lib/country-name';
-import type { WcaPersonProfile, WcaResultRow } from '@/lib/wca-person-api';
-import i18n from "@/i18n/i18n-client";
+import type { WcaPersonProfile, WcaResultRow, WcaFormerIdentity } from '@/lib/wca-person-api';
 
 interface Props {
   profile: WcaPersonProfile;
   results: WcaResultRow[] | null;
+  former?: WcaFormerIdentity[];
   isZh: boolean;
 }
 
-export default function PersonHero({ profile, results, isZh }: Props) {
+export default function PersonHero({ profile, results, former, isZh }: Props) {
   const p = profile.person;
   // 选手主页展示完整 WCA 名(拉丁名 + 括号内本地名),中英文一致;与 WCA 官网对齐。
   const displayName = p.name;
@@ -66,6 +66,15 @@ export default function PersonHero({ profile, results, isZh }: Props) {
           <div className="wp-hero-id">
             <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-id-link" title="WCA">{p.wca_id}</a>
           </div>
+          {former && former.length > 0 && (
+            <div className="wp-hero-former">
+              {former.map((f, i) => (
+                <span className="wp-hero-former-item" key={i}>
+                  ({t('曾经是', 'formerly')} {f.name}{f.iso2 ? ` - ${countryName(f.iso2, isZh)}` : ''})
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

@@ -417,6 +417,23 @@ wcaStatsExtraRoutes.get('/wca/persons-directory', async (c) => {
   });
 });
 
+// ── 2a-bis. /v1/wca/person-aka ──
+//   GET /v1/wca/person-aka?wcaId=
+// 选手详情页 hero 展示历史身份「曾经是 X - 国家」。数据来自 wca_person_aka.former_detail
+//   ([{name, iso2}],含纯改国籍;former_names 那侧只名字去重,口径不同故另存一列)。
+// 绝大多数人无曾用身份 → 空数组;表近静态,空响应也走 1 天缓存,避免每个选手页都回源。
+wcaStatsExtraRoutes.get('/wca/person-aka', async (c) => {
+  const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
+  if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) return c.json({ error: 'Invalid wcaId' }, 400);
+  const rows = await query<{ former_detail: { name: string; iso2: string | null }[] | null }>(
+    `SELECT former_detail FROM wca_person_aka WHERE wca_id = ?`,
+    [wcaId],
+  );
+  const former = (rows[0]?.former_detail ?? []).filter(f => f && f.name);
+  c.header('Cache-Control', CACHE_HEADER);
+  return c.json({ wcaId, former });
+});
+
 // ── 2b. /v1/wca/rank-for ──
 // "我这个成绩放进 WCA 历史能排第几" —— 给 /timer 速拧计时器的世界排名徽章用.
 //   GET /v1/wca/rank-for?event=333&type=single&centis=984
