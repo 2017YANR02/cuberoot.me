@@ -41,7 +41,9 @@ CREATE INDEX IF NOT EXISTS wca_persons_full_len ON wca_persons ((char_length(nam
 CREATE TABLE IF NOT EXISTS wca_person_aka (
   wca_id       VARCHAR(20) PRIMARY KEY,
   former_names JSONB   NOT NULL,
-  aka_len      INTEGER NOT NULL
+  aka_len      INTEGER NOT NULL,
+  -- former_detail: [{name, iso2}] 含纯改国籍,给选手页 hero「曾经是 X - 国家」展示(migration 0054)
+  former_detail JSONB
 );
 
 -- ── 4. historical_ranks_snapshot: 每年末的累积最佳快照(~7.5M 行 ~470MB TSV / ~1GB 含索引) ──
