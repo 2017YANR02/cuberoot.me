@@ -501,3 +501,118 @@ export type ErrorLog = typeof errorLogs.$inferSelect;
 export type ErrorLogInsert = typeof errorLogs.$inferInsert;
 export type RequestLog = typeof requestLogs.$inferSelect;
 export type RequestLogInsert = typeof requestLogs.$inferInsert;
+
+// ───────────────────────── Round 2: 游戏化与魔方垂直底座 ─────────────────────────
+
+// 通用收藏夹:一行 = 一个用户收藏的一个对象(课程/商品/赛事/资讯/帖子)
+export type FavoriteTarget = "course" | "product" | "event" | "news" | "post";
+
+export const favorites = sqliteTable(
+  "favorites",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    targetType: text("target_type").$type<FavoriteTarget>().notNull(),
+    targetId: text("target_id").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("favorites_user_target_unique").on(
+      t.userId,
+      t.targetType,
+      t.targetId,
+    ),
+    index("favorites_user_created_idx").on(t.userId, t.createdAt),
+  ],
+);
+
+// 魔方计时器成绩:每次还原一条,penalty 影响有效成绩(+2 加两秒 / DNF 不计)
+export type CubeEventId =
+  | "333"
+  | "222"
+  | "444"
+  | "555"
+  | "333oh"
+  | "333bf"
+  | "pyram"
+  | "skewb"
+  | "clock"
+  | "minx";
+export type SolvePenalty = "none" | "plus2" | "dnf";
+
+export const timerSolves = sqliteTable(
+  "timer_solves",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    event: text("event").$type<CubeEventId>().notNull().default("333"),
+    timeMs: integer("time_ms").notNull(), // 原始计时(毫秒,不含 +2)
+    scramble: text("scramble").notNull(),
+    penalty: text("penalty").$type<SolvePenalty>().notNull().default("none"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("timer_solves_user_event_idx").on(t.userId, t.event, t.createdAt),
+    index("timer_solves_event_idx").on(t.event),
+  ],
+);
+
+// 学习连续打卡:每个用户每个自然日(本地 YYYY-MM-DD)至多一条,source 记触发来源
+export const studyCheckins = sqliteTable(
+  "study_checkins",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    date: text("date").notNull(), // 本地日 YYYY-MM-DD
+    source: text("source"), // study / timer / manual
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("study_checkins_user_date_unique").on(t.userId, t.date),
+    index("study_checkins_user_idx").on(t.userId),
+  ],
+);
+
+// 积分流水账:正负 delta 记账,reason 标来源,统一 awardPoints() 写入;余额 = SUM(delta)
+export const pointLedger = sqliteTable(
+  "point_ledger",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    delta: integer("delta").notNull(),
+    reason: text("reason").notNull(), // purchase / lesson_complete / post / checkin / review / streak / membership
+    refId: text("ref_id"),
+    note: text("note"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("point_ledger_user_created_idx").on(t.userId, t.createdAt)],
+);
+
+// 课程评价:每个用户每门课至多一条(可改),rating 1..5;courses.rating 由此聚合回写
+export const courseReviews = sqliteTable(
+  "course_reviews",
+  {
+    id: text("id").primaryKey(),
+    courseId: text("course_id").notNull(),
+    userId: text("user_id").notNull(),
+    rating: integer("rating").notNull(), // 1..5
+    body: text("body").notNull().default(""),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("course_reviews_course_user_unique").on(t.courseId, t.userId),
+    index("course_reviews_course_created_idx").on(t.courseId, t.createdAt),
+  ],
+);
+
+export type Favorite = typeof favorites.$inferSelect;
+export type FavoriteInsert = typeof favorites.$inferInsert;
+export type TimerSolve = typeof timerSolves.$inferSelect;
+export type TimerSolveInsert = typeof timerSolves.$inferInsert;
+export type StudyCheckin = typeof studyCheckins.$inferSelect;
+export type StudyCheckinInsert = typeof studyCheckins.$inferInsert;
+export type PointLedgerRow = typeof pointLedger.$inferSelect;
+export type PointLedgerInsert = typeof pointLedger.$inferInsert;
+export type CourseReview = typeof courseReviews.$inferSelect;
+export type CourseReviewInsert = typeof courseReviews.$inferInsert;
