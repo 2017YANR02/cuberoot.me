@@ -10,6 +10,7 @@ import {
   effectiveFieldValue,
   effectiveAttempts,
   attemptOldValues,
+  effectiveAttemptPenalties,
   buildOriginalBackfillFields,
   type ResultChange,
 } from '@/lib/result-watch-api';
@@ -249,5 +250,27 @@ describe('buildOriginalBackfillFields (inline per-solve original)', () => {
     expect(fields.map((f) => f.field)).toEqual(['attempts', 'best']);
     expect(fields[0]?.old).toEqual([1000, 1500, -1]);
     expect(fields.find((f) => f.field === 'best')).toEqual({ field: 'best', old: 1000, new: 1200 });
+  });
+});
+
+// 罚时标注:3.00 实为 1.00+2 → 不改值,只在展示层拆 base + 罚时。
+describe('effectiveAttemptPenalties', () => {
+  it('returns the latest attempt_penalties.new array', () => {
+    const chain = [
+      mk({ id: 1, fields: [{ field: 'attempt_penalties', old: null, new: [200, 0, 0, 0, 0] }] }),
+      mk({ id: 2, fields: [{ field: 'attempt_penalties', old: null, new: [200, 0, 0, 0, 400] }] }),
+    ];
+    expect(effectiveAttemptPenalties(chain)).toEqual([200, 0, 0, 0, 400]);
+  });
+  it('empty when no penalty field / undefined', () => {
+    expect(effectiveAttemptPenalties(undefined)).toEqual([]);
+    expect(effectiveAttemptPenalties([mk({ fields: [{ field: 'best', old: 1, new: 2 }] })])).toEqual([]);
+  });
+  it('+2 decomposition: a 3.00 with penalty 200 shows base 1.00 (value - penalty)', () => {
+    const penalties = effectiveAttemptPenalties([
+      mk({ fields: [{ field: 'attempt_penalties', old: null, new: [200, 0, 0, 0, 0] }] }),
+    ]);
+    const displayedValue = 300; // 3.00 厘秒(含罚时)
+    expect(displayedValue - (penalties[0] ?? 0)).toBe(100); // base = 1.00
   });
 });

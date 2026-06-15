@@ -40,8 +40,9 @@ import ScheduleView, { ScheduleControls } from './ScheduleView';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import LangToggle from '@/components/LangToggle';
 import { useCompFollows, FollowStar } from '@/components/CompFollow';
-import { personRoundChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, recordAttemptEdit, recordAttemptOriginal } from '@/lib/result-watch-api';
+import { personRoundChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty } from '@/lib/result-watch-api';
 import { AttemptEditPopover } from '@/components/persons/sections/results/AttemptEditPopover';
+import { SolveValue } from '@/components/persons/sections/results/SolveValue';
 import { useCompRowChangeMap } from '@/components/persons/logic/use-row-change-map';
 import { ResultChangeChain } from '@/components/persons/sections/results/ChangedResultValue';
 import { ResultChangeEditor, type ResultChangeTarget } from '@/components/persons/sections/results/ResultChangeEditor';
@@ -1835,7 +1836,9 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                   );
                   return singleFirst ? [bestCell, avgCell] : [avgCell, bestCell];
                 })()}
-                {Array.from({ length: attemptCount }).map((_, i) => (
+                {Array.from({ length: attemptCount }).map((_, i) => {
+                  const pen = effectiveAttemptPenalties(chain)[i] ?? 0;
+                  return (
                   <td key={i} className={`td-attempt ${isAo5Bracketed(effAttempts, i) ? 'td-attempt-trimmed' : ''}`}>
                     {admin && wcaid && i < effAttempts.length ? (
                       <AttemptEditPopover
@@ -1843,6 +1846,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                         eventId={r.e}
                         oldValues={attemptOldValues(chain, i)}
                         format={(v) => formatLive(v, r.e, false)}
+                        penalty={pen}
                         onCorrect={(newValue, note) =>
                           recordAttemptEdit({
                             target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
@@ -1857,12 +1861,20 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                             index: i, originalValue, note, existingChain: chain,
                           }).then(() => onRefresh?.())
                         }
+                        onSetPenalty={(penaltyCs, note) =>
+                          recordAttemptPenalty({
+                            target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
+                            currentAttempts: effAttempts,
+                            index: i, penaltyCs, note, existingChain: chain,
+                          }).then(() => onRefresh?.())
+                        }
                       />
                     ) : (
-                      formatLive(effAttempts[i] ?? 0, r.e, false)
+                      <SolveValue value={effAttempts[i] ?? 0} penalty={pen} format={(v) => formatLive(v, r.e, false)} />
                     )}
                   </td>
-                ))}
+                  );
+                })}
               </tr>
             );
           })}
