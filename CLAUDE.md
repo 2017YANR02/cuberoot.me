@@ -8,8 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 1. **根目录的静态 HTML/JS**（来自多个 fork + Phase 4 前 deploy_mirror.yml 同步的 Vite build 残留）—— 只读，不改;deploy_mirror 已停,残留长期会清。
 2. **`core/`** — pnpm + Turbo monorepo，所有新开发都在这里：
-   - `packages/client-next` — **React 19 + Next.js 16 (App Router, Turbopack)** ← **主要工作区** (Phase 4 2026-05-27 切完)
-   - `packages/client` — React 19 + Vite 8 SPA (已退役,仅本地 `localhost:5173` 对比/兜底用,新功能不动;线上 vite.cuberoot.me 已下线)
+   - `packages/client-next` — **React 19 + Next.js 16 (App Router, Turbopack)** ← **唯一前端工作区** (Phase 4 2026-05-27 切完;退役的 Vite `packages/client` + Capacitor 移动壳已于 2026-06-14 整包移除)
    - `packages/server` — Hono + **PostgreSQL 13**（WCA OAuth + recon + alg 公式库 + 训练数据，部署到云服务器;2026-05-06 从 MariaDB 迁过来,MariaDB 服务 + 数据已完整卸载)
    - `packages/shared` — 共享类型(`shared/src/alg.ts` 等);**公式数据全部在 PG `alg_sets/alg_cases` 两张表** (2026-05-06 从 JSON 迁过来),`loadAlg(puzzle, set)` 走 `/api/alg/sets/:p/:s` fetch
    - `packages/visualcube` — 自有 visualcube 封装;CI/server bundle 前必须先 build (`pnpm -F @cuberoot/visualcube build`,产 `dist/index.js`),否则 esbuild/Vercel build 找不到 export
@@ -38,7 +37,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Mosaic（魔方马赛克生成） | `/mosaic` | `core/packages/client-next/app/[lang]/mosaic/` | ported from [Roman-/mosaic](https://github.com/Roman-/mosaic) | ✅ |
 | Blog | `blog.cuberoot.me`(`/blog` redirect 过去) | 独立 repo `RuiminYan/cuberoot-blog` | 外部托管 | — |
 
-改 upstream 模块前先问用户；要改就只改 fork 后新增/包装的部分。同名 Vite 版本在 `packages/client/src/pages/*` 还在,但只作回滚兜底,**新功能只改 client-next**。
+改 upstream 模块前先问用户；要改就只改 fork 后新增/包装的部分。**前端只有 client-next 一个工作区**。
 
 ## 部署拓扑 (Phase 4 后 — 2026-05-27)
 
@@ -75,26 +74,24 @@ pnpm --filter @cuberoot/client-next typecheck      # tsgo (native Go port，~3s 
 pnpm --filter @cuberoot/client-next typecheck:tsc  # tsc -b incremental
 pnpm --filter @cuberoot/client-next build          # 会自动 prebuild @cuberoot/shared + visualcube
 pnpm --filter @cuberoot/client-next lint
-# 旧 Vite (回滚兜底，不日常开):
-pnpm --filter @cuberoot/client dev                 # http://127.0.0.1:5173/
 ```
 
 > **重要:**
 > 1. 日常用 `typecheck` (tsgo,native Go,3s 冷 / 1s 暖,Microsoft 官方 preview);怀疑 tsgo 漏报时用 `typecheck:tsc` (老 tsc -b)。**禁** `tsc --noEmit` 走根 tsconfig (references-only 壳,typo 静默过)。
-> 2. **Dev server 永远在 `http://127.0.0.1:3000/` (Next) 或 `127.0.0.1:5173/` (Vite,兜底)**,不要 `pnpm dev`(端口占用立刻挂)。要验证用 playwright 直接开。
+> 2. **Dev server 永远在 `http://127.0.0.1:3000/` (Next)**,不要 `pnpm dev`(端口占用立刻挂)。要验证用 playwright 直接开。
 > 3. Windows Next dev 关窗口/Ctrl+C 可能留孤儿 node.exe (memory `feedback_windows_next_dev_restart`),改 globals/layout/next.config 看 chunk hash 是否变。
 > 4. 磁盘不够 (worktree / pnpm install / build 失败时) 先 `df -h` 告诉我,别静默换方案。
 > 5. **dev 在跑时禁本地 `next build`**:build 和 dev 共用 `.next/`,并发写撕裂 manifest JSON → 全站 500。验证走 `typecheck`(不碰 `.next/`),真要本地 build 先停 dev。已有 PreToolUse hook (`.claude/hooks/block-next-build-while-dev.ps1`) 在 dev 活着时硬拦 build;坏了删 `.next` 重启即恢复。
 
 - Next dev 绑定 `127.0.0.1` (Windows Chrome IPv6 解析问题)
 - 本地 Next dev 调 `/v1/*` 走 next.config rewrites 反代 `https://api.cuberoot.me`,**本地开发不需要跑后端**
-- `app/stats/[...slug]/route.ts` 和 `app/tools/[...slug]/route.ts` 是 dev 服仓库根 stats/tools/ 用的 catch-all (mirror Vite `serveRepoRoot` 插件),Vercel 上 fallback static.cuberoot.me
+- `app/stats/[...slug]/route.ts` 和 `app/tools/[...slug]/route.ts` 是 dev 服仓库根 stats/tools/ 用的 catch-all,Vercel 上 fallback static.cuberoot.me
 - **凭据展开**：给用户云服务器 / DB shell 命令时，从 `.password.md` 读真实密码直接嵌入，**不要写 `<password>` 占位**（`.password.md` 已 gitignore，不会进 repo；用户每次都得手动替换占位太烦）。命令本身不要 commit。
 - **本地 PG**:docker `pg13`(5433 pwd `dev` db `cuberoot_db`,PG 13)。schema / load.sql 先本地验。
 
 ## 测试
 
-- vitest 在 `@cuberoot/client-next`(CI 跑这个),跑 `pnpm --filter @cuberoot/client-next test`(全集)或 `test:watch`。测试全在 `packages/client-next/tests/`,源文件走 `@/` alias import(`vitest.config.ts` 配的)。退役的 `@cuberoot/client` 仍保留同一份测试作回滚兜底,但不进 CI
+- vitest 在 `@cuberoot/client-next`(CI 跑这个),跑 `pnpm --filter @cuberoot/client-next test`(全集)或 `test:watch`。测试全在 `packages/client-next/tests/`,源文件走 `@/` alias import(`vitest.config.ts` 配的)
 - **`tests/analyzer_worker.test.ts` 跑 ~225s**(占全集 99%,CFOP 分析器全空间枚举 53×7457×42664×21380)。只改它以外的东西用 `pnpm --filter @cuberoot/client-next exec vitest run <path>` 单跑;**禁** `pnpm --filter X test -- <path>`(pnpm 透传 `--` 会被 vitest 吞掉、跑全集)
 - 测试统一放 `packages/client-next/tests/*.test.ts`(不与源码并排,避开 Next App Router 的 `app/` 路由目录),纯函数 / 算法回归同一套
 - worker / 算法回归走 `tests/*.test.ts` + 一个 `_*_runner.cjs`(node:worker_threads + classic-worker globals shim),典型例子见 `tests/analyzer_worker.test.ts`
