@@ -198,6 +198,11 @@ function startMonitors(): void {
   if (monitorsStarted) return;
   monitorsStarted = true;
 
+  // Best-effort: don't leave the (multi-GB) child orphaned if this process
+  // exits cleanly. Synchronous 'exit' only — no signal handlers, to avoid
+  // interfering with the app's own shutdown.
+  process.once('exit', () => { if (child) { try { child.kill('SIGKILL'); } catch { /* gone */ } } });
+
   // Layer 1: idle-unload — drop the resident table once nobody has solved for a
   // while, returning ~2GB to the box for the 95% of the time it's not in use.
   setInterval(() => {
@@ -211,8 +216,14 @@ function startMonitors(): void {
   // Layer 2: memory watchdog — if MemAvailable dips below the floor for two
   // consecutive reads while the table is loaded, drop it pre-emptively (and
   // cool down) before the kernel is forced to OOM-kill something.
+  //
+  // Only while `ready`: loading a ~2GB table transiently pushes MemAvailable
+  // down (the file fills page cache while the wasm heap grows), which would make
+  // the watchdog kill its OWN load. During load we instead rely on Layer 3
+  // (oom_score_adj) — if it genuinely can't fit, the kernel sacrifices this
+  // process; if it's just a transient, let the load finish.
   setInterval(() => {
-    if (!child) { lowMemReads = 0; return; }
+    if (!child || !ready) { lowMemReads = 0; return; }
     const avail = readMemAvailableMB();
     if (avail < 0) return; // not Linux / unreadable
     if (avail < MEM_FLOOR_MB) {
