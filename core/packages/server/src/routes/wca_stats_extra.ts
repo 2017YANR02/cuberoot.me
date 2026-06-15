@@ -329,7 +329,8 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
 });
 
 // ── 2a. /v1/wca/persons-directory ──
-//   GET /v1/wca/persons-directory?country=&sort=name|len&dir=asc|desc&name=latin|full|local|aka&page=&size=
+//   GET /v1/wca/persons-directory?country=&sort=name|len&dir=asc|desc&name=latin|full|local|aka&lmin=&lmax=&page=&size=
+//   lmin/lmax:按当前名字口径的字符长度筛选(空 = 不限)。
 // 排名页空态(未选任何项目)的「名录」视图:全选手 A-Z,可叠加国家,按 名字首字母 / 名字长度 分页排序.
 // 名字口径 name(与姓名分布 name_stats 四档对齐):
 //   latin(默认)= 剥本地名注释后的拉丁名;full = 完整 WCA 名(含括号);
@@ -353,28 +354,40 @@ wcaStatsExtraRoutes.get('/wca/persons-directory', async (c) => {
 
   // 本地名 = 末尾括号内的内容(与 name_stats / 客户端口径一致)
   const LOCAL_EXTRACT = `substring(p.name from '\\(([^)]+)\\)\\s*$')`;
-
-  const where: string[] = [];
-  const params: unknown[] = [];
-  if (cn.id) { where.push(`p.country_id = ?`); params.push(cn.id); }
-  // 本地名口径只列真有本地名的选手
-  if (nameMode === 'local') where.push(`p.name ~ '\\([^)]+\\)\\s*$'`);
-  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
-
   const dirSql = dir === 'desc' ? 'DESC' : 'ASC';
+  // 当前名字口径的「字符长度」表达式 —— 排序 + 长度筛选共用(须与 migration 0052/0053 索引逐字一致)
   const lenExpr =
     nameMode === 'full'  ? `char_length(p.name)` :
     nameMode === 'local' ? `char_length(${LOCAL_EXTRACT})` :
     nameMode === 'aka'   ? `COALESCE(a.aka_len, char_length(p.name))` :
                            `char_length(regexp_replace(p.name, '\\s*\\([^)]*\\)\\s*$', ''))`;
   const alphaExpr = nameMode === 'local' ? LOCAL_EXTRACT : `p.name`;
+
+  // 长度区间筛选(按当前名字口径的字符数;空 = 不限)
+  const parseLen = (v: string | undefined) => {
+    if (v == null || v === '') return null;
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
+  const lenMin = parseLen(c.req.query('lmin'));
+  const lenMax = parseLen(c.req.query('lmax'));
+
+  // 含曾用名:LEFT JOIN 小表取曾用名数组 + 合并长度;长度表达式/筛选也靠它,故两条查询都要 join
+  const akaJoin = nameMode === 'aka' ? `LEFT JOIN wca_person_aka a ON a.wca_id = p.wca_id` : '';
+  const akaSelect = nameMode === 'aka' ? `, a.former_names` : '';
+
+  const where: string[] = [];
+  const params: unknown[] = [];
+  if (cn.id) { where.push(`p.country_id = ?`); params.push(cn.id); }
+  // 本地名口径只列真有本地名的选手
+  if (nameMode === 'local') where.push(`p.name ~ '\\([^)]+\\)\\s*$'`);
+  if (lenMin != null) { where.push(`${lenExpr} >= ?`); params.push(lenMin); }
+  if (lenMax != null) { where.push(`${lenExpr} <= ?`); params.push(lenMax); }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
   const orderSql = sort === 'len'
     ? `${lenExpr} ${dirSql}, p.name ASC, p.wca_id ASC`
     : `${alphaExpr} ${dirSql}, p.wca_id ASC`;
-
-  // 含曾用名:LEFT JOIN 小表取曾用名数组 + 合并长度(其他口径不 join)
-  const akaJoin = nameMode === 'aka' ? `LEFT JOIN wca_person_aka a ON a.wca_id = p.wca_id` : '';
-  const akaSelect = nameMode === 'aka' ? `, a.former_names` : '';
 
   const offset = (page - 1) * size;
   const [rows, totalRow] = await Promise.all([
@@ -389,14 +402,14 @@ wcaStatsExtraRoutes.get('/wca/persons-directory', async (c) => {
       [...params, size, offset],
     ),
     query<{ n: string }>(
-      `SELECT COUNT(*) AS n FROM wca_persons p ${whereSql}`,
+      `SELECT COUNT(*) AS n FROM wca_persons p ${akaJoin} ${whereSql}`,
       params,
     ),
   ]);
   const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    country: cn.id, sort, dir, name: nameMode, page, size, total,
+    country: cn.id, sort, dir, name: nameMode, lenMin, lenMax, page, size, total,
     rows: rows.map(r => ({
       wcaId: r.wca_id, name: r.name, countryId: r.country_id, iso2: r.iso2,
       ...(r.former_names && r.former_names.length ? { former: r.former_names } : {}),
