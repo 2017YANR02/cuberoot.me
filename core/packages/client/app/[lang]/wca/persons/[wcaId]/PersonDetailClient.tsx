@@ -14,7 +14,8 @@ import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import {
   fetchWcaPerson, fetchWcaPersonResults, fetchWcaPersonCompetitions, fetchWcaPersonLiveResults,
-  type WcaPersonProfile, type WcaResultRow, type WcaCompetition,
+  fetchWcaPersonFormer,
+  type WcaPersonProfile, type WcaResultRow, type WcaCompetition, type WcaFormerIdentity,
 } from '@/lib/wca-person-api';
 import { loadFlagData } from '@/lib/country-flags';
 import { listRecons } from '@/lib/recon-api';
@@ -48,6 +49,7 @@ export default function PersonDetailClient() {
   const [liveResults, setLiveResults] = useState<WcaResultRow[] | null>(null);
   const [liveComps, setLiveComps] = useState<WcaCompetition[] | null>(null);
   const [reconLookup, setReconLookup] = useState<Map<string, number> | null>(null);
+  const [former, setFormer] = useState<WcaFormerIdentity[]>([]);
   const [error, setError] = useState<string | null>(null);
   // 「废止项」口径开关:Σ 名次和行(PR 表底部)与「最优项目组合」共用一份状态
   const [inclCancelled, setInclCancelled] = useState(false);
@@ -55,7 +57,7 @@ export default function PersonDetailClient() {
   useEffect(() => {
     if (!wcaId) return; // wait until the id is resolved from the URL
     setProfile(null); setResults(null); setComps(null); setError(null);
-    setLiveResults(null); setLiveComps(null);
+    setLiveResults(null); setLiveComps(null); setFormer([]);
     let cancelled = false;
     loadFlagData().catch(() => { /* fallback to en */ });
     fetchWcaPerson(wcaId)
@@ -73,6 +75,9 @@ export default function PersonDetailClient() {
     listRecons(wcaId)
       .then((all) => { if (!cancelled) setReconLookup(buildReconAttemptMap(all)); })
       .catch(() => { /* keep degraded UI */ });
+    fetchWcaPersonFormer(wcaId)
+      .then((f) => { if (!cancelled) setFormer(f); })
+      .catch(() => { /* 曾用名缺失不影响主信息 */ });
     return () => { cancelled = true; };
   }, [wcaId]);
 
@@ -104,7 +109,7 @@ export default function PersonDetailClient() {
     <div className="wp-page">
       <PageHeader t={t} wcaId={profile.person.wca_id} />
       <main className="wp-main">
-        <PersonHero profile={profile} results={results} isZh={isZh} />
+        <PersonHero profile={profile} results={results} former={former} isZh={isZh} />
         <PersonPRTable profile={profile} results={results} isZh={isZh} inclCancelled={inclCancelled} onInclCancelledChange={setInclCancelled} />
         <PersonBestCombos wcaId={profile.person.wca_id} isZh={isZh} inclCancelled={inclCancelled} />
         <PersonResultChanges wcaId={profile.person.wca_id} isZh={isZh} />

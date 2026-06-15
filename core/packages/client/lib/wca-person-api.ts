@@ -1,6 +1,8 @@
 // Thin client for the WCA public API (https://documenter.getpostman.com/view/4584491/SVfWN6KS).
 // CORS-enabled; cached in localStorage 24h to keep repeat visits instant.
 
+import { API_ORIGIN } from './api-base';
+
 const BASE = 'https://www.worldcubeassociation.org/api/v0';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -96,6 +98,21 @@ export async function fetchWcaPersonResults(wcaId: string): Promise<WcaResultRow
     regional_single_record: r.regional_single_record ?? null,
     regional_average_record: r.regional_average_record ?? null,
   }));
+  cacheSet(key, out);
+  return out;
+}
+
+// 历史身份(曾用名 / 曾用国籍)。WCA 公开 API 不含此项,走我们后端的 wca_person_aka 小表。
+export interface WcaFormerIdentity { name: string; iso2: string | null }
+
+export async function fetchWcaPersonFormer(wcaId: string): Promise<WcaFormerIdentity[]> {
+  const key = `wca:former:${wcaId}`;
+  const cached = cacheGet<WcaFormerIdentity[]>(key);
+  if (cached) return cached;
+  const res = await fetch(`${API_ORIGIN}/v1/wca/person-aka?wcaId=${encodeURIComponent(wcaId)}`);
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  const json = (await res.json()) as { former?: WcaFormerIdentity[] };
+  const out = Array.isArray(json.former) ? json.former : [];
   cacheSet(key, out);
   return out;
 }
