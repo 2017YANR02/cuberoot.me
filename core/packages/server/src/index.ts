@@ -45,14 +45,13 @@ import { startMonitors } from './monitors/index.js';
 const app = new Hono();
 
 // CORS 配置——允许前端跨域请求
-// NOTE: GH Pages 服务的 cuberoot.me 跨域调 api.cuberoot.me,所以页面 origin 是 cuberoot.me。
+// NOTE: Vercel/Next 服务的 cuberoot.me 跨域调 api.cuberoot.me,所以页面 origin 是 cuberoot.me。
 // maxAge 缓存 preflight 一天,减少 edge 端的 OPTIONS 来回。
 // Phase 4 (2026-05-27): 主域全员切 Next; vite.cuberoot.me 已下线。
 // *.vercel.app 用 function 形式兜底,Vercel preview 每 PR 一个新 URL 全开。
 app.use('*', cors({
   origin: (origin) => {
     const allowed = new Set([
-      'http://localhost:5173',              // Local Vite dev (legacy fallback only)
       'http://localhost:3000',              // Next dev server
       'https://www.cuberoot.me',            // 主域
       'https://cuberoot.me',                // 裸域

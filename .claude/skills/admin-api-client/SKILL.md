@@ -14,12 +14,12 @@ function authHeaders() { ...token Bearer header... }
 async function handle<T>(r) { if (!r.ok) throw new Error(...); return r.json(); }
 ```
 
-**正确做法**:从 `utils/admin_api.ts` import:
+**正确做法**:从 `lib/admin-api.ts` import:
 
 ```ts
-// utils/foo_api.ts (新模块)
-import { API_ORIGIN } from '../utils/api_base';     // 或 apiUrl()
-import { authHeaders, handleApi } from '../utils/admin_api';
+// lib/foo-api.ts (新模块)
+import { API_ORIGIN } from '@/lib/api-base';     // 或 apiUrl()
+import { authHeaders, handleApi } from '@/lib/admin-api';
 
 const BASE = API_ORIGIN + '/v1/foo';
 
@@ -34,14 +34,14 @@ export async function createFoo<T>(body: unknown): Promise<T> {
 
 ## 用 helper 的现有模块 (参考)
 
-- `utils/wiki_api.ts` — wiki terms / additions
-- `utils/alg_sets_api.ts` — alg_cases CRUD
-- `pages/code/ops_api.ts` — /code/ops runbook 命令
+- `lib/wiki-api.ts` — wiki terms / additions
+- `lib/sponsors-api.ts` — sponsors CRUD
+- `lib/ops-api.ts` — /code/ops runbook 命令
 
 ## isAdmin 检测 (page 端控制 UI 显隐)
 
 ```ts
-import { useAuthStore, ADMIN_WCA_IDS } from '../stores/auth_store';
+import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 const user = useAuthStore((s) => s.user);
 const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
 ```
