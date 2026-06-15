@@ -188,7 +188,7 @@ export default function CodeToolIntroClient({ section = 'stack' }: { section?: T
                   {detail.heroStats.map((stat, i) => (
                     <div className="stat" key={i}>
                       <span className="stat-num">{stat.num}<small>{stat.unit ?? ''}</small></span>
-                      <span className="stat-label">{((i18n.language.startsWith('zh') ? stat.zh : stat.en))}</span>
+                      <span className="stat-label">{tr(stat)}</span>
                     </div>
                   ))}
                 </div>
@@ -222,7 +222,7 @@ export default function CodeToolIntroClient({ section = 'stack' }: { section?: T
                   <p className="sec-desc">{t.whatDesc}</p>
                 </header>
                 <div className="stack-intro-prose stack-prose-wide">
-                  {(i18n.language.startsWith('zh') ? detail.intro.zh : detail.intro.en)}
+                  {tr(detail.intro)}
                 </div>
               </section>
 
@@ -318,7 +318,7 @@ export default function CodeToolIntroClient({ section = 'stack' }: { section?: T
                   <p className="sec-desc">{t.role}</p>
                 </header>
                 <div className="stack-intro-prose stack-prose-wide stack-prose-quote">
-                  {(i18n.language.startsWith('zh') ? detail.cuberoot.zh : detail.cuberoot.en)}
+                  {tr(detail.cuberoot)}
                 </div>
               </section>
 

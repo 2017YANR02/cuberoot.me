@@ -651,7 +651,7 @@ function ConjugacyExplorer({ lang }: { lang: 'zh' | 'en' }) {
                 <td style={{ fontWeight: 600 }}>{cls.size}</td>
                 <td>{cls.centralizerOrder}</td>
                 <td style={{ color: cls.isCenter ? 'var(--accent-2)' : 'var(--ink-faint)' }}>
-                  {cls.isCenter ? (tr({ zh: '是', en: 'yes' })) : (tr({ zh: '否', en: 'no' }))}
+                  {cls.isCenter ? tr({ zh: '是', en: 'yes' }) : tr({ zh: '否', en: 'no' })}
                 </td>
                 {showMembers && (
                   <td style={{ fontFamily: 'var(--mono)', fontSize: 11, maxWidth: 240, wordBreak: 'break-word' }}>
@@ -971,10 +971,10 @@ function D4Q8ContrastPanel({ lang }: { lang: 'zh' | 'en' }) {
             onClick={() => setColorBy(c)}
           >
             {c === 'class'
-              ? (tr({ zh: '共轭类', en: 'conjugacy class'
-            }))
-              : (tr({ zh: '元素阶', en: 'element order'
-            }))}
+              ? tr({ zh: '共轭类', en: 'conjugacy class'
+                                })
+              : tr({ zh: '元素阶', en: 'element order'
+                                })}
           </button>
         ))}
         <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>

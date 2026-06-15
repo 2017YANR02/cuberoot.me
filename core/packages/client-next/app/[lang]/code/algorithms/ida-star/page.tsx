@@ -609,7 +609,7 @@ export default function IdaStarPage() {
           </div>
 
           {SECTIONS.map((s) => {
-            const t = ((i18n.language.startsWith('zh') ? s.zh : s.en));
+            const t = tr(s);
             return (
               <section key={s.num} className="algo-section">
                 <div className="algo-section-head">

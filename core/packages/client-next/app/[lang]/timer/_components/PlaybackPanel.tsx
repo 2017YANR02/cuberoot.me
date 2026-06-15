@@ -104,9 +104,9 @@ export default function PlaybackPanel({ event, scramble, moves, totalMs, isZh }:
   };
 
   const playLabel = playing
-    ? (tr({ zh: '暂停', en: 'Pause'
-    }))
-    : (idx >= total ? (tr({ zh: '重播', en: 'Replay' })) : (tr({ zh: '播放', en: 'Play' })));
+    ? tr({ zh: '暂停', en: 'Pause'
+          })
+    : (idx >= total ? tr({ zh: '重播', en: 'Replay' }) : tr({ zh: '播放', en: 'Play' }));
 
   return (
     <div className="reconstruct-playback">

@@ -23,7 +23,7 @@ export function ClearButton({
   ariaLabel,
   title,
 }: ClearButtonProps): JSX.Element {
-  const label = ariaLabel ?? (tr({ zh: '清除', en: 'Clear' }));
+  const label = ariaLabel ?? tr({ zh: '清除', en: 'Clear' });
   const cls = [
     'clear-btn',
     variant === 'standalone' ? 'clear-btn--standalone' : '',

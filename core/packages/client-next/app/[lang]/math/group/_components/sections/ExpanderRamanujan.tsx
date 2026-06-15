@@ -473,8 +473,8 @@ function AbelianSpectrumPanel() {
           <span className="gt-result-label"><L zh="满足 Ramanujan 不等式？" en="Satisfies Ramanujan bound?" /></span>
           <span className="gt-result-val-strong" style={{ color: isRamanujan ? 'var(--green)' : 'var(--warn)' }}>
             {isRamanujan
-              ? (tr({ zh: '是', en: 'Yes' }))
-              : (tr({ zh: '否', en: 'No' }))}
+              ? tr({ zh: '是', en: 'Yes' })
+              : tr({ zh: '否', en: 'No' })}
           </span>
         </div>
       </div>

@@ -106,7 +106,7 @@ export default function SkewbTrainerPage() {
               onClick={() => t.setMode(m.key)}
             >
               {m.icon}
-              {((i18n.language.startsWith('zh') ? m.zh : m.en))}
+              {tr(m)}
             </button>
           ))}
         </div>

@@ -27,7 +27,7 @@ export default function TutorialPostClient() {
     parseAsStringEnum(['pretty', 'raw']).withDefault('pretty').withOptions({ history: 'replace' }),
   );
 
-  const postTitle = post ? (post.title[pageLang] ?? post.title[pageLang === 'zh' ? 'en' : 'zh'] ?? post.slug) : (tr({ zh: '教程', en: 'Tutorial' }));
+  const postTitle = post ? (post.title[pageLang] ?? post.title[pageLang === 'zh' ? 'en' : 'zh'] ?? post.slug) : tr({ zh: '教程', en: 'Tutorial' });
   useDocumentTitle(postTitle, postTitle);
 
   if (loading) {
@@ -44,7 +44,7 @@ export default function TutorialPostClient() {
     return (
       <div className="tutorial-root">
         <div style={{ padding: 48, textAlign: 'center' }}>
-          <p>{error ?? (tr({ zh: '未找到此教程', en: 'Tutorial not found' }))}</p>
+          <p>{error ?? tr({ zh: '未找到此教程', en: 'Tutorial not found' })}</p>
         </div>
       </div>
     );
@@ -95,8 +95,8 @@ export default function TutorialPostClient() {
               className={'tutorial-lang-chip' + (lang === 'zh' ? ' is-active' : '')}
               onClick={() => setLang('zh')}
               disabled={!hasZh}
-              title={!hasZh ? (tr({ zh: '无中文版', en: 'No Chinese version'
-              })) : ''}
+              title={!hasZh ? tr({ zh: '无中文版', en: 'No Chinese version'
+                            }) : ''}
             >
               中
             </button>
@@ -104,8 +104,8 @@ export default function TutorialPostClient() {
               className={'tutorial-lang-chip' + (lang === 'en' ? ' is-active' : '')}
               onClick={() => setLang('en')}
               disabled={!hasEn}
-              title={!hasEn ? (tr({ zh: '无英文版', en: 'No English version'
-              })) : ''}
+              title={!hasEn ? tr({ zh: '无英文版', en: 'No English version'
+                            }) : ''}
             >
               EN
             </button>

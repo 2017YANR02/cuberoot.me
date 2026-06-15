@@ -15,6 +15,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
+import { T } from '@/i18n/tr';
 
 const PANEL_W = 220;
 const PANEL_H = 220;
@@ -55,7 +56,6 @@ function projectAndCount(pts: Pt[]): { proj: number[]; pairs: [number, number][]
 
 export default function LatticeProjection() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const t = useT();
 
   const [R, setR] = useState(3.5);
@@ -175,11 +175,7 @@ export default function LatticeProjection() {
       </div>
 
       <p className="ud-sandbox-hint">
-        {(isZh ? (
-                        <>这是 f = 2 的简化示意:格 <span className="ud-mono">Λ = ℤ[i]</span> 在 ℂ ≈ ℝ²。增加 R,有限子集 X 指数增长 (|X| ≤ e^Bf);投影后单位距离对数也指数增长 (≥ e^(γf/2) · |P|)。两者指数比就是新指数 1+δ。<strong>关键</strong>:论文里 f 可以任意大,Λⱼ 是<em>真正</em>的高维格,所以塞得下指数多的 norm-1 平移 — 而这些平移投影到 ℝ² 后,每对都是<em>精确</em>距离 1。</>
-                      ) : (
-                        <>This is the f = 2 cartoon: <span className="ud-mono">Λ = ℤ[i]</span> in ℂ ≈ ℝ². As R grows, |X| grows exponentially (|X| ≤ e^Bf); the unit-distance count also grows exponentially (≥ e^(γf/2) · |P|). The ratio of those exponents is the new exponent 1 + δ. <strong>The catch</strong>: in the paper f goes to infinity, Λⱼ is a <em>genuinely</em> high-dimensional lattice — that's why it fits exponentially many norm-1 translations, each of which projects to an <em>exact</em> distance-1 pair in ℝ².</>
-                      ))}
+        {<T zh={<>这是 f = 2 的简化示意:格 <span className="ud-mono">Λ = ℤ[i]</span> 在 ℂ ≈ ℝ²。增加 R,有限子集 X 指数增长 (|X| ≤ e^Bf);投影后单位距离对数也指数增长 (≥ e^(γf/2) · |P|)。两者指数比就是新指数 1+δ。<strong>关键</strong>:论文里 f 可以任意大,Λⱼ 是<em>真正</em>的高维格,所以塞得下指数多的 norm-1 平移 — 而这些平移投影到 ℝ² 后,每对都是<em>精确</em>距离 1。</>} en={<>This is the f = 2 cartoon: <span className="ud-mono">Λ = ℤ[i]</span> in ℂ ≈ ℝ². As R grows, |X| grows exponentially (|X| ≤ e^Bf); the unit-distance count also grows exponentially (≥ e^(γf/2) · |P|). The ratio of those exponents is the new exponent 1 + δ. <strong>The catch</strong>: in the paper f goes to infinity, Λⱼ is a <em>genuinely</em> high-dimensional lattice — that's why it fits exponentially many norm-1 translations, each of which projects to an <em>exact</em> distance-1 pair in ℝ².</>} />}
       </p>
     </div>
   );

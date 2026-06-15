@@ -237,8 +237,8 @@ export default function StatsPanel({ solves, isZh }: Props) {
         </div>
       )}
       <button type="button" className="stats-expand-toggle" onClick={() => setExpanded(e => !e)}>
-        {expanded ? (tr({ zh: '收起', en: 'Hide extras' })) : (tr({ zh: '显示全部统计', en: 'Show all stats'
-        }))}
+        {expanded ? tr({ zh: '收起', en: 'Hide extras' }) : tr({ zh: '显示全部统计', en: 'Show all stats'
+                      })}
       </button>
 
       {subX.length > 0 && (

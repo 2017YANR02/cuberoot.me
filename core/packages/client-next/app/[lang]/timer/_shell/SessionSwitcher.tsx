@@ -152,8 +152,8 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
         title={tr({ zh: '切换分组', en: 'Switch session'
         })}
       >
-        <span className="session-trigger-name">{active?.name ?? (tr({ zh: '分组', en: 'Session'
-        }))}</span>
+        <span className="session-trigger-name">{active?.name ?? tr({ zh: '分组', en: 'Session'
+                      })}</span>
         <ChevronDown size={14} className="session-trigger-caret" />
       </button>
 
@@ -242,10 +242,10 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
                           onClick={() => handleDelete(s)}
                           disabled={sessions.length <= 1}
                           title={sessions.length <= 1
-                            ? (tr({ zh: '至少保留一个分组', en: 'Keep at least one session'
-                            }))
-                            : (tr({ zh: '删除分组', en: 'Delete session'
-                            }))}
+                            ? tr({ zh: '至少保留一个分组', en: 'Keep at least one session'
+                                                          })
+                            : tr({ zh: '删除分组', en: 'Delete session'
+                                                          })}
                           aria-label={tr({ zh: '删除分组', en: 'Delete session'
                         })}
                         >

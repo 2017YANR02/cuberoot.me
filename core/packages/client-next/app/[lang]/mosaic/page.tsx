@@ -39,7 +39,7 @@ function stageComponent(stage: Stage) {
 }
 
 export default function MosaicPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   useDocumentTitle('马赛克', 'Mosaic');
   const stage = useMosaicStore(s => s.stage);
   const resetAll = useMosaicStore(s => s.resetAll);

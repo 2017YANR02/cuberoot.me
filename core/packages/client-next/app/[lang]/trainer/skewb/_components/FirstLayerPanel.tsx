@@ -40,8 +40,8 @@ export default function FirstLayerPanel({
         <div className="sk-scramble-label">{tr({ zh: '打乱', en: 'Scramble'
         })}</div>
         <div className={scramble ? 'sk-scramble-text' : 'sk-scramble-text is-empty'}>
-          {scramble || (tr({ zh: '点击上方生成', en: 'Press generate above'
-        }))}
+          {scramble || tr({ zh: '点击上方生成', en: 'Press generate above'
+                          })}
         </div>
 
         {flt.showImg && scramble ? (

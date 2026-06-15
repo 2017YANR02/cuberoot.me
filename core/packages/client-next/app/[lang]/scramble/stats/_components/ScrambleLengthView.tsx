@@ -143,8 +143,8 @@ function summarize(counts: Record<string, number>) {
 
 const eventName = (id: string, isZh: boolean) => (isZh ? EVENT_ZH[id] : EVENT_EN[id]) || id;
 const unitLabel = (unit: string, isZh: boolean) =>
-  unit === 'twists' ? (tr({ zh: '拧次', en: 'twists'
-})) : (tr({ zh: '步', en: 'moves' }));
+  unit === 'twists' ? tr({ zh: '拧次', en: 'twists'
+    }) : tr({ zh: '步', en: 'moves' });
 
 export default function ScrambleLengthView({ isZh, data, event, merged, metric }: {
   isZh: boolean;
@@ -194,7 +194,7 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric }
     () => (merged ? groupForRep(event) : undefined),
     [merged, event],
   );
-  const curName = activeGroup ? (((i18n.language.startsWith('zh') ? activeGroup.zh : activeGroup.en))) : eventName(event, isZh);
+  const curName = activeGroup ? tr(activeGroup) : eventName(event, isZh);
   const curSub = activeGroup ? ((isZh ? activeGroup.subZh : activeGroup.subEn)) : null;
 
   // Synthesize the merged distribution (sum member counts) or use the raw event.
@@ -264,8 +264,8 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric }
               hideLegendColors
               onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
               onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
-              yModeLabel={yMode === 'percent' ? (tr({ zh: '百分比', en: '%' })) : (tr({ zh: '数量', en: 'count'
-            }))}
+              yModeLabel={yMode === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count'
+                          })}
             />
           </div>
 
@@ -346,8 +346,8 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric }
             <div className="scramble-stats-panel-title">
               {selectedBin !== null
                 ? ((isZh ? `${selectedBin} ${curUnit}打乱样例` : `${selectedBin}-${curUnit} examples`))
-                : (tr({ zh: '极端打乱样例', en: 'Extreme scrambles'
-                }))}
+                : tr({ zh: '极端打乱样例', en: 'Extreme scrambles'
+                                                  })}
             </div>
               {selectedBin !== null && curExamples?.some(({ ex }) => !!optMap?.[ex[4]]) && (
                 <PillToggle

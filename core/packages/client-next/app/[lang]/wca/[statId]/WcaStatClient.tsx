@@ -375,8 +375,8 @@ function WrByCountryYearView({ header, years, cumulative, searchTerm, isZh }: {
             setPlaying(true);
           }}
           className="wr-year-play-btn"
-          title={playing ? (tr({ zh: '暂停', en: 'Pause'
-        })) : (tr({ zh: '播放', en: 'Play' }))}
+          title={playing ? tr({ zh: '暂停', en: 'Pause'
+                  }) : tr({ zh: '播放', en: 'Play' })}
           aria-label={playing ? 'Pause' : 'Play'}
         >
           {playing ? <Pause size={16} strokeWidth={2} /> : <Play size={16} strokeWidth={2} />}
@@ -1115,8 +1115,8 @@ export default function WcaStatClient() {
         <div className="wca-stats-error">
           <h2>{tr({ zh: '加载失败', en: 'Failed to load'
         })}</h2>
-          <p>{error || (tr({ zh: '未知错误', en: 'Unknown error'
-        }))}</p>
+          <p>{error || tr({ zh: '未知错误', en: 'Unknown error'
+                        })}</p>
         </div>
       </div>
     );

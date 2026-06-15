@@ -813,8 +813,8 @@ function LatticePanel({ lang }: { lang: 'zh' | 'en' }) {
                 }}>
                   {isNormalVerified
                     ? (lang === 'zh' ? `gHg⁻¹ = H ✓ — ${sg.name} 是正规子群` : `gHg⁻¹ = H ✓ — ${sg.name} is normal`)
-                    : (tr({ zh: 'gHg⁻¹ ≠ H — 不正规（理论上不应出现）', en: 'gHg⁻¹ ≠ H — not normal (should not occur)'
-                    }))}
+                    : tr({ zh: 'gHg⁻¹ ≠ H — 不正规（理论上不应出现）', en: 'gHg⁻¹ ≠ H — not normal (should not occur)'
+                                                          })}
                 </div>
               </div>
             )}
@@ -959,8 +959,8 @@ function CharTablePanel({ lang }: { lang: 'zh' | 'en' }) {
         {(['side', 'Q8', 'D4'] as const).map(m => (
           <button key={m} className={`gt-chip${mode === m ? ' gt-chip-active' : ''}`}
             onClick={() => setMode(m)}>
-            {m === 'side' ? (tr({ zh: '并排', en: 'side by side'
-            }))
+            {m === 'side' ? tr({ zh: '并排', en: 'side by side'
+                            })
               : m === 'Q8' ? 'Q₈'
               : 'D₄'}
           </button>

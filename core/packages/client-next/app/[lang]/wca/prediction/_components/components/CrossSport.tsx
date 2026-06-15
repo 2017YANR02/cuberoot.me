@@ -50,8 +50,8 @@ export function CrossSportSection({ isZh }: Props) {
                         {r.ratio_pct}%
                       </span>
                     </>
-                  ) : (tr({ zh: '墙已被推翻', en: 'wall moved'
-                }))}
+                  ) : tr({ zh: '墙已被推翻', en: 'wall moved'
+                                            })}
                 </td>
               </tr>
             ))}

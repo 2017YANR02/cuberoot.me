@@ -81,9 +81,9 @@ export default function LandingPage() {
         {SECTIONS.map((sec) => (
           <section key={sec.id} id={`section-${sec.id}`} className="cards-section">
             <div className="section-header">
-              <div className="section-eyebrow">{((i18n.language.startsWith('zh') ? sec.eyebrow.zh : sec.eyebrow.en))}</div>
-              <h2 className="section-title-serif">{((i18n.language.startsWith('zh') ? sec.title.zh : sec.title.en))}</h2>
-              <div className="section-sub">{((i18n.language.startsWith('zh') ? sec.sub.zh : sec.sub.en))}</div>
+              <div className="section-eyebrow">{tr(sec.eyebrow)}</div>
+              <h2 className="section-title-serif">{tr(sec.title)}</h2>
+              <div className="section-sub">{tr(sec.sub)}</div>
             </div>
             <div className="cards-container">
               {sec.cards.map((card) => {

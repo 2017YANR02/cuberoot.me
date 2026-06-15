@@ -19,6 +19,7 @@
 import { useMemo, useState } from 'react';
 import { TeX, MathText } from './Tex';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 type HeurMode = 'none' | 'corners' | 'corners-edges';
 
@@ -215,7 +216,7 @@ export default function IdaStarTree({ isZh }: Props) {
       </div>
 
       <p className="god-ida-heur-desc">
-        <MathText>{((i18n.language.startsWith('zh') ? heurDesc[mode].zh : heurDesc[mode].en))}</MathText>
+        <MathText>{tr(heurDesc[mode])}</MathText>
       </p>
 
       {/* counts */}

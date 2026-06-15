@@ -54,6 +54,10 @@ process.stdin.on('end', () => {
   }
 
   // (2) Inline UI-language text ternaries → must use tr()/<T>/useT()/t().
+  // Exempt the i18n/ primitives (tr.tsx / i18n-client.ts) — they ARE the single
+  // language-switch chokepoint, so the ternary lives there by design. The CI
+  // ratchet likewise only scans app/components/lib/hooks (not i18n/).
+  if (/client-next\/i18n\//.test(fp)) process.exit(0);
   // 2a. `i18n.language … ?` — the test is unambiguously the global UI language.
   if (/i18n\.language\b[^?\n]{0,80}\?/.test(text)) {
     deny(`禁止内联 UI 语言文案三元(i18n.language ? … : …)。可见文案统一走 tr({ en, zh }) / <T en zh /> / useT() 的 t(zh, en) / t('ns.key')。详见 skill i18n。`);

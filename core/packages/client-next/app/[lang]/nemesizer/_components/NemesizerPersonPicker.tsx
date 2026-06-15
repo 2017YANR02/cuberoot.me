@@ -35,8 +35,8 @@ export default function NemesizerPersonPicker({
       <WcaPersonPicker
         mode="inline"
         onSelect={handleSelect}
-        placeholder={placeholder ?? (tr({ zh: '搜索 WCA ID、姓名、国家或年份', en: 'Search WCA ID, name, country or year'
-        }))}
+        placeholder={placeholder ?? tr({ zh: '搜索 WCA ID、姓名、国家或年份', en: 'Search WCA ID, name, country or year'
+                })}
         searchFn={searchFn}
         initialQuery={initialQuery}
         autoConfirmExact={autoConfirmExact}

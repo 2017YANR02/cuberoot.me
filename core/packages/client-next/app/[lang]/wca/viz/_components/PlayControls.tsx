@@ -3,13 +3,10 @@
 // 1:1 映射 viz/index.html L164-190 的 DOM 结构 + viz.js setupControls() 的交互逻辑
 
 import { useCallback, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useVizStore } from '../_stores/viz_store';
 import { tr } from '@/i18n/tr';
 
 export default function PlayControls() {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
   const isPlaying = useVizStore(s => s.isPlaying);
   const playSpeed = useVizStore(s => s.playSpeed);
   const currentFrame = useVizStore(s => s.currentFrame);
@@ -120,9 +117,9 @@ export default function PlayControls() {
               onClick={() => setSyncMode(mode)}
             >
               {mode === 'solve'
-                ? (tr({ zh: '把数', en: 'Solves'
-                }))
-                : (tr({ zh: '日期', en: 'Date' }))}
+                ? tr({ zh: '把数', en: 'Solves'
+                                      })
+                : tr({ zh: '日期', en: 'Date' })}
             </button>
           ))}
         </div>

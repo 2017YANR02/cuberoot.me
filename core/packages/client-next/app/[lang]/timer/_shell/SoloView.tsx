@@ -1113,10 +1113,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       {
         icon: <Mic size={14} />,
         label: stackmat.status.listening
-          ? (tr({ zh: 'Stackmat 监听中（点击停止）', en: 'Stackmat listening (stop)'
-        }))
-          : (tr({ zh: '启用 Stackmat（麦克风）', en: 'Enable Stackmat (mic)'
-        })),
+          ? tr({ zh: 'Stackmat 监听中（点击停止）', en: 'Stackmat listening (stop)'
+                    })
+          : tr({ zh: '启用 Stackmat（麦克风）', en: 'Enable Stackmat (mic)'
+                    }),
         onClick: async () => {
           if (stackmat.status.listening) stackmat.stop();
           else {
@@ -1408,8 +1408,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             onClick={() => setBluetoothOpen(true)}
             title={bluetoothCube.status.connected
               ? ((isZh ? `已连接 ${bluetoothCube.status.deviceName}` : `Connected: ${bluetoothCube.status.deviceName}`))
-              : (tr({ zh: '智能魔方（iOS 用 Bluefy）', en: 'Smart cube (use Bluefy on iOS)'
-            }))}
+              : tr({ zh: '智能魔方（iOS 用 Bluefy）', en: 'Smart cube (use Bluefy on iOS)'
+                            })}
           >
             <Bluetooth size={14} />
           </button>
@@ -1443,13 +1443,13 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                 nextScramble();
               }}
               title={settings.scrambleClickAction === 'copy'
-                ? (tr({ zh: '点击复制打乱', en: 'Click to copy'
-                }))
+                ? tr({ zh: '点击复制打乱', en: 'Click to copy'
+                                  })
                 : settings.scrambleClickAction === 'none'
-                  ? (tr({ zh: '点击无操作', en: 'Click disabled'
-                }))
-                  : (tr({ zh: '点击换一个打乱', en: 'Click to refresh'
-                }))}
+                  ? tr({ zh: '点击无操作', en: 'Click disabled'
+                                      })
+                  : tr({ zh: '点击换一个打乱', en: 'Click to refresh'
+                                      })}
             >
               <span className="scramble-text">{scrambleLoading
                 ? <span className="scramble-loading">{tr({ zh: '加载真实打乱…', en: 'Loading real scramble…' })}</span>

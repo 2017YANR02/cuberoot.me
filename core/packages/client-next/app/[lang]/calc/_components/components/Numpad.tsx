@@ -6,7 +6,6 @@
 // 行为规则 1:1 还原自 D:\cube\副本\legacy\calc\js\input_grid.js
 
 import { useCallback, useRef, useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useCalcStore, isMbfForEvent } from '../stores/calc_store';
 import {
   DNF_VALUE, formatTime, textToTime, textToMbfScore, clampValue,
@@ -113,8 +112,6 @@ interface NumpadProps {
 }
 
 export function Numpad({ onEnsureWrTop2Loaded }: NumpadProps = {}) {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
   const state = useCalcStore();
   const [target, setTarget] = useState<[number, number]>([-1, -1]);
 

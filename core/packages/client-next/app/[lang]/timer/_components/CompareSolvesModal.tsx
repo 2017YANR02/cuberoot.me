@@ -267,13 +267,13 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
             style={{ marginBottom: 12, fontSize: 12, color: '#d4885a' }}
           >
             {!segA && !segB
-              ? (tr({ zh: '两次成绩都没有阶段数据 — 在设置中点击"重新分析"试试', en: 'No stage data on either solve — try Reanalyze in settings'
-            }))
+              ? tr({ zh: '两次成绩都没有阶段数据 — 在设置中点击"重新分析"试试', en: 'No stage data on either solve — try Reanalyze in settings'
+                                      })
               : !segA
-                ? (tr({ zh: 'A 没有阶段数据 — 在设置中点击"重新分析"试试', en: 'A has no stage data — try Reanalyze in settings'
-                }))
-                : (tr({ zh: 'B 没有阶段数据 — 在设置中点击"重新分析"试试', en: 'B has no stage data — try Reanalyze in settings'
-                }))}
+                ? tr({ zh: 'A 没有阶段数据 — 在设置中点击"重新分析"试试', en: 'A has no stage data — try Reanalyze in settings'
+                                              })
+                : tr({ zh: 'B 没有阶段数据 — 在设置中点击"重新分析"试试', en: 'B has no stage data — try Reanalyze in settings'
+                                              })}
           </div>
         )}
 

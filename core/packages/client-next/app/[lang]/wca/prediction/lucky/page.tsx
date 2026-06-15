@@ -48,7 +48,7 @@ import {
 import { LineChart, type Series } from '../_components/charts';
 import '../_components/prediction.css';
 import '../_components/lucky.css';
-import { tr } from '@/i18n/tr';
+import { tr, T } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
 
 interface Row {
@@ -296,19 +296,15 @@ function LuckyLimitPageInner() {
           <h2>{tr({ zh: '三阶: 当前累积概率', en: '3x3: Cumulative Hit Probability'
         })}</h2>
           <p>
-            {(isZh ? (
-                                    <>
-                                      到 {formatYear(year)} 年,WCA 累积生成了 <strong>{formatBigN(N333)} 个三阶打乱</strong> (含备用)。
-                                      「在这 N 个打乱里至少撞上一次 d ≤ K 状态」的累积概率 P = 1 − (1 − p)^N。
-                                      K 越小 → 该状态在 4.3×10¹⁹ 中的占比 p 越小 → N 即使极大也需要继续累积。
-                                    </>
-                                  ) : (
-                                    <>
-                                      Through {formatYear(year)}, WCA has accumulated <strong>{formatBigN(N333)} 3x3 scrambles</strong> (incl. backups).
-                                      Cumulative probability of at least one d ≤ K hit across these N is P = 1 − (1 − p)^N.
-                                      Smaller K → smaller p in the 4.3×10^19 state space → need exponentially larger N.
-                                    </>
-                                  ))}
+            {<T zh={<>
+                                                                                                        到 {formatYear(year)} 年,WCA 累积生成了 <strong>{formatBigN(N333)} 个三阶打乱</strong> (含备用)。
+                                                                                                        「在这 N 个打乱里至少撞上一次 d ≤ K 状态」的累积概率 P = 1 − (1 − p)^N。
+                                                                                                        K 越小 → 该状态在 4.3×10¹⁹ 中的占比 p 越小 → N 即使极大也需要继续累积。
+                                                                                                      </>} en={<>
+                                                                                                                                          Through {formatYear(year)}, WCA has accumulated <strong>{formatBigN(N333)} 3x3 scrambles</strong> (incl. backups).
+                                                                                                                                          Cumulative probability of at least one d ≤ K hit across these N is P = 1 − (1 − p)^N.
+                                                                                                                                          Smaller K → smaller p in the 4.3×10^19 state space → need exponentially larger N.
+                                                                                                                                        </>} />}
           </p>
           <div className="lucky-prob-table-wrap">
             <table className="lucky-prob-table">
@@ -349,22 +345,18 @@ function LuckyLimitPageInner() {
             </table>
           </div>
           <p className="lucky-prob-caption">
-            {(isZh ? (
-                                    <>
-                                      <strong>怎么读:</strong> 比如表中 d ≤ 2 这一行 — 单次概率 6×10⁻¹⁸ (4.3×10¹⁹ 个状态里只有 262 个)。
-                                      需要累积到 N₅₀ ≈ 1.2×10¹⁷ 次打乱才能有 50% 概率撞上一次,
-                                      对应年份约 10¹⁴ 左右 (WCA 比赛累积 30000 场 / 年 × 250 个打乱 / 场 ≈ 7.5×10⁶ / 年)。
-                                      所以「三阶 2 步运气解」不是某一年能见到的事件,而是「累积到无穷年」的渐近。
-                                      现实里 2026 年的期望最幸运 d ≈ 11.5 步,分布集中在 d=11-12 (P 约 40%)。
-                                    </>
-                                  ) : (
-                                    <>
-                                      <strong>How to read:</strong> e.g. d ≤ 2 row — single-scramble prob 6×10^-18 (262 of 4.3×10^19).
-                                      Need N₅₀ ≈ 1.2×10^17 to have 50% chance of one such hit; that's ~10^14 yr away at WCA's 7.5M scrambles/year cap.
-                                      That is why "3x3 2-move lucky solve" is not a near-future event but an asymptotic limit.
-                                      Today the expected luckiest scramble is d ≈ 11.5 with P(d≤12) ≈ 99.9%.
-                                    </>
-                                  ))}
+            {<T zh={<>
+                                                                                                        <strong>怎么读:</strong> 比如表中 d ≤ 2 这一行 — 单次概率 6×10⁻¹⁸ (4.3×10¹⁹ 个状态里只有 262 个)。
+                                                                                                        需要累积到 N₅₀ ≈ 1.2×10¹⁷ 次打乱才能有 50% 概率撞上一次,
+                                                                                                        对应年份约 10¹⁴ 左右 (WCA 比赛累积 30000 场 / 年 × 250 个打乱 / 场 ≈ 7.5×10⁶ / 年)。
+                                                                                                        所以「三阶 2 步运气解」不是某一年能见到的事件,而是「累积到无穷年」的渐近。
+                                                                                                        现实里 2026 年的期望最幸运 d ≈ 11.5 步,分布集中在 d=11-12 (P 约 40%)。
+                                                                                                      </>} en={<>
+                                                                                                                                          <strong>How to read:</strong> e.g. d ≤ 2 row — single-scramble prob 6×10^-18 (262 of 4.3×10^19).
+                                                                                                                                          Need N₅₀ ≈ 1.2×10^17 to have 50% chance of one such hit; that's ~10^14 yr away at WCA's 7.5M scrambles/year cap.
+                                                                                                                                          That is why "3x3 2-move lucky solve" is not a near-future event but an asymptotic limit.
+                                                                                                                                          Today the expected luckiest scramble is d ≈ 11.5 with P(d≤12) ≈ 99.9%.
+                                                                                                                                        </>} />}
           </p>
         </section>
 
@@ -394,7 +386,7 @@ function LuckyLimitPageInner() {
               <Stat
                 label={tr({ zh: '期望最幸运 d', en: 'Expected min depth'
                 })}
-                value={row333.depthClamped.toFixed(2) + (tr({ zh: ' 步', en: ' moves' }))}
+                value={row333.depthClamped.toFixed(2) + tr({ zh: ' 步', en: ' moves' })}
                 hint={isZh ? `WCA 接受 ≥ ${row333.k_min_wca} 步` : `WCA accepts ≥${row333.k_min_wca} moves`}
               />
               <Stat

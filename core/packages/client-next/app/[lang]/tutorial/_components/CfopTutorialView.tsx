@@ -12,7 +12,7 @@ import type { ArticlePostContent } from '../_lib/useTutorialCatalog';
 import { tutorialMediaUrl } from '../_lib/useTutorialCatalog';
 import { restructureCfop } from '../_lib/restructureCfop';
 import { CfopContent } from './CfopContent';
-import { tr } from '@/i18n/tr';
+import { tr, T } from '@/i18n/tr';
 
 export function CfopTutorialView({ post }: { post: ArticlePostContent }) {
   const { i18n } = useTranslation();
@@ -75,7 +75,7 @@ export function CfopTutorialView({ post }: { post: ArticlePostContent }) {
 
   const activeLabel = useMemo(() => {
     const t = toc.find(x => x.id === active);
-    return t ? (isZh ? t.zh : t.en) : tr({ zh: '目录', en: 'Contents'
+    return t ? tr(t) : tr({ zh: '目录', en: 'Contents'
     });
   }, [active, toc, isZh]);
 
@@ -92,17 +92,13 @@ export function CfopTutorialView({ post }: { post: ArticlePostContent }) {
           <p className="cfop-hero-sub">{isZh ? hero.titleEn : hero.titleZh}</p>
           {(hero.intro.zh || hero.intro.en) && (
             <div className="cfop-hero-intro">
-              {isZh ? (
-                <>
-                  {hero.intro.zh && <p>{hero.intro.zh}</p>}
-                  {hero.intro.en && <p className="cfop-hero-intro-alt">{hero.intro.en}</p>}
-                </>
-              ) : (
-                <>
-                  {hero.intro.en && <p>{hero.intro.en}</p>}
-                  {hero.intro.zh && <p className="cfop-hero-intro-alt">{hero.intro.zh}</p>}
-                </>
-              )}
+              {<T zh={<>
+                                                                      {hero.intro.zh && <p>{hero.intro.zh}</p>}
+                                                                      {hero.intro.en && <p className="cfop-hero-intro-alt">{hero.intro.en}</p>}
+                                                                    </>} en={<>
+                                                                                    {hero.intro.en && <p>{hero.intro.en}</p>}
+                                                                                    {hero.intro.zh && <p className="cfop-hero-intro-alt">{hero.intro.zh}</p>}
+                                                                                  </>} />}
             </div>
           )}
           {hero.pillars.length > 0 && (
@@ -167,7 +163,7 @@ export function CfopTutorialView({ post }: { post: ArticlePostContent }) {
                       (active === t.id ? ' is-active' : '')
                     }
                   >
-                    {isZh ? t.zh : t.en}
+                    {tr(t)}
                   </a>
                 ))}
               </nav>

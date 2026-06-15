@@ -400,10 +400,10 @@ function InvariantInspector() {
 
       <div className={`gt-inv-final ${inv.reachable ? '' : 'gt-inv-final-bad'}`}>
         {inv.reachable
-          ? (tr({ zh: '✓ 可达 — 该状态是 G 的元素', en: '✓ Reachable — this state is in G'
-        }))
-          : (tr({ zh: '✗ 不可达 — 该状态不在 G 中', en: '✗ Unreachable — this state is not in G'
-        }))}
+          ? tr({ zh: '✓ 可达 — 该状态是 G 的元素', en: '✓ Reachable — this state is in G'
+                          })
+          : tr({ zh: '✗ 不可达 — 该状态不在 G 中', en: '✗ Unreachable — this state is not in G'
+                          })}
       </div>
     </div>
   );
@@ -706,8 +706,8 @@ function CommutatorViewer() {
           <div className="gt-result-row">
             <div className="gt-result-label">{tr({ zh: '是否单位元', en: 'identity?'
             })}</div>
-            <div className="gt-result-val">{stateResult.solved ? (tr({ zh: '是 (A, B 互换)', en: 'yes (A and B commute)'
-            })) : (tr({ zh: '否', en: 'no' }))}</div>
+            <div className="gt-result-val">{stateResult.solved ? tr({ zh: '是 (A, B 互换)', en: 'yes (A and B commute)'
+                                  }) : tr({ zh: '否', en: 'no' })}</div>
           </div>
           <div className="gt-result-row">
             <div className="gt-result-label">{tr({ zh: '角块循环型', en: 'corner cycles'
@@ -779,8 +779,8 @@ function CentreVerifier() {
       </div>
       <div className={`gt-inv-final ${result?.inCentre ? '' : 'gt-inv-final-bad'}`}>
         {result?.inCentre
-          ? (tr({ zh: '✓ g ∈ Z(G) — 跟全部 6 个面转都交换', en: '✓ g ∈ Z(G) — commutes with every face turn'
-        }))
+          ? tr({ zh: '✓ g ∈ Z(G) — 跟全部 6 个面转都交换', en: '✓ g ∈ Z(G) — commutes with every face turn'
+                          })
           : (lang === 'zh' ? '✗ g ∉ Z(G)' : '✗ g ∉ Z(G)')}
       </div>
     </div>
@@ -921,10 +921,10 @@ function HomomorphismPanel() {
       )}
       <div className={`gt-inv-final ${result?.homOk ? '' : 'gt-inv-final-bad'}`}>
         {result?.homOk
-          ? (tr({ zh: '✓ 同态性质成立', en: '✓ homomorphism property holds'
-        }))
-          : (tr({ zh: '✗ 同态性质失败 (不可能发生 — 这是定理)', en: '✗ homomorphism property fails (impossible — this is a theorem)'
-        }))}
+          ? tr({ zh: '✓ 同态性质成立', en: '✓ homomorphism property holds'
+                          })
+          : tr({ zh: '✗ 同态性质失败 (不可能发生 — 这是定理)', en: '✗ homomorphism property fails (impossible — this is a theorem)'
+                          })}
       </div>
     </div>
   );
@@ -1464,11 +1464,11 @@ function GroupExamplesTable() {
           <div className="gt-example-name">{ex.name}</div>
           <div>
             <span className="gt-mono">{ex.op}</span>
-            <div style={{ fontSize: 12, color: 'var(--ink-dim)', marginTop: 4 }}>{((i18n.language.startsWith('zh') ? ex.zh : ex.en))}</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-dim)', marginTop: 4 }}>{tr(ex)}</div>
           </div>
           <div className="gt-mono" style={{ fontFamily: 'var(--mono)' }}>{ex.order}</div>
           <div className={`gt-example-abelian ${ex.abelian ? 'gt-example-abelian-yes' : 'gt-example-abelian-no'}`}>
-            {ex.abelian ? (tr({ zh: '是', en: 'yes' })) : (tr({ zh: '否', en: 'no' }))}
+            {ex.abelian ? tr({ zh: '是', en: 'yes' }) : tr({ zh: '否', en: 'no' })}
           </div>
         </div>
       ))}
@@ -1546,7 +1546,7 @@ function ScaleComparison() {
       {sorted.map((it, i) => (
         <div key={i} style={{ display: 'grid', gridTemplateColumns: '40px 1fr 70px', alignItems: 'center', gap: 12, padding: '6px 0', fontSize: 13, borderBottom: i < sorted.length - 1 ? '1px dashed var(--rule)' : 'none' }}>
           <div style={{ fontFamily: 'var(--mono)', color: it.colour, fontWeight: 600 }}>10<sup>{Math.round(it.log10)}</sup></div>
-          <div style={{ color: 'var(--ink)' }}>{((i18n.language.startsWith('zh') ? it.zh : it.en))}</div>
+          <div style={{ color: 'var(--ink)' }}>{tr(it)}</div>
           <div style={{ background: it.colour, height: 8, borderRadius: 4, width: `${(it.log10 / 30) * 100}%` }} />
         </div>
       ))}
@@ -1586,7 +1586,7 @@ function QuotientChart() {
             <div className="gt-quotient-track">
               <div className="gt-quotient-fill" style={{ width: `${(Math.log10(d.size) / max) * 100}%` }} />
             </div>
-            <div style={{ fontSize: 12, color: 'var(--ink-dim)', marginTop: 6 }}>{((i18n.language.startsWith('zh') ? d.zh : d.en))}</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-dim)', marginTop: 6 }}>{tr(d)}</div>
           </div>
           <div className="gt-quotient-val">{d.size.toLocaleString()}</div>
         </div>
@@ -1871,8 +1871,8 @@ function CayleyWalker() {
       <div className="gt-aside" style={{ marginTop: 12, marginBottom: 0 }}>
         {isHome && path.length > 0
           ? (lang === 'zh' ? `走了 ${path.length} 步又回到 e — 你转了一个圈 (这条路径是 G 中的一个 ${path.length}-阶元素)。` : `Walked ${path.length} steps and returned to e — you traced a cycle (this path is an ${path.length}-order element of G).`)
-          : (tr({ zh: '每个按钮都是一条边。路径长度 = 在 Cayley 图上的步数 (≥ 真实距离 d(e,g))。', en: 'Each button is an edge. Path length = walk length in Cayley graph (≥ the true distance d(e, g)).'
-        }))}
+          : tr({ zh: '每个按钮都是一条边。路径长度 = 在 Cayley 图上的步数 (≥ 真实距离 d(e,g))。', en: 'Each button is an edge. Path length = walk length in Cayley graph (≥ the true distance d(e, g)).'
+                          })}
       </div>
     </div>
   );
@@ -2440,7 +2440,7 @@ function SmallGroupCayleyExplorer() {
         })}</label>
         <select className="gt-sg-select" value={groupId} onChange={e => { setGroupId(e.target.value); setHover(null); setTarget(null); }}>
           {SMALL_GROUPS.map(g => (
-            <option key={g.id} value={g.id}>{((i18n.language.startsWith('zh') ? g.zh : g.en))}</option>
+            <option key={g.id} value={g.id}>{tr(g)}</option>
           ))}
         </select>
         <div className="gt-sg-legend">
@@ -2622,7 +2622,7 @@ function RandomWalkMixingPlot() {
         <label className="gt-sg-label">{tr({ zh: '群 (生成集 = 上方所有元)', en: 'group (generators = listed above)' })}</label>
         <select className="gt-sg-select" value={groupId} onChange={e => { setGroupId(e.target.value); setStep(0); }}>
           {MIXING_GROUPS.map(g => (
-            <option key={g.id} value={g.id}>{((i18n.language.startsWith('zh') ? g.zh : g.en))}</option>
+            <option key={g.id} value={g.id}>{tr(g)}</option>
           ))}
         </select>
       </div>
@@ -2922,7 +2922,7 @@ function CayleyReferences() {
         if (items.length === 0) return null;
         return (
           <div key={s.id} className="gt-refs-section">
-            <div className="gt-refs-section-head">{((i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
+            <div className="gt-refs-section-head">{tr(s)}</div>
             <ul className="gt-refs-list">
               {items.map((r, i) => (
                 <li key={i} className="gt-refs-item">
@@ -3083,7 +3083,7 @@ function CosetVisualizer() {
             onClick={() => setPicked(s.id)}
           >
             <span className="gt-mono" style={{ fontWeight: 600 }}>{s.name}</span>
-            <span style={{ fontSize: 11, color: 'var(--ink-faint)', marginLeft: 8 }}>{((i18n.language.startsWith('zh') ? s.zh : s.en))}</span>
+            <span style={{ fontSize: 11, color: 'var(--ink-faint)', marginLeft: 8 }}>{tr(s)}</span>
           </button>
         ))}
       </div>
@@ -3234,18 +3234,18 @@ function ParityCalculator() {
           <div className={`gt-parity-val ${sgnCp === 1 ? 'pos' : 'neg'}`}>
             {sgnCp === 1 ? '+1' : '−1'}
           </div>
-          <div className="gt-parity-sub">{sgnCp === 1 ? (tr({ zh: '偶置换', en: 'even'
-        })) : (tr({ zh: '奇置换', en: 'odd'
-        }))}</div>
+          <div className="gt-parity-sub">{sgnCp === 1 ? tr({ zh: '偶置换', en: 'even'
+                          }) : tr({ zh: '奇置换', en: 'odd'
+                              })}</div>
         </div>
         <div className="gt-parity-cell">
           <div className="gt-parity-lbl">sgn(ep)</div>
           <div className={`gt-parity-val ${sgnEp === 1 ? 'pos' : 'neg'}`}>
             {sgnEp === 1 ? '+1' : '−1'}
           </div>
-          <div className="gt-parity-sub">{sgnEp === 1 ? (tr({ zh: '偶置换', en: 'even'
-        })) : (tr({ zh: '奇置换', en: 'odd'
-        }))}</div>
+          <div className="gt-parity-sub">{sgnEp === 1 ? tr({ zh: '偶置换', en: 'even'
+                          }) : tr({ zh: '奇置换', en: 'odd'
+                              })}</div>
         </div>
         <div className="gt-parity-cell gt-parity-cell-prod">
           <div className="gt-parity-lbl">sgn(cp) · sgn(ep)</div>
@@ -3254,10 +3254,10 @@ function ParityCalculator() {
           </div>
           <div className="gt-parity-sub">
             {product === 1
-              ? (tr({ zh: '✓ 在 G 中可达', en: '✓ reachable in G'
-            }))
-              : (tr({ zh: '✗ 不可能!(单棱翻转不允许)', en: '✗ impossible! (single-edge flip forbidden)'
-            }))}
+              ? tr({ zh: '✓ 在 G 中可达', en: '✓ reachable in G'
+                                      })
+              : tr({ zh: '✗ 不可能!(单棱翻转不允许)', en: '✗ impossible! (single-edge flip forbidden)'
+                                      })}
           </div>
         </div>
       </div>
@@ -3393,7 +3393,7 @@ function ThistlethwaitePhaseChart() {
             <div className="gt-thistle-stage-fill" style={{ width: `${(s.maxDepth / maxD) * 100}%` }} />
             <div className="gt-thistle-stage-depth">{s.maxDepth}</div>
           </div>
-          <div className="gt-thistle-stage-desc">{((i18n.language.startsWith('zh') ? s.zh : s.en))}</div>
+          <div className="gt-thistle-stage-desc">{tr(s)}</div>
           <div className="gt-thistle-stage-bound"><span className="gt-mono">{s.bound}</span></div>
         </div>
       ))}
@@ -3530,9 +3530,9 @@ function RandomWalkSimulator() {
     <div className="gt-rwalk">
       <div className="gt-rwalk-controls">
         <button className="gt-rwalk-btn" onClick={() => setRunning(r => !r)}>
-          {running ? (tr({ zh: '暂停', en: 'pause'
-        })) : (tr({ zh: '运行', en: 'run'
-        }))}
+          {running ? tr({ zh: '暂停', en: 'pause'
+                          }) : tr({ zh: '运行', en: 'run'
+                              })}
         </button>
         <button className="gt-rwalk-btn" onClick={reset}>
           {tr({ zh: '重置', en: 'reset' })}
@@ -3845,7 +3845,7 @@ function LightsOutBoard({ size }: { size: number }) {
         <div className="gt-lights-stat">
           <div className="gt-lights-stat-label">{tr({ zh: '可解', en: 'solvable' })}</div>
           <div className="gt-lights-stat-val" style={{ color: solvable ? 'var(--green)' : 'var(--accent)' }}>
-            {solvable ? (tr({ zh: '是', en: 'yes' })) : (tr({ zh: '否', en: 'no' }))}
+            {solvable ? tr({ zh: '是', en: 'yes' }) : tr({ zh: '否', en: 'no' })}
           </div>
         </div>
         <div className="gt-lights-stat">
@@ -3953,9 +3953,9 @@ function QuietPatternViewer() {
         <div className="gt-quiet-verdict-label">{tr({ zh: '判定', en: 'verdict' })}</div>
         <div className="gt-quiet-verdict-val" style={{ color: isSolvable ? 'var(--green)' : 'var(--accent)' }}>
           {isSolvable
-            ? (tr({ zh: '可解 — 两个安静图案的内积都为 0', en: 'solvable — orthogonal to both quiet patterns'
-            }))
-            : (tr({ zh: '不可解 — 不在 im A 中', en: 'unreachable — not in im A' }))}
+            ? tr({ zh: '可解 — 两个安静图案的内积都为 0', en: 'solvable — orthogonal to both quiet patterns'
+                                  })
+            : tr({ zh: '不可解 — 不在 im A 中', en: 'unreachable — not in im A' })}
         </div>
       </div>
     </div>
@@ -4306,9 +4306,9 @@ function GrayCodeWalker() {
         <label>n = {n}</label>
         <input type="range" min={2} max={6} value={n} onChange={e => { setN(parseInt(e.target.value, 10)); reset(); }} />
         <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
-          {playing ? (tr({ zh: '暂停', en: 'pause'
-        })) : (tr({ zh: '播放 Gray 码', en: 'play'
-        }))}
+          {playing ? tr({ zh: '暂停', en: 'pause'
+                          }) : tr({ zh: '播放 Gray 码', en: 'play'
+                              })}
         </button>
         <button type="button" className="gt-btn gt-btn-ghost" onClick={reset}>{tr({ zh: '复位', en: 'reset'
         })}</button>
@@ -4402,8 +4402,8 @@ function MobiusPlayground() {
       }
       if (cyc.length > 1) parts.push('(' + cyc.map(x => x === 'inf' ? '∞' : String(x)).join(' ') + ')');
     }
-    return parts.join('') || (tr({ zh: '恒等', en: 'identity'
-    }));
+    return parts.join('') || tr({ zh: '恒等', en: 'identity'
+        });
   })();
 
   const presets = [
@@ -4757,10 +4757,10 @@ function PermutationVisualiser() {
               <span key={i} style={{ color: cycleColor[cycles.indexOf(c) % cycleColor.length] }}>
                 ({c.join(' ')})
               </span>
-            )) || (tr({ zh: '恒等', en: 'identity'
-            }))}
-            {cycles.every(c => c.length === 1) && (tr({ zh: '恒等 (e)', en: 'identity (e)'
-            }))}
+            )) || tr({ zh: '恒等', en: 'identity'
+                                      })}
+            {cycles.every(c => c.length === 1) && tr({ zh: '恒等 (e)', en: 'identity (e)'
+                                  })}
           </div>
         </div>
         <div className="gt-result-row">
@@ -4771,7 +4771,7 @@ function PermutationVisualiser() {
         <div className="gt-result-row">
           <div className="gt-result-label">{tr({ zh: '奇偶性 sgn(σ)', en: 'parity sgn(σ)' })}</div>
           <div className="gt-result-val" style={{ color: parity === '+1' ? 'var(--green)' : 'var(--accent)' }}>
-            {parity} ({parity === '+1' ? (tr({ zh: '偶', en: 'even' })) : (tr({ zh: '奇', en: 'odd' }))})
+            {parity} ({parity === '+1' ? tr({ zh: '偶', en: 'even' }) : tr({ zh: '奇', en: 'odd' })})
           </div>
         </div>
         <div className="gt-result-row">
@@ -5089,8 +5089,8 @@ function KernelDimTable() {
             })} = <strong>1 / {1 << dims[hover.m][hover.n]}</strong>
           </span>
         )}
-        {!hover && (tr({ zh: '把鼠标移到格子上看细节。', en: 'Hover any cell for details.'
-        }))}
+        {!hover && tr({ zh: '把鼠标移到格子上看细节。', en: 'Hover any cell for details.'
+                      })}
       </div>
     </div>
   );
@@ -5267,7 +5267,7 @@ function SigmaGameOnGraph() {
         <div className="gt-lights-sigma-stat">
           <span className="gt-lights-sigma-stat-label">{tr({ zh: '全亮可解', en: 'all-ones reachable' })}</span>
           <strong style={{ color: solvable ? 'var(--green)' : 'var(--accent)' }}>
-            {solvable ? (tr({ zh: '是', en: 'yes' })) : (tr({ zh: '否', en: 'no' }))}
+            {solvable ? tr({ zh: '是', en: 'yes' }) : tr({ zh: '否', en: 'no' })}
           </strong>
         </div>
       </div>
@@ -5434,11 +5434,11 @@ function PegBoardChoose() {
           <button key={b} type="button"
             className={`gt-chip ${name === b ? 'gt-chip-active' : ''}`}
             onClick={() => setName(b)}>
-            {b === 'english'  ? (tr({ zh: '英式 33', en: 'English 33' }))
-            : b === 'european' ? (tr({ zh: '欧式 37', en: 'European 37'
-            }))
-            : b === 'triangle' ? (tr({ zh: '三角 15', en: 'Triangle 15' }))
-            :                    (tr({ zh: '菱形 25', en: 'Diamond 25' }))}
+            {b === 'english'  ? tr({ zh: '英式 33', en: 'English 33' })
+            : b === 'european' ? tr({ zh: '欧式 37', en: 'European 37'
+                                })
+            : b === 'triangle' ? tr({ zh: '三角 15', en: 'Triangle 15' })
+            :                    tr({ zh: '菱形 25', en: 'Diamond 25' })}
           </button>
         ))}
       </div>
@@ -5713,8 +5713,8 @@ function PegMoveReplay() {
           <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setStep(0); setPlaying(false); }}>{tr({ zh: '重置', en: 'reset' })}</button>
           <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>← {tr({ zh: '退一步', en: 'back' })}</button>
           <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
-            {playing ? (tr({ zh: '⏸ 暂停', en: '⏸ pause'
-            })) : (tr({ zh: '▶ 播放', en: '▶ play' }))}
+            {playing ? tr({ zh: '⏸ 暂停', en: '⏸ pause'
+                                  }) : tr({ zh: '▶ 播放', en: '▶ play' })}
           </button>
           <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.min(states.length - 1, s + 1))} disabled={step >= states.length - 1}>{tr({ zh: '前一步', en: 'next' })} →</button>
         </div>
@@ -5921,8 +5921,8 @@ function KnightTourBoard() {
           <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setStep(0); setPlaying(false); }}>{tr({ zh: '重置', en: 'reset' })}</button>
           <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>← {tr({ zh: '退', en: 'back' })}</button>
           <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
-            {playing ? (tr({ zh: '暂停', en: 'pause'
-            })) : (tr({ zh: '播放', en: 'play' }))}
+            {playing ? tr({ zh: '暂停', en: 'pause'
+                                  }) : tr({ zh: '播放', en: 'play' })}
           </button>
           <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.min(tour.length - 1, s + 1))} disabled={step >= tour.length - 1}>{tr({ zh: '前进', en: 'next'
         })} →</button>
@@ -6004,8 +6004,8 @@ function HypercubeGrayWalker() {
         <button type="button" className={`gt-chip ${n === 4 ? 'gt-chip-active' : ''}`}
                 onClick={() => { setN(4); setStep(0); setPlaying(false); }}>Q₄</button>
         <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
-          {playing ? (tr({ zh: '暂停', en: 'pause'
-        })) : (tr({ zh: '播放', en: 'play' }))}
+          {playing ? tr({ zh: '暂停', en: 'pause'
+                          }) : tr({ zh: '播放', en: 'play' })}
         </button>
         <button type="button" className="gt-btn gt-btn-ghost"
                 onClick={() => { setStep(0); setPlaying(false); }}>{tr({ zh: '重置', en: 'reset' })}</button>
@@ -6143,10 +6143,10 @@ function PetersenInteractive() {
           <button type="button" className="gt-btn"
                   onClick={() => setShowPath(p => !p)}>
             {showPath
-              ? (tr({ zh: '隐藏 Ham 路径', en: 'hide Ham path'
-            }))
-              : (tr({ zh: '显示 Ham 路径', en: 'show Ham path'
-            }))}
+              ? tr({ zh: '隐藏 Ham 路径', en: 'hide Ham path'
+                                      })
+              : tr({ zh: '显示 Ham 路径', en: 'show Ham path'
+                                      })}
           </button>
         </div>
         <div className="gt-petersen-extra-row">
@@ -6293,8 +6293,8 @@ function CosetChainBuilder() {
           <button type="button" className="gt-btn gt-btn-ghost" onClick={() => { setStep(0); setPlaying(false); }}>{tr({ zh: '重置', en: 'reset' })}</button>
           <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}>←</button>
           <button type="button" className="gt-btn" onClick={() => setPlaying(p => !p)}>
-            {playing ? (tr({ zh: '暂停', en: 'pause'
-            })) : (tr({ zh: '播放', en: 'play' }))}
+            {playing ? tr({ zh: '暂停', en: 'pause'
+                                  }) : tr({ zh: '播放', en: 'play' })}
           </button>
           <button type="button" className="gt-btn gt-btn-ghost" onClick={() => setStep(s => Math.min(cycle.path.length - 1, s + 1))} disabled={step >= cycle.path.length - 1}>→</button>
         </div>
@@ -7105,8 +7105,8 @@ function TwoFaceTurner() {
         })}</span>
           <span className="gt-rot-info-val">
             {cycles.length === 0
-              ? (tr({ zh: '恒等 e', en: 'identity e'
-            }))
+              ? tr({ zh: '恒等 e', en: 'identity e'
+                                      })
               : cycles.map((c, i) => (
                 <span key={i}>({c.map(labelOf).join(' ')})</span>
               ))}
@@ -7632,9 +7632,9 @@ function TwoLineNotationDemo() {
         <label>{tr({ zh: '下行 σ(1)..σ(n)', en: 'bottom row σ(1)..σ(n)' })}</label>
         <input className="gt-input" value={input} onChange={e => setInput(e.target.value)} spellCheck={false} />
         <button type="button" className="gt-chip" onClick={() => setShowCycle(s => !s)}>
-          {showCycle ? (tr({ zh: '看两行', en: 'show two-line'
-        })) : (tr({ zh: '看循环', en: 'show cycles'
-        }))}
+          {showCycle ? tr({ zh: '看两行', en: 'show two-line'
+                          }) : tr({ zh: '看循环', en: 'show cycles'
+                              })}
         </button>
       </div>
       <div className="gt-useful-twoline-eq">
@@ -7793,7 +7793,7 @@ function ParityFromTranspositions() {
         <div><b>{tr({ zh: '乘积', en: 'product'
         })}:</b> {fmtCycles(decomposeCycles(acc))}</div>
         <div><b>(−1)<sup>k</sup>:</b> {k % 2 === 0 ? '+1' : '−1'}</div>
-        <div><b>sgn(σ):</b> <span style={{ color: sign === 1 ? 'var(--green)' : 'var(--accent)' }}>{sign === 1 ? '+1' : '−1'} ({sign === 1 ? (tr({ zh: '偶', en: 'even' })) : (tr({ zh: '奇', en: 'odd' }))})</span></div>
+        <div><b>sgn(σ):</b> <span style={{ color: sign === 1 ? 'var(--green)' : 'var(--accent)' }}>{sign === 1 ? '+1' : '−1'} ({sign === 1 ? tr({ zh: '偶', en: 'even' }) : tr({ zh: '奇', en: 'odd' })})</span></div>
         <div className="gt-useful-parity-match">{((k % 2 === 0 ? 1 : -1) === sign) ? (lang === 'zh' ? '✓ (−1)ᵏ = sgn(σ)' : '✓ (−1)ᵏ = sgn(σ)') : '✗'}</div>
       </div>
     </div>
@@ -8338,7 +8338,7 @@ function IndexThemedTOC() {
           <div key={theme.id} className="gt-index-theme">
             <div className="gt-index-theme-head">
               <span className="gt-index-theme-range">{theme.range}</span>
-              <span className="gt-index-theme-name">{((i18n.language.startsWith('zh') ? theme.zh : theme.en))}</span>
+              <span className="gt-index-theme-name">{tr(theme)}</span>
               <span className="gt-index-theme-desc">{lang === 'zh' ? theme.descZh : theme.descEn}</span>
             </div>
             <ul className="gt-index-theme-list">
@@ -8349,7 +8349,7 @@ function IndexThemedTOC() {
                   <li key={id}>
                     <Link href={`/math/group/${id}`}>
                       <span className="gt-index-theme-num">§{t.num}</span>
-                      <span className="gt-index-theme-title">{((i18n.language.startsWith('zh') ? t.zh : t.en))}</span>
+                      <span className="gt-index-theme-title">{tr(t)}</span>
                     </Link>
                   </li>
                 );
@@ -16400,7 +16400,7 @@ function SectionNav({ slug, lang }: { slug: string; lang: Lang }) {
             <div className="gt-section-nav-dir">← {tr({ zh: '上一节', en: 'previous'
             })}</div>
             <div className="gt-section-nav-num">§{prev.num}</div>
-            <div className="gt-section-nav-title">{((i18n.language.startsWith('zh') ? prev.zh : prev.en))}</div>
+            <div className="gt-section-nav-title">{tr(prev)}</div>
           </Link>
         ) : <div className="gt-section-nav-empty" />}
       </div>
@@ -16416,7 +16416,7 @@ function SectionNav({ slug, lang }: { slug: string; lang: Lang }) {
             <div className="gt-section-nav-dir">{tr({ zh: '下一节', en: 'next'
             })} →</div>
             <div className="gt-section-nav-num">§{next.num}</div>
-            <div className="gt-section-nav-title">{((i18n.language.startsWith('zh') ? next.zh : next.en))}</div>
+            <div className="gt-section-nav-title">{tr(next)}</div>
           </Link>
         ) : <div className="gt-section-nav-empty" />}
       </div>

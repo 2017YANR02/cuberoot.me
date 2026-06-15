@@ -176,8 +176,8 @@ function MethodCard({ outcome, isZh, bestTotal }: CardProps) {
           {!r
             ? (isZh ? '…' : '…')
             : failed
-              ? (tr({ zh: '失败', en: 'failed'
-            }))
+              ? tr({ zh: '失败', en: 'failed'
+                                      })
               : `${r.totalMoves} ${tr({ zh: '步', en: 'moves' })}`}
         </span>
       </div>
@@ -192,9 +192,9 @@ function MethodCard({ outcome, isZh, bestTotal }: CardProps) {
               </span>
               <span style={stageMovesStyle}>
                 {s.failed
-                  ? (tr({ zh: '未找到', en: 'no solution' }))
-                  : (s.moves.length === 0 ? (tr({ zh: '(跳过)', en: '(skip)'
-                })) : s.moves.join(' '))}
+                  ? tr({ zh: '未找到', en: 'no solution' })
+                  : (s.moves.length === 0 ? tr({ zh: '(跳过)', en: '(skip)'
+                                          }) : s.moves.join(' '))}
               </span>
             </div>
           ))}
@@ -232,8 +232,8 @@ function MethodAccordion({ outcome, isZh, bestTotal, open, onToggle }: Accordion
           {!r
             ? (isZh ? '…' : '…')
             : failed
-              ? (tr({ zh: '失败', en: 'failed'
-            }))
+              ? tr({ zh: '失败', en: 'failed'
+                                      })
               : `${r.totalMoves} ${tr({ zh: '步', en: 'moves' })}`}
         </span>
         <span style={{ marginLeft: 6, opacity: 0.7 }}>{open ? '▾' : '▸'}</span>
@@ -251,9 +251,9 @@ function MethodAccordion({ outcome, isZh, bestTotal, open, onToggle }: Accordion
                   </span>
                   <span style={stageMovesStyle}>
                     {s.failed
-                      ? (tr({ zh: '未找到', en: 'no solution' }))
-                      : (s.moves.length === 0 ? (tr({ zh: '(跳过)', en: '(skip)'
-                    })) : s.moves.join(' '))}
+                      ? tr({ zh: '未找到', en: 'no solution' })
+                      : (s.moves.length === 0 ? tr({ zh: '(跳过)', en: '(skip)'
+                                                  }) : s.moves.join(' '))}
                   </span>
                 </div>
               ))}

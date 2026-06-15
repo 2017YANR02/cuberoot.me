@@ -179,7 +179,7 @@ function Section({ title, rows, isZh, isMobile }: { title: string; rows: Shortcu
                 </span>
               ))}
             </div>
-            <div className="shortcut-desc" style={descStyle}>{((i18n.language.startsWith('zh') ? r.zh : r.en))}</div>
+            <div className="shortcut-desc" style={descStyle}>{tr(r)}</div>
           </div>
         ))}
       </div>

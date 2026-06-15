@@ -152,7 +152,7 @@ export default function AlgPanel({
                       checked={on}
                       onChange={() => onToggleCategory(cat.key)}
                     />
-                    {((i18n.language.startsWith('zh') ? cat.zh : cat.en))}
+                    {tr(cat)}
                   </label>
                 );
               })}

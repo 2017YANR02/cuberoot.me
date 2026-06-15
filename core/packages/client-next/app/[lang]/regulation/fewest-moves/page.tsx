@@ -11,7 +11,6 @@
 // rotations (E2d1).
 
 import type { ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Clock, Cuboid, Ban, ListChecks } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
@@ -21,6 +20,7 @@ import clauses from '../_data/reg-clauses/E.json';
 import { RegSection, Callout, RegQuote, RegList } from '../_components/primitives';
 import { FM_SCRAMBLE, FM_SOLUTION, FM_COUNT } from './_example';
 import './fewest-moves.css';
+import { T } from '@/i18n/tr';
 
 /** Inline mono token for prose. */
 function K({ children }: { children: ReactNode }) {
@@ -28,8 +28,6 @@ function K({ children }: { children: ReactNode }) {
 }
 
 export default function FewestMovesChapter() {
-  const { i18n } = useTranslation(); // subscribe to language toggle
-  const isZh = i18n.language.startsWith('zh');
   const t = useT();
 
   return (
@@ -98,19 +96,13 @@ export default function FewestMovesChapter() {
         )}
       >
         <Callout tone="info" label={t('计时与提交', 'Timing and submission')} icon={<Clock size={17} />}>
-          {(isZh
-              ? (
-                <>
-                  裁判在第 <b>55 分钟</b>提醒“还剩 5 分钟”,在 <b>60 分钟</b>喊“停”(E2b1)。<br />
-                  想清楚了可以提前交卷结束(E2b+)。开赛前不得在答题纸上写打乱以外的内容,也不得提前看/泄露打乱(E2a1 / E2a2)。
-                </>
-              )
-              : (
-                <>
-                  The judge calls "5 minutes remaining" at <b>55 minutes</b> and "STOP" at <b>60</b> (E2b1).<br />
-                  You may hand in early to end the attempt (E2b+). Before "GO" you must not write on the paper (beyond ID info) and must not see or reveal the scramble (E2a1 / E2a2).
-                </>
-              ))}
+          {<T zh={<>
+                                                                        裁判在第 <b>55 分钟</b>提醒“还剩 5 分钟”,在 <b>60 分钟</b>喊“停”(E2b1)。<br />
+                                                                        想清楚了可以提前交卷结束(E2b+)。开赛前不得在答题纸上写打乱以外的内容,也不得提前看/泄露打乱(E2a1 / E2a2)。
+                                                                      </>} en={<>
+                                                                                      The judge calls "5 minutes remaining" at <b>55 minutes</b> and "STOP" at <b>60</b> (E2b1).<br />
+                                                                                      You may hand in early to end the attempt (E2b+). Before "GO" you must not write on the paper (beyond ID info) and must not see or reveal the scramble (E2a1 / E2a2).
+                                                                                    </>} />}
         </Callout>
 
         <Callout tone="warn" label={t('解法必须清晰无歧义', 'The solution must be unambiguous')}>
@@ -140,9 +132,7 @@ export default function FewestMovesChapter() {
               <li>{t('白纸与答题纸(裁判提供)', 'Blank paper and the solution sheet (from the judge)')}</li>
               <li>{t('该次打乱的图片 + 笔 / 铅笔(裁判提供,也可自备笔)', 'A picture of the scramble + pen / pencil (from the judge; pens may be self-supplied)')}</li>
               <li>
-                {(isZh
-                    ? (<>最多 <b>3 个三阶魔方</b>(自备,须符合第三章;开始时不必是还原态)</>)
-                    : (<>Up to <b>three 3×3×3 cubes</b> (self-supplied, must meet Article 3; need not start solved)</>))}
+                {<T zh={<>最多 <b>3 个三阶魔方</b>(自备,须符合第三章;开始时不必是还原态)</>} en={<>Up to <b>three 3×3×3 cubes</b> (self-supplied, must meet Article 3; need not start solved)</>} />}
               </li>
               <li>{t('贴纸;以及修正液 / 修正带 / 橡皮(自备)', 'Stickers; and correction fluid / tape / erasers (self-supplied)')}</li>
               <li>{t('经 WCA 代表认可的秒表或手表 —— 不得带任何帮你找解的功能', 'A stopwatch or watch approved by the Delegate — with no function that helps find a solution')}</li>
@@ -185,36 +175,26 @@ export default function FewestMovesChapter() {
             <div className="fm-metric-tag">OBTM</div>
             <div className="fm-metric-name">{t('成绩计步', 'Scores your result')}</div>
             <p className="fm-metric-text">
-              {(isZh
-                  ? (<>Outer Block Turn Metric:外层(含宽层)的每次转动算 <b>1 步</b>,整体旋转 <K>x/y/z</K> <b>不计步</b>。这就是写在成绩单上的那个数字(E2d)。</>)
-                  : (<>Outer Block Turn Metric: each outer-layer turn (wide turns included) is <b>1 move</b>; whole-cube rotations <K>x/y/z</K> <b>do not count</b>. This is the number on your scorecard (E2d).</>))}
+              {<T zh={<>Outer Block Turn Metric:外层(含宽层)的每次转动算 <b>1 步</b>,整体旋转 <K>x/y/z</K> <b>不计步</b>。这就是写在成绩单上的那个数字(E2d)。</>} en={<>Outer Block Turn Metric: each outer-layer turn (wide turns included) is <b>1 move</b>; whole-cube rotations <K>x/y/z</K> <b>do not count</b>. This is the number on your scorecard (E2d).</>} />}
             </p>
           </div>
           <div className="fm-metric">
             <div className="fm-metric-tag">ETM</div>
             <div className="fm-metric-name">{t('守 80 步上限', 'Caps you at 80')}</div>
             <p className="fm-metric-text">
-              {(isZh
-                  ? (<>Execution Turn Metric:把<b>整体旋转也算进去</b>。解法按 ETM 数<b>不得超过 80 步</b>(E2d1)。所以红线管的是“写了多长”,不是“值多少分”。</>)
-                  : (<>Execution Turn Metric: here whole-cube rotations <b>do count</b>. The solution must be <b>at most 80 ETM moves</b> (E2d1). The ceiling limits how long the writing is, not what it scores.</>))}
+              {<T zh={<>Execution Turn Metric:把<b>整体旋转也算进去</b>。解法按 ETM 数<b>不得超过 80 步</b>(E2d1)。所以红线管的是“写了多长”,不是“值多少分”。</>} en={<>Execution Turn Metric: here whole-cube rotations <b>do count</b>. The solution must be <b>at most 80 ETM moves</b> (E2d1). The ceiling limits how long the writing is, not what it scores.</>} />}
             </p>
           </div>
         </div>
 
         <Callout tone="info" label={t('记号怎么写', 'Which notation to use')} icon={<Cuboid size={17} />}>
-          {(isZh
-              ? (
-                <>
-                  解法只能用<Link href="/regulation/notation">规则 12a(转动表示方法)</Link>里为三阶定义的记号:面字母、撇号、<K>2</K>、宽层、以及 <K>x/y/z</K> 整体旋转。只有数字、字母和撇号计入解法,其它符号被忽略(E2c4)。<br />
-                  旧的方括号写法(如 <K>[r]</K>)已废止,只保留 <K>x/y/z</K> 转体(E2c2++)。
-                </>
-              )
-              : (
-                <>
-                  Solutions may only use the 3×3×3 notation from <Link href="/regulation/notation">Article 12a (Notation)</Link>: face letters, primes, <K>2</K>, wide turns and <K>x/y/z</K> rotations. Only numbers, letters and apostrophes count toward the solution; other symbols are ignored (E2c4).<br />
-                  The old bracket notation (e.g. <K>[r]</K>) is gone — only <K>x/y/z</K> rotations remain (E2c2++).
-                </>
-              ))}
+          {<T zh={<>
+                                                                        解法只能用<Link href="/regulation/notation">规则 12a(转动表示方法)</Link>里为三阶定义的记号:面字母、撇号、<K>2</K>、宽层、以及 <K>x/y/z</K> 整体旋转。只有数字、字母和撇号计入解法,其它符号被忽略(E2c4)。<br />
+                                                                        旧的方括号写法(如 <K>[r]</K>)已废止,只保留 <K>x/y/z</K> 转体(E2c2++)。
+                                                                      </>} en={<>
+                                                                                      Solutions may only use the 3×3×3 notation from <Link href="/regulation/notation">Article 12a (Notation)</Link>: face letters, primes, <K>2</K>, wide turns and <K>x/y/z</K> rotations. Only numbers, letters and apostrophes count toward the solution; other symbols are ignored (E2c4).<br />
+                                                                                      The old bracket notation (e.g. <K>[r]</K>) is gone — only <K>x/y/z</K> rotations remain (E2c2++).
+                                                                                    </>} />}
         </Callout>
       </RegSection>
 

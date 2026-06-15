@@ -154,7 +154,7 @@ function ViewPicker({ view, onChange, isZh }: { view: RelationView; onChange: (v
       {VIEWS.map(v => (
         <label key={v.id}>
           <input type="radio" checked={view === v.id} onChange={() => onChange(v.id)} />
-          {((i18n.language.startsWith('zh') ? v.zh : v.en))}
+          {tr(v)}
         </label>
       ))}
     </div>

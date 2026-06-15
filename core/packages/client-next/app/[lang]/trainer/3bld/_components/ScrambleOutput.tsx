@@ -3,7 +3,6 @@
 // Numbered read-only list of generated scrambles + copy-all + stats line + busy spinner.
 
 import { useState, type JSX } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Copy, Check, Loader2 } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 
@@ -14,8 +13,6 @@ interface ScrambleOutputProps {
 }
 
 export function ScrambleOutput({ scrambles, info, busy }: ScrambleOutputProps): JSX.Element {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const [copied, setCopied] = useState(false);
 
   const copyAll = async () => {
@@ -52,16 +49,16 @@ export function ScrambleOutput({ scrambles, info, busy }: ScrambleOutputProps): 
           disabled={busy || scrambles.length === 0}
         >
           {copied ? <Check size={15} /> : <Copy size={15} />}
-          {copied ? (tr({ zh: '已复制', en: 'Copied'
-        })) : (tr({ zh: '复制全部', en: 'Copy all'
-        }))}
+          {copied ? tr({ zh: '已复制', en: 'Copied'
+                          }) : tr({ zh: '复制全部', en: 'Copy all'
+                              })}
         </button>
       </div>
 
       {scrambles.length === 0 ? (
         <div className="bld-scramble-empty">
-          {busy ? (tr({ zh: '生成中…', en: 'Generating…' })) : (tr({ zh: '暂无打乱', en: 'No scrambles yet'
-        }))}
+          {busy ? tr({ zh: '生成中…', en: 'Generating…' }) : tr({ zh: '暂无打乱', en: 'No scrambles yet'
+                          })}
         </div>
       ) : (
         <ol className="bld-scramble-list">

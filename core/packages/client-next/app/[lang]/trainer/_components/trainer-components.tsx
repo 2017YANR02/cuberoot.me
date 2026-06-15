@@ -276,9 +276,9 @@ export function CaseTreePicker({
                   type="button"
                   className="trainer-chevron-btn"
                   onClick={(e) => { e.stopPropagation(); toggleTop(top.label); }}
-                  title={isExpanded ? (tr({ zh: '折叠', en: 'Collapse'
-                })) : (tr({ zh: '展开', en: 'Expand'
-                }))}
+                  title={isExpanded ? tr({ zh: '折叠', en: 'Collapse'
+                                  }) : tr({ zh: '展开', en: 'Expand'
+                                      })}
                 >
                   {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </button>
@@ -318,9 +318,9 @@ export function CaseTreePicker({
                               type="button"
                               className="trainer-chevron-btn"
                               onClick={(e) => { e.stopPropagation(); toggleSub(subKey); }}
-                              title={subExpanded ? (tr({ zh: '折叠', en: 'Collapse'
-                            })) : (tr({ zh: '展开', en: 'Expand'
-                            }))}
+                              title={subExpanded ? tr({ zh: '折叠', en: 'Collapse'
+                                                          }) : tr({ zh: '展开', en: 'Expand'
+                                                              })}
                             >
                               {subExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                             </button>

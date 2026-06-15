@@ -479,8 +479,8 @@ export default function ColpiClient() {
               className={viewMode === 'mine' ? 'on' : ''}
               disabled={!user}
               onClick={() => setViewMode('mine')}
-              title={user ? '' : (tr({ zh: '需要登录', en: 'Login required'
-            }))}
+              title={user ? '' : tr({ zh: '需要登录', en: 'Login required'
+                          })}
             >{tr({ zh: '我的', en: 'Mine' })}</button>
           </div>
           <button
@@ -582,8 +582,8 @@ export default function ColpiClient() {
           <span className="colpi-legend-swatch empty" /> {tr({ zh: '空缺', en: 'Empty' })}
           <span className="colpi-legend-meta">
             {loading
-              ? (tr({ zh: '加载中…', en: 'Loading…'
-            }))
+              ? tr({ zh: '加载中…', en: 'Loading…'
+                                          })
               : loadError
                 ? ((isZh ? `加载失败: ${loadError}` : `Load failed: ${loadError}`))
                 : (isZh
@@ -625,7 +625,7 @@ export default function ColpiClient() {
                   <span
                     className="colpi-pao-dot"
                     style={{ background: CATEGORY_DOT[w.category] }}
-                    title={((i18n.language.startsWith('zh') ? CATEGORY_LABEL[w.category].zh : CATEGORY_LABEL[w.category].en))}
+                    title={tr(CATEGORY_LABEL[w.category])}
                   />
                   <span className="colpi-detail-word">{w.word}</span>
                   {w.note && <span className="colpi-detail-note">{w.note}</span>}
@@ -678,8 +678,8 @@ export default function ColpiClient() {
             <button
               className="colpi-detail-add"
               onClick={handleAddClick}
-              title={user ? '' : (tr({ zh: '需要登录', en: 'Login required'
-            }))}
+              title={user ? '' : tr({ zh: '需要登录', en: 'Login required'
+                          })}
             >
               + {tr({ zh: '提交一个新词', en: 'Submit a new word'
             })}
@@ -724,7 +724,7 @@ export default function ColpiClient() {
                     <span
                       className="colpi-pao-dot"
                       style={{ background: CATEGORY_DOT[w.category] }}
-                      title={((i18n.language.startsWith('zh') ? CATEGORY_LABEL[w.category].zh : CATEGORY_LABEL[w.category].en))}
+                      title={tr(CATEGORY_LABEL[w.category])}
                     />
                   </td>
                   <td className="colpi-recent-word">

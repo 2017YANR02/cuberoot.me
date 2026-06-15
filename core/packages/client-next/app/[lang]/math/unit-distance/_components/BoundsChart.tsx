@@ -13,8 +13,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useT } from "@/hooks/useT";
+import { T } from '@/i18n/tr';
 
 const W = 700, H = 380;
 const M = { top: 24, right: 18, bottom: 44, left: 56 };
@@ -52,8 +52,6 @@ function buildPath(samples: Array<[number, number | null]>): string {
 }
 
 export default function BoundsChart() {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const t = useT();
 
   const [delta, setDelta] = useState(0.014);
@@ -222,19 +220,15 @@ export default function BoundsChart() {
       </svg>
 
       <p className="ud-sandbox-hint">
-        {(isZh ? (
-                        <>
-                          <strong className="ud-disproved-text">为什么是反驳:</strong>
-                          {' '}Erdős 1946 猜想上界 <span className="ud-mono">1 + C/log log n</span> 随 n 增长是<em>下降</em>到 1 的曲线;OpenAI 2026 的新下界 <span className="ud-mono">1 + δ</span> 是一条<em>水平直线</em>。任何水平直线最终会穿过任何下降到 1 的曲线 — 穿越之后,猜想就破了。改 δ 滑块看穿越点 <span className="ud-mono">n ≈ exp(exp(C/δ))</span>。<br/>
-                          <span className="ud-text-mute">(图中 C、δ 取夸张值以让穿越在 n ≈ 10^{Math.min(crossLogN, X_MAX).toFixed(0)} 处可见;论文中真实 δ 可能极小,穿越点是天文数字 — 但只要 δ &gt; 0,定理依然成立。)</span>
-                        </>
-                      ) : (
-                        <>
-                          <strong className="ud-disproved-text">Why this disproves Erdős:</strong>
-                          {' '}the conjectured upper <span className="ud-mono">1 + C/log log n</span> is a curve <em>decaying</em> to 1; the new lower <span className="ud-mono">1 + δ</span> is a <em>horizontal</em> line. Any flat line eventually crosses any curve decaying to 1 — past the crossing the conjecture fails. Move the δ slider; the crossing sits at <span className="ud-mono">n ≈ exp(exp(C/δ))</span>.<br/>
-                          <span className="ud-text-mute">(C and δ are exaggerated so the crossover lands at n ≈ 10^{Math.min(crossLogN, X_MAX).toFixed(0)}; the real δ in the paper may be tiny and the crossing astronomical — but δ &gt; 0 is enough.)</span>
-                        </>
-                      ))}
+        {<T zh={<>
+                                                                    <strong className="ud-disproved-text">为什么是反驳:</strong>
+                                                                    {' '}Erdős 1946 猜想上界 <span className="ud-mono">1 + C/log log n</span> 随 n 增长是<em>下降</em>到 1 的曲线;OpenAI 2026 的新下界 <span className="ud-mono">1 + δ</span> 是一条<em>水平直线</em>。任何水平直线最终会穿过任何下降到 1 的曲线 — 穿越之后,猜想就破了。改 δ 滑块看穿越点 <span className="ud-mono">n ≈ exp(exp(C/δ))</span>。<br/>
+                                                                    <span className="ud-text-mute">(图中 C、δ 取夸张值以让穿越在 n ≈ 10^{Math.min(crossLogN, X_MAX).toFixed(0)} 处可见;论文中真实 δ 可能极小,穿越点是天文数字 — 但只要 δ &gt; 0,定理依然成立。)</span>
+                                                                  </>} en={<>
+                                                                                          <strong className="ud-disproved-text">Why this disproves Erdős:</strong>
+                                                                                          {' '}the conjectured upper <span className="ud-mono">1 + C/log log n</span> is a curve <em>decaying</em> to 1; the new lower <span className="ud-mono">1 + δ</span> is a <em>horizontal</em> line. Any flat line eventually crosses any curve decaying to 1 — past the crossing the conjecture fails. Move the δ slider; the crossing sits at <span className="ud-mono">n ≈ exp(exp(C/δ))</span>.<br/>
+                                                                                          <span className="ud-text-mute">(C and δ are exaggerated so the crossover lands at n ≈ 10^{Math.min(crossLogN, X_MAX).toFixed(0)}; the real δ in the paper may be tiny and the crossing astronomical — but δ &gt; 0 is enough.)</span>
+                                                                                        </>} />}
       </p>
     </div>
   );

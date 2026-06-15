@@ -184,12 +184,12 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
     })} (n=${summary.count})`;
     const body = lines.map(([k, v]) => `${k}: ${v}`).join('\n');
     const subxBody = subX.length
-      ? '\n\n' + (tr({ zh: 'sub-X 分布：', en: 'Sub-X breakdown:'
-    })) + '\n' +
+      ? '\n\n' + tr({ zh: 'sub-X 分布：', en: 'Sub-X breakdown:'
+            }) + '\n' +
           subX.map(s => `  ${s.label}: ${s.pct.toFixed(1)}%`).join('\n')
       : '';
-    const periodsBody = '\n\n' + (tr({ zh: '时间段：', en: 'Time periods:'
-    })) + '\n' +
+    const periodsBody = '\n\n' + tr({ zh: '时间段：', en: 'Time periods:'
+        }) + '\n' +
       periodRows.map(r => `  ${r.label}: ${fmtBucketRow(r.cur)}`).join('\n');
     return header + '\n' + body + subxBody + periodsBody;
     // `lines` is rebuilt every render but its content is fully determined by
@@ -449,9 +449,9 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
 
         <div className="modal-actions">
           <button onClick={onCopy} className="primary">
-            {copied ? (tr({ zh: '已复制', en: 'Copied'
-            })) : (tr({ zh: '复制文本', en: 'Copy text'
-            }))}
+            {copied ? tr({ zh: '已复制', en: 'Copied'
+                                  }) : tr({ zh: '复制文本', en: 'Copy text'
+                                      })}
           </button>
           <button onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
         })}</button>

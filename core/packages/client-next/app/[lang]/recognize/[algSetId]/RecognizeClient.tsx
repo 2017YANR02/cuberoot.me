@@ -171,8 +171,8 @@ export default function RecognizeClient() {
     if (gameState === 'paused') {
       return results.length === 0
         ? t('training.pressSpace')
-        : (tr({ zh: '按空格继续', en: 'Press Space to continue'
-        }));
+        : tr({ zh: '按空格继续', en: 'Press Space to continue'
+                  });
     }
     return '';
   };
@@ -283,10 +283,10 @@ export default function RecognizeClient() {
       {gameState === 'paused' && (
         <button className="btn-primary" onClick={resumePlay} style={{ fontSize: '1.2rem', padding: '0.75rem 2rem' }}>
           {results.length === 0
-            ? (tr({ zh: '▶ 开始', en: '▶ Start'
-            }))
-            : (tr({ zh: '▶ 继续', en: '▶ Continue'
-            }))} (Space)
+            ? tr({ zh: '▶ 开始', en: '▶ Start'
+                                  })
+            : tr({ zh: '▶ 继续', en: '▶ Continue'
+                                  })} (Space)
         </button>
       )}
 

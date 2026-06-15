@@ -398,8 +398,8 @@ export default function Top10HistoryPage({
       if (msg !== 'aborted') {
         console.error('[Top10 Export] failed:', e);
         // eslint-disable-next-line no-alert
-        alert((tr({ zh: '导出失败:', en: 'Export failed: '
-        })) + msg);
+        alert(tr({ zh: '导出失败:', en: 'Export failed: '
+                    }) + msg);
       }
     } finally {
       setExporting(false);
@@ -457,8 +457,8 @@ export default function Top10HistoryPage({
                 className={metric === 'average' ? 'active' : ''}
                 onClick={() => hasAverage && setMetric('average')}
                 disabled={!hasAverage}
-                title={!hasAverage ? (tr({ zh: '该项目没有平均成绩', en: 'No average for this event'
-                })) : undefined}
+                title={!hasAverage ? tr({ zh: '该项目没有平均成绩', en: 'No average for this event'
+                                }) : undefined}
               >{tr({ zh: '平均', en: 'Average' })}</button>
             </div>
             <LangToggle />
@@ -505,8 +505,8 @@ export default function Top10HistoryPage({
               <Flag iso2={top1Person.iso2} className="t10h-holder-flag" />
             )}
             <div className="t10h-holder-text">
-              <div className="t10h-holder-name">{top1Name || (eventLoading ? (tr({ zh: '加载中…', en: 'Loading…'
-            })) : '')}</div>
+              <div className="t10h-holder-name">{top1Name || (eventLoading ? tr({ zh: '加载中…', en: 'Loading…'
+                                      }) : '')}</div>
               <div className="t10h-holder-sub">
                 {top1Person && ((isZh
                                                 ? `保持纪录 ${top1DurationDays} 天`
@@ -567,8 +567,8 @@ export default function Top10HistoryPage({
           type="button"
           className="t10h-play"
           onClick={togglePlay}
-          aria-label={playing ? (tr({ zh: '暂停', en: 'Pause'
-        })) : (tr({ zh: '播放', en: 'Play' }))}
+          aria-label={playing ? tr({ zh: '暂停', en: 'Pause'
+                  }) : tr({ zh: '播放', en: 'Play' })}
         >
           {playing ? <Pause size={18} /> : <Play size={18} />}
         </button>

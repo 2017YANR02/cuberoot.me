@@ -420,8 +420,8 @@ function SectionPlayControls({ anim, isZh }: { anim: Animator; isZh: boolean }) 
         type="button"
         className="cs-sec-play"
         onClick={anim.toggle}
-        title={anim.playing ? (tr({ zh: '暂停', en: 'Pause'
-        })) : (tr({ zh: '播放', en: 'Play' }))}
+        title={anim.playing ? tr({ zh: '暂停', en: 'Pause'
+                }) : tr({ zh: '播放', en: 'Play' })}
         aria-label={anim.playing ? 'pause' : 'play'}
       >{anim.playing ? '⏸' : '▶'}</button>
       {anim.idx !== null && (

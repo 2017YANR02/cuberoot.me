@@ -32,8 +32,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
   const isMobile = useIsMobile();
   const isEditing = editIdx != null;
   const router = useRouter();
-  const { t, i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
+  const { t } = useTranslation();
   useDocumentTitle('提交替代解', 'Submit Alternative');
   const user = useAuthStore(s => s.user);
   const login = useAuthStore(s => s.login);

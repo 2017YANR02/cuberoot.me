@@ -28,7 +28,6 @@ const CARDS: MemoCard[] = [
 
 export default function MemoLandingPage() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   useDocumentTitle('记忆', 'Memo');
 
   return (
@@ -42,7 +41,7 @@ export default function MemoLandingPage() {
             <div className="card-icon">
               <c.Icon size={24} strokeWidth={1.5} />
             </div>
-            <div className="card-name">{((i18n.language.startsWith('zh') ? c.zh : c.en))}</div>
+            <div className="card-name">{tr(c)}</div>
           </Link>
         ))}
       </div>

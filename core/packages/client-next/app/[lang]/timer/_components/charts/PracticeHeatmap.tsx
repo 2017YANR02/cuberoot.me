@@ -326,7 +326,7 @@ export default function PracticeHeatmap({
     });
       return `${dateStr} · ${solvesPart} · ${noBest}`;
     }
-    const bestPart = (tr({ zh: '最佳 ', en: 'best ' })) + formatMs(agg.best);
+    const bestPart = tr({ zh: '最佳 ', en: 'best ' }) + formatMs(agg.best);
     return `${dateStr} · ${solvesPart} · ${bestPart}`;
   };
 
@@ -343,12 +343,12 @@ export default function PracticeHeatmap({
       : `${agg.count} ${agg.count === 1 ? 'solve' : 'solves'}`;
     const bestPart =
       agg.best === null
-        ? (tr({ zh: '最佳 -', en: 'best -' }))
-        : (tr({ zh: '最佳 ', en: 'best ' })) + formatMs(agg.best);
+        ? tr({ zh: '最佳 -', en: 'best -' })
+        : tr({ zh: '最佳 ', en: 'best ' }) + formatMs(agg.best);
     const avgPart =
       agg.validCount === 0
-        ? (tr({ zh: '平均 -', en: 'avg -' }))
-        : (tr({ zh: '平均 ', en: 'avg ' })) + formatMs(agg.validSum / agg.validCount);
+        ? tr({ zh: '平均 -', en: 'avg -' })
+        : tr({ zh: '平均 ', en: 'avg ' }) + formatMs(agg.validSum / agg.validCount);
     return `${label} · ${solvesPart} · ${bestPart} · ${avgPart}`;
   };
 
@@ -373,10 +373,10 @@ export default function PracticeHeatmap({
               onClick={() => setCalendarExpanded(v => !v)}
             >
               {calendarExpanded
-                ? (tr({ zh: '收起日历', en: 'Hide calendar'
-                }))
-                : (tr({ zh: '展开日历', en: 'Show calendar'
-                }))}
+                ? tr({ zh: '收起日历', en: 'Hide calendar'
+                                              })
+                : tr({ zh: '展开日历', en: 'Show calendar'
+                                              })}
             </button>
           )}
         </div>

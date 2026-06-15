@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { TeX, MathText } from './Tex';
 import i18n from '@/i18n/i18n-client';
+import { tr } from '@/i18n/tr';
 
 type AlgoKey = 'thistlethwaite' | 'kociemba';
 
@@ -160,7 +161,7 @@ export default function SubgroupChain({ isZh }: Props) {
                 <span className="god-chain-layer-order"><MathText>{`|${l.label}| = ${l.order}`}</MathText></span>
               </div>
               <div className="god-chain-layer-gens"><MathText>{l.gens}</MathText></div>
-              <div className="god-chain-layer-desc"><MathText>{((i18n.language.startsWith('zh') ? l.zh : l.en))}</MathText></div>
+              <div className="god-chain-layer-desc"><MathText>{tr(l)}</MathText></div>
               {l.cosetsToParent && (
                 <div className="god-chain-layer-cosets">
                   {t('陪集数', 'Coset count')} <TeX src={`\\bigl|G_{${parentIdx}}/G_{${selfIdx}}\\bigr| = ${l.cosetsToParent.replace(/,/g, '{,}')}`} />

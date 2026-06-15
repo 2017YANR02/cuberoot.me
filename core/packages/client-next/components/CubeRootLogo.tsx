@@ -5,7 +5,6 @@
 // logo 跟随主题:dark 用白字版,light 用深字版(否则白 logo 落在浅底看不见).
 import HomeLink from '@/components/HomeLink';
 import { useEffectiveTheme } from '@/lib/theme';
-import { useTranslation } from 'react-i18next';
 import { tr } from '@/i18n/tr';
 
 export default function CubeRootLogo({
@@ -16,8 +15,6 @@ export default function CubeRootLogo({
   height?: number;
 }) {
   const eff = useEffectiveTheme();
-  const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
   const src = eff === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png';
   return (
     <HomeLink className={className} aria-label={tr({ zh: '主页', en: 'Home'

@@ -15,6 +15,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
+import { T } from '@/i18n/tr';
 
 const VIEW = 420;
 const PAD = 24;
@@ -54,7 +55,6 @@ function countUnitPairs(s: number, k: number): Edge[] {
 
 export default function GridConstruction() {
   const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const t = useT();
 
   const [s, setS] = useState(7);
@@ -174,11 +174,7 @@ export default function GridConstruction() {
       </div>
 
       <p className="ud-sandbox-hint">
-        {(isZh ? (
-                        <>把"单位"重定义成 √k。k = 1 给出 <span className="ud-mono">2s(s−1)</span> ≈ 2n,只有 r₂(1) = 4 个方向能贡献。但 k = 5 有 <span className="ud-mono">r₂(5) = 8</span> 个方向 ((±1,±2),(±2,±1)),边数立刻变多。k = 25 还多了 (0, ±5)、(±3, ±4) 等。Erdős 1946 的下界正是来自:在 √n × √n 网格里挑使 r₂(k) 最大的 k,得到 ν(n) ≥ n · n<sup>c/log log n</sup>。</>
-                      ) : (
-                        <>Rescale "unit" to √k. k = 1 yields only <span className="ud-mono">2s(s−1)</span> ≈ 2n pairs — just r₂(1) = 4 directions. But k = 5 with <span className="ud-mono">r₂(5) = 8</span> directions ((±1,±2), (±2,±1)) jumps higher; k = 25 adds (0, ±5) and (±3, ±4). Erdős 1946 picks the k with maximum r₂(k) ≤ n, giving the classical lower bound ν(n) ≥ n · n<sup>c/log log n</sup>.</>
-                      ))}
+        {<T zh={<>把"单位"重定义成 √k。k = 1 给出 <span className="ud-mono">2s(s−1)</span> ≈ 2n,只有 r₂(1) = 4 个方向能贡献。但 k = 5 有 <span className="ud-mono">r₂(5) = 8</span> 个方向 ((±1,±2),(±2,±1)),边数立刻变多。k = 25 还多了 (0, ±5)、(±3, ±4) 等。Erdős 1946 的下界正是来自:在 √n × √n 网格里挑使 r₂(k) 最大的 k,得到 ν(n) ≥ n · n<sup>c/log log n</sup>。</>} en={<>Rescale "unit" to √k. k = 1 yields only <span className="ud-mono">2s(s−1)</span> ≈ 2n pairs — just r₂(1) = 4 directions. But k = 5 with <span className="ud-mono">r₂(5) = 8</span> directions ((±1,±2), (±2,±1)) jumps higher; k = 25 adds (0, ±5) and (±3, ±4). Erdős 1946 picks the k with maximum r₂(k) ≤ n, giving the classical lower bound ν(n) ≥ n · n<sup>c/log log n</sup>.</>} />}
       </p>
     </div>
   );

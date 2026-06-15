@@ -30,7 +30,6 @@ interface ArticleActionsProps {
 
 export default function ArticleActions({ slug, authorWcaId, lang }: ArticleActionsProps) {
   const { t, i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh') || lang.startsWith('zh');
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
 

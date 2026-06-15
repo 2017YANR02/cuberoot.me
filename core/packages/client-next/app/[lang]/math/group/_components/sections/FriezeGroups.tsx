@@ -198,7 +198,7 @@ function SevenTypeFriezeExplorer({ lang }: { lang: 'zh' | 'en' }) {
         >
           {FRIEZE_TABLE.map(f => (
             <option key={f.id} value={f.id}>
-              {f.id} — {((i18n.language.startsWith('zh') ? FRIEZE_NAMES[f.id].zh : FRIEZE_NAMES[f.id].en))}
+              {f.id} — {tr(FRIEZE_NAMES[f.id])}
             </option>
           ))}
         </select>
@@ -325,8 +325,8 @@ function SevenTypeFriezeExplorer({ lang }: { lang: 'zh' | 'en' }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <button className="gt-btn" onClick={animating ? stopAnim : startAnim}>
           {animating
-            ? (tr({ zh: '停止', en: 'Stop' }))
-            : (tr({ zh: '播放平移', en: 'Play translation' }))}
+            ? tr({ zh: '停止', en: 'Stop' })
+            : tr({ zh: '播放平移', en: 'Play translation' })}
         </button>
         <span style={{ fontSize: 12, color: 'var(--ink-dim)' }}>
           {lang === 'zh'
@@ -511,7 +511,7 @@ function BuildYourOwnFrieze({ lang }: { lang: 'zh' | 'en' }) {
           {info.id}
         </span>
         <span style={{ fontSize: 14, color: 'var(--ink-dim)' }}>
-          {((i18n.language.startsWith('zh') ? FRIEZE_NAMES[info.id].zh : FRIEZE_NAMES[info.id].en))}
+          {tr(FRIEZE_NAMES[info.id])}
         </span>
         <span style={{ fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--ink-dim)',
           background: 'var(--bg-deep)', padding: '2px 8px', borderRadius: 4 }}>

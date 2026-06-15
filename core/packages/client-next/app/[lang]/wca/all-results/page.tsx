@@ -407,7 +407,7 @@ function AllResultsPageInner() {
                 onClick={() => setEventsSet(cat.events)}
                 className={activeCategory === cat.key ? 'wse-cat-on' : undefined}
               >
-                {(i18n.language.startsWith('zh') ? cat.zh : cat.en)}
+                {tr(cat)}
               </button>
             ))}
             <PillToggle

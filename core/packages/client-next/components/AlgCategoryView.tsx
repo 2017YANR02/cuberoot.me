@@ -138,7 +138,7 @@ function SubgroupIndex({
                 ? <CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={110} />
                 : <VisualCube algorithm={firstAlg} view="oll" size={120} />}
             </div>
-            <div className="alg-subgroup-card-title">{useF2lThumb ? (topLabel || (tr({ zh: '其他', en: 'Other' }))) : `${set.toUpperCase()} ${topLabel || (tr({ zh: '其他', en: 'Other' }))}`}</div>
+            <div className="alg-subgroup-card-title">{useF2lThumb ? (topLabel || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${topLabel || tr({ zh: '其他', en: 'Other' })}`}</div>
             <div className="alg-subgroup-card-count">{count} {tr({ zh: '个', en: 'cases'
             })}</div>
           </Link>
@@ -163,7 +163,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     const fallback = tr({ zh: '公式库', en: 'Algorithms'
     });
     if (!puzzleParam || !set) return fallback;
-    const setName = meta ? (((i18n.language.startsWith('zh') ? meta.zh : meta.en))) : set;
+    const setName = meta ? tr(meta) : set;
     return `${puzzleParam} · ${setName}`;
   })();
   useDocumentTitle(algSetTitle, algSetTitle);
@@ -281,7 +281,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
         <h1 className="alg-cat-title">
           <span className="alg-cat-puzzle">{puzzleParam}</span>
           {' '}
-          {((i18n.language.startsWith('zh') ? meta.zh : meta.en))}
+          {tr(meta)}
           {subgroupDisplay && <span className="alg-cat-subgroup"> {subgroupDisplay}</span>}
         </h1>
         {data && !showSubgroupPicker && (
@@ -367,7 +367,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                 tabIndex={0}
               >
                 {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-                {subgroup || (tr({ zh: '其他', en: 'Other' }))}
+                {subgroup || tr({ zh: '其他', en: 'Other' })}
                 <span className="alg-subgroup-count">{cases.length}</span>
               </h2>
             )}

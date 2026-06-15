@@ -423,8 +423,8 @@ function OpsEditor({ mode, initial, lang, onClose, onSaved }: {
     <div className="ops-modal-backdrop" onClick={onClose}>
       <div className="ops-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <header className="ops-modal-head">
-          <h2>{isEdit ? (tr({ zh: '编辑命令', en: 'Edit command'
-        })) : (tr({ zh: '新建命令', en: 'New command' }))}</h2>
+          <h2>{isEdit ? tr({ zh: '编辑命令', en: 'Edit command'
+                          }) : tr({ zh: '新建命令', en: 'New command' })}</h2>
           <button type="button" className="ops-modal-close" onClick={onClose} aria-label="Close"><X size={16} /></button>
         </header>
         <div className="ops-modal-body">
@@ -482,8 +482,8 @@ function OpsEditor({ mode, initial, lang, onClose, onSaved }: {
             </div>
           </label>
           <label className="ops-field">
-            <span>cmd <em>{form.category === 'prompt' ? (tr({ zh: '(提示词正文)', en: '(prompt body)'
-            })) : (tr({ zh: '(shell 命令,多行 \\n)', en: '(shell command, multi-line ok)' }))}</em></span>
+            <span>cmd <em>{form.category === 'prompt' ? tr({ zh: '(提示词正文)', en: '(prompt body)'
+                                  }) : tr({ zh: '(shell 命令,多行 \\n)', en: '(shell command, multi-line ok)' })}</em></span>
             <textarea className="ops-field-mono" value={form.cmd} onChange={(e) => set('cmd', e.target.value)} rows={6} />
           </label>
           <label className="ops-field">
@@ -496,9 +496,9 @@ function OpsEditor({ mode, initial, lang, onClose, onSaved }: {
         <footer className="ops-modal-foot">
           <button type="button" className="ops-modal-cancel" onClick={onClose} disabled={saving}>{tr({ zh: '取消', en: 'Cancel' })}</button>
           <button type="button" className="ops-modal-save" onClick={onSave} disabled={saving}>
-            {saving ? (tr({ zh: '保存中...', en: 'Saving...'
-            })) : (tr({ zh: '保存', en: 'Save'
-            }))}
+            {saving ? tr({ zh: '保存中...', en: 'Saving...'
+                                  }) : tr({ zh: '保存', en: 'Save'
+                                      })}
           </button>
         </footer>
       </div>
