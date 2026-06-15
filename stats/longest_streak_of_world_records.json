@@ -48,7 +48,7 @@
   ],
   "rows": [
     [
-      "8.37",
+      "8.38",
       9,
       "6x6x6 Cube",
       "Single",
@@ -57,7 +57,7 @@
       "Still active"
     ],
     [
-      "8.16",
+      "8.17",
       9,
       "7x7x7 Cube",
       "Average",
@@ -93,7 +93,7 @@
       "[OCSEF 2017](https://www.worldcubeassociation.org/competitions/OCSEFOpen2017)"
     ],
     [
-      "7.13",
+      "7.14",
       8,
       "4x4x4 Blindfolded",
       "Single",
@@ -111,7 +111,7 @@
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
     ],
     [
-      "6.92",
+      "6.93",
       7,
       "4x4x4 Blindfolded",
       "Average",
@@ -408,7 +408,7 @@
       "[Magic Revenge 2012](https://www.worldcubeassociation.org/competitions/MagicRevenge2012)"
     ],
     [
-      "2.66",
+      "2.67",
       5,
       "5x5x5 Blindfolded",
       "Single",
@@ -770,6 +770,15 @@
     [
       "1.71",
       3,
+      "5x5x5 Cube",
+      "Single",
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "[DuPage Fall 2024](https://www.worldcubeassociation.org/competitions/DuPageFall2024)",
+      "Still active"
+    ],
+    [
+      "1.71",
+      3,
       "3x3x3 One-Handed",
       "Average",
       "[Patrick Ponce](https://www.worldcubeassociation.org/persons/2012PONC02)",
@@ -784,15 +793,6 @@
       "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
       "[Jaqueca Di Tella 2023](https://www.worldcubeassociation.org/competitions/JaquecaDiTella2023)",
       "[Central Asian Tour Astana 2025](https://www.worldcubeassociation.org/competitions/CentralAsianTourAstana2025)"
-    ],
-    [
-      "1.71",
-      3,
-      "5x5x5 Cube",
-      "Single",
-      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-      "[DuPage Fall 2024](https://www.worldcubeassociation.org/competitions/DuPageFall2024)",
-      "Still active"
     ],
     [
       "1.69",
@@ -1272,7 +1272,7 @@
       "[Czech Open 2012](https://www.worldcubeassociation.org/competitions/CzechOpen2012)"
     ],
     [
-      "0.94",
+      "0.95",
       2,
       "5x5x5 Cube",
       "Average",
@@ -1803,6 +1803,15 @@
       "[Schoolmark Open 2018](https://www.worldcubeassociation.org/competitions/SchoolmarkOpen2018)"
     ],
     [
+      "0.43",
+      2,
+      "Rubik's Cube",
+      "Average",
+      "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
+      "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
+      "Still active"
+    ],
+    [
       "0.42",
       2,
       "6x6x6 Cube",
@@ -1819,15 +1828,6 @@
       "[Yunho Nam (남윤호)](https://www.worldcubeassociation.org/persons/2014NAMY01)",
       "[Asian Championship 2014](https://www.worldcubeassociation.org/competitions/AsianChampionship2014)",
       "[Xi'an Cherry Blossom 2015](https://www.worldcubeassociation.org/competitions/XianCherryBlossom2015)"
-    ],
-    [
-      "0.42",
-      2,
-      "Rubik's Cube",
-      "Average",
-      "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
-      "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
-      "Still active"
     ],
     [
       "0.41",
