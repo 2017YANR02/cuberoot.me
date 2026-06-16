@@ -163,6 +163,15 @@
 
 /* ── demo helpers ───────────────────────── */
 .cg-row { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; }
+/* AttemptsList demo: stacked rows so the shared 8.5ch grid floor lines columns up
+   across rows; the cell renders solves as links — on the neutral stage show them as
+   plain aligned numbers (not default-blue underlined links). */
+/* 5-col ao5 grid is wider than the card; like the real .wp-table-scroll, clip to the
+   card and scroll horizontally instead of bleeding past the border. */
+.cg-attempts-demo { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; width: 100%; max-width: 100%; overflow-x: auto; }
+.cg-stage .wp-attempts-flow { font-size: 13px; gap: 4px 10px; }
+.cg-stage .wp-att { color: var(--foreground); text-decoration: none; }
+.cg-stage .wp-att-best { font-weight: 700; }
 .cg-demo-end { margin-left: auto; display: inline-flex; }
 .cg-hint { font-size: 13px; color: var(--muted-foreground); }
 .cg-input {
