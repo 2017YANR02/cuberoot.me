@@ -65,6 +65,10 @@ const inflight: Record<string, Promise<void> | undefined> = {};
 const metaByScramble = new Map<string, WcaScrambleMeta>();
 // comp 模式:过滤 + 排序后的整场打乱(按 specKey 缓存,refill 时循环灌回队列)。
 const compRows: Record<string, { scramble: string; meta: WcaScrambleMeta }[]> = {};
+// 已确认「确实没有真题」的来源 key:难度组合无匹配(端点 404)/ 选定比赛缺此项目。
+// 用于让 UI 显式提示,而不是悄悄伪造一条本地生成打乱(无比赛来源、且不符所选难度)。
+// 与「瞬时空(还在加载 / 网络失败)」区分:后者不进此集合,稍后重取。
+const knownEmpty = new Set<string>();
 
 /** Normalize stray non-ASCII punctuation (e.g. a Pyraminx scramble that used ’
  *  instead of ') so cubing.js / renderers accept the move string. */
@@ -127,7 +131,8 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
       }));
     compRows[key] = rows;
   }
-  if (rows.length === 0) return; // 该比赛没有此 event → 队列保持空 → 调用方回退随机生成
+  if (rows.length === 0) { knownEmpty.add(key); return; } // 该比赛没有此 event → 显式提示,不伪造生成
+  knownEmpty.delete(key);
   const q = (pools[key] ??= []);
   for (const it of rows) { q.push(it.scramble); rememberMeta(it.scramble, it.meta); }
 }
@@ -148,11 +153,15 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
     qs.set('steps', [...spec.diff.steps].sort((a, b) => a - b).join(','));
   }
   const res = await fetch(apiUrl(`/v1/wca/scrambles/random?${qs.toString()}`));
-  if (!res.ok) return;
+  // 难度无匹配时端点回 404 → 确认空(非瞬时错误),让 UI 显式提示。
+  if (res.status === 404) { knownEmpty.add(key); return; }
+  if (!res.ok) return; // 其它失败(5xx / 网络)= 瞬时,不标空,稍后重取
   const data = (await res.json()) as { scrambles?: RandomItem[] };
-  if (!Array.isArray(data.scrambles)) return;
+  const items = Array.isArray(data.scrambles) ? data.scrambles : [];
+  if (items.length === 0) { knownEmpty.add(key); return; }
+  knownEmpty.delete(key);
   const q = (pools[key] ??= []);
-  for (const it of data.scrambles) {
+  for (const it of items) {
     if (!it?.scramble) continue;
     // 最优模式且该条带最优等态 → 用最优打乱(同态,更短),否则原打乱。
     const s = normalize(spec.optimal && it.o ? it.o : it.scramble);
@@ -185,6 +194,17 @@ function fill(spec: WcaSourceSpec): Promise<void> {
  *  an empty result falls back to a generated scramble. */
 export function hasWcaSource(spec: WcaSourceSpec): boolean {
   return specKey(spec) !== null;
+}
+
+/** Whether this source was *confirmed* to have zero real scrambles — a difficulty
+ *  combo with no matches (endpoint 404) or a comp lacking the event. Distinct from
+ *  "still loading / transient failure" (those don't set this). Only meaningful after
+ *  at least one fill attempt; lets the UI show a clear notice instead of silently
+ *  substituting a locally generated scramble (which has no comp source and won't
+ *  match the requested difficulty). */
+export function isWcaSourceEmpty(spec: WcaSourceSpec): boolean {
+  const key = specKey(spec);
+  return key !== null && knownEmpty.has(key);
 }
 
 /** Warm the pool ahead of time (on spec change / when WCA mode turns on). */
