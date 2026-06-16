@@ -513,6 +513,18 @@
           "titleZh": "选手世界纪录数"
         }
       ]
+    },
+    {
+      "nameEn": "Other",
+      "nameZh": "其他",
+      "iconName": "Pin",
+      "stats": [
+        {
+          "id": "name_stats",
+          "titleEn": "Name statistics",
+          "titleZh": "姓名统计"
+        }
+      ]
     }
   ]
 }
