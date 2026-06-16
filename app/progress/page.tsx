@@ -32,6 +32,18 @@ import {
   Boxes,
   ScanLine,
   Crown,
+  Timer,
+  Route,
+  ListChecks,
+  NotebookPen,
+  Award,
+  Star,
+  Coins,
+  Flame,
+  Bell,
+  Heart,
+  Sparkles,
+  Gauge,
 } from "lucide-react";
 import { db, schema } from "@/db";
 import { Section } from "@/components/Section";
@@ -74,6 +86,26 @@ const FRONTEND: Feature[] = [
   { icon: Share2, title: "分享卡 OG 图", description: "详情页动态生成 1200×630 OG 图,微信/Twitter 分享有大图。" },
 ];
 
+const CUBE_LEARN: Feature[] = [
+  { icon: Timer, title: "魔方计时器", description: "前端生成 WCA 标准打乱(三阶 / 二阶 / 四阶 / 金字塔等),空格或长按起停,ao5 / ao12 / 最佳成绩自动统计,未登录也能练。" },
+  { icon: Trophy, title: "三榜排行", description: "速拧榜 / 学习榜 / 积分榜,周 / 月 / 总三档切换,速拧需满 5 次防刷,真实激励竞争。" },
+  { icon: Boxes, title: "算法字典", description: "内置 39 条公式(21 PLL + OLL + F2L),自绘 2D 棋盘示意每一步,支持搜索与分类筛选。" },
+  { icon: Route, title: "学习路径", description: "把零散课程打包成进阶路线,跨课计算完成度,一张路线图带学员从入门走到进阶。" },
+  { icon: ListChecks, title: "章节测验", description: "看完视频即测,答案不下发客户端、服务端判分讲解,满分自动发积分。" },
+  { icon: NotebookPen, title: "时间戳笔记", description: "边看边记一笔,点笔记跳回视频那一秒,我的笔记页统一回顾。" },
+  { icon: Award, title: "结课证书", description: "100% 完课自动发证,唯一编码可验证,附 1200×630 可分享证书图。" },
+  { icon: Star, title: "课程评价", description: "已购学员打星评价,评分分布可视化,聚合回写课程评分。" },
+];
+
+const ENGAGE: Feature[] = [
+  { icon: Coins, title: "积分体系", description: "购物 / 完课 / 发帖 / 评价 / 签到 / 满分测验自动发分,同来源幂等去重,流水账可追溯。" },
+  { icon: Award, title: "成就徽章", description: "多档成就目录,达成条件自动解锁,徽章墙展示成长轨迹。" },
+  { icon: Flame, title: "连续打卡", description: "学习 / 计时自动打卡,GitHub 风格热力图加连续天数,养成每日习惯。" },
+  { icon: Bell, title: "站内通知", description: "被评论 / 被赞 / 被 @ 实时入站,顶栏铃铛红点,通知中心集中查看。" },
+  { icon: Heart, title: "通用收藏", description: "课程 / 商品 / 赛事 / 资讯 / 帖子一键收藏,我的收藏与愿望单分区管理。" },
+  { icon: Crown, title: "会员专享价", description: "商品可设会员价或仅会员可购,下单服务端按会员身份计价并拦截越权。" },
+];
+
 const BACKEND: Feature[] = [
   { icon: Database, title: "SQLite + Drizzle", description: "better-sqlite3 + Drizzle ORM 类型安全数据层,迁移与种子脚本齐全。" },
   { icon: ShieldCheck, title: "双端鉴权", description: "管理端 HMAC-SHA256 session,用户端手机号 OTP,proxy 路由守门。" },
@@ -84,6 +116,8 @@ const BACKEND: Feature[] = [
   { icon: BarChart3, title: "可观测日志", description: "错误日志兜底 + 慢请求(>500ms)埋点,后台分 Tab 查看。" },
   { icon: Wallet, title: "讲师结算分账", description: "70% 分成按月一键生成结算单,后台标记打款留凭证,讲师可查到账状态。" },
   { icon: Boxes, title: "赛事名额防超卖", description: "付款自动占名额,满员 / 已结束下单即拦,退款自动释放,名额计数实时准确。" },
+  { icon: Coins, title: "积分流水账", description: "point_ledger 单一流水,同来源幂等去重,余额即求和,六类行为统一收口发分。" },
+  { icon: Gauge, title: "运营数据看板", description: "后台首页单查聚合 KPI 加 7 天趋势,埋点漏斗 / GMV / Top 事件纯 SVG 自绘,无图表库。" },
 ];
 
 const GROWTH: Feature[] = [
@@ -99,12 +133,16 @@ const HIGHLIGHTS: { icon: LucideIcon; title: string; desc: string }[] = [
   { icon: ShieldCheck, title: "手写各家签名", desc: "短信 / 存储 / 微信支付 V3 全部手写签名,零厂商 SDK 体积负担。" },
   { icon: Search, title: "中文 FTS5 分词", desc: "unicode61 无法分 CJK,自定义 SQL 函数插空格 + 前缀通配,中文也能搜。" },
   { icon: Rocket, title: "一键部署", desc: "push main → CI 构建 + scp,systemd 反代,持久库部署目录外不被覆盖。" },
+  { icon: Boxes, title: "魔方垂直自研", desc: "WCA 打乱、ao5 / ao12 统计、算法 2D 棋盘示意全部前端纯算法自绘,不挂第三方魔方库。" },
+  { icon: Sparkles, title: "游戏化全自建", desc: "积分幂等流水、成就引擎、打卡热力图、站内通知全自建,不接第三方成长 / 通知系统。" },
 ];
 
 const TODO: { title: string; desc: string }[] = [
   { title: "真实支付商户", desc: "接入微信 / 支付宝正式商户,替换当前 mock 通道。" },
   { title: "视频真实签名 URL", desc: "远端存储签发带时效的防盗链地址。" },
   { title: "短信真实通道", desc: "配置阿里云 / 腾讯云模板,替换 console 降级。" },
+  { title: "专用短域名", desc: "二维码印刷地址绑定独立短域名(NEXT_PUBLIC_QR_BASE),印前定好不可改。" },
+  { title: "录入课程章节", desc: "学习播放 / 章节测验 / 笔记 / 结课证书需后台先录入真实章节与视频才能完整体验。" },
   { title: "付费聚合码", desc: "聚合码链接级 gating 接现有付费墙(待群里定规则)。" },
 ];
 
@@ -126,12 +164,16 @@ const ROUTE_GROUPS: RouteGroupData[] = [
     links: [
       { href: "/", label: "首页" },
       { href: "/courses", label: "课程" },
+      { href: "/paths", label: "学习路径" },
       { href: "/membership", label: "会员订阅" },
       { href: "/shop", label: "商城" },
       { href: "/events", label: "赛事" },
       { href: "/community", label: "社群" },
       { href: "/news", label: "资讯" },
       { href: "/instructors", label: "讲师" },
+      { href: "/timer", label: "计时器" },
+      { href: "/leaderboard", label: "排行榜" },
+      { href: "/algorithms", label: "算法字典" },
       { href: "/about", label: "关于" },
       { href: "/search?q=魔方", label: "搜索结果" },
     ],
@@ -143,9 +185,16 @@ const ROUTE_GROUPS: RouteGroupData[] = [
     icon: Users,
     links: [
       { href: "/login", label: "登录" },
+      { href: "/me", label: "个人中心" },
       { href: "/me/courses", label: "我的课程" },
+      { href: "/me/badges", label: "我的徽章" },
+      { href: "/me/notes", label: "我的笔记" },
+      { href: "/me/favorites", label: "我的收藏" },
+      { href: "/me/wishlist", label: "愿望单" },
       { href: "/me/membership", label: "我的会员" },
       { href: "/me/invite", label: "我的邀请码" },
+      { href: "/notifications", label: "通知中心" },
+      { href: "/community/posts/new", label: "发帖" },
       { href: "/orders", label: "我的订单" },
       { href: "/instructors/apply", label: "讲师入驻申请" },
     ],
@@ -183,7 +232,11 @@ const ROUTE_GROUPS: RouteGroupData[] = [
       { href: "/admin", label: "概览" },
       { href: "/admin/qr", label: "二维码 / 落地码" },
       { href: "/admin/qr/cards", label: "二维码卡片打印" },
+      { href: "/admin/qr/prompts", label: "二维码提示词工坊" },
+      { href: "/admin/qr/stats", label: "二维码扫码统计" },
       { href: "/admin/courses", label: "课程管理" },
+      { href: "/admin/paths", label: "学习路径" },
+      { href: "/admin/algorithms", label: "算法库" },
       { href: "/admin/products", label: "商品管理" },
       { href: "/admin/events", label: "赛事管理" },
       { href: "/admin/orders", label: "订单" },
@@ -246,7 +299,7 @@ export default function ProgressPage() {
             做成了一个<span className="text-brand">真能跑通的平台</span>
           </h1>
           <p className="mt-6 text-[15px] md:text-[18px] leading-8 text-ink-2 max-w-2xl">
-            从扫码进站、登录下单、解锁学习,到社群交流与邀请裂变,全程在一个站里跑通。下面汇报目前做了什么
+            从扫码进站、登录下单、解锁学习,到练习计时、社群交流、成就打卡与邀请裂变,全程在一个站里跑通。下面汇报目前做了什么
             —— 前端用户能看到的体验,后端在背后支撑的能力,以及全部页面入口。
           </p>
           <div className="mt-10 grid gap-4 grid-cols-2 lg:grid-cols-4">
@@ -289,6 +342,33 @@ export default function ProgressPage() {
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FRONTEND.map((f) => (
+            <FeatureCard key={f.title} icon={f.icon} title={f.title} description={f.description} />
+          ))}
+        </div>
+      </Section>
+
+      {/* 魔方垂直 + 学习成长 */}
+      <Section
+        eyebrow="魔方垂直 练习与学习"
+        title="不止卖课,更是能练、能学、能拿证的地方"
+        subtitle="计时打乱、算法字典、进阶路径、章节测验、时间戳笔记到结课证书,围绕魔方学习的工具一应俱全。"
+      >
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {CUBE_LEARN.map((f) => (
+            <FeatureCard key={f.title} icon={f.icon} title={f.title} description={f.description} />
+          ))}
+        </div>
+      </Section>
+
+      {/* 游戏化与留存 */}
+      <Section
+        tone="soft"
+        eyebrow="游戏化 让人愿意每天回来"
+        title="积分、成就、打卡、通知,一套留存闭环"
+        subtitle="行为有积分、成长有徽章、坚持有热力图、互动有通知,收藏与会员价把用户留下来。"
+      >
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {ENGAGE.map((f) => (
             <FeatureCard key={f.title} icon={f.icon} title={f.title} description={f.description} />
           ))}
         </div>
