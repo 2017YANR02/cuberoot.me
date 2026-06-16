@@ -8,8 +8,9 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Trash2, Lightbulb, Bug, MessageSquare, ExternalLink } from 'lucide-react';
+import { ChevronLeft, Trash2, Lightbulb, Bug, MessageSquare, ExternalLink, ChevronDown } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
+import FeedbackConversation from '@/components/FeedbackConversation';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/lib/auth-store';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
@@ -54,15 +55,34 @@ export default function FeedbackAdminPage() {
   const [items, setItems] = useState<AdminFeedbackItem[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState<number | null>(null);
+  const [open, setOpen] = useState<Set<number>>(new Set());
 
   useEffect(() => { setMounted(true); }, []);
 
   const load = useCallback(() => {
     setErr(null);
     fetchFeedbackList(filter === 'all' ? undefined : filter)
-      .then(setItems)
+      .then((list) => {
+        setItems(list);
+        // 默认展开有用户新动作未读的线程
+        setOpen((prev) => {
+          const next = new Set(prev);
+          for (const it of list) if (it.unread) next.add(it.id);
+          return next;
+        });
+      })
       .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
   }, [filter]);
+
+  function toggle(id: number) {
+    setOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setItems((prev) => prev?.map((it) => (it.id === id ? { ...it, unread: false } : it)) ?? prev);
+  }
 
   useEffect(() => { if (admin && mounted) load(); }, [admin, mounted, load]);
 
@@ -118,12 +138,14 @@ export default function FeedbackAdminPage() {
       <div className="fba-list">
         {items?.map((it) => {
           const Icon = KIND_ICON[it.kind];
+          const expanded = open.has(it.id);
           return (
-            <article key={it.id} className={`fba-card fba-status-${it.status}`}>
+            <article key={it.id} className={`fba-card fba-status-${it.status}${it.unread ? ' is-unread' : ''}`}>
               <div className="fba-card-top">
                 <span className={`fba-kind fba-kind-${it.kind}`}><Icon size={14} />
                   {it.kind === 'need' ? t('需求', 'Idea') : it.kind === 'bug' ? 'Bug' : t('其他', 'Other')}</span>
                 <span className="fba-when">{String(it.createdAt).slice(0, 16).replace('T', ' ')}</span>
+                {it.unread && <span className="fba-dot" aria-label={t('用户有新回复', 'New from user')} />}
                 <span className={`fba-badge fba-badge-${it.status}`}>
                   {it.status === 'new' ? t('新', 'New') : it.status === 'triaged' ? t('处理中', 'Triaged') : t('已完成', 'Done')}</span>
               </div>
@@ -157,9 +179,17 @@ export default function FeedbackAdminPage() {
                     {s === 'new' ? t('新', 'New') : s === 'triaged' ? t('处理中', 'Triaged') : t('完成', 'Done')}
                   </button>
                 ))}
+                <button type="button" className={`fba-act fba-conv${expanded ? ' is-cur' : ''}`}
+                  onClick={() => toggle(it.id)} aria-expanded={expanded}>
+                  <MessageSquare size={13} />
+                  {it.replyCount ? `${t('对话', 'Thread')} ${it.replyCount}` : t('回复', 'Reply')}
+                  <ChevronDown size={13} className={`fba-conv-chev${expanded ? ' is-open' : ''}`} />
+                </button>
                 <button type="button" className="fba-del" disabled={busy === it.id} onClick={() => remove(it.id)}
                   title={t('删除', 'Delete')}><Trash2 size={14} /></button>
               </div>
+
+              {expanded && <FeedbackConversation feedbackId={it.id} onActivity={load} />}
             </article>
           );
         })}

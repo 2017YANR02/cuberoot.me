@@ -30,6 +30,8 @@ export interface FeedbackMedia {
   durationMs: number | null;
 }
 
+export type FeedbackRole = 'user' | 'admin';
+
 export interface AdminFeedbackItem {
   id: number;
   kind: FeedbackKind;
@@ -45,7 +47,39 @@ export interface AdminFeedbackItem {
   status: FeedbackStatus;
   createdAt: string;
   updatedAt: string;
+  lastReplyAt: string | null;
+  lastReplyRole: FeedbackRole | null;
+  replyCount?: number;
+  unread?: boolean;
   media: FeedbackMedia[];
+}
+
+/** 用户自己的反馈线程(列表项)。 */
+export interface MyFeedbackItem {
+  id: number;
+  kind: FeedbackKind;
+  body: string;
+  status: FeedbackStatus;
+  createdAt: string;
+  lastReplyAt: string | null;
+  lastReplyRole: FeedbackRole | null;
+  replyCount: number;
+  unread: boolean;
+  media: FeedbackMedia[];
+}
+
+export interface FeedbackMessage {
+  id: number;
+  role: FeedbackRole;
+  wcaId: string;
+  wcaName: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface FeedbackThread {
+  feedback: AdminFeedbackItem;
+  messages: FeedbackMessage[];
 }
 
 /** 创建一条反馈,返回 id(随后逐个传附件)。 */
@@ -109,4 +143,35 @@ export async function deleteFeedback(id: number): Promise<void> {
 /** 媒体公开可取,直接做 <img>/<video> 的 src。 */
 export function feedbackMediaUrl(id: number): string {
   return apiUrl(`/v1/feedback/media/${id}`);
+}
+
+// ── 对话(GitHub issue 式来回) ──────────────────────────────────────────────────
+/** 当前登录用户自己的反馈线程列表。 */
+export async function fetchMyFeedback(): Promise<MyFeedbackItem[]> {
+  const r = await fetch(apiUrl('/v1/feedback/mine'), { headers: authHeaders(false), cache: 'no-store' });
+  const data = await handle<{ items: MyFeedbackItem[] }>(r);
+  return data.items ?? [];
+}
+
+/** 「有管理员新回复」未读线程数(给入口红点)。 */
+export async function fetchMyFeedbackUnread(): Promise<number> {
+  const r = await fetch(apiUrl('/v1/feedback/mine/unread'), { headers: authHeaders(false), cache: 'no-store' });
+  const data = await handle<{ count: number }>(r);
+  return data.count ?? 0;
+}
+
+/** 单条反馈的完整对话(发帖人或 admin);取阅即标记该方已读。 */
+export async function fetchFeedbackThread(id: number): Promise<FeedbackThread> {
+  const r = await fetch(apiUrl(`/v1/feedback/${id}/thread`), { headers: authHeaders(false), cache: 'no-store' });
+  return handle<FeedbackThread>(r);
+}
+
+/** 回帖(发帖人或 admin)。 */
+export async function replyToFeedback(id: number, body: string): Promise<{ id: number }> {
+  const r = await fetch(apiUrl(`/v1/feedback/${id}/reply`), {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ body }),
+  });
+  return handle<{ id: number }>(r);
 }

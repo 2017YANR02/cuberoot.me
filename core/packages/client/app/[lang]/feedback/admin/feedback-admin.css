@@ -41,6 +41,12 @@
 .fba-card.fba-status-new { border-left-color: var(--accent); }
 .fba-card.fba-status-triaged { border-left-color: var(--signal-warning); }
 .fba-card.fba-status-done { border-left-color: var(--signal-success); }
+.fba-card.is-unread { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+
+.fba-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.fba-conv { display: inline-flex; align-items: center; gap: 5px; }
+.fba-conv-chev { transition: transform .18s; }
+.fba-conv-chev.is-open { transform: rotate(180deg); }
 
 .fba-card-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
 .fba-kind {

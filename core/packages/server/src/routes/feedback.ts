@@ -1,13 +1,16 @@
 /**
  * /v1/feedback — 桌宠「反馈」入口(需求 / Bug / 其他)。任何登录 WCA 用户可提。
  *
- * 模型 (migration 0049):
- *   - feedback:        正文 + 自动捕获环境(页面/语言/主题/视口/UA),admin 在 /feedback/admin 审核。
- *   - feedback_media:  截图存 BYTEA(沿用 article_image);短视频落磁盘(FEEDBACK_MEDIA_DIR),
- *                      PG 只存 disk_path → 不进每日备份。
+ * 模型 (migration 0049 + 0058):
+ *   - feedback:          正文(= 开帖) + 自动捕获环境(页面/语言/主题/视口/UA) + 对话读状态
+ *                        (last_reply_*, user_read_at, admin_read_at)。admin 在 /feedback/admin 审核。
+ *   - feedback_media:    截图存 BYTEA(沿用 article_image);短视频落磁盘(FEEDBACK_MEDIA_DIR),
+ *                        PG 只存 disk_path → 不进每日备份。
+ *   - feedback_messages: GitHub issue 式来回对话(role=user/admin)。开帖人在 /feedback 查看自己的
+ *                        线程并回复;admin 在 /feedback/admin 回复。未读经 mine/unread 红点 + admin 列表高亮。
  *
- * 鉴权:提交 / 传附件 = requireAuth + rate limit + 拥有该 feedback。
- *       审核列表 / 改状态 / 删 / 取媒体 = requireAdmin(媒体可能含私密屏幕内容,不公开)。
+ * 鉴权:提交 / 传附件 / 回帖 / 看线程 = requireAuth + 拥有该 feedback(或 admin)。
+ *       审核列表 / 改状态 / 删 = requireAdmin;取媒体公开(immutable 长缓存)。
  *
  * 错误经 throw new Error(msg);全局 onError 按关键词推 HTTP code
  * (Authentication→401, Cannot→403, Rate limit→429, Validation/invalid→400)。
@@ -101,6 +104,71 @@ async function loadOwner(id: number): Promise<string> {
 async function assertCanAttach(id: number, wcaId: string): Promise<void> {
   const owner = await loadOwner(id);
   if (owner !== wcaId && !isAdmin(wcaId)) throw new Error('Cannot attach to others feedback');
+}
+
+/** 取一条反馈的归属 + 当前状态;不存在返 null。 */
+async function loadFeedback(id: number): Promise<{ wcaId: string; status: string } | null> {
+  const rows = await query<{ wca_id: string; status: string }>(
+    'SELECT wca_id, status FROM feedback WHERE id = ?', [id]);
+  return rows.length ? { wcaId: rows[0].wca_id, status: rows[0].status } : null;
+}
+
+/** 批量取一组反馈的附件,返回 feedbackId → 客户端 media 形状数组。 */
+async function mediaMap(ids: number[]): Promise<Map<number, Array<Record<string, unknown>>>> {
+  const m = new Map<number, Array<Record<string, unknown>>>();
+  if (ids.length === 0) return m;
+  const placeholders = ids.map(() => '?').join(',');
+  const media = await query<{
+    id: number | string; feedback_id: number | string; kind: string; mime: string;
+    size_bytes: number; width: number | null; height: number | null; duration_ms: number | null;
+  }>(
+    `SELECT id, feedback_id, kind, mime, size_bytes, width, height, duration_ms
+     FROM feedback_media WHERE feedback_id IN (${placeholders}) ORDER BY id`,
+    ids,
+  );
+  for (const mm of media) {
+    const fb = Number(mm.feedback_id);
+    const arr = m.get(fb) ?? [];
+    arr.push({
+      id: Number(mm.id), kind: mm.kind, mime: mm.mime, sizeBytes: Number(mm.size_bytes),
+      width: mm.width, height: mm.height, durationMs: mm.duration_ms,
+    });
+    m.set(fb, arr);
+  }
+  return m;
+}
+
+/** 批量取一组反馈的回复条数。 */
+async function replyCounts(ids: number[]): Promise<Map<number, number>> {
+  const m = new Map<number, number>();
+  if (ids.length === 0) return m;
+  const placeholders = ids.map(() => '?').join(',');
+  const rows = await query<{ feedback_id: number | string; n: number | string }>(
+    `SELECT feedback_id, COUNT(*) AS n FROM feedback_messages
+     WHERE feedback_id IN (${placeholders}) GROUP BY feedback_id`, ids);
+  for (const r of rows) m.set(Number(r.feedback_id), Number(r.n));
+  return m;
+}
+
+interface ThreadFeedbackRow extends FeedbackRow {
+  last_reply_at: string | Date | null;
+  last_reply_role: string | null;
+  user_read_at: string | Date | null;
+  admin_read_at: string | Date | null;
+}
+
+/** 管理视角:线程最后动作来自用户(含仅开帖) 且管理员尚未读 → 未读。 */
+function adminUnread(r: ThreadFeedbackRow): boolean {
+  const lastActorIsUser = r.last_reply_role ? r.last_reply_role === 'user' : true;
+  if (!lastActorIsUser) return false;
+  const activity = r.last_reply_at ?? r.created_at;
+  return r.admin_read_at == null || new Date(activity) > new Date(r.admin_read_at);
+}
+
+/** 用户视角:有管理员回复且本人尚未读 → 未读。 */
+function userUnread(r: ThreadFeedbackRow): boolean {
+  if (r.last_reply_role !== 'admin' || r.last_reply_at == null) return false;
+  return r.user_read_at == null || new Date(r.last_reply_at) > new Date(r.user_read_at);
 }
 
 // ── POST /v1/feedback — 创建一条反馈 ──────────────────────────────────────────
@@ -286,6 +354,145 @@ feedbackRoutes.get('/feedback/media/:id', async (c) => {
   return c.json({ error: 'Not found' }, 404);
 });
 
+// ── GET /v1/feedback/mine — 当前用户自己的反馈对话列表 ─────────────────────────
+feedbackRoutes.get('/feedback/mine', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAuth(c);
+  const rows = await query<ThreadFeedbackRow>(
+    `SELECT id, kind, body, wca_id, wca_name, contact, page_url, lang, theme, viewport, user_agent,
+            status, created_at, updated_at, last_reply_at, last_reply_role, user_read_at, admin_read_at
+     FROM feedback WHERE wca_id = ?
+     ORDER BY COALESCE(last_reply_at, created_at) DESC, id DESC
+     LIMIT 200`,
+    [user.wcaId],
+  );
+  const ids = rows.map((r) => Number(r.id));
+  const [media, counts] = await Promise.all([mediaMap(ids), replyCounts(ids)]);
+  const items = rows.map((r) => ({
+    id: Number(r.id),
+    kind: r.kind,
+    body: r.body,
+    status: r.status,
+    createdAt: r.created_at,
+    lastReplyAt: r.last_reply_at,
+    lastReplyRole: r.last_reply_role,
+    replyCount: counts.get(Number(r.id)) ?? 0,
+    unread: userUnread(r),
+    media: media.get(Number(r.id)) ?? [],
+  }));
+  return c.json({ items });
+});
+
+// ── GET /v1/feedback/mine/unread — 当前用户「有管理员新回复」的线程数(给入口红点) ──
+feedbackRoutes.get('/feedback/mine/unread', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAuth(c);
+  const rows = await query<{ n: number | string }>(
+    `SELECT COUNT(*) AS n FROM feedback
+     WHERE wca_id = ? AND last_reply_role = 'admin'
+       AND (user_read_at IS NULL OR last_reply_at > user_read_at)`,
+    [user.wcaId],
+  );
+  return c.json({ count: Number(rows[0].n) });
+});
+
+// ── GET /v1/feedback/:id/thread — 单条反馈完整对话(发帖人或 admin),取阅即标记已读 ──
+feedbackRoutes.get('/feedback/:id/thread', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAuth(c);
+  const id = Number(c.req.param('id'));
+  if (!Number.isFinite(id)) throw new Error('Validation: invalid id');
+  const fb = await loadFeedback(id);
+  if (!fb) throw new Error('Validation: feedback not found');
+  const admin = isAdmin(user.wcaId);
+  const owner = fb.wcaId === user.wcaId;
+  if (!admin && !owner) throw new Error('Cannot view others feedback');
+
+  const rows = await query<ThreadFeedbackRow>(
+    `SELECT id, kind, body, wca_id, wca_name, contact, page_url, lang, theme, viewport, user_agent,
+            status, created_at, updated_at, last_reply_at, last_reply_role, user_read_at, admin_read_at
+     FROM feedback WHERE id = ?`, [id]);
+  const r = rows[0];
+  const media = await mediaMap([id]);
+
+  const msgs = await query<{
+    id: number | string; role: string; wca_id: string; wca_name: string; body: string; created_at: string | Date;
+  }>(
+    `SELECT id, role, wca_id, wca_name, body, created_at FROM feedback_messages
+     WHERE feedback_id = ? ORDER BY created_at, id`, [id]);
+
+  // 取阅即标记请求方已读(admin 看自己提的反馈则两边都标)。
+  if (admin) await query('UPDATE feedback SET admin_read_at = NOW() WHERE id = ?', [id]);
+  if (owner) await query('UPDATE feedback SET user_read_at = NOW() WHERE id = ?', [id]);
+
+  return c.json({
+    feedback: {
+      id: Number(r.id), kind: r.kind, body: r.body, wcaId: r.wca_id, wcaName: r.wca_name,
+      contact: r.contact, pageUrl: r.page_url, lang: r.lang, theme: r.theme, viewport: r.viewport,
+      userAgent: r.user_agent, status: r.status, createdAt: r.created_at, updatedAt: r.updated_at,
+      lastReplyAt: r.last_reply_at, lastReplyRole: r.last_reply_role,
+      media: media.get(id) ?? [],
+    },
+    messages: msgs.map((m) => ({
+      id: Number(m.id), role: m.role, wcaId: m.wca_id, wcaName: m.wca_name,
+      body: m.body, createdAt: m.created_at,
+    })),
+  });
+});
+
+// ── POST /v1/feedback/:id/reply — 回帖(发帖人或 admin) ────────────────────────
+feedbackRoutes.post('/feedback/:id/reply', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const user = await requireAuth(c);
+  const id = Number(c.req.param('id'));
+  if (!Number.isFinite(id)) throw new Error('Validation: invalid id');
+  const fb = await loadFeedback(id);
+  if (!fb) throw new Error('Validation: feedback not found');
+  const admin = isAdmin(user.wcaId);
+  const owner = fb.wcaId === user.wcaId;
+  if (!admin && !owner) throw new Error('Cannot reply to others feedback');
+
+  let body: { body?: unknown };
+  try {
+    body = await c.req.json<{ body?: unknown }>();
+  } catch {
+    throw new Error('Validation: invalid json');
+  }
+  const text = typeof body.body === 'string' ? body.body.trim() : '';
+  if (!text) throw new Error('Validation: body is required');
+  if (text.length > BODY_MAX) throw new Error(`Validation: body too long (max ${BODY_MAX})`);
+
+  // admin 身份优先(admin 给自己提的反馈回帖时算 admin 回复)。
+  const role = admin ? 'admin' : 'user';
+  const inserted = await query<{ id: number | string }>(
+    `INSERT INTO feedback_messages (feedback_id, role, wca_id, wca_name, body)
+     VALUES (?, ?, ?, ?, ?) RETURNING id`,
+    [id, role, user.wcaId, user.name ?? '', text],
+  );
+
+  // 推进线程:记录最后往来;admin 首次回复把 new → triaged。
+  const bumpStatus = role === 'admin' && fb.status === 'new' ? ", status = 'triaged'" : '';
+  await query(
+    `UPDATE feedback SET last_reply_at = NOW(), last_reply_role = ?, updated_at = NOW()${bumpStatus} WHERE id = ?`,
+    [role, id]);
+  // 回帖人本人即已读(admin 与 owner 可能同时成立)。
+  if (admin) await query('UPDATE feedback SET admin_read_at = NOW() WHERE id = ?', [id]);
+  if (owner) await query('UPDATE feedback SET user_read_at = NOW() WHERE id = ?', [id]);
+
+  // 用户回复推送给 admin(best-effort);admin 回复靠用户端未读红点感知。
+  if (role === 'user') {
+    sendBark({
+      title: '反馈回复',
+      body: `${user.name ?? user.wcaId}: ${text.slice(0, 120)}`,
+      url: 'https://www.cuberoot.me/feedback/admin',
+      group: 'Feedback',
+    }).catch(() => {});
+  }
+
+  return c.json({ id: Number(inserted[0].id) });
+});
+
 // ── GET /v1/feedback — admin 审核列表(?status= 过滤) ──────────────────────────
 feedbackRoutes.get('/feedback', async (c) => {
   c.header('Cache-Control', 'no-store');
@@ -293,37 +500,17 @@ feedbackRoutes.get('/feedback', async (c) => {
   const status = c.req.query('status');
   const where = status && STATUSES.has(status) ? 'WHERE status = ?' : '';
   const params = where ? [status] : [];
-  const rows = await query<FeedbackRow>(
+  const rows = await query<ThreadFeedbackRow>(
     `SELECT id, kind, body, wca_id, wca_name, contact, page_url, lang, theme, viewport, user_agent,
-            status, created_at, updated_at
+            status, created_at, updated_at, last_reply_at, last_reply_role, user_read_at, admin_read_at
      FROM feedback ${where}
-     ORDER BY created_at DESC, id DESC
+     ORDER BY COALESCE(last_reply_at, created_at) DESC, id DESC
      LIMIT 500`,
     params,
   );
 
   const ids = rows.map((r) => Number(r.id));
-  const mediaByFb = new Map<number, Array<Record<string, unknown>>>();
-  if (ids.length > 0) {
-    const placeholders = ids.map(() => '?').join(',');
-    const media = await query<{
-      id: number | string; feedback_id: number | string; kind: string; mime: string;
-      size_bytes: number; width: number | null; height: number | null; duration_ms: number | null;
-    }>(
-      `SELECT id, feedback_id, kind, mime, size_bytes, width, height, duration_ms
-       FROM feedback_media WHERE feedback_id IN (${placeholders}) ORDER BY id`,
-      ids,
-    );
-    for (const m of media) {
-      const fb = Number(m.feedback_id);
-      const arr = mediaByFb.get(fb) ?? [];
-      arr.push({
-        id: Number(m.id), kind: m.kind, mime: m.mime, sizeBytes: Number(m.size_bytes),
-        width: m.width, height: m.height, durationMs: m.duration_ms,
-      });
-      mediaByFb.set(fb, arr);
-    }
-  }
+  const [media, counts] = await Promise.all([mediaMap(ids), replyCounts(ids)]);
 
   const items = rows.map((r) => ({
     id: Number(r.id),
@@ -340,7 +527,11 @@ feedbackRoutes.get('/feedback', async (c) => {
     status: r.status,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
-    media: mediaByFb.get(Number(r.id)) ?? [],
+    lastReplyAt: r.last_reply_at,
+    lastReplyRole: r.last_reply_role,
+    replyCount: counts.get(Number(r.id)) ?? 0,
+    unread: adminUnread(r),
+    media: media.get(Number(r.id)) ?? [],
   }));
   return c.json({ items });
 });
