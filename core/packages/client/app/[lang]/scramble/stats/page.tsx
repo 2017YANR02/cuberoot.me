@@ -100,6 +100,13 @@ interface FaLengthJson {
   comps: Record<string, [string, string]>;
   events: Record<string, { htm: Record<string, FaLenEx>; qtm?: Record<string, FaLenEx> }>;
 }
+// 非 3x3 puzzle 整解步数「首次出现」(build_puzzle_first_appearance.ts):每 (puzzle,len) 最早一条。
+// 条目同 FaLenEx 形;binsAlt 仅 sq1(slash 口径)。
+interface FaPuzzleJson {
+  meta: { generated_at: string };
+  comps: Record<string, [string, string]>;
+  puzzles: Record<string, { event: string; bins: Record<string, FaLenEx>; binsAlt?: Record<string, FaLenEx> }>;
+}
 
 const EVENT_LABEL: Record<string, { zh: string; en: string
  }> = {
@@ -222,6 +229,7 @@ export default function ScrambleStatsPage() {
   const [faDiff, setFaDiff] = useState<FaDifficultyJson | null>(null);     // 难度首次出现(顶层合并池)
   const [faShards, setFaShards] = useState<Record<string, FaDifficultyShard | null>>({}); // per-event 分片缓存
   const [faLen, setFaLen] = useState<FaLengthJson | null>(null);           // 长度首次出现
+  const [faPuzzle, setFaPuzzle] = useState<FaPuzzleJson | null>(null);     // 非 3x3 puzzle 整解首次出现
 
   // 异步加载 comp→country 索引,完成后 bump version 触发重渲染拿示例卡片的比赛国旗 + 中文名
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
@@ -263,6 +271,10 @@ export default function ScrambleStatsPage() {
   useEffect(() => {
     fetch(statsUrl('/stats/scramble/event_length_first_appearance.json'))
       .then((r) => (r.ok ? r.json() : null)).then(setFaLen).catch(() => setFaLen(null));
+  }, []);
+  useEffect(() => {
+    fetch(statsUrl('/stats/scramble/puzzle_first_appearance.json'))
+      .then((r) => (r.ok ? r.json() : null)).then(setFaPuzzle).catch(() => setFaPuzzle(null));
   }, []);
 
   // 长度 tab 切项目:sq1 默认 slash,其余默认 HTM。
@@ -483,7 +495,7 @@ export default function ScrambleStatsPage() {
   const faDiffComps = isPerEvent ? faShards[scrambleSet]?.comps : faDiff?.comps;
   const faDiffIdMeta = isPerEvent ? faShards[scrambleSet]?.idMeta : faDiff?.idMeta;
   const difficultyTimeline = useMemo<TimelineEntry[]>(() => {
-    if (tab !== 'difficulty' || is333) return [];
+    if (tab !== 'difficulty') return [];
     if (!faDiffSet || !faDiffComps || !faDiffIdMeta) return [];
     const binMap = faDiffSet.variants[variant]?.data[stage]?.[effectiveSubset];
     if (!binMap) return [];
@@ -534,16 +546,40 @@ export default function ScrambleStatsPage() {
     return out;
   }, [tab, faLen, lenMetric, merged, event]);
 
-  // 时间线视图可用性:长度 tab 该项目有数据,或难度 tab 三阶族(非 puzzle 整解项目)。
+  // 非 3x3 puzzle 整解步数首次出现(难度 tab 选中 222/pyram/skewb/sq1):主口径 bins。
+  // sq1 双口径暂只展主口径(WCA 12c4);slash 数据已在 binsAlt 备用。
+  const puzzleTimeline = useMemo<TimelineEntry[]>(() => {
+    if (tab !== 'difficulty' || !isPuzzleEvent || !faPuzzle) return [];
+    const p = faPuzzle.puzzles[PUZZLE_EVENT_MAP[event]];
+    if (!p) return [];
+    const out: TimelineEntry[] = [];
+    for (const [lenStr, ex] of Object.entries(p.bins)) {
+      const comp = faPuzzle.comps[ex[0]];
+      out.push({
+        bin: Number(lenStr), scramble: ex[4], previewEvent: p.event, usageEvent: p.event,
+        compId: ex[0], compName: comp?.[0] ?? ex[0], date: comp?.[1] ?? '',
+        round: ex[1], group: ex[2], num: ex[3], isExtra: !!ex[5],
+      });
+    }
+    return out;
+  }, [tab, isPuzzleEvent, faPuzzle, event]);
+
+  // 时间线视图可用性:长度 tab 该项目有数据;难度 tab 三阶族 或 有首现数据的 puzzle。
   const canTimeline = tab === 'length'
     ? !!faLen?.events[event]
-    : DIFFICULTY_EVENTS.has(event) && !isPuzzleEvent;
+    : isPuzzleEvent
+      ? !!faPuzzle?.puzzles[PUZZLE_EVENT_MAP[event]]
+      : DIFFICULTY_EVENTS.has(event);
   const timelineActive = viewMode === 'timeline' && canTimeline;
-  const timelineEntries = tab === 'length' ? lengthTimeline : difficultyTimeline;
+  const timelineEntries = tab === 'length'
+    ? lengthTimeline
+    : isPuzzleEvent ? puzzleTimeline : difficultyTimeline;
   // 时间线加载/待生成提示:相关 FA 根还是 null = 加载中;否则该组合数据待生成。
   const timelineLoading = tab === 'length'
     ? faLen === null
-    : (isPerEvent ? !(scrambleSet in faShards) || faShards[scrambleSet] === null : faDiff === null);
+    : isPuzzleEvent
+      ? faPuzzle === null
+      : (isPerEvent ? !(scrambleSet in faShards) || faShards[scrambleSet] === null : faDiff === null);
 
   // 图表 / 时间线视图开关(难度 + 长度共用);仅当当前选择支持时间线时出现。
   const viewToggle = canTimeline ? (
@@ -716,7 +752,7 @@ export default function ScrambleStatsPage() {
       return (
         <div className="scramble-stats-page">
           {header}
-          <PuzzleDistView isZh={isZh} puzzleKey={puzzleKey} />
+          {timelineActive ? timelineBlock : <PuzzleDistView isZh={isZh} puzzleKey={puzzleKey} />}
         </div>
       );
     }

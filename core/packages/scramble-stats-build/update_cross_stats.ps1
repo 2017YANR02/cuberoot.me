@@ -564,6 +564,9 @@ if($runPuzzles){
   try {
     pnpm exec tsx src/build_puzzle_examples.ts
     if($LASTEXITCODE -ne 0){ throw 'build_puzzle_examples 失败' }
+    # puzzle 整解步数「首次出现」时间线(puzzle_first_appearance.json):每步数 bin 最早一条比赛打乱
+    pnpm exec tsx src/build_puzzle_first_appearance.ts
+    if($LASTEXITCODE -ne 0){ throw 'build_puzzle_first_appearance 失败' }
     # /timer「原始/最优打乱」用:产 wca_optimal_puzzle.csv(自然键 + 最优等态打乱)。
     # 灌库是手动一步(同 3x3 export_optimal):\copy 到 prod wca_scramble_optimal(见末尾提示)。
     node export_puzzle_optimal.mjs
@@ -620,6 +623,11 @@ if($willInject){
     Step '5b 注入 333 整解最优 (variant 333) — node solver/333opt/inject.mjs'
     node (Join-Path $SolverDir '333opt\inject.mjs')
     if($LASTEXITCODE -ne 0){ throw '333opt inject.mjs 失败' }
+    # 首次出现时间线: 把 333 整解按比赛日期折成每 htm 步数最早一条, 注入 difficulty_first_appearance.json
+    # (stages build 会覆写该文件 → 必须在 build:first-appearance 之后还原, 与 inject.mjs 同位)
+    Step '5b 注入 333 整解首次出现 — node solver/333opt/inject_first_appearance.mjs'
+    node (Join-Path $SolverDir '333opt\inject_first_appearance.mjs')
+    if($LASTEXITCODE -ne 0){ throw '333opt inject_first_appearance.mjs 失败' }
     $optChanged = $true
     # 同步产 /timer 最优打乱 CSV(invert(最优解), 同态 333/oh/ft/fm), 供步骤 6b 自动灌库
     Step '5b+ 导出 /timer 333 最优打乱 — node solver/333opt/export_optimal.mjs'
