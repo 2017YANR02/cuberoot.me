@@ -496,6 +496,7 @@ export default function ScrambleStatsPage() {
   const faDiffIdMeta = isPerEvent ? faShards[scrambleSet]?.idMeta : faDiff?.idMeta;
   const difficultyTimeline = useMemo<TimelineEntry[]>(() => {
     if (tab !== 'difficulty') return [];
+    if (is333 && optMetric === 'qtm') return []; // 333 QTM 首现未生成(同图表 counts_qtm 占位)
     if (!faDiffSet || !faDiffComps || !faDiffIdMeta) return [];
     const binMap = faDiffSet.variants[variant]?.data[stage]?.[effectiveSubset];
     if (!binMap) return [];
@@ -512,7 +513,7 @@ export default function ScrambleStatsPage() {
       });
     }
     return out;
-  }, [tab, is333, faDiffSet, faDiffComps, faDiffIdMeta, variant, stage, effectiveSubset]);
+  }, [tab, is333, optMetric, faDiffSet, faDiffComps, faDiffIdMeta, variant, stage, effectiveSubset]);
 
   // 长度首次出现:合并态跨成员项目取最早;单项目直接取。
   const lengthTimeline = useMemo<TimelineEntry[]>(() => {
@@ -580,6 +581,8 @@ export default function ScrambleStatsPage() {
     : isPuzzleEvent
       ? faPuzzle === null
       : (isPerEvent ? !(scrambleSet in faShards) || faShards[scrambleSet] === null : faDiff === null);
+  // 333 整解 QTM:首现数据未生成(同图表 counts_qtm 占位),时间线给「QTM 即将加入」而非「生成中」。
+  const timeline333Qtm = tab === 'difficulty' && is333 && optMetric === 'qtm';
 
   // 图表 / 时间线视图开关(难度 + 长度共用);仅当当前选择支持时间线时出现。
   const viewToggle = canTimeline ? (
@@ -616,9 +619,11 @@ export default function ScrambleStatsPage() {
         />
       ) : (
         <div className="scramble-stats-examples-hint">
-          {timelineLoading
-            ? tr({ zh: '加载中…', en: 'Loading…' })
-            : tr({ zh: '该组合的首次出现数据生成中,稍后再来', en: 'First-appearance data for this selection is being generated, check back soon' })}
+          {timeline333Qtm
+            ? tr({ zh: 'QTM 首次出现即将加入', en: 'QTM first-appearance coming soon' })
+            : timelineLoading
+              ? tr({ zh: '加载中…', en: 'Loading…' })
+              : tr({ zh: '该组合的首次出现数据生成中,稍后再来', en: 'First-appearance data for this selection is being generated, check back soon' })}
         </div>
       )}
     </div>
