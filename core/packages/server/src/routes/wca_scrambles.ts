@@ -73,7 +73,11 @@ function isAll6(colors: string): boolean { return [...colors].sort().join('') ==
 
 // 难度查询计划:predCol = 步数表达式(gm 列或 LEAST(选中底色槽));allSlots = 该 stage 6 底色槽
 // (B,G,O,R,W,Y 顺序,供返回 cols 让前端挑 argmin 底色)。布局缺该 (方法,阶段) → null(数据未灌)。
-interface DiffPlan { predCol: string; allSlots: number[] }
+// gmCol = 可用作「前过滤」的有索引 gm 列(仅 std/cross|xcross):因 gm = 六色最小 ≤ 任意子集最小,
+//   故 子集最小 ∈ S ⟹ gmCol ≤ max(S),对子集底色查询加 `gmCol <= max(steps)` 谓词即可走
+//   (event_id,gm_*,rnd) 索引区间扫描,把整分区扫描(~5s)降到小候选集(~几十 ms)。非 std 或非
+//   cross/xcross stage 无对应 gm 列(gm_* 仅 std 六色十字/xcross),不可前过滤。
+interface DiffPlan { predCol: string; allSlots: number[]; gmCol: string | null }
 function planDifficulty(layout: StepsLayout | null, variant: string, stage: string, colors: string): DiffPlan | null {
   const st = layout?.variants?.[variant]?.[stage];
   if (!st || typeof st !== 'object') return null;
@@ -82,11 +86,13 @@ function planDifficulty(layout: StepsLayout | null, variant: string, stage: stri
   if (subset.length === 0) return null;
   const allSlots: number[] = [];
   for (const ch of STEP_COLORS6) { const v = st[ch]; if (typeof v !== 'number') return null; allSlots.push(v); }
+  const gmCol = variant === 'std'
+    ? (stage === 'cross' ? 's.gm_cross6' : stage === 'xcross' ? 's.gm_xcross6' : null)
+    : null;
   let predCol: string;
-  if (variant === 'std' && isAll6(colors) && stage === 'cross') predCol = 's.gm_cross6';
-  else if (variant === 'std' && isAll6(colors) && stage === 'xcross') predCol = 's.gm_xcross6';
+  if (gmCol && isAll6(colors)) predCol = gmCol;
   else predCol = `LEAST(${subset.map((n) => `s.steps[${n}]`).join(',')})`;
-  return { predCol, allSlots };
+  return { predCol, allSlots, gmCol };
 }
 
 /** 全量镜像表命中则组装成 WcaScrambleRow[];未收录该比赛返回 null。 */
@@ -230,6 +236,9 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
       if (!plan) return c.json({ error: 'difficulty data not available', event }, 404);
       const diffWhere = `${plan.predCol} IN (${dSteps.join(',')})`;
       const isHot = plan.predCol.startsWith('s.gm_');
+      // 子集底色(冷路径)前过滤:gmCol <= max(steps) 走索引,把整分区扫描降到小候选集。
+      // dSteps 已由 parseStepList 校验为整数,内联安全。isHot(全六色)已直接走 gm 列,无需再加。
+      const gmPrefilter = !isHot && plan.gmCol ? ` AND ${plan.gmCol} <= ${Math.max(...dSteps)}` : '';
       let drows: RandomRow[];
       if (!hasFrom && !hasTo && isHot) {
         // 热路径:gm 列有索引 → 飞镖采样 ~1ms(同全时段 random,环绕补齐)。
@@ -265,7 +274,7 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
              ${STEPS_WS_JOIN}
              LEFT JOIN wca_competitions c ON c.id = s.competition_id
              ${OPT_JOIN}
-            WHERE s.event_id = ? AND ${diffWhere} ${optFilter}
+            WHERE s.event_id = ?${gmPrefilter} AND ${diffWhere} ${optFilter}
             ORDER BY random() LIMIT ?`,
           [event, count],
         );
@@ -281,7 +290,7 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
                     ORDER BY random() LIMIT ${COMP_SAMPLE}) c ON c.id = s.competition_id
              ${STEPS_WS_JOIN}
              ${OPT_JOIN}
-            WHERE s.event_id = ? AND ${diffWhere} ${optFilter}
+            WHERE s.event_id = ?${gmPrefilter} AND ${diffWhere} ${optFilter}
             ORDER BY random() LIMIT ?`,
           [...dParams, event, count],
         );
@@ -379,6 +388,8 @@ wcaScramblesRoutes.get('/wca/scrambles/by-difficulty', async (c) => {
       return c.json({ total: 0, page, pageSize, scrambles: [] });
     }
     const where: string[] = [`${plan.predCol} = ${bin}`]; // bin 已校验为整数,内联安全
+    // 子集底色前过滤:子集最小 = bin ⟹ gmCol <= bin → 走 (event_id,gm_*,rnd) 索引,避免整分区扫描。
+    if (plan.gmCol && plan.predCol !== plan.gmCol) where.push(`${plan.gmCol} <= ${bin}`);
     const params: unknown[] = [];
     if (hasEvent) { where.push('s.event_id = ?'); params.push(event); }
     if (q) { where.push('c.name ILIKE ?'); params.push(`%${q}%`); }
