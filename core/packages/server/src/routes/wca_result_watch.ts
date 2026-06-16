@@ -5,15 +5,21 @@
  *
  *   GET    /wca/result-watch/status                 监控概览
  *   GET    /wca/result-watch/changes?wcaId=&compId=&limit=  变更日志(可按选手或比赛过滤)
- *   POST   /wca/result-watch/changes                管理员新增一条变更(手动)
- *   PUT    /wca/result-watch/changes/:id            管理员编辑
+ *   POST   /wca/result-watch/changes                新增一条变更(手动)
+ *   PUT    /wca/result-watch/changes/:id            编辑
  *   DELETE /wca/result-watch/changes/:id            管理员删除
  *
- * 读端点属可变数据:浏览器短缓存;写端点 no-store + requireAdminOrApiKey。
+ * 写权限分两档(见 authorizeWrite):
+ *   - 管理员 / X-Admin-Key:全权(任意选手、任意字段)。
+ *   - 普通登录用户:只能给「自己」(user.wcaId === wca_id)标「纯罚时」(fields 仅 attempt_penalties)。
+ *     罚时纯展示不重算单次/平均/排名,故自助标注影响有界。
+ * 读端点属可变数据:浏览器短缓存;写端点 no-store。
  */
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import { query } from '../db/connection.js';
-import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
+import { requireAdminOrApiKey, requireAuth, checkRateLimit, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
+import { isPenaltyOnlyFields } from '@cuberoot/shared/result-penalty';
 
 export const wcaResultWatchRoutes = new Hono();
 
@@ -244,15 +250,39 @@ function validateChange(b: ChangeInput): { error: string } | { value: Normalized
   };
 }
 
+// 写权限:管理员 / X-Admin-Key = 全权;普通登录用户 = 只能给「自己」标「纯罚时」。
+async function authorizeWrite(c: Context): Promise<{ wcaId: string; selfOnly: boolean }> {
+  const key = c.req.header('X-Admin-Key');
+  const expected = process.env.ADMIN_API_KEY;
+  if (key && expected && key === expected) return { wcaId: '__api_key__', selfOnly: false };
+  const user = await requireAuth(c); // 未登录 / 被封 → throw(onError 映 401/403)
+  if (ADMIN_WCA_IDS.includes(user.wcaId)) return { wcaId: user.wcaId, selfOnly: false };
+  return { wcaId: user.wcaId, selfOnly: true };
+}
+
+// 普通用户(selfOnly)的写入必须:目标是本人 + 仅纯罚时字段。返回错误消息或 null(通过)。
+function selfPenaltyError(actorWcaId: string, change: NormalizedChange): string | null {
+  if (change.wca_id !== actorWcaId) return 'You can only edit your own results';
+  if (change.change_type !== 'modified' || !isPenaltyOnlyFields(change.fields)) {
+    return 'You can only add +2 penalties to your own results';
+  }
+  return null;
+}
+
 // POST /wca/result-watch/changes — 新增
 wcaResultWatchRoutes.post('/wca/result-watch/changes', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
-  const user = await requireAdminOrApiKey(c);
+  const actor = await authorizeWrite(c);
 
   const res = validateChange(await c.req.json<ChangeInput>());
   if ('error' in res) return c.json({ error: res.error }, 400);
   const f = res.value;
+
+  if (actor.selfOnly) {
+    const err = selfPenaltyError(actor.wcaId, f);
+    if (err) return c.json({ error: err }, 403);
+  }
 
   const inserted = await query<{ id: number | string }>(
     `INSERT INTO wca_result_changes
@@ -262,7 +292,7 @@ wcaResultWatchRoutes.post('/wca/result-watch/changes', async (c) => {
      RETURNING id`,
     [
       f.wca_id, f.result_id, f.competition_id, f.event_id, f.round_type_id, f.change_type,
-      f.fields, f.note, f.effective_at, user.wcaId,
+      f.fields, f.note, f.effective_at, actor.wcaId,
     ],
   );
   return c.json({ ok: true, id: Number(inserted[0].id) });
@@ -272,7 +302,7 @@ wcaResultWatchRoutes.post('/wca/result-watch/changes', async (c) => {
 wcaResultWatchRoutes.put('/wca/result-watch/changes/:id', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
-  await requireAdminOrApiKey(c);
+  const actor = await authorizeWrite(c);
 
   const id = Number(c.req.param('id'));
   if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
@@ -280,6 +310,29 @@ wcaResultWatchRoutes.put('/wca/result-watch/changes/:id', async (c) => {
   const res = validateChange(await c.req.json<ChangeInput>());
   if ('error' in res) return c.json({ error: res.error }, 400);
   const f = res.value;
+
+  if (actor.selfOnly) {
+    // 新内容必须是「本人 + 纯罚时」。
+    const err = selfPenaltyError(actor.wcaId, f);
+    if (err) return c.json({ error: err }, 403);
+    // 被改的那条记录本身也必须是本人的纯罚时记录(否则用户可借 id 篡改管理员的全量记录)。
+    const ex = await query<{
+      wca_id: string; change_type: string; fields: ChangeField[] | null;
+      competition_id: string | null; event_id: string | null; round_type_id: string | null;
+    }>(
+      'SELECT wca_id, change_type, fields, competition_id, event_id, round_type_id FROM wca_result_changes WHERE id = ?',
+      [id],
+    );
+    if (ex.length === 0) return c.json({ error: 'Not found' }, 404);
+    const row = ex[0];
+    if (row.wca_id !== actor.wcaId || row.change_type !== 'modified' || !isPenaltyOnlyFields(row.fields)) {
+      return c.json({ error: 'You can only edit your own +2 penalties' }, 403);
+    }
+    // 罚时记录钉死在原行:不允许借更新把它改贴到别的比赛/项目/轮次。
+    if (row.competition_id !== f.competition_id || row.event_id !== f.event_id || row.round_type_id !== f.round_type_id) {
+      return c.json({ error: 'Cannot move a penalty record to another round' }, 403);
+    }
+  }
 
   const updated = await query<{ id: number | string }>(
     `UPDATE wca_result_changes SET

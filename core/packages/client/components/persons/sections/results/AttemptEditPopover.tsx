@@ -12,12 +12,10 @@ import { useState, useRef, useEffect, useCallback, type CSSProperties } from 're
 import { createPortal } from 'react-dom';
 import { tr } from '@/i18n/tr';
 import { parseHumanResult } from '@/lib/result-watch-api';
+import { maxPenaltySteps, canPenalizeAttempt, PENALTY_STEP_CS } from '@cuberoot/shared/result-penalty';
 import { SolveValue } from './SolveValue';
 
 const POP_W = 216;
-
-// 罚时(+2 秒)只对按时间计的项目有意义;FMC(步数)/ MBLD(打包编码)不适用。
-const NO_PENALTY_EVENTS = new Set(['333fm', '333mbf', '333mbo']);
 
 const backdropStyle: CSSProperties = { position: 'fixed', inset: 0, zIndex: 199, background: 'transparent' };
 const boxStyle: CSSProperties = {
@@ -48,7 +46,7 @@ const cancelStyle: CSSProperties = {
 };
 
 export function AttemptEditPopover({
-  value, eventId, oldValues, cls, format, penalty, onSetOriginal, onCorrect, onSetPenalty,
+  value, eventId, oldValues, cls, format, penalty, penaltyOnly, onSetOriginal, onCorrect, onSetPenalty,
 }: {
   value: number;
   eventId: string;
@@ -56,27 +54,29 @@ export function AttemptEditPopover({
   cls?: string;
   format: (v: number) => string;
   penalty?: number;
+  penaltyOnly?: boolean;   // 本人(非管理员):只能标 +2,隐藏「原始/改判」
   onSetOriginal: (v: number, note?: string) => Promise<void> | void;
   onCorrect: (v: number, note?: string) => Promise<void> | void;
   onSetPenalty?: (penaltyCs: number, note?: string) => Promise<void> | void;
 }) {
   const anchorRef = useRef<HTMLSpanElement>(null);
   const popRef = useRef<HTMLSpanElement>(null);
+  const initialMode = penaltyOnly ? 'penalty' : 'orig';
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [orig, setOrig] = useState('');
   const [next, setNext] = useState('');
   const [pen, setPen] = useState('');        // 罚时档位 = +2 的次数('' = 无,'1'..'8')
   const [note, setNote] = useState('');
-  const [mode, setMode] = useState<'orig' | 'next' | 'penalty'>('orig'); // 先选操作再填
+  const [mode, setMode] = useState<'orig' | 'next' | 'penalty'>(initialMode); // 先选操作再填
   const [busy, setBusy] = useState(false);
 
   const olds = oldValues.map((ov, k) => (
     <s key={k} className="wp-old-result">{format(ov)}</s>
   ));
   // 罚时:每档 +2 秒,最多选到 base=值−罚时 仍 > 0 的档(再上限 8 档);FMC/MBLD/DNF 不适用。
-  const maxPenaltyCount = Math.min(8, Math.floor((value - 1) / 200));
-  const allowPenalty = !NO_PENALTY_EVENTS.has(eventId) && value > 0 && maxPenaltyCount >= 1;
+  const maxPenaltyCount = maxPenaltySteps(eventId, value);
+  const allowPenalty = canPenalizeAttempt(eventId, value);
 
   const reposition = useCallback(() => {
     const el = anchorRef.current;
@@ -95,7 +95,7 @@ export function AttemptEditPopover({
     setPos({ top, left });
   }, []);
 
-  const close = useCallback(() => { setOpen(false); setMode('orig'); setOrig(''); setNext(''); setPen(''); setNote(''); }, []);
+  const close = useCallback(() => { setOpen(false); setMode(initialMode); setOrig(''); setNext(''); setPen(''); setNote(''); }, [initialMode]);
 
   useEffect(() => {
     if (!open) return;
@@ -111,8 +111,8 @@ export function AttemptEditPopover({
 
   const toggle = () => {
     if (open) { close(); return; }
-    setMode('orig');
-    setPen(penalty && penalty > 0 ? String(Math.round(penalty / 200)) : '');  // 厘秒 → 档位(/200)
+    setMode(initialMode);
+    setPen(penalty && penalty > 0 ? String(Math.round(penalty / PENALTY_STEP_CS)) : '');  // 厘秒 → 档位
     reposition();
     setOpen(true);
   };
@@ -127,7 +127,7 @@ export function AttemptEditPopover({
       const pn = parseHumanResult(next, eventId);
       if (pn != null && pn !== value) action = () => onCorrect(pn, n);
     } else {
-      const penCs = pen === '' ? 0 : Number(pen) * 200; // 每档 +2 秒 = 200cs;下拉只给合法档
+      const penCs = pen === '' ? 0 : Number(pen) * PENALTY_STEP_CS; // 每档 +2 秒 = 200cs;下拉只给合法档
       if (penCs !== (penalty ?? 0)) action = () => onSetPenalty?.(penCs, n);
     }
     if (!action) { close(); return; }
@@ -147,21 +147,25 @@ export function AttemptEditPopover({
       <span
         ref={anchorRef}
         className={`${cls ?? ''} wp-att-editable`}
-        title={tr({ zh: '点击改这一次(原始 / 改判)', en: 'Edit this solve (original / corrected)' })}
+        title={penaltyOnly
+          ? tr({ zh: '点击给这一次标 +2 罚时', en: 'Add a +2 penalty to this solve' })
+          : tr({ zh: '点击改这一次(原始 / 改判)', en: 'Edit this solve (original / corrected)' })}
         onClick={(e) => { e.stopPropagation(); toggle(); }}
       >{olds}<SolveValue value={value} penalty={penalty} format={format} /></span>
       {open && pos && createPortal(
         <>
           <div style={backdropStyle} onClick={close} />
           <span ref={popRef} style={{ ...boxStyle, top: pos.top, left: pos.left }} role="dialog" onClick={(e) => e.stopPropagation()}>
-            <label style={rowStyle}>
-              <span style={rowLabelStyle}>{tr({ zh: '操作', en: 'Action' })}</span>
-              <select style={inputStyle} value={mode} onChange={(e) => setMode(e.target.value as 'orig' | 'next' | 'penalty')}>
-                <option value="orig">{tr({ zh: '更正前(原始)', en: 'Original (before)' })}</option>
-                <option value="next">{tr({ zh: '更正后(改判)', en: 'Corrected (after)' })}</option>
-                {allowPenalty && <option value="penalty">{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</option>}
-              </select>
-            </label>
+            {!penaltyOnly && (
+              <label style={rowStyle}>
+                <span style={rowLabelStyle}>{tr({ zh: '操作', en: 'Action' })}</span>
+                <select style={inputStyle} value={mode} onChange={(e) => setMode(e.target.value as 'orig' | 'next' | 'penalty')}>
+                  <option value="orig">{tr({ zh: '更正前(原始)', en: 'Original (before)' })}</option>
+                  <option value="next">{tr({ zh: '更正后(改判)', en: 'Corrected (after)' })}</option>
+                  {allowPenalty && <option value="penalty">{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</option>}
+                </select>
+              </label>
+            )}
             <span style={curStyle}>{tr({ zh: '当前', en: 'now' })} <SolveValue value={value} penalty={penalty} format={format} /></span>
             {mode === 'orig' && (
               <label style={rowStyle}>

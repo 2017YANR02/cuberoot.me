@@ -58,7 +58,11 @@ type SubSub = 'best' | 'dist' | 'rank';
 
 export default function ByEventView({ profile, results, comps, reconLookup, eventId, isZh, editMode, onToggleEditMode }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
-  const admin = useAuthStore((s) => isAdminWcaId(s.user?.wcaId));
+  const myWcaId = useAuthStore((s) => s.user?.wcaId);
+  const admin = isAdminWcaId(myWcaId);
+  const isOwner = !!myWcaId && myWcaId === profile.person.wca_id;
+  const penaltyOnly = !admin && isOwner;  // 本人(非管理员):只能标 +2
+  const canEdit = admin || isOwner;
   const [view, setView] = useState<SubSub>('best');
   const [hist, setHist] = useState<PersonRankHistoryResponse | null>(null);
   const [histLoading, setHistLoading] = useState(false);
@@ -129,7 +133,7 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
 
       <div className="wp-section-h-row">
         <h3 className="wp-section-h">{t('全部成绩', 'All Results')}</h3>
-        {admin && onToggleEditMode && <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} />}
+        {canEdit && onToggleEditMode && <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} penaltyOnly={penaltyOnly} />}
       </div>
       <EventRoundsList
         wcaId={profile.person.wca_id}
@@ -188,7 +192,9 @@ function EventRoundsList({
 }) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   const { map: changeMap, refresh: refreshChanges } = useRowChangeMap(wcaId);
-  const admin = useAuthStore((s) => isAdminWcaId(s.user?.wcaId));
+  const myWcaId = useAuthStore((s) => s.user?.wcaId);
+  const admin = isAdminWcaId(myWcaId);
+  const penaltyOnly = !admin && !!myWcaId && myWcaId === wcaId;  // 本人(非管理员):只能标 +2
   const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -374,6 +380,7 @@ function EventRoundsList({
                     reconLookup={reconLookup}
                     isZh={isZh}
                     admin={admin}
+                    penaltyOnly={penaltyOnly}
                     editMode={editMode}
                     personId={wcaId}
                     personName={personName ?? ''}
