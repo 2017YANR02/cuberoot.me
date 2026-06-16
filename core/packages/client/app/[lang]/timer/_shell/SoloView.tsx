@@ -33,7 +33,7 @@ import { type MoreMenuItem } from '../_components/MoreMenu';
 import i18n, { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { generateScramble, registerScramble } from '../_lib/scramble';
-import { peekWca, nextWca, prefetchWca, hasWcaSource, wcaMetaFor, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
+import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, wcaMetaFor, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { Flag } from '@/components/Flag';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
@@ -322,23 +322,35 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const scramble = scrambleHist.list[scrambleHist.idx] ?? '';
 
   // WCA mode: an empty slot means the pool was momentarily dry — fetch a real
-  // scramble and fill it in, showing a loading state until it lands.
+  // scramble and fill it in, showing a loading state until it lands. We never
+  // substitute a locally generated scramble here: in WCA mode a generated one has
+  // no competition source and wouldn't match the chosen difficulty (the exact
+  // confusing symptom users hit). If the source is *confirmed* empty (difficulty
+  // with no matches / comp lacking the event), show a notice instead.
   const [scrambleLoading, setScrambleLoading] = useState(false);
+  const [wcaSourceEmpty, setWcaSourceEmpty] = useState(false);
   useEffect(() => {
     if (scramble !== '' || settings.scrambleSource !== 'wca' || !hasWcaSource(wcaSpecRef.current)) {
       setScrambleLoading(false);
+      setWcaSourceEmpty(false);
       return;
     }
     let cancelled = false;
     setScrambleLoading(true);
+    setWcaSourceEmpty(false);
     void nextWca(wcaSpecRef.current).then((real) => {
       if (cancelled) return;
       setScrambleLoading(false);
       const cur = scrambleHistRef.current;
       if (cur.list[cur.idx] !== '') return;
-      const list = [...cur.list];
-      list[cur.idx] = real ?? generateScramble(event); // fetch failed / comp lacks event → fall back
-      applyScrambleHist({ list, idx: cur.idx });
+      if (real) {
+        const list = [...cur.list];
+        list[cur.idx] = real;
+        applyScrambleHist({ list, idx: cur.idx });
+      } else if (isWcaSourceEmpty(wcaSpecRef.current)) {
+        setWcaSourceEmpty(true); // 确认无真题 → 显式提示,不伪造生成打乱
+      }
+      // else: 瞬时空 / 网络失败 → 留空,等下次预取或换打乱重取(绝不伪造生成打乱)
     });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1473,7 +1485,15 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             >
               <span className="scramble-text">{scrambleLoading
                 ? <span className="scramble-loading">{tr({ zh: '加载真实打乱…', en: 'Loading real scramble…' })}</span>
-                : (displayScramble || <span className="scramble-empty">—</span>)}</span>
+                : wcaSourceEmpty
+                  ? <span className="scramble-empty">{
+                      settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
+                        ? tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
+                        : settings.wcaScrambleMode === 'comp'
+                          ? tr({ zh: '该比赛没有此项目的打乱', en: 'This competition has no scrambles for this event' })
+                          : tr({ zh: '该时间段内没有 WCA 真题', en: 'No WCA scrambles in this date range' })
+                    }</span>
+                  : (displayScramble || <span className="scramble-empty">—</span>)}</span>
               {scrambleCopied && (
                 <span className="scramble-copied-flash" data-no-timer>{tr({ zh: '已复制', en: 'Copied'
                 })}</span>
