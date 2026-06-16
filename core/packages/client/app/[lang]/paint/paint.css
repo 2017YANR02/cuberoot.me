@@ -495,6 +495,124 @@
   border-color: var(--accent);
 }
 
+/* ---- centered modal (shortcuts cheatsheet, confirm) ---- */
+.paint-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--foreground) 38%, transparent);
+  backdrop-filter: blur(2px);
+}
+.paint-modal {
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--foreground) 30%, transparent);
+  max-height: min(86vh, 720px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* shortcuts cheatsheet */
+.paint-shortcuts {
+  width: min(720px, 100%);
+}
+.paint-sc-body {
+  padding: 14px 16px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 28px;
+  align-content: start;
+}
+.paint-sc-group {
+  break-inside: avoid;
+  margin-bottom: 8px;
+}
+.paint-sc-h {
+  margin: 6px 0 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.paint-sc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  font-size: 12.5px;
+}
+.paint-sc-name {
+  color: var(--fg);
+  min-width: 0;
+}
+.paint-sc-combo {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.paint-sc-plus {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 0 1px;
+}
+.paint-sc-foot {
+  padding: 9px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* confirm dialog */
+.paint-confirm {
+  width: min(380px, 100%);
+  padding: 18px;
+}
+.paint-confirm-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+.paint-confirm-text {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.paint-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.paint-confirm-actions .paint-btn {
+  border-color: var(--border);
+  padding: 0 14px;
+}
+.paint-btn--danger {
+  background: var(--destructive);
+  border-color: var(--destructive);
+  color: var(--destructive-foreground);
+}
+.paint-btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--destructive) 88%, #000);
+}
+@media (max-width: 560px) {
+  .paint-sc-body {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* segmented / select */
 .paint-seg {
   display: inline-flex;

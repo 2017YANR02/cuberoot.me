@@ -17,6 +17,7 @@ import Canvas from './Canvas';
 import Inspector from './Inspector';
 import ShorthandPanel from './ShorthandPanel';
 import DrawingsPanel from './DrawingsPanel';
+import ShortcutsPanel from './ShortcutsPanel';
 import PaintGate from './PaintGate';
 
 function isTypingTarget(el: EventTarget | null): boolean {
@@ -43,7 +44,18 @@ function PaintEditorInner() {
   const [viewport, setViewport] = useState({ w: 800, h: 600 });
   const [shorthandOpen, setShorthandOpen] = useState(false);
   const [drawingsOpen, setDrawingsOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const shortcutsOpenRef = useRef(false);
   const spacePan = useRef(false);
+
+  const openShortcuts = () => {
+    shortcutsOpenRef.current = true;
+    setShortcutsOpen(true);
+  };
+  const closeShortcuts = () => {
+    shortcutsOpenRef.current = false;
+    setShortcutsOpen(false);
+  };
   const paper = usePaint((s) => s.paper);
 
   // Cloud sync: load the library + most-recent drawing on mount, then autosave
@@ -95,6 +107,18 @@ function PaintEditorInner() {
       // text editing target: let it through (except Escape blurs)
       if (isTypingTarget(e.target) || st.editing) {
         if (e.key === 'Escape') (e.target as HTMLElement)?.blur?.();
+        return;
+      }
+
+      // shortcuts cheatsheet open: swallow editor keys (Esc handled in the panel)
+      if (shortcutsOpenRef.current) {
+        if (e.key !== 'Escape') e.preventDefault();
+        return;
+      }
+      // "?" opens the cheatsheet (industry-standard discoverability key)
+      if (e.key === '?') {
+        e.preventDefault();
+        openShortcuts();
         return;
       }
 
@@ -218,6 +242,7 @@ function PaintEditorInner() {
         viewport={viewport}
         onOpenShorthand={() => setShorthandOpen(true)}
         onOpenDrawings={() => setDrawingsOpen(true)}
+        onOpenShortcuts={openShortcuts}
       />
       <Toolbar />
       <div className="paint-canvas-host" ref={canvasAreaRef} style={{ gridArea: 'canvas', position: 'relative', overflow: 'hidden' }}>
@@ -226,6 +251,7 @@ function PaintEditorInner() {
         <DrawingsPanel open={drawingsOpen} onClose={() => setDrawingsOpen(false)} />
       </div>
       <Inspector />
+      <ShortcutsPanel open={shortcutsOpen} onClose={closeShortcuts} />
     </div>
   );
 }

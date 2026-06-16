@@ -16,6 +16,7 @@ import {
   Check,
   Loader2,
   CloudOff,
+  Keyboard,
 } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
@@ -31,6 +32,7 @@ interface Props {
   viewport: { w: number; h: number };
   onOpenShorthand: () => void;
   onOpenDrawings: () => void;
+  onOpenShortcuts: () => void;
 }
 
 // Paper presets: light / white / dark / black. Theme-locked artboard colors —
@@ -42,7 +44,7 @@ const PAPER_PRESETS: { hex: string; zh: string; en: string }[] = [
   { hex: '#0a0a0a', zh: '黑', en: 'Black' },
 ];
 
-export default function Topbar({ viewport, onOpenShorthand, onOpenDrawings }: Props) {
+export default function Topbar({ viewport, onOpenShorthand, onOpenDrawings, onOpenShortcuts }: Props) {
   const t = useT();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -56,6 +58,7 @@ export default function Topbar({ viewport, onOpenShorthand, onOpenDrawings }: Pr
   const saveState = usePaintCloud((s) => s.saveState);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const undo = usePaint((s) => s.undo);
   const redo = usePaint((s) => s.redo);
@@ -94,11 +97,8 @@ export default function Topbar({ viewport, onOpenShorthand, onOpenDrawings }: Pr
   };
 
   const onNew = () => {
-    const st = usePaint.getState();
-    if (st.order.length === 0) return;
-    if (window.confirm(t('清空整个画布?此操作可撤销。', 'Clear the entire canvas? This can be undone.'))) {
-      st.clearDocument();
-    }
+    if (usePaint.getState().order.length === 0) return;
+    setConfirmClear(true);
   };
 
   const startTitle = () => {
@@ -112,6 +112,7 @@ export default function Topbar({ viewport, onOpenShorthand, onOpenDrawings }: Pr
   };
 
   return (
+    <>
     <div className="paint-topbar">
       <span className="paint-topbar-title">{t('绘制', 'Paint')}</span>
 
@@ -145,7 +146,7 @@ export default function Topbar({ viewport, onOpenShorthand, onOpenDrawings }: Pr
           type="button"
           className="paint-btn"
           onClick={() => zoomStep(1 / 1.2)}
-          title={tr({ zh: '缩小', en: 'Zoom out' })}
+          title={`${tr({ zh: '缩小', en: 'Zoom out' })}  (-)`}
           aria-label={tr({ zh: '缩小', en: 'Zoom out' })}
         >
           <ZoomOut size={16} />
@@ -154,7 +155,7 @@ export default function Topbar({ viewport, onOpenShorthand, onOpenDrawings }: Pr
           type="button"
           className="paint-btn paint-zoom-label"
           onClick={() => zoomTo(1)}
-          title={tr({ zh: '重置为 100%', en: 'Reset to 100%' })}
+          title={`${tr({ zh: '重置为 100%', en: 'Reset to 100%' })}  (1)`}
         >
           {Math.round(camera.zoom * 100)}%
         </button>
@@ -162,7 +163,7 @@ export default function Topbar({ viewport, onOpenShorthand, onOpenDrawings }: Pr
           type="button"
           className="paint-btn"
           onClick={() => zoomStep(1.2)}
-          title={tr({ zh: '放大', en: 'Zoom in' })}
+          title={`${tr({ zh: '放大', en: 'Zoom in' })}  (=)`}
           aria-label={tr({ zh: '放大', en: 'Zoom in' })}
         >
           <ZoomIn size={16} />
@@ -175,6 +176,15 @@ export default function Topbar({ viewport, onOpenShorthand, onOpenDrawings }: Pr
           aria-label={tr({ zh: '适应画布', en: 'Fit to view' })}
         >
           <Maximize size={16} />
+        </button>
+        <button
+          type="button"
+          className="paint-btn"
+          onClick={onOpenShortcuts}
+          title={`${tr({ zh: '快捷键 / 手势', en: 'Shortcuts & gestures' })}  (?)`}
+          aria-label={tr({ zh: '快捷键', en: 'Shortcuts' })}
+        >
+          <Keyboard size={16} />
         </button>
       </div>
 
@@ -340,5 +350,37 @@ export default function Topbar({ viewport, onOpenShorthand, onOpenDrawings }: Pr
         </button>
       </div>
     </div>
+
+    {confirmClear && (
+      <div
+        className="paint-modal-overlay"
+        onPointerDown={(e) => {
+          if (e.target === e.currentTarget) setConfirmClear(false);
+        }}
+      >
+        <div className="paint-modal paint-confirm" role="dialog" aria-modal="true">
+          <div className="paint-confirm-title">{t('清空整个画布?', 'Clear the entire canvas?')}</div>
+          <div className="paint-confirm-text">
+            {t('画布上的所有内容会被移除。可以用 Ctrl+Z 撤销。', 'Everything on the canvas will be removed. You can undo with Ctrl+Z.')}
+          </div>
+          <div className="paint-confirm-actions">
+            <button type="button" className="paint-btn" onClick={() => setConfirmClear(false)}>
+              {t('取消', 'Cancel')}
+            </button>
+            <button
+              type="button"
+              className="paint-btn paint-btn--danger"
+              onClick={() => {
+                usePaint.getState().clearDocument();
+                setConfirmClear(false);
+              }}
+            >
+              {t('清空', 'Clear')}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
