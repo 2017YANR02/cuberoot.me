@@ -689,6 +689,51 @@ impl Sq1Solver {
         (sid * 1680 + self.rank1680[code] as usize) * 2 + s.ml as usize
     }
 
+    /// 全 8 角 PDB 索引:(shape × 8 角全排列 rank8 ∈ [0,40320) × ml)。
+    /// 角按 tiling 扫描序读 id>>1 ∈ 0..7(恒为排列)。联合 8 角 ⇒ 严格强于 max(c4,c4b)。
+    fn corn_idx(&self, s: &Sq1State) -> usize {
+        let pt = Sq1State::layer_pattern(s.top);
+        let pb = Sq1State::layer_pattern(s.bottom);
+        let sid = self.shape_id(pt, pb);
+        let mut cp = [0u8; 8];
+        let mut ck = 0usize;
+        for (v, p) in [(s.top, pt), (s.bottom, pb)] {
+            let mut i = 0;
+            while i < 12 {
+                if (p >> (11 - i)) & 1 == 1 {
+                    cp[ck] = Sq1State::nib(v, i) >> 1;
+                    ck += 1;
+                    i += 2;
+                } else {
+                    i += 1;
+                }
+            }
+        }
+        (sid * 40320 + rank8(&cp)) * 2 + s.ml as usize
+    }
+
+    /// 全 8 棱 PDB 索引:(shape × 8 棱全排列 rank8 × ml)。棱按扫描序读 id>>1。
+    fn edge_idx(&self, s: &Sq1State) -> usize {
+        let pt = Sq1State::layer_pattern(s.top);
+        let pb = Sq1State::layer_pattern(s.bottom);
+        let sid = self.shape_id(pt, pb);
+        let mut ep = [0u8; 8];
+        let mut ek = 0usize;
+        for (v, p) in [(s.top, pt), (s.bottom, pb)] {
+            let mut i = 0;
+            while i < 12 {
+                if (p >> (11 - i)) & 1 == 1 {
+                    i += 2;
+                } else {
+                    ep[ek] = Sq1State::nib(v, i) >> 1;
+                    ek += 1;
+                    i += 1;
+                }
+            }
+        }
+        (sid * 40320 + rank8(&ep)) * 2 + s.ml as usize
+    }
+
     /// phase-1 启发值 = 五张投影表取 max(单次融合扫描,一次 shape 查找,
     /// 任一表超过 bound 立即短路返回 None,省后续随机访存)。各表可采纳 ⇒ max 可采纳。
     fn h_le(&self, s: &Sq1State, pt: u16, pb: u16, bound: u8) -> Option<u8> {
@@ -1131,6 +1176,626 @@ fn build_sq(moves: &[[u8; 8]], rots: &[[u8; 8]]) -> Vec<u8> {
     dist
 }
 
+/// 方形子群单件类 WCA 距离 BFS(40320×2):边 = 方形→方形 slash(moves,cost 1,翻 ml)
+/// + 方形保形旋转(rots,cost 1,不翻 ml),从 solved 起。**禁** 旋转 0-cost 闭包
+/// (那是 twist 专属);终局对齐(rotation of solved → exact)自然由旋转边编码(dist 1)。
+fn build_sq_wca(moves: &[[u8; 8]], rots: &[[u8; 8]]) -> Vec<u8> {
+    let mut dist = vec![255u8; 80640];
+    let id: [u8; 8] = [0, 1, 2, 3, 4, 5, 6, 7];
+    dist[rank8(&id) * 2] = 0; // solved, ml=0
+    let mut frontier: Vec<([u8; 8], u8)> = vec![(id, 0)];
+    let mut d = 0u8;
+    while !frontier.is_empty() {
+        let mut next = Vec::new();
+        for (p, ml) in &frontier {
+            for m in moves {
+                let q = apply_action(p, m);
+                let qml = ml ^ 1;
+                let qi = rank8(&q) * 2 + qml as usize;
+                if dist[qi] == 255 {
+                    dist[qi] = d + 1;
+                    next.push((q, qml));
+                }
+            }
+            for r in rots {
+                let q = apply_action(p, r);
+                let qi = rank8(&q) * 2 + *ml as usize;
+                if dist[qi] == 255 {
+                    dist[qi] = d + 1;
+                    next.push((q, *ml));
+                }
+            }
+        }
+        d += 1;
+        frontier = next;
+    }
+    dist
+}
+
+// ===========================================================================
+// Sq1WcaSolver:WCA 12c4 度量精确最优求解器。
+//
+// WCA cost = #(非恒等层转) + #(slash);每个动作恰好 1 步 ⇒ uniform-cost,
+// WCA 距离 = slash-aligned 态图上的 BFS 深度。复用 Sq1Solver 的索引/枚举设施
+// (同模块私有可达),twist 求解器零改动。完整设计 / 上帝之数路线见
+// `solver/SQ1_WCA_GODS_NUMBER.md`。
+//
+// 移动(均 1 步,只落脚 slash-legal 对位):
+//   - slash:           z → slash(z)
+//   - turn 到合法对位:  z → turn(z,a,b),(a,b)≠0,a∈legal_rot[pt] b∈legal_rot[pb]
+// 最优解 turn/slash 严格交替(同类相邻冗余:slash∘slash=id、turn∘turn 合并),
+// 据此剪枝不损最优。
+//
+// 剪枝表 = 5 张投影(comb/c4/e4/c4b/e4b),用 uniform BFS(上述边)重建,值 =
+// 该投影的 WCA 距离(投影是「移动+代价」同态 ⇒ 表值 ≤ 真 WCA dist ⇒ 可采纳);
+// h = 5 表 max。搜索 = IDA*(g 每步 +1,turn/slash 交替剪枝,子按 h 升序)。
+// 可证区间 13 ≤ D_WCA ≤ 27(后者 = 2·twist_God+1),故 bound 越过 27 即 bug。
+// ===========================================================================
+
+const LM_NONE: u8 = 0;
+const LM_TURN: u8 = 1;
+const LM_SLASH: u8 = 2;
+
+#[inline]
+fn is_exact_solved(s: &Sq1State) -> bool {
+    s.ml == 0 && s.top == SOLVED_TOP && s.bottom == SOLVED_BOTTOM
+}
+
+pub struct Sq1WcaSolver {
+    base: &'static Sq1Solver,
+    /// 5 张全空间 WCA 投影距离表(未打包,*2 含 ml;索引复用 base 的 *_idx 函数)。
+    comb: Vec<u8>, // SHAPE_COUNT*70*70*2
+    c4: Vec<u8>,   // SHAPE_COUNT*1680*2
+    e4: Vec<u8>,
+    c4b: Vec<u8>,
+    e4b: Vec<u8>,
+    /// 方形子群内(角 / 棱 8 排列 × ml)WCA 精确距离(phase-2 尾解,80640 each)。
+    /// 边 = 方形保形旋转(cost 1)+ 方形→方形 slash(cost 1),从 solved BFS。
+    csq: Vec<u8>,
+    esq: Vec<u8>,
+    /// 全 8 角 / 全 8 棱 WCA PDB((shape × 8! × ml),各 ~283MB)。比 c4/c4b/e4/e4b(各 4 件)
+    /// 联合更强 ⇒ 深态 h 抬高、IDA* 节点锐减。盘缓存 tables/sq1_wca_{corn,edge}p.bin;
+    /// 缺表且非 SQ1_BUILD_PDB=1 时为空,h 回退 5 小表(wasm 恒空)。
+    cornp: Vec<u8>,
+    edgep: Vec<u8>,
+}
+
+impl Default for Sq1WcaSolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Sq1WcaSolver {
+    pub fn shared() -> &'static Sq1WcaSolver {
+        static S: OnceLock<Sq1WcaSolver> = OnceLock::new();
+        S.get_or_init(Sq1WcaSolver::new)
+    }
+
+    pub fn new() -> Sq1WcaSolver {
+        let base = Sq1Solver::shared();
+        // 投影 seed = solved 的对应投影(与 Sq1Solver::new 同款 map,值映射逐 nibble)。
+        let pj = |v: u64, f: &dyn Fn(u64) -> u64| -> u64 {
+            let mut o = 0u64;
+            for i in 0..12 {
+                let n = (v >> ((11 - i) * 4)) & 0xF;
+                o |= f(n) << ((11 - i) * 4);
+            }
+            o
+        };
+        let comb_map = |n: u64| (n & 1) | (n & 8);
+        let c4_map = |n: u64| if n & 1 == 1 { if n < 8 { n } else { 9 } } else { 0 };
+        let e4_map = |n: u64| if n & 1 == 1 { 1 } else if n < 8 { n } else { 8 };
+        let c4b_map = |n: u64| if n & 1 == 1 { if n < 8 { 1 } else { n } } else { 0 };
+        let e4b_map = |n: u64| if n & 1 == 1 { 1 } else if n < 8 { 0 } else { n };
+        let seed = |f: &dyn Fn(u64) -> u64| Sq1State {
+            top: pj(SOLVED_TOP, f),
+            bottom: pj(SOLVED_BOTTOM, f),
+            ml: 0,
+        };
+        let comb =
+            Self::build_proj_wca_auto(base, SHAPE_COUNT * 70 * 70 * 2, seed(&comb_map), |b, s| {
+                b.comb_idx(s)
+            });
+        let c4 =
+            Self::build_proj_wca_auto(base, SHAPE_COUNT * 1680 * 2, seed(&c4_map), |b, s| b.c4_idx(s));
+        let e4 =
+            Self::build_proj_wca_auto(base, SHAPE_COUNT * 1680 * 2, seed(&e4_map), |b, s| b.e4_idx(s));
+        let c4b = Self::build_proj_wca_auto(base, SHAPE_COUNT * 1680 * 2, seed(&c4b_map), |b, s| {
+            b.c4b_idx(s)
+        });
+        let e4b = Self::build_proj_wca_auto(base, SHAPE_COUNT * 1680 * 2, seed(&e4b_map), |b, s| {
+            b.e4b_idx(s)
+        });
+        // phase-2 方形子群表(复用 twist 求解器的 action 推导,但 WCA 加权:旋转 cost 1)。
+        let (sig, tau, rhoc, rhoe) = derive_sq_actions();
+        let csq = build_sq_wca(&sig, &rhoc);
+        let esq = build_sq_wca(&tau, &rhoe);
+        let (cornp, edgep) = Self::load_or_build_pdbs(base);
+        Sq1WcaSolver { base, comb, c4, e4, c4b, e4b, csq, esq, cornp, edgep }
+    }
+
+    /// 大 PDB(角/棱全 8 件)加载或按需构建。盘缓存命中即直读;缺表且 `SQ1_BUILD_PDB=1`
+    /// 时 BFS 构建并落盘(各 ~283MB,一次性),否则返回空(h 回退 5 小表)。
+    /// CI / 无表环境零额外开销;wasm 不编译此路径。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn load_or_build_pdbs(base: &'static Sq1Solver) -> (Vec<u8>, Vec<u8>) {
+        let size = SHAPE_COUNT * 40320 * 2;
+        let corn = Self::load_or_build_one("sq1_wca_cornp.bin", size, base, |b, s| b.corn_idx(s));
+        let edge = Self::load_or_build_one("sq1_wca_edgep.bin", size, base, |b, s| b.edge_idx(s));
+        (corn, edge)
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn load_or_build_one(
+        name: &str,
+        size: usize,
+        base: &'static Sq1Solver,
+        idx_of: impl Fn(&Sq1Solver, &Sq1State) -> usize + Sync,
+    ) -> Vec<u8> {
+        let path = crate::move_tables::table_path(name);
+        if let Ok(bytes) = std::fs::read(&path) {
+            if bytes.len() == size {
+                eprintln!("[sq1] loaded {} ({} bytes)", path.display(), bytes.len());
+                return bytes;
+            }
+        }
+        if std::env::var("SQ1_BUILD_PDB").as_deref() != Ok("1") {
+            return Vec::new();
+        }
+        eprintln!("[sq1] building {} ({} entries, parallel) ...", name, size);
+        let t = Self::build_proj_wca_par(base, size, Sq1State::SOLVED, idx_of);
+        if let Some(dir) = path.parent() {
+            let _ = std::fs::create_dir_all(dir);
+        }
+        match std::fs::write(&path, &t) {
+            Ok(_) => eprintln!("[sq1] wrote {} ({} bytes)", path.display(), t.len()),
+            Err(e) => eprintln!("[sq1] WARN failed to write {}: {}", path.display(), e),
+        }
+        t
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn load_or_build_pdbs(_base: &'static Sq1Solver) -> (Vec<u8>, Vec<u8>) {
+        (Vec::new(), Vec::new())
+    }
+
+    /// 全局共享实例(表现场建,首次 ~秒级;含 Sq1Solver 的 twist 表)。
+    /// uniform-cost BFS 投影表:从 solved 投影起,turn(到合法对位)+slash 边均 1 步,
+    /// dist = BFS 层。投影同态 ⇒ 表值 ≤ 真 WCA dist。**禁** free-rotation 闭包
+    /// (那是 twist 专属;WCA 每对位独立)。
+    fn build_proj_wca(
+        base: &Sq1Solver,
+        size: usize,
+        seed: Sq1State,
+        idx_of: impl Fn(&Sq1Solver, &Sq1State) -> usize,
+    ) -> Vec<u8> {
+        let mut dist = vec![255u8; size];
+        dist[idx_of(base, &seed)] = 0;
+        let mut frontier = vec![seed];
+        let mut d = 0u8;
+        while !frontier.is_empty() {
+            let mut next = Vec::new();
+            for z in &frontier {
+                let pt = Sq1State::layer_pattern(z.top);
+                let pb = Sq1State::layer_pattern(z.bottom);
+                // slash 边(z 必 slash-legal:seed/turn 到合法对位/slash 结果皆 slash-ready)。
+                let y = z.slashed();
+                let iy = idx_of(base, &y);
+                if dist[iy] == 255 {
+                    dist[iy] = d + 1;
+                    next.push(y);
+                }
+                // turn 边(到合法对位,(a,b)≠0)。
+                let ta = base.legal_rot[pt as usize];
+                let tb = base.legal_rot[pb as usize];
+                let mut am = ta;
+                while am != 0 {
+                    let a = am.trailing_zeros();
+                    am &= am - 1;
+                    let mut bm = tb;
+                    while bm != 0 {
+                        let b = bm.trailing_zeros();
+                        bm &= bm - 1;
+                        if a == 0 && b == 0 {
+                            continue;
+                        }
+                        let y = z.turned(a, b);
+                        let iy = idx_of(base, &y);
+                        if dist[iy] == 255 {
+                            dist[iy] = d + 1;
+                            next.push(y);
+                        }
+                    }
+                }
+            }
+            d += 1;
+            frontier = next;
+        }
+        dist
+    }
+
+    /// build_proj_wca 的并行版(rayon + AtomicU8 dist,CAS 抢占首达 ⇒ 与单线程逐位相同的
+    /// BFS 距离)。大 PDB(296M)单线程 ~10min/张、内存重;并行 ~7× 加速。native-only。
+    /// 正确性:test `pdb_par_matches_serial` 锁死与单线程逐字节相等。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn build_proj_wca_par(
+        base: &Sq1Solver,
+        size: usize,
+        seed: Sq1State,
+        idx_of: impl Fn(&Sq1Solver, &Sq1State) -> usize + Sync,
+    ) -> Vec<u8> {
+        use rayon::prelude::*;
+        use std::sync::atomic::{AtomicU8, Ordering};
+        let dist: Vec<AtomicU8> = (0..size).map(|_| AtomicU8::new(255)).collect();
+        dist[idx_of(base, &seed)].store(0, Ordering::Relaxed);
+        let mut frontier = vec![seed];
+        let mut d = 0u8;
+        while !frontier.is_empty() {
+            let next: Vec<Sq1State> = frontier
+                .par_iter()
+                .fold(Vec::new, |mut acc, z| {
+                    let pt = Sq1State::layer_pattern(z.top);
+                    let pb = Sq1State::layer_pattern(z.bottom);
+                    // CAS 255→d+1:抢到(首达此索引)才入 next,与单线程 BFS 距离一致。
+                    let claim = |y: Sq1State, acc: &mut Vec<Sq1State>| {
+                        if dist[idx_of(base, &y)]
+                            .compare_exchange(255, d + 1, Ordering::Relaxed, Ordering::Relaxed)
+                            .is_ok()
+                        {
+                            acc.push(y);
+                        }
+                    };
+                    claim(z.slashed(), &mut acc);
+                    let ta = base.legal_rot[pt as usize];
+                    let tb = base.legal_rot[pb as usize];
+                    let mut am = ta;
+                    while am != 0 {
+                        let a = am.trailing_zeros();
+                        am &= am - 1;
+                        let mut bm = tb;
+                        while bm != 0 {
+                            let b = bm.trailing_zeros();
+                            bm &= bm - 1;
+                            if a == 0 && b == 0 {
+                                continue;
+                            }
+                            claim(z.turned(a, b), &mut acc);
+                        }
+                    }
+                    acc
+                })
+                .reduce(Vec::new, |mut a, mut b| {
+                    a.append(&mut b);
+                    a
+                });
+            d += 1;
+            frontier = next;
+        }
+        dist.into_iter().map(|a| a.into_inner()).collect()
+    }
+
+    /// 投影表构建分派:native 走并行(快 ~7×),wasm 走单线程(Sq1WcaSolver 不导出到 wasm,
+    /// 此分支实为死代码,仅供编译)。5 张小表也用它,把 native init 从 ~3min 砍到 ~15s。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn build_proj_wca_auto(
+        base: &Sq1Solver,
+        size: usize,
+        seed: Sq1State,
+        idx_of: impl Fn(&Sq1Solver, &Sq1State) -> usize + Sync,
+    ) -> Vec<u8> {
+        Self::build_proj_wca_par(base, size, seed, idx_of)
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn build_proj_wca_auto(
+        base: &Sq1Solver,
+        size: usize,
+        seed: Sq1State,
+        idx_of: impl Fn(&Sq1Solver, &Sq1State) -> usize + Sync,
+    ) -> Vec<u8> {
+        Self::build_proj_wca(base, size, seed, idx_of)
+    }
+
+    /// 融合剪枝(移植 Sq1Solver::h_le 的单次扫描 + 早短路):一次扫描算 5 张投影码,
+    /// 任一表值 > bound 立即 None(省后续随机访存)。s 必须 slash-aligned(shape ∈ 3678);
+    /// 搜索里只对 slash-legal 子节点调用。Some(5 表 max) 当且仅当全部 ≤ bound。
+    #[inline]
+    fn h_le_wca(&self, s: &Sq1State, pt: u16, pb: u16, bound: u8) -> Option<u8> {
+        let base = self.base;
+        let sid = base.shape_id(pt, pb);
+        let (mut cmask, mut emask) = (0usize, 0usize);
+        let (mut codec, mut codee) = (0usize, 0usize);
+        let (mut codecb, mut codeeb) = (0usize, 0usize);
+        let (mut ck, mut ek) = (0usize, 0usize);
+        let mut cp = [0u8; 8];
+        let mut ep = [0u8; 8];
+        for (v, p) in [(s.top, pt), (s.bottom, pb)] {
+            let mut i = 0;
+            while i < 12 {
+                let n = Sq1State::nib(v, i);
+                if (p >> (11 - i)) & 1 == 1 {
+                    cp[ck] = n >> 1;
+                    if n < 8 {
+                        cmask |= 1 << ck;
+                        codec |= ck << (((n >> 1) as usize) * 3);
+                    } else {
+                        codecb |= ck << ((((n >> 1) & 3) as usize) * 3);
+                    }
+                    ck += 1;
+                    i += 2;
+                } else {
+                    ep[ek] = n >> 1;
+                    if n < 8 {
+                        emask |= 1 << ek;
+                        codee |= ek << (((n >> 1) as usize) * 3);
+                    } else {
+                        codeeb |= ek << ((((n >> 1) & 3) as usize) * 3);
+                    }
+                    ek += 1;
+                    i += 1;
+                }
+            }
+        }
+        let ml = s.ml as usize;
+        // 大 PDB(角/棱全 8 件)最强 ⇒ 先查、命中早剪省后续小表访存。wasm/无表时为空跳过。
+        let mut hbig = 0u8;
+        if !self.cornp.is_empty() {
+            let hc8 = self.cornp[(sid * 40320 + rank8(&cp)) * 2 + ml];
+            if hc8 > bound {
+                return None;
+            }
+            let he8 = self.edgep[(sid * 40320 + rank8(&ep)) * 2 + ml];
+            if he8 > bound {
+                return None;
+            }
+            hbig = hc8.max(he8);
+        }
+        let h4 = self.c4[(sid * 1680 + base.rank1680[codec] as usize) * 2 + ml];
+        if h4 > bound {
+            return None;
+        }
+        let h4b = self.c4b[(sid * 1680 + base.rank1680[codecb] as usize) * 2 + ml];
+        if h4b > bound {
+            return None;
+        }
+        let he = self.e4[(sid * 1680 + base.rank1680[codee] as usize) * 2 + ml];
+        if he > bound {
+            return None;
+        }
+        let heb = self.e4b[(sid * 1680 + base.rank1680[codeeb] as usize) * 2 + ml];
+        if heb > bound {
+            return None;
+        }
+        let ci = (sid * 70 + base.rank70[cmask] as usize) * 70 + base.rank70[emask] as usize;
+        let hc = self.comb[ci * 2 + ml];
+        if hc > bound {
+            return None;
+        }
+        Some(hbig.max(hc).max(h4).max(he).max(h4b).max(heb))
+    }
+
+    /// 投影剪枝下界(可采纳)= h_le_wca 无上界版(root / 测试用)。
+    #[inline]
+    fn h(&self, s: &Sq1State) -> u8 {
+        let pt = Sq1State::layer_pattern(s.top);
+        let pb = Sq1State::layer_pattern(s.bottom);
+        self.h_le_wca(s, pt, pb, 255).unwrap()
+    }
+
+    /// 方形态 phase-2 启发值(仅方形子群内可采纳)= max(角, 棱 8 排列 WCA 距离)。
+    /// s 必须方形(sq_proj_arrays 对非方形 debug_assert)。
+    #[inline]
+    fn sq_h_wca(&self, s: &Sq1State) -> u8 {
+        let (cp, ep) = sq_proj_arrays(s);
+        let ci = rank8(&cp) * 2 + s.ml as usize;
+        let ei = rank8(&ep) * 2 + s.ml as usize;
+        self.csq[ci].max(self.esq[ei])
+    }
+
+    /// phase-2 DFS:限方形子群(每步保方形),移动 = slash(cost1)+ 方形保形旋转(cost1),
+    /// turn/slash 交替。成功(g..bound 内还原到精确 SOLVED)时 path 追加尾解 token。
+    fn p2_dfs_wca(&self, s: Sq1State, g: u8, bound: u8, lm: u8, path: &mut Vec<Sq1Token>) -> bool {
+        // 目标 = 精确 SOLVED,**不是** sq_h_wca==0。sq_proj_arrays 按扫描序读件 ⇒ 旋转不变,
+        // csq/esq 量的是到 solved **轨道/陪集**的距离;一整类非 solved 方形态(角-棱对位不同)
+        // 都有 sq_h_wca==0。终局对齐(轨道→精确,1 步旋转)由本搜索补上(故不能用 h==0 提前收尾)。
+        if is_exact_solved(&s) {
+            return true;
+        }
+        let h = self.sq_h_wca(&s);
+        if g + h > bound {
+            return false; // sq_h_wca 仍是可采纳下界(低估终局对齐,无害)
+        }
+        let pt = Sq1State::layer_pattern(s.top);
+        let pb = Sq1State::layer_pattern(s.bottom);
+        let cb = bound.saturating_sub(g + 1);
+        let mut kids = [(0u8, Sq1Token::Slash, Sq1State::SOLVED, 0u8); 145];
+        let mut n = 0usize;
+        if lm != LM_SLASH {
+            let c = s.slashed();
+            if c.is_square_shape() {
+                let ch = self.sq_h_wca(&c);
+                if ch <= cb {
+                    kids[n] = (ch, Sq1Token::Slash, c, LM_SLASH);
+                    n += 1;
+                }
+            }
+        }
+        if lm != LM_TURN {
+            let ta = self.base.legal_rot[pt as usize];
+            let tb = self.base.legal_rot[pb as usize];
+            let mut am = ta;
+            while am != 0 {
+                let a = am.trailing_zeros();
+                am &= am - 1;
+                let mut bm = tb;
+                while bm != 0 {
+                    let b = bm.trailing_zeros();
+                    bm &= bm - 1;
+                    if a == 0 && b == 0 {
+                        continue;
+                    }
+                    let c = s.turned(a, b);
+                    if c.is_square_shape() {
+                        let ch = self.sq_h_wca(&c);
+                        if ch <= cb {
+                            kids[n] = (ch, Sq1Token::Turn(ser_amt(a), ser_amt(b)), c, LM_TURN);
+                            n += 1;
+                        }
+                    }
+                }
+            }
+        }
+        kids[..n].sort_unstable_by_key(|k| k.0);
+        for &(_, tok, c, clm) in &kids[..n] {
+            path.push(tok);
+            if self.p2_dfs_wca(c, g + 1, bound, clm, path) {
+                return true;
+            }
+            path.pop();
+        }
+        false
+    }
+
+    /// 方形态精确 WCA 尾解(≤ cap 才 Some;成功时 path 追加尾解)。memo 跨 phase-1 节点复用。
+    /// **memo 键 = 精确态**(非 canon_key):WCA 下旋转计 1 步,不同对位距离不同。
+    fn p2_dist_le_wca(
+        &self,
+        s: &Sq1State,
+        cap: u8,
+        memo: &mut P2Memo,
+        path: &mut Vec<Sq1Token>,
+    ) -> Option<u8> {
+        let h0 = self.sq_h_wca(s);
+        if h0 > cap {
+            return None;
+        }
+        let key = ((s.top as u128) << 49) | ((s.bottom as u128) << 1) | s.ml as u128;
+        if let Some(&d) = memo.exact.get(&key) {
+            if d <= cap {
+                let ok = self.p2_dfs_wca(*s, 0, d, LM_NONE, path);
+                debug_assert!(ok, "memoized p2 distance not reproducible");
+                return Some(d);
+            }
+            return None;
+        }
+        let mut t = h0.max(memo.fail_below.get(&key).copied().unwrap_or(0));
+        while t <= cap {
+            if self.p2_dfs_wca(*s, 0, t, LM_NONE, path) {
+                memo.exact.insert(key, t);
+                return Some(t);
+            }
+            t += 1;
+        }
+        let e = memo.fail_below.entry(key).or_insert(0);
+        *e = (*e).max(t);
+        None
+    }
+
+    /// 任意态的 WCA 12c4 精确最优步数。
+    pub fn solve_wca(&self, st: &Sq1State) -> u32 {
+        self.solve_with_solution(st).0
+    }
+
+    /// 打乱串 → WCA 精确最优步数。
+    pub fn solve_str(&self, scramble: &str) -> Result<u32, String> {
+        Ok(self.solve_wca(&state_from_scramble(scramble)?))
+    }
+
+    /// 任意态的 WCA 精确最优步数 + 一条最优解(token 序列,从 st apply 回精确 SOLVED;
+    /// 每个 token = 1 步 ⇒ token 数 = WCA cost)。
+    pub fn solve_with_solution(&self, st: &Sq1State) -> (u32, Vec<Sq1Token>) {
+        if is_exact_solved(st) {
+            return (0, Vec::new());
+        }
+        // root 若 slash-legal,h(st) 是 admissible 起点;否则首步必为 turn(≥1 步)。
+        let mut bound = if st.slash_legal() { self.h(st) } else { 1 };
+        let mut memo = P2Memo { exact: HashMap::new(), fail_below: HashMap::new() };
+        loop {
+            let mut path: Vec<Sq1Token> = Vec::new();
+            if let Some(cost) = self.dfs(*st, 0, bound, LM_NONE, &mut memo, &mut path) {
+                debug_assert_eq!(cost as usize, path.len(), "WCA cost must equal token count");
+                return (cost as u32, path);
+            }
+            bound += 1;
+            assert!(bound <= 27, "WCA search exceeded proven bound D_WCA ≤ 27");
+        }
+    }
+
+    /// phase-1 IDA* DFS。调用方保证 g + h(s) ≤ bound(root 经 bound 起点、子经父 h_le_wca 剪枝)。
+    /// 方形态先试 phase-2 精确尾解(memo 跨节点复用);失败再继续 shape-shift 子。
+    fn dfs(
+        &self,
+        s: Sq1State,
+        g: u8,
+        bound: u8,
+        lm: u8,
+        memo: &mut P2Memo,
+        path: &mut Vec<Sq1Token>,
+    ) -> Option<u8> {
+        if is_exact_solved(&s) {
+            return Some(g);
+        }
+        // phase-2:方形态尝试方形子群内精确尾解,踩中即收尾(关键加速点)。
+        if s.is_square_shape() {
+            if let Some(d) = self.p2_dist_le_wca(&s, bound.saturating_sub(g), memo, path) {
+                return Some(g + d);
+            }
+        }
+        let slash_ok = s.slash_legal();
+        let pt = Sq1State::layer_pattern(s.top);
+        let pb = Sq1State::layer_pattern(s.bottom);
+        // 子的 h 须 ≤ bound-(g+1)(每步 +1)。
+        let child_bound = bound.saturating_sub(g + 1);
+        // 存活子:(h, token, state, lm)。≤ 1 slash + 144 turn。
+        let mut kids = [(0u8, Sq1Token::Slash, Sq1State::SOLVED, 0u8); 145];
+        let mut n = 0usize;
+        if slash_ok && lm != LM_SLASH {
+            let c = s.slashed();
+            let cpt = Sq1State::layer_pattern(c.top);
+            let cpb = Sq1State::layer_pattern(c.bottom);
+            if let Some(h) = self.h_le_wca(&c, cpt, cpb, child_bound) {
+                kids[n] = (h, Sq1Token::Slash, c, LM_SLASH);
+                n += 1;
+            }
+        }
+        if lm != LM_TURN {
+            let ta = self.base.legal_rot[pt as usize];
+            let tb = self.base.legal_rot[pb as usize];
+            let mut am = ta;
+            while am != 0 {
+                let a = am.trailing_zeros();
+                am &= am - 1;
+                let mut bm = tb;
+                while bm != 0 {
+                    let b = bm.trailing_zeros();
+                    bm &= bm - 1;
+                    if a == 0 && b == 0 {
+                        continue;
+                    }
+                    let c = s.turned(a, b);
+                    let cpt = Sq1State::layer_pattern(c.top);
+                    let cpb = Sq1State::layer_pattern(c.bottom);
+                    if let Some(h) = self.h_le_wca(&c, cpt, cpb, child_bound) {
+                        kids[n] = (h, Sq1Token::Turn(ser_amt(a), ser_amt(b)), c, LM_TURN);
+                        n += 1;
+                    }
+                }
+            }
+        }
+        debug_assert!(n <= 145);
+        kids[..n].sort_unstable_by_key(|k| k.0);
+        for &(_, tok, c, clm) in &kids[..n] {
+            path.push(tok);
+            if let Some(r) = self.dfs(c, g + 1, bound, clm, memo, path) {
+                return Some(r);
+            }
+            path.pop();
+        }
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1163,6 +1828,92 @@ mod tests {
             mv.push((a, b));
         }
         (st, mv)
+    }
+
+    /// 并行 BFS builder 必须与单线程逐字节相等(用 c4 投影,12M,~快)。
+    /// 锁死后即可信赖 build_proj_wca_par 建 296M 角/棱 PDB。
+    #[test]
+    fn pdb_par_matches_serial() {
+        let base = Sq1Solver::shared();
+        let pj = |v: u64, f: &dyn Fn(u64) -> u64| -> u64 {
+            let mut o = 0u64;
+            for i in 0..12 {
+                let n = (v >> ((11 - i) * 4)) & 0xF;
+                o |= f(n) << ((11 - i) * 4);
+            }
+            o
+        };
+        let c4_map = |n: u64| if n & 1 == 1 { if n < 8 { n } else { 9 } } else { 0 };
+        let seed = Sq1State {
+            top: pj(SOLVED_TOP, &c4_map),
+            bottom: pj(SOLVED_BOTTOM, &c4_map),
+            ml: 0,
+        };
+        let size = SHAPE_COUNT * 1680 * 2;
+        let serial = Sq1WcaSolver::build_proj_wca(base, size, seed, |b, s| b.c4_idx(s));
+        let par = Sq1WcaSolver::build_proj_wca_par(base, size, seed, |b, s| b.c4_idx(s));
+        assert_eq!(serial.len(), par.len());
+        assert_eq!(serial, par, "parallel BFS must equal serial BFS byte-for-byte");
+    }
+
+    /// 大 PDB 效果报告(需 CUBE_TABLE_DIR 指向已建表,否则 h 回退 5 表)。非断言,打印。
+    /// 跑:`CUBE_TABLE_DIR=...\tables cargo test --release --lib wca_bigtable_report -- --nocapture`
+    #[test]
+    fn wca_bigtable_report() {
+        let w = Sq1WcaSolver::shared();
+        let data = match std::fs::read_to_string("../core/.tmp/sq1_wca/sample.txt") {
+            Ok(d) => d,
+            Err(_) => {
+                eprintln!("[bigtable] sample.txt missing, skip");
+                return;
+            }
+        };
+        let mut states: Vec<(u8, Sq1State)> = Vec::new();
+        for line in data.lines() {
+            let line = line.trim();
+            if line.is_empty() {
+                continue;
+            }
+            let scr = line.splitn(2, ',').nth(1).unwrap_or("");
+            if let Ok(st) = state_from_scramble(scr) {
+                if st.slash_legal() {
+                    states.push((w.h(&st), st));
+                }
+            }
+        }
+        let n = states.len();
+        let mut hist = [0u32; 32];
+        let (mut sum, mut hmax) = (0u64, 0u8);
+        for (h, _) in &states {
+            hist[*h as usize] += 1;
+            sum += *h as u64;
+            hmax = hmax.max(*h);
+        }
+        eprintln!(
+            "[bigtable] n={} mean_h={:.2} max_h={}  (旧 5 表基线: mean 14.82 max 18)",
+            n,
+            sum as f64 / n as f64,
+            hmax
+        );
+        for (v, &c) in hist.iter().enumerate() {
+            if c > 0 {
+                eprintln!("  h={:2}: {:5} ({:.1}%)", v, c, 100.0 * c as f64 / n as f64);
+            }
+        }
+        // 精确解最易的 5 个态(快),给真 gap + 解时 + 正确性。
+        states.sort_by_key(|(h, _)| *h);
+        eprintln!("--- exact solve (5 lowest-h, tractable) ---");
+        for (h, st) in states.iter().take(5) {
+            let t0 = std::time::Instant::now();
+            let opt = w.solve_wca(st);
+            eprintln!(
+                "  h={} opt={} gap={} {:.3}s",
+                h,
+                opt,
+                opt as i32 - *h as i32,
+                t0.elapsed().as_secs_f64()
+            );
+        }
     }
 
     // ---------- 独立 oracle:朴素 [u8;24] 实现(与位打包主实现零共享) ----------
@@ -1518,5 +2269,301 @@ mod tests {
         assert_eq!((e4b_reach, e4b_max), (12358080, 9));
         assert_eq!((cs_reach, cs_max), (80640, 7));
         assert_eq!((es_reach, es_max), (80640, 7));
+    }
+
+    // ======================= WCA 12c4 度量精确求解器 =======================
+
+    /// 暴力 WCA-BFS oracle:从 solved 起 raw 图 BFS(turn 到合法对位 / slash,均 1 步)。
+    /// 返回 (态→精确 WCA 距离, 各深度态数)。**独立于求解器内部**(用 slash_legal 全枚举
+    /// 144 对位,不碰 legal_rot / 投影表),作正确性金标准。
+    fn wca_oracle_bfs(max_d: u32) -> (HashMap<(u64, u64, u8), u32>, Vec<usize>) {
+        let key = |s: &Sq1State| (s.top, s.bottom, s.ml);
+        let mut dist: HashMap<(u64, u64, u8), u32> = HashMap::new();
+        dist.insert(key(&Sq1State::SOLVED), 0);
+        let mut frontier = vec![Sq1State::SOLVED];
+        let mut counts = vec![1usize];
+        for d in 1..=max_d {
+            let mut next = Vec::new();
+            for z in &frontier {
+                let mut push = |c: Sq1State, next: &mut Vec<Sq1State>| {
+                    if !dist.contains_key(&key(&c)) {
+                        dist.insert(key(&c), d);
+                        next.push(c);
+                    }
+                };
+                if z.slash_legal() {
+                    push(z.slashed(), &mut next);
+                }
+                for a in 0..12u32 {
+                    for b in 0..12u32 {
+                        if a == 0 && b == 0 {
+                            continue;
+                        }
+                        let c = z.turned(a, b);
+                        if c.slash_legal() {
+                            push(c, &mut next);
+                        }
+                    }
+                }
+            }
+            counts.push(next.len());
+            frontier = next;
+        }
+        (dist, counts)
+    }
+
+    /// WCA 求解器逐态等于独立 oracle 的精确 BFS 距离(== 证明最优)。
+    #[test]
+    fn wca_matches_oracle() {
+        let w = Sq1WcaSolver::shared();
+        let (dist, counts) = wca_oracle_bfs(4);
+        eprintln!("WCA exact-state depth counts 0..=4: {:?}", counts);
+        let items: Vec<(&(u64, u64, u8), &u32)> = dist.iter().collect();
+        let stride = (items.len() / 40_000).max(1); // 上限 ~4 万次求解
+        let mut checked = 0usize;
+        for (i, (&(top, bottom, ml), &d)) in items.iter().enumerate() {
+            if i % stride != 0 {
+                continue;
+            }
+            let st = Sq1State { top, bottom, ml };
+            assert_eq!(
+                w.solve_wca(&st),
+                d,
+                "WCA mismatch ({:#014x},{:#014x},{}) oracle={}",
+                top,
+                bottom,
+                ml,
+                d
+            );
+            checked += 1;
+        }
+        eprintln!("WCA oracle cross-check: {} states (stride {})", checked, stride);
+    }
+
+    /// 表规模 / 可达 / 投影直径(回归锁;改表逻辑必须显式改这里)。
+    #[test]
+    fn wca_tables_baseline() {
+        let w = Sq1WcaSolver::shared();
+        assert_eq!(w.comb.len(), SHAPE_COUNT * 70 * 70 * 2);
+        assert_eq!(w.c4.len(), SHAPE_COUNT * 1680 * 2);
+        assert_eq!(w.e4.len(), SHAPE_COUNT * 1680 * 2);
+        assert_eq!(w.c4b.len(), SHAPE_COUNT * 1680 * 2);
+        assert_eq!(w.e4b.len(), SHAPE_COUNT * 1680 * 2);
+        let stats = |t: &[u8]| -> (usize, u8) {
+            let reach = t.iter().filter(|&&v| v != 255).count();
+            let mx = t.iter().filter(|&&v| v != 255).copied().max().unwrap();
+            (reach, mx)
+        };
+        for (name, t) in
+            [("comb", &w.comb), ("c4", &w.c4), ("e4", &w.e4), ("c4b", &w.c4b), ("e4b", &w.e4b)]
+        {
+            let (r, m) = stats(t);
+            eprintln!("WCA {:4} reach={} (len={}) max={}", name, r, t.len(), m);
+        }
+        // 全空间可达(无 255):投影态全覆盖。
+        assert!(w.comb.iter().all(|&v| v != 255));
+        assert!(w.c4.iter().all(|&v| v != 255));
+    }
+
+    /// 区间 + 还原 + 近最优交叉:13 ≤ twist ≤ WCA ≤ 2·twist+1 ≤ 27,解 replay 回精确 SOLVED,
+    /// token 数 = WCA cost,且 WCA-opt ≤ cstimer 双阶段近最优 WCA(上界一致性)。
+    #[test]
+    fn wca_bracket_replay_and_near_opt_cross() {
+        let w = Sq1WcaSolver::shared();
+        let exact = Sq1Solver::shared();
+        for seed in 0..300u64 {
+            let tw = 2 + (seed as usize % 8); // 2..=9 刀,twist 精确秒解
+            let (st, _) = random_walk(40_000 + seed, tw);
+            let (wca, sol) = w.solve_with_solution(&st);
+            let twist = exact.solve_one(&st);
+            assert!(twist <= wca, "twist {} > wca {}, seed={}", twist, wca, seed);
+            assert!(wca <= 2 * twist + 1, "wca {} > 2*twist+1={}, seed={}", wca, 2 * twist + 1, seed);
+            assert!(wca <= 27, "wca {} > 27, seed={}", wca, seed);
+            assert_eq!(sol.len() as u32, wca, "token count = wca, seed={}", seed);
+            let mut r = st;
+            for t in &sol {
+                r.apply(*t).unwrap();
+            }
+            assert_eq!(
+                (r.top, r.bottom, r.ml),
+                (SOLVED_TOP, SOLVED_BOTTOM, 0),
+                "replay to exact SOLVED, seed={}",
+                seed
+            );
+        }
+        // 81 真实 WCA 打乱(深态):WCA-opt ≤ 近最优 WCA、≤ 2·near_twist+1、≤27、replay。
+        let txt = include_str!("../test_data/sq1_scrambles.txt");
+        let mut n = 0;
+        let mut sum = 0u32;
+        let mut mx = 0u32;
+        for line in txt.lines() {
+            let line = line.trim();
+            if line.is_empty() {
+                continue;
+            }
+            let (id, scr) = line.split_once(',').unwrap();
+            let st = state_from_scramble(scr).unwrap();
+            let (wca, sol) = w.solve_with_solution(&st);
+            let near = crate::sq1_twophase::solve_wca(&st);
+            let near_tw = crate::sq1_twophase::solve_twist(&st);
+            assert!(wca <= near, "id={} wca-opt {} > near {}", id, wca, near);
+            assert!(wca <= 2 * near_tw + 1, "id={} wca {} > 2*near_tw+1", id, wca);
+            assert!(wca <= 27, "id={} wca {} > 27", id, wca);
+            assert_eq!(sol.len() as u32, wca);
+            let mut r = st;
+            for t in &sol {
+                r.apply(*t).unwrap();
+            }
+            assert_eq!((r.top, r.bottom, r.ml), (SOLVED_TOP, SOLVED_BOTTOM, 0), "id={} replay", id);
+            sum += wca;
+            mx = mx.max(wca);
+            n += 1;
+        }
+        assert_eq!(n, 81);
+        eprintln!("WCA-opt on 81 real scrambles: mean={:.2} max={}", sum as f64 / 81.0, mx);
+    }
+
+    /// 诊断:逐步打印 seed=63 的解,定位 replay 偏离点。
+    #[test]
+    fn wca_debug_replay_trace() {
+        let w = Sq1WcaSolver::shared();
+        let (st, _) = random_walk(40_000 + 63, 9);
+        let (wca, sol) = w.solve_with_solution(&st);
+        eprintln!("scramble: top={:#x} bottom={:#x} ml={} square={}", st.top, st.bottom, st.ml, st.is_square_shape());
+        eprintln!("wca={} sol={:?}", wca, sol);
+        let mut r = st;
+        for (i, t) in sol.iter().enumerate() {
+            let before_sq = r.is_square_shape();
+            r.apply(*t).unwrap();
+            eprintln!(
+                "  [{:2}] {:?}: top={:#x} bottom={:#x} ml={} sq={} (was_sq={})",
+                i, t, r.top, r.bottom, r.ml, r.is_square_shape(), before_sq
+            );
+        }
+        eprintln!(
+            "final: top={:#x} bottom={:#x} ml={} | SOLVED top={:#x} bottom={:#x}",
+            r.top, r.bottom, r.ml, SOLVED_TOP, SOLVED_BOTTOM
+        );
+        assert_eq!((r.top, r.bottom, r.ml), (SOLVED_TOP, SOLVED_BOTTOM, 0));
+    }
+
+    /// 分析(瞬时,不做精确解):phase-1 启发式 `h` vs 近最优 WCA 上界的 gap 分布。
+    /// gap = near - h ≥ actual - h,是真实启发式松弛的上界。gap 大 = IDA* 深态炸点。
+    /// 读 ../core/.tmp/sq1_wca/sample.txt(`id,scramble`);缺文件则 skip。
+    #[test]
+    fn wca_heuristic_gap_analysis() {
+        let path = "../core/.tmp/sq1_wca/sample.txt";
+        let data = match std::fs::read_to_string(path) {
+            Ok(d) => d,
+            Err(_) => {
+                eprintln!("[skip] corpus not found: {}", path);
+                return;
+            }
+        };
+        let w = Sq1WcaSolver::shared();
+        let (mut n, mut sum_h, mut sum_near, mut sum_gap) = (0u64, 0u64, 0u64, 0u64);
+        let mut gap_hist = [0u64; 32];
+        let mut near_hist = [0u64; 32];
+        let mut h_hist = [0u64; 32];
+        let mut max_near = 0u32;
+        for line in data.lines() {
+            let line = line.trim();
+            if line.is_empty() {
+                continue;
+            }
+            let scr = line.split_once(',').map(|(_, s)| s).unwrap_or(line);
+            let st = match state_from_scramble(scr) {
+                Ok(s) => s,
+                Err(_) => continue,
+            };
+            let h = w.h(&st) as u32;
+            let near = crate::sq1_twophase::solve_wca(&st);
+            let gap = near.saturating_sub(h);
+            n += 1;
+            sum_h += h as u64;
+            sum_near += near as u64;
+            sum_gap += gap as u64;
+            gap_hist[(gap as usize).min(31)] += 1;
+            near_hist[(near as usize).min(31)] += 1;
+            h_hist[(h as usize).min(31)] += 1;
+            max_near = max_near.max(near);
+        }
+        if n == 0 {
+            eprintln!("[skip] no scrambles parsed");
+            return;
+        }
+        let pct = |c: u64| 100.0 * c as f64 / n as f64;
+        eprintln!("=== heuristic gap analysis on {} real WCA scrambles ===", n);
+        eprintln!(
+            "mean h={:.2}  mean near-opt WCA={:.2}  mean gap(near-h)={:.2}  max near={}",
+            sum_h as f64 / n as f64,
+            sum_near as f64 / n as f64,
+            sum_gap as f64 / n as f64,
+            max_near
+        );
+        eprintln!("h (phase-1 lower bound) distribution:");
+        for (i, &c) in h_hist.iter().enumerate() {
+            if c > 0 {
+                eprintln!("  h={:2}: {:6} ({:.1}%)", i, c, pct(c));
+            }
+        }
+        eprintln!("near-opt WCA (upper bound) distribution:");
+        for (i, &c) in near_hist.iter().enumerate() {
+            if c > 0 {
+                eprintln!("  near={:2}: {:6} ({:.1}%)", i, c, pct(c));
+            }
+        }
+        eprintln!("gap (near - h) distribution  [b^gap ~ IDA* blowup per state]:");
+        for (i, &c) in gap_hist.iter().enumerate() {
+            if c > 0 {
+                eprintln!("  gap={:2}: {:6} ({:.1}%)", i, c, pct(c));
+            }
+        }
+    }
+
+    /// 校准:挑 sample 里 h 最小(精确解最快)的 1 条,精确求解,
+    /// 打印 真实最优 / h / 近最优,得真实 gap(actual-h)与近最优松弛(near-actual)。
+    #[test]
+    #[ignore] // 手动:cargo test --release --lib -- --ignored --nocapture wca_calibrate_one
+    fn wca_calibrate_one() {
+        let path = "../core/.tmp/sq1_wca/sample.txt";
+        let data = std::fs::read_to_string(path).expect("corpus");
+        let w = Sq1WcaSolver::shared();
+        // 选 h 最接近目标(默认 15 = 均值,代表典型硬态)的 1 条。SQ1_CALIB_H 可覆盖。
+        let target: u32 = std::env::var("SQ1_CALIB_H").ok().and_then(|s| s.parse().ok()).unwrap_or(15);
+        let mut best: Option<(u32, String, Sq1State)> = None;
+        for line in data.lines() {
+            let line = line.trim();
+            if line.is_empty() {
+                continue;
+            }
+            let scr = line.split_once(',').map(|(_, s)| s).unwrap_or(line);
+            let st = match state_from_scramble(scr) {
+                Ok(s) => s,
+                Err(_) => continue,
+            };
+            let h = w.h(&st) as u32;
+            let d = h.abs_diff(target);
+            if best.as_ref().map_or(true, |b| d < b.0.abs_diff(target)) {
+                best = Some((h, scr.to_string(), st));
+            }
+        }
+        let (h, scr, st) = best.expect("some scramble");
+        let near = crate::sq1_twophase::solve_wca(&st);
+        let t0 = std::time::Instant::now();
+        let actual = w.solve_wca(&st);
+        let dt = t0.elapsed().as_secs_f64();
+        eprintln!("=== calibrate ONE (min-h) scramble ===");
+        eprintln!("scramble: {}", scr);
+        eprintln!(
+            "h(lower)={}  actual WCA optimal={}  near-opt(upper)={}",
+            h, actual, near
+        );
+        eprintln!(
+            "TRUE gap (actual-h) = {}    near-opt looseness (near-actual) = {}",
+            actual as i64 - h as i64,
+            near as i64 - actual as i64
+        );
+        eprintln!("exact solve time: {:.2}s", dt);
     }
 }
