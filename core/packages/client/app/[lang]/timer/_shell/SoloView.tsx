@@ -558,6 +558,18 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   useEffect(() => { consumeFacesRef.current = multiStage.consumeFromState; }, [multiStage.consumeFromState]);
   const bluetoothSubscribersRef = useRef<Set<(m: string, ts: number) => void>>(new Set());
 
+  const [macPrompt, setMacPrompt] = useState<{ deviceName: string; isWrongKey?: boolean } | null>(null);
+  const macResolverRef = useRef<((m: string | null) => void) | null>(null);
+  const requestMac = useCallback((deviceName: string, isWrongKey?: boolean) => new Promise<string | null>((resolve) => {
+    macResolverRef.current = resolve;
+    setMacPrompt({ deviceName, isWrongKey });
+  }), []);
+  const resolveMac = useCallback((mac: string | null) => {
+    macResolverRef.current?.(mac);
+    macResolverRef.current = null;
+    setMacPrompt(null);
+  }, []);
+
   const bluetoothCube = useBluetoothCube({
     onMove: (move: string, ts: number) => {
       const faces = bluetoothCubeRef.current?.getFaces();
@@ -569,6 +581,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     onSolved: () => {
       if (phaseSnapshotRef.current === 'running') timer.onPressDown();
     },
+    onNeedMac: requestMac,
   });
 
   useAutoReady({
@@ -1736,7 +1749,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         <BluetoothModal
           isZh={isZh}
           cube={bluetoothCube}
-          onClose={() => setBluetoothOpen(false)}
+          macPrompt={macPrompt}
+          onSubmitMac={(mac) => resolveMac(mac)}
+          onCancelMac={() => resolveMac(null)}
+          onClose={() => { if (macResolverRef.current) resolveMac(null); setBluetoothOpen(false); }}
           onConnect={async () => {
             try { await bluetoothCube.connect(); }
             catch (err) {

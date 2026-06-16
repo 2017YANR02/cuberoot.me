@@ -75,12 +75,37 @@ export interface SubsetSelection {
   selectOption: (id: string) => void;
 }
 
+// 把一个 subsetKey(如 'Y' / 'WY' / 'BGOR' / 'BGORWY')反推成初始 mode + 子选状态,
+// 供深链 / URL 还原(?colors=WY 等)。无 key 时退回传入的 initialMode + 各档默认。
+function deriveSubsetInit(
+  initialMode: ColorMode,
+  key?: string,
+): { mode: ColorMode; single: ColorLetter; dual: string; quad: string } {
+  const base = { mode: initialMode, single: 'Y' as ColorLetter, dual: 'WY', quad: 'BG' };
+  if (!key) return base;
+  const letters = key.split('').filter((c): c is ColorLetter => (COLOR_LETTERS as string[]).includes(c));
+  if (letters.length === 6) return { ...base, mode: 'cn' };
+  if (letters.length === 1) return { ...base, mode: 'single', single: letters[0] };
+  if (letters.length === 2) {
+    const pair = DUAL_PAIRS.find((p) => subsetKeyFromLetters(p.letters) === subsetKeyFromLetters(letters));
+    return { ...base, mode: 'dual', dual: pair?.key ?? 'WY' };
+  }
+  if (letters.length === 4) {
+    const missing = COLOR_LETTERS.filter((c) => !letters.includes(c));
+    const pair = DUAL_PAIRS.find((p) => subsetKeyFromLetters(p.letters) === subsetKeyFromLetters(missing));
+    return { ...base, mode: 'quad', quad: pair?.key ?? 'BG' };
+  }
+  return base;
+}
+
 // 模式 + 子选状态 → 当前 subsetKey / 颜色 / 可选项。两页各自 use 一份。
-export function useSubsetSelection(initialMode: ColorMode = 'cn'): SubsetSelection {
-  const [colorMode, setColorMode] = useState<ColorMode>(initialMode);
-  const [singleColor, setSingleColor] = useState<ColorLetter>('Y');
-  const [dualPairKey, setDualPairKey] = useState<string>('WY');
-  const [quadExcludedPairKey, setQuadExcludedPairKey] = useState<string>('BG');
+// initialSubsetKey:可选深链 key(只在首次挂载用于还原,之后由组件自身状态驱动)。
+export function useSubsetSelection(initialMode: ColorMode = 'cn', initialSubsetKey?: string): SubsetSelection {
+  const [init] = useState(() => deriveSubsetInit(initialMode, initialSubsetKey));
+  const [colorMode, setColorMode] = useState<ColorMode>(init.mode);
+  const [singleColor, setSingleColor] = useState<ColorLetter>(init.single);
+  const [dualPairKey, setDualPairKey] = useState<string>(init.dual);
+  const [quadExcludedPairKey, setQuadExcludedPairKey] = useState<string>(init.quad);
 
   return useMemo<SubsetSelection>(() => {
     let options: SubsetOption[];

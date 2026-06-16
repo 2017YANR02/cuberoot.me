@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useQueryState, parseAsString } from 'nuqs';
+import { useQueryState, parseAsString, parseAsStringEnum, parseAsBoolean } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -185,7 +185,11 @@ export default function ScrambleStatsPage() {
   const isZh = i18n.language.startsWith('zh');
   useDocumentTitle(PAGE_TITLE.zh, PAGE_TITLE.en);
 
-  const [tab, setTab] = useState<'difficulty' | 'length'>('difficulty');
+  // 难度/长度 大视图切换进 URL(?tab),push 进历史(后退能返回)。
+  const [tab, setTab] = useQueryState(
+    'tab',
+    parseAsStringEnum<'difficulty' | 'length'>(['difficulty', 'length']).withDefault('difficulty').withOptions({ history: 'push' }),
+  );
   const [data, setData] = useState<DistributionJson | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Shared WCA-event selector (above the tabs) — drives both the length tab and
@@ -198,18 +202,25 @@ export default function ScrambleStatsPage() {
     'event',
     parseAsString.withDefault('333').withOptions({ history: 'replace' }),
   );
-  const [merged, setMerged] = useState(true);
+  // 合并同打乱项目(?merge):filter 性质 → replace,不堆历史。
+  const [merged, setMerged] = useQueryState('merge', parseAsBoolean.withDefault(true));
   const [lengthsData, setLengthsData] = useState<EventLengthsJson | null>(null);
   const [lengthsError, setLengthsError] = useState<string | null>(null);
   // Difficulty data source (top-level set: wca / xcross_2_col_10f). The actually
   // displayed set additionally routes through the event selector: wca + 333oh →
   // per-event set 'wca_333oh'; non-wca datasets are synthetic (no event split).
-  const [dataset, setDataset] = useState<string>('wca');
-  const [variant, setVariant] = useState<VariantKey>('std');
-  const [stage, setStage] = useState<string>('cross');
-  const sel = useSubsetSelection('cn');
-  const [yMode, setYMode] = useState<YMode>('percent');
-  const [chartMode, setChartMode] = useState<ChartMode>('pdf');
+  // 数据集 / 方法(变体) / 阶段 全进 URL(?set / ?variant / ?stage),filter 性质 → replace。
+  const [dataset, setDataset] = useQueryState('set', parseAsString.withDefault('wca'));
+  const [variantRaw, setVariantRaw] = useQueryState('variant', parseAsString.withDefault('std'));
+  const variant = variantRaw as VariantKey;
+  const setVariant = setVariantRaw as unknown as (v: VariantKey) => void;
+  const [stage, setStage] = useQueryState('stage', parseAsString.withDefault('cross'));
+  // 底色子集进 URL(?colors):首次挂载从 URL 还原,之后 subsetKey 变化写回(filter → replace)。
+  const [colorsParam, setColorsParam] = useQueryState('colors', parseAsString);
+  const sel = useSubsetSelection('cn', colorsParam ?? undefined);
+  // 图表显示口径也进 URL:y 轴(百分比/数量,?y)、曲线(pdf/cdf,?chart)。
+  const [yMode, setYMode] = useQueryState('y', parseAsStringEnum<YMode>(['percent', 'count']).withDefault('percent'));
+  const [chartMode, setChartMode] = useQueryState('chart', parseAsStringEnum<ChartMode>(['pdf', 'cdf']).withDefault('pdf'));
   // 整解(stage '333')专属:HTM(默认,真实数据)/ QTM(占位,数据后续用 15G 表生成)。
   const [optMetric, setOptMetric] = useState<'htm' | 'qtm'>('htm');
   // 长度 tab 第二计步口径(钮在顶栏):3x3-family HTM/QTM、sq1 WCA/slash;sq1 默认 slash。
@@ -224,8 +235,11 @@ export default function ScrambleStatsPage() {
   const [exView, setExView] = useState<'orig' | 'opt'>('orig');
   // 「下载全部」可用阶段(std 变体全量语料 gz);manifest 缺失则不显示按钮。
   const [bundleStages, setBundleStages] = useState<string[] | null>(null);
-  // 视图:图表(默认)/ 首次出现时间线。难度 + 长度两 tab 共用同一开关。
-  const [viewMode, setViewMode] = useState<'chart' | 'timeline'>('chart');
+  // 视图:图表(默认)/ 首次出现时间线。难度 + 长度两 tab 共用;进 URL(?view),push 历史。
+  const [viewMode, setViewMode] = useQueryState(
+    'view',
+    parseAsStringEnum<'chart' | 'timeline'>(['chart', 'timeline']).withDefault('chart').withOptions({ history: 'push' }),
+  );
   const [faDiff, setFaDiff] = useState<FaDifficultyJson | null>(null);     // 难度首次出现(顶层合并池)
   const [faShards, setFaShards] = useState<Record<string, FaDifficultyShard | null>>({}); // per-event 分片缓存
   const [faLen, setFaLen] = useState<FaLengthJson | null>(null);           // 长度首次出现
@@ -236,6 +250,12 @@ export default function ScrambleStatsPage() {
   useEffect(() => {
     void loadFlagData().then((v) => { if (v !== flagVer) setFlagVer(v); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 底色子集 → 写回 ?colors(六色默认省略);URL 只在首次挂载用于还原(filter → replace)。
+  useEffect(() => {
+    void setColorsParam(sel.subsetKey === 'BGORWY' ? null : sel.subsetKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sel.subsetKey]);
 
   useEffect(() => {
     // v= bump:2026-06-14 333 整解最优注入真实产出(240 雏形 → 226,965 样本),防缓存旧 JSON
@@ -680,6 +700,16 @@ export default function ScrambleStatsPage() {
     <div className="scramble-stats-header">
       <SolveTabs puzzle={distPuzzle} mode="dist" />
       <div className="scramble-stats-event-bar">
+        {/* 项目/事件选择 — 分布模式下唯一的项目选择器(紧贴功能行,在分类标签之上) */}
+        <div className="scramble-stats-event-pick">
+          <WcaEventSelector
+            availableEvents={availableEvents}
+            selectedEvent={event}
+            onSelect={setEvent}
+            isZh={isZh}
+            onlyAvailable
+          />
+        </div>
         <div className="scramble-stats-tabrow">
           {tabsBar}
           {datasetToggle}
@@ -725,13 +755,6 @@ export default function ScrambleStatsPage() {
         )}
         {viewToggle}
         </div>
-        <WcaEventSelector
-          availableEvents={availableEvents}
-          selectedEvent={event}
-          onSelect={setEvent}
-          isZh={isZh}
-          onlyAvailable
-        />
       </div>
     </div>
   );

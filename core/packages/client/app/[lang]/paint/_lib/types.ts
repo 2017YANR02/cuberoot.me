@@ -136,6 +136,7 @@ export type Camera = { x: number; y: number; zoom: number };
 export interface PaintDoc {
   shapes: Record<string, Shape>;
   order: string[]; // z-order, bottom -> top
+  paper: string; // artboard background ("paper") color, hex
 }
 
 export const HANDLE_IDS: HandleId[] = [

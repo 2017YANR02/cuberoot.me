@@ -8,8 +8,8 @@
     --cmt-text-mute: #95938E;
     --cmt-border: #e5e5e5;
     --cmt-border-strong: #d4d4d4;
-    --cmt-accent: #C15F3C;
-    --cmt-accent-soft: rgba(193, 95, 60, 0.08);
+    --cmt-accent: var(--accent);
+    --cmt-accent-soft: color-mix(in srgb, var(--accent) 8%, transparent);
     --cmt-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -237,7 +237,7 @@
     gap: 6px;
 }
 
-.cmt-btn:hover { background: #a44e30; border-color: #a44e30; }
+.cmt-btn:hover { background: color-mix(in srgb, var(--accent) 85%, black); border-color: color-mix(in srgb, var(--accent) 85%, black); }
 
 .cmt-btn.cmt-btn-secondary {
     background: var(--cmt-surface);

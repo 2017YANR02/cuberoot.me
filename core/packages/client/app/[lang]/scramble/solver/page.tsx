@@ -19,6 +19,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Trash2, Upload, Download, Sparkles, X, Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -102,12 +103,46 @@ function ScrambleSolverPageInner() {
   useEffect(() => {
     setMounted(true);
     if (typeof navigator === 'undefined') return;
-    const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-      || navigator.maxTouchPoints > 1
-      || (typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches);
+    // Real mobile only. A Windows/desktop touchscreen reports maxTouchPoints>1 AND
+    // a coarse pointer, but it ALSO exposes a fine pointer + a large screen — it
+    // must NOT be treated as mobile (which would force opt1 + the scary OOM
+    // warning). Require a phone/tablet UA, OR a coarse-only pointer on a small
+    // screen. (2026-06-15 — fixes false "手机端" on desktop touch monitors.)
+    const uaMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    // iPadOS 13+ reports a desktop "Macintosh" UA and large iPads exceed the
+    // small-screen gate below — detect them by Mac UA + touch (Macs have no
+    // touchscreen, so maxTouchPoints>1 + Mac UA reliably means an iPad). They
+    // share phones' tight wasm memory, so treat as mobile (opt1 + warning).
+    const iPadOS = /Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1;
+    const mm = typeof window !== 'undefined' ? window.matchMedia?.bind(window) : undefined;
+    const coarseOnly = !!mm?.('(pointer: coarse)').matches && !mm?.('(pointer: fine)').matches;
+    const minEdge = Math.min(window.screen?.width ?? 9999, window.screen?.height ?? 9999);
+    const mobile = uaMobile || iPadOS || (coarseOnly && minEdge <= 820);
     setIsMobile(mobile);
     if (mobile) setSolverName('cube48opt1');
   }, []);
+
+  // COEP self-heal: soft-navigating into this page lands WITHOUT the
+  // Cross-Origin-Embedder-Policy header (Next doesn't re-fetch the document on a
+  // client-side navigation), so crossOriginIsolated is false, SharedArrayBuffer
+  // is unavailable, and the multithreaded cubeopt wasm worker throws deep inside
+  // an emscripten pthread (NOT on the main thread, so onerror never fires) and
+  // the page sticks on "忙" forever. One hard reload re-fetches the document WITH
+  // the COEP header (next.config headers()), restoring isolation. sessionStorage
+  // guards against a reload loop if the header is genuinely absent. (2026-06-15)
+  useEffect(() => {
+    if (!mounted || typeof window === 'undefined') return;
+    try {
+      if (window.crossOriginIsolated) { sessionStorage.removeItem('cubeopt.coiReload'); return; }
+      if (sessionStorage.getItem('cubeopt.coiReload')) return;
+      sessionStorage.setItem('cubeopt.coiReload', '1');
+    } catch {
+      // Sandboxed iframe / locked-down privacy mode: without a persistable guard
+      // a reload could loop, so bail and let the warning + cloud fallback show.
+      return;
+    }
+    window.location.reload();
+  }, [mounted]);
 
   const [solverInfo, setSolverInfo] = useState<SolverInfo | null>(null);
   const [readyState, setReadyState] = useState<ReadyState>('no-solver');
@@ -147,13 +182,20 @@ function ScrambleSolverPageInner() {
   const justGeneratedRef = useRef(false);
   const [showLogs, setShowLogs] = useState(false);
   type InputMode = 'paint' | 'random' | 'paste';
-  const [inputMode, setInputMode] = useState<InputMode>('paint');
+  // Input method in URL (?input) so the chosen tab is shareable + back/forward works.
+  const [inputMode, setInputMode] = useQueryState(
+    'input',
+    parseAsStringEnum<InputMode>(['paint', 'random', 'paste']).withDefault('paint'),
+  );
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Solve source: 'local' = download/generate the prun table in-browser (current
-  // behaviour), 'cloud' = POST scrambles to api.cuberoot.me which solves with the
+  // Solve source in URL (?via): 'local' = download/generate the prun table
+  // in-browser, 'cloud' = POST scrambles to api.cuberoot.me which solves with the
   // server-side opt6 table (no download, login-gated). Same optimal solution.
-  const [solveSource, setSolveSource] = useState<'local' | 'cloud'>('local');
+  const [solveSource, setSolveSource] = useQueryState(
+    'via',
+    parseAsStringEnum<'local' | 'cloud'>(['local', 'cloud']).withDefault('local'),
+  );
   const [cloudBusy, setCloudBusy] = useState(false);
   const [cloudStatus, setCloudStatus] = useState<string | null>(null);
   const cloudAbortRef = useRef<AbortController | null>(null);
@@ -175,20 +217,14 @@ function ScrambleSolverPageInner() {
       if (ad !== null) setAutoDownloadTable(ad === '1');
       const sl = localStorage.getItem('cubeopt.showLogs');
       if (sl !== null) setShowLogs(sl === '1');
-      const im = localStorage.getItem('cubeopt.inputMode');
-      if (im === 'random' || im === 'paste') setInputMode(im);
       const sa = localStorage.getItem('cubeopt.showAdvanced');
       if (sa !== null) setShowAdvanced(sa === '1');
-      const src = localStorage.getItem('cubeopt.solveSource');
-      if (src === 'cloud' || src === 'local') setSolveSource(src);
     } catch { /* corrupt entries */ }
   }, []);
   useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.showPreview', showScramblePreview ? '1' : '0'); } catch { /* */ } }, [mounted, showScramblePreview]);
   useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.autoDownload', autoDownloadTable ? '1' : '0'); } catch { /* */ } }, [mounted, autoDownloadTable]);
   useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.showLogs', showLogs ? '1' : '0'); } catch { /* */ } }, [mounted, showLogs]);
-  useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.inputMode', inputMode); } catch { /* */ } }, [mounted, inputMode]);
   useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.showAdvanced', showAdvanced ? '1' : '0'); } catch { /* */ } }, [mounted, showAdvanced]);
-  useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.solveSource', solveSource); } catch { /* */ } }, [mounted, solveSource]);
 
   const workerRef = useRef<Worker | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);

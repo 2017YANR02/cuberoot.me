@@ -35,6 +35,7 @@ import { wcaProxyRoutes } from './routes/wca_proxy.js';
 import { wcaResultWatchRoutes } from './routes/wca_result_watch.js';
 import { feedbackRoutes } from './routes/feedback.js';
 import { cubeoptSolveRoutes } from './routes/cubeopt_solve.js';
+import { paintRoutes } from './routes/paint.js';
 import { ensureDaemon as ensureCubeoptDaemon, isEnabled as cubeoptEnabled } from './cubeopt/daemon.js';
 import { startWcaPastResultsMonitor } from './monitors/wca_past_results.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
@@ -120,6 +121,7 @@ app.route('/v1', wcaProxyRoutes);
 app.route('/v1', wcaResultWatchRoutes);
 app.route('/v1', feedbackRoutes);
 app.route('/v1', cubeoptSolveRoutes);
+app.route('/v1', paintRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).

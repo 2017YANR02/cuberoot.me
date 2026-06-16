@@ -157,6 +157,19 @@ export default function WrHistoryChart({ rows, header, isZh: _isZh }: Props) {
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+    // NOTE: canvas 不能直接吃 var(--token)，从 wrap 的 computed style 解析当前调色板的 token
+    const cs = getComputedStyle(wrap);
+    const tok = (name: string, fallback: string) => {
+      const v = cs.getPropertyValue(name).trim();
+      return v || fallback;
+    };
+    const accent = tok('--accent', '#d97757');
+    const accentText = tok('--muted-foreground', 'rgba(240,235,227,0.45)');
+    const gridColor = `color-mix(in srgb, ${tok('--foreground', '#ededed')} 6%, transparent)`;
+    const areaTop = `color-mix(in srgb, ${accent} 18%, transparent)`;
+    const areaBottom = `color-mix(in srgb, ${accent} 1%, transparent)`;
+    const dotColor = `color-mix(in srgb, ${accent} 78%, white)`;
+
     let xMin = points[0].x, xMax = points[points.length - 1].x;
     let yMin = Infinity, yMax = -Infinity;
     for (const p of points) {
@@ -175,10 +188,10 @@ export default function WrHistoryChart({ rows, header, isZh: _isZh }: Props) {
     const yPx = (v: number) => PAD.top + (1 - (v - yMin) / (yMax - yMin)) * plotH;
 
     // Grid
-    ctx.strokeStyle = 'rgba(255, 255, 255,0.06)';
+    ctx.strokeStyle = gridColor;
     ctx.lineWidth = 1;
     const yStep = yRange > 60 ? 20 : yRange > 20 ? 10 : yRange > 8 ? 2 : yRange > 3 ? 1 : 0.5;
-    ctx.fillStyle = 'rgba(240,235,227,0.45)';
+    ctx.fillStyle = accentText;
     ctx.font = '10px system-ui, sans-serif';
     ctx.textAlign = 'right';
     for (let v = Math.ceil(yMin / yStep) * yStep; v <= yMax; v += yStep) {
@@ -204,13 +217,13 @@ export default function WrHistoryChart({ rows, header, isZh: _isZh }: Props) {
     ctx.lineTo(xPx(points[0].x), PAD.top + plotH);
     ctx.closePath();
     const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + plotH);
-    grad.addColorStop(0, 'rgba(217,119,87,0.18)');
-    grad.addColorStop(1, 'rgba(217,119,87,0.01)');
+    grad.addColorStop(0, areaTop);
+    grad.addColorStop(1, areaBottom);
     ctx.fillStyle = grad;
     ctx.fill();
 
     // Line
-    ctx.strokeStyle = '#d97757';
+    ctx.strokeStyle = accent;
     ctx.lineWidth = 1.8;
     ctx.lineJoin = 'round';
     ctx.beginPath();
@@ -219,7 +232,7 @@ export default function WrHistoryChart({ rows, header, isZh: _isZh }: Props) {
     ctx.stroke();
 
     // Data points
-    ctx.fillStyle = '#e8a27a';
+    ctx.fillStyle = dotColor;
     for (const p of points) {
       ctx.beginPath(); ctx.arc(xPx(p.x), yPx(p.y), 2.5, 0, Math.PI * 2); ctx.fill();
     }
@@ -278,7 +291,7 @@ export default function WrHistoryChart({ rows, header, isZh: _isZh }: Props) {
     html += sameGroup
       .map((pt: DataPoint) => {
         let line = pt.person || '';
-        if (pt.imp) line += ` <span style="color:#d97757">↓${pt.imp}</span>`;
+        if (pt.imp) line += ` <span style="color:var(--accent)">↓${pt.imp}</span>`;
         return line;
       })
       .filter(Boolean)
@@ -312,7 +325,7 @@ export default function WrHistoryChart({ rows, header, isZh: _isZh }: Props) {
         }}
       />
       <div ref={tipRef} className="wr-chart-tooltip" style={{
-        position: 'absolute', background: 'rgba(28,25,23,0.92)', color: '#ededed',
+        position: 'absolute', background: 'var(--popover)', color: 'var(--foreground)',
         padding: '4px 8px', borderRadius: 4, fontSize: 11, pointerEvents: 'none',
         display: 'none', whiteSpace: 'nowrap', zIndex: 10,
       }} />

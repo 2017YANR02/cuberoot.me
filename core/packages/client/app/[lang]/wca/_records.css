@@ -20,10 +20,10 @@
 /* show toggle */
 .records-show-toggle {
   display: inline-flex;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 6px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
 }
 .records-show-toggle button {
   padding: 6px 14px;
@@ -35,20 +35,20 @@
 }
 .records-show-toggle button:hover { color: var(--foreground); }
 .records-show-toggle button.active {
-  background: rgba(255, 255, 255, 0.10);
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
   color: var(--foreground);
 }
 
 /* RegionPicker 颜色变量覆盖 — 默认 light theme,这里改成 wca-stats 深色 */
 .records-page .region-picker {
-  --rp-bg: rgba(255, 255, 255, 0.04);
-  --rp-bg-hover: rgba(255, 255, 255, 0.06);
-  --rp-bg-active: rgba(255, 255, 255, 0.10);
+  --rp-bg: color-mix(in srgb, var(--foreground) 4%, transparent);
+  --rp-bg-hover: color-mix(in srgb, var(--foreground) 6%, transparent);
+  --rp-bg-active: color-mix(in srgb, var(--foreground) 10%, transparent);
   --rp-text: var(--foreground);
   --rp-text-sub: var(--faint-foreground);
-  --rp-border: rgba(255, 255, 255, 0.12);
-  --rp-border-hover: rgba(255, 255, 255, 0.25);
-  --rp-popup-bg: #1f1f1f;
+  --rp-border: color-mix(in srgb, var(--foreground) 12%, transparent);
+  --rp-border-hover: color-mix(in srgb, var(--foreground) 25%, transparent);
+  --rp-popup-bg: var(--card);
   --rp-popup-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
 }
 

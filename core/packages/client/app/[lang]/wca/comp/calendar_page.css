@@ -538,9 +538,9 @@
 }
 
 .calendar-page .day-number:hover {
-    background: var(--accent-soft, rgba(193, 95, 60, 0.08));
-    border-color: var(--accent, #C15F3C);
-    color: var(--accent, #C15F3C);
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 /* today: 实心红色圆,白色数字 — 取代之前 cell 外层 outline + 小框双重指示 */
@@ -597,7 +597,7 @@
     background: var(--accent);
     color: #FFF;
 }
-.calendar-page .event-bar.is-clash:hover { background: #AE5434; }
+.calendar-page .event-bar.is-clash:hover { background: color-mix(in srgb, var(--accent) 85%, black); }
 .calendar-page .event-bar.is-none-top {
     background: #EDECE8;
     color: var(--text-sub);

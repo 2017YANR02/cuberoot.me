@@ -7,18 +7,13 @@ import { useT } from '@/hooks/useT';
 import CubeShorthand from '@/components/CubeShorthand';
 import { usePaint } from '../_lib/store';
 import { shorthandToShapes } from '../_lib/shorthand-shapes';
+import { paperInk } from '../_lib/paper';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   viewport: { w: number; h: number };
 }
-
-const SIZES = [
-  { key: 'sm', px: 48 },
-  { key: 'md', px: 72 },
-  { key: 'lg', px: 100 },
-] as const;
 
 const LEGEND: { alg: string; zh: string; en: string }[] = [
   {
@@ -49,8 +44,9 @@ export default function ShorthandPanel({ open, onClose, viewport }: Props) {
   const insert = () => {
     const st = usePaint.getState();
     const { camera } = st;
+    const ink = paperInk(st.paper).ink;
     // Pre-measure to size the strip, then center it on the viewport.
-    const probe = shorthandToShapes(alg, { size, originX: 0, originY: 0, labels });
+    const probe = shorthandToShapes(alg, { size, originX: 0, originY: 0, labels, ink });
     if (!probe.shapes.length) {
       setBad(probe.badTokens);
       return;
@@ -64,7 +60,7 @@ export default function ShorthandPanel({ open, onClose, viewport }: Props) {
     const originX = centerX - stripW / 2;
     const originY = centerY - stripH / 2;
 
-    const { shapes, badTokens } = shorthandToShapes(alg, { size, originX, originY, labels });
+    const { shapes, badTokens } = shorthandToShapes(alg, { size, originX, originY, labels, ink });
     if (!shapes.length) {
       setBad(badTokens);
       return;
@@ -111,17 +107,18 @@ export default function ShorthandPanel({ open, onClose, viewport }: Props) {
         />
 
         <div className="paint-sh-row">
-          <div className="paint-sh-sizes" role="group" aria-label={tr({ zh: '大小', en: 'Size' })}>
-            {SIZES.map((s) => (
-              <button
-                key={s.key}
-                type="button"
-                className={`paint-btn paint-sh-size${size === s.px ? ' is-active' : ''}`}
-                onClick={() => setSize(s.px)}
-              >
-                {t({ sm: '小', md: '中', lg: '大' }[s.key], { sm: 'S', md: 'M', lg: 'L' }[s.key])}
-              </button>
-            ))}
+          <div className="paint-sh-size-ctl">
+            <span className="paint-sh-size-label">{t('大小', 'Size')}</span>
+            <input
+              className="paint-range"
+              type="range"
+              min={24}
+              max={200}
+              value={size}
+              onChange={(e) => setSize(Number(e.target.value))}
+              aria-label={tr({ zh: '大小', en: 'Size' })}
+            />
+            <span className="paint-range-val">{size}</span>
           </div>
           <label className="paint-sh-toggle">
             <input type="checkbox" checked={labels} onChange={(e) => setLabels(e.target.checked)} />

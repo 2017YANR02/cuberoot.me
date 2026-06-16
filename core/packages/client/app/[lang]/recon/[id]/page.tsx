@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import ReconDetailClient from './ReconDetailClient';
 import {
-  fetchReconForSeo, buildReconTitle, buildReconDescription, reconCanonical,
+  fetchReconForSeo, fetchSameScrambleForSeo, buildReconTitle, buildReconDescription, reconCanonical,
   isZhLang, buildVideoJsonLd, parseReconId, reconPathSeg,
 } from '@/lib/recon-seo';
 
@@ -60,6 +60,10 @@ export default async function Page({ params }: {
   const solve = await fetchReconForSeo(id);
   if (!solve) notFound();
 
+  // SSR the "same scramble" matches so they're in the initial HTML (instant
+  // paint); the client island still refreshes them in the background.
+  const sameScramble = await fetchSameScrambleForSeo(id);
+
   const videoJsonLd = buildVideoJsonLd(solve, lang);
 
   return (
@@ -74,7 +78,7 @@ export default async function Page({ params }: {
           JSON-LD + the client island (which SSRs the full visible recon, incl.
           its own <h1 className="detail-title">) are the indexable body. No hidden
           SEO shadow block — it duplicated content and emitted a second <h1>. */}
-      <ReconDetailClient initialSolve={solve} />
+      <ReconDetailClient initialSolve={solve} initialSameScramble={sameScramble} />
     </>
   );
 }

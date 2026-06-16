@@ -1094,8 +1094,8 @@
   --sv-text-mute: #737373;
   --sv-border: color-mix(in srgb, #f0ebe3 10%, transparent);
   --sv-border-strong: color-mix(in srgb, #f0ebe3 20%, transparent);
-  --sv-accent: #d97757;
-  --sv-accent-soft: color-mix(in srgb, #d97757 16%, transparent);
+  --sv-accent: var(--accent);
+  --sv-accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 .solver-modal-head {
   display: flex;

@@ -93,6 +93,22 @@ export async function fetchReconForSeo(id: string): Promise<ReconSolve | null> {
   }
 }
 
+/** Server-side fetch of the "same scramble" matches for a recon, so the detail
+ *  page can SSR them into the initial HTML (instant paint, no post-mount full
+ *  /list download). Returns [] on any failure. */
+export async function fetchSameScrambleForSeo(id: string): Promise<ReconSolve[]> {
+  try {
+    const res = await fetch(apiUrl(`/v1/recon/${encodeURIComponent(id)}/same-scramble`), {
+      next: { revalidate: REVALIDATE },
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as ReconSolve[];
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
 export function reconTitleParts(solve: ReconSolve, isZh: boolean): {
   person: string; event: string; time: string; comp: string;
 } {

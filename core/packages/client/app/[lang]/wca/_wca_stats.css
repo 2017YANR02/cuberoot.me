@@ -39,30 +39,30 @@
   margin: 0;
   font-size: 28px;
   font-weight: 700;
-  color: #f9f4ef;
+  color: var(--foreground);
 }
 
 .wca-stats-back {
-  color: #e8a27a;
+  color: var(--accent);
   text-decoration: none;
   font-size: 14px;
   transition: color 0.2s;
 }
 
 .wca-stats-back:hover {
-  color: #f0c0a0;
+  color: color-mix(in srgb, var(--accent) 85%, black);
 }
 
 .wca-stats-header h1 {
   margin: 12px 0 8px;
   font-size: 28px;
   font-weight: 700;
-  color: #f9f4ef;
+  color: var(--foreground);
 }
 
 .wca-stats-note {
   font-size: 14px;
-  color: #8a7a6a;
+  color: var(--muted-foreground);
   font-style: italic;
   line-height: 1.5;
   /* note 里的 \n 渲染为换行（如 wr_metric 第二行的 metric 术语表） */
@@ -103,7 +103,7 @@
   position: relative;
   width: 38px;
   height: 16px;
-  background: rgba(255, 255, 255, 0.15);
+  background: color-mix(in srgb, var(--foreground) 15%, transparent);
   border-radius: 8px;
   transition: background 0.25s;
   flex-shrink: 0;
@@ -116,13 +116,13 @@
   left: 2px;
   width: 20px;
   height: 12px;
-  background: white;
+  background: var(--foreground);
   border-radius: 6px;
   transition: all 0.25s;
 }
 
 input:checked + .wca-stats-toggle-pill {
-  background: #34c759;
+  background: var(--signal-success);
 }
 
 input:checked + .wca-stats-toggle-pill::after {
@@ -134,9 +134,9 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-tab,
 .wca-stats-metric-btn {
   padding: 8px 20px;
-  border: 1px solid #444444;
+  border: 1px solid var(--border-default);
   background: transparent;
-  color: #ececec;
+  color: var(--foreground);
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
@@ -165,22 +165,22 @@ input:checked + .wca-stats-toggle-pill::after {
 /* active 状态 */
 .wca-stats-tab.active,
 .wca-stats-metric-btn.active {
-  background: #1a6bc4;
-  border-color: #1a6bc4;
-  color: #f9f4ef;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-foreground);
 }
 
-/* panel-tab（排名/历史）与主 tab 统一同一蓝色 */
+/* panel-tab（排名/历史）与主 tab 统一同一强调色 */
 .wca-stats-panel-tab.active {
-  background: #1a6bc4;
-  border-color: #1a6bc4;
-  color: #f9f4ef;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-foreground);
 }
 
 /* hover 状态 */
 .wca-stats-tab:hover:not(.active):not(.disabled),
 .wca-stats-metric-btn:hover:not(.active):not(.disabled) {
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 /* ==========================================================================
@@ -193,10 +193,10 @@ input:checked + .wca-stats-toggle-pill::after {
   align-items: center;
   gap: 6px;
   padding: 7px 14px;
-  border: 1px solid #555555;
+  border: 1px solid var(--border-default);
   border-radius: 20px;
-  background: #2f2f2f;
-  color: #ececec;
+  background: var(--popover);
+  color: var(--foreground);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -208,7 +208,7 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-metric-pill:hover {
-  background: #3d3d3d;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 .wca-stats-metric-pill-arrow {
@@ -226,8 +226,8 @@ input:checked + .wca-stats-toggle-pill::after {
   top: calc(100% + 6px);
   left: 0;
   min-width: 160px;
-  background: #2f2f2f;
-  border: 1px solid #555555;
+  background: var(--popover);
+  border: 1px solid var(--border-default);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
   z-index: 200;
@@ -248,17 +248,17 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-metric-option:hover {
-  background: #3d3d3d;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 .wca-stats-metric-option.active {
-  color: #d97757;
+  color: var(--accent);
   font-weight: 600;
-  background: rgba(217, 119, 87, 0.08);
+  background: var(--accent-soft);
 }
 
 .wca-stats-metric-option.disabled {
-  color: #555555;
+  color: var(--faint-foreground);
   cursor: not-allowed;
 }
 
@@ -267,8 +267,8 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-metric-groups {
   margin: 12px 0;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   border-radius: 8px;
 }
 
@@ -283,7 +283,7 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-metric-group-label {
   font-size: 12px;
   font-weight: 600;
-  color: #8e8ea0;
+  color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 6px;
@@ -300,7 +300,7 @@ input:checked + .wca-stats-toggle-pill::after {
   border: 1px solid transparent;
   border-radius: 6px;
   background: transparent;
-  color: #cccccc;
+  color: var(--muted-foreground);
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -320,14 +320,14 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-metric-group-items .wca-stats-metric-btn:hover:not(.active):not(.disabled) {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
 }
 
 .wca-stats-metric-group-items .wca-stats-metric-btn.active {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #ececec;
+  background: color-mix(in srgb, var(--foreground) 12%, transparent);
+  border-color: color-mix(in srgb, var(--foreground) 20%, transparent);
+  color: var(--foreground);
 }
 
 /* 工具栏 */
@@ -342,26 +342,26 @@ input:checked + .wca-stats-toggle-pill::after {
   flex: 1;
   max-width: 400px;
   padding: 8px 14px;
-  border: 1px solid #444444;
+  border: 1px solid var(--border-default);
   border-radius: 8px;
-  background: #2f2f2f;
-  color: #ececec;
+  background: var(--card);
+  color: var(--foreground);
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
 }
 
 .wca-stats-search:focus {
-  border-color: #8a7a6a888;
+  border-color: var(--accent);
 }
 
 .wca-stats-search::placeholder {
-  color: #6e6050;
+  color: var(--faint-foreground);
 }
 
 .wca-stats-count {
   font-size: 13px;
-  color: #8a7a6a;
+  color: var(--muted-foreground);
   white-space: nowrap;
 }
 
@@ -369,8 +369,8 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-table-wrapper {
   overflow-x: auto;
   border-radius: 12px;
-  border: 1px solid #444444;
-  background: #212121;
+  border: 1px solid var(--border-default);
+  background: var(--card);
   width: fit-content;
   max-width: 100%;
 
@@ -387,7 +387,7 @@ input:checked + .wca-stats-toggle-pill::after {
 
 /* hover 时 Firefox 显示半透明滚动条 */
 .wca-stats-table-wrapper:hover {
-  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  scrollbar-color: color-mix(in srgb, var(--foreground) 25%, transparent) transparent;
 }
 
 /* Webkit (Chrome / Edge / Safari) */
@@ -406,7 +406,7 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-table-wrapper:hover::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.25);
+  background: color-mix(in srgb, var(--foreground) 25%, transparent);
 }
 
 /* NOTE: 表格自适应内容宽度 */
@@ -423,40 +423,40 @@ input:checked + .wca-stats-toggle-pill::after {
 
 .wca-stats-table th {
   padding: 12px 16px;
-  background: #383838;
-  color: #8e8ea0;
+  background: var(--muted);
+  color: var(--muted-foreground);
   font-weight: 600;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 2px solid #444444;
+  border-bottom: 2px solid var(--border-strong);
   white-space: nowrap;
 }
 
 .wca-stats-table td {
   padding: 10px 16px;
-  border-bottom: 1px solid #333333;
+  border-bottom: 1px solid var(--border-default);
   white-space: nowrap;
 }
 
 /* 斑马纹 */
 .wca-stats-table tbody tr:nth-child(even) {
-  background: #292929;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
 }
 
 .wca-stats-table tbody tr:hover {
-  background: #3d3d3d;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 /* 链接 */
 .wca-stats-table a {
-  color: #e8a27a;
+  color: var(--accent);
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .wca-stats-table a:hover {
-  color: #f0c0a0;
+  color: color-mix(in srgb, var(--accent) 85%, black);
   text-decoration: underline;
 }
 
@@ -487,8 +487,8 @@ input:checked + .wca-stats-toggle-pill::after {
 .solve-row span {
   font-family: 'Roboto Mono', 'Courier New', monospace;
   font-size: 12px;
-  color: #cccccc;
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
   padding: 2px 6px;
   border-radius: 3px;
   text-align: center;
@@ -498,7 +498,7 @@ input:checked + .wca-stats-toggle-pill::after {
 .solve-details summary {
   cursor: pointer;
   font-size: 12px;
-  color: #8a7a6a888;
+  color: var(--faint-foreground);
   margin-bottom: 4px;
   user-select: none;
   list-style: none;
@@ -521,17 +521,17 @@ input:checked + .wca-stats-toggle-pill::after {
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  color: #8a7a6a;
+  color: var(--muted-foreground);
   font-size: 16px;
 }
 
 .wca-stats-error h2 {
-  color: #ff6b6b;
+  color: var(--destructive);
   margin-bottom: 8px;
 }
 
 .wca-stats-error a {
-  color: #e8a27a;
+  color: var(--accent);
   margin-top: 16px;
 }
 
@@ -551,8 +551,8 @@ input:checked + .wca-stats-toggle-pill::after {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #ececec;
-  background: #2f2f2f;
+  color: var(--foreground);
+  background: var(--secondary);
   border-radius: 8px;
   cursor: pointer;
   user-select: none;
@@ -560,13 +560,13 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-section-title:hover {
-  background: #383838;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 .wca-stats-section-count {
   font-size: 12px;
-  color: #8a7a6a;
-  background: #333;
+  color: var(--muted-foreground);
+  background: var(--muted);
   padding: 2px 8px;
   border-radius: 10px;
   margin-left: auto;
@@ -576,7 +576,7 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-chevron {
   display: inline-block;
   font-size: 10px;
-  color: #8a7a6a;
+  color: var(--muted-foreground);
   transition: transform 0.2s;
 }
 
@@ -591,21 +591,21 @@ input:checked + .wca-stats-toggle-pill::after {
   margin-top: 40px;
   padding: 40px 24px;
   text-align: center;
-  border: 1px dashed #444444;
+  border: 1px dashed var(--border-default);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
 }
 
 .wca-stats-empty-title {
   font-size: 18px;
   font-weight: 600;
-  color: #cccccc;
+  color: var(--foreground);
   margin-bottom: 6px;
 }
 
 .wca-stats-empty-hint {
   font-size: 13px;
-  color: #8a7a6a;
+  color: var(--muted-foreground);
   line-height: 1.6;
 }
 
@@ -1098,13 +1098,13 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-metric-btn.disabled {
   opacity: 0.4;
   cursor: not-allowed;
-  color: #6e6050;
+  color: var(--faint-foreground);
 }
 
 .wca-stats-tab.disabled {
   opacity: 0.4;
   cursor: not-allowed;
-  color: #6e6050;
+  color: var(--faint-foreground);
 }
 
 /* ==========================================================================
@@ -1121,11 +1121,11 @@ input:checked + .wca-stats-toggle-pill::after {
 .solve-list span {
   display: inline-block;
   padding: 2px 5px;
-  background: rgba(138, 180, 248, 0.10);
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
   border-radius: 3px;
   font-size: 12px;
   font-family: 'Roboto Mono', 'Consolas', monospace;
-  color: #c8d6e5;
+  color: var(--foreground);
   white-space: nowrap;
 }
 
@@ -1135,14 +1135,14 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .solve-details summary {
-  color: #e8a27a;
+  color: var(--accent);
   font-size: 13px;
   cursor: pointer;
   user-select: none;
 }
 
 .solve-details summary:hover {
-  color: #f0c0a0;
+  color: color-mix(in srgb, var(--accent) 85%, black);
 }
 
 .solve-details[open] .solve-list {
@@ -1162,13 +1162,13 @@ input:checked + .wca-stats-toggle-pill::after {
   width: 100%;
   display: block;
   border-radius: 6px;
-  background: #1f1f1f;
+  background: var(--card);
 }
 
 .wr-chart-tooltip {
   position: absolute;
-  background: rgba(0, 0, 0, 0.85);
-  color: #fff;
+  background: var(--popover);
+  color: var(--foreground);
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 11px;
@@ -1195,10 +1195,10 @@ input:checked + .wca-stats-toggle-pill::after {
   right: 20px;
   z-index: 1000;
   padding: 8px 16px;
-  border: 1px solid #555555;
+  border: 1px solid var(--border-default);
   border-radius: 20px;
-  background: #2f2f2f;
-  color: #ececec;
+  background: var(--popover);
+  color: var(--foreground);
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
@@ -1206,8 +1206,8 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 .wca-stats-lang-toggle:hover {
-  background: #3d3d3d;
-  border-color: #8a7a6a888;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  border-color: var(--accent);
 }
 
 /* ==========================================================================
