@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Loader2, CornerDownRight } from 'lucide-react';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchFeedbackThread, replyToFeedback, type FeedbackMessage } from '@/lib/feedback-api';
+import { refreshFeedbackUnread } from '@/lib/feedback-unread';
 import './feedback-conversation.css';
 
 const REPLY_MAX = 8000;
@@ -34,7 +35,7 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
   const load = useCallback(() => {
     setErr(null);
     fetchFeedbackThread(feedbackId)
-      .then((d) => setMessages(d.messages))
+      .then((d) => { setMessages(d.messages); refreshFeedbackUnread(); }) // 取阅已标记已读 → 同步桌宠角标
       .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
   }, [feedbackId]);
 
