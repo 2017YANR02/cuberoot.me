@@ -266,8 +266,8 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
           );
           drows = drows.concat(more);
         }
-      } else if (!hasFrom && !hasTo) {
-        // 冷门组合:LEAST 无索引 → 分区扫描随机(~100-300ms,可接受)。
+      } else if (!hasFrom && !hasTo && optFilter) {
+        // 最优 + 难度(较少用):optimal 作过滤需在 limit 前 join,保持整体 join 后随机。
         drows = await query<RandomRow>(
           `SELECT ${RANDOM_COLS}
              FROM wca_scramble_steps s
@@ -276,6 +276,21 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
              ${OPT_JOIN}
             WHERE s.event_id = ?${gmPrefilter} AND ${diffWhere} ${optFilter}
             ORDER BY random() LIMIT ?`,
+          [event, count],
+        );
+      } else if (!hasFrom && !hasTo) {
+        // 子集底色冷路径:先在 steps 表筛 + 随机 + limit count,再 join 取文本/比赛名/最优 —— 只 join
+        // count 行。否则对全候选集(中等步数 bin 可达上万行)做 6 列自然键 join 会慢到秒级(实测某
+        // 三步 bin 9.6s);先 limit 后 join 把同一查询降到 ~0.5s(EXPLAIN 验证)。
+        drows = await query<RandomRow>(
+          `SELECT ${RANDOM_COLS}
+             FROM (SELECT competition_id, event_id, round_type_id, group_id, is_extra, scramble_num
+                     FROM wca_scramble_steps s
+                    WHERE s.event_id = ?${gmPrefilter} AND ${diffWhere}
+                    ORDER BY random() LIMIT ?) s
+             ${STEPS_WS_JOIN}
+             LEFT JOIN wca_competitions c ON c.id = s.competition_id
+             ${OPT_JOIN}`,
           [event, count],
         );
       } else {
