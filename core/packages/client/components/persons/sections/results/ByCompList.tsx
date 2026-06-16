@@ -64,7 +64,10 @@ interface Props {
 export default function ByCompList({ wcaId, personName, personCountry, results, comps, reconLookup, isZh, editMode, onToggleEditMode }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   const { map: changeMap, refresh: refreshChanges } = useRowChangeMap(wcaId);
-  const admin = useAuthStore((s) => isAdminWcaId(s.user?.wcaId));
+  const myWcaId = useAuthStore((s) => s.user?.wcaId);
+  const admin = isAdminWcaId(myWcaId);
+  const penaltyOnly = !admin && !!myWcaId && myWcaId === wcaId;  // 本人(非管理员):只能标 +2
+  const canEdit = admin || penaltyOnly;
   const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -140,9 +143,9 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
 
   return (
     <div className="wp-bycomp">
-      {admin && onToggleEditMode && (
+      {canEdit && onToggleEditMode && (
         <div className="wp-section-h-row wp-section-h-row-bare">
-          <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} />
+          <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} penaltyOnly={penaltyOnly} />
         </div>
       )}
       {grouped.map(({ comp, rows }) => {
@@ -273,6 +276,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                             reconLookup={reconLookup}
                             isZh={isZh}
                             admin={admin}
+                            penaltyOnly={penaltyOnly}
                             editMode={editMode}
                             personId={wcaId}
                             personName={personName ?? ''}
