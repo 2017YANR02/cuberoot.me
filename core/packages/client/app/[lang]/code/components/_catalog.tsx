@@ -375,4 +375,11 @@ export const CATALOG: ComponentEntry[] = [
     zh: 'mallard 式 FMC 分步还原链浏览器(EO→DR→HTR→FR→收尾)。Rust→WASM 链式求解,逐阶段轴 / 步数窗口 / 排除控制 + 单个共享 3D 播放器。需 WASM 求解器池,/scramble/analyzer 底部在用。',
     en: 'Mallard-style FMC step-chain explorer (EO→DR→HTR→FR→Finish). Rust→WASM chained solving with per-stage axis / length-window / exclude controls and one shared 3D player. Needs the WASM solver pool; mounted at the bottom of /scramble/analyzer.',
   },
+  {
+    name: 'AttemptsList',
+    import: 'components/persons/sections/results/AttemptsList.tsx',
+    category: 'more',
+    zh: 'WCA 成绩的「详细成绩」单元(选手页 ByCompList / ByEventView 与复盘页同构)。每把右对齐 + ao5 去括号占位 + 跨行同列对齐(布局走共享 wca-results/attempts-grid.css)。已复盘的把点击跳复盘,管理员编辑模式行内改值,没复盘的把跳 /recon/submit 预填。需 reconLookup + 选手 / 比赛上下文。',
+    en: 'The WCA "Attempts" cell (shared by the person page ByCompList / ByEventView and the recon page). Right-aligned solves + ao5 bracket placeholders + cross-row column alignment (layout from the shared wca-results/attempts-grid.css). A reconstructed solve links to its recon, admin edit-mode edits inline, a no-recon solve links to /recon/submit prefilled. Needs reconLookup + person / comp context.',
+  },
 ];
