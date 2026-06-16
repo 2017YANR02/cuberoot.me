@@ -18,9 +18,10 @@ import { AttemptsList } from './AttemptsList';
 import { EditModeToggle } from './EditModeToggle';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
-import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty } from '@/lib/result-watch-api';
+import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, splitChainByStatus } from '@/lib/result-watch-api';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
 import { ResultChangeChain } from './ChangedResultValue';
+import { PendingProposals } from './PendingProposals';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthStore } from '@/lib/auth-store';
@@ -66,8 +67,9 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
   const { map: changeMap, refresh: refreshChanges } = useRowChangeMap(wcaId);
   const myWcaId = useAuthStore((s) => s.user?.wcaId);
   const admin = isAdminWcaId(myWcaId);
-  const penaltyOnly = !admin && !!myWcaId && myWcaId === wcaId;  // 本人(非管理员):只能标 +2
-  const canEdit = admin || penaltyOnly;
+  const isOwner = !!myWcaId && myWcaId === wcaId;
+  const loggedIn = !!myWcaId;
+  const canEdit = loggedIn;  // 任何登录用户都能编辑 / 提议
   const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -145,7 +147,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
     <div className="wp-bycomp">
       {canEdit && onToggleEditMode && (
         <div className="wp-section-h-row wp-section-h-row-bare">
-          <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} penaltyOnly={penaltyOnly} />
+          <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} propose={!admin} />
         </div>
       )}
       {grouped.map(({ comp, rows }) => {
@@ -185,10 +187,11 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                     const averageRank = rank?.averageRank ?? null;
                     const showEvent = r.event_id !== lastEvent;
                     lastEvent = r.event_id;
-                    const chain = changeMap.get(rowChangeKey(comp.id, r.event_id, r.round_type_id));
+                    // 拆 status:approved 进有效值;pending 仅作「待审核」标记。
+                    const { approved: chain, pending } = splitChainByStatus(changeMap.get(rowChangeKey(comp.id, r.event_id, r.round_type_id)));
                     const oldBest = changeChainOldValues(chain, 'best');
                     const oldAvg = changeChainOldValues(chain, 'average');
-                    const hasChange = !!chain && chain.length > 0;
+                    const hasChange = chain.length > 0;
                     // 当前有效值 = WCA 值叠加变更链最新(行内改某次后即时反映)
                     const effBest = effectiveFieldValue(chain, 'best', r.best);
                     const effAvg = effectiveFieldValue(chain, 'average', r.average);
@@ -240,6 +243,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                               {t('直播', 'LIVE')}
                             </span>
                           )}
+                          <PendingProposals pending={pending} eventId={r.event_id} isAdmin={admin} onModerated={refreshChanges} />
                         </td>
                         <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
                           {r.pos > 0 ? r.pos : '—'}
@@ -276,7 +280,8 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                             reconLookup={reconLookup}
                             isZh={isZh}
                             admin={admin}
-                            penaltyOnly={penaltyOnly}
+                            isOwner={isOwner}
+                            canEdit={loggedIn}
                             editMode={editMode}
                             personId={wcaId}
                             personName={personName ?? ''}
@@ -297,14 +302,14 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                               recordAttemptOriginal({
                                 target: { wcaId, competitionId: comp.id, eventId: r.event_id, roundTypeId: r.round_type_id, resultId: r.id ?? null },
                                 currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
-                                index, originalValue, note, existingChain: chain,
+                                index, originalValue, note, existingChain: chain, propose: !admin,
                               }).then(refreshChanges)
                             }
                             onSetPenalty={(index, penaltyCs, note) =>
                               recordAttemptPenalty({
                                 target: { wcaId, competitionId: comp.id, eventId: r.event_id, roundTypeId: r.round_type_id, resultId: r.id ?? null },
                                 currentAttempts: effAttempts,
-                                index, penaltyCs, note, existingChain: chain,
+                                index, penaltyCs, note, existingChain: chain, propose: !admin && !isOwner,
                               }).then(refreshChanges)
                             }
                           />

@@ -9,7 +9,6 @@ import Link from '@/components/AppLink';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
 import { findReconForAttempt, buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
-import { canPenalizeAttempt } from '@cuberoot/shared/result-penalty';
 import { tr } from '@/i18n/tr';
 import { AttemptEditPopover } from './AttemptEditPopover';
 import { SolveValue } from './SolveValue';
@@ -23,8 +22,9 @@ export interface AttemptsListProps {
   reconLookup: Map<string, number> | null;
   isZh: boolean;
   admin?: boolean;
-  penaltyOnly?: boolean;         // 本人(非管理员):编辑模式下只能给可标罚时的 solve 标 +2。
-  editMode?: boolean;            // 「编辑模式」:开 → 无复盘 solve 点击=行内编辑;关 → 跳 submit。
+  isOwner?: boolean;             // 本人页面:罚时即时生效(其余改动仍需审核)。
+  canEdit?: boolean;            // 任何登录用户:可打开编辑/提议浮层。
+  editMode?: boolean;            // 「编辑模式」:开 → 无复盘 solve 点击=行内编辑/提议;关 → 跳 submit。
   // submit 预填上下文(无复盘 solve 点击跳 /recon/submit 用)
   personId: string;
   personName: string;
@@ -40,7 +40,7 @@ export interface AttemptsListProps {
 }
 
 export function AttemptsList({
-  attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, penaltyOnly, editMode,
+  attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, isOwner, canEdit, editMode,
   personId, personName, personCountry, compName, compCountry, compDate,
   attemptOlds, penalties, onEdit, onSetOriginal, onSetPenalty,
 }: AttemptsListProps) {
@@ -68,8 +68,8 @@ export function AttemptsList({
             </Link>
           );
         }
-        // 编辑模式下行内改这一次:管理员=全权;本人(penaltyOnly)=仅当该次可标罚时。
-        if (editMode && (admin || (penaltyOnly && canPenalizeAttempt(eventId, a)))) {
+        // 编辑模式下:任何登录用户都能行内改/提议这一次(管理员=即时;本人罚时=即时;其余=待审核)。
+        if (editMode && canEdit) {
           return (
             <AttemptEditPopover
               key={i}
@@ -79,7 +79,8 @@ export function AttemptsList({
               cls={cls}
               format={fmt}
               penalty={pen}
-              penaltyOnly={penaltyOnly && !admin}
+              isAdmin={admin}
+              isOwner={isOwner}
               onSetOriginal={(v, note) => onSetOriginal?.(i, v, note)}
               onCorrect={(v, note) => onEdit?.(i, v, note)}
               onSetPenalty={(cs, note) => onSetPenalty?.(i, cs, note)}
