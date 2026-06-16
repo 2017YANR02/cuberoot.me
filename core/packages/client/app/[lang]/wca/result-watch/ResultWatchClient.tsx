@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQueryState, parseAsString } from 'nuqs';
+import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { Flag } from '@/components/Flag';
 import { EventIcon } from '@/components/EventIcon';
@@ -15,12 +15,15 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { eventDisplayName } from '@/lib/wca-events';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
+import { useAuthStore } from '@/lib/auth-store';
+import { isAdminWcaId } from '@cuberoot/shared/admin';
 import {
-  fetchResultWatchStatus, fetchResultChanges, canonicalRound, formatChangeFieldValue,
+  fetchResultWatchStatus, fetchResultChanges, fetchPendingChanges, canonicalRound, formatChangeFieldValue,
+  approveResultChange, rejectResultChange,
   type ResultWatchStatus, type ResultChange,
 } from '@/lib/result-watch-api';
 import {
-  BellRing, RefreshCw, MinusCircle, PencilLine, Clock, ChevronDown, ShieldAlert,
+  BellRing, RefreshCw, MinusCircle, PencilLine, Clock, ChevronDown, ShieldAlert, Hourglass, Check, X,
 } from 'lucide-react';
 import './result-watch.css';
 
@@ -36,6 +39,12 @@ export default function ResultWatchClient() {
     'wcaId',
     parseAsString.withOptions({ history: 'replace', scroll: false }),
   );
+  const [view, setView] = useQueryState(
+    'view',
+    parseAsStringEnum(['all', 'pending']).withDefault('all').withOptions({ history: 'replace', scroll: false }),
+  );
+  const myWcaId = useAuthStore((s) => s.user?.wcaId);
+  const admin = isAdminWcaId(myWcaId);
 
   const [status, setStatus] = useState<ResultWatchStatus | null>(null);
   const [changes, setChanges] = useState<ResultChange[] | null>(null);
@@ -54,15 +63,17 @@ export default function ResultWatchClient() {
     const ac = new AbortController();
     setChanges(null);
     setErr(null);
-    fetchResultChanges(wcaId || null, 300, ac.signal)
-      .then((c) => setChanges(c))
+    const p = view === 'pending'
+      ? fetchPendingChanges(300, ac.signal)
+      : fetchResultChanges(wcaId || null, 300, ac.signal);
+    p.then((c) => setChanges(c))
       .catch((e) => {
         if (e.name === 'AbortError') return;
         setErr(String(e.message ?? e));
         setChanges([]); // 停 loading;错误信息单独展示(避免「加载中…」与错误并存)
       });
     return () => ac.abort();
-  }, [wcaId, reloadKey]);
+  }, [wcaId, view, reloadKey]);
 
   // 选手筛选下拉:有变更的排前,其余按名字。无计数(站规)。
   const personOptions = useMemo(() => {
@@ -111,6 +122,20 @@ export default function ResultWatchClient() {
           <strong>{status?.totalChanges ?? 0}</strong>
           {t(' 条变更', ' changes')}
         </span>
+        {(status?.pendingChanges ?? 0) > 0 && (
+          <>
+            <span className="rw-stat-sep" />
+            <button
+              type="button"
+              className={`rw-stat rw-stat-pending ${view === 'pending' ? 'is-active' : ''}`}
+              onClick={() => setView(view === 'pending' ? 'all' : 'pending')}
+              title={t('待管理员审核的提议', 'Proposals awaiting admin review')}
+            >
+              <Hourglass size={13} strokeWidth={1.75} />
+              <strong>{status?.pendingChanges}</strong>{t(' 待审核', ' pending')}
+            </button>
+          </>
+        )}
         {lastChecked && (
           <>
             <span className="rw-stat-sep" />
@@ -165,7 +190,7 @@ export default function ResultWatchClient() {
       {changes !== null && changes.length > 0 && (
         <div className="rw-feed">
           {changes.map((c) => (
-            <ChangeCard key={c.id} change={c} isZh={isZh} t={t} />
+            <ChangeCard key={c.id} change={c} isZh={isZh} t={t} admin={admin} onModerated={() => setReloadKey((k) => k + 1)} />
           ))}
         </div>
       )}
@@ -173,11 +198,25 @@ export default function ResultWatchClient() {
   );
 }
 
-function ChangeCard({ change: c, isZh, t }: {
+function ChangeCard({ change: c, isZh, t, admin, onModerated }: {
   change: ResultChange;
   isZh: boolean;
   t: (zh: string, en: string) => string;
+  admin: boolean;
+  onModerated: () => void;
 }) {
+  const [busy, setBusy] = useState(false);
+  const isPending = c.status === 'pending';
+  const moderate = async (action: 'approve' | 'reject') => {
+    setBusy(true);
+    try {
+      await (action === 'approve' ? approveResultChange : rejectResultChange)(c.id);
+      onModerated();
+    } catch (e) {
+      window.alert((e as Error).message);
+      setBusy(false);
+    }
+  };
   const removed = c.changeType === 'removed';
   const eventId = c.eventId || '333';
   const rl = canonicalRound(c.roundTypeId);
@@ -198,6 +237,12 @@ function ChangeCard({ change: c, isZh, t }: {
           {removed ? <MinusCircle size={13} strokeWidth={2} /> : <PencilLine size={13} strokeWidth={2} />}
           {removed ? t('成绩移除', 'Removed') : t('成绩修改', 'Modified')}
         </span>
+        {isPending && (
+          <span className="rw-badge rw-badge-pending">
+            <Hourglass size={12} strokeWidth={2} />
+            {t('待审核', 'Pending')}
+          </span>
+        )}
         <time className="rw-card-time" title={c.detectedAt}>{relTime(c.detectedAt, t)}</time>
       </div>
 
@@ -243,6 +288,25 @@ function ChangeCard({ change: c, isZh, t }: {
           </ul>
         )}
       </div>
+
+      {isPending && (
+        <div className="rw-card-actions">
+          <span className="rw-proposer">
+            {t('提议人 ', 'by ')}{c.createdBy ?? t('匿名', 'anon')}
+            {c.note ? ` · ${c.note}` : ''}
+          </span>
+          {admin && (
+            <span className="rw-mod-buttons">
+              <button type="button" className="rw-approve" disabled={busy} onClick={() => moderate('approve')}>
+                <Check size={13} strokeWidth={2.2} />{t('批准', 'Approve')}
+              </button>
+              <button type="button" className="rw-reject" disabled={busy} onClick={() => moderate('reject')}>
+                <X size={13} strokeWidth={2.2} />{t('驳回', 'Reject')}
+              </button>
+            </span>
+          )}
+        </div>
+      )}
     </article>
   );
 }

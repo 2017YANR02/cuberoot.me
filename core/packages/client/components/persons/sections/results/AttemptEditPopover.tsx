@@ -46,7 +46,7 @@ const cancelStyle: CSSProperties = {
 };
 
 export function AttemptEditPopover({
-  value, eventId, oldValues, cls, format, penalty, penaltyOnly, onSetOriginal, onCorrect, onSetPenalty,
+  value, eventId, oldValues, cls, format, penalty, isAdmin, isOwner, onSetOriginal, onCorrect, onSetPenalty,
 }: {
   value: number;
   eventId: string;
@@ -54,14 +54,15 @@ export function AttemptEditPopover({
   cls?: string;
   format: (v: number) => string;
   penalty?: number;
-  penaltyOnly?: boolean;   // 本人(非管理员):只能标 +2,隐藏「原始/改判」
+  isAdmin?: boolean;       // 管理员:任何改动即时生效
+  isOwner?: boolean;       // 本人页面:罚时即时生效(其余改动仍需审核)
   onSetOriginal: (v: number, note?: string) => Promise<void> | void;
   onCorrect: (v: number, note?: string) => Promise<void> | void;
   onSetPenalty?: (penaltyCs: number, note?: string) => Promise<void> | void;
 }) {
   const anchorRef = useRef<HTMLSpanElement>(null);
   const popRef = useRef<HTMLSpanElement>(null);
-  const initialMode = penaltyOnly ? 'penalty' : 'orig';
+  const initialMode = 'orig' as const;
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [orig, setOrig] = useState('');
@@ -77,6 +78,8 @@ export function AttemptEditPopover({
   // 罚时:每档 +2 秒,最多选到 base=值−罚时 仍 > 0 的档(再上限 8 档);FMC/MBLD/DNF 不适用。
   const maxPenaltyCount = maxPenaltySteps(eventId, value);
   const allowPenalty = canPenalizeAttempt(eventId, value);
+  // 该操作是否需管理员审核:管理员永远即时;本人罚时即时;其余(改别人、或任何原始/改判)= 待审核。
+  const pendingForMode = !isAdmin && !(mode === 'penalty' && isOwner);
 
   const reposition = useCallback(() => {
     const el = anchorRef.current;
@@ -147,25 +150,23 @@ export function AttemptEditPopover({
       <span
         ref={anchorRef}
         className={`${cls ?? ''} wp-att-editable`}
-        title={penaltyOnly
-          ? tr({ zh: '点击给这一次标 +2 罚时', en: 'Add a +2 penalty to this solve' })
-          : tr({ zh: '点击改这一次(原始 / 改判)', en: 'Edit this solve (original / corrected)' })}
+        title={isAdmin
+          ? tr({ zh: '点击改这一次(原始 / 改判 / 罚时)', en: 'Edit this solve (original / corrected / penalty)' })
+          : tr({ zh: '点击提议改这一次(需管理员审核)', en: 'Propose an edit (needs admin review)' })}
         onClick={(e) => { e.stopPropagation(); toggle(); }}
       >{olds}<SolveValue value={value} penalty={penalty} format={format} /></span>
       {open && pos && createPortal(
         <>
           <div style={backdropStyle} onClick={close} />
           <span ref={popRef} style={{ ...boxStyle, top: pos.top, left: pos.left }} role="dialog" onClick={(e) => e.stopPropagation()}>
-            {!penaltyOnly && (
-              <label style={rowStyle}>
-                <span style={rowLabelStyle}>{tr({ zh: '操作', en: 'Action' })}</span>
-                <select style={inputStyle} value={mode} onChange={(e) => setMode(e.target.value as 'orig' | 'next' | 'penalty')}>
-                  <option value="orig">{tr({ zh: '更正前(原始)', en: 'Original (before)' })}</option>
-                  <option value="next">{tr({ zh: '更正后(改判)', en: 'Corrected (after)' })}</option>
-                  {allowPenalty && <option value="penalty">{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</option>}
-                </select>
-              </label>
-            )}
+            <label style={rowStyle}>
+              <span style={rowLabelStyle}>{tr({ zh: '操作', en: 'Action' })}</span>
+              <select style={inputStyle} value={mode} onChange={(e) => setMode(e.target.value as 'orig' | 'next' | 'penalty')}>
+                <option value="orig">{tr({ zh: '更正前(原始)', en: 'Original (before)' })}</option>
+                <option value="next">{tr({ zh: '更正后(改判)', en: 'Corrected (after)' })}</option>
+                {allowPenalty && <option value="penalty">{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</option>}
+              </select>
+            </label>
             <span style={curStyle}>{tr({ zh: '当前', en: 'now' })} <SolveValue value={value} penalty={penalty} format={format} /></span>
             {mode === 'orig' && (
               <label style={rowStyle}>
@@ -211,9 +212,14 @@ export function AttemptEditPopover({
                 onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }}
               />
             </label>
+            {pendingForMode && (
+              <span style={{ fontSize: '0.68rem', color: 'var(--muted-foreground)', lineHeight: 1.4 }}>
+                {tr({ zh: '提交后需管理员审核才上线', en: 'Submitted for admin review before going live' })}
+              </span>
+            )}
             <span style={actionsStyle}>
               <button type="button" style={saveStyle} onClick={save} disabled={busy}>
-                {busy ? '…' : tr({ zh: '保存', en: 'Save' })}
+                {busy ? '…' : (pendingForMode ? tr({ zh: '提交', en: 'Submit' }) : tr({ zh: '保存', en: 'Save' }))}
               </button>
               <button type="button" style={cancelStyle} onClick={close} disabled={busy}>
                 {tr({ zh: '取消', en: 'Cancel' })}

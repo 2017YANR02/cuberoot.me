@@ -26,9 +26,10 @@ import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
 import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
 import { UnofficialMark } from '@/components/UnofficialMark';
-import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty } from '@/lib/result-watch-api';
+import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, splitChainByStatus } from '@/lib/result-watch-api';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
 import { ResultChangeChain } from './ChangedResultValue';
+import { PendingProposals } from './PendingProposals';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthStore } from '@/lib/auth-store';
@@ -60,9 +61,7 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
   const t = (zh: string, en: string) => (isZh ? zh : en);
   const myWcaId = useAuthStore((s) => s.user?.wcaId);
   const admin = isAdminWcaId(myWcaId);
-  const isOwner = !!myWcaId && myWcaId === profile.person.wca_id;
-  const penaltyOnly = !admin && isOwner;  // 本人(非管理员):只能标 +2
-  const canEdit = admin || isOwner;
+  const canEdit = !!myWcaId;  // 任何登录用户都能编辑 / 提议(管理员即时,其余待审核)
   const [view, setView] = useState<SubSub>('best');
   const [hist, setHist] = useState<PersonRankHistoryResponse | null>(null);
   const [histLoading, setHistLoading] = useState(false);
@@ -133,7 +132,7 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
 
       <div className="wp-section-h-row">
         <h3 className="wp-section-h">{t('全部成绩', 'All Results')}</h3>
-        {canEdit && onToggleEditMode && <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} penaltyOnly={penaltyOnly} />}
+        {canEdit && onToggleEditMode && <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} propose={!admin} />}
       </div>
       <EventRoundsList
         wcaId={profile.person.wca_id}
@@ -194,7 +193,8 @@ function EventRoundsList({
   const { map: changeMap, refresh: refreshChanges } = useRowChangeMap(wcaId);
   const myWcaId = useAuthStore((s) => s.user?.wcaId);
   const admin = isAdminWcaId(myWcaId);
-  const penaltyOnly = !admin && !!myWcaId && myWcaId === wcaId;  // 本人(非管理员):只能标 +2
+  const isOwner = !!myWcaId && myWcaId === wcaId;
+  const loggedIn = !!myWcaId;
   const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -280,10 +280,11 @@ function EventRoundsList({
             const averageRank = rank?.averageRank ?? null;
             const showComp = r.competition_id !== lastCompId;
             lastCompId = r.competition_id;
-            const chain = changeMap.get(rowChangeKey(r.competition_id, eventId, r.round_type_id));
+            // 拆 status:approved 进有效值显示;pending 仅作「待审核」标记(不改官方值)。
+            const { approved: chain, pending } = splitChainByStatus(changeMap.get(rowChangeKey(r.competition_id, eventId, r.round_type_id)));
             const oldBest = changeChainOldValues(chain, 'best');
             const oldAvg = changeChainOldValues(chain, 'average');
-            const hasChange = !!chain && chain.length > 0;
+            const hasChange = chain.length > 0;
             // 当前有效值 = WCA 值叠加变更链最新(行内改某次后即时反映)
             const effBest = effectiveFieldValue(chain, 'best', r.best);
             const effAvg = effectiveFieldValue(chain, 'average', effectiveAverage(r, eventId));
@@ -344,6 +345,7 @@ function EventRoundsList({
                       {t('直播', 'LIVE')}
                     </span>
                   )}
+                  <PendingProposals pending={pending} eventId={eventId} isAdmin={admin} onModerated={refreshChanges} />
                 </td>
                 <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
                   {r.pos > 0 ? r.pos : '—'}
@@ -380,7 +382,8 @@ function EventRoundsList({
                     reconLookup={reconLookup}
                     isZh={isZh}
                     admin={admin}
-                    penaltyOnly={penaltyOnly}
+                    isOwner={isOwner}
+                    canEdit={loggedIn}
                     editMode={editMode}
                     personId={wcaId}
                     personName={personName ?? ''}
@@ -401,14 +404,14 @@ function EventRoundsList({
                       recordAttemptOriginal({
                         target: { wcaId, competitionId: r.competition_id, eventId, roundTypeId: r.round_type_id, resultId: r.id ?? null },
                         currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
-                        index, originalValue, note, existingChain: chain,
+                        index, originalValue, note, existingChain: chain, propose: !admin,
                       }).then(refreshChanges)
                     }
                     onSetPenalty={(index, penaltyCs, note) =>
                       recordAttemptPenalty({
                         target: { wcaId, competitionId: r.competition_id, eventId, roundTypeId: r.round_type_id, resultId: r.id ?? null },
                         currentAttempts: effAttempts,
-                        index, penaltyCs, note, existingChain: chain,
+                        index, penaltyCs, note, existingChain: chain, propose: !admin && !isOwner,
                       }).then(refreshChanges)
                     }
                   />

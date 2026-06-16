@@ -8,11 +8,13 @@ import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { localizeCompName } from '@/lib/comp-localize';
 import {
-  fetchResultChanges, canonicalRound, formatChangeFieldValue,
+  fetchResultChanges, canonicalRound, formatChangeFieldValue, isApprovedChange,
   type ResultChange,
 } from '@/lib/result-watch-api';
 import { tr } from '@/i18n/tr';
 
+// 本面板=「已生效的成绩更正历史」,只收 approved。待审核(pending)提议另由成绩表行内
+// 「待审核」标记展示,绝不在此当作官方更正呈现(否则任何登录用户都能伪造一条假更正)。
 export default function PersonResultChanges({ wcaId, isZh }: { wcaId: string; isZh: boolean }) {
   const [changes, setChanges] = useState<ResultChange[] | null>(null);
 
@@ -21,7 +23,7 @@ export default function PersonResultChanges({ wcaId, isZh }: { wcaId: string; is
     let done = false;
     const ac = new AbortController();
     fetchResultChanges(wcaId, 100, ac.signal)
-      .then((c) => { if (!done) setChanges(c); })
+      .then((c) => { if (!done) setChanges(c.filter(isApprovedChange)); })
       .catch(() => { /* 端点未上线 / 无数据:视同无变更,整块隐藏 */ });
     return () => { done = true; ac.abort(); };
   }, [wcaId]);

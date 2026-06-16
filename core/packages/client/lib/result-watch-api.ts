@@ -19,6 +19,7 @@ export interface ResultWatchPerson {
 export interface ResultWatchStatus {
   enabled: boolean;
   totalChanges: number;
+  pendingChanges?: number;
   lastCheckedAt: string | null;
   persons: ResultWatchPerson[];
 }
@@ -65,6 +66,26 @@ export interface ResultChange {
   source: 'auto' | 'manual';
   createdBy: string | null;
   editedAt: string | null;
+  // approved=已生效(自动/管理员/本人+2);pending=待审核(任何登录用户的提议);rejected=已驳回(端点已过滤)。
+  status: 'approved' | 'pending' | 'rejected';
+}
+
+/** 一条变更是否已生效(进有效值)。缺省/approved 视为已生效;pending/rejected 不算。 */
+export function isApprovedChange(c: ResultChange): boolean {
+  return c.status !== 'pending' && c.status !== 'rejected';
+}
+
+/** 一行变更链按状态拆分:approved 进有效值显示;pending 仅作「待审核」标记。 */
+export function splitChainByStatus(
+  chain: ResultChange[] | undefined,
+): { approved: ResultChange[]; pending: ResultChange[] } {
+  const approved: ResultChange[] = [];
+  const pending: ResultChange[] = [];
+  for (const c of chain ?? []) {
+    if (c.status === 'pending') pending.push(c);
+    else if (c.status !== 'rejected') approved.push(c); // 缺省/approved 都视为已生效
+  }
+  return { approved, pending };
 }
 
 export async function fetchResultWatchStatus(signal?: AbortSignal): Promise<ResultWatchStatus> {
@@ -88,6 +109,17 @@ export async function fetchResultChanges(
     ...(noStore ? { cache: 'no-store' as RequestCache } : {}),
   });
   if (!res.ok) throw new Error(`result-watch/changes ${res.status}`);
+  const j = (await res.json()) as { changes?: ResultChange[] };
+  return j.changes ?? [];
+}
+
+/** 审核队列:拉全部待审核(pending)提议,管理员页用(no-store,要新鲜)。 */
+export async function fetchPendingChanges(limit = 300, signal?: AbortSignal): Promise<ResultChange[]> {
+  const res = await fetch(apiUrl(`/v1/wca/result-watch/changes?status=pending&limit=${limit}&_t=${Date.now()}`), {
+    signal,
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error(`pending changes ${res.status}`);
   const j = (await res.json()) as { changes?: ResultChange[] };
   return j.changes ?? [];
 }
@@ -153,6 +185,20 @@ export async function deleteResultChange(id: number): Promise<void> {
   });
   if (!res.ok) throw new Error(`delete change ${res.status}`);
 }
+
+// 管理员审核:批准(→ approved 上线)/ 驳回(→ rejected 隐藏)。
+async function moderateChange(id: number, action: 'approve' | 'reject'): Promise<void> {
+  const res = await fetch(apiUrl(`/v1/wca/result-watch/changes/${id}/${action}`), {
+    method: 'POST',
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    const j = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(j.error ?? `${action} ${res.status}`);
+  }
+}
+export const approveResultChange = (id: number) => moderateChange(id, 'approve');
+export const rejectResultChange = (id: number) => moderateChange(id, 'reject');
 
 /**
  * 人类输入 → 厘秒(WCA 内部编码)。支持 DNF/DNS、[mm:]ss[.cc]、333fm 步数。
@@ -253,9 +299,8 @@ export function changeChainOldValues(
   changes: ResultChange[] | undefined,
   field: 'best' | 'average',
 ): number[] {
-  if (!changes) return [];
   const out: number[] = [];
-  for (const c of changes) {
+  for (const c of (changes ?? []).filter(isApprovedChange)) {
     if (c.changeType !== 'modified') continue;
     const f = (c.fields ?? []).find((x) => x.field === field);
     if (f && f.old != null) out.push(Number(f.old));
@@ -271,11 +316,10 @@ export function effectiveFieldValue(
   field: 'best' | 'average',
   fallback: number,
 ): number {
-  if (changes) {
-    for (let i = changes.length - 1; i >= 0; i--) {
-      const f = (changes[i].fields ?? []).find((x) => x.field === field);
-      if (f && f.new != null && !Array.isArray(f.new)) return Number(f.new);
-    }
+  const approved = (changes ?? []).filter(isApprovedChange);
+  for (let i = approved.length - 1; i >= 0; i--) {
+    const f = (approved[i].fields ?? []).find((x) => x.field === field);
+    if (f && f.new != null && !Array.isArray(f.new)) return Number(f.new);
   }
   return fallback;
 }
@@ -285,11 +329,10 @@ export function effectiveAttempts(
   changes: ResultChange[] | undefined,
   fallback: number[],
 ): number[] {
-  if (changes) {
-    for (let i = changes.length - 1; i >= 0; i--) {
-      const f = (changes[i].fields ?? []).find((x) => x.field === 'attempts');
-      if (f && Array.isArray(f.new)) return (f.new as unknown[]).map(Number);
-    }
+  const approved = (changes ?? []).filter(isApprovedChange);
+  for (let i = approved.length - 1; i >= 0; i--) {
+    const f = (approved[i].fields ?? []).find((x) => x.field === 'attempts');
+    if (f && Array.isArray(f.new)) return (f.new as unknown[]).map(Number);
   }
   return fallback;
 }
@@ -297,8 +340,8 @@ export function effectiveAttempts(
 /** 某一次成绩(index)历次被改前的旧值序列,用于该次行内划线。 */
 export function attemptOldValues(changes: ResultChange[] | undefined, index: number): number[] {
   const out: number[] = [];
-  if (changes) {
-    for (const c of changes) {
+  {
+    for (const c of (changes ?? []).filter(isApprovedChange)) {
       const f = (c.fields ?? []).find((x) => x.field === 'attempts');
       if (f && Array.isArray(f.old) && Array.isArray(f.new)) {
         const o = Number((f.old as unknown[])[index]);
@@ -398,12 +441,13 @@ export async function recordAttemptOriginal(p: {
   originalValue: number;
   existingChain?: ResultChange[];
   note?: string | null;
+  propose?: boolean;   // 非管理员提议:不折叠进既有(approved)记录,始终新建一条 pending。
 }): Promise<void> {
   const { target, currentAttempts, index, originalValue, existingChain, note } = p;
   if (currentAttempts[index] === originalValue) return;
   const eq = (a: unknown, b: number[]) =>
     Array.isArray(a) && a.length === b.length && a.every((v, k) => Number(v) === b[k]);
-  const existing = (existingChain ?? []).find(
+  const existing = p.propose ? undefined : (existingChain ?? []).find(
     (c) => c.changeType === 'modified' && (c.fields ?? []).some((f) => f.field === 'attempts' && eq(f.new, currentAttempts)),
   );
   const baseOld = existing
@@ -437,11 +481,10 @@ export async function recordAttemptOriginal(p: {
 
 /** 各次成绩的有效罚时数组(厘秒,index 对齐 attempts)= 变更链最新 attempt_penalties。 */
 export function effectiveAttemptPenalties(changes: ResultChange[] | undefined): number[] {
-  if (changes) {
-    for (let i = changes.length - 1; i >= 0; i--) {
-      const f = (changes[i].fields ?? []).find((x) => x.field === 'attempt_penalties');
-      if (f && Array.isArray(f.new)) return (f.new as unknown[]).map(Number);
-    }
+  const approved = (changes ?? []).filter(isApprovedChange);
+  for (let i = approved.length - 1; i >= 0; i--) {
+    const f = (approved[i].fields ?? []).find((x) => x.field === 'attempt_penalties');
+    if (f && Array.isArray(f.new)) return (f.new as unknown[]).map(Number);
   }
   return [];
 }
@@ -457,9 +500,10 @@ export async function recordAttemptPenalty(p: {
   penaltyCs: number;
   existingChain?: ResultChange[];
   note?: string | null;
+  propose?: boolean;   // 非本人提议罚时:不折叠进既有(approved)记录,始终新建一条 pending。
 }): Promise<void> {
   const { target, currentAttempts, index, penaltyCs, existingChain, note } = p;
-  const existing = (existingChain ?? []).find(
+  const existing = p.propose ? undefined : (existingChain ?? []).find(
     (c) => c.changeType === 'modified' && (c.fields ?? []).some((f) => f.field === 'attempt_penalties'),
   );
   const basePen = existing
@@ -501,6 +545,11 @@ export function formatChangeFieldValue(field: string, value: unknown, eventId: s
     const arr = Array.isArray(value) ? (value as number[]) : [];
     if (arr.length === 0) return '—';
     return arr.map((v) => formatWcaResult(Number(v), eventId, 'single')).join('  ');
+  }
+  if (field === 'attempt_penalties') {
+    const arr = Array.isArray(value) ? (value as number[]) : [];
+    const parts = arr.map((p, i) => (Number(p) > 0 ? `#${i + 1} +${Math.round(Number(p) / 100)}` : null)).filter(Boolean);
+    return parts.length ? parts.join('  ') : '—';
   }
   if (field === 'pos') {
     const n = Number(value);

@@ -150,6 +150,35 @@
   color: var(--accent);
   background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
+.rw-badge-pending {
+  color: color-mix(in srgb, var(--signal-warning) 88%, var(--foreground));
+  background: color-mix(in srgb, var(--signal-warning) 16%, transparent);
+}
+
+/* 待审核统计兼过滤按钮 */
+.rw-stat-pending {
+  border: none; cursor: pointer; padding: 1px 6px; border-radius: 999px;
+  background: transparent; color: color-mix(in srgb, var(--signal-warning) 85%, var(--foreground));
+  font: inherit; transition: background 0.12s;
+}
+.rw-stat-pending:hover { background: color-mix(in srgb, var(--signal-warning) 14%, transparent); }
+.rw-stat-pending.is-active { background: color-mix(in srgb, var(--signal-warning) 20%, transparent); }
+
+/* 卡片底部:提议人 + 管理员审核按钮 */
+.rw-card-actions {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  margin-top: 10px; padding-top: 9px;
+  border-top: 1px solid var(--border-subtle, color-mix(in srgb, var(--foreground) 12%, transparent));
+}
+.rw-proposer { font-size: 0.78rem; color: var(--muted-foreground); }
+.rw-mod-buttons { display: inline-flex; gap: 7px; margin-left: auto; }
+.rw-approve, .rw-reject {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 11px; border-radius: 7px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+}
+.rw-approve { border: none; background: var(--accent); color: var(--accent-foreground, #fff); }
+.rw-reject { background: transparent; color: var(--muted-foreground); border: 1px solid var(--border-strong); }
+.rw-approve:disabled, .rw-reject:disabled { opacity: 0.5; cursor: default; }
 .rw-card-time {
   margin-left: auto;
   font-size: 0.78rem;

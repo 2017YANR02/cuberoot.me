@@ -41,6 +41,18 @@
     color: color-mix(in srgb, var(--signal-warning) 80%, var(--foreground));
 }
 
+/* 待审核提议标记:任何登录用户的提议在管理员批准前公开可见(标注待审核),所有人可点查看 */
+.wp-pending-chip {
+    display: inline-flex; align-items: center; gap: 3px;
+    margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+    font-size: 0.66rem; font-weight: 600; cursor: pointer; vertical-align: middle;
+    border: 1px solid color-mix(in srgb, var(--signal-warning) 45%, transparent);
+    color: color-mix(in srgb, var(--signal-warning) 85%, var(--foreground));
+    background: color-mix(in srgb, var(--signal-warning) 12%, transparent);
+    transition: background 0.12s;
+}
+.wp-pending-chip:hover { background: color-mix(in srgb, var(--signal-warning) 22%, transparent); }
+
 /* 行内单次成绩编辑浮层(点 solve 弹出,二方向)的结构样式已内联到 AttemptEditPopover.tsx
    (portal 到 body + position:fixed),避免 dev CSS HMR 滞后导致浮层失样塌成行内/落页脚。 */
 

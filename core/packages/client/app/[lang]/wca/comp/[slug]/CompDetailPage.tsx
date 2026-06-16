@@ -40,7 +40,7 @@ import ScheduleView, { ScheduleControls } from './ScheduleView';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import LangToggle from '@/components/LangToggle';
 import { useCompFollows, FollowStar } from '@/components/CompFollow';
-import { personRoundChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty } from '@/lib/result-watch-api';
+import { personRoundChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, splitChainByStatus } from '@/lib/result-watch-api';
 import { AttemptEditPopover } from '@/components/persons/sections/results/AttemptEditPopover';
 import { SolveValue } from '@/components/persons/sections/results/SolveValue';
 import { useCompRowChangeMap } from '@/components/persons/logic/use-row-change-map';
@@ -1761,7 +1761,8 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
             const singleBadge = prBadgeFor(singleRank);
             const averageBadge = prBadgeFor(averageRank);
             const wcaid = u.wcaid;
-            const chain = wcaid ? changeMap?.get(personRoundChangeKey(wcaid, r.e, r.r)) : undefined;
+            // 只取 approved:pending 提议绝不进官方值,也不让其 note 漏到官方单元(见 splitChainByStatus)。
+            const { approved: chain } = splitChainByStatus(wcaid ? changeMap?.get(personRoundChangeKey(wcaid, r.e, r.r)) : undefined);
             // 当前有效值 = live 值叠加变更链最新(行内改某次后即时反映)。
             const effBest = effectiveFieldValue(chain, 'best', r.b);
             const effAvg = effectiveFieldValue(chain, 'average', effectiveAvg(r));
@@ -1847,6 +1848,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                         oldValues={attemptOldValues(chain, i)}
                         format={(v) => formatLive(v, r.e, false)}
                         penalty={pen}
+                        isAdmin
                         onCorrect={(newValue, note) =>
                           recordAttemptEdit({
                             target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },

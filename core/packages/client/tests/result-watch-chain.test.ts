@@ -12,6 +12,8 @@ import {
   attemptOldValues,
   effectiveAttemptPenalties,
   buildOriginalBackfillFields,
+  splitChainByStatus,
+  isApprovedChange,
   type ResultChange,
 } from '@/lib/result-watch-api';
 import { computeWcaBestAverage } from '@/lib/wca-compute';
@@ -40,8 +42,49 @@ function mk(p: Partial<ResultChange>): ResultChange {
     source: p.source ?? 'manual',
     createdBy: null,
     editedAt: null,
+    status: p.status ?? 'approved',
   };
 }
+
+describe('status: pending never enters official value', () => {
+  const eventId = '333';
+  // 一条 approved 改判(best 1200→1000)+ 一条 pending 提议(best 1000→500)
+  const approved = mk({ id: 1, eventId, status: 'approved', fields: [{ field: 'best', old: 1200, new: 1000 }] });
+  const pending = mk({ id: 2, eventId, status: 'pending', fields: [{ field: 'best', old: 1000, new: 500 }] });
+  const chain = [approved, pending];
+
+  it('isApprovedChange flags pending/rejected out', () => {
+    expect(isApprovedChange(approved)).toBe(true);
+    expect(isApprovedChange(pending)).toBe(false);
+    expect(isApprovedChange(mk({ status: 'rejected' }))).toBe(false);
+    expect(isApprovedChange(mk({ status: 'approved' }))).toBe(true);
+  });
+
+  it('splitChainByStatus partitions and drops rejected', () => {
+    const rej = mk({ id: 3, status: 'rejected' });
+    const { approved: a, pending: p } = splitChainByStatus([approved, pending, rej]);
+    expect(a.map((c) => c.id)).toEqual([1]);
+    expect(p.map((c) => c.id)).toEqual([2]);
+  });
+
+  it('effectiveFieldValue uses approved only (ignores pending proposal)', () => {
+    expect(effectiveFieldValue(chain, 'best', 1200)).toBe(1000); // not 500
+  });
+
+  it('changeChainOldValues skips pending', () => {
+    expect(changeChainOldValues(chain, 'best')).toEqual([1200]); // pending old (1000) excluded
+  });
+
+  it('effectiveAttempts/effectiveAttemptPenalties ignore pending', () => {
+    const ch = [
+      mk({ id: 1, status: 'approved', fields: [{ field: 'attempts', old: [100, 200], new: [300, 200] }] }),
+      mk({ id: 2, status: 'pending', fields: [{ field: 'attempts', old: [300, 200], new: [900, 900] }] }),
+      mk({ id: 3, status: 'pending', fields: [{ field: 'attempt_penalties', old: null, new: [200, 0] }] }),
+    ];
+    expect(effectiveAttempts(ch, [100, 200])).toEqual([300, 200]); // not [900,900]
+    expect(effectiveAttemptPenalties(ch)).toEqual([]);             // pending penalty ignored
+  });
+});
 
 describe('parseHumanResult', () => {
   it('seconds.centiseconds', () => {
