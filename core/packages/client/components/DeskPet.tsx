@@ -12,6 +12,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import i18n from '@/i18n/i18n-client';
+import { useAuthStore } from '@/lib/auth-store';
+import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
 const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -224,6 +226,20 @@ const CSS = `
 .clawd-deskpet[data-char=calico] .clawd-deskpet-hit{left:20%;top:30%;width:60%;height:60%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-hit{left:27%;top:28%;width:46%;height:54%;}
 .clawd-deskpet.dragging .clawd-deskpet-hit{cursor:grabbing;}
+/* Unread-feedback badge — anchored to each character's body, always visible while
+   the pet is on screen. Visual only (pet container is aria-hidden / click-through). */
+.clawd-deskpet-badge{position:absolute;z-index:3;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+  min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;
+  border-radius:9px;font-size:11px;font-weight:700;line-height:1;
+  font-family:var(--font-sans,system-ui,sans-serif);color:#fff;
+  background:var(--destructive,#e5484d);
+  box-shadow:0 0 0 2px var(--card,var(--background)),0 1px 4px rgba(0,0,0,.35);
+  animation:clawddp-badge-pop .3s ease-out;}
+@keyframes clawddp-badge-pop{0%{transform:scale(0)}70%{transform:scale(1.18)}100%{transform:scale(1)}}
+.clawd-deskpet[data-char=clawd] .clawd-deskpet-badge{left:60%;top:54%;}
+.clawd-deskpet[data-char=calico] .clawd-deskpet-badge{left:66%;top:22%;}
+.clawd-deskpet[data-char=cloudling] .clawd-deskpet-badge{left:58%;top:37%;}
 /* Mini (edge-cling) mode: the art is drawn lying sideways; flip on the left edge
    so it faces inward. The mini-anim class eases the slide-into-place / crabwalk /
    peek nudge; plain drags clear it so they stay 1:1 with the pointer. */
@@ -253,6 +269,8 @@ export default function DeskPet() {
   const [lang, setLang] = useState<'zh' | 'en'>('en');
   const [randomMode, setRandomMode] = useState(false);
   const pathname = usePathname();
+  const user = useAuthStore((s) => s.user);
+  const fbUnread = useFeedbackUnread();
 
   const rootRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -303,6 +321,26 @@ export default function DeskPet() {
     i18n.on('languageChanged', deferred);
     return () => { i18n.off('languageChanged', deferred); };
   }, []);
+
+  // 反馈未读:登录用户挂载时 + 标签可见时 + 每 90s 拉一次,数字挂到桌宠身上(每页可见)。
+  // 未登录 → refreshFeedbackUnread 内部归零。
+  useEffect(() => {
+    refreshFeedbackUnread();
+    if (!user) return;
+    const onVis = () => { if (document.visibilityState === 'visible') refreshFeedbackUnread(); };
+    document.addEventListener('visibilitychange', onVis);
+    const iv = setInterval(() => { refreshFeedbackUnread(); }, 90000);
+    return () => { document.removeEventListener('visibilitychange', onVis); clearInterval(iv); };
+  }, [user]);
+
+  // 未读数上升(来了新回复)→ 桌宠做一次通知姿势吸引注意(引擎监听 clawd:state)。
+  const prevUnreadRef = useRef(0);
+  useEffect(() => {
+    if (fbUnread > prevUnreadRef.current) {
+      try { window.dispatchEvent(new CustomEvent('clawd:state', { detail: 'notification' })); } catch {}
+    }
+    prevUnreadRef.current = fbUnread;
+  }, [fbUnread]);
 
   // Open the PLL performer from anywhere:
   //   window.dispatchEvent(new CustomEvent('clawd:perform', { detail: { caseName: 'Aa' } }))
@@ -870,6 +908,9 @@ export default function DeskPet() {
           </g></g>
         </svg>
         <img ref={imgRef} alt="" />
+        {fbUnread > 0 && (
+          <span className="clawd-deskpet-badge">{fbUnread > 9 ? '9+' : fbUnread}</span>
+        )}
         <div
           className="clawd-deskpet-hit"
           ref={hitRef}

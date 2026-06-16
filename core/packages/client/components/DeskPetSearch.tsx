@@ -15,8 +15,8 @@ import DonateModal from '@/components/DonateModal';
 import FeedbackModal from '@/components/FeedbackModal';
 import DeskPetGallery from '@/components/DeskPetGallery';
 import { SEARCH_CARDS } from '@/lib/landing-sections';
-import { isAdmin, useAuthStore } from '@/lib/auth-store';
-import { fetchMyFeedbackUnread } from '@/lib/feedback-api';
+import { isAdmin } from '@/lib/auth-store';
+import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
 
 const CSS = `
 .deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:100010;display:flex;
@@ -117,17 +117,13 @@ export default function DeskPetSearch({
   const [donateOpen, setDonateOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
-  const [fbUnread, setFbUnread] = useState(0);
-  const user = useAuthStore((s) => s.user);
+  const fbUnread = useFeedbackUnread();
   const router = useRouter();
 
-  // 登录用户:拉「有管理员新回复」未读数给反馈按钮上红点;关掉反馈弹窗后复查(可能刚读过)。
+  // 反馈按钮红点跟共享未读数;关掉反馈弹窗后复查一次(可能刚读过)。轮询由桌宠统一做。
   useEffect(() => {
-    if (!user || feedbackOpen) return;
-    let alive = true;
-    fetchMyFeedbackUnread().then((n) => { if (alive) setFbUnread(n); }).catch(() => {});
-    return () => { alive = false; };
-  }, [user, feedbackOpen]);
+    if (!feedbackOpen) refreshFeedbackUnread();
+  }, [feedbackOpen]);
   const zh = lang === 'zh';
   const t = (z: string, e: string) => (zh ? z : e);
 
