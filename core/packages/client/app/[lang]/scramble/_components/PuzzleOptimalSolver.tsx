@@ -7,7 +7,7 @@
  * 写一个 spec + 路由页复用(见 solver/VARIANT_PLAYBOOK.md §8)。
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryState, parseAsString } from 'nuqs';
+import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { Dices, LoaderCircle } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -18,6 +18,7 @@ import { pooledScramble, prewarmScramble } from '@/lib/cubing-scramble';
 import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import type { RustCrossPool, MovesTimed } from '@/lib/rust-cross-client';
 import SolveTabs, { type SolvePuzzle } from './SolveTabs';
+import { BatchSolvePanel, SolveModeToggle, type BatchSpec } from './BatchSolvePanel';
 import './puzzle_optimal_solver.css';
 
 export interface OptimalSolverSpec {
@@ -54,6 +55,10 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
   const [scramble, setScramble] = useQueryState(
     'scramble',
     parseAsString.withDefault(''),
+  );
+  const [mode, setMode] = useQueryState(
+    'mode',
+    parseAsStringEnum(['single', 'batch'] as const).withDefault('single'),
   );
   const [generating, setGenerating] = useState(false);
   const [solving, setSolving] = useState(false);
@@ -131,9 +136,29 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
         : spec.event === 'skewb' ? 'skewb'
           : null;
 
+  const batchSpec: BatchSpec = useMemo(() => ({
+    event: spec.event,
+    metricLabel: spec.metric,
+    placeholder: spec.placeholder ?? { zh: "输入打乱,如 R U R' F2 U'", en: "Enter scrambles, e.g. R U R' F2 U'" },
+    validate: (line) => line.trim().split(/\s+/).find((t) => t && !spec.tokenRe.test(t)) ?? null,
+    solveOne: async (s) => {
+      const pool = getRustCrossPool(spec.need, Math.min(2, poolSizeForDevice()));
+      const r = await spec.solve(pool, s);
+      return { len: r.len, solution: r.sols[0]?.m ?? '' };
+    },
+    randomOne: () => pooledScramble(spec.event),
+    concurrency: 4,
+  }), [spec]);
+
   return (
     <div className="pos-page">
       <SolveTabs puzzle={puzzle} mode="solve" />
+      <SolveModeToggle value={mode} onChange={(v) => void setMode(v)} />
+
+      {mode === 'batch' ? (
+        <BatchSolvePanel spec={batchSpec} />
+      ) : (
+      <>
       <p className="pos-lead">{tr(spec.lead)}</p>
 
       <div className="pos-input-row">
@@ -210,6 +235,8 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
             </>
           )}
         </div>
+      )}
+      </>
       )}
     </div>
   );
