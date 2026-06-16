@@ -75,6 +75,7 @@ DB 文件 `./data.db`(gitignored),Drizzle schema 在 `db/schema.ts`。当前业�
 - 学习进度 `learning_progress`(`userId,lessonId` 唯一),`LessonPlayer` timeupdate 节流 10s 调 `updateProgress(lessonId,positionSec,completed)`
 - `/me/courses` 我的课程,`courseProgressPercent` 计算完成率,"继续学习" 跳最近 progress 的 lesson
 - admin `_LessonsPanel` 章节编辑,视频 `UploadField` 上传 mp4
+- demo 数据:`pnpm exec tsx db/seed-demo-course.ts` 种免费课 `starter-3x3`(price=0)+ 5 章节(视频 `public/demo/lesson-*.mp4` 短样片)+ 每节一题测验,打通 看课→测验→笔记→进度→证书 闭环;幂等可重跑,本地验收用,未入主 seed/部署
 - 兼容老字段:`courses.videoUrl` / `coverUrl` 仍可用;`courses.nextLiveAt`(秒级 timestamp)无值不渲染
 - 会员订阅:`memberships` 表 + `lib/db/membership.ts`(`MEMBERSHIP_PLANS` 月/季/年、`isMember` / `membershipState` / `fulfillMembershipOrder` / `cancelMembershipForOrder`)。下单 `type=membership`,付成功开/续会员(续费叠加 expiresAt),退款撤销。`/membership` 定价订阅页,`/me/membership` 状态页;会员在 `canAccessCourse` 走 `member` 分支畅看付费课
 
