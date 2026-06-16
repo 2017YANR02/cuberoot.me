@@ -28,6 +28,7 @@ import { ContinentIcon } from '@/components/ContinentIcon';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import HeaderToggles from '@/components/HeaderToggles';
+import CubeShorthand from '@/components/CubeShorthand';
 import Link from '@/components/AppLink';
 
 export type GalleryCategory = 'toggle' | 'button' | 'input' | 'badge' | 'nav' | 'more';
@@ -192,6 +193,10 @@ function AppLinkDemo() {
 
 /* ── catalog ────────────────────────────────────────────────────────────── */
 
+function CubeShorthandDemo() {
+  return <CubeShorthand alg="R U R' U' F R2 x" size={40} showLabels />;
+}
+
 export const CATALOG: ComponentEntry[] = [
   {
     name: 'PillToggle',
@@ -288,6 +293,16 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<Flag iso2="jp" className="my-flag" />',
     Demo: FlagDemo,
     note: { zh: 'TW 用 WCA 的 Chinese Taipei SVG,已在组件内处理,别手写。', en: 'TW uses WCA’s Chinese Taipei SVG, handled inside — don’t hand-roll it.' },
+  },
+  {
+    name: 'CubeShorthand',
+    import: "import CubeShorthand from '@/components/CubeShorthand';",
+    category: 'badge',
+    zh: '把一条公式画成一行「一个转动一个符号」的可视化速记:三竖条=三列(箭头那条=R/L/M)、三横条=三行(U/D/E)、叠放方块=面转动 F/B/S、双箭头=180°。移动解析复用 lib/pll-fingertricks。',
+    en: 'Renders an alg as a row of discrete shorthand glyphs, one per move: three vertical bars = the 3 columns (the arrowed one = R/L/M), three horizontal bars = the rows (U/D/E), stacked squares = a face turn F/B/S, double-head = 180°. Move parsing reuses lib/pll-fingertricks.',
+    usage: "<CubeShorthand alg=\"R U R' U'\" size={44} showLabels />",
+    Demo: CubeShorthandDemo,
+    note: { zh: '在「绘制」编辑器(/paint)的「魔方速记」面板可把整条公式插成可编辑的矢量符号;箭头=该层从正面看的可见移动方向(自动消歧顺/逆)。', en: 'The Cube Shorthand panel in the Paint editor (/paint) inserts a whole alg as editable vector glyphs; the arrow shows that layer’s visible motion from the front (auto-resolves CW/CCW).' },
   },
   {
     name: 'EventIcon / CubingIcon',

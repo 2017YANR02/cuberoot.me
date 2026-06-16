@@ -33,6 +33,7 @@ import AlgInput from '@/components/AlgInput';
 import SolutionView from '@/components/SolutionView';
 import ReconAutofill from '@/components/ReconAutofill';
 import ReconReuseModal from './ReconReuseModal';
+import ScramblePicker from './ScramblePicker';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -57,7 +58,7 @@ import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { parseSq1Tokens, formatScrambleForEvent } from '@/lib/sq1-svg';
 import type { Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowLeft, ArrowRightLeft, Box, ChevronDown, ChevronRight, History, Home, Loader2, LogIn, UserPlus } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, Box, ChevronDown, ChevronRight, History, Home, Loader2, LogIn, UserPlus, ListPlus } from 'lucide-react';
 import '../recon.css';
 import './recon_submit.css';
 import { tr } from '@/i18n/tr';
@@ -245,6 +246,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // reusedFields = 当前被「复用」带入、尚未编辑的字段 key(用于高亮标记)。
   const [reuseOpen, setReuseOpen] = useState(false);
   const [reusedFields, setReusedFields] = useState<Set<string>>(() => new Set());
+  // 「从已有打乱选择」弹窗:null 关闭,否则标记打开的是哪个框。
+  const [scramblePickerFor, setScramblePickerFor] = useState<null | 'wca' | 'optimal'>(null);
 
   const pruneReused = useCallback((keys: string | string[]) => {
     setReusedFields(prev => {
@@ -376,6 +379,37 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     if (ev && EVENTS.includes(ev)) {
       setForm(prev => prev.event === ev ? prev : { ...prev, event: ev });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── WCA 成绩 prefill(选手页详细成绩「点击去复盘」带入,mount only, create 模式)──
+  // 只填身份字段(选手/比赛/项目/轮次/第几把);单次/平均/纪录交给下面的自动获取逻辑
+  // (按 person+comp+event+round+solveNum 抓 WCA/已录,per-event 正确)。
+  useEffect(() => {
+    if (isEditing || fromId) return;
+    const personId = searchParams?.get('personId');
+    if (!personId) return;
+    const ev = searchParams?.get('event') || '';
+    const round = searchParams?.get('round') || '';
+    const solveNumRaw = searchParams?.get('solveNum');
+    const sn = solveNumRaw ? Number(solveNumRaw) : NaN;
+    const dateRaw = searchParams?.get('date') || '';
+    setForm(prev => ({
+      ...prev,
+      official: searchParams?.get('official') === '1' ? true : prev.official,
+      event: EVENTS.includes(ev) ? ev : prev.event,
+      person: searchParams?.get('person') || prev.person,
+      personId,
+      personCountry: searchParams?.get('personCountry') || prev.personCountry,
+      comp: searchParams?.get('comp') || prev.comp,
+      compWcaId: searchParams?.get('compWcaId') || prev.compWcaId,
+      country: searchParams?.get('country') || prev.country,
+      round: round || prev.round,
+      solveNum: !isNaN(sn) ? sn : prev.solveNum,
+      date: dateRaw ? toDateInput(dateRaw) : prev.date,
+      reconer: authUser?.name ?? prev.reconer,
+      reconerId: authUser?.wcaId ?? prev.reconerId,
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1224,6 +1258,24 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 onPick={applyReuse}
               />
             )}
+            {scramblePickerFor && (
+              <ScramblePicker
+                isZh={isZh}
+                event={form.event}
+                onClose={() => setScramblePickerFor(null)}
+                onPick={scramble => {
+                  if (scramblePickerFor === 'wca') {
+                    setScrambleUserTouched(true);
+                    setScrambleAutoSource(null);
+                    scrambleAutoFilledRef.current = false;
+                    setField('wcaScramble', scramble);
+                  } else {
+                    setField('optimalScramble', scramble);
+                  }
+                  setScramblePickerFor(null);
+                }}
+              />
+            )}
             {/* === Competition info — default open === */}
             <CollapsibleSection
               title={tr({ zh: '比赛信息', en: 'Competition'
@@ -1419,28 +1471,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
               <div className="submit-row">
                 <label className="submit-field">
-                  <span className="submit-label">{t('recon.average')}</span>
-                  <input
-                    type="text"
-                    value={avgInput}
-                    onChange={e => {
-                      setAvgInput(e.target.value);
-                      setAvgUserTouched(true);
-                      setAvgAutoSource(null);
-                      avgAutoFilledRef.current = false;
-                    }}
-                    readOnly={!!avgAutoSource}
-                    className={avgAutoSource ? 'submit-input-locked' : undefined}
-                    title={avgAutoSource ? tr({ zh: '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取', en: 'auto-filled, read-only; change person/comp/event/round to refetch'
-                                        })
-                      : undefined}
-                  />
-                  {avgLoading
-                    ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
-                    })}</span>
-                    : avgAutoSource ? <span className="submit-hint">{avgAutoSource}</span> : null}
-                </label>
-                <label className="submit-field">
                   <span className="submit-label">{t('recon.single')}</span>
                   <input
                     type="text"
@@ -1474,6 +1504,28 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     : (!singleRecordUserTouched && form.regionalSingleRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
                 </label>
                 <label className="submit-field">
+                  <span className="submit-label">{t('recon.average')}</span>
+                  <input
+                    type="text"
+                    value={avgInput}
+                    onChange={e => {
+                      setAvgInput(e.target.value);
+                      setAvgUserTouched(true);
+                      setAvgAutoSource(null);
+                      avgAutoFilledRef.current = false;
+                    }}
+                    readOnly={!!avgAutoSource}
+                    className={avgAutoSource ? 'submit-input-locked' : undefined}
+                    title={avgAutoSource ? tr({ zh: '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取', en: 'auto-filled, read-only; change person/comp/event/round to refetch'
+                                        })
+                      : undefined}
+                  />
+                  {avgLoading
+                    ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
+                    })}</span>
+                    : avgAutoSource ? <span className="submit-hint">{avgAutoSource}</span> : null}
+                </label>
+                <label className="submit-field">
                   <span className="submit-label">{t('recon.badge.averageRecord')}</span>
                   <RecordSelect
                     value={form.regionalAverageRecord || ''}
@@ -1490,7 +1542,16 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
             {/* WCA scramble */}
             <label className="submit-field submit-block">
-              <span className="submit-label">{t('recon.wcaScramble')}</span>
+              <span className="submit-label submit-label-row">
+                {t('recon.wcaScramble')}
+                <button
+                  type="button"
+                  className="scramble-pick-btn"
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); setScramblePickerFor('wca'); }}
+                >
+                  <ListPlus size={13} /> {tr({ zh: '选已有', en: 'Pick existing' })}
+                </button>
+              </span>
               <textarea
                 rows={1}
                 ref={wcaScrambleRef}
@@ -1519,7 +1580,16 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
             {/* Optimal scramble */}
             <label className="submit-field submit-block">
-              <span className="submit-label">{t('recon.optimalScramble')}</span>
+              <span className="submit-label submit-label-row">
+                {t('recon.optimalScramble')}
+                <button
+                  type="button"
+                  className="scramble-pick-btn"
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); setScramblePickerFor('optimal'); }}
+                >
+                  <ListPlus size={13} /> {tr({ zh: '选已有', en: 'Pick existing' })}
+                </button>
+              </span>
               <textarea
                 rows={1}
                 value={form.optimalScramble || ''}

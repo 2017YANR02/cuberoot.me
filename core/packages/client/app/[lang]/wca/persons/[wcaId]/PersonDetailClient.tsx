@@ -27,6 +27,7 @@ import PersonResultChanges from '@/components/persons/sections/PersonResultChang
 import PersonTabs from '@/components/persons/sections/PersonTabs';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '@/components/persons/persons.css';
+import '@/components/wca-results/attempts-grid.css';
 import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 

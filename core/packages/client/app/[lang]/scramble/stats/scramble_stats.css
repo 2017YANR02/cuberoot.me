@@ -684,3 +684,152 @@ html[data-theme=dark] .scramble-stats-page {
   --accent: #d97757;
   --accent-soft: rgba(217, 119, 87, 0.16);
 }
+
+/* ── 图表 / 时间线 视图开关(顶栏) ── */
+.scramble-stats-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;          /* 推到顶栏右侧 */
+}
+
+/* ── 首次出现时间线 ── */
+.scramble-timeline-panel .scramble-stats-panel-title {
+  margin-bottom: 0.5rem;
+}
+.scramble-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+/* 贯穿所有节点的竖轴 */
+.scramble-timeline::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 0.55rem;
+  bottom: 0.55rem;
+  width: 2px;
+  background: var(--border-strong);
+}
+.scramble-timeline-item {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 0.7rem;
+  padding: 0.4rem 0;
+}
+.scramble-timeline-item + .scramble-timeline-item {
+  border-top: 1px solid var(--border);
+}
+.scramble-timeline-rail {
+  position: relative;
+}
+.scramble-timeline-dot {
+  position: absolute;
+  left: 0;
+  top: 0.35rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  box-sizing: border-box;
+  z-index: 1;
+}
+.scramble-timeline-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.scramble-timeline-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+.scramble-timeline-bin {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.scramble-timeline-unit {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-sub);
+}
+.scramble-timeline-date {
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.scramble-timeline-comp {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  max-width: 100%;
+  text-decoration: none;
+}
+.scramble-timeline-comp .country-flag,
+.scramble-timeline-comp .country-flag-ct {
+  margin-right: 0;
+  font-size: 0.82rem;
+}
+.scramble-timeline-comp-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scramble-timeline-comp:hover .scramble-timeline-comp-name {
+  text-decoration: underline;
+}
+.scramble-timeline-comp-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  font-variant-numeric: tabular-nums;
+}
+.scramble-timeline-evt {
+  font-size: 0.95rem;
+  color: var(--text-sub);
+}
+.scramble-timeline-scr-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.scramble-timeline-chip {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border-strong);
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+.scramble-timeline-cube {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: flex-start;
+  line-height: 0;
+}
+.scramble-timeline-scramble {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  word-break: break-word;
+  line-height: 1.4;
+  text-decoration: none;
+}
+a.scramble-timeline-scramble:hover {
+  text-decoration: underline;
+  color: var(--text);
+}

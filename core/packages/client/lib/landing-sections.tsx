@@ -5,7 +5,7 @@
 import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookMarked, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, ImagePlus, Code as CodeIcon,
-  Brain, Box, Sigma, Scale, Sprout, type LucideIcon,
+  Brain, Box, Sigma, Scale, Sprout, Brush, type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
 
@@ -54,6 +54,8 @@ export const TEXTS: Record<string, { en: string; zh: string
   prediction:      { en: 'Prediction', zh: '预测'
 },
   visualcubeEditor:{ en: 'VisualCube', zh: '魔方可视化'
+},
+  paint:           { en: 'Paint', zh: '绘制'
 },
   analyze:         { en: 'Analyzer', zh: '打乱分析'
 },
@@ -150,6 +152,7 @@ export const SECTIONS: Section[] = [
       { id: 'scramble',    href: '/scramble',    internal: true, tier: 'medium', Icon: Shuffle,    nameKey: 'scramble' },
       { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', iconImg: '/icons/upstream/solver.png', nameKey: 'solver' },
       { id: 'mosaic',      href: '/mosaic',      internal: true, tier: 'medium', Icon: Grid2x2,    nameKey: 'mosaic' },
+      { id: 'paint',       href: '/paint',       internal: true, tier: 'medium', Icon: Brush,      nameKey: 'paint' },
       { id: 'sim',         href: '/sim',         internal: true, tier: 'medium', Icon: Box,        nameKey: 'sim' },
     ],
   },

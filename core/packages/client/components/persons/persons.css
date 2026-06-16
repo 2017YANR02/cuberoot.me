@@ -116,6 +116,16 @@ html[data-theme=dark] .wp-page {
     font-size: 0.95rem; font-weight: 600;
     color: var(--wp-text);
 }
+/* 「全部成绩」标题行:编辑模式图标紧贴标题右侧。
+   竖直间距移到行容器,h3 自身清零 margin,否则 h3 的不对称 margin 会让文字与图标错位 */
+.wp-section-h-row {
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap;
+    margin: 24px 0 12px;
+}
+.wp-section-h-row .wp-section-h { margin: 0; }
+/* 按比赛视图无标题:图标单独留点上下边距,左对齐 */
+.wp-section-h-row-bare { margin: 4px 0 12px; }
 
 /* ── 最优项目组合(复用全局 .sor-pb / .sor-tool-hint,见 components/wca-stats/best-combos.css)── */
 .wp-combos-card {
@@ -486,6 +496,19 @@ html[data-theme=dark] .wp-page {
     color: var(--wp-blue); border-bottom-color: var(--wp-blue);
     font-weight: 600;
 }
+/* 管理员「编辑模式」开关:紧贴「全部成绩」标题右侧的纯图标按钮 */
+.wp-editmode-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; padding: 0; border-radius: 7px;
+    background: transparent; border: 1px solid var(--wp-border);
+    color: var(--wp-text-sub); cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.wp-editmode-toggle:hover { color: var(--wp-text); border-color: var(--wp-text-sub); }
+.wp-editmode-toggle.is-active {
+    background: color-mix(in srgb, var(--wp-blue) 14%, transparent);
+    border-color: var(--wp-blue); color: var(--wp-blue);
+}
 
 .wp-event-strip {
     display: inline-flex; flex-wrap: wrap; gap: 4px;
@@ -581,7 +604,14 @@ html[data-theme=dark] .wp-page {
     display: table-cell; min-width: 0;
     vertical-align: top;
     padding-top: 10px;
+    /* 长比赛名换行 + 限宽,否则单行撑宽这一列,把右侧「详细成绩」挤出可视区 */
+    white-space: normal;
 }
+.wp-bycomp-table .wp-cell-comp .comp-cell {
+    display: inline-flex; align-items: baseline; column-gap: 4px;
+    max-width: 16rem;
+}
+.wp-bycomp-table .wp-cell-comp .comp-cell > span { overflow-wrap: anywhere; }
 .wp-bycomp-table .wp-cell-comp-date {
     margin-top: 2px;
     font-family: var(--font-mono);
@@ -640,36 +670,22 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 .wp-cell-pos { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
 .wp-pos-first { color: var(--wp-pink); font-weight: 700; }
 .wp-cell-attempt { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
-/* 详细成绩单元格 — H2H 等 5+ 次的格式:每行 5 个,多了自动换行;
-   每行各自 grid 不能自动跨行对齐,所以列宽给定值用 ch 让行间对齐 */
+/* 数字列右对齐:排名 / 单次 / 平均(表头与单元格一致;详细成绩内每次成绩已各自右对齐) */
+.wp-bycomp-table thead th:nth-child(4),
+.wp-bycomp-table thead th:nth-child(5) { text-align: right; }
+.wp-bycomp-table thead th.wp-th-narrow { text-align: right !important; }
+.wp-bycomp-table .wp-cell-pos,
+.wp-bycomp-table .wp-cell-result { text-align: right; }
+/* 详细成绩单元格颜色 token;网格布局 + 括号占位见共享 components/wca-results/attempts-grid.css(与 /recon 同场表共用) */
 .wp-cell-attempts { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
-.wp-attempts-flow {
-    display: grid;
-    /* 默认 7ch 等宽(小数点行间对齐);某次被改后内含划掉的旧值会更宽 → 该列长到 max-content,
-       表格随之变宽并可在 .wp-table-scroll 内横向滚动,不再被裁掉。 */
-    grid-template-columns: repeat(5, minmax(7ch, max-content));
-    gap: 4px 12px;
-    justify-content: start;
-}
 /* 详细成绩里的旧值(被改的那一次)压缩,尽量少撑宽 */
 .wp-cell-attempts .wp-old-result { font-size: 0.72em; margin-right: 3px; }
-/* 每个 .wp-att 都用 ::before/::after 预留括号宽度,opacity:0 不显示;
-   .wp-att-trimmed 时翻 1 显出来。这样所有格子有等宽的括号占位,
-   小数点跨行对齐;复制时伪元素内容不进剪贴板,粘出来是干净数字。
-   参考 WCA 官网 wca.scss: &.solve { &::before/::after / &.trimmed }. */
 /* 表头带 InfoTooltip 的布局 wrapper:横向 flex + 间距,实际触发 / 弹层走组件 */
 .wp-th-info {
     display: inline-flex;
     align-items: center;
     gap: 3px;
 }
-
-.wp-att { text-align: right; }
-.wp-att::before { content: "("; opacity: 0; }
-.wp-att::after  { content: ")"; opacity: 0; }
-.wp-att-trimmed::before,
-.wp-att-trimmed::after { opacity: 1; }
-/* best 不再用更亮色 — 统一跟其他 attempt 同色,只靠括号区分 trimmed */
 /* 命中复盘的把数 — accent 色 + hover 下划线,提示可点击 */
 .wp-att-recon {
   color: var(--wp-accent);
@@ -679,6 +695,17 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 .wp-att-recon:hover {
   text-decoration: underline;
   text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+/* 还没复盘的成绩:点击去复盘(预填)。默认低调,hover 才提示(虚线区别于已有复盘的实线) */
+.wp-att-tonew {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.wp-att-tonew:hover {
+  color: var(--wp-accent);
+  text-decoration: underline dotted;
   text-underline-offset: 3px;
 }
 /* 区域记录徽章统一走 RecordBadge / record_badge.css,本页不再覆写 */

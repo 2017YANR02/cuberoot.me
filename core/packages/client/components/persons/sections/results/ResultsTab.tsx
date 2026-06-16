@@ -2,12 +2,11 @@
 // 成绩 tab:按项目 / 按比赛 子切换 + 项目图标条(在按项目模式下).
 
 import { useQueryStates, parseAsString } from 'nuqs';
-import { Suspense, lazy, useCallback, useMemo } from 'react';
+import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { mergePersonLive } from '@/lib/person-live-merge';
-import i18n from "@/i18n/i18n-client";
 
 const ByCompList = lazy(() => import('./ByCompList'));
 const ByEventView = lazy(() => import('./ByEventView'));
@@ -26,6 +25,9 @@ type Sub = 'event' | 'comp';
 
 export default function ResultsTab({ profile, results, comps, liveResults, liveComps, reconLookup, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
+  // 管理员「编辑模式」:开 → 点无复盘成绩进行内编辑;关(默认)→ 和访客一样点击跳 /recon/submit 复盘。
+  // (开关 UI 在各视图「全部成绩」标题右侧;admin 判定在子视图内做)
+  const [editMode, setEditMode] = useState(false);
   // 子 tab(按项目 / 按比赛)+ 选中项目均为页内瞬时态 → replace,不堆历史
   const [q, setQ] = useQueryStates(
     { sub: parseAsString, event: parseAsString },
@@ -92,10 +94,12 @@ export default function ResultsTab({ profile, results, comps, liveResults, liveC
             reconLookup={reconLookup}
             eventId={activeEvent}
             isZh={isZh}
+            editMode={editMode}
+            onToggleEditMode={() => setEditMode((v) => !v)}
           />
         )}
         {sub === 'comp' && (
-          <ByCompList wcaId={profile.person.wca_id} personName={profile.person.name} results={mResults} comps={mComps} reconLookup={reconLookup} isZh={isZh} />
+          <ByCompList wcaId={profile.person.wca_id} personName={profile.person.name} personCountry={profile.person.country_iso2} results={mResults} comps={mComps} reconLookup={reconLookup} isZh={isZh} editMode={editMode} onToggleEditMode={() => setEditMode((v) => !v)} />
         )}
       </Suspense>
     </div>

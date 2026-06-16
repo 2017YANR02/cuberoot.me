@@ -128,6 +128,7 @@
     "unknown": "未知",
     "sameRound": "同轮次还原",
     "sameCompEvent": "同场比赛还原",
+    "sameScramble": "相同打乱的复盘",
     "addAttempt": "添加第 {{n}} 把（沿用本轮信息）",
     "pasteAttempts": "粘贴轮次成绩",
     "pasteAttemptsPlaceholder": "在此粘贴…",

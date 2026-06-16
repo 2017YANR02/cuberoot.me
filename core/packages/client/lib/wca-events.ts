@@ -39,6 +39,20 @@ export function toWcaEventId(input: string | undefined | null): string {
   return SHORT_TO_WCA[s] ?? s;
 }
 
+// WCA 标准 id → recon 表单短名(ReconSubmitForm EVENTS 用的键)；找不到回退 WCA id。
+const WCA_TO_RECON: Record<string, string> = {
+  '333': '3x3', '222': '2x2', '444': '4x4', '555': '5x5', '666': '6x6', '777': '7x7',
+  '333bf': '3bld', '444bf': '4bld', '555bf': '5bld', '333mbf': 'mbld',
+  '333oh': 'oh', '333fm': 'fmc',
+  'pyram': 'pyra', 'minx': 'mega', 'sq1': 'sq1', 'clock': 'clock', 'skewb': 'skewb',
+};
+
+/** WCA 标准 id（或任意短名）→ recon 表单短名（'333' → '3x3'）；无映射回退归一化后的 WCA id。 */
+export function wcaToReconEvent(input: string | undefined | null): string {
+  const id = toWcaEventId(input);
+  return WCA_TO_RECON[id] ?? id;
+}
+
 // NOTE: WCA 标准 id → 显示名
 const DISPLAY_ZH: Record<string, string> = {
   '333': '三阶', '222': '二阶', '444': '四阶', '555': '五阶', '666': '六阶', '777': '七阶',

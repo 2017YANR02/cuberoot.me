@@ -1,0 +1,57 @@
+.cube-sh {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px 7px;
+}
+
+.cube-sh-item {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.cube-sh-glyph {
+  display: block;
+  color: var(--foreground);
+}
+
+.cube-sh-glyph.is-rot {
+  color: var(--accent);
+}
+
+.cube-sh-glyph line {
+  stroke: currentColor;
+}
+
+.cube-sh-glyph polygon {
+  fill: currentColor;
+}
+
+.cube-sh-glyph .cube-sh-sq {
+  fill: none;
+  stroke: currentColor;
+  stroke-linejoin: round;
+}
+
+.cube-sh-label {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--muted-foreground);
+}
+
+.cube-sh-bad {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--destructive);
+  border: 1px dashed color-mix(in srgb, var(--destructive) 50%, transparent);
+  border-radius: 8px;
+}

@@ -3,7 +3,7 @@
 
 import type { ReconSolve } from '@cuberoot/shared';
 import { matchRoundType } from './wca-results-api';
-import { toWcaEventId } from './wca-events';
+import { toWcaEventId, wcaToReconEvent } from './wca-events';
 
 export function buildReconAttemptMap(recons: ReconSolve[]): Map<string, number> {
   const m = new Map<string, number>();
@@ -30,4 +30,47 @@ export function findReconForAttempt(
     }
   }
   return undefined;
+}
+
+/** WCA roundTypeId → recon 轮次('1'/'2'/'3'/'f');无法归类返回 undefined。 */
+export function wcaRoundToReconRound(wcaRoundTypeId: string): string | undefined {
+  for (const reconRound of ['1', '2', '3', 'f']) {
+    if (matchRoundType(reconRound, wcaRoundTypeId)) return reconRound;
+  }
+  return undefined;
+}
+
+export interface ReconSubmitPrefill {
+  wcaEventId: string;
+  roundTypeId: string;
+  solveNum: number;
+  personId: string;
+  personName: string;
+  personCountry?: string;
+  compId: string;
+  compName: string;
+  compCountry?: string;
+  compDate?: string;
+}
+
+/**
+ * 选手页「还没复盘」的成绩 → /recon/submit 预填链接。
+ * 只带身份字段(选手/比赛/项目/轮次/第几把);单次/平均/纪录交给 submit 表单的
+ * 「按 person+comp+event+round+solveNum 自动获取」逻辑(per-event 正确,免在此处理 FMC/MBLD 编码)。
+ */
+export function buildReconSubmitHref(p: ReconSubmitPrefill): string {
+  const params = new URLSearchParams();
+  params.set('event', wcaToReconEvent(p.wcaEventId));
+  const round = wcaRoundToReconRound(p.roundTypeId);
+  if (round) params.set('round', round);
+  params.set('solveNum', String(p.solveNum));
+  params.set('personId', p.personId);
+  params.set('person', p.personName);
+  if (p.personCountry) params.set('personCountry', p.personCountry);
+  params.set('compWcaId', p.compId);
+  params.set('comp', p.compName);
+  if (p.compCountry) params.set('country', p.compCountry);
+  if (p.compDate) params.set('date', p.compDate);
+  params.set('official', '1');
+  return `/recon/submit?${params.toString()}`;
 }

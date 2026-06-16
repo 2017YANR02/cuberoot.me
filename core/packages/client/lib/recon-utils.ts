@@ -198,9 +198,14 @@ export const FACE_COLORS: Record<string, string> = {
 
 // ── Record dropdown options ──
 
-/** 纪录下拉选项 — 大洲精确到 AsR/AfR/ER/NAR/OcR/SAR(WCA API 原值)。含 cancelled 前缀 */
+/** 纪录下拉选项 — 大洲精确到 AsR/AfR/ER/NAR/OcR/SAR(WCA API 原值)。
+ *  每个 R 后缀(官方纪录)都配一个 B 后缀(非官方最佳,WR↔WB / AsR↔AsB / …),
+ *  再叠 YT 前缀(有视频)与 cancelled 前缀。 */
 export const RECORD_OPTIONS: string[] = (() => {
-  const types = ['WR', 'AsR', 'AfR', 'ER', 'NAR', 'OcR', 'SAR', 'NR', 'PR'];
+  const base = ['WR', 'AsR', 'AfR', 'ER', 'NAR', 'OcR', 'SAR', 'NR', 'PR'];
+  // 每个 R 结尾的码紧跟其 B 变体:WR, WB, AsR, AsB, …
+  const withB = base.flatMap(c => (c.endsWith('R') ? [c, c.slice(0, -1) + 'B'] : [c]));
+  const types = [...withB, ...withB.map(t => 'YT' + t)];
   const prefixes = ['', 'cancelled '];
   const out: string[] = [];
   for (const p of prefixes) for (const t of types) out.push(p + t);
@@ -217,7 +222,8 @@ const RECORD_TO_CONTINENT: Record<string, string> = {
  */
 export function isRecordCodeAllowedFor(code: string, personIso2: string | null | undefined): boolean {
   if (!code) return true;
-  const core = code.replace(/^cancell?ed?\s+/i, '').trim();
+  // 归一:剥 cancelled / YT 前缀,B 后缀视同对应 R 后缀(AsB 同 AsR 受大洲约束)。
+  const core = code.replace(/^cancell?ed?\s+/i, '').trim().replace(/^YT/, '').replace(/B$/, 'R');
   const cont = RECORD_TO_CONTINENT[core];
   if (!cont) return true;
   if (!personIso2) return true;

@@ -1,0 +1,20 @@
+/* WCA 成绩「详细成绩」单元格的 attempts 网格布局 —— 唯一一份,改这里两边同步。
+   /wca/persons(ByEventView / ByCompList)与 /recon/[id] 同场比赛表 HTML 同构:
+   .wp-attempts-flow > .wp-att[.wp-att-trimmed]。纯布局不含颜色,配色 token 由各自页面叠加。 */
+.wp-attempts-flow {
+    display: grid;
+    /* 8.5ch floor 容下分秒格式(M:SS.dd / MM:SS.dd 带括号占位 ~7.2-8.2ch),让各行同一列
+       右边缘对齐;更宽内容(被改那次的划掉旧值)→ 该列长到 max-content,表格随之变宽,
+       在 .wp-table-scroll 内横向滚动,不被裁掉。 */
+    grid-template-columns: repeat(5, minmax(8.5ch, max-content));
+    gap: 4px 12px;
+    justify-content: start;
+}
+.wp-att { text-align: right; font-variant-numeric: tabular-nums; }
+/* 每个 .wp-att 用 ::before/::after 预留括号宽度(opacity:0 不显示),.wp-att-trimmed 翻 1 显出;
+   所有格子等宽括号占位 → 小数点跨行对齐;伪元素内容不进剪贴板,复制粘出来是干净数字。
+   参考 WCA wca.scss .solve { &::before/::after / &.trimmed }. */
+.wp-att::before { content: "("; opacity: 0; }
+.wp-att::after  { content: ")"; opacity: 0; }
+.wp-att-trimmed::before,
+.wp-att-trimmed::after { opacity: 1; }
