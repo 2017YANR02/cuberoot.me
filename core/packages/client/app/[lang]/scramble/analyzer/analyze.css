@@ -8,8 +8,8 @@
     --az-text-mute: #95938E;
     --az-border: #e5e5e5;
     --az-border-strong: #d4d4d4;
-    --az-accent: #C15F3C;
-    --az-accent-soft: rgba(193, 95, 60, 0.08);
+    --az-accent: var(--accent);
+    --az-accent-soft: var(--accent-soft);
     --az-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.04);
 
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -561,8 +561,8 @@
         --az-text-mute: #737373;
         --az-border: rgba(240, 235, 227, 0.1);
         --az-border-strong: rgba(240, 235, 227, 0.2);
-        --az-accent: #d97757;
-        --az-accent-soft: rgba(217, 119, 87, 0.16);
+        --az-accent: var(--accent);
+        --az-accent-soft: var(--accent-soft);
         --az-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 }
@@ -574,8 +574,8 @@ html[data-theme=dark] .analyze-page {
     --az-text-mute: #737373;
     --az-border: rgba(240, 235, 227, 0.1);
     --az-border-strong: rgba(240, 235, 227, 0.2);
-    --az-accent: #d97757;
-    --az-accent-soft: rgba(217, 119, 87, 0.16);
+    --az-accent: var(--accent);
+    --az-accent-soft: var(--accent-soft);
     --az-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 

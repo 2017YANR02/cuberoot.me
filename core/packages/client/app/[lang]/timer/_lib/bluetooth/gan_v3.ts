@@ -40,6 +40,7 @@
 
 import type { CubeDriver, CubeDriverStartResult } from './driver';
 import type { CubeBrand } from './types';
+import { macStringToBytes } from './mac';
 
 // GAN v3 GATT identifiers — match cstimer's V3DATA / V3READ / V3WRITE.
 const GAN_V3_SERVICE = '8653000a-43e6-47b7-9cb0-5fc21d4ae340';
@@ -86,19 +87,12 @@ function hexToBytes(hex: string): Uint8Array {
 
 function tryParseMacFromName(name: string | undefined): Uint8Array | null {
   if (!name) return null;
+  // Only a FULL 6-byte MAC embedded in the name is trustworthy. We don't
+  // fabricate one from a 3-byte suffix + a guessed OUI (GAN uses several OUIs
+  // across batches — a guess derives a wrong key and fails silently). The hook
+  // resolves the MAC (advertisement / prompt) before start() anyway.
   const m12 = /([0-9A-Fa-f]{12})$/.exec(name);
   if (m12) return hexToBytes(m12[1]);
-  const m6 = /-([0-9A-Fa-f]{6})$/.exec(name);
-  if (m6) {
-    const lower = hexToBytes(m6[1]);
-    const out = new Uint8Array(6);
-    // Hard-coded GAN OUI — better than zeros when the name only carries the
-    // last 3 bytes. Real cube MACs may use a different OUI on newer batches;
-    // if decryption fails this is the first thing to revisit.
-    out[0] = 0xcc; out[1] = 0x9b; out[2] = 0x0f;
-    out.set(lower, 3);
-    return out;
-  }
   return null;
 }
 
@@ -330,6 +324,8 @@ interface MoveDecodeState {
   prevMoveCnt: number;
   /** Most recent battery percentage from a mode-16 event (0..100). */
   battery: number | null;
+  /** Consecutive frames with a bad magic byte (≠ 0x55) — wrong key/MAC. */
+  badFrames: number;
 }
 
 /** Read N bits (big-endian within the byte) starting at `bitOffset`. */
@@ -376,8 +372,10 @@ function readBits(buf: Uint8Array, bitOffset: number, nBits: number): number {
  */
 function decodeFrame(frame: Uint8Array, dec: MoveDecodeState): string[] {
   if (frame.length < 16) return [];
-  // cstimer validates magic == 0x55 and bails on any other value.
-  if (frame[0] !== 0x55) return [];
+  // cstimer validates magic == 0x55 and bails on any other value. A wrong key
+  // decrypts to a non-0x55 byte on every frame, so this also flags bad MACs.
+  if (frame[0] !== 0x55) { dec.badFrames++; return []; }
+  dec.badFrames = 0;
   const mode = frame[1];
   const len = frame[2];
   if (len <= 0) return [];
@@ -467,6 +465,7 @@ export const ganV3Driver: CubeDriver = {
   brand: 'gan-v3' satisfies CubeBrand,
   service: GAN_V3_SERVICE,
   optionalServices: [String(BATTERY_SERVICE)],
+  needsMac: true,
 
   matches(device: BluetoothDevice): boolean {
     const n = device.name ?? '';
@@ -478,16 +477,19 @@ export const ganV3Driver: CubeDriver = {
     return /^(GAN-?(356|357|i)|Gi[CSBM3]?-)/i.test(n);
   },
 
-  async start(server, onMove): Promise<CubeDriverStartResult> {
+  async start(server, onMove, ctx): Promise<CubeDriverStartResult> {
     const service = await server.getPrimaryService(GAN_V3_SERVICE);
     const notifyChar = await service.getCharacteristic(GAN_V3_NOTIFY_CHAR);
 
-    const mac = tryParseMacFromName(server.device.name) ?? new Uint8Array(6);
+    const mac = ctx?.mac
+      ? macStringToBytes(ctx.mac)
+      : (tryParseMacFromName(server.device.name) ?? new Uint8Array(6));
     const aesKey = deriveKey(GAN_V3_KEY_BASE, mac);
     const aesIv = deriveKey(GAN_V3_IV_BASE, mac);
     const expandedKey = expandKey(aesKey);
 
-    const decState: MoveDecodeState = { prevMoveCnt: -1, battery: null };
+    const decState: MoveDecodeState = { prevMoveCnt: -1, battery: null, badFrames: 0 };
+    let keyErrorFired = false;
 
     const onChar = (ev: Event): void => {
       const target = ev.target as BluetoothRemoteGATTCharacteristic;
@@ -502,6 +504,11 @@ export const ganV3Driver: CubeDriver = {
       }
       const moves = decodeFrame(pt, decState);
       for (const mv of moves) onMove(mv);
+      // Several bad-magic frames in a row ⇒ wrong MAC. Tell the hook once.
+      if (!keyErrorFired && decState.badFrames >= 6) {
+        keyErrorFired = true;
+        ctx?.onKeyError?.();
+      }
     };
 
     notifyChar.addEventListener('characteristicvaluechanged', onChar);

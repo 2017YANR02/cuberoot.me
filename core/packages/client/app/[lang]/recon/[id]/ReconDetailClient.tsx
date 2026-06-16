@@ -19,7 +19,7 @@ import {
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import {
   getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover,
-  listRecons, deleteAlternative,
+  listRecons, deleteAlternative, getSameScramble,
 } from '@/lib/recon-api';
 import {
   formatTime, isBldEvent, getPuzzleId, wcaPersonUrl,
@@ -65,7 +65,6 @@ import '../recon.css';
 import './recon_detail.css';
 import '@/components/wca-results/attempts-grid.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 const YOUTUBE_LOGO = '/assets/youtube_logo.svg';
 const BILIBILI_LOGO = '/assets/bilibili_logo.svg';
@@ -85,7 +84,10 @@ function personHref(wcaId: string, isZh: boolean): string {
   return `/wca/persons/${wcaId}${isZh ? '?lang=zh' : ''}`;
 }
 
-export default function ReconDetailClient({ initialSolve }: { initialSolve?: ReconSolve } = {}) {
+export default function ReconDetailClient({ initialSolve, initialSameScramble }: {
+  initialSolve?: ReconSolve;
+  initialSameScramble?: ReconSolve[];
+} = {}) {
   const params = useParams<{ id: string }>();
   const rawSeg = (Array.isArray(params?.id) ? params.id[0] : params?.id) ?? '';
   const id = parseReconId(rawSeg); // strip cosmetic slug suffix → numeric id
@@ -214,17 +216,19 @@ export default function ReconDetailClient({ initialSolve }: { initialSolve?: Rec
         solve={solve}
         comments={comments}
         onUpdate={loadData}
+        initialSameScramble={initialSameScramble}
       />
     </div>
   );
 }
 
-function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: {
+function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, initialSameScramble }: {
   scramble: string;
   solutionText: string;
   solve: ReconSolve;
   comments: ReconComment[];
   onUpdate: () => void;
+  initialSameScramble?: ReconSolve[];
 }) {
   const [sameCompHasRows, setSameCompHasRows] = useState(false);
   const { t, i18n } = useTranslation();
@@ -366,7 +370,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
           <SameCompEventTable solve={solve} onHasRows={setSameCompHasRows} />
         )}
 
-        <SameScrambleNav solve={solve} />
+        <SameScrambleNav solve={solve} initial={initialSameScramble} />
 
         <AlternativesSection
           reconId={solve.id}
@@ -780,24 +784,34 @@ function scrambleKey(solve: Pick<ReconSolve, 'optimalScramble' | 'wcaScramble'>)
 }
 
 // 相同打乱的其它复盘（任意选手/项目，只要打乱字符串一致），方便跨复盘对比跳转。
-function SameScrambleNav({ solve }: { solve: ReconSolve }) {
+function SameScrambleNav({ solve, initial }: { solve: ReconSolve; initial?: ReconSolve[] }) {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  const [matches, setMatches] = useState<ReconSolve[]>([]);
+  // Seeded from the server (SSR) so the section is in the initial HTML — instant,
+  // no full /list download. Background-refresh via the cheap dedicated endpoint.
+  const [matches, setMatches] = useState<ReconSolve[]>(initial ?? []);
   const key = scrambleKey(solve);
 
   useEffect(() => {
-    if (!key) return;
     let cancelled = false;
-    listRecons().then(all => {
-      if (cancelled) return;
-      const m = all
-        .filter(s => s.id !== solve.id && scrambleKey(s) === key)
-        .sort((a, b) => (a.rawTime ?? Infinity) - (b.rawTime ?? Infinity));
-      setMatches(m);
-    }).catch(() => { /* ignore */ });
+    getSameScramble(solve.id)
+      .then(rows => {
+        if (cancelled) return;
+        setMatches(rows.filter(s => s.id !== solve.id));
+      })
+      .catch(async () => {
+        // 端点未部署(dev 打 prod / 部署错位)时降级:老路径拉全量再客户端过滤。
+        if (!key || cancelled) return;
+        try {
+          const all = await listRecons();
+          if (cancelled) return;
+          setMatches(all
+            .filter(s => s.id !== solve.id && scrambleKey(s) === key)
+            .sort((a, b) => (a.rawTime ?? Infinity) - (b.rawTime ?? Infinity)));
+        } catch { /* keep SSR-seeded matches */ }
+      });
     return () => { cancelled = true; };
-  }, [key, solve.id]);
+  }, [solve.id, key]);
 
   if (!key || matches.length === 0) return null;
 
@@ -809,12 +823,12 @@ function SameScrambleNav({ solve }: { solve: ReconSolve }) {
           const time = isBldEvent(s.event) ? s.execTime : s.rawTime;
           return (
             <Link key={s.id} href={`/recon/${reconPathSeg(s)}`} className="same-scramble-item">
+              {time != null && <span className="ss-time">{formatTime(time)}</span>}
               {s.event && <EventIcon event={s.event} title={eventDisplayName(s.event, isZh)} />}
               <span className="ss-name">
                 {s.personId && <Flag iso2={personFlagIso2(s.personId)} className="yt-comment-flag" />}
                 {displayCuberName(s.person ?? '', isZh)}
               </span>
-              {time != null && <span className="ss-time">{formatTime(time)}</span>}
             </Link>
           );
         })}

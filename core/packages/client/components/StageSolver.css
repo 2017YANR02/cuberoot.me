@@ -8,8 +8,8 @@
   --sv-text-mute: #95938e;
   --sv-border: #e5e5e5;
   --sv-border-strong: #d4d4d4;
-  --sv-accent: #c15f3c;
-  --sv-accent-soft: color-mix(in srgb, #c15f3c 8%, transparent);
+  --sv-accent: var(--accent);
+  --sv-accent-soft: color-mix(in srgb, var(--accent) 8%, transparent);
   font-variant-numeric: tabular-nums;
 }
 
@@ -21,8 +21,8 @@
     --sv-text-mute: #737373;
     --sv-border: color-mix(in srgb, #f0ebe3 10%, transparent);
     --sv-border-strong: color-mix(in srgb, #f0ebe3 20%, transparent);
-    --sv-accent: #d97757;
-    --sv-accent-soft: color-mix(in srgb, #d97757 16%, transparent);
+    --sv-accent: var(--accent);
+    --sv-accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
   }
 }
 html[data-theme='dark'] .stsv {
@@ -32,8 +32,8 @@ html[data-theme='dark'] .stsv {
   --sv-text-mute: #737373;
   --sv-border: color-mix(in srgb, #f0ebe3 10%, transparent);
   --sv-border-strong: color-mix(in srgb, #f0ebe3 20%, transparent);
-  --sv-accent: #d97757;
-  --sv-accent-soft: color-mix(in srgb, #d97757 16%, transparent);
+  --sv-accent: var(--accent);
+  --sv-accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
 /* ── status ── */

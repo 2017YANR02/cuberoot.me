@@ -6,6 +6,7 @@
 
 /* Ported from packages/client-vite/src/index.css (tokens + base only — page-specific
    styles will land beside their pages during migration). */
+/* palette-scheme-aware locks (2026-06-16) */
 
 /* iOS Safari focus zoom guard */
 @media (max-width: 768px) {
@@ -135,17 +136,19 @@ body {
    and VisualCube editor (.vc-editor-page) are NO LONGER dark-locked — they follow
    the user's chosen theme via the :root token set (chrome fully tokenized in
    their own CSS).
-   `html:root:has()` (0,2,1) outranks the palette blocks `:root[data-palette]`
-   (0,2,0), so a chosen 中国色 palette is ignored here — these data-dense stats
-   pages stay locked to dark for readability. */
-html:root:has(.wca-stats-page),
-html:root:has(.wse-page),
-html:root:has(.wp-page),
-html:root:has(.records-page),
-html:root:has(.nemesizer-page),
-html:root:has(.fun-stats),
-html:root:has(.result-watch-page),
-html:root:has(.tr-page) {
+   `:not([data-palette-scheme=dark])` 让这些数据密集页只在「暗色」配色主题(寒潭/乌金)
+   下放行——此时选择器不匹配,改由 :root[data-palette=x] (0,2,0) 整套上色;无配色 / 选
+   「浅色」配色(克劳德/新篁/砚青/丹霞)时本块以 (0,3,1) 命中,把这些页钉回经典暗(浅色
+   配色不破坏暗底数据可读性)。新增暗色配色自动生效,无需改这里(data-palette-scheme
+   由 lib/theme.ts + theme-bootstrap.ts 写,源在 lib/palettes.ts 的 scheme 字段)。 */
+html:root:not([data-palette-scheme=dark]):has(.wca-stats-page),
+html:root:not([data-palette-scheme=dark]):has(.wse-page),
+html:root:not([data-palette-scheme=dark]):has(.wp-page),
+html:root:not([data-palette-scheme=dark]):has(.records-page),
+html:root:not([data-palette-scheme=dark]):has(.nemesizer-page),
+html:root:not([data-palette-scheme=dark]):has(.fun-stats),
+html:root:not([data-palette-scheme=dark]):has(.result-watch-page),
+html:root:not([data-palette-scheme=dark]):has(.tr-page) {
   color-scheme: dark;
   --background: #171717;
   --foreground: #ededed;

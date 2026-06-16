@@ -8,9 +8,11 @@ import { parseMove, tokenizeAlg } from '@/lib/pll-fingertricks';
 import { genId } from './registry';
 import type { LineShape, PathShape, RectShape, Shape, TextShape } from './types';
 
-// Concrete canvas colours (shapes need real hex, not CSS vars). Chosen to read
-// on both light and dark canvas backgrounds.
-const NORMAL = '#111827';
+// Concrete colours (shapes need real hex, not CSS vars). The glyph "ink"
+// (NORMAL) follows the current paper so glyphs stay visible on dark paper; the
+// caller passes it via opts.ink. ACCENT marks the x/y/z whole-cube rotations and
+// reads on both light and dark paper, so it stays fixed.
+const DEFAULT_NORMAL = '#111827';
 const ACCENT = '#2563eb';
 
 // Flatten an SVG arc into short line segments (only the bracket corners use 'A',
@@ -113,9 +115,16 @@ function bboxOf(pts: [number, number][]) {
 const COMMON = { rotation: 0, opacity: 1 as const };
 
 // Convert one prim (in box coords) to a concrete editor Shape, mapping box coords
-// to scene via (ox + px*k, oy + py*k). `k` = size / 100.
-function primToShape(prim: GlyphPrim, ox: number, oy: number, k: number): Shape | null {
-  const color = prim.accent ? ACCENT : NORMAL;
+// to scene via (ox + px*k, oy + py*k). `k` = size / 100. `normal` is the glyph
+// ink for the current paper.
+function primToShape(
+  prim: GlyphPrim,
+  ox: number,
+  oy: number,
+  k: number,
+  normal: string,
+): Shape | null {
+  const color = prim.accent ? ACCENT : normal;
   const X = (v: number) => ox + v * k;
   const Y = (v: number) => oy + v * k;
 
@@ -219,6 +228,7 @@ export interface ShorthandConvertOpts {
   originX: number; // scene x of the first glyph's box top-left
   originY: number;
   labels: boolean; // add a TextShape token under each glyph
+  ink?: string; // glyph "ink" color for the current paper (default: dark)
 }
 
 export interface ShorthandConvertResult {
@@ -230,6 +240,7 @@ export interface ShorthandConvertResult {
 // Tokenize + parse an alg and produce all shapes for a horizontal glyph strip.
 export function shorthandToShapes(alg: string, opts: ShorthandConvertOpts): ShorthandConvertResult {
   const { size, originX, originY, labels } = opts;
+  const normal = opts.ink ?? DEFAULT_NORMAL;
   const gap = size * 0.18; // mirror the standalone download layout
   const step = size + gap;
   const k = size / 100;
@@ -251,7 +262,7 @@ export function shorthandToShapes(alg: string, opts: ShorthandConvertOpts): Shor
     const ox = originX + col * step;
     col += 1;
     for (const prim of prims) {
-      const s = primToShape(prim, ox, originY, k);
+      const s = primToShape(prim, ox, originY, k, normal);
       if (s) shapes.push(s);
     }
     if (labels) {
@@ -263,7 +274,7 @@ export function shorthandToShapes(alg: string, opts: ShorthandConvertOpts): Shor
         width: size,
         height: size * 0.22,
         ...COMMON,
-        fill: NORMAL,
+        fill: normal,
         stroke: 'none',
         strokeWidth: 0,
         text: tok,

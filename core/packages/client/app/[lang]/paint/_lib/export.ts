@@ -16,6 +16,7 @@ import type {
 } from './types';
 import { aabbOfRotated, boundsCenter, unionBounds } from './geometry';
 import { smoothPath, translatePathD } from './registry';
+import { DEFAULT_PAPER } from './paper';
 
 export const DOC_KEY = 'paint:doc:v1';
 
@@ -145,6 +146,8 @@ export function toSvgString(doc: PaintDoc, pad = 8): string {
   const y = bb.y - pad;
   const w = Math.max(1, bb.width + pad * 2);
   const h = Math.max(1, bb.height + pad * 2);
+  // Export is transparent: paper is the on-screen working surface only, not part
+  // of the artwork (Illustrator/Figma norm). No background rect is baked in.
   const body = doc.order
     .map((id) => doc.shapes[id])
     .filter((s): s is Shape => !!s && !s.hidden)
@@ -170,16 +173,57 @@ export async function toPng(doc: PaintDoc, scale = 2): Promise<Blob> {
   canvas.height = h;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('no 2d ctx');
+  // Leave the canvas transparent (default 2d context has an alpha channel) so the
+  // PNG exports only the shapes — paper is screen-only, never baked in.
   ctx.drawImage(img, 0, 0, w, h);
   return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob null'))), 'image/png');
   });
 }
 
+// Small PNG dataURL for the cloud library grid. Unlike export (transparent), the
+// thumbnail BAKES the paper background so the card shows the drawing exactly as it
+// looks on its artboard. Fits within maxDim, returns null for an empty doc / failure.
+export async function toThumbnail(doc: PaintDoc, maxDim = 360): Promise<string | null> {
+  if (!doc.order.some((id) => doc.shapes[id] && !doc.shapes[id].hidden)) return null;
+  const svg = toSvgString(doc);
+  const bb = contentBounds(doc);
+  const pad = 8;
+  const cw = Math.max(1, bb.width + pad * 2);
+  const ch = Math.max(1, bb.height + pad * 2);
+  const scale = Math.min(maxDim / cw, maxDim / ch, 2);
+  const w = Math.max(1, Math.round(cw * scale));
+  const h = Math.max(1, Math.round(ch * scale));
+  const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  const img = new Image();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('svg load failed'));
+      img.src = url;
+    });
+  } catch {
+    return null;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  ctx.fillStyle = doc.paper || DEFAULT_PAPER;
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+  try {
+    return canvas.toDataURL('image/png');
+  } catch {
+    return null;
+  }
+}
+
 // Best-effort import. Parses rect/ellipse/circle/line/polygon/path/text into our
 // model. Tolerates anything it cannot map (skips it).
 export function fromSvgString(svg: string): Partial<PaintDoc> {
-  const out: PaintDoc = { shapes: {}, order: [] };
+  const out: PaintDoc = { shapes: {}, order: [], paper: DEFAULT_PAPER };
   if (typeof DOMParser === 'undefined') return out;
   let dom: Document;
   try {
@@ -321,6 +365,8 @@ export function loadDoc(key = DOC_KEY): PaintDoc | null {
       parsed.shapes &&
       Array.isArray(parsed.order)
     ) {
+      // Backward-compat: docs saved before `paper` existed default to light.
+      if (typeof parsed.paper !== 'string') parsed.paper = DEFAULT_PAPER;
       return parsed as PaintDoc;
     }
   } catch {

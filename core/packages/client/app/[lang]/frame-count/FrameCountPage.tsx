@@ -7,7 +7,7 @@
  */
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Link from '@/components/AppLink';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, MonitorDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type mediaInfoFactoryT from 'mediainfo.js';
 
@@ -2163,6 +2163,19 @@ export default function FrameCountPage() {
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
         </span>
+        <a
+          href="https://github.com/RuiminYan/lossless-cut-framecount"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fc-offline-link"
+          title={tr({
+            zh: '下载桌面版,在本地离线数帧(基于 LosslessCut)',
+            en: 'Download the desktop app to count frames offline (based on LosslessCut)',
+          })}
+        >
+          <MonitorDown size={15} strokeWidth={1.75} />
+          <span>{tr({ zh: '离线桌面版', en: 'Offline desktop app' })}</span>
+        </a>
       </header>
 
       {/* ── 主体：视频 + 右侧面板 ── */}

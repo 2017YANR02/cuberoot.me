@@ -8,8 +8,8 @@
     --otd-border: #e5e5e5;
     --otd-border-strong: #d4d4d4;
     --otd-surface: #FBF8F3;
-    --otd-accent: #C15F3C;
-    --otd-accent-soft: rgba(193, 95, 60, 0.08);
+    --otd-accent: var(--accent);
+    --otd-accent-soft: color-mix(in srgb, var(--accent) 8%, transparent);
 
     width: min(720px, 92vw);
     max-height: min(85vh, 800px);

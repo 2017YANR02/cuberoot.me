@@ -1,10 +1,13 @@
 'use client';
 
 /**
- * 统一「求解」中心的两行标签导航(/scramble 的 求解/分布/各魔方求解 入口)。
+ * 统一「求解」中心的标签导航(/scramble 的 求解/分布/各魔方求解 入口)。
  *
- * 第一行 = 项目(3×3 / 2×2×2 / 金字塔 / 斜转),第二行 = 功能(求解 / 分布);
- * 项目=3×3 且 功能=求解 时再出一行子标签(最优解 / 阶段 / CFOP / DR)。
+ * 第一行 = 功能(求解 / 分布),两个模式共用,是顶层主导航。
+ * 求解模式下第二行才出项目(3×3 / 2×2×2 / 金字塔 / 斜转),项目=3×3 时再出一行
+ * 子标签(最优解 / 阶段 / CFOP / DR)。
+ * 分布模式不出项目行 —— 分布页自带 WcaEventSelector 是唯一的项目/事件选择器,
+ * 避免「上面有项目、下面又有项目」的双重选择器。
  *
  * 关键:3×3 最优解(/scramble/solver)是全站唯一发 COOP/COEP 的文档(cubeopt 要
  * SharedArrayBuffer);其余工具在 COEP 下 worker 会被拦死。Next 软导航不换响应头,
@@ -69,6 +72,9 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
   // 当前是不是 COEP 的 3×3 最优解文档
   const currentIsSolver = mode === 'solve' && puzzle === '3x3' && sub === 'optimal';
 
+  // 「求解」功能标签的目标:当前项目的求解页(项目无在线求解器时退回 3×3 最优解)。
+  const solveHref = puzzle ? SOLVE_ROUTE[puzzle] : '/scramble/solver';
+
   // 跨 solver 边界 → 硬导航(原生 a),否则软导航(AppLink)
   const tab = (key: string, href: string, active: boolean, content: React.ReactNode, extraClass = '') => {
     const cls = `solve-tab${active ? ' is-active' : ''}${extraClass ? ` ${extraClass}` : ''}`;
@@ -95,27 +101,11 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
 
   return (
     <nav className="solve-tabs" aria-label={t('求解中心导航', 'Solve center navigation')}>
-      {/* 第一行:项目 */}
-      <div className="solve-tab-row solve-tab-puzzles">
-        {PUZZLES.map((p) =>
-          tab(
-            p,
-            mode === 'dist' ? distHref(p) : SOLVE_ROUTE[p],
-            puzzle === p,
-            <>
-              <EventIcon event={EVENT_ID[p]} className="solve-tab-evt" />
-              <span>{puzzleLabel(p)}</span>
-            </>,
-            'solve-tab-puzzle',
-          ),
-        )}
-      </div>
-
-      {/* 第二行:功能 */}
+      {/* 第一行:功能(求解 / 分布)— 顶层主导航,两个模式共用 */}
       <div className="solve-tab-row solve-tab-modes">
         {tab(
           'solve',
-          puzzle ? SOLVE_ROUTE[puzzle] : '/scramble/solver',
+          solveHref,
           mode === 'solve',
           <><Sparkles size={15} /><span>{t('求解', 'Solve')}</span></>,
           'solve-tab-mode',
@@ -129,8 +119,28 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
         )}
       </div>
 
-      {/* 第三行:3×3 求解的子标签(最优解 / 阶段 / CFOP / DR) */}
-      {puzzle === '3x3' && mode === 'solve' && (
+      {/* 第二行(仅求解):项目选择 — 4 个有在线求解器的项目。
+          分布模式不再重复项目行:分布页自带的 WcaEventSelector 是唯一的项目/事件选择器,
+          避免「上面有项目、下面又有项目」的双重选择器。 */}
+      {mode === 'solve' && (
+        <div className="solve-tab-row solve-tab-puzzles">
+          {PUZZLES.map((p) =>
+            tab(
+              p,
+              SOLVE_ROUTE[p],
+              puzzle === p,
+              <>
+                <EventIcon event={EVENT_ID[p]} className="solve-tab-evt" />
+                <span>{puzzleLabel(p)}</span>
+              </>,
+              'solve-tab-puzzle',
+            ),
+          )}
+        </div>
+      )}
+
+      {/* 第三行(仅 3×3 求解):子标签(最优解 / 阶段 / CFOP / DR) */}
+      {mode === 'solve' && puzzle === '3x3' && (
         <div className="solve-tab-row solve-tab-subs">
           {tab('optimal', SUB_ROUTE.optimal, sub === 'optimal', t('最优解', 'Optimal'), 'solve-tab-sub')}
           {tab('stage', SUB_ROUTE.stage, sub === 'stage', t('阶段', 'Stage'), 'solve-tab-sub')}

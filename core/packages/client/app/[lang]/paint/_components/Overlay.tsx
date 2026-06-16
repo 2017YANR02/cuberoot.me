@@ -84,6 +84,7 @@ export default function Overlay({ viewport }: Props) {
       };
       return { corners, handles, topMid, rotate, rotation: single.rotation };
     }
+    if (selection.length < 2) return null;
     const bb = getSelectionBounds(usePaint.getState());
     if (!bb) return null;
     const corners = [
@@ -92,7 +93,16 @@ export default function Overlay({ viewport }: Props) {
       { x: bb.x + bb.width, y: bb.y + bb.height },
       { x: bb.x, y: bb.y + bb.height },
     ].map((p) => sceneToScreen(p, camera));
-    return { corners, handles: [], topMid: null, rotate: null, rotation: 0 };
+    // resize handles on the axis-aligned group bbox (no rotation, no rotate handle)
+    const handles = RESIZE_HANDLES.map((h) => {
+      const fx = h.includes('w') ? 0 : h.includes('e') ? 1 : 0.5;
+      const fy = h.includes('n') ? 0 : h.includes('s') ? 1 : 0.5;
+      return {
+        id: h,
+        p: sceneToScreen({ x: bb.x + bb.width * fx, y: bb.y + bb.height * fy }, camera),
+      };
+    });
+    return { corners, handles, topMid: null, rotate: null, rotation: 0 };
   }, [single, selection, shapes, camera]);
 
   const cornerPath = (corners: Point[]) =>

@@ -29,18 +29,18 @@
 .solve-tab:hover { color: var(--foreground); }
 .solve-tab > span { line-height: 1; }
 
-/* 第一行:项目 — 主行,稍大;active 走全站项目选择器绿 */
-.solve-tab-puzzles { border-bottom: 1px solid var(--border-default); margin-bottom: 0.1rem; }
-.solve-tab-puzzle { font-size: 1rem; font-weight: 600; }
+/* 第一行:功能(求解 / 分布)— 顶层主导航,带下分隔线;active 走主题强调色 */
+.solve-tab-modes { border-bottom: 1px solid var(--border-default); margin-bottom: 0.15rem; }
+.solve-tab-mode { font-size: 1rem; font-weight: 600; }
+.solve-tab-mode.is-active { color: var(--accent); border-bottom-color: var(--accent); }
+.solve-tab-mode.is-active svg { color: var(--accent); }
+
+/* 第二行(仅求解):项目 — 次级;active 走全站项目选择器绿 */
+.solve-tab-puzzle { font-size: 0.95rem; font-weight: 600; }
 .solve-tab-evt { width: 18px; height: 18px; color: var(--muted-foreground); flex: none; }
 .solve-tab-puzzle:hover .solve-tab-evt { color: var(--foreground); }
 .solve-tab-puzzle.is-active { color: var(--foreground); border-bottom-color: #4ade80; }
 .solve-tab-puzzle.is-active .solve-tab-evt { color: #4ade80; }
-
-/* 第二行:功能(求解 / 分布)— active 走主题强调色 */
-.solve-tab-mode { font-size: 0.95rem; font-weight: 600; }
-.solve-tab-mode.is-active { color: var(--accent); border-bottom-color: var(--accent); }
-.solve-tab-mode.is-active svg { color: var(--accent); }
 
 /* 第三行:3×3 求解子标签 — 更小 */
 .solve-tab-subs { gap: 0.1rem; margin-top: 0.1rem; }

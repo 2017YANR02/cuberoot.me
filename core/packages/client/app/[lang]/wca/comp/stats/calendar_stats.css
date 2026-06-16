@@ -3,7 +3,6 @@
   --text: #d4d4d4;
   --muted: #8f8f8f;
   --border: rgba(255, 255, 255, 0.12);
-  --accent: #d97757;
   background: #111;
   color: var(--text);
   min-height: 100vh;
@@ -314,15 +313,15 @@
 }
 
 .cs-line-playhead {
-  stroke: #d97757;
+  stroke: var(--accent);
   stroke-width: 1.5;
   stroke-dasharray: 4 3;
   pointer-events: none;
 }
 
 .cs-line-dot-head {
-  fill: #d97757;
-  stroke: rgba(217, 119, 87, 0.4);
+  fill: var(--accent);
+  stroke: color-mix(in srgb, var(--accent) 40%, transparent);
   stroke-width: 4;
   paint-order: stroke;
 }

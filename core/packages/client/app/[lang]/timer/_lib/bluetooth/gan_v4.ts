@@ -42,6 +42,7 @@
 
 import type { CubeDriver, CubeDriverStartResult } from './driver';
 import type { CubeBrand } from './types';
+import { macStringToBytes } from './mac';
 
 // GAN v4 GATT identifiers — match cstimer's V4DATA / V4READ / V4WRITE.
 const GAN_V4_SERVICE = '00000010-0000-fff7-fff6-fff5fff4fff0';
@@ -86,19 +87,12 @@ function hexToBytes(hex: string): Uint8Array {
 
 function tryParseMacFromName(name: string | undefined): Uint8Array | null {
   if (!name) return null;
+  // Only a FULL 6-byte MAC embedded in the name is trustworthy. We don't
+  // fabricate one from a 3-byte suffix + a guessed OUI (GAN uses several OUIs
+  // across batches — a guess derives a wrong key and fails silently). The hook
+  // resolves the MAC (advertisement / prompt) before start() anyway.
   const m12 = /([0-9A-Fa-f]{12})$/.exec(name);
   if (m12) return hexToBytes(m12[1]);
-  const m6 = /-([0-9A-Fa-f]{6})$/.exec(name);
-  if (m6) {
-    const lower = hexToBytes(m6[1]);
-    const out = new Uint8Array(6);
-    // Hard-coded GAN OUI — better than zeros when the name only carries the
-    // last 3 bytes. Real cube MACs may use a different OUI on newer batches;
-    // if decryption fails this is the first thing to revisit.
-    out[0] = 0xcc; out[1] = 0x9b; out[2] = 0x0f;
-    out.set(lower, 3);
-    return out;
-  }
   return null;
 }
 
@@ -328,7 +322,13 @@ interface MoveDecodeState {
   prevMoveCnt: number;
   /** Most recent battery percentage from a mode-0xEF event (0..100). */
   battery: number | null;
+  /** Consecutive frames with an unrecognised mode byte — wrong key/MAC. */
+  badFrames: number;
 }
+
+// Every mode byte a correctly-keyed v4 cube emits. A wrong key randomises
+// frame[0], which almost never lands here — so sustained misses ⇒ bad MAC.
+const V4_KNOWN_MODES = new Set([0x01, 0xed, 0xef, 0xd1, 0xec, 0xf5, 0xf6, 0xfa, 0xfc, 0xfd, 0xfe, 0xff]);
 
 /** Read N bits (big-endian within the byte) starting at `bitOffset`. */
 function readBits(buf: Uint8Array, bitOffset: number, nBits: number): number {
@@ -371,6 +371,10 @@ function readBits(buf: Uint8Array, bitOffset: number, nBits: number): number {
 function decodeFrame(frame: Uint8Array, dec: MoveDecodeState): string[] {
   if (frame.length < 16) return [];
   const mode = frame[0];
+  // Unrecognised mode byte ⇒ likely a wrong-key decrypt; count it for the
+  // MAC-error detector. Known modes (incl. the ignored ones) reset the count.
+  if (V4_KNOWN_MODES.has(mode)) dec.badFrames = 0;
+  else { dec.badFrames++; return []; }
 
   if (mode === 0xef) {
     // Battery: bits 8 + len*8 .. 16 + len*8. cstimer reads len from bits
@@ -469,6 +473,7 @@ export const ganV4Driver: CubeDriver = {
   brand: 'gan-v4' satisfies CubeBrand,
   service: GAN_V4_SERVICE,
   optionalServices: [String(BATTERY_SERVICE)],
+  needsMac: true,
 
   matches(device: BluetoothDevice): boolean {
     const n = device.name ?? '';
@@ -478,16 +483,19 @@ export const ganV4Driver: CubeDriver = {
     return /^(GAN-?(?!356)(12|13|14|Mini)|MG-|AiCube)/i.test(n);
   },
 
-  async start(server, onMove): Promise<CubeDriverStartResult> {
+  async start(server, onMove, ctx): Promise<CubeDriverStartResult> {
     const service = await server.getPrimaryService(GAN_V4_SERVICE);
     const notifyChar = await service.getCharacteristic(GAN_V4_NOTIFY_CHAR);
 
-    const mac = tryParseMacFromName(server.device.name) ?? new Uint8Array(6);
+    const mac = ctx?.mac
+      ? macStringToBytes(ctx.mac)
+      : (tryParseMacFromName(server.device.name) ?? new Uint8Array(6));
     const aesKey = deriveKey(GAN_V4_KEY_BASE, mac);
     const aesIv = deriveKey(GAN_V4_IV_BASE, mac);
     const expandedKey = expandKey(aesKey);
 
-    const decState: MoveDecodeState = { prevMoveCnt: -1, battery: null };
+    const decState: MoveDecodeState = { prevMoveCnt: -1, battery: null, badFrames: 0 };
+    let keyErrorFired = false;
 
     const onChar = (ev: Event): void => {
       const target = ev.target as BluetoothRemoteGATTCharacteristic;
@@ -502,6 +510,11 @@ export const ganV4Driver: CubeDriver = {
       }
       const moves = decodeFrame(pt, decState);
       for (const mv of moves) onMove(mv);
+      // Several unrecognised frames in a row ⇒ wrong MAC. Tell the hook once.
+      if (!keyErrorFired && decState.badFrames >= 6) {
+        keyErrorFired = true;
+        ctx?.onKeyError?.();
+      }
     };
 
     notifyChar.addEventListener('characteristicvaluechanged', onChar);

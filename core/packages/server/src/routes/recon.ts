@@ -65,6 +65,29 @@ reconRoutes.get('/recon/list', async (c) => {
   return c.json(rows.map(rowToJson));
 });
 
+// ==================== GET /v1/recon/:id/same-scramble ====================
+// 同一打乱串的其它复盘(任意选手/项目),给详情页「相同打乱的复盘」用。
+// 旧实现客户端拉全量 /list(~800KB)再过滤 → 慢且不进 SSR。此端点只回匹配行,
+// 服务端按归一化打乱(trim + 多空白折一)比对,跟客户端 scrambleKey 同语义。
+// 注:path depth 与 /recon/:id 不同,注册顺序无冲突。
+reconRoutes.get('/recon/:id/same-scramble', async (c) => {
+  const id = c.req.param('id');
+  const norm = "regexp_replace(btrim(COALESCE(NULLIF(optimal_scramble, ''), wca_scramble)), '\\s+', ' ', 'g')";
+  const rows = await query<Record<string, unknown>>(
+    `WITH target AS (SELECT ${norm} AS k FROM recons WHERE id = ?)
+     SELECT ${LIST_COLUMNS} FROM recons, target
+     WHERE recons.id <> ?
+       AND target.k <> ''
+       AND ${norm.replace(/optimal_scramble/g, 'recons.optimal_scramble').replace(/wca_scramble/g, 'recons.wca_scramble')} = target.k
+     ORDER BY raw_time ASC NULLS LAST
+     LIMIT 200`,
+    [id, id],
+  );
+  // 可变数据,浏览器短缓存即可(SSR 已给首屏,客户端再刷新求新)。
+  c.header('Cache-Control', 'public, max-age=300');
+  return c.json(rows.map(rowToJson));
+});
+
 // ==================== GET /v1/recon/person/:wcaId ====================
 // 个人复盘主页:某选手参与的全部 recon——作为选手(person_id)、合作者(co_persons 含其 id)、
 // 复盘者(reconer_id) 或 添加者(added_by_id)。客户端再按角色 tab 过滤。

@@ -1,18 +1,20 @@
 /* 6 个 cubing.pro 风格统计 tab 共享样式. 类名前缀 .wse- (wca-stats-extra). */
 
-.wse-page {
-  /* wse 视觉硬码 dark,锁 dark token */
+html:not([data-palette-scheme=dark]) .wse-page {
+  /* wse 视觉硬码 dark,锁 dark token(dark 调色板激活时此选择器不匹配,token 透传) */
   color-scheme: dark;
   --background: #171717;
   --foreground: #ededed;
   --muted-foreground: #a3a3a3;
   --faint-foreground: #737373;
+}
 
+.wse-page {
   max-width: 1180px;
   margin: 0 auto;
   padding: 24px 16px;
   color: var(--foreground);
-  background: #1a1a1a;
+  background: var(--card);
   min-height: 100vh;
 }
 
@@ -21,12 +23,12 @@
 .wse-title-help {
   display: inline-flex;
   align-items: center;
-  color: #a3a3a3;
+  color: var(--muted-foreground);
   opacity: 0.6;
   text-decoration: none;
   transition: opacity 0.15s, color 0.15s;
 }
-.wse-title-help:hover { opacity: 1; color: #D97757; }
+.wse-title-help:hover { opacity: 1; color: var(--accent); }
 .wse-header-row {
   display: flex;
   justify-content: space-between;
@@ -51,9 +53,9 @@
   gap: 12px 16px;
   margin: 24px 0 16px;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .wse-filter {
@@ -73,15 +75,15 @@
 /* 排除 PillToggle:它是 <button> 但要保持自己的胶囊外形(999px),别被方框控件样式套住 */
 .wse-filter > button:not(.pill-toggle) {
   padding: 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   color: inherit;
   border-radius: 6px;
   font-size: 14px;
   height: 34px;
 }
 .wse-filter select:hover,
-.wse-filter > input:hover { border-color: rgba(255, 255, 255, 0.25); }
+.wse-filter > input:hover { border-color: color-mix(in srgb, var(--foreground) 25%, transparent); }
 
 /* 名录长度区间筛选(最小–最大,按当前名字口径的字符数) */
 .wse-len-range {
@@ -93,8 +95,8 @@
 .wse-len-input {
   width: 60px;
   padding: 6px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   color: inherit;
   border-radius: 6px;
   font-size: 14px;
@@ -103,7 +105,7 @@
   font-variant-numeric: tabular-nums;
   -moz-appearance: textfield;
 }
-.wse-len-input:hover { border-color: rgba(255, 255, 255, 0.25); }
+.wse-len-input:hover { border-color: color-mix(in srgb, var(--foreground) 25%, transparent); }
 .wse-len-input::-webkit-outer-spin-button,
 .wse-len-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .wse-len-dash { color: var(--muted-foreground); }
@@ -113,13 +115,13 @@
 .wse-country-trigger {
   display: flex;
   align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   border-radius: 6px;
   height: 34px;
   overflow: hidden;
 }
-.wse-country-trigger:hover { border-color: rgba(255, 255, 255, 0.25); }
+.wse-country-trigger:hover { border-color: color-mix(in srgb, var(--foreground) 25%, transparent); }
 .wse-country-trigger > button {
   flex: 1;
   display: flex;
@@ -152,8 +154,8 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: #2a2a2a;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--popover);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 6px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   z-index: 10;
@@ -167,7 +169,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
   color: var(--muted-foreground);
 }
 .wse-country-search input {
@@ -198,8 +200,8 @@
   text-align: left;
   height: auto !important;
 }
-.wse-country-item:hover { background: rgba(255, 255, 255, 0.06) !important; }
-.wse-country-item.active { background: rgba(120, 160, 255, 0.15) !important; }
+.wse-country-item:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent) !important; }
+.wse-country-item.active { background: var(--accent-soft) !important; }
 
 /* Toggle (chip) */
 .wse-toggle {
@@ -211,13 +213,13 @@
   font-size: 13px;
   color: var(--muted-foreground);
 }
-.wse-toggle input { accent-color: #d77757; }
+.wse-toggle input { accent-color: var(--accent); }
 
 /* Table */
 .wse-table-wrapper {
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   padding: 12px;
   overflow-x: auto;
 }
@@ -226,7 +228,7 @@
   text-align: center;
   color: var(--muted-foreground);
 }
-.wse-state-error { color: #ff7676; }
+.wse-state-error { color: var(--destructive); }
 /* 排名页:已选项目数 + 模式标签(单项 / 名次和),由事件选择器选中数量驱动 */
 .wse-mode-status {
   display: flex;
@@ -263,7 +265,7 @@
 .wse-table th, .wse-table td {
   padding: 4px 12px;
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   line-height: 1.4;
 }
 .wse-table th {
@@ -273,7 +275,7 @@
   text-transform: uppercase;
   color: var(--muted-foreground);
 }
-.wse-table tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+.wse-table tbody tr:hover { background: color-mix(in srgb, var(--foreground) 3%, transparent); }
 /* 可排序表头(空态名录):按钮形态但继承 th 字体外观 */
 .wse-th-sort {
   display: inline-flex;
@@ -290,7 +292,7 @@
 }
 .wse-th-sort:hover { color: var(--foreground); }
 .wse-th-sort svg { opacity: 0.8; }
-.wse-table a { color: #d77757; text-decoration: none; }
+.wse-table a { color: var(--accent); text-decoration: none; }
 .wse-table a:hover { text-decoration: underline; }
 
 .wse-rank-col {
@@ -320,7 +322,7 @@
 .wse-attempts-col {
   font-variant-numeric: tabular-nums;
   font-size: 13px;
-  color: #ccc;
+  color: var(--muted-foreground);
 }
 
 /* Pagination */
@@ -339,8 +341,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   color: inherit;
   border-radius: 6px;
   cursor: pointer;
@@ -349,8 +351,8 @@
 .wse-pagination select,
 .wse-pagination .paginator-input {
   padding: 4px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   color: inherit;
   border-radius: 6px;
   height: 28px;
@@ -406,7 +408,7 @@
 .wse-sor-evcell.podium-1 { color: #ffc107; font-weight: 600; }
 .wse-sor-evcell.podium-2 { color: #c0c0c0; font-weight: 600; }
 .wse-sor-evcell.podium-3 { color: #cd7f32; font-weight: 600; }
-.wse-sor-evcell.empty { color: #555; }
+.wse-sor-evcell.empty { color: var(--faint-foreground); }
 
 /* Show toggle 所在 filter 不强制 140px min-width,让 toggle 后紧贴下一项 filter */
 .wse-filter.wse-filter-show { min-width: 0; }
@@ -416,10 +418,10 @@
   display: inline-flex;
   align-items: stretch;
   align-self: flex-start;  /* 不被 .wse-filter 的 stretch 拉宽 → 避免右侧露空 */
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 6px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   height: 34px;
 }
 .wse-show-toggle button {
@@ -434,7 +436,7 @@
 }
 .wse-show-toggle button:hover { color: var(--foreground); }
 .wse-show-toggle button.active {
-  background: rgba(120, 160, 255, 0.18);
+  background: var(--accent-soft);
   color: var(--foreground);
   font-weight: 500;
 }
@@ -450,14 +452,14 @@
   flex: 1;
   width: 100%;
   padding: 6px 28px 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   color: inherit;
   border-radius: 6px;
   font-size: 14px;
   height: 34px;
 }
-.wse-q-wrap input:hover { border-color: rgba(255, 255, 255, 0.25); }
+.wse-q-wrap input:hover { border-color: color-mix(in srgb, var(--foreground) 25%, transparent); }
 
 /* Mobile */
 @media (max-width: 600px) {

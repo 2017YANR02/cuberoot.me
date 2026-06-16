@@ -8,8 +8,12 @@
   --accent: #2563eb;
   --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
   --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
-  --grid-dot: color-mix(in srgb, var(--foreground) 12%, transparent);
-  --canvas-bg: color-mix(in srgb, var(--background) 70%, var(--secondary));
+  /* Artboard is "paper": stays light under the dark UI chrome (like Illustrator /
+     Figma), so the default dark strokes / text / shorthand glyphs read clearly and
+     SVG/PNG export is predictable regardless of theme. Theme-locked on purpose —
+     do NOT swap these for theme tokens (they would flip dark and re-hide content). */
+  --grid-dot: #d6dae1;
+  --canvas-bg: #f5f6f8;
 
   position: fixed;
   inset: 0;
@@ -109,6 +113,57 @@
   padding: 0 6px;
 }
 
+/* ---- paper color control ---- */
+.paint-paper-group {
+  gap: 4px;
+}
+.paint-paper-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-right: 2px;
+  white-space: nowrap;
+}
+.paint-paper-swatch {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: box-shadow 0.12s, border-color 0.12s, transform 0.08s;
+}
+.paint-paper-swatch:hover {
+  transform: scale(1.08);
+}
+.paint-paper-swatch.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.paint-paper-custom {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px dashed var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.paint-paper-custom:hover {
+  border-color: var(--accent);
+}
+.paint-paper-custom input[type='color'] {
+  width: 30px;
+  height: 30px;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+
 /* ---- toolbar (left) ---- */
 .paint-toolbar {
   grid-area: toolbar;
@@ -203,6 +258,61 @@
   pointer-events: none;
   text-align: center;
   padding: 20px;
+}
+
+/* ---- create-gesture hints (polygon / star: drag + ↑/↓ change count) ----
+   UI-surface tokens (not paper ink) so they read over ANY paper color; both are
+   pointer-events:none so they never block drawing. */
+.paint-create-pill {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--fg);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--foreground) 16%, transparent);
+  backdrop-filter: blur(4px);
+}
+.paint-create-badge {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 10px));
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 8px;
+  line-height: 1;
+  color: var(--fg);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--foreground) 18%, transparent);
+  backdrop-filter: blur(4px);
+}
+.paint-create-badge-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+.paint-create-badge-count {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.paint-create-badge-keys {
+  font-size: 10px;
+  color: var(--muted);
 }
 
 /* ---- inspector (right) ---- */
@@ -714,14 +824,17 @@
   gap: 10px;
   flex-wrap: wrap;
 }
-.paint-sh-sizes {
-  display: inline-flex;
-  gap: 3px;
+.paint-sh-size-ctl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 170px;
 }
-.paint-sh-size {
-  min-width: 30px;
-  height: 28px;
-  border: 1px solid var(--border);
+.paint-sh-size-label {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
 }
 .paint-sh-toggle {
   display: inline-flex;
@@ -876,7 +989,8 @@
   .paint-layers-list {
     max-height: 160px;
   }
-  .paint-sh-panel {
+  .paint-sh-panel,
+  .paint-drawings-panel {
     left: 8px;
     right: 8px;
     top: 8px;
@@ -884,4 +998,250 @@
     max-width: none;
     max-height: 72vh;
   }
+}
+
+/* ---- active-drawing title + cloud save indicator (topbar) ---- */
+.paint-doc-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.paint-doc-title,
+.paint-doc-title-input {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg);
+  max-width: 200px;
+  border-radius: 6px;
+}
+.paint-doc-title {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 4px 7px;
+  cursor: text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.paint-doc-title:hover {
+  background: var(--surface-2);
+}
+.paint-doc-title-input {
+  width: 200px;
+  padding: 3px 6px;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  outline: none;
+}
+.paint-save-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.paint-save-badge.is-error {
+  color: var(--destructive);
+}
+.paint-spin {
+  animation: paint-spin 0.9s linear infinite;
+}
+@keyframes paint-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---- cloud library panel ---- */
+.paint-drawings-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 380px;
+  max-width: calc(100% - 24px);
+  max-height: calc(100% - 24px);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--foreground) 18%, transparent);
+  z-index: 18;
+  overflow: hidden;
+}
+.paint-drawings-body {
+  padding: 10px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.paint-drawings-new {
+  height: 34px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.paint-drawings-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 24px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--muted);
+}
+.paint-drawings-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.paint-drawing-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg);
+}
+.paint-drawing-card.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.paint-drawing-thumb {
+  display: block;
+  width: 100%;
+  height: 96px;
+  padding: 0;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+}
+.paint-drawing-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.paint-drawing-noimg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--muted);
+}
+.paint-drawing-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 6px;
+}
+.paint-drawing-title {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  padding: 2px 2px;
+  text-align: left;
+  font-size: 12px;
+  color: var(--fg);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.paint-drawing-title:hover {
+  text-decoration: underline;
+}
+.paint-drawing-rename {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 5px;
+  font-size: 12px;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 5px;
+  outline: none;
+}
+.paint-drawing-actions {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.paint-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.paint-icon-btn:hover {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+.paint-icon-btn--danger:hover {
+  background: color-mix(in srgb, var(--destructive) 14%, transparent);
+  color: var(--destructive);
+}
+
+/* ---- login gate (whole page when signed out) ---- */
+.paint-gate {
+  --fg: var(--foreground);
+  --muted: var(--muted-foreground);
+  --surface-2: var(--secondary);
+  --border: var(--border-default);
+  --accent: #2563eb;
+  --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--background);
+  color: var(--fg);
+}
+.paint-gate-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  max-width: 360px;
+}
+.paint-gate-icon {
+  color: var(--accent);
+}
+.paint-gate-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+.paint-gate-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.paint-gate-login {
+  height: 38px;
+  padding: 0 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-top: 4px;
 }

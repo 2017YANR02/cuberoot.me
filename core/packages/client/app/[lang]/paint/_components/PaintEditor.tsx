@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useAuthStore } from '@/lib/auth-store';
 import { usePaint } from '../_lib/store';
+import { paperInk } from '../_lib/paper';
+import { loadLibrary, scheduleAutosave, flushSave } from '../_lib/cloud-store';
 import {
   matchCommand,
   matchTool,
@@ -13,6 +16,8 @@ import Toolbar from './Toolbar';
 import Canvas from './Canvas';
 import Inspector from './Inspector';
 import ShorthandPanel from './ShorthandPanel';
+import DrawingsPanel from './DrawingsPanel';
+import PaintGate from './PaintGate';
 
 function isTypingTarget(el: EventTarget | null): boolean {
   if (!(el instanceof HTMLElement)) return false;
@@ -25,11 +30,43 @@ function isTypingTarget(el: EventTarget | null): boolean {
   );
 }
 
+// Login gate: only signed-in users can use /paint (their drawings live in the
+// cloud library). The page is dynamic(ssr:false), so reading auth here is safe.
 export default function PaintEditor() {
+  const user = useAuthStore((s) => s.user);
+  if (!user) return <PaintGate />;
+  return <PaintEditorInner />;
+}
+
+function PaintEditorInner() {
   const canvasAreaRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ w: 800, h: 600 });
   const [shorthandOpen, setShorthandOpen] = useState(false);
+  const [drawingsOpen, setDrawingsOpen] = useState(false);
   const spacePan = useRef(false);
+  const paper = usePaint((s) => s.paper);
+
+  // Cloud sync: load the library + most-recent drawing on mount, then autosave
+  // the active drawing on every document change (debounced in the cloud store).
+  useEffect(() => {
+    void loadLibrary();
+    const unsub = usePaint.subscribe((state, prev) => {
+      if (
+        state.shapes !== prev.shapes ||
+        state.order !== prev.order ||
+        state.paper !== prev.paper
+      ) {
+        scheduleAutosave();
+      }
+    });
+    const onBeforeUnload = () => flushSave();
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      unsub();
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      flushSave();
+    };
+  }, []);
 
   // measure the canvas grid cell
   useLayoutEffect(() => {
@@ -168,15 +205,27 @@ export default function PaintEditor() {
     };
   }, [viewport.w, viewport.h]);
 
+  // Override the artboard CSS custom props at runtime so the background + grid
+  // dots follow the chosen paper. paint.css keeps the static fallback values.
+  const paperStyle = {
+    ['--canvas-bg']: paper,
+    ['--grid-dot']: paperInk(paper).gridDot,
+  } as CSSProperties;
+
   return (
-    <>
-      <Topbar viewport={viewport} onOpenShorthand={() => setShorthandOpen(true)} />
+    <div className="paint-page" style={paperStyle}>
+      <Topbar
+        viewport={viewport}
+        onOpenShorthand={() => setShorthandOpen(true)}
+        onOpenDrawings={() => setDrawingsOpen(true)}
+      />
       <Toolbar />
       <div className="paint-canvas-host" ref={canvasAreaRef} style={{ gridArea: 'canvas', position: 'relative', overflow: 'hidden' }}>
         <Canvas viewport={viewport} />
         <ShorthandPanel open={shorthandOpen} onClose={() => setShorthandOpen(false)} viewport={viewport} />
+        <DrawingsPanel open={drawingsOpen} onClose={() => setDrawingsOpen(false)} />
       </div>
       <Inspector />
-    </>
+    </div>
   );
 }
