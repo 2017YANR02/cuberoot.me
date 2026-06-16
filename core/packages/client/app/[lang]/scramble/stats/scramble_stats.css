@@ -834,3 +834,106 @@ a.scramble-timeline-scramble:hover {
   text-decoration: underline;
   color: var(--text);
 }
+
+/* ── 查看全部:整个 bin 的真题列表 + 筛选 ── */
+.scramble-stats-fulllist-open {
+  align-self: flex-start;
+  margin-top: 0.6rem;
+  padding: 0.35rem 0.9rem;
+  background: transparent;
+  color: var(--text-sub);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.scramble-stats-fulllist-open:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.scramble-stats-fulllist {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.scramble-stats-fulllist-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+.scramble-stats-fulllist-count {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  font-variant-numeric: tabular-nums;
+}
+.scramble-stats-fulllist-search {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 1 1 12rem;
+  min-width: 9rem;
+}
+.scramble-stats-fulllist-input {
+  width: 100%;
+  padding: 0.32rem 1.7rem 0.32rem 0.6rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.8rem;
+}
+.scramble-stats-fulllist-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.scramble-stats-fulllist-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.76rem;
+  color: var(--text-sub);
+}
+.scramble-stats-fulllist-date input {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.28rem 0.4rem;
+  font: inherit;
+  font-size: 0.76rem;
+  color-scheme: inherit;
+}
+.scramble-stats-fulllist-close,
+.scramble-stats-fulllist-more {
+  padding: 0.3rem 0.85rem;
+  background: transparent;
+  color: var(--text-sub);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.scramble-stats-fulllist-close:hover,
+.scramble-stats-fulllist-more:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.scramble-stats-fulllist-more {
+  align-self: center;
+  margin-top: 0.25rem;
+}
+@media (max-width: 480px) {
+  .scramble-stats-fulllist-bar {
+    gap: 0.45rem;
+  }
+  .scramble-stats-fulllist-search {
+    flex-basis: 100%;
+  }
+}
