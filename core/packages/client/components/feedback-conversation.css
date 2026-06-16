@@ -18,6 +18,25 @@
 .fbc-msg-who { font-size: 12.5px; font-weight: 650; color: var(--foreground); }
 .fbc-msg-admin .fbc-msg-who { color: var(--accent); }
 .fbc-msg-when { font-size: 11px; color: var(--faint-foreground); }
+
+/* 单条回复删除:trash 图标 → 行内二次确认(删除 / 取消),不弹原生 confirm */
+.fbc-msg-del {
+  margin-left: auto; display: inline-flex; align-self: center; padding: 3px;
+  border: 0; border-radius: 6px; cursor: pointer; background: transparent;
+  color: var(--faint-foreground); transition: background .15s, color .15s;
+}
+.fbc-msg-del:hover { background: color-mix(in srgb, var(--destructive) 14%, transparent); color: var(--destructive); }
+.fbc-msg-confirm { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.fbc-msg-del-yes, .fbc-msg-del-no {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 6px; cursor: pointer; font-size: 11.5px; font-weight: 600;
+  border: 1px solid transparent;
+}
+.fbc-msg-del-yes { background: var(--destructive); color: #fff; }
+.fbc-msg-del-yes:disabled { opacity: .55; cursor: default; }
+.fbc-msg-del-no { background: transparent; color: var(--muted-foreground); border-color: var(--border-default); }
+.fbc-msg-del-no:hover { color: var(--foreground); }
+
 .fbc-msg-body {
   margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--foreground);
   white-space: pre-wrap; word-break: break-word;
