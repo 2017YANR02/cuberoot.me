@@ -12,7 +12,7 @@
  *  只登记路径 + 描述,不写 Demo。
  * ────────────────────────────────────────────────────────────────────────── */
 
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { tr } from '@/i18n/tr';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -29,9 +29,13 @@ import { EventIcon } from '@/components/EventIcon/EventIcon';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import HeaderToggles from '@/components/HeaderToggles';
 import CubeShorthand from '@/components/CubeShorthand';
+import { ScramblePreview2D } from '@/components/ScramblePreview2D';
+import { VisualCube } from '@/components/VisualCube';
+import { AttemptsList } from '@/components/persons/sections/results/AttemptsList';
+import '@/components/wca-results/attempts-grid.css';
 import Link from '@/components/AppLink';
 
-export type GalleryCategory = 'toggle' | 'button' | 'input' | 'badge' | 'nav' | 'more';
+export type GalleryCategory = 'toggle' | 'button' | 'input' | 'badge' | 'display' | 'nav' | 'more';
 
 export interface ComponentEntry {
   name: string;
@@ -50,6 +54,7 @@ export const CATEGORIES: { id: GalleryCategory; zh: string; en: string }[] = [
   { id: 'button', zh: '按钮', en: 'Buttons' },
   { id: 'input', zh: '输入与选择', en: 'Inputs & selects' },
   { id: 'badge', zh: '徽章与图标', en: 'Badges & icons' },
+  { id: 'display', zh: '展示与可视化', en: 'Display & visualization' },
   { id: 'nav', zh: '导航与链接', en: 'Navigation & links' },
   { id: 'more', zh: '更多组件(数据驱动 / 需上下文,无内联演示)', en: 'More (data-driven / context-bound, no inline demo)' },
 ];
@@ -195,6 +200,65 @@ function AppLinkDemo() {
 
 function CubeShorthandDemo() {
   return <CubeShorthand alg="R U R' U' F R2 x" size={40} showLabels />;
+}
+
+function ScramblePreview2DDemo() {
+  return (
+    <div className="cg-row">
+      <ScramblePreview2D event="333" scramble="R U R' U' R' F R2 U' R' U' R U R' F'" size={84} />
+      <ScramblePreview2D event="pyram" scramble="U L R' B U' L R U' L' R B'" size={84} />
+      <ScramblePreview2D event="skewb" scramble="R U L B R L U R B" size={84} />
+    </div>
+  );
+}
+
+// VisualCube fetches its SVG from the backend via apiUrl(), which resolves to a
+// relative path on SSR but an absolute prod URL on the client → hydration mismatch.
+// Gate the demo to client-only so server and client both render an empty placeholder first.
+function useMounted() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  return mounted;
+}
+
+function VisualCubeDemo() {
+  const mounted = useMounted();
+  if (!mounted) return <div className="cg-row" style={{ minHeight: 84 }} aria-hidden />;
+  return (
+    <div className="cg-row">
+      <VisualCube view="iso" setup="R U R' U R U2 R'" size={84} alt="OLL state" />
+      <VisualCube view="pll" algorithm="R U R' U' R' F R2 U' R' U' R U R' F'" size={84} alt="T perm" />
+    </div>
+  );
+}
+
+function AttemptsListDemo() {
+  const isZh = useIsZh();
+  // 三行不同量级(全 sub-min / 含 1 分多 / 全 1-2 分),展示跨行同列右对齐 + ao5 去括号占位。
+  const rows: { attempts: number[]; best: number }[] = [
+    { attempts: [5023, 4712, 6636, 5341, 4878], best: 4712 },
+    { attempts: [5412, 5382, 9740, 5067, 4423], best: 4423 },
+    { attempts: [15389, 11874, 8152, 11587, 8876], best: 8152 },
+  ];
+  return (
+    <div className="cg-attempts-demo">
+      {rows.map((r, i) => (
+        <AttemptsList
+          key={i}
+          attempts={r.attempts}
+          best={r.best}
+          eventId="333"
+          compId="DemoOpen2024"
+          roundTypeId="f"
+          reconLookup={null}
+          isZh={isZh}
+          personId="2017DEMO01"
+          personName="Demo Cuber"
+          compName="Demo Open 2024"
+        />
+      ))}
+    </div>
+  );
 }
 
 export const CATALOG: ComponentEntry[] = [
@@ -356,17 +420,22 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'VisualCube',
-    import: 'components/VisualCube.tsx',
-    category: 'more',
-    zh: 'NxN 魔方状态图(facelets → SVG),唯一入口。手写 <rect> 拼魔方 = bug。',
-    en: 'NxN cube state image (facelets → SVG), single entry point. Hand-rolling a cube out of <rect> is a bug.',
+    import: "import { VisualCube } from '@/components/VisualCube';",
+    category: 'display',
+    zh: 'NxN 魔方状态图(facelets → SVG,服务端渲染),唯一入口。手写 <rect> 拼魔方 = bug。view=iso/pll/oll/f2l…,setup= 正向打乱,或 algorithm= 当解法(渲染其逆)。',
+    en: 'NxN cube state image (facelets → SVG, server-rendered), single entry point. Hand-rolling a cube out of <rect> is a bug. view=iso/pll/oll/f2l…, setup= a forward scramble, or algorithm= treated as a solution (renders its inverse).',
+    usage: '<VisualCube view="pll" algorithm="R U R\' U\' …" size={88} />',
+    Demo: VisualCubeDemo,
+    note: { zh: '图从后端 /v1/visualcube.svg 取(数据驱动),后端挂时不显示。', en: 'The image is fetched from the backend /v1/visualcube.svg (data-driven); it won’t render if the backend is down.' },
   },
   {
     name: 'ScramblePreview2D',
-    import: 'components/ScramblePreview2D.tsx',
-    category: 'more',
-    zh: '打乱的 2D 平面展开图(WCA net)。"打乱图"统一用它,不是 3D iso。',
-    en: 'The 2D unfolded scramble net (WCA net). "Scramble image" means this, not a 3D iso view.',
+    import: "import { ScramblePreview2D } from '@/components/ScramblePreview2D';",
+    category: 'display',
+    zh: '打乱的 2D 平面展开图(WCA net),纯前端 SVG 渲染(无后端)。"打乱图"统一用它,不是 3D iso。覆盖 2-7 阶 / 金字塔 / 斜转 / SQ1 / 五魔 / 时钟 / 镜面。',
+    en: 'The 2D unfolded scramble net (WCA net), pure client-side SVG (no backend). "Scramble image" means this, not a 3D iso view. Covers 2–7×7 / pyraminx / skewb / SQ1 / megaminx / clock / mirror.',
+    usage: '<ScramblePreview2D event="333" scramble={scr} size={60} />',
+    Demo: ScramblePreview2DDemo,
   },
   {
     name: 'ChainExplorer',
@@ -377,9 +446,11 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'AttemptsList',
-    import: 'components/persons/sections/results/AttemptsList.tsx',
-    category: 'more',
-    zh: 'WCA 成绩的「详细成绩」单元(选手页 ByCompList / ByEventView 与复盘页同构)。每把右对齐 + ao5 去括号占位 + 跨行同列对齐(布局走共享 wca-results/attempts-grid.css)。已复盘的把点击跳复盘,管理员编辑模式行内改值,没复盘的把跳 /recon/submit 预填。需 reconLookup + 选手 / 比赛上下文。',
-    en: 'The WCA "Attempts" cell (shared by the person page ByCompList / ByEventView and the recon page). Right-aligned solves + ao5 bracket placeholders + cross-row column alignment (layout from the shared wca-results/attempts-grid.css). A reconstructed solve links to its recon, admin edit-mode edits inline, a no-recon solve links to /recon/submit prefilled. Needs reconLookup + person / comp context.',
+    import: "import { AttemptsList } from '@/components/persons/sections/results/AttemptsList';",
+    category: 'display',
+    zh: 'WCA 成绩的「详细成绩」单元(选手页 ByCompList / ByEventView 与复盘页同构)。每把右对齐 + ao5 去括号占位 + 跨行同列对齐(布局走共享 wca-results/attempts-grid.css)。已复盘的把点击跳复盘,管理员编辑模式行内改值,没复盘的把跳 /recon/submit 预填。',
+    en: 'The WCA "Attempts" cell (shared by the person page ByCompList / ByEventView and the recon page). Right-aligned solves + ao5 bracket placeholders + cross-row column alignment (layout from the shared wca-results/attempts-grid.css). A reconstructed solve links to its recon, admin edit-mode edits inline, a no-recon solve links to /recon/submit prefilled.',
+    Demo: AttemptsListDemo,
+    note: { zh: '点击行为需 reconLookup + 选手 / 比赛上下文;Demo 用 mock 数据,只展示对齐 + 括号占位。', en: 'Click behavior needs reconLookup + person / comp context; the demo uses mock data to show alignment + bracket placeholders only.' },
   },
 ];
