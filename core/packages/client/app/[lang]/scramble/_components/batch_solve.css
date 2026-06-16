@@ -1,0 +1,308 @@
+/* 批量求解面板(BatchSolvePanel)+ 单条/批量切换(SolveModeToggle) */
+
+/* ---- 单条 / 批量 切换 ---- */
+.bsp-mode {
+  display: inline-flex;
+  gap: 2px;
+  margin: 0 0 1.1rem;
+  padding: 3px;
+  background: var(--muted);
+  border-radius: 9px;
+}
+
+.bsp-mode-tab {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.86rem;
+  font-weight: 500;
+  padding: 0.35rem 0.95rem;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.bsp-mode-tab.is-active {
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+/* ---- 输入 ---- */
+.bsp {
+  color: var(--foreground);
+}
+
+.bsp-textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 7.5rem;
+  padding: 0.6rem 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 8px;
+}
+
+.bsp-textarea:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.bsp-input-meta {
+  margin-top: 0.35rem;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+
+.bsp-warn {
+  color: var(--destructive);
+}
+
+/* ---- 工具条 ---- */
+.bsp-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.bsp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.86rem;
+  color: var(--foreground);
+  background: var(--secondary);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.bsp-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.bsp-btn-primary {
+  color: var(--primary-foreground);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.bsp-btn-ghost {
+  background: transparent;
+}
+
+.bsp-gen {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.bsp-gen-n {
+  width: 3.4rem;
+  padding: 0.4rem 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 7px;
+}
+
+.bsp-gen-unit {
+  color: var(--muted-foreground);
+  font-size: 0.84rem;
+}
+
+/* ---- 进度 ---- */
+.bsp-progress {
+  height: 4px;
+  margin-top: 0.8rem;
+  background: var(--muted);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.bsp-progress-bar {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.15s linear;
+}
+
+.bsp-spin {
+  animation: bsp-spin 0.9s linear infinite;
+}
+
+@keyframes bsp-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- 汇总 ---- */
+.bsp-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.4rem;
+  margin-top: 1.3rem;
+}
+
+.bsp-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.bsp-stat-num {
+  font-size: 1.5rem;
+  font-weight: 650;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.bsp-stat-err .bsp-stat-num {
+  color: var(--destructive);
+}
+
+.bsp-stat-lbl {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+/* ---- 步数直方图 ---- */
+.bsp-hist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 1rem;
+  max-width: 420px;
+}
+
+.bsp-hist-row {
+  display: grid;
+  grid-template-columns: 1.8rem 1fr 2rem;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+
+.bsp-hist-len {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.bsp-hist-track {
+  height: 0.65rem;
+  background: var(--muted);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.bsp-hist-fill {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  background: var(--accent-soft);
+  border-left: 2px solid var(--accent);
+}
+
+.bsp-hist-n {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- 导出 ---- */
+.bsp-export {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.2rem;
+}
+
+/* ---- 结果表 ---- */
+.bsp-table-wrap {
+  margin-top: 0.8rem;
+  overflow-x: auto;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+}
+
+.bsp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.bsp-table th,
+.bsp-table td {
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-default);
+  vertical-align: top;
+}
+
+.bsp-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-weight: 500;
+  font-size: 0.78rem;
+  z-index: 1;
+}
+
+.bsp-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.bsp-col-i {
+  width: 2.5rem;
+  color: var(--faint-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.bsp-col-scr,
+.bsp-col-sol {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.bsp-col-sol {
+  user-select: all;
+}
+
+.bsp-col-len {
+  width: 3rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.bsp-row-err {
+  background: color-mix(in srgb, var(--destructive) 7%, transparent);
+}
+
+.bsp-err-msg {
+  color: var(--destructive);
+  font-family: var(--font-sans, inherit);
+  white-space: normal;
+}
+
+@media (max-width: 480px) {
+  .bsp-summary {
+    gap: 1rem;
+  }
+
+  .bsp-stat-num {
+    font-size: 1.25rem;
+  }
+
+  .bsp-table {
+    font-size: 0.8rem;
+  }
+}
