@@ -9,7 +9,7 @@
  * 真最优(单阶段 IDA*)与 WCA 12c4 口径的上帝之数详见 /math/sq1。
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryState, parseAsString } from 'nuqs';
+import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { Dices, LoaderCircle, ArrowRight } from 'lucide-react';
 import AppLink from '@/components/AppLink';
@@ -21,6 +21,7 @@ import { pooledScramble, prewarmScramble } from '@/lib/cubing-scramble';
 import { sq1MoveCounts, type Sq1MoveCounts } from '@/lib/sq1-metrics';
 import { solveSq1 } from '../../timer/_lib/solver/sq1';
 import SolveTabs from '../_components/SolveTabs';
+import { BatchSolvePanel, SolveModeToggle, type BatchSpec } from '../_components/BatchSolvePanel';
 import '../_components/puzzle_optimal_solver.css';
 import './sq1_solver.css';
 
@@ -57,6 +58,10 @@ export default function Sq1SolverPage() {
   useDocumentTitle('SQ1 求解器', 'Square-1 Solver');
 
   const [scramble, setScramble] = useQueryState('scramble', parseAsString.withDefault(''));
+  const [mode, setMode] = useQueryState(
+    'mode',
+    parseAsStringEnum(['single', 'batch'] as const).withDefault('single'),
+  );
   const [generating, setGenerating] = useState(false);
   const [solving, setSolving] = useState(false);
   const [result, setResult] = useState<Outcome | null>(null);
@@ -110,9 +115,37 @@ export default function Sq1SolverPage() {
 
   const showResult = result && result.scramble === trimmed && result.ok;
 
+  const batchSpec: BatchSpec = useMemo(() => ({
+    event: 'sq1',
+    metricLabel: 'WCA 12c4',
+    placeholder: {
+      zh: '每行一条打乱,如 (1,0)/(-3,3)/(0,-3)/',
+      en: 'one scramble per line, e.g. (1,0)/(-3,3)/(0,-3)/',
+    },
+    validate: (line) => (/[\d/]/.test(line.trim()) ? null : line.trim()),
+    solveOne: (s) => new Promise((resolve, reject) => {
+      // 同步 BFS,setTimeout 让出主线程让进度更新 + 不冻 UI。
+      window.setTimeout(() => {
+        try {
+          const out = solveScramble(s);
+          if (!out.ok) { reject(new Error('illegal')); return; }
+          resolve({ len: out.counts.wca, solution: out.solution });
+        } catch (e) { reject(e as Error); }
+      }, 0);
+    }),
+    randomOne: () => pooledScramble('sq1'),
+    concurrency: 1,
+  }), []);
+
   return (
     <div className="pos-page">
       <SolveTabs puzzle="sq1" mode="solve" />
+      <SolveModeToggle value={mode} onChange={(v) => void setMode(v)} />
+
+      {mode === 'batch' ? (
+        <BatchSolvePanel spec={batchSpec} />
+      ) : (
+      <>
       <p className="pos-lead">
         {tr({
           zh: 'Square-1 在线求解:两阶段近最优解,并对同一段解给出三套计步口径的步数。',
@@ -205,6 +238,8 @@ export default function Sq1SolverPage() {
           )}
         </div>
       )}
+      </>
+      )}
 
       <div className="sq1s-caveat">
         <strong>{tr({ zh: '关于「最优」', en: 'About "optimal"' })}</strong>{' '}
@@ -213,7 +248,7 @@ export default function Sq1SolverPage() {
           en: 'This is a two-phase near-optimal solution (cube shape, then permutation) — not guaranteed minimal; true optimal needs single-phase IDA*. Across the three counts, a "/" slice always counts 1; the only divergence is layer turns, so twist ≤ WCA 12c4 ≤ face-turn. WCA 12c4 is the metric your timer reports as scramble length — and its God\'s number has never been computed.',
         })}
         {' '}
-        <AppLink href="/math/sq1">
+        <AppLink href="/math/god?event=sq1">
           {tr({ zh: 'Square-1 上帝之数', en: "Square-1's God number" })} <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} />
         </AppLink>
       </div>
