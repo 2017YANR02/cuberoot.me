@@ -575,12 +575,28 @@ if($runPuzzles){
   $puzzleChanged = $true
 }
 
+# ===== JOB 附带: 近期打乱(全项目) recent_scrambles_events.json =====
+# id-watermark 批次(复刻 333 的"本次 export 新增"概念到所有项目): 长度分桶(全项目) + 222/金字塔/斜转
+# 难度分桶(整解最优步数, join puzzle CSV)。首页 RecentScrambles 选了非 333 项目时读这份。
+# 须在 puzzles 之后(难度 join 要最新 puzzle CSV)、发布之前。只要跑了 stages(刷新 Scrambles.tsv)或 puzzles 就跑。
+$eventsChanged = $false
+if($runStages -or $runPuzzles){
+  Step 'E 近期打乱(全项目) — build:recent-scrambles-events (长度全项目 + 222/金字塔/斜转难度)'
+  $env:SCRAMBLE_STATS_STAMP = if(Test-Path (Join-Path $IncrDir 'export_date.txt')){ (Get-Content (Join-Path $IncrDir 'export_date.txt') -Raw).Trim() } else { Get-Date -Format 'yyyy-MM-dd' }
+  Push-Location (Join-Path $RepoRoot 'core')
+  try {
+    pnpm --filter @cuberoot/scramble-stats-build build:recent-scrambles-events
+    if($LASTEXITCODE -ne 0){ throw 'build:recent-scrambles-events 失败' }
+  } finally { Pop-Location }
+  $eventsChanged = $true
+}
+
 # 333opt inject: stages 的 build 会覆写 distribution/examples 的 '333' 变体, 故 stages build 一跑就必须补 inject 还原;
 # 用户单点 333opt 也跑。实际跑在步骤 5 之后(必须在 build 之后)。
 $optChanged = $false
 $willInject = $run333opt -or ($runStages -and ($stdChanged -or $variantChanged))
 
-if(-not $stdChanged -and -not $variantChanged -and -not $willInject -and -not $puzzleChanged){
+if(-not $stdChanged -and -not $variantChanged -and -not $willInject -and -not $puzzleChanged -and -not $eventsChanged){
   Step '无任何数据变化, 结束。'
   return
 }
@@ -674,6 +690,7 @@ if($NoPublish){
     if($variantChanged){ $parts += "variants: $($Variants -join '/')" }
     if($optChanged){ $parts += '333-optimal' }
     if($puzzleChanged){ $parts += "puzzles: $($Puzzles -join '/')" }
+    if($eventsChanged){ $parts += 'recent-events' }
     git -C $RepoRoot commit -m "chore(scramble-stats): incremental refresh ($($parts -join ', '))"
     if($LASTEXITCODE -ne 0){ throw 'git commit 失败' }
     git -C $RepoRoot push origin main

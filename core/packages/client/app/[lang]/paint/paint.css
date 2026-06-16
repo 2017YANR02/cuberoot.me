@@ -324,6 +324,9 @@
   border-left: 1px solid var(--border);
   background: var(--surface);
   overflow-y: auto;
+  /* re-enable one-finger vertical scroll: the .paint-page ancestor sets
+     touch-action:none, which would otherwise kill scrolling this panel/sheet. */
+  touch-action: pan-y;
   z-index: 5;
 }
 .paint-insp-section {
@@ -466,6 +469,30 @@
 .paint-none-toggle.is-on {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+/* WCA color palette under each color field */
+.paint-swatches {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 5px;
+  margin-top: 7px;
+}
+.paint-swatch-chip {
+  aspect-ratio: 1;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.08s ease;
+}
+.paint-swatch-chip:hover {
+  transform: scale(1.12);
+}
+.paint-swatch-chip.is-on {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
 }
 
 /* segmented / select */
@@ -907,14 +934,63 @@
   color: var(--muted);
 }
 
-/* ---- responsive: tablet — inspector to bottom sheet ---- */
+/* Secondary text labels next to topbar icons — dropped on touch / narrow so the
+   topbar stays compact (icons only). Visible by default on desktop. */
+.paint-hide-narrow {
+  display: inline;
+}
+
+/* ---- responsive: tablet — inspector to bottom sheet, fatter touch targets ---- */
 @media (max-width: 768px) {
   .paint-page {
+    --paint-sheet-peek: 40px;
     grid-template-columns: auto 1fr;
     grid-template-areas:
       'topbar topbar'
       'toolbar canvas';
   }
+
+  /* compact, scrollable topbar: drop the secondary text labels + spacer */
+  .paint-hide-narrow {
+    display: none;
+  }
+  .paint-topbar {
+    overflow-x: auto;
+    /* re-enable one-finger horizontal scroll under the ancestor touch-action:none */
+    touch-action: pan-x;
+    scrollbar-width: none;
+  }
+  .paint-topbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* keep the bottom-most left tool clear of the bottom-sheet peek handle */
+  .paint-toolbar {
+    padding-bottom: var(--paint-sheet-peek);
+  }
+  .paint-topbar-spacer {
+    display: none;
+  }
+  .paint-topbar > * {
+    flex-shrink: 0;
+  }
+  .paint-doc-title,
+  .paint-doc-title-input {
+    max-width: 130px;
+  }
+  .paint-doc-title-input {
+    width: 130px;
+  }
+  /* bigger tap targets in the topbar */
+  .paint-topbar .paint-btn {
+    min-width: 34px;
+    height: 34px;
+  }
+  .paint-paper-swatch {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* inspector → bottom sheet */
   .paint-inspector {
     position: fixed;
     left: 0;
@@ -926,7 +1002,7 @@
     border-top: 1px solid var(--border);
     border-radius: 14px 14px 0 0;
     box-shadow: 0 -4px 18px color-mix(in srgb, var(--foreground) 16%, transparent);
-    transform: translateY(calc(100% - 38px));
+    transform: translateY(calc(100% - var(--paint-sheet-peek)));
     transition: transform 0.22s ease;
     z-index: 20;
   }
@@ -938,7 +1014,8 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    height: 38px;
+    position: relative;
+    height: var(--paint-sheet-peek);
     cursor: pointer;
     color: var(--muted);
     font-size: 12px;
@@ -954,40 +1031,79 @@
     position: absolute;
     top: 6px;
   }
+
+  /* fatter inspector controls for fingers */
+  .paint-field,
+  .paint-select,
+  .paint-seg button {
+    height: 34px;
+  }
+  .paint-swatch {
+    width: 32px;
+    height: 32px;
+  }
+  .paint-none-toggle,
+  .paint-lock-btn,
+  .paint-stepper .paint-btn {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+  }
+  .paint-range {
+    height: 22px;
+  }
 }
 
-/* ---- responsive: phone — compact toolbar ---- */
+/* ---- responsive: phone — toolbar to bottom bar, sheet floats above it ---- */
 @media (max-width: 480px) {
   .paint-page {
-    grid-template-rows: auto 1fr auto;
+    --paint-toolbar-h: 54px;
+    grid-template-rows: auto 1fr;
     grid-template-columns: 1fr;
     grid-template-areas:
       'topbar'
-      'canvas'
-      'toolbar';
-  }
-  .paint-toolbar {
-    flex-direction: row;
-    border-right: none;
-    border-top: 1px solid var(--border);
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 6px 8px;
-  }
-  .paint-tool {
-    flex-shrink: 0;
-  }
-  .paint-topbar {
-    overflow-x: auto;
+      'canvas';
   }
   .paint-topbar-title {
     display: none;
   }
-  .paint-inspector {
-    max-height: 60vh;
+
+  /* tools → fixed horizontal bar pinned to the bottom edge */
+  .paint-toolbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--paint-toolbar-h);
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+    border-right: none;
+    border-top: 1px solid var(--border);
+    overflow-x: auto;
+    overflow-y: hidden;
+    z-index: 21;
+    touch-action: pan-x;
+    scrollbar-width: none;
   }
+  .paint-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+  .paint-tool {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+  }
+
+  /* properties sheet sits just above the bottom toolbar (no overlap) */
+  .paint-inspector {
+    bottom: var(--paint-toolbar-h);
+    max-height: 56vh;
+  }
+
   .paint-layers-list {
-    max-height: 160px;
+    max-height: 150px;
   }
   .paint-sh-panel,
   .paint-drawings-panel {
@@ -996,7 +1112,7 @@
     top: 8px;
     width: auto;
     max-width: none;
-    max-height: 72vh;
+    max-height: calc(100dvh - 16px - var(--paint-toolbar-h));
   }
 }
 

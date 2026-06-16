@@ -1566,7 +1566,10 @@ const INLINE_CSS = `
   position: sticky; top: 0; z-index: 5;
   display: flex; justify-content: center; align-items: center;
   padding: calc(24px + var(--sat, 0px)) max(24px, var(--sar, 0px)) 24px max(24px, var(--sal, 0px));
-  background: var(--vc-input); border-radius: 4px;
+  /* Opaque: composite the input tint over the page bg so scrolled content
+     (alg input / virtual keyboard) doesn't bleed through the pinned preview. */
+  background: linear-gradient(var(--vc-input), var(--vc-input)), var(--vc-bg);
+  border-radius: 4px;
   max-height: 45vh;
 }
 .vc-preview {

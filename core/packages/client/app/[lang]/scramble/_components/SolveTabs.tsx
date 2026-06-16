@@ -4,15 +4,17 @@
  * 统一「求解」中心的标签导航(/scramble 的 求解/分布/各魔方求解 入口)。
  *
  * 第一行 = 功能(求解 / 分布),两个模式共用,是顶层主导航。
- * 求解模式下第二行才出项目(3×3 / 2×2×2 / 金字塔 / 斜转),项目=3×3 时再出一行
- * 子标签(最优解 / 阶段 / CFOP / DR)。
+ * 求解模式下第二行才出项目,直接复用全站 WcaEventSelector(同一图标选择器,只放出有
+ * 在线求解器的 5 个项目:3×3 / 2×2×2 / 金字塔 / 斜转 / SQ1),与分布模式的项目选择器同款;
+ * 项目=3×3 时再出一行子标签(最优解 / 阶段 / CFOP / DR)。
  * 分布模式不出项目行 —— 分布页自带 WcaEventSelector 是唯一的项目/事件选择器,
  * 避免「上面有项目、下面又有项目」的双重选择器。
  *
- * 关键:3×3 最优解(/scramble/solver)是全站唯一发 COOP/COEP 的文档(cubeopt 要
- * SharedArrayBuffer);其余工具在 COEP 下 worker 会被拦死。Next 软导航不换响应头,
- * 所以**只有跨 solver 边界**(进/出 /scramble/solver)才用原生 <a> 硬导航,其余
- * 一律 AppLink 软导航(秒切、不刷新)。两者都带真实 href,中键/Ctrl 新开正常。
+ * 关键:5 个项目共用一个路由 /scramble/solver?event=<id>(按 event 分发求解器),但只有
+ * 3×3(event=333,cubeopt 要 SharedArrayBuffer)是发 COOP/COEP 的文档;其余 event 是普通
+ * 文档(rust-cross worker/跨域表在 COEP 下会被拦死,绝不能套)。Next 软导航不换响应头,
+ * 所以**只有跨 333 边界**(进/出 event=333)才用原生 <a> 硬导航,非 333 之间一律 AppLink
+ * 软导航(秒切、不刷新)。两者都带真实 href,中键/Ctrl 新开正常。
  *
  * active 状态完全由各页以 props 传入(本组件不读 useSearchParams,避免 Suspense/SSG
  * 退化、秒渲染)。
@@ -20,13 +22,12 @@
 
 import AppLink from '@/components/AppLink';
 import { useParams } from 'next/navigation';
-import { useTranslation } from 'react-i18next';
 import { Sparkles, BarChart3 } from 'lucide-react';
-import { EventIcon } from '@/components/EventIcon/EventIcon';
+import WcaEventSelector from '@/components/WcaEventSelector';
 import { useT } from '@/hooks/useT';
 import './solve_tabs.css';
 
-export type SolvePuzzle = '3x3' | '2x2x2' | 'pyraminx' | 'skewb';
+export type SolvePuzzle = '3x3' | '2x2x2' | 'pyraminx' | 'skewb' | 'sq1';
 export type SolveSub = 'optimal' | 'stage' | 'cfop' | 'fmc';
 
 interface SolveTabsProps {
@@ -37,48 +38,64 @@ interface SolveTabsProps {
   sub?: SolveSub;
 }
 
-const PUZZLES: SolvePuzzle[] = ['3x3', '2x2x2', 'pyraminx', 'skewb'];
-
-const SOLVE_ROUTE: Record<SolvePuzzle, string> = {
-  '3x3': '/scramble/solver',
-  '2x2x2': '/scramble/pocket',
-  pyraminx: '/scramble/pyraminx',
-  skewb: '/scramble/skewb',
-};
+// 求解模式 5 个项目统一走一个路由 /scramble/solver?event=<id>,由该路由按 event 分发到
+// 对应求解器(333→cubeopt/COEP、222/pyram/skewb→PuzzleOptimalSolver、sq1→SQ1),和分布
+// /scramble/stats?event= 完全对称。event 是真正的选择器(决定渲染哪个求解器),无冗余路由名。
+const SOLVE_BASE = '/scramble/solver';
 const EVENT_ID: Record<SolvePuzzle, string> = {
   '3x3': '333',
   '2x2x2': '222',
   pyraminx: 'pyram',
   skewb: 'skewb',
+  sq1: 'sq1',
 };
+// 求解中心项目行复用全站 WcaEventSelector(同一图标选择器),仅放出有在线求解器的 5 个项目。
+const PUZZLE_BY_EVENT: Record<string, SolvePuzzle> = {
+  '333': '3x3', '222': '2x2x2', pyram: 'pyraminx', skewb: 'skewb', sq1: 'sq1',
+};
+const SOLVE_EVENTS = new Set(Object.keys(PUZZLE_BY_EVENT));
+
+const withEvent = (href: string, eventId: string) =>
+  `${href}${href.includes('?') ? '&' : '?'}event=${eventId}`;
+const solveHrefFor = (p: SolvePuzzle) => withEvent(SOLVE_BASE, EVENT_ID[p]);
+
+// 3×3 子标签:最优解 = 统一路由的 event=333;阶段/CFOP/DR 是另一个工具 /scramble/analyzer
+// (非 COEP),均属 333 带 event=333。
 const SUB_ROUTE: Record<SolveSub, string> = {
-  optimal: '/scramble/solver',
-  stage: '/scramble/analyzer?tool=stage',
-  cfop: '/scramble/analyzer?tool=cfop',
-  fmc: '/scramble/analyzer?tool=fmc',
+  optimal: '/scramble/solver?event=333',
+  stage: '/scramble/analyzer?tool=stage&event=333',
+  cfop: '/scramble/analyzer?tool=cfop&event=333',
+  fmc: '/scramble/analyzer?tool=fmc&event=333',
 };
 
 const distHref = (p: SolvePuzzle | null) => `/scramble/stats?event=${p ? EVENT_ID[p] : '333'}`;
-const isSolverHref = (href: string) => href === '/scramble/solver' || href.startsWith('/scramble/solver?');
+
+// COEP 边界 = 全站唯一发 COOP/COEP 的文档 = /scramble/solver?event=333(或裸 /scramble/solver
+// = 默认 333)。其余 event 是普通文档。跨这条边界(进/出 333)必须硬导航换文档头。
+const is333Href = (href: string) => {
+  if (href !== SOLVE_BASE && !href.startsWith(`${SOLVE_BASE}?`)) return false;
+  const q = href.split('?')[1];
+  if (!q) return true; // 裸 /scramble/solver = 默认 333
+  const ev = new URLSearchParams(q).get('event');
+  return ev === null || ev === '333';
+};
 
 export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
   const params = useParams();
   const lang = params?.lang;
   const prefix = lang === 'zh' ? '/zh' : '';
   const t = useT();
-  const { i18n } = useTranslation();
-  void i18n;
 
   // 当前是不是 COEP 的 3×3 最优解文档
   const currentIsSolver = mode === 'solve' && puzzle === '3x3' && sub === 'optimal';
 
-  // 「求解」功能标签的目标:当前项目的求解页(项目无在线求解器时退回 3×3 最优解)。
-  const solveHref = puzzle ? SOLVE_ROUTE[puzzle] : '/scramble/solver';
+  // 「求解」功能标签的目标:当前项目的求解页(项目无在线求解器时退回 3×3 最优解),带 ?event=。
+  const solveHref = puzzle ? solveHrefFor(puzzle) : '/scramble/solver?event=333';
 
   // 跨 solver 边界 → 硬导航(原生 a),否则软导航(AppLink)
   const tab = (key: string, href: string, active: boolean, content: React.ReactNode, extraClass = '') => {
     const cls = `solve-tab${active ? ' is-active' : ''}${extraClass ? ` ${extraClass}` : ''}`;
-    const hard = currentIsSolver !== isSolverHref(href);
+    const hard = currentIsSolver !== is333Href(href);
     if (hard) {
       return (
         <a key={key} href={`${prefix}${href}`} className={cls} aria-current={active ? 'page' : undefined}>
@@ -92,12 +109,6 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
       </AppLink>
     );
   };
-
-  const puzzleLabel = (p: SolvePuzzle) =>
-    p === '3x3' ? '3×3'
-      : p === '2x2x2' ? '2×2×2'
-        : p === 'pyraminx' ? t('金字塔', 'Pyraminx')
-          : t('斜转', 'Skewb');
 
   return (
     <nav className="solve-tabs" aria-label={t('求解中心导航', 'Solve center navigation')}>
@@ -119,23 +130,23 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
         )}
       </div>
 
-      {/* 第二行(仅求解):项目选择 — 4 个有在线求解器的项目。
-          分布模式不再重复项目行:分布页自带的 WcaEventSelector 是唯一的项目/事件选择器,
-          避免「上面有项目、下面又有项目」的双重选择器。 */}
+      {/* 第二行(仅求解):项目选择 — 复用全站 WcaEventSelector(同一图标选择器),只放出
+          有在线求解器的 5 个项目(3×3 / 2×2×2 / 金字塔 / 斜转 / SQ1)。分布模式不出此行:分布页
+          自带 WcaEventSelector 是唯一项目/事件选择器,避免「上面有项目、下面又有项目」。 */}
       {mode === 'solve' && (
-        <div className="solve-tab-row solve-tab-puzzles">
-          {PUZZLES.map((p) =>
-            tab(
-              p,
-              SOLVE_ROUTE[p],
-              puzzle === p,
-              <>
-                <EventIcon event={EVENT_ID[p]} className="solve-tab-evt" />
-                <span>{puzzleLabel(p)}</span>
-              </>,
-              'solve-tab-puzzle',
-            ),
-          )}
+        <div className="solve-tab-evrow">
+          <WcaEventSelector
+            availableEvents={SOLVE_EVENTS}
+            onlyAvailable
+            selectedEvent={puzzle ? EVENT_ID[puzzle] : undefined}
+            isZh={lang === 'zh'}
+            linkFor={(id) => {
+              const p = PUZZLE_BY_EVENT[id];
+              if (!p) return null;
+              const href = solveHrefFor(p);
+              return { href, hard: currentIsSolver !== is333Href(href) };
+            }}
+          />
         </div>
       )}
 

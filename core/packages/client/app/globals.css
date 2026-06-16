@@ -368,13 +368,16 @@ html[data-theme=dark] {
   box-sizing: border-box;
 }
 
+/* 原生表单控件(下拉 / 日期 / 时间)跟随根 color-scheme(theme.ts 按明暗 / 配色设),
+   而非硬钉 dark——否则浅色主题 / 浅配色下控件按暗色 UA 渲染(浅底配浅字)看不清。
+   :root 始终有 color-scheme(globals 默认 light dark + theme.ts inline 覆盖),故 inherit 总有值。 */
 select,
 input[type="date"],
 input[type="time"],
 input[type="datetime-local"],
 input[type="month"],
 input[type="week"] {
-  color-scheme: dark;
+  color-scheme: inherit;
 }
 
 option {

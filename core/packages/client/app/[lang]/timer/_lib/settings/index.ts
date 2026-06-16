@@ -7,6 +7,8 @@
  */
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
+import { readPalette } from '@/lib/theme';
+import { paletteScheme } from '@/lib/palettes';
 
 const KEY = 'cuberoot-timer.settings.v1';
 
@@ -358,18 +360,31 @@ export function useApplyTheme(): void {
       ? window.matchMedia('(prefers-color-scheme: dark)').matches
       : true,
   );
+  // 站点配色主题(克劳德/中国色)自带明暗,且 shell 背景走 var(--background) 跟配色。
+  // 选了配色时必须让 data-timer-theme 跟配色的明暗,否则计时器那套 [data-timer-theme]
+  // 灰阶仍按 OS prefers-color-scheme 走,会出现「浅配色 + OS 暗 → 浅底配暗灰文字」看不清。
+  const [paletteSch, setPaletteSch] = useState<'light' | 'dark' | null>(() =>
+    typeof window === 'undefined' ? null : paletteScheme(readPalette()),
+  );
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const onChange = (e: MediaQueryListEvent) => setSystemDark(e.matches);
     mq.addEventListener?.('change', onChange);
-    return () => mq.removeEventListener?.('change', onChange);
+    const onPalette = () => setPaletteSch(paletteScheme(readPalette()));
+    window.addEventListener('theme-change', onPalette);
+    window.addEventListener('storage', onPalette);
+    return () => {
+      mq.removeEventListener?.('change', onChange);
+      window.removeEventListener('theme-change', onPalette);
+      window.removeEventListener('storage', onPalette);
+    };
   }, []);
   useEffect(() => {
     const root = document.documentElement;
     const effective =
-      settings.theme === 'auto' ? (systemDark ? 'dark' : 'light') : settings.theme;
+      paletteSch ?? (settings.theme === 'auto' ? (systemDark ? 'dark' : 'light') : settings.theme);
     root.setAttribute('data-timer-theme', effective);
     return () => root.removeAttribute('data-timer-theme');
-  }, [settings.theme, systemDark]);
+  }, [settings.theme, systemDark, paletteSch]);
 }

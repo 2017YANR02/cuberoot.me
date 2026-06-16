@@ -44,6 +44,8 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1 -NoPublish      #
 - **前置**:比赛日期必须灌好,`incremental.py refresh_competitions` 读 WCA export 的 `year/month/day`+`end_*` 六列(非 `start_date`,2026-06-15 修;`competitions.tsv` 在 `D:/cube/scramble/wca_scramble/`)。日期空则时间线排序全乱。
 - 改任一 FA 文件 shape 必须同步前端 `stats/page.tsx` 的 `Fa*Json` 类型 + memo;改 fetch 响应形 bump `?v=`。
 
+**首页「近期打乱」数据(全自动, 跟一条龙)**:每跑 stages 或 puzzles 都会附带跑 `build:recent-scrambles-events`(ps1 步骤 E),产 `stats/scramble/recent_scrambles_events.json` —— 除 3x3 外所有项目的近期打乱(本次 export 新增, 靠单调 scramble-id watermark `incremental/recent_events_watermark.txt` 界定批次, 首次无 watermark 则取 export 日期前 30 天的比赛)。每项目按**打乱长度**分桶;222/金字塔/斜转额外按**难度**(整解最优步数, join puzzle CSV, 故须在 puzzles 之后)。3x3 本身仍走旧的 `recent_scrambles.json`(变体×类型×底色)。前端 `components/RecentScrambles.tsx` + `lib/recent-scrambles-events.ts`(改 shape 须同步 + bump V)。
+
 下面 A/B/C 是各 job 的内部细节。
 
 ---

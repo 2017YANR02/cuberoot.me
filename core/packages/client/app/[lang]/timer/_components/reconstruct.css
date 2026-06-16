@@ -6,7 +6,7 @@
 
 .reconstruct-modal h2 .reconstruct-date {
   font-weight: 400;
-  color: #888;
+  color: var(--muted-foreground);
   font-size: 13px;
 }
 
@@ -20,9 +20,9 @@
   flex: 1;
   padding: 6px 8px;
   border-radius: 4px;
-  border: 1px solid #2a2a2e;
-  background: #0e0e10;
-  color: #cfcfcf;
+  border: 1px solid var(--border-default);
+  background: var(--card);
+  color: var(--foreground);
   text-align: center;
   font-family: var(--font-mono);
 }
@@ -43,8 +43,8 @@
 }
 
 .reconstruct-stat {
-  background: #0e0e10;
-  border: 1px solid #2a2a2e;
+  background: var(--card);
+  border: 1px solid var(--border-default);
   border-radius: 6px;
   padding: 10px 12px;
   text-align: center;
@@ -53,12 +53,12 @@
 .reconstruct-stat-num {
   font-family: var(--font-mono);
   font-size: 22px;
-  color: #ededed;
+  color: var(--foreground);
   line-height: 1.2;
 }
 .reconstruct-stat-label {
   font-size: 11px;
-  color: #999;
+  color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-top: 2px;
@@ -74,7 +74,7 @@
 }
 .reconstruct-section-title {
   font-size: 12px;
-  color: #999;
+  color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 6px;
@@ -100,11 +100,11 @@
 
 .reconstruct-empty {
   font-size: 13px;
-  color: #888;
+  color: var(--muted-foreground);
   padding: 12px;
   text-align: center;
-  background: #0e0e10;
-  border: 1px solid #2a2a2e;
+  background: var(--card);
+  border: 1px solid var(--border-default);
   border-radius: 4px;
 }
 
@@ -114,8 +114,8 @@
   padding: 0;
   max-height: 280px;
   overflow-y: auto;
-  background: #0e0e10;
-  border: 1px solid #2a2a2e;
+  background: var(--card);
+  border: 1px solid var(--border-default);
   border-radius: 4px;
   font-family: var(--font-mono);
   font-size: 12px;
@@ -126,8 +126,8 @@
   grid-template-columns: 36px 56px 1fr 1fr;
   gap: 8px;
   padding: 4px 10px;
-  color: #cfcfcf;
-  border-bottom: 1px solid #1a1a1d;
+  color: var(--foreground);
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
 }
 .reconstruct-move-row:last-child {
   border-bottom: none;
@@ -138,16 +138,16 @@
 }
 
 .reconstruct-move-idx {
-  color: #666;
+  color: var(--faint-foreground);
   text-align: right;
 }
 .reconstruct-move-token {
-  color: #ededed;
+  color: var(--foreground);
   font-weight: bold;
 }
 .reconstruct-move-ts,
 .reconstruct-move-gap {
-  color: #888;
+  color: var(--muted-foreground);
   text-align: right;
 }
 .reconstruct-move-row.slow .reconstruct-move-gap {
@@ -164,8 +164,8 @@
   height: 14px;
   border-radius: 4px;
   overflow: hidden;
-  background: #0e0e10;
-  border: 1px solid #2a2a2e;
+  background: var(--card);
+  border: 1px solid var(--border-default);
   margin-bottom: 8px;
 }
 
@@ -195,8 +195,8 @@
 }
 
 .reconstruct-stage-cell {
-  background: #0e0e10;
-  border: 1px solid #2a2a2e;
+  background: var(--card);
+  border: 1px solid var(--border-default);
   border-radius: 4px;
   padding: 6px 8px;
   font-size: 11px;
@@ -217,7 +217,7 @@
 .reconstruct-stage-dot.stage-pll   { background: #7ad45a; }
 
 .reconstruct-stage-label {
-  color: #999;
+  color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 10px;
@@ -225,7 +225,7 @@
 .reconstruct-stage-time {
   font-family: var(--font-mono);
   font-size: 14px;
-  color: #ededed;
+  color: var(--foreground);
   margin-top: 2px;
 }
 .reconstruct-stage-tps {
@@ -252,8 +252,8 @@
   align-items: center;
   gap: 6px;
   background: transparent;
-  border: 1px solid #2a2a2e;
-  color: #cfcfcf;
+  border: 1px solid var(--border-default);
+  color: var(--foreground);
   font-size: 12px;
   padding: 6px 10px;
   border-radius: 4px;
@@ -263,14 +263,14 @@
   font-family: inherit;
 }
 .reconstruct-playback-toggle:hover {
-  background: #1a1a1d;
-  color: #ededed;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  color: var(--foreground);
 }
 
 .reconstruct-playback {
   margin-top: 10px;
-  background: #0e0e10;
-  border: 1px solid #2a2a2e;
+  background: var(--card);
+  border: 1px solid var(--border-default);
   border-radius: 6px;
   padding: 12px;
   display: flex;
@@ -298,9 +298,9 @@
 }
 
 .reconstruct-playback-buttons button {
-  background: #1a1a1d;
-  border: 1px solid #2a2a2e;
-  color: #cfcfcf;
+  background: var(--secondary);
+  border: 1px solid var(--border-default);
+  color: var(--foreground);
   width: 36px;
   height: 32px;
   display: inline-flex;
@@ -311,8 +311,8 @@
   padding: 0;
 }
 .reconstruct-playback-buttons button:hover:not(:disabled) {
-  background: #24242a;
-  color: #ededed;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  color: var(--foreground);
 }
 .reconstruct-playback-buttons button:disabled {
   opacity: 0.4;
@@ -336,11 +336,11 @@
   gap: 8px;
   font-family: var(--font-mono);
   font-size: 12px;
-  color: #cfcfcf;
+  color: var(--foreground);
 }
 
 .reconstruct-playback-counter {
-  color: #cfcfcf;
+  color: var(--foreground);
 }
 
 .reconstruct-playback-speed {
@@ -349,9 +349,9 @@
 }
 
 .reconstruct-playback-speed-btn {
-  background: #1a1a1d;
-  border: 1px solid #2a2a2e;
-  color: #888;
+  background: var(--secondary);
+  border: 1px solid var(--border-default);
+  color: var(--muted-foreground);
   font-size: 11px;
   padding: 3px 8px;
   border-radius: 3px;
@@ -359,8 +359,8 @@
   font-family: inherit;
 }
 .reconstruct-playback-speed-btn:hover {
-  background: #24242a;
-  color: #cfcfcf;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  color: var(--foreground);
 }
 .reconstruct-playback-speed-btn.active {
   background: #2a3d4d;
@@ -377,7 +377,7 @@
   }
   .reconstruct-section-header:hover,
   .reconstruct-section-header:active {
-    background: #1a1a1d;
+    background: color-mix(in srgb, var(--foreground) 6%, transparent);
   }
   .reconstruct-playback-toggle {
     min-height: 44px;

@@ -6,7 +6,7 @@
 .tc-heatmap {
   background: transparent;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
 
 .tc-heatmap-header {
@@ -25,7 +25,7 @@
 }
 
 .tc-heatmap-total {
-  color: #ededed;
+  color: var(--foreground);
   font-size: 12px;
 }
 
@@ -44,9 +44,9 @@
 }
 
 .tc-heatmap-streak-muted {
-  border-color: #333;
+  border-color: var(--border-default);
   background: transparent;
-  color: #666;
+  color: var(--muted-foreground);
 }
 
 .tc-heatmap-year-nav {
@@ -57,8 +57,8 @@
 
 .tc-heatmap-year-btn {
   background: transparent;
-  border: 1px solid #333;
-  color: #aaa;
+  border: 1px solid var(--border-default);
+  color: var(--muted-foreground);
   font-size: 11px;
   line-height: 1;
   padding: 2px 6px;
@@ -79,7 +79,7 @@
 }
 
 .tc-heatmap-year-label {
-  color: #ededed;
+  color: var(--foreground);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   min-width: 32px;
@@ -87,7 +87,7 @@
 }
 
 .tc-heatmap-empty {
-  color: #555;
+  color: var(--faint-foreground);
   font-size: 12px;
   font-style: italic;
   padding: 12px 4px;
@@ -99,7 +99,7 @@
 }
 
 .tc-heatmap-month {
-  fill: #888;
+  fill: var(--muted-foreground);
   font-size: 9px;
 }
 
@@ -108,11 +108,11 @@
 }
 
 .tc-heatmap-month-hover:hover {
-  fill: #ededed;
+  fill: var(--foreground);
 }
 
 .tc-heatmap-dow {
-  fill: #888;
+  fill: var(--muted-foreground);
   font-size: 9px;
 }
 
@@ -130,7 +130,7 @@
 }
 
 .tc-heatmap-cell:hover {
-  stroke: #ededed;
+  stroke: var(--foreground);
 }
 
 .tc-heatmap-cell-out {
@@ -140,8 +140,8 @@
 
 .tc-heatmap-expand-btn {
   background: transparent;
-  border: 1px solid #333;
-  color: #aaa;
+  border: 1px solid var(--border-default);
+  color: var(--muted-foreground);
   font-size: 11px;
   line-height: 1;
   padding: 2px 8px;

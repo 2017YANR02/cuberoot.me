@@ -20,8 +20,8 @@
   max-width: min(480px, calc(100vw - 32px));
   max-height: 320px;
   overflow-y: auto;
-  background: #1d1d1d;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--popover);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   z-index: 200;
@@ -36,7 +36,7 @@
   padding: 8px 12px;
   background: none;
   border: none;
-  color: #d4d4d4;
+  color: var(--foreground);
   font-size: 0.85rem;
   cursor: pointer;
   text-align: left;
@@ -44,7 +44,7 @@
 }
 
 .comp-picker-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .comp-picker-item.is-cancelled .comp-picker-name,
@@ -78,7 +78,7 @@
 
 .comp-picker-meta {
   font-size: 0.72rem;
-  color: #8f8f8f;
+  color: var(--muted-foreground);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -95,7 +95,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #c8c8c8;
+  color: var(--muted-foreground);
 }
 .comp-picker-item--preset:hover .comp-picker-preset-icon {
   color: color-mix(in srgb, var(--accent) 70%, white);
