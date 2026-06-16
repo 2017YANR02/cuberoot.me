@@ -104,6 +104,16 @@ export interface TimerSettings {
    *  original WCA scramble. Only same-state events (333/333oh/333ft/333fm) have one; others ignore it. */
   wcaUseOptimal: boolean;
 
+  /** Draw only WCA scrambles matching a cross/method difficulty — a filter layered on the date-range
+   *  random sampler (3x3-family events only; comp mode serves the comp's scrambles as-is and ignores it).
+   *  variant/stage/colors pick the metric (same selectors as /scramble/stats); wcaDiffSteps = the exact
+   *  optimal step-counts to allow. Empty wcaDiffSteps (or off) = no difficulty filter. */
+  wcaDifficultyOn: boolean;
+  wcaDiffVariant: string;   // method key, e.g. 'std'
+  wcaDiffStage: string;     // stage key, e.g. 'cross'
+  wcaDiffColors: string;    // subset key, e.g. 'BGORWY' (six-color) / 'W' / 'WY'
+  wcaDiffSteps: number[];   // allowed optimal step-counts; empty = no filter
+
   /** Auto-mark each WCA real scramble as done (public) after a non-DNF solve,
    *  when signed in. Default on — saves a manual click per solve. */
   autoMarkWcaScramble: boolean;
@@ -212,6 +222,11 @@ export const DEFAULTS: TimerSettings = {
   wcaDateFrom: '',
   wcaDateTo: '',
   wcaUseOptimal: false,
+  wcaDifficultyOn: false,
+  wcaDiffVariant: 'std',
+  wcaDiffStage: 'cross',
+  wcaDiffColors: 'BGORWY',
+  wcaDiffSteps: [],
   autoMarkWcaScramble: true,
   scrambleClickAction: 'copy',
   scrambleClickMigrated: false,

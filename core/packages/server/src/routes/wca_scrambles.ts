@@ -33,6 +33,62 @@ const OPT_JOIN = `LEFT JOIN wca_scramble_optimal o
    AND o.round_type_id = ws.round_type_id AND o.group_id = ws.group_id
    AND o.is_extra = ws.is_extra AND o.scramble_num = ws.scramble_num`;
 
+// ── 按难度筛选(wca_scramble_steps,migration 0057)──────────────────────────
+// 每条 3x3 真题存 steps[] 数组 = 各 (方法,阶段,底色) 最优步数;槽位偏移见 wca_scramble_steps_meta.layout
+// (随管道重灌,内存缓存 10min)。子集 bin = 对所选底色槽取 LEAST;std 六色 cross/xcross 走预算的
+// gm_cross6/gm_xcross6 列(有索引,飞镖 ~1ms),其余组合退化为分区扫描(可接受)。
+type StepsLayout = { variants?: Record<string, Record<string, Record<string, number>>> };
+let _stepsLayout: { at: number; v: StepsLayout | null } | null = null;
+const LAYOUT_TTL_MS = 10 * 60 * 1000;
+async function getStepsLayout(): Promise<StepsLayout | null> {
+  const now = Date.now();
+  if (_stepsLayout && now - _stepsLayout.at < LAYOUT_TTL_MS) return _stepsLayout.v;
+  let v: StepsLayout | null = null;
+  try {
+    const rows = await query<{ layout: StepsLayout }>('SELECT layout FROM wca_scramble_steps_meta WHERE id = 1');
+    v = rows[0]?.layout ?? null;
+  } catch (err) {
+    console.error('[wca-scrambles] steps layout read failed:', err);
+  }
+  _stepsLayout = { at: now, v };
+  return v;
+}
+
+const VARIANT_RE = /^[a-z0-9_]{1,24}$/;
+const STAGE_RE = /^[a-z0-9_]{1,32}$/;
+const COLORS_RE = /^[BGORWY]{1,6}$/;
+const STEP_COLORS6 = ['B', 'G', 'O', 'R', 'W', 'Y'] as const;
+// steps s ↔ wca_scrambles ws 自然键 join(steps 表无 scramble 文本,需 join 取文本/optimal)。
+const STEPS_WS_JOIN = `JOIN wca_scrambles ws
+    ON ws.competition_id = s.competition_id AND ws.event_id = s.event_id
+   AND ws.round_type_id = s.round_type_id AND ws.group_id = s.group_id
+   AND ws.is_extra = s.is_extra AND ws.scramble_num = s.scramble_num`;
+
+function parseStepList(s: string): number[] {
+  const out = new Set<number>();
+  for (const t of s.split(',')) { const n = Number(t); if (Number.isInteger(n) && n >= 0 && n <= 60) out.add(n); }
+  return [...out].sort((a, b) => a - b);
+}
+function isAll6(colors: string): boolean { return [...colors].sort().join('') === 'BGORWY'; }
+
+// 难度查询计划:predCol = 步数表达式(gm 列或 LEAST(选中底色槽));allSlots = 该 stage 6 底色槽
+// (B,G,O,R,W,Y 顺序,供返回 cols 让前端挑 argmin 底色)。布局缺该 (方法,阶段) → null(数据未灌)。
+interface DiffPlan { predCol: string; allSlots: number[] }
+function planDifficulty(layout: StepsLayout | null, variant: string, stage: string, colors: string): DiffPlan | null {
+  const st = layout?.variants?.[variant]?.[stage];
+  if (!st || typeof st !== 'object') return null;
+  const subset: number[] = [];
+  for (const ch of colors) { const v = st[ch]; if (typeof v !== 'number') return null; subset.push(v); }
+  if (subset.length === 0) return null;
+  const allSlots: number[] = [];
+  for (const ch of STEP_COLORS6) { const v = st[ch]; if (typeof v !== 'number') return null; allSlots.push(v); }
+  let predCol: string;
+  if (variant === 'std' && isAll6(colors) && stage === 'cross') predCol = 's.gm_cross6';
+  else if (variant === 'std' && isAll6(colors) && stage === 'xcross') predCol = 's.gm_xcross6';
+  else predCol = `LEAST(${subset.map((n) => `s.steps[${n}]`).join(',')})`;
+  return { predCol, allSlots };
+}
+
 /** 全量镜像表命中则组装成 WcaScrambleRow[];未收录该比赛返回 null。 */
 async function fromMirror(compId: string): Promise<ScrambleRow[] | null> {
   const rows = await query<ScrambleRow>(
@@ -160,7 +216,81 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
   // 仅同态项目(333/oh/ft/fm + 222/pyram/skewb)入 wca_scramble_optimal,前端只对这些项目传 optimal=1。
   const optFilter = c.req.query('optimal') === '1' ? 'AND o.optimal_scramble IS NOT NULL' : '';
 
+  // 按难度出题(timer 复用):variant/stage/colors/steps 齐全 → 只抽 LEAST(所选底色) ∈ steps 的真题。
+  const dVariant = c.req.query('variant') ?? '';
+  const dStage = c.req.query('stage') ?? '';
+  const dColors = c.req.query('colors') ?? '';
+  const dSteps = parseStepList(c.req.query('steps') ?? '');
+  const wantDifficulty = !!dVariant && !!dStage && !!dColors && dSteps.length > 0
+    && VARIANT_RE.test(dVariant) && STAGE_RE.test(dStage) && COLORS_RE.test(dColors);
+
   try {
+    if (wantDifficulty) {
+      const plan = planDifficulty(await getStepsLayout(), dVariant, dStage, dColors);
+      if (!plan) return c.json({ error: 'difficulty data not available', event }, 404);
+      const diffWhere = `${plan.predCol} IN (${dSteps.join(',')})`;
+      const isHot = plan.predCol.startsWith('s.gm_');
+      let drows: RandomRow[];
+      if (!hasFrom && !hasTo && isHot) {
+        // 热路径:gm 列有索引 → 飞镖采样 ~1ms(同全时段 random,环绕补齐)。
+        const dart = Math.random();
+        drows = await query<RandomRow>(
+          `SELECT ${RANDOM_COLS}
+             FROM wca_scramble_steps s
+             ${STEPS_WS_JOIN}
+             LEFT JOIN wca_competitions c ON c.id = s.competition_id
+             ${OPT_JOIN}
+            WHERE s.event_id = ? AND ${diffWhere} AND s.rnd >= ? ${optFilter}
+            ORDER BY s.rnd, ws.id LIMIT ?`,
+          [event, dart, count],
+        );
+        if (drows.length < count) {
+          const more = await query<RandomRow>(
+            `SELECT ${RANDOM_COLS}
+               FROM wca_scramble_steps s
+               ${STEPS_WS_JOIN}
+               LEFT JOIN wca_competitions c ON c.id = s.competition_id
+               ${OPT_JOIN}
+              WHERE s.event_id = ? AND ${diffWhere} AND s.rnd < ? ${optFilter}
+              ORDER BY s.rnd, ws.id LIMIT ?`,
+            [event, dart, count - drows.length],
+          );
+          drows = drows.concat(more);
+        }
+      } else if (!hasFrom && !hasTo) {
+        // 冷门组合:LEAST 无索引 → 分区扫描随机(~100-300ms,可接受)。
+        drows = await query<RandomRow>(
+          `SELECT ${RANDOM_COLS}
+             FROM wca_scramble_steps s
+             ${STEPS_WS_JOIN}
+             LEFT JOIN wca_competitions c ON c.id = s.competition_id
+             ${OPT_JOIN}
+            WHERE s.event_id = ? AND ${diffWhere} ${optFilter}
+            ORDER BY random() LIMIT ?`,
+          [event, count],
+        );
+      } else {
+        // 难度 + 日期:comp-sampling 叠难度谓词。
+        const dWhere: string[] = []; const dParams: string[] = [];
+        if (hasFrom) { dWhere.push('start_date >= ?'); dParams.push(from); }
+        if (hasTo) { dWhere.push('start_date <= ?'); dParams.push(to); }
+        drows = await query<RandomRow>(
+          `SELECT ${RANDOM_COLS}
+             FROM wca_scramble_steps s
+             JOIN (SELECT id, name FROM wca_competitions WHERE ${dWhere.join(' AND ')}
+                    ORDER BY random() LIMIT ${COMP_SAMPLE}) c ON c.id = s.competition_id
+             ${STEPS_WS_JOIN}
+             ${OPT_JOIN}
+            WHERE s.event_id = ? AND ${diffWhere} ${optFilter}
+            ORDER BY random() LIMIT ?`,
+          [...dParams, event, count],
+        );
+      }
+      if (drows.length === 0) return c.json({ error: 'no scrambles for difficulty', event }, 404);
+      c.header('Cache-Control', 'no-store');
+      return c.json({ event, scrambles: drows.map(toScrambleMeta) });
+    }
+
     let rows: RandomRow[];
     if (!hasFrom && !hasTo) {
       // 全时段:抽奖号飞镖采样。dart 在应用侧生成,便于环绕补齐复用同一落点。
@@ -212,6 +342,85 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
     return c.json({ event, scrambles: rows.map(toScrambleMeta) });
   } catch (err) {
     console.error('[wca-scrambles] random failed:', err);
+    return c.json({ error: 'query failed' }, 500);
+  }
+});
+
+// GET /wca/scrambles/by-difficulty?variant=&stage=&colors=&bin=&event=&q=&from=&to=&page=&pageSize=
+// 分布页「列举某步数的全部真题」+ 比赛名搜索 + 日期范围 + 分页。确定性(非随机)→ 可缓存。
+// event 省略 = 全 3x3 族(合并池);传具体 event = 该项目(分开模式)。
+type ByDiffRow = RandomRow & {
+  comp_date: string | null;
+  cb: number | null; cg: number | null; co: number | null; cr: number | null; cw: number | null; cy: number | null;
+};
+wcaScramblesRoutes.get('/wca/scrambles/by-difficulty', async (c) => {
+  const variant = c.req.query('variant') ?? '';
+  const stage = c.req.query('stage') ?? '';
+  const colors = c.req.query('colors') ?? '';
+  const bin = Number(c.req.query('bin'));
+  if (!VARIANT_RE.test(variant) || !STAGE_RE.test(stage) || !COLORS_RE.test(colors)
+      || !Number.isInteger(bin) || bin < 0 || bin > 60) {
+    return c.json({ error: 'invalid params' }, 400);
+  }
+  const event = c.req.query('event') ?? '';
+  const hasEvent = /^[0-9a-z]{2,6}$/.test(event);
+  const q = (c.req.query('q') ?? '').trim().slice(0, 80);
+  const from = c.req.query('from') ?? ''; const to = c.req.query('to') ?? '';
+  const hasFrom = DATE_RE.test(from); const hasTo = DATE_RE.test(to);
+  const page = Math.max(1, Number(c.req.query('page')) || 1);
+  const pageSize = Math.min(200, Math.max(1, Number(c.req.query('pageSize')) || 50));
+  const offset = (page - 1) * pageSize;
+
+  try {
+    const plan = planDifficulty(await getStepsLayout(), variant, stage, colors);
+    if (!plan) {
+      // 布局/数据未就绪(管道还没灌)→ 优雅返回空,不 500。
+      c.header('Cache-Control', 'no-store');
+      return c.json({ total: 0, page, pageSize, scrambles: [] });
+    }
+    const where: string[] = [`${plan.predCol} = ${bin}`]; // bin 已校验为整数,内联安全
+    const params: unknown[] = [];
+    if (hasEvent) { where.push('s.event_id = ?'); params.push(event); }
+    if (q) { where.push('c.name ILIKE ?'); params.push(`%${q}%`); }
+    if (hasFrom) { where.push('c.start_date >= ?'); params.push(from); }
+    if (hasTo) { where.push('c.start_date <= ?'); params.push(to); }
+    const needComp = !!q || hasFrom || hasTo;
+    const whereSql = where.join(' AND ');
+
+    const cntRows = await query<{ n: string }>(
+      `SELECT count(*)::text AS n
+         FROM wca_scramble_steps s
+         ${needComp ? 'JOIN wca_competitions c ON c.id = s.competition_id' : ''}
+        WHERE ${whereSql}`,
+      params,
+    );
+    const total = Number(cntRows[0]?.n ?? 0);
+
+    const colSel = STEP_COLORS6
+      .map((ch, i) => `s.steps[${plan.allSlots[i]}] AS c${ch.toLowerCase()}`)
+      .join(', ');
+    const rows = await query<ByDiffRow>(
+      `SELECT ws.competition_id, ws.event_id, ws.round_type_id, ws.group_id,
+              (ws.is_extra = 1) AS is_extra, ws.scramble_num, ws.scramble,
+              c.name AS comp_name, c.start_date AS comp_date, o.optimal_scramble, ${colSel}
+         FROM wca_scramble_steps s
+         ${STEPS_WS_JOIN}
+         LEFT JOIN wca_competitions c ON c.id = s.competition_id
+         ${OPT_JOIN}
+        WHERE ${whereSql}
+        ORDER BY c.start_date DESC NULLS LAST, ws.competition_id, ws.scramble_num
+        LIMIT ? OFFSET ?`,
+      [...params, pageSize, offset],
+    );
+    const scrambles = rows.map((r) => ({
+      ...toScrambleMeta(r),
+      cd: r.comp_date ?? '',
+      cols: [r.cb, r.cg, r.co, r.cr, r.cw, r.cy], // B,G,O,R,W,Y(前端挑 argmin 底色)
+    }));
+    c.header('Cache-Control', total > 0 ? 'public, max-age=300, s-maxage=86400' : 'no-store');
+    return c.json({ total, page, pageSize, scrambles });
+  } catch (err) {
+    console.error('[wca-scrambles] by-difficulty failed:', err);
     return c.json({ error: 'query failed' }, 500);
   }
 });

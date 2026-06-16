@@ -149,6 +149,57 @@ SELECT count(*) AS wca_scramble_optimal_total FROM wca_scramble_optimal;
   Remove-Item $localSql -Force -ErrorAction SilentlyContinue
   Write-Host "  [timer-optimal] ${Tag}: 完成 ($rows 行已上线)。" -ForegroundColor Green
 }
+# 难度 steps 索引 -> prod PG wca_scramble_steps(+ layout meta)。CSV 无 rnd 列:先 \copy 进临时表,
+# 再 INSERT JOIN wca_scrambles 补 rnd(顺带丢掉云表暂无的自然键,即覆盖缺口)。layout 内联灌 meta 单行。
+# 失败非致命(只警告不 throw):migration 0057 未部署到 prod 时这步会失败,部署后下次 run 自动灌上。
+# 服务器密码从其自身 /root/core-api/.env 读,不把凭据写进(进 git 的)本脚本。
+function Load-StepsToPg {
+  param([string]$LocalCsv, [string]$LocalLayout, [string]$Stamp)
+  if(-not (Test-Path $LocalCsv) -or -not (Test-Path $LocalLayout)){ Write-Host '  [steps] 缺 CSV/layout, 跳过灌库' -ForegroundColor DarkGray; return }
+  $rows = (Lc $LocalCsv)
+  Write-Host "  [steps] gzip+scp $rows 行 -> 临时表 -> INSERT JOIN wca_scrambles 补 rnd + layout meta ..." -ForegroundColor DarkCyan
+  # gzip(747MB -> ~150MB)
+  $gz = "$LocalCsv.gz"
+  Remove-Item $gz -Force -ErrorAction SilentlyContinue
+  $fin=[IO.File]::OpenRead($LocalCsv); $fout=[IO.File]::Create($gz)
+  $gzs=New-Object IO.Compression.GZipStream($fout,[IO.Compression.CompressionLevel]::Fastest)
+  $fin.CopyTo($gzs); $gzs.Close(); $fout.Close(); $fin.Close()
+  $remoteGz='/root/_wss.csv.gz'; $remoteCsv='/root/_wss.csv'; $remoteSql='/root/_wss.sql'
+  scp $gz "${StaticHost}:$remoteGz"; $scpRc=$LASTEXITCODE
+  Remove-Item $gz -Force -ErrorAction SilentlyContinue
+  if($scpRc -ne 0){ Write-Host '  [steps] scp 失败, 跳过灌库' -ForegroundColor Yellow; return }
+  # layout JSONB 内联(单引号字面串 + dollar-quote tag,避免 PowerShell/SQL 转义);json 内无 $/反引号
+  $layout = ([IO.File]::ReadAllText($LocalLayout)).Trim()
+  $metaIns = "INSERT INTO wca_scramble_steps_meta (id,layout,generated_at) VALUES (1, " + '$WSSL$' + $layout + '$WSSL$' + "::jsonb, '$Stamp') ON CONFLICT (id) DO UPDATE SET layout=EXCLUDED.layout, generated_at=EXCLUDED.generated_at;"
+  $sql = @"
+\set ON_ERROR_STOP on
+BEGIN;
+CREATE TEMP TABLE _wss_stage (competition_id varchar(32), event_id varchar(6), round_type_id varchar(1), group_id varchar(3), is_extra smallint, scramble_num int, gm_cross6 smallint, gm_xcross6 smallint, steps smallint[]) ON COMMIT DROP;
+\copy _wss_stage (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,gm_cross6,gm_xcross6,steps) FROM '$remoteCsv' WITH (FORMAT csv)
+TRUNCATE wca_scramble_steps;
+INSERT INTO wca_scramble_steps (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,rnd,steps,gm_cross6,gm_xcross6)
+  SELECT s.competition_id,s.event_id,s.round_type_id,s.group_id,s.is_extra,s.scramble_num,w.rnd,s.steps,s.gm_cross6,s.gm_xcross6
+  FROM _wss_stage s JOIN wca_scrambles w USING (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num);
+$metaIns
+COMMIT;
+SELECT 'wca_scramble_steps_total='||count(*) FROM wca_scramble_steps;
+"@
+  $localSql = Join-Path $env:TEMP '_wss_load.sql'
+  [IO.File]::WriteAllText($localSql, ($sql -replace "`r`n","`n"), [Text.UTF8Encoding]::new($false))
+  scp $localSql "${StaticHost}:$remoteSql" | Out-Null
+  if($LASTEXITCODE -ne 0){ Write-Host '  [steps] SQL scp 失败, 跳过' -ForegroundColor Yellow; Remove-Item $localSql -Force -EA SilentlyContinue; return }
+  $pwExpr = '$(grep -oP ''DB_PASS=\K.*'' /root/core-api/.env | tr -d ''[:space:]'')'
+  # 先 gunzip,再 psql -f(\copy 读已解压文件),最后清理远端临时文件
+  $remoteCmd = "gunzip -f $remoteGz && PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteCsv $remoteGz $remoteSql; exit `$rc"
+  ssh $StaticHost $remoteCmd
+  $loadRc=$LASTEXITCODE
+  Remove-Item $localSql -Force -ErrorAction SilentlyContinue
+  if($loadRc -ne 0){
+    Write-Host '  [steps] psql 灌库失败(非致命): migration 0057 可能尚未部署到 prod,部署后下次 run 自动灌。' -ForegroundColor Yellow
+  } else {
+    Write-Host "  [steps] 完成 ($rows 行已上线 wca_scramble_steps)。" -ForegroundColor Green
+  }
+}
 function AppendData($master,$src,$skipHeader){
   # LF 安全追加: 先确保 master 末尾有换行, 再逐行 append (跳过源 header)
   $needNL=$false
@@ -673,6 +724,22 @@ if($runStages){
   try {
     node --max-old-space-size=3072 build_scramble_bundle.mjs
     if($LASTEXITCODE -ne 0){ Write-Host '[bundle] 失败(非致命, 跳过)' -ForegroundColor Yellow }
+  } finally { Pop-Location }
+}
+
+# ---- 5e. 难度 steps 索引宽表 (wca_scramble_steps;依赖各变体 CSV,故跟 stages) ----
+# build:scramble-steps 产 stats/scramble/steps/{wca_scramble_steps.csv, steps_layout.json}(gitignored),
+# 非 NoPublish 时直接 \copy 灌 prod PG(供 /timer 按难度出题 + /scramble/stats 列举全部真题)。
+if($runStages){
+  Step '5e 难度 steps 索引 — build:scramble-steps (~0.75GB CSV, gitignored, \copy 灌 prod PG wca_scramble_steps)'
+  Push-Location (Join-Path $RepoRoot 'core')
+  try {
+    pnpm --filter @cuberoot/scramble-stats-build build:scramble-steps
+    if($LASTEXITCODE -ne 0){ Write-Host '[steps] 生成失败(非致命, 跳过)' -ForegroundColor Yellow }
+    elseif(-not $NoPublish){
+      Load-StepsToPg -LocalCsv (Join-Path $RepoRoot 'stats/scramble/steps/wca_scramble_steps.csv') `
+        -LocalLayout (Join-Path $RepoRoot 'stats/scramble/steps/steps_layout.json') -Stamp $stamp
+    }
   } finally { Pop-Location }
 }
 

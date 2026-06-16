@@ -271,6 +271,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // ref so the (stable-identity) scramble callbacks read the live value; the
   // `sig` string is the *meaningful* identity (excludes compName, which changes
   // per keystroke while typing in the comp picker) used as the reset trigger.
+  // 难度过滤(date 模式)签名:开启且选了步数才生效,变了即重置打乱队列。
+  const wcaDiffSig = settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
+    ? `${settings.wcaDiffVariant}:${settings.wcaDiffStage}:${settings.wcaDiffColors}:${[...settings.wcaDiffSteps].sort((a, b) => a - b).join('.')}`
+    : '';
   const wcaSpec = useMemo<WcaSourceSpec>(() => ({
     event,
     mode: settings.wcaScrambleMode,
@@ -281,11 +285,14 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     from: settings.wcaDateFrom,
     to: settings.wcaDateTo,
     optimal: settings.wcaUseOptimal,
-  }), [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, settings.wcaUseOptimal]);
+    diff: settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
+      ? { variant: settings.wcaDiffVariant, stage: settings.wcaDiffStage, colors: settings.wcaDiffColors, steps: settings.wcaDiffSteps }
+      : undefined,
+  }), [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, settings.wcaUseOptimal, settings.wcaDifficultyOn, settings.wcaDiffVariant, settings.wcaDiffStage, settings.wcaDiffColors, settings.wcaDiffSteps]);
   const wcaSpecRef = useRef(wcaSpec);
   wcaSpecRef.current = wcaSpec;
   const wcaSourceSig = settings.scrambleSource === 'wca'
-    ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}`
+    ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}|${wcaDiffSig}`
     : 'random';
 
   const genScramble = useCallback((): string => {

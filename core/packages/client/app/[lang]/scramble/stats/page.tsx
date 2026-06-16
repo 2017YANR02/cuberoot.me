@@ -11,6 +11,7 @@ import ScrambleLengthView, {
   type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
 } from './_components/ScrambleLengthView';
 import FirstAppearanceTimeline, { type TimelineEntry } from './_components/FirstAppearanceTimeline';
+import FullScrambleList from './_components/FullScrambleList';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
@@ -974,6 +975,9 @@ export default function ScrambleStatsPage() {
         is333={is333}
         exView={exView}
         onExView={setExView}
+        wcaEvent={event}
+        merged={merged}
+        dataset={dataset}
       />
 
       {cnBenefit && (
@@ -1067,6 +1071,9 @@ function ExamplesPanel({
   is333,
   exView,
   onExView,
+  wcaEvent,
+  merged,
+  dataset,
 }: {
   isZh: boolean;
   lang: 'zh' | 'en';
@@ -1084,6 +1091,9 @@ function ExamplesPanel({
   is333: boolean;
   exView: 'orig' | 'opt';
   onExView: (v: 'orig' | 'opt') => void;
+  wcaEvent: string;
+  merged: boolean;
+  dataset: string;
 }) {
   const selectedDownloadable = selectedBin !== null && downloadBins.includes(selectedBin);
   // 整解 + 该 bin 示例确有最优打乱数据时才露切换(线上旧 JSON 无第 4 元 → 自动隐藏)。
@@ -1194,6 +1204,20 @@ function ExamplesPanel({
       {selectedBin !== null && !loading && !errorText && samples && samples.length === 0 && (
         <div className="scramble-stats-examples-hint">{tr({ zh: '此 bin 无示例', en: 'No examples for this bin'
         })}</div>
+      )}
+      {/* 查看全部:列出该 bin 的全部真题 + 比赛名/日期筛选(仅 WCA 数据集、非整解、已选 bin)。
+          合并池 → 不传 event(全 3x3-family);分开 → 传当前项目。 */}
+      {dataset === 'wca' && !is333 && selectedBin !== null && (
+        <FullScrambleList
+          apiEvent={merged ? undefined : wcaEvent}
+          variant={variant}
+          stage={stage}
+          colors={subsetKey}
+          bin={selectedBin}
+          lang={lang}
+          isZh={isZh}
+          exView={exView}
+        />
       )}
     </div>
   );
