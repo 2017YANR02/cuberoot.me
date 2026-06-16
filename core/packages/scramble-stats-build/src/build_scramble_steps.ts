@@ -18,6 +18,10 @@ import YAML from 'yaml';
 import { VARIANTS, COLOR_LETTERS, type ColorLetter, type VariantSpec } from './variants';
 
 const MISSING = -1; // Int16 sentinel:该 (id, 槽) 无数据 → 数组元素 NULL
+// 333mbf(多盲)排除:split_mbf 把一次多盲拆成多个 cube 子打乱,同一自然键
+// (comp,event,round,group,num) 对应多条 → 破坏 wca_scramble_steps 的自然键主键。
+// 同 wca_scramble_optimal(0047)排除盲拧/多盲的口径。其余 333/oh/bf/fm/ft 单打乱、键唯一。
+const EXCLUDE_EVENTS = new Set(['333mbf']);
 
 interface SetSpec { key: string; csv_dir: string; scrambles_txt: string }
 function resolveWcaSet(): SetSpec {
@@ -171,7 +175,7 @@ async function main() {
   const buf: string[] = [];
   for (const [, row] of ids) {
     const k = natKeys[row];
-    if (!k || !k[0] || !k[1] || k[5] === undefined) { skipped++; continue; }
+    if (!k || !k[0] || !k[1] || k[5] === undefined || EXCLUDE_EVENTS.has(k[1])) { skipped++; continue; }
     const base = row * length;
     const arr: string[] = new Array(length);
     for (let s = 0; s < length; s++) { const v = store[base + s]; arr[s] = v === MISSING ? 'NULL' : String(v); }
