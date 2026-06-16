@@ -21,6 +21,7 @@ import { wcaEventId } from '../_lib/scramble/wca_pool';
 import type { EventId } from '../_lib/types';
 import type { TimerSettings } from '../_lib/settings';
 import { VariantSelect } from '@/components/VariantSelect';
+import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import { useSubsetSelection, SubsetColorPicker } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { stageLabel, VARIANT_ORDER, VARIANT_STAGES, type ScrambleVariant } from '@/lib/scramble-variants';
 import { statsUrl } from '@/lib/stats-base';
@@ -32,8 +33,11 @@ const WCA_MIN_DATE = '1982-06-05';
 
 // 难度过滤只适用 3x3-family(随机态打乱,有十字/方法步数);其余项目无此数据。
 const DIFFICULTY_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft', '333mbf']);
-// 步数多选范围(覆盖常用 cross/xcross;深阶段超出范围的步数 v1 暂不在此选)。
-const STEP_RANGE = Array.from({ length: 15 }, (_, i) => i);
+// 步数范围(覆盖常用 cross/xcross;深阶段超出 14 的步数 v1 暂不在此选)。难度开启默认带这个范围。
+const STEP_MIN = 0;
+const STEP_MAX = 14;
+const DEFAULT_STEP_RANGE: [number, number] = [4, 6]; // 难度首开默认中等十字区间
+const stepRange = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
 
 interface StepsLayout { variants: Record<string, Record<string, Record<string, number>>> }
 
@@ -143,11 +147,15 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stageOpts]);
 
-  const toggleStep = (n: number) => updateSettings({
-    wcaDiffSteps: settings.wcaDiffSteps.includes(n)
-      ? settings.wcaDiffSteps.filter((x) => x !== n)
-      : [...settings.wcaDiffSteps, n].sort((a, b) => a - b),
-  });
+  // 步数范围以连续区间 [lo, hi] 表示,落库仍是展开的步数列表(端点 / spec 不变)。
+  const diffLo = settings.wcaDiffSteps.length ? settings.wcaDiffSteps[0] : DEFAULT_STEP_RANGE[0];
+  const diffHi = settings.wcaDiffSteps.length ? settings.wcaDiffSteps[settings.wcaDiffSteps.length - 1] : DEFAULT_STEP_RANGE[1];
+  // 难度开启但步数为空(首次开 / 历史遗留)→ 填默认区间,保证滑块与过滤口径一致。
+  useEffect(() => {
+    if (canDifficulty && settings.wcaDifficultyOn && settings.wcaDiffSteps.length === 0) {
+      updateSettings({ wcaDiffSteps: stepRange(...DEFAULT_STEP_RANGE) });
+    }
+  }, [canDifficulty, settings.wcaDifficultyOn, settings.wcaDiffSteps.length, updateSettings]);
 
   return (
     <div className="wca-src-config">
@@ -225,24 +233,23 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings 
                       ariaLabel={tr({ zh: '阶段', en: 'Stage' })}
                     />
                   </div>
-                  <div className="wca-src-steps" role="group" aria-label={tr({ zh: '步数(可多选)', en: 'Step counts (multi-select)' })}>
-                    {STEP_RANGE.map((n) => {
-                      const on = settings.wcaDiffSteps.includes(n);
-                      return (
-                        <button
-                          key={n}
-                          type="button"
-                          className={`wca-src-step${on ? ' is-active' : ''}`}
-                          aria-pressed={on}
-                          onClick={() => toggleStep(n)}
-                        >{n}</button>
-                      );
-                    })}
+                  <div className="wca-src-steps-range">
+                    <span className="wca-src-steps-readout">
+                      {diffLo === diffHi
+                        ? tr({ zh: `${diffLo} 步`, en: `${diffLo} moves` })
+                        : tr({ zh: `${diffLo}–${diffHi} 步`, en: `${diffLo}–${diffHi} moves` })}
+                    </span>
+                    <RangeSlider
+                      min={STEP_MIN}
+                      max={STEP_MAX}
+                      value={[diffLo, diffHi]}
+                      onChange={([a, b]) => updateSettings({ wcaDiffSteps: stepRange(a, b) })}
+                      marks={[STEP_MIN, 7, STEP_MAX]}
+                      ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
+                    />
                   </div>
                   <p className="wca-src-hint">
-                    {settings.wcaDiffSteps.length
-                      ? tr({ zh: '只抽该方法 / 阶段 / 底色下,最优步数为所选值的真题。', en: 'Only scrambles whose optimal length (for this method / stage / color) matches a selected value.' })
-                      : tr({ zh: '选择要练的步数(可多选);未选 = 不按难度过滤。', en: 'Pick step counts to practice (multi-select); none selected = no difficulty filter.' })}
+                    {tr({ zh: '只抽该方法 / 阶段 / 底色下,最优步数落在所选范围内的真题。拖两个圆点设上下限。', en: 'Only scrambles whose optimal length (for this method / stage / color) falls in the selected range. Drag the two handles to set the bounds.' })}
                   </p>
                 </div>
               )}

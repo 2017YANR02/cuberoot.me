@@ -98,36 +98,29 @@
   padding: 4px 8px;
   font-size: 13px;
 }
-.wca-src-steps { display: flex; flex-wrap: wrap; gap: 5px; }
-.wca-src-step {
-  min-width: 26px;
-  padding: 3px 7px;
-  background: #0e0e10;
-  color: #aaa;
-  border: 1px solid #333;
-  border-radius: 6px;
-  font-size: 12px;
+/* 步数范围:双圆点滑块 + 选中区间读数 */
+.wca-src-steps-range { display: flex; flex-direction: column; gap: 2px; padding: 0 9px 18px; }
+.wca-src-steps-readout {
+  font-size: 13px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  cursor: pointer;
-  transition: background-color 0.12s, color 0.12s, border-color 0.12s;
+  color: var(--accent, #4b9fff);
 }
-.wca-src-step:hover { color: #ededed; border-color: #555; }
-.wca-src-step.is-active {
-  background: color-mix(in srgb, var(--accent, #4b9fff) 22%, #0e0e10);
-  color: #fff;
-  border-color: var(--accent, #4b9fff);
+/* RangeSlider 在 timer 面板(data-timer-theme,沿用面板的旧硬码灰阶)里的取色 */
+.wca-src-steps-range .range-slider {
+  --rs-rail-bg: #333;
+  --rs-thumb-ring: #0e0e10;
+  --rs-thumb-shadow: rgba(0, 0, 0, 0.4);
+  --rs-mark-fg: #888;
 }
 :root[data-timer-theme="light"] .wca-src-diff-row select {
   background: #fff; color: #1d1d1f; border-color: #ccc;
 }
-:root[data-timer-theme="light"] .wca-src-step {
-  background: #fff; color: #555; border-color: #ccc;
-}
-:root[data-timer-theme="light"] .wca-src-step:hover { color: #1d1d1f; border-color: #999; }
-:root[data-timer-theme="light"] .wca-src-step.is-active {
-  background: color-mix(in srgb, var(--accent, #2563eb) 14%, #fff);
-  color: #1d1d1f;
-  border-color: var(--accent, #2563eb);
+:root[data-timer-theme="light"] .wca-src-steps-range .range-slider {
+  --rs-rail-bg: #ccc;
+  --rs-thumb-ring: #fff;
+  --rs-thumb-shadow: rgba(0, 0, 0, 0.2);
+  --rs-mark-fg: #777;
 }
 
 @media (max-width: 540px) {

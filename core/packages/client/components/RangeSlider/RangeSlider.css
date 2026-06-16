@@ -1,0 +1,109 @@
+/* Dual-thumb range slider. Two stacked native range inputs share one rail; the
+   inputs are pointer-transparent and only their thumbs are interactive. Colors
+   default to theme tokens (follows light/dark + palette themes); consumers in a
+   non-token context (e.g. the timer's data-timer-theme panel) can override the
+   --rs-* color vars without touching this file. */
+.range-slider {
+  position: relative;
+  width: 100%;
+  --rs-h: 32px;
+  --rs-thumb: 18px;
+  --rs-rail: 6px;
+  height: var(--rs-h);
+  --rs-fill: var(--accent);
+  --rs-rail-bg: color-mix(in srgb, var(--foreground) 15%, transparent);
+  --rs-thumb-bg: var(--accent);
+  --rs-thumb-ring: var(--card);
+  --rs-thumb-shadow: color-mix(in srgb, var(--foreground) 30%, transparent);
+  --rs-mark-fg: var(--muted-foreground);
+  --rs-focus: var(--ring);
+}
+.range-slider.is-disabled { opacity: 0.5; pointer-events: none; }
+
+.range-slider-rail {
+  position: absolute;
+  top: calc((var(--rs-h) - var(--rs-rail)) / 2);
+  left: 0;
+  right: 0;
+  height: var(--rs-rail);
+  border-radius: 999px;
+  background: var(--rs-rail-bg);
+}
+.range-slider-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--rs-lo, 0%);
+  right: calc(100% - var(--rs-hi, 100%));
+  border-radius: 999px;
+  background: var(--rs-fill);
+}
+
+/* Both inputs overlay the full rail. pointer-events:none lets clicks fall
+   through to nothing (no track-jump), keeping both thumbs reachable. */
+.range-slider-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--rs-h);
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none;
+}
+.range-slider-input-lo { z-index: 2; }
+.range-slider-input-hi { z-index: 3; }
+.range-slider-input:focus-visible { outline: none; }
+
+.range-slider-input::-webkit-slider-runnable-track { height: var(--rs-h); background: transparent; }
+.range-slider-input::-moz-range-track { height: var(--rs-h); background: transparent; }
+
+.range-slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: var(--rs-thumb);
+  height: var(--rs-thumb);
+  margin-top: calc((var(--rs-h) - var(--rs-thumb)) / 2);
+  border-radius: 50%;
+  background: var(--rs-thumb-bg);
+  border: 2px solid var(--rs-thumb-ring);
+  box-shadow: 0 1px 3px var(--rs-thumb-shadow);
+  cursor: pointer;
+}
+.range-slider-input::-moz-range-thumb {
+  pointer-events: auto;
+  width: var(--rs-thumb);
+  height: var(--rs-thumb);
+  border-radius: 50%;
+  background: var(--rs-thumb-bg);
+  border: 2px solid var(--rs-thumb-ring);
+  box-shadow: 0 1px 3px var(--rs-thumb-shadow);
+  cursor: pointer;
+}
+.range-slider-input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--rs-focus); }
+.range-slider-input:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px var(--rs-focus); }
+
+.range-slider-marks {
+  position: absolute;
+  top: 24px;
+  left: 0;
+  right: 0;
+  height: 14px;
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--rs-mark-fg);
+}
+.range-slider-mark {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/* Coarse pointer (touch): larger thumbs + taller hit area. */
+@media (pointer: coarse) {
+  .range-slider { --rs-h: 38px; --rs-thumb: 24px; }
+  .range-slider-marks { top: 30px; }
+}
