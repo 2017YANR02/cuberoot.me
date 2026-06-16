@@ -16,7 +16,7 @@ import type { Bounds, Camera, PaintDoc, Shape, ToolId } from './types';
 import { getShapeBounds, setIdSeed, genId, SHAPE_UTILS } from './registry';
 import { unionBounds, aabbOfRotated } from './geometry';
 import { loadDoc, saveDoc, DOC_KEY } from './export';
-import { DEFAULT_PAPER } from './paper';
+import { DEFAULT_PAPER, paperInk } from './paper';
 
 export interface SnapLines {
   x?: number[];
@@ -87,6 +87,7 @@ export interface PaintState {
 
   beginHistory(): void;
   commit(): void;
+  cancelHistory(): void;
   undo(): void;
   redo(): void;
 
@@ -307,9 +308,33 @@ export const usePaint = create<PaintState>((set, get) => {
     setEditing: (id) => set({ editing: id }),
 
     setPaper: (hex) => {
-      if (get().paper === hex) return;
-      const prev = snapshot(get());
-      set({ paper: hex });
+      const cur = get();
+      if (cur.paper === hex) return;
+      const prev = snapshot(cur);
+      // Shapes still using the previous paper's default ink follow the paper, so
+      // they don't vanish when flipping light<->dark. User-picked colors (anything
+      // other than the old default ink) are left untouched.
+      const oldInk = paperInk(cur.paper).ink;
+      const newInk = paperInk(hex).ink;
+      if (oldInk !== newInk) {
+        const shapes: Record<string, Shape> = {};
+        let changed = false;
+        for (const id in cur.shapes) {
+          const s = cur.shapes[id];
+          if (s.type === 'text' && s.fill === oldInk) {
+            shapes[id] = { ...s, fill: newInk };
+            changed = true;
+          } else if (s.type !== 'text' && s.stroke === oldInk) {
+            shapes[id] = { ...s, stroke: newInk };
+            changed = true;
+          } else {
+            shapes[id] = s;
+          }
+        }
+        set(changed ? { paper: hex, shapes } : { paper: hex });
+      } else {
+        set({ paper: hex });
+      }
       pushHistory(prev);
     },
 
@@ -559,6 +584,24 @@ export const usePaint = create<PaintState>((set, get) => {
       if (pendingSnapshot) {
         pushHistory(pendingSnapshot);
         pendingSnapshot = null;
+      }
+      set({ _pending: false });
+    },
+
+    // Abort a mid-flight drag (no history push): roll the document back to the
+    // beginHistory() snapshot. Used when a 2nd touch lands and turns an
+    // in-progress move/resize into a pinch gesture.
+    cancelHistory: () => {
+      if (pendingSnapshot) {
+        const snap = pendingSnapshot;
+        pendingSnapshot = null;
+        set({
+          shapes: snap.shapes,
+          order: snap.order,
+          paper: snap.paper ?? DEFAULT_PAPER,
+          _pending: false,
+        });
+        return;
       }
       set({ _pending: false });
     },

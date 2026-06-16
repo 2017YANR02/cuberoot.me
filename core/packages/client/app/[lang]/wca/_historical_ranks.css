@@ -2,8 +2,8 @@
   max-width: 1100px;
   margin: 0 auto;
   padding: 24px 16px;
-  color: #ededed;
-  background: #1a1a1a;
+  color: var(--foreground);
+  background: var(--background);
   min-height: 100vh;
 }
 
@@ -19,14 +19,14 @@
 }
 
 .hr-back {
-  color: #aaa;
+  color: var(--muted-foreground);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 14px;
 }
-.hr-back:hover { color: #ededed; }
+.hr-back:hover { color: var(--foreground); }
 
 .historical-ranks-page h1 {
   margin: 0 0 8px;
@@ -36,7 +36,7 @@
 
 .hr-subtitle {
   margin: 0;
-  color: #aaa;
+  color: var(--muted-foreground);
   font-size: 14px;
 }
 
@@ -46,9 +46,9 @@
   gap: 12px 16px;
   margin: 24px 0 16px;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .hr-filter {
@@ -60,7 +60,7 @@
 
 .hr-filter label {
   font-size: 12px;
-  color: #aaa;
+  color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -69,8 +69,8 @@
 .hr-filter button,
 .hr-filter input {
   padding: 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   color: inherit;
   border-radius: 6px;
   font-size: 14px;
@@ -79,7 +79,7 @@
 
 .hr-filter select:hover,
 .hr-filter input:hover {
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: color-mix(in srgb, var(--foreground) 25%, transparent);
 }
 
 /* Country dropdown — 单格外观,× 浮在右侧像 search clear */
@@ -88,14 +88,14 @@
 .hr-country-trigger {
   display: flex;
   align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   border-radius: 6px;
   height: 34px;
   overflow: hidden;
 }
 .hr-country-trigger:hover {
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: color-mix(in srgb, var(--foreground) 25%, transparent);
 }
 
 .hr-country-trigger > button {
@@ -118,21 +118,21 @@
   padding: 0 !important;
   font-size: 16px;
   cursor: pointer;
-  color: #888;
+  color: var(--muted-foreground);
   border: none !important;
   background: transparent !important;
   border-radius: 0 !important;
   height: auto !important;
 }
-.hr-country-clear:hover { color: #ededed; }
+.hr-country-clear:hover { color: var(--foreground); }
 
 .hr-country-popup {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: #2a2a2a;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--popover);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 6px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   z-index: 10;
@@ -147,8 +147,8 @@
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: #aaa;
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--muted-foreground);
 }
 .hr-country-search input {
   flex: 1;
@@ -179,14 +179,14 @@
   text-align: left;
   height: auto !important;
 }
-.hr-country-item:hover { background: rgba(255, 255, 255, 0.06) !important; }
-.hr-country-item.active { background: rgba(120, 160, 255, 0.15) !important; }
+.hr-country-item:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent) !important; }
+.hr-country-item.active { background: color-mix(in srgb, var(--signal-info) 15%, transparent) !important; }
 
 /* Table */
 .hr-table-wrapper {
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   padding: 12px;
   overflow-x: auto;
 }
@@ -194,13 +194,13 @@
 .hr-state {
   padding: 40px;
   text-align: center;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
-.hr-state-error { color: #ff7676; }
+.hr-state-error { color: var(--destructive); }
 
 .hr-result-meta {
   font-size: 13px;
-  color: #aaa;
+  color: var(--muted-foreground);
   padding: 4px 8px 12px;
 }
 
@@ -215,7 +215,7 @@
 .hr-table th, .hr-table td {
   padding: 4px 12px;
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   line-height: 1.4;
 }
 
@@ -224,13 +224,13 @@
   font-size: 12px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
 
-.hr-table tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+.hr-table tbody tr:hover { background: color-mix(in srgb, var(--foreground) 3%, transparent); }
 
 .hr-table a {
-  color: #d77757;
+  color: var(--accent);
   text-decoration: none;
 }
 .hr-table a:hover { text-decoration: underline; }
@@ -239,7 +239,7 @@
   text-align: right !important;
   width: 50px;
   font-variant-numeric: tabular-nums;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
 
 .hr-value-col {
@@ -255,7 +255,7 @@
   gap: 12px;
   padding: 16px 0 8px;
   font-size: 13px;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
 
 .hr-pagination button {
@@ -264,8 +264,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   color: inherit;
   border-radius: 6px;
   cursor: pointer;
@@ -279,8 +279,8 @@
 .hr-pagination select,
 .hr-pagination .paginator-input {
   padding: 4px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   color: inherit;
   border-radius: 6px;
   height: 28px;

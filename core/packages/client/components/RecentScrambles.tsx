@@ -1,13 +1,16 @@
 'use client';
 
-// Landing "近期打乱" (Recent Scrambles) — the easiest scrambles of the latest export
-// batch, sliceable by variant (std/eo/pseudo/...) × metric (cross/xc/...) × bottom color
-// × move count. Data: stats/scramble/recent_scrambles.json (built by scramble-stats-build
-// build:recent-scrambles, refreshed by the cross-stats pipeline). 1 hero card + example list.
+// Landing "近期打乱" (Recent Scrambles). An event picker on top:
+//  - 333 → the rich variant(std/eo/pseudo/...) × metric(cross/xc/...) × bottom-color × move
+//    widget, fed by stats/scramble/recent_scrambles.json (Recent333Body).
+//  - every other event → simplest scrambles of the latest batch, bucketed by scramble length;
+//    222 / pyraminx / skewb also offer a difficulty (whole-solve optimal step) mode. Fed by
+//    stats/scramble/recent_scrambles_events.json (RecentEventBody).
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
+import WcaEventSelector from '@/components/WcaEventSelector';
 import { Flag } from '@/components/Flag';
 import { SubsetColorPicker, SubsetSwatch, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -16,6 +19,7 @@ import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
 import { VARIANT_ORDER, stageLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT } from '@/lib/scramble-variants';
 import { VariantSelect } from '@/components/VariantSelect';
+import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
 import './recent_scrambles.css';
 import { tr } from '@/i18n/tr';
 
@@ -31,31 +35,68 @@ interface RecentScramblesJson {
   rank: Record<string, Record<string, Record<string, Record<string, [string, ColorLetter][]>>>>;
 }
 
-// 指标显示名走 lib/scramble-variants 的 stageLabel(xc/xxc 等短键已在表内别名)。
+// 概率提示数据源 = /scramble/stats 的 distribution.json('wca' 合并池:全部 WCA 三阶打乱)。
+interface DistHist { counts: Record<string, number> }
+interface DistributionJson {
+  sets: Record<string, { variants: Record<string, { data: Record<string, Record<string, DistHist>> }> }>;
+}
+
 const METRIC_ORDER = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc', 'fbsquare', 'rouxs1', 'block222', 'block223', 'f2b', 'eo', 'eoline', 'dr'];
+
+// 难度模式的项目(整解最优步数);其余项目只按打乱长度。
+const DIFFICULTY_EVENTS = new Set(['222', 'pyram', 'skewb']);
+
+// 紧凑数字(960000→960k)。
+function compactNum(n: number): string {
+  if (n >= 1e6) { const m = n / 1e6; return `${m >= 10 ? Math.round(m) : m.toFixed(1).replace(/\.0$/, '')}M`; }
+  if (n >= 1e3) { const k = n / 1e3; return `${k >= 100 ? Math.round(k) : k.toFixed(1).replace(/\.0$/, '')}k`; }
+  return n.toLocaleString();
+}
+function formatProb(p: number): string | null {
+  if (!(p > 0)) return null;
+  if (p < 0.01) {
+    const n = 1 / p;
+    const mag = Math.pow(10, Math.max(0, Math.floor(Math.log10(n)) - 1));
+    return `1/${compactNum(Math.round(n / mag) * mag)}`;
+  }
+  return `${(p * 100).toFixed(1)}%`;
+}
+
+// 步数下拉选项标签(zh「N 步」/ en「N」)。tr 包住避免内联 isZh 文案三元。
+const stepOptionLabel = (n: number) => tr({ zh: `${n} 步`, en: String(n) });
+
+// Pattern B: English is bare; only Chinese is /zh-prefixed.
+const langPrefix = (lang: 'zh' | 'en') => (lang === 'zh' ? '/zh' : '');
+const genHref = (lp: string, ci: string) => `${lp}/scramble/gen?comp=${encodeURIComponent(ci)}`;
+const analyzerHref = (lp: string, scramble: string) =>
+  `${lp}/scramble/analyzer?${new URLSearchParams({ scramble: scramble.trim().replace(/ /g, '_') })}`;
+
+// 比赛来源行(hero / list 行尾):国旗 + 比赛名 + 项目图标 + 轮次/组别。
+function CompSource({ m, lp, isZh, row }: { m: RecentScrMeta | ScrMeta; lp: string; isZh: boolean; row?: boolean }) {
+  const iso2 = compFlagIso2(m.ci);
+  return (
+    <Link href={genHref(lp, m.ci)} prefetch={false} className={row ? 'rs-row-comp' : 'rs-hero-src'}>
+      {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+      <span className={row ? 'rs-row-name' : 'rs-src-comp'}>{localizeCompName(m.ci, m.cn, isZh)}</span>
+      <EventIcon event={m.e} className="rs-evt" />
+      <span className={row ? 'rs-row-sub' : 'rs-src-meta'}>{compSourceLine(m.r, m.g, m.n, isZh, !!m.x)}</span>
+    </Link>
+  );
+}
 
 export default function RecentScrambles({ lang }: Props) {
   const isZh = lang === 'zh';
+  const lp = langPrefix(lang);
   const [data, setData] = useState<RecentScramblesJson | null>(null);
-  const [variant, setVariant] = useState('std');
-  const [metric, setMetric] = useState('cross');
-  const [step, setStep] = useState<number | null>(null); // null = 跟随当前切片最少步
-  const sel = useSubsetSelection('dual');
-  const [expanded, setExpanded] = useState(false);
+  const [dist, setDist] = useState<DistributionJson | null>(null);
+  const [eventsJson, setEventsJson] = useState<RecentScramblesEventsJson | null>(null);
+  const [event, setEvent] = useState('333');
 
   // 异步加载 comp-country 索引,完成后 bump version 触发重渲染拿比赛国旗 + 中文名
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
   useEffect(() => {
     void loadFlagData().then((v) => { if (v !== flagVer) setFlagVer(v); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Pattern B: English is bare; only Chinese is /zh-prefixed.
-  const lp = lang === 'zh' ? '/zh' : '';
-  // 点比赛名跳 /scramble/gen?comp=<id>(comp tab 直链加载该比赛打乱),不是 /wca/comp。
-  const genHref = (ci: string) => `${lp}/scramble/gen?comp=${encodeURIComponent(ci)}`;
-  // 点打乱跳 /scramble/analyzer?scramble=<moves>(空格→_,与 analyzer 自身 URL 同格式)。
-  const analyzerHref = (scramble: string) =>
-    `${lp}/scramble/analyzer?${new URLSearchParams({ scramble: scramble.trim().replace(/ /g, '_') })}`;
 
   useEffect(() => {
     let on = true;
@@ -65,6 +106,11 @@ export default function RecentScrambles({ lang }: Props) {
         .then((r) => (r.ok ? r.json() : null))
         .then((j: RecentScramblesJson | null) => { if (on) setData(j); })
         .catch(() => { if (on) setData(null); });
+      fetch(statsUrl('/stats/scramble/distribution.json') + '?v=20260614opt')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j: DistributionJson | null) => { if (on) setDist(j); })
+        .catch(() => { if (on) setDist(null); });
+      void fetchRecentScramblesEvents().then((j) => { if (on) setEventsJson(j); });
     };
     type RIC = (cb: () => void, opts?: { timeout?: number }) => number;
     const w = window as Window & { requestIdleCallback?: RIC; cancelIdleCallback?: (id: number) => void };
@@ -79,22 +125,72 @@ export default function RecentScrambles({ lang }: Props) {
     };
   }, []);
 
-  // variants that actually carry data this batch (a variant with all-empty rows is hidden)
-  // 数据层块变体(123/123x2/222/223)在 UI 聚合为一个方法 'block';metric 经
-  // BLOCK_STAGE_VARIANT 映射回各自数据变体取数。
+  // 333 是否有数据(本批含可展示的变体)。
+  const has333 = useMemo(() => {
+    if (!data || data.new_count === 0) return false;
+    return VARIANT_ORDER.some((v) => {
+      if (v === '333') return true; // 占位恒列
+      const vars = v === 'block' ? BLOCK_DATA_VARIANTS : [v];
+      return vars.some((dv) => {
+        const r = data.rank?.[dv];
+        return r && Object.values(r).some((byColor) => Object.values(byColor).some((byStep) => Object.keys(byStep).length > 0));
+      });
+    });
+  }, [data]);
+
+  // 可选项目 = 有数据的非 333 项目 ∪ (333 有数据则含 333)。
+  const availableEvents = useMemo(() => {
+    const s = new Set<string>();
+    if (has333) s.add('333');
+    if (eventsJson) for (const [ev, b] of Object.entries(eventsJson.events)) {
+      if (Object.keys(b.length).length > 0 || (b.difficulty && Object.keys(b.difficulty.byStep).length > 0)) s.add(ev);
+    }
+    return s;
+  }, [has333, eventsJson]);
+
+  // 数据未到齐 / 无任何可展示项目时不渲染(保持原行为)。
+  if (data === null && eventsJson === null) return null;
+  if (availableEvents.size === 0) return null;
+
+  const curEvent = availableEvents.has(event) ? event : (availableEvents.has('333') ? '333' : [...availableEvents][0]);
+
+  return (
+    <div className="recent-scrambles">
+      <div className="rs-topbar">
+        <span className="rs-title">{tr({ zh: '近期打乱', en: 'Recent Scrambles' })}</span>
+      </div>
+      <WcaEventSelector
+        availableEvents={availableEvents}
+        selectedEvent={curEvent}
+        onSelect={setEvent}
+        isZh={isZh}
+        onlyAvailable
+      />
+      {curEvent === '333'
+        ? <Recent333Body data={data} dist={dist} isZh={isZh} lp={lp} />
+        : <RecentEventBody event={curEvent} json={eventsJson} isZh={isZh} lp={lp} />}
+    </div>
+  );
+}
+
+// ============================ 333:富控件(变体 × 类型 × 底色 × 步数)============================
+function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | null; dist: DistributionJson | null; isZh: boolean; lp: string }) {
+  const [variant, setVariant] = useState('std');
+  const [metric, setMetric] = useState('cross');
+  const [step, setStep] = useState<number | null>(null);
+  const sel = useSubsetSelection('dual');
+  const [expanded, setExpanded] = useState(false);
+
   const hasData = (v: string) => {
     const r = data?.rank?.[v];
     if (!r) return false;
     return Object.values(r).some((byColor) => Object.values(byColor).some((byStep) => Object.keys(byStep).length > 0));
   };
-  // 333 整解首页无数据(无法对近期打乱算整解最优),但仍恒列出占位 —— 与 stats 方法下拉一致;
-  // 选中后下方走空状态。其余变体仍按「本批有数据」过滤。
   const variants = useMemo(() => VARIANT_ORDER.filter((v) =>
     v === '333' ? true : v === 'block' ? BLOCK_DATA_VARIANTS.some(hasData) : hasData(v),
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [data]);
 
-  // clamp selections to what's available (variant switch may drop a metric, etc.)
   const curVariant = (variants as string[]).includes(variant) ? variant : (variants[0] ?? 'std');
   const metrics = useMemo(() => {
     if (curVariant === 'block') {
@@ -107,57 +203,56 @@ export default function RecentScrambles({ lang }: Props) {
     return r ? METRIC_ORDER.filter((m) => m in r) : [];
   }, [data, curVariant]);
   const curMetric = metrics.includes(metric) ? metric : (metrics[0] ?? 'cross');
-  // block 方法按当前 metric 取底层数据变体;其余变体即数据键本身。
   const dataVariant = curVariant === 'block' ? (BLOCK_STAGE_VARIANT[curMetric] ?? '123') : curVariant;
-  // 当前切片的步数分桶；步数选择器列出可选步数,默认跟随最少步
   const byStep = data?.rank?.[dataVariant]?.[curMetric]?.[sel.subsetKey];
   const steps = useMemo(() => Object.keys(byStep ?? {}).map(Number).sort((a, b) => a - b), [byStep]);
   const curStep = (step != null && steps.includes(step)) ? step : (steps[0] ?? null);
   const entries = (curStep != null ? byStep?.[String(curStep)] : undefined) ?? [];
 
-  if (!data || data.new_count === 0 || variants.length === 0) return null;
+  const distVar = dist?.sets?.wca?.variants?.[dataVariant];
+  const distStageKey = useMemo(() => {
+    if (!distVar) return null;
+    const target = stageLabel(curMetric, false);
+    return Object.keys(distVar.data).find((s) => stageLabel(s, false) === target) ?? null;
+  }, [distVar, curMetric]);
+  const prob = useMemo(() => {
+    if (curStep == null || !distVar || !distStageKey) return null;
+    const counts = distVar.data[distStageKey]?.[sel.subsetKey]?.counts;
+    if (!counts) return null;
+    let total = 0;
+    for (const k in counts) total += counts[k];
+    const c = counts[String(curStep)] ?? 0;
+    if (total <= 0 || c <= 0) return null;
+    const text = formatProb(c / total);
+    return text ? { text, stageKey: distStageKey } : null;
+  }, [curStep, distVar, distStageKey, sel.subsetKey]);
+
+  const probHref = useMemo(() => {
+    if (!prob) return null;
+    const p = new URLSearchParams();
+    if (dataVariant !== 'std') p.set('variant', dataVariant);
+    if (prob.stageKey !== 'cross') p.set('stage', prob.stageKey);
+    if (sel.subsetKey !== 'BGORWY') p.set('colors', sel.subsetKey);
+    const qs = p.toString();
+    return `${lp}/scramble/stats${qs ? `?${qs}` : ''}`;
+  }, [prob, dataVariant, sel.subsetKey, lp]);
+
+  if (!data || variants.length === 0) return null;
 
   const hero = entries[0];
   const rest = entries.slice(1);
 
   return (
-    <div className="recent-scrambles">
+    <>
       <div className="rs-head">
-        <span className="rs-title">{tr({ zh: '近期打乱', en: 'Recent Scrambles'
-        })}</span>
         <SubsetColorPicker sel={sel} isZh={isZh} />
-        <VariantSelect
-          className="rs-select"
-          value={curVariant}
-          options={variants}
-          onChange={setVariant}
-          isZh={isZh}
-          ariaLabel={tr({ zh: '变体', en: 'Variant'
-        })}
-        />
+        <VariantSelect className="rs-select" value={curVariant} options={variants} onChange={setVariant} isZh={isZh} ariaLabel={tr({ zh: '变体', en: 'Variant' })} />
         {metrics.length > 0 && (
-          <VariantSelect
-            className="rs-select"
-            value={curMetric}
-            options={metrics}
-            onChange={setMetric}
-            isZh={isZh}
-            label={stageLabel}
-            ariaLabel={tr({ zh: '类型', en: 'Type'
-          })}
-          />
+          <VariantSelect className="rs-select" value={curMetric} options={metrics} onChange={setMetric} isZh={isZh} label={stageLabel} ariaLabel={tr({ zh: '类型', en: 'Type' })} />
         )}
         {steps.length > 0 && (
-          <select
-            className="rs-select"
-            value={curStep ?? ''}
-            onChange={(e) => setStep(Number(e.target.value))}
-            aria-label={tr({ zh: '步数', en: 'Moves'
-          })}
-          >
-            {steps.map((s) => (
-              <option key={s} value={s}>{isZh ? `${s} 步` : `${s}`}</option>
-            ))}
+          <select className="rs-select" value={curStep ?? ''} onChange={(e) => setStep(Number(e.target.value))} aria-label={tr({ zh: '步数', en: 'Moves' })}>
+            {steps.map((s) => (<option key={s} value={s}>{stepOptionLabel(s)}</option>))}
           </select>
         )}
       </div>
@@ -169,33 +264,26 @@ export default function RecentScrambles({ lang }: Props) {
         return (
           <div className="rs-hero">
             <div className="rs-hero-cube">
-              <ScramblePreview2D event="333" scramble={scramble} size={78} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size'
-            })} />
+              <ScramblePreview2D event="333" scramble={scramble} size={78} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size' })} />
             </div>
             <div className="rs-hero-body">
               <div className="rs-hero-steps">
                 <span className="rs-hero-dot" aria-hidden="true"><SubsetSwatch colors={[color]} /></span>
                 <b>{curStep}</b>
-                <span className="rs-hero-unit">{isZh ? '步' : curStep === 1 ? 'move' : 'moves'}</span>
-              </div>
-              <Link href={analyzerHref(scramble)} prefetch={false} className="rs-hero-scramble">{scramble}</Link>
-              {m && (() => {
-                const iso2 = compFlagIso2(m.ci);
-                return (
-                  <Link href={genHref(m.ci)} prefetch={false} className="rs-hero-src">
-                    {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                    <span className="rs-src-comp">{localizeCompName(m.ci, m.cn, isZh)}</span>
-                    <EventIcon event={m.e} className="rs-evt" />
-                    <span className="rs-src-meta">{compSourceLine(m.r, m.g, m.n, isZh, !!m.x)}</span>
+                <span className="rs-hero-unit">{tr({ zh: '步', en: curStep === 1 ? 'move' : 'moves' })}</span>
+                {prob && probHref && (
+                  <Link href={probHref} prefetch={false} className="rs-hero-prob" title={tr({ zh: '随机打乱出现此难度的概率,点查看完整分布', en: 'How often a random scramble is this easy — click for the full distribution' })}>
+                    ≈ {prob.text}
                   </Link>
-                );
-              })()}
+                )}
+              </div>
+              <Link href={analyzerHref(lp, scramble)} prefetch={false} className="rs-hero-scramble">{scramble}</Link>
+              {m && <CompSource m={m} lp={lp} isZh={isZh} />}
             </div>
           </div>
         );
       })() : (
-        <div className="rs-empty">{tr({ zh: '该组合本批暂无数据', en: 'No data for this combination'
-        })}</div>
+        <div className="rs-empty">{tr({ zh: '该组合本批暂无数据', en: 'No data for this combination' })}</div>
       )}
 
       {rest.length > 0 && (
@@ -209,18 +297,8 @@ export default function RecentScrambles({ lang }: Props) {
                   <span className="rs-row-rank">{i + 2}</span>
                   <span className="rs-row-dot" aria-hidden="true"><SubsetSwatch colors={[color]} /></span>
                   <div className="rs-row-main">
-                    <Link href={analyzerHref(scramble)} prefetch={false} className="rs-row-scramble">{scramble}</Link>
-                    {m && (() => {
-                      const iso2 = compFlagIso2(m.ci);
-                      return (
-                        <Link href={genHref(m.ci)} prefetch={false} className="rs-row-comp">
-                          {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                          <span className="rs-row-name">{localizeCompName(m.ci, m.cn, isZh)}</span>
-                          <EventIcon event={m.e} className="rs-evt" />
-                          <span className="rs-row-sub">{compSourceLine(m.r, m.g, m.n, isZh, !!m.x)}</span>
-                        </Link>
-                      );
-                    })()}
+                    <Link href={analyzerHref(lp, scramble)} prefetch={false} className="rs-row-scramble">{scramble}</Link>
+                    {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
                   </div>
                 </li>
               );
@@ -233,6 +311,92 @@ export default function RecentScrambles({ lang }: Props) {
           )}
         </>
       )}
-    </div>
+    </>
+  );
+}
+
+// ============================ 其他项目:长度(全项目)+ 难度(222/金字塔/斜转)============================
+function RecentEventBody({ event, json, isZh, lp }: { event: string; json: RecentScramblesEventsJson | null; isZh: boolean; lp: string }) {
+  const buckets = json?.events?.[event];
+  const hasDifficulty = !!(buckets?.difficulty && DIFFICULTY_EVENTS.has(event) && Object.keys(buckets.difficulty.byStep).length > 0);
+  const [mode, setMode] = useState<'difficulty' | 'length'>('difficulty');
+  const [value, setValue] = useState<number | null>(null);
+
+  const curMode: 'difficulty' | 'length' = hasDifficulty ? mode : 'length';
+  const bucketMap = curMode === 'difficulty' ? (buckets?.difficulty?.byStep ?? {}) : (buckets?.length ?? {});
+  const values = useMemo(() => Object.keys(bucketMap).map(Number).sort((a, b) => a - b), [bucketMap]);
+  const curValue = (value != null && values.includes(value)) ? value : (values[0] ?? null);
+  const ids = (curValue != null ? bucketMap[String(curValue)] : undefined) ?? [];
+
+  if (!buckets || values.length === 0) {
+    return <div className="rs-empty">{tr({ zh: '该项目本批暂无数据', en: 'No recent scrambles for this event' })}</div>;
+  }
+
+  // 单位:难度=整解步数(zh '步' / en move(s));长度=打乱长度(sq1 用 twist(s))。
+  const enUnit = (v: number | null) => (curMode === 'length' && event === 'sq1')
+    ? (v === 1 ? 'twist' : 'twists')
+    : (v === 1 ? 'move' : 'moves');
+
+  const hero = ids[0];
+  const rest = ids.slice(1);
+  const scrOf = (id: string) => json?.scr?.[id] ?? '';
+  const metaOf = (id: string) => json?.meta?.[id];
+
+  return (
+    <>
+      <div className="rs-head">
+        {hasDifficulty && (
+          <div className="rs-seg" role="tablist" aria-label={tr({ zh: '维度', en: 'Dimension' })}>
+            <button type="button" role="tab" aria-selected={curMode === 'difficulty'} className={`rs-seg-btn${curMode === 'difficulty' ? ' active' : ''}`} onClick={() => { setMode('difficulty'); setValue(null); }}>
+              {tr({ zh: '难度', en: 'Difficulty' })}
+            </button>
+            <button type="button" role="tab" aria-selected={curMode === 'length'} className={`rs-seg-btn${curMode === 'length' ? ' active' : ''}`} onClick={() => { setMode('length'); setValue(null); }}>
+              {tr({ zh: '打乱长度', en: 'Length' })}
+            </button>
+          </div>
+        )}
+        <select className="rs-select" value={curValue ?? ''} onChange={(e) => setValue(Number(e.target.value))} aria-label={curMode === 'difficulty' ? tr({ zh: '难度', en: 'Difficulty' }) : tr({ zh: '长度', en: 'Length' })}>
+          {values.map((v) => (<option key={v} value={v}>{stepOptionLabel(v)}</option>))}
+        </select>
+      </div>
+
+      {hero ? (() => {
+        const scramble = scrOf(hero);
+        const m = metaOf(hero);
+        return (
+          <div className="rs-hero">
+            <div className="rs-hero-cube">
+              <ScramblePreview2D event={event} scramble={scramble} size={78} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size' })} />
+            </div>
+            <div className="rs-hero-body">
+              <div className="rs-hero-steps">
+                <b>{curValue}</b>
+                <span className="rs-hero-unit">{tr({ zh: '步', en: enUnit(curValue) })}</span>
+              </div>
+              <Link href={analyzerHref(lp, scramble)} prefetch={false} className="rs-hero-scramble">{scramble}</Link>
+              {m && <CompSource m={m} lp={lp} isZh={isZh} />}
+            </div>
+          </div>
+        );
+      })() : null}
+
+      {rest.length > 0 && (
+        <ol className="rs-list">
+          {rest.slice(0, 4).map((id, i) => {
+            const m = metaOf(id);
+            const scramble = scrOf(id);
+            return (
+              <li key={id} className="rs-row rs-row--nodot">
+                <span className="rs-row-rank">{i + 2}</span>
+                <div className="rs-row-main">
+                  <Link href={analyzerHref(lp, scramble)} prefetch={false} className="rs-row-scramble">{scramble}</Link>
+                  {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </>
   );
 }

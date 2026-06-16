@@ -15,9 +15,9 @@
   width: 100%;
   padding: 8px 48px 8px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: #e5e5e5;
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  color: var(--foreground);
   font-size: 0.88rem;
   font-family: 'Inter', Arial, sans-serif;
   outline: none;
@@ -26,12 +26,12 @@
 }
 
 .record-select-input:focus-visible {
-  border-color: rgba(217, 119, 87, 0.5);
-  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.15);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
 .record-select-input::placeholder {
-  color: #5a5a5a;
+  color: var(--faint-foreground);
 }
 
 /* 静止态:在输入框上叠彩色徽章,不拦点击(点击落到 input 上聚焦) */
@@ -51,7 +51,7 @@
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  color: #888;
+  color: var(--muted-foreground);
   pointer-events: none;
 }
 
@@ -66,22 +66,22 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  color: #888;
+  color: var(--muted-foreground);
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
 }
 .record-select-clear:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #e5e5e5;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  color: var(--foreground);
 }
 
 .record-select-empty {
-  color: #5a5a5a;
+  color: var(--faint-foreground);
   font-size: 0.85rem;
 }
 
 .record-select-count {
-  color: #888;
+  color: var(--muted-foreground);
   font-size: 0.78rem;
   margin-left: 6px;
   flex-shrink: 0;
@@ -94,8 +94,8 @@
   right: 0;
   max-height: 280px;
   overflow-y: auto;
-  background: #2a2a2a;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--popover);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 8px;
   padding: 4px 0;
   z-index: 100;
@@ -104,7 +104,7 @@
 
 .record-select-noresult {
   padding: 8px 12px;
-  color: #888;
+  color: var(--muted-foreground);
   font-size: 0.82rem;
 }
 
@@ -122,9 +122,9 @@
 }
 
 .record-select-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 .record-select-item--active {
-  background: rgba(217, 119, 87, 0.15);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
 }

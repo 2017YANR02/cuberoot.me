@@ -1,8 +1,8 @@
 /* Inline autofill popup near solution textarea caret */
 .recon-autofill {
-  background: #2a2d34;
-  color: #f0f2f5;
-  border: 1px solid #3a3e48;
+  background: var(--popover);
+  color: var(--foreground);
+  border: 1px solid var(--border-default);
   border-radius: 6px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
   z-index: 9999;
@@ -26,10 +26,10 @@
 }
 .recon-autofill-row:hover,
 .recon-autofill-row.is-selected {
-  background: #3a3e48;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 .recon-autofill-row.is-selected {
-  outline: 1px solid #5a606e;
+  outline: 1px solid var(--border-strong);
 }
 
 .recon-autofill-badge {
@@ -38,12 +38,12 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   padding: 2px 5px;
-  background: #1a1c20;
+  background: var(--secondary);
   border-radius: 3px;
-  color: #d0d4dc;
+  color: var(--muted-foreground);
 }
 .recon-autofill-badge--alg {
-  background: #1a1c20;
+  background: var(--secondary);
   color: #ffd066;
 }
 
@@ -56,7 +56,7 @@
   text-overflow: ellipsis;
 }
 .recon-autofill-text--alg {
-  color: #f0f2f5;
+  color: var(--foreground);
 }
 
 .recon-autofill-thumb {
@@ -73,16 +73,16 @@
   font-size: 9px;
   font-weight: 600;
   padding: 2px 6px;
-  background: #4a4e58;
+  background: var(--secondary);
   border-radius: 3px;
-  color: #c0c4cc;
+  color: var(--muted-foreground);
 }
 
 .recon-autofill-loading,
 .recon-autofill-empty {
   padding: 12px;
   text-align: center;
-  color: #9aa0aa;
+  color: var(--muted-foreground);
   font-size: 12px;
 }
 
@@ -95,16 +95,16 @@
   width: 22px;
   height: 22px;
   padding: 0;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
   border-radius: 4px;
-  color: #c0c4cc;
+  color: var(--muted-foreground);
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
 }
 .recon-autofill-close:hover {
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
+  background: color-mix(in srgb, var(--foreground) 14%, transparent);
+  color: var(--foreground);
 }
 
 @media (max-width: 480px) {

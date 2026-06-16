@@ -1,0 +1,87 @@
+/* /scramble/sq1 — SQ1 在线求解器的专有补充样式(复用 puzzle_optimal_solver.css 的 .pos-*)。 */
+
+.sq1s-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+.sq1s-mcard {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-default);
+  background: var(--card);
+}
+.sq1s-mcard.is-twist { border-top: 3px solid var(--signal-success); }
+.sq1s-mcard.is-wca { border-top: 3px solid var(--signal-warning); }
+.sq1s-mcard.is-face { border-top: 3px solid var(--signal-info); }
+.sq1s-mname { font-size: 0.8rem; font-weight: 600; color: var(--foreground); }
+.sq1s-mrule { font-size: 0.7rem; color: var(--faint-foreground); margin-top: 2px; line-height: 1.4; }
+.sq1s-mval {
+  font-size: 1.7rem; font-weight: 700; line-height: 1; margin-top: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.sq1s-mcard.is-twist .sq1s-mval { color: var(--signal-success); }
+.sq1s-mcard.is-wca .sq1s-mval { color: var(--signal-warning); }
+.sq1s-mcard.is-face .sq1s-mval { color: var(--signal-info); }
+.sq1s-mgod { font-size: 0.68rem; color: var(--faint-foreground); margin-top: 5px; }
+
+.sq1s-stages {
+  margin: 12px 0;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.sq1s-stage {
+  display: flex;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-default);
+  font-size: 0.9rem;
+}
+.sq1s-stage:last-child { border-bottom: none; }
+.sq1s-stage-head {
+  flex: 0 0 88px;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-top: 2px;
+}
+.sq1s-stage-moves {
+  flex: 1;
+  font-family: var(--font-mono, ui-monospace), monospace;
+  color: var(--foreground);
+  word-break: break-word;
+  line-height: 1.5;
+}
+.sq1s-stage-count { color: var(--faint-foreground); font-size: 0.78rem; }
+
+.sq1s-caveat {
+  margin: 14px 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-default);
+  border-left: 3px solid var(--signal-warning);
+  background: color-mix(in srgb, var(--signal-warning) 10%, transparent);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+.sq1s-caveat strong { color: var(--foreground); }
+.sq1s-caveat a { color: var(--accent); text-decoration: none; }
+.sq1s-caveat a:hover { text-decoration: underline; }
+
+.sq1s-solbox {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  font-family: var(--font-mono, ui-monospace), monospace;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--foreground);
+  word-break: break-word;
+}

@@ -5,10 +5,8 @@
  *   /scramble/stats     —— 打乱难度分布(WCA 1.2M 历史样本)
  *   /scramble/gen       —— 批量生成打乱
  *   /scramble/analyzer  —— 3x3 CFOP 打乱分析
- *   /scramble/solver    —— cubeopt 最优解 + 状态求解
- *   /scramble/pocket    —— 2x2x2 整解最优求解(Rust WASM 全空间精确表)
- *   /scramble/pyraminx  —— 金字塔整解最优求解(Rust WASM 核心全空间精确表 + tips)
- *   /scramble/skewb     —— 斜转整解最优求解(Rust WASM 全空间精确表)
+ *   /scramble/solver    —— 统一求解(?event= 分发):3×3 cubeopt 最优解+状态求解、
+ *                          2×2/金字塔/斜转 Rust WASM 全空间精确表、SQ1 两阶段近最优
  *   /scramble/pattern   —— 著名 NxN 图案集
  *
  * 1:1 port from packages/client-vite/src/pages/scramble/ScrambleHubPage.tsx (Vite SPA).

@@ -163,17 +163,17 @@
     padding: 6px 12px;
     font-size: 0.8rem;
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid color-mix(in srgb, var(--foreground) 15%, transparent);
     border-radius: 6px;
-    color: #a3a3a3;
+    color: var(--muted-foreground);
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
 }
-.vkb-toggle:hover { background: rgba(255, 255, 255, 0.06); color: #d4d4d4; }
+.vkb-toggle:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); color: var(--foreground); }
 .vkb-toggle.active {
-    background: rgba(217, 119, 87, 0.15);
-    border-color: rgba(217, 119, 87, 0.4);
-    color: #e8a27a;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    color: var(--accent);
 }
 
 /* NOTE: 记号入口按钮——space 左侧 ✎ 图标,iOS 蓝 */

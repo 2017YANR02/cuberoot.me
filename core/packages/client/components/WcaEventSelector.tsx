@@ -3,10 +3,12 @@
 // Ported from packages/client-vite/src/components/WcaEventSelector.tsx.
 
 import { useMemo, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { X } from 'lucide-react';
 import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { eventDisplayName } from '@/lib/wca-events';
 import { CubingIcon } from './EventIcon/EventIcon';
+import AppLink from './AppLink';
 import './WcaEventSelector.css';
 import { tr } from '@/i18n/tr';
 
@@ -25,6 +27,12 @@ interface WcaEventSelectorProps {
   appendEvents?: ReadonlyArray<{ id: string; iconClass: string; label?: string; textLabel?: string }>;
   collapsibleAppend?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
+  /**
+   * 链接模式:给定事件 id 返回其跳转目标 + 是否硬导航(跨 COEP 边界用原生 <a> 整页加载)。
+   * 返回 null = 该事件无链接(退回普通 button)。设置后官方事件渲染为 <a>/AppLink 而非 button,
+   * 保留中键 / Ctrl 新开;供「求解」中心复用同一选择器跳页(/scramble/solver|pocket|...)。
+   */
+  linkFor?: (id: string) => { href: string; hard?: boolean } | null;
 }
 
 type AppendItem = { id: string; iconClass: string; label?: string; textLabel?: string };
@@ -32,8 +40,10 @@ type AppendItem = { id: string; iconClass: string; label?: string; textLabel?: s
 export default function WcaEventSelector({
   availableEvents, selectedEvent, onSelect, isZh, allowAll,
   selectedEvents, onToggle, badges, topBadges, onlyAvailable, onRemove, appendEvents,
-  collapsibleAppend, onExpandedChange,
+  collapsibleAppend, onExpandedChange, linkFor,
 }: WcaEventSelectorProps) {
+  const params = useParams();
+  const prefix = params?.lang === 'zh' ? '/zh' : '';
   const isMulti = !!(selectedEvents && onToggle);
   const renderedIds = onlyAvailable
     ? ALL_EVENT_IDS.filter(id => availableEvents.has(id))
@@ -96,21 +106,37 @@ export default function WcaEventSelector({
     const isDisabled = !availableEvents.has(id);
     const isActive = isMulti ? selectedEvents!.has(id) : id === selectedEvent;
     const tooltip = isZh ? (EVENT_ZH[id] || id) : (EVENT_EN[id] || id);
-    const handleClick = isDisabled
-      ? undefined
-      : () => (isMulti ? onToggle!(id) : onSelect?.(id));
-
-    return (
-      <button
-        key={id}
-        className={`event-btn${isActive ? ' active' : ''}${isDisabled ? ' disabled' : ''}`}
-        data-tooltip={tooltip}
-        data-event={id}
-        onClick={handleClick}
-      >
+    const cls = `event-btn${isActive ? ' active' : ''}${isDisabled ? ' disabled' : ''}`;
+    const inner = (
+      <>
         <CubingIcon icon={`event-${id}`} />
         {eventBadges(id, isActive)}
         {removeBtn(id, isActive)}
+      </>
+    );
+
+    // 链接模式:可用事件渲染成真实 <a>/AppLink(中键/Ctrl 新开),跨 COEP 边界(进/出
+    // /scramble/solver)用原生 <a> 整页加载,其余 AppLink 软导航。
+    const link = !isDisabled && linkFor ? linkFor(id) : null;
+    if (link) {
+      const aria = isActive ? 'page' : undefined;
+      return link.hard ? (
+        <a key={id} href={`${prefix}${link.href}`} className={cls} data-tooltip={tooltip} data-event={id} aria-label={tooltip} aria-current={aria}>
+          {inner}
+        </a>
+      ) : (
+        <AppLink key={id} href={link.href} className={cls} data-tooltip={tooltip} data-event={id} aria-label={tooltip} aria-current={aria}>
+          {inner}
+        </AppLink>
+      );
+    }
+
+    const handleClick = isDisabled
+      ? undefined
+      : () => (isMulti ? onToggle!(id) : onSelect?.(id));
+    return (
+      <button key={id} className={cls} data-tooltip={tooltip} data-event={id} aria-label={tooltip} onClick={handleClick}>
+        {inner}
       </button>
     );
   };

@@ -28,6 +28,10 @@
     max-width: 1200px;
     margin: 0 auto;
 }
+/* 列表视图:解除 1200px 容器上限,表格按自身内容宽左对齐铺开,宽屏不再被截 / 强行横滚 */
+.calendar-page.calendar-page--list {
+    max-width: none;
+}
 
 /* ── Back + Header ── */
 .calendar-page .back-link {
@@ -239,6 +243,31 @@
     color: #A04A2E;
 }
 
+.calendar-page .debuts-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-sub);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.calendar-page .debuts-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.calendar-page .debuts-toggle.is-active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
 .calendar-page .mode-status {
     padding: 0.5rem 0.75rem;
     margin-bottom: 0.5rem;
@@ -343,10 +372,10 @@
     grid-template-columns: var(--cl-cols);
     align-items: center;
     gap: 6px;
-    /* 与 .comp-list-row 对齐 — row 是 absolute left:0 right:0 拿满 100%，
-     * grid 必须显式 100% 否则 overflow-x: auto 父级里会塌到 min-width，1fr 分配不一致 */
-    width: 100%;
-    min-width: var(--cl-min-width);
+    /* flex:none + width:max-content 让 grid 量到真实列宽总和而不被表头 flex 容器压缩(否则右侧项目列被裁,
+     * JS 据此设 --cl-list-min)。grid 取内容宽左对齐,与 .comp-list-row(width=--cl-list-min)横向对齐。 */
+    flex: none;
+    width: max-content;
     padding: 6px 12px;
     box-sizing: border-box;
 }
@@ -595,7 +624,7 @@
 }
 .calendar-page .event-bar.is-clash {
     background: var(--accent);
-    color: #FFF;
+    color: var(--accent-foreground);
 }
 .calendar-page .event-bar.is-clash:hover { background: color-mix(in srgb, var(--accent) 85%, black); }
 .calendar-page .event-bar.is-none-top {
@@ -1058,24 +1087,26 @@
 .calendar-page {
     --cl-ev-w: 1.3rem;
     --cl-comp-w: 2.8rem;  /* 整场单列（实际人数 / 上限 / 满员率）；选「不显示」时收为 0 */
-    --cl-cols: 7.2rem 1.4rem var(--cl-name-width, 18rem) var(--cl-city-width, 11rem) 1.6rem var(--cl-comp-w) repeat(21, var(--cl-ev-w));
-    --cl-min-width: 73rem;
+    --cl-cols: 7.2rem var(--cl-country-width, 6rem) 1.4rem var(--cl-name-width, 18rem) var(--cl-city-width, 11rem) 1.6rem var(--cl-comp-w) repeat(21, var(--cl-ev-w));
+    --cl-min-width: 79rem;
 }
 /* 宽值 metric（限时 / 及格线 / 晋级）：事件列加宽到能塞下 "10:00" / "≤6:00"，整体网格更宽，横向滚动 */
 .calendar-page[data-wide-metric] {
     --cl-ev-w: 3rem;
-    --cl-min-width: 108rem;
+    --cl-min-width: 114rem;
 }
 .calendar-page[data-comp-none] { --cl-comp-w: 0rem; }
 /* 经纬度：整场列拆成「纬度 + 经度」两列，各带正负号 + 两位小数（如 -122.42），比计数列宽 */
 .calendar-page[data-comp-latlng] {
     --cl-comp-w: 3.8rem;
-    --cl-cols: 7.2rem 1.4rem var(--cl-name-width, 18rem) var(--cl-city-width, 11rem) 1.6rem var(--cl-comp-w) var(--cl-comp-w) repeat(21, var(--cl-ev-w));
+    --cl-cols: 7.2rem var(--cl-country-width, 6rem) 1.4rem var(--cl-name-width, 18rem) var(--cl-city-width, 11rem) 1.6rem var(--cl-comp-w) var(--cl-comp-w) repeat(21, var(--cl-ev-w));
 }
 .calendar-page .comp-list {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    /* 列各取自然宽,整张表超出视口时横向滚动(桌面 + 移动端统一),保证比赛名 / 国家名完整 */
+    overflow-x: auto;
 }
 .calendar-page .comp-list-empty {
     text-align: center;
@@ -1089,8 +1120,10 @@
 /* 虚拟滚动容器 */
 .calendar-page .comp-list-virtual {
     position: relative;
-    width: 100%;
-    min-width: var(--cl-min-width);
+    /* 宽度 = 表头 grid 实测内容宽(JS 写 --cl-list-min);未测时回退固定 floor。
+     * 取自然内容宽(非 100%)→ 宽屏时表格左对齐到内容宽,右侧留白是页面底色而非行内空列;
+     * 内容宽 > 视口时由 .comp-list 横向滚动(不设 max-width,否则会裁掉右侧项目列)。 */
+    width: var(--cl-list-min, var(--cl-min-width));
 }
 .calendar-page .comp-list-row {
     position: absolute;
@@ -1122,6 +1155,27 @@
     padding: 2px 7px;
     border-radius: 10px;
 }
+/* 日期列头：年份格子变可点排序按钮 */
+.calendar-page button.cl-year-cell {
+    align-items: center;
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+.calendar-page .cl-date-chevron {
+    flex: none;
+    color: var(--text-sub);
+    transition: color 0.15s;
+}
+.calendar-page button.cl-year-cell:hover .cl-date-chevron {
+    color: var(--text);
+}
+.calendar-page button.cl-year-cell.is-active .cl-date-chevron {
+    color: var(--accent);
+}
 .calendar-page .comp-list-row {
     display: grid;
     grid-template-columns: var(--cl-cols);
@@ -1151,6 +1205,15 @@
 .calendar-page .cl-date-half {
     display: block;
     white-space: nowrap;
+}
+/* 国家名列：日期右侧、国旗左侧的国家文字，弱色、过长截断。 */
+.calendar-page .comp-list-country {
+    color: var(--text-sub);
+    font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
 }
 /* name 列：仅含关注标记 + 比赛名；city 独立成下一列。
  * 内部用 flex 让关注标记紧跟在名字前；名字过长截断。 */
@@ -1517,16 +1580,15 @@
     .calendar-page {
         --cl-ev-w: 1.1rem;
         --cl-comp-w: 2.4rem;
-        --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 14rem) var(--cl-city-width, 8rem) 1.4rem var(--cl-comp-w) repeat(21, var(--cl-ev-w));
-        --cl-min-width: 56rem;
+        --cl-cols: 5.5rem var(--cl-country-width, 4.5rem) 1.2rem var(--cl-name-width, 14rem) var(--cl-city-width, 8rem) 1.4rem var(--cl-comp-w) repeat(21, var(--cl-ev-w));
+        --cl-min-width: 61rem;
     }
-    .calendar-page[data-wide-metric] { --cl-ev-w: 2.7rem; --cl-min-width: 90rem; }
+    .calendar-page[data-wide-metric] { --cl-ev-w: 2.7rem; --cl-min-width: 95rem; }
     .calendar-page[data-comp-none] { --cl-comp-w: 0rem; }
     .calendar-page[data-comp-latlng] {
         --cl-comp-w: 3.4rem;
-        --cl-cols: 5.5rem 1.2rem var(--cl-name-width, 14rem) var(--cl-city-width, 8rem) 1.4rem var(--cl-comp-w) var(--cl-comp-w) repeat(21, var(--cl-ev-w));
+        --cl-cols: 5.5rem var(--cl-country-width, 4.5rem) 1.2rem var(--cl-name-width, 14rem) var(--cl-city-width, 8rem) 1.4rem var(--cl-comp-w) var(--cl-comp-w) repeat(21, var(--cl-ev-w));
     }
-    .calendar-page .comp-list { overflow-x: auto; }
     .calendar-page .event-chips-grid { padding: 4px 8px; gap: 4px; }
     .calendar-page .event-chips--list-header .event-chip { width: 20px; height: 20px; }
     .calendar-page .event-chips--list-header .event-chip .cubing-icon { font-size: 0.85rem; }

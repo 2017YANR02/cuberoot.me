@@ -152,8 +152,22 @@ const nextConfig: NextConfig = {
         source: "/assets/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
       },
+      // /scramble/solver 现在是统一求解路由(?event= 分发):只有 3×3 cubeopt(event=333
+      // 或缺省 event)要 SharedArrayBuffer → 只给它发 COOP/COEP。其余 event(222/pyram/skewb/
+      // sq1)是普通文档,绝不能套 COEP(rust-cross worker + 跨域 27MB 表会被 require-corp 拦死)。
+      // 故按 query 条件下发:has event=333 或 missing event 才发。跨 333 边界的切换是硬导航
+      // (SolveTabs 原生 <a>),每次整页重载按本规则重算 COEP,软导航不会错带/漏带头。
       {
         source: "/:lang(zh|en)?/scramble/solver",
+        has: [{ type: "query", key: "event", value: "333" }],
+        headers: [
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+        ],
+      },
+      {
+        source: "/:lang(zh|en)?/scramble/solver",
+        missing: [{ type: "query", key: "event" }],
         headers: [
           { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },

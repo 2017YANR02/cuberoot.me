@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import type { HandleId, Point } from '../_lib/types';
 import { usePaint, getSelectionBounds } from '../_lib/store';
 import { getShapeBounds } from '../_lib/registry';
+import { useCoarsePointer } from '../_lib/use-coarse-pointer';
 import {
   sceneToScreen,
   getRotatedCorners,
@@ -12,7 +13,8 @@ import {
 } from '../_lib/geometry';
 
 const ROTATE_OFFSET_SCREEN = 26;
-const HANDLE_SIZE = 9; // screen px
+const HANDLE_SIZE = 9; // screen px (fine pointer)
+const HANDLE_SIZE_COARSE = 15; // screen px (touch — fatter, easier to grab)
 const ACCENT = '#2563eb';
 
 interface Props {
@@ -47,6 +49,8 @@ export default function Overlay({ viewport }: Props) {
   const shapes = usePaint((s) => s.shapes);
   const marquee = usePaint((s) => s.marquee);
   const snapLines = usePaint((s) => s.snapLines);
+  const coarse = useCoarsePointer();
+  const handleSize = coarse ? HANDLE_SIZE_COARSE : HANDLE_SIZE;
 
   // single-shape selection: rotation-aware box; multi: AABB box (no rotate handle)
   const single = selection.length === 1 ? shapes[selection[0]] : null;
@@ -185,7 +189,7 @@ export default function Overlay({ viewport }: Props) {
                 className="paint-handle"
                 cx={selBox.rotate.x}
                 cy={selBox.rotate.y}
-                r={HANDLE_SIZE / 2 + 1}
+                r={handleSize / 2 + 1}
                 fill="var(--card)"
                 stroke={ACCENT}
                 strokeWidth={1.5}
@@ -197,10 +201,10 @@ export default function Overlay({ viewport }: Props) {
             <rect
               key={h.id}
               className="paint-handle"
-              x={h.p.x - HANDLE_SIZE / 2}
-              y={h.p.y - HANDLE_SIZE / 2}
-              width={HANDLE_SIZE}
-              height={HANDLE_SIZE}
+              x={h.p.x - handleSize / 2}
+              y={h.p.y - handleSize / 2}
+              width={handleSize}
+              height={handleSize}
               rx={2}
               fill="var(--card)"
               stroke={ACCENT}

@@ -6,10 +6,10 @@
   height: 28px;
   min-width: 110px;
   padding: 0 14px 0 32px;
-  background: rgba(255, 255, 255, 0.10);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 999px;
-  color: var(--text-sub, #aaa);
+  color: var(--text-sub, var(--muted-foreground));
   font-size: 13px;
   cursor: pointer;
   /* 横向拖动滑钮由组件接管,纵向留给页面滚动;同时禁掉移动端长按选字 / 高亮 */
@@ -27,7 +27,7 @@
   justify-content: flex-start;
 }
 
-.pill-toggle:hover { border-color: rgba(255, 255, 255, 0.24); }
+.pill-toggle:hover { border-color: color-mix(in srgb, var(--foreground) 24%, transparent); }
 .pill-toggle.is-on:hover { background: #2196ff; border-color: #2196ff; }
 
 .pill-toggle-label {

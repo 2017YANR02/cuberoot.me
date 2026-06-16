@@ -33,10 +33,29 @@ import {
 } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
-import type { PolygonShape, Shape, StarShape, TextShape } from '../_lib/types';
+import { CUBE_FILL } from '@/lib/cube-colors';
+import type { LineShape, PolygonShape, Shape, StarShape, TextShape } from '../_lib/types';
 import { usePaint } from '../_lib/store';
 import { remeasureText } from '../_lib/registry';
 import LayersPanel from './LayersPanel';
+
+// Swatch palette for the color pickers — the colors WCA puzzles use, so drawings
+// match scramble art. Standard cube scheme (single-sourced from CUBE_FILL: white /
+// yellow / green / blue / orange / red) + the extra Megaminx hues (tnoodle
+// MegaminxPuzzle default scheme), ending with neutral gray / black ink.
+const WCA_SWATCHES: string[] = [
+  CUBE_FILL.U, CUBE_FILL.D, CUBE_FILL.F, CUBE_FILL.B, CUBE_FILL.L, CUBE_FILL.R,
+  '#8a1aff', // megaminx purple
+  '#ff99ff', // megaminx pink
+  '#71e600', // megaminx light green
+  '#88ddff', // megaminx light blue
+  '#ffffb3', // megaminx cream
+  '#ff8433', // megaminx light orange
+  '#006600', // megaminx dark green
+  '#0000b3', // megaminx dark blue
+  '#999999', // neutral gray
+  '#000000', // black ink
+];
 
 const DASH_PRESETS: Record<string, number[] | undefined> = {
   solid: undefined,
@@ -223,6 +242,43 @@ function EmptyState() {
   );
 }
 
+// A line is the diagonal of its (unrotated) bbox; `flipped` picks which diagonal.
+// So its on-screen slope lives in width/height/flipped (+ box rotation), NOT in the
+// `rotation` field — that one only spins the box. These helpers expose the *visual*
+// angle so the ∠ field can read/drive the line direction directly.
+function lineEndsLocal(s: LineShape): [[number, number], [number, number]] {
+  return s.flipped
+    ? [[s.x, s.y + s.height], [s.x + s.width, s.y]]
+    : [[s.x, s.y], [s.x + s.width, s.y + s.height]];
+}
+// Visual orientation in [0,180) degrees (a segment and its 180° flip look the same).
+function lineAngleDeg(s: LineShape): number {
+  const [[ax, ay], [bx, by]] = lineEndsLocal(s);
+  const deg = (Math.atan2(by - ay, bx - ax) * 180) / Math.PI + s.rotation;
+  return ((deg % 180) + 180) % 180;
+}
+// Rebuild width/height/flipped so the line points at `deg`, keeping its midpoint and
+// length fixed, folding any box rotation back to 0.
+function linePatchFromAngle(s: LineShape, deg: number): Partial<LineShape> {
+  const [[ax, ay], [bx, by]] = lineEndsLocal(s);
+  const cx = (ax + bx) / 2;
+  const cy = (ay + by) / 2;
+  const len = Math.hypot(bx - ax, by - ay);
+  if (len < 1e-6) return {};
+  const r = (deg * Math.PI) / 180;
+  const hx = (len / 2) * Math.cos(r);
+  const hy = (len / 2) * Math.sin(r);
+  const flipped = hx < 0 ? hy >= 0 : hy < 0;
+  return {
+    x: cx - Math.abs(hx),
+    y: cy - Math.abs(hy),
+    width: Math.abs(2 * hx),
+    height: Math.abs(2 * hy),
+    flipped,
+    rotation: 0,
+  };
+}
+
 function GeometrySection({
   sel,
   update,
@@ -234,6 +290,7 @@ function GeometrySection({
   const [lockAspect, setLockAspect] = useState(false);
   const single = sel.length === 1 ? sel[0] : null;
   const isRect = single?.type === 'rect';
+  const lineSingle = single && single.type === 'line' ? (single as LineShape) : null;
 
   const w = common(sel, (s) => s.width);
   const h = common(sel, (s) => s.height);
@@ -289,8 +346,16 @@ function GeometrySection({
       <div className="paint-insp-grid2" style={{ marginTop: 6 }}>
         <LabeledNumber
           prefix="∠"
-          value={common(sel, (s) => Math.round(s.rotation))}
-          onChange={(v, c) => update({ rotation: ((v % 360) + 360) % 360 }, c)}
+          value={
+            lineSingle
+              ? Math.round(lineAngleDeg(lineSingle))
+              : common(sel, (s) => Math.round(s.rotation))
+          }
+          onChange={(v, c) =>
+            lineSingle
+              ? update(linePatchFromAngle(lineSingle, v), c)
+              : update({ rotation: ((v % 360) + 360) % 360 }, c)
+          }
         />
         {isRect && (
           <LabeledNumber
@@ -663,50 +728,65 @@ function ColorField({
   const colorVal = /^#[0-9a-fA-F]{6}$/.test(value) ? value : '#000000';
 
   return (
-    <div className="paint-insp-row" style={{ marginBottom: 0 }}>
-      <div className="paint-color-field">
-        <span className="paint-swatch">
-          {isNone ? (
-            <span className="paint-swatch-none">
-              <Ban size={13} color="var(--muted)" />
-            </span>
-          ) : (
-            <span className="paint-swatch-fill" style={{ background: value }} />
-          )}
+    <>
+      <div className="paint-insp-row" style={{ marginBottom: 0 }}>
+        <div className="paint-color-field">
+          <span className="paint-swatch">
+            {isNone ? (
+              <span className="paint-swatch-none">
+                <Ban size={13} color="var(--muted)" />
+              </span>
+            ) : (
+              <span className="paint-swatch-fill" style={{ background: value }} />
+            )}
+            <input
+              type="color"
+              value={colorVal}
+              onChange={(e) => {
+                setHex(e.target.value);
+                onChange(e.target.value, false);
+              }}
+              onBlur={() => onChange(hex, true)}
+            />
+          </span>
           <input
-            type="color"
-            value={colorVal}
-            onChange={(e) => {
-              setHex(e.target.value);
-              onChange(e.target.value, false);
+            className="paint-input paint-hex"
+            value={isNone ? 'none' : hex}
+            onChange={(e) => setHex(e.target.value)}
+            onBlur={() => {
+              const v = hex.trim();
+              if (v === 'none' || /^#[0-9a-fA-F]{3,8}$/.test(v)) onChange(v, true);
+              else setHex(value);
             }}
-            onBlur={() => onChange(hex, true)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            }}
           />
-        </span>
-        <input
-          className="paint-input paint-hex"
-          value={isNone ? 'none' : hex}
-          onChange={(e) => setHex(e.target.value)}
-          onBlur={() => {
-            const v = hex.trim();
-            if (v === 'none' || /^#[0-9a-fA-F]{3,8}$/.test(v)) onChange(v, true);
-            else setHex(value);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-          }}
-        />
+        </div>
+        <button
+          type="button"
+          className={`paint-none-toggle${isNone ? ' is-on' : ''}`}
+          title="none"
+          aria-label="none"
+          onClick={() => onChange(isNone ? '#cbd5e1' : 'none', true)}
+        >
+          <Ban size={14} />
+        </button>
       </div>
-      <button
-        type="button"
-        className={`paint-none-toggle${isNone ? ' is-on' : ''}`}
-        title="none"
-        aria-label="none"
-        onClick={() => onChange(isNone ? '#cbd5e1' : 'none', true)}
-      >
-        <Ban size={14} />
-      </button>
-    </div>
+      <div className="paint-swatches">
+        {WCA_SWATCHES.map((sw) => (
+          <button
+            key={sw}
+            type="button"
+            className={`paint-swatch-chip${value.toLowerCase() === sw.toLowerCase() ? ' is-on' : ''}`}
+            style={{ background: sw }}
+            title={sw.toUpperCase()}
+            aria-label={sw}
+            onClick={() => onChange(sw, true)}
+          />
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -761,6 +841,9 @@ function NumberInput({
 }) {
   const [draft, setDraft] = useState<string>('');
   const [editing, setEditing] = useState(false);
+  // select-all on the focusing click so a value can be overwritten immediately;
+  // the guard lets later clicks in an already-focused field place a caret normally.
+  const justFocused = useRef(false);
   const display = editing ? draft : value === undefined ? '' : round(value);
 
   return (
@@ -769,9 +852,18 @@ function NumberInput({
       type="number"
       value={display}
       placeholder={value === undefined ? '—' : ''}
-      onFocus={() => {
+      onFocus={(e) => {
         setEditing(true);
         setDraft(value === undefined ? '' : String(round(value)));
+        justFocused.current = true;
+        e.currentTarget.select();
+      }}
+      onMouseUp={(e) => {
+        // keep the focus-time select-all from collapsing to a caret on this click
+        if (justFocused.current) {
+          e.preventDefault();
+          justFocused.current = false;
+        }
       }}
       onChange={(e) => {
         setDraft(e.target.value);

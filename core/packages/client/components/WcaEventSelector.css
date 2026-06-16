@@ -11,11 +11,11 @@
   /* 按钮 — 纯图标无方块底/边框,仅 hover 淡叠加 */
   --evbtn-bg: transparent;
   --evbtn-border: transparent;
-  --evbtn-bg-hover: rgba(255, 255, 255, 0.08);
+  --evbtn-bg-hover: color-mix(in srgb, var(--foreground) 8%, transparent);
   --evbtn-border-hover: transparent;
-  --evbtn-icon: #aaa;
-  --evbtn-icon-hover: #ddd;
-  --evbtn-icon-disabled: #6e6050;
+  --evbtn-icon: var(--muted-foreground);
+  --evbtn-icon-hover: var(--foreground);
+  --evbtn-icon-disabled: var(--faint-foreground);
 
   display: flex;
   flex-wrap: wrap;
@@ -82,8 +82,8 @@
   height: 16px;
   padding: 0 3px;
   border-radius: 8px;
-  background: #fff;
-  color: #333;
+  background: var(--popover);
+  color: var(--foreground);
   font-size: 11px;
   font-weight: 700;
   line-height: 16px;
@@ -107,8 +107,8 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #fff;
-  color: #333;
+  background: var(--popover);
+  color: var(--foreground);
   font-size: 12px;
   font-weight: 700;
   line-height: 1;
@@ -137,7 +137,7 @@
   transition: color 0.2s;
 }
 .wca-stats-event-selector .event-btn-all:hover .event-all-label { color: var(--evbtn-icon-hover); }
-.wca-stats-event-selector .event-btn-all.active .event-all-label { color: #fff; }
+.wca-stats-event-selector .event-btn-all.active .event-all-label { color: var(--foreground); }
 
 /* cstimer 罕见 puzzle 无 cubing-icons → fallback 文字短标签 */
 .wca-stats-event-selector .event-btn-text {
@@ -154,7 +154,7 @@
   font-family: var(--font-mono);
 }
 .wca-stats-event-selector .event-btn-text:hover .event-text-label { color: var(--evbtn-icon-hover); }
-.wca-stats-event-selector .event-btn-text.active .event-text-label { color: #fff; }
+.wca-stats-event-selector .event-btn-text.active .event-text-label { color: var(--foreground); }
 
 /* 展开 / 收起 toggle — 无框纯箭头,与项目图标一致(继承 .event-btn 的 transparent + hover 淡叠加) */
 .wca-stats-event-selector .event-more-arrow {
@@ -164,7 +164,7 @@
   transition: color 0.2s;
 }
 .wca-stats-event-selector .event-btn-more:hover .event-more-arrow { color: var(--evbtn-icon-hover); }
-.wca-stats-event-selector .event-btn-more.active .event-more-arrow { color: #fff; }
+.wca-stats-event-selector .event-btn-more.active .event-more-arrow { color: var(--foreground); }
 
 /* tooltip */
 .wca-stats-event-selector .event-btn::after {
@@ -173,8 +173,8 @@
   bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
-  background: #fff;
-  color: #333;
+  background: var(--popover);
+  color: var(--foreground);
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 13px;
