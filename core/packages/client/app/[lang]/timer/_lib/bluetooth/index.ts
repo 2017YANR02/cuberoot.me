@@ -36,6 +36,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CubeDriver } from './driver';
 // detectBluetoothEnv re-exported above; the connect() helper uses it
 // indirectly via the env-tagged error and the surrounding consumer.
+import { ganV2Driver } from './gan_v2';
 import { ganV3Driver } from './gan_v3';
 import { ganV4Driver } from './gan_v4';
 import { giikerDriver } from './giiker';
@@ -43,6 +44,7 @@ import { gocubeDriver } from './gocube';
 import { moyuDriver } from './moyu';
 import { qiyiDriver } from './qiyi';
 import { CubeStateTracker } from './state_track';
+import { GAN_CIC_LIST, watchAdvertisementsMac, savedMac, saveMac, clearMac, parseMacFromName, normalizeMac } from './mac';
 import type { BluetoothCubeStatus } from './types';
 
 export type { BluetoothCubeStatus, CubeBrand } from './types';
@@ -73,7 +75,7 @@ const RECONNECT_MAX_ATTEMPTS = RECONNECT_BACKOFF_MS.length;
  * fully-decoded brands first so we prefer them when a device matches more
  * than one regex (GAN v3 and v4 share the FFF0 service in some firmwares).
  */
-const DRIVERS: CubeDriver[] = [ganV3Driver, gocubeDriver, ganV4Driver, qiyiDriver, moyuDriver, giikerDriver];
+const DRIVERS: CubeDriver[] = [ganV3Driver, gocubeDriver, ganV4Driver, qiyiDriver, moyuDriver, giikerDriver, ganV2Driver];
 
 function pickDriver(device: BluetoothDevice): CubeDriver | null {
   for (const d of DRIVERS) if (d.matches(device)) return d;
@@ -115,6 +117,12 @@ interface UseBluetoothCubeOpts {
    * give-up. Useful for surfacing toasts to the user.
    */
   onConnectionEvent?: (ev: BluetoothConnectionEvent) => void;
+  /**
+   * Called when a MAC-keyed cube (GAN / MoYu / QiYi) needs its MAC and we
+   * couldn't auto-detect it from advertisements / name / storage. Should
+   * resolve a "XX:XX:XX:XX:XX:XX" string, or null if the user cancels.
+   */
+  onNeedMac?: (deviceName: string, isWrongKey?: boolean) => Promise<string | null>;
 }
 
 const INITIAL_STATUS: BluetoothCubeStatus = {
@@ -152,11 +160,17 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   useEffect(() => { onMoveRef.current = opts.onMove; }, [opts.onMove]);
   useEffect(() => { onSolvedRef.current = opts.onSolved; }, [opts.onSolved]);
   useEffect(() => { onConnectionEventRef.current = opts.onConnectionEvent; }, [opts.onConnectionEvent]);
+  const onNeedMacRef = useRef(opts.onNeedMac);
+  useEffect(() => { onNeedMacRef.current = opts.onNeedMac; }, [opts.onNeedMac]);
 
   // Mutable runtime handles. We can't put these in state because they are
   // not serializable and updating them would re-render the consumer.
   const trackerRef = useRef<CubeStateTracker>(new CubeStateTracker());
   const deviceRef = useRef<BluetoothDevice | null>(null);
+  const macRef = useRef<string | null>(null);
+  // MAC pending persistence — only written once a real move decodes, so a
+  // wrong MAC the user typed never poisons storage.
+  const pendingSaveMacRef = useRef<{ name: string | null; mac: string } | null>(null);
   const driverRef = useRef<CubeDriver | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
   const disconnectListenerRef = useRef<((ev: Event) => void) | null>(null);
@@ -171,6 +185,11 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   const reconnectInFlightRef = useRef<boolean>(false);
 
   const handleMove = useCallback((move: string) => {
+    // First successfully-decoded move proves the MAC: persist it now. We
+    // deliberately don't save before a move lands, to avoid caching a wrong
+    // MAC the user typed (which would silently poison every reconnect).
+    const ps = pendingSaveMacRef.current;
+    if (ps) { saveMac(ps.name, ps.mac); pendingSaveMacRef.current = null; }
     // Capture timestamp as close to characteristic-value-changed as possible.
     // Drivers call this synchronously from their notification handler, so
     // this is the freshest reading the JS event loop affords us.
@@ -246,7 +265,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       disconnectListenerRef.current = onDisc;
 
       // Re-run the driver handshake to resume the move stream.
-      const started = await driver.start(server, handleMove);
+      const started = await driver.start(server, handleMove, { mac: macRef.current });
       cleanupRef.current = started.cleanup;
 
       // Reset solved-tracker baseline (cube may have been turned during
@@ -363,11 +382,20 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     intentionalDisconnectRef.current = false;
     cancelPendingReconnect();
 
-    // Build a single requestDevice options blob from all known drivers.
-    // Each driver contributes a service filter; optionalServices are merged.
-    const filters = DRIVERS.map(d => ({ services: [d.service] }));
+    // requestDevice: match by known service UUIDs OR GAN-family name prefixes
+    // (some firmwares don't advertise the data service in the scan record),
+    // expose every driver service for post-connect probing, and request GAN
+    // manufacturer data so we can recover the MAC from advertisements.
+    const filters: BluetoothLEScanFilter[] = [
+      ...DRIVERS.map(d => ({ services: [d.service] })),
+      { namePrefix: 'GAN' },
+      { namePrefix: 'MG' },
+      { namePrefix: 'AiCube' },
+      { namePrefix: 'Gi' },
+    ];
     const optional = new Set<string | number>();
     for (const d of DRIVERS) {
+      optional.add(d.service);
       for (const s of d.optionalServices ?? []) optional.add(s);
     }
 
@@ -376,6 +404,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       device = await navigator.bluetooth.requestDevice({
         filters,
         optionalServices: Array.from(optional),
+        optionalManufacturerData: GAN_CIC_LIST,
       });
     } catch (err) {
       // User cancelled the picker, denied permission, or no device found.
@@ -387,16 +416,54 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       throw err;
     }
 
-    const driver = pickDriver(device);
-    if (!driver) {
-      throw new Error(`Unrecognised smart cube: ${device.name ?? '(no name)'}`);
-    }
-
     if (!device.gatt) {
       throw new Error('Selected device does not expose a GATT server.');
     }
 
+    // Recover the MAC from a BLE advertisement BEFORE connecting (matches
+    // cstimer's order; GAN / MoYu / QiYi need it for AES key derivation).
+    // Best-effort: resolves null when unsupported or no manufacturer data.
+    const advMac = await watchAdvertisementsMac(device);
+
     const server = await device.gatt.connect();
+
+    // Pick the driver by which GATT service the cube actually exposes (GAN
+    // v2/v3/v4 share no service, so this is unambiguous); fall back to name.
+    let driver: CubeDriver | null = null;
+    try {
+      const services = await server.getPrimaryServices();
+      const uuids = new Set(services.map(s => s.uuid.toLowerCase()));
+      driver = DRIVERS.find(d => uuids.has(d.service.toLowerCase())) ?? null;
+    } catch {
+      // getPrimaryServices unsupported / failed — fall through to name match.
+    }
+    if (!driver) driver = pickDriver(device);
+    if (!driver) {
+      try { server.disconnect(); } catch { /* ignore */ }
+      throw new Error(`Unrecognised smart cube: ${device.name ?? '(no name)'}`);
+    }
+
+    // Resolve a MAC for MAC-keyed drivers: advertisement → saved → device-name
+    // → manual prompt. Persist whatever we settle on. If still unknown the
+    // driver falls back to a zero-MAC and simply won't decode — the UI then
+    // offers a manual-MAC retry.
+    let mac: string | null = null;
+    if (driver.needsMac) {
+      mac = normalizeMac(advMac) ?? savedMac(device.name) ?? parseMacFromName(device.name);
+      if (!mac && onNeedMacRef.current) {
+        try { mac = normalizeMac(await onNeedMacRef.current(device.name ?? '')); }
+        catch { mac = null; }
+      }
+    }
+    macRef.current = mac;
+
+    // A MAC-keyed cube with no MAC (user dismissed the prompt, nothing auto-
+    // detected) can't decode anything — abort cleanly instead of showing a
+    // dead "connected" state.
+    if (driver.needsMac && !mac) {
+      try { server.disconnect(); } catch { /* ignore */ }
+      return;
+    }
 
     // Wire up the disconnect listener BEFORE start() so we don't miss races.
     // On unexpected drop, fire the connection event then schedule the first
@@ -414,42 +481,67 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     device.addEventListener('gattserverdisconnected', onDisc);
     disconnectListenerRef.current = onDisc;
 
-    let started: { battery: () => Promise<number | null>; cleanup: () => void };
+    deviceRef.current = device;
+    driverRef.current = driver;
+
+    // `activate` (re)subscribes the driver with a given MAC. Factored out so a
+    // wrong-MAC re-prompt can re-run it on the same open GATT connection. The
+    // MAC is only persisted once a real move decodes (see handleMove).
+    const activate = async (macToUse: string | null): Promise<void> => {
+      macRef.current = macToUse;
+      pendingSaveMacRef.current = macToUse ? { name: device.name ?? null, mac: macToUse } : null;
+      const started = await driver!.start(server, handleMove, { mac: macToUse, onKeyError: handleKeyError });
+      cleanupRef.current = started.cleanup;
+      // Initialize tracker to solved (the user starts each session solved).
+      trackerRef.current.reset();
+      wasSolvedRef.current = true;
+      setSolved(true);
+      setLastMove(null);
+      setStatus({ connected: true, brand: driver!.brand, battery: null, deviceName: prettyDeviceName(device) });
+      // Read battery in the background; failures fall back to null silently.
+      void started.battery().then(b => {
+        if (deviceRef.current === device) setStatus(s => ({ ...s, battery: b }));
+      }).catch(() => {});
+    };
+
+    // A MAC-keyed driver that decodes sustained garbage ⇒ the MAC is wrong.
+    // Forget it, re-prompt (cstimer's keyCheck → reqMacAddr), and re-activate
+    // on the still-open GATT. Guarded against re-entrancy.
+    let keyErrorBusy = false;
+    function handleKeyError(): void {
+      if (!driver!.needsMac || keyErrorBusy) return;
+      keyErrorBusy = true;
+      void (async () => {
+        cleanupRef.current?.();
+        cleanupRef.current = null;
+        clearMac(device.name);
+        pendingSaveMacRef.current = null;
+        let newMac: string | null = null;
+        if (onNeedMacRef.current) {
+          try { newMac = normalizeMac(await onNeedMacRef.current(device.name ?? '', true)); }
+          catch { newMac = null; }
+        }
+        keyErrorBusy = false;
+        if (newMac) {
+          await activate(newMac).catch(() => {});
+        } else {
+          // User gave up — tear the connection down fully so a later GATT drop
+          // doesn't auto-reconnect against the bad MAC.
+          intentionalDisconnectRef.current = true;
+          internalDisconnect('manual');
+        }
+      })();
+    }
+
     try {
-      started = await driver.start(server, handleMove);
+      await activate(mac);
     } catch (err) {
       device.removeEventListener('gattserverdisconnected', onDisc);
       disconnectListenerRef.current = null;
       try { server.disconnect(); } catch { /* ignore */ }
       throw err;
     }
-
-    deviceRef.current = device;
-    driverRef.current = driver;
-    cleanupRef.current = started.cleanup;
-
-    // Initialize tracker to solved (the user is expected to start each
-    // session with a solved cube).
-    trackerRef.current.reset();
-    wasSolvedRef.current = true;
-    setSolved(true);
-    setLastMove(null);
-
-    setStatus({
-      connected: true,
-      brand: driver.brand,
-      battery: null,
-      deviceName: prettyDeviceName(device),
-    });
-
-    // Read battery in the background; failures fall back to null silently.
-    void started.battery().then(b => {
-      // Only update if we're still connected to the same device.
-      if (deviceRef.current === device) {
-        setStatus(s => ({ ...s, battery: b }));
-      }
-    }).catch(() => {});
-  }, [handleMove, cancelPendingReconnect]);
+  }, [handleMove, cancelPendingReconnect, internalDisconnect]);
 
   // Tear down on unmount so we don't leak GATT subscriptions.
   useEffect(() => {

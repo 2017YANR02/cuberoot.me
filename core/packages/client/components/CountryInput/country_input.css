@@ -41,8 +41,8 @@
 }
 
 .country-input-field:focus {
-  border-color: var(--accent, rgba(217, 119, 87, 0.5));
-  box-shadow: 0 0 0 3px var(--accent-soft, rgba(217, 119, 87, 0.15));
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 /* NOTE: 用 var() + fallback 自适应主题——landing/upcoming 浅色页定义了 --surface/--text/--border，
@@ -105,7 +105,7 @@
 }
 
 .country-input-item--active {
-  background: rgba(217, 119, 87, 0.15);
+  background: var(--accent-soft);
 }
 
 /* ── 多选模式：已选 chips 行 —— 放在下拉 popup 顶部，不挤占 toolbar ── */
@@ -123,7 +123,7 @@
   gap: 4px;
   padding: 2px 2px 2px 6px;
   border-radius: 999px;
-  background: var(--accent-soft, rgba(217, 119, 87, 0.15));
+  background: var(--accent-soft);
   color: var(--text, #e5e5e5);
   font-size: 0.78rem;
   line-height: 1.2;
@@ -168,7 +168,7 @@
 
 .country-input-check {
   margin-left: 4px;
-  color: var(--accent, #C15F3C);
+  color: var(--accent);
   font-weight: 700;
 }
 .country-input-check--partial {
@@ -179,5 +179,5 @@
   opacity: 0.85;
 }
 .country-input-chip--continent {
-  background: color-mix(in srgb, var(--accent, #C15F3C) 18%, transparent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }

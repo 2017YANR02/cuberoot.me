@@ -6,7 +6,7 @@
  * import cycle.
  */
 
-export type CubeBrand = 'gan-v3' | 'gan-v4' | 'gocube' | 'qiyi' | 'giiker' | 'moyu' | 'unknown';
+export type CubeBrand = 'gan-v2' | 'gan-v3' | 'gan-v4' | 'gocube' | 'qiyi' | 'giiker' | 'moyu' | 'unknown';
 
 export interface BluetoothCubeStatus {
   connected: boolean;

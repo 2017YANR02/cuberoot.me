@@ -11,11 +11,15 @@
     color: inherit;
 }
 
-.calc-page {
-    /* calc 视觉强度大,目前 light-only。dark 模式不要打乱 cream-button-on-cream-bg 设计意图。 */
+/* calc 是「奶油纸」专属视觉(cream-button-on-cream-bg),art-directed light-only。
+   用 html:root:has() (0,2,1) 把明暗 + token 钉死,outrank 配色主题块 :root[data-palette]
+   (0,2,0),让所有配色主题(明 / 暗)都不渗进 calc——保持其独立设计意图不被打乱。 */
+html:root:has(.calc-page) {
     color-scheme: light;
     --background: #fafafa;
     --foreground: #171717;
+}
+.calc-page {
     color: #333333;
 }
 

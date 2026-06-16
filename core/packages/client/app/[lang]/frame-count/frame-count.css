@@ -73,6 +73,21 @@
 }
 .fc-title-help:hover { opacity: 1; color: #fff; }
 
+.fc-offline-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #b0b0b0;
+  font-size: 0.78rem;
+  opacity: 0.75;
+  text-decoration: none;
+  transition: opacity 0.15s, color 0.15s;
+}
+.fc-offline-link:hover { opacity: 1; color: #fff; }
+@media (max-width: 480px) {
+  .fc-offline-link span { display: none; }
+}
+
 .fc-shortcuts-btn {
   display: inline-flex;
   align-items: center;

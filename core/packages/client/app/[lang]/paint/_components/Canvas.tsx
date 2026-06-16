@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { tr } from '@/i18n/tr';
 import type { Bounds, HandleId, Point, Shape, TextShape, ToolId } from '../_lib/types';
-import { usePaint, SHAPE_UTILS } from '../_lib/store';
+import { usePaint, SHAPE_UTILS, getSelectionBounds } from '../_lib/store';
 import {
   getShapeBounds,
   getUtil,
@@ -36,7 +36,9 @@ import {
   unionBounds,
 } from '../_lib/geometry';
 import { computeSnap } from '../_lib/snapping';
+import { paperInk } from '../_lib/paper';
 import Overlay from './Overlay';
+import CreateHint from './CreateHint';
 
 const HIT_PX = 6;
 const SNAP_PX = 6;
@@ -65,6 +67,12 @@ type Mode =
       startCenter: Point;
       startAngle: number;
       startRotation: number;
+    }
+  | {
+      kind: 'groupResize';
+      handle: Exclude<HandleId, 'rotate'>;
+      startBounds: Bounds;
+      origins: Record<string, Shape>;
     };
 
 interface Props {
@@ -120,6 +128,7 @@ export default function Canvas({ viewport }: Props) {
   const shapes = usePaint((s) => s.shapes);
   const order = usePaint((s) => s.order);
   const camera = usePaint((s) => s.camera);
+  const paper = usePaint((s) => s.paper);
   const tool = usePaint((s) => s.tool);
   const ephemeral = usePaint((s) => s.ephemeral);
   const selection = usePaint((s) => s.selection);
@@ -167,13 +176,29 @@ export default function Canvas({ viewport }: Props) {
 
   // ---- handle hit-test (screen space) for the selection overlay ----
   const hitHandle = useCallback(
-    (scene: Point): { handle: HandleId; id: string } | null => {
+    (scene: Point): { handle: HandleId; id: string | null; group: boolean } | null => {
       const st = usePaint.getState();
+      const tol = 11 / st.camera.zoom;
+      // multi-selection: hit-test the 8 handles of the axis-aligned group bbox
+      // (no rotation, no rotate handle).
+      if (st.selection.length >= 2) {
+        const bb = getSelectionBounds(st);
+        if (!bb) return null;
+        const handles: Exclude<HandleId, 'rotate'>[] = [
+          'nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w',
+        ];
+        for (const h of handles) {
+          const p = handleLocal(h, bb);
+          if (Math.hypot(scene.x - p.x, scene.y - p.y) <= tol) {
+            return { handle: h, id: null, group: true };
+          }
+        }
+        return null;
+      }
       if (st.selection.length !== 1) return null;
       const s = st.shapes[st.selection[0]];
       if (!s || s.locked) return null;
       const b = getShapeBounds(s);
-      const tol = 11 / st.camera.zoom;
       const rotOffset = 26 / st.camera.zoom;
       const handles: HandleId[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w', 'rotate'];
       for (const h of handles) {
@@ -183,7 +208,7 @@ export default function Canvas({ viewport }: Props) {
             : handleLocal(h, b);
         const scenePos = s.rotation ? rotatePoint(local, boundsCenter(b), s.rotation) : local;
         if (Math.hypot(scene.x - scenePos.x, scene.y - scenePos.y) <= tol) {
-          return { handle: h, id: s.id };
+          return { handle: h, id: s.id, group: false };
         }
       }
       return null;
@@ -249,7 +274,8 @@ export default function Canvas({ viewport }: Props) {
   const finishPen = useCallback(
     (closed: boolean) => {
       const anchors = penRef.current;
-      const shape = makePath(anchors, closed);
+      const raw = makePath(anchors, closed);
+      const shape = raw ? withInk(raw) : raw;
       resetPen();
       modeRef.current = { kind: 'idle' };
       if (shape) {
@@ -307,7 +333,8 @@ export default function Canvas({ viewport }: Props) {
   useEffect(() => {
     if (tool !== 'pen' && penRef.current.length) {
       const anchors = penRef.current;
-      const shape = makePath(anchors, false);
+      const raw = makePath(anchors, false);
+      const shape = raw ? withInk(raw) : raw;
       resetPen();
       if (modeRef.current.kind === 'pen') modeRef.current = { kind: 'idle' };
       if (shape) {
@@ -420,7 +447,7 @@ export default function Canvas({ viewport }: Props) {
           width: m.width,
           height: m.height,
           rotation: 0,
-          fill: '#171717',
+          fill: currentInk(),
           stroke: 'none',
           strokeWidth: 0,
           opacity: 1,
@@ -470,7 +497,24 @@ export default function Canvas({ viewport }: Props) {
       // ---- select tool ----
       // 1) handle drag (resize / rotate)?
       const handleHit = hitHandle(scene);
-      if (handleHit) {
+      if (handleHit && handleHit.group) {
+        // group resize: snapshot every selected shape; scale all proportionally
+        const startBounds = getSelectionBounds(st)!;
+        const origins: Record<string, Shape> = {};
+        for (const id of st.selection) {
+          const sh = st.shapes[id];
+          if (sh && !sh.locked) origins[id] = { ...sh };
+        }
+        st.beginHistory();
+        modeRef.current = {
+          kind: 'groupResize',
+          handle: handleHit.handle as Exclude<HandleId, 'rotate'>,
+          startBounds,
+          origins,
+        };
+        return;
+      }
+      if (handleHit && handleHit.id) {
         const s = st.shapes[handleHit.id];
         const b = getShapeBounds(s);
         const center = boundsCenter(b);
@@ -686,6 +730,33 @@ export default function Canvas({ viewport }: Props) {
           }
           break;
         }
+        case 'groupResize': {
+          const nb = resizeBounds(m.handle, m.startBounds, 0, scene, {
+            shift: e.shiftKey,
+            alt: e.altKey,
+          });
+          const sx = m.startBounds.width === 0 ? 1 : nb.width / m.startBounds.width;
+          const sy = m.startBounds.height === 0 ? 1 : nb.height / m.startBounds.height;
+          const patchById: Record<string, Partial<Shape>> = {};
+          for (const id in m.origins) {
+            const orig = m.origins[id];
+            const ob = getShapeBounds(orig);
+            const childNB = {
+              x: nb.x + (ob.x - m.startBounds.x) * sx,
+              y: nb.y + (ob.y - m.startBounds.y) * sy,
+              width: ob.width * sx,
+              height: ob.height * sy,
+            };
+            patchById[id] = getUtil(orig.type).resize?.(orig, childNB) ?? {
+              x: childNB.x,
+              y: childNB.y,
+              width: childNB.width,
+              height: childNB.height,
+            };
+          }
+          st.updateShapes(Object.keys(patchById), (s) => patchById[s.id], false);
+          break;
+        }
       }
     },
     [toScene, hitTopShape, hoverId]
@@ -722,7 +793,7 @@ export default function Canvas({ viewport }: Props) {
               height: isLine ? 0 : DEFAULT_SIZE,
             };
             const rx = m.tool === 'roundRect' ? DEFAULT_SIZE * 0.18 : 0;
-            eph = SHAPE_UTILS[type].create(b, { rx });
+            eph = withInk(SHAPE_UTILS[type].create(b, { rx }));
             eph = applyCount(eph, createCountRef.current);
           }
           createCountRef.current = null;
@@ -739,7 +810,8 @@ export default function Canvas({ viewport }: Props) {
           const pts = pencilRef.current;
           pencilRef.current = [];
           setPencilD(null);
-          const shape = makeFreehand(pts);
+          const raw = makeFreehand(pts);
+          const shape = raw ? withInk(raw) : raw;
           if (shape) {
             st.addShape(shape, true);
             st.setSelection([shape.id]);
@@ -771,6 +843,10 @@ export default function Canvas({ viewport }: Props) {
           break;
         }
         case 'resize': {
+          st.commit();
+          break;
+        }
+        case 'groupResize': {
           st.commit();
           break;
         }
@@ -886,7 +962,7 @@ export default function Canvas({ viewport }: Props) {
           <path
             d={pencilD}
             fill="none"
-            stroke="#1e293b"
+            stroke={paperInk(paper).ink}
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -977,6 +1053,8 @@ export default function Canvas({ viewport }: Props) {
 
       <Overlay viewport={viewport} />
 
+      <CreateHint />
+
       {editing &&
         shapes[editing] &&
         shapes[editing].type === 'text' &&
@@ -1047,6 +1125,22 @@ export default function Canvas({ viewport }: Props) {
 
 // ---- helpers ----
 
+// Current default ink (stroke / text color) for the active paper. Read lazily
+// from the store so dark paper -> light ink, light paper -> dark ink. The fill
+// gray from COMMON_DEFAULTS is left alone (reads on both papers).
+function currentInk(): string {
+  return paperInk(usePaint.getState().paper).ink;
+}
+
+// Override a freshly-created shape's default stroke (and text fill) with the
+// paper-derived ink, so the outline / strokes / text stay visible on any paper.
+// The default fill gray is intentionally left untouched.
+function withInk<S extends Shape>(shape: S): S {
+  const ink = currentInk();
+  if (shape.type === 'text') return { ...shape, fill: ink } as S;
+  return { ...shape, stroke: ink } as S;
+}
+
 // Build the create-preview shape, applying a live sides/points override.
 function buildCreateEphemeral(
   tool: ToolId,
@@ -1059,7 +1153,7 @@ function buildCreateEphemeral(
   const bounds = boundsFromDrag(start, cur, shift, alt);
   const type = toolToShapeType(tool);
   const rx = tool === 'roundRect' ? Math.min(bounds.width, bounds.height) * 0.18 : 0;
-  return applyCount(SHAPE_UTILS[type].create(bounds, { rx }), count ?? null);
+  return withInk(applyCount(SHAPE_UTILS[type].create(bounds, { rx }), count ?? null));
 }
 
 function applyCount<S extends Shape>(shape: S, count: number | null): S {

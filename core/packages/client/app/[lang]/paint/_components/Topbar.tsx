@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import {
   Undo2,
   Redo2,
@@ -12,10 +12,15 @@ import {
   Upload,
   FilePlus2,
   Boxes,
+  Images,
+  Check,
+  Loader2,
+  CloudOff,
 } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
 import { usePaint } from '../_lib/store';
+import { usePaintCloud, setActiveTitle } from '../_lib/cloud-store';
 import {
   downloadSvg,
   downloadPng,
@@ -25,24 +30,49 @@ import {
 interface Props {
   viewport: { w: number; h: number };
   onOpenShorthand: () => void;
+  onOpenDrawings: () => void;
 }
 
-export default function Topbar({ viewport, onOpenShorthand }: Props) {
+// Paper presets: light / white / dark / black. Theme-locked artboard colors —
+// same rationale as paint.css --canvas-bg (NOT theme tokens).
+const PAPER_PRESETS: { hex: string; zh: string; en: string }[] = [
+  { hex: '#f5f6f8', zh: '浅', en: 'Light' },
+  { hex: '#ffffff', zh: '白', en: 'White' },
+  { hex: '#1e1e1e', zh: '深', en: 'Dark' },
+  { hex: '#0a0a0a', zh: '黑', en: 'Black' },
+];
+
+export default function Topbar({ viewport, onOpenShorthand, onOpenDrawings }: Props) {
   const t = useT();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const camera = usePaint((s) => s.camera);
   const canUndo = usePaint((s) => s._past.length > 0);
   const canRedo = usePaint((s) => s._future.length > 0);
+  const paper = usePaint((s) => s.paper);
+  const selCount = usePaint((s) => s.selection.length);
+
+  const title = usePaintCloud((s) => s.title);
+  const saveState = usePaintCloud((s) => s.saveState);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState('');
 
   const undo = usePaint((s) => s.undo);
   const redo = usePaint((s) => s.redo);
   const zoomTo = usePaint((s) => s.zoomTo);
   const zoomToFit = usePaint((s) => s.zoomToFit);
+  const setPaper = usePaint((s) => s.setPaper);
 
-  const doc = () => {
+  // Export the current selection if any shapes are selected (cropped to their
+  // bounds), otherwise the whole canvas. z-order is preserved by filtering order.
+  const exportDoc = () => {
     const st = usePaint.getState();
-    return { shapes: st.shapes, order: st.order };
+    const sel = st.selection;
+    if (sel.length === 0) return { shapes: st.shapes, order: st.order, paper: st.paper };
+    const ids = new Set(sel);
+    const shapes: typeof st.shapes = {};
+    for (const id of sel) if (st.shapes[id]) shapes[id] = st.shapes[id];
+    return { shapes, order: st.order.filter((id) => ids.has(id)), paper: st.paper };
   };
 
   const zoomStep = (factor: number) => {
@@ -54,7 +84,11 @@ export default function Topbar({ viewport, onOpenShorthand }: Props) {
     const text = await file.text();
     const parsed = fromSvgString(text);
     if (parsed.shapes && parsed.order && parsed.order.length) {
-      usePaint.getState().loadDocument({ shapes: parsed.shapes, order: parsed.order });
+      usePaint.getState().loadDocument({
+        shapes: parsed.shapes,
+        order: parsed.order,
+        paper: parsed.paper ?? usePaint.getState().paper,
+      });
       zoomToFit(viewport.w, viewport.h);
     }
   };
@@ -65,6 +99,16 @@ export default function Topbar({ viewport, onOpenShorthand }: Props) {
     if (window.confirm(t('清空整个画布?此操作可撤销。', 'Clear the entire canvas? This can be undone.'))) {
       st.clearDocument();
     }
+  };
+
+  const startTitle = () => {
+    setTitleDraft(title);
+    setEditingTitle(true);
+  };
+  const commitTitle = () => {
+    setEditingTitle(false);
+    const v = titleDraft.trim();
+    if (v && v !== title) void setActiveTitle(v);
   };
 
   return (
@@ -146,16 +190,108 @@ export default function Topbar({ viewport, onOpenShorthand }: Props) {
           <Boxes size={16} />
           <span className="paint-hide-narrow">{t('速记', 'Shorthand')}</span>
         </button>
+        <button
+          type="button"
+          className="paint-btn"
+          onClick={onOpenDrawings}
+          title={tr({ zh: '我的作品', en: 'My drawings' })}
+        >
+          <Images size={16} />
+          <span className="paint-hide-narrow">{t('我的作品', 'My drawings')}</span>
+        </button>
+      </div>
+
+      <div className="paint-divider" />
+
+      <div className="paint-doc-status">
+        {editingTitle ? (
+          <input
+            className="paint-doc-title-input"
+            value={titleDraft}
+            autoFocus
+            onChange={(e) => setTitleDraft(e.target.value)}
+            onBlur={commitTitle}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+              else if (e.key === 'Escape') setEditingTitle(false);
+            }}
+            aria-label={tr({ zh: '作品名称', en: 'Drawing title' })}
+          />
+        ) : (
+          <button
+            type="button"
+            className="paint-doc-title"
+            onClick={startTitle}
+            title={tr({ zh: '重命名当前作品', en: 'Rename this drawing' })}
+          >
+            {title}
+          </button>
+        )}
+        {saveState === 'saving' && (
+          <span className="paint-save-badge">
+            <Loader2 size={12} className="paint-spin" />
+            <span className="paint-hide-narrow">{t('保存中', 'Saving')}</span>
+          </span>
+        )}
+        {saveState === 'saved' && (
+          <span className="paint-save-badge">
+            <Check size={12} />
+            <span className="paint-hide-narrow">{t('已保存', 'Saved')}</span>
+          </span>
+        )}
+        {saveState === 'error' && (
+          <span className="paint-save-badge is-error">
+            <CloudOff size={12} />
+            <span className="paint-hide-narrow">{t('未保存', 'Not saved')}</span>
+          </span>
+        )}
       </div>
 
       <div className="paint-topbar-spacer" />
+
+      <div
+        className="paint-topbar-group paint-paper-group"
+        role="group"
+        aria-label={tr({ zh: '纸张颜色', en: 'Paper color' })}
+      >
+        <span className="paint-paper-label paint-hide-narrow">{t('纸', 'Paper')}</span>
+        {PAPER_PRESETS.map((p) => (
+          <button
+            key={p.hex}
+            type="button"
+            className={`paint-paper-swatch${paper.toLowerCase() === p.hex ? ' is-active' : ''}`}
+            style={{ background: p.hex }}
+            onClick={() => setPaper(p.hex)}
+            title={t(p.zh, p.en)}
+            aria-label={t(p.zh, p.en)}
+            aria-pressed={paper.toLowerCase() === p.hex}
+          />
+        ))}
+        <label
+          className="paint-paper-custom"
+          title={tr({ zh: '自定义颜色', en: 'Custom color' })}
+        >
+          <input
+            type="color"
+            value={/^#[0-9a-fA-F]{6}$/.test(paper) ? paper : '#f5f6f8'}
+            onChange={(e) => setPaper(e.target.value)}
+            aria-label={tr({ zh: '自定义纸张颜色', en: 'Custom paper color' })}
+          />
+        </label>
+      </div>
+
+      <div className="paint-divider" />
 
       <div className="paint-topbar-group">
         <button
           type="button"
           className="paint-btn"
-          onClick={() => downloadSvg(doc())}
-          title={tr({ zh: '导出 SVG', en: 'Export SVG' })}
+          onClick={() => downloadSvg(exportDoc(), selCount > 0 ? 'selection.svg' : 'drawing.svg')}
+          title={
+            selCount > 0
+              ? tr({ zh: '导出所选图形为 SVG', en: 'Export selection as SVG' })
+              : tr({ zh: '导出整个画布为 SVG', en: 'Export whole canvas as SVG' })
+          }
         >
           <FileDown size={16} />
           <span className="paint-hide-narrow">SVG</span>
@@ -163,8 +299,12 @@ export default function Topbar({ viewport, onOpenShorthand }: Props) {
         <button
           type="button"
           className="paint-btn"
-          onClick={() => void downloadPng(doc())}
-          title={tr({ zh: '导出 PNG', en: 'Export PNG' })}
+          onClick={() => void downloadPng(exportDoc(), selCount > 0 ? 'selection.png' : 'drawing.png')}
+          title={
+            selCount > 0
+              ? tr({ zh: '导出所选图形为 PNG', en: 'Export selection as PNG' })
+              : tr({ zh: '导出整个画布为 PNG', en: 'Export whole canvas as PNG' })
+          }
         >
           <ImageIcon size={16} />
           <span className="paint-hide-narrow">PNG</span>

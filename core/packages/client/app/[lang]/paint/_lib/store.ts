@@ -16,6 +16,7 @@ import type { Bounds, Camera, PaintDoc, Shape, ToolId } from './types';
 import { getShapeBounds, setIdSeed, genId, SHAPE_UTILS } from './registry';
 import { unionBounds, aabbOfRotated } from './geometry';
 import { loadDoc, saveDoc, DOC_KEY } from './export';
+import { DEFAULT_PAPER } from './paper';
 
 export interface SnapLines {
   x?: number[];
@@ -26,6 +27,7 @@ export interface PaintState {
   // --- document slice (undoable) ---
   shapes: Record<string, Shape>;
   order: string[];
+  paper: string; // artboard background color (hex)
 
   // --- app state slice (not undoable) ---
   selection: string[];
@@ -70,6 +72,7 @@ export interface PaintState {
   setMarquee(b: Bounds | null): void;
   setSnapLines(s: SnapLines | null): void;
   setEditing(id: string | null): void;
+  setPaper(hex: string): void;
 
   reorder(id: string, dir: 'front' | 'back' | 'forward' | 'backward'): void;
   moveShapeTo(id: string, index: number): void;
@@ -88,13 +91,18 @@ export interface PaintState {
   redo(): void;
 
   loadDocument(doc: PaintDoc): void;
+  resetDocument(doc: PaintDoc): void;
   clearDocument(): void;
 }
 
 const HISTORY_LIMIT = 100;
 
-function snapshot(s: { shapes: Record<string, Shape>; order: string[] }): PaintDoc {
-  return structuredClone({ shapes: s.shapes, order: s.order });
+function snapshot(s: {
+  shapes: Record<string, Shape>;
+  order: string[];
+  paper: string;
+}): PaintDoc {
+  return structuredClone({ shapes: s.shapes, order: s.order, paper: s.paper });
 }
 
 let clipboard: Shape[] = [];
@@ -106,7 +114,7 @@ function scheduleSave(doc: PaintDoc) {
 }
 
 function initialDoc(): PaintDoc {
-  if (typeof window === 'undefined') return { shapes: {}, order: [] };
+  if (typeof window === 'undefined') return { shapes: {}, order: [], paper: DEFAULT_PAPER };
   const loaded = loadDoc(DOC_KEY);
   if (loaded) {
     // seed id counter past any numeric ids to avoid collisions.
@@ -118,7 +126,7 @@ function initialDoc(): PaintDoc {
     setIdSeed(max + 1);
     return loaded;
   }
-  return { shapes: {}, order: [] };
+  return { shapes: {}, order: [], paper: DEFAULT_PAPER };
 }
 
 export const usePaint = create<PaintState>((set, get) => {
@@ -137,6 +145,7 @@ export const usePaint = create<PaintState>((set, get) => {
   return {
     shapes: init.shapes,
     order: init.order,
+    paper: init.paper,
     selection: [],
     tool: 'select',
     camera: { x: 0, y: 0, zoom: 1 },
@@ -296,6 +305,13 @@ export const usePaint = create<PaintState>((set, get) => {
     setMarquee: (b) => set({ marquee: b }),
     setSnapLines: (s) => set({ snapLines: s }),
     setEditing: (id) => set({ editing: id }),
+
+    setPaper: (hex) => {
+      if (get().paper === hex) return;
+      const prev = snapshot(get());
+      set({ paper: hex });
+      pushHistory(prev);
+    },
 
     reorder: (id, dir) => {
       const prev = snapshot(get());
@@ -556,6 +572,7 @@ export const usePaint = create<PaintState>((set, get) => {
         return {
           shapes: prevDoc.shapes,
           order: prevDoc.order,
+          paper: prevDoc.paper ?? DEFAULT_PAPER,
           _past: past,
           _future: [...st._future, cur],
           selection: st.selection.filter((id) => prevDoc.shapes[id]),
@@ -576,6 +593,7 @@ export const usePaint = create<PaintState>((set, get) => {
         return {
           shapes: nextDoc.shapes,
           order: nextDoc.order,
+          paper: nextDoc.paper ?? DEFAULT_PAPER,
           _future: future,
           _past: [...st._past, cur],
           selection: st.selection.filter((id) => nextDoc.shapes[id]),
@@ -592,6 +610,7 @@ export const usePaint = create<PaintState>((set, get) => {
       set({
         shapes: structuredClone(doc.shapes),
         order: [...doc.order],
+        paper: doc.paper || DEFAULT_PAPER,
         selection: [],
         ephemeral: null,
         marquee: null,
@@ -601,11 +620,37 @@ export const usePaint = create<PaintState>((set, get) => {
       pushHistory(prev);
     },
 
+    // Replace the document and RESET history — used when switching between cloud
+    // drawings (undo must not cross documents). Re-seeds the id counter past any
+    // numeric ids in the loaded doc to avoid collisions (mirrors initialDoc).
+    resetDocument: (doc) => {
+      let max = 0;
+      for (const id of doc.order) {
+        const m = id.match(/(\d+)$/);
+        if (m) max = Math.max(max, parseInt(m[1], 36) || 0);
+      }
+      setIdSeed(max + 1);
+      set({
+        shapes: structuredClone(doc.shapes),
+        order: [...doc.order],
+        paper: doc.paper || DEFAULT_PAPER,
+        selection: [],
+        ephemeral: null,
+        marquee: null,
+        snapLines: null,
+        editing: null,
+        _past: [],
+        _future: [],
+        _pending: false,
+      });
+    },
+
     clearDocument: () => {
       const prev = snapshot(get());
       set({
         shapes: {},
         order: [],
+        paper: DEFAULT_PAPER,
         selection: [],
         ephemeral: null,
         marquee: null,

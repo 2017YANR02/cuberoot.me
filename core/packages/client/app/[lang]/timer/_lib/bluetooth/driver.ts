@@ -60,17 +60,41 @@ declare global {
     getPrimaryServices(uuid?: string | number): Promise<BluetoothRemoteGATTService[]>;
   }
 
+  interface BluetoothManufacturerData {
+    has(companyIdentifier: number): boolean;
+    get(companyIdentifier: number): DataView | undefined;
+  }
+
+  interface BluetoothAdvertisingEvent extends Event {
+    /** Map of company-identifier -> manufacturer-specific data. On the Bluefy
+     * iOS browser this can instead arrive as a bare DataView. */
+    readonly manufacturerData: BluetoothManufacturerData | DataView;
+  }
+
   interface BluetoothDevice extends EventTarget {
     readonly id: string;
     readonly name?: string;
     readonly gatt?: BluetoothRemoteGATTServer;
+    /** Experimental: stream BLE advertisement packets. Used to recover the
+     * cube MAC from manufacturer data (GAN/MoYu/QiYi need it for key
+     * derivation). Requires the device to have been requested with
+     * `optionalManufacturerData`. */
+    watchAdvertisements(options?: { signal?: AbortSignal }): Promise<void>;
     addEventListener(
       type: 'gattserverdisconnected',
       listener: (this: BluetoothDevice, ev: Event) => void,
     ): void;
+    addEventListener(
+      type: 'advertisementreceived',
+      listener: (this: BluetoothDevice, ev: BluetoothAdvertisingEvent) => void,
+    ): void;
     removeEventListener(
       type: 'gattserverdisconnected',
       listener: (this: BluetoothDevice, ev: Event) => void,
+    ): void;
+    removeEventListener(
+      type: 'advertisementreceived',
+      listener: (this: BluetoothDevice, ev: BluetoothAdvertisingEvent) => void,
     ): void;
   }
 
@@ -83,6 +107,9 @@ declare global {
   interface RequestDeviceOptions {
     filters?: BluetoothLEScanFilter[];
     optionalServices?: (string | number)[];
+    /** Company-identifier codes whose manufacturer data we want exposed in
+     * advertisement events (Chrome strips it otherwise). */
+    optionalManufacturerData?: number[];
     acceptAllDevices?: boolean;
   }
 
@@ -107,20 +134,43 @@ export interface CubeDriverStartResult {
   cleanup: () => void;
 }
 
+export interface CubeDriverContext {
+  /**
+   * Resolved cube MAC as "XX:XX:XX:XX:XX:XX" (upper-case, colon-separated), or
+   * null if it could not be determined. GAN / MoYu / QiYi drivers derive their
+   * per-cube AES key from this; the hook resolves it (BLE advertisement →
+   * saved → device-name → manual prompt) before calling start().
+   */
+  mac?: string | null;
+  /**
+   * Called by a MAC-keyed driver when it has decoded sustained garbage,
+   * meaning the supplied MAC is wrong. The hook forgets the bad MAC and
+   * re-prompts the user (cstimer's keyCheck → reqMacAddr behaviour).
+   */
+  onKeyError?: () => void;
+}
+
 export interface CubeDriver {
   brand: CubeBrand;
   /** Primary GATT service UUID this driver advertises with. */
   service: string;
   /** Extra services the picker needs access to (battery, device-info, etc.). */
   optionalServices?: string[];
+  /**
+   * True when this driver derives its AES key from the cube MAC (GAN family).
+   * The hook will resolve a MAC (and prompt the user if needed) before start().
+   */
+  needsMac?: boolean;
   /** Returns true if `device` looks like one of this driver's cubes. */
   matches(device: BluetoothDevice): boolean;
   /**
    * Connect to characteristics on an already-opened GATT server, subscribe to
    * notifications, and call `onMove` for every detected move (face notation).
+   * `ctx` carries the resolved MAC for MAC-keyed drivers.
    */
   start(
     server: BluetoothRemoteGATTServer,
     onMove: (move: string) => void,
+    ctx?: CubeDriverContext,
   ): Promise<CubeDriverStartResult>;
 }

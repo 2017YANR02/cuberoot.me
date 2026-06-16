@@ -6,22 +6,22 @@
   flex-wrap: wrap;
   margin-bottom: 12px;
   padding: 10px 12px;
-  background: #161616;
-  border: 1px solid #2a2a2a;
+  background: var(--card);
+  border: 1px solid var(--border-default);
   border-radius: 8px;
 }
 
 /* RegionPicker 跟随主题(亮色页是白底),但本控制条 + 舞台是固定深色广播台风格,
    故在这里把 --rp-* 钉成深色,popup 作为 .region-picker 子节点自动继承。 */
 .sor-race .sor-race-bar .region-picker {
-  --rp-bg: #1f1f1f;
-  --rp-bg-hover: #2a2a2a;
-  --rp-bg-active: #333;
-  --rp-text: #ededed;
-  --rp-text-sub: #999;
-  --rp-border: #2a2a2a;
-  --rp-border-hover: #3a3a3a;
-  --rp-popup-bg: #1f1f1f;
+  --rp-bg: var(--card);
+  --rp-bg-hover: var(--muted);
+  --rp-bg-active: var(--secondary);
+  --rp-text: var(--foreground);
+  --rp-text-sub: var(--muted-foreground);
+  --rp-border: var(--border-default);
+  --rp-border-hover: var(--border-strong);
+  --rp-popup-bg: var(--popover);
 }
 
 @media (max-width: 480px) {

@@ -86,7 +86,7 @@
 
 .comp-picker-id {
   font-family: var(--font-mono);
-  color: #d97757;
+  color: var(--accent);
 }
 
 .comp-picker-preset-icon {
@@ -98,5 +98,5 @@
   color: #c8c8c8;
 }
 .comp-picker-item--preset:hover .comp-picker-preset-icon {
-  color: #e8a27a;
+  color: color-mix(in srgb, var(--accent) 70%, white);
 }

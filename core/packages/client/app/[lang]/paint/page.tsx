@@ -10,9 +10,5 @@ const PaintEditor = dynamic(() => import('./_components/PaintEditor'), {
 
 export default function PaintPage() {
   useDocumentTitle('绘制', 'Paint');
-  return (
-    <div className="paint-page">
-      <PaintEditor />
-    </div>
-  );
+  return <PaintEditor />;
 }

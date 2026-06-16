@@ -38,6 +38,7 @@ export function applyTheme(theme: Theme, animate = false, clearPalette = false) 
   const commit = () => {
     if (clearPalette) {
       root.removeAttribute('data-palette');
+      root.removeAttribute('data-palette-scheme');
       try { localStorage.removeItem(PALETTE_KEY); } catch { /* ignore */ }
     }
     if (theme === 'light' || theme === 'dark') {
@@ -69,9 +70,13 @@ export function applyPalette(id: string | null, animate = false) {
     const scheme = paletteScheme(id);
     if (isPaletteId(id) && scheme) {
       root.setAttribute('data-palette', id);
+      // data-palette-scheme = light|dark 让 dark-/light-lock 页面只在「同明暗」配色下放行
+      // (暗页跟暗配色、亮页跟亮配色),globals.css 的 :not([data-palette-scheme=...]) 用它。
+      root.setAttribute('data-palette-scheme', scheme);
       root.style.colorScheme = scheme;
     } else {
       root.removeAttribute('data-palette');
+      root.removeAttribute('data-palette-scheme');
       const t = (localStorage.getItem(THEME_KEY) as Theme | null) || 'system';
       root.style.colorScheme = t === 'light' || t === 'dark' ? t : '';
     }

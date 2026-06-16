@@ -21,6 +21,7 @@ export const THEME_BOOTSTRAP = `(() => {
     if (pal && schemes[pal]) {
       // 配色主题优先:整套覆盖 light/dark,自带明暗。
       de.setAttribute('data-palette', pal);
+      de.setAttribute('data-palette-scheme', schemes[pal]);
       eff = schemes[pal];
       de.style.colorScheme = eff;
     } else {

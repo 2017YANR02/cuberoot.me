@@ -12,8 +12,8 @@
     --wp-text-mute: #95938E;
     --wp-border: #e5e5e5;
     --wp-border-strong: #d4d4d4;
-    --wp-accent: #C15F3C;
-    --wp-accent-soft: rgba(193, 95, 60, 0.08);
+    --wp-accent: var(--accent);
+    --wp-accent-soft: var(--accent-soft);
     --wp-blue: #2A6BB0;
     --wp-blue-soft: rgba(42, 107, 176, 0.10);
     --wp-green: #4A8A4A;

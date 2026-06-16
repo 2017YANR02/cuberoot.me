@@ -50,6 +50,12 @@ export async function getRecon(id: number): Promise<ReconSolve> {
   return apiGet<ReconSolve>(`/${id}`);
 }
 
+// 同一打乱串的其它复盘(轻量,只回匹配行)。详情页「相同打乱的复盘」用,
+// 替代旧的「拉全量 /list 再客户端过滤」。
+export async function getSameScramble(id: number): Promise<ReconSolve[]> {
+  return apiGet<ReconSolve[]>(`/${id}/same-scramble`);
+}
+
 // 个人复盘主页:某选手参与的全部 recon(作为选手 / 合作者 / 复盘者 / 添加者)。
 // 返回字段含 addedBy/addedById(LIST_COLUMNS 没有,角色筛选用)。
 // 端点未部署(dev 打 prod / 前后端部署错位)时降级:用全量列表按 选手/合作者/复盘者
