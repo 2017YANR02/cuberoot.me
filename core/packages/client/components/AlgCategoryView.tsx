@@ -1,13 +1,12 @@
 'use client';
 
 /**
- * AlgCategoryView — read-only port of packages/client-vite/src/pages/alg/AlgCategoryPage.tsx.
+ * AlgCategoryView — full port of packages/client-vite/src/pages/alg/AlgCategoryPage.tsx.
  *
- * Drops from the Vite version (deferred to later phases):
- *   - Admin features (AdminCaseEditor / ValidationReportModal / dnd-kit reorder)
- *   - CommunityAlgs sub-rendering
- *   - AlgPlayer (cubing.js TwistyPlayer) — alg rows still copy on click,
- *     but no inline 3D animation playback
+ * Restored (2026-06-16) to parity with the Vite version:
+ *   - CommunityAlgs (logged-in users add/edit/delete their own algs per case, validated on save)
+ *   - Admin tooling: AdminCaseEditor + ValidationReportModal + dnd-kit reorder (admin-gated)
+ *   - AlgPlayer (cubing.js TwistyPlayer) — click an alg row to expand + play the 3D animation
  *
  * Keeps: subgroup picker (umbrella sets), second-level picker, ori switcher,
  * per-case ori cycle, subgroup collapse, sticker/setup/HTML alg rendering.
@@ -15,13 +14,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical } from 'lucide-react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   loadAlg, getAlgSetMeta, ALG_PUZZLES,
-  type AlgCase, type AlgFile, type AlgPuzzle,
+  type AlgCase, type AlgFile, type AlgPuzzle, type AlgSubmission,
 } from '@cuberoot/shared';
 import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
+import CommunityAlgs from '@/components/CommunityAlgs';
+import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
+import ValidationReportModal from '@/components/ValidationReportModal';
+import AlgPlayer from '@/components/AlgPlayer';
+import { listSubmissions } from '@/lib/alg_api';
+import { reorderCases } from '@/lib/alg_sets_api';
+import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
@@ -55,48 +64,71 @@ function sanitizeAlgHtml(html: string): string {
   });
 }
 
-function AlgRow({ alg, algHtml, puzzle }: { alg: string; algHtml?: string; puzzle: AlgPuzzle }) {
+function AlgRow({ alg, algHtml, expanded, onToggle, animatable, puzzle, set, setup }: { alg: string; algHtml?: string; expanded: boolean; onToggle: () => void; animatable: boolean; puzzle: AlgPuzzle; set: string; setup?: string }) {
   const [copied, setCopied] = useState(false);
   const algShown = formatScrambleForEvent(puzzle, alg);
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      className="alg-alg-row"
-      onClick={() => {
-        navigator.clipboard.writeText(algShown).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1200);
-        });
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          navigator.clipboard.writeText(algShown).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1200);
-          });
-        }
-      }}
-      title="copy"
-    >
-      {algHtml && puzzle !== 'sq1'
-        ? <span className="alg-alg-text" dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
-        : <span className="alg-alg-text">{algShown}</span>}
-      <button
-        type="button"
-        className="alg-alg-copy-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          navigator.clipboard.writeText(algShown).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1200);
-          });
+    <>
+      <div
+        role="button"
+        tabIndex={0}
+        className={`alg-alg-row${expanded ? ' is-expanded' : ''}`}
+        onClick={animatable ? onToggle : undefined}
+        onKeyDown={(e) => {
+          if (animatable && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            onToggle();
+          }
         }}
-        title="copy"
+        title={animatable ? (expanded ? 'collapse' : 'play') : 'copy'}
       >
-        {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
-      </button>
+        {algHtml && puzzle !== 'sq1'
+          ? <span className="alg-alg-text" dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
+          : <span className="alg-alg-text">{algShown}</span>}
+        <button
+          type="button"
+          className="alg-alg-copy-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(algShown).then(() => {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1200);
+            });
+          }}
+          title="copy"
+        >
+          {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
+        </button>
+      </div>
+      {expanded && animatable && <AlgPlayer alg={alg} puzzle={puzzle} set={set} setup={setup} />}
+    </>
+  );
+}
+
+/** dnd-kit sortable wrapper:admin 模式下渲染拖动 handle,普通模式下退化成裸 div */
+function SortableCaseCard({ id, draggable, children }: { id: number; draggable: boolean; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !draggable });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative',
+    height: '100%',
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {draggable && (
+        <button
+          type="button"
+          className="alg-case-drag-handle"
+          {...attributes}
+          {...listeners}
+          title="drag to reorder"
+        >
+          <GripVertical size={14} />
+        </button>
+      )}
+      {children}
     </div>
   );
 }
@@ -172,6 +204,52 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
   const [activeOri, setActiveOri] = useState(0);
   const [caseOri, setCaseOri] = useState<Record<string, number>>({});
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [submissions, setSubmissions] = useState<AlgSubmission[]>([]);
+  const user = useAuthStore(s => s.user);
+  const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
+  const [editorState, setEditorState] = useState<AdminEditorState | null>(null);
+  const [validationOpen, setValidationOpen] = useState(false);
+  const [validationRefreshKey, setValidationRefreshKey] = useState(0);
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const animatable = true;
+
+  // dnd-kit sensors:鼠标按住超过 5px 才认作 drag,避免误触发(普通点击不被吞)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    if (!data) return;
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const all = data.cases;
+    const oldIdx = all.findIndex(c => c.id === Number(active.id));
+    const newIdx = all.findIndex(c => c.id === Number(over.id));
+    if (oldIdx < 0 || newIdx < 0) return;
+    const reordered = arrayMove(all, oldIdx, newIdx);
+    setData({ ...data, cases: reordered });
+    const ids = reordered.map(c => c.id).filter((x): x is number => typeof x === 'number');
+    reorderCases(puzzleParam, set, ids).catch(err => {
+      console.error('reorder failed', err);
+      alert(`Reorder failed: ${err.message}`);
+      setData(d => d ? { ...d, cases: all } : d);
+    });
+  };
+
+  useEffect(() => {
+    if (!validPuzzle || !meta) return;
+    listSubmissions(puzzleParam, set)
+      .then(setSubmissions)
+      .catch(e => { console.warn('[alg] failed to load submissions', e); setSubmissions([]); });
+  }, [puzzleParam, set, validPuzzle, meta]);
+
+  const submissionsByCase = useMemo(() => {
+    const map = new Map<string, AlgSubmission[]>();
+    for (const s of submissions) {
+      const arr = map.get(s.caseName) ?? [];
+      arr.push(s);
+      map.set(s.caseName, arr);
+    }
+    return map;
+  }, [submissions]);
 
   useEffect(() => {
     if (!validPuzzle || !meta) { setError('unknown set'); setData(null); return; }
@@ -288,6 +366,26 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
           <span className="alg-cat-count">{visibleCases.length} {tr({ zh: '个', en: 'cases'
         })}</span>
         )}
+        {isAdmin && data && !showSubgroupPicker && (
+          <>
+            <button
+              type="button"
+              className="alg-admin-add-btn"
+              onClick={() => setEditorState({ mode: 'add' })}
+              title={tr({ zh: '新增 case (admin)', en: 'Add case (admin)' })}
+            >
+              <Plus size={14} /> {tr({ zh: '新增 case', en: 'Add case' })}
+            </button>
+            <button
+              type="button"
+              className="alg-admin-add-btn"
+              onClick={() => setValidationOpen(true)}
+              title={tr({ zh: '校验此 set 所有公式', en: 'Validate this set' })}
+            >
+              <ShieldCheck size={14} /> {tr({ zh: '校验', en: 'Validate' })}
+            </button>
+          </>
+        )}
       </div>
 
       {data && !showSubgroupPicker && (() => {
@@ -372,6 +470,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
               </h2>
             )}
             {!collapsed && (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext
+                  items={cases.map(c => c.id).filter((x): x is number => typeof x === 'number')}
+                  strategy={rectSortingStrategy}
+                >
               <div className="alg-case-list">
                 {cases.map(c => {
                   const rawOri = caseOri[c.name] ?? activeOri;
@@ -380,7 +483,18 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                   const oriCount = c.algs.length;
                   const firstAlg = algsForOri[0]?.alg ?? c.standard ?? '';
                   return (
-                    <article key={c.id ?? c.name} className="alg-case">
+                    <SortableCaseCard key={c.id ?? c.name} id={c.id ?? 0} draggable={isAdmin && c.id != null}>
+                    <article className="alg-case">
+                      {isAdmin && c.id != null && (
+                        <button
+                          type="button"
+                          className="alg-admin-edit-btn alg-admin-edit-btn-corner"
+                          onClick={() => setEditorState({ mode: 'edit', existing: c })}
+                          title={tr({ zh: '编辑 case (admin)', en: 'Edit case (admin)' })}
+                        >
+                          <Pencil size={12} />
+                        </button>
+                      )}
                       <div className="alg-case-head">
                         <div className="alg-case-cube">
                           <CaseThumb
@@ -417,23 +531,80 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                         </div>
                       </div>
                       <div className="alg-case-algs">
-                        {algsForOri.map((entry, i) => (
-                          <AlgRow
-                            key={`${entry.altId ?? i}`}
-                            alg={entry.alg}
-                            algHtml={entry.algHtml}
-                            puzzle={puzzleParam as AlgPuzzle}
-                          />
-                        ))}
+                        {algsForOri.map((entry, i) => {
+                          const rowKey = `${c.name}::${oriIdx}::${i}`;
+                          const expanded = expandedKey === rowKey;
+                          return (
+                            <AlgRow
+                              key={`${entry.altId ?? i}`}
+                              alg={entry.alg}
+                              algHtml={entry.algHtml}
+                              expanded={expanded}
+                              onToggle={() => setExpandedKey(expanded ? null : rowKey)}
+                              animatable={animatable}
+                              puzzle={puzzleParam as AlgPuzzle}
+                              set={set}
+                              setup={oriAdjustSetup(c.setup, oriIdx)}
+                            />
+                          );
+                        })}
                       </div>
+                      <CommunityAlgs
+                        puzzle={puzzleParam}
+                        setSlug={set}
+                        caseName={c.name}
+                        sticker={c.sticker}
+                        setup={c.setup}
+                        submissions={submissionsByCase.get(c.name) ?? []}
+                        onPatch={(action) => {
+                          setSubmissions(prev => {
+                            if (action.type === 'add') return [...prev, action.submission];
+                            if (action.type === 'update') return prev.map(s => s.id === action.submission.id ? action.submission : s);
+                            return prev.filter(s => s.id !== action.id);
+                          });
+                        }}
+                      />
                     </article>
+                    </SortableCaseCard>
                   );
                 })}
               </div>
+                </SortableContext>
+              </DndContext>
             )}
           </section>
         );
       })}
+
+      {editorState && (
+        <AdminCaseEditor
+          puzzle={puzzleParam as AlgPuzzle}
+          setSlug={set}
+          state={editorState}
+          onClose={() => setEditorState(null)}
+          onSaved={(action) => {
+            if (!data) return;
+            if (action.type === 'add') {
+              setData({ ...data, cases: [...data.cases, action.created] });
+            } else if (action.type === 'update') {
+              setData({ ...data, cases: data.cases.map(c => c.id === action.updated.id ? action.updated : c) });
+            } else {
+              setData({ ...data, cases: data.cases.filter(c => c.id !== action.id) });
+            }
+            // 校验报告打开时,case saved 后让它重跑刷新结果
+            if (validationOpen) setValidationRefreshKey(k => k + 1);
+          }}
+        />
+      )}
+
+      {validationOpen && (
+        <ValidationReportModal
+          scope={{ kind: 'set', puzzle: puzzleParam as AlgPuzzle, set }}
+          onClose={() => setValidationOpen(false)}
+          onPickCase={(_p, _s, c) => setEditorState({ mode: 'edit', existing: c })}
+          refreshKey={validationRefreshKey}
+        />
+      )}
     </div>
   );
 }
