@@ -635,6 +635,12 @@ impl PocketSolverWasm {
         PocketSolverWasm { pocket: RefCell::new(None) }
     }
 
+    /// 用预算好的全空间距离表(3,674,160 字节)即时构造(秒算:静态资源直载,
+    /// 跳过现场 BFS)。worker 拉 opt_pocket.bin.gz 解压后传入。
+    pub fn from_dist(dist: &[u8]) -> PocketSolverWasm {
+        PocketSolverWasm { pocket: RefCell::new(Some(PocketSolver::from_dist(dist.to_vec()))) }
+    }
+
     fn ensure(&self) {
         if self.pocket.borrow().is_none() {
             *self.pocket.borrow_mut() = Some(PocketSolver::new_lean());
@@ -678,6 +684,12 @@ impl PyraminxSolverWasm {
         PyraminxSolverWasm { pyra: RefCell::new(None) }
     }
 
+    /// 用预算好的核心全空间距离表(933,120 字节)即时构造(秒算:静态资源直载,
+    /// 跳过现场 BFS)。worker 拉 opt_pyraminx.bin.gz 解压后传入。
+    pub fn from_dist(dist: &[u8]) -> PyraminxSolverWasm {
+        PyraminxSolverWasm { pyra: RefCell::new(Some(PyraminxSolver::from_dist(dist.to_vec()))) }
+    }
+
     fn ensure(&self) {
         if self.pyra.borrow().is_none() {
             *self.pyra.borrow_mut() = Some(PyraminxSolver::new_lean());
@@ -718,6 +730,12 @@ impl SkewbSolverWasm {
     #[allow(clippy::new_without_default)]
     pub fn new() -> SkewbSolverWasm {
         SkewbSolverWasm { skewb: RefCell::new(None) }
+    }
+
+    /// 用预算好的全空间距离表(3,149,280 字节)即时构造(秒算:静态资源直载,
+    /// 跳过现场 BFS)。worker 拉 opt_skewb.bin.gz 解压后传入。
+    pub fn from_dist(dist: &[u8]) -> SkewbSolverWasm {
+        SkewbSolverWasm { skewb: RefCell::new(Some(SkewbSolver::from_dist(dist.to_vec()))) }
     }
 
     fn ensure(&self) {

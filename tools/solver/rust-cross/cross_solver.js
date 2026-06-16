@@ -625,6 +625,12 @@ if (Symbol.dispose) HtrSolverWasm.prototype[Symbol.dispose] = HtrSolverWasm.prot
  * D/L/B 与对面只差整体旋转,24 旋转归一到固定 DBL 帧)。度量 HTM,God's number = 11。
  */
 export class PocketSolverWasm {
+    static __wrap(ptr) {
+        const obj = Object.create(PocketSolverWasm.prototype);
+        obj.__wbg_ptr = ptr;
+        PocketSolverWasmFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
         this.__wbg_ptr = 0;
@@ -634,6 +640,18 @@ export class PocketSolverWasm {
     free() {
         const ptr = this.__destroy_into_raw();
         wasm.__wbg_pocketsolverwasm_free(ptr, 0);
+    }
+    /**
+     * 用预算好的全空间距离表(3,674,160 字节)即时构造(秒算:静态资源直载,
+     * 跳过现场 BFS)。worker 拉 opt_pocket.bin.gz 解压后传入。
+     * @param {Uint8Array} dist
+     * @returns {PocketSolverWasm}
+     */
+    static from_dist(dist) {
+        const ptr0 = passArray8ToWasm0(dist, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.pocketsolverwasm_from_dist(ptr0, len0);
+        return PocketSolverWasm.__wrap(ret);
     }
     constructor() {
         const ret = wasm.pocketsolverwasm_new();
@@ -684,6 +702,12 @@ if (Symbol.dispose) PocketSolverWasm.prototype[Symbol.dispose] = PocketSolverWas
  * #错位 tips。God's number 核心 11 / 含 tips 15。
  */
 export class PyraminxSolverWasm {
+    static __wrap(ptr) {
+        const obj = Object.create(PyraminxSolverWasm.prototype);
+        obj.__wbg_ptr = ptr;
+        PyraminxSolverWasmFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
         this.__wbg_ptr = 0;
@@ -693,6 +717,18 @@ export class PyraminxSolverWasm {
     free() {
         const ptr = this.__destroy_into_raw();
         wasm.__wbg_pyraminxsolverwasm_free(ptr, 0);
+    }
+    /**
+     * 用预算好的核心全空间距离表(933,120 字节)即时构造(秒算:静态资源直载,
+     * 跳过现场 BFS)。worker 拉 opt_pyraminx.bin.gz 解压后传入。
+     * @param {Uint8Array} dist
+     * @returns {PyraminxSolverWasm}
+     */
+    static from_dist(dist) {
+        const ptr0 = passArray8ToWasm0(dist, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.pyraminxsolverwasm_from_dist(ptr0, len0);
+        return PyraminxSolverWasm.__wrap(ret);
     }
     constructor() {
         const ret = wasm.pyraminxsolverwasm_new();
@@ -832,6 +868,12 @@ if (Symbol.dispose) Roux223SolverWasm.prototype[Symbol.dispose] = Roux223SolverW
  * 阶 3 下 X2 = X');非法记号抛 JS 异常。God's number = 11。
  */
 export class SkewbSolverWasm {
+    static __wrap(ptr) {
+        const obj = Object.create(SkewbSolverWasm.prototype);
+        obj.__wbg_ptr = ptr;
+        SkewbSolverWasmFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
         this.__wbg_ptr = 0;
@@ -841,6 +883,18 @@ export class SkewbSolverWasm {
     free() {
         const ptr = this.__destroy_into_raw();
         wasm.__wbg_skewbsolverwasm_free(ptr, 0);
+    }
+    /**
+     * 用预算好的全空间距离表(3,149,280 字节)即时构造(秒算:静态资源直载,
+     * 跳过现场 BFS)。worker 拉 opt_skewb.bin.gz 解压后传入。
+     * @param {Uint8Array} dist
+     * @returns {SkewbSolverWasm}
+     */
+    static from_dist(dist) {
+        const ptr0 = passArray8ToWasm0(dist, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.skewbsolverwasm_from_dist(ptr0, len0);
+        return SkewbSolverWasm.__wrap(ret);
     }
     constructor() {
         const ret = wasm.skewbsolverwasm_new();
