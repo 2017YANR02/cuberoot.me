@@ -15,12 +15,18 @@
 //! 并打 stderr,不中断 batch(WCA 真实打乱永远合法,合法行永无 `-`)。
 
 use cube_solver::executor::{run_analyzer_app_raw, RawSolverWrapper};
-use cube_solver::sq1_solver::{state_from_scramble, Sq1Solver};
+use cube_solver::sq1_solver::{state_from_scramble, Sq1Solver, Sq1WcaSolver};
 use cube_solver::sq1_twophase::{solve_with_solution, Sq1TwoPhase};
 
 /// `SQ1_EXACT=1` ⇒ 走精确最优器(slash 口径,tail-bound,2 列调试用);否则默认近最优 two-phase。
 fn use_exact() -> bool {
     std::env::var("SQ1_EXACT").map(|v| v == "1").unwrap_or(false)
+}
+
+/// `SQ1_WCA_EXACT=1` ⇒ 走 WCA 12c4 **精确最优**器(2 列 `id,wca_exact`)。可证最优,
+/// 深态较慢(IDA*,无 phase-2);用于真实 WCA 难度分布 / D_WCA 经验下界,优先于 SQ1_EXACT。
+fn use_wca_exact() -> bool {
+    std::env::var("SQ1_WCA_EXACT").map(|v| v == "1").unwrap_or(false)
 }
 
 /// 一条 (id, alg) → CSV 行。
@@ -30,6 +36,9 @@ fn use_exact() -> bool {
 fn sq1_line(alg: &str, id: &str) -> String {
     match state_from_scramble(alg) {
         Ok(st) => {
+            if use_wca_exact() {
+                return format!("{},{}", id, Sq1WcaSolver::shared().solve_wca(&st));
+            }
             if use_exact() {
                 return format!("{},{}", id, Sq1Solver::shared().solve_one(&st));
             }
@@ -49,7 +58,10 @@ struct Sq1Wrapper;
 
 impl RawSolverWrapper for Sq1Wrapper {
     fn global_init() {
-        if use_exact() {
+        if use_wca_exact() {
+            let _ = Sq1WcaSolver::shared();
+            eprintln!("[INFO] sq1 WCA-EXACT solver ready (provably WCA 12c4-optimal; D_WCA proven in [13,27])");
+        } else if use_exact() {
             let _ = Sq1Solver::shared();
             eprintln!("[INFO] sq1 EXACT solver ready (provably optimal, slow tail; slash / God's number 13)");
         } else {
@@ -59,7 +71,13 @@ impl RawSolverWrapper for Sq1Wrapper {
     }
 
     fn get_csv_header() -> String {
-        if use_exact() { "id,sq1".into() } else { "id,wca,slash".into() }
+        if use_wca_exact() {
+            "id,wca_exact".into()
+        } else if use_exact() {
+            "id,sq1".into()
+        } else {
+            "id,wca,slash".into()
+        }
     }
 
     fn solve_raw(alg: &str, id: &str) -> String {
