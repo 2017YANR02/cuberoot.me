@@ -1241,6 +1241,29 @@ fn is_exact_solved(s: &Sq1State) -> bool {
     s.ml == 0 && s.top == SOLVED_TOP && s.bottom == SOLVED_BOTTOM
 }
 
+/// A2 诊断:运行时门控(默认关 ⇒ 求解热路径零成本,只一条 relaxed atomic load)的 phase-1
+/// IDA* profiler。开 `ON` 后用 `solve_profile` 跑;node/time cap 保证**不挂**(深态本就 >5min)。
+/// findings 见笔记 §5。只 native(wasm 不导出本求解器)。
+#[cfg(not(target_arch = "wasm32"))]
+mod wca_profile {
+    use std::cell::RefCell;
+    use std::sync::atomic::AtomicBool;
+    use std::time::Instant;
+    pub static ON: AtomicBool = AtomicBool::new(false);
+    pub struct Prof {
+        pub nodes: u64,
+        pub per_bound: u64,
+        pub node_cap: u64,
+        pub start: Instant,
+        pub time_cap_ms: u128,
+        pub first_square_depth: Option<u8>,
+        pub aborted: bool,
+    }
+    thread_local! {
+        pub static STATE: RefCell<Option<Prof>> = RefCell::new(None);
+    }
+}
+
 pub struct Sq1WcaSolver {
     base: &'static Sq1Solver,
     /// 5 张全空间 WCA 投影距离表(未打包,*2 含 ml;索引复用 base 的 *_idx 函数)。
@@ -1722,6 +1745,74 @@ impl Sq1WcaSolver {
         }
     }
 
+    /// A2 诊断:capped phase-1 IDA* profiler(**不改最优性 / 不改解**,默认关)。逐 bound 跑同一
+    /// `dfs`,记每 bound phase-1 节点数 + 首个方形态深度;node_cap / time_cap 任一到即截断(深态
+    /// 本就 >5min,截断保证不挂)。返回多行报告串。用于定位深态瓶颈(phase-1 太深 vs h 太弱)。
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn solve_profile(&self, st: &Sq1State, node_cap: u64, time_cap_ms: u128) -> String {
+        use std::sync::atomic::Ordering;
+        let h0 = if st.slash_legal() { self.h(st) } else { 1 };
+        wca_profile::STATE.with(|c| {
+            *c.borrow_mut() = Some(wca_profile::Prof {
+                nodes: 0,
+                per_bound: 0,
+                node_cap,
+                start: std::time::Instant::now(),
+                time_cap_ms,
+                first_square_depth: None,
+                aborted: false,
+            });
+        });
+        wca_profile::ON.store(true, Ordering::Relaxed);
+        let mut out = format!("h0={}", h0);
+        let mut bound = h0;
+        let mut solved = None;
+        loop {
+            wca_profile::STATE.with(|c| {
+                if let Some(p) = c.borrow_mut().as_mut() {
+                    p.per_bound = 0;
+                }
+            });
+            let mut memo = P2Memo { exact: HashMap::new(), fail_below: HashMap::new() };
+            let mut path = Vec::new();
+            let found = self.dfs(*st, 0, bound, LM_NONE, &mut memo, &mut path);
+            let (pb, total, aborted, fsd, secs) = wca_profile::STATE.with(|c| {
+                let b = c.borrow();
+                let p = b.as_ref().unwrap();
+                (
+                    p.per_bound,
+                    p.nodes,
+                    p.aborted,
+                    p.first_square_depth,
+                    p.start.elapsed().as_secs_f64(),
+                )
+            });
+            out.push_str(&format!(
+                "\n  bound={:2} nodes={:>12} total={:>12} firstSq={:?} {:.2}s",
+                bound, pb, total, fsd, secs
+            ));
+            if let Some(c) = found {
+                solved = Some(c);
+                break;
+            }
+            if aborted {
+                out.push_str("  <ABORTED node/time cap>");
+                break;
+            }
+            bound += 1;
+            if bound > 27 {
+                out.push_str("\n  bound>27 stop");
+                break;
+            }
+        }
+        wca_profile::ON.store(false, Ordering::Relaxed);
+        wca_profile::STATE.with(|c| *c.borrow_mut() = None);
+        if let Some(c) = solved {
+            out.push_str(&format!("\n  SOLVED={}", c));
+        }
+        out
+    }
+
     /// phase-1 IDA* DFS。调用方保证 g + h(s) ≤ bound(root 经 bound 起点、子经父 h_le_wca 剪枝)。
     /// 方形态先试 phase-2 精确尾解(memo 跨节点复用);失败再继续 shape-shift 子。
     fn dfs(
@@ -1733,6 +1824,29 @@ impl Sq1WcaSolver {
         memo: &mut P2Memo,
         path: &mut Vec<Sq1Token>,
     ) -> Option<u8> {
+        // A2 profiler hook(默认关:一条 relaxed load 即返回,不影响最优性)。开则记节点 /
+        // 首方形深度并在 node/time cap 处令整搜索快速 unwind(返 None,solve_profile 检 aborted 收尾)。
+        #[cfg(not(target_arch = "wasm32"))]
+        if wca_profile::ON.load(std::sync::atomic::Ordering::Relaxed) {
+            let abort = wca_profile::STATE.with(|c| {
+                if let Some(p) = c.borrow_mut().as_mut() {
+                    p.nodes += 1;
+                    p.per_bound += 1;
+                    if s.is_square_shape() && p.first_square_depth.map_or(true, |d| g < d) {
+                        p.first_square_depth = Some(g);
+                    }
+                    if p.nodes >= p.node_cap || p.start.elapsed().as_millis() >= p.time_cap_ms {
+                        p.aborted = true;
+                    }
+                    p.aborted
+                } else {
+                    false
+                }
+            });
+            if abort {
+                return None;
+            }
+        }
         if is_exact_solved(&s) {
             return Some(g);
         }
@@ -2523,6 +2637,37 @@ mod tests {
 
     /// 校准:挑 sample 里 h 最小(精确解最快)的 1 条,精确求解,
     /// 打印 真实最优 / h / 近最优,得真实 gap(actual-h)与近最优松弛(near-actual)。
+    /// A2 诊断(手动,bounded):profile 前 ≤5 条真深态(id 774..),看 phase-1 逐 bound 节点爆炸 +
+    /// 首方形深度 + h vs 近最优 gap。node_cap 20M / time_cap 15s 保证**不挂**(深态本就 >5min)。
+    /// 跑:`CUBE_TABLE_DIR=...\tables cargo test --release --lib wca_profile_deep -- --ignored --nocapture`
+    #[test]
+    #[ignore]
+    fn wca_profile_deep() {
+        let w = Sq1WcaSolver::shared();
+        let txt = include_str!("../test_data/sq1_scrambles.txt");
+        for line in txt.lines().take(5) {
+            let line = line.trim();
+            if line.is_empty() {
+                continue;
+            }
+            let (id, scr) = line.split_once(',').unwrap();
+            let st = state_from_scramble(scr).unwrap();
+            let h = w.h(&st);
+            let near_tw = crate::sq1_twophase::solve_twist(&st);
+            let near_wca = crate::sq1_twophase::solve_wca(&st);
+            eprintln!(
+                "=== id={} h={} near_twist={} near_wca={} gap≈{} (2*tw+1={}) ===",
+                id,
+                h,
+                near_tw,
+                near_wca,
+                near_wca as i32 - h as i32,
+                2 * near_tw + 1
+            );
+            eprintln!("{}", w.solve_profile(&st, 20_000_000, 15_000));
+        }
+    }
+
     #[test]
     #[ignore] // 手动:cargo test --release --lib -- --ignored --nocapture wca_calibrate_one
     fn wca_calibrate_one() {
