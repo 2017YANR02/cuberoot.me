@@ -87,6 +87,49 @@
 }
 :root[data-timer-theme="light"] .wca-src-hint { color: #777; }
 
+/* 按难度出题:配色 + 方法 + 阶段 选择器一行,步数 chip 多选一行。 */
+.wca-src-diff { margin: 4px 0 2px; display: flex; flex-direction: column; gap: 8px; }
+.wca-src-diff-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wca-src-diff-row select {
+  background: #0e0e10;
+  color: #ededed;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+.wca-src-steps { display: flex; flex-wrap: wrap; gap: 5px; }
+.wca-src-step {
+  min-width: 26px;
+  padding: 3px 7px;
+  background: #0e0e10;
+  color: #aaa;
+  border: 1px solid #333;
+  border-radius: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s, border-color 0.12s;
+}
+.wca-src-step:hover { color: #ededed; border-color: #555; }
+.wca-src-step.is-active {
+  background: color-mix(in srgb, var(--accent, #4b9fff) 22%, #0e0e10);
+  color: #fff;
+  border-color: var(--accent, #4b9fff);
+}
+:root[data-timer-theme="light"] .wca-src-diff-row select {
+  background: #fff; color: #1d1d1f; border-color: #ccc;
+}
+:root[data-timer-theme="light"] .wca-src-step {
+  background: #fff; color: #555; border-color: #ccc;
+}
+:root[data-timer-theme="light"] .wca-src-step:hover { color: #1d1d1f; border-color: #999; }
+:root[data-timer-theme="light"] .wca-src-step.is-active {
+  background: color-mix(in srgb, var(--accent, #2563eb) 14%, #fff);
+  color: #1d1d1f;
+  border-color: var(--accent, #2563eb);
+}
+
 @media (max-width: 540px) {
   .settings-row { flex-wrap: wrap; }
 }

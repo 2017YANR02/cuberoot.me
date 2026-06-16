@@ -49,6 +49,9 @@ export interface WcaSourceSpec {
   from: string;        // 'YYYY-MM-DD', '' = no lower bound (date mode)
   to: string;          // 'YYYY-MM-DD', '' = no upper bound (date mode)
   optimal: boolean;    // 用 God's-number 最短等态打乱(同态项目 333/oh/ft/fm 才有,无则回退原打乱)
+  // 按难度过滤:只在 date 模式生效(随机采样端点支持);comp 模式按比赛原序,忽略。
+  // steps 为空 = 不过滤。variant/stage/colors 同 /scramble/stats 的口径。
+  diff?: { variant: string; stage: string; colors: string; steps: number[] };
 }
 
 /** 一条真实打乱的来源元数据(键名对齐首页 RecentScrambles 的 ScrMeta)。 */
@@ -80,7 +83,11 @@ function specKey(spec: WcaSourceSpec): string | null {
   if (!w) return null;
   const opt = spec.optimal ? '|opt' : ''; // 原始/最优打乱用不同池,切换即重灌
   if (spec.mode === 'comp') return spec.comp ? `c|${spec.comp}|${w}|${spec.round}|${spec.group}${opt}` : null;
-  return `d|${w}|${spec.from}|${spec.to}${opt}`;
+  // 难度过滤只在 date 模式生效;steps 非空才计入池 key(切换难度即重灌)。
+  const d = spec.diff && spec.diff.steps.length > 0
+    ? `|D:${spec.diff.variant}:${spec.diff.stage}:${spec.diff.colors}:${[...spec.diff.steps].sort((a, b) => a - b).join('.')}`
+    : '';
+  return `d|${w}|${spec.from}|${spec.to}${opt}${d}`;
 }
 
 function rememberMeta(s: string, m: WcaScrambleMeta): void {
@@ -133,6 +140,13 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
   if (spec.from) qs.set('from', spec.from);
   if (spec.to) qs.set('to', spec.to);
   if (spec.optimal) qs.set('optimal', '1'); // 服务端只回有最优等态的真题,池内每条都可切最优
+  // 难度过滤(date 模式):只回该 (方法,阶段,配色) 最优步数 ∈ steps 的真题。
+  if (spec.diff && spec.diff.steps.length > 0) {
+    qs.set('variant', spec.diff.variant);
+    qs.set('stage', spec.diff.stage);
+    qs.set('colors', spec.diff.colors);
+    qs.set('steps', [...spec.diff.steps].sort((a, b) => a - b).join(','));
+  }
   const res = await fetch(apiUrl(`/v1/wca/scrambles/random?${qs.toString()}`));
   if (!res.ok) return;
   const data = (await res.json()) as { scrambles?: RandomItem[] };

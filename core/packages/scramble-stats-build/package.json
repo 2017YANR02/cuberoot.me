@@ -11,6 +11,7 @@
     "build:comp-steps": "tsx src/build_comp_steps.ts",
     "build:recent-scrambles": "tsx src/build_recent_scrambles.ts",
     "build:recent-scrambles-events": "tsx src/build_recent_scrambles_events.ts",
+    "build:scramble-steps": "tsx src/build_scramble_steps.ts",
     "build:puzzle-dist": "tsx src/build_puzzle_dist.ts",
     "scrape:algdb": "tsx bin/scrape_speedcubedb.ts"
   },

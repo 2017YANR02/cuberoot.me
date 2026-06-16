@@ -65,6 +65,8 @@ stats/comp/
 stats/scramble/comp_steps*/
 # 难度 tab「下载全部」全量语料 gz (~30MB/阶段,build_scramble_bundle.mjs 生成,只 scp 到 static)
 stats/scramble/bundles/
+# 难度 steps 索引宽表 CSV (~747MB,build_scramble_steps.ts 产,\copy 灌 PG wca_scramble_steps,不进 git)
+stats/scramble/steps/
 # /timer 最优打乱导出 CSV (export_puzzle_optimal.mjs 产 ~55MB,\copy 灌 PG,不进 git) + 跑批日志
 core/packages/scramble-stats-build/wca_optimal_puzzle.csv
 core/packages/scramble-stats-build/.lenopt.log

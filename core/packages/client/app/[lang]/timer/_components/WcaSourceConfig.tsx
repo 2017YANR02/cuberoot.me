@@ -20,11 +20,22 @@ import { ROUND_ORDER } from '@/lib/wca-round-meta';
 import { wcaEventId } from '../_lib/scramble/wca_pool';
 import type { EventId } from '../_lib/types';
 import type { TimerSettings } from '../_lib/settings';
+import { VariantSelect } from '@/components/VariantSelect';
+import { useSubsetSelection, SubsetColorPicker } from '@/components/SubsetColorPicker/SubsetColorPicker';
+import { stageLabel, VARIANT_ORDER, VARIANT_STAGES, type ScrambleVariant } from '@/lib/scramble-variants';
+import { statsUrl } from '@/lib/stats-base';
 import { tr } from '@/i18n/tr';
 import './wca-source.css';
 
 // WCA history floor (WC1982) — see CLAUDE.md. No scrambles exist before it.
 const WCA_MIN_DATE = '1982-06-05';
+
+// 难度过滤只适用 3x3-family(随机态打乱,有十字/方法步数);其余项目无此数据。
+const DIFFICULTY_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft', '333mbf']);
+// 步数多选范围(覆盖常用 cross/xcross;深阶段超出范围的步数 v1 暂不在此选)。
+const STEP_RANGE = Array.from({ length: 15 }, (_, i) => i);
+
+interface StepsLayout { variants: Record<string, Record<string, Record<string, number>>> }
 
 // 同态项目:打乱可由 God's-number 最优等态打乱作真题的等价替身(同一魔方态,更短)。
 // 3x3 纯面转族(333/oh/ft/fm)+ 二阶/金字塔/斜转(各自精确最优 solver)。
@@ -90,6 +101,54 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings 
   };
   const clearComp = () => updateSettings({ wcaComp: '', wcaCompName: '', wcaCompCountry: '', wcaRound: '', wcaGroup: '' });
 
+  // ── 按难度出题(date 模式 + 3x3-family) ────────────────────────────────
+  // 可用方法/阶段来自 steps_layout.json(哪些 (方法,阶段) 已回填);拿不到则回退静态 VARIANT 定义。
+  const canDifficulty = mode === 'date' && !!wev && DIFFICULTY_EVENTS.has(wev);
+  const [layout, setLayout] = useState<StepsLayout | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void fetch(statsUrl('/stats/scramble/steps/steps_layout.json'))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (!cancelled && j?.variants) setLayout(j as StepsLayout); })
+      .catch(() => { /* 未发布 → 回退静态定义 */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  // 配色子集:复用 /scramble/stats 的选择器;sel.subsetKey 变化写回 settings(filter 性质)。
+  const diffSel = useSubsetSelection('cn', settings.wcaDiffColors);
+  useEffect(() => {
+    if (diffSel.subsetKey !== settings.wcaDiffColors) updateSettings({ wcaDiffColors: diffSel.subsetKey });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diffSel.subsetKey]);
+
+  const orderIdx = (k: string) => { const i = (VARIANT_ORDER as readonly string[]).indexOf(k); return i < 0 ? 999 : i; };
+  const variantOpts = useMemo(() => {
+    const keys = layout
+      ? Object.keys(layout.variants)
+      : (VARIANT_ORDER as readonly string[]).filter((v) => (VARIANT_STAGES[v as ScrambleVariant]?.length ?? 0) > 0);
+    return [...keys].sort((a, b) => orderIdx(a) - orderIdx(b));
+  }, [layout]);
+  const stageOpts = useMemo(() => {
+    if (layout?.variants[settings.wcaDiffVariant]) return Object.keys(layout.variants[settings.wcaDiffVariant]);
+    return VARIANT_STAGES[settings.wcaDiffVariant as ScrambleVariant] ?? [];
+  }, [layout, settings.wcaDiffVariant]);
+
+  // 方法切换后阶段不在新方法里 → 回退首个;方法不在可选列表 → 回退首个。
+  useEffect(() => {
+    if (variantOpts.length && !variantOpts.includes(settings.wcaDiffVariant)) updateSettings({ wcaDiffVariant: variantOpts[0] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variantOpts]);
+  useEffect(() => {
+    if (stageOpts.length && !stageOpts.includes(settings.wcaDiffStage)) updateSettings({ wcaDiffStage: stageOpts[0] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stageOpts]);
+
+  const toggleStep = (n: number) => updateSettings({
+    wcaDiffSteps: settings.wcaDiffSteps.includes(n)
+      ? settings.wcaDiffSteps.filter((x) => x !== n)
+      : [...settings.wcaDiffSteps, n].sort((a, b) => a - b),
+  });
+
   return (
     <div className="wca-src-config">
       <div className="settings-row">
@@ -134,6 +193,61 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings 
               ? tr({ zh: '在该时间段内的官方打乱中完全随机抽取。', en: 'Uniformly random among official scrambles in this range.' })
               : tr({ zh: '留空 = 全部年份。在所选时间段的官方打乱中完全随机。', en: 'Empty = all years. Uniformly random among official scrambles in the range.' })}
           </p>
+
+          {canDifficulty && (
+            <>
+              <div className="settings-row">
+                <span className="settings-row-label">{tr({ zh: '按难度', en: 'By difficulty' })}</span>
+                <span className="settings-row-control">
+                  <PillToggle
+                    value={settings.wcaDifficultyOn}
+                    onChange={(v) => updateSettings({ wcaDifficultyOn: v })}
+                  />
+                </span>
+              </div>
+              {settings.wcaDifficultyOn && (
+                <div className="wca-src-diff">
+                  <div className="wca-src-diff-row">
+                    <SubsetColorPicker sel={diffSel} isZh={isZh} />
+                    <VariantSelect
+                      value={settings.wcaDiffVariant}
+                      options={variantOpts}
+                      onChange={(v) => updateSettings({ wcaDiffVariant: v })}
+                      isZh={isZh}
+                      ariaLabel={tr({ zh: '方法', en: 'Method' })}
+                    />
+                    <VariantSelect
+                      value={settings.wcaDiffStage}
+                      options={stageOpts}
+                      onChange={(s) => updateSettings({ wcaDiffStage: s })}
+                      isZh={isZh}
+                      label={stageLabel}
+                      ariaLabel={tr({ zh: '阶段', en: 'Stage' })}
+                    />
+                  </div>
+                  <div className="wca-src-steps" role="group" aria-label={tr({ zh: '步数(可多选)', en: 'Step counts (multi-select)' })}>
+                    {STEP_RANGE.map((n) => {
+                      const on = settings.wcaDiffSteps.includes(n);
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          className={`wca-src-step${on ? ' is-active' : ''}`}
+                          aria-pressed={on}
+                          onClick={() => toggleStep(n)}
+                        >{n}</button>
+                      );
+                    })}
+                  </div>
+                  <p className="wca-src-hint">
+                    {settings.wcaDiffSteps.length
+                      ? tr({ zh: '只抽该方法 / 阶段 / 底色下,最优步数为所选值的真题。', en: 'Only scrambles whose optimal length (for this method / stage / color) matches a selected value.' })
+                      : tr({ zh: '选择要练的步数(可多选);未选 = 不按难度过滤。', en: 'Pick step counts to practice (multi-select); none selected = no difficulty filter.' })}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </>
       ) : (
         <>
