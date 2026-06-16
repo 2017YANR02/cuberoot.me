@@ -1,15 +1,14 @@
 'use client';
 
-// Two-locale picker: English (bare URL) / 简体中文 (/zh).
+// Two-locale direct toggle: English (bare URL) <-> 简体中文 (/zh).
+// Single click flips to the other locale (no menu — only two locales exist).
 // Pattern B path swap: strip any /en, /zh prefix, then re-apply the
 // target locale's prefix (English stays bare). Reads the query lazily (not via
 // useSearchParams at render) so this globally mounted control doesn't force
 // pages to bail to CSR during prerender.
 
-import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Check } from 'lucide-react';
 import { changeAppLanguage, normalizeAppLang, syncLangToUrl, type AppLang } from '@/i18n/i18n-client';
 
 interface LangToggleProps {
@@ -20,11 +19,6 @@ interface LangToggleProps {
    *  cookie / localStorage / ?lang=. */
   soft?: boolean;
 }
-
-const OPTIONS: { code: AppLang; label: string }[] = [
-  { code: 'en', label: 'English' },
-  { code: 'zh', label: '简体中文' },
-];
 
 function TranslateIcon({ size = 14 }: { size?: number }) {
   const cnFont = "system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif";
@@ -44,28 +38,9 @@ export default function LangToggle({ variant = 'inline', className, soft = false
   const router = useRouter();
   const pathname = usePathname();
   const current = normalizeAppLang(i18n.language);
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const next: AppLang = current === 'zh' ? 'en' : 'zh';
 
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  const pick = (next: AppLang) => {
-    setOpen(false);
-    if (next === current) return;
+  const toggle = () => {
     changeAppLanguage(next);
     syncLangToUrl(next); // cookie + localStorage + html.lang (also adds ?lang=)
     if (soft) return; // stay on the current route so the host (e.g. an open modal) keeps its state
@@ -89,35 +64,16 @@ export default function LangToggle({ variant = 'inline', className, soft = false
     .join(' ');
 
   return (
-    <div className="lang-toggle-wrap" ref={ref}>
+    <div className="lang-toggle-wrap">
       <button
         type="button"
         className={cls}
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggle}
         title="Language / 语言"
-        aria-label="Language"
-        aria-haspopup="menu"
-        aria-expanded={open}
+        aria-label={next === 'zh' ? '切换到简体中文' : 'Switch to English'}
       >
         <TranslateIcon size={14} />
       </button>
-      {open && (
-        <div className="lang-menu" role="menu">
-          {OPTIONS.map((o) => (
-            <button
-              key={o.code}
-              type="button"
-              role="menuitemradio"
-              aria-checked={o.code === current}
-              className={`lang-menu-item${o.code === current ? ' is-active' : ''}`}
-              onClick={() => pick(o.code)}
-            >
-              <span className="lang-menu-check">{o.code === current && <Check size={13} />}</span>
-              <span>{o.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

@@ -594,6 +594,9 @@ if($stdChanged -or $variantChanged){
   try {
     pnpm --filter @cuberoot/scramble-stats-build build      # distribution.json 读全部变体, 任一变 -> 必重算
     if($LASTEXITCODE -ne 0){ throw 'build (distribution) 失败' }
+    # 「首次出现」时间线(difficulty_first_appearance.json + per-event 分片): 读全部变体 + competitions.tsv 日期, 同 distribution 一起重算
+    pnpm --filter @cuberoot/scramble-stats-build build:first-appearance
+    if($LASTEXITCODE -ne 0){ throw 'build:first-appearance 失败' }
     if($stdChanged){
       # wca_cross 只依赖 std cross 步数 + 比赛元数据, 只在有新 std 时重算
       pnpm --filter @cuberoot/scramble-stats-build build:wca-cross

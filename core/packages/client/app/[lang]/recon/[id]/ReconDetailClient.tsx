@@ -63,6 +63,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { parseReconId, reconPathSeg } from '@/lib/recon-seo';
 import '../recon.css';
 import './recon_detail.css';
+import '@/components/wca-results/attempts-grid.css';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
 
@@ -364,6 +365,8 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate }: 
         {solve.event && solve.personId && (solve.compWcaId || solve.comp) && (
           <SameCompEventTable solve={solve} onHasRows={setSameCompHasRows} />
         )}
+
+        <SameScrambleNav solve={solve} />
 
         <AlternativesSection
           reconId={solve.id}
@@ -767,6 +770,55 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
           <div className="same-round-paste-hint">{t('recon.pasteAttemptsHint')}</div>
         </div>
       )}
+    </div>
+  );
+}
+
+// 归一化打乱字符串作为关联键：去首尾空白 + 内部空白折叠为单空格（大小写敏感，r≠R）。
+function scrambleKey(solve: Pick<ReconSolve, 'optimalScramble' | 'wcaScramble'>): string {
+  return (solve.optimalScramble || solve.wcaScramble || '').trim().replace(/\s+/g, ' ');
+}
+
+// 相同打乱的其它复盘（任意选手/项目，只要打乱字符串一致），方便跨复盘对比跳转。
+function SameScrambleNav({ solve }: { solve: ReconSolve }) {
+  const { t, i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
+  const [matches, setMatches] = useState<ReconSolve[]>([]);
+  const key = scrambleKey(solve);
+
+  useEffect(() => {
+    if (!key) return;
+    let cancelled = false;
+    listRecons().then(all => {
+      if (cancelled) return;
+      const m = all
+        .filter(s => s.id !== solve.id && scrambleKey(s) === key)
+        .sort((a, b) => (a.rawTime ?? Infinity) - (b.rawTime ?? Infinity));
+      setMatches(m);
+    }).catch(() => { /* ignore */ });
+    return () => { cancelled = true; };
+  }, [key, solve.id]);
+
+  if (!key || matches.length === 0) return null;
+
+  return (
+    <div className="detail-section">
+      <div className="detail-section-label">{t('recon.sameScramble')}</div>
+      <div className="detail-same-scramble">
+        {matches.map(s => {
+          const time = isBldEvent(s.event) ? s.execTime : s.rawTime;
+          return (
+            <Link key={s.id} href={`/recon/${reconPathSeg(s)}`} className="same-scramble-item">
+              {s.event && <EventIcon event={s.event} title={eventDisplayName(s.event, isZh)} />}
+              <span className="ss-name">
+                {s.personId && <Flag iso2={personFlagIso2(s.personId)} className="yt-comment-flag" />}
+                {displayCuberName(s.person ?? '', isZh)}
+              </span>
+              {time != null && <span className="ss-time">{formatTime(time)}</span>}
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }

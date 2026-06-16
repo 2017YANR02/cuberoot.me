@@ -27,6 +27,8 @@ import { DB_CONFIG } from '../core/database.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(__dirname, '../../../../../stats/scramble/event_lengths.json');
 const OUT_EX = resolve(__dirname, '../../../../../stats/scramble/event_length_examples.json');
+// 「首次出现」时间线:每 (event, metric, length) 最早出现的那条打乱(按比赛开始日期排序)。
+const OUT_FIRST = resolve(__dirname, '../../../../../stats/scramble/event_length_first_appearance.json');
 
 const K = 12; // examples kept per (event, length) bin
 
@@ -71,6 +73,23 @@ async function main() {
     database: DB_CONFIG.database,
   });
 
+  // 先全量拉比赛日期(~1.8 万行)。「首次出现」需在单次扫描里按日期取最早,故必须先有日期表;
+  // 顺带给最终 comps(示例 + 首次出现引用到的)复用名称/日期,省一次查询。
+  interface CompMeta { name: string; dateStr: string; dateInt: number }
+  const compMeta = new Map<string, CompMeta>();
+  await new Promise<void>((res, rej) => {
+    conn.query('SELECT id, name, start_date FROM competitions', (err: unknown, rowsC: unknown) => {
+      if (err) return rej(err);
+      for (const c of rowsC as { id: string; name: string; start_date: Date | string }[]) {
+        const dateStr = typeof c.start_date === 'string' ? c.start_date.slice(0, 10)
+          : c.start_date instanceof Date ? c.start_date.toISOString().slice(0, 10) : '';
+        const di = dateStr ? Number(dateStr.replaceAll('-', '')) : NaN;
+        compMeta.set(c.id, { name: c.name, dateStr, dateInt: Number.isFinite(di) ? di : Infinity });
+      }
+      res();
+    });
+  });
+
   const hist = new Map<string, Map<number, number>>();      // event -> len -> count (HTM)
   const exMap = new Map<string, Map<number, Example[]>>();   // event -> len -> reservoir (HTM)
   const histQtm = new Map<string, Map<number, number>>();    // event -> qtmLen -> count (3x3-family)
@@ -107,11 +126,33 @@ async function main() {
     if (arr.length < K) arr.push(ex);
     else { const j = Math.floor(rand() * c); if (j < K) arr[j] = ex; }
   };
-  // HTM(所有项目)+ 可选 QTM(3x3-family,sample.qtm 有值时)。
-  const bump = (event: string, s: { len: number; qtm?: number }, ex: Example) => {
+  // 「首次出现」:event -> len -> 最早一条。排序键 = (比赛开始日期, 同日按 compId, 再按 scramble_num)。
+  type FirstLen = { dateInt: number; ex: Example };
+  const firstHtm = new Map<string, Map<number, FirstLen>>();
+  const firstQtm = new Map<string, Map<number, FirstLen>>();
+  const firstInto = (
+    fm: Map<string, Map<number, FirstLen>>,
+    event: string, len: number, dateInt: number, ex: Example,
+  ) => {
+    let m = fm.get(event);
+    if (!m) { m = new Map(); fm.set(event, m); }
+    const cur = m.get(len);
+    if (!cur
+      || dateInt < cur.dateInt
+      || (dateInt === cur.dateInt && (ex[0] < cur.ex[0] || (ex[0] === cur.ex[0] && ex[3] < cur.ex[3])))) {
+      m.set(len, { dateInt, ex });
+    }
+  };
+
+  // HTM(所有项目)+ 可选 QTM(3x3-family,sample.qtm 有值时)。dateInt 用于「首次出现」排序。
+  const bump = (event: string, s: { len: number; qtm?: number }, ex: Example, dateInt: number) => {
     bumpInto(hist, exMap, event, s.len, ex);
+    firstInto(firstHtm, event, s.len, dateInt, ex);
     samples++;
-    if (s.qtm !== undefined) bumpInto(histQtm, exMapQtm, event, s.qtm, ex);
+    if (s.qtm !== undefined) {
+      bumpInto(histQtm, exMapQtm, event, s.qtm, ex);
+      firstInto(firstQtm, event, s.qtm, dateInt, ex);
+    }
   };
 
   await new Promise<void>((res, rej) => {
@@ -121,8 +162,9 @@ async function main() {
     stream.on('data', (row: ScrambleRow) => {
       rows++;
       const extra: 0 | 1 = row.is_extra ? 1 : 0;
+      const dateInt = compMeta.get(row.competition_id)?.dateInt ?? Infinity;
       for (const s of scrambleMoveSamples(row.event_id, row.scramble)) {
-        bump(row.event_id, s, [row.competition_id, row.round_type_id, row.group_id, row.scramble_num, s.text, extra]);
+        bump(row.event_id, s, [row.competition_id, row.round_type_id, row.group_id, row.scramble_num, s.text, extra], dateInt);
       }
       if (row.event_id === 'minx') {
         const glued = (row.scramble ?? '').trim().split(/\s+/).filter(Boolean)
@@ -155,18 +197,10 @@ async function main() {
   for (const m of anomalyMap.values()) for (const ci of m.keys()) referenced.add(ci);
 
   const comps: Record<string, [string, string]> = {};
-  await new Promise<void>((res, rej) => {
-    conn.query('SELECT id, name, start_date FROM competitions', (err: unknown, rowsC: unknown) => {
-      if (err) return rej(err);
-      for (const c of rowsC as { id: string; name: string; start_date: Date | string }[]) {
-        if (!referenced.has(c.id)) continue;
-        const d = typeof c.start_date === 'string' ? c.start_date.slice(0, 10)
-          : c.start_date instanceof Date ? c.start_date.toISOString().slice(0, 10) : '';
-        comps[c.id] = [c.name, d];
-      }
-      res();
-    });
-  });
+  for (const id of referenced) {
+    const cm = compMeta.get(id);
+    if (cm) comps[id] = [cm.name, cm.dateStr];
+  }
 
   conn.end();
 
@@ -228,8 +262,40 @@ async function main() {
     events_qtm: exEventsQtm,
   }));
 
+  // 「首次出现」:每 (event, metric, length) 最早一条 + 引用到的比赛名/日期。
+  const firstReferenced = new Set<string>();
+  const firstByLen = (fm: Map<number, FirstLen>): Record<string, Example> => {
+    const o: Record<string, Example> = {};
+    for (const len of [...fm.keys()].sort((a, b) => a - b)) {
+      const f = fm.get(len)!;
+      o[String(len)] = f.ex;
+      firstReferenced.add(f.ex[0]);
+    }
+    return o;
+  };
+  const firstEvents: Record<string, { htm: Record<string, Example>; qtm?: Record<string, Example> }> = {};
+  for (const ev of orderedEvents) {
+    const h = firstHtm.get(ev);
+    if (!h) continue;
+    const entry: { htm: Record<string, Example>; qtm?: Record<string, Example> } = { htm: firstByLen(h) };
+    const q = firstQtm.get(ev);
+    if (q) entry.qtm = firstByLen(q);
+    firstEvents[ev] = entry;
+  }
+  const firstComps: Record<string, [string, string]> = {};
+  for (const id of firstReferenced) {
+    const cm = compMeta.get(id);
+    if (cm) firstComps[id] = [cm.name, cm.dateStr];
+  }
+  writeFileSync(OUT_FIRST, JSON.stringify({
+    meta: { generated_at, note: 'earliest scramble per (event, metric, length) by competition start_date' },
+    comps: firstComps,
+    events: firstEvents,
+  }));
+
   console.log(`Wrote ${OUT}`);
   console.log(`Wrote ${OUT_EX} (${Object.keys(comps).length} comps referenced)`);
+  console.log(`Wrote ${OUT_FIRST} (${Object.keys(firstComps).length} comps referenced)`);
   console.log(`  ${rows.toLocaleString()} scramble rows → ${samples.toLocaleString()} samples across ${orderedEvents.length} events`);
 }
 

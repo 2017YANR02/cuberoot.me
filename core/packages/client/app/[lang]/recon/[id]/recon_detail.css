@@ -704,6 +704,45 @@
   margin-top: 6px;
 }
 
+.detail-same-scramble {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.same-scramble-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--foreground);
+  transition: background 0.15s;
+}
+
+.same-scramble-item:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.same-scramble-item .ss-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.same-scramble-item .ss-time {
+  font-family: 'Roboto Mono', monospace;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
 .same-round-item {
   display: inline-flex;
   align-items: center;
@@ -853,18 +892,8 @@
 .same-comp-event-table .wp-th-info { display: inline-flex; align-items: center; gap: 3px; }
 .same-comp-event-table .wp-th-narrow { width: 50px; text-align: center !important; }
 
-.same-comp-event-table .wp-attempts-flow {
-  display: grid;
-  grid-template-columns: repeat(5, 7ch);
-  gap: 4px 12px;
-  justify-content: start;
-}
-.same-comp-event-table .wp-att { text-align: right; }
-.same-comp-event-table .wp-att::before { content: "("; opacity: 0; }
-.same-comp-event-table .wp-att::after { content: ")"; opacity: 0; }
-.same-comp-event-table .wp-att-trimmed::before,
-.same-comp-event-table .wp-att-trimmed::after { opacity: 1; }
-/* best 不再用更亮色 — 统一跟其他 attempt 同色,只靠括号区分 trimmed */
+/* .wp-attempts-flow / .wp-att 网格对齐 + 括号占位走共享
+   components/wca-results/attempts-grid.css(与 /wca/persons 同一份,ReconDetailClient 已 import) */
 
 .same-round-paste-btn {
   display: inline-flex;

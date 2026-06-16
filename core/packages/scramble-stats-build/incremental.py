@@ -93,7 +93,25 @@ COMP_ALIASES = {
     "name": ["name", "cell_name", "short_name"],
     "start_date": ["start_date", "startdate"],
     "end_date": ["end_date", "enddate"],
+    # WCA export 把日期拆成 year/month/day + end_year/end_month/end_day 六列 (无 start_date/end_date),
+    # 下面补这六列做兜底 → refresh_competitions 拼成 YYYY-MM-DD。
+    "year": ["year"],
+    "month": ["month"],
+    "day": ["day"],
+    "end_year": ["end_year", "endyear"],
+    "end_month": ["end_month", "endmonth"],
+    "end_day": ["end_day", "endday"],
 }
+
+
+def _ymd(y: str, m: str, d: str) -> str:
+    """year/month/day 三列 → 'YYYY-MM-DD';任一缺/NULL/0 → ''。"""
+    if not y or y in ("0", "NULL") or not m or m in ("0", "NULL") or not d or d in ("0", "NULL"):
+        return ""
+    try:
+        return f"{int(y):04d}-{int(m):02d}-{int(d):02d}"
+    except ValueError:
+        return ""
 
 
 def refresh_competitions(src_tsv: str, dest_tsv: str) -> None:
@@ -115,7 +133,9 @@ def refresh_competitions(src_tsv: str, dest_tsv: str) -> None:
                 def g(k):
                     i = cm.get(k)
                     return row[i] if i is not None and i < len(row) else ""
-                out.write(f"{g('id')}\t{g('name')}\t{g('start_date')}\t{g('end_date')}\n")
+                start = g('start_date') or _ymd(g('year'), g('month'), g('day'))
+                end = g('end_date') or _ymd(g('end_year'), g('end_month'), g('end_day'))
+                out.write(f"{g('id')}\t{g('name')}\t{start}\t{end}\n")
                 n += 1
     print(f"  competitions.tsv 刷新 {n} 行 -> {dest_tsv}")
 
