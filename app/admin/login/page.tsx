@@ -50,8 +50,9 @@ export default async function LoginPage({
         </button>
 
         <div className="mt-4 text-[12px] text-ink-3 leading-5">
-          默认密码 <code className="rounded bg-bg-soft px-1.5 py-0.5">admin123</code>,
-          通过环境变量 <code className="rounded bg-bg-soft px-1.5 py-0.5">ADMIN_PASSWORD</code> 修改。
+          密码通过环境变量{" "}
+          <code className="rounded bg-bg-soft px-1.5 py-0.5">ADMIN_PASSWORD</code>{" "}
+          配置(部署时务必设置强密码)。
         </div>
       </form>
     </div>

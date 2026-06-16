@@ -224,7 +224,7 @@ const ROUTE_GROUPS: RouteGroupData[] = [
   },
   {
     title: "管理后台",
-    access: "需登录 · 默认 admin123",
+    access: "需管理员登录",
     tone: "danger",
     icon: Lock,
     links: [
@@ -444,7 +444,7 @@ export default function ProgressPage() {
           ))}
         </div>
         <p className="mt-5 text-[12.5px] leading-6 text-ink-3">
-          扫码落地页为 noindex,真实场景由印在卡片上的二维码进入;管理后台默认密码 admin123,讲师后台需 instructor 角色;系统路由是给搜索引擎与 PWA 用的非页面资源。
+          扫码落地页为 noindex,真实场景由印在卡片上的二维码进入;管理后台需管理员登录,讲师后台需讲师角色;系统路由是给搜索引擎与 PWA 用的非页面资源。
         </p>
       </Section>
 

@@ -11,6 +11,15 @@ const COLS: { title: string; items: { href: string; label: string }[] }[] = [
     ],
   },
   {
+    title: "工具",
+    items: [
+      { href: "/timer", label: "计时器" },
+      { href: "/leaderboard", label: "排行榜" },
+      { href: "/algorithms", label: "算法字典" },
+      { href: "/paths", label: "学习路径" },
+    ],
+  },
+  {
     title: "内容",
     items: [
       { href: "/news", label: "资讯" },
@@ -31,7 +40,7 @@ const COLS: { title: string; items: { href: string; label: string }[] }[] = [
 export function SiteFooter() {
   return (
     <footer className="mt-24 border-t border-line bg-bg-soft">
-      <div className="container-page py-12 grid grid-cols-2 gap-10 md:grid-cols-4">
+      <div className="container-page py-12 grid grid-cols-2 gap-10 md:grid-cols-5">
         <div className="col-span-2 md:col-span-1">
           <div className="font-semibold text-ink mb-2">魔方开放社群</div>
           <p className="text-[13px] leading-6 text-ink-3">
