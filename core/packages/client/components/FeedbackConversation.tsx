@@ -7,9 +7,10 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, CornerDownRight } from 'lucide-react';
+import { Loader2, CornerDownRight, Trash2 } from 'lucide-react';
 import { displayCuberName } from '@/lib/cuber-name-display';
-import { fetchFeedbackThread, replyToFeedback, type FeedbackMessage } from '@/lib/feedback-api';
+import { getWcaId, isAdmin } from '@/lib/auth-store';
+import { fetchFeedbackThread, replyToFeedback, deleteFeedbackMessage, type FeedbackMessage } from '@/lib/feedback-api';
 import { refreshFeedbackUnread } from '@/lib/feedback-unread';
 import './feedback-conversation.css';
 
@@ -31,6 +32,12 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
   const [err, setErr] = useState<string | null>(null);
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
+  const [confirmId, setConfirmId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState<number | null>(null);
+
+  const myId = getWcaId();
+  const admin = isAdmin();
+  const canDelete = (m: FeedbackMessage) => admin || m.wcaId === myId;
 
   const load = useCallback(() => {
     setErr(null);
@@ -58,6 +65,21 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
     }
   }
 
+  async function del(messageId: number) {
+    setDeleting(messageId);
+    setErr(null);
+    try {
+      await deleteFeedbackMessage(feedbackId, messageId);
+      setConfirmId(null);
+      load();
+      onActivity?.();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDeleting(null);
+    }
+  }
+
   return (
     <div className="fbc">
       {messages && messages.length > 0 && (
@@ -69,6 +91,24 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
                   {m.role === 'admin' ? t('管理员', 'Admin') : (displayCuberName(m.wcaName, isZh) || m.wcaId)}
                 </span>
                 <span className="fbc-msg-when">{when(m.createdAt)}</span>
+                {canDelete(m) && (
+                  confirmId === m.id ? (
+                    <span className="fbc-msg-confirm">
+                      <button type="button" className="fbc-msg-del-yes" disabled={deleting === m.id}
+                        onClick={() => void del(m.id)}>
+                        {deleting === m.id ? <Loader2 size={12} className="fbc-spin" /> : t('删除', 'Delete')}
+                      </button>
+                      <button type="button" className="fbc-msg-del-no" onClick={() => setConfirmId(null)}>
+                        {t('取消', 'Cancel')}
+                      </button>
+                    </span>
+                  ) : (
+                    <button type="button" className="fbc-msg-del" title={t('删除', 'Delete')}
+                      onClick={() => setConfirmId(m.id)}>
+                      <Trash2 size={13} />
+                    </button>
+                  )
+                )}
               </div>
               <p className="fbc-msg-body">{m.body}</p>
             </div>

@@ -10,7 +10,8 @@
  *                        线程并回复;admin 在 /feedback/admin 回复。未读经 mine/unread 红点 + admin 列表高亮。
  *
  * 鉴权:提交 / 传附件 / 回帖 / 看线程 = requireAuth + 拥有该 feedback(或 admin)。
- *       审核列表 / 改状态 / 删 = requireAdmin;取媒体公开(immutable 长缓存)。
+ *       删单条回帖 = requireAuth + 该回帖本人(或 admin)。
+ *       审核列表 / 改状态 / 删整条 = requireAdmin;取媒体公开(immutable 长缓存)。
  *
  * 错误经 throw new Error(msg);全局 onError 按关键词推 HTTP code
  * (Authentication→401, Cannot→403, Rate limit→429, Validation/invalid→400)。
@@ -491,6 +492,34 @@ feedbackRoutes.post('/feedback/:id/reply', async (c) => {
   }
 
   return c.json({ id: Number(inserted[0].id) });
+});
+
+// ── DELETE /v1/feedback/:id/message/:mid — 删一条回复(本人或 admin) ─────────────
+feedbackRoutes.delete('/feedback/:id/message/:mid', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAuth(c);
+  const id = Number(c.req.param('id'));
+  const mid = Number(c.req.param('mid'));
+  if (!Number.isFinite(id) || !Number.isFinite(mid)) throw new Error('Validation: invalid id');
+
+  const rows = await query<{ wca_id: string }>(
+    'SELECT wca_id FROM feedback_messages WHERE id = ? AND feedback_id = ?', [mid, id]);
+  const msg = rows[0];
+  if (!msg) throw new Error('Validation: message not found');
+  if (msg.wca_id !== user.wcaId && !isAdmin(user.wcaId)) throw new Error('Cannot delete others reply');
+
+  await query('DELETE FROM feedback_messages WHERE id = ?', [mid]);
+
+  // 重算 last_reply_*(删的可能是最后一条 → 退回上一条;无剩余 → 仅开帖)。
+  const last = await query<{ created_at: string | Date; role: string }>(
+    'SELECT created_at, role FROM feedback_messages WHERE feedback_id = ? ORDER BY created_at DESC, id DESC LIMIT 1', [id]);
+  if (last[0]) {
+    await query('UPDATE feedback SET last_reply_at = ?, last_reply_role = ?, updated_at = NOW() WHERE id = ?',
+      [last[0].created_at, last[0].role, id]);
+  } else {
+    await query('UPDATE feedback SET last_reply_at = NULL, last_reply_role = NULL, updated_at = NOW() WHERE id = ?', [id]);
+  }
+  return c.json({ ok: true });
 });
 
 // ── GET /v1/feedback — admin 审核列表(?status= 过滤) ──────────────────────────
