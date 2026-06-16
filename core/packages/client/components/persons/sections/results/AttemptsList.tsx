@@ -9,6 +9,7 @@ import Link from '@/components/AppLink';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
 import { findReconForAttempt, buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
+import { canPenalizeAttempt } from '@cuberoot/shared/result-penalty';
 import { tr } from '@/i18n/tr';
 import { AttemptEditPopover } from './AttemptEditPopover';
 import { SolveValue } from './SolveValue';
@@ -22,7 +23,8 @@ export interface AttemptsListProps {
   reconLookup: Map<string, number> | null;
   isZh: boolean;
   admin?: boolean;
-  editMode?: boolean;            // 管理员「编辑模式」:开 → 无复盘 solve 点击=行内编辑;关 → 跳 submit。
+  penaltyOnly?: boolean;         // 本人(非管理员):编辑模式下只能给可标罚时的 solve 标 +2。
+  editMode?: boolean;            // 「编辑模式」:开 → 无复盘 solve 点击=行内编辑;关 → 跳 submit。
   // submit 预填上下文(无复盘 solve 点击跳 /recon/submit 用)
   personId: string;
   personName: string;
@@ -38,7 +40,7 @@ export interface AttemptsListProps {
 }
 
 export function AttemptsList({
-  attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, editMode,
+  attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, penaltyOnly, editMode,
   personId, personName, personCountry, compName, compCountry, compDate,
   attemptOlds, penalties, onEdit, onSetOriginal, onSetPenalty,
 }: AttemptsListProps) {
@@ -66,8 +68,8 @@ export function AttemptsList({
             </Link>
           );
         }
-        // 管理员开了编辑模式:行内改这一次
-        if (admin && editMode) {
+        // 编辑模式下行内改这一次:管理员=全权;本人(penaltyOnly)=仅当该次可标罚时。
+        if (editMode && (admin || (penaltyOnly && canPenalizeAttempt(eventId, a)))) {
           return (
             <AttemptEditPopover
               key={i}
@@ -77,6 +79,7 @@ export function AttemptsList({
               cls={cls}
               format={fmt}
               penalty={pen}
+              penaltyOnly={penaltyOnly && !admin}
               onSetOriginal={(v, note) => onSetOriginal?.(i, v, note)}
               onCorrect={(v, note) => onEdit?.(i, v, note)}
               onSetPenalty={(cs, note) => onSetPenalty?.(i, cs, note)}

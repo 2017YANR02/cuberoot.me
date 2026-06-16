@@ -7,9 +7,10 @@ export function SolveValue({ value, penalty, format }: {
   format: (v: number) => string;
 }) {
   if (penalty && penalty > 0 && value > 0) {
+    const base = Math.max(0, value - penalty); // 罚时 ≥ 成绩值时夹到 0,避免渲染负数底
     return (
       <>
-        {format(value - penalty)}
+        {format(base)}
         <sup className="wp-att-pen" title={`+${Math.round(penalty / 100)} 罚时`}>+{Math.round(penalty / 100)}</sup>
       </>
     );
