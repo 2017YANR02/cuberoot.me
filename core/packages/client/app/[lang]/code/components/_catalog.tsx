@@ -19,6 +19,7 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { ListSelect } from '@/components/ListSelect';
 import { VariantSelect } from '@/components/VariantSelect';
+import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import { VARIANT_ORDER } from '@/lib/scramble-variants';
 import NumberCommitInput from '@/components/NumberCommitInput';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
@@ -86,6 +87,24 @@ function ClearButtonDemo() {
     <div className="cg-row">
       <ClearButton onClick={() => setHits((h) => h + 1)} variant="standalone" isZh={isZh} />
       <span className="cg-hint">{isZh ? `点了 ${hits} 次` : `clicked ${hits}×`}</span>
+    </div>
+  );
+}
+
+function RangeSliderDemo() {
+  const [v, setV] = useState<[number, number]>([4, 6]);
+  const span = v[0] === v[1] ? `${v[0]}` : `${v[0]}–${v[1]}`;
+  return (
+    <div style={{ width: 240, maxWidth: '100%' }}>
+      <div className="cg-hint" style={{ marginBottom: 4 }}>{span} {tr({ zh: '步', en: 'moves' })}</div>
+      <RangeSlider
+        min={0}
+        max={14}
+        value={v}
+        onChange={setV}
+        marks={[0, 7, 14]}
+        ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
+      />
     </div>
   );
 }
@@ -319,6 +338,16 @@ export const CATALOG: ComponentEntry[] = [
     en: 'A number input that lets you clear and type freely, committing the clamped value only on blur / Enter — no per-keystroke snap-back.',
     usage: '<NumberCommitInput value={n} min={1} max={20} onCommit={setN} />',
     Demo: NumberCommitDemo,
+  },
+  {
+    name: 'RangeSlider',
+    import: "import { RangeSlider } from '@/components/RangeSlider/RangeSlider';",
+    category: 'input',
+    zh: '双圆点 min–max 区间滑块:两个原生 range 输入叠在一条轨道上(输入透传指针、只有圆点可拖),区间填充走 --accent。键盘 / 触摸可用,coarse 指针自动放大圆点;颜色经 --rs-* 变量可在非 token 上下文覆写。',
+    en: 'Dual-thumb min–max range slider: two native range inputs stacked on one rail (inputs are pointer-transparent, only the thumbs drag), fill painted with --accent. Keyboard- and touch-accessible, thumbs enlarge on coarse pointers; colors overridable via --rs-* vars for non-token contexts.',
+    usage: '<RangeSlider min={0} max={14} value={[lo, hi]} onChange={setRange} marks={[0, 7, 14]} />',
+    Demo: RangeSliderDemo,
+    note: { zh: '需要 min–max 双端选择就用它,别再叠两个 <input type=range> 手撸。', en: 'Use it for any min–max dual selection — don’t hand-stack two <input type=range> again.' },
   },
   {
     name: 'WcaEventSelector',
