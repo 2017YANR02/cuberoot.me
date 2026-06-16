@@ -11,9 +11,9 @@ description: "用户要更新 /scramble/stats(打乱难度 / 步数分布)的数
 
 | job | 对象 | 内部 | 产物 |
 |-----|------|------|------|
-| `stages` | 3x3 阶段难度(十字/F2L/EO/DR 多阶段多变体) | 内置(取数→std→变体补缺) | `distribution.json` + `wca_cross` + `comp_steps*` |
-| `333opt` | 3x3 整解最优 HTM(整个魔方最优解) | `node solver/333opt/inject.mjs`(折 `out.*.csv`) | `distribution.json` + `examples.json` 的 `variants['333']` |
-| `puzzles` | 非3x3(二阶/金字塔/斜转/SQ1) | `update_puzzle_stats.ps1` + `build_puzzle_examples.ts` | `puzzle_distribution.json` + `puzzle_examples.json` |
+| `stages` | 3x3 阶段难度(十字/F2L/EO/DR 多阶段多变体) | 内置(取数→std→变体补缺) | `distribution.json` + `wca_cross` + `comp_steps*` + `difficulty_first_appearance*`(时间线) |
+| `333opt` | 3x3 整解最优 HTM(整个魔方最优解) | `node solver/333opt/inject.mjs` + `inject_first_appearance.mjs`(折 `out.*.csv`) | `distribution.json` + `examples.json` 的 `variants['333']` + `difficulty_first_appearance` 的 333 注入 |
+| `puzzles` | 非3x3(二阶/金字塔/斜转/SQ1) | `update_puzzle_stats.ps1` + `build_puzzle_examples.ts` + `build_puzzle_first_appearance.ts` | `puzzle_distribution.json` + `puzzle_examples.json` + `puzzle_first_appearance.json`(时间线) |
 
 ```pwsh
 pwsh core/packages/scramble-stats-build/update_cross_stats.ps1                 # = -Jobs all,全跑 + 发布
@@ -35,6 +35,14 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1 -NoPublish      #
 - **难度 tab 三阶**:333opt inject 已带(examples 第 4 元)。
 - **长度 tab**(3x3 面转族 + 222/pyram/skewb):`build_length_opt.mjs`(一条龙 step 5c,增量)产 `event_length_examples_opt.json`(text→opt overlay);CI 日更的 base 不被覆盖。3x3 走 cube48opt5(972M 表),puzzle 走 analyzer。**首跑慢(~1284 个 3x3 解,opt5 ~40min);增量再跑很快**。
 - **/timer 真题最优**:走 PG `wca_scramble_optimal`(非 static)。**一条龙自动灌库**(2026-06-14 起,不再手动 `\copy`):333opt job 在 inject 后跑 `solver/333opt/export_optimal.mjs` 产 `wca_optimal.csv`,puzzles job 跑 `export_puzzle_optimal.mjs` 产 `wca_optimal_puzzle.csv`,发布步 6b 自动 scp + 按 event_id 整批替换(`DELETE`+`\copy` in tx,幂等)上线;密码服务器端从 `/root/core-api/.env` 读(不入仓库脚本)。`-NoPublish` 一并跳过(只产 CSV 不灌)。前端 `OPTIMAL_EVENTS`(WcaSourceConfig)gate 开关显示;开关 ON 时 date 模式传 `optimal=1`(服务端只回有最优等态的真题)、comp 模式客户端过滤,**不再静默回退原打乱**(某项目覆盖率不足时该池空→回退随机生成)。sq1/魔表无(占位注明)。
+
+**「首次出现时间线」数据**(/scramble/stats 难度+长度 tab 顶栏「图表 / 时间线」开关:每步数 / 长度第一次出现在哪场比赛,按 comp 开始日期升序、同日按 id):**全部走一条龙自动产,无需手动**。前端缺数据的组合显「数据生成中」提示(占位,后端照样跑)。
+- **难度 stages**(十字 / F2L / EO / DR 多变体 × 六/四/双/单色):`build:first-appearance`(步骤 5,跟 distribution 一起)→ `difficulty_first_appearance.json`(顶层 wca 合并池)+ `difficulty_first_appearance_wca_<event>.json` per-event 分片(前端懒加载)。
+- **难度 333 整解最优**:`solver/333opt/inject_first_appearance.mjs`(步骤 5b,跟 `inject.mjs` 同位)→ 注入 `difficulty_first_appearance.json` 的 `sets.wca.variants['333']`。**语义 = 当前已解子集(`out.*.csv`)内最早**,随 `solve_loop` 推进逼近真值,全量解完即真值。⚠️ stages build 会覆写该 FA 文件丢 333 变体 → 5b 自动重注入还原(同 `inject.mjs` 的 `willInject` 逻辑)。
+- **难度 puzzle**(222 / 金字塔 / 斜转 / SQ1 整解步数):`build_puzzle_first_appearance.ts`(puzzles job,跟 `build_puzzle_examples` 同位)→ `puzzle_first_appearance.json`(sq1 含 slash 备口径 `binsAlt`,前端暂只展主口径 WCA 12c4)。
+- **长度**(3x3 面转族 + 222/pyram/skewb):`build_scramble_lengths.ts` 产 `event_length_first_appearance.json` —— **CI 日更自带**(`stats.yml`,跟长度分布同管道),非本地 ps1。
+- **前置**:比赛日期必须灌好,`incremental.py refresh_competitions` 读 WCA export 的 `year/month/day`+`end_*` 六列(非 `start_date`,2026-06-15 修;`competitions.tsv` 在 `D:/cube/scramble/wca_scramble/`)。日期空则时间线排序全乱。
+- 改任一 FA 文件 shape 必须同步前端 `stats/page.tsx` 的 `Fa*Json` 类型 + memo;改 fetch 响应形 bump `?v=`。
 
 下面 A/B/C 是各 job 的内部细节。
 
