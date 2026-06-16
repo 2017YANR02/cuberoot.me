@@ -15,7 +15,8 @@ import DonateModal from '@/components/DonateModal';
 import FeedbackModal from '@/components/FeedbackModal';
 import DeskPetGallery from '@/components/DeskPetGallery';
 import { SEARCH_CARDS } from '@/lib/landing-sections';
-import { isAdmin } from '@/lib/auth-store';
+import { isAdmin, useAuthStore } from '@/lib/auth-store';
+import { fetchMyFeedbackUnread } from '@/lib/feedback-api';
 
 const CSS = `
 .deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:100010;display:flex;
@@ -116,7 +117,17 @@ export default function DeskPetSearch({
   const [donateOpen, setDonateOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [fbUnread, setFbUnread] = useState(0);
+  const user = useAuthStore((s) => s.user);
   const router = useRouter();
+
+  // 登录用户:拉「有管理员新回复」未读数给反馈按钮上红点;关掉反馈弹窗后复查(可能刚读过)。
+  useEffect(() => {
+    if (!user || feedbackOpen) return;
+    let alive = true;
+    fetchMyFeedbackUnread().then((n) => { if (alive) setFbUnread(n); }).catch(() => {});
+    return () => { alive = false; };
+  }, [user, feedbackOpen]);
   const zh = lang === 'zh';
   const t = (z: string, e: string) => (zh ? z : e);
 
@@ -215,8 +226,14 @@ export default function DeskPetSearch({
           <Heart size={16} className="heart-icon" />
         </button>
         <button type="button" className="icon-only" onClick={() => setFeedbackOpen(true)}
-          title={t('反馈', 'Feedback')}>
+          title={t('反馈', 'Feedback')} style={{ position: 'relative' }}>
           <MessageSquarePlus size={16} />
+          {fbUnread > 0 && (
+            <span aria-hidden style={{
+              position: 'absolute', top: 3, right: 3, width: 8, height: 8, borderRadius: '50%',
+              background: 'var(--accent)', boxShadow: '0 0 0 2px var(--card, var(--background))',
+            }} />
+          )}
         </button>
         <span className="sep" />
         <button type="button" className="icon-only char-btn" onClick={onCycleChar}

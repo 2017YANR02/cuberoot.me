@@ -1,0 +1,54 @@
+/* 反馈对话面板 — 发帖人 /feedback 与 admin /feedback/admin 共用。双主题走 token。 */
+.fbc { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-default); }
+
+.fbc-thread { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+
+.fbc-msg {
+  padding: 9px 12px; border-radius: 10px;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border: 1px solid var(--border-default);
+}
+/* 管理员回复用 accent 强调,跟用户消息区分 */
+.fbc-msg-admin {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.fbc-msg-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.fbc-msg-who { font-size: 12.5px; font-weight: 650; color: var(--foreground); }
+.fbc-msg-admin .fbc-msg-who { color: var(--accent); }
+.fbc-msg-when { font-size: 11px; color: var(--faint-foreground); }
+.fbc-msg-body {
+  margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--foreground);
+  white-space: pre-wrap; word-break: break-word;
+}
+
+.fbc-err {
+  margin: 0 0 8px; font-size: 12.5px; color: var(--destructive);
+}
+
+.fbc-reply { display: flex; align-items: flex-end; gap: 8px; }
+.fbc-input {
+  flex: 1; min-width: 0; resize: vertical; min-height: 38px;
+  padding: 8px 11px; border-radius: 9px; font: inherit; font-size: 13.5px; line-height: 1.5;
+  background: var(--input, var(--background)); color: var(--foreground);
+  border: 1px solid var(--border-default);
+}
+.fbc-input:focus { outline: none; border-color: var(--accent); }
+.fbc-input::placeholder { color: var(--faint-foreground); }
+
+.fbc-send {
+  display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+  padding: 8px 14px; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 600;
+  background: var(--accent); color: var(--accent-foreground, #fff); border: 1px solid transparent;
+  transition: opacity .15s;
+}
+.fbc-send:hover:not(:disabled) { opacity: .9; }
+.fbc-send:disabled { opacity: .45; cursor: default; }
+.fbc-spin { animation: fbc-spin 1s linear infinite; }
+@keyframes fbc-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 480px) {
+  .fbc-reply { flex-direction: column; align-items: stretch; }
+  .fbc-send { justify-content: center; }
+}

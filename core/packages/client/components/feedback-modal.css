@@ -98,7 +98,7 @@
 .fb-submit:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 90%, black); }
 .fb-submit:disabled { opacity: .5; cursor: default; }
 
-/* admin 审核入口(仅 admin 可见) */
+/* 我的反馈 / admin 审核入口 */
 .fb-admin-link {
   display: flex; align-items: center; justify-content: center; gap: 6px;
   margin-top: 10px; padding: 6px; border-radius: 8px;
@@ -106,6 +106,8 @@
   transition: background .15s, color .15s;
 }
 .fb-admin-link:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); color: var(--foreground); }
+.fb-links { display: flex; gap: 6px; }
+.fb-links .fb-admin-link { flex: 1; }
 
 /* 登录门 */
 .fb-login { text-align: center; padding: 8px 4px 4px; }

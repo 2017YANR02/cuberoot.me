@@ -5,7 +5,7 @@
 // 页面/语言/主题/视口/UA 供 admin 复现。结构镜像 DonateModal(lang prop + 本地 t)。
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ImagePlus, Film, X, Loader2, Check, LogIn, Inbox } from 'lucide-react';
+import { ImagePlus, Film, X, Loader2, Check, LogIn, Inbox, MessagesSquare } from 'lucide-react';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import AppLink from '@/components/AppLink';
 import { submitFeedback, uploadFeedbackImage, uploadFeedbackVideo } from '@/lib/feedback-api';
@@ -188,6 +188,9 @@ export default function FeedbackModal({ lang, onClose }: Props) {
           <div className="fb-done">
             <span className="fb-done-icon"><Check size={28} strokeWidth={2.4} /></span>
             <p>{t('收到了,谢谢你的反馈 ♡', 'Got it — thanks for the feedback ♡')}</p>
+            <AppLink href="/feedback" className="fb-admin-link" onClick={onClose}>
+              <MessagesSquare size={14} /> {t('在「我的反馈」查看进度和回复', 'Track it in My feedback')}
+            </AppLink>
           </div>
         ) : !user ? (
           <div className="fb-login">
@@ -255,11 +258,16 @@ export default function FeedbackModal({ lang, onClose }: Props) {
               {submitting ? <><Loader2 size={ICON} className="fb-spin" /> {t('提交中…', 'Sending…')}</> : t('提交', 'Send')}
             </button>
 
-            {isAdmin() && (
-              <AppLink href="/feedback/admin" className="fb-admin-link" onClick={onClose}>
-                <Inbox size={14} /> {t('管理', 'Manage')}
+            <div className="fb-links">
+              <AppLink href="/feedback" className="fb-admin-link" onClick={onClose}>
+                <MessagesSquare size={14} /> {t('我的反馈', 'My feedback')}
               </AppLink>
-            )}
+              {isAdmin() && (
+                <AppLink href="/feedback/admin" className="fb-admin-link" onClick={onClose}>
+                  <Inbox size={14} /> {t('管理', 'Manage')}
+                </AppLink>
+              )}
+            </div>
           </>
         )}
       </div>
