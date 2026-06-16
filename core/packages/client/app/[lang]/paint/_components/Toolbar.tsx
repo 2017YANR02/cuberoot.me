@@ -19,7 +19,7 @@ import { tr } from '@/i18n/tr';
 import type { ToolId } from '../_lib/types';
 import { usePaint } from '../_lib/store';
 
-interface ToolDef {
+export interface ToolDef {
   id: ToolId;
   icon: LucideIcon;
   label: { zh: string; en: string };
@@ -28,7 +28,7 @@ interface ToolDef {
 }
 
 // Functional tools (Phase 1) come first; stubs marked with a dot.
-const TOOLS: ToolDef[] = [
+export const TOOLS: ToolDef[] = [
   { id: 'select', icon: MousePointer2, label: { zh: '选择', en: 'Select' }, key: 'V' },
   { id: 'rect', icon: Square, label: { zh: '矩形', en: 'Rectangle' }, key: 'R' },
   { id: 'roundRect', icon: Squircle, label: { zh: '圆角矩形', en: 'Rounded rect' }, key: 'U' },
