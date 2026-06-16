@@ -336,23 +336,35 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       return;
     }
     let cancelled = false;
+    let retryTimer = 0;
     setScrambleLoading(true);
     setWcaSourceEmpty(false);
-    void nextWca(wcaSpecRef.current).then((real) => {
-      if (cancelled) return;
-      setScrambleLoading(false);
-      const cur = scrambleHistRef.current;
-      if (cur.list[cur.idx] !== '') return;
-      if (real) {
-        const list = [...cur.list];
-        list[cur.idx] = real;
-        applyScrambleHist({ list, idx: cur.idx });
-      } else if (isWcaSourceEmpty(wcaSpecRef.current)) {
-        setWcaSourceEmpty(true); // 确认无真题 → 显式提示,不伪造生成打乱
-      }
-      // else: 瞬时空 / 网络失败 → 留空,等下次预取或换打乱重取(绝不伪造生成打乱)
-    });
-    return () => { cancelled = true; };
+    // Fetch a real scramble; retry transient failures (cold start / slow query /
+    // network) with backoff while staying in the loading state — only a *confirmed*
+    // empty source (404) shows the notice, and we never substitute a generated one.
+    const attempt = (n: number) => {
+      void nextWca(wcaSpecRef.current).then((real) => {
+        if (cancelled) return;
+        const cur = scrambleHistRef.current;
+        if (cur.list[cur.idx] !== '') { setScrambleLoading(false); return; }
+        if (real) {
+          setScrambleLoading(false);
+          const list = [...cur.list];
+          list[cur.idx] = real;
+          applyScrambleHist({ list, idx: cur.idx });
+        } else if (isWcaSourceEmpty(wcaSpecRef.current)) {
+          setScrambleLoading(false);
+          setWcaSourceEmpty(true); // 确认无真题(端点 404)→ 显式提示,不伪造生成打乱
+        } else if (n < 6) {
+          // 暂态(冷启动 503 / 慢查询 / 网络)→ 保持「加载中」,退避重试,不伪造、不误报空。
+          retryTimer = window.setTimeout(() => attempt(n + 1), Math.min(1000 + n * 1500, 6000));
+        } else {
+          setScrambleLoading(false); // 多次仍失败 → 收起转圈(显示 — ),换打乱 / 改设置可再试
+        }
+      });
+    };
+    attempt(0);
+    return () => { cancelled = true; if (retryTimer) window.clearTimeout(retryTimer); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scramble, settings.scrambleSource, wcaSourceSig, applyScrambleHist]);
 

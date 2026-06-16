@@ -233,7 +233,9 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
   try {
     if (wantDifficulty) {
       const plan = planDifficulty(await getStepsLayout(), dVariant, dStage, dColors);
-      if (!plan) return c.json({ error: 'difficulty data not available', event }, 404);
+      // 布局未就绪(冷启动 / meta 读取失败)是「暂态不可用」,非「该难度无真题」。用 503 而非 404,
+      // 客户端据此重试而不是误判为空(404 专留给查询成功但 0 行的「确实无匹配」,见末尾)。
+      if (!plan) return c.json({ error: 'difficulty data not available', event }, 503);
       const diffWhere = `${plan.predCol} IN (${dSteps.join(',')})`;
       const isHot = plan.predCol.startsWith('s.gm_');
       // 子集底色(冷路径)前过滤:gmCol <= max(steps) 走索引,把整分区扫描降到小候选集。
