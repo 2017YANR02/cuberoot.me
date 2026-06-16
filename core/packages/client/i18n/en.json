@@ -128,6 +128,7 @@
     "unknown": "unknown",
     "sameRound": "Same Round",
     "sameCompEvent": "Same Competition",
+    "sameScramble": "Same Scramble",
     "addAttempt": "Add attempt #{{n}} (carry over round info)",
     "pasteAttempts": "Paste round times",
     "pasteAttemptsPlaceholder": "Paste here…",

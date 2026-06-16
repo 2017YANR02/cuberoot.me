@@ -10,6 +10,7 @@ import PuzzleDistView from './_components/PuzzleDistView';
 import ScrambleLengthView, {
   type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
 } from './_components/ScrambleLengthView';
+import FirstAppearanceTimeline, { type TimelineEntry } from './_components/FirstAppearanceTimeline';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
@@ -72,6 +73,32 @@ interface ExamplesSet {
 interface ExamplesJson {
   meta: { generated_at: string };
   sets: Record<string, ExamplesSet>;
+}
+
+// 「首次出现」JSON(build_first_appearance.ts):每 (variant,stage,subset,bin) 最早一条 [id,scr,color]。
+type FaSample = [string, string, string];
+interface FaSet {
+  label: string; label_zh: string | null; event?: string | null;
+  variants: Record<string, { stages: string[]; data: Record<string, Record<string, Record<string, FaSample>>> }>;
+}
+interface FaDifficultyJson {
+  meta: { generated_at: string };
+  sets: Record<string, FaSet>;
+  comps: Record<string, [string, string]>;
+  idMeta: Record<string, ExampleCompMeta>;
+}
+interface FaDifficultyShard {
+  meta: { generated_at: string };
+  set: FaSet;
+  comps: Record<string, [string, string]>;
+  idMeta: Record<string, ExampleCompMeta>;
+}
+// 长度「首次出现」(build_scramble_lengths.ts):event → metric → len → [compId,round,group,num,text,isExtra]。
+type FaLenEx = [string, string, string, number, string, (0 | 1)?];
+interface FaLengthJson {
+  meta: { generated_at: string };
+  comps: Record<string, [string, string]>;
+  events: Record<string, { htm: Record<string, FaLenEx>; qtm?: Record<string, FaLenEx> }>;
 }
 
 const EVENT_LABEL: Record<string, { zh: string; en: string
@@ -190,6 +217,11 @@ export default function ScrambleStatsPage() {
   const [exView, setExView] = useState<'orig' | 'opt'>('orig');
   // 「下载全部」可用阶段(std 变体全量语料 gz);manifest 缺失则不显示按钮。
   const [bundleStages, setBundleStages] = useState<string[] | null>(null);
+  // 视图:图表(默认)/ 首次出现时间线。难度 + 长度两 tab 共用同一开关。
+  const [viewMode, setViewMode] = useState<'chart' | 'timeline'>('chart');
+  const [faDiff, setFaDiff] = useState<FaDifficultyJson | null>(null);     // 难度首次出现(顶层合并池)
+  const [faShards, setFaShards] = useState<Record<string, FaDifficultyShard | null>>({}); // per-event 分片缓存
+  const [faLen, setFaLen] = useState<FaLengthJson | null>(null);           // 长度首次出现
 
   // 异步加载 comp→country 索引,完成后 bump version 触发重渲染拿示例卡片的比赛国旗 + 中文名
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
@@ -221,6 +253,16 @@ export default function ScrambleStatsPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => setBundleStages(j?.sets?.wca?.std ?? []))
       .catch(() => setBundleStages([]));
+  }, []);
+
+  // 「首次出现」数据:难度顶层合并池 + 长度全项目,各一份小文件,挂载即拉(缺失静默)。
+  useEffect(() => {
+    fetch(statsUrl('/stats/scramble/difficulty_first_appearance.json'))
+      .then((r) => (r.ok ? r.json() : null)).then(setFaDiff).catch(() => setFaDiff(null));
+  }, []);
+  useEffect(() => {
+    fetch(statsUrl('/stats/scramble/event_length_first_appearance.json'))
+      .then((r) => (r.ok ? r.json() : null)).then(setFaLen).catch(() => setFaLen(null));
   }, []);
 
   // 长度 tab 切项目:sq1 默认 slash,其余默认 HTM。
@@ -421,6 +463,131 @@ export default function ScrambleStatsPage() {
     () => (lenCur ? Object.values(lenCur.counts).reduce((a, b) => a + b, 0) : 0),
     [lenCur],
   );
+
+  // lang 走索引(避开 i18n.language 三元 ratchet);isZh 已是 startsWith('zh')。
+  const lang: 'zh' | 'en' = (['en', 'zh'] as const)[Number(isZh)];
+
+  // per-event 难度首次出现走分片;timeline 视图下按需懒加载。
+  useEffect(() => {
+    if (viewMode !== 'timeline' || tab !== 'difficulty' || !isPerEvent) return;
+    if (scrambleSet in faShards) return;
+    setFaShards((m) => ({ ...m, [scrambleSet]: null }));
+    fetch(statsUrl(`/stats/scramble/difficulty_first_appearance_${scrambleSet}.json`))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => setFaShards((m) => ({ ...m, [scrambleSet]: j })))
+      .catch(() => setFaShards((m) => ({ ...m, [scrambleSet]: null })));
+  }, [viewMode, tab, isPerEvent, scrambleSet]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 难度首次出现:顶层合并池取 faDiff.sets[dataset];per-event 取分片。
+  const faDiffSet = isPerEvent ? (faShards[scrambleSet]?.set ?? null) : (faDiff?.sets[dataset] ?? null);
+  const faDiffComps = isPerEvent ? faShards[scrambleSet]?.comps : faDiff?.comps;
+  const faDiffIdMeta = isPerEvent ? faShards[scrambleSet]?.idMeta : faDiff?.idMeta;
+  const difficultyTimeline = useMemo<TimelineEntry[]>(() => {
+    if (tab !== 'difficulty' || is333) return [];
+    if (!faDiffSet || !faDiffComps || !faDiffIdMeta) return [];
+    const binMap = faDiffSet.variants[variant]?.data[stage]?.[effectiveSubset];
+    if (!binMap) return [];
+    const out: TimelineEntry[] = [];
+    for (const [binStr, s] of Object.entries(binMap)) {
+      const m = faDiffIdMeta[s[0]];
+      if (!m) continue;
+      const comp = faDiffComps[m[0]];
+      out.push({
+        bin: Number(binStr), scramble: s[1], color: s[2],
+        previewEvent: '333', usageEvent: m[1],
+        compId: m[0], compName: comp?.[0] ?? m[0], date: comp?.[1] ?? '',
+        round: m[3], group: m[4], num: m[2], isExtra: !!m[5],
+      });
+    }
+    return out;
+  }, [tab, is333, faDiffSet, faDiffComps, faDiffIdMeta, variant, stage, effectiveSubset]);
+
+  // 长度首次出现:合并态跨成员项目取最早;单项目直接取。
+  const lengthTimeline = useMemo<TimelineEntry[]>(() => {
+    if (tab !== 'length' || !faLen) return [];
+    const metric = lenMetric === 'qtm' ? 'qtm' : 'htm';
+    const members = merged ? (MERGE_GROUPS.find((g) => g.rep === event)?.members ?? [event]) : [event];
+    const best = new Map<number, { ex: FaLenEx; ev: string; dateInt: number }>();
+    for (const ev of members) {
+      const byLen = faLen.events[ev]?.[metric];
+      if (!byLen) continue;
+      for (const [lenStr, ex] of Object.entries(byLen)) {
+        const len = Number(lenStr);
+        const date = faLen.comps[ex[0]]?.[1] ?? '';
+        const dateInt = date ? Number(date.replaceAll('-', '')) : Infinity;
+        const cur = best.get(len);
+        if (!cur || dateInt < cur.dateInt
+          || (dateInt === cur.dateInt && (ex[0] < cur.ex[0] || (ex[0] === cur.ex[0] && ex[3] < cur.ex[3])))) {
+          best.set(len, { ex, ev, dateInt });
+        }
+      }
+    }
+    const out: TimelineEntry[] = [];
+    for (const [len, picked] of best) {
+      const comp = faLen.comps[picked.ex[0]];
+      out.push({
+        bin: len, scramble: picked.ex[4], previewEvent: picked.ev, usageEvent: picked.ev,
+        compId: picked.ex[0], compName: comp?.[0] ?? picked.ex[0], date: comp?.[1] ?? '',
+        round: picked.ex[1], group: picked.ex[2], num: picked.ex[3], isExtra: !!picked.ex[5],
+      });
+    }
+    return out;
+  }, [tab, faLen, lenMetric, merged, event]);
+
+  // 时间线视图可用性:长度 tab 该项目有数据,或难度 tab 三阶族(非 puzzle 整解项目)。
+  const canTimeline = tab === 'length'
+    ? !!faLen?.events[event]
+    : DIFFICULTY_EVENTS.has(event) && !isPuzzleEvent;
+  const timelineActive = viewMode === 'timeline' && canTimeline;
+  const timelineEntries = tab === 'length' ? lengthTimeline : difficultyTimeline;
+  // 时间线加载/待生成提示:相关 FA 根还是 null = 加载中;否则该组合数据待生成。
+  const timelineLoading = tab === 'length'
+    ? faLen === null
+    : (isPerEvent ? !(scrambleSet in faShards) || faShards[scrambleSet] === null : faDiff === null);
+
+  // 图表 / 时间线视图开关(难度 + 长度共用);仅当当前选择支持时间线时出现。
+  const viewToggle = canTimeline ? (
+    <div className="scramble-stats-view-toggle">
+      <PillToggle
+        value={viewMode === 'timeline'}
+        onChange={(v) => setViewMode(v ? 'timeline' : 'chart')}
+        offLabel={tr({ zh: '图表', en: 'Chart' })}
+        onLabel={tr({ zh: '时间线', en: 'Timeline' })}
+        ariaLabel={tr({ zh: '图表或首次出现时间线', en: 'Chart or first-appearance timeline' })}
+      />
+      <InfoTooltip
+        icon={HelpCircle}
+        content={tr({
+          zh: '时间线:每个步数 / 长度第一次出现在哪场比赛(按比赛日期升序)',
+          en: 'Timeline: which competition each step-count / length first appeared at (earliest by date)',
+        })}
+      />
+    </div>
+  ) : null;
+
+  // 时间线区块(两 tab 共用):无数据时给「加载中 / 待生成」提示。
+  const timelineBlock = (
+    <div className="scramble-stats-panel scramble-timeline-panel">
+      <div className="scramble-stats-panel-title">{tr({ zh: '首次出现时间线', en: 'First-appearance timeline' })}</div>
+      {timelineEntries.length > 0 ? (
+        <FirstAppearanceTimeline
+          entries={timelineEntries}
+          isZh={isZh}
+          lang={lang}
+          unit={tab === 'length' && lenCur?.unit === 'twists'
+            ? { zh: '扭', en: ' twists' }
+            : { zh: '步', en: ' moves' }}
+        />
+      ) : (
+        <div className="scramble-stats-examples-hint">
+          {timelineLoading
+            ? tr({ zh: '加载中…', en: 'Loading…' })
+            : tr({ zh: '该组合的首次出现数据生成中,稍后再来', en: 'First-appearance data for this selection is being generated, check back soon' })}
+        </div>
+      )}
+    </div>
+  );
+
   const tabsBar = (
     <div className="scramble-stats-tabs" role="tablist">
       <button
@@ -515,6 +682,7 @@ export default function ScrambleStatsPage() {
             }).replace('{n}', lenTotal.toLocaleString())}
           </span>
         )}
+        {viewToggle}
         </div>
         <WcaEventSelector
           availableEvents={availableEvents}
@@ -534,7 +702,9 @@ export default function ScrambleStatsPage() {
         {lengthsError
           ? <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed'
         })}: {lengthsError}</div>
-          : <ScrambleLengthView isZh={isZh} data={lengthsData} event={event} merged={merged} metric={lenMetric} />}
+          : timelineActive
+            ? timelineBlock
+            : <ScrambleLengthView isZh={isZh} data={lengthsData} event={event} merged={merged} metric={lenMetric} />}
       </div>
     );
   }
@@ -689,6 +859,8 @@ export default function ScrambleStatsPage() {
         )}
       </div>
 
+      {timelineActive ? timelineBlock : (
+      <>
       <div className="scramble-stats-chart-wrapper">
         <DiscreteHistogram
           series={series}
@@ -758,6 +930,8 @@ export default function ScrambleStatsPage() {
                                     : `Savings vs white: dual −${(cnBenefit.whiteMean - cnBenefit.wyMean).toFixed(3)}, cn −${(cnBenefit.whiteMean - cnBenefit.all6Mean).toFixed(3)}`)}
           </div>
         </div>
+      )}
+      </>
       )}
 
       <div className="scramble-stats-meta">

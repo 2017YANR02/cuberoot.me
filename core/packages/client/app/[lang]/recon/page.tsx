@@ -10,9 +10,11 @@ import {
 import Link from '@/components/AppLink';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Plus, HelpCircle, TriangleAlert } from 'lucide-react';
+import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { Plus, HelpCircle, TriangleAlert, LayoutGrid, List, Video } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
-import { useReconStore, type SortKey } from '@/lib/recon-store';
+import { useReconStore, type SortKey, type SortDir } from '@/lib/recon-store';
+import { getBiliCover } from '@/lib/recon-api';
 import {
   formatResult, formatTime, formatAvg, formatAoXR, formatRound, localizeRound,
 } from '@/lib/recon-utils';
@@ -30,9 +32,24 @@ import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import { RecordSelect } from '@/components/RecordSelect';
 import { EventIcon } from '@/components/EventIcon';
 import { ColFilter, ColFilterCloseContext } from '@/components/ColFilter/ColFilter';
-import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
+import { isWcaEvent, eventDisplayName, toWcaEventId } from '@/lib/wca-events';
+import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
 import './recon.css';
 import { tr } from '@/i18n/tr';
+
+// ── 视图模式 ──
+type ViewMode = 'list' | 'grid';
+const VIEW_MODES: ViewMode[] = ['list', 'grid'];
+
+// ── 卡片视图排序选项 (key:dir 编码) ──
+const GRID_SORTS: { key: SortKey; dir: SortDir; zh: string; en: string }[] = [
+  { key: 'id', dir: 'desc', zh: '最新收录', en: 'Latest added' },
+  { key: 'date', dir: 'desc', zh: '比赛最新', en: 'Newest comp' },
+  { key: 'rawTime', dir: 'asc', zh: '单次最快', en: 'Fastest single' },
+  { key: 'stm', dir: 'asc', zh: '步数最少', en: 'Fewest moves' },
+  { key: 'tps', dir: 'desc', zh: 'TPS 最高', en: 'Highest TPS' },
+  { key: 'average', dir: 'asc', zh: '平均最快', en: 'Fastest average' },
+];
 
 // ── 列配置——原版顺序 ──
 
@@ -174,6 +191,158 @@ function DateRangeFilter({ min, max, onChange }: DateRangeFilterProps) {
   );
 }
 
+// ── 卡片视图：视频封面选取 ──
+// videoUrl 多行。按语言挑能出封面的视频：中文优先 B 站、英文优先 YouTube；
+// 首选平台没有就退而用另一平台（覆盖「只有一个链接直接用」）；两者皆无 → null（回退打乱图）。
+// b23.tv 短链不含 BV id、无法取封面，视作无 B 站封面。
+function pickReconCover(videoUrl: string | undefined, isZh: boolean): { kind: 'yt' | 'bili'; id: string } | null {
+  if (!videoUrl) return null;
+  let yt = '';
+  let bili = '';
+  for (const u of videoUrl.split('\n').map(s => s.trim()).filter(Boolean)) {
+    if (!yt && /youtu\.?be/i.test(u)) {
+      const m = u.match(/(?:v=|youtu\.be\/|\/(?:embed|shorts|live|v)\/)([A-Za-z0-9_-]{6,})/);
+      if (m) yt = m[1];
+    }
+    if (!bili) {
+      const m = u.match(/(BV[A-Za-z0-9]+)/);
+      if (m) bili = m[1];
+    }
+  }
+  const order: ('yt' | 'bili')[] = isZh ? ['bili', 'yt'] : ['yt', 'bili'];
+  for (const k of order) {
+    if (k === 'yt' && yt) return { kind: 'yt', id: yt };
+    if (k === 'bili' && bili) return { kind: 'bili', id: bili };
+  }
+  return null;
+}
+
+// B 站封面需走后端代理（无直链 URL 规律）；模块级缓存按 bvid 去重，避免同一卡重挂载重复拉取。
+const biliCoverCache = new Map<string, Promise<string | null>>();
+function loadBiliCover(bvid: string): Promise<string | null> {
+  let p = biliCoverCache.get(bvid);
+  if (!p) {
+    p = getBiliCover(bvid).then(r => r.pic || null).catch(() => null);
+    biliCoverCache.set(bvid, p);
+  }
+  return p;
+}
+
+// ── 卡片缩略图：有视频→封面图（YouTube 直链 / B 站异步取），否则打乱图，再否则项目图标 ──
+function ReconCardMedia({ solve, isZh }: { solve: ReconSolve; isZh: boolean }) {
+  const cover = useMemo(() => pickReconCover(solve.videoUrl, isZh), [solve.videoUrl, isZh]);
+  const ytSrc = cover?.kind === 'yt' ? `https://img.youtube.com/vi/${cover.id}/mqdefault.jpg` : null;
+  const [biliSrc, setBiliSrc] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+    setBiliSrc(null);
+    if (cover?.kind !== 'bili') return;
+    let alive = true;
+    void loadBiliCover(cover.id).then(pic => {
+      if (!alive) return;
+      if (pic) setBiliSrc(pic); else setFailed(true);
+    });
+    return () => { alive = false; };
+  }, [cover]);
+
+  const imgSrc = failed ? null : (ytSrc ?? biliSrc);
+
+  if (imgSrc) {
+    return (
+      <>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className="recon-card-cover"
+          src={imgSrc}
+          alt=""
+          referrerPolicy="no-referrer"
+          loading="lazy"
+          onError={() => setFailed(true)}
+        />
+      </>
+    );
+  }
+
+  // 无封面：打乱图（自包含 SVG）→ 项目图标兜底
+  const previewEvent = toWcaEventId(solve.event);
+  const scramble = solve.optimalScramble || solve.wcaScramble || '';
+  const hasVideo = !!solve.videoUrl && solve.videoUrl.trim() !== '';
+  return (
+    <>
+      {scramble && eventHasScramblePreview(previewEvent) ? (
+        <ScramblePreview2D event={previewEvent} scramble={scramble} size={52} />
+      ) : (
+        <div className="recon-card-media-empty">
+          {isWcaEvent(solve.event)
+            ? <EventIcon event={solve.event} title={eventDisplayName(solve.event, isZh)} />
+            : <span>{solve.event}</span>}
+        </div>
+      )}
+      {hasVideo && <span className="recon-card-video"><Video size={13} /></span>}
+    </>
+  );
+}
+
+// ── 卡片视图：单张复盘卡 ──
+// 整张卡是一个 <a>（AppLink，支持中键新开），故内部所有名字/比赛只渲染纯文本，禁套 <a>。
+
+function ReconCard({ solve, isZh, href }: { solve: ReconSolve; isZh: boolean; href: string }) {
+  const cubers = [
+    { name: solve.person || '', country: solve.personCountry },
+    ...(solve.coPersons ?? []).map(c => ({ name: c.name, country: c.country })),
+  ].filter(c => c.name);
+  const single = solve.value || formatTime(solve.rawTime);
+  const compName = localizeCompName(solve.compWcaId ?? '', solve.comp || '', isZh);
+
+  return (
+    <Link href={href} className="recon-card">
+      <div className="recon-card-media">
+        <ReconCardMedia solve={solve} isZh={isZh} />
+        {solve.official && <span className="recon-card-tag">WCA</span>}
+      </div>
+      <div className="recon-card-body">
+        <div className="recon-card-top">
+          <span className="recon-card-result mono">{single}</span>
+          {solve.regionalSingleRecord && (
+            <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} />
+          )}
+        </div>
+        <div className="recon-card-solver">
+          {cubers.map((c, i) => (
+            <span key={i}>
+              {i > 0 ? <span className="recon-cuber-sep"> &amp; </span> : null}
+              {c.country ? <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</> : null}
+              {displayCuberName(c.name, isZh)}
+            </span>
+          ))}
+        </div>
+        <div className="recon-card-meta">
+          {isWcaEvent(solve.event)
+            ? <EventIcon event={solve.event} title={eventDisplayName(solve.event, isZh)} />
+            : <span className="recon-card-event-txt">{solve.event}</span>}
+          {solve.method ? <span className="recon-card-method">{solve.method}</span> : null}
+          {solve.average != null && (
+            <span className="recon-card-avg mono">
+              {formatAvg(solve.average)}
+              {solve.regionalAverageRecord && (
+                <RecordBadge record={solve.regionalAverageRecord} variant="inline" iso2={solve.personCountry} />
+              )}
+            </span>
+          )}
+          {typeof solve.stm === 'number' ? <span className="recon-card-stm">{solve.stm} STM</span> : null}
+        </div>
+        <div className="recon-card-foot">
+          {solve.country ? <Flag iso2={solve.country} className="recon-inline-flag" /> : null}
+          <span className="recon-card-comp">{compName || tr({ zh: '非官方', en: 'Unofficial' })}</span>
+          {solve.date ? <span className="recon-card-date">{solve.date.slice(0, 10)}</span> : null}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 // ── 主组件 ──
 
 export default function ReconListPage() {
@@ -181,6 +350,13 @@ export default function ReconListPage() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   useDocumentTitle('复盘', 'Reconstructions');
+
+  // ── 列表 / 卡片视图切换（进 URL，后退可返回）──
+  // 默认卡片视图：裸 /recon 即 grid（clearOnDefault 自动省掉 ?view=grid），选列表才挂 ?view=list。
+  const [viewMode, setViewMode] = useQueryState(
+    'view',
+    parseAsStringEnum<ViewMode>(VIEW_MODES).withDefault('grid').withOptions({ history: 'push' }),
+  );
   const {
     loading, error, filters,
     sortKey, sortDir,
@@ -297,6 +473,17 @@ export default function ReconListPage() {
     label: a.name,
     hint: `(${a.count})`,
   })), [aoTypes]);
+
+  // ── 卡片视图排序下拉（无表头时的排序入口）──
+  const sortItems = useMemo<ListSelectItem[]>(() => GRID_SORTS.map(s => ({
+    value: `${s.key}:${s.dir}`,
+    label: tr({ zh: s.zh, en: s.en }),
+  })), []);
+  const sortValue = `${sortKey}:${sortDir}`;
+  const handleSortChange = useCallback((v: string) => {
+    const [key, dir] = v.split(':') as [SortKey, SortDir];
+    setSort(key, dir);
+  }, [setSort]);
 
   const displayed = filtered.slice(0, displayCount);
   const hasMore = filtered.length > displayCount;
@@ -770,6 +957,26 @@ export default function ReconListPage() {
             non-WCA
           </button>
         </div>
+        <div className="recon-view-toggle">
+          <button
+            className={`toggle-btn${viewMode === 'list' ? ' active' : ''}`}
+            onClick={() => setViewMode('list')}
+            aria-label={tr({ zh: '列表视图', en: 'List view' })}
+            aria-pressed={viewMode === 'list'}
+            title={tr({ zh: '列表视图', en: 'List view' })}
+          >
+            <List size={16} />
+          </button>
+          <button
+            className={`toggle-btn${viewMode === 'grid' ? ' active' : ''}`}
+            onClick={() => setViewMode('grid')}
+            aria-label={tr({ zh: '卡片视图', en: 'Gallery view' })}
+            aria-pressed={viewMode === 'grid'}
+            title={tr({ zh: '卡片视图', en: 'Gallery view' })}
+          >
+            <LayoutGrid size={16} />
+          </button>
+        </div>
         <div className="recon-actions">
           <span className="recon-stats-count">
             {t('recon.count', { count: filtered.length })}
@@ -786,6 +993,45 @@ export default function ReconListPage() {
 
       {!loading && !error && (
         <>
+          {/* 卡片视图：表头没了，提供一条紧凑筛选 + 排序栏（与表头共用同一份 store filter） */}
+          {viewMode === 'grid' && (
+            <div className="recon-grid-filters">
+              <EventSelect
+                events={events}
+                value={filters.event}
+                onChange={(v) => setFilter('event', v)}
+                allLabel={t('recon.allEvents')}
+              />
+              <ListSelect
+                items={solverItems}
+                value={filters.solver}
+                onChange={(v) => setFilter('solver', v)}
+                allLabel={t('recon.allSolvers')}
+                searchable
+              />
+              <ListSelect
+                items={methodItems}
+                value={filters.method}
+                onChange={(v) => setFilter('method', v)}
+                allLabel={t('recon.allMethods')}
+              />
+              <RecordSelect
+                records={records}
+                value={filters.record}
+                onChange={(v) => setFilter('record', v)}
+                placeholder={t('recon.allRecords')}
+              />
+              <ListSelect
+                items={sortItems}
+                value={sortValue}
+                onChange={handleSortChange}
+                allLabel={tr({ zh: '排序', en: 'Sort' })}
+                clearable={false}
+              />
+            </div>
+          )}
+
+          {viewMode === 'list' && (
           <div className="recon-table-wrap">
             <table className="recon-table">
               <thead>
@@ -868,6 +1114,20 @@ export default function ReconListPage() {
               </tbody>
             </table>
           </div>
+          )}
+
+          {viewMode === 'grid' && (
+            <div className="recon-grid">
+              {displayed.map((solve) => (
+                <ReconCard
+                  key={solve.id}
+                  solve={solve}
+                  isZh={isZh}
+                  href={getDetailUrl(solve)}
+                />
+              ))}
+            </div>
+          )}
 
           {/* 空状态 */}
           {filtered.length === 0 && (

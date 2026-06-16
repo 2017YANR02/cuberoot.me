@@ -417,6 +417,176 @@ img.recon-inline-flag {
   color: var(--accent);
 }
 
+/* --- 视图切换（列表 / 卡片）--- */
+.recon-view-toggle {
+  display: flex;
+  gap: 0;
+}
+.recon-view-toggle .toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+}
+
+/* --- 卡片视图：筛选 + 排序栏（共用同一份 store filter）--- */
+.recon-grid-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+/* --- 卡片网格 --- */
+.recon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
+  gap: 14px;
+  margin-bottom: 1rem;
+}
+
+.recon-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  border: 1px solid var(--border-default);
+  background: var(--card);
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--foreground);
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.recon-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border-default));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+/* 缩略图区——scramble 2D net（自包含 SVG）居中 */
+.recon-card-media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 116px;
+  background: var(--muted);
+  border-bottom: 1px solid var(--border-default);
+  overflow: hidden;
+}
+.recon-card-media-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--faint-foreground);
+}
+
+/* 视频封面铺满 media 区 + 居中播放标 */
+.recon-card-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* media 角标：WCA 官方 / 视频 */
+.recon-card-tag {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.recon-card-video {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--background) 78%, transparent);
+  color: var(--foreground);
+  border: 1px solid var(--border-default);
+}
+
+.recon-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 12px 12px;
+  min-width: 0;
+}
+.recon-card-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.recon-card-result {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+.recon-card-solver {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.recon-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+.recon-card-meta .cubing-icon,
+.recon-card-meta svg { flex-shrink: 0; }
+.recon-card-method { font-weight: 600; }
+.recon-card-avg { color: var(--muted-foreground); }
+.recon-card-stm { color: var(--faint-foreground); }
+.recon-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.73rem;
+  color: var(--faint-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.recon-card-comp {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.recon-card-date {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .recon-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+  .recon-card-media { height: 96px; }
+  .recon-grid-filters > * { flex: 1 1 auto; }
+}
+
 /* --- 副标题 --- */
 .recon-subtitle {
   color: var(--faint-foreground);

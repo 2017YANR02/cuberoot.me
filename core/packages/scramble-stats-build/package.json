@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsx src/build.ts",
+    "build:first-appearance": "tsx src/build_first_appearance.ts",
     "build:wca-cross": "tsx src/build_wca_cross.ts",
     "build:comp-steps": "tsx src/build_comp_steps.ts",
     "build:recent-scrambles": "tsx src/build_recent_scrambles.ts",

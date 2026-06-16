@@ -8,19 +8,17 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { compLinkProps } from '@/lib/comp-link';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { computePrRank } from '../../logic/progress';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
-import { findReconForAttempt } from '@/lib/recon-attempt-lookup';
+import { AttemptsList } from './AttemptsList';
+import { EditModeToggle } from './EditModeToggle';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty } from '@/lib/result-watch-api';
-import { AttemptEditPopover } from './AttemptEditPopover';
-import { SolveValue } from './SolveValue';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
 import { ResultChangeChain } from './ChangedResultValue';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
@@ -52,15 +50,18 @@ function resolveHashRow(hash: string): HTMLElement | null {
 interface Props {
   wcaId: string;
   personName?: string | null;
+  personCountry?: string;
   results: WcaResultRow[] | null;
   comps: WcaCompetition[] | null;
   reconLookup: Map<string, number> | null;
   isZh: boolean;
+  editMode?: boolean;
+  onToggleEditMode?: () => void;
 }
 
 // 轮次显示元数据走 utils/wca_round_meta (ByEventView / 复盘页同场比赛表也用)
 
-export default function ByCompList({ wcaId, personName, results, comps, reconLookup, isZh }: Props) {
+export default function ByCompList({ wcaId, personName, personCountry, results, comps, reconLookup, isZh, editMode, onToggleEditMode }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   const { map: changeMap, refresh: refreshChanges } = useRowChangeMap(wcaId);
   const admin = useAuthStore((s) => isAdminWcaId(s.user?.wcaId));
@@ -139,6 +140,11 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
 
   return (
     <div className="wp-bycomp">
+      {admin && onToggleEditMode && (
+        <div className="wp-section-h-row wp-section-h-row-bare">
+          <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} />
+        </div>
+      )}
       {grouped.map(({ comp, rows }) => {
         // event 内只在第一行显示项目名,视觉分组
         let lastEvent = '';
@@ -193,7 +199,7 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
                       >
                         <td className="wp-cell-event">
                           {showEvent && <EventIcon event={r.event_id} className="wp-event-icon-sm" />}
-                          {admin && (
+                          {admin && editMode && (
                             <button
                               type="button"
                               className="wp-change-edit"
@@ -267,6 +273,13 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
                             reconLookup={reconLookup}
                             isZh={isZh}
                             admin={admin}
+                            editMode={editMode}
+                            personId={wcaId}
+                            personName={personName ?? ''}
+                            personCountry={personCountry}
+                            compName={comp.name}
+                            compCountry={comp.country_iso2}
+                            compDate={comp.start_date}
                             attemptOlds={effAttempts.map((_, i) => attemptOldValues(chain, i))}
                             penalties={effectiveAttemptPenalties(chain)}
                             onEdit={(index, newValue, note) =>
@@ -313,66 +326,4 @@ export default function ByCompList({ wcaId, personName, results, comps, reconLoo
   );
 }
 
-// 把 attempts 渲染为可折行 inline 列表(支持 H2H 等 5+ 次的格式).
-// 命中 reconLookup 的把数渲染为 Link 跳到对应复盘;管理员可点改某一次(自动重算单次/平均).
-function AttemptsList({ attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, attemptOlds, penalties, onEdit, onSetOriginal, onSetPenalty }: {
-  attempts: number[];
-  best: number;
-  eventId: string;
-  compId: string;
-  roundTypeId: string;
-  reconLookup: Map<string, number> | null;
-  isZh: boolean;
-  admin?: boolean;
-  attemptOlds?: number[][];
-  penalties?: number[];
-  onEdit?: (index: number, newValue: number, note?: string) => Promise<void> | void;
-  onSetOriginal?: (index: number, originalValue: number, note?: string) => Promise<void> | void;
-  onSetPenalty?: (index: number, penaltyCs: number, note?: string) => Promise<void> | void;
-}) {
-  if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
-  const validNums = attempts.filter((x) => x > 0);
-  const minValid = validNums.length > 0 ? Math.min(...validNums) : 0;
-  const langQuery = isZh ? '?lang=zh' : '';
-  const fmt = (v: number) => formatWcaResult(v, eventId, 'single');
-  return (
-    <span className="wp-attempts-flow">
-      {attempts.map((a, i) => {
-        if (a === undefined) return null;
-        const pen = penalties?.[i] ?? 0;
-        const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
-        const cls = `wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(attempts, i) ? 'wp-att-trimmed' : ''}`;
-        const olds = (attemptOlds?.[i] ?? []).map((ov, k) => (
-          <s key={k} className="wp-old-result">{formatWcaResult(ov, eventId, 'single')}</s>
-        ));
-        // 复盘链接所有人(含管理员)都可点 → 优先;只有没复盘的 solve 才给管理员行内改
-        const reconId = findReconForAttempt(reconLookup, compId, eventId, roundTypeId, i + 1);
-        if (reconId) {
-          return (
-            <Link key={i} href={`/recon/${reconId}${langQuery}`} className={`${cls} wp-att-recon`}>
-              {olds}<SolveValue value={a} penalty={pen} format={fmt} />
-            </Link>
-          );
-        }
-        if (admin) {
-          return (
-            <AttemptEditPopover
-              key={i}
-              value={a}
-              eventId={eventId}
-              oldValues={attemptOlds?.[i] ?? []}
-              cls={cls}
-              format={fmt}
-              penalty={pen}
-              onSetOriginal={(v, note) => onSetOriginal?.(i, v, note)}
-              onCorrect={(v, note) => onEdit?.(i, v, note)}
-              onSetPenalty={(cs, note) => onSetPenalty?.(i, cs, note)}
-            />
-          );
-        }
-        return <span key={i} className={cls}>{olds}<SolveValue value={a} penalty={pen} format={fmt} /></span>;
-      })}
-    </span>
-  );
-}
 
