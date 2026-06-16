@@ -369,6 +369,19 @@ impl SkewbSolver {
         SkewbSolver { dist, solved }
     }
 
+    /// 用预算好的全空间距离表(3,149,280 字节)即时构造,跳过现场 BFS + 约束表推导。
+    /// 浏览器端「秒算」:静态资源直载距离表。查询走 solve_one / enumerate(全 State 级
+    /// encode,不依赖约束表 — 约束表仅 decode/构造期用)。
+    pub fn from_dist(dist: Vec<u8>) -> Self {
+        assert_eq!(dist.len(), SKEWB_STATES, "skewb dist table size mismatch");
+        SkewbSolver { dist, solved: encode(&SkewbState::SOLVED) }
+    }
+
+    /// 全空间距离表原始字节(落盘成静态资源用)。
+    pub fn dist_bytes(&self) -> &[u8] {
+        &self.dist
+    }
+
     /// 距离表最大深度(实测 God's number)。
     pub fn max_depth(&self) -> u8 {
         self.dist.iter().copied().filter(|&v| v != 255).max().unwrap_or(0)
@@ -602,5 +615,24 @@ mod tests {
         }
         let sol = s.enumerate(&[]);
         assert_eq!(sol.len, 0);
+    }
+
+    /// from_dist(落盘表直载,浏览器秒算路径)与全构造逐态相等,且解一致。
+    #[test]
+    fn from_dist_matches_full() {
+        let full = SkewbSolver::new();
+        let loaded = SkewbSolver::from_dist(full.dist_bytes().to_vec());
+        assert_eq!(loaded.dist, full.dist, "from_dist dist != full dist");
+        assert_eq!(loaded.solved, full.solved);
+        for seed in 0..40u64 {
+            let len = 1 + (seed as usize) % 25;
+            let alg = pseudo_word(27000 + seed, len);
+            assert_eq!(loaded.solve_one(&alg), full.solve_one(&alg), "seed={}", seed);
+            let sol = loaded.enumerate(&alg);
+            let mut st = SkewbState::SOLVED;
+            st.apply_all(&alg);
+            st.apply_all(&sol.moves);
+            assert_eq!(st, SkewbState::SOLVED, "loaded solution not solved, seed={}", seed);
+        }
     }
 }

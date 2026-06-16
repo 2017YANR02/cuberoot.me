@@ -11,7 +11,7 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260611i';
+const V = 'v=20260616a';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -31,10 +31,16 @@ export const TABLE_BYTES: Record<string, number> = {
   mt_eo12: 147468,
   mt_eo12_alt: 147468,
   mt_ep4: 855372,
+  // 整解最优全空间距离表(解压后 = 态数 × 1B):2x2x2 / 金字塔核心 / 斜转。
+  opt_pocket: 3674160,
+  opt_pyraminx: 933120,
+  opt_skewb: 3149280,
 };
 
 // 各 need 首次加载的表清单 —— 必须与 cross-solver-worker.js 的 init 分支严格一致。
-// eodr / htr / htr2 / fr / chain / pocket / pyraminx / skewb 零表下载(微表/距离表现场从内置运动学建)。
+// eodr / htr / htr2 / fr / chain 零表下载(微表/距离表现场从内置运动学建)。
+// pocket / pyraminx / skewb 拉预算好的全空间距离表 opt_*(秒算,from_dist 直载,
+// 表缺失时 worker 回退现场 BFS)。
 export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | 'pocket' | 'pyraminx' | 'skewb', string[]> = {
   cross: ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
   f2leo: ['pt_cross', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
@@ -49,9 +55,9 @@ export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222' | 'ro
   htr2: [],
   fr: [],
   chain: [],
-  pocket: [],
-  pyraminx: [],
-  skewb: [],
+  pocket: ['opt_pocket'],
+  pyraminx: ['opt_pyraminx'],
+  skewb: ['opt_skewb'],
 };
 
 /** HTR(条件式阶段)非 DR 视角的哨兵值(u32::MAX):该视角未处于 DR,无 HTR 步数。 */

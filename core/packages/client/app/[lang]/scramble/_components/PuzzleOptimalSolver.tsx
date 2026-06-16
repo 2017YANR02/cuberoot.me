@@ -67,6 +67,17 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
     return () => window.clearTimeout(id);
   }, [spec.event]);
 
+  // 档1 求解器预热:挂载后 idle 起 worker + 拉预算距离表(throwaway solve),把首查
+  // 成本(下表 ~0.3-1MB)藏在用户操作前 —— 等用户粘/生成打乱时 worker 已就绪,秒出。
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      const pool = getRustCrossPool(spec.need, Math.min(2, poolSizeForDevice()));
+      spec.solve(pool, 'U').catch(() => { /* 预热失败无所谓,真求解时会重试 */ });
+    }, 300);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spec.need]);
+
   const trimmed = scramble.trim();
   const badToken = useMemo(() => {
     if (!trimmed) return null;
@@ -179,7 +190,7 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
           {solving && !showResult && (
             <p className="pos-solving">
               <LoaderCircle size={14} className="pos-spin" aria-hidden />
-              {tr({ zh: '求解中(首次需建表,约 1 秒)…', en: 'Solving (first run builds the table, ~1s)…'
+              {tr({ zh: '求解中…', en: 'Solving…'
             })}
             </p>
           )}

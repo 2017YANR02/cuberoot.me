@@ -470,6 +470,54 @@ impl PocketSolver {
         PocketSolver { mt: Vec::new(), dist, fixed, movable }
     }
 
+    /// 角布局(固定 DBL 角 + 其余 7 个 movable 角升序),由 move 运动学现推(常数级)。
+    /// from_dist 用:加载预算距离表时仍需 fixed/movable 投影任意态到坐标。
+    fn corner_layout() -> (usize, [u8; 7]) {
+        let mut pcp = [[0u8; 8]; 18];
+        let mut pco = [[0u8; 8]; 18];
+        for m in Move::ALL {
+            let (cp, co) = move_state(m).cp_co();
+            pcp[m.index()] = cp;
+            pco[m.index()] = co;
+        }
+        let mut fixed = usize::MAX;
+        for c in 0..8usize {
+            let untouched = POCKET_MOVES.iter().all(|&m| {
+                let m = m as usize;
+                pcp[m][c] == c as u8 && pco[m][c] == 0
+            });
+            if untouched {
+                assert_eq!(fixed, usize::MAX, "more than one fixed corner");
+                fixed = c;
+            }
+        }
+        assert_ne!(fixed, usize::MAX, "no fixed corner under U/R/F");
+        let mut movable = [0u8; 7];
+        let mut n = 0;
+        for c in 0..8u8 {
+            if c as usize != fixed {
+                movable[n] = c;
+                n += 1;
+            }
+        }
+        debug_assert_eq!(n, 7);
+        (fixed, movable)
+    }
+
+    /// 用预算好的全空间距离表(3,674,160 字节)即时构造,跳过现场 BFS。
+    /// 浏览器端「秒算」:静态资源直载距离表。查询走 solve_one_any / enumerate_any
+    /// (全 State 级投影,不依赖 mt)。
+    pub fn from_dist(dist: Vec<u8>) -> Self {
+        assert_eq!(dist.len(), POCKET_STATES, "pocket dist table size mismatch");
+        let (fixed, movable) = Self::corner_layout();
+        PocketSolver { mt: Vec::new(), dist, fixed, movable }
+    }
+
+    /// 全空间距离表原始字节(落盘成静态资源用)。
+    pub fn dist_bytes(&self) -> &[u8] {
+        &self.dist
+    }
+
     /// 任意打乱末态归一到固定 DBL 帧:在 24 个整体旋转里找唯一使 DBL 角归位归向者。
     /// 返回(归一后全角态,选中的旋转条目)。与 pocket_analyzer::pocket_len 同语义
     /// (整体旋转不改最优解长,解经共轭等长)。
@@ -768,6 +816,31 @@ mod tests {
         assert_eq!(lean.movable, full.movable);
         assert_eq!(lean.dist, full.dist, "lean dist != full dist");
         assert_eq!(lean.max_depth(), 11);
+    }
+
+    /// from_dist(落盘表直载,浏览器秒算路径)与 lean 构造逐态相等,且任意打乱解一致。
+    #[test]
+    fn from_dist_matches_lean() {
+        let lean = PocketSolver::new_lean();
+        let loaded = PocketSolver::from_dist(lean.dist_bytes().to_vec());
+        assert_eq!(loaded.dist, lean.dist, "from_dist dist != lean dist");
+        assert_eq!(loaded.fixed, lean.fixed);
+        assert_eq!(loaded.movable, lean.movable);
+        assert!(loaded.mt.is_empty());
+        for seed in 0..40u64 {
+            let len = 1 + (seed as usize) % 12;
+            let alg = pseudo_scramble(23000 + seed, len);
+            assert_eq!(loaded.solve_one_any(&alg), lean.solve_one_any(&alg), "seed={}", seed);
+            let sol = loaded.enumerate_any(&alg);
+            let mut st = State::SOLVED;
+            for &m in &alg {
+                st.apply(m);
+            }
+            for &m in sol.rot_moves.iter().chain(sol.moves.iter()) {
+                st.apply(Move::from_index(m as usize));
+            }
+            assert_eq!(st.corners, State::SOLVED.corners, "loaded solution not solved, seed={}", seed);
+        }
     }
 
     /// 24 旋转归一入口(solve_one_any / enumerate_any,WASM 在线求解器走这):

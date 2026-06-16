@@ -298,6 +298,19 @@ impl PyraminxSolver {
         PyraminxSolver { mt, dist, solved }
     }
 
+    /// 用预算好的核心全空间距离表(933,120 字节)即时构造,跳过现场 BFS。
+    /// 浏览器端「秒算」:静态资源直载距离表,免每会话首查重建。查询走
+    /// solve_one / solve_split / enumerate_lean(全 State 级,不依赖 mt)。
+    pub fn from_dist(dist: Vec<u8>) -> Self {
+        assert_eq!(dist.len(), PYRA_CORE_STATES, "pyraminx core dist table size mismatch");
+        PyraminxSolver { mt: Vec::new(), dist, solved: encode_core(&PyraState::SOLVED) }
+    }
+
+    /// 核心全空间距离表原始字节(落盘成静态资源用)。
+    pub fn dist_bytes(&self) -> &[u8] {
+        &self.dist
+    }
+
     /// 核心距离表最大深度(实测核心 God's number)。
     pub fn max_depth(&self) -> u8 {
         self.dist.iter().copied().filter(|&v| v != 255).max().unwrap_or(0)
@@ -652,6 +665,28 @@ mod tests {
             assert_eq!(st, PyraState::SOLVED, "lean solution not solved, seed={}", seed);
         }
         assert_eq!(lean.enumerate_lean(&[]).len, 0);
+    }
+
+    /// from_dist(落盘表直载,浏览器秒算路径)与 lean 构造逐态相等,且解一致。
+    #[test]
+    fn from_dist_matches_lean() {
+        let lean = PyraminxSolver::new_lean();
+        let loaded = PyraminxSolver::from_dist(lean.dist_bytes().to_vec());
+        assert_eq!(loaded.dist, lean.dist, "from_dist dist != lean dist");
+        assert_eq!(loaded.solved, lean.solved);
+        assert!(loaded.mt.is_empty());
+        for seed in 0..40u64 {
+            let len = 1 + (seed as usize) % 25;
+            let alg = pseudo_word(21000 + seed, len, false);
+            assert_eq!(loaded.solve_one(&alg), lean.solve_one(&alg), "seed={}", seed);
+            let sol = loaded.enumerate_lean(&alg);
+            assert_eq!(sol.len, lean.solve_one(&alg), "seed={}", seed);
+            let mut st = PyraState::SOLVED;
+            st.apply_all(&alg);
+            st.apply_all(&sol.core);
+            st.apply_all(&sol.tips);
+            assert_eq!(st, PyraState::SOLVED, "loaded solution not solved, seed={}", seed);
+        }
     }
 
     /// 含 tips 全空间联合 BFS(16 move,75,582,720 态):闭包态数、God's number = 15、
