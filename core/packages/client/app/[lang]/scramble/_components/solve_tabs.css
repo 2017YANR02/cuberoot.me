@@ -35,12 +35,9 @@
 .solve-tab-mode.is-active { color: var(--accent); border-bottom-color: var(--accent); }
 .solve-tab-mode.is-active svg { color: var(--accent); }
 
-/* 第二行(仅求解):项目 — 次级;active 走全站项目选择器绿 */
-.solve-tab-puzzle { font-size: 0.95rem; font-weight: 600; }
-.solve-tab-evt { width: 18px; height: 18px; color: var(--muted-foreground); flex: none; }
-.solve-tab-puzzle:hover .solve-tab-evt { color: var(--foreground); }
-.solve-tab-puzzle.is-active { color: var(--foreground); border-bottom-color: #4ade80; }
-.solve-tab-puzzle.is-active .solve-tab-evt { color: #4ade80; }
+/* 第二行(仅求解):项目 — 直接复用全站 WcaEventSelector 图标选择器(active 图标绿锁在
+   组件内)。这里只收紧默认 12px 上下外边距,贴合标签导航的紧凑节奏。 */
+.solve-tab-evrow .wca-stats-event-selector { margin: 0.2rem 0 0.1rem; }
 
 /* 第三行:3×3 求解子标签 — 更小 */
 .solve-tab-subs { gap: 0.1rem; margin-top: 0.1rem; }
@@ -50,6 +47,5 @@
 @media (max-width: 480px) {
   .solve-tabs { margin-bottom: 0.9rem; }
   .solve-tab { padding: 0.4rem 0.5rem; }
-  .solve-tab-puzzle { font-size: 0.95rem; }
   .solve-tab-sub { font-size: 0.8rem; padding: 0.3rem 0.45rem; }
 }

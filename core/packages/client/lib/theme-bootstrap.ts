@@ -22,6 +22,9 @@ export const THEME_BOOTSTRAP = `(() => {
       // 配色主题优先:整套覆盖 light/dark,自带明暗。
       de.setAttribute('data-palette', pal);
       de.setAttribute('data-palette-scheme', schemes[pal]);
+      // 配色也驱动 data-theme,让页面级 html[data-theme=dark] / prefers-dark 规则跟配色翻明暗
+      // (否则 OS 暗 + 浅配色时暗色文字规则照样命中 → 看不清)。首屏即设,避免 FOUC。
+      de.setAttribute('data-theme', schemes[pal]);
       eff = schemes[pal];
       de.style.colorScheme = eff;
     } else {

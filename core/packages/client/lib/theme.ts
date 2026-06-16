@@ -73,11 +73,19 @@ export function applyPalette(id: string | null, animate = false) {
       // data-palette-scheme = light|dark 让 dark-/light-lock 页面只在「同明暗」配色下放行
       // (暗页跟暗配色、亮页跟亮配色),globals.css 的 :not([data-palette-scheme=...]) 用它。
       root.setAttribute('data-palette-scheme', scheme);
+      // 关键:配色也驱动 data-theme=明/暗。页面级 CSS 普遍用 html[data-theme=dark] /
+      // @media(prefers-dark) html:not([data-theme=light]) 切明暗色,这些规则原本无视配色
+      // (跟 OS prefers-color-scheme 走),导致「OS 暗 + 选浅配色」时暗色文字规则照样生效 →
+      // 白字落浅底看不清。让配色把 data-theme 设成自己的明暗,这些规则就自动跟配色翻。
+      root.setAttribute('data-theme', scheme);
       root.style.colorScheme = scheme;
     } else {
       root.removeAttribute('data-palette');
       root.removeAttribute('data-palette-scheme');
       const t = (localStorage.getItem(THEME_KEY) as Theme | null) || 'system';
+      // 清配色 → data-theme 恢复用户存的明暗(system 则移除跟 OS)。
+      if (t === 'light' || t === 'dark') root.setAttribute('data-theme', t);
+      else root.removeAttribute('data-theme');
       root.style.colorScheme = t === 'light' || t === 'dark' ? t : '';
     }
     applyFavicon();

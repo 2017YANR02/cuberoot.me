@@ -12,10 +12,10 @@
  */
 import { Suspense, useState, useEffect, useMemo, useCallback, useRef, useReducer } from 'react';
 import type { CSSProperties } from 'react';
-import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parseAsString, parseAsArrayOf } from 'nuqs';
+import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parseAsString, parseAsArrayOf, parseAsBoolean } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, CalendarRange, Ban, LayoutGrid, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, CalendarRange, Ban, LayoutGrid, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon, Flag as DebutIcon } from 'lucide-react';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import {
   fetchAllUpcomingCompsJson,
@@ -826,8 +826,8 @@ const SIGNED_METRICS = new Set<CompMetric>(['latlng']);
 // 经纬度子列排序键：latlng 模式下点哪一列就按哪个坐标排
 type CoordKey = 'lat' | 'lng';
 // 列表统一排序状态：null = 默认按日期倒序。
-// col='comp' 按整场列数值（latlng 看 coord 子列）；col='name'/'city' 按比赛名/城市名首字母（locale 排序）。
-type SortCol = 'comp' | 'name' | 'city';
+// col='comp' 按整场列数值（latlng 看 coord 子列）；col='name'/'city'/'country' 按比赛名/城市名/国家名首字母（locale 排序）。
+type SortCol = 'comp' | 'name' | 'city' | 'country' | 'date';
 type ListSort = { col: SortCol; coord?: CoordKey; dir: 'asc' | 'desc' } | null;
 
 function compColTitle(m: CompMetric): string {
@@ -881,19 +881,21 @@ function fillRate(c: { competitors?: number; competitor_limit: number }): number
 const LIST_ROW_H = 44;
 const LIST_BUFFER = 8; // 视口外多渲染几行做缓冲，避免快速滚动时露白
 
-// 列表 name / city 两列各自宽度 cap (px)：上限防极端长名撑爆行；下限保证短名筛选时不至于挤成一团
+// 列表 name / city / country 各列宽度 cap (px)：上限防极端长名撑爆行；下限保证短名筛选时不至于挤成一团
 const LIST_NAME_MIN_PX = 10 * 16;
 const LIST_NAME_MAX_PX = 34 * 16;
 const LIST_CITY_MIN_PX = 5 * 16;
 const LIST_CITY_MAX_PX = 16 * 16;
+const LIST_COUNTRY_MIN_PX = 3.5 * 16;
+const LIST_COUNTRY_MAX_PX = 12 * 16;
 const LIST_CELL_PAD_PX = 8; // 测得最长后再加一点缓冲，防 ellipsis 误切
 
-/** 用 canvas.measureText 分别测当前可视行 name / city 最长那行的实际像素宽,
- *  让两列各自贴最长一行、短名筛选场景下空白几乎消失,且 city 起点对齐成独立一列。
- *  另用 containerPx 算视口可用宽度上限——name+city 超出时优先保城市显示全,先压 name 再压 city
- *  (城市短、易看全;比赛名长且全称在弹窗里有)。O(n)，~30 行可视 ≈ 1ms。 */
-function measureNameCityCols(comps: Competition[], isZh: boolean, compMetric: CompMetric, containerPx?: number): { namePx: number; cityPx: number } {
-  const fallback = { namePx: 18 * 16, cityPx: 11 * 16 };
+/** 用 canvas.measureText 分别测当前可视行 country / name / city 最长那行的实际像素宽,
+ *  让三列各自贴最长一行、短名筛选场景下空白几乎消失,且各列起点对齐成独立列。
+ *  不再压到视口宽:列各取自然宽(带上下限),整张表超出视口时由 .comp-list 横向滚动
+ *  (桌面也滚),保证比赛名 / 国家名永远完整,长名走弹窗的旧妥协移除。O(n)，~30 行可视 ≈ 1ms。 */
+function measureNameCityCols(comps: Competition[], isZh: boolean): { namePx: number; cityPx: number; countryPx: number } {
+  const fallback = { namePx: 18 * 16, cityPx: 11 * 16, countryPx: 6 * 16 };
   if (typeof document === 'undefined' || comps.length === 0) return fallback;
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -910,31 +912,17 @@ function measureNameCityCols(comps: Competition[], isZh: boolean, compMetric: Co
   }
   ctx.font = `400 ${cityFontPx}px ${bodyFont}`;
   let maxCity = 0;
+  let maxCountry = 0;
   for (let i = 0; i < comps.length; i++) {
     const w = ctx.measureText(displayCityOf(comps[i], isZh)).width;
     if (w > maxCity) maxCity = w;
+    const cw = ctx.measureText(countryName(comps[i].country, isZh)).width;
+    if (cw > maxCountry) maxCountry = cw;
   }
-  let nameW = Math.max(LIST_NAME_MIN_PX, Math.min(LIST_NAME_MAX_PX, maxName + LIST_CELL_PAD_PX));
-  let cityW = Math.max(LIST_CITY_MIN_PX, Math.min(LIST_CITY_MAX_PX, maxCity + LIST_CELL_PAD_PX));
-  // 视口上限: container 减掉其他列总宽（date + flag + days + 整场列 + 21 events + gaps + padding）
-  // 整场列宽随 metric 变：none=0，经纬度=两列，其它=单列；列数变了 gap 数也跟着 +1。
-  if (containerPx != null && containerPx > 0) {
-    const isNarrow = window.innerWidth <= 768;
-    const oneCompRem = isNarrow ? 2.4 : 2.8;
-    const compRem = compMetric === 'none' ? 0 : compMetric === 'latlng' ? (isNarrow ? 3.4 : 3.8) * 2 : oneCompRem;
-    const gapCount = 26 + (compMetric === 'latlng' ? 1 : 0);
-    const otherColsRem = isNarrow ? (5.5 + 1.2 + 1.4 + compRem + 21 * 1.1) : (7.2 + 1.4 + 1.6 + compRem + 21 * 1.3);
-    const gapPaddingPx = isNarrow ? (4 * gapCount + 8 * 2) : (6 * gapCount + 12 * 2);
-    const avail = containerPx - otherColsRem * rootFontPx - gapPaddingPx;
-    if (avail > 0 && nameW + cityW > avail) {
-      const over = nameW + cityW - avail;
-      const nameShrink = Math.min(over, nameW - LIST_NAME_MIN_PX);
-      nameW -= nameShrink;
-      const rest = over - nameShrink;
-      if (rest > 0) cityW = Math.max(LIST_CITY_MIN_PX, cityW - rest);
-    }
-  }
-  return { namePx: nameW, cityPx: cityW };
+  const nameW = Math.max(LIST_NAME_MIN_PX, Math.min(LIST_NAME_MAX_PX, maxName + LIST_CELL_PAD_PX));
+  const cityW = Math.max(LIST_CITY_MIN_PX, Math.min(LIST_CITY_MAX_PX, maxCity + LIST_CELL_PAD_PX));
+  const countryW = Math.max(LIST_COUNTRY_MIN_PX, Math.min(LIST_COUNTRY_MAX_PX, maxCountry + LIST_CELL_PAD_PX));
+  return { namePx: nameW, cityPx: cityW, countryPx: countryW };
 }
 
 interface RowItem { comp: Competition; key: string }
@@ -975,11 +963,16 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   const items = useMemo<RowItem[]>(() => {
     const sorted = [...comps];
     const byDateDesc = (a: Competition, b: Competition) => b.start_date.localeCompare(a.start_date);
-    if (listSort && (listSort.col === 'name' || listSort.col === 'city')) {
+    if (listSort && listSort.col === 'date') {
+      const mul = listSort.dir === 'asc' ? 1 : -1;
+      sorted.sort((a, b) => a.start_date.localeCompare(b.start_date) * mul || a.id.localeCompare(b.id));
+    } else if (listSort && (listSort.col === 'name' || listSort.col === 'city' || listSort.col === 'country')) {
       const mul = listSort.dir === 'asc' ? 1 : -1;
       const keyOf = listSort.col === 'name'
         ? (c: Competition) => localizeName(c, isZh).trim()
-        : (c: Competition) => displayCityOf(c, isZh).trim();
+        : listSort.col === 'city'
+          ? (c: Competition) => displayCityOf(c, isZh).trim()
+          : (c: Competition) => countryName(c.country, isZh).trim();
       const collator = new Intl.Collator(isZh ? 'zh' : 'en', { sensitivity: 'base', numeric: true });
       sorted.sort((a, b) => {
         const cmp = collator.compare(keyOf(a), keyOf(b));
@@ -1056,7 +1049,8 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   // 通知父组件当前 sticky 年份（真正可见的最顶行的年份 — 用 range.top 而不是 range.start，
   // 后者带 LIST_BUFFER 上缓冲会指向视口外往上 8 行的位置，导致跨年时年份显示滞后）
   // 非日期序（任何列排序）时列表不再按年分组，sticky 年份无意义
-  const sorted = !!listSort && !(listSort.col === 'comp' && compMetric === 'none');
+  // date 排序仍是按时间分组（年份升/降而已），保留 sticky 年份；其余列排序打散年份分组
+  const sorted = !!listSort && listSort.col !== 'date' && !(listSort.col === 'comp' && compMetric === 'none');
   useEffect(() => {
     if (items.length === 0 || sorted) { onYearChange(null); return; }
     const idx = Math.min(range.top, items.length - 1);
@@ -1102,18 +1096,23 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
     return () => { cancelled = true; };
   }, [range.start, range.end, items, eventMetric]);
 
-  // 视口自适应 name / city 两列宽：测当前渲染窗口（含 LIST_BUFFER 缓冲）各自 max，写到
-  // .calendar-page 的 --cl-name-width / --cl-city-width。滚动到长名行时 cell 扩、滚出再收，
-  // chips 表头跟着同步。LIST_BUFFER=8 让长名进视口前几行就提前测到，平滑视觉抖动。
-  // 视口可用宽度作为 cap，避免 cell 撑爆 .calendar-page 引起 chips header 横向溢出。
+  // 自适应 country / name / city 三列宽：测当前渲染窗口（含 LIST_BUFFER 缓冲）各自 max，写到
+  // .calendar-page 的 --cl-name-width / --cl-city-width / --cl-country-width。滚动到长名行时 cell 扩、滚出再收。
+  // 列各取自然宽（不再压到视口）→ 整张表可能比视口宽，由 .comp-list 横向滚动撑开（桌面也滚），
+  // 比赛名 / 国家名永远完整。设好列宽后量一次表头 grid 的真实内容宽，写进 --cl-list-min 驱动虚拟列表
+  // 的最小宽（≥ 内容宽才能横向滚、≤ 视口时退回 100% 不留滚动条）。LIST_BUFFER=8 让长名提前测到，平滑抖动。
   useEffect(() => {
     const el = pageRef.current;
     if (!el) return;
     const apply = () => {
       const visibleComps = items.slice(range.start, range.end).map((it) => it.comp);
-      const { namePx, cityPx } = measureNameCityCols(visibleComps, isZh, compMetric, el.clientWidth);
+      const { namePx, cityPx, countryPx } = measureNameCityCols(visibleComps, isZh);
       el.style.setProperty('--cl-name-width', `${namePx}px`);
       el.style.setProperty('--cl-city-width', `${cityPx}px`);
+      el.style.setProperty('--cl-country-width', `${countryPx}px`);
+      // 读表头 grid 的实际渲染宽（width:max-content，含新列宽）→ 列表最小宽，桌面/移动端统一横向滚
+      const grid = el.querySelector('.event-chips-grid');
+      if (grid) el.style.setProperty('--cl-list-min', `${Math.ceil(grid.getBoundingClientRect().width)}px`);
     };
     apply();
     let raf = 0;
@@ -1126,12 +1125,14 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
     };
-  }, [range.start, range.end, items, isZh, compMetric, pageRef]);
+  }, [range.start, range.end, items, isZh, compMetric, eventMetric, pageRef]);
 
-  // 卸载时清理 — 切回日历模式不留 stale --cl-name-width / --cl-city-width
+  // 卸载时清理 — 切回日历模式不留 stale 列宽变量
   useEffect(() => () => {
     pageRef.current?.style.removeProperty('--cl-name-width');
     pageRef.current?.style.removeProperty('--cl-city-width');
+    pageRef.current?.style.removeProperty('--cl-country-width');
+    pageRef.current?.style.removeProperty('--cl-list-min');
   }, [pageRef]);
 
   if (items.length === 0) {
@@ -1175,6 +1176,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
                   </>
                 ) : dateStr}
               </span>
+              <span className="comp-list-country" title={countryName(c.country, isZh)}>{countryName(c.country, isZh)}</span>
               <Flag iso2={c.country} />
               <span className="comp-list-name-cell">
                 {followedIds.has(c.id) && <FollowMark />}
@@ -1330,6 +1332,11 @@ function CalendarPageInner() {
   }, [viewMode, eventMetric]);
   // 已取消过滤：'all' = 默认包含；'only' = 仅展示已取消
   const [cancelledFilter, setCancelledFilter] = useState<'all' | 'only'>('all');
+  // 各国首秀：只保留每个国家最早的那一场比赛（一国一条）。走 nuqs，可分享深链。
+  const [debutsOnly, setDebutsOnly] = useQueryState(
+    'debuts',
+    parseAsBoolean.withDefault(false).withOptions({ history: 'replace', scroll: false }),
+  );
   // 三个 popover 共用一份 state：'month' = 日历模式月份选择；'from'/'to' = 列表模式年月范围
   const [pickerOpen, setPickerOpen] = useState<'month' | 'from' | 'to' | null>(null);
   const monthBtnRef = useRef<HTMLButtonElement>(null);
@@ -1521,6 +1528,21 @@ function CalendarPageInner() {
     return () => { cancelled = true; };
   }, [selectedCuber, personCompIndex]);
 
+  // 各国首秀 id 集合：activeComps 里每个国家 start_date 最早那场（同日取 id 最小，稳定）。
+  // 仅开关打开时计算；用全量 activeComps 求"真正第一场",其他筛选(国家/项目/年月)再在其上叠加。
+  const debutIds = useMemo(() => {
+    if (!debutsOnly) return null;
+    const first = new Map<string, Competition>();
+    for (const c of activeComps) {
+      const k = c.country.toUpperCase();
+      const ex = first.get(k);
+      if (!ex || c.start_date < ex.start_date || (c.start_date === ex.start_date && c.id < ex.id)) first.set(k, c);
+    }
+    const ids = new Set<string>();
+    for (const c of first.values()) ids.add(c.id);
+    return ids;
+  }, [debutsOnly, activeComps]);
+
   // NOTE: 不匹配的比赛直接从日历中消失（不再"变淡"），所以 displayedComps 走完整过滤链
   const isMatch = useCallback(
     (comp: Competition) => {
@@ -1554,9 +1576,10 @@ function CalendarPageInner() {
         if (validYM(dateTo) && ym > dateTo) return false;
       }
       if (cancelledFilter === 'only' && !isCancelledComp(comp, cancelledCutoffIso)) return false;
+      if (debutIds && !debutIds.has(comp.id)) return false;
       return true;
     },
-    [compQuery, selectedCuber, selectedCuberCompIds, countryFilterSet, eventFilters, daysFilter, dateFrom, dateTo, cancelledFilter, cancelledCutoffIso],
+    [compQuery, selectedCuber, selectedCuberCompIds, countryFilterSet, eventFilters, daysFilter, dateFrom, dateTo, cancelledFilter, cancelledCutoffIso, debutIds],
   );
 
   const displayedComps = useMemo(
@@ -1815,6 +1838,16 @@ function CalendarPageInner() {
           <Ban size={14} strokeWidth={1.75} />
           <span>{tr({ zh: '已取消', en: 'Cancelled' })}</span>
         </button>
+        <button
+          type="button"
+          className={`debuts-toggle${debutsOnly ? ' is-active' : ''}`}
+          onClick={() => setDebutsOnly((v) => !v)}
+          aria-pressed={debutsOnly}
+          title={tr({ zh: '各国首秀：只显示每个国家有史以来的第一场 WCA 比赛（配合左侧国家筛选可锁定某国，日期列点「最早在前」按时间看各国登场）', en: 'Country debuts: show only each country’s first-ever WCA competition (pick a country at left to focus one; click the date header for oldest-first)' })}
+        >
+          <DebutIcon size={14} strokeWidth={1.75} />
+          <span>{tr({ zh: '各国首秀', en: 'Debuts' })}</span>
+        </button>
         {viewMode === 'calendar' && (
           <div className="mode-toggle" role="tablist">
             <button
@@ -2056,14 +2089,46 @@ function CalendarPageInner() {
           if (viewMode !== 'list' || displayedComps.length === 0) return <>{daysChip}{chips}</>;
           return (
             <div className="event-chips-grid">
-              <span className="cl-year-cell" aria-live="polite">
-                {currentYear && (
-                  <>
-                    <span className="cl-year-num">{currentYear.year}</span>
-                    <span className="cl-year-count">{currentYear.count.toLocaleString()}</span>
-                  </>
-                )}
-              </span>
+              {(() => {
+                // 日期列头：点击在「默认最新在前」与「最早在前」之间切换。
+                // 选某国家 + 切到「最早在前」→ 顶部即该国首场比赛。
+                const dateActive = listSort?.col === 'date';
+                const DateChevron = dateActive && listSort?.dir === 'asc' ? ChevronUp : ChevronDown;
+                return (
+                  <button
+                    type="button"
+                    className={`cl-year-cell cl-year-sort${dateActive ? ' is-active' : ''}`}
+                    aria-live="polite"
+                    aria-pressed={dateActive}
+                    title={tr({ zh: '按日期排序（默认最新在前，点击切到最早在前）', en: 'Sort by date (newest first; click for oldest first)' })}
+                    onClick={() => setListSort((s) => (s?.col === 'date' && s.dir === 'asc' ? null : { col: 'date', dir: 'asc' }))}
+                  >
+                    <DateChevron className="cl-date-chevron" size={12} strokeWidth={2.25} />
+                    {currentYear && (
+                      <>
+                        <span className="cl-year-num">{currentYear.year}</span>
+                        <span className="cl-year-count">{currentYear.count.toLocaleString()}</span>
+                      </>
+                    )}
+                  </button>
+                );
+              })()}
+              {/* 国家名列头：点击按国家名首字母 locale 排序 */}
+              {(() => {
+                const active = listSort?.col === 'country';
+                const AZ = active && listSort?.dir === 'desc' ? ArrowDownZA : ArrowDownAZ;
+                return (
+                  <button
+                    type="button"
+                    className={`cl-col-icon cl-col-sort cl-text-sort${active ? ' is-active' : ''}`}
+                    title={tr({ zh: '按国家名排序', en: 'Sort by country' })}
+                    aria-pressed={active}
+                    onClick={() => cycleSort('country')}
+                  >
+                    <AZ size={15} strokeWidth={1.75} />
+                  </button>
+                );
+              })()}
               <span className="cl-h-spacer" aria-hidden="true" />
               {/* 比赛名列头：点击按名字首字母 locale 排序 */}
               {(() => {

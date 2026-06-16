@@ -230,6 +230,15 @@ export const CATALOG: UtilEntry[] = [
     zh: '三阶 6 面标准配色的单一来源(贴纸 / 3D / 徽章 / 求解器都用它)。',
     en: 'Single source for the 6 cube-face colors (stickers, 3D, badges, solvers).',
   },
+  {
+    name: 'sq1MoveCounts',
+    sig: 'sq1MoveCounts(alg: string): { twist; wca; face; slices; turns; nonIdentityTurns; doubleTurns }',
+    imp: "import { sq1MoveCounts } from '@/lib/sq1-metrics';",
+    usage: "sq1MoveCounts('(3,3)/') // { twist:1, wca:2, face:3, ... }",
+    category: 'cube',
+    zh: 'SQ1 序列三套计步口径:扭转(只数 /)/ WCA 12c4 / 面转(双层=2),复用 parseSq1Tokens。详见 /math/sq1。',
+    en: "Counts a Square-1 (x,y)/ sequence under all 3 metrics (twist / WCA 12c4 / face-turn). See /math/sq1.",
+  },
 
   // ── util ──────────────────────────────────
   {

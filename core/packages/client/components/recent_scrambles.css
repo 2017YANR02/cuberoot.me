@@ -10,6 +10,12 @@
   gap: 0.75rem;
 }
 
+.rs-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
 .rs-head {
   display: flex;
   align-items: center;
@@ -23,6 +29,38 @@
   letter-spacing: 0.02em;
   color: var(--foreground);
   margin-right: auto;
+}
+
+/* 项目选择器在窄首页里收紧一点 icon 间距,横向可滚动不撑破布局 */
+.recent-scrambles .wca-stats-event-selector {
+  margin: 0;
+}
+
+/* 难度 / 打乱长度 段控(仅 222/金字塔/斜转) */
+.rs-seg {
+  display: inline-flex;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-right: auto;
+}
+.rs-seg-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s;
+}
+.rs-seg-btn + .rs-seg-btn { border-left: 1px solid var(--border-default); }
+.rs-seg-btn:hover { color: var(--foreground); }
+.rs-seg-btn.active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .rs-select {
@@ -86,6 +124,20 @@
   font-variant-numeric: tabular-nums;
 }
 .rs-hero-unit { font-size: 0.85rem; color: var(--muted-foreground); }
+/* 概率提示:跟在「N 步」后,展示该难度在全部 WCA 三阶打乱里的出现频率(链到 /scramble/stats) */
+.rs-hero-prob {
+  margin-left: 0.15rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.12s, background-color 0.12s;
+}
+.rs-hero-prob:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .rs-hero-scramble {
   display: block;
   font-family: var(--font-mono);

@@ -101,7 +101,7 @@
 
 .country-input-count {
   font-size: 0.75rem;
-  color: #666;
+  color: var(--muted-foreground);
 }
 
 .country-input-item--active {

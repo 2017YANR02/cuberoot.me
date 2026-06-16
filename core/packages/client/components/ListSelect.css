@@ -10,9 +10,9 @@
   width: 100%;
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: #e5e5e5;
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  color: var(--foreground);
   font-size: 0.88rem;
   font-family: 'Inter', Arial, sans-serif;
   cursor: pointer;
@@ -21,8 +21,8 @@
 }
 
 .list-select-trigger:focus-visible {
-  border-color: rgba(217, 119, 87, 0.5);
-  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.15);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
 .list-select-current {
@@ -35,7 +35,7 @@
 }
 
 .list-select-chevron {
-  color: #888;
+  color: var(--muted-foreground);
   flex-shrink: 0;
 }
 
@@ -46,14 +46,14 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  color: #888;
+  color: var(--muted-foreground);
   cursor: pointer;
   flex-shrink: 0;
   transition: background 0.12s, color 0.12s;
 }
 .list-select-clear:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #e5e5e5;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  color: var(--foreground);
 }
 
 .list-select-label {
@@ -77,8 +77,8 @@ img.list-select-flag { object-fit: cover; }
   left: 0;
   right: 0;
   min-width: 220px;
-  background: #2a2a2a;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--popover);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 8px;
   padding: 4px;
   z-index: 100;
@@ -92,14 +92,14 @@ img.list-select-flag { object-fit: cover; }
   width: 100%;
   padding: 6px 10px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: #e5e5e5;
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  color: var(--foreground);
   font-size: 0.85rem;
   font-family: inherit;
   outline: none;
 }
-.list-select-search:focus { border-color: rgba(217, 119, 87, 0.5); }
+.list-select-search:focus { border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
 
 .list-select-list {
   max-height: 320px;
@@ -118,8 +118,8 @@ img.list-select-flag { object-fit: cover; }
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  color: #e5e5e5;
+  color: var(--foreground);
   transition: background 0.12s;
 }
-.list-select-item:hover { background: rgba(255, 255, 255, 0.08); }
-.list-select-item--active { background: rgba(217, 119, 87, 0.15); }
+.list-select-item:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.list-select-item--active { background: color-mix(in srgb, var(--accent) 15%, transparent); }

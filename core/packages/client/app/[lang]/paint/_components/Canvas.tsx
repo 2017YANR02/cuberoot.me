@@ -37,6 +37,7 @@ import {
 } from '../_lib/geometry';
 import { computeSnap } from '../_lib/snapping';
 import { paperInk } from '../_lib/paper';
+import { useCoarsePointer } from '../_lib/use-coarse-pointer';
 import Overlay from './Overlay';
 import CreateHint from './CreateHint';
 
@@ -56,6 +57,8 @@ type Mode =
   // text: a click placed a new text shape and entered inline edit mode.
   | { kind: 'text' }
   | { kind: 'pan'; lastClient: Point }
+  // two-finger pinch-zoom + pan (touch). Takes over from any single-pointer op.
+  | { kind: 'gesture' }
   | { kind: 'marquee'; start: Point; additive: boolean }
   | { kind: 'move'; start: Point; origins: Record<string, Point>; moved: boolean }
   | {
@@ -105,6 +108,11 @@ export default function Canvas({ viewport }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const modeRef = useRef<Mode>({ kind: 'idle' });
   const spaceRef = useRef(false);
+  const coarse = useCoarsePointer();
+  // active pointers (client coords), keyed by pointerId — drives multitouch.
+  const pointersRef = useRef<Map<number, Point>>(new Map());
+  // live pinch baseline (screen midpoint + finger distance) while in 'gesture'.
+  const gestureRef = useRef<{ lastMid: Point; lastDist: number } | null>(null);
   // live polygon-sides / star-points override while create-dragging (arrow keys)
   const createCountRef = useRef<number | null>(null);
   const lastCreateRef = useRef<{ start: Point; cur: Point; shift: boolean; alt: boolean } | null>(
@@ -157,9 +165,9 @@ export default function Canvas({ viewport }: Props) {
 
   // top-most shape under a scene point (skips hidden/locked)
   const hitTopShape = useCallback(
-    (scene: Point, opts: { includeLocked?: boolean } = {}): string | null => {
+    (scene: Point, opts: { includeLocked?: boolean; hitPx?: number } = {}): string | null => {
       const st = usePaint.getState();
-      const tol = HIT_PX / st.camera.zoom;
+      const tol = (opts.hitPx ?? HIT_PX) / st.camera.zoom;
       for (let i = st.order.length - 1; i >= 0; i--) {
         const id = st.order[i];
         const s = st.shapes[id];
@@ -176,14 +184,20 @@ export default function Canvas({ viewport }: Props) {
 
   // ---- handle hit-test (screen space) for the selection overlay ----
   const hitHandle = useCallback(
-    (scene: Point): { handle: HandleId; id: string | null; group: boolean } | null => {
+    (scene: Point, tolPx = 11): { handle: HandleId; id: string | null; group: boolean } | null => {
       const st = usePaint.getState();
-      const tol = 11 / st.camera.zoom;
+      // Edge/corner handle radius, clamped so a touch-enlarged tolerance never
+      // swallows a small shape's whole body — leave the middle third tappable
+      // for a move drag. The rotate handle lives outside the box, so it keeps
+      // the full tolerance.
+      const bodyTol = (w: number, h: number) =>
+        Math.min(tolPx, Math.max(8, (Math.min(w, h) * st.camera.zoom) / 3)) / st.camera.zoom;
       // multi-selection: hit-test the 8 handles of the axis-aligned group bbox
       // (no rotation, no rotate handle).
       if (st.selection.length >= 2) {
         const bb = getSelectionBounds(st);
         if (!bb) return null;
+        const tol = bodyTol(bb.width, bb.height);
         const handles: Exclude<HandleId, 'rotate'>[] = [
           'nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w',
         ];
@@ -199,6 +213,8 @@ export default function Canvas({ viewport }: Props) {
       const s = st.shapes[st.selection[0]];
       if (!s || s.locked) return null;
       const b = getShapeBounds(s);
+      const tol = bodyTol(b.width, b.height);
+      const rotTol = tolPx / st.camera.zoom;
       const rotOffset = 26 / st.camera.zoom;
       const handles: HandleId[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w', 'rotate'];
       for (const h of handles) {
@@ -207,7 +223,7 @@ export default function Canvas({ viewport }: Props) {
             ? { x: b.x + b.width / 2, y: b.y - rotOffset }
             : handleLocal(h, b);
         const scenePos = s.rotation ? rotatePoint(local, boundsCenter(b), s.rotation) : local;
-        if (Math.hypot(scene.x - scenePos.x, scene.y - scenePos.y) <= tol) {
+        if (Math.hypot(scene.x - scenePos.x, scene.y - scenePos.y) <= (h === 'rotate' ? rotTol : tol)) {
           return { handle: h, id: s.id, group: false };
         }
       }
@@ -373,11 +389,43 @@ export default function Canvas({ viewport }: Props) {
     return () => window.removeEventListener('keydown', onKey, true);
   }, []);
 
+  // A 2nd finger landed: abandon any in-progress single-pointer op (without
+  // committing it) and switch to a two-finger pinch-zoom + pan gesture.
+  const beginGesture = useCallback(() => {
+    const st = usePaint.getState();
+    const m = modeRef.current;
+    if (m.kind === 'move' || m.kind === 'resize' || m.kind === 'groupResize') {
+      st.cancelHistory();
+    }
+    st.setEphemeral(null);
+    st.setMarquee(null);
+    st.setSnapLines(null);
+    pencilRef.current = [];
+    setPencilD(null);
+    setHoverId(null);
+    const pts = [...pointersRef.current.values()];
+    modeRef.current = { kind: 'gesture' };
+    gestureRef.current = {
+      lastMid: midpoint(pts[0], pts[1]),
+      lastDist: dist(pts[0], pts[1]),
+    };
+  }, []);
+
   // ================= POINTER DOWN =================
   const onPointerDown = useCallback(
     (e: ReactPointerEvent<SVGSVGElement>) => {
       if (e.button === 1 || e.button === 2) return;
       svgRef.current?.setPointerCapture(e.pointerId);
+      // Only touch/pen pointers join the multitouch map; a mouse can't produce
+      // two pointers, so keeping it out removes any chance a stale entry fakes a
+      // pinch on desktop. A 2nd tracked pointer starts a pinch/pan gesture.
+      if (e.pointerType !== 'mouse') {
+        pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pointersRef.current.size >= 2) {
+          beginGesture();
+          return;
+        }
+      }
       const st = usePaint.getState();
       const scene = toScene(e.clientX, e.clientY);
 
@@ -418,14 +466,19 @@ export default function Canvas({ viewport }: Props) {
       // text: clicking an existing text re-enters its edit; otherwise place a
       // new empty text shape at the click and start editing immediately.
       if (st.tool === 'text') {
-        // release the capture so the textarea can take focus/interaction.
+        // release the capture so the textarea can take focus/interaction. The
+        // svg won't receive this pointer's pointerup, so drop it from the map
+        // now (else a stale entry would fake a 2-finger gesture next touch).
+        // Side effect: the text tool intentionally opts out of two-finger pinch
+        // (the first finger self-removes); switch to select/hand to pan/zoom.
         try {
           svgRef.current?.releasePointerCapture(e.pointerId);
         } catch {
           /* ignore */
         }
+        pointersRef.current.delete(e.pointerId);
         if (st.editing) commitEdit();
-        const hit = hitTopShape(scene);
+        const hit = hitTopShape(scene, { hitPx: coarse ? 13 : HIT_PX });
         const hitShape = hit ? st.shapes[hit] : null;
         if (hitShape && hitShape.type === 'text') {
           enterEdit(hit!);
@@ -465,7 +518,7 @@ export default function Canvas({ viewport }: Props) {
 
       // eyedropper: sample the shape under the cursor, apply to selection
       if (st.tool === 'eyedropper') {
-        const id = hitTopShape(scene, { includeLocked: true });
+        const id = hitTopShape(scene, { includeLocked: true, hitPx: coarse ? 13 : HIT_PX });
         if (id) {
           const src = st.shapes[id];
           const sel = st.selection.filter((sid) => sid !== id);
@@ -496,7 +549,7 @@ export default function Canvas({ viewport }: Props) {
 
       // ---- select tool ----
       // 1) handle drag (resize / rotate)?
-      const handleHit = hitHandle(scene);
+      const handleHit = hitHandle(scene, coarse ? 22 : 11);
       if (handleHit && handleHit.group) {
         // group resize: snapshot every selected shape; scale all proportionally
         const startBounds = getSelectionBounds(st)!;
@@ -533,7 +586,7 @@ export default function Canvas({ viewport }: Props) {
       }
 
       // 2) shape under cursor?
-      const hitId = hitTopShape(scene);
+      const hitId = hitTopShape(scene, { hitPx: coarse ? 13 : HIT_PX });
       const additive = e.shiftKey;
       if (hitId) {
         const already = st.selection.includes(hitId);
@@ -559,7 +612,7 @@ export default function Canvas({ viewport }: Props) {
       modeRef.current = { kind: 'marquee', start: scene, additive };
       st.setMarquee({ x: scene.x, y: scene.y, width: 0, height: 0 });
     },
-    [toScene, hitHandle, hitTopShape, finishPen, enterEdit, commitEdit]
+    [toScene, hitHandle, hitTopShape, finishPen, enterEdit, commitEdit, beginGesture, coarse]
   );
 
   // ================= POINTER MOVE =================
@@ -567,6 +620,30 @@ export default function Canvas({ viewport }: Props) {
     (e: ReactPointerEvent<SVGSVGElement>) => {
       const st = usePaint.getState();
       const m = modeRef.current;
+      if (pointersRef.current.has(e.pointerId)) {
+        pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      }
+
+      // two-finger pinch-zoom + pan
+      if (m.kind === 'gesture' && gestureRef.current) {
+        const pts = [...pointersRef.current.values()];
+        if (pts.length < 2) return;
+        const g = gestureRef.current;
+        const mid = midpoint(pts[0], pts[1]);
+        const d = dist(pts[0], pts[1]);
+        if (g.lastDist > 0 && d > 0) {
+          const rect = svgRef.current?.getBoundingClientRect();
+          st.zoomAt(
+            { x: mid.x - (rect?.left ?? 0), y: mid.y - (rect?.top ?? 0) },
+            d / g.lastDist,
+          );
+        }
+        st.panBy(mid.x - g.lastMid.x, mid.y - g.lastMid.y);
+        g.lastMid = mid;
+        g.lastDist = d;
+        return;
+      }
+
       const scene = toScene(e.clientX, e.clientY);
 
       // hover highlight when idle + select tool
@@ -767,11 +844,56 @@ export default function Canvas({ viewport }: Props) {
     (e: ReactPointerEvent<SVGSVGElement>) => {
       const st = usePaint.getState();
       const m = modeRef.current;
-      modeRef.current = { kind: 'idle' };
+      pointersRef.current.delete(e.pointerId);
       try {
         svgRef.current?.releasePointerCapture(e.pointerId);
       } catch {
         /* ignore */
+      }
+
+      // pinch gesture: stays active until < 2 fingers remain. The last finger
+      // up just ends it — it must NOT start a fresh single-pointer op.
+      if (m.kind === 'gesture') {
+        if (pointersRef.current.size >= 2) {
+          const pts = [...pointersRef.current.values()];
+          gestureRef.current = { lastMid: midpoint(pts[0], pts[1]), lastDist: dist(pts[0], pts[1]) };
+        } else {
+          gestureRef.current = null;
+          modeRef.current = { kind: 'idle' };
+        }
+        return;
+      }
+
+      modeRef.current = { kind: 'idle' };
+
+      // pointercancel (palm rejection / OS edge-swipe / app switch) aborts the
+      // drag — roll it back instead of finalizing a half-done edit. Mirrors the
+      // beginGesture() rollback for the 2-finger case.
+      if (e.type === 'pointercancel') {
+        switch (m.kind) {
+          case 'move':
+          case 'resize':
+          case 'groupResize':
+            st.cancelHistory();
+            st.setSnapLines(null);
+            break;
+          case 'create':
+            st.setEphemeral(null);
+            break;
+          case 'marquee':
+            st.setMarquee(null);
+            break;
+          case 'pencil':
+            pencilRef.current = [];
+            setPencilD(null);
+            break;
+          case 'pen':
+            setPenDragHandles(null);
+            break;
+        }
+        createCountRef.current = null;
+        lastCreateRef.current = null;
+        return;
       }
 
       switch (m.kind) {
@@ -1150,7 +1272,7 @@ function buildCreateEphemeral(
   alt: boolean,
   count?: number | null
 ): Shape {
-  const bounds = boundsFromDrag(start, cur, shift, alt);
+  const bounds = boundsFromDrag(start, cur, shift, alt, tool);
   const type = toolToShapeType(tool);
   const rx = tool === 'roundRect' ? Math.min(bounds.width, bounds.height) * 0.18 : 0;
   return withInk(applyCount(SHAPE_UTILS[type].create(bounds, { rx }), count ?? null));
@@ -1169,6 +1291,14 @@ function handleLocal(h: HandleId, b: Bounds): Point {
   return { x: b.x + b.width * fx, y: b.y + b.height * fy };
 }
 
+function midpoint(a: Point, b: Point): Point {
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+function dist(a: Point, b: Point): number {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
 function normRect(a: Point, b: Point): Bounds {
   return {
     x: Math.min(a.x, b.x),
@@ -1178,11 +1308,18 @@ function normRect(a: Point, b: Point): Bounds {
   };
 }
 
-// shift=square/45deg, alt=from center
-function boundsFromDrag(start: Point, cur: Point, shift: boolean, alt: boolean): Bounds {
+// shift=square (rect/ellipse) or snap-to-45°-angle (line), alt=from center
+function boundsFromDrag(start: Point, cur: Point, shift: boolean, alt: boolean, tool?: ToolId): Bounds {
   let dx = cur.x - start.x;
   let dy = cur.y - start.y;
-  if (shift) {
+  if (shift && tool === 'line') {
+    // snap the drag direction to the nearest 15° (0/30/45/60/90 … all reachable)
+    const step = Math.PI / 12;
+    const snapped = Math.round(Math.atan2(dy, dx) / step) * step;
+    const len = dx * Math.cos(snapped) + dy * Math.sin(snapped);
+    dx = len * Math.cos(snapped);
+    dy = len * Math.sin(snapped);
+  } else if (shift) {
     const m = Math.max(Math.abs(dx), Math.abs(dy));
     dx = Math.sign(dx || 1) * m;
     dy = Math.sign(dy || 1) * m;

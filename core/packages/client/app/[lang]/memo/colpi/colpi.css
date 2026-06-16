@@ -130,7 +130,7 @@
 .colpi-pill-group button:last-child { border-right: none; }
 .colpi-pill-group button.on {
   background: var(--c-active);
-  color: #fff;
+  color: var(--accent-foreground);
 }
 .colpi-pill-group button:disabled {
   color: var(--c-faded);
@@ -153,9 +153,9 @@
 .colpi-toggle-btn.on {
   background: var(--c-active);
   border-color: var(--c-active);
-  color: #fff;
+  color: var(--accent-foreground);
 }
-.colpi-login-btn { background: var(--c-primary); color: #fff; border-color: var(--c-primary); }
+.colpi-login-btn { background: var(--c-primary); color: var(--primary-foreground); border-color: var(--c-primary); }
 .colpi-login-btn:hover { background: #1A1916; }
 
 /* === Language picker (popup, used in topbar filter + submit form) === */
@@ -244,7 +244,7 @@
 .colpi-langpicker-item.on {
   background: var(--c-active);
   border-color: var(--c-active);
-  color: #fff;
+  color: var(--accent-foreground);
 }
 @media (max-width: 640px) {
   .colpi-langpicker-grid { grid-template-columns: repeat(2, 1fr); }
@@ -360,7 +360,7 @@
 }
 .colpi-cell.active {
   background: var(--c-active) !important;
-  color: #fff;
+  color: var(--accent-foreground);
 }
 
 .colpi-grid-legend {
@@ -439,7 +439,7 @@
   font-weight: 700;
   letter-spacing: 1px;
   background: var(--c-active);
-  color: #fff;
+  color: var(--accent-foreground);
   padding: 4px 14px;
   border-radius: 4px;
 }
@@ -471,7 +471,7 @@
 .colpi-detail-word { font-weight: 600; }
 .colpi-detail-note {
   margin-left: 6px;
-  color: #888;
+  color: var(--c-muted);
   font-size: 0.85em;
   font-style: italic;
 }
@@ -525,19 +525,19 @@
 .colpi-recent-vote button.is-voted-up {
   background: var(--c-active);
   border-color: var(--c-active);
-  color: #fff;
+  color: var(--accent-foreground);
 }
 .colpi-detail-vote button.is-voted-down,
 .colpi-recent-vote button.is-voted-down {
   background: var(--c-text);
   border-color: var(--c-text);
-  color: #fff;
+  color: var(--background);
 }
 .colpi-detail-add {
   margin-top: 8px;
   padding: 8px 14px;
   background: var(--c-primary);
-  color: #fff;
+  color: var(--primary-foreground);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -630,8 +630,8 @@
   border-radius: 3px;
   margin-left: 4px;
 }
-.colpi-score.pos { background: var(--c-active); color: #fff; }
-.colpi-score.neg { background: var(--c-text); color: #fff; }
+.colpi-score.pos { background: var(--c-active); color: var(--accent-foreground); }
+.colpi-score.neg { background: var(--c-text); color: var(--background); }
 
 /* === Owner / admin edit-delete buttons === */
 .colpi-owner-actions { display: inline-flex; gap: 2px; margin-left: 2px; }
@@ -675,7 +675,7 @@
   letter-spacing: 0.5px;
   font-family: inherit;
 }
-.colpi-pair-chip:hover { background: var(--c-active); color: #fff; border-color: var(--c-active); }
+.colpi-pair-chip:hover { background: var(--c-active); color: var(--accent-foreground); border-color: var(--c-active); }
 .colpi-pair-chip:focus-visible { outline: 2px solid var(--c-active); outline-offset: 2px; }
 .colpi-pao-dot {
   display: inline-block;

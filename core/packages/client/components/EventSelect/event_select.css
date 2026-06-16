@@ -13,9 +13,9 @@
   width: 100%;
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: #e5e5e5;
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  color: var(--foreground);
   font-size: 0.88rem;
   font-family: 'Inter', Arial, sans-serif;
   cursor: pointer;
@@ -36,12 +36,12 @@
 }
 
 .event-select-chevron {
-  color: #888;
+  color: var(--muted-foreground);
   flex-shrink: 0;
 }
 
 .event-select-empty {
-  color: #5a5a5a;
+  color: var(--faint-foreground);
   font-size: 0.85rem;
 }
 
@@ -61,8 +61,8 @@
   right: 0;
   max-height: 360px;
   overflow-y: auto;
-  background: #2a2a2a;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--popover);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 8px;
   padding: 4px 0;
   z-index: 100;
@@ -80,12 +80,12 @@
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  color: #e5e5e5;
+  color: var(--foreground);
   transition: background 0.12s;
 }
 
 .event-select-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 .event-select-item--active {
