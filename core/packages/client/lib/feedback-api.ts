@@ -175,3 +175,12 @@ export async function replyToFeedback(id: number, body: string): Promise<{ id: n
   });
   return handle<{ id: number }>(r);
 }
+
+/** 删一条回复(本人或 admin)。 */
+export async function deleteFeedbackMessage(feedbackId: number, messageId: number): Promise<void> {
+  const r = await fetch(apiUrl(`/v1/feedback/${feedbackId}/message/${messageId}`), {
+    method: 'DELETE',
+    headers: authHeaders(false),
+  });
+  await handle<{ ok: boolean }>(r);
+}
