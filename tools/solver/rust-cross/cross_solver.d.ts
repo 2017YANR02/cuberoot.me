@@ -215,6 +215,11 @@ export class HtrSolverWasm {
 export class PocketSolverWasm {
     free(): void;
     [Symbol.dispose](): void;
+    /**
+     * 用预算好的全空间距离表(3,674,160 字节)即时构造(秒算:静态资源直载,
+     * 跳过现场 BFS)。worker 拉 opt_pocket.bin.gz 解压后传入。
+     */
+    static from_dist(dist: Uint8Array): PocketSolverWasm;
     constructor();
     /**
      * 整解最优 HTM 步数(0..=11)。
@@ -238,6 +243,11 @@ export class PocketSolverWasm {
 export class PyraminxSolverWasm {
     free(): void;
     [Symbol.dispose](): void;
+    /**
+     * 用预算好的核心全空间距离表(933,120 字节)即时构造(秒算:静态资源直载,
+     * 跳过现场 BFS)。worker 拉 opt_pyraminx.bin.gz 解压后传入。
+     */
+    static from_dist(dist: Uint8Array): PyraminxSolverWasm;
     constructor();
     /**
      * 整解最优 HTM 步数(0..=15,含 tips)。非法记号 → Err(JS 异常)。
@@ -284,6 +294,11 @@ export class Roux223SolverWasm {
 export class SkewbSolverWasm {
     free(): void;
     [Symbol.dispose](): void;
+    /**
+     * 用预算好的全空间距离表(3,149,280 字节)即时构造(秒算:静态资源直载,
+     * 跳过现场 BFS)。worker 拉 opt_skewb.bin.gz 解压后传入。
+     */
+    static from_dist(dist: Uint8Array): SkewbSolverWasm;
     constructor();
     /**
      * 整解最优步数(0..=11,每 120° 一步)。非法记号 → Err(JS 异常)。
@@ -378,15 +393,18 @@ export interface InitOutput {
     readonly htrsolverwasm_new: () => number;
     readonly htrsolverwasm_solve: (a: number, b: number, c: number) => [number, number];
     readonly htrsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+    readonly pocketsolverwasm_from_dist: (a: number, b: number) => number;
     readonly pocketsolverwasm_new: () => number;
     readonly pocketsolverwasm_solve: (a: number, b: number, c: number) => number;
     readonly pocketsolverwasm_solve_moves: (a: number, b: number, c: number) => [number, number];
+    readonly pyraminxsolverwasm_from_dist: (a: number, b: number) => number;
     readonly pyraminxsolverwasm_new: () => number;
     readonly pyraminxsolverwasm_solve: (a: number, b: number, c: number) => [number, number, number];
     readonly pyraminxsolverwasm_solve_moves: (a: number, b: number, c: number) => [number, number, number, number];
     readonly roux223solverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => number;
     readonly roux223solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly roux223solverwasm_solve_stage: (a: number, b: number, c: number, d: number) => [number, number];
+    readonly skewbsolverwasm_from_dist: (a: number, b: number) => number;
     readonly skewbsolverwasm_new: () => number;
     readonly skewbsolverwasm_solve: (a: number, b: number, c: number) => [number, number, number];
     readonly skewbsolverwasm_solve_moves: (a: number, b: number, c: number) => [number, number, number, number];
