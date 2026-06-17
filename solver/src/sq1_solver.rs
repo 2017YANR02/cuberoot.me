@@ -286,6 +286,23 @@ fn rank8(p: &[u8; 8]) -> usize {
     r
 }
 
+/// rank8 的逆:排列秩(0..40320)→ [u8;8] 排列(Lehmer / 阶乘进制)。无堆分配(builder 热路径)。
+fn unrank8(mut r: usize) -> [u8; 8] {
+    let mut avail = [0u8, 1, 2, 3, 4, 5, 6, 7];
+    let mut n = 8usize;
+    let mut p = [0u8; 8];
+    for (i, slot) in p.iter_mut().enumerate() {
+        let c = r / FACT8[i];
+        r %= FACT8[i];
+        *slot = avail[c];
+        for j in c..n - 1 {
+            avail[j] = avail[j + 1];
+        }
+        n -= 1;
+    }
+    p
+}
+
 fn invert8(p: &[u8; 8]) -> [u8; 8] {
     let mut inv = [0u8; 8];
     for (i, &v) in p.iter().enumerate() {
@@ -732,6 +749,52 @@ impl Sq1Solver {
             }
         }
         (sid * 40320 + rank8(&ep)) * 2 + s.ml as usize
+    }
+
+    /// corn_idx / edge_idx 的逆:PDB 索引 → 一个代表态。承载件(carry_corner: 角 / 棱)
+    /// 按 rank8 逆摆进 tiling 槽,另一类件填 filler(角填 id 1、棱填 id 0;只需占位且对齐合法)。
+    /// 投影是 move 同态(move(z) 的投影只依赖 z 的投影)⇒ 任一代表态在 BFS 里给出与全态
+    /// builder 逐字节相同的邻居索引(A1 内存安全 builder 用)。round-trip 由 `wca_pdb_unrank_roundtrip` 锁。
+    fn unrank_pdb(&self, idx: usize, carry_corner: bool) -> Sq1State {
+        let ml = (idx & 1) as u8;
+        let rest = idx >> 1;
+        let perm = unrank8(rest % 40320);
+        let sh = self.shapes[rest / 40320];
+        let pats = [(sh >> 12) as u16, (sh & 0xFFF) as u16];
+        let mut layers = [0u64; 2];
+        let mut k = 0usize;
+        for (li, &p) in pats.iter().enumerate() {
+            let mut v = 0u64;
+            let mut i = 0usize;
+            while i < 12 {
+                if (p >> (11 - i)) & 1 == 1 {
+                    // 角:占相邻 2 槽,同 id(奇)。
+                    let id = if carry_corner {
+                        let r = ((perm[k] << 1) | 1) as u64;
+                        k += 1;
+                        r
+                    } else {
+                        1u64
+                    };
+                    v |= id << ((11 - i) * 4);
+                    v |= id << ((11 - (i + 1)) * 4);
+                    i += 2;
+                } else {
+                    // 棱:占 1 槽(偶)。
+                    let id = if carry_corner {
+                        0u64
+                    } else {
+                        let r = (perm[k] << 1) as u64;
+                        k += 1;
+                        r
+                    };
+                    v |= id << ((11 - i) * 4);
+                    i += 1;
+                }
+            }
+            layers[li] = v;
+        }
+        Sq1State { top: layers[0], bottom: layers[1], ml }
     }
 
     /// phase-1 启发值 = 五张投影表取 max(单次融合扫描,一次 shape 查找,
@@ -1344,8 +1407,12 @@ impl Sq1WcaSolver {
     #[cfg(not(target_arch = "wasm32"))]
     fn load_or_build_pdbs(base: &'static Sq1Solver) -> (Vec<u8>, Vec<u8>) {
         let size = SHAPE_COUNT * 40320 * 2;
-        let corn = Self::load_or_build_one("sq1_wca_cornp.bin", size, base, |b, s| b.corn_idx(s));
-        let edge = Self::load_or_build_one("sq1_wca_edgep.bin", size, base, |b, s| b.edge_idx(s));
+        let corn = Self::load_or_build_one("sq1_wca_cornp.bin", size, base, |b, s| b.corn_idx(s), |b, ix| {
+            b.unrank_pdb(ix as usize, true)
+        });
+        let edge = Self::load_or_build_one("sq1_wca_edgep.bin", size, base, |b, s| b.edge_idx(s), |b, ix| {
+            b.unrank_pdb(ix as usize, false)
+        });
         (corn, edge)
     }
 
@@ -1355,6 +1422,7 @@ impl Sq1WcaSolver {
         size: usize,
         base: &'static Sq1Solver,
         idx_of: impl Fn(&Sq1Solver, &Sq1State) -> usize + Sync,
+        unrank: impl Fn(&Sq1Solver, u32) -> Sq1State + Sync,
     ) -> Vec<u8> {
         let path = crate::move_tables::table_path(name);
         if let Ok(bytes) = std::fs::read(&path) {
@@ -1366,8 +1434,8 @@ impl Sq1WcaSolver {
         if std::env::var("SQ1_BUILD_PDB").as_deref() != Ok("1") {
             return Vec::new();
         }
-        eprintln!("[sq1] building {} ({} entries, parallel) ...", name, size);
-        let t = Self::build_proj_wca_par(base, size, Sq1State::SOLVED, idx_of);
+        eprintln!("[sq1] building {} ({} entries, index-frontier parallel) ...", name, size);
+        let t = Self::build_pdb_idx_par(base, size, idx_of, unrank);
         if let Some(dir) = path.parent() {
             let _ = std::fs::create_dir_all(dir);
         }
@@ -1467,6 +1535,71 @@ impl Sq1WcaSolver {
                             .is_ok()
                         {
                             acc.push(y);
+                        }
+                    };
+                    claim(z.slashed(), &mut acc);
+                    let ta = base.legal_rot[pt as usize];
+                    let tb = base.legal_rot[pb as usize];
+                    let mut am = ta;
+                    while am != 0 {
+                        let a = am.trailing_zeros();
+                        am &= am - 1;
+                        let mut bm = tb;
+                        while bm != 0 {
+                            let b = bm.trailing_zeros();
+                            bm &= bm - 1;
+                            if a == 0 && b == 0 {
+                                continue;
+                            }
+                            claim(z.turned(a, b), &mut acc);
+                        }
+                    }
+                    acc
+                })
+                .reduce(Vec::new, |mut a, mut b| {
+                    a.append(&mut b);
+                    a
+                });
+            d += 1;
+            frontier = next;
+        }
+        dist.into_iter().map(|a| a.into_inner()).collect()
+    }
+
+    /// A1:内存安全的大 PDB builder。frontier 存 **u32 投影索引(4B)**而非全态 `Sq1State`(24B),
+    /// 出队时 `unrank` 重建一个代表态再扩展(投影是 move 同态 ⇒ 邻居索引与全态 builder 逐字节相等)。
+    /// 峰值内存 ≈ 表大小 + ~4×frontier(原 ~24×frontier),6× 省 frontier —— 建 >1GB 表(A3 的
+    /// 3.25GB 联合表)不 OOM 的前提(§0.4)。native-only。正确性:`wca_pdb_unrank_roundtrip`(unrank
+    /// 逆)+ `wca_pdb_idx_builder_matches_file`(整表对磁盘旧 builder byte-diff)。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn build_pdb_idx_par(
+        base: &Sq1Solver,
+        size: usize,
+        idx_of: impl Fn(&Sq1Solver, &Sq1State) -> usize + Sync,
+        unrank: impl Fn(&Sq1Solver, u32) -> Sq1State + Sync,
+    ) -> Vec<u8> {
+        use rayon::prelude::*;
+        use std::sync::atomic::{AtomicU8, Ordering};
+        let dist: Vec<AtomicU8> = (0..size).map(|_| AtomicU8::new(255)).collect();
+        let seed = idx_of(base, &Sq1State::SOLVED) as u32;
+        dist[seed as usize].store(0, Ordering::Relaxed);
+        let mut frontier: Vec<u32> = vec![seed];
+        let mut d = 0u8;
+        while !frontier.is_empty() {
+            let next: Vec<u32> = frontier
+                .par_iter()
+                .fold(Vec::new, |mut acc, &ix| {
+                    let z = unrank(base, ix);
+                    let pt = Sq1State::layer_pattern(z.top);
+                    let pb = Sq1State::layer_pattern(z.bottom);
+                    // CAS 255→d+1:首达此索引才入 next,与单线程 BFS 距离一致。
+                    let claim = |y: Sq1State, acc: &mut Vec<u32>| {
+                        let iy = idx_of(base, &y);
+                        if dist[iy]
+                            .compare_exchange(255, d + 1, Ordering::Relaxed, Ordering::Relaxed)
+                            .is_ok()
+                        {
+                            acc.push(iy as u32);
                         }
                     };
                     claim(z.slashed(), &mut acc);
@@ -1968,6 +2101,50 @@ mod tests {
         let par = Sq1WcaSolver::build_proj_wca_par(base, size, seed, |b, s| b.c4_idx(s));
         assert_eq!(serial.len(), par.len());
         assert_eq!(serial, par, "parallel BFS must equal serial BFS byte-for-byte");
+    }
+
+    /// A1:unrank_pdb 必须是 corn_idx / edge_idx 在整个索引空间(296M each)上的精确逆。
+    /// 锁死后 + 投影 move 同态 ⇒ index-frontier builder(build_pdb_idx_par)与全态 builder 等价。
+    #[test]
+    fn wca_pdb_unrank_roundtrip() {
+        let base = Sq1Solver::shared();
+        let size = SHAPE_COUNT * 40320 * 2;
+        for &(carry, name) in &[(true, "corn"), (false, "edge")] {
+            for i in 0..size {
+                let s = base.unrank_pdb(i, carry);
+                let got = if carry { base.corn_idx(&s) } else { base.edge_idx(&s) };
+                assert_eq!(got, i, "{} unrank round-trip failed at index {}", name, i);
+            }
+        }
+    }
+
+    /// A1:index-frontier builder 必须与磁盘上(旧全态 builder 建的)角/棱 PDB 逐字节相等。
+    /// 需 tables/sq1_wca_{corn,edge}p.bin(attempt C 建)。on-demand(慢,~分钟级):
+    /// `CUBE_TABLE_DIR=...\tables cargo test --release --lib wca_pdb_idx_builder_matches_file -- --ignored --nocapture`
+    #[test]
+    #[ignore]
+    fn wca_pdb_idx_builder_matches_file() {
+        let base = Sq1Solver::shared();
+        let size = SHAPE_COUNT * 40320 * 2;
+        for &(carry, name) in &[(true, "sq1_wca_cornp.bin"), (false, "sq1_wca_edgep.bin")] {
+            let path = crate::move_tables::table_path(name);
+            let disk = match std::fs::read(&path) {
+                Ok(b) if b.len() == size => b,
+                _ => {
+                    eprintln!("[idxbuild] {} missing/size-mismatch, skip", name);
+                    continue;
+                }
+            };
+            let built = Sq1WcaSolver::build_pdb_idx_par(
+                base,
+                size,
+                move |b, s| if carry { b.corn_idx(s) } else { b.edge_idx(s) },
+                move |b, ix| b.unrank_pdb(ix as usize, carry),
+            );
+            assert_eq!(built.len(), disk.len());
+            assert!(built == disk, "{}: index-frontier builder != disk (old builder)", name);
+            eprintln!("[idxbuild] {} byte-identical ({} bytes) ✓", name, size);
+        }
     }
 
     /// 大 PDB 效果报告(需 CUBE_TABLE_DIR 指向已建表,否则 h 回退 5 表)。非断言,打印。
