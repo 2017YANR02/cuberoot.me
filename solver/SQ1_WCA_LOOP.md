@@ -5,10 +5,10 @@
 > 按 §0 协议推进 §1 backlog 下一个未完成单元,干完更新两份文件(打勾 + §2 日志 + 笔记的尝试记录)。
 >
 > **终极目标(用户 2026-06-16 定)**:
-> ① 把 SQ1 的 **WCA 12c4 最优求解器**做到**任意真实打乱都够快**(现状:中位秒级,最深 ~22-25 仍 >5min);
+> ① 把 SQ1 的 **WCA 12c4 最优求解器**做到**任意真实打乱都够快**(现状 A3-full 后:5 真深态全解出无超时,最慢 37.86s;残留最难态 ~38s 是纯 phase-1 成本,待 A4);
 > ② 用它接统计管道(精确步数 + 最优打乱)、上 UI;
 > ③ 终极:算出 **`D_WCA`**(WCA 12c4 上帝之数,现可证区间 `[13,27]`)。
-> **允许建 ≤15GB 大表**(盘缓存,`solver/tables/`,gitignored);**严禁 OOM**;**线程一律 8**(用户 2026-06-16 从 12/14 降到 8)。
+> **允许建 ≤15GB 大表**(盘缓存,`solver/tables/`,gitignored);**严禁 OOM**;**线程一律 12**(用户 2026-06-16:14→8→12)。
 
 ---
 
@@ -22,7 +22,7 @@
    - **真正的 OOM 风险是构建瞬时 frontier,不是表本身**。实测:283MB 表用「frontier 存全态」builder 峰值 **~3.6GB**(frontier ≈ 10× 表大小)。⇒ **表 > ~1GB 前必须先把 builder 改成「frontier 存 u32 索引」或 scan-based**(见 §1 EPIC A 的 A1),否则 3GB 表 → ~15-30GB 瞬时 → 必 OOM。
    - **预算公式**:`需要 ≈ 表大小(dist) + 峰值frontier + 2GB余量`。不够就**别建**(红灯,§3 记账等用户),不死等。
    - **一次只建一张表**;**绝不并发两个重进程**(两个 cargo / cargo+建表),严格串行;建完 drop 瞬时再下一张。
-   - **线程(用户 2026-06-16 改:一律 8,原 12/14 已废)**:`RAYON_NUM_THREADS=8` + 编译 `cargo -j 8`(`CARGO_BUILD_JOBS=8`);长跑进程 BelowNormal 低优先级启动(留机器给用户)。
+   - **线程(用户 2026-06-16:14→8→12,当前 12)**:`RAYON_NUM_THREADS=12` + 编译 `cargo -j 12`(`CARGO_BUILD_JOBS=12`);长跑进程 BelowNormal 低优先级启动(留机器给用户)。
    - 长建表用后台 + 盯 WS(`Get-Process`),逼近 `可用-2GB` 立即 abort。
 5. **验收门(全过才算成,这是最优求解器的命门 —— 错的"最优"比慢更糟)**:
    - **正确性**:任何动 `Sq1WcaSolver` 启发式/搜索/表的改动 → ① 浅层(depth ≤4)对**独立暴力 WCA-BFS oracle 逐态相等**;② 解 **replay 回精确 SOLVED**(不是 `h==0`,见笔记 §7 陪集坑)且 token 数 = cost;③ `twist ≤ WCA ≤ 2·twist+1`。
@@ -52,8 +52,9 @@
 - [x] **A0 提交基线**(48a1c7e13,2026-06-16):`Sq1WcaSolver`(sq1_solver.rs +1047 行)+ analyzer `SQ1_WCA_EXACT` 已提交。门绿:`wca_matches_oracle`(5568 态对独立 oracle 全相等,深度 ≤4 证最优)/ `wca_tables_baseline` / `pdb_par_matches_serial` 三测过(56s,大 PDB 各 283MB load OK)。**未跑 `wca_bracket_replay_and_near_opt_cross`**(含 81 真深态,单态 >5min,会 hang —— 见 §3 欠账)。
 - [x] **A1 内存安全的大表 builder**(313ed1e28,2026-06-16):新增 `build_pdb_idx_par`——frontier 存 **u32 投影索引(4B)** 而非全态 Sq1State(24B),出队时 `unrank_pdb` 重建代表态再扩展(投影是 move 同态 ⇒ 邻居索引与全态 builder 逐字节相等)。`unrank8`(rank8 逆,阶乘进制,无堆分配)+ `unrank_pdb`(corn_idx/edge_idx 逆;`base.shapes[sid]` 直接给 shape 免建逆表,承载件按 rank8 摆、另一类填 filler)。corn/edge 的 `load_or_build_one` 已切到它。**门全过**:`wca_pdb_unrank_roundtrip`(全 296M×2 索引 round-trip 绿)+ `wca_pdb_idx_builder_matches_file`(#[ignore],重建 corn+edge 各 296593920 字节 **byte-identical** 磁盘旧表)+ **峰值 WS 1.24GB(旧 ~3.6GB,降 2.9×)** + oracle/baseline/par 绿 + wasm32 check 编过(unrank_pdb 在 wasm 是 dead code warning,同既有 corn_idx/edge_idx,无 deny)。下一步 A3。
 - [x] **A2 先诊断再加料**(2026-06-16,**先于 A1 做**,见 §3):新增运行时门控 profiler(`wca_profile` + `solve_profile`,默认零成本 + node/time cap 不挂),profile 5 条真深态(id 774-778)。**结论**:h 深态只 13-15、gap 7-12(比估计大);首方形深度浅(6-12)⇒「更早转 phase-2」是伪命题;两种慢模式 = phase-1 节点爆炸 + **phase-2 现搜时间槽**(776/778 仅 1-2 万节点却烧 7-15s)。**杠杆 = A3 角×棱联合精确 phase-2 表(一次查表替现搜)**,非更早入口、非单堆 h。详见笔记 §5 诊断 A2。下一步 A1→A3。
-- [~] **A3 加厚 phase-2 —— jsq 联合表已落地+验证,但只算「半成」(9d2e7c4ed,2026-06-16)**:角×棱联合表 `jsq`(`8!·8!·2`=3.25GB,scan-based 建,峰值仅表本身不 OOM,原地转换免 2×)替 `sq_h_wca` 的 `max(csq,esq)`。**正确性门全过**:`max(csq,esq) ≤ jsq ≤ 真距离`(可采纳)+ oracle 5568 态逐字节(最优性保持)+ scan 驱动==frontier + 配对 action 健全。**效果**:777 >5min→35.6s、775 1.3s。**但 <30s-all 门未过**:774/778/776 仍 >90s。profile 定论(笔记 §5「诊断 A3-后」):jsq 只是**更强剪枝启发**,phase-2 仍是搜索(分支~145)⇒ **没消灭 phase-2 时间槽**(776/778,461-753µs/节点),且 phase-1 爆炸(774/777,~23µs/节点 ×9-17/bound)jsq 根本碰不到。⇒「全 <30s」是 **A3-full(13GB 精确 phase-2 查表,杀 776/778)+ A4(phase-1,杀 774/777)** 的多单元目标。**下一步取舍见 §3,等用户拍板**(A3-full 需 ~15GB 空闲、当前仅 5.5GB;A4 是 soft-gate;或接受部分最优 §6.6#4)。
-- [ ] **A4(按需)更强 phase-1 表**:若 A3 后仍有态慢 → 试 coupled phase-1 PDB(角 + 棱归层 mask 等,≤15GB 预算内)。**先在样本上估收益再建**(别又建一个没用的大表,尝试 C 教训)。⏸ soft-gate:建前在 §3 写清表设计 + 内存预算,等用户点头(15GB 级投入)。
+- [x] **A3 加厚 phase-2 —— ✅ 完成(jsq 半成 9d2e7c4ed → A3-full 精确表收尾 aa93699b7,2026-06-16)**:角×棱联合表 `jsq`(`8!·8!·2`=3.25GB,scan-based 建,峰值仅表本身不 OOM,原地转换免 2×)替 `sq_h_wca` 的 `max(csq,esq)`。**正确性门全过**:`max(csq,esq) ≤ jsq ≤ 真距离`(可采纳)+ oracle 5568 态逐字节(最优性保持)+ scan 驱动==frontier + 配对 action 健全。**效果**:777 >5min→35.6s、775 1.3s。**但 <30s-all 门未过**:774/778/776 仍 >90s。profile 定论(笔记 §5「诊断 A3-后」):jsq 只是**更强剪枝启发**,phase-2 仍是搜索(分支~145)⇒ **没消灭 phase-2 时间槽**(776/778,461-753µs/节点),且 phase-1 爆炸(774/777,~23µs/节点 ×9-17/bound)jsq 根本碰不到。⇒「全 <30s」是 **A3-full(13GB 精确 phase-2 查表,杀 776/778)+ A4(phase-1,杀 774/777)** 的多单元目标。
+  **→ A3-full 收尾(本轮,详见 §3 + 笔记 §5「工程 A3-full」)**:补 per-layer shape 位的 13GB 精确表 `jsq_full` 建成(12 线程 ~52min,scan-based + 原地转换,无 OOM),phase-2 变 **O(1) 精确查表 + 梯度重建**(无搜索)。`wca_a3_jsqfull_exact`(3104 态 == 独立精确)+ oracle 5568 绿;`wca_a3_deep_timing` **5 真深态零超时**:774=22@6.7s / 775=19@0.26s / 776=22@37.86s / 777=20@0.52s / 778=22@5.0s。**惊喜:精确 h 顺带驯服 phase-1 爆炸(774/777 从估 >5min→秒级)**,推翻 jsq-lite 的悲观外推。残留 776@37.86s 是纯 phase-1 成本 ⇒ A4。
+- [ ] **A4(按需)更强 phase-1 表**:A3-full 后**残留只剩 776 @ 37.86s**(纯 phase-1 成本,其余 4 条均 ≤6.7s)。若要再压 → 试 coupled phase-1 PDB(角 + 棱归层 mask 等,≤15GB 预算内)。**先在样本上估收益再建**(别又建一个没用的大表,尝试 C 教训;且 A3-full 已让最难态 <40s,A4 性价比要重估)。⏸ soft-gate:建前在 §3 写清表设计 + 内存预算,等用户点头(15GB 级投入)。
 
 ### EPIC B — 接统计管道(A 达标后)
 - [ ] **B1 精确步数进管道**:`sq1_analyzer` 的 `SQ1_WCA_EXACT=1` 已出 `id,wca_exact`。在 `update_puzzle_stats.ps1` 加 SQ1 精确档(或精确/近最优双档),填它的 TODO。深尾态用 timeout→near-opt 上界兜底(标注)。**不在 loop 跑全量灌注(📦 MANUAL)**。
@@ -79,6 +80,7 @@
 - 2026-06-16 **A2 诊断**(先于 A1,见 §3 重排理由):加 bounded profiler,profile 5 真深态;定论瓶颈 = 弱 h + phase-2 现搜时间槽,**杠杆 = A3 联合精确 phase-2 表**。native 测过、wasm lib check 过。下一步 A1(为 A3 铺内存安全 builder)。
 - 2026-06-16 **A1 内存安全 builder**(313ed1e28):`build_pdb_idx_par`(u32 frontier + `unrank8`/`unrank_pdb`),corn/edge 切过去;round-trip + byte-diff(两表逐字节同旧表)双门绿,峰值 WS 3.6GB→1.24GB。下一步 A3(联合精确 phase-2 表)。
 - 2026-06-16 **A3 jsq 联合 phase-2 表(半成)**(9d2e7c4ed):角×棱联合 3.25GB 表替 sq_h_wca,scan-based 建(8 线程 ~65min,峰值仅表本身 + 原地转换免 2×)。正确性全绿(可采纳/支配性 + oracle 5568 逐字节 + 最优性保持)。效果 777 >5min→35.6s、775 1.3s,但 774/776/778 仍 >90s。profile 定论:jsq 是更强剪枝但没消灭 phase-2 时间槽(776/778)、碰不到 phase-1 爆炸(774/777)。**<30s-all 待 A3-full + A4,§3 取舍等用户。** 另:用户改线程 14→8(全局 CLAUDE.md + §0.4)。
+- 2026-06-16 **A3-full 精确 phase-2 表收尾**(aa93699b7 码 + 本轮建表+实测;线程 8→12):13GB `jsq_full`(补 per-layer shape 位的精确双射)建成(`build_jsq_full_only`,12 线程 ~52min,scan-based + 原地转换,无 OOM)⇒ phase-2 变 O(1) 精确查表 + 梯度重建(无搜索)。门全绿:`wca_a3_jsqfull_exact`(3104 态 == 独立精确)+ oracle 5568 + `wca_a3_deep_timing` **5 真深态零超时**(774=22@6.7s 775=19@0.26s 776=22@37.86s 777=20@0.52s 778=22@5.0s)。**意外:精确 h 顺带杀了 phase-1 爆炸(774/777 秒级)**,推翻 jsq-lite 悲观外推。残留 776@37.86s 纯 phase-1 → A4(soft-gate)。**EPIC A 达标,下一步 EPIC B(精确步数进管道)。**
 
 ---
 
@@ -106,7 +108,7 @@
   2. **A3-full(13GB 精确 phase-2)**:加 per-layer shape 位(4 combo × 8!×8!×2)⇒ phase-2 变 O(1) 精确查表(无搜索)⇒ 杀 776/778。但 **(a) 碰不到 phase-1 爆炸(774/777 仍慢)**;(b) 13GB 建表需 ~15GB 空闲(当前仅 5.5GB,得先腾内存);(c) 单独不达 <30s-all。
   3. **A4(更强 phase-1 PDB)**:压 774/777 的 phase-1 爆炸。soft-gate(≤15GB 投入需点头),且尝试 C 警告强耦合 puzzle 的 max-PDB 收益存疑、候选「角+棱归层 mask」~21GB 超预算。**先在样本估收益再建。**
   - 达「全深态 <30s」需 **2+3 一起**(~28-34GB 表 + 数小时建表 + A4 收益不确定)。判断:为最后几 % 最难态投这么多,性价比低 ⇒ 倾向路 1。
-  - **用户选了路 2(A3-full,2026-06-16)**。代码已落地+提交(`aa93699b7`):精确态索引(补 shape 位的双射)+ `build_jsq_full`(scan-based,真实方形 move)+ phase-2 改 O(1) 查表 + `p2_reconstruct` 梯度重建(无搜索)+ jsq_full 在位免载 jsq。**廉价门全绿**:`full_idx_unrank_roundtrip`(2M 采样 + 3104 BFS 态双射)、scan 驱动、配对、wasm32(JSQ_FULL_SIZE cfg-gate native:13e9 超 wasm 32-bit usize)。**安全:jsq_full.bin 不存在时零行为变化(优雅回退),故未验证也不影响现求解。** ⏳ **建表卡内存**:13GB dist 需 ~13.5GB 物理空闲(当前仅 9GB,用户在用机器),没法分块/mmap(随机 CAS 跨 13GB 会狂刷 pagefile)。**待用户腾 ~5GB → 跑 `build_jsq_full_only`(精简,驻留 ~13GB,8 线程低优先级 ~1-2h)→ `wca_a3_jsqfull_exact`(jsq_full==独立精确)+ oracle + deep_timing → 全过更新文档收尾。**
+  - **用户选了路 2(A3-full,2026-06-16)**。代码已落地+提交(`aa93699b7`):精确态索引(补 shape 位的双射)+ `build_jsq_full`(scan-based,真实方形 move)+ phase-2 改 O(1) 查表 + `p2_reconstruct` 梯度重建(无搜索)+ jsq_full 在位免载 jsq。**廉价门全绿**:`full_idx_unrank_roundtrip`(2M 采样 + 3104 BFS 态双射)、scan 驱动、配对、wasm32(JSQ_FULL_SIZE cfg-gate native:13e9 超 wasm 32-bit usize)。**安全:jsq_full.bin 不存在时零行为变化(优雅回退),故未验证也不影响现求解。** ✅ **已收尾(2026-06-16,用户腾内存到 ~17GB 后)**:`build_jsq_full_only` 12 线程 ~52min 建成 13GB 表(无 OOM);`wca_a3_jsqfull_exact`(3104 态 == 独立精确)+ oracle + `wca_a3_deep_timing`(5 真深态零超时,最慢 776@37.86s)全过。**结果超预期**:不只杀 phase-2 时间槽(776/778),精确 h 还顺带驯服 phase-1 爆炸(774/777 从估 >5min→6.7s/0.52s),推翻路 2「碰不到 phase-1」的预判。**EPIC A 达标**(残留 776@37.86s 纯 phase-1,留 A4 按需)。⚠️ 部署注意:驻留 13GB 对服务器太重,EPIC C 的 `/scramble/solver` 须走云 daemon / 部分最优(路 1),不能浏览器/服务器常驻这张表。
 
 ---
 
