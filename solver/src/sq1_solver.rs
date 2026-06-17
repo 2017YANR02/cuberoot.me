@@ -326,6 +326,66 @@ fn jidx(cp: &[u8; 8], ep: &[u8; 8], ml: u8) -> usize {
     (rank8(cp) * 40320 + rank8(ep)) * 2 + ml as usize
 }
 
+// === A3-full:精确方形态 ↔ 13e9 索引(jsq_full,精确 phase-2 查表)===
+// jsq 的 (cp,ep,ml) 投影忘了每层 A/B shape 偏移 ⇒ 只到陪集。补回 shape_combo(每层 SQ_PAT_A/B
+// 各 1 bit,共 4 combo)即得**精确态双射** ⇒ phase-2 一次查表到精确、无搜索(杀 phase-2 时间槽)。
+
+/// 精确方形态联合表大小:shape_combo(4)× 角 perm(8!)× 棱 perm(8!)× ml(2)= 13,005,619,200。
+/// **native-only**:13e9 超 wasm 32-bit usize(const-eval 溢出),且 jsq_full 全走 native 路径
+/// (full_idx/full_unrank 不引用它,wasm 安全)。
+#[cfg(not(target_arch = "wasm32"))]
+const JSQ_FULL_SIZE: usize = 4 * 40320 * 40320 * 2;
+
+/// 精确方形态 → 索引:`(((sc*8! + rank8(cp))*8! + rank8(ep))*2 + ml`,`sc = top_B*2 + bot_B`
+/// (层 shape == SQ_PAT_B ? 1 : 0)。s 必须方形。
+#[inline]
+fn full_idx(s: &Sq1State) -> usize {
+    let tb = (Sq1State::layer_pattern(s.top) == SQ_PAT_B) as usize;
+    let bb = (Sq1State::layer_pattern(s.bottom) == SQ_PAT_B) as usize;
+    let (cp, ep) = sq_proj_arrays(s);
+    (((tb * 2 + bb) * 40320 + rank8(&cp)) * 40320 + rank8(&ep)) * 2 + s.ml as usize
+}
+
+/// 按 shape pattern 把 4 角 + 4 棱(scan 序,值 = id>>1 ∈ 0..7)摆回一层 u64。
+/// 角 id = (c<<1)|1、棱 id = e<<1(0..3=top 件、4..7=bottom 件,自动还原)。
+fn build_square_layer(pattern: u16, corners: &[u8; 4], edges: &[u8; 4]) -> u64 {
+    let mut v = 0u64;
+    let (mut ci, mut ei, mut i) = (0usize, 0usize, 0usize);
+    while i < 12 {
+        if (pattern >> (11 - i)) & 1 == 1 {
+            let id = ((corners[ci] << 1) | 1) as u64;
+            ci += 1;
+            v |= id << ((11 - i) * 4);
+            v |= id << ((11 - (i + 1)) * 4);
+            i += 2;
+        } else {
+            let id = (edges[ei] << 1) as u64;
+            ei += 1;
+            v |= id << ((11 - i) * 4);
+            i += 1;
+        }
+    }
+    v
+}
+
+/// 索引 → 精确方形态(full_idx 逆)。每个索引都映射到一个合法方形态(build_square_layer 按 pattern
+/// 摆 ⇒ layer_pattern 恒 = 该 SQ_PAT);可达性由 BFS 决定(不可达留 255)。
+fn full_unrank(idx: usize) -> Sq1State {
+    let ml = (idx & 1) as u8;
+    let rest = idx >> 1;
+    let ep = unrank8(rest % 40320);
+    let rest2 = rest / 40320;
+    let cp = unrank8(rest2 % 40320);
+    let sc = rest2 / 40320; // 0..4
+    let top_pat = if (sc >> 1) & 1 == 1 { SQ_PAT_B } else { SQ_PAT_A };
+    let bot_pat = if sc & 1 == 1 { SQ_PAT_B } else { SQ_PAT_A };
+    Sq1State {
+        top: build_square_layer(top_pat, &[cp[0], cp[1], cp[2], cp[3]], &[ep[0], ep[1], ep[2], ep[3]]),
+        bottom: build_square_layer(bot_pat, &[cp[4], cp[5], cp[6], cp[7]], &[ep[4], ep[5], ep[6], ep[7]]),
+        ml,
+    }
+}
+
 /// 方形态投影:角/棱各 8 件在扫描序(top 槽 0..11 → bottom)下的排列(id>>1 ∈ 0..7)。
 fn sq_proj_arrays(s: &Sq1State) -> ([u8; 8], [u8; 8]) {
     let mut cp = [0u8; 8];
@@ -1449,6 +1509,10 @@ pub struct Sq1WcaSolver {
     /// 比 csq/esq(角/棱各自 max)强:`max(csq,esq) ≤ jsq ≤ 真距离` ⇒ phase-2 启发更紧、搜索坍缩。
     /// 盘缓存 tables/sq1_wca_jsq.bin;缺表且非 SQ1_BUILD_PDB=1 时空,sq_h_wca 回退 csq/esq(wasm 恒空)。
     jsq: Vec<u8>,
+    /// A3-full:**精确**方形态(shape_combo × 角 × 棱 × ml,13e9 = 13GB)WCA 距离到 solved。
+    /// 在位时 phase-2 = O(1) 精确查表 + 梯度重建(无搜索)⇒ 消灭 phase-2 时间槽。盘缓存
+    /// tables/sq1_wca_jsqfull.bin,门控 SQ1_BUILD_PDB=1。在位则免载 jsq(省 3.25GB);wasm 恒空。
+    jsq_full: Vec<u8>,
 }
 
 impl Default for Sq1WcaSolver {
@@ -1503,8 +1567,10 @@ impl Sq1WcaSolver {
         let csq = build_sq_wca(&sig, &rhoc);
         let esq = build_sq_wca(&tau, &rhoe);
         let (cornp, edgep) = Self::load_or_build_pdbs(base);
-        let jsq = Self::load_or_build_jsq();
-        Sq1WcaSolver { base, comb, c4, e4, c4b, e4b, csq, esq, cornp, edgep, jsq }
+        let jsq_full = Self::load_or_build_jsq_full();
+        // jsq_full 精确(覆盖 jsq 的陪集启发)⇒ 在位则免载 3.25GB jsq。
+        let jsq = if jsq_full.is_empty() { Self::load_or_build_jsq() } else { Vec::new() };
+        Sq1WcaSolver { base, comb, c4, e4, c4b, e4b, csq, esq, cornp, edgep, jsq, jsq_full }
     }
 
     /// 大 PDB(角/棱全 8 件)加载或按需构建。盘缓存命中即直读;缺表且 `SQ1_BUILD_PDB=1`
@@ -1610,6 +1676,74 @@ impl Sq1WcaSolver {
             }
             for (rc, re) in rot {
                 buf.push(jidx(&apply_action(&cp, rc), &apply_action(&ep, re), ml));
+            }
+        })
+    }
+
+    /// A3-full 精确方形态联合表(13e9 = 13GB)加载或按需构建。盘缓存命中即直读;缺表且
+    /// `SQ1_BUILD_PDB=1` 时 scan-based BFS 构建并落盘(一次性 ~1-2h@8 线程,峰值仅表本身 13GB ⇒
+    /// 须 ~15GB 空闲,§0.4),否则返回空(回退 jsq/csq-esq)。wasm 不编译此路径。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn load_or_build_jsq_full() -> Vec<u8> {
+        let path = crate::move_tables::table_path("sq1_wca_jsqfull.bin");
+        if let Ok(bytes) = std::fs::read(&path) {
+            if bytes.len() == JSQ_FULL_SIZE {
+                eprintln!("[sq1] loaded {} ({} bytes)", path.display(), bytes.len());
+                return bytes;
+            }
+        }
+        if std::env::var("SQ1_BUILD_PDB").as_deref() != Ok("1") {
+            return Vec::new();
+        }
+        eprintln!("[sq1] building sq1_wca_jsqfull.bin ({} entries, scan-based, exact phase-2) ...", JSQ_FULL_SIZE);
+        let t = Self::build_jsq_full(Sq1Solver::shared());
+        if let Some(dir) = path.parent() {
+            let _ = std::fs::create_dir_all(dir);
+        }
+        match std::fs::write(&path, &t) {
+            Ok(_) => eprintln!("[sq1] wrote {} ({} bytes)", path.display(), t.len()),
+            Err(e) => eprintln!("[sq1] WARN failed to write {}: {}", path.display(), e),
+        }
+        t
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn load_or_build_jsq_full() -> Vec<u8> {
+        Vec::new()
+    }
+
+    /// jsq_full 精确方形态 BFS:scan-based(峰值仅表本身 13GB,in-place 转换无 2×)。seed =
+    /// full_idx(SOLVED)。边 = **真实方形 move**:slash(方形结果)+ 方形保形旋转 turn(a,b)≠0
+    /// (各 cost1),直接对精确态算 `full_idx` —— 与 `p2_dfs_wca` 子节点生成同语义 ⇒ 表值 = 真精确
+    /// phase-2 WCA 距离(无陪集近似)。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn build_jsq_full(base: &Sq1Solver) -> Vec<u8> {
+        scan_bfs_par(JSQ_FULL_SIZE, full_idx(&Sq1State::SOLVED), |i, buf| {
+            let s = full_unrank(i);
+            let c = s.slashed();
+            if c.is_square_shape() {
+                buf.push(full_idx(&c));
+            }
+            let pt = Sq1State::layer_pattern(s.top);
+            let pb = Sq1State::layer_pattern(s.bottom);
+            let ta = base.legal_rot[pt as usize];
+            let tb = base.legal_rot[pb as usize];
+            let mut am = ta;
+            while am != 0 {
+                let a = am.trailing_zeros();
+                am &= am - 1;
+                let mut bm = tb;
+                while bm != 0 {
+                    let b = bm.trailing_zeros();
+                    bm &= bm - 1;
+                    if a == 0 && b == 0 {
+                        continue;
+                    }
+                    let c = s.turned(a, b);
+                    if c.is_square_shape() {
+                        buf.push(full_idx(&c));
+                    }
+                }
             }
         })
     }
@@ -1907,6 +2041,9 @@ impl Sq1WcaSolver {
     /// s 必须方形(sq_proj_arrays 对非方形 debug_assert)。
     #[inline]
     fn sq_h_wca(&self, s: &Sq1State) -> u8 {
+        if !self.jsq_full.is_empty() {
+            return self.jsq_full[full_idx(s)]; // 精确(可达态 = 真 phase-2 距离;不可达 255)
+        }
         let (cp, ep) = sq_proj_arrays(s);
         if !self.jsq.is_empty() {
             return self.jsq[jidx(&cp, &ep, s.ml)];
@@ -1980,6 +2117,49 @@ impl Sq1WcaSolver {
         false
     }
 
+    /// jsq_full 精确表的**梯度重建**:从方形态 s 沿 `jsq_full` 递减 1 选 move(slash / 方形保形旋转)
+    /// 走到精确 SOLVED,append d 个 token = 最优尾解(无搜索)。精确距离 ⇒ 每步必有递减 move(BFS 性质)。
+    /// 非 cfg-gate:不用 native-only API,wasm 下 jsq_full 恒空不会被调,但调用点在 ⇒ 非死码。
+    fn p2_reconstruct(&self, mut s: Sq1State, mut d: u8, path: &mut Vec<Sq1Token>) {
+        while d > 0 {
+            let next = d - 1;
+            let c = s.slashed();
+            if c.is_square_shape() && self.jsq_full[full_idx(&c)] == next {
+                path.push(Sq1Token::Slash);
+                s = c;
+                d = next;
+                continue;
+            }
+            let pt = Sq1State::layer_pattern(s.top);
+            let pb = Sq1State::layer_pattern(s.bottom);
+            let ta = self.base.legal_rot[pt as usize];
+            let tb = self.base.legal_rot[pb as usize];
+            let mut found = false;
+            let mut am = ta;
+            'outer: while am != 0 {
+                let a = am.trailing_zeros();
+                am &= am - 1;
+                let mut bm = tb;
+                while bm != 0 {
+                    let b = bm.trailing_zeros();
+                    bm &= bm - 1;
+                    if a == 0 && b == 0 {
+                        continue;
+                    }
+                    let c = s.turned(a, b);
+                    if c.is_square_shape() && self.jsq_full[full_idx(&c)] == next {
+                        path.push(Sq1Token::Turn(ser_amt(a), ser_amt(b)));
+                        s = c;
+                        d = next;
+                        found = true;
+                        break 'outer;
+                    }
+                }
+            }
+            assert!(found, "p2_reconstruct: no gradient move (jsq_full inconsistent)");
+        }
+    }
+
     /// 方形态精确 WCA 尾解(≤ cap 才 Some;成功时 path 追加尾解)。memo 跨 phase-1 节点复用。
     /// **memo 键 = 精确态**(非 canon_key):WCA 下旋转计 1 步,不同对位距离不同。
     fn p2_dist_le_wca(
@@ -1989,6 +2169,15 @@ impl Sq1WcaSolver {
         memo: &mut P2Memo,
         path: &mut Vec<Sq1Token>,
     ) -> Option<u8> {
+        // jsq_full 在位 ⇒ phase-2 = O(1) 精确查表 + 梯度重建,无搜索(消灭 phase-2 时间槽)。
+        if !self.jsq_full.is_empty() {
+            let d = self.jsq_full[full_idx(s)];
+            if d > cap {
+                return None; // 含 d==255(不在方形子群轨道 ⇒ 无纯方形尾解,dfs 继续 shape-shift)
+            }
+            self.p2_reconstruct(*s, d, path);
+            return Some(d);
+        }
         let h0 = self.sq_h_wca(s);
         if h0 > cap {
             return None;
@@ -2973,6 +3162,128 @@ mod tests {
         }
         eprintln!("jsq actions sound: {} transitions over {} square states", checked, seen.len());
         assert!(checked > 1000, "too few transitions: {}", checked);
+    }
+
+    /// A3-full 索引双射:`full_idx(full_unrank(i))==i`(采样含 0/SOLVED/末尾/lcg 随机/4 个 shape_combo)
+    /// + `full_unrank(full_idx(s))==s`(BFS 枚举方形态)+ full_unrank(i) 恒方形。锁 13e9 索引正确性,
+    /// 免建表(~1-2h 建表前必过 —— 索引错会白建)。
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    fn full_idx_unrank_roundtrip() {
+        let solved = full_idx(&Sq1State::SOLVED);
+        let mut probes: Vec<usize> = vec![0, solved, JSQ_FULL_SIZE - 1];
+        let mut x = 0x9e3779b97f4a7c15u64;
+        for _ in 0..2_000_000 {
+            x = x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            probes.push((x as usize) % JSQ_FULL_SIZE);
+        }
+        for sc in 0..4usize {
+            probes.push(((sc * 40320 + 123) * 40320 + 456) * 2 + 1);
+        }
+        for &i in &probes {
+            let s = full_unrank(i);
+            assert!(s.is_square_shape(), "full_unrank({}) not square", i);
+            assert_eq!(full_idx(&s), i, "idx roundtrip at {}", i);
+        }
+        use std::collections::{HashSet, VecDeque};
+        let mut seen: HashSet<(u64, u64, u8)> = HashSet::new();
+        let mut q: VecDeque<(Sq1State, u32)> = VecDeque::new();
+        let s0 = Sq1State::SOLVED;
+        seen.insert((s0.top, s0.bottom, s0.ml));
+        q.push_back((s0, 0));
+        let mut n = 0;
+        while let Some((z, depth)) = q.pop_front() {
+            assert_eq!(full_unrank(full_idx(&z)), z, "state roundtrip");
+            n += 1;
+            if depth < 4 {
+                let mut push = |r: Sq1State, q: &mut VecDeque<(Sq1State, u32)>| {
+                    if r.is_square_shape() && seen.insert((r.top, r.bottom, r.ml)) {
+                        q.push_back((r, depth + 1));
+                    }
+                };
+                for a in 0..12u32 {
+                    for b in 0..12u32 {
+                        if a == 0 && b == 0 {
+                            continue;
+                        }
+                        push(z.turned(a, b), &mut q);
+                    }
+                }
+                let c = z.slashed();
+                push(c, &mut q);
+            }
+        }
+        eprintln!("full_idx roundtrip: {} probes + {} BFS square states ✓", probes.len(), n);
+        assert!(n > 500);
+    }
+
+    /// A3-full 建表后门(#[ignore],需 jsq_full 已建/载):jsq_full[SOLVED]=0 + 采样方形态
+    /// `jsq_full == 独立精确 phase-2`(p2_exact_indep 用 csq/esq,不碰 jsq_full)⇒ **精确**(非仅可采纳)。
+    /// 跑:`CUBE_TABLE_DIR=...\tables cargo test --release --lib wca_a3_jsqfull_exact -- --ignored --nocapture`
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    #[ignore]
+    fn wca_a3_jsqfull_exact() {
+        use std::collections::{HashSet, VecDeque};
+        let w = Sq1WcaSolver::shared();
+        assert!(!w.jsq_full.is_empty(), "jsq_full not loaded; build with SQ1_BUILD_PDB=1 first");
+        assert_eq!(w.jsq_full[full_idx(&Sq1State::SOLVED)], 0, "jsq_full[SOLVED] must be 0");
+        let mut seen: HashSet<(u64, u64, u8)> = HashSet::new();
+        let mut q: VecDeque<(Sq1State, u32)> = VecDeque::new();
+        let s0 = Sq1State::SOLVED;
+        seen.insert((s0.top, s0.bottom, s0.ml));
+        q.push_back((s0, 0));
+        let mut n = 0u32;
+        while let Some((z, depth)) = q.pop_front() {
+            let d = w.jsq_full[full_idx(&z)];
+            let exact = p2_exact_indep(w, z);
+            assert_eq!(d, exact, "jsq_full {} != independent exact {} (depth {})", d, exact, depth);
+            n += 1;
+            if depth < 4 {
+                let mut push = |r: Sq1State, q: &mut VecDeque<(Sq1State, u32)>| {
+                    if r.is_square_shape() && seen.insert((r.top, r.bottom, r.ml)) {
+                        q.push_back((r, depth + 1));
+                    }
+                };
+                for a in 0..12u32 {
+                    for b in 0..12u32 {
+                        if a == 0 && b == 0 {
+                            continue;
+                        }
+                        push(z.turned(a, b), &mut q);
+                    }
+                }
+                push(z.slashed(), &mut q);
+            }
+        }
+        eprintln!("jsq_full EXACT over {} square states ✓", n);
+        assert!(n > 500);
+    }
+
+    /// A3-full **精简建表**(#[ignore]):只建 + 写 jsq_full,**不走全 Sq1WcaSolver::new()**
+    /// (免载 cornp/edgep/小表)⇒ 驻留仅 base + 13GB dist ≈ 13.1GB(比 new() 触发省 ~0.6GB),
+    /// 内存紧时用它建。已存在(尺寸对)则跳过。
+    /// 跑:`CUBE_TABLE_DIR=...\tables RAYON_NUM_THREADS=8 cargo test --release --lib build_jsq_full_only -- --ignored --nocapture`
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    #[ignore]
+    fn build_jsq_full_only() {
+        let path = crate::move_tables::table_path("sq1_wca_jsqfull.bin");
+        if let Ok(b) = std::fs::read(&path) {
+            if b.len() == JSQ_FULL_SIZE {
+                eprintln!("[sq1] jsq_full already built ({} bytes), skip", b.len());
+                return;
+            }
+        }
+        eprintln!("[sq1] building jsq_full ({} entries, scan-based, lean) ...", JSQ_FULL_SIZE);
+        let t = Sq1WcaSolver::build_jsq_full(Sq1Solver::shared());
+        if let Some(dir) = path.parent() {
+            let _ = std::fs::create_dir_all(dir);
+        }
+        std::fs::write(&path, &t).expect("write jsq_full");
+        eprintln!("[sq1] wrote {} ({} bytes)", path.display(), t.len());
+        assert_eq!(t.len(), JSQ_FULL_SIZE);
+        assert_eq!(t[full_idx(&Sq1State::SOLVED)], 0, "jsq_full[SOLVED]=0");
     }
 
     /// 建表后门(#[ignore],需 jsq 已建/加载):jsq[solved]=0、采样方形态 `max(csq,esq) ≤ jsq ≤ 精确`
