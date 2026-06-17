@@ -300,7 +300,7 @@ function EventRoundsList({
                   {showComp && cmp && (
                     <>
                       <Link
-                        {...compLinkProps(cmp.id, { event: eventId, round: r.round_type_id })}
+                        {...compLinkProps(cmp.id, { event: eventId, round: r.round_type_id, view: 'result' })}
                         className="wp-bycomp-name"
                       ><CompCell compId={cmp.id} compName={cmp.name} isZh={isZh} /></Link>
                       <div className="wp-cell-comp-date">{formatDateRangeIso(cmp.start_date, cmp.end_date)}</div>

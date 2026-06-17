@@ -182,10 +182,11 @@
     margin-top: -1rem;
     margin-bottom: 1.75rem;
   }
-  /* 窄屏:标签按自身宽度横向滚动(6 个标签 + 英文长名在 360px 放不下,等宽 grid 会撑爆),
-     滚动条隐藏;右端时效注脚省略(信息冗余,标签自解释)。 */
+  /* 窄屏:标签按自身宽度居中(放得下就居中,放不下才横向滚动,滚动条隐藏);右端时效
+     注脚保留,与电脑端一致。 */
   .ongoing-comps-tabs {
     grid-auto-columns: max-content;
+    justify-content: center;
     overflow-x: auto;
     scrollbar-width: none;
   }
@@ -194,5 +195,5 @@
     padding: 0.55rem 0.6rem;
     letter-spacing: 0.03em;
   }
-  .ongoing-comps-scope { display: none; }
+  .ongoing-comps-scope { padding-left: 0.5rem; }
 }

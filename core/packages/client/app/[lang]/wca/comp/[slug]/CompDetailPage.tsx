@@ -544,7 +544,7 @@ export default function CompDetailPage() {
   );
   const [explicitView, setExplicitView] = useQueryState(
     'view',
-    parseAsStringEnum<'live' | 'psych' | 'schedule' | 'podium'>(['live', 'psych', 'schedule', 'podium']).withOptions({ history: 'push', scroll: false }),
+    parseAsStringEnum<'result' | 'psych' | 'schedule' | 'podium'>(['result', 'psych', 'schedule', 'podium']).withOptions({ history: 'push', scroll: false }),
   );
   const [psychEventParam, setPsychEventParam] = useQueryState(
     'psychEvent',
@@ -599,10 +599,15 @@ export default function CompDetailPage() {
     | { kind: 'all'; number: number };
   const [modal, setModal] = useState<ModalState | null>(null);
   const [compInfo, setCompInfo] = useState<CompInfo | null>(null);
+  const [compInfoSettled, setCompInfoSettled] = useState(false);
   useEffect(() => {
     if (!slug) return;
     let cancel = false;
-    fetchCompInfo(slug).then(info => { if (!cancel) setCompInfo(info); }).catch(() => {});
+    setCompInfoSettled(false);
+    fetchCompInfo(slug)
+      .then(info => { if (!cancel) setCompInfo(info); })
+      .catch(() => {})
+      .finally(() => { if (!cancel) setCompInfoSettled(true); });
     return () => { cancel = true; };
   }, [slug]);
   useEffect(() => {
@@ -671,17 +676,25 @@ export default function CompDetailPage() {
     const t = compInfo?.registration_open ? Date.parse(compInfo.registration_open) : NaN;
     return Number.isFinite(t) && Date.now() < t;
   }, [compInfo]);
-  const viewParam: 'live' | 'psych' | 'schedule' | 'podium' =
+  const viewParam: 'result' | 'psych' | 'schedule' | 'podium' =
     explicitView === 'psych' ? 'psych'
       : explicitView === 'schedule' ? 'schedule'
         : explicitView === 'podium' ? 'podium'
-          : explicitView === 'live' ? 'live'
+          : explicitView === 'result' ? 'result'
             : (data && !hasResults) ? (beforeRegOpen ? 'schedule' : 'psych')
               : (compFinished && podiumGroups.length > 0) ? 'podium'
-                : 'live';
+                : 'result';
   const isPsych = viewParam === 'psych';
   const isSchedule = viewParam === 'schedule';
   const isPodium = viewParam === 'podium';
+  // 把当前生效的视图固化进 URL(强制带上 ?view=…),分享/收藏直接命中 active tab。
+  // 仅在用户未显式选 tab 且默认视图依赖的数据已就位时写一次:有成绩=纯 data 驱动,无成绩需
+  // 等 compInfo settle 才能定 schedule/psych。history:replace 不污染后退栈,避免回退到裸 URL。
+  useEffect(() => {
+    if (explicitView != null || !data) return;
+    if (!hasResults && !compInfoSettled) return;
+    setExplicitView(viewParam, { history: 'replace' });
+  }, [explicitView, data, hasResults, compInfoSettled, viewParam, setExplicitView]);
   const schedView: 'calendar' | 'table' = layoutParam === 'table' ? 'table' : 'calendar';
   // "Show round details" lives up in the view-tab row (next to the calendar/table
   // toggle); default on so Format / Time limit / Cutoff / Proceed show like WCA.
@@ -1105,7 +1118,7 @@ export default function CompDetailPage() {
     setFilterParam(value || null);
   };
 
-  const onChangeView = (value: 'live' | 'psych' | 'schedule' | 'podium') => {
+  const onChangeView = (value: 'result' | 'psych' | 'schedule' | 'podium') => {
     setExplicitView(value); // 显式记录:空成绩比赛点「成绩」不会被默认弹回预排名
   };
 
@@ -1204,7 +1217,7 @@ export default function CompDetailPage() {
     if (!ev) return;
     // 赛程视图下点项目 = 钻进该项目成绩(切到「成绩」),否则点击只改 URL 不变内容(死点);
     // 其余视图维持原行为(同项目循环轮次 / 切项目)。
-    if (isSchedule) onChangeView('live');
+    if (isSchedule) onChangeView('result');
     // 双轮 + 合并视图:第一轮和第二轮渲染同一张合并表 → 合为一个循环档(用第一轮代表),
     // 且整个事件的轮次都进循环(含尚无成绩的决赛),让点图标能从合并视图直达决赛,
     // 而不是在两张相同的合并表之间空转。非双轮 / 未合并时维持原行为(只循环有成绩的轮)。
@@ -1333,22 +1346,6 @@ export default function CompDetailPage() {
 
         {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} />}
 
-        {!isPodium && (
-          <div className="comp-event-bar">
-            <WcaEventSelector
-              availableEvents={availableEventIds}
-              {...(isPsych
-                ? { selectedEvents: psychSelectedSet, onToggle: onTogglePsychEvent }
-                : { selectedEvent: eventParam, onSelect: onSelectEvent })}
-              isZh={isZh}
-              onlyAvailable
-              badges={isPsych ? {} : eventBadges}
-              topBadges={isPsych ? {} : eventTopBadges}
-              appendEvents={nonWcaEvents}
-            />
-          </div>
-        )}
-
         <div className="comp-view-tabs">
           {hasPodiumTab && (
             <button
@@ -1366,7 +1363,7 @@ export default function CompDetailPage() {
           <button
             type="button"
             className={`comp-view-tab${(!isPsych && !isSchedule && !isPodium) ? ' is-active' : ''}`}
-            onClick={() => onChangeView('live')}
+            onClick={() => onChangeView('result')}
           >
             {(isZh ? '成绩' : (isWca ? 'Results' : 'Live'))}
           </button>
@@ -1418,6 +1415,22 @@ export default function CompDetailPage() {
             />
           )}
         </div>
+
+        {!isPodium && (
+          <div className="comp-event-bar">
+            <WcaEventSelector
+              availableEvents={availableEventIds}
+              {...(isPsych
+                ? { selectedEvents: psychSelectedSet, onToggle: onTogglePsychEvent }
+                : { selectedEvent: eventParam, onSelect: onSelectEvent })}
+              isZh={isZh}
+              onlyAvailable
+              badges={isPsych ? {} : eventBadges}
+              topBadges={isPsych ? {} : eventTopBadges}
+              appendEvents={nonWcaEvents}
+            />
+          </div>
+        )}
 
         {isSchedule ? (
           <ScheduleView
