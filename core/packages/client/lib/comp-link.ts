@@ -7,6 +7,7 @@ import { statsUrl } from './stats-base';
 export interface CompLinkOpts {
   event?: string;
   round?: string;
+  view?: string;
 }
 
 export function compHref(compId: string, opts?: CompLinkOpts): string {
@@ -14,6 +15,7 @@ export function compHref(compId: string, opts?: CompLinkOpts): string {
   const params: string[] = [];
   if (opts?.event) params.push(`event=${encodeURIComponent(opts.event)}`);
   if (opts?.round) params.push(`round=${encodeURIComponent(opts.round)}`);
+  if (opts?.view) params.push(`view=${encodeURIComponent(opts.view)}`);
   if (params.length) url += `?${params.join('&')}`;
   return url;
 }

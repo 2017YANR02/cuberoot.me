@@ -1379,25 +1379,61 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
   return data;
 }
 
-/** /competition/{slug}/competitors HTML scrape.
- *  WS 在比赛还没开始时只回个空 users — 此时 cubing.com 的网页版报名表是唯一公开来源.
- *  tbody 第一行是列汇总(40 / 5/35 / 35/5 / ...)— 用 "name 全是数字或 / " 的启发式过滤掉.
- *  thead 的 header-event th 给出每列对应的 event id,row 里相应 td 含 event-icon-{ev}
- *  = 该选手报名了该项目;空 td = 未报名.psych sheet 据此过滤报名表. */
-async function scrapeCompetitors(cubingSlug: string, onProgress?: ProgressFn): Promise<Record<string, User>> {
-  onProgress?.({ step: 'cubing.results', done: 0, total: 1 });
-  const url = `${CUBING_BASE}/competition/${encodeURIComponent(cubingSlug)}/competitors?lang=en`;
+const COMPETITORS_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+const CJK_NAME_RE = /[一-鿿]/;
+
+/** 抓 cubing.com /competitors HTML(指定语言)。cubing.com 对裸 UA 返 429 + 发 cookie 让浏览器
+ *  reload,服务器侧按 CubingRateLimit=1 cookie 放行. */
+async function fetchCompetitorsHtml(cubingSlug: string, lang: 'en' | 'zh'): Promise<string> {
+  const url = `${CUBING_BASE}/competition/${encodeURIComponent(cubingSlug)}/competitors?lang=${lang}`;
   const res = await fetch(url, {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'User-Agent': COMPETITORS_UA,
       'Accept': 'text/html,application/xhtml+xml',
-      'Accept-Language': 'en-US,en;q=0.9',
-      // cubing.com 对裸 UA 返 429 + 让浏览器 set 此 cookie 再 reload,服务器侧也按这个规则放行.
+      'Accept-Language': lang === 'zh' ? 'zh-CN,zh;q=0.9' : 'en-US,en;q=0.9',
       'Cookie': 'CubingRateLimit=1',
     },
   });
   if (!res.ok) throw new Error(`cubing.com /competitors HTTP ${res.status}`);
-  const html = await res.text();
+  return res.text();
+}
+
+/** 从 competitors HTML 抽 competitor number → 选手名(供 zh 版按号回填中文名). */
+function parseCompetitorNamesByNumber(html: string): Map<number, string> {
+  const map = new Map<number, string>();
+  const tbodyMatch = html.match(/<tbody>([\s\S]*?)<\/tbody>/);
+  if (!tbodyMatch) return map;
+  const tagRe = /<[^>]+>/g;
+  const trRe = /<tr[^>]*>([\s\S]*?)<\/tr>/g;
+  let trMatch: RegExpExecArray | null;
+  while ((trMatch = trRe.exec(tbodyMatch[1])) !== null) {
+    const cells: string[] = [];
+    const tdRe = /<td[^>]*>([\s\S]*?)<\/td>/g;
+    let cm: RegExpExecArray | null;
+    while ((cm = tdRe.exec(trMatch[1])) !== null) cells.push(cm[1]);
+    if (cells.length < 2) continue;
+    const number = parseInt(cells[0].replace(tagRe, ''), 10);
+    if (!Number.isFinite(number)) continue;
+    const name = decodeHtmlEntities(cells[1].replace(tagRe, '')).trim();
+    if (!name || /^[\d/&;\s]+$/.test(name)) continue;
+    map.set(number, name);
+  }
+  return map;
+}
+
+/** /competition/{slug}/competitors HTML scrape.
+ *  WS 在比赛还没开始时只回个空 users — 此时 cubing.com 的网页版报名表是唯一公开来源.
+ *  tbody 第一行是列汇总(40 / 5/35 / 35/5 / ...)— 用 "name 全是数字或 / " 的启发式过滤掉.
+ *  thead 的 header-event th 给出每列对应的 event id,row 里相应 td 含 event-icon-{ev}
+ *  = 该选手报名了该项目;空 td = 未报名.psych sheet 据此过滤报名表.
+ *  en 版给拼音名 + WCA ID + 项目列;再并发抓一份 zh 版,按 competitor number 把中文名合成
+ *  "English (中文)" — 无 WCA ID 的新人(查不到 wca_persons)靠这个出中文. */
+async function scrapeCompetitors(cubingSlug: string, onProgress?: ProgressFn): Promise<Record<string, User>> {
+  onProgress?.({ step: 'cubing.results', done: 0, total: 1 });
+  const [html, zhNames] = await Promise.all([
+    fetchCompetitorsHtml(cubingSlug, 'en'),
+    fetchCompetitorsHtml(cubingSlug, 'zh').then(parseCompetitorNamesByNumber).catch(() => new Map<number, string>()),
+  ]);
 
   // thead → event 列顺序 (header-event th 里嵌着 event-icon-{ev}).
   const eventCols: string[] = [];
@@ -1428,9 +1464,15 @@ async function scrapeCompetitors(cubingSlug: string, onProgress?: ProgressFn): P
     const number = parseInt(cells[0].replace(tagRe, ''), 10);
     if (!Number.isFinite(number)) continue;
     const nameCell = cells[1];
-    const name = decodeHtmlEntities(nameCell.replace(tagRe, '')).trim();
+    let name = decodeHtmlEntities(nameCell.replace(tagRe, '')).trim();
     // tbody 第一行的列汇总行:name 槽位是 "5/35" 之类,过滤掉
     if (!name || /^[\d/&;\s]+$/.test(name)) continue;
+    // 拼音名(无中文)+ zh 版同号有中文名 → 合成 "English (中文)":
+    // displayCuberName 中文模式抽中文、英文模式去括号.无 WCA ID 的新人靠这个出中文.
+    const zhName = zhNames.get(number);
+    if (zhName && CJK_NAME_RE.test(zhName) && !CJK_NAME_RE.test(name)) {
+      name = `${name} (${zhName})`;
+    }
     const wcaMatch = nameCell.match(wcaIdRe);
     const region = decodeHtmlEntities(cells[3]).replace(/&nbsp;/g, ' ').replace(tagRe, '').trim();
 
