@@ -25,6 +25,12 @@ interface PuzzleAltMetric {
   valueCol: string;  // 备选口径在 CSV 里的列名
 }
 
+interface PuzzleExactMetric {
+  metric: string;    // 精确档 key(sq1: 'wca_exact')
+  csv: string;       // 精确档独立 CSV 文件名(与近最优 CSV 分离,保留近最优档)
+  valueCol: string;  // 精确档在该 CSV 里的列名
+}
+
 interface PuzzleSpec {
   key: string;       // puzzle 名 = JSON key = 数据子目录名
   event: string;     // WCA event_id(语料过滤口径,meta 用)
@@ -33,6 +39,7 @@ interface PuzzleSpec {
   metric: string;    // 主口径 key(2x2x2 = htm;sq1 = wca)
   valueCol?: string; // 主口径在 CSV 里的列名(默认 = key;sq1 = 'wca')
   alt?: PuzzleAltMetric; // 备选口径(sq1 双口径:wca 主 + slash 备,前端可切)
+  exact?: PuzzleExactMetric; // 精确档(sq1 = WCA 12c4 可证最优,独立 CSV;主档保留近最优供对照)
 }
 
 // 新 puzzle 注册处:加一行 + update_puzzle_stats.ps1 的 $PUZZLE 表加对应 analyzer 即可。
@@ -40,8 +47,9 @@ const PUZZLES: PuzzleSpec[] = [
   { key: 'pocket', event: '222', label: '2x2x2', label_zh: '二阶', metric: 'htm' },
   { key: 'pyraminx', event: 'pyram', label: 'Pyraminx', label_zh: '金字塔', metric: 'htm' }, // 总 HTM 含 tips
   { key: 'skewb', event: 'skewb', label: 'Skewb', label_zh: '斜转', metric: 'htm' },
-  // sq1 analyzer 出 3 列 id,wca,slash:主口径 WCA 12c4((X,Y)=1+/=1),备选 slash(jaapsch twist)。
-  { key: 'sq1', event: 'sq1', label: 'Square-1', label_zh: 'SQ1', metric: 'wca', valueCol: 'wca', alt: { metric: 'slash', valueCol: 'slash' } },
+  // sq1 analyzer 出 3 列 id,wca,slash:主口径 WCA 12c4 近最优((X,Y)=1+/=1),备选 slash(jaapsch twist)。
+  // exact 档 = WCA 12c4 可证最优(Sq1WcaSolver,独立 sq1_wca_exact.csv),前端可切「精确 / 近最优」;主档仍保留近最优。
+  { key: 'sq1', event: 'sq1', label: 'Square-1', label_zh: 'SQ1', metric: 'wca', valueCol: 'wca', alt: { metric: 'slash', valueCol: 'slash' }, exact: { metric: 'wca_exact', csv: 'sq1_wca_exact.csv', valueCol: 'wca_exact' } },
 ];
 
 interface Hist { min: number; max: number; counts: Map<number, number> }
@@ -112,6 +120,16 @@ async function main() {
       const { hist: altHist } = await aggregate(csvPath, spec.alt.valueCol);
       console.log(`  [${spec.key}] alt dist ${altHist.min}..${altHist.max} (${spec.alt.metric})`);
       entry.alt = { metric: spec.alt.metric, dist: histToJson(altHist) };
+    }
+    if (spec.exact) {
+      const exCsv = path.join(dataRoot, spec.key, spec.exact.csv);
+      if (fs.existsSync(exCsv)) {
+        const { sampleCount: exCount, hist: exHist } = await aggregate(exCsv, spec.exact.valueCol);
+        console.log(`  [${spec.key}] exact dist ${exHist.min}..${exHist.max} (${spec.exact.metric}, ${exCount} rows)`);
+        entry.exact = { metric: spec.exact.metric, sample_count: exCount, dist: histToJson(exHist) };
+      } else {
+        console.warn(`  [skip exact] ${spec.key}: missing ${exCsv} (近最优主档不受影响)`);
+      }
     }
     puzzlesOut[spec.key] = entry;
     keys.push(spec.key);

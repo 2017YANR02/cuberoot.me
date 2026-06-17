@@ -251,6 +251,20 @@ pub fn scramble_to_string(ts: &[Sq1Token]) -> String {
     words.join(" ")
 }
 
+/// 反转一条 SQ1 token 序列(逆序 + 每层转量取逆 mod 12,slash 自逆)。
+/// 一条解的逆 = 最优等价打乱:从 SOLVED 出发到达同一状态,步数与解相同。
+pub fn invert_scramble(ts: &[Sq1Token]) -> Vec<Sq1Token> {
+    fn inv_amt(d: i8) -> i8 {
+        let a = ((d as i32 % 12) + 12) % 12; // 0..11
+        let ia = (12 - a) % 12;              // 逆量 0..11
+        if ia > 6 { (ia - 12) as i8 } else { ia as i8 }
+    }
+    ts.iter().rev().map(|t| match t {
+        Sq1Token::Turn(x, y) => Sq1Token::Turn(inv_amt(*x), inv_amt(*y)),
+        Sq1Token::Slash => Sq1Token::Slash,
+    }).collect()
+}
+
 /// 打乱串 → 末态(从 SOLVED 起应用)。
 pub fn state_from_scramble(s: &str) -> Result<Sq1State, String> {
     let ts = parse_scramble(s)?;
@@ -3395,6 +3409,72 @@ mod tests {
             "A3 deep timing(报告): slowest completed {:.2}s; timeouts(>{}s)={:?}",
             slowest, CAP_S, timeouts
         );
+    }
+
+    /// 具体最优打乱示例(#[ignore],**报告型**,需 jsq_full 已建):读语料前 N 条(或 `SQ1_CORPUS` 指定),
+    /// 解出 WCA 12c4 可证最优解 + 反推最优等价打乱,打印「原始 WCA 长 / 最优 / 最优解 / 最优打乱」,
+    /// 并校验反推打乱 replay 回原态(正确性)。
+    /// 跑:`CUBE_TABLE_DIR=...\tables SQ1_EX_N=12 cargo test --release --lib wca_optimal_examples -- --ignored --nocapture`
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    #[ignore]
+    fn wca_optimal_examples() {
+        // 原始打乱 WCA 12c4 长 = 非 (0,0) 层转数 + slash 数(按记号原样计)。
+        fn orig_wca_len(s: &str) -> usize {
+            let slashes = s.matches('/').count();
+            let mut turns = 0usize;
+            for part in s.split('/') {
+                let p = part.trim();
+                if p.is_empty() { continue; }
+                if let (Some(l), Some(r)) = (p.find('('), p.find(')')) {
+                    if let Some((a, b)) = p[l + 1..r].split_once(',') {
+                        let a: i32 = a.trim().parse().unwrap_or(0);
+                        let b: i32 = b.trim().parse().unwrap_or(0);
+                        if !(a == 0 && b == 0) { turns += 1; }
+                    }
+                }
+            }
+            slashes + turns
+        }
+        // 层转量逆:disp d(-5..=6)→ amount(0..11)→ 逆 amount → 回 disp。
+        fn inv_disp(d: i8) -> i8 {
+            let a = ((d as i32 % 12) + 12) % 12;
+            let ia = (12 - a) % 12;
+            if ia > 6 { (ia - 12) as i8 } else { ia as i8 }
+        }
+        // 最优打乱 = 最优解逆序(每层转取逆,slash 自逆)。
+        fn invert(ts: &[Sq1Token]) -> Vec<Sq1Token> {
+            ts.iter().rev().map(|t| match t {
+                Sq1Token::Turn(x, y) => Sq1Token::Turn(inv_disp(*x), inv_disp(*y)),
+                Sq1Token::Slash => Sq1Token::Slash,
+            }).collect()
+        }
+
+        let path = std::env::var("SQ1_CORPUS")
+            .unwrap_or_else(|_| "D:/cube/scramble/puzzle/sq1/scrambles.txt".into());
+        let n: usize = std::env::var("SQ1_EX_N").ok().and_then(|s| s.parse().ok()).unwrap_or(12);
+        let txt = std::fs::read_to_string(&path).expect("corpus scrambles.txt");
+        let w = Sq1WcaSolver::shared();
+        assert!(!w.jsq_full.is_empty(), "jsq_full not loaded; examples need the exact table");
+        for line in txt.lines().take(n) {
+            let line = line.trim();
+            if line.is_empty() { continue; }
+            let (id, scr) = line.split_once(',').unwrap();
+            let st = state_from_scramble(scr).unwrap();
+            let (cost, sol) = w.solve_with_solution(&st);
+            let inv = invert(&sol);
+            // 校验:最优打乱(逆解)从 SOLVED 出发 replay == 原态。
+            let mut r = Sq1State::SOLVED;
+            for t in &inv { r.apply(*t).unwrap(); }
+            assert_eq!(
+                (r.top, r.bottom, r.ml), (st.top, st.bottom, st.ml),
+                "id={} optimal-scramble replay mismatch", id
+            );
+            eprintln!(
+                "id={} orig_wca={} optimal={} | opt_scramble= {} | opt_solution= {}",
+                id, orig_wca_len(scr), cost, scramble_to_string(&inv), scramble_to_string(&sol)
+            );
+        }
     }
 
     /// 区间 + 还原 + 近最优交叉:13 ≤ twist ≤ WCA ≤ 2·twist+1 ≤ 27,解 replay 回精确 SOLVED,

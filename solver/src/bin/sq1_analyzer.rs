@@ -15,7 +15,9 @@
 //! 并打 stderr,不中断 batch(WCA 真实打乱永远合法,合法行永无 `-`)。
 
 use cube_solver::executor::{run_analyzer_app_raw, RawSolverWrapper};
-use cube_solver::sq1_solver::{state_from_scramble, Sq1Solver, Sq1WcaSolver};
+use cube_solver::sq1_solver::{
+    invert_scramble, scramble_to_string, state_from_scramble, Sq1Solver, Sq1WcaSolver,
+};
 use cube_solver::sq1_twophase::{solve_with_solution, Sq1TwoPhase};
 
 /// `SQ1_EXACT=1` ⇒ 走精确最优器(slash 口径,tail-bound,2 列调试用);否则默认近最优 two-phase。
@@ -29,6 +31,13 @@ fn use_wca_exact() -> bool {
     std::env::var("SQ1_WCA_EXACT").map(|v| v == "1").unwrap_or(false)
 }
 
+/// `SQ1_WCA_SOLN=1`(配合 `SQ1_WCA_EXACT=1`)⇒ 多出第 3 列 `opt_scramble`:最优等价打乱
+/// (= 可证最优解的逆,从 SOLVED 到达同一态、步数=wca_exact)。逗号安全序列化:`(x,y)`→`x:y`、去括号,
+/// 故 3 列仍是干净逗号 CSV(供网站「原始/最优打乱」切换 + 示例,与二阶/斜转/金字塔一致)。
+fn use_wca_soln() -> bool {
+    std::env::var("SQ1_WCA_SOLN").map(|v| v == "1").unwrap_or(false)
+}
+
 /// 一条 (id, alg) → CSV 行。
 /// **默认 3 列 `id,wca,slash`**:一次解算同时给两种口径(WCA 12c4 = (X,Y)+/ token 数;
 /// slash = jaapsch twist)。前端按口径切换直方图,二者同源同一条近最优解。
@@ -37,7 +46,17 @@ fn sq1_line(alg: &str, id: &str) -> String {
     match state_from_scramble(alg) {
         Ok(st) => {
             if use_wca_exact() {
-                return format!("{},{}", id, Sq1WcaSolver::shared().solve_wca(&st));
+                let w = Sq1WcaSolver::shared();
+                if use_wca_soln() {
+                    let (cost, sol) = w.solve_with_solution(&st);
+                    // 最优等价打乱 = 解的逆;逗号安全:"(x,y)"->"x:y" 去括号。
+                    let opt = scramble_to_string(&invert_scramble(&sol))
+                        .replace(',', ":")
+                        .replace('(', "")
+                        .replace(')', "");
+                    return format!("{},{},{}", id, cost, opt);
+                }
+                return format!("{},{}", id, w.solve_wca(&st));
             }
             if use_exact() {
                 return format!("{},{}", id, Sq1Solver::shared().solve_one(&st));
@@ -72,7 +91,7 @@ impl RawSolverWrapper for Sq1Wrapper {
 
     fn get_csv_header() -> String {
         if use_wca_exact() {
-            "id,wca_exact".into()
+            if use_wca_soln() { "id,wca_exact,opt_scramble".into() } else { "id,wca_exact".into() }
         } else if use_exact() {
             "id,sq1".into()
         } else {
