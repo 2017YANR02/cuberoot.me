@@ -3346,7 +3346,10 @@ mod tests {
     fn wca_a3_deep_timing() {
         use std::sync::mpsc;
         let w = Sq1WcaSolver::shared();
-        assert!(!w.jsq.is_empty(), "jsq not loaded; deep timing meaningless");
+        assert!(
+            !w.jsq.is_empty() || !w.jsq_full.is_empty(),
+            "no phase-2 table (jsq/jsq_full) loaded; deep timing meaningless"
+        );
         let txt = include_str!("../test_data/sq1_scrambles.txt");
         const CAP_S: u64 = 90; // 每条超时上限(jsq 生效则秒级;没救则封顶,不 >5min 死等)
         let mut slowest = 0f64;
