@@ -94,7 +94,8 @@ import { CubePreview } from '../_lib/cube';
 import LiveCubeState from '../_components/LiveCubeState';
 
 import TimingSurface from './TimingSurface';
-import GestureWheel, { type GestureWheelHandle } from './GestureWheel';
+import GestureWheel from '@/components/GestureWheel';
+import { useGestureWheel } from '@/hooks/useGestureWheel';
 import RankBadge from './RankBadge';
 import SessionSwitcher from './SessionSwitcher';
 import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
@@ -708,13 +709,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
 
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const digitsRef = useRef<HTMLDivElement | null>(null);
-  const touchActiveRef = useRef(false);
-  const lastTouchEndTsRef = useRef(0);
-  // Radial gesture tracking (idle/stopped, touch only) — cstimer-style dial.
-  const swipeStartRef = useRef<{ x: number; y: number; t: number } | null>(null);
-  const swipeMovedRef = useRef(false);
-  const gestureHitRef = useRef(-1);
-  const gestureWheelRef = useRef<GestureWheelHandle | null>(null);
 
   const shouldIgnoreTimerTarget = useCallback((target: EventTarget | null): boolean => {
     if (!(target instanceof Element)) return false;
@@ -726,115 +720,26 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // below once the solve mutators exist.
   const gestureActionsRef = useRef<Array<() => void>>([]);
 
-  // Native pointer listeners with { passive: false } so preventDefault works
-  // on iOS. Pointer events unify mouse/touch and (with touch-action:none in
-  // CSS) eliminate the 300ms delay + synthetic double-fire. We keep the
-  // shouldIgnoreTimerTarget guard verbatim. A movement threshold protects a
-  // hold-to-arm from being eaten by a swipe.
-  useEffect(() => {
-    const el = surfaceRef.current;
-    if (!el) return;
-    const TAP_SLOP = 10;   // px wobble still counts as a press, not a drag
-    const DEAD_ZONE = 44;  // px the drag must travel before a direction locks in
-
-    const isIdleOrStopped = () => {
+  // Radial press-and-drag dial (idle/stopped) — shared with /trainer via the
+  // useGestureWheel hook. A plain hold still times; only a drag fires a slot.
+  const { wheelRef: gestureWheelRef } = useGestureWheel({
+    surfaceRef,
+    canGesture: () => {
       const ph = phaseSnapshotRef.current;
       return ph === 'idle' || ph === 'stopped';
-    };
-
-    // Direction index from a drag delta: 0=right, then counter-clockwise
-    // (matches GestureWheel's label order). -1 inside the dead-zone.
-    const hitFor = (dx: number, dy: number): number => {
-      if (Math.hypot(dx, dy) < DEAD_ZONE) return -1;
-      const theta = -Math.atan2(dy, dx);
-      return ((Math.floor((theta / Math.PI) * 4 + 8.5) % 8) + 8) % 8;
-    };
-
-    const handlePointerDown = (e: PointerEvent) => {
-      if (shouldIgnoreTimerTarget(e.target)) return;
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
-      e.preventDefault();
-      touchActiveRef.current = true;
-      swipeMovedRef.current = false;
-      gestureHitRef.current = -1;
-      // Works for mouse too (cstimer is touch-only, but desktop mouse-drag is
-      // non-conflicting: a plain click/hold still times — only a drag past
-      // TAP_SLOP switches to gesture mode).
-      const canGesture = isIdleOrStopped();
-      swipeStartRef.current = canGesture
-        ? { x: e.clientX, y: e.clientY, t: performance.now() }
-        : null;
-      if (canGesture) {
-        const hasLast = solvesRef.current.length > 0;
-        const canPrev = scrambleHistRef.current.idx > 0;
-        // index: 0 next · 1 OK · 2 +2 · 3 DNF · 4 prev · 5 note · 6 del · 7 copy
-        gestureWheelRef.current?.show(e.clientX, e.clientY,
-          [true, hasLast, hasLast, hasLast, canPrev, hasLast, hasLast, true]);
-      }
-      warmupSound();
-      onPressDown();
-    };
-    const handlePointerMove = (e: PointerEvent) => {
-      const start = swipeStartRef.current;
-      if (!start) return;
-      const dx = e.clientX - start.x;
-      const dy = e.clientY - start.y;
-      const dist = Math.hypot(dx, dy);
-      if (!swipeMovedRef.current && dist > TAP_SLOP) {
-        // Crossed the tap-slop: this is a drag, not a hold. Soft-cancel the arm
-        // so we never start the timer on a gesture — but keep the last result
-        // on screen (reset() would blank it to 0.00).
-        swipeMovedRef.current = true;
-        touchActiveRef.current = false;
-        cancelArm();
-      }
-      if (swipeMovedRef.current) {
-        const hit = hitFor(dx, dy);
-        gestureHitRef.current = hit;
-        gestureWheelRef.current?.update(hit, Math.min(1, dist / DEAD_ZONE));
-      }
-    };
-    const handlePointerUp = (e: PointerEvent) => {
-      const start = swipeStartRef.current;
-      swipeStartRef.current = null;
-      if (start) gestureWheelRef.current?.hide();
-      // Gesture path: a drag that already cancelled the arm.
-      if (start && swipeMovedRef.current) {
-        const hit = gestureHitRef.current;
-        swipeMovedRef.current = false;
-        gestureHitRef.current = -1;
-        lastTouchEndTsRef.current = performance.now();
-        if (hit >= 0) gestureActionsRef.current[hit]?.();
-        return;
-      }
-      if (!touchActiveRef.current) return;
-      e.preventDefault();
-      touchActiveRef.current = false;
-      lastTouchEndTsRef.current = performance.now();
-      onPressUp();
-    };
-    const handlePointerCancel = () => {
-      if (swipeStartRef.current) gestureWheelRef.current?.hide();
-      swipeStartRef.current = null;
-      swipeMovedRef.current = false;
-      gestureHitRef.current = -1;
-      if (!touchActiveRef.current) return;
-      touchActiveRef.current = false;
-      lastTouchEndTsRef.current = performance.now();
-      onPressUp();
-    };
-
-    el.addEventListener('pointerdown', handlePointerDown, { passive: false });
-    el.addEventListener('pointermove', handlePointerMove, { passive: false });
-    el.addEventListener('pointerup', handlePointerUp, { passive: false });
-    el.addEventListener('pointercancel', handlePointerCancel, { passive: false });
-    return () => {
-      el.removeEventListener('pointerdown', handlePointerDown);
-      el.removeEventListener('pointermove', handlePointerMove);
-      el.removeEventListener('pointerup', handlePointerUp);
-      el.removeEventListener('pointercancel', handlePointerCancel);
-    };
-  }, [onPressDown, onPressUp, cancelArm, shouldIgnoreTimerTarget]);
+    },
+    enabledFor: () => {
+      const hasLast = solvesRef.current.length > 0;
+      const canPrev = scrambleHistRef.current.idx > 0;
+      // index: 0 next · 1 OK · 2 +2 · 3 DNF · 4 prev · 5 note · 6 del · 7 copy
+      return [true, hasLast, hasLast, hasLast, canPrev, hasLast, hasLast, true];
+    },
+    fireAction: (i) => gestureActionsRef.current[i]?.(),
+    onPressDown: () => { warmupSound(); onPressDown(); },
+    onPressUp: () => onPressUp(),
+    onArmCancel: () => cancelArm(),
+    ignoreTarget: shouldIgnoreTimerTarget,
+  });
 
   // Mouse handlers on the React node are now redundant (pointerdown covers
   // mouse) but kept as a no-op guard so child buttons stay isolated and we

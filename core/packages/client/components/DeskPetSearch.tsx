@@ -241,18 +241,20 @@ export default function DeskPetSearch({
           title={`${t('大小', 'Size')}: ${sizeLabel}`}>
           <Maximize2 size={16} />
         </button>
-        <button type="button" className="icon-only" onClick={() => setGalleryOpen(true)}
-          title={t('动画图鉴', 'Animations')}>
-          <Sparkles size={16} />
-        </button>
         {isAdmin() && (
-          <button type="button" className="icon-only" onClick={() => {
-            window.dispatchEvent(new CustomEvent('clawd:perform'));
-            onClose();
-          }}
-            title={t('PLL 表演', 'PLL Show')}>
-            <Boxes size={16} />
-          </button>
+          <>
+            <button type="button" className="icon-only" onClick={() => setGalleryOpen(true)}
+              title={t('动画图鉴', 'Animations')}>
+              <Sparkles size={16} />
+            </button>
+            <button type="button" className="icon-only" onClick={() => {
+              window.dispatchEvent(new CustomEvent('clawd:perform'));
+              onClose();
+            }}
+              title={t('PLL 表演', 'PLL Show')}>
+              <Boxes size={16} />
+            </button>
+          </>
         )}
         <button type="button" className={`icon-only${randomMode ? ' is-active' : ''}`} onClick={onToggleRandom}
           title={randomMode ? t('动画:随机', 'Animation: Random') : t('动画:默认', 'Animation: Default')}>

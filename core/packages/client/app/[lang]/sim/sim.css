@@ -221,6 +221,27 @@
   height: 100% !important;
 }
 
+/* 交换主视图 / 背面视图的浮动按钮 — JS (layoutBackView) 把它钉在背面小窗右下内角。
+   z-index 高于小窗 (9) 和全屏按钮 (10);小窗本身 pointer-events:none,本按钮自带 auto。 */
+.sim-backview-swap {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 11;
+}
+.sim-backview-swap:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+
 @media (max-width: 480px) {
   .sim-header {
     padding: 6px 8px;

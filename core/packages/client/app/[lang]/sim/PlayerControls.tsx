@@ -1114,9 +1114,9 @@ function PuzzleSettings({
                 value={settings.dragEmpty}
                 onChange={(e) => set('dragEmpty', e.target.value as 'orbit' | 'rotate' | 'view')}
               >
+                <option value="view">{t('视角', 'View')}</option>
                 <option value="orbit">{t('自动转体', 'Auto rotate')}</option>
                 <option value="rotate">{t('整步转体', 'Snap rotate')}</option>
-                <option value="view">{t('视角', 'View')}</option>
               </select>
             </label>
             <Toggle label={t('动画展示打乱', 'Animate scramble')} value={settings.animateScramble} onChange={(v) => set('animateScramble', v)} />

@@ -51,8 +51,8 @@ export const DEEP: Record<string, DeepBlurb> = {
         en: 'Then apply the 48-element cube symmetry group S₄₈ to crush cosets to 55.88M. Then a greedy set-cover absorbs neighbouring cosets into ~80 super-cosets that are actually solved. Google\'s cluster spent ~35 CPU-years; on 2010-07-13 they announced: every 3×3 state is solvable in ≤ 20 HTM, and some (e.g. superflip) actually need 20. Upper = lower = 20. QED.'
     },
       {
-        zh: 'QTM 直径 26(2014, Rokicki & Davidson)、STM 直径 18(2014, Rokicki)用同套陪集框架。三阶是上帝之数史上最干净的一胜:不仅给出精确值,还给出 12 个具体的 antipode 状态(distance 20 的状态)的几何结构。',
-        en: 'The QTM result of 26 (2014, Rokicki & Davidson) and STM result of 18 (2014, Rokicki) used the same coset framework. The 3×3 is the cleanest victory in God\'s-number history: not just the exact value, but also a geometric description of all 12 antipodes at distance 20.'
+        zh: 'QTM 直径 26 是 2014 年(Rokicki & Davidson)用同套陪集框架证出的;切片度量(STM)目前只知道夹在 18 与 20 之间,尚未合拢,不是已证的精确值。三阶仍是上帝之数史上最干净的一胜:不仅给出 HTM 精确值,还给出 distance-20 antipode 状态的几何结构。',
+        en: 'The QTM diameter of 26 was proven in 2014 (Rokicki & Davidson) with the same coset framework; the slice-turn metric (STM) is currently only bracketed between 18 and 20 — open, not a proven exact value. The 3×3 remains the cleanest victory in God\'s-number history: not just the exact HTM value, but also a geometric description of the distance-20 antipodes.'
     },
     ],
   },
@@ -70,8 +70,8 @@ export const DEEP: Record<string, DeepBlurb> = {
         en: 'The lower bound 35 comes from canonical-sequence counting: at depth d, the number of distinct sequences is at most N · M^(d-1), with M ≈ 25 (about 25 generators after rejecting same-axis-as-previous). To cover 7.4 × 10⁴⁵ states needs d such that N · M^(d-1) ≥ |G|, giving d ≥ 35. Rigorous but loose.'
     },
       {
-        zh: '上界 57 来自 Kociemba 的 block-move reduction 估算:先 reduce 到 3×3(中心块还原 + 棱块配对),再用 3×3 算法解。各阶段最坏值之和给出 57 OBTM (Outer Block Turn Metric,允许 Rw / Lw 等宽转作为单步)。两个数之间还有 22 步的鸿沟,十几年没人合拢——4×4 是"最容易研究但最缺成果"的项目。',
-        en: 'Upper bound 57 comes from Kociemba\'s block-move reduction estimate: reduce to 3×3 (centres + edge pairing), then solve as 3×3. Sum of per-phase worst cases gives 57 OBTM (Outer Block Turn Metric, where Rw/Lw count as single moves). A 22-move gap has gone un-closed for over a decade — 4×4 is "the most accessible unsolved puzzle, with the least progress".'
+        zh: '上界来自 reduction(归约)策略:先把 4×4 reduce 到 3×3(中心块还原 + 棱块配对),再用 3×3 算法解。Charles Tsai 的 8 步归约法给出 57 OBTM(Outer Block Turn Metric,允许 Rw / Lw 等宽转作为单步),经 Rokicki 复核;Shuang Chen 2015 年合并其中两步把上界压到 55。下界 35 与上界 55 之间还有 20 步的鸿沟,十几年没人合拢——4×4 是"最容易研究但最缺成果"的项目。',
+        en: 'The upper bound comes from a reduction strategy: reduce 4×4 to 3×3 (centres + edge pairing), then solve as 3×3. Charles Tsai\'s 8-step reduction gives 57 OBTM (Outer Block Turn Metric, where Rw/Lw count as single moves), confirmed by Rokicki; Shuang Chen merged two of its stages in 2015 to drop the upper bound to 55. A 20-move gap between the lower bound 35 and upper bound 55 has gone un-closed for over a decade — 4×4 is "the most accessible unsolved puzzle, with the least progress".'
     },
     ],
   },
@@ -98,8 +98,8 @@ export const DEEP: Record<string, DeepBlurb> = {
         en: '6×6: 1.57 × 10¹¹⁶ states. Roughly "universe atom count squared, divided a bit" — no meaningful physical analogue.'
     },
       {
-        zh: 'OBTM 上下界 75 / 200,均为社区估算。',
-        en: 'OBTM bounds 75 / 200, both community estimates.'
+        zh: 'OBTM 只有一个社区计数得到的下界 75,至今没有公开的上界。',
+        en: 'OBTM has only a community counting lower bound of 75 — no published upper bound.'
     },
     ],
   },
@@ -124,12 +124,12 @@ export const DEEP: Record<string, DeepBlurb> = {
     },
     paragraphs: [
       {
-        zh: 'Rubik\'s Clock 的群结构与方块系全无关。它有 14 个独立的时钟轮(每个轮 12 个状态)+ 16 种针位组合。算上针位,|G| = 12¹⁴ × 16 ≈ 2.05 × 10¹⁶。每"步" = 把若干轮旋转 ±1。',
-        en: "Rubik's Clock has nothing to do with cubes structurally. It has 14 independent clock dials (12 states each) and 16 pin configurations. With pins counted, |G| = 12¹⁴ × 16 ≈ 2.05 × 10¹⁶. Each \"move\" rotates some subset of dials by ±1."
+        zh: 'Rubik\'s Clock 的群结构与方块系全无关。它有 14 个独立的时钟轮(每个轮 12 个状态)+ 16 种针位组合。算上针位,总组合数 = 12¹⁴ × 16 ≈ 2.05 × 10¹⁶;但上帝之数是在 12¹⁴ ≈ 1.28 × 10¹⁵ 个表盘状态上计算的(针位只决定哪些轮联动,不改变求解距离)。一"步" = 由针位选定一组联动的轮,把它们一次转到 12 个钟点中的任意一个。',
+        en: "Rubik's Clock has nothing to do with cubes structurally. It has 14 independent clock dials (12 states each) and 16 pin configurations. Counting pins, the total combination count is 12¹⁴ × 16 ≈ 2.05 × 10¹⁶; but the God's number is computed over the 12¹⁴ ≈ 1.28 × 10¹⁵ dial states (pins only choose which dials turn together, they don't change solving distance). One \"move\" turns the pin-selected group of dials, in a single twist, to any of the 12 clock positions."
     },
       {
-        zh: 'Jakob Kogler (Jakube) 2014 年 5 月证出直径 = 12:用 front-cross 陪集分解(把 14 轮分成"前面 9 轮 + 后面 5 轮")+ 1.5 GB 剪枝表 + 陪集 DFS。Tomas Rokicki 独立复核同年公布。2025-03-04 cube20.org 发布全距离分布,作为 11 年后的二次验证。',
-        en: 'Jakob Kogler proved diameter = 12 in May 2014, using a front-cross coset partition (split the 14 dials into "9 front + 5 back") + 1.5 GB pruning table + coset DFS. Rokicki re-verified the same year. On 2025-03-04 cube20.org posted the full distance distribution as an 11-year-later cross-check.'
+        zh: 'Jakob Kogler (Jakube) 2014 年 5 月最早证出直径 = 12:用迭代加深 DFS + 一张约 1.5 GB(7 × 12⁸)的剪枝表。Tomas Rokicki 随后提出 front-cross 陪集法(把 14 轮按前十字分成约 9906 个对称类)独立复核,并算出完整距离分布——其中 39,248 个状态需要满 12 步。cube20.org 的 Clock 页(文献记为 2025-03-04)收录了这份分布,作为 11 年后的二次留档。',
+        en: 'Jakob Kogler (Jakube) first proved diameter = 12 in May 2014 using iterative-deepening DFS + a ~1.5 GB (7 × 12⁸) pruning table. Tomas Rokicki then introduced the front-cross coset method (folding the 14 dials into ~9906 symmetry classes), independently re-verifying the result and computing the full distance distribution — 39,248 states need the full 12. cube20.org\'s Clock page (documented 2025-03-04) hosts that distribution as an 11-year-later record.'
     },
       {
         zh: '魔表是"已经证完了但几乎没人讨论"的项目——它太特殊,以至于很多扭计资料根本不提它。',
@@ -147,12 +147,12 @@ export const DEEP: Record<string, DeepBlurb> = {
         en: 'Megaminx has 12 faces (each a 5-edge pentagon), group order ≈ 10⁶⁸ — comparable to between 3×3 (10¹⁹) and 4×4 (10⁴⁵)… not even close, it dwarfs 4×4 by 23 orders of magnitude.'
     },
       {
-        zh: 'Herbert Kociemba 2012 年的下界 48 走的是"对易面计数":两个不相邻的面 (它们不共享任何块) 可以独立旋转,这种独立性允许构造一个递推 total(n+1) = 36·total(n) − 240·total(n−1) − 320·total(n−2),给出深度 d 的合法序列上限。让它 ≥ 10⁶⁸ 得到 d ≥ 48 HTM。',
-        en: 'Kociemba\'s 2012 lower bound 48 uses "commuting-faces counting": two non-adjacent faces (sharing no cubie) can rotate independently, giving the recurrence total(n+1) = 36·total(n) − 240·total(n−1) − 320·total(n−2) for canonical sequences at depth d. Forcing total ≥ 10⁶⁸ gives d ≥ 48 HTM.'
+        zh: '下界走的是"对易面计数":两个不相邻的面(它们不共享任何块)可以独立旋转,这种独立性允许构造一个递推 total(n+1) = 36·total(n) − 240·total(n−1) − 320·total(n−2),给出深度 d 的合法序列上限,让它 ≥ 10⁶⁸ 即得下界。Kociemba 2012 年用这套论证得到 45 HTM;Tomas Rokicki 2016 年改进同一论证,把下界提到 48 HTM。',
+        en: 'The lower bound uses "commuting-faces counting": two non-adjacent faces (sharing no cubie) rotate independently, giving the recurrence total(n+1) = 36·total(n) − 240·total(n−1) − 320·total(n−2) for canonical sequences at depth d; forcing total ≥ 10⁶⁸ yields the bound. Kociemba\'s 2012 argument gave 45 HTM; Tomas Rokicki refined the same argument in 2016 to push the lower bound to 48 HTM.'
     },
       {
-        zh: '上界 194 是社区估算(reduction 类算法的最坏值)。鸿沟 146 步,迄今最大的"已知最严上下界差"之一。',
-        en: 'The 194 upper bound is a community estimate (reduction-style worst case). A 146-move gap — among the largest "tightest known bounds" gaps anywhere.'
+        zh: '上界 194 是较早的社区粗略估计(reduction 类算法的最坏值);此后用子群链 / 两阶段求解器已把上界大幅压低(报到过 110 多步,但具体口径尚未公开核实)。无论如何,下界 48 与上界之间仍隔着上百步——精确直径遥遥无期。',
+        en: 'The 194 upper bound is an older loose community estimate (reduction-style worst case); subgroup-chain / two-phase solvers have since pushed the ceiling much lower (figures in the 110s have been reported, though the exact metric is not yet publicly verified). Either way, a gap of over a hundred moves separates the 48 lower bound from the ceiling — an exact diameter is nowhere in sight.'
     },
     ],
   },

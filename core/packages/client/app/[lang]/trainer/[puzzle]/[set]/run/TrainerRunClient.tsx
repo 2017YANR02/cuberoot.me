@@ -1,7 +1,7 @@
 'use client';
 
 // Ported from packages/client-vite/src/pages/trainer/TrainerRunPage.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,8 @@ import { ArrowLeft, Flag, RefreshCw } from 'lucide-react';
 import { getAlgSetMeta, loadAlg } from '@cuberoot/shared';
 import { useTrainerStore, TimerState } from '@/lib/trainer-store';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
+import { useGestureWheel } from '@/hooks/useGestureWheel';
+import GestureWheel from '@/components/GestureWheel';
 import { findCaseByKey } from '@/lib/trainer-case-key';
 import {
   TimerDisplay, ScrambleHeader, SolveCard, StatsList,
@@ -50,6 +52,7 @@ export default function TrainerRunClient() {
   const stopTimer = useTrainerStore(s => s.stopTimer);
   const setTimerState = useTrainerStore(s => s.setTimerState);
   const setObservingIdx = useTrainerStore(s => s.setObservingIdx);
+  const setSolvePenalty = useTrainerStore(s => s.setSolvePenalty);
   const deleteSolve = useTrainerStore(s => s.deleteSolve);
   const clearSolves = useTrainerStore(s => s.clearSolves);
 
@@ -79,13 +82,90 @@ export default function TrainerRunClient() {
     }
   }, [cases.length, selected.length, currentName, pickRandomCase]);
 
-  const { onTouchStart, onTouchEnd } = useSpaceHoldTimer({
+  // Space-bar timing (keyboard). Touch/mouse press-to-time is handled by the
+  // gesture-wheel hook below so a press can also drive the radial dial.
+  useSpaceHoldTimer({
     state: timerState,
     delayMs: TIMER_DELAY_MS,
     getTimerReady,
     startTimer,
     stopTimer,
     setNotRunning: () => setTimerState(TimerState.NOT_RUNNING),
+  });
+
+  // ── Radial gesture wheel (shared with /timer) ───────────────────
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const [copied, setCopied] = useState(false);
+  const stageMounted = !!(puzzle && meta) && !(selected.length === 0 && cases.length > 0);
+
+  // index: 0 new · 1 OK · 2 +2 · 3 DNF · 4 prev-solve · 5 next-solve · 6 del · 7 copy
+  const wheelLabels = [
+    tr({ zh: '换一个', en: 'New' }),
+    'OK', '+2', 'DNF',
+    tr({ zh: '看上次', en: 'Prev' }),
+    tr({ zh: '看下次', en: 'Next' }),
+    tr({ zh: '删除', en: 'Del' }),
+    tr({ zh: '复制', en: 'Copy' }),
+  ];
+
+  const { wheelRef } = useGestureWheel({
+    surfaceRef: stageRef,
+    active: stageMounted,
+    canGesture: () => {
+      const st = useTrainerStore.getState().timerState;
+      return st === TimerState.NOT_RUNNING || st === TimerState.STOPPING;
+    },
+    enabledFor: () => {
+      const st = useTrainerStore.getState();
+      const hasLast = st.solves.length > 0;
+      return [
+        st.timerState === TimerState.NOT_RUNNING,
+        hasLast, hasLast, hasLast,
+        st.observingIdx > 0,
+        st.observingIdx < st.solves.length - 1,
+        hasLast,
+        !!st.currentScramble,
+      ];
+    },
+    fireAction: (i) => {
+      const st = useTrainerStore.getState();
+      const lastIdx = st.solves.length - 1;
+      const last = st.solves[lastIdx];
+      const obs = st.observingIdx;
+      switch (i) {
+        case 0: if (st.timerState === TimerState.NOT_RUNNING) pickRandomCase(); break;
+        case 1: if (last) setSolvePenalty(lastIdx, 'ok'); break;
+        case 2: if (last) setSolvePenalty(lastIdx, last.penalty === '+2' ? 'ok' : '+2'); break;
+        case 3: if (last) setSolvePenalty(lastIdx, last.penalty === 'DNF' ? 'ok' : 'DNF'); break;
+        case 4: if (obs > 0) setObservingIdx(obs - 1); break;
+        case 5: if (obs < st.solves.length - 1) setObservingIdx(obs + 1); break;
+        case 6: if (last) deleteSolve(lastIdx); break;
+        case 7: {
+          const scr = st.currentScramble;
+          if (scr && typeof navigator !== 'undefined' && navigator.clipboard) {
+            navigator.clipboard.writeText(scr).then(() => {
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 1200);
+            }).catch(() => {});
+          }
+          break;
+        }
+      }
+    },
+    onPressDown: () => {
+      const st = useTrainerStore.getState().timerState;
+      if (st === TimerState.RUNNING) stopTimer();
+      else if (st === TimerState.NOT_RUNNING) getTimerReady(TIMER_DELAY_MS);
+    },
+    onPressUp: () => {
+      const st = useTrainerStore.getState().timerState;
+      if (st === TimerState.READY) startTimer();
+      else if (st === TimerState.AWAITING_READY || st === TimerState.STOPPING) setTimerState(TimerState.NOT_RUNNING);
+    },
+    onArmCancel: () => {
+      const st = useTrainerStore.getState().timerState;
+      if (st === TimerState.READY || st === TimerState.AWAITING_READY) setTimerState(TimerState.NOT_RUNNING);
+    },
   });
 
   if (!puzzle || !meta) {
@@ -142,10 +222,10 @@ export default function TrainerRunClient() {
       </div>
 
       <div className="trainer-run">
-        <div className="trainer-stage" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <div className="trainer-stage" ref={stageRef}>
           <ScrambleHeader
             scramble={currentScramble || ''}
-            label={tr({ zh: '打乱:', en: 'Scramble:'
+            label={copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '打乱:', en: 'Scramble:'
             })}
           />
           <div className="trainer-stage-actions">
@@ -159,10 +239,10 @@ export default function TrainerRunClient() {
             </button>
           </div>
 
-          <TimerDisplay state={timerState} ms={ms} />
+          <TimerDisplay state={timerState} ms={ms} penalty={solves.length > 0 ? solves[solves.length - 1].penalty : undefined} />
 
           <div className="trainer-help">
-            {tr({ zh: '空格开始/停止', en: 'Space to start/stop'
+            {tr({ zh: '空格开始/停止，按住拖动标记成绩', en: 'Space to start/stop, drag to mark'
             })}
           </div>
         </div>
@@ -198,6 +278,7 @@ export default function TrainerRunClient() {
         </aside>
       </div>
 
+      <GestureWheel ref={wheelRef} isZh={isZh} labels={wheelLabels} />
     </div>
   );
 }

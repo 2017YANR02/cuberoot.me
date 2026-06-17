@@ -1,6 +1,6 @@
 /**
  * Square-1 move-count metrics. Given a Square-1 sequence in (x,y)/ notation,
- * count it under all three conventions (see /math/sq1 for the full story):
+ * count it under all three conventions (see /math/god?event=sq1 for the full story):
  *
  *   - twist / "slash":  count only "/" slices; layer turns are free.   God's number 13 (proven).
  *   - WCA 12c4:         non-identity (x,y) + "/" each count 1.          God's number unknown (open).

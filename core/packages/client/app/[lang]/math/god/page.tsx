@@ -12,19 +12,19 @@
  *   6. 历史时间线
  *   7. 算法 / 参考资料
  */
-import { Suspense, lazy, useMemo, useState, type ReactNode } from 'react';
+import { Suspense, lazy, useMemo, type ReactNode } from 'react';
+import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { VisualCube } from '@/components/VisualCube';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { PUZZLES, primaryDiameter, WCA_EVENT_ORDER, type PuzzleEntry } from './_components/god_data';
-import { DEEP } from './_components/god_deep_data';
 import { TeX, TeXBlock, MathText } from './_components/Tex';
+import EventDetail, { eventName, isKnownEvent } from './_components/EventDetail';
 import './god.css';
 import { tr, T } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 const GrowthChart = lazy(() => import('./_components/GrowthChart'));
 const Bfs2x2Demo = lazy(() => import('./_components/Bfs2x2Demo'));
@@ -66,29 +66,26 @@ function formatDiameter(p: PuzzleEntry): { tex?: string; text?: string } {
   if (d.status === 'exact') return { text: `${d.upper}` };
   if (d.status === 'parametric') return { tex: `20 \\cdot k` };
   if (d.lower != null && d.upper != null) return { text: `${d.lower}–${d.upper}` };
+  if (d.lower != null) return { tex: `\\ge ${d.lower}` };
   return { tex: `\\le ${d.upper}` };
 }
 
-function statusBadge(p: PuzzleEntry, isZh: boolean): { label: string; cls: string } {
+function statusBadge(p: PuzzleEntry): { label: string; cls: string } {
   const d = primaryDiameter(p);
-  if (d.status === 'exact') return { label: tr({ zh: '已证', en: 'Proven'
-}), cls: 'is-exact' };
+  if (d.status === 'exact') return { label: tr({ zh: '已证', en: 'Proven' }), cls: 'is-exact' };
   if (d.status === 'parametric') return { label: tr({ zh: '平凡', en: 'Trivial' }), cls: 'is-trivial' };
   return { label: tr({ zh: '上下界', en: 'Bounds' }), cls: 'is-bounds' };
 }
 
-/* ───── card ───────────────────────────────────────────────────────── */
+/* ───── card (links to the ?event=X deep-dive) ─────────────────────── */
 
-function PuzzleCard({ p, isZh, expanded, onToggle }: {
-  p: PuzzleEntry; isZh: boolean; expanded: boolean; onToggle: () => void;
-}) {
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+function PuzzleCard({ p }: { p: PuzzleEntry }) {
   const d = primaryDiameter(p);
-  const badge = statusBadge(p, isZh);
+  const badge = statusBadge(p);
 
   return (
-    <article className={`god-card ${expanded ? 'is-expanded' : ''}`}>
-      <header className="god-card-head" onClick={onToggle}>
+    <article className="god-card">
+      <Link href={`/math/god?event=${p.id}`} className="god-card-head is-link" aria-label={tr(p.name)}>
         <div className="god-card-icon">
           {p.puzzleSize ? (
             <VisualCube algorithm="" view="iso" puzzleSize={p.puzzleSize} size={56} alt={p.name.en} />
@@ -115,62 +112,7 @@ function PuzzleCard({ p, isZh, expanded, onToggle }: {
             <span className="god-card-d-metric">{d.metric}</span>
           </div>
         </div>
-      </header>
-
-      {expanded && (
-        <div className="god-card-body">
-          <p className="god-card-blurb"><MathText>{tr(p.blurb)}</MathText></p>
-
-          {DEEP[p.id] && (
-            <div className="god-card-deep">
-              {DEEP[p.id].heading && (
-                <h4 className="god-card-deep-h">{tr(DEEP[p.id].heading!)}</h4>
-              )}
-              {DEEP[p.id].paragraphs.map((para, i) => (
-                <p key={i} className="god-card-deep-p"><MathText>{tr(para)}</MathText></p>
-              ))}
-            </div>
-          )}
-
-          {p.diameters.length > 1 && (
-            <div className="god-card-metrics">
-              <div className="god-card-metrics-h">{t('其它度量', 'Other metrics')}</div>
-              <ul className="god-card-metrics-list">
-                {p.diameters.slice(1).map((m, i) => (
-                  <li key={i}>
-                    <span className="god-card-metric-tag">{m.metric}</span>
-                    <span className="god-card-metric-val">
-                      {m.status === 'exact'
-                        ? m.upper
-                        : (m.lower != null ? `${m.lower}–${m.upper}` : <TeX src={`\\le ${m.upper}`} />)}
-                    </span>
-                    {m.note && <span className="god-card-metric-note">— {tr(m.note)}</span>}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {d.by && (
-            <div className="god-card-meta">
-              <span className="god-card-meta-l">{t('证明 / 估算者', 'Proved / estimated by')}:</span>
-              <span>{d.by}</span>
-              {d.year && <span className="god-card-year"> · {d.year}</span>}
-            </div>
-          )}
-
-          <ul className="god-card-refs">
-            {p.refs.map((r, i) => (
-              <li key={i}>
-                <a href={r.url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink size={13} />
-                  <span>{r.label}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      </Link>
     </article>
   );
 }
@@ -208,7 +150,7 @@ const MILESTONES: Milestone[] = [
 },
   { year: 2012, zh: <>Herbert Kociemba 用对易面计数证 Megaminx 下界 = 48 HTM。</>, en: <>Herbert Kociemba proves Megaminx lower bound = 48 HTM via commuting-faces counting.</>
 },
-  { year: 2014, zh: <>Rokicki & Davidson 用同套陪集框架证 3×3 QTM 直径 = 26;Jakob Kogler 用 front-cross 陪集证 Rubik's Clock 直径 = 12;Rokicki 单独证 3×3 STM 直径 = 18。一年三个新精确直径。</>, en: <>Rokicki & Davidson prove 3×3 QTM diameter = 26 with the same coset framework; Jakob Kogler proves Rubik's Clock diameter = 12 via front-cross cosets; Rokicki separately proves 3×3 STM diameter = 18. Three new exact diameters in one year.</>, cls: 'is-major'
+  { year: 2014, zh: <>Rokicki & Davidson 用同套陪集框架证 3×3 QTM 直径 = 26(算力换成 Ohio 超算 ~29 CPU-年);同年 Jakob Kogler 用迭代加深 DFS 证 Rubik's Clock 直径 = 12,Tomas Rokicki 再用 front-cross 陪集复核并算出完整分布。两个新精确直径。</>, en: <>Rokicki & Davidson prove 3×3 QTM diameter = 26 with the same coset framework (~29 CPU-years at the Ohio Supercomputer Center); the same year Jakob Kogler proves Rubik's Clock diameter = 12 via iterative-deepening DFS, and Tomas Rokicki re-verifies it with a front-cross coset solver plus the full distribution. Two new exact diameters.</>, cls: 'is-major'
 },
   { year: 2017, zh: <>Shuang Chen (WCA 2008CHEN27) 用 722 GB 磁盘 BFS + 3816 对称陪集,证 Square-1 face-turn 直径 = 31。磁盘 BFS 第一次在 cube 领域达到这种规模。</>, en: <>Shuang Chen (WCA 2008CHEN27) uses 722 GB disk BFS + 3816 symmetry cosets to prove Square-1 face-turn diameter = 31. The first cubing-domain disk-BFS at this scale.</>
 },
@@ -229,15 +171,19 @@ const MILESTONES: Milestone[] = [
 export default function GodNumberPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('上帝之数', "God's Number");
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['333', '222']));
-  const toggle = (id: string) => setExpanded((s) => {
-    const ns = new Set(s);
-    if (ns.has(id)) ns.delete(id); else ns.add(id);
-    return ns;
-  });
+  const [event, setEvent] = useQueryState(
+    'event',
+    parseAsStringEnum<string>([...WCA_EVENT_ORDER]).withOptions({ history: 'push' }),
+  );
+  const activeEvent = event && isKnownEvent(event) ? event : null;
+
+  const evName = activeEvent ? eventName(activeEvent) : null;
+  useDocumentTitle(
+    evName ? `${evName.zh} 上帝之数` : '上帝之数',
+    evName ? `${evName.en} God's Number` : "God's Number",
+  );
 
   const orderedPuzzles = useMemo(() => {
     const map = new Map(PUZZLES.map((p) => [p.id, p]));
@@ -254,6 +200,10 @@ export default function GodNumberPage() {
       </header>
 
       <main className="god-main">
+        {activeEvent ? (
+          <EventDetail eventId={activeEvent} setEvent={setEvent} />
+        ) : (
+        <>
         {/* ────────────── HERO ────────────── */}
         <section className="god-hero">
           <div className="god-hero-eyebrow">{t('数学:扭计群论', 'Mathematics: combinatorial group theory')}</div>
@@ -407,16 +357,12 @@ export default function GodNumberPage() {
         <section className="god-section">
           <h2>{t('全 WCA 项目的上帝之数', "God's number for every WCA event")}</h2>
           <p className="god-sec-lead">{t(
-            '点任意卡片展开详情(算法、证明者、参考资料)。"已证"卡片有精确值;"上下界"卡片只有当前最好的上下界 —— 它们之间还存在缝隙,等待被合上。',
-            'Click any card to expand details (algorithm, prover, references). "Proven" cards have exact values; "Bounds" cards show the best known gap, waiting to be closed.'
+            '点任意卡片进入该项目的详解(精确值或上下界、计步度量、怎么算出来的、互动可视化与一手出处)。"已证"卡片有精确值;"上下界"卡片只有当前最好的上下界 —— 它们之间还存在缝隙,等待被合上。',
+            'Click any card to open that event\'s deep-dive (exact value or bounds, the move metric, how it was computed, interactive visuals and primary sources). "Proven" cards have exact values; "Bounds" cards show the best known gap, waiting to be closed.'
           )}</p>
           <div className="god-grid">
             {orderedPuzzles.map((p) => (
-              <PuzzleCard key={p.id}
-                          p={p}
-                          isZh={isZh}
-                          expanded={expanded.has(p.id)}
-                          onToggle={() => toggle(p.id)} />
+              <PuzzleCard key={p.id} p={p} />
             ))}
           </div>
           <div className="god-grid-legend">
@@ -604,6 +550,8 @@ function dfs(state, max_depth, g):
             <li><a href="https://en.wikipedia.org/wiki/God%27s_algorithm" target="_blank" rel="noopener noreferrer">Wikipedia — God\'s algorithm</a> — {t('上帝之数与上帝算法的标准百科词条', 'Encyclopedic article on God\'s number / God\'s algorithm')}</li>
           </ul>
         </section>
+        </>
+        )}
       </main>
     </div>
   );

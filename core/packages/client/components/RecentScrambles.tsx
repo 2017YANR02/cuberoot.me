@@ -19,6 +19,7 @@ import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
 import { VARIANT_ORDER, stageLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT } from '@/lib/scramble-variants';
 import { VariantSelect } from '@/components/VariantSelect';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
 import './recent_scrambles.css';
 import { tr } from '@/i18n/tr';
@@ -346,14 +347,13 @@ function RecentEventBody({ event, json, isZh, lp }: { event: string; json: Recen
     <>
       <div className="rs-head">
         {hasDifficulty && (
-          <div className="rs-seg" role="tablist" aria-label={tr({ zh: '维度', en: 'Dimension' })}>
-            <button type="button" role="tab" aria-selected={curMode === 'difficulty'} className={`rs-seg-btn${curMode === 'difficulty' ? ' active' : ''}`} onClick={() => { setMode('difficulty'); setValue(null); }}>
-              {tr({ zh: '难度', en: 'Difficulty' })}
-            </button>
-            <button type="button" role="tab" aria-selected={curMode === 'length'} className={`rs-seg-btn${curMode === 'length' ? ' active' : ''}`} onClick={() => { setMode('length'); setValue(null); }}>
-              {tr({ zh: '打乱长度', en: 'Length' })}
-            </button>
-          </div>
+          <PillToggle
+            value={curMode === 'length'}
+            onChange={(v) => { setMode(v ? 'length' : 'difficulty'); setValue(null); }}
+            offLabel={tr({ zh: '难度', en: 'Difficulty' })}
+            onLabel={tr({ zh: '打乱长度', en: 'Length' })}
+            ariaLabel={tr({ zh: '维度', en: 'Dimension' })}
+          />
         )}
         <select className="rs-select" value={curValue ?? ''} onChange={(e) => setValue(Number(e.target.value))} aria-label={curMode === 'difficulty' ? tr({ zh: '难度', en: 'Difficulty' }) : tr({ zh: '长度', en: 'Length' })}>
           {values.map((v) => (<option key={v} value={v}>{stepOptionLabel(v)}</option>))}

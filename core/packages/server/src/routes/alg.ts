@@ -9,7 +9,7 @@
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
 import {
-  requireAuth, checkRateLimit, ADMIN_WCA_IDS,
+  requireAuth, requireAdmin, checkRateLimit, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
 
 export const algRoutes = new Hono();
@@ -57,6 +57,43 @@ algRoutes.get('/alg/:puzzle/:set/submissions', async (c) => {
     [puzzle, setSlug],
   );
   return c.json(rows.map(rowToJson));
+});
+
+// GET /v1/alg/submissions/admin/unread — admin:晚于本人已读水位的新投稿数(排除自己投的)
+algRoutes.get('/alg/submissions/admin/unread', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAdmin(c);
+  const rows = await query<{ count: number }>(
+    `SELECT COUNT(*)::int AS count FROM alg_submissions
+      WHERE author_id <> ?
+        AND created_at > COALESCE((SELECT read_at FROM alg_submission_reads WHERE wca_id = ?), 'epoch')`,
+    [user.wcaId, user.wcaId],
+  );
+  return c.json({ count: Number(rows[0]?.count ?? 0) });
+});
+
+// GET /v1/alg/submissions/admin/recent — admin:跨所有 set 的最近投稿(给下拉列表)
+algRoutes.get('/alg/submissions/admin/recent', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  await requireAdmin(c);
+  const limit = Math.min(50, Math.max(1, Number(c.req.query('limit') ?? 30)));
+  const rows = await query<AlgSubmissionRow>(
+    'SELECT * FROM alg_submissions ORDER BY id DESC LIMIT ?',
+    [limit],
+  );
+  return c.json(rows.map(rowToJson));
+});
+
+// POST /v1/alg/submissions/admin/seen — admin:把当前所有投稿标记为已读(清角标)
+algRoutes.post('/alg/submissions/admin/seen', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAdmin(c);
+  await query(
+    `INSERT INTO alg_submission_reads (wca_id, read_at) VALUES (?, NOW())
+     ON CONFLICT (wca_id) DO UPDATE SET read_at = NOW()`,
+    [user.wcaId],
+  );
+  return c.json({ ok: true });
 });
 
 // POST /v1/alg/:puzzle/:set/:case/submit — 追加一条

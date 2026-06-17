@@ -7,7 +7,7 @@ import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
 import { VisualCube } from '@/components/VisualCube';
 import { TimerState } from '@/lib/trainer-store';
-import type { TrainerSolve } from '@/lib/trainer-store';
+import type { TrainerSolve, TrainerPenalty } from '@/lib/trainer-store';
 import { caseKey } from '@/lib/trainer-case-key';
 import { tr } from '@/i18n/tr';
 
@@ -20,16 +20,30 @@ export function formatMs(ms: number, precision = 2): string {
   return sec.toFixed(precision);
 }
 
+/** A solve's displayed time, accounting for its penalty (DNF / +2). */
+export function formatSolveTime(solve: { ms: number; penalty?: TrainerPenalty }): string {
+  if (solve.penalty === 'DNF') return 'DNF';
+  if (solve.penalty === '+2') return formatMs(solve.ms + 2000) + '+';
+  return formatMs(solve.ms);
+}
+
 export function TimerDisplay({
-  state, ms,
-}: { state: TimerState; ms: number }) {
+  state, ms, penalty,
+}: { state: TimerState; ms: number; penalty?: TrainerPenalty }) {
   const cls =
     state === TimerState.AWAITING_READY ? 'is-awaiting' :
     state === TimerState.READY          ? 'is-ready'    :
     state === TimerState.RUNNING        ? 'is-running'  :
     state === TimerState.STOPPING       ? 'is-stopping' :
                                           'is-idle';
-  return <div className={`trainer-timer ${cls}`}>{formatMs(ms)}</div>;
+  // Penalty applies only to a finished solve being shown (idle / just-stopped).
+  const showResult = state === TimerState.NOT_RUNNING || state === TimerState.STOPPING;
+  const isDnf = showResult && penalty === 'DNF';
+  const text =
+    isDnf ? 'DNF' :
+    showResult && penalty === '+2' ? formatMs(ms + 2000) + '+' :
+    formatMs(ms);
+  return <div className={`trainer-timer ${cls}${isDnf ? ' is-dnf' : ''}`}>{text}</div>;
 }
 
 export function ScrambleHeader({ scramble, label }: { scramble: string; label: string }) {
@@ -86,7 +100,7 @@ export function SolveCard({
           </div>
           <div className="trainer-solve-row">
             <span>{tr({ zh: '成绩:', en: 'Result:'
-            })}</span>{formatMs(solve.ms)}
+            })}</span>{formatSolveTime(solve)}
           </div>
           <div className="trainer-solve-row">
             <span>{tr({ zh: '打乱:', en: 'Scramble:'
@@ -131,10 +145,10 @@ export function StatsList({
           {solves.map(s => (
             <span
               key={s.i}
-              className={`trainer-stat-time${observingIdx === s.i ? ' is-active' : ''}`}
+              className={`trainer-stat-time${observingIdx === s.i ? ' is-active' : ''}${s.penalty === 'DNF' ? ' is-dnf' : ''}`}
               onClick={() => onPick(s.i)}
             >
-              {formatMs(s.ms)}
+              {formatSolveTime(s)}
             </span>
           ))}
         </div>
@@ -143,15 +157,12 @@ export function StatsList({
   );
 }
 
+// CSS-drawn tri-state checkbox (no <input>): a native checkbox can't live inside
+// a <button>, and the whole row is the real tap target. iOS Safari only reliably
+// fires tap→click on native interactive elements, so the rows below are buttons.
 function TriCheckbox({ checked, indeterminate }: { checked: boolean; indeterminate: boolean }) {
-  return (
-    <input
-      type="checkbox"
-      checked={checked}
-      ref={el => { if (el) el.indeterminate = indeterminate; }}
-      readOnly
-    />
-  );
+  const cls = checked ? ' is-checked' : indeterminate ? ' is-indeterminate' : '';
+  return <span className={`trainer-checkbox${cls}`} aria-hidden />;
 }
 
 interface TopGroup {
@@ -254,14 +265,14 @@ export function CaseTreePicker({
 
   return (
     <div className="trainer-set-block">
-      <div className="trainer-set-header" onClick={toggleAll}>
+      <button type="button" className="trainer-set-header" onClick={toggleAll}>
         <TriCheckbox checked={allSelected} indeterminate={!allSelected && !noneSelected} />
         <span>{tr({ zh: '全选', en: 'Select all'
         })}</span>
         <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
           ({totalSelected}/{cases.length})
         </span>
-      </div>
+      </button>
 
       {tops.map(top => {
         const isExpanded = expanded.has(top.label);
@@ -282,8 +293,9 @@ export function CaseTreePicker({
                 >
                   {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </button>
-                <span
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer', flex: 1 }}
+                <button
+                  type="button"
+                  className="trainer-bulk-toggle"
                   onClick={() => toggleBulk(top.allCases)}
                 >
                   <TriCheckbox checked={topAll} indeterminate={!topAll && !topNone} />
@@ -292,7 +304,7 @@ export function CaseTreePicker({
                   <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
                     ({topSelectedCount}/{top.allCases.length})
                   </span>
-                </span>
+                </button>
               </div>
             )}
 
@@ -324,8 +336,9 @@ export function CaseTreePicker({
                             >
                               {subExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                             </button>
-                            <span
-                              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer', flex: 1 }}
+                            <button
+                              type="button"
+                              className="trainer-bulk-toggle"
                               onClick={() => toggleBulk(subCases)}
                             >
                               <TriCheckbox checked={subAll} indeterminate={!subAll && !subNone} />
@@ -337,7 +350,7 @@ export function CaseTreePicker({
                               <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
                                 ({subSelectedCount}/{subCases.length})
                               </span>
-                            </span>
+                            </button>
                           </div>
                         )}
                         {subExpanded && (
@@ -381,8 +394,9 @@ function CaseCell({
     onChange(next);
   };
   return (
-    <div className={`trainer-case-cell${isOn ? ' is-selected' : ''}`} onClick={toggle}>
-      <div className="trainer-case-cell-thumb">
+    <button type="button" className={`trainer-case-cell${isOn ? ' is-selected' : ''}`}
+      aria-pressed={isOn} onClick={toggle}>
+      <span className="trainer-case-cell-thumb">
         <CaseThumb
           puzzle={puzzle}
           set={set}
@@ -391,8 +405,8 @@ function CaseCell({
           setup={c.setup}
           size={64}
         />
-      </div>
-      <div className="trainer-case-cell-name">{c.name}</div>
-    </div>
+      </span>
+      <span className="trainer-case-cell-name">{c.name}</span>
+    </button>
   );
 }

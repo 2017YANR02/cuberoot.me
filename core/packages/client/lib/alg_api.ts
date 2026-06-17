@@ -54,3 +54,32 @@ export async function deleteSubmission(id: number): Promise<{ ok: boolean }> {
   });
   return handleApi<{ ok: boolean }>(resp);
 }
+
+// ── admin: new-submission notification ──────────────────────────────────────
+
+/** Admin: count of submissions newer than this admin's read watermark (excludes own). */
+export async function fetchAdminUnreadSubmissions(): Promise<number> {
+  const resp = await fetch(`${API_BASE}/submissions/admin/unread`, {
+    headers: authHeaders(false),
+    cache: 'no-store',
+  });
+  const data = await handleApi<{ count: number }>(resp);
+  return data.count ?? 0;
+}
+
+/** Admin: most recent submissions across all sets (for the notification dropdown). */
+export async function fetchRecentSubmissions(limit = 30): Promise<AlgSubmission[]> {
+  const resp = await fetch(`${API_BASE}/submissions/admin/recent?limit=${limit}`, {
+    headers: authHeaders(false),
+    cache: 'no-store',
+  });
+  return handleApi<AlgSubmission[]>(resp);
+}
+
+/** Admin: mark all current submissions as seen (clears the badge). Best-effort. */
+export async function markSubmissionsSeen(): Promise<void> {
+  await fetch(`${API_BASE}/submissions/admin/seen`, {
+    method: 'POST',
+    headers: authHeaders(),
+  }).catch(() => {});
+}

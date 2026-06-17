@@ -8,7 +8,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Key, MoreVertical } from 'lucide-react';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore, useAuthUser } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { Flag } from '@/components/Flag';
 import { wcaPersonUrl } from '@/lib/recon-utils';
@@ -45,7 +45,7 @@ export function DiscussionComposer({
   autoFocus?: boolean;
 }) {
   const { t } = useTranslation();
-  const user = useAuthStore(s => s.user);
+  const user = useAuthUser();
   const currentWcaId = user?.wcaId || '';
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);

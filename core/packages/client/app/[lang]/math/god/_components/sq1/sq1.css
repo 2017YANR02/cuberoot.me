@@ -4,7 +4,9 @@
  * 局部 alias 用 --sq1-* 命名,只在本页 scope。语义色:
  *   proven = success(绿),open/未知 = warning(琥珀),accent = 品牌。 */
 
-.sq1-page {
+/* Embedded under /math/god?event=sq1: tokens scoped to a .god-sq1 wrapper
+ * (was .sq1-page, a full-viewport page root). */
+.god-sq1 {
   --sq1-bg: var(--background);
   --sq1-surface: var(--card);
   --sq1-surface-2: color-mix(in srgb, var(--card) 92%, var(--foreground) 8%);
@@ -23,10 +25,7 @@
   --sq1-info-soft: color-mix(in srgb, var(--signal-info) 14%, transparent);
   --sq1-grid: color-mix(in srgb, var(--foreground) 12%, transparent);
 
-  background: var(--sq1-bg);
   color: var(--sq1-text);
-  min-height: 100vh;
-  min-height: 100dvh;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
