@@ -157,7 +157,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
           <div key={comp.id} className="wp-bycomp-block">
             <div className="wp-bycomp-header">
               <Link
-                {...compLinkProps(comp.id)}
+                {...compLinkProps(comp.id, { view: 'result' })}
                 prefetch={false}
                 className="wp-bycomp-name"
               ><CompCell compId={comp.id} compName={comp.name} isZh={isZh} /></Link>
