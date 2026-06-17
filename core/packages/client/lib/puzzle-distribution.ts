@@ -15,6 +15,12 @@ export interface PuzzleAltDist {
   dist: PuzzleHistEntry;
 }
 
+export interface PuzzleExactDist {
+  metric: string;         // 精确档 key(sq1: 'wca_exact')
+  sample_count: number;   // 精确档样本数(可能 < 主档,如全量灌注未完时)
+  dist: PuzzleHistEntry;
+}
+
 export interface PuzzleDistEntry {
   event: string;          // WCA event_id(语料口径,如 '222')
   label: string;
@@ -23,6 +29,7 @@ export interface PuzzleDistEntry {
   sample_count: number;
   dist: PuzzleHistEntry;
   alt?: PuzzleAltDist;    // 备选口径(sq1: wca 主 + slash 备,前端可切)
+  exact?: PuzzleExactDist; // 精确档(sq1: WCA 12c4 可证最优;主档仍为近最优供对照)
 }
 
 export interface PuzzleDistributionJson {
@@ -31,7 +38,7 @@ export interface PuzzleDistributionJson {
 }
 
 // shape 变更或数据全量重灌时 bump(防缓存旧 JSON)
-const V = '20260612c';
+const V = '20260617a';
 
 export async function fetchPuzzleDistribution(): Promise<PuzzleDistributionJson> {
   const r = await fetch(statsUrl('/stats/scramble/puzzle_distribution.json') + `?v=${V}`);
