@@ -106,6 +106,7 @@
   2. **A3-full(13GB 精确 phase-2)**:加 per-layer shape 位(4 combo × 8!×8!×2)⇒ phase-2 变 O(1) 精确查表(无搜索)⇒ 杀 776/778。但 **(a) 碰不到 phase-1 爆炸(774/777 仍慢)**;(b) 13GB 建表需 ~15GB 空闲(当前仅 5.5GB,得先腾内存);(c) 单独不达 <30s-all。
   3. **A4(更强 phase-1 PDB)**:压 774/777 的 phase-1 爆炸。soft-gate(≤15GB 投入需点头),且尝试 C 警告强耦合 puzzle 的 max-PDB 收益存疑、候选「角+棱归层 mask」~21GB 超预算。**先在样本估收益再建。**
   - 达「全深态 <30s」需 **2+3 一起**(~28-34GB 表 + 数小时建表 + A4 收益不确定)。判断:为最后几 % 最难态投这么多,性价比低 ⇒ 倾向路 1。
+  - **用户选了路 2(A3-full,2026-06-16)**。代码已落地+提交(`aa93699b7`):精确态索引(补 shape 位的双射)+ `build_jsq_full`(scan-based,真实方形 move)+ phase-2 改 O(1) 查表 + `p2_reconstruct` 梯度重建(无搜索)+ jsq_full 在位免载 jsq。**廉价门全绿**:`full_idx_unrank_roundtrip`(2M 采样 + 3104 BFS 态双射)、scan 驱动、配对、wasm32(JSQ_FULL_SIZE cfg-gate native:13e9 超 wasm 32-bit usize)。**安全:jsq_full.bin 不存在时零行为变化(优雅回退),故未验证也不影响现求解。** ⏳ **建表卡内存**:13GB dist 需 ~13.5GB 物理空闲(当前仅 9GB,用户在用机器),没法分块/mmap(随机 CAS 跨 13GB 会狂刷 pagefile)。**待用户腾 ~5GB → 跑 `build_jsq_full_only`(精简,驻留 ~13GB,8 线程低优先级 ~1-2h)→ `wca_a3_jsqfull_exact`(jsq_full==独立精确)+ oracle + deep_timing → 全过更新文档收尾。**
 
 ---
 
