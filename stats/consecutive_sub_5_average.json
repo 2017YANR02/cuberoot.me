@@ -42,22 +42,28 @@
           "titleZh": "",
           "rows": [
             [
-              23,
+              24,
               "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
-              "[Jiangmen Open 2025](https://www.worldcubeassociation.org/competitions/JiangmenOpen2025)",
-              "[Guangzhou Small Cubes 2025](https://www.worldcubeassociation.org/competitions/GuangzhouSmallCubes2025)"
+              "[Xuzhou Zenith 2026](https://www.worldcubeassociation.org/competitions/XuzhouZenith2026)",
+              "[Huanggang Open 2026](https://www.worldcubeassociation.org/competitions/HuanggangOpen2026)"
             ],
             [
-              17,
+              18,
               "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-              "[Xuzhou Open 2025](https://www.worldcubeassociation.org/competitions/XuzhouOpen2025)",
-              "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)"
+              "[Chengdu Welcoming Summer 2026](https://www.worldcubeassociation.org/competitions/ChengduWelcomingSummer2026)",
+              "[Huanggang Open 2026](https://www.worldcubeassociation.org/competitions/HuanggangOpen2026)"
             ],
             [
               4,
               "[Yufang Du (杜昱方)](https://www.worldcubeassociation.org/persons/2023DUYU01)",
               "[Yancheng Spring Open 2026](https://www.worldcubeassociation.org/competitions/YanchengSpringOpen2026)",
               "[Xi'an Cherry Blossom 2026](https://www.worldcubeassociation.org/competitions/XianCherryBlossom2026)"
+            ],
+            [
+              3,
+              "[Zhaokun Li (李昭昆)](https://www.worldcubeassociation.org/persons/2024LIZH03)",
+              "[Huanggang Open 2026](https://www.worldcubeassociation.org/competitions/HuanggangOpen2026)",
+              "[Huanggang Open 2026](https://www.worldcubeassociation.org/competitions/HuanggangOpen2026)"
             ],
             [
               2,
@@ -110,6 +116,11 @@
           "title": "",
           "titleZh": "",
           "rows": [
+            [
+              24,
+              "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
+              "[Xuzhou Zenith 2026](https://www.worldcubeassociation.org/competitions/XuzhouZenith2026) → [Huanggang Open 2026](https://www.worldcubeassociation.org/competitions/HuanggangOpen2026)"
+            ],
             [
               23,
               "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
