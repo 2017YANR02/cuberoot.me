@@ -316,6 +316,16 @@ fn apply_action(p: &[u8; 8], m: &[u8; 8]) -> [u8; 8] {
     std::array::from_fn(|i| p[m[i] as usize])
 }
 
+/// 方形子群**联合** phase-2 表大小:角 perm(8!)× 棱 perm(8!)× ml(2)= 3,251,404,800。
+const JSQ_SIZE: usize = 40320 * 40320 * 2;
+
+/// 方形子群联合索引:`(角秩 * 40320 + 棱秩) * 2 + ml`。junrank 逆 = `unrank8(rest/40320)` 角、
+/// `unrank8(rest%40320)` 棱、`rest=idx>>1`、`ml=idx&1`(jsq builder 内联)。
+#[inline]
+fn jidx(cp: &[u8; 8], ep: &[u8; 8], ml: u8) -> usize {
+    (rank8(cp) * 40320 + rank8(ep)) * 2 + ml as usize
+}
+
 /// 方形态投影:角/棱各 8 件在扫描序(top 槽 0..11 → bottom)下的排列(id>>1 ∈ 0..7)。
 fn sq_proj_arrays(s: &Sq1State) -> ([u8; 8], [u8; 8]) {
     let mut cp = [0u8; 8];
@@ -1199,6 +1209,43 @@ fn derive_sq_actions() -> (Vec<[u8; 8]>, Vec<[u8; 8]>, Vec<[u8; 8]>, Vec<[u8; 8]
     )
 }
 
+/// 同 `derive_sq_actions`,但**保留角/棱 action 配对**(同一物理动作的角 action 与棱 action 绑一起)。
+/// 返回 (slash_pairs, rot_pairs),各元素 `(角 action, 棱 action)`。联合方形子群 BFS(jsq)必须用配对 ——
+/// 笛卡尔积 sig×tau 会造出物理上不存在的伪动作,破坏 BFS 图正确性。
+fn derive_sq_actions_paired() -> (Vec<([u8; 8], [u8; 8])>, Vec<([u8; 8], [u8; 8])>) {
+    use std::collections::HashSet;
+    let id = Sq1State::SOLVED;
+    let mut slash: HashSet<([u8; 8], [u8; 8])> = HashSet::new();
+    let mut rot: HashSet<([u8; 8], [u8; 8])> = HashSet::new();
+    for a0 in 0..12 {
+        for b0 in 0..12 {
+            let base = id.turned(a0, b0);
+            if !base.is_square_shape() {
+                continue;
+            }
+            let (bc, be) = sq_proj_arrays(&base);
+            let (inv_c, inv_e) = (invert8(&bc), invert8(&be));
+            for a in 0..12 {
+                for b in 0..12 {
+                    let r = base.turned(a, b);
+                    if !r.is_square_shape() {
+                        continue;
+                    }
+                    let (rc, re) = sq_proj_arrays(&r);
+                    rot.insert((apply_action(&inv_c, &rc), apply_action(&inv_e, &re)));
+                    let c = r.slashed();
+                    if !c.is_square_shape() {
+                        continue;
+                    }
+                    let (cc, ce) = sq_proj_arrays(&c);
+                    slash.insert((apply_action(&inv_c, &cc), apply_action(&inv_e, &ce)));
+                }
+            }
+        }
+    }
+    (slash.into_iter().collect(), rot.into_iter().collect())
+}
+
 /// 方形子群单件类投影 BFS(40320×2;旋转 0 步闭包,slash 计 1)。
 fn build_sq(moves: &[[u8; 8]], rots: &[[u8; 8]]) -> Vec<u8> {
     let mut dist = vec![255u8; 80640];
@@ -1275,6 +1322,60 @@ fn build_sq_wca(moves: &[[u8; 8]], rots: &[[u8; 8]]) -> Vec<u8> {
     dist
 }
 
+/// scan-based 并行 BFS(rayon + AtomicU8):每轮按 chunk 并行扫全 `dist` 找距离 == d 的前沿,
+/// 经 `neighbors(i, buf)` 取邻居索引、CAS 255→d+1 抢首达。**峰值内存 = dist 表本身**(无 frontier
+/// 累积)⇒ 建 3.25GB 联合表(jsq)不 OOM 的关键(§0.4:真正 OOM 风险是瞬时 frontier)。
+/// 代价 = 每轮重扫全表(~直径轮),一次性建表可接受。正确性:`scan_bfs_matches_build_sq_wca`
+/// 用它重建单类 csq/esq 逐字节等于 frontier 版 `build_sq_wca`。native-only(rayon)。
+#[cfg(not(target_arch = "wasm32"))]
+fn scan_bfs_par(size: usize, seed: usize, neighbors: impl Fn(usize, &mut Vec<usize>) + Sync) -> Vec<u8> {
+    use rayon::prelude::*;
+    use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+    let dist: Vec<AtomicU8> = (0..size).map(|_| AtomicU8::new(255)).collect();
+    dist[seed].store(0, Ordering::Relaxed);
+    let dref = &dist[..];
+    let nthreads = rayon::current_num_threads().max(1);
+    let chunk = (size / (nthreads * 8)).max(1);
+    let nchunks = size.div_ceil(chunk);
+    let mut d = 0u8;
+    loop {
+        let changed = AtomicBool::new(false);
+        (0..nchunks).into_par_iter().for_each(|c| {
+            let lo = c * chunk;
+            let hi = (lo + chunk).min(size);
+            let mut buf: Vec<usize> = Vec::with_capacity(160);
+            for i in lo..hi {
+                if dref[i].load(Ordering::Relaxed) != d {
+                    continue;
+                }
+                buf.clear();
+                neighbors(i, &mut buf);
+                for &ni in &buf {
+                    if dref[ni]
+                        .compare_exchange(255, d + 1, Ordering::Relaxed, Ordering::Relaxed)
+                        .is_ok()
+                    {
+                        changed.store(true, Ordering::Relaxed);
+                    }
+                }
+            }
+        });
+        if !changed.load(Ordering::Relaxed) {
+            break;
+        }
+        assert!(d < 250, "scan_bfs depth overflow (sentinel collision)");
+        d += 1;
+    }
+    // Vec<AtomicU8> → Vec<u8> 原地复用同一 buffer(AtomicU8 与 u8 layout 完全相同:size 1 / align 1)。
+    // 避免 `.into_iter().map().collect()` 的 2× 瞬时(3.25GB→6.5GB)⇒ 峰值恒 = 表本身,内存紧也不
+    // OOM(§0.4);A3-full 13GB 表更非此不可(2× 会到 26GB 必爆)。
+    let mut md = std::mem::ManuallyDrop::new(dist);
+    let (ptr, len, cap) = (md.as_mut_ptr(), md.len(), md.capacity());
+    // SAFETY: AtomicU8 是 repr(C) 包 UnsafeCell<u8>,与 u8 layout 相同;ptr/len/cap 取自同一 Vec、
+    // 每字节都是合法 u8;ManuallyDrop 防 dist 被二次释放(所有权移交新 Vec)。
+    unsafe { Vec::from_raw_parts(ptr as *mut u8, len, cap) }
+}
+
 // ===========================================================================
 // Sq1WcaSolver:WCA 12c4 度量精确最优求解器。
 //
@@ -1344,6 +1445,10 @@ pub struct Sq1WcaSolver {
     /// 缺表且非 SQ1_BUILD_PDB=1 时为空,h 回退 5 小表(wasm 恒空)。
     cornp: Vec<u8>,
     edgep: Vec<u8>,
+    /// 方形子群**联合**(角 perm × 棱 perm × ml,3.25e9 = 3.03GB)WCA 距离到 solved 陪集。
+    /// 比 csq/esq(角/棱各自 max)强:`max(csq,esq) ≤ jsq ≤ 真距离` ⇒ phase-2 启发更紧、搜索坍缩。
+    /// 盘缓存 tables/sq1_wca_jsq.bin;缺表且非 SQ1_BUILD_PDB=1 时空,sq_h_wca 回退 csq/esq(wasm 恒空)。
+    jsq: Vec<u8>,
 }
 
 impl Default for Sq1WcaSolver {
@@ -1398,7 +1503,8 @@ impl Sq1WcaSolver {
         let csq = build_sq_wca(&sig, &rhoc);
         let esq = build_sq_wca(&tau, &rhoe);
         let (cornp, edgep) = Self::load_or_build_pdbs(base);
-        Sq1WcaSolver { base, comb, c4, e4, c4b, e4b, csq, esq, cornp, edgep }
+        let jsq = Self::load_or_build_jsq();
+        Sq1WcaSolver { base, comb, c4, e4, c4b, e4b, csq, esq, cornp, edgep, jsq }
     }
 
     /// 大 PDB(角/棱全 8 件)加载或按需构建。盘缓存命中即直读;缺表且 `SQ1_BUILD_PDB=1`
@@ -1449,6 +1555,63 @@ impl Sq1WcaSolver {
     #[cfg(target_arch = "wasm32")]
     fn load_or_build_pdbs(_base: &'static Sq1Solver) -> (Vec<u8>, Vec<u8>) {
         (Vec::new(), Vec::new())
+    }
+
+    /// 方形子群联合 phase-2 表(3.25e9 项 = 3.03GB)加载或按需构建。盘缓存命中即直读;缺表且
+    /// `SQ1_BUILD_PDB=1` 时 scan-based BFS 构建并落盘(一次性 ~分钟级,峰值仅表本身),否则返回空
+    /// (sq_h_wca 回退 csq/esq)。wasm 不编译此路径。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn load_or_build_jsq() -> Vec<u8> {
+        let path = crate::move_tables::table_path("sq1_wca_jsq.bin");
+        if let Ok(bytes) = std::fs::read(&path) {
+            if bytes.len() == JSQ_SIZE {
+                eprintln!("[sq1] loaded {} ({} bytes)", path.display(), bytes.len());
+                return bytes;
+            }
+        }
+        if std::env::var("SQ1_BUILD_PDB").as_deref() != Ok("1") {
+            return Vec::new();
+        }
+        let (slash, rot) = derive_sq_actions_paired();
+        eprintln!(
+            "[sq1] building sq1_wca_jsq.bin ({} entries, scan-based; {} slash + {} rot moves) ...",
+            JSQ_SIZE,
+            slash.len(),
+            rot.len()
+        );
+        let t = Self::build_jsq(&slash, &rot);
+        if let Some(dir) = path.parent() {
+            let _ = std::fs::create_dir_all(dir);
+        }
+        match std::fs::write(&path, &t) {
+            Ok(_) => eprintln!("[sq1] wrote {} ({} bytes)", path.display(), t.len()),
+            Err(e) => eprintln!("[sq1] WARN failed to write {}: {}", path.display(), e),
+        }
+        t
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn load_or_build_jsq() -> Vec<u8> {
+        Vec::new()
+    }
+
+    /// jsq 联合表 BFS:scan-based(峰值仅表本身,不 OOM)。seed = jidx(id,id,0) = 0。
+    /// 边 = 配对方形→方形 slash(cost1,翻 ml)+ 配对方形保形旋转(cost1,ml 不变),复用
+    /// `build_sq_wca` 的边模型但角棱联合演进(配对 action,不是笛卡尔积)。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn build_jsq(slash: &[([u8; 8], [u8; 8])], rot: &[([u8; 8], [u8; 8])]) -> Vec<u8> {
+        scan_bfs_par(JSQ_SIZE, 0, |i, buf| {
+            let ml = (i & 1) as u8;
+            let rest = i >> 1;
+            let cp = unrank8(rest / 40320);
+            let ep = unrank8(rest % 40320);
+            for (mc, me) in slash {
+                buf.push(jidx(&apply_action(&cp, mc), &apply_action(&ep, me), ml ^ 1));
+            }
+            for (rc, re) in rot {
+                buf.push(jidx(&apply_action(&cp, rc), &apply_action(&ep, re), ml));
+            }
+        })
     }
 
     /// 全局共享实例(表现场建,首次 ~秒级;含 Sq1Solver 的 twist 表)。
@@ -1739,11 +1902,15 @@ impl Sq1WcaSolver {
         self.h_le_wca(s, pt, pb, 255).unwrap()
     }
 
-    /// 方形态 phase-2 启发值(仅方形子群内可采纳)= max(角, 棱 8 排列 WCA 距离)。
+    /// 方形态 phase-2 启发值(仅方形子群内可采纳)。jsq 联合表在位时 = 角×棱联合 WCA 距离(更紧,
+    /// `≥ max(csq,esq)` 且 `≤ 真距离` ⇒ 仍可采纳);缺表(wasm/未建)回退 max(角, 棱)。
     /// s 必须方形(sq_proj_arrays 对非方形 debug_assert)。
     #[inline]
     fn sq_h_wca(&self, s: &Sq1State) -> u8 {
         let (cp, ep) = sq_proj_arrays(s);
+        if !self.jsq.is_empty() {
+            return self.jsq[jidx(&cp, &ep, s.ml)];
+        }
         let ci = rank8(&cp) * 2 + s.ml as usize;
         let ei = rank8(&ep) * 2 + s.ml as usize;
         self.csq[ci].max(self.esq[ei])
@@ -2654,6 +2821,266 @@ mod tests {
         // 全空间可达(无 255):投影态全覆盖。
         assert!(w.comb.iter().all(|&v| v != 255));
         assert!(w.c4.iter().all(|&v| v != 255));
+    }
+
+    // ---- A3:角×棱联合 phase-2 表(jsq)----
+
+    /// 独立精确 phase-2:IDA* 用 **max(csq,esq)**(不碰 jsq,避免循环验证)搜到精确 SOLVED,
+    /// 返真实方形子群 WCA 尾距。边/剪枝同 `p2_dfs_wca` 但启发独立。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn p2_dfs_indep(w: &Sq1WcaSolver, s: Sq1State, g: u8, bound: u8, lm: u8) -> bool {
+        if is_exact_solved(&s) {
+            return true;
+        }
+        let (cp, ep) = sq_proj_arrays(&s);
+        let h = w.csq[rank8(&cp) * 2 + s.ml as usize].max(w.esq[rank8(&ep) * 2 + s.ml as usize]);
+        if g + h > bound {
+            return false;
+        }
+        let pt = Sq1State::layer_pattern(s.top);
+        let pb = Sq1State::layer_pattern(s.bottom);
+        if lm != LM_SLASH {
+            let c = s.slashed();
+            if c.is_square_shape() && p2_dfs_indep(w, c, g + 1, bound, LM_SLASH) {
+                return true;
+            }
+        }
+        if lm != LM_TURN {
+            let ta = w.base.legal_rot[pt as usize];
+            let tb = w.base.legal_rot[pb as usize];
+            let mut am = ta;
+            while am != 0 {
+                let a = am.trailing_zeros();
+                am &= am - 1;
+                let mut bm = tb;
+                while bm != 0 {
+                    let b = bm.trailing_zeros();
+                    bm &= bm - 1;
+                    if a == 0 && b == 0 {
+                        continue;
+                    }
+                    let c = s.turned(a, b);
+                    if c.is_square_shape() && p2_dfs_indep(w, c, g + 1, bound, LM_TURN) {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn p2_exact_indep(w: &Sq1WcaSolver, s: Sq1State) -> u8 {
+        let (cp, ep) = sq_proj_arrays(&s);
+        let mut t = w.csq[rank8(&cp) * 2 + s.ml as usize].max(w.esq[rank8(&ep) * 2 + s.ml as usize]);
+        loop {
+            if p2_dfs_indep(w, s, 0, t, LM_NONE) {
+                return t;
+            }
+            t += 1;
+            assert!(t < 40, "p2 exact indep runaway");
+        }
+    }
+
+    /// scan-based BFS 驱动锁:用它重建**单类** csq/esq,逐字节等于 frontier 版 `build_sq_wca`。
+    /// 锁住 `scan_bfs_par`(jsq 用同一驱动)的正确性,无需建 3.25GB 表(§0.5 新表 par==serial 门)。
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    fn scan_bfs_matches_build_sq_wca() {
+        let (sig, tau, rhoc, rhoe) = derive_sq_actions();
+        let scan_c = scan_bfs_par(80640, 0, |i, buf| {
+            let ml = (i & 1) as u8;
+            let cp = unrank8(i >> 1);
+            for m in &sig {
+                buf.push(rank8(&apply_action(&cp, m)) * 2 + (ml ^ 1) as usize);
+            }
+            for r in &rhoc {
+                buf.push(rank8(&apply_action(&cp, r)) * 2 + ml as usize);
+            }
+        });
+        assert_eq!(scan_c, build_sq_wca(&sig, &rhoc), "scan corner != build_sq_wca");
+        let scan_e = scan_bfs_par(80640, 0, |i, buf| {
+            let ml = (i & 1) as u8;
+            let ep = unrank8(i >> 1);
+            for m in &tau {
+                buf.push(rank8(&apply_action(&ep, m)) * 2 + (ml ^ 1) as usize);
+            }
+            for r in &rhoe {
+                buf.push(rank8(&apply_action(&ep, r)) * 2 + ml as usize);
+            }
+        });
+        assert_eq!(scan_e, build_sq_wca(&tau, &rhoe), "scan edge != build_sq_wca");
+    }
+
+    /// 配对 action 完备性 + 健全性:BFS 枚举方形态,验每个物理出边(slash / 方形保形旋转)
+    /// 都被某配对 action 在投影层精确复现。锁住 `derive_sq_actions_paired`(jsq 边生成的根基)。
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    fn sq1_jsq_actions_sound() {
+        use std::collections::{HashSet, VecDeque};
+        let (slash, rot) = derive_sq_actions_paired();
+        let mut seen: HashSet<(u64, u64, u8)> = HashSet::new();
+        let mut q: VecDeque<(Sq1State, u32)> = VecDeque::new();
+        let s0 = Sq1State::SOLVED;
+        seen.insert((s0.top, s0.bottom, s0.ml));
+        q.push_back((s0, 0));
+        let mut checked = 0usize;
+        while let Some((z, depth)) = q.pop_front() {
+            let (cp, ep) = sq_proj_arrays(&z);
+            let mut succ: Vec<Sq1State> = Vec::new();
+            for a in 0..12u32 {
+                for b in 0..12u32 {
+                    if a == 0 && b == 0 {
+                        continue;
+                    }
+                    let r = z.turned(a, b);
+                    if !r.is_square_shape() {
+                        continue;
+                    }
+                    let (tc, te) = sq_proj_arrays(&r);
+                    assert!(
+                        rot.iter()
+                            .any(|(rc, re)| apply_action(&cp, rc) == tc && apply_action(&ep, re) == te),
+                        "rotation ({},{}) not reproduced by any rot pair",
+                        a,
+                        b
+                    );
+                    checked += 1;
+                    succ.push(r);
+                }
+            }
+            if z.slash_legal() {
+                let c = z.slashed();
+                if c.is_square_shape() {
+                    let (tc, te) = sq_proj_arrays(&c);
+                    assert!(
+                        slash
+                            .iter()
+                            .any(|(mc, me)| apply_action(&cp, mc) == tc && apply_action(&ep, me) == te),
+                        "slash not reproduced by any slash pair"
+                    );
+                    checked += 1;
+                    succ.push(c);
+                }
+            }
+            if depth < 4 {
+                for r in succ {
+                    if seen.insert((r.top, r.bottom, r.ml)) {
+                        q.push_back((r, depth + 1));
+                    }
+                }
+            }
+        }
+        eprintln!("jsq actions sound: {} transitions over {} square states", checked, seen.len());
+        assert!(checked > 1000, "too few transitions: {}", checked);
+    }
+
+    /// 建表后门(#[ignore],需 jsq 已建/加载):jsq[solved]=0、采样方形态 `max(csq,esq) ≤ jsq ≤ 精确`
+    /// (精确用独立 p2_exact_indep,不碰 jsq)⇒ 支配性 + 可采纳性。
+    /// 跑:`CUBE_TABLE_DIR=...\tables SQ1_WCA_EXACT=1 cargo test --release --lib wca_a3_jsq -- --ignored --nocapture`
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    #[ignore]
+    fn wca_a3_jsq_admissible_dominant() {
+        use std::collections::{HashSet, VecDeque};
+        let w = Sq1WcaSolver::shared();
+        assert!(!w.jsq.is_empty(), "jsq not loaded; build with SQ1_BUILD_PDB=1 first");
+        assert_eq!(w.jsq[0], 0, "jsq[solved coset] must be 0");
+        let mut seen: HashSet<(u64, u64, u8)> = HashSet::new();
+        let mut q: VecDeque<(Sq1State, u32)> = VecDeque::new();
+        let s0 = Sq1State::SOLVED;
+        seen.insert((s0.top, s0.bottom, s0.ml));
+        q.push_back((s0, 0));
+        let mut n = 0u32;
+        while let Some((z, depth)) = q.pop_front() {
+            let (cp, ep) = sq_proj_arrays(&z);
+            let j = w.jsq[jidx(&cp, &ep, z.ml)];
+            let marg =
+                w.csq[rank8(&cp) * 2 + z.ml as usize].max(w.esq[rank8(&ep) * 2 + z.ml as usize]);
+            assert!(j >= marg, "jsq {} < max(csq,esq) {} (not dominant) depth {}", j, marg, depth);
+            let exact = p2_exact_indep(w, z);
+            assert!(j <= exact, "jsq {} > exact phase-2 {} (NOT admissible) depth {}", j, exact, depth);
+            n += 1;
+            if depth < 4 {
+                let mut push = |r: Sq1State, q: &mut VecDeque<(Sq1State, u32)>| {
+                    if r.is_square_shape() && seen.insert((r.top, r.bottom, r.ml)) {
+                        q.push_back((r, depth + 1));
+                    }
+                };
+                for a in 0..12u32 {
+                    for b in 0..12u32 {
+                        if a == 0 && b == 0 {
+                            continue;
+                        }
+                        push(z.turned(a, b), &mut q);
+                    }
+                }
+                if z.slash_legal() {
+                    push(z.slashed(), &mut q);
+                }
+            }
+        }
+        eprintln!("jsq A3 admissible+dominant over {} square states ✓", n);
+        assert!(n > 500, "too few states: {}", n);
+    }
+
+    /// A3 深态实测(#[ignore],**报告型**,需 jsq + 大 PDB 已建):解 5 条真深态(id 774-778),
+    /// 完成的逐条验 replay 回精确 SOLVED + token 数=cost(正确性回归),打印逐条耗时 + 超时清单。
+    /// **不再 panic <30s**:profile 已证 774/777=phase-1 爆炸(jsq 碰不到)、776/778=phase-2 时间槽
+    /// (需 A3-full 精确查表),「全 <30s」是 A3-full+A4 多单元目标,见笔记 §5 诊断 A3-后。
+    /// 跑:`CUBE_TABLE_DIR=...\tables RAYON_NUM_THREADS=8 cargo test --release --lib wca_a3_deep_timing -- --ignored --nocapture`
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    #[ignore]
+    fn wca_a3_deep_timing() {
+        use std::sync::mpsc;
+        let w = Sq1WcaSolver::shared();
+        assert!(!w.jsq.is_empty(), "jsq not loaded; deep timing meaningless");
+        let txt = include_str!("../test_data/sq1_scrambles.txt");
+        const CAP_S: u64 = 90; // 每条超时上限(jsq 生效则秒级;没救则封顶,不 >5min 死等)
+        let mut slowest = 0f64;
+        let mut timeouts: Vec<String> = Vec::new();
+        for line in txt.lines().take(5) {
+            let line = line.trim();
+            if line.is_empty() {
+                continue;
+            }
+            let (id, scr) = line.split_once(',').unwrap();
+            let id = id.to_string();
+            let st = state_from_scramble(scr).unwrap();
+            let (tx, rx) = mpsc::channel();
+            let t0 = std::time::Instant::now();
+            // solver 是 &'static,态 Copy ⇒ 可移进线程;超时则 detach(进程结束统一回收)。
+            std::thread::spawn(move || {
+                let _ = tx.send(w.solve_with_solution(&st));
+            });
+            match rx.recv_timeout(std::time::Duration::from_secs(CAP_S)) {
+                Ok((wca, sol)) => {
+                    let dt = t0.elapsed().as_secs_f64();
+                    let mut r = st;
+                    for t in &sol {
+                        r.apply(*t).unwrap();
+                    }
+                    assert_eq!(
+                        (r.top, r.bottom, r.ml),
+                        (SOLVED_TOP, SOLVED_BOTTOM, 0),
+                        "id={} replay",
+                        id
+                    );
+                    assert_eq!(sol.len() as u32, wca, "id={} token count", id);
+                    eprintln!("id={} wca={} time={:.2}s", id, wca, dt);
+                    slowest = slowest.max(dt);
+                }
+                Err(_) => {
+                    eprintln!("id={} TIMEOUT (> {}s)", id, CAP_S);
+                    timeouts.push(id);
+                }
+            }
+        }
+        eprintln!(
+            "A3 deep timing(报告): slowest completed {:.2}s; timeouts(>{}s)={:?}",
+            slowest, CAP_S, timeouts
+        );
     }
 
     /// 区间 + 还原 + 近最优交叉:13 ≤ twist ≤ WCA ≤ 2·twist+1 ≤ 27,解 replay 回精确 SOLVED,
