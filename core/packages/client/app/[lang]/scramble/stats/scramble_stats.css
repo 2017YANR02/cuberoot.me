@@ -836,23 +836,6 @@ a.scramble-timeline-scramble:hover {
 }
 
 /* ── 查看全部:整个 bin 的真题列表 + 筛选 ── */
-.scramble-stats-fulllist-open {
-  align-self: flex-start;
-  margin-top: 0.6rem;
-  padding: 0.35rem 0.9rem;
-  background: transparent;
-  color: var(--text-sub);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  font: inherit;
-  font-size: 0.78rem;
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-.scramble-stats-fulllist-open:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-}
 .scramble-stats-fulllist {
   margin-top: 0.75rem;
   display: flex;
@@ -863,10 +846,13 @@ a.scramble-timeline-scramble:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 0.75rem;
+  gap: 0.5rem 0.6rem;
 }
-.scramble-stats-fulllist-count {
-  font-size: 0.78rem;
+/* 全量条数:折进面板标题(N 步示例 共 X 条),轻量灰字 */
+.scramble-stats-examples-allcount {
+  margin-left: 0.5rem;
+  font-size: 0.76rem;
+  font-weight: 400;
   color: var(--text-sub);
   font-variant-numeric: tabular-nums;
 }
@@ -891,22 +877,61 @@ a.scramble-timeline-scramble:hover {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
-.scramble-stats-fulllist-date {
+/* 日期范围:两个 ISO 日期框收紧成一段(from ~ to + 清除) */
+.scramble-stats-fulllist-daterange {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+/* ISO 日期字段:自绘 yyyy-mm-dd 文案 + 透明原生日期框铺在上层(只借日历 picker) */
+.scramble-stats-isodate {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.scramble-stats-isodate-text {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.76rem;
-  color: var(--text-sub);
-}
-.scramble-stats-fulllist-date input {
+  min-width: 6.4rem;
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 0.28rem 0.4rem;
+  padding: 0.28rem 0.5rem;
   font: inherit;
   font-size: 0.76rem;
-  color-scheme: inherit;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.scramble-stats-isodate-text.is-placeholder {
+  color: var(--text-sub);
+}
+.scramble-stats-isodate-text svg {
+  flex: 0 0 auto;
+  color: var(--text-sub);
+}
+.scramble-stats-isodate-native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.scramble-stats-isodate-native::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+.scramble-stats-fulllist-dash {
+  color: var(--text-sub);
+  font-size: 0.76rem;
+}
+.scramble-stats-fulllist-bar .scramble-stats-fulllist-close {
+  margin-left: auto;
 }
 .scramble-stats-fulllist-close,
 .scramble-stats-fulllist-more {
@@ -925,9 +950,14 @@ a.scramble-timeline-scramble:hover {
   color: var(--accent);
   border-color: var(--accent);
 }
-.scramble-stats-fulllist-more {
-  align-self: center;
-  margin-top: 0.25rem;
+/* 列表底部:加载更多 + 收起(长列表也能就近折叠) */
+.scramble-stats-fulllist-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
 }
 @media (max-width: 480px) {
   .scramble-stats-fulllist-bar {
@@ -935,5 +965,8 @@ a.scramble-timeline-scramble:hover {
   }
   .scramble-stats-fulllist-search {
     flex-basis: 100%;
+  }
+  .scramble-stats-fulllist-daterange {
+    flex: 1 1 auto;
   }
 }

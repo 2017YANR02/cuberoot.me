@@ -124,7 +124,7 @@ const GLOSSARY: { term: string; def: { zh: string; en: string
   },
   {
     term: 'HTM / QTM / STM',
-    def: { zh: 'Half-Turn / Quarter-Turn / Slice-Turn 度量。决定"一步算什么"。三阶 HTM=20, QTM=26, STM=18。', en: 'Half-Turn / Quarter-Turn / Slice-Turn metric. Decides what counts as "one move". 3×3 HTM=20, QTM=26, STM=18.'
+    def: { zh: 'Half-Turn / Quarter-Turn / Slice-Turn 度量。决定"一步算什么"。三阶 HTM=20、QTM=26 都已证;STM 只知道在 18–20 之间(未合拢)。', en: 'Half-Turn / Quarter-Turn / Slice-Turn metric. Decides what counts as "one move". 3×3 HTM=20 and QTM=26 are proven; STM is only known to lie between 18 and 20 (open).'
     },
   },
   {

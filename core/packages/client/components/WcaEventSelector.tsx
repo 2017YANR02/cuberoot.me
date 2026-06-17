@@ -4,11 +4,12 @@
 
 import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { X } from 'lucide-react';
+import { X, Search } from 'lucide-react';
 import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { eventDisplayName } from '@/lib/wca-events';
 import { CubingIcon } from './EventIcon/EventIcon';
 import AppLink from './AppLink';
+import { ClearButton } from './ClearButton';
 import './WcaEventSelector.css';
 import { tr } from '@/i18n/tr';
 
@@ -28,6 +29,11 @@ interface WcaEventSelectorProps {
   collapsibleAppend?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   /**
+   * 显示一个搜索框,按项目名(中/英)或 id 过滤图标。项目太多时(如打乱生成器批量模式)用。
+   * 搜索激活时展开折叠组、隐藏三角,只渲染命中的图标(官方 + 废止 + 非 WCA 追加项一起搜)。
+   */
+  searchable?: boolean;
+  /**
    * 链接模式:给定事件 id 返回其跳转目标 + 是否硬导航(跨 COEP 边界用原生 <a> 整页加载)。
    * 返回 null = 该事件无链接(退回普通 button)。设置后官方事件渲染为 <a>/AppLink 而非 button,
    * 保留中键 / Ctrl 新开;供「求解」中心复用同一选择器跳页(/scramble/solver|pocket|...)。
@@ -40,7 +46,7 @@ type AppendItem = { id: string; iconClass: string; label?: string; textLabel?: s
 export default function WcaEventSelector({
   availableEvents, selectedEvent, onSelect, isZh, allowAll,
   selectedEvents, onToggle, badges, topBadges, onlyAvailable, onRemove, appendEvents,
-  collapsibleAppend, onExpandedChange, linkFor,
+  collapsibleAppend, onExpandedChange, linkFor, searchable,
 }: WcaEventSelectorProps) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -72,6 +78,21 @@ export default function WcaEventSelector({
   const [expanded, setExpanded] = useState(false);
   const showHidden = expanded || hasSelectedHidden;
   const showToggle = hasHiddenContent && !hasSelectedHidden;
+
+  // 搜索:命中项目名(中/英)/ 显示名 / id 即保留。激活时绕过折叠逻辑,扁平渲染所有命中。
+  const [query, setQuery] = useState('');
+  const q = searchable ? query.trim().toLowerCase() : '';
+  const searching = q.length > 0;
+  const matchWca = (id: string): boolean => {
+    if (!searching) return true;
+    const hay = `${id} ${EVENT_ZH[id] ?? ''} ${EVENT_EN[id] ?? ''} ${eventDisplayName(id, true)} ${eventDisplayName(id, false)}`.toLowerCase();
+    return hay.includes(q);
+  };
+  const matchAppend = (e: AppendItem): boolean => {
+    if (!searching) return true;
+    const hay = `${e.id} ${e.label ?? ''} ${e.textLabel ?? ''} ${eventDisplayName(e.id, true)} ${eventDisplayName(e.id, false)}`.toLowerCase();
+    return hay.includes(q);
+  };
 
   const toggleTip = (cancelledIds.length > 0 && appendCollapsible)
     ? tr({ zh: '其他项目', en: 'Other events'
@@ -161,8 +182,14 @@ export default function WcaEventSelector({
     );
   };
 
-  return (
-    <div className="wca-stats-event-selector">
+  const gridChildren = searching ? (
+    <>
+      {officialIds.filter(matchWca).map(renderWcaButton)}
+      {cancelledIds.filter(matchWca).map(renderWcaButton)}
+      {renderedAppend.filter(matchAppend).map(renderAppendButton)}
+    </>
+  ) : (
+    <>
       {allowAll && !isMulti && (
         <button
           className={`event-btn event-btn-all${selectedEvent === '' ? ' active' : ''}`}
@@ -190,6 +217,36 @@ export default function WcaEventSelector({
       {showHidden && cancelledIds.map(renderWcaButton)}
       {showHidden && hiddenAppend.map(renderAppendButton)}
       {inlineAppend.map(renderAppendButton)}
+    </>
+  );
+
+  const grid = <div className="wca-stats-event-selector">{gridChildren}</div>;
+  if (!searchable) return grid;
+
+  const noResults = searching
+    && !officialIds.some(matchWca)
+    && !cancelledIds.some(matchWca)
+    && !renderedAppend.some(matchAppend);
+
+  return (
+    <div className="wca-evsel-with-search">
+      <div className="wca-evsel-search">
+        <Search size={14} className="wca-evsel-search-icon" />
+        <input
+          type="text"
+          className="wca-evsel-search-input"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={tr({ zh: '搜索项目…', en: 'Search puzzles…' })}
+          aria-label={tr({ zh: '搜索项目', en: 'Search puzzles' })}
+        />
+        {query && (
+          <ClearButton variant="inline" isZh={isZh} preserveFocus onClick={() => setQuery('')} />
+        )}
+      </div>
+      {noResults ? (
+        <div className="wca-evsel-no-results">{tr({ zh: '无匹配项目', en: 'No matching puzzles' })}</div>
+      ) : grid}
     </div>
   );
 }

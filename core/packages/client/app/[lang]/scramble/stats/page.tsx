@@ -1095,6 +1095,12 @@ function ExamplesPanel({
   merged: boolean;
   dataset: string;
 }) {
+  // 「查看全部」展开态提到面板这一层:筛选栏(搜索 + 日期)常驻,展开后用全量列表**替换**
+  // 示例预览(不再两个列表叠着),全量条数经 onTotal 收上来折进面板标题。
+  const [showAll, setShowAll] = useState(false);
+  const [fullTotal, setFullTotal] = useState<number | null>(null);
+  const onExpanded = (v: boolean) => { setShowAll(v); if (!v) setFullTotal(null); };
+  const canFullList = dataset === 'wca' && !is333 && selectedBin !== null;
   const selectedDownloadable = selectedBin !== null && downloadBins.includes(selectedBin);
   // 整解 + 该 bin 示例确有最优打乱数据时才露切换(线上旧 JSON 无第 4 元 → 自动隐藏)。
   const hasOpt = is333 && !!samples?.some((s) => !!s[3]);
@@ -1112,6 +1118,11 @@ function ExamplesPanel({
           {selectedBin !== null
             ? (isZh ? `${selectedBin} 步示例` : `${selectedBin}-move examples`)
             : tr({ zh: '示例', en: 'Examples' })}
+          {showAll && fullTotal !== null && (
+            <span className="scramble-stats-examples-allcount">
+              {tr({ zh: '共 {n} 条', en: '{n} total' }).replace('{n}', fullTotal.toLocaleString())}
+            </span>
+          )}
         </div>
         {hasOpt && (
           <PillToggle
@@ -1136,15 +1147,32 @@ function ExamplesPanel({
           </a>
         )}
       </div>
-      {selectedBin !== null && loading && (
+      {/* 查看全部:筛选栏(搜索 + 日期)常驻在示例之上;展开后用全量列表替换下方的示例预览
+          (仅 WCA 数据集、非整解、已选 bin)。合并池 → 不传 event;分开 → 传当前项目。 */}
+      {canFullList && (
+        <FullScrambleList
+          apiEvent={merged ? undefined : wcaEvent}
+          variant={variant}
+          stage={stage}
+          colors={subsetKey}
+          bin={selectedBin}
+          lang={lang}
+          isZh={isZh}
+          exView={exView}
+          expanded={showAll}
+          onExpandedChange={onExpanded}
+          onTotal={setFullTotal}
+        />
+      )}
+      {!showAll && selectedBin !== null && loading && (
         <div className="scramble-stats-examples-hint">{tr({ zh: '加载中…', en: 'Loading…'
         })}</div>
       )}
-      {selectedBin !== null && errorText && (
+      {!showAll && selectedBin !== null && errorText && (
         <div className="scramble-stats-examples-hint">{tr({ zh: '加载失败', en: 'Load failed'
         })}: {errorText}</div>
       )}
-      {selectedBin !== null && !loading && !errorText && sortedSamples && sortedSamples.length > 0 && (
+      {!showAll && selectedBin !== null && !loading && !errorText && sortedSamples && sortedSamples.length > 0 && (
         <ul className="scramble-stats-examples-list">
           {sortedSamples.map(([id, scr, color, opt], i) => {
             const m = idMeta?.[id];
@@ -1201,23 +1229,9 @@ function ExamplesPanel({
           })}
         </ul>
       )}
-      {selectedBin !== null && !loading && !errorText && samples && samples.length === 0 && (
+      {!showAll && selectedBin !== null && !loading && !errorText && samples && samples.length === 0 && (
         <div className="scramble-stats-examples-hint">{tr({ zh: '此 bin 无示例', en: 'No examples for this bin'
         })}</div>
-      )}
-      {/* 查看全部:列出该 bin 的全部真题 + 比赛名/日期筛选(仅 WCA 数据集、非整解、已选 bin)。
-          合并池 → 不传 event(全 3x3-family);分开 → 传当前项目。 */}
-      {dataset === 'wca' && !is333 && selectedBin !== null && (
-        <FullScrambleList
-          apiEvent={merged ? undefined : wcaEvent}
-          variant={variant}
-          stage={stage}
-          colors={subsetKey}
-          bin={selectedBin}
-          lang={lang}
-          isZh={isZh}
-          exView={exView}
-        />
       )}
     </div>
   );

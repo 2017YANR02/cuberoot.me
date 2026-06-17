@@ -18,6 +18,47 @@ import {
 // WCA's ACTIVITY_OTHER_GREY — non-event activities (check-in, lunch, ceremony).
 const OTHER_GREY = '#666666';
 
+// 背景带(签到/开幕/午餐…)的标签都贴在带子顶部,起始时间相近的两条带子标签会叠在
+// 一起(如「开场简介」压住「3x3x3 Blindfolded Check-in」)。把同一时段的背景活动按
+// 标签占用的纵向高度做区间着色,给每条分一条横向 lane,标签并排不再重叠。
+// LABEL_SPAN_MIN ≈ 一个标签竖直方向占的分钟数(标签≈20px、~2px/min)。
+const LABEL_SPAN_MIN = 12;
+
+function assignLabelLanes(
+  activities: ScheduleData['activities'],
+): Map<number, { lane: number; lanes: number }> {
+  const items = activities
+    .map((a) => {
+      const start = Date.parse(a.startTime) / 60000;
+      return { id: a.id, start, end: start + LABEL_SPAN_MIN };
+    })
+    .sort((x, y) => x.start - y.start);
+  const result = new Map<number, { lane: number; lanes: number }>();
+  let cluster: typeof items = [];
+  let clusterMaxEnd = -Infinity;
+  const flush = () => {
+    const laneEnds: number[] = [];
+    const laneOf = new Map<number, number>();
+    for (const it of cluster) {
+      let lane = laneEnds.findIndex((e) => e <= it.start);
+      if (lane === -1) { lane = laneEnds.length; laneEnds.push(it.end); }
+      else laneEnds[lane] = it.end;
+      laneOf.set(it.id, lane);
+    }
+    const lanes = laneEnds.length;
+    for (const it of cluster) result.set(it.id, { lane: laneOf.get(it.id)!, lanes });
+    cluster = [];
+    clusterMaxEnd = -Infinity;
+  };
+  for (const it of items) {
+    if (cluster.length && it.start >= clusterMaxEnd) flush();
+    cluster.push(it);
+    clusterMaxEnd = Math.max(clusterMaxEnd, it.end);
+  }
+  if (cluster.length) flush();
+  return result;
+}
+
 export default function ScheduleCalendar({
   data, tz, isZh, slotMinTime, slotMaxTime, dayKeys, mobileDayKey,
 }: {
@@ -30,10 +71,12 @@ export default function ScheduleCalendar({
   mobileDayKey?: string;
 }) {
   const events = useMemo(
-    () =>
-      data.activities.map((a) => {
+    () => {
+      const lanes = assignLabelLanes(data.activities.filter((a) => eventOfActivity(a) === ''));
+      return data.activities.map((a) => {
         const isOther = eventOfActivity(a) === '';
         const color = isOther ? OTHER_GREY : a.roomColor;
+        const ln = isOther ? lanes.get(a.id) : undefined;
         return {
           title: localizeActivityName(a, data.rounds, isZh, eventDisplayName),
           start: a.startTime,
@@ -44,9 +87,10 @@ export default function ScheduleCalendar({
           backgroundColor: color,
           borderColor: color,
           textColor: readableTextColor(color),
-          extendedProps: { room: a.roomName, isOther },
+          extendedProps: { room: a.roomName, isOther, lane: ln?.lane ?? 0, lanes: ln?.lanes ?? 1 },
         };
-      }),
+      });
+    },
     [data, isZh],
   );
 
@@ -93,6 +137,21 @@ export default function ScheduleCalendar({
         eventDidMount={(info) => {
           const room = info.event.extendedProps.room as string | undefined;
           info.el.title = `${info.timeText} ${info.event.title}${room ? ` · ${room}` : ''}`;
+          // 起始时间相近的多条背景带,标签默认都贴左上会叠字(如「开场简介」压住
+          // 「3x3x3 Blindfolded Check-in」)。按预算好的 lane 把标题横向分槽并排。
+          const lanes = (info.event.extendedProps.lanes as number) || 1;
+          if (info.event.extendedProps.isOther && lanes > 1) {
+            const lane = (info.event.extendedProps.lane as number) || 0;
+            const title = info.el.querySelector<HTMLElement>('.fc-event-title');
+            if (title) {
+              title.style.position = 'absolute';
+              title.style.top = '0';
+              title.style.left = `${(lane / lanes) * 100}%`;
+              title.style.width = `${100 / lanes}%`;
+              title.style.boxSizing = 'border-box';
+              title.classList.add('sched-bg-label-split');
+            }
+          }
         }}
       />
     </div>

@@ -81,7 +81,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   lockView: false,
   backView: false,
   playbackMode: 'moves',
-  dragEmpty: 'orbit',
+  dragEmpty: 'view',
   coreColor: '#202020',
   faceColors: { ...DEFAULT_FACE_COLORS },
 };

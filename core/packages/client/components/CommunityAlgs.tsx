@@ -10,9 +10,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import type { AlgSubmission, AlgSticker } from '@cuberoot/shared';
+import Link from '@/components/AppLink';
 import { addSubmission, updateSubmission, deleteSubmission } from '@/lib/alg_api';
 import { validateAlgCase } from '@/lib/alg_validation';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { tr } from '@/i18n/tr';
 
 interface Props {
@@ -35,7 +37,8 @@ interface Props {
 }
 
 export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setup, submissions, onPatch }: Props) {
-  useTranslation(); // subscribe to language changes; text via tr()
+  const { i18n } = useTranslation(); // subscribe to language changes; text via tr()
+  const isZh = i18n.language.startsWith('zh');
   const user = useAuthStore(s => s.user);
   const login = useAuthStore(s => s.login);
   const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
@@ -161,9 +164,15 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
               </div>
             ) : (
               <>
-                <span className="alg-community-author" title={s.authorId}>{s.authorName}</span>
                 <code className="alg-community-alg">{s.alg}</code>
                 {s.notes && <span className="alg-community-notes">{s.notes}</span>}
+                <Link
+                  href={`/wca/persons/${encodeURIComponent(s.authorId)}`}
+                  className="alg-community-author"
+                  title={`${tr({ zh: '投稿者', en: 'Submitted by' })}: ${s.authorName} (${s.authorId})`}
+                >
+                  {displayCuberName(s.authorName, isZh)}
+                </Link>
                 {canEdit && (
                   <span className="alg-community-actions">
                     <button type="button" onClick={() => startEdit(s)} title={tr({ zh: '编辑', en: 'Edit' })}>
