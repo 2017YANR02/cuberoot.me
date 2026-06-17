@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { tr } from '@/i18n/tr';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { ClearButton } from '@/components/ClearButton';
+import { SearchInput } from '@/components/SearchInput';
 import { ListSelect } from '@/components/ListSelect';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
@@ -112,6 +113,21 @@ function RangeSliderDemo() {
 function NumberCommitDemo() {
   const [n, setN] = useState(5);
   return <NumberCommitInput value={n} min={1} max={20} onCommit={setN} className="cg-input cg-num" aria-label="count" />;
+}
+
+function SearchInputDemo() {
+  const [q, setQ] = useState('');
+  return (
+    <div className="cg-row">
+      <SearchInput
+        value={q}
+        onChange={setQ}
+        placeholder={tr({ zh: '试试中文输入法', en: 'Try an IME' })}
+        inputClassName="cg-input"
+      />
+      <span style={{ fontFamily: 'var(--cg-mono)', color: 'var(--muted-foreground)' }}>{q || '—'}</span>
+    </div>
+  );
 }
 
 function ListSelectDemo() {
@@ -340,6 +356,16 @@ export const CATALOG: ComponentEntry[] = [
     Demo: NumberCommitDemo,
   },
   {
+    name: 'SearchInput',
+    import: "import { SearchInput } from '@/components/SearchInput';",
+    category: 'input',
+    zh: 'IME 安全的受控文本搜索框:中文 / 日文输入法合成途中不写回外部 store,合成结束才提交,避免 nuqs / 节流 store 的重渲染打断拼音(把 bei 拼成乱码)。内置行内清除 ×。',
+    en: 'IME-safe controlled text search box: during CJK composition it holds value locally and only commits on compositionend, so a nuqs / throttled-store re-render can’t corrupt the in-progress pinyin. Built-in inline clear ×.',
+    usage: '<SearchInput value={q} onChange={setQ} placeholder="搜索" />',
+    Demo: SearchInputDemo,
+    note: { zh: '任何写 nuqs / 节流 store 的自由文本输入都走它,别裸写 <input value onChange=setQuery>。CI 守卫 tests/ime-safe-search-input。', en: 'Use it for any free-text input that writes to nuqs / a throttled store — never hand-roll <input value onChange=setQuery>. Guarded by tests/ime-safe-search-input.' },
+  },
+  {
     name: 'RangeSlider',
     import: "import { RangeSlider } from '@/components/RangeSlider/RangeSlider';",
     category: 'input',
@@ -446,6 +472,13 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: '选手搜索选择器。默认本地索引最快,别传 searchFn(后端代理对中文 / 单字符返空)。',
     en: 'Cuber search / picker. The default local index is fastest — don’t pass searchFn (the backend proxy returns empty for Chinese / single chars).',
+  },
+  {
+    name: 'GestureWheel',
+    import: "import GestureWheel from '@/components/GestureWheel';",
+    category: 'more',
+    zh: 'cstimer 式按住拖动径向轮盘(8 方向,ref 命令式驱动)。配 useGestureWheel hook 用,/timer 与 /trainer 计时面板共用;labels 可定制,空字符串隐藏槽位。',
+    en: 'cstimer-style press-and-drag radial dial (8 directions, ref-driven). Pairs with the useGestureWheel hook; shared by /timer and /trainer timing surfaces. Labels are customizable; an empty string hides a slot.',
   },
   {
     name: 'VisualCube',

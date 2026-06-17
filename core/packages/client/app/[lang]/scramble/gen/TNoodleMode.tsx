@@ -1275,6 +1275,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
           availableEvents={TNOODLE_EVENT_SET}
           onlyAvailable
           collapsibleAppend
+          searchable
           onExpandedChange={setOtherExpanded}
           selectedEvents={new Set(Object.keys(events))}
           badges={Object.fromEntries(Object.entries(events).map(([ev, cfg]) => [ev, cfg.rounds.length]))}

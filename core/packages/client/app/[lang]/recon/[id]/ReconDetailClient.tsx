@@ -46,7 +46,7 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
-import { useAuthStore, isAdmin } from '@/lib/auth-store';
+import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { RecordBadge } from '@/components/RecordBadge';
 import TwistySection from '@/components/TwistySection';
 import Sq1ReconPlayer from '@/components/Sq1ReconPlayer';
@@ -263,7 +263,9 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   return (
     <div className="detail-layout">
       <div className="detail-player-pane">
-        {scramble && solutionText && (
+        {scramble && (
+          // 有解法 → 播放复盘;无解法(只录了 WCA 成绩 + 打乱)→ alg 为空,
+          // player 停在 setup(打乱)后的 3D 状态,至少能看到这个打乱。
           isSq1 ? (
             <Sq1ReconPlayer
               scramble={scramble}
@@ -1056,9 +1058,9 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime }: {
   setAlts: (alts: ReconAlternative[]) => void;
   solveTime?: number;
 }) {
-  const user = useAuthStore(s => s.user);
+  const user = useAuthUser();
   const currentWcaId = user?.wcaId || '';
-  const isAdminUser = isAdmin();
+  const isAdminUser = useIsAdmin();
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -1165,8 +1167,9 @@ function CommentsView({
   const [replySubmitting, setReplySubmitting] = useState(false);
   const [expandedReplies, setExpandedReplies] = useState<Set<number>>(new Set());
 
-  const user = useAuthStore(s => s.user);
+  const user = useAuthUser();
   const currentWcaId = user?.wcaId || '';
+  const isAdminUser = useIsAdmin();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
 
@@ -1262,7 +1265,7 @@ function CommentsView({
 
   function renderCommentItem(comment: ReconComment, isReply: boolean) {
     const isOwn = !!currentWcaId && currentWcaId === comment.authorId;
-    const admin = isAdmin();
+    const admin = isAdminUser;
     const canEdit = isOwn;
     const canDelete = isOwn || admin;
     const canPin = admin && !isReply;

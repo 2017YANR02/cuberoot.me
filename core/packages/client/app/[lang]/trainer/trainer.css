@@ -3,6 +3,15 @@
    Dual-theme: follows ThemeToggle (no longer dark-locked). Theme tokens only,
    no hard-coded greys. Mobile (<480) collapses sidebar below timer. */
 
+/* Same 7-segment LED display as /timer (browser dedupes the shared face). */
+@font-face {
+  font-family: 'Segment7Standard';
+  src: url('/fonts/Segment7Standard.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 .trainer-root {
   /* --tr-sel: "selected/active" accent (blue), distinct from brand terracotta;
      defined once here, readable on both light + dark, derive via color-mix. */
@@ -65,18 +74,51 @@
   border-radius: 10px;
   padding: 14px 16px;
 }
+/* CSS-drawn tri-state checkbox (replaces native <input> so it can live inside the
+   <button> rows). iOS Safari only reliably fires tap→click on native interactive
+   elements, so every toggle row is a real <button>. */
+.trainer-checkbox {
+  flex: none;
+  display: inline-block;
+  width: 15px; height: 15px;
+  box-sizing: border-box;
+  border: 1.5px solid color-mix(in srgb, var(--foreground) 40%, transparent);
+  border-radius: 4px;
+  position: relative;
+}
+.trainer-checkbox.is-checked,
+.trainer-checkbox.is-indeterminate {
+  background: var(--tr-sel);
+  border-color: var(--tr-sel);
+}
+.trainer-checkbox.is-checked::after {
+  content: ''; position: absolute;
+  left: 4px; top: 1px; width: 4px; height: 8px;
+  border: solid #fff; border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.trainer-checkbox.is-indeterminate::after {
+  content: ''; position: absolute;
+  left: 3px; top: 6px; width: 7px; height: 2px;
+  background: #fff; border-radius: 1px;
+}
+
+/* Toggle rows are <button>; strip the UA chrome, keep the original layout. */
+.trainer-set-header,
+.trainer-bulk-toggle {
+  appearance: none; -webkit-appearance: none;
+  background: none; border: none; color: inherit;
+  font: inherit; text-align: left;
+}
 .trainer-set-header {
   display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 0;
   font-size: 1.1rem; font-weight: 600;
   margin-bottom: 12px;
   cursor: pointer;
   user-select: none;
 }
-.trainer-set-header input[type=checkbox] {
-  width: 16px; height: 16px;
-  accent-color: var(--tr-sel);
-  cursor: pointer;
-}
+.trainer-set-header .trainer-checkbox { width: 16px; height: 16px; }
 .trainer-set-header .trainer-set-title-thumb {
   display: inline-flex; align-items: center;
 }
@@ -92,9 +134,13 @@
   font-weight: 600; font-size: 0.95rem;
   margin-bottom: 10px; user-select: none;
 }
-.trainer-subgroup-header input[type=checkbox] {
-  width: 14px; height: 14px; accent-color: var(--tr-sel); cursor: pointer;
+/* The bulk-select button (checkbox + thumb + label + count) inside a header row. */
+.trainer-bulk-toggle {
+  display: inline-flex; align-items: center; gap: 8px;
+  flex: 1; min-width: 0;
+  padding: 0; cursor: pointer; user-select: none;
 }
+.trainer-subgroup-header .trainer-checkbox { width: 14px; height: 14px; }
 .trainer-chevron-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 22px; height: 22px;
@@ -131,13 +177,15 @@
 .trainer-sub-subgroup.is-expanded .trainer-sub-subgroup-header {
   margin-bottom: 8px;
 }
-.trainer-sub-subgroup-header input[type=checkbox] {
-  width: 13px; height: 13px; accent-color: var(--tr-sel); cursor: pointer;
+.trainer-sub-subgroup-header .trainer-checkbox {
+  width: 13px; height: 13px;
 }
 .trainer-case-grid {
   display: flex; flex-wrap: wrap; gap: 10px;
 }
 .trainer-case-cell {
+  appearance: none; -webkit-appearance: none;
+  font: inherit; color: inherit;
   display: flex; flex-direction: column; align-items: center;
   gap: 4px;
   padding: 6px 8px 8px;
@@ -148,9 +196,13 @@
   transition: all 0.12s;
   min-width: 92px;
 }
-.trainer-case-cell:hover {
-  border-color: color-mix(in srgb, var(--foreground) 30%, transparent);
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+/* Hover only on real pointers — iOS Safari "sticky hover" after a tap would
+   otherwise paint the last-tapped cell grey and read as a (wrong) selection. */
+@media (hover: hover) {
+  .trainer-case-cell:hover {
+    border-color: color-mix(in srgb, var(--foreground) 30%, transparent);
+    background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  }
 }
 .trainer-case-cell.is-selected {
   border-color: color-mix(in srgb, var(--tr-sel) 60%, transparent);
@@ -164,8 +216,6 @@
 .trainer-case-cell-thumb {
   pointer-events: none;
 }
-/* Hidden checkbox; whole cell click toggles. */
-.trainer-case-cell input { display: none; }
 
 /* ─── run page (timer) ─── */
 .trainer-run {
@@ -182,11 +232,12 @@
   text-align: center;
   padding: 40px 20px;
   /* iOS Safari 长按会触发文本选择 / 放大镜,影响计时手感;
-     stage(打乱+按钮+大计时数字)整块禁掉。sidebar 不动以便复制成绩 scramble。 */
+     stage(打乱+按钮+大计时数字)整块禁掉。sidebar 不动以便复制成绩 scramble。
+     touch-action:none 让按住拖动走 pointermove(径向轮盘),不被滚动吞掉。 */
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
-  touch-action: manipulation;
+  touch-action: none;
 }
 .trainer-scramble-label {
   font-size: 1rem; color: var(--muted-foreground); margin-bottom: 8px;
@@ -215,18 +266,20 @@
 .trainer-stage-btn:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
 
 .trainer-timer {
-  font-family: 'Inter', monospace;
+  font-family: 'Segment7Standard', 'SF Mono', Menlo, Consolas, 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   font-size: 6rem;
   line-height: 1.1;
   margin: 28px 0 12px;
-  font-style: italic;
 }
 .trainer-timer.is-awaiting { color: var(--signal-warning); }
 .trainer-timer.is-ready    { color: var(--signal-success); }
 .trainer-timer.is-running  { color: var(--foreground); }
 .trainer-timer.is-stopping,
 .trainer-timer.is-idle     { color: var(--foreground); }
+.trainer-timer.is-dnf      { color: var(--faint-foreground); }
 
 .trainer-help {
   font-size: 0.85rem;
@@ -294,6 +347,7 @@
   border-color: color-mix(in srgb, var(--tr-sel) 50%, transparent);
   color: var(--foreground);
 }
+.trainer-stats-list .trainer-stat-time.is-dnf { color: var(--faint-foreground); }
 .trainer-stats-empty {
   color: var(--faint-foreground); font-size: 0.85rem;
 }

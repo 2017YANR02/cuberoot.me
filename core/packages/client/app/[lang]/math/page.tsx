@@ -9,7 +9,7 @@
  */
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { Infinity as InfinityIcon, Sigma, Dices, Ruler, Box } from 'lucide-react';
+import { Infinity as InfinityIcon, Sigma, Dices, Ruler } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import i18n from '@/i18n/i18n-client';
 import { useT } from "@/hooks/useT";
@@ -46,12 +46,6 @@ const CARDS: Card[] = [
     Icon: Ruler,
     zh: { title: '单位距离问题', desc: 'OpenAI 2026:AI 自主推翻 Erdős 1946 平面单位距离猜想,5 个互动可视化' },
     en: { title: 'Unit distance problem', desc: 'OpenAI 2026: AI autonomously disproves Erdős 1946 planar unit-distance conjecture — 5 interactive visualisations' }
-},
-  {
-    to: '/math/sq1',
-    Icon: Box,
-    zh: { title: 'Square-1 上帝之数', desc: '三套计步口径:扭转 13、面转 31 已证,WCA 12c4 至今未解;计步对照器 + 穷举分布 + 态空间' },
-    en: { title: "Square-1's God number", desc: 'Three move metrics: twist 13 & face-turn 31 proven, WCA 12c4 still open — move calculator, exhaustive distributions, state space' }
 },
 ];
 

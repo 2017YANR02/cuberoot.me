@@ -13,8 +13,9 @@ export type Metric = 'HTM' | 'QTM' | 'STM' | 'OBTM' | 'twist' | 'face' | 'move';
 
 export interface DiameterValue {
   metric: Metric;
-  /** When `status==='exact'` the proven diameter, else the best published upper bound. */
-  upper: number;
+  /** When `status==='exact'` the proven diameter, else the best published upper bound.
+   *  Omit when no upper bound has been published (6×6 / 7×7) — only `lower` is shown then. */
+  upper?: number;
   /** Best published lower bound (omit if same as upper). */
   lower?: number;
   status: Status;
@@ -58,8 +59,8 @@ export const PUZZLES: PuzzleEntry[] = [
     },
     },
     diameters: [
-      { metric: 'HTM', upper: 11, status: 'exact', year: 1981, by: 'community BFS' },
-      { metric: 'QTM', upper: 14, status: 'exact', year: 1981, by: 'community BFS' },
+      { metric: 'HTM', upper: 11, status: 'exact', year: 1993, by: 'Jerry Bryan (full BFS)' },
+      { metric: 'QTM', upper: 14, status: 'exact', year: 1993, by: 'Jerry Bryan (full BFS)' },
     ],
     milestoneYear: 1981,
     blurb: {
@@ -82,19 +83,19 @@ export const PUZZLES: PuzzleEntry[] = [
     },
     },
     diameters: [
-      { metric: 'HTM', upper: 20, status: 'exact', year: 2010, by: 'Rokicki · Kociemba · Davidson · Dethridge' },
-      { metric: 'QTM', upper: 26, status: 'exact', year: 2014, by: 'Rokicki · Davidson' },
-      { metric: 'STM', upper: 18, lower: 18, status: 'exact', year: 2014, by: 'Rokicki' },
+      { metric: 'HTM', upper: 20, status: 'exact', year: 2010, by: 'Rokicki, Kociemba, Davidson, Dethridge' },
+      { metric: 'QTM', upper: 26, status: 'exact', year: 2014, by: 'Rokicki, Davidson' },
+      { metric: 'STM', upper: 20, lower: 18, status: 'bounds', by: 'bounds 18–20 (open)' },
     ],
     milestoneYear: 2010,
     blurb: {
-      zh: '把 4.3 × 10¹⁹ 个状态按 2,217,093,120 个陪集分组,再用对称性 + 集合覆盖压到 5588 万陪集,Google 上跑了 ~35 CPU-年,2010 年 7 月证出 HTM 直径恰好等于 20。QTM 直径 26 与 STM 直径 18 都是后续用同套陪集框架证出的。',
-      en: 'Partition all 4.3×10¹⁹ states into 2,217,093,120 cosets, then shrink to 55.88M via symmetry + set cover. ~35 CPU-years on Google in July 2010 nailed the HTM diameter at exactly 20. The QTM=26 (2014) and STM=18 results followed using the same coset framework.'
+      zh: '把 4.3 × 10¹⁹ 个状态按 2,217,093,120 个陪集分组,再用对称性 + 集合覆盖压到 5588 万陪集,Google 上跑了 ~35 CPU-年,2010 年 7 月证出 HTM 直径恰好等于 20。QTM 直径 26 是 2014 年用同套陪集框架证出的(算力换成 Ohio 超算 ~29 CPU-年);切片度量(STM)只知道夹在 18 与 20 之间,尚未合拢。',
+      en: 'Partition all 4.3×10¹⁹ states into 2,217,093,120 cosets, then shrink to 55.88M via symmetry + set cover. ~35 CPU-years on Google in July 2010 nailed the HTM diameter at exactly 20. The QTM=26 result (2014) used the same coset framework (~29 CPU-years at the Ohio Supercomputer Center); the slice-turn metric (STM) is only known to lie between 18 and 20, still open.'
     },
     refs: [
       { label: 'cube20.org', url: 'https://www.cube20.org/' },
       { label: 'cube20.org/qtm', url: 'https://www.cube20.org/qtm/' },
-      { label: 'Rokicki et al., SIAM J. Discrete Math 2014', url: 'https://epubs.siam.org/doi/abs/10.1137/120867366' },
+      { label: 'Rokicki et al., SIAM J. Discrete Math 2013', url: 'https://epubs.siam.org/doi/abs/10.1137/120867366' },
     ],
     puzzleSize: 3,
   },
@@ -156,11 +157,11 @@ export const PUZZLES: PuzzleEntry[] = [
     },
     },
     diameters: [
-      { metric: 'OBTM', upper: 57, lower: 35, status: 'bounds', by: 'Kociemba (上界:reduction 块转计) · community (下界:canonical-sequence)' },
+      { metric: 'OBTM', upper: 55, lower: 35, status: 'bounds', year: 2015, by: 'upper 55: Shuang Chen 2015 (Tsai reduction); lower 35: counting argument (community)' },
     ],
     blurb: {
-      zh: '没有精确解。下界来自 canonical-sequence 计数:每深度的合法序列数有递推上限,反推出"至少要这么多步才能覆盖所有状态" ⇒ d ≥ 35。上界 57 来自 Kociemba 的 reduction 策略各阶段最坏值之和。两者之间还有 20 多步的缝。',
-      en: 'No proven diameter. Lower bound from canonical-sequence counting: bounded sequences per depth force d ≥ 35 to cover all 7.4×10⁴⁵ states. Upper bound 57 from Kociemba\'s reduction-method per-phase worst case. A 20-move gap remains open.'
+      zh: '没有精确解。下界 35 来自计数论证:每深度的合法序列数有上限,反推出"至少要这么多步才能覆盖所有状态" ⇒ d ≥ 35。上界 55 是 Shuang Chen 2015 年改进 Tsai 的 8 步归约法得到的(早先是 57,经 Rokicki 复核),并非 Kociemba 直接归约。两者之间还有 20 步的缝。',
+      en: 'No proven diameter. The lower bound 35 comes from a counting argument: bounded legal sequences per depth force d ≥ 35 to cover all 7.4×10⁴⁵ states. The upper bound 55 is Shuang Chen\'s 2015 improvement of Tsai\'s 8-step reduction (the earlier figure 57 was confirmed by Rokicki) — not a direct Kociemba reduction. A 20-move gap remains open.'
     },
     refs: [
       { label: 'Wikipedia — Rubik\'s Revenge', url: 'https://en.wikipedia.org/wiki/Rubik%27s_Revenge' },
@@ -173,7 +174,7 @@ export const PUZZLES: PuzzleEntry[] = [
     sameGroupAs: '444',
     name: { zh: '四盲', en: '4×4 Blindfolded' },
     states: { sci: '7.40 × 10⁴⁵' },
-    diameters: [{ metric: 'OBTM', upper: 57, lower: 35, status: 'bounds' }],
+    diameters: [{ metric: 'OBTM', upper: 55, lower: 35, status: 'bounds' }],
     blurb: { zh: '同四阶群,只有界,没有精确值。', en: 'Same group as 4×4; only bounds, no exact diameter.'
     },
     refs: [{ label: 'Wikipedia — Rubik\'s Revenge', url: 'https://en.wikipedia.org/wiki/Rubik%27s_Revenge' }],
@@ -186,11 +187,11 @@ export const PUZZLES: PuzzleEntry[] = [
     states: { sci: '2.83 × 10⁷⁴', pretty: { zh: '约 2.83 × 10⁷⁴', en: '~2.83 × 10⁷⁴'
     } },
     diameters: [
-      { metric: 'OBTM', upper: 130, lower: 52, status: 'bounds', by: 'community / reduction ceiling' },
+      { metric: 'OBTM', upper: 130, lower: 52, status: 'bounds', by: 'community estimates (lower: counting; upper: worst-case algorithm)' },
     ],
     blurb: {
-      zh: '比可观测宇宙的原子数(~10⁸²)少几个 0 而已。除了渐近 Θ(N²/log N) 是数学严证,精确直径没人知道。',
-      en: 'Only a few zeros short of the atoms in the observable universe (~10⁸²). Apart from the Θ(N²/log N) asymptotic, no exact diameter is known.'
+      zh: '比可观测宇宙的原子数(~10⁸²)少几个 0 而已。OBTM 上下界 52 / 130 都是社区计算的估算(下界靠计数,上界靠最坏情形算法),并非已证直径;除了渐近 Θ(N²/log N) 是数学严证,精确直径没人知道。',
+      en: 'Only a few zeros short of the atoms in the observable universe (~10⁸²). The 52 / 130 OBTM bounds are community computational estimates (lower from counting, upper from a worst-case algorithm), not a proven diameter; apart from the Θ(N²/log N) asymptotic, no exact diameter is known.'
     },
     refs: [{ label: 'Wikipedia — Professor\'s Cube', url: 'https://en.wikipedia.org/wiki/Professor%27s_Cube' }],
     puzzleSize: 5,
@@ -211,10 +212,10 @@ export const PUZZLES: PuzzleEntry[] = [
     name: { zh: '六阶', en: '6×6×6'
     },
     states: { sci: '1.57 × 10¹¹⁶' },
-    diameters: [{ metric: 'OBTM', upper: 200, lower: 75, status: 'bounds', by: 'community' }],
+    diameters: [{ metric: 'OBTM', lower: 75, status: 'bounds', by: 'lower 75: counting argument (community); no published upper bound' }],
     blurb: {
-      zh: '状态数已经远超经典物理对"有限"的常识。直径只有粗糙界限。',
-      en: 'State count blows past anything classical physics calls finite. Only loose bounds are known.'
+      zh: '状态数已经远超经典物理对"有限"的常识。只有一个社区计数得到的下界 75 OBTM,至今没有公开的上界。',
+      en: 'State count blows past anything classical physics calls finite. Only a community counting lower bound of 75 OBTM exists — no upper bound has been published.'
     },
     refs: [{ label: 'Wikipedia — V-Cube 6', url: 'https://en.wikipedia.org/wiki/V-Cube_6' }],
     puzzleSize: 6,
@@ -224,10 +225,10 @@ export const PUZZLES: PuzzleEntry[] = [
     name: { zh: '七阶', en: '7×7×7'
     },
     states: { sci: '1.95 × 10¹⁶⁰' },
-    diameters: [{ metric: 'OBTM', upper: 280, lower: 99, status: 'bounds', by: 'community' }],
+    diameters: [{ metric: 'OBTM', lower: 99, status: 'bounds', by: 'lower 99: counting argument (community); no published upper bound' }],
     blurb: {
-      zh: '渐近来看,N 阶魔方的上帝之数走 Θ(N²/log N) —— 由 Demaine 等人 2011 证明,既给上界(用并行求解器)又给下界(用合法序列计数)。',
-      en: 'Asymptotically, N×N God\'s number grows as Θ(N²/log N) — proved by Demaine et al. (2011), upper via a parallel solver, lower via canonical-sequence counting.'
+      zh: 'WCA 最大魔方,只有一个社区计数得到的下界 99 OBTM,没有公开上界。渐近来看,N 阶魔方的上帝之数走 Θ(N²/log N) —— 由 Demaine 等人 2011 证明,既给上界(用并行求解器)又给下界(用合法序列计数)。',
+      en: 'The largest WCA cube. Only a community counting lower bound of 99 OBTM exists, with no published upper bound. Asymptotically, N×N God\'s number grows as Θ(N²/log N) — proved by Demaine et al. (2011), upper via a parallel solver, lower via canonical-sequence counting.'
     },
     refs: [
       { label: 'Wikipedia — V-Cube 7', url: 'https://en.wikipedia.org/wiki/V-Cube_7' },
@@ -239,7 +240,7 @@ export const PUZZLES: PuzzleEntry[] = [
     id: '333mbf',
     name: { zh: '多盲', en: 'Multi-Blind' },
     states: { sci: '(4.3 × 10¹⁹)ᵏ' },
-    diameters: [{ metric: 'HTM', upper: 20, status: 'parametric', by: '20·k for k 独立 3×3' }],
+    diameters: [{ metric: 'HTM', upper: 20, status: 'parametric', by: '20k (k independent 3×3 cubes)' }],
     blurb: {
       zh: 'k 个独立三阶的笛卡尔积。直径平凡地等于 20k(每个魔方走自己的 ≤20 步)。MBLD 的"难"完全在记忆和盲拧执行,与群论无关。',
       en: 'Cartesian product of k independent 3×3 cubes. Diameter is trivially 20k (each cube solved independently in ≤20). MBLD difficulty is all memory + execution, no new group theory.'
@@ -258,12 +259,12 @@ export const PUZZLES: PuzzleEntry[] = [
     },
     },
     diameters: [
-      { metric: 'move', upper: 12, status: 'exact', year: 2014, by: 'Jakob Kogler · 验证: Tomas Rokicki' },
+      { metric: 'move', upper: 12, status: 'exact', year: 2014, by: 'Jakob Kogler 2014 (IDDFS proof); Tomas Rokicki (coset solver + full distribution)' },
     ],
     milestoneYear: 2014,
     blurb: {
-      zh: 'Kogler 2014 年 5 月用 front-cross 陪集 + 1.5 GB 剪枝表证出直径 = 12 步。cube20.org 在 2025 年 3 月 4 日发布完整距离分布作为复核。Clock 是少数"上帝之数早就被算出来,只是没几个人在乎"的项目。',
-      en: 'Kogler proved diameter = 12 (May 2014) via a front-cross coset + 1.5 GB pruning table. cube20.org posted the full distance distribution on 2025-03-04 as cross-check. Clock is the rare event whose God\'s number has been known for a decade but barely talked about.'
+      zh: 'Kogler 2014 年 5 月用迭代加深 DFS + 1.5 GB 剪枝表证出直径 = 12 步;front-cross 陪集法是 Tomas Rokicki 后来提出的,并由他算出完整距离分布(39,248 个状态需满 12 步)。直径是在 12¹⁴ ≈ 1.28 × 10¹⁵ 个表盘状态上证明的(算上针位的总组合数 ~2.05 × 10¹⁶ 更大,但针位不改变求解距离)。Clock 是少数"上帝之数早就被算出来,只是没几个人在乎"的项目。',
+      en: 'Kogler proved diameter = 12 (May 2014) via iterative-deepening DFS + a 1.5 GB pruning table; the front-cross coset method was Tomas Rokicki\'s, who also computed the full distance distribution (39,248 states need the full 12). The diameter is proven over the 12¹⁴ ≈ 1.28 × 10¹⁵ dial states (the total combination count including pins, ~2.05 × 10¹⁶, is larger but pins don\'t change solving distance). Clock is the rare event whose God\'s number has been known for a decade but barely talked about.'
     },
     refs: [
       { label: 'cube20.org/clock', url: 'https://www.cube20.org/clock/' },
@@ -275,11 +276,11 @@ export const PUZZLES: PuzzleEntry[] = [
     name: { zh: '五魔方', en: 'Megaminx' },
     states: { sci: '1.01 × 10⁶⁸', pretty: { zh: '20! · 3¹⁹ · 30! · 2²⁷', en: '20! · 3¹⁹ · 30! · 2²⁷' } },
     diameters: [
-      { metric: 'HTM', upper: 194, lower: 48, status: 'bounds', year: 2012, by: 'Kociemba (下界)' },
+      { metric: 'HTM', upper: 194, lower: 48, status: 'bounds', year: 2016, by: 'lower 48: Rokicki 2016 (refining Kociemba 2012\'s 45); upper 194: old community estimate' },
     ],
     blurb: {
-      zh: '群序约 10⁶⁸,介于三阶 (10¹⁹) 与四阶 (10⁴⁵) ……才怪 —— 比四阶还大 23 个数量级。Kociemba 2012 年用对易面计数推出下界 48 HTM,上界 194 来自社区。',
-      en: 'Group order ≈ 10⁶⁸ — between 3×3 and 4×4… not even close, it dwarfs 4×4 by 23 orders. Kociemba (2012) proved lower bound 48 HTM via commuting-faces counting; community upper bound 194.'
+      zh: '群序约 10⁶⁸,介于三阶 (10¹⁹) 与四阶 (10⁴⁵) ……才怪 —— 比四阶还大 23 个数量级。下界 48 HTM 是 Rokicki 2016 年在 Kociemba 2012 的对易面计数(当时给 45)基础上改进得到的;上界 194 是较早的社区粗略估计(此后被求解器改进,但精确值仍未知)。',
+      en: 'Group order ≈ 10⁶⁸ — between 3×3 and 4×4… not even close, it dwarfs 4×4 by 23 orders. The lower bound 48 HTM is Rokicki\'s 2016 refinement of Kociemba\'s 2012 commuting-faces count (which gave 45); the 194 upper bound is an older loose community estimate (since improved by solvers, but the exact value is still unknown).'
     },
     refs: [
       { label: 'Speedsolving — Megaminx bound', url: 'https://www.speedsolving.com/threads/lower-bound-for-megaminx-in-htm-and-qtm.35724/' },

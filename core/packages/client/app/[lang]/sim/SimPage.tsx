@@ -24,6 +24,7 @@ import {
   ChevronLeft, ChevronRight,
   BookOpen, Film,
   Maximize2, Minimize2,
+  ArrowLeftRight,
 } from 'lucide-react';
 import World from './cuber/world';
 import type Cube from './cuber/cube';
@@ -33,7 +34,7 @@ import Toucher from './Toucher';
 import { TwistAction } from './cuber/twister';
 import CubeGroup from './cuber/group';
 import Sq1Cube from './cuber/sq1/Sq1Cube';
-import tweener from './cuber/tweener';
+import tweener, { type Tween } from './cuber/tweener';
 import {
   sq1DragStart, sq1DragDelta, sq1DragApply, sq1DragCommit,
   type Sq1DragStart,
@@ -158,6 +159,10 @@ export default function SimPage() {
   // backView). Second renderer shares world.scene with a camera mirrored 180°
   // about Y, rendered into an overlay canvas so snapshots/exports stay clean.
   const fsButtonRef = useRef<HTMLButtonElement>(null);
+  // Swap button (main view ↔ back-view mini window). Anchored over the back-view
+  // window's bottom-right corner via layoutBackView; only mounted when backView on.
+  const swapButtonRef = useRef<HTMLButtonElement>(null);
+  const swapTweenRef = useRef<Tween | null>(null);
   const backFrameRef = useRef<HTMLDivElement>(null);
   const backViewRef = useRef<BackView | null>(null);
   const backSizeRef = useRef<number>(140);
@@ -235,6 +240,12 @@ export default function SimPage() {
     backViewRef.current?.setSize(size);
     const btn = fsButtonRef.current;
     if (btn) btn.style.right = on ? `${size + BACKVIEW_MARGIN * 2}px` : '';
+    // Pin the swap button to the back-view window's bottom-right inner corner.
+    const swapBtn = swapButtonRef.current;
+    if (swapBtn) {
+      swapBtn.style.top = `${BACKVIEW_MARGIN + size - 34}px`;
+      swapBtn.style.right = `${BACKVIEW_MARGIN + 6}px`;
+    }
   }, []);
 
   const ensureCubeCallback = useCallback(() => {
@@ -845,6 +856,41 @@ export default function SimPage() {
     world.cube.twister.redo();
   }, []);
 
+  // Swap the main view with the back-view mini window: rotate 180° about the
+  // vertical axis so the face that was behind comes to the front (and the back
+  // view, always the mirror, swaps in turn).
+  const handleSwapView = useCallback(() => {
+    const world = worldRef.current;
+    if (!world) return;
+    if (swapTweenRef.current) {
+      tweener.finish(swapTweenRef.current);
+      swapTweenRef.current = null;
+    }
+    const cube = asNxN(world);
+    // orbit / rotate modes keep scene.rotation.y within ±90° and bake
+    // reorientation into the cube — a pure-view 180° flip there would leave the
+    // angle out of range and make the next empty-drag emit a stray y. Reorient
+    // the cube itself with an animated y2 instead: view-only (not appended to
+    // the alg), undoable, and it keeps the engine + back-view consistent.
+    if (cube && settingsRef.current.dragEmpty !== 'view') {
+      cube.twister.twist(new TwistAction('y', false, 2), false, true);
+      return;
+    }
+    // view mode + SQ1: spin the camera 180° about the vertical axis. Cube state
+    // is untouched (F stays F); the back-view mirror swaps automatically.
+    const begin = world.scene.rotation.y;
+    const end = begin + Math.PI;
+    swapTweenRef.current = tweener.tween(begin, end, 16, (v) => {
+      const w = worldRef.current;
+      if (!w) { swapTweenRef.current = null; return true; }
+      w.scene.rotation.y = v;
+      w.scene.updateMatrix();
+      w.dirty = true;
+      if (v >= end) { swapTweenRef.current = null; return true; }
+      return false;
+    });
+  }, []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -953,6 +999,21 @@ export default function SimPage() {
           >
             {fullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </button>
+          {/* Swap main view ↔ back-view mini window. Only while the cuber engine
+              back-view is on (NxN / SQ1); twisty puzzles use cubing.js native
+              back-view and aren't covered here. */}
+          {!twisty && settings.backView && (
+            <button
+              ref={swapButtonRef}
+              type="button"
+              className="sim-backview-swap"
+              onClick={handleSwapView}
+              title={t('交换主视图与背面视图', 'Swap main / back view')}
+              aria-label={t('交换主视图与背面视图', 'Swap main / back view')}
+            >
+              <ArrowLeftRight size={14} />
+            </button>
+          )}
         </div>
 
         <aside className="sim-side">

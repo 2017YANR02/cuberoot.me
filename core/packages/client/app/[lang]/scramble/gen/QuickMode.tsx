@@ -354,6 +354,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
         onExpandedChange={setOtherExpanded}
         isZh={isZh}
         onlyAvailable
+        searchable
       />
 
       {/* 配置条:高阶 NxN(随「其他」展开) + 5x5 打乱模式(选了 5x5 才显) */}

@@ -36,33 +36,6 @@
   margin: 0;
 }
 
-/* 难度 / 打乱长度 段控(仅 222/金字塔/斜转) */
-.rs-seg {
-  display: inline-flex;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  overflow: hidden;
-  margin-right: auto;
-}
-.rs-seg-btn {
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: var(--muted-foreground);
-  font: inherit;
-  font-size: 0.82rem;
-  padding: 0.3rem 0.7rem;
-  cursor: pointer;
-  transition: background-color 0.12s, color 0.12s;
-}
-.rs-seg-btn + .rs-seg-btn { border-left: 1px solid var(--border-default); }
-.rs-seg-btn:hover { color: var(--foreground); }
-.rs-seg-btn.active {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--accent);
-  font-weight: 600;
-}
-
 .rs-select {
   appearance: none;
   padding: 0.3rem 1.6rem 0.3rem 0.6rem;

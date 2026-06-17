@@ -1648,6 +1648,14 @@ td.is-pr {
   line-height: 1.2;
   color: var(--muted-foreground);
 }
+/* 起始时间相近的背景带,标题被 eventDidMount 按 lane 横向分槽(内联 left/width 定位);
+   压在窄槽里强制单行截断,免得换行又把相邻 lane 顶高重叠。 */
+.sched-fc .fc-bg-event .fc-event-title.sched-bg-label-split {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 /* 前景轮次默认在事件容器里左缩 2px、右缩 2.5% gutter,而背景带铺满整列 → 右边缘对不齐。
    去掉这个 inset,让轮次块与背景带共用整列宽度,左右对齐。 */
 .sched-fc .fc-timegrid-col-events { margin-left: 0; margin-right: 0; }

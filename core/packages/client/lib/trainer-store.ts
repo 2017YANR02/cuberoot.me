@@ -16,12 +16,15 @@ export const TimerState = {
 } as const;
 export type TimerState = (typeof TimerState)[keyof typeof TimerState];
 
+export type TrainerPenalty = 'ok' | '+2' | 'DNF';
+
 export interface TrainerSolve {
   i: number;
   caseKey: string;
   caseName: string;
   scramble: string;
   ms: number;
+  penalty: TrainerPenalty;
 }
 
 interface PersistedSession {
@@ -35,7 +38,12 @@ const loadPersisted = (p: string, s: string): PersistedSession => {
   if (typeof window === 'undefined') return { selected: [], solves: [] };
   try {
     const raw = localStorage.getItem(sessionKey(p, s));
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw) as PersistedSession;
+      // Back-compat: older sessions predate per-solve penalties.
+      parsed.solves = (parsed.solves ?? []).map(sv => ({ ...sv, penalty: sv.penalty ?? 'ok' }));
+      return parsed;
+    }
   } catch { /* ignore */ }
   return { selected: [], solves: [] };
 };
@@ -68,6 +76,7 @@ interface TrainerState {
   setTimerState: (s: TimerState) => void;
 
   setObservingIdx: (i: number) => void;
+  setSolvePenalty: (idx: number, penalty: TrainerPenalty) => void;
   deleteSolve: (idx: number) => void;
   clearSolves: () => void;
 }
@@ -164,6 +173,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => ({
       caseName: currentName,
       scramble: currentScramble || '',
       ms,
+      penalty: 'ok',
     };
     const newSolves = [...solves, newSolve];
     persist(puzzle, setSlug, { selected: get().selected, solves: newSolves });
@@ -180,6 +190,15 @@ export const useTrainerStore = create<TrainerState>((set, get) => ({
   setTimerState: (s) => set({ timerState: s }),
 
   setObservingIdx: (i) => set({ observingIdx: i }),
+
+  setSolvePenalty: (idx, penalty) => {
+    const { puzzle, set: setSlug, solves, selected } = get();
+    if (!puzzle || !setSlug) return;
+    if (idx < 0 || idx >= solves.length) return;
+    const newSolves = solves.map((s, j) => j === idx ? { ...s, penalty } : s);
+    persist(puzzle, setSlug, { selected, solves: newSolves });
+    set({ solves: newSolves });
+  },
 
   deleteSolve: (idx) => {
     const { puzzle, set: setSlug, solves, selected } = get();

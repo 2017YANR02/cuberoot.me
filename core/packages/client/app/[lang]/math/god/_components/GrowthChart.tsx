@@ -28,10 +28,10 @@ interface Row {
 const ROWS: Row[] = [
   { n: 2, states: Math.log10(3.67e6),   knownD: 11, lowerD: 11, upperD: 11, demaineLow: 5.77, demaineHigh: 11.55 },
   { n: 3, states: Math.log10(4.3252e19),knownD: 20, lowerD: 20, upperD: 20, demaineLow: 8.19, demaineHigh: 16.38 },
-  { n: 4, states: Math.log10(7.40e45),  knownD: null, lowerD: 35, upperD: 57, demaineLow: 11.55, demaineHigh: 23.09 },
+  { n: 4, states: Math.log10(7.40e45),  knownD: null, lowerD: 35, upperD: 55, demaineLow: 11.55, demaineHigh: 23.09 },
   { n: 5, states: Math.log10(2.83e74),  knownD: null, lowerD: 52, upperD: 130, demaineLow: 15.54, demaineHigh: 31.07 },
-  { n: 6, states: Math.log10(1.57e116), knownD: null, lowerD: 75, upperD: 200, demaineLow: 20.10, demaineHigh: 40.19 },
-  { n: 7, states: Math.log10(1.95e160), knownD: null, lowerD: 99, upperD: 280, demaineLow: 25.18, demaineHigh: 50.36 },
+  { n: 6, states: Math.log10(1.57e116), knownD: null, lowerD: 75, upperD: null, demaineLow: 20.10, demaineHigh: 40.19 },
+  { n: 7, states: Math.log10(1.95e160), knownD: null, lowerD: 99, upperD: null, demaineLow: 25.18, demaineHigh: 50.36 },
   { n: 8, states: 217.55,                knownD: null, lowerD: null, upperD: null, demaineLow: 30.77, demaineHigh: 61.54 },
   { n: 9, states: 277.55,                knownD: null, lowerD: null, upperD: null, demaineLow: 36.83, demaineHigh: 73.66 },
   { n: 10, states: 334.51,               knownD: null, lowerD: null, upperD: null, demaineLow: 43.37, demaineHigh: 86.73 },

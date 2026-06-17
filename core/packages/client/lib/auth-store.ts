@@ -4,6 +4,7 @@
  */
 'use client';
 
+import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import { apiUrl } from './api-base';
@@ -98,6 +99,22 @@ export function getWcaId(): string {
 
 export function isAdmin(): boolean {
   return isAdminWcaId(useAuthStore.getState().user?.wcaId);
+}
+
+// ── Hydration-safe 读取 ──
+// store 在模块初始化时 user: readUser() 同步读 localStorage:server 端为 null,
+// client 首帧已是真实登录态。任何「按登录态分叉渲染」的组件必须用下面两个 hook
+// (而非裸 useAuthStore(s => s.user) / isAdmin()),否则 SSG 页 hydration 错配
+// (server 渲染未登录分支,client 首帧渲染已登录分支)。mount 后才暴露真实态。
+export function useAuthUser(): WcaUser | null {
+  const user = useAuthStore((s) => s.user);
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => { setHydrated(true); }, []);
+  return hydrated ? user : null;
+}
+
+export function useIsAdmin(): boolean {
+  return isAdminWcaId(useAuthUser()?.wcaId);
 }
 
 // ── 长效 JWT 滑动续签 ──

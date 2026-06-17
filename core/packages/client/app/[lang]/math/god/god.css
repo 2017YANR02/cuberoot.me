@@ -106,6 +106,9 @@
   border-left: 3px solid var(--god-accent);
   border-radius: 10px;
   display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 .god-formula {
   font-family: 'KaTeX_Math', 'Cambria Math', 'STIX Two Math', 'LiberationMono', ui-monospace, monospace;
@@ -131,7 +134,11 @@
 .god-tex-block {
   display: block;
   margin: 0.6rem 0;
+  padding: 4px 0; /* absorb KaTeX strut so overflow-y:hidden never clips a glyph */
   text-align: center;
+  max-width: 100%;
+  overflow-x: auto;  /* wide formulas scroll inside their block instead of pushing the page on mobile */
+  overflow-y: hidden;
 }
 .god-tex-block .katex-display { margin: 0; }
 
@@ -982,7 +989,10 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
-.god-dist-stat-num span {
+/* small unit suffix (e.g. "HTM"). Scoped to direct-child non-math spans so it
+   never cascades into KaTeX's nested <span> tree (which would compound 0.6em
+   into microscopic, muted text — see |G| = … state-space lines). */
+.god-dist-stat-num > span:not(.god-tex) {
   font-size: 0.6em;
   color: var(--god-text-mute);
   font-weight: 500;
@@ -1026,7 +1036,7 @@
   margin-top: 14px;
 }
 @media (max-width: 600px) {
-  .god-sf-about { grid-template-columns: 1fr; justify-items: center; text-align: left; }
+  .god-sf-about { grid-template-columns: 1fr; justify-items: stretch; text-align: left; }
 }
 .god-sf-vis {
   display: flex;
@@ -1045,6 +1055,9 @@
   color: var(--god-text-mute);
   text-align: center;
   max-width: 200px;
+}
+.god-sf-text {
+  min-width: 0; /* let the grid child shrink so .god-sf-alg can scroll instead of overflowing on mobile */
 }
 .god-sf-text h3 {
   font-size: 1.1rem;
@@ -2087,3 +2100,170 @@
   .god-tl-year { font-size: 0.78rem; }
   .god-tl-body { font-size: 0.85rem; }
 }
+
+/* ─── EVENT DETAIL (?event=X) ───────────────────────────────────────── */
+
+.god-ev-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 1.75rem;
+}
+.god-ev-nav-sep { flex: 1 1 auto; }
+.god-ev-arrows { display: inline-flex; align-items: center; gap: 6px; }
+.god-ev-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 9px;
+  border: 1px solid var(--god-border);
+  border-radius: 7px;
+  color: var(--god-text-sub);
+  text-decoration: none;
+  font-size: 0.82rem;
+  background: var(--god-surface);
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+.god-ev-arrow:hover { border-color: var(--god-border-strong); color: var(--god-text); }
+.god-ev-jump {
+  padding: 6px 10px;
+  border: 1px solid var(--god-border);
+  border-radius: 7px;
+  background: var(--god-surface);
+  color: var(--god-text);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  max-width: 60vw;
+}
+.god-ev-jump:focus { outline: none; border-color: var(--god-accent); }
+
+/* hero */
+.god-ev-hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+.god-ev-hero-icon {
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.god-ev-hero-icon .god-card-cubing-icon { font-size: 56px; }
+.god-ev-eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--god-text-mute);
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.god-ev-title {
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.15;
+}
+.god-ev-title-sub {
+  font-size: 0.62em;
+  font-weight: 500;
+  color: var(--god-text-sub);
+  margin-left: 8px;
+}
+.god-ev-lede {
+  font-size: 1.04rem;
+  line-height: 1.7;
+  color: var(--god-text-sub);
+  margin: 0 0 1.5rem;
+  max-width: 780px;
+}
+.god-ev-lede strong { color: var(--god-text); font-weight: 600; }
+
+/* generic callout / definition / theorem boxes for event bodies */
+.god-ev-callout {
+  margin: 1.25rem 0;
+  padding: 14px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--god-border);
+  border-left: 3px solid var(--god-accent);
+  background: var(--god-surface);
+  font-size: 0.94rem;
+  line-height: 1.65;
+  color: var(--god-text-sub);
+}
+.god-ev-callout.is-warn { border-left-color: var(--god-warn); background: var(--god-warn-soft); }
+.god-ev-callout.is-info { border-left-color: var(--god-wca); background: var(--god-wca-soft); }
+.god-ev-callout strong { color: var(--god-text); }
+.god-ev-callout-h { font-weight: 600; color: var(--god-text); margin-bottom: 4px; }
+
+/* body prose */
+.god-ev-body p {
+  font-size: 1rem;
+  line-height: 1.72;
+  color: var(--god-text-sub);
+  margin: 0 0 1rem;
+  max-width: 780px;
+}
+.god-ev-body p strong { color: var(--god-text); font-weight: 600; }
+.god-ev-body a { color: var(--god-accent); text-decoration: none; }
+.god-ev-body a:hover { text-decoration: underline; }
+.god-ev-body h3 {
+  font-size: 1.12rem;
+  font-weight: 600;
+  margin: 1.6rem 0 0.6rem;
+  color: var(--god-text);
+}
+
+/* related-events footer */
+.god-ev-related {
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed var(--god-border);
+}
+.god-ev-related-h {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--god-text-mute);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.god-ev-related-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.god-ev-relchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border: 1px solid var(--god-border);
+  border-radius: 999px;
+  color: var(--god-text-sub);
+  text-decoration: none;
+  font-size: 0.85rem;
+  background: var(--god-surface);
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+.god-ev-relchip:hover { border-color: var(--god-accent); color: var(--god-text); }
+.god-ev-relchip.is-on { border-color: var(--god-accent); background: var(--god-accent-soft); color: var(--god-text); }
+
+/* clickable cards on the overview grid */
+.god-card-head.is-link { text-decoration: none; color: inherit; }
+.god-card-head.is-link:hover .god-card-title span { color: var(--god-accent); }
+
+@media (max-width: 600px) {
+  .god-ev-hero { grid-template-columns: auto 1fr; gap: 12px; }
+  .god-ev-hero-icon { width: 56px; height: 56px; }
+  .god-ev-hero-icon .god-card-cubing-icon { font-size: 42px; }
+  .god-ev-jump { max-width: 48vw; }
+}
+
+.god-mono { font-family: 'LiberationMono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }

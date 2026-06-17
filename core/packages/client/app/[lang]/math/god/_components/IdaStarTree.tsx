@@ -18,7 +18,6 @@
  */
 import { useMemo, useState } from 'react';
 import { TeX, MathText } from './Tex';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 type HeurMode = 'none' | 'corners' | 'corners-edges';
@@ -89,6 +88,9 @@ function buildTree(): Node[] {
 }
 
 const TREE = buildTree();
+
+/** Hard cap on SVG nodes drawn at once (BFS / high f-limit can touch thousands). */
+const RENDER_CAP = 400;
 
 const NODES_BY_ID = new Map(TREE.map((n) => [n.id, n]));
 
@@ -173,6 +175,27 @@ export default function IdaStarTree({ isZh }: Props) {
     return { total, visited, pruned, solutions };
   }, [mode, limit, live]);
 
+  /** Only the nodes IDA* actually touches: live (visited) ∪ direct children of
+   *  live nodes (the pruned frontier). Nodes whose parent is already pruned are
+   *  never expanded by IDA*, so we don't render them — drawing all 9841 was the
+   *  source of the lag. Capped + depth-ordered so the drawn subtree stays
+   *  connected and the DOM never explodes (e.g. the no-pruning BFS mode). */
+  const visible = useMemo(() => {
+    let ids: number[] = [];
+    for (const n of TREE) {
+      if (live.has(n.id) || (n.parent !== -1 && live.has(n.parent))) ids.push(n.id);
+    }
+    const touched = ids.length;
+    if (ids.length > RENDER_CAP) {
+      ids = ids
+        .map((id) => NODES_BY_ID.get(id)!)
+        .sort((a, b) => a.depth - b.depth || a.id - b.id)
+        .slice(0, RENDER_CAP)
+        .map((n) => n.id);
+    }
+    return { ids, set: new Set(ids), omitted: touched - ids.length };
+  }, [live]);
+
   const heurDesc: Record<HeurMode, { zh: string; en: string
  }> = {
     none: {
@@ -232,7 +255,9 @@ export default function IdaStarTree({ isZh }: Props) {
       <svg viewBox="0 0 720 540" className="god-ida-svg" preserveAspectRatio="xMidYMid meet"
            role="img" aria-label={t('IDA* 搜索树', 'IDA* search tree')}>
         {/* edges */}
-        {TREE.filter((n) => n.parent !== -1).map((n) => {
+        {visible.ids.map((id) => {
+          const n = NODES_BY_ID.get(id)!;
+          if (n.parent === -1) return null;
           const a = LAYOUT.get(n.parent)!;
           const b = LAYOUT.get(n.id)!;
           const isLive = live.has(n.id);
@@ -246,7 +271,8 @@ export default function IdaStarTree({ isZh }: Props) {
           );
         })}
         {/* nodes */}
-        {TREE.map((n) => {
+        {visible.ids.map((id) => {
+          const n = NODES_BY_ID.get(id)!;
           const p = LAYOUT.get(n.id)!;
           const h = hOf(n);
           const f = n.depth + h;
@@ -346,9 +372,15 @@ export default function IdaStarTree({ isZh }: Props) {
 
       <p className="god-ida-caption">
         <MathText>{t(
-          '本树是 8 层、分支因子 3 的教学版 (共 ~3,280 节点);真实三阶 IDA* 分支因子 ~13.34 (去同轴),iteration 21 时节点数 ~ 13.34²¹ ≈ 4 × 10²³,无启发完全跑不动。Korf 1997 用 1.5 GB PDB 把节点压到 ~ 10⁸ 量级,毫秒级返回。本组件演示的是同一个剪枝机制,但缩放到肉眼可见。',
-          'The tree above is a teaching-scale 8-layer branching-3 example (~3,280 nodes); a real 3×3 IDA* has branching ~13.34 (after same-axis pruning), so iteration 21 hits ~13.34²¹ ≈ 4 × 10²³ — utterly infeasible without heuristic. Korf\'s 1.5 GB PDB cuts that to ~10⁸ and returns in milliseconds. Same pruning mechanism, just scaled where the eye can follow.'
+          '本树是 8 层、分支因子 3 的教学版(完整空间 9,841 节点);为保持流畅,右图只画出 IDA* 实际触及的节点(已访问 + 剪枝边界),被父节点提前剪掉、永不展开的深层子树不再渲染。真实三阶 IDA* 分支因子 ~13.34 (去同轴),iteration 21 时节点数 ~ 13.34²¹ ≈ 4 × 10²³,无启发完全跑不动。Korf 1997 用 1.5 GB PDB 把节点压到 ~ 10⁸ 量级,毫秒级返回。本组件演示的是同一个剪枝机制,但缩放到肉眼可见。',
+          'The tree above is a teaching-scale 8-layer branching-3 example (9,841-node space); to stay smooth it draws only the nodes IDA* actually touches (visited + pruned frontier) — deep subtrees cut off at an already-pruned parent are never rendered. A real 3×3 IDA* has branching ~13.34 (after same-axis pruning), so iteration 21 hits ~13.34²¹ ≈ 4 × 10²³ — utterly infeasible without heuristic. Korf\'s 1.5 GB PDB cuts that to ~10⁸ and returns in milliseconds. Same pruning mechanism, just scaled where the eye can follow.'
         )}</MathText>
+        {visible.omitted > 0 && (
+          <span className="god-growth-hint" style={{ display: 'block', marginTop: '6px' }}>
+            {t(`(无剪枝时触及节点过多,图中省略了最深的 ${visible.omitted} 个;上方"节点总数 / 已访问"仍是完整计数)`,
+               `(no-pruning mode touches too many nodes to draw; the deepest ${visible.omitted} are omitted from the figure — the "Total / Visited" counts above remain exact)`)}
+          </span>
+        )}
       </p>
     </div>
   );

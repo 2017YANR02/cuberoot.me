@@ -31,11 +31,11 @@ const PROBLEMS: Problem[] = [
     },
     states: '7.40 × 10⁴⁵',
     lower: 35,
-    upper: 57,
+    upper: 55,
     metric: 'OBTM',
     whyHard: {
-      zh: '中心块"看起来一样"使得每个表观状态对应 24⁶/2 ≈ 1.9 × 10⁷ 个内部状态;对称压缩比三阶难很多。Reduction-style 算法的上界很松。',
-      en: 'Indistinguishable centres mean each visual state covers ~1.9 × 10⁷ internal states; symmetry compression is harder than 3×3. Reduction-style algorithms give loose upper bounds.'
+      zh: '中心块"看起来一样"使得每个表观状态对应 24⁶/2 ≈ 1.9 × 10⁷ 个内部状态;对称压缩比三阶难很多。当前上界 55(Shuang Chen 2015 改进 Tsai 8 步归约)来自 reduction-style 算法,仍然很松。',
+      en: 'Indistinguishable centres mean each visual state covers ~1.9 × 10⁷ internal states; symmetry compression is harder than 3×3. The current upper bound 55 (Shuang Chen 2015, improving Tsai\'s 8-step reduction) is reduction-style and still loose.'
     },
     toClose: {
       zh: '需要类似 Kociemba 的两阶段陪集分解,但找一个合适的中间子群 H ⊂ G(4×4) 非常难——4×4 没有"二色面 → 单色面"那种自然的简化。',

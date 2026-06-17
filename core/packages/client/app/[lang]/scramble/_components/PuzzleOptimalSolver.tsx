@@ -13,7 +13,7 @@ import { Dices, LoaderCircle } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
-import { ClearButton } from '@/components/ClearButton';
+import { SearchInput } from '@/components/SearchInput';
 import { pooledScramble, prewarmScramble } from '@/lib/cubing-scramble';
 import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import type { RustCrossPool, MovesTimed } from '@/lib/rust-cross-client';
@@ -162,22 +162,17 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
       <p className="pos-lead">{tr(spec.lead)}</p>
 
       <div className="pos-input-row">
-        <div className="pos-input-wrap">
-          <input
-            className="pos-input"
-            type="text"
-            value={scramble}
-            onChange={(e) => void setScramble(e.target.value)}
-            placeholder={tr(spec.placeholder ?? { zh: '输入打乱,如 R U R\' F2 U\'', en: "Enter a scramble, e.g. R U R' F2 U'"
-            })}
-            spellCheck={false}
-            autoComplete="off"
-            autoCapitalize="off"
-          />
-          {scramble !== '' && (
-            <ClearButton variant="inline" onClick={() => { void setScramble(''); }} />
-          )}
-        </div>
+        <SearchInput
+          className="pos-input-wrap"
+          inputClassName="pos-input"
+          value={scramble}
+          onChange={(v) => void setScramble(v)}
+          placeholder={tr(spec.placeholder ?? { zh: '输入打乱,如 R U R\' F2 U\'', en: "Enter a scramble, e.g. R U R' F2 U'"
+          })}
+          spellCheck={false}
+          autoComplete="off"
+          autoCapitalize="off"
+        />
         <button
           type="button"
           className="pos-random-btn"

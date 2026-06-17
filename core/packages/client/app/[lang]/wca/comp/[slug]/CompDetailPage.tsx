@@ -24,6 +24,7 @@ import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { fetchPb, prefetchPbs, type PbByEvent } from '@/lib/wca-pb';
 import { fetchCompInfo, fetchCubingZh, type CompInfo, type CubingZhMeta } from '@/lib/comp-wcif';
+import { loadNoScrambleIds } from '@/lib/comp-no-scrambles';
 import { formatDateRangeIso, toIsoDate } from '@/lib/wca-date';
 import { localizeCity } from '@/lib/city-localize';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -642,6 +643,19 @@ export default function CompDetailPage() {
     () => !!data && Object.values(data.resultsByRound).some(arr => arr.length > 0),
     [data],
   );
+  // 「打乱」入口跳到打乱生成器,只有 WCA 已公布打乱时才有内容。已公布 ≈ 比赛真办过
+  // (有成绩)且不在「办过但 dump 无 scrambles」黑名单(2003-2014 那 1675 场)。未来赛
+  // (无成绩)直接无打乱 → 隐藏入口,免得点进去只看到「未找到该比赛或暂无已公布的打乱」。
+  const [compHasNoScrambles, setCompHasNoScrambles] = useState(false);
+  useEffect(() => {
+    if (!hasResults) { setCompHasNoScrambles(false); return; }
+    let cancel = false;
+    loadNoScrambleIds()
+      .then(set => { if (!cancel) setCompHasNoScrambles(set.has(slug)); })
+      .catch(() => {});
+    return () => { cancel = true; };
+  }, [hasResults, slug]);
+  const showScramblesTab = hasResults && !compHasNoScrambles;
   // 领奖台:各项目决赛前三。比赛结束(所有项目末轮都有成绩)且有领奖台时默认展示。
   const podiumGroups = useMemo(() => (data ? computePodiumGroups(data) : []), [data]);
   const compRecords = useMemo(() => (data ? computeCompRecords(data) : []), [data]);
@@ -1373,7 +1387,9 @@ export default function CompDetailPage() {
             })}
           </button>
           {/* 打乱:不是页内视图,而是带当前项目/轮次跳到打乱生成器的比赛模式(AppLink 真 <a>,
-              支持中键新开)。故无 is-active,用 ⇄ 图标暗示「会离开本页」。 */}
+              支持中键新开)。故无 is-active,用 ⇄ 图标暗示「会离开本页」。WCA 未公布打乱的比赛
+              (未来赛 / 老赛无 scrambles)隐藏入口,点进去也只会是空。 */}
+          {showScramblesTab && (
           <Link
             href={(() => {
               const q = new URLSearchParams({ comp: slug });
@@ -1391,6 +1407,7 @@ export default function CompDetailPage() {
             {tr({ zh: '打乱', en: 'Scrambles'
             })}
           </Link>
+          )}
           {isSchedule && (
             <ScheduleControls
               view={schedView}

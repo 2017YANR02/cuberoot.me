@@ -12,8 +12,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import i18n from '@/i18n/i18n-client';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
+import { useAlgSubmissionUnread, refreshAlgSubmissionUnread } from '@/lib/alg-submission-unread';
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
 const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -21,6 +22,8 @@ const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffe
 const DeskPetSearch = dynamic(() => import('@/components/DeskPetSearch'), { ssr: false });
 // Lazy: three (~1.2MB) + the cuber engine only load when the PLL performer opens.
 const PllPerformerOverlay = dynamic(() => import('@/components/PllPerformerOverlay'), { ssr: false });
+// Lazy: admin-only new-submission dropdown, only loads when an admin opens it.
+const AdminSubmissionsPanel = dynamic(() => import('@/components/AdminSubmissionsPanel'), { ssr: false });
 
 type ThemeId = 'clawd' | 'calico' | 'cloudling';
 
@@ -57,6 +60,8 @@ const THEMES: Record<ThemeId, PetTheme> = {
       building: 'clawd-working-building.svg', groove: 'clawd-headphones-groove.svg',
       juggling: 'clawd-working-juggling.svg', sweeping: 'clawd-working-sweeping.svg',
       carrying: 'clawd-working-carrying.svg', cubing: 'clawd-cubing.svg',
+      debugger: 'clawd-working-debugger.svg', wizard: 'clawd-working-wizard.svg',
+      ultrathink: 'clawd-working-ultrathink.svg', boss: 'clawd-working-typing-boss.svg',
       error: 'clawd-error.svg',
       happy: 'clawd-happy.svg', notification: 'clawd-notification.svg',
       reading: 'clawd-idle-reading.svg', bubble: 'clawd-idle-bubble.svg',
@@ -240,6 +245,12 @@ const CSS = `
 .clawd-deskpet[data-char=clawd] .clawd-deskpet-badge{left:60%;top:54%;}
 .clawd-deskpet[data-char=calico] .clawd-deskpet-badge{left:66%;top:22%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-badge{left:58%;top:37%;}
+/* Admin new-submission badge — clickable, top-right, accent-colored (distinct from the red fb badge). */
+.clawd-deskpet-badge-admin{pointer-events:auto;cursor:pointer;border:none;margin:0;appearance:none;
+  background:var(--accent,#3b82f6);}
+.clawd-deskpet[data-char=clawd] .clawd-deskpet-badge-admin,
+.clawd-deskpet[data-char=calico] .clawd-deskpet-badge-admin,
+.clawd-deskpet[data-char=cloudling] .clawd-deskpet-badge-admin{left:auto;right:-5px;top:2px;}
 /* Mini (edge-cling) mode: the art is drawn lying sideways; flip on the left edge
    so it faces inward. The mini-anim class eases the slide-into-place / crabwalk /
    peek nudge; plain drags clear it so they stay 1:1 with the pointer. */
@@ -271,6 +282,9 @@ export default function DeskPet() {
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
   const fbUnread = useFeedbackUnread();
+  const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
+  const algUnread = useAlgSubmissionUnread();
+  const [submPanelOpen, setSubmPanelOpen] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -326,10 +340,11 @@ export default function DeskPet() {
   // 未登录 → refreshFeedbackUnread 内部归零。
   useEffect(() => {
     refreshFeedbackUnread();
+    refreshAlgSubmissionUnread();
     if (!user) return;
-    const onVis = () => { if (document.visibilityState === 'visible') refreshFeedbackUnread(); };
+    const onVis = () => { if (document.visibilityState === 'visible') { refreshFeedbackUnread(); refreshAlgSubmissionUnread(); } };
     document.addEventListener('visibilitychange', onVis);
-    const iv = setInterval(() => { refreshFeedbackUnread(); }, 90000);
+    const iv = setInterval(() => { refreshFeedbackUnread(); refreshAlgSubmissionUnread(); }, 90000);
     return () => { document.removeEventListener('visibilitychange', onVis); clearInterval(iv); };
   }, [user]);
 
@@ -634,9 +649,20 @@ export default function DeskPet() {
     let lastMove = 0;
     // Random-play mode: cycle a random expression every ~6–15s, no cursor eye-track
     // and no sleep timer (skipped while dragged / resting; drive() honors mini-cling).
-    const RANDOM_POOL = ['thinking', 'working', 'building', 'groove', 'juggling', 'sweeping', 'carrying', 'cubing', 'happy', 'notification', 'reading', 'bubble', 'yawning'];
+    // Pool = every expressive state this character actually has art for (so clawd's
+    // debugger/wizard/ultrathink/boss/error all show too), minus interaction-only
+    // reactions and the sleep-cycle poses that shouldn't fire unprompted.
+    const RANDOM_EXCLUDE = new Set(['idle', 'reactDouble', 'reactAnnoyed', 'reactDrag', 'waking', 'sleeping', 'dozing']);
+    const RANDOM_POOL = Object.keys(theme.files).filter((k) => !RANDOM_EXCLUDE.has(k));
+    let lastRandom = '';
     const playRandom = () => {
-      if (!dnd && !dragging) drive(RANDOM_POOL[Math.floor(Math.random() * RANDOM_POOL.length)]);
+      if (dnd || dragging || RANDOM_POOL.length === 0) return;
+      // Avoid repeating the same pose twice in a row so the variety reads.
+      let pick = RANDOM_POOL[Math.floor(Math.random() * RANDOM_POOL.length)];
+      if (RANDOM_POOL.length > 1 && pick === lastRandom)
+        pick = RANDOM_POOL[(RANDOM_POOL.indexOf(pick) + 1) % RANDOM_POOL.length];
+      lastRandom = pick;
+      drive(pick);
     };
     const scheduleRandom = () => {
       randomTimer = setTimeout(() => { playRandom(); scheduleRandom(); }, 6000 + Math.random() * 9000);
@@ -911,6 +937,18 @@ export default function DeskPet() {
         {fbUnread > 0 && (
           <span className="clawd-deskpet-badge">{fbUnread > 9 ? '9+' : fbUnread}</span>
         )}
+        {isAdmin && algUnread > 0 && (
+          <button
+            type="button"
+            className="clawd-deskpet-badge clawd-deskpet-badge-admin"
+            title={t('新公式投稿', 'New alg submissions')}
+            aria-label={t('新公式投稿', 'New alg submissions')}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); setSubmPanelOpen(true); }}
+          >
+            {algUnread > 9 ? '9+' : algUnread}
+          </button>
+        )}
         <div
           className="clawd-deskpet-hit"
           ref={hitRef}
@@ -944,6 +982,10 @@ export default function DeskPet() {
           initialCaseName={performCase}
           onClose={() => setPerformOpen(false)}
         />
+      )}
+
+      {submPanelOpen && (
+        <AdminSubmissionsPanel lang={curLang} onClose={() => setSubmPanelOpen(false)} />
       )}
     </>
   );

@@ -16,7 +16,7 @@ import AppLink from '@/components/AppLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
-import { ClearButton } from '@/components/ClearButton';
+import { SearchInput } from '@/components/SearchInput';
 import { pooledScramble, prewarmScramble } from '@/lib/cubing-scramble';
 import { sq1MoveCounts, type Sq1MoveCounts } from '@/lib/sq1-metrics';
 import { solveSq1 } from '../../timer/_lib/solver/sq1';
@@ -154,19 +154,16 @@ export default function Sq1SolverPage() {
       </p>
 
       <div className="pos-input-row">
-        <div className="pos-input-wrap">
-          <input
-            className="pos-input"
-            type="text"
-            value={scramble}
-            onChange={(e) => void setScramble(e.target.value)}
-            placeholder={tr({ zh: '输入打乱,如 (1,0)/(-3,3)/(0,-3)/', en: 'Enter a scramble, e.g. (1,0)/(-3,3)/(0,-3)/' })}
-            spellCheck={false}
-            autoComplete="off"
-            autoCapitalize="off"
-          />
-          {scramble !== '' && <ClearButton variant="inline" onClick={() => { void setScramble(''); }} />}
-        </div>
+        <SearchInput
+          className="pos-input-wrap"
+          inputClassName="pos-input"
+          value={scramble}
+          onChange={(v) => void setScramble(v)}
+          placeholder={tr({ zh: '输入打乱,如 (1,0)/(-3,3)/(0,-3)/', en: 'Enter a scramble, e.g. (1,0)/(-3,3)/(0,-3)/' })}
+          spellCheck={false}
+          autoComplete="off"
+          autoCapitalize="off"
+        />
         <button type="button" className="pos-random-btn" onClick={() => void randomScramble()} disabled={generating}>
           {generating ? <LoaderCircle size={16} className="pos-spin" aria-hidden /> : <Dices size={16} aria-hidden />}
           {tr({ zh: '随机打乱', en: 'Random' })}

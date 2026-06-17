@@ -104,6 +104,7 @@ pnpm --filter @cuberoot/client lint
 - 改完跑 `pnpm --filter @cuberoot/client typecheck`
 - UI 不用 emoji，用 lucide-react 图标
 - 不放页面级"返回"按钮，浏览器自带 back 即可（wizard 步骤间 / 模式切换不算）
+- 按钮式交互（选择/开关/点击单元）必须真 `<button>`（剥 UA 样式 `appearance:none;background:none;border:none;font:inherit`）或 `AppLink`，禁 `<div/span onClick>` 当按钮：iOS Safari 不可靠把 tap 合成 click，`cursor:pointer` 也救不了（点不动 + `:hover` 灰色伪装选中）。例外 div 须加 `role="button"`+`tabIndex`+`onKeyDown`。双守卫：写入即拦 hook `block-static-onclick-button.ps1` + CI `tests/no-static-element-onclick-button.test.ts`（ratchet，只降不升）；豁免加行内注释 `allow-static-onclick`
 - 选择型 / 搜索型输入框非空时必须显示 `×` 清除按钮：统一用 `components/ClearButton.tsx`（`variant='inline'` 浮在 input 内，`'standalone'` 流式独立圆），别再写一份局部 `.xxx-clear` CSS
 - 切换器默认下拉，不堆 chip / tab；chip 仅当选项 ≤ 4 且需要左右对比时才用
 - 新建可复用组件后，在 `/code/components` 组件库登记一条（改 `app/[lang]/code/components/_catalog.tsx`，自包含的顺手写个实时 Demo）；新建可复用 hook / 工具函数同理登记到 `/code/utils`（改 `app/[lang]/code/utils/_catalog.tsx`），方便人 / AI 查阅复用。CI 守卫：`tests/code-catalog-sync.test.ts`（hooks 必登记 + catalog import 路径必须真实存在）、`tests/code-tokens-drift.test.ts`（设计令牌页 `tokens/_tokens.ts` 必须跟 `globals.css` 一致），漏登记 / 改了不同步直接红
@@ -142,3 +143,7 @@ pnpm --filter @cuberoot/client lint
 ## 造求解器 loop
 
 `/loop 继续造求解器`(或"造求解器")= 读 `solver/SOLVER_LOOP.md` 全文,按 §0 LOOP PROTOCOL 推进 §1 backlog 下一个未完成单元;规则/backlog/进度全在那文件,别在此展开。
+
+## 造 SQ1 最优求解器 loop
+
+`/loop 继续造 SQ1 最优求解器`(或"造 SQ1 最优""SQ1 WCA loop")= 读 `solver/SQ1_WCA_LOOP.md` + `solver/SQ1_WCA_GODS_NUMBER.md` 全文,按前者 §0 协议推进 §1 backlog;终极目标=SQ1 WCA 12c4 最优求解器 + 算出 `D_WCA`;允许 ≤15GB 大表、严禁 OOM、线程 12/14;规则/backlog/进度/坑全在那两文件,别在此展开。

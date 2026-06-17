@@ -74,6 +74,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Space-bar / touch-hold timer state machine, shared by Solo and Battle.',
   },
   {
+    name: 'useGestureWheel',
+    sig: 'useGestureWheel(opts: UseGestureWheelOptions): { wheelRef }',
+    imp: "import { useGestureWheel } from '@/hooks/useGestureWheel';",
+    usage: 'const { wheelRef } = useGestureWheel({ surfaceRef, canGesture, enabledFor, fireAction, onPressDown, onPressUp, onArmCancel });',
+    category: 'hook',
+    zh: 'cstimer 式按住拖动径向轮盘:绑定计时面板,普通按压照常计时,拖过死区切手势模式并触发对应方向。配 <GestureWheel>,/timer 与 /trainer 共用。',
+    en: 'cstimer-style press-and-drag radial dial on a timing surface: a hold still times, a drag fires the nearest direction. Pairs with <GestureWheel>; shared by /timer and /trainer.',
+  },
+  {
     name: 'useSpeechToText',
     sig: 'useSpeechToText({ lang, onResult }): { supported; listening; start; stop }',
     imp: "import { useSpeechToText } from '@/hooks/useSpeechToText';",
@@ -236,8 +245,8 @@ export const CATALOG: UtilEntry[] = [
     imp: "import { sq1MoveCounts } from '@/lib/sq1-metrics';",
     usage: "sq1MoveCounts('(3,3)/') // { twist:1, wca:2, face:3, ... }",
     category: 'cube',
-    zh: 'SQ1 序列三套计步口径:扭转(只数 /)/ WCA 12c4 / 面转(双层=2),复用 parseSq1Tokens。详见 /math/sq1。',
-    en: "Counts a Square-1 (x,y)/ sequence under all 3 metrics (twist / WCA 12c4 / face-turn). See /math/sq1.",
+    zh: 'SQ1 序列三套计步口径:扭转(只数 /)/ WCA 12c4 / 面转(双层=2),复用 parseSq1Tokens。详见 /math/god?event=sq1。',
+    en: "Counts a Square-1 (x,y)/ sequence under all 3 metrics (twist / WCA 12c4 / face-turn). See /math/god?event=sq1.",
   },
 
   // ── util ──────────────────────────────────

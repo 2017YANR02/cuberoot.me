@@ -187,3 +187,37 @@
 }
 .wca-stats-event-selector .event-btn:hover::after { opacity: 1; }
 .wca-stats-event-selector .event-btn.disabled::after { display: none; }
+
+/* 可搜索模式:搜索框 + 图标网格垂直堆叠 */
+.wca-evsel-with-search { display: flex; flex-direction: column; }
+.wca-evsel-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 260px;
+}
+.wca-evsel-search-icon {
+  position: absolute;
+  left: 9px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+.wca-evsel-search-input {
+  width: 100%;
+  padding: 7px 28px 7px 30px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.wca-evsel-search-input:focus { border-color: var(--accent); }
+.wca-evsel-search-input::placeholder { color: var(--muted-foreground); }
+.wca-evsel-no-results {
+  margin: 12px 0;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
