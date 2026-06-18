@@ -110,6 +110,16 @@ for ($i = 0; $i -lt $todo.Count; $i += $ChunkSize) {
 }
 Write-Host "分 $($chunkPaths.Count) 块(每块 $ChunkSize)。单次载表逐块解算,日志 -> $logf"
 
+# 全局实时进度:analyzer 每 10 条往**专用进度文件**直写(自己 flush,绕过 PowerShell `2>` 缓冲)
+# [PROG] (已完成base+本进程累计)/总数 + 每块 [DONE](含块名)。**实时看**:
+#   Get-Content D:/cube/scramble/puzzle/sq1/_exact_progress.log -Wait -Tail 20
+$progf = "$dir/_exact_progress.log"
+Set-Content -Path $progf -Value '' -NoNewline   # 每次开跑清空,避免混入上次的 base
+$env:ANALYZER_PROGRESS_FILE  = $progf
+$env:ANALYZER_PROGRESS_EVERY = '10'
+$env:ANALYZER_PROGRESS_TOTAL = "$total"
+$env:ANALYZER_PROGRESS_BASE  = "$($done.Count)"
+
 # ---- 一次喂全部 chunk 文件名 + exit 给 analyzer(单进程单次载表)----
 $stdin = ($chunkPaths -join "`n") + "`nexit`n"
 $stdin | & $exe 2> $logf
