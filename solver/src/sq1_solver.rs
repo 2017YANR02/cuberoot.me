@@ -1479,6 +1479,43 @@ fn is_exact_solved(s: &Sq1State) -> bool {
     s.ml == 0 && s.top == SOLVED_TOP && s.bottom == SOLVED_BOTTOM
 }
 
+/// A4 phase-1 置换表(transposition table):key = (top48 | bottom48 | ml | lm) 打包 u128,
+/// 值 = 已**证明**无解的最大剩余预算(`rem = bound - g`)。IDA* 深态多路径重达同一态 ⇒
+/// 缓存 proven-fail 剪掉重复子树(只存"已穷举无解",绝不剪可能有解的态 ⇒ 保最优)。
+/// `lm` 进 key:turn/slash 交替剪枝令同一态在不同 lm 下子树不同,不能混。
+#[inline]
+fn tt_key(s: &Sq1State, lm: u8) -> u128 {
+    (s.top as u128) | ((s.bottom as u128) << 48) | ((s.ml as u128) << 96) | ((lm as u128) << 97)
+}
+
+/// 全局 TT 条目计数(**所有线程共享**):∑ 各线程在用 TT 的条目数。满了停插、查询照旧
+/// ⇒ 只少剪枝、绝不出错。这是 OOM 红线:总内存 ≈ 此值 × ~40B,与线程数无关
+/// ⇒ 批量 12 线程时单条怪物可独占大半预算(它需要大表),而总量恒有界,不 OOM。
+static TT_GLOBAL_ENTRIES: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+/// 全局 TT 条目预算。默认 240M ≈ 9GB(13GB 表 + 9GB TT + OS ≈ 25GB < 32GB,留余量)。
+/// `SQ1_TT_BUDGET` 覆盖(单条 profile 可调大;批量留默认)。
+fn tt_budget() -> usize {
+    static B: OnceLock<usize> = OnceLock::new();
+    *B.get_or_init(|| {
+        std::env::var("SQ1_TT_BUDGET").ok().and_then(|s| s.parse().ok()).unwrap_or(240_000_000)
+    })
+}
+
+/// profiler 是否已因 node/time cap 中止(中止时返回的 None 是"没搜完"而非"已证无解",
+/// 绝不能写进 TT,否则毒化成假 proven-fail)。求解热路径(profiler 关)恒 false。
+#[cfg(not(target_arch = "wasm32"))]
+#[inline]
+fn profiler_aborted() -> bool {
+    wca_profile::ON.load(std::sync::atomic::Ordering::Relaxed)
+        && wca_profile::STATE.with(|c| c.borrow().as_ref().is_some_and(|p| p.aborted))
+}
+#[cfg(target_arch = "wasm32")]
+#[inline]
+fn profiler_aborted() -> bool {
+    false
+}
+
 /// A2 诊断:运行时门控(默认关 ⇒ 求解热路径零成本,只一条 relaxed atomic load)的 phase-1
 /// IDA* profiler。开 `ON` 后用 `solve_profile` 跑;node/time cap 保证**不挂**(深态本就 >5min)。
 /// findings 见笔记 §5。只 native(wasm 不导出本求解器)。
@@ -2237,15 +2274,19 @@ impl Sq1WcaSolver {
         // root 若 slash-legal,h(st) 是 admissible 起点;否则首步必为 turn(≥1 步)。
         let mut bound = if st.slash_legal() { self.h(st) } else { 1 };
         let mut memo = P2Memo { exact: HashMap::new(), fail_below: HashMap::new() };
-        loop {
+        let mut tt: HashMap<u128, u8> = HashMap::new(); // A4 phase-1 置换表(跨 bound 复用)
+        let result = loop {
             let mut path: Vec<Sq1Token> = Vec::new();
-            if let Some(cost) = self.dfs(*st, 0, bound, LM_NONE, &mut memo, &mut path) {
+            if let Some(cost) = self.dfs(*st, 0, bound, LM_NONE, &mut memo, &mut path, &mut tt) {
                 debug_assert_eq!(cost as usize, path.len(), "WCA cost must equal token count");
-                return (cost as u32, path);
+                break (cost as u32, path);
             }
             bound += 1;
             assert!(bound <= 27, "WCA search exceeded proven bound D_WCA ≤ 27");
-        }
+        };
+        // 释放本 solve 的 TT 全局计数(tt.len() == 实际插入次数)。
+        TT_GLOBAL_ENTRIES.fetch_sub(tt.len(), std::sync::atomic::Ordering::Relaxed);
+        result
     }
 
     /// A2 诊断:capped phase-1 IDA* profiler(**不改最优性 / 不改解**,默认关)。逐 bound 跑同一
@@ -2270,6 +2311,7 @@ impl Sq1WcaSolver {
         let mut out = format!("h0={}", h0);
         let mut bound = h0;
         let mut solved = None;
+        let mut tt: HashMap<u128, u8> = HashMap::new(); // 跨 bound 复用,匹配真实求解器
         loop {
             wca_profile::STATE.with(|c| {
                 if let Some(p) = c.borrow_mut().as_mut() {
@@ -2278,7 +2320,7 @@ impl Sq1WcaSolver {
             });
             let mut memo = P2Memo { exact: HashMap::new(), fail_below: HashMap::new() };
             let mut path = Vec::new();
-            let found = self.dfs(*st, 0, bound, LM_NONE, &mut memo, &mut path);
+            let found = self.dfs(*st, 0, bound, LM_NONE, &mut memo, &mut path, &mut tt);
             let (pb, total, aborted, fsd, secs) = wca_profile::STATE.with(|c| {
                 let b = c.borrow();
                 let p = b.as_ref().unwrap();
@@ -2313,6 +2355,8 @@ impl Sq1WcaSolver {
         if let Some(c) = solved {
             out.push_str(&format!("\n  SOLVED={}", c));
         }
+        out.push_str(&format!("\n  TT_entries={} (budget={})", tt.len(), tt_budget()));
+        TT_GLOBAL_ENTRIES.fetch_sub(tt.len(), std::sync::atomic::Ordering::Relaxed);
         out
     }
 
@@ -2326,6 +2370,7 @@ impl Sq1WcaSolver {
         lm: u8,
         memo: &mut P2Memo,
         path: &mut Vec<Sq1Token>,
+        tt: &mut HashMap<u128, u8>,
     ) -> Option<u8> {
         // A2 profiler hook(默认关:一条 relaxed load 即返回,不影响最优性)。开则记节点 /
         // 首方形深度并在 node/time cap 处令整搜索快速 unwind(返 None,solve_profile 检 aborted 收尾)。
@@ -2352,6 +2397,14 @@ impl Sq1WcaSolver {
         }
         if is_exact_solved(&s) {
             return Some(g);
+        }
+        // A4 TT:此 (态,lm) 在 ≥ 当前剩余预算下已证无解 ⇒ 直接剪(保最优,只查已穷举的 fail)。
+        let rem = bound - g;
+        let key = tt_key(&s, lm);
+        if let Some(&fail) = tt.get(&key) {
+            if fail >= rem {
+                return None;
+            }
         }
         // phase-2:方形态尝试方形子群内精确尾解,踩中即收尾(关键加速点)。
         if s.is_square_shape() {
@@ -2404,10 +2457,22 @@ impl Sq1WcaSolver {
         kids[..n].sort_unstable_by_key(|k| k.0);
         for &(_, tok, c, clm) in &kids[..n] {
             path.push(tok);
-            if let Some(r) = self.dfs(c, g + 1, bound, clm, memo, path) {
+            if let Some(r) = self.dfs(c, g + 1, bound, clm, memo, path, tt) {
                 return Some(r);
             }
             path.pop();
+        }
+        // 穷举完未找到解(且非 profiler 中止)⇒ 记 (态,lm) 在 rem 内无解(取最大已证 fail)。
+        // 全局预算未满才插(满了停插、查询照旧 ⇒ OOM 红线,与线程数无关)。
+        if !profiler_aborted()
+            && TT_GLOBAL_ENTRIES.load(std::sync::atomic::Ordering::Relaxed) < tt_budget()
+        {
+            let before = tt.len();
+            let e = tt.entry(key).or_insert(0);
+            *e = (*e).max(rem);
+            if tt.len() > before {
+                TT_GLOBAL_ENTRIES.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            }
         }
         None
     }
@@ -3708,5 +3773,42 @@ mod tests {
             near as i64 - actual as i64
         );
         eprintln!("exact solve time: {:.2}s", dt);
+    }
+
+    /// A4 诊断(运行时驱动,#[ignore]):读 `SQ1_PROFILE_FILE`(默认
+    /// `../core/.tmp/sq1_wca/diag/profile_in.txt`,每行 `id,scramble`),对每条跑 `solve_profile`
+    /// 看 phase-1 逐 bound 节点爆炸 + 首方形深度 + h vs 近最优 gap。node/time cap 防挂
+    /// (`SQ1_PROFILE_NODECAP` / `SQ1_PROFILE_TIMECAP_MS` 覆盖,默认 2e9 / 60s)。
+    /// 跑:`CUBE_TABLE_DIR=...\tables cargo test --release --lib wca_profile_file -- --ignored --nocapture`
+    #[test]
+    #[ignore]
+    fn wca_profile_file() {
+        let path = std::env::var("SQ1_PROFILE_FILE")
+            .unwrap_or_else(|_| "../core/.tmp/sq1_wca/diag/profile_in.txt".to_string());
+        let data = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {}: {}", path, e));
+        let node_cap: u64 = std::env::var("SQ1_PROFILE_NODECAP")
+            .ok().and_then(|s| s.parse().ok()).unwrap_or(2_000_000_000);
+        let time_cap: u128 = std::env::var("SQ1_PROFILE_TIMECAP_MS")
+            .ok().and_then(|s| s.parse().ok()).unwrap_or(60_000);
+        let w = Sq1WcaSolver::shared();
+        eprintln!("jsq_full loaded: {}  cornp/edgep: {}/{}",
+            !w.jsq_full.is_empty(), !w.cornp.is_empty(), !w.edgep.is_empty());
+        for line in data.lines() {
+            let line = line.trim();
+            if line.is_empty() { continue; }
+            let (id, scr) = line.split_once(',').unwrap_or(("?", line));
+            let st = match state_from_scramble(scr) {
+                Ok(s) => s,
+                Err(e) => { eprintln!("id={} parse err: {}", id, e); continue; }
+            };
+            let h = w.h(&st);
+            let near_tw = crate::sq1_twophase::solve_twist(&st);
+            let near_wca = crate::sq1_twophase::solve_wca(&st);
+            eprintln!(
+                "\n=== id={} h={} near_twist={} near_wca={} gap≈{} ===",
+                id, h, near_tw, near_wca, near_wca as i32 - h as i32
+            );
+            eprintln!("{}", w.solve_profile(&st, node_cap, time_cap));
+        }
     }
 }
