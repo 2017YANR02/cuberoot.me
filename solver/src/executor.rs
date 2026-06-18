@@ -27,6 +27,53 @@ pub fn bump_node_count(n: u64) {
     GLOBAL_NODES.fetch_add(n, Ordering::Relaxed);
 }
 
+/// 跨 chunk 的**进程级**累计完成数(opt-in 全局进度用;不开则不动)。
+static GLOBAL_COMPLETED: AtomicU64 = AtomicU64::new(0);
+
+/// 全局进度配置(env opt-in,只读一次):`Some((every, total, base))` ⇒ 每完成 `every` 条
+/// 打一行 `[PROG] {base+累计}/{total}`(跨 chunk 连续,非每块重置)。未设 `ANALYZER_PROGRESS_EVERY`
+/// 或为 0 ⇒ None ⇒ 保持原"每块 1%"行为(其他 analyzer 不受影响)。inject 设这三个 env。
+fn progress_cfg() -> Option<(u64, u64, u64)> {
+    static C: std::sync::OnceLock<Option<(u64, u64, u64)>> = std::sync::OnceLock::new();
+    *C.get_or_init(|| -> Option<(u64, u64, u64)> {
+        let every: u64 = std::env::var("ANALYZER_PROGRESS_EVERY").ok()?.parse().ok()?;
+        if every == 0 {
+            return None;
+        }
+        let total = std::env::var("ANALYZER_PROGRESS_TOTAL").ok().and_then(|s| s.parse().ok()).unwrap_or(0);
+        let base = std::env::var("ANALYZER_PROGRESS_BASE").ok().and_then(|s| s.parse().ok()).unwrap_or(0);
+        Some((every, total, base))
+    })
+}
+
+/// 直写进度文件(`ANALYZER_PROGRESS_FILE`,append + 每行 flush)。**绕过 PowerShell `2>` 的缓冲**
+/// —— native stderr 经 PowerShell 重定向到文件会整块缓冲、长跑中看不到;直写 + flush 保证实时 tail。
+fn progress_file() -> Option<&'static std::sync::Mutex<std::fs::File>> {
+    static F: std::sync::OnceLock<Option<std::sync::Mutex<std::fs::File>>> = std::sync::OnceLock::new();
+    F.get_or_init(|| {
+        let path = std::env::var("ANALYZER_PROGRESS_FILE").ok()?;
+        std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+            .ok()
+            .map(std::sync::Mutex::new)
+    })
+    .as_ref()
+}
+
+/// 发一行进度:有进度文件就直写+flush(实时),否则回退 stderr。[PROG]/[DONE] 都走它。
+fn prog_emit(line: &str) {
+    if let Some(f) = progress_file() {
+        if let Ok(mut fh) = f.lock() {
+            let _ = writeln!(fh, "{}", line);
+            let _ = fh.flush();
+        }
+    } else {
+        eprintln!("{}", line);
+    }
+}
+
 /// 求解器接口。C++ 端是静态成员 + 实例方法的混合,Rust 用关联函数表达:
 ///   - `global_init`:进程级一次性初始化(加载表等)
 ///   - `get_csv_header`:CSV 表头(不含换行)
@@ -153,8 +200,14 @@ fn run_batch_core<T: Send + Sync>(
         .for_each(|(slot, (id, alg))| {
             *slot = solve(alg, id);
             let c = completed.fetch_add(1, Ordering::Relaxed) + 1;
-            if c as usize % progress_step == 0 {
-                eprintln!("[PROG] {}/{}", c, total);
+            if let Some((every, gtotal, base)) = progress_cfg() {
+                // 全局连续进度(跨 chunk),每 every 条打 base+累计 / 总数。
+                let g = GLOBAL_COMPLETED.fetch_add(1, Ordering::Relaxed) + 1;
+                if g % every == 0 {
+                    prog_emit(&format!("[PROG] {}/{}", base + g, gtotal));
+                }
+            } else if c as usize % progress_step == 0 {
+                prog_emit(&format!("[PROG] {}/{}", c, total)); // 原行为:每块 1%
             }
         });
 
@@ -168,13 +221,13 @@ fn run_batch_core<T: Send + Sync>(
 
     let elapsed = t0.elapsed();
     let nodes = GLOBAL_NODES.load(Ordering::Relaxed);
-    eprintln!(
+    prog_emit(&format!(
         "[DONE] {} tasks in {:.2}s, nodes={}, output={}",
         total,
         elapsed.as_secs_f64(),
         nodes,
         out_path.display()
-    );
+    ));
     Ok(out_path)
 }
 
