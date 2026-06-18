@@ -17,7 +17,7 @@
 #   pwsh inject_sq1_wca_exact.ps1 -BuildOnly       # 只把 chunk CSV 并入 out(不解算)
 [CmdletBinding()]
 param(
-  [int]$ChunkSize = 2000,
+  [int]$ChunkSize = 500,
   [int]$Threads = 12,
   [switch]$BuildOnly
 )

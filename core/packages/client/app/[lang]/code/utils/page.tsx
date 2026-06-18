@@ -7,12 +7,16 @@ import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './utils_ref.css';
 import { tr } from '@/i18n/tr';
-import { CATALOG, UCATS, type UtilEntry } from './_catalog';
+import { CATALOG, UCATS, iconFor, type UtilEntry } from './_catalog';
 
 function Card({ e, lang }: { e: UtilEntry; lang: 'zh' | 'en' }) {
+  const Icon = iconFor(e);
   return (
     <div className="ur-card">
-      <span className="ur-card-name">{e.name}</span>
+      <div className="ur-card-head">
+        <span className="ur-viz"><Icon size={18} strokeWidth={1.6} aria-hidden="true" /></span>
+        <span className="ur-card-name">{e.name}</span>
+      </div>
       <p className="ur-card-desc">{lang === 'zh' ? e.zh : e.en}</p>
       <pre className="ur-code ur-code-sig"><code>{e.sig}</code></pre>
       <pre className="ur-code ur-code-sub"><code>{e.imp}</code></pre>

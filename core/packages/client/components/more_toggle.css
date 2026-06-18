@@ -1,0 +1,18 @@
+/* 共享「更多 / 收起」开关 — 见 components/MoreToggle.tsx */
+.more-toggle {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.4rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+  transition: color 0.12s;
+}
+.more-toggle:hover { color: var(--accent); }
+.more-toggle-chevron { transition: transform 0.18s ease; }
+.more-toggle.is-open .more-toggle-chevron { transform: rotate(180deg); }

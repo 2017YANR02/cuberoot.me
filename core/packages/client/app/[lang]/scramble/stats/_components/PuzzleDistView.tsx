@@ -14,7 +14,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { compFlagIso2 } from '@/lib/country-flags';
 import { compSourceLine } from '@/lib/comp-schedule';
 import {
-  fetchPuzzleDistribution, type PuzzleDistributionJson,
+  fetchPuzzleDistribution, type PuzzleDistributionJson, type PuzzleHistEntry,
 } from '@/lib/puzzle-distribution';
 import {
   fetchPuzzleExamples, type PuzzleExamplesEntry,
@@ -34,15 +34,19 @@ const PUZZLE_COLOR: Record<string, string> = {
   sq1: '#9b6ef0',      // 紫
 };
 
-// 度量说明(顶点等口径)。sq1 按当前选中口径(wca / slash)给不同说明。
-function metricNote(key: string, metric: string): { zh: string; en: string; } {
+// 度量说明(顶点等口径)。sq1 按当前选中口径(wca / slash)+ 是否精确档给不同说明。
+function metricNote(key: string, metric: string, isExact: boolean): { zh: string; en: string; } {
   if (key === 'pyraminx') {
     return { zh: 'HTM,含顶点(tips)', en: 'HTM, tips included' };
   }
   if (key === 'sq1') {
-    return metric === 'slash'
-      ? { zh: 'slash 计步(层转计 0,God’s number 13)', en: 'slash count (turns = 0, God’s number 13)' }
-      : { zh: 'WCA 12c4 计步((X,Y) 计 1、/ 计 1)', en: 'WCA 12c4 ((X,Y) = 1, / = 1)' };
+    if (metric === 'slash') {
+      // 精确档的 slash = WCA-最优解里的 / 数(slash-最优紧上界),不是单独 slash-最优 —— 必须当面讲清。
+      return isExact
+        ? { zh: 'slash 计步:WCA 最优解里的 / 数(slash-最优的紧上界 ≤13,非单独 slash-最优)', en: 'slash count within the WCA-optimal solution (tight bound on slash-optimal ≤13, not a separate slash-optimal)' }
+        : { zh: 'slash 计步(层转计 0,God’s number 13)', en: 'slash count (turns = 0, God’s number 13)' };
+    }
+    return { zh: 'WCA 12c4 计步((X,Y) 计 1、/ 计 1)', en: 'WCA 12c4 ((X,Y) = 1, / = 1)' };
   }
   return { zh: 'HTM', en: 'HTM' };
 }
@@ -83,6 +87,9 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
   // sq1 双口径:'wca'(WCA 12c4,主)/ 'slash'(jaapsch twist)。仅 sq1 有 alt。
   const [sq1Metric, setSq1Metric] = useState<'wca' | 'slash'>('wca');
+  // 难度档:'exact'(我们求解器可证 WCA 12c4 最优,全量灌注中可能部分)/ 'near'(双阶段近最优,全量)。
+  // 默认精确(用户要的);精确档缺时自动回退近最优。
+  const [precision, setPrecision] = useState<'exact' | 'near'>('exact');
   // 示例:原始比赛打乱 vs 最优(最短)等价打乱(同状态)。仅当样例带最优数据时露切换。
   const [exView, setExView] = useState<'orig' | 'opt'>('orig');
 
@@ -100,12 +107,28 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const entry = json?.puzzles[puzzleKey];
   const exEntry = examples?.[puzzleKey];
 
-  // 当前口径(sq1 可切;其余 puzzle 恒主口径)。
-  const useAlt = sq1Metric === 'slash' && !!entry?.alt;
   const hasAlt = !!entry?.alt;
-  const activeMetricKey = useAlt ? entry!.alt!.metric : (entry?.metric ?? '');
-  const activeDist = useAlt ? entry!.alt!.dist : entry?.dist;
-  const activeBins = (useAlt ? exEntry?.binsAlt : exEntry?.bins);
+  const hasExact = !!entry?.exact;
+  // 无精确档的 puzzle / 精确档缺 → 强制近最优。
+  const effPrecision: 'exact' | 'near' = hasExact ? precision : 'near';
+  const wantSlash = sq1Metric === 'slash';
+
+  // 按 (难度档 × 口径) 解析直方图 / 口径 key / 示例 bin。
+  // 精确档示例暂缺(示例按近最优步数分桶,精确步数不同)→ exact 时不给 activeBins。
+  let activeDist: PuzzleHistEntry | undefined;
+  let activeMetricKey: string;
+  let activeBins: PuzzleExamplesEntry['bins'] | undefined;
+  if (effPrecision === 'exact' && entry?.exact) {
+    const useExactAlt = wantSlash && !!entry.exact.alt;
+    activeDist = useExactAlt ? entry.exact.alt!.dist : entry.exact.dist;
+    activeMetricKey = useExactAlt ? 'slash' : 'wca';
+    activeBins = undefined;
+  } else {
+    const useAlt = wantSlash && !!entry?.alt;
+    activeDist = useAlt ? entry!.alt!.dist : entry?.dist;
+    activeMetricKey = useAlt ? entry!.alt!.metric : (entry?.metric ?? '');
+    activeBins = useAlt ? exEntry?.binsAlt : exEntry?.bins;
+  }
 
   const series = useMemo<HistSeries[]>(() => {
     if (!entry || !activeDist) return [];
@@ -121,8 +144,8 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
     [activeBins],
   );
   useEffect(() => {
-    setSelectedBin(null); // 切 puzzle / 口径时清空,等下个 effect 按新数据重选
-  }, [puzzleKey, sq1Metric]);
+    setSelectedBin(null); // 切 puzzle / 口径 / 难度档时清空,等下个 effect 按新数据重选
+  }, [puzzleKey, sq1Metric, effPrecision]);
   useEffect(() => {
     if (exampleBins.length === 0) return;
     setSelectedBin((prev) => {
@@ -146,17 +169,41 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
     );
   }
 
-  const note = metricNote(puzzleKey, activeMetricKey);
-  const sampleLine = tr({ zh: '{n} 条样本', en: '{n} samples' })
-    .replace('{n}', entry.sample_count.toLocaleString());
+  const isExact = effPrecision === 'exact';
+  const note = metricNote(puzzleKey, activeMetricKey, isExact);
+  const total = entry.sample_count;                 // 近最优全量 = 总语料数(精确进度的分母)
+  const exactCount = entry.exact?.sample_count ?? 0;
+  const exactPct = total > 0 ? (exactCount / total) * 100 : 0;
+  const exactPartial = isExact && exactPct < 99.95;
+  const sampleLine = isExact
+    ? tr({ zh: '精确解出 {n} / {t}({p}%)', en: 'Exactly solved {n} / {t} ({p}%)' })
+        .replace('{n}', exactCount.toLocaleString())
+        .replace('{t}', total.toLocaleString())
+        .replace('{p}', exactPct.toFixed(1))
+    : tr({ zh: '{n} 条样本', en: '{n} samples' }).replace('{n}', total.toLocaleString());
 
   return (
     <>
       <div className="scramble-stats-controls">
         <div className="scramble-stats-puzzle-meta">
           <span>{sampleLine}</span>
+          {exactPartial && (
+            <span className="scramble-stats-puzzle-progress">{tr({ zh: '进行中', en: 'in progress' })}</span>
+          )}
           <span className="scramble-stats-puzzle-metric">{tr(note)}</span>
         </div>
+        {hasExact && (
+          <div className="scramble-stats-puzzle-toggle">
+            <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '求解', en: 'Solver' })}</span>
+            <PillToggle
+              value={precision === 'near'}
+              onChange={(v) => setPrecision(v ? 'near' : 'exact')}
+              offLabel={tr({ zh: '精确', en: 'Exact' })}
+              onLabel={tr({ zh: '近最优', en: 'Near' })}
+              ariaLabel={tr({ zh: '难度档:精确最优(我们的求解器)或近最优(双阶段)', en: 'Difficulty tier: exact-optimal (our solver) or near-optimal (two-phase)' })}
+            />
+          </div>
+        )}
         {hasAlt && (
           <div className="scramble-stats-puzzle-toggle">
             <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '计步', en: 'Metric' })}</span>
@@ -186,6 +233,12 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           yModeLabel={yMode === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count' })}
         />
       </div>
+
+      {isExact && hasExact && exEntry && (
+        <div className="scramble-stats-examples-hint scramble-stats-exact-note">
+          {tr({ zh: '精确档示例待补;切「近最优」可看真实比赛打乱示例。', en: 'Exact-tier examples pending; switch to “Near” for real competition scramble examples.' })}
+        </div>
+      )}
 
       {exEntry && activeBins && selectedBin !== null && (
         <PuzzleExamplesPanel
@@ -219,9 +272,13 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
         </span>
         <span>
           {puzzleKey === 'sq1'
-            ? (activeMetricKey === 'slash'
-              ? tr({ zh: '口径:整个打乱的近最优解步数,只数 slash(jaapsch twist;双阶段上界,非可证最优)', en: 'Metric: near-optimal solution length, slash count only (jaapsch twist; two-phase upper bound, not provably optimal)' })
-              : tr({ zh: '口径:整个打乱的近最优解步数,WCA 12c4 计步(双阶段上界,非可证最优)', en: 'Metric: near-optimal solution length in WCA 12c4 moves (two-phase upper bound, not provably optimal)' }))
+            ? (isExact
+              ? (activeMetricKey === 'slash'
+                ? tr({ zh: '口径:WCA 12c4 最优解里的 slash 数(slash-最优的紧上界,≤13;非单独 slash-最优)', en: 'Metric: slash count within the WCA-12c4-optimal solution (tight upper bound on slash-optimal, ≤13; not a separate slash-optimal)' })
+                : tr({ zh: '口径:整个打乱的可证 WCA 12c4 最优解步数(Sq1WcaSolver,精确)', en: 'Metric: provably WCA-12c4-optimal solution length (Sq1WcaSolver, exact)' }))
+              : (activeMetricKey === 'slash'
+                ? tr({ zh: '口径:整个打乱的近最优解步数,只数 slash(jaapsch twist;双阶段上界,非可证最优)', en: 'Metric: near-optimal solution length, slash count only (jaapsch twist; two-phase upper bound, not provably optimal)' })
+                : tr({ zh: '口径:整个打乱的近最优解步数,WCA 12c4 计步(双阶段上界,非可证最优)', en: 'Metric: near-optimal solution length in WCA 12c4 moves (two-phase upper bound, not provably optimal)' })))
             : tr({ zh: '口径:整个打乱的最优解步数', en: 'Metric: optimal solution length per scramble' })}
         </span>
       </div>
