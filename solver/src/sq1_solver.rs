@@ -251,6 +251,28 @@ pub fn scramble_to_string(ts: &[Sq1Token]) -> String {
     words.join(" ")
 }
 
+/// 序列化成 SQ1 简写记号(无逗号/括号/空格 → CSV 安全):turn `tb` 黏写、slash `/`,
+/// `(t,0)` 两侧是 slash/边界时简成单 `t`。与前端 compactSq1Alg(sq1_svg.ts)规则一致,
+/// parseSq1Tokens 可无损还原(WCA sq1 记号 turn 间必有 slash 分隔,故 `tb` 无歧义)。
+pub fn scramble_to_compact(ts: &[Sq1Token]) -> String {
+    let mut out = String::new();
+    for (i, t) in ts.iter().enumerate() {
+        match t {
+            Sq1Token::Slash => out.push('/'),
+            Sq1Token::Turn(x, y) => {
+                let left_bound = i == 0 || matches!(ts[i - 1], Sq1Token::Slash);
+                let right_bound = i + 1 >= ts.len() || matches!(ts[i + 1], Sq1Token::Slash);
+                if *y == 0 && left_bound && right_bound {
+                    out.push_str(&x.to_string());
+                } else {
+                    out.push_str(&format!("{}{}", x, y));
+                }
+            }
+        }
+    }
+    out
+}
+
 /// 反转一条 SQ1 token 序列(逆序 + 每层转量取逆 mod 12,slash 自逆)。
 /// 一条解的逆 = 最优等价打乱:从 SOLVED 出发到达同一状态,步数与解相同。
 pub fn invert_scramble(ts: &[Sq1Token]) -> Vec<Sq1Token> {

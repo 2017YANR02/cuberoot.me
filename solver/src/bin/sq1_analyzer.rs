@@ -16,7 +16,7 @@
 
 use cube_solver::executor::{run_analyzer_app_raw, RawSolverWrapper};
 use cube_solver::sq1_solver::{
-    invert_scramble, scramble_to_string, state_from_scramble, Sq1Solver, Sq1WcaSolver,
+    invert_scramble, scramble_to_compact, state_from_scramble, Sq1Solver, Sq1WcaSolver,
 };
 use cube_solver::sq1_twophase::{solve_with_solution, Sq1TwoPhase};
 
@@ -32,8 +32,8 @@ fn use_wca_exact() -> bool {
 }
 
 /// `SQ1_WCA_SOLN=1`(配合 `SQ1_WCA_EXACT=1`)⇒ 多出第 3 列 `opt_scramble`:最优等价打乱
-/// (= 可证最优解的逆,从 SOLVED 到达同一态、步数=wca_exact)。逗号安全序列化:`(x,y)`→`x:y`、去括号,
-/// 故 3 列仍是干净逗号 CSV(供网站「原始/最优打乱」切换 + 示例,与二阶/斜转/金字塔一致)。
+/// (= 可证最优解的逆,从 SOLVED 到达同一态、步数=wca_exact)。**SQ1 简写记号**(`tb/tb/…`,无逗号/
+/// 括号/空格 → 天生 CSV 安全,前端原样可渲染),供网站「原始/最优打乱」切换 + 示例。
 fn use_wca_soln() -> bool {
     std::env::var("SQ1_WCA_SOLN").map(|v| v == "1").unwrap_or(false)
 }
@@ -49,11 +49,8 @@ fn sq1_line(alg: &str, id: &str) -> String {
                 let w = Sq1WcaSolver::shared();
                 if use_wca_soln() {
                     let (cost, sol) = w.solve_with_solution(&st);
-                    // 最优等价打乱 = 解的逆;逗号安全:"(x,y)"->"x:y" 去括号。
-                    let opt = scramble_to_string(&invert_scramble(&sol))
-                        .replace(',', ":")
-                        .replace('(', "")
-                        .replace(')', "");
+                    // 最优等价打乱 = 解的逆;SQ1 简写记号(CSV 安全,无逗号/括号/空格)。
+                    let opt = scramble_to_compact(&invert_scramble(&sol));
                     return format!("{},{},{}", id, cost, opt);
                 }
                 return format!("{},{}", id, w.solve_wca(&st));
