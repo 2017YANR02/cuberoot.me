@@ -7,8 +7,10 @@ export type PuzzleExampleSample = [string, string, string?]; // [id, scramble, o
 export type PuzzleExampleCompMeta = [string, string, number, string, string, (0 | 1)];
 
 export interface PuzzleExamplesEntry {
-  bins: Record<string, PuzzleExampleSample[]>;   // 主口径步数 -> 示例打乱(每 bin K 条)
-  binsAlt?: Record<string, PuzzleExampleSample[]>; // 备选口径分桶(sq1: slash;前端切口径时用)
+  bins?: Record<string, PuzzleExampleSample[]>;   // near 档主口径步数 -> 示例(每 bin K 条);sq1 精确化后不产
+  binsAlt?: Record<string, PuzzleExampleSample[]>; // near 档备选口径分桶(slash)
+  exactBins?: Record<string, PuzzleExampleSample[]>;    // 精确档主口径(sq1 = wca_exact 分桶,可证 WCA 12c4 最优)
+  exactBinsAlt?: Record<string, PuzzleExampleSample[]>; // 精确档备选口径(sq1 = 最优解里的 slash 数分桶)
   comps: Record<string, [string, string]>;       // compId -> [比赛名, 日期串]
   idMeta: Record<string, PuzzleExampleCompMeta>;  // id -> 比赛元数据
 }
@@ -19,7 +21,7 @@ export interface PuzzleExamplesJson {
 }
 
 // shape 变更或数据全量重灌时 bump(防缓存旧 JSON)
-const V = '20260614opt';
+const V = '20260618sq1compact';
 
 export async function fetchPuzzleExamples(): Promise<PuzzleExamplesJson> {
   const r = await fetch(statsUrl('/stats/scramble/puzzle_examples.json') + `?v=${V}`);

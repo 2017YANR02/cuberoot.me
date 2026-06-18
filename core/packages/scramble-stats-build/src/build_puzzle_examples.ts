@@ -29,6 +29,9 @@ interface PuzzleSpec {
   event: string;     // WCA event_id(比赛元数据按此过滤,UI 预览 event 也用它)
   valueCol?: string; // 主口径 CSV 列名(默认 = key;sq1 = 'wca')
   altCol?: string;   // 备选口径列名(sq1 = 'slash';→ 产 binsAlt)
+  // sq1 已切「可证 WCA 12c4 最优」(Sq1WcaSolver)。精确化后**只产精确档示例**(exactBins/exactBinsAlt,
+  // 源 = sq1_wca_exact.csv + 未 ingest 完成块,按 wca_exact / opt 的 slash 数分桶),不再产 near 档示例。
+  exact?: boolean;
 }
 
 // 与 build_puzzle_dist.ts 的 PUZZLES 对齐(顺序无关,sq1 视 dist 是否存在决定产不产)。
@@ -36,7 +39,7 @@ const PUZZLES: PuzzleSpec[] = [
   { key: 'pocket', event: '222' },
   { key: 'pyraminx', event: 'pyram' },
   { key: 'skewb', event: 'skewb' },
-  { key: 'sq1', event: 'sq1', valueCol: 'wca', altCol: 'slash' }, // 双口径:bins=wca、binsAlt=slash
+  { key: 'sq1', event: 'sq1', exact: true }, // 精确档:exactBins=wca_exact、exactBinsAlt=slash(只显原始打乱)
 ];
 
 type Sample = [string, string, string?]; // [id, scramble, optScramble?]
@@ -99,6 +102,55 @@ async function bucketIdsByLen(csvPath: string, valueCol: string): Promise<Map<nu
     arr.push(id);
   }
   return buckets;
+}
+
+// sq1 精确档双分桶:读 sq1_wca_exact.csv + _exact_chunks/*_sq1.csv(全量灌注进行中时块未 ingest),
+// 按 wca_exact、按 opt_scramble 的 / 数(slash)各分桶 id(主 CSV 优先去重),并留 id → 最优等价打乱
+// (opt_scramble 已是 SQ1 简写记号 `tb/tb/…`,前端直接渲染,驱动「原始/最优」切换)。与 build_puzzle_dist 的 exact 口径对齐。
+async function bucketExactSq1(dataDir: string): Promise<{ wca: Map<number, string[]>; slash: Map<number, string[]>; optOf: Map<string, string> } | null> {
+  const files: string[] = [];
+  const exCsv = path.join(dataDir, 'sq1_wca_exact.csv');
+  if (fs.existsSync(exCsv)) files.push(exCsv);
+  const chunkDir = path.join(dataDir, '_exact_chunks');
+  if (fs.existsSync(chunkDir)) {
+    for (const n of fs.readdirSync(chunkDir).filter((x: string) => x.endsWith('_sq1.csv')).sort())
+      files.push(path.join(chunkDir, n));
+  }
+  if (files.length === 0) return null;
+  const seen = new Set<string>();
+  const wca = new Map<number, string[]>();
+  const slash = new Map<number, string[]>();
+  const optOf = new Map<string, string>();
+  const add = (m: Map<number, string[]>, k: number, id: string) => {
+    let a = m.get(k); if (!a) { a = []; m.set(k, a); } a.push(id);
+  };
+  for (const file of files) {
+    const rl = readline.createInterface({ input: fs.createReadStream(file, 'utf-8'), crlfDelay: Infinity });
+    let idIdx = -1, wcaIdx = -1, optIdx = -1;
+    for await (const line of rl) {
+      if (!line) continue;
+      if (idIdx === -1) {
+        const h = line.split(',');
+        idIdx = h.indexOf('id'); wcaIdx = h.indexOf('wca_exact'); optIdx = h.indexOf('opt_scramble');
+        if (idIdx === -1 || wcaIdx === -1) throw new Error(`missing id/wca_exact in ${file}`);
+        continue;
+      }
+      const c = line.split(','); // opt_scramble 用 ':' 不含逗号 → 恰 3 列
+      const id = c[idIdx];
+      if (!id || seen.has(id)) continue;
+      const w = Number(c[wcaIdx]);
+      if (!Number.isFinite(w)) continue;  // 防御坏行/半截块(WCA 真打乱永远合法)
+      seen.add(id);
+      add(wca, w, id);
+      if (optIdx >= 0) {
+        const opt = c[optIdx] ?? '';
+        let s = 0; for (let k = 0; k < opt.length; k++) if (opt.charCodeAt(k) === 47 /* '/' */) s++;
+        add(slash, s, id);
+        if (opt) optOf.set(id, opt); // 已是 SQ1 简写记号,原样存
+      }
+    }
+  }
+  return { wca, slash, optOf };
 }
 
 // 每 bin 确定性均匀步长取 K 条(可复现,不依赖 Math.random)。
@@ -207,10 +259,9 @@ async function main() {
       continue;
     }
 
-    // 1. 分桶 + 确定性采样(主口径 + 可选 alt 口径)。wantedIds = 两口径采样并集。
+    // 1. 采样 helper(确定性均匀步长 K 条 + 收 wantedIds);near 与 exact 共用。
     const wantedIds = new Set<string>();
-    const sampleBuckets = async (col: string): Promise<Map<number, string[]>> => {
-      const buckets = await bucketIdsByLen(csvPath, col);
+    const sampleFrom = (buckets: Map<number, string[]>): Map<number, string[]> => {
       const sampled = new Map<number, string[]>();
       for (const [len, ids] of buckets) {
         const picked = pickUniform(ids, EXAMPLE_K);
@@ -219,10 +270,26 @@ async function main() {
       }
       return sampled;
     };
-    const sampledByBin = await sampleBuckets(spec.valueCol ?? spec.key);
-    const sampledAlt = spec.altCol ? await sampleBuckets(spec.altCol) : null;
 
-    // 2. 流式读 scrambles.txt 仅取被采样 id 的打乱文字。
+    // near 档采样(主 + 可选 alt 口径);sq1 已精确化(spec.exact)→ 不产 near 示例。
+    let sampledByBin: Map<number, string[]> | null = null;
+    let sampledAlt: Map<number, string[]> | null = null;
+    if (!spec.exact) {
+      sampledByBin = sampleFrom(await bucketIdsByLen(csvPath, spec.valueCol ?? spec.key));
+      if (spec.altCol) sampledAlt = sampleFrom(await bucketIdsByLen(csvPath, spec.altCol));
+    }
+
+    // 精确档采样(sq1):wca_exact + opt 的 slash 数双分桶,源含未 ingest 完成块;exactOpt = 最优等价打乱(标准记号)。
+    let exactWca: Map<number, string[]> | null = null;
+    let exactSlash: Map<number, string[]> | null = null;
+    let exactOpt = new Map<string, string>();
+    if (spec.exact) {
+      const ex = await bucketExactSq1(path.join(dataRoot, spec.key));
+      if (ex) { exactWca = sampleFrom(ex.wca); exactSlash = sampleFrom(ex.slash); exactOpt = ex.optOf; }
+      else console.warn(`  [${spec.key}] 无精确档数据(sq1_wca_exact.csv + 完成块都缺)`);
+    }
+
+    // 2. 流式读 scrambles.txt 仅取被采样 id 的原始打乱(标准 (x,y) 记号)。
     const scrambleOf = new Map<string, string>();
     {
       const rl = readline.createInterface({ input: fs.createReadStream(txtPath, 'utf-8'), crlfDelay: Infinity });
@@ -236,39 +303,43 @@ async function main() {
       }
     }
 
-    // 2b. 读 soln 列 → 反演为最优等价打乱(仅采样 id;无解列的 puzzle 得空表)。
-    const optOf = await loadOptScrambles(csvPath, wantedIds);
+    // 2b. near 档最优等价打乱(invert soln);精确档用 bucketExactSq1 已转标准记号的 exactOpt。
+    const nearOpt = spec.exact ? new Map<string, string>() : await loadOptScrambles(csvPath, wantedIds);
 
-    // 3. 组装 bins(丢弃 txt 里缺失打乱的 id,正常不应发生)。
-    const assemble = (sampled: Map<number, string[]>): { bins: Record<string, Sample[]>; binCount: number; sampleCount: number } => {
+    // 3. 组装 bins(丢弃 txt 里缺失打乱的 id,正常不应发生)。原始 + 最优都标准记号,前端统一 compact 成简写。
+    const assemble = (sampled: Map<number, string[]>, optMap: Map<string, string>): Record<string, Sample[]> => {
       const bins: Record<string, Sample[]> = {};
-      let binCount = 0, sampleCount = 0;
       for (const len of [...sampled.keys()].sort((a, b) => a - b)) {
         const arr: Sample[] = [];
         for (const id of sampled.get(len)!) {
           const scr = scrambleOf.get(id);
           if (scr === undefined) continue;
-          const opt = optOf.get(id);
+          const opt = optMap.get(id);
           arr.push(opt ? [id, scr, opt] : [id, scr]);
         }
-        if (arr.length === 0) continue;
-        bins[String(len)] = arr;
-        binCount++;
-        sampleCount += arr.length;
+        if (arr.length > 0) bins[String(len)] = arr;
       }
-      return { bins, binCount, sampleCount };
+      return bins;
     };
-    const primary = assemble(sampledByBin);
-    const altBuilt = sampledAlt ? assemble(sampledAlt) : null;
 
-    // 4. 比赛元数据 join。
+    // 4. 比赛元数据 join(near + exact 采样 id 并集)。
     const { comps, idMeta } = await buildCompMeta(wantedIds, scramblesTsv, compTsv);
 
-    puzzlesOut[spec.key] = altBuilt
-      ? { bins: primary.bins, binsAlt: altBuilt.bins, comps, idMeta }
-      : { bins: primary.bins, comps, idMeta };
-    const altNote = altBuilt ? ` + ${altBuilt.binCount} alt bins/${altBuilt.sampleCount}` : '';
-    console.log(`  [${spec.key}] ${primary.binCount} bins, ${primary.sampleCount} samples${altNote}, ${Object.keys(comps).length} comps`);
+    const out: Record<string, unknown> = { comps, idMeta };
+    const note: string[] = [];
+    const setBins = (k: string, sampled: Map<number, string[]> | null, optMap: Map<string, string>) => {
+      if (!sampled) return;
+      const b = assemble(sampled, optMap);
+      out[k] = b;
+      let n = 0; for (const v of Object.values(b)) n += v.length;
+      note.push(`${k}=${Object.keys(b).length}bin/${n}`);
+    };
+    setBins('bins', sampledByBin, nearOpt);
+    setBins('binsAlt', sampledAlt, nearOpt);
+    setBins('exactBins', exactWca, exactOpt);
+    setBins('exactBinsAlt', exactSlash, exactOpt);
+    puzzlesOut[spec.key] = out;
+    console.log(`  [${spec.key}] ${note.join(', ') || '空'}, ${Object.keys(comps).length} comps`);
   }
 
   const outDir = path.join(repoRoot, 'stats', 'scramble');

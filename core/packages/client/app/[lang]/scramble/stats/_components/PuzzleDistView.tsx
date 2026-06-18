@@ -114,7 +114,7 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const wantSlash = sq1Metric === 'slash';
 
   // 按 (难度档 × 口径) 解析直方图 / 口径 key / 示例 bin。
-  // 精确档示例暂缺(示例按近最优步数分桶,精确步数不同)→ exact 时不给 activeBins。
+  // 精确档示例 = exactBins/exactBinsAlt(按 wca_exact / slash 分桶,源含未 ingest 完成块);near 档 sq1 不再产示例。
   let activeDist: PuzzleHistEntry | undefined;
   let activeMetricKey: string;
   let activeBins: PuzzleExamplesEntry['bins'] | undefined;
@@ -122,7 +122,7 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
     const useExactAlt = wantSlash && !!entry.exact.alt;
     activeDist = useExactAlt ? entry.exact.alt!.dist : entry.exact.dist;
     activeMetricKey = useExactAlt ? 'slash' : 'wca';
-    activeBins = undefined;
+    activeBins = useExactAlt ? exEntry?.exactBinsAlt : exEntry?.exactBins;
   } else {
     const useAlt = wantSlash && !!entry?.alt;
     activeDist = useAlt ? entry!.alt!.dist : entry?.dist;
@@ -234,9 +234,9 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
         />
       </div>
 
-      {isExact && hasExact && exEntry && (
+      {isExact && hasExact && exEntry && !activeBins && (
         <div className="scramble-stats-examples-hint scramble-stats-exact-note">
-          {tr({ zh: '精确档示例待补;切「近最优」可看真实比赛打乱示例。', en: 'Exact-tier examples pending; switch to “Near” for real competition scramble examples.' })}
+          {tr({ zh: '精确档示例生成中,稍后再来。', en: 'Exact-tier examples generating, check back soon.' })}
         </div>
       )}
 
@@ -310,7 +310,7 @@ function PuzzleExamplesPanel({
   isZh: boolean;
   puzzleKey: string;
   selectedBin: number;
-  bins: PuzzleExamplesEntry['bins'];
+  bins: NonNullable<PuzzleExamplesEntry['bins']>;
   comps: PuzzleExamplesEntry['comps'];
   idMeta: PuzzleExamplesEntry['idMeta'];
   exView: 'orig' | 'opt';
