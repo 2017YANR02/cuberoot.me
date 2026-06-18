@@ -8,6 +8,7 @@
 //    stats/scramble/recent_scrambles_events.json (RecentEventBody).
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import MoreToggle from '@/components/MoreToggle';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -289,27 +290,25 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
 
       {rest.length > 0 && (
         <>
-          <ol className="rs-list">
-            {(expanded ? rest : rest.slice(0, 4)).map(([id, color], i) => {
-              const m = data.meta[id];
-              const scramble = data.scr[id] ?? '';
-              return (
-                <li key={id} className="rs-row">
-                  <span className="rs-row-rank">{i + 2}</span>
-                  <span className="rs-row-dot" aria-hidden="true"><SubsetSwatch colors={[color]} /></span>
-                  <div className="rs-row-main">
-                    <Link href={analyzerHref(lp, scramble)} prefetch={false} className="rs-row-scramble">{scramble}</Link>
-                    {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-          {rest.length > 4 && (
-            <button type="button" className="rs-more" onClick={() => setExpanded(!expanded)}>
-              {expanded ? tr({ zh: '收起', en: 'Show less' }) : tr({ zh: '更多', en: 'More' })}
-            </button>
+          {expanded && (
+            <ol className="rs-list">
+              {rest.map(([id, color], i) => {
+                const m = data.meta[id];
+                const scramble = data.scr[id] ?? '';
+                return (
+                  <li key={id} className="rs-row">
+                    <span className="rs-row-rank">{i + 2}</span>
+                    <span className="rs-row-dot" aria-hidden="true"><SubsetSwatch colors={[color]} /></span>
+                    <div className="rs-row-main">
+                      <Link href={analyzerHref(lp, scramble)} prefetch={false} className="rs-row-scramble">{scramble}</Link>
+                      {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
           )}
+          <MoreToggle expanded={expanded} onToggle={() => setExpanded(!expanded)} />
         </>
       )}
     </>
@@ -322,6 +321,7 @@ function RecentEventBody({ event, json, isZh, lp }: { event: string; json: Recen
   const hasDifficulty = !!(buckets?.difficulty && DIFFICULTY_EVENTS.has(event) && Object.keys(buckets.difficulty.byStep).length > 0);
   const [mode, setMode] = useState<'difficulty' | 'length'>('difficulty');
   const [value, setValue] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const curMode: 'difficulty' | 'length' = hasDifficulty ? mode : 'length';
   const bucketMap = curMode === 'difficulty' ? (buckets?.difficulty?.byStep ?? {}) : (buckets?.length ?? {});
@@ -381,21 +381,26 @@ function RecentEventBody({ event, json, isZh, lp }: { event: string; json: Recen
       })() : null}
 
       {rest.length > 0 && (
-        <ol className="rs-list">
-          {rest.slice(0, 4).map((id, i) => {
-            const m = metaOf(id);
-            const scramble = scrOf(id);
-            return (
-              <li key={id} className="rs-row rs-row--nodot">
-                <span className="rs-row-rank">{i + 2}</span>
-                <div className="rs-row-main">
-                  <Link href={analyzerHref(lp, scramble)} prefetch={false} className="rs-row-scramble">{scramble}</Link>
-                  {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
-                </div>
-              </li>
-            );
-          })}
-        </ol>
+        <>
+          {expanded && (
+            <ol className="rs-list">
+              {rest.slice(0, 4).map((id, i) => {
+                const m = metaOf(id);
+                const scramble = scrOf(id);
+                return (
+                  <li key={id} className="rs-row rs-row--nodot">
+                    <span className="rs-row-rank">{i + 2}</span>
+                    <div className="rs-row-main">
+                      <Link href={analyzerHref(lp, scramble)} prefetch={false} className="rs-row-scramble">{scramble}</Link>
+                      {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+          <MoreToggle expanded={expanded} onToggle={() => setExpanded(!expanded)} />
+        </>
       )}
     </>
   );

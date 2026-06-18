@@ -2,6 +2,11 @@
 // /code/utils 这页直接读这份 CATALOG 渲染。让下一个人 / 下一个 AI 写新代码前
 // 翻一眼就知道「这个轮子已经有了」。签名照源码抄准,别 paraphrase。
 
+import {
+  Type, Crown, Smartphone, Mic, Radio, Timer, Disc, Languages, Shuffle, Flag, MapPin, User,
+  ListChecks, CalendarDays, Trophy, Palette, Box, Link2, Webhook, Wrench, type LucideIcon,
+} from 'lucide-react';
+
 export type UtilCat = 'hook' | 'i18n' | 'api' | 'format' | 'wca' | 'cube' | 'util';
 
 export interface UtilEntry {
@@ -15,6 +20,44 @@ export interface UtilEntry {
   category: UtilCat;
   zh: string;
   en: string;
+}
+
+// 每张速查卡配一个代表图标(关键词推断,兜底按分类),让纯代码卡也有图。
+const U_ICON_RULES: [RegExp, LucideIcon][] = [
+  [/title|document/, Type],
+  [/membership|member/, Crown],
+  [/mobile|viewport|width/, Smartphone],
+  [/speech|voice/, Mic],
+  [/stream|live|socket|websocket/, Radio],
+  [/timer|hold/, Timer],
+  [/gesture|wheel|dial/, Disc],
+  [/translat|bilingual|locale|language/, Languages],
+  [/scramble/, Shuffle],
+  [/country|flag/, Flag],
+  [/city/, MapPin],
+  [/\bname\b|cuber/, User],
+  [/color|palette/, Palette],
+  [/cube|sq1|move/, Box],
+  [/result|format/, ListChecks],
+  [/\bdate/, CalendarDays],
+  [/event|round|competition|\bwca/, Trophy],
+  [/url|\bapi|fetch/, Link2],
+];
+
+const U_CATEGORY_ICON: Record<UtilCat, LucideIcon> = {
+  hook: Webhook,
+  i18n: Languages,
+  api: Link2,
+  format: Type,
+  wca: Trophy,
+  cube: Box,
+  util: Wrench,
+};
+
+export function iconFor(e: UtilEntry): LucideIcon {
+  const hay = `${e.name} ${e.en}`.toLowerCase();
+  for (const [re, Icon] of U_ICON_RULES) if (re.test(hay)) return Icon;
+  return U_CATEGORY_ICON[e.category];
 }
 
 export const UCATS: { id: UtilCat; zh: string; en: string }[] = [

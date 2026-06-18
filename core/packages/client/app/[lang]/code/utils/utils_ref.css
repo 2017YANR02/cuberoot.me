@@ -111,6 +111,25 @@
   border: 1px solid var(--border-default);
   border-radius: 12px;
 }
+.ur-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ur-viz {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  color: var(--accent);
+  background:
+    radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 75%),
+    color-mix(in srgb, var(--foreground) 5%, var(--background));
+  border: 1px solid var(--border-default);
+}
 .ur-card-name {
   font-family: var(--ur-mono);
   font-size: 15px;
@@ -118,6 +137,7 @@
   color: var(--foreground);
   letter-spacing: -.01em;
   overflow-wrap: anywhere;
+  min-width: 0;
 }
 .ur-card-desc {
   font-size: 13px;

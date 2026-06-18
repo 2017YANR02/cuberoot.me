@@ -7,21 +7,26 @@ import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './components_gallery.css';
 import { tr } from '@/i18n/tr';
-import { CATALOG, CATEGORIES, type ComponentEntry } from './_catalog';
+import { CATALOG, CATEGORIES, EXTRA_DEMOS, iconFor, type ComponentEntry } from './_catalog';
 
 function Card({ e, lang }: { e: ComponentEntry; lang: 'zh' | 'en' }) {
-  const Demo = e.Demo;
+  const Demo = e.Demo ?? EXTRA_DEMOS[e.name];
+  const Icon = Demo ? null : iconFor(e);
   return (
     <div className="cg-card">
       <div className="cg-card-head">
         <span className="cg-card-name">{e.name}</span>
       </div>
       <p className="cg-card-desc">{lang === 'zh' ? e.zh : e.en}</p>
-      {Demo && (
+      {Demo ? (
         <div className="cg-stage">
           <Demo />
         </div>
-      )}
+      ) : Icon ? (
+        <div className="cg-viz">
+          <Icon size={32} strokeWidth={1.4} aria-hidden="true" />
+        </div>
+      ) : null}
       <pre className="cg-code"><code>{e.import}</code></pre>
       {e.usage && <pre className="cg-code cg-code-usage"><code>{e.usage}</code></pre>}
       {e.note && <div className="cg-card-note">{lang === 'zh' ? e.note.zh : e.note.en}</div>}

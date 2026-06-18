@@ -139,6 +139,21 @@
   border: 1px dashed var(--border-default);
 }
 
+/* icon viz — every non-demo card still gets a visual */
+.cg-viz {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  padding: 16px;
+  border-radius: 10px;
+  color: var(--accent);
+  background:
+    radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 72%),
+    color-mix(in srgb, var(--foreground) 4%, var(--background));
+  border: 1px solid var(--border-default);
+}
+
 .cg-code {
   margin: 0;
   font-family: var(--cg-mono);
@@ -163,6 +178,13 @@
 
 /* ── demo helpers ───────────────────────── */
 .cg-row { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; }
+/* MonthGrid demo: the component expects the 7-col calendar grid from its host
+   page CSS; supply a compact version scoped to the demo stage. */
+.cg-stage .calendar { display: flex; flex-direction: column; gap: 3px; width: 100%; }
+.cg-stage .weekday-header,
+.cg-stage .week-row { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cg-stage .weekday-cell { text-align: center; font-size: 11px; color: var(--muted-foreground); padding: 2px 0; }
+.cg-stage .day-cell { text-align: center; font-size: 12.5px; padding: 4px 0; }
 /* AttemptsList demo: stacked rows so the shared 8.5ch grid floor lines columns up
    across rows; the cell renders solves as links — on the neutral stage show them as
    plain aligned numbers (not default-blue underlined links). */

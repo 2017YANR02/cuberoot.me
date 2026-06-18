@@ -123,6 +123,18 @@
 .scramble-stats-puzzle-metric {
   color: var(--text-faint, var(--text-sub));
 }
+/* 精确档进行中徽标:accent 小药丸,提示该分布仍在全量灌注、当前为部分样本。 */
+.scramble-stats-puzzle-progress {
+  font-size: 0.72rem;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+  white-space: nowrap;
+}
+.scramble-stats-exact-note {
+  margin-top: -0.25rem;
+}
 .scramble-stats-puzzle-toggle {
   display: inline-flex;
   align-items: center;

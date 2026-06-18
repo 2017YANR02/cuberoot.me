@@ -60,6 +60,63 @@ function histToJson(h: Hist) {
   return { min: h.counts.size ? h.min : 0, max: h.counts.size ? h.max : 0, counts: countsObj };
 }
 
+function bump(h: Hist, v: number) {
+  if (v < h.min) h.min = v;
+  if (v > h.max) h.max = v;
+  h.counts.set(v, (h.counts.get(v) ?? 0) + 1);
+}
+
+// SQ1 精确档聚合:同时产 WCA 12c4(可证最优,wca_exact 列)+ slash(WCA-最优解里的 / 数,slash-最优紧上界)两口径。
+//
+// 关键:全量灌注(inject_sq1_wca_exact.ps1)把所有块喂给一个长跑 analyzer,主 CSV 只在进程启动/结束各 ingest 一次
+// (8 天级长跑期间主 CSV 一直停在初始行数)。完成的块堆在 sq1/_exact_chunks/*_sq1.csv 里。故这里**额外读这些块**
+// (只读不删,绝不碰运行中的 job),按 id 去重(主 CSV 优先),才能让网站反映真实进度而非停在初始值。
+async function aggregateExactSq1(exCsvPath: string, wcaCol: string): Promise<{
+  sampleCount: number; wcaHist: Hist; slashHist: Hist;
+} | null> {
+  const files: string[] = [];
+  if (fs.existsSync(exCsvPath)) files.push(exCsvPath);
+  const chunkDir = path.join(path.dirname(exCsvPath), '_exact_chunks');
+  if (fs.existsSync(chunkDir)) {
+    for (const n of fs.readdirSync(chunkDir).filter((x: string) => x.endsWith('_sq1.csv')).sort())
+      files.push(path.join(chunkDir, n));
+  }
+  if (files.length === 0) return null;
+  const seen = new Set<string>();
+  const wcaHist: Hist = { min: Infinity, max: -Infinity, counts: new Map() };
+  const slashHist: Hist = { min: Infinity, max: -Infinity, counts: new Map() };
+  let sampleCount = 0;
+  for (const file of files) {
+    const rl = readline.createInterface({ input: fs.createReadStream(file, 'utf-8'), crlfDelay: Infinity });
+    let wcaIdx = -1; let optIdx = -1;
+    for await (const line of rl) {
+      if (!line) continue;
+      if (wcaIdx === -1) {
+        const h = line.split(',');
+        wcaIdx = h.indexOf(wcaCol);
+        optIdx = h.indexOf('opt_scramble');
+        if (wcaIdx === -1) throw new Error(`missing column '${wcaCol}' in ${file}`);
+        continue;
+      }
+      const cols = line.split(',');         // opt_scramble 用 ':' 不含逗号,故 split(',') 恰 3 列
+      const id = cols[0];
+      if (!id || seen.has(id)) continue;
+      const wca = Number(cols[wcaIdx]);
+      if (!Number.isFinite(wca)) continue;  // 防御坏行(WCA 真打乱永远合法,无 '-')
+      seen.add(id);
+      sampleCount++;
+      bump(wcaHist, wca);
+      if (optIdx >= 0) {
+        const opt = cols[optIdx] ?? '';
+        let slash = 0;
+        for (let k = 0; k < opt.length; k++) if (opt.charCodeAt(k) === 47 /* '/' */) slash++;
+        bump(slashHist, slash);
+      }
+    }
+  }
+  return { sampleCount, wcaHist, slashHist };
+}
+
 async function aggregate(csvPath: string, valueCol: string): Promise<{ sampleCount: number; hist: Hist }> {
   const hist: Hist = { min: Infinity, max: -Infinity, counts: new Map() };
   const rl = readline.createInterface({
@@ -123,12 +180,19 @@ async function main() {
     }
     if (spec.exact) {
       const exCsv = path.join(dataRoot, spec.key, spec.exact.csv);
-      if (fs.existsSync(exCsv)) {
-        const { sampleCount: exCount, hist: exHist } = await aggregate(exCsv, spec.exact.valueCol);
-        console.log(`  [${spec.key}] exact dist ${exHist.min}..${exHist.max} (${spec.exact.metric}, ${exCount} rows)`);
-        entry.exact = { metric: spec.exact.metric, sample_count: exCount, dist: histToJson(exHist) };
+      const ex = await aggregateExactSq1(exCsv, spec.exact.valueCol);
+      if (ex) {
+        console.log(`  [${spec.key}] exact ${ex.sampleCount} rows; wca ${ex.wcaHist.min}..${ex.wcaHist.max}, slash ${ex.slashHist.min}..${ex.slashHist.max} (含未 ingest 块)`);
+        const exactEntry: Record<string, unknown> = {
+          metric: spec.exact.metric, sample_count: ex.sampleCount, dist: histToJson(ex.wcaHist),
+        };
+        // slash 口径 = WCA-最优解里的 / 数(slash-最优紧上界,≤13);仅当有 opt_scramble 列时产出。
+        if (ex.slashHist.counts.size > 0) {
+          exactEntry.alt = { metric: spec.alt?.metric ?? 'slash', dist: histToJson(ex.slashHist) };
+        }
+        entry.exact = exactEntry;
       } else {
-        console.warn(`  [skip exact] ${spec.key}: missing ${exCsv} (近最优主档不受影响)`);
+        console.warn(`  [skip exact] ${spec.key}: missing ${exCsv} + 无完成块(近最优主档不受影响)`);
       }
     }
     puzzlesOut[spec.key] = entry;

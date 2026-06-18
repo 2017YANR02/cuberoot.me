@@ -96,6 +96,10 @@ cd core/packages/scramble-stats-build; pnpm exec tsx src/build_puzzle_examples.t
 - 语料自动从三阶管道抽好的 `incremental/tsv/Scrambles.tsv` 按 event_id 过滤(`222`/`pyram`/`skewb`/`sq1`),增量落 `D:\cube\scramble\puzzle\<key>\`。`-MaxNew N` 限量验形,`-BuildOnly` 只重算 JSON。
 - 产 `stats/scramble/puzzle_distribution.json`(直方图)+ `puzzle_examples.json`(示例卡片)。前端 `/scramble/stats` 难度 tab 选中二阶/金字塔/斜转/SQ1 即显示(`PUZZLE_EVENT_MAP` → `PuzzleDistView`)。
 - **SQ1 = 近最优 + WCA 12c4 计步(2026-06-12 上线)**:精确最优长尾爆炸(>500 态/6min 不收敛),改用 cstimer 双阶段(`solver/src/sq1_twophase.rs`,`sq1_analyzer.exe` 默认走它)。**默认 WCA 12c4 计步**((X,Y)=1 + /=1,`solve_wca`);`SQ1_METRIC=slash` 回 slash-only(jaapsch God 13);`SQ1_EXACT=1` 回精确(slash,慢)。全 125k ~50s,**WCA dist 11..30 峰 25**。近最优 gap(slash 口径)+0/52% +2/44% +4/4% 均 +1 真上界。前端口径行标「WCA 12c4 计步,近最优」;**示例打乱用简写记号**(`formatScrambleForEvent('sq1',scr)`)。exact ground-truth 存 `sq1_exact_groundtruth.csv`。清空 master 重灌须留表头(管道已修空文件边界)。
+- **SQ1 精确档(WCA 12c4 可证最优)= 独立后台 + build 自动读**:`inject_sq1_wca_exact.ps1`(用 `Sq1WcaSolver` + 13GB `jsq_full` 表,可证最优,~0.16 解/s、全 125k ~8.8 天)是**独立长跑后台**,不进一条龙(类比 333opt 的 `solve_loop.mjs`)。产 `sq1/sq1_wca_exact.csv`(`id,wca_exact,opt_scramble`)。
+  - ⚠️ **进度藏在 chunk**:该 job 把所有块喂给一个长跑 analyzer,主 CSV 只在进程启动/结束各 ingest 一次 → 长跑期间主 CSV 一直停在初始行数,完成的块堆在 `sq1/_exact_chunks/*_sq1.csv`。`build_puzzle_dist.ts` 已**额外读这些块**(只读不删,绝不碰运行中的 job),按 id 去重,故每跑一次 build 就反映真实进度。**手动 ingest 块**(可选,清理用):`pwsh inject_sq1_wca_exact.ps1 -BuildOnly`。
+  - 产出进 `puzzle_distribution.json` 的 `sq1.exact`:`dist` = WCA 12c4 可证最优;`alt` = slash(从 `opt_scramble` 数 `/`,= WCA-最优解里的 slash 数,**slash-最优的紧上界 ≤13,非单独 slash-最优**)。前端难度 tab 加「求解:精确/近最优」开关(默认精确),两口径(WCA/slash)都切到精确;精确档示例暂缺(示例按近最优分桶)。
+  - **发布同近最优**:`update_cross_stats.ps1 -Jobs puzzles -Puzzles sq1` 跑完即一并 scp(build 会带上当前已完成的精确块)。改 exact shape 须 bump `lib/puzzle-distribution.ts` 的 `V`。
 - **想更准**(deferred):双阶段迭代总长 / 更紧剪枝可逼近最优,代价回到长尾;见 `solver/SOLVER_LOOP.md` P5d。
 - **发布**:走一条龙共享发布(`update_cross_stats.ps1 -Jobs puzzles` 跑完即一并 scp);单独手跑这两步则需手 scp。改 shape 须 bump `lib/puzzle-distribution.ts` / `lib/puzzle-examples.ts` 的 `V`。
 - 加新 puzzle(如 SQ1)的全链路范式:`solver/VARIANT_PLAYBOOK.md` §8。

@@ -6,7 +6,7 @@
 // 数据:lib/recon-api getTodayRecons()(主用 /v1/recon/today,回退 /latest 单条)。
 import { useEffect, useState } from 'react';
 import Link from '@/components/AppLink';
-import { ChevronDown } from 'lucide-react';
+import MoreToggle from '@/components/MoreToggle';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getTodayRecons } from '@/lib/recon-api';
 import { formatTime, formatRound } from '@/lib/recon-utils';
@@ -135,17 +135,7 @@ export default function TodayRecon({ lang }: Props) {
       {rest.length > 0 && (
         <>
           {expanded && rest.map((s) => <ReconCard key={s.id} solve={s} isZh={isZh} />)}
-          <button
-            type="button"
-            className={`tr-more${expanded ? ' is-open' : ''}`}
-            onClick={() => setExpanded((v) => !v)}
-            aria-expanded={expanded}
-          >
-            {expanded
-              ? tr({ zh: '收起', en: 'Show less' })
-              : tr({ zh: '更多', en: 'More' })}
-            <ChevronDown size={15} className="tr-more-chevron" aria-hidden="true" />
-          </button>
+          <MoreToggle expanded={expanded} onToggle={() => setExpanded((v) => !v)} />
         </>
       )}
     </div>

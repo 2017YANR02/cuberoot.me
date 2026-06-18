@@ -222,21 +222,6 @@
   flex-shrink: 0;
 }
 
-.rs-more {
-  align-self: center;
-  margin-top: 0.4rem;
-  padding: 0.35rem 1.3rem;
-  border: 1px solid var(--border-default);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted-foreground);
-  font: inherit;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: border-color 0.12s, color 0.12s;
-}
-.rs-more:hover { border-color: var(--accent); color: var(--accent); }
-
 @media (max-width: 560px) {
   .rs-hero { flex-direction: column; align-items: stretch; text-align: left; }
   .rs-hero-cube { align-self: center; }
