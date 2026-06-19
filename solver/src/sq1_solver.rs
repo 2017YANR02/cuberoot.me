@@ -1524,6 +1524,54 @@ fn tt_budget() -> usize {
     })
 }
 
+/// EPIC ④(`solve_with_solution_parallel`)用的**分片共享** TT。语义同串行 TT(proven-fail,值 =
+/// 已证无解的最大剩余预算 `rem`,单调 max ⇒ 并发 race 无害:顶多少剪、绝不误剪有解态)。64 片各一把
+/// 锁降争用;全局条目数仍记进 `TT_GLOBAL_ENTRIES`(OOM 红线与串行同源、跨并发 solve 共享预算)。
+/// 串行 `dfs` 完全不碰它(老路径一行不改)。
+#[cfg(not(target_arch = "wasm32"))]
+struct ShardedTt {
+    shards: Vec<std::sync::Mutex<HashMap<u128, u8>>>,
+}
+#[cfg(not(target_arch = "wasm32"))]
+impl ShardedTt {
+    const NSHARD: usize = 64; // 2 的幂
+    fn new() -> Self {
+        let mut shards = Vec::with_capacity(Self::NSHARD);
+        for _ in 0..Self::NSHARD {
+            shards.push(std::sync::Mutex::new(HashMap::new()));
+        }
+        ShardedTt { shards }
+    }
+    #[inline]
+    fn shard(&self, key: u128) -> &std::sync::Mutex<HashMap<u128, u8>> {
+        // 混低/高位再取模(key 低位 = top48,高位含 ml/lm;单取低位分布偏)。
+        let h = (key ^ (key >> 61) ^ (key >> 97)) as usize;
+        &self.shards[h & (Self::NSHARD - 1)]
+    }
+    /// 已证无解的最大 rem(命中且 ≥ 当前 rem ⇒ 调用方剪枝)。
+    #[inline]
+    fn get(&self, key: u128) -> Option<u8> {
+        self.shard(key).lock().unwrap().get(&key).copied()
+    }
+    /// 记录 (态,lm) 在 rem 内已穷举无解(单调 max)。全局预算未满才插(满了停插、查询照旧)。
+    #[inline]
+    fn record(&self, key: u128, rem: u8) {
+        if TT_GLOBAL_ENTRIES.load(std::sync::atomic::Ordering::Relaxed) >= tt_budget() {
+            return;
+        }
+        let mut m = self.shard(key).lock().unwrap();
+        let before = m.len();
+        let e = m.entry(key).or_insert(0);
+        *e = (*e).max(rem);
+        if m.len() > before {
+            TT_GLOBAL_ENTRIES.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        }
+    }
+    fn total_len(&self) -> usize {
+        self.shards.iter().map(|s| s.lock().unwrap().len()).sum()
+    }
+}
+
 /// profiler 是否已因 node/time cap 中止(中止时返回的 None 是"没搜完"而非"已证无解",
 /// 绝不能写进 TT,否则毒化成假 proven-fail)。求解热路径(profiler 关)恒 false。
 #[cfg(not(target_arch = "wasm32"))]
@@ -1535,6 +1583,63 @@ fn profiler_aborted() -> bool {
 #[cfg(target_arch = "wasm32")]
 #[inline]
 fn profiler_aborted() -> bool {
+    false
+}
+
+/// B1 怪物超时:每条 solve 可设一个墙钟 deadline(`solve_with_solution_deadline`)。命中后 `dfs`
+/// 像"穷举无解"一样返 None 快速 unwind —— 但**中止 ≠ 已证无解**,绝不能写 TT(同 profiler 中止的毒化
+/// 风险,见 `deadline_aborted` 守 TT 写入)。全局原子门 ⇒ 无 deadline 的热路径只付一条 relaxed load
+/// (同 profiler hook)。每线程独立 arm/清,线程复用安全(HIT 不跨 solve 残留)。
+#[cfg(not(target_arch = "wasm32"))]
+static DEADLINE_ON: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+#[cfg(not(target_arch = "wasm32"))]
+thread_local! {
+    static DEADLINE_AT: std::cell::Cell<Option<std::time::Instant>> = const { std::cell::Cell::new(None) };
+    static DEADLINE_HIT: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+    static DEADLINE_TICK: std::cell::Cell<u32> = const { std::cell::Cell::new(0) };
+}
+/// 本线程 deadline 已命中 ⇒ 当前 solve 应放弃(怪物)。TT 写入守卫用它(同 `profiler_aborted`)。
+#[cfg(not(target_arch = "wasm32"))]
+#[inline]
+fn deadline_aborted() -> bool {
+    DEADLINE_HIT.with(|h| h.get())
+}
+#[cfg(target_arch = "wasm32")]
+#[inline]
+fn deadline_aborted() -> bool {
+    false
+}
+/// 搜索热路径每节点调:无 deadline(门关)⇒ 一条 relaxed load 即返 false;有 ⇒ 每 16384 节点查一次
+/// 墙钟(`Instant::now()` 不便宜),命中置 HIT(粘滞,后续节点直返 true)⇒ 整搜索快速 unwind。
+#[cfg(not(target_arch = "wasm32"))]
+#[inline]
+fn deadline_check() -> bool {
+    if !DEADLINE_ON.load(std::sync::atomic::Ordering::Relaxed) {
+        return false;
+    }
+    DEADLINE_HIT.with(|h| {
+        if h.get() {
+            return true;
+        }
+        let n = DEADLINE_TICK.with(|t| {
+            let v = t.get().wrapping_add(1);
+            t.set(v);
+            v
+        });
+        if n & 0x3FFF == 0 {
+            if let Some(d) = DEADLINE_AT.with(|a| a.get()) {
+                if std::time::Instant::now() >= d {
+                    h.set(true);
+                    return true;
+                }
+            }
+        }
+        false
+    })
+}
+#[cfg(target_arch = "wasm32")]
+#[inline]
+fn deadline_check() -> bool {
     false
 }
 
@@ -2311,6 +2416,50 @@ impl Sq1WcaSolver {
         result
     }
 
+    /// 带墙钟超时的求解:正常返 `Some((cost, 解))`;**超时(怪物)返 `None`**(调用方记入怪物清单,
+    /// 后续用更大 `SQ1_TT_BUDGET` 单独跑 —— 它们是 actual 24-25 的深尾,可证最优只是慢)。超时经
+    /// `deadline_check` 在 `dfs` 内 unwind ⇒ **不写 TT**(保最优,无毒化)。每条独立 arm 本线程 deadline,
+    /// 结束清掉(防 HIT 残留污染同线程后续 plain solve)。
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn solve_with_solution_deadline(
+        &self,
+        st: &Sq1State,
+        deadline: std::time::Instant,
+    ) -> Option<(u32, Vec<Sq1Token>)> {
+        use std::sync::atomic::Ordering;
+        if is_exact_solved(st) {
+            return Some((0, Vec::new()));
+        }
+        // arm 本线程 deadline + 开全局门(幂等;**不复位门**,否则会误关其他并发线程的检查)。
+        DEADLINE_HIT.with(|h| h.set(false));
+        DEADLINE_TICK.with(|t| t.set(0));
+        DEADLINE_AT.with(|a| a.set(Some(deadline)));
+        DEADLINE_ON.store(true, Ordering::Relaxed);
+
+        let mut bound = if st.slash_legal() { self.h(st) } else { 1 };
+        let mut memo = P2Memo { exact: HashMap::new(), fail_below: HashMap::new() };
+        let mut tt: HashMap<u128, u8> = HashMap::new();
+        let result = loop {
+            let mut path: Vec<Sq1Token> = Vec::new();
+            if let Some(cost) = self.dfs(*st, 0, bound, LM_NONE, &mut memo, &mut path, &mut tt) {
+                break Some((cost as u32, path));
+            }
+            if deadline_aborted() {
+                break None; // 超时 ⇒ 怪物(dfs 因 deadline 提前返 None,而非真穷举完无解)
+            }
+            bound += 1;
+            if bound > 27 {
+                break None; // 已证 D_WCA ≤27;到此必异常,按怪物处理而非 panic
+            }
+        };
+        TT_GLOBAL_ENTRIES.fetch_sub(tt.len(), Ordering::Relaxed);
+        // 清本线程 deadline(AT=None ⇒ 后续 plain solve 即便门仍开也只多一条 load 不会误中止;
+        // HIT=false ⇒ 不把本次命中带给同线程下一条)。
+        DEADLINE_AT.with(|a| a.set(None));
+        DEADLINE_HIT.with(|h| h.set(false));
+        result
+    }
+
     /// A2 诊断:capped phase-1 IDA* profiler(**不改最优性 / 不改解**,默认关)。逐 bound 跑同一
     /// `dfs`,记每 bound phase-1 节点数 + 首个方形态深度;node_cap / time_cap 任一到即截断(深态
     /// 本就 >5min,截断保证不挂)。返回多行报告串。用于定位深态瓶颈(phase-1 太深 vs h 太弱)。
@@ -2394,6 +2543,13 @@ impl Sq1WcaSolver {
         path: &mut Vec<Sq1Token>,
         tt: &mut HashMap<u128, u8>,
     ) -> Option<u8> {
+        // B1 怪物超时:墙钟 deadline 命中 ⇒ 像穷举无解一样 unwind(返 None);TT 写入有 !deadline_aborted() 守,
+        // 故中止不毒化(同 profiler)。无 deadline 时一条 relaxed load 即过,零影响。jsq_full 在位 ⇒ phase-2
+        // 为 O(1) 查表无搜索 ⇒ 怪物耗时全在本 phase-1 dfs,deadline 覆盖到(看门狗当未覆盖路径的安全网)。
+        #[cfg(not(target_arch = "wasm32"))]
+        if deadline_check() {
+            return None;
+        }
         // A2 profiler hook(默认关:一条 relaxed load 即返回,不影响最优性)。开则记节点 /
         // 首方形深度并在 node/time cap 处令整搜索快速 unwind(返 None,solve_profile 检 aborted 收尾)。
         #[cfg(not(target_arch = "wasm32"))]
@@ -2487,6 +2643,7 @@ impl Sq1WcaSolver {
         // 穷举完未找到解(且非 profiler 中止)⇒ 记 (态,lm) 在 rem 内无解(取最大已证 fail)。
         // 全局预算未满才插(满了停插、查询照旧 ⇒ OOM 红线,与线程数无关)。
         if !profiler_aborted()
+            && !deadline_aborted()
             && TT_GLOBAL_ENTRIES.load(std::sync::atomic::Ordering::Relaxed) < tt_budget()
         {
             let before = tt.len();
@@ -2495,6 +2652,227 @@ impl Sq1WcaSolver {
             if tt.len() > before {
                 TT_GLOBAL_ENTRIES.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             }
+        }
+        None
+    }
+
+    // ===== EPIC ④:root-split 并行 IDA*(新增入口;老 dfs / solve_with_solution 一行不改)=====
+
+    /// 单条 solve 走 **root-split 并行 IDA***,用全部 `RAYON_NUM_THREADS` 核啃一条怪物。门控
+    /// `SQ1_SOLVE_PARALLEL=split`。**保最优**:bound 仍从 `h` 逐层 +1;失败的 bound 必须把所有 root
+    /// 子树**并行穷举完**才 +1(全 None 才递增);成功的 bound 任一线程找到即 `cancel` 其余子树。
+    /// `cancel` 用 Relaxed 安全:失败 bound 永不置 cancel(无 race,proven-fail 全有效);成功 bound
+    /// 一找到即结束 solve,race 写的假 proven-fail **永不再被查** ⇒ 无害(详见 `dfs_par`)。
+    /// phase-2:jsq_full 在位 ⇒ O(1) 查表(免共享 memo);缺则现搜(仅测试浅态)。
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn solve_with_solution_parallel(&self, st: &Sq1State, split: u8) -> (u32, Vec<Sq1Token>) {
+        // 无超时:必出可证最优(深尾可能很久;有时限需求用 _deadline)。
+        self.solve_par_core(st, split, None).expect("no-deadline parallel solve cannot time out")
+    }
+
+    /// EPIC ④ + 看门狗:`deadline` 到点 ⇒ 怪物,返 `None`(调用方记 `id,M`)。**绝不死等**:墙钟看门狗
+    /// 线程到点置 `cancel` ⇒ 所有搜索线程下个节点即 unwind(怪物超时**不毒化 TT**,见 `dfs_par`)。
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn solve_with_solution_parallel_deadline(
+        &self,
+        st: &Sq1State,
+        split: u8,
+        deadline: std::time::Instant,
+    ) -> Option<(u32, Vec<Sq1Token>)> {
+        self.solve_par_core(st, split, Some(deadline))
+    }
+
+    /// 并行 IDA* 核心(共享给有/无超时两入口)。`deadline=Some` ⇒ scope 内起看门狗线程,到点置
+    /// `timed_out`+`cancel`;主循环每个 bound 失败后先查 `timed_out`(超时即 break None=怪物,绝不递增
+    /// bound 死搜),否则 +1 继续。`cancel`(Relaxed)双用:成功短路 / 超时中止 —— 两者都靠 `!cancel`
+    /// 守不写假 proven-fail(失败 bound 永不置 cancel ⇒ proven-fail 全有效)。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn solve_par_core(
+        &self,
+        st: &Sq1State,
+        split: u8,
+        deadline: Option<std::time::Instant>,
+    ) -> Option<(u32, Vec<Sq1Token>)> {
+        use std::sync::atomic::{AtomicBool, Ordering::Relaxed};
+        if is_exact_solved(st) {
+            return Some((0, Vec::new()));
+        }
+        let tt = ShardedTt::new();
+        let cancel = AtomicBool::new(false);
+        let timed_out = AtomicBool::new(false);
+        let done = AtomicBool::new(false); // 声明在 scope 外以满足看门狗的 'scope 寿命
+        let result = std::thread::scope(|scope| {
+            if let Some(dl) = deadline {
+                let (cancel_r, to_r, done_r) = (&cancel, &timed_out, &done);
+                scope.spawn(move || {
+                    while !done_r.load(Relaxed) {
+                        if std::time::Instant::now() >= dl {
+                            to_r.store(true, Relaxed);
+                            cancel_r.store(true, Relaxed); // 所有搜索线程下个节点 unwind
+                            return;
+                        }
+                        std::thread::sleep(std::time::Duration::from_millis(200));
+                    }
+                });
+            }
+            let mut bound = if st.slash_legal() { self.h(st) } else { 1 };
+            let r = loop {
+                match self.dfs_par(*st, 0, bound, LM_NONE, &tt, &cancel, split) {
+                    Some((cost, path)) => {
+                        debug_assert_eq!(cost as usize, path.len(), "WCA cost == token count");
+                        break Some((cost as u32, path));
+                    }
+                    None => {
+                        if timed_out.load(Relaxed) {
+                            break None; // 怪物:超时 ⇒ 绝不死搜
+                        }
+                        bound += 1;
+                        assert!(bound <= 27, "WCA search exceeded proven bound D_WCA ≤ 27");
+                    }
+                }
+            };
+            done.store(true, Relaxed); // 通知看门狗退出(scope 会 join 它)
+            r
+        });
+        TT_GLOBAL_ENTRIES.fetch_sub(tt.total_len(), Relaxed);
+        result
+    }
+
+    /// 方形态精确尾解(并行版,**免共享 memo**):jsq_full 在位 ⇒ O(1) 查表 + 梯度重建;缺表 ⇒ 现搜
+    /// (fresh memo,仅测试浅态用,生产 grind 恒有 jsq_full)。返回 (尾解步数, 尾解 token)。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn p2_par(&self, s: &Sq1State, cap: u8) -> Option<(u8, Vec<Sq1Token>)> {
+        if !self.jsq_full.is_empty() {
+            let d = self.jsq_full[full_idx(s)];
+            if d > cap {
+                return None;
+            }
+            let mut tail = Vec::new();
+            self.p2_reconstruct(*s, d, &mut tail);
+            return Some((d, tail));
+        }
+        let mut memo = P2Memo { exact: HashMap::new(), fail_below: HashMap::new() };
+        let mut tail = Vec::new();
+        self.p2_dist_le_wca(s, cap, &mut memo, &mut tail).map(|d| (d, tail))
+    }
+
+    /// 并行 IDA* DFS。返回 `Some((solved 时的 g = 总深度, 本节点→SOLVED 的 token 路径))`。
+    /// `g < split` 且子>1 ⇒ `find_map_any` 并行各子树,否则串行。proven-fail 写共享 TT(`cancel`/预算守)。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn dfs_par(
+        &self,
+        s: Sq1State,
+        g: u8,
+        bound: u8,
+        lm: u8,
+        tt: &ShardedTt,
+        cancel: &std::sync::atomic::AtomicBool,
+        split: u8,
+    ) -> Option<(u8, Vec<Sq1Token>)> {
+        use rayon::prelude::*;
+        use std::sync::atomic::Ordering::Relaxed;
+        if cancel.load(Relaxed) {
+            return None;
+        }
+        if is_exact_solved(&s) {
+            return Some((g, Vec::new()));
+        }
+        let rem = bound - g;
+        let key = tt_key(&s, lm);
+        if let Some(fail) = tt.get(key) {
+            if fail >= rem {
+                return None;
+            }
+        }
+        if s.is_square_shape() {
+            if let Some((d, tail)) = self.p2_par(&s, bound.saturating_sub(g)) {
+                return Some((g + d, tail));
+            }
+        }
+        let slash_ok = s.slash_legal();
+        let pt = Sq1State::layer_pattern(s.top);
+        let pb = Sq1State::layer_pattern(s.bottom);
+        let child_bound = bound.saturating_sub(g + 1);
+        let mut kids = [(0u8, Sq1Token::Slash, Sq1State::SOLVED, 0u8); 145];
+        let mut n = 0usize;
+        if slash_ok && lm != LM_SLASH {
+            let c = s.slashed();
+            let cpt = Sq1State::layer_pattern(c.top);
+            let cpb = Sq1State::layer_pattern(c.bottom);
+            if let Some(h) = self.h_le_wca(&c, cpt, cpb, child_bound) {
+                kids[n] = (h, Sq1Token::Slash, c, LM_SLASH);
+                n += 1;
+            }
+        }
+        if lm != LM_TURN {
+            let ta = self.base.legal_rot[pt as usize];
+            let tb = self.base.legal_rot[pb as usize];
+            let mut am = ta;
+            while am != 0 {
+                let a = am.trailing_zeros();
+                am &= am - 1;
+                let mut bm = tb;
+                while bm != 0 {
+                    let b = bm.trailing_zeros();
+                    bm &= bm - 1;
+                    if a == 0 && b == 0 {
+                        continue;
+                    }
+                    let c = s.turned(a, b);
+                    let cpt = Sq1State::layer_pattern(c.top);
+                    let cpb = Sq1State::layer_pattern(c.bottom);
+                    if let Some(h) = self.h_le_wca(&c, cpt, cpb, child_bound) {
+                        kids[n] = (h, Sq1Token::Turn(ser_amt(a), ser_amt(b)), c, LM_TURN);
+                        n += 1;
+                    }
+                }
+            }
+        }
+        debug_assert!(n <= 145);
+        kids[..n].sort_unstable_by_key(|k| k.0);
+
+        // 子树求解:成功则把"本节点→子"的 token 接到子返回路径前(各线程独立 path,不共享 &mut)。
+        let solve_child =
+            |&(_, tok, c, clm): &(u8, Sq1Token, Sq1State, u8)| -> Option<(u8, Vec<Sq1Token>)> {
+                self.dfs_par(c, g + 1, bound, clm, tt, cancel, split).map(|(cost, mut sub)| {
+                    let mut p = Vec::with_capacity(sub.len() + 1);
+                    p.push(tok);
+                    p.append(&mut sub);
+                    (cost, p)
+                })
+            };
+
+        let found = if g < split && n > 1 {
+            // 并行:任一子树 Some 即短路 + 置 cancel 让其余子树快速放弃;失败 bound 全跑完返 None。
+            kids[..n].par_iter().find_map_any(|kid| {
+                if cancel.load(Relaxed) {
+                    return None;
+                }
+                let r = solve_child(kid);
+                if r.is_some() {
+                    cancel.store(true, Relaxed);
+                }
+                r
+            })
+        } else {
+            let mut r = None;
+            for kid in &kids[..n] {
+                if let Some(x) = solve_child(kid) {
+                    r = Some(x);
+                    break;
+                }
+                if cancel.load(Relaxed) {
+                    break; // 别处已找到 ⇒ 放弃(本子树未穷举完,下面 !cancel 守不记 proven-fail)
+                }
+            }
+            r
+        };
+        if found.is_some() {
+            return found;
+        }
+        // 穷举完无解(且非因 cancel 半途放弃)⇒ 记 proven-fail(单调 max,全局预算守)。
+        if !cancel.load(Relaxed) {
+            tt.record(key, rem);
         }
         None
     }
@@ -2960,6 +3338,67 @@ mod tests {
                 r.apply(*t).unwrap();
             }
             assert_eq!((r.top, r.bottom, r.ml), (SOLVED_TOP, SOLVED_BOTTOM, 0));
+        }
+    }
+
+    /// EPIC ④:并行求解 `solve_with_solution_parallel` 必须与串行 `solve_with_solution` **同最优步数**,
+    /// 且并行解 replay 回精确 SOLVED + token 数 = cost。无 jsq_full 时 p2 走现搜 fallback,故取浅态
+    /// (5..=11 刀)保快;真实 jsq_full 配置见 #[ignore] 的 wca_parallel_matches_serial_jsqfull。
+    #[test]
+    fn wca_parallel_matches_serial() {
+        let w = Sq1WcaSolver::shared();
+        for seed in 0..16u64 {
+            let tw = 5 + (seed as usize) % 7; // 5..=11
+            let (st, _) = random_walk(40000 + seed, tw);
+            let (ser, _) = w.solve_with_solution(&st);
+            let (par, sol) = w.solve_with_solution_parallel(&st, 2);
+            assert_eq!(par, ser, "parallel cost != serial, seed={}", seed);
+            assert_eq!(sol.len() as u32, par, "token count = cost, seed={}", seed);
+            let mut r = st;
+            for t in &sol {
+                r.apply(*t).unwrap();
+            }
+            assert_eq!(
+                (r.top, r.bottom, r.ml),
+                (SOLVED_TOP, SOLVED_BOTTOM, 0),
+                "parallel solution must replay to exact SOLVED, seed={}",
+                seed
+            );
+        }
+    }
+
+    /// EPIC ④(真实配置,需 jsq_full + 大 PDB):并行 == 串行,中等深态(走 O(1) phase-2 查表)。
+    /// 跑:`CUBE_TABLE_DIR=...\tables cargo test --release --lib wca_parallel_matches_serial_jsqfull -- --ignored --nocapture`
+    #[test]
+    #[ignore]
+    fn wca_parallel_matches_serial_jsqfull() {
+        let w = Sq1WcaSolver::shared();
+        if w.jsq_full.is_empty() {
+            eprintln!("[par] jsq_full missing (set CUBE_TABLE_DIR), skip");
+            return;
+        }
+        for seed in 0..8u64 {
+            let tw = 12 + (seed as usize) % 4; // 12..=15
+            let (st, _) = random_walk(50000 + seed, tw);
+            let t0 = std::time::Instant::now();
+            let (ser, _) = w.solve_with_solution(&st);
+            let ts = t0.elapsed().as_secs_f64();
+            let t1 = std::time::Instant::now();
+            let (par, sol) = w.solve_with_solution_parallel(&st, 2);
+            let tp = t1.elapsed().as_secs_f64();
+            assert_eq!(par, ser, "parallel cost != serial, seed={}", seed);
+            assert_eq!(sol.len() as u32, par, "token count, seed={}", seed);
+            let mut r = st;
+            for t in &sol {
+                r.apply(*t).unwrap();
+            }
+            assert_eq!(
+                (r.top, r.bottom, r.ml),
+                (SOLVED_TOP, SOLVED_BOTTOM, 0),
+                "replay seed={}",
+                seed
+            );
+            eprintln!("  seed={} opt={} serial={:.3}s parallel={:.3}s", seed, par, ts, tp);
         }
     }
 
