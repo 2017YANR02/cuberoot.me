@@ -28,6 +28,7 @@ import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { useFrameBuffer, IS_MOBILE } from './useFrameBuffer';
 import { VideoInfoButton, DecodeErrorCard, LoadingProgressOverlay } from './VideoInfoPanels';
+import { FrameCountDiag } from './FrameCountDiag';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { consumePendingVideo } from '@/lib/pending-video';
 
@@ -310,6 +311,13 @@ export default function FrameCountPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 设备端诊断浮层开关 — URL 带 ?fcdiag=1 时显示 (真机 iOS 调试用,正常用户不可见)
+  const [fcDiag, setFcDiag] = useState(false);
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    setFcDiag(sp.get('fcdiag') === '1' || window.location.hash.includes('fcdiag'));
+  }, []);
 
   // 视频状态
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
@@ -2581,6 +2589,9 @@ export default function FrameCountPage() {
                 className="fc-solve-select"
                 value={activeSolveIdx}
                 onChange={(e) => { setActiveSolveIdx(parseInt(e.target.value)); setSelectedMarkIdx(null); }}
+                // 移动端 Chrome 的表单/自动填充解析器会在 hydration 前往表单控件注入 __gcruniqueid 属性,
+                // 造成 React 属性 hydration 不匹配 (iOS Safari 不注入故无此问题)。属性无害,抑制告警即可。
+                suppressHydrationWarning
               >
                 {solves.map((s, i) => <option key={i} value={i}>{s.name}</option>)}
               </select>
@@ -2589,6 +2600,7 @@ export default function FrameCountPage() {
                   className="fc-tab-input fc-toolbar-time"
                   type="number" step="0.01" min={0} placeholder={t('frameCount.solves.timePlaceholder')}
                   inputMode="decimal"
+                  suppressHydrationWarning /* 同上:移动端 Chrome 注入 __gcruniqueid 致 hydration 不匹配 */
                   style={{ width: `${solveTime.length > 0 ? solveTime.length + 1 : 9}ch` }}
                   value={solveTime}
                   onChange={(e) => {
@@ -2769,6 +2781,23 @@ export default function FrameCountPage() {
           </div>
         </div>
       )}
+
+      <FrameCountDiag
+        enabled={fcDiag}
+        state={{
+          videoFile,
+          loadProgress,
+          videoFirstFrameReady,
+          parseFailed,
+          frameBufferReady,
+          samplesCount: fbSamples.length,
+          decoderDead,
+          keyThumbCount: keyFrameThumbs.length,
+          videoFps,
+          totalFrames,
+          isMobile: IS_MOBILE,
+        }}
+      />
     </div>
   );
 }
