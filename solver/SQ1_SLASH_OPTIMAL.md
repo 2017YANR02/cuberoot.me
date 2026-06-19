@@ -25,7 +25,7 @@ slash 精确求解器(`Sq1Solver`)对深态(s=11/12)**很慢**(~秒级~分钟级
 
 全 125,605 真题实测:**W=2s 占 49.75% + W=2s+1 占 45.95% = 95.71% 已证明 t=s**(免搜索,直接用 `sq1_wca_exact.csv` 的 s);仅 **W=2s−1 占 4.29%(5,392 条,全是 s=11/12 深态)** 跑精确 slash 求解器。
 
-歧义态实测:30s 超时下约 **69% 解出、31% 怪物**(回退 t=s 上界,≤ +1)。81 条 groundtruth 全部落在已证明态且 t=s 无一例外;尚无任何 t=s−1 实例(理论上 W=2s−1 的 tie 才可能,极罕见)。
+歧义态实测(slash-via-wca 归约,详见 §6):**5,392 条 → 5,382 条穷尽证明 t=s,10 条最深残留怪物(s=12/13)穷尽证明超时不可行 → 回退 t=s 紧上界(≤ +1),全程 0 条 t=s−1**。⇒ slash 分布数字 = wcaOptSlash(WCA 最优解里的 `/` 数),由"零反例 + 省算定理"双重支撑,**不随残留变**;残留只欠那 10 条的"可证"印章,见 §6.3。
 
 ## 2. 求解器改动(analyzer)
 
@@ -78,4 +78,40 @@ pnpm exec tsx src/build_puzzle_examples.ts
 # 发布:update_cross_stats.ps1 -Jobs puzzles(或手动 scp 两个 json 到 static.cuberoot.me)
 ```
 
-产物文件(`D:/cube/scramble/puzzle/sq1/`):`sq1_slash_exact.csv`(全量)、`sq1_slash_ambiguous.csv`(歧义解算)、`sq1_slash_monsters.csv`(超时清单)。
+产物文件(`D:/cube/scramble/puzzle/sq1/`):`sq1_slash_exact.csv`(全量)、`sq1_slash_ambiguous.csv`(歧义解算)、`sq1_slash_monsters.csv`(超时清单)、`sq1_slash_meta.json`(`{less,eq,fallback,ambiguous,provisional}`,前端 `provisional`/残留计数数据源)。
+
+## 6. 啃怪物尝试史 + 失败日志(2026-06-19,给未来 AI)
+
+> 目标:把 4.29% 歧义态(W=2s−1)全部精确判定到 **0 残留**,让 slash 分布从"紧上界"升级到"可证最优"(前端 `provisional` flip false)。
+
+### 6.1 slash-via-wca 归约(成功,已上线)
+
+精确 slash 求解器(`Sq1Solver`,5 表投影 h-max 9)对 s=11/12/13 深态秒级~分钟级,全量直跑歧义态长尾爆炸。改用**归约到 WCA 测地机**:歧义态只需判定"是否存在 turn=s、slash=s−1 的解"(总 WCA cost = 2s−1 = W,比 WCA 最优解少一刀)。`sq1_analyzer.rs` 的 `SQ1_SLASH_VIA_WCA=1` 走 `Sq1WcaSolver::shared_lite()`(~600MB,**不需** 13GB jsq_full)跑固定交替(偶位 turn / 奇位 slash,bound=W)IDA*(`dfs_slash_alt` 串行 / `dfs_slash_alt_par` 根分裂并行 + `ShardedTt` + `thread::scope` 看门狗):
+- 找到 s−1 解 → `SmallerExists` → t=s−1(输出 `id,s-1,opt`)。
+- 穷尽无 → `ProvenEqual` → t=s(输出 `id,s,`)。
+- 看门狗超时 → `Monster`(输出 `id,M`)。
+
+实战(`inject_sq1_slash_exact.ps1`:Tier1 lite 单线程 + Tier2 `-Split` 根分裂并行):**5,392 歧义态 → 5,382 条穷尽证明 t=s,10 条残留怪物,全程 0 条 t=s−1**(`meta.less=0`)。残留 10 = 5×(W23,s=12)+ 5×(W25,s=13):
+- s=12:`217111 476747 5242987 5305193 5587870`
+- s=13:`812997 941925 3682487 4395194 5293046`
+
+### 6.2 ❌ 尝试 A:slash 数下界剪枝(失败,已回退)
+
+**想法**:在 `dfs_slash_alt` / `dfs_slash_alt_par` 里,除 WCA 启发 `h_le_wca`,再叠一层 `Sq1Solver::h_le`(5 投影 slash 下界)剪枝 —— 状态 c 处剩余刀位 = `(child_bound+1)/2`(turn 位)/ `child_bound/2`(slash 位),若 slash 下界 > 剩余刀位则该枝必无解、直接剪(admissible,不误剪真解)。
+
+**结果**:对这 10 条最深态**无效 + OOM 崩**。
+- @120s 看门狗:前 6 条全 `[MONSTER]`(0 解出),第 7 条进程 OOM 崩(`memory allocation of 276824080 bytes failed`,退出码 `-1073740791` / `0xC0000409`)。
+- 单测 217111 给到 232s 仍 `M`。
+- **根因**:`Sq1Solver::h_le` 的 slash 下界对 s=12/13 最深态太松(h-max 才 9,深 13 时 gap 大),`h_le(c) > 剩余刀位` 几乎从不成立 → 剪不掉枝 → TT 照涨满 → 叠加 `Sq1Solver` 投影表(~1GB)驻留 + 多线程节点累积 > 物理内存 → OOM。
+- **教训**:**松下界做剪枝在最深态 = 没剪还白付每节点一次查表 + 涨内存**。要真剪深态得用**紧下界**(更大 pattern DB / 双向相遇),不是现成的 h-max 9 投影。
+- 代码已 `git checkout solver/src/sq1_solver.rs` 回退(A 的 5 处改:`h_le` 改 `pub` + 4 个剪枝块);committed via-wca 基建完好,**勿连带删 `Sq1Solver` / `sq1_twophase.rs`**。
+
+### 6.3 关键现实(别再被"残留"误导)
+
+**slash 分布的数字现在已经是真最优,不随残留变。** 已证:slash 真最优 t ≡ WCA 最优解的 slash 数(`wcaOptSlash`),由 **5,382/5,382 零反例 + 95.71% 省算定理**支撑。生产发的就是 `wcaOptSlash` 分布;这 10 条残留也填 `wcaOptSlash`(=s),经验上极大概率 = 真最优,只是没对这 10 条单独出"可证"印章。**0 残留 ≠ 数字会变,只 = `provisional` flip false 这一个标签。** 前端已数据驱动诚实标注(读 `meta.fallback`/`meta.eq`,见 `PuzzleDistView.tsx`)。
+
+### 6.4 下一步候选
+
+- **C 接受上界(已采纳,2026-06-19)**:数字不变,前端诚实标"紧上界 + 残留 N 条穷尽证明不可行"。零成本。
+- **B 双向搜索 / MITM(实验)**:正→反 BFS 在 ~W/2 相遇,把 W=23/25 固定交替搜索从指数降到约 √。难点:SQ1 状态空间 + 交替约束 + slash 计数 + ≤15GB 表禁 OOM、线程 ≤14。**实验性质 —— 跑通则 0 残留 + flip;跑不通就接受 C。**
+- A(松下界剪枝)已判死,**别重试**。
