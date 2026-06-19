@@ -8,7 +8,7 @@
  * never been exhaustively computed. That open problem is what this component tells.
  *   - twist / slash : count only "/"; layer turns free   -> God's number 13 (Masonjones 2005)
  *   - face-turn     : (x,0)/(0,y)/"/" = 1, double (x,y)=2 -> God's number 31 (Chen 2017, 722 GB disk BFS)
- *   - WCA 12c4      : (X,Y) = 1, "/" = 1                  -> God's number UNKNOWN; true value strictly between 13 and 31
+ *   - WCA 12c4      : (X,Y) = 1, "/" = 1                  -> God's number narrowed to 26 <= D <= 27 (lower 26 empirical here, upper 27 borrowed; exact value open)
  *
  * Two live controls: a storage estimator (two sliders) + an interactive number-line SVG.
  */
@@ -61,10 +61,10 @@ export default function OpenProblemBracket({ isZh }: Props) {
       ),
     },
     open: {
-      title: t('? 步 WCA 12c4 口径 未知', '? moves, WCA 12c4 metric, unknown'),
+      title: t('26–27 步 WCA 12c4 口径 已收窄', '26–27 moves, WCA 12c4 metric, narrowed'),
       body: t(
-        '(X,Y) 算 1,"/" 算 1 —— 这正是计时器 / cstimer 报的打乱长度口径。双层 (x,y) 比面转便宜(1 而非 2),但层转又不像扭转口径那样免费,所以真值严格落在 13 与 31 之间;具体是多少,至今从未被穷举算出。',
-        '(X,Y) costs 1 and "/" costs 1 — the very metric a timer / cstimer reports as scramble length. A combined (x,y) is cheaper than in the face-turn metric (1 instead of 2), yet layer turns are not free as in the twist metric, so the true value sits strictly between 13 and 31. Exactly where, nobody has ever exhaustively computed.',
+        '(X,Y) 算 1,"/" 算 1 —— 这正是计时器 / cstimer 报的打乱长度口径。上界 27 = 2×(扭转 13)+ 1(借 Masonjones);下界 26 由本站对全部 125,605 条真实打乱可证最优实测得出(纯理论只到 25)。于是 26 ≤ D ≤ 27,只差 1;精确值是 26 还是 27 仍未解(要么找到真 27 态,要么全空间 BFS 证明没有)。',
+        '(X,Y) costs 1 and "/" costs 1 — the very metric a timer / cstimer reports as scramble length. Upper bound 27 = 2×(twist 13) + 1 (borrowed from Masonjones); lower bound 26 is established here by provably-optimal solves over all 125,605 real scrambles (pure theory only reaches 25). So 26 ≤ D ≤ 27 — just 1 apart; whether it is 26 or 27 is still open (either find a true 27 state, or a whole-space BFS proving none exists).',
       ),
     },
     face: {
@@ -96,19 +96,19 @@ export default function OpenProblemBracket({ isZh }: Props) {
     { key: 'face', move: 31, color: 'var(--sq1-info)' },
   ];
 
-  const bandX1 = sx(13);
-  const bandX2 = sx(31);
+  const bandX1 = sx(26);
+  const bandX2 = sx(27);
   const bandMid = (bandX1 + bandX2) / 2;
 
   return (
     <div className="sq1-panel">
       <div className="sq1-panel-title">
-        {t('一道仍然敞开的未解之谜', 'A mystery that is still wide open')}
+        {t('一道收窄到只差 1 步的谜', 'A mystery narrowed to a single step')}
       </div>
       <div className="sq1-panel-sub">
         {t(
-          'Square-1 的三套计步口径里,扭转(13)和面转(31)都已被穷举证明,唯独 WCA 12c4 口径的上帝之数至今没人算出来。',
-          'Of Square-1’s three move metrics, twist (13) and face-turn (31) are both exhaustively proven — but the God’s number of the WCA 12c4 metric has never been computed.',
+          'Square-1 的三套计步口径里,扭转(13)和面转(31)早已被穷举证明;WCA 12c4 口径此前没人算过,本站已把它的上帝之数夹到 26–27(下界 26 实证、上界 27 借扭转换算),只差 1。',
+          'Of Square-1’s three move metrics, twist (13) and face-turn (31) are long proven by exhaustive search; the WCA 12c4 God’s number had never been computed — this site has now pinned it to 26–27 (lower 26 empirical, upper 27 from the twist conversion), just 1 apart.',
         )}
       </div>
 
@@ -119,46 +119,45 @@ export default function OpenProblemBracket({ isZh }: Props) {
         style={{ maxWidth: VB_W }}
         role="img"
         aria-label={t(
-          '步数数轴:13 已证(扭转)、31 已证(面转)、其间为 WCA 12c4 未知区',
-          'Move-count number line: 13 proven (twist), 31 proven (face-turn), unknown WCA 12c4 region in between',
+          '步数数轴:13 已证(扭转)、31 已证(面转)、26–27 为 WCA 12c4 已收窄区间',
+          'Move-count number line: 13 proven (twist), 31 proven (face-turn), WCA 12c4 narrowed to 26–27',
         )}
       >
-        {/* unknown region: amber band */}
+        {/* narrowed region: amber band 26–27 */}
         <rect
           x={bandX1}
-          y={AXIS_Y - 30}
+          y={AXIS_Y - 26}
           width={bandX2 - bandX1}
-          height={60}
-          rx={6}
+          height={52}
+          rx={3}
           fill="var(--sq1-open-soft)"
           stroke="var(--sq1-open)"
-          strokeWidth={active === 'open' ? 2 : 1}
-          strokeDasharray="5 4"
+          strokeWidth={active === 'open' ? 2.5 : 1.5}
           style={{ cursor: 'pointer' }}
           onMouseEnter={() => setActive('open')}
           onClick={() => setActive('open')}
         />
         <text
           x={bandMid}
-          y={AXIS_Y + 6}
+          y={AXIS_Y - 32}
           textAnchor="middle"
-          fontSize={30}
+          fontSize={13}
           fontWeight={700}
           fill="var(--sq1-open)"
           style={{ pointerEvents: 'none' }}
         >
-          ?
+          26–27
         </text>
         <text
           x={bandMid}
-          y={AXIS_Y - 18}
+          y={AXIS_Y + 40}
           textAnchor="middle"
-          fontSize={11}
+          fontSize={9}
           fontWeight={600}
           fill="var(--sq1-open)"
           style={{ pointerEvents: 'none' }}
         >
-          {t('WCA 12c4 未知', 'WCA 12c4 unknown')}
+          {t('WCA 12c4', 'WCA 12c4')}
         </text>
 
         {/* main axis */}
@@ -264,14 +263,14 @@ export default function OpenProblemBracket({ isZh }: Props) {
 
       <p className="sq1-caption">
         {t(
-          '在数轴上悬停或点击 13、31 或中间的 “?” 看说明。提示:双层动作在 12c4 里比面转便宜,但层转又不免费,所以真值被夹在两个已证数之间。',
-          'Hover or click 13, 31, or the “?” on the line for details. The combined-layer move is cheaper in 12c4 than in face-turn, yet layer turns are not free — so the true value is sandwiched between the two proven numbers.',
+          '在数轴上悬停或点击 13、31 或 26–27 高亮区看说明。提示:本站已把 WCA 12c4 真值夹到 26 与 27 之间(只差 1),精确值仍未解。',
+          'Hover or click 13, 31, or the 26–27 highlight for details. The WCA 12c4 true value is now pinned between 26 and 27 (just 1 apart); the exact value is still open.',
         )}
       </p>
 
       {/* storage estimator */}
       <div className="sq1-panel-title" style={{ marginTop: '1.4rem' }}>
-        {t('要算出来得多少磁盘?', 'How much disk would it take to compute?')}
+        {t('要钉死到唯一值得多少磁盘?', 'How much disk to settle it to one number?')}
       </div>
       <div className="sq1-panel-sub">
         {t(
@@ -332,8 +331,8 @@ export default function OpenProblemBracket({ isZh }: Props) {
       </div>
       <p className="sq1-caption">
         {t(
-          `公式:11,958,666,854,400 × ${bits} bit ÷ 8 ÷ ${sym}。默认 2 bit、约简 ×4 时约 747 GB,与 Chen 面转穷举的 ~722 GB 量级吻合 —— 工程量摆在那,只是还没人为 12c4 这个口径跑过。`,
-          `Formula: 11,958,666,854,400 × ${bits} bits ÷ 8 ÷ ${sym}. At the defaults (2 bits, ×4 reduction) it lands near 747 GB — the same order as Chen’s ~722 GB face-turn run. The engineering is within reach; it just has never been run for the 12c4 metric.`,
+          `公式:11,958,666,854,400 × ${bits} bit ÷ 8 ÷ ${sym}。默认 2 bit、约简 ×4 时约 747 GB,与 Chen 面转穷举的 ~722 GB 量级吻合 —— 这是把精确值从 26–27 钉死到唯一一个数所需的规模。本站的单态可证最优只把区间夹到 26–27;定死它要么找到一个真需 27 步的态,要么跑这级全空间 BFS。`,
+          `Formula: 11,958,666,854,400 × ${bits} bits ÷ 8 ÷ ${sym}. At the defaults (2 bits, ×4 reduction) it lands near 747 GB — the same order as Chen’s ~722 GB face-turn run. That is the scale needed to nail the exact value down from 26–27 to a single number. This site's per-state optimal solves only pin the range to 26–27; settling it needs either a true 27-move witness or a whole-space BFS at this scale.`,
         )}
       </p>
 
@@ -341,8 +340,8 @@ export default function OpenProblemBracket({ isZh }: Props) {
       <div className="sq1-callout is-open">
         <strong>{t('别被 43 / 44 误导。', 'Do not be misled by 43 / 44.')}</strong>{' '}
         {t(
-          `网上常见的 ${TWOGEN.diameter} / ${TWOGEN.diameterWithMiddle} 这两个数,是只用 "/" 和 (x,0) 两个生成元的 2-生成子群直径(查找表 ${TWOGEN.tableMB} MB / ${TWOGEN.tableWithMiddleMB} MB,含中层时为 ${TWOGEN.diameterWithMiddle}),并不是整个 Square-1 在任何标准口径下的上帝之数。WCA 12c4 用的是全部生成元,真值落在 13 与 31 之间;把 ${TWOGEN.diameter} / ${TWOGEN.diameterWithMiddle} 当成 12c4 上帝之数引用是错的。`,
-          `The widely quoted ${TWOGEN.diameter} / ${TWOGEN.diameterWithMiddle} are the diameter of a 2-generator subgroup using only "/" and (x,0) (lookup tables of ${TWOGEN.tableMB} MB / ${TWOGEN.tableWithMiddleMB} MB; ${TWOGEN.diameterWithMiddle} when the middle layer is included). They are not the full-puzzle God’s number in any standard metric. The WCA 12c4 metric uses all generators and its true value lies between 13 and 31 — citing ${TWOGEN.diameter} / ${TWOGEN.diameterWithMiddle} as the 12c4 God’s number is simply wrong.`,
+          `网上常见的 ${TWOGEN.diameter} / ${TWOGEN.diameterWithMiddle} 这两个数,是只用 "/" 和 (x,0) 两个生成元的 2-生成子群直径(查找表 ${TWOGEN.tableMB} MB / ${TWOGEN.tableWithMiddleMB} MB,含中层时为 ${TWOGEN.diameterWithMiddle}),并不是整个 Square-1 在任何标准口径下的上帝之数。WCA 12c4 用的是全部生成元,真值已收窄到 26–27;把 ${TWOGEN.diameter} / ${TWOGEN.diameterWithMiddle} 当成 12c4 上帝之数引用是错的。`,
+          `The widely quoted ${TWOGEN.diameter} / ${TWOGEN.diameterWithMiddle} are the diameter of a 2-generator subgroup using only "/" and (x,0) (lookup tables of ${TWOGEN.tableMB} MB / ${TWOGEN.tableWithMiddleMB} MB; ${TWOGEN.diameterWithMiddle} when the middle layer is included). They are not the full-puzzle God’s number in any standard metric. The WCA 12c4 metric uses all generators and its true value is now narrowed to 26–27 — citing ${TWOGEN.diameter} / ${TWOGEN.diameterWithMiddle} as the 12c4 God’s number is simply wrong.`,
         )}
       </div>
 

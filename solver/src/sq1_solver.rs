@@ -273,6 +273,50 @@ pub fn scramble_to_compact(ts: &[Sq1Token]) -> String {
     out
 }
 
+/// 解析 SQ1 **简写记号**(`scramble_to_compact` 的逆):无逗号/括号/空格,turn `xy` 黏写
+/// (转量恒单位数 ∈ -5..=6 ⇒ `-?d` 一位,无歧义)、单 `t` = `(t,0)`、`/` = slash。
+/// 与前端 parseSq1Tokens 同约定。round-trip:`parse_compact(scramble_to_compact(ts))` 态等价于 ts。
+pub fn parse_compact(s: &str) -> Result<Vec<Sq1Token>, String> {
+    let b = s.as_bytes();
+    let mut i = 0;
+    let mut out = Vec::new();
+    // 读一个带符号单位数(转量 |v| ≤ 6 ⇒ 恒一位)。
+    fn rd(b: &[u8], i: &mut usize) -> Result<i8, String> {
+        let neg = *i < b.len() && b[*i] == b'-';
+        if neg {
+            *i += 1;
+        }
+        if *i < b.len() && b[*i].is_ascii_digit() {
+            let v = (b[*i] - b'0') as i8;
+            *i += 1;
+            Ok(if neg { -v } else { v })
+        } else {
+            Err(format!("expected digit at byte {}", *i))
+        }
+    }
+    while i < b.len() {
+        match b[i] {
+            c if c.is_ascii_whitespace() => i += 1,
+            b'/' => {
+                out.push(Sq1Token::Slash);
+                i += 1;
+            }
+            b'-' | b'0'..=b'9' => {
+                let x = rd(b, &mut i)?;
+                // y 存在 ⇔ 紧跟数字/负号(否则 = (x,0) 简写)。
+                let y = if i < b.len() && (b[i] == b'-' || b[i].is_ascii_digit()) {
+                    rd(b, &mut i)?
+                } else {
+                    0
+                };
+                out.push(Sq1Token::Turn(x, y));
+            }
+            c => return Err(format!("unexpected '{}' at byte {}", c as char, i)),
+        }
+    }
+    Ok(out)
+}
+
 /// 反转一条 SQ1 token 序列(逆序 + 每层转量取逆 mod 12,slash 自逆)。
 /// 一条解的逆 = 最优等价打乱:从 SOLVED 出发到达同一状态,步数与解相同。
 pub fn invert_scramble(ts: &[Sq1Token]) -> Vec<Sq1Token> {
@@ -287,9 +331,19 @@ pub fn invert_scramble(ts: &[Sq1Token]) -> Vec<Sq1Token> {
     }).collect()
 }
 
-/// 打乱串 → 末态(从 SOLVED 起应用)。
+/// 打乱串 → token 序列,**自动识别记号**:含 `(` ⇒ WCA 记号(`parse_scramble`),否则 ⇒ 简写记号
+/// (`parse_compact`)。全管道统一存 compact 后,所有 sq1 入口透明吃 compact(WCA 仍兼容)。
+pub fn tokens_from_scramble(s: &str) -> Result<Vec<Sq1Token>, String> {
+    if s.contains('(') {
+        parse_scramble(s)
+    } else {
+        parse_compact(s)
+    }
+}
+
+/// 打乱串 → 末态(从 SOLVED 起应用,记号自动识别)。
 pub fn state_from_scramble(s: &str) -> Result<Sq1State, String> {
-    let ts = parse_scramble(s)?;
+    let ts = tokens_from_scramble(s)?;
     let mut st = Sq1State::SOLVED;
     for t in ts {
         st.apply(t)?;
@@ -1127,6 +1181,12 @@ impl Sq1Solver {
         memo: &mut P2Memo,
         path: &mut Vec<(u8, u8)>,
     ) -> bool {
+        // 墙钟超时(怪物):命中即从所有 phase-1 帧快速 unwind(返 false,外层 solve_*_deadline
+        // 用 deadline_aborted() 区分"超时"与"真穷举无解")。p2_dist_le 在递归前已完整跑完单个
+        // 方形态(自身有界),不会半写 memo ⇒ 无中毒。无 deadline 时 deadline_check 只付一条 relaxed load。
+        if deadline_check() {
+            return false;
+        }
         let square = (pt == SQ_PAT_A || pt == SQ_PAT_B) && (pb == SQ_PAT_A || pb == SQ_PAT_B);
         if square && self.p2_dist_le(s, rem, memo, path).is_some() {
             return true;
@@ -1237,6 +1297,84 @@ impl Sq1Solver {
     /// 任意态的最优 twist 数。
     pub fn solve_one(&self, st: &Sq1State) -> u32 {
         self.solve_with_solution(st).0
+    }
+
+    /// 带墙钟超时的 slash 最优求解:正常返 `Some((twist, 解))`;**超时(怪物)返 `None`**。
+    /// 超时经 `deadline_check` 在 `dfs1` 内 unwind ⇒ p2 memo 完整不毒化。每条独立 arm 本线程
+    /// deadline,结束清掉。slash God's number 13 ⇒ bound 上限 15(留奇偶余量)。
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn solve_with_solution_deadline(
+        &self,
+        st: &Sq1State,
+        deadline: std::time::Instant,
+    ) -> Option<(u32, Vec<Sq1Token>)> {
+        use std::sync::atomic::Ordering;
+        if self.is_goal(st) {
+            let align = self.exact_align(st);
+            let mut sol = Vec::new();
+            if align != (0, 0) {
+                sol.push(Sq1Token::Turn(ser_amt(align.0), ser_amt(align.1)));
+            }
+            return Some((0, sol));
+        }
+        DEADLINE_HIT.with(|h| h.set(false));
+        DEADLINE_TICK.with(|t| t.set(0));
+        DEADLINE_AT.with(|a| a.set(Some(deadline)));
+        DEADLINE_ON.store(true, Ordering::Relaxed);
+
+        let (ra, rb, root) = 'norm: {
+            for a in 0..12u32 {
+                for b in 0..12u32 {
+                    let r = st.turned(a, b);
+                    if r.slash_legal() {
+                        break 'norm (a, b, r);
+                    }
+                }
+            }
+            unreachable!("every layer has a slash-ready alignment");
+        };
+        let rpt = Sq1State::layer_pattern(root.top);
+        let rpb = Sq1State::layer_pattern(root.bottom);
+        let mut t = self.h_le(&root, rpt, rpb, 255).unwrap().max(1);
+        if (t ^ root.ml) & 1 == 1 {
+            t += 1;
+        }
+        let mut memo = P2Memo { exact: HashMap::new(), fail_below: HashMap::new() };
+        let result = loop {
+            let mut path: Vec<(u8, u8)> = Vec::new();
+            if self.dfs1(&root, rpt, rpb, t, true, &mut memo, &mut path) {
+                let found = path.len() as u32;
+                let mut cur = *st;
+                let mut sol = Vec::new();
+                for (k, &(a, b)) in path.iter().enumerate() {
+                    let (mut aa, mut bb) = (a as u32, b as u32);
+                    if k == 0 {
+                        aa = (aa + ra) % 12;
+                        bb = (bb + rb) % 12;
+                    }
+                    if (aa, bb) != (0, 0) {
+                        sol.push(Sq1Token::Turn(ser_amt(aa), ser_amt(bb)));
+                    }
+                    sol.push(Sq1Token::Slash);
+                    cur = cur.turned(aa, bb).slashed();
+                }
+                let align = self.exact_align(&cur);
+                if align != (0, 0) {
+                    sol.push(Sq1Token::Turn(ser_amt(align.0), ser_amt(align.1)));
+                }
+                break Some((found, sol));
+            }
+            if deadline_aborted() {
+                break None; // 超时 ⇒ 怪物(dfs1 因 deadline 提前 unwind)
+            }
+            t += 2;
+            if t > 15 {
+                break None; // slash God 13;到此必异常,按怪物处理而非 panic
+            }
+        };
+        DEADLINE_AT.with(|a| a.set(None));
+        DEADLINE_HIT.with(|h| h.set(false));
+        result
     }
 
     /// 打乱串 → 最优 twist 数(P5b analyzer 入口)。
@@ -1496,6 +1634,17 @@ const LM_NONE: u8 = 0;
 const LM_TURN: u8 = 1;
 const LM_SLASH: u8 = 2;
 
+/// `slash_minus_one_via_wca` 结果:歧义态(W=2s-1)slash 最优 t∈{s-1,s} 的判定。
+#[derive(Debug, Clone)]
+pub enum SlashViaWca {
+    /// 存在 (s-1)-slash 的 WCA 最优解 ⇒ slash 最优 t = s-1(附该解 token 序列)。
+    SmallerExists(Vec<Sq1Token>),
+    /// 穷举证明无 (s-1)-slash 解 ⇒ slash 最优 t = s(可证)。
+    ProvenEqual,
+    /// 看门狗超时 ⇒ 未决(调用方记怪物,加大超时/资源重跑)。
+    Timeout,
+}
+
 #[inline]
 fn is_exact_solved(s: &Sq1State) -> bool {
     s.ml == 0 && s.top == SOLVED_TOP && s.bottom == SOLVED_BOTTOM
@@ -1705,7 +1854,26 @@ impl Sq1WcaSolver {
         S.get_or_init(Sq1WcaSolver::new)
     }
 
+    /// 轻量共享实例:**只为 `h_le_wca` / `slash_minus_one_via_wca`**(slash 最优 via WCA)。
+    /// 跳过 13GB jsq_full + 3.25GB jsq + csq/esq(均 phase-2 用,slash 约束搜索不需要)⇒ 仅载
+    /// cornp/edgep(~600MB)+ 建小投影表。禁用它做 `solve_wca`(phase-2 表空会错)。
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn shared_lite() -> &'static Sq1WcaSolver {
+        static S: OnceLock<Sq1WcaSolver> = OnceLock::new();
+        S.get_or_init(Sq1WcaSolver::new_lite)
+    }
+
     pub fn new() -> Sq1WcaSolver {
+        Self::build(false)
+    }
+
+    /// 轻量构造(见 `shared_lite`):lite=true 跳过 phase-2 大表。
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn new_lite() -> Sq1WcaSolver {
+        Self::build(true)
+    }
+
+    fn build(lite: bool) -> Sq1WcaSolver {
         let base = Sq1Solver::shared();
         // 投影 seed = solved 的对应投影(与 Sq1Solver::new 同款 map,值映射逐 nibble)。
         let pj = |v: u64, f: &dyn Fn(u64) -> u64| -> u64 {
@@ -1741,13 +1909,17 @@ impl Sq1WcaSolver {
             b.e4b_idx(s)
         });
         // phase-2 方形子群表(复用 twist 求解器的 action 推导,但 WCA 加权:旋转 cost 1)。
-        let (sig, tau, rhoc, rhoe) = derive_sq_actions();
-        let csq = build_sq_wca(&sig, &rhoc);
-        let esq = build_sq_wca(&tau, &rhoe);
+        // lite(slash via WCA)只需 h_le_wca 的 cornp/edgep/小投影表 ⇒ 跳过 csq/esq/jsq/jsq_full。
+        let (csq, esq) = if lite {
+            (Vec::new(), Vec::new())
+        } else {
+            let (sig, tau, rhoc, rhoe) = derive_sq_actions();
+            (build_sq_wca(&sig, &rhoc), build_sq_wca(&tau, &rhoe))
+        };
         let (cornp, edgep) = Self::load_or_build_pdbs(base);
-        let jsq_full = Self::load_or_build_jsq_full();
+        let jsq_full = if lite { Vec::new() } else { Self::load_or_build_jsq_full() };
         // jsq_full 精确(覆盖 jsq 的陪集启发)⇒ 在位则免载 3.25GB jsq。
-        let jsq = if jsq_full.is_empty() { Self::load_or_build_jsq() } else { Vec::new() };
+        let jsq = if lite || !jsq_full.is_empty() { Vec::new() } else { Self::load_or_build_jsq() };
         Sq1WcaSolver { base, comb, c4, e4, c4b, e4b, csq, esq, cornp, edgep, jsq, jsq_full }
     }
 
@@ -2460,6 +2632,287 @@ impl Sq1WcaSolver {
         result
     }
 
+    /// slash 最优(twist)经 WCA 机器判定 —— 不需 13GB jsq_full(h_le_wca 只用 cornp/edgep/c4/comb)。
+    /// 歧义态(W=2s-1)的 slash 最优 t∈{s-1,s}(因 t≥(W-1)/2=s-1 且 t≤s)。任何 (s-1)-slash 解,由
+    /// turn/slash 严格交替 ⇒ turns=s、slashes=s-1 ⇒ WCA 代价 = 2s-1 = W ⇒ **必是长 W 的 WCA 最优解**,
+    /// 且结构唯一: `T S T … T`(s 个 turn + s-1 个 slash,首尾 turn)。故在已知最优 bound=W 上跑
+    /// **位置定型严格交替** IDA*(g 偶位=turn、g 奇位=slash)找该解:找到 ⇒ t=s-1;穷举无 ⇒ t=s(可证)。
+    /// `w` = 已知 WCA 12c4 最优步数(从 sq1_wca_exact.csv 传入,免重算深态)。`deadline` = 看门狗(可选)。
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn slash_minus_one_via_wca(
+        &self,
+        st: &Sq1State,
+        w: u8,
+        deadline: Option<std::time::Instant>,
+        split: u8,
+    ) -> SlashViaWca {
+        // split>0 ⇒ root-split 并行(吃满全核啃最硬的 W=23 穷尽);split=0 ⇒ 串行(绝大多数态秒级)。
+        if split > 0 {
+            return self.slash_via_wca_par(st, w, deadline, split);
+        }
+        use std::sync::atomic::Ordering;
+        if let Some(d) = deadline {
+            DEADLINE_HIT.with(|h| h.set(false));
+            DEADLINE_TICK.with(|t| t.set(0));
+            DEADLINE_AT.with(|a| a.set(Some(d)));
+            DEADLINE_ON.store(true, Ordering::Relaxed);
+        }
+        let mut path: Vec<Sq1Token> = Vec::new();
+        // proven-fail TT:key=(态,g)。同态在同深度 g 下"能否按位置模式在剩余 w-g 步内到 solved"唯一
+        // (g 定下一步类型 + 剩余预算)⇒ 一处证无解,他路重达即剪。超时中止**不写**(同 dfs 的 deadline 守)。
+        let mut tt: std::collections::HashSet<u128> = std::collections::HashSet::new();
+        let found = self.dfs_slash_alt(*st, 0, w, &mut path, &mut tt);
+        let aborted = deadline_aborted();
+        if deadline.is_some() {
+            DEADLINE_AT.with(|a| a.set(None));
+            DEADLINE_HIT.with(|h| h.set(false));
+        }
+        if aborted {
+            SlashViaWca::Timeout
+        } else if found {
+            SlashViaWca::SmallerExists(path)
+        } else {
+            SlashViaWca::ProvenEqual
+        }
+    }
+
+    /// 位置定型严格交替 DFS(g 偶=turn、g 奇=slash),定深 `bound`=W。到 g==bound 且精确 solved ⇒ 真。
+    /// 复用 admissible `h_le_wca` 可达剪枝 + proven-fail TT。仅供 `slash_minus_one_via_wca`。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn dfs_slash_alt(
+        &self,
+        s: Sq1State,
+        g: u8,
+        bound: u8,
+        path: &mut Vec<Sq1Token>,
+        tt: &mut std::collections::HashSet<u128>,
+    ) -> bool {
+        if deadline_check() {
+            return false;
+        }
+        if g == bound {
+            return is_exact_solved(&s);
+        }
+        let key = (s.top as u128) | ((s.bottom as u128) << 48) | ((s.ml as u128) << 96) | ((g as u128) << 97);
+        if tt.contains(&key) {
+            return false;
+        }
+        let child_bound = bound - g - 1;
+        let mut found = false;
+        if g & 1 == 0 {
+            // turn 位:存活 turn 子按 h 升序(先探更可能成功的)
+            let pt = Sq1State::layer_pattern(s.top);
+            let pb = Sq1State::layer_pattern(s.bottom);
+            let ta = self.base.legal_rot[pt as usize];
+            let tb = self.base.legal_rot[pb as usize];
+            let mut kids = [(0u8, 0u32, 0u32, Sq1State::SOLVED); 144];
+            let mut n = 0usize;
+            let mut am = ta;
+            while am != 0 {
+                let a = am.trailing_zeros();
+                am &= am - 1;
+                let mut bm = tb;
+                while bm != 0 {
+                    let b = bm.trailing_zeros();
+                    bm &= bm - 1;
+                    if a == 0 && b == 0 {
+                        continue;
+                    }
+                    let c = s.turned(a, b);
+                    let cpt = Sq1State::layer_pattern(c.top);
+                    let cpb = Sq1State::layer_pattern(c.bottom);
+                    if let Some(h) = self.h_le_wca(&c, cpt, cpb, child_bound) {
+                        kids[n] = (h, a, b, c);
+                        n += 1;
+                    }
+                }
+            }
+            kids[..n].sort_unstable_by_key(|k| k.0);
+            for &(_, a, b, c) in &kids[..n] {
+                path.push(Sq1Token::Turn(ser_amt(a), ser_amt(b)));
+                if self.dfs_slash_alt(c, g + 1, bound, path, tt) {
+                    found = true;
+                }
+                path.pop();
+                if found {
+                    break;
+                }
+            }
+        } else {
+            // slash 位
+            if s.slash_legal() {
+                let c = s.slashed();
+                let cpt = Sq1State::layer_pattern(c.top);
+                let cpb = Sq1State::layer_pattern(c.bottom);
+                if self.h_le_wca(&c, cpt, cpb, child_bound).is_some() {
+                    path.push(Sq1Token::Slash);
+                    if self.dfs_slash_alt(c, g + 1, bound, path, tt) {
+                        found = true;
+                    }
+                    path.pop();
+                }
+            }
+        }
+        if !found && !deadline_aborted() {
+            tt.insert(key);
+        }
+        found
+    }
+
+    /// `slash_minus_one_via_wca` 的 **root-split 并行**版(split>0):用全核啃最硬的 W=23 穷尽。
+    /// 模型同 `solve_par_core`:scope 内起看门狗(deadline→置 `timed_out`+`cancel`),`dfs_slash_alt_par`
+    /// 前 `split` 层并行各子树,任一找到 (s-1)-slash 解即 `cancel` 其余;全穷举无 ⇒ ProvenEqual。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn slash_via_wca_par(
+        &self,
+        st: &Sq1State,
+        w: u8,
+        deadline: Option<std::time::Instant>,
+        split: u8,
+    ) -> SlashViaWca {
+        use std::sync::atomic::{AtomicBool, Ordering::Relaxed};
+        let tt = ShardedTt::new();
+        let cancel = AtomicBool::new(false);
+        let timed_out = AtomicBool::new(false);
+        let done = AtomicBool::new(false);
+        let result = std::thread::scope(|scope| {
+            if let Some(dl) = deadline {
+                let (c_r, to_r, d_r) = (&cancel, &timed_out, &done);
+                scope.spawn(move || {
+                    while !d_r.load(Relaxed) {
+                        if std::time::Instant::now() >= dl {
+                            to_r.store(true, Relaxed);
+                            c_r.store(true, Relaxed);
+                            return;
+                        }
+                        std::thread::sleep(std::time::Duration::from_millis(200));
+                    }
+                });
+            }
+            let r = self.dfs_slash_alt_par(*st, 0, w, &tt, &cancel, split);
+            done.store(true, Relaxed);
+            r
+        });
+        TT_GLOBAL_ENTRIES.fetch_sub(tt.total_len(), Relaxed);
+        match result {
+            Some(path) => SlashViaWca::SmallerExists(path),
+            None => {
+                if timed_out.load(Relaxed) {
+                    SlashViaWca::Timeout
+                } else {
+                    SlashViaWca::ProvenEqual
+                }
+            }
+        }
+    }
+
+    /// 位置定型严格交替 DFS 的**并行版**(g<split 且子>1 ⇒ 并行各子树)。返回 Some(path)=找到 (s-1)-slash
+    /// 解;None=该子树无(穷举完且非 cancel 半途 ⇒ 共享 TT 记 proven-fail)。proven-fail 写 `!cancel` 守
+    /// (cancel 由 found 短路或看门狗超时置 ⇒ 半途态绝不记假 proven-fail,保正确)。
+    #[cfg(not(target_arch = "wasm32"))]
+    fn dfs_slash_alt_par(
+        &self,
+        s: Sq1State,
+        g: u8,
+        bound: u8,
+        tt: &ShardedTt,
+        cancel: &std::sync::atomic::AtomicBool,
+        split: u8,
+    ) -> Option<Vec<Sq1Token>> {
+        use rayon::prelude::*;
+        use std::sync::atomic::Ordering::Relaxed;
+        if cancel.load(Relaxed) {
+            return None;
+        }
+        if g == bound {
+            return if is_exact_solved(&s) { Some(Vec::new()) } else { None };
+        }
+        let rem = bound - g;
+        let key = (s.top as u128) | ((s.bottom as u128) << 48) | ((s.ml as u128) << 96) | ((g as u128) << 97);
+        if let Some(fail) = tt.get(key) {
+            if fail >= rem {
+                return None;
+            }
+        }
+        let child_bound = bound - g - 1;
+        // 存活子(位置定型:g 偶=turn、g 奇=slash),按 h 升序。
+        let mut kids: Vec<(u8, Sq1Token, Sq1State)> = Vec::new();
+        if g & 1 == 0 {
+            let pt = Sq1State::layer_pattern(s.top);
+            let pb = Sq1State::layer_pattern(s.bottom);
+            let ta = self.base.legal_rot[pt as usize];
+            let tb = self.base.legal_rot[pb as usize];
+            let mut am = ta;
+            while am != 0 {
+                let a = am.trailing_zeros();
+                am &= am - 1;
+                let mut bm = tb;
+                while bm != 0 {
+                    let b = bm.trailing_zeros();
+                    bm &= bm - 1;
+                    if a == 0 && b == 0 {
+                        continue;
+                    }
+                    let c = s.turned(a, b);
+                    let cpt = Sq1State::layer_pattern(c.top);
+                    let cpb = Sq1State::layer_pattern(c.bottom);
+                    if let Some(h) = self.h_le_wca(&c, cpt, cpb, child_bound) {
+                        kids.push((h, Sq1Token::Turn(ser_amt(a), ser_amt(b)), c));
+                    }
+                }
+            }
+        } else if s.slash_legal() {
+            let c = s.slashed();
+            let cpt = Sq1State::layer_pattern(c.top);
+            let cpb = Sq1State::layer_pattern(c.bottom);
+            if let Some(h) = self.h_le_wca(&c, cpt, cpb, child_bound) {
+                kids.push((h, Sq1Token::Slash, c));
+            }
+        }
+        kids.sort_unstable_by_key(|k| k.0);
+
+        let solve_child = |&(_, tok, c): &(u8, Sq1Token, Sq1State)| -> Option<Vec<Sq1Token>> {
+            self.dfs_slash_alt_par(c, g + 1, bound, tt, cancel, split).map(|mut sub| {
+                let mut p = Vec::with_capacity(sub.len() + 1);
+                p.push(tok);
+                p.append(&mut sub);
+                p
+            })
+        };
+
+        let found = if g < split && kids.len() > 1 {
+            kids.par_iter().find_map_any(|kid| {
+                if cancel.load(Relaxed) {
+                    return None;
+                }
+                let r = solve_child(kid);
+                if r.is_some() {
+                    cancel.store(true, Relaxed);
+                }
+                r
+            })
+        } else {
+            let mut r = None;
+            for kid in &kids {
+                if let Some(x) = solve_child(kid) {
+                    r = Some(x);
+                    break;
+                }
+                if cancel.load(Relaxed) {
+                    break;
+                }
+            }
+            r
+        };
+        if found.is_some() {
+            return found;
+        }
+        if !cancel.load(Relaxed) {
+            tt.record(key, rem);
+        }
+        None
+    }
+
     /// A2 诊断:capped phase-1 IDA* profiler(**不改最优性 / 不改解**,默认关)。逐 bound 跑同一
     /// `dfs`,记每 bound phase-1 节点数 + 首个方形态深度;node_cap / time_cap 任一到即截断(深态
     /// 本就 >5min,截断保证不挂)。返回多行报告串。用于定位深态瓶颈(phase-1 太深 vs h 太弱)。
@@ -2910,6 +3363,51 @@ mod tests {
             mv.push((a, b));
         }
         (st, mv)
+    }
+
+    /// compact 记号 round-trip:随机游走 → WCA tokens → `scramble_to_compact` → `parse_compact`
+    /// 态等价于游走末态;且 compact 串 CSV 安全(无括号/逗号/空格);`state_from_scramble` 自动
+    /// 识别 compact 与 WCA 两种记号给同一态。锁死全管道统一 compact 后求解入口的正确性。
+    #[test]
+    fn compact_round_trip() {
+        for seed in 0..40u64 {
+            let tw = 1 + (seed as usize) % 10;
+            let (st, mv) = random_walk(700 + seed, tw);
+            let mut toks = Vec::new();
+            for &(a, b) in &mv {
+                if (a, b) != (0, 0) {
+                    toks.push(Sq1Token::Turn(ser_amt(a), ser_amt(b)));
+                }
+                toks.push(Sq1Token::Slash);
+            }
+            let compact = scramble_to_compact(&toks);
+            assert!(
+                !compact.contains('(') && !compact.contains(',') && !compact.contains(' '),
+                "compact must be CSV-safe: {}",
+                compact
+            );
+            assert_eq!(
+                state_from_scramble(&compact).unwrap(),
+                st,
+                "compact round-trip state mismatch seed={} compact={}",
+                seed,
+                compact
+            );
+            // 同打乱的 WCA 记号必给同一态(自动识别两路一致)。
+            assert_eq!(
+                state_from_scramble(&scramble_to_string(&toks)).unwrap(),
+                st,
+                "wca-vs-compact state mismatch seed={}",
+                seed
+            );
+            // token 级 round-trip(compact 解析回的 token apply 后也必同态)。
+            let reparsed = parse_compact(&compact).unwrap();
+            let mut rs = Sq1State::SOLVED;
+            for t in &reparsed {
+                rs.apply(*t).unwrap();
+            }
+            assert_eq!(rs, st, "parse_compact token replay mismatch seed={}", seed);
+        }
     }
 
     /// 并行 BFS builder 必须与单线程逐字节相等(用 c4 投影,12M,~快)。

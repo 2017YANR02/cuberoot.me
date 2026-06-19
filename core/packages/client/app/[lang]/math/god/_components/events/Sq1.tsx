@@ -70,14 +70,14 @@ export default function Sq1({ isZh }: { isZh: boolean; eventId?: string }) {
       {/* ── intro ──────────────────────────────────────────────── */}
       <p className="sq1-lead">
         {t(
-          'Square-1 是 WCA 里唯一会变形的魔方。问「任意打乱最少几步能解」时,答案完全取决于你怎么数步——而它有三套计步口径。其中两套的上帝之数早已被穷举证明,第三套——偏偏是计时器和打乱程序实际用的那套——至今没人算出来。',
-          'Square-1 is the only shape-shifting puzzle in the WCA. Asking "how few moves solves any scramble" depends entirely on how you count moves — and it has three metrics. Two have God\'s numbers proven by exhaustive search; the third — the very one timers and scramblers actually use — has never been computed.',
+          'Square-1 是 WCA 里唯一会变形的魔方。问「任意打乱最少几步能解」时,答案完全取决于你怎么数步——而它有三套计步口径。其中两套的上帝之数早已被穷举证明;第三套——偏偏是计时器和打乱程序实际用的那套——至今没被精确算出,但本站已把它从「夹在 13 与 31 之间」收窄到 26–27(只差 1)。',
+          'Square-1 is the only shape-shifting puzzle in the WCA. Asking "how few moves solves any scramble" depends entirely on how you count moves — and it has three metrics. Two have God\'s numbers proven by exhaustive search; the third — the very one timers and scramblers actually use — has never been computed exactly, but this site has narrowed it from "somewhere between 13 and 31" down to 26–27 (just 1 apart).',
         )}
       </p>
       <div className="sq1-formula-block">
-        <TeXBlock src={String.raw`D_{\text{twist}} = 13, \quad D_{\text{face}} = 31, \quad D_{\text{WCA\,12c4}} = \;?`} />
+        <TeXBlock src={String.raw`D_{\text{twist}} = 13, \quad D_{\text{face}} = 31, \quad 26 \le D_{\text{WCA\,12c4}} \le 27`} />
         <div className="sq1-formula-cap">
-          {t('三套度量下的直径:两套已证,一套未解。', 'Diameter under three metrics: two proven, one open.')}
+          {t('三套度量下的直径:两套已证,第三套已收窄到 26–27。', 'Diameter under three metrics: two proven, the third narrowed to 26–27.')}
         </div>
       </div>
 
@@ -93,9 +93,9 @@ export default function Sq1({ isZh }: { isZh: boolean; eventId?: string }) {
           <div className="sq1-hl-sub">{t('已证 Chen 2017', 'Proven, Chen 2017')}</div>
         </div>
         <div className="sq1-hl-card is-open">
-          <div className="sq1-hl-num">?</div>
+          <div className="sq1-hl-num" style={{ fontSize: '2.2rem' }}>26–27</div>
           <div className="sq1-hl-cap">{t('WCA 12c4 上帝之数', "WCA 12c4 God's number")}</div>
-          <div className="sq1-hl-sub">{t('未解 从未被计算', 'Open, never computed')}</div>
+          <div className="sq1-hl-sub">{t('已收窄,精确值未解', 'Narrowed, exact value open')}</div>
         </div>
         <div className="sq1-hl-card is-neutral">
           <div className="sq1-hl-num" style={{ fontSize: '1.25rem' }}>15!/3</div>
@@ -158,7 +158,7 @@ export default function Sq1({ isZh }: { isZh: boolean; eventId?: string }) {
                   <td>{single}</td>
                   <td>{dbl}</td>
                   <td>{slice}</td>
-                  <td className="sq1-td-strong">{m.god ?? '?'}</td>
+                  <td className="sq1-td-strong">{m.god ?? m.godText ?? '?'}</td>
                   <td>
                     <span className={m.status === 'proven' ? 'sq1-badge-proven' : 'sq1-badge-open'}>
                       {m.status === 'proven' ? t('已证', 'Proven') : t('未解', 'Open')}
@@ -194,11 +194,11 @@ export default function Sq1({ isZh }: { isZh: boolean; eventId?: string }) {
       {/* ── §4 the open mystery ────────────────────────────────── */}
       <section className="sq1-section">
         <div className="sq1-section-num">{t('肆　未解之谜', 'IV — The unsolved mystery')}</div>
-        <h2>{t('WCA 12c4 口径:没人算过', 'WCA 12c4 metric: nobody has computed it')}</h2>
+        <h2>{t('WCA 12c4 口径:已收窄到 26–27', 'WCA 12c4 metric: narrowed to 26–27')}</h2>
         <p>
           {t(
-            '偏偏是最实用的那套口径——(X,Y) 计 1、/ 计 1,也就是计时器和打乱程序报的打乱长度——它的上帝之数至今没有公开的穷举结果。它夹在两套已证结果之间:12c4 里双层转只算 1(比面转的 2 便宜),但层转又不像扭转口径那样免费,所以真实直径严格落在扭转(13)和面转(31)之间——具体是几,要等有人真拿这个 cost 模型跑一遍 BFS 才知道。',
-            'The most practical metric — (X,Y)=1, /=1, the scramble length your timer reports — has no published exhaustive result for its God\'s number. It is bracketed by the two proven results: in 12c4 a double turn costs only 1 (cheaper than face-turn\'s 2), but layer turns are not free as in the twist metric, so the true diameter sits strictly between 13 and 31 — the exact value awaits someone actually running the BFS with that cost model.',
+            '偏偏是最实用的那套口径——(X,Y) 计 1、/ 计 1,也就是计时器和打乱程序报的打乱长度——至今没有覆盖全状态空间的穷举结果。但它的区间已经被夹得很紧。上界 27 来自一个初等换算:任意态的 WCA 最优解 ≤ 2×(扭转最优)+ 1 ≤ 2×13 + 1 = 27(借 Masonjones 已证的扭转 13)。下界 26 是本站实证:我们对全部 125,605 条真实比赛打乱跑了可证 WCA 12c4 最优,最难的整整需要 26 步(仅凭纯理论的交替论证只能证到 25,真实见证把它顶到 26)。于是 26 ≤ D ≤ 27,只差 1。精确值是 26 还是 27 仍未解:要么找到一个真需 27 步的态(→ 27),要么对全状态空间跑一遍 BFS 证明它不存在(→ 26)。两端来源强度不同——下界是本站全量实证,上界是借来的已知结果加初等换算。',
+            'The most practical metric — (X,Y)=1, /=1, the scramble length your timer reports — still has no whole-space exhaustive result. But its range is now pinned tight. The upper bound 27 comes from an elementary argument: any state\'s WCA-optimal solution is ≤ 2×(twist-optimal) + 1 ≤ 2×13 + 1 = 27 (borrowing Masonjones\' proven twist 13). The lower bound 26 is established here: we ran provably-WCA-12c4-optimal solves on all 125,605 real competition scrambles, and the hardest needs a full 26 (a purely theoretical alternation argument only reaches 25; a real witness pushes it to 26). So 26 ≤ D ≤ 27 — just 1 apart. Whether it is exactly 26 or 27 is still open: either find a state truly needing 27 (→ 27), or run a whole-space BFS proving none exists (→ 26). The two ends differ in strength — the lower bound is our full empirical result, the upper bound is a borrowed known result plus an elementary conversion.',
           )}
         </p>
         <Suspense fallback={<Loading />}><OpenProblemBracket isZh={isZh} /></Suspense>
@@ -210,8 +210,8 @@ export default function Sq1({ isZh }: { isZh: boolean; eventId?: string }) {
         <h2>{t('两阶段近最优 vs 真最优', 'Two-phase near-optimal vs true optimal')}</h2>
         <p>
           {t(
-            '实战引擎是 Chen 的 sq12phase:Kociemba 式两阶段——先把魔方归到方块形并修正宇称,再解排列。它快(约 50 态/s),但是近最优,不保证全局最少,因为最优路线未必恰好在「方块形」这个相位边界穿过。真最优要单阶段 IDA* 配大剪枝表,只有浅打乱在浏览器里可行。cubing.js、csTimer、TNoodle 用的都是这族两阶段引擎做随机态打乱,没有主流在线工具敢标「可证最优」。',
-            'The workhorse is Chen\'s sq12phase: a Kociemba-style two-phase solver — first reduce to cube shape and fix parity, then solve the permutation. It is fast (~50 states/s) but near-optimal, not guaranteed minimal, because the optimal route need not pass through cube shape at the phase boundary. True optimal needs single-phase IDA* with a large pruning table, feasible in-browser only for shallow scrambles. cubing.js, csTimer and TNoodle all use this two-phase family for random-state scrambles; no mainstream in-browser tool advertises provably-optimal SQ1.',
+            '实战引擎是 Chen 的 sq12phase:Kociemba 式两阶段——先把魔方归到方块形并修正宇称,再解排列。它快(约 50 态/s),但是近最优,不保证全局最少,因为最优路线未必恰好在「方块形」这个相位边界穿过。真最优要单阶段 IDA* 配大剪枝表,只有浅打乱在浏览器里可行。cubing.js、csTimer、TNoodle 用的都是这族两阶段引擎做随机态打乱。本站则专门为上帝之数造了一个 WCA 12c4 可证最优求解器(IDA* + 13GB 精确 phase-2 查表),对全部真实比赛打乱都能给出可证最少步——正是它把上面的下界顶到了 26。',
+            'The workhorse is Chen\'s sq12phase: a Kociemba-style two-phase solver — first reduce to cube shape and fix parity, then solve the permutation. It is fast (~50 states/s) but near-optimal, not guaranteed minimal, because the optimal route need not pass through cube shape at the phase boundary. True optimal needs single-phase IDA* with a large pruning table, feasible in-browser only for shallow scrambles. cubing.js, csTimer and TNoodle all use this two-phase family for random-state scrambles. For the God\'s-number question this site built a dedicated provably-WCA-12c4-optimal solver (IDA* with a 13 GB exact phase-2 table) that returns the proven minimum for every real competition scramble — it is what pushed the lower bound above to 26.',
           )}
         </p>
         <Link href="/scramble/solver?event=sq1" className="sq1-cta">
