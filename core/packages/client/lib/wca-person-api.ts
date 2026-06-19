@@ -117,6 +117,32 @@ export async function fetchWcaPersonFormer(wcaId: string): Promise<WcaFormerIden
   return out;
 }
 
+// 杂项:最亲密魔友(同场比赛最多)+ 见过的魔友(同场次数分布)。WCA API 无此项,走后端
+// /v1/wca/person-misc(SQL over wca_results_flat)。数据周更,localStorage 缓存。
+export interface WcaPersonMisc {
+  myComps: number;                                                   // 本人参赛比赛数
+  totalMet: number;                                                  // 见过的不同魔友总数(不含本人)
+  closest: { wcaId: string; name: string; shared: number }[];        // 最亲密 top 20
+  distribution: { shared: number; cubers: number }[];                // 同场次数 → 人数,升序
+}
+
+export async function fetchWcaPersonMisc(wcaId: string): Promise<WcaPersonMisc> {
+  const key = `wca:misc:${wcaId}`;
+  const cached = cacheGet<WcaPersonMisc>(key);
+  if (cached) return cached;
+  const res = await fetch(apiUrl(`/v1/wca/person-misc?wcaId=${encodeURIComponent(wcaId)}`));
+  if (!res.ok) throw new Error(`person-misc ${res.status}`);
+  const json = (await res.json()) as Partial<WcaPersonMisc>;
+  const out: WcaPersonMisc = {
+    myComps: json.myComps ?? 0,
+    totalMet: json.totalMet ?? 0,
+    closest: Array.isArray(json.closest) ? json.closest : [],
+    distribution: Array.isArray(json.distribution) ? json.distribution : [],
+  };
+  cacheSet(key, out);
+  return out;
+}
+
 export interface WcaCompetition {
   id: string;
   name: string;

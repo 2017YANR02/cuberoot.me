@@ -434,6 +434,69 @@ wcaStatsExtraRoutes.get('/wca/person-aka', async (c) => {
   return c.json({ wcaId, former });
 });
 
+// ── 2a-ter. /v1/wca/person-misc ──
+//   GET /v1/wca/person-misc?wcaId=
+// 选手详情页「杂项」tab 的两个表:最亲密魔友(同场比赛最多的选手)+ 见过的魔友(同场次数分布).
+// 复刻 cubingchina results/p 的 closestCubers + seenCubers(SQL over results).
+// 数据源 wca_results_flat 含 DNF/DNS 行(value 可 <=0,见 rank-for 注释),故「按 comp_id 计 DISTINCT」
+//   即等价「同场出现过」;注意「同人同 comp 多 round/event 多行」→ 必须 COUNT(DISTINCT comp_id).
+// 「去过的省份」由客户端用 comps + 静态省份表算,不在此端点.
+// 两步走:先取本人参赛 comp(走 wrf_wca_id 的 wca_id 前缀),再按 comp_id IN(...)分组(走 wrf_comp_lookup),
+//   避免 IN(子查询)的 planner 不确定性.
+wcaStatsExtraRoutes.get('/wca/person-misc', async (c) => {
+  const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
+  if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) return c.json({ error: 'Invalid wcaId' }, 400);
+
+  const compRows = await query<{ comp_id: string }>(
+    `SELECT DISTINCT comp_id FROM wca_results_flat WHERE wca_id = ?`,
+    [wcaId],
+  );
+  const compIds = compRows.map(r => r.comp_id);
+  if (compIds.length === 0) {
+    c.header('Cache-Control', CACHE_HEADER);
+    return c.json({ wcaId, myComps: 0, totalMet: 0, closest: [], distribution: [] });
+  }
+
+  const placeholders = compIds.map(() => '?').join(',');
+  const rows = await query<{ wca_id: string; shared: number }>(
+    `SELECT wca_id, COUNT(DISTINCT comp_id)::int AS shared
+       FROM wca_results_flat
+      WHERE comp_id IN (${placeholders})
+      GROUP BY wca_id`,
+    compIds,
+  );
+
+  const others: { wcaId: string; shared: number }[] = [];
+  const dist = new Map<number, number>();
+  for (const r of rows) {
+    if (r.wca_id === wcaId) continue; // 排除本人(shared = myComps)
+    const shared = Number(r.shared);
+    others.push({ wcaId: r.wca_id, shared });
+    dist.set(shared, (dist.get(shared) ?? 0) + 1);
+  }
+
+  // 最亲密魔友:共同参赛数 desc,同分按 wcaId 升序;取 top 20.
+  others.sort((a, b) => b.shared - a.shared || (a.wcaId < b.wcaId ? -1 : 1));
+  const top = others.slice(0, 20);
+  let names = new Map<string, string>();
+  if (top.length) {
+    const nrows = await query<{ wca_id: string; name: string }>(
+      `SELECT wca_id, name FROM wca_persons WHERE wca_id IN (${top.map(() => '?').join(',')})`,
+      top.map(t => t.wcaId),
+    );
+    names = new Map(nrows.map(n => [n.wca_id, n.name]));
+  }
+  const closest = top.map(t => ({ wcaId: t.wcaId, name: names.get(t.wcaId) ?? t.wcaId, shared: t.shared }));
+
+  // 见过的魔友:同场次数 → 人数,升序.
+  const distribution = [...dist.entries()]
+    .map(([shared, cubers]) => ({ shared, cubers }))
+    .sort((a, b) => a.shared - b.shared);
+
+  c.header('Cache-Control', CACHE_HEADER);
+  return c.json({ wcaId, myComps: compIds.length, totalMet: others.length, closest, distribution });
+});
+
 // ── 2b. /v1/wca/rank-for ──
 // "我这个成绩放进 WCA 历史能排第几" —— 给 /timer 速拧计时器的世界排名徽章用.
 //   GET /v1/wca/rank-for?event=333&type=single&centis=984
