@@ -1,8 +1,10 @@
 'use client';
 
 /**
- * 支付弹窗。先选渠道(支付宝 / 微信)→ 下单拿收银台链接 + 二维码 → 轮询查单。
- * 桌面端显示二维码扫码;移动端给「前往支付」按钮跳收银台。付款成功 onPaid()。
+ * 支付弹窗。选渠道(支付宝 / 微信)→ 下单。
+ * 返回收银台 url 且无二维码(支付宝 电脑/手机网站支付、微信 H5)→ 点一次即整页直跳收银台,
+ * 付完经 return_url 回 /membership?paid= 由页面自动确认;
+ * 返回二维码(微信 Native / 虎皮椒 PC)→ 弹窗内扫码 + 轮询查单,成功 onPaid()。
  */
 import { useEffect, useRef, useState } from 'react';
 import { X, Loader2, Smartphone, Check } from 'lucide-react';
@@ -54,12 +56,14 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
     setCreating(true);
     try {
       const info = await createOrder(plan.slug, ch, isMobile ? 'wap' : 'pc');
-      setOrder(info);
-      // 移动端直接跳收银台;桌面端展示二维码(微信)或前往收银台链接(支付宝)并轮询。
-      if (isMobile && info.url) {
+      // 有收银台 url 且无二维码(支付宝 电脑/手机网站支付、微信 H5)→ 点一次即整页直跳收银台,
+      // 省掉「前往支付」中转;付完 return_url 回 /membership?paid= 由页面自动确认。
+      if (info.url && !info.qrcode) {
         window.location.href = info.url;
         return;
       }
+      // 否则(微信 Native / 虎皮椒 PC)弹窗内展示二维码扫码 + 轮询查单。
+      setOrder(info);
       pollStatus(info.outTradeNo);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));

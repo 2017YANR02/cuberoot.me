@@ -7,7 +7,7 @@
  * 在线支付未开通时引导走打赏 + 联系站长手动开通。admin 登录后见管理面板。
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Crown, Check, Loader2, RefreshCw } from 'lucide-react';
+import { Crown, Check, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { tr, useLang } from '@/i18n/tr';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -16,7 +16,7 @@ import AppLink from '@/components/AppLink';
 import DonateModal from '@/components/DonateModal';
 import MembershipBadge from '@/components/MembershipBadge';
 import {
-  listPlans, getMyMembership, getOrderStatus,
+  listPlans, getMyMembership, getOrderStatus, membershipExpiry,
   type MembershipPlan, type Membership, type PayChannels,
 } from '@/lib/membership-api';
 import PayModal from './PayModal';
@@ -75,6 +75,7 @@ export default function MembershipPage() {
   const [donateOpen, setDonateOpen] = useState(false);
   const [justPaid, setJustPaid] = useState(false);
   const [paid, setPaid] = useQueryState('paid');
+  const [renew, setRenew] = useQueryState('renew');
 
   const refreshMembership = useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -122,12 +123,33 @@ export default function MembershipPage() {
 
   const isLifetime = membership?.lifetime && membership.active;
   const activeMember = membership?.active;
+  const expiry = useMemo(() => membershipExpiry(membership), [membership]);
 
   function handleChoose(plan: MembershipPlan) {
     if (!loggedIn) { login(); return; }
     if (payEnabled) setBuyPlan(plan);
     else setDonateOpen(true);
   }
+
+  // 便捷续费:默认续上当前 / 上次的套餐(过期会员的 planSlug 即上次套餐),回落月度 → 第一档。
+  const renewMembership = useCallback(() => {
+    if (!loggedIn) { login(); return; }
+    if (!payEnabled) { setDonateOpen(true); return; }
+    const list = plans ?? [];
+    const target =
+      list.find((p) => p.slug === membership?.planSlug) ??
+      list.find((p) => p.period === 'month') ??
+      list[0];
+    if (target) setBuyPlan(target);
+  }, [loggedIn, login, payEnabled, plans, membership?.planSlug]);
+
+  // 全局到期提醒 banner 深链 ?renew=1 → 自动打开续费弹窗(永久会员忽略)。
+  useEffect(() => {
+    if (!renew || !mounted || !plans || !membership || membership.lifetime) return;
+    renewMembership();
+    setRenew(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [renew, mounted, plans, membership]);
 
   const sortedPlans = useMemo(() => plans ?? [], [plans]);
 
@@ -147,17 +169,31 @@ export default function MembershipPage() {
         </p>
       </header>
 
-      {/* 当前会员状态 */}
-      {activeMember && membership && (
-        <div className="mem-status">
-          <MembershipBadge lifetime={membership.lifetime} size={15} />
+      {/* 当前会员状态 / 到期提醒 */}
+      {membership && (activeMember || expiry?.expired) && (
+        <div className={`mem-status${expiry?.expiringSoon ? ' is-warning' : ''}${expiry?.expired ? ' is-expired' : ''}`}>
+          {expiry?.expired
+            ? <AlertTriangle size={16} className="mem-status-icon" />
+            : <MembershipBadge lifetime={membership.lifetime} size={15} />}
           <span className="mem-status-text">
             {membership.lifetime
               ? tr({ zh: '你是永久会员,感谢长期的支持 ♡', en: "You're a lifetime member — thank you for the support ♡"
             })
+              : expiry?.expired
+              ? tr({ zh: '会员已于 {d} 到期', en: 'Membership expired on {d}'
+            }).replace('{d}', fmtDate(membership.expiresAt))
+              : expiry?.expiringSoon
+              ? tr({ zh: '会员还有 {n} 天到期({d})', en: 'Expires in {n} day(s) — {d}'
+            }).replace('{n}', String(Math.max(0, expiry.daysLeft ?? 0))).replace('{d}', fmtDate(membership.expiresAt))
               : tr({ zh: '会员有效期至 {d}', en: 'Member until {d}'
             }).replace('{d}', fmtDate(membership.expiresAt))}
           </span>
+          {!membership.lifetime && (expiry?.expiringSoon || expiry?.expired) && (
+            <button className="mem-status-renew" onClick={renewMembership}>
+              {tr({ zh: '立即续费', en: 'Renew now'
+            })}
+            </button>
+          )}
           <button className="mem-status-refresh" onClick={refreshMembership} aria-label={tr({ zh: '刷新', en: 'Refresh'
         })}>
             <RefreshCw size={13} />
@@ -235,8 +271,8 @@ export default function MembershipPage() {
 
       <p className="mem-foot-note">
         {tr({
-          zh: '会员为一次性按周期付款,不会自动续费、不会自动扣款,到期后需手动续费。',
-          en: 'Membership is a one-time payment per period — no auto-renewal, no auto-charge. Renew manually when it expires.'
+          zh: '会员为按周期一次性付款,不会自动扣款。到期前我们会提醒你,一键即可续费。',
+          en: "Membership is a one-time payment per period — no auto-charge. We'll remind you before it expires, and renewing takes one click."
         })}
         {' '}
         <AppLink href="/support">{tr({ zh: '查看致谢名单 →', en: 'See supporters →'
