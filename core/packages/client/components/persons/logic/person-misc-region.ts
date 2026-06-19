@@ -13,7 +13,7 @@ import type { WcaCompetition } from '@/lib/wca-person-api';
 export interface RegionStat {
   key: string;
   label: string;
-  iso2: string | null; // 国家分支带国旗;省份分支为 null(不画旗,同 cubingchina)
+  iso2: string | null; // 国家分支带该国旗;中国省份分支带 CN 国旗;XW/X* 伪代码为 null
   count: number;
 }
 
@@ -39,8 +39,9 @@ export function buildRegionStats(comps: WcaCompetition[], isZh: boolean): Region
     let flag: string | null;
     if (prov) {
       key = `P:${prov.en}`;
-      label = isZh ? prov.zh : prov.en;
-      flag = null;
+      // 国际站语境下省份单写「广东」歧义,统一加中国国旗 + 「中国」前缀
+      label = isZh ? `中国${prov.zh}` : `${prov.en}, China`;
+      flag = 'CN';
     } else {
       key = `C:${iso2}`;
       label = iso2 ? countryName(iso2, isZh) : '—';
