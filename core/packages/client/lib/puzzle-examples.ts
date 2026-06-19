@@ -19,7 +19,7 @@ export interface PuzzleExamplesJson {
 }
 
 // shape 变更或数据全量重灌时 bump(防缓存旧 JSON)
-const V = '20260618sq1exactonly';
+const V = '20260618sq1slashopt';
 
 export async function fetchPuzzleExamples(): Promise<PuzzleExamplesJson> {
   const r = await fetch(statsUrl('/stats/scramble/puzzle_examples.json') + `?v=${V}`);

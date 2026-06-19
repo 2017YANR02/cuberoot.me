@@ -123,6 +123,15 @@
 .scramble-stats-puzzle-metric {
   color: var(--text-faint, var(--text-sub));
 }
+/* slash 最优 t 分布:当前为紧上界、真最优计算中的提示条(callout 单边框,非卡片)。 */
+.scramble-stats-provisional {
+  margin: 0 0 0.75rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid var(--accent);
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
 /* 精确档进行中徽标:accent 小药丸,提示该分布仍在全量灌注、当前为部分样本。 */
 .scramble-stats-puzzle-progress {
   font-size: 0.72rem;

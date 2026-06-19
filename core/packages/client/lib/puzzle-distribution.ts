@@ -13,6 +13,9 @@ export interface PuzzleHistEntry {
 export interface PuzzleAltDist {
   metric: string;         // 备选口径 key(sq1: 'slash')
   dist: PuzzleHistEntry;
+  provisional?: boolean;  // sq1 slash:仍有未判定的歧义态怪物 ⇒ dist 含紧上界(非全可证最优)
+  ambiguous?: number;     // sq1 slash:歧义态总数(W=2s-1,需精确判定)
+  improved?: number;      // sq1 slash:真省刀(t=s-1)的歧义态数
 }
 
 export interface PuzzleDistEntry {
@@ -23,6 +26,7 @@ export interface PuzzleDistEntry {
   sample_count: number;
   dist: PuzzleHistEntry;
   alt?: PuzzleAltDist;    // 备选口径(sq1: wca 主 + slash 备,前端可切)
+  wcaOptSlash?: PuzzleHistEntry; // sq1 2×2 格3:WCA 最优解的 slash 含量分布(数 opt 解里的 /;≥ slash 最优)
 }
 
 export interface PuzzleDistributionJson {
@@ -31,7 +35,7 @@ export interface PuzzleDistributionJson {
 }
 
 // shape 变更或数据全量重灌时 bump(防缓存旧 JSON)
-const V = '20260618sq1exactonly';
+const V = '20260619sq1slashprov';
 
 export async function fetchPuzzleDistribution(): Promise<PuzzleDistributionJson> {
   const r = await fetch(statsUrl('/stats/scramble/puzzle_distribution.json') + `?v=${V}`);

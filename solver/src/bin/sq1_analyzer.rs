@@ -5,8 +5,9 @@
 //!   - **slash** = jaapsch twist:只数 `/`(`(x,y)` 计 0,God's number 13)。
 //! 二者同源(同一条 cstimer 双阶段近最优解),毫秒级一题,全 125k 语料几秒跑完。
 //!
-//! `SQ1_EXACT=1` ⇒ 改 2 列 `id,sq1`(`sq1_solver::solve_one` 可证最优,slash 口径,
-//!   tail-bound 深态数分钟;仅供 ground-truth / 对照,不用于全量灌注)。
+//! `SQ1_EXACT=1` ⇒ 改 2 列 `id,sq1`(`sq1_solver::solve_one` 可证最优,slash 口径,God's number 13)。
+//!   再叠 `SQ1_SLASH_SOLN=1` ⇒ 3 列 `id,slash_exact,opt_scramble`(附 slash 最优等价打乱),
+//!   供全量灌注 slash 最优分布 + 网站「slash 最优打乱」展示。
 //!
 //! 输入吃全 WCA sq1 记号:`(x,y)` 括号对(x/y 含负数,空格可有可无)+ `/` slash,
 //! 行尾空白 / 末尾悬挂 `/` / `(0,0)`(理论不出现)都容忍。记号含逗号和括号,
@@ -16,7 +17,8 @@
 
 use cube_solver::executor::{run_analyzer_app_raw, RawSolverWrapper};
 use cube_solver::sq1_solver::{
-    invert_scramble, scramble_to_compact, state_from_scramble, Sq1Solver, Sq1Token, Sq1WcaSolver,
+    invert_scramble, scramble_to_compact, state_from_scramble, tokens_from_scramble, SlashViaWca,
+    Sq1Solver, Sq1Token, Sq1WcaSolver,
 };
 use cube_solver::sq1_twophase::{solve_with_solution, Sq1TwoPhase};
 
@@ -25,10 +27,31 @@ fn use_exact() -> bool {
     std::env::var("SQ1_EXACT").map(|v| v == "1").unwrap_or(false)
 }
 
+/// `SQ1_SLASH_SOLN=1`(配合 `SQ1_EXACT=1`)⇒ 多出第 3 列 `opt_scramble`:slash 最优等价打乱
+/// (= 可证 slash 最优解的逆,从 SOLVED 到达同一态、slash 数 = slash_exact)。SQ1 简写记号,CSV 安全。
+/// 供网站「原始 / slash 最优打乱」切换 + slash 口径示例。3 列表头 `id,slash_exact,opt_scramble`。
+fn use_slash_soln() -> bool {
+    std::env::var("SQ1_SLASH_SOLN").map(|v| v == "1").unwrap_or(false)
+}
+
 /// `SQ1_WCA_EXACT=1` ⇒ 走 WCA 12c4 **精确最优**器(2 列 `id,wca_exact`)。可证最优,
 /// 深态较慢(IDA*,无 phase-2);用于真实 WCA 难度分布 / D_WCA 经验下界,优先于 SQ1_EXACT。
 fn use_wca_exact() -> bool {
     std::env::var("SQ1_WCA_EXACT").map(|v| v == "1").unwrap_or(false)
+}
+
+/// `SQ1_COMPACTIFY=1` ⇒ 纯记号转换器(不求解):输入 `id,scramble`(WCA 或 compact 自动识别)→
+/// 输出 `id,compact`(SQ1 简写,CSV 安全)。用于 corpus 一次性迁移 + 抽取时把 WCA 导出转 compact。
+fn use_compactify() -> bool {
+    std::env::var("SQ1_COMPACTIFY").map(|v| v == "1").unwrap_or(false)
+}
+
+/// `SQ1_SLASH_VIA_WCA=1` ⇒ slash 最优(twist)**经 WCA 机器可证**(不需 13GB jsq_full,轻量解器)。
+/// 输入 `id,compact,W`(W = 已知 WCA 12c4 最优,PS 从 sq1_wca_exact.csv 传;compact 无逗号 ⇒ 末段干净切)。
+/// 歧义态(W=2s-1):找 (s-1)-slash 解 ⇒ t=s-1;穷举无 ⇒ t=s(可证)。输出 `id,slash_exact,opt_scramble`
+/// (opt 空 = t=s 用 WCA 最优打乱;`id,M` = 看门狗超时怪物)。配 `SQ1_SOLVE_TIMEOUT_SECS` 看门狗。
+fn use_slash_via_wca() -> bool {
+    std::env::var("SQ1_SLASH_VIA_WCA").map(|v| v == "1").unwrap_or(false)
 }
 
 /// `SQ1_WCA_SOLN=1`(配合 `SQ1_WCA_EXACT=1`)⇒ 多出第 3 列 `opt_scramble`:最优等价打乱
@@ -64,6 +87,61 @@ fn solve_parallel_split() -> Option<u8> {
 /// slash = jaapsch twist)。前端按口径切换直方图,二者同源同一条近最优解。
 /// `SQ1_EXACT=1` 时 2 列 `id,sq1`(精确 slash,调试/对照)。解析失败 → `id,-`。
 fn sq1_line(alg: &str, id: &str) -> String {
+    // 纯转换器:id,scramble(WCA/compact 自动识别)→ id,compact。不求解。
+    if use_compactify() {
+        return match tokens_from_scramble(alg) {
+            Ok(toks) => format!("{},{}", id, scramble_to_compact(&toks)),
+            Err(e) => {
+                eprintln!("[ERROR] id={}: {}", id, e);
+                format!("{},-", id)
+            }
+        };
+    }
+    // slash 最优 via WCA:输入 alg = "compact,W"(compact 无逗号 ⇒ 首逗号前=记号、后=W)。
+    if use_slash_via_wca() {
+        let (scr, w) = match alg.find(',') {
+            Some(p) => match alg[p + 1..].trim().parse::<u8>() {
+                Ok(w) => (&alg[..p], w),
+                Err(_) => {
+                    eprintln!("[ERROR] id={}: SQ1_SLASH_VIA_WCA needs id,compact,W (bad W)", id);
+                    return format!("{},-", id);
+                }
+            },
+            None => {
+                eprintln!("[ERROR] id={}: SQ1_SLASH_VIA_WCA needs id,compact,W", id);
+                return format!("{},-", id);
+            }
+        };
+        let st = match state_from_scramble(scr) {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("[ERROR] id={}: {}", id, e);
+                return format!("{},-", id);
+            }
+        };
+        // 歧义态 W=2s-1 ⇒ s=(W+1)/2;t∈{s-1,s}。深态超时 → 怪物(PS 加大超时/资源重跑)。
+        // SQ1_SOLVE_PARALLEL=N ⇒ root-split 并行(单条怪物吃满全核啃 W=23 穷尽);未设 ⇒ 串行。
+        let s = (w + 1) / 2;
+        let split = solve_parallel_split().unwrap_or(0);
+        let deadline = solve_timeout_secs()
+            .map(|secs| std::time::Instant::now() + std::time::Duration::from_secs(secs));
+        return match Sq1WcaSolver::shared_lite().slash_minus_one_via_wca(&st, w, deadline, split) {
+            SlashViaWca::SmallerExists(sol) => {
+                format!("{},{},{}", id, s - 1, scramble_to_compact(&invert_scramble(&sol)))
+            }
+            // t=s:opt 留空 ⇒ PS 用 WCA 最优打乱(恰 s 刀 = 合法 slash 最优等价打乱)。
+            SlashViaWca::ProvenEqual => format!("{},{},", id, s),
+            SlashViaWca::Timeout => {
+                cube_solver::executor::emit_event(&format!(
+                    "[MONSTER] id={} timeout={}s scramble={}",
+                    id,
+                    solve_timeout_secs().unwrap_or(0),
+                    scr
+                ));
+                format!("{},M", id)
+            }
+        };
+    }
     match state_from_scramble(alg) {
         Ok(st) => {
             if use_wca_exact() {
@@ -119,7 +197,31 @@ fn sq1_line(alg: &str, id: &str) -> String {
                 return format!("{},{}", id, w.solve_wca(&st));
             }
             if use_exact() {
-                return format!("{},{}", id, Sq1Solver::shared().solve_one(&st));
+                let s = Sq1Solver::shared();
+                // slash 行装配:有 soln 列则附 slash 最优等价打乱(= 解的逆,SQ1 简写,CSV 安全)。
+                let row = |cost: u32, sol: &[Sq1Token]| -> String {
+                    if use_slash_soln() {
+                        format!("{},{},{}", id, cost, scramble_to_compact(&invert_scramble(sol)))
+                    } else {
+                        format!("{},{}", id, cost)
+                    }
+                };
+                // 怪物超时:>N 秒放弃 → id,M 占位(续跑跳过 / build 侧 NaN 略过)+ 实时 [MONSTER]。
+                if let Some(secs) = solve_timeout_secs() {
+                    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(secs);
+                    return match s.solve_with_solution_deadline(&st, deadline) {
+                        Some((cost, sol)) => row(cost, &sol),
+                        None => {
+                            cube_solver::executor::emit_event(&format!(
+                                "[MONSTER] id={} timeout={}s scramble={}",
+                                id, secs, alg
+                            ));
+                            format!("{},M", id)
+                        }
+                    };
+                }
+                let (cost, sol) = s.solve_with_solution(&st);
+                return row(cost, &sol);
             }
             let (slash, tokens) = solve_with_solution(&st);
             // WCA 12c4 = (X,Y) 数 + / 数 = token 总数(moves_to_tokens 只发非零 Turn 与 Slash)。
@@ -137,7 +239,12 @@ struct Sq1Wrapper;
 
 impl RawSolverWrapper for Sq1Wrapper {
     fn global_init() {
-        if use_wca_exact() {
+        if use_compactify() {
+            eprintln!("[INFO] sq1 COMPACTIFY (notation converter: id,scramble -> id,compact; no solve)");
+        } else if use_slash_via_wca() {
+            let _ = Sq1WcaSolver::shared_lite();
+            eprintln!("[INFO] sq1 SLASH-VIA-WCA ready (provably slash-optimal via WCA geodesic; lite ~600MB, no 13GB jsq_full)");
+        } else if use_wca_exact() {
             let _ = Sq1WcaSolver::shared();
             eprintln!("[INFO] sq1 WCA-EXACT solver ready (provably WCA 12c4-optimal; D_WCA proven in [13,27])");
         } else if use_exact() {
@@ -150,10 +257,14 @@ impl RawSolverWrapper for Sq1Wrapper {
     }
 
     fn get_csv_header() -> String {
-        if use_wca_exact() {
+        if use_compactify() {
+            "id,compact".into()
+        } else if use_slash_via_wca() {
+            "id,slash_exact,opt_scramble".into()
+        } else if use_wca_exact() {
             if use_wca_soln() { "id,wca_exact,opt_scramble".into() } else { "id,wca_exact".into() }
         } else if use_exact() {
-            "id,sq1".into()
+            if use_slash_soln() { "id,slash_exact,opt_scramble".into() } else { "id,sq1".into() }
         } else {
             "id,wca,slash".into()
         }
