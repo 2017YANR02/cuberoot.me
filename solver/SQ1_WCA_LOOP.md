@@ -77,7 +77,7 @@
 - [ ] **B2 最优打乱**:`solve_with_solution` 已能出 token 序列;analyzer 已产 `opt_scramble` 列(`SQ1_WCA_SOLN=1`,序列化 `x:y/` 逗号安全)。剩:精确档示例面板用它(接 B1-cleanup)。门:序列 replay 回 SOLVED + 步数 = 列值。
 
 ### EPIC C — UI / 数学页(A 达标后)
-- [ ] **C1 `/math/god?event=sq1`**:把 `D_WCA = ?` 改 `13 ≤ D_WCA ≤ 27`(可证)+ 样本经验下界 + 精确分布图。
+- [ ] **C1 `/math/god?event=sq1`**:把 `D_WCA = ?` 改 **`D_WCA ∈ [26,27]`** + 精确分布图。**措辞要诚实,别两端都写「可证」**:下界 26 = 本项目求解器实证(9 真态可证最优 = 26);上界 27 = Masonjones 2005(jaapsch.net,twist God=13,2026-06-18 fetch 原页核实)+ 初等 2k+1 换算(**外部借用,非本项目证**)。精确值未知。
 - [ ] **C2 `/scramble/solver?event=sq1`**:加"精确/近最优"开关(WASM 走精确仅当够快;否则服务端端点,照 3x3 cloud daemon 模式)。**保留**现有近最优求解器对照(§0.10)。
 
 ### EPIC D — 算出 D_WCA(终极目标)⛔ GATE
