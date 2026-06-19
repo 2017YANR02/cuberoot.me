@@ -1,6 +1,6 @@
 ---
 name: update-scramble-stats
-description: "用户要更新 /scramble/stats(打乱难度 / 步数分布)的数据时执行本地手动增量刷新管道(按需触发,非定时)。覆盖三阶阶段难度(十字/F2L/EO/DR 等)+ 非 3x3 整解最优步数(二阶/金字塔/斜转/SQ1)+ 三阶整解最优 HTM(333 方法,cubeopt WASM,solver/333opt)三条管道。只能本地跑(三阶需 solver 34GB 表 / 333 需 cubeopt 表)。Triggers: \"更新统计\", \"更新打乱统计\", \"重跑打乱统计\", \"更新打乱分布\", \"更新打乱难度\", \"update scramble stats\", \"全部刷新统计\", \"更新十字统计\", \"重跑十字统计\", \"跑十字管道\", \"更新 puzzle 统计\", \"更新二阶/金字塔/斜转统计\", \"补 xcross 变体\", \"双色底 10f xcross\", \"backfill_xcross_variant\", \"pseudo_f2leo 回填\", \"难打乱补变体\", \"更新333统计\", \"更新 333 统计\", \"更新 333 整解统计\", \"333 整解最优\", \"333 HTM 分布\", \"333opt\"."
+description: "用户要更新 /scramble/stats(打乱难度 / 步数分布)的数据时执行本地手动增量刷新管道(按需触发,非定时)。覆盖三阶阶段难度(十字/F2L/EO/DR 等)+ 非 3x3 整解最优步数(二阶/金字塔/斜转/SQ1)+ 三阶整解最优 HTM(333 方法,cubeopt WASM,solver/333opt)三条管道。只能本地跑(三阶需 solver 34GB 表 / 333 需 cubeopt 表)。Triggers: \"更新统计\", \"更新打乱统计\", \"重跑打乱统计\", \"更新打乱分布\", \"更新打乱难度\", \"update scramble stats\", \"全部刷新统计\", \"更新十字统计\", \"重跑十字统计\", \"跑十字管道\", \"更新 puzzle 统计\", \"更新二阶/金字塔/斜转统计\", \"更新 sq1 统计\", \"更新 SQ1 统计\", \"更新 sq1 分布\", \"刷新 sq1 精确分布\", \"sq1 精确分布\", \"sq1 精确档\", \"跑SQ1怪物\", \"跑 sq1 怪物\", \"啃怪物\", \"啃 sq1 怪物\", \"sq1 怪物\", \"grind sq1 monsters\", \"补 xcross 变体\", \"双色底 10f xcross\", \"backfill_xcross_variant\", \"pseudo_f2leo 回填\", \"难打乱补变体\", \"更新333统计\", \"更新 333 统计\", \"更新 333 整解统计\", \"333 整解最优\", \"333 HTM 分布\", \"333opt\"."
 ---
 
 # 更新打乱统计
@@ -98,8 +98,19 @@ cd core/packages/scramble-stats-build; pnpm exec tsx src/build_puzzle_examples.t
 - **SQ1 = 近最优 + WCA 12c4 计步(2026-06-12 上线)**:精确最优长尾爆炸(>500 态/6min 不收敛),改用 cstimer 双阶段(`solver/src/sq1_twophase.rs`,`sq1_analyzer.exe` 默认走它)。**默认 WCA 12c4 计步**((X,Y)=1 + /=1,`solve_wca`);`SQ1_METRIC=slash` 回 slash-only(jaapsch God 13);`SQ1_EXACT=1` 回精确(slash,慢)。全 125k ~50s,**WCA dist 11..30 峰 25**。近最优 gap(slash 口径)+0/52% +2/44% +4/4% 均 +1 真上界。前端口径行标「WCA 12c4 计步,近最优」;**示例打乱用简写记号**(`formatScrambleForEvent('sq1',scr)`)。exact ground-truth 存 `sq1_exact_groundtruth.csv`。清空 master 重灌须留表头(管道已修空文件边界)。
 - **SQ1 精确档(WCA 12c4 可证最优)= 独立后台 + build 自动读**:`inject_sq1_wca_exact.ps1`(用 `Sq1WcaSolver` + 13GB `jsq_full` 表,可证最优,~0.16 解/s、全 125k ~8.8 天)是**独立长跑后台**,不进一条龙(类比 333opt 的 `solve_loop.mjs`)。产 `sq1/sq1_wca_exact.csv`(`id,wca_exact,opt_scramble`)。
   - ⚠️ **进度藏在 chunk**:该 job 把所有块喂给一个长跑 analyzer,主 CSV 只在进程启动/结束各 ingest 一次 → 长跑期间主 CSV 一直停在初始行数,完成的块堆在 `sq1/_exact_chunks/*_sq1.csv`。`build_puzzle_dist.ts` 已**额外读这些块**(只读不删,绝不碰运行中的 job),按 id 去重,故每跑一次 build 就反映真实进度。**手动 ingest 块**(可选,清理用):`pwsh inject_sq1_wca_exact.ps1 -BuildOnly`。
-  - 产出进 `puzzle_distribution.json` 的 `sq1.exact`:`dist` = WCA 12c4 可证最优;`alt` = slash(从 `opt_scramble` 数 `/`,= WCA-最优解里的 slash 数,**slash-最优的紧上界 ≤13,非单独 slash-最优**)。前端难度 tab 加「求解:精确/近最优」开关(默认精确),两口径(WCA/slash)都切到精确;精确档示例暂缺(示例按近最优分桶)。
-  - **发布同近最优**:`update_cross_stats.ps1 -Jobs puzzles -Puzzles sq1` 跑完即一并 scp(build 会带上当前已完成的精确块)。改 exact shape 须 bump `lib/puzzle-distribution.ts` 的 `V`。
+  - 产出进 `puzzle_distribution.json` 的 `sq1.exact`:`dist` = WCA 12c4 可证最优;`alt` = slash(从 `opt_scramble` 数 `/`,= WCA-最优解里的 slash 数,**slash-最优的紧上界 ≤13,非单独 slash-最优**)。前端难度 tab 加「求解:精确/近最优」开关(默认精确),两口径(WCA/slash)都切到精确。
+  - **精确档示例已建(2026-06-18)**:`build_puzzle_examples.ts` 的 `bucketExactSq1`(读 `sq1_wca_exact.csv` + `_exact_chunks/*_sq1.csv`,按 wca_exact / opt 的 slash 数双分桶)→ `puzzle_examples.json` 的 `exactBins`/`exactBinsAlt`,点柱子看该步数真实比赛打乱;**只产精确档示例、不产 near 档**(用户要求)。opt_scramble = **SQ1 简写记号**(`tb/tb/`,CSV 安全,前端 `compactSq1Alg` 原样渲染)。改 shape 须 bump `lib/puzzle-examples.ts` 的 `V`。
+  - ⚠️ **怪物行(id,M)**:全量灌注对单条 >60s 的深尾(actual 24-25)**超时跳过**,记 `id,M`(原始打乱回捞进 `sq1/sq1_wca_monsters.csv`,留后续大 `SQ1_TT_BUDGET` 单独跑;仍可证最优只是延后)。build 侧 `Number('M')`=NaN **自动略过、不进 seen**(以后单独跑出真值仍计入)⇒ 精确分布**最右尾(25-27)在怪物全部单独跑完前会偏少**,属已知部分态(同「进行中 N%」徽标一并诚实展示)。env `SQ1_SOLVE_TIMEOUT_SECS`(inject 设 60)/ 看门狗安全网 `ANALYZER_STUCK_SECS`(120)。详见 memory [[project_sq1_wca_optimal_solver]]。
+  - **「跑SQ1怪物」= 啃怪物到最优**(用户说"跑SQ1怪物 / 啃怪物"时执行):`grind_sq1_monsters.ps1` 拿 `sq1_wca_monsters.csv`、**关超时**死磕到可证最优,把 `sq1_wca_exact.csv` 的 `id,M` 行**原地替换**成真值。
+    ```pwsh
+    pwsh core/packages/scramble-stats-build/grind_sq1_monsters.ps1                 # 默认 4 线程/240M TT/关超时,一次啃完
+    pwsh core/packages/scramble-stats-build/grind_sq1_monsters.ps1 -Threads 1      # 最硬的尾巴:单线程独占全部 TT
+    ```
+    - **为什么一定能最优**:IDA* 完备+可采纳,TT 满了只少剪枝不出错 ⇒ 给够时间必收敛。怪物是速度问题非正确性问题。
+    - **关键约束**:① **严禁与主 inject run 并跑**(两个 13GB 表 = OOM;脚本检测到 `sq1_analyzer` 在跑会拒绝)⇒ 先等主 run 完;② RAM 上限 13GB 表 + TT + OS < 32GB ⇒ TtBudget ≲300M(默认 240M 安全);③ **少线程比大 TT 更治硬态**(TT 全局共享,线程少 ⇒ 每条独占更多,复刻 217111 单线程 125M 成功的条件)。
+    - 可续(启动先合并上轮残留 + 跳已解);实时 `Get-Content sq1/_monster_progress.log -Wait -Tail 20`;>30min 单条报 `[STUCK]`(真·brutal,需 Tier 2:紧凑 open-addressing TT 2-3× / 更大耦合 PDB 抬 h)。报本轮**最深 WCA**(= D_WCA 经验下界候选)。
+    - **啃完后必跑** `update_cross_stats.ps1 -Jobs puzzles -Puzzles sq1` 重建+发布(把真值搬上线,最右尾补齐)。
+  - **发布同近最优**:`update_cross_stats.ps1 -Jobs puzzles -Puzzles sq1` 跑完即一并 scp(build 会带上当前已完成的精确块 + 怪物略过)。改 exact dist shape 须 bump `lib/puzzle-distribution.ts` 的 `V`。
 - **想更准**(deferred):双阶段迭代总长 / 更紧剪枝可逼近最优,代价回到长尾;见 `solver/SOLVER_LOOP.md` P5d。
 - **发布**:走一条龙共享发布(`update_cross_stats.ps1 -Jobs puzzles` 跑完即一并 scp);单独手跑这两步则需手 scp。改 shape 须 bump `lib/puzzle-distribution.ts` / `lib/puzzle-examples.ts` 的 `V`。
 - 加新 puzzle(如 SQ1)的全链路范式:`solver/VARIANT_PLAYBOOK.md` §8。

@@ -27,7 +27,8 @@ try { (Get-Process -Id $PID).PriorityClass = 'BelowNormal' } catch {}
 
 $dir   = 'D:/cube/scramble/puzzle/sq1'
 $src   = "$dir/scrambles.txt"          # id,scramble(近最优管道已增量抽好的全语料)
-$out   = "$dir/sq1_wca_exact.csv"      # 产物:id,wca_exact
+$out   = "$dir/sq1_wca_exact.csv"      # 产物:id,wca_exact(怪物行 = id,M 占位)
+$monf  = "$dir/sq1_wca_monsters.csv"   # 怪物清单:id,scramble(超时跳过的深尾,后续大 TT 单独跑)
 $work  = "$dir/_exact_chunks"
 $logf  = "$dir/_exact_run.err"
 $exe   = 'D:/cube/cuberoot.me/solver/target/release/sq1_analyzer.exe'
@@ -73,7 +74,43 @@ function Ingest-Chunks {
   return $added
 }
 
+# ---- 怪物回捞:out 里 wca_exact 列 == 'M' 的(超时跳过)→ 从 src 取原始打乱追加进 $monf(幂等去重)----
+# 怪物已在 out 标记已处理(续跑跳过、build 侧 NaN 略过);此处只是给后续单独跑攒一份 id,scramble 清单。
+function Update-Monsters {
+  if (-not (Test-Path $out)) { return }
+  $monIds = [Collections.Generic.HashSet[string]]::new()
+  $first = $true
+  foreach ($l in [IO.File]::ReadLines($out)) {
+    if ($first) { $first = $false; continue }
+    if (-not $l) { continue }
+    $c = $l.Split(',')
+    if ($c.Length -ge 2 -and $c[1] -eq 'M') { [void]$monIds.Add($c[0]) }
+  }
+  if ($monIds.Count -eq 0) { return }
+  $have = [Collections.Generic.HashSet[string]]::new()
+  if (Test-Path $monf) {
+    foreach ($l in [IO.File]::ReadLines($monf)) {
+      if (-not $l) { continue }
+      $i = $l.IndexOf(','); if ($i -gt 0) { [void]$have.Add($l.Substring(0,$i)) }
+    }
+  }
+  $want = [Collections.Generic.HashSet[string]]::new()
+  foreach ($x in $monIds) { if (-not $have.Contains($x)) { [void]$want.Add($x) } }
+  if ($want.Count -eq 0) { return }
+  $sw = New-Object IO.StreamWriter($monf, $true, [Text.UTF8Encoding]::new($false))
+  $added = 0
+  try {
+    foreach ($l in [IO.File]::ReadLines($src)) {
+      if (-not $l) { continue }
+      $i = $l.IndexOf(','); if ($i -le 0) { continue }
+      if ($want.Contains($l.Substring(0,$i))) { $sw.Write($l); $sw.Write("`n"); $added++ }
+    }
+  } finally { $sw.Close() }
+  Write-Host "  怪物清单 +$added -> $monf(累计 $($have.Count + $added))"
+}
+
 Ingest-Chunks | Out-Null
+Update-Monsters
 if ($BuildOnly) { Write-Host '仅并入,完成。'; exit 0 }
 
 # ---- 已完成 id(out 首列)----
@@ -119,21 +156,32 @@ $env:ANALYZER_PROGRESS_FILE  = $progf
 $env:ANALYZER_PROGRESS_EVERY = '10'
 $env:ANALYZER_PROGRESS_TOTAL = "$total"
 $env:ANALYZER_PROGRESS_BASE  = "$($done.Count)"
+# 怪物超时:单条 solve >60s 判怪物 → 放弃 + 输出 id,M(标记已处理 ⇒ 续跑跳过、build 侧 NaN 自动略过)
+# + 实时 [MONSTER] 报具体打乱。怪物(actual 24-25 深尾)回捞进 $monf,后续大 SQ1_TT_BUDGET 单独跑(仍可证最优)。
+$env:SQ1_SOLVE_TIMEOUT_SECS  = '60'
+# 看门狗当**安全网**:阈值 > 超时 ⇒ 正常怪物 60s 已被跳过、看门狗不响;若它响(>120s 仍在算)=
+# 超时机制有路径没覆盖到(真 hang),立即暴露具体打乱。正常跑应永远只见 [MONSTER]、不见 [STUCK]。
+$env:ANALYZER_STUCK_SECS     = '120'
 
 # ---- 一次喂全部 chunk 文件名 + exit 给 analyzer(单进程单次载表)----
 $stdin = ($chunkPaths -join "`n") + "`nexit`n"
 $stdin | & $exe 2> $logf
 $code = $LASTEXITCODE
 
-# ---- 并入本轮 chunk 输出 ----
+# ---- 并入本轮 chunk 输出 + 回捞怪物 ----
 Ingest-Chunks | Out-Null
+Update-Monsters
 
 if ($code -ne 0) { throw "analyzer 退出码 $code(已并入完成块,可重跑本脚本续解剩余)" }
 
-# ---- 校验:out 行数(去表头)应 == 语料(无解析失败行)----
-$outRows = 0; foreach ($l in [IO.File]::ReadLines($out)) { $outRows++ }
+# ---- 校验:out 行数(去表头)应 == 语料;怪物 id,M 算已处理,解析失败才是 id,-。----
+$outRows = 0; $mon = 0
+foreach ($l in [IO.File]::ReadLines($out)) {
+  $outRows++
+  $c = $l.Split(','); if ($c.Length -ge 2 -and $c[1] -eq 'M') { $mon++ }
+}
 $outRows = $outRows - 1
 $bad = 0
 foreach ($l in [IO.File]::ReadLines($out)) { if ($l -match ',-\s*$') { $bad++ } }
-Write-Host "完成:out $outRows 行 / 语料 $total$(if($bad){" ;⚠ $bad 行解析失败(id,-)"})"
+Write-Host "完成:out $outRows 行 / 语料 $total$(if($mon){" ;$mon 怪物(id,M)留 $monf 待单独跑"})$(if($bad){" ;⚠ $bad 行解析失败(id,-)"})"
 if ($outRows -lt $total) { Write-Host "  仍差 $($total - $outRows) 条,重跑本脚本续解。" }
