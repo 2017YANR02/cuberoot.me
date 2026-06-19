@@ -44,15 +44,14 @@ $PkgDir      = $PSScriptRoot
 #
 # 「最优等价打乱」(PUZZLE_EMIT_SOLN 第 3 列)支持现状:
 #   pocket / pyraminx / skewb = 精确最优解, 已产 soln 列 → 前端「原始/最优」切换可用。
-#   sq1   = 近最优(twophase 上界), analyzer 暂不产 soln 列 → 前端自动只显原始。
-#          TODO: 待 sq1 改产解序列(sq1_analyzer 已有 solve_with_solution, 需序列化 (x,y)/ 记号),
-#                此处 sq1 自然带上, build_puzzle_examples 无需改。
+#   sq1   = 难度走【精确档】(Sq1WcaSolver, sq1_wca_exact.csv, 由 inject_sq1_wca_exact.ps1 / grind 产)。
+#          近最优(twophase)2026-06-18 退役: 本脚本不再解算 sq1, build_puzzle_dist 直接读 exact CSV。
+#          (近最优代码仍在 solver/src/sq1_twophase.rs 作对照, 见该模块头的上游/cstimer-vs-TNoodle 说明)
 #   clock = 暂无 solver, 未注册; 接入时一并加 soln 列。
 $PUZZLE = @{
   pocket   = @{ event = '222';   exe = 'pocket_analyzer.exe' }
   pyraminx = @{ event = 'pyram'; exe = 'pyraminx_analyzer.exe' }
   skewb    = @{ event = 'skewb'; exe = 'skewb_analyzer.exe' }
-  sq1      = @{ event = 'sq1';   exe = 'sq1_analyzer.exe' }
 }
 
 if (-not $Puzzles -or $Puzzles.Count -eq 0) { $Puzzles = @($PUZZLE.Keys | Sort-Object) }
