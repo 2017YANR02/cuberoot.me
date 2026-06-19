@@ -29,6 +29,7 @@
 .wp-misc-table td { padding: 7px 8px; border-bottom: 1px solid var(--wp-border); }
 .wp-misc-table .wp-cell-num { text-align: right; }
 .wp-misc-table tbody tr:hover td { background: color-mix(in srgb, var(--wp-text) 3%, transparent); }
+.wp-misc-cuber { display: flex; align-items: center; gap: 6px; }
 .wp-misc-cuber a { color: var(--wp-blue); text-decoration: none; }
 .wp-misc-cuber a:hover { color: var(--wp-accent); text-decoration: underline; }
 .wp-misc-region { display: inline-flex; align-items: center; gap: 6px; }
