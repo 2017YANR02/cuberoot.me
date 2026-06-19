@@ -1,0 +1,32 @@
+# Scramble samples — f2leo / f2leo_xcross / Y / bin 10
+# Population in this bin: 25
+# Samples listed: 25 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+29464001,U L2 R2 U2 F2 L2 F2 R2 D' U2 R B L D' U' R U2 F' L U2 L2 B R,Y,Poznan Open 2014 (2014-06-14),333bf Final A #1
+456029001,L2 F2 R' D F' L' F' B D L2 F' U2 R2 D' R2 D L2 U R2 U2 B2,Y,Extra Rise Open 2017 (2017-02-26),333 Final A #3
+522317001,U2 L2 U R2 B2 D' L2 B2 U2 L2 F' U2 L' B R2 B2 D' R F L',Y,Swedish Championship 2017 (2017-05-26~28),333 R3 B #4
+660800025,F L2 B U2 R2 B' L2 B' D2 B L B D' L2 B2 D F' L' D' U L' F,Y,Aguascalientes Summer 2015 (2015-08-28~30),333mbf Final A #2
+729279001,D2 B' L2 F' U2 R2 U2 R2 F2 R' D' L F R' U F D2 F D' B2,Y,I Hope I Qualify 2018 (2018-03-17),333oh Final B #4
+853083001,D L2 B2 L2 D' B2 D R2 U2 L2 F' U' B' F2 R F L R2 D' U',Y,Tajikistan Open 2018 (2018-08-14),333 Final A #4
+976946001,D' F2 U2 F2 R2 B2 L2 F' L2 R' D' B L' U B D2 L F R2,Y,Northside Cube Day 2019 (2019-01-12),333oh Final A E1
+1187846012,U2 F2 L2 D' U2 L2 B2 U2 B2 U F' L2 B L D' B' R' F R2 F2 D2 B R,Y,Forgotten O'Clocks SBC 2019 (2019-06-16),333mbf Final C #1
+1233691001,U2 L2 U2 F2 R2 B' U2 F' R2 U2 L U' L2 D B' F R D2 U B,Y,İzmir Summer 2019 (2019-07-20~21),333 R1 B #2
+1547429001,U2 D' L' U' L2 U B R F' R2 D' F2 U L2 U F2 D L2 F2,Y,Going to The Gong 2020 (2020-02-16),333 R1 D E1
+1605620001,D2 R' F2 U R2 B2 L U' F' R B2 D2 B2 L' U2 B2 R2 L' U2 D2,Y,Iceland Open 2020 (2020-03-07),333 R2 A E2
+1636598001,R2 U' R' B2 D2 L' F' R B' D R2 U2 R2 L2 D' F2 D' F' R2,Y,Brisbane Is Back On 2021 (2021-01-16~17),333 R1 G #5
+1858262001,F' D B R U' L' F B2 U L2 B2 U' L2 D R2 U' R D2 B,Y,Noida Cube Open 2022 (2022-04-03),333 Final A #4
+2846569005,L2 F U2 B2 U2 R2 D' B' L' D2 F2 D2 F U' R2 B' L' R' D2,Y,Mini Minnesota Summer 2023 (2023-07-01~02),333mbf Final A #2
+3164801019,U2 B D2 R2 F D2 B U2 F2 U R' D2 F' L F2 L F' U L2 D L B',Y,Ansoáin Open 2023 (2023-10-14~15),333mbf Final A #1
+3227997001,U2 F2 L U' B2 U' R2 D2 F2 L2 B2 R2 U2 F' U B D' R B2 D',Y,El Carmen de Viboral II 2023 (2023-11-05),333 Final A #4
+3580686058,D2 R B R2 U R2 F2 L2 D2 L2 D B2 F' L' B2 L2 U' R D' B2 L2,Y,Reno Blind & Side Spring 2024 (2024-03-10),333mbf Final A #1
+3846234001,D R L D R L F' R' U R2 U2 L2 F2 R2 F U2 F D2 R2 F D2,Y,Colorado Mountain Tour - Glenwood Springs 2024 (2024-06-11),333 R2 B E1
+4585744001,L' F D' F U2 R2 U2 L2 B D2 F2 D2 F' U2 R' D' R' F2 L F2 L B R',Y,Catskills Spring 2025 (2025-03-23),333bf Final B #2
+4899326001,R2 U B D2 B R2 B2 F2 U' R2 F R D2 B R D2 L' B R,Y,Nyíregyháza Open 2025 (2025-08-02~03),333bf Final B E1
+5150837001,R B2 D2 B' L2 D2 R2 F D2 R2 F' R D' B' L2 D' L' U F' D2,Y,Xi'an Autumn 2025 (2025-11-02),333 R2 D E2
+5197191001,R2 U B2 F2 U' B2 U' L2 D2 L2 U L U' R2 F' R B' L' B2 U,Y,SSN Cube Challenge 2025 (2025-11-15~16),333 R1 F E1
+5223027001,F2 R2 B' L2 D2 B F R2 F R2 D' B R' B2 L D U F L2 U2,Y,St. John's Fall 2025 (2025-11-29),333 R1 A #1
+5297405051,F2 U F2 D U B2 R2 D' B R F L' U F' L F' L' B' D2 B D,Y,Taiwan Championship 2025 (2025-12-19~21),333mbf Final A #1
+5425971001,R2 D' U B2 D' R2 D R' F L U' L' B R F L R2 B2 F2,Y,Berkeley Favorites 2026 (2026-03-01),333oh Final B E1

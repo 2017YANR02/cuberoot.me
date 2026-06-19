@@ -1,0 +1,12 @@
+# Scramble samples — pair / xxcross_pair / O / bin 8
+# Population in this bin: 5
+# Samples listed: 5 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color
+
+890098,U' R2 D F2 R2 B2 U2 R2 D' B2 F2 D' U' F' R L' B2 D' R2 B U F' L' ,O
+890101,R2 B2 U' L2 D' F2 D2 L2 D L2 U L2 B2 U' L' B F' L2 U' B2 R D L' F' ,O
+890130,F2 U' R2 U' R2 U B2 D' R2 D' B2 F2 R2 D' B' R F' D' L' U' B U2 R' U' ,O
+892024,L2 B2 U L2 F2 D F2 R2 U' R2 U2 F2 R2 U' R' B L U' F' D' R' B U2 F' ,O
+892028,U F2 L2 D R2 F2 U B2 D' L2 B2 F2 U L2 U R' B L U' F' D' R' B U2 F' ,O

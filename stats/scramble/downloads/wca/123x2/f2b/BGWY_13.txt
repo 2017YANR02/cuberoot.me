@@ -1,0 +1,49 @@
+# Scramble samples — 123x2 / f2b / BGWY / bin 13
+# Population in this bin: 42
+# Samples listed: 42 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+163363001,U2 L F' B R L2 F' U F D' B2 R' B2 U2 L' D2 R2 B2 L',B,TCG & Friends 2015 (2015-07-11~12),333 R1 B #2
+280476001,L U2 R F2 D2 U2 R2 D2 U' F' R' F D' B' F U B2 D' U2,B,German Open 2016 (2016-04-09~10),333oh R1 A E2
+387024001,R2 D2 F D2 F U2 F D2 U2 F L' D' L U' B D' L F' R' D',B,Princeton Fall 2016 (2016-10-22),333 R2 A #3
+435660001,U2 L2 R2 U' R2 F2 D R2 F2 L2 D2 F' L' U' B L' F2 L R' B D L2 U',B,Madiun Happy Cubing 2017 (2017-01-22),333bf Final A #3
+455456001,U2 F L2 D2 B' D2 U2 B' D2 F' U R F' D B U2 B2 L R,B,Delhi Open 2017 (2017-02-25~26),333 R1 N E1
+481676001,B2 D F2 R2 F2 D' F2 D' B2 L' R D F U2 R2 B2 L B U' F',B,Best Open 2017 (2017-04-01),333 R1 A #4
+500088001,R F U' R' F U' B2 U2 D' B U2 F2 U F2 U2 L2 U' D2 R2 D' R2,B,Barby Cube 73 2017 (2017-04-29~05-01),333bf Final A E2
+660495001,U2 B2 R2 U2 R2 U2 B F2 R2 F' R D L' D2 U' L' D2 U2 F' L2 B L',B,Mallorca Open Rubik 2014 (2014-07-04~06),333mbf Final A #1
+660930003,B2 R2 D' L2 U2 F2 D B2 D L D2 R' F' U B L2 F2 D' R' U' F' L',B,Big Cubes Challenge 2016 (2016-02-27~28),333mbf Final A #1
+661168012,R2 B2 R2 U2 F2 U R2 D F' D2 B' U R2 U L R' U' R' F,B,Phillips Exeter Cube Day 2016 (2016-11-05~06),333mbf Final A #1
+804845001,F2 R2 D2 F2 R2 U2 F2 L' D2 F R' U' B2 L B U' F D2 F2 D,B,Windsor Classic 2018 (2018-06-16),333 R1 A E2
+902471001,U2 R2 B2 U2 L2 R B2 U2 R' D' L2 F' D' U' B' F2 L2 U' F2 L',B,Curicó al Cubo 2018 (2018-10-13),333 R1 D #3
+1074148023,B2 U2 L2 D L2 B2 F2 U2 R2 F' D2 L R' F2 D' L2 B L' U' L',B,Le Barcarès Mental Breakdown 2019 (2019-03-30~31),333mbf Final A #3
+1275172037,U2 L' U2 F2 U2 B2 L F2 D' B D U B2 U L2 D2 R' U' B,B,3x3 Only Minnesota 2019 (2019-08-24),333mbf Final A #1
+1286871001,F' D2 B2 L2 F U2 R2 U2 L2 D' R' F' R B2 R' U' L' D' R' F',B,Ibarra Open 2019 (2019-08-31),333 R1 B #5
+1327381001,U2 D' L B' R' U' D F L2 B' R2 U2 F2 R' D2 L F2 R B2 D2,B,Comas Speedsolving 2019 (2019-09-28~29),333 R2 B E2
+1788988001,U' B U2 R' U' B D F2 L' D2 B2 R2 F D2 B2 R2 L2 U2 R' B2 L',B,Melbourne Summer 2022 (2022-01-21~23),333bf R1 B #1
+1881735029,B2 D L B L2 F2 L2 D2 B' L2 R2 D R' F' U' B D L D2 L B2,B,Buckeye Blind Off 2022 (2022-04-16),333mbf Final A #1
+2122905001,U' L F2 D L' B R' F R B2 D2 L2 B2 D2 L' U2 D2 R2 D F,B,Swisscubing Cup IV 2022 (2022-08-20~21),333oh R1 A #1
+2314546001,D L F2 R B2 U2 R2 D2 F2 D' B F2 L R' F' D' U2 F' R2,B,Iowa Fall 2022 (2022-11-19),333oh R1 A #2
+2326190001,B F2 L F2 D2 L2 F2 R2 B2 U2 D' R' F L2 U2 F D' F' R D,B,U24 Open November 2022 (2022-11-20),333 R2 B #4
+2457270017,F' U2 F D2 U2 F2 R2 F U' R B2 D F2 L2 F' U L U2 R B' L B,B,4BLD in a Madison Hall 2023 (2023-01-28~29),333mbf Final A #1
+2491039001,F' U R' D' F2 U2 B2 U2 L2 B' R2 F L' D L2 R2 D2 U' R,B,Crazy Cubing Centurion 2023 (2023-02-11~12),333 R1 A #1
+2726355031,D B2 L2 D2 B2 U R2 B2 F2 D' R B' R2 B2 U' L B D2 B' D L' F2,B,PBQ Green Bay 2023 (2023-05-21),333mbf Final A #1
+2744906001,F' L' F2 U2 R F2 R' B2 L2 B' D2 F' U2 B2 R' B D U B,B,LSP Hverdagskubing Mai 2023 (2023-05-22),333 Final B E2
+3076073057,F2 D2 B' L R2 U' F2 R2 D2 L2 U' R B2 D U B' L' F U B' L,B,Szansa Cubing Open Warsaw 2023 (2023-09-16~17),333mbf Final A #2
+3497388001,F' D2 R2 B2 U R F' L2 U' R D2 R L2 D2 L2 F2 R2 F' R,B,Hawaiʻi Big Island Winter 2024 (2024-02-10),333 R1 C #1
+3546706001,D B2 U L2 D B2 D' U2 F2 R2 U' B' D2 R B' L F2 U' F' L2,B,The Battle of Concord 2024 (2024-03-02),333 Final A E1
+3960667001,D2 L2 B2 D' U2 R2 D R2 B L F U R B' F L' B2 L D' B' L2,B,Rubik's WCA South American Championship 2024 (2024-07-22~25),333bf R2 A E1
+4080206001,F L B2 L2 D2 F2 R2 F2 U F' R F2 D L2 D R' B D U,B,Kent Summer 2024 (2024-09-07),333 Final B E2
+4231814050,D B2 D2 R' F2 R' D2 L' D2 U2 F2 U B2 L' F U' L D B' U2 L2 U',B,DNFeandont Tijuana 2024 (2024-10-26~27),333mbf Final A #2
+4269636001,F U2 D F' D2 F2 U B R U' L U2 L2 F' R2 B' L2 F' R2,B,Back to Berlin 2024 (2024-11-09~10),333 R1 A E1
+4336022054,U B' U2 D' R' D2 L F' B2 D2 B U2 D2 F' U2 D' L2 B' D2 L B,B,Shhicago III 2024 (2024-12-07),333mbf Final B #1
+4909510001,B' L2 D2 B2 D L2 F2 D' U' B' R' D' B F' L' F2 U R2 B',B,Pune Unscrambled 2025 (2025-08-02~03),333 R1 A #2
+4964958001,F L' D' F2 U B2 U' B2 U R2 U2 B' U2 F2 L' R' D' F' D2 L,B,Tramsheds VI: Winter Saturday 2025 (2025-08-23),333 R1 A #4
+4970410001,R2 L' B2 D' F' U L' D' L' U D2 L2 D F2 U' L2 B2 D F2 U L2 U2,B,Louisiana Mega Two Day 2025 (2025-08-23~24),333bf Final A #2
+5084821001,U2 B2 R U' B R L' U2 F D2 F2 R2 B L2 F2 D' L2 B R',B,Cubing for Yuval Israel 2025 (2025-10-08~09),333 R1 G E1
+5167152001,F' R U2 F U L2 U2 B2 U2 B2 F' L2 D' U F U' L B',B,Cubing ATMOSphere 2025 (2025-11-08~09),333 R1 B E1
+5189783002,F2 D' B2 U' R2 D' U B' U2 L' B2 U' B' L R F' L' D2 R2 B' L2,B,Rudny Open 2025 (2025-11-14~16),333mbf Final A #2
+5340572001,B2 D2 R2 D2 L2 U2 F2 L2 U F' L R D B U' F' R B2 U F',B,Agoura Winter 2026 (2026-01-24),333 R1 A #3
+5420802001,R' B2 R2 F2 U L2 U R' U' B2 F' D' U' B2 F D' B' L',B,Pinoy Side Events Open 2026 (2026-02-28),333 Final B E2
+5552524001,D' L2 D L2 D2 B2 D' F2 B D2 L' U' R2 B' L D' L' R U',B,Lakewood Spring 2026 (2026-04-18),333 R1 D #2

@@ -1,0 +1,18 @@
+# Scramble samples — pair / xcross_pair / ORWY / bin 2
+# Population in this bin: 11
+# Samples listed: 11 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+351082001,F2 D2 B2 R U2 L' F2 U2 F2 D2 L2 B D' F2 L' D F R2 B2 L2,O,CCC Summer Open 2016 (2016-08-20~21),333 R2 B E2
+724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R,RGIT Cube Open 2018 (2018-03-10),333oh R1 A #4
+1092036001,B2 U B2 D' B2 U F2 R2 U' R F L F L2 U2 R D' L D,Y,Indian Nationals 2019 (2019-04-11~14),333oh R1 H #2
+1391001001,R F2 D' F D F' U' L F U' B2 U2 L' U2 L F2 B2 L' U2 R,Y,Caracolí Open 2019 (2019-11-03~04),333 R1 F #4
+1561971001,D' U L2 R2 U B2 R2 U2 R2 F L2 R' D' U' R' D' B F2 L,R,Frankfurt Cube Days 2020 (2020-02-22~23),333 Final A #4
+3061368001,F R' U R D R U' R U R2 L F2 U2 R' U2 L' F2 U2,Y,Cerrado Open 2023 (2023-09-08~10),333 R2 B #2
+3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y,Folkets Kub Alvesta 2024 (2024-01-27~28),333oh Final B E1
+3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,W,Longjum'Open 2024 (2024-01-27~28),333oh R1 A #4
+3518977001,U R2 D' F R' L2 F' L2 D2 B2 U F2 R2 F2 B2 D R U' R',O,Greater Toronto 2024 (2024-02-18),333 R1 H #1
+3579673001,B2 U' L2 F2 D2 U' R2 U2 F2 R2 B' R' U' L' U F2 L' R,R,Iloilo City of Love Open 2024 (2024-03-09),333oh Final C #5
+4381910004,U F2 U' B2 L2 D B2 L' R' F' U F' L2 R2 F' L' D F2 D',Y,I Hope It's Solved Edmonton 2024 (2024-12-21~22),333mbf Final A #3

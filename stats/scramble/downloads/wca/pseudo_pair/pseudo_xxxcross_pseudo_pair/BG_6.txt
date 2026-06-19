@@ -1,0 +1,28 @@
+# Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / BG / bin 6
+# Population in this bin: 21
+# Samples listed: 21 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
+188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,G,LMDL Open 2015 (2015-09-12),333 R1 B #3
+235735001,R2 D2 F2 R' F2 D2 B2 R2 B' D' U2 L2 D2 R2 U' L U2 R' B2,B,Greece Winter Open 2015 (2015-12-28),333oh Final B E1
+251557001,B2 U F2 D' U2 R2 D' U' L' D2 U2 F2 U L2 B L2 F' D2,B,Zaragoza Open 2016 (2016-02-06~07),333 R2 C #2
+430292001,U2 L2 R2 B' R2 B F U' L U' B L2 B L2 F' R' U B,G,Chișinău Winter 2017 (2017-01-08),333 R2 B #2
+504494001,F L2 D' B' U' F2 U B' R D R F2 B2 R' L' U2 L,G,GLS Cup II 2017 (2017-05-06),333 R2 C E2
+577465001,D F2 U R2 D' F2 U' B' R2 D2 B U2 L' D' B' U' L' B2,G,Bicho Legal Open 2017 (2017-08-19~20),333 R1 A #2
+584101001,B2 F' D2 L2 B2 F' L2 U2 L2 U' F' U B2 R D2 R2 F' U,B,Ukrainian Nationals 2017 (2017-08-25~27),333 R1 B #2
+661328028,U2 R2 D' B2 L2 D' R2 B L' U' R2 U2 B' L2 B R' F' D U2 L' F,B,Cat and Mouse 2017 (2017-04-29),333mbf Final A #1
+681376024,F U2 F2 R2 F2 L2 B' L2 R B L D2 R2 B' D' B2 R B2 U' F' L B,G,Swisscubing Mental Breakdown 2018 (2018-01-06~07),333mbf Final A #3
+705795001,L U2 L' D2 R F2 R' U2 L' F2 U R2 U2 B2 R' B2 R2 U2 B' R',G,Colegio Newton Yura 2018 (2018-02-11),333 R2 B E1
+1078996001,L2 B2 F2 L' B2 R U2 L F2 U L' D' B' D' R B2 F2 L' B,B,Cubalaya 2019 (2019-04-06),333oh Final A #2
+2478962001,F D' B D2 R2 B2 L B R' B2 U F U2 F' D2 B' L2 B',G,Empire State Winter Whirl 2023 (2023-02-05),333oh Final B #3
+2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,G,Pickering D 2023 (2023-03-26),333 R2 B #2
+3443928001,U2 R B2 R2 D2 L U2 R' U2 B2 F R B' F' D' B2 R2 U' R',B,Melbourne Summer 2024 (2024-01-19~21),333oh R1 A #5
+3486497001,D F' D' B' L' D' F2 D' L' F2 U2 F2 U2 L2 B2 U2 B2 U' L2,B,Egypt Winter 2024 (2024-02-03),333 R2 B E2
+4496834001,B D' L2 D2 U2 R' D' R' D B D2 L2 U2 L U' R,B,URJC Open 2025 (2025-02-15~16),333 R2 C #1
+4511552001,R2 F2 R B D' R D R D' B2 D B2 D' R2 D' L2 B2 L2,G,Pragyan Cube Open 2025 (2025-02-22~23),333oh R1 A #1
+4711986001,L' B U B U' B D2 L' B' U B2 D' B2 U D2,G,Cubing in School Westminster 2025 (2025-05-10),333 R1 A E1
+4924926027,B U2 B' R2 B' U2 B D2 U2 B2 R B2 D' U2 B' L U' L' D2 R2 D,G,Peterborough Qualification Day 2025 (2025-08-10),333mbf Final A #1
+5632126001,L' F' R2 U2 L2 U2 B F L2 F' R' F R2 D' R B2 L R F2 L',G,Long Island No Sound 2026 (2026-05-16),333mbf Final A #1

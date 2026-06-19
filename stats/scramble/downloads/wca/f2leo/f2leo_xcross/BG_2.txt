@@ -1,0 +1,13 @@
+# Scramble samples — f2leo / f2leo_xcross / BG / bin 2
+# Population in this bin: 6
+# Samples listed: 6 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+260937001,D2 R2 B U2 B' F2 R2 F2 R2 U' B L R2 U' R' F' R2 F2 U,B,Big Apple Cube Clash 2016 (2016-02-27),333oh R2 B #1
+342445001,L' R2 F2 R' U2 B2 U2 L2 D L' F' L' U B2 L D2 U' F',B,SSN Cube Open 2016 (2016-08-05~06),333 R1 H #4
+661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
+841822001,R L U2 L' B' L B' U' F2 L D2 R L F2 R,G,CubingUSA Nationals 2018 (2018-07-27~29),333oh R1 K #1
+1084160001,R2 L' U L' D2 F2 U2 R2 F L2 B D B2 L2 F2 L2 U F2 U2,B,Yancheng Spring 2019 (2019-04-06),333 R1 A #3
+1940152001,U L2 U2 L2 U' R D R F U2 F2 D' R B' R F2,B,3x3x3 Only Hamilton B 2022 (2022-05-29),333 R1 B #1

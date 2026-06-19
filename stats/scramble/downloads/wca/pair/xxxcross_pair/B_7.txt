@@ -1,0 +1,16 @@
+# Scramble samples — pair / xxxcross_pair / B / bin 7
+# Population in this bin: 9
+# Samples listed: 9 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
+584101001,B2 F' D2 L2 B2 F' L2 U2 L2 U' F' U B2 R D2 R2 F' U,B,Ukrainian Nationals 2017 (2017-08-25~27),333 R1 B #2
+753670001,U2 B2 L2 D' L2 B2 U R2 U R F U2 F R' U' R' F,B,Chanquete Open 2018 (2018-04-14),333 R2 B #1
+1128452001,D' F2 L2 U' L2 D U2 F2 R' U2 F2 U2 F D2 U' B2 U' B2,B,Chillán Open 2019 (2019-05-04),333oh Final A #1
+3126076001,D2 F' D' R2 U2 R' F' D' R' U D' L2 U2 L D2 R F2 R,B,South Deerfield Side Events 2023 (2023-09-30),333 R1 C #5
+3486497001,D F' D' B' L' D' F2 D' L' F2 U2 F2 U2 L2 B2 U2 B2 U' L2,B,Egypt Winter 2024 (2024-02-03),333 R2 B E2
+4475748001,F2 D' L' D F' D' L U L2 F' R2 D2 L' D2 R F2 R2 B2,B,Brazuca al Cubo I 2025 (2025-02-08),333 R2 A #5
+4698828001,B' U' B' L2 F' R2 U F2 L' U2 D2 B2 D2 L2 D2 B U2 L2 F' B',B,Kansas City Side Events 2025 (2025-05-03),333 R1 C #3
+4725510012,D R B2 U' R' L2 U' B2 D F2 L F2 B2 U' D2 F2 D2 L2 U,B,PBQtah 8 2025 (2025-05-17),333mbf Final A #1

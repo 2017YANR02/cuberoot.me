@@ -1,0 +1,11 @@
+# Scramble samples — f2leo / f2leo_xxcross / O / bin 4
+# Population in this bin: 4
+# Samples listed: 4 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,O,LMDL Open 2015 (2015-09-12),333 R1 B #3
+1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',O,High Wycombe Open 2019 (2019-06-08~09),333 R2 B #2
+1467171001,F2 D F2 D' R2 B2 R D' R2 U2 B2 U' F D' F D2 U,O,Pejaten Village Speedcubing 2019 (2019-12-14),333 R1 A #3
+2655130001,U2 L2 B' D2 B2 D2 L2 F' R2 U' F R U' L D2 F' D R2 B,O,Swallow Spring 2023 (2023-04-22),333 R1 B #5

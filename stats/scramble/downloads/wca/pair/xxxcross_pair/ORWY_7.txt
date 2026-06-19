@@ -1,0 +1,43 @@
+# Scramble samples — pair / xxxcross_pair / ORWY / bin 7
+# Population in this bin: 36
+# Samples listed: 36 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+239354001,D' R2 B2 R2 U' F2 D' F U F L' F U' F D F2 D B2 L2 U2,R,Great Indian Cubeathon 2016 (2016-01-08~10),333bf Final A #1
+419553001,F' U' F R U F2 R' F L2 B' L D2 R B2 R' D2 F2 L2,O,Cubelelo Winter Open 2016 (2016-12-22~23),333 R2 F #3
+433070001,R L' D' L' F' D2 B U2 R B2 U' R2 D R2 D F2 R2 U' F2 L2,O,Olsztyn Open 2017 (2017-01-14),333 R2 D #5
+728361001,L2 F2 R2 U F2 R2 F2 U2 L' U2 B' U B L2 U' F' L2 B,W,Ponikva Open 2018 (2018-03-17),333 R1 C E1
+733249020,F2 U' B2 U2 L2 B2 F2 D F2 U2 F' D' F U' R2 F2 U' L F L B2,R,Nacionales Uruguayas UCHI 2018 (2018-03-24~25),333mbf Final B #2
+863994001,B' D2 F' U F2 B R U' F2 R L2 U2 B L2 F2 B' R2 F2,Y,Ark 2018 (2018-08-24~26),333 R2 C E1
+1065348001,U R2 F' D B R' F B2 D B2 L U' B2 L2 U2 R2 U' D2,R,Speedsolving Huancayo 2019 (2019-03-24),333oh R1 A #3
+1690307001,R D B' L D2 R U2 L' R' U2 R F L2 R2 D2 L U' R2,W,Cubing Ekat Open 2021 (2021-09-11~12),333oh Final A E1
+1882653001,F' D' R2 B2 U2 F' L B D2 L D2 B2 L' D2 R' B2 R' B',W,San Diego Spring 2022 (2022-04-16),333 R1 B E2
+1923620001,B' L2 U2 B' U2 F R2 F2 R2 D' R2 D2 R' U2 F' U' R' F' L',R,Sherwood Park Spring 2022 (2022-05-21),333 R1 E #5
+1997666001,R' F' U2 L U' F2 R' B L2 F' U2 F2 L2 B' U2 L2 R' D',O,Petaling Jaya Cubing Comeback 2022 (2022-07-02~03),333 R1 C E1
+2497401001,F U2 F' L2 B' L2 F' D B' D2 F D' U2 L R2 B D R2,O,Waterloo Favourites B 2023 (2023-02-19),333oh Final A #3
+2647919001,B' R B' R2 F2 L D2 F2 R' B2 U2 F2 U B L' U2 F' L' R',Y,Szokolya Open 2023 (2023-04-15~16),333 R2 A #1
+3031013009,U2 L' F2 B' R' D' R' U' L2 U' B2 U D' F2 L2 D F L2 U B R,R,Pace Blind 'n Crazy Stockholm 2023 (2023-09-03),333mbf Final A #2
+3155239001,U2 R D2 B2 L' F2 U2 L D2 B' L B D' B2 R' B F L' U2 L2,O,Ankuram Open Saturday 2023 (2023-10-14),333bf Final B E1
+3267639001,L D R2 D2 B L B U' B D2 L2 U2 D' F2 R2 L2 D' R2,R,Vermont Cubikon 2023 (2023-11-18),333 Final A #3
+3423064001,D F' R F2 L2 B2 U R2 D2 U2 F' L U' L' B' D' B' F2,W,Iguatemi Fortaleza 2024 (2024-01-13~14),333 R1 D #4
+3492724001,U2 L B F' U2 F2 D2 B' D' L2 R2 B2 U' R2 B U2 R',R,HCHS Winter Open 2024 (2024-02-03),333 R1 B #2
+3648623001,U B U R2 F2 L' U2 R' D' L F2 R' D2 L' B2 R' U2 F',Y,Santa Barbara Cubing 2024 (2024-04-06),333 R2 D #4
+3839448001,F2 L' F' D L F2 D' L2 D F' B2 U2 R2 U R2 F2 U B2 U,W,24 Horas em Salvador 2024 (2024-06-08~09),333 R1 A E2
+4049432001,L B D2 L' D L2 B2 U B2 U2 F2 R' U' L B2 F2 U2,R,Telangana Cube Championship 2024 (2024-08-23~25),333oh R1 E E1
+4324135001,D' L2 F2 U R' D' L' B F2 R F2 R B2 L U2 F D2,W,Barcelona Open 2024 (2024-11-30~12-01),333 R1 E #5
+4381056012,F2 L U2 B2 F2 R2 U2 D' L U' R2 D2 B2 U' R' D',Y,Bengal Cube Open 2024 (2024-12-20~22),333mbf Final A #1
+4451791001,U' R2 L F' R U' R' D2 R2 U R2 F' D2 F' D2 F' R2 L2,Y,Avenida Chile XIX 2025 (2025-01-25~26),333 R3 A #5
+4528030001,R F' L' D' F' D' F2 R' D' L' R2 U F2 L2 U' F2 R2 D2,W,Amrita Newcomers Twistathon 2025 (2025-03-01),333 R1 H #3
+4578226001,R D R' B R2 B' L2 F2 D2 F' D2 F' L' D2 F U F',O,Wichita Art Museum 2025 (2025-03-22),333 Final A #1
+4805783058,U F U' B2 U' D2 L' D2 B R2 D' L2 D B2 D' L2 R' D2 L B2,Y,New York Multimate PBQ II 2025 (2025-06-13~15),333mbf Final A #2
+4875470001,U B' D F2 R U2 R' D L2 B2 D' F2 U F2 R2 U' L' B U',Y,Calgary Summer B 2025 (2025-07-20),333 Final C #3
+4983878009,U F' R2 B2 U2 R' U2 R' F2 U2 B L2 U R' B' R2 F' L D' L' F,O,Romanian National Championship 2025 (2025-08-21~24),333mbf Final A #2
+5350697001,B2 U D2 L2 F2 R D' F2 D2 L2 F B' R2 F2 B' D F',W,Chipichape al Cubo II 2026 (2026-01-24),333 R1 C #3
+5432779001,U' R' D R' B' D L U2 F L2 B L2 D2 F2 R2 U2 F D,W,Wiltshire Spring 2026 (2026-03-07~08),333 R3 C E2
+5539194001,L2 U2 B2 F2 L2 U' B2 D' R2 L U2 F U' B2 D' F' U2 B' D2,Y,Adelaide Autumn 2026 (2026-04-12),333 R1 A #2
+5564013001,F' B2 U2 B2 D2 L' U2 L B R F2 D' L U L F' R2 D2,O,Duper Super Davis Spring 2026 (2026-04-19),333 R2 A E1
+5575666026,L' U2 R2 D' L2 R2 B2 U2 F' U F U2 B L' R' U2 F' U F' L2 U',Y,WCC Western PBQ Championship - Santa Clara 2026 (2026-04-25),333mbf Final A #2
+5661276001,L2 F2 U' F2 L2 U' L2 F2 R2 B R' U F' L' F2 R D' B' F2,W,Liuzhou Open 2026 (2026-05-24),333 R2 D E2
+5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026 (2026-05-30),333 R2 B E2

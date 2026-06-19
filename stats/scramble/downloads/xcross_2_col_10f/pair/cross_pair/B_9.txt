@@ -1,0 +1,35 @@
+# Scramble samples — pair / cross_pair / B / bin 9
+# Population in this bin: 28
+# Samples listed: 28 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color
+
+4758,U F2 D B2 U2 R2 U L2 U' L2 U B2 U' B' L2 U L' F' D' B R D2 U L U' ,B
+7268,D' R2 L2 U2 B2 F2 U' R2 B2 D2 F2 D U F' R L U B' F D' U F' D' U' L' ,B
+7270,U' R2 F2 D' L2 D B2 U L2 B2 R2 D' F2 U' B' L F' D2 R2 U' R' D' B' L' ,B
+7273,U' B2 F2 R2 L2 U' B2 L2 D2 F2 L2 F2 U2 F' R L U B' F D' U F' D' U' L' ,B
+7286,B2 D2 F2 U B2 F2 R2 L2 D' L2 D U' F' R L U B' F D' U F' D' U' L' ,B
+7287,U B2 L2 B2 D F2 D' F2 U' B2 R2 D' R2 F' L' B F2 D2 U L' D' F R U' ,B
+7289,U2 B2 U' L2 U R2 B2 L2 D' R2 U B2 D2 R2 L' B' F' R' D F' R2 U' F U L' ,B
+7290,F2 R2 B2 U F2 U F2 D' B2 U' B2 R2 D' L' U2 B D R F' L' U' B' D L' ,B
+7291,F2 U2 B2 D B2 F2 D2 R2 L2 U' L2 D U' F' R L U B' F D' U F' D' U' L' ,B
+7315,D' F2 L2 U2 R2 F2 R2 U2 F2 L2 U L2 B2 F' R L U B' F D' U F' D' U' L' ,B
+7316,R2 F2 U R2 U' L2 D' F2 D' F2 R2 D' R2 U' B' L F' D2 R2 U' R' D' B' L' ,B
+7317,U B2 F2 L2 B2 F2 L2 U' L2 F2 U2 F2 D' U' F' R L U B' F D' U F' D' U' L' ,B
+36937,D2 B2 F2 R2 D2 F2 D U' L' B F D R' L D U' L' D' U' F' ,B
+36941,D' R2 U2 L2 B2 U B2 U R2 B2 D2 F2 U F2 U2 L' B F D R' L D U' L' D' U' F' ,B
+40880,R2 D B2 F2 R2 L2 D L2 F2 D2 L2 F2 L2 U2 L' B F D R' L D U' L' D' U' F' ,B
+889432,B2 F2 L2 U' B2 D2 L2 U' B2 U2 B2 R2 U' L2 U2 L' B F D R' L D U' L' D' U' F' ,B
+889435,B2 U2 L2 D' F2 R2 U2 L2 F2 D2 B2 L2 U' L' B F D R' L D U' L' D' U' F' ,B
+1271680,B2 U' R2 F2 D' R2 L2 F2 U F2 U R2 U2 L2 U2 B' R' D' R2 L B2 F D' B' R' ,B
+1271681,B2 D' F2 D L2 U F2 D2 F2 L2 U B2 U2 R2 L' D2 B' U' R' F L D B U' L' ,B
+1271682,F2 U B2 D' R2 B2 D R2 U2 L2 U' F2 D' L' F U2 B U' R' D F' D2 B' L' ,B
+1271683,D2 B2 R2 D F2 L2 F2 L2 U B2 R2 D L2 D U' B' D' B2 L F' U R' D L2 F' L' ,B
+1271684,L2 D2 B2 D' R2 L2 B2 D' R2 D' B2 L2 U' F' D2 R' D2 U B D' F2 R' F' L' ,B
+1271685,U2 L2 D' F2 R2 D' L2 D' R2 B2 D2 L2 U' L2 F' D2 R U B L' F' D' R' U F' ,B
+1271686,B2 U' L2 D2 B2 D R2 U' R2 U F2 L' D F' U' L' B' R D F U2 L' ,B
+1271687,R2 F2 D R2 D' F2 R2 U L2 U2 R2 U' F2 U' L' B D2 F D' R' U B' U2 F' L ,B
+1271688,L2 U' L2 D L2 U' L2 D R2 D' L2 B2 D2 L D F' U' L' B' R D F U2 L' U' ,B
+1271689,D2 R2 U' F2 L2 U B2 U2 B2 U' R2 U' F2 L' F' D2 B' D R U' F U2 B L' U' ,B
+1271690,B2 L2 F2 U' B2 D B2 D2 R2 L2 F2 D' R' B L2 F U' R' B' L' D F' U' L' ,B

@@ -1,0 +1,13 @@
+# Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / WY / bin 5
+# Population in this bin: 6
+# Samples listed: 6 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color
+
+18,L2 F2 R2 L2 U' R2 F2 U' F2 L2 D R2 D2 B' L2 D R L F' U' B' L ,Y
+19,F2 D2 L2 D' F2 L2 F2 L2 D' U' R2 D2 R' D2 B' D' L' F' U R B L2 ,Y
+20,L2 B2 D L2 D F2 L2 D B2 R2 F2 U' R2 U' F' R2 D R L B' U' F' R ,Y
+21,F2 U2 R2 D B2 U2 L2 B2 L2 D U' L2 R' D2 B' D' L' F' U R B L2 ,Y
+22,B2 D F2 U R2 F2 L2 U' B2 U F2 D F' R2 D R L B' U' F' R ,Y
+23,R2 D2 B2 D2 U' L2 B2 L2 B2 D2 L2 U2 R' D2 B' D' L' F' U R B L2 ,Y

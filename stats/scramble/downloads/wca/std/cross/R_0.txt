@@ -1,0 +1,13 @@
+# Scramble samples — std / cross / R / bin 0
+# Population in this bin: 6
+# Samples listed: 6 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+242765001,B L' F' R' U2 R' F' D2 R2 B L2 U2 D B2 D' F2 B2 D' B2,R,Horizon Cube Open 2016 (2016-01-16~17),333 R2 E #3
+1776277001,R U' B2 R2 D2 B D2 R2 U L' U' R2 F' D B' D2 R,R,Bologna New Year 2022 (2022-01-02),333 R2 B #5
+4433820001,F' B2 L' B2 L2 B' L' F' U2 D' B2 U2 F2 U L2 U' D2 L',R,Paulo VI Cartago 2025 (2025-01-19),333 R2 B E2
+5117693001,R U R' F2 D' L2 F2 L' D2 F' L2 F L2 U2 D2 F2 U2 F D,R,UH Cubing San José 2025 (2025-10-18),333 Final A E1
+5243105001,U' B2 U L2 D' F2 L2 U B2 F U2 B' L' B F2 L' F R2,R,Hungarian All-Rounder 12 2025 (2025-12-06),333oh Final A E2
+5540873001,B R2 U2 B2 F' R2 B F R' F2 D2 R U B2 F2 R D' B' F,R,Xuzhou Zenith 2026 (2026-04-11~12),333 R2 D #1

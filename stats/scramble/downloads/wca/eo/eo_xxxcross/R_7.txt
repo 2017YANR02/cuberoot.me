@@ -1,0 +1,17 @@
+# Scramble samples — eo / eo_xxxcross / R / bin 7
+# Population in this bin: 10
+# Samples listed: 10 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+499548001,U' L2 U2 R2 U' L2 D' R2 F2 L' F L R2 U2 L2 B' L' D' B' L',R,Please Be Quiet UCLA 2017 (2017-04-29~30),333bf R1 B E2
+660698003,L2 D2 F D2 L2 F L2 B' R D2 L' F2 L R B2 D' F U' B' L2,R,Curitiba Open 2015 (2015-04-25~26),333mbf Final A #2
+880129001,L' F' L D L D' L2 F' R' F2 U D L2 D' R2 D L2 D',R,No 3x3x3 Mississauga 2018 (2018-09-15),333ft Final A #3
+2430576001,D L2 F U F2 U R2 D2 B2 R2 U L' U2 B' L2 U' F' U R2,R,Richmond Favourites 2023 (2023-01-14),333 Final A E2
+2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,R,Pickering D 2023 (2023-03-26),333 R2 B #2
+3992623001,D2 F B2 U' F2 L2 F' R F' B L2 U2 L2 U2 F' D',R,A Twisty Day in Araneta 2024 (2024-08-04),333oh R1 A E2
+4898954001,F' R2 U2 L U2 F2 R' D2 U2 L B2 R' D B2 F2 L B L D,R,Play Extreme Cubing B 2025 (2025-08-03),333 R1 C #1
+5186792060,U R2 D2 U L2 B2 D R2 L D2 B' L B F2 L B2 R2 U',R,Polish Championship 2025 (2025-11-13~16),333mbf Final A #1
+5583676001,L D B2 D2 B2 U2 R2 F2 R' U2 R' U2 B2 F' L' D2 L' F2 D,R,Tigery Open 2026 (2026-04-25~26),333oh Final A #2
+5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026 (2026-05-30),333 R2 B E2

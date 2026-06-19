@@ -1,0 +1,23 @@
+# Scramble samples — f2leo / f2leo_xxcross / BG / bin 4
+# Population in this bin: 16
+# Samples listed: 16 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+80535001,R F' U2 L2 U D2 R U D' B U' L2 B R2 B' D2 B,G,Plaza de las Américas 2014 (2014-11-15),333oh Final A #1
+132039001,R' L' D' R2 B L B' R' B D' F2 D2 L' B2 L2 F2 U2 R' L,G,Cerbuna Open 2015 (2015-04-18~19),333 R2 B #3
+188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,G,LMDL Open 2015 (2015-09-12),333 R1 B #3
+660707002,U' L2 U F2 R2 B2 D2 L2 F2 U F' L D' F D' L D2 R2 F2 D2 B R,B,Mega Rubik 2015 (2015-05-02~03),333mbf Final A #1
+1004836001,D' L' F' R' U L F2 R' U2 L' F2 L2 D' L2 U' B2 L2 U,G,Return to Toronto 2019 (2019-02-02),333 R1 B #3
+1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',G,High Wycombe Open 2019 (2019-06-08~09),333 R2 B #2
+1228058002,B2 U2 R2 U2 R2 D B2 L2 F' D2 B R2 F L2 D' F' U R' B' D,G,Israel Summer Open 2019 (2019-07-17~18),333mbf Final A #1
+1289854007,U B2 D F2 L2 B2 D L2 U L2 U2 B F2 U' R B2 L2 B' F2 L,B,Champagne Open 2019 (2019-09-07~08),333mbf Final A #1
+1728229001,F2 U R L' F' L F' D B' R2 L D2 B2 L' F2 R' B2 U' B,G,BrizZon Side Open III 2021 (2021-11-12~14),333bf R2 B #1
+1761589001,F2 R2 U' B2 L2 D' L2 D2 L F D F2 L D' F' L2 F2 D',B,Richmond Open A 2021 (2021-12-11),333oh R1 A #5
+1902384001,D B' D L' D2 L B2 D2 R D2 R2 B R F' D R D2 L R,G,Stevenage Spring 2022 (2022-04-30~05-01),333 R2 C #3
+3185199001,F' L U L2 U2 F U B' U2 F U2 F2 U2 F U2 R U',B,Hong Kong Championship 2023 (2023-10-21~22),333 R2 A #1
+3268100001,D' L' U2 B2 U F2 R2 F2 R' F' D' R2 U2 L D2 B L',B,Cubing in Palem 2023 (2023-11-12),333 R1 D E1
+4279660001,U' F R2 B' D2 F D2 F2 L F' R2 F2 R2 U' F U R' B',G,Slow N Steady UMD Fall 2024 (2024-11-09~10),333 R1 D #1
+5267926001,L B' U2 B U' L2 R' U' L U' F' R' F R2 B' L',G,UNESP Rio Preto Open 2025 (2025-12-13~14),333bf Final B #1
+5501210001,F' L F D F' D' F L' B' D2 R F' R2 F B2 U2 F L2,B,North Sound Spring 2026 (2026-04-04),333 R2 A #5

@@ -1,0 +1,36 @@
+# Scramble samples — std / xxxxcross / ORWY / bin 15
+# Population in this bin: 29
+# Samples listed: 29 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+290204001,R2 B' L2 F' R2 D2 F U2 F L2 R F2 L R2 D' F U R2 B2 R,O,MIT Spring 2016 (2016-04-30),333 R1 D #2
+587315001,F R2 U2 F' L2 R2 B' D2 U' B2 R D B2 U2 R' B' F R' B' R' D',O,Svetlye Gory Open 2017 (2017-09-02~03),333bf Final B E1
+653513007,B2 F2 R2 D U L2 U R2 B2 U' F' R B D R2 B' U2 F D2 U' R' D,O,Bekasi Cube Days 2017 (2017-11-25~26),333mbf Final A #1
+663182034,R2 D' U' B2 L2 D' R2 U' B2 L' R2 B D R' U B' L2 R B L B R2,O,GLS Final 2017 (2017-12-09~10),333mbf Final A #1
+742053001,L D' L D2 R U F D2 R B U2 B D2 F2 R2 L2 U2 B' R2 B2,O,Budapest Open 2018 (2018-03-31~04-01),333 R1 B #5
+954512001,U L2 D2 B2 U B2 D' R2 U' B L' R' D B' R2 U' F' U' B F2,O,Nacionales Argentinas 2018 (2018-12-08~09),333 R2 A #4
+1100226001,L2 R2 F' U2 L2 F2 U2 F' L B' D F2 D2 F R D2 L2 R' U,O,SnoCo Feet Fest 2019 (2019-04-13),333 R2 B #1
+1158821001,R2 D' B2 L' D2 B' R F' R U' L D' R2 D L2 F2 U2 R2 L2,O,Peach State 2019 (2019-05-25~26),333 Final A #4
+1214395001,F2 L2 D L2 F2 L2 U2 R2 D' L B2 R' U2 R2 D B2 R B' L F',O,Maru Cube Day 2019 (2019-07-06~07),333oh R1 D #1
+1397697001,R2 U2 L2 F2 U2 F2 U' L2 R2 U L2 B' U2 L F L' D' B F' R' F,O,Berkeley Fall 2019 (2019-11-10),333oh R1 A #3
+1475913001,B' L2 U2 F U2 R2 D2 U2 F' D2 U2 R B2 D' B' R' D U B' L',O,Harbin Open 2019 (2019-12-22),333 R1 A #5
+2316745018,B2 L F' U' B2 D2 F2 L U2 L' B2 L' B2 F' R2 D B' U F U' L B2,O,Thanksgiving PBQ Tour - Saratoga Springs 2022 (2022-11-23),333mbf Final A #1
+2351263001,L F L' F2 L2 F2 U2 R' B2 U2 F L' R' B L D' F' L2 U',O,KSRCT Cube Open 2022 (2022-12-03~04),333 R1 E #4
+2843141001,F R2 F2 D2 U2 F2 R U2 L2 F R U L' F U F' D F2 R2,O,Cebu Cube Cup 2023 (2023-07-01),333oh Final A #3
+2885233001,D B R' D' R2 D U F2 R2 B2 L2 F2 R F R D' U2 B U R',O,Kerman Summer 2023 (2023-07-12~14),333 Final A #2
+3155069001,F2 D R' D2 U' F2 R2 F2 L2 D2 L2 U' L2 F' U B' R F' U B2,O,Cochabamba Feria al Cubo 2023 (2023-10-08),333 R3 A E2
+3507551001,F' D2 B2 R2 U R2 D U2 L2 B R' D' B D2 F' U2 L B' R,O,Side Events Bangalore Feb 2024 (2024-02-10~11),333oh R2 A E2
+3530543001,F2 D2 B U L2 U L2 R2 B2 D U2 B2 D B' L' D R2 U B2 U2 B' L2 U2,O,Fullerton Winter 2024 (2024-02-24),333bf R1 B #3
+3579448001,D U R2 D2 L2 U F2 R U2 L2 F' U2 L' U2 R2 D' F' L U',O,Lipovljani Newcomer Day 2024 (2024-03-10),333 R1 A #2
+3652209001,L' D F' L2 R2 F2 U' L2 U B2 D' B' L R' F2 R2 D R2 D,O,Cubing Kids Festival La Paz 2024 (2024-04-07),333oh Final B E2
+3845398001,R2 B L2 F' D2 U2 B' D2 B' U2 B2 U' F2 R' U' L' B' D U' F,O,Vancouver's on Tracks 2024 (2024-06-08),333 R1 B E1
+4243412001,R' B2 L D' L' U' D2 F L' U2 F2 R2 F2 R2 B2 U2 L' F2 R' F,O,Bremium Cubing 2024 (2024-11-02~03),333oh R1 B #2
+4611509001,U2 R2 B2 L F2 L' F2 R' F2 U2 L U' B2 L F D R B F L',O,Sofia Open 2025 (2025-03-29~30),333 R2 B #1
+4695035019,R2 F' D2 F R2 B2 D2 F' D2 L F' L2 R' D R' B' R' F U' B' L',O,Roskilde by Night 2025 (2025-05-03),333mbf Final B #1
+4862076001,U' D2 L B2 D2 U2 R F2 D2 F2 L U' F2 R F' L R' D' F R',O,Cubing with the Kilkenny Cats 2025 (2025-07-12~13),333 R1 C #2
+5163098001,B2 F2 L B2 D2 L2 R' B D' U' L2 R B L D F U' R',O,Cliffside Cubing Billings 2025 (2025-11-01),333 R1 B #3
+5297405051,F2 U F2 D U B2 R2 D' B R F L' U F' L F' L' B' D2 B D,O,Taiwan Championship 2025 (2025-12-19~21),333mbf Final A #1
+5337153001,U R L2 U2 R2 F' U2 F' D2 U2 F D F U2 B' L' R' U B2 L',O,Just Judge Jura 2026 (2026-01-17~18),333bf Final A E1
+5599614016,D' F B' D2 R' F U L D F R2 F2 B2 U2 R2 F2 L2 F' U2 R2 B' L2,O,Campeonato Mineiro 2026 (2026-05-01~03),333mbf Final B #1

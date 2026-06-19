@@ -1,0 +1,10 @@
+# Scramble samples — std / xcross / BGWY / bin 9
+# Population in this bin: 3
+# Samples listed: 3 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+3164801019,U2 B D2 R2 F D2 B U2 F2 U R' D2 F' L F2 L F' U L2 D L B',B,Ansoáin Open 2023 (2023-10-14~15),333mbf Final A #1
+3714112001,B U D2 F' R D' F' D2 L2 B' U2 B2 R2 F2 L' B2 R' B',B,Bay Area Speedcubin' 61 - San Jose 2024 (2024-04-27),333 R1 C #3
+4695035019,R2 F' D2 F R2 B2 D2 F' D2 L F' L2 R' D R' B' R' F U' B' L',B,Roskilde by Night 2025 (2025-05-03),333mbf Final B #1

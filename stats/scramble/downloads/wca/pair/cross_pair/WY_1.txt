@@ -1,0 +1,39 @@
+# Scramble samples — pair / cross_pair / WY / bin 1
+# Population in this bin: 32
+# Samples listed: 32 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+6462001,U L2 D U2 R2 U R2 B F' L' U F' L R2 B' F' D',W,Rumia Open 2014 (2014-03-29~30),333bf R1 A E2
+146449001,L' R' F2 D2 R F2 D2 F2 D' B D U2 R F2 D' U2 R B',W,Indian Nationals 2015 (2015-05-29~31),333 R1 L E1
+183540001,B2 L2 R2 D' L2 U2 F2 D' R F' R2 B2 F R' D2 B U' L2 B2 L' F2,W,Brain Studio Cube Open 2015 (2015-08-29~30),333bf R1 E #2
+197375001,U B' U' L2 B L' U' F R L2 U' B2 R2 F2 R D2 R2 D2,Y,Cubetoberfest 2015 (2015-10-03),333 R1 A E1
+205892001,F2 D B2 R2 U' F2 L2 U' R' D2 B' F' L2 F' R' D2 U2 R B' L B2,Y,Beijing Open 2015 (2015-10-24~25),333bf R1 A #2
+238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,W,Great Indian Cubeathon 2016 (2016-01-08~10),333oh R1 G E1
+248244001,B2 D2 B' U2 F' D2 B L2 D' L' F U' L2 D' U' R D B D' L2 U',Y,Camarma Open 2016 (2016-01-30),333bf Final A #1
+289173001,L2 F D2 B2 F D2 L2 D L2 D B2 U' F2 L' D R2 D2 L,W,Melbourne Autumn 2016 (2016-04-30),333 R1 G #1
+365324001,L B' D' R2 B L U2 D2 L' B' L D2 R2 B' U2 F' B2 L2 D2,W,VIT Rubik's Cube Challenge 2016 (2016-09-24~25),333oh Final C #2
+383553001,B2 D2 L2 F2 L2 R2 U L2 F D' R' B2 U B F2 L B L2 U',W,Tathva Cube Open 2016 (2016-10-22~23),333oh R2 B #4
+537336001,F B2 U' L' F' B2 D' F' D B2 U' F B U2 R2 L2 F' U2,W,Beijing Open 2017 (2017-06-24~25),333 R1 B #5
+539173001,D2 F' R2 F U2 F U2 L2 R2 D' L D L' U R U R2 U2 B' L',W,Irish Championship 2017 (2017-06-24~25),333 R1 C #3
+860719001,R2 D2 U2 L' B2 U2 F2 R' B D2 U2 B U2 R' D B R' U L',Y,IGA 2018 (2018-08-18),333 R2 D #1
+957088001,B L2 D2 U2 F2 D2 B' L2 R2 F R' D L2 U B' U2 B' L' R',Y,Big CubingItaly 2018 (2018-12-15~16),333 R1 C #2
+1125495001,D F D L' D F B2 R B' U B' U2 L U2 R D2 R' D2 F2,W,Guiyang Open 2019 (2019-05-01~02),333 R1 A #4
+1740888001,B' R D2 B U2 F U B D R2 U F2 U' B2 L2 U R2 D2 B,Y,Guayaquil Resist 2021 (2021-11-27),333 R2 D #1
+1764244001,L U R2 L2 B2 D2 R' U2 B L' U2 B D2 L2 B2 R2 F' D2,Y,Welcome Back Taipei 2021 (2021-12-19),333 R2 C #2
+2041467001,R2 U2 D F D2 B2 U D2 L F2 U' F2 U L2 B2 L2 B2 D' R2,W,Cubing Returns Delhi 2022 (2022-07-23~24),333 R2 B #1
+2066237001,B' R2 L F' D' F L' U2 F2 D2 F2 L2 U2 R' F2 U2 B2 F D2,Y,Lazarillo Open 2022 (2022-07-30~31),333 R1 C #4
+2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,Y,Pickering D 2023 (2023-03-26),333 R2 B #2
+2987280001,U' B2 D2 L2 D F2 R F2 R D' F U2 R F2 D2 U L' R,Y,Dublin Summer Solving Sunday 2023 (2023-08-20),333oh Final A E1
+3151446038,F D F2 L2 B R L2 D L2 U' R D2 F U2 F2 D2 F R2 B' L',W,UCSD Extravaganza PBQ 2023 (2023-10-08),333mbf Final B #1
+3167340001,F' B2 D' L2 D L' F L' R2 F2 R2 B' D2 B' L' F2 U,Y,Chengdu Flash Cube Open 2023 (2023-10-15),333 R1 J #2
+3470287001,D' R D2 L' U2 R U2 L' F2 L U B D2 B' F' L D' L B',Y,Bolivia Cubing Tour - SCZ 2024 (2024-01-27~28),333 R2 B #5
+4087810001,D L B2 L2 D2 U2 F U2 F L D L' R B' D R' U2 L2,Y,Apol Open Guayaquil 2024 (2024-09-07),333 R1 A #4
+4230218001,U2 B' D2 R2 D2 R2 B U2 F L F U' R2 D R2 F U L F',W,Wichita Speedcubing Fall 2024 (2024-10-26),333 R2 B E2
+4324764001,B' D' L2 F2 D B2 L2 D2 L2 B U' R2 F2 U F2 L U' L',Y,Centro Suba Bogotá IV 2024 (2024-12-01),333 R2 C #2
+4471267013,D' R2 F' R U2 B2 R2 F' D' R B F2 D' F2 U' D' L2 D' F2 D',W,DFW Mega Mental Breakdown 2025 (2025-02-01~02),333mbf Final A #1
+4542723001,B2 U R2 B2 L2 F2 U' R' B L D U F L B U' R B,W,Trondheim Play 2025 (2025-03-03~04),333oh Final B E2
+4640170001,B' L2 F' D' B2 U2 D' F' R' B2 U2 L' B2 U2 L' U2 R' F2 L,Y,South East Louisiana Open 2025 (2025-04-12),333 R1 A #3
+4828902071,D2 F' B2 L2 U' L2 D B2 U' B2 R2 L' F' L' U F L' U2 B' L B2,Y,Worlds Prep in Palisades 2025 (2025-06-20~22),333mbf Final B #1
+5486109007,R' D2 L B2 L2 D2 F' U' R2 F L D B L D' B R B' L',W,Budapest Open 2026 (2026-03-28~29),333mbf Final A #1

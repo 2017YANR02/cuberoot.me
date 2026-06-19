@@ -1,0 +1,50 @@
+# Scramble samples — eo / eo_xxxxcross / G / bin 10
+# Population in this bin: 43
+# Samples listed: 43 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+25765001,R2 U F' U F' R2 D F2 L F2 L2 D2 R F2 L' D2 L B2,G,Erfurt Open 2014 (2014-06-07~08),333 R2 A #4
+123707001,U2 B R2 U2 F U2 F' L2 B R' D' F2 D' B' R2 D' L B R' B2,G,Michigan Cubing Club Beta 2015 (2015-04-04),333 R1 A E2
+188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,G,LMDL Open 2015 (2015-09-12),333 R1 B #3
+235625001,D L2 D' B2 L2 D' F2 U' R2 B' D2 U R2 F' R2 D' F' U2,G,Brain Studio Winter Open 2015 (2015-12-25~27),333 R2 F E1
+386343001,B2 L2 D R L' B' D' F L2 B' R' L' F2 D2 R' D2 L B2 D2,G,Hayward Rubik's Rumble 2016 (2016-10-22),333oh R1 C E2
+558943001,F L2 R2 F L2 U2 R2 F' D2 U R U R' F2 R B2 U,G,SNZ Northern 2017 (2017-07-23),333 R1 C #4
+600093001,B' U' F2 B U2 F2 U B' D2 R B2 L B2 U2 L' B2 L2 F2 R',G,Verona Open 2017 (2017-09-24),333 Final A #3
+652082001,U2 F2 U2 B' D2 U2 F U2 B L2 D' B U' L' F L2 D' L' U2 B,G,Alicante Open 2017 (2017-11-25~26),333 R2 A E1
+666404001,D2 B2 D2 B2 L U2 L2 F2 L B2 U F' U R' F D2 R D2 F,G,Fuenlabrada Open 2017 (2017-12-08~10),333 R3 B E1
+671029001,B2 U L2 D2 L2 F2 U L2 D B R U' L' D2 L' U2 B F' R D B R,G,Skillcon 2017 (2017-12-16~17),333bf Final A #2
+680376001,F' U2 B' D2 R2 U2 L2 B' D U2 L2 D2 B D2 B' U B,G,Mauritius Open 2018 (2018-01-06),333 Final A #3
+842471001,B' R B R U' D2 L2 F D' B' R B2 L2 D2 R D2 R F2 D2 L',G,BeCubed Summer 2018 (2018-07-27),333 Final A #3
+888750001,U2 R D L' U F2 D' B R2 B' R2 B2 R2 D R2 F2 U F2,G,Oakville Limited Fall 2018 (2018-09-29),333 Final A #3
+942768001,U2 R F2 L' B2 L2 B2 R' U2 B2 D2 F L' U R' B2 F R U L,G,Latvian Open 2018 (2018-11-23~25),333ft Final B #4
+1037713001,U R' U R2 D' B2 U2 F' R D' B R2 D2 F2 U2 D2 R2 F2,G,Voronezh Open 2019 (2019-03-02~03),333 Final A E1
+1123728066,L2 D2 B' D2 L2 R2 B' D B' D' B D R U' L2 B' L U' F' L2 U2,G,Mental Breakdown Washington 2019 (2019-04-27~28),333mbf Final A #1
+1203462001,D' B2 F2 U R2 D2 U L2 B' F2 L F' U2 R F R2 F2 L' D2,G,Shenyang Open 2019 (2019-06-30),333 R2 B E1
+1240124001,D2 R' F' L2 B R F2 R2 U2 F U2 L B2 L F2,G,Planeta do Saber 2.0 2019 (2019-07-27~28),333 R2 B E2
+1565968001,F U2 F D2 B L2 D U2 R2 B2 F' U B' L2 B D' F2,G,Bendigo Cube Blitz 2020 (2020-02-23),333 Final A #3
+1644814001,L' U2 R2 B2 U' L2 B2 U2 L2 R B U' B R2 D' F' D2 L2 B',G,Xi'an Cherry Blossom PM 2021 (2021-04-11),333 R1 E #3
+1760213001,U D2 F2 U2 R B2 U2 L B' U2 B2 U' B' U F D2 U F',G,Dunas Open 2021 (2021-12-11),333 R1 A #4
+1777045001,L D L2 D2 U' B2 U R2 U' B2 F2 L' B' L' U' B' R' U B',G,Bulldog Winter 2022 (2022-01-08),333 R1 B #3
+1896195001,R2 F2 U2 D B' R F2 L2 D L F2 D' L2 U2 F2 L2 F2 D L,G,Minatomirai 2022 (2022-04-29),333oh Final A #2
+2089610001,B' R2 D2 U2 B2 R' D R' B2 R U2 B U' L2 B R',G,Oregon Championship 2022 (2022-08-12~14),333oh R2 A #5
+2570931001,B2 R' B2 R' D' L2 B R2 F2 D2 R2 L D2 R2 L F2 B2 U R,G,Douvrin Open 2023 (2023-03-18~19),333 R1 A E1
+2784227001,U' L2 U R U' B2 D U2 L' D2 R F2 R2 B2 D,G,Balaguer Medieval 2023 (2023-06-03),333 R2 C #2
+3115470026,D R U' R' F2 R2 D L D L' B R2 L2 D2 F' L2 B L2 D,G,BMME 3x3 Day 2023 (2023-09-23),333mbf Final B #1
+3195593032,B R D' F U D B2 U F L2 F2 R2 U2 B L2 B' D' L' F',G,CubingUSA Great Lakes Championship 2023 (2023-10-20~22),333mbf Final A #2
+4116398010,R' F' U2 F' L2 R2 B' F2 D2 R2 F2 L B U2 B R2 D2 F2,G,Swisscubing Cup Mental Breakdown II 2024 (2024-09-14~15),333mbf Final A #1
+4180648001,D' B' R' L2 B F' U2 F' R2 F2 L' U2 L D L' R2 D F,G,UC al Cubo - Santiago 2024 (2024-10-05),333 R2 C #4
+4250830001,B U L U2 B2 R' L B' R2 F2 D' L2 D' F2 B2 U' F2 D,G,Rubik's UK Championship 2024 (2024-11-01~03),333 R2 A E2
+4294171006,B' U' B2 F2 L2 U B2 F2 D U' F R D' R D L R B' D2 F' L B2,G,Reno Fall 2024 (2024-11-16~17),333mbf Final A #2
+4378280001,D2 B U' F2 R' D2 L D L2 F2 L2 D2 F2 D' L2 U2 R',G,Gallop in Kentucky Winter 2024 (2024-12-21),333 Final B E2
+4524204001,R2 F L2 F2 U L2 R2 U' B2 R' B' R F2 D' R' U R F2,G,See Georgia: Cloudland Canyon B 2025 (2025-02-23),333 R2 C #2
+4615073001,B2 D2 B D2 R2 B' D2 B2 F' L' D2 B U2 F' D' F U L F',G,Plaza Center Cube Lima V 2025 (2025-03-29~30),333 R1 A E2
+4745544001,F2 L B2 R B2 R' F2 L' F2 R' D' B U' B' R D' L B' U F',G,Danish Championship 2025 (2025-05-23~25),333 R1 C #5
+4800414001,L' B2 L' F' R U B U' F2 D B2 L B2 U2 R F2 R' D,G,Risbjerg Juni 2025 (2025-06-14~15),333 R1 B #1
+4935387001,L' D2 L' F L R B2 L2 R' U2 R' D' R F U2 F R2 F',G,Brockport Bolt 2025 (2025-08-16),333 R1 A #4
+5323360001,F' D2 F' U2 B' F2 U R2 U' R F R' B' R' F' D2 U',G,Try Cubing in St Helens 2026 (2026-01-15),333 R1 A #3
+5377338001,B2 D' F B' L' U' R' F2 U R' U2 F2 D2 L B2 L B2 L2,G,Speedsolving X Pucallpa 2026 (2026-02-07~08),333oh R1 B #3
+5478527001,R' F R2 F2 U' R2 F2 R2 B2 D' L' U' B U' L2 F2 R' B' F',G,Potsdam Puzzling 2026 (2026-03-28),333 Final A #1
+5605496001,F2 D' R2 U' B2 D U F D L2 F2 U B2 R' B2 U' B2 D,G,Minerva Zapopan 2026 (2026-05-01~03),333 R1 C #2
+5645057001,U2 L' D' B' U' R' F U F2 U2 B2 D2 L D2 R' D2 B2 L,G,Instituto Apontar Rio 2026 (2026-05-16),333 R2 A E2

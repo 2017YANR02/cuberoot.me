@@ -1,0 +1,12 @@
+# Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / OR / bin 1
+# Population in this bin: 5
+# Samples listed: 5 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R,RGIT Cube Open 2018 (2018-03-10),333oh R1 A #4
+1644525001,L2 D' B' R' B2 U' R2 B2 D2 R2 D' R' B U2 R2 D U' L',O,Xi'an Cherry Blossom AM 2021 (2021-04-11),333 R1 C #2
+3516176001,R' U' F U B2 D' L2 U' F2 U2 F2 L' U' L' D B' U' B' F2 U2 R2 U2 R' U' F,O,Love Is Blind Lima 2024 (2024-02-18),333fm Final A #1
+3590416001,B2 R' U2 B2 D2 R2 B2 L2 F' D2 B' D2 L' B U2 L' R,O,Nýliðamót Kubbafélagsins 2024 (2024-03-16),333 R2 C #2
+4463879001,B' D2 B U2 F2 R2 D2 L' D L' F2 U' L B2 L' R F' U,R,Aldeilla Winter Open 2025 (2025-02-01~02),333oh Final A #2

@@ -1,0 +1,11 @@
+# Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / O / bin 0
+# Population in this bin: 4
+# Samples listed: 4 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+2467347001,R2 U2 R2 L F R B2 R2 U F' R2 F L2 F2 D2 L2 F' R2 U',O,A New Year in Hamilton 2023 (2023-01-28~29),333 R1 A #1
+2844779001,R2 D2 U2 R2 U2 B2 R2 F2 R' B2 F' L' F' D R2 D R' U2,O,Eretum III: WC Warmup 2023 (2023-06-30~07-02),333 R2 C #3
+3613122001,U B2 R2 B2 D' R2 D F2 L D' L D' R2 D2 B2 F' D F',O,Mololoa Open 2024 (2024-03-23~24),333 R2 B #5
+4953966001,R B2 U2 L' D2 R' D B' F2 L2 D2 F2 R2 U' R2 U' L2 U' R2,O,South India Cube Championship 2025 (2025-08-14~17),333 R1 A #1

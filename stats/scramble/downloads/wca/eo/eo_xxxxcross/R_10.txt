@@ -1,0 +1,37 @@
+# Scramble samples — eo / eo_xxxxcross / R / bin 10
+# Population in this bin: 30
+# Samples listed: 30 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+603423001,D2 B2 F2 L2 U B2 R B' U2 L' D2 R2 B2 L R' F R,R,Puget Sound Fall 2017 (2017-09-23),333 R1 F E2
+743196001,B' R2 U2 B' R2 U2 B U' R' D2 U' R U B' L' B' R',R,GLS Cup II 2018 (2018-04-07~08),333 R2 B #5
+826386001,B2 R2 D' U' R2 U' L2 U' R2 B' U2 B2 L2 U R' D2 L' U' B',R,Adelaide Winter 2018 (2018-07-14),333oh Final A #1
+846356008,L' D2 L B2 U2 R U2 L2 U L2 B L D2 L2 B2 R2 U' B' D2 L,R,Batam Open 2018 (2018-08-04~05),333mbf Final A #1
+957758001,R2 F2 L' R B2 R' U2 B2 D' U R' D' U2 L2 R' U2 R B' U' L2,R,CubingUSA Georgia Championship 2018 (2018-12-14~16),333bf Final A E2
+986381001,D' R F2 L' B' L D B2 D' B R' U2 B2 R F2 L' D2 F2,R,Ha Noi Cube Day 2019 (2019-01-20),333 Final A E1
+1170994010,L' D2 U2 R' D2 R F2 L2 B2 U2 L2 F' R' U R2 F2 D' L' B2 U B,R,Tuzo Clásico 2019 (2019-06-01~02),333mbf Final A #3
+1194381001,U L2 U L2 U' F2 L2 F2 U B2 F' D' R B2 U' L B' R2 B',R,Bulldog Qualifier 2019 (2019-06-22~23),333 R1 B #4
+1345994001,F D2 L D2 R2 B2 U F2 D2 R' D2 F2 D2 R2 B L2 B' R2 F' D2 R2,R,Curicó al Cubo 2019 (2019-10-12),333 R1 A #1
+1374540001,U' R2 B2 F2 D' L2 B2 F2 U2 L F D L' U R F2 L2 D2,R,Copper Country Cubing Fall 2019 (2019-10-25~27),333ft Final A #5
+1387092001,F2 R F' L' U2 D' L F2 D F2 D L2 U D2 R2 B2 D2,R,Kjeller Open 2019 (2019-11-02~03),333 R2 C #4
+1748472047,F' R U2 R' F2 B' D2 L F D2 B' D2 F' U2 F B' U2 L2 U,R,Stockholm VRG 2021 (2021-11-27~28),333mbf Final B #1
+1817407001,U F' D2 R B' L U' L2 U2 B L2 F R2 B L2 F R2 U2 F' R' B' L2,R,Roskilde by Night 2022 (2022-02-26~27),333bf R1 C #2
+2056892001,L2 D' U2 R U2 B2 L' U2 R' U2 B2 R2 D2 F' R' B U B2 D' R2,R,Bay Area Speedcubin' 35 - Pacifica 2022 (2022-07-30),333 R1 A #1
+2134660011,F' U' L2 D' L2 F R' L' F' U2 R2 U2 L2 U2 L2 B' U2 R' D2 L2 U,R,Ecuador Nationals 2022 (2022-08-26~28),333mbf Final A #2
+2154354001,L D' B2 U L2 U L2 B R' B' L2 U' F U F' L2 D,R,Pretzel Mania 2022 (2022-09-03~04),333 R1 H E1
+2913102003,L' B' R' L2 B' U R' D' L2 F2 U2 B' R2 B2 D2 L2 B' R B' L',R,Blandede Bolsjer i Lejre 2023 (2023-07-22),333mbf Final B #1
+3128748001,F U2 B D' R' U2 F2 D2 F R F2 U2 B2 D2 L2 B2 L' D2,R,Cubing for Yuval 2023 (2023-10-01~02),333 R2 C E2
+3362111001,U2 B2 D2 B2 L' R' B R B L' B2 D2 F' U2 F2,R,Pocos Cupos Floridablanca 2023 (2023-12-17),333oh R1 B #3
+3411898001,U2 F U2 R2 F U2 B' R2 F D2 B' L2 R' B2 F' D F2 D2 L2,R,Ke Solo Lur 2024 (2024-01-13~14),333 R2 A #1
+3468768024,L' D2 B' U' F' B2 R2 B' D2 B' U' F2 U B2 U D F2 D',R,CMI Tessellate Cube Open 2024 (2024-01-26~28),333mbf Final A #1
+3673746001,F2 U' B' F' L2 R2 F' L2 F L2 F2 D2 L' F' D L B' L2 D,R,Bucharest Cubing April A 2024 (2024-04-13),333 Final B E1
+3921203001,U F2 U' L' U F2 L' F' R' F' R F' D' L2 U,R,Iguatemi Fortaleza IV 2024 (2024-07-06~07),333oh R1 B #1
+3992623001,D2 F B2 U' F2 L2 F' R F' B L2 U2 L2 U2 F' D',R,A Twisty Day in Araneta 2024 (2024-08-04),333oh R1 A E2
+4049432001,L B D2 L' D L2 B2 U B2 U2 F2 R' U' L B2 F2 U2,R,Telangana Cube Championship 2024 (2024-08-23~25),333oh R1 E E1
+4626879012,R B2 R F2 R2 D2 R2 D B' L2 D B2 D2 U B L D' L' F,R,New York Multimate PBQ 2025 (2025-04-04~06),333mbf R1 A #2
+4729785001,U B L2 R2 F R2 B2 F D2 F' D L2 B2 L' D L2 U' L B,R,It's a Long Way to Tipperary 2025 (2025-05-17~18),333oh R1 B #4
+4913366003,D B2 U2 L' U2 B' U' D B2 R' U2 R2 D2 R' L D B2 L D2,R,More Cubing with the Cougars WV 2025 (2025-08-02~03),333mbf Final A #1
+5068399001,D' R' F2 L B2 R2 D B2 D L2 B R2 F' L2 D U' B',R,Grand Forks 2025 (2025-10-04),333 R1 A #4
+5180367001,L F2 L' B2 D2 L2 U2 R B2 L' U2 F U R2 U' F2 L2 U2 B2,R,Road to Nats: Puebla 2025 (2025-11-08~09),333oh Final C #1

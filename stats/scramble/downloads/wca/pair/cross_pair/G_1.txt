@@ -1,0 +1,23 @@
+# Scramble samples — pair / cross_pair / G / bin 1
+# Population in this bin: 16
+# Samples listed: 16 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,G,Great Indian Cubeathon 2016 (2016-01-08~10),333oh R1 G E1
+527724001,L' B R2 U2 R F2 D R2 L2 D B2 U2 F2 L D2 L2 U2 R B2,G,2nd Negros Speedcubing Open 2017 (2017-06-10~11),333 R1 A #4
+592960001,R2 F2 D' B2 U R2 D L2 R' F' L2 U2 L' B2 F U' R2 U2 F',G,Monnem City Cubing 2017 (2017-09-16~17),333oh Final A E2
+632221001,D2 F' R' L2 U F L2 B' D B2 L D2 R B2 U2 B2 R F2 B2 R',G,St. Boois 2017 (2017-10-29),333 R2 C #3
+700776001,B D R2 U F2 D2 R2 L U' R' U2 F2 R D2 R' U2 R B2 L2,G,Inner Mongolia Winter 2018 (2018-02-03~04),333 R1 A #1
+790386002,D2 F2 D2 F2 U2 L R D2 F R F' R2 B D R2 F' U R' D B R',G,Brasília Open 2018 (2018-05-26~27),333mbf Final A #1
+841822001,R L U2 L' B' L B' U' F2 L D2 R L F2 R,G,CubingUSA Nationals 2018 (2018-07-27~29),333oh R1 K #1
+2352421001,D' B2 R B2 D2 B2 L2 F2 L2 D B2 D B L2 R' D' R' F' R,G,BCM Arya Cubing Challenge 2022 (2022-12-04),333oh R1 D E2
+3142148001,U R2 D' F2 U' F2 D' L' B2 D2 F D F' L' U2 L' F2 L',G,T-Town Showdown 2023 (2023-10-07),333 R1 A E2
+3172485001,R U L' D L' D L2 B' R2 U L2 F D2 F2 D2 F' D2 L2,G,Salonica Autumn Open 2023 (2023-10-14~15),333 R2 D #4
+3172507001,D' B R D L D2 R' B2 L U2 R' B F L2 B2 F' L F2,G,Salonica Autumn Open 2023 (2023-10-14~15),333 R3 C #5
+3705160001,L U' L2 R2 B2 U2 B U2 B L2 F2 L2 F2 L R2 B U R' B2 R',G,Club De Campo Cubing La Pintana 2024 (2024-04-20),333oh R1 A E1
+4185127024,B R B2 D2 F2 R F2 L D2 R2 F2 L' F U2 F D2 L' D2 B,G,Taboão Bigs & Blinds 2024 (2024-10-13),333mbf Final C #1
+4596661001,F2 R B' R2 D' B2 D' R2 F L2 F2 U2 F D2 U B' U' R',G,CubeCo Coastal Cubing KZN 2025 (2025-03-21~22),333 Final B #2
+4909935001,L' B' L' B' L2 U2 L2 U B2 D L2 B' L D2 B D U' L',G,Makati Heroes Speedcubing 2025 (2025-08-02),333 R1 A #4
+5435669001,L2 F2 U' L2 F2 R2 U' L' B2 R2 B' U' B2 F' D2 U B L2 U',G,Bern Cubing Festival 2026 (2026-03-08),333 Final C #1

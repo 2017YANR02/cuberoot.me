@@ -1,0 +1,50 @@
+# Scramble samples — std / xxcross / ORWY / bin 4
+# Population in this bin: 43
+# Samples listed: 43 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+32691001,F2 R2 B' U2 R2 F' D2 L2 D2 R2 U' F' R U2 B' D' F' U2 B F2 R2 B R2,R,Thailand Championship 2014 (2014-06-21~22),333bf Final A #3
+52675001,B' R2 U' R D' R2 U D2 B U B2 D' F2 B2 D2 B2 D L2,Y,ABHC 2014 (2014-08-23~25),333oh Final A #1
+74824001,D R2 D2 L2 B2 D2 R U' B R' D2 L2 R' F' R F' U,O,Slow n Steady Fall 2014 (2014-11-09),333 R1 B E1
+164772001,D2 F L2 F R2 F' D2 B2 F2 L' R' F L2 B2 R U B U' F2 L,R,Perth Winter 2015 (2015-07-18),333 R2 B E2
+188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,O,LMDL Open 2015 (2015-09-12),333 R1 B #3
+352796001,F2 U2 B D2 B D2 U2 L' B2 U2 R B L2 U L2 U B F,Y,The Most Serene Competition 2016 (2016-08-27),333 R2 B #3
+353826001,B2 U F2 U' B2 D L2 D' U L' B' D2 L F L D U' B' U' L' F,Y,August Bank Holiday Competition 2016 (2016-08-27~28),333bf R1 A #3
+370006001,U2 R D2 B2 D2 R' B2 R' F L' F L2 F' L2 U' R2 U',R,Oklahoma Fall 2016 (2016-10-01),333 R1 C #2
+401846001,F2 D2 F2 R F2 D2 F2 U2 F L F' U B' D2 U L' R D,O,Maharashtra Championship 2016 (2016-11-13),333 R1 A #4
+410766001,U2 L U2 R' U2 L2 D2 B2 R2 B D L2 D' B L2 D F' U2,R,Urdaneta City Fiesta Open 2016 (2016-12-04),333 Final B #4
+667364001,U' R2 D2 L2 D' F2 D' R2 B' U2 L' B' U2 R2 B' L2 B R2,Y,MTD Spring 2017 (2017-12-09~10),333oh Final B #2
+682432001,D2 F2 L' F D' F R' D' R2 L' U' R2 D2 R2 L' F2 U2 R,R,Tulcan Open 2018 (2018-01-06),333 R1 B #2
+826009001,F2 U2 F2 L' U2 L D2 F R' B2 L' U2 R' B' R U L F',Y,Kansai Summer 2018 (2018-07-14),333 R1 C #5
+907121001,D R' D' B U' B2 D2 F2 B' L' D2 B2 D R2 F2 L2 U2,O,Gravitas Cube Open 2018 (2018-10-13~14),333oh R1 F #5
+1024571001,F2 R2 F2 R2 F2 U2 B U2 R' B' R2 U2 L D U R U' L R',O,GLS Winter Camp 2019 (2019-02-11~15),333 R1 A #3
+1095758001,U2 F2 L F2 R B2 U2 R B' L2 F R' B2 D2 B U B2 U2 B,Y,Xi'an Cherry Blossom 2019 (2019-04-13~14),333 R2 D #2
+1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',O,High Wycombe Open 2019 (2019-06-08~09),333 R2 B #2
+1467171001,F2 D F2 D' R2 B2 R D' R2 U2 B2 U' F D' F D2 U,O,Pejaten Village Speedcubing 2019 (2019-12-14),333 R1 A #3
+1933469001,B2 F D2 B2 F' R2 D' R' U' L B2 R' F' L' D' R2 B,Y,Colorado Cubing Weekend 2022 (2022-05-21~22),333 R2 A #4
+2156434001,F D2 B' L B' R B2 D' F' D L' D2 F L2 F' B R2 F',R,Apollo Bay Cubing 2022 (2022-09-10~11),333 R1 C #4
+2239491001,R2 D2 L2 D B2 D2 B2 U F R2 B' D2 B U' F U2 B' D L' B' L,W,Pucallpa Cubea 2022 (2022-10-16),333bf Final A E2
+2249121001,D F2 D2 R B2 R' D2 F2 D L U L' B2 D' R' F R,Y,Mongolia Championship 2022 (2022-10-15~16),333 R1 F #2
+2489896018,U2 R2 B2 U B2 U2 L2 F2 U2 F' L2 R' U F' U2 F' D2 L2 D L' F',W,Kostelec Nonstop Cubing 2023 (2023-02-11~12),333mbf Final A #1
+2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,Y,Pickering D 2023 (2023-03-26),333 R2 B #2
+2617753001,D' B R L' B' R' U2 B' L' U F' D2 F' U2 F L2 F' U2,R,UCSD Spring 2023 (2023-04-02),333oh R2 B #5
+2655130001,U2 L2 B' D2 B2 D2 L2 F' R2 U' F R U' L D2 F' D R2 B,O,Swallow Spring 2023 (2023-04-22),333 R1 B #5
+2700440001,U' B2 D' U2 F' D2 F U' R2 F' L B2 L' B F U',Y,I Candanguim 2023 (2023-05-07),333 Final B #4
+3126076001,D2 F' D' R2 U2 R' F' D' R' U D' L2 U2 L D2 R F2 R,Y,South Deerfield Side Events 2023 (2023-09-30),333 R1 C #5
+3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y,Folkets Kub Alvesta 2024 (2024-01-27~28),333oh Final B E1
+3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,W,Longjum'Open 2024 (2024-01-27~28),333oh R1 A #4
+3462225001,R D B' D R' B2 D2 R D2 B2 R2 D' R' B D' L B' U',O,DJ Sanghvi Cube Open 2024 (2024-01-28),333 R1 E #2
+3648937001,D B U' B2 L F2 L F2 D2 L D2 B' F2 U L2 F2 U',O,Iasi Cubing Day 2024 (2024-04-06),333 R1 A #2
+3763216001,L' F' D' B2 D U2 R2 U' L2 B2 U' B' D2 R' B' L' F' R2,W,Košice Open 2024 (2024-05-18),333 Final A E2
+4324135001,D' L2 F2 U R' D' L' B F2 R F2 R B2 L U2 F D2,W,Barcelona Open 2024 (2024-11-30~12-01),333 R1 E #5
+4495002001,L2 U F2 U' B2 L2 U B2 U' L2 F2 L' U2 F' U F' U2 R,Y,Cube n' Chill in Chiang Mai 2025 (2025-02-15~16),333 R2 B #1
+4797982028,L' B' U' F' U' R2 F L2 F D F L2 D2 F' R2 U2 B2 L',Y,Perdiendo el Tiempo en Granada 2025 (2025-06-14~15),333mbf Final A #2
+4807311001,B2 U2 R' D B' U L' B L2 F2 D2 B2 D' F2 D' F R2,W,Zhuhai Open 2025 (2025-06-15),333oh R1 E #2
+4816312001,U2 B2 D2 L' U L' U2 F L2 B L2 U2 D R2 U2 L2 D',Y,DFW Cubing Summer 2025 (2025-06-21~22),333 R2 B #3
+4922615001,D F R2 F' R2 U2 R2 D2 U2 R' U R D' R B R' B2 L' B2 L B2,Y,Cube More in Ardmore 2025 (2025-08-09),333bf Final B E1
+5005575001,B' R2 L2 U2 R' U R L F2 D' L D2 B2 R D2 L,O,Nova Plaza Facatativá 2025 (2025-09-07),333oh Final A #5
+5023976001,B2 F U2 L2 D B2 F2 U R' D R' D L2 F' L' F' D2,Y,We Laugh Pohanghang 2025 (2025-09-14),333oh R1 C #1
+5456211001,U L' U B2 R2 F2 U L2 B2 U' R' F' U' B2 R' F R' D2,R,Stockholmsligan 4: Bilar - 2026 (2026-03-19),333 Final A #1
+5693041049,F2 L2 F U2 B L2 R2 F2 R2 L U B' R2 F D U F U R2 B' L2,Y,Brilliant Big & Blind Bravo Orlando 2026 (2026-06-06~07),333mbf Final B #1

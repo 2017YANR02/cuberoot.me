@@ -1,0 +1,11 @@
+# Scramble samples — pair / cross_pair / BGWY / bin 0
+# Population in this bin: 4
+# Samples listed: 4 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+1172094008,R' D2 L2 B2 R' B2 L' D2 R2 U' L' B' R U R B' F' R B2 F2 L' F',B,Tallinn Open 2019 (2019-06-08~09),333mbf Final A #2
+1252054018,R2 U2 B' R2 D2 B2 L2 B' D L F' D' U F' U' B' D2 B2 U' L2 U,G,CubingUSA Nationals 2019 (2019-08-01~04),333mbf Final A E1
+2693258001,F2 L2 F2 R2 D F2 D2 L2 B2 D L2 U L D' F' D L F,B,Østervang Open 2023 (2023-05-06~07),333 R2 C E2
+4618949001,U' R' D' F2 R2 D' L2 R2 U L2 R D R' D2 F' D' F U,B,Moncton 2025 (2025-04-05),333 R2 C E2

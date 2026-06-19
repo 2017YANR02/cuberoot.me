@@ -1,0 +1,30 @@
+# Scramble samples — pair / xcross_pair / W / bin 3
+# Population in this bin: 23
+# Samples listed: 23 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+192948001,R B2 D2 L2 D2 R U2 R F2 D2 R2 U' F U L2 R2 F',W,Warsaw Cube Masters 2015 (2015-09-19~20),333 R1 C #3
+213158001,L2 F2 L D2 L U2 B2 U' R' B' L2 B' R U' L U B2 L',W,Montevideo Open 2015 (2015-11-07),333oh Final B #4
+323030001,L B2 L' B' U F2 R' U' D2 R D F2 B D2 L2 F L2 F R2,W,Cannes Summer Open 2016 (2016-07-02~03),333oh R1 B #5
+427526001,D2 L B2 U2 R2 U2 B L' F2 U' L U F2 D B' F' L',W,P3 Grand Open - Jan 2017 (2017-01-08),333 R2 D #5
+825830001,R2 B' R U2 L' U2 B' R' U' D B2 R' D2 R U2 D2 F2,W,Nanchang Medium & Small Cubes 2018 (2018-07-08),333 R1 C E1
+846356008,L' D2 L B2 U2 R U2 L2 U L2 B L D2 L2 B2 R2 U' B' D2 L,W,Batam Open 2018 (2018-08-04~05),333mbf Final A #1
+1002727029,F2 L2 B' D2 B L2 D2 U2 L F' R' F D' B2 D' R' B D' R2 B,W,Please Be Quiet Oshawa 2019 (2019-02-03),333mbf Final A #2
+1125495001,D F D L' D F B2 R B' U B' U2 L U2 R D2 R' D2 F2,W,Guiyang Open 2019 (2019-05-01~02),333 R1 A #4
+2408439001,F U2 D F2 U' R' U' F' B' R2 D2 R' B2 D2 L D2 R' F2 R,W,Baton Rouge Winter 2023 (2023-01-07),333 R1 A E1
+2650702001,B L' B R2 U2 F' R2 B' F2 L' B2 R U2 R2 U' L2 R D,W,Manaus Plaza Open 2023 (2023-04-15~16),333oh R1 A #3
+2916191001,B2 U' B2 D R2 D2 B2 F2 U' L' U F2 L2 B L2 D' B D2 R,W,Bucharest You Only Need One 2023 (2023-07-22~23),333 R2 B #4
+2954589035,U2 F2 U R' D F2 R D2 R' L' B R2 B' U2 R2 F' R2 U2 R2 B,W,Silence in Tlaxcala 2023 (2023-08-05~06),333mbf Final A #2
+4164219001,F' U' D2 R' U F2 L D' U2 R2 B D2 R2 F D2 F' R D',W,Hublife Speedcubing 2024 (2024-09-28~29),333 R1 D #2
+4325994001,B' L B' R2 U' R2 B D2 R2 U' F2 D F2 D' R2 D L' U,W,Minnesota Championship 2024 (2024-11-30~12-01),333 R2 A E2
+4555927001,L' F R2 D' L B R U' B' D2 F' R F2 R L' B2 R' F2,W,Delhi Cube Open 2025 (2025-03-08~09),333 R1 F E1
+4701564001,B2 R2 D B R D2 R U2 R2 F L D F' U' R' B2,W,Hessen Mini Open 2025 (2025-05-02),333 Final B #4
+5020771001,R F' R D2 L' F' B2 R2 D L2 D' R2 B2 U F' L,W,Criciúma Open 2025 (2025-09-13~14),333 R2 A #5
+5144951001,L B2 D2 F' L2 B F U2 B' D2 L2 U2 D R' D U F L' R2,W,Pampanga Speedcubing Open 2025 (2025-10-25),333 R1 C E2
+5167579001,L2 B' R B' R U' B L2 F' D' R2 L2 U B2 R2 U L2 U B',W,Guangzhou Small Cubes 2025 (2025-11-09),333 R3 A #5
+5207821011,D L U2 F L2 F R U2 L2 F2 U2 B' U2 B U2 D2 L2 B2,W,Gelves Open 2025 (2025-11-22~23),333mbf Final A #1
+5338605001,F2 D2 F2 L2 U' R2 F R' D2 U F2 L' F U2 R2 B2 L2,W,Berkeley January Weekday 2026 (2026-01-22),333oh R2 C #2
+5372676001,F2 U2 B2 U2 F2 R D2 B2 F' R' U F' L U2 L' B2 F2 L2,W,DFW Favorites 2026 (2026-02-07),333 R2 B E2
+5691926001,B2 F2 U2 F2 L D2 R D' F D2 L2 D F' L2 F2 L U2 B,W,Swisscubing Cup Mental Breakdown I 2026 (2026-06-06~07),333mbf Final B #2

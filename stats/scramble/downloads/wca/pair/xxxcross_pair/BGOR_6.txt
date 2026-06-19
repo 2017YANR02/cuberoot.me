@@ -1,0 +1,8 @@
+# Scramble samples — pair / xxxcross_pair / BGOR / bin 6
+# Population in this bin: 1
+# Samples listed: 1 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,G,Pickering D 2023 (2023-03-26),333 R2 B #2

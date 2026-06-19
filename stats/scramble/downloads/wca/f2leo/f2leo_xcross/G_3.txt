@@ -1,0 +1,37 @@
+# Scramble samples — f2leo / f2leo_xcross / G / bin 3
+# Population in this bin: 30
+# Samples listed: 30 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+68780001,F2 L2 B' L B L' U' B' R' D2 F2 U2 B2 L U2 R D2 L B2,G,Hungarian Open 2014 (2014-10-17~19),333oh Final A #5
+219941001,R2 D2 R2 U B2 L2 F2 D' F2 R2 F' D' F' U' L' U2 L' U' R,G,UT Open 2015 (2015-11-23),333 R2 A #1
+284468001,R' L' U F B2 U D F L' U R2 U' F2 D L2 F2 D' F2,G,Manhasset Spring 2016 (2016-04-16),333 R1 G #3
+285181001,D2 F2 R2 F2 L' D2 R' B U2 L D' F' U' B' U2 B' F D2,G,Maine Cubing 2016 (2016-04-23),333oh R1 A #5
+344431001,D2 B2 D2 L2 R D2 R' B' L' B L D' L' D2 U' R F' L2,G,CEIC Masterda Open 2016 (2016-08-06~07),333oh Final B #5
+380810001,F D' L2 U' F2 L2 U2 L' F2 L' B2 L2 U' F2 L2 U D,G,Rubik's Cube Pune Open 2016 (2016-10-15~16),333 R1 C #5
+419567001,U' R2 F2 D2 U' L2 D F2 U' B2 R' F2 U F' L' B D' B' L' D2,G,Cubelelo Winter Open 2016 (2016-12-22~23),333 R2 H #3
+756260001,U2 L2 F2 L2 U B2 D B2 R F' U' R U' F' U' L2 U L U,G,Santiago UV de Otoño 2018 (2018-04-14~15),333 R1 I #1
+812053001,L B' U2 L D F L2 D2 R2 U B' R2 U2 B2 R2 U2 F R2,G,Fairview Cube Day 2018 (2018-06-24),333oh R1 B #3
+844000001,B F D2 L2 F L2 B' L B2 F R2 B D R F' L B2 R',G,Meizhou Open 2018 (2018-08-05),333 R1 E E1
+850330001,L2 F' R2 F R2 D2 B' R2 F2 L2 D' R F L' F' D' L' B2 D R,G,CubingUSA Northwest Championship 2018 (2018-08-10~12),333 R1 D #2
+1111500027,B2 L D2 U2 L U2 L2 U2 R2 F D2 F2 D L U L2 D L2 U B R',G,YJ Petersburg Special 2019 (2019-04-20~21),333mbf Final A #2
+1673019001,B2 L2 B' U2 L2 B' U2 B R D' B2 L2 B2 F' R' D L2 U B,G,WA State Championship 2021 (2021-07-17~18),333oh Final A E2
+2217895001,B2 U' R' D2 L2 F2 L F R L2 F L2 F2 R2 B' D2 F B2 R2 B',G,Poznań Mental Breakdown 2022 (2022-10-08~09),333bf R1 C #3
+2345586001,B' D2 L F2 L' B2 L F2 U2 L2 U2 R2 U' F U' R2 B2 D2 B2 L,G,Navidad Aves María 2022 (2022-12-03~04),333bf R1 A #3
+2404308001,B D' L F' L2 U' F2 D2 U L2 D' L U' F2 L' D2 U F,G,NTU Welcome 2023 (2022-12-31~2023-01-01),333 R1 E E1
+2855996001,L' R2 D2 U L2 R2 F' R' U2 F2 D' F R' U2 B' U2 B' L',G,Bothell Summer 2023 (2023-07-08),333bf R1 B #3
+3077128001,D B' R2 U2 B D' R' D R B' F2 U' F2 U' R2 D B2 U L2,G,Goats of Cubing 2023 (2023-09-16~17),333 R2 A #3
+3095670001,L2 B2 L U' D' L' B' L U F2 D2 L2 D' B2 U' R2 U L2 F2,G,Foothills NxNs 2023 (2023-09-23),333 R2 B #5
+3172485001,R U L' D L' D L2 B' R2 U L2 F D2 F2 D2 F' D2 L2,G,Salonica Autumn Open 2023 (2023-10-14~15),333 R2 D #4
+3172507001,D' B R D L D2 R' B2 L U2 R' B F L2 B2 F' L F2,G,Salonica Autumn Open 2023 (2023-10-14~15),333 R3 C #5
+3238402001,R2 F L U' B2 R2 D L2 B2 U2 F2 U' R' U2 B U L2 F' D',G,Uzbekistan Nationals 2023 (2023-11-03~05),333 R2 C #5
+3258097001,L2 F2 B R2 B R' L2 U2 L' D L2 B2 L D2 L' U2 F2 R' D',G,Guildford Autumn 2023 (2023-11-11~12),333bf Final A E1
+3686493001,U F B' D R D' F2 R F2 B2 D R2 B L2 B D2 B R2 B2 L' F2,G,Berkeley Spring 2024 (2024-04-21),333bf Final A E2
+4167371001,L' D' R U2 F R' F' R D' F D2 B' L2 D2 B' D2 B' L2,G,Zottegem Saturday Open 2024 (2024-10-05),333oh Final B #5
+4470369001,U B L2 U' L2 F2 R2 L B' L' F' U' R2 U' B2 U' F2 L2,G,Brisbane Summer 2025 (2025-02-01~02),333 R1 D #1
+4508505001,R' U' L2 F2 U2 D R B' D' B' U' R2 B2 U2 L2 D' F2 R',G,Manchester February 2025 (2025-02-22),333oh Final A #5
+4898089001,R' D' R2 D B2 R D B' U2 L2 B2 L U2 D2 R D2 L' B2 D,G,Fort Payne Summer 2025 (2025-08-02),333 R1 A E2
+5491191001,F2 R' F' L2 R2 D2 R2 D' B2 D2 F' D' R' B R2 F L2 U2,G,NxNjoyable Sydney Gathering 2026 (2026-03-28~29),333 R1 B #3
+5562422001,F2 U' B' U' B2 U F2 R D2 B' R' B2 L' U2 F2 U2 R U2,G,Xuzhou Zenith 2026 (2026-04-11~12),333 Final L #5

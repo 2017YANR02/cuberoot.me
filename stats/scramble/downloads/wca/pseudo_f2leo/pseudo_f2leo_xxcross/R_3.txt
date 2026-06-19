@@ -1,0 +1,12 @@
+# Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / R / bin 3
+# Population in this bin: 5
+# Samples listed: 5 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+682432001,D2 F2 L' F D' F R' D' R2 L' U' R2 D2 R2 L' F2 U2 R,R,Tulcan Open 2018 (2018-01-06),333 R1 B #2
+701333022,L2 B2 F2 L D2 L F2 L F2 U2 R B' U R2 U' L2 B' L' B F2 L B2,R,Please Be Quiet LA 2018 (2018-02-03~04),333mbf Final B #3
+1108365014,B2 R2 D' F2 U2 B2 D R2 B' R F' D' L B2 U' B R2 B' U2 L,R,Shanghai Memory Nightmare 2019 (2019-04-20~21),333mbf Final A #2
+2134410001,R B' L' U' F U2 D2 B L' F2 U2 F2 B2 D2 L U2 R' D2 R2,R,Ecuador Nationals 2022 (2022-08-26~28),333oh R1 E #3
+3835363001,F L U' B' R2 F' D2 U2 B R F L B' D F2 D B,R,Battle of Waterloo 2024 (2024-06-08~09),333oh R1 A #4

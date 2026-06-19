@@ -1,0 +1,34 @@
+# Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / BG / bin 5
+# Population in this bin: 27
+# Samples listed: 27 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color
+
+1253,L2 B2 U B2 U R2 U2 F2 D' F2 L2 U B2 D' B' R L' U' F2 L2 U' B F' L' ,B
+369083,B2 U' B2 F2 R2 U L2 D2 R2 B2 D R2 U F2 U L' F R2 D' F' R B F L D2 ,G
+369084,U B2 D B2 U' L2 B2 D' F2 D' R2 D2 B2 U' L' F' R D B2 L' F L B' L ,G
+375524,D' U' L2 F2 L2 D B2 F2 L2 U R2 F' D2 F2 R' L' F D' B' R' ,G
+387151,D' L2 F2 R2 B2 D R2 D2 B2 F2 D' L2 U2 B2 F' R B R2 D R2 L F' R U' ,G
+512620,U L2 D' B2 D2 B2 L2 D' B2 R2 U B2 R2 F' L2 U' L' B' R F' D L U' ,G
+526651,U2 L2 F2 D R2 B2 D' L2 U L2 F2 U F2 U' F' R B' L2 U' L' F R U' ,G
+526652,U' B2 D F2 R2 D F2 R2 U' R2 U' L2 F' L' D' R' B' F D' F2 D' R' U' ,G
+638210,D F2 D' R2 B2 F2 U2 F2 R2 F2 U' R2 L2 F' L B2 U' L' B R L F' L2 ,G
+638211,D' L2 B2 U2 F2 D' F2 D' B2 U B2 L2 D U' F' R' B D L2 B2 L' F' R' U2 ,G
+638212,B2 R2 B2 U L2 D L2 D2 F2 U' R2 U' L2 D B' L' D R' B2 D B F' L ,G
+643611,B2 L2 D R2 U F2 L2 D2 F2 L2 D' R2 D' L2 F' R' B D L2 B2 L' F' R' U2 ,G
+643612,F2 L2 U' F2 L2 B2 L2 U' B2 U R2 U2 B2 F' L' D' R' B' F D' F2 D' R' U' ,G
+648823,D' L2 F2 D' B2 D' B2 L2 U2 R2 D F' L2 U' L' B' R F' D L U' ,G
+648824,U R2 D L2 D2 F2 U F2 U' L2 B2 L2 U B2 U2 F' R B' L2 U' L' F R U' ,G
+865876,B2 F2 L2 B2 F2 D' B2 F2 R2 L2 U' L2 D' U R' L' B' F' R' L' ,B
+865878,R2 B2 U L2 F2 U F2 R2 D2 R2 D R2 U B2 U L' B F R' F' U' R2 F L ,B
+865879,D R2 D' L2 U F2 U' F2 U R2 U R2 D' L2 F' R B2 D' R' B R L F' L2 ,B
+865880,U' F2 D' L2 U' F2 R2 U' R2 D' R2 L2 U' B' U2 F2 R' L' B D' F' L' ,B
+865881,D' R2 B2 D B2 D' L2 U2 B2 L2 D B2 U' B' U2 F2 R' L' B D' F' L' U' ,B
+865882,F2 U' L2 U' B2 R2 U2 L2 D' B2 F2 L2 F2 D' U2 B' L2 U L F R' B D' L' U ,B
+865883,L2 D2 F2 D' R2 B2 U L2 D' L2 B2 F2 U L' B R' D' F2 L B' L' F L' ,B
+865884,U' B2 U2 R2 U' L2 F2 D R2 D2 B2 U' L2 U' B' R' D' L' B F' D' B2 D' L' U' ,B
+865885,U2 L2 F2 D R2 U' B2 L2 U L2 D2 F2 D' U' B' L' F R2 D R B' L' D' U2 ,B
+865886,B2 F2 U F2 D F2 R2 D L2 D' B2 U' B2 L' B' F' R' F D R2 F' L' D2 ,B
+865887,U2 B2 U F2 D' L2 D B2 U' R2 B2 D' B' L F' R2 U' R' B L U' ,B
+865888,B2 D' R2 L2 U' R2 D U' F2 D' B' L U' L2 U R U2 B F L' ,B

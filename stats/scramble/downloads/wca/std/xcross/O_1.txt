@@ -1,0 +1,9 @@
+# Scramble samples — std / xcross / O / bin 1
+# Population in this bin: 2
+# Samples listed: 2 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+1675715001,U R' B' L2 F2 D F2 L2 B2 U' R' U' B' U' R2 F R',O,Bucharest Cubing Days 2021 (2021-07-24~25),333 R2 A #1
+3516176001,R' U' F U B2 D' L2 U' F2 U2 F2 L' U' L' D B' U' B' F2 U2 R2 U2 R' U' F,O,Love Is Blind Lima 2024 (2024-02-18),333fm Final A #1

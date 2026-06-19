@@ -1,0 +1,17 @@
+# Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / W / bin 0
+# Population in this bin: 10
+# Samples listed: 10 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+289173001,L2 F D2 B2 F D2 L2 D L2 D B2 U' F2 L' D R2 D2 L,W,Melbourne Autumn 2016 (2016-04-30),333 R1 G #1
+495590001,R2 U' R2 B2 U' L2 R2 U2 F2 U L F2 L' B D B2 L2 U B,W,L.P. 3600 Rubik 2017 (2017-04-22),333oh Final B #5
+1286218001,D2 L2 F2 R2 B' U2 B U' B2 D B2 F D' F R D2 U F,W,Cubing in Cill Chainnigh 2019 (2019-08-31~09-01),333 R1 B #4
+3732927001,F2 L2 D2 F2 D2 F' U2 B' D2 U2 L2 U' L' R2 B U B' D' L U2,W,Ottawa Spring 2024 (2024-05-04),333 R1 A #4
+4486510001,F' R' F U2 F2 D2 B U2 L2 U R F L2 D U' B U2 R',W,Franconia Spring 2025 (2025-02-14~15),333 Final B #1
+4514389001,F2 D2 L D2 R2 B2 L' R2 F' R B2 R F2 U L' U L2 B U,W,Aarhus Winter 2025 (2025-02-22~23),333oh Final B #5
+5005130001,L2 F2 D' R2 D U' F2 U' B' R' D2 U B' U' R2 U' L2 U2 R',W,Rubik's Dutch Nationals 2025 (2025-09-05~07),333 R3 A #1
+5044590001,L2 B2 U2 R2 B' R2 B2 D' L' R' D' L B R' D F' R' B,W,Bucharest Cubing September 2025 (2025-09-20),333oh R1 B #2
+5424434001,B' L2 F2 U B' R' U D2 B2 L2 U2 R' D2 F2 B2 L F' R2 U2 B,W,Richardshhhon 2026 (2026-02-28~03-01),333bf R2 A #5
+5575506001,F L' D2 R' F2 L U' R' D' U R2 F' R' U' B2,W,Drammen Open 2026 (2026-04-18~19),333oh R1 A E2

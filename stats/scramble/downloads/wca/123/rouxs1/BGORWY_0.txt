@@ -1,0 +1,15 @@
+# Scramble samples — 123 / rouxs1 / BGORWY / bin 0
+# Population in this bin: 8
+# Samples listed: 8 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+255671001,L2 F2 R' U2 B2 R F2 D2 F2 R' D B' D' F2 L F U' B' F',R,Iran Open 2016 (2016-02-18~19),333oh R1 A #1
+660804007,F2 D' R2 F2 R2 D B2 D2 B' L2 B2 D L' D R2 U' B R2,B,Italian Championship 2015 (2015-08-29~30),333mbf Final A #1
+1776277001,R U' B2 R2 D2 B D2 R2 U L' U' R2 F' D B' D2 R,B,Bologna New Year 2022 (2022-01-02),333 R2 B #5
+2954589022,B2 U' R2 B' F2 D2 B2 F' R2 D2 R F2 U B2 F R B2 D B D',Y,Silence in Tlaxcala 2023 (2023-08-05~06),333mbf Final A #2
+3487378001,F U B U L2 B L U F2 U R2 F' L2 D2 R2 D2 F' D' L2,W,NoVa Cube Winter 2024 (2024-02-03),333bf Final B E2
+3672488001,R2 B2 L2 D2 U F2 U' L2 U' F' U' L' F2 L' D' B2 F2 R2,W,RioMar Kennedy Fortaleza 2024 (2024-04-13~14),333 R2 C E1
+4509755001,U2 L2 D2 U2 R' F2 D2 L' R U B R' F D F2 L2 F' R2 D',B,LA PRE Pucallpa Speedcubing 2025 (2025-02-22),333 R1 D #4
+5061345001,U2 D2 R B' D B2 D2 R D U2 B2 R2 U2 R U2 B2 R' D2 L',B,Kedah Cube Open 2025 (2025-09-27),333 Final B #3

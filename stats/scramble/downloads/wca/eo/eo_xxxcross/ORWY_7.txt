@@ -1,0 +1,41 @@
+# Scramble samples — eo / eo_xxxcross / ORWY / bin 7
+# Population in this bin: 34
+# Samples listed: 34 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+115238001,D R' U L' U2 B U2 L2 B' L' U' B2 U2 R2 U L2 D L2 B2,W,Summit City Open 2015 (2015-03-07),333 R2 A E1
+208739001,R2 U R2 D F2 D2 U2 R2 B2 F U L2 U R2 U2 B F D L',Y,Athens Fall 2015 (2015-10-24),333 R2 C E1
+392723001,L2 R2 B' L2 B' L2 B2 D2 F D2 F L' D' U' R' F L R' D' L,Y,Jawa Timur Open 2016 (2016-11-05~06),333 R1 A E1
+499548001,U' L2 U2 R2 U' L2 D' R2 F2 L' F L R2 U2 L2 B' L' D' B' L',R,Please Be Quiet UCLA 2017 (2017-04-29~30),333bf R1 B E2
+538439001,R2 B2 D2 R2 D2 R2 D' B R' D' B D B' F' R2 F D2 R,W,National Cubing Region Open 2017 (2017-06-23~25),333 R1 I #2
+594019001,B' R' B R2 L' U' F2 R U' F2 D2 B' D2 B2 U2 F R2 F U2,O,Music City Fall 2017 (2017-09-15~16),333oh R1 C #2
+660698003,L2 D2 F D2 L2 F L2 B' R D2 L' F2 L R B2 D' F U' B' L2,R,Curitiba Open 2015 (2015-04-25~26),333mbf Final A #2
+660851016,D2 R2 D2 F L2 R2 D2 B F' D2 F' L' U2 B U' R B L2 R2 U' L2 U',W,Two days in Vitebsk 2015 (2015-10-31~11-01),333mbf Final A #1
+660859014,D2 U2 L2 F R2 D2 B R2 U' B R2 F' R2 D B' D B R D2 L2 U2,Y,Valencia Open 2015 (2015-11-14),333mbf Final A #1
+880129001,L' F' L D L D' L2 F' R' F2 U D L2 D' R2 D L2 D',R,No 3x3x3 Mississauga 2018 (2018-09-15),333ft Final A #3
+1146927001,R' U' F D R2 U F2 D' L2 D2 U' B2 F2 R F' R U2 L' D' U' B2 D2 U R' U' F,W,Uzbekistan Big Cubes Spring 2019 (2019-05-18~19),333fm Final A #1
+1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',O,High Wycombe Open 2019 (2019-06-08~09),333 R2 B #2
+1201932001,R2 B' D2 F' U2 B L2 B' R2 U' R F L2 F R' B U R2 F',Y,Cusco Speedcubing II 2019 (2019-06-29),333 R1 A E2
+1921497001,U' B U2 B' U2 R2 B' R' D B' D R2 F' D2 L2 U2,Y,MSU Quiet Qualifier 2022 (2022-05-14),333bf Final B E1
+2261587001,R D R B2 D' R L D' B U2 L2 U2 B' R2 U2 F' D,Y,Minyons de Terrassa Open 2022 (2022-10-22),333 R1 C #5
+2430576001,D L2 F U F2 U R2 D2 B2 R2 U L' U2 B' L2 U' F' U R2,R,Richmond Favourites 2023 (2023-01-14),333 Final A E2
+2497401001,F U2 F' L2 B' L2 F' D B' D2 F D' U2 L R2 B D R2,O,Waterloo Favourites B 2023 (2023-02-19),333oh Final A #3
+2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,R,Pickering D 2023 (2023-03-26),333 R2 B #2
+3155239001,U2 R D2 B2 L' F2 U2 L D2 B' L B D' B2 R' B F L' U2 L2,O,Ankuram Open Saturday 2023 (2023-10-14),333bf Final B E1
+3262236001,D2 R D B R2 B D L2 U2 D2 F' U2 B2 U2 F' D2 U' R,O,Madrid Cundinamarca II 2023 (2023-11-13),333 R2 B E2
+3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y,Folkets Kub Alvesta 2024 (2024-01-27~28),333oh Final B E1
+3493389001,F D2 R F2 R U2 L F2 B D2 U B2 L2 D B' F' D' B,W,Mysore Cube Open 2024 (2024-02-03~04),333 R2 C #2
+3992623001,D2 F B2 U' F2 L2 F' R F' B L2 U2 L2 U2 F' D',R,A Twisty Day in Araneta 2024 (2024-08-04),333oh R1 A E2
+4381056012,F2 L U2 B2 F2 R2 U2 D' L U' R2 D2 B2 U' R' D',Y,Bengal Cube Open 2024 (2024-12-20~22),333mbf Final A #1
+4578226001,R D R' B R2 B' L2 F2 D2 F' D2 F' L' D2 F U F',O,Wichita Art Museum 2025 (2025-03-22),333 Final A #1
+4696250001,B' U D' L2 U' L' B2 D' R L2 U2 B2 U2 B2 U2 L' D' L2,W,Lake Macquarie Open 2025 (2025-05-03),333 R1 C E1
+4850256001,D R' B2 R B2 R' B2 R2 D2 F R' B2 U' L R2 B' L B,W,Rubik's WCA World Championship 2025 (2025-07-03~06),333 R2 D E1
+4898954001,F' R2 U2 L U2 F2 R' D2 U2 L B2 R' D B2 F2 L B L D,R,Play Extreme Cubing B 2025 (2025-08-03),333 R1 C #1
+5186792060,U R2 D2 U L2 B2 D R2 L D2 B' L B F2 L B2 R2 U',R,Polish Championship 2025 (2025-11-13~16),333mbf Final A #1
+5350697001,B2 U D2 L2 F2 R D' F2 D2 L2 F B' R2 F2 B' D F',W,Chipichape al Cubo II 2026 (2026-01-24),333 R1 C #3
+5447077001,D2 F U' L2 F' L' B D B2 L2 B' U2 R2 F' R2 U2 B' U' F2,W,Stevenage March 2026 (2026-03-14~15),333 R2 A #4
+5539194001,L2 U2 B2 F2 L2 U' B2 D' R2 L U2 F U' B2 D' F' U2 B' D2,Y,Adelaide Autumn 2026 (2026-04-12),333 R1 A #2
+5583676001,L D B2 D2 B2 U2 R2 F2 R' U2 R' U2 B2 F' L' D2 L' F2 D,R,Tigery Open 2026 (2026-04-25~26),333oh Final A #2
+5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026 (2026-05-30),333 R2 B E2

@@ -1,0 +1,15 @@
+# Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / G / bin 3
+# Population in this bin: 8
+# Samples listed: 8 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+80535001,R F' U2 L2 U D2 R U D' B U' L2 B R2 B' D2 B,G,Plaza de las Américas 2014 (2014-11-15),333oh Final A #1
+661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
+1017548001,D' U2 R2 D2 U' B2 L2 R2 U' R B' R B U R D R' F,G,Izhevsk Winter Cube 2019 (2019-02-09~10),333 R1 D E2
+1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',G,High Wycombe Open 2019 (2019-06-08~09),333 R2 B #2
+1728229001,F2 U R L' F' L F' D B' R2 L D2 B2 L' F2 R' B2 U' B,G,BrizZon Side Open III 2021 (2021-11-12~14),333bf R2 B #1
+1902384001,D B' D L' D2 L B2 D2 R D2 R2 B R F' D R D2 L R,G,Stevenage Spring 2022 (2022-04-30~05-01),333 R2 C #3
+2404308001,B D' L F' L2 U' F2 D2 U L2 D' L U' F2 L' D2 U F,G,NTU Welcome 2023 (2022-12-31~2023-01-01),333 R1 E E1
+5025875001,D2 R' F2 R' U2 R U2 F U2 F2 R D' L2 D' L U F' L,G,Kushtia Cube Open 2025 (2025-09-13),333 R1 A #5

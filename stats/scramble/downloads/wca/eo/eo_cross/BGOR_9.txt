@@ -1,0 +1,9 @@
+# Scramble samples — eo / eo_cross / BGOR / bin 9
+# Population in this bin: 2
+# Samples listed: 2 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+220248001,F2 L2 D2 U2 R B2 R B2 U' F L B' D R' U2 L' U' L R2,B,River Hill Fall 2015 (2015-11-21),333 R1 E #3
+1418363001,U2 B D2 R2 D2 L2 B R2 U2 B' D' L F2 L' R' U2 B U L D' F',B,Fargo Fall 2019 (2019-11-23~24),333oh Final A E2

@@ -1,0 +1,27 @@
+# Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / O / bin 6
+# Population in this bin: 20
+# Samples listed: 20 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color
+
+1225,B2 U' F2 R2 U2 L2 F2 L2 U F2 D B2 L2 D2 B' L2 F D U2 B' U' R' L' ,O
+1243,F2 U2 B2 D B2 F2 R2 L2 D L2 D U' B' D' U' L2 B' F' U' R' L' ,O
+5967,B2 R2 U' R2 U' R2 B2 L2 U' F2 D B2 D' R2 F' U B R' L' F R' D' U R' U2 ,O
+5968,B2 U B2 D' L2 D2 B2 L2 D R2 B2 U2 B2 U' L' F' D B' D' R U B' L' D2 ,O
+5969,L2 D' F2 D L2 B2 F2 D' L2 U' R2 D' R2 U L' F' R D B D' U R2 B' L' ,O
+5970,B2 R2 U' R2 D2 B2 R2 F2 L2 U R2 B2 D2 U2 B' R' D U' F D2 R' L' F' U' ,O
+5971,B2 D R2 B2 U R2 D B2 L2 U2 B2 D B2 R2 B' R' D U' F D2 R' L' F' U' ,O
+5972,D' R2 F2 R2 B2 U F2 U L2 B2 R2 U L' U2 F' D B' D' L' U' B R' ,O
+5973,U2 F2 U' F2 U' L2 U B2 R2 F2 L2 U' F2 U' L' B' D' F2 L' F R U L2 B' ,O
+5974,L2 D' B2 R2 D2 F2 L2 D R2 L2 F2 D L2 U' R' U' F' L' D L2 B' R' U F' ,O
+5975,B2 U F2 R2 U R2 F2 U' L2 U' R2 U L2 F' R L U B' U' L' D' L F' ,O
+5976,D' F2 R2 D' F2 L2 D' F2 U B2 F2 R2 U' L2 R' F D' U B2 R D2 B F L' U2 ,O
+5977,L2 D B2 L2 U R2 B2 U R2 B2 U2 F2 U L2 U' R' F D' U B2 R D2 B F L' U2 ,O
+5978,B2 U' L2 D' B2 F2 L2 D R2 B2 F2 D' F2 U' F' U B R' L' F R' D' U R' U2 ,O
+5979,L2 D R2 U' F2 R2 D2 R2 D R2 U' R2 F' D B2 L B U' R' F D' L' ,O
+5980,L2 D' F2 U B2 R2 L2 U2 R2 D' R2 U2 B2 U' L' F' R D B D' U R2 B' L' ,O
+5981,B2 D' R2 D R2 F2 R2 B2 U R2 D' B2 U' R2 U' L' F' R' F' U' B' F U L' ,O
+5982,D2 B2 D' B2 U2 L2 D' B2 D2 R2 U' B2 R2 U2 R2 F' D U2 R' L U' B' F D L' U' ,O
+5983,B2 D B2 D R2 F2 D B2 U' R2 U F2 U2 R' D' F' L U' R' B R' F U ,O
+5984,U B2 L2 U2 B2 U' F2 D' R2 F2 U' F2 R2 U' L' F' R' L2 D F' L D' U' B U ,O

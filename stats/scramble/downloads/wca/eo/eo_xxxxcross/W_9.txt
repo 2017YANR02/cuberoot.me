@@ -1,0 +1,11 @@
+# Scramble samples — eo / eo_xxxxcross / W / bin 9
+# Population in this bin: 4
+# Samples listed: 4 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+1024088029,B' F2 D2 L2 B' F' D2 R2 D2 F2 D' R' F2 U' L' B' U2 L' B F2 D',W,I Hope It's Solved Edmonton 2019 (2019-02-16~17),333mbf Final C #1
+2039522001,R2 F L2 U' R B2 L D2 L F' D2 L' F D R' D,W,El Palmar Cubing Fest 2022 (2022-07-24),333 R1 E #2
+3369381001,B2 D2 U2 L' F2 D2 L R2 U2 B U B' R F' R2 D' R2 B',W,Sydney Summer 2023 (2023-12-16~17),333 Final A #5
+4357097051,D2 B' D' B2 R2 U' L2 U' R2 B2 U2 R' D L' B D U2 B R F L B,W,New Zealand Nationals 2024 (2024-12-13~15),333mbf Final A #1

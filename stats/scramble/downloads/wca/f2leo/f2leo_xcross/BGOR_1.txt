@@ -1,0 +1,10 @@
+# Scramble samples — f2leo / f2leo_xcross / BGOR / bin 1
+# Population in this bin: 3
+# Samples listed: 3 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,G,Great Indian Cubeathon 2016 (2016-01-08~10),333oh R1 G E1
+3142148001,U R2 D' F2 U' F2 D' L' B2 D2 F D F' L' U2 L' F2 L',G,T-Town Showdown 2023 (2023-10-07),333 R1 A E2
+3516176001,R' U' F U B2 D' L2 U' F2 U2 F2 L' U' L' D B' U' B' F2 U2 R2 U2 R' U' F,O,Love Is Blind Lima 2024 (2024-02-18),333fm Final A #1

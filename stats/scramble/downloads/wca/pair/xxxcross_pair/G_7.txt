@@ -1,0 +1,19 @@
+# Scramble samples — pair / xxxcross_pair / G / bin 7
+# Population in this bin: 12
+# Samples listed: 12 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,G,LMDL Open 2015 (2015-09-12),333 R1 B #3
+315519001,B R2 B L2 U2 R2 F2 U2 F L2 F2 L' U2 L U F' D2 U' L B,G,SCMU 2016 (2016-06-17~19),333 R1 R #5
+450031001,B U2 F U D F L' U2 L F2 B2 D' R2 U2 L2 U L2 F2,G,Piedra del Sol Santander 2017 (2017-02-18),333oh Final B #3
+577465001,D F2 U R2 D' F2 U' B' R2 D2 B U2 L' D' B' U' L' B2,G,Bicho Legal Open 2017 (2017-08-19~20),333 R1 A #2
+1026578001,U2 F2 D2 L2 F2 L2 F D2 F' D2 R' F' D' F D B2 F' L F',G,KSF Ust-Kamenogorsk City 2019 (2019-02-16~17),333oh R1 A #3
+1329188001,R2 U R2 B2 D U' F2 D' U' B U2 F' L B' D F D2 F2 R' F,G,Sioux Fall 2019 (2019-09-28~29),333 R1 C #3
+2105467001,B F' U2 L2 R2 F' L2 F2 U2 R U' B D2 U B U' B' L R B,G,Israel Championship 2022 (2022-08-16~18),333bf Final A E2
+2858878001,D' R D2 L2 F U2 F' R2 F2 U' B' L2 R' U' F' D F',G,Queensland Open 2023 (2023-07-08~09),333 Final A E1
+2894139001,F2 B L U B R U D R F2 B' R2 U2 B L2 U2 F R2 U2 D2 L2 U,G,Lebrija 2023 (2023-07-16),333bf Final B #1
+3646111001,B2 U' B2 U F2 L2 U2 B' D' B U2 B' D B2 L' F' D B,G,Busan Spring 2024 (2024-04-06~07),333 R1 A #5
+5092082132,U' F' U2 L B' L D' B' U2 L' B U R2 D B2 R2 U' D' B' L',G,PBQ in Tashkent 2025 (2025-10-11~12),333mbf Final A #3
+5560802001,U2 R U2 R' B2 R' F2 D2 R2 F' D F' U B' U' B2 D2 L F2,G,Racing Kane 2026 (2026-04-18),333 R1 A #1

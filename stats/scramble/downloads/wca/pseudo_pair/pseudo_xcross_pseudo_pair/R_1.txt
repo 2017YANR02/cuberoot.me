@@ -1,0 +1,10 @@
+# Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / R / bin 1
+# Population in this bin: 3
+# Samples listed: 3 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R,RGIT Cube Open 2018 (2018-03-10),333oh R1 A #4
+3579673001,B2 U' L2 F2 D2 U' R2 U2 F2 R2 B' R' U' L' U F2 L' R,R,Iloilo City of Love Open 2024 (2024-03-09),333oh Final C #5
+5508904028,U2 F' D2 F2 U2 B' D2 R2 D F' D2 R D' R F U' R2 D2 L B',R,No Peeking Calgary 2026 (2026-04-04~05),333mbf Final A #2

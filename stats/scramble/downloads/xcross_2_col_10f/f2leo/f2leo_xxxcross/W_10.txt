@@ -1,0 +1,10 @@
+# Scramble samples — f2leo / f2leo_xxxcross / W / bin 10
+# Population in this bin: 3
+# Samples listed: 3 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color
+
+244758,R2 U2 R2 F2 R2 L2 U' F2 U2 L2 U2 L2 R' F' R2 D L U F' R B L2 U' ,W
+354889,U B2 U L2 B2 U' L2 U' B2 D R2 U2 B2 U' R' U B' U2 L F2 D F R B' ,W
+356232,D' R2 L2 F2 U' L2 D' F2 D' F2 D' R2 D2 F' U2 R' U B D L F' R' U' ,W

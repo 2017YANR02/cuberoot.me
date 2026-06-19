@@ -1,0 +1,12 @@
+# Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGWY / bin 11
+# Population in this bin: 5
+# Samples listed: 5 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color
+
+116411,L2 D F2 U' B2 U F2 R2 F2 D R2 L2 B' F' R' B2 L2 D U' F' R' L' ,B
+877108,L2 D2 B2 D R2 B2 U2 B2 L2 D2 L2 F2 U F' R L U B' F D' U F' D' U' L' ,B
+893277,D2 F2 R2 F2 D L2 U' R2 B2 U' L2 D F2 R2 L' B' U2 F' U R D' B D2 F L' U' ,B
+1211718,B2 D' L2 U F2 U B2 L2 F2 D2 L2 D' L2 U L' B' R' U F D L B' U2 F' ,B
+1233948,F2 D L2 B2 U L2 U R2 D' B2 L2 U R2 U' B' F' R' B2 L2 D U' F' R' L' ,B

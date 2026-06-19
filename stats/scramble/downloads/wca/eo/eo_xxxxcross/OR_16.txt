@@ -1,0 +1,49 @@
+# Scramble samples — eo / eo_xxxxcross / OR / bin 16
+# Population in this bin: 42
+# Samples listed: 42 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+94846001,B R2 B D2 R2 B F2 D2 B D L R' F L' F2 L' U B2 R' D B R2,O,Austin Cubing Limits 2015 (2015-01-03),333bf Final A #2
+145030001,D2 R2 D2 B2 F2 R' B2 R' U2 R' D B' F2 U2 L' R B U L2 R2,O,Festival Del Cubo Caracas 2015 (2015-05-30),333 R1 A #5
+252066001,F2 L2 F2 R2 F2 D F2 U' B2 U2 L2 B F D B2 F' U R D' U' L,O,Ural Winter 2016 (2016-02-06~07),333oh Final A #3
+370422001,F' B D' F2 L2 B R B' L F2 U F2 B2 D2 B2 R B2 D2 R,O,Arnold Open 2016 (2016-09-23~25),333 R1 C #3
+604223001,B' U2 B F2 R2 B U2 B2 D2 U' L B' F D L2 B2 R U2 F L2,O,Arnold Open 2017 (2017-09-22~24),333oh R1 A #5
+615826001,B2 R2 F2 R2 D2 U' F2 L2 U2 B' L D2 R' F2 L2 D U2 F' R2 B,O,Rocket City 2.0 2017 (2017-10-14),333 R1 B #5
+618875001,R2 D2 R' U2 F2 R2 U2 L' U2 L U2 B L' F U B' D F D' R,O,Spanish Championship 2017 (2017-10-13~15),333oh R1 C #2
+640720008,F U2 L2 F L2 B D2 L2 U2 L U R' F2 D B U' R2 F R2 B D2,O,CubeHub Open 2017 (2017-11-11~12),333mbf Final A #1
+661493046,D2 U' L2 B2 D B2 D2 U R' B' U B' F L' D' L2 B2 D B' F2 L2 U,O,Estonian Open 2017 (2017-09-09),333mbf Final A #1
+674729001,B L' B2 U' D' F' L F2 D' B L2 B2 R' D2 R U2 B2 L' B2 R,O,Bangladesh Cubing Fiesta 2017 (2017-12-23),333 R1 D #4
+704072001,R F2 D' R D' R' F R' L' B D R2 U2 R2 F2 B2 R' F2 L',O,LLS II 2018 (2018-02-10),333 R1 E E2
+905126001,F U' F' B D F2 R2 F2 R B' L2 B2 R' L' D2 R' B2 L' B2 D2 B2,O,Ukrainian Nationals 2018 (2018-10-12~14),333ft Final A #1
+1642238001,U L2 B2 D' U L2 D2 R F' D2 B' D R' B2 F D U F2 R',O,Craigie Cube-Off 2021 (2021-03-28),333oh R1 A #5
+1642445001,B2 L2 F' U' L' U' F' L2 U B' D R L D2 F2 R' F2 U2 F2 L,O,Ural Spring 2021 (2021-04-04),333 Final A #3
+1790669001,L F2 D' F2 L2 D2 F2 D B2 D' F L' R2 D B' D2 L' R D2 U,O,La Paz Survivors 2022 (2022-01-15~16),333 R2 C #3
+2140734001,L2 U D L D B' R2 B' U B' U2 B2 U2 R2 L' D2 R U2 B',O,Gbg Summer Cubing 2022 (2022-09-03~04),333oh R1 A #5
+2305097001,F' L2 R2 D2 F' L2 F U2 L2 F D B' D2 F2 L U2 B' L D' L2,O,Elektryk Cube Race 2022 (2022-11-12~13),333 R1 C #2
+2441531001,F2 U R2 F2 D2 F2 U2 L2 U2 R' B' D L2 U' B U' B2 L' F2 U,O,Berkeley Winter B 2023 (2023-01-22),333oh R1 C #1
+2689086001,L' U L U B U' F D R U2 D2 B2 L2 D2 L2 U2 B' U2 B L2,O,San Marino Nationals 2023 (2023-05-07),333oh Final A #2
+2744971001,D' B2 D2 U L2 R2 U' R2 F2 D2 R D B D' F' D B2 R F' D' B' L,O,LSP Hverdagskubing Mai 2023 (2023-05-22),333bf Final A #3
+2955596001,B F2 R' F2 U2 R2 U2 R D2 F2 U2 F2 U' L2 B' F' D' L2 D' L',O,Belgrade Summer 2023 (2023-08-05~06),333 R2 A #3
+2993517001,U2 R F2 D2 B2 U2 R2 U2 R' F' R2 U' L' D' B D2 R F' U,O,Aves María Teams 2023 (2023-08-20~21),333 R2 C #4
+3298247006,F D2 B D' R F2 L U R2 D B2 D F2 U2 L2 F2 B D R2 B' L',O,Mountain View Multi Madness 2023 (2023-11-24~27),333mbf R1 B #1
+3300959001,R2 D2 B2 R F2 L B2 L' D' U' L2 B' L' U L2 D L F D,O,TCG Space II Santa Anita 2023 (2023-11-25~26),333 R1 E E1
+3412974001,L' F2 R2 U' B2 D2 B2 D B2 D L2 B2 R' B2 F L' R2 B' D L2,O,Timisoara Cube Day 2024 (2024-01-14),333 R2 B #2
+4116400030,U2 R' F U2 R2 U' R2 F2 L2 U' B2 R2 F' L' D2 F' L' F' U' L,O,Swisscubing Cup Mental Breakdown II 2024 (2024-09-14~15),333mbf Final B #1
+4183956001,R F' U' B2 L D' F U' B2 D2 F2 D L2 B2 L2 U' L F2 D2,O,Lloydminster Border Battle 2024 (2024-10-12),333 Final A #1
+4358344001,B2 D2 U' R2 U R2 B2 U2 R2 D2 R' F' D' B U' L D' B U2 R D,O,Singapore NxNxN 2024 (2024-12-15),333bf R1 B #1
+4421457001,R' F D2 F2 R2 D2 F U2 F' D2 B' U F2 R' U' F' D' B' L' F2,O,Trivandrum Cube Open 2025 (2025-01-11),333oh R1 D E1
+4438171001,B2 U' L2 F2 L2 R2 D' L2 D2 L2 F U2 B' R D' U' F2 L B2 R B',O,Regreso a Clases Aves María 2025 (2025-01-18~19),333 R2 D #5
+4542485001,B' L' D2 F U D2 R U F D' R2 L' B2 R U2 R' F2 B2 L',O,Pingtung Winter Open 2025 (2025-03-01~02),333oh R1 D #3
+4558006001,F B2 U F2 L U D' F D B R' F' U2 B' L2 F' D2 R2 F2 U2,O,Johnsonville FTOpen 2025 (2025-03-08),333 R1 B E1
+4578816001,B U' F2 L2 B2 U B2 F2 R2 D' F2 U L' D B' D2 R' F L2 B2 U2,O,Oldham County Spring 2025 (2025-03-22),333 Final A E2
+4598738001,D F' L B2 R2 B2 U2 R2 D U2 F2 U2 R2 B' F L B R2 F D,O,Cubolimpiadas Aves María 2025 (2025-03-22~24),333 Final E E1
+4789796003,U2 L' R2 U2 L D2 U2 F U2 F' L' D2 B' U2 B2 D R U' L2 U2,O,Kansas Championship 2025 (2025-06-06~08),333mbf Final A #1
+4852221001,B2 U2 B2 L2 B2 L2 U L' U' F' R' U F2 U B' L U L U',O,Paseo Central Winter 2025 (2025-07-05),333 R1 L E1
+5092082110,R B2 D2 R' F2 U2 B2 R' D2 U' B' L' U2 R' B2 D' B' F' L B D',O,PBQ in Tashkent 2025 (2025-10-11~12),333mbf Final A #3
+5135339001,F' U' D' F2 L2 F R2 L' B U B2 L2 F' B R2 D2 B U2 L B2,O,Avenida Chile XXVII Prenacionales 2025 (2025-10-25~26),333mbf Final A #1
+5428348013,D B L' U' F U2 D' R' B U2 B' R2 L2 U2 R2 L2 F' D2 R B' L',O,Tokyo BLD Winter 2026 (2026-03-07),333mbf R1 A #1
+5490190001,F' L F B U2 R U' F B2 L' D2 R U2 B2 L U2 R B2 L2 U,O,Masiv Cubing 2026 (2026-03-28),333oh Final A E2
+5645676001,U2 B2 R' D2 U2 B2 L U2 R2 F2 L' D2 B U L' R' F' D B L2 D,O,Las Palmas Ahome 2026 (2026-05-16~17),333 R1 B #1
+5679826001,B2 U' L2 D' U2 F2 R2 U' B L' U L' D2 F2 D' L2 B R U,O,The Last Frontier Spring 2026 (2026-05-30),333 Final A #3

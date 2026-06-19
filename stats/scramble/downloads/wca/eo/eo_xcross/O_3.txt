@@ -1,0 +1,11 @@
+# Scramble samples — eo / eo_xcross / O / bin 3
+# Population in this bin: 4
+# Samples listed: 4 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+981166001,U' D L2 F U R2 F2 B U2 B L2 D L2 D R2 U F2,O,Florence Winter 2019 (2019-01-12),333ft Final A #3
+1389153001,B2 R2 D' B2 D' B2 U2 L U R U' B F2 U' L' U',O,Munich Open 2019 (2019-11-02~03),333 R2 E #2
+5041993001,B2 F2 L D2 R F2 U B2 F2 R2 D' U2 L' R2 U2,O,Hanoi Summer 2025 (2025-09-20~21),333 R2 D #4
+5539376001,R D L2 F D' R2 F U2 F2 U D2 F2 R2 U L2 F2 L2,O,NZ South Island Championship 2026 (2026-04-10~12),333 R2 C #2
