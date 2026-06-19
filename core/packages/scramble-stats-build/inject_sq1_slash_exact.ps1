@@ -30,7 +30,8 @@ param(
   [switch]$Split,
   [int]$SplitDepth = 2,
   [int]$SplitTimeoutSecs = 600,
-  [switch]$MergeOnly
+  [switch]$MergeOnly,
+  [switch]$NoMitm
 )
 $ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
@@ -45,6 +46,7 @@ $monf  = "$dir/sq1_slash_monsters.csv"
 $work  = "$dir/_slash_chunks"
 $logf  = "$dir/_slash_run.err"
 $exe   = 'D:/cube/cuberoot.me/solver/target/release/sq1_analyzer.exe'
+$mitm  = 'D:/cube/cuberoot.me/solver/target/release/sq1_slash_mitm.exe'  # decide_t 兜底:深态 radius ⌊s/2⌋ 判 t∈{s-1,s}(via-wca 超时的怪物)。cargo build 全 bin 默认带它,缺则告警跳过
 # 历史/外部已解来源(一次性 ingest 作种子,只读不删):
 $seedSources = @("$dir/_xval_resolved.csv", "$dir/_tier1")
 
@@ -173,6 +175,38 @@ function Build-Final {
   return $nFallback
 }
 
+# decide_t MITM 兜底:把所有残留 M 怪物(via-wca 解不动的)用 sq1_slash_mitm decide_t 判定 → resolved。
+# decide_t(state,s):歧义 t∈{s-1,s},只判"有无 ≤s-1 解" ⇒ 只建 radius ⌊s/2⌋ 双向 BFS frontier
+# (比全距离浅一层),s=12/13 深态可行(全距离 OOM 的那些);slash god=13 ⇒ cap≤6 完备兜底。
+# t=s 进 resolved(Build-Final 用 WCA-opt 作等价打乱,见上 156 行);t=s-1(史无前例)告警留怪物。
+# 各条独立进程避免内存累积。返回判定条数(>0 时已 Write-Out 持久化)。M 怪物不在 Tier1 todo 里,
+# 故必须独立于 via-wca 在每条 Build-Final 前跑。
+function Run-DecideT {
+  if ($NoMitm) { return 0 }
+  if (-not (Test-Path $mitm)) { Write-Warning "sq1_slash_mitm 未编译,跳过 decide_t 兜底(残留留作紧上界)。build: cargo build --release --bin sq1_slash_mitm -j 14"; return 0 }
+  $resid = [Collections.Generic.List[string]]::new()
+  foreach ($id in $ambIds) {
+    $r = $resolved[$id]
+    if (((-not $r) -or ($r.v -eq 'M') -or ($r.v -eq '') -or ($r.v -eq '-')) -and $compact.ContainsKey($id)) {
+      [void]$resid.Add("$id,$($compact[$id]),$($wcaMap[$id].s)")
+    }
+  }
+  if ($resid.Count -eq 0) { return 0 }
+  Write-Host "decide_t MITM 兜底 $($resid.Count) 条残留怪物(各独立进程,radius ⌊s/2⌋)…"
+  $got = 0
+  foreach ($line in $resid) {
+    $rid = $line.Split(',')[0]; $rs = [int]($line.Split(',')[2])
+    $res = ($line | & $mitm 2>$null)
+    if ($res -match '^\d+,(\d+)$') {
+      $rt = [int]$Matches[1]
+      if ($rt -eq $rs) { Add-Resolved $rid "$rt" ''; $got++ }
+      elseif ($rt -lt $rs) { Write-Warning "decide_t id=$rid t=$rt < s=$rs(史无前例真省刀!留怪物,手动跑 sq1_slash_mitm 全距离取解逆补 opt)" }
+    }
+  }
+  if ($got -gt 0) { Write-Host "  decide_t 判定 $got 条 t=s"; Write-Out }
+  return $got
+}
+
 if ($MergeOnly) { Build-Final | Out-Null; exit 0 }
 
 # ---- 待解 ----
@@ -190,7 +224,7 @@ if ($Split) {
   }
   Write-Host "Tier1(lite,${TimeoutSecs}s/条):新待解 $($todo.Count)(已解 $($resolved.Count)/$($ambIds.Count))"
 }
-if ($todo.Count -eq 0) { Write-Host '无待解,直接合并。'; Build-Final | Out-Null; exit 0 }
+if ($todo.Count -eq 0) { Write-Host '无 via-wca 新待解。'; Run-DecideT | Out-Null; Build-Final | Out-Null; exit 0 }
 
 # ---- 写 chunk(id,compact,W)----
 Get-ChildItem $work -Filter 'chunk_*.txt' -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
@@ -225,6 +259,9 @@ $code = $LASTEXITCODE
 Ingest-Dir $work
 Get-ChildItem $work -Filter '*_sq1.csv' -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 Write-Out
+
+# ---- decide_t MITM 兜底(via-wca 留下的残留怪物;函数 Run-DecideT 定义见上)----
+Run-DecideT | Out-Null
 
 # ---- 怪物清单 ----
 $monLines = [Collections.Generic.List[string]]::new()
