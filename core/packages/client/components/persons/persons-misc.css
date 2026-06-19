@@ -1,0 +1,35 @@
+/* 选手页 杂项 tab(最亲密魔友 / 见过的魔友 / 去过的省份)+ 赛事/项目统计 表头排序箭头。
+   独立于 persons.css,避免与该文件里其它进行中的改动耦合。在 PersonDetailClient 里随 persons.css 一起 import。 */
+
+/* 排序箭头:inline 跟在表头文字右侧(Tailwind preflight 把 svg 设为 block 会掉到下一行,这里强制 inline) */
+.wp-sort-ic { display: inline-block; vertical-align: middle; margin-left: 4px; }
+.wp-sort-idle { opacity: 0.3; }
+.wp-sort-active { opacity: 1; color: var(--wp-text); }
+
+/* 杂项三栏 */
+.wp-misc {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 28px;
+    align-items: start;
+}
+.wp-misc-title { font-size: 0.95rem; font-weight: 600; margin: 0 0 10px; color: var(--wp-text); }
+.wp-misc-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.wp-misc-table th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--wp-text-sub);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--wp-border);
+    white-space: nowrap;
+}
+.wp-misc-table td { padding: 7px 8px; border-bottom: 1px solid var(--wp-border); }
+.wp-misc-table .wp-cell-num { text-align: right; }
+.wp-misc-table tbody tr:hover td { background: color-mix(in srgb, var(--wp-text) 3%, transparent); }
+.wp-misc-cuber a { color: var(--wp-blue); text-decoration: none; }
+.wp-misc-cuber a:hover { color: var(--wp-accent); text-decoration: underline; }
+.wp-misc-region { display: inline-flex; align-items: center; gap: 6px; }
+.wp-misc-total td { font-weight: 600; border-top: 1px solid var(--wp-border); border-bottom: none; }
