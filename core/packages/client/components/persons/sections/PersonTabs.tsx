@@ -7,14 +7,16 @@ import { Suspense, lazy } from 'react';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 
 const ResultsTab = lazy(() => import('./results/ResultsTab'));
+const RecordsTab = lazy(() => import('./RecordsTab'));
+const ChampionshipPodiumsTab = lazy(() => import('./ChampionshipPodiumsTab'));
 const CompsTab = lazy(() => import('./CompsTab'));
 const EventStatsTab = lazy(() => import('./EventStatsTab'));
 const MilestonesTab = lazy(() => import('./MilestonesTab'));
 const LitCitiesTab = lazy(() => import('./LitCitiesTab'));
 const MiscTab = lazy(() => import('./MiscTab'));
 
-type TabKey = 'results' | 'comps' | 'events' | 'milestones' | 'cities' | 'misc';
-const TAB_KEYS: TabKey[] = ['results', 'comps', 'events', 'milestones', 'cities', 'misc'];
+type TabKey = 'results' | 'records' | 'podiums' | 'comps' | 'events' | 'milestones' | 'cities' | 'misc';
+const TAB_KEYS: TabKey[] = ['results', 'records', 'podiums', 'comps', 'events', 'milestones', 'cities', 'misc'];
 
 interface Props {
   profile: WcaPersonProfile;
@@ -37,6 +39,8 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
 
   const labels: Record<TabKey, string> = {
     results: t('成绩', 'Results'),
+    records: t('纪录', 'Records'),
+    podiums: t('领奖台', 'Podiums'),
     comps: t('赛事', 'Competitions'),
     events: t('项目统计', 'Event Stats'),
     milestones: t('里程碑', 'Milestones'),
@@ -60,6 +64,8 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
       <div className="wp-tab-body">
         <Suspense fallback={<div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>}>
           {active === 'results' && <ResultsTab profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} />}
+          {active === 'records' && <RecordsTab profile={profile} results={results} comps={comps} isZh={isZh} />}
+          {active === 'podiums' && <ChampionshipPodiumsTab profile={profile} isZh={isZh} />}
           {active === 'comps' && <CompsTab profile={profile} results={results} comps={comps} isZh={isZh} />}
           {active === 'events' && <EventStatsTab results={results} comps={comps} isZh={isZh} />}
           {active === 'milestones' && <MilestonesTab profile={profile} results={results} comps={comps} isZh={isZh} />}

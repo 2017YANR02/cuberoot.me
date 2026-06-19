@@ -13,6 +13,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
 import { computeMbfMo3 } from '../core/mbf_average.js';
+import { computeChampionshipPodiums } from '../core/championship_podiums.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -328,6 +329,30 @@ async function main() {
     }
   }
   console.log(`  WC=${worldChampComps.size} cont=${continentalChampComps.size} nat=${nationalChampComps.size} multi=${multiCountryNatComps.size}`);
+
+  // ── 3b. championship podiums: 选手页「锦标赛领奖台」(资格内重排名次,见 core/championship_podiums) ──
+  console.log('[champ-podium] computing championship podiums...');
+  const champPodiums = await computeChampionshipPodiums(
+    conn,
+    championships.map((ch) => ({
+      championship_type: ch['championship_type'] as string,
+      competition_id: ch['competition_id'] as string,
+    })),
+    continentOf, iso2Of, eligByType,
+  );
+  let champPodiumCount = 0;
+  {
+    const f = createWriteStream(resolve(outDir, 'wca_championship_podiums.copy.tsv'));
+    for (const p of champPodiums) {
+      f.write(
+        `${pgEsc(p.wcaId)}\t${pgEsc(p.compId)}\t${pgEsc(p.eventId)}\t${pgEsc(p.level)}\t` +
+        `${p.place}\t${p.best}\t${p.average}\t${intArr(p.attempts)}\t${pgEsc(p.singleRecord)}\t${pgEsc(p.averageRecord)}\n`,
+      );
+      champPodiumCount++;
+    }
+    f.end();
+  }
+  console.log(`  championship_podiums=${champPodiumCount}`);
 
   // ── 4. cohort: 每人首参赛年 + 首比赛 id/date ──
   console.log('[cohort] computing first-comp per person...');
@@ -1277,7 +1302,9 @@ CREATE TABLE IF NOT EXISTS wca_fs_comp_persons (comp_id VARCHAR(50) PRIMARY KEY,
 CREATE TABLE IF NOT EXISTS wca_fs_person_comp_solves (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, comp_id VARCHAR(50) NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL, PRIMARY KEY (wca_id, comp_id));
 CREATE TABLE IF NOT EXISTS wca_fs_comp_solves (comp_id VARCHAR(50) PRIMARY KEY, comp_country_id VARCHAR(50) NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS wca_fs_person_solves (wca_id VARCHAR(20) PRIMARY KEY, country_id VARCHAR(50) NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS wca_fs_person_year_solves (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, year SMALLINT NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL, PRIMARY KEY (wca_id, year));`;
+CREATE TABLE IF NOT EXISTS wca_fs_person_year_solves (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, year SMALLINT NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL, PRIMARY KEY (wca_id, year));
+CREATE TABLE IF NOT EXISTS wca_championship_podiums (wca_id VARCHAR(20) NOT NULL, comp_id VARCHAR(50) NOT NULL, event_id VARCHAR(20) NOT NULL, level VARCHAR(30) NOT NULL, place SMALLINT NOT NULL, best INTEGER NOT NULL, average INTEGER NOT NULL DEFAULT 0, attempts INTEGER[], single_record VARCHAR(3) NOT NULL DEFAULT '', average_record VARCHAR(3) NOT NULL DEFAULT '', PRIMARY KEY (wca_id, comp_id, event_id, level));
+CREATE INDEX IF NOT EXISTS wcp_wca ON wca_championship_podiums (wca_id);`;
 
   // 6 张全局聚合小表 + 指纹 manifest:两模式都全量 TRUNCATE+重灌(任一成绩变这些排名都会动,无法增量;
   // 但它们小,翻倍无所谓).边 COPY 边删源 TSV(同分区白占空间;\\copy 读完即删,\\! 不受事务影响).
@@ -1303,6 +1330,7 @@ TRUNCATE wca_fs_person_comp_solves;
 TRUNCATE wca_fs_comp_solves;
 TRUNCATE wca_fs_person_solves;
 TRUNCATE wca_fs_person_year_solves;
+TRUNCATE wca_championship_podiums;
 
 \\copy wca_competitions (id, name, country_id, start_date, end_date) FROM 'wca_competitions.copy.tsv';
 \\! rm -f wca_competitions.copy.tsv
@@ -1345,7 +1373,9 @@ TRUNCATE wca_fs_person_year_solves;
 \\copy wca_fs_person_solves (wca_id, country_id, solve, attempt) FROM 'wca_fs_person_solves.copy.tsv';
 \\! rm -f wca_fs_person_solves.copy.tsv
 \\copy wca_fs_person_year_solves (wca_id, country_id, year, solve, attempt) FROM 'wca_fs_person_year_solves.copy.tsv';
-\\! rm -f wca_fs_person_year_solves.copy.tsv`;
+\\! rm -f wca_fs_person_year_solves.copy.tsv
+\\copy wca_championship_podiums (wca_id, comp_id, event_id, level, place, best, average, attempts, single_record, average_record) FROM 'wca_championship_podiums.copy.tsv';
+\\! rm -f wca_championship_podiums.copy.tsv`;
 
   // VACUUM (ANALYZE):wca_results_flat 走 Index Only Scan 跑深分页,必须更新 visibility map.
   // 增量同样需要:DELETE 的 dead tuple 页 + delta 新页都要进 vmap,否则 IOS 退化 heap fetch.
@@ -1371,7 +1401,8 @@ ANALYZE wca_fs_comp_persons;
 ANALYZE wca_fs_person_comp_solves;
 ANALYZE wca_fs_comp_solves;
 ANALYZE wca_fs_person_solves;
-ANALYZE wca_fs_person_year_solves;`;
+ANALYZE wca_fs_person_year_solves;
+ANALYZE wca_championship_podiums;`;
 
   let loadSql: string;
   if (incremental) {
