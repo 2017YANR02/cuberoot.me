@@ -83,7 +83,7 @@ pwsh core/packages/scramble-stats-build/backfill_xcross_variant.ps1 -Variant pse
 
 ## B. 非 3x3 整解步数(`update_puzzle_stats.ps1`)
 
-二阶 / 金字塔 / 斜转 / SQ1 的整解步数分布 + 示例。前三个全表查表型精确最优(小表,百万/秒),全量分钟级;**SQ1 = 精确双口径(WCA 12c4 可证最优 + slash 最优),增量已自动接进一条龙**(需本机 13GB `sq1_wca_jsqfull.bin`;详见末条)。
+二阶 / 金字塔 / 斜转 / SQ1 的整解步数分布 + 示例。前三个全表查表型精确最优(小表,百万/秒),全量分钟级;**SQ1 = 精确双口径(WCA 12c4 可证最优 + slash 最优;slash 仅 10 条最深残留取紧上界,见 §6 引文),增量已自动接进一条龙**(需本机 13GB `sq1_wca_jsqfull.bin`;详见末条)。
 
 ```pwsh
 # 全部已注册 puzzle(增量补满,含 sq1)
@@ -97,7 +97,7 @@ cd core/packages/scramble-stats-build; pnpm exec tsx src/build_puzzle_examples.t
 - 产 `stats/scramble/puzzle_distribution.json`(直方图)+ `puzzle_examples.json`(示例卡片)。前端 `/scramble/stats` 难度 tab 选中二阶/金字塔/斜转/SQ1 即显示(`PUZZLE_EVENT_MAP` → `PuzzleDistView`)。
 - **SQ1 近最优(twophase)2026-06-18 退役**:精确档上线后 `update_puzzle_stats.ps1` 不再解算 sq1(已移出 `$PUZZLE` 注册表,改走专门「SQ1 块」)。`solver/src/sq1_twophase.rs` 仅留作对照(cstimer-vs-TNoodle 上游说明在该模块头)。示例打乱仍用 SQ1 简写记号(`formatScrambleForEvent('sq1',scr)`)。
 - **SQ1 精确双口径 = 增量自动接进一条龙(2026-06-18)**:`update_puzzle_stats.ps1` 的「SQ1 块」(sq1 不在 `$PUZZLE` 注册表,单独处理)增量抽 sq1 语料 → **有新打乱且 13GB `sq1_wca_jsqfull.bin` 在场**时,依次跑 `inject_sq1_wca_exact.ps1`(WCA 12c4 可证最优,`Sq1WcaSolver`,产 `sq1/sq1_wca_exact.csv` = `id,wca_exact,opt_scramble`)+ `inject_sq1_slash_exact.ps1`(slash 最优),两脚本都按 id 跳过已完成只解 delta。无新打乱→跳过不白载表;表缺失→`Write-Warning` 跳过(分布留旧值)。⇒ **`update_cross_stats.ps1 -Jobs puzzles`(或 all)现已自动刷新 SQ1 精确双口径并发布**。
-  - **slash 最优口径**:`inject_sq1_slash_exact.ps1` 由 `sq1_wca_exact.csv` 算 slash 最优 `t`(twist 口径,God 13)。**省算:W=2s 或 2s+1 ⇒ t=s 已证明(95.7%),只 W=2s-1 歧义(4.3%,深态)跑精确 `Sq1Solver`**(慢,30s 超时→怪物回退 t=s 上界 ≤+1)。产 `sq1/sq1_slash_exact.csv`(`id,slash_exact,opt_scramble`)。`puzzle_distribution.json` 的 `sq1.alt` = **真 slash 最优**(不再是 `opt_scramble` 数 `/` 的上界);`puzzle_examples.json` 的 `binsAlt` = slash 最优值 + slash 最优等价打乱。前端 `PuzzleDistView` 计步 **WCA / slash 最优** 切换 + 「原始/最优」打乱切换。详见 memory [[project_sq1_slash_optimal]] / `solver/SQ1_SLASH_OPTIMAL.md`。
+  - **slash 最优口径**:`inject_sq1_slash_exact.ps1` 由 `sq1_wca_exact.csv` 算 slash 最优 `t`(twist 口径,God 13)。**省算:W=2s 或 2s+1 ⇒ t=s 已证明(95.71%),只 W=2s−1 歧义(4.29%,5,392 条深态)需判定**。判定走 **slash-via-wca 归约**(analyzer `SQ1_SLASH_VIA_WCA=1`,`Sq1WcaSolver::shared_lite` ~600MB,不需 13GB 表):**5,382 条穷尽证明 t=s,10 条最深残留(s=12/13)穷尽证明超时不可行 → 取紧上界(全程 0 条 t=s−1)**。残留按 **C 接受为上界**(`sq1_slash_meta.json` 的 `provisional:true,fallback:10,eq:5382` 是前端数据驱动诚实标注的数据源)。产 `sq1/sq1_slash_exact.csv`(`id,slash_exact,opt_scramble`)+ `sq1_slash_meta.json`。`puzzle_distribution.json` 的 `sq1.alt` = 此(紧上界)slash 分布,数字 = `wcaOptSlash`(零反例 + 省算双重支撑,**不随残留变**);`binsAlt` = slash 值 + 等价打乱。前端 `PuzzleDistView` 计步 **WCA / slash 最优** 切换。**啃残留到 0 = 双向搜索 / MITM(实验,失败即接受 C)**;松下界剪枝(尝试 A)已 OOM 判死。saga/失败日志见 `solver/SQ1_SLASH_OPTIMAL.md` §6 + memory [[project_sq1_slash_optimal]]。
   - **全量历史 backfill 是一次性的**(WCA-exact ~8.8 天已完成 125,605 条;slash 歧义 ~3h 单独后台,完成后只剩增量)。⚠️ **勿与增量 / grind 并跑**(两个 13GB 表 = OOM)。
   - ⚠️ **进度藏在 chunk**:全量 backfill 把所有块喂给一个长跑 analyzer,主 CSV 只在进程启动/结束各 ingest 一次 → 长跑期间主 CSV 停在初始行数,完成的块堆在 `sq1/_{exact,slash}_chunks/`。`build_puzzle_dist.ts` 额外读这些块(只读不删),按 id 去重 → 每跑一次 build 反映真实进度。**手动 ingest 块**:`pwsh inject_sq1_wca_exact.ps1 -BuildOnly`。
   - **精确档示例已建(2026-06-18)**:`build_puzzle_examples.ts` 的 `bucketExactSq1`(读 `sq1_wca_exact.csv` + `_exact_chunks/*_sq1.csv`,按 wca_exact / opt 的 slash 数双分桶)→ `puzzle_examples.json` 的 `exactBins`/`exactBinsAlt`,点柱子看该步数真实比赛打乱;**只产精确档示例、不产 near 档**(用户要求)。opt_scramble = **SQ1 简写记号**(`tb/tb/`,CSV 安全,前端 `compactSq1Alg` 原样渲染)。改 shape 须 bump `lib/puzzle-examples.ts` 的 `V`。
