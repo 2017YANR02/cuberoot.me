@@ -29,8 +29,8 @@ interface PuzzleSpec {
   event: string;     // WCA event_id(比赛元数据按此过滤,UI 预览 event 也用它)
   valueCol?: string; // 主口径 CSV 列名(默认 = key;sq1 = 'wca')
   altCol?: string;   // 备选口径列名(sq1 = 'slash';→ 产 binsAlt)
-  // sq1 已切「可证 WCA 12c4 最优」(Sq1WcaSolver)。精确化后**只产精确档示例**(exactBins/exactBinsAlt,
-  // 源 = sq1_wca_exact.csv + 未 ingest 完成块,按 wca_exact / opt 的 slash 数分桶),不再产 near 档示例。
+  // sq1 = 可证 WCA 12c4 最优(Sq1WcaSolver)。示例源 = sq1_wca_exact.csv + 未 ingest 完成块,
+  // 按 wca_exact / opt 的 slash 数分桶,写进 bins/binsAlt(近最优 2026-06-18 退役,不再产 near 示例)。
   exact?: boolean;
 }
 
@@ -39,7 +39,7 @@ const PUZZLES: PuzzleSpec[] = [
   { key: 'pocket', event: '222' },
   { key: 'pyraminx', event: 'pyram' },
   { key: 'skewb', event: 'skewb' },
-  { key: 'sq1', event: 'sq1', exact: true }, // 精确档:exactBins=wca_exact、exactBinsAlt=slash(只显原始打乱)
+  { key: 'sq1', event: 'sq1', exact: true }, // 精确档:bins=wca_exact、binsAlt=slash(opt_scramble 驱动「原始/最优」)
 ];
 
 type Sample = [string, string, string?]; // [id, scramble, optScramble?]
@@ -254,7 +254,8 @@ async function main() {
     }
     const csvPath = path.join(dataRoot, spec.key, `${spec.key}.csv`);
     const txtPath = path.join(dataRoot, spec.key, 'scrambles.txt');
-    if (!fs.existsSync(csvPath) || !fs.existsSync(txtPath)) {
+    // sq1(exact)不读近最优 <key>.csv,只需 txt(原始打乱)+ exact CSV;其它 puzzle 仍需 <key>.csv。
+    if ((!spec.exact && !fs.existsSync(csvPath)) || !fs.existsSync(txtPath)) {
       console.warn(`  [skip] ${spec.key}: missing csv/txt (${csvPath})`);
       continue;
     }
@@ -334,10 +335,14 @@ async function main() {
       let n = 0; for (const v of Object.values(b)) n += v.length;
       note.push(`${k}=${Object.keys(b).length}bin/${n}`);
     };
-    setBins('bins', sampledByBin, nearOpt);
-    setBins('binsAlt', sampledAlt, nearOpt);
-    setBins('exactBins', exactWca, exactOpt);
-    setBins('exactBinsAlt', exactSlash, exactOpt);
+    if (spec.exact) {
+      // sq1:精确档作为唯一档,写进 bins/binsAlt(对齐其它 puzzle 的 key;近最优已退役)。
+      setBins('bins', exactWca, exactOpt);
+      setBins('binsAlt', exactSlash, exactOpt);
+    } else {
+      setBins('bins', sampledByBin, nearOpt);
+      setBins('binsAlt', sampledAlt, nearOpt);
+    }
     puzzlesOut[spec.key] = out;
     console.log(`  [${spec.key}] ${note.join(', ') || '空'}, ${Object.keys(comps).length} comps`);
   }

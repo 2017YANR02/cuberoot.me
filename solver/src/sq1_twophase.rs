@@ -1,10 +1,23 @@
 //! sq1_twophase: Square-1(SQ1)**近最优** two-phase 求解器(twist metric = slash 数)。
 //!
-//! 忠实移植 cstimer `scramble_sq1_new.js` 的双阶段 solver(`Search_solution` / `Search_phase1`
-//! / `Search_phase2` / `Shape_init` / `Square_init`)。`Search_solution` 从 `length1 =
-//! ShapePrun[shape]` 起逐增 phase-1 长度,**踩中第一个完整解即停** —— 这就是 cstimer 生成器用的
-//! 近最优行为(快、解短但不保证全局最优)。与 `sq1_solver`(精确最优,tail-bound)互补:
-//! 管道默认用本模块,几毫秒一题;只在需要可证最优时走 `SQ1_EXACT=1`。
+//! ## 上游来源 + cstimer vs TNoodle(2026-06-18 核实)
+//! - **本文件 = 从 cstimer `scramble_sq1_new.js`(JavaScript)逐行移植成 Rust**(不是从 TNoodle)。
+//! - 算法本体 = cs0x7f 的 sq12phase 两阶段近最优,**有两份不同语言的上游实现**(同源不同码):
+//!   - **cstimer** = **JavaScript**(浏览器计时器),`maxlen2 = min(32 − length1, 17)` ← 我们抄的这份,故 `32`。
+//!   - **TNoodle** = **Java**(JVM,WCA 官方出题程序,发布成 .jar),同算法同作者,`maxlen2 = min(31 − length1, 17)`。
+//! - **唯一实质参数差 = phase-2 深度 cap(32 vs 31)**:`length1 ≤ 14` 时两边都被 `min(…,17)` 夹平、无差别;
+//!   `length1 ≥ 15` 时 cstimer(我们)多搜 1 步 ⇒ 偶尔将就长 1 的总解 ⇒ 近最优略逊 TNoodle
+//!   (实测真打乱均值 WCA 24.2 vs TNoodle 23.9;高尾 28/29/30 更胖)。两边都是**启发式上限、非正确性阈值**。
+//!
+//! ## 现状(2026-06-18):已退役出线上
+//! 本近最优**已从统计管道 + 前端移除**:SQ1「难度」只展示 `sq1_solver::Sq1WcaSolver` 的**可证 WCA 12c4
+//! 最优**(`sq1_wca_exact.csv`)。本模块**代码保留**作对照 / 潜在深尾回退,但不再产线上数据。
+//!
+//! ## 实现细节
+//! 忠实移植 `Search_solution` / `Search_phase1` / `Search_phase2` / `Shape_init` / `Square_init`。
+//! `Search_solution` 从 `length1 = ShapePrun[shape]` 起逐增 phase-1 长度,**踩中第一个完整解即停**
+//! —— 这就是 cstimer 生成器用的近最优行为(快、解短但不保证全局最优)。与 `sq1_solver`(精确最优,
+//! tail-bound)互补;旧入口 `SQ1_EXACT=1` 仍可切精确(slash 口径)。
 //!
 //! ## 编码桥(已验证,勿重推)
 //! `sq1_solver::Sq1State { top, bottom, ml }` 与 cstimer `SqCubie { ul,ur,dl,dr,ml }` 位等价:
