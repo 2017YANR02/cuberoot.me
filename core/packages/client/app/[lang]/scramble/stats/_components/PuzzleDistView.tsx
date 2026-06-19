@@ -43,7 +43,7 @@ function sq1MetricLabel(key: string): string {
 }
 
 // sq1 2×2 当前格(解法目标 target × 计步单位 unit)的口径说明。
-function sq1CellNote(target: 'wca' | 'slash', unit: 'wca' | 'slash', provisional: boolean): { zh: string; en: string } {
+function sq1CellNote(target: 'wca' | 'slash', unit: 'wca' | 'slash', provisional: boolean, residual: number): { zh: string; en: string } {
   if (unit === 'wca') {
     if (target === 'slash') {
       return {
@@ -56,8 +56,8 @@ function sq1CellNote(target: 'wca' | 'slash', unit: 'wca' | 'slash', provisional
   if (target === 'slash') {
     return provisional
       ? {
-          zh: 'slash 最优解的 / 数(twist 口径,God 13);最深约 4.3% 的态真最优计算中,当前取紧上界',
-          en: 'slashes in the slash-optimal solution (twist, God 13); deepest ~4.3% still being solved, tight upper bound shown',
+          zh: `slash 最优解的 / 数(twist 口径,God 13);最深 ${residual} 条穷尽证明不可行、取紧上界,其余全部可证最优`,
+          en: `slashes of the slash-optimal solution (twist, God 13); the deepest ${residual} states are infeasible to prove exhaustively (tight upper bound), all others provably optimal`,
         }
       : {
           zh: 'slash 最优解的 / 数(twist 口径,God 13,可证最优)',
@@ -74,8 +74,8 @@ function metricNote(key: string, metric: string): { zh: string; en: string; } {
   }
   if (key === 'sq1') {
     if (metric === 'slash') {
-      // slash = slash 最优(twist 口径,只数 /;God 13)。4.29% 歧义态(W=2s-1)真最优计算中,当前取紧上界。
-      return { zh: 'slash 最优:只数 /(twist 口径,God 13);约 4.3% 最深态真最优计算中,当前紧上界', en: "slash-optimal: fewest slashes (twist, God 13); deepest ~4.3% still being solved (upper bound)" };
+      // slash = slash 最优(twist 口径,只数 /;God 13)。4.29% 歧义态(W=2s-1)绝大多数已证 t=s,极少数最深态穷尽证明不可行 → 紧上界。
+      return { zh: 'slash 最优:只数 /(twist 口径,God 13);极少数最深态穷尽证明不可行,取紧上界', en: "slash-optimal: fewest slashes (twist, God 13); a few deepest states are infeasible to prove exhaustively (upper bound)" };
     }
     return { zh: 'WCA 12c4 计步((X,Y) 计 1、/ 计 1)', en: 'WCA 12c4 ((X,Y) = 1, / = 1)' };
   }
@@ -138,6 +138,9 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
 
   const hasAlt = !!entry?.alt;
   const slashProvisional = entry?.alt?.provisional ?? true;
+  const slashResidual = entry?.alt?.residual ?? 0;
+  const slashResolved = entry?.alt?.resolved ?? 0;
+  const slashAmbiguous = entry?.alt?.ambiguous ?? 0;
   // sq1 2×2:target(解法目标)× unit(计步单位)。四格:
   //  unit=wca            → dist(W);两 target 同(省算定理:slash 最优解的 WCA 步数 ≡ WCA 最优步数)
   //  unit=slash,target=slash → alt.dist(t,真 slash 最优)
@@ -195,7 +198,7 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   }
 
   const note = (puzzleKey === 'sq1' && hasAlt)
-    ? sq1CellNote(target, unit, slashProvisional)
+    ? sq1CellNote(target, unit, slashProvisional, slashResidual)
     : metricNote(puzzleKey, activeMetricKey);
   const total = entry.sample_count;
   const sampleLine = tr({ zh: '{n} 条样本', en: '{n} samples' }).replace('{n}', total.toLocaleString());
@@ -236,8 +239,8 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
       {puzzleKey === 'sq1' && hasAlt && unit === 'slash' && target === 'slash' && slashProvisional && (
         <p className="scramble-stats-provisional">
           {tr({
-            zh: 'slash 数当前为紧上界:最深约 4.3% 的态(s=11、12)真 slash 最优正在精确求解,已验证的全部 = 此上界、暂无更优解。',
-            en: 'Slashes shown are a tight upper bound: the deepest ~4.3% of states (s=11,12) are still being solved exactly; everything verified so far equals this bound.',
+            zh: `slash 数为紧上界:已穷尽判定的 ${slashResolved.toLocaleString()} 条最深歧义态(W=2s-1)全部等于此上界、没有一条能再省刀;仅余 ${slashResidual} 条(占全部 ${((slashResidual / total) * 100).toFixed(3)}%,最深 s=12–13)在现求解器下穷尽证明超时不可行,暂取上界。`,
+            en: `Slashes shown are a tight upper bound: all ${slashResolved.toLocaleString()} deepest ambiguous states (W=2s-1) resolved so far equal this bound — not one saves a slash; only ${slashResidual} remain (${((slashResidual / total) * 100).toFixed(3)}% of all, deepest s=12–13) that the current solver cannot prove exhaustively in feasible time.`,
           })}
         </p>
       )}
@@ -291,8 +294,8 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
         <span>
           {puzzleKey === 'sq1' && hasAlt
             ? tr(slashProvisional ? {
-              zh: '两维口径:解法目标(WCA 最优解 / slash 最优解)× 计步单位(WCA 12c4 步数 / slash 数)。注:slash 最优解的 WCA 步数恒等于 WCA 最优步数(省算定理),故「slash 最优解 × WCA 步」与「WCA 最优解 × WCA 步」同图。slash 数中 95.71% 由省算定理免搜索证明,余 4.29% 最深态真最优计算中(当前取紧上界)。',
-              en: 'Two axes: solution target (WCA- / slash-optimal) × count unit (WCA-12c4 moves / slashes). Note: a slash-optimal solution always attains the WCA-optimal length, so "slash-optimal × WCA moves" equals "WCA-optimal × WCA moves". 95.71% of slash counts are proven search-free; the deepest 4.29% are still being solved exactly (upper bound for now).',
+              zh: `两维口径:解法目标(WCA 最优解 / slash 最优解)× 计步单位(WCA 12c4 步数 / slash 数)。注:slash 最优解的 WCA 步数恒等于 WCA 最优步数(省算定理),故「slash 最优解 × WCA 步」与「WCA 最优解 × WCA 步」同图。slash 数 95.71% 由省算定理免搜索证明;余 4.29%(${slashAmbiguous.toLocaleString()} 条)歧义态精确判定,其中 ${slashResolved.toLocaleString()} 条证得 t=s(无一条省刀)、${slashResidual} 条最深态(s=12–13)穷尽证明不可行而取紧上界。`,
+              en: `Two axes: solution target (WCA- / slash-optimal) × count unit (WCA-12c4 moves / slashes). Note: a slash-optimal solution always attains the WCA-optimal length, so "slash-optimal × WCA moves" equals "WCA-optimal × WCA moves". 95.71% of slash counts are proven search-free; of the remaining 4.29% (${slashAmbiguous.toLocaleString()}) ambiguous states, ${slashResolved.toLocaleString()} are proven t=s (none saves a slash) and ${slashResidual} deepest states (s=12–13) are infeasible to prove exhaustively and take the tight upper bound.`,
             } : {
               zh: '两维口径:解法目标(WCA 最优解 / slash 最优解)× 计步单位(WCA 12c4 步数 / slash 数)。注:slash 最优解的 WCA 步数恒等于 WCA 最优步数(省算定理),故「slash 最优解 × WCA 步」与「WCA 最优解 × WCA 步」同图。slash 数全部可证最优(95.71% 省算定理免搜索 + 4.29% 最深态精确求解)。',
               en: 'Two axes: solution target (WCA- / slash-optimal) × count unit (WCA-12c4 moves / slashes). Note: a slash-optimal solution always attains the WCA-optimal length, so "slash-optimal × WCA moves" equals "WCA-optimal × WCA moves". All slash counts are provably optimal (95.71% search-free + deepest 4.29% solved exactly).',

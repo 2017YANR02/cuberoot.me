@@ -201,10 +201,12 @@ async function main() {
         const metaPath = path.join(dataRoot, spec.key, 'sq1_slash_meta.json');
         if (fs.existsSync(metaPath)) {
           try {
-            const m = JSON.parse(fs.readFileSync(metaPath, 'utf-8')) as { provisional?: boolean; ambiguous?: number; less?: number };
+            const m = JSON.parse(fs.readFileSync(metaPath, 'utf-8')) as { provisional?: boolean; ambiguous?: number; less?: number; eq?: number; fallback?: number };
             alt.provisional = !!m.provisional;
             if (typeof m.ambiguous === 'number') alt.ambiguous = m.ambiguous;
             if (typeof m.less === 'number') alt.improved = m.less;
+            if (typeof m.eq === 'number') alt.resolved = m.eq;
+            if (typeof m.fallback === 'number') alt.residual = m.fallback;
           } catch { alt.provisional = true; }
         } else {
           alt.provisional = true;
