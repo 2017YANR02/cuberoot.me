@@ -35,6 +35,32 @@ export interface Membership {
   contactKind?: string;
 }
 
+// 到期提醒阈值:到期前 N 天起视为「即将到期」。
+export const EXPIRE_SOON_DAYS = 7;
+
+export interface MembershipExpiry {
+  lifetime: boolean;
+  active: boolean;
+  expired: boolean;        // 曾是会员、现已过期
+  daysLeft: number | null; // null = 永久;可为负(已过期天数)
+  expiringSoon: boolean;   // 生效中、非永久、剩余 ≤ EXPIRE_SOON_DAYS
+}
+
+/** 从会员状态算到期信息(纯函数,页/徽章/全局提醒共用)。无会员返回 null。 */
+export function membershipExpiry(m: Membership | null): MembershipExpiry | null {
+  if (!m) return null;
+  if (m.lifetime) return { lifetime: true, active: m.active, expired: false, daysLeft: null, expiringSoon: false };
+  const exp = m.expiresAt ? new Date(m.expiresAt).getTime() : 0;
+  const daysLeft = Math.ceil((exp - Date.now()) / 86_400_000);
+  return {
+    lifetime: false,
+    active: m.active,
+    expired: !m.active,
+    daysLeft,
+    expiringSoon: m.active && daysLeft <= EXPIRE_SOON_DAYS,
+  };
+}
+
 export interface OrderInfo {
   outTradeNo: string;
   channel: string;
