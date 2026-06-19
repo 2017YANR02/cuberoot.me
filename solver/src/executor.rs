@@ -62,7 +62,7 @@ fn progress_file() -> Option<&'static std::sync::Mutex<std::fs::File>> {
     .as_ref()
 }
 
-/// 发一行进度:有进度文件就直写+flush(实时),否则回退 stderr。[PROG]/[DONE] 都走它。
+/// 发一行进度:有进度文件就直写+flush(实时),否则回退 stderr。[PROG]/[DONE]/[STUCK] 都走它。
 fn prog_emit(line: &str) {
     if let Some(f) = progress_file() {
         if let Ok(mut fh) = f.lock() {
@@ -72,6 +72,25 @@ fn prog_emit(line: &str) {
     } else {
         eprintln!("{}", line);
     }
+}
+
+/// 供 solver wrapper 直接发一行事件(走同一进度文件 + flush,实时 tail);如怪物超时的 `[MONSTER]`。
+pub fn emit_event(line: &str) {
+    prog_emit(line);
+}
+
+/// 看门狗阈值(秒,env `ANALYZER_STUCK_SECS`,只读一次)。`Some(n)` ⇒ 启用:某条解算超 n 秒立即
+/// 报 `[STUCK]`。未设/0 ⇒ `None` ⇒ 整套关闭(in-flight 跟踪 + 看门狗线程都不跑,其他 analyzer 零开销)。
+fn stuck_secs() -> Option<u64> {
+    static S: std::sync::OnceLock<Option<u64>> = std::sync::OnceLock::new();
+    *S.get_or_init(|| std::env::var("ANALYZER_STUCK_SECS").ok().and_then(|s| s.parse().ok()).filter(|&v| v > 0))
+}
+
+/// 在算中的条目:id → (输入串, 开始时刻)。看门狗据此找出卡死的具体打乱。仅 stuck_secs 启用时写入。
+type InFlight = std::collections::HashMap<String, (String, Instant)>;
+fn in_flight() -> &'static std::sync::Mutex<InFlight> {
+    static F: std::sync::OnceLock<std::sync::Mutex<InFlight>> = std::sync::OnceLock::new();
+    F.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()))
 }
 
 /// 求解器接口。C++ 端是静态成员 + 实例方法的混合,Rust 用关联函数表达:
@@ -162,7 +181,7 @@ pub fn parse_tasks_raw_file<P: AsRef<Path>>(path: P) -> std::io::Result<Vec<(Str
 #[cfg(not(target_arch = "wasm32"))]
 pub fn run_batch<W: SolverWrapper>(input_file: &str, suffix: &str) -> std::io::Result<PathBuf> {
     let tasks = parse_tasks_file(input_file)?;
-    run_batch_core(tasks, input_file, suffix, W::get_csv_header(), |alg, id| W::solve(alg, id))
+    run_batch_core(tasks, input_file, suffix, W::get_csv_header(), |alg, id| W::solve(alg, id), |_| String::new())
 }
 
 /// 原始字符串版 batch(`RawSolverWrapper`)。
@@ -171,7 +190,7 @@ pub fn run_batch_raw<W: RawSolverWrapper>(input_file: &str, suffix: &str) -> std
     let tasks = parse_tasks_raw_file(input_file)?;
     run_batch_core(tasks, input_file, suffix, W::get_csv_header(), |alg, id| {
         W::solve_raw(alg, id)
-    })
+    }, |s| s.clone())
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -181,6 +200,7 @@ fn run_batch_core<T: Send + Sync>(
     suffix: &str,
     header: String,
     solve: impl Fn(&T, &str) -> String + Send + Sync,
+    descr: impl Fn(&T) -> String + Send + Sync,
 ) -> std::io::Result<PathBuf> {
     if tasks.is_empty() {
         eprintln!("[WARN] no tasks in {}", input_file);
@@ -193,12 +213,41 @@ fn run_batch_core<T: Send + Sync>(
     let completed = AtomicU64::new(0);
     let progress_step = (total / 100).max(1);
 
+    // 看门狗(opt-in):某条解算超阈值 ⇒ 立即报 `[STUCK] id=.. scramble=..` 暴露卡死的具体打乱。
+    // 仅 ANALYZER_STUCK_SECS 启用;关时 in-flight 跟踪 + 线程都不跑,其他 analyzer 零开销。
+    let wd_on = stuck_secs();
+    let wd_stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let wd_handle = wd_on.map(|thresh| {
+        let stop = wd_stop.clone();
+        std::thread::spawn(move || {
+            let mut reported: std::collections::HashSet<String> = std::collections::HashSet::new();
+            while !stop.load(Ordering::Relaxed) {
+                std::thread::sleep(std::time::Duration::from_secs(5));
+                let now = Instant::now();
+                if let Ok(map) = in_flight().lock() {
+                    for (id, (scr, start)) in map.iter() {
+                        let el = now.duration_since(*start).as_secs();
+                        if el >= thresh && reported.insert(id.clone()) {
+                            prog_emit(&format!("[STUCK] id={} elapsed={}s scramble={}", id, el, scr));
+                        }
+                    }
+                }
+            }
+        })
+    });
+
     let mut results: Vec<String> = vec![String::new(); total];
     results
         .par_iter_mut()
         .zip(tasks.par_iter())
         .for_each(|(slot, (id, alg))| {
+            if wd_on.is_some() {
+                if let Ok(mut m) = in_flight().lock() { m.insert(id.clone(), (descr(alg), Instant::now())); }
+            }
             *slot = solve(alg, id);
+            if wd_on.is_some() {
+                if let Ok(mut m) = in_flight().lock() { m.remove(id); }
+            }
             let c = completed.fetch_add(1, Ordering::Relaxed) + 1;
             if let Some((every, gtotal, base)) = progress_cfg() {
                 // 全局连续进度(跨 chunk),每 every 条打 base+累计 / 总数。
@@ -210,6 +259,9 @@ fn run_batch_core<T: Send + Sync>(
                 prog_emit(&format!("[PROG] {}/{}", c, total)); // 原行为:每块 1%
             }
         });
+
+    wd_stop.store(true, Ordering::Relaxed);
+    if let Some(h) = wd_handle { let _ = h.join(); }
 
     let f = std::fs::File::create(&out_path)?;
     let mut w = std::io::BufWriter::new(f);

@@ -16,7 +16,7 @@
 
 use cube_solver::executor::{run_analyzer_app_raw, RawSolverWrapper};
 use cube_solver::sq1_solver::{
-    invert_scramble, scramble_to_compact, state_from_scramble, Sq1Solver, Sq1WcaSolver,
+    invert_scramble, scramble_to_compact, state_from_scramble, Sq1Solver, Sq1Token, Sq1WcaSolver,
 };
 use cube_solver::sq1_twophase::{solve_with_solution, Sq1TwoPhase};
 
@@ -38,6 +38,27 @@ fn use_wca_soln() -> bool {
     std::env::var("SQ1_WCA_SOLN").map(|v| v == "1").unwrap_or(false)
 }
 
+/// `SQ1_SOLVE_TIMEOUT_SECS=N`(N>0,配合 `SQ1_WCA_EXACT=1`)⇒ 单条 solve 超 N 秒判**怪物**:放弃、
+/// 输出 `id,M` 占位(标记已处理 ⇒ 续跑跳过、build 侧 `Number('M')`=NaN 自动略过不污染分布)、实时
+/// `[MONSTER] id=.. scramble=..` 报具体打乱;怪物留清单(inject 脚本从 `id,M` 回捞)后续大 TT 单独跑。
+/// 未设/0 ⇒ 无超时(必出可证最优解,深尾可能很久)。
+fn solve_timeout_secs() -> Option<u64> {
+    static S: std::sync::OnceLock<Option<u64>> = std::sync::OnceLock::new();
+    *S.get_or_init(|| {
+        std::env::var("SQ1_SOLVE_TIMEOUT_SECS").ok().and_then(|s| s.parse().ok()).filter(|&v| v > 0)
+    })
+}
+
+/// `SQ1_SOLVE_PARALLEL=N`(N≥1,配 `SQ1_WCA_EXACT=1`、不配超时)⇒ 单条 solve 走 **root-split 并行
+/// IDA***(EPIC ④),split 深度 = N(用全部 RAYON_NUM_THREADS 核啃一条怪物)。供怪物 grind 尾部
+/// 单条独占全核;未设/0 ⇒ 老串行路径。仍可证 WCA 12c4 最优(只是把同一搜索分到多核)。
+fn solve_parallel_split() -> Option<u8> {
+    static S: std::sync::OnceLock<Option<u8>> = std::sync::OnceLock::new();
+    *S.get_or_init(|| {
+        std::env::var("SQ1_SOLVE_PARALLEL").ok().and_then(|s| s.parse::<u8>().ok()).filter(|&v| v > 0)
+    })
+}
+
 /// 一条 (id, alg) → CSV 行。
 /// **默认 3 列 `id,wca,slash`**:一次解算同时给两种口径(WCA 12c4 = (X,Y)+/ token 数;
 /// slash = jaapsch twist)。前端按口径切换直方图,二者同源同一条近最优解。
@@ -47,11 +68,53 @@ fn sq1_line(alg: &str, id: &str) -> String {
         Ok(st) => {
             if use_wca_exact() {
                 let w = Sq1WcaSolver::shared();
+                let timeout = solve_timeout_secs();
+                // 成功行:有 soln 列则附最优等价打乱(= 解的逆,SQ1 简写记号,CSV 安全无逗号/括号/空格)。
+                let row = |cost: u32, sol: &[Sq1Token]| -> String {
+                    if use_wca_soln() {
+                        format!("{},{},{}", id, cost, scramble_to_compact(&invert_scramble(sol)))
+                    } else {
+                        format!("{},{}", id, cost)
+                    }
+                };
+                // 怪物:超时放弃 → id,M 占位(续跑跳过 / build 侧 NaN 略过不污染分布)+ 实时 [MONSTER]。
+                let monster = || {
+                    cube_solver::executor::emit_event(&format!(
+                        "[MONSTER] id={} timeout={}s scramble={}",
+                        id,
+                        timeout.unwrap_or(0),
+                        alg
+                    ));
+                    format!("{},M", id)
+                };
+                // EPIC ④:并行(root-split 全核)。配超时 ⇒ 单条墙钟看门狗,≤N 秒超即怪物,绝不死等。
+                if let Some(split) = solve_parallel_split() {
+                    return match timeout {
+                        Some(secs) => {
+                            let deadline =
+                                std::time::Instant::now() + std::time::Duration::from_secs(secs);
+                            match w.solve_with_solution_parallel_deadline(&st, split, deadline) {
+                                Some((cost, sol)) => row(cost, &sol),
+                                None => monster(),
+                            }
+                        }
+                        None => {
+                            let (cost, sol) = w.solve_with_solution_parallel(&st, split);
+                            row(cost, &sol)
+                        }
+                    };
+                }
+                // 串行(老路径)。超时 ⇒ 怪物超时分支(deadline 在 dfs 内 unwind,不毒化 TT)。
+                if let Some(secs) = timeout {
+                    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(secs);
+                    return match w.solve_with_solution_deadline(&st, deadline) {
+                        Some((cost, sol)) => row(cost, &sol),
+                        None => monster(),
+                    };
+                }
                 if use_wca_soln() {
                     let (cost, sol) = w.solve_with_solution(&st);
-                    // 最优等价打乱 = 解的逆;SQ1 简写记号(CSV 安全,无逗号/括号/空格)。
-                    let opt = scramble_to_compact(&invert_scramble(&sol));
-                    return format!("{},{},{}", id, cost, opt);
+                    return row(cost, &sol);
                 }
                 return format!("{},{}", id, w.solve_wca(&st));
             }
