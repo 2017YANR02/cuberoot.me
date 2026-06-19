@@ -2098,24 +2098,33 @@ export default function FrameCountPage() {
     if (!video) return;
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
-    const onLoaded = () => {
+    // 强制 iOS 解出并渲染首帧 (修主画面纯黑 + useFrameBuffer 永远被闸住):
+    // iOS Safari 把 preload=auto 当 metadata-only — 加载完元数据后 networkState 转 IDLE,
+    // readyState 卡在 1, 既不解码首帧也不触发 loadeddata (→ videoFirstFrameReady 永远 false)。
+    // seek 到 0.001 在 IDLE 下不会让它重新取数据; 必须用 muted+playsInline 的 play()→pause()
+    // 逼它 load+decode+render 第 0 帧。桌面 readyState 早已 >=2, 直接放行不会真 play。
+    const forceFirstFrame = () => {
       if (videoFps > 0 && isFinite(video.duration)) setTotalFrames(Math.round(video.duration * videoFps));
-      // Safari/iOS 不会自动渲染第一帧，需要主动 seek 触发解码
-      if (video.paused && video.currentTime === 0) {
-        video.currentTime = 0.001;
+      if (video.readyState >= 2) { setVideoFirstFrameReady(true); return; }
+      const p = video.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => video.pause()).catch(() => {
+          try { if (video.currentTime === 0) video.currentTime = 0.001; } catch { /* ignore */ }
+        });
       }
     };
     const onFirstFrame = () => setVideoFirstFrameReady(true);
     video.addEventListener('play', onPlay);
     video.addEventListener('pause', onPause);
-    video.addEventListener('loadedmetadata', onLoaded);
+    video.addEventListener('loadedmetadata', forceFirstFrame);
     video.addEventListener('loadeddata', onFirstFrame);
-    if (video.readyState >= 2) setVideoFirstFrameReady(true);
-    if (video.duration && isFinite(video.duration) && videoFps > 0) setTotalFrames(Math.round(video.duration * videoFps));
+    // effect 可能在 video 事件之后才挂 (Next hydration 晚于 <video> 加载, 错过 loadedmetadata):
+    // 已有 metadata 就立即补触发强制解码, 已有首帧数据就直接放行。
+    if (video.readyState >= 1) forceFirstFrame();
     return () => {
       video.removeEventListener('play', onPlay);
       video.removeEventListener('pause', onPause);
-      video.removeEventListener('loadedmetadata', onLoaded);
+      video.removeEventListener('loadedmetadata', forceFirstFrame);
       video.removeEventListener('loadeddata', onFirstFrame);
     };
   }, [videoSrc, videoFps, frameBufferReady, prefetch]);
