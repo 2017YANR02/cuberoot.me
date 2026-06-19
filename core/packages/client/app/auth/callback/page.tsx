@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { apiUrl } from '@/lib/api-base';
+import { persistAuthItem, useAuthStore } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 import i18n from "@/i18n/i18n-client";
 
@@ -76,8 +77,22 @@ export default function AuthCallbackPage() {
         avatar: me.avatar?.thumb_url || '',
         country: me.country_iso2 || '',
       };
-      localStorage.setItem('wca_user', JSON.stringify(user));
-      localStorage.setItem('wca_access_token', accessToken);
+      // Resilient writes: localStorage may be (near-)full on mobile (e.g. iOS
+      // Safari's ~5MB quota packed with timer backups). persistAuthItem evicts
+      // regenerable caches and retries; a raw setItem here would throw
+      // QuotaExceededError ("The quota has been exceeded.") and abort login.
+      const persisted =
+        persistAuthItem('wca_user', JSON.stringify(user)) &&
+        persistAuthItem('wca_access_token', accessToken);
+      if (!persisted) {
+        setErrorMsg(tr({
+          zh: '无法保存登录状态：浏览器存储空间不足或处于隐私模式。请退出隐私模式或清理浏览器存储后重试。',
+          en: 'Could not save your session: browser storage is full or in private mode. Exit private browsing or free up storage, then try again.',
+        }));
+        return;
+      }
+      // Reflect login in the in-memory store for this tab immediately.
+      useAuthStore.getState().refresh();
 
       // Best effort: exchange short-lived WCA token for long-lived (365d) JWT.
       try {
@@ -88,7 +103,7 @@ export default function AuthCallbackPage() {
         });
         if (exchangeRes.ok) {
           const { token: jwtToken } = await exchangeRes.json();
-          localStorage.setItem('cuberoot_jwt', jwtToken);
+          persistAuthItem('cuberoot_jwt', jwtToken);
         }
       } catch {
         // Non-fatal — fall back to raw WCA token (2h).

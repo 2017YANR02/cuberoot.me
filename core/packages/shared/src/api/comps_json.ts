@@ -32,6 +32,8 @@ export interface UpcomingCompRecord {
   competitor_limit: number;
   registration_open?: string | null;   // ISO 8601 UTC, e.g. "2026-04-01T18:00:00.000Z"
   registration_close?: string | null;
+  /** 项目修改截止时刻（ISO 8601 UTC，单场端点专属，列表端点不返回，由管道逐场回填）；缺为 null */
+  event_change_deadline?: string | null;
   latitude_degrees: number;
   longitude_degrees: number;
   url: string;

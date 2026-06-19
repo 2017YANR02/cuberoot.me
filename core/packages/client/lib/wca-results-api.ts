@@ -196,29 +196,17 @@ export async function fetchCubingAttempts(
   }
 }
 
+interface CubingLiveUser { wcaid?: string; countryId?: string; continentId?: string }
 interface CubingLiveResult { n: number; b?: number; a?: number; pS?: number; pA?: number }
+interface CubingRecordsSnapshot { wr?: Record<string, number>; cr?: Record<string, number>; nr?: Record<string, number> }
 interface CubingLiveData {
-  users?: Record<string, { wcaid?: string }>;
+  users?: Record<string, CubingLiveUser>;
   resultsByRound?: Record<string, CubingLiveResult[]>;
+  currentRecords?: CubingRecordsSnapshot;
 }
 const cubingLiveCache = new Map<string, Promise<CubingLiveData | null>>();
 
-/**
- * Personal-record RANK (single + average) from cubing.com live data — the same
- * `pS`/`pA` the /comp page uses. WCA's regional_record field only carries
- * WR/CR/NR; the PR rank (PR / PR2 / PR3 …) lives only here. Round code is
- * matched via ROUND_VARIANTS (recon `f` → cubing `f`/`c`/`h`, etc.); best-single
- * / average value is a fallback link when the round code doesn't line up.
- */
-export async function fetchCubingPrRanks(
-  compWcaId: string,
-  reconEvent: string,
-  round: string,
-  personId: string,
-  bestCs: number | null,
-  avgCs: number | null,
-): Promise<{ pS: number | null; pA: number | null } | null> {
-  const wcaEventId = toWcaEventId(reconEvent);
+function loadCubingLive(compWcaId: string): Promise<CubingLiveData | null> {
   let p = cubingLiveCache.get(compWcaId);
   if (!p) {
     p = fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compWcaId)}`))
@@ -226,7 +214,18 @@ export async function fetchCubingPrRanks(
       .catch(() => null);
     cubingLiveCache.set(compWcaId, p);
   }
-  const data = await p;
+  return p;
+}
+
+// Locate one person's result row within a comp's live data for an event/round.
+// Primary match by round code (ROUND_VARIANTS: recon `f` → cubing `f`/`c`/`h`, etc.);
+// falls back to the round's best-single / average value when the code doesn't line up.
+async function findCubingLiveHit(
+  compWcaId: string, reconEvent: string, round: string, personId: string,
+  bestCs: number | null, avgCs: number | null,
+): Promise<{ data: CubingLiveData; num: string; hit: CubingLiveResult } | null> {
+  const wcaEventId = toWcaEventId(reconEvent);
+  const data = await loadCubingLive(compWcaId);
   if (!data) return null;
   const users = data.users ?? {};
   let num: string | null = null;
@@ -235,21 +234,87 @@ export async function fetchCubingPrRanks(
   }
   if (num == null) return null;
   const byRound = data.resultsByRound ?? {};
-  const pick = (r: CubingLiveResult) => ({
-    pS: typeof r.pS === 'number' ? r.pS : null,
-    pA: typeof r.pA === 'number' ? r.pA : null,
-  });
   const variants = ROUND_VARIANTS[round] ?? [round];
   for (const code of variants) {
     const hit = byRound[`${wcaEventId}:${code}`]?.find(r => String(r.n) === num);
-    if (hit) return pick(hit);
+    if (hit) return { data, num, hit };
   }
-  // Round code mismatch — link by the round's best-single / average value.
   for (const key of Object.keys(byRound)) {
     if (!key.startsWith(`${wcaEventId}:`)) continue;
     const hit = byRound[key].find(r => String(r.n) === num
       && ((bestCs != null && r.b === bestCs) || (avgCs != null && r.a === avgCs)));
-    if (hit) return pick(hit);
+    if (hit) return { data, num, hit };
   }
   return null;
+}
+
+/**
+ * Personal-record RANK (single + average) from cubing.com live data — the same
+ * `pS`/`pA` the /comp page uses (PR / PR2 / PR3 …, which WCA's regional_record
+ * field doesn't carry).
+ */
+export async function fetchCubingPrRanks(
+  compWcaId: string, reconEvent: string, round: string, personId: string,
+  bestCs: number | null, avgCs: number | null,
+): Promise<{ pS: number | null; pA: number | null } | null> {
+  const found = await findCubingLiveHit(compWcaId, reconEvent, round, personId, bestCs, avgCs);
+  if (!found) return null;
+  return {
+    pS: typeof found.hit.pS === 'number' ? found.hit.pS : null,
+    pA: typeof found.hit.pA === 'number' ? found.hit.pA : null,
+  };
+}
+
+// Infer a regional record tag (WR/CR/NR) for one live value — mirrors
+// CompDetailPage's inferLiveRecordTag, comparing against the comp's currentRecords
+// snapshot (keyed `${event}|${isAvg?1:0}` + continent/country suffix).
+function inferLiveTag(
+  value: number, wcaEventId: string, isAvg: boolean,
+  user: CubingLiveUser | undefined, snap: CubingRecordsSnapshot | undefined,
+): 'WR' | 'CR' | 'NR' | '' {
+  if (!snap || !value || value <= 0) return '';
+  const k = `${wcaEventId}|${isAvg ? '1' : '0'}`;
+  const wrMin = snap.wr?.[k];
+  if (wrMin !== undefined && value <= wrMin) return 'WR';
+  if (!user) return '';
+  if (user.continentId) {
+    const crMin = snap.cr?.[`${k}|${user.continentId}`];
+    if (crMin !== undefined && value <= crMin) return 'CR';
+  }
+  if (user.countryId) {
+    const nrMin = snap.nr?.[`${k}|${user.countryId}`];
+    if (nrMin !== undefined && value <= nrMin) return 'NR';
+  }
+  return '';
+}
+
+export interface CubingLiveResultInfo {
+  pS: number | null; pA: number | null;
+  singleTag: 'WR' | 'CR' | 'NR' | '';
+  averageTag: 'WR' | 'CR' | 'NR' | '';
+}
+
+/**
+ * Per-result live info for one person: PR rank (pS/pA) + inferred regional record
+ * tag (WR/CR/NR) for single & average — the same data /wca/comp's result table
+ * shows. Lets the person page badge unofficial (live) rows identically.
+ */
+export async function fetchCubingLiveResultInfo(
+  compWcaId: string, reconEvent: string, round: string, personId: string,
+  bestCs: number | null, avgCs: number | null,
+): Promise<CubingLiveResultInfo | null> {
+  const found = await findCubingLiveHit(compWcaId, reconEvent, round, personId, bestCs, avgCs);
+  if (!found) return null;
+  const { data, num, hit } = found;
+  const wcaEventId = toWcaEventId(reconEvent);
+  const user = data.users?.[num];
+  const snap = data.currentRecords;
+  const bestVal = typeof hit.b === 'number' ? hit.b : (bestCs ?? 0);
+  const avgVal = typeof hit.a === 'number' ? hit.a : (avgCs ?? 0);
+  return {
+    pS: typeof hit.pS === 'number' ? hit.pS : null,
+    pA: typeof hit.pA === 'number' ? hit.pA : null,
+    singleTag: inferLiveTag(bestVal, wcaEventId, false, user, snap),
+    averageTag: inferLiveTag(avgVal, wcaEventId, true, user, snap),
+  };
 }

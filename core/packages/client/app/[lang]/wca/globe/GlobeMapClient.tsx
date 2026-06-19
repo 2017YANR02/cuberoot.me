@@ -837,15 +837,15 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     if (q.length < 2) return [];
     const seen = new Set<string>();
     const matches: CompResult[] = [];
-    const isHit = (name: string, city: string): boolean => {
+    const isHit = (name: string, city: string, country?: string): boolean => {
       if (name.toLowerCase().includes(q)) return true;
       if (city.toLowerCase().includes(q)) return true;
       if (compNameZh(name).includes(raw)) return true;
-      if (city && localizeCity(city, true).includes(raw)) return true;
+      if (city && localizeCity(city, true, country).includes(raw)) return true;
       return false;
     };
     for (const c of (comps ?? [])) {
-      if (isHit(c.name, c.city)) {
+      if (isHit(c.name, c.city, c.country)) {
         seen.add(c.id);
         matches.push({ id: c.id, name: c.name, city: c.city, country: c.country, lng: c.longitude_degrees, lat: c.latitude_degrees, date: c.start_date, tag: 'upcoming' });
       }
@@ -853,7 +853,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     for (const c of (pastComps ?? [])) {
       if (seen.has(c.id)) continue;
       if (c.latitude_degrees == null || c.longitude_degrees == null) continue;
-      if (isHit(c.name, c.city)) {
+      if (isHit(c.name, c.city, c.country)) {
         matches.push({ id: c.id, name: c.name, city: c.city, country: c.country, lng: c.longitude_degrees, lat: c.latitude_degrees, date: c.start_date, tag: 'past' });
       }
     }
@@ -1426,7 +1426,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
       geometry: { type: 'Point' as const, coordinates: [c.longitude_degrees, c.latitude_degrees] },
       properties: {
         index: i, id: c.id, name: c.name, city: c.city,
-        city_label: localizeCity(c.city, isZh),
+        city_label: localizeCity(c.city, isZh, c.country_iso2),
         country_iso2: c.country_iso2, start_date: c.start_date, url: compHref(c.id),
       },
     })),
@@ -2689,7 +2689,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
   const buildFrameState = useCallback((i: number) => {
     const c = cuberComps[i];
     const cityZh = c ? nameZhMap?.get(c.id)?.city_zh : undefined;
-    const city = c ? ((cityZh && isZh) ? cityZh : localizeCity(c.city, isZh)) : '';
+    const city = c ? ((cityZh && isZh) ? cityZh : localizeCity(c.city, isZh, c.country_iso2)) : '';
     const country = c ? countryName(c.country_iso2, isZh) : '';
     return {
       index: i,
@@ -3133,7 +3133,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                       <span className={`globe-search-item-tag globe-search-item-tag-${c.tag}`}>{c.tag === 'upcoming' ? tr({ zh: '近期', en: 'upcoming' }) : tr({ zh: '历史', en: 'past'
                                                 })}</span>
                     </span>
-                    <span className="globe-search-item-sub">{c.city}, {countryName(c.country, isZh)} · {c.date}</span>
+                    <span className="globe-search-item-sub">{localizeCity(c.city, isZh, c.country)}, {countryName(c.country, isZh)} · {c.date}</span>
                   </button>
                 ))}
                 {personResults.length > 0 && (
@@ -3452,7 +3452,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
             {currentComp.country_iso2 && <Flag iso2={currentComp.country_iso2} className="cuber-step-flag" />}
             <span>{localizeCompName(currentComp.id, currentComp.name)}</span>
           </div>
-          <div className="cuber-step-meta is-selectable">{(nameZhMap?.get(currentComp.id)?.city_zh && isZh) ? nameZhMap.get(currentComp.id)!.city_zh : localizeCity(currentComp.city, isZh)}, {countryName(currentComp.country_iso2, isZh)} · {currentComp.start_date}</div>
+          <div className="cuber-step-meta is-selectable">{(nameZhMap?.get(currentComp.id)?.city_zh && isZh) ? nameZhMap.get(currentComp.id)!.city_zh : localizeCity(currentComp.city, isZh, currentComp.country_iso2)}, {countryName(currentComp.country_iso2, isZh)} · {currentComp.start_date}</div>
           {prevComp && (
             <div className="cuber-step-leg is-selectable">
               {fmtDistance(legKm, isZh)} · {(isZh ? `距上场 ${legDays} 天` : `${legDays}d since prev`)}
@@ -3650,7 +3650,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                     </a>
                   )}
                   <div className="bin-panel-meta">
-                    {c.city} · {formatDateRangeIso(c.start_date, c.end_date)}
+                    {localizeCity(c.city, isZh, c.country)} · {formatDateRangeIso(c.start_date, c.end_date)}
                   </div>
                 </div>
               ))}

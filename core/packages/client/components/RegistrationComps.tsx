@@ -57,20 +57,25 @@ function actionWord(kind: RegItem['kind']): string {
   return tr({ zh: '截止', en: 'Closes' });
 }
 
-/** 里程碑的「何时」标签。day 模式:日分组里靠组标题,只补时间细节;followed 模式:无组标题,带相对日。 */
+/** 里程碑的「何时」标签,始终带本地时区时刻(new Date 本地化,即用户所在时区)。
+ *  day 模式:日分组里靠组标题,近三天只补时刻,再远补星期/日期 + 时刻;
+ *  followed 模式:无组标题,带相对日 + 时刻。 */
 function whenLabel(item: RegItem, now: number, isZh: boolean, mode: 'day' | 'followed'): string {
   if (item.kind === 'closed') return '';
   const diff = localDayDiff(item.at, now);
+  const clock = clockOf(item.at);
   if (mode === 'day') {
-    if (diff <= 2) return clockOf(item.at);   // 组标题已说今天/明天/后天
-    if (diff <= 6) return weekdayOf(item.at, isZh);
-    return mdOf(item.at);
+    if (diff <= 2) return clock;   // 组标题已说今天/明天/后天
+    if (diff <= 6) return `${weekdayOf(item.at, isZh)} ${clock}`;
+    return `${mdOf(item.at)} ${clock}`;
   }
-  if (diff <= 0) return `${tr({ zh: '今天', en: 'Today' })} ${clockOf(item.at)}`;
-  if (diff === 1) return tr({ zh: '明天', en: 'Tomorrow' });
-  if (diff === 2) return tr({ zh: '后天', en: 'In 2 days' });
-  if (diff <= 6) return weekdayOf(item.at, isZh);
-  return mdOf(item.at);
+  let day: string;
+  if (diff <= 0) day = tr({ zh: '今天', en: 'Today' });
+  else if (diff === 1) day = tr({ zh: '明天', en: 'Tomorrow' });
+  else if (diff === 2) day = tr({ zh: '后天', en: 'In 2 days' });
+  else if (diff <= 6) day = weekdayOf(item.at, isZh);
+  else day = mdOf(item.at);
+  return `${day} ${clock}`;
 }
 
 /** 报名状态 pill 的色调:已截止灰;开放 accent;截止默认 amber,24h 内 urgent(红)。 */
@@ -93,7 +98,7 @@ function RegistrationCard({ item, isZh, lang, now, mode, followed, onToggle, sho
 }) {
   const c = item.comp;
   const name = localizeCompName(c.id, c.name, isZh).replace(/\s*20\d\d\s*$/, '');
-  const city = c.city ? (isZh ? localizeCity(c.city, true) : c.city) : '';
+  const city = c.city ? (isZh ? localizeCity(c.city, true, c.country) : c.city) : '';
   const country = countryName(c.country, isZh);
   const dateStr = formatDateRangeIso(c.start_date, c.end_date).replace(/20\d\d-/g, '');
   const when = whenLabel(item, now, isZh, mode);

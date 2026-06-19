@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Cpu, Database, Gauge, HardDrive, Globe, Layers, CircleCheck, CircleDashed, CircleDot } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { statsUrl } from '@/lib/stats-base';
+import { fetchPuzzleDistribution } from '@/lib/puzzle-distribution';
 import './solvers.css';
 
 // fetch 失败时的回退 (last-known 2026-05-30).
@@ -53,7 +54,7 @@ const NATIVE: NativeSolver[] = [
   { key: 'pyraminx', stages: 1, fbRows: 0, rate: null, tier: 'small', puzzle: 'Pyraminx', event: 'pyram', zhWhy: '非 3x3 独立 puzzle: Pyraminx 核心 933,120 态 (6 棱偶置换 360 × 翻转 32 × 4 轴心 3^4) 精确距离表查表即最优, 总步数 = 核心最优 + 错位顶点数 (75,582,720 含顶点全空间验证), God 数实测 核心 11 / 含顶点 15;统计走 puzzle_distribution.json 新管线 (event pyram), 全量灌注待跑, 吞吐未实测', enWhy: 'standalone non-3x3 puzzle: the Pyraminx core — 933,120 states (even edge perm 360 × flips 32 × axial 3^4) exact distance table, lookups are optimal; total HTM = core optimum + misplaced tips (verified across all 75,582,720 tip-inclusive states), measured God\'s number 11 core / 15 with tips; stats go through the puzzle_distribution.json pipeline (event pyram), full pour pending, throughput not yet measured' },
   { key: 'skewb', stages: 1, fbRows: 0, rate: null, tier: 'small', puzzle: 'Skewb', event: 'skewb', zhWhy: '非 3x3 独立 puzzle: Skewb (斜转) 整魔方全空间 3,149,280 态 (中心偶置换 360 × 双轨道角置换 12×3 × 扭转 3^5, 角 3 天然不动不扭作全局参照, 无需消整体朝向) 精确距离表查表即最优, God 数实测 11 (分布对公开数据逐项锁);统计走 puzzle_distribution.json 新管线 (event skewb), 全量灌注待跑, 吞吐未实测', enWhy: 'standalone non-3x3 puzzle: the whole Skewb — full-space 3,149,280-state (center even perms 360 × two-orbit corner perms 12×3 × twists 3^5; corner 3 never moves nor twists — a free global reference, no orientation reduction needed) exact distance table, lookups are optimal, measured God\'s number 11 (distribution locked term-by-term against published data); stats go through the puzzle_distribution.json pipeline (event skewb), full pour pending, throughput not yet measured' },
   { key: '123x2', stages: 1, fbRows: 0, rate: 220, tier: 'mid', zhWhy: '双 1x2x3 联合最优平均 ~11.5 步, 搜索深;5 张精确子目标表 max 剪枝, 其中 {块+2角} 表 2.68G 态落盘 mmap', enWhy: 'dual-1x2x3 joint optimum averages ~11.5 moves — deep search; pruned by max of 5 exact subgoal tables, incl. a 2.68G-state block+corners table mmapped from disk' },
-  { key: 'sq1', stages: 1, fbRows: 0, rate: null, tier: 'huge', puzzle: 'Square-1', event: 'sq1', zhWhy: '非 3x3 独立 puzzle: Square-1 整解, 双精确口径。WCA 12c4 最优 (Sq1WcaSolver, IDA* phase-1 + 限方形子群 phase-2 收尾, 13G jsq_full 精确 phase-2 距离查表 O(1); WCA 上帝之数 D_WCA ∈ [26,27]) + slash 最优 (Sq1Solver, twist 口径只数 /, 5 张全空间投影剪枝表零盘 ~43MB 现场建, God 数 13 = Masonjones)。深态慢, 怪物超时单独跑。统计走 puzzle_distribution.json 新管线 (event sq1): WCA 12c4 全 125,605 真题已灌; slash 最优 95.7% 由 W=2s/2s+1 免搜索证明 t=s + 4.3% 歧义态 (W=2s-1) 精确求解', enWhy: 'standalone non-3x3 puzzle: Square-1 whole solve, two exact metrics. WCA 12c4 optimal (Sq1WcaSolver, IDA* phase-1 + square-subgroup phase-2 finish, 13G jsq_full exact phase-2 distance table O(1); WCA God\'s number D_WCA ∈ [26,27]) + slash-optimal (Sq1Solver, twist metric counting only slashes, 5 full-space projection prune tables zero-disk ~43MB built in RAM, God\'s number 13 = Masonjones). Deep states slow, monsters time out for a separate pass. Stats go through the puzzle_distribution.json pipeline (event sq1): WCA 12c4 fully poured for all 125,605 scrambles; slash-optimal proven t=s for 95.7% via W=2s/2s+1 (no search) + the 4.3% ambiguous (W=2s-1) solved exactly' },
+  { key: 'sq1', stages: 1, fbRows: 0, rate: null, tier: 'huge', puzzle: 'Square-1', event: 'sq1', zhWhy: '非 3x3 独立 puzzle: Square-1 整解, 双精确口径。WCA 12c4 最优 (Sq1WcaSolver, IDA* phase-1 + 限方形子群 phase-2 收尾, 13G jsq_full 精确 phase-2 距离查表 O(1); WCA 上帝之数 D_WCA ∈ [26,27]) + slash 最优 (Sq1Solver, twist 口径只数 /, 5 张全空间投影剪枝表零盘 ~43MB 现场建, God 数 13 = Masonjones)。统计走 puzzle_distribution.json 新管线 (event sq1): WCA 12c4 全 125,605 真题已灌; slash 最优全部可证最优 (0 残留): 95.7% 由 W=2s/2s+1 免搜索证明 t=s, 余 4.3% 歧义态 (W=2s-1) 精确判定 — 最深 s=12-13 怪物由 sq1_slash_mitm 双向 BFS + decide_t (半径 ⌊s/2⌋≤6) 完备兜底, 管道自动调用', enWhy: 'standalone non-3x3 puzzle: Square-1 whole solve, two exact metrics. WCA 12c4 optimal (Sq1WcaSolver, IDA* phase-1 + square-subgroup phase-2 finish, 13G jsq_full exact phase-2 distance table O(1); WCA God\'s number D_WCA ∈ [26,27]) + slash-optimal (Sq1Solver, twist metric counting only slashes, 5 full-space projection prune tables zero-disk ~43MB built in RAM, God\'s number 13 = Masonjones). Stats go through the puzzle_distribution.json pipeline (event sq1): WCA 12c4 fully poured for all 125,605 scrambles; slash-optimal is now provably optimal with zero residual: 95.7% proven t=s via W=2s/2s+1 (no search), the remaining 4.3% ambiguous (W=2s-1) decided exactly — the deepest s=12-13 monsters cracked by sq1_slash_mitm bidirectional BFS + decide_t (radius ⌊s/2⌋≤6), auto-invoked by the pipeline' },
 ];
 
 interface BrowserSolver { key: string; zhEngine: string; enEngine: string; zhLatency: string; enLatency: string; }
@@ -214,8 +215,8 @@ const TABLES: Record<string, SolverTbls> = {
   sq1: {
     move: [],
     prune: [{ n: 'sq1_wca_jsqfull', b: 13005619200 }, { n: 'sq1_wca_cornp', b: 296593920 }, { n: 'sq1_wca_edgep', b: 296593920 }],
-    builtZh: 'SQ1 双口径双表源。WCA 12c4 最优 (Sq1WcaSolver) 用磁盘表:jsq_full ~13GB 精确 phase-2 距离查表 (补 shape 位 full_idx, O(1) 查使 phase-2 免搜索) + 角/棱置换投影各 ~283MB;WCA God 数 [26,27]。slash 最优 (Sq1Solver) 是零盘表:5 张全空间投影剪枝表 (comb / c4 / e4 / c4b / e4b, h-max 9) ~43MB 内存现场建;slash God 数 13。两者共享 SQ1 状态/索引基建',
-    builtEn: 'SQ1 two metrics, two table sources. WCA 12c4 optimal (Sq1WcaSolver) uses disk tables: jsq_full ~13GB exact phase-2 distance lookup (shape bits packed into full_idx, O(1) lookups make phase-2 search-free) + corner/edge permutation projections ~283MB each; WCA God\'s number [26,27]. slash-optimal (Sq1Solver) is zero-disk: 5 full-space projection prune tables (comb / c4 / e4 / c4b / e4b, h-max 9) ~43MB built in RAM; slash God\'s number 13. Both share the SQ1 state/index infrastructure',
+    builtZh: 'SQ1 双口径多表源。WCA 12c4 最优 (Sq1WcaSolver) 用磁盘表:jsq_full ~13GB 精确 phase-2 距离查表 (补 shape 位 full_idx, O(1) 查使 phase-2 免搜索) + 角/棱置换投影各 ~283MB;WCA God 数 [26,27]。slash 最优 (Sq1Solver) 是零盘表:5 张全空间投影剪枝表 (comb / c4 / e4 / c4b / e4b, h-max 9) ~43MB 内存现场建;slash God 数 13。最深歧义态 (s=12-13) 由 sq1_slash_mitm 双向 BFS 兜底:节点 = 自由转旋转类 (规范键 mod 144), 边 = 一刀, decide_t 只判 ≤s-1 可行性 → 半径 ⌊s/2⌋≤6 完备无 OOM。三者共享 SQ1 状态/索引基建',
+    builtEn: 'SQ1 two metrics, multiple table sources. WCA 12c4 optimal (Sq1WcaSolver) uses disk tables: jsq_full ~13GB exact phase-2 distance lookup (shape bits packed into full_idx, O(1) lookups make phase-2 search-free) + corner/edge permutation projections ~283MB each; WCA God\'s number [26,27]. slash-optimal (Sq1Solver) is zero-disk: 5 full-space projection prune tables (comb / c4 / e4 / c4b / e4b, h-max 9) ~43MB built in RAM; slash God\'s number 13. The deepest ambiguous states (s=12-13) are settled by sq1_slash_mitm bidirectional BFS: node = free-turn rotation class (canonical key mod 144), edge = one slash, decide_t only tests ≤s-1 feasibility → radius ⌊s/2⌋≤6, complete and OOM-free. All three share the SQ1 state/index infrastructure',
   },
   '123x2': {
     move: [{ n: 'mt_corn2', b: 36300 }, { n: 'mt_edge3', b: 760332 }],
@@ -265,6 +266,23 @@ export default function SolversPage() {
   useDocumentTitle('求解器', 'Solvers');
 
   const [cov, setCov] = useState<Coverage | null>(null);
+  // 非 3x3 puzzle 覆盖率走独立 puzzle_distribution.json(语料/目标都与 3x3 不同)。key 与 NATIVE.key 同名。
+  const [puz, setPuz] = useState<Record<string, number> | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPuzzleDistribution()
+      .then((j) => {
+        if (cancelled) return;
+        const counts: Record<string, number> = {};
+        for (const [k, v] of Object.entries(j.puzzles)) {
+          if (typeof v?.sample_count === 'number') counts[k] = v.sample_count;
+        }
+        setPuz(counts);
+      })
+      .catch(() => { /* 缺失则保留 pending 占位 */ });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -295,7 +313,8 @@ export default function SolversPage() {
   const live = !!cov;
   const rowsOf = (s: NativeSolver) => cov?.counts[s.key] ?? s.fbRows;
 
-  const completeN = NATIVE.filter((s) => deriveStatus(rowsOf(s), target) === 'complete').length;
+  const puzzleDone = (s: NativeSolver) => (puz?.[s.key] ?? 0) > 0;
+  const completeN = NATIVE.filter((s) => (s.puzzle ? puzzleDone(s) : deriveStatus(rowsOf(s), target) === 'complete')).length;
 
   return (
     <div className="solv-page">
@@ -359,27 +378,37 @@ export default function SolversPage() {
                 </div>
               );
             })}
-            {/* 非 3x3 独立 puzzle: 语料与目标都不同 (puzzle_distribution.json 新管线), 不对 3x3 目标算百分比 */}
-            {NATIVE.filter((s) => s.puzzle).map((s) => (
-              <div className="solv-row" key={s.key}>
-                <div className="solv-row-head">
-                  <span className="solv-row-name">{s.key}</span>
-                  <span className="solv-badge solv-badge-seed">
-                    <CircleDashed size={12} strokeWidth={2.2} />
-                    {zh ? '待灌注' : 'pending'}
-                  </span>
-                  <span className="solv-row-stages">{s.puzzle}</span>
+            {/* 非 3x3 独立 puzzle: 语料/目标都与 3x3 不同 (puzzle_distribution.json 新管线), 不算 3x3 百分比; 已灌注实时标 complete */}
+            {NATIVE.filter((s) => s.puzzle).map((s) => {
+              const n = puz?.[s.key];
+              const done = typeof n === 'number' && n > 0;
+              const SIcon = done ? CircleCheck : CircleDashed;
+              const foot = done
+                ? (s.key === 'sq1'
+                  ? (zh ? `${fmtInt(n)} 条真题已灌 · WCA 12c4 + slash 最优均可证最优 (0 残留)` : `${fmtInt(n)} scrambles poured · WCA 12c4 + slash-optimal both provably optimal (0 residual)`)
+                  : (zh ? `${fmtInt(n)} 条真题已灌 · 全空间精确距离表, 逐条最优` : `${fmtInt(n)} scrambles poured · full-space exact distance table, each optimal`))
+                : (zh
+                  ? `非 3x3 独立 puzzle · 语料 = WCA ${s.event} 打乱, 走 puzzle_distribution.json 新管线, 不计入上方 3x3 目标`
+                  : `standalone non-3x3 puzzle · corpus = WCA ${s.event} scrambles via the new puzzle_distribution.json pipeline`);
+              return (
+                <div className="solv-row" key={s.key}>
+                  <div className="solv-row-head">
+                    <span className="solv-row-name">{s.key}</span>
+                    <span className={`solv-badge ${done ? 'solv-badge-complete' : 'solv-badge-seed'}`}>
+                      <SIcon size={12} strokeWidth={2.2} />
+                      {done ? (zh ? '已灌注' : 'poured') : (zh ? '待灌注' : 'pending')}
+                    </span>
+                    <span className="solv-row-stages">{s.puzzle}</span>
+                  </div>
+                  <div className="solv-bar">
+                    <div className={`solv-bar-fill ${done ? 'solv-fill-complete' : 'solv-fill-seed'}`} style={{ width: done ? '100%' : '0.4%' }} />
+                  </div>
+                  <div className="solv-row-foot">
+                    <span className="solv-row-rows">{foot}</span>
+                  </div>
                 </div>
-                <div className="solv-bar">
-                  <div className="solv-bar-fill solv-fill-seed" style={{ width: '0.4%' }} />
-                </div>
-                <div className="solv-row-foot">
-                  <span className="solv-row-rows">{zh
-                    ? `非 3x3 独立 puzzle · 语料 = WCA ${s.event} 打乱, 走 puzzle_distribution.json 新管线, 不计入上方 3x3 目标`
-                    : `standalone non-3x3 puzzle · corpus = WCA ${s.event} scrambles via the new puzzle_distribution.json pipeline — not counted against the 3x3 target above`}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 

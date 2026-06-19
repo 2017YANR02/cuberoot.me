@@ -40,17 +40,62 @@
    表沿用 .wp-bycomp-table 的基础样式;此处只补项目分组列与列对齐覆盖。 */
 .wp-records-sec { margin-bottom: 28px; }
 .wp-records-sec:last-child { margin-bottom: 0; }
+
+/* ── 纪录单表:列头只出现一次且 sticky 悬浮(三档合并成一张表,档标题作表内分组行)── */
+/* 解除 sticky 阻断:tabs 卡片默认 overflow:hidden(走圆角裁剪)会成为滚动容器,令 thead 无法相对视口吸顶;
+   内容本就被 wp-tab-body 内边距收进圆角内,放开裁剪无视觉副作用 */
+.wp-card.wp-tabs-card { overflow: visible; }
+/* 桌面:容器不裁剪(表自适应内容、不溢出),让 thead 以页面为滚动上下文吸顶;窄屏才横向滚动 */
+.wp-records-scroll { overflow: visible; }
+/* sticky 列头吸在全局 .wp-header(高 61px,z-index:10)之下;border-collapse 下吸顶会丢单元格边框,改用 box-shadow 画下划线 */
+.wp-records-table thead th,
+.wp-podium-table thead th {
+  position: sticky;
+  top: 61px;
+  z-index: 3;
+  box-shadow: inset 0 -1px 0 var(--wp-border);
+}
+/* 档分组标题行(纪录:世界/洲际/国家;领奖台:世界/洲际/国家锦标赛):表内整行,左对齐加粗,档间分隔线 */
+.wp-records-table .wp-records-group-row th,
+.wp-podium-table .wp-records-group-row th {
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--wp-text);
+  background: var(--wp-surface);
+  padding: 18px 10px 10px 16px;
+  border-bottom: 1px solid var(--wp-border);
+}
+/* 档间分隔线用 2px:border-collapse 下「更宽者胜」,跨全部列都由本行 border-top 取胜,
+   避免与上一行 td 的 1px 下边框碰撞导致左粗右细(首列 th 无下边框) */
+.wp-records-table .wp-records-group-row:not(:first-child) th,
+.wp-podium-table .wp-records-group-row:not(:first-child) th { border-top: 2px solid var(--wp-border-strong); }
+@media (max-width: 767px) {
+  .wp-records-scroll { overflow-x: auto; }       /* 窄屏:表宽超屏 → 横向滚动 */
+  .wp-records-table thead th,
+  .wp-podium-table thead th { position: static; box-shadow: none; }  /* 横滚容器会破坏视口吸顶,移动端不吸顶 */
+}
 /* 项目分组:同项目仅首行显示图标+名,后续行留空;新项目起加上边线 */
 .wp-records-table .wp-rec-event { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .wp-records-table .wp-rec-event-name { font-weight: 600; color: var(--wp-text); }
 .wp-records-table tbody tr.wp-rec-event-first:not(:first-child) td,
-.wp-records-table tbody tr.wp-rec-event-first th { border-top: 2px solid var(--wp-border); }
+.wp-records-table tbody tr.wp-rec-event-first:not(:first-child) th { border-top: 2px solid var(--wp-border); }
 /* 列对齐:覆盖 bycomp-table 的 nth-child(4/5) 居中(那是给排名/单次列的)。
-   记录表列序 = 项目 单次 平均 赛事 轮次 详情 → 单次/平均居左,赛事/轮次居左 */
+   记录表列序 = 项目 单次 平均 赛事 轮次 详情 → 赛事/轮次居左;单次/平均数值右对齐
+   (.record-num-cell 固定 padding-right:22px 给 badge,右对齐后各行数字右缘齐于 cell_right-22px,
+    与 badge 宽度无关 → 6.39 的 9 与 18.74 的 4 对齐) */
 .wp-records-table thead th:nth-child(4),
 .wp-records-table thead th:nth-child(5) { text-align: left; }
-.wp-records-table .wp-cell-result { text-align: left; }
-.wp-records-table .wp-cell-event { vertical-align: top; }
+/* 表头 单次/平均/详细成绩 居中(对齐成绩页观感);数值仍右对齐做位对齐,
+   因 .record-num-cell 右侧 22px badge 占位,右对齐数字其实落在列视觉中线附近,居中表头正压其上 */
+.wp-records-table thead th:nth-child(2),
+.wp-records-table thead th:nth-child(3),
+.wp-records-table thead th.wp-th-attempts { text-align: center; }
+.wp-records-table .wp-cell-result { text-align: right; }
+/* 仅图标的项目列垂直居中,跟同行单次/平均数值齐平(比赛单元两行会撑高行,top 会让图标偏上) */
+.wp-records-table .wp-cell-event { vertical-align: middle; }
 
 /* ── 锦标赛领奖台表 ── */
 /* 比赛分组头行 */
@@ -67,10 +112,12 @@
   font-size: 0.82em;
   color: var(--wp-text-sub);
 }
-/* 列对齐:1 项目 / 2 名次 / 3 单次 / 4 平均 / 5 详情 */
+/* 列对齐:1 项目 / 2 名次 / 3 单次 / 4 平均 / 5 详情;表头单次/平均/详细成绩居中,数值右对齐(同纪录表) */
 .wp-podium-table thead th:nth-child(3),
-.wp-podium-table thead th:nth-child(4) { text-align: left; }
-.wp-podium-table .wp-cell-result { text-align: left; }
+.wp-podium-table thead th:nth-child(4),
+.wp-podium-table thead th.wp-th-attempts { text-align: center; }
+.wp-podium-table .wp-cell-result { text-align: right; }
+.wp-podium-table .wp-cell-event { vertical-align: middle; }
 .wp-podium-table thead th.wp-th-narrow { text-align: center !important; }
 .wp-podium-table .wp-cell-pos { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
 /* 金 / 银(取自正文色去饱和)/ 铜 */

@@ -148,7 +148,7 @@ export default function Sq1SolverPage() {
       <>
       <p className="pos-lead">
         {tr({
-          zh: 'Square-1 在线求解:两阶段近最优解,并对同一段解给出三套计步口径的步数。',
+          zh: 'Square-1 在线求解:两阶段近最优解,并对同一段解给出三套度量的步数。',
           en: 'Square-1 online solver: a two-phase near-optimal solution, with the move count under all three metrics.',
         })}
       </p>
@@ -241,7 +241,7 @@ export default function Sq1SolverPage() {
       <div className="sq1s-caveat">
         <strong>{tr({ zh: '关于「最优」', en: 'About "optimal"' })}</strong>{' '}
         {tr({
-          zh: '这是两阶段近最优解(先归方块形再解排列),不保证全局最少步;真最优要单阶段 IDA*。三个步数里,"/" 切片在任何口径都计 1,差异只在层转:同一段解满足 扭转 ≤ WCA 12c4 ≤ 面转。WCA 12c4 正是计时器报的打乱长度口径,而它的上帝之数至今没人算出来。',
+          zh: '这是两阶段近最优解(先归方块形再解排列),不保证全局最少步;真最优要单阶段 IDA*。三个步数里,"/" 切片在任何度量都计 1,差异只在层转:同一段解满足 扭转 ≤ WCA 12c4 ≤ 面转。WCA 12c4 正是计时器报的打乱长度度量,而它的上帝之数至今没人算出来。',
           en: 'This is a two-phase near-optimal solution (cube shape, then permutation) — not guaranteed minimal; true optimal needs single-phase IDA*. Across the three counts, a "/" slice always counts 1; the only divergence is layer turns, so twist ≤ WCA 12c4 ≤ face-turn. WCA 12c4 is the metric your timer reports as scramble length — and its God\'s number has never been computed.',
         })}
         {' '}

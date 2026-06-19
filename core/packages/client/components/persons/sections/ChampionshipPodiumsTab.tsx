@@ -3,7 +3,7 @@
 // 数据走后端预计算表(资格内重排名次,见 server person-championship-podiums)。
 // 分区顺序:世界 → 各大洲 → 国家;区内按比赛日期倒序分组,组内按项目顺序。
 
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
@@ -99,34 +99,35 @@ export default function ChampionshipPodiumsTab({ profile, isZh }: Props) {
     return level;
   };
 
+  // 合并成单表:列头只出现一次且 sticky 悬浮;各档标题(世界/洲际/国家)作表内分组行(同纪录表)。
   return (
-    <div className="wp-records">
-      {sections.map((sec) => {
-        const label = levelLabel(sec.level);
-        return (
-          <section key={sec.level} className="wp-records-sec">
-            <h3 className="wp-section-h">{t(`${label}锦标赛领奖台`, `${label} Championship Podiums`)}</h3>
-            <div className="wp-table-scroll">
-              <table className="wp-bycomp-table wp-podium-table">
-                <thead>
-                  <tr>
-                    <th>{t('项目', 'Event')}</th>
-                    <th className="wp-th-narrow">{t('名次', 'Place')}</th>
-                    <th>{t('单次', 'Single')}</th>
-                    <th>{t('平均', 'Average')}</th>
-                    <th className="wp-th-attempts">{t('详细成绩', 'Solves')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sec.comps.map((comp) => (
-                    <PodiumCompGroup key={comp.compId} comp={comp} isZh={isZh} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        );
-      })}
+    <div className="wp-records wp-records-scroll">
+      <table className="wp-bycomp-table wp-podium-table">
+        <thead>
+          <tr>
+            <th>{t('项目', 'Event')}</th>
+            <th className="wp-th-narrow">{t('名次', 'Place')}</th>
+            <th>{t('单次', 'Single')}</th>
+            <th>{t('平均', 'Average')}</th>
+            <th className="wp-th-attempts">{t('详细成绩', 'Solves')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sections.map((sec) => {
+            const label = levelLabel(sec.level);
+            return (
+              <Fragment key={sec.level}>
+                <tr className="wp-records-group-row">
+                  <th colSpan={5} scope="colgroup">{t(`${label}锦标赛领奖台`, `${label} Championship Podiums`)}</th>
+                </tr>
+                {sec.comps.map((comp) => (
+                  <PodiumCompGroup key={comp.compId} comp={comp} isZh={isZh} />
+                ))}
+              </Fragment>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -151,8 +152,7 @@ function PodiumCompGroup({
         <tr key={`${r.eventId}-${r.level}`}>
           <th scope="row" className="wp-cell-event">
             <span className="wp-rec-event">
-              <EventIcon event={r.eventId} className="wp-event-icon" />
-              <span className="wp-rec-event-name">{eventDisplayName(r.eventId, isZh)}</span>
+              <EventIcon event={r.eventId} className="wp-event-icon" title={eventDisplayName(r.eventId, isZh)} />
             </span>
           </th>
           <td className={`wp-cell-pos wp-podium-place-${r.place}`}>{r.place}</td>

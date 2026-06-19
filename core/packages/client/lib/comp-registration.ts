@@ -92,7 +92,7 @@ export function buildRegView(comps: Comp[], now: number, followed: ReadonlySet<s
     return a.at - b.at;
   });
 
-  // 日分组：同组内 close 在 open 前（更紧急），再按时间升序
+  // 日分组：组内按里程碑时刻升序（纯时间序，open/close 混排）
   const byBucket = new Map<RegBucketKey, RegItem[]>();
   for (const it of dayItems) {
     const k = bucketOf(localDayDiff(it.at, now));
@@ -104,12 +104,7 @@ export function buildRegView(comps: Comp[], now: number, followed: ReadonlySet<s
   for (const k of BUCKET_ORDER) {
     const arr = byBucket.get(k);
     if (!arr || arr.length === 0) continue;
-    arr.sort((a, b) => {
-      const ak = a.kind === 'close' ? 0 : 1;
-      const bk = b.kind === 'close' ? 0 : 1;
-      if (ak !== bk) return ak - bk;
-      return a.at - b.at;
-    });
+    arr.sort((a, b) => a.at - b.at);
     buckets.push({ key: k, items: arr });
   }
 

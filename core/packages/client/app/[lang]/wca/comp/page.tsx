@@ -49,7 +49,7 @@ import { formatRegStatus } from '@/lib/comp-reg-status';
 import { localizeCity } from '@/lib/city-localize';
 import { countryName } from '@/lib/country-name';
 import { expandCountrySelection } from '@/lib/continent';
-import { fetchCompRounds, fetchCompWcif } from '@/lib/comp-wcif';
+import { fetchCompRounds, fetchCompWcif, fetchCubingZh } from '@/lib/comp-wcif';
 import { statsUrl } from '@/lib/stats-base';
 import { ClearButton } from '@/components/ClearButton';
 import { CubingIcon } from '@/components/EventIcon';
@@ -173,6 +173,8 @@ interface Competition {
   longitude_degrees?: number | null;
   registration_open?: string | null;   // ISO 8601 UTC
   registration_close?: string | null;
+  /** 项目修改截止时刻（ISO，单场端点专属，列表数据由管道逐场回填）；缺为 null */
+  event_change_deadline?: string | null;
   cubing_china_url?: string;
   top_cubers: TopCuber[];
 }
@@ -556,7 +558,7 @@ function CompModal({ comp, isZh, onClose, t, cancelled, loggedIn, followed, onTo
   }, [comp.id, comp.rounds]);
 
   const displayName = localizeName(comp, isZh);
-  const displayCity = isZh ? (comp.city_zh || localizeCity(comp.city, true)) : comp.city;
+  const displayCity = isZh ? (comp.city_zh || localizeCity(comp.city, true, comp.country)) : comp.city;
   const displayCountry = countryName(comp.country, isZh);
 
   const dateStr = formatDateRangeIso(comp.start_date, comp.end_date || comp.start_date);
@@ -682,6 +684,7 @@ function adaptAllComp(w: UpcomingCompRecord, topCuberMap: Map<string, TopCuber[]
     competitor_limit: w.competitor_limit,
     registration_open: w.registration_open ?? undefined,
     registration_close: w.registration_close ?? undefined,
+    event_change_deadline: w.event_change_deadline ?? undefined,
     latitude_degrees: w.latitude_degrees,
     longitude_degrees: w.longitude_degrees,
     top_cubers: topCuberMap.get(w.id) ?? [],
@@ -827,7 +830,7 @@ const SIGNED_METRICS = new Set<CompMetric>(['latlng']);
 type CoordKey = 'lat' | 'lng';
 // 列表统一排序状态：null = 默认按日期倒序。
 // col='comp' 按整场列数值（latlng 看 coord 子列）；col='name'/'city'/'country' 按比赛名/城市名/国家名首字母（locale 排序）。
-type SortCol = 'comp' | 'name' | 'city' | 'country' | 'date';
+type SortCol = 'comp' | 'name' | 'city' | 'country' | 'date' | 'reg';
 type ListSort = { col: SortCol; coord?: CoordKey; dir: 'asc' | 'desc' } | null;
 
 function compColTitle(m: CompMetric): string {
@@ -855,7 +858,7 @@ function coordColTitle(kind: CoordKey): string {
 
 /** 当前语言下比赛城市的显示串（中文走 city_zh / 本地化，英文走原 city） */
 function displayCityOf(c: Competition, isZh: boolean): string {
-  return isZh ? (c.city_zh || localizeCity(c.city, true)) : c.city;
+  return isZh ? (c.city_zh || localizeCity(c.city, true, c.country)) : c.city;
 }
 
 /** 比赛经纬度，缺坐标 / 多地代码 / (0,0) 哨兵均按缺失返回 null（与 Globe 端口径一致） */
@@ -871,6 +874,100 @@ function compCoord(c: Competition, kind: 'lat' | 'lng'): number | null {
 function fillRate(c: { competitors?: number; competitor_limit: number }): number | null {
   return c.competitors != null && c.competitor_limit > 0
     ? Math.min(1, c.competitors / c.competitor_limit) : null;
+}
+
+function regPad(n: number): string { return String(n).padStart(2, '0'); }
+/** 本地时区「日期 时刻」(MM-DD HH:MM)。 */
+function fmtWhen(d: Date): string {
+  if (Number.isNaN(d.getTime())) return '';
+  return `${regPad(d.getMonth() + 1)}-${regPad(d.getDate())} ${regPad(d.getHours())}:${regPad(d.getMinutes())}`;
+}
+/** 本地时区完整「YYYY-MM-DD HH:MM」(hover 标题用,带年份消歧)。 */
+function fmtWhenFull(d: Date): string {
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${regPad(d.getMonth() + 1)}-${regPad(d.getDate())} ${regPad(d.getHours())}:${regPad(d.getMinutes())}`;
+}
+/** cubing.com 退赛/重开是北京时间(UTC+8)墙钟串(如 "2026-07-24 21:00:00") → epoch ms。 */
+function parseBeijingMs(s: string): number {
+  const m = s.trim().match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2})?)/);
+  if (m) return Date.parse(`${m[1]}T${m[2]}+08:00`);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s.trim())) return Date.parse(`${s.trim()}T00:00:00+08:00`);
+  return NaN;
+}
+
+type CnReg = { withdrawDeadline: string | null; reopenAt: string | null } | null | undefined;
+
+/** 比赛全部报名相关时间点(epoch ms + 标签 + 是否「开放类」,统一本地时区比较/展示)。
+ *  开放/截止/修改截止来自 baked ISO(UTC);退赛/重开来自 cubing.com 北京时间串(CN 行懒拉)。 */
+function regMilestones(
+  open: string | null | undefined,
+  close: string | null | undefined,
+  change: string | null | undefined,
+  cn: CnReg,
+): { t: number; word: string; opening: boolean }[] {
+  const out: { t: number; word: string; opening: boolean }[] = [];
+  const pushIso = (iso: string | null | undefined, word: string, opening: boolean) => {
+    if (!iso) return;
+    const t = new Date(iso).getTime();
+    if (Number.isFinite(t)) out.push({ t, word, opening });
+  };
+  const pushBeijing = (s: string | null | undefined, word: string, opening: boolean) => {
+    if (!s) return;
+    const t = parseBeijingMs(s);
+    if (Number.isFinite(t)) out.push({ t, word, opening });
+  };
+  pushIso(open, tr({ zh: '开放', en: 'Opens' }), true);
+  pushIso(close, tr({ zh: '截止', en: 'Closes' }), false);
+  pushBeijing(cn?.withdrawDeadline, tr({ zh: '退赛截止', en: 'Withdraw' }), false);
+  pushBeijing(cn?.reopenAt, tr({ zh: '重开报名', en: 'Reopens' }), true);
+  pushIso(change, tr({ zh: '修改截止', en: 'Edit by' }), false);
+  return out;
+}
+
+/** 列表「报名」列:全部时间点里「离现在最近的将来那个」自动选中(开放类绿 / 截止类黄,24h 内红);
+ *  全部已过 → 报名已截止;无报名字段(过去比赛)→ null。 */
+function regMilestone(
+  open: string | null | undefined,
+  close: string | null | undefined,
+  change: string | null | undefined,
+  cn: CnReg,
+): { when: string; word: string; tone: 'open' | 'close' | 'urgent' | 'closed' } | null {
+  const cands = regMilestones(open, close, change, cn);
+  if (!cands.length) return null;
+  const now = Date.now();
+  const future = cands.filter((c) => c.t > now).sort((a, b) => a.t - b.t);
+  if (!future.length) return { when: '', word: tr({ zh: '报名已截止', en: 'Closed' }), tone: 'closed' };
+  const n = future[0]!;
+  const tone = n.opening ? 'open' : (n.t - now <= 86_400_000 ? 'urgent' : 'close');
+  return { when: fmtWhen(new Date(n.t)), word: n.word, tone };
+}
+
+/** 列表「报名」列排序键:离现在最近的「将来」报名节点 epoch ms。已全过 / 无字段 → null(沉底)。
+ *  退赛/重开是 CN-only 懒拉(排序时未必加载),故排序只用 baked 的 开放/截止/修改截止。 */
+function regSortMs(c: { registration_open?: string | null; registration_close?: string | null; event_change_deadline?: string | null }): number | null {
+  const now = Date.now();
+  const ts = [c.registration_open, c.registration_close, c.event_change_deadline]
+    .map((x) => (x ? new Date(x).getTime() : NaN))
+    .filter((t) => Number.isFinite(t) && t > now);
+  return ts.length ? Math.min(...ts) : null;
+}
+
+/** 列表「报名」列 hover:全部报名节点完整时刻(本地时区,按时间升序,每个一行)。
+ *  标签补到等宽(CJK 标签用全角空格 U+3000,原生 tooltip 里与汉字同宽)→ 各行日期列对齐。 */
+function regFullTitle(
+  open: string | null | undefined,
+  close: string | null | undefined,
+  cn: CnReg,
+  change: string | null | undefined,
+): string | undefined {
+  const items = regMilestones(open, close, change, cn).sort((a, b) => a.t - b.t);
+  if (!items.length) return undefined;
+  // CJK 标签(码点 > 0xff)按全角空格补齐;拉丁标签按普通空格(原生 tooltip 比例字体无法精确对齐,尽力而为)。
+  const padCh = items[0]!.word.charCodeAt(0) > 0xff ? String.fromCharCode(0x3000) : ' ';
+  const maxLen = Math.max(...items.map((m) => m.word.length));
+  return items
+    .map((m) => `${m.word}${padCh.repeat(maxLen - m.word.length)} ${fmtWhenFull(new Date(m.t))}`)
+    .join('\n');
 }
 
 // ── 列表视图 ──────────────────────────────────────────────────────────────
@@ -994,6 +1091,17 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
         if (av !== bv) return (av! - bv!) * mul;
         return byDateDesc(a, b);
       });
+    } else if (listSort && listSort.col === 'reg') {
+      // 报名列：按「下一个报名里程碑时刻」排；缺报名字段（多为过去比赛）恒沉底，同值再按日期倒序
+      const mul = listSort.dir === 'asc' ? 1 : -1;
+      sorted.sort((a, b) => {
+        const av = regSortMs(a), bv = regSortMs(b);
+        if (av == null && bv == null) return byDateDesc(a, b);
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        if (av !== bv) return (av - bv) * mul;
+        return byDateDesc(a, b);
+      });
     } else {
       sorted.sort(byDateDesc);
     }
@@ -1013,6 +1121,9 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   // start/end = 渲染窗口（含 LIST_BUFFER 上下缓冲）；top = 真实最顶可见行（不含 buffer），sticky 年份用它
   const [range, setRange] = useState({ start: 0, end: 60, top: 0 });
   const rafRef = useRef<number | null>(null);
+  // 中国大陆比赛:懒拉 cubing.com 退赛截止 / 重开报名(server PG 已日更预热,命中即毫秒),
+  // 仅对当前可见 CN 行拉(全程 ≤23 场),localStorage 7 天缓存,补进「报名」列 hover。
+  const [cnZh, setCnZh] = useState<Record<string, { withdrawDeadline: string | null; reopenAt: string | null }>>({});
 
   useEffect(() => {
     const compute = () => {
@@ -1127,6 +1238,17 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
     };
   }, [range.start, range.end, items, isZh, compMetric, eventMetric, pageRef]);
 
+  // 可见 CN 行 → 懒拉 cubing.com 退赛/重开(补进报名 hover)。命中 cnZh 即跳过,只增不重拉,自然收敛。
+  useEffect(() => {
+    for (const it of items.slice(range.start, range.end)) {
+      const c = it.comp;
+      if (c.country !== 'CN' || cnZh[c.id]) continue;
+      fetchCubingZh(c.id)
+        .then((m) => setCnZh((prev) => (prev[c.id] ? prev : { ...prev, [c.id]: { withdrawDeadline: m.withdrawDeadline, reopenAt: m.reopenAt } })))
+        .catch(() => {});
+    }
+  }, [items, range.start, range.end, cnZh]);
+
   // 卸载时清理 — 切回日历模式不留 stale 列宽变量
   useEffect(() => () => {
     pageRef.current?.style.removeProperty('--cl-name-width');
@@ -1168,6 +1290,19 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
               onMouseEnter={prefetch}
               onFocus={prefetch}
             >
+              {(() => {
+                // 报名列 = 全部时间点(开放/截止/退赛/重开/修改截止)里离现在最近的「将来」那个,按时间自动选。
+                const cn = cnZh[c.id];
+                const r = regMilestone(c.registration_open, c.registration_close, c.event_change_deadline, cn);
+                const title = regFullTitle(c.registration_open, c.registration_close, cn, c.event_change_deadline);
+                if (!r) return <span className="cl-reg-cell" title={title} aria-hidden={!title} />;
+                return (
+                  <span className={`cl-reg-cell cl-reg-cell--${r.tone}`} title={title}>
+                    {r.when && <span className="cl-reg-when mono">{r.when}</span>}
+                    <span className="cl-reg-word">{r.word}</span>
+                  </span>
+                );
+              })()}
               <span className="comp-list-date mono">
                 {crossYear ? (
                   <>
@@ -1176,12 +1311,12 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
                   </>
                 ) : dateStr}
               </span>
-              <span className="comp-list-country" title={countryName(c.country, isZh)}>{countryName(c.country, isZh)}</span>
               <Flag iso2={c.country} />
               <span className="comp-list-name-cell">
                 {followedIds.has(c.id) && <FollowMark />}
                 <span className="comp-list-name">{displayName}</span>
               </span>
+              <span className="comp-list-country" title={countryName(c.country, isZh)}>{countryName(c.country, isZh)}</span>
               <span className="comp-list-city">{displayCity}</span>
               <span className="cl-days-cell" title={tr({ zh: '天数', en: 'Days'
             })}>
@@ -1548,7 +1683,7 @@ function CalendarPageInner() {
     (comp: Competition) => {
       const compQRaw = compQuery.trim();
       if (compQRaw) {
-        const cityZh = comp.city ? localizeCity(comp.city, true) : '';
+        const cityZh = comp.city ? localizeCity(comp.city, true, comp.country) : '';
         const text = `${comp.name} ${comp.name_zh || ''} ${compNameZh(comp.name)} ${comp.city} ${comp.city_zh || ''} ${cityZh}`.toLowerCase();
         if (!compNameMatches(text, compQRaw)) return false;
       }
@@ -2089,6 +2224,24 @@ function CalendarPageInner() {
           if (viewMode !== 'list' || displayedComps.length === 0) return <>{daysChip}{chips}</>;
           return (
             <div className="event-chips-grid">
+              {/* 报名列头（最左）：文字「报名」+ 点击按下一个将发生的报名里程碑时刻排序（已截止/无数据沉底） */}
+              {(() => {
+                const regOn = listSort?.col === 'reg';
+                return (
+                  <button
+                    type="button"
+                    className={`cl-col-icon cl-reg-head cl-col-sort${regOn ? ' is-active' : ''}`}
+                    title={tr({ zh: '报名（下一个开放/截止里程碑，本地时区）— 点击按时刻排序；已截止/无数据沉底', en: 'Registration (next opens/closes milestone, local time) — click to sort' })}
+                    aria-pressed={regOn}
+                    onClick={() => cycleSort('reg')}
+                  >
+                    <span className="cl-reg-head-text">{tr({ zh: '报名', en: 'Reg' })}</span>
+                    {regOn && (listSort?.dir === 'desc'
+                      ? <ChevronDown size={11} strokeWidth={2.25} />
+                      : <ChevronUp size={11} strokeWidth={2.25} />)}
+                  </button>
+                );
+              })()}
               {(() => {
                 // 日期列头：点击在「默认最新在前」与「最早在前」之间切换。
                 // 选某国家 + 切到「最早在前」→ 顶部即该国首场比赛。
@@ -2104,28 +2257,7 @@ function CalendarPageInner() {
                     onClick={() => setListSort((s) => (s?.col === 'date' && s.dir === 'asc' ? null : { col: 'date', dir: 'asc' }))}
                   >
                     <DateChevron className="cl-date-chevron" size={12} strokeWidth={2.25} />
-                    {currentYear && (
-                      <>
-                        <span className="cl-year-num">{currentYear.year}</span>
-                        <span className="cl-year-count">{currentYear.count.toLocaleString()}</span>
-                      </>
-                    )}
-                  </button>
-                );
-              })()}
-              {/* 国家名列头：点击按国家名首字母 locale 排序 */}
-              {(() => {
-                const active = listSort?.col === 'country';
-                const AZ = active && listSort?.dir === 'desc' ? ArrowDownZA : ArrowDownAZ;
-                return (
-                  <button
-                    type="button"
-                    className={`cl-col-icon cl-col-sort cl-text-sort${active ? ' is-active' : ''}`}
-                    title={tr({ zh: '按国家名排序', en: 'Sort by country' })}
-                    aria-pressed={active}
-                    onClick={() => cycleSort('country')}
-                  >
-                    <AZ size={15} strokeWidth={1.75} />
+                    {currentYear && <span className="cl-year-num">{currentYear.year}</span>}
                   </button>
                 );
               })()}
@@ -2142,6 +2274,23 @@ function CalendarPageInner() {
                     })}
                     aria-pressed={active}
                     onClick={() => cycleSort('name')}
+                  >
+                    <AZ size={15} strokeWidth={1.75} />
+                    {currentYear && <span className="cl-list-count">{currentYear.count.toLocaleString()}</span>}
+                  </button>
+                );
+              })()}
+              {/* 国家名列头：点击按国家名首字母 locale 排序 */}
+              {(() => {
+                const active = listSort?.col === 'country';
+                const AZ = active && listSort?.dir === 'desc' ? ArrowDownZA : ArrowDownAZ;
+                return (
+                  <button
+                    type="button"
+                    className={`cl-col-icon cl-col-sort cl-text-sort${active ? ' is-active' : ''}`}
+                    title={tr({ zh: '按国家名排序', en: 'Sort by country' })}
+                    aria-pressed={active}
+                    onClick={() => cycleSort('country')}
                   >
                     <AZ size={15} strokeWidth={1.75} />
                   </button>

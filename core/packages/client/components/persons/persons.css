@@ -90,7 +90,9 @@ html[data-theme=dark] .wp-page {
 .wp-source-link:hover { color: var(--wp-accent); border-color: var(--wp-accent); }
 
 .wp-main {
-    max-width: 1100px; margin: 0 auto;
+    /* 数据页:表格自适应内容(.wp-bycomp-table width:auto),最宽一张 ~1130px;容器贴着内容封顶,
+       宽屏不撑满(满屏超宽行难追),窄屏自适应。1240 = 最宽表 + 余量,既不挤换行也不留大空白。 */
+    max-width: 1240px; margin: 0 auto;
     padding: 24px 24px 64px;
     display: flex; flex-direction: column; gap: 16px;
 }
@@ -342,7 +344,8 @@ html[data-theme=dark] .wp-page {
     text-align: center;
     white-space: nowrap;
 }
-.wp-pr-table .wp-th-event { text-align: left; padding-left: 16px; }
+/* 项目列收缩到内容宽 (图标 / SoWR / 自选), 不吃 width:100% 的余量 — 否则 项目↔NR 间距过大 */
+.wp-pr-table .wp-th-event { text-align: left; padding-left: 16px; width: 1px; white-space: nowrap; }
 .wp-pr-table .wp-th-group {
     border-bottom: 1px solid var(--wp-border);
     color: var(--wp-text);
@@ -359,8 +362,8 @@ html[data-theme=dark] .wp-page {
     vertical-align: middle;
     white-space: nowrap;
 }
-/* 子表头 (世界/洲际/地区/成绩/奖牌) 右对齐, 压住下方数字列;组表头 (单次/平均/领奖台) 仍居中跨列 */
-.wp-pr-table thead tr:nth-child(2) th { text-align: right; }
+/* 单行表头: 列名右对齐压住下方数字列; 项目列由 .wp-th-event 覆盖成左对齐 */
+.wp-pr-table thead th { text-align: right; }
 .wp-pr-table tbody tr:last-child th,
 .wp-pr-table tbody tr:last-child td { border-bottom: none; }
 .wp-pr-table tbody tr:hover td,
@@ -371,6 +374,8 @@ html[data-theme=dark] .wp-page {
     padding-left: 16px !important;
     font-weight: 500;
     color: var(--wp-text);
+    width: 1px;
+    white-space: nowrap;
 }
 /* flex 放内层 span,th 保持 table-cell 才能跟整行做行高对齐(否则分隔线错位) */
 .wp-event-inner { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
@@ -581,6 +586,13 @@ html[data-theme=dark] .wp-page {
     border-collapse: collapse;
     font-size: 0.85rem;
 }
+/* 自适应内容:表宽随内容(不再 width:100% 撑满容器 → 列间不留大空隙),左对齐占用所需宽度。
+   容器(.wp-main 1440)只作上限:内容超出则压缩/换行,不足则表自然收窄。仅作用选手页,不碰 recon。 */
+.wp-main .wp-bycomp-table { width: auto; }
+/* 赛事 / 项目统计 / 点亮城市 表同理:列随内容,不撑满(否则末列被推到最右、中间留大空隙) */
+.wp-main .wp-comps-table,
+.wp-main .wp-event-stats-table,
+.wp-main .wp-lit-table { width: auto; }
 .wp-bycomp-table thead th {
     padding: 8px 10px; text-align: left;
     background: var(--wp-bg);
@@ -612,6 +624,10 @@ html[data-theme=dark] .wp-page {
     max-width: 16rem;
 }
 .wp-bycomp-table .wp-cell-comp .comp-cell > span { overflow-wrap: anywhere; }
+/* 桌面(容器已加宽)放宽比赛名单元,让常见赛事名落一行;移动端保持 16rem,2 行换行更省横滑 */
+@media (min-width: 768px) {
+    .wp-bycomp-table .wp-cell-comp .comp-cell { max-width: 26rem; }
+}
 .wp-bycomp-table .wp-cell-comp-date {
     margin-top: 2px;
     font-family: var(--font-mono);
@@ -624,6 +640,8 @@ html[data-theme=dark] .wp-page {
 
 .wp-round-tag {
     display: inline-block;
+    /* 统一两字符轮次标签(Fi/R1/R2/R3)宽度 → 后随的「直播」chip 各行左缘对齐 */
+    min-width: 1.4em;
     font-size: 0.78rem; font-weight: 600;
     color: var(--wp-text-sub);
 }
@@ -670,16 +688,30 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 .wp-cell-pos { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
 .wp-pos-first { color: var(--wp-pink); font-weight: 700; }
 .wp-cell-attempt { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
-/* 数字列右对齐:排名 / 单次 / 平均(表头与单元格一致;详细成绩内每次成绩已各自右对齐) */
+/* 排名右对齐;单次 / 平均 居中(表头压在 成绩+badge 整体正中);详细成绩内每次成绩各自右对齐 */
 .wp-bycomp-table thead th:nth-child(4),
-.wp-bycomp-table thead th:nth-child(5) { text-align: right; }
+.wp-bycomp-table thead th:nth-child(5) { text-align: center; }
 .wp-bycomp-table thead th.wp-th-narrow { text-align: right !important; }
-.wp-bycomp-table .wp-cell-pos,
-.wp-bycomp-table .wp-cell-result { text-align: right; }
+.wp-bycomp-table .wp-cell-pos { text-align: right; }
+.wp-bycomp-table .wp-cell-result { text-align: center; }
 /* 详细成绩单元格颜色 token;网格布局 + 括号占位见共享 components/wca-results/attempts-grid.css(与 /recon 同场表共用) */
 .wp-cell-attempts { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
 /* 详细成绩里的旧值(被改的那一次)压缩,尽量少撑宽 */
 .wp-cell-attempts .wp-old-result { font-size: 0.72em; margin-right: 3px; }
+/* 「详细成绩」表头压在下方 attempts 网格正上方:同列模板 + 同字号(8.5ch 同宽)→ 标题跨 5 列居中 */
+.wp-bycomp-table thead th.wp-th-attempts { text-align: left; }
+.wp-th-attempts .wp-att-head {
+    display: inline-grid;
+    grid-template-columns: repeat(5, minmax(8.5ch, max-content));
+    gap: 4px 12px;
+    justify-content: start;
+    font-size: 0.85rem;            /* 对齐 tbody 单元格字号,使 8.5ch 与下方网格同宽 */
+}
+.wp-th-attempts .wp-att-head > span {
+    grid-column: 1 / -1;           /* 跨 5 列 → 在整块 attempts 宽度内居中 */
+    text-align: center;
+    font-size: 0.72rem;            /* 标题字号与其它表头一致 */
+}
 /* 表头带 InfoTooltip 的布局 wrapper:横向 flex + 间距,实际触发 / 弹层走组件 */
 .wp-th-info {
     display: inline-flex;
@@ -751,6 +783,10 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 .wp-link-comp:hover { color: var(--wp-accent); text-decoration: underline; }
 .wp-cell-events .wp-event-strip { gap: 6px; }
 .wp-cell-num { text-align: right; font-variant-numeric: tabular-nums; }
+/* 数值列表头随数据右对齐(默认 thead th 左对齐特异度更高,这里显式压过 → 表头与数字齐)。
+   点亮城市:参赛次数表头有 wp-cell-num class;项目统计:第 4~8 列(比赛/轮次/尝试/成功/失败)按列序定位 */
+.wp-lit-table thead th.wp-cell-num,
+.wp-event-stats-table thead th:nth-child(n+4) { text-align: right; }
 .wp-cell-fail { color: var(--wp-orange); }
 .wp-table-footer {
     padding: 12px;
@@ -1021,3 +1057,5 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 .wp-row-live .wp-cell-attempts {
     color: var(--wp-text-sub);
 }
+/* 但第一名仍保留粉色(与官方行口径一致),覆盖上面对直播行 pos 的弱化 */
+.wp-row-live .wp-cell-pos.wp-pos-first { color: var(--wp-pink); }
