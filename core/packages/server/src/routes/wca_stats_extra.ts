@@ -478,15 +478,21 @@ wcaStatsExtraRoutes.get('/wca/person-misc', async (c) => {
   // 最亲密魔友:共同参赛数 desc,同分按 wcaId 升序;取 top 20.
   others.sort((a, b) => b.shared - a.shared || (a.wcaId < b.wcaId ? -1 : 1));
   const top = others.slice(0, 20);
-  let names = new Map<string, string>();
+  let info = new Map<string, { name: string; iso2: string | null }>();
   if (top.length) {
-    const nrows = await query<{ wca_id: string; name: string }>(
-      `SELECT wca_id, name FROM wca_persons WHERE wca_id IN (${top.map(() => '?').join(',')})`,
+    const nrows = await query<{ wca_id: string; name: string; iso2: string | null }>(
+      `SELECT p.wca_id, p.name, co.iso2
+         FROM wca_persons p
+         LEFT JOIN wca_countries co ON co.id = p.country_id
+        WHERE p.wca_id IN (${top.map(() => '?').join(',')})`,
       top.map(t => t.wcaId),
     );
-    names = new Map(nrows.map(n => [n.wca_id, n.name]));
+    info = new Map(nrows.map(n => [n.wca_id, { name: n.name, iso2: n.iso2 }]));
   }
-  const closest = top.map(t => ({ wcaId: t.wcaId, name: names.get(t.wcaId) ?? t.wcaId, shared: t.shared }));
+  const closest = top.map(t => {
+    const i = info.get(t.wcaId);
+    return { wcaId: t.wcaId, name: i?.name ?? t.wcaId, iso2: i?.iso2 ?? null, shared: t.shared };
+  });
 
   // 见过的魔友:同场次数 → 人数,升序.
   const distribution = [...dist.entries()]

@@ -57,6 +57,7 @@ export default function MiscTab({ profile, comps, isZh }: Props) {
                 {misc.closest.map((p) => (
                   <tr key={p.wcaId}>
                     <td className="wp-misc-cuber">
+                      {p.iso2 ? <Flag iso2={p.iso2} className="wp-flag-sm" /> : null}
                       <Link href={`/wca/persons/${p.wcaId}`} prefetch={false}>{displayCuberName(p.name, isZh)}</Link>
                     </td>
                     <td className="wp-cell-num">{p.shared}</td>
@@ -82,7 +83,7 @@ export default function MiscTab({ profile, comps, isZh }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {misc.distribution.map((d) => (
+                {[...misc.distribution].sort((a, b) => b.shared - a.shared).map((d) => (
                   <tr key={d.shared}>
                     <td className="wp-cell-num">{d.shared}</td>
                     <td className="wp-cell-num">{d.cubers}</td>

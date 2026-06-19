@@ -122,12 +122,12 @@ export async function fetchWcaPersonFormer(wcaId: string): Promise<WcaFormerIden
 export interface WcaPersonMisc {
   myComps: number;                                                   // 本人参赛比赛数
   totalMet: number;                                                  // 见过的不同魔友总数(不含本人)
-  closest: { wcaId: string; name: string; shared: number }[];        // 最亲密 top 20
+  closest: { wcaId: string; name: string; iso2: string | null; shared: number }[]; // 最亲密 top 20(带国旗)
   distribution: { shared: number; cubers: number }[];                // 同场次数 → 人数,升序
 }
 
 export async function fetchWcaPersonMisc(wcaId: string): Promise<WcaPersonMisc> {
-  const key = `wca:misc:${wcaId}`;
+  const key = `wca:misc:v2:${wcaId}`; // v2: closest 加 iso2,甩掉旧缓存
   const cached = cacheGet<WcaPersonMisc>(key);
   if (cached) return cached;
   const res = await fetch(apiUrl(`/v1/wca/person-misc?wcaId=${encodeURIComponent(wcaId)}`));
