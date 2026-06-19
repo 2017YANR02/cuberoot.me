@@ -25,7 +25,7 @@ slash 精确求解器(`Sq1Solver`)对深态(s=11/12)**很慢**(~秒级~分钟级
 
 全 125,605 真题实测:**W=2s 占 49.75% + W=2s+1 占 45.95% = 95.71% 已证明 t=s**(免搜索,直接用 `sq1_wca_exact.csv` 的 s);仅 **W=2s−1 占 4.29%(5,392 条,全是 s=11/12 深态)** 跑精确 slash 求解器。
 
-歧义态实测(slash-via-wca 归约,详见 §6):**5,392 条 → 5,382 条穷尽证明 t=s,10 条最深残留怪物(s=12/13)穷尽证明超时不可行 → 回退 t=s 紧上界(≤ +1),全程 0 条 t=s−1**。⇒ slash 分布数字 = wcaOptSlash(WCA 最优解里的 `/` 数),由"零反例 + 省算定理"双重支撑,**不随残留变**;残留只欠那 10 条的"可证"印章,见 §6.3。
+歧义态实测(slash-via-wca 归约 + MITM `decide_t`,详见 §6):**5,392 条全部证明 t=s(5,382 via-wca 穷尽 + 10 条最深 s=12/13 由双向 BFS `decide_t` 判定),0 残留,全程 0 条 t=s−1**。⇒ slash 分布**全部可证最优**,数字 = wcaOptSlash(WCA 最优解里的 `/` 数);**2026-06-19 起 `provisional` = false**。
 
 ## 2. 求解器改动(analyzer)
 
@@ -110,8 +110,11 @@ pnpm exec tsx src/build_puzzle_examples.ts
 
 **slash 分布的数字现在已经是真最优,不随残留变。** 已证:slash 真最优 t ≡ WCA 最优解的 slash 数(`wcaOptSlash`),由 **5,382/5,382 零反例 + 95.71% 省算定理**支撑。生产发的就是 `wcaOptSlash` 分布;这 10 条残留也填 `wcaOptSlash`(=s),经验上极大概率 = 真最优,只是没对这 10 条单独出"可证"印章。**0 残留 ≠ 数字会变,只 = `provisional` flip false 这一个标签。** 前端已数据驱动诚实标注(读 `meta.fallback`/`meta.eq`,见 `PuzzleDistView.tsx`)。
 
-### 6.4 下一步候选
+### 6.4 结局:B 成功,0 残留(2026-06-19)
 
-- **C 接受上界(已采纳,2026-06-19)**:数字不变,前端诚实标"紧上界 + 残留 N 条穷尽证明不可行"。零成本。
-- **B 双向搜索 / MITM(实验)**:正→反 BFS 在 ~W/2 相遇,把 W=23/25 固定交替搜索从指数降到约 √。难点:SQ1 状态空间 + 交替约束 + slash 计数 + ≤15GB 表禁 OOM、线程 ≤14。**实验性质 —— 跑通则 0 残留 + flip;跑不通就接受 C。**
-- A(松下界剪枝)已判死,**别重试**。
+**B(MITM 双向搜索)跑通 → 10 条残留全部判定 t=s → 0 残留 → `provisional` flipped false。** 路径:
+- 新增 bin `solver/src/bin/sq1_slash_mitm.rs`(纯增量,不碰 `Sq1Solver`/`sq1_twophase`):BFS 建在**自由转动等价类**(节点 = 状态模 144 种 top/bottom 自由转的规范键 `fast_key`,边 = 一刀;`fast_key` 用 top/bottom 独立取 min 分解,可证 == 144-min)。每条边 = 1 slash ⇒ **BFS 深度 = slash 数**;双向 BFS 中点相遇,把超时 IDA* 的半径砍半。
+- **`decide_t(state, s)` 是关键**:歧义态 t∈{s−1,s},只需判"是否存在 ≤s−1 解"。任一 ≤s−1 路径两半 ≤⌈(s−1)/2⌉=⌊s/2⌋,故只建 **radius=⌊s/2⌋(=6)** 双向 frontier(比全距离的 radius-7 浅一层)→ s=13 怪物 radius-6 fit 进 100M/侧上限,而全距离 `slash_dist` 在 radius-7 OOM(我先前 5/10 INFEASIBLE 即此)。实测:s=13 怪物 ~25s 判出 t=13、s=12 ~45-66s 判出 t=12。
+- **验证**(禁造假):全距离 MITM 对 221 条已知态 100% 吻合;`decide_t` 对 50 条已知 s=10/11 态 100% 返回 t(0 spurious t−1);10 怪物全 t=s(5 条 s=12 与全距离 MITM 交叉吻合)。
+- **持久化**:10 条 `id,t,opt` 进 seed `_xval_resolved.csv` → `inject -MergeOnly` 重算 `fallback=0 / eq=5392 / provisional=false`;future inject 跳过(已 resolved),不会再标怪物。
+- **教训**:深态判定别傻算全距离 ——「decide(≤K)」只需 radius ⌊K/2⌋,比 compute-distance 省一整层半径,是 OOM↔可行的分界。A(松下界剪枝)仍判死,别重试。
